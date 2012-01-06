@@ -949,11 +949,11 @@ public class FileFunctions {
 	}
 
 	public void showPluginChangesSinceUpload(String plugin) {
-		showPluginChangesSinceUpload(new LogComponentCommits(0, 15, false, null, null, "-p"), plugin, true);
+		showPluginChangesSinceUpload(new LogComponentCommits(0, 15, false, null, null, "-p", "-M"), plugin, true);
 	}
 
 	public void showPluginChangesSinceUpload(final String plugin, final int verboseLevel) {
-		showPluginChangesSinceUpload(new LogComponentCommits(verboseLevel, 15, false, null, null, "-p"), plugin, false);
+		showPluginChangesSinceUpload(new LogComponentCommits(verboseLevel, 15, false, null, null, "-p", "-M"), plugin, false);
 	}
 
 	public void showPluginChangesSinceUpload(final LogComponentCommits logger, final String plugin, final boolean checkReadyForUpload) {
