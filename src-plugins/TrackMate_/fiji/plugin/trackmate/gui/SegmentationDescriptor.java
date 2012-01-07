@@ -8,7 +8,7 @@ import fiji.plugin.trackmate.TrackMate_;
 
 public class SegmentationDescriptor implements WizardPanelDescriptor {
 	
-	public static final Object DESCRIPTOR = "SegmentationPanel";
+	public static final String DESCRIPTOR = "SegmentationPanel";
 	private LogPanel logPanel;
 	private TrackMate_ plugin;
 	private TrackMateWizard wizard;
@@ -33,17 +33,17 @@ public class SegmentationDescriptor implements WizardPanelDescriptor {
 	}
 
 	@Override
-	public Object getPanelDescriptorIdentifier() {
+	public String getThisPanelID() {
 		return DESCRIPTOR;
 	}
 
 	@Override
-	public Object getNextPanelDescriptor() {
+	public String getNextPanelID() {
 		return InitFilterPanel.DESCRIPTOR;
 	}
 
 	@Override
-	public Object getBackPanelDescriptor() {
+	public String getPreviousPanelID() {
 		return SegmenterConfigurationPanelDescriptor.DESCRIPTOR;
 	}
 

@@ -16,9 +16,9 @@ import fiji.plugin.trackmate.TrackMate_;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
 
 public class TrackFilterDescriptor implements WizardPanelDescriptor {
-	public static final Object DESCRIPTOR = "TrackFilter";
+	public static final String DESCRIPTOR = "TrackFilter";
 	private TrackMateWizard wizard;
-	private FilterGuiPanel component;
+	private FilterGuiPanel component = new FilterGuiPanel();
 	private TrackMate_ plugin;
 
 	@Override
@@ -37,25 +37,24 @@ public class TrackFilterDescriptor implements WizardPanelDescriptor {
 	}
 
 	@Override
-	public Object getPanelDescriptorIdentifier() {
+	public String getThisPanelID() {
 		return DESCRIPTOR;
 	}
 
 	@Override
-	public Object getNextPanelDescriptor() {
-		// TODO Auto-generated method stub
-		return null;
+	public String getNextPanelID() {
+		return DisplayerPanel.DESCRIPTOR;
 	}
 
 	@Override
-	public Object getBackPanelDescriptor() {
+	public String getPreviousPanelID() {
 		return TrackerConfigurationPanelDescriptor.DESCRIPTOR;
 	}
 
 	@Override
 	public void aboutToDisplayPanel() {
 		TrackMateModel model = plugin.getModel();
-		component = new  FilterGuiPanel(model.getFeatureModel().getTrackFeatures(), model.getTrackFilters(),  
+		component.setTarget(model.getFeatureModel().getTrackFeatures(), model.getTrackFilters(),  
 				model.getFeatureModel().getTrackFeatureNames(), model.getFeatureModel().getTrackFeatureValues(), "tracks"); 
 	}
 

@@ -8,7 +8,7 @@ import fiji.plugin.trackmate.TrackMate_;
 
 public class TrackingDescriptor implements WizardPanelDescriptor {
 
-	public static final Object DESCRIPTOR = "TrackingPanel";
+	public static final String DESCRIPTOR = "TrackingPanel";
 	private LogPanel logPanel;
 	private TrackMate_ plugin;
 	private TrackMateWizard wizard;
@@ -33,17 +33,17 @@ public class TrackingDescriptor implements WizardPanelDescriptor {
 	}
 
 	@Override
-	public Object getPanelDescriptorIdentifier() {
+	public String getThisPanelID() {
 		return DESCRIPTOR;
 	}
 
 	@Override
-	public Object getNextPanelDescriptor() {
+	public String getNextPanelID() {
 		return TrackFilterDescriptor.DESCRIPTOR;
 	}
 
 	@Override
-	public Object getBackPanelDescriptor() {
+	public String getPreviousPanelID() {
 		return TrackerConfigurationPanelDescriptor.DESCRIPTOR;
 	}
 

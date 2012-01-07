@@ -27,9 +27,9 @@ import javax.swing.event.ChangeListener;
 public class StartDialogPanel extends ActionListenablePanel implements WizardPanelDescriptor {
 
 	private static final long serialVersionUID = -5495612173611259921L;
-	
-	public static final Object DESCRIPTOR = "StartDialog";
-	
+
+	public static final String DESCRIPTOR = "StartDialog";
+
 	private JLabel jLabelCheckCalibration;
 	private JNumericTextField jTextFieldPixelWidth;
 	private JNumericTextField jTextFieldZStart;
@@ -71,24 +71,7 @@ public class StartDialogPanel extends ActionListenablePanel implements WizardPan
 
 	private TrackMate_ plugin;
 	private TrackMateWizard wizard;
-	
-	/*
-	 * CONSTRUCTOR
-	 */
-	
-	/**
-	 * Create and lay out of new {@link StartDialogPanel}, with the default settings given, and a target component.
-	 * The later will be disabled, until a valid {@link ImagePlus} is set in the {@link Settings} field returned
-	 * by this panel.
-	 */
-	public StartDialogPanel(Settings settings) {		
-		super();
-		if (null == settings)
-			settings = new Settings();
-		this.settings = settings;
-		initGUI();
-	}
-	
+
 	/*
 	 * WIZARDPANELDESCRIPTOR METHODS
 	 */
@@ -101,12 +84,17 @@ public class StartDialogPanel extends ActionListenablePanel implements WizardPan
 	@Override
 	public void setPlugin(TrackMate_ plugin) {
 		this.plugin = plugin;
+		if (null == plugin) {
+			this.settings = new Settings();
+		} else {
+			if (null == settings) {
+				this.settings = new Settings();
+			} else {
+				this.settings = plugin.getModel().getSettings();
+			}
+		}
+		initGUI();
 	}
-	
-//	@Override
-//	public void setWizard(TrackMateWizard wizard) {
-//		this.wizard = wizard;
-//	}
 
 	@Override
 	public Component getPanelComponent() {
@@ -114,17 +102,17 @@ public class StartDialogPanel extends ActionListenablePanel implements WizardPan
 	}
 
 	@Override
-	public Object getPanelDescriptorIdentifier() {
+	public String getThisPanelID() {
 		return DESCRIPTOR;
 	}
 
 	@Override
-	public Object getNextPanelDescriptor() {
+	public String getNextPanelID() {
 		return SegmenterChoiceDescriptor.DESCRIPTOR;
 	}
 
 	@Override
-	public Object getBackPanelDescriptor() {
+	public String getPreviousPanelID() {
 		return null;
 	}
 
@@ -150,9 +138,9 @@ public class StartDialogPanel extends ActionListenablePanel implements WizardPan
 		plugin.getModel().setSettings(getSettings());
 		wizard.setPreviousButtonEnabled(true);
 	}
-	
-	
-	
+
+
+
 	/*
 	 * PUBLIC METHODS
 	 */
@@ -559,13 +547,17 @@ public class StartDialogPanel extends ActionListenablePanel implements WizardPan
 		imp.getCalibration().pixelWidth = 0.4;
 		imp.setRoi(new Roi(10, 20, 5, 60));
 		imp.show();
-		frame.getContentPane().add(new StartDialogPanel(null));
+
+		StartDialogPanel panel = new StartDialogPanel();
+		panel.setPlugin(null);
+
+		frame.getContentPane().add(panel);
 		frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 		frame.pack();
 		frame.setVisible(true);
 		WindowManager.setCurrentWindow(imp.getWindow());
 	}
 
-	
+
 
 }

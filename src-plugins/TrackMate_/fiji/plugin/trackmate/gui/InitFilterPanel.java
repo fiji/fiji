@@ -42,7 +42,7 @@ public class InitFilterPanel extends ActionListenablePanel implements WizardPane
 			"step." +
 			"</html>";
 	private static final String SELECTED_SPOT_STRING = "Selected spots: %d out of %d";
-	public  static final Object DESCRIPTOR = "InitialThresholding";
+	public  static final String DESCRIPTOR = "InitialThresholding";
 
 	private Map<String, double[]> features;
 	private FilterPanel jPanelThreshold;
@@ -84,19 +84,19 @@ public class InitFilterPanel extends ActionListenablePanel implements WizardPane
 
 
 	@Override
-	public Object getPanelDescriptorIdentifier() {
+	public String getThisPanelID() {
 		return DESCRIPTOR;
 	}
 
 
 	@Override
-	public Object getNextPanelDescriptor() {
+	public String getNextPanelID() {
 		return LaunchDisplayerDescriptor.DESCRIPTOR;
 	}
 
 
 	@Override
-	public Object getBackPanelDescriptor() {
+	public String getPreviousPanelID() {
 		return SegmentationDescriptor.DESCRIPTOR;
 	}
 

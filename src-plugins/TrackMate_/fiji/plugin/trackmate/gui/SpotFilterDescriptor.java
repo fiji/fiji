@@ -17,9 +17,9 @@ import fiji.plugin.trackmate.visualization.TrackMateModelView;
 
 public class SpotFilterDescriptor implements WizardPanelDescriptor {
 
-	public static final Object DESCRIPTOR = "SpotFilter";
+	public static final String DESCRIPTOR = "SpotFilter";
 	private TrackMateWizard wizard;
-	private FilterGuiPanel component;
+	private FilterGuiPanel component = new FilterGuiPanel();
 	private TrackMate_ plugin;
 	
 	@Override
@@ -38,24 +38,24 @@ public class SpotFilterDescriptor implements WizardPanelDescriptor {
 	}
 
 	@Override
-	public Object getPanelDescriptorIdentifier() {
+	public String getThisPanelID() {
 		return DESCRIPTOR;
 	}
 
 	@Override
-	public Object getNextPanelDescriptor() {
+	public String getNextPanelID() {
 		return TrackerChoiceDescriptor.DESCRIPTOR;
 	}
 
 	@Override
-	public Object getBackPanelDescriptor() {
+	public String getPreviousPanelID() {
 		return DisplayerChoiceDescriptor.DESCRIPTOR;
 	}
 
 	@Override
 	public void aboutToDisplayPanel() {
 		TrackMateModel model = plugin.getModel();
-		component = new  FilterGuiPanel(model.getFeatureModel().getSpotFeatures(), model.getSpotFilters(),  
+		component.setTarget(model.getFeatureModel().getSpotFeatures(), model.getSpotFilters(),  
 				model.getFeatureModel().getSpotFeatureNames(), model.getFeatureModel().getSpotFeatureValues(), "spots"); 
 	}
 

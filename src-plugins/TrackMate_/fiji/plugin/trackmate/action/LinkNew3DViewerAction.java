@@ -2,10 +2,8 @@ package fiji.plugin.trackmate.action;
 
 import javax.swing.ImageIcon;
 
-import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMate_;
 import fiji.plugin.trackmate.gui.DisplayerPanel;
-import fiji.plugin.trackmate.gui.TrackMateWizard;
 import fiji.plugin.trackmate.visualization.threedviewer.SpotDisplayer3D;
 
 public class LinkNew3DViewerAction extends AbstractTMAction {
@@ -24,7 +22,7 @@ public class LinkNew3DViewerAction extends AbstractTMAction {
 				SpotDisplayer3D newDisplayer = new SpotDisplayer3D();
 				newDisplayer.setRenderImageData(false);
 				newDisplayer.setModel(plugin.getModel());
-//				DisplayerPanel displayerPanel = wizard.getc // TODO TODO
+				DisplayerPanel displayerPanel = (DisplayerPanel) wizard.getPanelDescriptorFor(DisplayerPanel.DESCRIPTOR);
 				if (null != displayerPanel) {
 					displayerPanel.register(newDisplayer);
 					displayerPanel.updateDisplaySettings(newDisplayer.getDisplaySettings());

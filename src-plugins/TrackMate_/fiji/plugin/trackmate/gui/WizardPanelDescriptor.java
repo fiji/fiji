@@ -30,7 +30,7 @@ public interface WizardPanelDescriptor {
     /**
      * @return the unique Object-based identifier for this panel descriptor.
      */    
-    public Object getPanelDescriptorIdentifier();
+    public String getThisPanelID();
 
     /**
      * Provide the Object-based identifier of the panel that the
@@ -40,7 +40,7 @@ public interface WizardPanelDescriptor {
      * the button should be disabled. 
      * @return Object-based identifier.
      */    
-    public Object getNextPanelDescriptor();
+    public String getNextPanelID();
 
     /**
      * Provide the Object-based identifier of the panel that the
@@ -50,7 +50,7 @@ public interface WizardPanelDescriptor {
      * the button should be disabled.
      * @return Object-based identifier
      */    
-    public Object getBackPanelDescriptor();
+    public String getPreviousPanelID();
     
     /**
      * This method is used to provide functionality that will be performed just before

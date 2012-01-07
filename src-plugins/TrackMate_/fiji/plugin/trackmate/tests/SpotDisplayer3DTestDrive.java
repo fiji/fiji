@@ -119,7 +119,8 @@ public class SpotDisplayer3DTestDrive {
 		
 		// Launch threshold GUI
 		List<FeatureFilter> ff = new ArrayList<FeatureFilter>();
-		final FilterGuiPanel gui = new FilterGuiPanel(
+		final FilterGuiPanel gui = new FilterGuiPanel();
+		gui.setTarget(
 				BlobDescriptiveStatistics.FEATURES, 
 				ff,
 				BlobDescriptiveStatistics.FEATURE_NAMES,

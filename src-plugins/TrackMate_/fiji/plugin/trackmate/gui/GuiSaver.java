@@ -14,78 +14,75 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.TrackMateModel;
-import fiji.plugin.trackmate.gui.TrackMateWizard.PanelCard;
-import fiji.plugin.trackmate.gui.WizardController.GuiState;
 import fiji.plugin.trackmate.io.TmXmlWriter;
 
 /**
  * This class is in charge of writing a {@link TrackMateModel} to a file, from
- * the current state and content of the controller {@link WizardController}.
+ * the current state and content of the wizard {@link TrackMateWizard}.
  * 
- * @author Jean-Yves Tinevez <jeanyves.tinevez@gmail.com> Apr 28, 2011
+ * @author Jean-Yves Tinevez <jeanyves.tinevez@gmail.com>  2011 - 2012
  */
 public class GuiSaver {
 
-	private WizardController controller;
+	private TrackMateWizard wizard;
 	private Logger logger = Logger.VOID_LOGGER;
-	
+
 	/*
 	 * CONSTRUCTORS
 	 */
-	
+
 	/**
 	 * Construct a {@link GuiReader}. The {@link WizardController} will have its state
 	 * set according to the data found in the file read.
-	 * @param controller
+	 * @param wizard
 	 */
-	public GuiSaver(WizardController controller) {
-		this.controller = controller;
-		logger = controller.getView().getLogger();
+	public GuiSaver(TrackMateWizard wizard) {
+		this.wizard = wizard;
+		logger = wizard.getLogger();
 	}
-	
+
 	/*
 	 * METHODS
 	 */
-	
-	
-	public void writeFile(final File file, final GuiState state) {
-		
-		TrackMateModel model = controller.getPlugin().getModel();
-		
+
+
+	public void writeFile(final File file, final TrackMateModel model, final String targetID) {
+
 		TmXmlWriter writer = new TmXmlWriter(model, logger);
-		switch (state) {
-		case START:
-		case CHOOSE_SEGMENTER:
-			model.setSettings(((StartDialogPanel) controller.getView().getPanelFor(PanelCard.START_DIALOG_KEY)).getSettings());
-			writer.appendBasicSettings();
-			break;
-		case TUNE_SEGMENTER:
-			writer.appendBasicSettings();
-			writer.appendSegmenterSettings();
-			break;
-		case SEGMENTING:
-		case INITIAL_THRESHOLDING:
+
+		if (targetID.equals(StartDialogPanel.DESCRIPTOR) || targetID.equals(SegmenterChoiceDescriptor.DESCRIPTOR) ) {
+
+			model.setSettings( ((StartDialogPanel) wizard.getPanelDescriptorFor(StartDialogPanel.DESCRIPTOR)).getSettings());
+			writer.appendBasicSettings(); 
+			
+		} else if ( targetID.equals(SegmenterConfigurationPanelDescriptor.DESCRIPTOR) ) {
+
+				writer.appendBasicSettings();
+				writer.appendSegmenterSettings();
+
+		} else if (targetID.equals(SegmentationDescriptor.DESCRIPTOR) || targetID.equals(InitFilterPanel.DESCRIPTOR) ) {
+
 			writer.appendBasicSettings();
 			writer.appendSegmenterSettings();
 			writer.appendSpots();
-			break;		
-		case CALCULATE_FEATURES:
-		case CHOOSE_DISPLAYER:
+
+		} else if  (targetID.equals(LaunchDisplayerDescriptor.DESCRIPTOR) || targetID.equals(DisplayerChoiceDescriptor.DESCRIPTOR) ) {
+
 			writer.appendBasicSettings();
 			writer.appendSegmenterSettings();
 			writer.appendInitialSpotFilter();
 			writer.appendSpots();
-			break;
-		case TUNE_SPOT_FILTERS:
-		case FILTER_SPOTS:
-		case CHOOSE_TRACKER:
+			
+		} else if  (targetID.equals(SpotFilterDescriptor.DESCRIPTOR) || targetID.equals(TrackerChoiceDescriptor.DESCRIPTOR) ) {
+			
 			writer.appendBasicSettings();
 			writer.appendSegmenterSettings();
 			writer.appendInitialSpotFilter();
 			writer.appendSpotFilters();
 			writer.appendSpots();
-			break;
-		case TUNE_TRACKER:
+			
+		} else if  (targetID.equals(TrackerConfigurationPanelDescriptor.DESCRIPTOR) ) {
+
 			writer.appendBasicSettings();
 			writer.appendSegmenterSettings();
 			writer.appendTrackerSettings();
@@ -93,8 +90,9 @@ public class GuiSaver {
 			writer.appendSpotFilters();
 			writer.appendFilteredSpots();
 			writer.appendSpots();
-			break;
-		case TRACKING:
+
+		} else if  (targetID.equals(TrackingDescriptor.DESCRIPTOR)) {
+
 			writer.appendBasicSettings();
 			writer.appendSegmenterSettings();
 			writer.appendTrackerSettings();
@@ -103,9 +101,9 @@ public class GuiSaver {
 			writer.appendFilteredSpots();
 			writer.appendTracks();
 			writer.appendSpots();
-			break;
-		case TUNE_TRACK_FILTERS:
-		case FILTER_TRACKS:
+			
+		} else if  (targetID.equals(TrackFilterDescriptor.DESCRIPTOR) ) {
+
 			writer.appendBasicSettings();
 			writer.appendSegmenterSettings();
 			writer.appendTrackerSettings();
@@ -115,10 +113,9 @@ public class GuiSaver {
 			writer.appendTracks();
 			writer.appendTrackFilters();
 			writer.appendSpots();
-			break;
-		case TUNE_DISPLAY:
-		case ACTIONS:
-		default:
+
+		} else {
+			
 			writer.appendBasicSettings();
 			writer.appendSegmenterSettings();
 			writer.appendTrackerSettings();
@@ -129,7 +126,7 @@ public class GuiSaver {
 			writer.appendTrackFilters();
 			writer.appendFilteredTracks();
 			writer.appendSpots();
-			break;
+
 		}
 		try {
 			writer.writeToFile(file);
@@ -140,15 +137,11 @@ public class GuiSaver {
 			logger.error("Input/Output error:\n"+e.getMessage()+'\n');
 		} 
 	}
-	
-	
+
+
 	public File askForFile(File file) {
-		JFrame parent;
-		if (null == controller) 
-			parent = null;
-		else
-			parent = controller.getView();
-		
+		JFrame parent= wizard;
+
 		if(IJ.isMacintosh()) {
 			// use the native file dialog on the mac
 			FileDialog dialog =	new FileDialog(parent, "Save to a TrackMate file", FileDialog.SAVE);

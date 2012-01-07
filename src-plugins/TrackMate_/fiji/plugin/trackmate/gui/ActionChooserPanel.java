@@ -16,7 +16,6 @@ import javax.swing.JLabel;
 import javax.swing.JList;
 
 import fiji.plugin.trackmate.Logger;
-import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMate_;
 import fiji.plugin.trackmate.action.TrackMateAction;
 
@@ -25,7 +24,7 @@ public class ActionChooserPanel extends ListChooserPanel<TrackMateAction> implem
 	private static final long serialVersionUID = 1L;
 	private static final Icon EXECUTE_ICON = new ImageIcon(TrackMateWizard.class.getResource("images/control_play_blue.png"));
 	
-	public static final Object DESCRIPTOR = "ActionChooserPanel";
+	public static final String DESCRIPTOR = "ActionChooserPanel";
 	public final ActionEvent ACTION_STARTED = new ActionEvent(this, 0, "ActionStarted");
 	public final ActionEvent ACTION_FINISHED = new ActionEvent(this, 1, "ActionFinished");
 //	private TrackMateModel model;
@@ -34,10 +33,8 @@ public class ActionChooserPanel extends ListChooserPanel<TrackMateAction> implem
 	private TrackMateWizard wizard;
 	private TrackMate_ plugin;
 
-	public ActionChooserPanel(TrackMateModel model, WizardController controller) {
-		super(controller.getPlugin().getAvailableActions(), "action");
-//		this.model = model;
-//		this.controller = controller;
+	public ActionChooserPanel(TrackMate_ plugin) {
+		super(plugin.getAvailableActions(), "action");
 		this.logPanel = new LogPanel();
 		this.logger = logPanel.getLogger();
 		init();
@@ -54,7 +51,7 @@ public class ActionChooserPanel extends ListChooserPanel<TrackMateAction> implem
 
 	@Override
 	public void setPlugin(TrackMate_ plugin) {
-		this.plugin = plugin;
+		this.plugin = plugin; // duplicate but we need the plugin at construction
 	}
 
 	@Override
@@ -63,17 +60,17 @@ public class ActionChooserPanel extends ListChooserPanel<TrackMateAction> implem
 	}
 
 	@Override
-	public Object getPanelDescriptorIdentifier() {
+	public String getThisPanelID() {
 		return DESCRIPTOR;
 	}
 
 	@Override
-	public Object getNextPanelDescriptor() {
+	public String getNextPanelID() {
 		return null;
 	}
 
 	@Override
-	public Object getBackPanelDescriptor() {
+	public String getPreviousPanelID() {
 		return DisplayerPanel.DESCRIPTOR;
 	}
 
@@ -140,7 +137,7 @@ public class ActionChooserPanel extends ListChooserPanel<TrackMateAction> implem
 	
 	public static void main(String[] args) {
 		JFrame frame = new JFrame();
-		frame.getContentPane().add(new ActionChooserPanel(new TrackMateModel(), null));
+		frame.getContentPane().add(new ActionChooserPanel(new TrackMate_()));
 		frame.setSize(300, 520);
 		frame.setVisible(true);
 	}

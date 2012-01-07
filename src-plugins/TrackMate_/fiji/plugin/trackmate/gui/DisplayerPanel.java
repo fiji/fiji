@@ -50,7 +50,7 @@ public class DisplayerPanel extends ActionListenablePanel implements WizardPanel
 
 	private static final long serialVersionUID = 1L;
 
-	public static final Object DESCRIPTOR = "DisplayerPanel";
+	public static final String DESCRIPTOR = "DisplayerPanel";
 	public ActionEvent TRACK_SCHEME_BUTTON_PRESSED 	= new ActionEvent(this, 0, "TrackSchemeButtonPushed");
 
 	JButton jButtonShowTrackScheme;
@@ -100,19 +100,19 @@ public class DisplayerPanel extends ActionListenablePanel implements WizardPanel
 
 
 	@Override
-	public Object getPanelDescriptorIdentifier() {
+	public String getThisPanelID() {
 		return DESCRIPTOR;
 	}
 
 
 	@Override
-	public Object getNextPanelDescriptor() {
+	public String getNextPanelID() {
 		return ActionChooserPanel.DESCRIPTOR;
 	}
 
 
 	@Override
-	public Object getBackPanelDescriptor() {
+	public String getPreviousPanelID() {
 		return TrackFilterDescriptor.DESCRIPTOR;
 	}
 

@@ -9,7 +9,7 @@ import fiji.plugin.trackmate.segmentation.SpotSegmenter;
 
 public class SegmenterConfigurationPanelDescriptor implements WizardPanelDescriptor {
 
-	public static final Object DESCRIPTOR = "SegmenterConfigurationPanel";
+	public static final String DESCRIPTOR = "SegmenterConfigurationPanel";
 	private TrackMate_ plugin;
 	private SegmenterConfigurationPanel configPanel;
 	
@@ -31,12 +31,12 @@ public class SegmenterConfigurationPanelDescriptor implements WizardPanelDescrip
 	}
 
 	@Override
-	public Object getPanelDescriptorIdentifier() {
+	public String getThisPanelID() {
 		return DESCRIPTOR;
 	}
 
 	@Override
-	public Object getNextPanelDescriptor() {
+	public String getNextPanelID() {
 		if (plugin.getModel().getSettings().segmenter.getClass() == ManualSegmenter.class) {
 			return LaunchDisplayerDescriptor.DESCRIPTOR;
 		} else {
@@ -45,7 +45,7 @@ public class SegmenterConfigurationPanelDescriptor implements WizardPanelDescrip
 	}
 
 	@Override
-	public Object getBackPanelDescriptor() {
+	public String getPreviousPanelID() {
 		return SegmenterChoiceDescriptor.DESCRIPTOR;
 	}
 

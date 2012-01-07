@@ -1,23 +1,13 @@
 package fiji.plugin.trackmate.gui;
 
+import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.File;
-import java.util.Collection;
+import java.util.ArrayList;
 import java.util.List;
 
-import javax.swing.SwingUtilities;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
-
-import fiji.plugin.trackmate.FeatureFilter;
 import fiji.plugin.trackmate.Logger;
-import fiji.plugin.trackmate.Settings;
-import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMate_;
-import fiji.plugin.trackmate.segmentation.ManualSegmenter;
-import fiji.plugin.trackmate.visualization.TrackMateModelView;
 import fiji.plugin.trackmate.visualization.trackscheme.TrackSchemeFrame;
 
 public class WizardController implements ActionListener {
@@ -28,7 +18,6 @@ public class WizardController implements ActionListener {
 
 	private static final boolean DEBUG = false;
 	private Logger logger;
-	private File file;
 	/** The plugin piloted here. */
 	private TrackMate_ plugin;
 	/** The GUI controlled by this controller.  */
@@ -48,18 +37,51 @@ public class WizardController implements ActionListener {
 
 	public WizardController(final TrackMate_ plugin) {
 		this.plugin = plugin;
-		this.wizard = new TrackMateWizard(plugin);
+		Component window;
+		if (plugin.getModel().getSettings().imp != null && plugin.getModel().getSettings().imp.getWindow() != null ) {
+			window = plugin.getModel().getSettings().imp.getWindow();
+		} else {
+			window = null;
+		}
+		this.wizard = new TrackMateWizard(window);
 		this.logger = wizard.getLogger();
 
 		plugin.setLogger(logger);
 		wizard.setVisible(true);
 		wizard.addActionListener(this);
+		
+		// Instantiate and pass panel descriptors to the wizard
+		List<WizardPanelDescriptor> descriptors = createWizardPanelDescriptorList();
+		for(WizardPanelDescriptor descriptor : descriptors) {
+			descriptor.setPlugin(plugin);
+			descriptor.setWizard(wizard);
+			wizard.registerWizardDescriptor(descriptor.getThisPanelID(), descriptor);
+		}
+		
+		init();
 	}
 
 	/*
 	 * PROTECTED METHODS
 	 */
 	
+	/**
+	 * Display the first panel
+	 */
+	protected void init() {
+		String id = StartDialogPanel.DESCRIPTOR;
+		WizardPanelDescriptor panelDescriptor  = wizard.getPanelDescriptorFor(id);
+
+		// Execute about to be displayed action of the new one
+		panelDescriptor.aboutToDisplayPanel();
+
+		// Display matching panel
+		wizard.setCurrentPanel(id);
+
+		//  Show the panel in the dialog, and execute action after display
+		panelDescriptor.displayingPanel();        
+	}
+
 	/**
 	 * Hook for subclassers.
 	 * <p>
@@ -68,7 +90,25 @@ public class WizardController implements ActionListener {
 	 * some panels. 
 	 */
 	protected List<WizardPanelDescriptor> createWizardPanelDescriptorList() {
+		List<WizardPanelDescriptor> descriptors = new ArrayList<WizardPanelDescriptor>(14);
+		descriptors.add(new StartDialogPanel());
+		descriptors.add(new SegmenterChoiceDescriptor());
+//		descriptors.add(new SegmenterConfigurationPanelDescriptor()); // will be instantiated on the fly, see SegmenterChoiceDescriptor
+		descriptors.add(new SegmentationDescriptor());
+		descriptors.add(new InitFilterPanel());
+		descriptors.add(new DisplayerChoiceDescriptor());
+		descriptors.add(new LaunchDisplayerDescriptor());
+		descriptors.add(new SpotFilterDescriptor());
+		descriptors.add(new TrackerChoiceDescriptor());
+//		descriptors.add(new TrackerConfigurationPanelDescriptor());  // will be instantiated on the fly, see TrackerChoiceDescriptor
+		descriptors.add(new TrackingDescriptor());
+		descriptors.add(new TrackFilterDescriptor());
+		descriptors.add(new DisplayerPanel());
+		descriptors.add(new ActionChooserPanel(plugin));
 		
+		descriptors.add(new LoadDescriptor());
+		descriptors.add(new SaveDescriptor());
+		return descriptors;
 	}
 	
 	/*
@@ -83,22 +123,20 @@ public class WizardController implements ActionListener {
 
 		if (event == wizard.NEXT_BUTTON_PRESSED && actionFlag) {
 
-			WizardPanelDescriptor descriptor = wizard.getCurrentPanelDescriptor();
-			Object nextPanelDescriptor = descriptor.getNextPanelDescriptor();
-			wizard.setCurrentPanel(nextPanelDescriptor);
+			next();
 
 		} else if (event == wizard.PREVIOUS_BUTTON_PRESSED && actionFlag) {
 
-			WizardPanelDescriptor descriptor = wizard.getCurrentPanelDescriptor();
-			Object backPanelDescriptor = descriptor.getBackPanelDescriptor();        
-			wizard.setCurrentPanel(backPanelDescriptor);
+			previous();
 
 		} else if (event == wizard.LOAD_BUTTON_PRESSED && actionFlag) {
 
+			actionFlag = false;
 			load();
 
 		} else if (event == wizard.SAVE_BUTTON_PRESSED && actionFlag) {
 
+			actionFlag = false;
 			save();
 
 		} else if ((event == wizard.NEXT_BUTTON_PRESSED || 
@@ -106,7 +144,10 @@ public class WizardController implements ActionListener {
 				event == wizard.LOAD_BUTTON_PRESSED ||
 				event == wizard.SAVE_BUTTON_PRESSED) && !actionFlag ) {
 
+			// Display old panel, bu do not execute its actions
 			actionFlag = true;
+			String id = wizard.getCurrentPanelDescriptor().getNextPanelID();
+			wizard.setCurrentPanel(id);
 
 		} else if (event == displayerPanel.TRACK_SCHEME_BUTTON_PRESSED) {
 
@@ -126,76 +167,60 @@ public class WizardController implements ActionListener {
 
 		}
 	}
+	
+	
+	private void next() {
+		
+		// Execute leave action of the old panel
+		WizardPanelDescriptor oldDescriptor = wizard.getCurrentPanelDescriptor();
+		if (oldDescriptor != null) {
+			oldDescriptor.aboutToHidePanel();
+		}
 
+		String id = oldDescriptor.getNextPanelID();
+		WizardPanelDescriptor panelDescriptor  = wizard.getPanelDescriptorFor(id);
+		
+		// Execute about to be displayed action of the new one
+		panelDescriptor.aboutToDisplayPanel();
+		
+		// Display matching panel
+		wizard.setCurrentPanel(id);
+
+		//  Show the panel in the dialog, and execute action after display
+		panelDescriptor.displayingPanel();        
+		
+	}
+
+	private void previous() {
+		// Move to previous panel, but do not execute its actions
+		WizardPanelDescriptor descriptor = wizard.getCurrentPanelDescriptor();
+		String backPanelDescriptor = descriptor.getPreviousPanelID();        
+		wizard.setCurrentPanel(backPanelDescriptor);
+	}
 
 	private void load() {
-		try {
-
-			actionFlag = false;
-//			setMainButtonsFor(null);
-			wizard.displayPanel(PanelCard.LOG_PANEL_KEY);
-
-			// New model to feed
-			TrackMateModel newModel = new TrackMateModel();
-			newModel.setLogger(logger);
-
-			if (null == file) {
-				File folder = new File(System.getProperty("user.dir")).getParentFile().getParentFile();
-				try {
-					file = new File(folder.getPath() + File.separator + plugin.getModel().getSettings().imp.getShortTitle() +".xml");
-				} catch (NullPointerException npe) {
-					file = new File(folder.getPath() + File.separator + "TrackMateData.xml");
-				}
-			}
-
-			GuiReader reader = new GuiReader(this);
-			File tmpFile = reader.askForFile(file);
-			if (null == tmpFile) {
-//				setMainButtonsFor(GuiState.LOAD_SAVE);
-				return;
-			}
-			file = tmpFile;
-			plugin = new TrackMate_(reader.loadFile(file));
-			plugin.computeTrackFeatures();
-
-		} finally {
-//			setMainButtonsFor(GuiState.LOAD_SAVE);
-		}
+		// Store current state
+		WizardPanelDescriptor oldDescriptor = wizard.getCurrentPanelDescriptor();
+		
+		// Move to load state and execute
+		LoadDescriptor loadDescriptor = (LoadDescriptor) wizard.getPanelDescriptorFor(LoadDescriptor.DESCRIPTOR);
+		loadDescriptor.aboutToDisplayPanel();
+		wizard.setCurrentPanel(LoadDescriptor.DESCRIPTOR);
+		loadDescriptor.displayingPanel();
+		loadDescriptor.setTargetNextID(oldDescriptor.getThisPanelID());
+		
 	}
 
 	private void save() {
-		try {
+		// Store current state
+		WizardPanelDescriptor oldDescriptor = wizard.getCurrentPanelDescriptor();
 
-//			setMainButtonsFor(null);
-			wizard.displayPanel(PanelCard.LOG_PANEL_KEY);
-
-			logger.log("Saving data...\n", Logger.BLUE_COLOR);
-			if (null == file ) {
-				File folder = new File(System.getProperty("user.dir")).getParentFile().getParentFile();
-				try {
-					file = new File(folder.getPath() + File.separator + plugin.getModel().getSettings().imp.getShortTitle() +".xml");
-				} catch (NullPointerException npe) {
-					file = new File(folder.getPath() + File.separator + "TrackMateData.xml");
-				}
-			}
-
-			plugin.computeTrackFeatures();
-			GuiSaver saver = new GuiSaver(this);
-			File tmpFile = saver.askForFile(file);
-			if (null == tmpFile) {
-				actionFlag = false;
-//				setMainButtonsFor(GuiState.LOAD_SAVE);
-				return;
-			}
-			file = tmpFile;
-			saver.writeFile(file, state);
-
-		}	finally {
-
-			actionFlag = false;
-//			setMainButtonsFor(GuiState.LOAD_SAVE);
-
-		}
+		// Move to save state and execute
+		SaveDescriptor saveDescriptor = (SaveDescriptor) wizard.getPanelDescriptorFor(SaveDescriptor.DESCRIPTOR);
+		saveDescriptor.aboutToDisplayPanel();
+		wizard.setCurrentPanel(SaveDescriptor.DESCRIPTOR);
+		saveDescriptor.displayingPanel();
+		saveDescriptor.setTargetNextID(oldDescriptor.getThisPanelID());
 	}
 
 }

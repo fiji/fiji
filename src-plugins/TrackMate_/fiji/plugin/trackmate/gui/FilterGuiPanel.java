@@ -58,11 +58,18 @@ public class FilterGuiPanel extends ActionListenablePanel implements ChangeListe
 	private Map<String, String> featureNames;
 
 	/*
-	 * CONSTRUCTORS
+	 * PUBLIC METHODS
 	 */
-
-	public FilterGuiPanel(List<String> features, List<FeatureFilter> filters,  Map<String, String> featureNames, Map<String, double[]> featureValues, String objectDescription) {
-		super();
+	
+	/**
+	 * Set the feature filters to display and layout this Panel.
+	 * @param features
+	 * @param filters
+	 * @param featureNames
+	 * @param featureValues
+	 * @param objectDescription
+	 */
+	public void setTarget(List<String> features, List<FeatureFilter> filters,  Map<String, String> featureNames, Map<String, double[]> featureValues, String objectDescription) {
 		this.features = features;
 		this.featureNames = featureNames;
 		this.featureValues = featureValues;
@@ -84,10 +91,6 @@ public class FilterGuiPanel extends ActionListenablePanel implements ChangeListe
 		}
 		updateInfoText();
 	}
-
-	/*
-	 * PUBLIC METHODS
-	 */
 
 	/**
 	 * Called when one of the {@link FilterPanel} is changed by the user.

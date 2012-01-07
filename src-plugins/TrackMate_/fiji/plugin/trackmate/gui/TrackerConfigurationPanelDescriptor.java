@@ -9,7 +9,7 @@ import fiji.plugin.trackmate.tracking.kdtree.NearestNeighborTracker;
 
 public class TrackerConfigurationPanelDescriptor implements WizardPanelDescriptor {
 
-	public static final Object DESCRIPTOR = "TrackerConfigurationPanel";
+	public static final String DESCRIPTOR = "TrackerConfigurationPanel";
 	private TrackMate_ plugin;
 	private TrackerConfigurationPanel configPanel;
 	
@@ -31,17 +31,17 @@ public class TrackerConfigurationPanelDescriptor implements WizardPanelDescripto
 	}
 
 	@Override
-	public Object getPanelDescriptorIdentifier() {
+	public String getThisPanelID() {
 		return DESCRIPTOR;
 	}
 
 	@Override
-	public Object getNextPanelDescriptor() {
+	public String getNextPanelID() {
 		return TrackingDescriptor.DESCRIPTOR;
 	}
 
 	@Override
-	public Object getBackPanelDescriptor() {
+	public String getPreviousPanelID() {
 		return TrackerChoiceDescriptor.DESCRIPTOR;
 	}
 

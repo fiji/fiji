@@ -7,9 +7,10 @@ import fiji.plugin.trackmate.tracking.SpotTracker;
 
 public class TrackerChoiceDescriptor implements WizardPanelDescriptor {
 
-	public static final Object DESCRIPTOR = "TrackerChoice";
+	public static final String DESCRIPTOR = "TrackerChoice";
 	private ListChooserPanel<SpotTracker> component;
 	private TrackMate_ plugin;
+	private TrackMateWizard wizard;
 	
 	/*
 	 * METHODS
@@ -21,17 +22,17 @@ public class TrackerChoiceDescriptor implements WizardPanelDescriptor {
 	}
 
 	@Override
-	public Object getPanelDescriptorIdentifier() {
+	public String getThisPanelID() {
 		return DESCRIPTOR;
 	}
 
 	@Override
-	public Object getNextPanelDescriptor() {
+	public String getNextPanelID() {
 		return TrackerConfigurationPanelDescriptor.DESCRIPTOR;
 	}
 
 	@Override
-	public Object getBackPanelDescriptor() {
+	public String getPreviousPanelID() {
 		return SpotFilterDescriptor.DESCRIPTOR;
 	}
 
@@ -43,7 +44,16 @@ public class TrackerChoiceDescriptor implements WizardPanelDescriptor {
 
 	@Override
 	public void aboutToHidePanel() {
-		plugin.getModel().getSettings().tracker = component.getChoice();
+		// Set the settings field of the model
+		SpotTracker tracker = component.getChoice();
+		plugin.getModel().getSettings().tracker = tracker;
+		plugin.getModel().getSettings().trackerSettings = tracker.createDefaultSettings();
+
+		// Instantiate next descriptor for the wizard
+		TrackerConfigurationPanelDescriptor descriptor = new TrackerConfigurationPanelDescriptor();
+		descriptor.setWizard(wizard);
+		descriptor.setPlugin(plugin);
+		wizard.registerWizardDescriptor(TrackerConfigurationPanelDescriptor.DESCRIPTOR, descriptor);
 	}
 
 	@Override
@@ -53,6 +63,8 @@ public class TrackerChoiceDescriptor implements WizardPanelDescriptor {
 	}
 
 	@Override
-	public void setWizard(TrackMateWizard wizard) {	}
+	public void setWizard(TrackMateWizard wizard) {	
+		this.wizard = wizard;
+	}
 
 }

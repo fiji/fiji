@@ -1,9 +1,8 @@
 package fiji.plugin.trackmate.gui;
 
-import ij.gui.ImageWindow;
-
 import java.awt.BorderLayout;
 import java.awt.CardLayout;
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.DisplayMode;
 import java.awt.Font;
@@ -23,7 +22,6 @@ import javax.swing.SwingUtilities;
 import javax.swing.WindowConstants;
 
 import fiji.plugin.trackmate.Logger;
-import fiji.plugin.trackmate.TrackMate_;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
 
 /**
@@ -34,10 +32,10 @@ import fiji.plugin.trackmate.visualization.TrackMateModelView;
  */
 public class TrackMateWizard extends javax.swing.JFrame implements ActionListener {
 
-	private JButton jButtonSave;
-	private JButton jButtonLoad;
-	private JButton jButtonPrevious;
-	private JButton jButtonNext;
+	JButton jButtonSave;
+	JButton jButtonLoad;
+	JButton jButtonPrevious;
+	JButton jButtonNext;
 
 	/*
 	 * DEFAULT VISIBILITY & PUBLIC CONSTANTS
@@ -75,9 +73,8 @@ public class TrackMateWizard extends javax.swing.JFrame implements ActionListene
 	 * FIELDS
 	 */
 
-	private TrackMate_ plugin;
 	private WizardPanelDescriptor currentDescriptor;
-	private HashMap<Object, WizardPanelDescriptor> descriptorHashmap;
+	private HashMap<String, WizardPanelDescriptor> descriptorHashmap = new HashMap<String, WizardPanelDescriptor>();
 	private ArrayList<ActionListener> listeners = new ArrayList<ActionListener>();
 
 	private JPanel jPanelButtons;
@@ -85,14 +82,15 @@ public class TrackMateWizard extends javax.swing.JFrame implements ActionListene
 	private LogPanel logPanel;
 	private CardLayout cardLayout;
 	private TrackMateModelView displayer;
+	private Component component;
 
 
 	/*
 	 * CONSTRUCTOR
 	 */
 
-	public TrackMateWizard(TrackMate_ plugin) {
-		this.plugin = plugin;
+	public TrackMateWizard(Component component) {
+		this.component = component;
 		initGUI();
 		positionWindow();
 	}
@@ -129,13 +127,18 @@ public class TrackMateWizard extends javax.swing.JFrame implements ActionListene
 		return logPanel;
 	}
 
+	/**
+	 * @return a reference to the {@link TrackMateModelView} linked to this wizard.
+	 */
 	public TrackMateModelView getDisplayer() {
 		return displayer;
 	}
 
+	/**
+	 * Set the {@link TrackMateModelView} to be linked to this wizard.
+	 */
 	public void setDisplayer(TrackMateModelView displayer) {
 		this.displayer = displayer;
-
 	}
 	
 	/** 
@@ -156,7 +159,8 @@ public class TrackMateWizard extends javax.swing.JFrame implements ActionListene
 	 * @param id Object-based identifier
 	 * @param descriptor WizardPanelDescriptor that describes the panel
 	 */    
-	public void registerWizardDescriptor(Object id, WizardPanelDescriptor descriptor) {
+	public void registerWizardDescriptor(String id, WizardPanelDescriptor descriptor) {
+		System.out.println(id); // DEBUG
 		cardLayout.addLayoutComponent(descriptor.getPanelComponent(), id);
 		descriptorHashmap.put(id, descriptor);
 	}
@@ -174,25 +178,12 @@ public class TrackMateWizard extends javax.swing.JFrame implements ActionListene
 	}
 	
 	/**
-	 * Sets the current panel to that identified by the Object passed in.
-	 * @param id Object-based panel identifier
-	 * @return boolean indicating success or failure
+	 * Sets the current panel to that identified by the String passed in.
+	 * @param id String-based panel identifier
 	 */    
-	public void setCurrentPanel(Object id) {
-
-		// Execute leave action of the old panel
-		WizardPanelDescriptor oldPanelDescriptor = currentDescriptor;
-		if (oldPanelDescriptor != null) {
-			oldPanelDescriptor.aboutToHidePanel();
-		}
-
-		// Execute about to be displayed action of the new one
+	public void setCurrentPanel(String id) {
 		currentDescriptor = descriptorHashmap.get(id);
-		currentDescriptor.aboutToDisplayPanel();
-
-		//  Show the panel in the dialog, and execute action after display
-		cardLayout.show(jPanelMain, id.toString());
-		currentDescriptor.displayingPanel();        
+		cardLayout.show(jPanelMain, id);
 	}
 
 	public void setNextButtonEnabled(final boolean b) {
@@ -224,10 +215,13 @@ public class TrackMateWizard extends javax.swing.JFrame implements ActionListene
 	 */
 
 	/**
-	 * Try to position the GUI cleverly...
+	 * If the {@link Component} object given at construction is not <code>null</code>,
+	 * try to position the GUI cleverly with respect to it.
 	 */
 	private void positionWindow() {
-		if (null != plugin.getModel().getSettings().imp && plugin.getModel().getSettings().imp.getWindow() != null) {
+		
+		
+		if (null != component) {
 
 			// Get total size of all screens
 			GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
@@ -238,9 +232,8 @@ public class TrackMateWizard extends javax.swing.JFrame implements ActionListene
 				screenWidth += dm.getWidth();
 			}
 
-			ImageWindow window = plugin.getModel().getSettings().imp.getWindow();
-			Point windowLoc = window.getLocation();
-			Dimension windowSize = window.getSize();
+			Point windowLoc = component.getLocation();
+			Dimension windowSize = component.getSize();
 			Dimension guiSize = this.getSize();
 			if (guiSize.width > windowLoc.x) {
 				if (guiSize.width > screenWidth - (windowLoc.x + windowSize.width)) {

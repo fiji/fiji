@@ -8,7 +8,7 @@ import fiji.plugin.trackmate.visualization.TrackMateModelView;
 
 public class LaunchDisplayerDescriptor implements WizardPanelDescriptor {
 
-	public static final Object DESCRIPTOR = "LaunchDisplayer";
+	public static final String DESCRIPTOR = "LaunchDisplayer";
 	private TrackMateWizard wizard;
 	private LogPanel logPanel;
 	private Logger logger;
@@ -36,17 +36,17 @@ public class LaunchDisplayerDescriptor implements WizardPanelDescriptor {
 	}
 
 	@Override
-	public Object getPanelDescriptorIdentifier() {
+	public String getThisPanelID() {
 		return DESCRIPTOR;
 	}
 
 	@Override
-	public Object getNextPanelDescriptor() {
+	public String getNextPanelID() {
 		return SpotFilterDescriptor.DESCRIPTOR;
 	}
 
 	@Override
-	public Object getBackPanelDescriptor() {
+	public String getPreviousPanelID() {
 		return DisplayerChoiceDescriptor.DESCRIPTOR;
 	}
 

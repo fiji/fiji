@@ -7,10 +7,11 @@ import fiji.plugin.trackmate.segmentation.SpotSegmenter;
 
 public class SegmenterChoiceDescriptor implements WizardPanelDescriptor {
 
-	public static final Object DESCRIPTOR = "SegmenterChoice";
+	public static final String DESCRIPTOR = "SegmenterChoice";
 	@SuppressWarnings("rawtypes")
 	private ListChooserPanel<SpotSegmenter> component;
 	private TrackMate_ plugin;
+	private TrackMateWizard wizard;
 	
 	/*
 	 * METHODS
@@ -22,17 +23,17 @@ public class SegmenterChoiceDescriptor implements WizardPanelDescriptor {
 	}
 
 	@Override
-	public Object getPanelDescriptorIdentifier() {
+	public String getThisPanelID() {
 		return DESCRIPTOR;
 	}
 
 	@Override
-	public Object getNextPanelDescriptor() {
+	public String getNextPanelID() {
 		return SegmenterConfigurationPanelDescriptor.DESCRIPTOR;
 	}
 
 	@Override
-	public Object getBackPanelDescriptor() {
+	public String getPreviousPanelID() {
 		return StartDialogPanel.DESCRIPTOR;
 	}
 
@@ -45,7 +46,17 @@ public class SegmenterChoiceDescriptor implements WizardPanelDescriptor {
 	@SuppressWarnings("unchecked")
 	@Override
 	public void aboutToHidePanel() {
-		plugin.getModel().getSettings().segmenter = component.getChoice();
+		// Set the settings field of the model
+		@SuppressWarnings("rawtypes")
+		SpotSegmenter segmenter = component.getChoice();
+		plugin.getModel().getSettings().segmenter = segmenter;
+		plugin.getModel().getSettings().segmenterSettings = segmenter.createDefaultSettings();
+		
+		// Instantiate next descriptor for the wizard
+		SegmenterConfigurationPanelDescriptor descriptor = new SegmenterConfigurationPanelDescriptor();
+		descriptor.setWizard(wizard);
+		descriptor.setPlugin(plugin);
+		wizard.registerWizardDescriptor(SegmenterConfigurationPanelDescriptor.DESCRIPTOR, descriptor);
 	}
 
 	@SuppressWarnings("rawtypes")
@@ -56,6 +67,8 @@ public class SegmenterChoiceDescriptor implements WizardPanelDescriptor {
 	}
 
 	@Override
-	public void setWizard(TrackMateWizard wizard) {	}
+	public void setWizard(TrackMateWizard wizard) {
+		this.wizard = wizard;
+	}
 
 }

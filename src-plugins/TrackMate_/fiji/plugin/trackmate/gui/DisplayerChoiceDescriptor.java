@@ -8,7 +8,7 @@ import fiji.plugin.trackmate.visualization.TrackMateModelView;
 
 public class DisplayerChoiceDescriptor implements WizardPanelDescriptor {
 
-	public static final Object DESCRIPTOR = "DisplayerChoice";
+	public static final String DESCRIPTOR = "DisplayerChoice";
 	private TrackMate_ plugin;
 	private ListChooserPanel<TrackMateModelView> component;
 	private TrackMateWizard wizard;
@@ -28,17 +28,17 @@ public class DisplayerChoiceDescriptor implements WizardPanelDescriptor {
 	}
 
 	@Override
-	public Object getPanelDescriptorIdentifier() {
+	public String getThisPanelID() {
 		return DESCRIPTOR;
 	}
 
 	@Override
-	public Object getNextPanelDescriptor() {
+	public String getNextPanelID() {
 		return LaunchDisplayerDescriptor.DESCRIPTOR;
 	}
 
 	@Override
-	public Object getBackPanelDescriptor() {
+	public String getPreviousPanelID() {
 		if (plugin.getModel().getSettings().segmenter.getClass() == ManualSegmenter.class) {
 			return SegmenterConfigurationPanelDescriptor.DESCRIPTOR;
 		} else {
