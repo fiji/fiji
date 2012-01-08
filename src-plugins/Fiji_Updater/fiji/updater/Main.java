@@ -239,8 +239,15 @@ public class Main {
 			PluginObject plugin = plugins.getPlugin(file);
 			if (plugin == null)
 				die("No plugin '" + file + "' found!");
-			if (plugin.getStatus() == Status.NOT_FIJI && Util.isLauncher(plugin.filename))
+			if (plugin.getStatus() == Status.NOT_FIJI && Util.isLauncher(plugin.filename)) {
 				plugin.executable = true;
+				String platform = plugin.filename.substring(plugin.filename.lastIndexOf('-') + 1);
+				if (platform.equals("tiger") || platform.equals("panther"))
+					platform = "macosx";
+				if (platform.endsWith(".exe"))
+					platform = platform.substring(0, platform.length() - 4);
+				plugin.addPlatform(platform);
+			}
 			if (updateSite == null) {
 				updateSite = plugin.updateSite;
 				if (updateSite == null)
