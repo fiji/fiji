@@ -264,10 +264,17 @@ public class Checksummer extends Progressable {
 		queue = new ArrayList<StringPair>();
 
 		for (String launcher : Util.launchers)
-				queueIfExists(launcher);
+			queueIfExists(launcher);
 
 		for (int i = 0; i < directories.length; i += 2)
 			queueDir(directories[i], directories[i + 1]);
+
+		Set<String> alreadyQueued = new HashSet<String>();
+		for (StringPair pair : queue)
+			alreadyQueued.add(pair.path);
+		for (PluginObject plugin : plugins)
+			if (!alreadyQueued.contains(plugin.getFilename()))
+				queueIfExists(plugin.getFilename());
 	}
 
 	public void updateFromLocal() {
