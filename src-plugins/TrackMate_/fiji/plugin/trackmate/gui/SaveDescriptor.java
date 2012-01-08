@@ -9,7 +9,7 @@ public class SaveDescriptor extends SomeDialogDescriptor {
 	public static final String DESCRIPTOR = "SavingPanel";
 	
 	@Override
-	public String getThisPanelID() {
+	public String getDescriptorID() {
 		return DESCRIPTOR;
 	}
 

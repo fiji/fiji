@@ -55,7 +55,7 @@ public class WizardController implements ActionListener {
 		for(WizardPanelDescriptor descriptor : descriptors) {
 			descriptor.setPlugin(plugin);
 			descriptor.setWizard(wizard);
-			wizard.registerWizardDescriptor(descriptor.getThisPanelID(), descriptor);
+			wizard.registerWizardDescriptor(descriptor.getDescriptorID(), descriptor);
 		}
 		
 		init();
@@ -69,6 +69,12 @@ public class WizardController implements ActionListener {
 	 * Display the first panel
 	 */
 	protected void init() {
+		// We need to listen to events happening on the DisplayerPanel
+		DisplayerPanel displayerPanel = (DisplayerPanel) wizard.getPanelDescriptorFor(DisplayerPanel.DESCRIPTOR);
+		displayerPanel.addActionListener(this);
+		
+		// Get start panel id
+		wizard.setPreviousButtonEnabled(false);
 		String id = StartDialogPanel.DESCRIPTOR;
 		WizardPanelDescriptor panelDescriptor  = wizard.getPanelDescriptorFor(id);
 
@@ -79,7 +85,7 @@ public class WizardController implements ActionListener {
 		wizard.setCurrentPanel(id);
 
 		//  Show the panel in the dialog, and execute action after display
-		panelDescriptor.displayingPanel();        
+		panelDescriptor.displayingPanel();  
 	}
 
 	/**
@@ -144,9 +150,9 @@ public class WizardController implements ActionListener {
 				event == wizard.LOAD_BUTTON_PRESSED ||
 				event == wizard.SAVE_BUTTON_PRESSED) && !actionFlag ) {
 
-			// Display old panel, bu do not execute its actions
+			// Display old panel, but do not execute its actions
 			actionFlag = true;
-			String id = wizard.getCurrentPanelDescriptor().getNextPanelID();
+			String id = wizard.getCurrentPanelDescriptor().getNextDescriptorID();
 			wizard.setCurrentPanel(id);
 
 		} else if (event == displayerPanel.TRACK_SCHEME_BUTTON_PRESSED) {
@@ -177,8 +183,16 @@ public class WizardController implements ActionListener {
 			oldDescriptor.aboutToHidePanel();
 		}
 
-		String id = oldDescriptor.getNextPanelID();
+		String id = oldDescriptor.getNextDescriptorID();
 		WizardPanelDescriptor panelDescriptor  = wizard.getPanelDescriptorFor(id);
+		
+		// Check if the new panel has a next panel. If not, disable the next button
+		if (null == panelDescriptor.getNextDescriptorID()) {
+			wizard.setNextButtonEnabled(false);
+		}
+		
+		// Re-enable the previous button, in case it was disabled
+		wizard.setPreviousButtonEnabled(true);
 		
 		// Execute about to be displayed action of the new one
 		panelDescriptor.aboutToDisplayPanel();
@@ -194,8 +208,17 @@ public class WizardController implements ActionListener {
 	private void previous() {
 		// Move to previous panel, but do not execute its actions
 		WizardPanelDescriptor descriptor = wizard.getCurrentPanelDescriptor();
-		String backPanelDescriptor = descriptor.getPreviousPanelID();        
+		String backPanelDescriptor = descriptor.getPreviousDescriptorID();        
 		wizard.setCurrentPanel(backPanelDescriptor);
+
+		// Check if the new panel has a next panel. If not, disable the next button
+		WizardPanelDescriptor previousPanel = wizard.getPanelDescriptorFor(backPanelDescriptor);
+		if (null == previousPanel.getPreviousDescriptorID()) {
+			wizard.setPreviousButtonEnabled(false);
+		}
+
+		// Re-enable the previous button, in case it was disabled
+		wizard.setNextButtonEnabled(true);
 	}
 
 	private void load() {
@@ -204,10 +227,13 @@ public class WizardController implements ActionListener {
 		
 		// Move to load state and execute
 		LoadDescriptor loadDescriptor = (LoadDescriptor) wizard.getPanelDescriptorFor(LoadDescriptor.DESCRIPTOR);
+		loadDescriptor.setTargetNextID(oldDescriptor.getDescriptorID());
 		loadDescriptor.aboutToDisplayPanel();
 		wizard.setCurrentPanel(LoadDescriptor.DESCRIPTOR);
-		loadDescriptor.displayingPanel();
-		loadDescriptor.setTargetNextID(oldDescriptor.getThisPanelID());
+		loadDescriptor.displayingPanel(); // This will update the GUI using GuiReader
+
+		// Update GUI with loaded plugin
+		plugin = loadDescriptor.plugin;
 		
 	}
 
@@ -217,10 +243,10 @@ public class WizardController implements ActionListener {
 
 		// Move to save state and execute
 		SaveDescriptor saveDescriptor = (SaveDescriptor) wizard.getPanelDescriptorFor(SaveDescriptor.DESCRIPTOR);
+		saveDescriptor.setTargetNextID(oldDescriptor.getDescriptorID());
 		saveDescriptor.aboutToDisplayPanel();
 		wizard.setCurrentPanel(SaveDescriptor.DESCRIPTOR);
 		saveDescriptor.displayingPanel();
-		saveDescriptor.setTargetNextID(oldDescriptor.getThisPanelID());
 	}
 
 }

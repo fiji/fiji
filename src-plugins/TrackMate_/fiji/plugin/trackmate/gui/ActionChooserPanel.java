@@ -55,22 +55,27 @@ public class ActionChooserPanel extends ListChooserPanel<TrackMateAction> implem
 	}
 
 	@Override
-	public Component getPanelComponent() {
+	public Component getComponent() {
 		return this;
 	}
 
 	@Override
-	public String getThisPanelID() {
+	public String getDescriptorID() {
+		return DESCRIPTOR;
+	}
+	
+	@Override
+	public String getComponentID() {
 		return DESCRIPTOR;
 	}
 
 	@Override
-	public String getNextPanelID() {
+	public String getNextDescriptorID() {
 		return null;
 	}
 
 	@Override
-	public String getPreviousPanelID() {
+	public String getPreviousDescriptorID() {
 		return DisplayerPanel.DESCRIPTOR;
 	}
 

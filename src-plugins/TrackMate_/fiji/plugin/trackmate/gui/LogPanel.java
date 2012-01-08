@@ -25,17 +25,8 @@ import fiji.plugin.trackmate.Logger;
  */
 public class LogPanel extends ActionListenablePanel {
 
-
-	{
-		//Set Look & Feel
-		try {
-			javax.swing.UIManager.setLookAndFeel(javax.swing.UIManager.getSystemLookAndFeelClassName());
-		} catch(Exception e) {
-			e.printStackTrace();
-		}
-	}
-
 	private static final long serialVersionUID = 1L;
+	public static final String DESCRIPTOR = "LogPanel";
 	private JScrollPane jScrollPaneLog;
 	private JTextPane jTextPaneLog;
 	private JProgressBar jProgressBar;

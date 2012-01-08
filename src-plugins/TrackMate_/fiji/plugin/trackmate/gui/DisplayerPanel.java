@@ -75,53 +75,55 @@ public class DisplayerPanel extends ActionListenablePanel implements WizardPanel
 	private Map<String, double[]> featureValues;
 	private List<String> features;
 	private Map<String, String> featureNames;
+	private TrackMate_ plugin;
+	private TrackMateWizard wizard;
 
 	/*
 	 * PUBLIC METHODS
 	 */
 
-
 	@Override
 	public void setWizard(TrackMateWizard wizard) {
-		register(wizard.getDisplayer());
+		this.wizard = wizard;
 	}
-
 
 	@Override
 	public void setPlugin(TrackMate_ plugin) {
-		setModel(plugin.getModel());
+		this.plugin = plugin;
 	}
 
-
 	@Override
-	public Component getPanelComponent() {
+	public Component getComponent() {
 		return this;
 	}
 
-
 	@Override
-	public String getThisPanelID() {
+	public String getComponentID() {
+		return DESCRIPTOR;
+	}
+	
+	@Override
+	public String getDescriptorID() {
 		return DESCRIPTOR;
 	}
 
-
 	@Override
-	public String getNextPanelID() {
+	public String getNextDescriptorID() {
 		return ActionChooserPanel.DESCRIPTOR;
 	}
 
-
 	@Override
-	public String getPreviousPanelID() {
+	public String getPreviousDescriptorID() {
 		return TrackFilterDescriptor.DESCRIPTOR;
 	}
 
 
 	@Override
 	public void aboutToDisplayPanel() {
+		setModel(plugin.getModel());
 		initGUI();
+		register(wizard.getDisplayer());
 	}
-
 
 	@Override
 	public void displayingPanel() { }
@@ -130,14 +132,13 @@ public class DisplayerPanel extends ActionListenablePanel implements WizardPanel
 	@Override
 	public void aboutToHidePanel() { }
 
-
-	
-	
 	/**
 	 * Add the given {@link TrackMateModelView} to the list managed by this controller.
 	 */
 	public void register(final TrackMateModelView view) {
-		this.views.add(view);
+		if (!views.contains(view)) {
+			views.add(view);
+		}
 	}
 	
 	@Override

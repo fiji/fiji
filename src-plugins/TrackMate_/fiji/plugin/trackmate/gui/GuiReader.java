@@ -42,8 +42,8 @@ public class GuiReader {
 
 	private Logger logger = Logger.VOID_LOGGER;
 	private TrackMateWizard wizard;
+	private String targetDescriptor;
 	private TrackMate_ plugin;
-	private Object targetDescriptor;
 
 	/*
 	 * CONSTRUCTORS
@@ -65,8 +65,8 @@ public class GuiReader {
 	 */
 
 	/**
-	 * Return the new {@link TrackMate_} object that was instantiated and prepared when calling 
-	 * the {@link #loadFile(File)} method. It is <code>null</code> unless loading went alright.
+	 * Return the new {@link TrackMate_} plugin that was instantiated and prepared when calling 
+	 * the {@link #loadFile(File)} method.
 	 */
 	public TrackMate_ getPlugin() {
 		return plugin;
@@ -77,14 +77,28 @@ public class GuiReader {
 	 * found in the target file. This identifier can be used to resume the tracking process
 	 * to a saved state. 
 	 */
-	public Object getTargetDescriptor() {
+	public String getTargetDescriptor() {
 		return targetDescriptor;
 	}
 	
-	public TrackMateModel loadFile(File file) {
+	/**
+	 * Load the file and create a new {@link TrackMate_} plugin
+	 * with a new model reflecting the file content.
+	 * <p>
+	 * The newly loaded plugin will be accessible through
+	 *  Also, calling this method re-initializes all the 
+	 *  {@link WizardPanelDescriptor} so that they are updated with the
+	 *  plugin new content.
+	 * @param file  the file to load
+	 */
+	public void loadFile(File file) {
 
-		plugin = null;
+		// Init target fields
 		TrackMateModel model = new TrackMateModel();
+		plugin = new TrackMate_(model);
+		plugin.setLogger(logger);
+		
+		// Open and parse file
 		logger.log("Opening file "+file.getName()+'\n');
 		TmXmlReader reader = new TmXmlReader(file, logger);
 		try {
@@ -98,6 +112,8 @@ public class GuiReader {
 		}
 		logger.log("  Parsing file done.\n");
 
+		// Retrieve data and update GUI
+		
 		Settings settings = null;
 		ImagePlus imp = null;
 
@@ -118,6 +134,11 @@ public class GuiReader {
 			model.setSettings(settings);
 			logger.log("  Reading image done.\n");
 			// We display it only if we have a GUI
+
+			// Update start panel
+			WizardPanelDescriptor panel = wizard.getPanelDescriptorFor(StartDialogPanel.DESCRIPTOR);
+			panel.setPlugin(plugin);
+			panel.aboutToDisplayPanel();
 		}
 
 
@@ -125,18 +146,27 @@ public class GuiReader {
 			reader.getSegmenterSettings(settings);
 			SegmenterSettings segmenterSettings = settings.segmenterSettings;
 			if (null == segmenterSettings) {
-				model.setSettings(settings);
-				plugin = new TrackMate_(model);
 				// Stop at start panel
 				targetDescriptor = StartDialogPanel.DESCRIPTOR;
 				if (!imp.isVisible())
 					imp.show();
 				logger.log("Loading data finished.\n");
-				return model;
+				return;
 			}
 
-			model.setSettings(settings);
 			logger.log("  Reading segmenter settings done.\n");
+			
+			// Update 2nd panel: segmenter choice
+			SegmenterChoiceDescriptor segmenterChoiceDescriptor = (SegmenterChoiceDescriptor) wizard.getPanelDescriptorFor(SegmenterChoiceDescriptor.DESCRIPTOR);
+			segmenterChoiceDescriptor.setPlugin(plugin);
+			segmenterChoiceDescriptor.aboutToDisplayPanel();
+			
+			// Instantiate descriptor for the segmenter configuration and update it
+			SegmenterConfigurationPanelDescriptor descriptor = new SegmenterConfigurationPanelDescriptor();
+			descriptor.setWizard(wizard);
+			descriptor.setPlugin(plugin);
+			wizard.registerWizardDescriptor(SegmenterConfigurationPanelDescriptor.DESCRIPTOR, descriptor);
+			descriptor.aboutToDisplayPanel();
 		}
 
 
@@ -149,13 +179,21 @@ public class GuiReader {
 				if (!imp.isVisible())
 					imp.show();
 				logger.log("Loading data finished.\n");
-				return model;
+				return;
 			}
 
 			// We have a spot field, update the model.
 			model.setSpots(spots, false);
 			logger.log("  Reading spots done.\n");
+			
+			// Next panel that needs to know is the initial filter one
+			InitFilterPanel panel = (InitFilterPanel) wizard.getPanelDescriptorFor(InitFilterPanel.DESCRIPTOR);
+			panel.setPlugin(plugin);
+			panel.aboutToDisplayPanel();
 		}
+		
+		// TODO 
+		// TODO from here
 
 
 		{ // Try to read the initial threshold
@@ -167,7 +205,7 @@ public class GuiReader {
 				if (!imp.isVisible())
 					imp.show();
 				logger.log("Loading data finished.\n");
-				return model;
+				return;
 			}
 
 			// Store it in model
@@ -189,7 +227,7 @@ public class GuiReader {
 				if (!imp.isVisible())
 					imp.show();
 				logger.log("Loading data finished.\n");
-				return model;
+				return;
 			}
 
 			// Store thresholds in model
@@ -212,7 +250,7 @@ public class GuiReader {
 				if (!imp.isVisible())
 					imp.show();
 				logger.log("Loading data finished.\n");
-				return model;
+				return;
 			}
 
 			model.setFilteredSpots(selectedSpots, false);
@@ -234,7 +272,7 @@ public class GuiReader {
 				if (!imp.isVisible())
 					imp.show();
 				logger.log("Loading data finished.\n");
-				return model;
+				return;
 			}
 
 			model.setSettings(settings);
@@ -254,7 +292,7 @@ public class GuiReader {
 				if (!imp.isVisible())
 					imp.show();
 				logger.log("Loading data finished.\n");
-				return model;
+				return;
 			}
 			model.setGraph(graph);
 			logger.log("  Reading tracks done.\n");
@@ -272,7 +310,7 @@ public class GuiReader {
 				if (!imp.isVisible())
 					imp.show();
 				logger.log("Loading data finished.\n");
-				return model;
+				return;
 			}
 			logger.log("  Reading track filters done.\n");
 		}
@@ -291,7 +329,7 @@ public class GuiReader {
 						imp.show();
 				}
 				logger.log("Loading data finished.\n");
-				return model;
+				return;
 			}
 			logger.log("  Reading track selection done.\n");
 		}
@@ -305,7 +343,6 @@ public class GuiReader {
 		if (!imp.isVisible())
 			imp.show();
 		logger.log("Loading data finished.\n");
-		return model;
 	}
 
 

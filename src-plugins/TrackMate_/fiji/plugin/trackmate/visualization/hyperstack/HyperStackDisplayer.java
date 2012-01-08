@@ -201,7 +201,8 @@ public class HyperStackDisplayer extends AbstractTrackMateModelView  {
 
 	@Override
 	public void clear() {
-		canvas.clearOverlay();
+		if (canvas != null)
+			canvas.clearOverlay();
 	}	
 
 	@Override

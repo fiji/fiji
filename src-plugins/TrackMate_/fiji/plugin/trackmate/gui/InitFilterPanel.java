@@ -78,25 +78,29 @@ public class InitFilterPanel extends ActionListenablePanel implements WizardPane
 
 
 	@Override
-	public Component getPanelComponent() {
+	public Component getComponent() {
 		return this;
 	}
 
+	@Override
+	public String getComponentID() {
+		return DESCRIPTOR;
+	}
 
 	@Override
-	public String getThisPanelID() {
+	public String getDescriptorID() {
 		return DESCRIPTOR;
 	}
 
 
 	@Override
-	public String getNextPanelID() {
-		return LaunchDisplayerDescriptor.DESCRIPTOR;
+	public String getNextDescriptorID() {
+		return DisplayerChoiceDescriptor.DESCRIPTOR;
 	}
 
 
 	@Override
-	public String getPreviousPanelID() {
+	public String getPreviousDescriptorID() {
 		return SegmentationDescriptor.DESCRIPTOR;
 	}
 

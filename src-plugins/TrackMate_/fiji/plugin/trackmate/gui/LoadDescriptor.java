@@ -3,7 +3,6 @@ package fiji.plugin.trackmate.gui;
 import java.io.File;
 
 import fiji.plugin.trackmate.TrackMateModel;
-import fiji.plugin.trackmate.TrackMate_;
 
 public class LoadDescriptor extends SomeDialogDescriptor {
 
@@ -11,10 +10,10 @@ public class LoadDescriptor extends SomeDialogDescriptor {
 	public static final String DESCRIPTOR = "LoadingPanel";
 	
 	@Override
-	public String getThisPanelID() {
+	public String getDescriptorID() {
 		return DESCRIPTOR;
 	}
-
+	
 	@Override
 	public void displayingPanel() {
 
@@ -39,8 +38,8 @@ public class LoadDescriptor extends SomeDialogDescriptor {
 				return;
 			}
 			file = tmpFile;
-			plugin = new TrackMate_(reader.loadFile(file));
-			plugin.computeTrackFeatures();
+			reader.loadFile(file, plugin);
+			setTargetNextID(reader.getTargetDescriptor());
 
 		} finally {
 			wizard.setNextButtonEnabled(true);

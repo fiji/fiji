@@ -2,6 +2,8 @@ package fiji.plugin.trackmate.gui;
 
 import java.awt.Component;
 
+import mpicbg.imglib.type.numeric.RealType;
+
 import fiji.plugin.trackmate.TrackMate_;
 import fiji.plugin.trackmate.segmentation.SpotSegmenter;
 
@@ -12,33 +14,50 @@ public class SegmenterChoiceDescriptor implements WizardPanelDescriptor {
 	private ListChooserPanel<SpotSegmenter> component;
 	private TrackMate_ plugin;
 	private TrackMateWizard wizard;
-	
+
 	/*
 	 * METHODS
 	 */
 
 	@Override
-	public Component getPanelComponent() {
+	public Component getComponent() {
 		return component;
 	}
 
 	@Override
-	public String getThisPanelID() {
+	public String getDescriptorID() {
 		return DESCRIPTOR;
 	}
 
 	@Override
-	public String getNextPanelID() {
+	public String getNextDescriptorID() {
 		return SegmenterConfigurationPanelDescriptor.DESCRIPTOR;
 	}
 
 	@Override
-	public String getPreviousPanelID() {
+	public String getComponentID() {
+		return DESCRIPTOR;
+	}
+
+	@Override
+	public String getPreviousDescriptorID() {
 		return StartDialogPanel.DESCRIPTOR;
 	}
 
 	@Override
-	public void aboutToDisplayPanel() {	}
+	public void aboutToDisplayPanel() {
+		SpotSegmenter<? extends RealType<?>> segmenter = plugin.getModel().getSettings().segmenter; 
+		if (segmenter != null) {
+			int index = 0;
+			for (int i = 0; i < plugin.getAvailableSpotSegmenters().size(); i++) {
+				if (segmenter.toString().equals(plugin.getAvailableSpotSegmenters().get(i).toString())) {
+					index = i;
+					break;
+				}
+			}
+			component.jComboBoxChoice.setSelectedIndex(index);
+		}
+	}
 
 	@Override
 	public void displayingPanel() { }
@@ -51,7 +70,7 @@ public class SegmenterChoiceDescriptor implements WizardPanelDescriptor {
 		SpotSegmenter segmenter = component.getChoice();
 		plugin.getModel().getSettings().segmenter = segmenter;
 		plugin.getModel().getSettings().segmenterSettings = segmenter.createDefaultSettings();
-		
+
 		// Instantiate next descriptor for the wizard
 		SegmenterConfigurationPanelDescriptor descriptor = new SegmenterConfigurationPanelDescriptor();
 		descriptor.setWizard(wizard);

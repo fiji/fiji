@@ -1,5 +1,6 @@
 package fiji.plugin.trackmate.gui;
 
+import java.awt.CardLayout;
 import java.awt.Component;
 
 import fiji.plugin.trackmate.TrackMate_;
@@ -25,22 +26,30 @@ public interface WizardPanelDescriptor {
     /**
      * @return a java.awt.Component that serves as the actual panel.
      */    
-    public Component getPanelComponent();
+    public Component getComponent();
     
     /**
-     * @return the unique Object-based identifier for this panel descriptor.
+     * @return  a String to serves in the {@link CardLayout} to identify the target
+     * component for display. This can be of use in case multiple {@link WizardPanelDescriptor}
+     * need to share the same instance of the component.
+     */
+    public String getComponentID();
+    
+    /**
+     * @return the unique String-based identifier for this descriptor, not to be mixed 
+     * with the panel descriptor, which indexes the component.
      */    
-    public String getThisPanelID();
+    public String getDescriptorID();
 
     /**
-     * Provide the Object-based identifier of the panel that the
+     * Provide the String-based identifier of the panel that the
      * user should traverse to when the Next button is pressed. Note that this method
      * is only called when the button is actually pressed, so that the panel can change
      * the next panel's identifier dynamically at runtime if necessary. Return null if
      * the button should be disabled. 
      * @return Object-based identifier.
      */    
-    public String getNextPanelID();
+    public String getNextDescriptorID();
 
     /**
      * Provide the Object-based identifier of the panel that the
@@ -50,7 +59,7 @@ public interface WizardPanelDescriptor {
      * the button should be disabled.
      * @return Object-based identifier
      */    
-    public String getPreviousPanelID();
+    public String getPreviousDescriptorID();
     
     /**
      * This method is used to provide functionality that will be performed just before

@@ -26,17 +26,22 @@ public class SegmenterConfigurationPanelDescriptor implements WizardPanelDescrip
 	}
 
 	@Override
-	public Component getPanelComponent() {
+	public Component getComponent() {
 		return configPanel;
 	}
 
 	@Override
-	public String getThisPanelID() {
+	public String getDescriptorID() {
+		return DESCRIPTOR;
+	}
+	
+	@Override
+	public String getComponentID() {
 		return DESCRIPTOR;
 	}
 
 	@Override
-	public String getNextPanelID() {
+	public String getNextDescriptorID() {
 		if (plugin.getModel().getSettings().segmenter.getClass() == ManualSegmenter.class) {
 			return LaunchDisplayerDescriptor.DESCRIPTOR;
 		} else {
@@ -45,12 +50,12 @@ public class SegmenterConfigurationPanelDescriptor implements WizardPanelDescrip
 	}
 
 	@Override
-	public String getPreviousPanelID() {
+	public String getPreviousDescriptorID() {
 		return SegmenterChoiceDescriptor.DESCRIPTOR;
 	}
 
-	@SuppressWarnings({ "rawtypes", "unchecked" })
 	@Override
+	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public void aboutToDisplayPanel() {
 		SegmenterSettings settings = plugin.getModel().getSettings().segmenterSettings;
 		// Bulletproof null

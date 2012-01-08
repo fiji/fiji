@@ -23,30 +23,6 @@ public class TrackerConfigurationPanelDescriptor implements WizardPanelDescripto
 	@Override
 	public void setPlugin(TrackMate_ plugin) {
 		this.plugin = plugin;
-	}
-
-	@Override
-	public Component getPanelComponent() {
-		return configPanel;
-	}
-
-	@Override
-	public String getThisPanelID() {
-		return DESCRIPTOR;
-	}
-
-	@Override
-	public String getNextPanelID() {
-		return TrackingDescriptor.DESCRIPTOR;
-	}
-
-	@Override
-	public String getPreviousPanelID() {
-		return TrackerChoiceDescriptor.DESCRIPTOR;
-	}
-
-	@Override
-	public void aboutToDisplayPanel() {
 		TrackerSettings settings = plugin.getModel().getSettings().trackerSettings;
 		// Bulletproof null
 		if (null == settings) {
@@ -59,6 +35,36 @@ public class TrackerConfigurationPanelDescriptor implements WizardPanelDescripto
 			settings = tracker.createDefaultSettings();
 		}
 		configPanel = settings.createConfigurationPanel();
+	}
+
+	@Override
+	public Component getComponent() {
+		return configPanel;
+	}
+
+	@Override
+	public String getDescriptorID() {
+		return DESCRIPTOR;
+	}
+	
+	@Override
+	public String getComponentID() {
+		return DESCRIPTOR;
+	}
+
+	@Override
+	public String getNextDescriptorID() {
+		return TrackingDescriptor.DESCRIPTOR;
+	}
+
+	@Override
+	public String getPreviousDescriptorID() {
+		return TrackerChoiceDescriptor.DESCRIPTOR;
+	}
+
+	@Override
+	public void aboutToDisplayPanel() {
+
 		configPanel.setTrackerSettings(plugin.getModel());
 	}
 

@@ -39,20 +39,25 @@ public abstract class SomeDialogDescriptor implements WizardPanelDescriptor {
 	}
 
 	@Override
-	public Component getPanelComponent() {
+	public Component getComponent() {
 		return logPanel;
 	}
 
 	@Override
-	public abstract String getThisPanelID();
+	public String getComponentID() {
+		return LogPanel.DESCRIPTOR;
+	}
+	
+	@Override
+	public abstract String getDescriptorID();
 
 	@Override
-	public String getNextPanelID() {
+	public String getNextDescriptorID() {
 		return targetID;
 	}
 
 	@Override
-	public String getPreviousPanelID() {
+	public String getPreviousDescriptorID() {
 		return null;
 	}
 
@@ -75,6 +80,8 @@ public abstract class SomeDialogDescriptor implements WizardPanelDescriptor {
 	@Override
 	public void aboutToHidePanel() {
 		wizard.jButtonNext.setText("Next");
+		wizard.setSaveButtonEnabled(true);
+		wizard.setLoadButtonEnabled(true);
 		wizard.setPreviousButtonEnabled(previousPreviousButtonState);
 	}
 }

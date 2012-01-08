@@ -15,14 +15,12 @@ public class LaunchDisplayerDescriptor implements WizardPanelDescriptor {
 	private TrackMate_ plugin;
 	private boolean renderingDone;
 	private boolean calculateFeaturesDone;
-	private TrackMateModelView displayer;
 
 	@Override
 	public void setWizard(TrackMateWizard wizard) { 
 		this.wizard = wizard;
 		this.logPanel = wizard.getLogPanel();
 		this.logger = wizard.getLogger();
-		this.displayer = wizard.getDisplayer();
 	}
 
 	@Override
@@ -31,22 +29,27 @@ public class LaunchDisplayerDescriptor implements WizardPanelDescriptor {
 	}
 
 	@Override
-	public Component getPanelComponent() {
+	public Component getComponent() {
 		return logPanel;
+	}
+	
+	@Override
+	public String getComponentID() {
+		return LogPanel.DESCRIPTOR;
 	}
 
 	@Override
-	public String getThisPanelID() {
+	public String getDescriptorID() {
 		return DESCRIPTOR;
 	}
 
 	@Override
-	public String getNextPanelID() {
+	public String getNextDescriptorID() {
 		return SpotFilterDescriptor.DESCRIPTOR;
 	}
 
 	@Override
-	public String getPreviousPanelID() {
+	public String getPreviousDescriptorID() {
 		return DisplayerChoiceDescriptor.DESCRIPTOR;
 	}
 
@@ -60,6 +63,7 @@ public class LaunchDisplayerDescriptor implements WizardPanelDescriptor {
 		renderingDone = false;
 		calculateFeaturesDone = false;
 		wizard.setNextButtonEnabled(false);
+		final TrackMateModelView displayer = wizard.getDisplayer();
 		
 		if (!plugin.getModel().getSpots().isEmpty()) {
 			logger.log("Calculating features...\n",Logger.BLUE_COLOR);

@@ -32,22 +32,27 @@ public class TrackFilterDescriptor implements WizardPanelDescriptor {
 	}
 
 	@Override
-	public Component getPanelComponent() {
+	public Component getComponent() {
 		return component;
 	}
 
 	@Override
-	public String getThisPanelID() {
+	public String getDescriptorID() {
 		return DESCRIPTOR;
 	}
 
 	@Override
-	public String getNextPanelID() {
+	public String getNextDescriptorID() {
 		return DisplayerPanel.DESCRIPTOR;
+	}
+	
+	@Override
+	public String getComponentID() {
+		return DESCRIPTOR;
 	}
 
 	@Override
-	public String getPreviousPanelID() {
+	public String getPreviousDescriptorID() {
 		return TrackerConfigurationPanelDescriptor.DESCRIPTOR;
 	}
 

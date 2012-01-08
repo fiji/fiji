@@ -160,9 +160,20 @@ public class TrackMateWizard extends javax.swing.JFrame implements ActionListene
 	 * @param descriptor WizardPanelDescriptor that describes the panel
 	 */    
 	public void registerWizardDescriptor(String id, WizardPanelDescriptor descriptor) {
-		System.out.println(id); // DEBUG
-		cardLayout.addLayoutComponent(descriptor.getPanelComponent(), id);
+		String str = descriptor.getComponentID();
+		cardLayout.addLayoutComponent(descriptor.getComponent(), str);
+		jPanelMain.add(descriptor.getComponent(), str);
 		descriptorHashmap.put(id, descriptor);
+	}
+	
+	/**
+	 * Sets the current panel to that identified by the String passed in.
+	 * @param id String-based panel identifier
+	 */    
+	public void setCurrentPanel(String id) {
+		currentDescriptor = descriptorHashmap.get(id);
+		String str =  currentDescriptor.getComponentID();
+		cardLayout.show(jPanelMain, str);
 	}
 	
 	/**
@@ -175,15 +186,6 @@ public class TrackMateWizard extends javax.swing.JFrame implements ActionListene
 
 	public WizardPanelDescriptor getPanelDescriptorFor(Object id) {
 		return descriptorHashmap.get(id);
-	}
-	
-	/**
-	 * Sets the current panel to that identified by the String passed in.
-	 * @param id String-based panel identifier
-	 */    
-	public void setCurrentPanel(String id) {
-		currentDescriptor = descriptorHashmap.get(id);
-		cardLayout.show(jPanelMain, id);
 	}
 
 	public void setNextButtonEnabled(final boolean b) {

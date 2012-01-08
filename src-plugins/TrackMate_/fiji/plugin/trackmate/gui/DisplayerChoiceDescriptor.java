@@ -23,22 +23,27 @@ public class DisplayerChoiceDescriptor implements WizardPanelDescriptor {
 	}
 
 	@Override
-	public Component getPanelComponent() {
+	public Component getComponent() {
 		return component;
 	}
 
 	@Override
-	public String getThisPanelID() {
+	public String getDescriptorID() {
+		return DESCRIPTOR;
+	}
+	
+	@Override
+	public String getComponentID() {
 		return DESCRIPTOR;
 	}
 
 	@Override
-	public String getNextPanelID() {
+	public String getNextDescriptorID() {
 		return LaunchDisplayerDescriptor.DESCRIPTOR;
 	}
 
 	@Override
-	public String getPreviousPanelID() {
+	public String getPreviousDescriptorID() {
 		if (plugin.getModel().getSettings().segmenter.getClass() == ManualSegmenter.class) {
 			return SegmenterConfigurationPanelDescriptor.DESCRIPTOR;
 		} else {
