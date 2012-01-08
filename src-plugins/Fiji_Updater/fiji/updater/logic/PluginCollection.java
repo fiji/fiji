@@ -128,6 +128,8 @@ public class PluginCollection extends ArrayList<PluginObject> {
 		Collection<String> set = new HashSet<String>();
 		for (PluginObject plugin : toUpload(true))
 			set.add(plugin.updateSite);
+		for (PluginObject plugin : toRemove())
+			set.add(plugin.updateSite);
 		// keep the update sites' order
 		List<String> result = new ArrayList<String>();
 		for (String name : getUpdateSiteNames())
