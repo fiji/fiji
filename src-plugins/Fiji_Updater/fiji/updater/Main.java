@@ -239,6 +239,8 @@ public class Main {
 			PluginObject plugin = plugins.getPlugin(file);
 			if (plugin == null)
 				die("No plugin '" + file + "' found!");
+			if (plugin.getStatus() == Status.NOT_FIJI && Util.isLauncher(plugin.filename))
+				plugin.executable = true;
 			if (updateSite == null) {
 				updateSite = plugin.updateSite;
 				if (updateSite == null)
