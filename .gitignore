@@ -14,6 +14,7 @@ hs_err*.log
 /ImageJ.o
 /tmp.rc
 /tmp.o
+/fiji
 /ImageJ
 /ImageJ.exe
 /ImageJ-tiger
