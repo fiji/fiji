@@ -278,6 +278,8 @@ public class PluginObject {
 	}
 
 	public void addPlatform(String platform) {
+		if (platform.equals("linux"))
+			platform = "linux32";
 		if (platform != null && !platform.trim().equals(""))
 			platforms.put(platform.trim(), (Object)null);
 	}
