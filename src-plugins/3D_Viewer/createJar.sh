@@ -3,14 +3,14 @@
 PWD=`pwd`
 FIJIF="$PWD/../../"
 JARF="$FIJIF/jars/"
-VIBF="$FIJIF/src-plugins/VIB-lib/"
-JAVAF="$FIJIF/java/linux/jdk1.6.0_21/"
-JAVAC="$JAVAF/bin/javac"
-JAR="$JAVAF/bin/jar"
+VIBF="$FIJIF/src-plugins/VIB-lib/src/main/java"
+JAVAC="/usr/bin/javac"
+JAR="/usr/bin/jar"
+J3DF="$FIJIF/java/macosx-java3d/Home/lib/ext/"
 
-CLASSPATH=".:$JARF/ij.jar:$JARF/imglib.jar:$JARF/Jama-1.0.2.jar"
+CLASSPATH=".:$JARF/ij.jar:$JARF/imglib.jar:$JARF/Jama-1.0.2.jar:$J3DF/j3dcore.jar:$J3DF/j3dutils.jar:$J3DF/vecmath.jar"
 
-JAVACOPTS="-source 1.5 -target 1.5 -classpath $CLASSPATH"
+JAVACOPTS="-source 1.5 -target 1.5 -extdirs $J3DF -classpath $CLASSPATH"
 IJ3D_SRC="`find . -type f` `find . -name \*.png` plugins.config"
 VIB_SRC="
 	math3d/*.java \

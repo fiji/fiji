@@ -104,6 +104,7 @@ public class Executer {
 	public static final String RESET_TRANSFORM = "resetTransform";
 	public static final String IMPORT = "importContent";
 	public static final String EXPORT = "exportContent";
+	public static final String SNAPSHOT = "snapshot";
 
 	// TODO
 	public static final String ADD = "add";
@@ -1555,8 +1556,8 @@ public class Executer {
 			return;
 		}
 		univ.takeSnapshot(w, h).show();
+		record(SNAPSHOT, Integer.toString(w), Integer.toString(h));
 	}
-
 
 	public void viewPreferences() {
 		UniverseSettings.initFromDialog(univ);
