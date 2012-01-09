@@ -1,24 +1,22 @@
 package ij3d;
 
-import customnode.u3d.U3DExporter;
-
 import ij.IJ;
 import ij.ImagePlus;
-import ij.plugin.PlugIn;
 import ij.WindowManager;
 import ij.gui.GUI;
-
+import ij.plugin.PlugIn;
 import isosurface.MeshExporter;
 
 import java.io.File;
 import java.io.IOException;
 
-import voltex.VoltexGroup;
-import orthoslice.OrthoGroup;
-
 import javax.media.j3d.Transform3D;
 import javax.vecmath.Color3f;
+
+import orthoslice.OrthoGroup;
+import voltex.VoltexGroup;
 import voltex.VolumeRenderer;
+import customnode.u3d.U3DExporter;
 
 public class ImageJ3DViewer implements PlugIn {
 
@@ -28,6 +26,7 @@ public class ImageJ3DViewer implements PlugIn {
 		  IJ.runPlugIn("ij3d.ImageJ3DViewer", "");
 	}
 
+	@Override
 	public void run(String arg) {
 		ImagePlus image = WindowManager.getCurrentImage();
 		try {
@@ -115,7 +114,7 @@ public class ImageJ3DViewer implements PlugIn {
 	public static void select(String name) {
 		Image3DUniverse univ = getUniv();
 		if(univ != null) univ.select(
-			(Content)univ.getContent(name));
+			univ.getContent(name));
 	}
 
 	// Contents menu
