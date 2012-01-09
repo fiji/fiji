@@ -81,16 +81,22 @@ public class Util {
 			updateablePlatforms.add("macosx");
 		String[] files = new File(ijRoot).list();
 		for (String name : files == null ? new String[0] : files)
-			if (name.startsWith("ImageJ-") || name.startsWith("fiji-")) {
-				name = name.substring(name.indexOf('-') + 1);
-				if (name.endsWith(".exe"))
-					name = name.substring(0, name.length() - 4);
-				if (name.equals("tiger") || name.equals("panther"))
-					name = "macosx";
-				else if (name.equals("linux"))
-					name = "linux32";
-				updateablePlatforms.add(name);
-			}
+			if (name.startsWith("ImageJ-") || name.startsWith("fiji-"))
+				updateablePlatforms.add(platformForLauncher(name));
+	}
+
+	public static String platformForLauncher(String fileName) {
+		int dash = fileName.lastIndexOf('-');
+		if (dash < 0)
+			return null;
+		String name = fileName.substring(dash + 1);
+		if (name.endsWith(".exe"))
+			name = name.substring(0, name.length() - 4);
+		if (name.equals("tiger") || name.equals("panther"))
+			name = "macosx";
+		else if (name.equals("linux"))
+			name = "linux32";
+		return name;
 	}
 
 	private Util() {} // make sure this class is not instantiated

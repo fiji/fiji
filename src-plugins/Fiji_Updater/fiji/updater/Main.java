@@ -245,12 +245,7 @@ public class Main {
 			}
 			if (plugin.getStatus() == Status.NOT_FIJI && Util.isLauncher(plugin.filename)) {
 				plugin.executable = true;
-				String platform = plugin.filename.substring(plugin.filename.lastIndexOf('-') + 1);
-				if (platform.equals("tiger") || platform.equals("panther"))
-					platform = "macosx";
-				if (platform.endsWith(".exe"))
-					platform = platform.substring(0, platform.length() - 4);
-				plugin.addPlatform(platform);
+				plugin.addPlatform(Util.platformForLauncher(plugin.filename));
 				for (String dependency : new String[] { "jars/Fiji.jar", "jars/fiji-compat.jar" })
 					if (plugins.getPlugin(dependency) != null)
 						plugin.addDependency(dependency);
