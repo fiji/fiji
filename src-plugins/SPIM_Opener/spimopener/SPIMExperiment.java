@@ -2,26 +2,16 @@ package spimopener;
 
 import ij.IJ;
 import ij.ImagePlus;
-
-import ij.process.Blitter;
 import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
-
-import java.io.File;
-
-import java.util.ArrayList;
-import java.util.Arrays;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.RandomAccessFile;
-
-import java.nio.ByteBuffer;
-
-import java.nio.channels.FileChannel;
-
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 
 
@@ -127,7 +117,7 @@ public class SPIMExperiment {
 				int fMin, int fMax,
 				int projectionMethod,
 				boolean virtual) {
-		return open(sample, tpMin, tpMax, region, angle, channel, zMin, zMax, fMin, fMax, 0, h - 1, 0, w - 1, projectionMethod, virtual);				
+		return open(sample, tpMin, tpMax, region, angle, channel, zMin, zMax, fMin, fMax, 0, h - 1, 0, w - 1, projectionMethod, virtual);
 	}
 
 	public ImagePlus open(int sample,
@@ -142,7 +132,7 @@ public class SPIMExperiment {
 				int projectionMethod,
 				boolean virtual) {
 
-	
+
 		int xDir = X;
 		int yDir = Y;
 		int projectionDir = Z; // z is the default projection direction
@@ -194,7 +184,7 @@ public class SPIMExperiment {
 			case GAUSSIAN_STACK_FOCUSER: projector = new GaussianStackFocuser(); break;
 			default: throw new IllegalArgumentException("Unknown projection method: " + projectionMethod);
 		}
-		
+
 		final int D = 5;
 		final int[] MIN = new int[] { xMin, yMin, fMin, zMin, tpMin };
 		final int[] MAX = new int[] { xMax, yMax, fMax, zMax, tpMax };
@@ -249,7 +239,7 @@ public class SPIMExperiment {
 					position[projectionDir] = proj;
 
 					ImageProcessor ip = new ShortProcessor(MAX[xDir] - MIN[xDir] + 1, MAX[yDir] - MIN[yDir] + 1);
-	
+
 					for(int i1 = MIN[ordered[1]]; i1 <= MAX[ordered[1]]; i1++) {
 						position[ordered[1]] = i1;
 						String path = getPath(sample, position[T], region, angle, channel, position[Z], position[F]);
@@ -279,18 +269,34 @@ public class SPIMExperiment {
 	}
 
 	public ImagePlus openNotProjected(int sample,
-				int tpMin, int tpMax,
-				int region,
-				int angle,
-				int channel,
-				int zMin, int zMax,
-				int fMin, int fMax,
-				int yMin, int yMax,
-				int xMin, int xMax,
-				int xDir,
-				int yDir,
-				int zDir,
-				boolean virtual) {
+			int tpMin, int tpMax,
+			int region,
+			int angle,
+			int channel,
+			int zMin, int zMax,
+			int fMin, int fMax,
+			int yMin, int yMax,
+			int xMin, int xMax,
+			int xDir,
+			int yDir,
+			int zDir,
+			boolean virtual) {
+		return openNotProjected(sample, tpMin, tpMax, region, angle, channel, zMin, zMax, 1, fMin, fMax, yMin, yMax, xMin, xMax, xDir, yDir, zDir, virtual);
+	}
+
+	public ImagePlus openNotProjected(int sample,
+			int tpMin, int tpMax,
+			int region,
+			int angle,
+			int channel,
+			int zMin, int zMax, int zStep,
+			int fMin, int fMax,
+			int yMin, int yMax,
+			int xMin, int xMax,
+			int xDir,
+			int yDir,
+			int zDir,
+			boolean virtual) {
 
 		final int D = 5;
 		final int[] MIN = new int[] { xMin, yMin, fMin, zMin, tpMin };
@@ -305,7 +311,7 @@ public class SPIMExperiment {
 
 		if(xDir == X && yDir == Y) {
 			stack.setRange(w, h, MIN[xDir], MIN[yDir]);
-			for(int z = MIN[zDir]; z <= MAX[zDir]; z++) {
+			for(int z = MIN[zDir]; z <= MAX[zDir]; z+=zStep) {
 				if(IJ.escapePressed()) {
 					IJ.resetEscape();
 					break;
@@ -320,7 +326,7 @@ public class SPIMExperiment {
 			int[] ordered = new int[2];
 			ordered[0] = Math.min(xDir, yDir);
 			ordered[1] = Math.max(xDir, yDir);
-			for(int z = MIN[zDir]; z <= MAX[zDir]; z++) {
+			for(int z = MIN[zDir]; z <= MAX[zDir]; z+=zStep) {
 				if(IJ.escapePressed()) {
 					IJ.resetEscape();
 					break;
