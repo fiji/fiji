@@ -746,6 +746,7 @@ public class Image3DMenubar extends JMenuBar implements ActionListener,
 					executer.select(null);
 			}
 		});
+		selectMenu.add(item);
 	}
 
 	@Override
