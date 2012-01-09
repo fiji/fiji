@@ -149,7 +149,14 @@ public class ViewDataBeads implements Comparable< ViewDataBeads >
 	protected int angle;
 	public int getAcqusitionAngle() { return angle; }
 	public void setAcqusitionAngle( final int angle ){ this.angle = angle; }
-	
+
+	/**
+	 * the index of the illumination direction
+	 */
+	protected int illumination;
+	public int getIllumination() { return illumination; }
+	public void setIllumination( int illumination )	{ this.illumination = illumination; }
+
 	/**
 	 * The file name of the current view
 	 */
@@ -356,7 +363,19 @@ public class ViewDataBeads implements Comparable< ViewDataBeads >
 				final int yMin = 0;
 				final int yMax = exp.h - 1;
 
-				ImagePlus imp = exp.openNotProjected( s, timePoint, timePoint, r, angle, channel, zMin, zMax, f, f, yMin, yMax, xMin, xMax, SPIMExperiment.X, SPIMExperiment.Y, SPIMExperiment.Z, false );
+				ImagePlus imp;
+				if ( getViewStructure().getSPIMConfiguration().hasAlternatingIllumination() )
+				{
+					final int zStep = 2;
+					if ( illumination == 0 )
+						imp = exp.openNotProjected( s, timePoint, timePoint, r, angle, channel, zMin, zMax-1, zStep, f, f, yMin, yMax, xMin, xMax, SPIMExperiment.X, SPIMExperiment.Y, SPIMExperiment.Z, false );
+					else
+						imp = exp.openNotProjected( s, timePoint, timePoint, r, angle, channel, zMin+1, zMax, zStep, f, f, yMin, yMax, xMin, xMax, SPIMExperiment.X, SPIMExperiment.Y, SPIMExperiment.Z, false );
+				}
+				else
+				{
+					imp = exp.openNotProjected( s, timePoint, timePoint, r, angle, channel, zMin, zMax, f, f, yMin, yMax, xMin, xMax, SPIMExperiment.X, SPIMExperiment.Y, SPIMExperiment.Z, false );
+				}
 				image = ImageJFunctions.convertFloat( imp );
 			}
 			else

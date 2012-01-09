@@ -189,7 +189,7 @@ public class Multi_View_Fusion implements PlugIn
 		{
 			timepoints.add( new ArrayList<Integer>() );
 		
-			final String name = conf.file[ 0 ][ c ][ 0 ].getName();			
+			final String name = conf.file[ 0 ][ c ][ 0 ][ 0 ].getName();			
 			final File regDir = new File( conf.registrationFiledirectory );
 			
 			IJ.log( "name: " + name );

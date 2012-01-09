@@ -27,6 +27,8 @@ public class SPIMConfiguration
 	public int timepoints[];
 	public String anglePattern;	
 	public int angles[];
+	public int illuminations[];
+
 	//public String angleString;
 	public String inputFilePattern;//spim_TL{i}_Angle\d*\.lsm
 	public int[] channels, channelsRegister, channelsFuse;
@@ -36,9 +38,9 @@ public class SPIMConfiguration
 	public String channelsToFuse;
 	public String mirrorChannels = "";
 	public int[] registrationAssignmentForFusion = null;
-	
-	// [timepoint][channel][angle]
-	public File file[][][];
+
+	// [timepoint][channel][angle][illumination]
+	public File file[][][][];
 	public String inputdirectory;
 	public String outputdirectory;// = "";
 	public String registrationFiledirectory;// = "";
@@ -438,6 +440,14 @@ public class SPIMConfiguration
     	}
     }
     
+	public void parseIlluminations() throws ConfigurationParserException
+    {
+		if ( hasAlternatingIllumination() )
+			illuminations = new int[] {0, 1};
+		else
+			illuminations = new int[] {0};
+    }
+
 	protected String[] getDirListing( final String directory, final String filePatternStart, final String filePatternEnd )
 	{
 		File dir = new File( directory );
@@ -446,7 +456,8 @@ public class SPIMConfiguration
 	    // This example does not return any files that start with `.'.
 	    FilenameFilter filter = new FilenameFilter() 
 	    {
-	        public boolean accept(File dir, String name) 
+	        @Override
+			public boolean accept(File dir, String name) 
 	        {
 	            return name.startsWith( filePatternStart) && name.endsWith( filePatternEnd );
 	        }
@@ -582,8 +593,13 @@ public class SPIMConfiguration
 	public boolean isHuiskenFormat()
 	{
 		return spimExperiment != null;
-    }
-	
+	}
+
+	public boolean hasAlternatingIllumination()
+	{
+		return isHuiskenFormat() && ( spimExperiment.d < ( spimExperiment.planeEnd + 1 - spimExperiment.planeStart ) );
+	}
+
 	public SPIMExperiment getSpimExperiment()
 	{
 		return spimExperiment;
@@ -599,23 +615,27 @@ public class SPIMConfiguration
 		parseTimePoints();
 		parseAngles();
 		parseChannels();
-		
-		// generate some dummy filenames that will be used for bead/registration files
-		file = new File[ timepoints.length ][ channels.length ][ angles.length ];
-		
-//		int sample = spimExperiment.sampleStart;
-//		int region = spimExperiment.regionStart;
-//		int plane = spimExperiment.planeStart;
-//		int frame = spimExperiment.frameStart;
-//		final String pathFormatString = "s%03d/t%05d/r%03d/a%03d/c%03d/z%04d/%010d.dat";
-		final String pathFormatString = "reg-t%05d-a%03d-c%03d";
+		parseIlluminations();
+
+		// generate some dummy filenames that will be used for bead/registration
+		// files
+		file = new File[ timepoints.length ][ channels.length ][ angles.length ][ illuminations.length ];
+
+		// int sample = spimExperiment.sampleStart;
+		// int region = spimExperiment.regionStart;
+		// int plane = spimExperiment.planeStart;
+		// int frame = spimExperiment.frameStart;
+		// final String pathFormatString =
+		// "s%03d/t%05d/r%03d/a%03d/c%03d/z%04d/%010d.dat";
+		final String pathFormatString = "reg-t%05d-a%03d-c%03d-i%01d";
 
 		for ( int tp = 0; tp < timepoints.length; ++tp )
 			for ( int channel = 0; channel < channels.length; ++channel )
 				for ( int angle = 0; angle < angles.length; ++angle )
-				{
-					file[ tp ][ channel ][ angle ] = new File( inputdirectory, String.format( pathFormatString, timepoints[tp], angles[angle], channels[channel] ) );
-				}
+					for ( int illumination = 0; illumination < illuminations.length; ++illumination )
+					{
+						file[ tp ][ channel ][ angle ][ illumination ] = new File( inputdirectory, String.format( pathFormatString, timepoints[ tp ], angles[ angle ], channels[ channel ], illuminations[ illumination ] ) );
+					}
 	}
 
     public void getFileNames() throws ConfigurationParserException
@@ -653,26 +673,27 @@ public class SPIMConfiguration
 		if (timepoints.length > 1 && replaceTL.equals( "\\" ) )
 			throw new ConfigurationParserException("You gave more than one timepoint but no pattern to replace");				
 		
-		file = new File[ timepoints.length ][ channels.length ][ angles.length ];
+		file = new File[ timepoints.length ][ channels.length ][ angles.length ][ illuminations.length ];
 		
 		for ( int tp = 0; tp < timepoints.length; ++tp )
 			for ( int channel = 0; channel < channels.length; ++channel )
 				for ( int angle = 0; angle < angles.length; ++angle )
-				{
-					String fileName = inputFilePattern;
-					if (replaceTL != null)
-						fileName = fileName.replace( replaceTL, getLeadingZeros(numDigitsTL, timepoints[tp]) );
-	
-					fileName = fileName.replace( replaceAngle, getLeadingZeros(numDigitsAngle, angles[angle]) );
-	
-					fileName = fileName.replace( replaceChannel, getLeadingZeros(numDigitsChannel, channels[channel]) );
-					
-					file[ tp ][ channel ][ angle ] = new File( inputdirectory, fileName );
-				}
-    }
-    
-    public File[][] getFileName( final int timepoint )
-    {
+					for ( int illumination = 0; illumination < illuminations.length; ++illumination )
+					{
+						String fileName = inputFilePattern;
+						if ( replaceTL != null )
+							fileName = fileName.replace( replaceTL, getLeadingZeros( numDigitsTL, timepoints[ tp ] ) );
+
+						fileName = fileName.replace( replaceAngle, getLeadingZeros( numDigitsAngle, angles[ angle ] ) );
+
+						fileName = fileName.replace( replaceChannel, getLeadingZeros( numDigitsChannel, channels[ channel ] ) );
+
+						file[ tp ][ channel ][ angle ][ illumination ] = new File( inputdirectory, fileName );
+					}
+	}
+
+	public File[][] getFileName( final int timepoint )
+	{
 		// find how to parse
 		String replaceTL = null, replaceAngle = null, replaceChannel = null;
 		int numDigitsTL = 0;
