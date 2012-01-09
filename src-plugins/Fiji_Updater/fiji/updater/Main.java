@@ -239,6 +239,10 @@ public class Main {
 			PluginObject plugin = plugins.getPlugin(file);
 			if (plugin == null)
 				die("No plugin '" + file + "' found!");
+			if (plugin.getStatus() == Status.INSTALLED) {
+				System.err.println("Skipping up-to-date " + file);
+				continue;
+			}
 			if (plugin.getStatus() == Status.NOT_FIJI && Util.isLauncher(plugin.filename)) {
 				plugin.executable = true;
 				String platform = plugin.filename.substring(plugin.filename.lastIndexOf('-') + 1);
