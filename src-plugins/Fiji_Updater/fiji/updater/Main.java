@@ -247,6 +247,9 @@ public class Main {
 				if (platform.endsWith(".exe"))
 					platform = platform.substring(0, platform.length() - 4);
 				plugin.addPlatform(platform);
+				for (String dependency : new String[] { "jars/Fiji.jar", "jars/fiji-compat.jar" })
+					if (plugins.getPlugin(dependency) != null)
+						plugin.addDependency(dependency);
 			}
 			if (updateSite == null) {
 				updateSite = plugin.updateSite;
