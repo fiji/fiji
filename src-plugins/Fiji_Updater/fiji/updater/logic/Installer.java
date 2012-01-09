@@ -3,6 +3,7 @@ package fiji.updater.logic;
 import fiji.updater.util.Downloader;
 import fiji.updater.util.Downloader.FileDownload;
 import fiji.updater.util.Progress;
+import fiji.updater.util.UserInterface;
 import fiji.updater.util.Util;
 
 import java.io.File;
@@ -72,6 +73,11 @@ public class Installer extends Downloader {
 				if (old.exists())
 					old.delete();
 				orig.renameTo(old);
+				if (name.equals(Util.macPrefix + "ImageJ-tiger")) try {
+					Util.patchInfoPList("ImageJ-tiger");
+				} catch (IOException e) {
+					UserInterface.get().error("Could not patch Info.plist");
+				}
 			}
 
 			String url = plugins.getURL(plugin);

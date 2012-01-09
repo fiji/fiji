@@ -1,8 +1,11 @@
 package fiji.updater.util;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
@@ -23,6 +26,9 @@ import java.util.Set;
 
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
+
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /*
  * Class functionality:
@@ -313,5 +319,42 @@ public class Util {
 
 	public static void useSystemProxies() {
 		System.setProperty("java.net.useSystemProxies", "true");
+	}
+
+	protected static String readFile(File file) throws IOException {
+		StringBuilder builder = new StringBuilder();
+		BufferedReader reader = new BufferedReader(new FileReader(file));
+		for (;;) {
+			String line = reader.readLine();
+			if (line == null)
+				break;
+			builder.append(line).append('\n');
+		}
+		reader.close();
+
+		return builder.toString();
+	}
+
+	// This method writes to a .bup file and then renames; this might not work on Windows
+	protected static void writeFile(File file, String contents) throws IOException {
+		File result = new File(file.getAbsoluteFile().getParentFile(), file.getName() + ".new");
+		FileOutputStream out = new FileOutputStream(result);
+		out.write(contents.getBytes());
+		out.close();
+		result.renameTo(file);
+	}
+
+	public static boolean patchInfoPList(String executable) throws IOException {
+		File infoPList = new File(ijRoot, "Contents/Info.plist");
+		if (!infoPList.exists())
+			return false;
+		String contents = readFile(infoPList);
+		Pattern pattern = Pattern.compile(".*<key>CFBundleExecutable</key>[^<]*<string>([^<]*).*", Pattern.DOTALL | Pattern.MULTILINE);
+		Matcher matcher = pattern.matcher(contents);
+		if (!matcher.matches())
+			return false;
+		contents = contents.substring(0, matcher.start(1)) + executable + contents.substring(matcher.end(1));
+		writeFile(infoPList, contents);
+		return true;
 	}
 }
