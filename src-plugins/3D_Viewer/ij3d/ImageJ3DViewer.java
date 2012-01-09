@@ -171,6 +171,16 @@ public class ImageJ3DViewer implements PlugIn {
 		}
 	}
 
+	public static void snapshot(String w, String h) {
+		Image3DUniverse univ = getUniv();
+		if(univ == null)
+			return;
+
+		int iw = Integer.parseInt(w);
+		int ih = Integer.parseInt(h);
+		univ.takeSnapshot(iw, ih).show();
+	}
+
 
 	// Individual content's menu
 	public static void setSlices(String x, String y, String z) {
