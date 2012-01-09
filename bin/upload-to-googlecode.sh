@@ -29,7 +29,7 @@ do
 	fiji-usb-*)
 		summary="Fiji USB stick image"
 		;;
-	fiji-linux-*)
+	fiji-linux32-*)
 		summary="Fiji for Linux (32-bit AMD/Intel)"
 		;;
 	fiji-linux64-*)

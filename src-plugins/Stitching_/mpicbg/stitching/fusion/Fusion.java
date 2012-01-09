@@ -62,6 +62,10 @@ public class Fusion
 		
 		estimateBounds( offset, size, images, models, dimensionality );
 		
+		if ( subpixelResolution )
+			for ( int d = 0; d < size.length; ++d )
+				++size[ d ];
+		
 		// for output
 		final ImageFactory<T> f = new ImageFactory<T>( targetType, new ImagePlusContainerFactory() );
 		

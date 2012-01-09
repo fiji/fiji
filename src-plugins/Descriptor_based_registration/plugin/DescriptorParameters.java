@@ -2,6 +2,8 @@ package plugin;
 
 import ij.gui.Roi;
 import mpicbg.models.AbstractModel;
+import mpicbg.models.TranslationModel2D;
+import mpicbg.models.TranslationModel3D;
 
 public class DescriptorParameters 
 {
@@ -47,10 +49,25 @@ public class DescriptorParameters
 	// for stack-registration
 	public int globalOpt; // 0=all-to-all; 1=all-to-all-withrange; 2=all-to-1; 3=Consecutive
 	public int range;	
+	public String directory;
 	
 	public boolean reApply = false;
 	public Roi roi1, roi2;
 	
 	public boolean setPointsRois = true;
-	public boolean fuse = true;
+	
+	// 0 == fuse in memory, 1 == write to disk, 2 == nothing
+	public int fuse = 0;
+	
+	protected AbstractModel< ? > initialModel = null; 
+	public AbstractModel<?> getInitialModel()
+	{
+		if ( initialModel != null )
+			return initialModel;
+		else if ( this.dimensionality == 2 )
+			return new TranslationModel2D();
+		else
+			return new TranslationModel3D();
+
+	}
 }

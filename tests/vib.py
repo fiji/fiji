@@ -1,5 +1,5 @@
 #!/bin/sh
-''''exec "$(dirname "$0")"/../fiji --jython "$0" "$@" # (call again with fiji)'''
+''''exec "$(dirname "$0")"/../ImageJ --jython "$0" "$@" # (call again with fiji)'''
 
 from java.io import File
 
@@ -8,8 +8,8 @@ from java.lang import System
 import lib, sys, os, errno, urllib
 from os.path import realpath
 
-fiji_dir = System.getProperty('fiji.dir')
-images_dir = os.path.join(fiji_dir, 'tests', 'sample-data')
+ij_dir = System.getProperty('ij.dir')
+images_dir = os.path.join(ij_dir, 'tests', 'sample-data')
 
 # Ensure that the sample-data directory exists:
 try:
@@ -40,8 +40,8 @@ for filename in (
 		print 'Downloading', filename
 		urllib.urlretrieve(url, destination)
 
-if realpath(os.getcwd()) != realpath(fiji_dir):
-    print >> sys.stderr, "The tests must be run from", realpath(fiji_dir)
+if realpath(os.getcwd()) != realpath(ij_dir):
+    print >> sys.stderr, "The tests must be run from", realpath(ij_dir)
     sys.exit(1)
 
 from org.junit.runner import JUnitCore

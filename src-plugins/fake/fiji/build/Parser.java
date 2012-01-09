@@ -58,7 +58,7 @@ public class Parser {
 
 		if (allPlatforms == null) {
 			allPlatforms = new HashSet<String>();
-			allPlatforms.add("linux");
+			allPlatforms.add("linux32");
 			allPlatforms.add("linux64");
 			allPlatforms.add("win32");
 			allPlatforms.add("win64");
@@ -76,12 +76,13 @@ public class Parser {
 
 		setVariable("platform", Util.getPlatform());
 
-		setVariable("FIJIHOME", Fake.fijiHome);
+		setVariable("FIJIHOME", Fake.ijHome);
+		setVariable("IJHOME", Fake.ijHome);
 
 		// Include all libraries in classpath when not building Fiji itself
 		// (when building submodules, the classpath will be overridden)
 		try {
-			if (!new File(Fake.fijiHome).getCanonicalFile().equals(this.cwd.getCanonicalFile()))
+			if (!new File(Fake.ijHome).getCanonicalFile().equals(this.cwd.getCanonicalFile()))
 				setVariable("CLASSPATH", Util.join(fake.discoverJars(), ":"));
 		} catch (IOException e) { /* ignore */ }
 
@@ -422,9 +423,16 @@ public class Parser {
 		else if (isSubmodule(lastPrereq))
 			rule = new SubFake(this, target, list);
 		else if (target.endsWith(".jar")) {
-			if (expandVariables(prerequisites, target)
-					.endsWith(".jar"))
+			String expanded = expandVariables(prerequisites, target);
+			if (expanded.endsWith(".jar"))
 				rule = new CopyJar(this, target, list);
+			else if (expanded.endsWith("/pom.xml")) {
+				int i = list.size() - 1;
+				String last = list.get(i);
+				last = last.substring(0, last.length() - 7);
+				list.set(i, last);
+				rule = new SubFake(this, target, list);
+			}
 			else
 				rule = new CompileJar(this, target, list);
 		}

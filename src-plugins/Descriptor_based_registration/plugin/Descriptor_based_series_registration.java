@@ -2,6 +2,7 @@ package plugin;
 
 import fiji.plugin.Bead_Registration;
 import fiji.stacks.Hyperstack_rearranger;
+import fiji.util.gui.GenericDialogPlus;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
@@ -177,8 +178,12 @@ public class Descriptor_based_series_registration implements PlugIn
 	public static int defaultRange = 5;
 	
 	public static int defaultChannel = 1;
-	public static boolean defaultCreateOverlay = true;
+	
+	public static String[] resultChoices = { "Fuse and display", "Write to disk", "Do not fuse" };
+	public static int defaultResult = 0;
 
+	public static String defaultDirectory = "";
+	
 	/**
 	 * Ask for all other required parameters ..
 	 * 
@@ -236,9 +241,9 @@ public class Descriptor_based_series_registration implements PlugIn
 			defaultChannel = 1;
 		
 		gd.addSlider( "Choose_registration_channel" , 1, numChannels, defaultChannel );
-		gd.addMessage( "Image fusion" );
-		gd.addCheckbox( "Create_registered_image", defaultCreateOverlay );
-
+		gd.addMessage( "" );
+		gd.addChoice( "Image fusion", resultChoices, resultChoices[ defaultResult ] );
+		
 		gd.addMessage("");
 		gd.addMessage("This Plugin is developed by Stephan Preibisch\n" + myURL);
 
@@ -266,7 +271,7 @@ public class Descriptor_based_series_registration implements PlugIn
 		final int range = (int)Math.round( gd.getNextNumber() );
 		// zero-offset channel
 		final int channel = (int)Math.round( gd.getNextNumber() ) - 1;
-		final boolean createOverlay = gd.getNextBoolean();
+		final int result = gd.getNextChoiceIndex();
 		
 		// update static values for next call
 		defaultDetectionBrightness = detectionBrightnessIndex;
@@ -281,7 +286,19 @@ public class Descriptor_based_series_registration implements PlugIn
 		defaultGlobalOpt = globalOptIndex;
 		defaultRange = range;
 		defaultChannel = channel + 1;
-		defaultCreateOverlay = createOverlay;
+		defaultResult = result;
+		
+		if ( defaultResult == 1 )
+		{
+			final GenericDialogPlus gd2 = new GenericDialogPlus( "Select output directory" );
+			gd2.addDirectoryField( "Output_directory", defaultDirectory, 60 );
+			gd2.showDialog();
+			
+			if ( gd2.wasCanceled() )
+				return null;
+			
+			defaultDirectory = gd2.getNextString();
+		}
 		
 		// one of them is by default interactive, then all are interactive
 		if ( detectionBrightnessIndex == detectionBrightness.length - 1 || 
@@ -416,7 +433,8 @@ public class Descriptor_based_series_registration implements PlugIn
 		params.ransacThreshold = ransacThreshold;
 		params.channel1 = channel; 
 		params.channel2 = -1;
-		params.fuse = createOverlay;
+		params.fuse = result;
+		params.directory = defaultDirectory;
 		params.setPointsRois = false;
 		params.globalOpt = globalOptIndex;
 		params.range = range;

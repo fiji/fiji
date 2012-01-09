@@ -2,7 +2,7 @@
 
 cd "$(dirname "$0")"/..
 
-JAVA_HOME="$(./fiji --print-java-home 2>&1)" &&
+JAVA_HOME="$(./ImageJ --print-java-home 2>&1)" &&
 case "$1" in
 mingw*)
 	JAVA_HOME_BUILD=$JAVA_HOME &&

@@ -49,7 +49,7 @@ public class JNI {
 			fallbackLibraryExtension = null;
 		}
 
-		libraryDirectory = System.getProperty("fiji.dir") + "/lib/"
+		libraryDirectory = System.getProperty("ij.dir") + "/lib/"
 			+ (platform != null ? platform + "/" : "");
 	}
 

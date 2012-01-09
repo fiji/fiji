@@ -82,8 +82,8 @@ do
 	log="$(git log --no-merges --format="%s" --reverse "$@" -- $f)"
 	test -z "$log" || {
 		case "$f" in
-		fiji.c)
-			f="Fiji Launcher"
+		ImageJ.c)
+			f="ImageJ Launcher"
 			;;
 		src-plugins/*)
 			f=${f#src-plugins/}

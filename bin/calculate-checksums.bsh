@@ -1,5 +1,5 @@
 #!/bin/sh
-/*/. 2>/dev/null; exec "$(dirname "$0")"/../fiji "$0" "$@" # exec with fiji */
+/*/. 2>/dev/null; exec "$(dirname "$0")"/../ImageJ "$0" "$@" # exec with fiji */
 
 import fiji.updater.logic.Checksummer;
 import fiji.updater.logic.PluginCollection;
@@ -9,7 +9,7 @@ import fiji.updater.util.StderrProgress;
 
 import java.util.Arrays;
 
-dbPath = System.getProperty("fiji.dir") + "/db.xml.gz";
+dbPath = System.getProperty("ij.dir") + "/db.xml.gz";
 
 plugins = new PluginCollection();
 progress = new StderrProgress();

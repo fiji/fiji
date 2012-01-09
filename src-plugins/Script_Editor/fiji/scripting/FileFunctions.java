@@ -69,13 +69,13 @@ import javax.swing.text.Document;
 import javax.swing.text.JTextComponent;
 
 public class FileFunctions {
-	protected static String fijiDir;
+	protected static String ijDir;
 
 	static {
-		String dir = System.getProperty("fiji.dir");
+		String dir = System.getProperty("ij.dir");
 		if (!dir.endsWith("/"))
 			dir += "/";
-		fijiDir = dir;
+		ijDir = dir;
 	}
 
 	protected TextEditor parent;
@@ -88,7 +88,7 @@ public class FileFunctions {
 		String baseName = new File(path).getName();
 		if (baseName.endsWith(".jar") || baseName.endsWith(".zip"))
 			baseName = baseName.substring(0, baseName.length() - 4);
-		String baseDirectory = System.getProperty("fiji.dir")
+		String baseDirectory = System.getProperty("ij.dir")
 			+ "/src-plugins/" + baseName + "/";
 
 		List<String> result = new ArrayList<String>();
@@ -168,7 +168,7 @@ public class FileFunctions {
 		// try the simple thing first
 		int slash = result.lastIndexOf('/'), backSlash = result.lastIndexOf('\\');
 		String baseName = result.substring(Math.max(slash, backSlash) + 1, result.length() - 4);
-		String dir = fijiDir + "/src-plugins/" + baseName + "/";
+		String dir = ijDir + "/src-plugins/" + baseName + "/";
 		String path = dir + className.replace('.', '/') + ".java";
 		if (new File(path).exists())
 			return path;
@@ -182,7 +182,7 @@ public class FileFunctions {
 			}
 
 		// Try to find it with the help of the Fakefile
-		File fakefile = new File(fijiDir, "Fakefile");
+		File fakefile = new File(ijDir, "Fakefile");
 		if (fakefile.exists()) try {
 			Fake fake = new Fake();
 			if (parent != null) {
@@ -191,14 +191,14 @@ public class FileFunctions {
 				fake.out = new PrintStream(output);
 				fake.err = new PrintStream(errors);
 			}
-			Parser parser = fake.parse(new FileInputStream(fakefile), new File(fijiDir));
+			Parser parser = fake.parse(new FileInputStream(fakefile), new File(ijDir));
 			parser.parseRules(null);
 			Rule rule = parser.getRule("plugins/" + baseName + ".jar");
 			if (rule == null)
 				rule = parser.getRule("jars/" + baseName + ".jar");
 			if (rule != null) {
 				String stripPath = rule.getStripPath();
-				dir = fijiDir + "/";
+				dir = ijDir + "/";
 				if (rule instanceof SubFake) {
 					SubFake subFake = (SubFake)rule;
 					stripPath = rule.getLastPrerequisite();
@@ -271,7 +271,7 @@ public class FileFunctions {
 					!= JOptionPane.YES_OPTION)
 				return null;
 			class2source = new HashMap<String, List<String>>();
-			findJavaPaths(new File(fijiDir), "");
+			findJavaPaths(new File(ijDir), "");
 		}
 		int dot = className.lastIndexOf('.');
 		String baseName = className.substring(dot + 1);
@@ -295,14 +295,14 @@ public class FileFunctions {
 			}
 		}
 		if (paths.size() == 1)
-			return fijiDir + "/" + paths.get(0);
+			return ijDir + "/" + paths.get(0);
 		String[] names = paths.toArray(new String[paths.size()]);
 		GenericDialog gd = new GenericDialog("Choose path", parent);
 		gd.addChoice("path", names, names[0]);
 		gd.showDialog();
 		if (gd.wasCanceled())
 			return null;
-		return fijiDir + "/" + gd.getNextChoice();
+		return ijDir + "/" + gd.getNextChoice();
 	}
 
 	protected void findJavaPaths(File directory, String prefix) {
@@ -356,7 +356,7 @@ public class FileFunctions {
 		if (name.indexOf('_') < 0)
 			name += "_";
 
-		File file = new File(System.getProperty("fiji.dir")
+		File file = new File(System.getProperty("ij.dir")
 			+ "/src-plugins/" + name + "/" + name + ".java");
 		File dir = file.getParentFile();
 		if ((!dir.exists() && !dir.mkdirs()) || !dir.isDirectory())
@@ -406,7 +406,7 @@ public class FileFunctions {
 		if (!name.endsWith("\n"))
 			name += "\n";
 
-		File file = new File(System.getProperty("fiji.dir"), ".gitignore");
+		File file = new File(System.getProperty("ij.dir"), ".gitignore");
 		if (!file.exists())
 			return false;
 
@@ -429,7 +429,7 @@ public class FileFunctions {
 	}
 
 	public boolean addPluginJarToFakefile(String name) {
-		File file = new File(System.getProperty("fiji.dir"), "Fakefile");
+		File file = new File(System.getProperty("ij.dir"), "Fakefile");
 		if (!file.exists())
 			return false;
 
@@ -604,7 +604,7 @@ public class FileFunctions {
 	public void showDiffOrCommit(File file, File gitDirectory, boolean diffOnly) {
 		if (file == null || gitDirectory == null)
 			return;
-		boolean isInFijiGit = gitDirectory.equals(new File(System.getProperty("fiji.dir"), ".git"));
+		boolean isInFijiGit = gitDirectory.equals(new File(System.getProperty("ij.dir"), ".git"));
 		final File root = isInFijiGit ? getPluginRootDirectory(file) : gitDirectory.getParentFile();
 
 		try {
@@ -635,9 +635,9 @@ public class FileFunctions {
 		}
 
 		final DiffView diff = new DiffView();
-		String configPath = System.getProperty("fiji.dir") + "/staged-plugins/"
+		String configPath = System.getProperty("ij.dir") + "/staged-plugins/"
 			+ root.getName() + ".config";
-		// only include .config file if gitDirectory is fiji.dir/.git
+		// only include .config file if gitDirectory is ij.dir/.git
 		final String config = isInFijiGit && new File(configPath).exists() ? configPath : null;
 		try {
 			String[] cmdarray = {
@@ -949,11 +949,11 @@ public class FileFunctions {
 	}
 
 	public void showPluginChangesSinceUpload(String plugin) {
-		showPluginChangesSinceUpload(new LogComponentCommits(0, 15, false, null, null, "-p"), plugin, true);
+		showPluginChangesSinceUpload(new LogComponentCommits(0, 15, false, null, null, "-p", "-M"), plugin, true);
 	}
 
 	public void showPluginChangesSinceUpload(final String plugin, final int verboseLevel) {
-		showPluginChangesSinceUpload(new LogComponentCommits(verboseLevel, 15, false, null, null, "-p"), plugin, false);
+		showPluginChangesSinceUpload(new LogComponentCommits(verboseLevel, 15, false, null, null, "-p", "-M"), plugin, false);
 	}
 
 	public void showPluginChangesSinceUpload(final LogComponentCommits logger, final String plugin, final boolean checkReadyForUpload) {
@@ -1026,7 +1026,7 @@ public class FileFunctions {
 	}
 
 	public static void main(String[] args) {
-		String root = System.getProperty("fiji.dir");
+		String root = System.getProperty("ij.dir");
 		try {
 			System.err.println(new FileFunctions(null).getSourcePath("script.imglib.analysis.DoGPeaks"));
 		} catch (Exception e) {

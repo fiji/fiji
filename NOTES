@@ -165,5 +165,5 @@ Subsequently all the necessary files are copied into Fiji.app, including
 the JREs for the other platforms.
 
 TODO: the subdirectory "Contents/MacOS/" has symbolic links; for USB disks
-(which have a FAT filesystem, typically) we will have to adapt fiji-macosx
+(which have a FAT filesystem, typically) we will have to adapt ImageJ-macosx
 instead, to search not only in java/macosx, but also ../../java/macosx.

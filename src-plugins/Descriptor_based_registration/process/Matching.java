@@ -113,7 +113,7 @@ public class Matching
 		}
 		
 		// fuse if wanted
-		if ( params.fuse )
+		if ( params.fuse < 2 )
 		{
 			final CompositeImage composite;
 			
@@ -208,7 +208,7 @@ public class Matching
 		}
 		
 		// fuse
-		if ( params.fuse )
+		if ( params.fuse < 2 )
 		{
 			if ( params.dimensionality == 3 )
 			{
@@ -224,15 +224,22 @@ public class Matching
 			}
 			
 			final ImagePlus result;
+			String directory = null;
+			
+			if ( params.fuse == 1 )
+				directory = params.directory;
 			
 			if ( imp.getType() == ImagePlus.GRAY32 )
-				result = OverlayFusion.createReRegisteredSeries( new FloatType(), imp, models, params.dimensionality );
+				result = OverlayFusion.createReRegisteredSeries( new FloatType(), imp, models, params.dimensionality, directory );
 			else if ( imp.getType() == ImagePlus.GRAY16 )
-				result = OverlayFusion.createReRegisteredSeries( new UnsignedShortType(), imp, models, params.dimensionality );
+				result = OverlayFusion.createReRegisteredSeries( new UnsignedShortType(), imp, models, params.dimensionality, directory );
 			else
-				result = OverlayFusion.createReRegisteredSeries( new UnsignedByteType(), imp, models, params.dimensionality );
+				result = OverlayFusion.createReRegisteredSeries( new UnsignedByteType(), imp, models, params.dimensionality, directory );
 			
-			result.show();
+			if ( result != null ) 
+				result.show();
+			
+			IJ.log( "Finished" );
 		}
 	}
 	
@@ -453,15 +460,23 @@ public class Matching
 		if ( params.similarOrientation )
 		{
 			// an empty model with identity transform
-			final Model<?> identityTransform;// = params.model.copy();
-
-			
+			final Model<?> identityTransform = params.getInitialModel();// = params.model.copy();
+	
+			/*
 			if ( params.dimensionality == 2 )
 				identityTransform = new TranslationModel2D();
 			else
 				identityTransform = new TranslationModel3D();
+			*/
 			
 			candidates = getCorrespondenceCandidates( params.significance, matcher, peaks1, peaks2, identityTransform, params.dimensionality, zStretching1, zStretching2 );
+
+			// before we compute the RANSAC we will reset the coordinates of all points so that we directly get the correct model
+			for ( final PointMatch pm : candidates )
+			{
+				((Particle)pm.getP1()).restoreCoordinates();
+				((Particle)pm.getP2()).restoreCoordinates();
+			}
 		}
 		else
 			candidates = getCorrespondenceCandidates( params.significance, matcher, peaks1, peaks2, null, params.dimensionality, zStretching1, zStretching2 );
@@ -480,8 +495,8 @@ public class Matching
 		//}
 		
 		String statement = computeRANSAC( candidates, finalInliers, finalModel, (float)params.ransacThreshold );
-		//IJ.log( explanation + ": " + statement );
-		
+		//IJ.log( "First ransac: " + explanation + ": " + statement );
+		//IJ.log( "first model: " + finalModel );
 		//IJ.log( "Z1 " + zStretching1 );
 		//IJ.log( "Z2 " + zStretching2 );
 

@@ -391,7 +391,7 @@ abstract public class RefreshScripts implements PlugIn {
 						classPath.substring(j + 1));
 			}
 		}
-		String jarsPath = System.getProperty("fiji.dir") + "/jars";
+		String jarsPath = System.getProperty("ij.dir") + "/jars";
 
 		// append the plugin .jar files
 		try {

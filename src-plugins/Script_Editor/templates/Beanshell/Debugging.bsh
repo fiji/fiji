@@ -2,7 +2,7 @@
 setAccessibility(true);
 
 // Set some variables
-fijiDir = System.getProperty("fiji.dir");
+ijDir = System.getProperty("ij.dir");
 image = WindowManager.getCurrentImage();
 frames = WindowManager.getNonImageWindows();
 
@@ -54,7 +54,7 @@ getDescendants(container, regex) {
 }
 
 // Useful commands
-// print(fijiDir);
+// print(ijDir);
 // image.unlock();
 // fiji.debugging.Object_Inspector.openFrame("Inspector", image);
 // print(dir("ImagePlus", ".*Color.*"));

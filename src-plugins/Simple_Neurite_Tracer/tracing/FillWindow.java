@@ -446,17 +446,17 @@ public class FillWindow extends JFrame implements PathAndFillListener, ActionLis
 	}
 
 	@Override
-	public void pointsInSearch( SearchThread source, int inOpen, int inClosed ) {
+	public void pointsInSearch( SearchInterface source, int inOpen, int inClosed ) {
 		// Do nothing...
 	}
 
 	@Override
-	public void finished( SearchThread source, boolean success ) {
+	public void finished( SearchInterface source, boolean success ) {
 		// Do nothing...
 	}
 
 	@Override
-	public void threadStatus( SearchThread source, final int currentStatus ) {
+	public void threadStatus( SearchInterface source, final int currentStatus ) {
 		SwingUtilities.invokeLater(new Runnable() {
 			public void run() {
 				switch(currentStatus) {

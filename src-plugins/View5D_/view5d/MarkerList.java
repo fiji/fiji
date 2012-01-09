@@ -203,7 +203,10 @@ class MarkerList extends Object {
 
     void SetActiveMarkerClosest(APoint other, int dir, int step) {
         if (NumPoints <= 0) return;
-        ActivePoint = ClosestTrackMarker(other,dir,step);
+        if (other==null)
+        	ActivePoint = 0;
+        else
+        	ActivePoint = ClosestTrackMarker(other,dir,step);
     }
 
     void SetActiveMarker(int pos) {

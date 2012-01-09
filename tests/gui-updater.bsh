@@ -1,5 +1,5 @@
 #!/bin/sh
-/*/. 2>/dev/null; exec "$(dirname "$0")"/../fiji "$0" "$@" # exec with fiji */
+/*/. 2>/dev/null; exec "$(dirname "$0")"/../ImageJ "$0" "$@" # exec with fiji */
 
 for (int i = 0; i < bsh.args.length; i++)
 	if (bsh.args[i].equals("--no-hidden"))

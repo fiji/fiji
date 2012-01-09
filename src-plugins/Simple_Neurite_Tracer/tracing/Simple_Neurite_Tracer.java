@@ -171,6 +171,18 @@ public class Simple_Neurite_Tracer extends SimpleNeuriteTracer
 
 			file_info = currentImage.getOriginalFileInfo();
 
+			// Look for a possible .oof.nrrd file:
+			if (file_info != null) {
+				String beforeExtension = stripExtension(file_info.fileName);
+				if (beforeExtension != null) {
+					File possibleOOFFile = new File(file_info.directory,
+									beforeExtension + ".oof.nrrd");
+					if (possibleOOFFile.exists() && ! singleSlice) {
+						oofFile = possibleOOFFile;
+					}
+				}
+			}
+
 			// Turn it grey, since I find that helpful:
 			{
 				ImageProcessor imageProcessor = currentImage.getProcessor();
@@ -195,8 +207,8 @@ public class Simple_Neurite_Tracer extends SimpleNeuriteTracer
 				if( originalFileName != null ) {
 					int lastDot=originalFileName.lastIndexOf(".");
 					if( lastDot > 0 ) {
-						String beforeExtension=originalFileName.substring(0, lastDot);
-						String tubesFileName=beforeExtension+".tubes.tif";
+						String tubesFileName =
+							stripExtension(originalFileName)+".tubes.tif";
 						ImagePlus tubenessImage = null;
 						File tubesFile=new File(file_info.directory,tubesFileName);
 						if (verbose) System.out.println("Testing for the existence of "+tubesFile.getAbsolutePath());

@@ -28,7 +28,7 @@ then
 	JAVA_HOME=/System/Library/Frameworks/JavaVM.framework/
 	JAVACMD=$JAVA_HOME/Commands/java
 else
-	FIJI="$CWD/../fiji"
+	FIJI="$CWD/../ImageJ"
 	JAVA_HOME="$("$FIJI" --print-java-home)/.."
 	JAVACMD="$JAVA_HOME/bin/java"
 fi

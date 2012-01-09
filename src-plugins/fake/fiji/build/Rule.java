@@ -14,13 +14,14 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.TreeSet;
 
 import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
 
-public abstract class Rule {
+public abstract class Rule implements Comparable<Rule> {
 	protected Parser parser;
 	protected String target;
 	protected String prerequisiteString;
@@ -267,6 +268,20 @@ public abstract class Rule {
 		return (Rule)parser.allRules.get(prereq);
 	}
 
+	public Iterable<String> getJarDependencies() throws FakeException {
+		Set<String> result = new TreeSet<String>();
+		for (String prereq : prerequisites)
+			if (prereq.endsWith(".jar"))
+				result.add(prereq);
+
+		// check the classpath
+		for (String jarFile : Util.split(getVar("CLASSPATH"), ":"))
+			if (jarFile.endsWith(".jar"))
+				result.add(jarFile);
+
+		return result;
+	}
+
 	public Iterable<Rule> getDependencies() throws FakeException {
 		Set<Rule> result = new HashSet<Rule>();
 		for (String prereq : prerequisites) {
@@ -287,7 +302,7 @@ public abstract class Rule {
 	}
 
 	public Iterable<Rule> getDependenciesRecursively() throws FakeException {
-		Set<Rule> result = new HashSet<Rule>();
+		Set<Rule> result = new TreeSet<Rule>();
 		getDependenciesRecursively(result);
 		return result;
 	}
@@ -506,5 +521,10 @@ public abstract class Rule {
 
 	public File getWorkingDirectory() {
 		return parser.cwd;
+	}
+
+	@Override
+	public int compareTo(Rule other) {
+		return target.compareTo(other.target);
 	}
 }

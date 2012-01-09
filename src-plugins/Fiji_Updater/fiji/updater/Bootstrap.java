@@ -55,17 +55,17 @@ public class Bootstrap {
 	}
 
 	protected void ensureFijiDirIsSet() {
-		if (System.getProperty("fiji.dir") == null) {
-			String fijiDir = getClass().getResource("/fiji/updater/Bootstrap.class").getPath();
-			if (fijiDir.startsWith("file:"))
-				fijiDir = fijiDir.substring(5);
-			int bang = fijiDir.indexOf("!/");
+		if (System.getProperty("ij.dir") == null) {
+			String ijDir = getClass().getResource("/fiji/updater/Bootstrap.class").getPath();
+			if (ijDir.startsWith("file:"))
+				ijDir = ijDir.substring(5);
+			int bang = ijDir.indexOf("!/");
 			if (bang > 0)
-				fijiDir = fijiDir.substring(0, bang);
+				ijDir = ijDir.substring(0, bang);
 			for (String suffix : new String[] { "/Fiji_Updater.jar", "/plugins" })
-				if (fijiDir.endsWith(suffix))
-					fijiDir = fijiDir.substring(0, fijiDir.length() - suffix.length());
-			System.setProperty("fiji.dir", fijiDir);
+				if (ijDir.endsWith(suffix))
+					ijDir = ijDir.substring(0, ijDir.length() - suffix.length());
+			System.setProperty("ij.dir", ijDir);
 		}
 	}
 

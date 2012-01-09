@@ -556,6 +556,17 @@ public class Path implements Comparable<Path> {
 			return;
 		}
 
+		// If we're trying to add a path with circles to one
+		// that previously had none, add circles to the
+		// previous one, and carry on:
+
+		if (other.hasCircles() && !hasCircles()) {
+			createCircles();
+			double defaultRadius =  getMinimumSeparation() * 2;
+			for( int i = 0; i < points; ++i )
+				radiuses[i] = defaultRadius;
+		}
+
 		if( maxPoints < (points + other.points) ) {
 			expandTo( points + other.points );
 		}
@@ -595,6 +606,16 @@ public class Path implements Comparable<Path> {
 				  points,
 				  other.points - toSkip );
 
+		if( hasCircles() ) {
+
+			System.arraycopy( other.radiuses,
+					  toSkip,
+					  radiuses,
+					  points,
+					  other.points - toSkip );
+
+		}
+
 		if( endJoins != null )
 			throw new RuntimeException("BUG: we should never be adding to a path that already endJoins");
 
@@ -604,6 +625,10 @@ public class Path implements Comparable<Path> {
 		}
 
 		points = points + (other.points - toSkip);
+
+		if( hasCircles() ) {
+			setGuessedTangents(2);
+		}
 	}
 
 	void unsetPrimaryForConnected( HashSet<Path> pathsExplored ) {

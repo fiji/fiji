@@ -1,5 +1,5 @@
 #!/bin/sh
-''''exec "$(dirname "$0")"/../fiji --jython "$0" "$@" # (call again with fiji)'''
+''''exec "$(dirname "$0")"/../ImageJ --jython "$0" "$@" # (call again with fiji)'''
 
 from com.itextpdf.text.pdf import PdfReader, PdfName, PdfNumber, PdfStamper
 from java.io import FileOutputStream

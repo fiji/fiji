@@ -115,7 +115,7 @@ case "$1" in
 	cd nightly-build &&
 	if test -z "$(find java -maxdepth 3 -type f)"
 	then
-		export JAVA_HOME=$(../fiji --print-java-home)
+		export JAVA_HOME=$(../ImageJ --print-java-home)
 	fi &&
 	git fetch .. "$1" &&
 	compile FETCH_HEAD
