@@ -85,6 +85,10 @@ public class Util {
 				name = name.substring(name.indexOf('-') + 1);
 				if (name.endsWith(".exe"))
 					name = name.substring(0, name.length() - 4);
+				if (name.equals("tiger") || name.equals("panther"))
+					name = "macosx";
+				else if (name.equals("linux"))
+					name = "linux32";
 				updateablePlatforms.add(name);
 			}
 	}
