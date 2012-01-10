@@ -121,7 +121,7 @@ Description: components from Fiji, including: ij, javac
  .
  jars/ij.jar: ImageJ. The core of Fiji.  Actually, Fiji uses a custom
  branch of the ImageJA project (which frequently synchronizes with
- ImageJ) with a few enhancements.
+ ImageJ) to allow for building with Maven.
  .
  jars/javac.jar: The Java compiler. The version we ship with Fiji was
  extracted from OpenJDK, so it has the same license as Fiji: GPLv2.
