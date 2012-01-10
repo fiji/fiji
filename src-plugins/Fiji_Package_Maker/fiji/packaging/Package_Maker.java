@@ -56,6 +56,7 @@ public class Package_Maker implements PlugIn {
 			// Maybe ImageJ or ImageJ.exe exist?
 			addFile(packager, "ImageJ");
 			addFile(packager, "ImageJ.exe");
+			addFile(packager, "Contents/Info.plist");
 			int i = 0;
 			for (PluginObject plugin : plugins) {
 				addFile(packager, plugin.filename);
