@@ -246,7 +246,7 @@ public class Main {
 			if (plugin.getStatus() == Status.NOT_FIJI && Util.isLauncher(plugin.filename)) {
 				plugin.executable = true;
 				plugin.addPlatform(Util.platformForLauncher(plugin.filename));
-				for (String dependency : new String[] { "jars/Fiji.jar", "jars/fiji-compat.jar" })
+				for (String dependency : new String[] { "jars/ij-launcher.jar", "jars/fiji-compat.jar" })
 					if (plugins.getPlugin(dependency) != null)
 						plugin.addDependency(dependency);
 			}
