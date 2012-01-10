@@ -692,77 +692,14 @@ public class SPIMConfiguration
 					}
 	}
 
-	public File[][] getFileName( final int timepoint )
+	public int getTimePointIndex( final int timepoint )
 	{
-		// find how to parse
-		String replaceTL = null, replaceAngle = null, replaceChannel = null;
-		int numDigitsTL = 0;
-		int numDigitsAngle = 0;
-		int numDigitsChannel = 0;
-		
-		int i1 = inputFilePattern.indexOf("{t");
-		int i2 = inputFilePattern.indexOf("t}");
-		if (i1 > 0 && i2 > 0)
-		{
-			replaceTL = "{";
-			
-			numDigitsTL = i2 - i1;
-			for (int i = 0; i < numDigitsTL; i++)
-				replaceTL += "t";
-			
-			replaceTL += "}";
-		}
+		for ( int i = 0; i < timepoints.length; ++i )
+			if ( timepoints[ i ] == timepoint )
+				return i;
+		return -1;
+	}
 
-		i1 = inputFilePattern.indexOf("{a");
-		i2 = inputFilePattern.indexOf("a}");
-		if (i1 > 0 && i2 > 0)
-		{
-			replaceAngle = "{";
-			
-			numDigitsAngle = i2 - i1;
-			for (int i = 0; i < numDigitsAngle; i++)
-				replaceAngle += "a";
-			
-			replaceAngle += "}";
-		}
-
-		i1 = inputFilePattern.indexOf("{c");
-		i2 = inputFilePattern.indexOf("c}");
-		if (i1 > 0 && i2 > 0)
-		{
-			replaceChannel = "{";
-			
-			numDigitsChannel = i2 - i1;
-			for (int i = 0; i < numDigitsChannel; i++)
-				replaceChannel += "c";
-			
-			replaceChannel += "}";
-		}
-		
-		// there is one, but nothing to replace
-		if ( numDigitsChannel == 0 )
-			numDigitsChannel = 1;
-
-		File[][] file = new File[channels.length][angles.length];
-		
-		for (int channel = 0; channel < channels.length; channel++)
-			for (int angle = 0; angle < angles.length; angle++)
-			{
-				String fileName = inputFilePattern;
-				if (replaceTL != null)
-					fileName = fileName.replace(replaceTL, getLeadingZeros(numDigitsTL, timepoint));
-	
-				fileName = fileName.replace(replaceAngle, getLeadingZeros(numDigitsAngle, angles[angle]));
-
-				if ( replaceChannel != null )
-					fileName = fileName.replace(replaceChannel, getLeadingZeros(numDigitsChannel, channels[channel]));
-
-				file[channel][angle] = new File( inputdirectory, fileName );
-			}
-		
-		return file;
-    }
-    
 	private static String getLeadingZeros(int zeros, int number)
 	{
 		String output = "" + number;
