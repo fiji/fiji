@@ -45,7 +45,7 @@ Linux)
 		look_for_tools_jar /usr/lib/jvm
 		;;
 	*)	platform=linux32
-		java_submodule=$platform
+		java_submodule=linux
 		look_for_tools_jar /usr/lib64/jvm
 		;;
 	esac; exe=;;
