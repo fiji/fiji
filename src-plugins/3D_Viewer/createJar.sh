@@ -15,6 +15,8 @@ IJ3D_SRC="`find . -type f` `find . -name \*.png` plugins.config"
 VIB_SRC="
 	math3d/*.java \
 	nrrd/*.java \
+	process3d/Smooth.java \
+	process3d/Convolve3d.java \
 	vib/NaiveResampler.java \
 	vib/InterpolatedImage.java \
 	vib/PointList.java \
@@ -34,7 +36,7 @@ tar cvf - $IJ3D_SRC | (cd tempdir; tar xvf -)
 
 (cd tempdir && \
 	rm -rf ImageJ_3D_Viewer.jar && \
-	$JAVAC $JAVACOPTS ImageJ_3D_Viewer.java && \
+	$JAVAC $JAVACOPTS ImageJ_3D_Viewer.java isosurface/Show_Colour_Surfaces.java process3d/Smooth_.java && \
 	$JAR cvf ../ImageJ_3D_Viewer.jar `find . -type f`) && \
 rm -rf tempdir
 
