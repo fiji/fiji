@@ -185,7 +185,7 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/IsoData_Classifier.jar \
 	plugins/RATS_.jar \
 	plugins/Directionality_.jar \
-	jars/Fiji.jar \
+	jars/ij-launcher.jar \
 	plugins/Image_Expression_Parser.jar \
 	plugins/Algorithm_Launcher.jar \
 	plugins/VIB_.jar \
@@ -329,7 +329,7 @@ plugins/Record_Screen.jar <- src-plugins/Record_Screen/ src-plugins/Record_Scree
 
 plugins/Trainable_Segmentation.jar <- src-plugins/Trainable_Segmentation/**/*java src-plugins/Trainable_Segmentation/trainableSegmentation/images/*png src-plugins/Trainable_Segmentation/*
 
-mainClass(jars/Fiji.jar)=fiji.ClassLauncher
+mainClass(jars/ij-launcher.jar)=imagej.ClassLauncher
 
 mainClass(jars/fiji-compat.jar)=fiji.Main
 src-plugins/fiji-compat/icon.png[cp $PRE $TARGET] <- images/icon.png
@@ -417,7 +417,7 @@ CLASSPATH(plugins/LocalThickness_.jar)=jars/ij.jar
 CLASSPATH(plugins/Volume_Viewer.jar)=jars/ij.jar
 CLASSPATH(jars/batik.jar)=jars/jacl.jar:plugins/loci_tools.jar:jars/jython.jar
 CLASSPATH(plugins/Stack_Manipulation.jar)=jars/ij.jar
-CLASSPATH(jars/fiji-compat.jar)=jars/Fiji.jar:jars/ij.jar:jars/javassist.jar
+CLASSPATH(jars/fiji-compat.jar)=jars/ij-launcher.jar:jars/ij.jar:jars/javassist.jar
 CLASSPATH(plugins/TurboReg_.jar)=jars/ij.jar
 CLASSPATH(plugins/RATS_.jar)=jars/ij.jar
 CLASSPATH(plugins/Interactive_3D_Surface_Plot.jar)=jars/ij.jar
@@ -544,7 +544,7 @@ LIBS(linux64)=-ldl -lpthread
 LIBS(macosx)=-weak -framework CoreFoundation -framework ApplicationServices \
 	-framework JavaVM
 
-CLASSPATH(ImageJ)=jars/Fiji.jar:jars/fiji-compat.jar:jars/ij.jar:jars/javassist.jar
+CLASSPATH(ImageJ)=jars/ij-launcher.jar:jars/fiji-compat.jar:jars/ij.jar:jars/javassist.jar
 ImageJ <- ImageJ.c
 
 CFLAGS(ImageJ-macosx)=$COMMONCFLAGS $MACOPTS(osx10.5)
@@ -641,7 +641,7 @@ precompile[] <- precompile-ImageJ precompile-fake precompile-submodules
 # precompiled fall back
 
 missingPrecompiledFallBack[./ImageJ --update update $TARGET] <- \
-	jars/Fiji.jar jars/fiji-compat.jar plugins/Fiji_Updater.jar
+	jars/ij-launcher.jar jars/fiji-compat.jar plugins/Fiji_Updater.jar
 
 # Portable application/.app
 

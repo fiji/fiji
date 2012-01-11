@@ -121,7 +121,7 @@ Description: components from Fiji, including: ij, javac
  .
  jars/ij.jar: ImageJ. The core of Fiji.  Actually, Fiji uses a custom
  branch of the ImageJA project (which frequently synchronizes with
- ImageJ) with a few enhancements.
+ ImageJ) to allow for building with Maven.
  .
  jars/javac.jar: The Java compiler. The version we ship with Fiji was
  extracted from OpenJDK, so it has the same license as Fiji: GPLv2.
@@ -428,7 +428,8 @@ Description: components from Fiji, including: PIV analyser, listManagement, P [.
  differentiation operations on images, seen as continuous functions, even
  though they are stored as discrete pixels.
  .
- jars/Fiji.jar: The main class and support classes for Fiji.
+ jars/ij-launcher.jar: The main class and support classes for the ImageJ
+ launcher.
  .
  plugins/Skeletonize3D_.jar: Used for shape analysis. Given an 8-bit
  grayscale image or stack, the Skeletonize3D plugin will generate a thin

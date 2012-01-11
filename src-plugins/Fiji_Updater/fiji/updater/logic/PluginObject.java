@@ -137,6 +137,7 @@ public class PluginObject {
 	private Status status;
 	private Action action;
 	public String updateSite, filename, description, newChecksum;
+	public boolean executable;
 	public Version current;
 	public Set<Version> previous;
 	public long filesize, newTimestamp;
@@ -278,6 +279,8 @@ public class PluginObject {
 	}
 
 	public void addPlatform(String platform) {
+		if (platform.equals("linux"))
+			platform = "linux32";
 		if (platform != null && !platform.trim().equals(""))
 			platforms.put(platform.trim(), (Object)null);
 	}
@@ -554,7 +557,15 @@ public class PluginObject {
 		if (action != Action.UNINSTALL)
 			throw new RuntimeException(filename + " was not marked "
 				+ "for uninstall");
-		touch(Util.prefixUpdate(filename));
+		if (filename.endsWith(".jar"))
+			touch(Util.prefixUpdate(filename));
+		else {
+			String old = filename + ".old";
+			if (old.endsWith(".exe.old"))
+				old = old.substring(0, old.length() - 8) + ".old.exe";
+			new File(Util.prefix(filename)).renameTo(new File(Util.prefix(old)));
+			touch(Util.prefixUpdate(old));
+		}
 		if (status != Status.NOT_FIJI)
 			setStatus(isObsolete() ? Status.OBSOLETE_UNINSTALLED
 					: Status.NOT_INSTALLED);
