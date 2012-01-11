@@ -34,6 +34,19 @@ public class DescriptorParameters
 	 * than minInlierFactor*4 
 	 */
 	public static float minInlierFactor = 2f;
+	
+	/**
+	 * if true we use filterRANSAC, otherwise only RANSAC
+	 */
+	public static boolean filterRANSAC = true;
+	
+	/**
+	 * How similar two descriptors at least have to be
+	 */
+	public static double minSimilarity = 100;
+	
+	// for debug
+	public static boolean printAllSimilarities = false;
 
 	public int dimensionality;
 	public double sigma1, sigma2, threshold;
