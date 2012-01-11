@@ -644,8 +644,15 @@ public class RandError extends Metrics
 		// number of pixels that are "in" (not background)
 		double n = 0;
 		
+		// reset min and max of the cluster processors (neede in order to have correct values)
+		cluster1.resetMinAndMax();
+		cluster2.resetMinAndMax();
+		
 		// Form the contingency matrix
 		int[][]cont = new int[(int) cluster1.getMax() + 1] [ (int) cluster2.getMax() + 1];		
+		
+		//IJ.log(" cont.length = " +cont.length );
+		//IJ.log(" cont[0].length = " +cont[0].length );
 
 		for(int i=0; i<nPixels; i++)
 		{						
@@ -656,7 +663,7 @@ public class RandError extends Metrics
 		// sum over rows & columnns of nij^2
 		//double t2 = 0;				
 		
-		// sum of squares of sums of rows
+		// sums of rows
 		// (skip background objects in the first cluster)
 		double[] ni = new double[ cont.length ];
 		for(int i=1; i<cont.length; i++)
@@ -665,12 +672,13 @@ public class RandError extends Metrics
 				ni[ i ] += cont[ i ][ j ];				
 			}
 		/*
+		// sum of squares of sums of rows
 		double nis = 0;
 		for(int k=0; k<ni.length; k++)
 			nis += ni[ k ] * ni[ k ];
 		*/
 		
-		// sum of squares of sums of columns
+		// sums of columns
 		// (prune out the zero component in the labeling (un-assigned "out" space))
 		double[] nj = new double[ cont[0].length ];
 		for(int j=1; j<cont[0].length; j++)
@@ -680,6 +688,7 @@ public class RandError extends Metrics
 				//t2 += cont[ i ][ j ] * cont[ i ][ j ];
 			}
 		/*
+		// sum of squares of sums of columns
 		double njs = 0;
 		for(int k=0; k<nj.length; k++)
 			njs += nj[ k ] * nj[ k ];
@@ -690,16 +699,21 @@ public class RandError extends Metrics
 		// (prune out the zero component in the labeling (un-assigned "out" space))
 		double truePositives = 0;
 		for(int j=1; j<cont[0].length; j++)
-			for(int i=1; i<cont.length; i++)			
-				truePositives += cont[ i ][ j ] * ( cont[ i ][ j ] - 1 ) / 2;			
+			for(int i=1; i<cont.length; i++)
+			{
+				truePositives += cont[ i ][ j ] * ( cont[ i ][ j ] - 1.0 ) / 2.0;
+			}
+							
 						
 		// total number of pairs
 		double nPairsTotal = n * (n-1) / 2 ;
 		
+		// 
 		double nPosTrue = 0;
 		for(int k=0; k<ni.length; k++)
 			nPosTrue += ni[ k ] * (ni[ k ]-1) /2;
 		
+		// number of pairs that were actually classified as positive
 		double nPosActual = 0;
 		for(int k=0; k<nj.length; k++)
 			nPosActual += nj[ k ] * (nj[ k ]-1)/2;				
@@ -715,10 +729,28 @@ public class RandError extends Metrics
 		// classes in cluster1 and in the same class in claster2
 		double falsePositives = nPosActual - truePositives; //(njs - t2) / 2;
 		
-		// false negatives - type (iv): objects in the pair are placed in the same 
-		// class in cluster1 and in different classes in claster2
+		// number of pairs actually classified as negative
 		double nNegActual = nPairsTotal - nPosActual;
+		
+		// false negatives - type (iv): objects in the pair are placed in the same 
+		// class in cluster1 and in different classes in claster2		
 		double falseNegatives = nNegActual - nNegCorrect; //(nis - t2) / 2;
+		
+							
+		// number of pairs classified as negative
+		//double nNegTrue = nPairsTotal - nPosTrue;
+		
+		// the number of incorrectly classified pairs
+		//double nPosIncorrect = nPosTrue-truePositives;
+		//double nNegIncorrect = nNegTrue-nNegCorrect;
+		//double nPairsIncorrect = nPosIncorrect + nNegIncorrect;
+
+		// clustering error
+		//double clusteringError = nPairsIncorrect/nPairsTotal;
+		
+		double agreements = truePositives + trueNegatives;		// number of agreements
+		
+		double randIndex = agreements / nPairsTotal;
 		
 		/*
 		IJ.log(" In getRandIndexStats:");
@@ -731,11 +763,9 @@ public class RandError extends Metrics
 	    IJ.log(" nPosActual = " + nPosActual);
 	    IJ.log(" nNegCorrect = " + nNegCorrect);
 	    IJ.log(" nNegActual = " + nNegActual);
+	    IJ.log("  clusteringError = " + clusteringError);
+	    IJ.log("  agreements / nPairsTotal = " + (agreements / nPairsTotal));
 		*/
-		double agreements = truePositives + trueNegatives;		// number of agreements
-		
-		double randIndex = agreements / nPairsTotal;
-		
 		return new ClassificationStatistics( truePositives, trueNegatives, 
 									falsePositives,  falseNegatives, randIndex);
 	}

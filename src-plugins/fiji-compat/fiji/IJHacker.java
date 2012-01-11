@@ -355,8 +355,13 @@ public class IJHacker extends JavassistHelper {
 					if (call.getMethodName().equals("create"))
 						call.replace("if ($1.endsWith(\".txt\"))"
 							+ "  $1 = $1.substring(0, $1.length() - 3) + \"ijm\";"
-							+ "fiji.FijiTools.openEditor($1, $2);"
-							+ "return;");
+							+ "if ($1.endsWith(\".ijm\")) {"
+							+ "  fiji.FijiTools.openEditor($1, $2);"
+							+ "  return;"
+							+ "}"
+							+ "int options = (monospaced ? ij.plugin.frame.Editor.MONOSPACED : 0)"
+							+ "  | (menuBar ? ij.plugin.frame.Editor.MENU_BAR : 0);"
+							+ "new ij.plugin.frame.Editor(rows, columns, 0, options).create($1, $2);");
 					else if (call.getMethodName().equals("runPlugIn"))
 						call.replace("$_ = null;");
 				}

@@ -29,9 +29,9 @@ public class TarGzPackager extends Packager {
 	}
 
 	@Override
-	public void putNextEntry(String name, int size) throws IOException {
+	public void putNextEntry(String name, boolean executable, int size) throws IOException {
 		handleDirectory(name);
-		writeHeader(name, isLauncher(name) ? 0755 : 0644, size, 0);
+		writeHeader(name, executable ? 0755 : 0644, size, 0);
 		fileSize = size;
 		fileOffset = 0;
 	}

@@ -81,7 +81,7 @@ def copy_platform_specific_files(platform):
 			shutil.copy('precompiled/ImageJ-tiger', macos)
 		chmod(macos + 'ImageJ-macosx', 0755)
 		chmod(macos + 'ImageJ-tiger', 0755)
-		shutil.copy('Info.plist', 'Fiji.app/Contents/')
+		shutil.copy('Contents/Info.plist', 'Fiji.app/Contents/')
 		images='Fiji.app/Contents/Resources/'
 		os.makedirs(images)
 		shutil.copy('images/Fiji.icns', images)
