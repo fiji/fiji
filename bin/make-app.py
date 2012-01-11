@@ -4,7 +4,8 @@
 import os
 import shutil
 import sys
-from compat import removedirs, chmod, execute
+from compat import chmod, execute
+from java.io import File
 
 if len(sys.argv) < 3:
 	print 'Usage: ' + sys.argv[0] + ' <platform> <host-platform>'
@@ -21,6 +22,19 @@ if platform == 'nojre':
 else:
 	copy_jre = True
 
+
+def removedirs(dir):
+	if not isinstance(dir, File):
+		dir = File(dir)
+	list = dir.listFiles()
+	if list is None:
+		return
+	for file in list:
+		if file.isDirectory():
+			removedirs(file)
+		elif file.isFile():
+			file.delete();
+	dir.delete()
 
 def make_app():
 	print 'Making app'
