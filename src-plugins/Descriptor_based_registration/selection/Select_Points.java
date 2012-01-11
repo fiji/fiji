@@ -139,9 +139,7 @@ public class Select_Points extends AbstractTrackingTool implements ToolToggleLis
 	
 	public void drawCurrentSelection( final Color color )
 	{
-		if ( matches.size() == 0 )
-			return;
-		
+		// it has to remove all existing ... even if the list is empty
 		final Overlay o1 = new Overlay();
 		final Overlay o2 = new Overlay();
 		
@@ -200,13 +198,7 @@ public class Select_Points extends AbstractTrackingTool implements ToolToggleLis
 	@Override
 	public Roi optimizeRoi(Roi roi, ImageProcessor ip) 
 	{
-		Roi result = new ShapeRoi(roi);
-		Roi[] rois = ((ShapeRoi)result).getRois();
-		if (rois.length == 1)
-			result = rois[0];
-		result.setImage(WindowManager.getCurrentImage());
-		result.nudge(KeyEvent.VK_RIGHT);
-		return result;
+		return roi;
 	}
 
 	@Override
