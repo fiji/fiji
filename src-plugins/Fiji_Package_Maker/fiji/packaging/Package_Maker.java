@@ -61,33 +61,42 @@ public class Package_Maker implements PlugIn {
 	}
 
 	protected static void addDefaultFiles(Packager packager, PluginCollection plugins, boolean showProgress) throws IOException {
-		int count = 0;
-		plugins.sort();
-		for (PluginObject plugin : plugins)
-			count++;
-		addFile(packager, "db.xml.gz");
+		int count = 4 + plugins.size();
+		addFile(packager, "db.xml.gz", false);
 		// Maybe ImageJ or ImageJ.exe exist?
-		addFile(packager, "ImageJ");
-		addFile(packager, "ImageJ.exe");
-		addFile(packager, "Contents/Info.plist");
-		int i = 0;
+		addFile(packager, "ImageJ", true);
+		addFile(packager, "ImageJ.exe", true);
+		addFile(packager, "Contents/Info.plist", false);
+		plugins.sort();
+		int i = 4;
 		for (PluginObject plugin : plugins) {
-			addFile(packager, plugin.filename);
+			addFile(packager, plugin.filename, isLauncher(plugin.filename));
 			if (showProgress)
 				IJ.showProgress(i++, count);
 		}
 	}
 
-	protected static boolean addFile(Packager packager, String fileName) throws IOException {
+	protected static boolean addFile(Packager packager, String fileName, boolean executable) throws IOException {
 		if (fileName.equals("ImageJ-macosx") || fileName.equals("ImageJ-tiger"))
 			fileName = "Contents/MacOS/" + fileName;
 		File file = new File(Util.prefix(fileName));
 		if (!file.exists())
 			return false;
-		packager.putNextEntry("Fiji.app/" + fileName, (int)file.length());
+		packager.putNextEntry("Fiji.app/" + fileName, executable, (int)file.length());
 		packager.write(new FileInputStream(file));
 		packager.closeEntry();
 		return true;
+	}
+
+	protected static boolean isLauncher(String fileName) {
+		if (fileName.startsWith("Fiji.app/"))
+			fileName = fileName.substring(9);
+		if (fileName.startsWith("Contents/MacOS/"))
+			fileName = fileName.substring(15);
+		if (fileName.endsWith(".exe"))
+			fileName = fileName.substring(0, fileName.length() - 4);
+		return fileName.equals("ImageJ") || fileName.equals("fiji") ||
+			fileName.startsWith("ImageJ-") || fileName.startsWith("fiji-");
 	}
 
 	public static void main(String[] args) {
