@@ -6,6 +6,7 @@ import fiji.updater.logic.PluginObject;
 
 import fiji.updater.ui.ij1.IJProgress;
 
+import fiji.updater.util.StderrProgress;
 import fiji.updater.util.Util;
 
 import fiji.util.gui.GenericDialogPlus;
@@ -49,25 +50,31 @@ public class Package_Maker implements PlugIn {
 		String path = save.getDirectory() + save.getFileName();
 		try {
 			packager.open(new FileOutputStream(path));
-			int count = 0;
-			for (PluginObject plugin : plugins)
-				count++;
-			addFile(packager, "db.xml.gz");
-			// Maybe ImageJ or ImageJ.exe exist?
-			addFile(packager, "ImageJ");
-			addFile(packager, "ImageJ.exe");
-			addFile(packager, "Contents/Info.plist");
-			int i = 0;
-			for (PluginObject plugin : plugins) {
-				addFile(packager, plugin.filename);
-				IJ.showProgress(i++, count);
-			}
+			addDefaultFiles(packager, plugins, true);
 			packager.close();
 			IJ.showMessage("Wrote " + path);
 		}
 		catch (IOException e) {
 			e.printStackTrace();
 			IJ.error("Error writing " + path);
+		}
+	}
+
+	protected static void addDefaultFiles(Packager packager, PluginCollection plugins, boolean showProgress) throws IOException {
+		int count = 0;
+		plugins.sort();
+		for (PluginObject plugin : plugins)
+			count++;
+		addFile(packager, "db.xml.gz");
+		// Maybe ImageJ or ImageJ.exe exist?
+		addFile(packager, "ImageJ");
+		addFile(packager, "ImageJ.exe");
+		addFile(packager, "Contents/Info.plist");
+		int i = 0;
+		for (PluginObject plugin : plugins) {
+			addFile(packager, plugin.filename);
+			if (showProgress)
+				IJ.showProgress(i++, count);
 		}
 	}
 
@@ -81,5 +88,39 @@ public class Package_Maker implements PlugIn {
 		packager.write(new FileInputStream(file));
 		packager.closeEntry();
 		return true;
+	}
+
+	public static void main(String[] args) {
+		Packager packager = null;
+		if (args.length == 1) {
+			if (args[0].endsWith(".zip"))
+				packager = new ZipPackager();
+			else if (args[0].endsWith(".tar.gz"))
+				packager = new TarGzPackager();
+			else {
+				System.err.println("Unsupported archive format: " + args[0]);
+				System.exit(1);
+			}
+		}
+		else {
+			System.err.println("Usage: Package_Maker <filename>");
+			System.exit(1);
+		}
+		String path = args[0];
+
+		PluginCollection plugins = new PluginCollection();
+		StderrProgress progress = new StderrProgress();
+		Checksummer checksummer = new Checksummer(plugins, progress);
+		checksummer.updateFromLocal();
+
+		try {
+			packager.open(new FileOutputStream(path));
+			addDefaultFiles(packager, plugins, false);
+			packager.close();
+		}
+		catch (IOException e) {
+			e.printStackTrace();
+			System.err.println("Error writing " + path);
+		}
 	}
 }
