@@ -171,7 +171,7 @@ public class FilterPanel extends javax.swing.JPanel {
 	private void comboBoxSelectionChanged() {
 		key = allKeys.get(jComboBoxFeature.getSelectedIndex());
 		double[] values = valuesMap.get(key);
-		if (null == values) {
+		if (0 == values.length) {
 			dataset = new LogHistogramDataset();
 			threshold = Double.NaN;
 			annotation.setLocation(0.5f, 0.5f);

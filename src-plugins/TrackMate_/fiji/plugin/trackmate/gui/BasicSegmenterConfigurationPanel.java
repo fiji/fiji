@@ -14,6 +14,7 @@ public class BasicSegmenterConfigurationPanel extends LogSegmenterConfigurationP
 		super();
 		JComponent[] uselessComponents = new JComponent[] {
 				super.jCheckBoxMedianFilter,
+				super.jCheckSubPixel, 
 				super.jLabelThreshold,
 				super.jTextFieldThreshold,
 				super.jButtonRefresh };

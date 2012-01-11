@@ -65,7 +65,7 @@ public class LaunchDisplayerDescriptor implements WizardPanelDescriptor {
 		wizard.setNextButtonEnabled(false);
 		final TrackMateModelView displayer = wizard.getDisplayer();
 		
-		if (!plugin.getModel().getSpots().isEmpty()) {
+		if (plugin.getModel().getSpots().getNSpots() > 0) {
 			logger.log("Calculating features...\n",Logger.BLUE_COLOR);
 			// Calculate features
 			new Thread("TrackMate spot feature calculating mother thread") {
@@ -85,7 +85,7 @@ public class LaunchDisplayerDescriptor implements WizardPanelDescriptor {
 			}.start();
 			
 		} else {
-			renderingDone = true;
+			calculateFeaturesDone = true;
 		}
 
 		// Thread for rendering

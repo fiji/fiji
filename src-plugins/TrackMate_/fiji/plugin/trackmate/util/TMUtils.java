@@ -520,7 +520,7 @@ public class TMUtils {
 					noDataFlag = false;
 				}
 				if (noDataFlag)
-					featureValues.put(feature, null);
+					featureValues.put(feature, new double[0]);
 				else 
 					featureValues.put(feature, values);
 			}

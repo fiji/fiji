@@ -56,7 +56,7 @@ public class SegmenterConfigurationPanelDescriptor implements WizardPanelDescrip
 	@Override
 	public String getNextDescriptorID() {
 		if (plugin.getModel().getSettings().segmenter.getClass() == ManualSegmenter.class) {
-			return LaunchDisplayerDescriptor.DESCRIPTOR;
+			return DisplayerChoiceDescriptor.DESCRIPTOR;
 		} else {
 			return SegmentationDescriptor.DESCRIPTOR;
 		}

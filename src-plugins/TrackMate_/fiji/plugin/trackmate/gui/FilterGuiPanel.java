@@ -243,8 +243,17 @@ public class FilterGuiPanel extends ActionListenablePanel implements ChangeListe
 
 	private void updateInfoText() {
 		String info = "";
-		int nobjects = featureValues.values().iterator().next().length;
-		if (featureFilters == null || featureFilters.isEmpty()) {
+		int nobjects = 0;
+		for (double[] values : featureValues.values()) { // bulletproof against unspecified features, which are signaled by empty arrays
+			if (values.length > 0) {
+				nobjects = values.length;
+				break;
+			}
+		}
+		
+		if (nobjects == 0)	{
+			info = "No objects.";
+		} else if (featureFilters == null || featureFilters.isEmpty() ) {
 			info = "Keep all "+nobjects+" "+objectDescription+".";
 		} else {
 			int nselected = 0;
@@ -252,7 +261,11 @@ public class FilterGuiPanel extends ActionListenablePanel implements ChangeListe
 			for (int i = 0; i < nobjects; i++) {
 				boolean ok = true;
 				for (FeatureFilter filter : featureFilters) {
-					val = featureValues.get(filter.feature)[i];
+					double[] values =  featureValues.get(filter.feature);
+					if (values.length == 0) { // bulletproof against unspecified features, which are signaled by empty arrays
+						continue;
+					}
+					val = values[i];
 					if (filter.isAbove) {
 						if (val < filter.value) {
 							ok = false;
