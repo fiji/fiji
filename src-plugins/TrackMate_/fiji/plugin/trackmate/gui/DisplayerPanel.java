@@ -72,9 +72,9 @@ public class DisplayerPanel extends ActionListenablePanel implements WizardPanel
 	 * The set of {@link TrackMateModelView} views controlled by this controller.
 	 */
 	private Set<TrackMateModelView> views = new HashSet<TrackMateModelView>();
-	private Map<String, double[]> featureValues;
-	private List<String> features;
-	private Map<String, String> featureNames;
+//	private Map<String, double[]> featureValues;
+//	private List<String> features;
+//	private Map<String, String> featureNames;
 	private TrackMate_ plugin;
 	private TrackMateWizard wizard;
 
@@ -187,9 +187,12 @@ public class DisplayerPanel extends ActionListenablePanel implements WizardPanel
 		
 		// TODO TODO FIXME
 		
-		this.featureValues = model.getFeatureModel().getSpotFeatureValues();
-		this.features = model.getFeatureModel().getSpotFeatures();
-		this.featureNames = model.getFeatureModel().getSpotFeatureNames();
+//		this.featureValues = model.getFeatureModel().getSpotFeatureValues();
+//		this.features = model.getFeatureModel().getSpotFeatures();
+//		this.featureNames = model.getFeatureModel().getSpotFeatureNames();
+		Map<String, double[]> featureValues = model.getFeatureModel().getSpotFeatureValues();
+		List<String> features = model.getFeatureModel().getSpotFeatures();
+		Map<String, String> featureNames = model.getFeatureModel().getSpotFeatureNames();
 
 		if (null != jPanelSpotColor) {
 			jPanelSpotOptions.remove(jPanelSpotOptions);
