@@ -134,7 +134,7 @@ public class Select_Points extends AbstractTrackingTool implements ToolToggleLis
 	    frame.add( button, c );
 	    
 	    /* Configuration */
-	    button.addActionListener( new DoneButtonListener( frame ) );
+	    button.addActionListener( new DoneButtonListener( this, frame ) );
 	    remove.addActionListener( new RemoveItemListener( this, list1, list2, matches ) );
 	    save.addActionListener( new SaveListener( frame, matches ) );
 	    load.addActionListener( new LoadListener( frame, list1, list2, matches ) );
