@@ -66,7 +66,7 @@ public class Manual_Landmark_Selection implements PlugIn
 		
 		imp1.show();
 		imp2.show();
-
+		
 		new Select_Points( imp1, imp2 ).run( null );
 	}
 }
