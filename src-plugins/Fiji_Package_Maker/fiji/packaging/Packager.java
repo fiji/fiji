@@ -26,9 +26,13 @@ public abstract class Packager {
 	}
 
 	protected static boolean isLauncher(String fileName) {
-		return fileName.equals("Fiji.app/fiji") ||
-			fileName.equals("Fiji.app/fiji.exe") ||
-			fileName.startsWith("Fiji.app/fiji-") ||
-			fileName.startsWith("Fiji.app/Contents/MacOS/fiji-");
+		if (fileName.startsWith("Fiji.app/"))
+			fileName = fileName.substring(9);
+		if (fileName.startsWith("Contents/MacOS/"))
+			fileName = fileName.substring(15);
+		if (fileName.endsWith(".exe"))
+			fileName = fileName.substring(0, fileName.length() - 4);
+		return fileName.equals("ImageJ") || fileName.equals("fiji") ||
+			fileName.startsWith("ImageJ-") || fileName.startsWith("fiji-");
 	}
 }
