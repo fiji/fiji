@@ -7,6 +7,7 @@ do
 	file=${launcher#*/}
 	prefix=.
 	case $launcher in *-macosx|*-tiger)
+		mkdir -p Contents/MacOS
 		prefix=Contents/MacOS;;
 	esac
 	cp $launcher $prefix/$file
