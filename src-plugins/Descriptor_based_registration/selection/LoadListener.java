@@ -51,7 +51,7 @@ public class LoadListener implements ActionListener
 			{
 				final String[] l = in.readLine().trim().split( "\t" );
 				
-				if ( l.length != 14 )
+				if ( l.length != 16 )
 				{
 					IJ.log( "Wrong line size, cancel." );
 					in.close();

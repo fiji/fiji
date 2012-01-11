@@ -11,9 +11,11 @@ public class RemoveItemListener implements ActionListener
 {
 	final List list1, list2;
 	final ArrayList< ExtendedPointMatch > matches;
+	final Select_Points parent;
 	
-	public RemoveItemListener( final List list1, final List list2, final ArrayList< ExtendedPointMatch > matches )
+	public RemoveItemListener( final Select_Points parent, final List list1, final List list2, final ArrayList< ExtendedPointMatch > matches )
 	{
+		this.parent = parent;
 		this.list1 = list1;
 		this.list2 = list2;
 		this.matches = matches;
@@ -42,6 +44,8 @@ public class RemoveItemListener implements ActionListener
 			list1.remove( index1 );
 			list2.remove( index1 );
 			matches.remove( index1 );
+			
+			parent.drawCurrentSelection();
 		}
 	}
 }
