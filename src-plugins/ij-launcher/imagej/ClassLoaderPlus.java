@@ -1,4 +1,4 @@
-package fiji;
+package imagej;
 
 /**
  * A classloader whose classpath can be augmented after instantiation
@@ -123,7 +123,7 @@ public class ClassLoaderPlus extends URLClassLoader {
 		if (path != null)
 			return path;
 		final String prefix = "file:";
-		final String suffix = "/jars/Fiji.jar!/fiji/ClassLoaderPlus.class";
+		final String suffix = "/jars/ij-launcher.jar!/fiji/ClassLoaderPlus.class";
 		path = Class.forName("fiji.ClassLoaderPlus")
 			.getResource("ClassLoaderPlus.class").getPath();
 		if (path.startsWith(prefix))

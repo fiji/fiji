@@ -1103,7 +1103,7 @@ static void show_splash(void)
 
 	SplashInit();
 	SplashLoadFile(image_path);
-	SplashSetFileJarName(image_path, ij_path("jars/Fiji.jar"));
+	SplashSetFileJarName(image_path, ij_path("jars/ij-launcher.jar"));
 
 	string_release(lib_path);
 }
@@ -2620,7 +2620,7 @@ static int handle_one_option2(int *i, int argc, const char **argv)
 	}
 	else if (handle_one_option(i, argv, "--jar", &arg)) {
 		string_addf_path_list(&class_path, "%s", arg.buffer);
-		main_class = "fiji.JarLauncher";
+		main_class = "imagej.JarLauncher";
 		add_option_string(&options, &arg, 1);
 	}
 	else if (handle_one_option(i, argv, "--class-path", &arg) ||
@@ -2953,10 +2953,10 @@ static void parse_command_line(void)
 
 	/* set up class path */
 	if (skip_build_classpath)
-		string_append_path_list(&class_path, ij_path("jars/Fiji.jar"));
+		string_append_path_list(&class_path, ij_path("jars/ij-launcher.jar"));
 	else {
 		if (is_default_ij1_class(main_class))
-			string_append_path_list(&class_path, ij_path("jars/Fiji.jar"));
+			string_append_path_list(&class_path, ij_path("jars/ij-launcher.jar"));
 		else {
 			if (build_classpath(&class_path, ij_path("plugins"), 0))
 				die("Could not build classpath!");
@@ -3119,7 +3119,7 @@ static int start_ij(void)
 
 	if (strcmp(main_class, "fiji.build.Fake")) {
 		prepend_string_copy(&options.ij_options, main_class);
-		main_class = "fiji.ClassLauncher";
+		main_class = "imagej.ClassLauncher";
 	}
 
 	if (env) {

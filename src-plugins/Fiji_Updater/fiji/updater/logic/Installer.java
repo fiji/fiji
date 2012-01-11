@@ -3,6 +3,7 @@ package fiji.updater.logic;
 import fiji.updater.util.Downloader;
 import fiji.updater.util.Downloader.FileDownload;
 import fiji.updater.util.Progress;
+import fiji.updater.util.UserInterface;
 import fiji.updater.util.Util;
 
 import java.io.File;
@@ -62,13 +63,21 @@ public class Installer extends Downloader {
 		for (PluginObject plugin : plugins.toInstallOrUpdate()) {
 			String name = plugin.filename;
 			String saveTo = Util.prefixUpdate(name);
-			if (Util.isLauncher(name)) {
+			if (plugin.executable) {
 				saveTo = Util.prefix(name);
 				File orig = new File(saveTo);
-				File old = new File(saveTo + ".old");
+				String oldName = saveTo + ".old";
+				if (oldName.endsWith(".exe.old"))
+					oldName = oldName.substring(0, oldName.length() - 8) + ".old.exe";
+				File old = new File(oldName);
 				if (old.exists())
 					old.delete();
 				orig.renameTo(old);
+				if (name.equals(Util.macPrefix + "ImageJ-tiger")) try {
+					Util.patchInfoPList("ImageJ-tiger");
+				} catch (IOException e) {
+					UserInterface.get().error("Could not patch Info.plist");
+				}
 			}
 
 			String url = plugins.getURL(plugin);
@@ -121,8 +130,7 @@ public class Installer extends Downloader {
 		plugin.setLocalVersion(digest, plugin.getTimestamp());
 		plugin.setStatus(PluginObject.Status.INSTALLED);
 
-		if (Util.isLauncher(fileName) &&
-				!Util.platform.startsWith("win")) try {
+		if (plugin.executable && !Util.platform.startsWith("win")) try {
 			Runtime.getRuntime().exec(new String[] {
 				"chmod", "0755", download.destination
 			});

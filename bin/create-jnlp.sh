@@ -138,7 +138,7 @@ cat > $outpath << EOF
     <resources>
     	<j2se version="1.5+" initial-heap-size="64m"/>
 	<jar href="jars/ij.jar"/>
-	<jar href="jars/Fiji.jar" main="true"/>
+	<jar href="jars/ij-launcher.jar" main="true"/>
     	<extension href="http://download.java.net/media/java3d/webstart/release/java3d-latest.jnlp"/>
 	<property name="jnlp" value="$plugins"/>
 	<property name="jnlp_class_map" value="$CODEBASE/configs.jar"/>

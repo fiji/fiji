@@ -159,7 +159,7 @@ public class Main {
 	public void download(PluginObject plugin) {
 		try {
 			new Downloader(progress).start(new OnePlugin(plugin));
-			if (Util.isLauncher(plugin.filename) && !Util.platform.startsWith("win")) try {
+			if (plugin.executable && !Util.platform.startsWith("win")) try {
 				Runtime.getRuntime().exec(new String[] { "chmod", "0755", Util.prefix(plugin.filename) });
 			} catch (Exception e) {
 				e.printStackTrace();
@@ -239,6 +239,17 @@ public class Main {
 			PluginObject plugin = plugins.getPlugin(file);
 			if (plugin == null)
 				die("No plugin '" + file + "' found!");
+			if (plugin.getStatus() == Status.INSTALLED) {
+				System.err.println("Skipping up-to-date " + file);
+				continue;
+			}
+			if (plugin.getStatus() == Status.NOT_FIJI && Util.isLauncher(plugin.filename)) {
+				plugin.executable = true;
+				plugin.addPlatform(Util.platformForLauncher(plugin.filename));
+				for (String dependency : new String[] { "jars/ij-launcher.jar", "jars/fiji-compat.jar" })
+					if (plugins.getPlugin(dependency) != null)
+						plugin.addDependency(dependency);
+			}
 			if (updateSite == null) {
 				updateSite = plugin.updateSite;
 				if (updateSite == null)
