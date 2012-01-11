@@ -1,12 +1,10 @@
 package selection;
 
 import ij.ImagePlus;
-import ij.WindowManager;
 import ij.gui.Line;
 import ij.gui.OvalRoi;
 import ij.gui.Overlay;
 import ij.gui.Roi;
-import ij.gui.ShapeRoi;
 import ij.process.ImageProcessor;
 
 import java.awt.Button;
@@ -17,7 +15,6 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.Label;
 import java.awt.List;
-import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 
@@ -26,7 +23,6 @@ import mpicbg.models.Point;
 import fiji.tool.AbstractTrackingTool;
 import fiji.tool.ToolToggleListener;
 import fiji.tool.ToolWithOptions;
-import fiji.util.gui.GenericDialogPlus;
 
 /**
  * This is a template for a generic tool using Fiji's AbstractTool infrastructure.
@@ -333,35 +329,6 @@ public class Select_Points extends AbstractTrackingTool implements ToolToggleLis
 		o.add( line2 );
 		
 		imp.updateAndDraw();
-		
-		/*
-		o.clear();
-		
-		for ( final DifferenceOfGaussianPeak<FloatType> peak : peaks )
-		{
-			if ( ( peak.isMax() && lookForMaxima ) || ( peak.isMin() && lookForMinima ) )
-			{
-				final float x = peak.getPosition( 0 ); 
-				final float y = peak.getPosition( 1 );
-				
-				if ( Math.abs( peak.getValue().get() ) > threshold &&
-					 x >= extraSize/2 && y >= extraSize/2 &&
-					 x < rect.width+extraSize/2 && y < rect.height+extraSize/2 )
-				{
-					final OvalRoi or = new OvalRoi( Util.round( x - sigma ) + rect.x - extraSize/2, Util.round( y - sigma ) + rect.y - extraSize/2, Util.round( sigma+sigma2 ), Util.round( sigma+sigma2 ) );
-					
-					if ( peak.isMax() )
-						or.setStrokeColor( Color.green );
-					else if ( peak.isMin() )
-						or.setStrokeColor( Color.red );
-					
-					o.add( or );
-				}
-			}
-		}
-		*/
-		
-		
 	}
 
 	@Override
