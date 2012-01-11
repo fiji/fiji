@@ -144,28 +144,23 @@ public class Select_Points extends AbstractTrackingTool implements ToolToggleLis
 		frame.setVisible( true );
 	}
 	
-	public void drawCurrentSelection()
+	protected void drawCurrentSelection1()
 	{
 		// it has to remove all existing ... even if the list is empty
 		final Overlay o1 = new Overlay();
-		final Overlay o2 = new Overlay();
 		
 		final int currentSlice1 = imp1.getCurrentSlice();
-		final int currentSlice2 = imp2.getCurrentSlice();
 		
 		int i = 0;
 		
 		for ( final ExtendedPointMatch pm : matches )
 		{
 			final Point p1 = pm.getP1();
-			final Point p2 = pm.getP2();
 			
 			final float radius1 = pm.radius1L;
-			final float radius2 = pm.radius2L;
 			
 			// assuming z has a different calibration
 			final float distance1 = Math.abs( p1.getL()[ 2 ] - currentSlice1 ) * ( (float)imp1.getCalibration().getZ( 1 ) / (float)imp1.getCalibration().getX( 1 ) ); 
-			final float distance2 = Math.abs( p2.getL()[ 2 ] - currentSlice2 ) * ( (float)imp2.getCalibration().getZ( 1 ) / (float)imp2.getCalibration().getX( 1 ) ); 
 			
 			if ( distance1 <= radius1 )
 			{
@@ -187,6 +182,31 @@ public class Select_Points extends AbstractTrackingTool implements ToolToggleLis
 				o1.add( or );
 			
 			}
+			
+			++i;
+		}
+		
+		imp1.setOverlay( o1 );
+		imp1.updateAndDraw();		
+	}
+
+	protected void drawCurrentSelection2()
+	{
+		// it has to remove all existing ... even if the list is empty
+		final Overlay o2 = new Overlay();
+		
+		final int currentSlice2 = imp2.getCurrentSlice();
+		
+		int i = 0;
+		
+		for ( final ExtendedPointMatch pm : matches )
+		{
+			final Point p2 = pm.getP2();
+			
+			final float radius2 = pm.radius2L;
+			
+			// assuming z has a different calibration
+			final float distance2 = Math.abs( p2.getL()[ 2 ] - currentSlice2 ) * ( (float)imp2.getCalibration().getZ( 1 ) / (float)imp2.getCalibration().getX( 1 ) ); 
 
 			if ( distance2 <= radius2 )
 			{
@@ -211,11 +231,14 @@ public class Select_Points extends AbstractTrackingTool implements ToolToggleLis
 			++i;
 		}
 		
-		imp1.setOverlay( o1 );
 		imp2.setOverlay( o2 );
-		
-		imp1.updateAndDraw();
 		imp2.updateAndDraw();
+	}
+
+	public void drawCurrentSelection()
+	{
+		drawCurrentSelection1();
+		drawCurrentSelection2();
 	}
 	
 	protected void addCorrespondence( final ExtendedPointMatch pm )
@@ -419,11 +442,22 @@ public class Select_Points extends AbstractTrackingTool implements ToolToggleLis
 	{
 		super.sliceChanged(image);
 		
-		drawCurrentSelection();
-		
-		// reset current selection if slice changed
-		p1 = p2 = null;
-		radius1 = radius2 = 0;
+		if ( image == imp1 )
+		{
+			drawCurrentSelection1();
+			
+			// reset current selection if slice changed
+			p1 = null;
+			radius1 = 0;
+		}
+		else
+		{
+			drawCurrentSelection2();
+			
+			// reset current selection if slice changed
+			p2 = null;
+			radius2 = 0;			
+		}
 		
 		//IJ.log("slice changed to " + image.getCurrentSlice() + " in " + image.getTitle());
 	}

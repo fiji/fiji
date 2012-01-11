@@ -45,6 +45,7 @@ public class RemoveItemListener implements ActionListener
 			list2.remove( index1 );
 			matches.remove( index1 );
 			
+			parent.activeIndex = -1;
 			parent.drawCurrentSelection();
 		}
 	}
