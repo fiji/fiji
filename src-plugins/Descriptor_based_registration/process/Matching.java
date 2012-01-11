@@ -66,9 +66,27 @@ public class Matching
 			ArrayList<DifferenceOfGaussianPeak<FloatType>> peaks2 = extractCandidates( imp2, params.channel2, 0, params );
 	
 			// filter for ROI
+			final int size1 = peaks1.size();
+			final int size2 = peaks2.size();
+			
 			peaks1 = filterForROI( params.roi1, peaks1 );
 			peaks2 = filterForROI( params.roi2, peaks2 );
 			
+			if ( size1 != peaks1.size() )
+				IJ.log( peaks1.size() + " candidates remaining for " + imp1.getTitle() + " after filtering by ROI." );
+			
+			if ( size2 != peaks2.size() )
+				IJ.log( peaks2.size() + " candidates remaining for " + imp2.getTitle() + " after filtering by ROI." );
+			
+			final int minNumPeaks = params.numNeighbors + params.redundancy + 1; 
+			if ( peaks1.size() < minNumPeaks || peaks2.size() < minNumPeaks )
+			{
+				IJ.log( "Not enough peaks in one of the images, should be at least " + minNumPeaks + ", " + imp1.getTitle() + 
+						" has " + peaks1.size() + "peaks, " + imp2.getTitle() + " has " + peaks2.size() + " peaks."  );
+				
+				return;
+			}
+
 			// compute ransac
 			ArrayList<PointMatch> finalInliers = new ArrayList<PointMatch>();
 			model1 = pairwiseMatching( finalInliers, peaks1, peaks2, zStretching1, zStretching2, params, "" );				
@@ -478,7 +496,7 @@ public class Matching
 		
 		String statement = computeRANSAC( candidates, finalInliers, finalModel, (float)params.ransacThreshold );
 		//IJ.log( "First ransac: " + explanation + ": " + statement );
-		//IJ.log( "first model: " + finalModel );
+		IJ.log( "first model: " + finalModel );
 		//IJ.log( "Z1 " + zStretching1 );
 		//IJ.log( "Z2 " + zStretching2 );
 
@@ -496,6 +514,7 @@ public class Matching
 		// apply rotation-variant matching after applying the model until it converges
 		if ( finalInliers.size() > finalModel.getMinNumMatches() * DescriptorParameters.minInlierFactor )
 		{
+			int i = 1;
 			int previousNumInliers = 0;
 			int numInliers = 0;
 			do
@@ -515,7 +534,9 @@ public class Matching
 				
 				final ArrayList<PointMatch> inliers = new ArrayList<PointMatch>();
 				Model<?> model2 = params.model.copy();
-				statement = computeRANSAC( candidates, inliers, model2, (float)params.ransacThreshold );
+				String tmpStatement = computeRANSAC( candidates, inliers, model2, (float)params.ransacThreshold );
+				
+				IJ.log( "ransac " + i + ": " + explanation + ": " + tmpStatement );
 				
 				numInliers = inliers.size();
 				//IJ.log( explanation + ": " + statement );
@@ -526,6 +547,9 @@ public class Matching
 					finalModel = model2;
 					finalInliers.clear();
 					finalInliers.addAll( inliers );
+					
+					// it might go wrong to update (or be worse), then we want to preserve the old statement
+					statement = tmpStatement;
 					//finalInliers = inliers;
 				}
 			} 
@@ -539,6 +563,17 @@ public class Matching
 		}
 		
 		IJ.log( explanation + ": " + statement );
+		
+		if ( DescriptorParameters.printAllSimilarities )
+		{
+			for ( final PointMatch pm : finalInliers )
+			{
+				Particle particleA = (Particle)pm.getP1();
+				Particle particleB = (Particle)pm.getP2();
+				
+				IJ.log( particleA.id + " <-> " + particleB.id );
+			}	
+		}
 		
 		return finalModel;
 	}
@@ -641,17 +676,23 @@ public class Matching
 		
 		try
 		{
-			/*modelFound = m.ransac(
-  					candidates,
-					inliers,
-					numIterations,
-					maxEpsilon, minInlierRatio );*/
-		
-			modelFound = model.filterRansac(
-					candidates,
-					inliers,
-					numIterations,
-					maxEpsilon, minInlierRatio, maxTrust );
+			if ( DescriptorParameters.filterRANSAC )
+			{
+				modelFound = model.filterRansac(
+						candidates,
+						inliers,
+						numIterations,
+						maxEpsilon, minInlierRatio, maxTrust );				
+				
+			}
+			else
+			{
+				modelFound = model.ransac(
+						candidates,
+						inliers,
+						numIterations,
+						maxEpsilon, minInlierRatio );
+			}		
 			
 			if ( modelFound && inliers.size() > model.getMinNumMatches() * minInlierFactor )
 			{
@@ -788,7 +829,7 @@ public class Matching
 				}				
 			}
 			
-			if ( bestDifference < 100 && bestDifference * nTimesBetter < secondBestDifference )
+			if ( bestDifference < DescriptorParameters.minSimilarity && bestDifference * nTimesBetter < secondBestDifference )
 			{	
 				// add correspondence for the two basis points of the descriptor
 				Particle particleA = (Particle)descriptorA.getBasisPoint();
@@ -796,6 +837,9 @@ public class Matching
 				
 				// for RANSAC
 				correspondenceCandidates.add( new PointMatch( particleA, particleB ) );
+				
+				if ( DescriptorParameters.printAllSimilarities )
+					IJ.log( particleA.id + " <-> " + particleB.id + " = " + bestDifference );
 			}
 		}
 		
