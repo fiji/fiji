@@ -46,8 +46,8 @@ public class SaveListener implements ActionListener
 		
 		for ( final ExtendedPointMatch pm : matches )
 		{
-			out.println( pm.getP1().getL()[ 0 ] + "\t" + pm.getP1().getL()[ 1 ] + "\t" +  pm.getP1().getL()[ 2 ] + "\t" + pm.getP1().getW()[ 0 ] + "\t" + pm.getP1().getW()[ 1 ] + "\t" +  pm.getP1().getW()[ 2 ] + "\t" + pm.radius1 + "\t" +
-					     pm.getP2().getL()[ 0 ] + "\t" + pm.getP2().getL()[ 1 ] + "\t" +  pm.getP2().getL()[ 2 ] + "\t" + pm.getP2().getW()[ 0 ] + "\t" + pm.getP2().getW()[ 1 ] + "\t" +  pm.getP2().getW()[ 2 ] + "\t" + pm.radius2 );
+			out.println( pm.getP1().getL()[ 0 ] + "\t" + pm.getP1().getL()[ 1 ] + "\t" +  pm.getP1().getL()[ 2 ] + "\t" + pm.getP1().getW()[ 0 ] + "\t" + pm.getP1().getW()[ 1 ] + "\t" +  pm.getP1().getW()[ 2 ] + "\t" + pm.radius1L + "\t" + pm.radius1W + "\t" +  
+					     pm.getP2().getL()[ 0 ] + "\t" + pm.getP2().getL()[ 1 ] + "\t" +  pm.getP2().getL()[ 2 ] + "\t" + pm.getP2().getW()[ 0 ] + "\t" + pm.getP2().getW()[ 1 ] + "\t" +  pm.getP2().getW()[ 2 ] + "\t" + pm.radius2L + "\t" + pm.radius2W );
 			
 		}
 		
