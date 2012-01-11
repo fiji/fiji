@@ -195,7 +195,6 @@ hs_err*.log
 /plugins/SPIM_Registration.jar
 /bin/apache-maven-*/
 /plugins/QuickPALM_.jar
-/misc/headless.jar
 /jars/commons-math.jar
 /plugins/CPU_Meter.jar
 /plugins/TopoJ_.jar
