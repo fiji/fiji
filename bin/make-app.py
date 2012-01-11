@@ -55,6 +55,8 @@ def find_java_tree(platform):
 		platform + '/' + tree[53:].replace('\n', '') + '/jre']
 
 def copy_java(platform):
+	if platform == 'linux32':
+		platform = 'linux'
 	java_platform = get_java_platform(platform)
 	java_tree = find_java_tree(java_platform)
 	os.system('git --git-dir=java/' + java_platform + '/.git ' \
