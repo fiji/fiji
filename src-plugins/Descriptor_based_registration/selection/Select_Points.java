@@ -39,6 +39,8 @@ public class Select_Points extends AbstractTrackingTool implements ToolToggleLis
 		clearToolsIfNecessary = true;
 	}
 
+	Color standard = Color.GREEN;
+	
 	/**
 	 * which windows to select in
 	 */
@@ -69,10 +71,7 @@ public class Select_Points extends AbstractTrackingTool implements ToolToggleLis
 		this.imp2 = imp2;
 
 		initDisplay();
-		
-		//IJ.log( "Manual selection of landmarks for: " + imp1.getTitle() + " vs. " + imp2.getTitle() );
-	}
-	
+	}	
 
 	public void initDisplay()
 	{
@@ -138,16 +137,64 @@ public class Select_Points extends AbstractTrackingTool implements ToolToggleLis
 		frame.setVisible( true );
 	}
 	
+	public void drawCurrentSelection( final Color color )
+	{
+		if ( matches.size() == 0 )
+			return;
+		
+		final Overlay o1 = new Overlay();
+		final Overlay o2 = new Overlay();
+		
+		final int currentSlice1 = imp1.getCurrentSlice();
+		final int currentSlice2 = imp2.getCurrentSlice();
+		
+		for ( final ExtendedPointMatch pm : matches )
+		{
+			final Point p1 = pm.getP1();
+			final Point p2 = pm.getP2();
+			
+			final float radius1 = pm.radius1L;
+			final float radius2 = pm.radius2L;
+			
+			// assuming z has a different calibration
+			final float distance1 = Math.abs( p1.getL()[ 2 ] - currentSlice1 ) * ( (float)imp1.getCalibration().getZ( 1 ) / (float)imp1.getCalibration().getX( 1 ) ); 
+			final float distance2 = Math.abs( p2.getL()[ 2 ] - currentSlice2 ) * ( (float)imp2.getCalibration().getZ( 1 ) / (float)imp2.getCalibration().getX( 1 ) ); 
+			
+			if ( distance1 <= radius1 )
+			{
+				// draw
+				final float newRadius = (float)Math.sqrt( radius1 * radius1 - distance1 * distance1 );
+				
+				final OvalRoi or = new OvalRoi( Math.round( p1.getL()[ 0 ] - newRadius ), Math.round( p1.getL()[ 1 ] - newRadius ), Math.round( newRadius * 2 ), Math.round( newRadius * 2 ) );
+				or.setStrokeColor( color );
+				o1.add( or );
+			}
+
+			if ( distance2 <= radius2 )
+			{
+				// draw
+				final float newRadius = (float)Math.sqrt( radius2 * radius2 - distance2 * distance2 );
+
+				final OvalRoi or = new OvalRoi( Math.round( p2.getL()[ 0 ] - newRadius ), Math.round( p2.getL()[ 1 ] - newRadius ), Math.round( newRadius * 2 ), Math.round( newRadius * 2 ) );
+				or.setStrokeColor( color );
+				o2.add( or );
+			}
+		}
+		
+		imp1.setOverlay( o1 );
+		imp2.setOverlay( o2 );
+		
+		imp1.updateAndDraw();
+		imp2.updateAndDraw();
+	}
+	
 	protected void addCorrespondence( final ExtendedPointMatch pm )
 	{
 		this.matches.add( pm );
-		this.list1.add( getStringForPoint( pm.getP1(), pm.radius1 ) );
-		this.list2.add( getStringForPoint( pm.getP2(), pm.radius2 ) );
-	}
-	
-	public static String getStringForPoint( final Point p, final float r )
-	{
-		return Util.printCoordinates( p.getW() ) + " [" + Math.round( p.getL()[ 0 ] ) + ", " + Math.round( p.getL()[ 1 ] ) + ", " + Math.round( p.getL()[ 2 ] ) + "], r = " + r;
+		this.list1.add( getStringForPoint( pm.getP1(), pm.radius1W ) );
+		this.list2.add( getStringForPoint( pm.getP2(), pm.radius2W ) );
+		
+		drawCurrentSelection( standard );
 	}
 	
 	@Override
@@ -198,7 +245,7 @@ public class Select_Points extends AbstractTrackingTool implements ToolToggleLis
 				if ( radius1 == 0 )
 					radius1 = 0.45f * (float)imp.getCalibration().getX( 1 );
 				
-				removeLastCross( imp );
+				removeColoredOverlays( imp, 2, Color.red );
 				addCircle( imp, Math.round( p1.getL()[ 0 ] ), Math.round( p1.getL()[ 1 ] ), (float)radius1 / (float)imp.getCalibration().getX( 1 ), Color.RED );
 			}
 		}
@@ -216,22 +263,45 @@ public class Select_Points extends AbstractTrackingTool implements ToolToggleLis
 				if ( radius2 == 0 )
 					radius2 = 0.45f * (float)imp.getCalibration().getX( 1 );
 				
-				removeLastCross( imp );
+				removeColoredOverlays( imp, 2, Color.red );
 				addCircle( imp, Math.round( p2.getL()[ 0 ] ), Math.round( p2.getL()[ 1 ] ), (float)radius2 / (float)imp.getCalibration().getX( 1 ) , Color.RED );
 			}
 		}
 
 		if ( p1 != null && p2 != null && radius1 > 0 && radius2 > 0 )
 		{
-			addCorrespondence( new ExtendedPointMatch( p1.clone(), p2.clone(), radius1, radius2 ) );
+			addCorrespondence( new ExtendedPointMatch( p1.clone(), p2.clone(), (float)radius1 / (float)imp.getCalibration().getX( 1 ), radius1, (float)radius2 / (float)imp.getCalibration().getX( 1 ), radius2 ) );
 			p1 = p2 = null;
 			radius1 = radius2 = 0;
+			
+			// remove temporary overlays
+			removeColoredOverlays( imp1, 1, Color.red );
+			removeColoredOverlays( imp2, 1, Color.red );
 		}
 		
 		
 		//IJ.log("mouse clicked in " + imp.getTitle() + ": (" + x + ", " + y + " " + z + ")" );
 		//IJ.log("mouse clicked in " + imp.getTitle() + ": (" + xR + ", " + yR + " " + zR + ")" );
 		e.consume(); // prevent ImageJ from handling this event
+	}
+	
+	protected void removeColoredOverlays( final ImagePlus imp, int num, final Color color )
+	{
+		final Overlay o = imp.getOverlay();
+		
+		// nothing there
+		if ( o == null )
+			return;
+		
+		for ( int i = o.size() - 1; i >=0 && num > 0; --i )
+		{
+			if ( o.get( i ).getStrokeColor().equals( color ) )
+			{
+				o.remove( i );
+				num--;
+			}
+		}
+		imp.updateAndDraw();
 	}
 
 	protected void addCircle( final ImagePlus imp, final int centerX, final int centerY, final float radius, final Color color )
@@ -250,40 +320,7 @@ public class Select_Points extends AbstractTrackingTool implements ToolToggleLis
 		
 		imp.updateAndDraw();
 	}
-	
-	protected boolean removeLastCross( final ImagePlus imp )
-	{
-		final Overlay o = imp.getOverlay();
 		
-		// nothing there
-		if ( o == null || o.size() < 2 )
-			return false;
-		
-		int first = -1;
-		int second = -1;
-		
-		for ( int i = o.size() - 1; i >=0 && second == -1; --i )
-		{
-			if ( Line.class.isInstance( o.get( i ) ) )
-			{
-				if ( first == -1 )
-					first = i;
-				else
-					second = i;
-			}
-		}
-		
-		if ( second == -1 )
-			return false;
-		
-		o.remove( first );
-		o.remove( second );
-		
-		imp.updateAndDraw();
-		
-		return true;
-	}
-	
 	protected void addCross( final ImagePlus imp, final int x, final int y )
 	{
 		Overlay o = imp.getOverlay();
@@ -379,21 +416,34 @@ public class Select_Points extends AbstractTrackingTool implements ToolToggleLis
 	}
 
 	@Override
-	public void sliceChanged(ImagePlus image) {
+	public void sliceChanged(ImagePlus image) 
+	{
 		super.sliceChanged(image);
+		
+		drawCurrentSelection( standard );
+		
+		// reset current selection if slice changed
+		p1 = p2 = null;
+		radius1 = radius2 = 0;
+		
 		//IJ.log("slice changed to " + image.getCurrentSlice() + " in " + image.getTitle());
 	}
 
 	@Override
 	public void showOptionDialog() {
-		GenericDialogPlus gd = new GenericDialogPlus(getToolName() + " Options");
-		gd.addMessage("Here could be your option dialog!");
-		addIOButtons(gd);
-		gd.showDialog();
+		//GenericDialogPlus gd = new GenericDialogPlus(getToolName() + " Options");
+		//gd.addMessage("Here could be your option dialog!");
+		//addIOButtons(gd);
+		//gd.showDialog();
 	}
 
 	@Override
 	public void toolToggled(boolean enabled) {
 		//IJ.log(getToolName() + " was switched " + (enabled ? "on" : "off"));
 	}
+	
+	public static String getStringForPoint( final Point p, final float r )
+	{
+		return Util.printCoordinates( p.getW() ) + " [" + Math.round( p.getL()[ 0 ] ) + ", " + Math.round( p.getL()[ 1 ] ) + ", " + Math.round( p.getL()[ 2 ] ) + "], r = " + r;
+	}	
 }

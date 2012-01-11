@@ -61,14 +61,14 @@ public class LoadListener implements ActionListener
 				final Point p1 = new Point( new float[] { Float.parseFloat( l[ 0 ] ), Float.parseFloat( l[ 1 ] ), Float.parseFloat( l[ 2 ] ) }, 
 											new float[] { Float.parseFloat( l[ 3 ] ), Float.parseFloat( l[ 4 ] ), Float.parseFloat( l[ 5 ] ) } );
 				
-				final Point p2 = new Point( new float[] { Float.parseFloat( l[ 7 ] ), Float.parseFloat( l[ 8 ] ), Float.parseFloat( l[ 9 ] ) }, 
-											new float[] { Float.parseFloat( l[ 10 ] ), Float.parseFloat( l[ 11 ] ), Float.parseFloat( l[ 12 ] ) } );
+				final Point p2 = new Point( new float[] { Float.parseFloat( l[ 8 ] ), Float.parseFloat( l[ 9 ] ), Float.parseFloat( l[ 10 ] ) }, 
+											new float[] { Float.parseFloat( l[ 11 ] ), Float.parseFloat( l[ 12 ] ), Float.parseFloat( l[ 13 ] ) } );
 
-				final ExtendedPointMatch pm = new ExtendedPointMatch( p1, p2, Float.parseFloat( l[ 6 ] ), Float.parseFloat( l[ 13 ] ) );
+				final ExtendedPointMatch pm = new ExtendedPointMatch( p1, p2, Float.parseFloat( l[ 6 ] ), Float.parseFloat( l[ 7 ] ), Float.parseFloat( l[ 14 ] ), Float.parseFloat( l[ 15 ] ) );
 				
 				matches.add( pm );
-				list1.add( Select_Points.getStringForPoint( pm.getP1(), pm.radius1 ) );
-				list2.add( Select_Points.getStringForPoint( pm.getP2(), pm.radius2 ) );
+				list1.add( Select_Points.getStringForPoint( pm.getP1(), pm.radius1W ) );
+				list2.add( Select_Points.getStringForPoint( pm.getP2(), pm.radius2W ) );
 			}
 			
 			in.close();
