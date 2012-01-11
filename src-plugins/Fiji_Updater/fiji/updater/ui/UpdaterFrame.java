@@ -599,6 +599,7 @@ public class UpdaterFrame extends JFrame implements TableModelListener, ListSele
 			}
 		};
 		PluginCollection justTheUpdater = PluginCollection.clone(plugins.filter(filter));
+		justTheUpdater.cloneUpdateSites(plugins);
 		Installer installer = new Installer(justTheUpdater, getProgress("Installing the updater..."));
 		try {
 			installer.start();

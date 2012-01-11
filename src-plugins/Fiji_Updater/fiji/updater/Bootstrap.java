@@ -159,7 +159,7 @@ public class Bootstrap {
 	public void download(PluginObject plugin) {
 		try {
 			new Downloader(progress).start(new OnePlugin(plugin));
-			if (Util.isLauncher(plugin.filename) && !Util.platform.startsWith("win")) try {
+			if (plugin.executable && !Util.platform.startsWith("win")) try {
 				Runtime.getRuntime().exec(new String[] { "chmod", "0755", Util.prefix(plugin.filename) });
 			} catch (Exception e) {
 				e.printStackTrace();

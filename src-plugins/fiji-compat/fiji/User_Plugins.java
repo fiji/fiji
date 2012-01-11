@@ -33,8 +33,9 @@ import java.util.jar.JarFile;
  * A class to find user plugins, i.e. plugins not inside Fiji.app/plugins/
  *
  * This plugin looks through all files in a given directory (default:
- * $ROOT/user-plugins/, where $ROOT is the parent directory of jars/Fiji.jar)
- * and inserts the found plugins into a given menu (default: Plugins>User).
+ * $ROOT/user-plugins/, where $ROOT is the parent directory of
+ * jars/ij-launcher.jar) and inserts the found plugins into a given menu
+ * (default: Plugins>User).
  */
 public class User_Plugins implements PlugIn {
 	public String path, menuPath;

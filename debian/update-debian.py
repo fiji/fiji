@@ -75,7 +75,7 @@ package_name_to_file_matchers = {
         [ "ImageJ-linux32",
           "ImageJ-linux64",
           "jars/fake.jar",
-          "misc/Fiji.jar",
+          "misc/ij-launcher.jar",
           "plugins/Fiji_Updater.jar",
           "plugins/Bug_Submitter.jar",
           "jars/fiji-lib.jar",
