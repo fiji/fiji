@@ -62,6 +62,17 @@ public class WizardController implements ActionListener {
 		
 		init();
 	}
+	
+	/*
+	 * PUBLIC METHODS 
+	 */
+	
+	/**
+	 * Expose the {@link TrackMateWizard} instance controlled here.
+	 */
+	public TrackMateWizard getWizard() {
+		return wizard;
+	}
 
 	/*
 	 * PROTECTED METHODS
