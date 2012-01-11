@@ -25,6 +25,12 @@ hs_err*.log
 /ImageJ-linux64
 /ImageJ-win32.exe
 /ImageJ-win64.exe
+/fiji-linux
+/fiji-linux64
+/Contents/MacOS/fiji-tiger
+/Contents/MacOS/fiji-macosx
+/fiji-win32.exe
+/fiji-win64.exe
 /fiji-macosx.dmg
 /tests/plugins
 /jvm.cfg
