@@ -3,10 +3,14 @@ package fiji.packaging;
 import java.io.IOException;
 import java.io.OutputStream;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 public class ZipPackager extends Packager {
+	protected Set<String> executables = new HashSet<String>();
 	protected MarkExecutableOutputStream out;
 	protected ZipOutputStream zip;
 
@@ -22,7 +26,9 @@ public class ZipPackager extends Packager {
 	}
 
 	@Override
-	public void putNextEntry(String name, int /* ignored */ size) throws IOException {
+	public void putNextEntry(String name, boolean executable, int /* ignored */ size) throws IOException {
+		if (executable)
+			executables.add(name);
 		zip.putNextEntry(new ZipEntry(name));
 	}
 
@@ -121,7 +127,7 @@ public class ZipPackager extends Packager {
 			}
 			else if (tocEntryOffset >= tocEntryLen) {
 				String fileName = getFileName();
-				if (isLauncher(fileName)) {
+				if (executables.contains(fileName)) {
 					int fileMode = 0100755;
 					tocEntry[0x28] = (byte)(fileMode & 0xff);
 					tocEntry[0x29] = (byte)((fileMode >> 8) & 0xff);

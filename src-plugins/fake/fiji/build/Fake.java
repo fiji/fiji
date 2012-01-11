@@ -61,12 +61,12 @@ public class Fake {
 
 	public static void checkObsoleteLauncher() {
 		String launcher = System.getProperty("fiji.executable");
-		if (launcher != null) {
-			launcher = launcher.substring(launcher.lastIndexOf('/') + 1);
-			launcher = launcher.substring(launcher.lastIndexOf('\\') + 1);
-			if (!launcher.startsWith("fiji"))
-				return;
-		}
+		if (launcher == null)
+			return;
+		launcher = launcher.substring(launcher.lastIndexOf('/') + 1);
+		launcher = launcher.substring(launcher.lastIndexOf('\\') + 1);
+		if (!launcher.startsWith("fiji"))
+			return;
 		System.err.println("=================== !!!WARNING!!! ===================\n"
 			+ "Fiji Build was started using the 'fiji' executable!!!\n"
 			+ "Please use 'ImageJ' next time.\n"

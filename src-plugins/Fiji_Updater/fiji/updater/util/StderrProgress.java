@@ -1,7 +1,8 @@
 package fiji.updater.util;
 
 public class StderrProgress implements Progress {
-	final static String end = "\033[K\r";
+	protected final static boolean redirected = System.console() == null;
+	protected final static String end = redirected ? "\n" : "\033[K\r";
 	protected String label;
 	protected Object item;
 	protected long lastShown, minShowDelay = 500;
@@ -54,7 +55,7 @@ public class StderrProgress implements Progress {
 	}
 
 	public void setItemCount(int count, int total) {
-		if (skipShow())
+		if (redirected || skipShow())
 			return;
 		print(label, "(" + item + ") [" + count + "/" + total + "]");
 	}
