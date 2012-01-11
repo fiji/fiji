@@ -17,11 +17,11 @@ public class WizardController implements ActionListener {
 	 */
 
 	private static final boolean DEBUG = false;
-	private Logger logger;
+	protected Logger logger;
 	/** The plugin piloted here. */
-	private TrackMate_ plugin;
+	protected TrackMate_ plugin;
 	/** The GUI controlled by this controller.  */
-	private TrackMateWizard wizard;
+	protected TrackMateWizard wizard;
 
 	/**
 	 * Is used to determine how to react to a 'next' button push. If it is set to true, then we are
