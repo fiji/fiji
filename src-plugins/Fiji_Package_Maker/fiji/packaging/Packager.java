@@ -60,7 +60,7 @@ public abstract class Packager {
 		addFile("Contents/Info.plist", false, progress);
 		plugins.sort();
 		for (PluginObject plugin : plugins)
-			addFile(plugin.filename, isLauncher(plugin.filename), progress);
+			addFile(plugin.filename, plugin.executable, progress);
 		if (progress != null)
 			progress.done();
 	}
@@ -83,18 +83,6 @@ public abstract class Packager {
 			progress.itemDone(fileName);
 		return true;
 	}
-
-	protected static boolean isLauncher(String fileName) {
-		if (fileName.startsWith("Fiji.app/"))
-			fileName = fileName.substring(9);
-		if (fileName.startsWith("Contents/MacOS/"))
-			fileName = fileName.substring(15);
-		if (fileName.endsWith(".exe"))
-			fileName = fileName.substring(0, fileName.length() - 4);
-		return fileName.equals("ImageJ") || fileName.equals("fiji") ||
-			fileName.startsWith("ImageJ-") || fileName.startsWith("fiji-");
-	}
-
 
 	public static void main(String[] args) {
 		Packager packager = null;
