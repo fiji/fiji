@@ -1,6 +1,7 @@
 package selection;
 
 import ij.gui.GenericDialog;
+import ij.gui.Overlay;
 
 import java.awt.Frame;
 import java.awt.event.ActionEvent;
@@ -33,5 +34,8 @@ public class DoneButtonListener implements ActionListener
 		
 		if ( frame != null )
 			frame.dispose();
+		
+		parent.imp1.setOverlay( new Overlay() );
+		parent.imp2.setOverlay( new Overlay() );
 	}
 }
