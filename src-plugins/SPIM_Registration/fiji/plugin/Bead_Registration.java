@@ -12,6 +12,7 @@ import ij.plugin.BrowserLauncher;
 import ij.plugin.PlugIn;
 
 import java.awt.AWTEvent;
+import java.awt.Checkbox;
 import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.TextField;
@@ -172,6 +173,7 @@ public class Bead_Registration implements PlugIn
 		gd.addCheckbox( "Re-use_segmented_beads", loadSegmentation );
 		gd.addChoice( "Bead_brightness", beadBrightness, beadBrightness[ defaultBeadBrightness ] );
 		gd.addCheckbox( "Override_file_dimensions", overrideResolution );
+		final Checkbox dimensionsBox = (Checkbox)gd.getCheckboxes().lastElement();
 		gd.addNumericField( "xy_resolution (um/px)", xyRes, 3 );
 		final TextField tfXyRes = (TextField) gd.getNumericFields().lastElement();
 		gd.addNumericField( "z_resolution (um/px)", zRes, 3 );
@@ -232,6 +234,7 @@ public class Bead_Registration implements PlugIn
 						// set dimension fields
 						if ( exp.pw != exp.ph )
 							IJ.log( "Warning: pixel width != pixel height in " + spimDataDirectory );
+						dimensionsBox.setState( true );
 						tfXyRes.setText( String.format( "%.3f", exp.pw ) );
 						tfZRes.setText( String.format( "%.3f", exp.pd ) );
 					}
