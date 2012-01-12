@@ -38,6 +38,7 @@ public class Package_Maker implements PlugIn {
 
 		List<Packager> packagers = new ArrayList<Packager>();
 		packagers.add(new ZipPackager());
+		try { packagers.add(new TarBz2Packager()); } catch (Exception e) { /* ignore */ }
 		packagers.add(new TarGzPackager());
 		packagers.add(new TarPackager());
 
