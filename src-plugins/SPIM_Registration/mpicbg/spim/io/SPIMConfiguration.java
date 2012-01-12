@@ -27,7 +27,7 @@ public class SPIMConfiguration
 	public int timepoints[];
 	public String anglePattern;	
 	public int angles[];
-	public int illuminations[];
+	public int illuminations[] = new int[ 1 ];
 
 	//public String angleString;
 	public String inputFilePattern;//spim_TL{i}_Angle\d*\.lsm
