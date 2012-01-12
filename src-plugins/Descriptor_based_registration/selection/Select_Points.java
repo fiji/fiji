@@ -35,6 +35,8 @@ public class Select_Points extends AbstractTrackingTool implements ToolToggleLis
 		clearToolsIfNecessary = true;
 	}
 
+	Frame frame;
+	
 	float standardWidth = 1;
 	float hightlightWidth = 2;
 	float selectWidth = 1;
@@ -82,7 +84,7 @@ public class Select_Points extends AbstractTrackingTool implements ToolToggleLis
 
 	public void initDisplay()
 	{
-		final Frame frame = new Frame( "Selected Landmarks" );
+		frame = new Frame( "Selected Landmarks" );
 		frame.setSize( 1000, 600 );        
 		
 		/* Instantiation */		
@@ -471,7 +473,24 @@ public class Select_Points extends AbstractTrackingTool implements ToolToggleLis
 	}
 
 	@Override
-	public void toolToggled(boolean enabled) {
+	public void toolToggled( final boolean enabled ) 
+	{
+		// reset active selections in any case
+		p1 = p2 = null;
+		radius1 = radius2 = 0;
+
+		if ( enabled )
+		{
+			frame.setVisible( true );
+			drawCurrentSelection();
+		}
+		else
+		{
+			frame.setVisible( false );
+			imp1.setOverlay( new Overlay() );
+			imp2.setOverlay( new Overlay() );
+		}
+				
 		//IJ.log(getToolName() + " was switched " + (enabled ? "on" : "off"));
 	}
 	
