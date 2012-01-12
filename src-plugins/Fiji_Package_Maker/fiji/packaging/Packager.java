@@ -101,8 +101,16 @@ public abstract class Packager {
 		if (args.length == 1) {
 			if (args[0].endsWith(".zip"))
 				packager = new ZipPackager();
-			else if (args[0].endsWith(".tar.gz"))
+			else if (args[0].endsWith(".tar"))
+				packager = new TarPackager();
+			else if (args[0].endsWith(".tar.gz") || args[0].endsWith(".tgz"))
 				packager = new TarGzPackager();
+			else if (args[0].endsWith(".tar.bz2") || args[0].endsWith(".tbz")) try {
+				packager = new TarBz2Packager();
+			} catch (ClassNotFoundException e) {
+				e.printStackTrace();
+				System.exit(1);
+			}
 			else {
 				System.err.println("Unsupported archive format: " + args[0]);
 				System.exit(1);
