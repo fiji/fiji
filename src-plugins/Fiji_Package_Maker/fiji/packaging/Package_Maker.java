@@ -23,22 +23,35 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 
+import java.util.ArrayList;
+import java.util.List;
+
+
 public class Package_Maker implements PlugIn {
+	protected int count, total;
+
 	public void run(String arg) {
 		PluginCollection plugins = new PluginCollection();
 		Progress progress = new IJProgress();
 		Checksummer checksummer = new Checksummer(plugins, progress);
 		checksummer.updateFromLocal();
 
-		String[] types = { "ZIP", "TGZ" };
-		Packager[] packagers = { new ZipPackager(), new TarGzPackager() };
+		List<Packager> packagers = new ArrayList<Packager>();
+		packagers.add(new ZipPackager());
+		packagers.add(new TarGzPackager());
+		packagers.add(new TarPackager());
+
+		String[] types = new String[packagers.size()];
+		for (int i = 0; i < types.length; i++)
+			types[i] = packagers.get(i).getExtension().substring(1).toUpperCase();
+
 		GenericDialogPlus gd = new GenericDialogPlus("Make Fiji Package");
 		gd.addChoice("Type", types, types[IJ.isWindows() ? 0 : 1]);
 		gd.showDialog();
 		if (gd.wasCanceled())
 			return;
 
-		Packager packager = packagers[gd.getNextChoiceIndex()];
+		Packager packager = packagers.get(gd.getNextChoiceIndex());
 
 		String platform = Util.platform;
 		String timestamp = Util.timestamp(System.currentTimeMillis());
@@ -61,10 +74,11 @@ public class Package_Maker implements PlugIn {
 		}
 	}
 
-	protected static void addDefaultFiles(Packager packager, PluginCollection plugins, Progress progress) throws IOException {
+	protected void addDefaultFiles(Packager packager, PluginCollection plugins, Progress progress) throws IOException {
 		if (progress != null) {
 			progress.setTitle("Packaging");
-			progress.setCount(0, 4 + plugins.size());
+			count = 0;
+			total = 4 + plugins.size();
 		}
 		addFile(packager, "db.xml.gz", false, progress);
 		// Maybe ImageJ or ImageJ.exe exist?
@@ -78,14 +92,17 @@ public class Package_Maker implements PlugIn {
 			progress.done();
 	}
 
-	protected static boolean addFile(Packager packager, String fileName, boolean executable, Progress progress) throws IOException {
+	protected boolean addFile(Packager packager, String fileName, boolean executable, Progress progress) throws IOException {
+		count++;
 		if (fileName.equals("ImageJ-macosx") || fileName.equals("ImageJ-tiger"))
 			fileName = "Contents/MacOS/" + fileName;
 		File file = new File(Util.prefix(fileName));
 		if (!file.exists())
 			return false;
-		if (progress != null)
+		if (progress != null) {
 			progress.addItem(fileName);
+			progress.setCount(count, total);
+		}
 		packager.putNextEntry("Fiji.app/" + fileName, executable, (int)file.length());
 		packager.write(new FileInputStream(file));
 		packager.closeEntry();
@@ -130,7 +147,7 @@ public class Package_Maker implements PlugIn {
 
 		try {
 			packager.open(new FileOutputStream(path));
-			addDefaultFiles(packager, plugins, progress);
+			new Package_Maker().addDefaultFiles(packager, plugins, progress);
 			packager.close();
 		}
 		catch (IOException e) {
