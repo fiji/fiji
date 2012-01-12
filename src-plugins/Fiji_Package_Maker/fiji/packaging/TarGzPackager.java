@@ -14,7 +14,7 @@ import java.util.zip.ZipOutputStream;
 public class TarGzPackager extends TarPackager {
 	@Override
 	public String getExtension() {
-		return ".tgz";
+		return ".tar.gz";
 	}
 
 	@Override
