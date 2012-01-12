@@ -2,7 +2,6 @@ package fiji.packaging;
 
 import fiji.updater.ui.ij1.IJProgress;
 
-import fiji.updater.util.StderrProgress;
 import fiji.updater.util.Util;
 
 import fiji.util.gui.GenericDialogPlus;
@@ -59,36 +58,6 @@ public class Package_Maker implements PlugIn {
 		catch (IOException e) {
 			e.printStackTrace();
 			IJ.error("Error writing " + path);
-		}
-	}
-
-	public static void main(String[] args) {
-		Packager packager = null;
-		if (args.length == 1) {
-			if (args[0].endsWith(".zip"))
-				packager = new ZipPackager();
-			else if (args[0].endsWith(".tar.gz"))
-				packager = new TarGzPackager();
-			else {
-				System.err.println("Unsupported archive format: " + args[0]);
-				System.exit(1);
-			}
-		}
-		else {
-			System.err.println("Usage: Package_Maker <filename>");
-			System.exit(1);
-		}
-		String path = args[0];
-
-		try {
-			packager.initialize(new StderrProgress());
-			packager.open(new FileOutputStream(path));
-			packager.addDefaultFiles();
-			packager.close();
-		}
-		catch (IOException e) {
-			e.printStackTrace();
-			System.err.println("Error writing " + path);
 		}
 	}
 }

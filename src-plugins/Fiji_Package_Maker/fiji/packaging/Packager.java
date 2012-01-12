@@ -5,10 +5,12 @@ import fiji.updater.logic.PluginCollection;
 import fiji.updater.logic.PluginObject;
 
 import fiji.updater.util.Progress;
+import fiji.updater.util.StderrProgress;
 import fiji.updater.util.Util;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -91,5 +93,36 @@ public abstract class Packager {
 			fileName = fileName.substring(0, fileName.length() - 4);
 		return fileName.equals("ImageJ") || fileName.equals("fiji") ||
 			fileName.startsWith("ImageJ-") || fileName.startsWith("fiji-");
+	}
+
+
+	public static void main(String[] args) {
+		Packager packager = null;
+		if (args.length == 1) {
+			if (args[0].endsWith(".zip"))
+				packager = new ZipPackager();
+			else if (args[0].endsWith(".tar.gz"))
+				packager = new TarGzPackager();
+			else {
+				System.err.println("Unsupported archive format: " + args[0]);
+				System.exit(1);
+			}
+		}
+		else {
+			System.err.println("Usage: Package_Maker <filename>");
+			System.exit(1);
+		}
+		String path = args[0];
+
+		try {
+			packager.initialize(new StderrProgress());
+			packager.open(new FileOutputStream(path));
+			packager.addDefaultFiles();
+			packager.close();
+		}
+		catch (IOException e) {
+			e.printStackTrace();
+			System.err.println("Error writing " + path);
+		}
 	}
 }
