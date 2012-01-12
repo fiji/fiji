@@ -43,7 +43,7 @@ public class Package_Maker implements PlugIn {
 		String platform = Util.platform;
 		String timestamp = Util.timestamp(System.currentTimeMillis());
 		String extension = packager.getExtension();
-		String fileName = "ImageJ-" + platform + "-" + timestamp;
+		String fileName = "fiji-" + platform + "-" + timestamp;
 		SaveDialog save = new SaveDialog("Make Fiji Package", fileName, extension);
 		if (save.getFileName() == null)
 			return;
