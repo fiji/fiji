@@ -11,8 +11,7 @@ import fiji.plugin.trackmate.segmentation.SpotSegmenter;
 public class SegmenterChoiceDescriptor implements WizardPanelDescriptor {
 
 	public static final String DESCRIPTOR = "SegmenterChoice";
-	@SuppressWarnings("rawtypes")
-	private ListChooserPanel<SpotSegmenter> component;
+	private ListChooserPanel<SpotSegmenter<? extends RealType<?>>> component;
 	private TrackMate_ plugin;
 	private TrackMateWizard wizard;
 
@@ -90,11 +89,10 @@ public class SegmenterChoiceDescriptor implements WizardPanelDescriptor {
 		wizard.registerWizardDescriptor(SegmenterConfigurationPanelDescriptor.DESCRIPTOR, descriptor);
 	}
 
-	@SuppressWarnings("rawtypes")
 	@Override
 	public void setPlugin(TrackMate_ plugin) {
 		this.plugin = plugin;
-		this.component = new ListChooserPanel<SpotSegmenter>(plugin.getAvailableSpotSegmenters(), "segmenter");
+		this.component = new ListChooserPanel<SpotSegmenter<? extends RealType<?>>>(plugin.getAvailableSpotSegmenters(), "segmenter");
 		setCurrentChoiceFromPlugin();
 	}
 

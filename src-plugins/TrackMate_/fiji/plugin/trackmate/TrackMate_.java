@@ -55,18 +55,18 @@ import org.jgrapht.graph.SimpleWeightedGraph;
 
 
 /**
- * <p>The TrackMate_ class runs on the currently active time lapse image (2D or 3D) 
- * and both identifies and tracks bright blobs over time.</p>
+ * <p>The TrackMate_ class runs on the currently active time-lapse image (2D or 3D) 
+ * and both identifies and tracks bright spots over time.</p>
  * 
  * <p><b>Required input:</b> A 2D or 3D time-lapse image with bright blobs.</p>
  *
- * @author Nicholas Perry, Jean-Yves Tinevez - Institut Pasteur - July 2010 - 2011
+ * @author Nicholas Perry, Jean-Yves Tinevez - Institut Pasteur - July 2010 - 2011 - 2012
  *
  */
 public class TrackMate_ implements PlugIn {
 
 	public static final String PLUGIN_NAME_STR = "Track Mate";
-	public static final String PLUGIN_NAME_VERSION = ".beta_2011-10-20";
+	public static final String PLUGIN_NAME_VERSION = ".beta_2012-01-13";
 	public static final boolean DEFAULT_USE_MULTITHREADING = true;
 
 	private TrackMateModel model;
@@ -75,8 +75,7 @@ public class TrackMate_ implements PlugIn {
 	private List<SpotFeatureAnalyzer> spotFeatureAnalyzers;
 	private List<TrackFeatureAnalyzer> trackFeatureAnalyzers;
 	/** The list of {@link SpotSegmenter} that will be offered to choose amongst to the user. */
-	@SuppressWarnings("rawtypes")
-	private List<SpotSegmenter> spotSegmenters;
+	private List<SpotSegmenter<? extends RealType<?>>> spotSegmenters;
 	/** The list of {@link TrackMateModelView} that will be offered to choose amongst to the user. */
 	private List<TrackMateModelView> trackMateModelViews;
 	/** The list of {@link TrackMateModelView} that will be offered to choose amongst to the user. */
@@ -159,9 +158,9 @@ public class TrackMate_ implements PlugIn {
 	 * Override it to add your own segmenter.
 	 * @return
 	 */
-	@SuppressWarnings("rawtypes")
-	protected List<SpotSegmenter> createSegmenterList() {
-		List<SpotSegmenter> spotSegmenters = new ArrayList<SpotSegmenter>(4);
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	protected List<SpotSegmenter<? extends RealType<?>>> createSegmenterList() {
+		List<SpotSegmenter<? extends RealType<?>>> spotSegmenters = new ArrayList<SpotSegmenter<? extends RealType<?>>>(4);
 		spotSegmenters.add(new LogSegmenter());
 		spotSegmenters.add(new DogSegmenter());
 		spotSegmenters.add(new DownSampleLogSegmenter());
@@ -262,8 +261,7 @@ public class TrackMate_ implements PlugIn {
 	/**
 	 * Return a list of the {@link SpotSegmenter} that are currently registered in this plugin.
 	 */
-	@SuppressWarnings("rawtypes")
-	public List<SpotSegmenter> getAvailableSpotSegmenters() {
+	public List<SpotSegmenter<? extends RealType<?>>> getAvailableSpotSegmenters() {
 		return spotSegmenters;
 	}
 	
