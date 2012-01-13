@@ -1,6 +1,5 @@
 package mpicbg.spim.registration;
 
-import spimopener.SPIMExperiment;
 import ij.IJ;
 import ij.ImagePlus;
 
@@ -25,6 +24,7 @@ import mpicbg.spim.mpicbg.TileSPIM;
 import mpicbg.spim.registration.bead.BeadStructure;
 import mpicbg.spim.registration.bead.error.ViewErrorStatistics;
 import mpicbg.spim.registration.segmentation.NucleusStructure;
+import spimopener.SPIMExperiment;
 
 public class ViewDataBeads implements Comparable< ViewDataBeads >
 {

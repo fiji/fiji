@@ -244,6 +244,13 @@ public class Bead_Registration implements PlugIn
 				return true;
 			}
 		} );
+		System.out.println( "init Bead_Registration dialog: tfSpimDataDirectory.getText() = " + tfSpimDataDirectory.getText() );
+		File f = new File( tfSpimDataDirectory.getText() );
+		if ( f.exists() && f.isFile() && f.getName().endsWith( ".xml" ) )
+		{
+			// disable file pattern field
+			tfFilePattern.setEnabled( false );
+		}
 		gd.showDialog();
 		
 		if ( gd.wasCanceled() )
@@ -314,7 +321,7 @@ public class Bead_Registration implements PlugIn
 		conf.anglePattern = angles;
 		conf.inputFilePattern = fileNamePattern;
 
-		File f = new File( spimDataDirectory );
+		f = new File( spimDataDirectory );
 		if ( f.exists() && f.isFile() && f.getName().endsWith( ".xml" ) )
 		{
 			conf.spimExperiment = new SPIMExperiment( f.getAbsolutePath() );
@@ -773,6 +780,7 @@ public class Bead_Registration implements PlugIn
 		{
 			text.addMouseListener(new MouseAdapter()
 			{
+				@Override
 				public void mouseClicked(MouseEvent e)
 				{
 					try
@@ -785,12 +793,14 @@ public class Bead_Registration implements PlugIn
 					}
 				}
 	
+				@Override
 				public void mouseEntered(MouseEvent e)
 				{
 					text.setForeground(Color.BLUE);
 					text.setCursor(new Cursor(Cursor.HAND_CURSOR));
 				}
 	
+				@Override
 				public void mouseExited(MouseEvent e)
 				{
 					text.setForeground(Color.BLACK);
