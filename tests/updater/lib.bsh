@@ -69,7 +69,7 @@ prepareNewFijiRoot(root, asDeveloper) {
 
 	toCopy = new String[] {
 		"ImageJ",
-		"jars/ij.jar", "jars/Fiji.jar", "plugins/Fiji_Updater.jar",
+		"jars/ij.jar", "jars/ij-launcher.jar", "plugins/Fiji_Updater.jar",
 		"jars/bsh-2.0b4.jar", "jars/jsch-0.1.44.jar", "jars/javassist.jar"
 	};
 

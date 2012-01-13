@@ -2729,8 +2729,9 @@ public class WekaSegmentation {
 			updateFeatures = false;
 			updateWholeData = true;
 			long end = System.currentTimeMillis();
-			IJ.log("Feature stack is now updated (" + (end-start) + "ms).");
-			IJ.log("Feature stack array is now updated.");
+			IJ.log("Feature stack array is now updated (" + featureStackArray.getSize() 
+					+ " slice(s) with " + featureStackArray.getNumOfFeatures() 
+					+ " features, took " + (end-start) + "ms).");
 		}
 
 		IJ.showStatus("Creating training instances...");
@@ -3170,7 +3171,9 @@ public class WekaSegmentation {
 			updateFeatures = false;
 			updateWholeData = true;
 			long end = System.currentTimeMillis();
-			IJ.log("Feature stack is now updated (" + (end-start) + "ms).");
+			IJ.log("Feature stack array is now updated (" + featureStackArray.getSize() 
+					+ " slice(s) with " + featureStackArray.getNumOfFeatures() 
+					+ " features, took " + (end-start) + "ms).");
 		}
 		
 		/*

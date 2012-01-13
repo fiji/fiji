@@ -173,6 +173,16 @@ public class PluginDetails extends JTextPane implements UndoableEditListener {
 		addEditableRegion(offset, "Description", plugin);
 	}
 
+	public void executable(PluginObject plugin) {
+		if (!updaterFrame.plugins.hasUploadableSites() && !plugin.executable)
+			return;
+		blankLine();
+		bold("Executable:\n");
+		int offset = getCaretPosition();
+		normal(plugin.executable ? "true" : "false");
+		addEditableRegion(offset, "Executable", plugin);
+	}
+
 	public void list(String label, boolean showLinks,
 			Iterable items, String delim, PluginObject plugin) {
 		List<Object> list = new ArrayList<Object>();
@@ -254,6 +264,9 @@ public class PluginDetails extends JTextPane implements UndoableEditListener {
 		list("Link", true, plugin.getLinks(), "\n", plugin);
 		list("Dependency", false, plugin.getDependencies(), ",\n",
 				plugin);
+		int dot = plugin.getFilename().lastIndexOf('.');
+		if (plugin.executable || dot < 0 || plugin.getFilename().substring(dot).equalsIgnoreCase(".exe"))
+			executable(plugin);
 		if (plugin.updateSite != null &&
 				!plugin.updateSite.equals(PluginCollection.DEFAULT_UPDATE_SITE)) {
 			blankLine();
@@ -340,7 +353,11 @@ public class PluginDetails extends JTextPane implements UndoableEditListener {
 
 		editable.plugin.metadataChanged = true;
 		if (editable.tag.equals("Description")) {
-			editable.plugin.description = text;
+			editable.plugin.description = text.trim();
+			return true;
+		}
+		else if (editable.tag.equals("Executable")) {
+			editable.plugin.executable = "true".equalsIgnoreCase(text.trim());
 			return true;
 		}
 		String[] list = text.split(editable.tag.equals("Link") ?

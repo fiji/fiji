@@ -112,10 +112,7 @@ public class PlugInExecutor {
 				InvocationTargetException,
 				NoSuchMethodException {
 		ClassLoader classLoader = newClassLoader ?
-			new FijiClassLoader(new String[] {
-				IJ.getDirectory("plugins"),
-				System.getProperty("ij.dir") + "/jars"
-			}) : getClassLoader();
+			new FijiClassLoader(true) : getClassLoader();
 		if (newClassLoader && jarPath != null)
 			((FijiClassLoader)classLoader).addPath(jarPath);
 		Class clazz;

@@ -1,4 +1,4 @@
-package fiji;
+package imagej;
 
 import java.io.File;
 

@@ -1830,7 +1830,7 @@ public class Trainable_Segmentation implements PlugIn
 					final FeatureStack testImageFeatures = new FeatureStack(testSlice);
 					// Use the same features as the current classifier
 					testImageFeatures.setEnabledFeatures(featureStack.getEnabledFeatures());
-					testImageFeatures.updateFeatures();
+					testImageFeatures.updateFeaturesST();
 	
 					final Instances testData = testImageFeatures.createInstances(classNames);
 					testData.setClassIndex(testData.numAttributes() - 1);
@@ -1872,7 +1872,7 @@ public class Trainable_Segmentation implements PlugIn
 			} catch (InterruptedException e) {}
 		}
 
-		// assamble probability image
+		// assemble probability image
 		for (int i = 0; i < testImage.getStackSize()*numOfClasses; i++)
 			probStack.addSlice(probSlices[i].getTitle(), probSlices[i].getProcessor().convertToByte(true).duplicate());
 

@@ -586,6 +586,12 @@ public class MiniMaven {
 				localPOMCache.put(key, null);
 				return null;
 			}
+			path += dependency.version + "/";
+			if (dependency.version.endsWith("-SNAPSHOT")) try {
+				if (!maybeDownloadAutomatically(dependency, quiet))
+					return null;
+				dependency.version = parseSnapshotVersion(new File(path));
+			} catch (FileNotFoundException e) { /* ignore */ }
 			else {
 				for (String jarName : new String[] {
 					"jars/" + dependency.artifactId + "-" + dependency.version + ".jar",
@@ -601,12 +607,6 @@ public class MiniMaven {
 					}
 				}
 			}
-			path += dependency.version + "/";
-			if (dependency.version.endsWith("-SNAPSHOT")) try {
-				if (!maybeDownloadAutomatically(dependency, quiet))
-					return null;
-				dependency.version = parseSnapshotVersion(new File(path));
-			} catch (FileNotFoundException e) { /* ignore */ }
 			path += dependency.getPOMName();
 
 			File file = new File(path);
@@ -905,11 +905,12 @@ public class MiniMaven {
 	protected File download(URL url, File directory, String fileName, String message) throws IOException {
 		if (offlineMode)
 			throw new RuntimeException("Offline!");
+		if (verbose)
+			err.println("Trying to download " + url);
 		if (fileName == null) {
 			fileName = url.getPath();
 			fileName = fileName.substring(fileName.lastIndexOf('/') + 1);
 		}
-
 		InputStream in = url.openStream();
 		if (message != null)
 			err.println(message);

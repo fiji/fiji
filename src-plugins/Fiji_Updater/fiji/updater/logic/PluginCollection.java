@@ -34,7 +34,7 @@ import org.xml.sax.SAXException;
 public class PluginCollection extends ArrayList<PluginObject> {
 	public final static String DEFAULT_UPDATE_SITE = "Fiji";
 
-	public static class UpdateSite {
+	public static class UpdateSite implements Cloneable {
 		public String url, sshHost, uploadDirectory;
 		public long timestamp;
 
@@ -54,6 +54,10 @@ public class PluginCollection extends ArrayList<PluginObject> {
 			this.sshHost = sshHost;
 			this.uploadDirectory = uploadDirectory;
 			this.timestamp = timestamp;
+		}
+
+		public Object clone() {
+			return new UpdateSite(url, sshHost, uploadDirectory, timestamp);
 		}
 
 		public boolean isLastModified(long lastModified) {
@@ -128,6 +132,8 @@ public class PluginCollection extends ArrayList<PluginObject> {
 		Collection<String> set = new HashSet<String>();
 		for (PluginObject plugin : toUpload(true))
 			set.add(plugin.updateSite);
+		for (PluginObject plugin : toRemove())
+			set.add(plugin.updateSite);
 		// keep the update sites' order
 		List<String> result = new ArrayList<String>();
 		for (String name : getUpdateSiteNames())
@@ -195,6 +201,11 @@ public class PluginCollection extends ArrayList<PluginObject> {
 		for (PluginObject plugin : iterable)
 			result.add(plugin);
 		return result;
+	}
+
+	public void cloneUpdateSites(PluginCollection other) {
+		for (String name : other.updateSites.keySet())
+			updateSites.put(name, (UpdateSite)other.updateSites.get(name).clone());
 	}
 
 	public Iterable<PluginObject> toUploadOrRemove() {
@@ -652,7 +663,7 @@ public class PluginCollection extends ArrayList<PluginObject> {
 	}
 
 	public void sort() {
-		// first letters in this order: 'f', 'p', 'j', 's', 'i', 'm'
+		// first letters in this order: 'I', 'f', 'p', 'j', 's', 'i', 'm', 'l, 'r'
 		Collections.sort(this, new Comparator<PluginObject>() {
 			public int compare(PluginObject a, PluginObject b) {
 				int result = firstChar(a) - firstChar(b);
@@ -662,7 +673,7 @@ public class PluginCollection extends ArrayList<PluginObject> {
 
 			int firstChar(PluginObject plugin) {
 				char c = plugin.filename.charAt(0);
-				int index =  "fpjsim".indexOf(c);
+				int index =  "Ifpjsimlr".indexOf(c);
 				return index < 0 ? 0x200 + c : index;
 			}
 		});

@@ -201,7 +201,7 @@ public class InspectJar implements Iterable<JarEntry> {
 		String ijDir = System.getProperty("ij.dir");
 		try {
 			for (String className : getClassNames(new String[] {
-				ijDir + "/jars/Fiji.jar",
+				ijDir + "/jars/ij-launcher.jar",
 				ijDir + "/jars/zs.jar",
 				ijDir + "/plugins/CLI_.jar"
 			}))
