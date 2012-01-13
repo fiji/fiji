@@ -27,7 +27,7 @@ public class SPIMConfiguration
 	public int timepoints[];
 	public String anglePattern;	
 	public int angles[];
-	public int illuminations[] = new int[ 1 ];
+	public int illuminations[];
 
 	//public String angleString;
 	public String inputFilePattern;//spim_TL{i}_Angle\d*\.lsm
@@ -661,7 +661,8 @@ public class SPIMConfiguration
 		parseTimePoints();
 		parseAngles();
 		parseChannels();
-		
+		parseIlluminations();
+
 		if ( replaceAngle.equals( "\\" ) )
 			throw new ConfigurationParserException("You gave no pattern to substitute the angles in the file name");
 		
