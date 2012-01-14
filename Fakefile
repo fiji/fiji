@@ -640,7 +640,7 @@ precompile[] <- precompile-ImageJ precompile-fake precompile-submodules
 
 # precompiled fall back
 
-missingPrecompiledFallBack[./ImageJ --update update $TARGET] <- \
+missingPrecompiledFallBack[./ImageJ --update update $TARGET] <- ImageJ \
 	jars/ij-launcher.jar jars/fiji-compat.jar plugins/Fiji_Updater.jar
 
 # Portable application/.app
