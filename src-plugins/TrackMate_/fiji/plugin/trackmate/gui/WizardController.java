@@ -1,10 +1,15 @@
 package fiji.plugin.trackmate.gui;
 
+import ij.IJ;
+
 import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.List;
+
+import javax.swing.UIManager;
+import javax.swing.UnsupportedLookAndFeelException;
 
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.TrackMate_;
@@ -32,12 +37,28 @@ public class WizardController implements ActionListener {
 	boolean actionFlag = true;
 	private boolean oldNextButtonState;
 	private boolean oldPreviousButtonState;
-	
+
 	/*
 	 * CONSTRUCTOR
 	 */
 
 	public WizardController(final TrackMate_ plugin) {
+
+		// I can't stand the metal look. If this is a problem, contact me (jeanyves.tinevez@gmail.com)
+		if (IJ.isMacOSX() || IJ.isWindows()) {
+			try {
+				UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+			} catch (ClassNotFoundException e) {
+				e.printStackTrace();
+			} catch (InstantiationException e) {
+				e.printStackTrace();
+			} catch (IllegalAccessException e) {
+				e.printStackTrace();
+			} catch (UnsupportedLookAndFeelException e) {
+				e.printStackTrace();
+			}
+		}
+
 		this.plugin = plugin;
 		Component window;
 		if (plugin.getModel().getSettings().imp != null && plugin.getModel().getSettings().imp.getWindow() != null ) {
@@ -51,7 +72,7 @@ public class WizardController implements ActionListener {
 		plugin.setLogger(logger);
 		wizard.setVisible(true);
 		wizard.addActionListener(this);
-		
+
 		// Instantiate and pass panel descriptors to the wizard
 		List<WizardPanelDescriptor> descriptors = createWizardPanelDescriptorList();
 		for(WizardPanelDescriptor descriptor : descriptors) {
@@ -59,14 +80,14 @@ public class WizardController implements ActionListener {
 			descriptor.setWizard(wizard);
 			wizard.registerWizardDescriptor(descriptor.getDescriptorID(), descriptor);
 		}
-		
+
 		init();
 	}
-	
+
 	/*
 	 * PUBLIC METHODS 
 	 */
-	
+
 	/**
 	 * Expose the {@link TrackMateWizard} instance controlled here.
 	 */
@@ -77,7 +98,7 @@ public class WizardController implements ActionListener {
 	/*
 	 * PROTECTED METHODS
 	 */
-	
+
 	/**
 	 * Display the first panel
 	 */
@@ -85,7 +106,7 @@ public class WizardController implements ActionListener {
 		// We need to listen to events happening on the DisplayerPanel
 		DisplayerPanel displayerPanel = (DisplayerPanel) wizard.getPanelDescriptorFor(DisplayerPanel.DESCRIPTOR);
 		displayerPanel.addActionListener(this);
-		
+
 		// Get start panel id
 		wizard.setPreviousButtonEnabled(false);
 		String id = StartDialogPanel.DESCRIPTOR;
@@ -112,24 +133,24 @@ public class WizardController implements ActionListener {
 		List<WizardPanelDescriptor> descriptors = new ArrayList<WizardPanelDescriptor>(14);
 		descriptors.add(new StartDialogPanel());
 		descriptors.add(new SegmenterChoiceDescriptor());
-//		descriptors.add(new SegmenterConfigurationPanelDescriptor()); // will be instantiated on the fly, see SegmenterChoiceDescriptor
+		//		descriptors.add(new SegmenterConfigurationPanelDescriptor()); // will be instantiated on the fly, see SegmenterChoiceDescriptor
 		descriptors.add(new SegmentationDescriptor());
 		descriptors.add(new InitFilterPanel());
 		descriptors.add(new DisplayerChoiceDescriptor());
 		descriptors.add(new LaunchDisplayerDescriptor());
 		descriptors.add(new SpotFilterDescriptor());
 		descriptors.add(new TrackerChoiceDescriptor());
-//		descriptors.add(new TrackerConfigurationPanelDescriptor());  // will be instantiated on the fly, see TrackerChoiceDescriptor
+		//		descriptors.add(new TrackerConfigurationPanelDescriptor());  // will be instantiated on the fly, see TrackerChoiceDescriptor
 		descriptors.add(new TrackingDescriptor());
 		descriptors.add(new TrackFilterDescriptor());
 		descriptors.add(new DisplayerPanel());
 		descriptors.add(new ActionChooserPanel(plugin));
-		
+
 		descriptors.add(new LoadDescriptor());
 		descriptors.add(new SaveDescriptor());
 		return descriptors;
 	}
-	
+
 	/*
 	 * ACTION LISTENER
 	 */
@@ -179,7 +200,7 @@ public class WizardController implements ActionListener {
 			actionFlag = true;
 			String id = wizard.getCurrentPanelDescriptor().getNextDescriptorID();
 			wizard.showDescriptorPanelFor(id);
-			
+
 			// Put back buttons
 			wizard.jButtonNext.setText("Next");
 			wizard.setLoadButtonEnabled(true);
@@ -205,10 +226,10 @@ public class WizardController implements ActionListener {
 
 		}
 	}
-	
-	
+
+
 	private void next() {
-		
+
 		// Execute leave action of the old panel
 		WizardPanelDescriptor oldDescriptor = wizard.getCurrentPanelDescriptor();
 		if (oldDescriptor != null) {
@@ -217,24 +238,24 @@ public class WizardController implements ActionListener {
 
 		String id = oldDescriptor.getNextDescriptorID();
 		WizardPanelDescriptor panelDescriptor  = wizard.getPanelDescriptorFor(id);
-		
+
 		// Check if the new panel has a next panel. If not, disable the next button
 		if (null == panelDescriptor.getNextDescriptorID()) {
 			wizard.setNextButtonEnabled(false);
 		}
-		
+
 		// Re-enable the previous button, in case it was disabled
 		wizard.setPreviousButtonEnabled(true);
-		
+
 		// Execute about to be displayed action of the new one
 		panelDescriptor.aboutToDisplayPanel();
-		
+
 		// Display matching panel
 		wizard.showDescriptorPanelFor(id);
 
 		//  Show the panel in the dialog, and execute action after display
 		panelDescriptor.displayingPanel();        
-		
+
 	}
 
 	private void previous() {
@@ -256,7 +277,7 @@ public class WizardController implements ActionListener {
 	private void load() {
 		// Store current state
 		WizardPanelDescriptor oldDescriptor = wizard.getCurrentPanelDescriptor();
-		
+
 		// Move to load state and execute
 		LoadDescriptor loadDescriptor = (LoadDescriptor) wizard.getPanelDescriptorFor(LoadDescriptor.DESCRIPTOR);
 		loadDescriptor.setTargetNextID(oldDescriptor.getDescriptorID());
@@ -266,7 +287,7 @@ public class WizardController implements ActionListener {
 
 		// Update GUI with loaded plugin
 		plugin = loadDescriptor.plugin;
-		
+
 		// Enable or disable next and previous button depending on the
 		// target descriptor.
 		WizardPanelDescriptor nextPanel = wizard.getPanelDescriptorFor(loadDescriptor.getNextDescriptorID());
@@ -280,7 +301,7 @@ public class WizardController implements ActionListener {
 		} else {
 			oldPreviousButtonState = true;
 		}
-		
+
 	}
 
 	private void save() {

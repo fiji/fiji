@@ -56,6 +56,7 @@ public class TrackMateWizard extends javax.swing.JFrame implements ActionListene
 	private static final Icon PREVIOUS_ICON = new ImageIcon(TrackMateWizard.class.getResource("images/arrow_left.png"));
 	private static final Icon LOAD_ICON = new ImageIcon(TrackMateWizard.class.getResource("images/page_go.png"));
 	private static final Icon SAVE_ICON = new ImageIcon(TrackMateWizard.class.getResource("images/page_save.png"));
+	private static final ImageIcon TRACKMATE_ICON = new ImageIcon(TrackMateWizard.class.getResource("images/trackmate-icon.png"));
 
 	/*
 	 * DEFAULT VISIBILITY FIELDS
@@ -280,6 +281,7 @@ public class TrackMateWizard extends javax.swing.JFrame implements ActionListene
 	private void initGUI() {
 		try {
 			setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+			setIconImage(TRACKMATE_ICON.getImage());
 			this.setTitle(fiji.plugin.trackmate.TrackMate_.PLUGIN_NAME_STR + " v"+fiji.plugin.trackmate.TrackMate_.PLUGIN_NAME_VERSION);
 			this.setResizable(false);
 			{
