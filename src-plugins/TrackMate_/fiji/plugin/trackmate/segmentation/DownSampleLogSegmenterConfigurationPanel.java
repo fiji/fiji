@@ -48,7 +48,7 @@ public class DownSampleLogSegmenterConfigurationPanel extends LogSegmenterConfig
 	public SegmenterSettings getSegmenterSettings() {
 		LogSegmenterSettings lss = (LogSegmenterSettings) super.getSegmenterSettings();
 		DownSampleLogSegmenterSettings dss = copyToDSLSS(lss);
-		dss.downSamplingFactor = Float.parseFloat(jTextFieldDownSample.getText());
+		dss.downSamplingFactor = Integer.parseInt(jTextFieldDownSample.getText());
 		return dss;
 	}
 	

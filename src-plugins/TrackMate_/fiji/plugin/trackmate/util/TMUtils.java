@@ -107,16 +107,20 @@ public class TMUtils {
 	 */
 	
 	public static  final int readIntAttribute(Element element, String name, Logger logger) {
-		int val = 0;
+		return readIntAttribute(element, name, logger, 0);
+	}
+	
+	public static  final int readIntAttribute(Element element, String name, Logger logger, int defaultValue) {
+		int val = defaultValue;
 		Attribute att = element.getAttribute(name);
 		if (null == att) {
-			logger.error("Could not find attribute "+name+" for element "+element.getName()+", substituting default value.\n");
+			logger.error("Could not find attribute "+name+" for element "+element.getName()+", substituting default value: "+defaultValue+".\n");
 			return val;
 		}
 		try {
 			val = att.getIntValue();
 		} catch (DataConversionException e) {	
-			logger.error("Cannot read the attribute "+name+" of the element "+element.getName()+", substituting default value.\n"); 
+			logger.error("Cannot read the attribute "+name+" of the element "+element.getName()+", substituting default value: "+defaultValue+".\n");
 		}
 		return val;
 	}

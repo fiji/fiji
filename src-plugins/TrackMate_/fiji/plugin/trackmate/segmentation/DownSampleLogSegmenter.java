@@ -1,12 +1,9 @@
 package fiji.plugin.trackmate.segmentation;
 
-import static fiji.plugin.trackmate.Spot.POSITION_X;
-import static fiji.plugin.trackmate.Spot.POSITION_Y;
-import static fiji.plugin.trackmate.Spot.POSITION_Z;
-import mpicbg.imglib.algorithm.gauss.DownSample;
+import mpicbg.imglib.cursor.LocalizableByDimCursor;
+import mpicbg.imglib.cursor.LocalizableCursor;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.type.numeric.RealType;
-import fiji.plugin.trackmate.Spot;
 
 public class DownSampleLogSegmenter <T extends RealType<T> > extends AbstractSpotSegmenter<T> {
 
@@ -52,56 +49,75 @@ public class DownSampleLogSegmenter <T extends RealType<T> > extends AbstractSpo
 
 	@Override
 	public boolean process() {
+		
+		// 0. Prepare new dimensions
 
-		// 1. Downsample the image
-		float downSamplingFactor = settings.downSamplingFactor;
-		DownSample<T> downsampler = new DownSample<T>(img, 1 / downSamplingFactor );
-		if (!downsampler.checkInput() || !downsampler.process()) {
-			errorMessage = BASE_ERROR_MESSAGE + downsampler.getErrorMessage();
-			return false;
+		int downSamplingFactor = settings.downSamplingFactor;
+		int[] dimensions = new int[img.getNumDimensions()];
+		int[] dsarr = new int[img.getNumDimensions()];
+		float[] dwnCalibration = new float[img.getNumDimensions()];
+		for (int i = 0; i < 2; i++) {
+			dimensions[i] = img.getDimension(i) / downSamplingFactor;
+			dsarr[i] = downSamplingFactor;
+			dwnCalibration[i] = calibration[i] * downSamplingFactor;
 		}
-		Image<T> downsampled = downsampler.getResult();
+		if (img.getNumDimensions() > 2) {
+			// 3D
+			float zratio = calibration[2] / calibration[0]; // Z spacing is how much bigger
+			int zdownsampling = (int) (downSamplingFactor / zratio); // temper z downsampling
+			zdownsampling = Math.max(1, zdownsampling); // but at least 1
+			dimensions[2] = img.getDimension(2) / zdownsampling;
+			dsarr[2] = zdownsampling;
+			dwnCalibration[2] = calibration[2] * zdownsampling;
+		}
+		
+		// 1. Downsample the image
+
+		Image<T> downsampled = img.createNewImage(dimensions);
+		LocalizableCursor<T> dwnCursor = downsampled.createLocalizableCursor();
+		LocalizableByDimCursor<T> srcCursor = img.createLocalizableByDimCursor();
+		int[] pos = dwnCursor.createPositionArray();
+		
+		while (dwnCursor.hasNext()) {
+			dwnCursor.fwd();
+			dwnCursor.getPosition(pos);
+			
+			// Scale up position
+			for (int i = 0; i < pos.length; i++) {
+				pos[i] = pos[i] * dsarr[i];
+			}
+			
+			// Pass it to source cursor
+			srcCursor.setPosition(pos);
+			
+			// Copy pixel data
+			dwnCursor.getType().set(srcCursor.getType());
+		}
+		dwnCursor.close();
+		srcCursor.close();
 
 		// 2. Segment downsampled image
 
 		// 2.1. Create settings object
 		LogSegmenterSettings logSettings = new LogSegmenterSettings();
-		logSettings.expectedRadius = settings.expectedRadius / downSamplingFactor;
+		logSettings.expectedRadius = settings.expectedRadius; 
 		logSettings.threshold = settings.threshold;
-		logSettings.doSubPixelLocalization = false;
+		logSettings.doSubPixelLocalization = true;;
 		logSettings.useMedianFilter = settings.useMedianFilter;
 
 		// 2.2 Instantiate segmenter
 		LogSegmenter<T> segmenter = new LogSegmenter<T>();
-		segmenter.setTarget(downsampled, calibration, logSettings);
+		segmenter.setTarget(downsampled, dwnCalibration, logSettings);
 
 		// 2.3 Execute segmentation
 		if (!segmenter.checkInput() || !segmenter.process()) {
 			errorMessage = BASE_ERROR_MESSAGE + segmenter.getErrorMessage();
 			return false;
 		}
+		
+		// 3. Benefits
 		spots = segmenter.getResult();
-
-		// Rescale spots
-
-		if (img.getDimension(2) > 1) {
-			for(Spot spot : spots) {
-				float x = spot.getFeature(POSITION_X);
-				spot.putFeature(POSITION_X, x * downSamplingFactor);
-				float y = spot.getFeature(POSITION_Y);
-				spot.putFeature(POSITION_Y, y * downSamplingFactor);
-				float z = spot.getFeature(POSITION_Z);
-				spot.putFeature(POSITION_Z, z * downSamplingFactor);
-			} 
-		} else {
-			for(Spot spot : spots) {
-				float x = spot.getFeature(POSITION_X);
-				spot.putFeature(POSITION_X, x * downSamplingFactor);
-				float y = spot.getFeature(POSITION_Y);
-				spot.putFeature(POSITION_Y, y * downSamplingFactor);
-			}
-		}
-
+		
 		return true;
 	}
 
@@ -109,7 +125,7 @@ public class DownSampleLogSegmenter <T extends RealType<T> > extends AbstractSpo
 	public String getInfoText() {
 		return "<html>" +
 				"This segmenter is basically identical to the LoG segmenter, except <br>" +
-				"that images are downsampled before filtering, giving it a small <br>" +
+				"that images are downsampled before filtering, giving it a good <br>" +
 				"kick in speed, particularly for large spot sizes. It is the fastest for <br>" +
 				"large spot sizes (>&nbsp;~20 pixels), at the cost of precision in localization. " +
 				"</html>";

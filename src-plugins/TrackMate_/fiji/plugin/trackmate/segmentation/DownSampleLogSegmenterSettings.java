@@ -6,7 +6,9 @@ import java.util.List;
 import org.jdom.Attribute;
 import org.jdom.Element;
 
+import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.gui.SegmenterConfigurationPanel;
+import fiji.plugin.trackmate.util.TMUtils;
 
 /**
  * A segmenter settings object valid for the down-sampling Log segmenter.
@@ -19,14 +21,14 @@ public class DownSampleLogSegmenterSettings extends BasicSegmenterSettings {
 	private static final String SEGMENTER_SETTINGS_USE_MEDIAN_ATTRIBUTE_NAME			= "usemedianfilter";
 	private static final String SEGMENTER_SETTINGS_DOWN_SAMPLE_FACTOR_ATTRIBUTE_NAME	= "downsamplingfactor";
 
-	private static final float 	DEFAULT_DOWNSAMPLING_FACTOR = 4;
+	private static final int 	DEFAULT_DOWNSAMPLING_FACTOR = 4;
 	
 	/** The pixel value under which any peak will be discarded from further analysis. */
 	public float 	threshold = 		0;
 	/** If true, a median filter will be applied before segmenting. */
 	public boolean useMedianFilter;
 	/** By how much the source image will be down-sampled before filtering.	 */
-	public float downSamplingFactor = DEFAULT_DOWNSAMPLING_FACTOR;
+	public int downSamplingFactor = DEFAULT_DOWNSAMPLING_FACTOR;
 	
 	
 	@Override
@@ -58,9 +60,9 @@ public class DownSampleLogSegmenterSettings extends BasicSegmenterSettings {
 			threshold = val;
 		} catch (NumberFormatException nfe) { }
 		useMedianFilter = Boolean.parseBoolean(element.getAttributeValue(SEGMENTER_SETTINGS_USE_MEDIAN_ATTRIBUTE_NAME));
+		
 		try {
-			float val = Float.parseFloat(element.getAttributeValue(SEGMENTER_SETTINGS_DOWN_SAMPLE_FACTOR_ATTRIBUTE_NAME));
-			downSamplingFactor = val;
+			downSamplingFactor = TMUtils.readIntAttribute(element, SEGMENTER_SETTINGS_DOWN_SAMPLE_FACTOR_ATTRIBUTE_NAME, Logger.VOID_LOGGER, DEFAULT_DOWNSAMPLING_FACTOR);
 		} catch (NumberFormatException nfe) { }
 	}
 	
