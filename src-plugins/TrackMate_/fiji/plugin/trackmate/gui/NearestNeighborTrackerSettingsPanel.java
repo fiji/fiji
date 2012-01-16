@@ -37,7 +37,10 @@ public class NearestNeighborTrackerSettingsPanel extends TrackerConfigurationPan
 		NearestNeighborTrackerSettings settings = (NearestNeighborTrackerSettings) model.getSettings().trackerSettings;
 		maxDistField.setText(""+settings.maxLinkingDistance);
 		labelTracker.setText(model.getSettings().tracker.toString());
-		labelTrackerDescription.setText(model.getSettings().tracker.getInfoText().replace("<br>", "").replace("<html>", "<html><p align=\"justify\">"));
+		labelTrackerDescription.setText(model.getSettings().tracker.getInfoText()
+				.replace("<br>", "")
+				.replace("<p>", "<p align=\"justify\">")
+				.replace("<html>", "<html><p align=\"justify\">"));
 		labelUnits.setText(model.getSettings().spaceUnits);
 	}
 

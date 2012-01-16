@@ -78,7 +78,9 @@ public class SimpleLAPTrackerSettingsPanel extends TrackerConfigurationPanel {
 	private void echoSettings(TrackMateModel model) {
 		jLabelTrackerName.setText(model.getSettings().tracker.toString());
 		jLabelTrackerDescription.setText(model.getSettings().tracker.getInfoText()
-				.replace("<br>", "").replace("<html>", "<html><p align=\"justify\">"));
+				.replace("<br>", "")
+				.replace("<p>", "<p align=\"justify\">")
+				.replace("<html>", "<html><p align=\"justify\">"));
 		jTextFieldLinkingDistance.setText(String.format("%.1f", settings.linkingDistanceCutOff));
 		jTextFieldGapClosingDistanceCutoff.setText(String.format("%.1f", settings.gapClosingDistanceCutoff));
 		jTextFieldGapClosingTimeCutoff.setText(String.format("%.1f", settings.gapClosingTimeCutoff));

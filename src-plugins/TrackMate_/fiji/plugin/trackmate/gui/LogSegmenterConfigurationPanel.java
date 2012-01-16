@@ -98,7 +98,10 @@ public class LogSegmenterConfigurationPanel extends SegmenterConfigurationPanel 
 	private void echoSettings(TrackMateModel model) {
 		jLabelBlobDiameterUnit.setText(model.getSettings().spaceUnits);
 		jLabelSegmenterName.setText(model.getSettings().segmenter.toString());
-		jLabelHelpText.setText(model.getSettings().segmenter.getInfoText().replace("<br>", "").replace("<html>", "<html><p align=\"justify\">"));
+		jLabelHelpText.setText(model.getSettings().segmenter.getInfoText()
+				.replace("<br>", "")
+				.replace("<p>", "<p align=\"justify\">")
+				.replace("<html>", "<html><p align=\"justify\">"));
 		
 		jTextFieldBlobDiameter.setText(""+(2*settings.expectedRadius));
 		jCheckBoxMedianFilter.setSelected(settings.useMedianFilter);

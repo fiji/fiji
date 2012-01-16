@@ -156,8 +156,8 @@ public class DogSegmenter<T extends RealType<T>> extends AbstractSpotSegmenter<T
 				"It is the quickest for small spot sizes (< ~5 pixels). " +
 				"<p> " +
 				"Spots found too close are suppressed. This segmenter can do sub-pixel <br>" +
-				"localization of spots. It is based on the scale-space framework <br>" +
-				"made by Stephan Preibisch for ImgLib. " +
+				"localization of spots using a quadratic fitting scheme. It is based on <br>" +
+				"the scale-space framework made by Stephan Preibisch for ImgLib. " +
 				"</html>";	
 	}
 

@@ -81,7 +81,10 @@ public class JPanelTrackerSettingsMain extends javax.swing.JPanel {
 		
 		if (null != model.getSettings().tracker) {
 			jLabelTrackerName.setText(model.getSettings().tracker.toString());
-			jLabelTrackDescription.setText(model.getSettings().tracker.getInfoText().replace("<br>", "").replace("<html>", "<html><p align=\"justify\">"));
+			jLabelTrackDescription.setText(model.getSettings().tracker.getInfoText()
+					.replace("<br>", "")
+					.replace("<p>", "<p align=\"justify\">")
+					.replace("<html>", "<html><p align=\"justify\">"));
 		}
 
 		jLabelLinkingMaxDistanceUnits.setText(model.getSettings().spaceUnits);

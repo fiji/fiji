@@ -27,7 +27,10 @@ public class BasicSegmenterConfigurationPanel extends LogSegmenterConfigurationP
 		jTextFieldBlobDiameter.setText(""+(((BasicSegmenterSettings)model.getSettings().segmenterSettings).expectedRadius * 2));
 		jLabelBlobDiameterUnit.setText(model.getSettings().spaceUnits);
 		jLabelSegmenterName.setText(model.getSettings().segmenter.toString());
-		jLabelHelpText.setText(model.getSettings().segmenter.getInfoText().replace("<br>", "").replace("<html>", "<html><p align=\"justify\">"));
+		jLabelHelpText.setText(model.getSettings().segmenter.getInfoText()
+				.replace("<br>", "")
+				.replace("<p>", "<p align=\"justify\">")
+				.replace("<html>", "<html><p align=\"justify\">"));
 	}
 	
 	@Override

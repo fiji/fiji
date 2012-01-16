@@ -92,7 +92,11 @@ public class ListChooserPanel <K extends InfoTextable> extends ActionListenableP
 	}
 	
 	private void echo(K choice) {
-		jLabelHelpText.setText(choice.getInfoText().replace("<br>", "").replace("<html>", "<html><p align=\"justify\">"));
+		jLabelHelpText.setText(choice.getInfoText()
+				.replace("<br>", "")
+				.replace("<p>", "<p align=\"justify\">")
+				.replace("<html>", "<html><p align=\"justify\">")
+			);
 	}
 	
 }
