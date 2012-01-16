@@ -175,6 +175,15 @@ public class LAPTrackerSettings implements TrackerSettings {
 	public void setUseSimpleConfigPanel(boolean useSimpleConfigPanel) {
 		this.useSimpleConfigPanel = useSimpleConfigPanel;
 	}
+	
+	/**
+	 * Return whether this settings object will return the simplified 
+	 * config panel when called by {@link #createConfigurationPanel()}. Otherwise,
+	 * the full, standard, config panel is used. 
+	 */
+	public boolean isUseSimpleConfigPanel() {
+		return useSimpleConfigPanel;
+	}
 
 	@Override
 	public void marshall(Element element) {

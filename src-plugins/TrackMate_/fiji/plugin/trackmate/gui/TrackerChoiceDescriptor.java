@@ -3,6 +3,7 @@ package fiji.plugin.trackmate.gui;
 import java.awt.Component;
 
 import fiji.plugin.trackmate.TrackMate_;
+import fiji.plugin.trackmate.tracking.LAPTrackerSettings;
 import fiji.plugin.trackmate.tracking.SpotTracker;
 import fiji.plugin.trackmate.tracking.TrackerSettings;
 
@@ -60,14 +61,24 @@ public class TrackerChoiceDescriptor implements WizardPanelDescriptor {
 		// only if the old ones are absent or not compatible with it.
 		TrackerSettings defaultSettings = tracker.createDefaultSettings();
 		TrackerSettings currentSettings = plugin.getModel().getSettings().trackerSettings;
+		
 		if (null == currentSettings || currentSettings.getClass() != defaultSettings.getClass()) {
+		
 			plugin.getModel().getSettings().trackerSettings = defaultSettings;
-		}
+		
+		} else if (currentSettings instanceof LAPTrackerSettings) {
+
+			// Deal with special case: the LAPTrackerSettings that exists in 2 flavor
+			LAPTrackerSettings clapts = (LAPTrackerSettings) currentSettings;
+			LAPTrackerSettings dlapts = (LAPTrackerSettings) defaultSettings;
+			// We copy the #useSimpleConfigPanel field to the current settings 
+			clapts.setUseSimpleConfigPanel(dlapts.isUseSimpleConfigPanel());
+		
+		} 
 		 
 		// Instantiate next descriptor for the wizard
 		TrackerConfigurationPanelDescriptor descriptor = new TrackerConfigurationPanelDescriptor();
 		descriptor.setPlugin(plugin);
-		
 		wizard.registerWizardDescriptor(TrackerConfigurationPanelDescriptor.DESCRIPTOR, descriptor);
 	}
 
