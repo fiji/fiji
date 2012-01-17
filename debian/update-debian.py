@@ -242,7 +242,7 @@ replacement_files =  {
     'jars/clojure.jar' : ( '/usr/share/java/clojure.jar', ),
     'jars/Jama.jar' : ( '/usr/share/java/jama.jar', ),
     'jars/jcommon.jar' : ( '/usr/share/java/jcommon.jar', ),
-    'jars/jfreechart-1.0.13.jar' : ( '/usr/share/java/jfreechart.jar', ),
+    'jars/jfreechart.jar' : ( '/usr/share/java/jfreechart.jar', ),
     'jars/js.jar' : ( '/usr/share/java/js.jar', ),
     'jars/jsch-0.1.44.jar' : ( '/usr/share/java/jsch.jar', ),
     'jars/junit-4.5.jar' : ( '/usr/share/java/junit4.jar', ),
