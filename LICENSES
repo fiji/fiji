@@ -47,7 +47,7 @@ Name					File					Author(s)						Contact								License
 * imagescience.jar 			imagescience.jar 			Erik Meijering 						meijering@imagescience.org 					imagescience (see below)
 * imageware.jar				imageware.jar				Daniel Sage et al					http://bigwww.epfl.ch/						BIG (see below)
 * Interactive 3D Surface Plot 		Interactive_3D_Surface_Plot.jar		Kai Uwe Barthel 					k.barthel@fhtw-berlin.de 					PD
-* iText					itextpdf-5.1.1.jar 			Bruno Lowagie, Paulo Soares 				http://itextpdf.com/terms-of-use/index.php 			AGPL
+* iText					itextpdf.jar	 			Bruno Lowagie, Paulo Soares 				http://itextpdf.com/terms-of-use/index.php 			AGPL
 * IO package 				IO_.jar 				A. Cardona, S. Saalfeld, J. Schindelin, G. Jefferis 	acardona@ini.phys.ethz.ch 					GPL/public domain
 * IPLab Reader 				IPLab_Reader.jar			Wayne Rasband 						wsr@nih.gov 							PD
 * Jacl 					jacl.jar 											http://sourceforge.net/projects/tcljava				BSD

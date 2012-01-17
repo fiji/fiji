@@ -43,13 +43,13 @@ mkdir -p "$FIJI_DIRECTORY"/build &&
     "CLASSPATH(plugins/BeanShell_Interpreter.jar)=/usr/share/java/bsh.jar:jars/fiji-scripting.jar:jars/ij.jar" \
     "CLASSPATH(plugins/CPU_Meter.jar)=/usr/share/java/jna.jar:jars/ij.jar" \
     "CLASSPATH(plugins/Clojure_Interpreter.jar)=/usr/share/java/clojure.jar:jars/fiji-scripting.jar:jars/ij.jar" \
-    "CLASSPATH(plugins/Colocalisation_Analysis.jar)=/usr/share/java/junit4.jar:jars/fiji-lib.jar:jars/ij.jar:jars/imglib-algorithms.jar:jars/imglib-ij.jar:jars/imglib.jar:jars/itextpdf-5.1.1.jar" \
+    "CLASSPATH(plugins/Colocalisation_Analysis.jar)=/usr/share/java/junit4.jar:jars/fiji-lib.jar:jars/ij.jar:jars/imglib-algorithms.jar:jars/imglib-ij.jar:jars/imglib.jar:jars/itextpdf.jar" \
     "CLASSPATH(plugins/Descriptor_based_registration.jar)=/usr/share/java/j3dcore.jar:/usr/share/java/j3dutils.jar:/usr/share/java/jama.jar:/usr/share/java/vecmath.jar:jars/VIB-lib.jar:jars/fiji-lib.jar:jars/ij.jar:jars/imglib-algorithms.jar:jars/imglib-ij.jar:jars/imglib-io.jar:jars/imglib.jar:jars/mpicbg.jar:plugins/Fiji_Plugins.jar:plugins/SPIM_Registration.jar" \
     "CLASSPATH(plugins/Directionality_.jar)=/usr/share/java/jcommon.jar:/usr/share/java/jfreechart.jar:jars/ij.jar" \
     "CLASSPATH(plugins/Fiji_Developer.jar)=/usr/share/java/j3dcore.jar:/usr/share/java/j3dutils.jar:/usr/share/java/vecmath.jar:jars/ij.jar:jars/rsyntaxtextarea.jar:plugins/3D_Viewer.jar:plugins/Fiji_Plugins.jar:plugins/Script_Editor.jar" \
     "CLASSPATH(plugins/Fiji_Plugins.jar)=/usr/share/java/jsch.jar:jars/VIB-lib.jar:jars/fiji-lib.jar:jars/ij.jar" \
     "CLASSPATH(plugins/Fiji_Updater.jar)=/usr/share/java/jsch.jar:jars/ij.jar" \
-    "CLASSPATH(plugins/IO_.jar)=/usr/share/java/batik-all.jar:/usr/share/java/jzlib.jar:/usr/share/java/xml-apis-ext.jar:jars/ij.jar:jars/itextpdf-5.1.1.jar:jars/jpedalSTD.jar" \
+    "CLASSPATH(plugins/IO_.jar)=/usr/share/java/batik-all.jar:/usr/share/java/jzlib.jar:/usr/share/java/xml-apis-ext.jar:jars/ij.jar:jars/itextpdf.jar:jars/jpedalSTD.jar" \
     "CLASSPATH(plugins/Image_Expression_Parser.jar)=/usr/share/java/junit4.jar:jars/ij.jar:jars/imglib-algorithms.jar:jars/imglib-ij.jar:jars/imglib.jar:jars/jep.jar" \
     "CLASSPATH(plugins/Javascript_.jar)=/usr/share/java/js.jar:jars/fiji-scripting.jar:jars/ij.jar" \
     "CLASSPATH(plugins/SPIM_Registration.jar)=/usr/share/java/j3dcore.jar:/usr/share/java/j3dutils.jar:/usr/share/java/jama.jar:/usr/share/java/jcommon.jar:/usr/share/java/jfreechart.jar:/usr/share/java/vecmath.jar:jars/VIB-lib.jar:jars/fiji-lib.jar:jars/ij.jar:jars/imglib-algorithms.jar:jars/imglib-ij.jar:jars/imglib-io.jar:jars/imglib.jar:jars/mpicbg.jar:jars/weka.jar:plugins/3D_Viewer.jar:plugins/Fiji_Plugins.jar:plugins/loci_tools.jar" \

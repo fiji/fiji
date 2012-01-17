@@ -193,7 +193,7 @@ package_name_to_file_matchers = {
         [ "jars/jython.jar" ],
 
     "fiji-itext" :
-        [ "jars/itextpdf-5.1.1.jar" ]
+        [ "jars/itextpdf.jar" ]
 
 }
 
