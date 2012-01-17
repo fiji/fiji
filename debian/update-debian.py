@@ -247,7 +247,7 @@ replacement_files =  {
     'jars/jsch.jar' : ( '/usr/share/java/jsch.jar', ),
     'jars/junit.jar' : ( '/usr/share/java/junit4.jar', ),
     'jars/jzlib.jar' : ( '/usr/share/java/jzlib.jar', ),
-    'jars/postgresql-8.2-506.jdbc3.jar' : ( '/usr/share/java/postgresql.jar', ),
+    'jars/postgresql.jar' : ( '/usr/share/java/postgresql.jar', ),
     'jars/javassist.jar' : ( '/usr/share/java/javassist.jar', ),
     'jars/jna.jar' : ( '/usr/share/java/jna.jar', ),
     '$TOOLS_JAR' : ('/usr/lib/jvm/java-6-openjdk/lib/tools.jar', ),
