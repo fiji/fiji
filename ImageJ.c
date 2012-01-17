@@ -2104,7 +2104,7 @@ static void add_subcommand(const char *line)
 }
 
 const char *default_subcommands[] = {
-	"--update --ij-jar=plugins/Fiji_Updater.jar --ij-jar=jars/jsch-0.1.44.jar --no-full-classpath --main-class=fiji.updater.Main",
+	"--update --ij-jar=plugins/Fiji_Updater.jar --ij-jar=jars/jsch.jar --no-full-classpath --main-class=fiji.updater.Main",
 	" start the command-line version of the Fiji updater",
 	"--jython --ij-jar=jars/jython.jar --main-class=org.python.util.jython",
 	".py",
@@ -2515,7 +2515,7 @@ static const char *maybe_substitute_ij_jar(const char *relative_path)
 		replacement = "/usr/share/java/ant-nodeps.jar";
 	else if (!strcmp(relative_path, "jars/ant-junit.jar"))
 		replacement = "/usr/share/java/ant-junit.jar";
-	else if (!strcmp(relative_path, "jars/jsch-0.1.44.jar"))
+	else if (!strcmp(relative_path, "jars/jsch-0.1.44.jar") || !strcmp(relative_path, "jars/jsch.jar"))
 		replacement = "/usr/share/java/jsch.jar";
 	else if (!strcmp(relative_path, "jars/javassist.jar"))
 		replacement = "/usr/share/java/javassist.jar";

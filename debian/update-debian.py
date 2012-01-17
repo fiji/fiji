@@ -244,7 +244,7 @@ replacement_files =  {
     'jars/jcommon.jar' : ( '/usr/share/java/jcommon.jar', ),
     'jars/jfreechart.jar' : ( '/usr/share/java/jfreechart.jar', ),
     'jars/js.jar' : ( '/usr/share/java/js.jar', ),
-    'jars/jsch-0.1.44.jar' : ( '/usr/share/java/jsch.jar', ),
+    'jars/jsch.jar' : ( '/usr/share/java/jsch.jar', ),
     'jars/junit-4.5.jar' : ( '/usr/share/java/junit4.jar', ),
     'jars/jzlib-1.0.7.jar' : ( '/usr/share/java/jzlib.jar', ),
     'jars/postgresql-8.2-506.jdbc3.jar' : ( '/usr/share/java/postgresql.jar', ),
@@ -711,7 +711,7 @@ if options.clean:
                 continue
             if re.search("(^\s*jars|precompiled)/javassist.jar",line):
                 continue
-            if re.search("(^\s*jars|precompiled)/jsch-0.1.44.jar",line):
+            if re.search("(^\s*jars|precompiled)/jsch.jar",line):
                 continue
             if re.search("(^\s*jars|precompiled)/junit-4.5.jar",line):
                 continue

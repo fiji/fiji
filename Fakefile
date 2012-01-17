@@ -123,7 +123,7 @@ SUBMODULE_TARGETS=\
 	jars/mpicbg.jar \
 	jars/commons-math.jar \
 	jars/javassist.jar \
-	jars/jsch-0.1.44.jar \
+	jars/jsch.jar \
 	jars/imglib-scripting.jar \
 	plugins/Image_5D.jar \
 	jars/ij-app.jar \
@@ -313,7 +313,7 @@ jars/weka.jar <- ImageJ jars/fiji-compat.jar modules/weka/
 jars/jython.jar <- ImageJ modules/jython/
 jars/commons-math.jar <- ImageJ modules/commons-math/
 jars/javassist.jar <- modules/javassist/
-jars/jsch-0.1.44.jar <- modules/jsch/
+jars/jsch.jar <- modules/jsch/
 COPYDEPENDENCIES(jars/ij-app.jar)=true
 jars/ij-app.jar <- jars/imglib2.jar modules/imagej2/
 CLASSPATH(plugins/Image_5D.jar)=jars/ij.jar
@@ -367,9 +367,9 @@ CLASSPATH(plugins/LSM_Toolbox.jar)=jars/ij.jar:plugins/LSM_Reader.jar
 MAINCLASS(plugins/LSM_Toolbox.jar)=org.imagearchive.lsm.toolbox.gui.AboutDialog
 MAINCLASS(plugins/Interactive_3D_Surface_Plot.jar)=Interactive_3D_Surface_Plot
 CLASSPATH(plugins/Stitching_.jar)=jars/ij.jar:plugins/loci_tools.jar:jars/fiji-lib.jar:jars/imglib.jar:jars/imglib-algorithms.jar:jars/imglib-ij.jar:jars/edu_mines_jtk.jar:plugins/Fiji_Plugins.jar:jars/mpicbg.jar
-CLASSPATH(plugins/Fiji_Plugins.jar)=jars/ij.jar:jars/jsch-0.1.44.jar:jars/fiji-lib.jar:jars/VIB-lib.jar
+CLASSPATH(plugins/Fiji_Plugins.jar)=jars/ij.jar:jars/jsch.jar:jars/fiji-lib.jar:jars/VIB-lib.jar
 MAINCLASS(plugins/Fiji_Updater.jar)=fiji.updater.Main
-CLASSPATH(plugins/Fiji_Updater.jar)=jars/ij.jar:jars/jsch-0.1.44.jar
+CLASSPATH(plugins/Fiji_Updater.jar)=jars/ij.jar:jars/jsch.jar
 CLASSPATH(plugins/IO_.jar)=jars/ij.jar:jars/batik.jar:jars/jpedalSTD.jar:jars/itextpdf.jar:jars/jzlib-1.0.7.jar
 CLASSPATH(plugins/Sync_Win.jar)=jars/ij.jar:plugins/Image_5D.jar
 CLASSPATH(plugins/Fiji_Developer.jar)=jars/ij.jar:plugins/Script_Editor.jar:plugins/Fiji_Plugins.jar:jars/rsyntaxtextarea.jar:plugins/3D_Viewer.jar:$JAVA3D_JARS
@@ -615,7 +615,7 @@ precompile-submodules[] <- \
 	precompiled/commons-math.jar \
 	precompiled/imglib-algorithms.jar \
 	precompiled/javassist.jar \
-	precompiled/jsch-0.1.44.jar \
+	precompiled/jsch.jar \
 
 precompiled/ij.jar <- jars/ij.jar
 precompiled/clojure.jar <- jars/clojure.jar
@@ -633,7 +633,7 @@ precompiled/imglib-io.jar <- jars/imglib-io.jar
 precompiled/imglib-scripting.jar <- jars/imglib-scripting.jar
 precompiled/commons-math.jar <- jars/commons-math.jar
 precompiled/javassist.jar <- jars/javassist.jar
-precompiled/jsch-0.1.44.jar <- jars/jsch-0.1.44.jar
+precompiled/jsch.jar <- jars/jsch.jar
 precompiled/* <- plugins/*
 
 precompile[] <- precompile-ImageJ precompile-fake precompile-submodules

@@ -255,7 +255,7 @@ hs_err*.log
 /modules/imglib/imglib-io.jar
 /modules/imglib/imglib-ops.jar
 /modules/imglib/imglib-scripting.jar
-/jars/jsch-0.1.44.jar
+/jars/jsch.jar
 /jars/jars/ij-core-plugins.jar
 /modules/imagej2/jars/ij-core-plugins.jar
 /jars/jars/ij-core-tools.jar
@@ -317,4 +317,4 @@ hs_err*.log
 /modules/javassist/target/
 /modules/jsch/build/
 /modules/jsch/dist/
-/modules/jsch/jsch-0.1.44.jar
+/modules/jsch/jsch.jar
