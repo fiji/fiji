@@ -36,7 +36,7 @@ targets = {
   'clojure':'jars/clojure.jar',
   'ij-plugins':'plugins/ij-ImageIO_.jar',
   'imglib':'jars/imglib.jar',
-  'junit':'jars/junit-4.5.jar',
+  'junit':'jars/junit.jar',
   'jython':'jars/jython.jar',
   #'live-helper':'',
   'mpicbg':'plugins/mpicbg_.jar',

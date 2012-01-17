@@ -8,7 +8,7 @@ JAVAF="$FIJIF/java/linux/jdk1.6.0_21"
 
 JAVADOC="$JAVAF/bin/javadoc"
 
-CLASSPATH=".:$JARF/junit-4.5.jar:$JARF/jzlib-1.0.7.jar:$JARF/ij.jar"
+CLASSPATH=".:$JARF/junit.jar:$JARF/jzlib-1.0.7.jar:$JARF/ij.jar"
 
 if [ ! -f ImageJ_3D_Viewer.jar ]; then
 	echo "Please create an up-to-date ImageJ_3D_Viewer.jar first"

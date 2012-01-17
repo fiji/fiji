@@ -107,7 +107,7 @@ SUBMODULE_TARGETS=\
 	plugins/ij-ImageIO_.jar \
 	jars/jacl.jar \
 	jars/batik.jar \
-	jars/junit-4.5.jar \
+	jars/junit.jar \
 	jars/rsyntaxtextarea.jar \
 	jars/autocomplete.jar \
 	jars/weka.jar \
@@ -306,7 +306,7 @@ plugins/TrakEM2_.jar <- modules/TrakEM2/
 plugins/ij-ImageIO_.jar <- modules/ij-plugins/
 jars/jacl.jar <- ImageJ modules/tcljava/
 jars/batik.jar <- ImageJ modules/batik/
-jars/junit-4.5.jar <- ImageJ modules/junit/
+jars/junit.jar <- ImageJ modules/junit/
 jars/rsyntaxtextarea.jar <- ImageJ modules/RSyntaxTextArea/
 jars/autocomplete.jar <- ImageJ modules/AutoComplete/
 jars/weka.jar <- ImageJ jars/fiji-compat.jar modules/weka/
@@ -355,7 +355,7 @@ CLASSPATH(jars/zs.jar)=jars/Jama.jar
 CLASSPATH(plugins/register_virtual_stack_slices.jar)=jars/ij.jar:plugins/TrakEM2_.jar:jars/mpicbg.jar:plugins/bUnwarpJ_.jar:jars/fiji-lib.jar
 CLASSPATH(plugins/registration_3d.jar)=jars/ij.jar:jars/edu_mines_jtk.jar
 CLASSPATH(plugins/Siox_Segmentation.jar)=jars/ij.jar:jars/fiji-lib.jar
-CLASSPATH(plugins/Image_Expression_Parser.jar)=jars/ij.jar:jars/jep.jar:jars/imglib.jar:jars/junit-4.5.jar:jars/imglib-algorithms.jar:jars/imglib-ij.jar
+CLASSPATH(plugins/Image_Expression_Parser.jar)=jars/ij.jar:jars/jep.jar:jars/imglib.jar:jars/junit.jar:jars/imglib-algorithms.jar:jars/imglib-ij.jar
 
 CLASSPATH(plugins/Algorithm_Launcher.jar)=jars/ij.jar:jars/imglib.jar:jars/imglib-ij.jar
 plugins/Algorithm_Launcher.jar <- \
@@ -375,10 +375,10 @@ CLASSPATH(plugins/Sync_Win.jar)=jars/ij.jar:plugins/Image_5D.jar
 CLASSPATH(plugins/Fiji_Developer.jar)=jars/ij.jar:plugins/Script_Editor.jar:plugins/Fiji_Plugins.jar:jars/rsyntaxtextarea.jar:plugins/3D_Viewer.jar:$JAVA3D_JARS
 CLASSPATH(plugins/Trainable_Segmentation.jar)=jars/ij.jar:jars/weka.jar:plugins/Stitching_.jar:jars/fiji-lib.jar:plugins/Anisotropic_Diffusion_2D.jar:jars/Jama.jar:jars/VIB-lib.jar:jars/commons-math.jar:jars/imglib.jar:jars/imglib-ij.jar:jars/imglib-algorithms.jar:jars/imagescience.jar:$JAVA3D_JARS
 CLASSPATH(plugins/VIB_.jar)=jars/ij.jar:$JAVA3D_JARS:jars/VIB-lib.jar:jars/pal-optimization.jar:plugins/3D_Viewer.jar:jars/imglib.jar:jars/fiji-lib.jar
-CLASSPATH(jars/VIB-lib.jar)=jars/ij.jar:jars/Jama.jar:jars/junit-4.5.jar:jars/pal-optimization.jar:jars/jzlib-1.0.7.jar:jars/fiji-lib.jar
-CLASSPATH(plugins/Simple_Neurite_Tracer.jar)=jars/ij.jar:$JAVA3D_JARS:jars/VIB-lib.jar:plugins/VIB_.jar:jars/pal-optimization.jar:jars/junit-4.5.jar:plugins/3D_Viewer.jar:jars/commons-math.jar:jars/jfreechart.jar:jars/jcommon.jar:jars/batik.jar:plugins/AnalyzeSkeleton_.jar:plugins/Skeletonize3D_.jar
+CLASSPATH(jars/VIB-lib.jar)=jars/ij.jar:jars/Jama.jar:jars/junit.jar:jars/pal-optimization.jar:jars/jzlib-1.0.7.jar:jars/fiji-lib.jar
+CLASSPATH(plugins/Simple_Neurite_Tracer.jar)=jars/ij.jar:$JAVA3D_JARS:jars/VIB-lib.jar:plugins/VIB_.jar:jars/pal-optimization.jar:jars/junit.jar:plugins/3D_Viewer.jar:jars/commons-math.jar:jars/jfreechart.jar:jars/jcommon.jar:jars/batik.jar:plugins/AnalyzeSkeleton_.jar:plugins/Skeletonize3D_.jar
 CLASSPATH(plugins/3D_Viewer.jar)=jars/ij.jar:jars/VIB-lib.jar:jars/imglib.jar:jars/Jama.jar:$JAVA3D_JARS
-CLASSPATH(jars/jep.jar)=jars/ij.jar:jars/Jama.jar:jars/junit-4.5.jar
+CLASSPATH(jars/jep.jar)=jars/ij.jar:jars/Jama.jar:jars/junit.jar
 CLASSPATH(plugins/SPIM_Registration.jar)=jars/ij.jar:$JAVA3D_JARS:jars/imglib.jar:jars/mpicbg.jar:plugins/3D_Viewer.jar:jars/weka.jar:jars/fiji-lib.jar:plugins/loci_tools.jar:plugins/Fiji_Plugins.jar:jars/VIB-lib.jar:jars/Jama.jar:jars/imglib-algorithms.jar:jars/imglib-ij.jar:jars/imglib-io.jar:jars/jfreechart.jar:jars/jcommon.jar
 CLASSPATH(plugins/Descriptor_based_registration.jar)=jars/ij.jar:jars/imglib.jar:jars/mpicbg.jar:jars/fiji-lib.jar:plugins/Fiji_Plugins.jar:jars/VIB-lib.jar:jars/Jama.jar:jars/imglib-algorithms.jar:jars/imglib-ij.jar:jars/imglib-io.jar:plugins/SPIM_Registration.jar:$JAVA3D_JARS
 CLASSPATH(plugins/Bug_Submitter.jar)=jars/ij.jar:plugins/Fiji_Updater.jar
@@ -389,7 +389,7 @@ CLASSPATH(plugins/TransformJ_.jar)=jars/ij.jar:jars/imagescience.jar
 CLASSPATH(plugins/FeatureJ_.jar)=jars/ij.jar:jars/imagescience.jar
 CLASSPATH(plugins/RandomJ_.jar)=jars/ij.jar:jars/imagescience.jar
 CLASSPATH(plugins/Auto_Threshold.jar)=jars/ij.jar
-CLASSPATH(plugins/Colocalisation_Analysis.jar)=jars/ij.jar:jars/imglib.jar:jars/imglib-ij.jar:jars/imglib-algorithms.jar:jars/junit-4.5.jar:jars/itextpdf.jar:jars/fiji-lib.jar
+CLASSPATH(plugins/Colocalisation_Analysis.jar)=jars/ij.jar:jars/imglib.jar:jars/imglib-ij.jar:jars/imglib-algorithms.jar:jars/junit.jar:jars/itextpdf.jar:jars/fiji-lib.jar
 CLASSPATH(plugins/Series_Labeler.jar)=jars/ij.jar
 CLASSPATH(plugins/Gray_Morphology.jar)=jars/ij.jar
 CLASSPATH(plugins/IsoData_Classifier.jar)=jars/ij.jar
@@ -403,7 +403,7 @@ CLASSPATH(plugins/SplineDeformationGenerator_.jar)=jars/ij.jar
 CLASSPATH(plugins/Manual_Tracking.jar)=jars/ij.jar
 CLASSPATH(plugins/IJ_Robot.jar)=jars/ij.jar
 CLASSPATH(jars/autocomplete.jar)=jars/rsyntaxtextarea.jar
-CLASSPATH(jars/jython.jar)=jars/junit-4.5.jar:jars/jna.jar
+CLASSPATH(jars/jython.jar)=jars/junit.jar:jars/jna.jar
 CLASSPATH(plugins/Video_Editing.jar)=jars/ij.jar
 CLASSPATH(plugins/Statistical_Region_Merging.jar)=jars/ij.jar
 CLASSPATH(plugins/PIV_analyser.jar)=jars/ij.jar
@@ -478,7 +478,7 @@ src-plugins/VIB-lib/math3d/Eigensystem2x2Float.java[src-plugins/VIB-lib/sed.py $
 	src-plugins/VIB-lib/math3d/Eigensystem2x2Double.java
 
 MAINCLASS(jars/test-fiji.jar)=fiji.Tests
-CLASSPATH(jars/test-fiji.jar)=jars/junit-4.5.jar
+CLASSPATH(jars/test-fiji.jar)=jars/junit.jar
 
 MAINCLASS(jars/Updater_Fix.jar)=fiji.updater.Fix
 
@@ -606,7 +606,7 @@ precompile-submodules[] <- \
 	precompiled/ij-ImageIO_.jar \
 	precompiled/jacl.jar \
 	precompiled/batik.jar \
-	precompiled/junit-4.5.jar \
+	precompiled/junit.jar \
 	precompiled/rsyntaxtextarea.jar \
 	precompiled/autocomplete.jar \
 	precompiled/weka.jar \
@@ -621,7 +621,7 @@ precompiled/ij.jar <- jars/ij.jar
 precompiled/clojure.jar <- jars/clojure.jar
 precompiled/jacl.jar <- jars/jacl.jar
 precompiled/batik.jar <- jars/batik.jar
-precompiled/junit-4.5.jar <- jars/junit-4.5.jar
+precompiled/junit.jar <- jars/junit.jar
 precompiled/rsyntaxtextarea.jar <- jars/rsyntaxtextarea.jar
 precompiled/autocomplete.jar <- jars/autocomplete.jar
 precompiled/weka.jar <- jars/weka.jar

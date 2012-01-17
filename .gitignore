@@ -103,7 +103,7 @@ hs_err*.log
 /plugins/TurboReg_.jar
 /plugins/Fiji_Plugins.jar
 /plugins/ToAST_.jar
-/jars/junit-4.5.jar
+/jars/junit.jar
 /plugins/MTrack2_.jar
 /plugins/Time_Stamper.jar
 /plugins/Series_Labeler.jar
@@ -180,7 +180,7 @@ hs_err*.log
 /modules/commons-math/target/
 /modules/ij-plugins/ij-ImageIO_.jar
 /modules/junit/junit4.5/
-/modules/junit/junit-4.5.jar
+/modules/junit/junit.jar
 /modules/junit/target/
 /modules/jython/jython/build/
 /modules/jython/jython/dist/
