@@ -241,7 +241,7 @@ replacement_files =  {
     'jars/bsh.jar' : ( '/usr/share/java/bsh.jar', ),
     'jars/clojure.jar' : ( '/usr/share/java/clojure.jar', ),
     'jars/Jama.jar' : ( '/usr/share/java/jama.jar', ),
-    'jars/jcommon-1.0.12.jar' : ( '/usr/share/java/jcommon.jar', ),
+    'jars/jcommon.jar' : ( '/usr/share/java/jcommon.jar', ),
     'jars/jfreechart-1.0.13.jar' : ( '/usr/share/java/jfreechart.jar', ),
     'jars/js.jar' : ( '/usr/share/java/js.jar', ),
     'jars/jsch-0.1.44.jar' : ( '/usr/share/java/jsch.jar', ),
