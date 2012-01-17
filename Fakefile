@@ -268,7 +268,7 @@ jars/jzlib-1.0.7.jar[] <-
 jars/ij.jar <- jars/javac.jar modules/ImageJA/
 CLASSPATH(plugins/mpicbg_.jar)=jars/ij.jar:jars/mpicbg.jar
 plugins/mpicbg_.jar <- modules/mpicbg/
-CLASSPATH(jars/mpicbg.jar)=jars/ij.jar:jars/Jama-1.0.2.jar
+CLASSPATH(jars/mpicbg.jar)=jars/ij.jar:jars/Jama.jar
 jars/mpicbg.jar <- modules/mpicbg/
 CLASSPATH(jars/imglib.jar)=jars/mpicbg.jar
 jars/imglib.jar <- modules/imglib/
@@ -276,7 +276,7 @@ CLASSPATH(jars/imglib-ij.jar)=jars/ij.jar:jars/imglib.jar:jars/mpicbg.jar
 jars/imglib-ij.jar <- modules/imglib/
 CLASSPATH(jars/imglib-io.jar)=plugins/loci_tools.jar:jars/imglib.jar:jars/imglib-ij.jar:jars/ij.jar
 jars/imglib-io.jar <- modules/imglib/
-CLASSPATH(jars/imglib-algorithms.jar)=jars/Jama-1.0.2.jar:jars/imglib.jar:jars/edu_mines_jtk.jar:jars/mpicbg.jar
+CLASSPATH(jars/imglib-algorithms.jar)=jars/Jama.jar:jars/imglib.jar:jars/edu_mines_jtk.jar:jars/mpicbg.jar
 jars/imglib-algorithms.jar <- modules/imglib/
 CLASSPATH(jars/imglib-scripting.jar)=jars/ij.jar:jars/imglib.jar:jars/imglib-io.jars:jars/imglib-algorithms.jar:jars/imglib-ij.jar:plugins/loci_tools.jar:jars/mpicbg.jar:jars/jfreechart-1.0.13.jar:jars/jcommon-1.0.12.jar:$JAVA3D_JARS
 jars/imglib-scripting.jar <- modules/imglib/
@@ -289,7 +289,7 @@ CLASSPATH(jars/imglib2-ij.jar)=jars/ij.jar:jars/imglib2.jar:jars/mpicbg.jar
 jars/imglib2-ij.jar <- modules/imglib/
 CLASSPATH(jars/imglib2-io.jar)=plugins/loci_tools.jar:jars/imglib2.jar
 jars/imglib2-io.jar <- modules/imglib/
-CLASSPATH(jars/imglib2-algorithms.jar)=jars/Jama-1.0.2.jar:jars/imglib2.jar:jars/edu_mines_jtk.jar
+CLASSPATH(jars/imglib2-algorithms.jar)=jars/Jama.jar:jars/imglib2.jar:jars/edu_mines_jtk.jar
 jars/imglib2-algorithms.jar <- modules/imglib/
 CLASSPATH(jars/imglib2-scripting.jar)=jars/ij.jar:jars/imglib2.jar:jars/imglib2-io.jars:jars/imglib2-algorithms.jar:jars/imglib2-ij.jar:plugins/loci_tools.jar:jars/mpicbg.jar:jars/jfreechart-1.0.13.jar:jars/jcommon-1.0.12.jar:$JAVA3D_JARS
 jars/imglib2-scripting.jar <- modules/imglib/
@@ -299,9 +299,9 @@ CLASSPATH(jars/imglib2-ui.jar)=jars/imglib2.jar:jars/imglib2-io.jar:plugins/loci
 jars/imglib2-ui.jar <- jars/imglib2-io.jar modules/imglib/
 jars/clojure.jar <- ImageJ modules/clojure/
 plugins/loci_tools.jar <- ImageJ modules/bio-formats/
-CLASSPATH(jars/VectorString.jar)=jars/ij.jar:jars/Jama-1.0.2.jar:$JAVA3D_JARS
+CLASSPATH(jars/VectorString.jar)=jars/ij.jar:jars/Jama.jar:$JAVA3D_JARS
 jars/VectorString.jar <- modules/TrakEM2/
-CLASSPATH(plugins/TrakEM2_.jar)=jars/ij.jar:jars/jai_core.jar:jars/jai_codec.jar:jars/VectorString.jar:jars/postgresql-8.2-506.jdbc3.jar:jars/jcommon-1.0.12.jar:jars/jfreechart-1.0.13.jar:jars/edu_mines_jtk.jar:jars/VIB-lib.jar:plugins/VIB_.jar:jars/mpicbg.jar:plugins/loci_tools.jar:plugins/bUnwarpJ_.jar:plugins/level_sets.jar:plugins/Fiji_Plugins.jar:jars/Jama-1.0.2.jar:jars/imglib.jar:jars/imglib-algorithms.jar:jars/imglib-ij.jar:plugins/Simple_Neurite_Tracer.jar:plugins/3D_Viewer.jar:plugins/Lasso_and_Blow_Tool.jar:$JAVA3D_JARS
+CLASSPATH(plugins/TrakEM2_.jar)=jars/ij.jar:jars/jai_core.jar:jars/jai_codec.jar:jars/VectorString.jar:jars/postgresql-8.2-506.jdbc3.jar:jars/jcommon-1.0.12.jar:jars/jfreechart-1.0.13.jar:jars/edu_mines_jtk.jar:jars/VIB-lib.jar:plugins/VIB_.jar:jars/mpicbg.jar:plugins/loci_tools.jar:plugins/bUnwarpJ_.jar:plugins/level_sets.jar:plugins/Fiji_Plugins.jar:jars/Jama.jar:jars/imglib.jar:jars/imglib-algorithms.jar:jars/imglib-ij.jar:plugins/Simple_Neurite_Tracer.jar:plugins/3D_Viewer.jar:plugins/Lasso_and_Blow_Tool.jar:$JAVA3D_JARS
 plugins/TrakEM2_.jar <- modules/TrakEM2/
 plugins/ij-ImageIO_.jar <- modules/ij-plugins/
 jars/jacl.jar <- ImageJ modules/tcljava/
@@ -320,7 +320,7 @@ CLASSPATH(plugins/Image_5D.jar)=jars/ij.jar
 plugins/Image_5D.jar <- modules/image5d/
 
 # From source
-libs[] <- jars/test-fiji.jar jars/zs.jar jars/VIB-lib.jar jars/Jama-1.0.2.jar \
+libs[] <- jars/test-fiji.jar jars/zs.jar jars/VIB-lib.jar jars/Jama.jar \
 	jars/fiji-scripting.jar jars/fiji-lib.jar jars/jep.jar \
 	jars/pal-optimization.jar jars/Updater_Fix.jar plugins/JNI_Example.jar \
 	plugins/FFMPEG_IO.jar \
@@ -351,7 +351,7 @@ src-plugins/Script_Editor/icon.png[cp $PRE $TARGET] <- images/icon.png
 src-plugins/Script_Editor/var.png[cp $PRE $TARGET] <- images/var.png
 src-plugins/Script_Editor/function.png[cp $PRE $TARGET] <- images/function.png
 
-CLASSPATH(jars/zs.jar)=jars/Jama-1.0.2.jar
+CLASSPATH(jars/zs.jar)=jars/Jama.jar
 CLASSPATH(plugins/register_virtual_stack_slices.jar)=jars/ij.jar:plugins/TrakEM2_.jar:jars/mpicbg.jar:plugins/bUnwarpJ_.jar:jars/fiji-lib.jar
 CLASSPATH(plugins/registration_3d.jar)=jars/ij.jar:jars/edu_mines_jtk.jar
 CLASSPATH(plugins/Siox_Segmentation.jar)=jars/ij.jar:jars/fiji-lib.jar
@@ -373,16 +373,16 @@ CLASSPATH(plugins/Fiji_Updater.jar)=jars/ij.jar:jars/jsch-0.1.44.jar
 CLASSPATH(plugins/IO_.jar)=jars/ij.jar:jars/batik.jar:jars/jpedalSTD.jar:jars/itextpdf.jar:jars/jzlib-1.0.7.jar
 CLASSPATH(plugins/Sync_Win.jar)=jars/ij.jar:plugins/Image_5D.jar
 CLASSPATH(plugins/Fiji_Developer.jar)=jars/ij.jar:plugins/Script_Editor.jar:plugins/Fiji_Plugins.jar:jars/rsyntaxtextarea.jar:plugins/3D_Viewer.jar:$JAVA3D_JARS
-CLASSPATH(plugins/Trainable_Segmentation.jar)=jars/ij.jar:jars/weka.jar:plugins/Stitching_.jar:jars/fiji-lib.jar:plugins/Anisotropic_Diffusion_2D.jar:jars/Jama-1.0.2.jar:jars/VIB-lib.jar:jars/commons-math.jar:jars/imglib.jar:jars/imglib-ij.jar:jars/imglib-algorithms.jar:jars/imagescience.jar:$JAVA3D_JARS
+CLASSPATH(plugins/Trainable_Segmentation.jar)=jars/ij.jar:jars/weka.jar:plugins/Stitching_.jar:jars/fiji-lib.jar:plugins/Anisotropic_Diffusion_2D.jar:jars/Jama.jar:jars/VIB-lib.jar:jars/commons-math.jar:jars/imglib.jar:jars/imglib-ij.jar:jars/imglib-algorithms.jar:jars/imagescience.jar:$JAVA3D_JARS
 CLASSPATH(plugins/VIB_.jar)=jars/ij.jar:$JAVA3D_JARS:jars/VIB-lib.jar:jars/pal-optimization.jar:plugins/3D_Viewer.jar:jars/imglib.jar:jars/fiji-lib.jar
-CLASSPATH(jars/VIB-lib.jar)=jars/ij.jar:jars/Jama-1.0.2.jar:jars/junit-4.5.jar:jars/pal-optimization.jar:jars/jzlib-1.0.7.jar:jars/fiji-lib.jar
+CLASSPATH(jars/VIB-lib.jar)=jars/ij.jar:jars/Jama.jar:jars/junit-4.5.jar:jars/pal-optimization.jar:jars/jzlib-1.0.7.jar:jars/fiji-lib.jar
 CLASSPATH(plugins/Simple_Neurite_Tracer.jar)=jars/ij.jar:$JAVA3D_JARS:jars/VIB-lib.jar:plugins/VIB_.jar:jars/pal-optimization.jar:jars/junit-4.5.jar:plugins/3D_Viewer.jar:jars/commons-math.jar:jars/jfreechart-1.0.13.jar:jars/jcommon-1.0.12.jar:jars/batik.jar:plugins/AnalyzeSkeleton_.jar:plugins/Skeletonize3D_.jar
-CLASSPATH(plugins/3D_Viewer.jar)=jars/ij.jar:jars/VIB-lib.jar:jars/imglib.jar:jars/Jama-1.0.2.jar:$JAVA3D_JARS
-CLASSPATH(jars/jep.jar)=jars/ij.jar:jars/Jama-1.0.2.jar:jars/junit-4.5.jar
-CLASSPATH(plugins/SPIM_Registration.jar)=jars/ij.jar:$JAVA3D_JARS:jars/imglib.jar:jars/mpicbg.jar:plugins/3D_Viewer.jar:jars/weka.jar:jars/fiji-lib.jar:plugins/loci_tools.jar:plugins/Fiji_Plugins.jar:jars/VIB-lib.jar:jars/Jama-1.0.2.jar:jars/imglib-algorithms.jar:jars/imglib-ij.jar:jars/imglib-io.jar:jars/jfreechart-1.0.13.jar:jars/jcommon-1.0.12.jar
-CLASSPATH(plugins/Descriptor_based_registration.jar)=jars/ij.jar:jars/imglib.jar:jars/mpicbg.jar:jars/fiji-lib.jar:plugins/Fiji_Plugins.jar:jars/VIB-lib.jar:jars/Jama-1.0.2.jar:jars/imglib-algorithms.jar:jars/imglib-ij.jar:jars/imglib-io.jar:plugins/SPIM_Registration.jar:$JAVA3D_JARS
+CLASSPATH(plugins/3D_Viewer.jar)=jars/ij.jar:jars/VIB-lib.jar:jars/imglib.jar:jars/Jama.jar:$JAVA3D_JARS
+CLASSPATH(jars/jep.jar)=jars/ij.jar:jars/Jama.jar:jars/junit-4.5.jar
+CLASSPATH(plugins/SPIM_Registration.jar)=jars/ij.jar:$JAVA3D_JARS:jars/imglib.jar:jars/mpicbg.jar:plugins/3D_Viewer.jar:jars/weka.jar:jars/fiji-lib.jar:plugins/loci_tools.jar:plugins/Fiji_Plugins.jar:jars/VIB-lib.jar:jars/Jama.jar:jars/imglib-algorithms.jar:jars/imglib-ij.jar:jars/imglib-io.jar:jars/jfreechart-1.0.13.jar:jars/jcommon-1.0.12.jar
+CLASSPATH(plugins/Descriptor_based_registration.jar)=jars/ij.jar:jars/imglib.jar:jars/mpicbg.jar:jars/fiji-lib.jar:plugins/Fiji_Plugins.jar:jars/VIB-lib.jar:jars/Jama.jar:jars/imglib-algorithms.jar:jars/imglib-ij.jar:jars/imglib-io.jar:plugins/SPIM_Registration.jar:$JAVA3D_JARS
 CLASSPATH(plugins/Bug_Submitter.jar)=jars/ij.jar:plugins/Fiji_Updater.jar
-CLASSPATH(plugins/TopoJ_.jar)=jars/ij.jar:jars/Jama-1.0.2.jar
+CLASSPATH(plugins/TopoJ_.jar)=jars/ij.jar:jars/Jama.jar
 CLASSPATH(jars/imagescience.jar)=jars/ij.jar:plugins/Image_5D.jar
 CLASSPATH(plugins/Arrow_.jar)=jars/ij.jar:jars/fiji-lib.jar
 CLASSPATH(plugins/TransformJ_.jar)=jars/ij.jar:jars/imagescience.jar
@@ -450,7 +450,7 @@ CLASSPATH(plugins/Extended_Depth_Field.jar)=jars/ij.jar:jars/imageware.jar:jars/
 CLASSPATH(plugins/panorama_.jar)=jars/ij.jar:jars/mpicbg.jar:/jars/mpicbg_.jar
 CLASSPATH(jars/weave_jy2java.jar)=plugins/Refresh_Javas.jar:jars/fiji-scripting.jar:jars/fiji-compat.jar:jars/ij.jar:plugins/Script_Editor.jar
 CLASSPATH(plugins/3D_Blob_Segmentation.jar)=jars/ij.jar:plugins/level_sets.jar:plugins/3D_Viewer.jar:jars/VIB-lib.jar:jars/imglib.jar:$JAVA3D_JARS
-CLASSPATH(plugins/Feature_Detection.jar)=jars/ij.jar:jars/imglib-ij.jar:jars/imglib.jar:jars/imglib-algorithms.jar:jars/Jama-1.0.2.jar
+CLASSPATH(plugins/Feature_Detection.jar)=jars/ij.jar:jars/imglib-ij.jar:jars/imglib.jar:jars/imglib-algorithms.jar:jars/Jama.jar
 LIBS(plugins/JNI_Example.jar)=-lm
 CLASSPATH(plugins/JNI_Example.jar)=jars/ij.jar:jars/fiji-lib.jar
 CLASSPATH(plugins/Kuwahara_Filter.jar)=jars/ij.jar

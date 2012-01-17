@@ -240,7 +240,7 @@ replacement_files =  {
     'jars/batik.jar' : ( '/usr/share/java/batik-all.jar', '/usr/share/java/xml-apis-ext.jar' ),
     'jars/bsh.jar' : ( '/usr/share/java/bsh.jar', ),
     'jars/clojure.jar' : ( '/usr/share/java/clojure.jar', ),
-    'jars/Jama-1.0.2.jar' : ( '/usr/share/java/jama.jar', ),
+    'jars/Jama.jar' : ( '/usr/share/java/jama.jar', ),
     'jars/jcommon-1.0.12.jar' : ( '/usr/share/java/jcommon.jar', ),
     'jars/jfreechart-1.0.13.jar' : ( '/usr/share/java/jfreechart.jar', ),
     'jars/js.jar' : ( '/usr/share/java/js.jar', ),
@@ -658,7 +658,7 @@ if options.clean:
     to_remove.append("java/linux")
     to_remove.append("java/linux-amd64")
     to_remove.append("java/macosx-java3d")
-    to_remove.append("src-plugins/Jama-1.0.2")
+    to_remove.append("src-plugins/Jama")
     to_remove.append("java/win32")
     to_remove.append("java/win64")
     to_remove.append("livehelper")
@@ -720,12 +720,12 @@ if options.clean:
         if re.search("^\s*missingPrecompiledFallBack",line):
             skip_next_line = True
             continue
-        # grrr, src-plugins/Jama-1.0.2 seems particularly awkward to
+        # grrr, src-plugins/Jama seems particularly awkward to
         # get rid of.  Probably should do everything like this, just
         # rewrite the Fakefile entirely, with a proper parser of the
         # format.  FIXME FIXME FIXME
-        line = re.sub('\s+jars/Jama-1\.0\.2\.jar\s+',' ',line)
-        line = re.sub('jars/Jama-1\.0\.2\.jar','/usr/share/java/jama.jar',line)
+        line = re.sub('\s+jars/Jama.jar\s+',' ',line)
+        line = re.sub('jars/Jama.jar','/usr/share/java/jama.jar',line)
         line = re.sub('jars/javassist.jar','/usr/share/java/javassist.jar',line)
         fp.write(line)
     fp.close()
