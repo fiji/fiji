@@ -2842,6 +2842,7 @@ public class WekaSegmentation {
 		else
 			classNames = loadedClassNames;
 
+		// array of images to store the classification results
 		final ImagePlus[] classifiedSlices = new ImagePlus[imp.getStackSize()];
 
 		class ApplyClassifierThread extends Thread {
@@ -2880,16 +2881,15 @@ public class WekaSegmentation {
 					final Instances sliceData = sliceFeatures.createInstances(classNames);
 					sliceData.setClassIndex(sliceData.numAttributes() - 1);					
 					
-					final ImagePlus classImage;
-					classImage = applyClassifier(sliceData, slice.getWidth(), slice.getHeight(), numFurtherThreads, probabilityMaps);
+					final ImagePlus classImage = applyClassifier(sliceData, slice.getWidth(), slice.getHeight(), numFurtherThreads, probabilityMaps);
 
-					IJ.log("Classifying slice " + i + " in " + numFurtherThreads + " threads...");
+					IJ.log("Classifying slice " + i + " in " + numFurtherThreads + " thread(s)...");
 					classImage.setTitle("classified_" + slice.getTitle());
 					if(probabilityMaps)
 						classImage.setProcessor(classImage.getProcessor().duplicate());
 					else
 						classImage.setProcessor(classImage.getProcessor().convertToByte(true).duplicate());
-					classifiedSlices[i-1] = classImage;
+					classifiedSlices[i-1] = classImage;					
 				}
 			}
 		}
@@ -2921,7 +2921,7 @@ public class WekaSegmentation {
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
-
+			
 		// assemble classified image
 		for (int i = 0; i < imp.getStackSize(); i++)
 			for (int c = 0; c < numChannels; c++)
@@ -3292,7 +3292,7 @@ public class WekaSegmentation {
 
 		final long start = System.currentTimeMillis();
 
-		exe = Executors.newFixedThreadPool(numThreads);
+		ExecutorService exe = Executors.newFixedThreadPool(numThreads);
 		final double[][][] results = new double[numThreads][][];
 		final Instances[] partialData = new Instances[numThreads];
 		final int partialSize = numInstances / numThreads;
@@ -3303,7 +3303,10 @@ public class WekaSegmentation {
 		for(int i = 0; i < numThreads; i++)
 		{
 			if (Thread.currentThread().isInterrupted()) 
+			{
+				exe.shutdown();
 				return null;
+			}
 			if(i == numThreads - 1)
 				partialData[i] = new Instances(data, i*partialSize, numInstances - i*partialSize);
 			else
