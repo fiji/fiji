@@ -238,7 +238,7 @@ map_to_external_dependencies = {
 # an external dependency.
 replacement_files =  {
     'jars/batik.jar' : ( '/usr/share/java/batik-all.jar', '/usr/share/java/xml-apis-ext.jar' ),
-    'jars/bsh-2.0b4.jar' : ( '/usr/share/java/bsh.jar', ),
+    'jars/bsh.jar' : ( '/usr/share/java/bsh.jar', ),
     'jars/clojure.jar' : ( '/usr/share/java/clojure.jar', ),
     'jars/Jama-1.0.2.jar' : ( '/usr/share/java/jama.jar', ),
     'jars/jcommon-1.0.12.jar' : ( '/usr/share/java/jcommon.jar', ),

@@ -174,7 +174,7 @@ public class Fake {
 	protected static void discoverBeanshell() throws IOException {
 		String bshJar = ijHome + "/jars/bsh.jar";
 		if (!new File(bshJar).exists()) {
-			bshJar = ijHome + "/jars/bsh-2.0b4.jar";
+			bshJar = ijHome + "/jars/bsh.jar";
 			if (!new File(bshJar).exists())
 				bshJar = ijHome + "/precompiled/bsh.jar";
 		}

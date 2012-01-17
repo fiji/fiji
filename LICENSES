@@ -25,7 +25,7 @@ Name					File					Author(s)						Contact								License
 ----					----					---------						--------------							-------
 * Anisotropic Diffusion 2D 		Anisotropic_Diffusion_2D.jar 		http://rsb.info.nih.gov/ij/plugins/download/Anisotropic_Diffusion_2D.java						GPL
 * Batik 				batik.jar 				http://xmlgraphics.apache.org/batik/contributors.html									AL
-* Bean Shell language 			bsh-2.0b4.jar 											http://www.beanshell.org/ 					SPL/LGPL
+* Bean Shell language 			bsh.jar 											http://www.beanshell.org/ 					SPL/LGPL
 * Bean Shell Interpreter 		BSH_Interpreter.jar			Johannes Schindelin					Johannes.Schindelin@gmx.de					GPL
 * bUnwarpJ				bUnwarpJ_.jar				Ignacio	Arganda et al.					ignacio.arganda@uam.es						GPL
 * Clojure				clojure.jar				Rich Hickey						http://clojure.sourceforge.net/					EPL
