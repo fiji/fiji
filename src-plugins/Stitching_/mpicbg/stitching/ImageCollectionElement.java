@@ -16,6 +16,7 @@ public class ImageCollectionElement
 	final int index;
 	Model<?> model;
 	int dimensionality;
+	boolean virtual = false;
 	
 	//2d or 3d offset
 	float[] offset;	
@@ -45,6 +46,7 @@ public class ImageCollectionElement
 	public int getDimensionality() { return dimensionality; }
 	
 	public File getFile() { return file; }
+	public boolean isVirtual() { return virtual; }
 	
 	/**
 	 * Used by the multi-series stitching
@@ -61,14 +63,19 @@ public class ImageCollectionElement
 			size = new int[] { imp.getWidth(), imp.getHeight(), imp.getNSlices() };	
 	}
 	
-	public ImagePlus open()
+	public ImagePlus open( final boolean virtual )
 	{
-		if ( imp != null )
+		if ( imp != null && this.isVirtual() == virtual )
 		{
 			return imp;
 		}
 		else
 		{
+			if ( imp != null )
+				imp.close();
+			
+			this.virtual = virtual;
+			
 			try 
 			{
 				ImporterOptions options = new ImporterOptions();
@@ -77,8 +84,14 @@ public class ImageCollectionElement
 				options.setSplitTimepoints( false );
 				options.setSplitFocalPlanes( false );
 				options.setAutoscale( false );
+				options.setVirtual( virtual );
 				
-				final ImagePlus[] imp = BF.openImagePlus( file.getAbsolutePath() );
+				final ImagePlus[] imp;
+				
+				if ( virtual )
+					imp = BF.openImagePlus( options );
+				else
+					imp = BF.openImagePlus( file.getAbsolutePath() ); // this worked, so we keep it (altough both should be the same)
 				
 				if ( imp.length > 1 )
 				{

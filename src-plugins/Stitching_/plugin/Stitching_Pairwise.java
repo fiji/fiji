@@ -10,6 +10,7 @@ import ij.gui.GenericDialog;
 import ij.gui.MultiLineLabel;
 import ij.plugin.PlugIn;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Vector;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -431,7 +432,7 @@ public class Stitching_Pairwise implements PlugIn
 		
 		if ( params.fusionMethod < 5 )
 		{
-			ImagePlus imp = Fusion.fuse( targetType, images, models, params.dimensionality, params.subpixelAccuracy, params.fusionMethod );
+			ImagePlus imp = Fusion.fuse( targetType, images, models, params.dimensionality, params.subpixelAccuracy, params.fusionMethod, null );
 			return imp;
 		}
 		else if ( params.fusionMethod == 5 ) // overlay

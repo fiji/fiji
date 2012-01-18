@@ -1,7 +1,6 @@
 package mpicbg.stitching;
 
 import ij.IJ;
-import ij.ImagePlus;
 import ij.gui.Roi;
 
 import java.awt.Rectangle;
@@ -9,11 +8,8 @@ import java.util.ArrayList;
 import java.util.Vector;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import stitching.ImageInformation;
-
 import mpicbg.imglib.multithreading.SimpleMultiThreading;
 import mpicbg.imglib.util.Util;
-import mpicbg.models.InvertibleBoundable;
 import mpicbg.models.TranslationModel2D;
 import mpicbg.models.TranslationModel3D;
 
@@ -89,7 +85,7 @@ public class CollectionStitchingImgLib
 	        
 	        // get the final positions of all tiles
 			optimized = GlobalOptimization.optimize( pairs, pairs.get( 0 ).getTile1(), params );
-			IJ.log( "Complete registration process took " + (System.currentTimeMillis() - time) + " ms." );
+			IJ.log( "Finished registration process (" + (System.currentTimeMillis() - time) + " ms)." );
 		}
 		else
 		{
@@ -98,7 +94,7 @@ public class CollectionStitchingImgLib
 			
 			for ( final ImageCollectionElement element : elements )
 			{
-				final ImagePlusTimePoint imt = new ImagePlusTimePoint( element.open(), element.getIndex(), 1, element.getModel(), element );
+				final ImagePlusTimePoint imt = new ImagePlusTimePoint( element.open( params.virtual ), element.getIndex(), 1, element.getModel(), element );
 				
 				// set the models to the offset
 				if ( params.dimensionality == 2 )
@@ -156,14 +152,14 @@ public class CollectionStitchingImgLib
 	{		
 		for ( final ImageCollectionElement element : elements )
 		{
-			if ( element.open() == null )
+			if ( element.open( params.virtual ) == null )
 				return null;
 		}
 		
 		// all ImagePlusTimePoints, each of them needs its own model
 		final ArrayList< ImagePlusTimePoint > listImp = new ArrayList< ImagePlusTimePoint >();
 		for ( final ImageCollectionElement element : elements )
-			listImp.add( new ImagePlusTimePoint( element.open(), element.getIndex(), 1, element.getModel(), element ) );
+			listImp.add( new ImagePlusTimePoint( element.open( params.virtual ), element.getIndex(), 1, element.getModel(), element ) );
 	
 		// get the connecting tiles
 		final Vector< ComparePair > overlappingTiles = new Vector< ComparePair >();
