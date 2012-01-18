@@ -141,7 +141,7 @@ public class MiniMaven {
 		if (dependency.artifactId.equals("ij")) {
 			String javac = pom.expand("${java.home}/../lib/tools.jar");
 			if (new File(javac).exists())
-				pom.dependencies.add(new Coordinate("com.sun", "tools", "1.4.2", false, javac, null));
+				pom.dependencies.add(new Coordinate("com.sun", "tools", "1.4.2", null, false, javac, null));
 		}
 		else if (dependency.artifactId.equals("imglib2-io"))
 			pom.dependencies.add(new Coordinate("loci", "bio-formats", "${bio-formats.version}"));
@@ -149,19 +149,20 @@ public class MiniMaven {
 	}
 
 	protected static class Coordinate {
-		protected String groupId, artifactId, version, systemPath, classifier;
+		protected String groupId, artifactId, version, systemPath, classifier, scope;
 		protected boolean optional;
 
 		public Coordinate() {}
 
 		public Coordinate(String groupId, String artifactId, String version) {
-			this(groupId, artifactId, version, false, null, null);
+			this(groupId, artifactId, version, null, false, null, null);
 		}
 
-		public Coordinate(String groupId, String artifactId, String version, boolean optional, String systemPath, String classifier) {
+		public Coordinate(String groupId, String artifactId, String version, String scope, boolean optional, String systemPath, String classifier) {
 			this.groupId = normalize(groupId);
 			this.artifactId = normalize(artifactId);
 			this.version = normalize(version);
+			this.scope = normalize(scope);
 			this.optional = optional;
 			this.systemPath = normalize(systemPath);
 			this.classifier = classifier;
@@ -446,6 +447,7 @@ public class MiniMaven {
 
 		public void getDependencies(Set<POM> result) throws IOException, ParserConfigurationException, SAXException {
 			for (Coordinate dependency : dependencies) {
+				String scope = expand(dependency.scope);
 				String groupId = expand(dependency.groupId);
 				String artifactId = expand(dependency.artifactId);
 				String version = expand(dependency.version);
@@ -454,7 +456,7 @@ public class MiniMaven {
 				if (version == null && "aopalliance".equals(artifactId))
 					optional = true; // guice has recorded this without a version
 				String systemPath = expand(dependency.systemPath);
-				Coordinate expanded = new Coordinate(groupId, artifactId, version, optional, systemPath, classifier);
+				Coordinate expanded = new Coordinate(groupId, artifactId, version, scope, optional, systemPath, classifier);
 				if (systemPath != null) {
 					File file = new File(systemPath);
 					if (file.exists()) {
@@ -739,6 +741,8 @@ public class MiniMaven {
 				latestDependency.artifactId = string;
 			else if (prefix.equals(">project>dependencies>dependency>version"))
 				latestDependency.version = string;
+			else if (prefix.equals(">project>dependencies>dependency>scope"))
+				latestDependency.scope = string;
 			else if (prefix.equals(">project>dependencies>dependency>optional"))
 				latestDependency.optional = string.equalsIgnoreCase("true");
 			else if (prefix.equals(">project>dependencies>dependency>systemPath"))
