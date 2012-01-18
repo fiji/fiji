@@ -201,7 +201,14 @@ public class MiniMaven {
 
 		@Override
 		public String toString() {
-			return getFileName(true, true, null);
+			String extra = "";
+			if (optional)
+				extra += " optional";
+			if (scope != null)
+				extra += " scope=" + scope;
+			if (extra.startsWith(" "))
+				extra = "{" + extra.substring(1) + "}";
+			return getFileName(true, true, null) + extra;
 		}
 	}
 
