@@ -8,7 +8,7 @@ JAVAC="/usr/bin/javac"
 JAR="/usr/bin/jar"
 J3DF="$FIJIF/java/macosx-java3d/Home/lib/ext/"
 
-CLASSPATH=".:$JARF/ij.jar:$JARF/imglib.jar:$JARF/Jama-1.0.2.jar:$J3DF/j3dcore.jar:$J3DF/j3dutils.jar:$J3DF/vecmath.jar"
+CLASSPATH=".:$JARF/ij.jar:$JARF/imglib.jar:$JARF/Jama.jar:$J3DF/j3dcore.jar:$J3DF/j3dutils.jar:$J3DF/vecmath.jar"
 
 JAVACOPTS="-source 1.5 -target 1.5 -extdirs $J3DF -classpath $CLASSPATH"
 IJ3D_SRC="`find . -type f` `find . -name \*.png` plugins.config"

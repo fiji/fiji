@@ -24,7 +24,7 @@ public class ExecuteProgram extends Rule {
 		if (argv0.endsWith(".py"))
 			prereq = "jars/jython.jar";
 		else if (argv0.endsWith(".bsh"))
-			prereq = "jars/bsh-2.0b4.jar";
+			prereq = "jars/bsh.jar";
 		Rule rule = prereq == null ? null : parser.getRule(prereq);
 		if (rule == null)
 			return super.getDependencies();

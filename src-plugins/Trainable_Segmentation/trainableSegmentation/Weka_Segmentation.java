@@ -1185,12 +1185,11 @@ public class Weka_Segmentation implements PlugIn
 
 
 		if (Math.max(trainingImage.getWidth(), trainingImage.getHeight()) > 1024)
-			if (!IJ.showMessageWithCancel("Warning", "At least one dimension of the image \n" +
-					"is larger than 1024 pixels. \n" +
-					"Feature stack creation and classifier training \n" +
-					"might take some time depending on your computer.\n" +
-			"Proceed?"))
-				return;
+			IJ.log("Warning: at least one dimension of the image "  +
+					"is larger than 1024 pixels.\n" +
+					"Feature stack creation and classifier training " +
+					"might take some time depending on your computer.\n");
+
 
 		//trainingImage.setProcessor("Advanced Weka Segmentation", trainingImage.getProcessor().duplicate().convertToByte(true));
 		//wekaSegmentation.loadNewImage(trainingImage);

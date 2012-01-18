@@ -25,7 +25,7 @@ Name					File					Author(s)						Contact								License
 ----					----					---------						--------------							-------
 * Anisotropic Diffusion 2D 		Anisotropic_Diffusion_2D.jar 		http://rsb.info.nih.gov/ij/plugins/download/Anisotropic_Diffusion_2D.java						GPL
 * Batik 				batik.jar 				http://xmlgraphics.apache.org/batik/contributors.html									AL
-* Bean Shell language 			bsh-2.0b4.jar 											http://www.beanshell.org/ 					SPL/LGPL
+* Bean Shell language 			bsh.jar 											http://www.beanshell.org/ 					SPL/LGPL
 * Bean Shell Interpreter 		BSH_Interpreter.jar			Johannes Schindelin					Johannes.Schindelin@gmx.de					GPL
 * bUnwarpJ				bUnwarpJ_.jar				Ignacio	Arganda et al.					ignacio.arganda@uam.es						GPL
 * Clojure				clojure.jar				Rich Hickey						http://clojure.sourceforge.net/					EPL
@@ -47,23 +47,23 @@ Name					File					Author(s)						Contact								License
 * imagescience.jar 			imagescience.jar 			Erik Meijering 						meijering@imagescience.org 					imagescience (see below)
 * imageware.jar				imageware.jar				Daniel Sage et al					http://bigwww.epfl.ch/						BIG (see below)
 * Interactive 3D Surface Plot 		Interactive_3D_Surface_Plot.jar		Kai Uwe Barthel 					k.barthel@fhtw-berlin.de 					PD
-* iText					itextpdf-5.1.1.jar 			Bruno Lowagie, Paulo Soares 				http://itextpdf.com/terms-of-use/index.php 			AGPL
+* iText					itextpdf.jar	 			Bruno Lowagie, Paulo Soares 				http://itextpdf.com/terms-of-use/index.php 			AGPL
 * IO package 				IO_.jar 				A. Cardona, S. Saalfeld, J. Schindelin, G. Jefferis 	acardona@ini.phys.ethz.ch 					GPL/public domain
 * IPLab Reader 				IPLab_Reader.jar			Wayne Rasband 						wsr@nih.gov 							PD
 * Jacl 					jacl.jar 											http://sourceforge.net/projects/tcljava				BSD
 * Java Compiler				javac.jar				OpenJDK							http://hg.openjdk.java.net/jdk6/jdk6/langtools			GPL 2
 * Java Expression Parser (JEP)		jep.jar					Nathan Funk, Richard Morris				http://www.singularsys.com/jep/					GPL
-* Java Matrix package 			Jama-1.0.2.jar 				http://math.nist.gov/javanumerics/jama/#Authors 	http://math.nist.gov/javanumerics/jama/#Authors 		PD
+* Java Matrix package 			Jama.jar 				http://math.nist.gov/javanumerics/jama/#Authors 	http://math.nist.gov/javanumerics/jama/#Authors 		PD
 * Javascript Rhino Engine 		js.jar 					http://www.mozilla.org/rhino/ 				http://www.mozilla.org/rhino/ 					MPL 1.1/GPL 2  see http://developer.mozilla.org/en/docs/Rhino_License
 * Javascript Interpreter 		Javascript_Interpreter.jar 		Albert Cardona 						acardona@ini.phys.ethz.ch 					GPL
-* JFreeChart	 			jfreechart-1.0.13.jar 			http://www.jfree.org/jfreechart/			http://www.jfree.org/jfreechart/ 				LGPL
+* JFreeChart	 			jfreechart.jar 				http://www.jfree.org/jfreechart/			http://www.jfree.org/jfreechart/ 				LGPL
 * JPedal PDF library 			jpedalSTD.jar 				http://www.jpedal.org/ 					http://www.jpedal.org/ 						GPL/commercial
 * JRuby Interpreter 			JRuby_Interpreter.jar			Mark Longair						Mark.Longair@ed.ac.uk						GPL
 * JRuby 				jruby.jar				Thomas E. Enebo						http://jruby.codehaus.org/					CPL/GPL/LGPL
-* JSch					jsch-0.1.44.jar				JCraft							http://www.jcraft.com/jsch/					BSD
+* JSch					jsch.jar				JCraft							http://www.jcraft.com/jsch/					BSD
 * Jython 				jython.jar				http://www.jython.org/Project/contributors.html 	http://www.jython.org 						PSF 2/JSF 2.1/JPSL
 * Jython Interpreter 			Jython_Interpreter.jar			Albert Cardona 						acardona@ini.phys.ethz.ch					GPL
-* jzlib 				jzlib-1.0.7.jar 			ymnk 							jzlib@jcraft.com 						BSD-like http://www.jcraft.com/jzlib/LICENSE.txt
+* jzlib 				jzlib.jar	 			ymnk 							jzlib@jcraft.com 						BSD-like http://www.jcraft.com/jzlib/LICENSE.txt
 * Kalman Stack Filter			contained in Stack_Manipulation.jar	Christopher Philip Mauer				-								BSD-like
 * Kuwahara Filter			Kuwahara_Filter.jar			Wayne Rasband						http://imagej.nih.gov/ij/plugins/kuwahara.html			PD
 * Multi Kymograph			Multi_Kymograph.jar			Jens Rietdorf & Arne Seitz				http://www.embl.de/eamnet/html/body_kymograph.html		BSD
@@ -79,7 +79,7 @@ Name					File					Author(s)						Contact								License
 * Panorama equirectangular view 	panorama_.jar 				Stephan Saalfeld 					http://fly.mpi-cbg.de/~saalfeld/Projects/panorama.html 		GPL
 * PDF Viewer 				PDF_Viewer.jar				Albert Cardona 						acardona@ini.phys.ethz.ch					GPL
 * PointPicker				PointPicker_.jar			Philippe Thevenaz					http://bigwww.epfl.ch/thevenaz/pointpicker/			BIG (see below)
-* PostgreSQL JDBC 			postgresql-8.2-506.jdbc3.jar 		http://jdbc.postgresql.org/ 				http://jdbc.postgresql.org/					BSD
+* PostgreSQL JDBC 			postgresql.jar		 		http://jdbc.postgresql.org/ 				http://jdbc.postgresql.org/					BSD
 * RandomJ	 			RandomJ_.jar	 			Erik Meijering	 					http://www.imagescience.org/meijering/software/randomj/		imagescience (see below)
 * Register virtual stack slices 	register_virtual_stack_slices.jar 	Albert Cardona 						acardona@ini.phys.ethz.ch					GPL
 * Script Editor				Script_Editor.jar			Johannes Schindelin et al				fiji@googlegroups.com						BSD

@@ -391,7 +391,7 @@ hs_err*.log
 /plugins/TurboReg_.jar
 /plugins/Fiji_Plugins.jar
 /plugins/ToAST_.jar
-/jars/junit-4.5.jar
+/jars/junit.jar
 /plugins/MTrack2_.jar
 /plugins/Time_Stamper.jar
 /plugins/Series_Labeler.jar
@@ -431,7 +431,7 @@ hs_err*.log
 /jars/jep.jar
 /plugins/Siox_Segmentation.jar
 /plugins/Directionality_.jar
-/jars/Jama-1.0.2.jar
+/jars/Jama.jar
 /jars/mpicbg.jar
 /plugins/Image_Expression_Parser.jar
 /plugins/Algorithm_Launcher.jar
@@ -468,7 +468,7 @@ hs_err*.log
 /modules/commons-math/target/
 /modules/ij-plugins/ij-ImageIO_.jar
 /modules/junit/junit4.5/
-/modules/junit/junit-4.5.jar
+/modules/junit/junit.jar
 /modules/junit/target/
 /modules/jython/jython/build/
 /modules/jython/jython/dist/
@@ -543,7 +543,7 @@ hs_err*.log
 /modules/imglib/imglib-io.jar
 /modules/imglib/imglib-ops.jar
 /modules/imglib/imglib-scripting.jar
-/jars/jsch-0.1.44.jar
+/jars/jsch.jar
 /jars/jars/ij-core-plugins.jar
 /modules/imagej2/jars/ij-core-plugins.jar
 /jars/jars/ij-core-tools.jar
@@ -605,4 +605,4 @@ hs_err*.log
 /modules/javassist/target/
 /modules/jsch/build/
 /modules/jsch/dist/
-/modules/jsch/jsch-0.1.44.jar
+/modules/jsch/jsch.jar

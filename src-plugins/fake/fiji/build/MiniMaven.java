@@ -44,6 +44,7 @@ import org.xml.sax.XMLReader;
 import org.xml.sax.helpers.DefaultHandler;
 
 public class MiniMaven {
+	protected String endLine = System.console() == null ? "\n" : "\033[K\r";
 	protected boolean verbose, debug = false, downloadAutomatically, offlineMode;
 	protected PrintStream err;
 	protected Map<String, POM> localPOMCache = new HashMap<String, POM>();
@@ -58,7 +59,7 @@ public class MiniMaven {
 
 	protected void print80(String string) {
 		int length = string.length();
-		err.print((verbose || length < 80 ? string : string.substring(0, 80)) + "\r");
+		err.print((verbose || length < 80 ? string : string.substring(0, 80)) + endLine);
 	}
 
 	public POM parse(File file) throws IOException, ParserConfigurationException, SAXException {

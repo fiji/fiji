@@ -193,7 +193,7 @@ package_name_to_file_matchers = {
         [ "jars/jython.jar" ],
 
     "fiji-itext" :
-        [ "jars/itextpdf-5.1.1.jar" ]
+        [ "jars/itextpdf.jar" ]
 
 }
 
@@ -238,16 +238,16 @@ map_to_external_dependencies = {
 # an external dependency.
 replacement_files =  {
     'jars/batik.jar' : ( '/usr/share/java/batik-all.jar', '/usr/share/java/xml-apis-ext.jar' ),
-    'jars/bsh-2.0b4.jar' : ( '/usr/share/java/bsh.jar', ),
+    'jars/bsh.jar' : ( '/usr/share/java/bsh.jar', ),
     'jars/clojure.jar' : ( '/usr/share/java/clojure.jar', ),
-    'jars/Jama-1.0.2.jar' : ( '/usr/share/java/jama.jar', ),
-    'jars/jcommon-1.0.12.jar' : ( '/usr/share/java/jcommon.jar', ),
-    'jars/jfreechart-1.0.13.jar' : ( '/usr/share/java/jfreechart.jar', ),
+    'jars/Jama.jar' : ( '/usr/share/java/jama.jar', ),
+    'jars/jcommon.jar' : ( '/usr/share/java/jcommon.jar', ),
+    'jars/jfreechart.jar' : ( '/usr/share/java/jfreechart.jar', ),
     'jars/js.jar' : ( '/usr/share/java/js.jar', ),
-    'jars/jsch-0.1.44.jar' : ( '/usr/share/java/jsch.jar', ),
-    'jars/junit-4.5.jar' : ( '/usr/share/java/junit4.jar', ),
-    'jars/jzlib-1.0.7.jar' : ( '/usr/share/java/jzlib.jar', ),
-    'jars/postgresql-8.2-506.jdbc3.jar' : ( '/usr/share/java/postgresql.jar', ),
+    'jars/jsch.jar' : ( '/usr/share/java/jsch.jar', ),
+    'jars/junit.jar' : ( '/usr/share/java/junit4.jar', ),
+    'jars/jzlib.jar' : ( '/usr/share/java/jzlib.jar', ),
+    'jars/postgresql.jar' : ( '/usr/share/java/postgresql.jar', ),
     'jars/javassist.jar' : ( '/usr/share/java/javassist.jar', ),
     'jars/jna.jar' : ( '/usr/share/java/jna.jar', ),
     '$TOOLS_JAR' : ('/usr/lib/jvm/java-6-openjdk/lib/tools.jar', ),
@@ -658,7 +658,7 @@ if options.clean:
     to_remove.append("java/linux")
     to_remove.append("java/linux-amd64")
     to_remove.append("java/macosx-java3d")
-    to_remove.append("src-plugins/Jama-1.0.2")
+    to_remove.append("src-plugins/Jama")
     to_remove.append("java/win32")
     to_remove.append("java/win64")
     to_remove.append("livehelper")
@@ -711,21 +711,21 @@ if options.clean:
                 continue
             if re.search("(^\s*jars|precompiled)/javassist.jar",line):
                 continue
-            if re.search("(^\s*jars|precompiled)/jsch-0.1.44.jar",line):
+            if re.search("(^\s*jars|precompiled)/jsch.jar",line):
                 continue
-            if re.search("(^\s*jars|precompiled)/junit-4.5.jar",line):
+            if re.search("(^\s*jars|precompiled)/junit.jar",line):
                 continue
             if re.search("(^\s*jars|precompiled)/batik.jar",line):
                 continue
         if re.search("^\s*missingPrecompiledFallBack",line):
             skip_next_line = True
             continue
-        # grrr, src-plugins/Jama-1.0.2 seems particularly awkward to
+        # grrr, src-plugins/Jama seems particularly awkward to
         # get rid of.  Probably should do everything like this, just
         # rewrite the Fakefile entirely, with a proper parser of the
         # format.  FIXME FIXME FIXME
-        line = re.sub('\s+jars/Jama-1\.0\.2\.jar\s+',' ',line)
-        line = re.sub('jars/Jama-1\.0\.2\.jar','/usr/share/java/jama.jar',line)
+        line = re.sub('\s+jars/Jama.jar\s+',' ',line)
+        line = re.sub('jars/Jama.jar','/usr/share/java/jama.jar',line)
         line = re.sub('jars/javassist.jar','/usr/share/java/javassist.jar',line)
         fp.write(line)
     fp.close()
