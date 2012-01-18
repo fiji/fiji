@@ -1,6 +1,7 @@
 package mpicbg.spim.registration;
 
 import ij.IJ;
+import ij.ImagePlus;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -11,10 +12,10 @@ import javax.vecmath.Matrix4f;
 
 import mpicbg.imglib.algorithm.gauss.DownSample;
 import mpicbg.imglib.algorithm.mirror.MirrorImage;
-//import mpicbg.imglib.algorithm.mirror.MirrorImage;
 import mpicbg.imglib.container.ContainerFactory;
 import mpicbg.imglib.cursor.Cursor;
 import mpicbg.imglib.image.Image;
+import mpicbg.imglib.image.display.imagej.ImageJFunctions;
 import mpicbg.imglib.io.LOCI;
 import mpicbg.imglib.type.numeric.real.FloatType;
 import mpicbg.models.AbstractAffineModel3D;
@@ -23,6 +24,7 @@ import mpicbg.spim.mpicbg.TileSPIM;
 import mpicbg.spim.registration.bead.BeadStructure;
 import mpicbg.spim.registration.bead.error.ViewErrorStatistics;
 import mpicbg.spim.registration.segmentation.NucleusStructure;
+import spimopener.SPIMExperiment;
 
 public class ViewDataBeads implements Comparable< ViewDataBeads >
 {
@@ -116,11 +118,18 @@ public class ViewDataBeads implements Comparable< ViewDataBeads >
 	protected float initialSigma = 1.8f;
 	protected float minPeakValue = 0.01f;
 	protected float minInitialPeakValue = 0.001f;
+	
+	/**
+	 * the timepoint of this view
+	 */
+	protected int timePoint = 0;
 
 	public int getChannel() { return channel; }
 	public void setChannel( final int channel ){ this.channel = channel; }
 	public int getChannelIndex() { return channelIndex; }
 	public void setChannelIndex( final int channelIndex ){ this.channelIndex = channelIndex; }
+	public int getTimePoint() { return timePoint; }
+	public void setTimePoint( final int timePoint ){ this.timePoint = timePoint; }
 	public boolean getUseForRegistration() { return useForRegistration; }
 	public void setUseForRegistration( final boolean useForRegistration ) { this.useForRegistration = useForRegistration; }
 	public boolean getUseForFusion() { return useForFusion; }
@@ -140,7 +149,14 @@ public class ViewDataBeads implements Comparable< ViewDataBeads >
 	protected int angle;
 	public int getAcqusitionAngle() { return angle; }
 	public void setAcqusitionAngle( final int angle ){ this.angle = angle; }
-	
+
+	/**
+	 * the index of the illumination direction
+	 */
+	protected int illumination;
+	public int getIllumination() { return illumination; }
+	public void setIllumination( int illumination )	{ this.illumination = illumination; }
+
 	/**
 	 * The file name of the current view
 	 */
@@ -331,23 +347,54 @@ public class ViewDataBeads implements Comparable< ViewDataBeads >
 	 * @return the link or null unable to open
 	 */
 	public Image<FloatType> getImage( final ContainerFactory imageFactory, final boolean normalize ) 
-	{
+	{		
 		if ( image == null )
 		{
-			String s = getFileName();
-			
-			//TODO: REMOVE!!!!!!
-			//if ( s.contains("red-h2amcherry-nuclei") )
-			//	s = s.replace( "red-h2amcherry-nuclei", "green-rasgfp-membranes" ) + ".tif";
-			
-			//System.out.println( s );
-			
-			image = LOCI.openLOCIFloatType( s, imageFactory );
-			
-			if ( image == null )
+			if ( getViewStructure().getSPIMConfiguration().isHuiskenFormat() )
 			{
-				IJ.error( "Cannot find file: " + s );
-				return null;
+				SPIMExperiment exp = getViewStructure().getSPIMConfiguration().getSpimExperiment();
+				final int s = exp.sampleStart;
+				final int r = exp.regionStart;
+				final int f = exp.frameStart;
+				final int zMin = exp.planeStart;
+				final int zMax = exp.planeEnd;
+				final int xMin = 0;
+				final int xMax = exp.w - 1;
+				final int yMin = 0;
+				final int yMax = exp.h - 1;
+
+				ImagePlus imp;
+				if ( getViewStructure().getSPIMConfiguration().hasAlternatingIllumination() )
+				{
+					final int zStep = 2;
+					if ( illumination == 0 )
+						imp = exp.openNotProjected( s, timePoint, timePoint, r, angle, channel, zMin, zMax-1, zStep, f, f, yMin, yMax, xMin, xMax, SPIMExperiment.X, SPIMExperiment.Y, SPIMExperiment.Z, false );
+					else
+						imp = exp.openNotProjected( s, timePoint, timePoint, r, angle, channel, zMin+1, zMax, zStep, f, f, yMin, yMax, xMin, xMax, SPIMExperiment.X, SPIMExperiment.Y, SPIMExperiment.Z, false );
+				}
+				else
+				{
+					imp = exp.openNotProjected( s, timePoint, timePoint, r, angle, channel, zMin, zMax, f, f, yMin, yMax, xMin, xMax, SPIMExperiment.X, SPIMExperiment.Y, SPIMExperiment.Z, false );
+				}
+				image = ImageJFunctions.convertFloat( imp );
+			}
+			else
+			{
+				String s = getFileName();
+				
+				//TODO: REMOVE!!!!!!
+				//if ( s.contains("red-h2amcherry-nuclei") )
+				//	s = s.replace( "red-h2amcherry-nuclei", "green-rasgfp-membranes" ) + ".tif";
+				
+				//System.out.println( s );
+				
+				image = LOCI.openLOCIFloatType( s, imageFactory );
+				
+				if ( image == null )
+				{
+					IJ.error( "Cannot find file: " + s );
+					return null;
+				}
 			}
 			
 			// set different calibration if override is activated

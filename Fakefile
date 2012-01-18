@@ -227,6 +227,7 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/Threshold_Colour.jar \
 	plugins/Helmholtz_Analysis.jar \
 	plugins/Descriptor_based_registration.jar \
+	plugins/SPIM_Opener.jar \
 	plugins/Reconstruct_Reader.jar \
 	jars/fiji-compat.jar \
 	plugins/Fiji_Package_Maker.jar
@@ -377,10 +378,11 @@ CLASSPATH(plugins/Trainable_Segmentation.jar)=jars/ij.jar:jars/weka.jar:plugins/
 CLASSPATH(plugins/VIB_.jar)=jars/ij.jar:$JAVA3D_JARS:jars/VIB-lib.jar:jars/pal-optimization.jar:plugins/3D_Viewer.jar:jars/imglib.jar:jars/fiji-lib.jar
 CLASSPATH(jars/VIB-lib.jar)=jars/ij.jar:jars/Jama.jar:jars/junit.jar:jars/pal-optimization.jar:jars/jzlib.jar:jars/fiji-lib.jar
 CLASSPATH(plugins/Simple_Neurite_Tracer.jar)=jars/ij.jar:$JAVA3D_JARS:jars/VIB-lib.jar:plugins/VIB_.jar:jars/pal-optimization.jar:jars/junit.jar:plugins/3D_Viewer.jar:jars/commons-math.jar:jars/jfreechart.jar:jars/jcommon.jar:jars/batik.jar:plugins/AnalyzeSkeleton_.jar:plugins/Skeletonize3D_.jar
+CLASSPATH(plugins/SPIM_Opener.jar)=jars/ij.jar:jars/fiji-lib.jar:plugins/Fiji_Plugins.jar
 CLASSPATH(plugins/3D_Viewer.jar)=jars/ij.jar:jars/VIB-lib.jar:jars/imglib.jar:jars/Jama.jar:$JAVA3D_JARS
 CLASSPATH(jars/jep.jar)=jars/ij.jar:jars/Jama.jar:jars/junit.jar
-CLASSPATH(plugins/SPIM_Registration.jar)=jars/ij.jar:$JAVA3D_JARS:jars/imglib.jar:jars/mpicbg.jar:plugins/3D_Viewer.jar:jars/weka.jar:jars/fiji-lib.jar:plugins/loci_tools.jar:plugins/Fiji_Plugins.jar:jars/VIB-lib.jar:jars/Jama.jar:jars/imglib-algorithms.jar:jars/imglib-ij.jar:jars/imglib-io.jar:jars/jfreechart.jar:jars/jcommon.jar
-CLASSPATH(plugins/Descriptor_based_registration.jar)=jars/ij.jar:jars/imglib.jar:jars/mpicbg.jar:jars/fiji-lib.jar:plugins/Fiji_Plugins.jar:jars/VIB-lib.jar:jars/Jama.jar:jars/imglib-algorithms.jar:jars/imglib-ij.jar:jars/imglib-io.jar:plugins/SPIM_Registration.jar:$JAVA3D_JARS
+CLASSPATH(plugins/SPIM_Registration.jar)=jars/ij.jar:$JAVA3D_JARS:jars/imglib.jar:jars/mpicbg.jar:plugins/3D_Viewer.jar:jars/weka.jar:jars/fiji-lib.jar:plugins/loci_tools.jar:plugins/Fiji_Plugins.jar:jars/VIB-lib.jar:jars/Jama.jar:jars/imglib-algorithms.jar:jars/imglib-ij.jar:jars/imglib-io.jar:jars/jfreechart.jar:jars/jcommon.jar:plugins/SPIM_Opener.jar
+CLASSPATH(plugins/Descriptor_based_registration.jar)=jars/ij.jar:jars/imglib.jar:jars/mpicbg.jar:jars/fiji-lib.jar:plugins/Fiji_Plugins.jar:jars/VIB-lib.jar:jars/Jama.jar:jars/imglib-algorithms.jar:jars/imglib-ij.jar:jars/imglib-io.jar:plugins/SPIM_Registration.jar:plugins/Stitching_.jar:$JAVA3D_JARS
 CLASSPATH(plugins/Bug_Submitter.jar)=jars/ij.jar:plugins/Fiji_Updater.jar
 CLASSPATH(plugins/TopoJ_.jar)=jars/ij.jar:jars/Jama.jar
 CLASSPATH(jars/imagescience.jar)=jars/ij.jar:plugins/Image_5D.jar
