@@ -254,7 +254,7 @@ public class MiniMaven {
 		public void clean() throws IOException, ParserConfigurationException, SAXException {
 			if (!buildFromSource)
 				return;
-			for (POM child : getDependencies())
+			for (POM child : getDependencies(true))
 				if (child != null)
 					child.clean();
 			if (target.isDirectory())
@@ -268,7 +268,7 @@ public class MiniMaven {
 
 		public void downloadDependencies() throws IOException, ParserConfigurationException, SAXException {
 			downloadAutomatically = true;
-			getDependencies();
+			getDependencies(true, "test");
 			download();
 		}
 
@@ -293,7 +293,7 @@ public class MiniMaven {
 		public boolean upToDate() throws IOException, ParserConfigurationException, SAXException {
 			if (!buildFromSource)
 				return true;
-			for (POM child : getDependencies())
+			for (POM child : getDependencies(true, "test", "runtime"))
 				if (child != null && !child.upToDate())
 					return false;
 
@@ -330,7 +330,7 @@ public class MiniMaven {
 		public void build(boolean makeJar) throws FakeException, IOException, ParserConfigurationException, SAXException {
 			if (!buildFromSource || built)
 				return;
-			for (POM child : getDependencies())
+			for (POM child : getDependencies(true, "test", "runtime"))
 				if (child != null)
 					child.build(makeJar);
 
@@ -343,8 +343,9 @@ public class MiniMaven {
 
 			List<String> arguments = new ArrayList<String>();
 			// classpath
+			String classPath = getClassPath(true);
 			arguments.add("-classpath");
-			arguments.add(getClassPath());
+			arguments.add(classPath);
 			// output directory
 			arguments.add("-d");
 			arguments.add(target.getPath());
@@ -356,7 +357,7 @@ public class MiniMaven {
 			if (count > 0) {
 				err.println("Compiling " + count + " files in " + directory);
 				if (verbose)
-					err.println("using the class path: " + getClassPath());
+					err.println("using the class path: " + classPath);
 				String[] array = arguments.toArray(new String[arguments.size()]);
 				if (fake != null)
 					fake.callJavac(array, verbose);
@@ -429,16 +430,26 @@ public class MiniMaven {
 			return new File(new File(directory, "target"), getJarName());
 		}
 
-		public String getClassPath() throws IOException, ParserConfigurationException, SAXException {
+		public String getClassPath(boolean forCompile) throws IOException, ParserConfigurationException, SAXException {
 			StringBuilder builder = new StringBuilder();
 			builder.append(target);
-			for (POM pom : getDependencies())
+			for (POM pom : getDependencies(true, "test", forCompile ? "runtime" : "provided")) {
 				builder.append(File.pathSeparator).append(pom.target);
+			}
 			return builder.toString();
 		}
 
+		/**
+		 * Copy the runtime dependencies
+		 *
+		 * @param directory where to copy the files to
+		 * @param onlyNewer whether to copy the files only if the sources are newer
+		 * @throws IOException
+		 * @throws ParserConfigurationException
+		 * @throws SAXException
+		 */
 		public void copyDependencies(File directory, boolean onlyNewer) throws IOException, ParserConfigurationException, SAXException {
-			for (POM pom : getDependencies()) {
+			for (POM pom : getDependencies(true, "test", "provided")) {
 				File file = pom.getTarget();
 				File destination = new File(directory, pom.coordinate.artifactId + ".jar");
 				if (file.exists() && (!destination.exists() || destination.lastModified() < file.lastModified()))
@@ -447,19 +458,27 @@ public class MiniMaven {
 		}
 
 		public Set<POM> getDependencies() throws IOException, ParserConfigurationException, SAXException {
+			return getDependencies(false);
+		}
+
+		public Set<POM> getDependencies(boolean excludeOptionals, String... excludeScopes) throws IOException, ParserConfigurationException, SAXException {
 			Set<POM> set = new TreeSet<POM>();
-			getDependencies(set);
+			getDependencies(set, excludeOptionals, excludeScopes);
 			return set;
 		}
 
-		public void getDependencies(Set<POM> result) throws IOException, ParserConfigurationException, SAXException {
+		public void getDependencies(Set<POM> result, boolean excludeOptionals, String... excludeScopes) throws IOException, ParserConfigurationException, SAXException {
 			for (Coordinate dependency : dependencies) {
+				boolean optional = dependency.optional;
+				if (excludeOptionals && optional)
+					continue;
 				String scope = expand(dependency.scope);
+				if (scope != null && excludeScopes != null && arrayContainsString(excludeScopes, scope))
+					continue;
 				String groupId = expand(dependency.groupId);
 				String artifactId = expand(dependency.artifactId);
 				String version = expand(dependency.version);
 				String classifier = expand(dependency.classifier);
-				boolean optional = dependency.optional;
 				if (version == null && "aopalliance".equals(artifactId))
 					optional = true; // guice has recorded this without a version
 				String systemPath = expand(dependency.systemPath);
@@ -475,8 +494,15 @@ public class MiniMaven {
 				if (pom == null || result.contains(pom))
 					continue;
 				result.add(pom);
-				pom.getDependencies(result);
+				pom.getDependencies(result, excludeOptionals, excludeScopes);
 			}
+		}
+
+		protected boolean arrayContainsString(String[] array, String key) {
+			for (String string : array)
+				if (string.equals(key))
+					return true;
+			return false;
 		}
 
 		// expands ${<property-name>}
@@ -1041,7 +1067,7 @@ public class MiniMaven {
 		else if (command.equals("get") || command.equals("get-dependencies"))
 			pom.downloadDependencies();
 		else if (command.equals("run")) {
-			String[] paths = pom.getClassPath().split(File.pathSeparator);
+			String[] paths = pom.getClassPath(false).split(File.pathSeparator);
 			URL[] urls = new URL[paths.length];
 			for (int i = 0; i < urls.length; i++)
 				urls[i] = new URL("file:" + paths[i] + (paths[i].endsWith(".jar") ? "" : "/"));
@@ -1053,7 +1079,7 @@ public class MiniMaven {
 			main.invoke(null, new Object[] { new String[0] });
 		}
 		else if (command.equals("classpath"))
-			miniMaven.err.println(pom.getClassPath());
+			miniMaven.err.println(pom.getClassPath(false));
 		else if (command.equals("list")) {
 			Set<POM> result = new TreeSet<POM>();
 			Stack<POM> stack = new Stack<POM>();
