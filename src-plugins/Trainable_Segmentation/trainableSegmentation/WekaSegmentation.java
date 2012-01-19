@@ -203,6 +203,8 @@ public class WekaSegmentation {
 	/** executor service to launch threads for the library operations */
 	private ExecutorService exe = Executors.newFixedThreadPool(1);
 	
+	/** threads to be used when applying the classifier in a concurrent way */
+	private Thread[] threads  = null;
 
 	/**
 	 * Default constructor.
@@ -1287,6 +1289,9 @@ public class WekaSegmentation {
 			FeatureStack featureStack)
 	{
 		if (null == featureNames)
+			return;
+		
+		if (Thread.currentThread().isInterrupted() )
 			return;
 
 		IJ.log("Filtering feature stack by selected attributes...");
@@ -2863,7 +2868,7 @@ public class WekaSegmentation {
 			public void run() {
 
 				for (int i = startSlice; i < startSlice + numSlices; i++)
-				{
+				{					
 					final ImagePlus slice = new ImagePlus(imp.getImageStack().getSliceLabel(i), imp.getImageStack().getProcessor(i));
 					// Create feature stack for slice
 					IJ.showStatus("Creating features...");
@@ -2875,14 +2880,20 @@ public class WekaSegmentation {
 					sliceFeatures.setMinimumSigma(minimumSigma);
 					sliceFeatures.setMembranePatchSize(membranePatchSize);
 					sliceFeatures.setMembraneSize(membraneThickness);
-					sliceFeatures.updateFeaturesMT();
+					if(false == sliceFeatures.updateFeaturesMT())
+					{
+						IJ.log("Classifier execution was interrupted.");
+						return;
+					}
 					filterFeatureStackByList(featureNames, sliceFeatures);
-
+					
 					final Instances sliceData = sliceFeatures.createInstances(classNames);
 					sliceData.setClassIndex(sliceData.numAttributes() - 1);					
-					
+										
 					final ImagePlus classImage = applyClassifier(sliceData, slice.getWidth(), slice.getHeight(), numFurtherThreads, probabilityMaps);
 
+					if (null == classImage )
+						return;
 					IJ.log("Classifying slice " + i + " in " + numFurtherThreads + " thread(s)...");
 					classImage.setTitle("classified_" + slice.getTitle());
 					if(probabilityMaps)
@@ -2895,7 +2906,7 @@ public class WekaSegmentation {
 		}
 
 		final int numFurtherThreads = (int)Math.ceil((double)(numThreads - numSliceThreads)/numSliceThreads) + 1;
-		final ApplyClassifierThread[] threads = new ApplyClassifierThread[numSliceThreads];
+		threads = new ApplyClassifierThread[numSliceThreads];
 
 		int numSlices  = imp.getStackSize()/numSliceThreads;
 		for (int i = 0; i < numSliceThreads; i++) {
@@ -2916,11 +2927,17 @@ public class WekaSegmentation {
 
 		// join threads
 		for(Thread thread : threads)
+		{
 			try {
 				thread.join();
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
+		}
+		
+		if ( exe.isShutdown() )												
+			return null;
+
 			
 		// assemble classified image
 		for (int i = 0; i < imp.getStackSize(); i++)
@@ -3302,7 +3319,7 @@ public class WekaSegmentation {
 
 		for(int i = 0; i < numThreads; i++)
 		{
-			if (Thread.currentThread().isInterrupted()) 
+			if (Thread.currentThread().isInterrupted() || this.exe.isShutdown()) 
 			{
 				exe.shutdown();
 				return null;
@@ -3927,7 +3944,15 @@ public class WekaSegmentation {
 	public void shutDownNow()
 	{
 		featureStackArray.shutDownNow();
-		exe.shutdownNow();		
+		exe.shutdownNow();	
+		// interrupt applyClassifier threads if they are running
+		if ( null != threads )
+		{			
+			for(int i=0; i<threads.length; i++)
+			{
+				threads[ i ].interrupt();
+			}
+		}
 	}
 
 	/**
