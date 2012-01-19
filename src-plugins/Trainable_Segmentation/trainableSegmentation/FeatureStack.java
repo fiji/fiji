@@ -65,6 +65,7 @@ import mpicbg.imglib.algorithm.fft.FourierConvolution;
 import anisotropic_diffusion.Anisotropic_Diffusion_2D;
 
 import stitching.FloatArray2D;
+import trainableSegmentation.utils.Utils;
 
 import vib.BilateralFilter;
 import weka.core.Attribute;
@@ -1635,8 +1636,7 @@ public class FeatureStack
 		return new Callable<ImagePlus>()
 		{
 			public ImagePlus call()
-			{
-		
+			{	
 				final int width = originalImage.getWidth();
 				final int height = originalImage.getHeight();
 				
@@ -1661,6 +1661,7 @@ public class FeatureStack
 				final double rotationAngle = Math.PI/nAngles;
 				final double sigma_x2 = sigma_x * sigma_x;
 				final double sigma_y2 = sigma_y * sigma_y;
+
 				
 				// Rotate kernel from 0 to 180 degrees
 				for (int i=0; i<nAngles; i++)
@@ -1691,7 +1692,7 @@ public class FeatureStack
 				ImagePlus[] channels = extractChannels(originalImage);
 				
 				ImagePlus[] results = new ImagePlus[ channels.length ];
-				
+			
 				for(int ch=0; ch < channels.length; ch++)
 				{
 
@@ -1701,6 +1702,7 @@ public class FeatureStack
 					//Image<FloatType> image2 = ImagePlusAdapter.wrap(originalImage);
 					for (int i=0; i<nAngles; i++)
 					{
+						
 						Image<FloatType> kernel = ImagePlusAdapter.wrap( new ImagePlus("", kernels.getProcessor(i+1)) );
 						Image<FloatType> image2 = ImagePlusAdapter.wrap( channels[ ch ] );
 
@@ -1717,15 +1719,15 @@ public class FeatureStack
 
 						Image<FloatType>  convolved = fourierConvolution.getResult();
 
-						is.addSlice("gabor angle = " + i, ImageJFunctions.copyToImagePlus( convolved ).getProcessor() );					
+						is.addSlice("gabor angle = " + i, ImageJFunctions.copyToImagePlus( convolved ).getProcessor() );
+
 					}
-
-
-					final ImagePlus projectStack = new ImagePlus("filtered stack",is);
+					
 					//projectStack.show();
 
-					// Normalize filtered stack (it seems necessary to have proper results)
-					IJ.run(projectStack, "Enhance Contrast", "saturated=0.4 normalize normalize_all");
+					// Normalize filtered stack (it seems necessary to have proper results)					
+					final ImagePlus projectStack = new ImagePlus("filtered stack", Utils.normalize( is ));
+					
 					//final ContrastEnhancer c = new ContrastEnhancer();
 					//c.stretchHistogram(projectStack, 0.4);
 					//projectStack.updateAndDraw();
@@ -1742,7 +1744,8 @@ public class FeatureStack
 								+"_"+sigma+"_" + gamma + "_"+ (int) (psi / (Math.PI/4) ) +"_"+frequency, 
 								zp.getProjection().getChannelProcessor());
 					}
-					results[ ch ] = new ImagePlus ("Gabor stack", resultStack);
+					results[ ch ] = new ImagePlus ("Gabor stack", resultStack);									
+					
 				}
 				
 				return mergeResultChannels(results);
@@ -1976,6 +1979,9 @@ public class FeatureStack
 		return new Callable<ImagePlus>(){
 			public ImagePlus call(){
 				
+				if (Thread.currentThread().isInterrupted()) 
+					return null;
+				
 				Anisotropic_Diffusion_2D ad = new Anisotropic_Diffusion_2D();
 				
 				ad.setup("", originalImage);
@@ -1989,6 +1995,8 @@ public class FeatureStack
 				
 				final ImagePlus result = ad.runTD(originalImage.getProcessor());
 				
+				if (Thread.currentThread().isInterrupted()) 
+					return null;
 				
 				if(result.getImageStackSize() == 1)
 				{
@@ -2825,6 +2833,7 @@ public class FeatureStack
 			return false;
 		
 		exe = Executors.newFixedThreadPool( Prefs.getThreads() );
+				
 		wholeStack = new ImageStack(width, height);
 		if( originalImage.getType() == ImagePlus.COLOR_RGB)
 			wholeStack.addSlice("original", originalImage.getProcessor().duplicate());
@@ -2913,7 +2922,7 @@ public class FeatureStack
 							if (Thread.currentThread().isInterrupted()) 
 								return false;
 							final double psi = Math.PI / 2 * i;
-							//IJ.log( n++ +": Calculating Gabor filter (1.0, " + gamma + ", " + psi + ", " + frequency + ", " + nAngles + ")");
+							//System.out.println( " Calculating Gabor filter (1.0, " + gamma + ", " + psi + ", " + frequency + ", " + nAngles + ")");
 							futures.add(exe.submit( getGabor(originalImage, 1.0, gamma, psi, frequency, nAngles) ) );
 						}
 				// elongated filters in x- axis (sigma = [2.0 - 4.0], gamma = [1.0 - 2.0])
@@ -2925,7 +2934,7 @@ public class FeatureStack
 								if (Thread.currentThread().isInterrupted()) 
 									return false;
 								final double psi = Math.PI / 2 * i;
-								//IJ.log( n++ +": Calculating Gabor filter (" + sigma + " , " + gamma + ", " + psi + ", " + frequency + ", " + nAngles + ")");
+								//System.out.println( " Calculating Gabor filter (" + sigma + " , " + gamma + ", " + psi + ", " + frequency + ", " + nAngles + ")");
 								futures.add(exe.submit( getGabor(originalImage, sigma, gamma, psi, frequency, nAngles) ) );
 							}								
 			}
@@ -3074,7 +3083,7 @@ public class FeatureStack
 			return false;
 		}
 		finally{
-			exe.shutdown();
+			exe.shutdownNow();
 		}	
 		
 		IJ.showProgress(1.0);
