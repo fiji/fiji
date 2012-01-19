@@ -1,4 +1,4 @@
-package trainableSegmentation;
+package trainableSegmentation.filters;
 
 /************************************************************************************\
  * 2D Lipschitz Filtering Plug-in for ImageJ                                          *

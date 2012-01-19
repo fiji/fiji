@@ -65,6 +65,8 @@ import mpicbg.imglib.algorithm.fft.FourierConvolution;
 import anisotropic_diffusion.Anisotropic_Diffusion_2D;
 
 import stitching.FloatArray2D;
+import trainableSegmentation.filters.Kuwahara;
+import trainableSegmentation.filters.Lipschitz_;
 import trainableSegmentation.utils.Utils;
 
 import vib.BilateralFilter;
@@ -1741,7 +1743,8 @@ public class FeatureStack
 						resultStack.addSlice(availableFeatures[GABOR] + "_" + i 
 								+"_"+sigma+"_" + gamma + "_"+ (int) (psi / (Math.PI/4) ) +"_"+frequency, 
 								zp.getProjection().getChannelProcessor());
-					}
+					}					
+					
 					results[ ch ] = new ImagePlus ("Gabor stack", resultStack);									
 					
 				}

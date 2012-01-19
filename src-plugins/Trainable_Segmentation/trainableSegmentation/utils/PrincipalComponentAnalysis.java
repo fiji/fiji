@@ -1,4 +1,4 @@
-package trainableSegmentation;
+package trainableSegmentation.utils;
 
 /**
 *

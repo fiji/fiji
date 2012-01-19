@@ -1,4 +1,4 @@
-package trainableSegmentation;
+package trainableSegmentation.filters;
 
 import ij.IJ;
 import ij.ImagePlus;
