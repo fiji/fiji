@@ -108,10 +108,8 @@ public class Util {
 		if (target.equals(source))
 			return;
 		try {
-			if (!target.startsWith("/"))
-				target = cwd + "/" + target;
-			if (!source.startsWith("/"))
-				source = cwd + "/" + source;
+			target = makePath(cwd, target);
+			source = makePath(cwd, source);
 			File parent = new File(target).getParentFile();
 			if (!parent.exists())
 				parent.mkdirs();
