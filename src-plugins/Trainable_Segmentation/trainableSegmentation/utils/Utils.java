@@ -25,7 +25,12 @@ import java.util.ArrayList;
 
 import ij.IJ;
 import ij.ImagePlus;
+import ij.ImageStack;
 import ij.gui.Plot;
+import ij.measure.Measurements;
+import ij.process.FloatProcessor;
+import ij.process.ImageProcessor;
+import ij.process.ImageStatistics;
 import trainableSegmentation.metrics.ClassificationStatistics;
 import util.FindConnectedRegions;
 import util.FindConnectedRegions.Results;
@@ -119,6 +124,37 @@ public class Utils {
 		pl.setSize(540, 512);
 		pl.setColor(Color.GREEN);
 		return pl;
+	}
+	
+	/**
+	 * Normalize an image stack so it has 0 mean and unit variance
+	 * @param inputStack input stack
+	 * @return normalize stack
+	 */
+	public static ImageStack normalize( ImageStack inputStack )
+	{
+		// new stack
+		ImageStack is = new ImageStack( inputStack.getWidth(), inputStack.getHeight() );
+
+		for(int slice = 1; slice<=inputStack.getSize(); slice++)
+		{
+			ImageProcessor ip = inputStack.getProcessor( slice );
+			// get mean and standard deviation of current slice
+			ImageStatistics stats = ImageStatistics.getStatistics( ip, Measurements.MEAN + Measurements.STD_DEV, null);
+
+			FloatProcessor fp = (FloatProcessor) ip.convertToFloat();
+
+			// subtract mean
+			fp.subtract(stats.mean);
+			
+			// divide by std dev
+			fp.multiply(1.0 / stats.stdDev);
+			
+			// add slice to new stack
+			is.addSlice(inputStack.getSliceLabel( slice ), fp);
+		}
+
+		return is;
 	}
 
 }
