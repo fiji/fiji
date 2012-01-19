@@ -1723,8 +1723,6 @@ public class FeatureStack
 
 					}
 					
-					//projectStack.show();
-
 					// Normalize filtered stack (it seems necessary to have proper results)					
 					final ImagePlus projectStack = new ImagePlus("filtered stack", Utils.normalize( is ));
 					
@@ -1855,14 +1853,11 @@ public class FeatureStack
 				Image<FloatType>  convolved = fourierConvolution.getResult();
 
 				is.addSlice("gabor angle = " + i, ImageJFunctions.copyToImagePlus( convolved ).getProcessor() );					
-			}
-
-
-			final ImagePlus projectStack = new ImagePlus("filtered stack",is);
-			//projectStack.show();
+			}			
 
 			// Normalize filtered stack (it seems necessary to have proper results)
-			IJ.run(projectStack, "Enhance Contrast", "saturated=0.4 normalize normalize_all");
+			final ImagePlus projectStack = new ImagePlus("filtered stack", Utils.normalize( is ));
+			
 			//final ContrastEnhancer c = new ContrastEnhancer();
 			//c.stretchHistogram(projectStack, 0.4);
 			//projectStack.updateAndDraw();
