@@ -253,8 +253,6 @@ public class Stitching_Grid implements PlugIn
 		params.cpuMemChoice = defaultMemorySpeedChoice = gd.getNextChoiceIndex();
 		params.outputVariant = defaultResult = gd.getNextChoiceIndex();
 		
-		IJ.log( "gridtype: " + gridType );
-		
 		if ( params.virtual )
 		{
 			IJ.log( "WARNING: Using virtual input images. This will save a lot of RAM, but will also be slower ... \n" );
