@@ -363,7 +363,7 @@ public class MiniMaven {
 					fake.callJavac(array, verbose);
 			}
 
-			updateRecursively(new File(source.getParentFile(), "resources"), target);
+			updateRecursively(new File(source.getParentFile(), "resources"), target, false);
 
 			if (makeJar) {
 				JarOutputStream out = new JarOutputStream(new FileOutputStream(getTarget()));
@@ -374,38 +374,54 @@ public class MiniMaven {
 			built = true;
 		}
 
-		protected void addRecursively(List<String> list, File directory, String extension, File targetDirectory, String targetExtension) {
+		protected long addRecursively(List<String> list, File directory, String extension, File targetDirectory, String targetExtension) {
+			long lastModified = 0;
 			File[] files = directory.listFiles();
 			if (list == null)
-				return;
+				return lastModified;
 			for (File file : files)
-				if (file.isDirectory())
-					addRecursively(list, file, extension, new File(targetDirectory, file.getName()), targetExtension);
+				if (file.isDirectory()) {
+					long lastModified2 = addRecursively(list, file, extension, new File(targetDirectory, file.getName()), targetExtension);
+					if (lastModified < lastModified2)
+						lastModified = lastModified2;
+				}
 				else {
 					String name = file.getName();
 					if (!name.endsWith(extension))
 						continue;
 					File targetFile = new File(targetDirectory, name.substring(0, name.length() - extension.length()) + targetExtension);
-					if (!targetFile.exists() || targetFile.lastModified() < file.lastModified())
+					long lastModified2 = file.lastModified();
+					if (lastModified < lastModified2)
+						lastModified = lastModified2;
+					if (!targetFile.exists() || targetFile.lastModified() < lastModified2)
 						list.add(file.getPath());
 				}
+			return lastModified;
 		}
 
-		protected void updateRecursively(File source, File target) throws IOException {
+		protected long updateRecursively(File source, File target, boolean dryRun) throws IOException {
+			long lastModified = 0;
 			File[] list = source.listFiles();
 			if (list == null)
-				return;
+				return lastModified;
 			for (File file : list) {
 				File targetFile = new File(target, file.getName());
-				if (file.isDirectory())
-					updateRecursively(file, targetFile);
+				if (file.isDirectory()) {
+					long lastModified2 = updateRecursively(file, targetFile, dryRun);
+					if (lastModified < lastModified2)
+						lastModified = lastModified2;
+				}
 				else if (file.isFile()) {
-					if (targetFile.exists() && targetFile.lastModified() >= file.lastModified())
+					long lastModified2 = file.lastModified();
+					if (lastModified < lastModified2)
+						lastModified = lastModified2;
+					if (dryRun || (targetFile.exists() && targetFile.lastModified() >= lastModified2))
 						continue;
 					targetFile.getParentFile().mkdirs();
 					copyFile(file, targetFile);
 				}
 			}
+			return lastModified;
 		}
 
 		public String getGroup() {
