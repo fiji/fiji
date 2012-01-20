@@ -334,7 +334,7 @@ public class MiniMaven {
 				if (child != null)
 					child.build(makeJar);
 
-			// do not build wrapper projects
+			// do not build aggregator projects
 			if (!new File(directory, "src").exists())
 				return;
 
