@@ -290,19 +290,29 @@ public class MiniMaven {
 			throw new FileNotFoundException("Could not download " + dependency.getJarName());
 		}
 
-		public boolean upToDate() throws IOException, ParserConfigurationException, SAXException {
+		public boolean upToDate(boolean includingJar) throws IOException, ParserConfigurationException, SAXException {
 			if (!buildFromSource)
 				return true;
 			for (POM child : getDependencies(true, "test"))
-				if (child != null && !child.upToDate())
+				if (child != null && !child.upToDate(includingJar))
 					return false;
 
 			File source = new File(directory, getSourcePath());
 
 			List<String> notUpToDates = new ArrayList<String>();
-			addRecursively(notUpToDates, source, ".java", target, ".class");
+			long lastModified = addRecursively(notUpToDates, source, ".java", target, ".class");
 			int count = notUpToDates.size();
-			return count == 0;
+			if (count != 0)
+				return false;
+			long lastModified2 = updateRecursively(new File(source.getParentFile(), "resources"), target, true);
+			if (lastModified < lastModified2)
+				lastModified = lastModified2;
+			if (includingJar) {
+				File jar = getTarget();
+				if (!jar.exists() || jar.lastModified() < lastModified)
+					return false;
+			}
+			return true;
 		}
 
 		public String getSourcePath() {
