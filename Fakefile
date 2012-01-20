@@ -316,7 +316,7 @@ jars/commons-math.jar <- ImageJ modules/commons-math/
 jars/javassist.jar <- modules/javassist/
 jars/jsch.jar <- modules/jsch/
 COPYDEPENDENCIES(jars/ij-app.jar)=true
-jars/ij-app.jar <- jars/imglib2.jar modules/imagej2/
+jars/ij-app.jar <- ImageJ jars/ij.jar jars/imglib2.jar modules/imagej2/
 CLASSPATH(plugins/Image_5D.jar)=jars/ij.jar
 plugins/Image_5D.jar <- modules/image5d/
 
