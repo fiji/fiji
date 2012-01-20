@@ -10,8 +10,8 @@ public class XYEdgeSeries extends Series {
 	 */
 	
 	private static final long serialVersionUID = -3716934680176727207L;
-	private XYSeries startSeries = new XYSeries("StartPoints");
-	private XYSeries endSeries = new XYSeries("EndPoints");
+	private XYSeries startSeries = new XYSeries("StartPoints", false, true);
+	private XYSeries endSeries = new XYSeries("EndPoints", false, true);
 	
 	/*
 	 * CONSTRUCTOR
@@ -37,8 +37,8 @@ public class XYEdgeSeries extends Series {
 	}
 	
 	public void addEdge(double x0, double y0, double x1, double y1) {
-		startSeries.add(x0, y0);
-		endSeries.add(x1, y1);
+		startSeries.add(x0, y0, false);
+		endSeries.add(x1, y1, false);
 	}
 	
 	public Number getEdgeXStart(int index) {
@@ -56,6 +56,8 @@ public class XYEdgeSeries extends Series {
 	public Number getEdgeYEnd(int index) {
 		return endSeries.getY(index);
 	}
+	
+	
 	
 	
 	

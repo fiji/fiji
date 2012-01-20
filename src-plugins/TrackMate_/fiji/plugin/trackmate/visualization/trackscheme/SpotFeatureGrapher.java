@@ -53,8 +53,7 @@ public class SpotFeatureGrapher extends JFrame {
 	 * CONSTRUCTOR
 	 */
 
-	public SpotFeatureGrapher(final String xFeature, final Set<String> yFeatures,
-			final List<Spot> spots, final TrackMateModel model) {
+	public SpotFeatureGrapher(final String xFeature, final Set<String> yFeatures, final List<Spot> spots, final TrackMateModel model) {
 		this.xFeature = xFeature;
 		this.xDimension = model.getFeatureModel().getSpotFeatureDimensions().get(xFeature);
 		this.yFeatures = yFeatures;
@@ -63,9 +62,8 @@ public class SpotFeatureGrapher extends JFrame {
 		this.spots = spots;
 		this.model = model;
 		initGUI();
+		
 	}
-	
-	
 	
 	/*
 	 * PRIVATE METHODS
@@ -133,8 +131,9 @@ public class SpotFeatureGrapher extends JFrame {
 					for (int j = i+1; j < nspots; j++) {
 						target = spots.get(j);
 
-						if (model.containsEdge(source, target)) 
+						if (model.containsEdge(source, target)) {
 							edges.add(new Spot[] {source, target});
+						}
 
 					}
 				}
@@ -178,7 +177,6 @@ public class SpotFeatureGrapher extends JFrame {
 			plot.getRangeAxis().setTickLabelFont(SMALL_FONT);
 			plot.getDomainAxis().setLabelFont(FONT);
 			plot.getDomainAxis().setTickLabelFont(SMALL_FONT);
-			
 			
 			// Paint
 			pointRenderer.setUseOutlinePaint(true);

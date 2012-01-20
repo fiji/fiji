@@ -16,7 +16,7 @@ import org.jfree.ui.RectangleEdge;
 public class XYEdgeRenderer extends AbstractXYItemRenderer {
 	
 	private static final long serialVersionUID = -4565389588020243812L;
-
+	
 	@Override
 	public void drawItem(Graphics2D g2, XYItemRendererState state, Rectangle2D dataArea, PlotRenderingInfo info, XYPlot plot,
 			ValueAxis domainAxis, ValueAxis rangeAxis, XYDataset dataset, int series, int item, CrosshairState crosshairState, int pass) {
@@ -30,8 +30,6 @@ public class XYEdgeRenderer extends AbstractXYItemRenderer {
 		double x1 = s.getEdgeXEnd(item).doubleValue();
 		double y1 = s.getEdgeYEnd(item).doubleValue();
 		
-//		 System.out.println(String.format(""+item +" - Edge with x0=%.1f, y0=%.1f, x1=%.1f, y1=%.1f is transformed ...", x0, y0, x1, y1));
-		
         if (Double.isNaN(y1) || Double.isNaN(x1) || Double.isNaN(y0) || Double.isNaN(x0))
             return;
         
@@ -43,9 +41,6 @@ public class XYEdgeRenderer extends AbstractXYItemRenderer {
 
         double transX1 = domainAxis.valueToJava2D(x1, dataArea, xAxisLocation);
         double transY1 = rangeAxis.valueToJava2D(y1, dataArea, yAxisLocation);
-
-//        System.out.println(String.format("\t in coords X0=%.1f, Y0=%.1f, X1=%.1f, Y1=%.1f", transX0, transY0, transX1, transY1));// DEBUG
-        
         
         // only draw if we have good values
         if (Double.isNaN(transX0) || Double.isNaN(transY0) || Double.isNaN(transX1) || Double.isNaN(transY1)) 
