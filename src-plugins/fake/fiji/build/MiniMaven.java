@@ -293,7 +293,7 @@ public class MiniMaven {
 		public boolean upToDate() throws IOException, ParserConfigurationException, SAXException {
 			if (!buildFromSource)
 				return true;
-			for (POM child : getDependencies(true, "test", "runtime"))
+			for (POM child : getDependencies(true, "test"))
 				if (child != null && !child.upToDate())
 					return false;
 
@@ -330,7 +330,7 @@ public class MiniMaven {
 		public void build(boolean makeJar) throws FakeException, IOException, ParserConfigurationException, SAXException {
 			if (!buildFromSource || built)
 				return;
-			for (POM child : getDependencies(true, "test", "runtime"))
+			for (POM child : getDependencies(true, "test"))
 				if (child != null)
 					child.build(makeJar);
 
