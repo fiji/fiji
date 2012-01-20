@@ -34,7 +34,7 @@ public class SpotImageUpdater {
 			// Keep the same image than in memory
 		} else {
 			Settings settings = model.getSettings();
-			int targetChannel = settings.imp.getChannel() - 1; // TODO: be more flexible about that
+			int targetChannel = settings.segmentationChannel; // TODO: be more flexible about that
 			Image img = TMUtils.getSingleFrameAsImage(settings.imp, frame, targetChannel, settings);
 			grabber.setTarget(img, calibration);
 			previousFrame = frame;

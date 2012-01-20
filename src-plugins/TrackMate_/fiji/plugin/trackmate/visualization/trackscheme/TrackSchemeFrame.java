@@ -247,6 +247,9 @@ public class TrackSchemeFrame extends JFrame implements TrackMateModelChangeList
 
 							if (event.getSpotFlag(spot) == TrackMateModelChangeEvent.FLAG_SPOT_ADDED) {
 
+								// Update spot image
+								spotImageUpdater.update(spot);
+								// Put in the graph
 								insertSpotInGraph(spot, targetColumn);
 								targetColumn++;
 
