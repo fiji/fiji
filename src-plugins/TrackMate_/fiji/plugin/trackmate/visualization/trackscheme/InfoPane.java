@@ -36,7 +36,7 @@ import fiji.plugin.trackmate.TrackMateSelectionChangeListener;
 import fiji.plugin.trackmate.util.TMUtils;
 import fiji.plugin.trackmate.visualization.TrackMateSelectionView;
 
-class InfoPane extends JPanel implements TrackMateSelectionView, TrackMateSelectionChangeListener {
+public class InfoPane extends JPanel implements TrackMateSelectionView, TrackMateSelectionChangeListener {
 
 	private static final long serialVersionUID = 5889316637017869042L;
 
@@ -60,9 +60,10 @@ class InfoPane extends JPanel implements TrackMateSelectionView, TrackMateSelect
 		}
 	}
 
+	FeaturePlotSelectionPanel featureSelectionPanel;
+
 	private JTable table;
 	private JScrollPane scrollTable;
-	private FeaturePlotSelectionPanel featureSelectionPanel;
 	private boolean doHighlightSelection = true;
 	private TrackMateModel model;
 	private List<String> features;

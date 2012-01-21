@@ -28,7 +28,6 @@ public class TrackSchemeToolbar extends JToolBar {
 	private static final ImageIcon ZOOM_IN_ICON 	= new ImageIcon(TrackSchemeFrame.class.getResource("resources/zoom_in.png")); 
 	private static final ImageIcon ZOOM_OUT_ICON 	= new ImageIcon(TrackSchemeFrame.class.getResource("resources/zoom_out.png")); 
 	private static final ImageIcon REFRESH_ICON		= new ImageIcon(TrackSchemeFrame.class.getResource("resources/refresh.png"));
-	private static final ImageIcon PLOT_ICON		= new ImageIcon(TrackSchemeFrame.class.getResource("resources/plots.png"));
 	private static final ImageIcon CAPTURE_UNDECORATED_ICON = new ImageIcon(TrackSchemeFrame.class.getResource("resources/camera_go.png"));
 	private static final ImageIcon CAPTURE_DECORATED_ICON = new ImageIcon(TrackSchemeFrame.class.getResource("resources/camera_edit.png"));
 
@@ -112,16 +111,6 @@ public class TrackSchemeToolbar extends JToolBar {
 		final JButton redoLayoutButton = new JButton(redoLayoutAction);
 		redoLayoutButton.setToolTipText("Redo layout");
 		
-		// Plot selection data
-		final Action plotSelection = new AbstractAction(null, PLOT_ICON) {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				frame.plotSelectionData();
-			}
-		};
-		final JButton plotSelectionButton = new JButton(plotSelection);
-		plotSelectionButton.setToolTipText("Plot selection data");
-	
 		/* 
 		 * Folding
 		 */
@@ -220,10 +209,6 @@ public class TrackSchemeToolbar extends JToolBar {
 		add(toggleEnableFoldingButton);
 		add(foldAllButton);
 		add(unFoldAllButton);
-		// Separator
-		addSeparator();
-		// Plotting
-		add(plotSelectionButton);
 		// Separator
 		addSeparator();
 		// Zoom
