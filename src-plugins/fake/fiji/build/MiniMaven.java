@@ -634,7 +634,7 @@ public class MiniMaven {
 				dependency.version = findLocallyCachedVersion(path);
 			if (dependency.version == null && dependency.artifactId.equals("scifio"))
 				dependency.version = "4.4-SNAPSHOT";
-			if (dependency.version == null || dependency.version.startsWith("[") || dependency.artifactId.equals("tools")) {
+			if (dependency.version == null || dependency.artifactId.equals("tools")) {
 				// try to find the .jar in Fiji's jars/ dir
 				String jarName = dependency.artifactId.equals("tools") ? "javac.jar" : dependency.artifactId + ".jar";
 				File file = new File(System.getProperty("ij.dir"), "jars/" + jarName);
@@ -648,11 +648,18 @@ public class MiniMaven {
 				localPOMCache.put(key, null);
 				return null;
 			}
+			else if (dependency.version.startsWith("[")) try {
+				if (!maybeDownloadAutomatically(dependency, quiet))
+					return null;
+				if (!downloadAutomatically)
+					dependency.version = parseVersion(new File(path, "maven-metadata-version.xml"));
+			} catch (FileNotFoundException e) { /* ignore */ }
 			path += dependency.version + "/";
 			if (dependency.version.endsWith("-SNAPSHOT")) try {
 				if (!maybeDownloadAutomatically(dependency, quiet))
 					return null;
-				dependency.version = parseSnapshotVersion(new File(path));
+				if (!downloadAutomatically)
+					dependency.version = parseVersion(new File(path, "maven-metadata-snapshot.xml"));
 			} catch (FileNotFoundException e) { /* ignore */ }
 			else {
 				for (String jarName : new String[] {
@@ -868,9 +875,30 @@ public class MiniMaven {
 			String message = quiet ? null : "Checking for new snapshot of " + dependency.artifactId;
 			String metadataURL = repositoryURL + path + "maven-metadata.xml";
 			downloadAndVerify(metadataURL, directory, snapshotMetaData.getName(), message);
-			dependency.version = parseSnapshotVersion(directory);
+			dependency.version = parseSnapshotVersion(snapshotMetaData);
 			if (dependency.version == null)
 				throw new IOException("No version found in " + metadataURL);
+			if (new File(directory, dependency.getJarName()).exists() &&
+					new File(directory, dependency.getPOMName()).exists())
+				return;
+		}
+		else if (dependency.version.startsWith("[")) {
+			path = "/" + dependency.groupId.replace('.', '/') + "/" + dependency.artifactId + "/";
+			directory = new File(System.getProperty("user.home") + "/.m2/repository" + path);
+
+			// Only check versions once per day
+			File versionMetaData = new File(directory, "maven-metadata-version.xml");
+			if (System.currentTimeMillis() - versionMetaData.lastModified() < 24 * 60 * 60 * 1000l)
+				return;
+
+			String message = quiet ? null : "Checking for new version of " + dependency.artifactId;
+			String metadataURL = repositoryURL + path + "maven-metadata.xml";
+			downloadAndVerify(metadataURL, directory, versionMetaData.getName(), message);
+			dependency.version = parseVersion(versionMetaData);
+			if (dependency.version == null)
+				throw new IOException("No version found in " + metadataURL);
+			path = "/" + dependency.groupId.replace('.', '/') + "/" + dependency.artifactId + "/" + dependency.version + "/";
+			directory = new File(System.getProperty("user.home") + "/.m2/repository" + path);
 			if (new File(directory, dependency.getJarName()).exists() &&
 					new File(directory, dependency.getPOMName()).exists())
 				return;
@@ -908,8 +936,8 @@ public class MiniMaven {
 		fileStream.close();
 	}
 
-	protected static String parseSnapshotVersion(File directory) throws IOException, ParserConfigurationException, SAXException {
-		return parseSnapshotVersion(new FileInputStream(new File(directory, "maven-metadata-snapshot.xml")));
+	protected static String parseSnapshotVersion(File xml) throws IOException, ParserConfigurationException, SAXException {
+		return parseSnapshotVersion(new FileInputStream(xml));
 	}
 
 	protected static String parseSnapshotVersion(InputStream in) throws IOException, ParserConfigurationException, SAXException {
@@ -946,6 +974,41 @@ public class MiniMaven {
 				timestamp = new String(ch, start, length).trim();
 			else if (qName.equals("buildNumber"))
 				buildNumber = new String(ch, start, length).trim();
+		}
+	}
+
+	protected static String parseVersion(File xml) throws IOException, ParserConfigurationException, SAXException {
+		return parseVersion(new FileInputStream(xml));
+	}
+
+	protected static String parseVersion(InputStream in) throws IOException, ParserConfigurationException, SAXException {
+		VersionPOMHandler handler = new VersionPOMHandler();
+		XMLReader reader = SAXParserFactory.newInstance().newSAXParser().getXMLReader();
+		reader.setContentHandler(handler);
+		reader.parse(new InputSource(in));
+		if (handler.version != null)
+			return handler.version;
+		throw new IOException("Missing version");
+	}
+
+	protected static class VersionPOMHandler extends DefaultHandler {
+		protected String qName;
+		protected String version;
+
+		public void startElement(String uri, String localName, String qName, Attributes attributes) {
+			this.qName = qName;
+		}
+
+		public void endElement(String uri, String localName, String qName) {
+			this.qName = null;
+		}
+
+		public void characters(char[] ch, int start, int length) {
+			if (qName == null)
+				; // ignore
+			else if (qName.equals("version")) {
+				version = new String(ch, start, length).trim();
+			}
 		}
 	}
 
