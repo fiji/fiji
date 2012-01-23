@@ -26,6 +26,7 @@
  * @author Jan Funke <jan.funke@inf.tu-dresden.de>
  * @version 0.1
  */
+package graphcut;
 
 import java.util.LinkedList;
 import java.util.List;

@@ -1,3 +1,5 @@
+package graphcut;
+
 /**
  * Class wrapping some basic structures that are used to represent a graph.
  */

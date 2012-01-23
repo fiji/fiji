@@ -1,3 +1,4 @@
+package graphcut;
 
 import java.awt.AlphaComposite;
 import java.awt.Component;
