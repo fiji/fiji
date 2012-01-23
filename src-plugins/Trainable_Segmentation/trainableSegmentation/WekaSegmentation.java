@@ -167,6 +167,7 @@ public class WekaSegmentation {
 	private float minimumSigma = 1f;
 	/** maximum sigma to use on the filters */
 	private float maximumSigma = 16f;
+
 	/** flags of filters to be used */
 	private boolean[] enabledFeatures = new boolean[]{
 			true, 	/* Gaussian_blur */
@@ -186,7 +187,8 @@ public class WekaSegmentation {
 			false,	/* Gabor */
 			false, 	/* Derivatives */
 			false, 	/* Laplacian */
-			false	/* Structure */
+			false,	/* Structure */
+			false	/* Entropy */
 	};
 	/** use neighborhood flag */
 	private boolean useNeighbors = false;

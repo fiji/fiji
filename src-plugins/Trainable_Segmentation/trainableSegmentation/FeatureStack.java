@@ -20,6 +20,7 @@ package trainableSegmentation;
  * - Laplacian filter
  * - Eigenvalues of the Structure tensor
  * - Color features: HSB (if the input image is RGB)
+ * - Entropy 
  * 
  * filters to come:
  * - histogram patch
@@ -65,6 +66,7 @@ import mpicbg.imglib.algorithm.fft.FourierConvolution;
 import anisotropic_diffusion.Anisotropic_Diffusion_2D;
 
 import stitching.FloatArray2D;
+import trainableSegmentation.filters.Entropy_Filter;
 import trainableSegmentation.filters.Kuwahara;
 import trainableSegmentation.filters.Lipschitz_;
 import trainableSegmentation.utils.Utils;
@@ -149,13 +151,15 @@ public class FeatureStack
 	public static final int LAPLACIAN				= 16;
 	/** structure tensor filter flag index */
 	public static final int STRUCTURE				= 17;
+	/** structure tensor filter flag index */
+	public static final int ENTROPY					= 18;
 	
 	/** names of available filters */
 	public static final String[] availableFeatures 
 		= new String[]{	"Gaussian_blur", "Sobel_filter", "Hessian", "Difference_of_gaussians", 
 					   	"Membrane_projections","Variance","Mean", "Minimum", "Maximum", "Median", 
 					   	"Anisotropic_diffusion", "Bilateral", "Lipschitz", "Kuwahara", "Gabor" , 
-					   	"Derivatives", "Laplacian", "Structure"};
+					   	"Derivatives", "Laplacian", "Structure", "Entropy"};
 	/** flags of filters to be used */
 	private boolean[] enableFeatures = new boolean[]{
 			true, 	/* Gaussian_blur */
@@ -175,7 +179,8 @@ public class FeatureStack
 			false,	/* Gabor */
 			false, 	/* Derivatives */
 			false, 	/* Laplacian */
-			false	/* Structure */
+			false,	/* Structure */
+			false	/* Entropy */
 	};
 	
 	/** use neighborhood flag */
@@ -351,6 +356,39 @@ public class FeatureStack
 		};
 	}
 	
+	/**
+	 * Add entropy filter to current stack
+	 * @param radius radius to use (in pixels)
+	 */
+	public void addEntropy(int radius)
+	{
+		ImageProcessor ip = originalImage.getProcessor().duplicate();
+		Entropy_Filter filter = new Entropy_Filter();
+		wholeStack.addSlice(availableFeatures[ENTROPY] + "_" + radius, filter.getEntropy(ip, radius));
+	}
+	/**
+	 * Calculate entropy filter filter concurrently
+	 * @param originalImage original input image
+	 * @param radius radius to use (in pixels)
+	 * @return result image
+	 */
+	public Callable<ImagePlus> getEntropy(
+			final ImagePlus originalImage,
+			final int radius)
+	{
+		if (Thread.currentThread().isInterrupted()) 
+			return null;
+		
+		return new Callable<ImagePlus>(){
+			public ImagePlus call(){
+		
+				ImageProcessor ip = originalImage.getProcessor().duplicate();
+				Entropy_Filter filter = new Entropy_Filter();
+				return new ImagePlus (availableFeatures[ENTROPY] + "_" + radius, filter.getEntropy(ip, radius));
+			}
+		};
+	}
+	
 	
 	/**
 	 * Add variance-filtered image to the stack (single thread version)
@@ -403,7 +441,10 @@ public class FeatureStack
 		};
 	}
 	
-	
+	/**
+	 * Add mean filter to current stack
+	 * @param radius radius to use 
+	 */
 	public void addMean(float radius)
 	{
 		final ImageProcessor ip = originalImage.getProcessor().duplicate();
@@ -2598,7 +2639,7 @@ public class FeatureStack
 
 					addAnisotropicDiffusion(originalImage, 20, 20,(int) i, j, 0.9f, (float) membraneSize)  ;
 				}
-		}
+		}				
 
 		// Bilateral filter
 		if(enableFeatures[BILATERAL])			
@@ -2765,6 +2806,12 @@ public class FeatureStack
 			{					
 				for(int integrationScale = 1; integrationScale <= 3; integrationScale+=2)
 					addStructure(i, integrationScale );
+			}
+			
+			// Entropy
+			if(enableFeatures[ENTROPY])
+			{
+				addEntropy((int)i);
 			}
 
 		}
@@ -3037,6 +3084,12 @@ public class FeatureStack
 				{					
 					for(int integrationScale = 1; integrationScale <= 3; integrationScale+=2)
 						futures.add(exe.submit( getStructure(originalImage, i, integrationScale )) );
+				}
+				
+				// Entropy
+				if(enableFeatures[ENTROPY])
+				{
+					futures.add(exe.submit( getEntropy(originalImage, (int) i)) );
 				}
 
 			}
