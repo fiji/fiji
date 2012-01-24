@@ -81,6 +81,7 @@ static void open_win_console();
 #include "glibc-compat.h"
 #endif
 
+__attribute__((format (printf, 1, 2)))
 static void error(const char *fmt, ...)
 {
 	va_list ap;
@@ -1531,7 +1532,7 @@ int build_classpath_for_string(struct string *result, struct string *jar_directo
 	if (!directory) {
 		if (no_error)
 			return 0;
-		error("Failed to open: %s", jar_directory);
+		error("Failed to open: %s", jar_directory->buffer);
 		return 1;
 	}
 	while (NULL != (entry = readdir(directory))) {
@@ -1961,9 +1962,9 @@ static int update_files(struct string *relative_path)
 
 		if (is_file_empty(source->buffer)) {
 			if (unlink(source->buffer))
-				error("Could not remove %s", source);
+				error("Could not remove %s", source->buffer);
 			if (unlink(target->buffer))
-				error("Could not remove %s", target);
+				error("Could not remove %s", target->buffer);
 			continue;
 		}
 
