@@ -530,8 +530,10 @@ static void sleep(int seconds)
 	Sleep(seconds * 1000);
 }
 
-// There is no setenv on Windows, so it should be safe for us to
-// define this compatible version
+/*
+ * There is no setenv on Windows, so it should be safe for us to
+ * define this compatible version.
+ */
 static int setenv(const char *name, const char *value, int overwrite)
 {
 	struct string *string;
@@ -545,7 +547,7 @@ static int setenv(const char *name, const char *value, int overwrite)
 	return putenv(string->buffer);
 }
 
-// Similarly we can do the same for unsetenv:
+/* Similarly we can do the same for unsetenv: */
 static int unsetenv(const char *name)
 {
 	struct string *string = string_initf("%s=", name);
@@ -556,7 +558,7 @@ static int unsetenv(const char *name)
 #include <dlfcn.h>
 #endif
 
-// A wrapper for setenv that exits on error
+/* A wrapper for setenv that exits on error */
 void setenv_or_exit(const char *name, const char *value, int overwrite)
 {
 	int result;
@@ -1139,7 +1141,7 @@ static void maybe_reexec_with_correct_lib_path(void)
 	string_release(path);
 	string_release(parent);
 
-	// Is this JDK6?
+	/* Is this JDK6? */
 	if (!dir_exists(get_jre_home()) || dir_exists(jli->buffer)) {
 		string_release(lib_path);
 		string_release(jli);
@@ -1212,9 +1214,11 @@ static int create_java_vm(JavaVM **vm, void **env, JavaVMInitArgs *args)
 #ifdef MACOSX
 	set_path_to_JVM();
 #else
-	// Save the original value of JAVA_HOME: if creating the JVM this
-	// way doesn't work, set it back so that calling the system JVM
-	// can use the JAVA_HOME variable if it's set...
+	/*
+	 * Save the original value of JAVA_HOME: if creating the JVM this
+	 * way doesn't work, set it back so that calling the system JVM
+	 * can use the JAVA_HOME variable if it's set...
+	 */
 	char *original_java_home_env = getenv("JAVA_HOME");
 	struct string *buffer = string_init(32);
 	void *handle;
@@ -1223,7 +1227,7 @@ static int create_java_vm(JavaVM **vm, void **env, JavaVMInitArgs *args)
 	const char *java_home = get_jre_home();
 
 #ifdef WIN32
-	// on Windows, a setenv() invalidates strings obtained by getenv()
+	/* On Windows, a setenv() invalidates strings obtained by getenv(). */
 	if (original_java_home_env)
 		original_java_home_env = xstrdup(original_java_home_env);
 #endif
@@ -1299,7 +1303,7 @@ static void open_win_console(void)
 		char title[1024];
 		if (GetConsoleTitle(title, sizeof(title)) &&
 				!strncmp(title, "rxvt", 4))
-			return; // console already opened
+			return; /* Console already opened. */
 	}
 
 	handle = CreateFile("CONOUT$", GENERIC_WRITE, FILE_SHARE_WRITE,
@@ -2057,10 +2061,10 @@ static void add_extension(struct subcommand *subcommand, const char *extension)
 static void add_subcommand(const char *line)
 {
 	int size = all_subcommands.size;
-	// TODO: safeguard against malformed configuration files
+	/* TODO: safeguard against malformed configuration files. */
 	struct subcommand *latest = &all_subcommands.list[size - 1];
 
-	// is it the description?
+	/* Is it the description? */
 	if (line[0] == ' ') {
 		struct string *description = &latest->description;
 
@@ -2431,7 +2435,7 @@ static void try_with_less_memory(size_t memory_size)
 	/* Try again, with 25% less memory */
 	if (memory_size < 0)
 		return;
-	memory_size >>= 20; // turn into megabytes
+	memory_size >>= 20; /* Turn into megabytes. */
 	subtract = memory_size >> 2;
 	if (!subtract)
 		return;
@@ -2447,7 +2451,7 @@ static void try_with_less_memory(size_t memory_size)
 	j = 1;
 	new_argv[j++] = xstrdup(buffer->buffer);
 
-	// strip out --mem options
+	/* Strip out --mem options. */
 	found_dashdash = 0;
 	for (i = 1; i < main_argc; i++) {
 		struct string *dummy = string_init(32);
@@ -2794,7 +2798,7 @@ static void parse_command_line(void)
 	memset(&options, 0, sizeof(options));
 
 #ifdef MACOSX
-	// When double-clicked Finder adds a psn argument
+	/* When double-clicked Finder adds a psn argument. */
 	if (main_argc > 1 && ! strncmp(main_argv[1], "-psn_", 5)) {
 		/*
 		 * Reset main_argc so that ImageJ won't try to open
@@ -2882,7 +2886,7 @@ static void parse_command_line(void)
 		string_setf(&plugin_path, "-Dplugins.dir=%s", ij_dir);
 	add_option(&options, plugin_path.buffer, 0);
 
-	// if arguments don't set the memory size, set it after available memory
+	/* If arguments don't set the memory size, set it after available memory. */
 	if (memory_size == 0 && !has_memory_option(&options.java_options)) {
 		memory_size = get_memory_size(0);
 		/* 0.75x, but avoid multiplication to avoid overflow */
@@ -2991,7 +2995,7 @@ static void parse_command_line(void)
 		add_option(&options, "-Dsun.java.command=Fiji", 0);
 	}
 
-	// If there is no -- but some options unknown to IJ1, DWIM it
+	/* If there is no -- but some options unknown to IJ1, DWIM it. */
 	if (!dashdash && is_default_ij1_class(main_class)) {
 		for (i = 1; i < main_argc; i++) {
 			int count = imagej1_option_count(main_argv[i]);
@@ -3196,9 +3200,9 @@ static int start_ij(void)
 			error("Could not launch system-wide Java (%s)", strerror(errno));
 #else
 		if (console_opened)
-			sleep(5); // sleep 5 seconds
+			sleep(5); /* Sleep 5 seconds */
 
-		FreeConsole(); // java.exe cannot reuse the console anyway
+		FreeConsole(); /* java.exe cannot reuse the console anyway. */
 		for (i = 0; i < options.java_options.nr - 1; i++)
 			options.java_options.list[i] =
 				quote_win32(options.java_options.list[i]);
@@ -3399,7 +3403,7 @@ static void set_path_to_JVM(void)
 
 	/* Append to the path the target JVM's Version. */
 	CFURLRef TargetJavaVM = NULL;
-	CFStringRef targetJVM; // Minimum Java5
+	CFStringRef targetJVM; /* Minimum Java5. */
 
 	/* TODO: disable this test on 10.6+ */
 	/* Try 1.6 only with 64-bit */
