@@ -1245,8 +1245,7 @@ static int create_java_vm(JavaVM **vm, void **env, JavaVMInitArgs *args)
 	}
 	dlerror(); /* Clear any existing error */
 
-	JNI_CreateJavaVM = (typeof(JNI_CreateJavaVM))dlsym(handle,
-			JNI_CREATEVM);
+	JNI_CreateJavaVM = dlsym(handle, JNI_CREATEVM);
 	err = dlerror();
 	if (err) {
 		error("Error loading libjvm: %s", err);
