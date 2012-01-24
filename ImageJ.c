@@ -696,6 +696,7 @@ static int is_ipv6_broken(void)
 	struct sockaddr_in6 address = {
 		AF_INET6, 57294 + 7, 0, in6addr_loopback, 0
 	};
+	int result = 0;
 	long flags;
 
 	if (sock < 0)
@@ -708,7 +709,6 @@ static int is_ipv6_broken(void)
 	}
 
 
-	int result = 0;
 	if (connect(sock, (struct sockaddr *)&address, sizeof(address)) < 0) {
 		if (errno == EINPROGRESS) {
 			struct timeval tv;
@@ -1231,11 +1231,12 @@ static int create_java_vm(JavaVM **vm, void **env, JavaVMInitArgs *args)
 
 	handle = dlopen(buffer->buffer, RTLD_LAZY);
 	if (!handle) {
+		const char *err;
 		setenv_or_exit("JAVA_HOME", original_java_home_env, 1);
 		if (!file_exists(java_home))
 			return 2;
 
-		const char *err = dlerror();
+		err = dlerror();
 		if (!err)
 			err = "(unknown error)";
 		error("Could not load Java library '%s': %s",
@@ -1568,6 +1569,7 @@ static struct string *set_property(JNIEnv *env,
 {
 	static jclass system_class = NULL;
 	static jmethodID set_property_method = NULL;
+	jstring result;
 
 	if (!system_class) {
 		system_class = (*env)->FindClass(env, "java/lang/System");
@@ -1584,8 +1586,7 @@ static struct string *set_property(JNIEnv *env,
 			return NULL;
 	}
 
-	jstring result =
-		(jstring)(*env)->CallStaticObjectMethod(env, system_class,
+	result = (jstring)(*env)->CallStaticObjectMethod(env, system_class,
 				set_property_method,
 				(*env)->NewStringUTF(env, key),
 				(*env)->NewStringUTF(env, value));
@@ -1896,6 +1897,7 @@ int file_is_newer(const char *path, const char *than)
 
 int handle_one_option(int *i, const char **argv, const char *option, struct string *arg)
 {
+	int len;
 	string_set_length(arg, 0);
 	if (!strcmp(argv[*i], option)) {
 		if (++(*i) >= main_argc || !argv[*i])
@@ -1903,7 +1905,7 @@ int handle_one_option(int *i, const char **argv, const char *option, struct stri
 		string_append(arg, argv[*i]);
 		return 1;
 	}
-	int len = strlen(option);
+	len = strlen(option);
 	if (!strncmp(argv[*i], option, len) && argv[*i][len] == '=') {
 		string_append(arg, argv[*i] + len + 1);
 		return 1;
