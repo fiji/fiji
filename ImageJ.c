@@ -645,14 +645,11 @@ size_t get_memory_size(int available_only)
 }
 #endif
 
-#if defined(__TINYC__)
-#define strtoll strtol
-#endif
-
-static long long parse_memory(const char *amount)
+/* This returns the amount of megabytes */
+static long parse_memory(const char *amount)
 {
 	char *endp;
-	long long result = strtoll(amount, &endp, 0);
+	long result = strtol(amount, &endp, 0);
 
 	if (endp)
 		switch (*endp) {
@@ -663,15 +660,11 @@ static long long parse_memory(const char *amount)
 			result <<= 10;
 			/* fall through */
 		case 'm': case 'M':
-			result <<= 10;
-			/* fall through */
-		case 'k': case 'K':
-			result <<= 10;
-			break;
 		case '\0':
 			/* fall back to megabyte */
-			if (result < 1024)
-				result <<= 20;
+			break;
+		default:
+			die("Unsupported memory unit '%c' in %s", *endp, amount);
 		}
 
 	return result;
@@ -2420,12 +2413,12 @@ static void jvm_workarounds(struct options *options)
 #define MAX_32BIT_HEAP 1920
 #endif
 
-struct string *make_memory_option(size_t memory_size)
+struct string *make_memory_option(long megabytes)
 {
-	return string_initf("-Xmx%dm", (int)(memory_size >> 20));
+	return string_initf("-Xmx%dm", (int)megabytes);
 }
 
-static void try_with_less_memory(size_t memory_size)
+static void try_with_less_memory(long megabytes)
 {
 	char **new_argv;
 	int i, j, found_dashdash;
@@ -2433,15 +2426,14 @@ static void try_with_less_memory(size_t memory_size)
 	size_t subtract;
 
 	/* Try again, with 25% less memory */
-	if (memory_size < 0)
+	if (megabytes < 0)
 		return;
-	memory_size >>= 20; /* Turn into megabytes. */
-	subtract = memory_size >> 2;
+	subtract = megabytes >> 2;
 	if (!subtract)
 		return;
-	memory_size -= subtract;
+	megabytes -= subtract;
 
-	buffer = string_initf("--mem=%dm", (int)memory_size);
+	buffer = string_initf("--mem=%dm", (int)megabytes);
 
 	main_argc = main_argc_backup;
 	main_argv = main_argv_backup;
@@ -2554,7 +2546,7 @@ const char *properties[32];
 static int retrotranslator;
 
 static struct options options;
-static size_t memory_size = 0;
+static long megabytes = 0;
 static struct string buffer, buffer2, arg, class_path, plugin_path, ext_option;
 static int jdb, add_class_path_option, advanced_gc = 1, debug_gc;
 static int allow_multiple, skip_build_classpath;
@@ -2616,7 +2608,7 @@ static int handle_one_option2(int *i, int argc, const char **argv)
 	else if (handle_one_option(i, argv, "--heap", &arg) ||
 			handle_one_option(i, argv, "--mem", &arg) ||
 			handle_one_option(i, argv, "--memory", &arg))
-		memory_size = parse_memory(arg.buffer);
+		megabytes = parse_memory(arg.buffer);
 	else if (!strcmp(argv[*i], "--headless"))
 		headless = 1;
 	else if (handle_one_option(i, argv, "--main-class", &arg)) {
@@ -2816,7 +2808,7 @@ static void parse_command_line(void)
 	if (!get_fiji_bundle_variable("heap", &arg) ||
 			!get_fiji_bundle_variable("mem", &arg) ||
 			!get_fiji_bundle_variable("memory", &arg))
-		memory_size = parse_memory((&arg)->buffer);
+		megabytes = parse_memory((&arg)->buffer);
 	if (!get_fiji_bundle_variable("system", &arg) &&
 			atol((&arg)->buffer) > 0)
 		options.use_system_jvm++;
@@ -2887,17 +2879,16 @@ static void parse_command_line(void)
 	add_option(&options, plugin_path.buffer, 0);
 
 	/* If arguments don't set the memory size, set it after available memory. */
-	if (memory_size == 0 && !has_memory_option(&options.java_options)) {
-		memory_size = get_memory_size(0);
+	if (megabytes == 0 && !has_memory_option(&options.java_options)) {
+		megabytes = (long)(get_memory_size(0) >> 20);
 		/* 0.75x, but avoid multiplication to avoid overflow */
-		memory_size -= memory_size >> 2;
-		if (sizeof(void *) == 4 &&
-				(memory_size >> 20) > MAX_32BIT_HEAP)
-			memory_size = (MAX_32BIT_HEAP << 20);
+		megabytes -= megabytes >> 2;
+		if (sizeof(void *) == 4 && megabytes > MAX_32BIT_HEAP)
+			megabytes = MAX_32BIT_HEAP;
 	}
 
-	if (memory_size > 0)
-		add_option(&options, make_memory_option(memory_size)->buffer, 0);
+	if (megabytes > 0)
+		add_option(&options, make_memory_option(megabytes)->buffer, 0);
 
 	if (headless)
 		add_option(&options, "-Djava.awt.headless=true", 0);
@@ -3107,7 +3098,7 @@ static int start_ij(void)
 	else {
 		int result = create_java_vm(&vm, (void **)&env, &args);
 		if (result == JNI_ENOMEM) {
-			try_with_less_memory(memory_size);
+			try_with_less_memory(megabytes);
 			die("Out of memory!");
 		}
 		if (result) {
