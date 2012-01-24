@@ -2277,14 +2277,14 @@ static void __attribute__((__noreturn__)) usage(void)
 	}
 
 	die("Usage: %s [<Java options>.. --] [<ImageJ options>..] [<files>..]\n"
-		"\n"
+		"\n%s%s%s%s%s%s%s",
 		"Java options are passed to the Java Runtime, ImageJ\n"
 		"options to ImageJ (or Jython, JRuby, ...).\n"
 		"\n"
 		"In addition, the following options are supported by Fiji:\n"
 		"General options:\n"
 		"--help, -h\n"
-		"\tshow this help\n"
+		"\tshow this help\n",
 		"--dry-run\n"
 		"\tshow the command line, but do not run anything\n"
 		"--system\n"
@@ -2294,7 +2294,7 @@ static void __attribute__((__noreturn__)) usage(void)
 		"--print-java-home\n"
 		"\tprint Fiji's idea of JAVA_HOME\n"
 		"--print-ij-dir\n"
-		"\tprint where Fiji thinks it is located\n"
+		"\tprint where Fiji thinks it is located\n",
 #ifdef WIN32
 		"--console\n"
 		"\talways open an error console\n"
@@ -2309,7 +2309,7 @@ static void __attribute__((__noreturn__)) usage(void)
 		"--class-path, --classpath, -classpath, --cp, -cp <path>\n"
 		"\tappend <path> to the class path\n"
 		"--jar-path, --jarpath, -jarpath <path>\n"
-		"\tappend .jar files in <path> to the class path\n"
+		"\tappend .jar files in <path> to the class path\n",
 		"--ext <path>\n"
 		"\tset Java's extension directory to <path>\n"
 		"--default-gc\n"
@@ -2321,7 +2321,7 @@ static void __attribute__((__noreturn__)) usage(void)
 		"\tshow debug info about the garbage collector on stderr\n"
 		"--no-splash\n"
 		"\tsuppress showing a splash screen upon startup\n"
-		"\n"
+		"\n",
 		"Options for ImageJ:\n"
 		"--ij2\n"
 		"\tstart ImageJ2 instead of ImageJ1\n"
@@ -2337,7 +2337,7 @@ static void __attribute__((__noreturn__)) usage(void)
 		"\tcompile and run <plugin> in ImageJ\n"
 		"--edit [<file>...]\n"
 		"\tedit the given file in the script editor\n"
-		"\n"
+		"\n",
 		"Options to run programs other than ImageJ:\n"
 		"%s"
 		"--build\n"
