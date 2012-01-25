@@ -223,8 +223,10 @@ public class IJHacker extends JavassistHelper {
 		clazz = get("ij.plugin.Options");
 
 		// Replace application name in restart message
-		method = clazz.getMethod("appearance", "()V");
-		replaceAppNameInCall(method, "showMessage", 2, 2);
+		try {
+			method = clazz.getMethod("appearance", "()V");
+			replaceAppNameInCall(method, "showMessage", 2, 2);
+		} catch (NotFoundException e) { /* do not patch, then */ }
 
 		// Class JavaScriptEvaluator
 		clazz = get("JavaScriptEvaluator");
