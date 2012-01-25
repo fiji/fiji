@@ -720,9 +720,8 @@ if options.clean:
         if re.search("^\s*missingPrecompiledFallBack",line):
             skip_next_line = True
             continue
-        for old_file, replacement_tuple in replacement_files.items():
-            replacement_string = ':'.join(replacement_tuple)
-            line = re.sub(re.escape(old_file), replacement_string, line)
+        for old_file in replacement_files:
+            line = re.sub(re.escape(old_file)+':?', '', line)
         # grrr, src-plugins/Jama seems particularly awkward to
         # get rid of.  Probably should do everything like this, just
         # rewrite the Fakefile entirely, with a proper parser of the
