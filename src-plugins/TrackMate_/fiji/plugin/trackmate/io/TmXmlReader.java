@@ -507,14 +507,14 @@ public class TmXmlReader {
 						if (sourceSpot.equals(targetSpot)) {
 							LineNumberElement lne = (LineNumberElement) edgeElement;
 							logger.error("Bad edge found for track "+trackElement.getAttributeValue(TRACK_ID_ATTRIBUTE_NAME)
-									+": loop edge at line "+lne.getStartLine()+". Skipping.");
+									+": loop edge at line "+lne.getStartLine()+". Skipping.\n");
 							break;
 						}
 						DefaultWeightedEdge edge = graph.addEdge(sourceSpot, targetSpot);
 						if (edge == null) {
 							LineNumberElement lne = (LineNumberElement) edgeElement;
 							logger.error("Bad edge found for track "+trackElement.getAttributeValue(TRACK_ID_ATTRIBUTE_NAME)
-									+": duplicate edge at line "+lne.getStartLine()+". Skipping.");
+									+": duplicate edge at line "+lne.getStartLine()+". Skipping.\n");
 							break;
 						} else {
 							graph.setEdgeWeight(edge, weight);
@@ -560,8 +560,15 @@ public class TmXmlReader {
 		if (null == folder || folder.isEmpty())
 			folder = file.getParent(); // it is a relative path, then
 		File imageFile = new File(folder, filename);
-		if (!imageFile.exists() || !imageFile.canRead())
-			return null;
+		if (!imageFile.exists() || !imageFile.canRead()) {
+			// Could not find it to the absolute path. Then we look for the same path of the xml file
+			logger.log("Could not find the image in "+folder+". Looking in xml file location...\n");
+			folder = file.getParent();
+			imageFile = new File(folder, filename);
+			if (!imageFile.exists() || !imageFile.canRead()) {
+				return null;
+			}
+		}
 		return IJ.openImage(imageFile.getAbsolutePath());
 	}
 
@@ -591,7 +598,7 @@ public class TmXmlReader {
 			try {
 				spot.putFeature(att.getName(), att.getFloatValue());
 			} catch (DataConversionException e) {
-				logger.error("Cannot read the feature "+att.getName()+" value. Skipping.");
+				logger.error("Cannot read the feature "+att.getName()+" value. Skipping.\n");
 			}
 		}
 		return spot;
