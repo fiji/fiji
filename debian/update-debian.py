@@ -720,13 +720,15 @@ if options.clean:
         if re.search("^\s*missingPrecompiledFallBack",line):
             skip_next_line = True
             continue
+        for old_file, replacement_tuple in replacement_files.items():
+            replacement_string = ':'.join(replacement_tuple)
+            line = re.sub(re.escape(old_file), replacement_string, line)
         # grrr, src-plugins/Jama seems particularly awkward to
         # get rid of.  Probably should do everything like this, just
         # rewrite the Fakefile entirely, with a proper parser of the
         # format.  FIXME FIXME FIXME
         line = re.sub('\s+jars/Jama.jar\s+',' ',line)
         line = re.sub('jars/Jama.jar','/usr/share/java/jama.jar',line)
-        line = re.sub('jars/javassist.jar','/usr/share/java/javassist.jar',line)
         fp.write(line)
     fp.close()
 
