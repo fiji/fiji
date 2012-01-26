@@ -4,6 +4,8 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Point;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowEvent;
@@ -308,13 +310,7 @@ public class TrackSchemeFrame extends JFrame implements TrackMateModelChangeList
 		graphComponent.setColumnColor(graphLayout.getTrackColors());
 	}
 
-	public void plotSelectionData() {
-		String xFeature = infoPane.getFeatureSelectionPanel().getXKey();
-		Set<String> yFeatures = infoPane.getFeatureSelectionPanel().getYKeys();
-
-		if (DEBUG) {
-			System.out.println("[TrackSchemeFrame] plotSelectionData(): X is "+xFeature+" and Ys are "+yFeatures);
-		}
+	public void plotSelectionData(String xFeature, Set<String> yFeatures) {
 
 		if (yFeatures.isEmpty())
 			return;
@@ -696,6 +692,16 @@ public class TrackSchemeFrame extends JFrame implements TrackMateModelChangeList
 		JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, infoPane, graphComponent);
 		splitPane.setDividerLocation(170);
 		getContentPane().add(splitPane, BorderLayout.CENTER);
+		
+		// Add listener for plot events
+		infoPane.featureSelectionPanel.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				String xFeature = infoPane.getFeatureSelectionPanel().getXKey();
+				Set<String> yFeatures = infoPane.getFeatureSelectionPanel().getYKeys();
+				plotSelectionData(xFeature, yFeatures);
+			}
+		});
 
 		// Add a listener to ensure we remove this frame from the listener list of the model when it closes
 		addWindowListener(new  WindowListener() {
