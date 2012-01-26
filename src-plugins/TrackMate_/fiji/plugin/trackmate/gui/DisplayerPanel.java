@@ -72,9 +72,6 @@ public class DisplayerPanel extends ActionListenablePanel implements WizardPanel
 	 * The set of {@link TrackMateModelView} views controlled by this controller.
 	 */
 	private Set<TrackMateModelView> views = new HashSet<TrackMateModelView>();
-//	private Map<String, double[]> featureValues;
-//	private List<String> features;
-//	private Map<String, String> featureNames;
 	private TrackMate_ plugin;
 	private TrackMateWizard wizard;
 
@@ -184,32 +181,24 @@ public class DisplayerPanel extends ActionListenablePanel implements WizardPanel
 	 */
 
 	private void setModel(TrackMateModel model) {
-		
-		// TODO TODO FIXME
-		
-//		this.featureValues = model.getFeatureModel().getSpotFeatureValues();
-//		this.features = model.getFeatureModel().getSpotFeatures();
-//		this.featureNames = model.getFeatureModel().getSpotFeatureNames();
 		Map<String, double[]> featureValues = model.getFeatureModel().getSpotFeatureValues();
 		List<String> features = model.getFeatureModel().getSpotFeatures();
 		Map<String, String> featureNames = model.getFeatureModel().getSpotFeatureNames();
 
-		if (null != jPanelSpotColor) {
-			jPanelSpotOptions.remove(jPanelSpotOptions);
+		if (jPanelSpotColor == null) {
+			jPanelSpotColor = new JPanelColorByFeatureGUI(features, featureNames, this);
+			jPanelSpotOptions.add(jPanelSpotColor);
+			jPanelSpotColor.addActionListener(new ActionListener() {
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					for(TrackMateModelView view : views) {
+						view.setDisplaySettings(KEY_SPOT_COLOR_FEATURE, jPanelSpotColor.setColorByFeature);
+						view.refresh();
+					}							
+				}
+			});
 		}
-		jPanelSpotColor = new JPanelColorByFeatureGUI(features, featureNames, this);
 		jPanelSpotColor.featureValues = featureValues;
-		jPanelSpotOptions.add(jPanelSpotColor);
-		jPanelSpotColor.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				for(TrackMateModelView view : views) {
-					view.setDisplaySettings(KEY_SPOT_COLOR_FEATURE, jPanelSpotColor.setColorByFeature);
-					view.refresh();
-				}							
-			}
-		});
-
 	}
 
 	private void initGUI() {
