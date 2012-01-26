@@ -39,6 +39,9 @@ public class TrackSchemeToolbar extends JToolBar {
 	private static final ImageIcon DISPLAY_COST_ON_ICON		= new ImageIcon(TrackSchemeFrame.class.getResource("resources/Label-icons.png"));
 	private static final ImageIcon DISPLAY_COST_OFF_ICON	= new ImageIcon(TrackSchemeFrame.class.getResource("resources/Label-icons-disabled.png"));
 	
+	private static final ImageIcon DISPLAY_DECORATIONS_ON_ICON	= new ImageIcon(TrackSchemeFrame.class.getResource("resources/application_view_columns.png"));
+	private static final ImageIcon DISPLAY_DECORATIONS_OFF_ICON	= new ImageIcon(TrackSchemeFrame.class.getResource("resources/application.png"));
+	
 	private TrackSchemeFrame frame;
 
 	public TrackSchemeToolbar(TrackSchemeFrame frame) {
@@ -199,24 +202,50 @@ public class TrackSchemeToolbar extends JToolBar {
 		/*
 		 * display labels on edges
 		 */
+
+		JButton toggleDisplayCostsButton;
+		{
+			boolean defaultDisplayCosts= TrackSchemeFrame.DEFAULT_DO_DISPLAY_COSTS_ON_EDGES;
+			final Action toggleDisplayCostsAction = new AbstractAction(null, defaultDisplayCosts ? DISPLAY_COST_ON_ICON : DISPLAY_COST_OFF_ICON) {
+				public void actionPerformed(ActionEvent e) {
+					boolean enabled = frame.getGraphLayout().isDoDisplayCosts();
+					ImageIcon displayIcon;
+					if (enabled)
+						displayIcon = DISPLAY_COST_OFF_ICON;
+					else
+						displayIcon = DISPLAY_COST_ON_ICON;
+					putValue(SMALL_ICON, displayIcon);
+					frame.getGraphLayout().setDoDisplayCosts(!enabled);
+				}
+
+			};
+			toggleDisplayCostsButton = new JButton(toggleDisplayCostsAction);
+			toggleDisplayCostsButton.setToolTipText("Toggle costs display (redo layout)");
+		}
 		
-		boolean defaultDisplayCosts= TrackSchemeFrame.DEFAULT_DO_DISPLAY_COSTS_ON_EDGES;
-		final Action toggleDisplayCostsAction = new AbstractAction(null, defaultDisplayCosts ? DISPLAY_COST_ON_ICON : DISPLAY_COST_OFF_ICON) {
-			public void actionPerformed(ActionEvent e) {
-				boolean enabled = frame.getGraphLayout().isDoDisplayCosts();
-				ImageIcon displayIcon;
-				if (enabled)
-					displayIcon = DISPLAY_COST_OFF_ICON;
-				else
-					displayIcon = DISPLAY_COST_ON_ICON;
-				putValue(SMALL_ICON, displayIcon);
-				frame.getGraphLayout().setDoDisplayCosts(!enabled);
-			}
-			
-		};
-		final JButton toggleDisplayCostsButton = new JButton(toggleDisplayCostsAction);
-		toggleDisplayCostsButton.setToolTipText("Toggle costs display (redo layout)");
-		
+		/*
+		 * display background decorations
+		 */
+		JButton toggleDisplayDecorationsButton; 
+		{
+			boolean defaultDisplayDecorations= TrackSchemeFrame.DEFAULT_DO_PAINT_DECORATIONS;
+			final Action toggleDisplayDecorations = new AbstractAction(null, defaultDisplayDecorations ? DISPLAY_DECORATIONS_ON_ICON : DISPLAY_DECORATIONS_OFF_ICON) {
+				public void actionPerformed(ActionEvent e) {
+					boolean enabled = frame.getGraphComponent().isDoPaintDecorations();
+					ImageIcon displayIcon;
+					if (enabled)
+						displayIcon = DISPLAY_DECORATIONS_OFF_ICON;
+					else
+						displayIcon = DISPLAY_DECORATIONS_ON_ICON;
+					putValue(SMALL_ICON, displayIcon);
+					frame.getGraphComponent().setDoPaintDecorations(!enabled);
+					frame.getGraphComponent().repaint();
+				}
+
+			};
+			toggleDisplayDecorationsButton = new JButton(toggleDisplayDecorations);
+			toggleDisplayDecorationsButton.setToolTipText("Toggle display decorations");
+		}
 		
 		/*
 		 * ADD TO TOOLBAR
@@ -250,6 +279,8 @@ public class TrackSchemeToolbar extends JToolBar {
 		addSeparator();
 		// Display costs along edges
 		add(toggleDisplayCostsButton);
+		// Display background decorations
+		add(toggleDisplayDecorationsButton);
 
 	}
 }

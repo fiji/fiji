@@ -44,9 +44,8 @@ public class mxTrackGraphComponent extends mxGraphComponent implements mxIEventL
 	private TrackSchemeFrame frame;
 	
 	/** If true, will paint background decorations. */
-	private boolean doPaintDecorations = true;
+	private boolean doPaintDecorations = TrackSchemeFrame.DEFAULT_DO_PAINT_DECORATIONS;
 
-	
 	/*
 	 * CONSTRUCTOR
 	 */
@@ -76,6 +75,14 @@ public class mxTrackGraphComponent extends mxGraphComponent implements mxIEventL
 	/*
 	 * METHODS
 	 */
+	
+	public void setDoPaintDecorations(boolean doPaintDecorations) {
+		this.doPaintDecorations = doPaintDecorations;
+	}
+	
+	public boolean isDoPaintDecorations() {
+		return doPaintDecorations;
+	}
 
 	@Override
 	public boolean isToggleEvent(MouseEvent event) {

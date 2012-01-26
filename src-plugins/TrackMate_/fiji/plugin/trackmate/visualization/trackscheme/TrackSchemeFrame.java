@@ -78,7 +78,10 @@ public class TrackSchemeFrame extends JFrame implements TrackMateModelChangeList
 	boolean defaultLinkingEnabled = false;
 	/** Are linking costs displayed by default? Can be changed in the toolbar. */
 	static final boolean DEFAULT_DO_DISPLAY_COSTS_ON_EDGES = false;
-
+	/** Do we display the background decorations by default? */
+	static final boolean DEFAULT_DO_PAINT_DECORATIONS = true;
+	
+	
 	private Settings settings;
 	private JGraphXAdapter graph;
 
@@ -442,7 +445,7 @@ public class TrackSchemeFrame extends JFrame implements TrackMateModelChangeList
 	 * Instantiate the toolbar of the track scheme. Hook for sub-classers.
 	 */
 	protected JToolBar createToolBar() {
-		return new TrackSchemeToolbar(this);		
+		return new TrackSchemeToolbar(this);
 	}
 
 	/**
