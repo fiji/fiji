@@ -16,9 +16,6 @@ import java.util.TreeSet;
 
 import com.mxgraph.canvas.mxGraphics2DCanvas;
 import com.mxgraph.model.mxCell;
-import com.mxgraph.shape.mxCloudShape;
-import com.mxgraph.shape.mxImageShape;
-import com.mxgraph.shape.mxRectangleShape;
 import com.mxgraph.swing.mxGraphComponent;
 import com.mxgraph.swing.handler.mxGraphHandler;
 import com.mxgraph.swing.view.mxCellEditor;

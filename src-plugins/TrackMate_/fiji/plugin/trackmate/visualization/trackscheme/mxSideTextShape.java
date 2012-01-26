@@ -34,9 +34,6 @@ public class mxSideTextShape extends mxDefaultTextShape {
 
 	@Override
 	public void paintShape(mxGraphics2DCanvas canvas, String text, mxCellState state, Map<String, Object> style) {
-
-		if (!mxUtils.isTrue(style, STYLE_DISPLAY_COST, false))
-			return;
 		
 		mxCell cell = (mxCell) state.getCell();
 		boolean isEdgeLabel = cell.isEdge(); 
@@ -54,6 +51,10 @@ public class mxSideTextShape extends mxDefaultTextShape {
 			int h = rect.height;
 
 			if (isEdgeLabel) {
+				
+				if (!mxUtils.isTrue(style, STYLE_DISPLAY_COST, false))
+					return;
+				
 				List<mxPoint> points = state.getAbsolutePoints();
 				double px1 = points.get(0).getX();
 				double py1 = points.get(0).getY();
