@@ -429,18 +429,28 @@ public class WarpingError extends Metrics {
 		flags = MERGE + SPLIT;
 		
 		double minError = Double.MAX_VALUE;
-				
+		double bestTh = minThreshold;
+		
 		for(double th = minThreshold; th<=maxThreshold; th += stepThreshold)
 		{						
 			if( verbose )
 				IJ.log("  Calculating splits and mergers for threshold value " + String.format("%.2f", th) + "...");
 			double error = getMetricValue( th, clusterByError );
+			if ( verbose )
+				IJ.log("    error = " + error);
 			if ( error < minError)
+			{
 				minError = error;
+				bestTh = th;
+			}
 		}
+		
+		if (verbose)
+			IJ.log(" **  Minimum error = " + minError + ", with threshold = " + bestTh + " **\n");
 						
 		return minError;
 	}
+		
 	/**
 	 * Calculate error with the minimum number of splits and mergers for different thresholds
 	 * 
@@ -468,15 +478,24 @@ public class WarpingError extends Metrics {
 		flags = MERGE + SPLIT;
 		
 		double minError = Double.MAX_VALUE;
+		double bestTh = minThreshold;
 				
 		for(double th = minThreshold; th<=maxThreshold; th += stepThreshold)
 		{						
 			if ( verbose )
 				IJ.log("  Calculating splits and mergers for threshold value " + String.format("%.2f", th) + "...");
 			double error = getMetricValue( th, clusterByError, radius );
+			if ( verbose )
+				IJ.log("    error = " + error);
 			if ( error < minError)
+			{
 				minError = error;
+				bestTh = th;
+			}
 		}
+		
+		if (verbose)
+			IJ.log(" **  Minimum error = " + minError + ", with threshold = " + bestTh + " **\n");
 						
 		return minError;
 	}
