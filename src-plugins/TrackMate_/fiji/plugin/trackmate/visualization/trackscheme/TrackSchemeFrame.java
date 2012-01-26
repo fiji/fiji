@@ -74,6 +74,11 @@ public class TrackSchemeFrame extends JFrame implements TrackMateModelChangeList
 	 * FIELDS
 	 */
 
+	/** Is linking allowed by default? Can be changed in the toolbar. */
+	boolean defaultLinkingEnabled = false;
+	/** Are linking costs displayed by default? Can be changed in the toolbar. */
+	static final boolean DEFAULT_DO_DISPLAY_COSTS_ON_EDGES = false;
+
 	private Settings settings;
 	private JGraphXAdapter graph;
 
@@ -83,8 +88,6 @@ public class TrackSchemeFrame extends JFrame implements TrackMateModelChangeList
 	private mxTrackGraphComponent graphComponent;
 	/** The layout manager that can be called to re-arrange cells in the graph. */
 	private mxTrackGraphLayout graphLayout;
-	/** Is linking allowed by default? Can be changed in the toolbar. */
-	boolean defaultLinkingEnabled = false;
 	/** A flag used to prevent double event firing when setting the selection programmatically. */
 	private boolean doFireSelectionChangeEvent = true;
 	/** A flag used to prevent double event firing when setting the selection programmatically. */

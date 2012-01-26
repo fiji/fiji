@@ -36,7 +36,7 @@ import fiji.plugin.trackmate.util.TrackSplitter;
  * It also sets the style of each cell so that they have a coloring depending on the lane
  * they belong to.
  * Each lane's width and color is available to other classes for further exploitation.
- * @author Jean-Yves Tinevez <jeanyves.tinevez@gmail.com> - Mar 13, 2011
+ * @author Jean-Yves Tinevez <jeanyves.tinevez@gmail.com> - Mar 2011 - 2012
  *
  */
 public class mxTrackGraphLayout extends mxGraphLayout {
@@ -53,13 +53,15 @@ public class mxTrackGraphLayout extends mxGraphLayout {
 	 * The spatial calibration in X. We need it to compute cell's height from spot radiuses.
 	 */
 	private float dx;
-
 	/**
 	 * Do we group branches and display branch cells.
 	 * False by default.
 	 */
 	private boolean doBranchGrouping = false;
-
+	/**
+	 * Do we display costs along edges? Default set by mother frame
+	 */
+	private boolean doDisplayCosts = TrackSchemeFrame.DEFAULT_DO_DISPLAY_COSTS_ON_EDGES;
 	/**
 	 * Used to keep a reference to the branch cell which will contain spot cells.
 	 * We need this to be able to purge them from the graph when we redo a layout.	 */
@@ -76,6 +78,18 @@ public class mxTrackGraphLayout extends mxGraphLayout {
 		this.graph = graph;
 		this.model = model;
 		this.dx = dx;
+	}
+	
+	/*
+	 * PUBLIC METHODS
+	 */
+	
+	public void setDoDisplayCosts(boolean doDisplayCosts) {
+		this.doDisplayCosts = doDisplayCosts;
+	}
+	
+	public boolean isDoDisplayCosts() {
+		return doDisplayCosts;
 	}
 
 	@Override
@@ -205,7 +219,7 @@ public class mxTrackGraphLayout extends mxGraphLayout {
 
 				}
 
-				// Second pass: we know iterate over each spot's edges
+				// Second pass: we now iterate over each spot's edges
 				for(Spot spot : track) {
 
 					for(final DefaultWeightedEdge edge : model.edgesOf(spot)) {
@@ -220,6 +234,7 @@ public class mxTrackGraphLayout extends mxGraphLayout {
 						graph.getModel().add(currentParent, edgeCell, 0);
 						String edgeStyle = edgeCell.getStyle();
 						edgeStyle = mxUtils.setStyle(edgeStyle, mxConstants.STYLE_STROKECOLOR, trackColorStr);
+						edgeStyle = mxUtils.setStyle(edgeStyle, mxSideTextShape.STYLE_DISPLAY_COST, ""+doDisplayCosts);
 						graph.getModel().setStyle(edgeCell, edgeStyle);
 					}
 				}

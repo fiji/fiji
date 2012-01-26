@@ -16,6 +16,9 @@ import java.util.TreeSet;
 
 import com.mxgraph.canvas.mxGraphics2DCanvas;
 import com.mxgraph.model.mxCell;
+import com.mxgraph.shape.mxCloudShape;
+import com.mxgraph.shape.mxImageShape;
+import com.mxgraph.shape.mxRectangleShape;
 import com.mxgraph.swing.mxGraphComponent;
 import com.mxgraph.swing.handler.mxGraphHandler;
 import com.mxgraph.swing.view.mxCellEditor;
@@ -32,7 +35,7 @@ import fiji.plugin.trackmate.TrackMateModel;
 
 public class mxTrackGraphComponent extends mxGraphComponent implements mxIEventListener {
 
-	private static final long serialVersionUID = -281620557095353617L;
+	private static final long serialVersionUID = -1L;
 	private static final Color BACKGROUND_COLOR_1 	= Color.GRAY;
 	private static final Color BACKGROUND_COLOR_2 	= Color.LIGHT_GRAY;
 	private static final Color LINE_COLOR 			= Color.BLACK;
@@ -46,6 +49,11 @@ public class mxTrackGraphComponent extends mxGraphComponent implements mxIEventL
 	/** If true, will paint background decorations. */
 	private boolean doPaintDecorations = true;
 
+	
+	/*
+	 * CONSTRUCTOR
+	 */
+	
 	public mxTrackGraphComponent(TrackSchemeFrame frame) {
 		super(frame.getGraph());
 		this.frame = frame;
@@ -62,7 +70,7 @@ public class mxTrackGraphComponent extends mxGraphComponent implements mxIEventL
 		// Our own cell painter, that displays an image (if any) and a label next to it.
 		mxGraphics2DCanvas.putShape(mxScaledLabelShape.SHAPE_NAME, new mxScaledLabelShape());
 		// Replace default painter for edge label so that we can draw labels parallel to edges.
-		mxGraphics2DCanvas.putTextShape(mxGraphics2DCanvas.TEXT_SHAPE_DEFAULT, new mxSideTextShape(true));
+		mxGraphics2DCanvas.putTextShape(mxGraphics2DCanvas.TEXT_SHAPE_DEFAULT, new mxSideTextShape());
 
 		setSwimlaneSelectionEnabled(true);
 

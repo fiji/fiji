@@ -35,6 +35,9 @@ public class TrackSchemeToolbar extends JToolBar {
 	private static final ImageIcon BRANCH_FOLDING_OFF_ICON 	= new ImageIcon(TrackSchemeFrame.class.getResource("resources/shape_square-forbid.png"));
 	private static final ImageIcon FOLD_ALL_BRANCHES_ICON	= new ImageIcon(TrackSchemeFrame.class.getResource("resources/shape_group.png"));
 	private static final ImageIcon UNFOLD_ALL_BRANCHES_ICON	= new ImageIcon(TrackSchemeFrame.class.getResource("resources/shape_ungroup.png"));
+
+	private static final ImageIcon DISPLAY_COST_ON_ICON		= new ImageIcon(TrackSchemeFrame.class.getResource("resources/Label-icons.png"));
+	private static final ImageIcon DISPLAY_COST_OFF_ICON	= new ImageIcon(TrackSchemeFrame.class.getResource("resources/Label-icons-disabled.png"));
 	
 	private TrackSchemeFrame frame;
 
@@ -150,7 +153,7 @@ public class TrackSchemeToolbar extends JToolBar {
 				}
 			}
 		});
-		toggleEnableFoldingButton.setToolTipText("Toggle folding (requires redoing layout)");
+		toggleEnableFoldingButton.setToolTipText("Toggle folding (redo layout)");
 		foldAllButton.setToolTipText("Fold all branches");
 		unFoldAllButton.setToolTipText("Unfold all branches");
 		if (!defaultEnabled) {
@@ -194,6 +197,28 @@ public class TrackSchemeToolbar extends JToolBar {
 		
 		
 		/*
+		 * display labels on edges
+		 */
+		
+		boolean defaultDisplayCosts= TrackSchemeFrame.DEFAULT_DO_DISPLAY_COSTS_ON_EDGES;
+		final Action toggleDisplayCostsAction = new AbstractAction(null, defaultDisplayCosts ? DISPLAY_COST_ON_ICON : DISPLAY_COST_OFF_ICON) {
+			public void actionPerformed(ActionEvent e) {
+				boolean enabled = frame.getGraphLayout().isDoDisplayCosts();
+				ImageIcon displayIcon;
+				if (enabled)
+					displayIcon = DISPLAY_COST_OFF_ICON;
+				else
+					displayIcon = DISPLAY_COST_ON_ICON;
+				putValue(SMALL_ICON, displayIcon);
+				frame.getGraphLayout().setDoDisplayCosts(!enabled);
+			}
+			
+		};
+		final JButton toggleDisplayCostsButton = new JButton(toggleDisplayCostsAction);
+		toggleDisplayCostsButton.setToolTipText("Toggle costs display (redo layout)");
+		
+		
+		/*
 		 * ADD TO TOOLBAR
 		 */
 		
@@ -221,6 +246,10 @@ public class TrackSchemeToolbar extends JToolBar {
 		add(captureUndecoratedButton);
 		add(captureDecoratedButton);
 		add(saveButton);
+		// Separator
+		addSeparator();
+		// Display costs along edges
+		add(toggleDisplayCostsButton);
 
 	}
 }
