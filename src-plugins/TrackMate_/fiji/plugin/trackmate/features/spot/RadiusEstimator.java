@@ -5,17 +5,12 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
-import mpicbg.imglib.container.array.ArrayContainerFactory;
 import mpicbg.imglib.cursor.special.DiscCursor;
 import mpicbg.imglib.cursor.special.DomainCursor;
 import mpicbg.imglib.cursor.special.SphereCursor;
-import mpicbg.imglib.image.Image;
-import mpicbg.imglib.image.ImageFactory;
 import mpicbg.imglib.type.numeric.RealType;
-import mpicbg.imglib.type.numeric.integer.UnsignedByteType;
 import fiji.plugin.trackmate.Dimension;
 import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.SpotImp;
 
 public class RadiusEstimator extends IndependentSpotFeatureAnalyzer {
 
@@ -36,7 +31,7 @@ public class RadiusEstimator extends IndependentSpotFeatureAnalyzer {
 		FEATURE_DIMENSIONS.put(ESTIMATED_DIAMETER, Dimension.LENGTH);
 	}
 	
-	private static final float MIN_DIAMETER_RATIO = 0.4f;
+	private static final float MIN_DIAMETER_RATIO = 0.1f;
 	private static final float MAX_DIAMETER_RATIO = 2;
 	
 	
@@ -47,20 +42,15 @@ public class RadiusEstimator extends IndependentSpotFeatureAnalyzer {
 	/** Utility holder. */
 	private float[] coords;
 	/** The number of different diameters to try. */
-	protected int nDiameters = 10;
+	protected int nDiameters = 20;
 
 	/**
 	 * Create a feature analyzer that will return the best estimated diameter for a 
 	 * spot. Estimated diameter is obtained by finding the diameter that gives the 
-	 * maximum contrast, as calculated by the {@link BlobContrast} feature analyzer.
-	 * Searched diameters are linearly spread between <code>diameter</code> * {@value #MIN_DIAMTER_RATIO}
+	 * maximum contrast, as calculated by difference in mean intensity in successive rings.
+	 * Searched diameters are linearly spread between <code>diameter</code> * {@value #MIN_DIAMETER_RATIO}
 	 * and <code>diameter</code> * {@value #MAX_DIAMETER_RATIO}. The optimum is them calculated by doing an interpolation
 	 * over calculated values.
-	 *  
-	 * @param originalImage  the image to get data from 
-	 * @param diameter  the diameter scale to search around
-	 * @param nDiameters  the number of different diameter to compute
-	 * @param calibration  the spatial calibration array containing the pixel size in X, Y, Z
 	 */
 	public RadiusEstimator() { }	
 
@@ -68,15 +58,17 @@ public class RadiusEstimator extends IndependentSpotFeatureAnalyzer {
 	@Override
 	public void process(Spot spot) {
 		coords = new float[img.getNumDimensions()];
-		for (int i = 0; i < coords.length; i++)
+		for (int i = 0; i < coords.length; i++) {
 			coords[i] = spot.getFeature(Spot.POSITION_FEATURES[i]);
+		}
 
 		// Get diameter array and radius squared
 		final float radius = spot.getFeature(Spot.RADIUS);
 		final float[] diameters = prepareDiameters(radius*2, nDiameters);
 		final float[] r2 = new float[nDiameters];
-		for (int i = 0; i < r2.length; i++) 
+		for (int i = 0; i < r2.length; i++) {
 			r2[i] = diameters[i] * diameters[i] / 4 ;
+		}
 		
 		// Calculate total intensity in balls
 		final float[] ring_intensities = new float[nDiameters];
@@ -150,64 +142,6 @@ public class RadiusEstimator extends IndependentSpotFeatureAnalyzer {
 		return diameters;
 	}
 	
-	
-	/**
-	 * For testing purposes
-	 */
-	public static void main(String[] args) {
-		
-		final byte on = (byte) 255;
-		SpotImp s1 = new SpotImp(new float[] {100, 100, 100});
-		SpotImp s2 = new SpotImp(new float[] {100, 100, 200});
-		SpotImp s3 = new SpotImp(new float[] {100, 100, 300});
-		SpotImp[] spots = new SpotImp[] {s1, s2, s3};
-		float[] radiuses = new float[]  {12, 20, 32};
-		float[] calibration = new float[] {1, 1, 1};
-		
-		// Create 3 spots image
-		Image<UnsignedByteType> testImage = new ImageFactory<UnsignedByteType>(
-					new UnsignedByteType(),
-					new ArrayContainerFactory()
-				).createImage(new int[] {200, 200, 400});
-
-		SphereCursor<UnsignedByteType> cursor;
-		int index = 0;
-		for (SpotImp s : spots) {
-			s.putFeature(Spot.RADIUS, radiuses[index]);
-			cursor = new SphereCursor<UnsignedByteType>(
-					testImage,
-					s.getPosition(null),
-					radiuses[index],
-					calibration);
-			while (cursor.hasNext())
-				cursor.next().set(on);
-			cursor.close();
-			index++;			
-		}
-				
-		ij.ImageJ.main(args);
-		ij.ImagePlus imp = mpicbg.imglib.image.display.imagej.ImageJFunctions.copyToImagePlus(testImage);
-		imp.show();
-		
-		// Apply the estimator
-		RadiusEstimator es = new RadiusEstimator();
-		es.setTarget(testImage, calibration);
-		es.nDiameters = 20;
-		
-		SpotImp s;
-		double r;
-		long start, stop;
-		for (int i = 0; i < spots.length; i++) {
-			s = spots[i];
-			r = radiuses[i];
-			start = System.currentTimeMillis();
-			es.process(s);
-			stop = System.currentTimeMillis();
-			System.out.println(String.format("For spot %d, found diameter %.1f, real value was %.1f.", i, s.getFeatures().get(ESTIMATED_DIAMETER), 2*r));
-			System.out.println("Computing time: "+(stop-start)+" ms.");
-		}
-	}
-
 	@Override
 	public Collection<String> getFeatures() {
 		return FEATURES;
