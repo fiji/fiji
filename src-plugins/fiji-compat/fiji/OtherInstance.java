@@ -72,7 +72,7 @@ public class OtherInstance {
 		String display = System.getenv("DISPLAY");
 		return System.getProperty("java.io.tmpdir") + "/ImageJ-"
 			+ System.getProperty("user.name") + "-"
-			+ (display == null ? "" : (display.replace(':', '_') + "-"))
+			+ (display == null ? "" : (display.replace(':', '_').replace('/', '_') + "-"))
 			+ ImageJ.getPort() + ".stub";
 	}
 
