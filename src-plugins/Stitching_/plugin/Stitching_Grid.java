@@ -34,7 +34,6 @@ import mpicbg.stitching.StitchingParameters;
 import mpicbg.stitching.TextFileAccess;
 import mpicbg.stitching.fusion.Fusion;
 import stitching.CommonFunctions;
-import stitching.ImageInformation;
 
 /**
  * 
@@ -63,6 +62,7 @@ public class Stitching_Grid implements PlugIn
 	
 	public static boolean defaultIgnoreCalibration = false;
 	public static double defaultIncreaseOverlap = 10;
+	public static boolean defaultVirtualInput = false;
 	
 	public static int defaultStartI = 1;
 	public static int defaultStartX = 1;
@@ -75,6 +75,9 @@ public class Stitching_Grid implements PlugIn
 	public static boolean defaultOnlyPreview = false;
 	public static int defaultMemorySpeedChoice = 0;
 	
+	public static String[] resultChoices = { "Fuse and display", "Write to disk" };
+	public static int defaultResult = 0;
+	public static String defaultOutputDirectory = "";
 	
 	@Override
 	public void run( String arg0 ) 
@@ -146,7 +149,9 @@ public class Stitching_Grid implements PlugIn
 		}
 		
 		gd.addCheckbox( "Subpixel_accuracy", defaultSubpixelAccuracy );
+		gd.addCheckbox( "Use_virtual_input_images (Slow! Even slower when combined with subpixel accuracy during fusion!)", defaultVirtualInput );
 		gd.addChoice( "Computation_parameters", CommonFunctions.cpuMemSelect, CommonFunctions.cpuMemSelect[ defaultMemorySpeedChoice ] );
+		gd.addChoice( "Image_output", resultChoices, resultChoices[ defaultResult ] );
 		gd.addMessage("");
 		gd.addMessage( "This Plugin is developed by Stephan Preibisch\n" + myURL);
 
@@ -244,7 +249,40 @@ public class Stitching_Grid implements PlugIn
 		}
 		
 		params.subpixelAccuracy = defaultSubpixelAccuracy = gd.getNextBoolean();
+		params.virtual = defaultVirtualInput = gd.getNextBoolean();
 		params.cpuMemChoice = defaultMemorySpeedChoice = gd.getNextChoiceIndex();
+		params.outputVariant = defaultResult = gd.getNextChoiceIndex();
+		
+		if ( params.virtual )
+		{
+			IJ.log( "WARNING: Using virtual input images. This will save a lot of RAM, but will also be slower ... \n" );
+			
+			if ( params.subpixelAccuracy && params.fusionMethod != CommonFunctions.fusionMethodListGrid.length - 1 )
+			{
+				IJ.log( "WARNING: You combine subpixel-accuracy with virtual input images, fusion will take 2-times longer ... \n" );
+			}
+		}
+		
+		if ( params.fusionMethod != CommonFunctions.fusionMethodListGrid.length - 1 && params.outputVariant == 1 )
+		{
+			if ( defaultOutputDirectory == null || defaultOutputDirectory.length() == 0 )
+				defaultOutputDirectory = defaultDirectory;
+			
+			final GenericDialogPlus gd2 = new GenericDialogPlus( "Select output directory" );
+			gd2.addDirectoryField( "Output_directory", defaultOutputDirectory, 60 );
+			gd2.showDialog();
+			
+			if ( gd2.wasCanceled() )
+				return;
+			
+			params.outputDirectory = defaultOutputDirectory = gd2.getNextString();
+		}
+		else
+		{
+			params.outputDirectory = null;
+		}
+
+		final long startTime = System.currentTimeMillis();
 		
 		// we need to set this
 		params.channel1 = 0;
@@ -265,7 +303,7 @@ public class Stitching_Grid implements PlugIn
 		final ArrayList< ImageCollectionElement > elements;
 		
 		if ( gridType < 5 )
-			elements = getGridLayout( grid, gridSizeX, gridSizeY, overlap, directory, filenames, startI, startX, startY );
+			elements = getGridLayout( grid, gridSizeX, gridSizeY, overlap, directory, filenames, startI, startX, startY, params.virtual );
 		else if ( gridType == 5 )
 			elements = getAllFilesInDirectory( directory, confirmFiles );
 		else if ( gridType == 6 && gridOrder == 1 )
@@ -291,10 +329,17 @@ public class Stitching_Grid implements PlugIn
 		for ( final ImageCollectionElement element : elements )
 		{
 			if ( gridType >=5 )
-				IJ.log( "Loading: " + element.getFile().getAbsolutePath() + " ... " );
+			{
+				if ( params.virtual )
+					IJ.log( "Opening VIRTUAL: " + element.getFile().getAbsolutePath() + " ... " );
+				else
+					IJ.log( "Loading: " + element.getFile().getAbsolutePath() + " ... " );
+			}
+				
 			
 			long time = System.currentTimeMillis();
-			final ImagePlus imp = element.open();
+			final ImagePlus imp = element.open( params.virtual );
+			
 			time = System.currentTimeMillis() - time;
 			
 			if ( imp == null )
@@ -394,7 +439,11 @@ public class Stitching_Grid implements PlugIn
 		if ( params.fusionMethod != CommonFunctions.fusionMethodListGrid.length - 1 )
 		{
 			long time = System.currentTimeMillis();
-			IJ.log( "Fusing ..." );
+			
+			if ( params.outputDirectory == null )
+				IJ.log( "Fuse & Display ..." );
+			else
+				IJ.log( "Fuse & Write to disk (into directory '" + new File( params.outputDirectory, "" ).getAbsolutePath() + "') ..." );
 			
 			// first prepare the models and get the targettype
 			final ArrayList<InvertibleBoundable> models = new ArrayList< InvertibleBoundable >();
@@ -425,15 +474,16 @@ public class Stitching_Grid implements PlugIn
 			ImagePlus imp = null;
 			
 			if ( is32bit )
-				imp = Fusion.fuse( new FloatType(), images, models, params.dimensionality, params.subpixelAccuracy, params.fusionMethod );
+				imp = Fusion.fuse( new FloatType(), images, models, params.dimensionality, params.subpixelAccuracy, params.fusionMethod, params.outputDirectory );
 			else if ( is16bit )
-				imp = Fusion.fuse( new UnsignedShortType(), images, models, params.dimensionality, params.subpixelAccuracy, params.fusionMethod );
+				imp = Fusion.fuse( new UnsignedShortType(), images, models, params.dimensionality, params.subpixelAccuracy, params.fusionMethod, params.outputDirectory );
 			else if ( is8bit )
-				imp = Fusion.fuse( new UnsignedByteType(), images, models, params.dimensionality, params.subpixelAccuracy, params.fusionMethod );
+				imp = Fusion.fuse( new UnsignedByteType(), images, models, params.dimensionality, params.subpixelAccuracy, params.fusionMethod, params.outputDirectory );
 			else
 				IJ.log( "Unknown image type for fusion." );
 			
-			IJ.log( "Finished ... (" + (System.currentTimeMillis() - time) + " ms)");
+			IJ.log( "Finished fusion (" + (System.currentTimeMillis() - time) + " ms)");
+			IJ.log( "Finished ... (" + (System.currentTimeMillis() - startTime) + " ms)");
 			
 			if ( imp != null )
 				imp.show();
@@ -827,7 +877,8 @@ public class Stitching_Grid implements PlugIn
 		return elements;
 	}
 	
-	protected ArrayList< ImageCollectionElement > getGridLayout( final GridType grid, final int gridSizeX, final int gridSizeY, final double overlap, final String directory, final String filenames, final int startI, final int startX, final int startY )
+	protected ArrayList< ImageCollectionElement > getGridLayout( final GridType grid, final int gridSizeX, final int gridSizeY, final double overlap, final String directory, final String filenames, 
+			final int startI, final int startX, final int startY, final boolean virtual )
 	{
 		final int gridType = grid.getType();
 		final int gridOrder = grid.getOrder();
@@ -929,10 +980,13 @@ public class Stitching_Grid implements PlugIn
 		for ( int y = 0; y < gridSizeY; ++y )
 			for ( int x = 0; x < gridSizeX; ++x )
 			{
-				IJ.log( "Loading (" + x + ", " + y + "): " + gridLayout[ x ][ y ].getFile().getAbsolutePath() + " ... " );
+				if ( virtual )
+					IJ.log( "Opening VIRTUAL (" + x + ", " + y + "): " + gridLayout[ x ][ y ].getFile().getAbsolutePath() + " ... " );
+				else
+					IJ.log( "Loading (" + x + ", " + y + "): " + gridLayout[ x ][ y ].getFile().getAbsolutePath() + " ... " );			
 				
 				long time = System.currentTimeMillis();
-				final ImagePlus imp = gridLayout[ x ][ y ].open();
+				final ImagePlus imp = gridLayout[ x ][ y ].open( virtual );
 				time = System.currentTimeMillis() - time;
 				
 				if ( imp == null )

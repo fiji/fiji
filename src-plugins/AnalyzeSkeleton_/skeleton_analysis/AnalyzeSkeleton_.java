@@ -19,8 +19,7 @@ import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
 
 /**
- * AnalyzeSkeleton_ plugin for ImageJ(C) and Fiji.
- * Copyright (C) 2008-2010 Ignacio Arganda-Carreras 
+ * AnalyzeSkeleton_ plugin for ImageJ and Fiji.
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -46,7 +45,6 @@ import ij.process.ShortProcessor;
  * <A target="_blank" href="http://fiji.sc/wiki/index.php/AnalyzeSkeleton">http://fiji.sc/wiki/index.php/AnalyzeSkeleton</A>
  *
  *
- * @version 09/03/2010
  * @author Ignacio Arganda-Carreras <iarganda@mit.edu>
  *
  */
@@ -83,14 +81,14 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 	private int totalNumberOfJunctionVoxels = 0;
 	/** total number of slab voxels */
 	private int totalNumberOfSlabs = 0;
-	/** the longest shortest path in the graph */
+	/** auxiliary variable to store the length of longest shortest path in a graph */
 	private double shortestPath = 0;
 	
 	// Shortest path variables
 	/** list of longest shortest paths from the skeletons in the image */
 	private ArrayList< Double > shortestPathList;
-	/** list containing longest shortest path points */
-	private ArrayList< Point > shortestPathPoints; 
+	/** list containing longest shortest path points (one per tree) */
+	private ArrayList< Point >[] shortestPathPoints = null; 
 	/** shortest path x start position */
 	private int spx = 0;
 	/** shortest path y start position */
@@ -400,13 +398,17 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 				shortPathImage.addSlice(this.inputImage.getSliceLabel(i), this.inputImage.getProcessor(i).duplicate());
 			
 			shortestPathList = new ArrayList < Double >();
+			
+			this.shortestPathPoints = new ArrayList [ this.numOfTrees ];
+			
 			// Visit skeleton and measure distances.
 			// and apply warshall algorithm
 			spStartPosition = new double[this.numOfTrees][3];
 			for(int i = 0; i < this.numOfTrees; i++)
 			{							
+				shortestPathPoints[ i ] = new ArrayList<Point>();
 				// Warshall algorithm including tag positions
-				this.shortestPath = warshallAlgorithm(this.graph[i]);
+				this.shortestPath = warshallAlgorithm(this.graph[i], shortestPathPoints[ i ]);
 				shortestPathList.add(this.shortestPath);
 				spStartPosition[i][0] = spx * this.imRef.getCalibration().pixelWidth;
 				spStartPosition[i][1] = spy * this.imRef.getCalibration().pixelHeight;
@@ -437,12 +439,149 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 	}
 
 	/**
+	 * This method is intended for non-interactively using this plugin.
+	 * <p>
+	 * @param pruneIndex The pruneIndex, as asked by the initial gui dialog.
+	 * @param thresholdLength maximum length of the branches to prune (all branches below that value are removed)
+	 * @param shortPath flag to calculate the longest shortest path
+	 * @param origIP original input image
+	 * @param silent 
+	 * @param verbose flag to display running information 
+	 */
+	public SkeletonResult run(
+			int pruneIndex,
+			double thresholdLength,			
+			boolean shortPath,
+			ImagePlus origIP,
+			boolean silent,
+			boolean verbose)
+	{
+		AnalyzeSkeleton_.pruneIndex = pruneIndex;
+		this.silent = silent;
+		AnalyzeSkeleton_.pruneEnds = true;		
+		AnalyzeSkeleton_.calculateShortestPath = shortPath;
+		AnalyzeSkeleton_.verbose = verbose;
+
+		switch(pruneIndex)
+		{
+			// No pruning
+			case AnalyzeSkeleton_.NONE:
+				this.bPruneCycles = false;
+				break;
+			// Pruning cycles by shortest branch
+			case AnalyzeSkeleton_.SHORTEST_BRANCH:
+				this.bPruneCycles = true;
+				break;
+			// Pruning cycles by lowest pixel intensity
+			case AnalyzeSkeleton_.LOWEST_INTENSITY_VOXEL:
+			case AnalyzeSkeleton_.LOWEST_INTENSITY_BRANCH:
+				// calculate neighborhood size given the calibration
+				calculateNeighborhoodOffsets(origIP.getCalibration());
+				this.originalImage = origIP.getStack();
+				this.bPruneCycles = true;
+				break;
+			default:
+		}
+
+		this.width = this.imRef.getWidth();
+		this.height = this.imRef.getHeight();
+		this.depth = this.imRef.getStackSize();
+		this.inputImage = this.imRef.getStack();
+		
+		// initialize visit flags
+		resetVisited();
+		
+		// Tag skeleton, differentiate trees and visit them
+		processSkeleton(this.inputImage);
+		
+		 // prune ends
+		pruneEndBranches(this.inputImage, this.taggedImage, thresholdLength);
+		
+		
+		// Prune cycles if necessary
+		if(bPruneCycles)
+		{
+			if(pruneCycles(this.inputImage, this.originalImage, AnalyzeSkeleton_.pruneIndex))
+			{
+				// initialize visit flags
+				resetVisited();
+				// Recalculate analysis over the new image
+				bPruneCycles = false;
+				processSkeleton(this.inputImage);
+			}
+		}
+		
+		// Calculate triple points (junctions with exactly 3 branches)
+		calculateTripleAndQuadruplePoints();
+	
+		if(shortPath)
+		{
+			if(debug)
+				IJ.log("Calculating longest shortest paths...");
+			
+			// Copy input image
+			this.shortPathImage = new ImageStack(this.width, this.height, this.inputImage.getColorModel());
+			for(int i=1; i<=this.inputImage.getSize(); i++)
+				shortPathImage.addSlice(this.inputImage.getSliceLabel(i), this.inputImage.getProcessor(i).duplicate());
+			
+			shortestPathList = new ArrayList < Double >();
+			
+			this.shortestPathPoints = new ArrayList [ this.numOfTrees ];
+			
+			// Visit skeleton and measure distances.
+			// and apply warshall algorithm
+			spStartPosition = new double[this.numOfTrees][3];
+			for(int i = 0; i < this.numOfTrees; i++)
+			{							
+				shortestPathPoints[ i ] = new ArrayList<Point>();
+				// Warshall algorithm including tag positions
+				this.shortestPath = warshallAlgorithm(this.graph[i], shortestPathPoints[ i ]);
+				shortestPathList.add(this.shortestPath);
+				spStartPosition[i][0] = spx * this.imRef.getCalibration().pixelWidth;
+				spStartPosition[i][1] = spy * this.imRef.getCalibration().pixelHeight;
+				spStartPosition[i][2] = spz * this.imRef.getCalibration().pixelDepth;				
+			}
+			
+			if (!silent) {
+				// Display short paths in a new stack
+				ImagePlus shortIP = new ImagePlus("Longest shortest paths", shortPathImage);
+				shortIP.show();
+
+				// Set same calibration as the input image
+				shortIP.setCalibration(this.imRef.getCalibration());
+
+				// We apply the Fire LUT and reset the min and max to be between 0-255.
+				IJ.run(shortIP, "Fire", null);
+
+				//IJ.resetMinAndMax();
+				shortIP.resetDisplayRange();
+				shortIP.updateAndDraw();
+			}
+		
+		}
+		
+		
+		// Return the analysis results
+		return assembleResults();
+	}
+	
+	/**
 	 * Get the graphs of the current skeletons
 	 * @return array of graphs (one per tree/skeleton)
 	 */
 	public Graph[] getGraphs()
 	{
 		return graph;
+	}
+	
+	/**
+	 * Get the list of points (including junctions and end points) of the 
+	 * largest shortest paths in the skeleton image (one per tree).
+	 * @return array with the lists of points of the shortest paths
+	 */
+	public ArrayList<Point>[] getShortestPathPoints()
+	{
+		return this.shortestPathPoints;
 	}
 	
 	/**
@@ -570,6 +709,126 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 						
 		return;
 	}
+	
+	/**
+	 * Prune end branches of a specific length
+	 *
+	 * @param stack input skeleton image
+	 * @param taggedImage tagged skeleton image
+	 * @param length limit length to prune the branches (in calibrated units)
+	 *
+	 */
+	private void pruneEndBranches(
+			ImageStack stack, 
+			ImageStack taggedImage, 
+			double length) 
+	{
+		if(debug)
+			IJ.log("Pruning end-point branches...");
+		for (int t = 0; t < this.numOfTrees; t++)
+		{
+			if(debug)
+				IJ.log("Pruning tree #" + t);
+			
+			Graph g = graph[t];
+			ArrayList<Vertex> vertices = g.getVertices();
+			ListIterator<Vertex> vit = vertices.listIterator();
+			
+			if(debug)
+				IJ.log("Initial number of vertices: " + graph[t].getVertices().size());
+			
+			while (vit.hasNext())
+			{
+				Vertex v = vit.next();
+				if (v.getBranches().size() == 1 && v.getBranches().get(0).getLength() <= length)
+				{
+					if(debug)
+						IJ.log("Pruning branch starting at " + v.getPoints().get(0));
+					// Remove end point voxels
+					ArrayList<Point> points = v.getPoints();
+					final int nPoints = points.size();
+					
+					for (int i = 0; i < nPoints; i++)
+					{
+						Point p = points.get(i);
+						setPixel(stack, p.x, p.y, p.z, (byte) 0);
+						setPixel(taggedImage, p.x, p.y, p.z, (byte) 0);
+						this.numberOfEndPoints[t]--;
+						this.totalNumberOfEndPoints--;
+						Iterator<Point> pit = this.listOfEndPoints.listIterator();
+						while (pit.hasNext()){
+							Point ep = pit.next();
+							if (ep.equals(p)){
+								pit.remove();
+								break;
+							}
+						}
+					}
+					
+					// Remove branch voxels
+					Edge branch = v.getBranches().get(0);
+					points = branch.getSlabs();
+					final int nSlabs = points.size();
+					for (int i = 0; i < nSlabs; i++)
+					{
+						Point p = points.get(i);
+						setPixel(stack, p.x, p.y, p.z, (byte) 0);
+						setPixel(taggedImage, p.x, p.y, p.z, (byte) 0);
+						this.numberOfSlabs[t]--;
+						this.totalNumberOfSlabs--;
+						Iterator<Point> pit = this.listOfSlabVoxels.listIterator();
+						while (pit.hasNext())
+						{
+							Point ep = pit.next();
+							if (ep.equals(p)){
+								pit.remove();
+								break;
+							}
+						}						
+					}
+					
+					// remove the Edge from the Graph
+					ArrayList<Edge> gEdges = graph[t].getEdges();
+					Iterator<Edge> git = gEdges.listIterator();
+					while (git.hasNext())
+					{
+						Edge e = git.next();
+						if (e.equals(branch))
+						{
+							git.remove();
+							break;
+						}
+					}
+					
+					// remove the Edge from the opposite Vertex
+					Vertex opp = branch.getOppositeVertex(v);
+					ArrayList<Edge> oppBranches = opp.getBranches();
+					Iterator<Edge> oppIt = oppBranches.listIterator();
+					while (oppIt.hasNext())
+					{
+						Edge oppBranch = oppIt.next();
+						if (oppBranch.equals(branch))
+						{
+							oppIt.remove();
+							break;
+						}
+					}
+
+					// remove the Edge from the Vertex
+					v.getBranches().remove(0);
+
+					// remove the Vertex from the Graph
+					vit.remove();
+				}
+			}						
+			
+			if(debug)
+				IJ.log("Final number of vertices: " + graph[t].getVertices().size());
+		}
+						
+		return;
+	}
+	
 	
 	// ---------------------------------------------------------------------------
 	/**
@@ -2730,10 +2989,11 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 	 * warshall algorithm
 	 * 
 	 * @param graph the graph of a tree
+	 * @param shortestPathPoints list to store the longest shortest path points
 	 * @return longest shortest path length
 	 * @author Huub Hovens
 	 */
-	private double warshallAlgorithm(Graph graph)
+	private double warshallAlgorithm(Graph graph, ArrayList <Point> shortestPathPoints)
 	{
 		// local fields
 		/** vertex 1 of an edge */
@@ -2877,7 +3137,7 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 		}
 
 		// trace back the longest shortest path
-		reconstructPath(predecessorMatrix, a, b, edgeList, vertexList);
+		reconstructPath(predecessorMatrix, a, b, edgeList, vertexList, shortestPathPoints);
 
 		// !important return maxPath;
 		return maxPath;
@@ -2891,16 +3151,19 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 	 * @param predecessorMatrix the Matrix which contains the predecessor of vertex b in the shortest path from a to b
 	 * @param startIndex the index of the row which contains the longest shortest path
 	 * @param endIndex the index of the column which contains the longest shortest path
-	 * @param edgeList the list of edges
+	 * @param edgeList the list of edges 
 	 * @param vertexList the list of vertices
-	 * 
+	 * @param shortestPathPoints contains points of the longest shortest path for each graph
 	 * @author Huub Hovens
 	 */
-	private void reconstructPath(int[][] predecessorMatrix, int startIndex, int endIndex, ArrayList<Edge> edgeList, ArrayList<Vertex> vertexList)
+	private void reconstructPath(
+			int[][] predecessorMatrix, 
+			int startIndex, 
+			int endIndex, 
+			ArrayList<Edge> edgeList, 
+			ArrayList<Vertex> vertexList,
+			ArrayList<Point> shortestPathPoints)
 	{
-		/** contains points of the longest shortest path for each graph*/
-		this.shortestPathPoints = new ArrayList< Point >();
-
 		// We know the first and last vertex of the longest shortest path, namely a and b
 		// using the predecessor matrix we can now determine the path that is taken from a to b
 		// remember a and b are indices and not the actual vertices.
@@ -2939,12 +3202,32 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 				}
 
 			}
+			
+			// add slab points of the shortest edge to the list of points
 			for (Point p : shortestedge.getSlabs())
 			{
-				this.shortestPathPoints.add(p);
+				shortestPathPoints.add(p);
 				setPixel(this.shortPathImage, p.x, p.y, p.z, SHORTEST_PATH);
 			}
 
+			// add vertex points too
+			for (Point p : shortestedge.getV1().getPoints())
+			{
+				if( ! shortestPathPoints.contains( p ))
+				{
+					shortestPathPoints.add(p);
+					//setPixel(this.shortPathImage, p.x, p.y, p.z, SHORTEST_PATH);
+				}
+			}
+			
+			for (Point p : shortestedge.getV2().getPoints())
+			{
+				if( ! shortestPathPoints.contains( p ))
+				{
+					shortestPathPoints.add(p);
+					//setPixel(this.shortPathImage, p.x, p.y, p.z, SHORTEST_PATH);
+				}
+			}
 
 			// now make the index of the endvertex the index of the predecessor so that the path now goes from
 			// a to predecessor and repeat cycle
@@ -2952,9 +3235,9 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 		}
 		if (shortestPathPoints.size() != 0)
 		{
-			this.spx = this.shortestPathPoints.get(0).x;
-			this.spy = this.shortestPathPoints.get(0).y;
-			this.spz = this.shortestPathPoints.get(0).z;
+			this.spx = shortestPathPoints.get(0).x;
+			this.spy = shortestPathPoints.get(0).y;
+			this.spz = shortestPathPoints.get(0).z;
 		}		
 
 	}

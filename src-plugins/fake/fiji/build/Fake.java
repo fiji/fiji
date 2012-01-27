@@ -61,12 +61,12 @@ public class Fake {
 
 	public static void checkObsoleteLauncher() {
 		String launcher = System.getProperty("fiji.executable");
-		if (launcher != null) {
-			launcher = launcher.substring(launcher.lastIndexOf('/') + 1);
-			launcher = launcher.substring(launcher.lastIndexOf('\\') + 1);
-			if (!launcher.startsWith("fiji"))
-				return;
-		}
+		if (launcher == null)
+			return;
+		launcher = launcher.substring(launcher.lastIndexOf('/') + 1);
+		launcher = launcher.substring(launcher.lastIndexOf('\\') + 1);
+		if (!launcher.startsWith("fiji"))
+			return;
 		System.err.println("=================== !!!WARNING!!! ===================\n"
 			+ "Fiji Build was started using the 'fiji' executable!!!\n"
 			+ "Please use 'ImageJ' next time.\n"
@@ -174,7 +174,7 @@ public class Fake {
 	protected static void discoverBeanshell() throws IOException {
 		String bshJar = ijHome + "/jars/bsh.jar";
 		if (!new File(bshJar).exists()) {
-			bshJar = ijHome + "/jars/bsh-2.0b4.jar";
+			bshJar = ijHome + "/jars/bsh.jar";
 			if (!new File(bshJar).exists())
 				bshJar = ijHome + "/precompiled/bsh.jar";
 		}

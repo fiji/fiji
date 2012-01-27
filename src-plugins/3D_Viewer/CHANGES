@@ -1,3 +1,21 @@
+09th January 2012:
+------------------
+* Buf fixes.
+* Make mesh import/export macro-recordable
+  (thanks to Johannes Schindelin)
+* Bug fixes in the surface plot functions, thanks to Johannes Schindelin
+* Make 'Export transformed' macro-recordable
+* Correct drawing of 4D buttons on Mac OSX
+* Make bounding-box text always aligned in x- and y-direction of the view.
+* Real annotations: display text together with landmark points
+* User-adjustable keyboard shortcuts.
+* A completely restructured menu bar
+* A context menu
+* Possibility to add primitive 3D shapes like spheres, boxes, cones & tubes.
+* Mesh decimation to simplify and surface meshes and make them less
+  memory-consuming and thus faster renderable
+* Snapshots are now macro-recordable.
+
 06th July 2011:
 ---------------
 * Support for exporting meshes to .u3d files, which can be embedded into PDFs, allowing for interactive 3D content in PDFs (using Adobe's Acrobat Reader)

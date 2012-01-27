@@ -6,7 +6,9 @@ import ij.IJ;
 import ij.ImageJ;
 import ij.ImagePlus;
 import ij.ImageStack;
+import ij.io.FileSaver;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Vector;
@@ -52,7 +54,7 @@ public class Fusion
 	 * @param subpixelResolution - if there is no subpixel resolution, we do not need to convert to float as no interpolation is necessary, we can compute everything with RealType
 	 */
 	public static < T extends RealType< T > > ImagePlus fuse( final T targetType, final ArrayList< ImagePlus > images, final ArrayList< InvertibleBoundable > models, 
-			final int dimensionality, final boolean subpixelResolution, final int fusionType )
+			final int dimensionality, final boolean subpixelResolution, final int fusionType, final String outputDirectory )
 	{
 		// first we need to estimate the boundaries of the new image
 		final float[] offset = new float[ dimensionality ];
@@ -70,7 +72,13 @@ public class Fusion
 		final ImageFactory<T> f = new ImageFactory<T>( targetType, new ImagePlusContainerFactory() );
 		
 		// the final composite
-		final ImageStack stack = new ImageStack( size[ 0 ], size[ 1 ] );
+		final ImageStack stack;
+		
+		// there is no output if we write to disk
+		if ( outputDirectory == null )
+			stack = new ImageStack( size[ 0 ], size[ 1 ] );
+		else
+			stack = null;
 
 		//"Overlay into composite image"
 		for ( int t = 1; t <= numTimePoints; ++t )
@@ -78,7 +86,13 @@ public class Fusion
 			for ( int c = 1; c <= numChannels; ++c )
 			{
 				// create the 2d/3d target image for the current channel and timepoint 
-				final Image< T > out = f.createImage( size );
+				final Image< T > out;
+				
+				// we just create one slice if we write to disk
+				if ( outputDirectory == null )
+					out = f.createImage( size );
+				else
+					out = f.createImage( new int[] { size[ 0 ], size[ 1 ] } ); // just create a slice
 
 				// init the fusion
 				PixelFusion fusion = null;
@@ -107,7 +121,22 @@ public class Fusion
 					if ( fusionType == 0 )
 						fusion = new BlendingPixelFusion( blockData );
 					
-					fuseBlock( out, blockData, offset, models, fusion );
+					if ( outputDirectory == null )
+					{
+						fuseBlock( out, blockData, offset, models, fusion );
+					}
+					else
+					{
+						final int numSlices;
+						
+						if ( dimensionality == 2 )
+							numSlices = 1;
+						else
+							numSlices = size[ 2 ];
+						
+						writeBlock( out, numSlices, t, numTimePoints, c, numChannels, blockData, offset, models, fusion, outputDirectory );
+						out.close();
+					}
 				}
 				else
 				{
@@ -132,15 +161,33 @@ public class Fusion
 					if ( fusionType == 0 )
 						fusion = new BlendingPixelFusion( blockData );					
 
-					fuseBlock( out, blockData, offset, models, fusion );
+					if ( outputDirectory == null )
+					{
+						fuseBlock( out, blockData, offset, models, fusion );
+					}
+					else
+					{
+						final int numSlices;
+						
+						if ( dimensionality == 2 )
+							numSlices = 1;
+						else
+							numSlices = size[ 2 ];
+						
+						writeBlock( out, numSlices, t, numTimePoints, c, numChannels, blockData, offset, models, fusion, outputDirectory );
+						out.close();
+					}
 				}
 				
 				// add to stack
 				try 
 				{
-					final ImagePlus outImp = ((ImagePlusContainer<?,?>)out.getContainer()).getImagePlus();
-					for ( int z = 1; z <= out.getDimension( 2 ); ++z )
-						stack.addSlice( "", outImp.getStack().getProcessor( z ) );
+					if ( stack != null )
+					{
+						final ImagePlus outImp = ((ImagePlusContainer<?,?>)out.getContainer()).getImagePlus();
+						for ( int z = 1; z <= out.getDimension( 2 ); ++z )
+							stack.addSlice( "", outImp.getStack().getProcessor( z ) );
+					}
 				} 
 				catch (ImgLibException e) 
 				{
@@ -148,6 +195,10 @@ public class Fusion
 				}				
 			}
 		}
+
+		// has been written to disk ...
+		if ( stack == null )
+			return null;
 		
 		//convertXYZCT ...
 		ImagePlus result = new ImagePlus( "", stack );
@@ -273,6 +324,114 @@ A:        					for ( int i = 0; i < numImages; ++i )
             });
         
         SimpleMultiThreading.startAndJoin( threads );
+	}
+
+	/**
+	 * Fuse one slice/volume (one channel)
+	 * 
+	 * @param outputSlice - same the type of the ImagePlus input, just one slice which will be written to the output directory
+	 * @param input - FloatType, because of Interpolation that needs to be done
+	 * @param transform - the transformation
+	 */
+	protected static <T extends RealType<T>> void writeBlock( final Image<T> outputSlice, final int numSlices, final int t, final int numTimePoints, final int c, final int numChannels, 
+			final ArrayList< ? extends ImageInterpolation< ? extends RealType< ? > > > input, final float[] offset, 
+			final ArrayList< InvertibleBoundable > transform, final PixelFusion fusion, final String outputDirectory )
+	{
+		final int numImages = input.size();
+		final int numDimensions = offset.length;
+
+		// the maximal dimensions of each image
+		final int[][] max = new int[ numImages ][ numDimensions ];
+		for ( int i = 0; i < numImages; ++i )
+			for ( int d = 0; d < numDimensions; ++d )
+				max[ i ][ d ] = input.get( i ).getImage().getDimension( d ) - 1; 
+		
+		final LocalizableCursor<T> out = outputSlice.createLocalizableCursor();
+		final ArrayList<Interpolator<? extends RealType<?>>> in = new ArrayList<Interpolator<? extends RealType<?>>>();
+		
+		for ( int i = 0; i < numImages; ++i )
+			in.add( input.get( i ).createInterpolator() );
+		
+		final float[][] tmp = new float[ numImages ][ numDimensions ];
+		final PixelFusion myFusion = fusion.copy();
+		
+		try 
+		{
+			for ( int slice = 0; slice < numSlices; ++slice )
+			{
+				out.reset();
+				
+				// fill all pixels of the current slice
+				while ( out.hasNext() )
+				{
+					out.fwd();
+					
+					// get the current position in the output image
+					for ( int d = 0; d < 2; ++d )
+					{
+						final float value = out.getPosition( d ) + offset[ d ];
+						
+						for ( int i = 0; i < numImages; ++i )
+							tmp[ i ][ d ] = value;
+					}
+					
+					// if there is a third dimension, use the slice index
+					if ( numDimensions == 3 )
+					{
+						final float value = slice + offset[ 2 ];
+						
+						for ( int i = 0; i < numImages; ++i )
+							tmp[ i ][ 2 ] = value;						
+					}
+					
+					// transform and compute output value
+					myFusion.clear();
+					
+					// loop over all images for this output location
+A:		        	for ( int i = 0; i < numImages; ++i )
+		        	{
+		        		transform.get( i ).applyInverseInPlace( tmp[ i ] );
+		            	
+		        		// test if inside
+						for ( int d = 0; d < numDimensions; ++d )
+							if ( tmp[ i ][ d ] < 0 || tmp[ i ][ d ] > max[ i ][ d ] )
+								continue A;
+						
+						in.get( i ).setPosition( tmp[ i ] );			
+						myFusion.addValue( in.get( i ).getType().getRealFloat(), i, tmp[ i ] );
+					}
+					
+					// set value
+					out.getType().setReal( myFusion.getValue() );
+				}
+				
+				// write the slice
+				final ImagePlus outImp = ((ImagePlusContainer<?,?>)outputSlice.getContainer()).getImagePlus();
+				final FileSaver fs = new FileSaver( outImp );
+				fs.saveAsTiff( new File( outputDirectory, "img_t" + lz( t, numTimePoints ) + "_z" + lz( slice+1, numSlices ) + "_c" + lz( c, numChannels ) ).getAbsolutePath() );
+			}
+		} 
+		catch ( NoninvertibleModelException e ) 
+		{
+			IJ.log( "Cannot invert model, qutting." );
+			return;
+		} 
+		catch ( ImgLibException e ) 
+		{
+			IJ.log( "Output image has no ImageJ type: " + e );
+			return;
+		}
+	}
+
+	private static final String lz( final int num, final int max )
+	{
+		String out = "" + num;
+		String outMax = "" + max;
+		
+		while ( out.length() < outMax.length() )
+			out = "0" + out;
+		
+		return out;
 	}
 
 	/**

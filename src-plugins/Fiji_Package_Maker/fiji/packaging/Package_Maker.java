@@ -1,9 +1,5 @@
 package fiji.packaging;
 
-import fiji.updater.logic.Checksummer;
-import fiji.updater.logic.PluginCollection;
-import fiji.updater.logic.PluginObject;
-
 import fiji.updater.ui.ij1.IJProgress;
 
 import fiji.updater.util.Util;
@@ -16,51 +12,45 @@ import ij.io.SaveDialog;
 
 import ij.plugin.PlugIn;
 
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class Package_Maker implements PlugIn {
 	public void run(String arg) {
-		PluginCollection plugins = new PluginCollection();
-		IJProgress progress = new IJProgress();
-		Checksummer checksummer = new Checksummer(plugins, progress);
-		checksummer.updateFromLocal();
+		List<Packager> packagers = new ArrayList<Packager>();
+		packagers.add(new ZipPackager());
+		try { packagers.add(new TarBz2Packager()); } catch (Exception e) { /* ignore */ }
+		packagers.add(new TarGzPackager());
+		packagers.add(new TarPackager());
 
-		String[] types = { "ZIP", "TGZ" };
-		Packager[] packagers = { new ZipPackager(), new TarGzPackager() };
+		String[] types = new String[packagers.size()];
+		for (int i = 0; i < types.length; i++)
+			types[i] = packagers.get(i).getExtension().substring(1).toUpperCase();
+
 		GenericDialogPlus gd = new GenericDialogPlus("Make Fiji Package");
 		gd.addChoice("Type", types, types[IJ.isWindows() ? 0 : 1]);
 		gd.showDialog();
 		if (gd.wasCanceled())
 			return;
 
-		Packager packager = packagers[gd.getNextChoiceIndex()];
+		Packager packager = packagers.get(gd.getNextChoiceIndex());
 
 		String platform = Util.platform;
 		String timestamp = Util.timestamp(System.currentTimeMillis());
 		String extension = packager.getExtension();
-		String fileName = "ImageJ-" + platform + "-" + timestamp;
+		String fileName = "fiji-" + platform + "-" + timestamp;
 		SaveDialog save = new SaveDialog("Make Fiji Package", fileName, extension);
 		if (save.getFileName() == null)
 			return;
 
 		String path = save.getDirectory() + save.getFileName();
 		try {
+			packager.initialize(new IJProgress());
 			packager.open(new FileOutputStream(path));
-			int count = 0;
-			for (PluginObject plugin : plugins)
-				count++;
-			addFile(packager, "db.xml.gz");
-			// Maybe ImageJ or ImageJ.exe exist?
-			addFile(packager, "ImageJ");
-			addFile(packager, "ImageJ.exe");
-			int i = 0;
-			for (PluginObject plugin : plugins) {
-				addFile(packager, plugin.filename);
-				IJ.showProgress(i++, count);
-			}
+			packager.addDefaultFiles();
 			packager.close();
 			IJ.showMessage("Wrote " + path);
 		}
@@ -68,17 +58,5 @@ public class Package_Maker implements PlugIn {
 			e.printStackTrace();
 			IJ.error("Error writing " + path);
 		}
-	}
-
-	protected static boolean addFile(Packager packager, String fileName) throws IOException {
-		if (fileName.equals("ImageJ-macosx") || fileName.equals("ImageJ-tiger"))
-			fileName = "Contents/MacOS/" + fileName;
-		File file = new File(Util.prefix(fileName));
-		if (!file.exists())
-			return false;
-		packager.putNextEntry("Fiji.app/" + fileName, (int)file.length());
-		packager.write(new FileInputStream(file));
-		packager.closeEntry();
-		return true;
 	}
 }

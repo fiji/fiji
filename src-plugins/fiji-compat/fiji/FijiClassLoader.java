@@ -27,10 +27,17 @@ public class FijiClassLoader extends URLClassLoader {
 	Map<String, String> classMap;
 
 	public FijiClassLoader() {
-		super(new URL[0], Thread.currentThread().getContextClassLoader());
+		super(new URL[0], getDefaultParent());
 		fallBacks = new ArrayList<ClassLoader>();
 		// needed for sezpoz
 		Thread.currentThread().setContextClassLoader(this);
+	}
+
+	private static ClassLoader getDefaultParent() {
+		ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+		while (classLoader != null && (classLoader instanceof FijiClassLoader))
+			classLoader = classLoader.getParent();
+		return classLoader;
 	}
 
 	public FijiClassLoader(boolean initDefaults) {

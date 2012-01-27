@@ -103,8 +103,8 @@ public class Apply_External_Transformation implements PlugIn
 		final ArrayList<Integer> timepoints = new ArrayList<Integer>();
 		int numChoices = 0;
 		conf.zStretching = -1;
-		
-		final String name = conf.file[ 0 ][ 0 ][ 0 ].getName();			
+
+		final String name = conf.file[ 0 ][ 0 ][ 0 ][ 0 ].getName();
 		final File regDir = new File( conf.registrationFiledirectory );
 		
 		if ( !regDir.isDirectory() )
@@ -277,11 +277,13 @@ public class Apply_External_Transformation implements PlugIn
 		
 		final int numTimePoints = conf.file.length;
 		final int numAngles = conf.file[ 0 ][ 0 ].length;
-		
+		final int numIlluminations = conf.file[ 0 ][ 0 ][ 0 ].length;
+
 		for ( int indexT = 0; indexT < numTimePoints; ++indexT )
 			for ( int indexA = 0; indexA < numAngles; ++indexA )
-			{
-				final String file = conf.file[ indexT ][ 0 ][ indexA ].getName();			
+				for ( int indexI = 0; indexI < numIlluminations; ++indexI )
+				{
+					final String file = conf.file[ indexT ][ 0 ][ indexA ][ indexI ].getName();
 
 				final String fileList[] = regDir.list( new FilenameFilter() 
 				{				

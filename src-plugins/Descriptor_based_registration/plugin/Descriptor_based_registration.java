@@ -329,6 +329,11 @@ public class Descriptor_based_registration implements PlugIn
 			{
 				// ask for the dog parameters
 				final double[] values = getAdvancedDoGParameters( defaultSigma, defaultThreshold );
+				
+				// cancelled
+				if ( values == null )
+					return null;
+				
 				params.sigma1 = values[ 0 ];
 				params.threshold = values[ 1 ];				
 			}

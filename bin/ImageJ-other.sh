@@ -111,7 +111,7 @@ esac
 case "$main_class" in
 fiji.Main|ij.ImageJ)
 	ij_options="-port7 $ij_options"
-	CLASSPATH="$FIJI_ROOT/jars/Fiji.jar:$FIJI_ROOT/jars/ij.jar:$FIJI_ROOT/jars/javassist.jar"
+	CLASSPATH="$FIJI_ROOT/jars/ij-launcher.jar:$FIJI_ROOT/jars/ij.jar:$FIJI_ROOT/jars/javassist.jar"
 	;;
 *)
 	CLASSPATH=

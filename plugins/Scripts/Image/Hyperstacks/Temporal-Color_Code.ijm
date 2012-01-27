@@ -54,12 +54,12 @@ macro "Time-Lapse Color Coder" {
 	calcslices = slices * totalframes;
 	imgID = getImageID();
 
+	setBatchMode(true);
+
 	newImage("colored", "RGB White", ww, hh, calcslices);
 	run("Stack to Hyperstack...", "order=xyczt(default) channels=1 slices="
 		+ slices + " frames=" + totalframes + " display=Color");
 	newimgID = getImageID();
-
-	setBatchMode(true);
 
 	selectImage(imgID);
 	run("Duplicate...", "duplicate");
@@ -78,7 +78,6 @@ macro "Time-Lapse Color Coder" {
 	tempID = getImageID();
 
 	for (i = 0; i < totalframes; i++) {
-		selectImage(tempID);
 		colorscale = floor((256 / totalframes) * i);
 		for (j = 0; j < 256; j++) {
 			intensityfactor = j / 255;
@@ -114,9 +113,8 @@ macro "Time-Lapse Color Coder" {
 	selectImage(imgID);
 	close();
 
-	setBatchMode("exit and display");
-
 	selectImage(newimgID);
+
 	run("Stack to Hyperstack...", "order=xyctz channels=1 slices="
 		+ totalframes + " frames=" + slices + " display=Color");
 	op = "start=1 stop=" + Gendf + " projection=[Max Intensity] all";
@@ -124,8 +122,14 @@ macro "Time-Lapse Color Coder" {
 	if (slices > 1)
 		run("Stack to Hyperstack...", "order=xyczt(default) channels=1 slices=" + slices
 			+ " frames=1 display=Color");
+	resultImageID = getImageID();
+
 	selectImage(newimgID);
 	close();
+
+	selectImage(resultImageID);
+	setBatchMode("exit and display");
+
 	if (GFrameColorScaleCheck)
 		CreateScale(Glut, Gstartf, Gendf);
 }

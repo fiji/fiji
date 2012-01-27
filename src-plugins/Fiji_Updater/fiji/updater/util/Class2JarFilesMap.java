@@ -58,7 +58,7 @@ public class Class2JarFilesMap extends HashMap<String, ArrayList<String>> {
 	 * handling plugin...
 	 */
 	private boolean ignore(String name, String jar) {
-		if (jar.endsWith("/batik.jar"))
+		if (jar.endsWith("/batik.jar") || jar.endsWith("/xml-apis.jar"))
 			return name.startsWith("org.xml.") ||
 				name.startsWith("org.w3c.") ||
 				name.startsWith("javax.xml.") ||

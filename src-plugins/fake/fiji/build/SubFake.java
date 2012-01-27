@@ -57,7 +57,7 @@ public class SubFake extends Rule {
 
 			POM pom = getPOM();
 			if (pom != null)
-				return pom.upToDate() && upToDate(pom.getTarget(), target);
+				return pom.upToDate(true) && upToDate(pom.getTarget(), target);
 
 			if (!upToDateRecursive(new File(Util.makePath(parser.cwd, directory)), target, true))
 				return false;

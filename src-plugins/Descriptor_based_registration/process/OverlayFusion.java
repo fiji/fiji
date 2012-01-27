@@ -99,11 +99,14 @@ public class OverlayFusion
 						//write to disk
 						for ( int z = 1; z <= out.getDimension( 2 ); ++z )
 						{
-							final ImagePlus tmp = new ImagePlus( "img_t" + t + "_z" + z + "_c" + c, outImp.getStack().getProcessor( z ) );
+							final ImagePlus tmp = new ImagePlus( "img_t" + lz(t,numImages) + "_z" + lz(z,out.getDimension( 2 ) ) + "_c" + lz( c, imp.getNChannels() ), outImp.getStack().getProcessor( z ) );
 							final FileSaver fs = new FileSaver( tmp );
 							fs.saveAsTiff( new File( directory, tmp.getTitle() ).getAbsolutePath() );
 							tmp.close();
 						}
+						
+						out.close();
+						outImp.close();
 					}
 				} 
 				catch (ImgLibException e) 
@@ -140,6 +143,16 @@ public class OverlayFusion
 		}
 	}
 	
+	private static final String lz( final int num, final int max )
+	{
+		String out = "" + num;
+		String outMax = "" + max;
+		
+		while ( out.length() < outMax.length() )
+			out = "0" + out;
+		
+		return out;
+	}
 	public static <T extends RealType<T>> CompositeImage createOverlay( final T targetType, final ArrayList<ImagePlus> images, final ArrayList<InvertibleBoundable> models, final int dimensionality, final int timepoint, final InterpolatorFactory< FloatType > factory )
 	{	
 		final int numImages = images.size();
