@@ -10,7 +10,7 @@ import fiji.plugin.trackmate.action.RecalculateFeatureAction;
 import fiji.plugin.trackmate.action.ResetRadiusAction;
 import fiji.plugin.trackmate.action.ResetSpotTimeFeatureAction;
 import fiji.plugin.trackmate.action.TrackMateAction;
-import fiji.plugin.trackmate.features.spot.BlobContrast;
+import fiji.plugin.trackmate.features.spot.BlobContrastAndSNR;
 import fiji.plugin.trackmate.features.spot.BlobDescriptiveStatistics;
 import fiji.plugin.trackmate.features.spot.BlobMorphology;
 import fiji.plugin.trackmate.features.spot.RadiusEstimator;
@@ -177,7 +177,7 @@ public class TrackMate_ implements PlugIn {
 	protected List<SpotFeatureAnalyzer> createSpotFeatureAnalyzerList() {
 		List<SpotFeatureAnalyzer> analyzers = new ArrayList<SpotFeatureAnalyzer>(5);
 		analyzers.add(new BlobDescriptiveStatistics());
-		analyzers.add(new BlobContrast());
+		analyzers.add(new BlobContrastAndSNR()); // must be after the statistics one
 		analyzers.add(new RadiusEstimator());
 		analyzers.add(new BlobMorphology());
 //		analyzers.add(new SpotIconGrabber()); // Takes too long. And we need it only at the end, and we can do it with an action.

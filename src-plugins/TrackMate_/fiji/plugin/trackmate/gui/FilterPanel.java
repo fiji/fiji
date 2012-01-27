@@ -393,7 +393,7 @@ public class FilterPanel extends javax.swing.JPanel {
 		double mean;
 		
 		String[] features = new String[] { 
-				fiji.plugin.trackmate.features.spot.BlobContrast.CONTRAST, 
+				fiji.plugin.trackmate.features.spot.BlobContrastAndSNR.CONTRAST, 
 				fiji.plugin.trackmate.features.spot.BlobMorphology.MORPHOLOGY, 
 				fiji.plugin.trackmate.features.spot.BlobDescriptiveStatistics.MEAN_INTENSITY };
 		

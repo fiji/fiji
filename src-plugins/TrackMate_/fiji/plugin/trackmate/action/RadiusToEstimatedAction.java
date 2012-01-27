@@ -54,6 +54,8 @@ public class RadiusToEstimatedAction extends AbstractTMAction {
 			logger.log(String.format("Updated %d spots, left %d spots unchanged.\n", valid, invalid));
 		}
 		logger.log("Done.\n");
-		wizard.getDisplayer().refresh();
+		if (null != wizard) {
+			wizard.getDisplayer().refresh();
+		}
 	}
 }
