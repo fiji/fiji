@@ -659,7 +659,7 @@ public class MiniMaven {
 				if (!maybeDownloadAutomatically(dependency, quiet))
 					return null;
 				if (!downloadAutomatically)
-					dependency.version = parseVersion(new File(path, "maven-metadata-snapshot.xml"));
+					dependency.version = parseSnapshotVersion(new File(path, "maven-metadata-snapshot.xml"));
 			} catch (FileNotFoundException e) { /* ignore */ }
 			else {
 				for (String jarName : new String[] {
