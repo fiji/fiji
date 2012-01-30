@@ -651,14 +651,14 @@ public class MiniMaven {
 			else if (dependency.version.startsWith("[")) try {
 				if (!maybeDownloadAutomatically(dependency, quiet))
 					return null;
-				if (!downloadAutomatically)
+				if (dependency.version.startsWith("["))
 					dependency.version = parseVersion(new File(path, "maven-metadata-version.xml"));
 			} catch (FileNotFoundException e) { /* ignore */ }
 			path += dependency.version + "/";
 			if (dependency.version.endsWith("-SNAPSHOT")) try {
 				if (!maybeDownloadAutomatically(dependency, quiet))
 					return null;
-				if (!downloadAutomatically)
+				if (dependency.version.endsWith("-SNAPSHOT"))
 					dependency.version = parseSnapshotVersion(new File(path, "maven-metadata-snapshot.xml"));
 			} catch (FileNotFoundException e) { /* ignore */ }
 			else {
