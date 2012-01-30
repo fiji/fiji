@@ -2808,8 +2808,12 @@ static void parse_command_line(void)
 
 	if (!get_fiji_bundle_variable("heap", &arg) ||
 			!get_fiji_bundle_variable("mem", &arg) ||
-			!get_fiji_bundle_variable("memory", &arg))
-		megabytes = parse_memory((&arg)->buffer);
+			!get_fiji_bundle_variable("memory", &arg)) {
+		if (!strcmp("auto", arg.buffer))
+			megabytes = 0;
+		else
+			megabytes = parse_memory(arg.buffer);
+	}
 	if (!get_fiji_bundle_variable("system", &arg) &&
 			atol((&arg)->buffer) > 0)
 		options.use_system_jvm++;
