@@ -1016,7 +1016,7 @@ Standards-Version: 3.7.2""" % (", ".join(build_dependencies),))
             for package_name, most_recent_requirement in required_packages.items():
                 print "   requires "+ package_version_to_string(package_name,most_recent_requirement)
 
-            dependencies = []
+            dependencies = ['openjdk-6-jdk']
             if required_packages:
                 for dependent_package, timestamp in required_packages.items():
                     dependencies.append(package_version_to_string(dependent_package,timestamp))
