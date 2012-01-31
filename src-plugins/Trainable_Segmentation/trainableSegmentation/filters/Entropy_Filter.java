@@ -19,6 +19,8 @@ public class Entropy_Filter implements PlugInFilter
 	ImagePlus origImg = null;
 	/** radius to use (in pixels) */
 	int radius = 2;
+	/** number of bins to use in the histogram */
+	int numBins = 256;
 	
 	/**
 	 * Main method when called as a plugin filter
@@ -26,7 +28,7 @@ public class Entropy_Filter implements PlugInFilter
 	 */
 	public void run(ImageProcessor ip) 
 	{
-		applyEntropy(ip, radius);		
+		applyEntropy(ip, radius, numBins);			
 	}
 
 	/**
@@ -48,12 +50,16 @@ public class Entropy_Filter implements PlugInFilter
 
 		GenericDialog gd = new GenericDialog("Entropy filter");
 		gd.addNumericField("Radius (in pixels)", 3, 0);
+		gd.addNumericField("Number of bins", 256, 0);
 
 		gd.showDialog();
 		if ( gd.wasCanceled() )
 			return DONE;
 
 		radius = (int) gd.getNextNumber();
+		numBins = (int) gd.getNextNumber();
+		if( numBins <= 0 || numBins >= 256)
+			numBins = 256;
 
 		return DOES_ALL+DOES_STACKS+PARALLELIZE_STACKS;
 	}
@@ -64,12 +70,19 @@ public class Entropy_Filter implements PlugInFilter
 	 * Get the entropy filter version of an image
 	 * @param ip input image
 	 * @param radius radius to use (in pixels)
+	 * @param numBins number of bins to use in the histogram
 	 * @return entropy image (32-bit)
 	 */
-	public FloatProcessor getEntropy(ImageProcessor ip, int radius)
+	public FloatProcessor getEntropy(
+			ImageProcessor ip, 
+			int radius,
+			int numBins)
 	{
 		final double log2=Math.log(2.0);
 		final ByteProcessor bp = (ByteProcessor) ip.convertToByte(false);
+		
+		bp.setHistogramRange( 0, 255 );
+		bp.setHistogramSize( numBins );
 		
 		final FloatProcessor fp = new FloatProcessor(bp.getWidth(), bp.getHeight());
 		
@@ -84,11 +97,11 @@ public class Entropy_Filter implements PlugInFilter
 				final int[] histogram = bp.getHistogram(); // Get histogram from the ROI
 				
 				double total = 0;
-				for (int k = 0 ; k < 256 ; k++ )
+				for (int k = 0 ; k < numBins ; k++ )
 					total +=histogram[ k ];
 
 				double entropy = 0;
-				for (int k = 0 ; k < 256 ; k++ )
+				for (int k = 0 ; k < numBins ; k++ )
 				{
 					if (histogram[k]>0)
 					{   
@@ -107,12 +120,19 @@ public class Entropy_Filter implements PlugInFilter
 	 * Apply entropy filter to an image
 	 * @param ip input image
 	 * @param radius radius to use (in pixels)
+	 * @param numBin number of bins to use in the histogram
 	 */
-	public void applyEntropy(ImageProcessor ip, int radius)
+	public void applyEntropy(
+			ImageProcessor ip, 
+			int radius, 
+			int numBins)
 	{
 		final double log2=Math.log(2.0);
 		final ByteProcessor bp = (ByteProcessor) ip.convertToByte(false);
-				
+			
+		bp.setHistogramRange( 0, 255 );
+		bp.setHistogramSize( numBins );
+		
 		final int size = 2 * radius + 1;
 		
 		final FloatProcessor fp = new FloatProcessor(bp.getWidth(), bp.getHeight());
@@ -126,11 +146,11 @@ public class Entropy_Filter implements PlugInFilter
 				final int[] histogram = bp.getHistogram(); // Get histogram from the ROI
 				
 				double total = 0;
-				for (int k = 0 ; k < 256 ; k++ )
+				for (int k = 0 ; k < numBins ; k++ )
 					total +=histogram[ k ];
 
 				double entropy = 0;
-				for (int k = 0 ; k < 256 ; k++ )
+				for (int k = 0 ; k < numBins ; k++ )
 				{
 					if (histogram[k]>0)
 					{   
