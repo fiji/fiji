@@ -359,22 +359,25 @@ public class FeatureStack
 	/**
 	 * Add entropy filter to current stack
 	 * @param radius radius to use (in pixels)
+	 * @param numBins number of bins to use in the histogram
 	 */
-	public void addEntropy(int radius)
+	public void addEntropy(int radius, int numBins)
 	{
 		ImageProcessor ip = originalImage.getProcessor().duplicate();
 		Entropy_Filter filter = new Entropy_Filter();
-		wholeStack.addSlice(availableFeatures[ENTROPY] + "_" + radius, filter.getEntropy(ip, radius));
+		wholeStack.addSlice(availableFeatures[ENTROPY] + "_" + radius + "_" + numBins, filter.getEntropy(ip, radius, numBins));
 	}
 	/**
 	 * Calculate entropy filter filter concurrently
 	 * @param originalImage original input image
 	 * @param radius radius to use (in pixels)
+	 * @param numBins number of bins to use in the histogram
 	 * @return result image
 	 */
 	public Callable<ImagePlus> getEntropy(
 			final ImagePlus originalImage,
-			final int radius)
+			final int radius,
+			final int numBins)
 	{
 		if (Thread.currentThread().isInterrupted()) 
 			return null;
@@ -384,7 +387,7 @@ public class FeatureStack
 		
 				ImageProcessor ip = originalImage.getProcessor().duplicate();
 				Entropy_Filter filter = new Entropy_Filter();
-				return new ImagePlus (availableFeatures[ENTROPY] + "_" + radius, filter.getEntropy(ip, radius));
+				return new ImagePlus (availableFeatures[ENTROPY] + "_" + radius + "_" + numBins, filter.getEntropy(ip, radius, numBins));
 			}
 		};
 	}
@@ -2811,7 +2814,8 @@ public class FeatureStack
 			// Entropy
 			if(enableFeatures[ENTROPY])
 			{
-				addEntropy((int)i);
+				for(int nBins = 32; nBins <= 256; nBins *=2)
+					addEntropy((int)i, nBins);
 			}
 
 		}
@@ -3089,7 +3093,8 @@ public class FeatureStack
 				// Entropy
 				if(enableFeatures[ENTROPY])
 				{
-					futures.add(exe.submit( getEntropy(originalImage, (int) i)) );
+					for(int nBins = 32; nBins <= 256; nBins *=2)
+						futures.add(exe.submit( getEntropy(originalImage, (int) i, nBins)) );
 				}
 
 			}
