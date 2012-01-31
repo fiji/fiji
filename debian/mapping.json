@@ -10,6 +10,9 @@
  "junit:junit:4.8.1":
  {"package": "junit4",
   "jar": "/usr/share/java/junit4.jar"},
+ "com.miglayout:miglayout:${miglayout.version}":
+ {"package": "libmiglayout-java",
+  "jar": "/usr/share/java/miglayout.jar"},
  "org.slf4j:slf4j-api:1.5.10":
  {"package": "libslf4j-java",
   "jar" : "/usr/share/java/slf4j-api.jar"},
