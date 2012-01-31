@@ -653,6 +653,9 @@ if options.clean:
                   "staged-plugins/TransformJ_.config",
                   "staged-plugins/TransformJ_.jar" ]
 
+    # Remove MacAdapter
+    to_remove.append("modules/ImageJA/src/main/java/MacAdapter.java")
+
     # Also remove submodules which are now provided by external dependencies:
     to_remove.append("batik")
     to_remove.append("java/linux")
