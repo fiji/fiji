@@ -206,9 +206,6 @@ public class WekaSegmentation {
 	/** executor service to launch threads for the library operations */
 	private ExecutorService exe = Executors.newFixedThreadPool(1);
 	
-	/** threads to be used when applying the classifier in a concurrent way */
-	private Thread[] threads  = null;
-
 	/**
 	 * Default constructor.
 	 *
@@ -4225,14 +4222,6 @@ public class WekaSegmentation {
 	{
 		featureStackArray.shutDownNow();
 		exe.shutdownNow();	
-		// interrupt applyClassifier threads if they are running
-		if ( null != threads )
-		{			
-			for(int i=0; i<threads.length; i++)
-			{
-				threads[ i ].interrupt();
-			}
-		}
 	}
 
 	/**
