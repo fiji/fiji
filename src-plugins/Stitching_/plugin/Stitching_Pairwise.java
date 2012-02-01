@@ -431,7 +431,7 @@ public class Stitching_Pairwise implements PlugIn
 		
 		if ( params.fusionMethod < 5 )
 		{
-			ImagePlus imp = Fusion.fuse( targetType, images, models, params.dimensionality, params.subpixelAccuracy, params.fusionMethod );
+			ImagePlus imp = Fusion.fuse( targetType, images, models, params.dimensionality, params.subpixelAccuracy, params.fusionMethod, null );
 			return imp;
 		}
 		else if ( params.fusionMethod == 5 ) // overlay

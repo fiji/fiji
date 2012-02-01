@@ -81,6 +81,7 @@ static void open_win_console();
 #include "glibc-compat.h"
 #endif
 
+__attribute__((format (printf, 1, 2)))
 static void error(const char *fmt, ...)
 {
 	va_list ap;
@@ -529,8 +530,10 @@ static void sleep(int seconds)
 	Sleep(seconds * 1000);
 }
 
-// There is no setenv on Windows, so it should be safe for us to
-// define this compatible version
+/*
+ * There is no setenv on Windows, so it should be safe for us to
+ * define this compatible version.
+ */
 static int setenv(const char *name, const char *value, int overwrite)
 {
 	struct string *string;
@@ -544,7 +547,7 @@ static int setenv(const char *name, const char *value, int overwrite)
 	return putenv(string->buffer);
 }
 
-// Similarly we can do the same for unsetenv:
+/* Similarly we can do the same for unsetenv: */
 static int unsetenv(const char *name)
 {
 	struct string *string = string_initf("%s=", name);
@@ -555,7 +558,7 @@ static int unsetenv(const char *name)
 #include <dlfcn.h>
 #endif
 
-// A wrapper for setenv that exits on error
+/* A wrapper for setenv that exits on error */
 void setenv_or_exit(const char *name, const char *value, int overwrite)
 {
 	int result;
@@ -642,14 +645,11 @@ size_t get_memory_size(int available_only)
 }
 #endif
 
-#if defined(__TINYC__)
-#define strtoll strtol
-#endif
-
-static long long parse_memory(const char *amount)
+/* This returns the amount of megabytes */
+static long parse_memory(const char *amount)
 {
 	char *endp;
-	long long result = strtoll(amount, &endp, 0);
+	long result = strtol(amount, &endp, 0);
 
 	if (endp)
 		switch (*endp) {
@@ -660,15 +660,11 @@ static long long parse_memory(const char *amount)
 			result <<= 10;
 			/* fall through */
 		case 'm': case 'M':
-			result <<= 10;
-			/* fall through */
-		case 'k': case 'K':
-			result <<= 10;
-			break;
 		case '\0':
 			/* fall back to megabyte */
-			if (result < 1024)
-				result <<= 20;
+			break;
+		default:
+			die("Unsupported memory unit '%c' in %s", *endp, amount);
 		}
 
 	return result;
@@ -700,6 +696,7 @@ static int is_ipv6_broken(void)
 	struct sockaddr_in6 address = {
 		AF_INET6, 57294 + 7, 0, in6addr_loopback, 0
 	};
+	int result = 0;
 	long flags;
 
 	if (sock < 0)
@@ -712,7 +709,6 @@ static int is_ipv6_broken(void)
 	}
 
 
-	int result = 0;
 	if (connect(sock, (struct sockaddr *)&address, sizeof(address)) < 0) {
 		if (errno == EINPROGRESS) {
 			struct timeval tv;
@@ -1138,7 +1134,7 @@ static void maybe_reexec_with_correct_lib_path(void)
 	string_release(path);
 	string_release(parent);
 
-	// Is this JDK6?
+	/* Is this JDK6? */
 	if (!dir_exists(get_jre_home()) || dir_exists(jli->buffer)) {
 		string_release(lib_path);
 		string_release(jli);
@@ -1211,9 +1207,11 @@ static int create_java_vm(JavaVM **vm, void **env, JavaVMInitArgs *args)
 #ifdef MACOSX
 	set_path_to_JVM();
 #else
-	// Save the original value of JAVA_HOME: if creating the JVM this
-	// way doesn't work, set it back so that calling the system JVM
-	// can use the JAVA_HOME variable if it's set...
+	/*
+	 * Save the original value of JAVA_HOME: if creating the JVM this
+	 * way doesn't work, set it back so that calling the system JVM
+	 * can use the JAVA_HOME variable if it's set...
+	 */
 	char *original_java_home_env = getenv("JAVA_HOME");
 	struct string *buffer = string_init(32);
 	void *handle;
@@ -1222,7 +1220,7 @@ static int create_java_vm(JavaVM **vm, void **env, JavaVMInitArgs *args)
 	const char *java_home = get_jre_home();
 
 #ifdef WIN32
-	// on Windows, a setenv() invalidates strings obtained by getenv()
+	/* On Windows, a setenv() invalidates strings obtained by getenv(). */
 	if (original_java_home_env)
 		original_java_home_env = xstrdup(original_java_home_env);
 #endif
@@ -1233,11 +1231,12 @@ static int create_java_vm(JavaVM **vm, void **env, JavaVMInitArgs *args)
 
 	handle = dlopen(buffer->buffer, RTLD_LAZY);
 	if (!handle) {
+		const char *err;
 		setenv_or_exit("JAVA_HOME", original_java_home_env, 1);
 		if (!file_exists(java_home))
 			return 2;
 
-		const char *err = dlerror();
+		err = dlerror();
 		if (!err)
 			err = "(unknown error)";
 		error("Could not load Java library '%s': %s",
@@ -1246,8 +1245,7 @@ static int create_java_vm(JavaVM **vm, void **env, JavaVMInitArgs *args)
 	}
 	dlerror(); /* Clear any existing error */
 
-	JNI_CreateJavaVM = (typeof(JNI_CreateJavaVM))dlsym(handle,
-			JNI_CREATEVM);
+	JNI_CreateJavaVM = dlsym(handle, JNI_CREATEVM);
 	err = dlerror();
 	if (err) {
 		error("Error loading libjvm: %s", err);
@@ -1298,7 +1296,7 @@ static void open_win_console(void)
 		char title[1024];
 		if (GetConsoleTitle(title, sizeof(title)) &&
 				!strncmp(title, "rxvt", 4))
-			return; // console already opened
+			return; /* Console already opened. */
 	}
 
 	handle = CreateFile("CONOUT$", GENERIC_WRITE, FILE_SHARE_WRITE,
@@ -1531,7 +1529,7 @@ int build_classpath_for_string(struct string *result, struct string *jar_directo
 	if (!directory) {
 		if (no_error)
 			return 0;
-		error("Failed to open: %s", jar_directory);
+		error("Failed to open: %s", jar_directory->buffer);
 		return 1;
 	}
 	while (NULL != (entry = readdir(directory))) {
@@ -1570,6 +1568,7 @@ static struct string *set_property(JNIEnv *env,
 {
 	static jclass system_class = NULL;
 	static jmethodID set_property_method = NULL;
+	jstring result;
 
 	if (!system_class) {
 		system_class = (*env)->FindClass(env, "java/lang/System");
@@ -1586,8 +1585,7 @@ static struct string *set_property(JNIEnv *env,
 			return NULL;
 	}
 
-	jstring result =
-		(jstring)(*env)->CallStaticObjectMethod(env, system_class,
+	result = (jstring)(*env)->CallStaticObjectMethod(env, system_class,
 				set_property_method,
 				(*env)->NewStringUTF(env, key),
 				(*env)->NewStringUTF(env, value));
@@ -1898,6 +1896,7 @@ int file_is_newer(const char *path, const char *than)
 
 int handle_one_option(int *i, const char **argv, const char *option, struct string *arg)
 {
+	int len;
 	string_set_length(arg, 0);
 	if (!strcmp(argv[*i], option)) {
 		if (++(*i) >= main_argc || !argv[*i])
@@ -1905,7 +1904,7 @@ int handle_one_option(int *i, const char **argv, const char *option, struct stri
 		string_append(arg, argv[*i]);
 		return 1;
 	}
-	int len = strlen(option);
+	len = strlen(option);
 	if (!strncmp(argv[*i], option, len) && argv[*i][len] == '=') {
 		string_append(arg, argv[*i] + len + 1);
 		return 1;
@@ -1961,9 +1960,9 @@ static int update_files(struct string *relative_path)
 
 		if (is_file_empty(source->buffer)) {
 			if (unlink(source->buffer))
-				error("Could not remove %s", source);
+				error("Could not remove %s", source->buffer);
 			if (unlink(target->buffer))
-				error("Could not remove %s", target);
+				error("Could not remove %s", target->buffer);
 			continue;
 		}
 
@@ -2056,10 +2055,10 @@ static void add_extension(struct subcommand *subcommand, const char *extension)
 static void add_subcommand(const char *line)
 {
 	int size = all_subcommands.size;
-	// TODO: safeguard against malformed configuration files
+	/* TODO: safeguard against malformed configuration files. */
 	struct subcommand *latest = &all_subcommands.list[size - 1];
 
-	// is it the description?
+	/* Is it the description? */
 	if (line[0] == ' ') {
 		struct string *description = &latest->description;
 
@@ -2278,14 +2277,14 @@ static void __attribute__((__noreturn__)) usage(void)
 	}
 
 	die("Usage: %s [<Java options>.. --] [<ImageJ options>..] [<files>..]\n"
-		"\n"
+		"\n%s%s%s%s%s%s%s",
 		"Java options are passed to the Java Runtime, ImageJ\n"
 		"options to ImageJ (or Jython, JRuby, ...).\n"
 		"\n"
 		"In addition, the following options are supported by Fiji:\n"
 		"General options:\n"
 		"--help, -h\n"
-		"\tshow this help\n"
+		"\tshow this help\n",
 		"--dry-run\n"
 		"\tshow the command line, but do not run anything\n"
 		"--system\n"
@@ -2295,7 +2294,7 @@ static void __attribute__((__noreturn__)) usage(void)
 		"--print-java-home\n"
 		"\tprint Fiji's idea of JAVA_HOME\n"
 		"--print-ij-dir\n"
-		"\tprint where Fiji thinks it is located\n"
+		"\tprint where Fiji thinks it is located\n",
 #ifdef WIN32
 		"--console\n"
 		"\talways open an error console\n"
@@ -2310,7 +2309,7 @@ static void __attribute__((__noreturn__)) usage(void)
 		"--class-path, --classpath, -classpath, --cp, -cp <path>\n"
 		"\tappend <path> to the class path\n"
 		"--jar-path, --jarpath, -jarpath <path>\n"
-		"\tappend .jar files in <path> to the class path\n"
+		"\tappend .jar files in <path> to the class path\n",
 		"--ext <path>\n"
 		"\tset Java's extension directory to <path>\n"
 		"--default-gc\n"
@@ -2322,7 +2321,7 @@ static void __attribute__((__noreturn__)) usage(void)
 		"\tshow debug info about the garbage collector on stderr\n"
 		"--no-splash\n"
 		"\tsuppress showing a splash screen upon startup\n"
-		"\n"
+		"\n",
 		"Options for ImageJ:\n"
 		"--ij2\n"
 		"\tstart ImageJ2 instead of ImageJ1\n"
@@ -2338,7 +2337,7 @@ static void __attribute__((__noreturn__)) usage(void)
 		"\tcompile and run <plugin> in ImageJ\n"
 		"--edit [<file>...]\n"
 		"\tedit the given file in the script editor\n"
-		"\n"
+		"\n",
 		"Options to run programs other than ImageJ:\n"
 		"%s"
 		"--build\n"
@@ -2415,12 +2414,12 @@ static void jvm_workarounds(struct options *options)
 #define MAX_32BIT_HEAP 1920
 #endif
 
-struct string *make_memory_option(size_t memory_size)
+struct string *make_memory_option(long megabytes)
 {
-	return string_initf("-Xmx%dm", (int)(memory_size >> 20));
+	return string_initf("-Xmx%dm", (int)megabytes);
 }
 
-static void try_with_less_memory(size_t memory_size)
+static void try_with_less_memory(long megabytes)
 {
 	char **new_argv;
 	int i, j, found_dashdash;
@@ -2428,15 +2427,14 @@ static void try_with_less_memory(size_t memory_size)
 	size_t subtract;
 
 	/* Try again, with 25% less memory */
-	if (memory_size < 0)
+	if (megabytes < 0)
 		return;
-	memory_size >>= 20; // turn into megabytes
-	subtract = memory_size >> 2;
+	subtract = megabytes >> 2;
 	if (!subtract)
 		return;
-	memory_size -= subtract;
+	megabytes -= subtract;
 
-	buffer = string_initf("--mem=%dm", (int)memory_size);
+	buffer = string_initf("--mem=%dm", (int)megabytes);
 
 	main_argc = main_argc_backup;
 	main_argv = main_argv_backup;
@@ -2446,7 +2444,7 @@ static void try_with_less_memory(size_t memory_size)
 	j = 1;
 	new_argv[j++] = xstrdup(buffer->buffer);
 
-	// strip out --mem options
+	/* Strip out --mem options. */
 	found_dashdash = 0;
 	for (i = 1; i < main_argc; i++) {
 		struct string *dummy = string_init(32);
@@ -2549,7 +2547,7 @@ const char *properties[32];
 static int retrotranslator;
 
 static struct options options;
-static size_t memory_size = 0;
+static long megabytes = 0;
 static struct string buffer, buffer2, arg, class_path, plugin_path, ext_option;
 static int jdb, add_class_path_option, advanced_gc = 1, debug_gc;
 static int allow_multiple, skip_build_classpath;
@@ -2611,7 +2609,7 @@ static int handle_one_option2(int *i, int argc, const char **argv)
 	else if (handle_one_option(i, argv, "--heap", &arg) ||
 			handle_one_option(i, argv, "--mem", &arg) ||
 			handle_one_option(i, argv, "--memory", &arg))
-		memory_size = parse_memory(arg.buffer);
+		megabytes = parse_memory(arg.buffer);
 	else if (!strcmp(argv[*i], "--headless"))
 		headless = 1;
 	else if (handle_one_option(i, argv, "--main-class", &arg)) {
@@ -2793,7 +2791,7 @@ static void parse_command_line(void)
 	memset(&options, 0, sizeof(options));
 
 #ifdef MACOSX
-	// When double-clicked Finder adds a psn argument
+	/* When double-clicked Finder adds a psn argument. */
 	if (main_argc > 1 && ! strncmp(main_argv[1], "-psn_", 5)) {
 		/*
 		 * Reset main_argc so that ImageJ won't try to open
@@ -2810,8 +2808,12 @@ static void parse_command_line(void)
 
 	if (!get_fiji_bundle_variable("heap", &arg) ||
 			!get_fiji_bundle_variable("mem", &arg) ||
-			!get_fiji_bundle_variable("memory", &arg))
-		memory_size = parse_memory((&arg)->buffer);
+			!get_fiji_bundle_variable("memory", &arg)) {
+		if (!strcmp("auto", arg.buffer))
+			megabytes = 0;
+		else
+			megabytes = parse_memory(arg.buffer);
+	}
 	if (!get_fiji_bundle_variable("system", &arg) &&
 			atol((&arg)->buffer) > 0)
 		options.use_system_jvm++;
@@ -2881,18 +2883,17 @@ static void parse_command_line(void)
 		string_setf(&plugin_path, "-Dplugins.dir=%s", ij_dir);
 	add_option(&options, plugin_path.buffer, 0);
 
-	// if arguments don't set the memory size, set it after available memory
-	if (memory_size == 0 && !has_memory_option(&options.java_options)) {
-		memory_size = get_memory_size(0);
+	/* If arguments don't set the memory size, set it after available memory. */
+	if (megabytes == 0 && !has_memory_option(&options.java_options)) {
+		megabytes = (long)(get_memory_size(0) >> 20);
 		/* 0.75x, but avoid multiplication to avoid overflow */
-		memory_size -= memory_size >> 2;
-		if (sizeof(void *) == 4 &&
-				(memory_size >> 20) > MAX_32BIT_HEAP)
-			memory_size = (MAX_32BIT_HEAP << 20);
+		megabytes -= megabytes >> 2;
+		if (sizeof(void *) == 4 && megabytes > MAX_32BIT_HEAP)
+			megabytes = MAX_32BIT_HEAP;
 	}
 
-	if (memory_size > 0)
-		add_option(&options, make_memory_option(memory_size)->buffer, 0);
+	if (megabytes > 0)
+		add_option(&options, make_memory_option(megabytes)->buffer, 0);
 
 	if (headless)
 		add_option(&options, "-Djava.awt.headless=true", 0);
@@ -2990,7 +2991,7 @@ static void parse_command_line(void)
 		add_option(&options, "-Dsun.java.command=Fiji", 0);
 	}
 
-	// If there is no -- but some options unknown to IJ1, DWIM it
+	/* If there is no -- but some options unknown to IJ1, DWIM it. */
 	if (!dashdash && is_default_ij1_class(main_class)) {
 		for (i = 1; i < main_argc; i++) {
 			int count = imagej1_option_count(main_argv[i]);
@@ -3102,7 +3103,7 @@ static int start_ij(void)
 	else {
 		int result = create_java_vm(&vm, (void **)&env, &args);
 		if (result == JNI_ENOMEM) {
-			try_with_less_memory(memory_size);
+			try_with_less_memory(megabytes);
 			die("Out of memory!");
 		}
 		if (result) {
@@ -3195,9 +3196,9 @@ static int start_ij(void)
 			error("Could not launch system-wide Java (%s)", strerror(errno));
 #else
 		if (console_opened)
-			sleep(5); // sleep 5 seconds
+			sleep(5); /* Sleep 5 seconds */
 
-		FreeConsole(); // java.exe cannot reuse the console anyway
+		FreeConsole(); /* java.exe cannot reuse the console anyway. */
 		for (i = 0; i < options.java_options.nr - 1; i++)
 			options.java_options.list[i] =
 				quote_win32(options.java_options.list[i]);
@@ -3398,7 +3399,7 @@ static void set_path_to_JVM(void)
 
 	/* Append to the path the target JVM's Version. */
 	CFURLRef TargetJavaVM = NULL;
-	CFStringRef targetJVM; // Minimum Java5
+	CFStringRef targetJVM; /* Minimum Java5. */
 
 	/* TODO: disable this test on 10.6+ */
 	/* Try 1.6 only with 64-bit */

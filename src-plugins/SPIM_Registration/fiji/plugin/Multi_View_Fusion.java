@@ -2,10 +2,14 @@ package fiji.plugin;
 
 import fiji.util.gui.GenericDialogPlus;
 import ij.IJ;
+import ij.gui.DialogListener;
 import ij.gui.GenericDialog;
 import ij.gui.MultiLineLabel;
 import ij.plugin.PlugIn;
 
+import java.awt.AWTEvent;
+import java.awt.TextField;
+import java.awt.event.TextEvent;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FilenameFilter;
@@ -18,6 +22,7 @@ import mpicbg.spim.io.ConfigurationParserException;
 import mpicbg.spim.io.IOFunctions;
 import mpicbg.spim.io.SPIMConfiguration;
 import mpicbg.spim.io.TextFileAccess;
+import spimopener.SPIMExperiment;
 
 public class Multi_View_Fusion implements PlugIn
 {
@@ -76,21 +81,25 @@ public class Multi_View_Fusion implements PlugIn
 	public static boolean displayFusedImageStatic = true;
 	public static boolean saveFusedImageStatic = true;
 	public static int outputImageScalingStatic = 1;
-	public static int cropOffsetXStatic = 285;
-	public static int cropOffsetYStatic = 353;
-	public static int cropOffsetZStatic = 375;
-	public static int cropSizeXStatic = 727;
-	public static int cropSizeYStatic = 395;
-	public static int cropSizeZStatic = 325;
+	public static int cropOffsetXStatic = 0;
+	public static int cropOffsetYStatic = 0;
+	public static int cropOffsetZStatic = 0;
+	public static int cropSizeXStatic = 0;
+	public static int cropSizeYStatic = 0;
+	public static int cropSizeZStatic = 0;
 	
 	protected SPIMConfiguration getParameters( final boolean multichannel ) 
 	{
 		final GenericDialogPlus gd = new GenericDialogPlus( "Multi-View Fusion" );
 		
-		gd.addDirectoryField( "SPIM_data_directory", Bead_Registration.spimDataDirectory );
+		gd.addDirectoryOrFileField( "SPIM_data_directory", Bead_Registration.spimDataDirectory );
+		final TextField tfSpimDataDirectory = (TextField) gd.getStringFields().lastElement();
 		gd.addStringField( "Pattern_of_SPIM files", Bead_Registration.fileNamePattern, 25 );
+		final TextField tfFilePattern = (TextField) gd.getStringFields().lastElement();
 		gd.addStringField( "Timepoints_to_process", Bead_Registration.timepoints );
+		final TextField tfTimepoints = (TextField) gd.getStringFields().lastElement();
 		gd.addStringField( "Angles to process", Bead_Registration.angles );
+		final TextField tfAngles = (TextField) gd.getStringFields().lastElement();
 		
 		if ( multichannel )
 			gd.addStringField( "Channels to process", allChannels );
@@ -101,6 +110,57 @@ public class Multi_View_Fusion implements PlugIn
 		MultiLineLabel text = (MultiLineLabel) gd.getMessage();
 		Bead_Registration.addHyperLinkListener(text, myURL);
 		
+		gd.addDialogListener( new DialogListener()
+		{
+			@Override
+			public boolean dialogItemChanged( GenericDialog dialog, AWTEvent e )
+			{
+				if ( e instanceof TextEvent && e.getID() == TextEvent.TEXT_VALUE_CHANGED && e.getSource() == tfSpimDataDirectory )
+				{
+					TextField tf = ( TextField ) e.getSource();
+					final String spimDataDirectory = tf.getText();
+					File f = new File( spimDataDirectory );
+					if ( f.exists() && f.isFile() && f.getName().endsWith( ".xml" ) )
+					{
+						SPIMExperiment exp = new SPIMExperiment( f.getAbsolutePath() );
+
+						// disable file pattern field
+						tfFilePattern.setEnabled( false );
+
+						// set timepoint string
+						String expTimepoints = "";
+						if ( exp.timepointStart == exp.timepointEnd )
+							expTimepoints = "" + exp.timepointStart;
+						else
+							expTimepoints = "" + exp.timepointStart + "-" + exp.timepointEnd;
+						tfTimepoints.setText( expTimepoints );
+
+						// set angles string
+						String expAngles = "";
+						for ( String angle : exp.angles )
+						{
+							int a = Integer.parseInt( angle.substring( 1, angle.length() ) );
+							if ( !expAngles.equals( "" ) )
+								expAngles += ",";
+							expAngles += a;
+						}
+						tfAngles.setText( expAngles );
+					}
+					else
+					{
+						// enable file pattern field
+						tfFilePattern.setEnabled( true );
+					}
+				}
+				return true;
+			}
+		} );
+		File f = new File( tfSpimDataDirectory.getText() );
+		if ( f.exists() && f.isFile() && f.getName().endsWith( ".xml" ) )
+		{
+			// disable file pattern field
+			tfFilePattern.setEnabled( false );
+		}
 		gd.showDialog();
 		
 		if ( gd.wasCanceled() )
@@ -173,7 +233,18 @@ public class Multi_View_Fusion implements PlugIn
 			conf.channelsToFuse = "";			
 		}
 		conf.inputFilePattern = Bead_Registration.fileNamePattern;
-		conf.inputdirectory = Bead_Registration.spimDataDirectory;
+
+		f = new File( Bead_Registration.spimDataDirectory );
+		if ( f.exists() && f.isFile() && f.getName().endsWith( ".xml" ) )
+		{
+			conf.spimExperiment = new SPIMExperiment( f.getAbsolutePath() );
+			conf.inputdirectory = f.getAbsolutePath().substring( 0, f.getAbsolutePath().length() - 4 );
+			System.out.println( "inputdirectory : " + conf.inputdirectory );
+		}
+		else
+		{
+			conf.inputdirectory = Bead_Registration.spimDataDirectory;
+		}
 		
 		// get filenames and so on...
 		if ( !Bead_Registration.init( conf ) )
@@ -189,7 +260,7 @@ public class Multi_View_Fusion implements PlugIn
 		{
 			timepoints.add( new ArrayList<Integer>() );
 		
-			final String name = conf.file[ 0 ][ c ][ 0 ].getName();			
+			final String name = conf.file[ 0 ][ c ][ 0 ][ 0 ].getName();			
 			final File regDir = new File( conf.registrationFiledirectory );
 			
 			IJ.log( "name: " + name );

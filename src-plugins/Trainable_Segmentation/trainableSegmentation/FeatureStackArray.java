@@ -218,8 +218,6 @@ public class FeatureStackArray
 	{
 		final int numProcessors = Prefs.getThreads();
 		final ExecutorService exe = Executors.newFixedThreadPool( numProcessors );
-		//IJ.log("Num of processors = " + numProcessors);
-		
 		final ArrayList< Future<Boolean> > futures = new ArrayList< Future<Boolean> >();
 		
 		IJ.showStatus("Updating features...");

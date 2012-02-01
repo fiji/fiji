@@ -1655,7 +1655,8 @@ public class Weka_Segmentation implements PlugIn
 
 					ImagePlus segmentation = wekaSegmentation.applyClassifier(testImage, numFurtherThreads, probabilityMaps);
 
-					if (showResults) {
+					if (showResults && null != segmentation) 
+					{
 						segmentation.show();
 						testImage.show();
 					}
@@ -2331,7 +2332,7 @@ public class Weka_Segmentation implements PlugIn
 		 * Method to run when pressing the save feature stack button
 		 */
 		public void actionPerformed(ActionEvent e)
-		{			
+		{		
 			SaveDialog sd = new SaveDialog(title, "feature-stack", ".tif");
 			final String dir = sd.getDirectory();
 			final String fileWithExt = sd.getFileName();
@@ -2360,7 +2361,7 @@ public class Weka_Segmentation implements PlugIn
 			}
 			
 			// macro recording
-			record(SAVE_FEATURE_STACK, new String[]{ dir, fileWithExt });			
+			record(SAVE_FEATURE_STACK, new String[]{ dir, fileWithExt });
 		}
 	}	
 

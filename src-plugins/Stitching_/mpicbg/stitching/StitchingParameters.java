@@ -24,12 +24,17 @@ public class StitchingParameters
 	public double yOffset;
 	public double zOffset;
 
+	public boolean virtual = false;
 	public int channel1;
 	public int channel2;
 
 	public int timeSelect;
 	
 	public int cpuMemChoice = 0;
+	// 0 == fuse&display, 1 == writeToDisk
+	public int outputVariant = 0;
+	public String outputDirectory = null;
+	
 	public double regThreshold = -2;
 	public double relativeThreshold = 2.5;
 	public double absoluteThreshold = 3.5;

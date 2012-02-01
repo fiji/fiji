@@ -16,7 +16,6 @@ import mpicbg.imglib.container.cell.CellContainerFactory;
 import mpicbg.imglib.container.planar.PlanarContainerFactory;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.image.display.imagej.ImageJFunctions;
-import mpicbg.imglib.multithreading.SimpleMultiThreading;
 import mpicbg.imglib.type.numeric.real.FloatType;
 import mpicbg.spim.Reconstruction;
 import mpicbg.spim.fusion.FusionControl;
@@ -241,7 +240,7 @@ public class Multi_View_Deconvolution implements PlugIn
 		{
 			timepoints.add( new ArrayList<Integer>() );
 		
-			final String name = conf.file[ 0 ][ c ][ 0 ].getName();			
+			final String name = conf.file[ 0 ][ c ][ 0 ][ 0 ].getName();			
 			final File regDir = new File( conf.registrationFiledirectory );
 			
 			if ( !regDir.isDirectory() )

@@ -3,14 +3,6 @@ package mpicbg.spim;
 import java.util.ArrayList;
 import java.util.Date;
 
-import javax.media.j3d.Transform3D;
-import javax.vecmath.Vector3d;
-
-import fiji.plugin.timelapsedisplay.RegistrationStatistics;
-
-
-import mpicbg.models.AbstractAffineModel3D;
-import mpicbg.models.AffineModel3D;
 import mpicbg.models.Point;
 import mpicbg.spim.io.ConfigurationParserException;
 import mpicbg.spim.io.ConfigurationParserGeneral;
@@ -23,7 +15,7 @@ import mpicbg.spim.registration.ViewStructure;
 import mpicbg.spim.registration.bead.Bead;
 import mpicbg.spim.registration.bead.BeadIdentification;
 import mpicbg.spim.registration.bead.BeadRegistration;
-import mpicbg.util.TransformUtils;
+import fiji.plugin.timelapsedisplay.RegistrationStatistics;
 
 public class Reconstruction
 {
@@ -101,9 +93,9 @@ public class Reconstruction
 						//IOFunctions.println( correspondingBead );
 					}	
 					
-					location.getW()[ 0 ] /= (float)correspondingBeadList.size();
-					location.getW()[ 1 ] /= (float)correspondingBeadList.size();
-					location.getW()[ 2 ] /= (float)correspondingBeadList.size();
+					location.getW()[ 0 ] /= correspondingBeadList.size();
+					location.getW()[ 1 ] /= correspondingBeadList.size();
+					location.getW()[ 2 ] /= correspondingBeadList.size();
 					
 					averagedBeadList.add( new Bead( averagedBeadList.size(), location.getW().clone(), newView ) );
 					
@@ -125,7 +117,7 @@ public class Reconstruction
 	{
 		for (int timePointIndex = 0; timePointIndex < conf.file.length; timePointIndex++)
 		{
-			final ViewStructure reference = ViewStructure.initViewStructure( conf, conf.referenceTimePoint, conf.getFileName( conf.referenceTimePoint ), conf.getModel(), "Reference ViewStructure Timepoint " + conf.referenceTimePoint, conf.debugLevelInt );
+			final ViewStructure reference = ViewStructure.initViewStructure( conf, conf.getTimePointIndex( conf.referenceTimePoint ), conf.getModel(), "Reference ViewStructure Timepoint " + conf.referenceTimePoint, conf.debugLevelInt );
 			currentViewStructure = ViewStructure.initViewStructure( conf, timePointIndex, conf.getModel(), "Template ViewStructure Timepoint " + conf.timepoints[timePointIndex], conf.debugLevelInt );
 			
 			//
