@@ -136,7 +136,7 @@ public class WekaSegmentation {
 	/** flag to update the whole set of instances (used when there is any change on the features or the classes) */
 	private boolean updateWholeData = false;
 	/** flag to update the feature stack (used when there is any change on the features) */
-	private boolean updateFeatures = true;
+	private boolean updateFeatures = false;
 	
 	/** array of boolean flags to update (or not) specific feature stacks during training */
 	private boolean featureStackToUpdateTrain[];
