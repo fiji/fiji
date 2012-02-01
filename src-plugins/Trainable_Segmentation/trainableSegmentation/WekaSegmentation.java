@@ -3077,28 +3077,25 @@ public class WekaSegmentation {
 			public void run() {
 				IJ.showProgress(counter.get(), numInstances);
 			}
-		}, 0, 1, TimeUnit.SECONDS);
-
+		}, 0, 1, TimeUnit.SECONDS);		
+		
 		// Join threads
 		for(int i = 0; i < imp.getStackSize(); i++)
 		{
 			try {
 				classifiedSlices[i] = fu[i].get();
 			} catch (InterruptedException e) {				
-				//e.printStackTrace();
+				e.printStackTrace();
 				return null;
 			} catch (ExecutionException e) {
 				e.printStackTrace();
 				return null;
 			} finally {
-				//exe.shutdown();
 				task.cancel(true);
 				monitor.shutdownNow();
 				IJ.showProgress(1);
 			}
 		}
-
-		//exe.shutdown();
 		
 		// create classified image
 		final ImageStack classified = new ImageStack(imp.getWidth(), imp.getHeight());
