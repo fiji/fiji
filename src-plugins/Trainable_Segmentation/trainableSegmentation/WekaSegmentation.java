@@ -2998,7 +2998,7 @@ public class WekaSegmentation {
 		final int numClasses = numOfClasses;
 		final int numChannels = (probabilityMaps ? numClasses : 1);
 
-		IJ.log("Processing slices of " + imp.getTitle() + " in " + numThreads + " thread(s)...");
+		IJ.log("Processing each slice of " + imp.getTitle() + " in a different thread (up to " + numThreads + ")...");
 
 		// Set proper class names (skip empty list ones)
 		ArrayList<String> classNames = new ArrayList<String>();

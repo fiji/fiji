@@ -1556,7 +1556,8 @@ public class Weka_Segmentation implements PlugIn
 	}
 	
 	/**
-	 * Apply classifier to test data
+	 * Apply classifier to test data. As it is implemented right now, 
+	 * it will use one thread per input image and slice. 
 	 */
 	public void applyClassifierToTestData()
 	{
