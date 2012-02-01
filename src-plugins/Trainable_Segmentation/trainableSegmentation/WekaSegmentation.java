@@ -204,7 +204,7 @@ public class WekaSegmentation {
 	private String projectFolder = null;
 	
 	/** executor service to launch threads for the library operations */
-	private ExecutorService exe = Executors.newFixedThreadPool(1);
+	private ExecutorService exe = Executors.newFixedThreadPool(  Prefs.getThreads() );
 	
 	/**
 	 * Default constructor.
