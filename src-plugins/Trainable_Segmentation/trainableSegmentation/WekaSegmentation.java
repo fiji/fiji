@@ -2108,36 +2108,145 @@ public class WekaSegmentation {
 		
 		//resultLabels.show();
 		
+		return getConfusionMatrix(resultLabels, expectedLabels, whiteClassIndex, blackClassIndex);
+	}
+
+	/**
+	 * Get confusion matrix (binary images)
+	 * @param proposedLabels proposed binary labels
+	 * @param expectedLabels original binary labels
+	 * @param whiteClassIndex index of white class
+	 * @param blackClassIndex index of black class
+	 * @return confusion matrix
+	 */
+	public int[][] getConfusionMatrix(
+			ImagePlus proposedLabels,
+			ImagePlus expectedLabels, 
+			int whiteClassIndex, 
+			int blackClassIndex) 
+	{
 		int[][] confusionMatrix = new int[2][2];
 		
 		// Compare labels
-		final int height = image.getHeight();
-		final int width = image.getWidth();
-		final int depth = image.getStackSize();
+		final int height = proposedLabels.getHeight();
+		final int width = proposedLabels.getWidth();
+		final int depth = proposedLabels.getStackSize();
 		
 
 		for(int z=1; z <= depth; z++)
 			for(int y=0; y<height; y++)
 				for(int x=0; x<width; x++)
 				{
-					if( expectedLabels.getImageStack().getProcessor(z).get(x, y) == 255 )
+					if( expectedLabels.getImageStack().getProcessor(z).get(x, y) > 0)
 					{
-						if( resultLabels.getImageStack().getProcessor(z).get(x, y) == 255 )
+						if( proposedLabels.getImageStack().getProcessor(z).get(x, y) > 0 )
 							confusionMatrix[whiteClassIndex][whiteClassIndex] ++; 							                                 
 						else
 							confusionMatrix[whiteClassIndex][blackClassIndex] ++; 
 					}
 					else
 					{
-						if( resultLabels.getImageStack().getProcessor(z).get(x, y) == 0 )
-							confusionMatrix[blackClassIndex][blackClassIndex] ++; 							                                 
+						if( proposedLabels.getImageStack().getProcessor(z).get(x, y) > 0 )
+							confusionMatrix[blackClassIndex][whiteClassIndex] ++; 							                                 
 						else
-							confusionMatrix[blackClassIndex][whiteClassIndex] ++;
+							confusionMatrix[blackClassIndex][blackClassIndex] ++;							
 					}
 				}
 		
 		return confusionMatrix;
 	}
+	
+	/**
+	 * Get confusion matrix (2 classes)
+	 * @param proposal probability image
+	 * @param expectedLabels original labels
+	 * @param threshold binary threshold to be applied to proposal
+	 * @return confusion matrix
+	 */
+	public static int[][] getConfusionMatrix(
+			ImagePlus proposal,
+			ImagePlus expectedLabels, 
+			double threshold) 
+	{
+		int[][] confusionMatrix = new int[2][2];
+		
+		final int depth = proposal.getStackSize();
+		
+		ExecutorService exe = Executors.newFixedThreadPool( Prefs.getThreads() );
+		ArrayList< Future <int[][]>  > fu = new ArrayList<Future <int[][]>>();		
+		
+		// Compare labels
+		for(int z=1; z <= depth; z++)
+		{
+			fu.add( exe.submit( confusionMatrixBinarySlice(proposal.getImageStack().getProcessor( z ), expectedLabels.getImageStack().getProcessor( z ), threshold)) ); 
+		}
+				 		
+		for(int z=0; z < depth; z++)
+		{
+			try {
+				int[][] temp = fu.get( z ).get();
+				for(int i=0 ; i<2; i++)
+					for(int j=0 ; j<2; j++)
+						confusionMatrix[i][j] += temp[i][j];
+						
+			} catch (Exception e) {
+				e.printStackTrace();
+				return null;
+			}
+			finally{
+				exe.shutdown();
+			}
+		}
+		
+		
+		return confusionMatrix;
+	}
+	
+	
+	/**
+	 * Calculate the confusion matrix of a slice (2 classes)
+	 * @param proposal probability image (single 2D slice)
+	 * @param expectedLabels original binary labels
+	 * @param threshold threshold to apply to proposal
+	 * @return confusion matrix (first row: black, second raw: white)
+	 */
+	public static Callable<int[][]> confusionMatrixBinarySlice(
+			final ImageProcessor proposal,
+			final ImageProcessor expectedLabels, 
+			final double threshold)
+	{
+		if (Thread.currentThread().isInterrupted()) 
+			return null;
+		
+		return new Callable<int[][]>(){
+			public int[][] call()
+			{
+				int[][] confusionMatrix = new int[2][2];
+				for(int y=0; y<proposal.getHeight(); y++)
+					for(int x=0; x<proposal.getWidth(); x++)
+					{
+						double pix = proposal.getPixelValue(x, y) > threshold ? 1.0 : 0.0; 
+						
+						if( expectedLabels.get(x, y) > 0)
+						{
+							if( pix > 0 )
+								confusionMatrix[1][1] ++; 							                                 
+							else
+								confusionMatrix[1][0] ++; 
+						}
+						else
+						{
+							if( pix > 0 )
+								confusionMatrix[0][1] ++; 							                                 
+							else
+								confusionMatrix[0][0] ++;							
+						}
+					}
+				return confusionMatrix;
+			}
+		};
+	}
+	
 	
 	/**
 	 * Get the confusion matrix for an input image and its expected labels
@@ -2174,35 +2283,7 @@ public class WekaSegmentation {
 		
 		//resultLabels.show();
 		
-		int[][] confusionMatrix = new int[2][2];
-		
-		// Compare labels
-		final int height = image.getHeight();
-		final int width = image.getWidth();
-		final int depth = image.getStackSize();
-		
-
-		for(int z=1; z <= depth; z++)
-			for(int y=0; y<height; y++)
-				for(int x=0; x<width; x++)
-				{
-					if( expectedLabels.getImageStack().getProcessor(z).get(x, y) == 255 )
-					{
-						if( resultLabels.getImageStack().getProcessor(z).get(x, y) == 255 )
-							confusionMatrix[whiteClassIndex][whiteClassIndex] ++; 							                                 
-						else
-							confusionMatrix[whiteClassIndex][blackClassIndex] ++; 
-					}
-					else
-					{
-						if( resultLabels.getImageStack().getProcessor(z).get(x, y) == 0 )
-							confusionMatrix[blackClassIndex][blackClassIndex] ++; 							                                 
-						else
-							confusionMatrix[blackClassIndex][whiteClassIndex] ++;
-					}
-				}
-		
-		return confusionMatrix;
+		return getConfusionMatrix(resultLabels, expectedLabels, whiteClassIndex, blackClassIndex);
 	}
 	
 	
