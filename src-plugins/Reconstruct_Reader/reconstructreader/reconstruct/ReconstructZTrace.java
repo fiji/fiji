@@ -12,9 +12,9 @@ public class ReconstructZTrace implements ContourSet
     private final ArrayList<Element> polyLineList;
     private final ArrayList<Integer> polyLineOIDList;
     private final ArrayList<Integer> polyLineIDList;
-    private final Translator translator;
+    private final ReconstructTranslator translator;
 
-    public ReconstructZTrace(final Element e, final Translator t)
+    public ReconstructZTrace(final Element e, final ReconstructTranslator t)
     {
         translator = t;
         oid = translator.nextOID();
@@ -56,7 +56,7 @@ public class ReconstructZTrace implements ContourSet
 
             if (n != 3)
             {
-                System.err.println("While processing Z-Traces, expected n = 3, but n = " + n);
+                translator.log("While processing Z-Traces, expected n = 3, but n = " + n);
             }
 
             layerID = new int[pts3D.length / n];

@@ -12,11 +12,13 @@ public class ReconstructSection {
 
     private final int index, oid;
     private final Document doc;
-    private final Translator translator;
+    private final ReconstructTranslator translator;
     private final ArrayList<ReconstructProfile> profiles;
     private final double mag;
+    private double z;
+    private double thickness;
 
-    public ReconstructSection(final Translator t, final Document d)
+    public ReconstructSection(final ReconstructTranslator t, final Document d)
     {
         double m;
         translator = t;
@@ -28,6 +30,8 @@ public class ReconstructSection {
 
         m = Utils.getMag(d);
         mag = Double.isNaN(m) ? t.getMag() : m;
+        z = -1;
+        thickness = -1;
     }
 
     public int getOID()
@@ -54,19 +58,53 @@ public class ReconstructSection {
     {
         profiles.add(rp);
     }
+    
+    public void setZ(double inZ)
+    {
+        z = inZ;
+    }
+    
+    public double getThickness()
+    {
+        if (thickness < 0)
+        {
+            String thickStr = doc.getDocumentElement().getAttribute("thickness");
+            thickness = Double.valueOf(thickStr);
+        }
+
+        return thickness;
+    }
+
+    public void setThickness(double inThickness)
+    {
+        thickness = inThickness;
+    }
+    
+    public void setZFromPrevious(ReconstructSection prev)
+    {
+        if (prev.getIndex() > getIndex())
+        {
+            translator.log("Whoa! Sections not sorted!");
+        }
+        setZ(prev.getZ() + getThickness() * (this.getIndex() - prev.getIndex()));
+    }
+    
+    public double getZ()
+    {
+        return z;
+    }
 
     public void appendXML(final StringBuilder sb)
     {
-        String thickness = doc.getDocumentElement().getAttribute("thickness");
-        double mag = translator.getMag();
-        int index = Integer.valueOf(doc.getDocumentElement().getAttribute("index"));
-        double aniso = Double.valueOf(thickness) / mag;
+        //double mag = translator.getMag();
+        //int index = Integer.valueOf(doc.getDocumentElement().getAttribute("index"));
+        //double aniso = th / mag;
         NodeList imageList = doc.getElementsByTagName("Image");
 
         sb.append("<t2_layer oid=\"")
                 .append(oid).append("\"\n" +
-                "thickness=\"").append(thickness).append("\"\n" +
-                "z=\"").append(aniso * (double)index).append("\"\n" +
+                "thickness=\"").append(getThickness()).append("\"\n" +
+                "z=\"").append(getZ()).append("\"\n" +
                 "title=\"\"\n" +
                 ">\n");
 
