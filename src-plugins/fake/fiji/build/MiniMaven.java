@@ -643,9 +643,9 @@ public class MiniMaven {
 				dependency.version = findLocallyCachedVersion(path);
 			if (dependency.version == null && dependency.artifactId.equals("scifio"))
 				dependency.version = "4.4-SNAPSHOT";
-			if (dependency.version == null || dependency.artifactId.equals("tools")) {
+			if (dependency.version == null) {
 				// try to find the .jar in Fiji's jars/ dir
-				String jarName = dependency.artifactId.equals("tools") ? "javac.jar" : dependency.artifactId + ".jar";
+				String jarName = dependency.artifactId + ".jar";
 				File file = new File(System.getProperty("ij.dir"), "jars/" + jarName);
 				if (file.exists()) {
 					POM pom = fakePOM(file, dependency);
