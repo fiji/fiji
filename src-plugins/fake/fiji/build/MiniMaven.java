@@ -52,9 +52,14 @@ public class MiniMaven {
 	protected String profile = "swing";
 
 	public MiniMaven(Fake fake, PrintStream err, boolean verbose) throws FakeException {
+		this(fake, err, verbose, false);
+	}
+
+	public MiniMaven(Fake fake, PrintStream err, boolean verbose, boolean debug) throws FakeException {
 		this.fake = fake == null ? new Fake() : fake;
 		this.err = err;
 		this.verbose = verbose;
+		this.debug = debug;
 	}
 
 	protected void print80(String string) {
