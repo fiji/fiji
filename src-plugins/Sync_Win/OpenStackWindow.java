@@ -45,22 +45,29 @@ public class OpenStackWindow extends StackWindow {
 //    }
     public synchronized void adjustmentValueChanged(AdjustmentEvent e) {
         super.adjustmentValueChanged(e);
-        if (!running2) {
-//          notify DisplayChangeListeners
-            if (displayChangeListener != null) {
-                DisplayChangeEvent dcEvent = new DisplayChangeEvent(this, DisplayChangeEvent.Z, sliceSelector.getValue());
-                displayChangeListener.displayChanged(dcEvent);
-            }            
-        }
+        if (!running2)
+		sendDisplayChangeEvent(e.getSource());
     }
 
     /** Handles changing slice by MouseWheel */   
     public void mouseWheelMoved(MouseWheelEvent event) {
         super.mouseWheelMoved(event);
-        if (displayChangeListener != null) {
-            DisplayChangeEvent dcEvent = new DisplayChangeEvent(this, DisplayChangeEvent.Z, sliceSelector.getValue());
-            displayChangeListener.displayChanged(dcEvent);
-        } 
+        sendDisplayChangeEvent(event.getSource());
+    }
+
+    protected void sendDisplayChangeEvent(Object source) {
+	if (displayChangeListener == null)
+		return;
+	final DisplayChangeEvent event;
+	if (source == cSelector)
+		event = new DisplayChangeEvent(this, DisplayChangeEvent.CHANNEL, cSelector.getValue());
+	else if (source == zSelector)
+		event = new DisplayChangeEvent(this, DisplayChangeEvent.Z, zSelector.getValue());
+	else if (source == tSelector)
+		event = new DisplayChangeEvent(this, DisplayChangeEvent.T, tSelector.getValue());
+	else
+		throw new RuntimeException("Unknown source: " + source);
+        displayChangeListener.displayChanged(event);
     }
 
     public synchronized void addDisplayChangeListener(DisplayChangeListener l) {

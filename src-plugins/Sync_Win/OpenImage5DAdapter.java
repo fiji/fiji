@@ -51,6 +51,10 @@ public class OpenImage5DAdapter {
         return ((iw instanceof OpenStackWindow) | (iw instanceof OpenImage5DWindow));
     }
     
+    public static boolean isImage5DWindow(ImageWindow iw) {
+	return iw instanceof OpenImage5DWindow;
+    }
+
     public static void addDisplayChangeListener(ImageWindow iw, DisplayChangeListener dcl) {
         if (iw instanceof OpenStackWindow) {
             ((OpenStackWindow)iw).addDisplayChangeListener(dcl);
