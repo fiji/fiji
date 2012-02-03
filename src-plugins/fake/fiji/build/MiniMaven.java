@@ -464,7 +464,11 @@ public class MiniMaven {
 		public String getClassPath(boolean forCompile) throws IOException, ParserConfigurationException, SAXException {
 			StringBuilder builder = new StringBuilder();
 			builder.append(target);
+			if (debug)
+				err.println("Get classpath for " + coordinate + " for " + (forCompile ? "compile" : "runtime"));
 			for (POM pom : getDependencies(true, "test", forCompile ? "runtime" : "provided")) {
+				if (debug)
+					err.println("Adding dependency " + pom.coordinate + " to classpath");
 				builder.append(File.pathSeparator).append(pom.target);
 			}
 			return builder.toString();
@@ -767,6 +771,8 @@ public class MiniMaven {
 
 		public void endElement(String uri, String name, String qualifiedName) {
 			if (prefix.equals(">project>dependencies>dependency") || (isCurrentProfile && prefix.equals(">project>profiles>profile>dependencies>dependency"))) {
+				if (debug)
+					err.println("Adding dependendency " + latestDependency + " to " + this);
 				dependencies.add(latestDependency);
 				latestDependency = new Coordinate();
 			}
@@ -820,8 +826,11 @@ public class MiniMaven {
 				latestDependency.systemPath = string;
 			else if (prefix.equals(">project>dependencies>dependency>classifier"))
 				latestDependency.classifier = string;
-			else if (prefix.equals(">project>profiles>profile>id"))
+			else if (prefix.equals(">project>profiles>profile>id")) {
 				isCurrentProfile = (!Util.getPlatform().equals("macosx") && "javac".equals(string)) || (coordinate.artifactId.equals("javassist") && string.equals("jdk16")) || profile.equals(string);
+				if (debug)
+					err.println((isCurrentProfile ? "Activating" : "Ignoring") + " profile " + string);
+			}
 			else if (prefix.equals(">project>repositories>repository>url"))
 				repositories.add(string);
 			else if (prefix.equals(">project>build>sourceDirectory"))
