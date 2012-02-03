@@ -37,7 +37,7 @@ public class Sync_Windows extends PlugInFrame implements
 ActionListener, MouseMotionListener, MouseListener, DisplayChangeListener,
 ItemListener, ImageListener {
 
-    static protected final String VERSIONSTRING = "1.7";
+    static protected final String VERSIONSTRING = "1.7-fiji1";
 	
     /** Indices of synchronized image windows are maintained in this
         Vector. */
