@@ -773,6 +773,8 @@ public class MiniMaven {
 			if (prefix.equals(">project>dependencies>dependency") || (isCurrentProfile && prefix.equals(">project>profiles>profile>dependencies>dependency"))) {
 				if (debug)
 					err.println("Adding dependendency " + latestDependency + " to " + this);
+				if (coordinate.artifactId.equals("javassist") && latestDependency.artifactId.equals("tools"))
+					latestDependency.optional = false;
 				dependencies.add(latestDependency);
 				latestDependency = new Coordinate();
 			}
