@@ -1,13 +1,11 @@
 package mpicbg.spim.registration;
 
-import java.io.File;
 import java.util.ArrayList;
 
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.io.LOCI;
 import mpicbg.imglib.type.numeric.real.FloatType;
 import mpicbg.models.AbstractAffineModel3D;
-import mpicbg.models.AffineModel3D;
 import mpicbg.spim.fusion.FusionControl;
 import mpicbg.spim.io.IOFunctions;
 import mpicbg.spim.io.SPIMConfiguration;
@@ -311,14 +309,20 @@ public class ViewStructure
 		{
 			zStretching = conf.zStretching;
 		}
+		else if ( conf.isHuiskenFormat() )
+		{
+			IOFunctions.println( "Reading z-stretching from xml." );
+			zStretching = conf.getZStretchingHuisken();
+			IOFunctions.println( "z-stretching = " + zStretching );
+		}
 		else
 		{
 			IOFunctions.println( "Opening first image to determine z-stretching." );
-			final Image<FloatType> image = LOCI.openLOCIFloatType( conf.file[ timePointIndex ][ 0 ][ 0 ].getPath(), conf.imageFactory );
-			
+			final Image<FloatType> image = LOCI.openLOCIFloatType( conf.file[ timePointIndex ][ 0 ][ 0 ][ 0 ].getPath(), conf.imageFactory );
+
 			if ( image == null )
 			{
-				IOFunctions.println( "Cannot open fie: '" + conf.file[ timePointIndex ][ 0 ][ 0 ].getPath() + "'" );
+				IOFunctions.println( "Cannot open fie: '" + conf.file[ timePointIndex ][ 0 ][ 0 ][ 0 ].getPath() + "'" );
 				return null;
 			}
 			
@@ -329,162 +333,67 @@ public class ViewStructure
 
 		int idNr = 0;
 		final int numChannels = conf.file[ timePointIndex ].length;
-		
+
 		for (int c = 0; c < conf.file[ timePointIndex ].length; c++)
-			for (int i = 0; i < conf.file[ timePointIndex ][ c ].length; i++)
-			{
-				final ViewDataBeads view = new ViewDataBeads( idNr++, model.copy(), conf.file[ timePointIndex ][ c ][ i ].getPath(), zStretching );
-				int channelRegister = 0;
-					
-				view.setAcqusitionAngle( conf.angles[ i ] );
-				view.setChannel( conf.channels[ c ] );
-				view.setChannelIndex( c );
-		
-				if ( numChannels == 1 )
+			for (int a = 0; a < conf.file[ timePointIndex ][ c ].length; a++)
+				for ( int i = 0; i < conf.file[ timePointIndex ][ c ][ a ].length; ++i )
 				{
-					view.setUseForFusion( true );
-					view.setUseForRegistration( true );
-					view.setInitialSigma( conf.initialSigma[ channelRegister ] );
-					view.setMinPeakValue( conf.minPeakValue[ channelRegister ] );
-				}
-				else
-				{
-					boolean contains = false;				
-					for ( final int cR : conf.channelsRegister )
-						if ( cR == view.getChannel() )
-							contains = true;				
-					view.setUseForRegistration( contains );
+					final ViewDataBeads view = new ViewDataBeads( idNr++, model.copy(), conf.file[ timePointIndex ][ c ][ a ][ i ].getPath(), zStretching );
+					int channelRegister = 0;
 
-					if ( contains )
+					view.setAcqusitionAngle( conf.angles[ a ] );
+					view.setChannel( conf.channels[ c ] );
+					view.setChannelIndex( c );
+					view.setTimePoint( conf.timepoints[timePointIndex] );
+					view.setIllumination( conf.illuminations[ i ] );
+
+					if ( numChannels == 1 )
 					{
+						view.setUseForFusion( true );
+						view.setUseForRegistration( true );
 						view.setInitialSigma( conf.initialSigma[ channelRegister ] );
 						view.setMinPeakValue( conf.minPeakValue[ channelRegister ] );
-						channelRegister++;
 					}
-					
-					contains = false;
-					for ( final int cF : conf.channelsFuse )
-						if ( cF == view.getChannel() )
-							contains = true;				
-					view.setUseForFusion( contains );
-				}
-				
-				if ( conf.channelsMirror != null )				
-				{
-					for ( final int[] mirror : conf.channelsMirror )
+					else
 					{
-						if ( conf.channels[ c ] == mirror[ 0 ] )
+						boolean contains = false;
+						for ( final int cR : conf.channelsRegister )
+							if ( cR == view.getChannel() )
+								contains = true;
+						view.setUseForRegistration( contains );
+
+						if ( contains )
 						{
-							if ( mirror[ 1 ] == 0 )
-								view.setMirrorHorizontally( true );
-							if ( mirror[ 1 ] == 1 )
-								view.setMirrorVertically( true );
+							view.setInitialSigma( conf.initialSigma[ channelRegister ] );
+							view.setMinPeakValue( conf.minPeakValue[ channelRegister ] );
+							channelRegister++;
+						}
+
+						contains = false;
+						for ( final int cF : conf.channelsFuse )
+							if ( cF == view.getChannel() )
+								contains = true;
+						view.setUseForFusion( contains );
+					}
+
+					if ( conf.channelsMirror != null )
+					{
+						for ( final int[] mirror : conf.channelsMirror )
+						{
+							if ( conf.channels[ c ] == mirror[ 0 ] )
+							{
+								if ( mirror[ 1 ] == 0 )
+									view.setMirrorHorizontally( true );
+								if ( mirror[ 1 ] == 1 )
+									view.setMirrorVertically( true );
+							}
 						}
 					}
+					views.add( view );
 				}
-				views.add( view );
-			}
-			
-		final ViewStructure viewStructure = new ViewStructure( views, conf, id, conf.timepoints[ timePointIndex ], numChannels, debugLevel );		
-		
-		return viewStructure;
-	}
 
-	/**
-	 * This static methods creates an instance of {@link ViewStructure} with all {@link ViewDataBeads} completely instantiated.
-	 * Afterwards processing can start or already processed data can be loaded.
-	 * 
-	 * @param conf - the {@link SPIMConfiguration} object containing all information about the current registration
-	 * @param timePointIndex - the id of the current time point as the {@link SPIMConfiguration} stores the information for all time points 
-	 * @param model - the model to be used for registration
-	 * @param id - arbitrary id, will be printed with the toString method
-	 * @param debugLevel - the debug level of the program ViewStructure.DEBUG_ALL, ViewStructure.DEBUG_MAIN or ViewStructure.DEBUG_ERRORONLY
-	 * @return an instance of the ViewStructure, completely initialized
-	 */
-	public static <M extends AbstractAffineModel3D<M>> ViewStructure initViewStructure( final SPIMConfiguration conf, final int timePoint, final File[][] files, final M model, final String id, final int debugLevel )
-	{
-		final ArrayList<ViewDataBeads> views = new ArrayList<ViewDataBeads>();
+		final ViewStructure viewStructure = new ViewStructure( views, conf, id, conf.timepoints[ timePointIndex ], numChannels, debugLevel );
 
-		double zStretching;
-		
-		if ( conf.overrideImageZStretching )
-		{
-			zStretching = conf.zStretching;
-		}
-		else
-		{
-			IOFunctions.println( "Opening first image to determine z-stretching." );
-			final Image<FloatType >image = LOCI.openLOCIFloatType( files[ 0 ][ 0 ].getPath(), conf.imageFactory );
-			if ( image == null )
-			{
-				IOFunctions.println( "Cannot open fie: '" +files[ 0 ][ 0 ].getPath() + "'" );
-				return null;
-			}
-			
-			zStretching = image.getCalibration( 2 ) / image.getCalibration( 0 );
-			IOFunctions.println( "z-stretching = " + zStretching );
-			image.close();
-		}
-		
-		int idNr = 0;
-		final int numChannels = files.length;
-		
-		for (int c = 0; c < files.length; c++)
-			for (int i = 0; i < files[c].length; i++)
-			{
-				int channelRegister = 0;
-				ViewDataBeads view = new ViewDataBeads( idNr++, model.copy(), files[ c ][ i ].getPath(), conf.zStretching );
-				view.setChannel( conf.channels[ c ] );
-				view.setChannelIndex( c );
-
-				if ( numChannels == 1 )
-				{
-					view.setUseForFusion( true );
-					view.setUseForRegistration( true );
-					view.setInitialSigma( conf.initialSigma[ channelRegister ] );
-					view.setMinPeakValue( conf.minPeakValue[ channelRegister ] );
-				}
-				else
-				{
-					boolean contains = false;				
-					for ( final int cR : conf.channelsRegister )
-						if ( cR == view.getChannel() )
-							contains = true;				
-					view.setUseForRegistration( contains );
-
-					if ( contains )
-					{
-						view.setInitialSigma( conf.initialSigma[ channelRegister ] );
-						view.setMinPeakValue( conf.minPeakValue[ channelRegister ] );
-						channelRegister++;
-					}
-
-					contains = false;
-					for ( final int cF : conf.channelsFuse )
-						if ( cF == view.getChannel() )
-							contains = true;				
-					view.setUseForFusion( contains );
-				}
-				
-				if ( conf.channelsMirror != null )				
-				{
-					for ( final int[] mirror : conf.channelsMirror )
-					{
-						if ( conf.channels[ c ] == mirror[ 0 ] )
-						{
-							if ( mirror[ 1 ] == 0 )
-								view.setMirrorHorizontally( true );
-							if ( mirror[ 1 ] == 1 )
-								view.setMirrorVertically( true );
-						}
-					}
-				}				
-				views.add( view );
-			}
-		
-		
-		final ViewStructure viewStructure = new ViewStructure( views, conf, id, timePoint, numChannels, debugLevel );		
-		
 		return viewStructure;
 	}
 }

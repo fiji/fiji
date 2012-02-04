@@ -597,6 +597,7 @@ hs_err*.log
 /modules/image5d/target/
 /plugins/Helmholtz_Analysis.jar
 /plugins/Descriptor_based_registration.jar
+/plugins/SPIM_Opener.jar
 /tests/sample-data/
 /modules/jython/unpacked
 /modules/jython/python-*

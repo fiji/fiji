@@ -236,12 +236,12 @@ public class TimeLapseDisplay
 			sumRank[ indicesMinRatio[ i ] ] += i;
 			indicesSumRank[ i ] = i;
 		}
-		
+
 		// now we sort the ranks and select the best
 		Util.quicksort( sumRank, indicesSumRank, 0, data.size() - 1 );
 
 		// the best timepoint is the one with the highest rank
-		return indicesSumRank[ 0 ];
+		return data.get( indicesSumRank[ 0 ] ).getTimePoint();
 	}
 	
 	public static ArrayList< RegistrationStatistics > loadData( SPIMConfiguration conf )
@@ -305,7 +305,7 @@ public class TimeLapseDisplay
 				}
 			}
 
-			avgRatio /= (float)numViews;
+			avgRatio /= numViews;
 
 			System.out.println("data.add( new TimepointData( "+timepoint.getTimePoint()+", "+minError+", "+avgError+", "+maxError+", "+minRatio+", "+avgRatio+", "+maxRatio+" ) );");
 			data.add( new RegistrationStatistics( timepoint.getTimePoint(), minError, avgError, maxError, minRatio, avgRatio, maxRatio, new File( worstView.getFileName() ) ) );

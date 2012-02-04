@@ -16,9 +16,18 @@ import java.util.Iterator;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+if (bsh.args.length > 0 && bsh.args[0].equals("-debug")) {
+	setAccessibility(true);
+	fiji.updater.util.UserInterface.ui.debug = true;
+	args = new String[bsh.args.length - 1];
+	if (args.length > 0)
+		System.arraycopy(bsh.args, 1, args, 0, args.length);
+	bsh.args = args;
+}
+
 if (bsh.args.length == 0) {
 	System.err.println("Usage: " + this.interpreter.getSourceFileInfo()
-		"<file.jar>...");
+		+ "<file.jar>...");
 	System.exit(1);
 }
 

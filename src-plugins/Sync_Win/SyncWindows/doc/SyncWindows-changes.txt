@@ -64,3 +64,6 @@ Version 1.7:
 v1.7 started 2007-04-19
 v1.7 finished 2007-08-12
 
+Version 1.7-fiji1:
+- Works around a backwards-incompatible change in IJ 1.46d
+- Works with Hyperstacks now

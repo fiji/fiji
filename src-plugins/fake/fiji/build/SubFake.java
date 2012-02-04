@@ -57,7 +57,7 @@ public class SubFake extends Rule {
 
 			POM pom = getPOM();
 			if (pom != null)
-				return pom.upToDate() && upToDate(pom.getTarget(), target);
+				return pom.upToDate(true) && upToDate(pom.getTarget(), target);
 
 			if (!upToDateRecursive(new File(Util.makePath(parser.cwd, directory)), target, true))
 				return false;
@@ -102,7 +102,7 @@ public class SubFake extends Rule {
 			targetBasename = targetBasename.substring(0, targetBasename.length() - 4);
 		// TODO: targetBasename could end in "-<version>"
 		try {
-			POM pom = new MiniMaven(parser.fake, parser.fake.err, getVarBool("VERBOSE")).parse(file);
+			POM pom = new MiniMaven(parser.fake, parser.fake.err, getVarBool("VERBOSE"), getVarBool("DEBUG")).parse(file);
 			if (targetBasename.equals(pom.getArtifact()))
 				return pom;
 			return pom.findPOM(new Coordinate(null, targetBasename, null));
