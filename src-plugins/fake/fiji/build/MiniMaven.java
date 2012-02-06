@@ -52,9 +52,14 @@ public class MiniMaven {
 	protected String profile = "swing";
 
 	public MiniMaven(Fake fake, PrintStream err, boolean verbose) throws FakeException {
+		this(fake, err, verbose, false);
+	}
+
+	public MiniMaven(Fake fake, PrintStream err, boolean verbose, boolean debug) throws FakeException {
 		this.fake = fake == null ? new Fake() : fake;
 		this.err = err;
 		this.verbose = verbose;
+		this.debug = debug;
 	}
 
 	protected void print80(String string) {
@@ -459,7 +464,11 @@ public class MiniMaven {
 		public String getClassPath(boolean forCompile) throws IOException, ParserConfigurationException, SAXException {
 			StringBuilder builder = new StringBuilder();
 			builder.append(target);
+			if (debug)
+				err.println("Get classpath for " + coordinate + " for " + (forCompile ? "compile" : "runtime"));
 			for (POM pom : getDependencies(true, "test", forCompile ? "runtime" : "provided")) {
+				if (debug)
+					err.println("Adding dependency " + pom.coordinate + " to classpath");
 				builder.append(File.pathSeparator).append(pom.target);
 			}
 			return builder.toString();
@@ -634,9 +643,9 @@ public class MiniMaven {
 				dependency.version = findLocallyCachedVersion(path);
 			if (dependency.version == null && dependency.artifactId.equals("scifio"))
 				dependency.version = "4.4-SNAPSHOT";
-			if (dependency.version == null || dependency.artifactId.equals("tools")) {
+			if (dependency.version == null) {
 				// try to find the .jar in Fiji's jars/ dir
-				String jarName = dependency.artifactId.equals("tools") ? "javac.jar" : dependency.artifactId + ".jar";
+				String jarName = dependency.artifactId + ".jar";
 				File file = new File(System.getProperty("ij.dir"), "jars/" + jarName);
 				if (file.exists()) {
 					POM pom = fakePOM(file, dependency);
@@ -762,6 +771,10 @@ public class MiniMaven {
 
 		public void endElement(String uri, String name, String qualifiedName) {
 			if (prefix.equals(">project>dependencies>dependency") || (isCurrentProfile && prefix.equals(">project>profiles>profile>dependencies>dependency"))) {
+				if (debug)
+					err.println("Adding dependendency " + latestDependency + " to " + this);
+				if (coordinate.artifactId.equals("javassist") && latestDependency.artifactId.equals("tools"))
+					latestDependency.optional = false;
 				dependencies.add(latestDependency);
 				latestDependency = new Coordinate();
 			}
@@ -815,8 +828,11 @@ public class MiniMaven {
 				latestDependency.systemPath = string;
 			else if (prefix.equals(">project>dependencies>dependency>classifier"))
 				latestDependency.classifier = string;
-			else if (prefix.equals(">project>profiles>profile>id"))
+			else if (prefix.equals(">project>profiles>profile>id")) {
 				isCurrentProfile = (!Util.getPlatform().equals("macosx") && "javac".equals(string)) || (coordinate.artifactId.equals("javassist") && string.equals("jdk16")) || profile.equals(string);
+				if (debug)
+					err.println((isCurrentProfile ? "Activating" : "Ignoring") + " profile " + string);
+			}
 			else if (prefix.equals(">project>repositories>repository>url"))
 				repositories.add(string);
 			else if (prefix.equals(">project>build>sourceDirectory"))

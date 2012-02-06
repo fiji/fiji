@@ -37,7 +37,7 @@ public class Sync_Windows extends PlugInFrame implements
 ActionListener, MouseMotionListener, MouseListener, DisplayChangeListener,
 ItemListener, ImageListener {
 
-    static protected final String VERSIONSTRING = "1.7";
+    static protected final String VERSIONSTRING = "1.7-fiji1";
 	
     /** Indices of synchronized image windows are maintained in this
         Vector. */
@@ -171,23 +171,23 @@ ItemListener, ImageListener {
     
                     int stacksize = imp.getStackSize();
                     if( !iw.equals(source) && (iw instanceof StackWindow) ) {
-                        if (value > 0 && value <= stacksize) {
-                            imp.setSlice(value);
-                            imp.repaintWindow();
-                        }
+                        ((StackWindow)iw).setPosition(imp.getChannel(), value, imp.getFrame());
                     }
                 }
             }
         }
         
         // Change channel in other synchronized Image5Ds.
-        if(bImage5DInstalled && cChannel.getState() && type==DisplayChangeEvent.CHANNEL) {
+        if(cChannel.getState() && type==DisplayChangeEvent.CHANNEL) {
             for(int n=0; n<vwins.size();++n) {
                 imp = getImageFromVector(n);
                 if (imp != null) {
                     iw = imp.getWindow();
                     if( !iw.equals(source)) {
-                        OpenImage5DAdapter.setChannel(imp, value);
+			if (bImage5DInstalled && OpenImage5DAdapter.isImage5DWindow(iw))
+                            OpenImage5DAdapter.setChannel(imp, value);
+                        else if (iw instanceof StackWindow)
+			    ((StackWindow)iw).setPosition(value, imp.getSlice(), imp.getFrame());
                     }
                 }
             }   
@@ -199,7 +199,10 @@ ItemListener, ImageListener {
                 if (imp != null) {
                     iw = imp.getWindow();
                     if( !iw.equals(source)) {
-                        OpenImage5DAdapter.setFrame(imp, value);
+			if (bImage5DInstalled && OpenImage5DAdapter.isImage5DWindow(iw))
+                            OpenImage5DAdapter.setFrame(imp, value);
+                        else if (iw instanceof StackWindow)
+			    ((StackWindow)iw).setPosition(imp.getChannel(), imp.getSlice(), value);
                     }
                 }
             }   
