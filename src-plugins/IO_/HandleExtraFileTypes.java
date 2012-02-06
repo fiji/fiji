@@ -265,7 +265,7 @@ public class HandleExtraFileTypes extends ImagePlus implements PlugIn {
 			return tryPlugIn("io.Open_DF3", path);
 		}
 
-		if (name.endsWith(".dat")) {
+		if (name.endsWith(".dat") && buf[0] == -45 && buf[1] == -19 && buf[2] == -11 && buf[3] == -14) {
 			return tryPlugIn("io.FIBSEM_Reader", path);
 		}
 
