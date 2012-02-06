@@ -653,6 +653,9 @@ if options.clean:
                   "staged-plugins/TransformJ_.config",
                   "staged-plugins/TransformJ_.jar" ]
 
+    # Remove MacAdapter
+    to_remove.append("modules/ImageJA/src/main/java/MacAdapter.java")
+
     # Also remove submodules which are now provided by external dependencies:
     to_remove.append("batik")
     to_remove.append("java/linux")
@@ -720,13 +723,15 @@ if options.clean:
         if re.search("^\s*missingPrecompiledFallBack",line):
             skip_next_line = True
             continue
+        for old_file, replacement_tuple in replacement_files.items():
+            replacement_string = ':'.join(replacement_tuple)
+            line = re.sub(re.escape(old_file), replacement_string, line)
         # grrr, src-plugins/Jama seems particularly awkward to
         # get rid of.  Probably should do everything like this, just
         # rewrite the Fakefile entirely, with a proper parser of the
         # format.  FIXME FIXME FIXME
         line = re.sub('\s+jars/Jama.jar\s+',' ',line)
         line = re.sub('jars/Jama.jar','/usr/share/java/jama.jar',line)
-        line = re.sub('jars/javassist.jar','/usr/share/java/javassist.jar',line)
         fp.write(line)
     fp.close()
 
@@ -1011,7 +1016,7 @@ Standards-Version: 3.7.2""" % (", ".join(build_dependencies),))
             for package_name, most_recent_requirement in required_packages.items():
                 print "   requires "+ package_version_to_string(package_name,most_recent_requirement)
 
-            dependencies = []
+            dependencies = ['openjdk-6-jdk']
             if required_packages:
                 for dependent_package, timestamp in required_packages.items():
                     dependencies.append(package_version_to_string(dependent_package,timestamp))

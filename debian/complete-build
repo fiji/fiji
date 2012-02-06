@@ -5,11 +5,14 @@ set -e
 echo === Checking this is a clean working tree:
 debian/update-debian.py --check-git-clean
 
-echo === Cleaning the tree:
-debian/update-debian.py --clean
-
 echo === Generating a new build-command from the Fakefile
 debian/update-debian.py --generate-build-command
+
+echo === Generating a new build-command from the Fakefile
+debian/rewrite-pom-files.py
+
+echo === Cleaning the tree:
+debian/update-debian.py --clean
 
 echo ==== Building the tree:
 debian/build-command

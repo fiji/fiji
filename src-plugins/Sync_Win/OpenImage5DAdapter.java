@@ -26,6 +26,7 @@ public class OpenImage5DAdapter {
                 !(iw instanceof OpenStackWindow)) {
             ImageCanvas ic = iw.getCanvas();
             ImagePlus img = iw.getImagePlus();
+            img.setOpenAsHyperStack(true); // as required by IJ 1.46d or newer, now requires IJ 1.39g or newer
             double magn = ic.getMagnification();
             iwOut = new OpenStackWindow(img, ic);
             
@@ -50,6 +51,10 @@ public class OpenImage5DAdapter {
         return ((iw instanceof OpenStackWindow) | (iw instanceof OpenImage5DWindow));
     }
     
+    public static boolean isImage5DWindow(ImageWindow iw) {
+	return iw instanceof OpenImage5DWindow;
+    }
+
     public static void addDisplayChangeListener(ImageWindow iw, DisplayChangeListener dcl) {
         if (iw instanceof OpenStackWindow) {
             ((OpenStackWindow)iw).addDisplayChangeListener(dcl);

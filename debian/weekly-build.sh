@@ -46,6 +46,7 @@ then
 
   VERSION=$( cd fiji && dpkg-parsechangelog | egrep '^Version' | sed 's/^Version: //' )
   OLD_D=$(readlink -n fiji)
+  OLD_D=${OLD_D%/}
   D=fiji-$VERSION
   if [ "$D" != "$OLD_D" ]
   then

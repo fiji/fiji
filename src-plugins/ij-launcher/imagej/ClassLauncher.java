@@ -51,6 +51,8 @@ public class ClassLauncher {
 	}
 
 	protected static void patchIJ1(ClassLoader classLoader) throws ClassNotFoundException, IllegalAccessException, InstantiationException {
+		if ("false".equals(System.getProperty("patch.ij1")))
+			return;
 		Class<Runnable> clazz = (Class<Runnable>)classLoader.loadClass("fiji.IJ1Patcher");
 		Runnable ij1Patcher = clazz.newInstance();
 		ij1Patcher.run();
