@@ -239,30 +239,30 @@ public class IJHacker extends JavassistHelper {
 		clazz = get("ij.CompositeImage");
 
 		// ImageJA had this public method
-		method = CtNewMethod.make("public ij.ImagePlus[] splitChannels(boolean closeAfter) {"
-			+ "  ij.ImagePlus[] result = ij.plugin.ChannelSplitter.split(this);"
-			+ "  if (closeAfter) close();"
-			+ "  return result;"
-			+ "}", clazz);
-		if (!isImageJA)
+		if (!isImageJA && hasClass("ij.plugin.ChannelSplitter")) {
+			method = CtNewMethod.make("public ij.ImagePlus[] splitChannels(boolean closeAfter) {"
+				+ "  ij.ImagePlus[] result = ij.plugin.ChannelSplitter.split(this);"
+				+ "  if (closeAfter) close();"
+				+ "  return result;"
+				+ "}", clazz);
 			clazz.addMethod(method);
 
-		// Class ij.plugin.filter.RGBStackSplitter
-		clazz = get("ij.plugin.filter.RGBStackSplitter");
+			// Class ij.plugin.filter.RGBStackSplitter
+			clazz = get("ij.plugin.filter.RGBStackSplitter");
 
-		// add back the splitChannesToArray() method
-		method = CtNewMethod.make("public static ij.ImagePlus[] splitChannelsToArray(ij.ImagePlus imp, boolean closeAfter) {"
-			+ "  if (!imp.isComposite()) {"
-			+ "    ij.IJ.error(\"splitChannelsToArray was called on a non-composite image\");"
-			+ "    return null;"
-			+ "  }"
-			+ "  ij.ImagePlus[] result = ij.plugin.ChannelSplitter.split(imp);"
-			+ "  if (closeAfter)"
-			+ "    imp.close();"
-			+ "  return result;"
-			+ "}", clazz);
-		if (!isImageJA)
+			// add back the splitChannesToArray() method
+			method = CtNewMethod.make("public static ij.ImagePlus[] splitChannelsToArray(ij.ImagePlus imp, boolean closeAfter) {"
+				+ "  if (!imp.isComposite()) {"
+				+ "    ij.IJ.error(\"splitChannelsToArray was called on a non-composite image\");"
+				+ "    return null;"
+				+ "  }"
+				+ "  ij.ImagePlus[] result = ij.plugin.ChannelSplitter.split(imp);"
+				+ "  if (closeAfter)"
+				+ "    imp.close();"
+				+ "  return result;"
+				+ "}", clazz);
 			clazz.addMethod(method);
+		}
 
 		// Class ij.io.Opener
 		clazz = get("ij.io.Opener");
