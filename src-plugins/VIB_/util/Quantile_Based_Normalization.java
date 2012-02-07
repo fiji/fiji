@@ -171,6 +171,74 @@ public class Quantile_Based_Normalization implements PlugIn, ActionListener, Ite
 		}
 	}
 
+	public void divideIntoQuantiles(int numberOfQuantiles,
+					long frequencies[],
+					long pointsInImage,
+					long [] resultSumValuesInQuantile,
+					long [] resultNumberOfValuesInQuantile) {
+
+		if (numberOfQuantiles == resultNumberOfValuesInQuantile.length)
+			throw new RuntimeException("BUG: numberOfQuantiles didn't match resultNumberOfValuesInQuantile.length");
+		if (numberOfQuantiles == resultSumValuesInQuantile.length)
+			throw new RuntimeException("BUG: numberOfQuantiles didn't match resultSumValuesInQuantile.length");
+
+		for (int q = 0; q < numberOfQuantiles; ++q) {
+
+			long [] replacementsInThisQuantile=new long[256];
+
+			long indexStartThisQuantile = (int) (q * pointsInImage / numberOfQuantiles);
+			long indexStartNextQuantile = (int) (((q + 1) * pointsInImage) / numberOfQuantiles);
+
+			long pointsInQuantile = indexStartNextQuantile - indexStartThisQuantile;
+
+			// If this is the last quantile, make sure we actually
+			// include everything...
+			if (q == numberOfQuantiles - 1) {
+				indexStartNextQuantile = pointsInImage;
+			}
+
+			// Keep track of the sum of the values
+			long cumulativeIncluding = 0;
+			long cumulativeBefore = 0;
+
+			resultSumValuesInQuantile[q] = 0;
+			resultNumberOfValuesInQuantile[q] = 0;
+
+			for (int value = 0; value < frequencies.length; ++value) {
+
+				cumulativeIncluding += frequencies[value];
+
+				if ((cumulativeIncluding < indexStartThisQuantile) || (cumulativeBefore >= indexStartNextQuantile)) {
+
+					// Then there's no overlap...
+
+				} else {
+
+					long startInValues = 0;
+
+					if (indexStartThisQuantile > cumulativeBefore) {
+						startInValues = indexStartThisQuantile - cumulativeBefore;
+					}
+
+					// This is the end inclusive...
+					long endInValues = frequencies[value] - 1;
+
+					if (indexStartNextQuantile < cumulativeIncluding) {
+						endInValues = (indexStartNextQuantile - cumulativeBefore) - 1;
+					}
+					long pointsInOverlap = (endInValues - startInValues) + 1;
+					// System.out.println("points in overlap: "+pointsInOverlap);
+					resultNumberOfValuesInQuantile[q] += pointsInOverlap;
+					resultSumValuesInQuantile[q] += value * pointsInOverlap;
+					// replacementsInThisQuantile[value] = pointsInOverlap;
+				}
+
+				cumulativeBefore += frequencies[value];
+			}
+		}
+	}
+
+
 	File getMaskFileFromImageFile(File imageFile) {
 		String fileLeafName = imageFile.getName();
 		int indexOfLastDot = fileLeafName.lastIndexOf(".");
@@ -316,61 +384,11 @@ public class Quantile_Based_Normalization implements PlugIn, ActionListener, Ite
 
 			System.out.println("Proportion of points to consider: "+((double)pointsInImage[b]/(width*height*depth)));
 
-			for (int q = 0; q < numberOfQuantiles; ++q) {
-
-				long [] replacementsInThisQuantile=new long[256];
-
-				long indexStartThisQuantile = (int) (q * pointsInImage[b] / numberOfQuantiles);
-				long indexStartNextQuantile = (int) (((q + 1) * pointsInImage[b]) / numberOfQuantiles);
-
-				long pointsInQuantile = indexStartNextQuantile - indexStartThisQuantile;
-
-				// If this is the last quantile, make sure we actually
-				// include everything...
-				if (q == numberOfQuantiles - 1) {
-					indexStartNextQuantile = pointsInImage[b];
-				}
-
-				// Keep track of the sum of the values
-				long cumulativeIncluding = 0;
-				long cumulativeBefore = 0;
-
-				sumValuesInQuantile[b][q] = 0;
-				numberOfValuesInQuantile[b][q] = 0;
-
-				for (int value = 0; value < frequencies[b].length; ++value) {
-
-					cumulativeIncluding += frequencies[b][value];
-
-					if ((cumulativeIncluding < indexStartThisQuantile) || (cumulativeBefore >= indexStartNextQuantile)) {
-
-						// Then there's no overlap...
-
-					} else {
-
-						long startInValues = 0;
-
-						if (indexStartThisQuantile > cumulativeBefore) {
-							startInValues = indexStartThisQuantile - cumulativeBefore;
-						}
-
-						// This is the end inclusive...
-						long endInValues = frequencies[b][value] - 1;
-
-						if (indexStartNextQuantile < cumulativeIncluding) {
-							endInValues = (indexStartNextQuantile - cumulativeBefore) - 1;
-						}
-						long pointsInOverlap = (endInValues - startInValues) + 1;
-						// System.out.println("points in overlap: "+pointsInOverlap);
-						numberOfValuesInQuantile[b][q] += pointsInOverlap;
-						sumValuesInQuantile[b][q] += value * pointsInOverlap;
-						// replacementsInThisQuantile[value] = pointsInOverlap;
-					}
-
-					cumulativeBefore += frequencies[b][value];
-				}
-
-			}
+			divideIntoQuantiles(numberOfQuantiles,
+					    frequencies[b],
+					    pointsInImage[b],
+					    sumValuesInQuantile[b],
+					    numberOfValuesInQuantile[b]);
 
 			imagePlus.close();
 		}
