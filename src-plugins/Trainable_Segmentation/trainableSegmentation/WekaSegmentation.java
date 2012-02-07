@@ -1764,8 +1764,8 @@ public class WekaSegmentation {
 			featureStack.setUseNeighbors(this.featureStackArray.useNeighborhood());
 
 			if( false == addRandomBalancedBinaryData(labelIP.getProcessor(), 
-					mask.getImageStack().getProcessor(i), featureStack, 
-					whiteClassName, blackClassName, numSamples) )
+					null == mask ? null : mask.getImageStack().getProcessor(i), 
+					featureStack, whiteClassName, blackClassName, numSamples) )
 			{
 				IJ.log("Error while loading binary label data from slice " + i);
 				return false;
