@@ -2129,11 +2129,11 @@ const char *default_subcommands[] = {
 	" run Fiji's very simple Maven mockup",
 	"--javac --ij-jar=jars/javac.jar --headless --add-classpath-option --main-class=com.sun.tools.javac.Main",
 	" start JavaC, the Java Compiler, instead of ImageJ",
-	"--javah --tools-jar --headless --add-classpath-option --main-class=com.sun.tools.javah.Main",
+	"--javah --only-tools-jar --headless --add-classpath-option --main-class=com.sun.tools.javah.Main",
 	" start javah instead of ImageJ",
-	"--javap --tools-jar --headless --add-classpath-option --main-class=sun.tools.javap.Main",
+	"--javap --only-tools-jar --headless --add-classpath-option --main-class=sun.tools.javap.Main",
 	" start javap instead of ImageJ",
-	"--javadoc --tools-jar --headless --add-classpath-option --main-class=com.sun.tools.javadoc.Main",
+	"--javadoc --only-tools-jar --headless --add-classpath-option --main-class=com.sun.tools.javadoc.Main",
 	" start javadoc instead of ImageJ",
 };
 
@@ -2223,7 +2223,7 @@ static int check_subcommand_classpath(struct subcommand *subcommand)
 			if (!jar_exists("%s/%.*s", ij_path(""), (int)(space - expanded), expanded))
 				return 0;
 		}
-		else if (!prefixcmp(expanded, "--tools-jar")) {
+		else if (!prefixcmp(expanded, "--tools-jar") || !prefixcmp(expanded, "--only-tools-jar")) {
 			if (!jar_exists("%s/../lib/tools.jar", get_jre_home()))
 				return 0;
 		}
@@ -2550,7 +2550,7 @@ static struct options options;
 static long megabytes = 0;
 static struct string buffer, buffer2, arg, class_path, plugin_path, ext_option;
 static int jdb, add_class_path_option, advanced_gc = 1, debug_gc;
-static int allow_multiple, skip_build_classpath;
+static int allow_multiple, skip_build_classpath, class_path_already_defined;
 
 static int handle_one_option2(int *i, int argc, const char **argv)
 {
@@ -2672,6 +2672,11 @@ static int handle_one_option2(int *i, int argc, const char **argv)
 	}
 	else if (!strcmp(argv[*i], "--tools-jar"))
 		string_addf_path_list(&class_path, "%s/../lib/tools.jar", get_jre_home());
+	else if (!strcmp(argv[*i], "--only-tools-jar")) {
+		struct string *buffer = string_initf("-Djava.class.path=%s/../lib/tools.jar", get_jre_home());
+		add_option_string(&options, buffer, 0);
+		class_path_already_defined = 1;
+	}
 	else if (!strcmp(argv[*i], "--add-classpath-option"))
 		add_class_path_option = 1;
 	else if (!strcmp(argv[*i], "--no-full-classpath"))
@@ -2964,9 +2969,10 @@ static void parse_command_line(void)
 			build_classpath(&class_path, ij_path("jars"), 0);
 		}
 	}
-	if (class_path.length) {
+	if (class_path.length && !class_path_already_defined) {
 		string_setf(&buffer, "-Djava.class.path=%s", class_path.buffer);
 		add_option_string(&options, &buffer, 0);
+		class_path_already_defined = 1;
 	}
 
 	if (default_arguments->length)
@@ -3118,7 +3124,7 @@ static int start_ij(void)
 		}
 	}
 
-	if (strcmp(main_class, "fiji.build.Fake")) {
+	if (!class_path_already_defined && strcmp(main_class, "fiji.build.Fake")) {
 		prepend_string_copy(&options.ij_options, main_class);
 		main_class = "imagej.ClassLauncher";
 	}

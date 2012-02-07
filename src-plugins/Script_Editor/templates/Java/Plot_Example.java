@@ -9,6 +9,13 @@ import java.awt.Color;
  * An example how to use ImageJ's Plot class
  */
 public class Plot_Example implements PlugIn {
+	/**
+	 * This method gets called by ImageJ / Fiji.
+	 *
+	 * @param arg can be specified in plugins.config
+	 * @see ij.plugin.PlugIn#run(java.lang.String)
+	 */
+	@Override
 	public void run(String arg) {
 		// Some data to show
 		double[] x = { 1, 3, 4, 5, 6, 7, 8, 9, 11 };

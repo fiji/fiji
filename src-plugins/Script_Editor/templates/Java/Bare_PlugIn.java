@@ -10,7 +10,9 @@ public class Bare_PlugIn implements PlugIn {
 	 * This method gets called by ImageJ / Fiji.
 	 *
 	 * @param arg can be specified in plugins.config
+	 * @see ij.plugin.PlugIn#run(java.lang.String)
 	 */
+	@Override
 	public void run(String arg) {
 	}
 }

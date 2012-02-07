@@ -120,6 +120,14 @@ public abstract class JavassistHelper implements Runnable {
 		return info.getConstPool().getStringInfo(indices[(indices.length + counter - skip) % indices.length]);
 	}
 
+	protected boolean hasClass(String name) {
+		try {
+			return pool.get(name) != null;
+		} catch (NotFoundException e) {
+			return false;
+		}
+	}
+
 	protected boolean hasField(CtClass clazz, String name) {
 		try {
 			return clazz.getField(name) != null;
