@@ -50,6 +50,7 @@ import java.awt.GridBagConstraints;
 import java.awt.event.ItemListener;
 import java.awt.image.ColorModel;
 import java.util.regex.Pattern;
+import java.util.ArrayList;
 
 public class Quantile_Based_Normalization implements PlugIn, ActionListener, ItemListener {
 
@@ -134,6 +135,56 @@ public class Quantile_Based_Normalization implements PlugIn, ActionListener, Ite
 
 	}
 
+	public static class Mask {
+		File file;
+		public boolean [][] inMask;
+		int width, height, depth;
+		long pointsInMask;
+		public Mask(File maskFile) {
+			file = maskFile;
+			String path = maskFile.getAbsolutePath();
+			IJ.showStatus("Loading mask file: "+path);
+			ImagePlus [] channels=BatchOpener.open(path);
+			if( channels == null )
+				throw new RuntimeException("Couldn't open the mask file: "+path);
+			if( channels.length != 1 )
+				throw new RuntimeException("The mask file must have one channel - "+path+" has "+channels.length);
+			ImagePlus maskImagePlus=channels[0];
+			ImageStack maskStack=maskImagePlus.getStack();
+			width=maskImagePlus.getWidth();
+			height=maskImagePlus.getHeight();
+			depth=maskImagePlus.getStackSize();
+			inMask=new boolean[depth][width*height];
+			pointsInMask = 0;
+			for( int z = 0; z < depth; ++z ) {
+				byte [] pixels = (byte[])maskStack.getPixels(z+1);
+				for( int y = 0; y < height; ++y ) {
+					for( int x = 0; x < width; ++x ) {
+						if( (pixels[y*width+x]&0xFF) > 127 ) {
+							inMask[z][y*width+x] = true;
+							++pointsInMask;
+						}
+					}
+				}
+			}
+			maskImagePlus.close();
+		}
+	}
+
+	File getMaskFileFromImageFile(File imageFile) {
+		String fileLeafName = imageFile.getName();
+		int indexOfLastDot = fileLeafName.lastIndexOf(".");
+		if (indexOfLastDot < 0)
+			throw new RuntimeException(
+				"Tried to find the corresponding mask file for an image file with an extension: "+
+				imageFile.getAbsolutePath());
+		String fileWithoutExtension = fileLeafName.substring(0, indexOfLastDot);
+		String extension = fileLeafName.substring(indexOfLastDot);
+		return new File(
+			imageFile.getParent(),
+			fileWithoutExtension + ".mask.tif");
+	}
+
 	TextField outputDirectoryInput;
 	Button chooseOutputDirectory;
 
@@ -167,38 +218,9 @@ public class Quantile_Based_Normalization implements PlugIn, ActionListener, Ite
 		int maskHeight = -1;
 		int maskDepth = -1;
 
-		long pointsInMask=0;
-
+		Mask singleMask = null;
 		if( maskFileName != null ) {
-
-			IJ.showStatus("Loading mask file: "+maskFileName);
-			ImagePlus [] channels=BatchOpener.open(maskFileName);
-			if( channels == null ) {
-				IJ.error("Couldn't open the mask file: "+maskFileName);
-				return;
-			}
-			if( channels.length != 1 ) {
-				IJ.error("The mask file must have one channel - "+maskFileName+" has "+channels.length);
-				return;
-			}
-			ImagePlus maskImagePlus=channels[0];
-			ImageStack maskStack=maskImagePlus.getStack();
-			maskWidth=maskImagePlus.getWidth();
-			maskHeight=maskImagePlus.getHeight();
-			maskDepth=maskImagePlus.getStackSize();
-			inMask=new boolean[maskDepth][maskWidth*maskHeight];
-			for( int z = 0; z < maskDepth; ++z ) {
-				byte [] pixels = (byte[])maskStack.getPixels(z+1);
-				for( int y = 0; y < maskHeight; ++y ) {
-					for( int x = 0; x < maskWidth; ++x ) {
-						if( (pixels[y*maskWidth+x]&0xFF) > 127 ) {
-							inMask[z][y*maskWidth+x] = true;
-							++pointsInMask;
-						}
-					}
-				}
-			}
-			maskImagePlus.close();
+			singleMask = new Mask(new File(maskFileName));
 		}
 
 		int n = fg.size();
@@ -207,6 +229,22 @@ public class Quantile_Based_Normalization implements PlugIn, ActionListener, Ite
 			return;
 		}
 
+		/* Check that all the mask files are present if the
+		   useMaskPerImage option was selected: */
+		if (useMaskPerImage) {
+			boolean missingMask = false;
+			for (int b = 0; b < n; ++b ) {
+				File f = fg.get(b);
+				File maskFile = getMaskFileFromImageFile(f);
+				if (!maskFile.exists()) {
+					IJ.log("The following mask file was missing: "+maskFile.getAbsolutePath());
+					missingMask = true;
+				}
+			}
+			if (missingMask) {
+				throw new RuntimeException("At least one mask file was missing - see the log window");
+			}
+		}
 
 		/* First go through each image building totalling the
 		   frequencies of each value. */
@@ -221,6 +259,11 @@ public class Quantile_Based_Normalization implements PlugIn, ActionListener, Ite
 
 			File f = fg.get(b);
 			String path = f.getAbsolutePath();
+			Mask mask = null;
+			if (singleMask != null)
+				mask = singleMask;
+			else if (useMaskPerImage)
+				mask = new Mask(getMaskFileFromImageFile(f));
 
 			ImagePlus [] channels=BatchOpener.open(path);
 
@@ -247,13 +290,12 @@ public class Quantile_Based_Normalization implements PlugIn, ActionListener, Ite
 			// If we're using a mask they all have to be the right
 			// dimensions.
 
-			if( (maskFileName != null) &&
-				! ((width == maskWidth ) &&
-				   (height == maskHeight) &&
-				   (depth == maskDepth)) ) {
-				IJ.error("The image file "+path+" was not the same dimensions as the mask file");
-				return;
-			}
+			if( (mask != null) &&
+				! ((width == mask.width) &&
+				   (height == mask.height) &&
+				   (depth == mask.depth)) )
+				throw new RuntimeException(
+					"The image file "+path+" was not the same dimensions as the mask file "+mask.file.getAbsolutePath());
 
 			ImageStack stack=imagePlus.getStack();
 
@@ -263,16 +305,16 @@ public class Quantile_Based_Normalization implements PlugIn, ActionListener, Ite
 				byte [] pixels=(byte[])stack.getPixels(z+1);
 				for( int y=0; y<height; ++y )
 					for( int x=0; x<width; ++x ) {
-						if( (maskFileName == null) || inMask[z][y*width+x] ) {
+						if( (mask == null) || mask.inMask[z][y*width+x] ) {
 							int value=pixels[y*width+x]&0xFF;
 							++frequencies[b][value];
 						}
 					}
 			}
 
-			pointsInImage[b]= (maskFileName == null) ? width*height*depth : pointsInMask;
+			pointsInImage[b]= (mask == null) ? width*height*depth : mask.pointsInMask;
 
-			System.out.println("Proportion of points to consider: "+((double)pointsInMask/(width*height*depth)));
+			System.out.println("Proportion of points to consider: "+((double)pointsInImage[b]/(width*height*depth)));
 
 			for (int q = 0; q < numberOfQuantiles; ++q) {
 
@@ -332,6 +374,7 @@ public class Quantile_Based_Normalization implements PlugIn, ActionListener, Ite
 
 			imagePlus.close();
 		}
+		// Now the following 
 
 		System.out.println("Now going on to calculate the mean in each quantile.");
 
@@ -677,7 +720,7 @@ public class Quantile_Based_Normalization implements PlugIn, ActionListener, Ite
 
 		processToDirectory( fg,
 				    outputDirectory,
-				    useMaskPerImageCheckbox.getState()
+				    useMaskPerImageCheckbox.getState(),
 				    maskFileName,
 				    channelToUse,
 				    numberOfQuantiles,
