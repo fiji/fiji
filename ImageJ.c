@@ -2972,7 +2972,6 @@ static void parse_command_line(void)
 	if (class_path.length && !class_path_already_defined) {
 		string_setf(&buffer, "-Djava.class.path=%s", class_path.buffer);
 		add_option_string(&options, &buffer, 0);
-		class_path_already_defined = 1;
 	}
 
 	if (default_arguments->length)
