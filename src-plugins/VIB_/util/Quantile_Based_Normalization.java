@@ -138,11 +138,13 @@ public class Quantile_Based_Normalization implements PlugIn, ActionListener, Ite
 	Button chooseOutputDirectory;
 	
 	Checkbox useMaskCheckbox;
+	Checkbox useMaskPerImageCheckbox;
 	TextField maskFileInput;
 	Button chooseMaskButton;	
 	
 	public void processToDirectory( FileGroup fg,
 					String outputDirectory,
+					boolean useMaskPerImage,
 					String maskFileName,
 					int channelToUse,
 					int numberOfQuantiles,
@@ -599,11 +601,15 @@ public class Quantile_Based_Normalization implements PlugIn, ActionListener, Ite
 		c.gridy = 0;
 		c.gridwidth = 3;		
 		c.anchor = GridBagConstraints.LINE_START;
+		useMaskPerImageCheckbox = new Checkbox("Use a mask per image?");
+		useMaskPerImageCheckbox.addItemListener(this);
+		useMaskPanel.add(useMaskPerImageCheckbox,c);
+		++ c.gridy;
+		c.anchor = GridBagConstraints.LINE_START;
 		useMaskCheckbox = new Checkbox("Use a single image mask?");
                 useMaskCheckbox.addItemListener(this);
 		useMaskPanel.add(useMaskCheckbox,c);
 		++ c.gridy;
-		c.gridwidth = 3;		
 		useMaskPanel.add(new Label("(If you use a single image mask, all images must be the same dimensions."),c);
 		c.gridx = 0;
 		++ c.gridy;
@@ -638,6 +644,13 @@ public class Quantile_Based_Normalization implements PlugIn, ActionListener, Ite
                 // Now whether there's a mask file, and if so then load it.		
 		
                 boolean useMask=useMaskCheckbox.getState();
+		boolean useMaskPerImage=useMaskPerImageCheckbox.getState();
+		// This shouldn't happen due to disabling of the
+		// checkboxes, but check anyway:
+		if ( useMask && useMaskPerImage ) {
+			IJ.error("You can only choose one of the mask options.");
+			return;
+		}
 		
 		String maskFileName = null;
 		
@@ -664,6 +677,7 @@ public class Quantile_Based_Normalization implements PlugIn, ActionListener, Ite
 
 		processToDirectory( fg,
 				    outputDirectory,
+				    useMaskPerImageCheckbox.getState()
 				    maskFileName,
 				    channelToUse,
 				    numberOfQuantiles,
@@ -711,10 +725,17 @@ public class Quantile_Based_Normalization implements PlugIn, ActionListener, Ite
 	}
 	
 	public void itemStateChanged(ItemEvent e) {
-                if( e.getSource() == useMaskCheckbox ) {
+		Object source = e.getSource();
+                if( source == useMaskCheckbox ) {
 			boolean useMask = useMaskCheckbox.getState();
 			maskFileInput.setEnabled(useMask);
 			chooseMaskButton.setEnabled(useMask);
-                }
+			useMaskPerImageCheckbox.setEnabled(!useMask);
+                } else if( source == useMaskPerImageCheckbox ) {
+			boolean useMaskPerImage = useMaskPerImageCheckbox.getState();
+			maskFileInput.setEnabled(!useMaskPerImage);
+			chooseMaskButton.setEnabled(!useMaskPerImage);
+			useMaskCheckbox.setEnabled(!useMaskPerImage);
+		}
 	}
 }
