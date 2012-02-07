@@ -559,14 +559,6 @@ public class Quantile_Based_Normalization implements PlugIn, ActionListener, Ite
 		
 	public void run(String ignored) {
 
-		Pattern macOSPattern = Pattern.compile("^Mac ?OS.*$",Pattern.CASE_INSENSITIVE);
-		String osName = (String)System.getProperties().get("os.name");
-		if( osName != null && macOSPattern.matcher(osName).matches() ) {
-			IJ.error("The Quantile Based Normalization plugin "+
-				 "is currently disabled on Mac OS due to Bug 29.");
-			return;
-		}
-
 		/*
 		String [] defaultFiles = { "/home/mark/corpus/central-complex/mhl-middle(C)c5(0).lsm",
 					   "/home/mark/corpus/central-complex/mhl-71yxUAS-lacZ(0).lsm",
