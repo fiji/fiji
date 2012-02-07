@@ -21,7 +21,7 @@ Architecture: all
 Priority: extra
 Replaces: fiji (<= 20090513)
 Conflicts: fiji (<= 20090513)
-Depends: openjdk-6-jdk, libjava3d-java, libbatik-java, libxml-commons-external-java, libjfreechart-java, fiji-vib (>= 20111117225923), fiji-imagej (>= 20111114232849), fiji-3d-viewer (>= 20120109165759), fiji-plugins (>= 20120126170542), libjcommon-java, junit, libvecmath-java
+Depends: openjdk-6-jdk, libjava3d-java, libbatik-java, libxml-commons-external-java, libjcommon-java, fiji-vib (>= 20120207033317), fiji-imagej (>= 20111114232849), fiji-3d-viewer (>= 20120109165759), fiji-plugins (>= 20120126170542), libjfreechart-java, junit, libvecmath-java
 Description: Semi-automatic tracing, analysis and visualization of neurons, f [...]
  The description below is extracted from the Fiji Updater database.
  .
@@ -196,7 +196,7 @@ Architecture: all
 Priority: extra
 Replaces: fiji (<= 20090513)
 Conflicts: fiji (<= 20090513)
-Depends: openjdk-6-jdk, fiji-mpicbg (>= 20120114122321), fiji-bunwarpj (>= 20110423002840), libjava3d-java, fiji-imglib (>= 20111104171923), fiji-tracer (>= 20111114164221), libpg-java, libjcommon-java, fiji-jai (>= 20080801134354), fiji-vib (>= 20111117225923), fiji-edu-mines-jtk (>= 20080801134354), fiji-imagej (>= 20111114232849), libvecmath-java, fiji-loci-tools (>= 20111208200155), fiji-3d-viewer (>= 20120109165759), fiji-plugins (>= 20111223095853), libjfreechart-java, libjama-java
+Depends: openjdk-6-jdk, fiji-mpicbg (>= 20120114122321), libpg-java, libjava3d-java, fiji-imglib (>= 20111104171923), fiji-tracer (>= 20111114164221), fiji-bunwarpj (>= 20110423002840), libjcommon-java, fiji-jai (>= 20080801134354), fiji-vib (>= 20120207033317), fiji-edu-mines-jtk (>= 20080801134354), libjama-java, libvecmath-java, fiji-loci-tools (>= 20111208200155), fiji-3d-viewer (>= 20120109165759), fiji-plugins (>= 20111223095853), libjfreechart-java, fiji-imagej (>= 20111114232849)
 Description: TrakEM2 is a program to model from images, it is used for morpho [...]
  The description below is extracted from the Fiji Updater database.
  .
@@ -236,7 +236,7 @@ Architecture: all
 Priority: extra
 Replaces: fiji (<= 20090513)
 Conflicts: fiji (<= 20090513)
-Depends: openjdk-6-jdk, fiji-itext (>= 20120119233258), fiji-base (>= 20120112224841), fiji-imagej (>= 20111114232849), fiji-loci-tools (>= 20111208200155), libjfreechart-java, libvecmath-java, fiji-bunwarpj (>= 20110423002840), libjava3d-java, libjna-java, fiji-edu-mines-jtk (>= 20080801134354), fiji-trakem2 (>= 20120107144413), libjcommon-java, junit, fiji-scripting (>= 20120111190019), fiji-mpicbg (>= 20120113234153), fiji-imglib (>= 20111104171923), fiji-vib (>= 20111117225923), libjsch-java, libjavassist-java, fiji-image5d (>= 20111104184639), fiji-weka (>= 20100609224141), libjama-java, fiji-3d-viewer (>= 20120109165759)
+Depends: openjdk-6-jdk, fiji-itext (>= 20120119233258), fiji-base (>= 20120207033317), fiji-imagej (>= 20111114232849), fiji-loci-tools (>= 20111208200155), libjfreechart-java, libvecmath-java, fiji-bunwarpj (>= 20110423002840), libjava3d-java, libjna-java, fiji-edu-mines-jtk (>= 20080801134354), fiji-trakem2 (>= 20120107144413), libjcommon-java, junit, fiji-scripting (>= 20120207033317), fiji-mpicbg (>= 20120113234153), fiji-imglib (>= 20111104171923), fiji-vib (>= 20111117225923), libjsch-java, libjavassist-java, fiji-image5d (>= 20111104184639), fiji-weka (>= 20100609224141), libjama-java, fiji-3d-viewer (>= 20120109165759)
 Description: components from Fiji, including: PIV analyser, ij-app, PointPick [...]
  The descriptions below are extracted from the Fiji Updater database:
  .
@@ -599,7 +599,7 @@ Architecture: all
 Priority: extra
 Replaces: fiji (<= 20090513)
 Conflicts: fiji (<= 20090513)
-Depends: openjdk-6-jdk, clojure, fiji-imglib (>= 20111104171923), fiji-rsyntaxtextarea (>= 20110223005940), libjfreechart-java, fiji-vib (>= 20111007201734), libvecmath-java, fiji-base (>= 20120111190019), fiji-autocomplete (>= 20090524213156), libjava3d-java, bsh, fiji-imagej (>= 20111114232849), fiji-jython (>= 20100925003646), fiji-3d-viewer (>= 20120109165759), fiji-plugins (>= 20120125094957), libjcommon-java, rhino, fiji-jruby (>= 20100925003646)
+Depends: openjdk-6-jdk, clojure, fiji-imglib (>= 20111104171923), fiji-rsyntaxtextarea (>= 20110223005940), libjfreechart-java, fiji-vib (>= 20120207033317), libvecmath-java, fiji-base (>= 20120207033317), fiji-autocomplete (>= 20090524213156), libjava3d-java, bsh, fiji-imagej (>= 20111114232849), fiji-jython (>= 20100925003646), fiji-3d-viewer (>= 20120109165759), fiji-plugins (>= 20120207033317), libjcommon-java, rhino, fiji-jruby (>= 20100925003646)
 Description: components from Fiji, including: Script Editor, Javascript, JRub [...]
  The descriptions below are extracted from the Fiji Updater database:
  .
@@ -744,7 +744,7 @@ Architecture: all
 Priority: extra
 Replaces: fiji (<= 20090513)
 Conflicts: fiji (<= 20090513)
-Depends: openjdk-6-jdk, libjava3d-java, fiji-imglib (>= 20111104171923), fiji-base (>= 20120111190019), fiji-imagej (>= 20111114232849), fiji-3d-viewer (>= 20120109165759), fiji-plugins (>= 20110907054909), libvecmath-java, junit, libjzlib-java, libjama-java
+Depends: openjdk-6-jdk, libjava3d-java, fiji-imglib (>= 20111104171923), fiji-base (>= 20120207033317), fiji-imagej (>= 20111114232849), fiji-3d-viewer (>= 20120109165759), fiji-plugins (>= 20110907054909), libvecmath-java, junit, libjzlib-java, libjama-java
 Description: components from Fiji, including: VIB, VIB-lib
  The descriptions below are extracted from the Fiji Updater database:
  .
@@ -936,7 +936,7 @@ Architecture: all
 Priority: extra
 Replaces: fiji (<= 20090513), fiji-plugins (<= 20111206070018)
 Conflicts: fiji (<= 20090513), fiji-plugins (<= 20111206070018)
-Depends: openjdk-6-jdk, fiji-mpicbg (>= 20120113234153), libjava3d-java, fiji-imglib (>= 20111104171923), fiji-base (>= 20120111190019), fiji-imagej (>= 20111114232849), fiji-plugins (>= 20111223095853), libvecmath-java
+Depends: openjdk-6-jdk, fiji-mpicbg (>= 20120113234153), libjava3d-java, fiji-imglib (>= 20111104171923), fiji-base (>= 20120207033317), fiji-imagej (>= 20111114232849), fiji-plugins (>= 20111223095853), libvecmath-java
 Description: Generic descriptor-based registration which can be applied to 2d [...]
  The description below is extracted from the Fiji Updater database.
  .
@@ -983,7 +983,7 @@ Package: fiji
 Section: graphics
 Architecture: all
 Priority: extra
-Depends: fiji-image5d (>= 20111104184639), fiji-tracer (>= 20111114164221), fiji-jpedal (>= 20080801134354), fiji-examples (>= 20110925150919), fiji-base (>= 20120112224841), fiji-imagej (>= 20111114232849), fiji-loci-tools (>= 20111208200155), fiji-bunwarpj (>= 20110423002840), fiji-color-histogram (>= 20100607205357), fiji-edu-mines-jtk (>= 20080801134354), fiji-trakem2 (>= 20120107144413), fiji-itext (>= 20120119233258), fiji-luts (>= 20100610024221), fiji-plugins (>= 20120126170542), fiji-scripting (>= 20120111190019), fiji-mip (>= 20100818200853), fiji-mpicbg (>= 20120114122321), fiji-lsm-toolbox (>= 20100813145758), fiji-view5d (>= 20111227133755), fiji-imglib (>= 20111104171923), fiji-mtrack2 (>= 20100607205357), fiji-vib (>= 20111117225923), fiji-autocomplete (>= 20090524213156), fiji-jython (>= 20100925003646), fiji-ij-imageio (>= 20081218211215), fiji-jruby (>= 20100925003646), fiji-lsm-reader (>= 20110413184056), fiji-rsyntaxtextarea (>= 20110223005940), fiji-jai (>= 20080801134354), fiji-weka (>= 20100609224141), fiji-tcljava (>= 20081218211215), fiji-3d-viewer (>= 20120109165759), fiji-io (>= 20111122205655), fiji-db-registration (>= 20111221163941), fiji-barthel-plugins (>= 20100607205357)
+Depends: fiji-image5d (>= 20111104184639), fiji-tracer (>= 20111114164221), fiji-jpedal (>= 20080801134354), fiji-examples (>= 20110925150919), fiji-base (>= 20120207033317), fiji-imagej (>= 20111114232849), fiji-loci-tools (>= 20111208200155), fiji-bunwarpj (>= 20110423002840), fiji-color-histogram (>= 20100607205357), fiji-edu-mines-jtk (>= 20080801134354), fiji-trakem2 (>= 20120107144413), fiji-itext (>= 20120119233258), fiji-luts (>= 20100610024221), fiji-plugins (>= 20120207033317), fiji-scripting (>= 20120207033317), fiji-mip (>= 20100818200853), fiji-mpicbg (>= 20120114122321), fiji-lsm-toolbox (>= 20100813145758), fiji-view5d (>= 20111227133755), fiji-imglib (>= 20111104171923), fiji-mtrack2 (>= 20100607205357), fiji-vib (>= 20120207033317), fiji-autocomplete (>= 20090524213156), fiji-jython (>= 20100925003646), fiji-ij-imageio (>= 20081218211215), fiji-jruby (>= 20100925003646), fiji-lsm-reader (>= 20110413184056), fiji-rsyntaxtextarea (>= 20110223005940), fiji-jai (>= 20080801134354), fiji-weka (>= 20100609224141), fiji-tcljava (>= 20081218211215), fiji-3d-viewer (>= 20120109165759), fiji-io (>= 20120206233301), fiji-db-registration (>= 20111221163941), fiji-barthel-plugins (>= 20100607205357)
 Description: A metapackage for the Fiji image processing suite (based on ImageJ)
  Fiji is a project aiming at simplifying:
     * the installation of ImageJ
