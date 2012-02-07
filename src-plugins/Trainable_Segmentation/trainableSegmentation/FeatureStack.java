@@ -2989,7 +2989,7 @@ public class FeatureStack
 			}
 			
 			// Sobel (no blur)
-			if(enableFeatures[SOBEL])
+			if(enableFeatures[SOBEL] && minimumSigma < 2)
 			{
 				if ( Thread.currentThread().isInterrupted() ) 
 					return false;
@@ -2997,7 +2997,7 @@ public class FeatureStack
 				futures.add(exe.submit( getGradient(originalImage, 0)) );
 			}
 			// Hessian (no blur)
-			if(enableFeatures[HESSIAN])
+			if(enableFeatures[HESSIAN] && minimumSigma < 2)
 			{
 				if (Thread.currentThread().isInterrupted()) 
 					return false;
