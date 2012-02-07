@@ -135,9 +135,9 @@ public class IJHacker extends JavassistHelper {
 			}
 		});
 		if (isImageJA)
-			clazz.getConstructor("(Lij/ImageJApplet;I)V").insertBeforeBody("if ($2 != ij.ImageJ.NO_SHOW) setIcon();");
+			clazz.getConstructor("(Lij/ImageJApplet;I)V").insertBeforeBody("if ($2 != 2 /* ij.ImageJ.NO_SHOW */) setIcon();");
 		else {
-			clazz.getConstructor("(Ljava/applet/Applet;I)V").insertBeforeBody("if ($2 != ij.ImageJ.NO_SHOW) setIcon();");
+			clazz.getConstructor("(Ljava/applet/Applet;I)V").insertBeforeBody("if ($2 != 2 /* ij.ImageJ.NO_SHOW */) setIcon();");
 			method = clazz.getMethod("isRunning", "([Ljava/lang/String;)Z");
 			method.insertBefore("return fiji.OtherInstance.sendArguments($1);");
 		}
