@@ -1,5 +1,6 @@
 package io;
 
+import ij.CompositeImage;
 import ij.IJ;
 import ij.ImageJ;
 import ij.ImagePlus;
@@ -35,7 +36,7 @@ public class FIBSEM_Reader implements PlugIn
 
 			if ( !f.exists() )
 			{
-				IJ.log( "Cannot find file '" + filename + "'" );
+				IJ.log( "Cannot find file '" + f.getAbsolutePath() + "'" );
 				return;
 			}
 		}
@@ -50,6 +51,8 @@ public class FIBSEM_Reader implements PlugIn
 				IJ.log( "The file '" + f.getAbsolutePath() + "' is not a FIB-SEM raw file, the magic number does not match." );
 				return;
 			}
+
+			//System.out.println( header );
 
 			final ImagePlus imp = readFIBSEM( header, file );
 			file.close();
@@ -154,7 +157,7 @@ public class FIBSEM_Reader implements PlugIn
 	*/
 	public ImagePlus readFIBSEM( final FIBSEMData header, final FileInputStream file ) throws IOException
 	{
-		final ImagePlus imp;
+		ImagePlus imp;
 		double[] minmax = new double[] { Double.MAX_VALUE, Double.MIN_VALUE };
 
 		if ( header.numChannels == 1 )
@@ -163,22 +166,9 @@ public class FIBSEM_Reader implements PlugIn
 		}
 		else
 		{
-			final ImageStack stack = new ImageStack( (int)header.xRes, (int)header.yRes );
-
-			for ( int c = 0; c < header.numChannels; ++c )
-			{
-				final double[] tmpMinMax = new double[ 2 ];
-				final ShortProcessor sp = readChannel( header, file, tmpMinMax );
-				stack.addSlice( "channel " + c, sp );
-
-				if ( tmpMinMax[ 0 ] < minmax[ 0 ] )
-					minmax[ 0 ] = tmpMinMax[ 0 ];
-
-				if ( tmpMinMax[ 1 ] > minmax[ 1 ] )
-					minmax[ 1 ] = tmpMinMax[ 1 ];
-			}
-
-			imp = new ImagePlus( "", stack );
+			imp = new ImagePlus( header.name, readChannels( header, file, minmax ) );
+			imp.setDimensions( 1, header.numChannels, 1 );
+			imp =  new CompositeImage( imp, CompositeImage.COMPOSITE );
 		}
 
 		imp.setDisplayRange( minmax[ 0 ], minmax[ 1 ] );
@@ -215,6 +205,48 @@ public class FIBSEM_Reader implements PlugIn
 		minmax[ 1 ] = max;
 
 		return new ShortProcessor( (int)header.xRes, (int)header.yRes, shortSlice, null );
+	}
+
+	final ImageStack readChannels( final FIBSEMData header, final FileInputStream file, double[] minmax ) throws IOException
+	{
+		final int numChannels = header.numChannels;
+
+		// it is always unsigned short
+		final byte[] slice = new byte[ (int)header.xRes * (int)header.yRes * numChannels * 2 ];
+		file.read( slice );
+
+		final short[][] shortSlice = new short[ numChannels ][ (int)header.xRes * (int)header.yRes ];
+
+		// for the display range
+		double min = Double.MAX_VALUE;
+		double max = Double.MIN_VALUE;
+
+		for ( int i = 0; i < shortSlice[ 0 ].length; ++i )
+		{
+			for ( int c = 0; c < numChannels; ++c )
+			{
+				int j = 2 * i * numChannels + 2 * c;
+				int v = ( slice[ j ] ) << 8;
+				v += ( slice[ j + 1 ] );
+
+				// represent signed as unsigned
+				v -= Short.MIN_VALUE;
+
+				if ( v < min ) min = v;
+				if ( v > max ) max = v;
+				shortSlice[ c ][ i ] = (short)(v);
+			}
+		}
+
+		minmax[ 0 ] = min;
+		minmax[ 1 ] = max;
+
+		final ImageStack stack = new ImageStack( (int)header.xRes, (int)header.yRes );
+
+		for ( int c = 0; c < numChannels; ++c )
+			stack.addSlice( "channel " + c, new ShortProcessor( (int)header.xRes, (int)header.yRes, shortSlice[ c ], null ) );
+
+		return stack;
 	}
 
 	/**
@@ -766,7 +798,7 @@ public class FIBSEM_Reader implements PlugIn
 	{
 		new ImageJ();
 		FIBSEM_Reader r = new FIBSEM_Reader();
-		r.run( "/Users/preibischs/Desktop/Zeiss_12-01-14_210123.dat" );
+		r.run( "/Users/preibischs/Desktop/Zeiss_12-02-07_094618.dat" );//"/Users/preibischs/Desktop/Zeiss_12-01-14_210123.dat" );
 	}
 }
 /*
