@@ -342,17 +342,6 @@ public class Quantile_Based_Normalization implements PlugIn, ActionListener, Ite
 			return;
 		}
 
-		boolean [][] inMask = null;
-
-		int maskWidth = -1;
-		int maskHeight = -1;
-		int maskDepth = -1;
-
-		Mask singleMask = null;
-		if( maskFileName != null ) {
-			singleMask = new Mask(new File(maskFileName));
-		}
-
 		int n = fg.size();
 		if (n < 1) {
 			IJ.error("No image files selected");
@@ -390,8 +379,8 @@ public class Quantile_Based_Normalization implements PlugIn, ActionListener, Ite
 			File f = fg.get(b);
 			String path = f.getAbsolutePath();
 			Mask mask = null;
-			if (singleMask != null)
-				mask = singleMask;
+			if (maskFileName != null)
+				mask = new Mask(new File(maskFileName));
 			else if (useMaskPerImage)
 				mask = new Mask(getMaskFileFromImageFile(f));
 
