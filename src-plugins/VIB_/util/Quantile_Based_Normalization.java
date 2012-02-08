@@ -238,6 +238,68 @@ public class Quantile_Based_Normalization implements PlugIn, ActionListener, Ite
 		}
 	}
 
+	ImagePlus remapImage(ImagePlus imagePlus,
+			     int numberOfQuantiles,
+			     boolean replaceWithRankInstead,
+			     boolean rescaleRanks,
+			     Mask mask,
+			     Replacements [] rankReplacements,
+			     Replacements [] meanReplacements) {
+
+		if (mask != null) {
+			System.out.println("remapping with mask: "+mask);
+		}
+
+		int width = imagePlus.getWidth();
+		int height = imagePlus.getHeight();
+		ImageStack stack = imagePlus.getStack();
+		int depth = stack.getSize();
+		ImageStack newStack = new ImageStack(width,height);
+		for( int z = 0; z < depth; ++z ) {
+			byte [] oldPixels = (byte[])stack.getPixels(z+1);
+			byte [] newPixels = new byte[width*height];
+			for( int y = 0; y < height; ++y )
+				for( int x = 0; x < width; ++x ) {
+					if( (mask != null) && ! mask.inMask[z][y*width+x] )
+						continue;
+					int oldValue = oldPixels[y*width+x]&0xFF;
+					int replacement;
+					if( replaceWithRankInstead ) {
+						replacement = rankReplacements[oldValue].getRandomReplacement();
+						if(rescaleRanks)
+							replacement = (255*replacement) / (numberOfQuantiles - 1);
+					} else {
+						replacement = meanReplacements[oldValue].getRandomReplacement();
+					}
+					if( replacement < 0 ) {
+						System.out.println("BUG: ran out of replacements for "+oldValue);
+						newPixels[y*width+x] = (byte)oldValue;
+					} else {
+						newPixels[y*width+x] = (byte)replacement;
+					}
+				}
+			ByteProcessor bp=new ByteProcessor(width,height);
+			bp.setPixels(newPixels);
+			newStack.addSlice("",bp);
+
+			IJ.showProgress( z / (double)depth );
+		}
+
+		IJ.showProgress(1.0);
+
+		if( ImagePlus.COLOR_256 == imagePlus.getType() ) {
+			ColorModel cm = null;
+			cm = stack.getColorModel();
+			if( cm != null ) {
+				newStack.setColorModel( cm );
+			}
+		}
+
+		ImagePlus newImage = new ImagePlus( "normalized "+imagePlus.getTitle(), newStack );
+		newImage.setCalibration(imagePlus.getCalibration());
+
+		return newImage;
+	}
 
 	File getMaskFileFromImageFile(File imageFile) {
 		String fileLeafName = imageFile.getName();
@@ -433,6 +495,25 @@ public class Quantile_Based_Normalization implements PlugIn, ActionListener, Ite
 
 			File outputFile=new File(outputDirectory,newLeafName);
 
+			/* Get the mask: */
+			Mask mask = null;
+			if (maskFileName != null)
+				mask = new Mask(new File(maskFileName));
+			else if (useMaskPerImage)
+				mask = new Mask(getMaskFileFromImageFile(f));
+
+			/* meanReplacements or rankReplacements are
+			   the arrays that are ultimately used to get
+			   replacement values for the image, as in:
+
+			     rankReplacements[oldValue].getRandomReplacement()
+
+			     The Replacment class stores a particular
+			     number of replacment values, and tracks
+			     how many are left after removing a random
+			     one.
+			*/
+
 			Replacements [] meanReplacements = new Replacements[256];
 			for( int value = 0; value < 256; ++value )
 				meanReplacements[value] = new Replacements(256);
@@ -538,54 +619,15 @@ public class Quantile_Based_Normalization implements PlugIn, ActionListener, Ite
 				}
 			}
 
-
 			IJ.showProgress(0);
 
-			ImageStack newStack = new ImageStack(width,height);
-			for( int z = 0; z < depth; ++z ) {
-				byte [] oldPixels = (byte[])stack.getPixels(z+1);
-				byte [] newPixels = new byte[width*height];
-				for( int y = 0; y < height; ++y )
-					for( int x = 0; x < width; ++x ) {
-						if( (maskFileName != null) && ! inMask[z][y*width+x] )
-							continue;
-						int oldValue = oldPixels[y*width+x]&0xFF;
-						int replacement;
-						if( replaceWithRankInstead ) {
-							replacement = rankReplacements[oldValue].getRandomReplacement();
-							if(rescaleRanks)
-								replacement = (255*replacement) / (numberOfQuantiles - 1);
-						} else {
-							replacement = meanReplacements[oldValue].getRandomReplacement();
-						}
-						if( replacement < 0 ) {
-							System.out.println("BUG: ran out of replacements for "+oldValue);
-							newPixels[y*width+x] = (byte)oldValue;
-						} else {
-							newPixels[y*width+x] = (byte)replacement;
-						}
-					}
-				ByteProcessor bp=new ByteProcessor(width,height);
-				bp.setPixels(newPixels);
-				newStack.addSlice("",bp);
-
-				IJ.showProgress( z / (double)depth );
-
-			}
-
-
-			IJ.showProgress(1.0);
-
-			if( ImagePlus.COLOR_256 == imagePlus.getType() ) {
-				ColorModel cm = null;
-				cm = stack.getColorModel();
-				if( cm != null ) {
-					newStack.setColorModel( cm );
-				}
-			}
-
-			ImagePlus newImage = new ImagePlus( "normalized "+imagePlus.getTitle(), newStack );
-			newImage.setCalibration(imagePlus.getCalibration());
+			ImagePlus newImage = remapImage(imagePlus,
+							numberOfQuantiles,
+							replaceWithRankInstead,
+							rescaleRanks,
+							mask,
+							rankReplacements,
+							meanReplacements);
 
 			// newImage.show();
 
