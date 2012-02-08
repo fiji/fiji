@@ -606,7 +606,11 @@ public class Quantile_Based_Normalization implements PlugIn, ActionListener, Ite
 				}
 			}
 
-			boolean saved=new FileSaver(newImage).saveAsTiffStack(outputFile.getAbsolutePath());
+			boolean saved;
+			if (newImage.getStackSize() == 1)
+				saved = new FileSaver(newImage).saveAsTiff(outputFile.getAbsolutePath());
+			else
+				saved = new FileSaver(newImage).saveAsTiffStack(outputFile.getAbsolutePath());
 			if( ! saved )
 				return;
 
