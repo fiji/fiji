@@ -515,8 +515,6 @@ public class Quantile_Based_Normalization implements PlugIn, ActionListener, Ite
 			int height=imagePlus.getHeight();
 			int depth=imagePlus.getStackSize();
 
-			ImageStack stack=imagePlus.getStack();
-
 			IJ.showStatus("Replacing values in: "+imagePlus.getShortTitle()+" ...");
 
 			for (int q = 0; q < numberOfQuantiles; ++q) {
