@@ -8,6 +8,8 @@ import ij.ImageStack;
 import ij.io.OpenDialog;
 import ij.measure.Calibration;
 import ij.plugin.PlugIn;
+import ij.process.FloatProcessor;
+import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
 
 import java.io.DataInputStream;
@@ -23,6 +25,25 @@ import java.io.IOException;
  */
 public class FIBSEM_Reader implements PlugIn
 {
+	/**
+	 * Opens it either as:
+	 * UnsignedShort with the range [0..65535] where 0 == -10 Volts and 65535 == +10 Volts (default)
+	 * Float with a range from -10 Volts to +10 Volts
+	 *
+	 * Note, the voltage might be different in future versions, it is stored in FIBSEMData.detMin and FIBSEMData.detMax
+	 */
+	public static boolean openAsFloat = false;
+
+	/**
+	 * Stores the current header if somebody wants access to it
+	 */
+	FIBSEMData header;
+
+	/**
+	 * @return - the header of the last opened FIB-SEM file
+	 */
+	public FIBSEMData getHeader() { return header; }
+
 	@Override
 	public void run( final String filename )
 	{
@@ -32,6 +53,7 @@ public class FIBSEM_Reader implements PlugIn
 		if ( !f.exists() )
 		{
 			final OpenDialog od = new OpenDialog( "Open FIB-SEM raw file", null );
+
 			f = new File( od.getDirectory() + od.getFileName() );
 
 			if ( !f.exists() )
@@ -54,11 +76,13 @@ public class FIBSEM_Reader implements PlugIn
 
 			//System.out.println( header );
 
-			final ImagePlus imp = readFIBSEM( header, file );
+			final ImagePlus imp = readFIBSEM( header, file, openAsFloat );
 			file.close();
 
 			if ( imp == null )
 				return;
+
+			this.header = header;
 
 			// set the filename
 			imp.setTitle( f.getName() );
@@ -82,6 +106,12 @@ public class FIBSEM_Reader implements PlugIn
 		}
 	}
 
+	/**
+	 * Determines if the given file is a FIB-SEM file based on the magic number (first 4 bytes)
+	 *
+	 * @param f - the File
+	 * @return
+	 */
 	public static boolean isFIBSEM( final File f )
 	{
 		try
@@ -103,111 +133,85 @@ public class FIBSEM_Reader implements PlugIn
 		}
 	}
 
-	/**
-	 * Open the FIBSEM data as an ImgLib1 {@link Image}
-	 *
-	 * @param header - the {@link FIBSEMData} header
-	 * @param file - the {@link FileInputStream} located at position 1024
-	 * @param factory - the {@link ContainerFactory} to be used when creating the {@link Image}
-	 * @return the {@link Image} with the type {@link ShortType}
-	 * @throws IOException - if reading fails
-	 */
-	/*
-	public Image< ShortType > readFIBSEM( final FIBSEMData header, final FileInputStream file, final ContainerFactory factory ) throws IOException
-	{
-		final byte[] slice = new byte[ (int)header.xRes * (int)header.yRes * 2 ];
-		file.read( slice );
-
-		final Image< ShortType > img = new ImageFactory< ShortType >( new ShortType(), factory ).createImage( new int[] { (int)header.xRes, (int)header.yRes } );
-
-		if ( ArrayContainerFactory.class.isInstance( factory ) || ImagePlusContainerFactory.class.isInstance( factory ) )
-		{
-			for ( final ShortType s : img )
-			{
-				final int i = s.getIndex();
-				final int j = i * 2;
-
-				int v = ( slice[ j ] ) << 8;
-				v += ( slice[ j + 1 ] );
-
-				s.set( (short)v );
-			}
-		}
-		else
-		{
-			final LocalizableCursor< ShortType > cursor = img.createLocalizableCursor();
-			final int width = (int)header.xRes;
-
-			while ( cursor.hasNext() )
-			{
-				cursor.fwd();
-				final int i = cursor.getPosition( 1 ) * width + cursor.getPosition( 0 );
-
-				final int j = i * 2;
-
-				int v = ( slice[ j ] ) << 8;
-				v += ( slice[ j + 1 ] );
-
-				cursor.getType().set( (short)v );
-			}
-		}
-
-		return img;
-	}
-	*/
-	public ImagePlus readFIBSEM( final FIBSEMData header, final FileInputStream file ) throws IOException
+	public ImagePlus readFIBSEM( final FIBSEMData header, final FileInputStream file, boolean openAsFloat ) throws IOException
 	{
 		ImagePlus imp;
 		double[] minmax = new double[] { Double.MAX_VALUE, Double.MIN_VALUE };
 
 		if ( header.numChannels == 1 )
 		{
-			imp = new ImagePlus( header.name, readChannel( header, file, minmax ) );
+			imp = new ImagePlus( "", readChannel( header, file, minmax, openAsFloat ) );
 		}
 		else
 		{
-			imp = new ImagePlus( header.name, readChannels( header, file, minmax ) );
+			imp = new ImagePlus( "", readChannels( header, file, minmax, openAsFloat ) );
 			imp.setDimensions( 1, header.numChannels, 1 );
-			imp =  new CompositeImage( imp, CompositeImage.COMPOSITE );
+			imp =  new CompositeImage( imp, CompositeImage.GRAYSCALE );
 		}
 
 		imp.setDisplayRange( minmax[ 0 ], minmax[ 1 ] );
 		return imp;
 	}
 
-	final ShortProcessor readChannel( final FIBSEMData header, final FileInputStream file, double[] minmax ) throws IOException
+	final ImageProcessor readChannel( final FIBSEMData header, final FileInputStream file, double[] minmax, boolean openAsFloat ) throws IOException
 	{
 		// it is always unsigned short
 		final byte[] slice = new byte[ (int)header.xRes * (int)header.yRes * 2 ];
 		file.read( slice );
 
-		final short[] shortSlice = new short[ (int)header.xRes * (int)header.yRes ];
-
 		// for the display range
 		double min = Double.MAX_VALUE;
 		double max = Double.MIN_VALUE;
 
-		for ( int i = 0; i < shortSlice.length; ++i )
+		final ImageProcessor ip;
+
+		if ( openAsFloat )
 		{
-			int j = 2 * i;
-			int v = ( slice[ j ] ) << 8;
-			v += ( slice[ j + 1 ] );
+			final float[] floatSlice = new float[ (int)header.xRes * (int)header.yRes ];
 
-			// represent signed as unsigned
-			v -= Short.MIN_VALUE;
+			for ( int i = 0; i < floatSlice.length; ++i )
+			{
+				int j = 2 * i;
+				int v = ( slice[ j ] ) << 8;
+				v += ( slice[ j + 1 ] );
 
-			if ( v < min ) min = v;
-			if ( v > max ) max = v;
-			shortSlice[ i ] = (short)(v);
+				final float v2 = (header.offset[ 0 ] + v * header.gain[ 0 ]);
+
+				if ( v2 < min ) min = v2;
+				if ( v2 > max ) max = v2;
+				floatSlice[ i ] = v2;
+			}
+			ip = new FloatProcessor( (int)header.xRes, (int)header.yRes, floatSlice, null );
+		}
+		else
+		{
+			final short[] shortSlice = new short[ (int)header.xRes * (int)header.yRes ];
+
+			final float minVolts = (float)header.detMin;
+			final float rangeVolts = (float)header.detMax - (float)header.detMin;
+
+			for ( int i = 0; i < shortSlice.length; ++i )
+			{
+				int j = 2 * i;
+				int v = ( slice[ j ] ) << 8;
+				v += ( slice[ j + 1 ] );
+
+				v = Math.round( ((header.offset[ 0 ] + v * header.gain[ 0 ])-minVolts)/rangeVolts*65535.0f );
+
+				if ( v < min ) min = v;
+				if ( v > max ) max = v;
+				shortSlice[ i ] = (short)v;
+			}
+			ip = new ShortProcessor( (int)header.xRes, (int)header.yRes, shortSlice, null );
 		}
 
 		minmax[ 0 ] = min;
 		minmax[ 1 ] = max;
 
-		return new ShortProcessor( (int)header.xRes, (int)header.yRes, shortSlice, null );
+		return ip;
 	}
 
-	final ImageStack readChannels( final FIBSEMData header, final FileInputStream file, double[] minmax ) throws IOException
+	final ImageStack readChannels( final FIBSEMData header, final FileInputStream file, double[] minmax, boolean openAsFloat ) throws IOException
 	{
 		final int numChannels = header.numChannels;
 
@@ -215,36 +219,70 @@ public class FIBSEM_Reader implements PlugIn
 		final byte[] slice = new byte[ (int)header.xRes * (int)header.yRes * numChannels * 2 ];
 		file.read( slice );
 
-		final short[][] shortSlice = new short[ numChannels ][ (int)header.xRes * (int)header.yRes ];
-
 		// for the display range
 		double min = Double.MAX_VALUE;
 		double max = Double.MIN_VALUE;
 
-		for ( int i = 0; i < shortSlice[ 0 ].length; ++i )
+		final ImageStack stack;
+
+		if ( openAsFloat )
 		{
-			for ( int c = 0; c < numChannels; ++c )
+			final float[][] floatSlice = new float[ numChannels ][ (int)header.xRes * (int)header.yRes ];
+
+
+			for ( int i = 0; i < floatSlice[ 0 ].length; ++i )
 			{
-				int j = 2 * i * numChannels + 2 * c;
-				int v = ( slice[ j ] ) << 8;
-				v += ( slice[ j + 1 ] );
+				for ( int c = 0; c < numChannels; ++c )
+				{
+					int j = 2 * i * numChannels + 2 * c;
+					int v = ( slice[ j ] ) << 8;
+					v += ( slice[ j + 1 ] );
 
-				// represent signed as unsigned
-				v -= Short.MIN_VALUE;
+					final float v2 = header.offset[ 0 ] + v * header.gain[ 0 ];
 
-				if ( v < min ) min = v;
-				if ( v > max ) max = v;
-				shortSlice[ c ][ i ] = (short)(v);
+					if ( v2 < min ) min = v2;
+					if ( v2 > max ) max = v2;
+					floatSlice[ c ][ i ] = v2;
+				}
 			}
+
+			stack = new ImageStack( (int)header.xRes, (int)header.yRes );
+
+			for ( int c = 0; c < numChannels; ++c )
+				stack.addSlice( "channel " + c, new FloatProcessor( (int)header.xRes, (int)header.yRes, floatSlice[ c ], null ) );
+		}
+		else
+		{
+			final short[][] shortSlice = new short[ numChannels ][ (int)header.xRes * (int)header.yRes ];
+
+			final float minVolts = (float)header.detMin;
+			final float rangeVolts = (float)header.detMax - (float)header.detMin;
+
+			for ( int i = 0; i < shortSlice[ 0 ].length; ++i )
+			{
+				for ( int c = 0; c < numChannels; ++c )
+				{
+					int j = 2 * i * numChannels + 2 * c;
+					int v = ( slice[ j ] ) << 8;
+					v += ( slice[ j + 1 ] );
+
+					v = Math.round( ((header.offset[ 0 ] + v * header.gain[ 0 ])-minVolts)/rangeVolts*65535.0f );
+
+					if ( v < min ) min = v;
+					if ( v > max ) max = v;
+					shortSlice[ c ][ i ] = (short)(v);
+				}
+			}
+
+			stack = new ImageStack( (int)header.xRes, (int)header.yRes );
+
+			for ( int c = 0; c < numChannels; ++c )
+				stack.addSlice( "channel " + c, new ShortProcessor( (int)header.xRes, (int)header.yRes, shortSlice[ c ], null ) );
+
 		}
 
 		minmax[ 0 ] = min;
 		minmax[ 1 ] = max;
-
-		final ImageStack stack = new ImageStack( (int)header.xRes, (int)header.yRes );
-
-		for ( int c = 0; c < numChannels; ++c )
-			stack.addSlice( "channel " + c, new ShortProcessor( (int)header.xRes, (int)header.yRes, shortSlice[ c ], null ) );
 
 		return stack;
 	}
@@ -292,16 +330,12 @@ public class FIBSEM_Reader implements PlugIn
 		{
 			// fseek(fid,36,'bof'); FIBSEMData.Scaling = single(fread(fid,[4,FIBSEMData.ChanNum],'double')); % Read in AI channel scaling factors, (col#: AI#), (row#: offset, gain, 2nd order, 3rd order)
 			for ( int c = 0; c < data.numChannels; ++c )
+			{
 				data.offset[ c ] = (float)s.readDouble();
-
-			for ( int c = 0; c < data.numChannels; ++c )
 				data.gain[ c ] = (float)s.readDouble();
-
-			for ( int c = 0; c < data.numChannels; ++c )
 				data.secondOrder[ c ] = (float)s.readDouble();
-
-			for ( int c = 0; c < data.numChannels; ++c )
 				data.thirdOrder[ c ] = (float)s.readDouble();
+			}
 
 			s.skip( 64 - data.numChannels*8*4 );
 		}
@@ -309,16 +343,12 @@ public class FIBSEM_Reader implements PlugIn
 		{
 			// fseek(fid,36,'bof'); FIBSEMData.Scaling = fread(fid,[4,FIBSEMData.ChanNum],'single');
 			for ( int c = 0; c < data.numChannels; ++c )
+			{
 				data.offset[ c ] = s.readFloat();
-
-			for ( int c = 0; c < data.numChannels; ++c )
 				data.gain[ c ] = s.readFloat();
-
-			for ( int c = 0; c < data.numChannels; ++c )
 				data.secondOrder[ c ] = s.readFloat();
-
-			for ( int c = 0; c < data.numChannels; ++c )
 				data.thirdOrder[ c ] = s.readFloat();
+			}
 
 			s.skip( 64 - data.numChannels*4*4 );
 		}
@@ -345,36 +375,85 @@ public class FIBSEM_Reader implements PlugIn
 		// fseek(fid,111,'bof'); FIBSEMData.ZeissScanSpeed = fread(fid,1,'uint8'); % Scan speed (Zeiss #)
 		data.zeissScanSpeed = getUnsignedByte( s.readByte() );
 
-		s.skip( 380 - 112 );
+		if ( data.fileVersion == 1 || data.fileVersion == 2 || data.fileVersion == 3 )
+		{
+		    // fseek(fid,112,'bof'); FIBSEMData.ScanRate = fread(fid,1,'double'); % Actual AO (scanning) rate
+			data.scanRate = s.readDouble();
+			// fseek(fid,120,'bof'); FIBSEMData.FramelineRampdownRatio = fread(fid,1,'double'); % Frameline rampdown ratio
+			data.framelineRampdownRatio = s.readDouble();
+			// fseek(fid,128,'bof'); FIBSEMData.Xmin = fread(fid,1,'double'); % X coil minimum voltage
+			data.xMin = s.readDouble();
+			// fseek(fid,136,'bof'); FIBSEMData.Xmax = fread(fid,1,'double'); % X coil maximum voltage
+			data.xMax = s.readDouble();
+			// FIBSEMData.Detmin = -10; % Detector minimum voltage
+			data.detMin = -10.0;
+			// FIBSEMData.Detmax = 10; % Detector maximum voltage
+			data.detMax = 10.0;
+
+			s.skip( 151 - 144 );
+		}
+		else
+		{
+		    // fseek(fid,112,'bof'); FIBSEMData.ScanRate = fread(fid,1,'single'); % Actual AO (scanning) rate
+			data.scanRate = s.readFloat();
+			// fseek(fid,116,'bof'); FIBSEMData.FramelineRampdownRatio = fread(fid,1,'single'); % Frameline rampdown ratio
+			data.framelineRampdownRatio = s.readFloat();
+			// fseek(fid,120,'bof'); FIBSEMData.Xmin = fread(fid,1,'single'); % X coil minimum voltage
+			data.xMin = s.readFloat();
+			// fseek(fid,124,'bof'); FIBSEMData.Xmax = fread(fid,1,'single'); % X coil maximum voltage
+			data.xMax = s.readFloat();
+			// fseek(fid,128,'bof'); FIBSEMData.Detmin = fread(fid,1,'single'); % Detector minimum voltage
+			data.detMin = s.readFloat();
+			// fseek(fid,132,'bof'); FIBSEMData.Detmax = fread(fid,1,'single'); % Detector maximum voltage
+			data.detMax = s.readFloat();
+
+			s.skip( 151 - 136 );
+		}
+
+		// fseek(fid,151,'bof'); FIBSEMData.AI1 = fread(fid,1,'uint8'); % AI Ch1
+		data.AI1 = getUnsignedByte( s.readByte() );
+		// fseek(fid,152,'bof'); FIBSEMData.AI2 = fread(fid,1,'uint8'); % AI Ch2
+		data.AI2 = getUnsignedByte( s.readByte() );
+		// fseek(fid,153,'bof'); FIBSEMData.AI3 = fread(fid,1,'uint8'); % AI Ch3
+		data.AI3 = getUnsignedByte( s.readByte() );
+		// fseek(fid,154,'bof'); FIBSEMData.AI4 = fread(fid,1,'uint8'); % AI Ch4
+		data.AI4 = getUnsignedByte( s.readByte() );
+
+		s.skip( 180 - 155 );
+
+		// fseek(fid,180,'bof'); FIBSEMData.Notes = fread(fid,200,'*char')'; % Read in notes		 */
+		byte[] tmp = new byte[ 200 ];
+		s.read( tmp );
+		data.notes = new String( tmp );
 
 		if ( data.fileVersion == 1 || data.fileVersion == 2 )
 		{
 			// fseek(fid,380,'bof'); FIBSEMData.DetA = fread(fid,10,'*char')'; % Name of detector A
-			byte[] tmp = new byte[ 10 ];
+			tmp = new byte[ 10 ];
 			s.read( tmp );
 			data.detectorA = new String( tmp );
 
-	    // fseek(fid,390,'bof'); FIBSEMData.DetB = fread(fid,18,'*char')'; % Name of detector B
+			// fseek(fid,390,'bof'); FIBSEMData.DetB = fread(fid,18,'*char')'; % Name of detector B
 			tmp = new byte[ 18 ];
 			s.read( tmp );
 			data.detectorB = new String( tmp );
 
-	    // fseek(fid,408,'bof'); FIBSEMData.Mag = fread(fid,1,'double'); % Magnification
+			// fseek(fid,408,'bof'); FIBSEMData.Mag = fread(fid,1,'double'); % Magnification
 			data.magnification = s.readDouble();
 
-	    // fseek(fid,416,'bof'); FIBSEMData.PixelSize = fread(fid,1,'double'); % Pixel size in nm
+			// fseek(fid,416,'bof'); FIBSEMData.PixelSize = fread(fid,1,'double'); % Pixel size in nm
 			data.pixelSize = s.readDouble();
 
-	    // fseek(fid,424,'bof'); FIBSEMData.WD = fread(fid,1,'double'); % Working distance in mm
+			// fseek(fid,424,'bof'); FIBSEMData.WD = fread(fid,1,'double'); % Working distance in mm
 			data.wd = s.readDouble();
 
-	    // fseek(fid,432,'bof'); FIBSEMData.EHT = fread(fid,1,'double'); % EHT in kV
+			// fseek(fid,432,'bof'); FIBSEMData.EHT = fread(fid,1,'double'); % EHT in kV
 			data.eht = s.readDouble();
 
-	    // fseek(fid,440,'bof'); FIBSEMData.SEMApr = fread(fid,1,'uint8'); % SEM aperture number
+			// fseek(fid,440,'bof'); FIBSEMData.SEMApr = fread(fid,1,'uint8'); % SEM aperture number
 			data.semApr = getUnsignedByte( s.readByte() );
 
-	    // fseek(fid,441,'bof'); FIBSEMData.HighCurrent = fread(fid,1,'uint8'); % high current mode (1=on, 0=off)
+			// fseek(fid,441,'bof'); FIBSEMData.HighCurrent = fread(fid,1,'uint8'); % high current mode (1=on, 0=off)
 			data.highCurrent = getUnsignedByte( s.readByte() );
 
 			s.skip( 448 - 442 );
@@ -474,12 +553,12 @@ public class FIBSEM_Reader implements PlugIn
 
 			s.skip( 700 - 688 );
 
-	    // fseek(fid,700,'bof'); FIBSEMData.DetC = fread(fid,20,'*char')'; % Name of detector C
+			// fseek(fid,700,'bof'); FIBSEMData.DetC = fread(fid,20,'*char')'; % Name of detector C
 			tmp = new byte[ 20 ];
 			s.read( tmp );
 			data.detectorC = new String( tmp );
 
-	    // fseek(fid,720,'bof'); FIBSEMData.DetD = fread(fid,20,'*char')'; % Name of detector D
+			// fseek(fid,720,'bof'); FIBSEMData.DetD = fread(fid,20,'*char')'; % Name of detector D
 			s.read( tmp );
 			data.detectorD = new String( tmp );
 
@@ -488,103 +567,103 @@ public class FIBSEM_Reader implements PlugIn
 		else
 		{
 		    // fseek(fid,380,'bof'); FIBSEMData.DetA = fread(fid,10,'*char')'; % Name of detector A
-			byte[] tmp = new byte[ 10 ];
+			tmp = new byte[ 10 ];
 			s.read( tmp );
 			data.detectorA = new String( tmp );
 
-	    // fseek(fid,390,'bof'); FIBSEMData.DetB = fread(fid,18,'*char')'; % Name of detector B
+			// fseek(fid,390,'bof'); FIBSEMData.DetB = fread(fid,18,'*char')'; % Name of detector B
 			tmp = new byte[ 18 ];
 			s.read( tmp );
 			data.detectorB = new String( tmp );
 
 			s.skip( 410 - 408 );
 
-	    // fseek(fid,410,'bof'); FIBSEMData.DetC = fread(fid,20,'*char')'; % Name of detector C
+			// fseek(fid,410,'bof'); FIBSEMData.DetC = fread(fid,20,'*char')'; % Name of detector C
 			tmp = new byte[ 20 ];
 			s.read( tmp );
 			data.detectorC = new String( tmp );
 
-	    // fseek(fid,430,'bof'); FIBSEMData.DetD = fread(fid,20,'*char')'; % Name of detector D
+			// fseek(fid,430,'bof'); FIBSEMData.DetD = fread(fid,20,'*char')'; % Name of detector D
 			s.read( tmp );
 			data.detectorD = new String( tmp );
 
 			s.skip( 460 - 450 );
 
-	    // fseek(fid,460,'bof'); FIBSEMData.Mag = fread(fid,1,'single'); % Magnification
+			// fseek(fid,460,'bof'); FIBSEMData.Mag = fread(fid,1,'single'); % Magnification
 			data.magnification = s.readFloat();
 
-	    // fseek(fid,464,'bof'); FIBSEMData.PixelSize = fread(fid,1,'single'); % Pixel size in nm
+			// fseek(fid,464,'bof'); FIBSEMData.PixelSize = fread(fid,1,'single'); % Pixel size in nm
 			data.pixelSize = s.readFloat();
 
-	    // fseek(fid,468,'bof'); FIBSEMData.WD = fread(fid,1,'single'); % Working distance in mm
+			// fseek(fid,468,'bof'); FIBSEMData.WD = fread(fid,1,'single'); % Working distance in mm
 			data.wd = s.readFloat();
 
-	    // fseek(fid,472,'bof'); FIBSEMData.EHT = fread(fid,1,'single'); % EHT in kV
+			// fseek(fid,472,'bof'); FIBSEMData.EHT = fread(fid,1,'single'); % EHT in kV
 			data.eht = s.readFloat();
 
 			s.skip( 480 - 476 );
 
-	    // fseek(fid,480,'bof'); FIBSEMData.SEMApr = fread(fid,1,'uint8'); % SEM aperture number
+			// fseek(fid,480,'bof'); FIBSEMData.SEMApr = fread(fid,1,'uint8'); % SEM aperture number
 			data.semApr = getUnsignedByte( s.readByte() );
 
-	    // fseek(fid,481,'bof'); FIBSEMData.HighCurrent = fread(fid,1,'uint8'); % high current mode (1=on, 0=off)
+			// fseek(fid,481,'bof'); FIBSEMData.HighCurrent = fread(fid,1,'uint8'); % high current mode (1=on, 0=off)
 			data.highCurrent = getUnsignedByte( s.readByte() );
 
 			s.skip( 490 - 482 );
 
-	    // fseek(fid,490,'bof'); FIBSEMData.SEMCurr = fread(fid,1,'single'); % SEM probe current in A
+			// fseek(fid,490,'bof'); FIBSEMData.SEMCurr = fread(fid,1,'single'); % SEM probe current in A
 			data.semCurr = s.readFloat();
 
-	    // fseek(fid,494,'bof'); FIBSEMData.SEMRot = fread(fid,1,'single'); % SEM scan roation in degree
+			// fseek(fid,494,'bof'); FIBSEMData.SEMRot = fread(fid,1,'single'); % SEM scan roation in degree
 			data.semRot = s.readFloat();
 
-	    // fseek(fid,498,'bof'); FIBSEMData.ChamVac = fread(fid,1,'single'); % Chamber vacuum
+			// fseek(fid,498,'bof'); FIBSEMData.ChamVac = fread(fid,1,'single'); % Chamber vacuum
 			data.chamVac = s.readFloat();
 
-	    // fseek(fid,502,'bof'); FIBSEMData.GunVac = fread(fid,1,'single'); % E-gun vacuum
+			// fseek(fid,502,'bof'); FIBSEMData.GunVac = fread(fid,1,'single'); % E-gun vacuum
 			data.gunVac = s.readFloat();
 
 			s.skip( 510 - 506 );
 
-	    // fseek(fid,510,'bof'); FIBSEMData.SEMShiftX = fread(fid,1,'single'); % SEM beam shift X
+			// fseek(fid,510,'bof'); FIBSEMData.SEMShiftX = fread(fid,1,'single'); % SEM beam shift X
 			data.semShiftX = s.readFloat();
 
-	    // fseek(fid,514,'bof'); FIBSEMData.SEMShiftY = fread(fid,1,'single'); % SEM beam shift Y
+			// fseek(fid,514,'bof'); FIBSEMData.SEMShiftY = fread(fid,1,'single'); % SEM beam shift Y
 			data.semShiftY = s.readFloat();
 
 			// fseek(fid,518,'bof'); FIBSEMData.SEMStiX = fread(fid,1,'single'); % SEM stigmation X
 			data.semStiX = s.readFloat();
 
-	    // fseek(fid,522,'bof'); FIBSEMData.SEMStiY = fread(fid,1,'single'); % SEM stigmation Y
+			// fseek(fid,522,'bof'); FIBSEMData.SEMStiY = fread(fid,1,'single'); % SEM stigmation Y
 			data.semStiY = s.readFloat();
 
-	    // fseek(fid,526,'bof'); FIBSEMData.SEMAlnX = fread(fid,1,'single'); % SEM aperture alignment X
+			// fseek(fid,526,'bof'); FIBSEMData.SEMAlnX = fread(fid,1,'single'); % SEM aperture alignment X
 			data.semAlnX = s.readFloat();
 
-	    // fseek(fid,530,'bof'); FIBSEMData.SEMAlnY = fread(fid,1,'single'); % SEM aperture alignment Y
+			// fseek(fid,530,'bof'); FIBSEMData.SEMAlnY = fread(fid,1,'single'); % SEM aperture alignment Y
 			data.semAlnY = s.readFloat();
 
-	    // fseek(fid,534,'bof'); FIBSEMData.StageX = fread(fid,1,'single'); % Stage position X in mm
+			// fseek(fid,534,'bof'); FIBSEMData.StageX = fread(fid,1,'single'); % Stage position X in mm
 			data.stageX = s.readFloat();
 
-	    // fseek(fid,538,'bof'); FIBSEMData.StageY = fread(fid,1,'single'); % Stage position Y in mm
+			// fseek(fid,538,'bof'); FIBSEMData.StageY = fread(fid,1,'single'); % Stage position Y in mm
 			data.stageY = s.readFloat();
 
-	    // fseek(fid,542,'bof'); FIBSEMData.StageZ = fread(fid,1,'single'); % Stage position Z in mm
+			// fseek(fid,542,'bof'); FIBSEMData.StageZ = fread(fid,1,'single'); % Stage position Z in mm
 			data.stageZ = s.readFloat();
 
-	    // fseek(fid,546,'bof'); FIBSEMData.StageT = fread(fid,1,'single'); % Stage position T in degree
+			// fseek(fid,546,'bof'); FIBSEMData.StageT = fread(fid,1,'single'); % Stage position T in degree
 			data.stageT = s.readFloat();
 
-	    // fseek(fid,550,'bof'); FIBSEMData.StageR = fread(fid,1,'single'); % Stage position R in degree
+			// fseek(fid,550,'bof'); FIBSEMData.StageR = fread(fid,1,'single'); % Stage position R in degree
 			data.stageR = s.readFloat();
 
-	    // fseek(fid,554,'bof'); FIBSEMData.StageM = fread(fid,1,'single'); % Stage position M in mm
+			// fseek(fid,554,'bof'); FIBSEMData.StageM = fread(fid,1,'single'); % Stage position M in mm
 			data.stageM = s.readFloat();
 
 			s.skip( 560 - 558 );
 
-	    // fseek(fid,560,'bof'); FIBSEMData.BrightnessA = fread(fid,1,'single'); % Detector A brightness (%)
+			// fseek(fid,560,'bof'); FIBSEMData.BrightnessA = fread(fid,1,'single'); % Detector A brightness (%)
 			data.brightnessA = s.readFloat();
 
 			// fseek(fid,564,'bof'); FIBSEMData.ContrastA = fread(fid,1,'single'); % Detector A contrast (%)
@@ -598,48 +677,48 @@ public class FIBSEM_Reader implements PlugIn
 
 			s.skip( 600 - 576 );
 
-	    // fseek(fid,600,'bof'); FIBSEMData.Mode = fread(fid,1,'uint8'); % FIB mode: 0=SEM, 1=FIB, 2=Milling, 3=SEM+FIB, 4=Mill+SEM, 5=SEM Drift Correction, 6=FIB Drift Correction, 7=No Beam, 8=External, 9=External+SEM
+			// fseek(fid,600,'bof'); FIBSEMData.Mode = fread(fid,1,'uint8'); % FIB mode: 0=SEM, 1=FIB, 2=Milling, 3=SEM+FIB, 4=Mill+SEM, 5=SEM Drift Correction, 6=FIB Drift Correction, 7=No Beam, 8=External, 9=External+SEM
 			data.mode = getUnsignedByte( s.readByte() );
 
 			s.skip( 604 - 601 );
 
-	    // fseek(fid,604,'bof'); FIBSEMData.FIBFocus = fread(fid,1,'single'); % FIB focus in kV
+			// fseek(fid,604,'bof'); FIBSEMData.FIBFocus = fread(fid,1,'single'); % FIB focus in kV
 			data.fibFocus = s.readFloat();
 
-	    // fseek(fid,608,'bof'); FIBSEMData.FIBProb = fread(fid,1,'uint8'); % FIB probe number
+			// fseek(fid,608,'bof'); FIBSEMData.FIBProb = fread(fid,1,'uint8'); % FIB probe number
 			data.fibProb = getUnsignedByte( s.readByte() );
 
 			s.skip( 620 - 609 );
 
-	    // fseek(fid,620,'bof'); FIBSEMData.FIBCurr = fread(fid,1,'single'); % FIB emission current
+			// fseek(fid,620,'bof'); FIBSEMData.FIBCurr = fread(fid,1,'single'); % FIB emission current
 			data.fibCurr = s.readFloat();
 
 			// fseek(fid,624,'bof'); FIBSEMData.FIBRot = fread(fid,1,'single'); % FIB scan rotation
 			data.fibRot = s.readFloat();
 
-	    // fseek(fid,628,'bof'); FIBSEMData.FIBAlnX = fread(fid,1,'single'); % FIB aperture alignment X
+			// fseek(fid,628,'bof'); FIBSEMData.FIBAlnX = fread(fid,1,'single'); % FIB aperture alignment X
 			data.fibAlnX = s.readFloat();
 
-	    // fseek(fid,632,'bof'); FIBSEMData.FIBAlnY = fread(fid,1,'single'); % FIB aperture alignment Y
+			// fseek(fid,632,'bof'); FIBSEMData.FIBAlnY = fread(fid,1,'single'); % FIB aperture alignment Y
 			data.fibAlnY = s.readFloat();
 
-	    // fseek(fid,636,'bof'); FIBSEMData.FIBStiX = fread(fid,1,'single'); % FIB stigmation X
+			// fseek(fid,636,'bof'); FIBSEMData.FIBStiX = fread(fid,1,'single'); % FIB stigmation X
 			data.fibStiX = s.readFloat();
 
-	    // fseek(fid,640,'bof'); FIBSEMData.FIBStiY = fread(fid,1,'single'); % FIB stigmation Y
+			// fseek(fid,640,'bof'); FIBSEMData.FIBStiY = fread(fid,1,'single'); % FIB stigmation Y
 			data.fibStiY = s.readFloat();
 
-	    // fseek(fid,644,'bof'); FIBSEMData.FIBShiftX = fread(fid,1,'single'); % FIB beam shift X in micron
+			// fseek(fid,644,'bof'); FIBSEMData.FIBShiftX = fread(fid,1,'single'); % FIB beam shift X in micron
 			data.fibShiftX = s.readFloat();
 
-	    // fseek(fid,648,'bof'); FIBSEMData.FIBShiftY = fread(fid,1,'single'); % FIB beam shift Y in micron
+			// fseek(fid,648,'bof'); FIBSEMData.FIBShiftY = fread(fid,1,'single'); % FIB beam shift Y in micron
 			data.fibShiftY = s.readFloat();
 
 			s.skip( 800 - 652 );
 		}
 
 		// fseek(fid,800,'bof'); FIBSEMData.MachineID = fread(fid,160,'*char')'; % Read in Machine ID
-		byte[] tmp = new byte[ 160 ];
+		tmp = new byte[ 160 ];
 		s.read( tmp );
 		data.machineID = new String( tmp );
 
@@ -655,60 +734,145 @@ public class FIBSEM_Reader implements PlugIn
 
 	public class FIBSEMData
 	{
-		String name = "";
+		/* the magic number identifying the file, should be 3555587570 */
 		long magicNumber;
+		/* the version of the file, supported until now is 1,2,3 */
 		int fileVersion;
+		/* file type, 1 is Zeiss Neon detectors */
 		int fileType;
+		/* AI sampling time (including oversampling) in seconds */
 		double timeStep;
+		/* the number of channels */
 		int numChannels;
+		/* the parameters required to transform the 16 bit signed signal back to volts:
+		 * volts = offset + intensity*gain
+		 * (we ignore second and third order as they are zero anyways)
+		 */
 		float[] offset, gain, secondOrder, thirdOrder;
+		/* number of pixels in x per channel */
 		long xRes;
+		/* number of pixels in y per channel */
 		long yRes;
+		/* AI oversampling */
 		int oversampling;
-		int AIdelay = 0; // might not be in the file
+		/* Read AI delay (# of samples) - only v3*/
+		int AIdelay = 0;
+		/* Scan speed (Zeiss #) */
 		int zeissScanSpeed;
 
+	    /* Actual AO (scanning) rate */
+		double scanRate;
+		/* Frameline rampdown ratio */
+		double framelineRampdownRatio;
+		/* X coil minimum voltage */
+		double xMin;
+		/* X coil maximum voltage */
+		double xMax;
+		/* Detector minimum voltage */
+		double detMin;
+		/* Detector maximum voltage */
+		double detMax;
+
+		/* AI Ch1 */
+		int AI1;
+		/* AI Ch2 */
+		int AI2;
+		/* AI Ch3 */
+		int AI3;
+		/* AI Ch4 */
+		int AI4;
+
+		/* notes */
+		String notes;
+
+		/* Name of detector A */
 		String detectorA = "";
+		/* Name of detector B */
 		String detectorB = "";
+		/* Name of detector C */
 		String detectorC = "";
+		/* Name of detector D */
 		String detectorD = "";
 
-		double magnification, pixelSize;
-		double wd, eht;
-		int semApr, highCurrent, mode;
+		/* Magnification */
+		double magnification;
+		/* Pixel size in nm */
+		double pixelSize;
+		/* Working distance in mm */
+		double wd;
+		/* EHT in kV */
+		double eht;
+		/* SEM aperture number */
+		int semApr;
+		/* high current mode (1=on, 0=off) */
+		int highCurrent;
+		/* FIB mode: 0=SEM, 1=FIB, 2=Milling, 3=SEM+FIB, 4=Mill+SEM, 5=SEM Drift Correction, 6=FIB Drift Correction, 7=No Beam, 8=External, 9=External+SEM */
+		int mode;
 
+		/* SEM probe current in A */
 		double semCurr;
+		/* SEM scan roation in degree */
 		double semRot;
+		/* Chamber Vacuum */
 		double chamVac;
+		/* Gun vacuum */
 		double gunVac;
+		/* SEM beam shift X */
 		double semShiftX;
+		/* SEM beam shift Y */
 		double semShiftY;
+		/* SEM stigmation X */
 		double semStiX;
+		/* SEM stigmation Y */
 		double semStiY;
+		/* SEM aperture alignment X */
 		double semAlnX;
+		/* SEM aperture alignment Y */
 		double semAlnY;
+		/* Stage position X in mm */
 		double stageX;
+		/* Stage position Y in mm */
 		double stageY;
+		/* Stage position Z in mm */
 		double stageZ;
+		/* Stage position T in degree */
 		double stageT;
+		/* Stage position R in degree */
 		double stageR;
+		/* Stage position M in mm */
 		double stageM;
+		/* Detector A brightness (%) */
 		double brightnessA;
+		/* Detector A contrast (%) */
 		double contrastA;
+		/* Detector B brightness (%) */
 		double brightnessB;
+		/* Detector B contrast (%) */
 		double contrastB;
+		/* FIB focus in kV */
 		double fibFocus;
+		/* FIB probe number */
 		int fibProb;
+		/* FIB emission current */
 		double fibCurr;
+		/* FIB scan rotation */
 		double fibRot;
+		/* FIB aperture alignment X */
 		double fibAlnX;
+		/* FIB aperture alignment Y */
 		double fibAlnY;
+		/* FIB stigmation X */
 		double fibStiX;
+		/* FIB stigmation Y */
 		double fibStiY;
+		/* FIB beam shift X in micron */
 		double fibShiftX;
+		/* FIB beam shift Y in micron */
 		double fibShiftY;
 
+		/* name of the machine */
 		String machineID;
+		/* file length in bytes */
 		long fileLength;
 
 		public String toString()
@@ -744,6 +908,17 @@ public class FIBSEM_Reader implements PlugIn
 				   "oversampling = " + oversampling  + "\n" +
 				   "AI delay (# of samples) = " + AIdelay + "\n" +
 				   "Scan speed (Zeiss #) = " + zeissScanSpeed + "\n" +
+				   "Actual AO (scanning) rate = " + scanRate  + "\n" +
+				   "Frameline rampdown ratio = " + framelineRampdownRatio  + "\n" +
+				   "X coil minimum voltage = " + xMin + "\n" +
+				   "X coil maximum voltage = " + xMax + "\n" +
+				   "Detector minimum voltage = " + detMin + "\n" +
+				   "Detector maximum voltage = " + detMax + "\n" +
+				   "AI Ch1 = " + AI1 + "\n" +
+				   "AI Ch2 = " + AI2 + "\n" +
+				   "AI Ch3 = " + AI3 + "\n" +
+				   "AI Ch4 = " + AI4 + "\n" +
+				   "notes = " + notes + "\n" +
 				   "detector A = " + detectorA + "\n" +
 				   "detector B = " + detectorB + "\n" +
 				   "detector C = " + detectorC + "\n" +
@@ -797,8 +972,14 @@ public class FIBSEM_Reader implements PlugIn
 	public static void main( String args[] )
 	{
 		new ImageJ();
+
+		FIBSEM_Reader.openAsFloat = false;
+
 		FIBSEM_Reader r = new FIBSEM_Reader();
-		r.run( "/Users/preibischs/Desktop/Zeiss_12-02-07_094618.dat" );//"/Users/preibischs/Desktop/Zeiss_12-01-14_210123.dat" );
+		//r.run( "/Users/preibischs/Desktop/Zeiss_12-02-07_094618.dat" );//"/Users/preibischs/Desktop/Zeiss_12-01-14_210123.dat" );
+		r.run( "/Users/preibischs/Desktop/Zeiss_12-01-14_210123.dat" );
+
+		System.out.println( r.getHeader() );
 	}
 }
 /*
