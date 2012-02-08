@@ -177,9 +177,9 @@ public class Quantile_Based_Normalization implements PlugIn, ActionListener, Ite
 					long [] resultSumValuesInQuantile,
 					long [] resultNumberOfValuesInQuantile) {
 
-		if (numberOfQuantiles == resultNumberOfValuesInQuantile.length)
+		if (numberOfQuantiles != resultNumberOfValuesInQuantile.length)
 			throw new RuntimeException("BUG: numberOfQuantiles didn't match resultNumberOfValuesInQuantile.length");
-		if (numberOfQuantiles == resultSumValuesInQuantile.length)
+		if (numberOfQuantiles != resultSumValuesInQuantile.length)
 			throw new RuntimeException("BUG: numberOfQuantiles didn't match resultSumValuesInQuantile.length");
 
 		for (int q = 0; q < numberOfQuantiles; ++q) {
