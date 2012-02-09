@@ -626,7 +626,7 @@ public class MiniMaven {
 				if (result != null)
 					return result;
 			}
-			// for the root POM, fall back to $HOME/.m2/repository/
+			// for the root POM, fall back to $HOME/.m2/repository/ and Fiji's jars/ and plugins/ directories
 			if (parent == null)
 				return findLocallyCachedPOM(dependency, quiet);
 			return null;
