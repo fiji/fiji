@@ -669,17 +669,11 @@ public class MiniMaven {
 					dependency.version = parseSnapshotVersion(new File(path, "maven-metadata-snapshot.xml"));
 			} catch (FileNotFoundException e) { /* ignore */ }
 			else {
-				for (String jarName : new String[] {
-					"jars/" + dependency.artifactId + "-" + dependency.version + ".jar",
-					"plugins/" + dependency.artifactId + "-" + dependency.version + ".jar",
-					"jars/" + dependency.artifactId + ".jar",
-					"plugins/" + dependency.artifactId + ".jar"
-				}) {
-					File file = new File(System.getProperty("ij.dir"), jarName);
-					if (file.exists())
-						return cacheAndReturn(key, fakePOM(file, dependency));
-				}
+				File file = findInFijiDirectories(dependency);
+				if (file != null)
+					return cacheAndReturn(key, fakePOM(file, dependency));
 			}
+
 			path += dependency.getPOMName();
 
 			File file = new File(path);
@@ -705,6 +699,20 @@ public class MiniMaven {
 			else if (!quiet && !dependency.optional)
 				err.println("Artifact " + dependency.artifactId + " not found" + (downloadAutomatically ? "" : "; consider 'get-dependencies'"));
 			return cacheAndReturn(key, result);
+		}
+
+		protected File findInFijiDirectories(Coordinate dependency) {
+			for (String jarName : new String[] {
+				"jars/" + dependency.artifactId + "-" + dependency.version + ".jar",
+				"plugins/" + dependency.artifactId + "-" + dependency.version + ".jar",
+				"jars/" + dependency.artifactId + ".jar",
+				"plugins/" + dependency.artifactId + ".jar"
+			}) {
+				File file = new File(System.getProperty("ij.dir"), jarName);
+				if (file.exists())
+					return file;
+			}
+			return null;
 		}
 
 		protected POM cacheAndReturn(String key, POM pom) {
