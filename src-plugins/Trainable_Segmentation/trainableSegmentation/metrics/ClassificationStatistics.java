@@ -66,10 +66,13 @@ public class ClassificationStatistics
 		this.falsePositives = falsePositives;
 		this.falseNegatives = falseNegatives;
 		this.metricValue = metricValue;
+
+		final double retrievedPositives = truePositives + falsePositives; 
+		final double totalPositives = truePositives + falseNegatives; 
 		
-		this.precision = (double) truePositives / ((double)truePositives + (double)falsePositives);
-		this.recall = (double) truePositives / ((double)truePositives + (double)falseNegatives);
-		this.fScore = 2 * precision * recall / ( precision + recall );
-		
+		this.precision = retrievedPositives > 0 ? truePositives / retrievedPositives : 0;
+		this.recall = totalPositives > 0 ? truePositives / totalPositives : 0;
+		if( (precision + recall) > 0)
+			this.fScore = 2 * precision * recall / ( precision + recall );				
 	}
 }
