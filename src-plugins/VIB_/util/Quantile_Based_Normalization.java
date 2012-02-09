@@ -238,6 +238,107 @@ public class Quantile_Based_Normalization implements PlugIn, ActionListener, Ite
 		}
 	}
 
+	public void generateReplacements(
+		ImagePlus imagePlus,
+		int numberOfQuantiles,
+		long pointsInImage,
+		long [] frequencies,
+		long [] sumValuesInQuantile,
+		long [] numberOfValuesInQuantile,
+		double [] quantileMeans,
+		Replacements [] resultRankReplacements,
+		Replacements [] resultMeanReplacements) {
+
+		for (int q = 0; q < numberOfQuantiles; ++q) {
+
+			long [] replacementsInThisQuantile=new long[256];
+
+			long indexStartThisQuantile = (int) (q * pointsInImage / numberOfQuantiles);
+			long indexStartNextQuantile = (int) (((q + 1) * pointsInImage) / numberOfQuantiles);
+
+			long pointsInQuantile = indexStartNextQuantile - indexStartThisQuantile;
+
+			// If this is the last quantile, make sure we actually
+			// include everything...
+			if (q == numberOfQuantiles - 1) {
+				indexStartNextQuantile = pointsInImage;
+			}
+
+			// Keep track of the sum of the values
+			long cumulativeIncluding = 0;
+			long cumulativeBefore = 0;
+
+			for (int value = 0; value < frequencies.length; ++value) {
+
+				cumulativeIncluding += frequencies[value];
+
+				if ((cumulativeIncluding < indexStartThisQuantile) || (cumulativeBefore >= indexStartNextQuantile)) {
+
+					// Then there's no overlap...
+
+				} else {
+
+					long startInValues = 0;
+
+					if (indexStartThisQuantile > cumulativeBefore) {
+						startInValues = indexStartThisQuantile - cumulativeBefore;
+					}
+
+					// This is the end inclusive...
+					long endInValues = frequencies[value] - 1;
+
+					if (indexStartNextQuantile < cumulativeIncluding) {
+						endInValues = (indexStartNextQuantile - cumulativeBefore) - 1;
+					}
+					long pointsInOverlap = (endInValues - startInValues) + 1;
+					numberOfValuesInQuantile[q] += pointsInOverlap;
+					sumValuesInQuantile[q] += value * pointsInOverlap;
+					replacementsInThisQuantile[value] = pointsInOverlap;
+				}
+
+				cumulativeBefore += frequencies[value];
+			}
+
+			double mean = quantileMeans[q];
+
+			int byteLowerThanMean = (int) Math.floor(mean);
+			int byteHigherThanMean = (int) Math.ceil(mean);
+
+			double proportionLower = Math.ceil(mean) - mean;
+			int lowerBytes = (int) Math.round(proportionLower*(indexStartNextQuantile-indexStartThisQuantile));
+			int higherBytes = (int) (numberOfValuesInQuantile[q] - lowerBytes);
+
+			long replacementsAddedAlready = 0;
+
+			for( int i = 0; i < 256; ++i ) {
+
+				long r = replacementsInThisQuantile[i];
+
+				if( r == 0 )
+					continue;
+
+				long howManyLowerToAdd = 0;
+				long howManyHigherToAdd = 0;
+
+				if( replacementsAddedAlready >= lowerBytes ) {
+					howManyHigherToAdd = r;
+				} else if( replacementsAddedAlready + r >= lowerBytes ) {
+					howManyLowerToAdd = lowerBytes - replacementsAddedAlready;
+					howManyHigherToAdd = r - howManyLowerToAdd;
+				} else {
+					howManyLowerToAdd = r;
+				}
+
+				resultMeanReplacements[i].addSomeReplacements(howManyLowerToAdd, byteLowerThanMean);
+				resultMeanReplacements[i].addSomeReplacements(howManyHigherToAdd, byteHigherThanMean);
+
+				resultRankReplacements[i].addSomeReplacements(r, q);
+
+				replacementsAddedAlready += r;
+			}
+		}
+	}
+
 	ImagePlus remapImage(ImagePlus imagePlus,
 			     int numberOfQuantiles,
 			     boolean replaceWithRankInstead,
@@ -443,7 +544,6 @@ public class Quantile_Based_Normalization implements PlugIn, ActionListener, Ite
 
 			imagePlus.close();
 		}
-		// Now the following 
 
 		System.out.println("Now going on to calculate the mean in each quantile.");
 
@@ -517,94 +617,15 @@ public class Quantile_Based_Normalization implements PlugIn, ActionListener, Ite
 
 			IJ.showStatus("Replacing values in: "+imagePlus.getShortTitle()+" ...");
 
-			for (int q = 0; q < numberOfQuantiles; ++q) {
-
-				long [] replacementsInThisQuantile=new long[256];
-
-				long indexStartThisQuantile = (int) (q * pointsInImage[b] / numberOfQuantiles);
-				long indexStartNextQuantile = (int) (((q + 1) * pointsInImage[b]) / numberOfQuantiles);
-
-				long pointsInQuantile = indexStartNextQuantile - indexStartThisQuantile;
-
-				// If this is the last quantile, make sure we actually
-				// include everything...
-				if (q == numberOfQuantiles - 1) {
-					indexStartNextQuantile = pointsInImage[b];
-				}
-
-				// Keep track of the sum of the values
-				long cumulativeIncluding = 0;
-				long cumulativeBefore = 0;
-
-				for (int value = 0; value < frequencies[b].length; ++value) {
-
-					cumulativeIncluding += frequencies[b][value];
-
-					if ((cumulativeIncluding < indexStartThisQuantile) || (cumulativeBefore >= indexStartNextQuantile)) {
-
-						// Then there's no overlap...
-
-					} else {
-
-						long startInValues = 0;
-
-						if (indexStartThisQuantile > cumulativeBefore) {
-							startInValues = indexStartThisQuantile - cumulativeBefore;
-						}
-
-						// This is the end inclusive...
-						long endInValues = frequencies[b][value] - 1;
-
-						if (indexStartNextQuantile < cumulativeIncluding) {
-							endInValues = (indexStartNextQuantile - cumulativeBefore) - 1;
-						}
-						long pointsInOverlap = (endInValues - startInValues) + 1;
-						numberOfValuesInQuantile[b][q] += pointsInOverlap;
-						sumValuesInQuantile[b][q] += value * pointsInOverlap;
-						replacementsInThisQuantile[value] = pointsInOverlap;
-					}
-
-					cumulativeBefore += frequencies[b][value];
-				}
-
-				double mean = quantileMeans[q];
-
-				int byteLowerThanMean = (int) Math.floor(mean);
-				int byteHigherThanMean = (int) Math.ceil(mean);
-
-				double proportionLower = Math.ceil(mean) - mean;
-				int lowerBytes = (int) Math.round(proportionLower*(indexStartNextQuantile-indexStartThisQuantile));
-				int higherBytes = (int) (numberOfValuesInQuantile[b][q] - lowerBytes);
-
-				long replacementsAddedAlready = 0;
-
-				for( int i = 0; i < 256; ++i ) {
-
-					long r = replacementsInThisQuantile[i];
-
-					if( r == 0 )
-						continue;
-
-					long howManyLowerToAdd = 0;
-					long howManyHigherToAdd = 0;
-
-					if( replacementsAddedAlready >= lowerBytes ) {
-						howManyHigherToAdd = r;
-					} else if( replacementsAddedAlready + r >= lowerBytes ) {
-						howManyLowerToAdd = lowerBytes - replacementsAddedAlready;
-						howManyHigherToAdd = r - howManyLowerToAdd;
-					} else {
-						howManyLowerToAdd = r;
-					}
-
-					meanReplacements[i].addSomeReplacements(howManyLowerToAdd, byteLowerThanMean);
-					meanReplacements[i].addSomeReplacements(howManyHigherToAdd, byteHigherThanMean);
-
-					rankReplacements[i].addSomeReplacements(r, q);
-
-					replacementsAddedAlready += r;
-				}
-			}
+			generateReplacements(imagePlus,
+					     numberOfQuantiles,
+					     pointsInImage[b],
+					     frequencies[b],
+					     sumValuesInQuantile[b],
+					     numberOfValuesInQuantile[b],
+					     quantileMeans,
+					     rankReplacements,
+					     meanReplacements);
 
 			IJ.showProgress(0);
 
