@@ -22,8 +22,8 @@ import fiji.plugin.trackmate.features.track.TrackSpeedStatisticsAnalyzer;
 import fiji.plugin.trackmate.gui.WizardController;
 import fiji.plugin.trackmate.segmentation.DogSegmenter;
 import fiji.plugin.trackmate.segmentation.DownSampleLogSegmenter;
-import fiji.plugin.trackmate.segmentation.ManualSegmenter;
 import fiji.plugin.trackmate.segmentation.LogSegmenter;
+import fiji.plugin.trackmate.segmentation.ManualSegmenter;
 import fiji.plugin.trackmate.segmentation.SpotSegmenter;
 import fiji.plugin.trackmate.tracking.FastLAPTracker;
 import fiji.plugin.trackmate.tracking.LAPTracker;
@@ -38,7 +38,6 @@ import fiji.plugin.trackmate.visualization.threedviewer.SpotDisplayer3D;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.WindowManager;
-import ij.gui.Roi;
 import ij.plugin.PlugIn;
 
 import java.awt.Polygon;
@@ -126,6 +125,71 @@ public class TrackMate_ implements PlugIn {
 	/*
 	 * PROTECTED METHODS
 	 */
+	
+	/**
+	 * This method exists for the following reason:
+	 * <p>
+	 * The segmenter receives at each frame a cropped image to operate on, depending
+	 * on the user specifying a ROI. It therefore returns spots whose coordinates are 
+	 * with respect to the top-left corner of the ROI, not of the original image. 
+	 * <p>
+	 * This method modifies the given spots to put them back in the image coordinate
+	 * system. Additionally, is a non-square ROI was specified (e.g. a polygon), it 
+	 * prunes the spots that are not within the polygon of the ROI.
+	 * @param spotsThisFrame  the spot list to inspect
+	 * @param settings  the {@link Settings} object that will be used to retrieve the image ROI
+	 * and cropping information
+	 * @return  a list of spot. Depending on the presence of a polygon ROI, it might be a new, 
+	 * pruned list. Or not.
+	 */
+	protected List<Spot> translateAndPruneSpots(final List<Spot> spotsThisFrame, final Settings settings) {
+		// Get Roi
+		final Polygon polygon;
+		if (null == settings.imp || null == settings.imp.getRoi()) {
+			polygon = null;
+		} else {
+			polygon = settings.imp.getRoi().getPolygon();
+		}		
+		
+		// Put them back in the right referential 
+		final float[] calibration = settings.getCalibration();
+		TMUtils.translateSpots(spotsThisFrame, 
+				settings.xstart * calibration[0], 
+				settings.ystart * calibration[1], 
+				settings.zstart * calibration[2]);
+		List<Spot> prunedSpots;
+		// Prune if outside of ROI
+		if (null != polygon) {
+			prunedSpots = new ArrayList<Spot>();
+			for (Spot spot : spotsThisFrame) {
+				if (polygon.contains(spot.getFeature(Spot.POSITION_X)/calibration[0], spot.getFeature(Spot.POSITION_Y)/calibration[1])) 
+					prunedSpots.add(spot);
+			}
+		} else {
+			prunedSpots = spotsThisFrame;
+		}
+		return prunedSpots;
+	}
+	
+	
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	protected List<Spot> execSingleFrameSegmentation(final Image<?  extends RealType<?>> img, Settings settings) {
+		
+		final float[] calibration = settings.getCalibration();
+		SpotSegmenter segmenter = settings.segmenter.createNewSegmenter();
+		segmenter.setTarget(img, calibration, settings.segmenterSettings);
+
+		if (segmenter.checkInput() && segmenter.process()) {
+			List<Spot> spotsThisFrame = segmenter.getResult();
+			return translateAndPruneSpots(spotsThisFrame, settings);
+			
+		} else {
+			model.getLogger().error(segmenter.getErrorMessage()+'\n');
+			return null;
+		}
+
+	}
+	
 	
 	/**
 	 * Hook for subclassers.
@@ -343,10 +407,9 @@ public class TrackMate_ implements PlugIn {
 	 * 
 	 * @see #getSpots()
 	 */
-	@SuppressWarnings("unchecked")
 	public void execSegmentation() {
 		final Settings settings = model.getSettings();
-		final float[] calibration = settings.getCalibration();
+		final int segmentationChannel = settings.segmentationChannel;
 		final Logger logger = model.getLogger();
 		final ImagePlus imp = settings.imp;
 		if (null == imp) {
@@ -354,12 +417,7 @@ public class TrackMate_ implements PlugIn {
 			return;
 		}
 		final int numFrames = settings.tend - settings.tstart + 1;
-		Roi roi = imp.getRoi();
-		final Polygon polygon;
-		if (roi != null)
-			polygon = roi.getPolygon();
-		else 
-			polygon = null;
+		
 		final SpotCollection spots = new SpotCollection();
 		final AtomicInteger spotFound = new AtomicInteger(0);
 		final AtomicInteger progress = new AtomicInteger(0);
@@ -371,9 +429,6 @@ public class TrackMate_ implements PlugIn {
 			threads = SimpleMultiThreading.newThreads(1);
 		}
 
-		// The channel segmented is the one specified in the settings object, 0-based.
-		final int segmentationChannel = settings.segmentationChannel;
-
 		// Prepare the thread array
 		final AtomicInteger ai = new AtomicInteger(settings.tstart-1);
 		for (int ithread = 0; ithread < threads.length; ithread++) {
@@ -384,45 +439,16 @@ public class TrackMate_ implements PlugIn {
 
 					for (int i = ai.getAndIncrement(); i < settings.tend; i = ai.getAndIncrement()) {
 
-						/* 0 - Prepare stack for use with Imglib. */
-						@SuppressWarnings("rawtypes")
-						Image img = TMUtils.getSingleFrameAsImage(imp, i, segmentationChannel, settings); // will be cropped according to settings
-
-						/* 1 -- Initialize segmenter */
-						SpotSegmenter<? extends RealType<?>> segmenter = settings.segmenter.createNewSegmenter();
-						segmenter.setTarget(img, calibration, settings.segmenterSettings);
-
-						/* 2 Segment it */
-						if (segmenter.checkInput() && segmenter.process()) {
-							// Get spots
-							List<Spot> spotsThisFrame = segmenter.getResult();
-							// Put them back in the right referential 
-							TMUtils.translateSpots(spotsThisFrame, 
-									settings.xstart * calibration[0], 
-									settings.ystart * calibration[1], 
-									settings.zstart * calibration[2]);
-							List<Spot> prunedSpots;
-							// Prune if outside of ROI
-							if (null != polygon) {
-								prunedSpots = new ArrayList<Spot>();
-								for (Spot spot : spotsThisFrame) {
-									if (polygon.contains(spot.getFeature(Spot.POSITION_X)/calibration[0], spot.getFeature(Spot.POSITION_Y)/calibration[1])) 
-										prunedSpots.add(spot);
-								}
-							} else {
-								prunedSpots = spotsThisFrame;
-							}
-							// Add segmentation feature other than position
-							for (Spot spot : prunedSpots) {
-								spot.putFeature(Spot.POSITION_T, i * settings.dt);
-							}
-							spots.put(i, prunedSpots);
-							spotFound.addAndGet(prunedSpots.size());
-						} else {
-							logger.error(segmenter.getErrorMessage()+'\n');
-							return;
+						Image<? extends RealType<?>> img = TMUtils.getSingleFrameAsImage(imp, i, segmentationChannel, settings); // will be cropped according to settings
+						List<Spot> s = execSingleFrameSegmentation(img, settings);
+						
+						// Add segmentation feature other than position
+						for (Spot spot : spots) {
+							spot.putFeature(Spot.POSITION_T, i * settings.dt);
 						}
-
+						spots.put(i, s);
+						spotFound.addAndGet(s.size());
+						
 						logger.setProgress(progress.incrementAndGet() / (float)numFrames );
 
 					} // Finished looping over frames
