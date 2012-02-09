@@ -60,6 +60,8 @@ public class MiniMaven {
 		this.err = err;
 		this.verbose = verbose;
 		this.debug = debug;
+		if ("true".equalsIgnoreCase(System.getProperty("minimaven.offline")))
+			offlineMode = true;
 	}
 
 	protected void print80(String string) {
