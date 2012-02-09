@@ -51,6 +51,7 @@ import java.awt.event.ItemListener;
 import java.awt.image.ColorModel;
 import java.util.regex.Pattern;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 public class Quantile_Based_Normalization implements PlugIn, ActionListener, ItemListener {
 
@@ -71,7 +72,7 @@ public class Quantile_Based_Normalization implements PlugIn, ActionListener, Ite
 
 	class Replacements {
 
-		long [] replacements;
+		HashMap<Integer, Long> replacements;
 		long totalReplacements;
 		int minReplacement = Integer.MAX_VALUE;
 		int maxReplacement = Integer.MIN_VALUE;
@@ -79,7 +80,7 @@ public class Quantile_Based_Normalization implements PlugIn, ActionListener, Ite
 		int quantile;
 
 		public Replacements(int possibleValues) {
-			replacements = new long[possibleValues];
+			replacements = new HashMap<Integer, Long>();
 			rng=new Random();
 		}
 
@@ -88,7 +89,11 @@ public class Quantile_Based_Normalization implements PlugIn, ActionListener, Ite
 				minReplacement = replacement;
 			if( replacement > maxReplacement )
 				maxReplacement = replacement;
-			replacements[replacement] += howManyToReplace;
+			if( ! replacements.containsKey(replacement) ) {
+				replacements.put(replacement, 0L);
+			}
+			long previousValue = replacements.get(replacement);
+			replacements.put(replacement, previousValue + howManyToReplace);
 			totalReplacements += howManyToReplace;
 		}
 
@@ -103,16 +108,20 @@ public class Quantile_Based_Normalization implements PlugIn, ActionListener, Ite
 
 			for( int r = minReplacement; r <= maxReplacement; ++r ) {
 
+				if ( ! replacements.containsKey(r) )
+					continue;
+
 				long indexInThisSlot = index - replacementsSkipped;
 
-				if( indexInThisSlot < replacements[r] ) {
+				long numberOfReplacements = replacements.get(r);
+				if( indexInThisSlot < numberOfReplacements ) {
 					// Then we remove one of these and return
 					// the value of r.
-					-- replacements[r];
+					replacements.put(r, numberOfReplacements - 1);
 					-- totalReplacements;
 					return r;
 				} else {
-					replacementsSkipped += replacements[r];
+					replacementsSkipped += numberOfReplacements;
 				}
 			}
 			return -1;
@@ -125,8 +134,9 @@ public class Quantile_Based_Normalization implements PlugIn, ActionListener, Ite
 			else {
 				String result = "" + totalReplacements + " replacements left (in";
 				for( int i = minReplacement; i <= maxReplacement; ++i ) {
-					if( replacements[i] > 0 )
-						result += " " + i + " (" + replacements[i] + ")";
+					long numberOfReplacements = replacements.get(i);
+					if( numberOfReplacements > 0 )
+						result += " " + i + " (" + numberOfReplacements + ")";
 				}
 				return result;
 			}
@@ -184,8 +194,6 @@ public class Quantile_Based_Normalization implements PlugIn, ActionListener, Ite
 
 		for (int q = 0; q < numberOfQuantiles; ++q) {
 
-			long [] replacementsInThisQuantile=new long[256];
-
 			long indexStartThisQuantile = (int) (q * pointsInImage / numberOfQuantiles);
 			long indexStartNextQuantile = (int) (((q + 1) * pointsInImage) / numberOfQuantiles);
 
@@ -230,7 +238,6 @@ public class Quantile_Based_Normalization implements PlugIn, ActionListener, Ite
 					// System.out.println("points in overlap: "+pointsInOverlap);
 					resultNumberOfValuesInQuantile[q] += pointsInOverlap;
 					resultSumValuesInQuantile[q] += value * pointsInOverlap;
-					// replacementsInThisQuantile[value] = pointsInOverlap;
 				}
 
 				cumulativeBefore += frequencies[value];
@@ -249,9 +256,11 @@ public class Quantile_Based_Normalization implements PlugIn, ActionListener, Ite
 		Replacements [] resultRankReplacements,
 		Replacements [] resultMeanReplacements) {
 
+		int possibleImageValues = frequencies.length;
+
 		for (int q = 0; q < numberOfQuantiles; ++q) {
 
-			long [] replacementsInThisQuantile=new long[256];
+			long [] replacementsInThisQuantile=new long[possibleImageValues];
 
 			long indexStartThisQuantile = (int) (q * pointsInImage / numberOfQuantiles);
 			long indexStartNextQuantile = (int) (((q + 1) * pointsInImage) / numberOfQuantiles);
@@ -310,7 +319,7 @@ public class Quantile_Based_Normalization implements PlugIn, ActionListener, Ite
 
 			long replacementsAddedAlready = 0;
 
-			for( int i = 0; i < 256; ++i ) {
+			for( int i = 0; i < possibleImageValues; ++i ) {
 
 				long r = replacementsInThisQuantile[i];
 
@@ -351,19 +360,31 @@ public class Quantile_Based_Normalization implements PlugIn, ActionListener, Ite
 			System.out.println("remapping with mask: "+mask);
 		}
 
+		int originalImageType = imagePlus.getType();
 		int width = imagePlus.getWidth();
 		int height = imagePlus.getHeight();
 		ImageStack stack = imagePlus.getStack();
 		int depth = stack.getSize();
 		ImageStack newStack = new ImageStack(width,height);
 		for( int z = 0; z < depth; ++z ) {
-			byte [] oldPixels = (byte[])stack.getPixels(z+1);
-			byte [] newPixels = new byte[width*height];
+			byte [] oldPixelsByte = null, newPixelsByte = null;
+			short [] oldPixelsShort = null, newPixelsShort = null;
+			if (originalImageType == ImagePlus.GRAY16) {
+				oldPixelsShort = (short[])stack.getPixels(z+1);
+				newPixelsShort = new short[width*height];
+			} else {
+				oldPixelsByte = (byte[])stack.getPixels(z+1);
+				newPixelsByte = new byte[width*height];
+			}
 			for( int y = 0; y < height; ++y )
 				for( int x = 0; x < width; ++x ) {
 					if( (mask != null) && ! mask.inMask[z][y*width+x] )
 						continue;
-					int oldValue = oldPixels[y*width+x]&0xFF;
+					int oldValue;
+					if (originalImageType == ImagePlus.GRAY16)
+						oldValue = oldPixelsShort[y*width+x]&0xFFFF;
+					else
+						oldValue = oldPixelsByte[y*width+x]&0xFF;
 					int replacement;
 					if( replaceWithRankInstead ) {
 						replacement = rankReplacements[oldValue].getRandomReplacement();
@@ -374,14 +395,22 @@ public class Quantile_Based_Normalization implements PlugIn, ActionListener, Ite
 					}
 					if( replacement < 0 ) {
 						System.out.println("BUG: ran out of replacements for "+oldValue);
-						newPixels[y*width+x] = (byte)oldValue;
-					} else {
-						newPixels[y*width+x] = (byte)replacement;
+						replacement = oldValue;
 					}
+					if (originalImageType == ImagePlus.GRAY16)
+						newPixelsShort[y*width+x] = (short)replacement;
+					else
+						newPixelsByte[y*width+x] = (byte)replacement;
 				}
-			ByteProcessor bp=new ByteProcessor(width,height);
-			bp.setPixels(newPixels);
-			newStack.addSlice("",bp);
+			if (originalImageType == ImagePlus.GRAY16) {
+				ShortProcessor sp=new ShortProcessor(width,height);
+				sp.setPixels(newPixelsShort);
+				newStack.addSlice("",sp);
+			} else {
+				ByteProcessor bp=new ByteProcessor(width,height);
+				bp.setPixels(newPixelsByte);
+				newStack.addSlice("",bp);
+			}
 
 			IJ.showProgress( z / (double)depth );
 		}
@@ -423,6 +452,9 @@ public class Quantile_Based_Normalization implements PlugIn, ActionListener, Ite
 	Checkbox useMaskPerImageCheckbox;
 	TextField maskFileInput;
 	Button chooseMaskButton;
+
+	static final int POSSIBLE_8_BIT_VALUES = 256;
+	static final int POSSIBLE_16_BIT_VALUES = 65536;
 
 	public void processToDirectory( FileGroup fg,
 					String outputDirectory,
@@ -469,11 +501,13 @@ public class Quantile_Based_Normalization implements PlugIn, ActionListener, Ite
 		/* First go through each image building totalling the
 		   frequencies of each value. */
 
-		long frequencies[][] = new long[n][256];
+		long frequencies[][] = null;
 		long pointsInImage[] = new long[n];
 
 		long [][] sumValuesInQuantile = new long[n][numberOfQuantiles];
 		long [][] numberOfValuesInQuantile = new long[n][numberOfQuantiles];
+
+		int possibleImageValues = -1;
 
 		for (int b = 0; b < n; ++b) {
 
@@ -495,7 +529,25 @@ public class Quantile_Based_Normalization implements PlugIn, ActionListener, Ite
 			ImagePlus imagePlus=channels[channelToUse];
 
 			int type=imagePlus.getType();
-			if( ! ((type == ImagePlus.GRAY8) || (type == ImagePlus.COLOR_256)) ) {
+			if( (type == ImagePlus.GRAY8) || (type == ImagePlus.COLOR_256) ) {
+				if (possibleImageValues > 0) {
+					if (possibleImageValues != POSSIBLE_8_BIT_VALUES) {
+						IJ.error("The image '"+path+"' was 8 bit, but the previous images were all 16 bit");
+					}
+				} else {
+					possibleImageValues = POSSIBLE_8_BIT_VALUES;
+					frequencies = new long[n][possibleImageValues];
+				}
+			} else if( type == ImagePlus.GRAY16 ) {
+				if (possibleImageValues > 0) {
+					if (possibleImageValues != POSSIBLE_16_BIT_VALUES) {
+						IJ.error("The image '"+path+"' was 16 bit, but the previous images were all 8 bit");
+					}
+				} else {
+					possibleImageValues = POSSIBLE_16_BIT_VALUES;
+					frequencies = new long[n][possibleImageValues];
+				}
+			} else {
 				IJ.error("Error processing '"+path+"': This plugin only works on 8bit (GRAY8 or COLOR_256) images.");
 				return;
 			}
@@ -522,14 +574,25 @@ public class Quantile_Based_Normalization implements PlugIn, ActionListener, Ite
 			IJ.showStatus("Calculating frequencies and quantiles for "+imagePlus.getShortTitle()+" ...");
 
 			for( int z=0; z<depth; ++z ) {
-				byte [] pixels=(byte[])stack.getPixels(z+1);
-				for( int y=0; y<height; ++y )
-					for( int x=0; x<width; ++x ) {
-						if( (mask == null) || mask.inMask[z][y*width+x] ) {
-							int value=pixels[y*width+x]&0xFF;
-							++frequencies[b][value];
+				if (possibleImageValues == POSSIBLE_8_BIT_VALUES) {
+					byte [] pixels=(byte[])stack.getPixels(z+1);
+					for( int y=0; y<height; ++y )
+						for( int x=0; x<width; ++x ) {
+							if( (mask == null) || mask.inMask[z][y*width+x] ) {
+								int value=pixels[y*width+x]&0xFF;
+								++frequencies[b][value];
+							}
 						}
-					}
+				} else {
+					short [] pixels=(short[])stack.getPixels(z+1);
+					for( int y=0; y<height; ++y )
+						for( int x=0; x<width; ++x ) {
+							if( (mask == null) || mask.inMask[z][y*width+x] ) {
+								int value=pixels[y*width+x]&0xFFFF;
+								++frequencies[b][value];
+							}
+						}
+				}
 			}
 
 			pointsInImage[b]= (mask == null) ? width*height*depth : mask.pointsInMask;
@@ -603,12 +666,12 @@ public class Quantile_Based_Normalization implements PlugIn, ActionListener, Ite
 			     one.
 			*/
 
-			Replacements [] meanReplacements = new Replacements[256];
-			for( int value = 0; value < 256; ++value )
-				meanReplacements[value] = new Replacements(256);
+			Replacements [] meanReplacements = new Replacements[possibleImageValues];
+			for( int value = 0; value < possibleImageValues; ++value )
+				meanReplacements[value] = new Replacements(possibleImageValues);
 
-			Replacements [] rankReplacements = new Replacements[256];
-			for( int value = 0; value < 256; ++value )
+			Replacements [] rankReplacements = new Replacements[possibleImageValues];
+			for( int value = 0; value < possibleImageValues; ++value )
 				rankReplacements[value] = new Replacements(numberOfQuantiles);
 
 			int width=imagePlus.getWidth();
@@ -779,8 +842,8 @@ public class Quantile_Based_Normalization implements PlugIn, ActionListener, Ite
 		-- channelToUse;
 
 		int numberOfQuantiles = (int)gd.getNextNumber();
-		if( numberOfQuantiles < 1 || numberOfQuantiles > 256 ) {
-			IJ.error("Number of quantiles must be between 1 and 256 inclusive.");
+		if( numberOfQuantiles < 1 || numberOfQuantiles > POSSIBLE_16_BIT_VALUES ) {
+			IJ.error("Number of quantiles must be between 1 and "+POSSIBLE_16_BIT_VALUES+" inclusive.");
 			return;
 		}
 
