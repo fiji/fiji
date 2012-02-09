@@ -45,7 +45,7 @@ import org.xml.sax.helpers.DefaultHandler;
 
 public class MiniMaven {
 	protected String endLine = System.console() == null ? "\n" : "\033[K\r";
-	protected boolean verbose, debug = false, downloadAutomatically, offlineMode;
+	protected boolean verbose, debug = false, downloadAutomatically, offlineMode, ignoreMavenRepositories;
 	protected PrintStream err;
 	protected Map<String, POM> localPOMCache = new HashMap<String, POM>();
 	protected Fake fake;
@@ -62,6 +62,8 @@ public class MiniMaven {
 		this.debug = debug;
 		if ("true".equalsIgnoreCase(System.getProperty("minimaven.offline")))
 			offlineMode = true;
+		if ("ignore".equalsIgnoreCase(System.getProperty("minimaven.repositories")))
+			ignoreMavenRepositories = true;
 	}
 
 	protected void print80(String string) {
@@ -638,6 +640,15 @@ public class MiniMaven {
 				POM result = localPOMCache.get(key); // may be null
 				if (result == null || dependency.version == null || compareVersion(dependency.version, result.coordinate.version) <= 0)
 					return result;
+			}
+
+			if (ignoreMavenRepositories) {
+				File file = findInFijiDirectories(dependency);
+				if (file != null)
+					return cacheAndReturn(key, fakePOM(file, dependency));
+				if (!quiet && !dependency.optional)
+					err.println("Skipping artifact " + dependency.artifactId + " (for " + coordinate.artifactId + "): not in jars/ nor plugins/");
+				return cacheAndReturn(key, null);
 			}
 
 			String path = System.getProperty("user.home") + "/.m2/repository/" + dependency.groupId.replace('.', '/') + "/" + dependency.artifactId + "/";
