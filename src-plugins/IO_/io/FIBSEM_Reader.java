@@ -735,145 +735,145 @@ public class FIBSEM_Reader implements PlugIn
 	public class FIBSEMData
 	{
 		/* the magic number identifying the file, should be 3555587570 */
-		long magicNumber;
+		public long magicNumber;
 		/* the version of the file, supported until now is 1,2,3 */
-		int fileVersion;
+		public int fileVersion;
 		/* file type, 1 is Zeiss Neon detectors */
-		int fileType;
+		public int fileType;
 		/* AI sampling time (including oversampling) in seconds */
-		double timeStep;
+		public double timeStep;
 		/* the number of channels */
-		int numChannels;
+		public int numChannels;
 		/* the parameters required to transform the 16 bit signed signal back to volts:
 		 * volts = offset + intensity*gain
 		 * (we ignore second and third order as they are zero anyways)
 		 */
-		float[] offset, gain, secondOrder, thirdOrder;
+		public float[] offset, gain, secondOrder, thirdOrder;
 		/* number of pixels in x per channel */
-		long xRes;
+		public long xRes;
 		/* number of pixels in y per channel */
-		long yRes;
+		public long yRes;
 		/* AI oversampling */
-		int oversampling;
+		public int oversampling;
 		/* Read AI delay (# of samples) - only v3*/
-		int AIdelay = 0;
+		public int AIdelay = 0;
 		/* Scan speed (Zeiss #) */
-		int zeissScanSpeed;
+		public int zeissScanSpeed;
 
 	    /* Actual AO (scanning) rate */
-		double scanRate;
+		public double scanRate;
 		/* Frameline rampdown ratio */
-		double framelineRampdownRatio;
+		public double framelineRampdownRatio;
 		/* X coil minimum voltage */
-		double xMin;
+		public double xMin;
 		/* X coil maximum voltage */
-		double xMax;
+		public double xMax;
 		/* Detector minimum voltage */
-		double detMin;
+		public double detMin;
 		/* Detector maximum voltage */
-		double detMax;
+		public double detMax;
 
 		/* AI Ch1 */
-		int AI1;
+		public int AI1;
 		/* AI Ch2 */
-		int AI2;
+		public int AI2;
 		/* AI Ch3 */
-		int AI3;
+		public int AI3;
 		/* AI Ch4 */
-		int AI4;
+		public int AI4;
 
 		/* notes */
-		String notes;
+		public String notes;
 
 		/* Name of detector A */
-		String detectorA = "";
+		public String detectorA = "";
 		/* Name of detector B */
-		String detectorB = "";
+		public String detectorB = "";
 		/* Name of detector C */
-		String detectorC = "";
+		public String detectorC = "";
 		/* Name of detector D */
-		String detectorD = "";
+		public String detectorD = "";
 
 		/* Magnification */
-		double magnification;
+		public double magnification;
 		/* Pixel size in nm */
-		double pixelSize;
+		public double pixelSize;
 		/* Working distance in mm */
-		double wd;
+		public double wd;
 		/* EHT in kV */
-		double eht;
+		public double eht;
 		/* SEM aperture number */
-		int semApr;
+		public int semApr;
 		/* high current mode (1=on, 0=off) */
-		int highCurrent;
+		public int highCurrent;
 		/* FIB mode: 0=SEM, 1=FIB, 2=Milling, 3=SEM+FIB, 4=Mill+SEM, 5=SEM Drift Correction, 6=FIB Drift Correction, 7=No Beam, 8=External, 9=External+SEM */
-		int mode;
+		public int mode;
 
 		/* SEM probe current in A */
-		double semCurr;
+		public double semCurr;
 		/* SEM scan roation in degree */
-		double semRot;
+		public double semRot;
 		/* Chamber Vacuum */
-		double chamVac;
+		public double chamVac;
 		/* Gun vacuum */
-		double gunVac;
+		public double gunVac;
 		/* SEM beam shift X */
-		double semShiftX;
+		public double semShiftX;
 		/* SEM beam shift Y */
-		double semShiftY;
+		public double semShiftY;
 		/* SEM stigmation X */
-		double semStiX;
+		public double semStiX;
 		/* SEM stigmation Y */
-		double semStiY;
+		public double semStiY;
 		/* SEM aperture alignment X */
-		double semAlnX;
+		public double semAlnX;
 		/* SEM aperture alignment Y */
-		double semAlnY;
+		public double semAlnY;
 		/* Stage position X in mm */
-		double stageX;
+		public double stageX;
 		/* Stage position Y in mm */
-		double stageY;
+		public double stageY;
 		/* Stage position Z in mm */
-		double stageZ;
+		public double stageZ;
 		/* Stage position T in degree */
-		double stageT;
+		public double stageT;
 		/* Stage position R in degree */
-		double stageR;
+		public double stageR;
 		/* Stage position M in mm */
-		double stageM;
+		public double stageM;
 		/* Detector A brightness (%) */
-		double brightnessA;
+		public double brightnessA;
 		/* Detector A contrast (%) */
-		double contrastA;
+		public double contrastA;
 		/* Detector B brightness (%) */
-		double brightnessB;
+		public double brightnessB;
 		/* Detector B contrast (%) */
-		double contrastB;
+		public double contrastB;
 		/* FIB focus in kV */
-		double fibFocus;
+		public double fibFocus;
 		/* FIB probe number */
-		int fibProb;
+		public int fibProb;
 		/* FIB emission current */
-		double fibCurr;
+		public double fibCurr;
 		/* FIB scan rotation */
-		double fibRot;
+		public double fibRot;
 		/* FIB aperture alignment X */
-		double fibAlnX;
+		public double fibAlnX;
 		/* FIB aperture alignment Y */
-		double fibAlnY;
+		public double fibAlnY;
 		/* FIB stigmation X */
-		double fibStiX;
+		public double fibStiX;
 		/* FIB stigmation Y */
-		double fibStiY;
+		public double fibStiY;
 		/* FIB beam shift X in micron */
-		double fibShiftX;
+		public double fibShiftX;
 		/* FIB beam shift Y in micron */
-		double fibShiftY;
+		public double fibShiftY;
 
 		/* name of the machine */
-		String machineID;
+		public String machineID;
 		/* file length in bytes */
-		long fileLength;
+		public long fileLength;
 
 		public String toString()
 		{
