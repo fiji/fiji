@@ -649,15 +649,11 @@ public class MiniMaven {
 				// try to find the .jar in Fiji's jars/ dir
 				String jarName = dependency.artifactId + ".jar";
 				File file = new File(System.getProperty("ij.dir"), "jars/" + jarName);
-				if (file.exists()) {
-					POM pom = fakePOM(file, dependency);
-					localPOMCache.put(key, pom);
-					return pom;
-				}
+				if (file.exists())
+					return cacheAndReturn(key, fakePOM(file, dependency));
 				if (!quiet)
 					err.println("Cannot find version for artifact " + dependency.artifactId + " (dependency of " + coordinate.artifactId + ")");
-				localPOMCache.put(key, null);
-				return null;
+				return cacheAndReturn(key, null);
 			}
 			else if (dependency.version.startsWith("[")) try {
 				if (!maybeDownloadAutomatically(dependency, quiet))
@@ -680,11 +676,8 @@ public class MiniMaven {
 					"plugins/" + dependency.artifactId + ".jar"
 				}) {
 					File file = new File(System.getProperty("ij.dir"), jarName);
-					if (file.exists()) {
-						POM pom = fakePOM(file, dependency);
-						localPOMCache.put(key, pom);
-						return pom;
-					}
+					if (file.exists())
+						return cacheAndReturn(key, fakePOM(file, dependency));
 				}
 			}
 			path += dependency.getPOMName();
@@ -698,8 +691,7 @@ public class MiniMaven {
 				else {
 					if (!quiet && !dependency.optional)
 						err.println("Skipping artifact " + dependency.artifactId + " (for " + coordinate.artifactId + "): not found");
-					localPOMCache.put(key, null);
-					return null;
+					return cacheAndReturn(key, null);
 				}
 			}
 
@@ -712,8 +704,12 @@ public class MiniMaven {
 			}
 			else if (!quiet && !dependency.optional)
 				err.println("Artifact " + dependency.artifactId + " not found" + (downloadAutomatically ? "" : "; consider 'get-dependencies'"));
-			localPOMCache.put(key, result);
-			return result;
+			return cacheAndReturn(key, result);
+		}
+
+		protected POM cacheAndReturn(String key, POM pom) {
+			localPOMCache.put(key, pom);
+			return pom;
 		}
 
 		// TODO: if there is no internet connection, do not try to download -SNAPSHOT versions
