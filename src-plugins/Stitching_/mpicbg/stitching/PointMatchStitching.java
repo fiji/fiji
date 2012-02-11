@@ -5,6 +5,10 @@ import mpicbg.models.PointMatch;
 
 public class PointMatchStitching extends PointMatch 
 {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 	ComparePair pair;
 	
 	/**

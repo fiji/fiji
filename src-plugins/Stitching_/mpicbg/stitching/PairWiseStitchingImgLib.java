@@ -24,7 +24,6 @@ import mpicbg.imglib.type.numeric.RealType;
 import mpicbg.imglib.type.numeric.integer.UnsignedByteType;
 import mpicbg.imglib.type.numeric.integer.UnsignedShortType;
 import mpicbg.imglib.type.numeric.real.FloatType;
-import mpicbg.imglib.util.Util;
 
 /**
  * Pairwise Stitching of two ImagePlus using ImgLib1 and PhaseCorrelation.
@@ -65,6 +64,8 @@ public class PairWiseStitchingImgLib
 					result = performStitching( image1, getWrappedImageUnsignedByte( imp2, params.channel2, timepoint2 ), params );
 				else
 					IJ.log( "Unknown image type: " + imp2.getType() );
+				
+				image1.close();
 			}
 			else if ( imp1.getType() == ImagePlus.GRAY16 )
 			{
@@ -78,6 +79,8 @@ public class PairWiseStitchingImgLib
 					result = performStitching( image1, getWrappedImageUnsignedByte( imp2, params.channel2, timepoint2 ), params );
 				else
 					IJ.log( "Unknown image type: " + imp2.getType() );
+
+				image1.close();
 			} 
 			else if ( imp1.getType() == ImagePlus.GRAY8 )
 			{
@@ -91,6 +94,8 @@ public class PairWiseStitchingImgLib
 					result = performStitching( image1, getWrappedImageUnsignedByte( imp2, params.channel2, timepoint2 ), params );
 				else
 					IJ.log( "Unknown image type: " + imp2.getType() );
+				
+				image1.close();
 			} 
 			else
 			{
