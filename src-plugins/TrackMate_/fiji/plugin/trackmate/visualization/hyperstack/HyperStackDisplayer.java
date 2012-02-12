@@ -23,7 +23,7 @@ import fiji.util.gui.OverlayedImageCanvas;
 public class HyperStackDisplayer extends AbstractTrackMateModelView  {
 
 	private static final boolean DEBUG = false;
-	ImagePlus imp;
+	protected ImagePlus imp;
 	OverlayedImageCanvas canvas;
 	float[] calibration;
 	Settings settings;

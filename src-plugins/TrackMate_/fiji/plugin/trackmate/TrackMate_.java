@@ -68,19 +68,19 @@ public class TrackMate_ implements PlugIn {
 	public static final String PLUGIN_NAME_VERSION = ".beta_2012-01-13";
 	public static final boolean DEFAULT_USE_MULTITHREADING = true;
 
-	private TrackMateModel model;
-	private boolean useMultithreading = DEFAULT_USE_MULTITHREADING;
+	protected TrackMateModel model;
+	protected boolean useMultithreading = DEFAULT_USE_MULTITHREADING;
 
-	private List<SpotFeatureAnalyzer> spotFeatureAnalyzers;
-	private List<TrackFeatureAnalyzer> trackFeatureAnalyzers;
+	protected List<SpotFeatureAnalyzer> spotFeatureAnalyzers;
+	protected List<TrackFeatureAnalyzer> trackFeatureAnalyzers;
 	/** The list of {@link SpotSegmenter} that will be offered to choose amongst to the user. */
-	private List<SpotSegmenter<? extends RealType<?>>> spotSegmenters;
+	protected List<SpotSegmenter<? extends RealType<?>>> spotSegmenters;
 	/** The list of {@link TrackMateModelView} that will be offered to choose amongst to the user. */
-	private List<TrackMateModelView> trackMateModelViews;
+	protected List<TrackMateModelView> trackMateModelViews;
 	/** The list of {@link TrackMateModelView} that will be offered to choose amongst to the user. */
-	private List<TrackMateAction> trackMateActions;
+	protected List<TrackMateAction> trackMateActions;
 	/** The list of {@link SpotTracker} that will be offered to choose amongst to the user. */
-	private List<SpotTracker> spotTrackers;
+	protected List<SpotTracker> spotTrackers;
 
 
 
@@ -173,7 +173,7 @@ public class TrackMate_ implements PlugIn {
 	
 	
 	@SuppressWarnings({ "unchecked", "rawtypes" })
-	protected List<Spot> execSingleFrameSegmentation(final Image<?  extends RealType<?>> img, Settings settings) {
+	protected List<Spot> execSingleFrameSegmentation(final Image<?  extends RealType<?>> img, Settings settings, int frameIndex) {
 		
 		final float[] calibration = settings.getCalibration();
 		SpotSegmenter segmenter = settings.segmenter.createNewSegmenter();
@@ -440,7 +440,7 @@ public class TrackMate_ implements PlugIn {
 					for (int i = ai.getAndIncrement(); i < settings.tend; i = ai.getAndIncrement()) {
 
 						Image<? extends RealType<?>> img = TMUtils.getSingleFrameAsImage(imp, i, segmentationChannel, settings); // will be cropped according to settings
-						List<Spot> s = execSingleFrameSegmentation(img, settings);
+						List<Spot> s = execSingleFrameSegmentation(img, settings, i);
 						
 						// Add segmentation feature other than position
 						for (Spot spot : spots) {

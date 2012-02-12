@@ -171,7 +171,7 @@ public class SpotOverlay implements Overlay {
 			val = spot.getFeature(feature);
 			InterpolatePaintScale  colorMap = (InterpolatePaintScale) displaySettings.get(TrackMateModelView.KEY_COLORMAP);
 			if (null == feature || null == val)
-				targetColor.put(spot, (Color) displaySettings.get(TrackMateModelView.DEFAULT_COLOR));
+				targetColor.put(spot, TrackMateModelView.DEFAULT_COLOR);
 			else
 				targetColor.put(spot, colorMap .getPaint((val-min)/(max-min)) );
 		}
