@@ -562,8 +562,9 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 						Float val;
 						for(String key : featuresKey) {
 							val = spot.getFeature(key);
-							if (null != val)
-								val = new Float(val);
+							if (val == null) {
+								continue;
+							}
 							newSpot.putFeature(key, val);
 						}
 						newSpot.putFeature(Spot.POSITION_T, spot.getFeature(Spot.POSITION_T) + dt);
