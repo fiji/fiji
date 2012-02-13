@@ -4542,11 +4542,21 @@ public class WekaSegmentation {
 			
 	}
 
-	public void setClassLabels(String[] classLabels) {
+	/**
+	 * Set the labels for each class
+	 * @param classLabels array containing all the class labels
+	 */
+	public void setClassLabels(String[] classLabels) 
+	{
 		this.classLabels = classLabels;
 	}
 
-	public String[] getClassLabels() {
+	/**
+	 * Get the current class labels
+	 * @return array containing all the class labels
+	 */
+	public String[] getClassLabels() 
+	{
 		return classLabels;
 	}
 	
