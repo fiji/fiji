@@ -17,6 +17,8 @@ import java.awt.event.KeyListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowFocusListener;
 
+import java.net.URL;
+
 import java.util.Hashtable;
 
 /**
@@ -36,8 +38,8 @@ public abstract class MenuItemDiverter implements KeyListener, PlugIn, WindowFoc
 
 	protected abstract void action(String arg);
 
-	protected String getCursorPath() {
-		return System.getProperty("ij.dir") + "/images/help-cursor.gif";
+	protected URL getCursorPath() {
+		return getClass().getResource("/help-cursor.gif");
 	}
 
 	@Override
@@ -77,8 +79,8 @@ public abstract class MenuItemDiverter implements KeyListener, PlugIn, WindowFoc
 		cursor = ij.getCursor();
 		if (diversionCursor == null) {
 			Toolkit toolkit = Toolkit.getDefaultToolkit();
-			String path = getCursorPath();
-			Image diversion = toolkit.getImage(path);
+			URL url = getCursorPath();
+			Image diversion = toolkit.getImage(url);
 			Point hotSpot = new Point(6, 7);
 			diversionCursor = toolkit.createCustomCursor(diversion, hotSpot, "cursor-" + getTitle().replace(' ', '-'));
 		}
