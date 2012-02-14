@@ -235,7 +235,7 @@ do
 			fi
 		done)
 	test -z "$pushopts" && continue
-	echo git push $name $pushopts
+	git push $name $pushopts
 done
 
 # Maybe error out
