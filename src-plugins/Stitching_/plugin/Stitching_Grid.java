@@ -86,7 +86,7 @@ public class Stitching_Grid implements PlugIn
 		
 		final int gridType = grid.getType();
 		final int gridOrder = grid.getOrder();
-		
+				
 		if ( gridType == -1 || gridOrder == -1 )
 			return;
 
