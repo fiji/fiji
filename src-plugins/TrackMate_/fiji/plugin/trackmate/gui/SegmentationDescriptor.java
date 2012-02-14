@@ -9,10 +9,10 @@ import fiji.plugin.trackmate.TrackMate_;
 public class SegmentationDescriptor implements WizardPanelDescriptor {
 	
 	public static final String DESCRIPTOR = "SegmentationPanel";
-	private LogPanel logPanel;
-	private TrackMate_ plugin;
-	private TrackMateWizard wizard;
-	private Logger logger;
+	protected LogPanel logPanel;
+	protected TrackMate_ plugin;
+	protected TrackMateWizard wizard;
+	protected Logger logger;
 	
 
 	@Override
