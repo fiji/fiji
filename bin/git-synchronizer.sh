@@ -235,7 +235,8 @@ do
 			fi
 		done)
 	test -z "$pushopts" && continue
-	git push $name $pushopts
+	git push $name $pushopts ||
+	add_error "Could not push to $url"
 done
 
 # Maybe error out
