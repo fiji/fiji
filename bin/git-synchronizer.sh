@@ -8,7 +8,7 @@ add_error () {
 }
 
 url2remotename () {
-	echo "$1" |
+	echo "${1%=*}" |
 	sed 's/[^-A-Za-z0-9._]/_/g'
 }
 
@@ -52,7 +52,9 @@ fetch_from () {
 			add_error "Could not add remote $name ($url)"
 			return 1
 		}
-		test -n "$pushurl" && git config remote.$name.pushURL "$pushurl"
+		test -n "$pushurl" &&
+		test "$pushurl" != "$url" &&
+		git config remote.$name.pushURL "$pushurl"
 	fi
 	previous="$(get_remote_branches $name)"
 	git fetch --prune $name >&2 || {
@@ -107,16 +109,16 @@ exit
 # Fetch
 
 todo=
-for url
+for urlpair
 do
-	url="${url%=*}"
+	url="${urlpair%=*}"
 	has_spaces $url && {
 		add_error "Error: Ignoring URL with spaces: $url"
 		continue
 	}
 
 	echo "Getting updates from $url..."
-	thistodo="$(fetch_from $url)" || {
+	thistodo="$(fetch_from $urlpair)" || {
 		add_error "$thistodo"
 		continue
 	}
