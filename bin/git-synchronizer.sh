@@ -179,6 +179,21 @@ todo="$(echo "$todo" |
 
 # test for disagreeing updates
 
+refs=$(echo "$todo" |
+	sed 's/^[^ ]* [^ ]*	//' |
+	sort |
+	uniq -d)
+for ref in $refs
+do
+	sha1=$(echo "$todo" |
+		sed -n "s|^\([^ ]*\) [^ ]*	$ref$|\1|p")
+	sha1=$(get_common_fast_forward $sha1)
+	has_spaces $sha1 ||
+	todo="$(echo "$todo" |
+		sed "s|^[^ ]* \([^ ]*	$ref\)$|$sha1 \1|" |
+		uniq)"
+done
+
 disagreeing="$(echo "$todo" |
 	sort -k 3 |
 	uniq -D -f 2)"
