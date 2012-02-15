@@ -463,6 +463,24 @@ static int string_read_file(struct string *string, const char *path) {
 	return result;
 }
 
+static void string_escape(struct string *string, const char *characters)
+{
+	int i, j = string->length;
+
+	for (i = 0; i < string->length; i++)
+		if (strchr(characters, string->buffer[i]))
+			j++;
+	if (i == j)
+		return;
+	string_ensure_alloc(string, j);
+	string->buffer[j] = '\0';
+	while (--i < --j) {
+		string->buffer[j] = string->buffer[i];
+		if (strchr(characters, string->buffer[j]))
+			string->buffer[--j] = '\\';
+	}
+}
+
 /*
  * If set, overrides the environment variable JAVA_HOME, which in turn
  * overrides relative_java_home.
@@ -2600,7 +2618,11 @@ static int handle_one_option2(int *i, int argc, const char **argv)
 	else if (handle_one_option(i, argv, "--edit", &arg))
 		for (;;) {
 			add_option(&options, "-eval", 1);
-			string_setf(&buffer, "run(\"Script Editor\", \"%s\");", *arg.buffer && strncmp(arg.buffer, "class:", 6) ? make_absolute_path(arg.buffer) : arg.buffer);
+			if (*arg.buffer && strncmp(arg.buffer, "class:", 6)) {
+				string_set(&arg, make_absolute_path(arg.buffer));
+				string_escape(&arg, "\\");
+			}
+			string_setf(&buffer, "run(\"Script Editor\", \"%s\");", arg.buffer);
 			add_option_string(&options, &buffer, 1);
 			if (*i + 1 >= argc)
 				break;
