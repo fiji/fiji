@@ -393,9 +393,16 @@ public abstract class Rule implements Comparable<Rule> {
 		String dir = getVar("builddir");
 		if (dir == null || dir.equals(""))
 			return null;
-		return new File(Util.makePath(parser.cwd, dir + "/"
-			+ Util.stripSuffix(Util.stripSuffix(target,
-				".class"), ".jar")));
+		String suffix = target;
+		String ijDir = System.getProperty("ij.dir");
+		if (ijDir != null)
+			suffix = Util.stripPrefix(suffix, ijDir);
+		// strip DOS drive prefix
+		if (suffix.length() > 2 && suffix.charAt(1) == ':')
+			suffix = suffix.substring(2);
+		suffix = Util.stripSuffix(suffix, ".class");
+		suffix = Util.stripSuffix(suffix, ".jar");
+		return new File(Util.makePath(parser.cwd, dir + "/" + suffix));
 	}
 
 	List<String> compileJavas(List<String> javas, File buildDir,
