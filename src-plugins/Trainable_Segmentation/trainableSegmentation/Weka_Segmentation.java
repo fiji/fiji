@@ -1654,7 +1654,7 @@ public class Weka_Segmentation implements PlugIn
 
 					IJ.log("Processing image " + file.getName() + " in thread " + numThread);
 
-					ImagePlus segmentation = wekaSegmentation.applyClassifier(testImage, numFurtherThreads, probabilityMaps);
+					ImagePlus segmentation = wekaSegmentation.applyClassifierMT(testImage, numFurtherThreads, probabilityMaps);
 
 					if (showResults && null != segmentation) 
 					{
