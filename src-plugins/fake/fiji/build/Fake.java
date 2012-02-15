@@ -548,8 +548,11 @@ public class Fake {
 
 				Object result = javac.invoke(null,
 						new Object[] { arguments, new PrintWriter(err) });
-				if (!result.equals(new Integer(0)))
-					throw new FakeException("Compile error");
+				if (!result.equals(new Integer(0))) {
+					FakeException e = new FakeException("Compile error");
+					e.printStackTrace();
+					throw e;
+				}
 				return;
 			} catch (FakeException e) {
 				/* was compile error */
