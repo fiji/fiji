@@ -44,6 +44,7 @@ public class GuiReader {
 	private TrackMateWizard wizard;
 	private String targetDescriptor;
 	private TrackMate_ plugin;
+	private TrackMateModelView displayer;
 
 	/*
 	 * CONSTRUCTORS
@@ -97,6 +98,9 @@ public class GuiReader {
 		TrackMateModel model = new TrackMateModel();
 		plugin = new TrackMate_(model);
 		plugin.setLogger(logger);
+		if (displayer ==null ) {
+			displayer = new HyperStackDisplayer();
+		}
 
 		// Open and parse file
 		logger.log("Opening file "+file.getName()+'\n');
@@ -220,7 +224,6 @@ public class GuiReader {
 				// in a state such that the threshold GUI will be displayed.
 				spotFilterDescriptor.aboutToDisplayPanel();
 				targetDescriptor = SpotFilterDescriptor.DESCRIPTOR;
-				TrackMateModelView displayer = new HyperStackDisplayer();
 				displayer.setModel(model);
 				displayer.render();
 				wizard.setDisplayer(displayer);
@@ -243,7 +246,6 @@ public class GuiReader {
 				// No spot selection, so we display the feature threshold GUI, with the loaded feature threshold
 				// already in place.
 				targetDescriptor = SpotFilterDescriptor.DESCRIPTOR;
-				TrackMateModelView displayer = new HyperStackDisplayer();
 				displayer.setModel(model);
 				displayer.render();
 				wizard.setDisplayer(displayer);
@@ -264,7 +266,6 @@ public class GuiReader {
 			if (null == trackerSettings) {
 				model.setSettings(settings);
 				targetDescriptor = SpotFilterDescriptor.DESCRIPTOR;
-				TrackMateModelView displayer = new HyperStackDisplayer();
 				displayer.setModel(model);
 				displayer.render();
 				wizard.setDisplayer(displayer);
@@ -295,7 +296,6 @@ public class GuiReader {
 			SimpleWeightedGraph<Spot, DefaultWeightedEdge> graph = reader.readTracks(model.getFilteredSpots());
 			if (graph == null) {
 				targetDescriptor = TrackerConfigurationPanelDescriptor.DESCRIPTOR;
-				TrackMateModelView displayer = new HyperStackDisplayer();
 				displayer.setModel(model);
 				displayer.render();
 				wizard.setDisplayer(displayer);
@@ -314,7 +314,6 @@ public class GuiReader {
 			model.setTrackFilters(reader.getTrackFeatureFilters());
 			if (model.getTrackFilters() == null) {
 				targetDescriptor = TrackFilterDescriptor.DESCRIPTOR;
-				TrackMateModelView displayer = new HyperStackDisplayer();
 				displayer.setModel(model);
 				displayer.render();
 				wizard.setDisplayer(displayer);
@@ -334,7 +333,6 @@ public class GuiReader {
 			model.setVisibleTrackIndices(reader.getFilteredTracks(), false);
 			if (model.getVisibleTrackIndices() == null) {
 				targetDescriptor = TrackFilterDescriptor.DESCRIPTOR;
-				TrackMateModelView displayer = new HyperStackDisplayer();
 				displayer.setModel(model);
 				displayer.render();
 				wizard.setDisplayer(displayer);
@@ -349,7 +347,6 @@ public class GuiReader {
 		}
 
 		targetDescriptor = DisplayerPanel.DESCRIPTOR;
-		TrackMateModelView displayer = new HyperStackDisplayer();
 		displayer.setModel(model);
 		displayer.render();
 		wizard.setDisplayer(displayer);
@@ -363,6 +360,15 @@ public class GuiReader {
 		logger.log("Loading data finished.\n");
 	}
 
+	/**
+	 * Set the instance of {@link TrackMateModelView} that will be used to display the loaded model.
+	 * If <code>null</code> or not set, a plain {@link HyperStackDisplayer} will be used.
+	 * @param displayer  the target blank (yet) displayer
+	 */
+	public void setDisplayer(TrackMateModelView displayer) {
+		this.displayer = displayer;
+	}
+	
 
 	public File askForFile(File file) {
 		JFrame parent;
