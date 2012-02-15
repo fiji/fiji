@@ -2590,7 +2590,7 @@ public class Weka_Segmentation implements PlugIn
 
 			IJ.log("Processing image " + dir + "/" + fileName );
 
-			ImagePlus segmentation = wekaSegmentation.applyClassifier(testImage, 0, probabilityMaps);
+			ImagePlus segmentation = wekaSegmentation.applyClassifierMT(testImage, 0, probabilityMaps);
 
 			if (showResults) 
 			{
