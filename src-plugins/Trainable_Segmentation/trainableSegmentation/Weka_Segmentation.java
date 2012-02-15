@@ -1618,7 +1618,7 @@ public class Weka_Segmentation implements PlugIn
 		final int numThreads        = Math.min(imageFiles.length, numProcessors);
 		final int numFurtherThreads = (int)Math.ceil((double)(numProcessors - numThreads)/imageFiles.length) + 1;
 
-		IJ.log("Processing " + imageFiles.length + " image files in " + numThreads + " threads....");
+		IJ.log("Processing " + imageFiles.length + " image files in " + numThreads + " thread(s)....");
 
 		win.setButtonsEnabled(false);
 
