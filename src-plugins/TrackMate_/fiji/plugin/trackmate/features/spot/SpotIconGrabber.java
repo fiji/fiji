@@ -46,6 +46,12 @@ public class SpotIconGrabber extends IndependentSpotFeatureAnalyzer {
 		if (img.getNumDimensions() > 2) {
 			int slice = 0;
 			slice = Math.round(spot.getFeature(Spot.POSITION_Z) / calibration[2]);
+			if (slice < 0) {
+				slice = 0;
+			}
+			if (slice >= img.getDimension(2)) {
+				slice = img.getDimension(2) -1;
+			}
 			sourceCursor.setPosition(slice, 2);
 		}
 		
