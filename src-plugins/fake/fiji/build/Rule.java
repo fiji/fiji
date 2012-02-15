@@ -275,7 +275,7 @@ public abstract class Rule implements Comparable<Rule> {
 				result.add(prereq);
 
 		// check the classpath
-		for (String jarFile : Util.split(getVar("CLASSPATH"), ":"))
+		for (String jarFile : Util.splitPaths(getVar("CLASSPATH")))
 			if (jarFile.endsWith(".jar"))
 				result.add(jarFile);
 
@@ -293,7 +293,7 @@ public abstract class Rule implements Comparable<Rule> {
 		}
 
 		// check the classpath
-		for (String jarFile : Util.split(getVar("CLASSPATH"), ":")) {
+		for (String jarFile : Util.splitPaths(getVar("CLASSPATH"))) {
 			Rule rule = getRule(jarFile);
 			if (rule != null)
 				result.add(rule);
@@ -322,7 +322,7 @@ public abstract class Rule implements Comparable<Rule> {
 
 	public List<String> getDependenciesAsStrings() {
 		List<String> dependencies = new ArrayList(prerequisites);
-		Collections.addAll(dependencies, Util.split(getVar("CLASSPATH"), ":"));
+		Collections.addAll(dependencies, Util.splitPaths(getVar("CLASSPATH")));
 		return dependencies;
 	}
 

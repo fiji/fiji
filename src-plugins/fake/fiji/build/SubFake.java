@@ -22,7 +22,7 @@ public class SubFake extends Rule {
 		configPath = getPluginsConfig();
 
 		String[] paths =
-			Util.split(getVar("CLASSPATH"), ":");
+			Util.splitPaths(getVar("CLASSPATH"));
 		for (int i = 0; i < paths.length; i++)
 			prerequisites.add(prerequisites.size() - 1, paths[i]);
 		if (!new File(Util.makePath(parser.cwd, directory)).exists())

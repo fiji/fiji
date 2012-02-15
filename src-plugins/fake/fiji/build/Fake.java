@@ -605,13 +605,8 @@ public class Fake {
 			arguments.add("-Xlint:unchecked");
 		}
 		if (extraClassPath != null && !extraClassPath.equals("")) {
-			String classPath = "";
-			StringTokenizer tokenizer = new StringTokenizer(extraClassPath, ":");
-			while (tokenizer.hasMoreElements())
-                                classPath += (classPath.equals("") ? "" : File.pathSeparator) + tokenizer.nextToken();
-
 			arguments.add("-classpath");
-			arguments.add(classPath);
+			arguments.add(Util.pathListToNative(extraClassPath));
 		}
 		String extDirs = System.getProperty("java.ext.dirs");
 		if (extDirs != null && !extDirs.equals(""))
@@ -1260,7 +1255,7 @@ public class Fake {
 			boolean skipVariables) {
 		if (pathList == null || pathList.equals(""))
 			return pathList;
-		String[] paths = Util.split(pathList, ":");
+		String[] paths = Util.splitPaths(pathList);
 		for (int i = 0; i < paths.length; i++)
 			if (!skipVariables || !paths[i].startsWith("$"))
 				paths[i] = Util.makePath(cwd, paths[i]);
