@@ -443,12 +443,12 @@ public class TrackMate_ implements PlugIn {
 						List<Spot> s = execSingleFrameSegmentation(img, settings, i);
 						
 						// Add segmentation feature other than position
-						for (Spot spot : spots) {
+						for (Spot spot : s) {
 							spot.putFeature(Spot.POSITION_T, i * settings.dt);
 						}
 						spots.put(i, s);
+
 						spotFound.addAndGet(s.size());
-						
 						logger.setProgress(progress.incrementAndGet() / (float)numFrames );
 
 					} // Finished looping over frames
