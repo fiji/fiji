@@ -244,6 +244,30 @@ public class Util {
 		return result;
 	}
 
+	public static String[] splitPaths(String pathList) {
+		String[] paths = Util.split(pathList, ":");
+		if (":".equals(File.pathSeparator))
+			return paths;
+		// by mistake, c:\blub could have been separated
+		int j = 0;
+		for (int i = 0; i < paths.length; i++, j++)
+			if (i + 1 < paths.length && paths[i].length() == 1 && "\\/".indexOf(paths[i + 1].charAt(0)) >= 0)
+				paths[j] = paths[i] + ":" + paths[++i];
+			else if (j < i)
+				paths[j] = paths[i];
+		if (j == paths.length)
+			return paths;
+		String[] newPaths = new String[j];
+		System.arraycopy(paths, 0, newPaths, 0, j);
+		return newPaths;
+	}
+
+	public static String pathListToNative(String pathList) {
+		if (":".equals(File.pathSeparator))
+			return pathList;
+		return join(splitPaths(pathList), File.pathSeparator);
+	}
+
 	public static boolean moveFileOutOfTheWay(String file) throws FakeException {
 		return moveFileOutOfTheWay(new File(file));
 	}

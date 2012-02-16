@@ -46,6 +46,7 @@ import org.xml.sax.helpers.DefaultHandler;
 public class MiniMaven {
 	protected String endLine = System.console() == null ? "\n" : "\033[K\r";
 	protected boolean verbose, debug = false, downloadAutomatically, offlineMode, ignoreMavenRepositories;
+	protected int updateInterval = 24 * 60; // by default, check once per 24h for new snapshot versions
 	protected PrintStream err;
 	protected Map<String, POM> localPOMCache = new HashMap<String, POM>();
 	protected Fake fake;
@@ -64,6 +65,14 @@ public class MiniMaven {
 			offlineMode = true;
 		if ("ignore".equalsIgnoreCase(System.getProperty("minimaven.repositories")))
 			ignoreMavenRepositories = true;
+		String updateInterval = System.getProperty("minimaven.updateinterval");
+		if (updateInterval != null && !updateInterval.equals("")) try {
+			this.updateInterval = Integer.parseInt(updateInterval);
+			if (verbose)
+				err.println("Setting update interval to " + this.updateInterval + " minutes");
+		} catch (NumberFormatException e) {
+			err.println("Warning: ignoring invalid update interval " + updateInterval);
+		}
 	}
 
 	protected void print80(String string) {
@@ -902,7 +911,7 @@ public class MiniMaven {
 		if (dependency.version.endsWith("-SNAPSHOT")) {
 			// Only check snapshots once per day
 			File snapshotMetaData = new File(directory, "maven-metadata-snapshot.xml");
-			if (System.currentTimeMillis() - snapshotMetaData.lastModified() < 24 * 60 * 60 * 1000l)
+			if (System.currentTimeMillis() - snapshotMetaData.lastModified() < updateInterval * 60 * 1000l)
 				return;
 
 			String message = quiet ? null : "Checking for new snapshot of " + dependency.artifactId;
