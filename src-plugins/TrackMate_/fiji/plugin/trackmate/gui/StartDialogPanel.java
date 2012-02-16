@@ -521,6 +521,7 @@ public class StartDialogPanel extends ActionListenablePanel implements WizardPan
 
 				jButtonRefresh.addActionListener(new ActionListener() {
 					public void actionPerformed(ActionEvent e) {
+						imp = WindowManager.getCurrentImage();
 						refresh();
 					}
 				});
