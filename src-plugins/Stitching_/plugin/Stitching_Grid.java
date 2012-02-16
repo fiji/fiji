@@ -44,11 +44,14 @@ public class Stitching_Grid implements PlugIn
 {
 	final private String myURL = "http://fly.mpi-cbg.de/preibisch";
 	
+	public static boolean seperateOverlapY = false;
+	
 	public static int defaultGridChoice1 = 0;
 	public static int defaultGridChoice2 = 0;
 
 	public static int defaultGridSizeX = 2, defaultGridSizeY = 3;
-	public static double defaultOverlap = 20;
+	public static double defaultOverlapX = 20;
+	public static double defaultOverlapY = 20;
 	
 	public static String defaultDirectory = "";
 	public static String defaultSeriesFile = "";
@@ -97,7 +100,15 @@ public class Stitching_Grid implements PlugIn
 			gd.addNumericField( "Grid_size_x", defaultGridSizeX, 0 );
 			gd.addNumericField( "Grid_size_y", defaultGridSizeY, 0 );
 			
-			gd.addSlider( "Tile_overlap [%]", 0, 100, defaultOverlap );
+			if ( seperateOverlapY )
+			{
+				gd.addSlider( "Tile_overlap_x [%]", 0, 100, defaultOverlapX );
+				gd.addSlider( "Tile_overlap_y [%]", 0, 100, defaultOverlapY );				
+			}
+			else
+			{
+				gd.addSlider( "Tile_overlap [%]", 0, 100, defaultOverlapX );
+			}
 			
 			// row-by-row, column-by-column or snake
 			// needs the same questions
@@ -167,15 +178,28 @@ public class Stitching_Grid implements PlugIn
 		final StitchingParameters params = new StitchingParameters();
 		
 		final int gridSizeX, gridSizeY;
-		double overlap;
+		double overlapX, overlapY;
 		int startI = 0, startX = 0, startY = 0;
 		
 		if ( gridType < 5 )
 		{
 			gridSizeX = defaultGridSizeX = (int)Math.round(gd.getNextNumber());
 			gridSizeY = defaultGridSizeY = (int)Math.round(gd.getNextNumber());
-			overlap = defaultOverlap = gd.getNextNumber();
-			overlap /= 100.0;
+			
+			if ( seperateOverlapY )
+			{
+				overlapX = defaultOverlapX = gd.getNextNumber();
+				overlapX /= 100.0;				
+				overlapY = defaultOverlapY = gd.getNextNumber();
+				overlapY /= 100.0;				
+				
+			}
+			else
+			{
+				overlapX = overlapY = defaultOverlapY = defaultOverlapX = gd.getNextNumber();
+				overlapX /= 100.0;
+				overlapY = overlapX;
+			}
 	
 			// row-by-row, column-by-column or snake
 			// needs the same questions
@@ -192,7 +216,7 @@ public class Stitching_Grid implements PlugIn
 		else
 		{
 			gridSizeX = gridSizeY = 0;
-			overlap = 0;
+			overlapX = overlapY = 0;
 		}
 		
 		String directory, outputFile, seriesFile;
@@ -303,7 +327,7 @@ public class Stitching_Grid implements PlugIn
 		final ArrayList< ImageCollectionElement > elements;
 		
 		if ( gridType < 5 )
-			elements = getGridLayout( grid, gridSizeX, gridSizeY, overlap, directory, filenames, startI, startX, startY, params.virtual );
+			elements = getGridLayout( grid, gridSizeX, gridSizeY, overlapX, overlapY, directory, filenames, startI, startX, startY, params.virtual );
 		else if ( gridType == 5 )
 			elements = getAllFilesInDirectory( directory, confirmFiles );
 		else if ( gridType == 6 && gridOrder == 1 )
@@ -877,7 +901,7 @@ public class Stitching_Grid implements PlugIn
 		return elements;
 	}
 	
-	protected ArrayList< ImageCollectionElement > getGridLayout( final GridType grid, final int gridSizeX, final int gridSizeY, final double overlap, final String directory, final String filenames, 
+	protected ArrayList< ImageCollectionElement > getGridLayout( final GridType grid, final int gridSizeX, final int gridSizeY, final double overlapX, final double overlapY, final String directory, final String filenames, 
 			final int startI, final int startX, final int startY, final boolean virtual )
 	{
 		final int gridType = grid.getType();
@@ -1039,7 +1063,7 @@ public class Stitching_Grid implements PlugIn
         	if ( y == 0 )
         		yoffset = 0;
         	else 
-        		yoffset += (int)( minHeight * ( 1 - overlap ) );
+        		yoffset += (int)( minHeight * ( 1 - overlapY ) );
 
         	for ( int x = 0; x < gridSizeX; x++ )
             {
@@ -1051,7 +1075,7 @@ public class Stitching_Grid implements PlugIn
             	if ( x == 0 )
             		xoffset = 0;
             	else 
-            		xoffset += (int)( minWidth * ( 1 - overlap ) );
+            		xoffset += (int)( minWidth * ( 1 - overlapX ) );
             	            	
             	element.setDimensionality( dimensionality );
             	
