@@ -16,6 +16,7 @@ import javax.imageio.ImageIO;
 import mpicbg.imglib.cursor.LocalizableByDimCursor;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.image.display.imagej.ImageJFunctions;
+import mpicbg.imglib.outofbounds.OutOfBoundsStrategyValueFactory;
 
 import com.mxgraph.util.mxBase64;
 
@@ -25,7 +26,7 @@ import fiji.plugin.trackmate.Spot;
 /**
  * This class is used to take a snapshot of a {@link Spot} object (or collection) from 
  * its coordinates and an {@link ImagePlus} that contain the pixel data.
- * @author Jean-Yves Tinevez <jeanyves.tinevez@gmail.com> - Dec 2010 - 2011
+ * @author Jean-Yves Tinevez <jeanyves.tinevez@gmail.com> - Dec 2010 - 2012
  */
 public class SpotIconGrabber extends IndependentSpotFeatureAnalyzer {
 
@@ -41,7 +42,7 @@ public class SpotIconGrabber extends IndependentSpotFeatureAnalyzer {
 		
 		// Copy cropped view
 		Image crop = img.createNewImage(new int[] {width, height});
-		LocalizableByDimCursor sourceCursor = img.createLocalizableByDimCursor();
+		LocalizableByDimCursor sourceCursor = img.createLocalizableByDimCursor(new OutOfBoundsStrategyValueFactory(img.createType()));
 		LocalizableByDimCursor targetCursor = crop.createLocalizableByDimCursor();
 		if (img.getNumDimensions() > 2) {
 			int slice = 0;

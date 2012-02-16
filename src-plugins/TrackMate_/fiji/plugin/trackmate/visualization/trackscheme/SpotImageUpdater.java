@@ -35,7 +35,7 @@ public class SpotImageUpdater {
 		} else {
 			Settings settings = model.getSettings();
 			int targetChannel = settings.segmentationChannel; // TODO: be more flexible about that
-			Image img = TMUtils.getSingleFrameAsImage(settings.imp, frame, targetChannel, settings);
+			Image img = TMUtils.getUncroppedSingleFrameAsImage(settings.imp, frame, targetChannel); // We have to use the un-cropped version, since the spots are referring to the un-cropped image at this time.
 			grabber.setTarget(img, calibration);
 			previousFrame = frame;
 		}

@@ -291,15 +291,17 @@ public class TMUtils {
 
 
 	/**
-	 * Return a 3D stack or a 2D slice as an {@link Image} corresponding to the frame number <code>iFrame</code>
-	 * in the given 4D or 3D {@link ImagePlus}.
+	 * Return a copy 3D stack or a 2D slice as an {@link Image} corresponding to the frame number <code>iFrame</code>
+	 * in the given 4D or 3D {@link ImagePlus}. The resulting image will be cropped according the cropping
+	 * cube set in the {@link Settings} object given.
 	 * @param imp  the 4D or 3D source ImagePlus
 	 * @param iFrame  the frame number to extract, 0-based
 	 * @param iChannel  the channel number to extract, careful: <b>1-based</b>
+	 * @param settings  the settings object that will be used to compute the crop rectangle
 	 * @return  a 3D or 2D {@link Image} with the single time-point required 
 	 */
 	@SuppressWarnings({ "rawtypes", "unchecked" })
-	public static Image<? extends RealType<?>> getSingleFrameAsImage(ImagePlus imp, int iFrame, int iChannel, Settings settings) {
+	public static Image<? extends RealType<?>> getCroppedSingleFrameAsImage(ImagePlus imp, int iFrame, int iChannel, Settings settings) {
 		ImageStack stack = imp.getImageStack();
 		ImageStack frame = new ImageStack(settings.xend-settings.xstart, settings.yend-settings.ystart, stack.getColorModel());
 		int numSlices = imp.getNSlices();
@@ -316,6 +318,37 @@ public class TMUtils {
 		}
 
 		ImagePlus ipSingleFrame = new ImagePlus(imp.getShortTitle()+"-Frame_" + Integer.toString(iFrame + 1), frame);
+		ipSingleFrame.setCalibration(imp.getCalibration());
+		Image<? extends RealType> obj =  ImagePlusAdapter.wrap(ipSingleFrame);
+		Image<? extends RealType<?>> img = (Image<? extends RealType<?>>) obj;
+		return img;
+	}
+	
+	/**
+	 * Return a copy 3D stack or a 2D slice as an {@link Image} corresponding to the frame number <code>iFrame</code>
+	 * in the given 4D or 3D {@link ImagePlus}. The resulting image will <u>not</u> be cropped and will have the 
+	 * same size in X, Y and Z that of the source {@link ImagePlus}. 
+	 * @param imp  the 4D or 3D source ImagePlus
+	 * @param iFrame  the frame number to extract, 0-based
+	 * @param iChannel  the channel number to extract, careful: <b>1-based</b>
+	 * @return  a 3D or 2D {@link Image} with the single time-point required 
+	 */
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	public static Image<? extends RealType<?>> getUncroppedSingleFrameAsImage(ImagePlus imp, int iFrame, int iChannel) {
+		ImageStack stack = imp.getImageStack();
+		ImageStack frame = new ImageStack(imp.getWidth(), imp.getHeight(), stack.getColorModel());
+		int numSlices = imp.getNSlices();
+
+		// ...create the slice by combining the ImageProcessors, one for each Z in the stack.
+		ImageProcessor ip;
+		for (int j = 1; j <= numSlices; j++) {
+			int stackIndex = imp.getStackIndex(iChannel, j, iFrame+1);
+			ip = stack.getProcessor(stackIndex);
+			frame.addSlice(Integer.toString(j + (iFrame * numSlices)), ip.duplicate());
+		}
+
+		ImagePlus ipSingleFrame = new ImagePlus(imp.getShortTitle()+"-Frame_" + Integer.toString(iFrame + 1), frame);
+		ipSingleFrame.setCalibration(imp.getCalibration());
 		Image<? extends RealType> obj =  ImagePlusAdapter.wrap(ipSingleFrame);
 		Image<? extends RealType<?>> img = (Image<? extends RealType<?>>) obj;
 		return img;

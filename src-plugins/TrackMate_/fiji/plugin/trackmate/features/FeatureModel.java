@@ -294,7 +294,7 @@ public class FeatureModel {
 
 						int frame = frameSet.get(index);
 						List<Spot> spotsThisFrame = toCompute.get(frame);
-						Image<? extends RealType<?>> img = TMUtils.getSingleFrameAsImage(settings.imp, frame, targetChannel, uncroppedSettings);
+						Image<? extends RealType<?>> img = TMUtils.getCroppedSingleFrameAsImage(settings.imp, frame, targetChannel, uncroppedSettings);
 
 						for (SpotFeatureAnalyzer analyzer : analyzers) {
 							analyzer.setTarget(img, calibration);

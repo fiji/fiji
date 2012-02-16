@@ -439,7 +439,7 @@ public class TrackMate_ implements PlugIn {
 
 					for (int i = ai.getAndIncrement(); i < settings.tend; i = ai.getAndIncrement()) {
 
-						Image<? extends RealType<?>> img = TMUtils.getSingleFrameAsImage(imp, i, segmentationChannel, settings); // will be cropped according to settings
+						Image<? extends RealType<?>> img = TMUtils.getCroppedSingleFrameAsImage(imp, i, segmentationChannel, settings); // will be cropped according to settings
 						List<Spot> s = execSingleFrameSegmentation(img, settings, i);
 						
 						// Add segmentation feature other than position
