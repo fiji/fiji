@@ -3095,6 +3095,11 @@ static void parse_command_line(void)
 
 	keep_only_one_memory_option(&options.java_options);
 
+	if (!class_path_already_defined && strcmp(main_class, "fiji.build.Fake")) {
+		prepend_string_copy(&options.ij_options, main_class);
+		main_class = "imagej.ClassLauncher";
+	}
+
 	if (options.debug) {
 		for (i = 0; properties[i]; i += 2) {
 			string_setf(&buffer, "-D%s=%s", properties[i], properties[i + 1]);
@@ -3143,11 +3148,6 @@ static int start_ij(void)
 			string_setf(buffer, "-Djava.home=%s", get_java_home());
 			prepend_string_copy(&options.java_options, buffer->buffer);
 		}
-	}
-
-	if (!class_path_already_defined && strcmp(main_class, "fiji.build.Fake")) {
-		prepend_string_copy(&options.ij_options, main_class);
-		main_class = "imagej.ClassLauncher";
 	}
 
 	if (env) {
