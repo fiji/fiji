@@ -187,9 +187,11 @@ public class FIBSEM_Reader implements PlugIn
 		{
 			final short[] shortSlice = new short[ (int)header.xRes * (int)header.yRes ];
 
-			final float minVolts = (float)header.detMin;
-			final float rangeVolts = (float)header.detMax - (float)header.detMin;
-
+			final float minVolts = -10;//(float)header.detMin;
+			final float rangeVolts = 20;//(float)header.detMax - (float)header.detMin;
+			
+			int cropped = 0;
+			
 			for ( int i = 0; i < shortSlice.length; ++i )
 			{
 				int j = 2 * i;
@@ -198,10 +200,26 @@ public class FIBSEM_Reader implements PlugIn
 
 				v = Math.round( ((header.offset[ 0 ] + v * header.gain[ 0 ])-minVolts)/rangeVolts*65535.0f );
 
+				if ( v < 0 )
+				{
+					v = 0;
+					++cropped;
+				}
+				
+				if ( v > 65535 )
+				{
+					v = 65535;
+					++cropped;
+				}
+				
 				if ( v < min ) min = v;
 				if ( v > max ) max = v;
 				shortSlice[ i ] = (short)v;
 			}
+			
+			if ( cropped > 0 )
+				IJ.log( "Warning : " + cropped + " values have been truncated as they were out of range of 16 bit. To verify this, please open the image as float (see http://fiji.sc/wiki/index.php/FIBSEM_importer#Open_image_as_float)" );
+
 			ip = new ShortProcessor( (int)header.xRes, (int)header.yRes, shortSlice, null );
 		}
 
@@ -252,14 +270,17 @@ public class FIBSEM_Reader implements PlugIn
 				stack.addSlice( "channel " + c, new FloatProcessor( (int)header.xRes, (int)header.yRes, floatSlice[ c ], null ) );
 		}
 		else
-		{
+		{			
 			final short[][] shortSlice = new short[ numChannels ][ (int)header.xRes * (int)header.yRes ];
 
-			final float minVolts = (float)header.detMin;
-			final float rangeVolts = (float)header.detMax - (float)header.detMin;
+			final float minVolts = -10;//(float)header.detMin;
+			final float rangeVolts = 20;//(float)header.detMax - (float)header.detMin;
+
+			int[] cropped = new int[ numChannels ];
 
 			for ( int i = 0; i < shortSlice[ 0 ].length; ++i )
 			{
+				
 				for ( int c = 0; c < numChannels; ++c )
 				{
 					int j = 2 * i * numChannels + 2 * c;
@@ -267,12 +288,29 @@ public class FIBSEM_Reader implements PlugIn
 					v += ( slice[ j + 1 ] );
 
 					v = Math.round( ((header.offset[ 0 ] + v * header.gain[ 0 ])-minVolts)/rangeVolts*65535.0f );
-
+					
+					if ( v < 0 )
+					{
+						v = 0;
+						++cropped[ c ];
+					}
+					
+					if ( v > 65535 )
+					{
+						v = 65535;
+						++cropped[ c ];
+					}
+					
 					if ( v < min ) min = v;
 					if ( v > max ) max = v;
 					shortSlice[ c ][ i ] = (short)(v);
 				}
+				
 			}
+
+			for ( int i = 0; i < numChannels; ++i )
+				if ( cropped[ i ] > 0 )
+					IJ.log( "Warning (channel " + (i+1) + "/" + numChannels + "): " + cropped[ i ] + " values have been truncated as they were out of range of 16 bit. To verify this, please open the image as float (see http://fiji.sc/wiki/index.php/FIBSEM_importer#Open_image_as_float)" );
 
 			stack = new ImageStack( (int)header.xRes, (int)header.yRes );
 
@@ -976,8 +1014,9 @@ public class FIBSEM_Reader implements PlugIn
 		FIBSEM_Reader.openAsFloat = false;
 
 		FIBSEM_Reader r = new FIBSEM_Reader();
-		//r.run( "/Users/preibischs/Desktop/Zeiss_12-02-07_094618.dat" );//"/Users/preibischs/Desktop/Zeiss_12-01-14_210123.dat" );
+		//r.run( "/Users/preibischs/Desktop/Zeiss_12-02-07_094618.dat" );
 		r.run( "/Users/preibischs/Desktop/Zeiss_12-01-14_210123.dat" );
+		//r.run( "/Users/preibischs/Desktop/Zeiss_11-11-03_000019.dat" );
 
 		System.out.println( r.getHeader() );
 	}
