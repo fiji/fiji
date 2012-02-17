@@ -1657,8 +1657,7 @@ static void append_string_array(struct string_array *target,
 		target->list = (char **)xrealloc(target->list,
 				target->alloc * sizeof(target->list[0]));
 	}
-	memcpy(target->list + target->nr, source->list,
-			source->nr * sizeof(target->list[0]));
+	memcpy(target->list + target->nr, source->list, source->nr * sizeof(target->list[0]));
 	target->nr += source->nr;
 }
 
