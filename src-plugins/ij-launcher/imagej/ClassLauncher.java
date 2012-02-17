@@ -9,6 +9,7 @@ import java.util.Arrays;
 
 public class ClassLauncher {
 	protected static boolean debug = System.getenv("DEBUG_IJ_LAUNCHER") != null;
+	protected static String[] originalArguments;
 
 	/**
 	 * Patch ij.jar and launch the class given as first argument passing on the remaining arguments
@@ -17,6 +18,16 @@ public class ClassLauncher {
 	 *        with the remaining arguments.
 	 */
 	public static void main(String[] arguments) {
+		originalArguments = arguments;
+		run(arguments);
+	}
+
+	public static void restart() {
+		Thread.currentThread().setContextClassLoader(ClassLoader.class.getClassLoader());
+		run(originalArguments);
+	}
+
+	protected static void run(String[] arguments) {
 		boolean retrotranslator = false, jdb = false, passClasspath = false;
 		ClassLoaderPlus classLoader = null;
 		int i = 0;
