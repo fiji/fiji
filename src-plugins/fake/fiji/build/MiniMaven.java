@@ -859,6 +859,8 @@ public class MiniMaven {
 				if (debug)
 					err.println((isCurrentProfile ? "Activating" : "Ignoring") + " profile " + string);
 			}
+			else if (!isCurrentProfile && prefix.equals(">project>profiles>profile>activation>file>exists"))
+				isCurrentProfile = new File(directory, string).exists();
 			else if (prefix.equals(">project>repositories>repository>url"))
 				repositories.add(string);
 			else if (prefix.equals(">project>build>sourceDirectory"))
