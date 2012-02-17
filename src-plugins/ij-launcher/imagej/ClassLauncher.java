@@ -30,11 +30,8 @@ public class ClassLauncher {
 				System.exit(1);
 			}
 		}
-		if (i > 0) {
-			String[] newArguments = new String[arguments.length - i + 1];
-			System.arraycopy(arguments, i, newArguments, 0, newArguments.length);
-			arguments = newArguments;
-		}
+		if (i > 0)
+			arguments = slice(arguments, i);
 
 		if (!"false".equals(System.getProperty("patch.ij1")) && !arguments[0].equals("imagej.Main") && !arguments[0].equals("fiji.build.MiniMaven")) {
 			classLoader = ClassLoaderPlus.getInFijiDirectory("jars/fiji-compat.jar", "jars/ij.jar", "jars/javassist.jar");
@@ -44,9 +41,8 @@ public class ClassLauncher {
 				e.printStackTrace();
 			}
 		}
-		String[] stripped = new String[arguments.length - 1];
-		if (stripped.length > 0)
-			System.arraycopy(arguments, 1, stripped, 0, stripped.length);
+
+		String[] stripped = slice(arguments, 1);
 		launch(classLoader, arguments[0], stripped);
 	}
 
@@ -54,6 +50,17 @@ public class ClassLauncher {
 		Class<Runnable> clazz = (Class<Runnable>)classLoader.loadClass("fiji.IJ1Patcher");
 		Runnable ij1Patcher = clazz.newInstance();
 		ij1Patcher.run();
+	}
+
+	protected static String[] slice(String[] array, int from) {
+		return slice(array, from, array.length);
+	}
+
+	protected static String[] slice(String[] array, int from, int to) {
+		String[] result = new String[to - from];
+		if (result.length > 0)
+			System.arraycopy(array, from, result, 0, result.length);
+		return result;
 	}
 
 	protected static void launch(ClassLoader classLoader, String className, String[] arguments) {
