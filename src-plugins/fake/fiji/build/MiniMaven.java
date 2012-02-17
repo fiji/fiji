@@ -162,6 +162,8 @@ public class MiniMaven {
 		}
 		else if (dependency.artifactId.equals("imglib2-io"))
 			pom.dependencies.add(new Coordinate("loci", "bio-formats", "${bio-formats.version}"));
+		else if (dependency.artifactId.equals("jfreechart"))
+			pom.dependencies.add(new Coordinate("jfree", "jcommon", "1.0.16"));
 		return pom;
 	}
 
