@@ -17,6 +17,7 @@ public class ClassLauncher {
 	 *        with the remaining arguments.
 	 */
 	public static void main(String[] arguments) {
+		boolean retrotranslator = false;
 		ClassLoaderPlus classLoader = null;
 		int i = 0;
 		for (; i < arguments.length && arguments[i].charAt(0) == '-'; i++) {
@@ -29,6 +30,10 @@ public class ClassLauncher {
 				classLoader = ClassLoaderPlus.getRecursively(new File(arguments[++i]));
 			else if (option.equals("-ijjarpath"))
 				classLoader = ClassLoaderPlus.getRecursivelyInFijiDirectory(arguments[++i]);
+			else if (option.equals("-retrotranslator")) {
+				classLoader = ClassLoaderPlus.getRecursivelyInFijiDirectory("retro");
+				retrotranslator = true;
+			}
 			else {
 				System.err.println("Unknown option: " + option + "!");
 				System.exit(1);
@@ -52,6 +57,11 @@ public class ClassLauncher {
 			}
 		}
 
+		if (retrotranslator) {
+			arguments = prepend(arguments, "-advanced", mainClass);
+			mainClass = "net.sf.retrotranslator.transformer.JITRetrotranslator";
+		}
+
 		if (debug)
 			System.err.println("Launching main class " + mainClass + " with parameters " + Arrays.toString(arguments));
 
@@ -72,6 +82,15 @@ public class ClassLauncher {
 		String[] result = new String[to - from];
 		if (result.length > 0)
 			System.arraycopy(array, from, result, 0, result.length);
+		return result;
+	}
+
+	protected static String[] prepend(String[] array, String... before) {
+		if (before.length == 0)
+			return array;
+		String[] result = new String[before.length + array.length];
+		System.arraycopy(before, 0, result, 0, before.length);
+		System.arraycopy(array, 0, result, before.length, array.length);
 		return result;
 	}
 
