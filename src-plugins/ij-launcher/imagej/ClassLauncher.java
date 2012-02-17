@@ -65,7 +65,7 @@ public class ClassLauncher {
 		String mainClass = arguments[i];
 		arguments = slice(arguments, i + 1);
 
-		if (!"false".equals(System.getProperty("patch.ij1")) && !arguments[0].equals("imagej.Main") && !arguments[0].equals("fiji.build.MiniMaven")) {
+		if (!"false".equals(System.getProperty("patch.ij1")) && !mainClass.equals("imagej.Main") && !mainClass.equals("fiji.build.MiniMaven")) {
 			classLoader = ClassLoaderPlus.getInFijiDirectory("jars/fiji-compat.jar", "jars/ij.jar", "jars/javassist.jar");
 			try {
 				patchIJ1(classLoader);
