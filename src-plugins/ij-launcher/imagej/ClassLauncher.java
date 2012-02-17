@@ -19,14 +19,14 @@ public class ClassLauncher {
 			String option = arguments[i];
 			if (option.equals("-cp") || option.equals("-classpath"))
 				classLoader = ClassLoaderPlus.get(new File(arguments[++i]));
-			if (option.equals("-ijcp") || option.equals("-ijclasspath"))
+			else if (option.equals("-ijcp") || option.equals("-ijclasspath"))
 				classLoader = ClassLoaderPlus.getInFijiDirectory(arguments[++i]);
 			else if (option.equals("-jarpath"))
 				classLoader = ClassLoaderPlus.getRecursively(new File(arguments[++i]));
 			else if (option.equals("-ijjarpath"))
 				classLoader = ClassLoaderPlus.getRecursivelyInFijiDirectory(arguments[++i]);
 			else {
-				System.err.println("Unknown option: " + option);
+				System.err.println("Unknown option: " + option + "!");
 				System.exit(1);
 			}
 		}
