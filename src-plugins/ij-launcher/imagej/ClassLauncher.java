@@ -5,7 +5,11 @@ import java.io.File;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
+import java.util.Arrays;
+
 public class ClassLauncher {
+	protected static boolean debug = System.getenv("DEBUG_IJ_LAUNCHER") != null;
+
 	/**
 	 * Patch ij.jar and launch the class given as first argument passing on the remaining arguments
 	 *
@@ -47,6 +51,9 @@ public class ClassLauncher {
 				e.printStackTrace();
 			}
 		}
+
+		if (debug)
+			System.err.println("Launching main class " + mainClass + " with parameters " + Arrays.toString(arguments));
 
 		launch(classLoader, mainClass, arguments);
 	}
