@@ -2568,7 +2568,7 @@ static struct options options;
 static long megabytes = 0;
 static struct string buffer, buffer2, arg, class_path, plugin_path, ext_option;
 static int jdb, add_class_path_option, advanced_gc = 1, debug_gc;
-static int allow_multiple, skip_build_classpath, class_path_already_defined;
+static int allow_multiple, skip_build_classpath, class_path_already_defined, skip_class_launcher;
 
 static int handle_one_option2(int *i, int argc, const char **argv)
 {
@@ -2679,6 +2679,7 @@ static int handle_one_option2(int *i, int argc, const char **argv)
 #ifdef WIN32
 		open_win_console();
 #endif
+		skip_class_launcher = 1;
 		skip_build_classpath = 1;
 		headless = 1;
 		fake_jar = ij_path("jars/fake.jar");
@@ -2698,6 +2699,7 @@ static int handle_one_option2(int *i, int argc, const char **argv)
 		struct string *buffer = string_initf("-Djava.class.path=%s/../lib/tools.jar", get_jre_home());
 		add_option_string(&options, buffer, 0);
 		class_path_already_defined = 1;
+		skip_class_launcher = 1;
 	}
 	else if (!strcmp(argv[*i], "--add-classpath-option"))
 		add_class_path_option = 1;
@@ -3095,7 +3097,7 @@ static void parse_command_line(void)
 
 	keep_only_one_memory_option(&options.java_options);
 
-	if (!class_path_already_defined && strcmp(main_class, "fiji.build.Fake")) {
+	if (!skip_class_launcher) {
 		prepend_string_copy(&options.ij_options, main_class);
 		main_class = "imagej.ClassLauncher";
 	}
