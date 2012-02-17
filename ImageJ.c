@@ -2149,37 +2149,37 @@ static void add_subcommand(const char *line)
 }
 
 const char *default_subcommands[] = {
-	"--update --ij-jar=plugins/Fiji_Updater.jar --ij-jar=jars/jsch.jar --no-full-classpath --main-class=fiji.updater.Main",
+	"--update --ij-jar=plugins/Fiji_Updater.jar --ij-jar=jars/jsch.jar --main-class=fiji.updater.Main",
 	" start the command-line version of the Fiji updater",
-	"--jython --ij-jar=jars/jython.jar --main-class=org.python.util.jython",
+	"--jython --ij-jar=jars/jython.jar --full-classpath --main-class=org.python.util.jython",
 	".py",
 	" start Jython instead of ImageJ (this is the",
 	" default when called with a file ending in .py)",
-	"--jruby --main-class=org.jruby.Main",
+	"--jruby --ij-jar=jars/jruby.jar --full-classpath --main-class=org.jruby.Main",
 	".rb",
 	" start JRuby instead of ImageJ (this is the",
 	" default when called with a file ending in .rb)",
-	"--clojure --ij-jar=jars/clojure.jar --main-class=clojure.lang.Repl",
+	"--clojure --ij-jar=jars/clojure.jar --full-classpath --main-class=clojure.lang.Repl",
 	".clj",
 	" start Clojure instead of ImageJ (this is the """,
 	" default when called with a file ending in .clj)",
-	"--beanshell --ij-jar=jars/bsh.jar --main-class=bsh.Interpreter",
+	"--beanshell --ij-jar=jars/bsh.jar --full-classpath --main-class=bsh.Interpreter",
 	".bs",
 	"--bsh --ij-jar=jars/bsh.jar --main-class=bsh.Interpreter",
 	".bsh",
 	" start BeanShell instead of ImageJ (this is the",
 	" default when called with a file ending in .bs or .bsh",
-	"--ant --tools-jar --ij-jar=jars/ant.jar --ij-jar=jars/ant-launcher.jar --ij-jar=jars/ant-nodeps.jar --ij-jar=jars/ant-junit.jar --no-full-classpath --dont-patch-ij1 --headless --main-class=org.apache.tools.ant.Main",
+	"--ant --tools-jar --ij-jar=jars/ant.jar --ij-jar=jars/ant-launcher.jar --ij-jar=jars/ant-nodeps.jar --ij-jar=jars/ant-junit.jar --dont-patch-ij1 --headless --main-class=org.apache.tools.ant.Main",
 	" run Apache Ant",
-	"--mini-maven --ij-jar=jars/fake.jar --no-full-classpath --dont-patch-ij1 --main-class=fiji.build.MiniMaven",
+	"--mini-maven --ij-jar=jars/fake.jar --dont-patch-ij1 --main-class=fiji.build.MiniMaven",
 	" run Fiji's very simple Maven mockup",
-	"--javac --ij-jar=jars/javac.jar --headless --dont-patch-ij1 --add-classpath-option --main-class=com.sun.tools.javac.Main",
+	"--javac --ij-jar=jars/javac.jar --freeze-classloader --headless --full-classpath --dont-patch-ij1 --pass-classpath --main-class=com.sun.tools.javac.Main",
 	" start JavaC, the Java Compiler, instead of ImageJ",
-	"--javah --only-tools-jar --headless --dont-patch-ij1 --add-classpath-option --main-class=com.sun.tools.javah.Main",
+	"--javah --only-tools-jar --headless --full-classpath --dont-patch-ij1 --pass-classpath --main-class=com.sun.tools.javah.Main",
 	" start javah instead of ImageJ",
-	"--javap --only-tools-jar --headless --dont-patch-ij1 --add-classpath-option --main-class=sun.tools.javap.Main",
+	"--javap --only-tools-jar --headless --full-classpath --dont-patch-ij1 --pass-classpath --main-class=sun.tools.javap.Main",
 	" start javap instead of ImageJ",
-	"--javadoc --only-tools-jar --headless --dont-patch-ij1 --add-classpath-option --main-class=com.sun.tools.javadoc.Main",
+	"--javadoc --only-tools-jar --headless --full-classpath --dont-patch-ij1 --pass-classpath --main-class=com.sun.tools.javadoc.Main",
 	" start javadoc instead of ImageJ",
 };
 
@@ -2356,10 +2356,10 @@ static void __attribute__((__noreturn__)) usage(void)
 		"\tappend <path> to the class path\n"
 		"--jar-path, --jarpath, -jarpath <path>\n"
 		"\tappend .jar files in <path> to the class path\n",
-		"--add-classpath-option\n"
+		"--pass-classpath\n"
 		"\tpass -classpath <classpath> to the main() method\n"
-		"--no-full-classpath\n"
-		"\tdo not build classpath implicitly\n"
+		"--full-classpath\n"
+		"\tcall the main class with the full ImageJ class path\n"
 		"--dont-patch-ij1\n"
 		"\tdo not try to runtime-patch ImageJ1\n"
 		"--ext <path>\n"
@@ -2600,9 +2600,9 @@ static int retrotranslator;
 
 static struct options options;
 static long megabytes = 0;
-static struct string buffer, buffer2, arg, class_path, plugin_path, ext_option;
-static int jdb, add_class_path_option, advanced_gc = 1, debug_gc;
-static int allow_multiple, skip_build_classpath, class_path_already_defined, skip_class_launcher;
+static struct string buffer, buffer2, arg, plugin_path, ext_option;
+static int jdb, advanced_gc = 1, debug_gc;
+static int allow_multiple, skip_class_launcher, full_class_path;
 
 static int handle_one_option2(int *i, int argc, const char **argv)
 {
@@ -2621,9 +2621,8 @@ static int handle_one_option2(int *i, int argc, const char **argv)
 		; /* ignore */
 #endif
 	else if (!strcmp(argv[*i], "--jdb")) {
-		string_addf_path_list(&class_path, "%s/../lib/tools.jar", get_jre_home());
-		add_class_path_option = 1;
-		jdb = 1;
+		add_tools_jar(&options);
+		add_launcher_option(&options, "-jdb", NULL);
 	}
 	else if (!strcmp(argv[*i], "--allow-multiple"))
 		allow_multiple = 1;
@@ -2669,11 +2668,11 @@ static int handle_one_option2(int *i, int argc, const char **argv)
 	else if (!strcmp(argv[*i], "--headless"))
 		headless = 1;
 	else if (handle_one_option(i, argv, "--main-class", &arg)) {
-		string_append_path_list(&class_path, ".");
+		add_launcher_option(&options, "-classpath", ".");
 		main_class = xstrdup(arg.buffer);
 	}
 	else if (handle_one_option(i, argv, "--jar", &arg)) {
-		string_addf_path_list(&class_path, "%s", arg.buffer);
+		add_launcher_option(&options, "-classpath", arg.buffer);
 		main_class = "imagej.JarLauncher";
 		add_option_string(&options, &arg, 1);
 	}
@@ -2682,24 +2681,22 @@ static int handle_one_option2(int *i, int argc, const char **argv)
 			handle_one_option(i, argv, "-classpath", &arg) ||
 			handle_one_option(i, argv, "--cp", &arg) ||
 			handle_one_option(i, argv, "-cp", &arg))
-		string_addf_path_list(&class_path, "%s", arg.buffer);
-	else if (handle_one_option(i, argv, "--fiji-jar", &arg)) {
+		add_launcher_option(&options, "-classpath", arg.buffer);
+	else if (handle_one_option(i, argv, "--fiji-jar", &arg) || handle_one_option(i, argv, "--ij-jar", &arg)) {
 		const char *path = maybe_substitute_ij_jar(arg.buffer);
-		string_addf_path_list(&class_path, "%s", path ? path : ij_path(arg.buffer));
-	}
-	else if (handle_one_option(i, argv, "--ij-jar", &arg)) {
-		const char *path = maybe_substitute_ij_jar(arg.buffer);
-		string_addf_path_list(&class_path, "%s", path ? path : ij_path(arg.buffer));
+		if (path)
+			add_launcher_option(&options, "-classpath", path);
+		else
+			add_launcher_option(&options, "-ijclasspath", arg.buffer);
 	}
 	else if (handle_one_option(i, argv, "--jar-path", &arg) ||
 			handle_one_option(i, argv, "--jarpath", &arg) ||
-			handle_one_option(i, argv, "-jarpath", &arg)) {
-		struct string *jars = string_init(32);
-		build_classpath_for_string(jars, &arg, 0);
-		if (jars->length)
-			string_addf_path_list(&class_path, "%s", jars->buffer);
-		string_release(jars);
-	}
+			handle_one_option(i, argv, "-jarpath", &arg))
+		add_launcher_option(&options, "-jarpath", arg.buffer);
+	else if (!strcmp(argv[*i], "--full-classpath"))
+		full_class_path = 1;
+	else if (!strcmp(argv[*i], "--freeze-classloader"))
+		add_launcher_option(&options, "-freeze-classloader", NULL);
 	else if (handle_one_option(i, argv, "--ext", &arg)) {
 		string_append_path_list(&ext_option, arg.buffer);
 	}
@@ -2724,23 +2721,21 @@ static int handle_one_option2(int *i, int argc, const char **argv)
 		if (file_is_newer(ij_path("src-plugins/fake/fiji/build/Fake.java"), fake_jar) &&
 				!is_building("jars/fake.jar"))
 			error("Warning: jars/fake.jar is not up-to-date");
-		string_addf_path_list(&class_path, "%s", fake_jar);
+		string_set_length(&arg, 0);
+		string_addf(&arg, "-Djava.class.path=%s", fake_jar);
+		add_option_string(&options, &arg, 0);
 		main_class = "fiji.build.Fake";
 	}
 	else if (!strcmp(argv[*i], "--tools-jar"))
-		string_addf_path_list(&class_path, "%s/../lib/tools.jar", get_jre_home());
+		add_tools_jar(&options);
 	else if (!strcmp(argv[*i], "--only-tools-jar")) {
-		struct string *buffer = string_initf("-Djava.class.path=%s/../lib/tools.jar", get_jre_home());
-		add_option_string(&options, buffer, 0);
-		class_path_already_defined = 1;
-		skip_class_launcher = 1;
+		add_tools_jar(&options);
+		add_launcher_option(&options, "-freeze-classloader", NULL);
 	}
 	else if (!strcmp(argv[*i], "--dont-patch-ij1"))
 		add_option(&options, "-Dpatch.ij1=false", 0);
-	else if (!strcmp(argv[*i], "--add-classpath-option"))
-		add_class_path_option = 1;
-	else if (!strcmp(argv[*i], "--no-full-classpath"))
-		skip_build_classpath = 1;
+	else if (!strcmp(argv[*i], "--pass-classpath"))
+		add_launcher_option(&options, "-pass-classpath", NULL);
 	else if (!strcmp(argv[*i], "--retrotranslator") ||
 			!strcmp(argv[*i], "--retro"))
 		retrotranslator = 1;
@@ -2997,7 +2992,7 @@ static void parse_command_line(void)
 			handle_commandline(expanded);
 		else if (len > 6 && !strcmp(first + len - 6, ".class")) {
 			struct string *dotted = string_copy(first);
-			string_append_path_list(&class_path, ".");
+			add_launcher_option(&options, "-classpath", ".");
 			string_replace(dotted, '/', '.');
 			string_set_length(dotted, len - 6);
 			main_class = xstrdup(dotted->buffer);
@@ -3011,39 +3006,19 @@ static void parse_command_line(void)
 
 	maybe_reexec_with_correct_lib_path();
 
-	if (retrotranslator && build_classpath(&class_path, ij_path("retro"), 0))
-		die("Retrotranslator is required but cannot be found!");
-
 	if (!options.debug && !options.use_system_jvm && !headless && is_default_ij1_class(main_class))
 		show_splash();
 
 	/* set up class path */
-	if (skip_build_classpath)
-		string_append_path_list(&class_path, ij_path("jars/ij-launcher.jar"));
-	else {
-		if (is_default_ij1_class(main_class))
-			string_append_path_list(&class_path, ij_path("jars/ij-launcher.jar"));
-		else {
-			if (build_classpath(&class_path, ij_path("plugins"), 0))
-				die("Could not build classpath!");
-			build_classpath(&class_path, ij_path("jars"), 0);
-		}
+	if (full_class_path || !strcmp(default_main_class, main_class)) {
+		add_launcher_option(&options, "-ijjarpath", "jars");
+		add_launcher_option(&options, "-ijjarpath", "plugins");
 	}
-	if (class_path.length && !class_path_already_defined) {
-		string_setf(&buffer, "-Djava.class.path=%s", class_path.buffer);
-		add_option_string(&options, &buffer, 0);
-	}
+	else if (is_default_ij1_class(main_class))
+		add_launcher_option(&options, "-ijclasspath", "jars/ij.jar");
 
 	if (default_arguments->length)
 		add_options(&options, default_arguments->buffer, 1);
-
-	if (add_class_path_option) {
-		add_option(&options, "-classpath", 1);
-		add_option_copy(&options, class_path.buffer, 1);
-	}
-
-	if (jdb)
-		add_option_copy(&options, main_class, 1);
 
 	if (!strcmp(main_class, "org.apache.tools.ant.Main"))
 		add_java_home_to_path();
@@ -3095,14 +3070,10 @@ static void parse_command_line(void)
 	}
 
 	if (jdb)
-		main_class = "com.sun.tools.example.debug.tty.TTY";
+		add_launcher_option(&options, "-jdb", NULL);
 
-	if (retrotranslator) {
-		add_option(&options, "-advanced", 1);
-		add_option_copy(&options, main_class, 1);
-		main_class =
-			"net.sf.retrotranslator.transformer.JITRetrotranslator";
-	}
+	if (retrotranslator)
+		add_launcher_option(&options, "-retrotranslator", NULL);
 
 	for (i = 1; i < main_argc; i++)
 		add_option(&options, main_argv[i], 1);
