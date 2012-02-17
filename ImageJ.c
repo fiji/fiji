@@ -2267,7 +2267,8 @@ static void __attribute__((__noreturn__)) usage(void)
 	}
 
 	die("Usage: %s [<Java options>.. --] [<ImageJ options>..] [<files>..]\n"
-		"\n%s%s%s%s%s%s%s",
+		"\n%s%s%s%s%s%s%s%s",
+		main_argv[0],
 		"Java options are passed to the Java Runtime, ImageJ\n"
 		"options to ImageJ (or Jython, JRuby, ...).\n"
 		"\n"
@@ -2334,8 +2335,8 @@ static void __attribute__((__noreturn__)) usage(void)
 		"--edit [<file>...]\n"
 		"\tedit the given file in the script editor\n"
 		"\n",
-		"Options to run programs other than ImageJ:\n"
-		"%s"
+		"Options to run programs other than ImageJ:\n",
+		subcommands.buffer,
 		"--build\n"
 		"\tstart Fiji's build instead of ImageJ\n"
 		"\n"
@@ -2343,8 +2344,7 @@ static void __attribute__((__noreturn__)) usage(void)
 		"\tdefault when called with a file ending in .class)\n"
 		"\tstart the given class instead of ImageJ\n"
 		"--retrotranslator\n"
-		"\tuse Retrotranslator to support Java < 1.6\n\n",
-		main_argv[0], subcommands.buffer);
+		"\tuse Retrotranslator to support Java < 1.6\n\n");
 	string_release(&subcommands);
 }
 
