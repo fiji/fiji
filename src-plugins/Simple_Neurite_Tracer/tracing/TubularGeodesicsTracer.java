@@ -120,10 +120,66 @@ public class TubularGeodesicsTracer extends Thread implements SearchInterface {
 		progressListeners.add( callback );
 	}
 
+	public void reportProgress(float proportionDone) {
+		System.out.println("No implementation yet for reportProgress; proportionDone: "+proportionDone);
+	}
+
 	@Override
 	public void requestStop() {
-		// FIXME: should probably add a "stoppable" query method to SearchInterface
-		throw new RuntimeException("TubularGeodesicsTracer:requestStop: Not implemented yet...");
+
+		try {
+
+			ClassLoader loader = IJ.getClassLoader();
+			if (loader == null)
+				throw new RuntimeException("IJ.getClassLoader() failed (!)");
+
+			try {
+
+				/* Unfortunately, we can't be sure that the tubularity plugin
+				   will be available at compile- or run-time, so we have to
+				   try to load it via reflection. */
+
+				Class<?> c = loader.loadClass("FijiITKInterface.TubularGeodesics");
+				Object newInstance = c.newInstance();
+
+				Class [] parameterTypes = { };
+
+				Method m = c.getMethod( "interruptSearch", parameterTypes );
+				Object [] parameters = new Object[0];
+
+				m.invoke(newInstance,parameters);
+
+				System.out.println("finished running the interruptITK code");
+
+			} catch (IllegalArgumentException e) {
+				reportFinished(false);
+				throw new RuntimeException("There was an illegal argument when trying to invoke interruptSearch: " + e);
+			} catch (InvocationTargetException e) {
+				reportFinished(false);
+				Throwable realException = e.getTargetException();
+				throw new RuntimeException("There was an exception thrown by interruptSearch: " + realException);
+			} catch (ClassNotFoundException e) {
+				reportFinished(false);
+				throw new RuntimeException("The FijiITKInterface.TubularGeodesics class was not found: " + e);
+			} catch (InstantiationException e) {
+				reportFinished(false);
+				throw new RuntimeException("Failed to instantiate the FijiITKInterface.TubularGeodesics object: " + e);
+			} catch ( IllegalAccessException e ) {
+				reportFinished(false);
+				throw new RuntimeException("IllegalAccessException when trying to create an instance of FijiITKInterface.TubularGeodesics: "+e);
+			} catch (NoSuchMethodException e) {
+				reportFinished(false);
+				throw new RuntimeException("There was a NoSuchMethodException when trying to invoke interruptSearch: " + e);
+			} catch (SecurityException e) {
+				reportFinished(false);
+				throw new RuntimeException("There was a SecurityException when trying to invoke interruptSearch: " + e);
+			}
+
+		} catch( Throwable t ) {
+			System.out.println("Got an exception from call to ITK code: "+t);
+			t.printStackTrace();
+			IJ.error("There was an error in calling to ITK code: "+t);
+		}
 	}
 
 	PathResult temporaryPathResult;
