@@ -271,8 +271,14 @@ public class TubularGeodesicsTracer extends Thread implements SearchInterface {
 			lastPathResult = temporaryPathResult;
 		for( SearchProgressCallback progress : progressListeners )
 			progress.finished( this, success );
-		if (!success)
-			IJ.error("The tracing failed: "+temporaryPathResult.getErrorMessage());
+		if (!success) {
+			String errorMessage = temporaryPathResult.getErrorMessage();
+			/* If this is null, it means that the user
+			   cancelled the search, so we don't need to
+			   report an error: */
+			if (errorMessage != null)
+				IJ.error("The tracing failed: "+errorMessage);
+		}
 	}
 
 }
