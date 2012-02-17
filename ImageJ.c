@@ -1661,6 +1661,21 @@ static void append_string_array(struct string_array *target,
 	target->nr += source->nr;
 }
 
+static void prepend_string_array(struct string_array *target,
+		struct string_array *source)
+{
+	if (source->nr <= 0)
+		return;
+	if (target->alloc - target->nr < source->nr) {
+		target->alloc += source->nr;
+		target->list = (char **)xrealloc(target->list,
+				target->alloc * sizeof(target->list[0]));
+	}
+	memmove(target->list + source->nr, target->list, target->nr * sizeof(target->list[0]));
+	memcpy(target->list, source->list, source->nr * sizeof(target->list[0]));
+	target->nr += source->nr;
+}
+
 static JavaVMOption *prepare_java_options(struct string_array *array)
 {
 	JavaVMOption *result = (JavaVMOption *)xcalloc(array->nr,
@@ -1698,9 +1713,23 @@ fail:
 }
 
 struct options {
-	struct string_array java_options, ij_options;
+	struct string_array java_options, launcher_options, ij_options;
 	int debug, use_system_jvm;
 };
+
+static void add_launcher_option(struct options *options, const char *option, const char *class_path)
+{
+	append_string(&options->launcher_options, xstrdup(option));
+	if (class_path)
+		append_string(&options->launcher_options, xstrdup(class_path));
+}
+
+static void add_tools_jar(struct options *options)
+{
+	struct string *string = string_initf("%s/../lib/tools.jar", get_jre_home());
+	add_launcher_option(options, "-classpath", string->buffer);
+	string_release(string);
+}
 
 static void add_option(struct options *options, char *option, int for_ij)
 {
@@ -3105,7 +3134,10 @@ static void parse_command_line(void)
 	keep_only_one_memory_option(&options.java_options);
 
 	if (!skip_class_launcher) {
-		prepend_string_copy(&options.ij_options, main_class);
+		struct string *string = string_initf("-Djava.class.path=%s", ij_path("jars/ij-launcher.jar"));
+		add_option_string(&options, string, 0);
+		add_launcher_option(&options, main_class, NULL);
+		prepend_string_array(&options.ij_options, &options.launcher_options);
 		main_class = "imagej.ClassLauncher";
 	}
 
