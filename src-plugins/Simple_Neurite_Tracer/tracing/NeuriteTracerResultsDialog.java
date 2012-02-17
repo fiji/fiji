@@ -87,6 +87,7 @@ public class NeuriteTracerResultsDialog
 	protected JMenuItem shollAnalysiHelpMenuItem;
 
 	protected JCheckBoxMenuItem mipOverlayMenuItem;
+	protected JCheckBoxMenuItem drawDiametersXYMenuItem;
 
 	// These are the states that the UI can be in:
 
@@ -747,6 +748,9 @@ public class NeuriteTracerResultsDialog
 		mipOverlayMenuItem.addItemListener(this);
 		viewMenu.add(mipOverlayMenuItem);
 
+		drawDiametersXYMenuItem = new JCheckBoxMenuItem("Draw diameters in XY plane", plugin.getDrawDiametersXY());
+		drawDiametersXYMenuItem.addItemListener(this);
+		viewMenu.add(drawDiametersXYMenuItem);
 
 		setJMenuBar(menuBar);
 
@@ -1449,12 +1453,10 @@ public class NeuriteTracerResultsDialog
 
 		} else if( source == mipOverlayMenuItem ) {
 
-			if( e.getStateChange() == ItemEvent.SELECTED ) {
-				plugin.showMIPOverlays(true);
-			} else {
-				plugin.showMIPOverlays(false);
-			}
+			plugin.showMIPOverlays(e.getStateChange() == ItemEvent.SELECTED);
 
+		} else if( source == drawDiametersXYMenuItem ) {
+			plugin.setDrawDiametersXY(e.getStateChange() == ItemEvent.SELECTED);
 		}
 	}
 

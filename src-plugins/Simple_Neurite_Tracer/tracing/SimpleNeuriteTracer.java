@@ -1633,4 +1633,17 @@ public class SimpleNeuriteTracer extends ThreePanes
 			}
 		}
 	}
+
+	protected boolean drawDiametersXY = Prefs.get("tracing.Simple_Neurite_Tracer.drawDiametersXY", "false").equals("true");
+	public void setDrawDiametersXY(boolean draw) {
+		drawDiametersXY = draw;
+		Prefs.set("tracing.Simple_Neurite_Tracer.drawDiametersXY", Boolean.toString(draw));
+		Prefs.savePreferences();
+		repaintAllPanes();
+	}
+
+	public boolean getDrawDiametersXY() {
+		return drawDiametersXY;
+	}
+
 }
