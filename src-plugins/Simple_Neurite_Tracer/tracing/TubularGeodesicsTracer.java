@@ -126,6 +126,8 @@ public class TubularGeodesicsTracer extends Thread implements SearchInterface {
 		throw new RuntimeException("TubularGeodesicsTracer:requestStop: Not implemented yet...");
 	}
 
+	PathResult temporaryPathResult;
+
 	@Override
 	public void run( ) {
 
@@ -142,7 +144,7 @@ public class TubularGeodesicsTracer extends Thread implements SearchInterface {
 			p2[1] = end_y_image;
 			p2[2] = end_z_image;
 
-			PathResult result = new PathResult();
+			temporaryPathResult = new PathResult();
 
 			// Call the JNI here:
 
@@ -162,14 +164,16 @@ public class TubularGeodesicsTracer extends Thread implements SearchInterface {
 				Class [] parameterTypes = { String.class,
 							    float[].class,
 							    float[].class,
-							    PathResult.class };
+							    PathResult.class,
+							    TubularGeodesicsTracer.class };
 
-				Method m = c.getMethod( "getPathResult", parameterTypes );
-				Object [] parameters = new Object[4];
+				Method m = c.getMethod( "startSearch", parameterTypes );
+				Object [] parameters = new Object[5];
 				parameters[0] = oofFile.getAbsolutePath();
 				parameters[1] = p1;
 				parameters[2] = p2;
-				parameters[3] = result;
+				parameters[3] = temporaryPathResult;
+				parameters[4] = this;
 
 				m.invoke(newInstance,parameters);
 
@@ -177,11 +181,11 @@ public class TubularGeodesicsTracer extends Thread implements SearchInterface {
 
 			} catch (IllegalArgumentException e) {
 				reportFinished(false);
-				throw new RuntimeException("There was an illegal argument when trying to invoke getPathResult: " + e);
+				throw new RuntimeException("There was an illegal argument when trying to invoke startSearch: " + e);
 			} catch (InvocationTargetException e) {
 				reportFinished(false);
 				Throwable realException = e.getTargetException();
-				throw new RuntimeException("There was an exception thrown by getPathResult: " + realException);
+				throw new RuntimeException("There was an exception thrown by startSearch: " + realException);
 			} catch (ClassNotFoundException e) {
 				reportFinished(false);
 				throw new RuntimeException("The FijiITKInterface.TubularGeodesics class was not found: " + e);
@@ -193,24 +197,11 @@ public class TubularGeodesicsTracer extends Thread implements SearchInterface {
 				throw new RuntimeException("IllegalAccessException when trying to create an instance of FijiITKInterface.TubularGeodesics: "+e);
 			} catch (NoSuchMethodException e) {
 				reportFinished(false);
-				throw new RuntimeException("There was a NoSuchMethodException when trying to invoke getPathResult: " + e);
+				throw new RuntimeException("There was a NoSuchMethodException when trying to invoke startSearch: " + e);
 			} catch (SecurityException e) {
 				reportFinished(false);
-				throw new RuntimeException("There was a SecurityException when trying to invoke getPathResult: " + e);
+				throw new RuntimeException("There was a SecurityException when trying to invoke startSearch: " + e);
 			}
-
-			System.out.println("before checking for success");
-
-			if(!result.getSuccess()) {
-				reportFinished( false );
-				throw new RuntimeException("getPathResult failed, reporting the error: "+result.getErrorMessage());
-			}
-
-			lastPathResult = result;
-
-			System.out.println("about to call reportFinished, with "+progressListeners.size()+" listeners");
-
-			reportFinished( true );
 
 		} catch( Throwable t ) {
 			System.out.println("Got an exception from call to ITK code: "+t);
@@ -220,8 +211,12 @@ public class TubularGeodesicsTracer extends Thread implements SearchInterface {
 	}
 
 	public void reportFinished( boolean success ) {
+		if (success)
+			lastPathResult = temporaryPathResult;
 		for( SearchProgressCallback progress : progressListeners )
 			progress.finished( this, success );
+		if (!success)
+			IJ.error("The tracing failed: "+temporaryPathResult.getErrorMessage());
 	}
 
 }
