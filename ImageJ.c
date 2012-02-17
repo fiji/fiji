@@ -392,19 +392,6 @@ static void string_addf(struct string *string, const char *fmt, ...)
 }
 
 __attribute__((format (printf, 2, 3)))
-static void string_addf_path_list(struct string *string, const char *fmt, ...)
-{
-	va_list ap;
-
-	if (string->length)
-		string_append(string, PATH_SEP);
-
-	va_start(ap, fmt);
-	string_vaddf(string, fmt, ap);
-	va_end(ap);
-}
-
-__attribute__((format (printf, 2, 3)))
 static void string_setf(struct string *string, const char *fmt, ...)
 {
 	va_list ap;
@@ -1538,49 +1525,6 @@ static void add_java_home_to_path(void)
 
 static int headless, headless_argc;
 
-int build_classpath_for_string(struct string *result, struct string *jar_directory, int no_error) {
-	const char *extension = ".jar";
-	int extension_length = strlen(extension);
-	DIR *directory = opendir(jar_directory->buffer);
-	struct dirent *entry;
-
-	if (!directory) {
-		if (no_error)
-			return 0;
-		error("Failed to open: %s", jar_directory->buffer);
-		return 1;
-	}
-	while (NULL != (entry = readdir(directory))) {
-		const char *filename = entry->d_name;
-		int len = strlen(filename);
-		if (len > extension_length && !strcmp(filename + len - extension_length, extension))
-			string_addf_path_list(result, "%s/%s", jar_directory->buffer, filename);
-		else {
-			if (filename[0] == '.')
-				continue;
-			len = jar_directory->length;
-			string_addf(jar_directory, "/%s", filename);
-			if (build_classpath_for_string(result, jar_directory, 1)) {
-				closedir(directory);
-				string_set_length(jar_directory, len);
-				return 1;
-			}
-			string_set_length(jar_directory, len);
-		}
-
-	}
-	closedir(directory);
-	return 0;
-}
-
-int build_classpath(struct string *result, const char *jar_directory, int no_error) {
-	struct string *string = string_copy(jar_directory);
-	int res = build_classpath_for_string(result, string, no_error);
-
-	string_release(string);
-	return res;
-}
-
 static struct string *set_property(JNIEnv *env,
 		const char *key, const char *value)
 {
@@ -2711,7 +2655,6 @@ static int handle_one_option2(int *i, int argc, const char **argv)
 		open_win_console();
 #endif
 		skip_class_launcher = 1;
-		skip_build_classpath = 1;
 		headless = 1;
 		fake_jar = ij_path("jars/fake.jar");
 		precompiled_fake_jar = ij_path("precompiled/fake.jar");
