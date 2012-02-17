@@ -3047,12 +3047,34 @@ static void parse_command_line(void)
 
 	keep_only_one_memory_option(&options.java_options);
 
-	if (!skip_class_launcher) {
+	if (!skip_class_launcher && strcmp(main_class, "org.apache.tools.ant.Main")) {
 		struct string *string = string_initf("-Djava.class.path=%s", ij_path("jars/ij-launcher.jar"));
 		add_option_string(&options, string, 0);
 		add_launcher_option(&options, main_class, NULL);
 		prepend_string_array(&options.ij_options, &options.launcher_options);
 		main_class = "imagej.ClassLauncher";
+	}
+	else {
+		struct string *class_path = string_init(32);
+		const char *sep = "-Djava.class.path=";
+		int i;
+
+		for (i = 0; i < options.launcher_options.nr; i++) {
+			const char *option = options.launcher_options.list[i];
+			if (sep)
+				string_append(class_path, sep);
+			if (!strcmp(option, "-ijclasspath"))
+				string_append(class_path, ij_path(options.launcher_options.list[++i]));
+			else if (!strcmp(option, "-classpath"))
+				string_append(class_path, options.launcher_options.list[++i]);
+			else
+				die ("Without ij-launcher, '%s' cannot be handled", option);
+			sep = PATH_SEP;
+		}
+
+		if (class_path->length)
+			add_option_string(&options, class_path, 0);
+		string_release(class_path);
 	}
 
 	if (options.debug) {
