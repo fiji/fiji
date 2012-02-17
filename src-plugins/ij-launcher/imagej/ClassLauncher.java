@@ -17,7 +17,7 @@ public class ClassLauncher {
 	 *        with the remaining arguments.
 	 */
 	public static void main(String[] arguments) {
-		boolean retrotranslator = false, jdb = false;
+		boolean retrotranslator = false, jdb = false, passClasspath = false;
 		ClassLoaderPlus classLoader = null;
 		int i = 0;
 		for (; i < arguments.length && arguments[i].charAt(0) == '-'; i++) {
@@ -36,6 +36,8 @@ public class ClassLauncher {
 				classLoader = ClassLoaderPlus.getRecursivelyInFijiDirectory("retro");
 				retrotranslator = true;
 			}
+			else if (option.equals("-pass-classpath"))
+				passClasspath = true;
 			else {
 				System.err.println("Unknown option: " + option + "!");
 				System.exit(1);
@@ -58,6 +60,9 @@ public class ClassLauncher {
 				e.printStackTrace();
 			}
 		}
+
+		if (passClasspath && classLoader != null)
+			arguments = prepend(arguments, "-classpath", classLoader.getClassPath());
 
 		if (jdb) {
 			arguments = prepend(arguments, mainClass);
