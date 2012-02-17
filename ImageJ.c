@@ -2141,17 +2141,17 @@ const char *default_subcommands[] = {
 	".bsh",
 	" start BeanShell instead of ImageJ (this is the",
 	" default when called with a file ending in .bs or .bsh",
-	"--ant --tools-jar --ij-jar=jars/ant.jar --ij-jar=jars/ant-launcher.jar --ij-jar=jars/ant-nodeps.jar --ij-jar=jars/ant-junit.jar --no-full-classpath --headless --main-class=org.apache.tools.ant.Main",
+	"--ant --tools-jar --ij-jar=jars/ant.jar --ij-jar=jars/ant-launcher.jar --ij-jar=jars/ant-nodeps.jar --ij-jar=jars/ant-junit.jar --no-full-classpath --dont-patch-ij1 --headless --main-class=org.apache.tools.ant.Main",
 	" run Apache Ant",
-	"--mini-maven --ij-jar=jars/fake.jar --no-full-classpath --main-class=fiji.build.MiniMaven",
+	"--mini-maven --ij-jar=jars/fake.jar --no-full-classpath --dont-patch-ij1 --main-class=fiji.build.MiniMaven",
 	" run Fiji's very simple Maven mockup",
-	"--javac --ij-jar=jars/javac.jar --headless --add-classpath-option --main-class=com.sun.tools.javac.Main",
+	"--javac --ij-jar=jars/javac.jar --headless --dont-patch-ij1 --add-classpath-option --main-class=com.sun.tools.javac.Main",
 	" start JavaC, the Java Compiler, instead of ImageJ",
-	"--javah --only-tools-jar --headless --add-classpath-option --main-class=com.sun.tools.javah.Main",
+	"--javah --only-tools-jar --headless --dont-patch-ij1 --add-classpath-option --main-class=com.sun.tools.javah.Main",
 	" start javah instead of ImageJ",
-	"--javap --only-tools-jar --headless --add-classpath-option --main-class=sun.tools.javap.Main",
+	"--javap --only-tools-jar --headless --dont-patch-ij1 --add-classpath-option --main-class=sun.tools.javap.Main",
 	" start javap instead of ImageJ",
-	"--javadoc --only-tools-jar --headless --add-classpath-option --main-class=com.sun.tools.javadoc.Main",
+	"--javadoc --only-tools-jar --headless --dont-patch-ij1 --add-classpath-option --main-class=com.sun.tools.javadoc.Main",
 	" start javadoc instead of ImageJ",
 };
 
@@ -2701,6 +2701,8 @@ static int handle_one_option2(int *i, int argc, const char **argv)
 		class_path_already_defined = 1;
 		skip_class_launcher = 1;
 	}
+	else if (!strcmp(argv[*i], "--dont-patch-ij1"))
+		add_option(&options, "-Dpatch.ij1=false", 0);
 	else if (!strcmp(argv[*i], "--add-classpath-option"))
 		add_class_path_option = 1;
 	else if (!strcmp(argv[*i], "--no-full-classpath"))
