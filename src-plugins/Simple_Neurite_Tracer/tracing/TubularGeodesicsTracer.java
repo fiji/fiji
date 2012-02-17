@@ -149,8 +149,6 @@ public class TubularGeodesicsTracer extends Thread implements SearchInterface {
 
 				m.invoke(newInstance,parameters);
 
-				System.out.println("finished running the interruptITK code");
-
 			} catch (IllegalArgumentException e) {
 				reportFinished(false);
 				throw new RuntimeException("There was an illegal argument when trying to invoke interruptSearch: " + e);
@@ -232,8 +230,6 @@ public class TubularGeodesicsTracer extends Thread implements SearchInterface {
 				parameters[4] = this;
 
 				m.invoke(newInstance,parameters);
-
-				System.out.println("finished running the ITK code");
 
 			} catch (IllegalArgumentException e) {
 				reportFinished(false);
