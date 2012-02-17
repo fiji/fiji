@@ -36,7 +36,7 @@ public class ClassLauncher {
 			arguments = newArguments;
 		}
 
-		if (!arguments[0].equals("imagej.Main") && !arguments[0].equals("fiji.build.MiniMaven")) {
+		if (!"false".equals(System.getProperty("patch.ij1")) && !arguments[0].equals("imagej.Main") && !arguments[0].equals("fiji.build.MiniMaven")) {
 			classLoader = ClassLoaderPlus.getInFijiDirectory("jars/fiji-compat.jar", "jars/ij.jar", "jars/javassist.jar");
 			try {
 				patchIJ1(classLoader);
@@ -51,8 +51,6 @@ public class ClassLauncher {
 	}
 
 	protected static void patchIJ1(ClassLoader classLoader) throws ClassNotFoundException, IllegalAccessException, InstantiationException {
-		if ("false".equals(System.getProperty("patch.ij1")))
-			return;
 		Class<Runnable> clazz = (Class<Runnable>)classLoader.loadClass("fiji.IJ1Patcher");
 		Runnable ij1Patcher = clazz.newInstance();
 		ij1Patcher.run();
