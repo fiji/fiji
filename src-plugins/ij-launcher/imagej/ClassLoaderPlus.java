@@ -14,6 +14,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ClassLoaderPlus extends URLClassLoader {
+	// A frozen ClassLoaderPlus will add only to the urls array
+	protected boolean frozen;
 	protected List<URL> urls = new ArrayList<URL>();
 
 	public static ClassLoaderPlus getInFijiDirectory(String... relativePaths) {
@@ -112,7 +114,12 @@ public class ClassLoaderPlus extends URLClassLoader {
 
 	public void add(URL url) {
 		urls.add(url);
-		addURL(url);
+		if (!frozen)
+			addURL(url);
+	}
+
+	public void freeze() {
+		frozen = true;
 	}
 
 	public String getClassPath() {

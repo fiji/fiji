@@ -38,6 +38,8 @@ public class ClassLauncher {
 			}
 			else if (option.equals("-pass-classpath"))
 				passClasspath = true;
+			else if (option.equals("-freeze-classloader"))
+				classLoader.freeze();
 			else {
 				System.err.println("Unknown option: " + option + "!");
 				System.exit(1);
