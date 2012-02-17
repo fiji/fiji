@@ -17,7 +17,7 @@ public class ClassLauncher {
 	 *        with the remaining arguments.
 	 */
 	public static void main(String[] arguments) {
-		boolean retrotranslator = false;
+		boolean retrotranslator = false, jdb = false;
 		ClassLoaderPlus classLoader = null;
 		int i = 0;
 		for (; i < arguments.length && arguments[i].charAt(0) == '-'; i++) {
@@ -30,6 +30,8 @@ public class ClassLauncher {
 				classLoader = ClassLoaderPlus.getRecursively(new File(arguments[++i]));
 			else if (option.equals("-ijjarpath"))
 				classLoader = ClassLoaderPlus.getRecursivelyInFijiDirectory(arguments[++i]);
+			else if (option.equals("-jdb"))
+				jdb = true;
 			else if (option.equals("-retrotranslator")) {
 				classLoader = ClassLoaderPlus.getRecursivelyInFijiDirectory("retro");
 				retrotranslator = true;
@@ -55,6 +57,13 @@ public class ClassLauncher {
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
+		}
+
+		if (jdb) {
+			arguments = prepend(arguments, mainClass);
+			if (classLoader != null)
+				arguments = prepend(arguments, "-classpath", classLoader.getClassPath());
+			mainClass = "com.sun.tools.example.debug.tty.TTY";
 		}
 
 		if (retrotranslator) {
