@@ -2328,6 +2328,12 @@ static void __attribute__((__noreturn__)) usage(void)
 		"\tappend <path> to the class path\n"
 		"--jar-path, --jarpath, -jarpath <path>\n"
 		"\tappend .jar files in <path> to the class path\n",
+		"--add-classpath-option\n"
+		"\tpass -classpath <classpath> to the main() method\n"
+		"--no-full-classpath\n"
+		"\tdo not build classpath implicitly\n"
+		"--dont-patch-ij1\n"
+		"\tdo not try to runtime-patch ImageJ1\n"
 		"--ext <path>\n"
 		"\tset Java's extension directory to <path>\n"
 		"--default-gc\n"
