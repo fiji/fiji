@@ -30,8 +30,14 @@ public class ClassLauncher {
 				System.exit(1);
 			}
 		}
-		if (i > 0)
-			arguments = slice(arguments, i);
+
+		if (i >= arguments.length) {
+			System.err.println("Missing argument: main class");
+			System.exit(1);
+		}
+
+		String mainClass = arguments[i];
+		arguments = slice(arguments, i + 1);
 
 		if (!"false".equals(System.getProperty("patch.ij1")) && !arguments[0].equals("imagej.Main") && !arguments[0].equals("fiji.build.MiniMaven")) {
 			classLoader = ClassLoaderPlus.getInFijiDirectory("jars/fiji-compat.jar", "jars/ij.jar", "jars/javassist.jar");
@@ -42,8 +48,7 @@ public class ClassLauncher {
 			}
 		}
 
-		String[] stripped = slice(arguments, 1);
-		launch(classLoader, arguments[0], stripped);
+		launch(classLoader, mainClass, arguments);
 	}
 
 	protected static void patchIJ1(ClassLoader classLoader) throws ClassNotFoundException, IllegalAccessException, InstantiationException {
