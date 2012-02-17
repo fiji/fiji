@@ -50,7 +50,6 @@ public class MiniMaven {
 	protected PrintStream err;
 	protected Map<String, POM> localPOMCache = new HashMap<String, POM>();
 	protected Fake fake;
-	protected String profile = "swing";
 
 	public MiniMaven(Fake fake, PrintStream err, boolean verbose) throws FakeException {
 		this(fake, err, verbose, false);
@@ -855,12 +854,14 @@ public class MiniMaven {
 			else if (prefix.equals(">project>dependencies>dependency>classifier"))
 				latestDependency.classifier = string;
 			else if (prefix.equals(">project>profiles>profile>id")) {
-				isCurrentProfile = (!Util.getPlatform().equals("macosx") && "javac".equals(string)) || (coordinate.artifactId.equals("javassist") && string.equals("jdk16")) || profile.equals(string);
+				isCurrentProfile = (!Util.getPlatform().equals("macosx") && "javac".equals(string)) || (coordinate.artifactId.equals("javassist") && string.equals("jdk16"));
 				if (debug)
 					err.println((isCurrentProfile ? "Activating" : "Ignoring") + " profile " + string);
 			}
 			else if (!isCurrentProfile && prefix.equals(">project>profiles>profile>activation>file>exists"))
 				isCurrentProfile = new File(directory, string).exists();
+			else if (!isCurrentProfile && prefix.equals(">project>profiles>profile>activation>activeByDefault"))
+				isCurrentProfile = "true".equalsIgnoreCase(string);
 			else if (prefix.equals(">project>repositories>repository>url"))
 				repositories.add(string);
 			else if (prefix.equals(">project>build>sourceDirectory"))
