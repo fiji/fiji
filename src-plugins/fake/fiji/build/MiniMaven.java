@@ -131,8 +131,8 @@ public class MiniMaven {
 		//reader.setXMLErrorHandler(...);
 		reader.parse(new InputSource(new FileInputStream(file)));
 
-
-		if (new File(pom.directory, pom.sourceDirectory).exists()) {
+		File sourceDirectory = pom.getSourceDirectory();
+		if (sourceDirectory.exists()) {
 			pom.buildFromSource = true;
 			pom.target = new File(directory, "target/classes");
 		}
@@ -318,7 +318,7 @@ public class MiniMaven {
 				if (child != null && !child.upToDate(includingJar))
 					return false;
 
-			File source = new File(directory, getSourcePath());
+			File source = getSourceDirectory();
 
 			List<String> notUpToDates = new ArrayList<String>();
 			long lastModified = addRecursively(notUpToDates, source, ".java", target, ".class");
@@ -336,8 +336,16 @@ public class MiniMaven {
 			return true;
 		}
 
+		public File getSourceDirectory() {
+			String sourcePath = getSourcePath();
+			File file = new File(sourcePath);
+			if (file.isAbsolute())
+				return file;
+			return new File(directory, sourcePath);
+		}
+
 		public String getSourcePath() {
-			return sourceDirectory;
+			return expand(sourceDirectory);
 		}
 
 		public void buildJar() throws FakeException, IOException, ParserConfigurationException, SAXException {
@@ -370,7 +378,7 @@ public class MiniMaven {
 				return;
 
 			target.mkdirs();
-			File source = new File(directory, getSourcePath());
+			File source = getSourceDirectory();
 
 			List<String> arguments = new ArrayList<String>();
 			// classpath
