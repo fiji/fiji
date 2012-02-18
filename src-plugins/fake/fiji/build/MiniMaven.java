@@ -582,6 +582,8 @@ public class MiniMaven {
 		public String getProperty(String key) {
 			if (properties.containsKey(key))
 				return properties.get(key);
+			if (key.equals("project.basedir"))
+				return directory.getPath();
 			if (parent == null) {
 				// hard-code a few variables
 				if (key.equals("bio-formats.groupId"))
