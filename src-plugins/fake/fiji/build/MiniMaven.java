@@ -124,6 +124,8 @@ public class MiniMaven {
 		File directory = file.getCanonicalFile().getParentFile();
 		POM pom = new POM(directory, parent);
 		pom.coordinate.classifier = classifier;
+		if (parent != null)
+			pom.sourceDirectory = parent.sourceDirectory;
 		XMLReader reader = SAXParserFactory.newInstance().newSAXParser().getXMLReader();
 		reader.setContentHandler(pom);
 		//reader.setXMLErrorHandler(...);
