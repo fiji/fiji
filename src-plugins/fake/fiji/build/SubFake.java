@@ -97,6 +97,19 @@ public class SubFake extends Rule {
 		File file = new File(Util.makePath(parser.cwd, getLastPrerequisite()), "pom.xml");
 		if (!file.exists())
 			return null;
+		// look for parent POMs (e.g. in modules/)
+		for (;;) {
+			File parent = file.getParentFile();
+			if (parent == null)
+				break;
+			parent = parent.getParentFile();
+			if (parent == null)
+				break;
+			File file2 = new File(parent, "pom.xml");
+			if (!file2.exists())
+				break;
+			file = file2;
+		}
 		String targetBasename = jarName.substring(jarName.lastIndexOf('/') + 1);
 		if (targetBasename.endsWith(".jar"))
 			targetBasename = targetBasename.substring(0, targetBasename.length() - 4);
