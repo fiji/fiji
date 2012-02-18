@@ -415,8 +415,10 @@ public class MiniMaven {
 
 		protected long addRecursively(List<String> list, File directory, String extension, File targetDirectory, String targetExtension) {
 			long lastModified = 0;
-			File[] files = directory.listFiles();
 			if (list == null)
+				return lastModified;
+			File[] files = directory.listFiles();
+			if (files == null)
 				return lastModified;
 			for (File file : files)
 				if (file.isDirectory()) {
