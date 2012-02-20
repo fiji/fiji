@@ -15,6 +15,14 @@ then
         export JAVA_HOME=$FIJI_JAVA_HOME
     else
         export JAVA_HOME=@@INSTALLED_JVM_ROOT@@
+        if [ ! -e "$JAVA_HOME/lib/tools.jar"  ]
+        then
+            # Then it may be that this is a system
+            # where we need to use
+            # /usr/lib/jvm/java-6-openjdk-i386/ (etc.)
+            # instead of /usr/lib/jvm/java-6-openjdk/
+            export JAVA_HOME=$(echo $JAVA_HOME | sed 's,/*$,,')-$(dpkg --print-architecture)
+        fi
     fi
 fi
 

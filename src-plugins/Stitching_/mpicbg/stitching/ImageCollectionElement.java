@@ -78,6 +78,12 @@ public class ImageCollectionElement
 			
 			try 
 			{
+				if ( !file.exists() )
+				{
+					IJ.log( "Cannot find file: '" + file + "' - abort stitching." );
+					return null;
+				}
+				
 				ImporterOptions options = new ImporterOptions();
 				options.setId( file.getAbsolutePath() );
 				options.setSplitChannels( false );
@@ -113,7 +119,7 @@ public class ImageCollectionElement
 			catch ( Exception e ) 
 			{
 				IJ.log( "Cannot open file '" + file + "': " + e );
-				e.printStackTrace();
+				//e.printStackTrace();
 				return null;
 			} 
 			

@@ -10,7 +10,14 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class ClassLoaderPlus extends URLClassLoader {
+	// A frozen ClassLoaderPlus will add only to the urls array
+	protected boolean frozen;
+	protected List<URL> urls = new ArrayList<URL>();
+
 	public static ClassLoaderPlus getInFijiDirectory(String... relativePaths) {
 		try {
 			File directory = new File(getFijiDir());
@@ -106,7 +113,24 @@ public class ClassLoaderPlus extends URLClassLoader {
 	}
 
 	public void add(URL url) {
-		addURL(url);
+		urls.add(url);
+		if (!frozen)
+			addURL(url);
+	}
+
+	public void freeze() {
+		frozen = true;
+	}
+
+	public String getClassPath() {
+		StringBuilder builder = new StringBuilder();
+		String sep = "";
+		for (URL url : urls)
+			if (url.getProtocol().equals("file")) {
+				builder.append(sep).append(url.getPath());
+				sep = File.pathSeparator;
+			}
+		return builder.toString();
 	}
 
 	public String toString() {

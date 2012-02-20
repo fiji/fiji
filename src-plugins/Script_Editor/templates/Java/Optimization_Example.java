@@ -18,12 +18,20 @@ import org.apache.commons.math.optimization.fitting.CurveFitter;
 import org.apache.commons.math.optimization.general.LevenbergMarquardtOptimizer;
 
 /**
- *  A demonstration how to use Apache commons math to perform
- *  - curve fitting
- *  - minimization
+ * A demonstration how to use Apache commons math to perform
+ * <ul>
+ * <li>curve fitting</li>
+ * <li>minimization</li>
+ * </ul>
  */
 
 public class Optimization_Example implements PlugIn {
+	/**
+	 * This method gets called by ImageJ / Fiji.
+	 *
+	 * @param arg can be specified in plugins.config
+	 * @see ij.plugin.PlugIn#run(java.lang.String)
+	 */
 	@Override
 	public void run(String arg) {
 		fit();

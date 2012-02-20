@@ -127,8 +127,7 @@ public class CompileJar extends Rule {
 				return notUpToDate(path);
 		}
 		// check the classpath
-		String[] paths = Util.split(getVar("CLASSPATH"),
-				File.pathSeparator);
+		String[] paths = Util.splitPaths(getVar("CLASSPATH"));
 		for (int i = 0; i < paths.length; i++) {
 			if (!paths[i].equals(".") &&
 					!upToDate(paths[i]))

@@ -149,6 +149,8 @@ public class SimpleNeuriteTracer extends ThreePanes
 	public void cancelSearch( boolean cancelFillToo ) {
 		if( currentSearchThread != null )
 			currentSearchThread.requestStop();
+		if( tubularGeodesicsThread != null )
+			tubularGeodesicsThread.requestStop();
 		endJoin = null;
 		endJoinPoint = null;
 		if( cancelFillToo && filler != null )
@@ -229,8 +231,6 @@ public class SimpleNeuriteTracer extends ThreePanes
 	   about the progress of the search. */
 
 	public void finished( SearchInterface source, boolean success ) {
-
-		System.out.println("Yes, in finished...");
 
 		/* This is called by both filler and currentSearchThread,
 		   so distinguish these cases: */
@@ -1633,4 +1633,17 @@ public class SimpleNeuriteTracer extends ThreePanes
 			}
 		}
 	}
+
+	protected boolean drawDiametersXY = Prefs.get("tracing.Simple_Neurite_Tracer.drawDiametersXY", "false").equals("true");
+	public void setDrawDiametersXY(boolean draw) {
+		drawDiametersXY = draw;
+		Prefs.set("tracing.Simple_Neurite_Tracer.drawDiametersXY", Boolean.toString(draw));
+		Prefs.savePreferences();
+		repaintAllPanes();
+	}
+
+	public boolean getDrawDiametersXY() {
+		return drawDiametersXY;
+	}
+
 }

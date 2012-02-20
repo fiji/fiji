@@ -1,4 +1,4 @@
-package trainableSegmentation;
+package trainableSegmentation.filters;
 
 /************************************************************************************\
  * 2D Lipschitz Filtering Plug-in for ImageJ                                          *
@@ -9,6 +9,25 @@ package trainableSegmentation;
  * and RGB images with support for ROI and Stacks. Long processing can be             *
  * stopped with Esc.                                                                  *
 \************************************************************************************/
+
+/**
+*
+* License: GPL
+*
+* This program is free software; you can redistribute it and/or
+* modify it under the terms of the GNU General Public License 2
+* as published by the Free Software Foundation.
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License
+* along with this program; if not, write to the Free Software
+* Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+* 
+*/
 
 
 /* importing standard Java API Files and ImageJ packages */
@@ -34,7 +53,7 @@ public class Lipschitz_ implements PlugInFilter
 	// the following are the input parameters, with default values assigned to them
 	boolean m_Down    = true;     //  
 	boolean m_TopHat    = false;  // lower Lipschitz cover  
-	double m_Slope = 10;                 // slope
+	public double m_Slope = 10;                 // slope
 
 	protected ImagePlus m_imp;
 	int m_scount;                      // number of stacks

@@ -29,7 +29,15 @@ public class ExceptionHandler implements IJ.ExceptionHandler {
 	protected IJ.ExceptionHandler fallBack;
 
 	protected ExceptionHandler(IJ.ExceptionHandler fallBackHandler) {
-		fallBack = fallBackHandler;
+		if (fallBackHandler != null)
+			fallBack = fallBackHandler;
+		else
+			fallBack = new IJ.ExceptionHandler() {
+				@Override
+				public void handle(Throwable t) {
+					legacyHandle(t);
+				}
+			};
 	}
 
 	public static void addThread(Thread thread, TextEditor editor) {
@@ -82,7 +90,7 @@ public class ExceptionHandler implements IJ.ExceptionHandler {
 		ThreadGroup group = Thread.currentThread().getThreadGroup();
 		while (group != null) {
 			TextEditor editor = threadMap.get(group);
-			if (editor != null) {
+			if (editor != null && editor.isVisible()) {
 				handle(t, editor);
 				return;
 			}
@@ -98,6 +106,10 @@ public class ExceptionHandler implements IJ.ExceptionHandler {
 	}
 
 	public static void handle(Throwable t, TextEditor editor) {
+		if (editor == null || editor.getTab() == null) {
+			legacyHandle(t);
+			return;
+		}
 		JTextArea screen = editor.errorScreen;
 		editor.getTab().showErrors();
 

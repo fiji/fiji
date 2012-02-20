@@ -275,7 +275,7 @@ public abstract class Rule implements Comparable<Rule> {
 				result.add(prereq);
 
 		// check the classpath
-		for (String jarFile : Util.split(getVar("CLASSPATH"), ":"))
+		for (String jarFile : Util.splitPaths(getVar("CLASSPATH")))
 			if (jarFile.endsWith(".jar"))
 				result.add(jarFile);
 
@@ -293,7 +293,7 @@ public abstract class Rule implements Comparable<Rule> {
 		}
 
 		// check the classpath
-		for (String jarFile : Util.split(getVar("CLASSPATH"), ":")) {
+		for (String jarFile : Util.splitPaths(getVar("CLASSPATH"))) {
 			Rule rule = getRule(jarFile);
 			if (rule != null)
 				result.add(rule);
@@ -322,7 +322,7 @@ public abstract class Rule implements Comparable<Rule> {
 
 	public List<String> getDependenciesAsStrings() {
 		List<String> dependencies = new ArrayList(prerequisites);
-		Collections.addAll(dependencies, Util.split(getVar("CLASSPATH"), ":"));
+		Collections.addAll(dependencies, Util.splitPaths(getVar("CLASSPATH")));
 		return dependencies;
 	}
 
@@ -393,9 +393,16 @@ public abstract class Rule implements Comparable<Rule> {
 		String dir = getVar("builddir");
 		if (dir == null || dir.equals(""))
 			return null;
-		return new File(Util.makePath(parser.cwd, dir + "/"
-			+ Util.stripSuffix(Util.stripSuffix(target,
-				".class"), ".jar")));
+		String suffix = target;
+		String ijDir = System.getProperty("ij.dir");
+		if (ijDir != null)
+			suffix = Util.stripPrefix(suffix, ijDir);
+		// strip DOS drive prefix
+		if (suffix.length() > 2 && suffix.charAt(1) == ':')
+			suffix = suffix.substring(2);
+		suffix = Util.stripSuffix(suffix, ".class");
+		suffix = Util.stripSuffix(suffix, ".jar");
+		return new File(Util.makePath(parser.cwd, dir + "/" + suffix));
 	}
 
 	List<String> compileJavas(List<String> javas, File buildDir,

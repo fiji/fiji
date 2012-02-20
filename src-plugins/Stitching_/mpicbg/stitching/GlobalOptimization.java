@@ -3,17 +3,13 @@ package mpicbg.stitching;
 import ij.IJ;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;
 import java.util.Vector;
 
-import mpicbg.models.InvertibleBoundable;
-import mpicbg.models.NotEnoughDataPointsException;
 import mpicbg.models.Point;
 import mpicbg.models.PointMatch;
 import mpicbg.models.Tile;
-import mpicbg.models.TileConfiguration;
 import mpicbg.models.TranslationModel2D;
 import mpicbg.models.TranslationModel3D;
 

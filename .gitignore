@@ -440,6 +440,7 @@ hs_err*.log
 /src-plugins/Script_Editor/function.png
 /src-plugins/Script_Editor/icon.png
 /src-plugins/Script_Editor/var.png
+/src-plugins/fiji-lib/help-cursor.gif
 /jars/pal-optimization.jar
 /plugins/Anisotropic_Diffusion_2D.jar
 /modules/AutoComplete/ant-classes/

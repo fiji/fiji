@@ -1556,7 +1556,8 @@ public class Weka_Segmentation implements PlugIn
 	}
 	
 	/**
-	 * Apply classifier to test data
+	 * Apply classifier to test data. As it is implemented right now, 
+	 * it will use one thread per input image and slice. 
 	 */
 	public void applyClassifierToTestData()
 	{
@@ -1617,7 +1618,7 @@ public class Weka_Segmentation implements PlugIn
 		final int numThreads        = Math.min(imageFiles.length, numProcessors);
 		final int numFurtherThreads = (int)Math.ceil((double)(numProcessors - numThreads)/imageFiles.length) + 1;
 
-		IJ.log("Processing " + imageFiles.length + " image files in " + numThreads + " threads....");
+		IJ.log("Processing " + imageFiles.length + " image files in " + numThreads + " thread(s)....");
 
 		win.setButtonsEnabled(false);
 

@@ -7,11 +7,12 @@ import ij.plugin.filter.PlugInFilter;
 
 import ij.process.ImageProcessor;
 
-/** ProcessPixels
-  *
-  * A template for processing each pixel of either
-  * GRAY8, GRAY16, GRAY32 or COLOR_RGB images.
-  */
+/**
+ * ProcessPixels
+ *
+ * A template for processing each pixel of either
+ * GRAY8, GRAY16, GRAY32 or COLOR_RGB images.
+ */
 public class Process_Pixels implements PlugInFilter {
 	protected ImagePlus image;
 
@@ -23,6 +24,10 @@ public class Process_Pixels implements PlugInFilter {
 	public double value;
 	public String name;
 
+	/**
+	 * @see ij.plugin.filter.PlugInFilter#setup(java.lang.String, ij.ImagePlus)
+	 */
+	@Override
 	public int setup(String arg, ImagePlus imp) {
 		if (arg.equals("about")) {
 			showAbout();
@@ -33,6 +38,10 @@ public class Process_Pixels implements PlugInFilter {
 		return DOES_8G | DOES_16 | DOES_32 | DOES_RGB;
 	}
 
+	/**
+	 * @see ij.plugin.filter.PlugInFilter#run(ij.process.ImageProcessor)
+	 */
+	@Override
 	public void run(ImageProcessor ip) {
 		// get width and height
 		width = ip.getWidth();
@@ -62,7 +71,20 @@ public class Process_Pixels implements PlugInFilter {
 		return true;
 	}
 
-	public void process(ImagePlus ip) {
+	/**
+	 * Process an image.
+	 *
+	 * Please provide this method even if {@link ij.plugin.filter.PlugInFilter} does require it;
+	 * the method {@link ij.plugin.filter.PlugInFilter#run(ij.process.ImageProcessor)} can only
+	 * handle 2-dimensional data.
+	 *
+	 * If your plugin does not change the pixels in-place, make this method return the results and
+	 * change the {@link #setup(java.lang.String, ij.ImagePlus)} method to return also the
+	 * <i>DOES_NOTHING</i> flag.
+	 *
+	 * @param image the image (possible multi-dimensional)
+	 */
+	public void process(ImagePlus image) {
 		// slice numbers start with 1 for historical reasons
 		for (int i = 1; i <= image.getStackSize(); i++)
 			process(image.getStack().getProcessor(i));
