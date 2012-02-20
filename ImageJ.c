@@ -1025,8 +1025,16 @@ static const char *find_in_path(const char *path)
 #ifdef WIN32
 static char *dos_path(const char *path)
 {
+	const char *orig = path;
 	int size = GetShortPathName(path, NULL, 0);
-	char *buffer = (char *)xmalloc(size);
+	char *buffer;
+
+	if (!size)
+		path = find_in_path(path);
+	size = GetShortPathName(path, NULL, 0);
+	if (!size)
+		die ("Could not determine DOS name of %s", orig);
+	buffer = (char *)xmalloc(size);
 	GetShortPathName(path, buffer, size);
 	return buffer;
 }
