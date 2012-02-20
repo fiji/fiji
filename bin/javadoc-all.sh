@@ -18,6 +18,7 @@ grep -ve src-plugins/FFMPEG_IO/fiji/ffmpeg/ \
 	-e modules/bio-formats/components/bio-formats/utils/mipav/PlugInBioFormatsImporter.java \
 	-e modules/imglib/imglib./ij/src/test/java/tests/PerformanceBenchmark.java \
 	-e modules/imglib/imglib2/broken/ \
+	-e mpicbg/MOPS_ExtractPointRoi.java \
 	-e modules/imagej2/ui/pivot/ \
 	-e modules/imagej2/ui/swt/ \
 	-e modules/imagej2/extra/ \
