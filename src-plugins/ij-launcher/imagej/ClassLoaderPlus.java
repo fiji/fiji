@@ -55,12 +55,16 @@ public class ClassLoaderPlus extends URLClassLoader {
 	}
 
 	public static ClassLoaderPlus getRecursivelyInFijiDirectory(String... relativePaths) {
+		return getRecursivelyInFijiDirectory(false, relativePaths);
+	}
+
+	public static ClassLoaderPlus getRecursivelyInFijiDirectory(boolean onlyJars, String... relativePaths) {
 		try {
 			File directory = new File(getFijiDir());
 			ClassLoaderPlus classLoader = null;
 			File[] files = new File[relativePaths.length];
 			for (int i = 0; i < files.length; i++)
-				classLoader = getRecursively(new File(directory, relativePaths[i]));
+				classLoader = getRecursively(onlyJars, new File(directory, relativePaths[i]));
 			return classLoader;
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -69,13 +73,17 @@ public class ClassLoaderPlus extends URLClassLoader {
 	}
 
 	public static ClassLoaderPlus getRecursively(File directory) {
+		return getRecursively(false, directory);
+	}
+
+	public static ClassLoaderPlus getRecursively(boolean onlyJars, File directory) {
 		try {
-			ClassLoaderPlus classLoader = get(directory);
+			ClassLoaderPlus classLoader = onlyJars ? null : get(directory);
 			File[] list = directory.listFiles();
 			if (list != null)
 				for (File file : list)
 					if (file.isDirectory())
-						classLoader = getRecursively(file);
+						classLoader = getRecursively(onlyJars, file);
 					else if (file.getName().endsWith(".jar"))
 						classLoader = get(file);
 			return classLoader;
