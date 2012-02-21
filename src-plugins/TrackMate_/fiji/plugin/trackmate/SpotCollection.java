@@ -48,7 +48,10 @@ public class SpotCollection implements Iterable<Spot>,  SortedMap<Integer, List<
 	@Override
 	public String toString() {
 		String str = super.toString();
-		str += ": contains "+getNSpots()+" spots in "+keySet().size()+" different frames.";
+		str += ": contains "+getNSpots()+" spots in "+keySet().size()+" different frames:\n";
+		for (int key : content.keySet()) {
+			str += "\tframe "+key+": "+getNSpots(key)+" spots.\n";
+		}
 		return str;
 	}
 
