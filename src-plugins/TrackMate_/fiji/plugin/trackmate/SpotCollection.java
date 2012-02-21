@@ -88,8 +88,6 @@ public class SpotCollection implements Iterable<Spot>,  SortedMap<Integer, List<
 		return spots.remove(spot);		
 	}
 
-
-
 	/**
 	 * Add the given spot to this collection, at the given frame. If the frame collection does not exist yet,
 	 * it is created. If <code>null</code> is passed for the frame, nothing is done and false is returned. 

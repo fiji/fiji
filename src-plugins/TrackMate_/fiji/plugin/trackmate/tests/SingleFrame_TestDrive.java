@@ -13,6 +13,7 @@ import ij.IJ;
 import ij.ImagePlus;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.List;
 
 import mpicbg.imglib.image.Image;
@@ -48,11 +49,11 @@ public class SingleFrame_TestDrive {
 		// Feed this to the model & plugin
 		TrackMateModel model = new TrackMateModel();
 		model.setSettings(settings);
+		model.getSpots().put(frame, new ArrayList<Spot>());
 		TrackMate_ plugin = new TrackMate_(model);
 		
 		// Segment using the plugin
-		plugin.execSegmentation();
-		System.out.println(model.getSpots());
+//		plugin.execSegmentation();
 
 		// Grab single frame as Imglib image
 		@SuppressWarnings("unchecked")
@@ -74,7 +75,7 @@ public class SingleFrame_TestDrive {
 		model.getSpots().get(frame).addAll(spots);
 		
 		// Filter on quality
-		FeatureFilter filter = new FeatureFilter(Spot.QUALITY, 20f, true);
+		FeatureFilter filter = new FeatureFilter(Spot.QUALITY, 16f, true);
 		model.addSpotFilter(filter);
 		plugin.execSpotFiltering();
 		

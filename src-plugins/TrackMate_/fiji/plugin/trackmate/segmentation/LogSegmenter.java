@@ -5,9 +5,9 @@ import java.util.List;
 
 import mpicbg.imglib.algorithm.fft.FourierConvolution;
 import mpicbg.imglib.algorithm.math.PickImagePeaks;
+import mpicbg.imglib.algorithm.scalespace.DifferenceOfGaussian.SpecialPoint;
 import mpicbg.imglib.algorithm.scalespace.DifferenceOfGaussianPeak;
 import mpicbg.imglib.algorithm.scalespace.SubpixelLocalization;
-import mpicbg.imglib.algorithm.scalespace.DifferenceOfGaussian.SpecialPoint;
 import mpicbg.imglib.container.array.ArrayContainerFactory;
 import mpicbg.imglib.cursor.LocalizableByDimCursor;
 import mpicbg.imglib.image.Image;
@@ -85,13 +85,13 @@ public class LogSegmenter <T extends RealType<T>> extends AbstractSpotSegmenter<
 		}
 		intermediateImage = fConvLaplacian.getResult();	
 
-
 		PickImagePeaks<T> peakPicker = new PickImagePeaks<T>(intermediateImage);
 		double[] suppressionRadiuses = new double[img.getNumDimensions()];
 		for (int i = 0; i < img.getNumDimensions(); i++) 
 			suppressionRadiuses[i] = radius / calibration[i];
 		peakPicker.setSuppression(suppressionRadiuses); // in pixels
-
+		peakPicker.setAllowBorderPeak(true);
+		
 		if (!peakPicker.checkInput() || !peakPicker.process()) {
 			errorMessage = baseErrorMessage +"Could not run the peak picker algorithm:\n" + peakPicker.getErrorMessage();
 			return false;
