@@ -11,7 +11,7 @@ import mpicbg.imglib.cursor.LocalizableByDimCursor;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.image.ImageFactory;
 import mpicbg.imglib.outofbounds.OutOfBoundsStrategyFactory;
-import mpicbg.imglib.outofbounds.OutOfBoundsStrategyMirrorFactory;
+import mpicbg.imglib.outofbounds.OutOfBoundsStrategyValueFactory;
 import mpicbg.imglib.type.numeric.RealType;
 import mpicbg.imglib.type.numeric.real.FloatType;
 import fiji.plugin.trackmate.Spot;
@@ -69,11 +69,12 @@ public class DogSegmenter<T extends RealType<T>> extends AbstractSpotSegmenter<T
 		}
 		
 		float radius = settings.expectedRadius;
-		// first we need an image factory for FloatType
+		// First we need an image factory for FloatType
 		final ImageFactory<FloatType> imageFactory = new ImageFactory<FloatType>( new FloatType(), img.getContainerFactory() );
 		
-		// and the out of bounds strategies for both types
-		final OutOfBoundsStrategyFactory<FloatType> oobs2 = new OutOfBoundsStrategyMirrorFactory<FloatType>();
+		// And the out of bounds strategies for both types. It needs to be a value-oobs, with a constant
+		// value of 0; otherwise, we will miss maxima on the border of the image.
+		final OutOfBoundsStrategyFactory<FloatType> oobs2 = new OutOfBoundsStrategyValueFactory<FloatType>(new FloatType(0f));
 		
 		float sigma1, sigma2, minPeakValue;
 		sigma1 = (float) (2 / (1+Math.sqrt(2)) *  radius); // / Math.sqrt(img.getNumDimensions())); // in physical unit

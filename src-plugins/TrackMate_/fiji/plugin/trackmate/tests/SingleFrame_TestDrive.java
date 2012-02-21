@@ -5,7 +5,7 @@ import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMate_;
-import fiji.plugin.trackmate.segmentation.LogSegmenter;
+import fiji.plugin.trackmate.segmentation.DogSegmenter;
 import fiji.plugin.trackmate.segmentation.LogSegmenterSettings;
 import fiji.plugin.trackmate.util.TMUtils;
 import fiji.plugin.trackmate.visualization.hyperstack.HyperStackDisplayer;
@@ -17,7 +17,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import mpicbg.imglib.image.Image;
-import mpicbg.imglib.image.display.imagej.ImageJFunctions;
 import mpicbg.imglib.type.numeric.integer.UnsignedByteType;
 
 public class SingleFrame_TestDrive {
@@ -33,10 +32,10 @@ public class SingleFrame_TestDrive {
 		int frame = 0; // 0-based
 
 		// Prepare segmenter instance
-		LogSegmenter<UnsignedByteType> segmenter = new LogSegmenter<UnsignedByteType>();
-		LogSegmenterSettings ss = new LogSegmenterSettings();
-		ss.doSubPixelLocalization = false;
-		ss.expectedRadius = 2.5f;
+		DogSegmenter<UnsignedByteType> segmenter = new DogSegmenter<UnsignedByteType>();
+		LogSegmenterSettings lss = new LogSegmenterSettings();
+		lss.doSubPixelLocalization = false;
+		lss.expectedRadius = 2f;
 		
 		// Build settings object
 		Settings settings = new Settings(imp);
@@ -44,7 +43,7 @@ public class SingleFrame_TestDrive {
 		settings.tstart = frame;
 		settings.tend = frame;
 		settings.segmenter = segmenter;
-		settings.segmenterSettings = ss;
+		settings.segmenterSettings = lss;
 		
 		// Feed this to the model & plugin
 		TrackMateModel model = new TrackMateModel();
@@ -61,10 +60,10 @@ public class SingleFrame_TestDrive {
 		
 		// Check to see if it is right
 		ij.ImageJ.main(args);
-		ImageJFunctions.copyToImagePlus(img, ImagePlus.GRAY8).show();
+//		 mpicbg.imglib.image.display.imagej.ImageJFunctions.copyToImagePlus(img, ImagePlus.GRAY8).show();
 		
 		// Segment it using individual segmenter
-		segmenter.setTarget(img, img.getCalibration(), ss );
+		segmenter.setTarget(img, img.getCalibration(), lss );
 		if (!(segmenter.checkInput() && segmenter.process())) {
 			System.err.println("Problem in segmentation: "+segmenter.getErrorMessage());
 			return;
@@ -75,7 +74,7 @@ public class SingleFrame_TestDrive {
 		model.getSpots().get(frame).addAll(spots);
 		
 		// Filter on quality
-		FeatureFilter filter = new FeatureFilter(Spot.QUALITY, 16f, true);
+		FeatureFilter filter = new FeatureFilter(Spot.QUALITY, 2f, true);
 		model.addSpotFilter(filter);
 		plugin.execSpotFiltering();
 		
