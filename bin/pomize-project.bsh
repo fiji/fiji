@@ -140,6 +140,22 @@ void writePOM(String target, Rule rule) {
 	writeAndAddFile(pom, new File(fijiDir, rule.getStripPath() + "pom.xml"));
 }
 
+void editParentPOM(String stripPath) {
+	if (stripPath.endsWith("/"))
+		stripPath = stripPath.substring(0, stripPath.length() - 1);
+	slash = stripPath.lastIndexOf('/');
+	file = new File(fijiDir, stripPath.substring(0, slash) + "/pom.xml");
+	if (!file.exists())
+		return;
+	module = stripPath.substring(slash + 1);
+	pom = readFile(file);
+	offset = pom.indexOf("\t</modules>");
+	pom = pom.substring(0, offset)
+		+ "\t\t<module>" + module + "</module>\n"
+		+ pom.substring(offset);
+	writeAndAddFile(pom, file);
+}
+
 void fsckEclipse(String stripPath) {
 	factoryPath = "<factorypath>\n"
 		+ "\t<factorypathentry kind=\"VARJAR\" id=\"M2_REPO/net/java/sezpoz/sezpoz/1.9/sezpoz-1.9.jar\" enabled=\"true\" runInBatchMode=\"true\"/>\n"
@@ -207,6 +223,7 @@ for (String target : targets) {
 
 	moveSources(stripPath);
 	writePOM(target, rule);
+	editParentPOM(stripPath);
 	fsckEclipse(stripPath);
 	editFakefile(target, stripPath);
 }
