@@ -2117,7 +2117,7 @@ const char *default_subcommands[] = {
 	" default when called with a file ending in .clj)",
 	"--beanshell --ij-jar=jars/bsh.jar --full-classpath --main-class=bsh.Interpreter",
 	".bs",
-	"--bsh --ij-jar=jars/bsh.jar --main-class=bsh.Interpreter",
+	"--bsh --ij-jar=jars/bsh.jar --full-classpath --main-class=bsh.Interpreter",
 	".bsh",
 	" start BeanShell instead of ImageJ (this is the",
 	" default when called with a file ending in .bs or .bsh",
