@@ -22,15 +22,23 @@ public class Settings {
 	/** The ImagePlus to operate on. */
 	public ImagePlus imp;
 	// Crop cube
+	/** The time-frame index, <b>0-based</b>, of the first time-point to process. */
 	public int tstart;
+	/** The time-frame index, <b>0-based</b>, of the last time-point to process. */
 	public int tend;
+	/** The lowest pixel X position, <b>0-based</b>, of the volume to process. */
 	public int xstart;
+	/** The highest pixel X position, <b>0-based</b>, of the volume to process. */
 	public int xend;
+	/** The lowest pixel Y position, <b>0-based</b>, of the volume to process. */
 	public int ystart;
+	/** The lowest pixel Y position, <b>0-based</b>, of the volume to process. */
 	public int yend;
+	/** The lowest pixel Z position, <b>0-based</b>, of the volume to process. */
 	public int zstart;
+	/** The lowest pixel Z position, <b>0-based</b>, of the volume to process. */
 	public int zend;
-	/** Target channel for segmentation, 1-based. */
+	/** Target channel for segmentation, <b>1-based</b>. */
 	public int segmentationChannel = 1;
 	// Image info
 	public float dt 	= 1;
@@ -89,22 +97,22 @@ public class Settings {
 		}
 		
 		// Crop cube
-		this.zstart = 1;
-		this.zend = imp.getNSlices();
-		this.tstart = 1; 
-		this.tend = imp.getNFrames();
+		this.zstart = 0;
+		this.zend = imp.getNSlices()-1;
+		this.tstart = 0; 
+		this.tend = imp.getNFrames()-1;
 		Roi roi = imp.getRoi();
 		if (roi == null) {
-			this.xstart = 1;
-			this.xend = 1 + width;
-			this.ystart = 1;
-			this.yend = 1 + height;
+			this.xstart = 0;
+			this.xend = width-1;
+			this.ystart = 0;
+			this.yend = height-1;
 		} else {
 			Rectangle boundingRect = roi.getBounds();
-			this.xstart = boundingRect.x+1; 
+			this.xstart = boundingRect.x; 
 			this.xend = boundingRect.width;
-			this.ystart = boundingRect.y+1;
-			this.yend = boundingRect.height+boundingRect.y+1;
+			this.ystart = boundingRect.y;
+			this.yend = boundingRect.height+boundingRect.y;
 		}
 		// The rest is left to the user
 	}

@@ -285,11 +285,6 @@ public class TMUtils {
 		};
 	}
 
-
-
-
-
-
 	/**
 	 * Return a copy 3D stack or a 2D slice as an {@link Image} corresponding to the frame number <code>iFrame</code>
 	 * in the given 4D or 3D {@link ImagePlus}. The resulting image will be cropped according the cropping
@@ -308,7 +303,7 @@ public class TMUtils {
 
 		// ...create the slice by combining the ImageProcessors, one for each Z in the stack.
 		ImageProcessor ip, croppedIp;
-		Roi cropRoi = new Roi(settings.xstart-1, settings.ystart-1, settings.xend-settings.xstart, settings.yend-settings.ystart);
+		Roi cropRoi = new Roi(settings.xstart, settings.ystart, settings.xend-settings.xstart, settings.yend-settings.ystart);
 		for (int j = settings.zstart; j <= settings.zend; j++) {
 			int stackIndex = imp.getStackIndex(iChannel, j, iFrame+1);
 			ip = stack.getProcessor(stackIndex);

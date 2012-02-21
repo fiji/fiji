@@ -194,8 +194,8 @@ public class SpotOverlay implements Overlay {
 		float radiusRatio = (Float) displaySettings.get(TrackMateModelView.KEY_SPOT_RADIUS_RATIO);
 		final float radius = spot.getFeature(Spot.RADIUS)*radiusRatio;
 		// In pixel units
-		final float xp = x / calibration[0] - 0.5f;
-		final float yp = y / calibration[1] - 0.5f; // so that spot centers are displayed on the pixel centers
+		final float xp = x / calibration[0] + 0.5f;
+		final float yp = y / calibration[1] + 0.5f; // so that spot centers are displayed on the pixel centers
 		// Scale to image zoom
 		final float xs = (xp - xcorner) * magnification ;
 		final float ys = (yp - ycorner) * magnification ;

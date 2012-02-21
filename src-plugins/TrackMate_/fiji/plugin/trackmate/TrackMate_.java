@@ -82,8 +82,6 @@ public class TrackMate_ implements PlugIn {
 	/** The list of {@link SpotTracker} that will be offered to choose amongst to the user. */
 	protected List<SpotTracker> spotTrackers;
 
-
-
 	/*
 	 * CONSTRUCTORS
 	 */
@@ -412,12 +410,27 @@ public class TrackMate_ implements PlugIn {
 		final int segmentationChannel = settings.segmentationChannel;
 		final Logger logger = model.getLogger();
 		final ImagePlus imp = settings.imp;
+		
 		if (null == imp) {
-			model.getLogger().error("No image to operate on.\n");
+			logger.error("No image to operate on.\n");
 			return;
 		}
-		final int numFrames = settings.tend - settings.tstart + 1;
+		if (null == settings.segmenter) {
+			logger.error("No segmenter selected.\n");
+			return;
+		}
+		if (null == settings.segmenterSettings) {
+			logger.error("No segmenter settings set.\n");
+			return;
+		}
+		if (!settings.segmenterSettings.getClass().equals(settings.segmenter.createDefaultSettings().getClass())) {
+			logger.error(String.format("Segmenter settings class does not match segmenter class: %s vs %s.\n", 
+					settings.segmenterSettings.getClass().getSimpleName(),
+					settings.segmenter.createDefaultSettings().getClass().getSimpleName()));
+			return;
+		}
 		
+		final int numFrames = settings.tend - settings.tstart + 1;
 		final SpotCollection spots = new SpotCollection();
 		final AtomicInteger spotFound = new AtomicInteger(0);
 		final AtomicInteger progress = new AtomicInteger(0);
@@ -430,14 +443,14 @@ public class TrackMate_ implements PlugIn {
 		}
 
 		// Prepare the thread array
-		final AtomicInteger ai = new AtomicInteger(settings.tstart-1);
+		final AtomicInteger ai = new AtomicInteger(settings.tstart);
 		for (int ithread = 0; ithread < threads.length; ithread++) {
 
 			threads[ithread] = new Thread("TrackMate spot feature calculating thread "+(1+ithread)+"/"+threads.length) {  
 
 				public void run() {
 
-					for (int i = ai.getAndIncrement(); i < settings.tend; i = ai.getAndIncrement()) {
+					for (int i = ai.getAndIncrement(); i <= settings.tend; i = ai.getAndIncrement()) {
 
 						Image<? extends RealType<?>> img = TMUtils.getCroppedSingleFrameAsImage(imp, i, segmentationChannel, settings); // will be cropped according to settings
 						List<Spot> s = execSingleFrameSegmentation(img, settings, i);

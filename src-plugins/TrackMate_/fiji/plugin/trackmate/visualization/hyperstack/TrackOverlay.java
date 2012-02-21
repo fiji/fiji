@@ -254,10 +254,10 @@ public class TrackOverlay implements Overlay {
 		final float x1i = target.getFeature(Spot.POSITION_X);
 		final float y1i = target.getFeature(Spot.POSITION_Y);
 		// In pixel units
-		final float x0p = x0i / calibration[0] - 0.5f;
-		final float y0p = y0i / calibration[1] - 0.5f;
-		final float x1p = x1i / calibration[0] - 0.5f;
-		final float y1p = y1i / calibration[1] - 0.5f;
+		final float x0p = x0i / calibration[0] + 0.5f;
+		final float y0p = y0i / calibration[1] + 0.5f;
+		final float x1p = x1i / calibration[0] + 0.5f;
+		final float y1p = y1i / calibration[1] + 0.5f;
 		// Scale to image zoom
 		final float x0s = (x0p - xcorner) * magnification ;
 		final float y0s = (y0p - ycorner) * magnification ;
@@ -282,10 +282,10 @@ public class TrackOverlay implements Overlay {
 		final float x1i = target.getFeature(Spot.POSITION_X);
 		final float y1i = target.getFeature(Spot.POSITION_Y);
 		// In pixel units
-		final float x0p = x0i / calibration[0] - 0.5f;
-		final float y0p = y0i / calibration[1] - 0.5f;
-		final float x1p = x1i / calibration[0] - 0.5f;
-		final float y1p = y1i / calibration[1] - 0.5f; // so that spot centers are displayed on the pixel centers
+		final float x0p = x0i / calibration[0] + 0.5f;
+		final float y0p = y0i / calibration[1] + 0.5f;
+		final float x1p = x1i / calibration[0] + 0.5f;
+		final float y1p = y1i / calibration[1] + 0.5f; // so that spot centers are displayed on the pixel centers
 		// Scale to image zoom
 		final float x0s = (x0p - xcorner) * magnification ;
 		final float y0s = (y0p - ycorner) * magnification ;
