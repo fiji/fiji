@@ -1779,13 +1779,13 @@ static void keep_only_one_memory_option(struct string_array *options)
 	options->nr = j;
 }
 
-static char has_memory_option(struct string_array *options)
+static const char* has_memory_option(struct string_array *options)
 {
 	int i;
 	for (i = 0; i < options->nr; i++)
 		if (!prefixcmp(options->list[i], "-Xm"))
-			return 1;
-	return 0;
+			return options->list[i];
+	return NULL;
 }
 
 __attribute__((unused))
@@ -3120,6 +3120,12 @@ static int start_ij(void)
 	else {
 		int result = create_java_vm(&vm, (void **)&env, &args);
 		if (result == JNI_ENOMEM) {
+			if (!megabytes) {
+				const char *option = has_memory_option(&options.java_options);
+				if (!option || prefixcmp(option, "-Xm") || !option[3])
+					die ("Out of memory, could not determine heap size!");
+				megabytes = parse_memory(option + 4);
+			}
 			try_with_less_memory(megabytes);
 			die("Out of memory!");
 		}
