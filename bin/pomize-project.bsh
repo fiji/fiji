@@ -77,6 +77,20 @@ void writeAndAddFile(String contents, File file) {
 	SimpleExecuter.exec(fijiDir, new String[] { "git", "add", file.getPath() });
 }
 
+String getGroupId(String artifact) {
+	if ("ij".equals(artifact))
+		return "net.imagej";
+	if ("junit".equals(artifact))
+		return "junit";
+	if ("jzlib".equals(artifact) || "jsch".equals(artifact))
+		return "com.jcraft";
+	if ("javassist".equals(artifact))
+		return "org.javassist";
+	if ("Image_5D".equals(artifact))
+		return "net.imagej";
+	return "fiji";
+}
+
 void writePOM(String target, Rule rule) {
 	String versionRegex = "(.*?)-([\\.0-9]*)";
 	Pattern versionPattern = Pattern.compile(versionRegex);
@@ -89,9 +103,10 @@ void writePOM(String target, Rule rule) {
 			artifact = matcher.group(1);
 			version = matcher.group(2);
 		}
+		group = getGroupId(artifact);
 
 		dependencies += "\t\t<dependency>\n"
-			+ "\t\t\t<groupId>fiji</groupId>\n"
+			+ "\t\t\t<groupId>" + group + "</groupId>\n"
 			+ "\t\t\t<artifactId>" + artifact + "</artifactId>\n"
 			+ (version == null || version.equals("") ? "" : "\t\t\t<version>" + version + "</version>\n")
 			+ "\t\t</dependency>\n";
