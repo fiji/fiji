@@ -231,6 +231,7 @@ public class StartDialogPanel extends ActionListenablePanel implements WizardPan
 		}
 		
 		if (imp.getType() == ImagePlus.COLOR_RGB) {
+			// We do not know how to process RGB images
 			jLabelImageName.setText(imp.getShortTitle()+" is RGB: invalid.");
 			wizard.setNextButtonEnabled(false);
 			return;
@@ -254,14 +255,14 @@ public class StartDialogPanel extends ActionListenablePanel implements WizardPan
 		if (null == roi)
 			roi = new Roi(0,0,imp.getWidth(),imp.getHeight());
 		Rectangle boundingRect = roi.getBounds();
-		jTextFieldXStart.setText(""+(boundingRect.x+1)); 
-		jTextFieldYStart.setText(""+(boundingRect.y+1));
-		jTextFieldXEnd.setText(""+(boundingRect.width+boundingRect.x+1));
-		jTextFieldYEnd.setText(""+(boundingRect.height+boundingRect.y+1));
-		jTextFieldZStart.setText(""+1);
-		jTextFieldZEnd.setText(""+imp.getNSlices());
-		jTextFieldTStart.setText(""+1); 
-		jTextFieldTEnd.setText(""+imp.getNFrames());
+		jTextFieldXStart.setText(""+(boundingRect.x)); 
+		jTextFieldYStart.setText(""+(boundingRect.y));
+		jTextFieldXEnd.setText(""+(boundingRect.width+boundingRect.x-1));
+		jTextFieldYEnd.setText(""+(boundingRect.height+boundingRect.y-1));
+		jTextFieldZStart.setText(""+0);
+		jTextFieldZEnd.setText(""+(imp.getNSlices()-1));
+		jTextFieldTStart.setText(""+0); 
+		jTextFieldTEnd.setText(""+(imp.getNFrames()-1));
 
 		// Deal with channels: the slider and channel labels are only visible if we find more than one channel.
 		int n_channels = imp.getNChannels();
@@ -384,7 +385,7 @@ public class StartDialogPanel extends ActionListenablePanel implements WizardPan
 				jLabelCropSetting = new JLabel();
 				jLabelCropSetting.setBounds(10, 237, 111, 13);
 				this.add(jLabelCropSetting);
-				jLabelCropSetting.setText("Crop settings (in pixels):");
+				jLabelCropSetting.setText("Crop settings (in pixels, 0-based):");
 				jLabelCropSetting.setFont(SMALL_FONT);
 			}
 			{
