@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.Date;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.regex.Matcher;
@@ -56,7 +57,9 @@ public class ISBIChallengeExporter extends AbstractTMAction {
 		File file;
 		File folder = new File(System.getProperty("user.dir")).getParentFile().getParentFile();
 		try {
-			file = new File(folder.getPath() + File.separator + plugin.getModel().getSettings().imageFileName +"_ISBI.xml");
+			String filename = plugin.getModel().getSettings().imageFileName;
+			filename = filename.substring(0, filename.indexOf("."));
+			file = new File(folder.getPath() + File.separator + filename +"_ISBI.xml");
 		} catch (NullPointerException npe) {
 			file = new File(folder.getPath() + File.separator + "ISBIChallenge2012Result.xml");
 		}
@@ -98,8 +101,7 @@ public class ISBIChallengeExporter extends AbstractTMAction {
 
 		// Extract from file name
 		String filename = model.getSettings().imageFileName; // VIRUS snr 7 density mid.tif
-		String pattern = "^(\\w+) " + SNR_ATT +" (\\d+) " + DENSITY_ATT + " (\\w+)\\.tif$";	
-		//  <TrackContestISBI2012 snr="VIRUS" density="7" scenario="VIRUS snr 7 density mid.tif">
+		String pattern = "^(\\w+) " + SNR_ATT +" (\\d+) " + DENSITY_ATT + " (\\w+)\\.";	
 		Pattern r = Pattern.compile(pattern);
 		Matcher m = r.matcher(filename);
 		String snr_val;
@@ -117,6 +119,7 @@ public class ISBIChallengeExporter extends AbstractTMAction {
 		content.setAttribute(SNR_ATT, snr_val);
 		content.setAttribute(DENSITY_ATT, density_val);
 		content.setAttribute(SCENARIO_ATT, scenario_val);
+		content.setAttribute(DATE_ATT, new Date().toString());
 
 		logger.setStatus("Marshalling...");
 		for (int i = 0 ; i < model.getNFilteredTracks() ; i++) {
@@ -131,10 +134,10 @@ public class ISBIChallengeExporter extends AbstractTMAction {
 				float t = spot.getFeature(Spot.POSITION_T);
 				float x = spot.getFeature(Spot.POSITION_X);
 				float y = spot.getFeature(Spot.POSITION_Y);
-				float z = spot.getFeature(Spot.POSITION_T);
+				float z = spot.getFeature(Spot.POSITION_Z);
 
 				Element spotElement = new Element(SPOT_KEY);
-				spotElement.setAttribute(T_ATT, ""+t);
+				spotElement.setAttribute(T_ATT, ""+ (int)t);
 				spotElement.setAttribute(X_ATT, ""+x);
 				spotElement.setAttribute(Y_ATT, ""+y);
 				spotElement.setAttribute(Z_ATT, ""+z);
@@ -156,6 +159,7 @@ public class ISBIChallengeExporter extends AbstractTMAction {
 	 */
 
 	private static final String CONTENT_KEY = "TrackContestISBI2012";
+	private static final String DATE_ATT = "generationDateTime";
 	private static final String SNR_ATT = "snr";
 	private static final String DENSITY_ATT = "density";
 	private static final String SCENARIO_ATT = "scenario";
