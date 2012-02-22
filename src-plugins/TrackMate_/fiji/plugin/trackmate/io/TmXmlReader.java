@@ -23,8 +23,7 @@ import org.jdom.DataConversionException;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
-import org.jdom.contrib.input.LineNumberElement;
-import org.jdom.contrib.input.LineNumberSAXBuilder;
+import org.jdom.input.SAXBuilder;
 import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.graph.SimpleWeightedGraph;
 
@@ -72,7 +71,8 @@ public class TmXmlReader {
 	 * the other getter methods.
 	 */
 	public void parse() throws JDOMException,  IOException {
-		LineNumberSAXBuilder sb = new LineNumberSAXBuilder();
+//		SAXBuilder sb = new LineNumberSAXBuilder();
+		SAXBuilder sb = new SAXBuilder();
 		document = sb.build(file);
 		root = document.getRootElement();
 	}
@@ -505,16 +505,16 @@ public class TmXmlReader {
 					}
 					if (targetFound && sourceFound) {
 						if (sourceSpot.equals(targetSpot)) {
-							LineNumberElement lne = (LineNumberElement) edgeElement;
-							logger.error("Bad edge found for track "+trackElement.getAttributeValue(TRACK_ID_ATTRIBUTE_NAME)
-									+": loop edge at line "+lne.getStartLine()+". Skipping.\n");
+//							LineNumberElement lne = (LineNumberElement) edgeElement;
+							logger.error("Bad edge found for track "+trackElement.getAttributeValue(TRACK_ID_ATTRIBUTE_NAME));
+//									+": loop edge at line "+lne.getStartLine()+". Skipping.\n");
 							break;
 						}
 						DefaultWeightedEdge edge = graph.addEdge(sourceSpot, targetSpot);
 						if (edge == null) {
-							LineNumberElement lne = (LineNumberElement) edgeElement;
-							logger.error("Bad edge found for track "+trackElement.getAttributeValue(TRACK_ID_ATTRIBUTE_NAME)
-									+": duplicate edge at line "+lne.getStartLine()+". Skipping.\n");
+//							LineNumberElement lne = (LineNumberElement) edgeElement;
+							logger.error("Bad edge found for track "+trackElement.getAttributeValue(TRACK_ID_ATTRIBUTE_NAME));
+//									+": duplicate edge at line "+lne.getStartLine()+". Skipping.\n");
 							break;
 						} else {
 							graph.setEdgeWeight(edge, weight);

@@ -86,17 +86,16 @@ public class GuiReader {
 	 * Load the file and create a new {@link TrackMate_} plugin
 	 * with a new model reflecting the file content.
 	 * <p>
-	 * The newly loaded plugin will be accessible through
-	 *  Also, calling this method re-initializes all the 
-	 *  {@link WizardPanelDescriptor} so that they are updated with the
-	 *  plugin new content.
+	 * Also, calling this method re-initializes all the 
+	 * {@link WizardPanelDescriptor} so that they are updated with the
+	 * plugin new content.
 	 * @param file  the file to load
 	 */
 	public void loadFile(File file) {
-
 		// Init target fields
 		TrackMateModel model = new TrackMateModel();
 		plugin = new TrackMate_(model);
+		plugin.initModules();
 		plugin.setLogger(logger);
 		if (displayer ==null ) {
 			displayer = new HyperStackDisplayer();

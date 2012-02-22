@@ -1,16 +1,8 @@
 package fiji.plugin.trackmate.gui;
 
-import ij.IJ;
-
-import java.awt.FileDialog;
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FilenameFilter;
 import java.io.IOException;
-
-import javax.swing.JFileChooser;
-import javax.swing.JFrame;
-import javax.swing.filechooser.FileNameExtensionFilter;
 
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.TrackMateModel;
@@ -139,44 +131,5 @@ public class GuiSaver {
 	}
 
 
-	public File askForFile(File file) {
-		JFrame parent= wizard;
-
-		if(IJ.isMacintosh()) {
-			// use the native file dialog on the mac
-			FileDialog dialog =	new FileDialog(parent, "Save to a TrackMate file", FileDialog.SAVE);
-			dialog.setDirectory(file.getParent());
-			dialog.setFile(file.getName());
-			FilenameFilter filter = new FilenameFilter() {
-				@Override
-				public boolean accept(File dir, String name) {
-					return name.endsWith(".xml");
-				}
-			};
-			dialog.setFilenameFilter(filter);
-			dialog.setVisible(true);
-			String selectedFile = dialog.getFile();
-			if (null == selectedFile) {
-				logger.log("Save data aborted.\n");
-				return null;
-			}
-			if (!selectedFile.endsWith(".xml"))
-				selectedFile += ".xml";
-			file = new File(dialog.getDirectory(), selectedFile);
-		} else {
-			JFileChooser fileChooser = new JFileChooser(file.getParent());
-			fileChooser.setSelectedFile(file);
-			FileNameExtensionFilter filter = new FileNameExtensionFilter("XML files", "xml");
-			fileChooser.setFileFilter(filter);
-
-			int returnVal = fileChooser.showSaveDialog(parent);
-			if(returnVal == JFileChooser.APPROVE_OPTION) {
-				file = fileChooser.getSelectedFile();
-			} else {
-				logger.log("Save data aborted.\n");
-				return null;  	    		
-			}
-		}
-		return file;
-	}
+	
 }

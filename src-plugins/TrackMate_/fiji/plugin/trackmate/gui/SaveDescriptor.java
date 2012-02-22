@@ -3,6 +3,7 @@ package fiji.plugin.trackmate.gui;
 import java.io.File;
 
 import fiji.plugin.trackmate.Logger;
+import fiji.plugin.trackmate.util.TMUtils;
 
 public class SaveDescriptor extends SomeDialogDescriptor {
 
@@ -29,7 +30,7 @@ public class SaveDescriptor extends SomeDialogDescriptor {
 
 			plugin.computeTrackFeatures();
 			GuiSaver saver = new GuiSaver(wizard);
-			File tmpFile = saver.askForFile(file);
+			File tmpFile = TMUtils.askForFile(file, wizard, logger);
 			if (null == tmpFile) {
 				wizard.setNextButtonEnabled(true);
 				return;
