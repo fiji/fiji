@@ -25,12 +25,12 @@ grep -ve src-plugins/FFMPEG_IO/fiji/ffmpeg/ \
 	-e envisaje/ \
 	-e modules/weka/wekaexamples/ |
 ./ImageJ "$@" \
-	--classpath $HOME/.m2/repository/com/apple/AppleJavaExtensions/1.5/AppleJavaExtensions-1.5.jar \
 	--javadoc --jarpath modules/bio-formats/jar \
 	--jarpath modules/jython/jython/extlibs \
 	--jarpath $HOME/.m2/repository/net/java/sezpoz/ \
 	--jarpath /usr/share/java/ \
 	--jarpath modules/ij-plugins/ \
+	--classpath $HOME/.m2/repository/com/apple/AppleJavaExtensions/1.5/AppleJavaExtensions-1.5.jar \
 	-link http://download.java.net/media/java3d/javadoc/1.5.2/ \
 	-link http://java.sun.com/j2se/1.5.0/docs/api/ \
 	@/dev/stdin 2>&1

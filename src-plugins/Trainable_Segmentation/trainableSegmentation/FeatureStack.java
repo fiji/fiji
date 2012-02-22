@@ -20,6 +20,7 @@ package trainableSegmentation;
  * - Laplacian filter
  * - Eigenvalues of the Structure tensor
  * - Color features: HSB (if the input image is RGB)
+ * - Entropy 
  * 
  * filters to come:
  * - histogram patch
@@ -65,6 +66,9 @@ import mpicbg.imglib.algorithm.fft.FourierConvolution;
 import anisotropic_diffusion.Anisotropic_Diffusion_2D;
 
 import stitching.FloatArray2D;
+import trainableSegmentation.filters.Entropy_Filter;
+import trainableSegmentation.filters.Kuwahara;
+import trainableSegmentation.filters.Lipschitz_;
 import trainableSegmentation.utils.Utils;
 
 import vib.BilateralFilter;
@@ -147,13 +151,15 @@ public class FeatureStack
 	public static final int LAPLACIAN				= 16;
 	/** structure tensor filter flag index */
 	public static final int STRUCTURE				= 17;
+	/** structure tensor filter flag index */
+	public static final int ENTROPY					= 18;
 	
 	/** names of available filters */
 	public static final String[] availableFeatures 
 		= new String[]{	"Gaussian_blur", "Sobel_filter", "Hessian", "Difference_of_gaussians", 
 					   	"Membrane_projections","Variance","Mean", "Minimum", "Maximum", "Median", 
 					   	"Anisotropic_diffusion", "Bilateral", "Lipschitz", "Kuwahara", "Gabor" , 
-					   	"Derivatives", "Laplacian", "Structure"};
+					   	"Derivatives", "Laplacian", "Structure", "Entropy"};
 	/** flags of filters to be used */
 	private boolean[] enableFeatures = new boolean[]{
 			true, 	/* Gaussian_blur */
@@ -173,7 +179,8 @@ public class FeatureStack
 			false,	/* Gabor */
 			false, 	/* Derivatives */
 			false, 	/* Laplacian */
-			false	/* Structure */
+			false,	/* Structure */
+			false	/* Entropy */
 	};
 	
 	/** use neighborhood flag */
@@ -349,6 +356,42 @@ public class FeatureStack
 		};
 	}
 	
+	/**
+	 * Add entropy filter to current stack
+	 * @param radius radius to use (in pixels)
+	 * @param numBins number of bins to use in the histogram
+	 */
+	public void addEntropy(int radius, int numBins)
+	{
+		ImageProcessor ip = originalImage.getProcessor().duplicate();
+		Entropy_Filter filter = new Entropy_Filter();
+		wholeStack.addSlice(availableFeatures[ENTROPY] + "_" + radius + "_" + numBins, filter.getEntropy(ip, radius, numBins));
+	}
+	/**
+	 * Calculate entropy filter filter concurrently
+	 * @param originalImage original input image
+	 * @param radius radius to use (in pixels)
+	 * @param numBins number of bins to use in the histogram
+	 * @return result image
+	 */
+	public Callable<ImagePlus> getEntropy(
+			final ImagePlus originalImage,
+			final int radius,
+			final int numBins)
+	{
+		if (Thread.currentThread().isInterrupted()) 
+			return null;
+		
+		return new Callable<ImagePlus>(){
+			public ImagePlus call(){
+		
+				ImageProcessor ip = originalImage.getProcessor().duplicate();
+				Entropy_Filter filter = new Entropy_Filter();
+				return new ImagePlus (availableFeatures[ENTROPY] + "_" + radius + "_" + numBins, filter.getEntropy(ip, radius, numBins));
+			}
+		};
+	}
+	
 	
 	/**
 	 * Add variance-filtered image to the stack (single thread version)
@@ -401,7 +444,10 @@ public class FeatureStack
 		};
 	}
 	
-	
+	/**
+	 * Add mean filter to current stack
+	 * @param radius radius to use 
+	 */
 	public void addMean(float radius)
 	{
 		final ImageProcessor ip = originalImage.getProcessor().duplicate();
@@ -1723,8 +1769,6 @@ public class FeatureStack
 
 					}
 					
-					//projectStack.show();
-
 					// Normalize filtered stack (it seems necessary to have proper results)					
 					final ImagePlus projectStack = new ImagePlus("filtered stack", Utils.normalize( is ));
 					
@@ -1743,7 +1787,8 @@ public class FeatureStack
 						resultStack.addSlice(availableFeatures[GABOR] + "_" + i 
 								+"_"+sigma+"_" + gamma + "_"+ (int) (psi / (Math.PI/4) ) +"_"+frequency, 
 								zp.getProjection().getChannelProcessor());
-					}
+					}					
+					
 					results[ ch ] = new ImagePlus ("Gabor stack", resultStack);									
 					
 				}
@@ -1855,14 +1900,11 @@ public class FeatureStack
 				Image<FloatType>  convolved = fourierConvolution.getResult();
 
 				is.addSlice("gabor angle = " + i, ImageJFunctions.copyToImagePlus( convolved ).getProcessor() );					
-			}
-
-
-			final ImagePlus projectStack = new ImagePlus("filtered stack",is);
-			//projectStack.show();
+			}			
 
 			// Normalize filtered stack (it seems necessary to have proper results)
-			IJ.run(projectStack, "Enhance Contrast", "saturated=0.4 normalize normalize_all");
+			final ImagePlus projectStack = new ImagePlus("filtered stack", Utils.normalize( is ));
+			
 			//final ContrastEnhancer c = new ContrastEnhancer();
 			//c.stretchHistogram(projectStack, 0.4);
 			//projectStack.updateAndDraw();
@@ -2600,7 +2642,7 @@ public class FeatureStack
 
 					addAnisotropicDiffusion(originalImage, 20, 20,(int) i, j, 0.9f, (float) membraneSize)  ;
 				}
-		}
+		}				
 
 		// Bilateral filter
 		if(enableFeatures[BILATERAL])			
@@ -2668,7 +2710,7 @@ public class FeatureStack
 		}
 
 		// Sobel (no blur)
-		if(enableFeatures[SOBEL])
+		if(enableFeatures[SOBEL] && minimumSigma < 2)
 		{
 			if ( Thread.currentThread().isInterrupted() ) 
 				return false;
@@ -2676,7 +2718,7 @@ public class FeatureStack
 			addGradient(0);
 		}
 		// Hessian (no blur)
-		if(enableFeatures[HESSIAN])
+		if(enableFeatures[HESSIAN] && minimumSigma < 2)
 		{
 			if (Thread.currentThread().isInterrupted()) 
 				return false;
@@ -2767,6 +2809,13 @@ public class FeatureStack
 			{					
 				for(int integrationScale = 1; integrationScale <= 3; integrationScale+=2)
 					addStructure(i, integrationScale );
+			}
+			
+			// Entropy
+			if(enableFeatures[ENTROPY])
+			{
+				for(int nBins = 32; nBins <= 256; nBins *=2)
+					addEntropy((int)i, nBins);
 			}
 
 		}
@@ -2940,7 +2989,7 @@ public class FeatureStack
 			}
 			
 			// Sobel (no blur)
-			if(enableFeatures[SOBEL])
+			if(enableFeatures[SOBEL] && minimumSigma < 2)
 			{
 				if ( Thread.currentThread().isInterrupted() ) 
 					return false;
@@ -2948,7 +2997,7 @@ public class FeatureStack
 				futures.add(exe.submit( getGradient(originalImage, 0)) );
 			}
 			// Hessian (no blur)
-			if(enableFeatures[HESSIAN])
+			if(enableFeatures[HESSIAN] && minimumSigma < 2)
 			{
 				if (Thread.currentThread().isInterrupted()) 
 					return false;
@@ -3039,6 +3088,13 @@ public class FeatureStack
 				{					
 					for(int integrationScale = 1; integrationScale <= 3; integrationScale+=2)
 						futures.add(exe.submit( getStructure(originalImage, i, integrationScale )) );
+				}
+				
+				// Entropy
+				if(enableFeatures[ENTROPY])
+				{
+					for(int nBins = 32; nBins <= 256; nBins *=2)
+						futures.add(exe.submit( getEntropy(originalImage, (int) i, nBins)) );
 				}
 
 			}

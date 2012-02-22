@@ -662,11 +662,11 @@ public class Path implements Comparable<Path> {
 		precise_z_positions[points++] = z;
 	}
 
-	public void drawPathAsPoints( TracerCanvas canvas, Graphics g, java.awt.Color c, int plane ) {
-		drawPathAsPoints( canvas, g, c, plane, 0, -1 );
+	public void drawPathAsPoints( TracerCanvas canvas, Graphics g, java.awt.Color c, int plane, boolean drawDiameter ) {
+		drawPathAsPoints( canvas, g, c, plane, drawDiameter, 0, -1 );
 	}
 
-	public void drawPathAsPoints( TracerCanvas canvas, Graphics g, java.awt.Color c, int plane, int slice, int either_side ) {
+	public void drawPathAsPoints( TracerCanvas canvas, Graphics g, java.awt.Color c, int plane, boolean drawDiameter, int slice, int either_side ) {
 
 		/* In addition, if this is a start or end point we
 		   want to represent that with a circle or a square
@@ -682,13 +682,13 @@ public class Path implements Comparable<Path> {
 		int spotExtra = pixel_size;
 		int spotDiameter = pixel_size * 3;
 
-		// boolean drawDiameter = hasCircles();
-		boolean drawDiameter = false;
-
 		Path realStartJoins = fittedVersionOf == null ? startJoins : fittedVersionOf.startJoins;
 		Path realEndJoins = fittedVersionOf == null ? endJoins : fittedVersionOf.endJoins;
 
 		int startIndexOfLastDrawnLine = -1;
+
+		if (!hasCircles())
+			drawDiameter = false;
 
 		for( int i = 0; i < points; ++i ) {
 
@@ -768,23 +768,35 @@ public class Path implements Comparable<Path> {
 				double normalized_cross_x = cross_x / sizeInPlane;
 				double normalized_cross_y = cross_y / sizeInPlane;
 
-				double left_x = precise_x_positions[i] + normalized_cross_x * radiuses[i];
-				double left_y = precise_y_positions[i] + normalized_cross_y * radiuses[i];
+				double zdiff = Math.abs((slice - slice_of_point) * z_spacing);
+				double realRadius = radiuses[i];
 
-				double right_x = precise_x_positions[i] - normalized_cross_x * radiuses[i];
-				double right_y = precise_y_positions[i] - normalized_cross_y * radiuses[i];
+				if (either_side < 0 || zdiff <= realRadius) {
 
-				int left_x_on_screen = canvas.myScreenXD(left_x/x_spacing);
-				int left_y_on_screen = canvas.myScreenYD(left_y/y_spacing);
+					double effective_radius;
+					if (either_side < 0)
+						effective_radius = realRadius;
+					else
+						effective_radius = Math.sqrt(realRadius*realRadius - zdiff*zdiff);
 
-				int right_x_on_screen = canvas.myScreenXD(right_x/x_spacing);
-				int right_y_on_screen = canvas.myScreenYD(right_y/y_spacing);
+					double left_x = precise_x_positions[i] + normalized_cross_x * effective_radius;
+					double left_y = precise_y_positions[i] + normalized_cross_y * effective_radius;
 
-				int x_on_screen = canvas.myScreenXD( precise_x_positions[i]/x_spacing );
-				int y_on_screen = canvas.myScreenYD( precise_y_positions[i]/y_spacing );
+					double right_x = precise_x_positions[i] - normalized_cross_x * effective_radius;
+					double right_y = precise_y_positions[i] - normalized_cross_y * effective_radius;
 
-				g.drawLine( x_on_screen, y_on_screen, left_x_on_screen, left_y_on_screen );
-				g.drawLine( x_on_screen, y_on_screen, right_x_on_screen, right_y_on_screen );
+					int left_x_on_screen = canvas.myScreenXD(left_x/x_spacing);
+					int left_y_on_screen = canvas.myScreenYD(left_y/y_spacing);
+
+					int right_x_on_screen = canvas.myScreenXD(right_x/x_spacing);
+					int right_y_on_screen = canvas.myScreenYD(right_y/y_spacing);
+
+					int x_on_screen = canvas.myScreenXD( precise_x_positions[i]/x_spacing );
+					int y_on_screen = canvas.myScreenYD( precise_y_positions[i]/y_spacing );
+
+					g.drawLine( x_on_screen, y_on_screen, left_x_on_screen, left_y_on_screen );
+					g.drawLine( x_on_screen, y_on_screen, right_x_on_screen, right_y_on_screen );
+				}
 			}
 
 			if( (either_side >= 0) && (Math.abs(slice_of_point - slice) > either_side) )

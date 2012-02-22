@@ -50,7 +50,6 @@ public class MiniMaven {
 	protected PrintStream err;
 	protected Map<String, POM> localPOMCache = new HashMap<String, POM>();
 	protected Fake fake;
-	protected String profile = "swing";
 
 	public MiniMaven(Fake fake, PrintStream err, boolean verbose) throws FakeException {
 		this(fake, err, verbose, false);
@@ -125,13 +124,15 @@ public class MiniMaven {
 		File directory = file.getCanonicalFile().getParentFile();
 		POM pom = new POM(directory, parent);
 		pom.coordinate.classifier = classifier;
+		if (parent != null)
+			pom.sourceDirectory = parent.sourceDirectory;
 		XMLReader reader = SAXParserFactory.newInstance().newSAXParser().getXMLReader();
 		reader.setContentHandler(pom);
 		//reader.setXMLErrorHandler(...);
 		reader.parse(new InputSource(new FileInputStream(file)));
 
-
-		if (new File(pom.directory, pom.sourceDirectory).exists()) {
+		File sourceDirectory = pom.getSourceDirectory();
+		if (sourceDirectory.exists()) {
 			pom.buildFromSource = true;
 			pom.target = new File(directory, "target/classes");
 		}
@@ -163,6 +164,8 @@ public class MiniMaven {
 		}
 		else if (dependency.artifactId.equals("imglib2-io"))
 			pom.dependencies.add(new Coordinate("loci", "bio-formats", "${bio-formats.version}"));
+		else if (dependency.artifactId.equals("jfreechart"))
+			pom.dependencies.add(new Coordinate("jfree", "jcommon", "1.0.16"));
 		return pom;
 	}
 
@@ -315,7 +318,7 @@ public class MiniMaven {
 				if (child != null && !child.upToDate(includingJar))
 					return false;
 
-			File source = new File(directory, getSourcePath());
+			File source = getSourceDirectory();
 
 			List<String> notUpToDates = new ArrayList<String>();
 			long lastModified = addRecursively(notUpToDates, source, ".java", target, ".class");
@@ -333,8 +336,16 @@ public class MiniMaven {
 			return true;
 		}
 
+		public File getSourceDirectory() {
+			String sourcePath = getSourcePath();
+			File file = new File(sourcePath);
+			if (file.isAbsolute())
+				return file;
+			return new File(directory, sourcePath);
+		}
+
 		public String getSourcePath() {
-			return sourceDirectory;
+			return expand(sourceDirectory);
 		}
 
 		public void buildJar() throws FakeException, IOException, ParserConfigurationException, SAXException {
@@ -367,7 +378,7 @@ public class MiniMaven {
 				return;
 
 			target.mkdirs();
-			File source = new File(directory, getSourcePath());
+			File source = getSourceDirectory();
 
 			List<String> arguments = new ArrayList<String>();
 			// classpath
@@ -404,8 +415,10 @@ public class MiniMaven {
 
 		protected long addRecursively(List<String> list, File directory, String extension, File targetDirectory, String targetExtension) {
 			long lastModified = 0;
-			File[] files = directory.listFiles();
 			if (list == null)
+				return lastModified;
+			File[] files = directory.listFiles();
+			if (files == null)
 				return lastModified;
 			for (File file : files)
 				if (file.isDirectory()) {
@@ -579,6 +592,8 @@ public class MiniMaven {
 		public String getProperty(String key) {
 			if (properties.containsKey(key))
 				return properties.get(key);
+			if (key.equals("project.basedir"))
+				return directory.getPath();
 			if (parent == null) {
 				// hard-code a few variables
 				if (key.equals("bio-formats.groupId"))
@@ -855,10 +870,14 @@ public class MiniMaven {
 			else if (prefix.equals(">project>dependencies>dependency>classifier"))
 				latestDependency.classifier = string;
 			else if (prefix.equals(">project>profiles>profile>id")) {
-				isCurrentProfile = (!Util.getPlatform().equals("macosx") && "javac".equals(string)) || (coordinate.artifactId.equals("javassist") && string.equals("jdk16")) || profile.equals(string);
+				isCurrentProfile = (!Util.getPlatform().equals("macosx") && "javac".equals(string)) || (coordinate.artifactId.equals("javassist") && string.equals("jdk16"));
 				if (debug)
 					err.println((isCurrentProfile ? "Activating" : "Ignoring") + " profile " + string);
 			}
+			else if (!isCurrentProfile && prefix.equals(">project>profiles>profile>activation>file>exists"))
+				isCurrentProfile = new File(directory, string).exists();
+			else if (!isCurrentProfile && prefix.equals(">project>profiles>profile>activation>activeByDefault"))
+				isCurrentProfile = "true".equalsIgnoreCase(string);
 			else if (prefix.equals(">project>repositories>repository>url"))
 				repositories.add(string);
 			else if (prefix.equals(">project>build>sourceDirectory"))

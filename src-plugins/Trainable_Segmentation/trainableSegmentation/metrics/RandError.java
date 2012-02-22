@@ -242,12 +242,26 @@ public class RandError extends Metrics
 		
 		ArrayList< ClassificationStatistics > cs = new ArrayList<ClassificationStatistics>();
 		
+		double bestFscore = 0;
+		double bestTh = minThreshold;
+		
 		for(double th = minThreshold; th <= maxThreshold; th += stepThreshold)
 		{
 			if( verbose ) 
 				IJ.log("  Calculating Rand index statistics for threshold value " + String.format("%.2f", th) + "...");
 			cs.add( getRandIndexStats( th ));
+			final double fScore = cs.get( cs.size()-1 ).fScore;
+			if( fScore > bestFscore )
+			{
+				bestFscore = fScore;
+				bestTh = th;
+			}
+			if( verbose )
+				IJ.log("    F-score = " + fScore);
 		}
+		
+		if( verbose )
+			IJ.log(" ** Best F-score = " + bestFscore + ", with threshold = " + bestTh + " **\n");
 		
 		return cs;
 	}

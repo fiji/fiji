@@ -10,7 +10,14 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class ClassLoaderPlus extends URLClassLoader {
+	// A frozen ClassLoaderPlus will add only to the urls array
+	protected boolean frozen;
+	protected List<URL> urls = new ArrayList<URL>();
+
 	public static ClassLoaderPlus getInFijiDirectory(String... relativePaths) {
 		try {
 			File directory = new File(getFijiDir());
@@ -48,12 +55,16 @@ public class ClassLoaderPlus extends URLClassLoader {
 	}
 
 	public static ClassLoaderPlus getRecursivelyInFijiDirectory(String... relativePaths) {
+		return getRecursivelyInFijiDirectory(false, relativePaths);
+	}
+
+	public static ClassLoaderPlus getRecursivelyInFijiDirectory(boolean onlyJars, String... relativePaths) {
 		try {
 			File directory = new File(getFijiDir());
 			ClassLoaderPlus classLoader = null;
 			File[] files = new File[relativePaths.length];
 			for (int i = 0; i < files.length; i++)
-				classLoader = getRecursively(new File(directory, relativePaths[i]));
+				classLoader = getRecursively(onlyJars, new File(directory, relativePaths[i]));
 			return classLoader;
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -62,13 +73,17 @@ public class ClassLoaderPlus extends URLClassLoader {
 	}
 
 	public static ClassLoaderPlus getRecursively(File directory) {
+		return getRecursively(false, directory);
+	}
+
+	public static ClassLoaderPlus getRecursively(boolean onlyJars, File directory) {
 		try {
-			ClassLoaderPlus classLoader = get(directory);
+			ClassLoaderPlus classLoader = onlyJars ? null : get(directory);
 			File[] list = directory.listFiles();
 			if (list != null)
 				for (File file : list)
 					if (file.isDirectory())
-						classLoader = getRecursively(file);
+						classLoader = getRecursively(onlyJars, file);
 					else if (file.getName().endsWith(".jar"))
 						classLoader = get(file);
 			return classLoader;
@@ -106,7 +121,24 @@ public class ClassLoaderPlus extends URLClassLoader {
 	}
 
 	public void add(URL url) {
-		addURL(url);
+		urls.add(url);
+		if (!frozen)
+			addURL(url);
+	}
+
+	public void freeze() {
+		frozen = true;
+	}
+
+	public String getClassPath() {
+		StringBuilder builder = new StringBuilder();
+		String sep = "";
+		for (URL url : urls)
+			if (url.getProtocol().equals("file")) {
+				builder.append(sep).append(url.getPath());
+				sep = File.pathSeparator;
+			}
+		return builder.toString();
 	}
 
 	public String toString() {
