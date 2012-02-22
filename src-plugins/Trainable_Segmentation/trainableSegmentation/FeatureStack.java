@@ -3311,5 +3311,9 @@ public class FeatureStack
 		this.wholeStack = stack;
 	}
 	
+	public ImageStack getStack()
+	{
+		return wholeStack;
+	}
 	
 }
