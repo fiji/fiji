@@ -4043,17 +4043,23 @@ public class WekaSegmentation {
 		final int numFurtherThreads = (int)Math.ceil((double)(numThreads - numSliceThreads)/numSliceThreads) + 1;
 		final ApplyClassifierThread[] threads = new ApplyClassifierThread[numSliceThreads];
 
-		int numSlices  = imp.getStackSize()/numSliceThreads;
+		// calculate optimum number of slices per thread
+		int[] numSlicesPerThread = new int [ numSliceThreads ];
+		for(int i=0; i<imp.getImageStackSize(); i++)
+		{
+			numSlicesPerThread[ i % numSliceThreads ] ++;
+		}
+		
+		int aux = 0;
 		for (int i = 0; i < numSliceThreads; i++) 
 		{
 
-			int startSlice = i*numSlices + 1;
-			// last thread takes all the remaining slices
-			if (i == numSliceThreads - 1)
-				numSlices = imp.getStackSize() - (numSliceThreads - 1)*(imp.getStackSize()/numSliceThreads);
-
-			IJ.log("Starting thread " + i + " processing " + numSlices + " slices, starting with " + startSlice);
-			threads[i] = new ApplyClassifierThread(startSlice, numSlices, numFurtherThreads, classNames, fsa);
+			int startSlice = aux + 1;
+			
+			aux += numSlicesPerThread[ i ];
+									
+			IJ.log("Starting thread " + i + " processing " + numSlicesPerThread[ i ] + " slices, starting with " + startSlice);
+			threads[i] = new ApplyClassifierThread(startSlice, numSlicesPerThread[ i ], numFurtherThreads, classNames, fsa);
 
 			threads[i].start();
 		}
