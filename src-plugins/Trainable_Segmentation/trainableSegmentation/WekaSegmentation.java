@@ -3600,9 +3600,11 @@ public class WekaSegmentation {
 			try {
 				// The Weka random forest classifiers do not need to be duplicated on each thread 
 				// (that saves much memory)
+				/*
 				if( classifier instanceof FastRandomForest || classifier instanceof RandomForest )
 					classifierCopy = classifier;
 				else
+				*/
 					classifierCopy = (AbstractClassifier) (AbstractClassifier.makeCopy( classifier ));
 			} catch (Exception e) {
 				IJ.log("Error: classifier could not be copied to classify in a multi-thread way.");
@@ -4314,9 +4316,11 @@ public class WekaSegmentation {
 			try {			
 				// The Weka random forest classifiers do not need to be duplicated on each thread 
 				// (that saves much memory)
+				/*
 				if( classifier instanceof FastRandomForest || classifier instanceof RandomForest )
 					classifierCopy = classifier;
 				else
+				*/
 					classifierCopy = (AbstractClassifier) (AbstractClassifier.makeCopy( classifier ));
 			} catch (Exception e) {
 				IJ.log("Error: classifier could not be copied to classify in a multi-thread way.");
@@ -4466,9 +4470,11 @@ public class WekaSegmentation {
 			try {
 				// The Weka random forest classifiers do not need to be duplicated on each thread 
 				// (that saves much memory)
+				/*
 				if( classifier instanceof FastRandomForest || classifier instanceof RandomForest )
 					classifierCopy = classifier;
 				else
+				*/
 					classifierCopy = (AbstractClassifier) (AbstractClassifier.makeCopy( classifier ));
 			} catch (Exception e) {
 				IJ.log("Error: classifier could not be copied to classify in a multi-thread way.");
