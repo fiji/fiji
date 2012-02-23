@@ -621,7 +621,7 @@ public class Manual_Tracking extends PlugInFrame implements ActionListener, Item
             
             win = img.getWindow();
             canvas=win.getCanvas();
-            img.setSlice(1);
+            img.setPosition(img.getChannel(), img.getSlice(), 1);
             
             NbPoint=1;
             IJ.showProgress(2,1);
@@ -666,7 +666,7 @@ public class Manual_Tracking extends PlugInFrame implements ActionListener, Item
             
             prevx=(int) rt.getValue(2, rt.getCounter()-1);
             prevy=(int) rt.getValue(3, rt.getCounter()-1);
-            img.setSlice(((int) rt.getValue(1, rt.getCounter()-1))+1);
+            img.setPosition(img.getChannel(), img.getSlice(), ((int) rt.getValue(1, rt.getCounter()-1))+1);
             IJ.showStatus("Last Point Deleted !");
         }
         
@@ -1154,9 +1154,9 @@ public class Manual_Tracking extends PlugInFrame implements ActionListener, Item
         rt.show("Results from "+imgtitle+" in "+choicecalxy.getItem(choicecalxy.getSelectedIndex())+" per "+choicecalt.getItem(choicecalt.getSelectedIndex()));
         
         
-        if ((img.getCurrentSlice())<img.getStackSize()){
+        if ((img.getFrame()) < img.getNFrames()){
             NbPoint++;
-            img.setSlice(img.getCurrentSlice()+1);
+            img.setPosition(img.getChannel(), img.getSlice(), img.getFrame() + 1);
             if (Distance!=0) {
                 pprevx=prevx;
                 pprevy=prevy;
@@ -1403,12 +1403,12 @@ public class Manual_Tracking extends PlugInFrame implements ActionListener, Item
         limsz1=z-sglBoxz;
         if (limsz1<1) limsz1=1;
         limsz2=z+sglBoxz;
-        if (limsz2>ip.getStackSize()) limsz2=ip.getStackSize();
+        if (limsz2>ip.getNSlices()) limsz2=ip.getNSlices();
         
         
         
         for (l=limsz1; l<limsz2+1; l++){
-            ip.setSlice(l);
+            ip.setPosition(ip.getChannel(), l, ip.getFrame());
             for (m=limsy1; m<limsy2+1; m++){
                 for (n=limsx1; n<limsx2+1; n++){
                     tmppixval=ip.getProcessor().getPixel(n,m);
@@ -1503,10 +1503,10 @@ public class Manual_Tracking extends PlugInFrame implements ActionListener, Item
         limbz1=z-bkgdBoxz;
         if (limbz1<1) limbz1=1;
         limbz2=z+bkgdBoxz;
-        if (limbz2>ip.getStackSize()) limbz2=ip.getStackSize();
+        if (limbz2>ip.getNSlices()) limbz2=ip.getNSlices();
         
         for (l=limsz1; l<limsz2+1; l++){
-            ip.setSlice(l);
+            ip.setPosition(img.getChannel(), l, img.getFrame());
             for (m=limsy1; m<limsy2+1; m++){
                 for (n=limsx1; n<limsx2+1; n++){
                     Qsgl=Qsgl+ip.getProcessor().getPixel(n,m);
@@ -1517,7 +1517,7 @@ public class Manual_Tracking extends PlugInFrame implements ActionListener, Item
         
         if (Quantification>0){
             for (l=limbz1; l<limbz2+1; l++){
-                ip.setSlice(l);
+                ip.setPosition(img.getChannel(), l, img.getFrame());
                 for (m=limby1; m<limby2+1; m++){
                     for (n=limbx1; n<limbx2+1; n++){
                         Qbkgd=Qbkgd+ip.getProcessor().getPixel(n,m);
