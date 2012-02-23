@@ -7,6 +7,8 @@ Previous track files may be reloaded
 3D features added (retrieve z coordinates, quantification and 3D representation as VRML file)
  */
 
+import adapter.Image5DAdapter;
+import adapter.ImageAdapter;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -275,12 +277,20 @@ public class Manual_Tracking extends PlugInFrame implements ActionListener, Item
     String pointKey; //Stores the xyz coordinates (modified by calibration) of each point from the current track
     String lastPoint; //Stores the xyz coordinates (modified by calibration) of the last point from the current track
     
+    protected ImageAdapter adapter;
     
     public Manual_Tracking() {
-        
-        //Interface setup ------------------------------------------------------
         super("Tracking");
         instance=this;
+
+        try {
+		Class.forName("i5d.gui.Image5DWindow");
+		adapter = new Image5DAdapter();
+        } catch (ClassNotFoundException e) {
+		adapter = new ImageAdapter();
+        }
+
+        //Interface setup ------------------------------------------------------
         panel = new Panel();
         panel.setLayout(new GridLayout(0,3));
         panel.setBackground(SystemColor.control);
@@ -611,8 +621,8 @@ public class Manual_Tracking extends PlugInFrame implements ActionListener, Item
             }
             IJ.setTool(7);
             
-            xRoi=new int[img.getStackSize()];
-            yRoi=new int[img.getStackSize()];
+            xRoi=new int[img.getNFrames()];
+            yRoi=new int[img.getNFrames()];
             
             if (img==null){
                 IJ.showMessage("Error", "Man,\n"+"You're in deep troubles:\n"+"no opened stack...");
@@ -621,7 +631,7 @@ public class Manual_Tracking extends PlugInFrame implements ActionListener, Item
             
             win = img.getWindow();
             canvas=win.getCanvas();
-            img.setPosition(img.getChannel(), img.getSlice(), 1);
+            adapter.setFrame(img, 1);
             
             NbPoint=1;
             IJ.showProgress(2,1);
@@ -666,7 +676,7 @@ public class Manual_Tracking extends PlugInFrame implements ActionListener, Item
             
             prevx=(int) rt.getValue(2, rt.getCounter()-1);
             prevy=(int) rt.getValue(3, rt.getCounter()-1);
-            img.setPosition(img.getChannel(), img.getSlice(), ((int) rt.getValue(1, rt.getCounter()-1))+1);
+            adapter.setFrame(img, ((int) rt.getValue(1, rt.getCounter()-1))+1);
             IJ.showStatus("Last Point Deleted !");
         }
         
@@ -964,7 +974,6 @@ public class Manual_Tracking extends PlugInFrame implements ActionListener, Item
                 Dynamic="";
                 DynamicView=true;
                 DynamicViewStaticTraj=false;
-                DynamicViewDynamicTraj=false;
                 VRMLgd= new GenericDialog("VRML file");
                 VRMLgd.addChoice("Static view",StaticArray,StaticArray[1]);
                 VRMLgd.addMessage("");
@@ -1099,8 +1108,8 @@ public class Manual_Tracking extends PlugInFrame implements ActionListener, Item
     // Click on image-----------------------------------------------------------
     public void mouseReleased(MouseEvent m) {
         if (!islisteningRef){
-            IJ.showProgress(img.getCurrentSlice()+1,img.getStackSize()+1);
-            IJ.showStatus("Tracking slice "+(img.getCurrentSlice()+1)+" of "+(img.getStackSize()+1));
+            IJ.showProgress(adapter.getFrame(img),img.getNFrames());
+            IJ.showStatus("Tracking frame "+ adapter.getFrame(img) +" of "+(img.getNFrames()));
             if (Nbtrack==1 && NbPoint==1){
                 for (i=0; i<head.length; i++) rt.setHeading(i,head[i]);
             }
@@ -1153,10 +1162,9 @@ public class Manual_Tracking extends PlugInFrame implements ActionListener, Item
         for (i=0; i<doub.length; i++) rt.addValue(i,doub[i]);
         rt.show("Results from "+imgtitle+" in "+choicecalxy.getItem(choicecalxy.getSelectedIndex())+" per "+choicecalt.getItem(choicecalt.getSelectedIndex()));
         
-        
-        if ((img.getFrame()) < img.getNFrames()){
+        if (adapter.getFrame(img) < img.getNFrames()){
             NbPoint++;
-            img.setPosition(img.getChannel(), img.getSlice(), img.getFrame() + 1);
+            adapter.setFrame(img, adapter.getFrame(img) + 1);
             if (Distance!=0) {
                 pprevx=prevx;
                 pprevy=prevy;
@@ -1408,7 +1416,7 @@ public class Manual_Tracking extends PlugInFrame implements ActionListener, Item
         
         
         for (l=limsz1; l<limsz2+1; l++){
-            ip.setPosition(ip.getChannel(), l, ip.getFrame());
+            adapter.setSlice(ip, l);
             for (m=limsy1; m<limsy2+1; m++){
                 for (n=limsx1; n<limsx2+1; n++){
                     tmppixval=ip.getProcessor().getPixel(n,m);
@@ -1506,7 +1514,7 @@ public class Manual_Tracking extends PlugInFrame implements ActionListener, Item
         if (limbz2>ip.getNSlices()) limbz2=ip.getNSlices();
         
         for (l=limsz1; l<limsz2+1; l++){
-            ip.setPosition(img.getChannel(), l, img.getFrame());
+            adapter.setSlice(ip, l);
             for (m=limsy1; m<limsy2+1; m++){
                 for (n=limsx1; n<limsx2+1; n++){
                     Qsgl=Qsgl+ip.getProcessor().getPixel(n,m);
@@ -1517,7 +1525,7 @@ public class Manual_Tracking extends PlugInFrame implements ActionListener, Item
         
         if (Quantification>0){
             for (l=limbz1; l<limbz2+1; l++){
-                ip.setPosition(img.getChannel(), l, img.getFrame());
+                adapter.setSlice(ip, l);
                 for (m=limby1; m<limby2+1; m++){
                     for (n=limbx1; n<limbx2+1; n++){
                         Qbkgd=Qbkgd+ip.getProcessor().getPixel(n,m);
