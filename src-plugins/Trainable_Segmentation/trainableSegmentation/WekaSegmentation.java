@@ -3608,10 +3608,12 @@ public class WekaSegmentation {
 			
 		}
 		
-		// Submit the jobs
+		// Create a copy of the classifier for each thread
+		AbstractClassifier[] classifierCopy = new AbstractClassifier[ numThreads ];
+
 		for(int i = 0; i < numThreads; i++)
 		{
-			AbstractClassifier classifierCopy = null;
+			
 			try {
 				// The Weka random forest classifiers do not need to be duplicated on each thread 
 				// (that saves much memory)
@@ -3620,17 +3622,22 @@ public class WekaSegmentation {
 					classifierCopy = classifier;
 				else
 				*/
-					classifierCopy = (AbstractClassifier) (AbstractClassifier.makeCopy( classifier ));
-					if( classifierCopy instanceof FastRandomForest )
-						((FastRandomForest) classifierCopy).setNumThreads( 1 );
+					classifierCopy[ i ] = (AbstractClassifier) (AbstractClassifier.makeCopy( classifier ));
+					if( classifierCopy[ i ] instanceof FastRandomForest )
+						((FastRandomForest) classifierCopy[ i ]).setNumThreads( 1 );
 							
 			} catch (Exception e) {
 				IJ.log("Error: classifier could not be copied to classify in a multi-thread way.");
 				e.printStackTrace();
 			}
 			
+		}
+		
+		// Submit the jobs		
+		for(int i = 0; i < numThreads; i++)
+		{
 			// classify slice
-			fu[i] = exe.submit( classifyListOfImages( list[ i ] , dataInfo, classifierCopy, counter, probabilityMaps ));
+			fu[i] = exe.submit( classifyListOfImages( list[ i ] , dataInfo, classifierCopy[ i ], counter, probabilityMaps ));
 		}
 
 		final int numInstances = imp.getHeight() * imp.getWidth() * imp.getStackSize();
