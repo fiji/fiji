@@ -3537,7 +3537,7 @@ public class WekaSegmentation {
 		
 		// Calculate number of rows per thread
 		// (with this division we may miss one row, 
-		// but it will be added to the las thread)
+		// but it will be added to the last thread)
 		int numOfRows = height * imp.getImageStackSize() / numThreads; 				
 		
 		// set each slice in a thread
@@ -3548,7 +3548,7 @@ public class WekaSegmentation {
 		ArrayList <ImagePlus> list[] = new ArrayList [ numThreads ];
 		
 		// Divide work among available threads
-		IJ.log("Diving image data among the " + numThreads + " available threads...");
+		IJ.log("Dividing image data among the " + numThreads + " available threads...");
 		final long time1 = System.currentTimeMillis();
 		for(int i = 0; i < numThreads; i++)
 		{
