@@ -3636,10 +3636,7 @@ public class WekaSegmentation {
 				{
 					classifiedImages.add( ip );
 				}
-			} catch (InterruptedException e) {				
-				e.printStackTrace();
-				return null;
-			} catch (ExecutionException e) {
+			} catch (Exception e) {
 				e.printStackTrace();
 				return null;
 			} finally {
@@ -3846,7 +3843,7 @@ public class WekaSegmentation {
 				{
 					// Create feature stack for the image
 					IJ.showStatus("Creating features...");
-					//IJ.log("Creating features of slice " + image.getTitle() + "...");
+					IJ.log("Creating features of slice " + image.getTitle() + ", size = " + image.getWidth() + "x" + image.getHeight() + "...");
 					final FeatureStack sliceFeatures = new FeatureStack( image );
 					// Use the same features as the current classifier
 					sliceFeatures.setEnabledFeatures(featureStackArray.getEnabledFeatures());
@@ -3876,7 +3873,7 @@ public class WekaSegmentation {
 					else
 						probArray = new double[1][numInstances];
 
-					//IJ.log("Classifying slice " + image.getTitle() + "...");
+					IJ.log("Classifying slice " + image.getTitle() + "...");
 
 					for (int x=0; x<width; x++)
 						for(int y=0; y<height; y++)
