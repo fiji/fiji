@@ -3548,6 +3548,8 @@ public class WekaSegmentation {
 		ArrayList <ImagePlus> list[] = new ArrayList [ numThreads ];
 		
 		// Divide work among available threads
+		IJ.log("Diving image data among the " + numThreads + " available threads...");
+		final long time1 = System.currentTimeMillis();
 		for(int i = 0; i < numThreads; i++)
 		{
 			list[ i ] = new ArrayList < ImagePlus > ();
@@ -3607,10 +3609,13 @@ public class WekaSegmentation {
 			
 			
 		}
+		final long time2 = System.currentTimeMillis();
+		IJ.log(" Done. Image division took " + (time2-time1)  + " ms.");
+		
 		
 		// Create a copy of the classifier for each thread
 		AbstractClassifier[] classifierCopy = new AbstractClassifier[ numThreads ];
-
+		IJ.log("Creating classifier copy for each thread...");
 		for(int i = 0; i < numThreads; i++)
 		{
 			
@@ -3632,6 +3637,8 @@ public class WekaSegmentation {
 			}
 			
 		}
+		final long time3 = System.currentTimeMillis();
+		IJ.log(" Done. Classifiers duplication took " + (time3-time2)  + " ms.");
 		
 		// Submit the jobs		
 		for(int i = 0; i < numThreads; i++)
