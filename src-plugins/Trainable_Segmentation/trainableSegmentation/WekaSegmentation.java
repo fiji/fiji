@@ -226,6 +226,9 @@ public class WekaSegmentation {
 		// Random seed
 		rf.setSeed( (new Random()).nextInt() );
 
+		// Set number of threads
+		rf.setNumThreads( Prefs.getThreads() );
+		
 		classifier = rf;
 
 		// Initialize feature stack (no features yet)
@@ -268,6 +271,8 @@ public class WekaSegmentation {
 		rf.setNumFeatures(randomFeatures);
 		// Random seed
 		rf.setSeed( (new Random()).nextInt() );
+		// Set number of threads
+		rf.setNumThreads( Prefs.getThreads() );
 
 		classifier = rf;
 		
