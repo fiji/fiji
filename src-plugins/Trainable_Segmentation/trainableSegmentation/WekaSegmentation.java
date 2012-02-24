@@ -3540,9 +3540,12 @@ public class WekaSegmentation {
 		
 		ArrayList<int[]> imagePad = new ArrayList<int[]>();
 		
+		ArrayList <ImagePlus> list[] = new ArrayList [ numThreads ];
+		
 		// Divide work among available threads
 		for(int i = 0; i < numThreads; i++)
 		{
+			list[ i ] = new ArrayList < ImagePlus > ();
 			if (Thread.currentThread().isInterrupted()) 
 				return null;
 			
@@ -3551,7 +3554,7 @@ public class WekaSegmentation {
 			int lastRow = i < (numThreads-1) ? (i+1) * numOfRows - 1 : height * imp.getImageStackSize()-1;
 			
 			//IJ.log("Thread " + i + ": first row = " + firstRow + ", last row = " + lastRow);		
-			ArrayList <ImagePlus> list = new ArrayList <ImagePlus>();
+			
 			
 			int r = firstRow;
 			int rowsToDo = numOfRows;
@@ -3576,7 +3579,7 @@ public class WekaSegmentation {
 				
 				final ImagePlus ip = new ImagePlus( "slice-" + slice + "-" + begin, im); 
 				// add image to list
-				list.add( ip );
+				list[ i ].add( ip );
 				
 				//IJ.log(" begin = " + begin + ", end = " + end + ", paddedBegin = " + paddedBegin + ", paddedEnd = " + paddedEnd + ", height = " + height + ", pad = " + pad);				
 				
@@ -3596,6 +3599,13 @@ public class WekaSegmentation {
 				rowsToDo -= rowsDone;
 			}
 						
+			
+			
+		}
+		
+		// Submit the jobs
+		for(int i = 0; i < numThreads; i++)
+		{
 			AbstractClassifier classifierCopy = null;
 			try {
 				// The Weka random forest classifiers do not need to be duplicated on each thread 
@@ -3612,7 +3622,7 @@ public class WekaSegmentation {
 			}
 			
 			// classify slice
-			fu[i] = exe.submit( classifyListOfImages( list , dataInfo, classifierCopy, counter, probabilityMaps ));
+			fu[i] = exe.submit( classifyListOfImages( list[ i ] , dataInfo, classifierCopy, counter, probabilityMaps ));
 		}
 
 		final int numInstances = imp.getHeight() * imp.getWidth() * imp.getStackSize();
