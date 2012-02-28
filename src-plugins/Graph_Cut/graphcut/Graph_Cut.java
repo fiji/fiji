@@ -694,7 +694,7 @@ public class Graph_Cut<T extends RealType<T>> implements PlugIn {
 	 *
 	 * @param imp         The image to process
 	 * @param edge        An edge image that increases the likelihood for cuts
-	 *                    between certain pixels
+	 *                    between certain pixels (can be null).
 	 * @param pottsWeight Isotropic edge weights.
 	 * @param edgeWeight  The influence of the edge image.
 	 * @return A binary segmentation image
@@ -714,6 +714,270 @@ public class Graph_Cut<T extends RealType<T>> implements PlugIn {
 		processSingleChannelImage(imp, edge, dataWeight, pottsWeight, edgeWeight, seg);
 
 		return seg;
+	}
+
+	/**
+	 * Processes a single channel image.
+	 *
+	 * The intensities of the image are interpreted as the probability of each
+	 * pixel to belong to the foreground. The potts weight represents an
+	 * isotropic edge weight.
+	 *
+	 * @param imp         The image to process
+	 * @param edge        An edge image that increases the likelihood for cuts
+	 *                    between certain pixels (can be null).
+	 * @param pottsWeight Isotropic edge weights.
+	 * @param edgeWeight  The influence of the edge image.
+	 * @param seg         A grayscale image to store the binary result.
+	 */
+	public void processSingleChannelImage(ImagePlus imp, ImagePlus edge, float dataWeight, float pottsWeight, float edgeWeight, ImagePlus seg) {
+
+		float maxValue     = (float)Math.pow(2, imp.getBitDepth());
+		Image<T> image     = ImagePlusAdapter.wrap(imp);
+		Image<T> edgeImage = null;
+		if (edge != null)
+			edgeImage = ImagePlusAdapter.wrap(edge);
+
+		// get some statistics
+		int[] dimensions = image.getDimensions();
+		int   numNodes   = image.size();
+		int   numEdges   = 0;
+
+		// determine type of edge image
+		if (edge != null) {
+			int[] edgeDimensions = edge.getDimensions();
+			if (edgeDimensions[0] == 2*dimensions[0] - 1)
+				implicitEdgeWeights = false;
+			else
+				implicitEdgeWeights = true;
+		}
+
+		// compute number of edges
+		if (eightConnect) {
+
+			// straight and diagonal edges
+
+			// n = (2*a-1)*(2*b-1)*...
+			//   - a*b*c*...
+			//   + (a-1)*(b-1)*...
+			int prod1 = 1;
+			for (int d = 0; d < dimensions.length; d++)
+				prod1 *= (2*dimensions[d] - 1);
+
+			int prod2 = 1;
+			for (int d = 0; d < dimensions.length; d++)
+				prod2 *= dimensions[d];
+
+			int prod3 = 1;
+			for (int d = 0; d < dimensions.length; d++)
+				prod3 *= (dimensions[d] - 1);
+
+			numEdges = prod1 - prod2 + prod3;
+		} else {
+
+			// straight edges
+			for (int d = 0; d < dimensions.length; d++)
+				numEdges += numNodes - numNodes/dimensions[d];
+		}
+
+		// setup imglib cursors
+		LocalizableByDimCursor<T> cursor     = image.createLocalizableByDimCursor();
+		LocalizableByDimCursor<T> edgeCursor = null;
+		int[] imagePosition                  = new int[dimensions.length];
+
+		// create a new graph cut instance
+		// TODO: reuse an old one
+		IJ.log("Creating graph structure of " + numNodes + " nodes and " + numEdges + " edges...");
+		long start = System.currentTimeMillis();
+		GraphCut graphCut = new GraphCut(numNodes, numEdges);
+		long end   = System.currentTimeMillis();
+		IJ.log("...done. (" + (end - start) + "ms)");
+
+		// set terminal weights, i.e., segmentation probabilities
+		IJ.log("Setting terminal weights with data prior " + dataWeight + "...");
+		start = System.currentTimeMillis();
+		while (cursor.hasNext()) {
+
+			cursor.fwd();
+			cursor.getPosition(imagePosition);
+
+			int nodeNum = listPosition(imagePosition, dimensions);
+			
+			T type = cursor.getType();
+			float value = type.getRealFloat();
+
+			float probData  = (value/maxValue);
+			float probPrior = dataWeight;
+			float fweight = -(float)Math.log(probData) - (float)Math.log(probPrior);
+			float bweight = -(float)Math.log(1.0 - probData) - (float)Math.log(1.0 - probPrior);
+
+			graphCut.setTerminalWeights(nodeNum, fweight, bweight);
+		}
+		end = System.currentTimeMillis();
+		IJ.log("...done. (" + (end - start) + "ms)");
+
+		// set edge weights
+
+		// create neighbor offsets
+		int[][] neighborPositions;
+
+		if (eightConnect) {
+
+			int numNeighbors = dimensions.length*2;
+			int numDiagonal = 1;
+			for (int d = 0; d < dimensions.length; d++)
+				numDiagonal *= 2;
+			numNeighbors += numDiagonal;
+			numNeighbors /= 2; // consider only half of the edges per pixel
+
+			IJ.log("num neighbors per pixel: " + numNeighbors);
+
+			neighborPositions = new int[numNeighbors][dimensions.length];
+
+			Arrays.fill(neighborPositions[0], -1);
+
+			for (int i = 1; i < neighborPositions.length; i++) {
+
+				System.arraycopy(neighborPositions[i-1], 0, neighborPositions[i], 0, dimensions.length);
+
+				boolean valid = false;
+				do {
+
+					for (int d = dimensions.length - 1; d >= 0; d--) {
+
+						neighborPositions[i][d]++;
+						if (neighborPositions[i][d] < 2)
+							break;
+						neighborPositions[i][d] = -1;
+					}
+
+					// check if valid neighbor
+					for (int d = dimensions.length - 1; d >= 0; d--) {
+
+						if (neighborPositions[i][d] < 0) {
+							valid = true;
+							break;
+						}
+					}
+
+				} while (!valid);
+				System.out.println(Arrays.toString(neighborPositions[i]));
+			}
+		} else {
+
+			neighborPositions = new int[dimensions.length][dimensions.length];
+
+			for (int d = 0; d < dimensions.length; d++) {
+				Arrays.fill(neighborPositions[d], 0);
+				neighborPositions[d][d] = -1;
+			}
+		}
+
+		IJ.log("Setting edge weights to " + pottsWeight + "...");
+		if (edge != null) {
+			IJ.log("   (under consideration of edge image with weight " + edgeWeight + ")");
+			if (implicitEdgeWeights)
+				cursor   = edgeImage.createLocalizableByDimCursor();
+			else {
+				cursor     = image.createLocalizableByDimCursor();
+				edgeCursor = edgeImage.createLocalizableByDimCursor();
+			}
+		} else
+			cursor   = image.createLocalizableByDimCursor();
+
+		int[] neighborPosition = new int[dimensions.length];
+		int[] edgePosition     = new int[dimensions.length];
+		int e = 0;
+		start = System.currentTimeMillis();
+
+		while (cursor.hasNext()) {
+
+			cursor.fwd();
+
+			// image position
+			cursor.getPosition(imagePosition);
+			int nodeNum = listPosition(imagePosition, dimensions);
+
+			float value = cursor.getType().getRealFloat();
+
+A:			for (int i = 0; i < neighborPositions.length; i++) {
+
+				for (int d = 0; d < dimensions.length; d++) {
+
+					neighborPosition[d] = imagePosition[d]   + neighborPositions[i][d];
+					edgePosition[d]     = 2*imagePosition[d] + neighborPositions[i][d];
+
+					if (neighborPosition[d] < 0 || neighborPosition[d] >= dimensions[d])
+						continue A;
+				}
+
+				int neighborNum = listPosition(neighborPosition, dimensions);
+
+				float weight = pottsWeight;
+
+				if (edge != null) {
+
+					if (implicitEdgeWeights) {
+
+						cursor.setPosition(neighborPosition);
+						float neighborValue = cursor.getType().getRealFloat();
+
+						// TODO:
+						// cache neighbor distances
+						weight += edgeWeight*edgeLikelihood(value, neighborValue, imagePosition, neighborPosition, dimensions);
+					} else {
+
+						edgeCursor.setPosition(edgePosition);
+						float edgeValue = edgeCursor.getType().getRealFloat();
+
+						// TODO:
+						// cache neighbor distances
+						weight += edgeWeight*edgeLikelihood(0, edgeValue, imagePosition, neighborPosition, dimensions);
+					}
+				}
+
+				// add weight_00 to source weight of node,
+				// add weight_11 to sink weight of neighbor,
+				// set edge weight node->neighbor to weight_10,
+				// set edge weight neighbor->node to weight_01 - weight_00 -
+				// weight_11
+				//
+				// since weight_00 = weight_11 = 0 and weight_01 = weight_10 =
+				// weight, the following does it:
+				graphCut.setEdgeWeight(nodeNum, neighborNum, weight);
+				e++;
+			}
+
+			cursor.setPosition(imagePosition);
+		}
+		end = System.currentTimeMillis();
+		IJ.log("...done inserting " + e + " edges. (" + (end - start) + "ms)");
+
+		// calculate max flow
+		IJ.log("Calculating max flow...");
+		start = System.currentTimeMillis();
+		float maxFlow = graphCut.computeMaximumFlow(false, null);
+		end = System.currentTimeMillis();
+		IJ.log("...done. Max flow is " + maxFlow + ". (" + (end - start) + "ms)");
+
+		Image<T> segmentation = ImagePlusAdapter.wrap(seg);
+
+		// create segmentation image
+		cursor = segmentation.createLocalizableByDimCursor();
+		imagePosition = new int[dimensions.length];
+		while (cursor.hasNext()) {
+
+			cursor.fwd();
+
+			cursor.getPosition(imagePosition);
+
+			int nodeNum = listPosition(imagePosition, dimensions);
+
+			if (graphCut.getTerminal(nodeNum) == Terminal.FOREGROUND)
+				cursor.getType().setReal(255.0);
+			else
+				cursor.getType().setReal(0.0);
+		}
 	}
 
 	public ImagePlus createSequenceImage(ImagePlus imp, ImagePlus edge,
@@ -941,255 +1205,6 @@ public class Graph_Cut<T extends RealType<T>> implements PlugIn {
 		}
 
 		setButtonsEnabled(true);
-	}
-
-	private void processSingleChannelImage(ImagePlus imp, ImagePlus edge, float dataWeight, float pottsWeight, float edgeWeight, ImagePlus seg) {
-
-		Image<T> image     = ImagePlusAdapter.wrap(imp);
-		Image<T> edgeImage = null;
-		if (edge != null)
-			edgeImage = ImagePlusAdapter.wrap(edge);
-
-		// get some statistics
-		int[] dimensions = image.getDimensions();
-		int   numNodes   = image.size();
-		int   numEdges   = 0;
-
-		// determine type of edge image
-		if (edge != null) {
-			int[] edgeDimensions = edge.getDimensions();
-			if (edgeDimensions[0] == 2*dimensions[0] - 1)
-				implicitEdgeWeights = false;
-			else
-				implicitEdgeWeights = true;
-		}
-
-		// compute number of edges
-		if (eightConnect) {
-
-			// straight and diagonal edges
-
-			// n = (2*a-1)*(2*b-1)*...
-			//   - a*b*c*...
-			//   + (a-1)*(b-1)*...
-			int prod1 = 1;
-			for (int d = 0; d < dimensions.length; d++)
-				prod1 *= (2*dimensions[d] - 1);
-
-			int prod2 = 1;
-			for (int d = 0; d < dimensions.length; d++)
-				prod2 *= dimensions[d];
-
-			int prod3 = 1;
-			for (int d = 0; d < dimensions.length; d++)
-				prod3 *= (dimensions[d] - 1);
-
-			numEdges = prod1 - prod2 + prod3;
-		} else {
-
-			// straight edges
-			for (int d = 0; d < dimensions.length; d++)
-				numEdges += numNodes - numNodes/dimensions[d];
-		}
-
-		// setup imglib cursors
-		LocalizableByDimCursor<T> cursor     = image.createLocalizableByDimCursor();
-		LocalizableByDimCursor<T> edgeCursor = null;
-		int[] imagePosition                  = new int[dimensions.length];
-
-		// create a new graph cut instance
-		// TODO: reuse an old one
-		IJ.log("Creating graph structure of " + numNodes + " nodes and " + numEdges + " edges...");
-		long start = System.currentTimeMillis();
-		GraphCut graphCut = new GraphCut(numNodes, numEdges);
-		long end   = System.currentTimeMillis();
-		IJ.log("...done. (" + (end - start) + "ms)");
-
-		// set terminal weights, i.e., segmentation probabilities
-		IJ.log("Setting terminal weights with data prior " + dataWeight + "...");
-		start = System.currentTimeMillis();
-		while (cursor.hasNext()) {
-
-			cursor.fwd();
-			cursor.getPosition(imagePosition);
-
-			int nodeNum = listPosition(imagePosition, dimensions);
-			
-			T type = cursor.getType();
-			float value = type.getRealFloat();
-
-			float probData  = (value/255.0f);
-			float probPrior = dataWeight;
-			float fweight = -(float)Math.log(probData) - (float)Math.log(probPrior);
-			float bweight = -(float)Math.log(1.0 - probData) - (float)Math.log(1.0 - probPrior);
-
-			graphCut.setTerminalWeights(nodeNum, fweight, bweight);
-		}
-		end = System.currentTimeMillis();
-		IJ.log("...done. (" + (end - start) + "ms)");
-
-		// set edge weights
-
-		// create neighbor offsets
-		int[][] neighborPositions;
-
-		if (eightConnect) {
-
-			int numNeighbors = dimensions.length*2;
-			int numDiagonal = 1;
-			for (int d = 0; d < dimensions.length; d++)
-				numDiagonal *= 2;
-			numNeighbors += numDiagonal;
-			numNeighbors /= 2; // consider only half of the edges per pixel
-
-			IJ.log("num neighbors per pixel: " + numNeighbors);
-
-			neighborPositions = new int[numNeighbors][dimensions.length];
-
-			Arrays.fill(neighborPositions[0], -1);
-
-			for (int i = 1; i < neighborPositions.length; i++) {
-
-				System.arraycopy(neighborPositions[i-1], 0, neighborPositions[i], 0, dimensions.length);
-
-				boolean valid = false;
-				do {
-
-					for (int d = dimensions.length - 1; d >= 0; d--) {
-
-						neighborPositions[i][d]++;
-						if (neighborPositions[i][d] < 2)
-							break;
-						neighborPositions[i][d] = -1;
-					}
-
-					// check if valid neighbor
-					for (int d = dimensions.length - 1; d >= 0; d--) {
-
-						if (neighborPositions[i][d] < 0) {
-							valid = true;
-							break;
-						}
-					}
-
-				} while (!valid);
-				System.out.println(Arrays.toString(neighborPositions[i]));
-			}
-		} else {
-
-			neighborPositions = new int[dimensions.length][dimensions.length];
-
-			for (int d = 0; d < dimensions.length; d++) {
-				Arrays.fill(neighborPositions[d], 0);
-				neighborPositions[d][d] = -1;
-			}
-		}
-
-		IJ.log("Setting edge weights to " + pottsWeight + "...");
-		if (edge != null) {
-			IJ.log("   (under consideration of edge image with weight " + edgeWeight + ")");
-			if (implicitEdgeWeights)
-				cursor   = edgeImage.createLocalizableByDimCursor();
-			else {
-				cursor     = image.createLocalizableByDimCursor();
-				edgeCursor = edgeImage.createLocalizableByDimCursor();
-			}
-		} else
-			cursor   = image.createLocalizableByDimCursor();
-
-		int[] neighborPosition = new int[dimensions.length];
-		int[] edgePosition     = new int[dimensions.length];
-		int e = 0;
-		start = System.currentTimeMillis();
-
-		while (cursor.hasNext()) {
-
-			cursor.fwd();
-
-			// image position
-			cursor.getPosition(imagePosition);
-			int nodeNum = listPosition(imagePosition, dimensions);
-
-			float value = cursor.getType().getRealFloat();
-
-A:			for (int i = 0; i < neighborPositions.length; i++) {
-
-				for (int d = 0; d < dimensions.length; d++) {
-
-					neighborPosition[d] = imagePosition[d]   + neighborPositions[i][d];
-					edgePosition[d]     = 2*imagePosition[d] + neighborPositions[i][d];
-
-					if (neighborPosition[d] < 0 || neighborPosition[d] >= dimensions[d])
-						continue A;
-				}
-
-				int neighborNum = listPosition(neighborPosition, dimensions);
-
-				float weight = pottsWeight;
-
-				if (edge != null) {
-
-					if (implicitEdgeWeights) {
-
-						cursor.setPosition(neighborPosition);
-						float neighborValue = cursor.getType().getRealFloat();
-
-						// TODO:
-						// cache neighbor distances
-						weight += edgeWeight*edgeLikelihood(value, neighborValue, imagePosition, neighborPosition, dimensions);
-					} else {
-
-						edgeCursor.setPosition(edgePosition);
-						float edgeValue = edgeCursor.getType().getRealFloat();
-
-						// TODO:
-						// cache neighbor distances
-						weight += edgeWeight*edgeLikelihood(0, edgeValue, imagePosition, neighborPosition, dimensions);
-					}
-				}
-
-				// add weight_00 to source weight of node,
-				// add weight_11 to sink weight of neighbor,
-				// set edge weight node->neighbor to weight_10,
-				// set edge weight neighbor->node to weight_01 - weight_00 -
-				// weight_11
-				//
-				// since weight_00 = weight_11 = 0 and weight_01 = weight_10 =
-				// weight, the following does it:
-				graphCut.setEdgeWeight(nodeNum, neighborNum, weight);
-				e++;
-			}
-
-			cursor.setPosition(imagePosition);
-		}
-		end = System.currentTimeMillis();
-		IJ.log("...done inserting " + e + " edges. (" + (end - start) + "ms)");
-
-		// calculate max flow
-		IJ.log("Calculating max flow...");
-		start = System.currentTimeMillis();
-		float maxFlow = graphCut.computeMaximumFlow(false, null);
-		end = System.currentTimeMillis();
-		IJ.log("...done. Max flow is " + maxFlow + ". (" + (end - start) + "ms)");
-
-		Image<T> segmentation = ImagePlusAdapter.wrap(seg);
-
-		// create segmentation image
-		cursor = segmentation.createLocalizableByDimCursor();
-		imagePosition = new int[dimensions.length];
-		while (cursor.hasNext()) {
-
-			cursor.fwd();
-
-			cursor.getPosition(imagePosition);
-
-			int nodeNum = listPosition(imagePosition, dimensions);
-
-			if (graphCut.getTerminal(nodeNum) == Terminal.FOREGROUND)
-				cursor.getType().setReal(255.0);
-			else
-				cursor.getType().setReal(0.0);
-		}
 	}
 
 	private ImagePlus extractChannel(ImagePlus imp, int channel) {
