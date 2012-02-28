@@ -15,7 +15,12 @@ get_url () {
 	url=$(git config remote.origin.url)
 	if test -z "$url"
 	then
-		remote=$(git config branch.master.remote) &&
+		branch=$(git rev-parse --symbolic-full-name HEAD) &&
+		remote=$(git config branch.${branch#refs/heads/}.remote) &&
+		if test -z "$remote"
+		then
+			remote=$(git config branch.master.remote)
+		fi &&
 		url=$(git config remote.$remote.url) &&
 		test ! -z "$url"
 	fi || {
