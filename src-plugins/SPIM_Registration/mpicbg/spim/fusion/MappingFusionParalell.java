@@ -218,7 +218,7 @@ public class MappingFusionParalell extends SPIMImageFusion
 		    			// create Interpolated Iterators for the input images (every thread need own ones!)
 		    			final Interpolator<FloatType>[] interpolators = new Interpolator[ numViews ];
 		    			for (int view = 0; view < numViews ; view++)
-		    				interpolators[ view ] = views.get( view ).getImage().createInterpolator( conf.interpolatorFactorOutput );
+		    				interpolators[ view ] = views.get( view ).getImage( false ).createInterpolator( conf.interpolatorFactorOutput );
 
 		    			while (it.hasNext())
 		    			{
