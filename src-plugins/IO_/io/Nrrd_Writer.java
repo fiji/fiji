@@ -130,6 +130,11 @@ public class Nrrd_Writer implements PlugIn {
 		}
 	}
 	
+	public void save(ImagePlus imp, String path){
+		File f = new File(path);
+		save(imp, f.getParent(),f.getName());
+	}
+	
 	void writeImage(FileInfo fi, Calibration cal) throws IOException {
 		FileOutputStream out = new FileOutputStream(new File(fi.directory, fi.fileName));
 		// First write out the full header
