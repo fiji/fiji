@@ -61,7 +61,7 @@ public class Nrrd_Writer implements PlugIn {
 	// See http://teem.sourceforge.net/nrrd/format.html#centers
 	static final String defaultNrrdCentering="node";	
 	
-	String setNrrdEncoding(String enc) throws IOException {
+	public String setNrrdEncoding(String enc) throws IOException {
 		enc=enc.toLowerCase();
 		if (enc.equals("raw")) nrrdEncoding="raw";
 		else if (enc.equals("gz") || enc.equals("gzip")) nrrdEncoding="gzip";
