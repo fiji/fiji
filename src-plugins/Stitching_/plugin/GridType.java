@@ -86,7 +86,7 @@ public class GridType
 		{
 			// the interactive changing is not compatible with the macro language, 
 			// thats why we show all possible options and figure out what was meant
-			gd.addChoice( "Grid_order", allChoices, allChoices[ 0 ] );
+			gd.addChoice( "Order", allChoices, allChoices[ 0 ] );
 		}
 
 		gd.addMessage( "Please note that the Stitching is\n" +
@@ -104,7 +104,7 @@ public class GridType
 			return;
 		
 		type = Stitching_Grid.defaultGridChoice1 = gd.getNextChoiceIndex();
-		
+
 		if ( !IJ.isMacro() )
 		{
 			order = gd.getNextChoiceIndex();
@@ -121,7 +121,7 @@ public class GridType
 			else
 				order = tmp % 4;				
 		}
-		
+
 		Stitching_Grid.defaultGridChoice2 = order;
 	}
 	

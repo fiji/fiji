@@ -38,13 +38,13 @@ public class ClassLauncher {
 			else if (option.equals("-ijcp") || option.equals("-ijclasspath"))
 				classLoader = ClassLoaderPlus.getInFijiDirectory(arguments[++i]);
 			else if (option.equals("-jarpath"))
-				classLoader = ClassLoaderPlus.getRecursively(new File(arguments[++i]));
+				classLoader = ClassLoaderPlus.getRecursively(true, new File(arguments[++i]));
 			else if (option.equals("-ijjarpath"))
-				classLoader = ClassLoaderPlus.getRecursivelyInFijiDirectory(arguments[++i]);
+				classLoader = ClassLoaderPlus.getRecursivelyInFijiDirectory(true, arguments[++i]);
 			else if (option.equals("-jdb"))
 				jdb = true;
 			else if (option.equals("-retrotranslator")) {
-				classLoader = ClassLoaderPlus.getRecursivelyInFijiDirectory("retro");
+				classLoader = ClassLoaderPlus.getRecursivelyInFijiDirectory(true, "retro");
 				retrotranslator = true;
 			}
 			else if (option.equals("-pass-classpath"))

@@ -493,16 +493,10 @@ public void convert(String dir1, String dir2,String original,String format, Stri
 											
 			
 				if(runmacro && FileMacro != null ){
-				img.show();
-
-				IJ.run("Select None");
-				if(IJ.isWindows()){
-				
-         			IJ.runMacroFile(FileMacro,"");
-			   	}else{      
-				IJ.run("Run... ", "run=" + FileMacro);
-				}
-				IJ.run("Select None");
+					img.show();
+					IJ.run("Select None");
+					IJ.runMacroFile(FileMacro,"");
+					IJ.run("Select None");
 				}
 								
 			

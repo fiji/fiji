@@ -1025,8 +1025,16 @@ static const char *find_in_path(const char *path)
 #ifdef WIN32
 static char *dos_path(const char *path)
 {
+	const char *orig = path;
 	int size = GetShortPathName(path, NULL, 0);
-	char *buffer = (char *)xmalloc(size);
+	char *buffer;
+
+	if (!size)
+		path = find_in_path(path);
+	size = GetShortPathName(path, NULL, 0);
+	if (!size)
+		die ("Could not determine DOS name of %s", orig);
+	buffer = (char *)xmalloc(size);
 	GetShortPathName(path, buffer, size);
 	return buffer;
 }
@@ -1771,13 +1779,13 @@ static void keep_only_one_memory_option(struct string_array *options)
 	options->nr = j;
 }
 
-static char has_memory_option(struct string_array *options)
+static const char* has_memory_option(struct string_array *options)
 {
 	int i;
 	for (i = 0; i < options->nr; i++)
 		if (!prefixcmp(options->list[i], "-Xm"))
-			return 1;
-	return 0;
+			return options->list[i];
+	return NULL;
 }
 
 __attribute__((unused))
@@ -2109,10 +2117,16 @@ const char *default_subcommands[] = {
 	" default when called with a file ending in .clj)",
 	"--beanshell --ij-jar=jars/bsh.jar --full-classpath --main-class=bsh.Interpreter",
 	".bs",
-	"--bsh --ij-jar=jars/bsh.jar --main-class=bsh.Interpreter",
+	"--bsh --ij-jar=jars/bsh.jar --full-classpath --main-class=bsh.Interpreter",
 	".bsh",
 	" start BeanShell instead of ImageJ (this is the",
 	" default when called with a file ending in .bs or .bsh",
+	"--javascript --ij-jar=jars/js.jar --full-classpath --main-class=org.mozilla.javascript.tools.shell.Main",
+	"--js --ij-jar=jars/js.jar --full-classpath --main-class=org.mozilla.javascript.tools.shell.Main",
+	".js",
+	" start Javascript (the Rhino engine) instead of",
+	" ImageJ (this is the default when called with a",
+	" file ending in .js)",
 	"--ant --tools-jar --ij-jar=jars/ant.jar --ij-jar=jars/ant-launcher.jar --ij-jar=jars/ant-nodeps.jar --ij-jar=jars/ant-junit.jar --dont-patch-ij1 --headless --main-class=org.apache.tools.ant.Main",
 	" run Apache Ant",
 	"--mini-maven --ij-jar=jars/fake.jar --dont-patch-ij1 --main-class=fiji.build.MiniMaven",
@@ -3112,6 +3126,12 @@ static int start_ij(void)
 	else {
 		int result = create_java_vm(&vm, (void **)&env, &args);
 		if (result == JNI_ENOMEM) {
+			if (!megabytes) {
+				const char *option = has_memory_option(&options.java_options);
+				if (!option || prefixcmp(option, "-Xm") || !option[3])
+					die ("Out of memory, could not determine heap size!");
+				megabytes = parse_memory(option + 4);
+			}
 			try_with_less_memory(megabytes);
 			die("Out of memory!");
 		}

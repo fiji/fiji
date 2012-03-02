@@ -404,6 +404,13 @@ public class MiniMaven {
 
 			updateRecursively(new File(source.getParentFile(), "resources"), target, false);
 
+			File pom = new File(directory, "pom.xml");
+			if (pom.exists()) {
+				File targetFile = new File(target, "META-INF/maven/" + coordinate.groupId + "/" + coordinate.artifactId + "/pom.xml");
+				targetFile.getParentFile().mkdirs();
+				copyFile(pom, targetFile);
+			}
+
 			if (makeJar) {
 				JarOutputStream out = new JarOutputStream(new FileOutputStream(getTarget()));
 				addToJarRecursively(out, target, "");
