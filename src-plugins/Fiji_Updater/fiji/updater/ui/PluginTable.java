@@ -7,6 +7,8 @@ import fiji.updater.logic.PluginObject;
 import fiji.updater.logic.PluginObject.Action;
 import fiji.updater.logic.PluginObject.Status;
 
+import fiji.updater.util.Util;
+
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
@@ -145,7 +147,7 @@ public class PluginTable extends JTable {
 	}
 
 	public void maybeShowPopupMenu(MouseEvent e) {
-		if (!e.isPopupTrigger())
+		if (!e.isPopupTrigger() && (Util.getPlatform().equals("macosx") || (e.getModifiers() & MouseEvent.META_MASK) == 0))
 			return;
 		final Iterable<PluginObject> selected = getSelectedPlugins(e.getY() / getRowHeight());
 		if (!selected.iterator().hasNext())

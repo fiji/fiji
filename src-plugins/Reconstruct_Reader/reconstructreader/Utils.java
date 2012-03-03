@@ -5,6 +5,9 @@ import reconstructreader.reconstruct.ContourSet;
 
 import java.awt.geom.AffineTransform;
 import java.awt.geom.NoninvertibleTransformException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.io.Writer;
 import java.util.*;
 
 public final class Utils {
@@ -286,37 +289,48 @@ public final class Utils {
     {
         return getReconstructImageWH(image, null);
     }
+    
+    public static Element getImageDomainContour(final Node image)
+    {
+        NodeList imageContourList =
+                ((Element)image.getParentNode()).getElementsByTagName("Contour");
+        return (Element)imageContourList.item(0);
+    }
 
     public static double[] getReconstructImageWH(final Node image,
                                                  double[] wh)
     {
-        NodeList imageContourList =
-                ((Element)image.getParentNode()).getElementsByTagName("Contour");
-        Element imageDomainContour =
-                Utils.findElementByAttributeRegex(imageContourList, "name", "^domain.*");
-        String pointsString;
-        double[] points;
-
-        if (null == wh)
+        if (null == image)
         {
-            wh = new double[2];
-        }
-
-        if (null != imageDomainContour)
-        {
-            pointsString = imageDomainContour.getAttribute("points");
-            points = Utils.createNodeValueVector(pointsString);
-            Utils.nodeValueToVector(pointsString, points);
-
-            wh[0] = points[2] + 1;
-            wh[1] = points[5] + 1;
+            return new double[]{Double.NaN, Double.NaN};
         }
         else
         {
-            wh[0] = Double.NaN;
-            wh[1] = Double.NaN;
+            Element imageDomainContour = getImageDomainContour(image);
+            String pointsString;
+            double[] points;
+
+            if (null == wh)
+            {
+                wh = new double[2];
+            }
+
+            if (null != imageDomainContour)
+            {
+                pointsString = imageDomainContour.getAttribute("points");
+                points = Utils.createNodeValueVector(pointsString);
+                Utils.nodeValueToVector(pointsString, points);
+
+                wh[0] = points[2] + 1;
+                wh[1] = points[5] + 1;
+            }
+            else
+            {
+                wh[0] = Double.NaN;
+                wh[1] = Double.NaN;
+            }
+            return wh;
         }
-        return wh;
     }
 
     public static <T extends ContourSet> T findContourByName(final List<T> contours,
@@ -394,18 +408,29 @@ public final class Utils {
         return hex;
     }
 
-    public static double getMag(final Node n)
+    public static double getMag(final Document d)
     {
-         return Double.valueOf(((Element)n.getOwnerDocument().
-                 getElementsByTagName("Image").item(0)).getAttribute("mag"));
+        NodeList nl = d.getElementsByTagName("Image");
+        if (nl.getLength() == 0)
+        {
+            return Double.NaN;
+        }
+        else
+        {
+            return Double.valueOf(((Element) nl.item(0)).getAttribute("mag"));
+        }
     }
 
-    public static double[] getTransformedPoints(Element contour, double stackHeight)
+    public static double getMag(final Node n)
+    {
+        Document d = n.getOwnerDocument();
+        return getMag(d);
+    }
+
+    public static double[] getTransformedPoints(Element contour, double stackHeight, double mag)
     {
         //I admit that this code is really really ugly.
 
-        //Get the magnification.
-        double mag = getMag(contour);
         //So-called "domain" contours are treated differently, wrt mag and flipping....
         boolean isDomainContour = contour.getAttribute("name").startsWith("domain");
         //Mag and zoom are different. Sigh.
@@ -460,4 +485,33 @@ public final class Utils {
         }
         return wh;
     }
+
+    public static double getMedianMag(final List<Document> sectionList)
+    {
+        final ArrayList<Double> magList = new ArrayList<Double>(sectionList.size());
+
+        for (final Document d : sectionList)
+        {
+            double m = getMag(d);
+            if (!Double.isNaN(m))
+            {
+                magList.add(m);
+            }
+        }
+
+        Collections.sort(magList);
+
+        return magList.get(magList.size() / 2);
+    }
+
+    public static String stackTraceToString(final Throwable t)
+    {
+        //adapted from code found on javapractices.com
+        final StringWriter result = new StringWriter();
+        final PrintWriter printWriter = new PrintWriter(result);
+        t.printStackTrace(printWriter);
+        return result.toString();
+
+    }
 }
+

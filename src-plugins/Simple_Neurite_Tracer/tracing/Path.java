@@ -556,6 +556,17 @@ public class Path implements Comparable<Path> {
 			return;
 		}
 
+		// If we're trying to add a path with circles to one
+		// that previously had none, add circles to the
+		// previous one, and carry on:
+
+		if (other.hasCircles() && !hasCircles()) {
+			createCircles();
+			double defaultRadius =  getMinimumSeparation() * 2;
+			for( int i = 0; i < points; ++i )
+				radiuses[i] = defaultRadius;
+		}
+
 		if( maxPoints < (points + other.points) ) {
 			expandTo( points + other.points );
 		}
@@ -595,6 +606,16 @@ public class Path implements Comparable<Path> {
 				  points,
 				  other.points - toSkip );
 
+		if( hasCircles() ) {
+
+			System.arraycopy( other.radiuses,
+					  toSkip,
+					  radiuses,
+					  points,
+					  other.points - toSkip );
+
+		}
+
 		if( endJoins != null )
 			throw new RuntimeException("BUG: we should never be adding to a path that already endJoins");
 
@@ -604,6 +625,10 @@ public class Path implements Comparable<Path> {
 		}
 
 		points = points + (other.points - toSkip);
+
+		if( hasCircles() ) {
+			setGuessedTangents(2);
+		}
 	}
 
 	void unsetPrimaryForConnected( HashSet<Path> pathsExplored ) {
@@ -637,11 +662,11 @@ public class Path implements Comparable<Path> {
 		precise_z_positions[points++] = z;
 	}
 
-	public void drawPathAsPoints( TracerCanvas canvas, Graphics g, java.awt.Color c, int plane ) {
-		drawPathAsPoints( canvas, g, c, plane, 0, -1 );
+	public void drawPathAsPoints( TracerCanvas canvas, Graphics g, java.awt.Color c, int plane, boolean drawDiameter ) {
+		drawPathAsPoints( canvas, g, c, plane, drawDiameter, 0, -1 );
 	}
 
-	public void drawPathAsPoints( TracerCanvas canvas, Graphics g, java.awt.Color c, int plane, int slice, int either_side ) {
+	public void drawPathAsPoints( TracerCanvas canvas, Graphics g, java.awt.Color c, int plane, boolean drawDiameter, int slice, int either_side ) {
 
 		/* In addition, if this is a start or end point we
 		   want to represent that with a circle or a square
@@ -657,13 +682,13 @@ public class Path implements Comparable<Path> {
 		int spotExtra = pixel_size;
 		int spotDiameter = pixel_size * 3;
 
-		// boolean drawDiameter = hasCircles();
-		boolean drawDiameter = false;
-
 		Path realStartJoins = fittedVersionOf == null ? startJoins : fittedVersionOf.startJoins;
 		Path realEndJoins = fittedVersionOf == null ? endJoins : fittedVersionOf.endJoins;
 
 		int startIndexOfLastDrawnLine = -1;
+
+		if (!hasCircles())
+			drawDiameter = false;
 
 		for( int i = 0; i < points; ++i ) {
 
@@ -743,23 +768,35 @@ public class Path implements Comparable<Path> {
 				double normalized_cross_x = cross_x / sizeInPlane;
 				double normalized_cross_y = cross_y / sizeInPlane;
 
-				double left_x = precise_x_positions[i] + normalized_cross_x * radiuses[i];
-				double left_y = precise_y_positions[i] + normalized_cross_y * radiuses[i];
+				double zdiff = Math.abs((slice - slice_of_point) * z_spacing);
+				double realRadius = radiuses[i];
 
-				double right_x = precise_x_positions[i] - normalized_cross_x * radiuses[i];
-				double right_y = precise_y_positions[i] - normalized_cross_y * radiuses[i];
+				if (either_side < 0 || zdiff <= realRadius) {
 
-				int left_x_on_screen = canvas.myScreenXD(left_x/x_spacing);
-				int left_y_on_screen = canvas.myScreenYD(left_y/y_spacing);
+					double effective_radius;
+					if (either_side < 0)
+						effective_radius = realRadius;
+					else
+						effective_radius = Math.sqrt(realRadius*realRadius - zdiff*zdiff);
 
-				int right_x_on_screen = canvas.myScreenXD(right_x/x_spacing);
-				int right_y_on_screen = canvas.myScreenYD(right_y/y_spacing);
+					double left_x = precise_x_positions[i] + normalized_cross_x * effective_radius;
+					double left_y = precise_y_positions[i] + normalized_cross_y * effective_radius;
 
-				int x_on_screen = canvas.myScreenXD( precise_x_positions[i]/x_spacing );
-				int y_on_screen = canvas.myScreenYD( precise_y_positions[i]/y_spacing );
+					double right_x = precise_x_positions[i] - normalized_cross_x * effective_radius;
+					double right_y = precise_y_positions[i] - normalized_cross_y * effective_radius;
 
-				g.drawLine( x_on_screen, y_on_screen, left_x_on_screen, left_y_on_screen );
-				g.drawLine( x_on_screen, y_on_screen, right_x_on_screen, right_y_on_screen );
+					int left_x_on_screen = canvas.myScreenXD(left_x/x_spacing);
+					int left_y_on_screen = canvas.myScreenYD(left_y/y_spacing);
+
+					int right_x_on_screen = canvas.myScreenXD(right_x/x_spacing);
+					int right_y_on_screen = canvas.myScreenYD(right_y/y_spacing);
+
+					int x_on_screen = canvas.myScreenXD( precise_x_positions[i]/x_spacing );
+					int y_on_screen = canvas.myScreenYD( precise_y_positions[i]/y_spacing );
+
+					g.drawLine( x_on_screen, y_on_screen, left_x_on_screen, left_y_on_screen );
+					g.drawLine( x_on_screen, y_on_screen, right_x_on_screen, right_y_on_screen );
+				}
 			}
 
 			if( (either_side >= 0) && (Math.abs(slice_of_point - slice) > either_side) )
@@ -1984,6 +2021,15 @@ public class Path implements Comparable<Path> {
 			}
 		}
 
+		// Has the path's representation in the 3D viewer been marked as invalid?
+
+		if (pathToUse.is3DViewInvalid()) {
+			pathToUse.removeFrom3DViewer(univ);
+			pathToUse.addTo3DViewer(univ, color, colorImage);
+			invalid3DMesh = false;
+			return;
+		}
+
 		// Is the (flat) color wrong?
 
 		if( pathToUse.realColor == null || ! pathToUse.realColor.equals(color) ) {
@@ -2039,6 +2085,14 @@ public class Path implements Comparable<Path> {
 						     (float)precise_z_positions[i] ) );
 		}
 		return linePoints;
+	}
+
+	protected boolean invalid3DMesh = false;
+	public void invalidate3DView() {
+		invalid3DMesh = true;
+	}
+	public boolean is3DViewInvalid() {
+		return invalid3DMesh;
 	}
 
 	public Content addAsLinesTo3DViewer(Image3DUniverse univ, Color c, ImagePlus colorImage ) {
@@ -2382,4 +2436,140 @@ public class Path implements Comparable<Path> {
 
 		return result;
 	}
+
+	/** Returns the points which are indicated to be a join,
+	 *  either in this Path object, or any other that starts or ends on
+	 *  it.
+	 */
+	public List<PointInImage> findJoinedPoints() {
+		ArrayList<PointInImage > result = new ArrayList<PointInImage>();
+		if (startJoins != null) {
+			result.add(startJoinsPoint);
+		}
+		if (endJoins != null) {
+			result.add(endJoinsPoint);
+		}
+		for (Path other : somehowJoins) {
+			if (other.startJoins == this) {
+				result.add(other.startJoinsPoint);
+			}
+			if (other.endJoins == this) {
+				result.add(other.endJoinsPoint);
+			}
+		}
+		return result;
+	}
+
+	/** Returns the indices of points which are indicated to be a
+	 *  join, either in this path object, or any other that starts
+	 *  or ends on it.
+	 */
+	public Set<Integer> findJoinedPointIndices() {
+		HashSet<Integer> result = new HashSet<Integer>();
+		for (PointInImage point : findJoinedPoints()) {
+			result.add(indexNearestTo(point.x, point.y, point.z));
+		}
+		return result;
+	}
+
+	synchronized public void downsample(double maximumAllowedDeviation) {
+		// We should only downsample between the fixed points, i.e.
+		// where this neuron joins others
+		Set<Integer> fixedPointSet = findJoinedPointIndices();
+		// Add the start and end points:
+		fixedPointSet.add(0);
+		fixedPointSet.add(points-1);
+		Integer [] fixedPoints = fixedPointSet.toArray(new Integer[0]);
+		Arrays.sort(fixedPoints);
+		int lastIndex = -1;
+		int totalDroppedPoints = 0;
+		for (int fpi : fixedPoints) {
+			if (lastIndex >= 0) {
+				int start = lastIndex - totalDroppedPoints;
+				int end = fpi - totalDroppedPoints;
+				// Now downsample between those points:
+				ArrayList<SimplePoint> forDownsampling = new ArrayList<SimplePoint>();
+				for (int i = start; i <= end; ++i) {
+					forDownsampling.add(new SimplePoint(
+							precise_x_positions[i],
+							precise_y_positions[i],
+							precise_z_positions[i],
+							i));
+				}
+				ArrayList<SimplePoint> downsampled =
+					PathDownsampler.downsample(forDownsampling, maximumAllowedDeviation);
+
+				// Now update x_points, y_points, z_points:
+				int pointsDroppedThisTime = forDownsampling.size() - downsampled.size();
+				totalDroppedPoints += pointsDroppedThisTime;
+				int newLength = points - pointsDroppedThisTime;
+				double [] new_x_points = new double[maxPoints];
+				double [] new_y_points = new double[maxPoints];
+				double [] new_z_points = new double[maxPoints];
+				// First copy the elements before 'start' verbatim:
+				System.arraycopy(precise_x_positions, 0, new_x_points, 0, start);
+				System.arraycopy(precise_y_positions, 0, new_y_points, 0, start);
+				System.arraycopy(precise_z_positions, 0, new_z_points, 0, start);
+				// Now copy in the downsampled points:
+				int downsampledLength = downsampled.size();
+				for (int i = 0; i < downsampledLength; ++i) {
+					SimplePoint sp = downsampled.get(i);
+					new_x_points[start+i] = sp.x;
+					new_y_points[start+i] = sp.y;
+					new_z_points[start+i] = sp.z;
+				}
+				System.arraycopy(precise_x_positions, end, new_x_points, (start + downsampledLength) - 1, points - end);
+				System.arraycopy(precise_y_positions, end, new_y_points, (start + downsampledLength) - 1, points - end);
+				System.arraycopy(precise_z_positions, end, new_z_points, (start + downsampledLength) - 1, points - end);
+
+				double [] new_radiuses = null;
+				if (hasCircles()) {
+					new_radiuses = new double[maxPoints];
+					System.arraycopy(radiuses, 0, new_radiuses, 0, start);
+					for (int i = 0; i < downsampledLength; ++i) {
+						SimplePoint sp = downsampled.get(i);
+						// Find a first and last index in the original radius array to
+						// take a mean over:
+						int firstRadiusIndex, lastRadiusIndex, n = 0;
+						double total = 0;
+						if (i == 0) {
+							// This is the first point:
+							SimplePoint spNext = downsampled.get(i+1);
+							firstRadiusIndex = sp.originalIndex;
+							lastRadiusIndex = (sp.originalIndex + spNext.originalIndex) / 2;
+						} else if (i == downsampledLength - 1) {
+							// The this is the last point:
+							SimplePoint spPrevious = downsampled.get(i-1);
+							firstRadiusIndex = (spPrevious.originalIndex + sp.originalIndex) / 2;
+							lastRadiusIndex = sp.originalIndex;
+						} else {
+							SimplePoint spPrevious = downsampled.get(i-1);
+							SimplePoint spNext = downsampled.get(i+1);
+							firstRadiusIndex = (sp.originalIndex + spPrevious.originalIndex) / 2;
+							lastRadiusIndex = (sp.originalIndex + spNext.originalIndex) / 2;
+						}
+						for (int j = firstRadiusIndex; j <= lastRadiusIndex; ++j) {
+							total += radiuses[j];
+							++n;
+						}
+						new_radiuses[start+i] = total / n;
+					}
+					System.arraycopy(radiuses, end, new_radiuses, (start + downsampledLength) -1, points - end);
+				}
+
+				// Now update all of those fields:
+				points = newLength;
+				precise_x_positions = new_x_points;
+				precise_y_positions = new_y_points;
+				precise_z_positions = new_z_points;
+				radiuses = new_radiuses;
+				if (hasCircles()) {
+					setGuessedTangents(2);
+				}
+			}
+			lastIndex = fpi;
+		}
+		invalidate3DView();
+	}
+
 }

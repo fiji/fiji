@@ -3,14 +3,6 @@ package mpicbg.spim;
 import java.util.ArrayList;
 import java.util.Date;
 
-import javax.media.j3d.Transform3D;
-import javax.vecmath.Vector3d;
-
-import fiji.plugin.timelapsedisplay.RegistrationStatistics;
-
-
-import mpicbg.models.AbstractAffineModel3D;
-import mpicbg.models.AffineModel3D;
 import mpicbg.models.Point;
 import mpicbg.spim.io.ConfigurationParserException;
 import mpicbg.spim.io.ConfigurationParserGeneral;
@@ -23,7 +15,7 @@ import mpicbg.spim.registration.ViewStructure;
 import mpicbg.spim.registration.bead.Bead;
 import mpicbg.spim.registration.bead.BeadIdentification;
 import mpicbg.spim.registration.bead.BeadRegistration;
-import mpicbg.util.TransformUtils;
+import fiji.plugin.timelapsedisplay.RegistrationStatistics;
 
 public class Reconstruction
 {
@@ -32,6 +24,9 @@ public class Reconstruction
 	
 	ArrayList<RegistrationStatistics> stats;
 	public ArrayList<RegistrationStatistics> getRegistrationStatistics() { return stats; }
+	
+	ViewStructure currentViewStructure = null;
+	public ViewStructure getCurrentViewStructure() { return currentViewStructure; }
 
 	public Reconstruction( final SPIMConfiguration conf )
 	{
@@ -98,9 +93,9 @@ public class Reconstruction
 						//IOFunctions.println( correspondingBead );
 					}	
 					
-					location.getW()[ 0 ] /= (float)correspondingBeadList.size();
-					location.getW()[ 1 ] /= (float)correspondingBeadList.size();
-					location.getW()[ 2 ] /= (float)correspondingBeadList.size();
+					location.getW()[ 0 ] /= correspondingBeadList.size();
+					location.getW()[ 1 ] /= correspondingBeadList.size();
+					location.getW()[ 2 ] /= correspondingBeadList.size();
 					
 					averagedBeadList.add( new Bead( averagedBeadList.size(), location.getW().clone(), newView ) );
 					
@@ -122,8 +117,8 @@ public class Reconstruction
 	{
 		for (int timePointIndex = 0; timePointIndex < conf.file.length; timePointIndex++)
 		{
-			final ViewStructure reference = ViewStructure.initViewStructure( conf, conf.referenceTimePoint, conf.getFileName( conf.referenceTimePoint ), conf.getModel(), "Reference ViewStructure Timepoint " + conf.referenceTimePoint, conf.debugLevelInt );
-			final ViewStructure template = ViewStructure.initViewStructure( conf, timePointIndex, conf.getModel(), "Template ViewStructure Timepoint " + conf.timepoints[timePointIndex], conf.debugLevelInt );
+			final ViewStructure reference = ViewStructure.initViewStructure( conf, conf.getTimePointIndex( conf.referenceTimePoint ), conf.getModel(), "Reference ViewStructure Timepoint " + conf.referenceTimePoint, conf.debugLevelInt );
+			currentViewStructure = ViewStructure.initViewStructure( conf, timePointIndex, conf.getModel(), "Template ViewStructure Timepoint " + conf.timepoints[timePointIndex], conf.debugLevelInt );
 			
 			//
 			// get timepoint information
@@ -136,10 +131,10 @@ public class Reconstruction
 			reference.loadRegistrations();
 
 			if ( reference.getDebugLevel() <= ViewStructure.DEBUG_MAIN )
-				IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Loading timepoint " + template + " information");
+				IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Loading timepoint " + currentViewStructure + " information");
 			
-			template.loadDimensions();
-			template.loadSegmentations();
+			currentViewStructure.loadDimensions();
+			currentViewStructure.loadSegmentations();
 
 			// update the ids of the template timepoint so that there are no identical ids
 			int id = reference.getViews().get( 0 ).getID();
@@ -147,7 +142,7 @@ public class Reconstruction
 				if ( view.getID() >= id )
 					id = view.getID() + 1;
 			
-			for ( ViewDataBeads view : template.getViews() )
+			for ( ViewDataBeads view : currentViewStructure.getViews() )
 			{
 				view.setID( id++ );
 				if ( reference.getDebugLevel() <= ViewStructure.DEBUG_ALL )
@@ -157,7 +152,7 @@ public class Reconstruction
 			boolean readReg = conf.readRegistration;
 			
 			if ( readReg )
-				for ( ViewDataBeads view : template.getViews() )
+				for ( ViewDataBeads view : currentViewStructure.getViews() )
 				{
 					readReg &= view.loadRegistrationTimePoint( reference.getTimePoint() );
 					if ( !readReg )
@@ -165,10 +160,10 @@ public class Reconstruction
 				}
 				
 			if ( !readReg )
-				reference.getBeadRegistration().registerViewStructure( template );			
+				reference.getBeadRegistration().registerViewStructure( currentViewStructure );			
 
 			BeadRegistration.concatenateAxialScaling( reference.getViews(), reference.getDebugLevel() );
-			BeadRegistration.concatenateAxialScaling( template.getViews(), template.getDebugLevel() );
+			BeadRegistration.concatenateAxialScaling( currentViewStructure.getViews(), currentViewStructure.getDebugLevel() );
 			
 	        //
 	        // remove the beads
@@ -179,23 +174,24 @@ public class Reconstruction
 	        //
 	        // add an external transformation
 	        //
-	        addExternalTransformation( template );
+	        addExternalTransformation( currentViewStructure );
         	addExternalTransformation( reference );
 			
 			if (!conf.registerOnly)
 			{
 				IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Starting Fusion for timepoint " + conf.timepoints[timePointIndex]);		
 				
-				template.getFusionControl().fuse( template, reference, template.getTimePoint() );
+				currentViewStructure.getFusionControl().fuse( currentViewStructure, reference, currentViewStructure.getTimePoint() );
 				
 				IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Finished Fusion for timepoint " + conf.timepoints[timePointIndex]);
 			}
 			
 			//
-			// close all images
+			// close all images, except if called as deconvolution as we still need the data
 			//
-			for ( ViewDataBeads view : template.getViews() )
-				view.closeImage();
+			if ( !conf.isDeconvolution )
+				for ( ViewDataBeads view : currentViewStructure.getViews() )
+					view.closeImage();
 		}		
 	}  	
 	
@@ -203,37 +199,37 @@ public class Reconstruction
 	{
 		for ( int timePointIndex = 0; timePointIndex < conf.file.length; timePointIndex++ )
 		{
-			final ViewStructure viewStructure = ViewStructure.initViewStructure( conf, timePointIndex, conf.getModel(), "ViewStructure Timepoint " + timePointIndex, conf.debugLevelInt );						
+			currentViewStructure = ViewStructure.initViewStructure( conf, timePointIndex, conf.getModel(), "ViewStructure Timepoint " + timePointIndex, conf.debugLevelInt );						
 			
 			// no file found
-			if ( viewStructure == null )
+			if ( currentViewStructure == null )
 				continue;
 			
 			//
 			// Segmentation
 			//
-	        if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_MAIN )
+	        if ( currentViewStructure.getDebugLevel() <= ViewStructure.DEBUG_MAIN )
 	        	IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Starting Bead Extraction");
 			
 			boolean dimSuccess = false, segSuccess = false;
 			
-			if ( viewStructure.getSPIMConfiguration().readSegmentation )
+			if ( currentViewStructure.getSPIMConfiguration().readSegmentation )
 			{
-				dimSuccess = viewStructure.loadDimensions();
+				dimSuccess = currentViewStructure.loadDimensions();
 				
 				if ( !dimSuccess )
 				{
-			        if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_ERRORONLY )
-			        	IOFunctions.println( "Cannot find files for " + viewStructure );
+			        if ( currentViewStructure.getDebugLevel() <= ViewStructure.DEBUG_ERRORONLY )
+			        	IOFunctions.println( "Cannot find files for " + currentViewStructure );
 			        
 					return;
 				}
 				
-				segSuccess = viewStructure.loadSegmentations();
+				segSuccess = currentViewStructure.loadSegmentations();
 			}
 			
 			if ( !segSuccess )
-				viewStructure.getBeadSegmentation().segment();
+				currentViewStructure.getBeadSegmentation().segment();
 
 			/*
 			Image<FloatType> img = viewStructure.getBeadSegmentation().getFoundBeads( viewStructure.getViews().get( 0) );
@@ -241,26 +237,26 @@ public class Reconstruction
 			ImageJFunctions.copyToImagePlus(img).show();
 			*/
 			
-			if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_MAIN )
+			if ( currentViewStructure.getDebugLevel() <= ViewStructure.DEBUG_MAIN )
 	        	IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Finished Bead Extraction");					
 	        
 			//
 			// Registration
 			//			
-	        if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_MAIN )
+	        if ( currentViewStructure.getDebugLevel() <= ViewStructure.DEBUG_MAIN )
 	        	IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Starting Registration");
 
 	        boolean regSuccess = false;
 	        
-			if ( viewStructure.getSPIMConfiguration().readRegistration )
-				regSuccess = viewStructure.loadRegistrations();
+			if ( currentViewStructure.getSPIMConfiguration().readRegistration )
+				regSuccess = currentViewStructure.loadRegistrations();
 
 			if ( !regSuccess )
-				viewStructure.getBeadRegistration().registerViews();
+				currentViewStructure.getBeadRegistration().registerViews();
 
-			BeadRegistration.concatenateAxialScaling( viewStructure.getViews(), viewStructure.getDebugLevel() );
+			BeadRegistration.concatenateAxialScaling( currentViewStructure.getViews(), currentViewStructure.getDebugLevel() );
 	        
-	        if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_MAIN )
+	        if ( currentViewStructure.getDebugLevel() <= ViewStructure.DEBUG_MAIN )
 	        	IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Finished Registration");
 					        
 
@@ -280,7 +276,7 @@ public class Reconstruction
 	        //
 	        // add an external transformation
 	        //
-	        addExternalTransformation( viewStructure );
+	        addExternalTransformation( currentViewStructure );
 	        
 			//
 			// Fusion
@@ -289,22 +285,25 @@ public class Reconstruction
 			{
 				IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Starting Fusion");
 				
-				viewStructure.getFusionControl().fuse( viewStructure, conf.timepoints[timePointIndex] );
+				currentViewStructure.getFusionControl().fuse( currentViewStructure, conf.timepoints[timePointIndex] );
 				
-				IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Finished Fusion");
+				if  ( !conf.isDeconvolution )
+					IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Finished Fusion");
 			}	
 
 			//
-			// close all images
+			// close all images, except if called as deconvolution as we still need the data
 			//
-			for ( ViewDataBeads view : viewStructure.getViews() )
-				view.closeImage();
+			if ( !conf.isDeconvolution )
+				for ( ViewDataBeads view : currentViewStructure.getViews() )
+					view.closeImage();
 			
 			// collect some information if wanted
 			if ( conf.collectRegistrationStatistics )
-				stats.add( new RegistrationStatistics( viewStructure ) );
+				stats.add( new RegistrationStatistics( currentViewStructure ) );
 
-			IOFunctions.println( "Finished processing." );
+			if  ( !conf.isDeconvolution )
+				IOFunctions.println( "Finished processing." );
 		}
 	}
 	

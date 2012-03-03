@@ -42,14 +42,14 @@ public class JNI {
 			fallbackLibraryExtension = null;
 		}
 		else {
-			System.err.println("Unknown platform: " + osName);
-			platform = null;
+			String arch = is64bit ? "64" : "32";
+			platform = osName.toLowerCase() + (osName.endsWith(arch) ? "" : arch);
 			libraryPrefix = "lib";
 			libraryExtension = ".so";
 			fallbackLibraryExtension = null;
 		}
 
-		libraryDirectory = System.getProperty("fiji.dir") + "/lib/"
+		libraryDirectory = System.getProperty("ij.dir") + "/lib/"
 			+ (platform != null ? platform + "/" : "");
 	}
 

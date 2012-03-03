@@ -438,6 +438,7 @@ public class Fit_Sphere implements PlugIn {
 			Quantile_Based_Normalization qbn = new Quantile_Based_Normalization();
 			qbn.processToDirectory(fileGroupArray[i],
 					       normalizedDirectories[i].getAbsolutePath(),
+					       false,
 					       heatmapPath,
 					       0,
 					       256,

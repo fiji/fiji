@@ -27,8 +27,10 @@ public class Bare_Reader_PlugIn extends ImagePlus implements PlugIn {
 	/**
 	 * This method gets called by ImageJ / Fiji.
 	 *
-	 * @param arg is supposed to be a path if it is not empty
+	 * @param path is expected to be a path if it is not empty
+	 * @see ij.plugin.PlugIn#run(java.lang.String)
 	 */
+	@Override
 	public void run(String path) {
 		boolean needToShow = false;
 

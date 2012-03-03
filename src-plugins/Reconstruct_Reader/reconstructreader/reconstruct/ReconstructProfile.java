@@ -7,13 +7,19 @@ public class ReconstructProfile {
     private final Element profile;
     private final int id, oid;
     private final Translator translator;
+    private final double mag;
 
-    public ReconstructProfile(Element e, Translator t)
+    public ReconstructProfile(final Element e, final Translator t)
     {
+        double m;
+
         translator = t;
         profile = e;
         id = translator.nextOID();
         oid = translator.nextOID();
+
+        m = Utils.getMag(e);
+        mag = Double.isNaN(m) ? t.getMag() : m;
     }
 
     public int getOID()
@@ -26,10 +32,10 @@ public class ReconstructProfile {
         return id;
     }
 
-    public void appendXML(StringBuilder sb)
+    public void appendXML(final StringBuilder sb)
     {
         String colorHex = Utils.hexColor(profile.getAttribute("fill"));
-        double[] pts = Utils.getTransformedPoints(profile, translator.getStackHeight());
+        double[] pts = Utils.getTransformedPoints(profile, translator.getStackHeight(), mag);
         double[] wh = Utils.getPathExtent(pts);
         double width = wh[0];
         double height = wh[1];

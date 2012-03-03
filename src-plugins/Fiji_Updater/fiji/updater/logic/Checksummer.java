@@ -46,7 +46,7 @@ public class Checksummer extends Progressable {
 	public Checksummer(PluginCollection plugins, Progress progress) {
 		this.plugins = plugins;
 		addProgress(progress);
-		setTitle("Checksumming");
+		setTitle("Czech Summer");
 	}
 
 	protected static class StringPair {
@@ -130,7 +130,8 @@ public class Checksummer extends Progressable {
 
 		String checksum = null;
 		long timestamp = 0;
-		if (new File(realPath).exists()) try {
+		File realFile = new File(realPath);
+		if (realFile.exists()) try {
 			timestamp = Util.getTimestamp(realPath);
 			checksum = getDigest(path, realPath, timestamp);
 
@@ -152,6 +153,8 @@ public class Checksummer extends Progressable {
 					plugin.newChecksum = checksum;
 					plugin.newTimestamp = timestamp;
 				}
+				if (realFile.canExecute() || path.endsWith(".exe"))
+					plugin.executable = true;
 				plugins.add(plugin);
 			}
 			else if (checksum != null) {
@@ -212,8 +215,8 @@ public class Checksummer extends Progressable {
 			return false;
 		platform = platform.substring(0, slash);
 
-		if (platform.equals("linux32"))
-			platform = "linux";
+		if (platform.equals("linux"))
+			platform = "linux32";
 		for (String valid : Util.platforms)
 			if (platform.equals(valid)) {
 				plugin.addPlatform(platform);
@@ -263,12 +266,18 @@ public class Checksummer extends Progressable {
 	protected void initializeQueue() {
 		queue = new ArrayList<StringPair>();
 
-		for (String launcher : Util.isDeveloper ?
-					Util.launchers : Util.getLaunchers())
-				queueIfExists(launcher);
+		for (String launcher : Util.launchers)
+			queueIfExists(launcher);
 
 		for (int i = 0; i < directories.length; i += 2)
 			queueDir(directories[i], directories[i + 1]);
+
+		Set<String> alreadyQueued = new HashSet<String>();
+		for (StringPair pair : queue)
+			alreadyQueued.add(pair.path);
+		for (PluginObject plugin : plugins)
+			if (!alreadyQueued.contains(plugin.getFilename()))
+				queueIfExists(plugin.getFilename());
 	}
 
 	public void updateFromLocal() {

@@ -33,7 +33,7 @@ Fiji is meant to be distributed without source, to make the download as
 small as possible.  In the basic version, Fiji is a portable application,
 i.e. it should run wherever you copy it.
 
-The starting point is the Fiji launcher, which will launch Java, set up
+The starting point is the ImageJ launcher, which will launch Java, set up
 the environment, and call ImageJ.
 
 To pass arguments to ImageJ, just specify them on the command line.
@@ -43,7 +43,7 @@ line, separating them from the ImageJ arguments (if any) with a "--".
 In other words, if you want to override the memory setting, call Fiji
 like this:
 
-	$ ./fiji-linux -Xmx128m --
+	$ ./ImageJ-linux32 -Xmx128m --
 
 Open Source
 -----------

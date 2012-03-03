@@ -5,16 +5,24 @@ import isosurface.MeshProperties;
 import java.util.List;
 import java.util.Arrays;
 
+import java.awt.Polygon;
+
 import javax.media.j3d.Geometry;
 import javax.media.j3d.GeometryArray;
 import javax.media.j3d.TriangleArray;
+import javax.media.j3d.Transform3D;
+import javax.media.j3d.Canvas3D;
 import javax.vecmath.Color3f;
 import javax.vecmath.Point3d;
+import javax.vecmath.Point2d;
 import javax.vecmath.Point3f;
 
 import com.sun.j3d.utils.geometry.GeometryInfo;
 import com.sun.j3d.utils.geometry.NormalGenerator;
 import com.sun.j3d.utils.geometry.Stripifier;
+
+import java.util.ArrayList;
+
 
 public class CustomTriangleMesh extends CustomMesh {
 
@@ -127,6 +135,41 @@ public class CustomTriangleMesh extends CustomMesh {
 		result.setValidVertexCount(nValid);
 
 		return result;
+	}
+
+	private Point2d p2d = new Point2d();
+	private boolean roiContains(Point3f p, Transform3D volToIP, Canvas3D canvas, Polygon polygon) {
+		Point3d locInImagePlate = new Point3d(p);
+		volToIP.transform(locInImagePlate);
+		canvas.getPixelLocationFromImagePlate(locInImagePlate, p2d);
+		return polygon.contains(p2d.x, p2d.y);
+	}
+
+	public void retain(Canvas3D canvas, Polygon polygon) {
+		Transform3D volToIP = new Transform3D();
+		canvas.getImagePlateToVworld(volToIP);
+		volToIP.invert();
+
+		Transform3D toVWorld = new Transform3D();
+		this.getLocalToVworld(toVWorld);
+		volToIP.mul(toVWorld);
+
+		ArrayList<Point3f> f = new ArrayList<Point3f>();
+		for(int i = 0; i < mesh.size(); i += 3) {
+			Point3f p1 = mesh.get(i);
+			Point3f p2 = mesh.get(i + 1);
+			Point3f p3 = mesh.get(i + 2);
+			if(roiContains(p1, volToIP, canvas, polygon) ||
+					roiContains(p2, volToIP, canvas, polygon) ||
+					roiContains(p3, volToIP, canvas, polygon)) {
+				f.add(p1);
+				f.add(p2);
+				f.add(p3);
+			}
+		}
+		mesh.clear();
+		mesh.addAll(f);
+		update();
 	}
 
 	@Override

@@ -1,7 +1,5 @@
 package fiji.updater.logic;
 
-import fiji.updater.Updater;
-
 import fiji.updater.logic.PluginCollection.UpdateSite;
 
 import fiji.updater.logic.PluginObject.Status;
@@ -65,7 +63,7 @@ public class XMLFileReader extends DefaultHandler {
 		UpdateSite site = plugins.getUpdateSite(updateSite);
 		if (site == null)
 			throw new IOException("Unknown update site: " + site);
-		URL url = new URL(site.url + Updater.XML_COMPRESSED);
+		URL url = new URL(site.url + Util.XML_COMPRESSED);
 		URLConnection connection = url.openConnection();
 		long lastModified = connection.getLastModified();
 		read(updateSite, new GZIPInputStream(connection.getInputStream()), site.timestamp);
@@ -128,6 +126,9 @@ public class XMLFileReader extends DefaultHandler {
 						+ already.updateSite
 						+ "'\n");
 			}
+			String executable = atts.getValue("executable");
+			if ("true".equalsIgnoreCase(executable))
+				current.executable = true;
 		}
 		else if (currentTag.equals("previous-version"))
 			current.addPreviousVersion(atts.getValue("checksum"),
@@ -172,7 +173,7 @@ public class XMLFileReader extends DefaultHandler {
 				current.setStatus(Status.OBSOLETE_UNINSTALLED);
 			else if (current.isNewerThan(newTimestamp)) {
 				current.setStatus(Status.NEW);
-				current.setAction(plugins, current.isForThisPlatform() ?
+				current.setAction(plugins, current.isUpdateablePlatform() ?
 					PluginObject.Action.INSTALL :
 					PluginObject.Action.NEW);
 			}

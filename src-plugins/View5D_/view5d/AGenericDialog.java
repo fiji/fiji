@@ -48,11 +48,11 @@ class AGenericDialog extends Dialog implements WindowListener,ActionListener, Fo
 
     /** Creates a new GenericDialog using the specified title and parent frame. */
     public AGenericDialog(String title, Frame parent) {
-		super(parent==null?new Frame():parent, title, true);
+		super(parent==null?new Frame():parent, title, true);  // True means "modal"
 		gridbag = new GridBagLayout();
 		c = new GridBagConstraints();
 		setLayout(gridbag);
-                addWindowListener(this);
+        addWindowListener(this);
     }
     
     
@@ -76,11 +76,22 @@ class AGenericDialog extends Dialog implements WindowListener,ActionListener, Fo
 	pack();
 	// GUI.center(this);
 	//show();
+    //setBackground(Color.black);
     setVisible(true);
-        // toFront();
-        // dispose();            // really ?
+    //repaint();
+    //validate();
+    toFront();
+    repaint();
+    update(this.getGraphics()); // nasty, but necessary for Matlab single-thread behaviour
+    //show();
+    // while (isShowing()) {}
     }
 
+    public void repaint() {
+    	super.repaint();
+        update(this.getGraphics()); // nasty, but necessary for Matlab single-thread behaviour
+    }
+    
     public boolean wasCanceled() {
 	return canceled;
     }
@@ -248,7 +259,19 @@ class AGenericDialog extends Dialog implements WindowListener,ActionListener, Fo
     }
     
     public void windowClosed (WindowEvent e) { }
-    public void windowOpened (WindowEvent e) {canceled=true;}
+    public void windowOpened (WindowEvent e) {canceled=true;
+    	update(this.getGraphics()); // nasty, but necessary for Matlab single-thread behaviour
+    }
+
+//    public void setSize(Dimension d) { 
+//    	super.setSize(d);
+//    	update(this.getGraphics()); // nasty, but necessary for Matlab single-thread behaviour
+//    }
+//    public void setSize(int width, int height) { 
+//    	super.setSize(width, height);
+//    	update(this.getGraphics()); // nasty, but necessary for Matlab single-thread behaviour
+//    }
+    
     public void windowIconified (WindowEvent e) { }
     public void windowDeiconified (WindowEvent e) { }
     public void windowActivated (WindowEvent e) { }
@@ -260,6 +283,7 @@ class AGenericDialog extends Dialog implements WindowListener,ActionListener, Fo
                 Component c = e.getComponent();
                 if (c instanceof TextField)
                         ((TextField)c).selectAll();
+                update(this.getGraphics()); // nasty, but necessary for Matlab single-thread behaviour
         }
 
     public void focusLost(FocusEvent e) {

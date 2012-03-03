@@ -17,7 +17,9 @@ public class Bare_PlugInFilter implements PlugInFilter {
 	 *
 	 * @param arg can be specified in plugins.config
 	 * @param image is the currently opened image
+	 * @see ij.plugin.filter.PlugInFilter#setup(java.lang.String, ij.ImagePlus)
 	 */
+	@Override
 	public int setup(String arg, ImagePlus image) {
 		this.image = image;
 		/*
@@ -42,7 +44,9 @@ public class Bare_PlugInFilter implements PlugInFilter {
 	 *
 	 * @param ip is the current slice (typically, plugins use
 	 * the ImagePlus set above instead).
+	 * @see ij.plugin.filter.PlugInFilter#run(ij.process.ImageProcessor)
 	 */
+	@Override
 	public void run(ImageProcessor ip) {
 	}
 }

@@ -68,16 +68,16 @@ prepareNewFijiRoot(root, asDeveloper) {
 	root.mkdirs();
 
 	toCopy = new String[] {
-		"fiji",
-		"jars/ij.jar", "jars/Fiji.jar", "plugins/Fiji_Updater.jar",
-		"jars/bsh-2.0b4.jar", "jars/jsch-0.1.44.jar", "jars/javassist.jar"
+		"ImageJ",
+		"jars/ij.jar", "jars/ij-launcher.jar", "plugins/Fiji_Updater.jar",
+		"jars/bsh.jar", "jars/jsch.jar", "jars/javassist.jar"
 	};
 
 	if (asDeveloper)
-		toCopy = unshiftArray(toCopy, "fiji.c");
+		toCopy = unshiftArray(toCopy, "ImageJ.c");
 
 	for (String name : toCopy)
-		copyFile(new File(fijiDir, name),  new File(root, name));
+		copyFile(new File(ijDir, name),  new File(root, name));
 }
 
 cleanWebRoot() {

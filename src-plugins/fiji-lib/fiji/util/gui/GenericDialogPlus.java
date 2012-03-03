@@ -33,9 +33,11 @@ import java.awt.event.KeyEvent;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URL;
 
 import java.util.List;
 
+import javax.swing.ImageIcon;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -78,11 +80,37 @@ public class GenericDialogPlus extends GenericDialog implements KeyListener {
 		return WindowManager.getImage(windowIDs[getNextChoiceIndex()]);
 	}
 
+	@Override
 	public void addStringField(String label, String defaultString, int columns) {
 		super.addStringField(label, defaultString, columns);
 		TextField text = (TextField)stringField.lastElement();
 		text.setDropTarget(null);
 		new DropTarget(text, new TextDropTarget(text));
+	}
+
+	public void addDirectoryOrFileField(String label, String defaultPath) {
+		addDirectoryOrFileField(label, defaultPath, 20);
+	}
+
+	public void addDirectoryOrFileField(String label, String defaultPath, int columns) {
+		addStringField(label, defaultPath, columns);
+
+		TextField text = (TextField)stringField.lastElement();
+		GridBagLayout layout = (GridBagLayout)getLayout();
+		GridBagConstraints constraints = layout.getConstraints(text);
+
+		Button button = new Button("Browse...");
+		DirectoryListener listener = new DirectoryListener("Browse for " + label, text, JFileChooser.FILES_AND_DIRECTORIES);
+		button.addActionListener(listener);
+		button.addKeyListener(this);
+
+		Panel panel = new Panel();
+		panel.setLayout(new FlowLayout(FlowLayout.LEFT, 0, 0));
+		panel.add(text);
+		panel.add(button);
+
+		layout.setConstraints(panel, constraints);
+		add(panel);
 	}
 
 	public void addDirectoryField(String label, String defaultPath) {
@@ -140,8 +168,7 @@ public class GenericDialogPlus extends GenericDialog implements KeyListener {
 	 * @param label button label
 	 * @param listener listener to handle the action when pressing the button
 	 */
-	public void addButton(String label, ActionListener listener)
-	{
+	public void addButton(String label, ActionListener listener) {
 		Button button = new Button(label);
 
 		button.addActionListener(listener);
@@ -165,6 +192,62 @@ public class GenericDialogPlus extends GenericDialog implements KeyListener {
 		add(component);
 	}
 	
+	/**
+	 * Adds an image to the generic dialog
+	 * 
+	 * @param path - the path to the image in the jar, e.g. /images/fiji.png (the first / has to be there!)
+	 * @return true if the image was found and added, otherwise false
+	 */
+	public boolean addImage(final String path) {
+		return addImage(getClass().getResource(path));
+	}
+	
+	/**
+	 * Adds an image to the generic dialog
+	 * 
+	 * @param imgURL - the {@link URL} pointing to the resource
+	 * @return true if the image was found and added, otherwise false
+	 */
+	public boolean addImage(final URL imgURL) {
+		final ImageIcon image = createImageIcon(imgURL);
+		
+		if (image==null) {
+			return false;
+		}
+		else{
+			addImage(image);
+			return true;
+		}
+	}
+
+	/**
+	 * Adds an image to the generic dialog
+	 * 
+	 * @param image - the {@link ImageIcon} to display
+	 * @return label - the {@link JLabel} that contains the image for updating:
+	 * 
+	 * image.setImage(otherImageIcon.getImage());
+	 * label.update(label.getGraphics());
+	 */
+	public JLabel addImage(final ImageIcon image) {
+		final Panel panel = new Panel();
+		panel.setLayout(new FlowLayout(FlowLayout.LEFT, 0, 0));
+		final JLabel label = new JLabel(image);
+		label.setOpaque(true);
+		panel.add(label);
+		addPanel(panel);
+		
+		return label;
+	}
+
+	/** Returns an ImageIcon, or null if the path was invalid. */
+	public static ImageIcon createImageIcon(final URL imgURL) {
+	    if (imgURL != null)
+	        return new ImageIcon(imgURL);
+	    else
+	        return null;
+	}
+	
 	// Work around too many private restrictions (add a new panel and remove it right away)
 	protected GridBagConstraints getConstraints() {
 		GridBagLayout layout = (GridBagLayout)getLayout();
@@ -184,6 +267,7 @@ public class GenericDialogPlus extends GenericDialog implements KeyListener {
 			this.text = text;
 		}
 
+		@Override
 		public void actionPerformed(ActionEvent e) {
 			String fileName = null;
 			File dir = new File(text.getText());
@@ -211,24 +295,31 @@ public class GenericDialogPlus extends GenericDialog implements KeyListener {
 	static class DirectoryListener implements ActionListener {
 		String title;
 		TextField text;
+		int fileSelectionMode;
 
-		public DirectoryListener(String title, TextField text) {
-			this.title = title;
-			this.text = text;
+		public DirectoryListener (String title, TextField text) {
+			this(title, text, JFileChooser.DIRECTORIES_ONLY);
 		}
 
+		public DirectoryListener (String title, TextField text, int fileSelectionMode) {
+			this.title = title;
+			this.text = text;
+			this.fileSelectionMode = fileSelectionMode;
+		}
+
+		@Override
 		public void actionPerformed(ActionEvent e) {
 			File directory = new File(text.getText());
 			while (directory != null && !directory.exists())
 				directory = directory.getParentFile();
 
 			JFileChooser fc = new JFileChooser(directory);
-			fc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+			fc.setFileSelectionMode(fileSelectionMode);
 
 			fc.showOpenDialog(null);
 			File selFile = fc.getSelectedFile();
 			if (selFile != null)
-				text.setText( selFile.getAbsolutePath() );
+				text.setText(selFile.getAbsolutePath());
 		}
 	}
 
@@ -274,6 +365,7 @@ public class GenericDialogPlus extends GenericDialog implements KeyListener {
 			this.text = text;
 		}
 
+		@Override
 		public void drop(DropTargetDropEvent event) {
 			try {
 				text.setText(getString(event));
@@ -281,6 +373,7 @@ public class GenericDialogPlus extends GenericDialog implements KeyListener {
 		}
 	}
 
+	@Override
 	public void keyPressed(KeyEvent e) {
 		int keyCode = e.getKeyCode();
 		if (keyCode == KeyEvent.VK_ESCAPE || (keyCode == KeyEvent.VK_W &&
@@ -289,13 +382,16 @@ public class GenericDialogPlus extends GenericDialog implements KeyListener {
 			windowClosing(null);
 	}
 
+	@Override
 	public void keyReleased(KeyEvent e) {}
+	
+	@Override
 	public void keyTyped(KeyEvent e) {}
 
 	public static void main(String[] args) {
 		GenericDialogPlus gd = new GenericDialogPlus("GenericDialogPlus Test");
-		gd.addFileField("A_file", System.getProperty("fiji.dir") + "/jars/ij.jar");
-		gd.addDirectoryField("A_directory", System.getProperty("fiji.dir") + "/plugins");
+		gd.addFileField("A_file", System.getProperty("ij.dir") + "/jars/ij.jar");
+		gd.addDirectoryField("A_directory", System.getProperty("ij.dir") + "/plugins");
 		gd.addButton("Click me!", new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				IJ.showMessage("You clicked me!");

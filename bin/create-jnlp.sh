@@ -44,7 +44,7 @@ for jar in $(case "$mode" in
 		find plugins jars -name \*.jar
 		;;
 	updater)
-		./fiji --update list-current |
+		./ImageJ --update list-current |
 		grep -e '^plugins/' -e '^jars/' |
 		sed -n -e 's|^|/var/www/update/|' -e '/\.jar-/p'
 		;;
@@ -138,7 +138,7 @@ cat > $outpath << EOF
     <resources>
     	<j2se version="1.5+" initial-heap-size="64m"/>
 	<jar href="jars/ij.jar"/>
-	<jar href="jars/Fiji.jar" main="true"/>
+	<jar href="jars/ij-launcher.jar" main="true"/>
     	<extension href="http://download.java.net/media/java3d/webstart/release/java3d-latest.jnlp"/>
 	<property name="jnlp" value="$plugins"/>
 	<property name="jnlp_class_map" value="$CODEBASE/configs.jar"/>

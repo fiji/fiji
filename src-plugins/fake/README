@@ -33,7 +33,9 @@ plugins/abc.jar <- src-plugins/abc/*.java
 # C stuff
 CCFLAGS=-g -O2
 CCFLAGS(win32)=-DWIN32 -DJRE_HOME=java/win32
-LDFLAGS(linux,linux-amd64,macosx)=-ldl
+LDFLAGS(linux32)=-ldl
+LDFLAGS(linux64)=-ldl
+LDFLAGS(macosx)=-ldl
 fiji <- fiji.c
 -- snap --
 

@@ -83,9 +83,11 @@ public class NeuriteTracerResultsDialog
 	protected JMenuItem analyzeSkeletonMenuItem;
 	protected JMenuItem makeLineStackMenuItem;
 	protected JMenuItem exportCSVMenuItemAgain;
+	protected JMenuItem sendToTrakEM2;
 	protected JMenuItem shollAnalysiHelpMenuItem;
 
 	protected JCheckBoxMenuItem mipOverlayMenuItem;
+	protected JCheckBoxMenuItem drawDiametersXYMenuItem;
 
 	// These are the states that the UI can be in:
 
@@ -156,6 +158,8 @@ public class NeuriteTracerResultsDialog
 		"as surface reconstructions",
 		"as lines",
 		"as lines and discs" };
+
+	protected JCheckBox useTubularGeodesics;
 
 	protected JCheckBox preprocess;
 	protected JCheckBox usePreprocessed;
@@ -427,6 +431,7 @@ public class NeuriteTracerResultsDialog
 		}
 
 		plugin.cancelSearch( true );
+		plugin.notifyListeners(new SNTEvent(SNTEvent.QUIT));
 		pw.dispose();
 		fw.dispose();
 		dispose();
@@ -452,10 +457,12 @@ public class NeuriteTracerResultsDialog
 		viewPathChoice.setEnabled(false);
 		paths3DChoice.setEnabled(false);
 		preprocess.setEnabled(false);
+		useTubularGeodesics.setEnabled(false);
 
 		exportCSVMenuItem.setEnabled(false);
 		exportAllSWCMenuItem.setEnabled(false);
 		exportCSVMenuItemAgain.setEnabled(false);
+		sendToTrakEM2.setEnabled(false);
 		analyzeSkeletonMenuItem.setEnabled(false);
 		saveMenuItem.setEnabled(false);
 		loadMenuItem.setEnabled(false);
@@ -490,6 +497,7 @@ public class NeuriteTracerResultsDialog
 					viewPathChoice.setEnabled(true);
 					paths3DChoice.setEnabled(true);
 					preprocess.setEnabled(true);
+					useTubularGeodesics.setEnabled(plugin.oofFileAvailable());
 
 					editSigma.setEnabled( ! preprocess.isSelected() );
 					sigmaWizard.setEnabled( ! preprocess.isSelected() );
@@ -503,6 +511,7 @@ public class NeuriteTracerResultsDialog
 					exportCSVMenuItem.setEnabled(true);
 					exportAllSWCMenuItem.setEnabled(true);
 					exportCSVMenuItemAgain.setEnabled(true);
+					sendToTrakEM2.setEnabled(plugin.anyListeners());
 					analyzeSkeletonMenuItem.setEnabled(true);
 					if( uploadButton != null ) {
 						uploadButton.setEnabled(true);
@@ -530,6 +539,7 @@ public class NeuriteTracerResultsDialog
 					viewPathChoice.setEnabled(true);
 					paths3DChoice.setEnabled(true);
 					preprocess.setEnabled(true);
+					useTubularGeodesics.setEnabled(plugin.oofFileAvailable());
 
 					editSigma.setEnabled( ! preprocess.isSelected() );
 					sigmaWizard.setEnabled( ! preprocess.isSelected() );
@@ -707,6 +717,10 @@ public class NeuriteTracerResultsDialog
 		exportAllSWCMenuItem.addActionListener(this);
 		fileMenu.add(exportAllSWCMenuItem);
 
+		sendToTrakEM2 = new JMenuItem("Send to TrakEM2");
+		sendToTrakEM2.addActionListener(this);
+		fileMenu.add(sendToTrakEM2);
+
 		quitMenuItem = new JMenuItem("Quit");
 		quitMenuItem.addActionListener(this);
 		fileMenu.add(quitMenuItem);
@@ -734,6 +748,9 @@ public class NeuriteTracerResultsDialog
 		mipOverlayMenuItem.addItemListener(this);
 		viewMenu.add(mipOverlayMenuItem);
 
+		drawDiametersXYMenuItem = new JCheckBoxMenuItem("Draw diameters in XY plane", plugin.getDrawDiametersXY());
+		drawDiametersXYMenuItem.addItemListener(this);
+		viewMenu.add(drawDiametersXYMenuItem);
 
 		setJMenuBar(menuBar);
 
@@ -903,6 +920,15 @@ public class NeuriteTracerResultsDialog
 			otherOptionsPanel.setLayout(new GridBagLayout());
 			GridBagConstraints co = new GridBagConstraints();
 			co.anchor = GridBagConstraints.LINE_START;
+
+			useTubularGeodesics = new JCheckBox("Use Tubular Geodesics");
+			useTubularGeodesics.addItemListener( this );
+
+			co.gridx = 0;
+			++ co.gridy;
+			co.gridwidth = 2;
+			co.anchor = GridBagConstraints.LINE_START;
+			otherOptionsPanel.add(useTubularGeodesics,co);
 
 			preprocess = new JCheckBox("Hessian-based analysis");
 			preprocess.addItemListener( this );
@@ -1174,6 +1200,10 @@ public class NeuriteTracerResultsDialog
 			IJ.showStatus("Export complete.");
 			changeState( preExportingState );
 
+		} else if( source == sendToTrakEM2 ) {
+
+			plugin.notifyListeners(new SNTEvent(SNTEvent.SEND_TO_TRAKEM2));
+
 		} else if( source == showCorrespondencesToButton ) {
 
 			// Ask for the traces file to show correspondences to:
@@ -1393,6 +1423,10 @@ public class NeuriteTracerResultsDialog
 
 			plugin.justDisplayNearSlices(nearbySlices(),getEitherSide());
 
+		} else if( source == useTubularGeodesics ) {
+
+			plugin.enableTubularGeodesicsTracing(useTubularGeodesics.isSelected());
+
 		} else if( source == preprocess && ! ignorePreprocessEvents) {
 
 			if( preprocess.isSelected() )
@@ -1419,12 +1453,10 @@ public class NeuriteTracerResultsDialog
 
 		} else if( source == mipOverlayMenuItem ) {
 
-			if( e.getStateChange() == ItemEvent.SELECTED ) {
-				plugin.showMIPOverlays(true);
-			} else {
-				plugin.showMIPOverlays(false);
-			}
+			plugin.showMIPOverlays(e.getStateChange() == ItemEvent.SELECTED);
 
+		} else if( source == drawDiametersXYMenuItem ) {
+			plugin.setDrawDiametersXY(e.getStateChange() == ItemEvent.SELECTED);
 		}
 	}
 

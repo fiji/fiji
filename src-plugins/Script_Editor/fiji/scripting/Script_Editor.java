@@ -65,8 +65,8 @@ public class Script_Editor implements PlugIn {
 			return "macosx";
 		if (osName.startsWith("Windows"))
 			return "win" + (is64bit ? "64" : "32");
-		System.err.println("Unknown platform: " + osName);
-		return osName;
+		//System.err.println("Unknown platform: " + osName);
+		return osName.toLowerCase();
 	}
 
 	private String getNewestJavaSubdirectory(String baseURL) {

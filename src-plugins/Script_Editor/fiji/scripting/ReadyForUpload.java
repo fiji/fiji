@@ -32,21 +32,24 @@ import java.io.InputStream;
 import java.io.PrintStream;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 public class ReadyForUpload {
-	protected static String fijiDir;
+	protected static String ijDir;
 
 	static {
-		String dir = System.getProperty("fiji.dir");
+		String dir = System.getProperty("ij.dir");
 		if (IJ.isWindows())
 			dir = normalizeWinPath(dir);
 		if (!dir.endsWith("/"))
 			dir += "/";
-		fijiDir = dir;
+		ijDir = dir;
 	}
 
 	protected PrintStream out;
@@ -69,12 +72,12 @@ public class ReadyForUpload {
 		path = new File(path).getAbsolutePath();
 		if (IJ.isWindows())
 			path = normalizeWinPath(path);
-		if (!path.startsWith(fijiDir)) {
+		if (!path.startsWith(ijDir)) {
 			print("Warning: Not in $FIJI_ROOT: " + path);
 			return;
 		}
 
-		String target = path.substring(fijiDir.length());
+		String target = path.substring(ijDir.length());
 		if (rule != null && rule.getTarget().equals(target))
 			return;
 
@@ -83,7 +86,7 @@ public class ReadyForUpload {
 			fake.out = fake.err = out;
 		}
 		if (parser == null) {
-			parser = fake.parse(new FileInputStream(fijiDir + "/Fakefile"), new File(fijiDir));
+			parser = fake.parse(new FileInputStream(ijDir + "/Fakefile"), new File(ijDir));
 			parser.parseRules(new ArrayList());
 		}
 
@@ -98,12 +101,17 @@ public class ReadyForUpload {
 				return "modules/batik/sources/";
 			if (fromSubFakefile) {
 				if (rule.getLastPrerequisite().equals("mpicbg/"))
-					return fijiDir + "mpicbg/";
+					return ijDir + "mpicbg/";
 				File fakefile = ((SubFake)rule).getFakefile();
-				if (fakefile == null)
+				if (fakefile == null) {
+					// TODO: this really needs to go into a new Rule.isClean() method, checking also for resources
+					File mavenSrc = new File(rule.getWorkingDirectory(), rule.getLastPrerequisite() + "src/main/java");
+					if (mavenSrc.exists())
+						return mavenSrc.getAbsolutePath();
 					return null;
+				}
 				Fake fake = new Fake();
-				File cwd = new File(fijiDir, rule.getLastPrerequisite());
+				File cwd = new File(ijDir, rule.getLastPrerequisite());
 				if (!new File(cwd, ".git").exists()) {
 					print(rule.getLastPrerequisite() + " not checked out");
 					return null;
@@ -142,7 +150,7 @@ public class ReadyForUpload {
 		if (starstar >= 0)
 			prereq = prereq.substring(0, starstar);
 
-		return fijiDir + prereq;
+		return ijDir + prereq;
 	}
 
 	protected boolean checkFakeTargetUpToDate() throws FakeException, FileNotFoundException {
@@ -307,7 +315,7 @@ public class ReadyForUpload {
 
 	protected boolean checkPushed() throws FakeException, IOException {
 		String submodulePath = getSourcePathForTarget(false);
-		if (fullPath.startsWith(fijiDir) && submodulePath != null && !checkPushed(fijiDir, submodulePath))
+		if (fullPath.startsWith(ijDir) && submodulePath != null && !checkPushed(ijDir, submodulePath))
 			return false;
 
 		// check whether submodules are pushed
@@ -323,7 +331,7 @@ public class ReadyForUpload {
 		String submoduleDir = rule.getLastPrerequisite();
 		if (submoduleDir == null)
 			return false;
-		File dir = new File(fijiDir, submoduleDir);
+		File dir = new File(ijDir, submoduleDir);
 		if (!dir.isDirectory())
 			return true;
 		for (String name : dir.list())
@@ -332,14 +340,91 @@ public class ReadyForUpload {
 		return true;
 	}
 
+	protected boolean checkPrecompiled() {
+		final String baseName = new File(path).getName();
+		final File precompiled = new File(new File(ijDir, "precompiled"), baseName);
+		if (!precompiled.exists())
+			return true;
+
+		// compare .jar contents (timestamps can vary)
+		try {
+			final ZipFile jar = new ZipFile(fullPath);
+			final Set<ZipEntry> files = new HashSet<ZipEntry>(Collections.list(jar.entries()));
+			final ZipFile precompiledJar = new ZipFile(precompiled);
+			final Set<ZipEntry> precompiledFiles = new HashSet<ZipEntry>(Collections.list(precompiledJar.entries()));
+
+			if (files.size() != precompiledFiles.size()) {
+				print(path + " differs from the precompiled one!");
+				return false;
+			}
+
+			for (ZipEntry entry : files) {
+				ZipEntry precompiledEntry = precompiledJar.getEntry(entry.getName());
+				if (precompiledEntry == null) {
+					print("The precompiled " + path + " lacks the file " + entry.getName() + "!");
+					return false;
+				}
+				InputStream in = jar.getInputStream(entry);
+				InputStream precompiledIn = precompiledJar.getInputStream(precompiledEntry);
+				if (streamCompare(in, precompiledIn) != 0) {
+					print(path + " differs from the precompiled one (" + entry.getName() + ")!");
+					return false;
+				}
+			}
+		} catch (IOException e) {
+			print("Could not compare " + path + " to the precompiled one!");
+			return false;
+		}
+		return true;
+	}
+
+	protected int streamCompare(InputStream in1, InputStream in2) throws IOException {
+		byte[] buffer1 = new byte[32768];
+		byte[] buffer2 = new byte[32768];
+
+		for (;;) {
+			int count1 = in1.read(buffer1);
+			if (count1 < 0) {
+				in1.close();
+				int count2 = in2.read(buffer2);
+				in2.close();
+				if (count2 >= 0)
+					return -1;
+				return 0;
+			}
+
+			for (int i1 = 0; i1 < count1; ) {
+				int count2 = in2.read(buffer2, 0, count1 - i1);
+				if (count2 < 0) {
+					in1.close();
+					in2.close();
+					return +1;
+				}
+				for (int i2 = 0; i2 < count2; i2++)
+					if (buffer1[i1 + i2] != buffer2[i2])
+						return buffer1[i1 + i2] - buffer2[i2];
+				i1 += count2;
+			}
+		}
+
+	}
+
+	protected static Set<String> textFileExtensions;
+	static {
+		textFileExtensions = new HashSet<String>(Arrays.asList(new String[] {
+			"bsh", "c", "clj", "h", "ijm", "js", "m", "py", "rb", "txt"
+		}));
+	}
+
 	public synchronized boolean check(String path) {
 		if (IJ.isWindows())
 			path = normalizeWinPath(path);
 
-		if (!path.endsWith(".jar")) {
-			print("Warning: ignoring " + path);
-			return true;
-		}
+		int dot = path.lastIndexOf('.');
+		String extension = "";
+		if (dot > path.length() - 5)
+			extension = path.substring(dot + 1);
+		boolean isText = textFileExtensions.contains(extension);
 
 		boolean result = true;
 		rule = null;
@@ -349,12 +434,21 @@ public class ReadyForUpload {
 			if (IJ.isWindows())
 				fullPath = normalizeWinPath(fullPath);
 
+			if (!isText && !extension.equals("jar")) {
+				print("Warning: ignoring " + path);
+				return true;
+			}
+
 			if (!checkCRLF()) {
 				print("");
 				result = false;
 			}
+
+			if (isText)
+				return result;
+
 			if (containsDebugInfo(fullPath)) {
-				if (new File(path).getCanonicalPath().equals(new File(fijiDir, "plugins/loci_tools.jar").getCanonicalPath()))
+				if (new File(path).getCanonicalPath().equals(new File(ijDir, "plugins/loci_tools.jar").getCanonicalPath()))
 					print("Ignoring debug info in Bio-Formats");
 				else {
 					print(path + " contains debug information\n");
@@ -378,6 +472,8 @@ public class ReadyForUpload {
 				if (!checkDirtyFiles())
 					result = false;
 				if (!checkPushed())
+					result = false;
+				if (!checkPrecompiled())
 					result = false;
 			}
 		} catch (Exception e) {

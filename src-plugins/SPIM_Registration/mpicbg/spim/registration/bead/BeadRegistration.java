@@ -19,6 +19,7 @@ import mpicbg.models.Model;
 import mpicbg.models.NotEnoughDataPointsException;
 import mpicbg.models.RigidModel3D;
 import mpicbg.models.TranslationModel3D;
+import mpicbg.pointdescriptor.model.RigidModelOld3D;
 import mpicbg.spim.io.IOFunctions;
 import mpicbg.spim.io.SPIMConfiguration;
 import mpicbg.spim.mpicbg.PointMatchGeneric;
@@ -624,6 +625,16 @@ public class BeadRegistration
 							  0f, 0f, z,  0f );
 
 				((RigidModel3D)model).concatenate( tmpModel );				
+			}
+			else if ( model instanceof RigidModelOld3D )
+			{
+				Transform3D t = ((RigidModelOld3D) model).getTransform3D();
+				Transform3D tmp = new Transform3D();
+				tmp.setScale( new Vector3d( 1, 1, zStretching ) );
+				t.mul( tmp );				
+				((RigidModelOld3D) model).set( t );
+				System.out.println( ((RigidModelOld3D) model).getTransform3D() );
+				
 			}
 			else if ( model instanceof TranslationModel3D )
 			{

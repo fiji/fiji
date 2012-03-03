@@ -47,7 +47,7 @@ public class Reconstruct_Reader implements PlugIn
         }
         else
         {
-            IJ.log("Encountered error during translation");
+            IJ.log(translator.getLastErrorMessage());
             new MessageDialog(IJ.getInstance(), "Error", "Encountered an Error while translating");
         }
 

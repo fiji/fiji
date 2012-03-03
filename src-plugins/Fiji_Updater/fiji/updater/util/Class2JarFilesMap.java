@@ -1,8 +1,5 @@
 package fiji.updater.util;
 
-import ij.IJ;
-import ij.ImageJ;
-
 import java.io.File;
 import java.io.IOException;
 
@@ -23,7 +20,7 @@ public class Class2JarFilesMap extends HashMap<String, ArrayList<String>> {
 	}
 
 	private void addDirectory(String directory) {
-		File dir = new File(Util.fijiRoot + "/" + directory);
+		File dir = new File(Util.ijRoot + "/" + directory);
 		if (!dir.isDirectory())
 			return;
 		String[] list = dir.list();
@@ -32,7 +29,7 @@ public class Class2JarFilesMap extends HashMap<String, ArrayList<String>> {
 			if (list[i].endsWith(".jar")) try {
 				addJar(path);
 			} catch (IOException e) {
-				IJ.log("Warning: could not open " + path);
+				UserInterface.get().log("Warning: could not open " + path);
 			}
 			else
 				addDirectory(path);
@@ -41,7 +38,7 @@ public class Class2JarFilesMap extends HashMap<String, ArrayList<String>> {
 
 	private void addJar(String jar) throws IOException {
 		try {
-			JarFile file = new JarFile(Util.fijiRoot + "/" + jar);
+			JarFile file = new JarFile(Util.ijRoot + "/" + jar);
 			Enumeration entries = file.entries();
 			while (entries.hasMoreElements()) {
 				String name = ((JarEntry)entries.nextElement())
@@ -51,7 +48,7 @@ public class Class2JarFilesMap extends HashMap<String, ArrayList<String>> {
 						".class").replace('/', '.'), jar);
 			}
 		} catch (ZipException e) {
-			IJ.log("Warning: could not open " + jar);
+			UserInterface.get().log("Warning: could not open " + jar);
 		}
 	}
 
@@ -61,7 +58,7 @@ public class Class2JarFilesMap extends HashMap<String, ArrayList<String>> {
 	 * handling plugin...
 	 */
 	private boolean ignore(String name, String jar) {
-		if (jar.endsWith("/batik.jar"))
+		if (jar.endsWith("/batik.jar") || jar.endsWith("/xml-apis.jar"))
 			return name.startsWith("org.xml.") ||
 				name.startsWith("org.w3c.") ||
 				name.startsWith("javax.xml.") ||
@@ -106,9 +103,6 @@ public class Class2JarFilesMap extends HashMap<String, ArrayList<String>> {
 	}
 
 	public static void main(String[] args) {
-		if (IJ.getInstance() == null)
-			new ImageJ();
-
 		Class2JarFilesMap map = new Class2JarFilesMap();
 
 		if (args.length == 0)

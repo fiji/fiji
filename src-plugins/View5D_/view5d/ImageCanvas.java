@@ -1599,7 +1599,8 @@ public void ProcessKey(char myChar) {
 	UpdateAll();
 	return;
     case 'k':  // Creates a new Marker List and inserts a point
-        my3ddata.NewMarkerList();
+    	if (my3ddata.NumMarkerLists() > 0 && my3ddata.GetActiveMarker() != null)
+    		my3ddata.NewMarkerList();
         my3ddata.SetMarker(label.px,label.py,label.pz);
 	// my3ddata.AddPoint(label.px,label.py,label.pz);
 	UpdateAll();

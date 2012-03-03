@@ -17,7 +17,17 @@ import org.jfree.chart.plot.PiePlot;
 
 import org.jfree.data.general.DefaultPieDataset;
 
+/**
+ * A basic example how to use JFreeChart in a Fiji plugin.
+ */
 public class JFreeChart_Example implements PlugIn {
+	/**
+	 * Paint a pie chart into an ImagePlus.
+	 *
+	 * @param arg can be specified in plugins.config
+	 * @see ij.plugin.PlugIn#run(java.lang.String)
+	 */
+	@Override
 	public void run(String arg) {
 		DefaultPieDataset dataset = new DefaultPieDataset();
 		dataset.setValue("Apples", 63);

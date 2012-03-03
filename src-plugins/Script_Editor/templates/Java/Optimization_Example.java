@@ -18,12 +18,21 @@ import org.apache.commons.math.optimization.fitting.CurveFitter;
 import org.apache.commons.math.optimization.general.LevenbergMarquardtOptimizer;
 
 /**
- *  A demonstration how to use Apache commons math to perform
- *  - curve fitting
- *  - minimization
+ * A demonstration how to use Apache commons math to perform
+ * <ul>
+ * <li>curve fitting</li>
+ * <li>minimization</li>
+ * </ul>
  */
 
 public class Optimization_Example implements PlugIn {
+	/**
+	 * This method gets called by ImageJ / Fiji.
+	 *
+	 * @param arg can be specified in plugins.config
+	 * @see ij.plugin.PlugIn#run(java.lang.String)
+	 */
+	@Override
 	public void run(String arg) {
 		fit();
 		optimize();
@@ -40,6 +49,7 @@ public class Optimization_Example implements PlugIn {
 		 * f(x) = a * log(x) + b
 		 */
 		ParametricUnivariateRealFunction function = new ParametricUnivariateRealFunction() {
+			@Override
 			public double[] gradient(double x, double[] params) {
 				double a = params[0];
 				double b = params[1];
@@ -49,6 +59,7 @@ public class Optimization_Example implements PlugIn {
 				};
 			}
 
+			@Override
 			public double value(double x, double[] params) {
 				double a  = params[0];
 				double b = params[1];
@@ -113,6 +124,7 @@ public class Optimization_Example implements PlugIn {
 		 * http://en.wikipedia.org/wiki/Rosenbrock_function
 		 */
 		MultivariateRealFunction function = new MultivariateRealFunction() {
+			@Override
 			public double value(double[] point) {
 				double x = point[0];
 				double y = point[1];

@@ -112,8 +112,7 @@ public class Refresh_Javas extends RefreshScripts {
 			}
 		}
 		try {
-			File plugins = new File(Menus.getPlugInsPath())
-				.getCanonicalFile();
+			File plugins = new File(Menus.getPlugInsPath()).getCanonicalFile();
 			File file = new File(c).getCanonicalFile();
 			c = file.getName();
 			while ((file = file.getParentFile()) != null &&
@@ -165,7 +164,7 @@ public class Refresh_Javas extends RefreshScripts {
 		path = file.getName();
 		String name = path;
 
-		File srcPlugins = new File(System.getProperty("fiji.dir"), "src-plugins");
+		File srcPlugins = new File(System.getProperty("ij.dir"), "src-plugins");
 		try {
 			srcPlugins = srcPlugins.getCanonicalFile();
 		}
@@ -300,7 +299,7 @@ public class Refresh_Javas extends RefreshScripts {
 
 	public static InputStream fakeFakefile(String projectName) {
 		StringBuilder buffer = new StringBuilder();
-		String target = System.getProperty("fiji.dir") + "/plugins/" + projectName + ".jar";
+		String target = System.getProperty("ij.dir") + "/plugins/" + projectName + ".jar";
 		buffer.append("all <- ").append(target).append("\n")
 			.append(target).append(" <- ").append(projectName).append("/**/*\n");
 		return new ByteArrayInputStream(buffer.toString().getBytes());
@@ -333,6 +332,12 @@ public class Refresh_Javas extends RefreshScripts {
 		if (extraArgs != null)
 			arguments = unshift(arguments, extraArgs);
 		String classPath = getPluginsClasspath();
+		File root = null;
+		try {
+			root = getSourceRootDirectory(path);
+		} catch (Exception e) { /* ignore */ }
+		if (root != null)
+			classPath = root.getPath() + (classPath.equals("") ? "" : File.pathSeparator + classPath);
 		if (!classPath.equals(""))
 			arguments = unshift(arguments,
 				new String[] { "-classpath", classPath });
@@ -386,32 +391,38 @@ public class Refresh_Javas extends RefreshScripts {
 		}
 	}
 
-	void runOutOfTreePlugin(String path) throws IOException,
-			MalformedURLException {
-		String className = new File(path).getName();
-		if (className.endsWith(".java"))
-			className = className.substring(0,
-					className.length() - 5);
-
-		String packageName = null;
-		try {
-			packageName = getPackageName(path);
-		} catch (IOException e) {
-			IJ.error("Could not read " + path);
-			return;
-		}
-		String classPath = getPluginsClasspath();
-		File directory = new File(path).getCanonicalFile()
-			.getParentFile();
+	protected File getSourceRootDirectory(String path) throws IOException {
+		String packageName = getPackageName(path);
+		File directory = new File(path).getCanonicalFile().getParentFile();
 		if (packageName != null) {
 			int dot = -1;
 			do {
-				className = directory.getName()
-					+ "." + className;
 				directory = directory.getParentFile();
 				dot = packageName.indexOf('.', dot + 1);
 			} while (dot > 0);
 		}
+		return directory;
+	}
+
+	protected String getClassName(String path) throws IOException {
+		String className = new File(path).getName();
+		if (className.endsWith(".java"))
+			className = className.substring(0, className.length() - 5);
+		String packageName = getPackageName(path);
+		return (packageName == null || packageName.equals("") ? "" : packageName + ".") + className;
+	}
+
+	void runOutOfTreePlugin(String path) throws IOException,
+			MalformedURLException {
+		String classPath = getPluginsClasspath();
+		File directory;
+		try {
+			directory = getSourceRootDirectory(path);
+		} catch (IOException e) {
+			IJ.error("Could not read " + path);
+			return;
+		}
+
 		if (classPath == null || classPath.equals(""))
 			classPath = directory.getPath();
 		else {
@@ -421,6 +432,7 @@ public class Refresh_Javas extends RefreshScripts {
 			classPath = directory.getPath() + classPath;
 		}
 
+		String className = getClassName(path);
 		new PlugInExecutor(classPath).run(className);
 	}
 

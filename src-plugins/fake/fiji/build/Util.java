@@ -108,10 +108,8 @@ public class Util {
 		if (target.equals(source))
 			return;
 		try {
-			if (!target.startsWith("/"))
-				target = cwd + "/" + target;
-			if (!source.startsWith("/"))
-				source = cwd + "/" + source;
+			target = makePath(cwd, target);
+			source = makePath(cwd, source);
 			File parent = new File(target).getParentFile();
 			if (!parent.exists())
 				parent.mkdirs();
@@ -246,6 +244,30 @@ public class Util {
 		return result;
 	}
 
+	public static String[] splitPaths(String pathList) {
+		String[] paths = Util.split(pathList, ":");
+		if (":".equals(File.pathSeparator))
+			return paths;
+		// by mistake, c:\blub could have been separated
+		int j = 0;
+		for (int i = 0; i < paths.length; i++, j++)
+			if (i + 1 < paths.length && paths[i].length() == 1 && "\\/".indexOf(paths[i + 1].charAt(0)) >= 0)
+				paths[j] = paths[i] + ":" + paths[++i];
+			else if (j < i)
+				paths[j] = paths[i];
+		if (j == paths.length)
+			return paths;
+		String[] newPaths = new String[j];
+		System.arraycopy(paths, 0, newPaths, 0, j);
+		return newPaths;
+	}
+
+	public static String pathListToNative(String pathList) {
+		if (":".equals(File.pathSeparator))
+			return pathList;
+		return join(splitPaths(pathList), File.pathSeparator);
+	}
+
 	public static boolean moveFileOutOfTheWay(String file) throws FakeException {
 		return moveFileOutOfTheWay(new File(file));
 	}
@@ -265,13 +287,13 @@ public class Util {
 		boolean is64bit = System.getProperty("os.arch", "").indexOf("64") >= 0;
 		String osName = System.getProperty("os.name", "<unknown>");
 		if (osName.equals("Linux"))
-			return "linux" + (is64bit ? "64" : "");
+			return "linux" + (is64bit ? "64" : "32");
 		if (osName.equals("Mac OS X"))
 			return "macosx";
 		if (osName.startsWith("Windows"))
 			return "win" + (is64bit ? "64" : "32");
-		System.err.println("Unknown platform: " + osName);
-		return osName;
+		//System.err.println("Unknown platform: " + osName);
+		return osName.toLowerCase();
 	}
 
 	public static boolean isAbsolutePath(String path) {

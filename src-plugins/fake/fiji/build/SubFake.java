@@ -1,9 +1,9 @@
 package fiji.build;
 
+import fiji.build.MiniMaven.Coordinate;
 import fiji.build.MiniMaven.POM;
 
 import java.io.File;
-
 import java.util.List;
 import java.util.StringTokenizer;
 
@@ -22,7 +22,7 @@ public class SubFake extends Rule {
 		configPath = getPluginsConfig();
 
 		String[] paths =
-			Util.split(getVar("CLASSPATH"), ":");
+			Util.splitPaths(getVar("CLASSPATH"));
 		for (int i = 0; i < paths.length; i++)
 			prerequisites.add(prerequisites.size() - 1, paths[i]);
 		if (!new File(Util.makePath(parser.cwd, directory)).exists())
@@ -57,7 +57,7 @@ public class SubFake extends Rule {
 
 			POM pom = getPOM();
 			if (pom != null)
-				return pom.upToDate();
+				return pom.upToDate(true) && upToDate(pom.getTarget(), target);
 
 			if (!upToDateRecursive(new File(Util.makePath(parser.cwd, directory)), target, true))
 				return false;
@@ -93,19 +93,32 @@ public class SubFake extends Rule {
 		return file.exists() ? file : null;
 	}
 
-	protected POM getPOM() {
+	public POM getPOM() {
 		File file = new File(Util.makePath(parser.cwd, getLastPrerequisite()), "pom.xml");
 		if (!file.exists())
 			return null;
+		// look for parent POMs (e.g. in modules/)
+		for (;;) {
+			File parent = file.getParentFile();
+			if (parent == null)
+				break;
+			parent = parent.getParentFile();
+			if (parent == null)
+				break;
+			File file2 = new File(parent, "pom.xml");
+			if (!file2.exists())
+				break;
+			file = file2;
+		}
 		String targetBasename = jarName.substring(jarName.lastIndexOf('/') + 1);
 		if (targetBasename.endsWith(".jar"))
 			targetBasename = targetBasename.substring(0, targetBasename.length() - 4);
 		// TODO: targetBasename could end in "-<version>"
 		try {
-			POM pom = new MiniMaven(parser.fake, parser.fake.err, getVarBool("VERBOSE")).parse(file);
+			POM pom = new MiniMaven(parser.fake, parser.fake.err, getVarBool("VERBOSE"), getVarBool("DEBUG")).parse(file);
 			if (targetBasename.equals(pom.getArtifact()))
 				return pom;
-			return pom.findPOM(null, targetBasename, null);
+			return pom.findPOM(new Coordinate(null, targetBasename, null));
 		} catch (Exception e) {
 			e.printStackTrace(parser.fake.err);
 			return null;
@@ -121,8 +134,11 @@ public class SubFake extends Rule {
 		else {
 			POM pom = getPOM();
 			if (pom != null) try {
+				pom.downloadDependencies();
 				pom.buildJar();
 				copyJar(pom.getTarget().getPath(), target, parser.cwd, configPath);
+				if (getVarBool("copyDependencies"))
+					pom.copyDependencies(new File(target).getAbsoluteFile().getParentFile(), true);
 				return;
 			} catch (Exception e) {
 				e.printStackTrace(parser.fake.err);

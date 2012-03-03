@@ -27,13 +27,15 @@
 
 package tracing;
 
-import ij.*;
-import java.awt.*;
-import java.awt.event.*;
+import ij.IJ;
+import ij.ImagePlus;
+
+import java.awt.Color;
+import java.awt.Graphics;
+import java.awt.event.InputEvent;
+import java.awt.event.MouseEvent;
+
 import stacks.ThreePanes;
-import java.util.Arrays;
-import java.util.ArrayList;
-import java.util.HashMap;
 
 @SuppressWarnings("serial")
 public class InteractiveTracerCanvas extends TracerCanvas {
@@ -50,7 +52,7 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 
 	// -------------------------------------------------------------
 
-	private SimpleNeuriteTracer tracerPlugin;
+	private final SimpleNeuriteTracer tracerPlugin;
 
 	public SimpleNeuriteTracer getTracerPlugin() {
 		return tracerPlugin;
@@ -240,6 +242,12 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 		if( tracerPlugin.loading )
 		    return;
 
+		boolean drawDiametersXY = tracerPlugin.getDrawDiametersXY();
+		int sliceZeroIndexed = imp.getCurrentSlice() - 1;
+		int eitherSideParameter = eitherSide;
+		if (! just_near_slices)
+			eitherSideParameter = -1;
+
 		FillerThread filler = tracerPlugin.filler;
 		if( filler != null ) {
 			filler.setDrawingColors( fillTransparent ? transparentGreen : Color.GREEN,
@@ -257,7 +265,7 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 		int spotDiameter = 5 * pixel_size;
 
 		if( unconfirmedSegment != null ) {
-			unconfirmedSegment.drawPathAsPoints( this, g, Color.BLUE, plane );
+			unconfirmedSegment.drawPathAsPoints( this, g, Color.BLUE, plane, drawDiametersXY, sliceZeroIndexed, eitherSideParameter );
 
 			if( unconfirmedSegment.endJoins != null ) {
 
@@ -270,10 +278,7 @@ public class InteractiveTracerCanvas extends TracerCanvas {
 		Path currentPathFromTracer = tracerPlugin.getCurrentPath();
 
 		if( currentPathFromTracer != null ) {
-			if( just_near_slices )
-				currentPathFromTracer.drawPathAsPoints( this, g, Color.RED, plane, imp.getCurrentSlice() - 1, eitherSide );
-			else
-				currentPathFromTracer.drawPathAsPoints( this, g, Color.RED, plane );
+			currentPathFromTracer.drawPathAsPoints( this, g, Color.RED, plane, drawDiametersXY, sliceZeroIndexed, eitherSideParameter );
 
 			if( lastPathUnfinished && currentPath.size() == 0 ) {
 

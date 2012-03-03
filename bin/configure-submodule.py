@@ -1,5 +1,5 @@
 #!/bin/sh
-''''exec "$(dirname "$0")"/../fiji --jython "$0" "$@" # (call again with fiji)'''
+''''exec "$(dirname "$0")"/../ImageJ --jython "$0" "$@" # (call again with fiji)'''
 
 #
 # configure-submodule.py
@@ -18,8 +18,8 @@ from java.io import File, FileInputStream
 # script prefix, for error messages
 prefix = sys.argv[0] + ':'
 
-# path to fiji environment
-fijiPath = getProperty('fiji.dir')
+# path to ImageJ environment
+ijPath = getProperty('ij.dir')
 
 # TODO - Edit Fake.java to allow access to entire ruleset. Then we can iterate
 #        over all rules and discover the mappings, instead of hardcoding them.
@@ -36,7 +36,7 @@ targets = {
   'clojure':'jars/clojure.jar',
   'ij-plugins':'plugins/ij-ImageIO_.jar',
   'imglib':'jars/imglib.jar',
-  'junit':'jars/junit-4.5.jar',
+  'junit':'jars/junit.jar',
   'jython':'jars/jython.jar',
   #'live-helper':'',
   'mpicbg':'plugins/mpicbg_.jar',
@@ -58,20 +58,20 @@ branches = {
 # updates an already-initialized submodule
 def updateSubModule(submodule):
   print '=== Updating', submodule, '==='
-  os.system('cd ' + fijiPath + ' && git pull')
+  os.system('cd ' + ijPath + ' && git pull')
 
 # initializes a submodule
 def cloneSubModule(submodule):
   print '=== Cloning', submodule, '==='
   # initialize submodule
-  os.system('cd ' + fijiPath +
+  os.system('cd ' + ijPath +
     ' && git submodule init ' + submodule +
     ' && git submodule update ' + submodule)
   chooseBranchSubModule(submodule)
 
 # switches a submodule to the appropriate branch
 def chooseBranchSubModule(submodule):
-  submodulePath = fijiPath + '/' + submodule
+  submodulePath = ijPath + '/' + submodule
   if submodule in branches:
     # HACK - special case for non-default branches
     branch = branches[submodule]
@@ -106,7 +106,7 @@ def processSubModule(submodule, parser):
   processed[submodule] = 1
 
   # parse submodule
-  handle = os.popen('cd ' + fijiPath +
+  handle = os.popen('cd ' + ijPath +
     ' && git submodule ' + submodule + ' 2>&1', 'r')
   status = handle.readline()
   handle.close()
@@ -148,9 +148,9 @@ def main(argv=None):
 
   # extract module dependencies using Fake
   fake = Fake()
-  fakefile = fijiPath + "/Fakefile"
+  fakefile = ijPath + "/Fakefile"
   fis = FileInputStream(fakefile)
-  parser = fake.parse(fis, File(fijiPath))
+  parser = fake.parse(fis, File(ijPath))
   parser.parseRules([])
   fis.close()
 

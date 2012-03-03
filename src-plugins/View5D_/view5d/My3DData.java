@@ -61,6 +61,13 @@ public class My3DData extends Object {
     int TrackDirection=2;  // by default track along Z
     String [] TrackModes={"Max","Min"};
     int TrackMode=0;  // by default track Maxima
+    String [] FinishModes={"None","Freeze", "Stop"};
+    int    FinishMode=2;  // by default continue until relative threshold is reached
+    String [] FinishMeasures={"Max","Integral","Integral Above Min"};
+    int    FinishMeasure=1;  // by default continue until relative threshold is reached
+    double ThreshValue=0.2;
+    double TotalMax,TotalMin,TotalInt,TotalIntDiff;  // Used as variables when running thought the current MarkerList
+
     boolean Repulsion=false;
     boolean FocusDispToMarker=true;
     boolean AppendVersionNumber=false;
@@ -360,40 +367,118 @@ public class My3DData extends Object {
         //SetActiveList(alist);
         //SetActiveMarker(APt);
     }
-    
+
+    int TestValidPoint(APoint Pt)
+    {
+    	int TrackState=0;
+    	TotalMax=Math.max(TotalMax,Pt.max);
+    	TotalMin=Math.min(TotalMin,Pt.min);
+    	TotalInt=Math.max(TotalInt,Pt.integral);
+    	TotalIntDiff=Math.max(TotalIntDiff,Pt.integralAboveMin);
+    	double myMeasure=0;
+    	switch (FinishMeasure)  // {"Max","Integral","Integral Above Min"}
+    	{
+    	case 0:
+    		myMeasure = Pt.max/TotalMax;
+			break;
+    	case 1:
+    		myMeasure = Pt.integral/TotalInt;
+			break;
+    	case 2:            
+    		myMeasure = Pt.integralAboveMin/TotalIntDiff;
+			break;
+    	}
+
+    	if (myMeasure < ThreshValue)
+    	{
+    		switch (FinishMode)
+    		{
+    		case 0: // None  
+    			TrackState=0;  // Go on tracking
+    			break;
+    		case 1:
+    			TrackState=1;  // freeze
+    			break;
+    		case 2:
+    			TrackState=2;  // stop tracking
+    			break;
+    		}
+    	}
+    	return TrackState;
+    }
+
     void AutoTrack()  // will start at the current marker and track the spot through the stack
     {
         APoint Pt=GetPoint(-1);  // retrieves the active point in the active List
         if (Pt == null) return; // no idea where to start the tracking
         int PNr = ActiveMarkerPos();
-        int NumM = NumMarkers(-1);
-        APoint prevPt = Pt;
-        double stepcoord=Pt.coord[TrackDirection];
+        //int NumM = NumMarkers(-1);
+        //APoint prevPt = Pt;
+        //double stepcoord=Pt.coord[TrackDirection];
         double preve=Pt.coord[3], prevt=Pt.coord[4],pe,pt;
+        TotalMax=Pt.max;
+        TotalMin=Pt.min;
+        TotalInt=Pt.integral;
+        TotalIntDiff=Pt.integralAboveMin;
+        int myP;
+        for (myP=1;myP<=PNr;myP++)  // To determine the spot statistics so far
+        {
+            TestValidPoint(GetPoint(PNr)); // Just to fill the statistics
+        }
         
-        for (PNr+=1;PNr<NumM;PNr++)  // This updates the allready present markers
+        int TrackState=0;  // 1 means frozen, 2 means track ended
+        double px=Pt.coord[0],py=Pt.coord[1],pz=Pt.coord[2];pe=Pt.coord[3];pt=Pt.coord[4];
+        for (;(NumMarkers(-1) > 0)&&(ActiveMarkerPos() >= 0) && (ActiveMarkerPos()<NumMarkers(-1)-1) && (TrackState < 2);)  // This updates the already present markers
             {
-              SetActiveMarker(PNr);
-              Pt=GetPoint(PNr);
-              pe=Pt.coord[3]; pt=Pt.coord[4];
-              stepcoord=Pt.coord[TrackDirection];
-              // System.out.println("... updating marker nr. "+PNr+"\n");
-              Pt.copy(prevPt); // use old point's coordinates
-              Pt.coord[TrackDirection]=stepcoord; // restor track position to original
+        	  AdvancePoint(1);
+              Pt=GetPoint(-1);  // retrieves the active point in the active List              
+              //SetActiveMarker(PNr);
+              //Pt=GetPoint(PNr);
+              //stepcoord=Pt.coord[TrackDirection];
+              px=Pt.coord[0];py=Pt.coord[1];pz=Pt.coord[2];pe=Pt.coord[3];pt=Pt.coord[4];
+        	  px = px - ElementAt((int) pe,(int) pt).DisplayOffset[0] + ElementAt((int) preve,(int) prevt).DisplayOffset[0];
+        	  py = py - ElementAt((int) pe,(int) pt).DisplayOffset[1] + ElementAt((int) preve,(int) prevt).DisplayOffset[1];
+        	  pz = pz - ElementAt((int) pe,(int) pt).DisplayOffset[2] + ElementAt((int) preve,(int) prevt).DisplayOffset[2];
+        	  UpdateMarker(Pt);
+        	  //RemovePoint();
+              //SetMarker(px,py,pz,pe,pt); // This will determine the positions
+              Pt=GetPoint(-1);  // retrieves the active point in the active List              
 
-              Pt.coord[0] = Pt.coord[0] - ElementAt((int) pe,(int) pt).DisplayOffset[0] + ElementAt((int) preve,(int) prevt).DisplayOffset[0];
-              Pt.coord[1] = Pt.coord[1] - ElementAt((int) pe,(int) pt).DisplayOffset[1] + ElementAt((int) preve,(int) prevt).DisplayOffset[1];
-              Pt.coord[2] = Pt.coord[2] - ElementAt((int) pe,(int) pt).DisplayOffset[2] + ElementAt((int) preve,(int) prevt).DisplayOffset[2];
+              // System.out.println("... updating marker nr. "+PNr+"\n");
+//              Pt.copy(prevPt); // use old point's coordinates
+//              px=Pt.coord[0];py=Pt.coord[1];pz=Pt.coord[2];pe=Pt.coord[3];pt=Pt.coord[4];
+//              Pt.coord[TrackDirection]=stepcoord; // restore track position to original
+//
+//              Pt.coord[0] = px - ElementAt((int) pe,(int) pt).DisplayOffset[0] + ElementAt((int) preve,(int) prevt).DisplayOffset[0];
+//              Pt.coord[1] = py - ElementAt((int) pe,(int) pt).DisplayOffset[1] + ElementAt((int) preve,(int) prevt).DisplayOffset[1];
+//              Pt.coord[2] = pz - ElementAt((int) pe,(int) pt).DisplayOffset[2] + ElementAt((int) preve,(int) prevt).DisplayOffset[2];
               //Pt.copy(prevPt);
               //Pt.coord[TrackDirection] = backup.coord[TrackDirection];  // preserve the coordinae along track direction
-              UpdateMarker(Pt);  // Track with prevPt starting positions
+//              UpdateMarker(Pt);  // Track with prevPt starting positions
+              px=Pt.coord[0];py=Pt.coord[1];pz=Pt.coord[2];pe=Pt.coord[3];pt=Pt.coord[4];
+              TrackState=TestValidPoint(Pt);
+              if (TrackState > 0)
+              {
+                  System.out.println("Marker frozen@ "+PNr+ "\n");
+            	  RemovePoint();
+                  Pt=GetPoint(-1);  // retrieves the active point in the active List              
+                  px=Pt.coord[0];py=Pt.coord[1];pz=Pt.coord[2];pe=Pt.coord[3];pt=Pt.coord[4];
+              } 
+              if (TrackState >= 2)
+              {
+                  System.out.println("Track ended@ "+PNr+ "\n");                	  
+            	  RemoveTrailingPoints();
+            	  return;
+              }
               preve=pe; prevt=pt;
-              prevPt=Pt;
+              //prevPt=Pt;
+              PNr = ActiveMarkerPos();
+              System.out.println("Active Marker: "+PNr+ ", "+NumMarkers(-1)+"\n");
+              System.out.println("pxyz: "+px+ ", "+py+ ", "+pz+ "\n");
               //px=Pt.coord[0];py=Pt.coord[1];pz=Pt.coord[2];pe=Pt.coord[3];pt=Pt.coord[4];
             }
         int TrackSize=0,ix=0,iy=0,iz=0,ie=0,it=0,tpos=0;  // increments during tracking
-        double px=Pt.coord[0],py=Pt.coord[1],pz=Pt.coord[2];
-        pe=Pt.coord[3];pt=Pt.coord[4];
+        //double px=Pt.coord[0],py=Pt.coord[1],pz=Pt.coord[2];pe=Pt.coord[3];pt=Pt.coord[4];
         
         switch(TrackDirection)
         {
@@ -406,19 +491,31 @@ public class My3DData extends Object {
 
         preve=pe; prevt=pt;
         px+=ix;py+=iy;pz+=iz;pe+=ie;pt+=it;  // advance one
-        for (;tpos < TrackSize;tpos++)  // continue until the end in z is reached
+        for (;(tpos < TrackSize) & (TrackState < 2);tpos++)  // continue until the end in trackingDirection is reached
             {
+              System.out.println("Extend Active MarkerPos: "+ActiveMarkerPos()+"\n");
               //System.out.println("AutoTrack at Pt:"+PNr+", coords:"+px+", "+py+", "+pz);
               //System.out.println("... creating marker\n");
         	  px = px - ElementAt((int) pe,(int) pt).DisplayOffset[0] + ElementAt((int) preve,(int) prevt).DisplayOffset[0];
         	  py = py - ElementAt((int) pe,(int) pt).DisplayOffset[1] + ElementAt((int) preve,(int) prevt).DisplayOffset[1];
         	  pz = pz - ElementAt((int) pe,(int) pt).DisplayOffset[2] + ElementAt((int) preve,(int) prevt).DisplayOffset[2];
-              SetMarker(px,py,pz,pe,pt);
-              Pt=GetPoint(PNr);
-              preve=pe; prevt=pt;
+              SetMarker(px,py,pz,pe,pt); // This will determine the positions
+              Pt=GetPoint(-1);  // retrieves the active point in the active List
               px=Pt.coord[0];py=Pt.coord[1];pz=Pt.coord[2];pe=Pt.coord[3];
+              // Pt=GetPoint(PNr);
+              
+              TrackState=TestValidPoint(Pt);
+              if (TrackState > 0)
+              {
+                  System.out.println("Marker frozen@ "+px+", "+py+", "+pz+ "\n");
+                  if (TrackState > 1)
+                  {
+                      System.out.println("Track ended@ "+px+", "+py+", "+pz+ "\n");                	  
+                  }
+            	  RemovePoint();
+              }
+              preve=pe; prevt=pt;
               px+=ix;py+=iy;pz+=iz;pe+=ie;pt+=it;  // advance one
-	      PNr++;
             }
     }
     
@@ -658,6 +755,10 @@ public class My3DData extends Object {
         md.addCheckbox("Advance each marker",Advance);
         md.addChoice("Tracking Mode: ",TrackModes,TrackModes[TrackMode]);
         md.addChoice("Tracking direction: ",TrackDirections,TrackDirections[TrackDirection]);
+        md.addChoice("Finnish Mode: ",FinishModes,FinishModes[FinishMode]);
+        md.addChoice("Finnish Metric: ",FinishMeasures,FinishMeasures[FinishMeasure]);
+        md.addNumericFields("Threshold",ThreshValue,3,3);
+
         md.addCheckbox("Spectral Display for Track",ShowSpectralTrack);
         md.addMessage("For automatic marker positioning an iterative search for the nearest\r\n"+
                     "maximum signal is performed. The region to be searched is defined by the\r\n"+
@@ -693,6 +794,10 @@ public class My3DData extends Object {
             Advance=md.getNextBoolean();
             TrackMode=md.getNextChoiceIndex();
             TrackDirection=md.getNextChoiceIndex();
+            FinishMode=md.getNextChoiceIndex();
+            FinishMeasure=md.getNextChoiceIndex();
+            ThreshValue= md.getNextNumber();
+
             ShowSpectralTrack=md.getNextBoolean();
             MarkerToMax=md.getNextBoolean();
             SearchX=(int) md.getNextNumber();
@@ -732,9 +837,9 @@ public class My3DData extends Object {
 
         switch(TrackDirection)
         {
-            case 0: SearchX=0;break;
-            case 1: SearchY=0;break;
-            case 2: SearchZ=0;break;
+            case 0: SearchX=0;COMX=0;break;
+            case 1: SearchY=0;COMY=0;break;
+            case 2: SearchZ=0;COMZ=0;break;
             case 3: break;
             case 4: break;
         }
@@ -1282,52 +1387,69 @@ public class My3DData extends Object {
    }
 
    void AxesUnitsDialog() {  // allows the user to define the units and scales
-        AGenericDialog md= new AGenericDialog("Axes Units and Scalings");
-        int e=ActiveElement;
-        md.addStringField("NameX: ",GetAxisNames()[0]);
-        md.addStringField("UnitX: ",GetAxisUnits()[0]);
-        md.addNumericField("ScaleX: ",GetScale(e,0),5);
-        md.addNumericField("OffsetX: ",GetOffset(e,0),5);
-        md.addStringField("NameY: ",GetAxisNames()[1]);
-        md.addStringField("UnitY: ",GetAxisUnits()[1]);
-        md.addNumericField("ScaleY: ",GetScale(e,1),5);
-        md.addNumericField("OffsetY: ",GetOffset(e,1),5);
-        md.addStringField("NameZ: ",GetAxisNames()[2]);
-        md.addStringField("UnitZ: ",GetAxisUnits()[2]);
-        md.addNumericField("ScaleZ: ",GetScale(e,2),5);
-        md.addNumericField("OffsetZ: ",GetOffset(e,2),5);
-        md.addStringField("NameE: ",GetAxisNames()[3]);
-        md.addStringField("UnitE: ",GetAxisUnits()[3]);
-        md.addNumericField("ScaleE: ",GetScale(e,3),5);
-        md.addNumericField("OffsetE: ",GetOffset(e,3),5);
-        md.addStringField("NameT: ",GetAxisNames()[4]);
-        md.addStringField("UnitT: ",GetAxisUnits()[4]);
-        md.addNumericField("ScaleT: ",GetScale(e,4),5);
-        md.addNumericField("OffsetT: ",GetOffset(e,4),5);
-        md.showDialog();
-        if (! md.wasCanceled())
-        {
-            String Units[] = new String[5];
-            String Names[] = new String[5];
-            double SX,SY,SZ,SE,ST,OX,OY,OZ,OE,OT;
-            Names[0]=md.getNextString();Units[0]=md.getNextString();SX=md.getNextNumber();OX=md.getNextNumber();
-            Names[1]=md.getNextString();Units[1]=md.getNextString();SY=md.getNextNumber();OY=md.getNextNumber();
-            Names[2]=md.getNextString();Units[2]=md.getNextString();SZ=md.getNextNumber();OZ=md.getNextNumber();
-            Names[3]=md.getNextString();Units[3]=md.getNextString();SE=md.getNextNumber();OE=md.getNextNumber();
-            Names[4]=md.getNextString();Units[4]=md.getNextString();ST=md.getNextNumber();OT=md.getNextNumber();
-            for (int i=0 ; i< Elements;i++)
-            {
-                ElementAt(i).Scales[0]=SX;
-                ElementAt(i).Scales[1]=SY;
-                ElementAt(i).Scales[2]=SZ;
-                ElementAt(i).Scales[3]=SE;
-                ElementAt(i).Scales[4]=ST;
-                ElementAt(i).Offsets[0]=OX;ElementAt(i).Offsets[1]=OY;ElementAt(i).Offsets[2]=OZ;
-                ElementAt(i).Offsets[3]=OE;ElementAt(i).Offsets[4]=OT;
-                ElementAt(i).Names = Names;
-                ElementAt(i).Units = Units;
-            }
-        }
+
+	   Runnable runnable = new Runnable()  // This is workaround to make dialogues work properly in newer Matlab versions
+	   {
+	       public void run()
+	       {
+	    	   AGenericDialog md= new AGenericDialog("Axes Units and Scalings");
+	           int e=ActiveElement;
+	           md.addStringField("NameX: ",GetAxisNames()[0]);
+	           md.addStringField("UnitX: ",GetAxisUnits()[0]);
+	           md.addNumericField("ScaleX: ",GetScale(e,0),5);
+	           md.addNumericField("OffsetX: ",GetOffset(e,0),5);
+	           md.addStringField("NameY: ",GetAxisNames()[1]);
+	           md.addStringField("UnitY: ",GetAxisUnits()[1]);
+	           md.addNumericField("ScaleY: ",GetScale(e,1),5);
+	           md.addNumericField("OffsetY: ",GetOffset(e,1),5);
+	           md.addStringField("NameZ: ",GetAxisNames()[2]);
+	           md.addStringField("UnitZ: ",GetAxisUnits()[2]);
+	           md.addNumericField("ScaleZ: ",GetScale(e,2),5);
+	           md.addNumericField("OffsetZ: ",GetOffset(e,2),5);
+	           md.addStringField("NameE: ",GetAxisNames()[3]);
+	           md.addStringField("UnitE: ",GetAxisUnits()[3]);
+	           md.addNumericField("ScaleE: ",GetScale(e,3),5);
+	           md.addNumericField("OffsetE: ",GetOffset(e,3),5);
+	           md.addStringField("NameT: ",GetAxisNames()[4]);
+	           md.addStringField("UnitT: ",GetAxisUnits()[4]);
+	           md.addNumericField("ScaleT: ",GetScale(e,4),5);
+	           md.addNumericField("OffsetT: ",GetOffset(e,4),5);
+	           md.showDialog();
+	           if (! md.wasCanceled())
+	           {
+	               String Units[] = new String[5];
+	               String Names[] = new String[5];
+	               double SX,SY,SZ,SE,ST,OX,OY,OZ,OE,OT;
+	               Names[0]=md.getNextString();Units[0]=md.getNextString();SX=md.getNextNumber();OX=md.getNextNumber();
+	               Names[1]=md.getNextString();Units[1]=md.getNextString();SY=md.getNextNumber();OY=md.getNextNumber();
+	               Names[2]=md.getNextString();Units[2]=md.getNextString();SZ=md.getNextNumber();OZ=md.getNextNumber();
+	               Names[3]=md.getNextString();Units[3]=md.getNextString();SE=md.getNextNumber();OE=md.getNextNumber();
+	               Names[4]=md.getNextString();Units[4]=md.getNextString();ST=md.getNextNumber();OT=md.getNextNumber();
+	               for (int i=0 ; i< Elements;i++)
+	               {
+	                   ElementAt(i).Scales[0]=SX;
+	                   ElementAt(i).Scales[1]=SY;
+	                   ElementAt(i).Scales[2]=SZ;
+	                   ElementAt(i).Scales[3]=SE;
+	                   ElementAt(i).Scales[4]=ST;
+	                   ElementAt(i).Offsets[0]=OX;ElementAt(i).Offsets[1]=OY;ElementAt(i).Offsets[2]=OZ;
+	                   ElementAt(i).Offsets[3]=OE;ElementAt(i).Offsets[4]=OT;
+	                   ElementAt(i).Names = Names;
+	                   ElementAt(i).Units = Units;
+	               }
+	           }
+	       }
+	   };
+	   try {
+	   // EventQueue.invokeAndWait(runnable);
+	   EventQueue.invokeLater(runnable);
+	   }
+	   catch(Exception e)
+	   {
+		System.out.println("Exception appeared in dialogue \n");
+		e.printStackTrace();
+	   }
+
     }
 
   void ValueUnitsDialog() {  // allows the user to define the units and scales
@@ -1729,7 +1851,8 @@ public class My3DData extends Object {
        return ne;
     }
 
-    public int GenerateNewTime(int DataType, int NumBytes, int NumBits, double[] Scales,
+    @SuppressWarnings("unchecked")
+	public int GenerateNewTime(int DataType, int NumBytes, int NumBits, double[] Scales,
             double[] Offsets, double ScaleV, double OffsetV, 
            String [] Names, String [] Units)
 		{
@@ -2449,12 +2572,13 @@ public class My3DData extends Object {
  	    if (markerInfilename.startsWith("http:") || markerInfilename.startsWith("file:") || markerInfilename.startsWith("ftp:")) 	    	
 	        myurl = new URL(markerInfilename);
  	    else
- 	    	myurl = new URL(((View5D) applet).getDocumentBase(), markerInfilename);
- 	    	//if (System.getProperty("os.name").startsWith("Windows"))
- 	    		// myurl = new URL(protocol+":////"+markerInfilename);
- 	    	//else
- 		        myurl = new URL(((View5D) applet).getDocumentBase(), markerInfilename);
- 	    		// myurl = new URL(protocol+"://"+markerInfilename);
+            //if (applet instanceof View5D)
+            // 	myurl = new URL(((View5D) applet).getDocumentBase(), markerInfilename);
+ 	    	// OLD: if (System.getProperty("os.name").startsWith("Windows"))
+ 	    		// OLD: myurl = new URL(protocol+":////"+markerInfilename);
+ 	    	//else // This is in ImageJ
+ 		    myurl = new URL("file:///"+markerInfilename);
+ 	    	// myurl = new URL(protocol+"://"+markerInfilename);
 
 	    }
             System.out.println("Opening Markerfile "+myurl+"\n");
@@ -2464,8 +2588,10 @@ public class My3DData extends Object {
 	    is.slashSlashComments(true);
 	    is.slashStarComments(true);
 	    is.parseNumbers();
+	    MyMarkers.ListOffset=MyMarkers.NumLists;
 	    while (MyMarkers.readline(is,this))   // reads a line and inserts/updates the appropriate marker
-		;
+	    	;
+	    MyMarkers.DeleteDublicateMarkerLists();
 	    ifs.close();
 	} catch(MalformedURLException e)
 	    {
@@ -2480,8 +2606,8 @@ public class My3DData extends Object {
 	    {
             	System.out.println("In Markerfile "+myurl+"\n");
 		System.out.println("reading markers, URLException:"+e);
-		applet.add("South",new Label ("IOException:"+e +"\n"));
-		applet.add("South",new Label ("Error: Unable to load file  "+markerInfilename+"\n"));
+		applet.add("South",new Label ("IOException: "+e +"\n"));
+		//applet.add("South",new Label ("Error: Unable to load file  "+markerInfilename));
                 e.printStackTrace();
 		applet.setVisible(true);
 		// System.exit(1);
@@ -2489,7 +2615,7 @@ public class My3DData extends Object {
 	catch(Exception e)
 	    {
             	System.out.println("In Markerfile "+myurl+"\n");
-		applet.add("South",new Label ("Exception appeared during load!\n"+e+"\n"));
+		applet.add("South",new Label ("Exception appeared during load! \n"+e+"\n"));
                 System.out.println("reading markers, Memoryexception! "+e + "\n");
                 e.printStackTrace();
 		applet.setVisible(true);
@@ -2623,7 +2749,8 @@ public class My3DData extends Object {
         ProjMode[DimNr] = ! ProjMode[DimNr];
     }
 
-  public My3DData(My3DData other) {   // operates on the same data but allows different views and projections
+  @SuppressWarnings("unchecked")
+public My3DData(My3DData other) {   // operates on the same data but allows different views and projections
     DataToHistogram=other.DataToHistogram;
     applet=other.applet;
     SizeX=other.SizeX; sizes[0]=other.sizes[0];
@@ -2746,7 +2873,8 @@ public class My3DData extends Object {
     TrackDirection=other.TrackDirection;
  }
 
- public My3DData(Container myapp,int sizex,int sizey, int sizez, 
+ @SuppressWarnings("unchecked")
+public My3DData(Container myapp,int sizex,int sizey, int sizez, 
                     int elements, int times,
                     int redEl,int greenEl, int blueEl, 
                     int hisx,int hisy,int hisz,

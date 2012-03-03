@@ -1,7 +1,5 @@
 package fiji.updater.logic;
 
-import fiji.updater.Updater;
-
 import fiji.updater.logic.PluginObject.Action;
 import fiji.updater.logic.PluginObject.Status;
 
@@ -36,17 +34,17 @@ import org.xml.sax.SAXException;
 public class PluginCollection extends ArrayList<PluginObject> {
 	public final static String DEFAULT_UPDATE_SITE = "Fiji";
 
-	public static class UpdateSite {
+	public static class UpdateSite implements Cloneable {
 		public String url, sshHost, uploadDirectory;
 		public long timestamp;
 
 		public UpdateSite(String url, String sshHost, String uploadDirectory, long timestamp) {
 			if (url.equals("http://pacific.mpi-cbg.de/update/")) {
-				url = Updater.MAIN_URL;
+				url = Util.MAIN_URL;
 				if (sshHost != null && sshHost.equals("pacific.mpi-cbg.de"))
-					sshHost = Updater.SSH_HOST;
+					sshHost = Util.SSH_HOST;
 				else if (sshHost != null && sshHost.endsWith("@pacific.mpi-cbg.de"))
-					sshHost = sshHost.substring(0, sshHost.length() - 18) + Updater.SSH_HOST;
+					sshHost = sshHost.substring(0, sshHost.length() - 18) + Util.SSH_HOST;
 			}
 			if (!url.endsWith("/"))
 				url += "/";
@@ -56,6 +54,10 @@ public class PluginCollection extends ArrayList<PluginObject> {
 			this.sshHost = sshHost;
 			this.uploadDirectory = uploadDirectory;
 			this.timestamp = timestamp;
+		}
+
+		public Object clone() {
+			return new UpdateSite(url, sshHost, uploadDirectory, timestamp);
 		}
 
 		public boolean isLastModified(long lastModified) {
@@ -80,10 +82,10 @@ public class PluginCollection extends ArrayList<PluginObject> {
 
 	public PluginCollection() {
 		updateSites = new LinkedHashMap<String, UpdateSite>();
-		addUpdateSite(DEFAULT_UPDATE_SITE, Updater.MAIN_URL,
-			Util.isDeveloper ? Updater.SSH_HOST : null,
-			Util.isDeveloper ? Updater.UPDATE_DIRECTORY : null,
-			Util.getTimestamp(Updater.XML_COMPRESSED));
+		addUpdateSite(DEFAULT_UPDATE_SITE, Util.MAIN_URL,
+			Util.isDeveloper ? Util.SSH_HOST : null,
+			Util.isDeveloper ? Util.UPDATE_DIRECTORY : null,
+			Util.getTimestamp(Util.XML_COMPRESSED));
 	}
 
 	public void addUpdateSite(String name, String url, String sshHost, String uploadDirectory, long timestamp) {
@@ -129,6 +131,8 @@ public class PluginCollection extends ArrayList<PluginObject> {
 	public Collection<String> getSiteNamesToUpload() {
 		Collection<String> set = new HashSet<String>();
 		for (PluginObject plugin : toUpload(true))
+			set.add(plugin.updateSite);
+		for (PluginObject plugin : toRemove())
 			set.add(plugin.updateSite);
 		// keep the update sites' order
 		List<String> result = new ArrayList<String>();
@@ -179,11 +183,11 @@ public class PluginCollection extends ArrayList<PluginObject> {
 	}
 
 	public void read() throws IOException, ParserConfigurationException, SAXException {
-		new XMLFileReader(this).read(new File(Util.prefix(Updater.XML_COMPRESSED)));
+		new XMLFileReader(this).read(new File(Util.prefix(Util.XML_COMPRESSED)));
 	}
 
 	public void write() throws IOException, SAXException, TransformerConfigurationException, ParserConfigurationException {
-		new XMLFileWriter(this).write(new GZIPOutputStream(new FileOutputStream(Util.prefix(Updater.XML_COMPRESSED))), true);
+		new XMLFileWriter(this).write(new GZIPOutputStream(new FileOutputStream(Util.prefix(Util.XML_COMPRESSED))), true);
 	}
 
 	protected static DependencyAnalyzer dependencyAnalyzer;
@@ -197,6 +201,11 @@ public class PluginCollection extends ArrayList<PluginObject> {
 		for (PluginObject plugin : iterable)
 			result.add(plugin);
 		return result;
+	}
+
+	public void cloneUpdateSites(PluginCollection other) {
+		for (String name : other.updateSites.keySet())
+			updateSites.put(name, (UpdateSite)other.updateSites.get(name).clone());
 	}
 
 	public Iterable<PluginObject> toUploadOrRemove() {
@@ -279,7 +288,7 @@ public class PluginCollection extends ArrayList<PluginObject> {
 				Status.OBSOLETE_MODIFIED,
 				Status.OBSOLETE_UNINSTALLED
 			/* the old updater will only checksum these! */
-			})), or(startsWith("fiji-"),
+			})), or(startsWith("ImageJ-"),
 				and(startsWith(new String[] {
 					"plugins/", "jars/", "retro/", "misc/"
 					}), endsWith(".jar")))));
@@ -390,7 +399,7 @@ public class PluginCollection extends ArrayList<PluginObject> {
 			return yes();
 		return new Filter() {
 			public boolean matches(PluginObject plugin) {
-				return plugin.isForThisPlatform();
+				return plugin.isUpdateablePlatform();
 			}
 		};
 	}
@@ -576,7 +585,7 @@ public class PluginCollection extends ArrayList<PluginObject> {
 		return filter(new Filter() {
 			public boolean matches(PluginObject plugin) {
 				return plugin.isUpdateable(evenForcedOnes) &&
-					plugin.isForThisPlatform();
+					plugin.isUpdateablePlatform();
 			}
 		});
 	}
@@ -590,11 +599,11 @@ public class PluginCollection extends ArrayList<PluginObject> {
 			});
 		}
 		if (!Util.isDeveloper)
-			for (String name : Util.getLaunchers()) {
+			for (String name : Util.launchers) {
 				PluginObject launcher = getPlugin(name);
 				if (launcher == null)
 					continue; // the regression test triggers this
-				if (launcher.getStatus() == Status.NOT_INSTALLED)
+				if (launcher.getStatus() == Status.NOT_INSTALLED && launcher.isForThisPlatform())
 					launcher.setAction(this, Action.INSTALL);
 			}
 	}
@@ -630,7 +639,7 @@ public class PluginCollection extends ArrayList<PluginObject> {
 		for (Dependency dependency : plugin.getDependencies()) {
 			PluginObject other = getPlugin(dependency.filename);
 			if (other == null || overriding != dependency.overrides
-					|| !other.isForThisPlatform())
+					|| !other.isUpdateablePlatform())
 				continue;
 			if (dependency.overrides) {
 				if (other.willNotBeInstalled())
@@ -654,7 +663,7 @@ public class PluginCollection extends ArrayList<PluginObject> {
 	}
 
 	public void sort() {
-		// first letters in this order: 'f', 'p', 'j', 's', 'i', 'm'
+		// first letters in this order: 'I', 'f', 'p', 'j', 's', 'i', 'm', 'l, 'r'
 		Collections.sort(this, new Comparator<PluginObject>() {
 			public int compare(PluginObject a, PluginObject b) {
 				int result = firstChar(a) - firstChar(b);
@@ -664,7 +673,7 @@ public class PluginCollection extends ArrayList<PluginObject> {
 
 			int firstChar(PluginObject plugin) {
 				char c = plugin.filename.charAt(0);
-				int index =  "fpjsim".indexOf(c);
+				int index =  "Ifpjsimlr".indexOf(c);
 				return index < 0 ? 0x200 + c : index;
 			}
 		});

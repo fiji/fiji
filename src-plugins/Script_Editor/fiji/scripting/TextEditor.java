@@ -11,6 +11,8 @@ import ij.gui.GenericDialog;
 
 import ij.io.SaveDialog;
 
+import ij.plugin.BrowserLauncher;
+
 import java.awt.Dimension;
 import java.awt.FileDialog;
 import java.awt.Font;
@@ -78,14 +80,10 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import javax.swing.text.BadLocationException;
-import javax.swing.text.Document;
 import javax.swing.text.JTextComponent;
 import javax.swing.text.Position;
 
 import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
-import org.fife.ui.rsyntaxtextarea.RSyntaxDocument;
-
-import org.fife.ui.rtextarea.RTextScrollPane;
 
 public class TextEditor extends JFrame implements ActionListener,
 	       ChangeListener {
@@ -714,7 +712,7 @@ public class TextEditor extends JFrame implements ActionListener,
 			String defaultDir =
 				editorPane != null && editorPane.file != null ?
 				editorPane.file.getParent() :
-				System.getProperty("fiji.dir");
+				System.getProperty("ij.dir");
 			final String path = openWithDialog("Open...", defaultDir, new String[] {
 				".class", ".jar"
 			}, false);
@@ -859,6 +857,10 @@ public class TextEditor extends JFrame implements ActionListener,
 				String path = new FileFunctions(this).getSourcePath(className);
 				if (path != null)
 					open(path);
+				else {
+					String url = new FileFunctions(this).getSourceURL(className);
+					new BrowserLauncher().run(url);
+				}
 			} catch (ClassNotFoundException e) {
 				error("Could not open source for class " + className);
 			}
@@ -1387,7 +1389,7 @@ public class TextEditor extends JFrame implements ActionListener,
 		EditorPane editorPane = getEditorPane();
 		SaveDialog sd = new SaveDialog("Save as ",
 				editorPane.file == null ?
-				System.getProperty("fiji.dir") :
+				System.getProperty("ij.dir") :
 				editorPane.file.getParentFile().getAbsolutePath(),
 				editorPane.getFileName() , "");
 		grabFocus(2);

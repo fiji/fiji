@@ -5,21 +5,116 @@ import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
 import org.w3c.dom.Node;
 
+import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
+import org.xml.sax.SAXParseException;
 import reconstructreader.Utils;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.FilenameFilter;
-import java.io.IOException;
+import java.io.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
 public class Translator {
 
-    private final StringBuilder xmlBuilder;
+    private static class MalformedFileInputStream extends FilterInputStream
+    {
+        /**
+         * A private class to handle malformed XML that sometimes crops up in
+         * Reconstruct files, when the projects get very large, typically in
+         * the comments.
+         */
+        int fixCnt;
+        int[] callCnt;
+        byte[] lastByte;
+
+        public MalformedFileInputStream(File f) throws FileNotFoundException
+        {
+            super(new FileInputStream(f));
+            fixCnt = 0;
+            callCnt = new int[3];
+            Arrays.fill(callCnt, 0);
+            lastByte  = new byte[0];
+        }
+
+        private byte fixByte(byte b)
+        {
+            if (b<0x20 && !(b==0x9 || b==0xA) || b == 0x26)
+            {
+                ++fixCnt;
+                b = 0x20;
+            }
+            return b;
+        }
+
+        public int read(byte[] bs, int off, int len) throws IOException
+        {
+            int ret = super.read(bs, off, len);
+
+            ++callCnt[0];
+
+            for (int i = 0; i < bs.length; ++i)
+            {
+                //Replace control chars with spaces
+                bs[i] = fixByte(bs[i]);
+            }
+
+            lastByte = bs.clone();
+
+            return ret;
+        }
+
+        public int read(byte[] bs) throws IOException
+        {
+            int ret = super.read(bs);
+
+            ++callCnt[1];
+
+            for (int i = 0; i < bs.length; ++i)
+            {
+                bs[i] = fixByte(bs[i]);
+            }
+
+            lastByte = bs.clone();
+
+            return ret;
+        }
+
+        public int read() throws IOException
+        {
+            int read = super.read();
+
+            ++callCnt[2];
+
+            if (read != -1)
+            {
+                read = fixByte((byte)read);
+            }
+
+            return read;
+        }
+
+        public String toString()
+        {
+            String s = "Called " + callCnt[0] + " " + callCnt[1] + " " + callCnt[2] + ", and fixed " + fixCnt + '\n';
+            s += "[";
+            for (byte b : lastByte)
+            {
+                s += b + " ";
+            }
+
+            s += "];";
+
+            return s;
+        }
+    }
+
+    private static final int STRING_CHUNK_SIZE = 8192;
+
+    private StringBuilder xmlBuilder;
 
     private Document serDoc;
     private final ArrayList<Document> sectionDocuments;
@@ -34,25 +129,48 @@ public class Translator {
     private final String nuid;
     private final File inputFile;
 
+    private String errorMessage;
+    private File lastFile;
+
     private int currentOID;
 
     private final int layerSetOID;
 
     private double[] preTransPatchSize;
+    private double defaultMag;
 
     private boolean ready;
 
 
+
+    public static InputSource getISO8559Source(final File f) throws FileNotFoundException, UnsupportedEncodingException
+    {
+        MalformedFileInputStream fileStream = new MalformedFileInputStream(f);
+        //Reader charStream = new InputStreamReader(fileStream, "ISO-8859-1");
+        Reader charStream = new InputStreamReader(fileStream);
+        return new InputSource(charStream);
+    }
+
+    public static void addSection(List<Document> sectionDocuments, DocumentBuilder builder, File f) throws IOException, SAXException
+    {
+        MalformedFileInputStream fileStream = new MalformedFileInputStream(f);
+        Reader charStream = new InputStreamReader(fileStream);
+        Document d = builder.parse(new InputSource(charStream));
+        sectionDocuments.add(d);
+    }
 
     public Translator(String f)
     {
         inputFile = new File(f);
         // Parse out the path
         final String localFile = inputFile.getName();
-        final File seriesDTD = new File(inputFile.getParent() + "/series.dtd");
-        final File sectionDTD = new File(inputFile.getParent() + "/section.dtd");
+        //final File seriesDTD = new File(inputFile.getParent() + "/series.dtd");
+        //final File sectionDTD = new File(inputFile.getParent() + "/section.dtd");
 
-        xmlBuilder = new StringBuilder();
+        errorMessage = "";
+        lastFile = null;
+
+        xmlBuilder = null;
         sectionDocuments = new ArrayList<Document>();
         sections = new ArrayList<ReconstructSection>();
         zTraces = new ArrayList<ReconstructZTrace>();
@@ -69,35 +187,8 @@ public class Translator {
 
         layerSetOID = nextOID();
 
-        // Make sure that the DTD files exist. Apparently it doesn't matter a
-        // whole lot if they actually contain anything.
-        try
-        {
-            if (!seriesDTD.exists())
-            {
-                FileWriter fw = new FileWriter(seriesDTD);
-                fw.write("");
-                fw.close();
-                seriesDTD.deleteOnExit();
-            }
+        ready = true;
 
-            if (!sectionDTD.exists())
-            {
-                FileWriter fw = new FileWriter(sectionDTD);
-                fw.write("");
-                fw.close();
-                sectionDTD.deleteOnExit();
-            }
-
-            ready = true;
-        }
-        catch (IOException ioe)
-        {
-            ioe.printStackTrace();
-            xmlBuilder.append(ioe.getStackTrace());
-
-            ready = false;
-        }
     }
 
     public int getLayerSetOID()
@@ -105,12 +196,14 @@ public class Translator {
         return layerSetOID;
     }
 
+
     public boolean process()
     {
         if (ready)
         {
             File[] list;
 
+            xmlBuilder = new StringBuilder();
             sectionDocuments.clear();
 
             /*
@@ -127,7 +220,7 @@ public class Translator {
                     {
                         public boolean accept(File dir, String name)
                         {
-                            return name.matches(projectName + ".*[0-9]$");
+                            return name.matches(projectName + ".[0-9]*$");
                         }
                     }
             );
@@ -135,14 +228,21 @@ public class Translator {
             try
             {
                 //Read and parse all of the files (series and sections)
-                DocumentBuilder builder =
-                        DocumentBuilderFactory.newInstance().newDocumentBuilder();
+                final DocumentBuilderFactory builderFactory = DocumentBuilderFactory.newInstance();
+                DocumentBuilder builder;
+
+                // DTDs aren't commonly included with Reconstruct projects, so ignore them.
+                builderFactory.setValidating(false);
+                builderFactory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
+                builder = builderFactory.newDocumentBuilder();
 
                 serDoc = builder.parse(inputFile);
 
                 for (File f : list)
                 {
-                    sectionDocuments.add(builder.parse(f));
+                    System.out.println("Opening file " + f.getAbsolutePath());
+                    lastFile = f;
+                    addSection(sectionDocuments, builder, f);
                 }
 
                 //Sort section files by index.
@@ -152,6 +252,7 @@ public class Translator {
                 //image transforms into TrakEM2 transforms. The coordinate systems are almost
                 //as different as possible, for a 2D euclidean space.
                 preTransPatchSize = Utils.getReconstructStackSize(sectionDocuments);
+                defaultMag = Utils.getMedianMag(sectionDocuments);
 
                 /*
                 Reconstruct : TrakEM2
@@ -179,11 +280,25 @@ public class Translator {
                 appendLayerSet(xmlBuilder);
                 appendDisplay(xmlBuilder);
                 xmlBuilder.append("</trakem2>\n");
+
+                clearMemory();
+
                 return true;
+            }
+            catch (SAXParseException spe)
+            {
+                String fid = lastFile == null ? "" : " in " + lastFile.getName();
+                errorMessage = "Error while parsing XML" + fid + " at line " + spe.getLineNumber() +
+                        ", column " + spe.getColumnNumber() + "\n";
+                errorMessage += Utils.stackTraceToString(spe);
+
+                return false;
             }
             catch (Exception e)
             {
+                clearMemory();
                 e.printStackTrace();
+                errorMessage = Utils.stackTraceToString(e);
                 return false;
             }
         }
@@ -191,6 +306,20 @@ public class Translator {
         {
             return false;
         }
+    }
+
+    public String getLastErrorMessage()
+    {
+        return errorMessage;
+    }
+
+    protected void clearMemory()
+    {
+        sectionDocuments.clear();
+        sections.clear();
+        closedContours.clear();
+        openContours.clear();
+        zTraces.clear();
     }
 
     protected void collectZTraces(Document serFile)
@@ -219,11 +348,18 @@ public class Translator {
             NodeList contours = doc.getElementsByTagName("Contour");
             ReconstructSection currSection = new ReconstructSection(this, doc);
             sections.add(currSection);
+            ArrayList<Element> domains = new ArrayList<Element>();
+            NodeList images = doc.getElementsByTagName("Image");
+            for (int i = 0; i < images.getLength(); ++i)
+            {
+                domains.add(Utils.getImageDomainContour(images.item(i)));
+            }
 
             for (int i = 0; i < contours.getLength(); ++i)
             {
                 Element e = (Element)contours.item(i);
-                if (e.getAttribute("closed").equals("true"))
+
+                if (e.getAttribute("closed").equals("true") && !domains.contains(e))
                 {
                     ReconstructAreaList areaList = Utils.findContourByName(closedContours,
                             e.getAttribute("name"));
@@ -236,7 +372,7 @@ public class Translator {
                         areaList.addContour(e, currSection);
                     }
                 }
-                else
+                else if (!domains.contains(e))
                 {
                     ReconstructProfileList profileList = Utils.findContourByName(openContours,
                             e.getAttribute("name"));
@@ -576,7 +712,6 @@ public class Translator {
     protected void appendLayerSet(final StringBuilder sb)
     {
         Node image = sectionDocuments.get(0).getElementsByTagName("Image").item(0);
-        double[] layerwh = Utils.getReconstructImageWH(image);
 
         sb.append("<t2_layer_set\n");
         sb.append("oid=\"").append(layerSetOID).append("\"\n");
@@ -585,8 +720,8 @@ public class Translator {
         sb.append("transform=\"matrix(1.0,0.0,0.0,1.0,0.0,0.0)\"\n");
         sb.append("title=\"Top Level\"\n");
         sb.append("links=\"\"\n");
-        sb.append("layer_width=\"").append(layerwh[0]).append("\"\n");
-        sb.append("layer_height=\"").append(layerwh[1]).append("\"\n");
+        sb.append("layer_width=\"").append(getStackWidth()).append("\"\n");
+        sb.append("layer_height=\"").append(getStackHeight()).append("\"\n");
         sb.append("rot_x=\"0.0\"\n");
         sb.append("rot_y=\"0.0\"\n");
         sb.append("rot_z=\"0.0\"\n");
@@ -691,11 +826,23 @@ public class Translator {
     {
         final String trakEMFile = inputFile.getParentFile().getAbsolutePath() + "/" + projectName + ".xml";
 
+        xmlBuilder.append('\n');
+
         try
         {
-            FileWriter fw = new FileWriter(
-                    new File(trakEMFile));
-            fw.write(xmlBuilder.toString());
+            FileWriter fw = new FileWriter(new File(trakEMFile));
+            String xmlString = xmlBuilder.toString();
+            int n = xmlString.length();
+            int t = n - STRING_CHUNK_SIZE;
+            int i;
+            xmlBuilder = null;
+            System.gc();
+
+            for (i = 0; i < t; i += STRING_CHUNK_SIZE)
+            {
+                fw.write(xmlString, i, STRING_CHUNK_SIZE);
+            }
+            fw.write(xmlString, i, n - i - 1);
             fw.close();
             return trakEMFile;
         }
@@ -707,6 +854,6 @@ public class Translator {
 
     public double getMag()
     {
-        return Utils.getMag(sectionDocuments.get(0).getDocumentElement());
+        return defaultMag;
     }
 }

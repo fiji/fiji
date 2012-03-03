@@ -1,10 +1,15 @@
 package fiji.plugin;
 
 import fiji.util.gui.GenericDialogPlus;
+import ij.IJ;
+import ij.gui.DialogListener;
 import ij.gui.GenericDialog;
 import ij.gui.MultiLineLabel;
 import ij.plugin.PlugIn;
 
+import java.awt.AWTEvent;
+import java.awt.TextField;
+import java.awt.event.TextEvent;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FilenameFilter;
@@ -17,13 +22,14 @@ import mpicbg.spim.io.ConfigurationParserException;
 import mpicbg.spim.io.IOFunctions;
 import mpicbg.spim.io.SPIMConfiguration;
 import mpicbg.spim.io.TextFileAccess;
+import spimopener.SPIMExperiment;
 
 public class Multi_View_Fusion implements PlugIn
 {
 	final private String myURL = "http://fly.mpi-cbg.de/preibisch";
 	final private String paperURL = "http://www.nature.com/nmeth/journal/v7/n6/full/nmeth0610-418.html";
 
-	final String fusionType[] = new String[] { "Single-channel", "Multi-channel" };
+	final static String fusionType[] = new String[] { "Single-channel", "Multi-channel" };
 	static int defaultFusionType = 0;
 
 	@Override
@@ -67,8 +73,9 @@ public class Multi_View_Fusion implements PlugIn
 	}
 
 	public static String allChannels = "0, 1";
-	public static String[] fusionMethodList = { "Fuse all views at once", "Fuse views sequentially", "Create independent registered images" };	
+	public static String[] fusionMethodList = { "Fuse into a single image", "Create independent registered images" };	
 	public static int defaultFusionMethod = 0;
+	public static int defaultParalellViews = 0;
 	public static boolean fusionUseBlendingStatic = true;
 	public static boolean fusionUseContentBasedStatic = false;
 	public static boolean displayFusedImageStatic = true;
@@ -85,10 +92,14 @@ public class Multi_View_Fusion implements PlugIn
 	{
 		final GenericDialogPlus gd = new GenericDialogPlus( "Multi-View Fusion" );
 		
-		gd.addDirectoryField( "SPIM_data_directory", Bead_Registration.spimDataDirectory );
+		gd.addDirectoryOrFileField( "SPIM_data_directory", Bead_Registration.spimDataDirectory );
+		final TextField tfSpimDataDirectory = (TextField) gd.getStringFields().lastElement();
 		gd.addStringField( "Pattern_of_SPIM files", Bead_Registration.fileNamePattern, 25 );
+		final TextField tfFilePattern = (TextField) gd.getStringFields().lastElement();
 		gd.addStringField( "Timepoints_to_process", Bead_Registration.timepoints );
+		final TextField tfTimepoints = (TextField) gd.getStringFields().lastElement();
 		gd.addStringField( "Angles to process", Bead_Registration.angles );
+		final TextField tfAngles = (TextField) gd.getStringFields().lastElement();
 		
 		if ( multichannel )
 			gd.addStringField( "Channels to process", allChannels );
@@ -99,15 +110,78 @@ public class Multi_View_Fusion implements PlugIn
 		MultiLineLabel text = (MultiLineLabel) gd.getMessage();
 		Bead_Registration.addHyperLinkListener(text, myURL);
 		
+		gd.addDialogListener( new DialogListener()
+		{
+			@Override
+			public boolean dialogItemChanged( GenericDialog dialog, AWTEvent e )
+			{
+				if ( e instanceof TextEvent && e.getID() == TextEvent.TEXT_VALUE_CHANGED && e.getSource() == tfSpimDataDirectory )
+				{
+					TextField tf = ( TextField ) e.getSource();
+					final String spimDataDirectory = tf.getText();
+					File f = new File( spimDataDirectory );
+					if ( f.exists() && f.isFile() && f.getName().endsWith( ".xml" ) )
+					{
+						SPIMExperiment exp = new SPIMExperiment( f.getAbsolutePath() );
+
+						// disable file pattern field
+						tfFilePattern.setEnabled( false );
+
+						// set timepoint string
+						String expTimepoints = "";
+						if ( exp.timepointStart == exp.timepointEnd )
+							expTimepoints = "" + exp.timepointStart;
+						else
+							expTimepoints = "" + exp.timepointStart + "-" + exp.timepointEnd;
+						tfTimepoints.setText( expTimepoints );
+
+						// set angles string
+						String expAngles = "";
+						for ( String angle : exp.angles )
+						{
+							int a = Integer.parseInt( angle.substring( 1, angle.length() ) );
+							if ( !expAngles.equals( "" ) )
+								expAngles += ",";
+							expAngles += a;
+						}
+						tfAngles.setText( expAngles );
+					}
+					else
+					{
+						// enable file pattern field
+						tfFilePattern.setEnabled( true );
+					}
+				}
+				return true;
+			}
+		} );
+		File f = new File( tfSpimDataDirectory.getText() );
+		if ( f.exists() && f.isFile() && f.getName().endsWith( ".xml" ) )
+		{
+			// disable file pattern field
+			tfFilePattern.setEnabled( false );
+		}
 		gd.showDialog();
 		
 		if ( gd.wasCanceled() )
 			return null;
 
 		Bead_Registration.spimDataDirectory = gd.getNextString();
-		Bead_Registration.fileNamePatternMC = gd.getNextString();
+		Bead_Registration.fileNamePattern = gd.getNextString();
 		Bead_Registration.timepoints = gd.getNextString();
 		Bead_Registration.angles = gd.getNextString();
+
+		int numViews = 0;
+		
+		try
+		{
+			numViews = SPIMConfiguration.parseIntegerString( Bead_Registration.angles ).size();
+		}
+		catch (ConfigurationParserException e)
+		{
+			IOFunctions.printErr( "Cannot understand/parse the channels: " + Bead_Registration.angles );
+			return null;
+		}
 
 		int numChannels = 0;
 		ArrayList<Integer> channels;
@@ -159,7 +233,18 @@ public class Multi_View_Fusion implements PlugIn
 			conf.channelsToFuse = "";			
 		}
 		conf.inputFilePattern = Bead_Registration.fileNamePattern;
-		conf.inputdirectory = Bead_Registration.spimDataDirectory;
+
+		f = new File( Bead_Registration.spimDataDirectory );
+		if ( f.exists() && f.isFile() && f.getName().endsWith( ".xml" ) )
+		{
+			conf.spimExperiment = new SPIMExperiment( f.getAbsolutePath() );
+			conf.inputdirectory = f.getAbsolutePath().substring( 0, f.getAbsolutePath().length() - 4 );
+			System.out.println( "inputdirectory : " + conf.inputdirectory );
+		}
+		else
+		{
+			conf.inputdirectory = Bead_Registration.spimDataDirectory;
+		}
 		
 		// get filenames and so on...
 		if ( !Bead_Registration.init( conf ) )
@@ -175,8 +260,11 @@ public class Multi_View_Fusion implements PlugIn
 		{
 			timepoints.add( new ArrayList<Integer>() );
 		
-			final String name = conf.file[ 0 ][ c ][ 0 ].getName();			
+			final String name = conf.file[ 0 ][ c ][ 0 ][ 0 ].getName();			
 			final File regDir = new File( conf.registrationFiledirectory );
+			
+			IJ.log( "name: " + name );
+			IJ.log( "dir: " + regDir.getAbsolutePath() );
 			
 			if ( !regDir.isDirectory() )
 			{
@@ -194,6 +282,9 @@ public class Multi_View_Fusion implements PlugIn
 						return false;
 				}
 			});
+			
+			for ( final String e : entries )
+				IJ.log( e );
 	
 			for ( final String s : entries )
 			{
@@ -275,6 +366,15 @@ public class Multi_View_Fusion implements PlugIn
 
 		gd2.addMessage( "" );
 		gd2.addChoice( "Fusion_method", fusionMethodList, fusionMethodList[ defaultFusionMethod ] );
+		
+		final String[] views = new String[ numViews ];
+		views[ 0 ] = "All";
+		for ( int v = 1; v < numViews; v++ )
+			views[ v ] = "" + v;	
+		if ( defaultParalellViews >= views.length )
+			defaultParalellViews = views.length - 1;
+		gd2.addChoice( "Process_views_in_paralell", views, views[ defaultParalellViews ] );
+		
 		gd2.addMessage( "" );
 		gd2.addCheckbox( "Apply_blending", fusionUseBlendingStatic );
 		gd2.addCheckbox( "Apply_content_based_weightening", fusionUseContentBasedStatic );
@@ -282,7 +382,7 @@ public class Multi_View_Fusion implements PlugIn
 		gd2.addNumericField( "Downsample_output image n-times", outputImageScalingStatic, 0 );
 		gd2.addNumericField( "Crop_output_image_offset_x", cropOffsetXStatic, 0 );
 		gd2.addNumericField( "Crop_output_image_offset_y", cropOffsetYStatic, 0 );
-		gd2.addNumericField( "Crop_output_image_offset_x", cropOffsetZStatic, 0 );
+		gd2.addNumericField( "Crop_output_image_offset_z", cropOffsetZStatic, 0 );
 		gd2.addNumericField( "Crop_output_image_size_x", cropSizeXStatic, 0 );
 		gd2.addNumericField( "Crop_output_image_size_y", cropSizeYStatic, 0 );
 		gd2.addNumericField( "Crop_output_image_size_z", cropSizeZStatic, 0 );
@@ -353,6 +453,7 @@ public class Multi_View_Fusion implements PlugIn
 		IOFunctions.println( "tp " + tp );
 		
 		defaultFusionMethod = gd2.getNextChoiceIndex();
+		defaultParalellViews = gd2.getNextChoiceIndex(); // 0 = all
 		fusionUseBlendingStatic = gd2.getNextBoolean();
 		fusionUseContentBasedStatic = gd2.getNextBoolean();
 		outputImageScalingStatic = (int)Math.round( gd2.getNextNumber() );
@@ -369,17 +470,24 @@ public class Multi_View_Fusion implements PlugIn
 		conf.sequentialFusion = false;
 		conf.multipleImageFusion = false;
 
-		if ( defaultFusionMethod == 0 )
+		if ( defaultFusionMethod == 0 && defaultParalellViews == 0  )
+		{
 			conf.paralellFusion = true;
-		else if ( defaultFusionMethod == 1 )
+		}
+		else if ( defaultFusionMethod == 0 && defaultParalellViews > 0 )
+		{
 			conf.sequentialFusion = true;
+			conf.numParalellViews = defaultParalellViews;
+		}
 		else
+		{
 			conf.multipleImageFusion = true;
+		}
 		
-		if ( conf.timeLapseRegistration || !displayFusedImageStatic  )
-			conf.showOutputImage = false;
-		else
+		if ( displayFusedImageStatic  )
 			conf.showOutputImage = true;
+		else
+			conf.showOutputImage = false;
 		
 		if ( saveFusedImageStatic )
 			conf.writeOutputImage = true;

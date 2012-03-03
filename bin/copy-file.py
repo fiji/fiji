@@ -1,5 +1,5 @@
 #!/bin/sh
-''''exec "$(dirname "$0")"/../fiji --jython "$0" "$@" # (call again with fiji)'''
+''''exec "$(dirname "$0")"/../ImageJ --jython "$0" "$@" # (call again with fiji)'''
 
 import os
 import shutil
@@ -14,3 +14,7 @@ if not os.path.exists(sys.argv[1]) and os.path.exists(sys.argv[1] + '.exe'):
 	sys.argv[2] += '.exe'
 
 shutil.copyfile(sys.argv[1], sys.argv[2])
+
+from java.io import File
+if File(sys.argv[1]).canExecute():
+	File(sys.argv[2]).setExecutable(True)

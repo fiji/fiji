@@ -281,7 +281,10 @@ public class Auto_Threshold implements PlugIn {
 		}
 
 		// Apply the selected algorithm
-		 if(myMethod.equals("Default")){
+		if (data2.length < 2){
+			threshold = 0;
+		}
+		else if(myMethod.equals("Default")){
 			threshold = IJDefault(data2); // re-implemeted so we can ignore black/white and set the bright or dark objects
 		}
 		else if(myMethod.equals("Huang")){
@@ -850,6 +853,8 @@ public class Auto_Threshold implements PlugIn {
 	}
 
 	public static int Minimum(int [] data ) {
+		if (data.length < 2)
+			return 0;
 		// J. M. S. Prewitt and M. L. Mendelsohn, "The analysis of cell images," in
 		// Annals of the New York Academy of Sciences, vol. 128, pp. 1035-1053, 1966.
 		// ported to ImageJ plugin by G.Landini from Antti Niemisto's Matlab code (GPL)

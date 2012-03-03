@@ -102,7 +102,7 @@ public class ReconstructAreaList implements ContourSet {
 
             for (Element contour : selectionList)
             {
-                double[] pts = Utils.getTransformedPoints(contour, h);
+                double[] pts = Utils.getTransformedPoints(contour, h, sec.getMag());
                 sb.append("<t2_path d=\"");
                 Utils.appendClosedPathXML(sb, pts);
                 sb.append("\" />\n");

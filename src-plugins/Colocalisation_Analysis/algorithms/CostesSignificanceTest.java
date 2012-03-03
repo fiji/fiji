@@ -261,26 +261,24 @@ public class CostesSignificanceTest<T extends RealType<T>> extends Algorithm<T> 
 	protected void generateBlocks(Image<T> img, List<RegionOfInterestCursor<T>> blockList,
 			int[] offset, int[] size, OutOfBoundsStrategyFactory<T> outOfBoundsFactory)
 			throws MissingPreconditionException {
-		// get the dimensions of the image
-		int[] dimensions = img.getDimensions();
 		// get the number of dimensions
 		int nrDimensions = img.getNumDimensions();
-
 		if (nrDimensions == 2)
 		{ // for a 2D image...
 			generateBlocksXY(img, blockList, offset, size, outOfBoundsFactory, false);
 		}
 		else if (nrDimensions == 3)
 		{ // for a 3D image...
+			final int depth = size[2];
 			int z;
 			int originalZ = offset[2];
 			// go through the depth in steps of block depth
-			for ( z = psfRadius[2]; z <= dimensions[2]; z += psfRadius[2] ) {
+			for ( z = psfRadius[2]; z <= depth; z += psfRadius[2] ) {
 				offset[2] = originalZ + z - psfRadius[2];
 				generateBlocksXY(img, blockList, offset, size, outOfBoundsFactory, false);
 			}
 			// check is we need to add a out of bounds strategy cursor
-			if (z > dimensions[2]) {
+			if (z > depth) {
 				offset[2] = originalZ + z - psfRadius[2];
 				generateBlocksXY(img, blockList, offset, size, outOfBoundsFactory, true);
 			}
