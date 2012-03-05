@@ -395,8 +395,10 @@ public class MiniMaven {
 
 			if (count > 0) {
 				err.println("Compiling " + count + " files in " + directory);
-				if (verbose)
+				if (verbose) {
+					err.println(arguments.toString());
 					err.println("using the class path: " + classPath);
+				}
 				String[] array = arguments.toArray(new String[arguments.size()]);
 				if (fake != null)
 					fake.callJavac(array, verbose);
