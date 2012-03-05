@@ -9,9 +9,6 @@ go in the separate configuration panel.
 
 Bugs:
 - Check if TrackScheme still reports edge deletion problems.
-- The estimate radius feature calculator should be more accurate. It seems
-like it reports only a finite number of values, corresponding to the discrete
-possible radii, and not the interpolated ones.
 - Unsolvable bug: in TrackScheme, when TrackMate is launched from Fiji, the cells
 are not movable???!
 
@@ -35,7 +32,7 @@ Track scheme
 
 Export/Import
 - Offer to select displayer at load.
-- Save the spot images in the xml file.
+- Save the spot images in the xml file. Maybe not.
 
 
 Making it available.

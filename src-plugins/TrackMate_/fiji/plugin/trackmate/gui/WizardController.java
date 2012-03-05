@@ -163,11 +163,23 @@ public class WizardController implements ActionListener {
 
 		if (event == wizard.NEXT_BUTTON_PRESSED && actionFlag) {
 
-			next();
+			new Thread("TrackMate moving to next state thread") {
+				@Override
+				public void run() {
+					next();
+				}
+			}.start();
+			
 
 		} else if (event == wizard.PREVIOUS_BUTTON_PRESSED && actionFlag) {
 
-			previous();
+			new Thread("TrackMate moving to previous state thread") {
+				@Override
+				public void run() {
+					previous();
+				}
+			}.start();
+
 
 		} else if (event == wizard.LOAD_BUTTON_PRESSED && actionFlag) {
 
@@ -177,7 +189,14 @@ public class WizardController implements ActionListener {
 			wizard.setLoadButtonEnabled(false);
 			wizard.setPreviousButtonEnabled(false);
 			wizard.setNextButtonEnabled(false);
-			load();
+			// Do the main job in another thread.
+			new Thread("TrackMate loading thread") {
+				@Override
+				public void run() {
+					load();
+				}
+			}.start();
+			
 
 		} else if (event == wizard.SAVE_BUTTON_PRESSED && actionFlag) {
 
@@ -189,7 +208,13 @@ public class WizardController implements ActionListener {
 			wizard.setLoadButtonEnabled(false);
 			wizard.setPreviousButtonEnabled(false);
 			wizard.setNextButtonEnabled(false);
-			save();
+			new Thread("TrackMate saving thread") {
+				@Override
+				public void run() {
+					save();
+				}
+			}.start();
+
 
 		} else if ((event == wizard.NEXT_BUTTON_PRESSED || 
 				event == wizard.PREVIOUS_BUTTON_PRESSED || 
@@ -223,7 +248,7 @@ public class WizardController implements ActionListener {
 				}
 			}.start();
 
-
+		
 		}
 	}
 
@@ -278,18 +303,19 @@ public class WizardController implements ActionListener {
 		// Store current state
 		WizardPanelDescriptor oldDescriptor = wizard.getCurrentPanelDescriptor();
 
-		// Move to load state and execute
-		LoadDescriptor loadDescriptor = (LoadDescriptor) wizard.getPanelDescriptorFor(LoadDescriptor.DESCRIPTOR);
+		// Move to load state and show log panel
+		final LoadDescriptor loadDescriptor = (LoadDescriptor) wizard.getPanelDescriptorFor(LoadDescriptor.DESCRIPTOR);
 		loadDescriptor.setTargetNextID(oldDescriptor.getDescriptorID());
 		loadDescriptor.aboutToDisplayPanel();
 		wizard.showDescriptorPanelFor(LoadDescriptor.DESCRIPTOR);
-		loadDescriptor.displayingPanel(); // This will update the GUI using GuiReader
 
-		// Update GUI with loaded plugin
+		// Instantiate GuiReader, ask for file, and load it in memory
+		loadDescriptor.displayingPanel();
+
+		// Get the loaded data back
 		plugin = loadDescriptor.plugin;
 
-		// Enable or disable next and previous button depending on the
-		// target descriptor.
+		// Enable or disable next and previous button depending on the target descriptor.
 		WizardPanelDescriptor nextPanel = wizard.getPanelDescriptorFor(loadDescriptor.getNextDescriptorID());
 		if (nextPanel.getNextDescriptorID() == null) {
 			oldNextButtonState = false;

@@ -1,5 +1,6 @@
 package fiji.plugin.trackmate.tests;
 
+import ij.IJ;
 import ij.ImagePlus;
 
 import java.io.File;
@@ -20,10 +21,15 @@ import fiji.plugin.trackmate.visualization.trackscheme.TrackSchemeFrame;
 
 public class TrackVisualizerTestDrive {
 
-	private static final File file = new File("/Users/tinevez/Desktop/Data/FakeTracks.xml");
 	
 	public static void main(String[] args) throws JDOMException, IOException {
 	
+		File file;
+		if (!IJ.isWindows()) {
+			file = new File("/Users/tinevez/Desktop/Data/FakeTracks.xml");
+		} else {
+			file = new File("E:/Users/JeanYves/Desktop/Data/FakeTracks.xml");
+		}
 		ij.ImageJ.main(args);
 		
 		TmXmlReader reader = new TmXmlReader(file, Logger.DEFAULT_LOGGER);
