@@ -103,6 +103,7 @@ public class SubFake extends Rule {
 		// TODO: targetBasename could end in "-<version>"
 		try {
 			MiniMaven miniMaven = new MiniMaven(parser.fake, parser.fake.err, getVarBool("VERBOSE"), getVarBool("DEBUG"));
+			miniMaven.downloadAutomatically = !miniMaven.offlineMode;
 			String ijDir = System.getProperty("ij.dir");
 			if (ijDir != null) {
 				File submodules = new File(ijDir, "modules");

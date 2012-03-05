@@ -112,6 +112,22 @@ public class MiniMaven {
 			pom.target = new File(directory, "target/classes");
 		}
 
+		if (pom.parentCoordinate != null && pom.parent == null) {
+			Coordinate dependency = pom.expand(pom.parentCoordinate);
+			POM root = pom.getRoot();
+			pom.parent = root.findPOM(dependency);
+			if (pom.parent == null && downloadAutomatically) {
+				if (root.maybeDownloadAutomatically(pom.parentCoordinate, !verbose))
+					pom.parent = root.findPOM(dependency);
+			}
+			// prevent infinite loops (POMs without parents get the current root as parent)
+			if (pom.parent != null) {
+				if (pom.parent.parent == pom)
+					pom.parent.parent = null;
+				pom.parent.addChild(pom);
+			}
+		}
+
 		pom.children = new POM[pom.modules.size()];
 		for (int i = 0; i < pom.children.length; i++) {
 			file = new File(directory, pom.modules.get(i) + "/pom.xml");
@@ -122,6 +138,10 @@ public class MiniMaven {
 			String fileName = pom.coordinate.getJarName();
 			pom.target = new File(directory, fileName);
 		}
+
+		String key = pom.expand(pom.coordinate.groupId) + ">" + pom.expand(pom.coordinate.artifactId);
+		if (!localPOMCache.containsKey(key))
+			localPOMCache.put(key, pom);
 
 		return pom;
 	}
@@ -231,7 +251,7 @@ public class MiniMaven {
 		protected POM parent;
 		protected POM[] children;
 
-		protected Coordinate coordinate = new Coordinate();
+		protected Coordinate coordinate = new Coordinate(), parentCoordinate;
 		protected Map<String, String> properties = new HashMap<String, String>();
 		protected List<String> modules = new ArrayList<String>();
 		protected List<Coordinate> dependencies = new ArrayList<Coordinate>(); // contains String[3]
@@ -260,6 +280,7 @@ public class MiniMaven {
 			if (parent != null) {
 				coordinate.groupId = parent.coordinate.groupId;
 				coordinate.version = parent.coordinate.version;
+				parentCoordinate = parent.coordinate;
 			}
 		}
 
@@ -649,9 +670,9 @@ public class MiniMaven {
 		}
 
 		protected POM findPOM(Coordinate dependency, boolean quiet) throws IOException, ParserConfigurationException, SAXException {
-			if (dependency.artifactId.equals(coordinate.artifactId) &&
-					(dependency.groupId == null || dependency.groupId.equals(coordinate.groupId)) &&
-					(dependency.version == null || coordinate.version == null || dependency.version.equals(coordinate.version)))
+			if (dependency.artifactId.equals(expand(coordinate.artifactId)) &&
+					(dependency.groupId == null || dependency.groupId.equals(expand(coordinate.groupId))) &&
+					(dependency.version == null || coordinate.version == null || dependency.version.equals(expand(coordinate.version))))
 				return this;
 			if (dependency.groupId == null && dependency.artifactId.equals("jdom"))
 				dependency.groupId = "jdom";
@@ -877,18 +898,10 @@ public class MiniMaven {
 
 			if (prefix.equals(">project>groupId"))
 				coordinate.groupId = string;
-			else if (prefix.equals(">project>parent>groupId")) {
-				if (coordinate.groupId == null)
-					coordinate.groupId = string;
-			}
 			else if (prefix.equals(">project>artifactId"))
 				coordinate.artifactId = string;
 			else if (prefix.equals(">project>version"))
 				coordinate.version = string;
-			else if (prefix.equals(">project>parent>version")) {
-				if (coordinate.version == null)
-					coordinate.version = string;
-			}
 			else if (prefix.equals(">project>modules"))
 				buildFromSource = true; // might not be building a target
 			else if (prefix.equals(">project>modules>module"))
@@ -922,8 +935,41 @@ public class MiniMaven {
 				repositories.add(string);
 			else if (prefix.equals(">project>build>sourceDirectory"))
 				sourceDirectory = string;
+			else if (prefix.startsWith(">project>parent>")) {
+				if (parentCoordinate == null)
+					parentCoordinate = new Coordinate();
+				if (prefix.equals(">project>parent>groupId")) {
+					if (coordinate.groupId == null)
+						coordinate.groupId = string;
+					if (parentCoordinate.groupId == null)
+						parentCoordinate.groupId = string;
+					else
+						checkParentTag("groupId", parentCoordinate.groupId, string);
+				}
+				else if (prefix.equals(">project>parent>artifactId")) {
+					if (parentCoordinate.artifactId == null)
+						parentCoordinate.artifactId = string;
+					else
+						checkParentTag("artifactId", parentCoordinate.artifactId, string);
+				}
+				else if (prefix.equals(">project>parent>version")) {
+					if (coordinate.version == null)
+						coordinate.version = string;
+					if (parentCoordinate.version == null)
+						parentCoordinate.version = string;
+					else
+						checkParentTag("version", parentCoordinate.version, string);
+				}
+			}
 			else if (debug)
 				err.println("Ignoring " + prefix);
+		}
+
+		protected void checkParentTag(String tag, String string1, String string2) {
+			String expanded1 = expand(string1);
+			String expanded2 = expand(string2);
+			if (((expanded1 == null || expanded2 == null) && expanded1 != expanded2) || !expanded1.equals(expanded2))
+				err.println("Warning: " + tag + " mismatch in " + directory + "'s parent: " + string1 + " != " + string2);
 		}
 
 		public String toString(Attributes attributes) {
