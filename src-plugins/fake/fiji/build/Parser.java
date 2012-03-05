@@ -27,7 +27,7 @@ public class Parser {
 	String line;
 	int lineNumber;
 	File cwd;
-	protected Map<String, Rule> allRules = new HashMap<String, Rule>();
+	protected Map<String, Rule> allRules = new TreeMap<String, Rule>();
 	protected Set<String> allPrerequisites = new HashSet<String>();
 	protected Set<String> allPlatforms;
 	protected Rule allRule;
