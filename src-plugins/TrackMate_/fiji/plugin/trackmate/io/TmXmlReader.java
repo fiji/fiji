@@ -480,6 +480,10 @@ public class TmXmlReader {
 		boolean sourceFound, targetFound;
 
 		for (Element trackElement : trackElements) {
+			
+			// Get track ID as it is saved on disk
+			int trackID = readIntAttribute(trackElement, TRACK_ID_ATTRIBUTE_NAME, logger);
+			
 			edgeElements = trackElement.getChildren(TRACK_EDGE_ELEMENT_KEY);
 			for (Element edgeElement : edgeElements) {
 				// Get source and target ID for this edge
@@ -506,14 +510,14 @@ public class TmXmlReader {
 					if (targetFound && sourceFound) {
 						if (sourceSpot.equals(targetSpot)) {
 //							LineNumberElement lne = (LineNumberElement) edgeElement;
-							logger.error("Bad edge found for track "+trackElement.getAttributeValue(TRACK_ID_ATTRIBUTE_NAME));
+							logger.error("Bad edge found for track "+trackID);
 //									+": loop edge at line "+lne.getStartLine()+". Skipping.\n");
 							break;
 						}
 						DefaultWeightedEdge edge = graph.addEdge(sourceSpot, targetSpot);
 						if (edge == null) {
 //							LineNumberElement lne = (LineNumberElement) edgeElement;
-							logger.error("Bad edge found for track "+trackElement.getAttributeValue(TRACK_ID_ATTRIBUTE_NAME));
+							logger.error("Bad edge found for track "+trackID);
 //									+": duplicate edge at line "+lne.getStartLine()+". Skipping.\n");
 							break;
 						} else {

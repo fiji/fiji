@@ -1174,8 +1174,7 @@ public class TrackMateModel {
 		visibleTrackIndices = new HashSet<Integer>(noldtracks); // Approx
 		// How to know if a new track should be visible or not?
 		// We can say this: the new track should be visible if it has at least
-		// one spot
-		// that can be found in a visible old track.
+		// one spot that can be found in a visible old track.
 		for (int trackIndex = 0; trackIndex < ntracks; trackIndex++) {
 
 			boolean shouldBeVisible = false;
