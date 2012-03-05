@@ -575,7 +575,7 @@ cross-*[bin/cross-compiler.bsh * $CFLAGS(*) $LDFLAGS(*) $LIBS(*)] <- ImageJ.c
 
 # legacy launcher
 
-fiji[bin/copy-file.py $PRE $TARGET] <- ImageJ
+fiji[bin/copy-file.bsh $PRE $TARGET] <- ImageJ
 
 # Precompiled stuff
 
@@ -586,10 +586,10 @@ LAUNCHER(osx10.4)=precompiled/ImageJ-macosx
 LAUNCHER(osx10.5)=precompiled/ImageJ-macosx precompiled/ImageJ-tiger
 precompile-ImageJ[] <- $LAUNCHER
 
-precompiled/ImageJ-tiger[bin/copy-file.py $PRE $TARGET] <- ImageJ-tiger
-precompiled/ImageJ-macosx[bin/copy-file.py $PRE $TARGET] <- ImageJ-macosx
+precompiled/ImageJ-tiger[bin/copy-file.bsh $PRE $TARGET] <- ImageJ-tiger
+precompiled/ImageJ-macosx[bin/copy-file.bsh $PRE $TARGET] <- ImageJ-macosx
 # this rule only matches precompiled/ImageJ-$PLATFORM
-precompiled/ImageJ-*[bin/copy-file.py $PRE $TARGET] <- ImageJ
+precompiled/ImageJ-*[bin/copy-file.bsh $PRE $TARGET] <- ImageJ
 
 precompile-fake[] <- precompiled/fake.jar
 precompiled/fake.jar <- jars/fake.jar
@@ -597,7 +597,7 @@ precompiled/javac.jar <- jars/javac.jar
 precompiled/ij.jar <- jars/ij.jar
 precompiled/mpicbg.jar <- jars/mpicbg.jar
 precompiled/Image_5D.jar <- plugins/Image_5D.jar
-precompiled/*[bin/copy-file.py $PRE $TARGET] <- *
+precompiled/*[bin/copy-file.bsh $PRE $TARGET] <- *
 
 precompile-submodules[] <- \
 	precompiled/ij.jar \

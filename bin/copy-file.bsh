@@ -1,0 +1,32 @@
+#!/bin/sh
+/*/. 2>/dev/null; exec "$(dirname "$0")"/../ImageJ "$0" "$@" # exec with fiji */
+
+if (bsh.args.length < 2) {
+	System.err.println("Usage: " + this.interpreter.getSourceFileInfo()
+		+ " <source> <target>");
+	System.exit(1);
+}
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+
+if (!new File(bsh.args[0]).exists() && new File(bsh.args[0] + ".exe").exists()) {
+	bsh.args[0] += ".exe";
+	bsh.args[1] += ".exe";
+}
+
+buffer = new byte[65536];
+in = new FileInputStream(bsh.args[0]);
+out = new FileOutputStream(bsh.args[1]);
+for (;;) {
+	count = in.read(buffer);
+	if (count <= 0)
+		break;
+	out.write(buffer, 0, count);
+}
+in.close();
+out.close();
+
+if (new File(bsh.args[0]).canExecute())
+	new File(bsh.args[1]).setExecutable(true);
