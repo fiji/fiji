@@ -624,6 +624,12 @@ public class MiniMaven {
 			return parent.getProperty(key);
 		}
 
+		protected POM[] getChildren() {
+			if (children == null)
+				return new POM[0];
+			return children;
+		}
+
 		protected POM getRoot() {
 			POM result = this;
 			while (result.parent != null)
@@ -642,7 +648,7 @@ public class MiniMaven {
 			if (parent == null)
 				result.add("http://repo1.maven.org/maven2/");
 			result.addAll(repositories);
-			for (POM child : children)
+			for (POM child : getChildren())
 				if (child != null)
 					child.getRepositories(result);
 		}
@@ -658,7 +664,7 @@ public class MiniMaven {
 				return this;
 			if (dependency.groupId == null && dependency.artifactId.equals("jdom"))
 				dependency.groupId = "jdom";
-			for (POM child : children) {
+			for (POM child : getChildren()) {
 				if (child == null)
 					continue;
 				POM result = child.findPOM(dependency, quiet);
@@ -934,8 +940,11 @@ public class MiniMaven {
 		public void append(StringBuilder builder, String indent) {
 			builder.append(indent + coordinate.groupId + ">" + coordinate.artifactId + "\n");
 			if (children != null)
-				for (POM child : children)
-					child.append(builder, indent + "  ");
+				for (POM child : getChildren())
+					if (child == null)
+						builder.append(indent).append("  (null)\n");
+					else
+						child.append(builder, indent + "  ");
 		}
 	}
 
@@ -1254,7 +1263,7 @@ public class MiniMaven {
 				if (result.contains(pom) || !pom.buildFromSource)
 					continue;
 				result.add(pom);
-				for (POM child : pom.children)
+				for (POM child : pom.getChildren())
 					stack.push(child);
 			}
 			for (POM pom2 : result)
