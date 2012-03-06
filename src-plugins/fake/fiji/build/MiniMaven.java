@@ -539,20 +539,13 @@ public class MiniMaven {
 
 		public void getDependencies(Set<POM> result, boolean excludeOptionals, String... excludeScopes) throws IOException, ParserConfigurationException, SAXException {
 			for (Coordinate dependency : dependencies) {
-				boolean optional = dependency.optional;
-				if (excludeOptionals && optional)
+				if (excludeOptionals && dependency.optional)
 					continue;
 				String scope = expand(dependency.scope);
 				if (scope != null && excludeScopes != null && arrayContainsString(excludeScopes, scope))
 					continue;
-				String groupId = expand(dependency.groupId);
-				String artifactId = expand(dependency.artifactId);
-				String version = expand(dependency.version);
-				String classifier = expand(dependency.classifier);
-				if (version == null && "aopalliance".equals(artifactId))
-					optional = true; // guice has recorded this without a version
+				Coordinate expanded = expand(dependency);
 				String systemPath = expand(dependency.systemPath);
-				Coordinate expanded = new Coordinate(groupId, artifactId, version, scope, optional, systemPath, classifier);
 				if (systemPath != null) {
 					File file = new File(systemPath);
 					if (file.exists()) {
@@ -576,6 +569,19 @@ public class MiniMaven {
 		}
 
 		// expands ${<property-name>}
+		public Coordinate expand(Coordinate dependency) {
+			boolean optional = dependency.optional;
+			String scope = expand(dependency.scope);
+			String groupId = expand(dependency.groupId);
+			String artifactId = expand(dependency.artifactId);
+			String version = expand(dependency.version);
+			String classifier = expand(dependency.classifier);
+			if (version == null && "aopalliance".equals(artifactId))
+				optional = true; // guice has recorded this without a version
+			String systemPath = expand(dependency.systemPath);
+			return new Coordinate(groupId, artifactId, version, scope, optional, systemPath, classifier);
+		}
+
 		public String expand(String string) {
 			if (string == null)
 				return null;
