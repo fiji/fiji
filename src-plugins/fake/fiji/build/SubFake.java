@@ -97,25 +97,21 @@ public class SubFake extends Rule {
 		File file = new File(Util.makePath(parser.cwd, getLastPrerequisite()), "pom.xml");
 		if (!file.exists())
 			return null;
-		// look for parent POMs (e.g. in modules/)
-		for (;;) {
-			File parent = file.getParentFile();
-			if (parent == null)
-				break;
-			parent = parent.getParentFile();
-			if (parent == null)
-				break;
-			File file2 = new File(parent, "pom.xml");
-			if (!file2.exists())
-				break;
-			file = file2;
-		}
 		String targetBasename = jarName.substring(jarName.lastIndexOf('/') + 1);
 		if (targetBasename.endsWith(".jar"))
 			targetBasename = targetBasename.substring(0, targetBasename.length() - 4);
 		// TODO: targetBasename could end in "-<version>"
 		try {
-			POM pom = new MiniMaven(parser.fake, parser.fake.err, getVarBool("VERBOSE"), getVarBool("DEBUG")).parse(file);
+			MiniMaven miniMaven = new MiniMaven(parser.fake, parser.fake.err, getVarBool("VERBOSE"), getVarBool("DEBUG"));
+			String ijDir = System.getProperty("ij.dir");
+			if (ijDir != null) {
+				File submodules = new File(ijDir, "modules");
+				if (submodules.exists()) {
+					miniMaven.addMultiProjectRoot(submodules);
+					miniMaven.excludeFromMultiProjects(file.getParentFile());
+				}
+			}
+			POM pom = miniMaven.parse(file);
 			if (targetBasename.equals(pom.getArtifact()))
 				return pom;
 			return pom.findPOM(new Coordinate(null, targetBasename, null));

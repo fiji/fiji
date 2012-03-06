@@ -84,36 +84,7 @@ public class MiniMaven {
 	}
 
 	public POM parse(File file) throws IOException, ParserConfigurationException, SAXException {
-		File directory = file.getCanonicalFile().getParentFile();
-
-		// look for root pom.xml
-		File parentDirectory = directory.getParentFile();
-		if (!parentDirectory.exists() || !new File(parentDirectory, "pom.xml").exists())
-			return parse(file, null);
-
-		Stack<String> stack = new Stack<String>();
-		for (;;) {
-			stack.push(directory.getName());
-			directory = parentDirectory;
-			parentDirectory = directory.getParentFile();
-			if (!parentDirectory.exists() || !new File(parentDirectory, "pom.xml").exists())
-				break;
-		}
-		POM pom = parse(new File(directory, "pom.xml"), null);
-		// walk back up to the desired pom.xml
-		while (!stack.empty()) {
-			String name = stack.pop();
-			POM next = null;
-			for (POM child : pom.children)
-				if (child.directory.getName().equals(name)) {
-					next = child;
-					break;
-				}
-			if (next == null)
-				next = pom.addModule(name);
-			pom = next;
-		}
-		return pom;
+		return parse(file, null);
 	}
 
 	public POM parse(File file, POM parent) throws IOException, ParserConfigurationException, SAXException {
