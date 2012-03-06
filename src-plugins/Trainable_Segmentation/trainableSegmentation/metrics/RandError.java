@@ -226,7 +226,7 @@ public class RandError extends Metrics
 	 * @param minThreshold minimum threshold value to binarize the input images
 	 * @param maxThreshold maximum threshold value to binarize the input images
 	 * @param stepThreshold threshold step value to use during binarization
-	 * @return rand index value and derived statistics for each threshold
+	 * @return Rand index value and derived statistics for each threshold
 	 */
 	public ArrayList< ClassificationStatistics > getRandIndexStats(
 			double minThreshold,
