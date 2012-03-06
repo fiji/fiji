@@ -991,7 +991,8 @@ public class MiniMaven {
 		String message = quiet ? null : "Downloading " + dependency.artifactId;
 		String baseURL = repositoryURL + path;
 		downloadAndVerify(baseURL + dependency.getPOMName(), directory, null);
-		downloadAndVerify(baseURL + dependency.getJarName(), directory, message);
+		if (!isAggregatorPOM(new File(directory, dependency.getPOMName())))
+			downloadAndVerify(baseURL + dependency.getJarName(), directory, message);
 	}
 
 	protected void downloadAndVerify(String url, File directory, String message) throws IOException, NoSuchAlgorithmException {
@@ -1094,6 +1095,61 @@ public class MiniMaven {
 			else if (qName.equals("version")) {
 				version = new String(ch, start, length).trim();
 			}
+		}
+	}
+
+	protected boolean isAggregatorPOM(File xml) {
+		if (!xml.exists())
+			return false;
+		try {
+			return isAggregatorPOM(new FileInputStream(xml));
+		} catch (IOException e) {
+			e.printStackTrace(err);
+			return false;
+		}
+	}
+
+	protected boolean isAggregatorPOM(final InputStream in) {
+		final RuntimeException yes = new RuntimeException(), no = new RuntimeException();
+		try {
+			DefaultHandler handler = new DefaultHandler() {
+				protected int level = 0;
+
+				@Override
+				public void startElement(String uri, String localName, String qName, Attributes attributes) {
+					if ((level == 0 && "project".equals(qName)) || (level == 1 && "packaging".equals(qName)))
+						level++;
+				}
+
+				@Override
+				public void endElement(String uri, String localName, String qName) {
+					if (level > 0)
+						level--;
+				}
+
+				@Override
+				public void characters(char[] ch, int start, int length) {
+					if (level == 2)
+						throw "pom".equals(new String(ch, start, length)) ? yes : no;
+				}
+			};
+			XMLReader reader = SAXParserFactory.newInstance().newSAXParser().getXMLReader();
+			reader.setContentHandler(handler);
+			reader.parse(new InputSource(in));
+			in.close();
+			return false;
+		} catch (Exception e) {
+			try {
+				in.close();
+			} catch (IOException e2) {
+				e2.printStackTrace(err);
+			}
+			if (e == yes)
+				return true;
+			if (e == no)
+				return false;
+			e.printStackTrace(err);
+			return false;
 		}
 	}
 
