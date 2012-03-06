@@ -22,7 +22,9 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -49,6 +51,8 @@ public class MiniMaven {
 	protected int updateInterval = 24 * 60; // by default, check once per 24h for new snapshot versions
 	protected PrintStream err;
 	protected Map<String, POM> localPOMCache = new HashMap<String, POM>();
+	protected Stack<File> multiProjectRoots = new Stack<File>();
+	protected Set<File> excludedFromMultiProjects = new HashSet<File>();
 	protected Fake fake;
 
 	public MiniMaven(Fake fake, PrintStream err, boolean verbose) throws FakeException {
@@ -167,6 +171,22 @@ public class MiniMaven {
 		else if (dependency.artifactId.equals("jfreechart"))
 			pom.dependencies.add(new Coordinate("jfree", "jcommon", "1.0.16"));
 		return pom;
+	}
+
+	public void addMultiProjectRoot(File root) {
+		try {
+			multiProjectRoots.push(root.getCanonicalFile());
+		} catch (IOException e) {
+			multiProjectRoots.push(root);
+		}
+	}
+
+	public void excludeFromMultiProjects(File directory) {
+		try {
+			excludedFromMultiProjects.add(directory.getCanonicalFile());
+		} catch (IOException e) {
+			excludedFromMultiProjects.add(directory);
+		}
 	}
 
 	protected static class Coordinate {
@@ -671,7 +691,7 @@ public class MiniMaven {
 				if (result != null)
 					return result;
 			}
-			// for the root POM, fall back to $HOME/.m2/repository/ and Fiji's jars/ and plugins/ directories
+			// for the root POM, fall back to Fiji's modules/, $HOME/.m2/repository/ and Fiji's jars/ and plugins/ directories
 			if (parent == null)
 				return findLocallyCachedPOM(dependency, quiet);
 			return null;
@@ -686,6 +706,10 @@ public class MiniMaven {
 				if (result == null || dependency.version == null || compareVersion(dependency.version, result.coordinate.version) <= 0)
 					return result;
 			}
+
+			POM pom = findInMultiProjects(dependency);
+			if (pom != null)
+				return pom;
 
 			if (ignoreMavenRepositories) {
 				File file = findInFijiDirectories(dependency);
@@ -751,10 +775,34 @@ public class MiniMaven {
 					result.coordinate.version = dependency.version;
 					result.target = new File(result.directory, dependency.getJarName());
 				}
+				if (result.parent == null)
+					result.parent = getRoot();
 			}
 			else if (!quiet && !dependency.optional)
 				err.println("Artifact " + dependency.artifactId + " not found" + (downloadAutomatically ? "" : "; consider 'get-dependencies'"));
 			return cacheAndReturn(key, result);
+		}
+
+		protected POM findInMultiProjects(Coordinate dependency) throws IOException, ParserConfigurationException, SAXException {
+			while (!multiProjectRoots.empty()) {
+				File root = multiProjectRoots.pop();
+				if (root == null || !root.exists())
+					continue;
+				File[] list = root.listFiles();
+				if (list == null)
+					continue;
+				Arrays.sort(list);
+				for (File directory : list) {
+					if (excludedFromMultiProjects.contains(directory))
+						continue;
+					File file = new File(directory, "pom.xml");
+					if (!file.exists())
+						continue;
+					parse(file, null);
+				}
+			}
+			String key = dependency.groupId + ">" + dependency.artifactId;
+			return localPOMCache.get(key);
 		}
 
 		protected File findInFijiDirectories(Coordinate dependency) {
