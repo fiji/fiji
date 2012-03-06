@@ -14,10 +14,11 @@ import com.mxgraph.view.mxCellState;
  * spots objects. It displays an image on the left, that scales with the cell dimension,
  * and a label on the right.
  *<p>
- * We re-used the JGraphX classes as far as we could, which turned to necessitate
- * only to recalculate the image bounds to have then scaling with the cell size.
+ * We re-used the JGraphX classes as far as we could. It turned out we
+ * only need to recalculate the image bounds to have them scaling with 
+ * the cell size.
  *   
- * @author Jean-Yves Tinevez <jeanyves.tinevez@gmail.com> Mar 15, 2011
+ * @author Jean-Yves Tinevez <jeanyves.tinevez@gmail.com> Mar 2011 - 2012
  */
 public class mxScaledLabelShape extends mxRectangleShape {
 

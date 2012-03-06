@@ -43,6 +43,8 @@ import fiji.plugin.trackmate.tracking.TrackerSettings;
 
 
 public class TmXmlReader {
+	
+	private static final boolean DEBUG = false;
 
 
 	private Document document = null;
@@ -71,7 +73,7 @@ public class TmXmlReader {
 	 * the other getter methods.
 	 */
 	public void parse() throws JDOMException,  IOException {
-//		SAXBuilder sb = new LineNumberSAXBuilder();
+		//		SAXBuilder sb = new LineNumberSAXBuilder();
 		SAXBuilder sb = new SAXBuilder();
 		document = sb.build(file);
 		root = document.getRootElement();
@@ -102,7 +104,7 @@ public class TmXmlReader {
 		model.setSpots(allSpots, false);
 		model.setFilteredSpots(filteredSpots, false);
 		// Tracks
-		SimpleWeightedGraph<Spot, DefaultWeightedEdge> graph = readTracks(filteredSpots);
+		SimpleWeightedGraph<Spot, DefaultWeightedEdge> graph = readTrackGraph(filteredSpots);
 		if (null != graph) {
 			model.setGraph(graph);
 		}
@@ -113,6 +115,8 @@ public class TmXmlReader {
 		Set<Integer> filteredTrackIndices = getFilteredTracks();
 		if (null != filteredTrackIndices) {
 			model.setVisibleTrackIndices(filteredTrackIndices, false);
+			model.setTrackSpots(readTrackSpots(graph));
+			model.setTrackEdges(readTrackEdges(graph));
 		}
 		// Return
 		return model;
@@ -264,20 +268,20 @@ public class TmXmlReader {
 			}
 		}
 		settings.segmenter = segmenter;
-		
+
 		// Deal with segmenter settings
 		SegmenterSettings ss = segmenter.createDefaultSettings();
 		String segmenterSettingsClassName = element.getAttributeValue(SEGMENTER_SETTINGS_CLASS_ATTRIBUTE_NAME);
 
 		if (null == segmenterSettingsClassName) {
-			
+
 			logger.error("Segmenter settings class is not present,\n");
 			logger.error("substituting default one.\n");
-			
+
 		} else {
-			
+
 			if (segmenterSettingsClassName.equals(ss.getClass().getName())) {
-				
+
 				// The saved class matched, we can updated the settings created above with the file content
 				ss.unmarshall(element);
 
@@ -285,17 +289,17 @@ public class TmXmlReader {
 
 				// They do not match. We DO NOT give priority to what has been saved. That way we always
 				// have something that works (when invoking the process methods of the plugin).
-				
+
 				logger.error("Tracker settings class ("+segmenterSettingsClassName+") does not match tracker requirements (" +
 						ss.getClass().getName()+"),\n");
 				logger.error("substituting default one.\n");
-				
+
 			}
 		}
 		settings.segmenterSettings = ss;
 
 	}
-	
+
 	/**
 	 * Update the given {@link Settings} object with the {@link TrackerSettings} and {@link SpotTracker} fields
 	 * named {@link Settings#trackerSettings} and {@link Settings#tracker} read within the XML file
@@ -346,10 +350,10 @@ public class TmXmlReader {
 			TrackerSettings ts = tracker.createDefaultSettings();
 			String trackerSettingsClassName = element.getAttributeValue(TRACKER_SETTINGS_CLASS_ATTRIBUTE_NAME);
 			if (null == trackerSettingsClassName) {
-				
+
 				logger.error("Tracker settings class is not present,\n");
 				logger.error("substituting default one.\n");
-				
+
 			} else {
 
 				if (trackerSettingsClassName.equals(ts.getClass().getName())) {
@@ -361,7 +365,7 @@ public class TmXmlReader {
 
 					// They do not match. We DO NOT give priority to what has been saved. That way we always
 					// have something that works (when invoking the process methods of the plugin).
-					
+
 					logger.error("Tracker settings class ("+trackerSettingsClassName+") does not match tracker requirements (" +
 							ts.getClass().getName()+"),\n");
 					logger.error("substituting default one.\n");
@@ -454,14 +458,15 @@ public class TmXmlReader {
 	}
 
 	/**
-	 * Load the graph mapping spot linking as tracks. The graph vertices are made of the selected spot
+	 * Load and build a new graph mapping spot linking as tracks. The graph vertices are made of the selected spot
 	 * list given in argument. Edges are formed from the file data.
 	 * <p>
 	 * The track features are not retrieved by this method. They must be recalculated from the model.
+	 * 
 	 * @param selectedSpots  the spot selection from which tracks area made 
 	 */
 	@SuppressWarnings("unchecked")
-	public SimpleWeightedGraph<Spot, DefaultWeightedEdge> readTracks(final SpotCollection spots) {
+	public SimpleWeightedGraph<Spot, DefaultWeightedEdge> readTrackGraph(final SpotCollection spots) {
 
 		Element allTracksElement = root.getChild(TRACK_COLLECTION_ELEMENT_KEY);
 		if (null == allTracksElement)
@@ -480,10 +485,10 @@ public class TmXmlReader {
 		boolean sourceFound, targetFound;
 
 		for (Element trackElement : trackElements) {
-			
+
 			// Get track ID as it is saved on disk
 			int trackID = readIntAttribute(trackElement, TRACK_ID_ATTRIBUTE_NAME, logger);
-			
+
 			edgeElements = trackElement.getChildren(TRACK_EDGE_ELEMENT_KEY);
 			for (Element edgeElement : edgeElements) {
 				// Get source and target ID for this edge
@@ -509,16 +514,16 @@ public class TmXmlReader {
 					}
 					if (targetFound && sourceFound) {
 						if (sourceSpot.equals(targetSpot)) {
-//							LineNumberElement lne = (LineNumberElement) edgeElement;
+							//							LineNumberElement lne = (LineNumberElement) edgeElement;
 							logger.error("Bad edge found for track "+trackID);
-//									+": loop edge at line "+lne.getStartLine()+". Skipping.\n");
+							//									+": loop edge at line "+lne.getStartLine()+". Skipping.\n");
 							break;
 						}
 						DefaultWeightedEdge edge = graph.addEdge(sourceSpot, targetSpot);
 						if (edge == null) {
-//							LineNumberElement lne = (LineNumberElement) edgeElement;
+							//							LineNumberElement lne = (LineNumberElement) edgeElement;
 							logger.error("Bad edge found for track "+trackID);
-//									+": duplicate edge at line "+lne.getStartLine()+". Skipping.\n");
+							//									+": duplicate edge at line "+lne.getStartLine()+". Skipping.\n");
 							break;
 						} else {
 							graph.setEdgeWeight(edge, weight);
@@ -529,6 +534,203 @@ public class TmXmlReader {
 			}
 		}
 		return graph;
+	}
+
+
+	/**
+	 * Read the tracks stored in the file as a list of set of spots.
+	 * <p>
+	 * This methods ensures that the indices of the track in the returned list match the indices 
+	 * stored in the file. Because we want this list to be made of the same objects used everywhere,
+	 * we build it from the track graph that can be built calling {@link #readTrackGraph(SpotCollection)}.  
+	 * <p>
+	 * Each track is returned as a set of spot. The set itself is sorted by increasing time.
+	 * 
+	 * @param graph  the graph to retrieve spot objects from 
+	 * @return  a list of tracks as a set of spots
+	 */
+	@SuppressWarnings("unchecked")
+	public List<Set<Spot>> readTrackSpots(final SimpleWeightedGraph<Spot, DefaultWeightedEdge> graph) {
+
+		Element allTracksElement = root.getChild(TRACK_COLLECTION_ELEMENT_KEY);
+		if (null == allTracksElement)
+			return null;
+
+		// Retrieve all spots from the graph
+		final Set<Spot> spots = graph.vertexSet();
+
+		// Load tracks
+		List<Element> trackElements = allTracksElement.getChildren(TRACK_ELEMENT_KEY);
+		final int nTracks = trackElements.size();
+
+		// Prepare holder for results
+		final ArrayList<Set<Spot>> trackSpots = new ArrayList<Set<Spot>>(nTracks);
+		// Fill it with null value so that it is of size nTracks, and we can later put the real tracks
+		for (int i = 0; i < nTracks; i++) {
+			trackSpots.add(null);
+		}
+
+		List<Element> edgeElements;
+		int sourceID, targetID;
+		boolean sourceFound, targetFound;
+
+		for (Element trackElement : trackElements) {
+
+			// Get track ID as it is saved on disk
+			int trackID = readIntAttribute(trackElement, TRACK_ID_ATTRIBUTE_NAME, logger);
+
+			
+			// Instantiate current track
+			HashSet<Spot> track = new HashSet<Spot>(2*trackElements.size()); // approx
+
+			edgeElements = trackElement.getChildren(TRACK_EDGE_ELEMENT_KEY);
+			for (Element edgeElement : edgeElements) {
+
+				// Get source and target ID for this edge
+				sourceID = readIntAttribute(edgeElement, TRACK_EDGE_SOURCE_ATTRIBUTE_NAME, logger);
+				targetID = readIntAttribute(edgeElement, TRACK_EDGE_TARGET_ATTRIBUTE_NAME, logger);
+
+				// Retrieve corresponding spots from their ID
+				targetFound = false;
+				sourceFound = false;
+				
+				for (Spot spot : spots) {
+					if (!sourceFound  && spot.ID() == sourceID) {
+						track.add(spot);
+						sourceFound = true;
+						if (DEBUG) {
+							System.out.println("[TmXmlReader] readTrackSpots: in track "+trackID+", found spot "+spot);
+							System.out.println("[TmXmlReader] readTrackSpots: the track "+trackID+" has the following spots: "+track);
+						}
+					}
+					if (!targetFound  && spot.ID() == targetID) {
+						track.add(spot);
+						targetFound = true;
+						if (DEBUG) {
+							System.out.println("[TmXmlReader] readTrackSpots: in track "+trackID+", found spot "+spot);
+							System.out.println("[TmXmlReader] readTrackSpots: the track "+trackID+" has the following spots: "+track);
+						}
+					}
+					if (targetFound && sourceFound) {
+						break;
+					}
+				}
+
+			} // looping over all edges
+
+			trackSpots.set(trackID, track);
+			
+			if (DEBUG) {
+				System.out.println("[TmXmlReader] readTrackSpots: the track "+trackID+" has the following spots: "+track);
+			}
+
+
+		} // looping over all track elements
+
+		return trackSpots;
+	}
+
+	/**
+	 * Read the tracks stored in the file as a list of set of edges.
+	 * <p>
+	 * This methods ensures that the indices of the track in the returned list match the indices 
+	 * stored in the file. Because we want this list to be made of the same objects used everywhere,
+	 * we build it from the track graph that can be built calling {@link #readTrackGraph(SpotCollection)}.  
+	 * <p>
+	 * Each track is returned as a set of edges.
+	 * 
+	 * @param graph  the graph to retrieve spot objects from 
+	 * @return  a list of tracks as a set of edges
+	 */
+	@SuppressWarnings("unchecked")
+	public List<Set<DefaultWeightedEdge>> readTrackEdges(final SimpleWeightedGraph<Spot, DefaultWeightedEdge> graph) {
+
+		Element allTracksElement = root.getChild(TRACK_COLLECTION_ELEMENT_KEY);
+		if (null == allTracksElement)
+			return null;
+
+		// Retrieve all spots from the graph
+		final Set<Spot> spots = graph.vertexSet();
+
+		// Load tracks
+		List<Element> trackElements = allTracksElement.getChildren(TRACK_ELEMENT_KEY);
+		final int nTracks = trackElements.size();
+
+		// Prepare holder for results
+		final ArrayList<Set<DefaultWeightedEdge>> trackEdges = new ArrayList<Set<DefaultWeightedEdge>>(nTracks);
+		// Fill it with null value so that it is of size nTracks, and we can later put the real tracks
+		for (int i = 0; i < nTracks; i++) {
+			trackEdges.add(null);
+		}
+
+		List<Element> edgeElements;
+		int sourceID, targetID;
+		Spot sourceSpot, targetSpot;
+		boolean sourceFound, targetFound;
+
+		for (Element trackElement : trackElements) {
+
+			// Get all edge elements
+			edgeElements = trackElement.getChildren(TRACK_EDGE_ELEMENT_KEY);
+
+			// Get track ID as it is saved on disk
+			int trackID = readIntAttribute(trackElement, TRACK_ID_ATTRIBUTE_NAME, logger);
+
+			// Instantiate current track
+			HashSet<DefaultWeightedEdge> track = new HashSet<DefaultWeightedEdge>(edgeElements.size());
+
+			for (Element edgeElement : edgeElements) {
+
+				// Get source and target ID for this edge
+				sourceID = readIntAttribute(edgeElement, TRACK_EDGE_SOURCE_ATTRIBUTE_NAME, logger);
+				targetID = readIntAttribute(edgeElement, TRACK_EDGE_TARGET_ATTRIBUTE_NAME, logger);
+
+				// Retrieve corresponding spots from their ID
+				targetFound = false;
+				sourceFound = false;
+				targetSpot = null;
+				sourceSpot = null;
+
+				for (Spot spot : spots) {
+					if (!sourceFound  && spot.ID() == sourceID) {
+						sourceSpot = spot;
+						sourceFound = true;
+					}
+					if (!targetFound  && spot.ID() == targetID) {
+						targetSpot = spot;
+						targetFound = true;
+					}
+					if (targetFound && sourceFound) {
+						if (sourceSpot.equals(targetSpot)) {
+							logger.error("Bad edge found for track "+trackID+": target spot equals source spot.\n");
+							break;
+						}
+						
+						// Retrieve possible edges from graph
+						Set<DefaultWeightedEdge> edges = graph.getAllEdges(sourceSpot, targetSpot);
+						
+						if (edges.size() != 1) {
+							logger.error("Bad edge found for track "+trackID+": found "+edges.size()+" edges.\n");
+							break;
+						} else {
+							DefaultWeightedEdge edge = edges.iterator().next();
+							track.add(edge);
+							if (DEBUG) {
+								System.out.println("[TmXmlReader] readTrackEdges: in track "+trackID+", found edge "+edge);
+							}
+
+						}
+						break;
+					}
+
+				}
+			} // looping over all edges
+
+			trackEdges.set(trackID, track);
+
+		} // looping over all track elements
+
+		return trackEdges;
 	}
 
 	/**

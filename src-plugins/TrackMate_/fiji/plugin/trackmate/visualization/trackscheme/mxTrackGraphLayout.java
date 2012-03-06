@@ -159,6 +159,9 @@ public class mxTrackGraphLayout extends mxGraphLayout {
 
 				// Get Tracks
 				final Set<Spot> track = model.getTrackSpots(i);
+				if (DEBUG) {
+					System.out.println("[mxTrackGraphLayout] execute: Track nbr "+i+": "+model.trackToString(i));
+				}
 
 				// Sort by ascending order
 				SortedSet<Spot> sortedTrack = new TreeSet<Spot>(SpotImp.frameComparator);

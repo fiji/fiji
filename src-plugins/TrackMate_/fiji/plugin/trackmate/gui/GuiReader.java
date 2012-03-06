@@ -292,7 +292,7 @@ public class GuiReader {
 
 
 		{ // Try reading the tracks
-			SimpleWeightedGraph<Spot, DefaultWeightedEdge> graph = reader.readTracks(model.getFilteredSpots());
+			SimpleWeightedGraph<Spot, DefaultWeightedEdge> graph = reader.readTrackGraph(model.getFilteredSpots());
 			if (graph == null) {
 				targetDescriptor = TrackerConfigurationPanelDescriptor.DESCRIPTOR;
 				displayer.setModel(model);
@@ -305,6 +305,8 @@ public class GuiReader {
 				return;
 			}
 			model.setGraph(graph);
+			model.setTrackSpots(reader.readTrackSpots(graph));
+			model.setTrackEdges(reader.readTrackEdges(graph));
 			trackerDescriptor.aboutToDisplayPanel();
 			logger.log("  Reading tracks done.\n");
 		}

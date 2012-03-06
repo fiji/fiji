@@ -155,8 +155,6 @@ public class TrackOverlay implements Overlay {
 			break;
 		}
 
-		System.out.println("[TrackOverlay] paint: visible tracks are: "+filteredTrackIndices); // DEBUG
-
 		float sourceFrame, transparency;
 		switch (trackDisplayMode) {
 
