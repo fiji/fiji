@@ -190,7 +190,8 @@ public class WekaSegmentation {
 			false, 	/* Derivatives */
 			false, 	/* Laplacian */
 			false,	/* Structure */
-			false	/* Entropy */
+			false,	/* Entropy */
+			false	/* Neighbors */
 	};
 	/** use neighborhood flag */
 	private boolean useNeighbors = false;

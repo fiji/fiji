@@ -20,7 +20,8 @@ package trainableSegmentation;
  * - Laplacian filter
  * - Eigenvalues of the Structure tensor
  * - Color features: HSB (if the input image is RGB)
- * - Entropy 
+ * - Entropy
+ * - Neighbors 
  * 
  * filters to come:
  * - histogram patch
@@ -151,15 +152,17 @@ public class FeatureStack
 	public static final int LAPLACIAN				= 16;
 	/** structure tensor filter flag index */
 	public static final int STRUCTURE				= 17;
-	/** structure tensor filter flag index */
+	/** entropy filter flag index */
 	public static final int ENTROPY					= 18;
+	/** neighbors feature flag index */
+	public static final int NEIGHBORS				= 19;
 	
 	/** names of available filters */
 	public static final String[] availableFeatures 
 		= new String[]{	"Gaussian_blur", "Sobel_filter", "Hessian", "Difference_of_gaussians", 
 					   	"Membrane_projections","Variance","Mean", "Minimum", "Maximum", "Median", 
 					   	"Anisotropic_diffusion", "Bilateral", "Lipschitz", "Kuwahara", "Gabor" , 
-					   	"Derivatives", "Laplacian", "Structure", "Entropy"};
+					   	"Derivatives", "Laplacian", "Structure", "Entropy", "Neighbors"};
 	/** flags of filters to be used */
 	private boolean[] enableFeatures = new boolean[]{
 			true, 	/* Gaussian_blur */
@@ -180,7 +183,8 @@ public class FeatureStack
 			false, 	/* Derivatives */
 			false, 	/* Laplacian */
 			false,	/* Structure */
-			false	/* Entropy */
+			false,	/* Entropy */
+			false	/* Neighbors */
 	};
 	
 	/** use neighborhood flag */
@@ -388,6 +392,66 @@ public class FeatureStack
 				ImageProcessor ip = originalImage.getProcessor().duplicate();
 				Entropy_Filter filter = new Entropy_Filter();
 				return new ImagePlus (availableFeatures[ENTROPY] + "_" + radius + "_" + numBins, filter.getEntropy(ip, radius, numBins));
+			}
+		};
+	}
+	
+	/**
+	 * Add 8 neighbors of the original image as features
+	 */
+	public void addNeighbors()
+	{
+		// Test: add neighbors of original image
+		double[][] neighborhood = new double[8][originalImage.getWidth() * originalImage.getHeight()];		
+		
+		for(int x=0, n=0; x<originalImage.getWidth(); x++)
+			for(int y=0; y<originalImage.getHeight(); y++, n++)
+			{
+				for(int i=-1, k=0;  i < 2; i++)
+					for(int j = -1; j < 2; j++, k++)
+					{
+						if(i==0 && j==0)
+							continue;				
+						neighborhood[k][n] = getPixelMirrorConditions(getProcessor(1), x+i, y+j);						
+					}
+			}
+		for(int i=0; i<8; i++)
+			wholeStack.addSlice(availableFeatures[ NEIGHBORS] + "_" +  i, new FloatProcessor( width, height, neighborhood[ i ]));
+	}
+	
+	/**
+	 * Calculate 8 neighbors  concurrently
+	 * @param originalImage original input image
+	 * @return result image
+	 */
+	public Callable<ImagePlus> getNeighbors(
+			final ImagePlus originalImage)
+	{
+		if (Thread.currentThread().isInterrupted()) 
+			return null;
+		
+		return new Callable<ImagePlus>(){
+			public ImagePlus call(){
+		
+				// Test: add neighbors of original image
+				double[][] neighborhood = new double[8][originalImage.getWidth() * originalImage.getHeight()];		
+				
+				for(int x=0, n=0; x<originalImage.getWidth(); x++)
+					for(int y=0; y<originalImage.getHeight(); y++, n++)
+					{
+						for(int i=-1, k=0;  i < 2; i++)
+							for(int j = -1; j < 2; j++)
+							{
+								if(i==0 && j==0)
+									continue;				
+								neighborhood[k][n] = getPixelMirrorConditions(getProcessor(1), x+i, y+j);
+								k++;
+							}
+					}
+				ImageStack result = new ImageStack( originalImage.getWidth(), originalImage.getHeight() );
+				for(int i=0; i<8; i++)
+					result.addSlice(availableFeatures[ NEIGHBORS] + "_" +  i, new FloatProcessor( originalImage.getWidth(), originalImage.getHeight(), neighborhood[ i ]));
+				return new ImagePlus("Neighbors", result);
 			}
 		};
 	}
@@ -2553,6 +2617,10 @@ public class FeatureStack
 			addMembraneFeatures(membranePatchSize, membraneSize);
 		}
 		
+		// Neighbors
+		if( enableFeatures[ NEIGHBORS ])
+			addNeighbors();
+		
 		IJ.showProgress(1.0);
 		IJ.showStatus("Features stack is updated now!");
 	}
@@ -2827,6 +2895,10 @@ public class FeatureStack
 			//IJ.log( n++ +": Calculating Membranes projections ("+ membranePatchSize + ", " + membraneSize + ")");
 			addMembraneFeatures(membranePatchSize, membraneSize);
 		}
+		
+		// Neighbors
+		if( enableFeatures[ NEIGHBORS ])
+			addNeighbors();
 		
 		IJ.showProgress(1.0);
 		IJ.showStatus("Features stack is updated now!");
@@ -3107,6 +3179,10 @@ public class FeatureStack
 				futures.add(exe.submit( getMembraneFeatures(originalImage, membranePatchSize, membraneSize) ));
 			}
 
+			// Neighbors
+			if( enableFeatures[ NEIGHBORS ])
+				futures.add(exe.submit( getNeighbors( originalImage ) ));
+			
 			// Wait for the jobs to be done
 			for(Future<ImagePlus> f : futures)
 			{
