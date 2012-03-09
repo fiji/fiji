@@ -236,7 +236,7 @@ public class PixelError extends Metrics
 		for(double th =  minThreshold; th <= maxThreshold; th += stepThreshold)
 		{
 			if( verbose ) 
-				IJ.log("  Calculating pixel error statistics for threshold value " + String.format("%.2f", th) + "...");
+				IJ.log("  Calculating pixel error statistics for threshold value " + String.format("%.3f", th) + "...");
 			cs.add( getPrecisionRecallStats( th ));
 			
 			final double fScore = cs.get( cs.size()-1 ).fScore;
@@ -261,7 +261,7 @@ public class PixelError extends Metrics
 	 * are binarized. 
 	 *  
 	 * @param binaryThreshold threshold value to binarize proposal (larger than 0 and smaller than 1)
-	 * @return pixel error value and derived satatistics
+	 * @return pixel error value and derived statistics
 	 */
 	public ClassificationStatistics getPrecisionRecallStats( double binaryThreshold )
 	{

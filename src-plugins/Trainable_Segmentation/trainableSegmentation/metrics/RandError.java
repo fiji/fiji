@@ -248,7 +248,7 @@ public class RandError extends Metrics
 		for(double th = minThreshold; th <= maxThreshold; th += stepThreshold)
 		{
 			if( verbose ) 
-				IJ.log("  Calculating Rand index statistics for threshold value " + String.format("%.2f", th) + "...");
+				IJ.log("  Calculating Rand index statistics for threshold value " + String.format("%.3f", th) + "...");
 			cs.add( getRandIndexStats( th ));
 			final double fScore = cs.get( cs.size()-1 ).fScore;
 			if( fScore > bestFscore )
