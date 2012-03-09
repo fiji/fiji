@@ -402,21 +402,38 @@ public class FeatureStack
 	public void addNeighbors()
 	{
 		// Test: add neighbors of original image
-		double[][] neighborhood = new double[8][originalImage.getWidth() * originalImage.getHeight()];		
+				
+		ImagePlus[] channels = extractChannels(originalImage);
+
+		ImagePlus[] results = new ImagePlus[ channels.length ];
+
+		for(int ch=0; ch < channels.length; ch++)
+		{
+			double[][] neighborhood = new double[8][originalImage.getWidth() * originalImage.getHeight()];		
+			
+			for(int x=0, n=0; x<originalImage.getWidth(); x++)
+				for(int y=0; y<originalImage.getHeight(); y++, n++)
+				{
+					for(int i=-1, k=0;  i < 2; i++)
+						for(int j = -1; j < 2; j++)
+						{
+							if(i==0 && j==0)
+								continue;				
+							neighborhood[k][n] = getPixelMirrorConditions(channels[ ch ].getProcessor(), x+i, y+j);
+							k++;
+						}
+				}
+			
 		
-		for(int x=0, n=0; x<originalImage.getWidth(); x++)
-			for(int y=0; y<originalImage.getHeight(); y++, n++)
-			{
-				for(int i=-1, k=0;  i < 2; i++)
-					for(int j = -1; j < 2; j++, k++)
-					{
-						if(i==0 && j==0)
-							continue;				
-						neighborhood[k][n] = getPixelMirrorConditions(getProcessor(1), x+i, y+j);						
-					}
-			}
-		for(int i=0; i<8; i++)
-			wholeStack.addSlice(availableFeatures[ NEIGHBORS] + "_" +  i, new FloatProcessor( width, height, neighborhood[ i ]));
+			ImageStack result = new ImageStack( originalImage.getWidth(), originalImage.getHeight() );
+			for(int i=0; i<8; i++)
+				result.addSlice(availableFeatures[ NEIGHBORS] + "_" +  i, new FloatProcessor( originalImage.getWidth(), originalImage.getHeight(), neighborhood[ i ]));
+			results[ ch ] = new ImagePlus("Neighbors", result);
+		}
+		ImagePlus merged = mergeResultChannels(results);
+		
+		for(int i=1; i<=merged.getImageStackSize(); i++)
+			wholeStack.addSlice(merged.getImageStack().getSliceLabel(i), merged.getImageStack().getPixels(i));
 	}
 	
 	/**
@@ -434,24 +451,34 @@ public class FeatureStack
 			public ImagePlus call(){
 		
 				// Test: add neighbors of original image
-				double[][] neighborhood = new double[8][originalImage.getWidth() * originalImage.getHeight()];		
+				ImagePlus[] channels = extractChannels(originalImage);
+
+				ImagePlus[] results = new ImagePlus[ channels.length ];
+
+				for(int ch=0; ch < channels.length; ch++)
+				{
+					double[][] neighborhood = new double[8][originalImage.getWidth() * originalImage.getHeight()];		
+					
+					for(int x=0, n=0; x<originalImage.getWidth(); x++)
+						for(int y=0; y<originalImage.getHeight(); y++, n++)
+						{
+							for(int i=-1, k=0;  i < 2; i++)
+								for(int j = -1; j < 2; j++)
+								{
+									if(i==0 && j==0)
+										continue;				
+									neighborhood[k][n] = getPixelMirrorConditions(channels[ ch ].getProcessor(), x+i, y+j);
+									k++;
+								}
+						}
+					
 				
-				for(int x=0, n=0; x<originalImage.getWidth(); x++)
-					for(int y=0; y<originalImage.getHeight(); y++, n++)
-					{
-						for(int i=-1, k=0;  i < 2; i++)
-							for(int j = -1; j < 2; j++)
-							{
-								if(i==0 && j==0)
-									continue;				
-								neighborhood[k][n] = getPixelMirrorConditions(getProcessor(1), x+i, y+j);
-								k++;
-							}
-					}
-				ImageStack result = new ImageStack( originalImage.getWidth(), originalImage.getHeight() );
-				for(int i=0; i<8; i++)
-					result.addSlice(availableFeatures[ NEIGHBORS] + "_" +  i, new FloatProcessor( originalImage.getWidth(), originalImage.getHeight(), neighborhood[ i ]));
-				return new ImagePlus("Neighbors", result);
+					ImageStack result = new ImageStack( originalImage.getWidth(), originalImage.getHeight() );
+					for(int i=0; i<8; i++)
+						result.addSlice(availableFeatures[ NEIGHBORS] + "_" +  i, new FloatProcessor( originalImage.getWidth(), originalImage.getHeight(), neighborhood[ i ]));
+					results[ ch ] = new ImagePlus("Neighbors", result);
+				}
+				return mergeResultChannels(results);
 			}
 		};
 	}
