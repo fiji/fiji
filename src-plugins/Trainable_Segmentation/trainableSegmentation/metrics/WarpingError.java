@@ -642,13 +642,24 @@ public class WarpingError extends Metrics {
 	{
 		ArrayList<ClassificationStatistics> stats = getRandIndexStats( minThreshold, maxThreshold, stepThreshold );
 	    // trainableSegmentation.utils.Utils.plotPrecisionRecall( stats );    
+	    
 	    double maxFScore = 0;
-
+	    double th = 0;
+	    double bestTh = 0;
+	    
 	    for(ClassificationStatistics stat : stats)
 	    {
 	    	if (stat.fScore > maxFScore)
+	    	{
 	    		maxFScore = stat.fScore;
-	    }	    
+	    		bestTh = th;  
+	    	}
+	    	th += stepThreshold;
+	    }	 
+	    
+	    if( verbose )
+			IJ.log(" ** Best F-score = " + maxFScore + ", with threshold = " + bestTh + " **\n");
+	    
 	    return maxFScore;
 	}
 
