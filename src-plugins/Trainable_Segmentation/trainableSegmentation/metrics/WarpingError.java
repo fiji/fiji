@@ -608,20 +608,24 @@ public class WarpingError extends Metrics {
 				
 		for(double th =  minThreshold; th <= maxThreshold; th += stepThreshold)
 		{
+			if( verbose )
+				IJ.log("  Calculating warping error statistics for threshold value " + String.format("%.3f", th) + "...");
+			
 			WarpingResults[] wrs = simplePointWarp2dMT(originalLabels, proposedLabels, mask, th);
 			
 			ImageStack is = new ImageStack( originalLabels.getWidth(), originalLabels.getHeight() );
 			for(int i = 0; i < wrs.length; i ++)
 				is.addSlice("warped source slice " + (i+1), wrs[i].warpedSource.getProcessor() );
 			
-			ImagePlus warpedSource = new ImagePlus ("warped source", is);
-			
-			if( verbose )
-				IJ.log("  Calculating warping error statistics for threshold value " + String.format("%.3f", th) + "...");
+			ImagePlus warpedSource = new ImagePlus ("warped source", is);						
 			
 			// We calculate the precision-recall value between the warped original labels and the 
 			// proposed labels 
-			cs.add( (new RandError( warpedSource, proposedLabels)).getRandIndexStats( th ) );
+			RandError randError = new RandError( warpedSource, proposedLabels );			
+			ClassificationStatistics stats = randError.getRandIndexStats( th );
+			if( verbose )
+				IJ.log("   F-score = " + stats.fScore );			
+			cs.add( stats );
 		}		
 		return cs;
 	}
