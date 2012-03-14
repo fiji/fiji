@@ -268,7 +268,7 @@ public class PixelError extends Metrics
 		final ImageStack labelSlices = originalLabels.getImageStack();
 		final ImageStack proposalSlices = proposedLabels.getImageStack();
 
-		double randIndex = 0;
+		double pixelError = 0;
 		double tp = 0;
 		double tn = 0;
 		double fp = 0;
@@ -291,7 +291,7 @@ public class PixelError extends Metrics
 			for(Future<ClassificationStatistics> f : futures)
 			{
 				ClassificationStatistics cs = f.get();
-				randIndex += cs.metricValue;
+				pixelError += cs.metricValue;
 				tp += cs.truePositives;
 				tn += cs.trueNegatives;
 				fp += cs.falsePositives;
@@ -307,7 +307,7 @@ public class PixelError extends Metrics
 			exe.shutdown();
 		}
 
-		return new ClassificationStatistics( tp, tn, fp, fn, randIndex / labelSlices.getSize() );
+		return new ClassificationStatistics( tp, tn, fp, fn, pixelError / labelSlices.getSize() );
 	}
 	
 	/**
