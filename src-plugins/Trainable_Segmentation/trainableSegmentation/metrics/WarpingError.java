@@ -501,7 +501,8 @@ public class WarpingError extends Metrics {
 	}
 	
 	/**
-	 * Get the best F-score of the pixel error over a set of thresholds 
+	 * Get the best F-score of the pixel error between proposed and original labels
+	 * over a set of thresholds 
 	 * 
 	 * @param minThreshold minimum threshold value to binarize the input images
 	 * @param maxThreshold maximum threshold value to binarize the input images
@@ -584,6 +585,43 @@ public class WarpingError extends Metrics {
 	}
 	
 	/**
+	 * Get the best F-score of the pixel error between proposed and original labels
+	 * (and all the way around) over a set of thresholds 
+	 * 
+	 * @param minThreshold minimum threshold value to binarize the input images
+	 * @param maxThreshold maximum threshold value to binarize the input images
+	 * @param stepThreshold threshold step value to use during binarization
+	 * @param verbose flag to print or not output information
+	 * @return maximal F-score of the pixel error
+	 */
+	public double getDualPixelErrorMaximalFScore(
+			double minThreshold,
+			double maxThreshold,
+			double stepThreshold )
+	{
+		ArrayList<ClassificationStatistics> stats = getDualPrecisionRecallStats( minThreshold, maxThreshold, stepThreshold );
+	    // trainableSegmentation.utils.Utils.plotPrecisionRecall( stats );    
+	    double maxFScore = 0;
+	    double th = 0;
+	    double bestTh = 0;
+	    
+	    for(ClassificationStatistics stat : stats)
+	    {
+	    	if (stat.fScore > maxFScore)
+	    	{
+	    		maxFScore = stat.fScore;
+	    		bestTh = th;  
+	    	}
+	    	th += stepThreshold;
+	    }	 
+	    
+	    if( verbose )
+			IJ.log(" ** Best F-score = " + maxFScore + ", with threshold = " + bestTh + " **\n");
+	    
+	    return maxFScore;
+	}
+	
+	/**
 	 * Calculate the precision-recall values based on pixel error between 
 	 * some warped 2D original labels and the corresponding proposed labels
 	 * in both directions (from original labels to proposal and reversely). 
@@ -630,7 +668,7 @@ public class WarpingError extends Metrics {
 			// apply threshold to proposed labels so they are binary
 			double max = proposedLabels.getImageStack().getProcessor( 1 ) instanceof ByteProcessor ? 255 : 1.0;
 			ImagePlus proposal8bit = proposedLabels.duplicate();	
-			IJ.setThreshold( proposal8bit, th, max);
+			IJ.setThreshold( proposal8bit, th + 0.00001, max);
 			IJ.run( proposal8bit, "Convert to Mask", "  black");
 			
 			// warp proposal into original labels
