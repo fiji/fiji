@@ -224,6 +224,7 @@ for (i = 0; i < bsh.args.length; i++)
 	targets.add(bsh.args[i]);
 
 errors = 0;
+message = "";
 for (String target : targets) {
 	rule = parser.getRule(target);
 	if (rule == null) {
@@ -244,7 +245,14 @@ for (String target : targets) {
 	editParentPOM(stripPath);
 	fsckEclipse(stripPath);
 	editFakefile(target, stripPath);
+
+	if (stripPath.endsWith("/"))
+		stripPath = stripPath.substring(0, stripPath.length() - 1);
+	stripPath = stripPath.substring(stripPath.lastIndexOf('/') + 1);
+	message += (message.equals("") ? "" : ", ") + stripPath;
 }
 
 if (errors > 0)
 	System.exit(1);
+
+SimpleExecuter.exec(fijiDir, new String[] { "git", "commit", "-m", "Mavenize " + message });
