@@ -1317,10 +1317,16 @@ public class MiniMaven {
 			if (ijDir.startsWith(prefix))
 				ijDir = ijDir.substring(prefix.length());
 		int bang = ijDir.indexOf("!/");
-		if (bang < 0)
-			throw new RuntimeException("Funny ?-) " + ijDir);
-		ijDir = ijDir.substring(0, bang);
-		for (String suffix : new String[] { "fake.jar", File.separator, "jars", File.separator })
+		if (bang >= 0)
+			ijDir = ijDir.substring(0, bang);
+		else {
+			String suffix = "/" + MiniMaven.class.getName().replace('.', '/') + ".class";
+			if (ijDir.endsWith(suffix))
+				ijDir = ijDir.substring(0, ijDir.length() - suffix.length());
+			else
+				throw new RuntimeException("Funny ?-) " + ijDir);
+		}
+		for (String suffix : new String[] { "fake.jar", File.separator, "jars", "build", File.separator })
 			if (ijDir.endsWith(suffix))
 				ijDir = ijDir.substring(0, ijDir.length() - suffix.length());
 		System.setProperty("ij.dir", ijDir);
