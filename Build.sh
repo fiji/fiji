@@ -114,6 +114,21 @@ test -f "$CWD"/java/"$java_submodule"/Home/lib/ext/vecmath.jar || {
 	}
 }
 
+test -n "$JAVA_HOME" &&
+test -d "$JAVA_HOME" ||
+for d in java/$java_submodule/*
+do
+	if test -z "$JAVA_HOME" || test "$d" -nt "$JAVA_HOME"
+	then
+		JAVA_HOME="$d"
+	fi
+done
+
+if test -d "$JAVA_HOME"
+then
+	export PATH=$JAVA_HOME/bin:$PATH
+fi
+
 handle_variables () {
 	case "$1" in
 	--strip) strip_variables=t; shift;;
