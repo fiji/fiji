@@ -148,7 +148,6 @@ targets=$(handle_variables --strip "$@")
 variables=$(handle_variables "$@")
 
 jar=jars/fake.jar
-pre_jar=precompiled/${jar##*/}
 source_dir=src-plugins/fake
 sources=$source_dir/fiji/build/*.java
 
@@ -196,12 +195,6 @@ test "a$targets" != a$jar -a "a$targets" != aImageJ &&
 "$CWD"/ImageJ$exe --build "$@" &&
 exit
 
-# fall back to precompiled
-test -f "$CWD"/precompiled/ImageJ-$platform$exe \
-	-a -f "$CWD"/precompiled/${jar##*/} &&
-"$CWD"/precompiled/ImageJ-$platform$exe --build -- "$@" &&
-exit
-
 export SYSTEM_JAVA=java
 export SYSTEM_JAVAC=javac
 
@@ -225,10 +218,6 @@ fi
 # fall back to calling Fake with system Java
 test -f "$CWD"/$jar &&
 $SYSTEM_JAVA -classpath "$CWD"/$jar fiji.build.Fake "$@"
-
-# fall back to calling precompiled Fake with system Java
-test -f "$CWD"/$pre_jar &&
-$SYSTEM_JAVA -classpath "$CWD"/$pre_jar fiji.build.Fake "$@"
 
 # fall back to compiling and running with system Java
 mkdir -p "$CWD"/build &&
