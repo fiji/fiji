@@ -117,6 +117,20 @@ public class MiniMaven {
 			POM root = pom.getRoot();
 			pom.parent = root.findPOM(dependency, true, false);
 
+			if (pom.parent == null) {
+				File parentDirectory = pom.directory.getParentFile();
+				if (parentDirectory == null) try {
+					parentDirectory = pom.directory.getCanonicalFile().getParentFile();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+				if (parentDirectory != null) {
+					File parentFile = new File(parentDirectory, "pom.xml");
+					if (parentFile.exists())
+						pom.parent = parse(parentFile, null, null);
+				}
+			}
+
 			if (pom.parent == null && downloadAutomatically) {
 				if (root.maybeDownloadAutomatically(pom.parentCoordinate, !verbose, downloadAutomatically))
 					pom.parent = root.findPOM(dependency, !verbose, downloadAutomatically);
