@@ -12,6 +12,8 @@ public class SubFake extends Rule {
 	protected String baseName;
 	protected String source;
 	protected String configPath;
+	protected POM pom;
+	protected boolean pomRead;
 
 	SubFake(Parser parser, String target, List<String> prerequisites) {
 		super(parser, target, prerequisites);
@@ -94,9 +96,13 @@ public class SubFake extends Rule {
 	}
 
 	public POM getPOM() {
+		if (pomRead)
+			return pom;
 		File file = new File(Util.makePath(parser.cwd, getLastPrerequisite()), "pom.xml");
-		if (!file.exists())
-			return null;
+		if (!file.exists()) {
+			pomRead = true;
+			return pom;
+		}
 		String targetBasename = jarName.substring(jarName.lastIndexOf('/') + 1);
 		if (targetBasename.endsWith(".jar"))
 			targetBasename = targetBasename.substring(0, targetBasename.length() - 4);
@@ -112,14 +118,14 @@ public class SubFake extends Rule {
 					miniMaven.excludeFromMultiProjects(file.getParentFile());
 				}
 			}
-			POM pom = miniMaven.parse(file);
-			if (targetBasename.equals(pom.getArtifact()))
-				return pom;
-			return pom.findPOM(new Coordinate(null, targetBasename, null));
+			pom = miniMaven.parse(file);
+			if (!targetBasename.equals(pom.getArtifact()))
+				pom = pom.getRoot().findPOM(new Coordinate(null, targetBasename, null));
 		} catch (Exception e) {
 			e.printStackTrace(parser.fake.err);
-			return null;
 		}
+		pomRead = true;
+		return pom;
 	}
 
 	void action() throws FakeException {
