@@ -176,6 +176,12 @@ public class MiniMaven {
 			pom.dependencies.add(new Coordinate("loci", "bio-formats", "${bio-formats.version}"));
 		else if (dependency.artifactId.equals("jfreechart"))
 			pom.dependencies.add(new Coordinate("jfree", "jcommon", "1.0.16"));
+
+		String key = dependency.groupId + ">" + dependency.artifactId;
+		if (localPOMCache.containsKey(key))
+			err.println("Warning: " + target + " overrides " + localPOMCache.get(key));
+		localPOMCache.put(key, pom);
+
 		return pom;
 	}
 
@@ -717,7 +723,7 @@ public class MiniMaven {
 			if (ignoreMavenRepositories) {
 				File file = findInFijiDirectories(dependency);
 				if (file != null)
-					return cacheAndReturn(key, fakePOM(file, dependency));
+					return fakePOM(file, dependency);
 				if (!quiet && !dependency.optional)
 					err.println("Skipping artifact " + dependency.artifactId + " (for " + coordinate.artifactId + "): not in jars/ nor plugins/");
 				return cacheAndReturn(key, null);
@@ -733,7 +739,7 @@ public class MiniMaven {
 				String jarName = dependency.artifactId + ".jar";
 				File file = new File(System.getProperty("ij.dir"), "jars/" + jarName);
 				if (file.exists())
-					return cacheAndReturn(key, fakePOM(file, dependency));
+					return fakePOM(file, dependency);
 				if (!quiet)
 					err.println("Cannot find version for artifact " + dependency.artifactId + " (dependency of " + coordinate.artifactId + ")");
 				return cacheAndReturn(key, null);
@@ -754,7 +760,7 @@ public class MiniMaven {
 			else {
 				File file = findInFijiDirectories(dependency);
 				if (file != null)
-					return cacheAndReturn(key, fakePOM(file, dependency));
+					return fakePOM(file, dependency);
 			}
 
 			path += dependency.getPOMName();
@@ -783,7 +789,7 @@ public class MiniMaven {
 			}
 			else if (!quiet && !dependency.optional)
 				err.println("Artifact " + dependency.artifactId + " not found" + (downloadAutomatically ? "" : "; consider 'get-dependencies'"));
-			return cacheAndReturn(key, result);
+			return result;
 		}
 
 		protected POM findInMultiProjects(Coordinate dependency) throws IOException, ParserConfigurationException, SAXException {
