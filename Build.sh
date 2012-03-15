@@ -178,12 +178,14 @@ esac
 # still needed for Windows, which cannot overwrite files that are in use
 test -f "$CWD"/ImageJ$exe -a -f "$CWD"/$jar &&
 test "a$targets" != a$jar -a "a$targets" != aImageJ &&
-exec "$CWD"/ImageJ$exe --build "$@"
+"$CWD"/ImageJ$exe --build "$@" &&
+exit
 
 # fall back to precompiled
 test -f "$CWD"/precompiled/ImageJ-$platform$exe \
 	-a -f "$CWD"/precompiled/${jar##*/} &&
-exec "$CWD"/precompiled/ImageJ-$platform$exe --build -- "$@"
+"$CWD"/precompiled/ImageJ-$platform$exe --build -- "$@" &&
+exit
 
 export SYSTEM_JAVA=java
 export SYSTEM_JAVAC=javac
