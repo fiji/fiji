@@ -215,7 +215,18 @@ void editFakefile(String target, String stripPath) {
 	insert = target + " <- " + stripPath + "pom.xml\n";
 
 	fakefile = readFile(new File(fijiDir, "Fakefile"));
-	// for the moment, leave all CLASSPATH(<target>) stuff
+
+	for (String key : new String[] { "CLASSPATH", "MAINCLASS" }) {
+		int offset = fakefile.indexOf("\n" + key + "(" + target + ")=");
+		if (offset > 0) {
+			int end = fakefile.indexOf('\n', offset + 1);
+			while (fakefile.charAt(end - 1) == '\\')
+				end = fakefile.indexOf('\n', end + 1);
+			fakefile = fakefile.substring(0, offset)
+				+ fakefile.substring(end);
+		}
+	}
+
 	int offset = fakefile.indexOf("\n" + target + " <- ");
 	if (offset >= 0) {
 		// does not use the default rule
