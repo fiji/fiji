@@ -215,6 +215,19 @@ void editFakefile(String target, String stripPath) {
 	writeAndAddFile(fakefile, new File(fijiDir, "Fakefile"));
 }
 
+boolean hasNonMavenDependency(String target) {
+	for (String dependency : rule.getJarDependencies()) {
+		if (dependency.startsWith(fijiDir.getAbsolutePath()))
+			dependency = dependency.substring(fijiDir.getAbsolutePath().length() + 1);
+		Rule rule = parser.getRule(dependency);
+		if (rule != null && rule.getClass().getName().endsWith(".CompileJar")) {
+			print("Target '" + target + "' has a non-Maven dependency '" + dependency + "'");
+			return true;
+		}
+	}
+	return false;
+}
+
 fake = new Fake();
 parser = fake.parse(new FileInputStream(new File(fijiDir, "Fakefile")), fijiDir);
 parser.parseRules(new ArrayList());
@@ -234,6 +247,10 @@ for (String target : targets) {
 	}
 	if (!rule.getClass().getName().endsWith(".CompileJar")) {
 		print("Target '" + target + "' is not a .jar rule");
+		errors++;
+		continue;
+	}
+	if (hasNonMavenDependency(target)) {
 		errors++;
 		continue;
 	}
