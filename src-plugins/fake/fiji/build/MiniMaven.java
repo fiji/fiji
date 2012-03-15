@@ -691,24 +691,12 @@ public class MiniMaven {
 					(dependency.groupId == null || dependency.groupId.equals(expand(coordinate.groupId))) &&
 					(dependency.version == null || coordinate.version == null || dependency.version.equals(expand(coordinate.version))))
 				return this;
-			if (dependency.groupId == null && dependency.artifactId.equals("jdom"))
-				dependency.groupId = "jdom";
-			for (POM child : getChildren()) {
-				if (child == null)
-					continue;
-				POM result = child.findPOM(dependency, quiet, downloadAutomatically);
-				if (result != null)
-					return result;
-			}
-			// for the root POM, fall back to Fiji's modules/, $HOME/.m2/repository/ and Fiji's jars/ and plugins/ directories
-			if (parent == null)
-				return findLocallyCachedPOM(dependency, quiet, downloadAutomatically);
-			return null;
-		}
-
-		protected POM findLocallyCachedPOM(Coordinate dependency, boolean quiet, boolean downloadAutomatically) throws IOException, ParserConfigurationException, SAXException {
 			if (dependency.groupId == null)
 				return null;
+
+			if (dependency.groupId == null && dependency.artifactId.equals("jdom"))
+				dependency.groupId = "jdom";
+			// fall back to Fiji's modules/, $HOME/.m2/repository/ and Fiji's jars/ and plugins/ directories
 			String key = dependency.groupId + ">" + dependency.artifactId;
 			if (localPOMCache.containsKey(key)) {
 				POM result = localPOMCache.get(key); // may be null
