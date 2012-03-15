@@ -354,7 +354,7 @@ public class MiniMaven {
 			File source = getSourceDirectory();
 
 			List<String> notUpToDates = new ArrayList<String>();
-			long lastModified = addRecursively(notUpToDates, source, ".java", target, ".class");
+			long lastModified = addRecursively(notUpToDates, source, ".java", target, ".class", false);
 			int count = notUpToDates.size();
 			if (count != 0)
 				return false;
@@ -402,9 +402,12 @@ public class MiniMaven {
 		public void build(boolean makeJar) throws FakeException, IOException, ParserConfigurationException, SAXException {
 			if (!buildFromSource || built)
 				return;
+			boolean forceFullBuild = false;
 			for (POM child : getDependencies(true, "test"))
-				if (child != null)
+				if (child != null && !child.upToDate(makeJar)) {
 					child.build(makeJar);
+					forceFullBuild = true;
+				}
 
 			// do not build aggregator projects
 			if (!new File(directory, "src").exists())
@@ -423,7 +426,7 @@ public class MiniMaven {
 			arguments.add(target.getPath());
 			// the files
 			int count = arguments.size();
-			addRecursively(arguments, source, ".java", target, ".class");
+			addRecursively(arguments, source, ".java", target, ".class", !forceFullBuild);
 			count = arguments.size() - count;
 
 			if (count > 0) {
@@ -455,7 +458,7 @@ public class MiniMaven {
 			built = true;
 		}
 
-		protected long addRecursively(List<String> list, File directory, String extension, File targetDirectory, String targetExtension) {
+		protected long addRecursively(List<String> list, File directory, String extension, File targetDirectory, String targetExtension, boolean includeUpToDates) {
 			long lastModified = 0;
 			if (list == null)
 				return lastModified;
@@ -464,7 +467,7 @@ public class MiniMaven {
 				return lastModified;
 			for (File file : files)
 				if (file.isDirectory()) {
-					long lastModified2 = addRecursively(list, file, extension, new File(targetDirectory, file.getName()), targetExtension);
+					long lastModified2 = addRecursively(list, file, extension, new File(targetDirectory, file.getName()), targetExtension, includeUpToDates);
 					if (lastModified < lastModified2)
 						lastModified = lastModified2;
 				}
@@ -476,7 +479,7 @@ public class MiniMaven {
 					long lastModified2 = file.lastModified();
 					if (lastModified < lastModified2)
 						lastModified = lastModified2;
-					if (!targetFile.exists() || targetFile.lastModified() < lastModified2)
+					if (!includeUpToDates || !targetFile.exists() || targetFile.lastModified() < lastModified2)
 						list.add(file.getPath());
 				}
 			return lastModified;
