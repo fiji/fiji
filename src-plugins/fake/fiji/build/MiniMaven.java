@@ -115,7 +115,7 @@ public class MiniMaven {
 		if (pom.parentCoordinate != null && pom.parent == null) {
 			Coordinate dependency = pom.expand(pom.parentCoordinate);
 			POM root = pom.getRoot();
-			pom.parent = root.findPOM(dependency, true, false);
+			pom.parent = pom.findPOM(dependency, true, false);
 
 			if (pom.parent == null) {
 				File parentDirectory = pom.directory.getParentFile();
@@ -132,8 +132,8 @@ public class MiniMaven {
 			}
 
 			if (pom.parent == null && downloadAutomatically) {
-				if (root.maybeDownloadAutomatically(pom.parentCoordinate, !verbose, downloadAutomatically))
-					pom.parent = root.findPOM(dependency, !verbose, downloadAutomatically);
+				if (pom.maybeDownloadAutomatically(pom.parentCoordinate, !verbose, downloadAutomatically))
+					pom.parent = pom.findPOM(dependency, !verbose, downloadAutomatically);
 			}
 			// prevent infinite loops (POMs without parents get the current root as parent)
 			if (pom.parent != null) {

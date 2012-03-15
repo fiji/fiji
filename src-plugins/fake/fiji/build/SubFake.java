@@ -120,7 +120,7 @@ public class SubFake extends Rule {
 			}
 			pom = miniMaven.parse(file);
 			if (!targetBasename.equals(pom.getArtifact()))
-				pom = pom.getRoot().findPOM(new Coordinate(null, targetBasename, null), miniMaven.verbose, miniMaven.downloadAutomatically);
+				pom = pom.findPOM(new Coordinate(null, targetBasename, null), miniMaven.verbose, miniMaven.downloadAutomatically);
 		} catch (Exception e) {
 			e.printStackTrace(parser.fake.err);
 		}
