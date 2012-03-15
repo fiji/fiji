@@ -36,6 +36,16 @@ public class SubFake extends Rule {
 	boolean checkUpToDate() {
 		if (!upToDate(configPath))
 			return false;
+
+		// check the classpath
+		for (String path : Util.splitPaths(getVar("CLASSPATH"))) {
+			Rule rule = (Rule)parser.allRules.get(path);
+			if (rule != null && !rule.upToDate()) {
+				verbose(target + " is not up-to-date because of " + path);
+				return false;
+			}
+		}
+
 		File target = new File(this.target);
 		for (String directory : prerequisites) try {
 			if (!checkUpToDate(directory, target))
@@ -130,6 +140,13 @@ public class SubFake extends Rule {
 	void action() throws FakeException {
 		String directory = getLastPrerequisite();
 		checkObsoleteLocation(directory);
+
+		// check the classpath
+		for (String path : Util.splitPaths(getVar("CLASSPATH"))) {
+			Rule rule = (Rule)parser.allRules.get(path);
+			if (rule != null && !rule.upToDate())
+				rule.action();
+		}
 
 		if (getFakefile() != null || new File(directory, "Makefile").exists())
 			fakeOrMake(jarName);
