@@ -578,15 +578,17 @@ public class MiniMaven {
 				if (scope != null && excludeScopes != null && arrayContainsString(excludeScopes, scope))
 					continue;
 				Coordinate expanded = expand(dependency);
+				POM pom = findPOM(expanded, !verbose, false);
 				String systemPath = expand(dependency.systemPath);
-				if (systemPath != null) {
+				if (pom == null && systemPath != null) {
 					File file = new File(systemPath);
 					if (file.exists()) {
 						result.add(fakePOM(file, expanded));
 						continue;
 					}
 				}
-				POM pom = getRoot().findPOM(expanded, !verbose, downloadAutomatically);
+				if (pom == null && downloadAutomatically)
+					pom = findPOM(expanded, !verbose, downloadAutomatically);
 				if (pom == null || result.contains(pom))
 					continue;
 				result.add(pom);
