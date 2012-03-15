@@ -115,10 +115,11 @@ public class MiniMaven {
 		if (pom.parentCoordinate != null && pom.parent == null) {
 			Coordinate dependency = pom.expand(pom.parentCoordinate);
 			POM root = pom.getRoot();
-			pom.parent = root.findPOM(dependency);
+			pom.parent = root.findPOM(dependency, true, false);
+
 			if (pom.parent == null && downloadAutomatically) {
-				if (root.maybeDownloadAutomatically(pom.parentCoordinate, !verbose))
-					pom.parent = root.findPOM(dependency);
+				if (root.maybeDownloadAutomatically(pom.parentCoordinate, !verbose, downloadAutomatically))
+					pom.parent = root.findPOM(dependency, !verbose, downloadAutomatically);
 			}
 			// prevent infinite loops (POMs without parents get the current root as parent)
 			if (pom.parent != null) {
@@ -565,7 +566,7 @@ public class MiniMaven {
 						continue;
 					}
 				}
-				POM pom = getRoot().findPOM(expanded);
+				POM pom = getRoot().findPOM(expanded, !verbose, downloadAutomatically);
 				if (pom == null || result.contains(pom))
 					continue;
 				result.add(pom);
@@ -665,11 +666,7 @@ public class MiniMaven {
 					child.getRepositories(result);
 		}
 
-		protected POM findPOM(Coordinate dependency) throws IOException, ParserConfigurationException, SAXException {
-			return findPOM(dependency, false);
-		}
-
-		protected POM findPOM(Coordinate dependency, boolean quiet) throws IOException, ParserConfigurationException, SAXException {
+		protected POM findPOM(Coordinate dependency, boolean quiet, boolean downloadAutomatically) throws IOException, ParserConfigurationException, SAXException {
 			if (dependency.artifactId.equals(expand(coordinate.artifactId)) &&
 					(dependency.groupId == null || dependency.groupId.equals(expand(coordinate.groupId))) &&
 					(dependency.version == null || coordinate.version == null || dependency.version.equals(expand(coordinate.version))))
@@ -679,17 +676,17 @@ public class MiniMaven {
 			for (POM child : getChildren()) {
 				if (child == null)
 					continue;
-				POM result = child.findPOM(dependency, quiet);
+				POM result = child.findPOM(dependency, quiet, downloadAutomatically);
 				if (result != null)
 					return result;
 			}
 			// for the root POM, fall back to Fiji's modules/, $HOME/.m2/repository/ and Fiji's jars/ and plugins/ directories
 			if (parent == null)
-				return findLocallyCachedPOM(dependency, quiet);
+				return findLocallyCachedPOM(dependency, quiet, downloadAutomatically);
 			return null;
 		}
 
-		protected POM findLocallyCachedPOM(Coordinate dependency, boolean quiet) throws IOException, ParserConfigurationException, SAXException {
+		protected POM findLocallyCachedPOM(Coordinate dependency, boolean quiet, boolean downloadAutomatically) throws IOException, ParserConfigurationException, SAXException {
 			if (dependency.groupId == null)
 				return null;
 			String key = dependency.groupId + ">" + dependency.artifactId;
@@ -728,14 +725,14 @@ public class MiniMaven {
 				return cacheAndReturn(key, null);
 			}
 			else if (dependency.version.startsWith("[")) try {
-				if (!maybeDownloadAutomatically(dependency, quiet))
+				if (!maybeDownloadAutomatically(dependency, quiet, downloadAutomatically))
 					return null;
 				if (dependency.version.startsWith("["))
 					dependency.version = parseVersion(new File(path, "maven-metadata-version.xml"));
 			} catch (FileNotFoundException e) { /* ignore */ }
 			path += dependency.version + "/";
 			if (dependency.version.endsWith("-SNAPSHOT")) try {
-				if (!maybeDownloadAutomatically(dependency, quiet))
+				if (!maybeDownloadAutomatically(dependency, quiet, downloadAutomatically))
 					return null;
 				if (dependency.version.endsWith("-SNAPSHOT"))
 					dependency.version = parseSnapshotVersion(new File(path, "maven-metadata-snapshot.xml"));
@@ -751,7 +748,7 @@ public class MiniMaven {
 			File file = new File(path);
 			if (!file.exists()) {
 				if (downloadAutomatically) {
-					if (!maybeDownloadAutomatically(dependency, quiet))
+					if (!maybeDownloadAutomatically(dependency, quiet, downloadAutomatically))
 						return null;
 				}
 				else {
@@ -817,7 +814,7 @@ public class MiniMaven {
 		}
 
 		// TODO: if there is no internet connection, do not try to download -SNAPSHOT versions
-		protected boolean maybeDownloadAutomatically(Coordinate dependency, boolean quiet) {
+		protected boolean maybeDownloadAutomatically(Coordinate dependency, boolean quiet, boolean downloadAutomatically) {
 			if (!downloadAutomatically || offlineMode)
 				return true;
 			try {
@@ -1343,7 +1340,7 @@ public class MiniMaven {
 		String artifactId = getSystemProperty("artifactId", "ij-app");
 		String mainClass = getSystemProperty("mainClass", "imagej.Main");
 
-		POM pom = root.findPOM(new Coordinate(null, artifactId, null));
+		POM pom = root.findPOM(new Coordinate(null, artifactId, null), false, miniMaven.downloadAutomatically);
 		if (pom == null)
 			pom = root;
 		if (command.equals("compile") || command.equals("build") || command.equals("compile-and-run")) {
