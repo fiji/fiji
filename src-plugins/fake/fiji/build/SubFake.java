@@ -110,13 +110,12 @@ public class SubFake extends Rule {
 		try {
 			MiniMaven miniMaven = new MiniMaven(parser.fake, parser.fake.err, getVarBool("VERBOSE"), getVarBool("DEBUG"));
 			miniMaven.downloadAutomatically = !miniMaven.offlineMode;
+			MiniMaven.ensureIJDirIsSet();
 			String ijDir = System.getProperty("ij.dir");
-			if (ijDir != null) {
-				File submodules = new File(ijDir, "modules");
-				if (submodules.exists()) {
-					miniMaven.addMultiProjectRoot(submodules);
-					miniMaven.excludeFromMultiProjects(file.getParentFile());
-				}
+			File submodules = new File(ijDir, "modules");
+			if (submodules.exists()) {
+				miniMaven.addMultiProjectRoot(submodules);
+				miniMaven.excludeFromMultiProjects(file.getParentFile());
 			}
 			pom = miniMaven.parse(file);
 			if (!targetBasename.equals(pom.getArtifact()))
