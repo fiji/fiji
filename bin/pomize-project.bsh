@@ -223,14 +223,17 @@ targets = new ArrayList();
 for (i = 0; i < bsh.args.length; i++)
 	targets.add(bsh.args[i]);
 
+errors = 0;
 for (String target : targets) {
 	rule = parser.getRule(target);
 	if (rule == null) {
 		print("No rule found for " + target);
+		errors++;
 		continue;
 	}
 	if (!rule.getClass().getName().endsWith(".CompileJar")) {
 		print("Target '" + target + "' is not a .jar rule");
+		errors++;
 		continue;
 	}
 
@@ -242,3 +245,6 @@ for (String target : targets) {
 	fsckEclipse(stripPath);
 	editFakefile(target, stripPath);
 }
+
+if (errors > 0)
+	System.exit(1);
