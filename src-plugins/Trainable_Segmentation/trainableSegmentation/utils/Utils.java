@@ -453,35 +453,45 @@ public class Utils {
 		// Localize small objects by the difference with the original thresholded image
 		ByteProcessor th2 = (ByteProcessor) th.duplicate();
 		th2.copyBits(thresholded, 0, 0, Blitter.DIFFERENCE);
-								
+		
+		//(new ImagePlus( "th2 diff 1", th2)).show();
+		
+		byte[] th2pixels = (byte[])th2.getPixels();
+		final float[] probPixels = (float[])probabilityMap.getPixels();
+				
 		// Set those pixels to background in the probability image
-		for(int x=0; x<th2.getWidth(); x++)
-			for(int y=0; y<th2.getHeight(); y++)
-			{
-				if( th2.getPixelValue(x, y) > 0)
-					probabilityMap.putPixelValue(x, y, 0);
-			}
+		for(int i=0; i<th2pixels.length; i++)
+		{
+			if( th2pixels[ i ] != 0)
+				probPixels[ i ] = 0;
+		}
+		//(new ImagePlus("prob", new FloatProcessor( th.getWidth(), th.getHeight(), probPixels, null))).show();
 		
-		// Fill holes in the thresholded components image
-		fill( th, 255, 0 );
-		
-		// Localize holes by the difference with the original thresholded image
+		//IJ.showMessage("Pause");
+				
+		// Localize holes by the removing them first from the image
+		// without small objects and then looking at the difference
 		th2 = (ByteProcessor) th.duplicate();
 		
-		//(new ImagePlus( "th", th)).show();
+		// Fill holes in the thresholded components image
+		fill( th2, 255, 0 );
 		
-		th2.copyBits(thresholded, 0, 0, Blitter.DIFFERENCE);
+		//(new ImagePlus( "th2", th2)).show();
+		
+		th2.copyBits(th, 0, 0, Blitter.DIFFERENCE);
+		th2pixels = (byte[])th2.getPixels();
 								
-		//(new ImagePlus( "th2 diff", th2)).show();
+		//(new ImagePlus( "th2 diff 2", th2)).show();
 		//(new ImagePlus( "thresholded", thresholded)).show();
 		
 		// Set those pixels to foreground in the probability image
-		for(int x=0; x<th2.getWidth(); x++)
-			for(int y=0; y<th2.getHeight(); y++)
-			{
-				if( th2.getPixelValue(x, y) > 0)
-					probabilityMap.putPixelValue(x, y, 1);
-			}
+		for(int i=0; i<th2pixels.length; i++)
+		{
+			if( th2pixels[ i ] != 0)
+				probPixels[ i ] = 1;
+		}
+		
+		//(new ImagePlus("prob", new FloatProcessor( th.getWidth(), th.getHeight(), probPixels, null))).show();
 		
 	}
 	
