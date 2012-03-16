@@ -68,6 +68,7 @@ static const char *get_platform(void)
 #define PATH_SEP ";"
 
 static void open_win_console();
+static void win_error(const char *fmt, ...);
 static void win_verror(const char *fmt, va_list ap);
 
 /* TODO: use dup2() and freopen() and a thread to handle the output */
@@ -575,6 +576,15 @@ static void win_verror(const char *fmt, va_list ap)
 	string_vaddf(string, fmt, ap);
 	MessageBox(NULL, string->buffer, "Fiji Error", MB_OK);
 	string_release(string);
+}
+
+static MAYBE_UNUSED void win_error(const char *fmt, ...)
+{
+	va_list ap;
+
+	va_start(ap, fmt);
+	win_verror(fmt, ap);
+	va_end(ap);
 }
 
 #else
