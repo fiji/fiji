@@ -1312,6 +1312,7 @@ static void open_win_console(void)
 	struct string *kernel32_dll_path;
 	void *kernel32_dll;
 	BOOL WINAPI (*attach_console)(DWORD process_id) = NULL;
+	SECURITY_ATTRIBUTES attributes;
 	HANDLE handle;
 
 	if (initialized)
@@ -1338,8 +1339,12 @@ static void open_win_console(void)
 			return; /* Console already opened. */
 	}
 
+	memset(&attributes, 0, sizeof(attributes));
+	attributes.nLength = sizeof(SECURITY_ATTRIBUTES);
+	attributes.bInheritHandle = TRUE;
+
 	handle = CreateFile("CONOUT$", GENERIC_WRITE, FILE_SHARE_WRITE,
-		NULL, OPEN_EXISTING, 0, NULL);
+		&attributes, OPEN_EXISTING, 0, NULL);
 	if (isatty(1)) {
 		freopen("CONOUT$", "wt", stdout);
 		SetStdHandle(STD_OUTPUT_HANDLE, handle);
@@ -3246,7 +3251,6 @@ static int start_ij(void)
 		if (console_opened)
 			sleep(5); /* Sleep 5 seconds */
 
-		FreeConsole(); /* java.exe cannot reuse the console anyway. */
 		for (i = 0; i < options.java_options.nr - 1; i++)
 			options.java_options.list[i] =
 				quote_win32(options.java_options.list[i]);
