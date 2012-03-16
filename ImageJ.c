@@ -68,6 +68,7 @@ static const char *get_platform(void)
 #define PATH_SEP ";"
 
 static void open_win_console();
+static void win_verror(const char *fmt, va_list ap);
 
 /* TODO: use dup2() and freopen() and a thread to handle the output */
 #else
@@ -85,6 +86,15 @@ __attribute__((format (printf, 1, 2)))
 static void error(const char *fmt, ...)
 {
 	va_list ap;
+#ifdef WIN32
+	const char *debug = getenv("WINDEBUG");
+	if (debug && *debug) {
+		va_start(ap, fmt);
+		win_verror(fmt, ap);
+		va_end(ap);
+		return;
+	}
+#endif
 
 	va_start(ap, fmt);
 	vfprintf(stderr, fmt, ap);
@@ -556,6 +566,15 @@ static int unsetenv(const char *name)
 {
 	struct string *string = string_initf("%s=", name);
 	return putenv(string->buffer);
+}
+
+static void win_verror(const char *fmt, va_list ap)
+{
+	struct string *string = string_init(32);
+
+	string_vaddf(string, fmt, ap);
+	MessageBox(NULL, string->buffer, "Fiji Error", MB_OK);
+	string_release(string);
 }
 
 #else
