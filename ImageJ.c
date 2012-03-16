@@ -95,9 +95,9 @@ static void error(const char *fmt, ...)
 		va_end(ap);
 		return;
 	}
+	open_win_console();
 #endif
 
-	open_win_console();
 	va_start(ap, fmt);
 	vfprintf(stderr, fmt, ap);
 	va_end(ap);
