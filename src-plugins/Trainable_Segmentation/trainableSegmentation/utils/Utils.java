@@ -452,9 +452,7 @@ public class Utils {
 		
 		// Localize small objects by the difference with the original thresholded image
 		ByteProcessor th2 = (ByteProcessor) th.duplicate();
-		th2.copyBits(thresholded, 0, 0, Blitter.DIFFERENCE);
-		
-		//(new ImagePlus( "th2 diff 1", th2)).show();
+		th2.copyBits(thresholded, 0, 0, Blitter.DIFFERENCE);				
 		
 		byte[] th2pixels = (byte[])th2.getPixels();
 		final float[] probPixels = (float[])probabilityMap.getPixels();
@@ -465,9 +463,6 @@ public class Utils {
 			if( th2pixels[ i ] != 0)
 				probPixels[ i ] = 0;
 		}
-		//(new ImagePlus("prob", new FloatProcessor( th.getWidth(), th.getHeight(), probPixels, null))).show();
-		
-		//IJ.showMessage("Pause");
 				
 		// Localize holes by the removing them first from the image
 		// without small objects and then looking at the difference
@@ -475,23 +470,16 @@ public class Utils {
 		
 		// Fill holes in the thresholded components image
 		fill( th2, 255, 0 );
-		
-		//(new ImagePlus( "th2", th2)).show();
-		
+						
 		th2.copyBits(th, 0, 0, Blitter.DIFFERENCE);
 		th2pixels = (byte[])th2.getPixels();
-								
-		//(new ImagePlus( "th2 diff 2", th2)).show();
-		//(new ImagePlus( "thresholded", thresholded)).show();
-		
+										
 		// Set those pixels to foreground in the probability image
 		for(int i=0; i<th2pixels.length; i++)
 		{
 			if( th2pixels[ i ] != 0)
 				probPixels[ i ] = 1;
 		}
-		
-		//(new ImagePlus("prob", new FloatProcessor( th.getWidth(), th.getHeight(), probPixels, null))).show();
 		
 	}
 	
