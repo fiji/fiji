@@ -425,8 +425,7 @@ static void string_replace(struct string *string, char from, char to)
 			string->buffer[j] = to;
 }
 
-__attribute__((unused))
-static int string_read_file(struct string *string, const char *path) {
+static MAYBE_UNUSED int string_read_file(struct string *string, const char *path) {
 	FILE *file = fopen(path, "rb");
 	char buffer[1024];
 	int result = 0;
@@ -675,8 +674,7 @@ static long parse_memory(const char *amount)
 	return result;
 }
 
-__attribute__((unused))
-static int parse_bool(const char *value)
+static MAYBE_UNUSED int parse_bool(const char *value)
 {
 	return strcmp(value, "0") && strcmp(value, "false") &&
 		strcmp(value, "False") && strcmp(value, "FALSE");
@@ -789,8 +787,7 @@ static int dir_exists(const char *directory);
 static int is_native_library(const char *path);
 static int file_exists(const char *path);
 
-__attribute__((unused))
-static const char *get_java_home_env(void)
+static MAYBE_UNUSED const char *get_java_home_env(void)
 {
 	const char *env = getenv("JAVA_HOME");
 	if (env) {
@@ -1040,8 +1037,7 @@ static char *dos_path(const char *path)
 }
 #endif
 
-__attribute__((unused))
-static struct string *get_parent_directory(const char *path)
+static MAYBE_UNUSED struct string *get_parent_directory(const char *path)
 {
 	const char *slash = last_slash(path);
 
@@ -1443,8 +1439,7 @@ static int mkdir_p(const char *path)
 	return result;
 }
 
-__attribute__((unused))
-static int find_file(struct string *search_root, int max_depth, const char *file, struct string *result)
+static MAYBE_UNUSED int find_file(struct string *search_root, int max_depth, const char *file, struct string *result)
 {
 	int len = search_root->length;
 	DIR *directory;
@@ -1788,8 +1783,7 @@ static const char* has_memory_option(struct string_array *options)
 	return NULL;
 }
 
-__attribute__((unused))
-static void read_file_as_string(const char *file_name, struct string *contents)
+static MAYBE_UNUSED void read_file_as_string(const char *file_name, struct string *contents)
 {
 	char buffer[1024];
 	FILE *in = fopen(file_name, "r");
