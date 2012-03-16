@@ -1299,7 +1299,7 @@ static int create_java_vm(JavaVM **vm, void **env, JavaVMInitArgs *args)
 /* Windows specific stuff */
 
 #ifdef WIN32
-static int console_opened = 0;
+static int console_opened, console_attached;
 
 static void sleep_a_while(void)
 {
@@ -1318,6 +1318,7 @@ static void open_win_console(void)
 	if (initialized)
 		return;
 	initialized = 1;
+	console_attached = 1;
 	if (!isatty(1) && !isatty(2))
 		return;
 
