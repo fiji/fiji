@@ -3255,7 +3255,29 @@ static int start_ij(void)
 		for (i = 0; i < options.java_options.nr - 1; i++)
 			options.java_options.list[i] =
 				quote_win32(options.java_options.list[i]);
-		execvp(buffer->buffer, (char * const *)options.java_options.list);
+		STARTUPINFO startup_info;
+		PROCESS_INFORMATION process_info;
+		const char *java = find_in_path(console_opened || console_attached ? "java" : "javaw");
+		struct string *cmdline = string_initf("java");
+
+		if (!java)
+			die("Could not find java.exe in PATH!");
+
+		memset(&startup_info, 0, sizeof(startup_info));
+		startup_info.cb = sizeof(startup_info);
+
+		memset(&process_info, 0, sizeof(process_info));
+
+		for (i = 1; i < options.java_options.nr - 1; i++)
+			string_addf(cmdline, " %s", options.java_options.list[i]);
+		if (CreateProcess(java, cmdline->buffer, NULL, NULL, TRUE, NORMAL_PRIORITY_CLASS, NULL, NULL, &startup_info, &process_info)) {
+			DWORD exit_code;
+			WaitForSingleObject(process_info.hProcess, INFINITE);
+			if (GetExitCodeProcess(process_info.hProcess, &exit_code) && exit_code)
+				exit(exit_code);
+			return;
+		}
+
 		char message[16384];
 		int off = sprintf(message, "Error: '%s' while executing\n\n",
 				strerror(errno));
