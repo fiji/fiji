@@ -194,6 +194,23 @@ void fsckEclipse(String stripPath) {
 	writeAndAddFile(settings, new File(fijiDir, rule.getStripPath() + ".settings/org.eclipse.jdt.apt.core.prefs"));
 }
 
+boolean handleMainClass(Rule rule, String stripPath) {
+	String mainClass = rule.getVar("MAINCLASS");
+	if (mainClass == null)
+		return true;
+
+	file = new File(fijiDir, rule.getStripPath() + "src/main/resources/META-INF/MANIFEST.MF");
+	if (file.exists()) {
+		print("Cannot set main-class " + mainClass + ": " + file + " exists already!");
+		return false;
+	}
+
+	manifest = "Manifest-Version: 1.0\n"
+		+ "Main-Class: " + mainClass + "\n";
+	writeAndAddFile(manifest, file);
+	return true;
+}
+
 void editFakefile(String target, String stripPath) {
 	insert = target + " <- " + stripPath + "pom.xml\n";
 
@@ -272,6 +289,10 @@ for (String target : targets) {
 	editParentPOM(stripPath);
 	fsckEclipse(stripPath);
 	editFakefile(target, stripPath);
+	if (!handleMainClass(rule, stripPath)) {
+		errors++;
+		continue;
+	}
 
 	if (stripPath.endsWith("/"))
 		stripPath = stripPath.substring(0, stripPath.length() - 1);
