@@ -488,7 +488,7 @@ public class MiniMaven {
 				}
 				else {
 					String name = file.getName();
-					if (!name.endsWith(extension))
+					if (!name.endsWith(extension) || name.equals("package-info.java"))
 						continue;
 					File targetFile = new File(targetDirectory, name.substring(0, name.length() - extension.length()) + targetExtension);
 					long lastModified2 = file.lastModified();
