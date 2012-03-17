@@ -277,6 +277,7 @@ public class MiniMaven {
 		protected List<String> modules = new ArrayList<String>();
 		protected List<Coordinate> dependencies = new ArrayList<Coordinate>();
 		protected Set<String> repositories = new TreeSet<String>();
+		protected String sourceVersion, targetVersion;
 
 		// only used during parsing
 		protected String prefix = "";
@@ -419,6 +420,20 @@ public class MiniMaven {
 			List<String> arguments = new ArrayList<String>();
 			// classpath
 			String classPath = getClassPath(true);
+			POM pom2 = this;
+			while (pom2 != null && pom2.sourceVersion == null)
+				pom2 = pom2.parent;
+			if (pom2 != null) {
+				arguments.add("-source");
+				arguments.add(pom2.sourceVersion);
+			}
+			pom2 = this;
+			while (pom2 != null && pom2.targetVersion == null)
+				pom2 = pom2.parent;
+			if (pom2 != null) {
+				arguments.add("-target");
+				arguments.add(pom2.targetVersion);
+			}
 			arguments.add("-classpath");
 			arguments.add(classPath);
 			// output directory
@@ -971,6 +986,10 @@ public class MiniMaven {
 						checkParentTag("version", parentCoordinate.version, string);
 				}
 			}
+			else if (prefix.equals(">project>build>plugins>plugin>configuration>source"))
+				sourceVersion = string;
+			else if (prefix.equals(">project>build>plugins>plugin>configuration>target"))
+				targetVersion = string;
 			else if (debug)
 				err.println("Ignoring " + prefix);
 		}
