@@ -275,7 +275,7 @@ public class MiniMaven {
 		protected Coordinate coordinate = new Coordinate(), parentCoordinate;
 		protected Map<String, String> properties = new HashMap<String, String>();
 		protected List<String> modules = new ArrayList<String>();
-		protected List<Coordinate> dependencies = new ArrayList<Coordinate>(); // contains String[3]
+		protected List<Coordinate> dependencies = new ArrayList<Coordinate>();
 		protected Set<String> repositories = new TreeSet<String>();
 
 		// only used during parsing
