@@ -102,7 +102,7 @@ String getGroupId(String artifact) {
 }
 
 void writePOM(String target, Rule rule) {
-	String versionRegex = "(.*?)-([\\.0-9]*)";
+	String versionRegex = "(.*?)-([\\.0-9]*(-SNAPSHOT)?)";
 	Pattern versionPattern = Pattern.compile(versionRegex);
 	dependencies = "";
 	for (String target : rule.getJarDependencies()) {
@@ -114,6 +114,8 @@ void writePOM(String target, Rule rule) {
 			version = matcher.group(2);
 		}
 		group = getGroupId(artifact);
+		if (rule.target.endsWith("/" + artifact + ".jar"))
+			continue;
 
 		dependencies += "\t\t<dependency>\n"
 			+ "\t\t\t<groupId>" + group + "</groupId>\n"
