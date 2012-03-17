@@ -144,7 +144,6 @@ hs_err*.log
 /plugins/Image_Expression_Parser.jar
 /plugins/Algorithm_Launcher.jar
 /jars/VIB-lib.jar
-/src-plugins/fiji-compat/icon.png
 /src-plugins/Script_Editor/function.png
 /src-plugins/Script_Editor/icon.png
 /src-plugins/Script_Editor/var.png

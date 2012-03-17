@@ -342,7 +342,6 @@ plugins/Trainable_Segmentation.jar <- src-plugins/Trainable_Segmentation/**/*jav
 mainClass(jars/ij-launcher.jar)=imagej.ClassLauncher
 
 mainClass(jars/fiji-compat.jar)=fiji.Main
-src-plugins/fiji-compat/icon.png[bin/copy-file.bsh $PRE $TARGET] <- images/icon.png
 
 MAINCLASS(jars/javac.jar)=com.sun.tools.javac.Main
 
