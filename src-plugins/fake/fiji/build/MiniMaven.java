@@ -740,8 +740,12 @@ public class MiniMaven {
 			String path = System.getProperty("user.home") + "/.m2/repository/" + dependency.groupId.replace('.', '/') + "/" + dependency.artifactId + "/";
 			if (dependency.version == null)
 				dependency.version = findLocallyCachedVersion(path);
-			if (dependency.version == null && dependency.artifactId.equals("scifio"))
-				dependency.version = "4.4-SNAPSHOT";
+			if (dependency.version == null) {
+				if (dependency.artifactId.equals("scifio"))
+					dependency.version = "4.4-SNAPSHOT";
+				else if (dependency.artifactId.equals("Image_5D"))
+					dependency.version = "1.2.5";
+			}
 			if (dependency.version == null) {
 				// try to find the .jar in Fiji's jars/ dir
 				String jarName = dependency.artifactId + ".jar";
