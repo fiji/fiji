@@ -434,7 +434,6 @@ CLASSPATH(plugins/TurboReg_.jar)=jars/ij.jar
 CLASSPATH(plugins/RATS_.jar)=jars/ij.jar
 CLASSPATH(plugins/Interactive_3D_Surface_Plot.jar)=jars/ij.jar
 CLASSPATH(jars/fiji-lib.jar)=jars/ij.jar
-src-plugins/fiji-lib/help-cursor.gif[bin/copy-file.bsh $PRE $TARGET] <- images/help-cursor.gif
 CLASSPATH(jars/ij.jar)=jars/javac.jar
 CLASSPATH(plugins/Analyze_Reader_Writer.jar)=jars/ij.jar
 CLASSPATH(plugins/Calculator_Plus.jar)=jars/ij.jar
