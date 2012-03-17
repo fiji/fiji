@@ -24,22 +24,32 @@ if (bsh.args.length == 0) {
 
 File fijiDir = new File(System.getProperty("fiji.dir"));
 
-void moveSources(File sourceDirectory, File targetDirectory) {
+void moveSources(File sourceDirectory, File targetJavaDirectory, File targetResourceDirectory) {
 	File[] list = sourceDirectory.listFiles();
 	if (list == null)
 		return;
-	SimpleExecuter.exec(fijiDir, new String[] { "mkdir", "-p", targetDirectory.getPath() });
 	for (File file : list) {
-		File targetFile = new File(targetDirectory, file.getName());
-		if (file.isDirectory() && !file.getAbsolutePath().endsWith("/src/main/java"))
-			moveSources(file, targetFile);
-		else if (file.getName().endsWith(".java"))
-			SimpleExecuter.exec(fijiDir, new String[] { "git", "mv", file.getPath(), targetFile.getPath() });
+		File targetJavaFile = new File(targetJavaDirectory, file.getName());
+		File targetResourceFile = new File(targetResourceDirectory, file.getName());
+		if (file.isDirectory() && !file.getAbsolutePath().endsWith("/src/main/java") && !file.getAbsolutePath().endsWith("/src/main/resources") && !file.getName().startsWith("."))
+			moveSources(file, targetJavaFile, targetResourceFile);
+		else if (file.getName().endsWith(".java")) {
+			SimpleExecuter.exec(fijiDir, new String[] { "mkdir", "-p", targetJavaDirectory.getPath() });
+			SimpleExecuter.exec(fijiDir, new String[] { "git", "mv", file.getPath(), targetJavaFile.getPath() });
+		}
+		else if (file.isFile() && !new SimpleExecuter(fijiDir, new String[] { "git", "ls-files", file.getAbsolutePath() }).getOutput().equals("")) {
+			if (file.getName().equals("plugins.config") || file.getName().endsWith(".gif") || file.getName().endsWith(".jpg") || file.getName().endsWith(".png") || file.getName().endsWith(".properties") || file.getAbsolutePath().indexOf("/services/") > 0) {
+				SimpleExecuter.exec(fijiDir, new String[] { "mkdir", "-p", targetResourceDirectory.getPath() });
+				SimpleExecuter.exec(fijiDir, new String[] { "git", "mv", file.getPath(), targetResourceFile.getPath() });
+			}
+			else
+				print("Warning: did not move " + file);
+		}
 	}
 }
 
 void moveSources(String baseDirectory) {
-	moveSources(new File(baseDirectory), new File(baseDirectory, "src/main/java"));
+	moveSources(new File(baseDirectory), new File(baseDirectory, "src/main/java"), new File(baseDirectory, "src/main/resources"));
 }
 
 String readFile(File file) {
