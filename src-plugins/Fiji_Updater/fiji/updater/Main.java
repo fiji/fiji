@@ -273,8 +273,6 @@ public class Main {
 
 		PluginUploader uploader = new PluginUploader(plugins, updateSite);
 		String username = uploader.getDefaultUsername();
-		if (username == null || username.equals(""))
-			username = userInfo.getUsername("Login for " + getLongUpdateSiteName(updateSite));
 		FileUploader sshUploader = SSHFileUploader.getUploader(uploader, username, userInfo);
 		if (sshUploader == null)
 			die("Aborting");
