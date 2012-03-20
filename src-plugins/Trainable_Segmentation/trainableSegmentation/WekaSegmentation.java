@@ -1076,11 +1076,12 @@ public class WekaSegmentation {
 	 * black pixels will be added to class 2.
 	 *
 	 * @param labelImage binary image
+	 * @param mask binary mask image to prevent some pixel to be selected (null if all pixels are eligible)
 	 * @param featureStack corresponding feature stack
 	 * @param whiteClassName name of the class which receives the white pixels
 	 * @param blackClassName name of the class which receives the black pixels
 	 * @param numSamples number of samples to add of each class
-	 * @param mask binary mask image to prevent some pixel to be selected (null if all pixels are eligible)
+	 * 
 	 * @return false if error
 	 */
 	public boolean addRandomBalancedBinaryData(
@@ -1194,6 +1195,107 @@ public class WekaSegmentation {
 
 		return true;
 	}	
+
+	
+	/**
+	 * Add instances to two classes from lists of coordinates in a random
+	 * and balanced way.
+	 * White pixels will be added to the corresponding class 1 and
+	 * black pixels will be added to class 2.
+	 *
+	 * @param classPoints list of 3D coordinates to be used (x, y, slice)
+	 * @param fsa feature stack array
+	 * @param whiteClassName name of the class which receives the white pixels
+	 * @param blackClassName name of the class which receives the black pixels
+	 * @param numSamples number of samples to add of each class
+	 * 
+	 * @return false if error
+	 */
+	public boolean addRandomBalancedBinaryData(
+			List< Point3f >[] classPoints,
+			FeatureStackArray fsa,
+			String whiteClassName,
+			String blackClassName,
+			int numSamples)
+	{		
+
+		// Detect class indexes
+		int whiteClassIndex = 0;
+		for(whiteClassIndex = 0 ; whiteClassIndex < this.getClassLabels().length; whiteClassIndex++)
+			if(whiteClassName.equalsIgnoreCase(this.getClassLabels()[whiteClassIndex]))
+				break;
+		if(whiteClassIndex == this.getClassLabels().length)
+		{
+			IJ.log("Error: class named '" + whiteClassName + "' not found.");
+			return false;
+		}
+		int blackClassIndex = 0;
+		for(blackClassIndex = 0 ; blackClassIndex < this.getClassLabels().length; blackClassIndex++)
+			if(blackClassName.equalsIgnoreCase(this.getClassLabels()[blackClassIndex]))
+				break;
+		if(blackClassIndex == this.getClassLabels().length)
+		{
+			IJ.log("Error: class named '" + blackClassName + "' not found.");
+			return false;
+		}
+
+		// Create loaded training data if it does not exist yet
+		if(null == loadedTrainingData)
+		{
+			IJ.log("Initializing loaded data...");
+			// Create instances
+			ArrayList<Attribute> attributes = new ArrayList<Attribute>();
+			for (int i=1; i<=fsa.getNumOfFeatures(); i++)
+			{
+				String attString = fsa.getLabel( i );
+				attributes.add(new Attribute(attString));
+			}
+
+			if(fsa.useNeighborhood())
+				for (int i=0; i<8; i++)
+				{
+					IJ.log("Adding extra attribute original_neighbor_" + (i+1) + "...");
+					attributes.add(new Attribute(new String("original_neighbor_" + (i+1))));
+				}
+
+			// Update list of names of loaded classes
+			// (we assume the first two default class names)
+			loadedClassNames = new ArrayList<String>();
+			for(int i = 0; i < numOfClasses ; i ++)
+				loadedClassNames.add(getClassLabels()[i]);
+			attributes.add(new Attribute("class", loadedClassNames));
+			loadedTrainingData = new Instances("segment", attributes, 1);
+
+			loadedTrainingData.setClassIndex(loadedTrainingData.numAttributes()-1);
+		}
+				
+		// Select random samples from both classes
+		Random rand = new Random();
+		for(int i=0; i<numSamples; i++)
+		{
+			int randomBlack = rand.nextInt( classPoints[ 0 ].size() );
+			int randomWhite = rand.nextInt( classPoints[ 1 ].size() );
+			
+			// add random black sample
+			loadedTrainingData.add( fsa.get( (int) (classPoints[ 0 ].get(randomBlack).z) ) 
+										.createInstance( 	(int) (classPoints[ 0 ].get(randomBlack).x), 
+															(int) (classPoints[ 0 ].get(randomBlack).y), 
+															blackClassIndex) );
+			
+			// add random white sample
+			loadedTrainingData.add(fsa.get( (int) (classPoints[ 1 ].get(randomWhite).z) ) .createInstance( (int) (classPoints[ 1 ].get(randomWhite).x), 
+					(int) (classPoints[ 1 ].get(randomWhite).y), whiteClassIndex));
+		}
+		
+		IJ.log("Added " + numSamples + " instances of '" + whiteClassName +"'.");
+		IJ.log("Added " + numSamples + " instances of '" + blackClassName +"'.");
+
+		IJ.log("Training dataset updated ("+ loadedTrainingData.numInstances() +
+				" instances, " + loadedTrainingData.numAttributes() +
+				" attributes, " + loadedTrainingData.numClasses() + " classes).");
+
+		return true;
+	}
 	
 	
 	/**
