@@ -1,11 +1,13 @@
 package fiji.plugin.trackmate.visualization.trackscheme;
 
+import static fiji.plugin.trackmate.gui.TrackMateWizard.FONT;
 import static fiji.plugin.trackmate.gui.TrackMateWizard.SMALL_FONT;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.FontMetrics;
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.ConcurrentModificationException;
@@ -38,11 +40,11 @@ import fiji.plugin.trackmate.visualization.TrackMateSelectionView;
 
 public class InfoPane extends JPanel implements TrackMateSelectionView, TrackMateSelectionChangeListener {
 
-	private static final long serialVersionUID = 5889316637017869042L;
+	private static final long serialVersionUID = -1L;
 
 	private class RowHeaderRenderer extends JLabel implements ListCellRenderer, Serializable {
 
-		private static final long serialVersionUID = -4068369886241557528L;
+		private static final long serialVersionUID = -1L;
 
 		RowHeaderRenderer(JTable table) {
 			JTableHeader header = table.getTableHeader();
@@ -158,21 +160,25 @@ public class InfoPane extends JPanel implements TrackMateSelectionView, TrackMat
 				}
 			};
 			headerRenderer.setBackground(Color.RED);
+			headerRenderer.setFont(FONT);
 
 			DefaultTableCellRenderer renderer = new DefaultTableCellRenderer();
 			renderer.setOpaque(false);
 			renderer.setHorizontalAlignment(SwingConstants.RIGHT);
-			renderer.setFont(SMALL_FONT);			
+			renderer.setFont(SMALL_FONT);
+			
+			FontMetrics fm = table.getGraphics().getFontMetrics(FONT);
 			for(int i=0; i<table.getColumnCount(); i++) {
 				table.setDefaultRenderer(table.getColumnClass(i), renderer);
-				table.getColumnModel().getColumn(i).setPreferredWidth(TrackSchemeFrame.TABLE_CELL_WIDTH);
+				// Set width auto
+				table.getColumnModel().getColumn(i).setWidth(fm.stringWidth( dm.getColumnName(i) ) );
 			}
 			for (Component c : scrollTable.getColumnHeader().getComponents()) {
 				c.setBackground(getBackground());
 			}
 			scrollTable.getColumnHeader().setOpaque(false);
 			scrollTable.setVisible(true);
-			revalidate();
+			validate();
 
 		} catch (ConcurrentModificationException cme) {
 			// do nothing
@@ -209,7 +215,6 @@ public class InfoPane extends JPanel implements TrackMateSelectionView, TrackMat
 		table.setGridColor(TrackSchemeFrame.GRID_COLOR);
 
 		JList rowHeader = new JList(lm);
-		rowHeader.setFixedCellWidth(TrackSchemeFrame.TABLE_ROW_HEADER_WIDTH);
 		rowHeader.setFixedCellHeight(table.getRowHeight());
 		rowHeader.setCellRenderer(new RowHeaderRenderer(table));
 		rowHeader.setBackground(getBackground());

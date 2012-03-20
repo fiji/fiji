@@ -67,7 +67,6 @@ public class TrackSchemeFrame extends JFrame implements TrackMateModelChangeList
 	private static final long serialVersionUID = 1L;
 	private static final Dimension DEFAULT_SIZE = new Dimension(800, 600);
 	static final int TABLE_CELL_WIDTH 		= 40;
-	static final int TABLE_ROW_HEADER_WIDTH = 50;
 	static final Color GRID_COLOR = Color.GRAY;
 
 	/*
