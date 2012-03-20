@@ -23,6 +23,8 @@ package trainableSegmentation.utils;
 import java.awt.Color;
 import java.util.ArrayList;
 
+import javax.vecmath.Point3f;
+
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
@@ -510,5 +512,34 @@ public class Utils {
 		}
 	}
 	
+	
+	public static ArrayList< Point3f >[] getClassCoordinates( 
+			ImagePlus labelImage,
+			ImagePlus mask)
+	{
+		final ArrayList< Point3f >[] classPoints = new ArrayList[2];
+		classPoints[ 0 ] = new ArrayList< Point3f >();
+		classPoints[ 1 ] = new ArrayList< Point3f >();
+		
+		final int width = labelImage.getWidth();
+		final int height = labelImage.getHeight();
+		final int size = labelImage.getImageStackSize();
+		
+		final boolean useMask = null != mask;
+		
+		for(int slice = 1; slice <= size; slice ++)
+			for(int x = 0; x < width; x++)
+				for( int y = 0; y < height; y++ )
+					if(useMask && mask.getImageStack().getProcessor(slice).getPixelValue(x, y) > 0)
+					{
+						if(labelImage.getImageStack().getProcessor(slice).getPixelValue(x, y) > 0)				
+							classPoints[ 1 ].add( new Point3f( new float[]{ x, y, slice-1}) );					
+						else				
+							classPoints[ 0 ].add( new Point3f( new float[]{ x, y, slice-1}) );
+					}
+		
+		return classPoints;
+		
+	}
 	
 }
