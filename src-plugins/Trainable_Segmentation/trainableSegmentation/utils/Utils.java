@@ -536,13 +536,13 @@ public class Utils {
 		for(int slice = 1; slice <= size; slice ++)
 		{
 			final float[] labelsPix = (float[]) labelImage.getImageStack().getProcessor( slice ).convertToFloat().getPixels();
-			final float[] maskPix = useMask ? (float[]) labelImage.getImageStack().getProcessor( slice ).convertToFloat().getPixels() : null;
+			final float[] maskPix = useMask ? (float[]) mask.getImageStack().getProcessor( slice ).convertToFloat().getPixels() : null;
 			
 			for(int x = 0; x < width; x++)
 				for( int y = 0; y < height; y++ )
 					if(useMask && maskPix[ x + y * width] > 0)
 					{
-						if( labelsPix[ x + y * width] > 0)				
+						if( labelsPix[ x + y * width] != 0)				
 							classPoints[ 1 ].add( new Point3f( new float[]{ x, y, slice-1}) );					
 						else				
 							classPoints[ 0 ].add( new Point3f( new float[]{ x, y, slice-1}) );
