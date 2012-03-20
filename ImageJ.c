@@ -68,6 +68,8 @@ static const char *get_platform(void)
 #define PATH_SEP ";"
 
 static void open_win_console();
+static void win_error(const char *fmt, ...);
+static void win_verror(const char *fmt, va_list ap);
 
 /* TODO: use dup2() and freopen() and a thread to handle the output */
 #else
@@ -85,6 +87,16 @@ __attribute__((format (printf, 1, 2)))
 static void error(const char *fmt, ...)
 {
 	va_list ap;
+#ifdef WIN32
+	const char *debug = getenv("WINDEBUG");
+	if (debug && *debug) {
+		va_start(ap, fmt);
+		win_verror(fmt, ap);
+		va_end(ap);
+		return;
+	}
+	open_win_console();
+#endif
 
 	va_start(ap, fmt);
 	vfprintf(stderr, fmt, ap);
@@ -425,8 +437,7 @@ static void string_replace(struct string *string, char from, char to)
 			string->buffer[j] = to;
 }
 
-__attribute__((unused))
-static int string_read_file(struct string *string, const char *path) {
+static MAYBE_UNUSED int string_read_file(struct string *string, const char *path) {
 	FILE *file = fopen(path, "rb");
 	char buffer[1024];
 	int result = 0;
@@ -559,6 +570,24 @@ static int unsetenv(const char *name)
 	return putenv(string->buffer);
 }
 
+static void win_verror(const char *fmt, va_list ap)
+{
+	struct string *string = string_init(32);
+
+	string_vaddf(string, fmt, ap);
+	MessageBox(NULL, string->buffer, "Fiji Error", MB_OK);
+	string_release(string);
+}
+
+static MAYBE_UNUSED void win_error(const char *fmt, ...)
+{
+	va_list ap;
+
+	va_start(ap, fmt);
+	win_verror(fmt, ap);
+	va_end(ap);
+}
+
 #else
 #include <dlfcn.h>
 #endif
@@ -675,8 +704,7 @@ static long parse_memory(const char *amount)
 	return result;
 }
 
-__attribute__((unused))
-static int parse_bool(const char *value)
+static MAYBE_UNUSED int parse_bool(const char *value)
 {
 	return strcmp(value, "0") && strcmp(value, "false") &&
 		strcmp(value, "False") && strcmp(value, "FALSE");
@@ -789,8 +817,7 @@ static int dir_exists(const char *directory);
 static int is_native_library(const char *path);
 static int file_exists(const char *path);
 
-__attribute__((unused))
-static const char *get_java_home_env(void)
+static MAYBE_UNUSED const char *get_java_home_env(void)
 {
 	const char *env = getenv("JAVA_HOME");
 	if (env) {
@@ -1040,8 +1067,7 @@ static char *dos_path(const char *path)
 }
 #endif
 
-__attribute__((unused))
-static struct string *get_parent_directory(const char *path)
+static MAYBE_UNUSED struct string *get_parent_directory(const char *path)
 {
 	const char *slash = last_slash(path);
 
@@ -1273,7 +1299,7 @@ static int create_java_vm(JavaVM **vm, void **env, JavaVMInitArgs *args)
 /* Windows specific stuff */
 
 #ifdef WIN32
-static int console_opened = 0;
+static int console_opened, console_attached;
 
 static void sleep_a_while(void)
 {
@@ -1286,11 +1312,13 @@ static void open_win_console(void)
 	struct string *kernel32_dll_path;
 	void *kernel32_dll;
 	BOOL WINAPI (*attach_console)(DWORD process_id) = NULL;
+	SECURITY_ATTRIBUTES attributes;
 	HANDLE handle;
 
 	if (initialized)
 		return;
 	initialized = 1;
+	console_attached = 1;
 	if (!isatty(1) && !isatty(2))
 		return;
 
@@ -1312,8 +1340,12 @@ static void open_win_console(void)
 			return; /* Console already opened. */
 	}
 
+	memset(&attributes, 0, sizeof(attributes));
+	attributes.nLength = sizeof(SECURITY_ATTRIBUTES);
+	attributes.bInheritHandle = TRUE;
+
 	handle = CreateFile("CONOUT$", GENERIC_WRITE, FILE_SHARE_WRITE,
-		NULL, OPEN_EXISTING, 0, NULL);
+		&attributes, OPEN_EXISTING, 0, NULL);
 	if (isatty(1)) {
 		freopen("CONOUT$", "wt", stdout);
 		SetStdHandle(STD_OUTPUT_HANDLE, handle);
@@ -1443,8 +1475,7 @@ static int mkdir_p(const char *path)
 	return result;
 }
 
-__attribute__((unused))
-static int find_file(struct string *search_root, int max_depth, const char *file, struct string *result)
+static MAYBE_UNUSED int find_file(struct string *search_root, int max_depth, const char *file, struct string *result)
 {
 	int len = search_root->length;
 	DIR *directory;
@@ -1788,8 +1819,7 @@ static const char* has_memory_option(struct string_array *options)
 	return NULL;
 }
 
-__attribute__((unused))
-static void read_file_as_string(const char *file_name, struct string *contents)
+static MAYBE_UNUSED void read_file_as_string(const char *file_name, struct string *contents)
 {
 	char buffer[1024];
 	FILE *in = fopen(file_name, "r");
@@ -3222,11 +3252,32 @@ static int start_ij(void)
 		if (console_opened)
 			sleep(5); /* Sleep 5 seconds */
 
-		FreeConsole(); /* java.exe cannot reuse the console anyway. */
 		for (i = 0; i < options.java_options.nr - 1; i++)
 			options.java_options.list[i] =
 				quote_win32(options.java_options.list[i]);
-		execvp(buffer->buffer, (char * const *)options.java_options.list);
+		STARTUPINFO startup_info;
+		PROCESS_INFORMATION process_info;
+		const char *java = find_in_path(console_opened || console_attached ? "java" : "javaw");
+		struct string *cmdline = string_initf("java");
+
+		if (!java)
+			die("Could not find java.exe in PATH!");
+
+		memset(&startup_info, 0, sizeof(startup_info));
+		startup_info.cb = sizeof(startup_info);
+
+		memset(&process_info, 0, sizeof(process_info));
+
+		for (i = 1; i < options.java_options.nr - 1; i++)
+			string_addf(cmdline, " %s", options.java_options.list[i]);
+		if (CreateProcess(java, cmdline->buffer, NULL, NULL, TRUE, NORMAL_PRIORITY_CLASS, NULL, NULL, &startup_info, &process_info)) {
+			DWORD exit_code;
+			WaitForSingleObject(process_info.hProcess, INFINITE);
+			if (GetExitCodeProcess(process_info.hProcess, &exit_code) && exit_code)
+				exit(exit_code);
+			return;
+		}
+
 		char message[16384];
 		int off = sprintf(message, "Error: '%s' while executing\n\n",
 				strerror(errno));

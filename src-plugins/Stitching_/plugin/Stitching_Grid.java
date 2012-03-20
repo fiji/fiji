@@ -716,6 +716,13 @@ public class Stitching_Grid implements PlugIn
 		try
 		{
 			final BufferedReader in = TextFileAccess.openFileRead( new File( directory, layoutFile ) );
+			
+			if ( in == null )
+			{
+				IJ.log( "Cannot find tileconfiguration file '" + new File( directory, layoutFile ).getAbsolutePath() + "'" );
+				return null;
+			}
+			
 			int lineNo = 0;
 			
 			while ( in.ready() )
