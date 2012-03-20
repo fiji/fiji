@@ -485,7 +485,8 @@ static void string_escape(struct string *string, const char *characters)
  */
 static const char *absolute_java_home;
 static const char *relative_java_home;
-static const char *library_path = JAVA_LIB_PATH;
+static const char *default_library_path;
+static const char *library_path;
 static const char *default_fiji1_class = "fiji.Main";
 static const char *default_main_class = "imagej.Main";
 
@@ -3097,7 +3098,7 @@ static void parse_command_line(void)
 	properties[i++] = "fiji.dir";
 	properties[i++] =  ij_dir,
 	properties[i++] = "fiji.defaultLibPath";
-	properties[i++] = JAVA_LIB_PATH;
+	properties[i++] = default_library_path;
 	properties[i++] = "fiji.executable";
 	properties[i++] = main_argv0;
 	properties[i++] = "ij.executable";
@@ -3887,13 +3888,30 @@ static void find_newest(struct string *relative_path, int max_depth, const char 
 	string_set_length(relative_path, len);
 }
 
+static void set_default_library_path(void)
+{
+	default_library_path =
+#if defined(MACOSX)
+		"";
+#elif defined(WIN32)
+		sizeof(void *) < 8 ? "bin/client/jvm.dll" : "bin/server/jvm.dll";
+#else
+		sizeof(void *) < 8 ? "lib/i386/client/libjvm.so" : "lib/amd64/server/libjvm.so";
+#endif
+}
+
 static void adjust_java_home_if_necessary(void)
 {
 	struct string *result, *buffer, *jre_path;
+
+	set_default_library_path();
 #ifdef MACOSX
 	/* On MacOSX, we use the system Java anyway. */
 	return;
 #endif
+
+	library_path = default_library_path;
+
 	buffer = string_copy("java");
 	result = string_init(32);
 	jre_path = string_initf("jre/%s", library_path);
