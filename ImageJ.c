@@ -484,7 +484,7 @@ static void string_escape(struct string *string, const char *characters)
  * overrides relative_java_home.
  */
 static const char *absolute_java_home;
-static const char *relative_java_home = JAVA_HOME;
+static const char *relative_java_home;
 static const char *library_path = JAVA_LIB_PATH;
 static const char *default_fiji1_class = "fiji.Main";
 static const char *default_main_class = "imagej.Main";
@@ -849,18 +849,23 @@ static const char *get_java_home(void)
 {
 	if (absolute_java_home)
 		return absolute_java_home;
+	if (!relative_java_home)
+		return NULL;
 	return ij_path(relative_java_home);
 }
 
 static const char *get_jre_home(void)
 {
 	const char *result = get_java_home();
-	int len = strlen(result);
+	int len;
 	static struct string *jre;
 
 	if (jre)
 		return jre->buffer;
 
+	if (!result)
+		return NULL;
+	len = strlen(result);
 	if (len > 4 && !strcmp(result + len - 4, "/jre"))
 		return result;
 
@@ -1085,10 +1090,11 @@ static void (*SplashClose)(void);
 
 struct string *get_splashscreen_lib_path(void)
 {
+	const char *jre_home = get_jre_home();
 #if defined(WIN32)
-	return string_initf("%s/bin/splashscreen.dll", get_jre_home());
+	return !jre_home ? NULL : string_initf("%s/bin/splashscreen.dll", jre_home);
 #elif defined(__linux__)
-	return string_initf("%s/lib/%s/libsplashscreen.so", get_jre_home(), sizeof(void *) == 8 ? "amd64" : "i386");
+	return !jre_home ? NULL : string_initf("%s/lib/%s/libsplashscreen.so", jre_home, sizeof(void *) == 8 ? "amd64" : "i386");
 #elif defined(MACOSX)
 	struct string *search_root = string_initf("/System/Library/Java/JavaVirtualMachines");
 	struct string *result = string_init(32);
@@ -1164,11 +1170,16 @@ static void hide_splash(void)
 static void maybe_reexec_with_correct_lib_path(void)
 {
 #ifdef __linux__
-	struct string *path = string_initf("%s/%s", get_jre_home(), library_path);
-	struct string *parent = get_parent_directory(path->buffer);
-	struct string *lib_path = get_parent_directory(parent->buffer);
-	struct string *jli = string_initf("%s/jli", lib_path->buffer);
-	const char *original;
+	const char *jre_home = get_jre_home(), *original;
+	struct string *path, *parent, *lib_path, *jli;
+
+	if (!jre_home)
+		return;
+
+	path = string_initf("%s/%s", jre_home, library_path);
+	parent = get_parent_directory(path->buffer);
+	lib_path = get_parent_directory(parent->buffer);
+	jli = string_initf("%s/jli", lib_path->buffer);
 
 	string_release(path);
 	string_release(parent);
@@ -1548,6 +1559,8 @@ static void add_java_home_to_path(void)
 	struct string *new_path = string_init(32), *buffer;
 	const char *env;
 
+	if (!java_home)
+		return;
 	buffer = string_initf("%s/bin", java_home);
 	if (dir_exists(buffer->buffer))
 		string_append_path_list(new_path, buffer->buffer);
@@ -1709,7 +1722,13 @@ static void add_launcher_option(struct options *options, const char *option, con
 
 static void add_tools_jar(struct options *options)
 {
-	struct string *string = string_initf("%s/../lib/tools.jar", get_jre_home());
+	const char *jre_home = get_jre_home();
+	struct string *string;
+
+	if (!jre_home)
+		die("Cannot determine path to tools.jar");
+
+	string = string_initf("%s/../lib/tools.jar", jre_home);
 	add_launcher_option(options, "-classpath", string->buffer);
 	string_release(string);
 }
@@ -2258,7 +2277,8 @@ static int check_subcommand_classpath(struct subcommand *subcommand)
 				return 0;
 		}
 		else if (!prefixcmp(expanded, "--tools-jar") || !prefixcmp(expanded, "--only-tools-jar")) {
-			if (!jar_exists("%s/../lib/tools.jar", get_jre_home()))
+			const char *jre_home = get_jre_home();
+			if (!jre_home || !jar_exists("%s/../lib/tools.jar", jre_home))
 				return 0;
 		}
 		expanded = space + !!*space;
@@ -2735,7 +2755,8 @@ static int handle_one_option2(int *i, int argc, const char **argv)
 		exit(0);
 	}
 	else if (!strcmp("--print-java-home", argv[*i])) {
-		printf("%s\n", get_java_home());
+		const char *java_home = get_java_home();
+		printf("%s\n", !java_home ? "" : java_home);
 		exit(0);
 	}
 	else if (!strcmp("--default-gc", argv[*i]))
@@ -2901,10 +2922,13 @@ static void parse_command_line(void)
 
 #ifdef WIN32
 	/* Windows automatically adds the path of the executable to PATH */
-	struct string *path = string_initf("%s;%s/bin",
-		getenv("PATH"), get_jre_home());
-	setenv_or_exit("PATH", path->buffer, 1);
-	string_release(path);
+	const char *jre_home = get_jre_home();
+	if (jre_home) {
+		struct string *path = string_initf("%s;%s/bin",
+			getenv("PATH"), jre_home);
+		setenv_or_exit("PATH", path->buffer, 1);
+		string_release(path);
+	}
 #endif
 	if (!headless &&
 #ifdef MACOSX
@@ -3151,7 +3175,7 @@ static int start_ij(void)
 	args.nOptions = options.java_options.nr;
 	args.ignoreUnrecognized = JNI_FALSE;
 
-	if (options.use_system_jvm)
+	if (!get_jre_home() || options.use_system_jvm)
 		env = NULL;
 	else {
 		int result = create_java_vm(&vm, (void **)&env, &args);
