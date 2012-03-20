@@ -512,7 +512,13 @@ public class Utils {
 		}
 	}
 	
-	
+	/**
+	 * Get the binary class coordinates from a label image (2D image or stack)
+	 * 
+	 * @param labelImage labels (they can be in any format, black = 0)
+	 * @param mask binary mask to select the pixels to be extracted
+	 * @return array with the two lists (black and white) of sample coordinates
+	 */
 	public static ArrayList< Point3f >[] getClassCoordinates( 
 			ImagePlus labelImage,
 			ImagePlus mask)
@@ -526,18 +532,22 @@ public class Utils {
 		final int size = labelImage.getImageStackSize();
 		
 		final boolean useMask = null != mask;
-		
+						
 		for(int slice = 1; slice <= size; slice ++)
+		{
+			final float[] labelsPix = (float[]) labelImage.getImageStack().getProcessor( slice ).convertToFloat().getPixels();
+			final float[] maskPix = useMask ? (float[]) labelImage.getImageStack().getProcessor( slice ).convertToFloat().getPixels() : null;
+			
 			for(int x = 0; x < width; x++)
 				for( int y = 0; y < height; y++ )
-					if(useMask && mask.getImageStack().getProcessor(slice).getPixelValue(x, y) > 0)
+					if(useMask && maskPix[ x + y * width] > 0)
 					{
-						if(labelImage.getImageStack().getProcessor(slice).getPixelValue(x, y) > 0)				
+						if( labelsPix[ x + y * width] > 0)				
 							classPoints[ 1 ].add( new Point3f( new float[]{ x, y, slice-1}) );					
 						else				
 							classPoints[ 0 ].add( new Point3f( new float[]{ x, y, slice-1}) );
 					}
-		
+		}
 		return classPoints;
 		
 	}
