@@ -531,25 +531,40 @@ public class Utils {
 		final int height = labelImage.getHeight();
 		final int size = labelImage.getImageStackSize();
 		
-		final boolean useMask = null != mask;
-						
-		for(int slice = 1; slice <= size; slice ++)
+		if( null != mask )
+		{					
+			for(int slice = 1; slice <= size; slice ++)
+			{
+				final float[] labelsPix = (float[]) labelImage.getImageStack().getProcessor( slice ).convertToFloat().getPixels();
+				final float[] maskPix = (float[]) mask.getImageStack().getProcessor( slice ).convertToFloat().getPixels();
+				
+				for(int x = 0; x < width; x++)
+					for( int y = 0; y < height; y++ )
+						if( maskPix[ x + y * width] > 0 )
+						{
+							if( labelsPix[ x + y * width] != 0)				
+								classPoints[ 1 ].add( new Point3f( new float[]{ x, y, slice-1}) );					
+							else				
+								classPoints[ 0 ].add( new Point3f( new float[]{ x, y, slice-1}) );
+						}
+			}
+		}
+		else
 		{
-			final float[] labelsPix = (float[]) labelImage.getImageStack().getProcessor( slice ).convertToFloat().getPixels();
-			final float[] maskPix = useMask ? (float[]) mask.getImageStack().getProcessor( slice ).convertToFloat().getPixels() : null;
-			
-			for(int x = 0; x < width; x++)
-				for( int y = 0; y < height; y++ )
-					if(useMask && maskPix[ x + y * width] > 0)
-					{
-						if( labelsPix[ x + y * width] != 0)				
-							classPoints[ 1 ].add( new Point3f( new float[]{ x, y, slice-1}) );					
-						else				
-							classPoints[ 0 ].add( new Point3f( new float[]{ x, y, slice-1}) );
-					}
+			for(int slice = 1; slice <= size; slice ++)
+			{
+				final float[] labelsPix = (float[]) labelImage.getImageStack().getProcessor( slice ).convertToFloat().getPixels();
+				
+				for(int x = 0; x < width; x++)
+					for( int y = 0; y < height; y++ )					
+							if( labelsPix[ x + y * width] != 0)				
+								classPoints[ 1 ].add( new Point3f( new float[]{ x, y, slice-1}) );					
+							else				
+								classPoints[ 0 ].add( new Point3f( new float[]{ x, y, slice-1}) );
+					
+			}
 		}
 		return classPoints;
-		
 	}
 	
 }
