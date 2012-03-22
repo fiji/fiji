@@ -204,6 +204,10 @@ public class Skeletonize3D_ implements PlugInFilter
 					        }
 					        
 					        // check if point is the end of an arc
+					        if ( isEndPoint(outputImage, x, y, z) )
+					        	continue; // current point is not deletable
+					        /*
+					        // check if point is the end of an arc
 					        int numberOfNeighbors = -1;   // -1 and not 0 because the center pixel will be counted as well
 					        byte[] neighbor = getNeighborhood(outputImage, x, y, z);
 					        for( int i = 0; i < 27; i++ ) // i =  0..26
@@ -216,6 +220,7 @@ public class Skeletonize3D_ implements PlugInFilter
 					        {
 					          continue;         // current point is not deletable
 					        }
+					        */
 					        
 					        // Check if point is Euler invariant
 					        if( !isEulerInvariant( getNeighborhood(outputImage, x, y, z), eulerLUT ) )
@@ -240,11 +245,12 @@ public class Skeletonize3D_ implements PlugInFilter
 				
 				// sequential re-checking to preserve connectivity when
 				// deleting in a parallel way
-				boolean noChange = true;
+				boolean change = false;
 				int[] index = null;
 				for(int i = 0; 	i < simpleBorderPoints.size() ; i++)
-				{
+				{					
 					index = simpleBorderPoints.get(i);
+					/*
 					// 1. Set simple border point to 0
 					setPixel( outputImage, index[0], index[1], index[2], (byte) 0);
 					
@@ -258,8 +264,20 @@ public class Skeletonize3D_ implements PlugInFilter
 					{
 						noChange = false;
 					}
+					*/
+					
+					// Check if neighborhood is still connected and the point has not become an endpoint			        
+			        if( isSimplePoint( getNeighborhood(outputImage, index[0], index[1], index[2]) ) 
+			        		&& isEulerInvariant( getNeighborhood(outputImage, index[0], index[1], index[2]), eulerLUT ) 
+			        		&& !isEndPoint( outputImage, index[0], index[1], index[2]) )
+			        {
+			        	// we can delete the current point
+			        	setPixel( outputImage, index[0], index[1], index[2], (byte) 0);
+			        	change = true;
+			        }
+					
 				}
-				if( noChange )
+				if( !change )
 					unchangedBorders++;
 
 				//IJ.write("# simple border points = " + simpleBorderPoints.size());
@@ -281,6 +299,29 @@ public class Skeletonize3D_ implements PlugInFilter
 		//IJ.write("Compute Thin Image End");
 		IJ.showStatus("Computed thin image.");
 	} /* end computeThinImage */	
+	
+	
+	/**
+	 * Check if point is the end of an arc
+	 * 
+	 * @param image
+	 * @param x
+	 * @param y
+	 * @param z
+	 * @return
+	 */
+	boolean isEndPoint(ImageStack image, int x, int y, int z)
+	{
+		int numberOfNeighbors = -1;   // -1 and not 0 because the center pixel will be counted as well
+        byte[] neighbor = getNeighborhood(image, x, y, z);
+        for( int i = 0; i < 27; i++ ) // i =  0..26
+        {					        	
+          if( neighbor[i] == 1 )
+            numberOfNeighbors++;
+        }
+
+        return  numberOfNeighbors == 1;        
+	}
 	
 	/* -----------------------------------------------------------------------*/
 	/**
