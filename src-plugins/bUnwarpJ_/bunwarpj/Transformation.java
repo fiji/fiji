@@ -27,6 +27,7 @@ package bunwarpj;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
+import ij.Macro;
 import ij.io.SaveDialog;
 import ij.process.ColorProcessor;
 import ij.process.FloatProcessor;
@@ -4859,42 +4860,60 @@ public class Transformation
 
 		if (filename.equals(""))
 		{
-			// Get the filename to save
-			File dir=new File(".");
-			String path="";
-			try
-			{
-				path=dir.getCanonicalPath()+"/";
+			// if it is a macro, read file name from the macro options
+			if( this.dialog.isMacroCall() )
+			{				
+				//IJ.log(" Macro args: " + dialog.getMacroArgs());
+				if( bIsReverse )
+				{
+					int i0 = dialog.getMacroArgs().indexOf( "save_direct_transformation" );
+					int i1 = dialog.getMacroArgs().indexOf( " ", i0 + 26 );
+					filename = i1 == -1 ?  dialog.getMacroArgs().substring( i0+27 ) : dialog.getMacroArgs().substring( i0+27, i1 );
+				}
+				else
+				{
+					int i0 = dialog.getMacroArgs().indexOf( "save_inverse_transformation" );
+					int i1 = dialog.getMacroArgs().indexOf( " ", i0 + 27 );
+					filename = i1 == -1 ?  dialog.getMacroArgs().substring( i0+28 ) : dialog.getMacroArgs().substring( i0+28, i1 );
+				}	
 			}
-			catch (Exception e)
-			{
-				e.printStackTrace();
-			}
-			filename = (bIsReverse) ? targetImp.getTitle() : sourceImp.getTitle();
-			String sDirection = (bIsReverse) ? "_inverse" : "_direct";
-			String new_filename="";
-			int dot = filename.lastIndexOf('.');
-			if (dot == -1) new_filename = filename + sDirection + "_transf";
-			else           new_filename = filename.substring(0, dot) + sDirection + "_transf";
-			filename=path+filename;
-
-			if (outputLevel > -1 && this.dialog != null && this.dialog.isMacroCall() == false)
-			{
-				final SaveDialog sd = new SaveDialog("Save"+sDirection+"_transformation", new_filename, ".txt");
-
-				path = sd.getDirectory();
-				filename = sd.getFileName();
-				if ((path == null) || (filename == null)) 
-					return;
-				filename = path + filename;
-			} 
 			else
-				filename = new_filename;
+			{
+				// Get the filename to save
+				File dir=new File(".");
+				String path="";
+				try
+				{
+					path=dir.getCanonicalPath()+"/";
+				}
+				catch (Exception e)
+				{
+					e.printStackTrace();
+				}
+				filename = (bIsReverse) ? targetImp.getTitle() : sourceImp.getTitle();
+				String sDirection = (bIsReverse) ? "_inverse" : "_direct";
+				String new_filename="";
+				int dot = filename.lastIndexOf('.');
+				if (dot == -1) new_filename = filename + sDirection + "_transf";
+				else           new_filename = filename.substring(0, dot) + sDirection + "_transf";
+				filename=path+filename;
+
+				if (outputLevel > -1 && this.dialog != null && this.dialog.isMacroCall() == false)
+				{
+					final SaveDialog sd = new SaveDialog("Save"+sDirection+"_transformation", new_filename, ".txt");
+
+					path = sd.getDirectory();
+					filename = sd.getFileName();
+					if ((path == null) || (filename == null)) 
+						return;
+					filename = path + filename;
+				} 
+				else
+					filename = new_filename;
+			}
 		}
 
 		// Save the file
-		if(this.dialog != null && this.dialog.isMacroCall())
-			filename += ".txt";
 		MiscTools.saveElasticTransformation(intervals, cx, cy, filename);
 	}
 
