@@ -711,8 +711,24 @@ public class MiniMaven {
 					(dependency.groupId == null || dependency.groupId.equals(expand(coordinate.groupId))) &&
 					(dependency.version == null || coordinate.version == null || dependency.version.equals(expand(coordinate.version))))
 				return this;
-			if (dependency.groupId == null)
-				return null;
+			if (dependency.groupId == null) {
+				POM result = null;
+				for (String key : localPOMCache.keySet()) {
+					POM pom = localPOMCache.get(key);
+					if (pom == null || pom.coordinate == null || pom.coordinate.artifactId == null)
+						continue;
+					if (dependency.artifactId.equals(pom.coordinate.artifactId)) {
+						if (result == null)
+							result = pom;
+						else {
+							err.println("Artifact ID " + dependency.artifactId + " is not unique! (group IDs '"
+								+ result.coordinate.groupId + "' and '" + pom.coordinate.groupId + "' match)");
+							return null;
+						}
+					}
+				}
+				return result;
+			}
 
 			if (dependency.groupId == null && dependency.artifactId.equals("jdom"))
 				dependency.groupId = "jdom";
