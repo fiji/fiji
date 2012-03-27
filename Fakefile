@@ -132,6 +132,7 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/Clojure_Interpreter.jar \
 	plugins/JRuby_Interpreter.jar \
 	plugins/BeanShell_Interpreter.jar \
+	plugins/blockmatching_.jar \
 	plugins/bUnwarpJ_.jar \
 	plugins/register_virtual_stack_slices.jar \
 	plugins/Siox_Segmentation.jar \
@@ -354,6 +355,7 @@ src-plugins/Script_Editor/function.png[cp $PRE $TARGET] <- images/function.png
 
 CLASSPATH(jars/zs.jar)=jars/Jama.jar
 CLASSPATH(plugins/register_virtual_stack_slices.jar)=jars/ij.jar:plugins/TrakEM2_.jar:jars/mpicbg.jar:plugins/bUnwarpJ_.jar:jars/fiji-lib.jar
+CLASSPATH(plugins/blockmatching_.jar)=jars/ij.jar:jars/mpicbg.jar:jars/imglib2.jar:jars/imglib2-ij.jar:plugins/TrakEM2_.jar
 CLASSPATH(plugins/registration_3d.jar)=jars/ij.jar:jars/edu_mines_jtk.jar
 CLASSPATH(plugins/Siox_Segmentation.jar)=jars/ij.jar:jars/fiji-lib.jar
 CLASSPATH(plugins/Image_Expression_Parser.jar)=jars/ij.jar:jars/jep.jar:jars/imglib.jar:jars/junit.jar:jars/imglib-algorithms.jar:jars/imglib-ij.jar
