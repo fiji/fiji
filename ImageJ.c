@@ -3289,7 +3289,7 @@ static int start_ij(void)
 		if (execvp(buffer->buffer, options.java_options.list))
 			error("Could not launch system-wide Java (%s)", strerror(errno));
 #else
-		if (console_opened)
+		if (console_opened && !console_attached)
 			sleep(5); /* Sleep 5 seconds */
 
 		for (i = 0; i < options.java_options.nr - 1; i++)
