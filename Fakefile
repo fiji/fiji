@@ -334,7 +334,7 @@ plugins/Trainable_Segmentation.jar <- src-plugins/Trainable_Segmentation/**/*jav
 mainClass(jars/ij-launcher.jar)=imagej.ClassLauncher
 
 mainClass(jars/fiji-compat.jar)=fiji.Main
-src-plugins/fiji-compat/icon.png[cp $PRE $TARGET] <- images/icon.png
+src-plugins/fiji-compat/icon.png[bin/copy-file.bsh $PRE $TARGET] <- images/icon.png
 
 MAINCLASS(jars/javac.jar)=com.sun.tools.javac.Main
 
@@ -349,9 +349,9 @@ CLASSPATH(plugins/CLI_.jar)=jars/ij.jar:jars/fiji-scripting.jar
 MAINCLASS(plugins/Script_Editor.jar)=fiji.scripting.Script_Editor
 CLASSPATH(plugins/Script_Editor.jar)=jars/ij.jar:jars/rsyntaxtextarea.jar:jars/autocomplete.jar:plugins/Clojure_Interpreter.jar:plugins/JRuby_Interpreter.jar:plugins/Javascript_.jar:plugins/Jython_Interpreter.jar:plugins/Refresh_Javas.jar:plugins/BeanShell_Interpreter.jar:plugins/CLI_.jar:jars/fiji-scripting.jar:jars/fiji-compat.jar:jars/imglib.jar:jars/fiji-lib.jar:jars/fake.jar:$TOOLS_JAR:jars/jfreechart.jar:jars/imglib-ij.jar:jars/commons-math.jar
 NO_COMPILE(plugins/Script_Editor.jar)=src-plugins/Script_Editor/templates/**/*
-src-plugins/Script_Editor/icon.png[cp $PRE $TARGET] <- images/icon.png
-src-plugins/Script_Editor/var.png[cp $PRE $TARGET] <- images/var.png
-src-plugins/Script_Editor/function.png[cp $PRE $TARGET] <- images/function.png
+src-plugins/Script_Editor/icon.png[bin/copy-file.bsh $PRE $TARGET] <- images/icon.png
+src-plugins/Script_Editor/var.png[bin/copy-file.bsh $PRE $TARGET] <- images/var.png
+src-plugins/Script_Editor/function.png[bin/copy-file.bsh $PRE $TARGET] <- images/function.png
 
 CLASSPATH(jars/zs.jar)=jars/Jama.jar
 CLASSPATH(plugins/register_virtual_stack_slices.jar)=jars/ij.jar:plugins/TrakEM2_.jar:jars/mpicbg.jar:plugins/bUnwarpJ_.jar:jars/fiji-lib.jar
@@ -426,7 +426,7 @@ CLASSPATH(plugins/TurboReg_.jar)=jars/ij.jar
 CLASSPATH(plugins/RATS_.jar)=jars/ij.jar
 CLASSPATH(plugins/Interactive_3D_Surface_Plot.jar)=jars/ij.jar
 CLASSPATH(jars/fiji-lib.jar)=jars/ij.jar
-src-plugins/fiji-lib/help-cursor.gif[cp $PRE $TARGET] <- images/help-cursor.gif
+src-plugins/fiji-lib/help-cursor.gif[bin/copy-file.bsh $PRE $TARGET] <- images/help-cursor.gif
 CLASSPATH(jars/ij.jar)=jars/javac.jar
 CLASSPATH(plugins/Analyze_Reader_Writer.jar)=jars/ij.jar
 CLASSPATH(plugins/Calculator_Plus.jar)=jars/ij.jar
@@ -506,40 +506,27 @@ misc/headless.jar[bin/make-headless-jar.bsh] <- jars/fiji-compat.jar jars/javass
 
 # ImageJ launcher
 
-JAVA_LIB_PATH(linux32)=lib/i386/client/libjvm.so
-JAVA_LIB_PATH(linux64)=lib/amd64/server/libjvm.so
-JAVA_LIB_PATH(win32)=bin/client/jvm.dll
-JAVA_LIB_PATH(win64)=bin/server/jvm.dll
-JAVA_LIB_PATH(macosx)=
-JAVA_LIB_PATH(freebsd)=lib/i386/client/libjvm.so
-
 # The variables CFLAGS, LDFLAGS and LIBS will be used for compiling
 # C and C++ programs.
 COMMONCFLAGS=-Wall -Iincludes
-WINOPTS=-mwindows -mno-cygwin -DMINGW32
-CFLAGS(win32)=$COMMONCFLAGS $WINOPTS \
-	-DJAVA_HOME='"$FIJI_JAVA_HOME_UNEXPANDED(win32)"' -DJAVA_LIB_PATH='"$JAVA_LIB_PATH(win32)"'
-CFLAGS(win64)=$COMMONCFLAGS $WINOPTS \
-	-DJAVA_HOME='"$FIJI_JAVA_HOME_UNEXPANDED(win64)"' -DJAVA_LIB_PATH='"$JAVA_LIB_PATH(win64)"'
+WINOPTS=-mwindows -DMINGW32
+CFLAGS(win32)=$COMMONCFLAGS $WINOPTS -mno-cygwin
+CFLAGS(win64)=$COMMONCFLAGS $WINOPTS
 
 # Include 64-bit architectures only in ./ImageJ (as opposed to ./ImageJ-tiger),
 # and only on MacOSX
 MACOPTS(osx10.3)=-I/System/Library/Frameworks/JavaVM.Framework/Headers -Iincludes \
-	-DMACOSX \
-	-DJAVA_HOME='"$FIJI_JAVA_HOME_UNEXPANDED(macosx)"' -DJAVA_LIB_PATH='"$JAVA_LIB_PATH(macosx)"'
+	-DMACOSX
 MACOPTS(osx10.4)=$MACOPTS(osx10.3) -mmacosx-version-min=10.3 -arch i386 -arch ppc
 MACOPTS(osx10.5)=$MACOPTS(osx10.3) -mmacosx-version-min=10.4 -arch i386 -arch x86_64
 CFLAGS(macosx)=$MACOPTS
 
-CFLAGS(linux32)=$COMMONCFLAGS -DIPV6_MAYBE_BROKEN -fno-stack-protector \
-	-DJAVA_HOME='"$FIJI_JAVA_HOME_UNEXPANDED(linux32)"' -DJAVA_LIB_PATH='"$JAVA_LIB_PATH(linux32)"'
-CFLAGS(linux64)=$COMMONCFLAGS -DIPV6_MAYBE_BROKEN -fno-stack-protector -rdynamic -g \
-	-DJAVA_HOME='"$FIJI_JAVA_HOME_UNEXPANDED(linux64)"' -DJAVA_LIB_PATH='"$JAVA_LIB_PATH(linux64)"'
+CFLAGS(linux32)=$COMMONCFLAGS -DIPV6_MAYBE_BROKEN -fno-stack-protector
+CFLAGS(linux64)=$COMMONCFLAGS -DIPV6_MAYBE_BROKEN -fno-stack-protector -rdynamic -g
 
 LDFLAGS(win32)=$LDFLAGS $WINOPTS
 
-CFLAGS(freebsd)=$COMMONCFLAGS \
-	-DJAVA_HOME='"$FIJI_JAVA_HOME_UNEXPANDED(freebsd)"' -DJAVA_LIB_PATH='"$JAVA_LIB_PATH(freebsd)"'
+CFLAGS(freebsd)=$COMMONCFLAGS
 
 CFLAGS(ImageJ)=$COMMONCFLAGS $MACOPTS
 LDFLAGS(ImageJ)=$LDFLAGS $MACOPTS
