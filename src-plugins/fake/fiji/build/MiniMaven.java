@@ -283,6 +283,7 @@ public class MiniMaven {
 		protected String prefix = "";
 		protected Coordinate latestDependency = new Coordinate();
 		protected boolean isCurrentProfile;
+		protected String currentPluginName;
 
 		protected POM addModule(String name) throws IOException, ParserConfigurationException, SAXException {
 			return addChild(parse(new File(new File(directory, name), "pom.xml"), this));
@@ -1006,9 +1007,11 @@ public class MiniMaven {
 						checkParentTag("version", parentCoordinate.version, string);
 				}
 			}
-			else if (prefix.equals(">project>build>plugins>plugin>configuration>source"))
+			else if (prefix.equals(">project>build>plugins>plugin>artifactId"))
+				currentPluginName = string;
+			else if (prefix.equals(">project>build>plugins>plugin>configuration>source") && "maven-compiler-plugin".equals(currentPluginName))
 				sourceVersion = string;
-			else if (prefix.equals(">project>build>plugins>plugin>configuration>target"))
+			else if (prefix.equals(">project>build>plugins>plugin>configuration>target") && "maven-compiler-plugin".equals(currentPluginName))
 				targetVersion = string;
 			else if (debug)
 				err.println("Ignoring " + prefix);
