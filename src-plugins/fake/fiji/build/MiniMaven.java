@@ -1243,7 +1243,7 @@ public class MiniMaven {
 
 				@Override
 				public void endElement(String uri, String localName, String qName) {
-					if (level > 0)
+					if ((level == 1 && "project".equals(qName)) || (level == 2 && "packaging".equals(qName)))
 						level--;
 				}
 
