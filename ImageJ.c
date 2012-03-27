@@ -1342,6 +1342,15 @@ static void open_win_console(void)
 		attach_console = (typeof(attach_console))
 			dlsym(kernel32_dll, "AttachConsole");
 	if (!attach_console || !attach_console((DWORD)-1)) {
+		if (attach_console) {
+			if (GetLastError() == ERROR_ACCESS_DENIED)
+				/*
+				 * Already attached, according to
+				 * http://msdn.microsoft.com/en-us/library/windows/desktop/ms681952(v=vs.85).aspx
+				 */
+				return;
+			error("error attaching console: %s", get_win_error());
+		}
 		AllocConsole();
 		console_opened = 1;
 		atexit(sleep_a_while);
