@@ -2025,8 +2025,14 @@ static int update_files(struct string *relative_path)
 
 #ifdef WIN32
 		if (file_exists(target->buffer) && unlink(target->buffer)) {
-			if (!strcmp(filename, "ImageJ.exe") || !strcmp(filename, "ImageJ-win32.exe") || !strcmp(filename, "ImageJ-win64.exe"))
-				die("Could not remove old version of %s.  Please move %s to %s manually!", target->buffer, source->buffer, target->buffer);
+			if (!strcmp(filename, "ImageJ.exe") || !strcmp(filename, "ImageJ-win32.exe") || !strcmp(filename, "ImageJ-win64.exe")) {
+				struct string *old = string_initf("%.*s.old.exe", target->length - 4, target->buffer);
+				if (file_exists(old->buffer) && unlink(old->buffer))
+					die("Could not move %s out of the way!", old->buffer);
+				if (rename(target->buffer, old->buffer))
+					die("Could not remove old version of %s.  Please move %s to %s manually!", target->buffer, source->buffer, target->buffer);
+				string_release(old);
+			}
 			else
 				die("Could not remove old version of %s.  Please remove it manually!", target->buffer);
 		}
