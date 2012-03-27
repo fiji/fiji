@@ -342,7 +342,10 @@ public class MiniMaven {
 			for (String url : getRoot().getRepositories()) try {
 				downloadAndVerify(url, dependency, quiet);
 				return;
-			} catch (Exception e) { /* ignore */ }
+			} catch (Exception e) {
+				if (verbose)
+					e.printStackTrace();
+			}
 			throw new FileNotFoundException("Could not download " + dependency.getJarName());
 		}
 
