@@ -3300,7 +3300,7 @@ static int start_ij(void)
 			WaitForSingleObject(process_info.hProcess, INFINITE);
 			if (GetExitCodeProcess(process_info.hProcess, &exit_code) && exit_code)
 				exit(exit_code);
-			return;
+			return 0;
 		}
 
 		char message[16384];
