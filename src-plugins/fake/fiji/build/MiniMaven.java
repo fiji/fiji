@@ -806,6 +806,8 @@ public class MiniMaven {
 				else {
 					if (!quiet && !dependency.optional)
 						err.println("Skipping artifact " + dependency.artifactId + " (for " + coordinate.artifactId + "): not found");
+					if (!downloadAutomatically && MiniMaven.this.downloadAutomatically)
+						return null;
 					return cacheAndReturn(key, null);
 				}
 			}
