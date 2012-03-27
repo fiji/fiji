@@ -36,7 +36,7 @@
 #define MAYBE_UNUSED
 #endif
 
-#ifdef MACOSX
+#ifdef __APPLE__
 #include <stdlib.h>
 #include <pthread.h>
 #include <CoreFoundation/CoreFoundation.h>
@@ -50,7 +50,7 @@ static int get_fiji_bundle_variable(const char *key, struct string *value);
 
 static const char *get_platform(void)
 {
-#ifdef MACOSX
+#ifdef __APPLE__
 	return "macosx";
 #endif
 #ifdef WIN32
@@ -598,7 +598,7 @@ void setenv_or_exit(const char *name, const char *value, int overwrite)
 {
 	int result;
 	if (!value) {
-#ifdef MACOSX
+#ifdef __APPLE__
 		unsetenv(name);
 #else
 		result = unsetenv(name);
@@ -614,7 +614,7 @@ void setenv_or_exit(const char *name, const char *value, int overwrite)
 
 /* Determining heap size */
 
-#ifdef MACOSX
+#ifdef __APPLE__
 #include <mach/mach_init.h>
 #include <mach/mach_host.h>
 
@@ -1096,7 +1096,7 @@ struct string *get_splashscreen_lib_path(void)
 	return !jre_home ? NULL : string_initf("%s/bin/splashscreen.dll", jre_home);
 #elif defined(__linux__)
 	return !jre_home ? NULL : string_initf("%s/lib/%s/libsplashscreen.so", jre_home, sizeof(void *) == 8 ? "amd64" : "i386");
-#elif defined(MACOSX)
+#elif defined(__APPLE__)
 	struct string *search_root = string_initf("/System/Library/Java/JavaVirtualMachines");
 	struct string *result = string_init(32);
 	if (!find_file(search_root, 4, "libsplashscreen.jnilib", result)) {
@@ -1111,7 +1111,7 @@ struct string *get_splashscreen_lib_path(void)
 }
 
 /* So far, only Windows and MacOSX support splash with alpha, Linux does not */
-#if defined(WIN32) || defined(MACOSX)
+#if defined(WIN32) || defined(__APPLE__)
 #define SPLASH_PATH "images/icon.png"
 #else
 #define SPLASH_PATH "images/icon-flat.png"
@@ -1234,7 +1234,7 @@ static const char *get_ij_dir(const char *argv0)
 		slash -= strlen("/precompiled");
 		run_precompiled = 1;
 	}
-#ifdef MACOSX
+#ifdef __APPLE__
 	else if (!suffixcmp(argv0, len, "/Fiji.app/Contents/MacOS"))
 		slash -= strlen("/Contents/MacOS");
 #endif
@@ -1255,7 +1255,7 @@ static const char *get_ij_dir(const char *argv0)
 
 static int create_java_vm(JavaVM **vm, void **env, JavaVMInitArgs *args)
 {
-#ifdef MACOSX
+#ifdef __APPLE__
 	set_path_to_JVM();
 #else
 	/*
@@ -2834,7 +2834,7 @@ static void parse_command_line(void)
 #ifdef __linux__
 	string_append_path_list(java_library_path, getenv("LD_LIBRARY_PATH"));
 #endif
-#ifdef MACOSX
+#ifdef __APPLE__
 	string_append_path_list(java_library_path, getenv("DYLD_LIBRARY_PATH"));
 #endif
 
@@ -2859,7 +2859,7 @@ static void parse_command_line(void)
 
 	memset(&options, 0, sizeof(options));
 
-#ifdef MACOSX
+#ifdef __APPLE__
 	/* When double-clicked Finder adds a psn argument. */
 	if (main_argc > 1 && ! strncmp(main_argv[1], "-psn_", 5)) {
 		/*
@@ -2932,7 +2932,7 @@ static void parse_command_line(void)
 	}
 #endif
 	if (!headless &&
-#ifdef MACOSX
+#ifdef __APPLE__
 			!CGSessionCopyCurrentDictionary()
 #elif defined(__linux__)
 			!getenv("DISPLAY")
@@ -3234,7 +3234,7 @@ static int start_ij(void)
 	} else {
 		/* fall back to system-wide Java */
 		const char *java_home_env;
-#ifdef MACOSX
+#ifdef __APPLE__
 		struct string *icon_option;
 		/*
 		 * On MacOSX, one must (stupidly) fork() before exec() to
@@ -3316,7 +3316,7 @@ static int start_ij(void)
 	return 0;
 }
 
-#ifdef MACOSX
+#ifdef __APPLE__
 static void append_icon_path(struct string *str)
 {
 	/*
@@ -3840,7 +3840,7 @@ static int MAYBE_UNUSED is_dylib(const char *path)
 
 static int is_native_library(const char *path)
 {
-#ifdef MACOSX
+#ifdef __APPLE__
 	return is_dylib(path);
 #else
 	return
@@ -3891,7 +3891,7 @@ static void find_newest(struct string *relative_path, int max_depth, const char 
 static void set_default_library_path(void)
 {
 	default_library_path =
-#if defined(MACOSX)
+#if defined(__APPLE__)
 		"";
 #elif defined(WIN32)
 		sizeof(void *) < 8 ? "bin/client/jvm.dll" : "bin/server/jvm.dll";
@@ -3905,7 +3905,7 @@ static void adjust_java_home_if_necessary(void)
 	struct string *result, *buffer, *jre_path;
 
 	set_default_library_path();
-#ifdef MACOSX
+#ifdef __APPLE__
 	/* On MacOSX, we use the system Java anyway. */
 	return;
 #endif
@@ -3935,7 +3935,7 @@ int main(int argc, char **argv, char **e)
 {
 	int size;
 
-#if defined(MACOSX)
+#if defined(__APPLE__)
 	launch_32bit_on_tiger(argc, argv);
 #elif defined(WIN32)
 	int len;
