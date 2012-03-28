@@ -102,6 +102,11 @@ test -f "$CWD"/java/"$java_submodule"/Home/lib/ext/vecmath.jar || {
 	JAVA_SUBMODULE=java/$java_submodule
 	git submodule init "$JAVA_SUBMODULE" && (
 		URL="$(git config submodule."$JAVA_SUBMODULE".url)" &&
+		case "$URL" in
+		contrib@fiji.sc:/srv/git/*)
+			URL="git://fiji.sc/${URL#contrib@fiji.sc:/srv/git/}"
+			;;
+		esac &&
 		mkdir -p "$JAVA_SUBMODULE" &&
 		cd "$JAVA_SUBMODULE" &&
 		git init &&
