@@ -78,7 +78,7 @@ class RegularFileObject extends BaseFileObject {
 
     //@Override
     public String getName() {
-        return file.getPath();
+        return this.name;
     }
 
     //@Override
