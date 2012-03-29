@@ -974,7 +974,7 @@ public class MiniMaven {
 			else if (prefix.equals(">project>dependencies>dependency>classifier"))
 				latestDependency.classifier = string;
 			else if (prefix.equals(">project>profiles>profile>id")) {
-				isCurrentProfile = (!Util.getPlatform().equals("macosx") && "javac".equals(string)) || (coordinate.artifactId.equals("javassist") && string.equals("jdk16"));
+				isCurrentProfile = (!Util.getPlatform().equals("macosx") && "javac".equals(string)) || (coordinate.artifactId.equals("javassist") && (string.equals("jdk16") || string.equals("default-tools")));
 				if (debug)
 					err.println((isCurrentProfile ? "Activating" : "Ignoring") + " profile " + string);
 			}

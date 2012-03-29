@@ -290,7 +290,7 @@ CLASSPATH(jars/imglib2-ij.jar)=jars/ij.jar:jars/imglib2.jar:jars/mpicbg.jar
 jars/imglib2-ij.jar <- modules/imglib/
 CLASSPATH(jars/imglib2-io.jar)=plugins/loci_tools.jar:jars/imglib2.jar
 jars/imglib2-io.jar <- modules/imglib/
-CLASSPATH(jars/imglib2-algorithms.jar)=jars/Jama.jar:jars/imglib2.jar:jars/edu_mines_jtk.jar
+CLASSPATH(jars/imglib2-algorithms.jar)=jars/Jama.jar:jars/imglib2.jar:jars/edu_mines_jtk.jar:jars/mpicbg.jar
 jars/imglib2-algorithms.jar <- modules/imglib/
 CLASSPATH(jars/imglib2-scripting.jar)=jars/ij.jar:jars/imglib2.jar:jars/imglib2-io.jars:jars/imglib2-algorithms.jar:jars/imglib2-ij.jar:plugins/loci_tools.jar:jars/mpicbg.jar:jars/jfreechart.jar:jars/jcommon.jar:$JAVA3D_JARS
 jars/imglib2-scripting.jar <- modules/imglib/
