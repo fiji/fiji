@@ -229,6 +229,7 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/Descriptor_based_registration.jar \
 	plugins/SPIM_Opener.jar \
 	plugins/Reconstruct_Reader.jar \
+	plugins/FS_Align_TrakEM2.jar \
 	jars/fiji-compat.jar \
 	plugins/Fiji_Package_Maker.jar
 
@@ -460,6 +461,7 @@ CLASSPATH(plugins/Kuwahara_Filter.jar)=jars/ij.jar
 CLASSPATH(plugins/Action_Bar.jar)=jars/ij.jar
 CLASSPATH(plugins/Multi_Kymograph.jar)=jars/ij.jar
 CLASSPATH(plugins/Reconstruct_Reader.jar)=jars/ij.jar:plugins/TrakEM2_.jar
+CLASSPATH(plugins/FS_Align_TrakEM2.jar)=jars/ij.jar:plugins/TrakEM2_.jar
 CLASSPATH(plugins/Colour_Deconvolution.jar)=jars/ij.jar
 CLASSPATH(plugins/Dichromacy_.jar)=jars/ij.jar
 CLASSPATH(plugins/Threshold_Colour.jar)=jars/ij.jar
