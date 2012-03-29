@@ -391,53 +391,16 @@ public class Infer {
         }
         checkWithinBounds(tvars, undettypes.toList(), warn);
 
-        mt = (MethodType)types.subst(mt, tvars, insttypes.toList());
-
         if (!restvars.isEmpty()) {
             // if there are uninstantiated variables,
             // quantify result type with them
-            final List<Type> inferredTypes = insttypes.toList();
-            final List<Type> all_tvars = tvars; //this is the wrong tvars
-            final MethodType mt2 = new MethodType(mt.argtypes, null, mt.thrown, syms.methodClass);
-            mt2.restype = new ForAll(restvars.toList(), mt.restype) {
-                @Override
-                public List<Type> getConstraints(TypeVar tv, ConstraintKind ck) {
-                    for (Type t : restundet.toList()) {
-                        UndetVar uv = (UndetVar)t;
-                        if (uv.qtype == tv) {
-                            switch (ck) {
-                                case EXTENDS: return uv.hibounds;
-                                case SUPER: return uv.lobounds;
-                                case EQUAL: return uv.inst != null ? List.of(uv.inst) : List.<Type>nil();
-                            }
-                        }
-                    }
-                    return List.nil();
-                }
+            mt = new MethodType(mt.argtypes,
+                                new ForAll(restvars.toList(), mt.restype),
+                                mt.thrown, syms.methodClass);
+        }
 
-                @Override
-                public Type inst(List<Type> inferred, Types types) throws NoInstanceException {
-                    List<Type> formals = types.subst(mt2.argtypes, tvars, inferred);
-                    if (!rs.argumentsAcceptable(capturedArgs, formals,
-                           allowBoxing, useVarargs, warn)) {
-                      // inferred method is not applicable
-                      throw invalidInstanceException.setMessage("inferred.do.not.conform.to.params", formals, argtypes);
-                    }
-                    // check that inferred bounds conform to their bounds
-                    checkWithinBounds(all_tvars,
-                           types.subst(inferredTypes, tvars, inferred), warn);
-                    return super.inst(inferred, types);
-            }};
-            return mt2;
-        }
-        else if (!rs.argumentsAcceptable(capturedArgs, mt.getParameterTypes(), allowBoxing, useVarargs, warn)) {
-            // inferred method is not applicable
-            throw invalidInstanceException.setMessage("inferred.do.not.conform.to.params", mt.getParameterTypes(), argtypes);
-        }
-        else {
-            // return instantiated version of method type
-            return mt;
-        }
+        // return instantiated version of method type
+        return types.subst(mt, tvars, insttypes.toList());
     }
     //where
 
