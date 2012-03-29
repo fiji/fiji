@@ -2,14 +2,15 @@ package fsalign;
 
 import javax.swing.filechooser.FileNameExtensionFilter;
 import java.io.File;
-//import ;
-//import ;
 import java.io.FileFilter;
 import java.io.IOException;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.Vector;
 
+/**
+ * @author Larry Lindsey
+ */
 public class FolderWatcher extends TimerTask{
 
     /**
@@ -26,6 +27,9 @@ public class FolderWatcher extends TimerTask{
         }
     }
 
+    /**
+     * Adapts javax.swing.filechooser.FileFilter's to be used as java.io.FileFilter's
+     */
     private static class FileFilterAdapter implements FileFilter
     {
         final javax.swing.filechooser.FileFilter javaxFileFilter;
@@ -67,11 +71,19 @@ public class FolderWatcher extends TimerTask{
         this(folderName, inInterval, new FileNameExtensionFilter("File extension", extension));
     }
 
-    public FolderWatcher(final String folderName, final long inInterval, final javax.swing.filechooser.FileFilter filter)
+    public FolderWatcher(final String folderName, final long inInterval,
+                         final javax.swing.filechooser.FileFilter filter)
     {
         this(folderName, inInterval, new FileFilterAdapter(filter));
     }
-    
+
+    /**
+     * Watch the folder at the given location for changes, polling at a given interval, ignoring
+     * all files but those accepted by the given filter. Does not start() automatically.
+     * @param folderName the String path to the folder in question
+     * @param inInterval the poll interval in milliseconds
+     * @param filter a filter to accept the files that we're interested in.
+     */
     public FolderWatcher(final String folderName, final long inInterval, final FileFilter filter)
     {
         folders = new Vector<File>();
@@ -112,17 +124,29 @@ public class FolderWatcher extends TimerTask{
             }
         }
     }
-    
+
+    /**
+     * Returns a list of all files seen.
+     * @return a list of all files seen.
+     */
     public Vector<File> getFileList()
     {
         return new Vector<File>(allFileList);
     }
-    
+
+    /**
+     * Returns a list of file newly seen since the last poll epoch.
+     * @return a list of file newly seen since the last poll epoch.
+     */
     public Vector<File> getFreshFileList()
     {
         return new Vector<File>(freshFileList);
     }
-    
+
+    /**
+     * Stop this FolderWatcher/TimerTask, cancel()'ing all FileListeners as well.
+     * @return super.cancel()
+     */
     public boolean cancel()
     {
         for (FileListener fl : listenerList)
@@ -170,7 +194,12 @@ public class FolderWatcher extends TimerTask{
             fl.handle(this);
         }
     }
-    
+
+    /**
+     * Because who doesn't like a main method?
+     * @param args looks at args[0] for a folder to watch.
+     * @throws IOException
+     */
     public static void main(String[] args) throws IOException
     {
         if (args.length < 1)
