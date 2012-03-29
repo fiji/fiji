@@ -82,6 +82,7 @@ ensure_fake_is_built () {
 
 case "$(uname -s)" in
 Darwin)
+	JAVA_HOME=/System/Library/Frameworks/JavaVM.framework/Home
 	java_submodule=macosx-java3d
 	case "$(uname -r)" in
 	8.*) platform=tiger;;
