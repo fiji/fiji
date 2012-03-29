@@ -1,6 +1,7 @@
 package fsalign;
 
 import ij.IJ;
+import ij.Prefs;
 import ij.gui.GenericDialog;
 import ij.io.DirectoryChooser;
 import ij.plugin.PlugIn;
@@ -41,12 +42,14 @@ public class FS_Align_TrakEM2 implements PlugIn
     }
     
     private static class DoneListener implements ActionListener
-    {
-        private final FSAlignListener listener;
+    {        
+        private final FolderWatcher watcher;
+        private final Frame frame;
 
-        public DoneListener(FSAlignListener alignListener)
+        public DoneListener(Frame f, FolderWatcher fw)
         {
-            listener = alignListener;
+            frame = f;
+            watcher = fw;
         }
 
         public void actionPerformed(ActionEvent actionEvent) {
@@ -56,11 +59,16 @@ public class FS_Align_TrakEM2 implements PlugIn
 
             if (gd.wasOKed())
             {
-                listener.stop();
+                watcher.cancel();
+                frame.dispose();
             }
         }
     }
 
+    private static final String REGEX_KEY = "fsalign.FSAlignTrakEM2.regex";
+    private static final String REGEX_TEST_KEY = "fsalign.FSAlignTrakEM2.regextest";
+    private static final String POLL_KEY = "fsalign.FSAlignTrakEM2.poll";
+    
     private String email;
     private String regexp;
     private int delayMS;
@@ -68,16 +76,17 @@ public class FS_Align_TrakEM2 implements PlugIn
 
     
     
-    private void setupFinishWindow(FSAlignListener listener)
+    private void setupFinishWindow(FolderWatcher watcher)
     {
         Frame f = new Frame("File System Image Registration Plugin");
         Panel p = new Panel(new FlowLayout(FlowLayout.CENTER));
         Button b = new Button("Quit");
 
-        b.addActionListener(new DoneListener(listener));
+        b.addActionListener(new DoneListener(f, watcher));
         
         p.add(b);
         f.add(p);
+        f.pack();
 
         f.setVisible(true);
     }
@@ -88,18 +97,23 @@ public class FS_Align_TrakEM2 implements PlugIn
         final GenericDialog gd = new GenericDialog("Folder Watch Alignment Plugin Settings");
         final Button button = new Button("Update Result");
         final Panel panel = new Panel(new FlowLayout(FlowLayout.CENTER));
+        final double pollTime = Prefs.get(POLL_KEY, 30.0);
+        final String regexField = Prefs.get(REGEX_KEY, "Tile.*(tif|tiff|png)$");
+        final String regexTestField = Prefs.get(REGEX_TEST_KEY, "Tile_r1-c1_Something Something.tif");
+        
+        
         Vector stringFields;
         RegexpListener rl;
 
         panel.add(button);
 
-        gd.addNumericField("Section Thickness (pixels)", 22.5, 2);
-        gd.addNumericField("Poll Frequency (seconds)", 30.0, 2);
+        gd.addNumericField("Section Thickness (pixels)", 1.0, 2);
+        gd.addNumericField("Poll Frequency (seconds)", pollTime, 2);
         //gd.addStringField("Notification Email Address (Blank for none)", "");
         gd.addMessage("Regular Expressions are used to match file names");
         gd.addMessage("Test your regular expression below");
-        gd.addStringField("Regular Expression", "Tile.*(tif|tiff|png)$");
-        gd.addStringField("Test", "Tile_r1-c1_Something Something.tif");
+        gd.addStringField("Regular Expression", regexField);
+        gd.addStringField("Test", regexTestField);
         gd.addStringField("Result", "");
         gd.addPanel(panel);
 
@@ -126,6 +140,11 @@ public class FS_Align_TrakEM2 implements PlugIn
         //email = gd.getNextString();
         regexp = gd.getNextString();
 
+        Prefs.set(POLL_KEY, ((double)delayMS)/1000);
+        Prefs.set(REGEX_KEY, regexp);
+        Prefs.set(REGEX_TEST_KEY, gd.getNextString());
+        Prefs.savePreferences();
+        
         return true;
     }
     
@@ -153,8 +172,8 @@ public class FS_Align_TrakEM2 implements PlugIn
         {
             FSAlignListener alignListener;
             final DirectoryChooser folderDialog = new DirectoryChooser("Choose Folder to Watch");
-            String watchPath = folderDialog.getDirectory();
-            
+            final String watchPath = folderDialog.getDirectory();
+
             if (!getPluginParams())
             {
                 return;
@@ -167,10 +186,12 @@ public class FS_Align_TrakEM2 implements PlugIn
 
             alignListener = new FSAlignListener(trakemProject, thickness);
             alignListener.setNotifyEmail(email);
-
+            
             try
             {
-                ImageListener.imageFolderWatcher(watchPath, delayMS, alignListener, regexp).start();
+                final FolderWatcher fw = ImageListener.imageFolderWatcher(watchPath, delayMS, alignListener, regexp);
+                setupFinishWindow(fw);
+                fw.start();
             }
             catch (IOException ioe)
             {

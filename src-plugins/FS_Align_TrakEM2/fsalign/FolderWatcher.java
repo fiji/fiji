@@ -122,6 +122,16 @@ public class FolderWatcher extends TimerTask{
     {
         return new Vector<File>(freshFileList);
     }
+    
+    public boolean cancel()
+    {
+        for (FileListener fl : listenerList)
+        {
+            fl.stop();
+        }
+        
+        return super.cancel();
+    }
 
     public void run()
     {
@@ -187,6 +197,8 @@ public class FolderWatcher extends TimerTask{
                             }
                             System.out.println();
                         }
+
+                        public void stop(){}
                     }
             );
             fw.start();
