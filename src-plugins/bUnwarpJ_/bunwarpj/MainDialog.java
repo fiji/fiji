@@ -172,6 +172,9 @@ public class MainDialog extends GenericDialog
 
 	/** macro flag */
 	private boolean bMacro = false;
+	
+	/** macro arguments */
+	String macroArgs = null;
 
 	/** region of interest of the source image before calling the plugin */
 	private Roi previousSourceRoi;
@@ -317,6 +320,9 @@ public class MainDialog extends GenericDialog
 
 		// Check if it is a macro call
 		this.bMacro = Macro.getOptions() != null;
+		
+		if( bMacro )
+			macroArgs = Macro.getOptions();
 
 		// Start source and target images (concurrent threads 
 		// need to be started later)		
@@ -1317,6 +1323,15 @@ public class MainDialog extends GenericDialog
 	 */
 	public boolean isMacroCall() {
 		return bMacro;
+	}
+	
+	/**
+	 * Get arguments from the macro call
+	 * @return macro call arguments
+	 */
+	public String getMacroArgs()
+	{
+		return macroArgs;
 	}
 
 } /* end class MainDialog */
