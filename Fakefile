@@ -230,6 +230,7 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/Descriptor_based_registration.jar \
 	plugins/SPIM_Opener.jar \
 	plugins/Reconstruct_Reader.jar \
+	plugins/FS_Align_TrakEM2.jar \
 	jars/fiji-compat.jar \
 	plugins/Fiji_Package_Maker.jar
 
@@ -291,7 +292,7 @@ CLASSPATH(jars/imglib2-ij.jar)=jars/ij.jar:jars/imglib2.jar:jars/mpicbg.jar
 jars/imglib2-ij.jar <- modules/imglib/
 CLASSPATH(jars/imglib2-io.jar)=plugins/loci_tools.jar:jars/imglib2.jar
 jars/imglib2-io.jar <- modules/imglib/
-CLASSPATH(jars/imglib2-algorithms.jar)=jars/Jama.jar:jars/imglib2.jar:jars/edu_mines_jtk.jar
+CLASSPATH(jars/imglib2-algorithms.jar)=jars/Jama.jar:jars/imglib2.jar:jars/edu_mines_jtk.jar:jars/mpicbg.jar
 jars/imglib2-algorithms.jar <- modules/imglib/
 CLASSPATH(jars/imglib2-scripting.jar)=jars/ij.jar:jars/imglib2.jar:jars/imglib2-io.jars:jars/imglib2-algorithms.jar:jars/imglib2-ij.jar:plugins/loci_tools.jar:jars/mpicbg.jar:jars/jfreechart.jar:jars/jcommon.jar:$JAVA3D_JARS
 jars/imglib2-scripting.jar <- modules/imglib/
@@ -462,6 +463,7 @@ CLASSPATH(plugins/Kuwahara_Filter.jar)=jars/ij.jar
 CLASSPATH(plugins/Action_Bar.jar)=jars/ij.jar
 CLASSPATH(plugins/Multi_Kymograph.jar)=jars/ij.jar
 CLASSPATH(plugins/Reconstruct_Reader.jar)=jars/ij.jar:plugins/TrakEM2_.jar
+CLASSPATH(plugins/FS_Align_TrakEM2.jar)=jars/ij.jar:plugins/TrakEM2_.jar
 CLASSPATH(plugins/Colour_Deconvolution.jar)=jars/ij.jar
 CLASSPATH(plugins/Dichromacy_.jar)=jars/ij.jar
 CLASSPATH(plugins/Threshold_Colour.jar)=jars/ij.jar

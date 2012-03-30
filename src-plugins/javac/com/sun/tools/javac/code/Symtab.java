@@ -441,6 +441,7 @@ public class Symtab {
         synthesizeEmptyInterfaceIfMissing(serializableType);
         synthesizeBoxTypeIfMissing(doubleType);
         synthesizeBoxTypeIfMissing(floatType);
+        synthesizeBoxTypeIfMissing(voidType);
 
         // Enter a synthetic class that is used to mark internal
         // proprietary classes in ct.sym.  This class does not have a

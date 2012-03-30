@@ -12,7 +12,7 @@ public class Reconstruct_Reader implements PlugIn
 
     public void run(final String arg) {
         String fname;
-        Translator translator;
+        ReconstructTranslator translator;
         long sTime;
 
         if (arg.equals(""))
@@ -26,7 +26,7 @@ public class Reconstruct_Reader implements PlugIn
         }
 
         IJ.log("Creating Reconstruct Translator.");
-        translator = new Translator(fname);
+        translator = new ReconstructTranslator(fname);
         IJ.log("Done.");
 
         sTime = System.currentTimeMillis();

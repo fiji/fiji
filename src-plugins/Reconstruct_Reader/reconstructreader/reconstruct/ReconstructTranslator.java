@@ -13,12 +13,15 @@ import reconstructreader.Utils;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
-public class Translator {
+public class ReconstructTranslator {
+    
+    public static interface TranslationMessenger
+    {
+        public void sendMessage(String message);
+    }
+    
 
     private static class MalformedFileInputStream extends FilterInputStream
     {
@@ -140,6 +143,8 @@ public class Translator {
     private double defaultMag;
 
     private boolean ready;
+    
+    private TranslationMessenger messenger;
 
 
 
@@ -159,13 +164,11 @@ public class Translator {
         sectionDocuments.add(d);
     }
 
-    public Translator(String f)
+    public ReconstructTranslator(String f)
     {
         inputFile = new File(f);
         // Parse out the path
         final String localFile = inputFile.getName();
-        //final File seriesDTD = new File(inputFile.getParent() + "/series.dtd");
-        //final File sectionDTD = new File(inputFile.getParent() + "/section.dtd");
 
         errorMessage = "";
         lastFile = null;
@@ -177,9 +180,8 @@ public class Translator {
         closedContours = new ArrayList<ReconstructAreaList>();
         openContours = new ArrayList<ReconstructProfileList>();
 
-        projectName = (localFile.endsWith(".ser") || localFile.endsWith(".SER")) ?
+        projectName = localFile.toLowerCase().endsWith(".ser") ?
                 localFile.substring(0, localFile.length() - 4) : localFile;
-        //fileName = f;
         currentOID = -1;
 
         nuid = Integer.toString(projectName.hashCode());
@@ -189,6 +191,13 @@ public class Translator {
 
         ready = true;
 
+        messenger = new TranslationMessenger()
+        {
+            public void sendMessage(String message)
+            {
+                System.err.println(message);
+            }
+        };
     }
 
     public int getLayerSetOID()
@@ -196,13 +205,21 @@ public class Translator {
         return layerSetOID;
     }
 
+    public void setMessenger(TranslationMessenger inMessenger)
+    {
+        messenger = inMessenger;
+    }
+    
+    public void log(String logString)
+    {
+        messenger.sendMessage(logString);
+    }
 
     public boolean process()
     {
         if (ready)
         {
-            File[] list;
-
+            File[] sectionFiles;
             xmlBuilder = new StringBuilder();
             sectionDocuments.clear();
 
@@ -215,7 +232,7 @@ public class Translator {
             Reconstruct.199
             Reconstruct.200
             */
-            list = inputFile.getParentFile().listFiles(
+            sectionFiles = inputFile.getParentFile().listFiles(
                     new FilenameFilter()
                     {
                         public boolean accept(File dir, String name)
@@ -238,9 +255,9 @@ public class Translator {
 
                 serDoc = builder.parse(inputFile);
 
-                for (File f : list)
+                for (File f : sectionFiles)
                 {
-                    System.out.println("Opening file " + f.getAbsolutePath());
+                    log("Opening file " + f.getAbsolutePath());
                     lastFile = f;
                     addSection(sectionDocuments, builder, f);
                 }
@@ -270,7 +287,7 @@ public class Translator {
                 ahead of time, and link them to their respective sections/layers.
                 */
 
-                collectContours(sectionDocuments);
+                collectContoursAndSections(sectionDocuments);
                 collectZTraces(serDoc);
 
                 xmlBuilder.append("<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>\n");
@@ -292,6 +309,8 @@ public class Translator {
                         ", column " + spe.getColumnNumber() + "\n";
                 errorMessage += Utils.stackTraceToString(spe);
 
+                clearMemory();
+                
                 return false;
             }
             catch (Exception e)
@@ -341,15 +360,22 @@ public class Translator {
         }
     }
 
-    protected void collectContours(List<Document> sectionDocs)
+    protected void collectContoursAndSections(List<Document> sectionDocs)
     {
+        double[] sectionThickness;
+
+        //Collect contours
         for (Document doc : sectionDocs)
         {
             NodeList contours = doc.getElementsByTagName("Contour");
             ReconstructSection currSection = new ReconstructSection(this, doc);
-            sections.add(currSection);
             ArrayList<Element> domains = new ArrayList<Element>();
             NodeList images = doc.getElementsByTagName("Image");
+
+            sections.add(currSection);
+
+            //Find the domain contours. domains is used later to make sure we ignore those
+            //contours correctly
             for (int i = 0; i < images.getLength(); ++i)
             {
                 domains.add(Utils.getImageDomainContour(images.item(i)));
@@ -359,6 +385,7 @@ public class Translator {
             {
                 Element e = (Element)contours.item(i);
 
+                //Open contours and closed contours are treated differently
                 if (e.getAttribute("closed").equals("true") && !domains.contains(e))
                 {
                     ReconstructAreaList areaList = Utils.findContourByName(closedContours,
@@ -386,6 +413,71 @@ public class Translator {
                     }
                 }
             }
+        }
+
+        fixupSections();
+    }
+    
+    private void fixupSections()
+    {
+        double[] sectionThickness = new double[sections.size()];
+        //List of indices with zero thickness
+        Vector<Integer> zeroIndices = new Vector<Integer>();
+        for (int i = 0; i < sections.size(); ++i)
+        {
+            sectionThickness[i] = sections.get(i).getThickness();
+            if (sectionThickness[i] <= 0)
+            {
+                zeroIndices.add(i);
+            }
+        }
+        
+        if (zeroIndices.size() > 0)
+        {
+            ArrayList<Double> nbd = new ArrayList<Double>(5);
+
+            for (int i : zeroIndices)
+            {
+                int offset = 1;
+                int condition = 0;
+                
+                nbd.clear();
+
+                //Find up to five nearest neighbors. Take the correct thickness as the neighbors'
+                //median.
+                while (condition < 2 && nbd.size() < 5)
+                {
+                    //condition == 2 indicates that we ran out of bounds in high and low indices
+                    int checkIndex = i + offset;
+                    if (checkIndex < 0)
+                    {
+                        ++condition; //low oob
+                    }
+                    else if (checkIndex >= sectionThickness.length)
+                    {
+                        ++condition; //high oob
+                    }
+                    else if(sectionThickness[checkIndex] > 0)
+                    {
+                        nbd.add(sectionThickness[checkIndex]);
+                    }
+                    // 1 -> -1 -> 2 -> -2 ...
+                    offset = offset > 0 ? -offset : -offset + 1;
+                }
+                Collections.sort(nbd);
+                sections.get(i).setThickness(nbd.get(nbd.size()/2));
+            }
+
+            log("There are " + zeroIndices.size() + " sections out of " + sections.size() +
+                    " with zero section thickness.\nThey will be given a best-guess thickness for use with " +
+                    "TrakEM2.");
+        }
+
+        sections.get(0).setZ(((double)sections.get(0).getIndex()) * sections.get(0).getThickness());
+        
+        for (int i = 1; i < sections.size(); ++i)
+        {
+            sections.get(i).setZFromPrevious(sections.get(i-1));
         }
     }
 

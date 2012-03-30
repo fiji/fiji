@@ -277,7 +277,7 @@ public class MiniMaven {
 		protected List<String> modules = new ArrayList<String>();
 		protected List<Coordinate> dependencies = new ArrayList<Coordinate>();
 		protected Set<String> repositories = new TreeSet<String>();
-		protected String sourceVersion, targetVersion;
+		protected String sourceVersion, targetVersion, mainClass;
 
 		// only used during parsing
 		protected String prefix = "";
@@ -974,7 +974,7 @@ public class MiniMaven {
 			else if (prefix.equals(">project>dependencies>dependency>classifier"))
 				latestDependency.classifier = string;
 			else if (prefix.equals(">project>profiles>profile>id")) {
-				isCurrentProfile = (!Util.getPlatform().equals("macosx") && "javac".equals(string)) || (coordinate.artifactId.equals("javassist") && string.equals("jdk16"));
+				isCurrentProfile = (!Util.getPlatform().equals("macosx") && "javac".equals(string)) || (coordinate.artifactId.equals("javassist") && (string.equals("jdk16") || string.equals("default-tools")));
 				if (debug)
 					err.println((isCurrentProfile ? "Activating" : "Ignoring") + " profile " + string);
 			}
@@ -1018,6 +1018,8 @@ public class MiniMaven {
 				sourceVersion = string;
 			else if (prefix.equals(">project>build>plugins>plugin>configuration>target") && "maven-compiler-plugin".equals(currentPluginName))
 				targetVersion = string;
+			else if (prefix.equals(">project>build>plugins>plugin>configuration>archive>manifest>mainClass") && "maven-jar-plugin".equals(currentPluginName))
+				mainClass = string;
 			else if (debug)
 				err.println("Ignoring " + prefix);
 		}
@@ -1397,8 +1399,7 @@ public class MiniMaven {
 		MiniMaven miniMaven = new MiniMaven(null, System.err, false);
 		POM root = miniMaven.parse(new File("pom.xml"), null);
 		String command = args.length == 0 ? "compile-and-run" : args[0];
-		String artifactId = getSystemProperty("artifactId", "ij-app");
-		String mainClass = getSystemProperty("mainClass", "imagej.Main");
+		String artifactId = getSystemProperty("artifactId", root.coordinate.artifactId.equals("pom-ij-base") ? "ij-app" : root.coordinate.artifactId);
 
 		POM pom = root.findPOM(new Coordinate(null, artifactId, null), false, miniMaven.downloadAutomatically);
 		if (pom == null)
@@ -1425,6 +1426,11 @@ public class MiniMaven {
 		else if (command.equals("get") || command.equals("get-dependencies"))
 			pom.downloadDependencies();
 		else if (command.equals("run")) {
+			String mainClass = getSystemProperty("mainClass", pom.mainClass);
+			if (mainClass == null) {
+				miniMaven.err.println("No main class specified in pom " + pom.coordinate);
+				System.exit(1);
+			}
 			String[] paths = pom.getClassPath(false).split(File.pathSeparator);
 			URL[] urls = new URL[paths.length];
 			for (int i = 0; i < urls.length; i++)
