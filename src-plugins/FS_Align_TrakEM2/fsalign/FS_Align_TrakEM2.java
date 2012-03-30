@@ -218,8 +218,9 @@ public class FS_Align_TrakEM2 implements PlugIn
         }
     }
 
-    public void run(String s) {        
-        Project trakemProject = Display.getFront().getProject();
+    public void run(String s) {
+        Display display = Display.getFront();
+        Project trakemProject = display == null ? null : display.getProject();
 
         if (trakemProject != null)
         {
@@ -251,6 +252,12 @@ public class FS_Align_TrakEM2 implements PlugIn
                 IJ.log("FS Align Plugin Caught IOException:\n" + ioe);
             }
             
+        }
+        else
+        {
+            GenericDialog gd = new GenericDialog("Need a TrakEM2 Project");
+            gd.addMessage("Please either open a TrakEM2 project or create a new one through File->New->TrakEM2 Project");
+            gd.showDialog();
         }
     }
 }
