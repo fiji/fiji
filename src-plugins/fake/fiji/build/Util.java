@@ -105,13 +105,14 @@ public class Util {
 
 	public static void copyFile(String source, String target, File cwd)
 			throws FakeException {
+
 		if (target.equals(source))
 			return;
 		try {
 			target = makePath(cwd, target);
 			source = makePath(cwd, source);
 			File parent = new File(target).getParentFile();
-			if (!parent.exists())
+			if (parent != null && !parent.exists())
 				parent.mkdirs();
 			OutputStream out = new FileOutputStream(target);
 			InputStream in = new FileInputStream(source);
