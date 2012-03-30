@@ -277,7 +277,7 @@ public class MiniMaven {
 		protected List<String> modules = new ArrayList<String>();
 		protected List<Coordinate> dependencies = new ArrayList<Coordinate>();
 		protected Set<String> repositories = new TreeSet<String>();
-		protected String sourceVersion, targetVersion;
+		protected String sourceVersion, targetVersion, mainClass;
 
 		// only used during parsing
 		protected String prefix = "";
@@ -1018,6 +1018,8 @@ public class MiniMaven {
 				sourceVersion = string;
 			else if (prefix.equals(">project>build>plugins>plugin>configuration>target") && "maven-compiler-plugin".equals(currentPluginName))
 				targetVersion = string;
+			else if (prefix.equals(">project>build>plugins>plugin>configuration>archive>manifest>mainClass") && "maven-jar-plugin".equals(currentPluginName))
+				mainClass = string;
 			else if (debug)
 				err.println("Ignoring " + prefix);
 		}
