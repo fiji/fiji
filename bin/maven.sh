@@ -34,7 +34,7 @@ then
 	else
 		FIJI="$CWD/../ImageJ"
 		FIJI_JAVA_HOME="$("$FIJI" --print-java-home)"
-		if test -d "$JAVA_HOME"
+		if test -d "$FIJI_JAVA_HOME"
 		then
 			JAVA_HOME="$FIJI_JAVA_HOME"
 			export JAVA_HOME
