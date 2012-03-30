@@ -37,7 +37,7 @@ then
 		if test -d "$FIJI_JAVA_HOME"
 		then
 			JAVA_HOME="${FIJI_JAVA_HOME%/jre/}"
-			JAVA_HOME="${FIJI_JAVA_HOME%/jre}"
+			JAVA_HOME="${JAVA_HOME%/jre}"
 			export JAVA_HOME
 			JAVACMD="$JAVA_HOME/bin/java"
 			export JAVACMD
