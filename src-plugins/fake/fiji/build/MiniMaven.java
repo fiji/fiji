@@ -1399,8 +1399,7 @@ public class MiniMaven {
 		MiniMaven miniMaven = new MiniMaven(null, System.err, false);
 		POM root = miniMaven.parse(new File("pom.xml"), null);
 		String command = args.length == 0 ? "compile-and-run" : args[0];
-		String artifactId = getSystemProperty("artifactId", "ij-app");
-		String mainClass = getSystemProperty("mainClass", "imagej.Main");
+		String artifactId = getSystemProperty("artifactId", root.coordinate.artifactId.equals("pom-ij-base") ? "ij-app" : root.coordinate.artifactId);
 
 		POM pom = root.findPOM(new Coordinate(null, artifactId, null), false, miniMaven.downloadAutomatically);
 		if (pom == null)
@@ -1427,6 +1426,11 @@ public class MiniMaven {
 		else if (command.equals("get") || command.equals("get-dependencies"))
 			pom.downloadDependencies();
 		else if (command.equals("run")) {
+			String mainClass = getSystemProperty("mainClass", pom.mainClass);
+			if (mainClass == null) {
+				miniMaven.err.println("No main class specified in pom " + pom.coordinate);
+				System.exit(1);
+			}
 			String[] paths = pom.getClassPath(false).split(File.pathSeparator);
 			URL[] urls = new URL[paths.length];
 			for (int i = 0; i < urls.length; i++)
