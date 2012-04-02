@@ -408,7 +408,7 @@ implements ActionListener, AdjustmentListener, ItemListener,
 				{
 					if (pop.topo[i][j]==true)
 					{
-						// label connection between cells (potential neigbhours)
+						// label connection between cells (potential neighbours)
 						java.awt.geom.GeneralPath Tshape = new GeneralPath();
 						Point P2 = ((Balloon)(balloons.get(j))).getPoint();
 						x2 = (float)(P2.getX());
@@ -861,7 +861,7 @@ implements ActionListener, AdjustmentListener, ItemListener,
 
 
 		//ComboBox for View options/////////////////////////////////////////////////////////////////////
-		String[] showOptions = { "Bounds", "Centres", "Interactions", "Neigbhours", "Cells", "Report"};
+		String[] showOptions = { "Bounds", "Centres", "Interactions", "Neighbours", "Cells", "Report"};
 		showOptionsList = new JComboBox(showOptions);
 		showOptionsList.setSelectedIndex(0);
 		showOptionsList.addActionListener(this);
@@ -1415,7 +1415,7 @@ implements ActionListener, AdjustmentListener, ItemListener,
 				// SET THE TOOLBAR TO HAND
 				Tb.setTool(Toolbar.HAND);
 			}
-			else if (showType == "Neigbhours") {
+			else if (showType == "Neighbours") {
 				selected_cell = -2;
 				InitiateDraw();
 				drawBounds();

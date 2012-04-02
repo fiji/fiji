@@ -85,7 +85,7 @@ public class Balloon extends Thread  	/* BEGIN Balloon class definition */
 	private double[] VY;																					// array of vert Y velocities
 	private double[] VX0;																					// X velocities at time t-1
 	private double[] VY0;																					// Y velocities at time t-1																		//        //
-	public int[] FIX;																								// fixed points e.g. due to contact with neigbhours
+	public int[] FIX;																								// fixed points e.g. due to contact with neighbours
 	public int x0;   																							// center of the balloon
 	public int y0;
 	BalloonPopulation POP;
@@ -230,7 +230,7 @@ public class Balloon extends Thread  	/* BEGIN Balloon class definition */
 			VY = new double[n0];																	// array of vert Y velocities
 			VX0 = new double[n0];																	// X velocities at time t-1
 			VY0 = new double[n0];																	// Y velocities at time t-1																		//        //
-			FIX = new int[n0];																				// fixed points e.g. due to contact with neigbhours
+			FIX = new int[n0];																				// fixed points e.g. due to contact with neighbours
 
 
 			Ixx = 0; Iyy = 0; Ixy = 0;
@@ -257,7 +257,7 @@ public class Balloon extends Thread  	/* BEGIN Balloon class definition */
 		VY = new double[n0];																	// array of vert Y velocities
 		VX0 = new double[n0];																	// X velocities at time t-1
 		VY0 = new double[n0];																	// Y velocities at time t-1																		//        //
-		FIX = new int[n0];																				// fixed points e.g. due to contact with neigbhours
+		FIX = new int[n0];																				// fixed points e.g. due to contact with neighbours
 
 
 		Ixx = 0; Iyy = 0; Ixy = 0;
@@ -826,7 +826,7 @@ public class Balloon extends Thread  	/* BEGIN Balloon class definition */
 		VY = new double[n1];																	// array of vert Y velocities
 		VX0 = new double[n1];																	// X velocities at time t-1
 		VY0 = new double[n1];																	// Y velocities at time t-1																		//        //
-		FIX = new int[n1];																				// fixed points e.g. due to contact with neigbhours
+		FIX = new int[n1];																				// fixed points e.g. due to contact with neighbours
 		for (int i=0;i<n0;i++) /* BEGIN loop over the nodes of the structure */
 		{
 				// compute normal and nodal force //

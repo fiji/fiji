@@ -236,15 +236,15 @@ public class Kinematics {
 					double score = 15;
 
 					Balloon Bnew = (Balloon)(BP1.BallList.get(i));		// new cell found
-					int[] new_neigbh = BP1.contacts[i]; 				// neigbhours of the new cell
+					int[] new_neighb = BP1.contacts[i]; 				// neighbours of the new cell
 					Balloon Bmother= (Balloon)(BP.BallList.get(0)); // initiate the mother cell
 
 					for (int j=0;j<BP.N;j++)  /** run through all potential mother cells  */
 					 {
 						// local candidate properties
 						Balloon Bcandidate = (Balloon)(BP.BallList.get(j));  //  candidate to be examined (from the previous sequence)
-						int[] candidate_neigbh_0 = BP.contacts[j];			 //  neigbhours of the candidate
-						int[] candidate_neigbh_1 = BP1.contacts[j];			 	 //  neigbhours of the candidate
+						int[] candidate_neighb_0 = BP.contacts[j];			 //  neighbours of the candidate
+						int[] candidate_neighb_1 = BP1.contacts[j];			 	 //  neighbours of the candidate
 						double score_candidate = 15;
 						if (BP1.topo[Bnew.id][Bcandidate.id])
 							{score_candidate = score_lineage(final_topo, BP, BP1, Bnew.id, Bcandidate.id, seq);}  // score the current configuration
@@ -522,16 +522,16 @@ public class Kinematics {
 			/** this is done in 5 ugly steps, but should work the same */
 			int[] neig_list = new int[BP.N];
 
-			// fill neig_list with 0 (no neigbhour)
+			// fill neig_list with 0 (no neighbour)
 			for (int j=0;j<BP.N;j++){neig_list[j]=0;}
 
-			// find neigbhours of the cell i
+			// find neighbours of the cell i
 			for (int j=0;j<B0.n0;j++) {
 				if (BP.contacts[i][j]>0) {
 					neig_list[BP.contacts[i][j]] = 1;
 				} }
 
-			// Extract X,Y and displacement for the set of neigbhour vertices
+			// Extract X,Y and displacement for the set of neighbour vertices
 			int n=0;
 			Vector V = new Vector();
 			Vector PXY = new Vector();

@@ -27,10 +27,10 @@ public class Watershed
 	int IM[][];											// the image personal format (DEPRECATRED)
 	ArrayList VERTEX = new ArrayList();						// cell vertices
 	ArrayList CELL = new ArrayList();							// Cell definition (1 cell = list of vertices)
-	ArrayList active_growth2 = new ArrayList();		//xxx	// active pixel for checking neigbhors for merging
+	ArrayList active_growth2 = new ArrayList();		//xxx	// active pixel for checking neighbors for merging
 	double[] CENTx;										// lsit of Cell center x position
 	double[] CENTy;										// lsit of Cell center y position
-	Matrix[] NEGB = new Matrix[8];						// neigbhor of a pixel
+	Matrix[] NEGB = new Matrix[8];						// neighbor of a pixel
 	int b_level;										// buffer for level of boundary seeds
 
 	public int sx;												// size of the image
@@ -182,9 +182,9 @@ private int update_Wactive2(int level)
 		// change pixel value when watershed level reach its altitude
 		IM2[im][jm] = (basin+1)*1000;
 		IMB[im][jm][0] = 255;
-		neigbhour( im, jm );
+		neighbour( im, jm );
 
-		//  add verts from the neigbhors to active_growth region
+		//  add verts from the neighbors to active_growth region
         for (int j=0; j<8; j++)
 			{
 			Matrix negbi = NEGB[j];
@@ -325,8 +325,8 @@ private void append_v(int x, int y, int[] LL)
 
 
 
-/** FIND NEIGBHOURS OF A PIXEL */
-private void neigbhour(int i, int j)
+/** FIND NEIGHBOURS OF A PIXEL */
+private void neighbour(int i, int j)
 {
 //
 //    7   6   5
@@ -391,7 +391,7 @@ private void neigbhour(int i, int j)
 }
 
 
-/** SORT THE NEIGBHOURS OF A PIXEL ACCORDING TO THEIR LUMINANCE VALUE */
+/** SORT THE NEIGHBOURS OF A PIXEL ACCORDING TO THEIR LUMINANCE VALUE */
 private int[] _sort(int ii, int jj)
 {
 	ArrayList row = new ArrayList();

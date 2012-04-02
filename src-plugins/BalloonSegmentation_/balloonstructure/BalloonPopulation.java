@@ -105,7 +105,7 @@ public class BalloonPopulation
 
 	// Parameters for KNN triangulation
 	int use_knn = 0;						// use the knn instead of delaunay
-	int KN = 7;								// number of neigbhours
+	int KN = 7;								// number of neighbours
 
 	// Contact Algorithm
 	boolean is_contact_all = false;			// Is contact checked for all possible balloon combination or not
@@ -415,7 +415,7 @@ public class BalloonPopulation
 
 		/** Removes more points to get a better point distribution	*/
 		private void optimize(float HL) {
-			MakeTopo();					// establish temporary neigbhouring through a modified delaunay algorithm
+			MakeTopo();					// establish temporary neighbouring through a modified delaunay algorithm
 			boolean[] deletion = new boolean[N];
 			for (int i=N-1;i>-1;i--)
 				{
@@ -571,7 +571,7 @@ public class BalloonPopulation
 			IJ.log("Could not initialize the contact detection in population: " + this.id);
 			}
 
-		/* make delaunay triangulation prior to expansion so that contact is checked only through neigbhours */
+		/* make delaunay triangulation prior to expansion so that contact is checked only through neighbours */
 		 // 1 - Start from a fully connected graph of interactions
 		 topo = new boolean[N][N];
 		 for (int i = 0; i < N; i++) {
@@ -631,7 +631,7 @@ public class BalloonPopulation
 		        }
 			}
 
-			// 2 - Run nearest neigbhour algorithm
+			// 2 - Run nearest neighbour algorithm
 		else{
 			int[][] BUF = new int[N][2];
 			ArrayList<double[]> KNLIST = new ArrayList<double[]>();

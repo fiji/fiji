@@ -218,7 +218,7 @@ public class BalloonSequence
 			info.append("***\tBalloon:");
 			info.append("\t" + bal.id + "\n");
 
-			// write the neigbhours of the current balloon
+			// write the neighbours of the current balloon
 			for (int k = 0; k<bal.n0; k++)
 				{
 				info.append("\t\t" + k + "\t" + pop.contacts[j][k]);

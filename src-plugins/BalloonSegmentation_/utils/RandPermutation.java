@@ -18,7 +18,7 @@ package utils;
 
 
 public // Generating random permutations.
-// used because for searching division planes through neigbhouring relation
+// used because for searching division planes through neighbouring relation
 // uses rendomness because we are not searching through the entire set of combinations
 class RandPermutation {
     private static int[] source;
