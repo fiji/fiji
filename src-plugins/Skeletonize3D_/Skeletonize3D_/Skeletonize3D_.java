@@ -117,7 +117,7 @@ public class Skeletonize3D_ implements PlugInFilter
 	 * 
 	 * @param outputImage output image stack
 	 */
-	private void prepareData(ImageStack outputImage) 
+	public void prepareData(ImageStack outputImage) 
 	{
 	
 		//IJ.write("Prepare Data: Copy input to output");
@@ -147,15 +147,22 @@ public class Skeletonize3D_ implements PlugInFilter
 	{
 		//IJ.write("Compute Thin Image Start");
 		IJ.showStatus("Computing thin image ...");
-		
-		ArrayList <int[]> simpleBorderPoints = new ArrayList<int[]>();
-		
+						
 		// Prepare Euler LUT [Lee94]
 		int eulerLUT[] = new int[256]; 
 		fillEulerLUT( eulerLUT );
 		
-		int iter = 1;
+		// Prepare number of points LUT
+		int pointsLUT[] = new int[ 256 ];
+		fillnumOfPointsLUT(pointsLUT);
 		
+		// Following Lee[94], save versions (Q) of input image S, while 
+		// deleting each type of border points (R)
+		//ImagePlus Q[] = new ImagePlus[6];
+		ArrayList <int[]> simpleBorderPoints = new ArrayList<int[]>();				
+		
+		int iter = 1;
+		//boolean debug = false;			
 		// Loop through the image several times until there is no change.
 		int unchangedBorders = 0;
 		while( unchangedBorders < 6 )  // loop until no change for all the six border types
@@ -163,7 +170,13 @@ public class Skeletonize3D_ implements PlugInFilter
 			unchangedBorders = 0;
 			for( int currentBorder = 1; currentBorder <= 6; currentBorder++)
 			{
+				//Q[ currentBorder-1 ] = new ImagePlus("Q-" + currentBorder, outputImage).duplicate();
+				
 				IJ.showStatus("Thinning iteration " + iter + " (" + currentBorder +"/6 borders) ...");
+				
+				//if( debug ) IJ.log( " *** current border = " + currentBorder + " ***");	
+				
+				boolean noChange = true;				
 				
 				// Loop through the image.				 
 				for (int z = 0; z < depth; z++)
@@ -172,112 +185,183 @@ public class Skeletonize3D_ implements PlugInFilter
 					{
 						for (int x = 0; x < width; x++)						
 						{
-							// check if point is foreground
-					        if ( getPixel(outputImage, x, y, z) != 1 )
-					        {
-					          continue;         // current point is already background 
-					        }
-					        // check 6-neighbors if point is a border point of type currentBorder
-					        boolean isBorderPoint = false;
-					        // North
-					        if( currentBorder == 1 && N(outputImage, x, y, z) <= 0 )
-					          isBorderPoint = true;
-					        // South
-					        if( currentBorder == 2 && S(outputImage, x, y, z) <= 0 )
-					          isBorderPoint = true;
-					        // East
-					        if( currentBorder == 3 && E(outputImage, x, y, z) <= 0 )
-					          isBorderPoint = true;
-					        // West
-					        if( currentBorder == 4 && W(outputImage, x, y, z) <= 0 )
-					          isBorderPoint = true;
-					        // Up
-					        if( currentBorder == 5 && U(outputImage, x, y, z) <= 0 )
-					          isBorderPoint = true;
-					        // Bottom
-					        if( currentBorder == 6 && B(outputImage, x, y, z) <= 0 )
-					          isBorderPoint = true;
-					        
-					        if( !isBorderPoint )
-					        {
-					          continue;         // current point is not deletable
-					        }
-					        
-					        // check if point is the end of an arc
-					        if ( isEndPoint(outputImage, x, y, z) )
-					        	continue; // current point is not deletable
-					        /*
-					        // check if point is the end of an arc
-					        int numberOfNeighbors = -1;   // -1 and not 0 because the center pixel will be counted as well
-					        byte[] neighbor = getNeighborhood(outputImage, x, y, z);
-					        for( int i = 0; i < 27; i++ ) // i =  0..26
-					        {					        	
-					          if( neighbor[i] == 1 )
-					            numberOfNeighbors++;
-					        }
 
-					        if( numberOfNeighbors == 1 )
-					        {
-					          continue;         // current point is not deletable
-					        }
-					        */
-					        
-					        // Check if point is Euler invariant
-					        if( !isEulerInvariant( getNeighborhood(outputImage, x, y, z), eulerLUT ) )
-					        {
-					          continue;         // current point is not deletable
-					        }
-					        // Check if point is simple (deletion does not change connectivity in the 3x3x3 neighborhood)
-					        if( !isSimplePoint(getNeighborhood(outputImage, x, y, z) ) )
-					        {
-					          continue;         // current point is not deletable
-					        }
-					        // add all simple border points to a list for sequential re-checking
-					        int[] index = new int[3];
-					        index[0] = x;
-					        index[1] = y;
-					        index[2] = z;
-					        simpleBorderPoints.add(index);
+							// check if point is foreground
+							if ( getPixelNoCheck(outputImage, x, y, z) != 1 )
+							{
+								//IJ.log("  background");
+								continue;         // current point is already background 
+							}
+																				
+							// check 6-neighbors if point is a border point of type currentBorder
+							boolean isBorderPoint = false;
+							// North
+							if( currentBorder == 1 && N(outputImage, x, y, z) <= 0 )
+								isBorderPoint = true;
+							// South
+							if( currentBorder == 2 && S(outputImage, x, y, z) <= 0 )
+								isBorderPoint = true;
+							// East
+							if( currentBorder == 3 && E(outputImage, x, y, z) <= 0 )
+								isBorderPoint = true;
+							// West
+							if( currentBorder == 4 && W(outputImage, x, y, z) <= 0 )
+								isBorderPoint = true;
+							if(outputImage.getSize() > 1)
+							{
+								// Up							
+								if( currentBorder == 5 && U(outputImage, x, y, z) <= 0 )
+									isBorderPoint = true;
+								// Bottom
+								if( currentBorder == 6 && B(outputImage, x, y, z) <= 0 )
+									isBorderPoint = true;
+							}
+							if( !isBorderPoint )
+							{
+								//if (debug) IJ.log("  not border");
+								continue;         // current point is not deletable
+							}
+							
+							//else // remove border point from Q
+							//	setPixelNoCheck( Q[ currentBorder -1 ].getImageStack(), x, y, z, (byte)0);
+
+
+							if( isEndPoint( outputImage, x, y, z))
+							{
+								//if (debug) IJ.log("checking point (" + x + ", " + y + ", " + z + ")");
+								//if (debug) IJ.log("  end point");
+								continue;
+							}
+
+							final byte[] neighborhood = getNeighborhood(outputImage, x, y, z);
+							
+							// Check if point is Euler invariant (condition 1 in Lee[94])
+							if( !isEulerInvariant( neighborhood, eulerLUT ) )
+							{
+								//if (debug) IJ.log("checking point (" + x + ", " + y + ", " + z + ")");
+								//if (debug) IJ.log("  not Euler invariant");								
+								continue;         // current point is not deletable
+							}
+
+							/*
+							// check if point is the end of an arc
+							if ( isSurfacePoint(  neighborhood, pointsLUT) )
+							{
+								if (debug) IJ.log("  surface point");								
+								// Calculate intersection of Q and N(v)
+								byte[] qPix = getNeighborhood(Q[ currentBorder - 1 ].getImageStack(), x, y, z);
+								byte[] nPix = neighborhood;
+
+								int nPoints = 0;
+								for(int n=0; n<qPix.length; n++)
+									if( qPix[ n ] == 1 && nPix[ n ] == 1)
+										nPoints ++;
+
+								// Condition 4 in Lee[94]
+								if( nPoints-1 < 2 )			
+								{
+									if (debug) IJ.log("  nPoints < 2");									
+									continue; // current point is not deletable
+								}
+							}
+							 */
+
+							
+							// Check if point is simple (deletion does not change connectivity in the 3x3x3 neighborhood)
+							// (conditions 2 and 3 in Lee[94])
+							if( !isSimplePoint( neighborhood ) )
+							{
+								//if (debug) IJ.log("checking point (" + x + ", " + y + ", " + z + ")");
+								//if (debug) IJ.log("  not simple point");								
+								continue;         // current point is not deletable
+							}
+
+
+
+							// add all simple border points to a list for sequential re-checking
+							int[] index = new int[3];
+							index[0] = x;
+							index[1] = y;
+							index[2] = z;
+							simpleBorderPoints.add(index);							
+							/*
+							// delete point
+							if (debug) IJ.log("  delete point!");							
+							setPixel( outputImage, x, y, z, (byte) 0);
+							noChange = false;
+							 */
+
 						}
 					}					
 					IJ.showProgress(z, this.depth);				
 				}							
-				
+
+
 				// sequential re-checking to preserve connectivity when
 				// deleting in a parallel way
-				boolean change = false;
+				//				boolean noChange = true;
 				int[] index = null;
+				
+				
 				for(int i = 0; 	i < simpleBorderPoints.size() ; i++)
 				{					
 					index = simpleBorderPoints.get(i);
-					/*
+
 					// 1. Set simple border point to 0
-					setPixel( outputImage, index[0], index[1], index[2], (byte) 0);
+					//setPixel( outputImage, index[0], index[1], index[2], (byte) 0);
+					/*
+					if( !isEulerInvariant( getNeighborhood(outputImage,  index[0], index[1], index[2]), eulerLUT ) )
+					{
+						if (debug) IJ.log("checking point (" + index[0] + ", " + index[1] + ", " + index[2] + ")");
+						if (debug) IJ.log("  not Euler invariant");								
+						continue;         // current point is not deletable
+					}
 					
 					// 2. Check if neighborhood is still connected
-					if( !isSimplePoint( getNeighborhood(outputImage, index[0], index[1], index[2]) ) )
+					if( isSimplePoint( getNeighborhood(outputImage, index[0], index[1], index[2])) )
 					{
-						// we cannot delete current point, so reset
-						setPixel( outputImage, index[0], index[1], index[2], (byte) 1);
-					}
-					else
-					{
-						noChange = false;
+						if (debug) IJ.log("checking point (" + index[0] + ", " + index[1] + ", " + index[2] + ")");
+						if (debug) IJ.log("  simple point");				
+						if(	 !isSurfacePoint( getNeighborhood(outputImage, index[0], index[1], index[2]), pointsLUT) ) 
+						{
+							if (debug) IJ.log("  not surface point");
+							// Calculate intersection of Q and N(v)
+							byte[] qPix = getNeighborhood(Q[ currentBorder - 1 ].getImageStack(),  index[0], index[1], index[2]);
+							byte[] nPix = getNeighborhood(outputImage, index[0], index[1], index[2]);
+
+							int nPoints = 0;
+							for(int n=0; n<qPix.length; n++)
+								if( qPix[ n ] == 1 && nPix[ n ] == 1)
+									nPoints ++;
+
+							// Condition 4 in Lee[94]
+							if( nPoints < 2 )			
+							{
+								if (debug) IJ.log("  nPoints < 2");									
+								continue; // current point is not deletable
+							}
+
+							setPixel( outputImage, index[0], index[1], index[2], (byte) 0);
+							if (debug) IJ.log("  nPoints >= 2");
+							if (debug) IJ.log("  delete point!");				
+							noChange = false;
+						}
 					}
 					*/
-					
-					// Check if neighborhood is still connected and the point has not become an endpoint			        
-			        if( isSimplePoint( getNeighborhood(outputImage, index[0], index[1], index[2]) ) 
-			        		&& isEulerInvariant( getNeighborhood(outputImage, index[0], index[1], index[2]), eulerLUT ) 
-			        		&& !isEndPoint( outputImage, index[0], index[1], index[2]) )
-			        {
-			        	// we can delete the current point
-			        	setPixel( outputImage, index[0], index[1], index[2], (byte) 0);
-			        	change = true;
-			        }
-					
+
+
+					// Check if border points is simple			        
+					if( isSimplePoint( getNeighborhood(outputImage, index[0], index[1], index[2]) )	 )
+					{
+						// we can delete the current point
+						setPixel( outputImage, index[0], index[1], index[2], (byte) 0);
+						noChange = false;
+					}
+
+
 				}
-				if( !change )
+
+				if( noChange )
 					unchangedBorders++;
 
 				//IJ.write("# simple border points = " + simpleBorderPoints.size());
@@ -286,12 +370,14 @@ public class Skeletonize3D_ implements PlugInFilter
 					IJ.write("# last point = [" + index[0] + ", " + index[1] + "," +  index[2]+ "]");
 				else 
 					IJ.write("# last point = [0, 0, 0]");
-					*/
+				 */
+
 				simpleBorderPoints.clear();
+
 				//IJ.write("# simple border points = " + simpleBorderPoints.size() + "\n");
-							
+
 			} // end currentBorder for loop
-			
+
 			// Progress bar iterations
 			iter++;
 		}
@@ -333,7 +419,7 @@ public class Skeletonize3D_ implements PlugInFilter
 	 * @param z z- coordinate (in image stacks the indexes start at 1)
 	 * @return corresponding 27-pixels neighborhood (0 if out of image)
 	 */
-	private byte[] getNeighborhood(ImageStack image, int x, int y, int z)
+	public byte[] getNeighborhood(ImageStack image, int x, int y, int z)
 	{
 		byte[] neighborhood = new byte[27];
 		
@@ -395,6 +481,22 @@ public class Skeletonize3D_ implements PlugInFilter
 	
 	/* -----------------------------------------------------------------------*/
 	/**
+	 * Get pixel in 3D image (no border checking) 
+	 * 
+	 * @param image 3D image
+	 * @param x x- coordinate
+	 * @param y y- coordinate
+	 * @param z z- coordinate (in image stacks the indexes start at 1)
+	 * @return corresponding pixel
+	 */
+	private byte getPixelNoCheck(ImageStack image, int x, int y, int z)
+	{		
+		return ((byte[]) image.getPixels(z + 1))[x + y * this.width];		
+	} /* end getPixelNocheck */
+	
+	
+	/* -----------------------------------------------------------------------*/
+	/**
 	 * Set pixel in 3D image 
 	 * 
 	 * @param image 3D image
@@ -407,7 +509,23 @@ public class Skeletonize3D_ implements PlugInFilter
 	{
 		if(x >= 0 && x < this.width && y >= 0 && y < this.height && z >= 0 && z < this.depth)
 			((byte[]) image.getPixels(z + 1))[x + y * this.width] = value;
-	} /* end getPixel */
+	} /* end setPixel */
+	
+	
+	/* -----------------------------------------------------------------------*/
+	/**
+	 * Set pixel in 3D image (without checking border conditions)
+	 * 
+	 * @param image 3D image
+	 * @param x x- coordinate
+	 * @param y y- coordinate
+	 * @param z z- coordinate (in image stacks the indexes start at 1)
+	 * @param value pixel value
+	 */
+	private void setPixelNoCheck(ImageStack image, int x, int y, int z, byte value)
+	{		
+			((byte[]) image.getPixels(z + 1))[x + y * this.width] = value;
+	} /* end setPixelNoCheck */
 	
 	/* -----------------------------------------------------------------------*/
 	/**
@@ -497,7 +615,7 @@ public class Skeletonize3D_ implements PlugInFilter
 	private byte B(ImageStack image, int x, int y, int z)
 	{
 		return getPixel(image, x, y, z-1);
-	} /* end N */
+	} /* end B */
 	
 	/* -----------------------------------------------------------------------*/
 	/**
@@ -640,6 +758,19 @@ public class Skeletonize3D_ implements PlugInFilter
 		LUT[253] =  1;
 		LUT[255] = -1;
 	}
+	
+	
+	/* -----------------------------------------------------------------------*/
+	/**
+	 * Fill number of points in octant LUT
+	 * 
+	 * @param LUT number of points in octant LUT
+	 */
+	public void fillnumOfPointsLUT(int[] LUT) 
+	{
+		for(int i=0; i<256; i++)
+			LUT[ i ] = Integer.bitCount( i );			
+	}
 
 	/**
 	 * Check if a point is Euler invariant
@@ -654,125 +785,45 @@ public class Skeletonize3D_ implements PlugInFilter
 		int eulerChar = 0;
 		char n;
 		// Octant SWU
-		n = 1;
-		if( neighbors[24]==1 )
-			n |= 128;
-		if( neighbors[25]==1 )
-			n |=  64;
-		if( neighbors[15]==1 )
-			n |=  32;
-		if( neighbors[16]==1 )
-			n |=  16;
-		if( neighbors[21]==1 )
-			n |=   8;
-		if( neighbors[22]==1 )
-			n |=   4;
-		if( neighbors[12]==1 )
-			n |=   2;
+		n = indexOctantSWU(neighbors);
 		eulerChar += LUT[n];
+		
 		// Octant SEU
-		n = 1;
-		if( neighbors[26]==1 )
-			n |= 128;
-		if( neighbors[23]==1 )
-			n |=  64;
-		if( neighbors[17]==1 )
-			n |=  32;
-		if( neighbors[14]==1 )
-			n |=  16;
-		if( neighbors[25]==1 )
-			n |=   8;
-		if( neighbors[22]==1 )
-			n |=   4;
-		if( neighbors[16]==1 )
-			n |=   2;
+		n = indexOctantSEU(neighbors);
 		eulerChar += LUT[n];
+		
 		// Octant NWU
-		n = 1;
-		if( neighbors[18]==1 )
-			n |= 128;
-		if( neighbors[21]==1 )
-			n |=  64;
-		if( neighbors[9]==1 )
-			n |=  32;
-		if( neighbors[12]==1 )
-			n |=  16;
-		if( neighbors[19]==1 )
-			n |=   8;
-		if( neighbors[22]==1 )
-			n |=   4;
-		if( neighbors[10]==1 )
-			n |=   2;
+		n = indexOctantNWU(neighbors);
 		eulerChar += LUT[n];
+		
 		// Octant NEU
-		n = 1;
-		if( neighbors[20]==1 )
-			n |= 128;
-		if( neighbors[23]==1 )
-			n |=  64;
-		if( neighbors[19]==1 )
-			n |=  32;
-		if( neighbors[22]==1 )
-			n |=  16;
-		if( neighbors[11]==1 )
-			n |=   8;
-		if( neighbors[14]==1 )
-			n |=   4;
-		if( neighbors[10]==1 )
-			n |=   2;
+		n = indexOctantNEU(neighbors);
 		eulerChar += LUT[n];
+		
 		// Octant SWB
-		n = 1;
-		if( neighbors[6]==1 )
-			n |= 128;
-		if( neighbors[15]==1 )
-			n |=  64;
-		if( neighbors[7]==1 )
-			n |=  32;
-		if( neighbors[16]==1 )
-			n |=  16;
-		if( neighbors[3]==1 )
-			n |=   8;
-		if( neighbors[12]==1 )
-			n |=   4;
-		if( neighbors[4]==1 )
-			n |=   2;
+		n = indexOctantSWB(neighbors);
 		eulerChar += LUT[n];
+		
 		// Octant SEB
-		n = 1;
-		if( neighbors[8]==1 )
-			n |= 128;
-		if( neighbors[7]==1 )
-			n |=  64;
-		if( neighbors[17]==1 )
-			n |=  32;
-		if( neighbors[16]==1 )
-			n |=  16;
-		if( neighbors[5]==1 )
-			n |=   8;
-		if( neighbors[4]==1 )
-			n |=   4;
-		if( neighbors[14]==1 )
-			n |=   2;
+		n = indextOctantSEB(neighbors);
 		eulerChar += LUT[n];
+		
 		// Octant NWB
-		n = 1;
-		if( neighbors[0]==1 )
-			n |= 128;
-		if( neighbors[9]==1 )
-			n |=  64;
-		if( neighbors[3]==1 )
-			n |=  32;
-		if( neighbors[12]==1 )
-			n |=  16;
-		if( neighbors[1]==1 )
-			n |=   8;
-		if( neighbors[10]==1 )
-			n |=   4;
-		if( neighbors[4]==1 )
-			n |=   2;
+		n = indexOctantNWB(neighbors);
 		eulerChar += LUT[n];
+		
 		// Octant NEB
+		n = indexOctantNEB(neighbors);
+		eulerChar += LUT[n];
+		
+		if( eulerChar == 0 )
+			return true;
+		else
+			return false;
+		}
+
+	public char indexOctantNEB(byte[] neighbors) {
+		char n;
 		n = 1;
 		if( neighbors[2]==1 )
 			n |= 128;
@@ -788,12 +839,195 @@ public class Skeletonize3D_ implements PlugInFilter
 			n |=   4;
 		if( neighbors[14]==1 )
 			n |=   2;
-		eulerChar += LUT[n];
-		if( eulerChar == 0 )
-			return true;
-		else
+		return n;
+	}
+
+	public char indexOctantNWB(byte[] neighbors) {
+		char n;
+		n = 1;
+		if( neighbors[0]==1 )
+			n |= 128;
+		if( neighbors[9]==1 )
+			n |=  64;
+		if( neighbors[3]==1 )
+			n |=  32;
+		if( neighbors[12]==1 )
+			n |=  16;
+		if( neighbors[1]==1 )
+			n |=   8;
+		if( neighbors[10]==1 )
+			n |=   4;
+		if( neighbors[4]==1 )
+			n |=   2;
+		return n;
+	}
+
+	public char indextOctantSEB(byte[] neighbors) {
+		char n;
+		n = 1;
+		if( neighbors[8]==1 )
+			n |= 128;
+		if( neighbors[7]==1 )
+			n |=  64;
+		if( neighbors[17]==1 )
+			n |=  32;
+		if( neighbors[16]==1 )
+			n |=  16;
+		if( neighbors[5]==1 )
+			n |=   8;
+		if( neighbors[4]==1 )
+			n |=   4;
+		if( neighbors[14]==1 )
+			n |=   2;
+		return n;
+	}
+
+	public char indexOctantSWB(byte[] neighbors) {
+		char n;
+		n = 1;
+		if( neighbors[6]==1 )
+			n |= 128;
+		if( neighbors[15]==1 )
+			n |=  64;
+		if( neighbors[7]==1 )
+			n |=  32;
+		if( neighbors[16]==1 )
+			n |=  16;
+		if( neighbors[3]==1 )
+			n |=   8;
+		if( neighbors[12]==1 )
+			n |=   4;
+		if( neighbors[4]==1 )
+			n |=   2;
+		return n;
+	}
+
+	public char indexOctantNEU(byte[] neighbors) {
+		char n;
+		n = 1;
+		if( neighbors[20]==1 )
+			n |= 128;
+		if( neighbors[23]==1 )
+			n |=  64;
+		if( neighbors[19]==1 )
+			n |=  32;
+		if( neighbors[22]==1 )
+			n |=  16;
+		if( neighbors[11]==1 )
+			n |=   8;
+		if( neighbors[14]==1 )
+			n |=   4;
+		if( neighbors[10]==1 )
+			n |=   2;
+		return n;
+	}
+
+	public char indexOctantNWU(byte[] neighbors) {
+		char n;
+		n = 1;
+		if( neighbors[18]==1 )
+			n |= 128;
+		if( neighbors[21]==1 )
+			n |=  64;
+		if( neighbors[9]==1 )
+			n |=  32;
+		if( neighbors[12]==1 )
+			n |=  16;
+		if( neighbors[19]==1 )
+			n |=   8;
+		if( neighbors[22]==1 )
+			n |=   4;
+		if( neighbors[10]==1 )
+			n |=   2;
+		return n;
+	}
+
+	public char indexOctantSEU(byte[] neighbors) {
+		char n;
+		n = 1;
+		if( neighbors[26]==1 )
+			n |= 128;
+		if( neighbors[23]==1 )
+			n |=  64;
+		if( neighbors[17]==1 )
+			n |=  32;
+		if( neighbors[14]==1 )
+			n |=  16;
+		if( neighbors[25]==1 )
+			n |=   8;
+		if( neighbors[22]==1 )
+			n |=   4;
+		if( neighbors[16]==1 )
+			n |=   2;
+		return n;
+	}
+
+	public char indexOctantSWU(byte[] neighbors) {
+		char n;
+		n = 1;
+		if( neighbors[24]==1 )
+			n |= 128;
+		if( neighbors[25]==1 )
+			n |=  64;
+		if( neighbors[15]==1 )
+			n |=  32;
+		if( neighbors[16]==1 )
+			n |=  16;
+		if( neighbors[21]==1 )
+			n |=   8;
+		if( neighbors[22]==1 )
+			n |=   4;
+		if( neighbors[12]==1 )
+			n |=   2;
+		return n;
+	}
+	
+	
+	public boolean isSurfacePoint( byte[] neighbors, int[] pointsLUT )
+	{		
+		char n;
+		// Octant SWU
+		n = indexOctantSWU(neighbors);
+		if( n != 240 && n != 165 && n != 170 && n != 204 && (pointsLUT[ n ] > 2) )
 			return false;
-		}
+		
+		// Octant SEU
+		n = indexOctantSEU(neighbors);
+		if( n != 240 && n != 165 && n != 170 && n != 204 && (pointsLUT[ n ] > 2) )
+			return false;
+		
+		// Octant NWU
+		n = indexOctantNWU(neighbors);
+		if( n != 240 && n != 165 && n != 170 && n != 204 && (pointsLUT[ n ] > 2) )
+			return false;
+		
+		// Octant NEU
+		n = indexOctantNEU(neighbors);
+		if( n != 240 && n != 165 && n != 170 && n != 204 && (pointsLUT[ n ] > 2) )
+			return false;
+		
+		// Octant SWB
+		n = indexOctantSWB(neighbors);
+		if( n != 240 && n != 165 && n != 170 && n != 204 && (pointsLUT[ n ] > 2) )
+			return false;
+		
+		// Octant SEB
+		n = indextOctantSEB(neighbors);
+		if( n != 240 && n != 165 && n != 170 && n != 204 && (pointsLUT[ n ] > 2) )
+			return false;
+		
+		// Octant NWB
+		n = indexOctantNWB(neighbors);
+		if( n != 240 && n != 165 && n != 170 && n != 204 && (pointsLUT[ n ] > 2) )
+			return false;
+		
+		// Octant NEB
+		n = indexOctantNEB(neighbors);
+		if( n != 240 && n != 165 && n != 170 && n != 204 && (pointsLUT[ n ] > 2) )
+			return false;
+		
+		return true;
+	}
 	
 	/* -----------------------------------------------------------------------*/
 	/**
@@ -820,7 +1054,7 @@ public class Skeletonize3D_ implements PlugInFilter
 		// for all points in the neighborhood
 		for( i = 0; i < 26; i++ )
 		{
-			if( cube[i]==1 )     // voxel has not been labelled yet
+			if( cube[i]==1 )     // voxel has not been labeled yet
 			{
 				// start recursion with any octant that contains the point i
 				switch( i )
