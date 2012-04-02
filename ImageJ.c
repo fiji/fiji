@@ -1594,6 +1594,9 @@ static struct string *set_property(JNIEnv *env,
 	static jmethodID set_property_method = NULL;
 	jstring result;
 
+	if (!value)
+		return NULL;
+
 	if (!system_class) {
 		system_class = (*env)->FindClass(env, "java/lang/System");
 		if (!system_class)
@@ -2901,12 +2904,14 @@ static void parse_command_line(void)
 	if (!get_fiji_bundle_variable("system", &arg) &&
 			atol((&arg)->buffer) > 0)
 		options.use_system_jvm++;
-	if (get_fiji_bundle_variable("ext", &ext_option))
-		string_setf(&ext_option, "%s/Home/lib/ext:"
+	if (get_fiji_bundle_variable("ext", &ext_option)) {
+		const char *java_home = get_java_home();
+		string_setf(&ext_option, "%s%s"
 			"/Library/Java/Extensions:"
 			"/System/Library/Java/Extensions:"
-			"/System/Library/Frameworks/JavaVM.framework/"
-				"Home/lib/ext", get_java_home());
+			"/System/Library/Frameworks/JavaVM.framework/Home/lib/ext",
+			java_home ? java_home : "", java_home ? "/Home/lib/ext:" : "");
+	}
 	if (!get_fiji_bundle_variable("allowMultiple", &arg))
 		allow_multiple = parse_bool((&arg)->buffer);
 	get_fiji_bundle_variable("JVMOptions", jvm_options);
@@ -3163,6 +3168,8 @@ static void parse_command_line(void)
 
 	if (options.debug) {
 		for (i = 0; properties[i]; i += 2) {
+			if (!properties[i] || !properties[i + 1])
+				continue;
 			string_setf(&buffer, "-D%s=%s", properties[i], properties[i + 1]);
 			add_option_string(&options, &buffer, 0);
 		}
@@ -3212,8 +3219,11 @@ static int start_ij(void)
 			}
 			env = NULL;
 		} else {
-			string_setf(buffer, "-Djava.home=%s", get_java_home());
-			prepend_string_copy(&options.java_options, buffer->buffer);
+			const char *java_home = get_java_home();
+			if (java_home) {
+				string_setf(buffer, "-Djava.home=%s", java_home);
+				prepend_string_copy(&options.java_options, buffer->buffer);
+			}
 		}
 	}
 
@@ -3267,6 +3277,8 @@ static int start_ij(void)
 #endif
 
 		for (i = 0; properties[i]; i += 2) {
+			if (!properties[i] || !properties[i + 1])
+				continue;
 			string_setf(buffer, "-D%s=%s", properties[i], properties[i + 1]);
 			add_option_string(&options, buffer, 0);
 		}
@@ -3917,33 +3929,39 @@ static void set_default_library_path(void)
 
 static void adjust_java_home_if_necessary(void)
 {
-	struct string *result, *buffer, *jre_path;
+	struct string *result, *buffer, *path;
+	const char *prefix = "jre/";
+	int depth = 2;
 
-	set_default_library_path();
 #ifdef __APPLE__
-	/* On MacOSX, we use the system Java anyway. */
-	return;
-#endif
-
+	/* On MacOSX, we look for libjogl.jnilib instead. */
+	library_path = "Home/lib/ext/libjogl.jnilib";
+	prefix = "";
+	depth = 1;
+#else
+	set_default_library_path();
 	library_path = default_library_path;
+#endif
 
 	buffer = string_copy("java");
 	result = string_init(32);
-	jre_path = string_initf("jre/%s", library_path);
+	path = string_initf("%s%s", prefix, library_path);
 
-	find_newest(buffer, 2, jre_path->buffer, result);
+	find_newest(buffer, depth, path->buffer, result);
 	if (result->length) {
-		string_append(result, "/jre");
+		if (result->buffer[result->length - 1] != '/')
+			string_add_char(result, '/');
+		string_append(result, prefix);
 		relative_java_home = xstrdup(result->buffer);
 	}
-	else {
-		find_newest(buffer, 3, library_path, buffer);
+	else if (*prefix) {
+		find_newest(buffer, depth + 1, library_path, buffer);
 		if (result->length)
 			relative_java_home = xstrdup(result->buffer);
 	}
 	string_release(buffer);
 	string_release(result);
-	string_release(jre_path);
+	string_release(path);
 }
 
 int main(int argc, char **argv, char **e)
