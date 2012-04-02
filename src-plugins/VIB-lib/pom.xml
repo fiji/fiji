@@ -18,7 +18,7 @@
 
 	<dependencies>
 		<dependency>
-			<groupId>fiji</groupId>
+			<groupId>jama</groupId>
 			<artifactId>Jama</artifactId>
 			<version>1.0.2</version>
 		</dependency>
@@ -27,16 +27,16 @@
 			<artifactId>fiji-lib</artifactId>
 		</dependency>
 		<dependency>
-			<groupId>fiji</groupId>
+			<groupId>net.imagej</groupId>
 			<artifactId>ij</artifactId>
 		</dependency>
 		<dependency>
-			<groupId>fiji</groupId>
+			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
 			<version>4.5</version>
 		</dependency>
 		<dependency>
-			<groupId>fiji</groupId>
+			<groupId>com.jcraft</groupId>
 			<artifactId>jzlib</artifactId>
 			<version>1.0.7</version>
 		</dependency>

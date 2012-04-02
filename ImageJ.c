@@ -36,7 +36,7 @@
 #define MAYBE_UNUSED
 #endif
 
-#ifdef MACOSX
+#ifdef __APPLE__
 #include <stdlib.h>
 #include <pthread.h>
 #include <CoreFoundation/CoreFoundation.h>
@@ -50,7 +50,7 @@ static int get_fiji_bundle_variable(const char *key, struct string *value);
 
 static const char *get_platform(void)
 {
-#ifdef MACOSX
+#ifdef __APPLE__
 	return "macosx";
 #endif
 #ifdef WIN32
@@ -484,8 +484,9 @@ static void string_escape(struct string *string, const char *characters)
  * overrides relative_java_home.
  */
 static const char *absolute_java_home;
-static const char *relative_java_home = JAVA_HOME;
-static const char *library_path = JAVA_LIB_PATH;
+static const char *relative_java_home;
+static const char *default_library_path;
+static const char *library_path;
 static const char *default_fiji1_class = "fiji.Main";
 static const char *default_main_class = "imagej.Main";
 
@@ -597,7 +598,7 @@ void setenv_or_exit(const char *name, const char *value, int overwrite)
 {
 	int result;
 	if (!value) {
-#ifdef MACOSX
+#ifdef __APPLE__
 		unsetenv(name);
 #else
 		result = unsetenv(name);
@@ -613,7 +614,7 @@ void setenv_or_exit(const char *name, const char *value, int overwrite)
 
 /* Determining heap size */
 
-#ifdef MACOSX
+#ifdef __APPLE__
 #include <mach/mach_init.h>
 #include <mach/mach_host.h>
 
@@ -849,18 +850,23 @@ static const char *get_java_home(void)
 {
 	if (absolute_java_home)
 		return absolute_java_home;
+	if (!relative_java_home)
+		return NULL;
 	return ij_path(relative_java_home);
 }
 
 static const char *get_jre_home(void)
 {
 	const char *result = get_java_home();
-	int len = strlen(result);
+	int len;
 	static struct string *jre;
 
 	if (jre)
 		return jre->buffer;
 
+	if (!result)
+		return NULL;
+	len = strlen(result);
 	if (len > 4 && !strcmp(result + len - 4, "/jre"))
 		return result;
 
@@ -1085,11 +1091,12 @@ static void (*SplashClose)(void);
 
 struct string *get_splashscreen_lib_path(void)
 {
+	const char *jre_home = get_jre_home();
 #if defined(WIN32)
-	return string_initf("%s/bin/splashscreen.dll", get_jre_home());
+	return !jre_home ? NULL : string_initf("%s/bin/splashscreen.dll", jre_home);
 #elif defined(__linux__)
-	return string_initf("%s/lib/%s/libsplashscreen.so", get_jre_home(), sizeof(void *) == 8 ? "amd64" : "i386");
-#elif defined(MACOSX)
+	return !jre_home ? NULL : string_initf("%s/lib/%s/libsplashscreen.so", jre_home, sizeof(void *) == 8 ? "amd64" : "i386");
+#elif defined(__APPLE__)
 	struct string *search_root = string_initf("/System/Library/Java/JavaVirtualMachines");
 	struct string *result = string_init(32);
 	if (!find_file(search_root, 4, "libsplashscreen.jnilib", result)) {
@@ -1104,7 +1111,7 @@ struct string *get_splashscreen_lib_path(void)
 }
 
 /* So far, only Windows and MacOSX support splash with alpha, Linux does not */
-#if defined(WIN32) || defined(MACOSX)
+#if defined(WIN32) || defined(__APPLE__)
 #define SPLASH_PATH "images/icon.png"
 #else
 #define SPLASH_PATH "images/icon-flat.png"
@@ -1164,11 +1171,16 @@ static void hide_splash(void)
 static void maybe_reexec_with_correct_lib_path(void)
 {
 #ifdef __linux__
-	struct string *path = string_initf("%s/%s", get_jre_home(), library_path);
-	struct string *parent = get_parent_directory(path->buffer);
-	struct string *lib_path = get_parent_directory(parent->buffer);
-	struct string *jli = string_initf("%s/jli", lib_path->buffer);
-	const char *original;
+	const char *jre_home = get_jre_home(), *original;
+	struct string *path, *parent, *lib_path, *jli;
+
+	if (!jre_home)
+		return;
+
+	path = string_initf("%s/%s", jre_home, library_path);
+	parent = get_parent_directory(path->buffer);
+	lib_path = get_parent_directory(parent->buffer);
+	jli = string_initf("%s/jli", lib_path->buffer);
 
 	string_release(path);
 	string_release(parent);
@@ -1222,7 +1234,7 @@ static const char *get_ij_dir(const char *argv0)
 		slash -= strlen("/precompiled");
 		run_precompiled = 1;
 	}
-#ifdef MACOSX
+#ifdef __APPLE__
 	else if (!suffixcmp(argv0, len, "/Fiji.app/Contents/MacOS"))
 		slash -= strlen("/Contents/MacOS");
 #endif
@@ -1243,7 +1255,7 @@ static const char *get_ij_dir(const char *argv0)
 
 static int create_java_vm(JavaVM **vm, void **env, JavaVMInitArgs *args)
 {
-#ifdef MACOSX
+#ifdef __APPLE__
 	set_path_to_JVM();
 #else
 	/*
@@ -1330,6 +1342,15 @@ static void open_win_console(void)
 		attach_console = (typeof(attach_console))
 			dlsym(kernel32_dll, "AttachConsole");
 	if (!attach_console || !attach_console((DWORD)-1)) {
+		if (attach_console) {
+			if (GetLastError() == ERROR_ACCESS_DENIED)
+				/*
+				 * Already attached, according to
+				 * http://msdn.microsoft.com/en-us/library/windows/desktop/ms681952(v=vs.85).aspx
+				 */
+				return;
+			error("error attaching console: %s", get_win_error());
+		}
 		AllocConsole();
 		console_opened = 1;
 		atexit(sleep_a_while);
@@ -1548,6 +1569,8 @@ static void add_java_home_to_path(void)
 	struct string *new_path = string_init(32), *buffer;
 	const char *env;
 
+	if (!java_home)
+		return;
 	buffer = string_initf("%s/bin", java_home);
 	if (dir_exists(buffer->buffer))
 		string_append_path_list(new_path, buffer->buffer);
@@ -1570,6 +1593,9 @@ static struct string *set_property(JNIEnv *env,
 	static jclass system_class = NULL;
 	static jmethodID set_property_method = NULL;
 	jstring result;
+
+	if (!value)
+		return NULL;
 
 	if (!system_class) {
 		system_class = (*env)->FindClass(env, "java/lang/System");
@@ -1709,7 +1735,13 @@ static void add_launcher_option(struct options *options, const char *option, con
 
 static void add_tools_jar(struct options *options)
 {
-	struct string *string = string_initf("%s/../lib/tools.jar", get_jre_home());
+	const char *jre_home = get_jre_home();
+	struct string *string;
+
+	if (!jre_home)
+		die("Cannot determine path to tools.jar");
+
+	string = string_initf("%s/../lib/tools.jar", jre_home);
 	add_launcher_option(options, "-classpath", string->buffer);
 	string_release(string);
 }
@@ -1996,8 +2028,14 @@ static int update_files(struct string *relative_path)
 
 #ifdef WIN32
 		if (file_exists(target->buffer) && unlink(target->buffer)) {
-			if (!strcmp(filename, "ImageJ.exe") || !strcmp(filename, "ImageJ-win32.exe") || !strcmp(filename, "ImageJ-win64.exe"))
-				die("Could not remove old version of %s.  Please move %s to %s manually!", target->buffer, source->buffer, target->buffer);
+			if (!strcmp(filename, "ImageJ.exe") || !strcmp(filename, "ImageJ-win32.exe") || !strcmp(filename, "ImageJ-win64.exe")) {
+				struct string *old = string_initf("%.*s.old.exe", target->length - 4, target->buffer);
+				if (file_exists(old->buffer) && unlink(old->buffer))
+					die("Could not move %s out of the way!", old->buffer);
+				if (rename(target->buffer, old->buffer))
+					die("Could not remove old version of %s.  Please move %s to %s manually!", target->buffer, source->buffer, target->buffer);
+				string_release(old);
+			}
 			else
 				die("Could not remove old version of %s.  Please remove it manually!", target->buffer);
 		}
@@ -2258,7 +2296,8 @@ static int check_subcommand_classpath(struct subcommand *subcommand)
 				return 0;
 		}
 		else if (!prefixcmp(expanded, "--tools-jar") || !prefixcmp(expanded, "--only-tools-jar")) {
-			if (!jar_exists("%s/../lib/tools.jar", get_jre_home()))
+			const char *jre_home = get_jre_home();
+			if (!jre_home || !jar_exists("%s/../lib/tools.jar", jre_home))
 				return 0;
 		}
 		expanded = space + !!*space;
@@ -2735,7 +2774,8 @@ static int handle_one_option2(int *i, int argc, const char **argv)
 		exit(0);
 	}
 	else if (!strcmp("--print-java-home", argv[*i])) {
-		printf("%s\n", get_java_home());
+		const char *java_home = get_java_home();
+		printf("%s\n", !java_home ? "" : java_home);
 		exit(0);
 	}
 	else if (!strcmp("--default-gc", argv[*i]))
@@ -2812,7 +2852,7 @@ static void parse_command_line(void)
 #ifdef __linux__
 	string_append_path_list(java_library_path, getenv("LD_LIBRARY_PATH"));
 #endif
-#ifdef MACOSX
+#ifdef __APPLE__
 	string_append_path_list(java_library_path, getenv("DYLD_LIBRARY_PATH"));
 #endif
 
@@ -2837,7 +2877,7 @@ static void parse_command_line(void)
 
 	memset(&options, 0, sizeof(options));
 
-#ifdef MACOSX
+#ifdef __APPLE__
 	/* When double-clicked Finder adds a psn argument. */
 	if (main_argc > 1 && ! strncmp(main_argv[1], "-psn_", 5)) {
 		/*
@@ -2864,12 +2904,14 @@ static void parse_command_line(void)
 	if (!get_fiji_bundle_variable("system", &arg) &&
 			atol((&arg)->buffer) > 0)
 		options.use_system_jvm++;
-	if (get_fiji_bundle_variable("ext", &ext_option))
-		string_setf(&ext_option, "%s/Home/lib/ext:"
+	if (get_fiji_bundle_variable("ext", &ext_option)) {
+		const char *java_home = get_java_home();
+		string_setf(&ext_option, "%s%s"
 			"/Library/Java/Extensions:"
 			"/System/Library/Java/Extensions:"
-			"/System/Library/Frameworks/JavaVM.framework/"
-				"Home/lib/ext", get_java_home());
+			"/System/Library/Frameworks/JavaVM.framework/Home/lib/ext",
+			java_home ? java_home : "", java_home ? "/Home/lib/ext:" : "");
+	}
 	if (!get_fiji_bundle_variable("allowMultiple", &arg))
 		allow_multiple = parse_bool((&arg)->buffer);
 	get_fiji_bundle_variable("JVMOptions", jvm_options);
@@ -2901,13 +2943,16 @@ static void parse_command_line(void)
 
 #ifdef WIN32
 	/* Windows automatically adds the path of the executable to PATH */
-	struct string *path = string_initf("%s;%s/bin",
-		getenv("PATH"), get_jre_home());
-	setenv_or_exit("PATH", path->buffer, 1);
-	string_release(path);
+	const char *jre_home = get_jre_home();
+	if (jre_home) {
+		struct string *path = string_initf("%s;%s/bin",
+			getenv("PATH"), jre_home);
+		setenv_or_exit("PATH", path->buffer, 1);
+		string_release(path);
+	}
 #endif
 	if (!headless &&
-#ifdef MACOSX
+#ifdef __APPLE__
 			!CGSessionCopyCurrentDictionary()
 #elif defined(__linux__)
 			!getenv("DISPLAY")
@@ -3073,7 +3118,7 @@ static void parse_command_line(void)
 	properties[i++] = "fiji.dir";
 	properties[i++] =  ij_dir,
 	properties[i++] = "fiji.defaultLibPath";
-	properties[i++] = JAVA_LIB_PATH;
+	properties[i++] = default_library_path;
 	properties[i++] = "fiji.executable";
 	properties[i++] = main_argv0;
 	properties[i++] = "ij.executable";
@@ -3123,6 +3168,8 @@ static void parse_command_line(void)
 
 	if (options.debug) {
 		for (i = 0; properties[i]; i += 2) {
+			if (!properties[i] || !properties[i + 1])
+				continue;
 			string_setf(&buffer, "-D%s=%s", properties[i], properties[i + 1]);
 			add_option_string(&options, &buffer, 0);
 		}
@@ -3151,7 +3198,7 @@ static int start_ij(void)
 	args.nOptions = options.java_options.nr;
 	args.ignoreUnrecognized = JNI_FALSE;
 
-	if (options.use_system_jvm)
+	if (!get_jre_home() || options.use_system_jvm)
 		env = NULL;
 	else {
 		int result = create_java_vm(&vm, (void **)&env, &args);
@@ -3172,8 +3219,11 @@ static int start_ij(void)
 			}
 			env = NULL;
 		} else {
-			string_setf(buffer, "-Djava.home=%s", get_java_home());
-			prepend_string_copy(&options.java_options, buffer->buffer);
+			const char *java_home = get_java_home();
+			if (java_home) {
+				string_setf(buffer, "-Djava.home=%s", java_home);
+				prepend_string_copy(&options.java_options, buffer->buffer);
+			}
 		}
 	}
 
@@ -3209,7 +3259,7 @@ static int start_ij(void)
 	} else {
 		/* fall back to system-wide Java */
 		const char *java_home_env;
-#ifdef MACOSX
+#ifdef __APPLE__
 		struct string *icon_option;
 		/*
 		 * On MacOSX, one must (stupidly) fork() before exec() to
@@ -3227,6 +3277,8 @@ static int start_ij(void)
 #endif
 
 		for (i = 0; properties[i]; i += 2) {
+			if (!properties[i] || !properties[i + 1])
+				continue;
 			string_setf(buffer, "-D%s=%s", properties[i], properties[i + 1]);
 			add_option_string(&options, buffer, 0);
 		}
@@ -3249,7 +3301,7 @@ static int start_ij(void)
 		if (execvp(buffer->buffer, options.java_options.list))
 			error("Could not launch system-wide Java (%s)", strerror(errno));
 #else
-		if (console_opened)
+		if (console_opened && !console_attached)
 			sleep(5); /* Sleep 5 seconds */
 
 		for (i = 0; i < options.java_options.nr - 1; i++)
@@ -3275,7 +3327,7 @@ static int start_ij(void)
 			WaitForSingleObject(process_info.hProcess, INFINITE);
 			if (GetExitCodeProcess(process_info.hProcess, &exit_code) && exit_code)
 				exit(exit_code);
-			return;
+			return 0;
 		}
 
 		char message[16384];
@@ -3291,7 +3343,7 @@ static int start_ij(void)
 	return 0;
 }
 
-#ifdef MACOSX
+#ifdef __APPLE__
 static void append_icon_path(struct string *str)
 {
 	/*
@@ -3815,7 +3867,7 @@ static int MAYBE_UNUSED is_dylib(const char *path)
 
 static int is_native_library(const char *path)
 {
-#ifdef MACOSX
+#ifdef __APPLE__
 	return is_dylib(path);
 #else
 	return
@@ -3863,37 +3915,60 @@ static void find_newest(struct string *relative_path, int max_depth, const char 
 	string_set_length(relative_path, len);
 }
 
+static void set_default_library_path(void)
+{
+	default_library_path =
+#if defined(__APPLE__)
+		"";
+#elif defined(WIN32)
+		sizeof(void *) < 8 ? "bin/client/jvm.dll" : "bin/server/jvm.dll";
+#else
+		sizeof(void *) < 8 ? "lib/i386/client/libjvm.so" : "lib/amd64/server/libjvm.so";
+#endif
+}
+
 static void adjust_java_home_if_necessary(void)
 {
-	struct string *result, *buffer, *jre_path;
-#ifdef MACOSX
-	/* On MacOSX, we use the system Java anyway. */
-	return;
+	struct string *result, *buffer, *path;
+	const char *prefix = "jre/";
+	int depth = 2;
+
+#ifdef __APPLE__
+	/* On MacOSX, we look for libjogl.jnilib instead. */
+	library_path = "Home/lib/ext/libjogl.jnilib";
+	prefix = "";
+	depth = 1;
+#else
+	set_default_library_path();
+	library_path = default_library_path;
 #endif
+
 	buffer = string_copy("java");
 	result = string_init(32);
-	jre_path = string_initf("jre/%s", library_path);
+	path = string_initf("%s%s", prefix, library_path);
 
-	find_newest(buffer, 2, jre_path->buffer, result);
+	find_newest(buffer, depth, path->buffer, result);
 	if (result->length) {
-		string_append(result, "/jre");
+		if (result->buffer[result->length - 1] != '/')
+			string_add_char(result, '/');
+		string_append(result, prefix);
 		relative_java_home = xstrdup(result->buffer);
 	}
-	else {
-		find_newest(buffer, 3, library_path, buffer);
+	else if (*prefix) {
+		find_newest(buffer, depth + 1, library_path, buffer);
 		if (result->length)
 			relative_java_home = xstrdup(result->buffer);
 	}
 	string_release(buffer);
 	string_release(result);
-	string_release(jre_path);
+	string_release(path);
 }
 
 int main(int argc, char **argv, char **e)
 {
 	int size;
 
-#if defined(MACOSX)
+#if defined(__APPLE__)
 	launch_32bit_on_tiger(argc, argv);
 #elif defined(WIN32)
 	int len;

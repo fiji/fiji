@@ -115,10 +115,25 @@ public class MiniMaven {
 		if (pom.parentCoordinate != null && pom.parent == null) {
 			Coordinate dependency = pom.expand(pom.parentCoordinate);
 			POM root = pom.getRoot();
-			pom.parent = root.findPOM(dependency);
+			pom.parent = pom.findPOM(dependency, true, false);
+
+			if (pom.parent == null) {
+				File parentDirectory = pom.directory.getParentFile();
+				if (parentDirectory == null) try {
+					parentDirectory = pom.directory.getCanonicalFile().getParentFile();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+				if (parentDirectory != null) {
+					File parentFile = new File(parentDirectory, "pom.xml");
+					if (parentFile.exists())
+						pom.parent = parse(parentFile, null, null);
+				}
+			}
+
 			if (pom.parent == null && downloadAutomatically) {
-				if (root.maybeDownloadAutomatically(pom.parentCoordinate, !verbose))
-					pom.parent = root.findPOM(dependency);
+				if (pom.maybeDownloadAutomatically(pom.parentCoordinate, !verbose, downloadAutomatically))
+					pom.parent = pom.findPOM(dependency, !verbose, downloadAutomatically);
 			}
 			// prevent infinite loops (POMs without parents get the current root as parent)
 			if (pom.parent != null) {
@@ -161,6 +176,12 @@ public class MiniMaven {
 			pom.dependencies.add(new Coordinate("loci", "bio-formats", "${bio-formats.version}"));
 		else if (dependency.artifactId.equals("jfreechart"))
 			pom.dependencies.add(new Coordinate("jfree", "jcommon", "1.0.16"));
+
+		String key = dependency.groupId + ">" + dependency.artifactId;
+		if (localPOMCache.containsKey(key))
+			err.println("Warning: " + target + " overrides " + localPOMCache.get(key));
+		localPOMCache.put(key, pom);
+
 		return pom;
 	}
 
@@ -254,13 +275,15 @@ public class MiniMaven {
 		protected Coordinate coordinate = new Coordinate(), parentCoordinate;
 		protected Map<String, String> properties = new HashMap<String, String>();
 		protected List<String> modules = new ArrayList<String>();
-		protected List<Coordinate> dependencies = new ArrayList<Coordinate>(); // contains String[3]
+		protected List<Coordinate> dependencies = new ArrayList<Coordinate>();
 		protected Set<String> repositories = new TreeSet<String>();
+		protected String sourceVersion, targetVersion, mainClass;
 
 		// only used during parsing
 		protected String prefix = "";
 		protected Coordinate latestDependency = new Coordinate();
 		protected boolean isCurrentProfile;
+		protected String currentPluginName;
 
 		protected POM addModule(String name) throws IOException, ParserConfigurationException, SAXException {
 			return addChild(parse(new File(new File(directory, name), "pom.xml"), this));
@@ -319,7 +342,10 @@ public class MiniMaven {
 			for (String url : getRoot().getRepositories()) try {
 				downloadAndVerify(url, dependency, quiet);
 				return;
-			} catch (Exception e) { /* ignore */ }
+			} catch (Exception e) {
+				if (verbose)
+					e.printStackTrace();
+			}
 			throw new FileNotFoundException("Could not download " + dependency.getJarName());
 		}
 
@@ -333,7 +359,7 @@ public class MiniMaven {
 			File source = getSourceDirectory();
 
 			List<String> notUpToDates = new ArrayList<String>();
-			long lastModified = addRecursively(notUpToDates, source, ".java", target, ".class");
+			long lastModified = addRecursively(notUpToDates, source, ".java", target, ".class", false);
 			int count = notUpToDates.size();
 			if (count != 0)
 				return false;
@@ -381,9 +407,12 @@ public class MiniMaven {
 		public void build(boolean makeJar) throws FakeException, IOException, ParserConfigurationException, SAXException {
 			if (!buildFromSource || built)
 				return;
+			boolean forceFullBuild = false;
 			for (POM child : getDependencies(true, "test"))
-				if (child != null)
+				if (child != null && !child.upToDate(makeJar)) {
 					child.build(makeJar);
+					forceFullBuild = true;
+				}
 
 			// do not build aggregator projects
 			if (!new File(directory, "src").exists())
@@ -395,6 +424,20 @@ public class MiniMaven {
 			List<String> arguments = new ArrayList<String>();
 			// classpath
 			String classPath = getClassPath(true);
+			POM pom2 = this;
+			while (pom2 != null && pom2.sourceVersion == null)
+				pom2 = pom2.parent;
+			if (pom2 != null) {
+				arguments.add("-source");
+				arguments.add(pom2.sourceVersion);
+			}
+			pom2 = this;
+			while (pom2 != null && pom2.targetVersion == null)
+				pom2 = pom2.parent;
+			if (pom2 != null) {
+				arguments.add("-target");
+				arguments.add(pom2.targetVersion);
+			}
 			arguments.add("-classpath");
 			arguments.add(classPath);
 			// output directory
@@ -402,7 +445,7 @@ public class MiniMaven {
 			arguments.add(target.getPath());
 			// the files
 			int count = arguments.size();
-			addRecursively(arguments, source, ".java", target, ".class");
+			addRecursively(arguments, source, ".java", target, ".class", !forceFullBuild);
 			count = arguments.size() - count;
 
 			if (count > 0) {
@@ -434,7 +477,7 @@ public class MiniMaven {
 			built = true;
 		}
 
-		protected long addRecursively(List<String> list, File directory, String extension, File targetDirectory, String targetExtension) {
+		protected long addRecursively(List<String> list, File directory, String extension, File targetDirectory, String targetExtension, boolean includeUpToDates) {
 			long lastModified = 0;
 			if (list == null)
 				return lastModified;
@@ -443,19 +486,19 @@ public class MiniMaven {
 				return lastModified;
 			for (File file : files)
 				if (file.isDirectory()) {
-					long lastModified2 = addRecursively(list, file, extension, new File(targetDirectory, file.getName()), targetExtension);
+					long lastModified2 = addRecursively(list, file, extension, new File(targetDirectory, file.getName()), targetExtension, includeUpToDates);
 					if (lastModified < lastModified2)
 						lastModified = lastModified2;
 				}
 				else {
 					String name = file.getName();
-					if (!name.endsWith(extension))
+					if (!name.endsWith(extension) || name.equals("package-info.java"))
 						continue;
 					File targetFile = new File(targetDirectory, name.substring(0, name.length() - extension.length()) + targetExtension);
 					long lastModified2 = file.lastModified();
 					if (lastModified < lastModified2)
 						lastModified = lastModified2;
-					if (!targetFile.exists() || targetFile.lastModified() < lastModified2)
+					if (!includeUpToDates || !targetFile.exists() || targetFile.lastModified() < lastModified2)
 						list.add(file.getPath());
 				}
 			return lastModified;
@@ -557,15 +600,17 @@ public class MiniMaven {
 				if (scope != null && excludeScopes != null && arrayContainsString(excludeScopes, scope))
 					continue;
 				Coordinate expanded = expand(dependency);
+				POM pom = findPOM(expanded, !verbose, false);
 				String systemPath = expand(dependency.systemPath);
-				if (systemPath != null) {
+				if (pom == null && systemPath != null) {
 					File file = new File(systemPath);
 					if (file.exists()) {
 						result.add(fakePOM(file, expanded));
 						continue;
 					}
 				}
-				POM pom = getRoot().findPOM(expanded);
+				if (pom == null && downloadAutomatically)
+					pom = findPOM(expanded, !verbose, downloadAutomatically);
 				if (pom == null || result.contains(pom))
 					continue;
 				result.add(pom);
@@ -665,33 +710,33 @@ public class MiniMaven {
 					child.getRepositories(result);
 		}
 
-		protected POM findPOM(Coordinate dependency) throws IOException, ParserConfigurationException, SAXException {
-			return findPOM(dependency, false);
-		}
-
-		protected POM findPOM(Coordinate dependency, boolean quiet) throws IOException, ParserConfigurationException, SAXException {
+		protected POM findPOM(Coordinate dependency, boolean quiet, boolean downloadAutomatically) throws IOException, ParserConfigurationException, SAXException {
 			if (dependency.artifactId.equals(expand(coordinate.artifactId)) &&
 					(dependency.groupId == null || dependency.groupId.equals(expand(coordinate.groupId))) &&
 					(dependency.version == null || coordinate.version == null || dependency.version.equals(expand(coordinate.version))))
 				return this;
+			if (dependency.groupId == null) {
+				POM result = null;
+				for (String key : localPOMCache.keySet()) {
+					POM pom = localPOMCache.get(key);
+					if (pom == null || pom.coordinate == null || pom.coordinate.artifactId == null)
+						continue;
+					if (dependency.artifactId.equals(pom.coordinate.artifactId)) {
+						if (result == null)
+							result = pom;
+						else {
+							err.println("Artifact ID " + dependency.artifactId + " is not unique! (group IDs '"
+								+ result.coordinate.groupId + "' and '" + pom.coordinate.groupId + "' match)");
+							return null;
+						}
+					}
+				}
+				return result;
+			}
+
 			if (dependency.groupId == null && dependency.artifactId.equals("jdom"))
 				dependency.groupId = "jdom";
-			for (POM child : getChildren()) {
-				if (child == null)
-					continue;
-				POM result = child.findPOM(dependency, quiet);
-				if (result != null)
-					return result;
-			}
-			// for the root POM, fall back to Fiji's modules/, $HOME/.m2/repository/ and Fiji's jars/ and plugins/ directories
-			if (parent == null)
-				return findLocallyCachedPOM(dependency, quiet);
-			return null;
-		}
-
-		protected POM findLocallyCachedPOM(Coordinate dependency, boolean quiet) throws IOException, ParserConfigurationException, SAXException {
-			if (dependency.groupId == null)
-				return null;
+			// fall back to Fiji's modules/, $HOME/.m2/repository/ and Fiji's jars/ and plugins/ directories
 			String key = dependency.groupId + ">" + dependency.artifactId;
 			if (localPOMCache.containsKey(key)) {
 				POM result = localPOMCache.get(key); // may be null
@@ -706,7 +751,7 @@ public class MiniMaven {
 			if (ignoreMavenRepositories) {
 				File file = findInFijiDirectories(dependency);
 				if (file != null)
-					return cacheAndReturn(key, fakePOM(file, dependency));
+					return fakePOM(file, dependency);
 				if (!quiet && !dependency.optional)
 					err.println("Skipping artifact " + dependency.artifactId + " (for " + coordinate.artifactId + "): not in jars/ nor plugins/");
 				return cacheAndReturn(key, null);
@@ -715,27 +760,31 @@ public class MiniMaven {
 			String path = System.getProperty("user.home") + "/.m2/repository/" + dependency.groupId.replace('.', '/') + "/" + dependency.artifactId + "/";
 			if (dependency.version == null)
 				dependency.version = findLocallyCachedVersion(path);
-			if (dependency.version == null && dependency.artifactId.equals("scifio"))
-				dependency.version = "4.4-SNAPSHOT";
+			if (dependency.version == null) {
+				if (dependency.artifactId.equals("scifio"))
+					dependency.version = "4.4-SNAPSHOT";
+				else if (dependency.artifactId.equals("Image_5D"))
+					dependency.version = "1.2.5";
+			}
 			if (dependency.version == null) {
 				// try to find the .jar in Fiji's jars/ dir
 				String jarName = dependency.artifactId + ".jar";
 				File file = new File(System.getProperty("ij.dir"), "jars/" + jarName);
 				if (file.exists())
-					return cacheAndReturn(key, fakePOM(file, dependency));
+					return fakePOM(file, dependency);
 				if (!quiet)
 					err.println("Cannot find version for artifact " + dependency.artifactId + " (dependency of " + coordinate.artifactId + ")");
 				return cacheAndReturn(key, null);
 			}
 			else if (dependency.version.startsWith("[")) try {
-				if (!maybeDownloadAutomatically(dependency, quiet))
+				if (!maybeDownloadAutomatically(dependency, quiet, downloadAutomatically))
 					return null;
 				if (dependency.version.startsWith("["))
 					dependency.version = parseVersion(new File(path, "maven-metadata-version.xml"));
 			} catch (FileNotFoundException e) { /* ignore */ }
 			path += dependency.version + "/";
 			if (dependency.version.endsWith("-SNAPSHOT")) try {
-				if (!maybeDownloadAutomatically(dependency, quiet))
+				if (!maybeDownloadAutomatically(dependency, quiet, downloadAutomatically))
 					return null;
 				if (dependency.version.endsWith("-SNAPSHOT"))
 					dependency.version = parseSnapshotVersion(new File(path, "maven-metadata-snapshot.xml"));
@@ -743,7 +792,7 @@ public class MiniMaven {
 			else {
 				File file = findInFijiDirectories(dependency);
 				if (file != null)
-					return cacheAndReturn(key, fakePOM(file, dependency));
+					return fakePOM(file, dependency);
 			}
 
 			path += dependency.getPOMName();
@@ -751,12 +800,14 @@ public class MiniMaven {
 			File file = new File(path);
 			if (!file.exists()) {
 				if (downloadAutomatically) {
-					if (!maybeDownloadAutomatically(dependency, quiet))
+					if (!maybeDownloadAutomatically(dependency, quiet, downloadAutomatically))
 						return null;
 				}
 				else {
 					if (!quiet && !dependency.optional)
 						err.println("Skipping artifact " + dependency.artifactId + " (for " + coordinate.artifactId + "): not found");
+					if (!downloadAutomatically && MiniMaven.this.downloadAutomatically)
+						return null;
 					return cacheAndReturn(key, null);
 				}
 			}
@@ -772,7 +823,7 @@ public class MiniMaven {
 			}
 			else if (!quiet && !dependency.optional)
 				err.println("Artifact " + dependency.artifactId + " not found" + (downloadAutomatically ? "" : "; consider 'get-dependencies'"));
-			return cacheAndReturn(key, result);
+			return result;
 		}
 
 		protected POM findInMultiProjects(Coordinate dependency) throws IOException, ParserConfigurationException, SAXException {
@@ -817,7 +868,7 @@ public class MiniMaven {
 		}
 
 		// TODO: if there is no internet connection, do not try to download -SNAPSHOT versions
-		protected boolean maybeDownloadAutomatically(Coordinate dependency, boolean quiet) {
+		protected boolean maybeDownloadAutomatically(Coordinate dependency, boolean quiet, boolean downloadAutomatically) {
 			if (!downloadAutomatically || offlineMode)
 				return true;
 			try {
@@ -923,7 +974,7 @@ public class MiniMaven {
 			else if (prefix.equals(">project>dependencies>dependency>classifier"))
 				latestDependency.classifier = string;
 			else if (prefix.equals(">project>profiles>profile>id")) {
-				isCurrentProfile = (!Util.getPlatform().equals("macosx") && "javac".equals(string)) || (coordinate.artifactId.equals("javassist") && string.equals("jdk16"));
+				isCurrentProfile = (!Util.getPlatform().equals("macosx") && "javac".equals(string)) || (coordinate.artifactId.equals("javassist") && (string.equals("jdk16") || string.equals("default-tools")));
 				if (debug)
 					err.println((isCurrentProfile ? "Activating" : "Ignoring") + " profile " + string);
 			}
@@ -961,6 +1012,14 @@ public class MiniMaven {
 						checkParentTag("version", parentCoordinate.version, string);
 				}
 			}
+			else if (prefix.equals(">project>build>plugins>plugin>artifactId"))
+				currentPluginName = string;
+			else if (prefix.equals(">project>build>plugins>plugin>configuration>source") && "maven-compiler-plugin".equals(currentPluginName))
+				sourceVersion = string;
+			else if (prefix.equals(">project>build>plugins>plugin>configuration>target") && "maven-compiler-plugin".equals(currentPluginName))
+				targetVersion = string;
+			else if (prefix.equals(">project>build>plugins>plugin>configuration>archive>manifest>mainClass") && "maven-jar-plugin".equals(currentPluginName))
+				mainClass = string;
 			else if (debug)
 				err.println("Ignoring " + prefix);
 		}
@@ -1188,7 +1247,7 @@ public class MiniMaven {
 
 				@Override
 				public void endElement(String uri, String localName, String qName) {
-					if (level > 0)
+					if ((level == 1 && "project".equals(qName)) || (level == 2 && "packaging".equals(qName)))
 						level--;
 				}
 
@@ -1317,10 +1376,16 @@ public class MiniMaven {
 			if (ijDir.startsWith(prefix))
 				ijDir = ijDir.substring(prefix.length());
 		int bang = ijDir.indexOf("!/");
-		if (bang < 0)
-			throw new RuntimeException("Funny ?-) " + ijDir);
-		ijDir = ijDir.substring(0, bang);
-		for (String suffix : new String[] { "fake.jar", File.separator, "jars", File.separator })
+		if (bang >= 0)
+			ijDir = ijDir.substring(0, bang);
+		else {
+			String suffix = "/" + MiniMaven.class.getName().replace('.', '/') + ".class";
+			if (ijDir.endsWith(suffix))
+				ijDir = ijDir.substring(0, ijDir.length() - suffix.length());
+			else
+				throw new RuntimeException("Funny ?-) " + ijDir);
+		}
+		for (String suffix : new String[] { "fake.jar", File.separator, "jars", "build", File.separator })
 			if (ijDir.endsWith(suffix))
 				ijDir = ijDir.substring(0, ijDir.length() - suffix.length());
 		System.setProperty("ij.dir", ijDir);
@@ -1334,10 +1399,9 @@ public class MiniMaven {
 		MiniMaven miniMaven = new MiniMaven(null, System.err, false);
 		POM root = miniMaven.parse(new File("pom.xml"), null);
 		String command = args.length == 0 ? "compile-and-run" : args[0];
-		String artifactId = getSystemProperty("artifactId", "ij-app");
-		String mainClass = getSystemProperty("mainClass", "imagej.Main");
+		String artifactId = getSystemProperty("artifactId", root.coordinate.artifactId.equals("pom-ij-base") ? "ij-app" : root.coordinate.artifactId);
 
-		POM pom = root.findPOM(new Coordinate(null, artifactId, null));
+		POM pom = root.findPOM(new Coordinate(null, artifactId, null), false, miniMaven.downloadAutomatically);
 		if (pom == null)
 			pom = root;
 		if (command.equals("compile") || command.equals("build") || command.equals("compile-and-run")) {
@@ -1362,6 +1426,11 @@ public class MiniMaven {
 		else if (command.equals("get") || command.equals("get-dependencies"))
 			pom.downloadDependencies();
 		else if (command.equals("run")) {
+			String mainClass = getSystemProperty("mainClass", pom.mainClass);
+			if (mainClass == null) {
+				miniMaven.err.println("No main class specified in pom " + pom.coordinate);
+				System.exit(1);
+			}
 			String[] paths = pom.getClassPath(false).split(File.pathSeparator);
 			URL[] urls = new URL[paths.length];
 			for (int i = 0; i < urls.length; i++)

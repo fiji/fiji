@@ -15,9 +15,9 @@ public class ReconstructAreaList implements ContourSet {
     private final int recContourID, areaListID;
     private final ArrayList<Element> contourList;
     private final ArrayList<Integer> indexList;
-    private final Translator translator;
+    private final ReconstructTranslator translator;
 
-    public ReconstructAreaList(final Element e, final Translator t, final ReconstructSection rs)
+    public ReconstructAreaList(final Element e, final ReconstructTranslator t, final ReconstructSection rs)
     {
         translator = t;
         name = e.getAttribute("name");

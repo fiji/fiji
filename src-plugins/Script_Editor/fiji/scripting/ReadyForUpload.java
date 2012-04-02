@@ -257,6 +257,10 @@ public class ReadyForUpload {
 		if (!sourcePath.endsWith(File.separator))
 			sourcePath += File.separator;
 
+		int mavenInfix = sourcePath.indexOf("src/main/java/");
+		String resourcePath = mavenInfix < 0 ? null :
+			sourcePath.substring(0, mavenInfix + 9) + "resources" + sourcePath.substring(mavenInfix + 13);
+
 		boolean result = true;
 		ZipFile zip = new ZipFile(fullPath);
 		for (ZipEntry entry : Collections.list(zip.entries())) {
@@ -279,6 +283,7 @@ public class ReadyForUpload {
 				}
 			}
 			if (!new File(sourcePath + name).exists() &&
+					(resourcePath == null || !new File(resourcePath + name).exists()) &&
 					(!path.endsWith("/Script_Editor.jar") ||
 					 !new File(sourcePath + "templates/Java/" + name).exists()) &&
 					(!path.endsWith("/ij.jar") ||

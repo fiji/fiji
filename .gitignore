@@ -608,3 +608,4 @@ hs_err*.log
 /modules/jsch/build/
 /modules/jsch/dist/
 /modules/jsch/jsch.jar
+/plugins/BalloonSegmentation_.jar

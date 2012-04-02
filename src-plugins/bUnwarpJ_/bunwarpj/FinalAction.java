@@ -204,7 +204,7 @@ public class FinalAction implements Runnable
         
         long stop = System.currentTimeMillis(); // stop timing
         if(outputLevel == 2)
-        	IJ.write("\nRegistration time: " + (stop - start) + "ms"); // print execution time
+        	IJ.log("\nRegistration time: " + (stop - start) + "ms"); // print execution time
 
         dialog.restoreAll();
         dialog.freeMemory();

@@ -102,6 +102,11 @@ test -f "$CWD"/java/"$java_submodule"/Home/lib/ext/vecmath.jar || {
 	JAVA_SUBMODULE=java/$java_submodule
 	git submodule init "$JAVA_SUBMODULE" && (
 		URL="$(git config submodule."$JAVA_SUBMODULE".url)" &&
+		case "$URL" in
+		contrib@fiji.sc:/srv/git/*)
+			URL="git://fiji.sc/${URL#contrib@fiji.sc:/srv/git/}"
+			;;
+		esac &&
 		mkdir -p "$JAVA_SUBMODULE" &&
 		cd "$JAVA_SUBMODULE" &&
 		git init &&
@@ -113,6 +118,21 @@ test -f "$CWD"/java/"$java_submodule"/Home/lib/ext/vecmath.jar || {
 		exit 1
 	}
 }
+
+test -n "$JAVA_HOME" &&
+test -d "$JAVA_HOME" ||
+for d in java/$java_submodule/*
+do
+	if test -z "$JAVA_HOME" || test "$d" -nt "$JAVA_HOME"
+	then
+		JAVA_HOME="$d"
+	fi
+done
+
+if test -d "$JAVA_HOME"
+then
+	export PATH=$JAVA_HOME/bin:$PATH
+fi
 
 handle_variables () {
 	case "$1" in
@@ -133,7 +153,6 @@ targets=$(handle_variables --strip "$@")
 variables=$(handle_variables "$@")
 
 jar=jars/fake.jar
-pre_jar=precompiled/${jar##*/}
 source_dir=src-plugins/fake
 sources=$source_dir/fiji/build/*.java
 
@@ -178,12 +197,8 @@ esac
 # still needed for Windows, which cannot overwrite files that are in use
 test -f "$CWD"/ImageJ$exe -a -f "$CWD"/$jar &&
 test "a$targets" != a$jar -a "a$targets" != aImageJ &&
-exec "$CWD"/ImageJ$exe --build "$@"
-
-# fall back to precompiled
-test -f "$CWD"/precompiled/ImageJ-$platform$exe \
-	-a -f "$CWD"/precompiled/${jar##*/} &&
-exec "$CWD"/precompiled/ImageJ-$platform$exe --build -- "$@"
+"$CWD"/ImageJ$exe --build "$@" &&
+exit
 
 export SYSTEM_JAVA=java
 export SYSTEM_JAVAC=javac
@@ -208,10 +223,6 @@ fi
 # fall back to calling Fake with system Java
 test -f "$CWD"/$jar &&
 $SYSTEM_JAVA -classpath "$CWD"/$jar fiji.build.Fake "$@"
-
-# fall back to calling precompiled Fake with system Java
-test -f "$CWD"/$pre_jar &&
-$SYSTEM_JAVA -classpath "$CWD"/$pre_jar fiji.build.Fake "$@"
 
 # fall back to compiling and running with system Java
 mkdir -p "$CWD"/build &&
