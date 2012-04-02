@@ -117,6 +117,8 @@ SUBMODULE_TARGETS=\
 	jars/imglib-ij.jar \
 	jars/imglib-io.jar \
 	jars/imglib2.jar \
+	jars/imglib2-algorithms.jar \
+	jars/imglib2-algorithms-gpl.jar \
 	jars/imglib2-ij.jar \
 	jars/imglib2-io.jar \
 	jars/imglib2-ui.jar \
