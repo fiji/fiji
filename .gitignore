@@ -253,6 +253,7 @@ hs_err*.log
 /modules/jsch/jsch.jar
 /plugins/BalloonSegmentation_.jar
 /plugins/FS_Align_TrakEM2.jar
+/plugins/blockmatching_.jar
 
 # ImgLib #
 /jars/imglib-algorithms.jar
@@ -264,21 +265,23 @@ hs_err*.log
 /jars/imglib2-algorithms.jar
 /jars/imglib2-ij.jar
 /jars/imglib2-io.jar
+/jars/imglib2-ops.jar
 /jars/imglib2-ui.jar
 /jars/imglib2.jar
-/modules/imglib/imglib2.jar
+/modules/imglib/imglib-algorithms.jar
+/modules/imglib/imglib-ij.jar
+/modules/imglib/imglib-io.jar
+/modules/imglib/imglib-ops.jar
+/modules/imglib/imglib-scripting.jar
+/modules/imglib/imglib.jar
+/modules/imglib/imglib2-algorithms-gpl.jar
 /modules/imglib/imglib2-algorithms.jar
 /modules/imglib/imglib2-ij.jar
 /modules/imglib/imglib2-io.jar
 /modules/imglib/imglib2-ops.jar
 /modules/imglib/imglib2-scripting.jar
 /modules/imglib/imglib2-ui.jar
-/modules/imglib/imglib.jar
-/modules/imglib/imglib-algorithms.jar
-/modules/imglib/imglib-ij.jar
-/modules/imglib/imglib-io.jar
-/modules/imglib/imglib-ops.jar
-/modules/imglib/imglib-scripting.jar
+/modules/imglib/imglib2.jar
 
 # Bio-Formats #
 /jars/bio-formats.jar
@@ -315,6 +318,7 @@ hs_err*.log
 
 # ImageJ2 #
 /jars/eventbus.jar
+/jars/ij-app.jar
 /jars/ij-core.jar
 /jars/ij-data.jar
 /jars/ij-ext-swing.jar
