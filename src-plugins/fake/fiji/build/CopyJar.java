@@ -22,4 +22,11 @@ public class CopyJar extends Rule {
 		return parser.fake.jarUpToDate(source, target,
 			getVarBool("VERBOSE"));
 	}
+
+	@Override
+	public CopyJar copy() {
+		CopyJar copy = new CopyJar(parser, target, prerequisites);
+		copy.prerequisiteString = prerequisiteString;
+		return copy;
+	}
 }

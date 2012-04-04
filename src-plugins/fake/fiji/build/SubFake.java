@@ -281,4 +281,11 @@ public class SubFake extends Rule {
 			throw new FakeException("Detected submodule in obsolete location: " + submodule.getAbsolutePath()
 				+ "\nTo move submodules automatically, call Fiji Build again with moveSubmodules=true");
 	}
+
+	@Override
+	public SubFake copy() {
+		SubFake copy = new SubFake(parser, target, prerequisites);
+		copy.prerequisiteString = prerequisiteString;
+		return copy;
+	}
 }
