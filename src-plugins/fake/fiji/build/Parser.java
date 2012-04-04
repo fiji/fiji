@@ -756,13 +756,9 @@ public class Parser {
 		if (fallBack == null)
 			throw new FakeException("No precompiled and "
 				+ "no fallback for " + target + "!");
-		// TODO: clone it
-		synchronized(fallBack) {
-			String save = fallBack.target;
-			fallBack.target = target;
-			fallBack.make();
-			fallBack.target = save;
-		}
+		fallBack = fallBack.copy();
+		fallBack.target = target;
+		fallBack.make();
 	}
 
 	public Rule getRule(String rule) {
