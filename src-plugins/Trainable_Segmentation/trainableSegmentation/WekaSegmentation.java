@@ -3791,7 +3791,7 @@ public class WekaSegmentation {
 			
 			
 			int r = firstRow;
-			int rowsToDo = numOfRows;
+			int rowsToDo = lastRow - firstRow + 1;
 			
 			while( r < lastRow )
 			{
