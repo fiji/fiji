@@ -399,7 +399,9 @@ public class FeatureStack
 	/**
 	 * Add 8 neighbors of the original image as features
 	 */
-	public void addNeighbors()
+	public void addNeighbors(
+			final int minSigma,
+			final int maxSigma)
 	{
 		// Test: add neighbors of original image
 				
@@ -409,25 +411,29 @@ public class FeatureStack
 
 		for(int ch=0; ch < channels.length; ch++)
 		{
-			double[][] neighborhood = new double[8][originalImage.getWidth() * originalImage.getHeight()];		
-			
-			for(int x=0, n=0; x<originalImage.getWidth(); x++)
-				for(int y=0; y<originalImage.getHeight(); y++, n++)
-				{
-					for(int i=-1, k=0;  i < 2; i++)
-						for(int j = -1; j < 2; j++)
-						{
-							if(i==0 && j==0)
-								continue;				
-							neighborhood[k][n] = getPixelMirrorConditions(channels[ ch ].getProcessor(), x+i, y+j);
-							k++;
-						}
-				}
-			
-		
 			ImageStack result = new ImageStack( originalImage.getWidth(), originalImage.getHeight() );
-			for(int i=0; i<8; i++)
-				result.addSlice(availableFeatures[ NEIGHBORS] + "_" +  i, new FloatProcessor( originalImage.getWidth(), originalImage.getHeight(), neighborhood[ i ]));
+			
+			for(int sigma = minSigma; sigma <=maxSigma; sigma *= 2)
+			{
+				double[][] neighborhood = new double[8][originalImage.getWidth() * originalImage.getHeight()];		
+
+				for(int y=0, n=0; y<originalImage.getHeight(); y++)
+					for(int x=0; x<originalImage.getWidth(); x++, n++)					
+					{
+						for(int i = -1 * sigma, k=0;  i < (sigma+1); i += sigma)
+							for(int j = -1 * sigma; j < (sigma+1); j += sigma)
+							{
+								if(i==0 && j==0)
+									continue;				
+								neighborhood[k][n] = getPixelMirrorConditions(channels[ ch ].getProcessor(), x+i, y+j);
+								k++;
+							}
+					}
+
+
+				for(int i=0; i<8; i++)
+					result.addSlice(availableFeatures[ NEIGHBORS] + "_" + sigma +"_" +  i, new FloatProcessor( originalImage.getWidth(), originalImage.getHeight(), neighborhood[ i ]));						
+			}
 			results[ ch ] = new ImagePlus("Neighbors", result);
 		}
 		ImagePlus merged = mergeResultChannels(results);
@@ -442,7 +448,9 @@ public class FeatureStack
 	 * @return result image
 	 */
 	public Callable<ImagePlus> getNeighbors(
-			final ImagePlus originalImage)
+			final ImagePlus originalImage,
+			final int minSigma,
+			final int maxSigma)
 	{
 		if (Thread.currentThread().isInterrupted()) 
 			return null;
@@ -457,25 +465,28 @@ public class FeatureStack
 
 				for(int ch=0; ch < channels.length; ch++)
 				{
-					double[][] neighborhood = new double[8][originalImage.getWidth() * originalImage.getHeight()];		
-					
-					for(int x=0, n=0; x<originalImage.getWidth(); x++)
-						for(int y=0; y<originalImage.getHeight(); y++, n++)
-						{
-							for(int i=-1, k=0;  i < 2; i++)
-								for(int j = -1; j < 2; j++)
-								{
-									if(i==0 && j==0)
-										continue;				
-									neighborhood[k][n] = getPixelMirrorConditions(channels[ ch ].getProcessor(), x+i, y+j);
-									k++;
-								}
-						}
-					
-				
 					ImageStack result = new ImageStack( originalImage.getWidth(), originalImage.getHeight() );
-					for(int i=0; i<8; i++)
-						result.addSlice(availableFeatures[ NEIGHBORS] + "_" +  i, new FloatProcessor( originalImage.getWidth(), originalImage.getHeight(), neighborhood[ i ]));
+					for(int sigma = minSigma; sigma <=maxSigma; sigma *= 2)
+					{
+						double[][] neighborhood = new double[8][originalImage.getWidth() * originalImage.getHeight()];		
+
+						for(int y=0, n=0; y<originalImage.getHeight(); y++)
+							for(int x=0; x<originalImage.getWidth(); x++, n++)
+							{
+								for(int i=-1 * sigma, k=0;  i < (sigma+1); i+=sigma)
+									for(int j = -1 * sigma; j < (sigma+1); j+=sigma)
+									{
+										if(i==0 && j==0)
+											continue;				
+										neighborhood[k][n] = getPixelMirrorConditions(channels[ ch ].getProcessor(), x+i, y+j);
+										k++;
+									}
+							}
+
+						
+						for(int i=0; i<8; i++)
+							result.addSlice(availableFeatures[ NEIGHBORS] + "_" + sigma +"_" +  i, new FloatProcessor( originalImage.getWidth(), originalImage.getHeight(), neighborhood[ i ]));						
+					}
 					results[ ch ] = new ImagePlus("Neighbors", result);
 				}
 				return mergeResultChannels(results);
@@ -2646,7 +2657,7 @@ public class FeatureStack
 		
 		// Neighbors
 		if( enableFeatures[ NEIGHBORS ])
-			addNeighbors();
+			addNeighbors( (int)minimumSigma, (int)maximumSigma );
 		
 		IJ.showProgress(1.0);
 		IJ.showStatus("Features stack is updated now!");
@@ -2925,7 +2936,7 @@ public class FeatureStack
 		
 		// Neighbors
 		if( enableFeatures[ NEIGHBORS ])
-			addNeighbors();
+			addNeighbors( (int)minimumSigma, (int)maximumSigma );
 		
 		IJ.showProgress(1.0);
 		IJ.showStatus("Features stack is updated now!");
@@ -3208,7 +3219,7 @@ public class FeatureStack
 
 			// Neighbors
 			if( enableFeatures[ NEIGHBORS ])
-				futures.add(exe.submit( getNeighbors( originalImage ) ));
+				futures.add(exe.submit( getNeighbors( originalImage, (int)minimumSigma, (int)maximumSigma ) ) );
 			
 			// Wait for the jobs to be done
 			for(Future<ImagePlus> f : futures)
