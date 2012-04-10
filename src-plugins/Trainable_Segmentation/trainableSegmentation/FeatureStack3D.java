@@ -14,12 +14,12 @@ import ij.Prefs;
 import ij.process.ByteProcessor;
 import ij.process.ColorProcessor;
 import imagescience.feature.Differentiator;
+import imagescience.feature.Edges;
 import imagescience.feature.Hessian;
 import imagescience.feature.Laplacian;
 import imagescience.feature.Structure;
 import imagescience.image.Aspects;
 import imagescience.image.FloatImage;
-import imagescience.image.Image;
 
 public class FeatureStack3D 
 {
@@ -50,10 +50,12 @@ public class FeatureStack3D
 	public static final int LAPLACIAN				=  3;
 	/** structure tensor filter flag index */
 	public static final int STRUCTURE				=  4;
+	/** edge filter flag index */
+	public static final int EDGES					=  5;
 	
 	/** names of available filters */
 	public static final String[] availableFeatures 
-		= new String[]{	"Gaussian_blur", "Hessian", "Derivatives", "Laplacian", "Structure"};
+		= new String[]{	"Gaussian_blur", "Hessian", "Derivatives", "Laplacian", "Structure", "Edges"};
 	
 	/** flags of filters to be used */	
 	private boolean[] enableFeatures = new boolean[]{
@@ -62,12 +64,13 @@ public class FeatureStack3D
 			true, 	/* Derivatives */
 			true, 	/* Laplacian */
 			true,	/* Structure */
+			true	/* Edges */
 	};
 	
 	
 	private int minDerivativeOrder = 1;
 	private int maxDerivativeOrder = 5;
-	
+		
 	/**
 	 * Construct object to store stack of image features
 	 * @param image original image
@@ -133,7 +136,12 @@ public class FeatureStack3D
 				{
 					results[ ch ] = new ArrayList<ImagePlus>();
 					
-					imagescience.image.Image img = imagescience.image.Image.wrap( channels[ ch ] );
+					// pad image on the back and the front
+					final ImagePlus channel = channels [ ch ].duplicate();
+					channel.getImageStack().addSlice("pad-back", channels[ch].getImageStack().getProcessor( channels[ ch ].getImageStackSize()));
+					channel.getImageStack().addSlice("pad-front", channels[ch].getImageStack().getProcessor( 1 ), 1);
+					
+					imagescience.image.Image img = imagescience.image.Image.wrap( channel );
 					Aspects aspects = img.aspects();
 
 
@@ -149,6 +157,10 @@ public class FeatureStack3D
 					else
 						ip.setTitle( availableFeatures[DERIVATIVES] +"_" + xOrder + "_" +yOrder+"_"+zOrder+ "_"+sigma );
 					
+					// remove pad				
+					ip.getImageStack().deleteLastSlice();
+					ip.getImageStack().deleteSlice(1);				
+					
 					results[ch].add( ip );		
 				}
 						
@@ -163,7 +175,7 @@ public class FeatureStack3D
 	 *
 	 * @param originalImage input image
 	 * @param sigma smoothing scale	
-	 * @return filter Laplacian filter image
+	 * @return filter Hessian filter images
 	 */
 	public Callable< ArrayList<ImagePlus> >getHessian(
 			final ImagePlus originalImage,
@@ -187,7 +199,12 @@ public class FeatureStack3D
 				{
 					results[ ch ] = new ArrayList<ImagePlus>();
 					
-					final imagescience.image.Image img = imagescience.image.Image.wrap( channels[ ch ] ) ;
+					// pad image on the back and the front
+					final ImagePlus channel = channels [ ch ].duplicate();
+					channel.getImageStack().addSlice("pad-back", channels[ch].getImageStack().getProcessor( channels[ ch ].getImageStackSize()));
+					channel.getImageStack().addSlice("pad-front", channels[ch].getImageStack().getProcessor( 1 ), 1);
+					
+					imagescience.image.Image img = imagescience.image.Image.wrap( channel );
 				
 					final Aspects aspects = img.aspects();				
 
@@ -201,10 +218,20 @@ public class FeatureStack3D
 					for (int i=0; i<nrimgs; ++i)
 						hessianImages.get(i).aspects(aspects);
 
-					results[ ch ].add( new ImagePlus( availableFeatures[HESSIAN] +"_largest_" + sigma + "_" +  absolute, hessianImages.get(0).imageplus().getImageStack() ) );
-					results[ ch ].add( new ImagePlus( availableFeatures[HESSIAN] +"_middle_" + sigma + "_" +   absolute, hessianImages.get(1).imageplus().getImageStack() ) );
-					results[ ch ].add( new ImagePlus( availableFeatures[HESSIAN] +"_smallest_" + sigma + "_" + absolute, hessianImages.get(2).imageplus().getImageStack() ) );
-										
+					final ImageStack smallest = hessianImages.get(0).imageplus().getImageStack();
+					final ImageStack middle   = hessianImages.get(1).imageplus().getImageStack();
+					final ImageStack largest  = hessianImages.get(2).imageplus().getImageStack();
+					// remove pad
+					smallest.deleteLastSlice();
+					smallest.deleteSlice(1);
+					middle.deleteLastSlice();
+					middle.deleteSlice(1);
+					largest.deleteLastSlice();
+					largest.deleteSlice(1);
+					
+					results[ ch ].add( new ImagePlus( availableFeatures[HESSIAN] +"_largest_"  + sigma + "_" + absolute, smallest ) );					
+					results[ ch ].add( new ImagePlus( availableFeatures[HESSIAN] +"_middle_"   + sigma + "_" + absolute, middle ) );					
+					results[ ch ].add( new ImagePlus( availableFeatures[HESSIAN] +"_smallest_" + sigma + "_" + absolute, largest ) );									
 				}
 											
 				return mergeResultChannels(results);
@@ -240,7 +267,12 @@ public class FeatureStack3D
 				{
 					results[ ch ] = new ArrayList<ImagePlus>();
 					
-					final imagescience.image.Image img = imagescience.image.Image.wrap( channels[ ch ] ) ;
+					// pad image on the back and the front
+					final ImagePlus channel = channels [ ch ].duplicate();
+					channel.getImageStack().addSlice("pad-back", channels[ch].getImageStack().getProcessor( channels[ ch ].getImageStackSize()));
+					channel.getImageStack().addSlice("pad-front", channels[ch].getImageStack().getProcessor( 1 ), 1);
+					
+					imagescience.image.Image img = imagescience.image.Image.wrap( channel );
 				
 					final Aspects aspects = img.aspects();				
 
@@ -254,6 +286,71 @@ public class FeatureStack3D
 					
 					final ImagePlus ip = newimg.imageplus();
 					ip.setTitle(availableFeatures[LAPLACIAN] +"_" + sigma );
+					
+					// remove pad				
+					ip.getImageStack().deleteLastSlice();
+					ip.getImageStack().deleteSlice(1);	
+					
+					results[ch].add( ip );
+					
+				}
+											
+				return mergeResultChannels(results);
+			}
+		};
+	}
+	
+	/**
+	 * Get Edges features (to be submitted in an ExecutorService)
+	 *
+	 * @param originalImage input image
+	 * @param sigma smoothing scale	
+	 * @return filter Edges filter image
+	 */
+	public Callable<ArrayList< ImagePlus >> getEdges(
+			final ImagePlus originalImage,
+			final double sigma)
+	{
+		if (Thread.currentThread().isInterrupted()) 
+			return null;
+		
+		return new Callable<ArrayList< ImagePlus >>()
+		{
+			public ArrayList< ImagePlus > call()
+			{
+				
+				// Get channel(s) to process
+				ImagePlus[] channels = extractChannels(originalImage);
+				
+				ArrayList<ImagePlus>[] results = new ArrayList[ channels.length ];
+				
+				for(int ch=0; ch < channels.length; ch++)
+				{
+					results[ ch ] = new ArrayList<ImagePlus>();
+					
+					// pad image on the back and the front
+					final ImagePlus channel = channels [ ch ].duplicate();
+					channel.getImageStack().addSlice("pad-back", channels[ch].getImageStack().getProcessor( channels[ ch ].getImageStackSize()));
+					channel.getImageStack().addSlice("pad-front", channels[ch].getImageStack().getProcessor( 1 ), 1);
+					
+					imagescience.image.Image img = imagescience.image.Image.wrap( channel );
+				
+					final Aspects aspects = img.aspects();				
+
+					imagescience.image.Image newimg = new FloatImage( img );
+
+					final Edges edges = new Edges();
+
+					newimg = edges.run(newimg, sigma, false);
+					newimg.aspects(aspects);						
+
+					
+					final ImagePlus ip = newimg.imageplus();
+					ip.setTitle(availableFeatures[EDGES] +"_" + sigma );
+					
+					// remove pad				
+					ip.getImageStack().deleteLastSlice();
+					ip.getImageStack().deleteSlice(1);	
 					
 					results[ch].add( ip );
 					
@@ -297,7 +394,12 @@ public class FeatureStack3D
 				{
 					results[ ch ] = new ArrayList<ImagePlus>();
 					
-					final imagescience.image.Image img = imagescience.image.Image.wrap( channels[ ch ] ) ;
+					// pad image on the back and the front
+					final ImagePlus channel = channels [ ch ].duplicate();
+					channel.getImageStack().addSlice("pad-back", channels[ch].getImageStack().getProcessor( channels[ ch ].getImageStackSize()));
+					channel.getImageStack().addSlice("pad-front", channels[ch].getImageStack().getProcessor( 1 ), 1);
+					
+					imagescience.image.Image img = imagescience.image.Image.wrap( channel );
 				
 					final Aspects aspects = img.aspects();				
 
@@ -308,8 +410,17 @@ public class FeatureStack3D
 					for (int i=0; i<nrimgs; ++i)
 						eigenimages.get(i).aspects(aspects);
 
-					results[ ch ].add( new ImagePlus( availableFeatures[STRUCTURE] +"_largest_" + sigma + "_"  + integrationScale, eigenimages.get(0).imageplus().getImageStack() ) );
-					results[ ch ].add( new ImagePlus( availableFeatures[STRUCTURE] +"_smallest_" + sigma + "_" + integrationScale, eigenimages.get(1).imageplus().getImageStack() ) );
+					final ImageStack largest  = eigenimages.get(0).imageplus().getImageStack();					
+					final ImageStack smallest = eigenimages.get(1).imageplus().getImageStack();
+					
+					// remove pad
+					smallest.deleteLastSlice();
+					smallest.deleteSlice(1);					
+					largest.deleteLastSlice();
+					largest.deleteSlice(1);					
+					
+					results[ ch ].add( new ImagePlus( availableFeatures[STRUCTURE] +"_largest_"  + sigma + "_"  + integrationScale, largest ) );
+					results[ ch ].add( new ImagePlus( availableFeatures[STRUCTURE] +"_smallest_" + sigma + "_"  + integrationScale, smallest ) );
 				
 				}
 				
@@ -503,15 +614,19 @@ public class FeatureStack3D
 					futures.add(exe.submit( getLaplacian(originalImage, i)) );
 				}
 				
+				// Edges
+				if(enableFeatures[ EDGES ])
+				{
+					futures.add(exe.submit( getEdges(originalImage, i)) );
+				}
+				
 				// Structure tensor
 				if(enableFeatures[ STRUCTURE ])
 				{					
 					for(int integrationScale = 1; integrationScale <= 3; integrationScale+=2)
 						futures.add(exe.submit( getStructure(originalImage, i, integrationScale )) );
 				}
-				
-			
-
+							
 			}
 			
 			// Wait for the jobs to be done
@@ -575,5 +690,15 @@ public class FeatureStack3D
 		return fsa;
 	}
 	
+	
+	public void setMinimumSigma( float minimumSigma )
+	{
+		this.minimumSigma = minimumSigma;
+	}
+	
+	public void setMaximumSigma( float maximumSigma )
+	{
+		this.maximumSigma = maximumSigma;
+	}
 	
 }
