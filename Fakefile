@@ -117,6 +117,8 @@ SUBMODULE_TARGETS=\
 	jars/imglib-ij.jar \
 	jars/imglib-io.jar \
 	jars/imglib2.jar \
+	jars/imglib2-algorithms.jar \
+	jars/imglib2-algorithms-gpl.jar \
 	jars/imglib2-ij.jar \
 	jars/imglib2-io.jar \
 	jars/imglib2-ui.jar \
@@ -132,6 +134,7 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/Clojure_Interpreter.jar \
 	plugins/JRuby_Interpreter.jar \
 	plugins/BeanShell_Interpreter.jar \
+	plugins/blockmatching_.jar \
 	plugins/bUnwarpJ_.jar \
 	plugins/register_virtual_stack_slices.jar \
 	plugins/Siox_Segmentation.jar \
@@ -305,6 +308,7 @@ CLASSPATH(jars/imglib2-ui.jar)=jars/imglib2.jar:jars/imglib2-io.jar:plugins/loci
 jars/imglib2-ui.jar <- jars/imglib2-io.jar modules/imglib/
 jars/clojure.jar <- ImageJ modules/clojure/
 plugins/loci_tools.jar <- ImageJ modules/bio-formats/
+CLASSPATH(plugins/loci_tools.jar)=jars/imglib2.jar
 CLASSPATH(jars/VectorString.jar)=jars/ij.jar:jars/Jama.jar:$JAVA3D_JARS
 jars/VectorString.jar <- modules/TrakEM2/
 CLASSPATH(plugins/TrakEM2_.jar)=jars/ij.jar:jars/jai_core.jar:jars/jai_codec.jar:jars/VectorString.jar:jars/postgresql.jar:jars/jcommon.jar:jars/jfreechart.jar:jars/edu_mines_jtk.jar:jars/VIB-lib.jar:plugins/VIB_.jar:jars/mpicbg.jar:plugins/loci_tools.jar:plugins/bUnwarpJ_.jar:plugins/level_sets.jar:plugins/Fiji_Plugins.jar:jars/Jama.jar:jars/imglib.jar:jars/imglib-algorithms.jar:jars/imglib-ij.jar:plugins/Simple_Neurite_Tracer.jar:plugins/3D_Viewer.jar:plugins/Lasso_and_Blow_Tool.jar:$JAVA3D_JARS
@@ -359,6 +363,7 @@ src-plugins/Script_Editor/function.png[bin/copy-file.bsh $PRE $TARGET] <- images
 
 CLASSPATH(jars/zs.jar)=jars/Jama.jar
 CLASSPATH(plugins/register_virtual_stack_slices.jar)=jars/ij.jar:plugins/TrakEM2_.jar:jars/mpicbg.jar:plugins/bUnwarpJ_.jar:jars/fiji-lib.jar
+CLASSPATH(plugins/blockmatching_.jar)=jars/ij.jar:jars/mpicbg.jar:jars/imglib2.jar:jars/imglib2-ij.jar:plugins/TrakEM2_.jar
 CLASSPATH(plugins/registration_3d.jar)=jars/ij.jar:jars/edu_mines_jtk.jar
 CLASSPATH(plugins/Siox_Segmentation.jar)=jars/ij.jar:jars/fiji-lib.jar
 CLASSPATH(plugins/Image_Expression_Parser.jar)=jars/ij.jar:jars/jep.jar:jars/imglib.jar:jars/junit.jar:jars/imglib-algorithms.jar:jars/imglib-ij.jar

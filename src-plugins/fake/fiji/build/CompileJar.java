@@ -175,4 +175,11 @@ public class CompileJar extends Rule {
 			return;
 		}
 	}
+
+	@Override
+	public CompileJar copy() {
+		CompileJar copy = new CompileJar(parser, target, prerequisites);
+		copy.prerequisiteString = prerequisiteString;
+		return copy;
+	}
 }

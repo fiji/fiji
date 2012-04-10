@@ -534,4 +534,6 @@ public abstract class Rule implements Comparable<Rule> {
 	public int compareTo(Rule other) {
 		return target.compareTo(other.target);
 	}
+
+	public abstract Rule copy();
 }

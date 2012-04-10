@@ -24,6 +24,7 @@ Abbreviations:
 Name					File					Author(s)						Contact								License
 ----					----					---------						--------------							-------
 * Anisotropic Diffusion 2D 		Anisotropic_Diffusion_2D.jar 		http://rsb.info.nih.gov/ij/plugins/download/Anisotropic_Diffusion_2D.java						GPL
+* Balloon Segmentation	 		BalloonSegmentation_.jar 		Lionel Dupuy						Lionel.Dupuy@hutton.ac.uk					GPL
 * Batik 				batik.jar 				http://xmlgraphics.apache.org/batik/contributors.html									AL
 * Bean Shell language 			bsh.jar 											http://www.beanshell.org/ 					SPL/LGPL
 * Bean Shell Interpreter 		BSH_Interpreter.jar			Johannes Schindelin					Johannes.Schindelin@gmx.de					GPL

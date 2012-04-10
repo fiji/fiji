@@ -30,4 +30,11 @@ public class CompileClass extends Rule {
 				source.substring(slash2), parser.cwd);
 		}
 	}
+
+	@Override
+	public CompileClass copy() {
+		CompileClass copy = new CompileClass(parser, target, prerequisites);
+		copy.prerequisiteString = prerequisiteString;
+		return copy;
+	}
 }
