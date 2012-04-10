@@ -501,7 +501,7 @@ public class Matching
 		
 		String statement = computeRANSAC( candidates, finalInliers, finalModel, (float)params.ransacThreshold );
 		//IJ.log( "First ransac: " + explanation + ": " + statement );
-		IJ.log( "first model: " + finalModel );
+		//IJ.log( "first model: " + finalModel );
 		//IJ.log( "Z1 " + zStretching1 );
 		//IJ.log( "Z2 " + zStretching2 );
 
@@ -541,7 +541,7 @@ public class Matching
 				Model<?> model2 = params.model.copy();
 				String tmpStatement = computeRANSAC( candidates, inliers, model2, (float)params.ransacThreshold );
 				
-				IJ.log( "ransac " + i + ": " + explanation + ": " + tmpStatement );
+				//IJ.log( "ransac " + i + ": " + explanation + ": " + tmpStatement );
 				
 				numInliers = inliers.size();
 				//IJ.log( explanation + ": " + statement );
