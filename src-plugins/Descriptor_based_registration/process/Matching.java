@@ -589,25 +589,33 @@ public class Matching
 			{
 				if ( dir.isDirectory() )
 				{
-					final File file = new File( DescriptorParameters.correspondenceDirectory, explanation + ".txt" );
+					String ex2 = explanation.replaceAll( "<->", "-" );
+					final File file = new File( DescriptorParameters.correspondenceDirectory, ex2 + ".txt" );
 					final PrintWriter out = openFileWrite( file );
-
-					if  ( params.dimensionality == 3 )
-						out.println( "x0" + "\t" + "y0" + "\t" + "z0" + "\t" + "x1" + "\t" + "y1" + "\t" + "z1" );
-					else
-						out.println( "x0" + "\t" + "y0" + "\t" + "x1" + "\t" + "y1" );
-
-					for ( final PointMatch pm : finalInliers )
+					
+					if ( out == null )
 					{
-						Particle particleA = (Particle)pm.getP1();
-						Particle particleB = (Particle)pm.getP2();
-						
+						IJ.log( "Could not create file: " + file );											
+					}
+					else
+					{
 						if  ( params.dimensionality == 3 )
-							out.println( particleA.getL()[ 0 ] + "\t" + particleA.getL()[ 1 ] + "\t" + particleA.getL()[ 2 ]/particleA.zStretching + "\t" + particleB.getL()[ 0 ] + "\t" + particleB.getL()[ 1 ] + "\t" + particleB.getL()[ 2 ]/particleB.zStretching );
+							out.println( "x0" + "\t" + "y0" + "\t" + "z0" + "\t" + "x1" + "\t" + "y1" + "\t" + "z1" );
 						else
-							out.println( particleA.getL()[ 0 ] + "\t" + particleA.getL()[ 1 ] + "\t" + particleB.getL()[ 0 ] + "\t" + particleB.getL()[ 1 ] );
-					}					
-					out.close();
+							out.println( "x0" + "\t" + "y0" + "\t" + "x1" + "\t" + "y1" );
+	
+						for ( final PointMatch pm : finalInliers )
+						{
+							Particle particleA = (Particle)pm.getP1();
+							Particle particleB = (Particle)pm.getP2();
+							
+							if  ( params.dimensionality == 3 )
+								out.println( particleA.getL()[ 0 ] + "\t" + particleA.getL()[ 1 ] + "\t" + particleA.getL()[ 2 ]/particleA.zStretching + "\t" + particleB.getL()[ 0 ] + "\t" + particleB.getL()[ 1 ] + "\t" + particleB.getL()[ 2 ]/particleB.zStretching );
+							else
+								out.println( particleA.getL()[ 0 ] + "\t" + particleA.getL()[ 1 ] + "\t" + particleB.getL()[ 0 ] + "\t" + particleB.getL()[ 1 ] );
+						}					
+						out.close();
+					}
 				}
 				else
 				{
