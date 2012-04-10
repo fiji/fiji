@@ -228,6 +228,20 @@ public class FeatureStack
 	}
 	
 	/**
+	 * Initialize empty feature stack
+	 * @param width image width
+	 * @param height image height
+	 * @param colorFeatures color image flat
+	 */
+	public FeatureStack(int width, int height, boolean colorFeatures)
+	{
+		this.width = width;
+		this.height = height;
+		wholeStack = new ImageStack(width, height);
+		this.colorFeatures = colorFeatures;
+	}
+	
+	/**
 	 * Construct object to store stack of image features
 	 * @param ip original image
 	 */
