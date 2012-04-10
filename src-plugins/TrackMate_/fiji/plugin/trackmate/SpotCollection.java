@@ -169,6 +169,9 @@ public class SpotCollection implements Iterable<Spot>,  SortedMap<Integer, List<
 				}
 			};
 		}
+		
+		SimpleMultiThreading.startAndJoin(threads);
+		
 		return selectedSpots;
 	}
 
