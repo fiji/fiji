@@ -1,6 +1,7 @@
 package fiji.plugin.trackmate.tests;
 
 import fiji.plugin.trackmate.FeatureFilter;
+import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.SpotImp;
@@ -124,7 +125,7 @@ public class SpotDisplayer3DTestDrive {
 				BlobDescriptiveStatistics.FEATURES, 
 				ff,
 				BlobDescriptiveStatistics.FEATURE_NAMES,
-				TMUtils.getSpotFeatureValues(allSpots.values(), BlobDescriptiveStatistics.FEATURES),
+				TMUtils.getSpotFeatureValues(allSpots, BlobDescriptiveStatistics.FEATURES, Logger.DEFAULT_LOGGER),
 				"spots");
 
 		// Set listeners

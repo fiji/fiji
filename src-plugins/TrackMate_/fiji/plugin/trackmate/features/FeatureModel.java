@@ -241,7 +241,7 @@ public class FeatureModel {
 	 * {@link Spot}, all pooled together.
 	 */
 	public Map<String, double[]> getSpotFeatureValues() {
-		return TMUtils.getSpotFeatureValues(model.getSpots().values(), spotFeatures);
+		return TMUtils.getSpotFeatureValues(model.getSpots(), spotFeatures, model.getLogger());
 	}
 	
 	/**

@@ -22,6 +22,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -30,6 +31,7 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.image.ImagePlusAdapter;
+import mpicbg.imglib.multithreading.SimpleMultiThreading;
 import mpicbg.imglib.type.numeric.RealType;
 
 import org.jdom.Attribute;
@@ -41,6 +43,7 @@ import fiji.plugin.trackmate.FeatureFilter;
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
+import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.SpotImp;
 import fiji.plugin.trackmate.TrackMate_;
 
@@ -49,12 +52,12 @@ import fiji.plugin.trackmate.TrackMate_;
  */
 public class TMUtils {
 
-	
-	
+
+
 	/*
 	 * STATIC CONSTANTS
 	 */
-	
+
 	/** The name of the spot quality feature. */
 	public static final String QUALITY = "QUALITY";
 	/** The name of the radius spot feature. */
@@ -78,7 +81,7 @@ public class TMUtils {
 	public final static Map<String, String> FEATURE_SHORT_NAMES = new HashMap<String, String>(6);
 	/** The 6 privileged spot feature dimensions. */
 	public final static Map<String, Dimension> FEATURE_DIMENSIONS = new HashMap<String, Dimension>(6);
-	
+
 	static {
 		FEATURES.add(QUALITY);
 		FEATURES.add(POSITION_X);
@@ -100,7 +103,7 @@ public class TMUtils {
 		FEATURE_SHORT_NAMES.put(POSITION_T, "T");
 		FEATURE_SHORT_NAMES.put(RADIUS, "R");
 		FEATURE_SHORT_NAMES.put(QUALITY, "Quality");
-		
+
 		FEATURE_DIMENSIONS.put(POSITION_X, Dimension.POSITION);
 		FEATURE_DIMENSIONS.put(POSITION_Y, Dimension.POSITION);
 		FEATURE_DIMENSIONS.put(POSITION_Z, Dimension.POSITION);
@@ -108,14 +111,14 @@ public class TMUtils {
 		FEATURE_DIMENSIONS.put(RADIUS, Dimension.LENGTH);
 		FEATURE_DIMENSIONS.put(QUALITY, Dimension.QUALITY);
 	}
-	
-	
-	
+
+
+
 	/*
 	 * STATIC METHODS
 	 */
-	
-	
+
+
 	/**
 	 * Prompt the user for a target xml file.
 	 *  
@@ -163,15 +166,15 @@ public class TMUtils {
 		}
 		return file;
 	}
-	
-	
-	
-	
-	
+
+
+
+
+
 	public static  final int readIntAttribute(Element element, String name, Logger logger) {
 		return readIntAttribute(element, name, logger, 0);
 	}
-	
+
 	public static  final int readIntAttribute(Element element, String name, Logger logger, int defaultValue) {
 		int val = defaultValue;
 		Attribute att = element.getAttribute(name);
@@ -186,7 +189,7 @@ public class TMUtils {
 		}
 		return val;
 	}
-	
+
 	public static  final float readFloatAttribute(Element element, String name, Logger logger) {
 		float val = 0;
 		Attribute att = element.getAttribute(name);
@@ -201,7 +204,7 @@ public class TMUtils {
 		}
 		return val;
 	}
-	
+
 	public static  final double readDoubleAttribute(Element element, String name, Logger logger) {
 		double val = 0;
 		Attribute att = element.getAttribute(name);
@@ -216,7 +219,7 @@ public class TMUtils {
 		}
 		return val;
 	}
-	
+
 	public static  final boolean readBooleanAttribute(Element element, String name, Logger logger) {
 		boolean val = false;
 		Attribute att = element.getAttribute(name);
@@ -231,9 +234,9 @@ public class TMUtils {
 		}
 		return val;
 	}
-	
-	
-	
+
+
+
 	/**
 	 * Return the mapping in a map that is targeted by a list of keys, in the order given in the list.
 	 */
@@ -264,10 +267,10 @@ public class TMUtils {
 			}
 		}
 	}
-	
-	
-		
-	
+
+
+
+
 	/**
 	 * http://www.rgagnon.com/javadetails/java-0541.html
 	 */
@@ -288,15 +291,15 @@ public class TMUtils {
 	/**
 	 * http://www.rgagnon.com/javadetails/java-0541.html
 	 */
-	  public static String getFileExtension(String f) {
-	    String ext = "";
-	    int i = f.lastIndexOf('.');
-	    if (i > 0 &&  i < f.length() - 1) {
-	      ext = f.substring(i + 1);
-	    }
-	    return ext;
-	  }
-	
+	public static String getFileExtension(String f) {
+		String ext = "";
+		int i = f.lastIndexOf('.');
+		if (i > 0 &&  i < f.length() - 1) {
+			ext = f.substring(i + 1);
+		}
+		return ext;
+	}
+
 	/**
 	 * Create a new list of spots, made from the given list by excluding overlapping spots.
 	 * <p>
@@ -380,7 +383,7 @@ public class TMUtils {
 		Image<? extends RealType<?>> img = (Image<? extends RealType<?>>) obj;
 		return img;
 	}
-	
+
 	/**
 	 * Return a copy 3D stack or a 2D slice as an {@link Image} corresponding to the frame number <code>iFrame</code>
 	 * in the given 4D or 3D {@link ImagePlus}. The resulting image will <u>not</u> be cropped and will have the 
@@ -584,41 +587,64 @@ public class TMUtils {
 	}
 
 	/**
-	 * Return a map of {@link SpotFeature} values for the spot collection given.
+	 * Build and return a map of {@link SpotFeature} values for the spot collection given.
 	 * Each feature maps a double array, with 1 element per {@link Spot}, all pooled
 	 * together.
 	 */
-	public static Map<String, double[]> getSpotFeatureValues(Collection<? extends Collection<Spot>> spots, Collection<String> features) {
-		Map<String, double[]> featureValues = new  HashMap<String, double[]>();
+	public static Map<String, double[]> getSpotFeatureValues(final SpotCollection spots, final List<String> features, final Logger logger) {
+		final Map<String, double[]> featureValues = new  HashMap<String, double[]>();
 		if (null == spots || spots.isEmpty())
 			return featureValues;
-		int index;
-		Float val;
-		boolean noDataFlag = true;
 		// Get the total quantity of spot we have
-		int spotNumber = 0;
-		for(Collection<? extends Spot> collection : spots)
-			spotNumber += collection.size();
+		final int spotNumber = spots.getNSpots();
 
-		for(String feature : features) {
-			// Make a double array to comply to JFreeChart histograms
-			double[] values = new double[spotNumber];
-			index = 0;
-			for(Collection<? extends Spot> collection : spots) {
-				for (Spot spot : collection) {
-					val = spot.getFeature(feature);
-					if (null == val)
-						continue;
-					values[index] = val; 
-					index++;
-					noDataFlag = false;
+		final AtomicInteger ai = new AtomicInteger();
+		final AtomicInteger progress = new AtomicInteger();
+		Thread[] threads = SimpleMultiThreading.newThreads();
+
+		for (int ithread = 0; ithread < threads.length; ithread++) {
+
+			threads[ithread] = new Thread("TrackMate collecting spot feature values thread "+ithread) {
+
+				public void run() {
+
+					int index;
+					Float val;
+					boolean noDataFlag = true;
+
+					for (int i = ai.getAndIncrement(); i < features.size(); i = ai.getAndIncrement()) {
+
+						String feature = features.get(i);
+						
+						// Make a double array to comply to JFreeChart histograms
+						double[] values = new double[spotNumber];
+						index = 0;
+						for (Spot spot : spots) {
+							val = spot.getFeature(feature);
+							if (null == val)
+								continue;
+							values[index] = val; 
+							index++;
+							noDataFlag = false;
+						}
+						if (noDataFlag) {
+							featureValues.put(feature, new double[0]);
+						} else { 
+							featureValues.put(feature, values);
+						}
+					
+						logger.setProgress(progress.incrementAndGet() / (float) features.size());
+					}
 				}
-				if (noDataFlag)
-					featureValues.put(feature, new double[0]);
-				else 
-					featureValues.put(feature, values);
-			}
+				
+			};
+
 		}
+		
+		logger.setStatus("Collecting feature values");
+		SimpleMultiThreading.startAndJoin(threads);
+		logger.setProgress(0);
+		logger.setStatus("");
 		return featureValues;
 	}
 
