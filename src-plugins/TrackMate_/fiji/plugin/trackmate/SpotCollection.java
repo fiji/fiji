@@ -9,6 +9,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import mpicbg.imglib.multithreading.SimpleMultiThreading;
 
 /**
  * A utility class that wrap the {@link TreeMap} we use to store the spots contained
@@ -109,43 +112,62 @@ public class SpotCollection implements Iterable<Spot>,  SortedMap<Integer, List<
 	 * feature satisfying the filter given. 
 	 */
 	public final SpotCollection filter(final FeatureFilter featurefilter) {
-		SpotCollection selectedSpots = new SpotCollection();
-		Collection<Spot> spotThisFrame, spotToRemove;
-		List<Spot> spotToKeep;
-		Float val, tval;	
+		final SpotCollection selectedSpots = new SpotCollection();
 
-		for (int timepoint : content.keySet()) {
+		final int[] keys = new int[content.keySet().size()];
+		Iterator<Integer> it = content.keySet().iterator();
+		for (int i = 0; i < keys.length; i++) {
+			keys[i] = it.next();
+		}
+		final AtomicInteger ai = new AtomicInteger();
+		Thread[] threads = SimpleMultiThreading.newThreads();
 
-			spotThisFrame = content.get(timepoint);
-			spotToKeep = new ArrayList<Spot>(spotThisFrame);
-			spotToRemove = new ArrayList<Spot>(spotThisFrame.size());
+		for (int ithread = 0; ithread < threads.length; ithread++) {
 
-			tval = featurefilter.value;
-			if (null != tval) {
+			threads[ithread] = new Thread("TrackMate filtering spot thread "+ithread) {
 
-				if (featurefilter.isAbove) {
-					for (Spot spot : spotToKeep) {
-						val = spot.getFeature(featurefilter.feature);
-						if (null == val)
-							continue;
-						if ( val < tval)
-							spotToRemove.add(spot);
-					}
+				public void run() {
 
-				} else {
-					for (Spot spot : spotToKeep) {
-						val = spot.getFeature(featurefilter.feature);
-						if (null == val)
-							continue;
-						if ( val > tval)
-							spotToRemove.add(spot);
+					Collection<Spot> spotThisFrame, spotToRemove;
+					List<Spot> spotToKeep;
+					Float val, tval;	
+
+					for (int i = ai.getAndIncrement(); i < keys.length; i = ai.getAndIncrement()) {
+					
+						int timepoint = keys[i];
+						spotThisFrame = content.get(timepoint);
+						spotToKeep = new ArrayList<Spot>(spotThisFrame);
+						spotToRemove = new ArrayList<Spot>(spotThisFrame.size());
+
+						tval = featurefilter.value;
+						if (null != tval) {
+
+							if (featurefilter.isAbove) {
+								for (Spot spot : spotToKeep) {
+									val = spot.getFeature(featurefilter.feature);
+									if (null == val)
+										continue;
+									if ( val < tval)
+										spotToRemove.add(spot);
+								}
+
+							} else {
+								for (Spot spot : spotToKeep) {
+									val = spot.getFeature(featurefilter.feature);
+									if (null == val)
+										continue;
+									if ( val > tval)
+										spotToRemove.add(spot);
+								}
+							}
+							spotToKeep.removeAll(spotToRemove); // no need to treat them multiple times
+
+						}
+
+						selectedSpots.put(timepoint, spotToKeep);
 					}
 				}
-				spotToKeep.removeAll(spotToRemove); // no need to treat them multiple times
-
-			}
-
-			selectedSpots.put(timepoint, spotToKeep);
+			};
 		}
 		return selectedSpots;
 	}
@@ -289,7 +311,7 @@ public class SpotCollection implements Iterable<Spot>,  SortedMap<Integer, List<
 		int nspots = 0;
 		for(List<Spot> spots : content.values())
 			nspots += spots.size();
-				return nspots;
+		return nspots;
 	}
 
 
@@ -303,7 +325,7 @@ public class SpotCollection implements Iterable<Spot>,  SortedMap<Integer, List<
 		else
 			return spots.size();
 	}
-	
+
 	/**
 	 * Return a new list made of all the spot in this collection.
 	 * <p>
@@ -315,7 +337,7 @@ public class SpotCollection implements Iterable<Spot>,  SortedMap<Integer, List<
 		List<Spot> allSpots = new ArrayList<Spot>(getNSpots()); 
 		for(List<Spot> spots : content.values())
 			allSpots.addAll(spots);
-				return allSpots;
+		return allSpots;
 	}
 
 	/*
