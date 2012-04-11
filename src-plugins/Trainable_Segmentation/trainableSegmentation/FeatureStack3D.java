@@ -11,6 +11,7 @@ import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.Prefs;
+import ij.plugin.ImageCalculator;
 import ij.process.ByteProcessor;
 import ij.process.ColorProcessor;
 import imagescience.feature.Differentiator;
@@ -52,10 +53,12 @@ public class FeatureStack3D
 	public static final int STRUCTURE				=  4;
 	/** edge filter flag index */
 	public static final int EDGES					=  5;
+	/** difference of Gaussian filter flag index */
+	public static final int DOG						=  6;
 	
 	/** names of available filters */
 	public static final String[] availableFeatures 
-		= new String[]{	"Gaussian_blur", "Hessian", "Derivatives", "Laplacian", "Structure", "Edges"};
+		= new String[]{	"Gaussian_blur", "Hessian", "Derivatives", "Laplacian", "Structure", "Edges", "Difference_of_Gaussian"};
 	
 	/** flags of filters to be used */	
 	private boolean[] enableFeatures = new boolean[]{
@@ -64,7 +67,8 @@ public class FeatureStack3D
 			true, 	/* Derivatives */
 			true, 	/* Laplacian */
 			true,	/* Structure */
-			true	/* Edges */
+			true,	/* Edges */
+			true,	/* Difference of Gaussian */
 	};
 	
 	
@@ -162,6 +166,77 @@ public class FeatureStack3D
 					ip.getImageStack().deleteSlice(1);				
 					
 					results[ch].add( ip );		
+				}
+						
+				return mergeResultChannels(results);				
+			}
+		};
+	}	
+	
+	
+	/**
+	 * Get difference of Gaussian features (to be submitted in an ExecutorService)
+	 *
+	 * @param originalImage input image
+	 * @param sigma1 sigma of the smaller Gausian
+	 * @param sigma2 sigma of the larger Gausian  
+	 * @return filter image after specific order derivatives
+	 */
+	public Callable<ArrayList<ImagePlus>> getDoG(
+			final ImagePlus originalImage,
+			final double sigma1,
+			final double sigma2)
+	{
+		if (Thread.currentThread().isInterrupted()) 
+			return null;
+		
+		return new Callable<ArrayList<ImagePlus>>()
+		{
+			public ArrayList<ImagePlus> call()
+			{
+				// Get channel(s) to process
+				ImagePlus[] channels = extractChannels(originalImage);
+				
+				ArrayList<ImagePlus>[] results = new ArrayList[ channels.length ];
+				
+				for(int ch=0; ch < channels.length; ch++)
+				{
+					results[ ch ] = new ArrayList<ImagePlus>();
+					
+					// pad image on the back and the front
+					final ImagePlus channel = channels [ ch ].duplicate();
+					channel.getImageStack().addSlice("pad-back", channels[ch].getImageStack().getProcessor( channels[ ch ].getImageStackSize()));
+					channel.getImageStack().addSlice("pad-front", channels[ch].getImageStack().getProcessor( 1 ), 1);
+					
+					imagescience.image.Image img = imagescience.image.Image.wrap( channel );
+					Aspects aspects = img.aspects();
+
+
+					imagescience.image.Image newimg = new FloatImage(img);
+					imagescience.image.Image newimg2 = new FloatImage(img);
+					
+					Differentiator diff = new Differentiator();
+
+					diff.run(newimg, sigma1 , 0, 0, 0);
+					diff.run(newimg2, sigma2 , 0, 0, 0);
+					
+					newimg.aspects(aspects);
+					newimg2.aspects(aspects);
+
+					final ImagePlus ip = newimg.imageplus();
+					final ImagePlus ip2 = newimg2.imageplus();
+					
+					ImageCalculator ic = new ImageCalculator();
+					final ImagePlus res = ic.run("Difference create stack", ip2, ip );
+					
+					
+					res.setTitle( availableFeatures[ DOG ] +"_" + sigma1 + "_" + sigma2 );
+										
+					// remove pad				
+					res.getImageStack().deleteLastSlice();
+					res.getImageStack().deleteSlice(1);				
+					
+					results[ch].add( res );		
 				}
 						
 				return mergeResultChannels(results);				
@@ -592,6 +667,16 @@ public class FeatureStack3D
 				{
 					//IJ.log( n++ +": Calculating Gaussian filter ("+ i + ")");
 					futures.add(exe.submit( getDerivatives(originalImage, i, 0, 0, 0)) );
+				}
+				
+				// Difference of Gaussian
+				if(enableFeatures[ DOG ])
+				{
+					for (float j=minimumSigma; j<i; j*=2)
+					{
+						//IJ.log( n++ +": Calculating DoG filter ("+ i + ", " + j + ")");
+						futures.add(exe.submit( getDoG( originalImage, i, j ) ) );
+					}
 				}
 			
 				// Hessian
