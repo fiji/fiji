@@ -6,7 +6,15 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-
+/*
+import net.imglib2.Cursor;
+import net.imglib2.ExtendedRandomAccessibleInterval;
+import net.imglib2.img.ImagePlusAdapter;
+import net.imglib2.img.Img;
+import net.imglib2.type.numeric.NumericType;
+import net.imglib2.type.numeric.real.FloatType;
+import net.imglib2.view.Views;
+*/
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
@@ -55,10 +63,13 @@ public class FeatureStack3D
 	public static final int EDGES					=  5;
 	/** difference of Gaussian filter flag index */
 	public static final int DOG						=  6;
+	/** Minimum flag index */
+	public static final int MINIMUM					=  7;
 	
 	/** names of available filters */
 	public static final String[] availableFeatures 
-		= new String[]{	"Gaussian_blur", "Hessian", "Derivatives", "Laplacian", "Structure", "Edges", "Difference_of_Gaussian"};
+		= new String[]{	"Gaussian_blur", "Hessian", "Derivatives", "Laplacian", 
+						"Structure", "Edges", "Difference_of_Gaussian", "Minimum"};
 	
 	/** flags of filters to be used */	
 	private boolean[] enableFeatures = new boolean[]{
@@ -69,6 +80,7 @@ public class FeatureStack3D
 			true,	/* Structure */
 			true,	/* Edges */
 			true,	/* Difference of Gaussian */
+			true,	/* Minimum */
 	};
 	
 	
@@ -436,6 +448,94 @@ public class FeatureStack3D
 		};
 	}
 	
+	/**
+	 * Get Minimum features (to be submitted to an ExecutorService)
+	 *
+	 * @param originalImage input image
+	 * @param sigma filter radius	
+	 * @return filter Minimum filter image
+	 */
+/*	public Callable<ArrayList< ImagePlus >> getMinimum(
+			final ImagePlus originalImage,
+			final double sigma)
+	{
+		if (Thread.currentThread().isInterrupted()) 
+			return null;
+		
+		return new Callable<ArrayList< ImagePlus >>()
+		{
+			public ArrayList< ImagePlus > call()
+			{
+				
+				// Get channel(s) to process
+				ImagePlus[] channels = extractChannels(originalImage);
+				
+				ArrayList<ImagePlus>[] results = new ArrayList[ channels.length ];
+				
+				for(int ch=0; ch < channels.length; ch++)
+				{
+					results[ ch ] = new ArrayList<ImagePlus>();
+					
+					
+					// wrap it into an ImgLib image (no copying)
+					Img<FloatType> image = ImagePlusAdapter.wrap( channels [ ch ] );
+					
+					// create a new Image with the same properties
+					Img<FloatType> output = image.factory().create( image, image.firstElement() );
+					
+					// get mirror view
+					ExtendedRandomAccessibleInterval<FloatType, Img<FloatType>> infinite = Views.extendMirrorSingle( image ); 
+
+					Cursor<FloatType> cursorInput = image.cursor();
+					Cursor<FloatType> cursorOutput = output.cursor();
+
+					FloatType min = image.firstElement().createVariable();
+					
+					// iterate over the input
+					while ( cursorInput.hasNext())
+					{
+						cursorInput.fwd();
+						cursorOutput.fwd();
+
+						// define a hypersphere (n-dimensional sphere)
+						HyperSphere hyperSphere = new HyperSphere( infinite, cursorInput, sigma );
+
+						// create a cursor on the hypersphere
+						cursor2 = hyperSphere.cursor();
+
+						cursor2.fwd();
+						min.set( cursor2.get() );
+
+						while ( cursor2.hasNext() )
+						{
+							cursor2.fwd();
+							if( cursor2.get().compareTo( min ) >= 0 )
+								min.set( cursor2.get() );
+						}
+
+						// set the value of this pixel of the output image to the minimum value of the sphere
+						cursorOutput.get().set( min );
+
+					}
+					
+					
+					final ImagePlus ip = newimg.imageplus();
+					ip.setTitle(availableFeatures[EDGES] +"_" + sigma );
+					
+					// remove pad				
+					ip.getImageStack().deleteLastSlice();
+					ip.getImageStack().deleteSlice(1);	
+					
+					results[ch].add( ip );
+					
+				}
+											
+				return mergeResultChannels(results);
+			}
+		};
+	}
+		
+*/	
 	
 	/**
 	 * Get structure tensor features (to be submitted in an ExecutorService).
