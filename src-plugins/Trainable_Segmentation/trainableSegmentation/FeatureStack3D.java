@@ -6,15 +6,18 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-/*
+
+import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.Cursor;
 import net.imglib2.ExtendedRandomAccessibleInterval;
+import net.imglib2.algorithm.region.hypersphere.HyperSphere;
+import net.imglib2.algorithm.region.hypersphere.HyperSphereCursor;
 import net.imglib2.img.ImagePlusAdapter;
 import net.imglib2.img.Img;
 import net.imglib2.type.numeric.NumericType;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.view.Views;
-*/
+
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
@@ -65,11 +68,16 @@ public class FeatureStack3D
 	public static final int DOG						=  6;
 	/** Minimum flag index */
 	public static final int MINIMUM					=  7;
+	/** Maximum flag index */
+	public static final int MAXIMUM					=  8;
+	/** Mean flag index */
+	public static final int MEAN					=  9;
 	
 	/** names of available filters */
 	public static final String[] availableFeatures 
 		= new String[]{	"Gaussian_blur", "Hessian", "Derivatives", "Laplacian", 
-						"Structure", "Edges", "Difference_of_Gaussian", "Minimum"};
+						"Structure", "Edges", "Difference_of_Gaussian", "Minimum",
+						"Maximum", "Mean"};
 	
 	/** flags of filters to be used */	
 	private boolean[] enableFeatures = new boolean[]{
@@ -81,6 +89,8 @@ public class FeatureStack3D
 			true,	/* Edges */
 			true,	/* Difference of Gaussian */
 			true,	/* Minimum */
+			true,	/* Maximum */
+			true,	/* Mean */
 	};
 	
 	
@@ -455,7 +465,7 @@ public class FeatureStack3D
 	 * @param sigma filter radius	
 	 * @return filter Minimum filter image
 	 */
-/*	public Callable<ArrayList< ImagePlus >> getMinimum(
+	public Callable<ArrayList< ImagePlus >> getMinimum(
 			final ImagePlus originalImage,
 			final double sigma)
 	{
@@ -498,10 +508,10 @@ public class FeatureStack3D
 						cursorOutput.fwd();
 
 						// define a hypersphere (n-dimensional sphere)
-						HyperSphere hyperSphere = new HyperSphere( infinite, cursorInput, sigma );
+						HyperSphere<FloatType> hyperSphere = new HyperSphere<FloatType>( infinite, cursorInput, (long)sigma );
 
 						// create a cursor on the hypersphere
-						cursor2 = hyperSphere.cursor();
+						HyperSphereCursor<FloatType> cursor2 = hyperSphere.cursor();
 
 						cursor2.fwd();
 						min.set( cursor2.get() );
@@ -509,7 +519,7 @@ public class FeatureStack3D
 						while ( cursor2.hasNext() )
 						{
 							cursor2.fwd();
-							if( cursor2.get().compareTo( min ) >= 0 )
+							if( cursor2.get().compareTo( min ) <= 0 )
 								min.set( cursor2.get() );
 						}
 
@@ -519,15 +529,8 @@ public class FeatureStack3D
 					}
 					
 					
-					final ImagePlus ip = newimg.imageplus();
-					ip.setTitle(availableFeatures[EDGES] +"_" + sigma );
-					
-					// remove pad				
-					ip.getImageStack().deleteLastSlice();
-					ip.getImageStack().deleteSlice(1);	
-					
-					results[ch].add( ip );
-					
+					final ImagePlus ip = ImageJFunctions.wrap( output, availableFeatures[ MINIMUM ] +"_" + sigma );										
+					results[ch].add( ip );					
 				}
 											
 				return mergeResultChannels(results);
@@ -535,7 +538,171 @@ public class FeatureStack3D
 		};
 	}
 		
-*/	
+	
+	/**
+	 * Get Maximum features (to be submitted to an ExecutorService)
+	 *
+	 * @param originalImage input image
+	 * @param sigma filter radius	
+	 * @return filter Maximum filter image
+	 */
+	public Callable<ArrayList< ImagePlus >> getMaximum(
+			final ImagePlus originalImage,
+			final double sigma)
+	{
+		if (Thread.currentThread().isInterrupted()) 
+			return null;
+		
+		return new Callable<ArrayList< ImagePlus >>()
+		{
+			public ArrayList< ImagePlus > call()
+			{
+				
+				// Get channel(s) to process
+				ImagePlus[] channels = extractChannels(originalImage);
+				
+				ArrayList<ImagePlus>[] results = new ArrayList[ channels.length ];
+				
+				for(int ch=0; ch < channels.length; ch++)
+				{
+					results[ ch ] = new ArrayList<ImagePlus>();
+					
+					
+					// wrap it into an ImgLib image (no copying)
+					Img<FloatType> image = ImagePlusAdapter.wrap( channels [ ch ] );
+					
+					// create a new Image with the same properties
+					Img<FloatType> output = image.factory().create( image, image.firstElement() );
+					
+					// get mirror view
+					ExtendedRandomAccessibleInterval<FloatType, Img<FloatType>> infinite = Views.extendMirrorSingle( image ); 
+
+					Cursor<FloatType> cursorInput = image.cursor();
+					Cursor<FloatType> cursorOutput = output.cursor();
+
+					FloatType max = image.firstElement().createVariable();
+					
+					// iterate over the input
+					while ( cursorInput.hasNext())
+					{
+						cursorInput.fwd();
+						cursorOutput.fwd();
+
+						// define a hypersphere (n-dimensional sphere)
+						HyperSphere<FloatType> hyperSphere = new HyperSphere<FloatType>( infinite, cursorInput, (long)sigma );
+
+						// create a cursor on the hypersphere
+						HyperSphereCursor<FloatType> cursor2 = hyperSphere.cursor();
+
+						cursor2.fwd();
+						max.set( cursor2.get() );
+
+						while ( cursor2.hasNext() )
+						{
+							cursor2.fwd();
+							if( cursor2.get().compareTo( max ) >= 0 )
+								max.set( cursor2.get() );
+						}
+
+						// set the value of this pixel of the output image to the maximum value of the sphere
+						cursorOutput.get().set( max );
+
+					}
+					
+					
+					final ImagePlus ip = ImageJFunctions.wrap( output, availableFeatures[ MAXIMUM ] +"_" + sigma );										
+					results[ch].add( ip );					
+				}
+											
+				return mergeResultChannels(results);
+			}
+		};
+	}
+	
+	
+	/**
+	 * Get Mean features (to be submitted to an ExecutorService)
+	 *
+	 * @param originalImage input image
+	 * @param sigma filter radius	
+	 * @return filter Mean filter image
+	 */
+	public Callable<ArrayList< ImagePlus >> getMean(
+			final ImagePlus originalImage,
+			final double sigma)
+	{
+		if (Thread.currentThread().isInterrupted()) 
+			return null;
+		
+		return new Callable<ArrayList< ImagePlus >>()
+		{
+			public ArrayList< ImagePlus > call()
+			{
+				
+				// Get channel(s) to process
+				ImagePlus[] channels = extractChannels(originalImage);
+				
+				ArrayList<ImagePlus>[] results = new ArrayList[ channels.length ];
+				
+				for(int ch=0; ch < channels.length; ch++)
+				{
+					results[ ch ] = new ArrayList<ImagePlus>();
+					
+					
+					// wrap it into an ImgLib image (no copying)
+					Img<FloatType> image = ImagePlusAdapter.wrap( channels [ ch ] );
+					
+					// create a new Image with the same properties
+					Img<FloatType> output = image.factory().create( image, image.firstElement() );
+					
+					// get mirror view
+					ExtendedRandomAccessibleInterval<FloatType, Img<FloatType>> infinite = Views.extendMirrorSingle( image ); 
+
+					Cursor<FloatType> cursorInput = image.cursor();
+					Cursor<FloatType> cursorOutput = output.cursor();
+
+					FloatType mean = image.firstElement().createVariable();
+					
+					// iterate over the input
+					while ( cursorInput.hasNext())
+					{
+						cursorInput.fwd();
+						cursorOutput.fwd();
+
+						// define a hypersphere (n-dimensional sphere)
+						HyperSphere<FloatType> hyperSphere = new HyperSphere<FloatType>( infinite, cursorInput, (long)sigma );
+
+						// create a cursor on the hypersphere
+						HyperSphereCursor<FloatType> cursor2 = hyperSphere.cursor();
+
+						cursor2.fwd();
+						mean.set( cursor2.get() );
+						int n = 1;
+
+						while ( cursor2.hasNext() )
+						{
+							cursor2.fwd();
+							n++;
+							
+							mean.add( cursor2.get() );
+						}
+
+						mean.div( new FloatType( n ));
+						
+						// set the value of this pixel of the output image to the mean value of the sphere
+						cursorOutput.get().set( mean );
+
+					}
+					
+					
+					final ImagePlus ip = ImageJFunctions.wrap( output, availableFeatures[ MEAN ] +"_" + sigma );										
+					results[ch].add( ip );					
+				}
+											
+				return mergeResultChannels(results);
+			}
+		};
+	}
 	
 	/**
 	 * Get structure tensor features (to be submitted in an ExecutorService).
@@ -811,6 +978,25 @@ public class FeatureStack3D
 					for(int integrationScale = 1; integrationScale <= 3; integrationScale+=2)
 						futures.add(exe.submit( getStructure(originalImage, i, integrationScale )) );
 				}
+				
+				// Maximum
+				if(enableFeatures[ MINIMUM ])
+				{
+					futures.add(exe.submit( getMinimum(originalImage, i)) );
+				}
+				
+				// Maxmimum
+				if(enableFeatures[ MAXIMUM ])
+				{
+					futures.add(exe.submit( getMaximum(originalImage, i)) );
+				}
+				
+				// Mean
+				if(enableFeatures[ MEAN ])
+				{
+					futures.add(exe.submit( getMean(originalImage, i)) );
+				}
+					
 							
 			}
 			
