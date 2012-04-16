@@ -74,4 +74,11 @@ public class ExecuteProgram extends Rule {
 		if (!"".equals(program))
 			super.clean(dryRun);
 	}
+
+	@Override
+	public ExecuteProgram copy() {
+		ExecuteProgram copy = new ExecuteProgram(parser, target, prerequisites, program);
+		copy.prerequisiteString = prerequisiteString;
+		return copy;
+	}
 }

@@ -558,6 +558,7 @@ public class Fake {
 				/* was compile error */
 				throw e;
 			} catch (Exception e) {
+				e.printStackTrace(err);
 				err.println("Could not find javac " + e
 					+ " (tools path = " + toolsPath + "), "
 					+ "falling back to system javac");

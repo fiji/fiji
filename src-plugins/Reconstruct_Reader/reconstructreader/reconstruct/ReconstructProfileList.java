@@ -8,11 +8,11 @@ public class ReconstructProfileList implements ContourSet
 {
 
     private final int oid, id;
-    private final Translator translator;
+    private final ReconstructTranslator translator;
     private final String name;
     private final ArrayList<ReconstructProfile> profileList;
 
-    public ReconstructProfileList(final Element e, final Translator t,
+    public ReconstructProfileList(final Element e, final ReconstructTranslator t,
                                   final ReconstructSection sec)
     {
         translator = t;

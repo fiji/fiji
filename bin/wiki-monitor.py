@@ -68,7 +68,11 @@ f.close()
 result = ''
 for line in response.split('\n'):
 	i = line.find('<h4>')
-	if i >= 0:
+	if line.find('<div') > 0 and line.find('mainContent') > 0:
+		result = ''
+	elif line.find('</div') > 0 and line.find('mainContent') > 0:
+		break
+	elif i >= 0:
 		line = line[i + 4:]
 		if line.endswith('</h4>'):
 			line = line[:-5]

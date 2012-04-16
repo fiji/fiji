@@ -113,6 +113,9 @@ fiji.Main|ij.ImageJ)
 	ij_options="-port7 $ij_options"
 	CLASSPATH="$FIJI_ROOT/jars/ij-launcher.jar:$FIJI_ROOT/jars/ij.jar:$FIJI_ROOT/jars/javassist.jar"
 	;;
+fiji.build.Fake)
+	CLASSPATH="$FIJI_ROOT/jars/fake.jar"
+	;;
 *)
 	CLASSPATH=
 	for path in "$FIJI_ROOT"/jars/*.jar "$FIJI_ROOT"/plugins/*.jar

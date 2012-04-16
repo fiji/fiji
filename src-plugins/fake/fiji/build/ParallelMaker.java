@@ -49,6 +49,11 @@ public class ParallelMaker {
 			public void action() {
 				finalRule.notify();
 			}
+
+			@Override
+			public Rule copy() {
+				throw new UnsupportedOperationException();
+			}
 		};
 	}
 

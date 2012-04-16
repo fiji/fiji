@@ -13,4 +13,11 @@ class All extends Rule {
 	public boolean checkUpToDate() {
 		return false;
 	}
+
+	@Override
+	public All copy() {
+		All copy = new All(parser, target, prerequisites);
+		copy.prerequisiteString = prerequisiteString;
+		return copy;
+	}
 }

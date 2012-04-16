@@ -91,10 +91,14 @@ public class TracerCanvas extends ThreePanesCanvas {
 				st.drawProgressOnSlice( plane, current_z, this, g );
 		}
 
-		boolean showOnlySelectedPaths = pathAndFillManager.plugin.getShowOnlySelectedPaths();
+		SimpleNeuriteTracer plugin = pathAndFillManager.plugin;
 
-		Color selectedColor = pathAndFillManager.plugin.selectedColor;
-		Color deselectedColor = pathAndFillManager.plugin.deselectedColor;
+		boolean showOnlySelectedPaths = plugin.getShowOnlySelectedPaths();
+
+		Color selectedColor = plugin.selectedColor;
+		Color deselectedColor = plugin.deselectedColor;
+
+		boolean drawDiametersXY = plugin.getDrawDiametersXY();
 
 		if( pathAndFillManager != null ) {
 			for( int i = 0; i < pathAndFillManager.size(); ++i ) {
@@ -120,9 +124,9 @@ public class TracerCanvas extends ThreePanesCanvas {
 					continue;
 
 				if( just_near_slices ) {
-					drawPath.drawPathAsPoints( this, g, color, plane, current_z, eitherSide );
+					drawPath.drawPathAsPoints( this, g, color, plane, drawDiametersXY, current_z, eitherSide );
 				} else
-					drawPath.drawPathAsPoints( this, g, color, plane );
+					drawPath.drawPathAsPoints( this, g, color, plane, drawDiametersXY );
 			}
 		}
 

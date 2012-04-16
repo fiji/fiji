@@ -147,4 +147,11 @@ public class CompileCProgram extends Rule {
 		throw new FakeException("Could not " + action
 			+ " " + file + ": " + e);
 	}
+
+	@Override
+	public CompileCProgram copy() {
+		CompileCProgram copy = new CompileCProgram(parser, target, prerequisites);
+		copy.prerequisiteString = prerequisiteString;
+		return copy;
+	}
 }

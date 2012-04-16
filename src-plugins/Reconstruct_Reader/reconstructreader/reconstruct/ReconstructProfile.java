@@ -6,10 +6,10 @@ import reconstructreader.Utils;
 public class ReconstructProfile {
     private final Element profile;
     private final int id, oid;
-    private final Translator translator;
+    private final ReconstructTranslator translator;
     private final double mag;
 
-    public ReconstructProfile(final Element e, final Translator t)
+    public ReconstructProfile(final Element e, final ReconstructTranslator t)
     {
         double m;
 

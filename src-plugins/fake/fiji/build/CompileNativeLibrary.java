@@ -298,4 +298,11 @@ public class CompileNativeLibrary extends Rule {
 		String value = System.getenv(key);
 		return value == null ? fallback : value;
 	}
+
+	@Override
+	public CompileNativeLibrary copy() {
+		CompileNativeLibrary copy = new CompileNativeLibrary(parser, libraryBaseName, jarFile, buildDir, prerequisites);
+		copy.prerequisiteString = prerequisiteString;
+		return copy;
+	}
 }

@@ -36,7 +36,7 @@
 #define MAYBE_UNUSED
 #endif
 
-#ifdef MACOSX
+#ifdef __APPLE__
 #include <stdlib.h>
 #include <pthread.h>
 #include <CoreFoundation/CoreFoundation.h>
@@ -50,7 +50,7 @@ static int get_fiji_bundle_variable(const char *key, struct string *value);
 
 static const char *get_platform(void)
 {
-#ifdef MACOSX
+#ifdef __APPLE__
 	return "macosx";
 #endif
 #ifdef WIN32
@@ -68,6 +68,8 @@ static const char *get_platform(void)
 #define PATH_SEP ";"
 
 static void open_win_console();
+static void win_error(const char *fmt, ...);
+static void win_verror(const char *fmt, va_list ap);
 
 /* TODO: use dup2() and freopen() and a thread to handle the output */
 #else
@@ -85,6 +87,16 @@ __attribute__((format (printf, 1, 2)))
 static void error(const char *fmt, ...)
 {
 	va_list ap;
+#ifdef WIN32
+	const char *debug = getenv("WINDEBUG");
+	if (debug && *debug) {
+		va_start(ap, fmt);
+		win_verror(fmt, ap);
+		va_end(ap);
+		return;
+	}
+	open_win_console();
+#endif
 
 	va_start(ap, fmt);
 	vfprintf(stderr, fmt, ap);
@@ -392,19 +404,6 @@ static void string_addf(struct string *string, const char *fmt, ...)
 }
 
 __attribute__((format (printf, 2, 3)))
-static void string_addf_path_list(struct string *string, const char *fmt, ...)
-{
-	va_list ap;
-
-	if (string->length)
-		string_append(string, PATH_SEP);
-
-	va_start(ap, fmt);
-	string_vaddf(string, fmt, ap);
-	va_end(ap);
-}
-
-__attribute__((format (printf, 2, 3)))
 static void string_setf(struct string *string, const char *fmt, ...)
 {
 	va_list ap;
@@ -438,8 +437,7 @@ static void string_replace(struct string *string, char from, char to)
 			string->buffer[j] = to;
 }
 
-__attribute__((unused))
-static int string_read_file(struct string *string, const char *path) {
+static MAYBE_UNUSED int string_read_file(struct string *string, const char *path) {
 	FILE *file = fopen(path, "rb");
 	char buffer[1024];
 	int result = 0;
@@ -486,8 +484,9 @@ static void string_escape(struct string *string, const char *characters)
  * overrides relative_java_home.
  */
 static const char *absolute_java_home;
-static const char *relative_java_home = JAVA_HOME;
-static const char *library_path = JAVA_LIB_PATH;
+static const char *relative_java_home;
+static const char *default_library_path;
+static const char *library_path;
 static const char *default_fiji1_class = "fiji.Main";
 static const char *default_main_class = "imagej.Main";
 
@@ -572,6 +571,24 @@ static int unsetenv(const char *name)
 	return putenv(string->buffer);
 }
 
+static void win_verror(const char *fmt, va_list ap)
+{
+	struct string *string = string_init(32);
+
+	string_vaddf(string, fmt, ap);
+	MessageBox(NULL, string->buffer, "Fiji Error", MB_OK);
+	string_release(string);
+}
+
+static MAYBE_UNUSED void win_error(const char *fmt, ...)
+{
+	va_list ap;
+
+	va_start(ap, fmt);
+	win_verror(fmt, ap);
+	va_end(ap);
+}
+
 #else
 #include <dlfcn.h>
 #endif
@@ -581,7 +598,7 @@ void setenv_or_exit(const char *name, const char *value, int overwrite)
 {
 	int result;
 	if (!value) {
-#ifdef MACOSX
+#ifdef __APPLE__
 		unsetenv(name);
 #else
 		result = unsetenv(name);
@@ -597,7 +614,7 @@ void setenv_or_exit(const char *name, const char *value, int overwrite)
 
 /* Determining heap size */
 
-#ifdef MACOSX
+#ifdef __APPLE__
 #include <mach/mach_init.h>
 #include <mach/mach_host.h>
 
@@ -688,8 +705,7 @@ static long parse_memory(const char *amount)
 	return result;
 }
 
-__attribute__((unused))
-static int parse_bool(const char *value)
+static MAYBE_UNUSED int parse_bool(const char *value)
 {
 	return strcmp(value, "0") && strcmp(value, "false") &&
 		strcmp(value, "False") && strcmp(value, "FALSE");
@@ -802,8 +818,7 @@ static int dir_exists(const char *directory);
 static int is_native_library(const char *path);
 static int file_exists(const char *path);
 
-__attribute__((unused))
-static const char *get_java_home_env(void)
+static MAYBE_UNUSED const char *get_java_home_env(void)
 {
 	const char *env = getenv("JAVA_HOME");
 	if (env) {
@@ -835,18 +850,23 @@ static const char *get_java_home(void)
 {
 	if (absolute_java_home)
 		return absolute_java_home;
+	if (!relative_java_home)
+		return NULL;
 	return ij_path(relative_java_home);
 }
 
 static const char *get_jre_home(void)
 {
 	const char *result = get_java_home();
-	int len = strlen(result);
+	int len;
 	static struct string *jre;
 
 	if (jre)
 		return jre->buffer;
 
+	if (!result)
+		return NULL;
+	len = strlen(result);
 	if (len > 4 && !strcmp(result + len - 4, "/jre"))
 		return result;
 
@@ -1038,15 +1058,22 @@ static const char *find_in_path(const char *path)
 #ifdef WIN32
 static char *dos_path(const char *path)
 {
+	const char *orig = path;
 	int size = GetShortPathName(path, NULL, 0);
-	char *buffer = (char *)xmalloc(size);
+	char *buffer;
+
+	if (!size)
+		path = find_in_path(path);
+	size = GetShortPathName(path, NULL, 0);
+	if (!size)
+		die ("Could not determine DOS name of %s", orig);
+	buffer = (char *)xmalloc(size);
 	GetShortPathName(path, buffer, size);
 	return buffer;
 }
 #endif
 
-__attribute__((unused))
-static struct string *get_parent_directory(const char *path)
+static MAYBE_UNUSED struct string *get_parent_directory(const char *path)
 {
 	const char *slash = last_slash(path);
 
@@ -1064,11 +1091,12 @@ static void (*SplashClose)(void);
 
 struct string *get_splashscreen_lib_path(void)
 {
+	const char *jre_home = get_jre_home();
 #if defined(WIN32)
-	return string_initf("%s/bin/splashscreen.dll", get_jre_home());
+	return !jre_home ? NULL : string_initf("%s/bin/splashscreen.dll", jre_home);
 #elif defined(__linux__)
-	return string_initf("%s/lib/%s/libsplashscreen.so", get_jre_home(), sizeof(void *) == 8 ? "amd64" : "i386");
-#elif defined(MACOSX)
+	return !jre_home ? NULL : string_initf("%s/lib/%s/libsplashscreen.so", jre_home, sizeof(void *) == 8 ? "amd64" : "i386");
+#elif defined(__APPLE__)
 	struct string *search_root = string_initf("/System/Library/Java/JavaVirtualMachines");
 	struct string *result = string_init(32);
 	if (!find_file(search_root, 4, "libsplashscreen.jnilib", result)) {
@@ -1083,7 +1111,7 @@ struct string *get_splashscreen_lib_path(void)
 }
 
 /* So far, only Windows and MacOSX support splash with alpha, Linux does not */
-#if defined(WIN32) || defined(MACOSX)
+#if defined(WIN32) || defined(__APPLE__)
 #define SPLASH_PATH "images/icon.png"
 #else
 #define SPLASH_PATH "images/icon-flat.png"
@@ -1143,11 +1171,16 @@ static void hide_splash(void)
 static void maybe_reexec_with_correct_lib_path(void)
 {
 #ifdef __linux__
-	struct string *path = string_initf("%s/%s", get_jre_home(), library_path);
-	struct string *parent = get_parent_directory(path->buffer);
-	struct string *lib_path = get_parent_directory(parent->buffer);
-	struct string *jli = string_initf("%s/jli", lib_path->buffer);
-	const char *original;
+	const char *jre_home = get_jre_home(), *original;
+	struct string *path, *parent, *lib_path, *jli;
+
+	if (!jre_home)
+		return;
+
+	path = string_initf("%s/%s", jre_home, library_path);
+	parent = get_parent_directory(path->buffer);
+	lib_path = get_parent_directory(parent->buffer);
+	jli = string_initf("%s/jli", lib_path->buffer);
 
 	string_release(path);
 	string_release(parent);
@@ -1201,7 +1234,7 @@ static const char *get_ij_dir(const char *argv0)
 		slash -= strlen("/precompiled");
 		run_precompiled = 1;
 	}
-#ifdef MACOSX
+#ifdef __APPLE__
 	else if (!suffixcmp(argv0, len, "/Fiji.app/Contents/MacOS"))
 		slash -= strlen("/Contents/MacOS");
 #endif
@@ -1222,7 +1255,7 @@ static const char *get_ij_dir(const char *argv0)
 
 static int create_java_vm(JavaVM **vm, void **env, JavaVMInitArgs *args)
 {
-#ifdef MACOSX
+#ifdef __APPLE__
 	set_path_to_JVM();
 #else
 	/*
@@ -1278,7 +1311,7 @@ static int create_java_vm(JavaVM **vm, void **env, JavaVMInitArgs *args)
 /* Windows specific stuff */
 
 #ifdef WIN32
-static int console_opened = 0;
+static int console_opened, console_attached;
 
 static void sleep_a_while(void)
 {
@@ -1291,11 +1324,13 @@ static void open_win_console(void)
 	struct string *kernel32_dll_path;
 	void *kernel32_dll;
 	BOOL WINAPI (*attach_console)(DWORD process_id) = NULL;
+	SECURITY_ATTRIBUTES attributes;
 	HANDLE handle;
 
 	if (initialized)
 		return;
 	initialized = 1;
+	console_attached = 1;
 	if (!isatty(1) && !isatty(2))
 		return;
 
@@ -1307,6 +1342,15 @@ static void open_win_console(void)
 		attach_console = (typeof(attach_console))
 			dlsym(kernel32_dll, "AttachConsole");
 	if (!attach_console || !attach_console((DWORD)-1)) {
+		if (attach_console) {
+			if (GetLastError() == ERROR_ACCESS_DENIED)
+				/*
+				 * Already attached, according to
+				 * http://msdn.microsoft.com/en-us/library/windows/desktop/ms681952(v=vs.85).aspx
+				 */
+				return;
+			error("error attaching console: %s", get_win_error());
+		}
 		AllocConsole();
 		console_opened = 1;
 		atexit(sleep_a_while);
@@ -1317,8 +1361,12 @@ static void open_win_console(void)
 			return; /* Console already opened. */
 	}
 
+	memset(&attributes, 0, sizeof(attributes));
+	attributes.nLength = sizeof(SECURITY_ATTRIBUTES);
+	attributes.bInheritHandle = TRUE;
+
 	handle = CreateFile("CONOUT$", GENERIC_WRITE, FILE_SHARE_WRITE,
-		NULL, OPEN_EXISTING, 0, NULL);
+		&attributes, OPEN_EXISTING, 0, NULL);
 	if (isatty(1)) {
 		freopen("CONOUT$", "wt", stdout);
 		SetStdHandle(STD_OUTPUT_HANDLE, handle);
@@ -1448,8 +1496,7 @@ static int mkdir_p(const char *path)
 	return result;
 }
 
-__attribute__((unused))
-static int find_file(struct string *search_root, int max_depth, const char *file, struct string *result)
+static MAYBE_UNUSED int find_file(struct string *search_root, int max_depth, const char *file, struct string *result)
 {
 	int len = search_root->length;
 	DIR *directory;
@@ -1522,6 +1569,8 @@ static void add_java_home_to_path(void)
 	struct string *new_path = string_init(32), *buffer;
 	const char *env;
 
+	if (!java_home)
+		return;
 	buffer = string_initf("%s/bin", java_home);
 	if (dir_exists(buffer->buffer))
 		string_append_path_list(new_path, buffer->buffer);
@@ -1538,55 +1587,15 @@ static void add_java_home_to_path(void)
 
 static int headless, headless_argc;
 
-int build_classpath_for_string(struct string *result, struct string *jar_directory, int no_error) {
-	const char *extension = ".jar";
-	int extension_length = strlen(extension);
-	DIR *directory = opendir(jar_directory->buffer);
-	struct dirent *entry;
-
-	if (!directory) {
-		if (no_error)
-			return 0;
-		error("Failed to open: %s", jar_directory->buffer);
-		return 1;
-	}
-	while (NULL != (entry = readdir(directory))) {
-		const char *filename = entry->d_name;
-		int len = strlen(filename);
-		if (len > extension_length && !strcmp(filename + len - extension_length, extension))
-			string_addf_path_list(result, "%s/%s", jar_directory->buffer, filename);
-		else {
-			if (filename[0] == '.')
-				continue;
-			len = jar_directory->length;
-			string_addf(jar_directory, "/%s", filename);
-			if (build_classpath_for_string(result, jar_directory, 1)) {
-				closedir(directory);
-				string_set_length(jar_directory, len);
-				return 1;
-			}
-			string_set_length(jar_directory, len);
-		}
-
-	}
-	closedir(directory);
-	return 0;
-}
-
-int build_classpath(struct string *result, const char *jar_directory, int no_error) {
-	struct string *string = string_copy(jar_directory);
-	int res = build_classpath_for_string(result, string, no_error);
-
-	string_release(string);
-	return res;
-}
-
 static struct string *set_property(JNIEnv *env,
 		const char *key, const char *value)
 {
 	static jclass system_class = NULL;
 	static jmethodID set_property_method = NULL;
 	jstring result;
+
+	if (!value)
+		return NULL;
 
 	if (!system_class) {
 		system_class = (*env)->FindClass(env, "java/lang/System");
@@ -1657,8 +1666,22 @@ static void append_string_array(struct string_array *target,
 		target->list = (char **)xrealloc(target->list,
 				target->alloc * sizeof(target->list[0]));
 	}
-	memcpy(target->list + target->nr, source->list,
-			source->nr * sizeof(target->list[0]));
+	memcpy(target->list + target->nr, source->list, source->nr * sizeof(target->list[0]));
+	target->nr += source->nr;
+}
+
+static void prepend_string_array(struct string_array *target,
+		struct string_array *source)
+{
+	if (source->nr <= 0)
+		return;
+	if (target->alloc - target->nr < source->nr) {
+		target->alloc += source->nr;
+		target->list = (char **)xrealloc(target->list,
+				target->alloc * sizeof(target->list[0]));
+	}
+	memmove(target->list + source->nr, target->list, target->nr * sizeof(target->list[0]));
+	memcpy(target->list, source->list, source->nr * sizeof(target->list[0]));
 	target->nr += source->nr;
 }
 
@@ -1699,9 +1722,29 @@ fail:
 }
 
 struct options {
-	struct string_array java_options, ij_options;
+	struct string_array java_options, launcher_options, ij_options;
 	int debug, use_system_jvm;
 };
+
+static void add_launcher_option(struct options *options, const char *option, const char *class_path)
+{
+	append_string(&options->launcher_options, xstrdup(option));
+	if (class_path)
+		append_string(&options->launcher_options, xstrdup(class_path));
+}
+
+static void add_tools_jar(struct options *options)
+{
+	const char *jre_home = get_jre_home();
+	struct string *string;
+
+	if (!jre_home)
+		die("Cannot determine path to tools.jar");
+
+	string = string_initf("%s/../lib/tools.jar", jre_home);
+	add_launcher_option(options, "-classpath", string->buffer);
+	string_release(string);
+}
 
 static void add_option(struct options *options, char *option, int for_ij)
 {
@@ -1799,17 +1842,16 @@ static void keep_only_one_memory_option(struct string_array *options)
 	options->nr = j;
 }
 
-static char has_memory_option(struct string_array *options)
+static const char* has_memory_option(struct string_array *options)
 {
 	int i;
 	for (i = 0; i < options->nr; i++)
 		if (!prefixcmp(options->list[i], "-Xm"))
-			return 1;
-	return 0;
+			return options->list[i];
+	return NULL;
 }
 
-__attribute__((unused))
-static void read_file_as_string(const char *file_name, struct string *contents)
+static MAYBE_UNUSED void read_file_as_string(const char *file_name, struct string *contents)
 {
 	char buffer[1024];
 	FILE *in = fopen(file_name, "r");
@@ -1986,8 +2028,14 @@ static int update_files(struct string *relative_path)
 
 #ifdef WIN32
 		if (file_exists(target->buffer) && unlink(target->buffer)) {
-			if (!strcmp(filename, "ImageJ.exe") || !strcmp(filename, "ImageJ-win32.exe") || !strcmp(filename, "ImageJ-win64.exe"))
-				die("Could not remove old version of %s.  Please move %s to %s manually!", target->buffer, source->buffer, target->buffer);
+			if (!strcmp(filename, "ImageJ.exe") || !strcmp(filename, "ImageJ-win32.exe") || !strcmp(filename, "ImageJ-win64.exe")) {
+				struct string *old = string_initf("%.*s.old.exe", target->length - 4, target->buffer);
+				if (file_exists(old->buffer) && unlink(old->buffer))
+					die("Could not move %s out of the way!", old->buffer);
+				if (rename(target->buffer, old->buffer))
+					die("Could not remove old version of %s.  Please move %s to %s manually!", target->buffer, source->buffer, target->buffer);
+				string_release(old);
+			}
 			else
 				die("Could not remove old version of %s.  Please remove it manually!", target->buffer);
 		}
@@ -2121,37 +2169,43 @@ static void add_subcommand(const char *line)
 }
 
 const char *default_subcommands[] = {
-	"--update --ij-jar=plugins/Fiji_Updater.jar --ij-jar=jars/jsch.jar --no-full-classpath --main-class=fiji.updater.Main",
+	"--update --ij-jar=plugins/Fiji_Updater.jar --ij-jar=jars/jsch.jar --main-class=fiji.updater.Main",
 	" start the command-line version of the Fiji updater",
-	"--jython --ij-jar=jars/jython.jar --main-class=org.python.util.jython",
+	"--jython --ij-jar=jars/jython.jar --full-classpath --main-class=org.python.util.jython",
 	".py",
 	" start Jython instead of ImageJ (this is the",
 	" default when called with a file ending in .py)",
-	"--jruby --main-class=org.jruby.Main",
+	"--jruby --ij-jar=jars/jruby.jar --full-classpath --main-class=org.jruby.Main",
 	".rb",
 	" start JRuby instead of ImageJ (this is the",
 	" default when called with a file ending in .rb)",
-	"--clojure --ij-jar=jars/clojure.jar --main-class=clojure.lang.Repl",
+	"--clojure --ij-jar=jars/clojure.jar --full-classpath --main-class=clojure.lang.Repl",
 	".clj",
 	" start Clojure instead of ImageJ (this is the """,
 	" default when called with a file ending in .clj)",
-	"--beanshell --ij-jar=jars/bsh.jar --main-class=bsh.Interpreter",
+	"--beanshell --ij-jar=jars/bsh.jar --full-classpath --main-class=bsh.Interpreter",
 	".bs",
-	"--bsh --ij-jar=jars/bsh.jar --main-class=bsh.Interpreter",
+	"--bsh --ij-jar=jars/bsh.jar --full-classpath --main-class=bsh.Interpreter",
 	".bsh",
 	" start BeanShell instead of ImageJ (this is the",
 	" default when called with a file ending in .bs or .bsh",
-	"--ant --tools-jar --ij-jar=jars/ant.jar --ij-jar=jars/ant-launcher.jar --ij-jar=jars/ant-nodeps.jar --ij-jar=jars/ant-junit.jar --no-full-classpath --headless --main-class=org.apache.tools.ant.Main",
+	"--javascript --ij-jar=jars/js.jar --full-classpath --main-class=org.mozilla.javascript.tools.shell.Main",
+	"--js --ij-jar=jars/js.jar --full-classpath --main-class=org.mozilla.javascript.tools.shell.Main",
+	".js",
+	" start Javascript (the Rhino engine) instead of",
+	" ImageJ (this is the default when called with a",
+	" file ending in .js)",
+	"--ant --tools-jar --ij-jar=jars/ant.jar --ij-jar=jars/ant-launcher.jar --ij-jar=jars/ant-nodeps.jar --ij-jar=jars/ant-junit.jar --dont-patch-ij1 --headless --main-class=org.apache.tools.ant.Main",
 	" run Apache Ant",
-	"--mini-maven --ij-jar=jars/fake.jar --no-full-classpath --main-class=fiji.build.MiniMaven",
+	"--mini-maven --ij-jar=jars/fake.jar --dont-patch-ij1 --main-class=fiji.build.MiniMaven",
 	" run Fiji's very simple Maven mockup",
-	"--javac --ij-jar=jars/javac.jar --headless --add-classpath-option --main-class=com.sun.tools.javac.Main",
+	"--javac --ij-jar=jars/javac.jar --freeze-classloader --headless --full-classpath --dont-patch-ij1 --pass-classpath --main-class=com.sun.tools.javac.Main",
 	" start JavaC, the Java Compiler, instead of ImageJ",
-	"--javah --only-tools-jar --headless --add-classpath-option --main-class=com.sun.tools.javah.Main",
+	"--javah --only-tools-jar --headless --full-classpath --dont-patch-ij1 --pass-classpath --main-class=com.sun.tools.javah.Main",
 	" start javah instead of ImageJ",
-	"--javap --only-tools-jar --headless --add-classpath-option --main-class=sun.tools.javap.Main",
+	"--javap --only-tools-jar --headless --full-classpath --dont-patch-ij1 --pass-classpath --main-class=sun.tools.javap.Main",
 	" start javap instead of ImageJ",
-	"--javadoc --only-tools-jar --headless --add-classpath-option --main-class=com.sun.tools.javadoc.Main",
+	"--javadoc --only-tools-jar --headless --full-classpath --dont-patch-ij1 --pass-classpath --main-class=com.sun.tools.javadoc.Main",
 	" start javadoc instead of ImageJ",
 };
 
@@ -2242,7 +2296,8 @@ static int check_subcommand_classpath(struct subcommand *subcommand)
 				return 0;
 		}
 		else if (!prefixcmp(expanded, "--tools-jar") || !prefixcmp(expanded, "--only-tools-jar")) {
-			if (!jar_exists("%s/../lib/tools.jar", get_jre_home()))
+			const char *jre_home = get_jre_home();
+			if (!jre_home || !jar_exists("%s/../lib/tools.jar", jre_home))
 				return 0;
 		}
 		expanded = space + !!*space;
@@ -2295,7 +2350,8 @@ static void __attribute__((__noreturn__)) usage(void)
 	}
 
 	die("Usage: %s [<Java options>.. --] [<ImageJ options>..] [<files>..]\n"
-		"\n%s%s%s%s%s%s%s",
+		"\n%s%s%s%s%s%s%s%s",
+		main_argv[0],
 		"Java options are passed to the Java Runtime, ImageJ\n"
 		"options to ImageJ (or Jython, JRuby, ...).\n"
 		"\n"
@@ -2328,6 +2384,12 @@ static void __attribute__((__noreturn__)) usage(void)
 		"\tappend <path> to the class path\n"
 		"--jar-path, --jarpath, -jarpath <path>\n"
 		"\tappend .jar files in <path> to the class path\n",
+		"--pass-classpath\n"
+		"\tpass -classpath <classpath> to the main() method\n"
+		"--full-classpath\n"
+		"\tcall the main class with the full ImageJ class path\n"
+		"--dont-patch-ij1\n"
+		"\tdo not try to runtime-patch ImageJ1\n"
 		"--ext <path>\n"
 		"\tset Java's extension directory to <path>\n"
 		"--default-gc\n"
@@ -2356,8 +2418,8 @@ static void __attribute__((__noreturn__)) usage(void)
 		"--edit [<file>...]\n"
 		"\tedit the given file in the script editor\n"
 		"\n",
-		"Options to run programs other than ImageJ:\n"
-		"%s"
+		"Options to run programs other than ImageJ:\n",
+		subcommands.buffer,
 		"--build\n"
 		"\tstart Fiji's build instead of ImageJ\n"
 		"\n"
@@ -2365,8 +2427,7 @@ static void __attribute__((__noreturn__)) usage(void)
 		"\tdefault when called with a file ending in .class)\n"
 		"\tstart the given class instead of ImageJ\n"
 		"--retrotranslator\n"
-		"\tuse Retrotranslator to support Java < 1.6\n\n",
-		main_argv[0], subcommands.buffer);
+		"\tuse Retrotranslator to support Java < 1.6\n\n");
 	string_release(&subcommands);
 }
 
@@ -2566,9 +2627,9 @@ static int retrotranslator;
 
 static struct options options;
 static long megabytes = 0;
-static struct string buffer, buffer2, arg, class_path, plugin_path, ext_option;
-static int jdb, add_class_path_option, advanced_gc = 1, debug_gc;
-static int allow_multiple, skip_build_classpath, class_path_already_defined;
+static struct string buffer, buffer2, arg, plugin_path, ext_option;
+static int jdb, advanced_gc = 1, debug_gc;
+static int allow_multiple, skip_class_launcher, full_class_path;
 
 static int handle_one_option2(int *i, int argc, const char **argv)
 {
@@ -2587,9 +2648,8 @@ static int handle_one_option2(int *i, int argc, const char **argv)
 		; /* ignore */
 #endif
 	else if (!strcmp(argv[*i], "--jdb")) {
-		string_addf_path_list(&class_path, "%s/../lib/tools.jar", get_jre_home());
-		add_class_path_option = 1;
-		jdb = 1;
+		add_tools_jar(&options);
+		add_launcher_option(&options, "-jdb", NULL);
 	}
 	else if (!strcmp(argv[*i], "--allow-multiple"))
 		allow_multiple = 1;
@@ -2635,11 +2695,11 @@ static int handle_one_option2(int *i, int argc, const char **argv)
 	else if (!strcmp(argv[*i], "--headless"))
 		headless = 1;
 	else if (handle_one_option(i, argv, "--main-class", &arg)) {
-		string_append_path_list(&class_path, ".");
+		add_launcher_option(&options, "-classpath", ".");
 		main_class = xstrdup(arg.buffer);
 	}
 	else if (handle_one_option(i, argv, "--jar", &arg)) {
-		string_addf_path_list(&class_path, "%s", arg.buffer);
+		add_launcher_option(&options, "-classpath", arg.buffer);
 		main_class = "imagej.JarLauncher";
 		add_option_string(&options, &arg, 1);
 	}
@@ -2648,24 +2708,22 @@ static int handle_one_option2(int *i, int argc, const char **argv)
 			handle_one_option(i, argv, "-classpath", &arg) ||
 			handle_one_option(i, argv, "--cp", &arg) ||
 			handle_one_option(i, argv, "-cp", &arg))
-		string_addf_path_list(&class_path, "%s", arg.buffer);
-	else if (handle_one_option(i, argv, "--fiji-jar", &arg)) {
+		add_launcher_option(&options, "-classpath", arg.buffer);
+	else if (handle_one_option(i, argv, "--fiji-jar", &arg) || handle_one_option(i, argv, "--ij-jar", &arg)) {
 		const char *path = maybe_substitute_ij_jar(arg.buffer);
-		string_addf_path_list(&class_path, "%s", path ? path : ij_path(arg.buffer));
-	}
-	else if (handle_one_option(i, argv, "--ij-jar", &arg)) {
-		const char *path = maybe_substitute_ij_jar(arg.buffer);
-		string_addf_path_list(&class_path, "%s", path ? path : ij_path(arg.buffer));
+		if (path)
+			add_launcher_option(&options, "-classpath", path);
+		else
+			add_launcher_option(&options, "-ijclasspath", arg.buffer);
 	}
 	else if (handle_one_option(i, argv, "--jar-path", &arg) ||
 			handle_one_option(i, argv, "--jarpath", &arg) ||
-			handle_one_option(i, argv, "-jarpath", &arg)) {
-		struct string *jars = string_init(32);
-		build_classpath_for_string(jars, &arg, 0);
-		if (jars->length)
-			string_addf_path_list(&class_path, "%s", jars->buffer);
-		string_release(jars);
-	}
+			handle_one_option(i, argv, "-jarpath", &arg))
+		add_launcher_option(&options, "-jarpath", arg.buffer);
+	else if (!strcmp(argv[*i], "--full-classpath"))
+		full_class_path = 1;
+	else if (!strcmp(argv[*i], "--freeze-classloader"))
+		add_launcher_option(&options, "-freeze-classloader", NULL);
 	else if (handle_one_option(i, argv, "--ext", &arg)) {
 		string_append_path_list(&ext_option, arg.buffer);
 	}
@@ -2679,7 +2737,7 @@ static int handle_one_option2(int *i, int argc, const char **argv)
 #ifdef WIN32
 		open_win_console();
 #endif
-		skip_build_classpath = 1;
+		skip_class_launcher = 1;
 		headless = 1;
 		fake_jar = ij_path("jars/fake.jar");
 		precompiled_fake_jar = ij_path("precompiled/fake.jar");
@@ -2689,20 +2747,21 @@ static int handle_one_option2(int *i, int argc, const char **argv)
 		if (file_is_newer(ij_path("src-plugins/fake/fiji/build/Fake.java"), fake_jar) &&
 				!is_building("jars/fake.jar"))
 			error("Warning: jars/fake.jar is not up-to-date");
-		string_addf_path_list(&class_path, "%s", fake_jar);
+		string_set_length(&arg, 0);
+		string_addf(&arg, "-Djava.class.path=%s", fake_jar);
+		add_option_string(&options, &arg, 0);
 		main_class = "fiji.build.Fake";
 	}
 	else if (!strcmp(argv[*i], "--tools-jar"))
-		string_addf_path_list(&class_path, "%s/../lib/tools.jar", get_jre_home());
+		add_tools_jar(&options);
 	else if (!strcmp(argv[*i], "--only-tools-jar")) {
-		struct string *buffer = string_initf("-Djava.class.path=%s/../lib/tools.jar", get_jre_home());
-		add_option_string(&options, buffer, 0);
-		class_path_already_defined = 1;
+		add_tools_jar(&options);
+		add_launcher_option(&options, "-freeze-classloader", NULL);
 	}
-	else if (!strcmp(argv[*i], "--add-classpath-option"))
-		add_class_path_option = 1;
-	else if (!strcmp(argv[*i], "--no-full-classpath"))
-		skip_build_classpath = 1;
+	else if (!strcmp(argv[*i], "--dont-patch-ij1"))
+		add_option(&options, "-Dpatch.ij1=false", 0);
+	else if (!strcmp(argv[*i], "--pass-classpath"))
+		add_launcher_option(&options, "-pass-classpath", NULL);
 	else if (!strcmp(argv[*i], "--retrotranslator") ||
 			!strcmp(argv[*i], "--retro"))
 		retrotranslator = 1;
@@ -2715,7 +2774,8 @@ static int handle_one_option2(int *i, int argc, const char **argv)
 		exit(0);
 	}
 	else if (!strcmp("--print-java-home", argv[*i])) {
-		printf("%s\n", get_java_home());
+		const char *java_home = get_java_home();
+		printf("%s\n", !java_home ? "" : java_home);
 		exit(0);
 	}
 	else if (!strcmp("--default-gc", argv[*i]))
@@ -2792,7 +2852,7 @@ static void parse_command_line(void)
 #ifdef __linux__
 	string_append_path_list(java_library_path, getenv("LD_LIBRARY_PATH"));
 #endif
-#ifdef MACOSX
+#ifdef __APPLE__
 	string_append_path_list(java_library_path, getenv("DYLD_LIBRARY_PATH"));
 #endif
 
@@ -2817,7 +2877,7 @@ static void parse_command_line(void)
 
 	memset(&options, 0, sizeof(options));
 
-#ifdef MACOSX
+#ifdef __APPLE__
 	/* When double-clicked Finder adds a psn argument. */
 	if (main_argc > 1 && ! strncmp(main_argv[1], "-psn_", 5)) {
 		/*
@@ -2844,12 +2904,14 @@ static void parse_command_line(void)
 	if (!get_fiji_bundle_variable("system", &arg) &&
 			atol((&arg)->buffer) > 0)
 		options.use_system_jvm++;
-	if (get_fiji_bundle_variable("ext", &ext_option))
-		string_setf(&ext_option, "%s/Home/lib/ext:"
+	if (get_fiji_bundle_variable("ext", &ext_option)) {
+		const char *java_home = get_java_home();
+		string_setf(&ext_option, "%s%s"
 			"/Library/Java/Extensions:"
 			"/System/Library/Java/Extensions:"
-			"/System/Library/Frameworks/JavaVM.framework/"
-				"Home/lib/ext", get_java_home());
+			"/System/Library/Frameworks/JavaVM.framework/Home/lib/ext",
+			java_home ? java_home : "", java_home ? "/Home/lib/ext:" : "");
+	}
 	if (!get_fiji_bundle_variable("allowMultiple", &arg))
 		allow_multiple = parse_bool((&arg)->buffer);
 	get_fiji_bundle_variable("JVMOptions", jvm_options);
@@ -2881,13 +2943,16 @@ static void parse_command_line(void)
 
 #ifdef WIN32
 	/* Windows automatically adds the path of the executable to PATH */
-	struct string *path = string_initf("%s;%s/bin",
-		getenv("PATH"), get_jre_home());
-	setenv_or_exit("PATH", path->buffer, 1);
-	string_release(path);
+	const char *jre_home = get_jre_home();
+	if (jre_home) {
+		struct string *path = string_initf("%s;%s/bin",
+			getenv("PATH"), jre_home);
+		setenv_or_exit("PATH", path->buffer, 1);
+		string_release(path);
+	}
 #endif
 	if (!headless &&
-#ifdef MACOSX
+#ifdef __APPLE__
 			!CGSessionCopyCurrentDictionary()
 #elif defined(__linux__)
 			!getenv("DISPLAY")
@@ -2959,7 +3024,7 @@ static void parse_command_line(void)
 			handle_commandline(expanded);
 		else if (len > 6 && !strcmp(first + len - 6, ".class")) {
 			struct string *dotted = string_copy(first);
-			string_append_path_list(&class_path, ".");
+			add_launcher_option(&options, "-classpath", ".");
 			string_replace(dotted, '/', '.');
 			string_set_length(dotted, len - 6);
 			main_class = xstrdup(dotted->buffer);
@@ -2973,39 +3038,19 @@ static void parse_command_line(void)
 
 	maybe_reexec_with_correct_lib_path();
 
-	if (retrotranslator && build_classpath(&class_path, ij_path("retro"), 0))
-		die("Retrotranslator is required but cannot be found!");
-
 	if (!options.debug && !options.use_system_jvm && !headless && is_default_ij1_class(main_class))
 		show_splash();
 
 	/* set up class path */
-	if (skip_build_classpath)
-		string_append_path_list(&class_path, ij_path("jars/ij-launcher.jar"));
-	else {
-		if (is_default_ij1_class(main_class))
-			string_append_path_list(&class_path, ij_path("jars/ij-launcher.jar"));
-		else {
-			if (build_classpath(&class_path, ij_path("plugins"), 0))
-				die("Could not build classpath!");
-			build_classpath(&class_path, ij_path("jars"), 0);
-		}
+	if (full_class_path || !strcmp(default_main_class, main_class)) {
+		add_launcher_option(&options, "-ijjarpath", "jars");
+		add_launcher_option(&options, "-ijjarpath", "plugins");
 	}
-	if (class_path.length && !class_path_already_defined) {
-		string_setf(&buffer, "-Djava.class.path=%s", class_path.buffer);
-		add_option_string(&options, &buffer, 0);
-	}
+	else if (is_default_ij1_class(main_class))
+		add_launcher_option(&options, "-ijclasspath", "jars/ij.jar");
 
 	if (default_arguments->length)
 		add_options(&options, default_arguments->buffer, 1);
-
-	if (add_class_path_option) {
-		add_option(&options, "-classpath", 1);
-		add_option_copy(&options, class_path.buffer, 1);
-	}
-
-	if (jdb)
-		add_option_copy(&options, main_class, 1);
 
 	if (!strcmp(main_class, "org.apache.tools.ant.Main"))
 		add_java_home_to_path();
@@ -3057,14 +3102,10 @@ static void parse_command_line(void)
 	}
 
 	if (jdb)
-		main_class = "com.sun.tools.example.debug.tty.TTY";
+		add_launcher_option(&options, "-jdb", NULL);
 
-	if (retrotranslator) {
-		add_option(&options, "-advanced", 1);
-		add_option_copy(&options, main_class, 1);
-		main_class =
-			"net.sf.retrotranslator.transformer.JITRetrotranslator";
-	}
+	if (retrotranslator)
+		add_launcher_option(&options, "-retrotranslator", NULL);
 
 	for (i = 1; i < main_argc; i++)
 		add_option(&options, main_argv[i], 1);
@@ -3077,7 +3118,7 @@ static void parse_command_line(void)
 	properties[i++] = "fiji.dir";
 	properties[i++] =  ij_dir,
 	properties[i++] = "fiji.defaultLibPath";
-	properties[i++] = JAVA_LIB_PATH;
+	properties[i++] = default_library_path;
 	properties[i++] = "fiji.executable";
 	properties[i++] = main_argv0;
 	properties[i++] = "ij.executable";
@@ -3095,8 +3136,40 @@ static void parse_command_line(void)
 
 	keep_only_one_memory_option(&options.java_options);
 
+	if (!skip_class_launcher && strcmp(main_class, "org.apache.tools.ant.Main")) {
+		struct string *string = string_initf("-Djava.class.path=%s", ij_path("jars/ij-launcher.jar"));
+		add_option_string(&options, string, 0);
+		add_launcher_option(&options, main_class, NULL);
+		prepend_string_array(&options.ij_options, &options.launcher_options);
+		main_class = "imagej.ClassLauncher";
+	}
+	else {
+		struct string *class_path = string_init(32);
+		const char *sep = "-Djava.class.path=";
+		int i;
+
+		for (i = 0; i < options.launcher_options.nr; i++) {
+			const char *option = options.launcher_options.list[i];
+			if (sep)
+				string_append(class_path, sep);
+			if (!strcmp(option, "-ijclasspath"))
+				string_append(class_path, ij_path(options.launcher_options.list[++i]));
+			else if (!strcmp(option, "-classpath"))
+				string_append(class_path, options.launcher_options.list[++i]);
+			else
+				die ("Without ij-launcher, '%s' cannot be handled", option);
+			sep = PATH_SEP;
+		}
+
+		if (class_path->length)
+			add_option_string(&options, class_path, 0);
+		string_release(class_path);
+	}
+
 	if (options.debug) {
 		for (i = 0; properties[i]; i += 2) {
+			if (!properties[i] || !properties[i + 1])
+				continue;
 			string_setf(&buffer, "-D%s=%s", properties[i], properties[i + 1]);
 			add_option_string(&options, &buffer, 0);
 		}
@@ -3125,11 +3198,17 @@ static int start_ij(void)
 	args.nOptions = options.java_options.nr;
 	args.ignoreUnrecognized = JNI_FALSE;
 
-	if (options.use_system_jvm)
+	if (!get_jre_home() || options.use_system_jvm)
 		env = NULL;
 	else {
 		int result = create_java_vm(&vm, (void **)&env, &args);
 		if (result == JNI_ENOMEM) {
+			if (!megabytes) {
+				const char *option = has_memory_option(&options.java_options);
+				if (!option || prefixcmp(option, "-Xm") || !option[3])
+					die ("Out of memory, could not determine heap size!");
+				megabytes = parse_memory(option + 4);
+			}
 			try_with_less_memory(megabytes);
 			die("Out of memory!");
 		}
@@ -3140,14 +3219,12 @@ static int start_ij(void)
 			}
 			env = NULL;
 		} else {
-			string_setf(buffer, "-Djava.home=%s", get_java_home());
-			prepend_string_copy(&options.java_options, buffer->buffer);
+			const char *java_home = get_java_home();
+			if (java_home) {
+				string_setf(buffer, "-Djava.home=%s", java_home);
+				prepend_string_copy(&options.java_options, buffer->buffer);
+			}
 		}
-	}
-
-	if (!class_path_already_defined && strcmp(main_class, "fiji.build.Fake")) {
-		prepend_string_copy(&options.ij_options, main_class);
-		main_class = "imagej.ClassLauncher";
 	}
 
 	if (env) {
@@ -3182,7 +3259,7 @@ static int start_ij(void)
 	} else {
 		/* fall back to system-wide Java */
 		const char *java_home_env;
-#ifdef MACOSX
+#ifdef __APPLE__
 		struct string *icon_option;
 		/*
 		 * On MacOSX, one must (stupidly) fork() before exec() to
@@ -3200,6 +3277,8 @@ static int start_ij(void)
 #endif
 
 		for (i = 0; properties[i]; i += 2) {
+			if (!properties[i] || !properties[i + 1])
+				continue;
 			string_setf(buffer, "-D%s=%s", properties[i], properties[i + 1]);
 			add_option_string(&options, buffer, 0);
 		}
@@ -3222,14 +3301,35 @@ static int start_ij(void)
 		if (execvp(buffer->buffer, options.java_options.list))
 			error("Could not launch system-wide Java (%s)", strerror(errno));
 #else
-		if (console_opened)
+		if (console_opened && !console_attached)
 			sleep(5); /* Sleep 5 seconds */
 
-		FreeConsole(); /* java.exe cannot reuse the console anyway. */
 		for (i = 0; i < options.java_options.nr - 1; i++)
 			options.java_options.list[i] =
 				quote_win32(options.java_options.list[i]);
-		execvp(buffer->buffer, (char * const *)options.java_options.list);
+		STARTUPINFO startup_info;
+		PROCESS_INFORMATION process_info;
+		const char *java = find_in_path(console_opened || console_attached ? "java" : "javaw");
+		struct string *cmdline = string_initf("java");
+
+		if (!java)
+			die("Could not find java.exe in PATH!");
+
+		memset(&startup_info, 0, sizeof(startup_info));
+		startup_info.cb = sizeof(startup_info);
+
+		memset(&process_info, 0, sizeof(process_info));
+
+		for (i = 1; i < options.java_options.nr - 1; i++)
+			string_addf(cmdline, " %s", options.java_options.list[i]);
+		if (CreateProcess(java, cmdline->buffer, NULL, NULL, TRUE, NORMAL_PRIORITY_CLASS, NULL, NULL, &startup_info, &process_info)) {
+			DWORD exit_code;
+			WaitForSingleObject(process_info.hProcess, INFINITE);
+			if (GetExitCodeProcess(process_info.hProcess, &exit_code) && exit_code)
+				exit(exit_code);
+			return 0;
+		}
+
 		char message[16384];
 		int off = sprintf(message, "Error: '%s' while executing\n\n",
 				strerror(errno));
@@ -3243,7 +3343,7 @@ static int start_ij(void)
 	return 0;
 }
 
-#ifdef MACOSX
+#ifdef __APPLE__
 static void append_icon_path(struct string *str)
 {
 	/*
@@ -3767,7 +3867,7 @@ static int MAYBE_UNUSED is_dylib(const char *path)
 
 static int is_native_library(const char *path)
 {
-#ifdef MACOSX
+#ifdef __APPLE__
 	return is_dylib(path);
 #else
 	return
@@ -3815,37 +3915,60 @@ static void find_newest(struct string *relative_path, int max_depth, const char 
 	string_set_length(relative_path, len);
 }
 
+static void set_default_library_path(void)
+{
+	default_library_path =
+#if defined(__APPLE__)
+		"";
+#elif defined(WIN32)
+		sizeof(void *) < 8 ? "bin/client/jvm.dll" : "bin/server/jvm.dll";
+#else
+		sizeof(void *) < 8 ? "lib/i386/client/libjvm.so" : "lib/amd64/server/libjvm.so";
+#endif
+}
+
 static void adjust_java_home_if_necessary(void)
 {
-	struct string *result, *buffer, *jre_path;
-#ifdef MACOSX
-	/* On MacOSX, we use the system Java anyway. */
-	return;
+	struct string *result, *buffer, *path;
+	const char *prefix = "jre/";
+	int depth = 2;
+
+#ifdef __APPLE__
+	/* On MacOSX, we look for libjogl.jnilib instead. */
+	library_path = "Home/lib/ext/libjogl.jnilib";
+	prefix = "";
+	depth = 1;
+#else
+	set_default_library_path();
+	library_path = default_library_path;
 #endif
+
 	buffer = string_copy("java");
 	result = string_init(32);
-	jre_path = string_initf("jre/%s", library_path);
+	path = string_initf("%s%s", prefix, library_path);
 
-	find_newest(buffer, 2, jre_path->buffer, result);
+	find_newest(buffer, depth, path->buffer, result);
 	if (result->length) {
-		string_append(result, "/jre");
+		if (result->buffer[result->length - 1] != '/')
+			string_add_char(result, '/');
+		string_append(result, prefix);
 		relative_java_home = xstrdup(result->buffer);
 	}
-	else {
-		find_newest(buffer, 3, library_path, buffer);
+	else if (*prefix) {
+		find_newest(buffer, depth + 1, library_path, buffer);
 		if (result->length)
 			relative_java_home = xstrdup(result->buffer);
 	}
 	string_release(buffer);
 	string_release(result);
-	string_release(jre_path);
+	string_release(path);
 }
 
 int main(int argc, char **argv, char **e)
 {
 	int size;
 
-#if defined(MACOSX)
+#if defined(__APPLE__)
 	launch_32bit_on_tiger(argc, argv);
 #elif defined(WIN32)
 	int len;
