@@ -19,7 +19,7 @@ the Wiki.
 It fetches information on menu item position and files called by
 letting fiji.User_Plugins parse the jars.
 
-J.Y. Tinevez - 2009, J. Schindelin - 2010
+J.Y. Tinevez - 2009, J. Schindelin - 2010,2012
 """
 
 def walktree(top = ".", depthfirst = True):
@@ -59,7 +59,7 @@ def getTree(menuPath):
         parentMenuPath, dummy = splitLast(menuPath, '>', '')
         parentTree = getTree(parentMenuPath)
         parentTree.append([menuPath, result])
-        allElements[menuPath] = result
+        allElements.put(menuPath, result)
     return result
 
 def appendPlugin(menuPath, name, class_name, package_name, type, path = None):
@@ -104,6 +104,8 @@ def createPluginsTree(ij_folder):
 def treeToString(tree, level=1):
     global firstNode
     result = ''
+
+    tree.sort()
 
     # first handle the commands
     for element in tree:
