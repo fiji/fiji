@@ -169,12 +169,16 @@ allElements[''] = []
 
 uploadToWiki = False
 compareToWiki = False
+color = '--color=none'
 if len(sys.argv) > 1 and sys.argv[1] == '--upload-to-wiki':
     uploadToWiki = True
     sys.argv = sys.argv[:1] + sys.argv[2:]
 elif len(sys.argv) > 1 and sys.argv[1] == '--compare-to-wiki':
     compareToWiki = True
     sys.argv = sys.argv[:1] + sys.argv[2:]
+    if len(sys.argv) > 1 and sys.argv[1] == '--color':
+        color = '--color'
+        sys.argv = sys.argv[:1] + sys.argv[2:]
 
 if len(sys.argv) < 2:
     ij_folder = os.path.curdir
@@ -207,7 +211,7 @@ if uploadToWiki or compareToWiki:
             writer2 = FileWriter(file2)
             writer2.write(result)
             writer2.close()
-            diff = SimpleExecuter(['git', 'diff', '--patience', '--no-index', '--src-prefix=wiki/', '--dst-prefix=local/', file1.getAbsolutePath(), file2.getAbsolutePath()])
+            diff = SimpleExecuter(['git', 'diff', color, '--patience', '--no-index', '--src-prefix=wiki/', '--dst-prefix=local/', file1.getAbsolutePath(), file2.getAbsolutePath()])
             file1.delete()
             file2.delete()
             print diff.getOutput()
