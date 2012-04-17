@@ -153,7 +153,7 @@ PLUGINS_TYPE = {JAR_EXTENSION:'java jar file',
                 '.class':'java class file',
                 '.txt':'macro',
                 '.ijm':'macro',
-                '.js':'javascript file',
+                '.js':'javascript script',
                 '.rb':'jruby script',
                 '.py':'jython script',
                 '.clj':'clojure script'}
