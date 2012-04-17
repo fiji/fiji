@@ -72,6 +72,8 @@ def appendJar(jarfile_path, type):
     """Analyze the content of a plugins.config embeded in a jar, and get the
     location of its indexed compenents."""
     for line in User_Plugins(False).getJarPluginList(File(jarfile_path), 'Plugins'):
+        if line[1] == '-':
+            continue
         packageName, className = splitLast(line[2], '.')
         appendPlugin(line[0], line[1], className, packageName, type, jarfile_path)
 
