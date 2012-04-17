@@ -211,7 +211,7 @@ if uploadToWiki or compareToWiki:
             writer2 = FileWriter(file2)
             writer2.write(result)
             writer2.close()
-            diff = SimpleExecuter(['git', 'diff', color, '--patience', '--no-index', '--src-prefix=wiki/', '--dst-prefix=local/', file1.getAbsolutePath(), file2.getAbsolutePath()])
+            diff = SimpleExecuter(['git', 'diff', color, '--ignore-space-at-eol', '--patience', '--no-index', '--src-prefix=wiki/', '--dst-prefix=local/', file1.getAbsolutePath(), file2.getAbsolutePath()])
             file1.delete()
             file2.delete()
             print diff.getOutput()
