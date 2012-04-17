@@ -193,7 +193,7 @@ public class Stitch_Multiple_Series_File implements PlugIn
 				// IJ.log( "fetching data for series:  " + series );
 				r.setSeries( series );
 
-				final MetadataRetrieve retrieve = (MetadataRetrieve)r.getMetadataStore();
+				final MetadataRetrieve retrieve = service.asRetrieve(r.getMetadataStore());
 
 				// stage coordinates (per plane and series)
 				Double tmp;
