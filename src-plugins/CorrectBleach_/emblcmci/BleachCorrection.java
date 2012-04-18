@@ -19,7 +19,7 @@ package emblcmci;
  *  	See documentation at http://cmci.embl.de
  *
  *
- * Copyright © 2010 Kota Miura
+ * Copyright Â© 2010 Kota Miura
  * License: GPL 2
  *
  * This program is free software; you can redistribute it and/or

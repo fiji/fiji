@@ -12,7 +12,7 @@ package emblcmci;
  * this correction algorithm is not appropriate for intensity measurements.
  * use only for segmentation.
  *
- * Copyright © 2010 Kota Miura
+ * Copyright Â© 2010 Kota Miura
  * License: GPL 2
  *
  * This program is free software; you can redistribute it and/or

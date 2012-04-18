@@ -10,7 +10,7 @@ package emblcmci;
  *  in case of 3D times series, mean intensity in the first time point stack becomes the reference.
  *  @author Kota Miura (miura@embl.de)
  *
- * Copyright © 2004, 2005, 2010 Jens Rietdorf, Kota Miura
+ * Copyright Â© 2004, 2005, 2010 Jens Rietdorf, Kota Miura
  * License: GPL 2
  *
  * This program is free software; you can redistribute it and/or

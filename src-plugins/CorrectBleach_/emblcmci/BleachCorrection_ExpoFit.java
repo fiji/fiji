@@ -5,7 +5,7 @@ package emblcmci;
  *
  * 2D and 3D time series corrected by fitting exponential decay function.
  *
- * Copyright © 2010 Kota Miura
+ * Copyright Â© 2010 Kota Miura
  * License: GPL 2
  *
  * This program is free software; you can redistribute it and/or
