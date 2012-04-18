@@ -13,9 +13,11 @@ import net.imglib2.img.ImagePlusAdapter;
 
 import net.imglib2.img.display.imagej.ImageJFunctions;
 
+import net.imglib2.type.NativeType;
+
 import net.imglib2.type.numeric.RealType;
 
-public class ImgLib2_Plugin<T extends RealType<T>> implements PlugInFilter {
+public class ImgLib2_Plugin<T extends RealType<T> & NativeType<T>> implements PlugInFilter {
 	protected ImagePlus image;
 
 	/**
