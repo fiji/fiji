@@ -28,6 +28,7 @@ Name					File					Author(s)						Contact								License
 * Batik 				batik.jar 				http://xmlgraphics.apache.org/batik/contributors.html									AL
 * Bean Shell language 			bsh.jar 											http://www.beanshell.org/ 					SPL/LGPL
 * Bean Shell Interpreter 		BSH_Interpreter.jar			Johannes Schindelin					Johannes.Schindelin@gmx.de					GPL
+* Bleach Corrector	 		CorrectBleach_.jar			Kota Miura						miura@embl.de							GPL
 * bUnwarpJ				bUnwarpJ_.jar				Ignacio	Arganda et al.					ignacio.arganda@uam.es						GPL
 * Clojure				clojure.jar				Rich Hickey						http://clojure.sourceforge.net/					EPL
 * Clojure Interpreter			Clojure_Interpreter.jar 		Albert Cardona 						acardona@ini.phys.ethz.ch					GPL
