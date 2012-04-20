@@ -108,6 +108,25 @@ f)
 	;;
 esac
 
+get_first () {
+	echo "$1"
+}
+
+case "$main_class,$(get_first $ij_options)" in
+fiji.Main,*.py)
+	main_class=org.python.util.jython
+	;;
+fiji.Main,*.rb)
+	main_class=org.jruby.Main
+	;;
+fiji.Main,*.clj)
+	main_class=clojure.lang.Repl
+	;;
+fiji.Main,*.bsh)
+	main_class=bsh.Interpreter
+	;;
+esac
+
 case "$main_class" in
 fiji.Main|ij.ImageJ)
 	ij_options="-port7 $ij_options"
