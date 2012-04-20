@@ -56,7 +56,7 @@ public class ExecuteProgram extends Rule {
 		}
 
 		// special-case ant, since it's slow
-		if (program.startsWith("../../fiji --ant") &&
+		if ((program.startsWith("../../fiji --ant") || program.startsWith("../../ImageJ --ant")) &&
 				prerequisites.size() == 0 &&
 				upToDateRecursive(parser.cwd, new File(target)))
 			return true;
