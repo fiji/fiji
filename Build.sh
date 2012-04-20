@@ -92,11 +92,11 @@ Linux)
 	x86_64)
 		platform=linux64
 		java_submodule=linux-amd64
-		look_for_tools_jar /usr/lib/jvm
+		look_for_tools_jar /usr/lib64/jvm /usr/lib/jvm
 		;;
 	*)	platform=linux32
 		java_submodule=linux
-		look_for_tools_jar /usr/lib64/jvm
+		look_for_tools_jar /usr/lib/jvm
 		;;
 	esac; exe=;;
 MINGW*|CYGWIN*)
