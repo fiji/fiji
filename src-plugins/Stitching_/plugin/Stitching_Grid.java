@@ -590,103 +590,103 @@ public class Stitching_Grid implements PlugIn
 
 				for ( int t = 0; t < maxT; ++t )
 				{
-				final int index = r.getIndex(0, 0, t);
+					final int index = r.getIndex(0, 0, t);
 
-				double locationX = 0, locationY = 0, locationZ = 0;
+					double locationX = 0, locationY = 0, locationZ = 0;
 
-				if ( planeMap.containsKey( index ) )
-				{
-					final int planeIndex = planeMap.get( index );
+					if ( planeMap.containsKey( index ) )
+					{
+						final int planeIndex = planeMap.get( index );
 
-					// stage coordinates (per plane and series)
-					Double tmp;
+						// stage coordinates (per plane and series)
+						Double tmp;
 
-					tmp = retrieve.getPlanePositionX( series, planeIndex );
-					if ( tmp != null )
-						locationX = tmp;
-					if ( IJ.debugMode )
-						IJ.log( "locationX:  " + locationX );
+						tmp = retrieve.getPlanePositionX( series, planeIndex );
+						if ( tmp != null )
+							locationX = tmp;
+						if ( IJ.debugMode )
+							IJ.log( "locationX:  " + locationX );
 
-					tmp = retrieve.getPlanePositionY( series, planeIndex );
-					if ( tmp != null )
-						locationY = tmp;
-					if ( IJ.debugMode )
-						IJ.log( "locationY:  " + locationY );
+						tmp = retrieve.getPlanePositionY( series, planeIndex );
+						if ( tmp != null )
+							locationY = tmp;
+						if ( IJ.debugMode )
+							IJ.log( "locationY:  " + locationY );
 
-					tmp = retrieve.getPlanePositionZ( series, planeIndex );
-					if ( tmp != null )
-						locationZ = tmp;
-					if ( IJ.debugMode )
-						IJ.log( "locationZ:  " + locationZ );
-				}
-				else
-				{
-					if ( IJ.debugMode )
-						IJ.log( "Missing Plane element: series=" + series + ", t=" + t );
-				}
+						tmp = retrieve.getPlanePositionZ( series, planeIndex );
+						if ( tmp != null )
+							locationZ = tmp;
+						if ( IJ.debugMode )
+							IJ.log( "locationZ:  " + locationZ );
+					}
+					else
+					{
+						if ( IJ.debugMode )
+							IJ.log( "Missing Plane element: series=" + series + ", t=" + t );
+					}
 
-				if ( !ignoreCalibration )
-				{
-					// calibration
-					double calX = 1, calY = 1, calZ = 1;
-					PositiveFloat cal;
-					final String dimOrder = r.getDimensionOrder().toUpperCase();
-					
-					final int posX = dimOrder.indexOf( 'X' );
-					cal = retrieve.getPixelsPhysicalSizeX( series );
-					if ( posX >= 0 && cal != null && cal.getValue().floatValue() != 0 )
-						calX = cal.getValue().floatValue(); 
-	
-					if ( IJ.debugMode )
-						IJ.log( "calibrationX:  " + calX );
-	
-					final int posY = dimOrder.indexOf( 'Y' );
-					cal = retrieve.getPixelsPhysicalSizeY( series );
-					if ( posY >= 0 && cal != null && cal.getValue().floatValue() != 0 )
-						calY = cal.getValue().floatValue();
-	
-					if ( IJ.debugMode )
-						IJ.log( "calibrationY:  " + calY );
-	
-					final int posZ = dimOrder.indexOf( 'Z' );
-					cal = retrieve.getPixelsPhysicalSizeZ( series );
-					if ( posZ >= 0 && cal != null && cal.getValue().floatValue() != 0 )
-						calZ = cal.getValue().floatValue();
-				
-					if ( IJ.debugMode )
-						IJ.log( "calibrationZ:  " + calZ );
-	
-					// location in pixel values;
-					locationX /= calX;
-					locationY /= calY;
-					locationZ /= calZ;
-				}
-				
-				// increase overlap if desired
-				locationX *= (100.0-increaseOverlap)/100.0;
-				locationY *= (100.0-increaseOverlap)/100.0;
-				locationZ *= (100.0-increaseOverlap)/100.0;
-				
-				// create ImageInformationList
-				
-				final ImageCollectionElement element;
-				
-				if ( dim == 2 )
-				{
-					element = new ImageCollectionElement( new File( multiSeriesFile ), elements.size() );
-					element.setModel( new TranslationModel2D() );
-					element.setOffset( new float[]{ (float)locationX, (float)locationY } );
-					element.setDimensionality( 2 );
-				}
-				else
-				{
-					element = new ImageCollectionElement( new File( multiSeriesFile ), elements.size() );
-					element.setModel( new TranslationModel3D() );
-					element.setOffset( new float[]{ (float)locationX, (float)locationY, (float)locationZ } );
-					element.setDimensionality( 3 );
-				}
-				
-				elements.add( element );
+					if ( !ignoreCalibration )
+					{
+						// calibration
+						double calX = 1, calY = 1, calZ = 1;
+						PositiveFloat cal;
+						final String dimOrder = r.getDimensionOrder().toUpperCase();
+
+						final int posX = dimOrder.indexOf( 'X' );
+						cal = retrieve.getPixelsPhysicalSizeX( series );
+						if ( posX >= 0 && cal != null && cal.getValue().floatValue() != 0 )
+							calX = cal.getValue().floatValue();
+
+						if ( IJ.debugMode )
+							IJ.log( "calibrationX:  " + calX );
+
+						final int posY = dimOrder.indexOf( 'Y' );
+						cal = retrieve.getPixelsPhysicalSizeY( series );
+						if ( posY >= 0 && cal != null && cal.getValue().floatValue() != 0 )
+							calY = cal.getValue().floatValue();
+
+						if ( IJ.debugMode )
+							IJ.log( "calibrationY:  " + calY );
+
+						final int posZ = dimOrder.indexOf( 'Z' );
+						cal = retrieve.getPixelsPhysicalSizeZ( series );
+						if ( posZ >= 0 && cal != null && cal.getValue().floatValue() != 0 )
+							calZ = cal.getValue().floatValue();
+
+						if ( IJ.debugMode )
+							IJ.log( "calibrationZ:  " + calZ );
+
+						// location in pixel values;
+						locationX /= calX;
+						locationY /= calY;
+						locationZ /= calZ;
+					}
+
+					// increase overlap if desired
+					locationX *= (100.0-increaseOverlap)/100.0;
+					locationY *= (100.0-increaseOverlap)/100.0;
+					locationZ *= (100.0-increaseOverlap)/100.0;
+
+					// create ImageInformationList
+
+					final ImageCollectionElement element;
+
+					if ( dim == 2 )
+					{
+						element = new ImageCollectionElement( new File( multiSeriesFile ), elements.size() );
+						element.setModel( new TranslationModel2D() );
+						element.setOffset( new float[]{ (float)locationX, (float)locationY } );
+						element.setDimensionality( 2 );
+					}
+					else
+					{
+						element = new ImageCollectionElement( new File( multiSeriesFile ), elements.size() );
+						element.setModel( new TranslationModel3D() );
+						element.setOffset( new float[]{ (float)locationX, (float)locationY, (float)locationZ } );
+						element.setDimensionality( 3 );
+					}
+
+					elements.add( element );
 				}
 			}
 		}
