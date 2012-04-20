@@ -31,8 +31,8 @@ look_for_tools_jar () {
 		test -d "$d" || continue
 		for j in java default-java
 		do
-			test -f "$d/$java/lib/tools.jar" || continue
-			export TOOLS_JAR="$d/$java/lib/tools.jar"
+			test -f "$d/$j/lib/tools.jar" || continue
+			export TOOLS_JAR="$d/$j/lib/tools.jar"
 			return
 		done
 	done
