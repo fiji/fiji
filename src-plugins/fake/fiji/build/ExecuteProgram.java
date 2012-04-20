@@ -28,7 +28,11 @@ public class ExecuteProgram extends Rule {
 		Rule rule = prereq == null ? null : parser.getRule(prereq);
 		if (rule == null)
 			return super.getDependencies();
-		return new MultiIterable<Rule>(super.getDependencies(), Collections.<Rule>singleton(rule));
+		Iterable<Rule> additional = Collections.<Rule>singleton(rule);
+		Rule launcher = parser.getRule("ImageJ");
+		if (launcher != null)
+			additional = new MultiIterable<Rule>(additional, Collections.<Rule>singleton(launcher));
+		return new MultiIterable<Rule>(super.getDependencies(), additional);
 	}
 
 	boolean checkUpToDate() {
