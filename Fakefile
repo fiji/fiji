@@ -188,7 +188,6 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/IsoData_Classifier.jar \
 	plugins/RATS_.jar \
 	plugins/Directionality_.jar \
-	jars/ij-launcher.jar \
 	plugins/Image_Expression_Parser.jar \
 	plugins/Algorithm_Launcher.jar \
 	plugins/VIB_.jar \
@@ -339,8 +338,6 @@ plugins/Record_Screen.jar <- src-plugins/Record_Screen/ src-plugins/Record_Scree
 
 plugins/Trainable_Segmentation.jar <- src-plugins/Trainable_Segmentation/**/*java src-plugins/Trainable_Segmentation/trainableSegmentation/images/*png src-plugins/Trainable_Segmentation/*
 
-mainClass(jars/ij-launcher.jar)=imagej.ClassLauncher
-
 mainClass(jars/fiji-compat.jar)=fiji.Main
 src-plugins/fiji-compat/icon.png[bin/copy-file.bsh $PRE $TARGET] <- images/icon.png
 
@@ -429,7 +426,7 @@ CLASSPATH(plugins/LocalThickness_.jar)=jars/ij.jar
 CLASSPATH(plugins/Volume_Viewer.jar)=jars/ij.jar
 CLASSPATH(jars/batik.jar)=jars/jacl.jar:plugins/loci_tools.jar:jars/jython.jar
 CLASSPATH(plugins/Stack_Manipulation.jar)=jars/ij.jar
-CLASSPATH(jars/fiji-compat.jar)=jars/ij-launcher.jar:jars/ij.jar:jars/javassist.jar
+CLASSPATH(jars/fiji-compat.jar)=jars/ij.jar:jars/javassist.jar
 CLASSPATH(plugins/TurboReg_.jar)=jars/ij.jar
 CLASSPATH(plugins/RATS_.jar)=jars/ij.jar
 CLASSPATH(plugins/Interactive_3D_Surface_Plot.jar)=jars/ij.jar
@@ -517,61 +514,10 @@ misc/headless.jar[bin/make-headless-jar.bsh] <- jars/fiji-compat.jar jars/javass
 
 # ImageJ launcher
 
-# The variables CFLAGS, LDFLAGS and LIBS will be used for compiling
-# C and C++ programs.
-COMMONCFLAGS=-Wall -Iincludes
-WINOPTS=-mwindows -DMINGW32
-CFLAGS(win32)=$COMMONCFLAGS $WINOPTS -mno-cygwin
-CFLAGS(win64)=$COMMONCFLAGS $WINOPTS
+# We re-use ImageJ2's launcher now, so let's use the updater to perform
+# the job.
 
-# Include 64-bit architectures only in ./ImageJ (as opposed to ./ImageJ-tiger),
-# and only on MacOSX
-MACOPTS(osx10.3)=-I/System/Library/Frameworks/JavaVM.Framework/Headers -Iincludes \
-	-DMACOSX
-MACOPTS(osx10.4)=$MACOPTS(osx10.3) -mmacosx-version-min=10.3 -arch i386 -arch ppc
-MACOPTS(osx10.5)=$MACOPTS(osx10.3) -mmacosx-version-min=10.4 -arch i386 -arch x86_64
-CFLAGS(macosx)=$MACOPTS
-
-CFLAGS(linux32)=$COMMONCFLAGS -DIPV6_MAYBE_BROKEN -fno-stack-protector
-CFLAGS(linux64)=$COMMONCFLAGS -DIPV6_MAYBE_BROKEN -fno-stack-protector -rdynamic -g
-
-LDFLAGS(win32)=$LDFLAGS $WINOPTS
-
-CFLAGS(freebsd)=$COMMONCFLAGS
-
-CFLAGS(ImageJ)=$COMMONCFLAGS $MACOPTS
-LDFLAGS(ImageJ)=$LDFLAGS $MACOPTS
-
-LIBS(linux32)=-ldl -lpthread
-LIBS(linux64)=-ldl -lpthread
-LIBS(macosx)=-weak -framework CoreFoundation -framework ApplicationServices \
-	-framework JavaVM
-
-CLASSPATH(ImageJ)=jars/ij-launcher.jar:jars/fiji-compat.jar:jars/ij.jar:jars/javassist.jar
-ImageJ <- ImageJ.c
-
-CFLAGS(ImageJ-macosx)=$COMMONCFLAGS $MACOPTS(osx10.5)
-LDFLAGS(ImageJ-macosx)=$LDFLAGS $MACOPTS(osx10.5)
-ImageJ-macosx <- ImageJ.c
-
-CFLAGS(ImageJ-tiger)=$COMMONCFLAGS $MACOPTS(osx10.4)
-LDFLAGS(ImageJ-tiger)=$LDFLAGS $MACOPTS(osx10.4)
-ImageJ-tiger <- ImageJ.c
-
-CFLAGS(ImageJ-panther)=$COMMONCFLAGS $MACOPTS(osx10.3)
-LDFLAGS(ImageJ-panther)=$LDFLAGS $MACOPTS(osx10.3)
-ImageJ-panther <- ImageJ.c
-
-# Cross-compiling (works only on Linux64 so far)
-
-all-cross[] <- cross-win32 cross-win64 cross-linux32 cross-macosx cross-tiger
-# cross-tiger does not work yet
-
-cross-tiger[bin/cross-compiler.bsh tiger \
-	$CFLAGS(ImageJ-panther) $LIBS(macosx)] <- ImageJ.c
-cross-macosx[bin/cross-compiler.bsh macosx \
-	$CFLAGS(ImageJ-panther) $LIBS(macosx)] <- ImageJ.c
-cross-*[bin/cross-compiler.bsh * $CFLAGS(*) $LDFLAGS(*) $LIBS(*)] <- ImageJ.c
+ImageJ[bin/update-launcher.sh] <- plugins/Fiji_Updater.jar
 
 # legacy launcher
 
