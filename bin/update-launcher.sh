@@ -43,7 +43,14 @@ MINGW*|CYGWIN*)
 	esac
 	;;
 esac &&
-file=${prefix}ImageJ$suffix$exe &&
 (cd "$(dirname "$0")"/.. &&
- bin/ImageJ.sh --update update $file &&
- cp $file ImageJ$exe)
+ case "$suffix" in
+ '')
+	cp bin/ImageJ.sh ImageJ
+	;;
+ *)
+	file=${prefix}ImageJ$suffix$exe &&
+	bin/ImageJ.sh --update update $file &&
+	cp $file ImageJ$exe
+	;;
+ esac)
