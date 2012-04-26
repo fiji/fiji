@@ -77,9 +77,10 @@ ensure_fake_is_built () {
 	 : compile classes
 	 javac -classpath precompiled/javac.jar -d build/jars/fake/ $(find src-plugins/fake/ -name \*.java) &&
 	 : compile .jar using Fiji Build
-	 java -classpath build/jars/fake/:precompiled/javac.jar fiji.build.Fake jars/fake.jar-rebuild ImageJ)
+	 java -classpath build/jars/fake/"$PATHSEP"precompiled/javac.jar fiji.build.Fake jars/fake.jar-rebuild ImageJ)
 }
 
+PATHSEP=:
 case "$(uname -s)" in
 Darwin)
 	JAVA_HOME=/System/Library/Frameworks/JavaVM.framework/Home
@@ -101,6 +102,8 @@ Linux)
 		;;
 	esac; exe=;;
 MINGW*|CYGWIN*)
+	CWD="$(cd "$CWD" && pwd)"
+	PATHSEP=\;
 	case "$PROCESSOR_ARCHITEW6432" in
 	'') platform=win32; java_submodule=$platform;;
 	*) platform=win64; java_submodule=$platform;;
@@ -178,7 +181,8 @@ then
 fi
 
 : build fake.jar, making sure javac is in the PATH
-PATH="$PATH:$(get_java_home)/bin" ensure_fake_is_built || {
+PATH="$PATH:$(get_java_home)/bin:$(get_java_home)/../bin" \
+ensure_fake_is_built || {
 	echo "Could not build Fiji Build" >&2
 	exit 1
 }
