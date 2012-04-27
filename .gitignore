@@ -349,3 +349,8 @@ hs_err*.log
 /jars/object-inspector.jar
 /jars/sezpoz.jar
 /jars/velocity.jar
+/plugins/CorrectBleach_.jar
+
+# Retrotranslator #
+/jars/backport-util-concurrent.jar
+/jars/retrotranslator-runtime.jar

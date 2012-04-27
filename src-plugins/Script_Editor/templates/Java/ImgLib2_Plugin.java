@@ -6,19 +6,18 @@ import ij.plugin.filter.PlugInFilter;
 
 import ij.process.ImageProcessor;
 
-import mpicbg.imglib.cursor.Cursor;
+import net.imglib2.Cursor;
 
-import mpicbg.imglib.image.Image;
-import mpicbg.imglib.image.ImagePlusAdapter;
+import net.imglib2.img.Img;
+import net.imglib2.img.ImagePlusAdapter;
 
-import mpicbg.imglib.image.display.imagej.ImageJFunctions;
+import net.imglib2.img.display.imagej.ImageJFunctions;
 
-import mpicbg.imglib.type.numeric.RealType;
+import net.imglib2.type.NativeType;
 
-/**
- * @deprecated Use ImgLib2 instead
- */
-public class Imglib_Plugin<T extends RealType<T>> implements PlugInFilter {
+import net.imglib2.type.numeric.RealType;
+
+public class ImgLib2_Plugin<T extends RealType<T> & NativeType<T>> implements PlugInFilter {
 	protected ImagePlus image;
 
 	/**
@@ -27,7 +26,8 @@ public class Imglib_Plugin<T extends RealType<T>> implements PlugInFilter {
 	@Override
 	public int setup(String arg, ImagePlus imp) {
 		image = imp;
-		return DOES_ALL;
+		// does not handle RGB, since the wrapped type is ARGBType (not a RealType)
+		return DOES_8G | DOES_8C | DOES_16 | DOES_32;
 	}
 
 	/**
@@ -43,23 +43,22 @@ public class Imglib_Plugin<T extends RealType<T>> implements PlugInFilter {
 	 * This should have been the method declared in PlugInFilter...
 	 */
 	public void run(ImagePlus image) {
-		Image<T> img = ImagePlusAdapter.wrap(image);
+		Img<T> img = ImagePlusAdapter.wrap(image);
 		add(img, 20);
 	}
 
 	/**
 	 * The actual processing is done here.
 	 */
-	public static<T extends RealType<T>> void add(Image<T> img, float value) {
-		final Cursor<T> cursor = img.createCursor();
-		final T summand = cursor.getType().createVariable();
+	public static<T extends RealType<T>> void add(Img<T> img, float value) {
+		final Cursor<T> cursor = img.cursor();
+		final T summand = cursor.get().createVariable();
 
 		summand.setReal(value);
 
 		while (cursor.hasNext()) {
 			cursor.fwd();
-			cursor.getType().add(summand);
+			cursor.get().add(summand);
 		}
-		cursor.close();
 	}
 }

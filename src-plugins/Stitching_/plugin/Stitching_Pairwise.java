@@ -415,11 +415,12 @@ public class Stitching_Pairwise implements PlugIn
 		else
 			ci = fuse( new UnsignedByteType(), imp1, imp2, models, params );
 		
-		ci.setTitle( params.fusedName );
-		
 		if ( ci != null )
+		{
+			ci.setTitle( params.fusedName );
 			ci.show();
-		
+		}
+
 		IJ.log( "Finished ... (" + (System.currentTimeMillis() - start) + " ms)");
 	}
 	
