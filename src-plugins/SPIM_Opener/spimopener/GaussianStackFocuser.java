@@ -1,10 +1,7 @@
 package spimopener;
 
 import ij.macro.Interpreter;
-
 import ij.plugin.filter.GaussianBlur;
-
-import ij.process.Blitter;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 
@@ -21,15 +18,18 @@ public class GaussianStackFocuser implements Projector {
 
 	private final ArrayList<FloatProcessor> ips = new ArrayList<FloatProcessor>();
 
+	@Override
 	public void reset() {
 		ips.clear();
 	}
 
+	@Override
 	public void add(ImageProcessor ip) {
 		ips.add((FloatProcessor)ip.convertToFloat());
-			
+
 	}
 
+	@Override
 	public ImageProcessor getProjection() {
 		FloatProcessor[] fps = new FloatProcessor[ips.size()];
 		ips.toArray(fps);
@@ -50,7 +50,7 @@ public class GaussianStackFocuser implements Projector {
                         float[] pixels1 = (float[])slices[i].getPixels();
                         float[] pixels2 = (float[])weights[i].getPixels();
                         for (int j = 0; j < pixelCount; j++)
-                                pixels2[j] = (float)Math.abs(pixels2[j] - pixels1[j]);
+                                pixels2[j] = Math.abs(pixels2[j] - pixels1[j]);
                 }
 
                 FloatProcessor result = (FloatProcessor)slices[0].duplicate();
