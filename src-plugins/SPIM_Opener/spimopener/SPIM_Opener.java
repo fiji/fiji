@@ -74,18 +74,23 @@ public class SPIM_Opener implements PlugIn {
 				DoubleSlider slider = sliders.get(0);
 				final int tpMin = slider.getCurrentMin();
 				final int tpMax = slider.getCurrentMax();
+				final int tpInc = slider.getIncrement();
 				slider = sliders.get(1);
 				final int xMin = slider.getCurrentMin();
 				final int xMax = slider.getCurrentMax();
+				final int xInc = slider.getIncrement();
 				slider = sliders.get(2);
 				final int yMin = slider.getCurrentMin();
 				final int yMax = slider.getCurrentMax();
+				final int yInc = slider.getIncrement();
 				slider = sliders.get(3);
 				final int zMin = slider.getCurrentMin();
 				final int zMax = slider.getCurrentMax();
+				final int zInc = slider.getIncrement();
 				slider = sliders.get(4);
 				final int fMin = slider.getCurrentMin();
 				final int fMax = slider.getCurrentMax();
+				final int fInc = slider.getIncrement();
 
 				@SuppressWarnings("unchecked")
 				Vector<Checkbox> checkboxes = gd.getCheckboxes();
@@ -96,7 +101,7 @@ public class SPIM_Opener implements PlugIn {
 					public void run() {
 long start = System.currentTimeMillis();
 						try {
-							exp.open(sample, tpMin, tpMax, region, angle, channel, zMin, zMax, fMin, fMax, yMin, yMax, xMin, xMax, xDir, yDir, zDir, virtual, projectionMethod, projectionDir).show();
+							exp.open(sample, tpMin, tpMax, tpInc, region, angle, channel, zMin, zMax, zInc, fMin, fMax, fInc, yMin, yMax, yInc, xMin, xMax, xInc, xDir, yDir, zDir, virtual, projectionMethod, projectionDir).show();
 long end = System.currentTimeMillis();
 System.out.println("needed " + (end - start) + " ms");
 							String command = "call(\"huisken.opener.SPIM_Opener.open\",\n";
