@@ -315,6 +315,7 @@ public class SPIMExperiment {
 		final int D = 5;
 		final int[] MIN = new int[] { xMin, yMin, fMin, zMin, tpMin };
 		final int[] MAX = new int[] { xMax, yMax, fMax, zMax, tpMax };
+		final int[] INC = new int[] { 1, 1, 1, zStep, 1};
 
 		int ws = MAX[xDir] - MIN[xDir] + 1;
 		int hs = MAX[yDir] - MIN[yDir] + 1;
@@ -325,7 +326,7 @@ public class SPIMExperiment {
 
 		if(xDir == X && yDir == Y) {
 			stack.setRange(w, h, MIN[xDir], MIN[yDir]);
-			for(int z = MIN[zDir]; z <= MAX[zDir]; z+=zStep) {
+			for(int z = MIN[zDir]; z <= MAX[zDir]; z+=INC[zDir]) {
 				if(IJ.escapePressed()) {
 					IJ.resetEscape();
 					break;
@@ -340,7 +341,7 @@ public class SPIMExperiment {
 			int[] ordered = new int[2];
 			ordered[0] = Math.min(xDir, yDir);
 			ordered[1] = Math.max(xDir, yDir);
-			for(int z = MIN[zDir]; z <= MAX[zDir]; z+=zStep) {
+			for(int z = MIN[zDir]; z <= MAX[zDir]; z+=INC[zDir]) {
 				if(IJ.escapePressed()) {
 					IJ.resetEscape();
 					break;
