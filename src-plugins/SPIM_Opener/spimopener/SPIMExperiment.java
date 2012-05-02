@@ -9,10 +9,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.RandomAccessFile;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 
 
 public class SPIMExperiment {
@@ -428,14 +426,6 @@ public class SPIMExperiment {
 		}
 
 		return new ShortProcessor(w, h, pixels, null);
-	}
-
-	private HashMap<String, RandomAccessFile> cache = new HashMap<String, RandomAccessFile>();
-
-	private final void closeAllFiles() throws IOException {
-		for(RandomAccessFile f : cache.values())
-			f.close();
-		cache.clear();
 	}
 
 	public static void saveRaw(ImageProcessor ip, String path) {
