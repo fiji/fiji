@@ -357,8 +357,8 @@ public class SPIMExperiment {
 		final int[] MAX = new int[] { xMax, yMax, fMax, zMax, tpMax };
 		final int[] INC = new int[] { xStep, yStep, fStep, zStep, tpStep};
 
-		int ws = MAX[xDir] - MIN[xDir] + 1;
-		int hs = MAX[yDir] - MIN[yDir] + 1;
+		int ws = (MAX[xDir] - MIN[xDir] + 1) / INC[xDir];
+		int hs = (MAX[yDir] - MIN[yDir] + 1) / INC[yDir];
 		SPIMStack stack = virtual ? new SPIMVirtualStack(ws, hs) : new SPIMRegularStack(ws, hs);
 
 		final int[] position = new int[D];
@@ -387,9 +387,7 @@ public class SPIMExperiment {
 					break;
 				}
 				position[zDir] = z;
-				ImageProcessor ip = new ShortProcessor(
-						(MAX[xDir] - MIN[xDir] + 1) / INC[xDir],
-						(MAX[yDir] - MIN[yDir] + 1) / INC[yDir]);
+				ImageProcessor ip = new ShortProcessor(ws, hs);
 
 				for(int i1 = MIN[ordered[1]]; i1 <= MAX[ordered[1]]; i1+=INC[ordered[1]]) {
 					position[ordered[1]] = i1;
