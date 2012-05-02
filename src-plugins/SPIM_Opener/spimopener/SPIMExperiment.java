@@ -298,6 +298,7 @@ public class SPIMExperiment {
 		return openNotProjected(sample, tpMin, tpMax, region, angle, channel, zMin, zMax, 1, fMin, fMax, yMin, yMax, xMin, xMax, xDir, yDir, zDir, virtual);
 
 	}
+
 	public ImagePlus openNotProjected(int sample,
 			int tpMin, int tpMax,
 			int region,
@@ -311,11 +312,26 @@ public class SPIMExperiment {
 			int yDir,
 			int zDir,
 			boolean virtual) {
+		return openNotProjected(sample, tpMin, tpMax, 1, region, angle, channel, zMin, zMax, zStep, fMin, fMax, 1, yMin, yMax, 1, xMin, xMax, 1, xDir, yDir, zDir, virtual);
+	}
 
+	public ImagePlus openNotProjected(int sample,
+			int tpMin, int tpMax, int tpStep,
+			int region,
+			int angle,
+			int channel,
+			int zMin, int zMax, int zStep,
+			int fMin, int fMax, int fStep,
+			int yMin, int yMax, int yStep,
+			int xMin, int xMax, int xStep,
+			int xDir,
+			int yDir,
+			int zDir,
+			boolean virtual) {
 		final int D = 5;
 		final int[] MIN = new int[] { xMin, yMin, fMin, zMin, tpMin };
 		final int[] MAX = new int[] { xMax, yMax, fMax, zMax, tpMax };
-		final int[] INC = new int[] { 1, 1, 1, zStep, 1};
+		final int[] INC = new int[] { xStep, yStep, fStep, zStep, tpStep};
 
 		int ws = MAX[xDir] - MIN[xDir] + 1;
 		int hs = MAX[yDir] - MIN[yDir] + 1;
@@ -324,7 +340,7 @@ public class SPIMExperiment {
 		final int[] position = new int[D];
 		System.arraycopy(MIN, 0, position, 0, D);
 
-		if(xDir == X && yDir == Y) {
+		if(xDir == X && yDir == Y && INC[xDir] == 1 && INC[yDir] == 1) {
 			stack.setRange(w, h, MIN[xDir], MIN[yDir]);
 			for(int z = MIN[zDir]; z <= MAX[zDir]; z+=INC[zDir]) {
 				if(IJ.escapePressed()) {
@@ -347,15 +363,19 @@ public class SPIMExperiment {
 					break;
 				}
 				position[zDir] = z;
-				ImageProcessor ip = new ShortProcessor(MAX[xDir] - MIN[xDir] + 1, MAX[yDir] - MIN[yDir] + 1);
+				ImageProcessor ip = new ShortProcessor(
+						(MAX[xDir] - MIN[xDir] + 1) / INC[xDir],
+						(MAX[yDir] - MIN[yDir] + 1) / INC[yDir]);
 
-				for(int i1 = MIN[ordered[1]]; i1 <= MAX[ordered[1]]; i1++) {
+				for(int i1 = MIN[ordered[1]]; i1 <= MAX[ordered[1]]; i1+=INC[ordered[1]]) {
 					position[ordered[1]] = i1;
 					String path = getPath(sample, position[T], region, angle, channel, position[Z], position[F]);
 					ImageProcessor org = openRaw(path, w, h);
-					for(int i2 = MIN[ordered[0]]; i2 <= MAX[ordered[0]]; i2++) {
+					for(int i2 = MIN[ordered[0]]; i2 <= MAX[ordered[0]]; i2+=INC[ordered[0]]) {
 						position[ordered[0]] = i2;
-						ip.set(position[xDir] - MIN[xDir], position[yDir] - MIN[yDir], org.get(position[X], position[Y]));
+						ip.set((position[xDir] - MIN[xDir]) / INC[xDir],
+							(position[yDir] - MIN[yDir]) / INC[yDir],
+							org.get(position[X], position[Y]));
 					}
 				}
 
