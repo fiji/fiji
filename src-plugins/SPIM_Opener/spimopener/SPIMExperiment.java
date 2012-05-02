@@ -15,11 +15,11 @@ import java.util.Arrays;
 
 public class SPIMExperiment {
 
-	public static final int X = 0;
-	public static final int Y = 1;
-	public static final int F = 2;
-	public static final int Z = 3;
-	public static final int T = 4;
+	public static final int X = 0; // x dimension
+	public static final int Y = 1; // y dimension
+	public static final int F = 2; // frame dimension
+	public static final int Z = 3; // z dimension
+	public static final int T = 4; // time dimension
 
 	public final int sampleStart, sampleEnd;
 	public final int timepointStart, timepointEnd;
@@ -55,7 +55,13 @@ public class SPIMExperiment {
 		regions             = filter(tmp.list(), "r\\d{3}?"); Arrays.sort(regions);    tmp = new File(tmp, regions[0]);
 		angles              = filter(tmp.list(), "a\\d{3}?"); Arrays.sort(angles);     tmp = new File(tmp, angles[0]);
 		channels            = filter(tmp.list(), "c\\d{3}?"); Arrays.sort(channels);   tmp = new File(tmp, channels[0]);
-		String[] planes     = filter(tmp.list(), "z\\d{4}?"); Arrays.sort(planes);     tmp = new File(tmp, planes[0]);
+		boolean zStack = false;
+		String[] planes     = filter(tmp.list(), "z\\d{4}?");
+		if(planes.length == 0) {
+			planes = filter(tmp.list(), "zstack");
+			zStack = true;
+		}
+		Arrays.sort(planes);     tmp = new File(tmp, planes[0]);
 		String[] frames     = tmp.list();                     Arrays.sort(frames);
 
 		sampleStart    = getMin(samples);
@@ -68,14 +74,24 @@ public class SPIMExperiment {
 		angleEnd       = getMax(angles);
 		channelStart   = getMin(channels);
 		channelEnd     = getMax(channels);
-		int zMin       = getMin(planes);
-		int zMax       = getMax(planes);
+		int zMin = 0, zMax = 0;
+		if(!zStack) {
+			zMin       = getMin(planes);
+			zMax       = getMax(planes);
+		}
 		int fMin       = getMin(frames);
 		int fMax       = getMax(frames);
 
+		// legacy
 		if(frames[0].startsWith("plane_")) {
 			pathFormatString = experimentFolder.getAbsolutePath() + File.separator +
 				"s%03d/t%05d/r%03d/a%03d/c%03d/z0000/plane_%010d.dat";
+			zMin = fMin;
+			zMax = fMax;
+			fMin = fMax = 0;
+		} else if(zStack) {
+			pathFormatString = experimentFolder.getAbsolutePath() + File.separator +
+				"s%03d/t%05d/r%03d/a%03d/c%03d/zstack/%010d.dat";
 			zMin = fMin;
 			zMax = fMax;
 			fMin = fMax = 0;
@@ -280,8 +296,8 @@ public class SPIMExperiment {
 			int zDir,
 			boolean virtual) {
 		return openNotProjected(sample, tpMin, tpMax, region, angle, channel, zMin, zMax, 1, fMin, fMax, yMin, yMax, xMin, xMax, xDir, yDir, zDir, virtual);
-	}
 
+	}
 	public ImagePlus openNotProjected(int sample,
 			int tpMin, int tpMax,
 			int region,
@@ -448,7 +464,7 @@ public class SPIMExperiment {
 	}
 
 	private static String[] filter(String[] in, String pattern) {
-		ArrayList<String> all = new ArrayList(in.length);
+		ArrayList<String> all = new ArrayList<String>(in.length);
 		for(String s : in)
 			if(s.matches(pattern))
 				all.add(s);
