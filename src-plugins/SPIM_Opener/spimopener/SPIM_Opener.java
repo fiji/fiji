@@ -1,17 +1,14 @@
 package spimopener;
 
-import ij.plugin.PlugIn;
-import ij.io.OpenDialog;
 import ij.IJ;
-
+import ij.io.OpenDialog;
+import ij.plugin.PlugIn;
 import ij.plugin.frame.Recorder;
 
 import java.awt.Checkbox;
 import java.awt.Choice;
-
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-
 import java.util.List;
 import java.util.Vector;
 
@@ -19,6 +16,7 @@ import java.util.Vector;
 
 public class SPIM_Opener implements PlugIn {
 
+	@Override
 	public void run(String args) {
 		OpenDialog od = new OpenDialog("Open experiment xml", "");
 		final String filename = od.getFileName();
@@ -58,17 +56,19 @@ public class SPIM_Opener implements PlugIn {
 		gd.addCheckbox("Use Virtual Stack", true);
 		gd.setModal(false);
 		gd.setActionListener(new ActionListener() {
+			@Override
 			public void actionPerformed(ActionEvent e) {
-				Vector choices = gd.getChoices();
-				final int sample           = Integer.parseInt(((Choice)choices.get(0)).getSelectedItem().substring(1));
-				final int region           = Integer.parseInt(((Choice)choices.get(1)).getSelectedItem().substring(1));
-				final int angle            = Integer.parseInt(((Choice)choices.get(2)).getSelectedItem().substring(1));
-				final int channel          = Integer.parseInt(((Choice)choices.get(3)).getSelectedItem().substring(1));
-				final int xDir             = ((Choice)choices.get(4)).getSelectedIndex();
-				final int yDir             = ((Choice)choices.get(5)).getSelectedIndex();
-				final int zDir             = ((Choice)choices.get(6)).getSelectedIndex();
-				final int projectionMethod = ((Choice)choices.get(7)).getSelectedIndex();
-				final int projectionDir    = ((Choice)choices.get(8)).getSelectedIndex();
+				@SuppressWarnings("unchecked")
+				Vector<Choice> choices = gd.getChoices();
+				final int sample           = Integer.parseInt(choices.get(0).getSelectedItem().substring(1));
+				final int region           = Integer.parseInt(choices.get(1).getSelectedItem().substring(1));
+				final int angle            = Integer.parseInt(choices.get(2).getSelectedItem().substring(1));
+				final int channel          = Integer.parseInt(choices.get(3).getSelectedItem().substring(1));
+				final int xDir             = choices.get(4).getSelectedIndex();
+				final int yDir             = choices.get(5).getSelectedIndex();
+				final int zDir             = choices.get(6).getSelectedIndex();
+				final int projectionMethod = choices.get(7).getSelectedIndex();
+				final int projectionDir    = choices.get(8).getSelectedIndex();
 
 				List<DoubleSlider> sliders = gd.getDoubleSliders();
 				DoubleSlider slider = sliders.get(0);
@@ -87,12 +87,14 @@ public class SPIM_Opener implements PlugIn {
 				final int fMin = slider.getCurrentMin();
 				final int fMax = slider.getCurrentMax();
 
-				Vector checkboxes = gd.getCheckboxes();
-				final boolean virtual = ((Checkbox)checkboxes.get(0)).getState();
+				@SuppressWarnings("unchecked")
+				Vector<Checkbox> checkboxes = gd.getCheckboxes();
+				final boolean virtual = checkboxes.get(0).getState();
 
 				new Thread() {
+					@Override
 					public void run() {
-long start = System.currentTimeMillis();						
+long start = System.currentTimeMillis();
 						try {
 							exp.open(sample, tpMin, tpMax, region, angle, channel, zMin, zMax, fMin, fMax, yMin, yMax, xMin, xMax, xDir, yDir, zDir, virtual, projectionMethod, projectionDir).show();
 long end = System.currentTimeMillis();
@@ -119,7 +121,7 @@ System.out.println("needed " + (end - start) + " ms");
 							command += "\t\"" + virtual              + "\"); // virtual?";
 							command += "\t\"" + projectionMethod     + "\",  // projection method\n";
 							command += "\t\"" + projectionDir        + "\",  // projection axis\n";
-	
+
 							if(Recorder.record)
 								Recorder.recordString(command);
 						} catch(Exception e) {
@@ -147,7 +149,7 @@ System.out.println("needed " + (end - start) + " ms");
 				String virtual,
 				String projectionMethod,
 				String projectionDir) {
-				
+
 		open(xmlpath,
 			Integer.parseInt(sample),
 			Integer.parseInt(tpMin),
