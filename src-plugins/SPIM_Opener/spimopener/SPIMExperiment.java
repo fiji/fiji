@@ -187,9 +187,27 @@ public class SPIMExperiment {
 				boolean virtual,
 				int projectionMethod,
 				int projectionDir) {
+		return open(sample, tpMin, tpMax, 1, region, angle, channel, zMin, zMax, 1, fMin, fMax, 1, yMin, yMax, 1, xMin, xMax, 1, xDir, yDir, zDir, virtual, projectionMethod, projectionDir);
+	}
+
+	public ImagePlus open(int sample,
+				int tpMin, int tpMax, int tpStep,
+				int region,
+				int angle,
+				int channel,
+				int zMin, int zMax, int zStep,
+				int fMin, int fMax, int fStep,
+				int yMin, int yMax, int yStep,
+				int xMin, int xMax, int xStep,
+				int xDir,
+				int yDir,
+				int zDir,
+				boolean virtual,
+				int projectionMethod,
+				int projectionDir) {
 
 		if(projectionMethod == NO_PROJECTION)
-			return openNotProjected(sample, tpMin, tpMax, region, angle, channel, zMin, zMax, fMin, fMax, yMin, yMax, xMin, xMax, xDir, yDir, zDir, virtual);
+			return openNotProjected(sample, tpMin, tpMax, tpStep, region, angle, channel, zMin, zMax, zStep, fMin, fMax, fStep, yMin, yMax, yStep, xMin, xMax, xStep, xDir, yDir, zDir, virtual);
 
 		Projector projector = null;
 		switch(projectionMethod) {
@@ -202,6 +220,7 @@ public class SPIMExperiment {
 		final int D = 5;
 		final int[] MIN = new int[] { xMin, yMin, fMin, zMin, tpMin };
 		final int[] MAX = new int[] { xMax, yMax, fMax, zMax, tpMax };
+		final int[] INC = new int[] { xStep, yStep, fStep, zStep, tpStep };
 
 		// check that projection method is none of xdir, ydir, zdir and max-min+1 > 1
 		if(projectionDir == xDir)
@@ -210,25 +229,25 @@ public class SPIMExperiment {
 			throw new IllegalArgumentException("The projection direction cannot be the same as the dimension displayed in y direction");
 		if(projectionDir == zDir)
 			throw new IllegalArgumentException("The projection direction cannot be the same as the dimension displayed in z direction");
-		if(MAX[projectionDir] - MIN[projectionDir] + 1 <= 1)
-			return openNotProjected(sample, tpMin, tpMax, region, angle, channel, zMin, zMax, fMin, fMax, yMin, yMax, xMin, xMax, xDir, yDir, zDir, virtual);
+		if((MAX[projectionDir] - MIN[projectionDir] + 1) / INC[projectionDir] <= 1)
+			return openNotProjected(sample, tpMin, tpMax, tpStep, region, angle, channel, zMin, zMax, zStep, fMin, fMax, fStep, yMin, yMax, yStep, xMin, xMax, xStep, xDir, yDir, zDir, virtual);
 
-		int ws = MAX[xDir] - MIN[xDir] + 1;
-		int hs = MAX[yDir] - MIN[yDir] + 1;
+		int ws = (MAX[xDir] - MIN[xDir] + 1) / INC[xDir];
+		int hs = (MAX[yDir] - MIN[yDir] + 1) / INC[yDir];
 		SPIMStack stack = virtual ? new SPIMVirtualStack(ws, hs) : new SPIMRegularStack(ws, hs);
 
 		final int[] position = new int[D];
 		System.arraycopy(MIN, 0, position, 0, D);
 
-		if(xDir == X && yDir == Y) {
-			for(int z = MIN[zDir]; z <= MAX[zDir]; z++) {
+		if(xDir == X && yDir == Y && INC[xDir] == 1 && INC[yDir] == 1) {
+			for(int z = MIN[zDir]; z <= MAX[zDir]; z+=INC[zDir]) {
 				position[zDir] = z;
 				if(IJ.escapePressed()) {
 					IJ.resetEscape();
 					break;
 				}
 				projector.reset();
-				for(int proj = MIN[projectionDir]; proj <= MAX[projectionDir]; proj++) {
+				for(int proj = MIN[projectionDir]; proj <= MAX[projectionDir]; proj+=INC[projectionDir]) {
 					position[projectionDir] = proj;
 					String path = getPath(sample, position[T], region, angle, channel, position[Z], position[F]);
 					ImageProcessor ip = openRaw(path, w, h, MIN[xDir], MAX[xDir], MIN[yDir], MAX[yDir]);
@@ -242,25 +261,27 @@ public class SPIMExperiment {
 			int[] ordered = new int[2];
 			ordered[0] = Math.min(xDir, yDir);
 			ordered[1] = Math.max(xDir, yDir);
-			for(int z = MIN[zDir]; z <= MAX[zDir]; z++) {
+			for(int z = MIN[zDir]; z <= MAX[zDir]; z+=INC[zDir]) {
 				position[zDir] = z;
 				if(IJ.escapePressed()) {
 					IJ.resetEscape();
 					break;
 				}
 				projector.reset();
-				for(int proj = MIN[projectionDir]; proj <= MAX[projectionDir]; proj++) {
+				for(int proj = MIN[projectionDir]; proj <= MAX[projectionDir]; proj+=INC[projectionDir]) {
 					position[projectionDir] = proj;
 
-					ImageProcessor ip = new ShortProcessor(MAX[xDir] - MIN[xDir] + 1, MAX[yDir] - MIN[yDir] + 1);
+					ImageProcessor ip = new ShortProcessor(ws, hs);
 
-					for(int i1 = MIN[ordered[1]]; i1 <= MAX[ordered[1]]; i1++) {
+					for(int i1 = MIN[ordered[1]]; i1 <= MAX[ordered[1]]; i1+=INC[ordered[1]]) {
 						position[ordered[1]] = i1;
 						String path = getPath(sample, position[T], region, angle, channel, position[Z], position[F]);
 						ImageProcessor org = openRaw(path, w, h);
-						for(int i2 = MIN[ordered[0]]; i2 <= MAX[ordered[0]]; i2++) {
+						for(int i2 = MIN[ordered[0]]; i2 <= MAX[ordered[0]]; i2+=INC[ordered[0]]) {
 							position[ordered[0]] = i2;
-							ip.set(position[xDir] - MIN[xDir], position[yDir] - MIN[yDir], org.get(position[X], position[Y]));
+							ip.set((position[xDir] - MIN[xDir]) / INC[xDir],
+								(position[yDir] - MIN[yDir]) / INC[yDir],
+								org.get(position[X], position[Y]));
 						}
 					}
 					projector.add(ip);
@@ -274,6 +295,9 @@ public class SPIMExperiment {
 		IJ.showProgress(1);
 
 		double[] pdiffs = new double[] { pw, ph, 1, pd, 1 };
+		for(int i = 0; i < pdiffs.length; i++)
+			pdiffs[i] *= INC[i];
+
 		ImagePlus ret = new ImagePlus(experimentName, stack);
 
 		ret.getCalibration().pixelWidth = pdiffs[xDir];
@@ -387,6 +411,9 @@ public class SPIMExperiment {
 		IJ.showProgress(1);
 
 		double[] pdiffs = new double[] { pw, ph, 1, pd, 1 };
+		for(int i = 0; i < pdiffs.length; i++)
+			pdiffs[i] *= INC[i];
+
 		ImagePlus ret = new ImagePlus(experimentName, stack);
 
 		ret.getCalibration().pixelWidth = pdiffs[xDir];
