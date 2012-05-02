@@ -2,17 +2,20 @@ package spimopener;
 
 import java.util.HashMap;
 
-import javax.xml.parsers.*;
-import org.w3c.dom.*;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 
 public class XMLReader {
-	private final String xmlfile;
 
 	public final int width, height, depth;
-	public final double pw, ph, pd;
+	public final double pw, ph, pd, framerate;
 
 	public XMLReader(String xmlfile) throws Exception {
-		this.xmlfile = xmlfile;
 
 		//get the factory
 		DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
@@ -43,6 +46,7 @@ public class XMLReader {
 		this.pw     = pixSize / magObj;
 		this.ph     = this.pw;
 		this.pd     = Double.parseDouble(data.get("dZ"));
+		this.framerate = Double.parseDouble(data.get("FrameRate"));
 	}
 
 	public static void main(String[] args) throws Exception {
