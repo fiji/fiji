@@ -107,7 +107,7 @@ void writePOM(String target, Rule rule) {
 		+ "\t<parent>\n"
 		+ "\t\t<groupId>fiji</groupId>\n"
 		+ "\t\t<artifactId>pom-fiji-plugins</artifactId>\n"
-		+ "\t\t<version>2.0-SNAPSHOT</version>\n"
+		+ "\t\t<version>2.0.0-SNAPSHOT</version>\n"
 		+ "\t</parent>\n"
 		+ "\n"
 		+ "\t<artifactId>" + getBaseName(target) + "</artifactId>\n"
