@@ -12,6 +12,8 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
+import java.util.Stack;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -255,12 +257,25 @@ void editFakefile(String target, String stripPath) {
 	writeAndAddFile(fakefile, new File(fijiDir, "Fakefile"));
 }
 
+rules = new LinkedHashSet();
+void addRule(Rule rule) {
+	if (rules.contains(rule))
+		return;
+	// Beanshell cannot handle MultiIterable...
+	iter = rule.getDependencies().iterator();
+	while (iter.hasNext()) {
+		Rule dependency = iter.next();
+		addRule(dependency);
+	}
+	rules.add(rule);
+}
+
 boolean hasNonMavenDependency(String target) {
 	for (String dependency : rule.getJarDependencies()) {
 		if (dependency.startsWith(fijiDir.getAbsolutePath()))
 			dependency = dependency.substring(fijiDir.getAbsolutePath().length() + 1);
 		Rule rule = parser.getRule(dependency);
-		if (rule != null && rule.getClass().getName().endsWith(".CompileJar")) {
+		if (rule != null && rule.getClass().getName().endsWith(".CompileJar") && !rules.contains(rule)) {
 			print("Target '" + target + "' has a non-Maven dependency '" + dependency + "'");
 			return true;
 		}
@@ -272,19 +287,23 @@ fake = new Fake();
 parser = fake.parse(new FileInputStream(new File(fijiDir, "Fakefile")), fijiDir);
 parser.parseRules(new ArrayList());
 
-targets = new ArrayList();
-for (i = 0; i < bsh.args.length; i++)
-	targets.add(bsh.args[i]);
-
 errors = 0;
 message = "";
-for (String target : targets) {
+
+// topo-sort
+for (i = 0; i < bsh.args.length; i++) {
+	target = bsh.args[i];
 	rule = parser.getRule(target);
 	if (rule == null) {
 		print("No rule found for " + target);
 		errors++;
 		continue;
 	}
+	addRule(rule);
+}
+
+for (Rule rule : rules) {
+	target = rule.target;
 	if (!rule.getClass().getName().endsWith(".CompileJar")) {
 		print("Target '" + target + "' is not a .jar rule");
 		errors++;
