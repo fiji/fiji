@@ -265,7 +265,7 @@ void editFakefile(String target, String stripPath) {
 
 rules = new LinkedHashSet();
 void addRule(Rule rule) {
-	if (rules.contains(rule))
+	if (rule == null || rules.contains(rule))
 		return;
 	// Beanshell cannot handle MultiIterable...
 	iter = rule.getDependencies().iterator();
@@ -273,7 +273,8 @@ void addRule(Rule rule) {
 		Rule dependency = iter.next();
 		addRule(dependency);
 	}
-	rules.add(rule);
+	if (rule.getClass().getName().endsWith(".CompileJar"))
+		rules.add(rule);
 }
 
 boolean hasNonMavenDependency(Rule rule) {
@@ -282,7 +283,7 @@ boolean hasNonMavenDependency(Rule rule) {
 			dependency = dependency.substring(fijiDir.getAbsolutePath().length() + 1);
 		Rule rule2 = parser.getRule(dependency);
 		if (rule2 != null && rule2.getClass().getName().endsWith(".CompileJar") && !rules.contains(rule2)) {
-			print("Target '" + rule.target + "' has a non-Maven dependency '" + dependency + "'");
+			print("Target '" + rule.target + "' has a non-Maven dependency '" + dependency + "' (" + rule2.getClass() + ")");
 			return true;
 		}
 	}
@@ -295,6 +296,12 @@ parser.parseRules(new ArrayList());
 
 errors = 0;
 message = "";
+
+if (bsh.args.length == 1 && bsh.args[0].equals("--all")) {
+	bsh.args = new String[0];
+	for (String target : parser.getVariable("PLUGIN_TARGETS").split("[ \t]+"))
+		addRule(parser.getRule(target));
+}
 
 // topo-sort
 for (i = 0; i < bsh.args.length; i++) {
