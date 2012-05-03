@@ -195,13 +195,13 @@ void fsckEclipse(String stripPath) {
 	factoryPath = "<factorypath>\n"
 		+ "\t<factorypathentry kind=\"VARJAR\" id=\"M2_REPO/net/java/sezpoz/sezpoz/1.9/sezpoz-1.9.jar\" enabled=\"true\" runInBatchMode=\"true\"/>\n"
 		+ "</factorypath>";
-	writeAndAddFile(factoryPath, new File(fijiDir, rule.getStripPath() + ".factorypath"));
+	writeAndAddFile(factoryPath, new File(fijiDir, stripPath + ".factorypath"));
 	settings = "#Sun Jan 15 20:38:51 CET 2010\n"
 		+ "eclipse.preferences.version=1\n"
 		+ "org.eclipse.jdt.apt.aptEnabled=true\n"
 		+ "org.eclipse.jdt.apt.genSrcDir=target/classes\n"
 		+ "org.eclipse.jdt.apt.reconcileEnabled=false\n";
-	writeAndAddFile(settings, new File(fijiDir, rule.getStripPath() + ".settings/org.eclipse.jdt.apt.core.prefs"));
+	writeAndAddFile(settings, new File(fijiDir, stripPath + ".settings/org.eclipse.jdt.apt.core.prefs"));
 }
 
 boolean handleMainClass(Rule rule, String stripPath) {
@@ -276,13 +276,13 @@ void addRule(Rule rule) {
 	rules.add(rule);
 }
 
-boolean hasNonMavenDependency(String target) {
+boolean hasNonMavenDependency(Rule rule) {
 	for (String dependency : rule.getJarDependencies()) {
 		if (dependency.startsWith(fijiDir.getAbsolutePath()))
 			dependency = dependency.substring(fijiDir.getAbsolutePath().length() + 1);
-		Rule rule = parser.getRule(dependency);
-		if (rule != null && rule.getClass().getName().endsWith(".CompileJar") && !rules.contains(rule)) {
-			print("Target '" + target + "' has a non-Maven dependency '" + dependency + "'");
+		Rule rule2 = parser.getRule(dependency);
+		if (rule2 != null && rule2.getClass().getName().endsWith(".CompileJar") && !rules.contains(rule2)) {
+			print("Target '" + rule.target + "' has a non-Maven dependency '" + dependency + "'");
 			return true;
 		}
 	}
@@ -315,7 +315,7 @@ for (Rule rule : rules) {
 		errors++;
 		continue;
 	}
-	if (hasNonMavenDependency(target)) {
+	if (hasNonMavenDependency(rule)) {
 		errors++;
 		continue;
 	}
