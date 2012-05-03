@@ -305,7 +305,7 @@ for (i = 0; i < bsh.args.length; i++) {
 for (Rule rule : rules) {
 	target = rule.target;
 	if (!rule.getClass().getName().endsWith(".CompileJar")) {
-		print("Target '" + target + "' is not a .jar rule");
+		print("Target '" + target + "' is not a .jar rule (" + rule.getClass() + ")");
 		errors++;
 		continue;
 	}
