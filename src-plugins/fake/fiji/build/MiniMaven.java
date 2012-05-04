@@ -546,7 +546,7 @@ public class MiniMaven {
 		}
 
 		public String getJarName() {
-			return coordinate.artifactId + '-' + coordinate.version + ".jar";
+			return coordinate.getJarName();
 		}
 
 		public File getTarget() {
