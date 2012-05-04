@@ -154,7 +154,7 @@ public class MiniMaven {
 			pom.target = new File(directory, fileName);
 		}
 
-		String key = pom.expand(pom.coordinate.groupId) + ">" + pom.expand(pom.coordinate.artifactId);
+		String key = pom.expand(pom.coordinate).getKey();
 		if (!localPOMCache.containsKey(key))
 			localPOMCache.put(key, pom);
 
@@ -177,7 +177,7 @@ public class MiniMaven {
 		else if (dependency.artifactId.equals("jfreechart"))
 			pom.dependencies.add(new Coordinate("jfree", "jcommon", "1.0.16"));
 
-		String key = dependency.groupId + ">" + dependency.artifactId;
+		String key = dependency.getKey();
 		if (localPOMCache.containsKey(key))
 			err.println("Warning: " + target + " overrides " + localPOMCache.get(key));
 		localPOMCache.put(key, pom);
@@ -250,6 +250,10 @@ public class MiniMaven {
 				+ artifactId + "-" + version
 				+ (withClassifier && classifier != null ? "-" + classifier : "")
 				+ (fileExtension != null ? "." + fileExtension : "");
+		}
+
+		public String getKey() {
+			return groupId + ">" + artifactId + (classifier == null ? "" : ">" + classifier);
 		}
 
 		@Override
@@ -737,7 +741,7 @@ public class MiniMaven {
 			if (dependency.groupId == null && dependency.artifactId.equals("jdom"))
 				dependency.groupId = "jdom";
 			// fall back to Fiji's modules/, $HOME/.m2/repository/ and Fiji's jars/ and plugins/ directories
-			String key = dependency.groupId + ">" + dependency.artifactId;
+			String key = dependency.getKey();
 			if (localPOMCache.containsKey(key)) {
 				POM result = localPOMCache.get(key); // may be null
 				if (result == null || dependency.version == null || compareVersion(dependency.version, result.coordinate.version) <= 0)
@@ -844,7 +848,7 @@ public class MiniMaven {
 					parse(file, null);
 				}
 			}
-			String key = dependency.groupId + ">" + dependency.artifactId;
+			String key = dependency.getKey();
 			return localPOMCache.get(key);
 		}
 
@@ -878,7 +882,7 @@ public class MiniMaven {
 					e.printStackTrace(err);
 					err.println("Could not download " + dependency.artifactId + ": " + e.getMessage());
 				}
-				String key = dependency.groupId + ">" + dependency.artifactId;
+				String key = dependency.getKey();
 				localPOMCache.put(key, null);
 				return false;
 			}
@@ -1062,7 +1066,7 @@ public class MiniMaven {
 		}
 
 		public void append(StringBuilder builder, String indent) {
-			builder.append(indent + coordinate.groupId + ">" + coordinate.artifactId + "\n");
+			builder.append(indent + coordinate.getKey() + "\n");
 			if (children != null)
 				for (POM child : getChildren())
 					if (child == null)
