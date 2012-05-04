@@ -483,6 +483,7 @@ CLASSPATH(plugins/CorrectBleach_.jar)=jars/ij.jar
 
 jars/VIB-lib.jar <- src-plugins/VIB-lib/pom.xml
 jars/pal-optimization.jar <- src-plugins/pal-optimization/pom.xml
+jars/Jama.jar <- src-plugins/Jama/pom.xml
 
 # pre-Java5 generics ;-)
 

@@ -23,6 +23,7 @@
 	<modules>
 		<module>VIB-lib</module>
 		<module>pal-optimization</module>
+		<module>Jama</module>
 	</modules>
 
 	<properties>
