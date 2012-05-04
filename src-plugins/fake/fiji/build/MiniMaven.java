@@ -204,6 +204,7 @@ public class MiniMaven {
 	protected static class Coordinate {
 		protected String groupId, artifactId, version, systemPath, classifier, scope;
 		protected boolean optional;
+		private String snapshotVersion;
 
 		public Coordinate() {}
 
@@ -247,13 +248,17 @@ public class MiniMaven {
 
 		public String getFileName(boolean withProjectPrefix, boolean withClassifier, String fileExtension) {
 			return (withProjectPrefix ? groupId + "/" : "")
-				+ artifactId + "-" + version
+				+ artifactId + "-" + (snapshotVersion != null ? snapshotVersion : version)
 				+ (withClassifier && classifier != null ? "-" + classifier : "")
 				+ (fileExtension != null ? "." + fileExtension : "");
 		}
 
 		public String getKey() {
 			return groupId + ">" + artifactId + (classifier == null ? "" : ">" + classifier);
+		}
+
+		public void setSnapshotVersion(String version) {
+			snapshotVersion = version;
 		}
 
 		@Override
@@ -791,7 +796,7 @@ public class MiniMaven {
 				if (!maybeDownloadAutomatically(dependency, quiet, downloadAutomatically))
 					return null;
 				if (dependency.version.endsWith("-SNAPSHOT"))
-					dependency.version = parseSnapshotVersion(new File(path, "maven-metadata-snapshot.xml"));
+					dependency.setSnapshotVersion(parseSnapshotVersion(new File(path, "maven-metadata-snapshot.xml")));
 			} catch (FileNotFoundException e) { /* ignore */ }
 			else {
 				File file = findInFijiDirectories(dependency);
@@ -1088,9 +1093,10 @@ public class MiniMaven {
 			String message = quiet ? null : "Checking for new snapshot of " + dependency.artifactId;
 			String metadataURL = repositoryURL + path + "maven-metadata.xml";
 			downloadAndVerify(metadataURL, directory, snapshotMetaData.getName(), message);
-			dependency.version = parseSnapshotVersion(snapshotMetaData);
-			if (dependency.version == null)
+			String snapshotVersion = parseSnapshotVersion(snapshotMetaData);
+			if (snapshotVersion == null)
 				throw new IOException("No version found in " + metadataURL);
+			dependency.setSnapshotVersion(snapshotVersion);
 			if (new File(directory, dependency.getJarName()).exists() &&
 					new File(directory, dependency.getPOMName()).exists())
 				return;
