@@ -63,3 +63,5 @@ download x86_64-MacOSX Contents/MacOS/ImageJ-macosx
 
 download i386-Linux ImageJ-linux32
 download amd64-Linux ImageJ-linux64
+
+rm -rf $tmpdir
