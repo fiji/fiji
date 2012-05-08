@@ -5,6 +5,13 @@
 set -e
 cd "$(dirname "$0")/.."
 
+debugoption=
+case "$1" in
+-g|-d|--debug)
+	debugoption=-Ddebug.option=-g
+	;;
+esac
+
 exe=
 mvnopts=
 macprefix=
@@ -58,7 +65,7 @@ artifactId=ij-launcher
 version=$(sed -n 's-.*<version>\([^${}]*\)</version>.*-\1-p' < $path/pom.xml)
 
 IJDIR="$(pwd)"
-eval ./bin/maven.sh $mvnopts -f $path/pom.xml &&
+eval ./bin/maven.sh $mvnopts $debugoption -f $path/pom.xml &&
 cp $path/target/nar/$artifactId-$version-$arch-$os-gcc-executable/bin/$arch-$os-gcc/$artifactId ${macprefix}ImageJ-$platform$exe &&
 
 cp ${macprefix}ImageJ-$platform$exe ${macprefix}fiji-$platform$exe &&
