@@ -38,7 +38,8 @@ Linux)
 		platform=linux64
 		arch=amd64
 		;;
-	*)	platform=linux32
+	*)
+		platform=linux
 		arch=i386
 		;;
 	esac
