@@ -14,7 +14,19 @@
 	<artifactId>VIB-lib</artifactId>
 
 	<name>jars/VIB-lib.jar</name>
-	<description></description>
+	<description>Support library for all the VIB stuff.</description>
+
+	<developers>
+		<developer>
+			<name>Johannes Schindelin</name>
+		</developer>
+		<developer>
+			<name>Benjamin Schmid</name>
+		</developer>
+		<developer>
+			<name>Mark Longair</name>
+		</developer>
+	</developers>
 
 	<dependencies>
 		<dependency>
