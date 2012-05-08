@@ -47,6 +47,7 @@ download () {
 	exe=; case "$2" in *.exe) exe=.exe;; esac
 	unzip -p $tmpdir/$1.zip bin/$1-gcc/ij-launcher$exe > $2
 	chmod a+x $2
+	cp $2 $(echo "$2" | sed 's/ImageJ-/fiji-/')
 }
 
 curl $baseurl/$basename.nar > jars/ij-launcher.jar
