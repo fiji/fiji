@@ -3,6 +3,7 @@
 FIJIROOT="$(dirname "$0")/.."
 FIJI="$FIJIROOT"/ImageJ
 RETRO="$FIJIROOT"/retro/retrotranslator-transformer-1.2.7.jar
+TARGETVERSION=$TARGETVERSION${TARGETVERSION:-1.3}
 
 die () {
 	echo "$*" >&2
@@ -27,13 +28,13 @@ do
 	case "$f" in
 	*.jar)
 		"$FIJI" --jar "$RETRO" \
-			-srcjar "$f" -destjar "$f".new -target 1.5 &&
+			-srcjar "$f" -destjar "$f".new -target $TARGETVERSION &&
 		mv -f "$f".new "$f"
 		;;
 	*.class)
 		mv "$f" "$TMPDIR" &&
 		"$FIJI" --jar "$RETRO" \
-			-srcdir "$TMPDIR" -destdir $(dirname "$f") -target 1.5
+			-srcdir "$TMPDIR" -destdir $(dirname "$f") -target $TARGETVERSION
 		;;
 	*)
 		die "Unknown type: $f"

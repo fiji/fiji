@@ -108,6 +108,25 @@ f)
 	;;
 esac
 
+get_first () {
+	echo "$1"
+}
+
+case "$main_class,$(get_first $ij_options)" in
+fiji.Main,*.py)
+	main_class=org.python.util.jython
+	;;
+fiji.Main,*.rb)
+	main_class=org.jruby.Main
+	;;
+fiji.Main,*.clj)
+	main_class=clojure.lang.Repl
+	;;
+fiji.Main,*.bsh)
+	main_class=bsh.Interpreter
+	;;
+esac
+
 case "$main_class" in
 fiji.Main|ij.ImageJ)
 	ij_options="-port7 $ij_options"
@@ -147,7 +166,15 @@ case "$EXECUTABLE_NAME" in
 	;;
 esac
 
-eval java -Dpython.cachedir.skip=true \
+EXT_OPTION=
+case "$(uname -s)" in
+Darwin)
+	EXT_OPTION=-Djava.ext.dirs="$FIJI_ROOT_SQ"/java/macosx-java3d/Home/lib/ext:/Library/Java/Extensions:/System/Library/Java/Extensions:/System/Library/Frameworks/JavaVM.framework/Home/lib/ext
+	;;
+esac
+
+eval java $EXT_OPTION \
+	-Dpython.cachedir.skip=true \
 	-Xincgc -XX:PermSize=128m \
 	-Dplugins.dir=$FIJI_ROOT_SQ \
 	-Djava.class.path="`sq_quote $CLASSPATH`" \
