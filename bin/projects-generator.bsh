@@ -1,5 +1,5 @@
 #!/bin/sh
-// 2>&1 | :; exec "$(dirname "$0")"/../ImageJ "$0" "$@" # exec with fiji
+// 2>&1 | :; exec "$(dirname "$0")"/ImageJ.sh "$0" "$@" # exec with fiji
 
 import fiji.build.Fake;
 import fiji.build.Parser;

@@ -1396,7 +1396,7 @@ public class MiniMaven {
 
 	public static void main(String[] args) throws Exception {
 		ensureIJDirIsSet();
-		MiniMaven miniMaven = new MiniMaven(null, System.err, false);
+		MiniMaven miniMaven = new MiniMaven(null, System.err, "true".equals(getSystemProperty("minimaven.verbose", "false")));
 		POM root = miniMaven.parse(new File("pom.xml"), null);
 		String command = args.length == 0 ? "compile-and-run" : args[0];
 		String artifactId = getSystemProperty("artifactId", root.coordinate.artifactId.equals("pom-ij-base") ? "ij-app" : root.coordinate.artifactId);

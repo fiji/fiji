@@ -1,5 +1,5 @@
 #!/bin/sh
-// 2>&1 | :; exec "$(dirname "$0")"/../ImageJ --bsh "$0" "$@" # exec with fiji */
+// 2>&1 | :; exec "$(dirname "$0")"/ImageJ.sh --bsh "$0" "$@" # exec with fiji */
 
 if (bsh.args.length != 1) {
 	System.err.println("Usage: " + this.interpreter.getSourceFileInfo()

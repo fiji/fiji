@@ -1,5 +1,15 @@
 #!/bin/sh
 
+# This script is the entry point for the Fiji Build
+#
+# Call it without parameters to build everything or
+# with the filenames of the .jar files to be built
+
+set -a
+CWD="$(dirname "$0")" || {
+	echo "Huh? Cannot cd to $(dirname "$0")" >&2
+	exit 1
+}
 
 dirname () {
 	case "$1" in
@@ -21,17 +31,59 @@ look_for_tools_jar () {
 		test -d "$d" || continue
 		for j in java default-java
 		do
-			test -f "$d/$java/lib/tools.jar" || continue
-			export TOOLS_JAR="$d/$java/lib/tools.jar"
+			test -f "$d/$j/lib/tools.jar" || continue
+			export TOOLS_JAR="$d/$j/lib/tools.jar"
 			return
 		done
 	done
 }
 
-CWD="$(dirname "$0")"
+get_java_home () {
+	if test -d "$JAVA_HOME"
+	then
+		echo "$JAVA_HOME"
+	else
+		if test -n "$java_submodule" && test -d "$CWD/java/$java_submodule"
+		then
+			echo "$CWD/java/$java_submodule/$(ls -t "$CWD/java/$java_submodule" | head -n 1)/jre"
+		fi
+	fi
+}
 
+need_to_build_fake () {
+	(cd "$CWD" &&
+	 test -f jars/fake.jar || {
+		echo YesPlease
+		return
+	 }
+	 for source in $(find src-plugins/fake/ -name \*.java)
+	 do
+		test "$source" -nt jars/fake.jar && {
+			echo YesPlease
+			return
+		}
+	 done)
+	return
+}
+
+ensure_fake_is_built () {
+	# test whether we need to build it
+	test -z "$(need_to_build_fake)" && return
+
+	(cd "$CWD" &&
+	 : blow previous builds away
+	 rm -rf build/jars/fake/ &&
+	 mkdir -p build/jars/fake/ &&
+	 : compile classes
+	 javac -source 1.5 -target 1.5 -classpath precompiled/javac.jar -d build/jars/fake/ $(find src-plugins/fake/ -name \*.java) &&
+	 : compile .jar using Fiji Build
+	 java -classpath build/jars/fake/"$PATHSEP"precompiled/javac.jar fiji.build.Fake jars/fake.jar-rebuild ImageJ)
+}
+
+PATHSEP=:
 case "$(uname -s)" in
 Darwin)
+	JAVA_HOME=/System/Library/Frameworks/JavaVM.framework/Home
 	java_submodule=macosx-java3d
 	case "$(uname -r)" in
 	8.*) platform=tiger;;
@@ -42,14 +94,16 @@ Linux)
 	x86_64)
 		platform=linux64
 		java_submodule=linux-amd64
-		look_for_tools_jar /usr/lib/jvm
+		look_for_tools_jar /usr/lib64/jvm /usr/lib/jvm
 		;;
 	*)	platform=linux32
 		java_submodule=linux
-		look_for_tools_jar /usr/lib64/jvm
+		look_for_tools_jar /usr/lib/jvm
 		;;
 	esac; exe=;;
 MINGW*|CYGWIN*)
+	CWD="$(cd "$CWD" && pwd)"
+	PATHSEP=\;
 	case "$PROCESSOR_ARCHITEW6432" in
 	'') platform=win32; java_submodule=$platform;;
 	*) platform=win64; java_submodule=$platform;;
@@ -73,10 +127,6 @@ FreeBSD)
 	fi;;
 *)
 	platform=
-	# copy and use bin/ImageJ-other.sh
-	test -f "$CWD/ImageJ" &&
-	test "$CWD/bin/ImageJ" -nt "$CWD/bin/ImageJ-other.sh" ||
-	cp "$CWD/bin/ImageJ-other.sh" "$CWD/ImageJ"
 	TOOLS_JAR="$(ls -t /usr/jdk*/lib/tools.jar \
 		/usr/local/jdk*/lib/tools.jar 2> /dev/null |
 		head -n 1)"
@@ -84,15 +134,10 @@ FreeBSD)
 	export TOOLS_JAR;;
 esac
 
+
 test -n "$platform" &&
 test -z "$JAVA_HOME" &&
-JAVA_HOME="$("$CWD"/precompiled/ImageJ-"$platform" --print-java-home 2> /dev/null)"
-
-if test -n "$platform" && test ! -d "$JAVA_HOME"
-then
-	JAVA_HOME="$CWD"/java/$java_submodule
-	JAVA_HOME="$JAVA_HOME"/"$(ls -t "$JAVA_HOME" | head -n 1)"
-fi
+JAVA_HOME="$(get_java_home)"
 
 # need to clone java submodule
 test -z "$platform" ||
@@ -100,6 +145,7 @@ test -f "$JAVA_HOME/lib/tools.jar" || test -f "$JAVA_HOME/../lib/tools.jar" ||
 test -f "$CWD"/java/"$java_submodule"/Home/lib/ext/vecmath.jar || {
 	echo "No JDK found; cloning it"
 	JAVA_SUBMODULE=java/$java_submodule
+	: jump through hoops to enable a shallow clone of the JDK
 	git submodule init "$JAVA_SUBMODULE" && (
 		URL="$(git config submodule."$JAVA_SUBMODULE".url)" &&
 		case "$URL" in
@@ -134,47 +180,11 @@ then
 	export PATH=$JAVA_HOME/bin:$PATH
 fi
 
-handle_variables () {
-	case "$1" in
-	--strip) strip_variables=t; shift;;
-	*) strip_variables=;;
-	esac
-	while test $# -ge 1
-	do
-		case "$1" in
-		*=*) test ! -z "$strip_variables" || echo "$1";;
-		*) test -z "$strip_variables" || echo "$1";;
-		esac
-		shift
-	done
-}
-
-targets=$(handle_variables --strip "$@")
-variables=$(handle_variables "$@")
-
-jar=jars/fake.jar
-source_dir=src-plugins/fake
-sources=$source_dir/fiji/build/*.java
-
-jarUpToDate () {
-	test -f "$CWD/$jar" || return 1
-	for source in $sources
-	do
-		test "$CWD/$source" -nt "$CWD/$jar" && return 1
-	done
-	return 0
-}
-
-# make sure fake.jar is up-to-date
-test "a$targets" != a$jar &&
-! jarUpToDate && {
-	(cd "$CWD" && sh "$(basename "$0")" $variables $jar) || exit
-}
-
-# make sure the ImageJ launcher is up-to-date
-test "a$targets" != a$jar -a "a$targets" != aImageJ &&
-test ! -f "$CWD"/ImageJ -o "$CWD"/ImageJ.c -nt "$CWD"/ImageJ$exe && {
-	(cd "$CWD" && sh "$(basename "$0")" $variables ImageJ) || exit
+: build fake.jar, making sure javac is in the PATH
+PATH="$PATH:$(get_java_home)/bin:$(get_java_home)/../bin" \
+ensure_fake_is_built || {
+	echo "Could not build Fiji Build" >&2
+	exit 1
 }
 
 # on Win64, with a 32-bit compiler, do not try to compile
@@ -185,7 +195,7 @@ win64)
 
 	case "$CC,$(gcc --version)" in
 	,*mingw32*)
-		# cannot compile!
+		# cannot compile! Fall back to copying
 		test "$CWD"/ImageJ.exe -nt "$CWD"/ImageJ.c &&
 		test "$CWD"/ImageJ.exe -nt "$CWD"/precompiled/ImageJ-win64.exe &&
 		test "$CWD"/ImageJ.exe -nt "$CWD"/Fakefile &&
@@ -194,37 +204,4 @@ win64)
 	esac
 esac
 
-# still needed for Windows, which cannot overwrite files that are in use
-test -f "$CWD"/ImageJ$exe -a -f "$CWD"/$jar &&
-test "a$targets" != a$jar -a "a$targets" != aImageJ &&
-"$CWD"/ImageJ$exe --build "$@" &&
-exit
-
-export SYSTEM_JAVA=java
-export SYSTEM_JAVAC=javac
-
-# If JAVA_HOME leads to an executable java or javac then use them:
-if [ x != x$JAVA_HOME ]
-then
-    if [ -e $JAVA_HOME/bin/java ]
-    then
-        export SYSTEM_JAVA=$JAVA_HOME/bin/java
-    fi
-    if [ -e $JAVA_HOME/bin/javac ]
-    then
-        export SYSTEM_JAVAC=$JAVA_HOME/bin/javac
-    elif [ -e $JAVA_HOME/../bin/javac ]
-    then
-        export SYSTEM_JAVAC=$JAVA_HOME/../bin/javac
-
-    fi
-fi
-
-# fall back to calling Fake with system Java
-test -f "$CWD"/$jar &&
-$SYSTEM_JAVA -classpath "$CWD"/$jar fiji.build.Fake "$@"
-
-# fall back to compiling and running with system Java
-mkdir -p "$CWD"/build &&
-$SYSTEM_JAVAC -d "$CWD"/build/ "$CWD"/$sources &&
-$SYSTEM_JAVA -classpath "$CWD"/build fiji.build.Fake "$@"
+sh "$CWD/bin/ImageJ.sh" --build "$@"

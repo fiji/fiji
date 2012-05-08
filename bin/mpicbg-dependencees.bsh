@@ -1,5 +1,5 @@
 #!/bin/sh
-/*/. 2>/dev/null; exec "$(dirname "$0")"/../ImageJ "$0" "$@" # exec with fiji */
+/*/. 2>/dev/null; exec "$(dirname "$0")"/ImageJ.sh "$0" "$@" # exec with fiji */
 
 /*
  * This script helps to identify the plugins that depend directly or

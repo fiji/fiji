@@ -71,6 +71,9 @@ public class ImageCollectionElement
 		}
 		else
 		{
+			// TODO: Unify this image loading mechanism with the one in
+			// plugin/Stitching_Grid.java. Otherwise changes to how images
+			// are loaded must be made in multiple places in the code.
 			if ( imp != null )
 				imp.close();
 			
