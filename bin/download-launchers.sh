@@ -51,6 +51,7 @@ download () {
 }
 
 curl $baseurl/$basename.nar > jars/ij-launcher.jar
+./bin/fix-java6-classes.sh jars/ij-launcher.jar
 
 download x86-Windows ImageJ-win32.exe
 download amd64-Windows ImageJ-win64.exe
