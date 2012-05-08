@@ -11,9 +11,6 @@ hs_err*.log
 .checksums
 /build/
 /make-targets
-/ImageJ.o
-/tmp.rc
-/tmp.o
 /fiji
 /ImageJ
 /ImageJ.exe
