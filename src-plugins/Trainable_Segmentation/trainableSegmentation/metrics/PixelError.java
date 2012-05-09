@@ -449,7 +449,9 @@ public class PixelError extends Metrics
 		double pixelError = 0;
 		for(int i=0; i<labelPix.length; i++)
 		{
-			int pix1 = (labelPix[ i ] > binaryThreshold) ? 1 : 0;
+			// make sure labels are binary
+			int pix1 = (labelPix[ i ] > 0) ? 1 : 0;
+			// threshold proposal
 			int pix2 = (proposalPix[ i ] > binaryThreshold) ? 1 : 0;
 			
 			if (pix1 == 1)
@@ -506,8 +508,11 @@ public class PixelError extends Metrics
 		
 		for(int i=0; i<labelPix.length; i++)
 		{
-			int pix1 = (labelPix[ i ] > binaryThreshold) ? 1 : 0;
+			// make sure labels are binary
+			int pix1 = (labelPix[ i ] > 0) ? 1 : 0;
+			// threshold proposal
 			int pix2 = (proposalPix[ i ] > binaryThreshold) ? 1 : 0;
+			// make sure mask is binary
 			int pixMask = maskPixels[ i ] > 0 ? 1 : 0;			
 									
 			if (pixMask == 0)
