@@ -147,6 +147,30 @@ public class Utils {
 		pl.show();
 	}
 	
+	/**
+	 * Plot the Receiver operating characteristic curve
+	 * @param stats classification statistics
+	 */
+	public static void plotROC(
+			ArrayList< ClassificationStatistics > stats)
+	{
+		// Extract true positive and true negative rates
+		float[] tpr = new float[ stats.size() ];
+		float[] fpr = new float[ stats.size() ];
+		
+		for(int i = 0; i < tpr.length; i++)
+		{
+			tpr[i] = (float) stats.get(i).recall;
+			fpr[i] = (float) (1f - stats.get(i).specificity);
+		}
+
+		Plot pl = new Plot("Receiver Operating Characteristic curve", "True Positive Rate or sensitivity", "False Positive Rate (1 - specificity)", tpr, fpr );		
+		pl.setLimits(0, 1, 0, 1);
+		pl.setSize(540, 512);
+		pl.setColor(Color.RED);
+		pl.show();
+	}
+	
 	
 	/**
 	 * Create plot with the precision-recall curve
