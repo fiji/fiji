@@ -130,6 +130,19 @@ fiji.Main,*.bsh)
 	;;
 esac
 
+discover_tools_jar () {
+	javac="$(which javac)" &&
+	while test -h "$javac"
+	do
+		javac="$(readlink "$javac")"
+	done
+	if test -n "$javac"
+	then
+		javac="${javac%/bin/javac}/lib/tools.jar"
+	fi
+	echo "$javac"
+}
+
 case "$main_class" in
 fiji.Main|ij.ImageJ)
 	ij_options="-port7 $ij_options"
@@ -137,6 +150,13 @@ fiji.Main|ij.ImageJ)
 	;;
 fiji.build.Fake)
 	CLASSPATH="$FIJI_ROOT/jars/fake.jar"
+	;;
+org.apache.tools.ant.Main)
+	CLASSPATH="$(discover_tools_jar)"
+	for path in "$FIJI_ROOT"/jars/ant*.jar
+	do
+		CLASSPATH="$CLASSPATH${CLASSPATH:+:}$path"
+	done
 	;;
 *)
 	CLASSPATH=
