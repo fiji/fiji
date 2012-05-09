@@ -91,6 +91,9 @@ EOF
 	?,--update)
 		main_class=fiji.updater.Main
 		;;
+	?,--ant)
+		main_class=org.apache.tools.ant.Main
+		;;
 	f,*)
 		java_options="$java_options `sq_quote "$option"`"
 		;;
