@@ -164,7 +164,7 @@ public class Utils {
 			fpr[i] = (float) (1f - stats.get(i).specificity);
 		}
 
-		Plot pl = new Plot("Receiver Operating Characteristic curve", "True Positive Rate or sensitivity", "False Positive Rate (1 - specificity)", tpr, fpr );		
+		Plot pl = new Plot("Receiver Operating Characteristic curve", "False Positive Rate (1 - specificity)", "True Positive Rate or sensitivity", fpr, tpr );		
 		pl.setLimits(0, 1, 0, 1);
 		pl.setSize(540, 512);
 		pl.setColor(Color.RED);
