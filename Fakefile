@@ -306,26 +306,26 @@ CLASSPATH(jars/imglib2-ops.jar)=jars/imglib2.jar
 jars/imglib2-ops.jar <- modules/imglib/
 CLASSPATH(jars/imglib2-ui.jar)=jars/imglib2.jar:jars/imglib2-io.jar:plugins/loci_tools.jar
 jars/imglib2-ui.jar <- jars/imglib2-io.jar modules/imglib/
-jars/clojure.jar <- ImageJ modules/clojure/
-plugins/loci_tools.jar <- ImageJ modules/bio-formats/
+jars/clojure.jar <- modules/clojure/
+plugins/loci_tools.jar <- modules/bio-formats/
 CLASSPATH(plugins/loci_tools.jar)=jars/imglib2.jar
 CLASSPATH(jars/VectorString.jar)=jars/ij.jar:jars/Jama.jar:$JAVA3D_JARS
 jars/VectorString.jar <- modules/TrakEM2/
 CLASSPATH(plugins/TrakEM2_.jar)=jars/ij.jar:jars/jai_core.jar:jars/jai_codec.jar:jars/VectorString.jar:jars/postgresql.jar:jars/jcommon.jar:jars/jfreechart.jar:jars/edu_mines_jtk.jar:jars/VIB-lib.jar:plugins/VIB_.jar:jars/mpicbg.jar:plugins/loci_tools.jar:plugins/bUnwarpJ_.jar:plugins/level_sets.jar:plugins/Fiji_Plugins.jar:jars/Jama.jar:jars/imglib.jar:jars/imglib-algorithms.jar:jars/imglib-ij.jar:plugins/Simple_Neurite_Tracer.jar:plugins/3D_Viewer.jar:plugins/Lasso_and_Blow_Tool.jar:$JAVA3D_JARS
 plugins/TrakEM2_.jar <- modules/TrakEM2/
 plugins/ij-ImageIO_.jar <- modules/ij-plugins/
-jars/jacl.jar <- ImageJ modules/tcljava/
-jars/batik.jar <- ImageJ modules/batik/
-jars/junit.jar <- ImageJ modules/junit/
-jars/rsyntaxtextarea.jar <- ImageJ modules/RSyntaxTextArea/
-jars/autocomplete.jar <- ImageJ modules/AutoComplete/
-jars/weka.jar <- ImageJ jars/fiji-compat.jar modules/weka/
-jars/jython.jar <- ImageJ modules/jython/
-jars/commons-math.jar <- ImageJ modules/commons-math/
+jars/jacl.jar <- modules/tcljava/
+jars/batik.jar <- modules/batik/
+jars/junit.jar <- modules/junit/
+jars/rsyntaxtextarea.jar <- modules/RSyntaxTextArea/
+jars/autocomplete.jar <- modules/AutoComplete/
+jars/weka.jar <- jars/fiji-compat.jar modules/weka/
+jars/jython.jar <- modules/jython/
+jars/commons-math.jar <- modules/commons-math/
 jars/javassist.jar <- modules/javassist/
 jars/jsch.jar <- modules/jsch/
 COPYDEPENDENCIES(jars/ij-app.jar)=true
-jars/ij-app.jar <- ImageJ jars/ij.jar jars/imglib2.jar modules/imagej2/
+jars/ij-app.jar <- jars/ij.jar jars/imglib2.jar modules/imagej2/
 CLASSPATH(plugins/Image_5D.jar)=jars/ij.jar
 plugins/Image_5D.jar <- modules/image5d/
 
