@@ -3689,8 +3689,10 @@ public class WekaSegmentation {
 		return applyClassifier(imp, 0, false);
 	}
 
+	
 	/**
-	 * Apply current classifier to a given image.
+	 * Apply current classifier to a given image. It divides the
+	 * whole slices of the input image into the available CPUs.
 	 *
 	 * @param imp image (2D single image or stack)
 	 * @param numThreads The number of threads to use. Set to zero for
@@ -3700,6 +3702,164 @@ public class WekaSegmentation {
 	 * @return result image
 	 */
 	public ImagePlus applyClassifier(
+			final ImagePlus imp, 
+			int numThreads, 
+			final boolean probabilityMaps)
+	{
+		if (numThreads == 0)
+			numThreads = Prefs.getThreads();
+
+		final int numSliceThreads = Math.min(imp.getStackSize(), numThreads);
+		final int numClasses      = numOfClasses;
+		final int numChannels     = (probabilityMaps ? numClasses : 1);
+
+		IJ.log("Processing slices of " + imp.getTitle() + " in " + numSliceThreads + " thread(s)...");
+
+		// Set proper class names (skip empty list ones)
+		ArrayList<String> classNames = new ArrayList<String>();
+		if( null == loadedClassNames )
+		{
+			for(int i = 0; i < numOfClasses; i++)
+				for(int j=0; j<trainingImage.getImageStackSize(); j++)
+					if(examples[j].get(i).size() > 0)
+					{
+						classNames.add(getClassLabels()[i]);
+						break;
+					}
+		}
+		else
+			classNames = loadedClassNames;
+
+		final ImagePlus[] classifiedSlices = new ImagePlus[imp.getStackSize()];
+
+		class ApplyClassifierThread extends Thread 
+		{
+
+			final int startSlice;
+			final int numSlices;
+			final int numFurtherThreads;
+			final ArrayList<String> classNames;
+			
+			public ApplyClassifierThread(
+					int startSlice, 
+					int numSlices, 
+					int numFurtherThreads, 
+					ArrayList<String> classNames) 
+			{
+
+				this.startSlice         = startSlice;
+				this.numSlices          = numSlices;
+				this.numFurtherThreads  = numFurtherThreads;
+				this.classNames         = classNames;
+			}
+
+			public void run() 
+			{
+
+				for (int i = startSlice; i < startSlice + numSlices; i++)
+				{
+					final ImagePlus slice = new ImagePlus(imp.getImageStack().getSliceLabel(i), imp.getImageStack().getProcessor(i));
+                    // Create feature stack for slice
+                    IJ.showStatus("Creating features...");
+                    IJ.log("Creating features for slice " + i +  "...");
+                    final FeatureStack sliceFeatures = new FeatureStack(slice);
+                    // Use the same features as the current classifier
+                    sliceFeatures.setEnabledFeatures(featureStackArray.getEnabledFeatures());
+                    sliceFeatures.setMaximumSigma(maximumSigma);
+                    sliceFeatures.setMinimumSigma(minimumSigma);
+                    sliceFeatures.setMembranePatchSize(membranePatchSize);
+                    sliceFeatures.setMembraneSize(membraneThickness);
+                    sliceFeatures.updateFeaturesST();
+                    filterFeatureStackByList(featureNames, sliceFeatures);
+ 
+                    final Instances sliceData = sliceFeatures.createInstances(classNames);
+                    sliceData.setClassIndex(sliceData.numAttributes() - 1); 
+
+					IJ.log("Classifying slice " + i + " in " + numFurtherThreads + " thread(s)...");
+					final ImagePlus classImage = applyClassifier(sliceData, slice.getWidth(), slice.getHeight(), numFurtherThreads, probabilityMaps);
+					
+					if( null == classImage )
+					{
+						IJ.log("Error while applying classifier!");
+						return;
+					}
+											
+					classImage.setTitle("classified_" + slice.getTitle());
+					if(probabilityMaps)
+						classImage.setProcessor(classImage.getProcessor().duplicate());
+					else
+						classImage.setProcessor(classImage.getProcessor().convertToByte(true).duplicate());
+					classifiedSlices[i-1] = classImage;
+				}
+			}
+		}
+
+		final int numFurtherThreads = (int)Math.ceil((double)(numThreads - numSliceThreads)/numSliceThreads) + 1;
+		final ApplyClassifierThread[] threads = new ApplyClassifierThread[numSliceThreads];
+
+		// calculate optimum number of slices per thread
+		int[] numSlicesPerThread = new int [ numSliceThreads ];
+		for(int i=0; i<imp.getImageStackSize(); i++)
+		{
+			numSlicesPerThread[ i % numSliceThreads ] ++;
+		}
+		
+		int aux = 0;
+		for (int i = 0; i < numSliceThreads; i++) 
+		{
+
+			int startSlice = aux + 1;
+			
+			aux += numSlicesPerThread[ i ];
+									
+			IJ.log("Starting thread " + i + " processing " + numSlicesPerThread[ i ] + " slices, starting with " + startSlice);
+			threads[i] = new ApplyClassifierThread(startSlice, numSlicesPerThread[ i ], numFurtherThreads, classNames );
+
+			threads[i].start();
+		}
+
+		// create classified image
+		final ImageStack classified = new ImageStack(imp.getWidth(), imp.getHeight());
+
+		// join threads
+		for(Thread thread : threads)
+			try {
+				thread.join();
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+
+		// assemble classified image
+		for (int i = 0; i < imp.getStackSize(); i++)
+			for (int c = 0; c < numChannels; c++)
+				classified.addSlice("", classifiedSlices[i].getStack().getProcessor(c+1));
+
+		ImagePlus result = new ImagePlus("Classification result", classified);
+
+		if (probabilityMaps)
+		{
+			result.setDimensions(numOfClasses, imp.getNSlices(), imp.getNFrames());
+			if (imp.getNSlices()*imp.getNFrames() > 1)
+				result.setOpenAsHyperStack(true);
+		}
+
+		return result;
+	}
+	
+	
+	/**
+	 * Apply current classifier to a given image in a complete concurrent way.
+	 * This method is experimental, it divides the image(s) in pieces and that
+	 * can cause artifacts using some filters.
+	 *
+	 * @param imp image (2D single image or stack)
+	 * @param numThreads The number of threads to use. Set to zero for
+	 * auto-detection.
+	 * @param probabilityMaps create probability maps for each class instead of
+	 * a classification
+	 * @return result image
+	 */
+	public ImagePlus applyClassifierMT(
 			final ImagePlus imp, 
 			int numThreads, 
 			final boolean probabilityMaps)
