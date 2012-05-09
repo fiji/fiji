@@ -309,6 +309,66 @@ public class PixelError extends Metrics
 
 		return new ClassificationStatistics( tp, tn, fp, fn, pixelError / labelSlices.getSize() );
 	}
+
+	/**
+	 * Calculate the pixel error and its derived statistics in 2D between 
+	 * some original labels and the corresponding proposed labels. Both images 
+	 * are binarized. 
+	 *  
+	 * @param binaryThreshold threshold value to binarize proposal (larger than 0 and smaller than 1)
+	 * @param mask mask image
+	 * @return pixel error value and derived statistics
+	 */
+	public ClassificationStatistics getPrecisionRecallStats( 
+			double binaryThreshold, 
+			ImagePlus mask )
+	{
+		final ImageStack labelSlices = originalLabels.getImageStack();
+		final ImageStack proposalSlices = proposedLabels.getImageStack();
+
+		double pixelError = 0;
+		double tp = 0;
+		double tn = 0;
+		double fp = 0;
+		double fn = 0;
+
+		// Executor service to produce concurrent threads
+		final ExecutorService exe = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+
+		final ArrayList< Future<ClassificationStatistics> > futures = new ArrayList< Future<ClassificationStatistics> >();
+
+		try{
+			for(int i = 1; i <= labelSlices.getSize(); i++)
+			{
+				futures.add(exe.submit( getPrecisionRecallStatsConcurrent(labelSlices.getProcessor(i).convertToFloat(),
+											proposalSlices.getProcessor(i).convertToFloat(), 
+											( null != mask ) ? mask.getImageStack().getProcessor(i) : null,										
+											binaryThreshold ) ) );
+			}
+
+			// Wait for the jobs to be done
+			for(Future<ClassificationStatistics> f : futures)
+			{
+				ClassificationStatistics cs = f.get();
+				pixelError += cs.metricValue;
+				tp += cs.truePositives;
+				tn += cs.trueNegatives;
+				fp += cs.falsePositives;
+				fn += cs.falseNegatives;
+			}			
+		}
+		catch(Exception ex)
+		{
+			IJ.log("Error when calculating pixel error in a concurrent way.");
+			ex.printStackTrace();
+		}
+		finally{
+			exe.shutdown();
+		}
+
+		return new ClassificationStatistics( tp, tn, fp, fn, pixelError / labelSlices.getSize() );
+	}
+	
 	
 	/**
 	 * Get pixel error value and derived statistics between two images 
@@ -333,6 +393,36 @@ public class PixelError extends Metrics
 			}
 		};
 	}
+	
+	/**
+	 * Get pixel error value and derived statistics between two images 
+	 * in a concurrent way (to be submitted to an Executor Service). 
+	 * Both images are binarized.
+	 * 
+	 * @param image1 first image
+	 * @param image2 second image
+	 * @param mask mask image
+	 * @param binaryThreshold threshold to apply to both images
+	 * @return pixel error value and derived statistics
+	 */
+	public  Callable<ClassificationStatistics> getPrecisionRecallStatsConcurrent(
+			final ImageProcessor image1, 
+			final ImageProcessor image2,
+			final ImageProcessor mask,
+			final double binaryThreshold) 
+	{
+		return new Callable<ClassificationStatistics>()
+		{
+			public ClassificationStatistics call()
+			{
+				if(null == mask)
+					return precisionRecallStats( image1, image2, binaryThreshold );
+				else
+					return precisionRecallStats( image1, image2, mask, binaryThreshold );
+			}
+		};
+	}
+	
 	
 	/**
 	 * Calculate the pixel error and derived statistics between some 2D original labels 
@@ -384,6 +474,71 @@ public class PixelError extends Metrics
 		
 		return new ClassificationStatistics(truePositives, trueNegatives, falsePositives, falseNegatives, pixelError);		
 	}
+	
+	/**
+	 * Calculate the pixel error and derived statistics between some 2D original labels 
+	 * and the corresponding proposed labels. Both image are binarized.	 
+	 * 
+	 * @param label 2D image with the original labels
+	 * @param proposal 2D image with the proposed labels
+	 * @param mask 2D image representing the binary mask
+	 * @param binaryThreshold threshold value to binarize the input images
+	 * @return classification statistics
+	 */
+	public  ClassificationStatistics precisionRecallStats(
+			ImageProcessor label,
+			ImageProcessor proposal,
+			ImageProcessor mask,
+			double binaryThreshold)
+	{
+		// Binarize inputs
+		float[] labelPix = (float[]) label.getPixels();
+		float[] proposalPix = (float[]) proposal.getPixels();
+		float[] maskPixels = (float[]) mask.getPixels();
+		
+		double truePositives = 0;
+		double trueNegatives = 0;
+		double falsePositives = 0;
+		double falseNegatives = 0;
+		double pixelError = 0;
+				
+		double n = 0;
+		
+		for(int i=0; i<labelPix.length; i++)
+		{
+			int pix1 = (labelPix[ i ] > binaryThreshold) ? 1 : 0;
+			int pix2 = (proposalPix[ i ] > binaryThreshold) ? 1 : 0;
+			int pixMask = maskPixels[ i ] > 0 ? 1 : 0;			
+									
+			if (pixMask == 0)
+				continue;
+			
+			if (pix1 == 1)
+			{
+				if(pix2 == 1)
+					truePositives ++;
+				else 
+					falsePositives ++;
+			}
+			else
+			{
+				if(pix2 == 1)
+					falseNegatives ++;
+				else
+					trueNegatives ++;						
+			}
+			
+			pixelError +=  ( pix1 - pix2 ) * ( pix1 - pix2 ) ;
+			
+			n++;
+		}
+		
+		if ( n > 0 )
+			pixelError /= n;
+		
+		return new ClassificationStatistics(truePositives, trueNegatives, falsePositives, falseNegatives, pixelError);		
+	}
+	
 	
 	/**
 	 * Get the best F-score of the pixel error over a set of thresholds 
