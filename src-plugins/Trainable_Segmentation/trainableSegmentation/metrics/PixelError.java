@@ -342,7 +342,7 @@ public class PixelError extends Metrics
 			{
 				futures.add(exe.submit( getPrecisionRecallStatsConcurrent(labelSlices.getProcessor(i).convertToFloat(),
 											proposalSlices.getProcessor(i).convertToFloat(), 
-											( null != mask ) ? mask.getImageStack().getProcessor(i) : null,										
+											( null != mask ) ? mask.getImageStack().getProcessor(i).convertToFloat() : null,										
 											binaryThreshold ) ) );
 			}
 
