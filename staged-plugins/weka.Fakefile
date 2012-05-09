@@ -3,5 +3,5 @@ all <- weka.jar
 
 weka.jar <- weka/dist/weka.jar
 
-weka/dist/weka.jar[../../ImageJ --ant -f weka/build.xml exejar] <-
+weka/dist/weka.jar[../../bin/ImageJ.sh --ant -f weka/build.xml exejar] <-
 
