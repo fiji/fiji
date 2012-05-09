@@ -106,7 +106,7 @@ done
 
 case "$dashdash" in
 f)
-	ij_options="$java_options"
+	ij_options="$ij_options $java_options"
 	java_options=
 	;;
 esac
