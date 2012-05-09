@@ -454,16 +454,16 @@ public class PixelError extends Metrics
 			// threshold proposal
 			int pix2 = (proposalPix[ i ] > binaryThreshold) ? 1 : 0;
 			
-			if (pix1 == 1)
+			if (pix2 == 1)
 			{
-				if(pix2 == 1)
+				if(pix1 == 1)
 					truePositives ++;
 				else 
 					falsePositives ++;
 			}
 			else
 			{
-				if(pix2 == 1)
+				if(pix1 == 1)
 					falseNegatives ++;
 				else
 					trueNegatives ++;						
@@ -518,16 +518,16 @@ public class PixelError extends Metrics
 			if (pixMask == 0)
 				continue;
 			
-			if (pix1 == 1)
+			if (pix2 == 1)
 			{
-				if(pix2 == 1)
+				if(pix1 == 1)
 					truePositives ++;
 				else 
 					falsePositives ++;
 			}
 			else
 			{
-				if(pix2 == 1)
+				if(pix1 == 1)
 					falseNegatives ++;
 				else
 					trueNegatives ++;						
