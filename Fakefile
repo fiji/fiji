@@ -165,7 +165,7 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/ToAST_.jar \
 	plugins/MTrack2_.jar \
 	plugins/Time_Stamper.jar \
-  plugins/Series_Labeler.jar \
+	plugins/Series_Labeler.jar \
 	plugins/Statistical_Region_Merging.jar \
 	plugins/Refresh_Javas.jar \
 	plugins/Auto_Threshold.jar \
@@ -224,7 +224,7 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/Kuwahara_Filter.jar \
 	plugins/Action_Bar.jar \
 	plugins/Multi_Kymograph.jar \
-  plugins/TrackMate_.jar \
+	plugins/TrackMate_.jar \
 	plugins/Colour_Deconvolution.jar \
 	plugins/Dichromacy_.jar \
 	plugins/Threshold_Colour.jar \
