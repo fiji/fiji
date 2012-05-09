@@ -3,4 +3,4 @@ all <- clojure.jar
 
 MAINCLASS(clojure.jar)=clojure.main
 
-clojure.jar[../../ImageJ --ant] <- src/**/*
+clojure.jar[../../bin/ImageJ.sh --ant] <- src/**/*

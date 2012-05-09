@@ -153,6 +153,7 @@ public class Manual_Tracking extends PlugInFrame implements ActionListener, Item
     double Velocity; //Distance/calt
     int pprevx; //x coordinate of the antepenultimate tracked point
     int pprevy; //y coordinate of the antepenultimate tracked point
+    boolean trackZ; // whether Z or time is tracked
     
     
     //Centring correction related variables--------------------------------------
@@ -554,8 +555,40 @@ public class Manual_Tracking extends PlugInFrame implements ActionListener, Item
         rt=new ResultsTable();
         
     }
-    
-    
+
+    /**
+     * Moves to a given position in either time or z in the given
+     * image, depending on what is tracked.
+     */
+    protected void moveTo(ImagePlus img, int position) {
+        if (trackZ)
+            adapter.setSlice(img, position);
+        else
+            adapter.setFrame(img, position);
+    }
+
+    /**
+     * Gets either the current slice or the current frame, depending
+     * on what is tracked.
+     */
+    protected int getPosition(ImagePlus img) {
+        if (trackZ)
+            return adapter.getSlice(img);
+        else
+            return adapter.getFrame(img);
+    }
+
+    /**
+     * Gets the number of slices or frames available in the image,
+     * depending on whit is tracked.
+     */
+    protected int getMaxPosition(ImagePlus img) {
+        if (trackZ)
+            return img.getNSlices();
+        else
+            return img.getNFrames();
+    }
+
     public void itemStateChanged(ItemEvent e) {
         // Show/Hide the current path-------------------------------------------
         if (e.getSource() == checkPath) {
@@ -620,9 +653,12 @@ public class Manual_Tracking extends PlugInFrame implements ActionListener, Item
                 return;
             }
             IJ.setTool(7);
+
+            // assume time tracking when more than one frame is present
+            trackZ = img.getNSlices() > 1 && img.getNFrames() == 1;
             
-            xRoi=new int[img.getNFrames()];
-            yRoi=new int[img.getNFrames()];
+            xRoi=new int[getMaxPosition(img)];
+            yRoi=new int[getMaxPosition(img)];
             
             if (img==null){
                 IJ.showMessage("Error", "Man,\n"+"You're in deep troubles:\n"+"no opened stack...");
@@ -631,7 +667,7 @@ public class Manual_Tracking extends PlugInFrame implements ActionListener, Item
             
             win = img.getWindow();
             canvas=win.getCanvas();
-            adapter.setFrame(img, 1);
+            moveTo(img, 1);
             
             NbPoint=1;
             IJ.showProgress(2,1);
@@ -676,7 +712,7 @@ public class Manual_Tracking extends PlugInFrame implements ActionListener, Item
             
             prevx=(int) rt.getValue(2, rt.getCounter()-1);
             prevy=(int) rt.getValue(3, rt.getCounter()-1);
-            adapter.setFrame(img, ((int) rt.getValue(1, rt.getCounter()-1))+1);
+            moveTo(img, ((int) rt.getValue(1, rt.getCounter()-1))+1);
             IJ.showStatus("Last Point Deleted !");
         }
         
@@ -1108,8 +1144,12 @@ public class Manual_Tracking extends PlugInFrame implements ActionListener, Item
     // Click on image-----------------------------------------------------------
     public void mouseReleased(MouseEvent m) {
         if (!islisteningRef){
-            IJ.showProgress(adapter.getFrame(img),img.getNFrames());
-            IJ.showStatus("Tracking frame "+ adapter.getFrame(img) +" of "+(img.getNFrames()));
+            IJ.showProgress(getPosition(img), getMaxPosition(img));
+            if (trackZ) {
+                IJ.showStatus("Tracking slice " + adapter.getSlice(img) + " of " + img.getNSlices());
+            } else {
+                IJ.showStatus("Tracking frame " + adapter.getFrame(img) + " of " + img.getNFrames());
+            }
             if (Nbtrack==1 && NbPoint==1){
                 for (i=0; i<head.length; i++) rt.setHeading(i,head[i]);
             }
@@ -1162,9 +1202,9 @@ public class Manual_Tracking extends PlugInFrame implements ActionListener, Item
         for (i=0; i<doub.length; i++) rt.addValue(i,doub[i]);
         rt.show("Results from "+imgtitle+" in "+choicecalxy.getItem(choicecalxy.getSelectedIndex())+" per "+choicecalt.getItem(choicecalt.getSelectedIndex()));
         
-        if (adapter.getFrame(img) < img.getNFrames()){
+        if (getPosition(img) < getMaxPosition(img)) {
             NbPoint++;
-            adapter.setFrame(img, adapter.getFrame(img) + 1);
+            moveTo(img, getPosition(img) + 1);
             if (Distance!=0) {
                 pprevx=prevx;
                 pprevy=prevy;
@@ -1416,7 +1456,7 @@ public class Manual_Tracking extends PlugInFrame implements ActionListener, Item
         
         
         for (l=limsz1; l<limsz2+1; l++){
-            adapter.setSlice(ip, l);
+            moveTo(ip, l);
             for (m=limsy1; m<limsy2+1; m++){
                 for (n=limsx1; n<limsx2+1; n++){
                     tmppixval=ip.getProcessor().getPixel(n,m);
@@ -1468,7 +1508,7 @@ public class Manual_Tracking extends PlugInFrame implements ActionListener, Item
         limsz1=z-sglBoxz;
         if (limsz1<1) limsz1=1;
         limsz2=z+sglBoxz;
-        if (limsz2>ip.getStackSize()) limsz2=ip.getStackSize();
+        if (limsz2>getMaxPosition(ip)) limsz2=getMaxPosition(ip);
         
         if (Quantification==1) {
             limbx1=x-bkgdBoxx;
@@ -1511,10 +1551,10 @@ public class Manual_Tracking extends PlugInFrame implements ActionListener, Item
         limbz1=z-bkgdBoxz;
         if (limbz1<1) limbz1=1;
         limbz2=z+bkgdBoxz;
-        if (limbz2>ip.getNSlices()) limbz2=ip.getNSlices();
+        if (limbz2>getMaxPosition(ip)) limbz2=getMaxPosition(ip);
         
         for (l=limsz1; l<limsz2+1; l++){
-            adapter.setSlice(ip, l);
+            moveTo(ip, l);
             for (m=limsy1; m<limsy2+1; m++){
                 for (n=limsx1; n<limsx2+1; n++){
                     Qsgl=Qsgl+ip.getProcessor().getPixel(n,m);
@@ -1525,7 +1565,7 @@ public class Manual_Tracking extends PlugInFrame implements ActionListener, Item
         
         if (Quantification>0){
             for (l=limbz1; l<limbz2+1; l++){
-                adapter.setSlice(ip, l);
+                moveTo(ip, l);
                 for (m=limby1; m<limby2+1; m++){
                     for (n=limbx1; n<limbx2+1; n++){
                         Qbkgd=Qbkgd+ip.getProcessor().getPixel(n,m);
