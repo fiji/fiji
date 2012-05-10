@@ -171,6 +171,58 @@ public class Utils {
 		pl.show();
 	}
 	
+	/**
+	 * Get area under the ROC curve
+	 * @param stats classification statistics with the ROC curve information
+	 * @return area under the input curve
+	 */
+	public static double getROCArea(
+			ArrayList< ClassificationStatistics > stats)
+	{
+		
+		final int n = stats.size();
+		double area = 0;
+	    double xlast = 1 - stats.get( n - 1 ).specificity;
+	    
+	    // start from the first real tpr/fpr pair (not the artificial zero point)
+	    for (int i = n - 2; i >= 0; i--) 
+	    {
+	      double fprDelta = (1 - stats.get( i ).specificity) - xlast;
+	      area += (stats.get( i ).recall * fprDelta);
+	      
+	      xlast = 1 - stats.get( i ).specificity;
+	    }
+	    
+
+	    return area;
+	}
+
+	/**
+	 * Get Kappa statistic
+	 * @param stats classification statistics
+	 * @return Kappa statistic
+	 */
+	public static double getKappa(
+			ClassificationStatistics stats)
+	{
+		
+		double correct = stats.truePositives + stats.trueNegatives;
+		double numSamples = stats.truePositives + stats.falsePositives + stats.falseNegatives + stats.trueNegatives;
+
+		double chanceAgreement = (stats.truePositives + stats.falsePositives) * (stats.truePositives + stats.falseNegatives)
+					+ (stats.falseNegatives + stats.trueNegatives) * (stats.falsePositives + stats.trueNegatives);
+
+		chanceAgreement /= (numSamples * numSamples);
+		correct /= numSamples;
+
+		double kappa = 1.0;
+		if (chanceAgreement < 1) 
+		     	kappa = (correct - chanceAgreement) / (1 - chanceAgreement);
+	    
+
+	    return kappa;
+	}
+	
 	
 	/**
 	 * Create plot with the precision-recall curve
