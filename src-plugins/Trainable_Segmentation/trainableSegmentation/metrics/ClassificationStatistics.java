@@ -70,18 +70,22 @@ public class ClassificationStatistics
 		this.falseNegatives = falseNegatives;
 		this.metricValue = metricValue;
 
-		final double retrievedPositives = truePositives + falsePositives; 
-		final double totalPositives = truePositives + falseNegatives;
-			
+		
 		final double totalNegatives = trueNegatives + falsePositives;
 		
 		this.specificity = (totalNegatives > 0) ? trueNegatives / totalNegatives : 0;
 		
-		// no positives involves minimum precision
-		this.precision = retrievedPositives > 0 ? truePositives / retrievedPositives : 0;
+		// no false positives involves maximum precision
+		if( falsePositives == 0 )
+			this.precision = 1;
+		else
+			this.precision = truePositives / (truePositives + falsePositives);
 		
 		// no false negatives involves maximum recall
-		this.recall = totalPositives > 0 ? truePositives / totalPositives : 1;
+		if( falseNegatives == 0)
+			this.recall = 1;
+		else
+			this.recall = truePositives / (truePositives + falseNegatives);
 		
 		if( (precision + recall) > 0)
 			this.fScore = 2 * precision * recall / ( precision + recall );				
