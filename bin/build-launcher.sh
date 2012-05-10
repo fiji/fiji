@@ -31,6 +31,7 @@ case "$(uname -s)" in
 Darwin)
 	os=MacOSX
 	macprefix=Contents/MacOS/
+	mkdir -p $macprefix
 	case "$force32,$(uname -r)" in
 	t,*|,8.*)
 		platform=tiger
