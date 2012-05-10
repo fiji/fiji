@@ -77,8 +77,12 @@ public class ClassificationStatistics
 		
 		this.specificity = (totalNegatives > 0) ? trueNegatives / totalNegatives : 0;
 		
+		// no positives involves minimum precision
 		this.precision = retrievedPositives > 0 ? truePositives / retrievedPositives : 0;
-		this.recall = totalPositives > 0 ? truePositives / totalPositives : 0;
+		
+		// no false negatives involves maximum recall
+		this.recall = totalPositives > 0 ? truePositives / totalPositives : 1;
+		
 		if( (precision + recall) > 0)
 			this.fScore = 2 * precision * recall / ( precision + recall );				
 	}
