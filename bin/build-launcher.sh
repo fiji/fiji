@@ -65,7 +65,6 @@ MINGW*|CYGWIN*)
 	t,*|,)
 		platform=win32
 		arch=x86
-		arch=i386
 		mvnopts="-Dos.arch=$arch"
 		;;
 	*)
