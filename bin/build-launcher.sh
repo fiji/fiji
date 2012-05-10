@@ -6,11 +6,23 @@ set -e
 cd "$(dirname "$0")/.."
 
 debugoption=
-case "$1" in
--g|-d|--debug)
-	debugoption=-Ddebug.option=-g
-	;;
-esac
+force32=
+while test $# -gt 0
+do
+	case "$1" in
+	-g|-d|--debug)
+		debugoption=-Ddebug.option=-g
+		;;
+	-32)
+		force32=t
+		;;
+	*)
+		echo "Unknown option: $1" >&2
+		exit 1
+		;;
+	esac
+	shift
+done
 
 exe=
 mvnopts=
@@ -19,8 +31,8 @@ case "$(uname -s)" in
 Darwin)
 	os=MacOSX
 	macprefix=Contents/MacOS/
-	case "$(uname -r)" in
-	8.*)
+	case "$force32,$(uname -r)" in
+	t,*|,8.*)
 		platform=tiger
 		arch=i386
 		mvnopts="-Dos.arch=i386 -P MacOSX-Tiger -P '!MacOSX-Leopard'"
@@ -33,25 +45,27 @@ Darwin)
 	;;
 Linux)
 	os=Linux
-	case "$(uname -m)" in
-	x86_64)
+	case "$force32,$(uname -m)" in
+	t,x86_64)
 		platform=linux64
 		arch=amd64
 		;;
 	*)
 		platform=linux
 		arch=i386
+		mvnopts="-Dos.arch=$arch"
 		;;
 	esac
 	;;
 MINGW*|CYGWIN*)
 	os=Windows
 	exe=.exe
-	case "$PROCESSOR_ARCHITEW6432" in
-	'')
+	case "$force32,$PROCESSOR_ARCHITEW6432" in
+	t,*|,)
 		platform=win32
 		arch=x86
 		arch=i386
+		mvnopts="-Dos.arch=$arch"
 		;;
 	*)
 		platform=win64
