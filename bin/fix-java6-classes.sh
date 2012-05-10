@@ -21,7 +21,7 @@ case $# in
 	;;
 esac
 
-TMPDIR="$(mktemp -d)"
+TMPDIR="$(mktemp -d fixXXXXXX)"
 for f in $OFFENDERS
 do
 	echo "Fixing $f..."
