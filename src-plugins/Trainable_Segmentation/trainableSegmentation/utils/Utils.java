@@ -40,6 +40,7 @@ import ij.process.ImageStatistics;
 import trainableSegmentation.metrics.ClassificationStatistics;
 import util.FindConnectedRegions;
 import util.FindConnectedRegions.Results;
+import weka.core.Instances;
 
 /**
  * This class implements useful methods for the Weka Segmentation library.
@@ -196,6 +197,46 @@ public class Utils {
 
 	    return area;
 	}
+	
+	  /**
+	   * Calculates the area under the ROC curve as the Wilcoxon-Mann-Whitney statistic.
+	   *
+	   * @param tcurve a previously extracted threshold curve Instances.
+	   * @return the ROC area, or Double.NaN if you don't pass in 
+	   * a ThresholdCurve generated Instances. 
+	   */
+	  public static double getROCAreaWMW(ArrayList< ClassificationStatistics > stats) 
+	  {
+		  final int n = stats.size();
+		  double area = 0;
+
+		  double cumNeg = 0.0;
+		  
+		  // Get total number of positives and negatives assuming the first
+		  // element of the list corresponds to threshold 0 (so all samples are
+		  // considered positive)
+		  final double totalPos = stats.get( 0 ).truePositives;
+		  final double totalNeg = stats.get( 0 ).falsePositives;
+		  
+		  for (int i = 0; i < n; i++) 
+		  {
+			  double cip, cin;
+			  if (i < n - 1) 
+			  {
+				  cip = stats.get( i ).truePositives - stats.get( i + 1 ).truePositives;
+				  cin = stats.get( i ).falsePositives - stats.get( i + 1 ).falsePositives;
+			  } else {
+				  cip = stats.get( n - 1 ).truePositives;
+				  cin = stats.get( n - 1 ).falsePositives;
+			  }
+			  area += cip * (cumNeg + (0.5 * cin));
+			  cumNeg += cin;
+		  }
+		  area /= (totalNeg * totalPos);
+
+		  return area;
+	  }
+	
 
 	/**
 	 * Get Kappa statistic
