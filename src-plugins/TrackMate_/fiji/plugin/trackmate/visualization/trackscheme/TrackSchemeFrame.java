@@ -34,7 +34,7 @@ import com.mxgraph.util.mxConstants;
 import com.mxgraph.util.mxEvent;
 import com.mxgraph.util.mxEventObject;
 import com.mxgraph.util.mxEventSource.mxIEventListener;
-import com.mxgraph.util.mxUtils;
+import com.mxgraph.util.mxStyleUtils;
 import com.mxgraph.view.mxGraphSelectionModel;
 import com.mxgraph.view.mxPerimeter;
 
@@ -277,7 +277,7 @@ public class TrackSchemeFrame extends JFrame implements TrackMateModelChangeList
 
 								// Update cell look
 								String style = cell.getStyle();
-								style = mxUtils.setStyle(style, mxConstants.STYLE_IMAGE, "data:image/base64,"+spot.getImageString());
+								style = mxStyleUtils.setStyle(style, mxConstants.STYLE_IMAGE, "data:image/base64,"+spot.getImageString());
 								graph.getModel().setStyle(cell, style);
 								int height = Math.min(DEFAULT_CELL_WIDTH, Math.round(2 * spot.getFeature(Spot.RADIUS) / settings.dx));
 								height = Math.max(height, DEFAULT_CELL_HEIGHT/3);

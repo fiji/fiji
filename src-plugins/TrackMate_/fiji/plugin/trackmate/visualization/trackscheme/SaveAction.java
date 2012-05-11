@@ -30,7 +30,9 @@ import com.mxgraph.io.mxGdCodec;
 import com.mxgraph.swing.mxGraphComponent;
 import com.mxgraph.util.mxCellRenderer;
 import com.mxgraph.util.mxCellRenderer.CanvasFactory;
+import com.mxgraph.util.mxDomUtils;
 import com.mxgraph.util.mxUtils;
+import com.mxgraph.util.mxXmlUtils;
 import com.mxgraph.util.png.mxPngEncodeParam;
 import com.mxgraph.util.png.mxPngImageEncoder;
 import com.mxgraph.view.mxGraph;
@@ -74,7 +76,7 @@ public class SaveAction extends AbstractAction {
 
 		// Creates the URL-encoded XML data
 		mxCodec codec = new mxCodec();
-		String xml = URLEncoder.encode(mxUtils.getXml(codec.encode(graph.getModel())), "UTF-8");
+		String xml = URLEncoder.encode(mxXmlUtils.getXml(codec.encode(graph.getModel())), "UTF-8");
 		mxPngEncodeParam param = mxPngEncodeParam.getDefaultEncodeParam(image);
 		param.setCompressedText(new String[] { "mxGraphModel", xml });
 
@@ -180,23 +182,23 @@ public class SaveAction extends AbstractAction {
 			if (ext.equalsIgnoreCase("svg")) {
 				mxSvgCanvas canvas = (mxSvgCanvas) mxCellRenderer.drawCells(graph, null, 1, null, new CanvasFactory() {
 					public mxICanvas createCanvas(int width, int height) {
-						mxTrackSchemeSvgCanvas canvas = new mxTrackSchemeSvgCanvas(mxUtils.createSvgDocument(width, height));
+						mxTrackSchemeSvgCanvas canvas = new mxTrackSchemeSvgCanvas(mxDomUtils.createSvgDocument(width, height));
 						canvas.setEmbedded(true);
 						return canvas;
 					}
 				});
 
-				mxUtils.writeFile(mxUtils.getXml(canvas.getDocument()), filename);
+				mxUtils.writeFile(mxXmlUtils.getXml(canvas.getDocument()), filename);
 
 			} else if (selectedFilter == vmlFileFilter) {
-				mxUtils.writeFile(mxUtils.getXml(mxCellRenderer.createVmlDocument(graph, null, 1, null, null).getDocumentElement()), filename);
+				mxUtils.writeFile(mxXmlUtils.getXml(mxCellRenderer.createVmlDocument(graph, null, 1, null, null).getDocumentElement()), filename);
 
 			} else if (ext.equalsIgnoreCase("html")) {
-				mxUtils.writeFile(mxUtils.getXml(mxCellRenderer.createHtmlDocument(graph, null, 1, null, null).getDocumentElement()), filename);
+				mxUtils.writeFile(mxXmlUtils.getXml(mxCellRenderer.createHtmlDocument(graph, null, 1, null, null).getDocumentElement()), filename);
 
 			} else if (ext.equalsIgnoreCase("mxe") || ext.equalsIgnoreCase("xml")) {
 				mxCodec codec = new mxCodec();
-				String xml = mxUtils.getXml(codec.encode(graph.getModel()));
+				String xml = mxXmlUtils.getXml(codec.encode(graph.getModel()));
 				mxUtils.writeFile(xml, filename);
 
 			} else if (ext.equalsIgnoreCase("txt")) {
