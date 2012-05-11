@@ -512,10 +512,9 @@ public class PixelError extends Metrics
 			int pix1 = (labelPix[ i ] > 0) ? 1 : 0;
 			// threshold proposal
 			int pix2 = (proposalPix[ i ] > binaryThreshold) ? 1 : 0;
-			// make sure mask is binary
-			int pixMask = maskPixels[ i ] > 0 ? 1 : 0;			
-									
-			if (pixMask == 0)
+			
+			// check mask
+			if ( maskPixels[ i ] > 0 )															
 				continue;
 			
 			if (pix2 == 1)
