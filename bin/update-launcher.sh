@@ -35,10 +35,10 @@ MINGW*|CYGWIN*)
 	exe=.exe
 	case "$PROCESSOR_ARCHITEW6432" in
 	'')
-		suffix=win32
+		suffix=-win32
 		;;
 	*)
-		suffix=win64
+		suffix=-win64
 		;;
 	esac
 	;;
