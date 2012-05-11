@@ -48,7 +48,7 @@ add_win_logo () {
 		;;
 	CYGWIN*)
 		;;
-	Linux)
+	Wine-crashes-on-Linux)
 		wine=wine
 		;;
 	*)
