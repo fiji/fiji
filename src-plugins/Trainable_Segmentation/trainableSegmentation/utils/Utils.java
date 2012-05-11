@@ -173,25 +173,25 @@ public class Utils {
 	}
 	
 	/**
-	 * Get area under the ROC curve
+	 * Get area under the Precision/Recall curve
 	 * @param stats classification statistics with the ROC curve information
 	 * @return area under the input curve
 	 */
-	public static double getROCArea(
+	public static double getPrecRecArea(
 			ArrayList< ClassificationStatistics > stats)
 	{
 		
 		final int n = stats.size();
 		double area = 0;
-	    double xlast = 1 - stats.get( n - 1 ).specificity;
+	    double xlast = stats.get( n - 1 ).recall;
 	    
-	    // start from the first real tpr/fpr pair (not the artificial zero point)
+	    // start from the first real precision/recall pair (not the artificial zero point)
 	    for (int i = n - 2; i >= 0; i--) 
 	    {
-	      double fprDelta = (1 - stats.get( i ).specificity) - xlast;
-	      area += (stats.get( i ).recall * fprDelta);
+	      double recallDelta = stats.get( i ).recall - xlast;
+	      area += (stats.get( i ).precision * recallDelta);
 	      
-	      xlast = 1 - stats.get( i ).specificity;
+	      xlast = stats.get( i ).recall;
 	    }
 	    
 
@@ -205,7 +205,7 @@ public class Utils {
 	   * @return the ROC area, or Double.NaN if you don't pass in 
 	   * a ThresholdCurve generated Instances. 
 	   */
-	  public static double getROCAreaWMW(ArrayList< ClassificationStatistics > stats) 
+	  public static double getROCArea(ArrayList< ClassificationStatistics > stats) 
 	  {
 		  final int n = stats.size();
 		  double area = 0;
