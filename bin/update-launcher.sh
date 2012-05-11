@@ -49,6 +49,7 @@ esac &&
 	cp bin/ImageJ.sh ImageJ
 	;;
  *)
+	test -f plugins/Fiji_Updater.jar || ./Build.sh plugins/Fiji_Updater.jar
 	file=${prefix}ImageJ$suffix$exe &&
 	bin/ImageJ.sh --update update $file &&
 	cp $file ImageJ$exe
