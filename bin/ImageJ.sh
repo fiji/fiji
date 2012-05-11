@@ -5,7 +5,16 @@
 
 # bend over for SunOS' sh, and use `` instead of $()
 DIRECTORY="`dirname "$0"`"
-FIJI_ROOT="`cd "$DIRECTORY" && pwd`"
+PATHSEPARATOR=:
+case "$(uname -s)" in
+MINGW*)
+	PATHSEPARATOR=";"
+	FIJI_ROOT="$(cd "$DIRECTORY" && pwd -W)"
+	;;
+*)
+	FIJI_ROOT="$(cd "$DIRECTORY" && pwd)"
+	;;
+esac
 
 # SunOS's sh cannot do this: FIJI_ROOT="${FIJI_ROOT%*/bin}"
 case "$FIJI_ROOT" in
@@ -15,7 +24,7 @@ case "$FIJI_ROOT" in
 esac
 
 sq_quote () {
-	echo "$1" | sed "s/[]\"\'\\\\(){}[\!\$ 	]/\\\\&/g"
+	echo "$1" | sed "s/[]\"\'\\\\(){}[\!\$ 	;]/\\\\&/g"
 }
 
 java_options=
@@ -146,7 +155,7 @@ discover_tools_jar () {
 case "$main_class" in
 fiji.Main|ij.ImageJ)
 	ij_options="-port7 $ij_options"
-	CLASSPATH="$FIJI_ROOT/jars/ij-launcher.jar:$FIJI_ROOT/jars/ij.jar:$FIJI_ROOT/jars/javassist.jar"
+	CLASSPATH="$FIJI_ROOT/jars/ij-launcher.jar$PATHSEPARATOR$FIJI_ROOT/jars/ij.jar$PATHSEPARATOR$FIJI_ROOT/jars/javassist.jar"
 	;;
 fiji.build.Fake)
 	CLASSPATH="$FIJI_ROOT/jars/fake.jar"
@@ -155,14 +164,14 @@ org.apache.tools.ant.Main)
 	CLASSPATH="$(discover_tools_jar)"
 	for path in "$FIJI_ROOT"/jars/ant*.jar
 	do
-		CLASSPATH="$CLASSPATH${CLASSPATH:+:}$path"
+		CLASSPATH="$CLASSPATH${CLASSPATH:+$PATHSEPARATOR}$path"
 	done
 	;;
 *)
 	CLASSPATH=
 	for path in "$FIJI_ROOT"/jars/*.jar "$FIJI_ROOT"/plugins/*.jar
 	do
-		CLASSPATH="$CLASSPATH${CLASSPATH:+:}$path"
+		CLASSPATH="$CLASSPATH${CLASSPATH:+$PATHSEPARATOR}$path"
 	done
 esac
 
@@ -200,7 +209,7 @@ eval java $EXT_OPTION \
 	-Dpython.cachedir.skip=true \
 	-Xincgc -XX:PermSize=128m \
 	-Dplugins.dir=$FIJI_ROOT_SQ \
-	-Djava.class.path="`sq_quote $CLASSPATH`" \
+	-Djava.class.path="$(sq_quote "$CLASSPATH")" \
 	-Dsun.java.command=Fiji -Dij.dir=$FIJI_ROOT_SQ \
 	-Dfiji.dir=$FIJI_ROOT_SQ \
 	-Dfiji.executable="`sq_quote "$EXECUTABLE_NAME"`" \
