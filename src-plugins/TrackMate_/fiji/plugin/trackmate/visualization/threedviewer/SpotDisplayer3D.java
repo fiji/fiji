@@ -80,7 +80,6 @@ public class SpotDisplayer3D extends AbstractTrackMateModelView {
 		universe = new Image3DUniverse();
 		// Add a listener to unregister this instance from the model listener list when closing
 		universe.addUniverseListener(unregisterListener);
-
 	}
 
 	/*
