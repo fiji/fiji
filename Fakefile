@@ -521,7 +521,7 @@ misc/headless.jar[bin/make-headless-jar.bsh] <- jars/fiji-compat.jar jars/javass
 # We re-use ImageJ2's launcher now, so let's use the updater to perform
 # the job.
 
-ImageJ[bin/update-launcher.sh] <- plugins/Fiji_Updater.jar
+ImageJ[sh bin/update-launcher.sh] <- plugins/Fiji_Updater.jar
 
 # legacy launcher
 
@@ -593,7 +593,7 @@ precompile[] <- precompile-ImageJ precompile-fake precompile-submodules
 
 # precompiled fall back
 
-missingPrecompiledFallBack[./bin/ImageJ.sh --update update $TARGET] <- \
+missingPrecompiledFallBack[sh ./bin/ImageJ.sh --update update $TARGET] <- \
 	plugins/Fiji_Updater.jar
 
 # Portable application/.app
