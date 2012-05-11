@@ -38,6 +38,31 @@ case "$version" in
 	;;
 esac
 
+add_win_logo () {
+	wine=
+	icon_option=/i
+	case "$(uname -s)" in
+	MINGW*)
+		# work around MINGW's POSIX file path mangling
+		icon_option=//i
+		;;
+	CYGWIN*)
+		;;
+	Linux)
+		wine=wine
+		;;
+	*)
+		# Need Windows or at least Wine (on Linux) to run RCEDIT
+		return
+		;;
+	esac
+
+	test -e bin/RCEDIT.exe ||
+	curl https://raw.github.com/poidasmith/winrun4j/master/org.boris.winrun4j.eclipse/launcher/RCEDIT.exe > bin/RCEDIT.exe
+
+	eval $wine bin/RCEDIT.exe $icon_option "$1" images/fiji.ico
+}
+
 tmpdir=.tmp.$$
 mkdir $tmpdir
 
@@ -47,6 +72,7 @@ download () {
 	exe=; case "$2" in *.exe) exe=.exe;; esac
 	unzip -p $tmpdir/$1.zip bin/$1-gcc/ij-launcher$exe > $2
 	chmod a+x $2
+	test -n "$exe" && add_win_logo "$2"
 	target=$(echo "$2" | sed 's/ImageJ-/fiji-/')
 	case "$target" in fiji-linux32) target=fiji-linux;; esac
 	cp $2 $target
