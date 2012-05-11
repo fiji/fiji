@@ -515,26 +515,26 @@ public class PixelError extends Metrics
 			
 			// check mask
 			if ( maskPixels[ i ] > 0 )															
-				continue;
-			
-			if (pix2 == 1)
-			{
-				if(pix1 == 1)
-					truePositives ++;
-				else 
-					falsePositives ++;
-			}
-			else
-			{
-				if(pix1 == 1)
-					falseNegatives ++;
+			{				
+				if (pix2 == 1)
+				{
+					if(pix1 == 1)
+						truePositives ++;
+					else 
+						falsePositives ++;
+				}
 				else
-					trueNegatives ++;						
+				{
+					if(pix1 == 1)
+						falseNegatives ++;
+					else
+						trueNegatives ++;						
+				}
+
+				pixelError +=  ( pix1 - pix2 ) * ( pix1 - pix2 ) ;
+
+				n++;
 			}
-			
-			pixelError +=  ( pix1 - pix2 ) * ( pix1 - pix2 ) ;
-			
-			n++;
 		}
 		
 		if ( n > 0 )
