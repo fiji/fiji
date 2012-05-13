@@ -1,12 +1,31 @@
 package spimopener;
 
-import java.awt.*;
-import java.awt.event.*;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Cursor;
+import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
+import java.awt.Panel;
+import java.awt.TextField;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+import java.awt.event.MouseMotionListener;
+import java.awt.event.TextEvent;
+import java.awt.event.TextListener;
 
 public class DoubleSlider extends Panel implements TextListener, FocusListener {
 
+	private static final long serialVersionUID = 1L;
+
+
 	private TextField minTF = new TextField(4);
 	private TextField maxTF = new TextField(4);
+	private TextField incTF = new TextField(4);
 	private DoubleSliderCanvas slider;
 
 	public DoubleSlider(int min, int max, int cmin, int cmax) {
@@ -25,16 +44,21 @@ public class DoubleSlider extends Panel implements TextListener, FocusListener {
 		c.weightx = 0;
 		add(minTF, c);
 		add(maxTF, c);
+		incTF.setText("1");
+		add(incTF, c);
 		valueChanged();
 	}
 
+	@Override
 	public void focusGained(FocusEvent e) {
 		TextField tf = (TextField)e.getSource();
 		tf.selectAll();
 	}
 
+	@Override
 	public void focusLost(FocusEvent e) {}
 
+	@Override
 	public void textValueChanged(TextEvent e) {
 		try {
 			int min = Integer.parseInt(minTF.getText());
@@ -56,8 +80,13 @@ public class DoubleSlider extends Panel implements TextListener, FocusListener {
 		return slider.cmax;
 	}
 
+	public int getIncrement() {
+		return Integer.parseInt(incTF.getText());
+	}
+
 	private static class DoubleSliderCanvas extends Component implements MouseMotionListener, MouseListener {
 
+		private static final long serialVersionUID = 1L;
 		private int min, max;
 		private int cmin, cmax;
 
@@ -88,14 +117,20 @@ public class DoubleSlider extends Panel implements TextListener, FocusListener {
 			repaint();
 		}
 
+		@Override
 		public void mouseClicked(MouseEvent e) {}
+		@Override
 		public void mouseEntered(MouseEvent e) {}
+		@Override
 		public void mouseExited(MouseEvent e) {}
 
+		@Override
 		public void mousePressed(MouseEvent e) {}
 
+		@Override
 		public void mouseReleased(MouseEvent e) {}
 
+		@Override
 		public void mouseDragged(MouseEvent e) {
 			double inc = (double) getWidth() / (max - min + 1);
 			int newx = (int)Math.round(e.getX() / inc) + min;
@@ -105,6 +140,7 @@ public class DoubleSlider extends Panel implements TextListener, FocusListener {
 			}
 		}
 
+		@Override
 		public void mouseMoved(MouseEvent e) {
 			int x = e.getX();
 			if(Math.abs(x - drawnMin) < 10) {
@@ -119,6 +155,7 @@ public class DoubleSlider extends Panel implements TextListener, FocusListener {
 			}
 		}
 
+		@Override
 		public void paint(Graphics g) {
 			int w = getWidth();
 			int h = getHeight();

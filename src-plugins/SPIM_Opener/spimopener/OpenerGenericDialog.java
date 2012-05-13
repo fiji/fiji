@@ -1,22 +1,26 @@
 package spimopener;
 
-import fiji.util.gui.GenericDialogPlus;
-
-import java.util.List;
-import java.util.ArrayList;
-
-import java.awt.*;
-
+import java.awt.Button;
+import java.awt.Frame;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Label;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
+import java.util.List;
+
+import fiji.util.gui.GenericDialogPlus;
 
 
 public class OpenerGenericDialog extends GenericDialogPlus {
 
+	private static final long serialVersionUID = 1L;
+
 	private ActionListener listener;
 	private List<DoubleSlider> doubleSliders = new ArrayList<DoubleSlider>();
 	private int cIdx = 0;
-	private Button okButton, cancelButton;
+	private Button okButton;
 
 	public OpenerGenericDialog(String title) {
 		super(title);
@@ -30,13 +34,14 @@ public class OpenerGenericDialog extends GenericDialogPlus {
 		this.listener = l;
 	}
 
+	@Override
 	public void showDialog() {
 		super.showDialog();
 		Button[] buttons = getButtons();
 		okButton = buttons[0];
-		cancelButton = buttons[1];
 	}
 
+	@Override
 	public void actionPerformed(ActionEvent e) {
 		if(e.getSource() == okButton && listener != null)
 			listener.actionPerformed(e);
