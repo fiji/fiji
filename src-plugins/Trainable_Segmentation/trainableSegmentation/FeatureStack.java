@@ -347,7 +347,8 @@ public class FeatureStack
 	{
 		ImageProcessor ip = originalImage.getProcessor().duplicate();
 		GaussianBlur gs = new GaussianBlur();
-		gs.blur(ip, sigma);
+		//gs.blur(ip, sigma);
+		gs.blurGaussian(ip, 0.4 * sigma, 0.4 * sigma,  0.0002);
 		wholeStack.addSlice(availableFeatures[GAUSSIAN] + "_" + sigma, ip);
 	}
 	/**
@@ -368,7 +369,8 @@ public class FeatureStack
 		
 				ImageProcessor ip = originalImage.getProcessor().duplicate();
 				GaussianBlur gs = new GaussianBlur();
-				gs.blur(ip, sigma);
+				//gs.blur(ip, sigma);
+				gs.blurGaussian(ip, 0.4 * sigma, 0.4 * sigma,  0.0002);
 				return new ImagePlus (availableFeatures[GAUSSIAN] + "_" + sigma, ip);
 			}
 		};
@@ -789,13 +791,15 @@ public class FeatureStack
 
 			GaussianBlur gs = new GaussianBlur();
 			ImageProcessor ip_x = channels[ch].getProcessor().convertToFloat();
-			gs.blur(ip_x, sigma);
+			//gs.blur(ip_x, sigma);
+			gs.blurGaussian(ip_x, 0.4 * sigma, 0.4 * sigma,  0.0002);
 			Convolver c = new Convolver();
 			float[] sobelFilter_x = {1f,2f,1f,0f,0f,0f,-1f,-2f,-1f};
 			c.convolveFloat(ip_x, sobelFilter_x, 3, 3);
 
 			ImageProcessor ip_y = channels[ch].getProcessor().convertToFloat();
-			gs.blur(ip_y, sigma);
+			//gs.blur(ip_y, sigma);
+			gs.blurGaussian(ip_y, 0.4 * sigma, 0.4 * sigma,  0.0002);
 			c = new Convolver();
 			float[] sobelFilter_y = {1f,0f,-1f,2f,0f,-2f,1f,0f,-1f};
 			c.convolveFloat(ip_y, sobelFilter_y, 3, 3);
@@ -843,13 +847,15 @@ public class FeatureStack
 
 					GaussianBlur gs = new GaussianBlur();
 					ImageProcessor ip_x = channels[ch].getProcessor().convertToFloat();
-					gs.blur(ip_x, sigma);
+					//gs.blur(ip_x, sigma);
+					gs.blurGaussian(ip_x, 0.4 * sigma, 0.4 * sigma,  0.0002);
 					Convolver c = new Convolver();
 					float[] sobelFilter_x = {1f,2f,1f,0f,0f,0f,-1f,-2f,-1f};
 					c.convolveFloat(ip_x, sobelFilter_x, 3, 3);
 
 					ImageProcessor ip_y = channels[ch].getProcessor().convertToFloat();
-					gs.blur(ip_y, sigma);
+					//gs.blur(ip_y, sigma);
+					gs.blurGaussian(ip_y, 0.4 * sigma, 0.4 * sigma,  0.0002);
 					c = new Convolver();
 					float[] sobelFilter_y = {1f,0f,-1f,2f,0f,-2f,1f,0f,-1f};
 					c.convolveFloat(ip_y, sobelFilter_y, 3, 3);
@@ -895,11 +901,13 @@ public class FeatureStack
 		{
 		
 			ImageProcessor ip_x = channels[ch].getProcessor().convertToFloat();
-			gs.blur(ip_x, sigma);		
+			//gs.blur(ip_x, sigma);
+			gs.blurGaussian(ip_x, 0.4 * sigma, 0.4 * sigma,  0.0002);
 			c.convolveFloat(ip_x, sobelFilter_x, 3, 3);		
 
 			ImageProcessor ip_y = channels[ch].getProcessor().convertToFloat();
-			gs.blur(ip_y, sigma);
+			//gs.blur(ip_y, sigma);
+			gs.blurGaussian(ip_y, 0.4 * sigma, 0.4 * sigma,  0.0002);
 			c = new Convolver();
 			c.convolveFloat(ip_y, sobelFilter_y, 3, 3);
 
@@ -1031,11 +1039,11 @@ public class FeatureStack
 				{
 
 					ImageProcessor ip_x = channels[ch].getProcessor().convertToFloat();
-					gs.blur(ip_x, sigma);		
+					gs.blurGaussian(ip_x, 0.4 * sigma, 0.4 * sigma,  0.0002);		
 					c.convolveFloat(ip_x, sobelFilter_x, 3, 3);		
 
 					ImageProcessor ip_y = channels[ch].getProcessor().convertToFloat();
-					gs.blur(ip_y, sigma);
+					gs.blurGaussian(ip_y, 0.4 * sigma, 0.4 * sigma,  0.0002);
 					c = new Convolver();
 					c.convolveFloat(ip_y, sobelFilter_y, 3, 3);
 
@@ -1146,9 +1154,11 @@ public class FeatureStack
 		for(int ch=0; ch < channels.length; ch++)
 		{
 			ImageProcessor ip_1 = channels[ch].getProcessor().duplicate();
-			gs.blur(ip_1, sigma1);
-			ImageProcessor ip_2 = channels[ch].getProcessor().duplicate();
-			gs.blur(ip_2, sigma2);
+			//gs.blur(ip_1, sigma1);
+			gs.blurGaussian(ip_1, 0.4 * sigma1, 0.4 * sigma1,  0.0002);
+			ImageProcessor ip_2 = channels[ch].getProcessor().duplicate();			
+			//gs.blur(ip_2, sigma2);
+			gs.blurGaussian(ip_2, 0.4 * sigma2, 0.4 * sigma2,  0.0002);
 
 			ImageProcessor ip = new FloatProcessor(width, height);
 
@@ -1197,9 +1207,11 @@ public class FeatureStack
 				for(int ch=0; ch < channels.length; ch++)
 				{
 					ImageProcessor ip_1 = channels[ch].getProcessor().duplicate();
-					gs.blur(ip_1, sigma1);
+					//gs.blur(ip_1, sigma1);
+					gs.blurGaussian(ip_1, 0.4 * sigma1, 0.4 * sigma1,  0.0002);
 					ImageProcessor ip_2 = channels[ch].getProcessor().duplicate();
-					gs.blur(ip_2, sigma2);
+					//gs.blur(ip_2, sigma2);
+					gs.blurGaussian(ip_2, 0.4 * sigma2, 0.4 * sigma2,  0.0002);
 
 					ImageProcessor ip = new FloatProcessor(width, height);
 
