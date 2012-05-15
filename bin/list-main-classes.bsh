@@ -1,5 +1,5 @@
 #!/bin/sh
-/*/. 2>/dev/null; exec "$(dirname "$0")"/../ImageJ --bsh "$0" "$@" # exec with fiji */
+/*/. 2>/dev/null; exec "$(dirname "$0")"/ImageJ.sh --bsh "$0" "$@" # exec with fiji */
 
 import fiji.FijiClassLoader;
 

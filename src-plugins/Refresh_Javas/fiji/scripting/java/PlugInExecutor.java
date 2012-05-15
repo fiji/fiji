@@ -18,6 +18,7 @@ import ij.plugin.filter.PlugInFilterRunner;
 import java.io.File;
 import java.io.IOException;
 
+import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
@@ -155,7 +156,12 @@ public class PlugInExecutor {
 						plugin, arg);
 				return;
 			}
-			runMain(clazz, arg);
+			try {
+				runMain(clazz, arg);
+			} catch (NoSuchMethodException e) {
+				// fall back to simply instantiating the class
+				instantiateClass(clazz);
+			}
 		} catch (InstantiationException e) {
 			e.printStackTrace();
 			Throwable cause = e.getCause();
@@ -210,11 +216,15 @@ public class PlugInExecutor {
 		return classLoader;
 	}
 
-	void runMain(Class clazz, String arg) throws IllegalAccessException,
-			InvocationTargetException, NoSuchMethodException {
+	protected void runMain(Class clazz, String arg) throws IllegalAccessException, InvocationTargetException, NoSuchMethodException {
 		String[] args = new String[] { arg };
 		Method main = clazz.getMethod("main",
 				new Class[] { args.getClass() });
 		main.invoke(null, (Object)args);
+	}
+
+	protected void instantiateClass(Class clazz) throws IllegalAccessException, InstantiationException, InvocationTargetException, NoSuchMethodException {
+		Constructor ctor = clazz.getConstructor();
+		ctor.newInstance();
 	}
 }
