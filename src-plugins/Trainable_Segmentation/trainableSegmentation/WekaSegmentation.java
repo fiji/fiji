@@ -3338,7 +3338,7 @@ public class WekaSegmentation {
 		if(featuresChanged)
 		{
 			//this.setButtonsEnabled(false);
-			this.featureStackArray.setEnabledFeatures( usedFeatures );
+			this.setEnabledFeatures( usedFeatures );
 			// Force features to be updated
 			updateFeatures = true;
 		}
