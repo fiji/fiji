@@ -47,6 +47,9 @@ public class mxTrackGraphLayout extends mxGraphLayout {
 	private JGraphXAdapter graph;
 	private int[] columnWidths;
 	protected InterpolatePaintScale colorMap = InterpolatePaintScale.Jet;
+	/** The style to use to apply to cells, can be changed by the user. */
+	protected String selectedStyle = TrackSchemeFrame.DEFAULT_STYLE_NAME;
+	
 	private Color[] trackColorArray;
 	private TreeMap<Float, Integer> rows;
 	/**
@@ -183,8 +186,10 @@ public class mxTrackGraphLayout extends mxGraphLayout {
 						cell = graph.addJGraphTVertex(spot);
 					}
 
-					// Get default style					
-					String style = cell.getStyle();
+					// Add selected style to style string
+					String style = cell.getStyle(); 
+					style = mxStyleUtils.removeAllStylenames(style);
+					style = selectedStyle + ";" + style;
 
 					// Determine in what column to put the spot
 					Float instant = spot.getFeature(Spot.POSITION_T);
@@ -203,18 +208,29 @@ public class mxTrackGraphLayout extends mxGraphLayout {
 					columns.put(instant, targetColumn);
 
 					// Compute cell position in absolute coords 
-					double x = (targetColumn) * X_COLUMN_SIZE - DEFAULT_CELL_WIDTH/2;
-					double y = (0.5 + rows.get(instant)) * Y_COLUMN_SIZE - DEFAULT_CELL_HEIGHT/2;
 
 					// Cell size
-					int height = Math.min(DEFAULT_CELL_WIDTH, Math.round(2 * spot.getFeature(Spot.RADIUS) / dx));
-					height = Math.max(height, DEFAULT_CELL_HEIGHT/3);
+					
+					// Ugly, but we have to do it here, where we set the geometry of cells.
+					double width 	= DEFAULT_CELL_WIDTH;
+					double height 	= DEFAULT_CELL_HEIGHT; 
+					if (selectedStyle.equals("Simple")) {
+						width 	= DEFAULT_CELL_HEIGHT / 2;
+						height 	= DEFAULT_CELL_HEIGHT / 2;
+						style = mxStyleUtils.setStyle(style, mxConstants.STYLE_FILLCOLOR, trackColorStr);
+					} else {
+						height = Math.min(DEFAULT_CELL_WIDTH, Math.round(2 * spot.getFeature(Spot.RADIUS) / dx));
+						height = Math.max(height, DEFAULT_CELL_HEIGHT/3);
+						style = mxStyleUtils.setStyle(style, mxConstants.STYLE_FILLCOLOR, "white");
+					}
 					geometry = cell.getGeometry();
 					geometry.setHeight(height);
-					geometry.setWidth(DEFAULT_CELL_WIDTH);
+					geometry.setWidth(width);
+					double x = (targetColumn) * X_COLUMN_SIZE - DEFAULT_CELL_WIDTH/2;
+					double y = (0.5 + rows.get(instant)) * Y_COLUMN_SIZE - DEFAULT_CELL_HEIGHT/2;
 					geometry.setX(x);
 					geometry.setY(y);
-					
+
 					// Add it to its root cell holder.
 					// Not needed, but if we do not do it, some cells with modified geometry 
 					// are not put back to the imposed geometry.

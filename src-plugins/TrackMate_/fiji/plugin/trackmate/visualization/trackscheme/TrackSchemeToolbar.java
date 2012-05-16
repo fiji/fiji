@@ -9,11 +9,15 @@ import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
+import javax.swing.JComboBox;
 import javax.swing.JToolBar;
 import javax.swing.JViewport;
 
@@ -247,6 +251,33 @@ public class TrackSchemeToolbar extends JToolBar {
 			toggleDisplayDecorationsButton.setToolTipText("Toggle display decorations");
 		}
 		
+		
+		/*
+		 * styles
+		 */
+		
+		
+		Map<String, Map<String, Object>> styles = frame.getGraph().getStylesheet().getStyles();
+		Set<String> styleNames = new HashSet<String>(styles.keySet());
+		styleNames.remove("defaultEdge");
+		styleNames.remove("defaultVertex");
+		final JComboBox selectStyleBox = new JComboBox(styleNames.toArray());
+		selectStyleBox.setSelectedItem(TrackSchemeFrame.DEFAULT_STYLE_NAME);
+		selectStyleBox.addActionListener(new ActionListener() {
+			
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				String selectedStyle = (String) selectStyleBox.getSelectedItem();
+				mxTrackGraphLayout layout = frame.getGraphLayout();
+				if (!selectedStyle.equals(layout.selectedStyle)) {
+					layout.selectedStyle = selectedStyle;
+					layout.execute(frame);
+				}
+			}
+		});
+		
+		
+		
 		/*
 		 * ADD TO TOOLBAR
 		 */
@@ -281,6 +312,10 @@ public class TrackSchemeToolbar extends JToolBar {
 		add(toggleDisplayCostsButton);
 		// Display background decorations
 		add(toggleDisplayDecorationsButton);
-
+		// Separator
+		addSeparator();
+		// Set display style
+		add(selectStyleBox);
+				
 	}
 }
