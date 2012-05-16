@@ -1,14 +1,14 @@
 package tests;
 
 import static org.junit.Assert.assertEquals;
-import mpicbg.imglib.cursor.special.TwinCursor;
-import mpicbg.imglib.type.numeric.integer.UnsignedByteType;
+import net.imglib2.TwinCursor;
+import net.imglib2.type.numeric.integer.UnsignedByteType;
 
 import org.junit.Test;
 
 import algorithms.MandersColocalization;
-import algorithms.MissingPreconditionException;
 import algorithms.MandersColocalization.MandersResults;
+import algorithms.MissingPreconditionException;
 
 public class MandersColocalizationTest extends ColocalisationTest {
 
@@ -21,117 +21,108 @@ public class MandersColocalizationTest extends ColocalisationTest {
 		MandersResults r;
 		// test A-A combination
 		cursor = new TwinCursor<UnsignedByteType>(
-				mandersA.createLocalizableByDimCursor(),
-				mandersA.createLocalizableByDimCursor(),
-				mandersAlwaysTrueMask.createLocalizableCursor());
+				mandersA.randomAccess(),
+				mandersA.randomAccess(),
+				mandersAlwaysTrueMask.localizingCursor());
 
 		r = mc.calculateMandersCorrelation(cursor,
-				mandersA.createType());
-		cursor.close();
+				mandersA.firstElement().createVariable());
 
 		assertEquals(1.0d, r.m1, 0.0001);
 		assertEquals(1.0d, r.m2, 0.0001);
 
 		// test A-B combination
 		cursor = new TwinCursor<UnsignedByteType>(
-				mandersA.createLocalizableByDimCursor(),
-				mandersB.createLocalizableByDimCursor(),
-				mandersAlwaysTrueMask.createLocalizableCursor());
+				mandersA.randomAccess(),
+				mandersB.randomAccess(),
+				mandersAlwaysTrueMask.localizingCursor());
 
 		r = mc.calculateMandersCorrelation(cursor,
-				mandersA.createType());
-		cursor.close();
+				mandersA.firstElement().createVariable());
 
 		assertEquals(0.75d, r.m1, 0.0001);
 		assertEquals(0.75d, r.m2, 0.0001);
 
 		// test A-C combination
 		cursor = new TwinCursor<UnsignedByteType>(
-				mandersA.createLocalizableByDimCursor(),
-				mandersC.createLocalizableByDimCursor(),
-				mandersAlwaysTrueMask.createLocalizableCursor());
+				mandersA.randomAccess(),
+				mandersC.randomAccess(),
+				mandersAlwaysTrueMask.localizingCursor());
 		
 		r = mc.calculateMandersCorrelation(cursor,
-				mandersA.createType());
-		cursor.close();
+				mandersA.firstElement().createVariable());
 		
 		assertEquals(0.5d, r.m1, 0.0001);
 		assertEquals(0.5d, r.m2, 0.0001);
 
 		// test A-D combination
 		cursor = new TwinCursor<UnsignedByteType>(
-				mandersA.createLocalizableByDimCursor(),
-				mandersD.createLocalizableByDimCursor(),
-				mandersAlwaysTrueMask.createLocalizableCursor());
+				mandersA.randomAccess(),
+				mandersD.randomAccess(),
+				mandersAlwaysTrueMask.localizingCursor());
 
 		r = mc.calculateMandersCorrelation(cursor,
-				mandersA.createType());
-		cursor.close();
+				mandersA.firstElement().createVariable());
 
 		assertEquals(0.25d, r.m1, 0.0001);
 		assertEquals(0.25d, r.m2, 0.0001);
 
 		// test A-E combination
 		cursor = new TwinCursor<UnsignedByteType>(
-				mandersA.createLocalizableByDimCursor(),
-				mandersE.createLocalizableByDimCursor(),
-				mandersAlwaysTrueMask.createLocalizableCursor());
+				mandersA.randomAccess(),
+				mandersE.randomAccess(),
+				mandersAlwaysTrueMask.localizingCursor());
 
 		r = mc.calculateMandersCorrelation(cursor,
-				mandersA.createType());
-		cursor.close();
+				mandersA.firstElement().createVariable());
 
 		assertEquals(0.0d, r.m1, 0.0001);
 		assertEquals(0.0d, r.m2, 0.0001);
 
 		// test A-F combination
 		cursor = new TwinCursor<UnsignedByteType>(
-				mandersA.createLocalizableByDimCursor(),
-				mandersF.createLocalizableByDimCursor(),
-				mandersAlwaysTrueMask.createLocalizableCursor());
+				mandersA.randomAccess(),
+				mandersF.randomAccess(),
+				mandersAlwaysTrueMask.localizingCursor());
 
 		r = mc.calculateMandersCorrelation(cursor,
-				mandersA.createType());
-		cursor.close();
+				mandersA.firstElement().createVariable());
 
 		assertEquals(0.25d, r.m1, 0.0001);
 		assertEquals(0.3333d, r.m2, 0.0001);
 
 		// test A-G combination
 		cursor = new TwinCursor<UnsignedByteType>(
-				mandersA.createLocalizableByDimCursor(),
-				mandersG.createLocalizableByDimCursor(),
-				mandersAlwaysTrueMask.createLocalizableCursor());
+				mandersA.randomAccess(),
+				mandersG.randomAccess(),
+				mandersAlwaysTrueMask.localizingCursor());
 
 		r = mc.calculateMandersCorrelation(cursor,
-				mandersA.createType());
-		cursor.close();
+				mandersA.firstElement().createVariable());
 
 		assertEquals(0.25d, r.m1, 0.0001);
 		assertEquals(0.50d, r.m2, 0.0001);
 
 		// test A-H combination
 		cursor = new TwinCursor<UnsignedByteType>(
-				mandersA.createLocalizableByDimCursor(),
-				mandersH.createLocalizableByDimCursor(),
-				mandersAlwaysTrueMask.createLocalizableCursor());
+				mandersA.randomAccess(),
+				mandersH.randomAccess(),
+				mandersAlwaysTrueMask.localizingCursor());
 
 		r = mc.calculateMandersCorrelation(cursor,
-				mandersA.createType());
-		cursor.close();
+				mandersA.firstElement().createVariable());
 
 		assertEquals(0.25d, r.m1, 0.0001);
 		assertEquals(1.00d, r.m2, 0.0001);
 
 		// test A-I combination
 		cursor = new TwinCursor<UnsignedByteType>(
-				mandersA.createLocalizableByDimCursor(),
-				mandersI.createLocalizableByDimCursor(),
-				mandersAlwaysTrueMask.createLocalizableCursor());
+				mandersA.randomAccess(),
+				mandersI.randomAccess(),
+				mandersAlwaysTrueMask.localizingCursor());
 
 		r = mc.calculateMandersCorrelation(cursor,
-				mandersA.createType());
-		cursor.close();
+				mandersA.firstElement().createVariable());
 
 		assertEquals(0.083d, r.m1, 0.001);
 		assertEquals(0.75d, r.m2, 0.0001);

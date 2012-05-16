@@ -2,10 +2,10 @@ package algorithms;
 
 import gadgets.DataContainer;
 import ij.IJ;
-import mpicbg.imglib.cursor.special.TwinCursor;
-import mpicbg.imglib.image.Image;
-import mpicbg.imglib.type.logic.BitType;
-import mpicbg.imglib.type.numeric.RealType;
+import net.imglib2.TwinCursor;
+import net.imglib2.img.Img;
+import net.imglib2.type.logic.BitType;
+import net.imglib2.type.numeric.RealType;
 import results.ResultHandler;
 
 /**
@@ -13,7 +13,7 @@ import results.ResultHandler;
  * data. For instance is the percentage of zero-zero pixels
  * checked or how many pixels are saturated.
  */
-public class InputCheck<T extends RealType<T>> extends Algorithm<T> {
+public class InputCheck<T extends RealType< T >> extends Algorithm<T> {
 	/* the maximum allowed ratio between zero-zero and
 	 * normal pixels
 	 */
@@ -37,13 +37,13 @@ public class InputCheck<T extends RealType<T>> extends Algorithm<T> {
 	public void execute(DataContainer<T> container)
 			throws MissingPreconditionException {
 		// get the 2 images and the mask
-		final Image<T> img1 = container.getSourceImage1();
-		final Image<T> img2 = container.getSourceImage2();
-		final Image<BitType> mask = container.getMask();
+		final Img<T> img1 = container.getSourceImage1();
+		final Img<T> img2 = container.getSourceImage2();
+		final Img<BitType> mask = container.getMask();
 
 		// get the cursors for iterating through pixels in images
-		TwinCursor<T> cursor = new TwinCursor<T>(img1.createLocalizableByDimCursor(),
-				img2.createLocalizableByDimCursor(), mask.createLocalizableCursor());
+		TwinCursor<T> cursor = new TwinCursor<T>(img1.randomAccess(),
+				img2.randomAccess(), mask.cursor());
 
 		double ch1Max = container.getMaxCh1();
 		double ch2Max = container.getMaxCh2();
@@ -76,7 +76,6 @@ public class InputCheck<T extends RealType<T>> extends Algorithm<T> {
 
 			N++;
 		}
-		cursor.close();
 
 		// calculate results
 		double zeroZeroRatio = (double)Nzero / (double)N;

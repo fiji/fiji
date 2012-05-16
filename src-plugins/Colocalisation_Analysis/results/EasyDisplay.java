@@ -4,10 +4,10 @@ import gadgets.DataContainer;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.text.TextWindow;
-import mpicbg.imglib.algorithm.math.ImageStatistics;
-import mpicbg.imglib.image.Image;
-import mpicbg.imglib.image.display.imagej.ImageJFunctions;
-import mpicbg.imglib.type.numeric.RealType;
+import net.imglib2.algorithm.math.ImageStatistics;
+import net.imglib2.img.Img;
+import net.imglib2.img.display.imagej.ImageJFunctions;
+import net.imglib2.type.numeric.RealType;
 import algorithms.Histogram2D;
 
 public class EasyDisplay<T extends RealType<T>> implements ResultHandler<T> {
@@ -35,14 +35,14 @@ public class EasyDisplay<T extends RealType<T>> implements ResultHandler<T> {
 		this.container = container;
 	}
 
-	public void handleImage(Image<T> image) {
-		ImagePlus imp = ImageJFunctions.displayAsVirtualStack( image );
+	public void handleImage(Img<T> image, String name) {
+		ImagePlus imp = ImageJFunctions.wrapFloat( image, name );
 		double max = ImageStatistics.getImageMax( image ).getRealDouble();
 		showImage( imp, max );
 	}
 
-	public void handleHistogram(Histogram2D<T> histogram) {
-		ImagePlus imp = ImageJFunctions.displayAsVirtualStack( histogram.getPlotImage() );
+	public void handleHistogram(Histogram2D<T> histogram, String name) {
+		ImagePlus imp = ImageJFunctions.wrapFloat( histogram.getPlotImage(), name );
 		double max = ImageStatistics.getImageMax( histogram.getPlotImage() ).getRealDouble();
 		showImage( imp, max );
 	}

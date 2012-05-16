@@ -2,14 +2,13 @@ package gadgets;
 
 import java.util.Arrays;
 
-import mpicbg.imglib.container.array.ArrayContainerFactory;
-import mpicbg.imglib.cursor.Cursor;
-import mpicbg.imglib.cursor.LocalizableByDimCursor;
-import mpicbg.imglib.cursor.LocalizableCursor;
-import mpicbg.imglib.image.Image;
-import mpicbg.imglib.image.ImageFactory;
-import mpicbg.imglib.type.logic.BitType;
-import mpicbg.imglib.type.numeric.RealType;
+import net.imglib2.Cursor;
+import net.imglib2.RandomAccess;
+import net.imglib2.img.Img;
+import net.imglib2.img.ImgFactory;
+import net.imglib2.img.array.ArrayImgFactory;
+import net.imglib2.type.logic.BitType;
+import net.imglib2.type.numeric.RealType;
 import algorithms.MissingPreconditionException;
 
 public class MaskFactory {
@@ -22,18 +21,16 @@ public class MaskFactory {
 	 * Create a new mask image without any specific content, but with
 	 * a defined size.
 	 */
-	public static Image<BitType> createMask(int[] dim) {
-		ImageFactory<BitType> imageFactory = new ImageFactory<BitType>(
-				new BitType(), new ArrayContainerFactory());
-
-		return imageFactory.createImage(dim);
+	public static Img<BitType> createMask(long[] dim) {
+		ImgFactory< BitType > imgFactory = new ArrayImgFactory< BitType >();
+		return imgFactory.create(dim, new BitType());
 	}
 	
 	/**
 	 * Create a new mask image with a defined size and preset content.
 	 */
-	public static Image<BitType> createMask(int[] dim, boolean val) {
-		Image<BitType> mask = createMask(dim);
+	public static Img<BitType> createMask(long[] dim, boolean val) {
+		Img<BitType> mask = createMask(dim);
 		
 		for (BitType t : mask)
 			t.set(val);
@@ -45,45 +42,48 @@ public class MaskFactory {
 	 * Create a new mask image with a defined size and preset content.
 	 * @throws MissingPreconditionException
 	 */
-	public static Image<BitType> createMask(int[] dim, int[] roiOffset, int[] roiDim)
+	public static Img<BitType> createMask(long[] dim, long[] roiOffset, long[] roiDim)
 			throws MissingPreconditionException {
 		if (dim.length != roiOffset.length || dim.length != roiDim.length) {
 			throw new MissingPreconditionException("The dimensions of the mask as well as the ROIs and his offset must be the same.");
 		}
 
-		final Image<BitType> mask = createMask(dim);
-		final int[] pos = mask.createPositionArray();
-		final int dims = pos.length;
+		final Img<BitType> mask = createMask(dim);
+		final int dims = mask.numDimensions();
+		final long[] pos = new long[dims];
+		
 
 		// create an array with the max corner of the ROI
-		final int[] roiOffsetMax = mask.createPositionArray();
+		final long[] roiOffsetMax = new long[dims];
 		for (int i=0; i<dims; ++i)
 			roiOffsetMax[i] = roiOffset[i] + roiDim[i];
 		// go through the mask and mask points as valid that are in the ROI
-		final LocalizableCursor<BitType> cursor = mask.createLocalizableCursor();
+		Cursor<BitType> cursor = mask.cursor();
 		while ( cursor.hasNext() ) {
 			cursor.fwd();
-			cursor.getPosition(pos);
+			cursor.localize(pos);
 			boolean valid = true;
 			// test if the current position is contained in the ROI
 			for(int i=0; i<dims; ++i)
 				valid &= pos[i] >= roiOffset[i] && pos[i] < roiOffsetMax[i];
-			cursor.getType().set(valid);
+			cursor.get().set(valid);
 		}
-		cursor.close();
+
 		return mask;
 	}
 
 	/**
 	 * Create a new mask based on a threshold condition for two images.
 	 */
-	public static<T extends RealType<T>> Image<BitType> createMask(Image<T> ch1, Image<T> ch2,
+	public static<T extends RealType< T >> Img<BitType> createMask(Img<T> ch1, Img<T> ch2,
 			T threshold1, T threshold2, ThresholdMode tMode, CombinationMode cMode) {
 		
-		Image<BitType> mask = createMask(ch1.getDimensions());
-		Cursor<T> cursor1 = ch1.createCursor();
-		Cursor<T> cursor2 = ch2.createCursor();
-		Cursor<BitType> maskCursor = mask.createCursor();
+		final long[] dims = new long[ ch1.numDimensions() ];
+		ch1.dimensions(dims);
+		Img<BitType> mask = createMask(dims);
+		Cursor<T> cursor1 = ch1.cursor();
+		Cursor<T> cursor2 = ch2.cursor();
+		Cursor<BitType> maskCursor = mask.cursor();
 		
 		while (cursor1.hasNext() && cursor2.hasNext() && maskCursor.hasNext()) {
 			cursor1.fwd();
@@ -92,8 +92,8 @@ public class MaskFactory {
 			
 			boolean ch1Valid, ch2Valid;
 			
-			T data1 = cursor1.getType();
-			T data2 = cursor2.getType();
+			T data1 = cursor1.get();
+			T data2 = cursor2.get();
 			
 			// get relation to threshold
 			if (tMode == ThresholdMode.Above) {
@@ -106,7 +106,7 @@ public class MaskFactory {
 				throw new UnsupportedOperationException();
 			}
 			
-			BitType maskData = maskCursor.getType();
+			BitType maskData = maskCursor.get();
 			
 			// combine the results into mask
 			if (cMode == CombinationMode.AND) {
@@ -120,10 +120,6 @@ public class MaskFactory {
 			}
 		}
 		
-		cursor1.close();
-		cursor2.close();
-		maskCursor.close();
-		
 		return mask;
 	}
 
@@ -136,24 +132,23 @@ public class MaskFactory {
 	 * @param dim The dimensions of the new mask image
 	 * @param origMask The image from which the mask should be created from
 	 */
-	public static<T extends RealType<T>> Image<BitType> createMask(final int[] dim,
-			final Image<T> origMask) {
-		final Image<BitType> mask = createMask(dim);
-		final int[] origDim = origMask.getDimensions();
+	public static<T extends RealType< T >> Img<BitType> createMask(final long[] dim,
+			final Img<T> origMask) {
+		final Img<BitType> mask = createMask(dim);
+		final long[] origDim = new long[ origMask.numDimensions() ];
+		origMask.dimensions(origDim);
 
 		// test if original mask and new mask have same dimensions
 		if (Arrays.equals(dim, origDim)) {
 			// copy the input image to the mask output image
-			LocalizableCursor<T> origCursor = origMask.createLocalizableCursor();
-			LocalizableByDimCursor<BitType> maskCursor = mask.createLocalizableByDimCursor();
+			Cursor<T> origCursor = origMask.cursor();
+			RandomAccess<BitType> maskCursor = mask.randomAccess();
 			while (origCursor.hasNext()) {
 				origCursor.fwd();
 				maskCursor.setPosition(origCursor);
-				boolean value = origCursor.getType().getRealDouble() > 0.001;
-				maskCursor.getType().set(value);
+				boolean value = origCursor.get().getRealDouble() > 0.001;
+				maskCursor.get().set(value);
 			}
-			origCursor.close();
-			maskCursor.close();
 		} else if (dim.length > origDim.length) {
 			// sanity check
 			for (int i=0; i<origDim.length; i++) {
@@ -162,14 +157,14 @@ public class MaskFactory {
 							+ " but a different extent are not yet supported.");
 			}
 			// mask and image have different dimensionality and maybe even a different extent
-			LocalizableCursor<T> origCursor = origMask.createLocalizableCursor();
-			LocalizableByDimCursor<BitType> maskCursor = mask.createLocalizableByDimCursor();
-			int[] pos = origCursor.createPositionArray();
+			Cursor<T> origCursor = origMask.cursor();
+			RandomAccess<BitType> maskCursor = mask.randomAccess();
+			final long[] pos = new long[ origMask.numDimensions() ];
 			// iterate over the original mask
 			while (origCursor.hasNext()) {
 				origCursor.fwd();
-				origCursor.getPosition(pos);
-				boolean value = origCursor.getType().getRealDouble() > 0.001;
+				origCursor.localize(pos);
+				boolean value = origCursor.get().getRealDouble() > 0.001;
 				// set available (lower dimensional) position information
 				for (int i=0; i<origDim.length; i++)
 					// setPosition requires first the position and then the dimension
@@ -179,11 +174,9 @@ public class MaskFactory {
 					for (int j=0; j<dim[i]; j++) {
 						// setPosition requires first the position and then the dimension
 						maskCursor.setPosition(j, i);
-						maskCursor.getType().set(value);
+						maskCursor.get().set(value);
 					}
 			}
-			origCursor.close();
-			maskCursor.close();
 		} else if (dim.length < origDim.length) {
 			// mask has more dimensions than image
 			throw new UnsupportedOperationException("Masks with more dimensions than the image are not supported, yet.");

@@ -3,11 +3,11 @@ package algorithms;
 import gadgets.DataContainer;
 import gadgets.MaskFactory;
 import gadgets.ThresholdMode;
-import mpicbg.imglib.algorithm.math.ImageStatistics;
-import mpicbg.imglib.cursor.special.TwinCursor;
-import mpicbg.imglib.image.Image;
-import mpicbg.imglib.type.logic.BitType;
-import mpicbg.imglib.type.numeric.RealType;
+import net.imglib2.algorithm.math.ImageStatistics;
+import net.imglib2.TwinCursor;
+import net.imglib2.img.Img;
+import net.imglib2.type.logic.BitType;
+import net.imglib2.type.numeric.RealType;
 import results.ResultHandler;
 
 /**
@@ -16,7 +16,7 @@ import results.ResultHandler;
  *
  * @param <T>
  */
-public class PearsonsCorrelation<T extends RealType<T>> extends Algorithm<T> {
+public class PearsonsCorrelation<T extends RealType< T >> extends Algorithm<T> {
 
 	// Identifiers for choosing which implementation to use
 	public enum Implementation {Classic, Fast};
@@ -48,9 +48,9 @@ public class PearsonsCorrelation<T extends RealType<T>> extends Algorithm<T> {
 
 	public void execute(DataContainer<T> container) throws MissingPreconditionException {
 		// get the 2 images for the calculation of Pearson's
-		Image<T> img1 = container.getSourceImage1();
-		Image<T> img2 = container.getSourceImage2();
-		Image<BitType> mask = container.getMask();
+		Img<T> img1 = container.getSourceImage1();
+		Img<T> img2 = container.getSourceImage2();
+		Img<BitType> mask = container.getMask();
 
 		// get the thresholds of the images
 		AutoThresholdRegression<T> autoThreshold = container.getAutoThreshold();
@@ -66,8 +66,8 @@ public class PearsonsCorrelation<T extends RealType<T>> extends Algorithm<T> {
 		/* Create cursors to walk over the images. First go over the
 		 * images without a mask. */
 		TwinCursor<T> cursor = new TwinCursor<T>(
-				img1.createLocalizableByDimCursor(), img2.createLocalizableByDimCursor(),
-				mask.createLocalizableCursor());
+				img1.randomAccess(), img2.randomAccess(),
+				mask.localizingCursor());
 
 		MissingPreconditionException error = null;
 		if (theImplementation == Implementation.Classic) {
@@ -136,8 +136,6 @@ public class PearsonsCorrelation<T extends RealType<T>> extends Algorithm<T> {
 			}
 		}
 
-		cursor.close();
-
 		// if an error occurred, throw it one level up
 		if (error != null)
 			throw error;
@@ -153,10 +151,12 @@ public class PearsonsCorrelation<T extends RealType<T>> extends Algorithm<T> {
 	 * @return Pearson's R value.
 	 * @throws MissingPreconditionException
 	 */
-	public <S extends RealType<S>> double calculatePearsons(Image<S> img1, Image<S> img2)
+	public <S extends RealType<S>> double calculatePearsons(Img<S> img1, Img<S> img2)
 			throws MissingPreconditionException {
 		// create an "always true" mask to walk over the images
-		Image<BitType> alwaysTrueMask = MaskFactory.createMask(img1.getDimensions(), true);
+		final long[] dims = new long[img1.numDimensions()];
+		img1.dimensions(dims);
+		Img<BitType> alwaysTrueMask = MaskFactory.createMask(dims, true);
 		return calculatePearsons(img1, img2, alwaysTrueMask);
 	}
 
@@ -172,11 +172,11 @@ public class PearsonsCorrelation<T extends RealType<T>> extends Algorithm<T> {
 	 * @return Pearson's R value.
 	 * @throws MissingPreconditionException
 	 */
-	public <S extends RealType<S>> double calculatePearsons(Image<S> img1, Image<S> img2,
-			Image<BitType> mask) throws MissingPreconditionException {
+	public <S extends RealType<S>> double calculatePearsons(Img<S> img1, Img<S> img2,
+			Img<BitType> mask) throws MissingPreconditionException {
 		TwinCursor<S> cursor = new TwinCursor<S>(
-				img1.createLocalizableByDimCursor(), img2.createLocalizableByDimCursor(),
-				mask.createLocalizableCursor());
+				img1.randomAccess(), img2.randomAccess(),
+				mask.localizingCursor());
 
 		double r;
 		if (theImplementation == Implementation.Classic) {
@@ -191,7 +191,6 @@ public class PearsonsCorrelation<T extends RealType<T>> extends Algorithm<T> {
 			r = fastPearsons(cursor);
 		}
 
-		cursor.close();
 		return r;
 	}
 

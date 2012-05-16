@@ -27,20 +27,37 @@
  *
  * @author Dan White & Tom Kazimiers
  */
-package mpicbg.imglib.algorithm.math;
+package net.imglib2.algorithm.math;
 
-import mpicbg.imglib.cursor.Cursor;
-import mpicbg.imglib.cursor.special.TwinCursor;
-import mpicbg.imglib.image.Image;
-import mpicbg.imglib.type.Type;
-import mpicbg.imglib.type.logic.BitType;
-import mpicbg.imglib.type.numeric.RealType;
+import net.imglib2.Cursor;
+import net.imglib2.TwinCursor;
+import net.imglib2.img.Img;
+import net.imglib2.type.Type;
+import net.imglib2.type.logic.BitType;
+import net.imglib2.type.numeric.RealType;
+import net.imglib2.util.RealSum;
 
 /**
- * This class contains some basic {@link Image} statistics
+ * This class contains some basic {@link Img} statistics
  * calculations.
  */
 public class ImageStatistics {
+	/**
+	 * Calculates the number of pixels in the image.
+	 *
+	 * @param img The image to calculate the mean of
+	 * @param mask The mask to respect
+	 * @return The mean of the image passed
+	 */
+	final public static <T extends RealType<T>> long getNumPixels( final Img<T> img )
+	{
+		long numPixels = 1;
+		for (int d=0; d<img.numDimensions(); ++d)
+			numPixels = numPixels * img.dimension(d);
+		
+		return numPixels;
+	} 
+
 	/**
 	 * Calculates the mean of an image with respect to a mask.
 	 *
@@ -48,20 +65,19 @@ public class ImageStatistics {
 	 * @param mask The mask to respect
 	 * @return The mean of the image passed
 	 */
-	final public static <T extends RealType<T>> double getImageMean( final Image<T> img, final Image<BitType>  mask )
+	final public static <T extends RealType<T>> double getImageMean( final Img<T> img, final Img<BitType>  mask )
 	{
 		final RealSum sum = new RealSum();
 		long numPixels = 0;
 		// create cursor to walk an image with respect to a mask
 		final TwinCursor<T> cursor = new TwinCursor<T>(
-				img.createLocalizableByDimCursor(),
-				img.createLocalizableByDimCursor(),
-				mask.createLocalizableCursor());
+				img.randomAccess(),
+				img.randomAccess(),
+				mask.cursor());
 		while (cursor.hasNext()) {
 			sum.add(cursor.getChannel1().getRealDouble());
 			++numPixels;
 		}
-		cursor.close();
 
 		return sum.getSum() / numPixels;
 	}
@@ -72,23 +88,20 @@ public class ImageStatistics {
 	 * @param img The image to calculate the mean of
 	 * @return The mean of the image passed
 	 */
-	final public static <T extends RealType<T>> double getImageMean( final Image<T> img )
+	final public static <T extends RealType<T>> double getImageMean( final Img<T> img )
 	{
-		return getImageIntegral(img) / img.getNumPixels();
-	}
+		// Count all values using the RealSum class.
+        // It prevents numerical instabilities when adding up millions of pixels
+        RealSum realSum = new RealSum();
+        long count = 0;
+ 
+        for ( final T type : img )
+        {
+            realSum.add( type.getRealDouble() );
+            ++count;
+        }
 
-	protected static class RealSum {
-		protected double sum;
-
-		protected void add( double value )
-		{
-			sum += value;
-		}
-
-		protected double getSum()
-		{
-			return sum;
-		}
+        return realSum.getSum() / count;
 	}
 
 	/**
@@ -97,7 +110,7 @@ public class ImageStatistics {
 	 * @param img The image to calculate the integral of
 	 * @return The pixel values integral of the image passed
 	 */
-	final public static <T extends RealType<T>> double getImageIntegral( final Image<T> img )
+	final public static <T extends RealType<T>> double getImageIntegral( final Img<T> img )
 	{
 		final RealSum sum = new RealSum();
 
@@ -113,17 +126,16 @@ public class ImageStatistics {
 	 * @param img The image to calculate the integral of
 	 * @return The pixel values integral of the image passed
 	 */
-	final public static <T extends RealType<T>> double getImageIntegral( final Image<T> img, Image<BitType> mask )
+	final public static <T extends RealType<T>> double getImageIntegral( final Img<T> img, Img<BitType> mask )
 	{
 		final RealSum sum = new RealSum();
 		// create cursor to walk an image with respect to a mask
 		final TwinCursor<T> cursor = new TwinCursor<T>(
-				img.createLocalizableByDimCursor(),
-				img.createLocalizableByDimCursor(),
-				mask.createLocalizableCursor());
+				img.randomAccess(),
+				img.randomAccess(),
+				mask.cursor());
 		while (cursor.hasNext())
 			sum.add( cursor.getChannel1().getRealDouble() );
-		cursor.close();
 
 		return sum.getSum();
 	}
@@ -134,19 +146,18 @@ public class ImageStatistics {
 	 * @param img The image to calculate the min of
 	 * @return The min of the image passed
 	 */
-	final public static <T extends Type<T> & Comparable<T>> T getImageMin( final Image<T> img )
+	final public static <T extends Type<T> & Comparable<T>> T getImageMin( final Img<T> img )
 	{
-		final Cursor<T> cursor = img.createCursor();
+		final Cursor<T> cursor = img.cursor();
 		cursor.fwd();
-
-		final T min = img.createType();
-		min.set( cursor.getType() );
+		// copy first element as current maximum
+		final T min = cursor.get().copy();
 
 		while ( cursor.hasNext() )
 		{
 			cursor.fwd();
 
-			final T currValue = cursor.getType();
+			final T currValue = cursor.get();
 
 			if ( currValue.compareTo( min ) < 0 )
 				min.set( currValue );
@@ -162,17 +173,17 @@ public class ImageStatistics {
 	 * @param mask The mask to respect
 	 * @return The min of the image passed
 	 */
-	final public static <T extends Type<T> & Comparable<T>> T getImageMin( final Image<T> img, final Image<BitType> mask )
+	final public static <T extends Type<T> & Comparable<T>> T getImageMin( final Img<T> img, final Img<BitType> mask )
 	{
 		// create cursor to walk an image with respect to a mask
 		final TwinCursor<T> cursor = new TwinCursor<T>(
-				img.createLocalizableByDimCursor(),
-				img.createLocalizableByDimCursor(),
-				mask.createLocalizableCursor());
-		final T min = img.createType();
+				img.randomAccess(),
+				img.randomAccess(),
+				mask.cursor());
 		// forward one step to get the first value
 		cursor.fwd();
-		min.set( cursor.getChannel1() );
+		// copy first element as current minimum
+		final T min = cursor.getChannel1().copy();
 
 		while ( cursor.hasNext() ) {
 			cursor.fwd();
@@ -182,7 +193,6 @@ public class ImageStatistics {
 			if ( currValue.compareTo( min ) < 0 )
 				min.set( currValue );
 		}
-		cursor.close();
 
         return min;
 	 }
@@ -193,19 +203,18 @@ public class ImageStatistics {
 	 * @param img The image to calculate the max of
 	 * @return The max of the image passed
 	 */
-	final public static <T extends Type<T> & Comparable<T>> T getImageMax( final Image<T> img ) {
+	final public static <T extends Type<T> & Comparable<T>> T getImageMax( final Img<T> img ) {
 
-		final Cursor<T> cursor = img.createCursor();
+		final Cursor<T> cursor = img.cursor();
 		cursor.fwd();
-
-		final T max = img.createType();
-		max.set( cursor.getType() );
+		// copy first element as current maximum
+		final T max = cursor.get().copy();
 
 		while ( cursor.hasNext() )
 		{
 			cursor.fwd();
 
-			final T currValue = cursor.getType();
+			final T currValue = cursor.get();
 
 			if ( currValue.compareTo( max ) > 0 )
 				max.set( currValue );
@@ -220,17 +229,16 @@ public class ImageStatistics {
 	 * @param mask The mask to respect
 	 * @return The min of the image passed
 	 */
-	final public static <T extends Type<T> & Comparable<T>> T getImageMax( final Image<T> img, final Image<BitType> mask )
+	final public static <T extends Type<T> & Comparable<T>> T getImageMax( final Img<T> img, final Img<BitType> mask )
 	{
 		// create cursor to walk an image with respect to a mask
 		final TwinCursor<T> cursor = new TwinCursor<T>(
-				img.createLocalizableByDimCursor(),
-				img.createLocalizableByDimCursor(),
-				mask.createLocalizableCursor());
-		final T max = img.createType();
+				img.randomAccess(),
+				img.randomAccess(),
+				mask.cursor());
 		// forward one step to get the first value
 		cursor.fwd();
-		max.set( cursor.getChannel1() );
+		final T max = cursor.getChannel1().copy();
 
 		while ( cursor.hasNext() ) {
 			cursor.fwd();
@@ -240,7 +248,6 @@ public class ImageStatistics {
 			if ( currValue.compareTo( max ) > 0 )
 				max.set( currValue );
 		}
-		cursor.close();
 
         return max;
 	 }

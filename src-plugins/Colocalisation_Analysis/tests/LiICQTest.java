@@ -1,9 +1,8 @@
 package tests;
 
 import static org.junit.Assert.assertTrue;
-
-import mpicbg.imglib.cursor.special.TwinCursor;
-import mpicbg.imglib.type.numeric.integer.UnsignedByteType;
+import net.imglib2.TwinCursor;
+import net.imglib2.type.numeric.integer.UnsignedByteType;
 
 import org.junit.Test;
 
@@ -23,14 +22,13 @@ public class LiICQTest extends ColocalisationTest {
 	@Test
 	public void liPositiveCorrTest() {
 		TwinCursor<UnsignedByteType> cursor = new TwinCursor<UnsignedByteType>(
-				positiveCorrelationImageCh1.createLocalizableByDimCursor(),
-				positiveCorrelationImageCh2.createLocalizableByDimCursor(),
-				positiveCorrelationAlwaysTrueMask.createLocalizableCursor());
+				positiveCorrelationImageCh1.randomAccess(),
+				positiveCorrelationImageCh2.randomAccess(),
+				positiveCorrelationAlwaysTrueMask.localizingCursor());
 		// calculate Li's ICQ value
 		double icq = LiICQ.calculateLisICQ(cursor, positiveCorrelationImageCh1Mean,
 					positiveCorrelationImageCh2Mean);
 		assertTrue(icq > 0.34 && icq < 0.35);
-		cursor.close();
 	}
 
 	/**
@@ -40,13 +38,12 @@ public class LiICQTest extends ColocalisationTest {
 	@Test
 	public void liZeroCorrTest() {
 		TwinCursor<UnsignedByteType> cursor = new TwinCursor<UnsignedByteType>(
-				zeroCorrelationImageCh1.createLocalizableByDimCursor(),
-				zeroCorrelationImageCh2.createLocalizableByDimCursor(),
-				zeroCorrelationAlwaysTrueMask.createLocalizableCursor());
+				zeroCorrelationImageCh1.randomAccess(),
+				zeroCorrelationImageCh2.randomAccess(),
+				zeroCorrelationAlwaysTrueMask.localizingCursor());
 		// calculate Li's ICQ value
 		double icq = LiICQ.calculateLisICQ(cursor, zeroCorrelationImageCh1Mean,
 					zeroCorrelationImageCh2Mean);
 		assertTrue(Math.abs(icq) < 0.01);
-		cursor.close();
 	}
 }

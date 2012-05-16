@@ -18,20 +18,20 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.awt.event.WindowListener;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import mpicbg.imglib.container.array.ArrayContainerFactory;
-import mpicbg.imglib.cursor.LocalizableByDimCursor;
-import mpicbg.imglib.cursor.LocalizableCursor;
-import mpicbg.imglib.cursor.special.TwinCursor;
-import mpicbg.imglib.image.Image;
-import mpicbg.imglib.image.ImageFactory;
-import mpicbg.imglib.image.ImagePlusAdapter;
-import mpicbg.imglib.type.logic.BitType;
-import mpicbg.imglib.type.numeric.RealType;
+import net.imglib2.Cursor;
+import net.imglib2.RandomAccess;
+import net.imglib2.TwinCursor;
+import net.imglib2.img.ImagePlusAdapter;
+import net.imglib2.img.Img;
+import net.imglib2.img.ImgFactory;
+import net.imglib2.img.array.ArrayImgFactory;
+import net.imglib2.type.NativeType;
+import net.imglib2.type.logic.BitType;
+import net.imglib2.type.numeric.RealType;
 import results.PDFWriter;
 import results.ResultHandler;
 import results.SingleWindowDisplay;
@@ -43,10 +43,10 @@ import algorithms.Histogram2D;
 import algorithms.InputCheck;
 import algorithms.LiHistogram2D;
 import algorithms.LiICQ;
-import algorithms.SpearmanRankCorrelation;
 import algorithms.MandersColocalization;
 import algorithms.MissingPreconditionException;
 import algorithms.PearsonsCorrelation;
+import algorithms.SpearmanRankCorrelation;
 
 /**
    Copyright 2010, 2011 Daniel J. White, Tom Kazimiers, Johannes Schindelin
@@ -71,13 +71,13 @@ import algorithms.PearsonsCorrelation;
  *
  * @param <T>
  */
-public class Coloc_2<T extends RealType<T>> implements PlugIn {
+public class Coloc_2<T extends RealType< T > & NativeType< T >> implements PlugIn {
 
 	// a small bounding box container
 	protected class BoundingBox {
-		public int[] offset;
-		public int[] size;
-		public BoundingBox(int [] offset, int[] size) {
+		public long[] offset;
+		public long[] size;
+		public BoundingBox(long [] offset, long[] size) {
 			this.offset = offset.clone();
 			this.size = size.clone();
 		}
@@ -86,10 +86,10 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 	// a storage class for ROI information
 	protected class MaskInfo {
 		BoundingBox roi;
-		public Image<T> mask;
+		public Img<T> mask;
 
 		// constructors
-		public MaskInfo(BoundingBox roi, Image<T> mask) {
+		public MaskInfo(BoundingBox roi, Img<T> mask) {
 			this.roi = roi;
 			this.mask = mask;
 		}
@@ -122,7 +122,7 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 	protected static int indexRoi = 0;
 
 	// the images to work on
-	protected Image<T> img1, img2;
+	protected Img<T> img1, img2;
 
 	// the channels of the images to use
 	protected int img1Channel = 1, img2Channel = 1;
@@ -291,7 +291,7 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 		} else if (roiConfig == RoiConfiguration.Mask) {
 			// get the image to be used as mask
 			ImagePlus maskImp = WindowManager.getImage(windowList[indexMask]);
-			Image<T> maskImg = ImagePlusAdapter.<T>wrap( maskImp );
+			Img<T> maskImg = ImagePlusAdapter.<T>wrap( maskImp );
 			// get a valid mask info for the image
 			MaskInfo mi = getBoundingBoxOfMask(maskImg);
 			masks.add( mi ) ;
@@ -366,21 +366,21 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 	 * @param maskBB
 	 * @throws MissingPreconditionException
 	 */
-	public void colocalise(Image<T> img1, Image<T> img2, BoundingBox roi,
-			Image<T> mask) throws MissingPreconditionException {
+	public void colocalise(Img<T> img1, Img<T> img2, BoundingBox roi,
+			Img<T> mask) throws MissingPreconditionException {
 		// create a new container for the selected images and channels
 		DataContainer<T> container;
 		if (mask != null) {
 			container = new DataContainer<T>(img1, img2,
-					img1Channel, img2Channel, mask, roi.offset, roi.size);
+					img1Channel, img2Channel, "Channel 1", "Channel 2", mask, roi.offset, roi.size);
 		} else if (roi != null) {
 				// we have no mask, but a regular ROI in use
 				container = new DataContainer<T>(img1, img2,
-						img1Channel, img2Channel, roi.offset, roi.size);
+						img1Channel, img2Channel, "Channel 1", "Channel 2", roi.offset, roi.size);
 		} else {
 			// no mask and no ROI is present
 			container = new DataContainer<T>(img1, img2,
-					img1Channel, img2Channel);
+					img1Channel, img2Channel, "Channel 1", "Channel 2");
 		}
 
 		// create a results handler
@@ -436,23 +436,21 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 		}
 		// if we have ROIs/masks, add them to results
 		if (displayImages) {
-			Image<T> channel1, channel2;
+			Img<T> channel1, channel2;
 			if (mask != null || roi != null) {
-				int[] offset = container.getMaskBBOffset();
-				int[] size = container.getMaskBBSize();
+				long[] offset = container.getMaskBBOffset();
+				long[] size = container.getMaskBBSize();
 				channel1 = createMaskImage( container.getSourceImage1(),
-						container.getMask(), offset, size, "Channel 1" );
+						container.getMask(), offset, size );
 				channel2 = createMaskImage( container.getSourceImage2(),
-						container.getMask(), offset, size, "Channel 2" );
+						container.getMask(), offset, size );
 			} else {
 				channel1 = container.getSourceImage1();
 				channel2 = container.getSourceImage2();
-				channel1.setName("Channel 1");
-				channel2.setName("Channel 2");
 			}
 			for (ResultHandler<T> r : listOfResultHandlers) {
-				r.handleImage (channel1);
-				r.handleImage (channel2);
+				r.handleImage (channel1, "Channel 1");
+				r.handleImage (channel2, "Channel 2");
 			}
 		}
 		// do the actual results processing
@@ -478,28 +476,28 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 	 * @param mask The image to look for "on" values in
 	 * @return a new MaskInfo object or null
 	 */
-	protected MaskInfo getBoundingBoxOfMask(Image<T> mask) {
-		LocalizableCursor<T> cursor = mask.createLocalizableCursor();
+	protected MaskInfo getBoundingBoxOfMask(Img<T> mask) {
+		Cursor<T> cursor = mask.localizingCursor();
 
-		int numMaskDims = mask.getNumDimensions();
+		int numMaskDims = mask.numDimensions();
 		// the "off type" of the mask
-		T offType = mask.createType();
+		T offType = mask.firstElement().createVariable();
 		offType.setZero();
 		// the corners of the bounding box
-		int[] min = null;
-		int[] max = null;
+		long[] min = null;
+		long[] max = null;
 		// indicates if mask data has been found
 		boolean maskFound = false;
 		// a container for temporary position information
-		int[] pos = new int[numMaskDims];
+		long[] pos = new long[numMaskDims];
 		// walk over the mask
 		while (cursor.hasNext() ) {
 			cursor.fwd();
-			T data = cursor.getType();
+			T data = cursor.get();
 			// test if the current mask data represents on or off
 			if (data.compareTo(offType) > 0) {
 				// get current position
-				cursor.getPosition(pos);
+				cursor.localize(pos);
 				if (!maskFound) {
 					// we found mask data, first time
 					maskFound = true;
@@ -524,13 +522,11 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 			}
 		}
 
-		cursor.close();
-
 		if (!maskFound) {
 			return null;
 		} else {
 			// calculate size
-			int[] size = new int[numMaskDims];
+			long[] size = new long[numMaskDims];
 			for (int d=0; d<numMaskDims; d++)
 				size[d] = max[d] - min[d] + 1;
 			// create and add bounding box
@@ -618,8 +614,8 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 			// get the ROIs/masks bounding box
 			Rectangle rect = r.getBounds();
 			mi.roi = new BoundingBox(
-					new int[] {rect.x, rect.y} ,
-					new int[] {rect.width, rect.height});
+					new long[] {rect.x, rect.y} ,
+					new long[] {rect.width, rect.height});
 			ImageProcessor ipMask = r.getMask();
 			// check if we got a regular ROI and return if so
 			if (ipMask == null) {
@@ -632,7 +628,7 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 			ipSlice.setValue(0.0);
 			ipSlice.fill();
 			// position the mask on the new  mask processor
-			ipSlice.copyBits(ipMask, mi.roi.offset[0], mi.roi.offset[1], Blitter.COPY);
+			ipSlice.copyBits(ipMask, (int)mi.roi.offset[0], (int)mi.roi.offset[1], Blitter.COPY);
 			// create an Image<T> out of it
 			ImagePlus maskImp = new ImagePlus("Mask", ipSlice);
 			// and remember it and the masks bounding box
@@ -646,39 +642,35 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 	 * source images are ROI/MaskImages.
 	 * @throws MissingPreconditionException
 	 */
-	protected Image<T> createMaskImage(Image<T> image, Image<BitType> mask,
-			int[] offset, int[] size, String name) throws MissingPreconditionException {
-		int[] pos = image.createPositionArray();
+	protected Img<T> createMaskImage(Img<T> image, Img<BitType> mask,
+			long[] offset, long[] size) throws MissingPreconditionException {
+		long[] pos = new long[ image.numDimensions() ];
 		// sanity check
 		if (pos.length != offset.length || pos.length != size.length) {
 			throw new MissingPreconditionException("Mask offset and size must be of same dimensionality like image.");
 		}
 		// use twin cursor for only one image
 		TwinCursor<T> cursor = new TwinCursor<T>(
-				image.createLocalizableByDimCursor(),
-				image.createLocalizableByDimCursor(),
-				mask.createLocalizableCursor());
+				image.randomAccess(),
+				image.randomAccess(),
+				mask.localizingCursor());
 		// prepare output image
-		ImageFactory<T> maskFactory = new ImageFactory<T>(
-				image.createType(), new ArrayContainerFactory());
-		Image<T> maskImage = maskFactory.createImage( size, name );
-		LocalizableByDimCursor<T> maskCursor =
-				maskImage.createLocalizableByDimCursor();
+		ImgFactory<T> maskFactory = new ArrayImgFactory<T>();
+		//Img<T> maskImage = maskFactory.create( size, name );
+		Img<T> maskImage = maskFactory.create( size, image.firstElement().createVariable() );
+		RandomAccess<T> maskCursor = maskImage.randomAccess();
 		// go through the visible data and copy it to the output
 		while (cursor.hasNext()) {
 			cursor.fwd();
-			cursor.getPosition(pos);
+			cursor.localize(pos);
 			// shift coordinates by offset
 			for (int i=0; i < pos.length; ++i) {
 				pos[i] = pos[i] - offset[i];
 			}
 			// write out to correct position
 			maskCursor.setPosition( pos );
-			maskCursor.getType().set( cursor.getChannel1() );
+			maskCursor.get().set( cursor.getChannel1() );
 		}
-
-		cursor.close();
-		maskCursor.close();
 
 		return maskImage;
 	}

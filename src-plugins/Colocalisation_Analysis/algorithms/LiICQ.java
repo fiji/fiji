@@ -1,10 +1,10 @@
 package algorithms;
 
 import gadgets.DataContainer;
-import mpicbg.imglib.cursor.special.TwinCursor;
-import mpicbg.imglib.image.Image;
-import mpicbg.imglib.type.logic.BitType;
-import mpicbg.imglib.type.numeric.RealType;
+import net.imglib2.TwinCursor;
+import net.imglib2.img.Img;
+import net.imglib2.type.logic.BitType;
+import net.imglib2.type.numeric.RealType;
 import results.ResultHandler;
 
 /**
@@ -13,7 +13,7 @@ import results.ResultHandler;
  *
  * @param <T>
  */
-public class LiICQ<T extends RealType<T>> extends Algorithm<T> {
+public class LiICQ<T extends RealType< T >> extends Algorithm<T> {
 	// the resulting ICQ value
 	double icqValue;
 
@@ -28,15 +28,14 @@ public class LiICQ<T extends RealType<T>> extends Algorithm<T> {
 		double mean2 = container.getMeanCh2();
 
 		// get the 2 images for the calculation of Li's ICQ
-		Image<T> img1 = container.getSourceImage1();
-		Image<T> img2 = container.getSourceImage2();
-		Image<BitType> mask = container.getMask();
+		Img<T> img1 = container.getSourceImage1();
+		Img<T> img2 = container.getSourceImage2();
+		Img<BitType> mask = container.getMask();
 
-		TwinCursor<T> cursor = new TwinCursor<T>(img1.createLocalizableByDimCursor(),
-				img2.createLocalizableByDimCursor(), mask.createLocalizableCursor());
+		TwinCursor<T> cursor = new TwinCursor<T>(img1.randomAccess(),
+				img2.randomAccess(), mask.cursor());
 		// calculate ICQ value
 		icqValue = calculateLisICQ(cursor, mean1, mean2);
-		cursor.close();
 	}
 
 	/**

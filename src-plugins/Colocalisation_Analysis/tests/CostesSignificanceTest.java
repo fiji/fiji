@@ -2,8 +2,9 @@ package tests;
 
 import static org.junit.Assert.assertTrue;
 import gadgets.DataContainer;
-import mpicbg.imglib.image.Image;
-import mpicbg.imglib.type.numeric.real.FloatType;
+
+import net.imglib2.img.Img;
+import net.imglib2.type.numeric.real.FloatType;
 
 import org.junit.Test;
 
@@ -46,16 +47,16 @@ public class CostesSignificanceTest extends ColocalisationTest {
 
 		for (double exp=0; exp < 2.5; exp=exp+0.5) {
 			double colocPercentage = Math.pow(10, exp);
-			Image<FloatType> ch1 = TestImageAccessor.producePerlinNoiseImage(
+			Img<FloatType> ch1 = TestImageAccessor.producePerlinNoiseImage(
 				new FloatType(), width, height, z, scale);
-			Image<FloatType> ch2 = TestImageAccessor.producePerlinNoiseImage(
+			Img<FloatType> ch2 = TestImageAccessor.producePerlinNoiseImage(
 				new FloatType(), width, height, z, scale);
 			/* calculate the number of colocalised pixels, based on the percentage and the
 			 * space one noise point will take (here 9, because we use 3x3 dots)
 			 */
 			int nrColocPixels = (int) ( ( (width * height / 100.0) * colocPercentage ) / (objectSize * objectSize) );
 			// create non-smoothed coloc image. add it to the noise images and smooth them
-			Image<FloatType> colocImg = TestImageAccessor.produceNoiseImage(
+			Img<FloatType> colocImg = TestImageAccessor.produceNoiseImage(
 				width, height, objectSize, nrColocPixels);
 			TestImageAccessor.combineImages(ch1, colocImg);
 			ch1 = TestImageAccessor.gaussianSmooth(ch1, sigma);
@@ -63,7 +64,7 @@ public class CostesSignificanceTest extends ColocalisationTest {
 			ch2 = TestImageAccessor.gaussianSmooth(ch2, sigma);
 
 			DataContainer<FloatType> container
-				= new DataContainer<FloatType>(ch1, ch2, 1, 1);
+				= new DataContainer<FloatType>(ch1, ch2, 1, 1, "Channel 1", "Channel 2");
 
 			PearsonsCorrelation<FloatType> pc
 				= new PearsonsCorrelation<FloatType>(PearsonsCorrelation.Implementation.Fast);

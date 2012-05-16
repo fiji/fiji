@@ -4,11 +4,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import mpicbg.imglib.algorithm.math.ImageStatistics;
-import mpicbg.imglib.image.Image;
-import mpicbg.imglib.image.display.imagej.ImageJFunctions;
-import mpicbg.imglib.type.logic.BitType;
-import mpicbg.imglib.type.numeric.RealType;
+import net.imglib2.algorithm.math.ImageStatistics;
+import net.imglib2.img.Img;
+import net.imglib2.type.logic.BitType;
+import net.imglib2.type.numeric.RealType;
 import algorithms.Algorithm;
 import algorithms.AutoThresholdRegression;
 import algorithms.InputCheck;
@@ -22,23 +21,25 @@ import algorithms.MissingPreconditionException;
 
  * @param <T>
  */
-public class DataContainer<T extends RealType<T>> {
+public class DataContainer<T extends RealType< T >> {
 	// enumeration of different mask types
 	public enum MaskType { Regular, Irregular, None };
 	// some general image statistics
 	double meanCh1, meanCh2, minCh1, maxCh1, minCh2, maxCh2, integralCh1, integralCh2;
 	// The source images that the results are based on
-	Image<T> sourceImage1, sourceImage2;
+	Img<T> sourceImage1, sourceImage2;
+	// The names of the two source images
+	String sourceImage1Name, sourceImage2Name;
 	// The mask for the images
-	Image<BitType> mask;
+	Img<BitType> mask;
 	// Type of the used mask
 	protected MaskType maskType;
 
 	// The channels of the source images that the result relate to
 	int ch1, ch2;
 	// The masks bounding box
-	protected int[] maskBBSize = null;
-	protected int[] maskBBOffset = null;
+	protected long[] maskBBSize = null;
+	protected long[] maskBBOffset = null;
 
 	InputCheck<T> inputCheck = null;
 	AutoThresholdRegression<T> autoThreshold = null;
@@ -57,17 +58,22 @@ public class DataContainer<T extends RealType<T>> {
 	 * @param ch1 The channel one image channel
 	 * @param ch2 The channel two image channel
 	 */
-	public DataContainer(Image<T> src1, Image<T> src2, int ch1, int ch2) {
+	public DataContainer(Img<T> src1, Img<T> src2, int ch1, int ch2, String name1, String name2) {
 		sourceImage1 = src1;
 		sourceImage2 = src2;
+		sourceImage1Name = name1;
+		sourceImage2Name = name1;
 		// create a mask that is everywhere valid
-		mask = MaskFactory.createMask(src1.getDimensions(), true);
+		final long[] dims = new long[src1.numDimensions()];
+		src1.dimensions(dims);
+		mask = MaskFactory.createMask(dims, true);
 		this.ch1 = ch1;
 		this.ch2 = ch2;
 		// fill mask dimension information, here the whole image
-		maskBBOffset = mask.createPositionArray();
+		maskBBOffset = new long[mask.numDimensions()];
 		Arrays.fill(maskBBOffset, 0);
-		maskBBSize = mask.getDimensions();
+		maskBBSize = new long[mask.numDimensions()];
+		mask.dimensions(maskBBSize);
 		// indicated that there is actually no mask
 		maskType = MaskType.None;
 
@@ -90,18 +96,24 @@ public class DataContainer<T extends RealType<T>> {
 	 * @param size The size of the ROI in each dimension
 	 * @throws MissingPreconditionException
 	 */
-	public DataContainer(Image<T> src1, Image<T> src2, int ch1, int ch2,
-			final Image<T> mask, final int[] offset, final int[] size)
+	public DataContainer(Img<T> src1, Img<T> src2, int ch1, int ch2,
+			String name1, String name2, 
+			final Img<T> mask, final long[] offset, final long[] size)
 			throws MissingPreconditionException {
 		sourceImage1 = src1;
 		sourceImage2 = src2;
 		this.ch1 = ch1;
 		this.ch2 = ch2;
+		sourceImage1Name = name1;
+		sourceImage2Name = name1;
 
-		this.mask = MaskFactory.createMask(src1.getDimensions(), mask);
-		final int[] dim = src1.getDimensions();
-		maskBBOffset = src1.createPositionArray();
-		maskBBSize = src1.createPositionArray();
+		final int numDims = src1.numDimensions();
+		maskBBOffset = new long[numDims];
+		maskBBSize = new long[numDims];
+		final long[] dim = new long[numDims];
+		src1.dimensions(dim);
+		this.mask = MaskFactory.createMask(dim.clone(), mask);
+
 		// this constructor supports irregular masks
 		maskType = MaskType.Irregular;
 		adjustRoiOffset(offset, maskBBOffset, dim);
@@ -123,14 +135,20 @@ public class DataContainer<T extends RealType<T>> {
 	 * @param offset The offset of the ROI in each dimension
 	 * @param size The size of the ROI in each dimension
 	 */
-	public DataContainer(Image<T> src1, Image<T> src2, int ch1, int ch2,
-			final int[] offset, final int size[]) throws MissingPreconditionException {
+	public DataContainer(Img<T> src1, Img<T> src2, int ch1, int ch2,
+			String name1, String name2,
+			final long[] offset, final long size[])
+			throws MissingPreconditionException {
 		sourceImage1 = src1;
 		sourceImage2 = src2;
-
-		final int[] dim = src1.getDimensions();
-		int[] roiOffset = src1.createPositionArray();
-		int[] roiSize = src1.createPositionArray();
+		sourceImage1Name = name1;
+		sourceImage1Name = name2;
+		
+		final int numDims = src1.numDimensions();
+		final long[] dim = new long[numDims];
+		src1.dimensions(dim);
+		long[] roiOffset = new long[numDims];
+		long[] roiSize = new long[numDims];
 
 		adjustRoiOffset(offset, roiOffset, dim);
 		adjustRoiSize(size, roiSize, dim, roiOffset);
@@ -168,7 +186,7 @@ public class DataContainer<T extends RealType<T>> {
 	 * @param dimensions An array of the dimensions
 	 * @throws MissingPreconditionException
 	 */
-	protected void adjustRoiOffset(int[] oldOffset, int[] newOffset, int[] dimensions)
+	protected void adjustRoiOffset(long[] oldOffset, long[] newOffset, long[] dimensions)
 			throws MissingPreconditionException {
 		for (int i=0; i<newOffset.length; ++i) {
 			if (i < oldOffset.length) {
@@ -192,7 +210,7 @@ public class DataContainer<T extends RealType<T>> {
 	 * @param offset Offset of the new dimensionality
 	 * @throws MissingPreconditionException
 	 */
-	protected void adjustRoiSize(int[] oldSize, int[] newSize, int[] dimensions, int[] offset)
+	protected void adjustRoiSize(long[] oldSize, long[] newSize, long[] dimensions, long[] offset)
 			throws MissingPreconditionException {
 		for (int i=0; i<newSize.length; ++i) {
 			if (i < oldSize.length) {
@@ -209,23 +227,31 @@ public class DataContainer<T extends RealType<T>> {
 		return maskType;
 	}
 
-	public Image<T> getSourceImage1() {
+	public Img<T> getSourceImage1() {
 		return sourceImage1;
 	}
 
-	public Image<T> getSourceImage2() {
+	public Img<T> getSourceImage2() {
 		return sourceImage2;
 	}
 
-	public Image<BitType> getMask() {
+	public String getSourceImage1Name() {
+		return sourceImage1Name;
+	}
+
+	public String getSourceImage2Name() {
+		return sourceImage2Name;
+	}
+
+	public Img<BitType> getMask() {
 		return mask;
 	}
 
-	public int[] getMaskBBOffset() {
+	public long[] getMaskBBOffset() {
 		return maskBBOffset.clone();
 	}
 
-	public int[] getMaskBBSize() {
+	public long[] getMaskBBSize() {
 		return maskBBSize.clone();
 	}
 

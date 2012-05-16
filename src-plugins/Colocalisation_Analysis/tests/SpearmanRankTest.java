@@ -1,14 +1,9 @@
 package tests;
 
-import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertEquals;
-
-import gadgets.MaskFactory;
-import mpicbg.imglib.cursor.special.TwinCursor;
-import mpicbg.imglib.image.Image;
-import mpicbg.imglib.type.logic.BitType;
-import mpicbg.imglib.cursor.special.TwinCursor;
-import mpicbg.imglib.type.numeric.integer.UnsignedByteType;
+import static org.junit.Assert.assertTrue;
+import net.imglib2.TwinCursor;
+import net.imglib2.type.numeric.integer.UnsignedByteType;
 
 import org.junit.Test;
 
@@ -29,14 +24,13 @@ public class SpearmanRankTest extends ColocalisationTest {
 	@Test
 	public void spearmanPositiveCorrTest() throws MissingPreconditionException {
 		TwinCursor<UnsignedByteType> cursor = new TwinCursor<UnsignedByteType>(
-				positiveCorrelationImageCh1.createLocalizableByDimCursor(),
-				positiveCorrelationImageCh2.createLocalizableByDimCursor(),
-				positiveCorrelationAlwaysTrueMask.createLocalizableCursor());
+				positiveCorrelationImageCh1.randomAccess(),
+				positiveCorrelationImageCh2.randomAccess(),
+				positiveCorrelationAlwaysTrueMask.localizingCursor());
 		// calculate Spearman's Rank rho value
 		double rho = SpearmanRankCorrelation.calculateSpearmanRank(cursor);
 		// Rho value = 0.5463...
 		assertTrue(rho > 0.54 && rho < 0.55);
-		cursor.close();
 	}
 
 	/**
@@ -46,14 +40,13 @@ public class SpearmanRankTest extends ColocalisationTest {
 	@Test
 	public void spearmanZeroCorrTest() throws MissingPreconditionException {
 		TwinCursor<UnsignedByteType> cursor = new TwinCursor<UnsignedByteType>(
-				zeroCorrelationImageCh1.createLocalizableByDimCursor(),
-				zeroCorrelationImageCh2.createLocalizableByDimCursor(),
-				zeroCorrelationAlwaysTrueMask.createLocalizableCursor());
+				zeroCorrelationImageCh1.randomAccess(),
+				zeroCorrelationImageCh2.randomAccess(),
+				zeroCorrelationAlwaysTrueMask.localizingCursor());
 		// calculate Spearman's Rank rho value
 		double rho = SpearmanRankCorrelation.calculateSpearmanRank(cursor);
 		// Rho value = -0.11...
 		assertTrue(Math.abs(rho) < 0.012);
-		cursor.close();
 	}
 	
 	/**
@@ -89,13 +82,13 @@ public class SpearmanRankTest extends ColocalisationTest {
 			y[i] = data[i][1];
 		}
 		
-		/**
+		/*
 		 * Check the arithmetic for the rho calculation.
 		 * Rho is exactly -0.1743 using the exact calculation for Spearman's rho 
 		 * as implemented here.
-		*/
+		 */
 		double rho = SpearmanRankCorrelation.calculateRho(x, y);
-		assertTrue((rho > -0.178) && (rho < -0.173));
+		assertEquals(-0.1743, rho, 0.001);
 		
 		// check the degrees of freedom calculation ( df = n - 2 )
 		int df = 0;
@@ -117,14 +110,13 @@ public class SpearmanRankTest extends ColocalisationTest {
 	@Test
 	public void spearmanSyntheticNegCorrTest() throws MissingPreconditionException {
 		TwinCursor<UnsignedByteType> cursor = new TwinCursor<UnsignedByteType>(
-				syntheticNegativeCorrelationImageCh1.createLocalizableByDimCursor(),
-				syntheticNegativeCorrelationImageCh2.createLocalizableByDimCursor(),
-				syntheticNegativeCorrelationAlwaysTrueMask.createLocalizableCursor());
+				syntheticNegativeCorrelationImageCh1.randomAccess(),
+				syntheticNegativeCorrelationImageCh2.randomAccess(),
+				syntheticNegativeCorrelationAlwaysTrueMask.localizingCursor());
 		
 		// calculate Spearman's Rank rho value
 		double rho = SpearmanRankCorrelation.calculateSpearmanRank(cursor);
 		assertTrue((rho > -0.178) && (rho < -0.173));
-		cursor.close();
 	}
 	
 }

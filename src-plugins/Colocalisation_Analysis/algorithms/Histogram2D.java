@@ -5,14 +5,14 @@ import ij.measure.ResultsTable;
 
 import java.util.EnumSet;
 
-import mpicbg.imglib.container.array.ArrayContainerFactory;
-import mpicbg.imglib.cursor.LocalizableByDimCursor;
-import mpicbg.imglib.cursor.special.TwinCursor;
-import mpicbg.imglib.image.Image;
-import mpicbg.imglib.image.ImageFactory;
-import mpicbg.imglib.type.logic.BitType;
-import mpicbg.imglib.type.numeric.RealType;
-import mpicbg.imglib.type.numeric.integer.LongType;
+import net.imglib2.TwinCursor;
+import net.imglib2.RandomAccess;
+import net.imglib2.img.Img;
+import net.imglib2.img.ImgFactory;
+import net.imglib2.img.array.ArrayImgFactory;
+import net.imglib2.type.logic.BitType;
+import net.imglib2.type.numeric.RealType;
+import net.imglib2.type.numeric.integer.LongType;
 import results.ResultHandler;
 
 /**
@@ -20,7 +20,7 @@ import results.ResultHandler;
  * Channel 1 is set out in x direction, while channel 2 in y direction.
  * @param <T> The source images value type
  */
-public class Histogram2D<T extends RealType<T>> extends Algorithm<T> {
+public class Histogram2D<T extends RealType< T >> extends Algorithm<T> {
 	// An enumeration of possible drawings
 	public enum DrawingFlags { Plot, RegressionLine, Axes }
 	// the drawing configuration
@@ -41,7 +41,7 @@ public class Histogram2D<T extends RealType<T>> extends Algorithm<T> {
 	// Result keeping members
 
 	// the generated plot image
-	private Image<LongType> plotImage;
+	private Img<LongType> plotImage;
 	// the bin widths for each channel
 	private double xBinWidth = 0.0, yBinWidth = 0.0;
 	// labels for the axes
@@ -127,7 +127,7 @@ public class Histogram2D<T extends RealType<T>> extends Algorithm<T> {
 	 *
 	 * @return The image of what is seen as channel one.
 	 */
-	protected Image<T> getImageCh1(DataContainer<T> container) {
+	protected Img<T> getImageCh1(DataContainer<T> container) {
 		return swapChannels ? container.getSourceImage2() : container.getSourceImage1();
 	}
 
@@ -138,7 +138,7 @@ public class Histogram2D<T extends RealType<T>> extends Algorithm<T> {
 	 *
 	 * @return The image of what is seen as channel two.
 	 */
-	protected Image<T> getImageCh2(DataContainer<T> container) {
+	protected Img<T> getImageCh2(DataContainer<T> container) {
 		return swapChannels ? container.getSourceImage1() : container.getSourceImage2();
 	}
 
@@ -173,22 +173,21 @@ public class Histogram2D<T extends RealType<T>> extends Algorithm<T> {
 		double ch2BinWidth = getYBinWidth(container);
 
 		// get the 2 images for the calculation of Pearson's
-		final Image<T> img1 = getImageCh1(container);
-		final Image<T> img2 = getImageCh2(container);
-		final Image<BitType> mask = container.getMask();
+		final Img<T> img1 = getImageCh1(container);
+		final Img<T> img2 = getImageCh2(container);
+		final Img<BitType> mask = container.getMask();
 
 		// get the cursors for iterating through pixels in images
-		TwinCursor<T> cursor = new TwinCursor<T>(img1.createLocalizableByDimCursor(),
-				img2.createLocalizableByDimCursor(), mask.createLocalizableCursor());
+		TwinCursor<T> cursor = new TwinCursor<T>(img1.randomAccess(),
+				img2.randomAccess(), mask.localizingCursor());
 
 		// create new image to put the scatter-plot in
-		final ImageFactory<LongType> scatterFactory =
-			new ImageFactory<LongType>(new LongType(), new ArrayContainerFactory());
-		plotImage = scatterFactory.createImage(new int[] {xBins, yBins}, title);
+		final ImgFactory<LongType> scatterFactory = new ArrayImgFactory< LongType >();
+		plotImage = scatterFactory.create(new int[] {xBins, yBins}, new LongType() );
 
 		// create access cursors
-		final LocalizableByDimCursor<LongType> histogram2DCursor =
-			plotImage.createLocalizableByDimCursor();
+		final RandomAccess<LongType> histogram2DCursor =
+			plotImage.randomAccess();
 
 		// iterate over images
 		while (cursor.hasNext()) {
@@ -203,12 +202,11 @@ public class Histogram2D<T extends RealType<T>> extends Algorithm<T> {
 			// set position of input/output cursor
 			histogram2DCursor.setPosition( new int[] {scaledXvalue, scaledYvalue});
 			// get current value at position and increment it
-			long count = histogram2DCursor.getType().getIntegerLong();
+			long count = histogram2DCursor.get().getIntegerLong();
 			count++;
 
-			histogram2DCursor.getType().set(count);
+			histogram2DCursor.get().set(count);
 		}
-		cursor.close();
 
 		xBinWidth = ch1BinWidth;
 		yBinWidth = ch2BinWidth;
@@ -241,19 +239,18 @@ public class Histogram2D<T extends RealType<T>> extends Algorithm<T> {
 		int xDecimalPlaces = xBinWidthIsOne ? 0 : 3;
 		int yDecimalPlaces = yBinWidthIsOne ? 0 : 3;
 		// create a cursor to access the histogram data
-		LocalizableByDimCursor<LongType> cursor = plotImage.createLocalizableByDimCursor();
+		RandomAccess<LongType> cursor = plotImage.randomAccess();
 		// loop over 2D histogram
-		for (int i=0; i < plotImage.getDimension(0); ++i) {
-			for (int j=0; j < plotImage.getDimension(1); ++j) {
+		for (int i=0; i < plotImage.dimension(0); ++i) {
+			for (int j=0; j < plotImage.dimension(1); ++j) {
 				cursor.setPosition(i, 0);
 				cursor.setPosition(j, 1);
 				sb.append(
 						ResultsTable.d2s(xMin + (i * xBinWidth), xDecimalPlaces) + "\t" +
 						ResultsTable.d2s(yMin + (j * yBinWidth), yDecimalPlaces) + "\t" +
-						ResultsTable.d2s(cursor.getType().getRealDouble(), 0) + "\n");
+						ResultsTable.d2s(cursor.get().getRealDouble(), 0) + "\n");
 			}
 		}
-		cursor.close();
 
 		return sb.toString();
 	}
@@ -261,7 +258,7 @@ public class Histogram2D<T extends RealType<T>> extends Algorithm<T> {
 	public void processResults(ResultHandler<T> handler) {
 		super.processResults(handler);
 
-		handler.handleHistogram( this );
+		handler.handleHistogram( this, title );
 	}
 
 	/**
@@ -322,7 +319,7 @@ public class Histogram2D<T extends RealType<T>> extends Algorithm<T> {
 
 	// Result access methods
 
-	public Image<LongType> getPlotImage() {
+	public Img<LongType> getPlotImage() {
 		return plotImage;
 	}
 

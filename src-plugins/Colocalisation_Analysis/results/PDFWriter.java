@@ -11,11 +11,11 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import mpicbg.imglib.algorithm.math.ImageStatistics;
-import mpicbg.imglib.image.Image;
-import mpicbg.imglib.image.display.imagej.ImageJFunctions;
-import mpicbg.imglib.type.numeric.RealType;
-import mpicbg.imglib.type.numeric.integer.LongType;
+import net.imglib2.algorithm.math.ImageStatistics;
+import net.imglib2.img.Img;
+import net.imglib2.img.display.imagej.ImageJFunctions;
+import net.imglib2.type.numeric.RealType;
+import net.imglib2.type.numeric.integer.LongType;
 import algorithms.Histogram2D;
 
 import com.itextpdf.text.BadElementException;
@@ -59,13 +59,13 @@ public class PDFWriter<T extends RealType<T>> implements ResultHandler<T> {
 		this.container = container;
 	}
 
-	public void handleImage(Image<T> image) {
-		ImagePlus imp = ImageJFunctions.displayAsVirtualStack( image );
+	public void handleImage(Img<T> image, String name) {
+		ImagePlus imp = ImageJFunctions.wrapFloat( image, name );
 
 		// set the display range
 		double max = ImageStatistics.getImageMax(image).getRealDouble();
 		imp.setDisplayRange(0.0, max);
-		addImageToList(imp, image.getName());
+		addImageToList(imp, name);
 	}
 
 	/**
@@ -73,16 +73,16 @@ public class PDFWriter<T extends RealType<T>> implements ResultHandler<T> {
 	 * display range, apply the Fire LUT and finally store it as an iText PDF image.
 	 * Afterwards the image is reset to its orignal state again
 	 */
-	public void handleHistogram(Histogram2D<T> histogram) {
-		Image<LongType> image = histogram.getPlotImage();
-		ImagePlus imp = ImageJFunctions.displayAsVirtualStack( image );
+	public void handleHistogram(Histogram2D<T> histogram, String name) {
+		Img<LongType> image = histogram.getPlotImage();
+		ImagePlus imp = ImageJFunctions.wrapFloat( image, name );
 		// make a snapshot to be able to reset after modifications
 		imp.getProcessor().snapshot();
 		imp.getProcessor().log();
 		imp.updateAndDraw();
 		imp.getProcessor().resetMinAndMax();
 		IJ.run(imp,"Fire", null);
-		addImageToList(imp, image.getName());
+		addImageToList(imp, name);
 		// reset the imp from the log scaling we applied earlier
 		imp.getProcessor().reset();
 	}
@@ -165,8 +165,8 @@ public class PDFWriter<T extends RealType<T>> implements ResultHandler<T> {
 	public void process() {
 		try {
 			// produce default name
-			String nameCh1 = container.getSourceImage1().getName();
-			String nameCh2 = container.getSourceImage2().getName();
+			String nameCh1 = container.getSourceImage1Name();
+			String nameCh2 = container.getSourceImage2Name();
 
 			String name =  "coloc_" + nameCh1 + "_" + nameCh2;
 			/* If a mask is in use, add a counter

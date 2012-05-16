@@ -4,10 +4,10 @@ import gadgets.DataContainer;
 
 import java.util.EnumSet;
 
-import mpicbg.imglib.cursor.special.TwinCursor;
-import mpicbg.imglib.image.Image;
-import mpicbg.imglib.type.logic.BitType;
-import mpicbg.imglib.type.numeric.RealType;
+import net.imglib2.TwinCursor;
+import net.imglib2.img.Img;
+import net.imglib2.type.logic.BitType;
+import net.imglib2.type.numeric.RealType;
 
 /**
  * Represents the creation of a 2D histogram between two images.
@@ -15,7 +15,7 @@ import mpicbg.imglib.type.numeric.RealType;
  * The value calculation is done after Li.
  * @param <T>
  */
-public class LiHistogram2D<T extends RealType<T>> extends Histogram2D<T> {
+public class LiHistogram2D<T extends RealType< T >> extends Histogram2D<T> {
 	// On execution these variables hold the images means
 	double ch1Mean, ch2Mean;
 
@@ -64,13 +64,13 @@ public class LiHistogram2D<T extends RealType<T>> extends Histogram2D<T> {
 		 */
 
 		// get the 2 images and the mask
-		final Image<T> img1 = getImageCh1(container);
-		final Image<T> img2 = getImageCh2(container);
-		final Image<BitType> mask = container.getMask();
+		final Img<T> img1 = getImageCh1(container);
+		final Img<T> img2 = getImageCh2(container);
+		final Img<BitType> mask = container.getMask();
 
 		// get the cursors for iterating through pixels in images
-		TwinCursor<T> cursor = new TwinCursor<T>(img1.createLocalizableByDimCursor(),
-				img2.createLocalizableByDimCursor(), mask.createLocalizableCursor());
+		TwinCursor<T> cursor = new TwinCursor<T>(img1.randomAccess(),
+				img2.randomAccess(), mask.localizingCursor());
 
 		// give liMin and liMax appropriate starting values at the top and bottom of the range
 		liMin = Double.MAX_VALUE;
@@ -89,7 +89,6 @@ public class LiHistogram2D<T extends RealType<T>> extends Histogram2D<T> {
 			if (productOfDifferenceOfMeans > liMax)
 				liMax = productOfDifferenceOfMeans;
 		}
-		cursor.close();
 		liDiff = Math.abs(liMax - liMin);
 
 		generateHistogramData(container);

@@ -1,7 +1,7 @@
 package results;
 
-import mpicbg.imglib.image.Image;
-import mpicbg.imglib.type.numeric.RealType;
+import net.imglib2.img.Img;
+import net.imglib2.type.numeric.RealType;
 import algorithms.Histogram2D;
 
 /**
@@ -13,9 +13,9 @@ import algorithms.Histogram2D;
  */
 public interface ResultHandler<T extends RealType<T>> {
 
-	void handleImage(Image<T> image);
+	void handleImage(Img<T> image, String name);
 
-	void handleHistogram(Histogram2D<T> histogram);
+	void handleHistogram(Histogram2D<T> histogram, String name);
 
 	void handleWarning(Warning warning);
 

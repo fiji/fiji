@@ -38,11 +38,11 @@ import javax.swing.JEditorPane;
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
 
-import mpicbg.imglib.cursor.LocalizableByDimCursor;
-import mpicbg.imglib.image.Image;
-import mpicbg.imglib.image.display.imagej.ImageJFunctions;
-import mpicbg.imglib.type.numeric.RealType;
-import mpicbg.imglib.type.numeric.integer.LongType;
+import net.imglib2.RandomAccess;
+import net.imglib2.img.Img;
+import net.imglib2.img.display.imagej.ImageJFunctions;
+import net.imglib2.type.numeric.RealType;
+import net.imglib2.type.numeric.integer.LongType;
 import algorithms.AutoThresholdRegression;
 import algorithms.Histogram2D;
 
@@ -63,13 +63,13 @@ public class SingleWindowDisplay<T extends RealType<T>> extends JFrame implement
 	protected boolean displayOriginalImages = false;
 
 	// this is the image currently selected by the drop down menu
-	protected Image<? extends RealType> currentlyDisplayedImageResult;
+	protected Img<? extends RealType<?>> currentlyDisplayedImageResult;
 
 	// a list of the available result images, no matter what specific kinds
-	protected List<Image<? extends RealType>> listOfImages
-		= new ArrayList<Image<? extends RealType>>();
-	protected Map<Image<LongType>, Histogram2D<T>> mapOf2DHistograms
-	= new HashMap<Image<LongType>, Histogram2D<T>>();
+	protected List< NamedContainer< Img<? extends RealType<?>>> > listOfImages
+		= new ArrayList< NamedContainer< Img<? extends RealType<?>>> >();
+	protected Map<Img<LongType>, Histogram2D<T>> mapOf2DHistograms
+		= new HashMap<Img<LongType>, Histogram2D<T>>();
 	// a list of warnings
 	protected List<Warning> warnings = new ArrayList<Warning>();
 	// a list of named values, collected from algorithms
@@ -81,7 +81,7 @@ public class SingleWindowDisplay<T extends RealType<T>> extends JFrame implement
 	protected Map<Object, String> listOfLUTs = new HashMap<Object, String>();
 
 	//make a cursor so we can get pixel values from the image
-	protected LocalizableByDimCursor<? extends RealType> pixelAccessCursor;
+	protected RandomAccess<? extends RealType<?>> pixelAccessCursor;
 
 	// A PDF writer to call if user wants PDF print
 	protected PDFWriter<T> pdfWriter;
@@ -100,8 +100,8 @@ public class SingleWindowDisplay<T extends RealType<T>> extends JFrame implement
 	protected DataContainer<T> dataContainer = null;
 
 	public SingleWindowDisplay(DataContainer<T> container, PDFWriter<T> pdfWriter){
-		super("Colocalisation " + container.getSourceImage1().getName() + " vs " +
-				container.getSourceImage2().getName());
+		super("Colocalisation " + container.getSourceImage1Name() + " vs " +
+				container.getSourceImage2Name());
 
 		setPreferredSize(new Dimension(WIN_WIDTH, WIN_HEIGHT));
 
@@ -117,8 +117,8 @@ public class SingleWindowDisplay<T extends RealType<T>> extends JFrame implement
 	public void setup() {
 
 		JComboBox dropDownList = new JComboBox();
-		for(Image<? extends RealType> img : listOfImages) {
-			dropDownList.addItem(new NamedContainer<Image<? extends RealType> >(img, img.getName()));
+		for(NamedContainer< Img<? extends RealType<?>> > img : listOfImages) {
+			dropDownList.addItem(new NamedContainer<Img<? extends RealType<?>> >(img.object, img.name));
 		}
 		dropDownList.addItemListener(this);
 
@@ -191,8 +191,12 @@ public class SingleWindowDisplay<T extends RealType<T>> extends JFrame implement
 	public void process() {
 		// if wanted, display source images
 		if ( displayOriginalImages ) {
-			listOfImages.add( dataContainer.getSourceImage1() );
-			listOfImages.add( dataContainer.getSourceImage2() );
+			listOfImages.add( new NamedContainer(
+					dataContainer.getSourceImage1(),
+					dataContainer.getSourceImage1Name() ) );
+			listOfImages.add( new NamedContainer(
+					dataContainer.getSourceImage2(),
+					dataContainer.getSourceImage2Name() ) );
 		}
 		// create HTML table
 		makeHtmlText();
@@ -200,18 +204,18 @@ public class SingleWindowDisplay<T extends RealType<T>> extends JFrame implement
 		setup();
 		// display the first image available, if any
 		if (listOfImages.size() > 0) {
-			adjustDisplayedImage(listOfImages.get(0));
+			adjustDisplayedImage(listOfImages.get(0).object);
 		}
 		// show the GUI
 		this.setVisible(true);
 	}
 
-	public void handleImage(Image<T> image) {
-		listOfImages.add( image );
+	public void handleImage(Img<T> image, String name) {
+		listOfImages.add( new NamedContainer( image, name ) );
 	}
 
-	public void handleHistogram(Histogram2D<T> histogram) {
-		listOfImages.add(histogram.getPlotImage());
+	public void handleHistogram(Histogram2D<T> histogram, String name) {
+		listOfImages.add( new NamedContainer( histogram.getPlotImage(), name ) );
 		mapOf2DHistograms.put(histogram.getPlotImage(), histogram);
 		// link the histogram to a LUT
 		listOfLUTs.put(histogram.getPlotImage(), "Fire");
@@ -401,8 +405,8 @@ public class SingleWindowDisplay<T extends RealType<T>> extends JFrame implement
 					pixelAccessCursor.setPosition(y, 1);
 
 					// get current value at position
-					LocalizableByDimCursor<LongType> cursor = (LocalizableByDimCursor<LongType>)pixelAccessCursor;
-					long val = cursor.getType().getIntegerLong();
+					RandomAccess<LongType> cursor = (RandomAccess<LongType>)pixelAccessCursor;
+					long val = cursor.get().getIntegerLong();
 
 					double calibratedXBinBottom = histogram.getXMin() + x / histogram.getXBinWidth();
 					double calibratedXBinTop = histogram.getXMin() + (x + 1) / histogram.getXBinWidth();
@@ -414,12 +418,14 @@ public class SingleWindowDisplay<T extends RealType<T>> extends JFrame implement
 							", y = " + IJ.d2s(calibratedYBinBottom) + " to " + IJ.d2s(calibratedYBinTop) + ", value = " + val );
 				}
 			} else {
-				ImagePlus imp = ImageJFunctions.displayAsVirtualStack( currentlyDisplayedImageResult );
+				Img<T> img = (Img<T>) currentlyDisplayedImageResult;
+				ImagePlus imp = ImageJFunctions.wrapFloat( img, "TODO" );
 				imp.mouseMoved(x, y);
 			}
 		} else {
 			// alt key is down, so show the image coordinates for x y in status bar.
-			ImagePlus imp = ImageJFunctions.displayAsVirtualStack( currentlyDisplayedImageResult );
+			Img<T> img = (Img<T>) currentlyDisplayedImageResult;
+			ImagePlus imp = ImageJFunctions.wrapFloat( img, "TODO" );
 			imp.mouseMoved(x, y);
 		}
 	}
@@ -430,9 +436,9 @@ public class SingleWindowDisplay<T extends RealType<T>> extends JFrame implement
 	 * If the image is part of a CompositeImageResult then contained
 	 * lines will also be drawn
 	 */
-	protected void drawImage(Image<? extends RealType> img) {
+	protected void drawImage(Img<? extends RealType<?>> img) {
 		// get ImgLib image as ImageJ image
-		imp = ImageJFunctions.displayAsVirtualStack( img );
+		imp = ImageJFunctions.wrapFloat( (Img<T>) img, "TODO" );
 		imagePanel.updateImage(imp);
 		// set the display range
 
@@ -478,17 +484,17 @@ public class SingleWindowDisplay<T extends RealType<T>> extends JFrame implement
 	 * @param img The image to test
 	 * @return true if histogram, false otherwise
 	 */
-	protected boolean isHistogram(Image<? extends RealType> img) {
+	protected boolean isHistogram(Img<? extends RealType<?>> img) {
 		return mapOf2DHistograms.containsKey(img);
 	}
 
 	/**
 	 * Draws the line on the overlay.
 	 */
-	protected void drawLine(Overlay overlay, Image<? extends RealType> img, double slope, double intercept) {
+	protected void drawLine(Overlay overlay, Img<? extends RealType<?>> img, double slope, double intercept) {
 		double startX, startY, endX, endY;
-		int imgWidth = img.getDimension(0);
-		int imgHeight = img.getDimension(1);
+		long imgWidth = img.dimension(0);
+		long imgHeight = img.dimension(1);
 		/* since we want to draw the line over the whole image
 		 * we can directly use screen coordinates for x values.
 		 */
@@ -523,7 +529,7 @@ public class SingleWindowDisplay<T extends RealType<T>> extends JFrame implement
 		overlay.add(lineROI);
 	}
 
-	protected void adjustDisplayedImage (Image<? extends RealType> img) {
+	protected void adjustDisplayedImage (Img<? extends RealType<?>> img) {
 		/* when changing the result image to display
 		 * need to set the image we were looking at
 		 * back to not log scale,
@@ -533,10 +539,7 @@ public class SingleWindowDisplay<T extends RealType<T>> extends JFrame implement
 			toggleLogarithmic(false);
 
 		currentlyDisplayedImageResult = img;
-		if (pixelAccessCursor != null){
-			pixelAccessCursor.close();
-		}
-		pixelAccessCursor = img.createLocalizableByDimCursor();
+		pixelAccessCursor = img.randomAccess();
 
 		// Currently disabled, due to lag of non-histograms :-)
 		// disable list and copy button if it is no histogram result
@@ -552,7 +555,8 @@ public class SingleWindowDisplay<T extends RealType<T>> extends JFrame implement
 
 	public void itemStateChanged(ItemEvent e) {
 		if (e.getStateChange() == ItemEvent.SELECTED) {
-			Image<? extends RealType> img = ((NamedContainer<Image<? extends RealType> >)(e.getItem())).getObject();
+			Img<? extends RealType<?>> img =
+					((NamedContainer<Img<? extends RealType<?>> >)(e.getItem())).getObject();
 			adjustDisplayedImage(img);
 		}
 	}

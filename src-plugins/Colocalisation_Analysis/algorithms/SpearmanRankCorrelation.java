@@ -1,15 +1,15 @@
 package algorithms;
 
 import gadgets.DataContainer;
-import mpicbg.imglib.cursor.special.TwinCursor;
-import mpicbg.imglib.image.Image;
-import mpicbg.imglib.type.logic.BitType;
-import mpicbg.imglib.type.numeric.RealType;
-import results.ResultHandler;
 
 import java.util.Arrays;
 import java.util.Comparator;
-import java.lang.Math;
+
+import net.imglib2.TwinCursor;
+import net.imglib2.img.Img;
+import net.imglib2.type.logic.BitType;
+import net.imglib2.type.numeric.RealType;
+import results.ResultHandler;
 
 /*
 * This code has been heavily adapted from Numerical Recipces: The Art of Scientific Computing.
@@ -27,7 +27,7 @@ import java.lang.Math;
  *
  * @param <T>
  */
-public class SpearmanRankCorrelation<T extends RealType<T>> extends Algorithm<T> {
+public class SpearmanRankCorrelation<T extends RealType< T >> extends Algorithm<T> {
 	// the resulting Spearman rho value
 	static double rhoValue;
 	static double tStatisticSpearman;
@@ -49,15 +49,14 @@ public class SpearmanRankCorrelation<T extends RealType<T>> extends Algorithm<T>
 			throws MissingPreconditionException {
 
 		// get the 2 images for the calculation of Spearman's rho
-		Image<T> img1 = container.getSourceImage1();
-		Image<T> img2 = container.getSourceImage2();
-		Image<BitType> mask = container.getMask();
+		Img<T> img1 = container.getSourceImage1();
+		Img<T> img2 = container.getSourceImage2();
+		Img<BitType> mask = container.getMask();
 
-		TwinCursor<T> cursor = new TwinCursor<T>(img1.createLocalizableByDimCursor(),
-				img2.createLocalizableByDimCursor(), mask.createLocalizableCursor());
+		TwinCursor<T> cursor = new TwinCursor<T>(img1.randomAccess(),
+				img2.randomAccess(), mask.localizingCursor());
 		// calculate Spearman's rho value
 		rhoValue = calculateSpearmanRank(cursor);
-		cursor.close();
 	}
 
 	/**

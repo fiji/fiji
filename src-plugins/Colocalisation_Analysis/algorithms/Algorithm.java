@@ -5,11 +5,9 @@ import gadgets.DataContainer;
 import java.util.ArrayList;
 import java.util.List;
 
+import net.imglib2.type.numeric.RealType;
 import results.ResultHandler;
 import results.Warning;
-
-
-import mpicbg.imglib.type.numeric.RealType;
 
 /**
  * An algorithm is an abstraction of techniques like the
@@ -17,7 +15,7 @@ import mpicbg.imglib.type.numeric.RealType;
  * allows to separate initialization and execution of
  * such an algorithm.
  */
-public abstract class Algorithm<T extends RealType<T>> {
+public abstract class Algorithm<T extends RealType< T >> {
 	// a name for the algorithm
 	protected String name;
 	/* a list of warnings that can be filled by the

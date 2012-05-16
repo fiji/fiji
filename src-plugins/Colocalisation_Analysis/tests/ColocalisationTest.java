@@ -1,11 +1,11 @@
 package tests;
 
 import gadgets.MaskFactory;
-import mpicbg.imglib.algorithm.math.ImageStatistics;
-import mpicbg.imglib.image.Image;
-import mpicbg.imglib.type.logic.BitType;
-import mpicbg.imglib.type.numeric.RealType;
-import mpicbg.imglib.type.numeric.integer.UnsignedByteType;
+import net.imglib2.algorithm.math.ImageStatistics;
+import net.imglib2.img.Img;
+import net.imglib2.type.logic.BitType;
+import net.imglib2.type.numeric.RealType;
+import net.imglib2.type.numeric.integer.UnsignedByteType;
 
 import org.junit.After;
 import org.junit.Before;
@@ -14,30 +14,30 @@ import org.junit.Before;
 public abstract class ColocalisationTest {
 
 	// images and meta data for zero correlation
-	Image<UnsignedByteType> zeroCorrelationImageCh1;
-	Image<UnsignedByteType> zeroCorrelationImageCh2;
-	Image<BitType> zeroCorrelationAlwaysTrueMask;
+	Img<UnsignedByteType> zeroCorrelationImageCh1;
+	Img<UnsignedByteType> zeroCorrelationImageCh2;
+	Img<BitType> zeroCorrelationAlwaysTrueMask;
 	double zeroCorrelationImageCh1Mean;
 	double zeroCorrelationImageCh2Mean;
 
 	// images and meta data for positive correlation
-	Image<UnsignedByteType> positiveCorrelationImageCh1;
-	Image<UnsignedByteType> positiveCorrelationImageCh2;
-	Image<BitType> positiveCorrelationAlwaysTrueMask;
+	Img<UnsignedByteType> positiveCorrelationImageCh1;
+	Img<UnsignedByteType> positiveCorrelationImageCh2;
+	Img<BitType> positiveCorrelationAlwaysTrueMask;
 	double positiveCorrelationImageCh1Mean;
 	double positiveCorrelationImageCh2Mean;
 
 	// images and meta data for a synthetic negative correlation dataset
-	Image<UnsignedByteType> syntheticNegativeCorrelationImageCh1;
-	Image<UnsignedByteType> syntheticNegativeCorrelationImageCh2;
-	Image<BitType> syntheticNegativeCorrelationAlwaysTrueMask;
+	Img<UnsignedByteType> syntheticNegativeCorrelationImageCh1;
+	Img<UnsignedByteType> syntheticNegativeCorrelationImageCh2;
+	Img<BitType> syntheticNegativeCorrelationAlwaysTrueMask;
 	double syntheticNegativeCorrelationImageCh1Mean;
 	double syntheticNegativeCorrelationImageCh2Mean;
 	
 	// images like in the manders paper
-	Image<UnsignedByteType> mandersA, mandersB, mandersC, mandersD,
+	Img<UnsignedByteType> mandersA, mandersB, mandersC, mandersD,
 		mandersE, mandersF, mandersG, mandersH, mandersI;
-	Image<BitType> mandersAlwaysTrueMask;
+	Img<BitType> mandersAlwaysTrueMask;
 
 	/**
 	 * This method is run before every single test is run and is meant to set up
@@ -51,7 +51,9 @@ public abstract class ColocalisationTest {
 		zeroCorrelationImageCh2 = TestImageAccessor.loadTiffFromJar("Data/redZstack.tif");
 		zeroCorrelationImageCh2Mean = ImageStatistics.getImageMean(zeroCorrelationImageCh2);
 
-		zeroCorrelationAlwaysTrueMask = MaskFactory.createMask(zeroCorrelationImageCh1.getDimensions(), true);
+		final long[] dimZeroCorrCh1 = new long[ zeroCorrelationImageCh1.numDimensions() ];
+		zeroCorrelationImageCh1.dimensions(dimZeroCorrCh1);
+		zeroCorrelationAlwaysTrueMask = MaskFactory.createMask(dimZeroCorrCh1, true);
 
 		positiveCorrelationImageCh1 = TestImageAccessor.loadTiffFromJar("Data/colocsample1b-green.tif");
 		positiveCorrelationImageCh1Mean = ImageStatistics.getImageMean(positiveCorrelationImageCh1);
@@ -59,17 +61,19 @@ public abstract class ColocalisationTest {
 		positiveCorrelationImageCh2 = TestImageAccessor.loadTiffFromJar("Data/colocsample1b-red.tif");
 		positiveCorrelationImageCh2Mean = ImageStatistics.getImageMean(positiveCorrelationImageCh2);
 
-		positiveCorrelationAlwaysTrueMask = MaskFactory.createMask(positiveCorrelationImageCh1.getDimensions(), true);
+		final long[] dimPosCorrCh1 = new long[ positiveCorrelationImageCh1.numDimensions() ];
+		positiveCorrelationImageCh1.dimensions(dimPosCorrCh1);
+		positiveCorrelationAlwaysTrueMask = MaskFactory.createMask(dimPosCorrCh1, true);
 
-		/*
 		syntheticNegativeCorrelationImageCh1 = TestImageAccessor.loadTiffFromJar("Data/syntheticNegCh1.tif");
 		syntheticNegativeCorrelationImageCh1Mean = ImageStatistics.getImageMean(syntheticNegativeCorrelationImageCh1);
 
 		syntheticNegativeCorrelationImageCh2 = TestImageAccessor.loadTiffFromJar("Data/syntheticNegCh2.tif");
 		syntheticNegativeCorrelationImageCh2Mean = ImageStatistics.getImageMean(syntheticNegativeCorrelationImageCh2);
 
-		syntheticNegativeCorrelationAlwaysTrueMask = MaskFactory.createMask(syntheticNegativeCorrelationImageCh1.getDimensions(), true);
-		*/
+		final long[] dimSynthNegCorrCh1 = new long[ syntheticNegativeCorrelationImageCh1.numDimensions() ];
+		syntheticNegativeCorrelationImageCh1.dimensions(dimSynthNegCorrCh1);
+		syntheticNegativeCorrelationAlwaysTrueMask = MaskFactory.createMask(dimSynthNegCorrCh1, true);
 		
 		mandersA = TestImageAccessor.loadTiffFromJar("Data/mandersA.tiff");
 		mandersB = TestImageAccessor.loadTiffFromJar("Data/mandersB.tiff");
@@ -81,7 +85,9 @@ public abstract class ColocalisationTest {
 		mandersH = TestImageAccessor.loadTiffFromJar("Data/mandersH.tiff");
 		mandersI = TestImageAccessor.loadTiffFromJar("Data/mandersI.tiff");
 
-		mandersAlwaysTrueMask = MaskFactory.createMask(mandersA.getDimensions(), true);
+		final long[] dimMandersA = new long[ mandersA.numDimensions() ];
+		mandersA.dimensions(dimMandersA);
+		mandersAlwaysTrueMask = MaskFactory.createMask(dimMandersA, true);
 	}
 
 	/**
@@ -89,30 +95,18 @@ public abstract class ColocalisationTest {
 	 */
 	@After
 	public void cleanup() {
-		zeroCorrelationImageCh1.closeAllCursors();
-		zeroCorrelationImageCh2.closeAllCursors();
-		positiveCorrelationImageCh1.closeAllCursors();
-		positiveCorrelationImageCh2.closeAllCursors();
-
-		mandersA.closeAllCursors();
-		mandersB.closeAllCursors();
-		mandersC.closeAllCursors();
-		mandersD.closeAllCursors();
-		mandersE.closeAllCursors();
-		mandersF.closeAllCursors();
-		mandersG.closeAllCursors();
-		mandersH.closeAllCursors();
-		mandersI.closeAllCursors();
+		// nothing to do
 	}
 
 	/**
 	 * Creates a ROI offset array with a distance of 1/4 to the origin
 	 * in each dimension.
 	 */
-	protected <T extends RealType<T>> int[] createRoiOffset(Image<T> img) {
-		int[] offset = img.createPositionArray();
+	protected <T extends RealType<T>> long[] createRoiOffset(Img<T> img) {
+		final long[] offset = new long[ img.numDimensions() ];
+		img.dimensions(offset);
 		for (int i=0; i<offset.length; i++) {
-			offset[i] = Math.max(1, img.getDimension(i) / 4);
+			offset[i] = Math.max(1, img.dimension(i) / 4);
 		}
 		return offset;
 	}
@@ -121,10 +115,11 @@ public abstract class ColocalisationTest {
 	 * Creates a ROI size array with a size of 1/2 of each
 	 * dimension.
 	 */
-	protected <T extends RealType<T>> int[] createRoiSize(Image<T> img) {
-		int[] size = img.createPositionArray();
+	protected <T extends RealType<T>> long[] createRoiSize(Img<T> img) {
+		final long[] size = new long[ img.numDimensions() ];
+		img.dimensions(size);
 		for (int i=0; i<size.length; i++) {
-			size[i] = Math.max(1, img.getDimension(i) / 2);
+			size[i] = Math.max(1, img.dimension(i) / 2);
 		}
 		return size;
 	}

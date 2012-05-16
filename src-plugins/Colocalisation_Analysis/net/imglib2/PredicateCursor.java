@@ -1,30 +1,26 @@
-package mpicbg.imglib.cursor.special;
+package net.imglib2;
 
-import java.util.Iterator;
 import java.util.NoSuchElementException;
 
-import mpicbg.imglib.container.Container;
-import mpicbg.imglib.cursor.LocalizableCursor;
-import mpicbg.imglib.cursor.special.predicate.Predicate;
-import mpicbg.imglib.image.Image;
-import mpicbg.imglib.type.Type;
+import net.imglib2.predicate.Predicate;
+import net.imglib2.type.Type;
 
 /**
  * The PredicateCursor traverses a whole image but only returns
  * those pixels for which the Predicate returns true. There is
  * little sense to make this less than a LocalizableCursor
  */
-public class PredicateCursor<T extends Type<T>> implements LocalizableCursor<T> {
+public class PredicateCursor<T extends Type<T>> implements Cursor<T> {
 	// the condition on which a position is valid
 	final protected Predicate<T> predicate;
 	// the cursor driven by the evaluation of the predicate
-	final protected LocalizableCursor<T> cursor;
+	final protected Cursor<T> cursor;
 	// indicate if the next element has already been looked up
 	protected boolean lookedForNext = false;
 	// true if a next element was found after a look-up
 	protected boolean hasNext = false;
 
-	public PredicateCursor(final LocalizableCursor<T> cursor,
+	public PredicateCursor(final Cursor<T> cursor,
 			final Predicate<T> predicate) {
 		this.cursor = cursor;
 		this.predicate = predicate;
@@ -76,7 +72,7 @@ public class PredicateCursor<T extends Type<T>> implements LocalizableCursor<T> 
 	}
 
 	@Override
-	public void fwd(long num) {
+	public void jumpFwd(long num) {
 		while (num > 0) {
 			fwd();
 		}
@@ -86,7 +82,7 @@ public class PredicateCursor<T extends Type<T>> implements LocalizableCursor<T> 
 	public T next() {
 		if ( hasNext() ) {
 			fwd();
-			return getType();
+			return get();
 		} else {
 			throw new NoSuchElementException();
 		}
@@ -98,93 +94,68 @@ public class PredicateCursor<T extends Type<T>> implements LocalizableCursor<T> 
 	}
 
 	@Override
-	public Iterator<T> iterator() {
-		return new PredicateCursor<T>(cursor, predicate);
-	}
-	
-	@Override
-	public void close() {
-		cursor.close();
-	}
-
-	@Override
-	public int[] createPositionArray() {
-		return cursor.createPositionArray();
-	}
-
-	@Override
-	public int getArrayIndex() {
-		return cursor.getArrayIndex();
-	}
-
-	@Override
-	public Image<T> getImage() {
-		return cursor.getImage();
-	}
-
-	@Override
-	public Container<T> getStorageContainer() {
-		return cursor.getStorageContainer();
-	}
-
-	@Override
-	public int getStorageIndex() {
-		return cursor.getStorageIndex();
-	}
-
-	@Override
-	public T getType() {
-		return cursor.getType();
-	}
-
-	@Override
-	public boolean isActive() {
-		return cursor.isActive();
-	}
-
-	@Override
 	public void reset() {
 		cursor.reset();
 		lookedForNext = false;
 	}
 
 	@Override
-	public void setDebug(boolean debug) {
-		cursor.setDebug(debug);
+	public double getDoublePosition(int arg0) {
+		return cursor.getDoublePosition(arg0);
 	}
 
 	@Override
-	public int[] getDimensions() {
-		return cursor.getDimensions();
+	public float getFloatPosition(int arg0) {
+		return cursor.getFloatPosition(arg0);
 	}
 
 	@Override
-	public void getDimensions(int[] dim) {
-		cursor.getDimensions(dim);
+	public void localize(float[] arg0) {
+		cursor.localize(arg0);
 	}
 
 	@Override
-	public int getNumDimensions() {
-		return cursor.getNumDimensions();
+	public void localize(double[] arg0) {
+		cursor.localize(arg0);
 	}
 
 	@Override
-	public int[] getPosition() {
-		return cursor.getPosition();
+	public int numDimensions() {
+		return cursor.numDimensions();
 	}
 
 	@Override
-	public void getPosition(int[] pos) {
-		cursor.getPosition(pos);
+	public Sampler<T> copy() {
+		return cursor.copy();
 	}
 
 	@Override
-	public int getPosition(int dim) {
-		return cursor.getPosition(dim);
+	public T get() {
+		return cursor.get();
 	}
 
 	@Override
-	public String getPositionAsString() {
-		return cursor.getPositionAsString();
+	public int getIntPosition(int arg0) {
+		return cursor.getIntPosition(arg0);
+	}
+
+	@Override
+	public long getLongPosition(int arg0) {
+		return cursor.getLongPosition(arg0);
+	}
+
+	@Override
+	public void localize(int[] arg0) {
+		cursor.localize(arg0);
+	}
+
+	@Override
+	public void localize(long[] arg0) {
+		cursor.localize(arg0);
+	}
+
+	@Override
+	public Cursor<T> copyCursor() {
+		return new PredicateCursor<T>( cursor.copyCursor(), predicate );
 	}
 }

@@ -1,7 +1,7 @@
-package mpicbg.imglib.cursor.special.predicate;
+package net.imglib2.predicate;
 
-import mpicbg.imglib.cursor.LocalizableCursor;
-import mpicbg.imglib.type.Type;
+import net.imglib2.Cursor;
+import net.imglib2.type.Type;
 
 /**
  * An interface to check a value against arbitrary conditions.
@@ -9,5 +9,5 @@ import mpicbg.imglib.type.Type;
 public interface Predicate<T extends Type<T>> {
 
 	// evaluate a predicate check for a given value
-	boolean test(LocalizableCursor<T> value);
+	boolean test(Cursor<T> value);
 }
