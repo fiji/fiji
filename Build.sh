@@ -178,6 +178,10 @@ done
 
 if test -d "$JAVA_HOME"
 then
+	if test -d "$JAVA_HOME/jre"
+	then
+		JAVA_HOME="$JAVA_HOME/jre"
+	fi
 	export PATH=$JAVA_HOME/bin:$PATH
 fi
 
