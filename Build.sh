@@ -169,9 +169,10 @@ test -n "$JAVA_HOME" &&
 test -d "$JAVA_HOME" ||
 for d in java/$java_submodule/*
 do
+	test "$d/jre" || continue
 	if test -z "$JAVA_HOME" || test "$d" -nt "$JAVA_HOME"
 	then
-		JAVA_HOME="$CWD$d"
+		JAVA_HOME="$CWD$d/jre"
 	fi
 done
 
