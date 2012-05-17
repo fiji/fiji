@@ -171,7 +171,7 @@ for d in java/$java_submodule/*
 do
 	if test -z "$JAVA_HOME" || test "$d" -nt "$JAVA_HOME"
 	then
-		JAVA_HOME="$d"
+		JAVA_HOME="$CWD$d"
 	fi
 done
 
