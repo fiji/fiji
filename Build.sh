@@ -165,6 +165,14 @@ test -f "$CWD"/java/"$java_submodule"/Home/lib/ext/vecmath.jar || {
 	}
 }
 
+case "$JAVA_HOME" in
+[A-Z]:*)
+	# assume this is MSys
+	JAVA_HOME="$(cd "$JAVA_HOME" && pwd)" ||
+	unset JAVA_HOME
+	;;
+esac
+
 test -n "$JAVA_HOME" &&
 test -d "$JAVA_HOME" ||
 for d in java/$java_submodule/*
