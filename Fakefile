@@ -127,7 +127,6 @@ SUBMODULE_TARGETS=\
 	jars/javassist.jar \
 	jars/jsch.jar \
 	jars/imglib-scripting.jar \
-	jars/imglib2-scripting.jar \
 	plugins/Image_5D.jar \
 	jars/ij-app.jar \
 
