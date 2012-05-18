@@ -40,10 +40,13 @@ public class ClassificationStatistics
 	
 	/** precision: true positives / ( true positives + false positives ) */
 	public double precision = 0;
-	/** recall: true positives / ( true positives + false negatives ) */
+	/** recall (also called sensitivity of hit rate): true positives / ( true positives + false negatives ) */
 	public double recall = 0;
 	/** F-score, harmonic mean of precision and recall */
 	public double fScore = 0;
+	/** specificity, also called true negative rate (TNR): true negatives / (true negatives + false negatives) */
+	public double specificity = 0;
+	
 	
 	/**
 	 * Create classification statistics
@@ -67,11 +70,23 @@ public class ClassificationStatistics
 		this.falseNegatives = falseNegatives;
 		this.metricValue = metricValue;
 
-		final double retrievedPositives = truePositives + falsePositives; 
-		final double totalPositives = truePositives + falseNegatives; 
 		
-		this.precision = retrievedPositives > 0 ? truePositives / retrievedPositives : 0;
-		this.recall = totalPositives > 0 ? truePositives / totalPositives : 0;
+		final double totalNegatives = trueNegatives + falsePositives;
+		
+		this.specificity = (totalNegatives > 0) ? trueNegatives / totalNegatives : 0;
+		
+		// no false positives involves maximum precision
+		if( falsePositives == 0 )
+			this.precision = 1;
+		else
+			this.precision = truePositives / (truePositives + falsePositives);
+		
+		// no false negatives involves maximum recall
+		if( falseNegatives == 0)
+			this.recall = 1;
+		else
+			this.recall = truePositives / (truePositives + falseNegatives);
+		
 		if( (precision + recall) > 0)
 			this.fScore = 2 * precision * recall / ( precision + recall );				
 	}

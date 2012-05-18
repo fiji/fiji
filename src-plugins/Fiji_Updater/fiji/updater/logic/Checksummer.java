@@ -153,7 +153,7 @@ public class Checksummer extends Progressable {
 					plugin.newChecksum = checksum;
 					plugin.newTimestamp = timestamp;
 				}
-				if (realFile.canExecute() || path.endsWith(".exe"))
+				if (Util.canExecute(realFile) || path.endsWith(".exe"))
 					plugin.executable = true;
 				plugins.add(plugin);
 			}

@@ -37,6 +37,7 @@ import com.mxgraph.util.mxEventSource.mxIEventListener;
 import com.mxgraph.util.mxStyleUtils;
 import com.mxgraph.view.mxGraphSelectionModel;
 import com.mxgraph.view.mxPerimeter;
+import com.mxgraph.view.mxStylesheet;
 
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
@@ -64,10 +65,11 @@ public class TrackSchemeFrame extends JFrame implements TrackMateModelChangeList
 
 	public static final ImageIcon TRACK_SCHEME_ICON = new ImageIcon(TrackSchemeFrame.class.getResource("resources/track_scheme.png"));
 
-	private static final long serialVersionUID = 1L;
-	private static final Dimension DEFAULT_SIZE = new Dimension(800, 600);
-	static final int TABLE_CELL_WIDTH 		= 40;
-	static final Color GRID_COLOR = Color.GRAY;
+	private static final long 		serialVersionUID = 1L;
+	private static final Dimension 	DEFAULT_SIZE = new Dimension(800, 600);
+	static final String 			DEFAULT_STYLE_NAME = "Full"; 
+	static final int 				TABLE_CELL_WIDTH 		= 40;
+	static final Color 				GRID_COLOR = Color.GRAY;
 
 	/*
 	 * FIELDS
@@ -79,7 +81,6 @@ public class TrackSchemeFrame extends JFrame implements TrackMateModelChangeList
 	static final boolean DEFAULT_DO_DISPLAY_COSTS_ON_EDGES = false;
 	/** Do we display the background decorations by default? */
 	static final boolean DEFAULT_DO_PAINT_DECORATIONS = true;
-	
 	
 	private Settings settings;
 	private JGraphXAdapter graph;
@@ -101,7 +102,9 @@ public class TrackSchemeFrame extends JFrame implements TrackMateModelChangeList
 
 
 
+	private static final Map<String, Map<String, Object>> VERTEX_STYLES;
 	private static final HashMap<String, Object> BASIC_VERTEX_STYLE = new HashMap<String, Object>();
+	private static final HashMap<String, Object> SIMPLE_VERTEX_STYLE = new HashMap<String, Object>();
 	private static final HashMap<String, Object> BASIC_EDGE_STYLE = new HashMap<String, Object>();
 
 	static {
@@ -115,6 +118,16 @@ public class TrackSchemeFrame extends JFrame implements TrackMateModelChangeList
 		BASIC_VERTEX_STYLE.put(mxConstants.STYLE_PERIMETER, mxPerimeter.RectanglePerimeter);
 		BASIC_VERTEX_STYLE.put(mxConstants.STYLE_STROKECOLOR, "#FF00FF");
 
+		SIMPLE_VERTEX_STYLE.put(mxConstants.STYLE_FILLCOLOR, "white");
+		SIMPLE_VERTEX_STYLE.put(mxConstants.STYLE_FONTCOLOR, "black");
+		SIMPLE_VERTEX_STYLE.put(mxConstants.STYLE_ALIGN, mxConstants.ALIGN_RIGHT);
+		SIMPLE_VERTEX_STYLE.put(mxConstants.STYLE_SHAPE, mxConstants.SHAPE_ELLIPSE);
+		SIMPLE_VERTEX_STYLE.put(mxConstants.STYLE_IMAGE_ALIGN, mxConstants.ALIGN_LEFT);
+		SIMPLE_VERTEX_STYLE.put(mxConstants.STYLE_ROUNDED, true);
+		SIMPLE_VERTEX_STYLE.put(mxConstants.STYLE_PERIMETER, mxPerimeter.EllipsePerimeter);
+		SIMPLE_VERTEX_STYLE.put(mxConstants.STYLE_STROKECOLOR, "#FF00FF");
+		SIMPLE_VERTEX_STYLE.put(mxConstants.STYLE_NOLABEL, true);
+		
 		BASIC_EDGE_STYLE.put(mxConstants.STYLE_SHAPE, mxConstants.SHAPE_CONNECTOR);
 		BASIC_EDGE_STYLE.put(mxConstants.STYLE_ALIGN, mxConstants.ALIGN_CENTER);
 		BASIC_EDGE_STYLE.put(mxConstants.STYLE_VERTICAL_ALIGN, mxConstants.ALIGN_MIDDLE);
@@ -122,6 +135,10 @@ public class TrackSchemeFrame extends JFrame implements TrackMateModelChangeList
 		BASIC_EDGE_STYLE.put(mxConstants.STYLE_ENDARROW, mxConstants.NONE);
 		BASIC_EDGE_STYLE.put(mxConstants.STYLE_STROKEWIDTH, 2.0f);
 		BASIC_EDGE_STYLE.put(mxConstants.STYLE_STROKECOLOR, "#FF00FF");
+		
+		VERTEX_STYLES = new HashMap<String, Map<String, Object> >(2);
+		VERTEX_STYLES.put(DEFAULT_STYLE_NAME, BASIC_VERTEX_STYLE);
+		VERTEX_STYLES.put("Simple", SIMPLE_VERTEX_STYLE);
 
 	}
 
@@ -385,8 +402,12 @@ public class TrackSchemeFrame extends JFrame implements TrackMateModelChangeList
 		graph.setGridEnabled(false);
 		graph.setLabelsVisible(true);
 		graph.setDropEnabled(false);
-		graph.getStylesheet().setDefaultEdgeStyle(BASIC_EDGE_STYLE);
-		graph.getStylesheet().setDefaultVertexStyle(BASIC_VERTEX_STYLE);
+		
+		mxStylesheet styleSheet = graph.getStylesheet();
+		styleSheet.setDefaultEdgeStyle(BASIC_EDGE_STYLE);
+		styleSheet.setDefaultVertexStyle(BASIC_VERTEX_STYLE);
+		styleSheet.putCellStyle(DEFAULT_STYLE_NAME, BASIC_VERTEX_STYLE);
+		styleSheet.putCellStyle("Simple", SIMPLE_VERTEX_STYLE);
 
 		// Set spot image to cell style
 		try {
@@ -744,7 +765,7 @@ public class TrackSchemeFrame extends JFrame implements TrackMateModelChangeList
 	public mxTrackGraphComponent getGraphComponent() {
 		return graphComponent;
 	}
-
+	
 	/**
 	 * Return the graph layout in charge of arranging the cells on the graph.
 	 */

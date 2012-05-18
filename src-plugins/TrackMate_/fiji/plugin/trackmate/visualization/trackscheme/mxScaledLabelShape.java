@@ -23,9 +23,10 @@ import com.mxgraph.view.mxCellState;
 public class mxScaledLabelShape extends mxRectangleShape {
 
 	public static final String SHAPE_NAME = "scaledLabel";
-
+	
 	@Override
 	public void paintShape(mxGraphics2DCanvas canvas, mxCellState state) {
+		
 		super.paintShape(canvas, state);
 		
 		Image img = canvas.loadImage(mxUtils.getString(state.getStyle(), mxConstants.STYLE_IMAGE));
@@ -35,8 +36,10 @@ public class mxScaledLabelShape extends mxRectangleShape {
 			int y = bounds.y;
 			int w = bounds.width;
 			int h = bounds.height;
-			Image scaledImage = img.getScaledInstance(w, h, Image.SCALE_FAST);
-			canvas.getGraphics().drawImage(scaledImage, x, y, null);
+			if (h > 0 && w > 0) {
+				Image scaledImage = img.getScaledInstance(w, h, Image.SCALE_FAST);
+				canvas.getGraphics().drawImage(scaledImage, x, y, null);
+			}
 		}
 	}
 

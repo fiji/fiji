@@ -165,18 +165,31 @@ test -f "$CWD"/java/"$java_submodule"/Home/lib/ext/vecmath.jar || {
 	}
 }
 
+case "$JAVA_HOME" in
+[A-Z]:*)
+	# assume this is MSys
+	JAVA_HOME="$(cd "$JAVA_HOME" && pwd)" ||
+	unset JAVA_HOME
+	;;
+esac
+
 test -n "$JAVA_HOME" &&
 test -d "$JAVA_HOME" ||
 for d in java/$java_submodule/*
 do
+	test "$d/jre" || continue
 	if test -z "$JAVA_HOME" || test "$d" -nt "$JAVA_HOME"
 	then
-		JAVA_HOME="$d"
+		JAVA_HOME="$CWD$d/jre"
 	fi
 done
 
 if test -d "$JAVA_HOME"
 then
+	if test -d "$JAVA_HOME/jre"
+	then
+		JAVA_HOME="$JAVA_HOME/jre"
+	fi
 	export PATH=$JAVA_HOME/bin:$PATH
 fi
 

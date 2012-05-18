@@ -60,12 +60,12 @@ public class Lipschitz_ implements PlugInFilter
 	protected ImageStack m_stack, m_stack_out;
 
 	protected Rectangle m_roi;
-	static int ImageHeight = -1;
-	static int ImageWidth = -1;
-	static int m_channels = 0;
-	static boolean m_short = false;
-	static boolean breaked = false;
-	static ImageProcessor iptmp;
+	int ImageHeight = -1;
+	int ImageWidth = -1;
+	int m_channels = 0;
+	boolean m_short = false;
+	boolean breaked = false;
+	ImageProcessor iptmp;
 	int [] pixel;
 
 	//-----------------------------------------------------------------------------------

@@ -15,10 +15,8 @@ import java.util.Map;
 import java.util.Set;
 
 import javax.media.j3d.Appearance;
-import javax.media.j3d.ColoringAttributes;
 import javax.media.j3d.LineArray;
 import javax.media.j3d.LineAttributes;
-import javax.media.j3d.PolygonAttributes;
 import javax.media.j3d.RenderingAttributes;
 import javax.media.j3d.Shape3D;
 import javax.media.j3d.Switch;

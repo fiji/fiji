@@ -13,6 +13,7 @@ import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMate_;
+import fiji.plugin.trackmate.action.GrabSpotImageAction;
 import fiji.plugin.trackmate.features.track.TrackBranchingAnalyzer;
 import fiji.plugin.trackmate.io.TmXmlReader;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
@@ -59,9 +60,14 @@ public class TrackVisualizerTestDrive {
 			imp.show();
 		}
 		
+		GrabSpotImageAction grabber = new GrabSpotImageAction();
+		grabber.execute(plugin);
+		
+		
 		// Instantiate displayer
 		final TrackMateModelView displayer = new HyperStackDisplayer();
 		displayer.setModel(model);
+		displayer.render();
 		displayer.refresh();
 		
 		// Display Track scheme

@@ -20,7 +20,8 @@ package trainableSegmentation;
  * - Laplacian filter
  * - Eigenvalues of the Structure tensor
  * - Color features: HSB (if the input image is RGB)
- * - Entropy 
+ * - Entropy
+ * - Neighbors 
  * 
  * filters to come:
  * - histogram patch
@@ -151,15 +152,17 @@ public class FeatureStack
 	public static final int LAPLACIAN				= 16;
 	/** structure tensor filter flag index */
 	public static final int STRUCTURE				= 17;
-	/** structure tensor filter flag index */
+	/** entropy filter flag index */
 	public static final int ENTROPY					= 18;
+	/** neighbors feature flag index */
+	public static final int NEIGHBORS				= 19;
 	
 	/** names of available filters */
 	public static final String[] availableFeatures 
 		= new String[]{	"Gaussian_blur", "Sobel_filter", "Hessian", "Difference_of_gaussians", 
 					   	"Membrane_projections","Variance","Mean", "Minimum", "Maximum", "Median", 
 					   	"Anisotropic_diffusion", "Bilateral", "Lipschitz", "Kuwahara", "Gabor" , 
-					   	"Derivatives", "Laplacian", "Structure", "Entropy"};
+					   	"Derivatives", "Laplacian", "Structure", "Entropy", "Neighbors"};
 	/** flags of filters to be used */
 	private boolean[] enableFeatures = new boolean[]{
 			true, 	/* Gaussian_blur */
@@ -180,7 +183,8 @@ public class FeatureStack
 			false, 	/* Derivatives */
 			false, 	/* Laplacian */
 			false,	/* Structure */
-			false	/* Entropy */
+			false,	/* Entropy */
+			false	/* Neighbors */
 	};
 	
 	/** use neighborhood flag */
@@ -221,6 +225,20 @@ public class FeatureStack
 		height = image.getHeight();
 		wholeStack = new ImageStack(width, height);		
 		wholeStack.addSlice("original", originalImage.getProcessor().duplicate());		
+	}
+	
+	/**
+	 * Initialize empty feature stack
+	 * @param width image width
+	 * @param height image height
+	 * @param colorFeatures color image flat
+	 */
+	public FeatureStack(int width, int height, boolean colorFeatures)
+	{
+		this.width = width;
+		this.height = height;
+		wholeStack = new ImageStack(width, height);
+		this.colorFeatures = colorFeatures;
 	}
 	
 	/**
@@ -329,7 +347,8 @@ public class FeatureStack
 	{
 		ImageProcessor ip = originalImage.getProcessor().duplicate();
 		GaussianBlur gs = new GaussianBlur();
-		gs.blur(ip, sigma);
+		//gs.blur(ip, sigma);
+		gs.blurGaussian(ip, 0.4 * sigma, 0.4 * sigma,  0.0002);
 		wholeStack.addSlice(availableFeatures[GAUSSIAN] + "_" + sigma, ip);
 	}
 	/**
@@ -350,7 +369,8 @@ public class FeatureStack
 		
 				ImageProcessor ip = originalImage.getProcessor().duplicate();
 				GaussianBlur gs = new GaussianBlur();
-				gs.blur(ip, sigma);
+				//gs.blur(ip, sigma);
+				gs.blurGaussian(ip, 0.4 * sigma, 0.4 * sigma,  0.0002);
 				return new ImagePlus (availableFeatures[GAUSSIAN] + "_" + sigma, ip);
 			}
 		};
@@ -388,6 +408,104 @@ public class FeatureStack
 				ImageProcessor ip = originalImage.getProcessor().duplicate();
 				Entropy_Filter filter = new Entropy_Filter();
 				return new ImagePlus (availableFeatures[ENTROPY] + "_" + radius + "_" + numBins, filter.getEntropy(ip, radius, numBins));
+			}
+		};
+	}
+	
+	/**
+	 * Add 8 neighbors of the original image as features
+	 */
+	public void addNeighbors(
+			final int minSigma,
+			final int maxSigma)
+	{
+		// Test: add neighbors of original image
+				
+		ImagePlus[] channels = extractChannels(originalImage);
+
+		ImagePlus[] results = new ImagePlus[ channels.length ];
+
+		for(int ch=0; ch < channels.length; ch++)
+		{
+			ImageStack result = new ImageStack( originalImage.getWidth(), originalImage.getHeight() );
+			
+			for(int sigma = minSigma; sigma <=maxSigma; sigma *= 2)
+			{
+				double[][] neighborhood = new double[8][originalImage.getWidth() * originalImage.getHeight()];		
+
+				for(int y=0, n=0; y<originalImage.getHeight(); y++)
+					for(int x=0; x<originalImage.getWidth(); x++, n++)					
+					{
+						for(int i = -1 * sigma, k=0;  i < (sigma+1); i += sigma)
+							for(int j = -1 * sigma; j < (sigma+1); j += sigma)
+							{
+								if(i==0 && j==0)
+									continue;				
+								neighborhood[k][n] = getPixelMirrorConditions(channels[ ch ].getProcessor(), x+i, y+j);
+								k++;
+							}
+					}
+
+
+				for(int i=0; i<8; i++)
+					result.addSlice(availableFeatures[ NEIGHBORS] + "_" + sigma +"_" +  i, new FloatProcessor( originalImage.getWidth(), originalImage.getHeight(), neighborhood[ i ]));						
+			}
+			results[ ch ] = new ImagePlus("Neighbors", result);
+		}
+		ImagePlus merged = mergeResultChannels(results);
+		
+		for(int i=1; i<=merged.getImageStackSize(); i++)
+			wholeStack.addSlice(merged.getImageStack().getSliceLabel(i), merged.getImageStack().getPixels(i));
+	}
+	
+	/**
+	 * Calculate 8 neighbors  concurrently
+	 * @param originalImage original input image
+	 * @return result image
+	 */
+	public Callable<ImagePlus> getNeighbors(
+			final ImagePlus originalImage,
+			final int minSigma,
+			final int maxSigma)
+	{
+		if (Thread.currentThread().isInterrupted()) 
+			return null;
+		
+		return new Callable<ImagePlus>(){
+			public ImagePlus call(){
+		
+				// Test: add neighbors of original image
+				ImagePlus[] channels = extractChannels(originalImage);
+
+				ImagePlus[] results = new ImagePlus[ channels.length ];
+
+				for(int ch=0; ch < channels.length; ch++)
+				{
+					ImageStack result = new ImageStack( originalImage.getWidth(), originalImage.getHeight() );
+					for(int sigma = minSigma; sigma <=maxSigma; sigma *= 2)
+					{
+						double[][] neighborhood = new double[8][originalImage.getWidth() * originalImage.getHeight()];		
+
+						for(int y=0, n=0; y<originalImage.getHeight(); y++)
+							for(int x=0; x<originalImage.getWidth(); x++, n++)
+							{
+								for(int i=-1 * sigma, k=0;  i < (sigma+1); i+=sigma)
+									for(int j = -1 * sigma; j < (sigma+1); j+=sigma)
+									{
+										if(i==0 && j==0)
+											continue;				
+										neighborhood[k][n] = getPixelMirrorConditions(channels[ ch ].getProcessor(), x+i, y+j);
+										k++;
+									}
+							}
+
+						
+						for(int i=0; i<8; i++)
+							result.addSlice(availableFeatures[ NEIGHBORS] + "_" + sigma +"_" +  i, new FloatProcessor( originalImage.getWidth(), originalImage.getHeight(), neighborhood[ i ]));						
+					}
+					results[ ch ] = new ImagePlus("Neighbors", result);
+				}
+				return mergeResultChannels(results);
 			}
 		};
 	}
@@ -673,13 +791,15 @@ public class FeatureStack
 
 			GaussianBlur gs = new GaussianBlur();
 			ImageProcessor ip_x = channels[ch].getProcessor().convertToFloat();
-			gs.blur(ip_x, sigma);
+			//gs.blur(ip_x, sigma);
+			gs.blurGaussian(ip_x, 0.4 * sigma, 0.4 * sigma,  0.0002);
 			Convolver c = new Convolver();
 			float[] sobelFilter_x = {1f,2f,1f,0f,0f,0f,-1f,-2f,-1f};
 			c.convolveFloat(ip_x, sobelFilter_x, 3, 3);
 
 			ImageProcessor ip_y = channels[ch].getProcessor().convertToFloat();
-			gs.blur(ip_y, sigma);
+			//gs.blur(ip_y, sigma);
+			gs.blurGaussian(ip_y, 0.4 * sigma, 0.4 * sigma,  0.0002);
 			c = new Convolver();
 			float[] sobelFilter_y = {1f,0f,-1f,2f,0f,-2f,1f,0f,-1f};
 			c.convolveFloat(ip_y, sobelFilter_y, 3, 3);
@@ -727,13 +847,15 @@ public class FeatureStack
 
 					GaussianBlur gs = new GaussianBlur();
 					ImageProcessor ip_x = channels[ch].getProcessor().convertToFloat();
-					gs.blur(ip_x, sigma);
+					//gs.blur(ip_x, sigma);
+					gs.blurGaussian(ip_x, 0.4 * sigma, 0.4 * sigma,  0.0002);
 					Convolver c = new Convolver();
 					float[] sobelFilter_x = {1f,2f,1f,0f,0f,0f,-1f,-2f,-1f};
 					c.convolveFloat(ip_x, sobelFilter_x, 3, 3);
 
 					ImageProcessor ip_y = channels[ch].getProcessor().convertToFloat();
-					gs.blur(ip_y, sigma);
+					//gs.blur(ip_y, sigma);
+					gs.blurGaussian(ip_y, 0.4 * sigma, 0.4 * sigma,  0.0002);
 					c = new Convolver();
 					float[] sobelFilter_y = {1f,0f,-1f,2f,0f,-2f,1f,0f,-1f};
 					c.convolveFloat(ip_y, sobelFilter_y, 3, 3);
@@ -779,11 +901,13 @@ public class FeatureStack
 		{
 		
 			ImageProcessor ip_x = channels[ch].getProcessor().convertToFloat();
-			gs.blur(ip_x, sigma);		
+			//gs.blur(ip_x, sigma);
+			gs.blurGaussian(ip_x, 0.4 * sigma, 0.4 * sigma,  0.0002);
 			c.convolveFloat(ip_x, sobelFilter_x, 3, 3);		
 
 			ImageProcessor ip_y = channels[ch].getProcessor().convertToFloat();
-			gs.blur(ip_y, sigma);
+			//gs.blur(ip_y, sigma);
+			gs.blurGaussian(ip_y, 0.4 * sigma, 0.4 * sigma,  0.0002);
 			c = new Convolver();
 			c.convolveFloat(ip_y, sobelFilter_y, 3, 3);
 
@@ -915,11 +1039,11 @@ public class FeatureStack
 				{
 
 					ImageProcessor ip_x = channels[ch].getProcessor().convertToFloat();
-					gs.blur(ip_x, sigma);		
+					gs.blurGaussian(ip_x, 0.4 * sigma, 0.4 * sigma,  0.0002);		
 					c.convolveFloat(ip_x, sobelFilter_x, 3, 3);		
 
 					ImageProcessor ip_y = channels[ch].getProcessor().convertToFloat();
-					gs.blur(ip_y, sigma);
+					gs.blurGaussian(ip_y, 0.4 * sigma, 0.4 * sigma,  0.0002);
 					c = new Convolver();
 					c.convolveFloat(ip_y, sobelFilter_y, 3, 3);
 
@@ -1030,9 +1154,11 @@ public class FeatureStack
 		for(int ch=0; ch < channels.length; ch++)
 		{
 			ImageProcessor ip_1 = channels[ch].getProcessor().duplicate();
-			gs.blur(ip_1, sigma1);
-			ImageProcessor ip_2 = channels[ch].getProcessor().duplicate();
-			gs.blur(ip_2, sigma2);
+			//gs.blur(ip_1, sigma1);
+			gs.blurGaussian(ip_1, 0.4 * sigma1, 0.4 * sigma1,  0.0002);
+			ImageProcessor ip_2 = channels[ch].getProcessor().duplicate();			
+			//gs.blur(ip_2, sigma2);
+			gs.blurGaussian(ip_2, 0.4 * sigma2, 0.4 * sigma2,  0.0002);
 
 			ImageProcessor ip = new FloatProcessor(width, height);
 
@@ -1081,9 +1207,11 @@ public class FeatureStack
 				for(int ch=0; ch < channels.length; ch++)
 				{
 					ImageProcessor ip_1 = channels[ch].getProcessor().duplicate();
-					gs.blur(ip_1, sigma1);
+					//gs.blur(ip_1, sigma1);
+					gs.blurGaussian(ip_1, 0.4 * sigma1, 0.4 * sigma1,  0.0002);
 					ImageProcessor ip_2 = channels[ch].getProcessor().duplicate();
-					gs.blur(ip_2, sigma2);
+					//gs.blur(ip_2, sigma2);
+					gs.blurGaussian(ip_2, 0.4 * sigma2, 0.4 * sigma2,  0.0002);
 
 					ImageProcessor ip = new FloatProcessor(width, height);
 
@@ -2553,6 +2681,10 @@ public class FeatureStack
 			addMembraneFeatures(membranePatchSize, membraneSize);
 		}
 		
+		// Neighbors
+		if( enableFeatures[ NEIGHBORS ])
+			addNeighbors( (int)minimumSigma, (int)maximumSigma );
+		
 		IJ.showProgress(1.0);
 		IJ.showStatus("Features stack is updated now!");
 	}
@@ -2827,6 +2959,10 @@ public class FeatureStack
 			//IJ.log( n++ +": Calculating Membranes projections ("+ membranePatchSize + ", " + membraneSize + ")");
 			addMembraneFeatures(membranePatchSize, membraneSize);
 		}
+		
+		// Neighbors
+		if( enableFeatures[ NEIGHBORS ])
+			addNeighbors( (int)minimumSigma, (int)maximumSigma );
 		
 		IJ.showProgress(1.0);
 		IJ.showStatus("Features stack is updated now!");
@@ -3107,6 +3243,10 @@ public class FeatureStack
 				futures.add(exe.submit( getMembraneFeatures(originalImage, membranePatchSize, membraneSize) ));
 			}
 
+			// Neighbors
+			if( enableFeatures[ NEIGHBORS ])
+				futures.add(exe.submit( getNeighbors( originalImage, (int)minimumSigma, (int)maximumSigma ) ) );
+			
 			// Wait for the jobs to be done
 			for(Future<ImagePlus> f : futures)
 			{
@@ -3311,5 +3451,9 @@ public class FeatureStack
 		this.wholeStack = stack;
 	}
 	
+	public ImageStack getStack()
+	{
+		return wholeStack;
+	}
 	
 }
