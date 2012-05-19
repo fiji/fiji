@@ -162,6 +162,15 @@ public class mxTrackGraphLayout extends mxGraphLayout {
 
 				// Get Tracks
 				final Set<Spot> track = model.getTrackSpots(i);
+
+				if (track.isEmpty()) {
+					if (DEBUG) {
+						System.out.println("[mxTrackGraphLayout] execute: Track nbr "+i+" is empty, skipping.");
+					}
+					
+					continue;
+				}
+				
 				if (DEBUG) {
 					System.out.println("[mxTrackGraphLayout] execute: Track nbr "+i+": "+model.trackToString(i));
 				}

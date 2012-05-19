@@ -40,13 +40,19 @@ public class TrackVisualizerTestDrive {
 		final TrackMateModel model = reader.getModel();
 		TrackMate_ plugin = new TrackMate_(model);
 		
-		System.out.println("Found "+model.getNTracks()+" tracks.");
-		for(int i=0; i<model.getNFilteredTracks(); i++) 
+		System.out.println("From the XML file:");
+		System.out.println("Found "+model.getNTracks()+" tracks in total.");
+		System.out.println("There were "+model.getTrackFilters().size() + " track filter(s) applied on this list,");
+		System.out.println("resulting in having only "+model.getNFilteredTracks()+" visible tracks after filtering.");
+		for(int i : model.getVisibleTrackIndices()) {
 			System.out.println(" - "+model.trackToString(i));
+		}
 		
 		FeatureFilter filter = new FeatureFilter(TrackBranchingAnalyzer.NUMBER_SPOTS, 50f, true);
 		model.addTrackFilter(filter);
 		plugin.execTrackFiltering();
+		System.out.println();
+		System.out.println("We had an extra track filter: "+filter);
 		System.out.println("After filtering, retaining "+model.getNFilteredTracks()+" tracks.");
 			
 		ImagePlus imp = reader.getImage();
