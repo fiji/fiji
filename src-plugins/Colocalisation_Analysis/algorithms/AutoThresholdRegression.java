@@ -2,10 +2,13 @@ package algorithms;
 
 import gadgets.DataContainer;
 import gadgets.ThresholdMode;
+import net.imglib2.RandomAccessible;
+import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.TwinCursor;
-import net.imglib2.img.Img;
 import net.imglib2.type.logic.BitType;
 import net.imglib2.type.numeric.RealType;
+import net.imglib2.util.Util;
+import net.imglib2.view.Views;
 import results.ResultHandler;
 
 /**
@@ -39,9 +42,9 @@ public class AutoThresholdRegression<T extends RealType< T >> extends Algorithm<
 	public void execute(DataContainer<T> container)
 			throws MissingPreconditionException {
 		// get the 2 images for the calculation of Pearson's
-		final Img<T> img1 = container.getSourceImage1();
-		final Img<T> img2 = container.getSourceImage2();
-		final Img<BitType> mask = container.getMask();
+		final RandomAccessibleInterval<T> img1 = container.getSourceImage1();
+		final RandomAccessibleInterval<T> img2 = container.getSourceImage2();
+		final RandomAccessibleInterval<BitType> mask = container.getMask();
 
 		double ch1Mean = container.getMeanCh1();
 		double ch2Mean = container.getMeanCh2();
@@ -51,7 +54,7 @@ public class AutoThresholdRegression<T extends RealType< T >> extends Algorithm<
 		// get the cursors for iterating through pixels in images
 		TwinCursor<T> cursor = new TwinCursor<T>(
 				img1.randomAccess(), img2.randomAccess(),
-				mask.cursor());
+				Views.iterable(mask).localizingCursor());
 
 		// variables for summing up the
 		double ch1MeanDiffSum = 0.0, ch2MeanDiffSum = 0.0, combinedMeanDiffSum = 0.0;
@@ -120,8 +123,8 @@ public class AutoThresholdRegression<T extends RealType< T >> extends Algorithm<
 		double ch2ThreshMax = container.getMaxCh2();
 
 		// define some image type specific threshold variables
-		T thresholdCh1 = img1.firstElement().createVariable();
-		T thresholdCh2 = img2.firstElement().createVariable();
+		T thresholdCh1 = Util.getTypeFromInterval(img1).createVariable();
+		T thresholdCh2 = Util.getTypeFromInterval(img2).createVariable();
 		// reset the previously created cursor
 		cursor.reset();
 
@@ -175,7 +178,7 @@ public class AutoThresholdRegression<T extends RealType< T >> extends Algorithm<
 		/* Get min and max value of image data type. Since type of image
 		 * one and two are the same, we dont't need to distinguish them.
 		 */
-		T dummyT = img1.firstElement().createVariable();
+		T dummyT = Util.getTypeFromInterval(img1).createVariable();
 		double minVal = dummyT.getMinValue();
 		double maxVal = dummyT.getMaxValue();
 
@@ -183,10 +186,10 @@ public class AutoThresholdRegression<T extends RealType< T >> extends Algorithm<
 		 * min value for now. For the max threshold we do a clipping
 		 * to make it fit into the image type.
 		 */
-		ch1MinThreshold = img1.firstElement().createVariable();
+		ch1MinThreshold = Util.getTypeFromInterval(img1).createVariable();
 		ch1MinThreshold.setReal(minVal);
 
-		ch1MaxThreshold = img1.firstElement().createVariable();
+		ch1MaxThreshold = Util.getTypeFromInterval(img1).createVariable();
 		if ( minVal > ch1ThreshMax )
 			ch1MaxThreshold.setReal( minVal );
 		else if ( maxVal < ch1ThreshMax )
@@ -194,10 +197,10 @@ public class AutoThresholdRegression<T extends RealType< T >> extends Algorithm<
 		else
 			ch1MaxThreshold.setReal( ch1ThreshMax );
 
-		ch2MinThreshold = img2.firstElement().createVariable();
+		ch2MinThreshold = Util.getTypeFromInterval(img2).createVariable();
 		ch2MinThreshold.setReal(minVal);
 
-		ch2MaxThreshold = img2.firstElement().createVariable();
+		ch2MaxThreshold = Util.getTypeFromInterval(img2).createVariable();
 		if ( minVal > ch2ThreshMax )
 			ch2MaxThreshold.setReal( minVal );
 		else if ( maxVal < ch2ThreshMax )

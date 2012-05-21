@@ -2,10 +2,11 @@ package algorithms;
 
 import gadgets.DataContainer;
 import ij.IJ;
+import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.TwinCursor;
-import net.imglib2.img.Img;
 import net.imglib2.type.logic.BitType;
 import net.imglib2.type.numeric.RealType;
+import net.imglib2.view.Views;
 import results.ResultHandler;
 
 /**
@@ -37,13 +38,13 @@ public class InputCheck<T extends RealType< T >> extends Algorithm<T> {
 	public void execute(DataContainer<T> container)
 			throws MissingPreconditionException {
 		// get the 2 images and the mask
-		final Img<T> img1 = container.getSourceImage1();
-		final Img<T> img2 = container.getSourceImage2();
-		final Img<BitType> mask = container.getMask();
+		final RandomAccessibleInterval<T> img1 = container.getSourceImage1();
+		final RandomAccessibleInterval<T> img2 = container.getSourceImage2();
+		final RandomAccessibleInterval<BitType> mask = container.getMask();
 
 		// get the cursors for iterating through pixels in images
 		TwinCursor<T> cursor = new TwinCursor<T>(img1.randomAccess(),
-				img2.randomAccess(), mask.cursor());
+				img2.randomAccess(), Views.iterable(mask).cursor());
 
 		double ch1Max = container.getMaxCh1();
 		double ch2Max = container.getMaxCh2();

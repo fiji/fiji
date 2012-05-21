@@ -4,6 +4,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import net.imglib2.TwinCursor;
 import net.imglib2.type.numeric.integer.UnsignedByteType;
+import net.imglib2.view.Views;
 
 import org.junit.Test;
 
@@ -26,7 +27,7 @@ public class SpearmanRankTest extends ColocalisationTest {
 		TwinCursor<UnsignedByteType> cursor = new TwinCursor<UnsignedByteType>(
 				positiveCorrelationImageCh1.randomAccess(),
 				positiveCorrelationImageCh2.randomAccess(),
-				positiveCorrelationAlwaysTrueMask.localizingCursor());
+				Views.iterable(positiveCorrelationAlwaysTrueMask).localizingCursor());
 		// calculate Spearman's Rank rho value
 		double rho = SpearmanRankCorrelation.calculateSpearmanRank(cursor);
 		// Rho value = 0.5463...
@@ -42,7 +43,7 @@ public class SpearmanRankTest extends ColocalisationTest {
 		TwinCursor<UnsignedByteType> cursor = new TwinCursor<UnsignedByteType>(
 				zeroCorrelationImageCh1.randomAccess(),
 				zeroCorrelationImageCh2.randomAccess(),
-				zeroCorrelationAlwaysTrueMask.localizingCursor());
+				Views.iterable(zeroCorrelationAlwaysTrueMask).localizingCursor());
 		// calculate Spearman's Rank rho value
 		double rho = SpearmanRankCorrelation.calculateSpearmanRank(cursor);
 		// Rho value = -0.11...
@@ -112,7 +113,7 @@ public class SpearmanRankTest extends ColocalisationTest {
 		TwinCursor<UnsignedByteType> cursor = new TwinCursor<UnsignedByteType>(
 				syntheticNegativeCorrelationImageCh1.randomAccess(),
 				syntheticNegativeCorrelationImageCh2.randomAccess(),
-				syntheticNegativeCorrelationAlwaysTrueMask.localizingCursor());
+				Views.iterable(syntheticNegativeCorrelationAlwaysTrueMask).localizingCursor());
 		
 		// calculate Spearman's Rank rho value
 		double rho = SpearmanRankCorrelation.calculateSpearmanRank(cursor);

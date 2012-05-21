@@ -13,15 +13,20 @@ import net.imglib2.Cursor;
 import net.imglib2.IterableInterval;
 import net.imglib2.RandomAccess;
 import net.imglib2.RandomAccessible;
+import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.algorithm.gauss.Gauss;
 import net.imglib2.img.Img;
+import net.imglib2.img.ImgFactory;
+import net.imglib2.img.array.ArrayImgFactory;
 import net.imglib2.roi.RectangleRegionOfInterest;
+import net.imglib2.type.NativeType;
 import net.imglib2.type.logic.BitType;
 import net.imglib2.type.numeric.RealType;
+import net.imglib2.util.Util;
 import net.imglib2.view.Views;
 import results.ResultHandler;
 
-public class CostesSignificanceTest<T extends RealType< T >> extends Algorithm<T> {
+public class CostesSignificanceTest<T extends RealType< T > & NativeType<T>> extends Algorithm<T> {
 	// radius of the PSF in pixels, its size *must* for now be three
 	protected double[] psfRadius = new double[3];
 	// indicates if the shuffled images should be shown as a result
@@ -75,9 +80,9 @@ public class CostesSignificanceTest<T extends RealType< T >> extends Algorithm<T
 	@Override
 	public void execute(DataContainer<T> container)
 			throws MissingPreconditionException {
-		final Img<T> img1 = container.getSourceImage1();
-		final Img<T> img2 = container.getSourceImage2();
-		final Img<BitType> mask = container.getMask();
+		final RandomAccessibleInterval<T> img1 = container.getSourceImage1();
+		final RandomAccessibleInterval<T> img2 = container.getSourceImage2();
+		final RandomAccessibleInterval<BitType> mask = container.getMask();
 
 		/* To determine the number of needed blocks, we need
 		 * the effective dimensions of the image. Since the
@@ -128,7 +133,7 @@ public class CostesSignificanceTest<T extends RealType< T >> extends Algorithm<T
 		}
 		
 		// we will need a zero variable
-		final T zero = img1.firstElement().createVariable();
+		final T zero = Util.getTypeFromInterval(img1).createVariable();
 		zero.setZero();
 
 		/* Create a new image to contain the shuffled data and with
@@ -136,8 +141,9 @@ public class CostesSignificanceTest<T extends RealType< T >> extends Algorithm<T
 		 */
 		final long[] dims = new long[img1.numDimensions()];
 		img1.dimensions(dims);
-		Img<T> shuffledImage = img1.factory().create(
-				dims, img1.firstElement().createVariable() );
+		ImgFactory<T> factory = new ArrayImgFactory<T>();
+		Img<T> shuffledImage = factory.create(
+				dims, Util.getTypeFromInterval(img1).createVariable() );
 		RandomAccessible< T> infiniteShuffledImage =
 				Views.extendValue(shuffledImage, zero );
 

@@ -4,10 +4,11 @@ import gadgets.DataContainer;
 
 import java.util.EnumSet;
 
+import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.TwinCursor;
-import net.imglib2.img.Img;
 import net.imglib2.type.logic.BitType;
 import net.imglib2.type.numeric.RealType;
+import net.imglib2.view.Views;
 
 /**
  * Represents the creation of a 2D histogram between two images.
@@ -64,13 +65,13 @@ public class LiHistogram2D<T extends RealType< T >> extends Histogram2D<T> {
 		 */
 
 		// get the 2 images and the mask
-		final Img<T> img1 = getImageCh1(container);
-		final Img<T> img2 = getImageCh2(container);
-		final Img<BitType> mask = container.getMask();
+		final RandomAccessibleInterval<T> img1 = getImageCh1(container);
+		final RandomAccessibleInterval<T> img2 = getImageCh2(container);
+		final RandomAccessibleInterval<BitType> mask = container.getMask();
 
 		// get the cursors for iterating through pixels in images
 		TwinCursor<T> cursor = new TwinCursor<T>(img1.randomAccess(),
-				img2.randomAccess(), mask.localizingCursor());
+				img2.randomAccess(), Views.iterable(mask).localizingCursor());
 
 		// give liMin and liMax appropriate starting values at the top and bottom of the range
 		liMin = Double.MAX_VALUE;

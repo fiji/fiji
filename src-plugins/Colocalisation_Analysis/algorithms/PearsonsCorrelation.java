@@ -3,11 +3,12 @@ package algorithms;
 import gadgets.DataContainer;
 import gadgets.MaskFactory;
 import gadgets.ThresholdMode;
-import net.imglib2.algorithm.math.ImageStatistics;
+import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.TwinCursor;
-import net.imglib2.img.Img;
+import net.imglib2.algorithm.math.ImageStatistics;
 import net.imglib2.type.logic.BitType;
 import net.imglib2.type.numeric.RealType;
+import net.imglib2.view.Views;
 import results.ResultHandler;
 
 /**
@@ -48,9 +49,9 @@ public class PearsonsCorrelation<T extends RealType< T >> extends Algorithm<T> {
 
 	public void execute(DataContainer<T> container) throws MissingPreconditionException {
 		// get the 2 images for the calculation of Pearson's
-		Img<T> img1 = container.getSourceImage1();
-		Img<T> img2 = container.getSourceImage2();
-		Img<BitType> mask = container.getMask();
+		RandomAccessibleInterval<T> img1 = container.getSourceImage1();
+		RandomAccessibleInterval<T> img2 = container.getSourceImage2();
+		RandomAccessibleInterval<BitType> mask = container.getMask();
 
 		// get the thresholds of the images
 		AutoThresholdRegression<T> autoThreshold = container.getAutoThreshold();
@@ -67,7 +68,7 @@ public class PearsonsCorrelation<T extends RealType< T >> extends Algorithm<T> {
 		 * images without a mask. */
 		TwinCursor<T> cursor = new TwinCursor<T>(
 				img1.randomAccess(), img2.randomAccess(),
-				mask.localizingCursor());
+				Views.iterable(mask).localizingCursor());
 
 		MissingPreconditionException error = null;
 		if (theImplementation == Implementation.Classic) {
@@ -151,12 +152,13 @@ public class PearsonsCorrelation<T extends RealType< T >> extends Algorithm<T> {
 	 * @return Pearson's R value.
 	 * @throws MissingPreconditionException
 	 */
-	public <S extends RealType<S>> double calculatePearsons(Img<S> img1, Img<S> img2)
+	public <S extends RealType<S>> double calculatePearsons(
+			RandomAccessibleInterval<S> img1, RandomAccessibleInterval<S> img2)
 			throws MissingPreconditionException {
 		// create an "always true" mask to walk over the images
 		final long[] dims = new long[img1.numDimensions()];
 		img1.dimensions(dims);
-		Img<BitType> alwaysTrueMask = MaskFactory.createMask(dims, true);
+		RandomAccessibleInterval<BitType> alwaysTrueMask = MaskFactory.createMask(dims, true);
 		return calculatePearsons(img1, img2, alwaysTrueMask);
 	}
 
@@ -172,11 +174,12 @@ public class PearsonsCorrelation<T extends RealType< T >> extends Algorithm<T> {
 	 * @return Pearson's R value.
 	 * @throws MissingPreconditionException
 	 */
-	public <S extends RealType<S>> double calculatePearsons(Img<S> img1, Img<S> img2,
-			Img<BitType> mask) throws MissingPreconditionException {
+	public <S extends RealType<S>> double calculatePearsons(
+			RandomAccessibleInterval<S> img1, RandomAccessibleInterval<S> img2,
+			RandomAccessibleInterval<BitType> mask) throws MissingPreconditionException {
 		TwinCursor<S> cursor = new TwinCursor<S>(
 				img1.randomAccess(), img2.randomAccess(),
-				mask.localizingCursor());
+				Views.iterable(mask).localizingCursor());
 
 		double r;
 		if (theImplementation == Implementation.Classic) {

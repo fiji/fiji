@@ -3,6 +3,7 @@ package tests;
 import static org.junit.Assert.assertTrue;
 import net.imglib2.TwinCursor;
 import net.imglib2.type.numeric.integer.UnsignedByteType;
+import net.imglib2.view.Views;
 
 import org.junit.Test;
 
@@ -24,7 +25,7 @@ public class LiICQTest extends ColocalisationTest {
 		TwinCursor<UnsignedByteType> cursor = new TwinCursor<UnsignedByteType>(
 				positiveCorrelationImageCh1.randomAccess(),
 				positiveCorrelationImageCh2.randomAccess(),
-				positiveCorrelationAlwaysTrueMask.localizingCursor());
+				Views.iterable(positiveCorrelationAlwaysTrueMask).localizingCursor());
 		// calculate Li's ICQ value
 		double icq = LiICQ.calculateLisICQ(cursor, positiveCorrelationImageCh1Mean,
 					positiveCorrelationImageCh2Mean);
@@ -40,7 +41,7 @@ public class LiICQTest extends ColocalisationTest {
 		TwinCursor<UnsignedByteType> cursor = new TwinCursor<UnsignedByteType>(
 				zeroCorrelationImageCh1.randomAccess(),
 				zeroCorrelationImageCh2.randomAccess(),
-				zeroCorrelationAlwaysTrueMask.localizingCursor());
+				Views.iterable(zeroCorrelationAlwaysTrueMask).localizingCursor());
 		// calculate Li's ICQ value
 		double icq = LiICQ.calculateLisICQ(cursor, zeroCorrelationImageCh1Mean,
 					zeroCorrelationImageCh2Mean);

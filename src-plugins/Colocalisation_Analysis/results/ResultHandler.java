@@ -1,6 +1,6 @@
 package results;
 
-import net.imglib2.img.Img;
+import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.type.numeric.RealType;
 import algorithms.Histogram2D;
 
@@ -13,7 +13,7 @@ import algorithms.Histogram2D;
  */
 public interface ResultHandler<T extends RealType<T>> {
 
-	void handleImage(Img<T> image, String name);
+	void handleImage(RandomAccessibleInterval<T> image, String name);
 
 	void handleHistogram(Histogram2D<T> histogram, String name);
 

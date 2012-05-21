@@ -5,6 +5,7 @@ import ij.measure.ResultsTable;
 
 import java.util.EnumSet;
 
+import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.TwinCursor;
 import net.imglib2.RandomAccess;
 import net.imglib2.img.Img;
@@ -13,6 +14,7 @@ import net.imglib2.img.array.ArrayImgFactory;
 import net.imglib2.type.logic.BitType;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.integer.LongType;
+import net.imglib2.view.Views;
 import results.ResultHandler;
 
 /**
@@ -41,7 +43,7 @@ public class Histogram2D<T extends RealType< T >> extends Algorithm<T> {
 	// Result keeping members
 
 	// the generated plot image
-	private Img<LongType> plotImage;
+	private RandomAccessibleInterval<LongType> plotImage;
 	// the bin widths for each channel
 	private double xBinWidth = 0.0, yBinWidth = 0.0;
 	// labels for the axes
@@ -127,7 +129,7 @@ public class Histogram2D<T extends RealType< T >> extends Algorithm<T> {
 	 *
 	 * @return The image of what is seen as channel one.
 	 */
-	protected Img<T> getImageCh1(DataContainer<T> container) {
+	protected RandomAccessibleInterval<T> getImageCh1(DataContainer<T> container) {
 		return swapChannels ? container.getSourceImage2() : container.getSourceImage1();
 	}
 
@@ -138,7 +140,7 @@ public class Histogram2D<T extends RealType< T >> extends Algorithm<T> {
 	 *
 	 * @return The image of what is seen as channel two.
 	 */
-	protected Img<T> getImageCh2(DataContainer<T> container) {
+	protected RandomAccessibleInterval<T> getImageCh2(DataContainer<T> container) {
 		return swapChannels ? container.getSourceImage1() : container.getSourceImage2();
 	}
 
@@ -173,13 +175,13 @@ public class Histogram2D<T extends RealType< T >> extends Algorithm<T> {
 		double ch2BinWidth = getYBinWidth(container);
 
 		// get the 2 images for the calculation of Pearson's
-		final Img<T> img1 = getImageCh1(container);
-		final Img<T> img2 = getImageCh2(container);
-		final Img<BitType> mask = container.getMask();
+		final RandomAccessibleInterval<T> img1 = getImageCh1(container);
+		final RandomAccessibleInterval<T> img2 = getImageCh2(container);
+		final RandomAccessibleInterval<BitType> mask = container.getMask();
 
 		// get the cursors for iterating through pixels in images
 		TwinCursor<T> cursor = new TwinCursor<T>(img1.randomAccess(),
-				img2.randomAccess(), mask.localizingCursor());
+				img2.randomAccess(), Views.iterable(mask).localizingCursor());
 
 		// create new image to put the scatter-plot in
 		final ImgFactory<LongType> scatterFactory = new ArrayImgFactory< LongType >();
@@ -319,7 +321,7 @@ public class Histogram2D<T extends RealType< T >> extends Algorithm<T> {
 
 	// Result access methods
 
-	public Img<LongType> getPlotImage() {
+	public RandomAccessibleInterval<LongType> getPlotImage() {
 		return plotImage;
 	}
 

@@ -2,10 +2,12 @@ package algorithms;
 
 import gadgets.DataContainer;
 import gadgets.ThresholdMode;
+import net.imglib2.RandomAccessible;
+import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.TwinCursor;
-import net.imglib2.img.Img;
 import net.imglib2.type.logic.BitType;
 import net.imglib2.type.numeric.RealType;
+import net.imglib2.view.Views;
 import results.ResultHandler;
 
 /**
@@ -40,16 +42,16 @@ public class MandersColocalization<T extends RealType< T >> extends Algorithm<T>
 	public void execute(DataContainer<T> container)
 			throws MissingPreconditionException {
 		// get the two images for the calculation of Manders' values
-		Img<T> img1 = container.getSourceImage1();
-		Img<T> img2 = container.getSourceImage2();
-		Img<BitType> mask = container.getMask();
+		RandomAccessible<T> img1 = container.getSourceImage1();
+		RandomAccessible<T> img2 = container.getSourceImage2();
+		RandomAccessibleInterval<BitType> mask = container.getMask();
 
 		TwinCursor<T> cursor = new TwinCursor<T>(img1.randomAccess(),
-				img2.randomAccess(), mask.localizingCursor());
+				img2.randomAccess(), Views.iterable(mask).localizingCursor());
 
 		// calculate Mander's values without threshold
 		MandersResults results = calculateMandersCorrelation(cursor,
-				img1.firstElement().createVariable());
+				img1.randomAccess().get().createVariable());
 
 		// save the results
 		mandersM1 = results.m1;

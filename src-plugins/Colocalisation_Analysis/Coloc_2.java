@@ -24,6 +24,7 @@ import java.util.List;
 
 import net.imglib2.Cursor;
 import net.imglib2.RandomAccess;
+import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.TwinCursor;
 import net.imglib2.img.ImagePlusAdapter;
 import net.imglib2.img.Img;
@@ -32,6 +33,8 @@ import net.imglib2.img.array.ArrayImgFactory;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.logic.BitType;
 import net.imglib2.type.numeric.RealType;
+import net.imglib2.util.Util;
+import net.imglib2.view.Views;
 import results.PDFWriter;
 import results.ResultHandler;
 import results.SingleWindowDisplay;
@@ -436,7 +439,7 @@ public class Coloc_2<T extends RealType< T > & NativeType< T >> implements PlugI
 		}
 		// if we have ROIs/masks, add them to results
 		if (displayImages) {
-			Img<T> channel1, channel2;
+			RandomAccessibleInterval<T> channel1, channel2;
 			if (mask != null || roi != null) {
 				long[] offset = container.getMaskBBOffset();
 				long[] size = container.getMaskBBSize();
@@ -642,7 +645,8 @@ public class Coloc_2<T extends RealType< T > & NativeType< T >> implements PlugI
 	 * source images are ROI/MaskImages.
 	 * @throws MissingPreconditionException
 	 */
-	protected Img<T> createMaskImage(Img<T> image, Img<BitType> mask,
+	protected RandomAccessibleInterval<T> createMaskImage(
+			RandomAccessibleInterval<T> image, RandomAccessibleInterval<BitType> mask,
 			long[] offset, long[] size) throws MissingPreconditionException {
 		long[] pos = new long[ image.numDimensions() ];
 		// sanity check
@@ -653,11 +657,11 @@ public class Coloc_2<T extends RealType< T > & NativeType< T >> implements PlugI
 		TwinCursor<T> cursor = new TwinCursor<T>(
 				image.randomAccess(),
 				image.randomAccess(),
-				mask.localizingCursor());
+				Views.iterable(mask).localizingCursor());
 		// prepare output image
 		ImgFactory<T> maskFactory = new ArrayImgFactory<T>();
 		//Img<T> maskImage = maskFactory.create( size, name );
-		Img<T> maskImage = maskFactory.create( size, image.firstElement().createVariable() );
+		RandomAccessibleInterval<T> maskImage = maskFactory.create( size, Util.getTypeFromInterval(image).createVariable() );
 		RandomAccess<T> maskCursor = maskImage.randomAccess();
 		// go through the visible data and copy it to the output
 		while (cursor.hasNext()) {

@@ -30,15 +30,16 @@
 package net.imglib2.algorithm.math;
 
 import net.imglib2.Cursor;
+import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.TwinCursor;
-import net.imglib2.img.Img;
 import net.imglib2.type.Type;
 import net.imglib2.type.logic.BitType;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.util.RealSum;
+import net.imglib2.view.Views;
 
 /**
- * This class contains some basic {@link Img} statistics
+ * This class contains some basic image statistics
  * calculations.
  */
 public class ImageStatistics {
@@ -49,7 +50,8 @@ public class ImageStatistics {
 	 * @param mask The mask to respect
 	 * @return The mean of the image passed
 	 */
-	final public static <T extends RealType<T>> long getNumPixels( final Img<T> img )
+	final public static <T extends RealType<T>> long getNumPixels(
+			final RandomAccessibleInterval<T> img )
 	{
 		long numPixels = 1;
 		for (int d=0; d<img.numDimensions(); ++d)
@@ -65,7 +67,9 @@ public class ImageStatistics {
 	 * @param mask The mask to respect
 	 * @return The mean of the image passed
 	 */
-	final public static <T extends RealType<T>> double getImageMean( final Img<T> img, final Img<BitType>  mask )
+	final public static <T extends RealType<T>> double getImageMean(
+			final RandomAccessibleInterval<T> img,
+			final RandomAccessibleInterval<BitType> mask )
 	{
 		final RealSum sum = new RealSum();
 		long numPixels = 0;
@@ -73,7 +77,7 @@ public class ImageStatistics {
 		final TwinCursor<T> cursor = new TwinCursor<T>(
 				img.randomAccess(),
 				img.randomAccess(),
-				mask.cursor());
+				Views.iterable(mask).localizingCursor());
 		while (cursor.hasNext()) {
 			sum.add(cursor.getChannel1().getRealDouble());
 			++numPixels;
@@ -88,14 +92,15 @@ public class ImageStatistics {
 	 * @param img The image to calculate the mean of
 	 * @return The mean of the image passed
 	 */
-	final public static <T extends RealType<T>> double getImageMean( final Img<T> img )
+	final public static <T extends RealType<T>> double getImageMean(
+			final RandomAccessibleInterval<T> img )
 	{
 		// Count all values using the RealSum class.
         // It prevents numerical instabilities when adding up millions of pixels
         RealSum realSum = new RealSum();
         long count = 0;
  
-        for ( final T type : img )
+        for ( final T type : Views.iterable(img) )
         {
             realSum.add( type.getRealDouble() );
             ++count;
@@ -110,11 +115,12 @@ public class ImageStatistics {
 	 * @param img The image to calculate the integral of
 	 * @return The pixel values integral of the image passed
 	 */
-	final public static <T extends RealType<T>> double getImageIntegral( final Img<T> img )
+	final public static <T extends RealType<T>> double getImageIntegral(
+			final RandomAccessibleInterval<T> img )
 	{
 		final RealSum sum = new RealSum();
 
-		for ( final T type : img )
+		for ( final T type : Views.iterable(img) )
 			sum.add( type.getRealDouble() );
 
 		return sum.getSum();
@@ -126,14 +132,16 @@ public class ImageStatistics {
 	 * @param img The image to calculate the integral of
 	 * @return The pixel values integral of the image passed
 	 */
-	final public static <T extends RealType<T>> double getImageIntegral( final Img<T> img, Img<BitType> mask )
+	final public static <T extends RealType<T>> double getImageIntegral(
+			final RandomAccessibleInterval<T> img,
+			final RandomAccessibleInterval<BitType> mask )
 	{
 		final RealSum sum = new RealSum();
 		// create cursor to walk an image with respect to a mask
 		final TwinCursor<T> cursor = new TwinCursor<T>(
 				img.randomAccess(),
 				img.randomAccess(),
-				mask.cursor());
+				Views.iterable(mask).cursor());
 		while (cursor.hasNext())
 			sum.add( cursor.getChannel1().getRealDouble() );
 
@@ -146,9 +154,10 @@ public class ImageStatistics {
 	 * @param img The image to calculate the min of
 	 * @return The min of the image passed
 	 */
-	final public static <T extends Type<T> & Comparable<T>> T getImageMin( final Img<T> img )
+	final public static <T extends Type<T> & Comparable<T>> T getImageMin(
+			final RandomAccessibleInterval<T> img )
 	{
-		final Cursor<T> cursor = img.cursor();
+		final Cursor<T> cursor = Views.iterable(img).cursor();
 		cursor.fwd();
 		// copy first element as current maximum
 		final T min = cursor.get().copy();
@@ -173,13 +182,15 @@ public class ImageStatistics {
 	 * @param mask The mask to respect
 	 * @return The min of the image passed
 	 */
-	final public static <T extends Type<T> & Comparable<T>> T getImageMin( final Img<T> img, final Img<BitType> mask )
+	final public static <T extends Type<T> & Comparable<T>> T getImageMin(
+			final RandomAccessibleInterval<T> img,
+			final RandomAccessibleInterval<BitType> mask )
 	{
 		// create cursor to walk an image with respect to a mask
 		final TwinCursor<T> cursor = new TwinCursor<T>(
 				img.randomAccess(),
 				img.randomAccess(),
-				mask.cursor());
+				Views.iterable(mask).localizingCursor());
 		// forward one step to get the first value
 		cursor.fwd();
 		// copy first element as current minimum
@@ -203,9 +214,10 @@ public class ImageStatistics {
 	 * @param img The image to calculate the max of
 	 * @return The max of the image passed
 	 */
-	final public static <T extends Type<T> & Comparable<T>> T getImageMax( final Img<T> img ) {
+	final public static <T extends Type<T> & Comparable<T>> T getImageMax(
+			final RandomAccessibleInterval<T> img ) {
 
-		final Cursor<T> cursor = img.cursor();
+		final Cursor<T> cursor = Views.iterable(img).localizingCursor();
 		cursor.fwd();
 		// copy first element as current maximum
 		final T max = cursor.get().copy();
@@ -229,13 +241,15 @@ public class ImageStatistics {
 	 * @param mask The mask to respect
 	 * @return The min of the image passed
 	 */
-	final public static <T extends Type<T> & Comparable<T>> T getImageMax( final Img<T> img, final Img<BitType> mask )
+	final public static <T extends Type<T> & Comparable<T>> T getImageMax(
+			final RandomAccessibleInterval<T> img,
+			final RandomAccessibleInterval<BitType> mask )
 	{
 		// create cursor to walk an image with respect to a mask
 		final TwinCursor<T> cursor = new TwinCursor<T>(
 				img.randomAccess(),
 				img.randomAccess(),
-				mask.cursor());
+				Views.iterable(mask).localizingCursor());
 		// forward one step to get the first value
 		cursor.fwd();
 		final T max = cursor.getChannel1().copy();

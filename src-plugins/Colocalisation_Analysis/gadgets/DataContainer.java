@@ -4,8 +4,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.algorithm.math.ImageStatistics;
-import net.imglib2.img.Img;
 import net.imglib2.type.logic.BitType;
 import net.imglib2.type.numeric.RealType;
 import algorithms.Algorithm;
@@ -27,11 +27,11 @@ public class DataContainer<T extends RealType< T >> {
 	// some general image statistics
 	double meanCh1, meanCh2, minCh1, maxCh1, minCh2, maxCh2, integralCh1, integralCh2;
 	// The source images that the results are based on
-	Img<T> sourceImage1, sourceImage2;
+	RandomAccessibleInterval<T> sourceImage1, sourceImage2;
 	// The names of the two source images
 	String sourceImage1Name, sourceImage2Name;
 	// The mask for the images
-	Img<BitType> mask;
+	RandomAccessibleInterval<BitType> mask;
 	// Type of the used mask
 	protected MaskType maskType;
 
@@ -58,7 +58,9 @@ public class DataContainer<T extends RealType< T >> {
 	 * @param ch1 The channel one image channel
 	 * @param ch2 The channel two image channel
 	 */
-	public DataContainer(Img<T> src1, Img<T> src2, int ch1, int ch2, String name1, String name2) {
+	public DataContainer(RandomAccessibleInterval<T> src1,
+			RandomAccessibleInterval<T> src2, int ch1, int ch2,
+			String name1, String name2) {
 		sourceImage1 = src1;
 		sourceImage2 = src2;
 		sourceImage1Name = name1;
@@ -96,9 +98,11 @@ public class DataContainer<T extends RealType< T >> {
 	 * @param size The size of the ROI in each dimension
 	 * @throws MissingPreconditionException
 	 */
-	public DataContainer(Img<T> src1, Img<T> src2, int ch1, int ch2,
+	public DataContainer(RandomAccessibleInterval<T> src1,
+			RandomAccessibleInterval<T> src2, int ch1, int ch2,
 			String name1, String name2, 
-			final Img<T> mask, final long[] offset, final long[] size)
+			final RandomAccessibleInterval<T> mask,
+			final long[] offset, final long[] size)
 			throws MissingPreconditionException {
 		sourceImage1 = src1;
 		sourceImage2 = src2;
@@ -135,7 +139,8 @@ public class DataContainer<T extends RealType< T >> {
 	 * @param offset The offset of the ROI in each dimension
 	 * @param size The size of the ROI in each dimension
 	 */
-	public DataContainer(Img<T> src1, Img<T> src2, int ch1, int ch2,
+	public DataContainer(RandomAccessibleInterval<T> src1,
+			RandomAccessibleInterval<T> src2, int ch1, int ch2,
 			String name1, String name2,
 			final long[] offset, final long size[])
 			throws MissingPreconditionException {
@@ -227,11 +232,11 @@ public class DataContainer<T extends RealType< T >> {
 		return maskType;
 	}
 
-	public Img<T> getSourceImage1() {
+	public RandomAccessibleInterval<T> getSourceImage1() {
 		return sourceImage1;
 	}
 
-	public Img<T> getSourceImage2() {
+	public RandomAccessibleInterval<T> getSourceImage2() {
 		return sourceImage2;
 	}
 
@@ -243,7 +248,7 @@ public class DataContainer<T extends RealType< T >> {
 		return sourceImage2Name;
 	}
 
-	public Img<BitType> getMask() {
+	public RandomAccessibleInterval<BitType> getMask() {
 		return mask;
 	}
 

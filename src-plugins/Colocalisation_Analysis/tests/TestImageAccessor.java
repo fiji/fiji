@@ -10,19 +10,26 @@ import ij.process.ImageProcessor;
 import java.awt.Color;
 import java.io.BufferedInputStream;
 import java.io.InputStream;
+import java.util.Arrays;
 
-import net.imglib2.algorithm.math.ImageStatistics;
-import net.imglib2.TwinCursor;
 import net.imglib2.Cursor;
+import net.imglib2.Interval;
+import net.imglib2.Localizable;
+import net.imglib2.Point;
 import net.imglib2.RandomAccess;
+import net.imglib2.RandomAccessibleInterval;
+import net.imglib2.TwinCursor;
 import net.imglib2.algorithm.gauss.Gauss;
+import net.imglib2.algorithm.math.ImageStatistics;
 import net.imglib2.img.ImagePlusAdapter;
-import net.imglib2.img.Img;
 import net.imglib2.img.ImgFactory;
 import net.imglib2.img.array.ArrayImgFactory;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.logic.BitType;
 import net.imglib2.type.numeric.RealType;
+import net.imglib2.type.numeric.real.FloatType;
+import net.imglib2.util.Util;
+import net.imglib2.view.Views;
 import algorithms.MissingPreconditionException;
 
 /**
@@ -47,7 +54,7 @@ public class TestImageAccessor {
 	 * @param relPath The relative path to the Tiff file.
 	 * @return The file as ImgLib image.
 	 */
-	public static <T extends RealType<T> & NativeType<T>> Img<T> loadTiffFromJar(String relPath) {
+	public static <T extends RealType<T> & NativeType<T>> RandomAccessibleInterval<T> loadTiffFromJar(String relPath) {
 		InputStream is = TestImageAccessor.class.getResourceAsStream(relPath);
 		BufferedInputStream bis = new BufferedInputStream(is);
 
@@ -68,7 +75,7 @@ public class TestImageAccessor {
 	 * @param height The image height.
 	 * @return The noise image.
 	 */
-	public static <T extends RealType<T> & NativeType<T>> Img<T> produceNoiseImageSmoothed(T type, int width, int height) {
+	public static <T extends RealType<T> & NativeType<T>> RandomAccessibleInterval<T> produceNoiseImageSmoothed(T type, int width, int height) {
 		return produceNoiseImageSmoothed(type, width, height, 3.0f, 5000, new double[] {1.0,1.0});
 	}
 
@@ -85,7 +92,7 @@ public class TestImageAccessor {
 	 * @param smoothingSigma The two dimensional sigma for smoothing.
 	 * @return The noise image.
 	 */
-	public static <T extends RealType<T> & NativeType<T>> Img<T> produceNoiseImage(int width,
+	public static <T extends RealType<T> & NativeType<T>> RandomAccessibleInterval<T> produceNoiseImage(int width,
 			int height, float dotSize, int numDots) {
 		/* For now (probably until ImageJ2 is out) we use an
 		 * ImageJ image to draw circles.
@@ -106,14 +113,14 @@ public class TestImageAccessor {
 		// we changed the data, so update it
 		img.updateImage();
 		// create the new image
-		Img<T> noiseImage = ImagePlusAdapter.wrap(img);
+		RandomAccessibleInterval<T> noiseImage = ImagePlusAdapter.wrap(img);
 
 		return noiseImage;
 	}
 
-	public static <T extends RealType<T> & NativeType<T>> Img<T> produceNoiseImageSmoothed(T type, int width,
+	public static <T extends RealType<T> & NativeType<T>> RandomAccessibleInterval<T> produceNoiseImageSmoothed(T type, int width,
 			int height, float dotSize, int numDots, double[] smoothingSigma) {
-		Img<T> noiseImage = produceNoiseImage(width, height, dotSize, numDots);
+		RandomAccessibleInterval<T> noiseImage = produceNoiseImage(width, height, dotSize, numDots);
 
 		return gaussianSmooth(noiseImage, smoothingSigma);
 	}
@@ -126,16 +133,16 @@ public class TestImageAccessor {
 	 * @return a new noise image
 	 * @throws MissingPreconditionException if specified means and spreads are not valid
 	 */
-	public static <T extends RealType<T> & NativeType<T>> Img<T> produceMeanBasedNoiseImage(T type, int width,
+	public static <T extends RealType<T> & NativeType<T>> RandomAccessibleInterval<T> produceMeanBasedNoiseImage(T type, int width,
 			int height, double mean, double spread, double[] smoothingSigma) throws MissingPreconditionException {
 		if (mean < spread || (mean + spread) > type.getMaxValue()) {
 			throw new MissingPreconditionException("Mean must be larger than spread, and mean plus spread must be smaller than max of the type");
 		}
 		// create the new image
 		ImgFactory<T> imgFactory = new ArrayImgFactory<T>();
-		Img<T> noiseImage = imgFactory.create( new int[] {width, height}, type); // "Noise image");
+		RandomAccessibleInterval<T> noiseImage = imgFactory.create( new int[] {width, height}, type); // "Noise image");
 
-		for (T value : noiseImage) {
+		for (T value : Views.iterable(noiseImage)) {
 			value.setReal( mean + ( (Math.random() - 0.5) * spread ) );
 		}
 
@@ -149,7 +156,7 @@ public class TestImageAccessor {
 	 *
 	 * @return a new noise image that is not smoothed
 	 */
-	public static <T extends RealType<T> & NativeType<T>> Img<T> produceSticksNoiseImage(int width,
+	public static <T extends RealType<T> & NativeType<T>> RandomAccessibleInterval<T> produceSticksNoiseImage(int width,
 			int height, int numSticks, int lineWidth, double maxLength) {
 		/* For now (probably until ImageJ2 is out) we use an
 		 * ImageJ image to draw lines.
@@ -186,10 +193,10 @@ public class TestImageAccessor {
 	 *
 	 * @return a new noise image that is smoothed
 	 */
-	public static <T extends RealType<T> & NativeType<T>> Img<T> produceSticksNoiseImageSmoothed(T type, int width,
+	public static <T extends RealType<T> & NativeType<T>> RandomAccessibleInterval<T> produceSticksNoiseImageSmoothed(T type, int width,
 			int height, int numSticks, int lineWidth, double maxLength, double[] smoothingSigma) {
 
-		Img<T> noiseImage = produceSticksNoiseImage(width, height, numSticks, lineWidth, maxLength);
+		RandomAccessibleInterval<T> noiseImage = produceSticksNoiseImage(width, height, numSticks, lineWidth, maxLength);
 
 		return gaussianSmooth(noiseImage, smoothingSigma);
 	}
@@ -199,12 +206,12 @@ public class TestImageAccessor {
 	 * reference implementation (ImprovedNoise class) and a small
 	 * bit of Kas Thomas' sample code (http://asserttrue.blogspot.com/).
 	 */
-	public static <T extends RealType<T> & NativeType<T>> Img<T> producePerlinNoiseImage(T type, int width,
+	public static <T extends RealType<T> & NativeType<T>> RandomAccessibleInterval<T> producePerlinNoiseImage(T type, int width,
 			int height, double z, double scale) {
 		// create the new image
 		ImgFactory<T> imgFactory = new ArrayImgFactory<T>();
-		Img<T> noiseImage = imgFactory.create( new int[] {width, height}, type);
-		Cursor<T> noiseCursor = noiseImage.localizingCursor();
+		RandomAccessibleInterval<T> noiseImage = imgFactory.create( new int[] {width, height}, type);
+		Cursor<T> noiseCursor = Views.iterable(noiseImage).localizingCursor();
 
 		double xOffset = Math.random() * (width*width);
 		double yOffset = Math.random() * (height*height);
@@ -234,8 +241,25 @@ public class TestImageAccessor {
 	 * @param sigma
 	 * @return
 	 */
-	public static <T extends RealType<T>> Img<T> gaussianSmooth(Img<T> img, double[] sigma) {
-		return Gauss.inFloat( sigma, img );
+	public static <T extends RealType<T> & NativeType<T>> RandomAccessibleInterval<T> gaussianSmooth(
+			RandomAccessibleInterval<T> img, double[] sigma) {
+		Interval interval = Views.iterable(img);
+
+		ImgFactory<T> outputFactory = new ArrayImgFactory<T>();
+		final long[] dim = new long[ img.numDimensions() ];
+		img.dimensions(dim);
+		RandomAccessibleInterval<T> output = outputFactory.create( dim,
+				Util.getTypeFromInterval(img).createVariable() );
+
+		final long[] pos = new long[ img.numDimensions() ];
+		Arrays.fill(pos, 0);
+		Localizable origin = new Point(pos);
+
+		ImgFactory<FloatType> tempFactory = new ArrayImgFactory<FloatType>();
+
+		Gauss.inFloat(sigma, Views.extendMirrorSingle(img), interval, output, origin, tempFactory);
+
+		return output;
 	}
 
 	/**
@@ -245,12 +269,15 @@ public class TestImageAccessor {
 	 * @param image The image to convert.
 	 * @return The inverted image.
 	 */
-	public static <T extends RealType<T>> Img<T> invertImage(Img<T> image) {
-		Cursor<T> imgCursor = image.localizingCursor();
+	public static <T extends RealType<T> & NativeType<T>> RandomAccessibleInterval<T> invertImage(
+			RandomAccessibleInterval<T> image) {
+		Cursor<T> imgCursor = Views.iterable(image).localizingCursor();
 		// invert the image
 		long[] dim = new long[ image.numDimensions() ];
 		image.dimensions(dim);
-		Img<T> invImg = image.factory().create( dim, image.firstElement().createVariable() ); // "Inverted " + image.getName());
+		ArrayImgFactory<T> imgFactory = new ArrayImgFactory<T>();
+		RandomAccessibleInterval<T> invImg = imgFactory.create(
+				dim, Util.getTypeFromInterval(image).createVariable() ); // "Inverted " + image.getName());
 		RandomAccess<T> invCursor = invImg.randomAccess();
 
 		while (imgCursor.hasNext()) {
@@ -267,8 +294,9 @@ public class TestImageAccessor {
 	 * All image data lower or equal 0.5 times the maximum value
 	 * of the image type will get black, the rest will turn white.
 	 */
-	public static <T extends RealType<T>> Img<T> makeBinaryImage(Img<T> image) {
-		T binSplitValue = image.firstElement().createVariable();
+	public static <T extends RealType<T> & NativeType<T>> RandomAccessibleInterval<T> makeBinaryImage(
+			RandomAccessibleInterval<T> image) {
+		T binSplitValue = Util.getTypeFromInterval(image).createVariable();
 		binSplitValue.setReal( binSplitValue.getMaxValue() * 0.5 );
 		return TestImageAccessor.makeBinaryImage(image, binSplitValue);
 	}
@@ -278,12 +306,15 @@ public class TestImageAccessor {
 	 * All image data lower or equal the splitValue will get black,
 	 * the rest will turn white.
 	 */
-	public static <T extends RealType<T>> Img<T> makeBinaryImage(Img<T> image, T splitValue) {
-		Cursor<T> imgCursor = image.localizingCursor();
+	public static <T extends RealType<T> & NativeType<T>> RandomAccessibleInterval<T> makeBinaryImage(
+			RandomAccessibleInterval<T> image, T splitValue) {
+		Cursor<T> imgCursor = Views.iterable(image).localizingCursor();
 		// make a new image of the same type, but binary
 		long[] dim = new long[ image.numDimensions() ];
 		image.dimensions(dim);
-		Img<T> binImg = image.factory().create( dim, image.firstElement().createVariable() ); // "Binary image of " + image.getName());
+		ArrayImgFactory<T> imgFactory = new ArrayImgFactory<T>();
+		RandomAccessibleInterval<T> binImg = imgFactory.create( dim,
+				Util.getTypeFromInterval(image).createVariable() ); // "Binary image of " + image.getName());
 		RandomAccess<T> invCursor = binImg.randomAccess();
 
 		while (imgCursor.hasNext()) {
@@ -305,14 +336,15 @@ public class TestImageAccessor {
 	 * placed on the background. While doing that, the image data from
 	 * the foreground is scaled to be in range of the background.
 	 */
-	public static <T extends RealType<T>> void combineImages(Img<T> background, Img<T> foreground) {
+	public static <T extends RealType<T>> void combineImages(RandomAccessibleInterval<T> background,
+			RandomAccessibleInterval<T> foreground) {
 		final long[] dim = new long[ background.numDimensions() ];
 		background.dimensions(dim);
-		Img<BitType> alwaysTrueMask = MaskFactory.createMask(dim, true);
+		RandomAccessibleInterval<BitType> alwaysTrueMask = MaskFactory.createMask(dim, true);
 		TwinCursor<T> cursor = new TwinCursor<T>(
 				background.randomAccess(),
 				foreground.randomAccess(),
-				alwaysTrueMask.localizingCursor());
+				Views.iterable(alwaysTrueMask).localizingCursor());
 		// find a scaling factor for scale forground range into background
 		double bgMin = ImageStatistics.getImageMin(background).getRealDouble();
 		double bgMax = ImageStatistics.getImageMax(background).getRealDouble();
@@ -344,8 +376,8 @@ public class TestImageAccessor {
 	 * @param size The size of the rectangular mask.
 	 * @return A black image with a white rectangle on it.
 	 */
-	public static <T extends RealType<T> & NativeType<T>> Img<T> createRectengularMaskImage(long width,
-			long height, long[] offset, long[] size) {
+	public static <T extends RealType<T> & NativeType<T>> RandomAccessibleInterval<T> createRectengularMaskImage(
+			long width, long height, long[] offset, long[] size) {
 		/* For now (probably until ImageJ2 is out) we use an
 		 * ImageJ image to draw lines.
 		 */

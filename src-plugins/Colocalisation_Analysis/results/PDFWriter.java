@@ -11,8 +11,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.algorithm.math.ImageStatistics;
-import net.imglib2.img.Img;
 import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.integer.LongType;
@@ -59,7 +59,7 @@ public class PDFWriter<T extends RealType<T>> implements ResultHandler<T> {
 		this.container = container;
 	}
 
-	public void handleImage(Img<T> image, String name) {
+	public void handleImage(RandomAccessibleInterval<T> image, String name) {
 		ImagePlus imp = ImageJFunctions.wrapFloat( image, name );
 
 		// set the display range
@@ -74,7 +74,7 @@ public class PDFWriter<T extends RealType<T>> implements ResultHandler<T> {
 	 * Afterwards the image is reset to its orignal state again
 	 */
 	public void handleHistogram(Histogram2D<T> histogram, String name) {
-		Img<LongType> image = histogram.getPlotImage();
+		RandomAccessibleInterval<LongType> image = histogram.getPlotImage();
 		ImagePlus imp = ImageJFunctions.wrapFloat( image, name );
 		// make a snapshot to be able to reset after modifications
 		imp.getProcessor().snapshot();

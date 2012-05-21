@@ -1,8 +1,8 @@
 package tests;
 
 import gadgets.MaskFactory;
+import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.algorithm.math.ImageStatistics;
-import net.imglib2.img.Img;
 import net.imglib2.type.logic.BitType;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.integer.UnsignedByteType;
@@ -14,30 +14,30 @@ import org.junit.Before;
 public abstract class ColocalisationTest {
 
 	// images and meta data for zero correlation
-	Img<UnsignedByteType> zeroCorrelationImageCh1;
-	Img<UnsignedByteType> zeroCorrelationImageCh2;
-	Img<BitType> zeroCorrelationAlwaysTrueMask;
+	RandomAccessibleInterval<UnsignedByteType> zeroCorrelationImageCh1;
+	RandomAccessibleInterval<UnsignedByteType> zeroCorrelationImageCh2;
+	RandomAccessibleInterval<BitType> zeroCorrelationAlwaysTrueMask;
 	double zeroCorrelationImageCh1Mean;
 	double zeroCorrelationImageCh2Mean;
 
 	// images and meta data for positive correlation
-	Img<UnsignedByteType> positiveCorrelationImageCh1;
-	Img<UnsignedByteType> positiveCorrelationImageCh2;
-	Img<BitType> positiveCorrelationAlwaysTrueMask;
+	RandomAccessibleInterval<UnsignedByteType> positiveCorrelationImageCh1;
+	RandomAccessibleInterval<UnsignedByteType> positiveCorrelationImageCh2;
+	RandomAccessibleInterval<BitType> positiveCorrelationAlwaysTrueMask;
 	double positiveCorrelationImageCh1Mean;
 	double positiveCorrelationImageCh2Mean;
 
 	// images and meta data for a synthetic negative correlation dataset
-	Img<UnsignedByteType> syntheticNegativeCorrelationImageCh1;
-	Img<UnsignedByteType> syntheticNegativeCorrelationImageCh2;
-	Img<BitType> syntheticNegativeCorrelationAlwaysTrueMask;
+	RandomAccessibleInterval<UnsignedByteType> syntheticNegativeCorrelationImageCh1;
+	RandomAccessibleInterval<UnsignedByteType> syntheticNegativeCorrelationImageCh2;
+	RandomAccessibleInterval<BitType> syntheticNegativeCorrelationAlwaysTrueMask;
 	double syntheticNegativeCorrelationImageCh1Mean;
 	double syntheticNegativeCorrelationImageCh2Mean;
 	
 	// images like in the manders paper
-	Img<UnsignedByteType> mandersA, mandersB, mandersC, mandersD,
+	RandomAccessibleInterval<UnsignedByteType> mandersA, mandersB, mandersC, mandersD,
 		mandersE, mandersF, mandersG, mandersH, mandersI;
-	Img<BitType> mandersAlwaysTrueMask;
+	RandomAccessibleInterval<BitType> mandersAlwaysTrueMask;
 
 	/**
 	 * This method is run before every single test is run and is meant to set up
@@ -102,7 +102,7 @@ public abstract class ColocalisationTest {
 	 * Creates a ROI offset array with a distance of 1/4 to the origin
 	 * in each dimension.
 	 */
-	protected <T extends RealType<T>> long[] createRoiOffset(Img<T> img) {
+	protected <T extends RealType<T>> long[] createRoiOffset(RandomAccessibleInterval<T> img) {
 		final long[] offset = new long[ img.numDimensions() ];
 		img.dimensions(offset);
 		for (int i=0; i<offset.length; i++) {
@@ -115,7 +115,7 @@ public abstract class ColocalisationTest {
 	 * Creates a ROI size array with a size of 1/2 of each
 	 * dimension.
 	 */
-	protected <T extends RealType<T>> long[] createRoiSize(Img<T> img) {
+	protected <T extends RealType<T>> long[] createRoiSize(RandomAccessibleInterval<T> img) {
 		final long[] size = new long[ img.numDimensions() ];
 		img.dimensions(size);
 		for (int i=0; i<size.length; i++) {

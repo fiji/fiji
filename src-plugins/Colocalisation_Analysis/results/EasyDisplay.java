@@ -4,8 +4,8 @@ import gadgets.DataContainer;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.text.TextWindow;
+import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.algorithm.math.ImageStatistics;
-import net.imglib2.img.Img;
 import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.type.numeric.RealType;
 import algorithms.Histogram2D;
@@ -35,7 +35,7 @@ public class EasyDisplay<T extends RealType<T>> implements ResultHandler<T> {
 		this.container = container;
 	}
 
-	public void handleImage(Img<T> image, String name) {
+	public void handleImage(RandomAccessibleInterval<T> image, String name) {
 		ImagePlus imp = ImageJFunctions.wrapFloat( image, name );
 		double max = ImageStatistics.getImageMax( image ).getRealDouble();
 		showImage( imp, max );

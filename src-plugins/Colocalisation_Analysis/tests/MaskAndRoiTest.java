@@ -9,9 +9,9 @@ import java.util.Arrays;
 import net.imglib2.Cursor;
 import net.imglib2.PredicateCursor;
 import net.imglib2.RandomAccess;
+import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.TwinCursor;
 import net.imglib2.algorithm.math.ImageStatistics;
-import net.imglib2.img.Img;
 import net.imglib2.img.ImgFactory;
 import net.imglib2.img.array.ArrayImgFactory;
 import net.imglib2.predicate.MaskPredicate;
@@ -19,6 +19,7 @@ import net.imglib2.predicate.Predicate;
 import net.imglib2.roi.RectangleRegionOfInterest;
 import net.imglib2.type.logic.BitType;
 import net.imglib2.type.numeric.integer.UnsignedByteType;
+import net.imglib2.view.Views;
 
 import org.junit.Test;
 
@@ -43,22 +44,23 @@ public class MaskAndRoiTest extends ColocalisationTest {
 	@Test
 	public void maskContentTest() throws MissingPreconditionException {
 		// load a 3D test image
-		final Img<UnsignedByteType> img = positiveCorrelationImageCh1;
+		final RandomAccessibleInterval<UnsignedByteType> img = positiveCorrelationImageCh1;
 		final long[] roiOffset = createRoiOffset(img);
 		final long[] roiSize = createRoiSize(img);
 		final long[] dim = new long[ img.numDimensions() ];
 		img.dimensions(dim);
-		final Img<BitType> mask = MaskFactory.createMask(dim,
-				roiOffset, roiSize);
+		final RandomAccessibleInterval<BitType> mask =
+				MaskFactory.createMask(dim, roiOffset, roiSize);
 
 		// create cursor to walk an image with respect to a mask
 		TwinCursor<UnsignedByteType> cursor = new TwinCursor<UnsignedByteType>(
-				img.randomAccess(), img.randomAccess(), mask.localizingCursor());
+				img.randomAccess(), img.randomAccess(),
+				Views.iterable(mask).localizingCursor());
 
 		// create an image for the "clipped ROI"
 		ImgFactory<UnsignedByteType> maskFactory =
 				new ArrayImgFactory<UnsignedByteType>();
-		Img<UnsignedByteType> clippedRoiImage =
+		RandomAccessibleInterval<UnsignedByteType> clippedRoiImage =
 				maskFactory.create( roiSize, new UnsignedByteType() ); //  "Clipped ROI" );
 		RandomAccess<UnsignedByteType> outputCursor =
 				clippedRoiImage.randomAccess();
@@ -80,7 +82,7 @@ public class MaskAndRoiTest extends ColocalisationTest {
 		 * of the original data.
 		 */
 		Cursor<UnsignedByteType> roiCopyCursor =
-				clippedRoiImage.localizingCursor();
+				Views.iterable(clippedRoiImage).localizingCursor();
 		RandomAccess<UnsignedByteType> imgCursor =
 				img.randomAccess();
 		// create variable for summing up and set it to zero
@@ -114,18 +116,19 @@ public class MaskAndRoiTest extends ColocalisationTest {
 	@Test
 	public void predicateCursorTest() throws MissingPreconditionException {
 		// load a 3D test image
-		Img<UnsignedByteType> img = positiveCorrelationImageCh1;
+		RandomAccessibleInterval<UnsignedByteType> img = positiveCorrelationImageCh1;
 		long[] roiOffset = createRoiOffset(img);
 		long[] roiSize = createRoiSize(img);
 		long[] dim = new long[ img.numDimensions() ];
 		img.dimensions(dim);
-		Img<BitType> mask = MaskFactory.createMask(dim,
+		RandomAccessibleInterval<BitType> mask = MaskFactory.createMask(dim,
 				roiOffset, roiSize);
 
 		// create cursor to walk an image with respect to a mask
 		final Predicate<BitType> predicate = new MaskPredicate();
 		Cursor<BitType> roiCursor
-			= new PredicateCursor<BitType>(mask.localizingCursor(), predicate);
+			= new PredicateCursor<BitType>(
+					Views.iterable(mask).localizingCursor(), predicate);
 
 		// test if all visited voxels are "true"
 		while (roiCursor.hasNext()) {
@@ -145,12 +148,12 @@ public class MaskAndRoiTest extends ColocalisationTest {
 	@Test
 	public void regularMaskCreationTest() throws MissingPreconditionException {
 		// load a 3D test image
-		Img<UnsignedByteType> img = positiveCorrelationImageCh1;
+		RandomAccessibleInterval<UnsignedByteType> img = positiveCorrelationImageCh1;
 		final long[] roiOffset = createRoiOffset(img);
 		final long[] roiSize = createRoiSize(img);
 		final long[] dim = new long[ img.numDimensions() ];
 		img.dimensions(dim);
-		Img<BitType> mask = MaskFactory.createMask(dim,
+		RandomAccessibleInterval<BitType> mask = MaskFactory.createMask(dim,
 				roiOffset, roiSize);
 
 		// is the number of dimensions the same as in the image?
@@ -160,7 +163,7 @@ public class MaskAndRoiTest extends ColocalisationTest {
 
 		// go through the mask and check if all valid points are in the ROI
 		long[] pos = new long[ img.numDimensions() ];
-		final Cursor<BitType> cursor = mask.localizingCursor();
+		final Cursor<BitType> cursor = Views.iterable(mask).localizingCursor();
 		while ( cursor.hasNext() ) {
 			cursor.fwd();
 			cursor.localize(pos);
@@ -180,7 +183,8 @@ public class MaskAndRoiTest extends ColocalisationTest {
 		// create cursor to walk an image with respect to a mask
 		final Predicate<BitType> predicate = new MaskPredicate();
 		Cursor<BitType> roiCursor
-			= new PredicateCursor<BitType>(mask.localizingCursor(), predicate);
+			= new PredicateCursor<BitType>(
+					Views.iterable(mask).localizingCursor(), predicate);
 		long[] min = new long[ mask.numDimensions() ];
 		long[] max = new long[ mask.numDimensions() ];
 		Arrays.fill(min, Integer.MAX_VALUE);
@@ -212,14 +216,14 @@ public class MaskAndRoiTest extends ColocalisationTest {
 	 */
 	@Test
 	public void simpleMaskCreationTest() {
-		final Img<UnsignedByteType> img = positiveCorrelationImageCh1;
+		final RandomAccessibleInterval<UnsignedByteType> img = positiveCorrelationImageCh1;
 		// first, create an always true mask
 		final long[] dim = new long[ img.numDimensions() ];
-		Img<BitType> mask = MaskFactory.createMask(dim, true);
+		RandomAccessibleInterval<BitType> mask = MaskFactory.createMask(dim, true);
 		final Predicate<BitType> predicate = new MaskPredicate();
 		Cursor<BitType> cursor
-			= new PredicateCursor<BitType>(mask.localizingCursor(),
-					predicate);
+			= new PredicateCursor<BitType>(
+					Views.iterable(mask).localizingCursor(), predicate);
 		// iterate over mask and count values
 		long count = 0;
 		while (cursor.hasNext()) {
@@ -232,7 +236,7 @@ public class MaskAndRoiTest extends ColocalisationTest {
 		// second, create an always false mask
 		mask = MaskFactory.createMask(dim, false);
 		cursor = new PredicateCursor<BitType>(
-				mask.localizingCursor(), predicate);
+				Views.iterable(mask).localizingCursor(), predicate);
 		// iterate over mask and count values
 		count = 0;
 		while (cursor.hasNext()) {
@@ -257,29 +261,31 @@ public class MaskAndRoiTest extends ColocalisationTest {
 	@Test
 	public void irregularRoiTest() {
 		// create a random noise 2D image -- set roiWidh/roiSize accordingly
-		Img<UnsignedByteType> img =
+		RandomAccessibleInterval<UnsignedByteType> img =
 			TestImageAccessor.produceSticksNoiseImage(300, 300, 50, 2, 10);
 		final long[] dim = new long[ img.numDimensions() ];
 		img.dimensions(dim);
 		
 		/* first test - using itself as a mask */
-		Img<BitType> mask = MaskFactory.createMask(dim, img);
+		RandomAccessibleInterval<BitType> mask = MaskFactory.createMask(dim, img);
 		TwinCursor<UnsignedByteType> cursor = new TwinCursor<UnsignedByteType>(
 				img.randomAccess(),
 				img.randomAccess(),
-				mask.localizingCursor());
+				Views.iterable(mask).localizingCursor());
 		while (cursor.hasNext()) {
 			cursor.fwd();
 			assertTrue( cursor.getChannel1().getInteger() != 0 );
 		}
 
 		/* second test - using inverted image */
-		Img<UnsignedByteType> invImg = TestImageAccessor.invertImage(img);
-		Img<BitType> invMask = MaskFactory.createMask(dim, invImg);
+		RandomAccessibleInterval<UnsignedByteType> invImg =
+				TestImageAccessor.invertImage(img);
+		RandomAccessibleInterval<BitType> invMask =
+				MaskFactory.createMask(dim, invImg);
 		cursor = new TwinCursor<UnsignedByteType>(
 				img.randomAccess(),
 				img.randomAccess(),
-				invMask.localizingCursor());
+				Views.iterable(invMask).localizingCursor());
 		while (cursor.hasNext()) {
 			cursor.fwd();
 			assertEquals( 0, cursor.getChannel1().getInteger() );
@@ -293,16 +299,17 @@ public class MaskAndRoiTest extends ColocalisationTest {
 	@Test
 	public void irregularRoiDimensionTest() {
 		// load a 3D test image
-		Img<UnsignedByteType> img = positiveCorrelationImageCh1;
+		RandomAccessibleInterval<UnsignedByteType> img = positiveCorrelationImageCh1;
 		final long width = img.dimension(0);
 		final long height = img.dimension(1);
 		final long slices = img.dimension(2);
 		final long[] dimImg = new long[ img.numDimensions() ];
 		img.dimensions(dimImg);
 		// create a random noise 2D image -- set roiWidh/roiSize accordingly
-		Img<UnsignedByteType> maskSlice =
+		RandomAccessibleInterval<UnsignedByteType> maskSlice =
 			TestImageAccessor.produceSticksNoiseImage( (int) width, (int) height, 50, 2, 10);
-		Img<BitType> mask = MaskFactory.createMask(dimImg, maskSlice);
+		RandomAccessibleInterval<BitType> mask =
+				MaskFactory.createMask(dimImg, maskSlice);
 		final long[] dimMask = new long[ mask.numDimensions() ];
 		mask.dimensions(dimMask);
 		// check the dimensions of the mask
@@ -337,22 +344,23 @@ public class MaskAndRoiTest extends ColocalisationTest {
 	@Test
 	public void regularRoiPixelCountTest() {
 		// load a 3D test image
-		Img<UnsignedByteType> img = positiveCorrelationImageCh1;
+		RandomAccessibleInterval<UnsignedByteType> img = positiveCorrelationImageCh1;
 		final long[] roiOffset = createRoiOffset(img);
 		final long[] roiSize = createRoiSize(img);
 		final long width = img.dimension(0);
 		final long height = img.dimension(1);
 
-		Img<UnsignedByteType> maskImg
+		RandomAccessibleInterval<UnsignedByteType> maskImg
 			= TestImageAccessor.createRectengularMaskImage(width, height, roiOffset, roiSize);
 		final long[] dim = new long[ img.numDimensions() ];
 		img.dimensions(dim);
-		Img<BitType> mask = MaskFactory.createMask(dim, maskImg);
+		RandomAccessibleInterval<BitType> mask =
+				MaskFactory.createMask(dim, maskImg);
 
 		TwinCursor<UnsignedByteType> cursor = new TwinCursor<UnsignedByteType>(
 				img.randomAccess(),
 				img.randomAccess(),
-				mask.localizingCursor());
+				Views.iterable(mask).localizingCursor());
 		// calculate volume of mask bounding box
 		long roiVolume = roiSize[0] * roiSize[1] * img.dimension(2);
 		long count = 0;

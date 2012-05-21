@@ -4,11 +4,12 @@ import java.util.Arrays;
 
 import net.imglib2.Cursor;
 import net.imglib2.RandomAccess;
-import net.imglib2.img.Img;
+import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.img.ImgFactory;
 import net.imglib2.img.array.ArrayImgFactory;
 import net.imglib2.type.logic.BitType;
 import net.imglib2.type.numeric.RealType;
+import net.imglib2.view.Views;
 import algorithms.MissingPreconditionException;
 
 public class MaskFactory {
@@ -21,7 +22,7 @@ public class MaskFactory {
 	 * Create a new mask image without any specific content, but with
 	 * a defined size.
 	 */
-	public static Img<BitType> createMask(long[] dim) {
+	public static RandomAccessibleInterval<BitType> createMask(long[] dim) {
 		ImgFactory< BitType > imgFactory = new ArrayImgFactory< BitType >();
 		return imgFactory.create(dim, new BitType());
 	}
@@ -29,10 +30,10 @@ public class MaskFactory {
 	/**
 	 * Create a new mask image with a defined size and preset content.
 	 */
-	public static Img<BitType> createMask(long[] dim, boolean val) {
-		Img<BitType> mask = createMask(dim);
+	public static RandomAccessibleInterval<BitType> createMask(long[] dim, boolean val) {
+		RandomAccessibleInterval<BitType> mask = createMask(dim);
 		
-		for (BitType t : mask)
+		for (BitType t : Views.iterable(mask))
 			t.set(val);
 		
 		return mask;
@@ -42,13 +43,13 @@ public class MaskFactory {
 	 * Create a new mask image with a defined size and preset content.
 	 * @throws MissingPreconditionException
 	 */
-	public static Img<BitType> createMask(long[] dim, long[] roiOffset, long[] roiDim)
+	public static RandomAccessibleInterval<BitType> createMask(long[] dim, long[] roiOffset, long[] roiDim)
 			throws MissingPreconditionException {
 		if (dim.length != roiOffset.length || dim.length != roiDim.length) {
 			throw new MissingPreconditionException("The dimensions of the mask as well as the ROIs and his offset must be the same.");
 		}
 
-		final Img<BitType> mask = createMask(dim);
+		final RandomAccessibleInterval<BitType> mask = createMask(dim);
 		final int dims = mask.numDimensions();
 		final long[] pos = new long[dims];
 		
@@ -58,7 +59,7 @@ public class MaskFactory {
 		for (int i=0; i<dims; ++i)
 			roiOffsetMax[i] = roiOffset[i] + roiDim[i];
 		// go through the mask and mask points as valid that are in the ROI
-		Cursor<BitType> cursor = mask.cursor();
+		Cursor<BitType> cursor = Views.iterable(mask).localizingCursor();
 		while ( cursor.hasNext() ) {
 			cursor.fwd();
 			cursor.localize(pos);
@@ -75,15 +76,16 @@ public class MaskFactory {
 	/**
 	 * Create a new mask based on a threshold condition for two images.
 	 */
-	public static<T extends RealType< T >> Img<BitType> createMask(Img<T> ch1, Img<T> ch2,
+	public static<T extends RealType< T >> RandomAccessibleInterval<BitType> createMask(
+			RandomAccessibleInterval<T> ch1, RandomAccessibleInterval<T> ch2,
 			T threshold1, T threshold2, ThresholdMode tMode, CombinationMode cMode) {
 		
 		final long[] dims = new long[ ch1.numDimensions() ];
 		ch1.dimensions(dims);
-		Img<BitType> mask = createMask(dims);
-		Cursor<T> cursor1 = ch1.cursor();
-		Cursor<T> cursor2 = ch2.cursor();
-		Cursor<BitType> maskCursor = mask.cursor();
+		RandomAccessibleInterval<BitType> mask = createMask(dims);
+		Cursor<T> cursor1 = Views.iterable(ch1).cursor();
+		Cursor<T> cursor2 = Views.iterable(ch2).cursor();
+		Cursor<BitType> maskCursor = Views.iterable(mask).cursor();
 		
 		while (cursor1.hasNext() && cursor2.hasNext() && maskCursor.hasNext()) {
 			cursor1.fwd();
@@ -132,16 +134,16 @@ public class MaskFactory {
 	 * @param dim The dimensions of the new mask image
 	 * @param origMask The image from which the mask should be created from
 	 */
-	public static<T extends RealType< T >> Img<BitType> createMask(final long[] dim,
-			final Img<T> origMask) {
-		final Img<BitType> mask = createMask(dim);
+	public static<T extends RealType< T >> RandomAccessibleInterval<BitType> createMask(
+			final long[] dim, final RandomAccessibleInterval<T> origMask) {
+		final RandomAccessibleInterval<BitType> mask = createMask(dim);
 		final long[] origDim = new long[ origMask.numDimensions() ];
 		origMask.dimensions(origDim);
 
 		// test if original mask and new mask have same dimensions
 		if (Arrays.equals(dim, origDim)) {
 			// copy the input image to the mask output image
-			Cursor<T> origCursor = origMask.cursor();
+			Cursor<T> origCursor = Views.iterable(origMask).localizingCursor();
 			RandomAccess<BitType> maskCursor = mask.randomAccess();
 			while (origCursor.hasNext()) {
 				origCursor.fwd();
@@ -157,7 +159,7 @@ public class MaskFactory {
 							+ " but a different extent are not yet supported.");
 			}
 			// mask and image have different dimensionality and maybe even a different extent
-			Cursor<T> origCursor = origMask.cursor();
+			Cursor<T> origCursor = Views.iterable(origMask).localizingCursor();
 			RandomAccess<BitType> maskCursor = mask.randomAccess();
 			final long[] pos = new long[ origMask.numDimensions() ];
 			// iterate over the original mask

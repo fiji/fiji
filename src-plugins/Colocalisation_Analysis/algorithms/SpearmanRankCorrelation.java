@@ -5,10 +5,11 @@ import gadgets.DataContainer;
 import java.util.Arrays;
 import java.util.Comparator;
 
+import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.TwinCursor;
-import net.imglib2.img.Img;
 import net.imglib2.type.logic.BitType;
 import net.imglib2.type.numeric.RealType;
+import net.imglib2.view.Views;
 import results.ResultHandler;
 
 /*
@@ -49,12 +50,12 @@ public class SpearmanRankCorrelation<T extends RealType< T >> extends Algorithm<
 			throws MissingPreconditionException {
 
 		// get the 2 images for the calculation of Spearman's rho
-		Img<T> img1 = container.getSourceImage1();
-		Img<T> img2 = container.getSourceImage2();
-		Img<BitType> mask = container.getMask();
+		RandomAccessibleInterval<T> img1 = container.getSourceImage1();
+		RandomAccessibleInterval<T> img2 = container.getSourceImage2();
+		RandomAccessibleInterval<BitType> mask = container.getMask();
 
 		TwinCursor<T> cursor = new TwinCursor<T>(img1.randomAccess(),
-				img2.randomAccess(), mask.localizingCursor());
+				img2.randomAccess(), Views.iterable(mask).localizingCursor());
 		// calculate Spearman's rho value
 		rhoValue = calculateSpearmanRank(cursor);
 	}

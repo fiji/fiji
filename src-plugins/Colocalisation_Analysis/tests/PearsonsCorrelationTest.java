@@ -2,11 +2,13 @@ package tests;
 
 import static org.junit.Assert.assertEquals;
 import gadgets.MaskFactory;
+import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.TwinCursor;
-import net.imglib2.img.Img;
+import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.type.logic.BitType;
 import net.imglib2.type.numeric.integer.UnsignedByteType;
 import net.imglib2.type.numeric.real.FloatType;
+import net.imglib2.view.Views;
 
 import org.junit.Test;
 
@@ -32,7 +34,7 @@ public class PearsonsCorrelationTest extends ColocalisationTest {
 		TwinCursor<UnsignedByteType> cursor = new TwinCursor<UnsignedByteType>(
 				zeroCorrelationImageCh1.randomAccess(),
 				zeroCorrelationImageCh2.randomAccess(),
-				zeroCorrelationAlwaysTrueMask.localizingCursor());
+				Views.iterable(zeroCorrelationAlwaysTrueMask).localizingCursor());
 		// get the Pearson's value
 		double pearsonsR = PearsonsCorrelation.fastPearsons(cursor);
 		// check Pearsons R is close to zero
@@ -49,7 +51,7 @@ public class PearsonsCorrelationTest extends ColocalisationTest {
 		TwinCursor<UnsignedByteType> cursor = new TwinCursor<UnsignedByteType>(
 				positiveCorrelationImageCh1.randomAccess(),
 				positiveCorrelationImageCh2.randomAccess(),
-				positiveCorrelationAlwaysTrueMask.localizingCursor());
+				Views.iterable(positiveCorrelationAlwaysTrueMask).localizingCursor());
 		// get the Pearson's value
 		double pearsonsR = PearsonsCorrelation.fastPearsons(cursor);
 		// check Pearsons R is close to 0.75
@@ -66,7 +68,7 @@ public class PearsonsCorrelationTest extends ColocalisationTest {
 		TwinCursor<UnsignedByteType> cursor = new TwinCursor<UnsignedByteType>(
 				zeroCorrelationImageCh1.randomAccess(),
 				zeroCorrelationImageCh2.randomAccess(),
-				zeroCorrelationAlwaysTrueMask.localizingCursor());
+				Views.iterable(zeroCorrelationAlwaysTrueMask).localizingCursor());
 		// get the Pearson's value
 		double pearsonsR = PearsonsCorrelation
 			.classicPearsons(cursor, zeroCorrelationImageCh1Mean, zeroCorrelationImageCh2Mean);
@@ -84,7 +86,7 @@ public class PearsonsCorrelationTest extends ColocalisationTest {
 		TwinCursor<UnsignedByteType> cursor = new TwinCursor<UnsignedByteType>(
 				positiveCorrelationImageCh1.randomAccess(),
 				positiveCorrelationImageCh2.randomAccess(),
-				positiveCorrelationAlwaysTrueMask.localizingCursor());
+				Views.iterable(positiveCorrelationAlwaysTrueMask).localizingCursor());
 		// get the Pearson's value
 		double pearsonsR = PearsonsCorrelation
 			.classicPearsons(cursor, positiveCorrelationImageCh1Mean, positiveCorrelationImageCh2Mean);
@@ -102,17 +104,17 @@ public class PearsonsCorrelationTest extends ColocalisationTest {
 		final double spread = 0.1;
 		final double[] sigma = new double[] {3.0, 3.0};
 
-		Img<BitType> mask = MaskFactory.createMask(new long[] {512, 512}, true);
+		RandomAccessibleInterval<BitType> mask = MaskFactory.createMask(new long[] {512, 512}, true);
 
 		for (double mean = initialMean; mean < 1; mean += spread) {
-			Img<FloatType> ch1 = TestImageAccessor.produceMeanBasedNoiseImage(new FloatType(),
+			RandomAccessibleInterval<FloatType> ch1 = TestImageAccessor.produceMeanBasedNoiseImage(new FloatType(),
 					512, 512, mean, spread, sigma);
-			Img<FloatType> ch2 = TestImageAccessor.produceMeanBasedNoiseImage(new FloatType(),
+			RandomAccessibleInterval<FloatType> ch2 = TestImageAccessor.produceMeanBasedNoiseImage(new FloatType(),
 					512, 512, mean, spread, sigma);
 
 			// create a twin value range cursor that iterates over all pixels of the input data
 			TwinCursor<FloatType> cursor = new TwinCursor<FloatType>(ch1.randomAccess(),
-					ch2.randomAccess(), mask.localizingCursor());
+					ch2.randomAccess(), Views.iterable(mask).localizingCursor());
 			double resultFast = PearsonsCorrelation.fastPearsons(cursor);
 			assertEquals(0.0, resultFast, 0.1);
 

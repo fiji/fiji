@@ -39,7 +39,7 @@ import javax.swing.JFrame;
 import javax.swing.JScrollPane;
 
 import net.imglib2.RandomAccess;
-import net.imglib2.img.Img;
+import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.integer.LongType;
@@ -63,13 +63,13 @@ public class SingleWindowDisplay<T extends RealType<T>> extends JFrame implement
 	protected boolean displayOriginalImages = false;
 
 	// this is the image currently selected by the drop down menu
-	protected Img<? extends RealType<?>> currentlyDisplayedImageResult;
+	protected RandomAccessibleInterval<? extends RealType<?>> currentlyDisplayedImageResult;
 
 	// a list of the available result images, no matter what specific kinds
-	protected List< NamedContainer< Img<? extends RealType<?>>> > listOfImages
-		= new ArrayList< NamedContainer< Img<? extends RealType<?>>> >();
-	protected Map<Img<LongType>, Histogram2D<T>> mapOf2DHistograms
-		= new HashMap<Img<LongType>, Histogram2D<T>>();
+	protected List< NamedContainer< RandomAccessibleInterval<? extends RealType<?>>> > listOfImages
+		= new ArrayList< NamedContainer< RandomAccessibleInterval<? extends RealType<?>>> >();
+	protected Map<RandomAccessibleInterval<LongType>, Histogram2D<T>> mapOf2DHistograms
+		= new HashMap<RandomAccessibleInterval<LongType>, Histogram2D<T>>();
 	// a list of warnings
 	protected List<Warning> warnings = new ArrayList<Warning>();
 	// a list of named values, collected from algorithms
@@ -117,8 +117,10 @@ public class SingleWindowDisplay<T extends RealType<T>> extends JFrame implement
 	public void setup() {
 
 		JComboBox dropDownList = new JComboBox();
-		for(NamedContainer< Img<? extends RealType<?>> > img : listOfImages) {
-			dropDownList.addItem(new NamedContainer<Img<? extends RealType<?>> >(img.object, img.name));
+		for(NamedContainer< RandomAccessibleInterval<? extends RealType<?>> > img : listOfImages) {
+			dropDownList.addItem(
+					new NamedContainer<RandomAccessibleInterval<? extends RealType<?>> >(
+							img.object, img.name));
 		}
 		dropDownList.addItemListener(this);
 
@@ -210,7 +212,7 @@ public class SingleWindowDisplay<T extends RealType<T>> extends JFrame implement
 		this.setVisible(true);
 	}
 
-	public void handleImage(Img<T> image, String name) {
+	public void handleImage(RandomAccessibleInterval<T> image, String name) {
 		listOfImages.add( new NamedContainer( image, name ) );
 	}
 
@@ -418,13 +420,13 @@ public class SingleWindowDisplay<T extends RealType<T>> extends JFrame implement
 							", y = " + IJ.d2s(calibratedYBinBottom) + " to " + IJ.d2s(calibratedYBinTop) + ", value = " + val );
 				}
 			} else {
-				Img<T> img = (Img<T>) currentlyDisplayedImageResult;
+				RandomAccessibleInterval<T> img = (RandomAccessibleInterval<T>) currentlyDisplayedImageResult;
 				ImagePlus imp = ImageJFunctions.wrapFloat( img, "TODO" );
 				imp.mouseMoved(x, y);
 			}
 		} else {
 			// alt key is down, so show the image coordinates for x y in status bar.
-			Img<T> img = (Img<T>) currentlyDisplayedImageResult;
+			RandomAccessibleInterval<T> img = (RandomAccessibleInterval<T>) currentlyDisplayedImageResult;
 			ImagePlus imp = ImageJFunctions.wrapFloat( img, "TODO" );
 			imp.mouseMoved(x, y);
 		}
@@ -436,9 +438,9 @@ public class SingleWindowDisplay<T extends RealType<T>> extends JFrame implement
 	 * If the image is part of a CompositeImageResult then contained
 	 * lines will also be drawn
 	 */
-	protected void drawImage(Img<? extends RealType<?>> img) {
+	protected void drawImage(RandomAccessibleInterval<? extends RealType<?>> img) {
 		// get ImgLib image as ImageJ image
-		imp = ImageJFunctions.wrapFloat( (Img<T>) img, "TODO" );
+		imp = ImageJFunctions.wrapFloat( (RandomAccessibleInterval<T>) img, "TODO" );
 		imagePanel.updateImage(imp);
 		// set the display range
 
@@ -484,14 +486,15 @@ public class SingleWindowDisplay<T extends RealType<T>> extends JFrame implement
 	 * @param img The image to test
 	 * @return true if histogram, false otherwise
 	 */
-	protected boolean isHistogram(Img<? extends RealType<?>> img) {
+	protected boolean isHistogram(RandomAccessibleInterval<? extends RealType<?>> img) {
 		return mapOf2DHistograms.containsKey(img);
 	}
 
 	/**
 	 * Draws the line on the overlay.
 	 */
-	protected void drawLine(Overlay overlay, Img<? extends RealType<?>> img, double slope, double intercept) {
+	protected void drawLine(Overlay overlay, RandomAccessibleInterval<? extends RealType<?>> img,
+			double slope, double intercept) {
 		double startX, startY, endX, endY;
 		long imgWidth = img.dimension(0);
 		long imgHeight = img.dimension(1);
@@ -529,7 +532,7 @@ public class SingleWindowDisplay<T extends RealType<T>> extends JFrame implement
 		overlay.add(lineROI);
 	}
 
-	protected void adjustDisplayedImage (Img<? extends RealType<?>> img) {
+	protected void adjustDisplayedImage (RandomAccessibleInterval<? extends RealType<?>> img) {
 		/* when changing the result image to display
 		 * need to set the image we were looking at
 		 * back to not log scale,
@@ -555,8 +558,8 @@ public class SingleWindowDisplay<T extends RealType<T>> extends JFrame implement
 
 	public void itemStateChanged(ItemEvent e) {
 		if (e.getStateChange() == ItemEvent.SELECTED) {
-			Img<? extends RealType<?>> img =
-					((NamedContainer<Img<? extends RealType<?>> >)(e.getItem())).getObject();
+			RandomAccessibleInterval<? extends RealType<?>> img =
+					((NamedContainer<RandomAccessibleInterval<? extends RealType<?>> >)(e.getItem())).getObject();
 			adjustDisplayedImage(img);
 		}
 	}
