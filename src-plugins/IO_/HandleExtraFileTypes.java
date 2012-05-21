@@ -342,6 +342,9 @@ public class HandleExtraFileTypes extends ImagePlus implements PlugIn {
 			return tryPlugIn("org.doube.bonej.pqct.Read_Stratec_File", path);
 		}
 
+		if (name.endsWith(".obj") || name.endsWith(".dxf") || name.endsWith(".stl"))
+			return tryPlugIn("ImageJ_3D_Viewer", path);
+
 		// ****************** MODIFY HERE ******************
 		// do what ever you have to do to recognise your own file type
 		// and then call appropriate plugin using the above as models

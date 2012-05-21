@@ -33,9 +33,11 @@ public class ImageJ3DViewer implements PlugIn {
 			Image3DUniverse univ = new Image3DUniverse();
 			univ.show();
 			GUI.center(univ.getWindow());
+			if(arg != null)
+				importContent(arg);
 			// only when there is an image and we are not called
 			// from a macro
-			if(image != null && !IJ.isMacro())
+			else if(image != null && !IJ.isMacro())
 				univ.getExecuter().addContent(image, null);
 
 		} catch(Exception e) {
