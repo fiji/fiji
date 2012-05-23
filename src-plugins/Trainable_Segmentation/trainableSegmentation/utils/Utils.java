@@ -683,5 +683,124 @@ public class Utils {
 		}
 		return classPoints;
 	}
+
+	public static ImagePlus[] maxPool( 
+			ImagePlus input,
+			ImagePlus label,
+			int sizeX,
+			int sizeY)
+	{
+		final int maxPoolWidth = input.getWidth() / sizeX;
+		final int maxPoolHeight = input.getHeight() / sizeY;
+		
+		final int inputWidth = input.getWidth();
+		final int inputHeight = input.getHeight();
+		
+		ImageStack isMaxPoolInput = new ImageStack(maxPoolWidth, maxPoolHeight);
+		ImageStack isMaxPoolLabel = new ImageStack(maxPoolWidth, maxPoolHeight);
+		
+		ImagePlus[] maxPool = new ImagePlus[ 2 ];
+		
+		for(int slice = 1; slice <= input.getImageStackSize(); slice ++)
+		{
+			IJ.log("Processing slice " + slice + "...");
+			
+			double[] inputPix = new double [ maxPoolWidth * maxPoolHeight ];
+			byte[] labelPix = new byte [ maxPoolWidth * maxPoolHeight ];
+				
+			for(int y=0, pos2 = 0; y<inputHeight; y += sizeY)
+				for(int x=0; x<inputWidth; x += sizeX)				
+				{
+					double max = 0;										
+					
+					for(int x2=0; x2<sizeX; x2++)
+						for(int y2=0; y2<sizeY; y2++)
+						{
+							final int pos = (y2 + y) * inputWidth + x2 + x;
+							
+							double val = ((float[]) input.getImageStack().getProcessor( slice ).getPixels())[pos];
+							
+							if (val > max)
+							{								
+								inputPix[ pos2 ] = val;
+								labelPix[ pos2 ] = ((byte[]) label.getImageStack().getProcessor( slice ).getPixels())[ pos ];
+							}							
+						}
+					pos2++;
+				}
+			
+			isMaxPoolInput.addSlice( new FloatProcessor( maxPoolWidth, maxPoolHeight, inputPix));
+			isMaxPoolLabel.addSlice( new ByteProcessor( maxPoolWidth, maxPoolHeight, labelPix));
+			
+		}
+		
+		maxPool[ 0 ] = new ImagePlus("Input", isMaxPoolInput );
+		maxPool[ 1 ] = new ImagePlus("Labels", isMaxPoolLabel );
+		
+		return maxPool;
+	}
+	
+	public static ImagePlus[] maxPoolNoReduction( 
+			ImagePlus input,
+			ImagePlus label,
+			int sizeX,
+			int sizeY)
+	{		
+		final int width = input.getWidth();
+		final int height = input.getHeight();
+		
+		ImageStack isMaxPoolInput = new ImageStack(width, height);
+		ImageStack isMaxPoolLabel = new ImageStack(width, height);
+		
+		ImagePlus[] maxPool = new ImagePlus[ 2 ];
+		
+		for(int slice = 1; slice <= input.getImageStackSize(); slice ++)
+		{
+			IJ.log("Processing slice " + slice + "...");
+			
+			double[] inputPix = new double [ width * height ];
+			byte[] labelPix = new byte [ width * height ];
+				
+			for(int y=0; y<height; y += sizeY)
+				for(int x=0; x<width; x += sizeX)				
+				{
+					double max = 0;										
+					double maxVal = 0;
+					byte maxLabel = 0;
+					
+					for(int x2=0; x2<sizeX; x2++)
+						for(int y2=0; y2<sizeY; y2++)
+						{
+							final int pos = (y2 + y) * width + x2 + x;
+							
+							double val = ((float[]) input.getImageStack().getProcessor( slice ).getPixels())[pos];
+							
+							if (val > max)
+							{								
+								maxVal = val;
+								maxLabel = ((byte[]) label.getImageStack().getProcessor( slice ).getPixels())[ pos ];
+							}							
+						}
+					
+					for(int x2=0; x2<sizeX; x2++)
+						for(int y2=0; y2<sizeY; y2++)
+						{
+							final int pos = (y2 + y) * width + x2 + x;
+							inputPix [ pos ] = maxVal;
+							labelPix [ pos ] = maxLabel;
+						}
+			
+				}
+			
+			isMaxPoolInput.addSlice( new FloatProcessor( width, height, inputPix));
+			isMaxPoolLabel.addSlice( new ByteProcessor( width, height, labelPix));
+			
+		}
+		
+		maxPool[ 0 ] = new ImagePlus("Input", isMaxPoolInput );
+		maxPool[ 1 ] = new ImagePlus("Labels", isMaxPoolLabel );
+		
+		return maxPool;
+	}
 	
 }
