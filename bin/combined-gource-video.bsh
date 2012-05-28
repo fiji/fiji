@@ -22,7 +22,7 @@ class Logger {
 
 	public Logger(String gitDirectory, String prefix, String since) {
 		command = "git --git-dir=" + gitDirectory + "/.git "
-			+ LOG4GOURCE + " --since=" + since;
+			+ LOG4GOURCE + " --since=" + since.replace(' ', '.');
 		this.prefix = prefix;
 		process = Runtime.getRuntime().exec(command);
 		reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
