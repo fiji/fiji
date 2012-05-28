@@ -120,7 +120,7 @@ for (;;) {
 writer.close();
 
 gource = "gource";
-Runtime.getRuntime().exec(new String[] {
+process = Runtime.getRuntime().exec(new String[] {
 	gource,
 	"-800x600",
 	"-s", "1",
@@ -129,3 +129,5 @@ Runtime.getRuntime().exec(new String[] {
 	"--hide-filenames",
 	"--output-movie", ijDir + "gource.flv",
 	ijDir + "out.gource" });
+dumpStream(process.getErrorStream());
+process.waitFor();
