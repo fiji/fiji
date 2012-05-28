@@ -1,13 +1,14 @@
 #!/bin/sh
 // 2>&1 | :; exec "$(dirname "$0")"/ImageJ.sh --bsh "$0" "$@" # exec with fiji */
 
-if (bsh.args.length != 1) {
+if (bsh.args.length != 1 && bsh.args.length != 2) {
 	System.err.println("Usage: " + this.interpreter.getSourceFileInfo()
-		+ " <since.when>");
+		+ " <since.when> [<until.when>]");
 	System.exit(1);
 }
 
 since = bsh.args[0];
+until = bsh.args.length > 1 ? bsh.args[1] : null;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -20,9 +21,10 @@ class Logger {
 	Process process;
 	BufferedReader reader;
 
-	public Logger(String gitDirectory, String prefix, String since) {
+	public Logger(String gitDirectory, String prefix, String since, String until) {
 		command = "git --git-dir=" + gitDirectory + "/.git "
-			+ LOG4GOURCE + " --since=" + since.replace(' ', '.');
+			+ LOG4GOURCE + " --since=" + since.replace(' ', '.')
+			+ (until == null ? "" : " --until=" + until.replace(' ', '.'));
 		this.prefix = prefix;
 		process = Runtime.getRuntime().exec(command);
 		reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
@@ -78,9 +80,9 @@ class Logger {
 
 loggers = new ArrayList();
 ijDir = System.getProperty("ij.dir") + "/";
-loggers.add(new Logger(ijDir, "", since));
+loggers.add(new Logger(ijDir, "", since, until));
 for (sub : new String[] { "ImageJA", "TrakEM2", "imglib", "mpicbg" })
-	loggers.add(new Logger(ijDir + "/" + sub, sub + "/", since));
+	loggers.add(new Logger(ijDir + "modules/" + sub, sub + "/", since, until));
 for (l : loggers)
 	l.readOneCommit();
 
