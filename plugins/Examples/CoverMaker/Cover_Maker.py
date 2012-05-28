@@ -14,31 +14,23 @@ from loci.formats.gui import BufferedImageReader
 import zipfile
 import zlib
 
-def CropInputImage(width, height):
-	imp = IJ.getImage()
-	ip = imp.getProcessor()
-
-	temp = int(imp.width/width)
+def CropInputImage(ip, width, height):
+	temp = int(ip.width/width)
 	newwidth = temp * width
-	temp = int(imp.height/height)
+	temp = int(ip.height/height)
 	newheight = temp * height
 
 	roi = Roi(0,0,newwidth,newheight)
 	ip.setRoi(roi)
 	ip = ip.crop()
-	imp2 = ImagePlus("Cropped image", ip.crop())
-	imp2.show()
-	imp.close()
+	return ip.crop()
 
 #split template image into tiles
-def SplitImage(width, height):
-	imp = IJ.getImage()
-	ip = imp.getProcessor()
-
+def SplitImage(ip, width, height):
 	stack = ImageStack(width, height)
 
-	for x in range(0,imp.width,width):
-		for y in range(0,imp.height,height):
+	for x in range(0,ip.width,width):
+		for y in range(0,ip.height,height):
 			roi = Roi(x,y,width,height)
 			ip.setRoi(roi)
 			ip2 = ip.crop()
@@ -67,13 +59,14 @@ def Inline(arrays):
 
 #compare all tiles to all downsampled database images of the same size
 #iterate through template slices
-def CreateCover(width, height, dbpath):
+def CreateCover(ip, width, height, dbpath):
 	# split input image into appropriate tiles
-	stackt = SplitImage(width, height)
+	stackt = SplitImage(ip, width, height)
 	impt = ImagePlus("template", stackt)
 	nSlicestmp = impt.getNSlices()
 
 	# open the preprocessed database
+	print dbpath
 	impd = IJ.openImage(dbpath)
 	stackd = impd.getImageStack()
 	nSlicesdb = impd.getNSlices()
@@ -83,13 +76,12 @@ def CreateCover(width, height, dbpath):
 	imageList = imageNames.split(';')
 
 	# set up preview output
-	impcurrent = IJ.getImage()
-	outputip = ColorProcessor(impcurrent.width, impcurrent.height)
+	outputip = ColorProcessor(ip.width, ip.height)
 	outputimp = ImagePlus("output", outputip)
 	outputimp.show()
 
-	cols = impcurrent.width/width
-	rows = impcurrent.height/height
+	cols = ip.width/width
+	rows = ip.height/height
 
 	print str(cols) + "," + str(rows)
 
@@ -325,8 +317,8 @@ ratio = float(imp.getWidth()) / float(imp.getHeight())
 (dbpath, width, height, tilewidth, tileheight) = Dialog(imp)
 
 # run program
-CropInputImage(tilewidth, tileheight)
-tileName, tileIndex, cols, rows = CreateCover(tilewidth, tileheight, dbpath)
+ip = CropInputImage(imp.processor, tilewidth, tileheight)
+tileName, tileIndex, cols, rows = CreateCover(ip, tilewidth, tileheight, dbpath)
 
 # save output
 newwidth, newheight, res, originalspath = SaveDialog(imp)
