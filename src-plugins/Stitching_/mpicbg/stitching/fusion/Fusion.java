@@ -622,7 +622,7 @@ A:		        	for ( int i = 0; i < numImages; ++i )
 		
 		// test blending
 		ImageFactory< FloatType > f = new ImageFactory<FloatType>( new FloatType(), new ArrayContainerFactory() );
-		Image< FloatType > img = f.createImage( new int[] { 1024, 100 } ); 
+		Image< FloatType > img = f.createImage( new int[] { 400, 400 } ); 
 		
 		LocalizableCursor< FloatType > c = img.createLocalizableCursor();
 		final int numDimensions = img.getNumDimensions();
@@ -630,14 +630,9 @@ A:		        	for ( int i = 0; i < numImages; ++i )
 		
 		// for blending
 		final int[] dimensions = img.getDimensions();
-		final float percentScaling = 0.3f;
-		final float[] dimensionScaling = new float[ numDimensions ];
+		final float percentScaling = 0.2f;
 		final float[] border = new float[ numDimensions ];
-		for ( int d = 0; d < numDimensions; ++d )
-			dimensionScaling[ d ] = 1;
-		
-		//dimensionScaling[ 1 ] = 0.5f;
-			
+					
 		while ( c.hasNext() )
 		{
 			c.fwd();
@@ -645,7 +640,7 @@ A:		        	for ( int i = 0; i < numImages; ++i )
 			for ( int d = 0; d < numDimensions; ++d )
 				tmp[ d ] = c.getPosition( d );
 			
-			c.getType().set( (float)BlendingPixelFusion.computeWeight( tmp, dimensions, border, dimensionScaling, percentScaling ) );
+			c.getType().set( (float)BlendingPixelFusion.computeWeight( tmp, dimensions, border, percentScaling ) );
 		}
 		
 		ImageJFunctions.show( img );

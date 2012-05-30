@@ -534,7 +534,10 @@ public class Stitching_Grid implements PlugIn
 			IJ.log( "Finished ... (" + (System.currentTimeMillis() - startTime) + " ms)");
 			
 			if ( imp != null )
+			{
+				imp.setTitle( "Fused" );
 				imp.show();
+			}
 		}
 		
     	// close all images
