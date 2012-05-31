@@ -254,8 +254,7 @@ public class CompileNativeLibrary extends Rule {
 
 	protected void javah(File jarFile, String className, List<String> arguments) throws FakeException, IOException {
 		parser.fake.execute(getVarBool("VERBOSE"), parser.cwd,
-			System.getProperty("ij.executable"),
-			"--javah", "-classpath", jarFile.getAbsolutePath(),
+			"javah", "-classpath", jarFile.getAbsolutePath(),
 			"-d", buildDir.getAbsolutePath(), className);
 		arguments.add("-I");
 		arguments.add(buildDir.getAbsolutePath());
