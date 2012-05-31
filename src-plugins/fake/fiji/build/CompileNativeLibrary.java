@@ -176,6 +176,11 @@ public class CompileNativeLibrary extends Rule {
 	}
 
 	protected void addFlags(List<String> arguments) throws FakeException {
+		// make sure that generated .dll files really export the symbols
+		arguments.add("-D_JNI_IMPLEMENTATION_=1");
+		if (hostPlatform.startsWith("win"))
+			arguments.add("-Wl,-kill-at");
+
 		if (platform.equals("win32")) {
 			arguments.add("-shared");
 			arguments.add("-m32");
