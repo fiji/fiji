@@ -16,7 +16,7 @@ public class Time_Stamper implements PlugInFilter {
         static double interval = 1;
         static String suffix = "sec";
         static int decimalPlaces = 0;
-        boolean firstSlice = true;
+	int idx = 1;
         boolean canceled;
         static boolean digital = false;
 	boolean AAtext=true;
@@ -28,7 +28,7 @@ public class Time_Stamper implements PlugInFilter {
         }
 
         public void run(ImageProcessor ip) {
-                if (firstSlice)
+                if (idx == 1)
                         showDialog(ip);
                 if (canceled)
                         return;
@@ -37,12 +37,14 @@ public class Time_Stamper implements PlugInFilter {
 	  ip.setAntialiasedText(AAtext);
 
                 String s = "";
+		int[] pos = imp.convertIndexToPosition(idx);
+		idx++;
+		double time = start + (pos[2] - 1) * interval;
 	
 	if (!digital) s = getString(time);
                 if (digital) s = getString2(time);
                 ip.moveTo(x+maxWidth-ip.getStringWidth(s), y);
                 ip.drawString(s);
-                time += interval;
         }
 
         String getString(double time) {
@@ -75,7 +77,6 @@ decimalPlaces));        //+" "+suffix;
 
 
         void showDialog(ImageProcessor ip) {
-                firstSlice = false;
                 Rectangle roi = ip.getRoi();
                 if (roi.width<ip.getWidth() ||
 roi.height<ip.getHeight()) {

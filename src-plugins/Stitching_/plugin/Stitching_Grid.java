@@ -80,6 +80,8 @@ public class Stitching_Grid implements PlugIn
 	public static boolean defaultOnlyPreview = false;
 	public static int defaultMemorySpeedChoice = 0;
 	
+	public static boolean defaultQuickFusion = true;
+	
 	public static String[] resultChoices = { "Fuse and display", "Write to disk" };
 	public static int defaultResult = 0;
 	public static String defaultOutputDirectory = "";
@@ -499,12 +501,32 @@ public class Stitching_Grid implements PlugIn
 	
 			ImagePlus imp = null;
 			
+			// test if there is no overlap between any of the tiles
+			// if so fusion can be much faster
+			boolean noOverlap = false;
+			if ( overlapX == 0 && overlapY == 0 && params.computeOverlap == false && params.subpixelAccuracy == false && grid.getType() < 4 )
+			{
+				final GenericDialogPlus gd3 = new GenericDialogPlus( "Use fast fusion algorithm" );
+				gd3.addMessage( "There seems to be no overlap between any of the tiles." );
+				gd3.addCheckbox( "Use fast fusion?", defaultQuickFusion );
+				
+				gd3.showDialog();
+				
+				if ( gd3.wasCanceled() )
+					return;
+				
+				noOverlap = defaultQuickFusion = gd3.getNextBoolean();
+				
+				if ( noOverlap )
+					IJ.log( "There is no overlap between any of the tiles, using faster fusion algorithm." );
+			}
+			
 			if ( is32bit )
-				imp = Fusion.fuse( new FloatType(), images, models, params.dimensionality, params.subpixelAccuracy, params.fusionMethod, params.outputDirectory );
+				imp = Fusion.fuse( new FloatType(), images, models, params.dimensionality, params.subpixelAccuracy, params.fusionMethod, params.outputDirectory, noOverlap );
 			else if ( is16bit )
-				imp = Fusion.fuse( new UnsignedShortType(), images, models, params.dimensionality, params.subpixelAccuracy, params.fusionMethod, params.outputDirectory );
+				imp = Fusion.fuse( new UnsignedShortType(), images, models, params.dimensionality, params.subpixelAccuracy, params.fusionMethod, params.outputDirectory, noOverlap );
 			else if ( is8bit )
-				imp = Fusion.fuse( new UnsignedByteType(), images, models, params.dimensionality, params.subpixelAccuracy, params.fusionMethod, params.outputDirectory );
+				imp = Fusion.fuse( new UnsignedByteType(), images, models, params.dimensionality, params.subpixelAccuracy, params.fusionMethod, params.outputDirectory, noOverlap );
 			else
 				IJ.log( "Unknown image type for fusion." );
 			
@@ -512,7 +534,10 @@ public class Stitching_Grid implements PlugIn
 			IJ.log( "Finished ... (" + (System.currentTimeMillis() - startTime) + " ms)");
 			
 			if ( imp != null )
+			{
+				imp.setTitle( "Fused" );
 				imp.show();
+			}
 		}
 		
     	// close all images

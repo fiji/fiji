@@ -356,6 +356,14 @@ public class FeatureModel {
 
 	public void putTrackFeature(final int trackIndex, final String feature, final Float value) {
 		trackFeatureValues.get(trackIndex).put(feature, value);
+		
+		// FIXME We store the found feature name if it is not already in the feature name list 
+		// This happens when we load a model from a file: the feature name list is empty, 
+		// because it is normally initiated from the plugin.
+		if (!trackFeatures.contains(feature)) {
+			trackFeatures.add(feature);
+		}
+		
 	}
 
 	public Float getTrackFeature(final int trackIndex, final String feature) {
@@ -389,7 +397,7 @@ public class FeatureModel {
 	/**
 	 * Instantiate an empty feature 2D map.
 	 */
-	private void initFeatureMap() {
+	public void initFeatureMap() {
 		this.trackFeatureValues = new ArrayList<Map<String, Float>>(model.getNTracks());
 		for (int i = 0; i < model.getNTracks(); i++) {
 			Map<String, Float> featureMap = new HashMap<String, Float>(trackFeatures.size());

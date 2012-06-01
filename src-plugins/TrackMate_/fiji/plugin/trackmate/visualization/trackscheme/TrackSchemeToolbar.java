@@ -1,5 +1,6 @@
 package fiji.plugin.trackmate.visualization.trackscheme;
 
+import static fiji.plugin.trackmate.gui.TrackMateWizard.FONT;
 import ij.ImagePlus;
 
 import java.awt.Color;
@@ -15,11 +16,14 @@ import java.util.Set;
 
 import javax.swing.AbstractAction;
 import javax.swing.Action;
+import javax.swing.Box;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
+import javax.swing.JLabel;
 import javax.swing.JToolBar;
 import javax.swing.JViewport;
+import javax.swing.SwingConstants;
 
 import com.mxgraph.util.mxCellRenderer;
 
@@ -45,6 +49,8 @@ public class TrackSchemeToolbar extends JToolBar {
 	
 	private static final ImageIcon DISPLAY_DECORATIONS_ON_ICON	= new ImageIcon(TrackSchemeFrame.class.getResource("resources/application_view_columns.png"));
 	private static final ImageIcon DISPLAY_DECORATIONS_OFF_ICON	= new ImageIcon(TrackSchemeFrame.class.getResource("resources/application.png"));
+	
+	private static final ImageIcon SELECT_STYLE_ICON = new ImageIcon(TrackSchemeFrame.class.getResource("resources/style.png"));
 	
 	private TrackSchemeFrame frame;
 
@@ -255,28 +261,36 @@ public class TrackSchemeToolbar extends JToolBar {
 		/*
 		 * styles
 		 */
+		final JLabel selectStyleLabel;
+		{
+			selectStyleLabel = new JLabel("Style:", SELECT_STYLE_ICON, SwingConstants.RIGHT);
+			selectStyleLabel.setFont(FONT);
+		}
 		
-		
-		Map<String, Map<String, Object>> styles = frame.getGraph().getStylesheet().getStyles();
-		Set<String> styleNames = new HashSet<String>(styles.keySet());
-		styleNames.remove("defaultEdge");
-		styleNames.remove("defaultVertex");
-		final JComboBox selectStyleBox = new JComboBox(styleNames.toArray());
-		selectStyleBox.setSelectedItem(TrackSchemeFrame.DEFAULT_STYLE_NAME);
-		selectStyleBox.addActionListener(new ActionListener() {
-			
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				String selectedStyle = (String) selectStyleBox.getSelectedItem();
-				mxTrackGraphLayout layout = frame.getGraphLayout();
-				if (!selectedStyle.equals(layout.selectedStyle)) {
-					layout.selectedStyle = selectedStyle;
-					layout.execute(frame);
+		final JComboBox selectStyleBox;
+		{
+			Map<String, Map<String, Object>> styles = frame.getGraph().getStylesheet().getStyles();
+			Set<String> styleNames = new HashSet<String>(styles.keySet());
+			styleNames.remove("defaultEdge");
+			styleNames.remove("defaultVertex");
+			selectStyleBox = new JComboBox(styleNames.toArray());
+			selectStyleBox.setSelectedItem(TrackSchemeFrame.DEFAULT_STYLE_NAME);
+			selectStyleBox.setMaximumSize(new Dimension(100, 20));
+			selectStyleBox.setFont(FONT);
+			selectStyleBox.addActionListener(new ActionListener() {
+
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					String selectedStyle = (String) selectStyleBox.getSelectedItem();
+					mxTrackGraphLayout layout = frame.getGraphLayout();
+					if (!selectedStyle.equals(layout.selectedStyle)) {
+						layout.selectedStyle = selectedStyle;
+						layout.execute(frame);
+					}
 				}
-			}
-		});
-		
-		
+			});
+
+		}
 		
 		/*
 		 * ADD TO TOOLBAR
@@ -290,12 +304,12 @@ public class TrackSchemeToolbar extends JToolBar {
 		add(toggleLinkingButton);
 		// Separator
 		addSeparator();
-		// Folding
-		add(toggleEnableFoldingButton);
-		add(foldAllButton);
-		add(unFoldAllButton);
-		// Separator
-		addSeparator();
+		// Folding  - DISABLED until further notice
+//		add(toggleEnableFoldingButton);
+//		add(foldAllButton);
+//		add(unFoldAllButton);
+//		// Separator
+//		addSeparator();
 		// Zoom
 		add(zoomInButton);
 		add(zoomOutButton);
@@ -315,7 +329,9 @@ public class TrackSchemeToolbar extends JToolBar {
 		// Separator
 		addSeparator();
 		// Set display style
+		add(selectStyleLabel);
 		add(selectStyleBox);
+		add(Box.createHorizontalGlue());
 				
 	}
 }

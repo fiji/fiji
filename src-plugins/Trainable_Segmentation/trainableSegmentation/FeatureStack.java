@@ -790,14 +790,14 @@ public class FeatureStack
 		{
 
 			GaussianBlur gs = new GaussianBlur();
-			ImageProcessor ip_x = channels[ch].getProcessor().convertToFloat();
+			ImageProcessor ip_x = channels[ch].getProcessor().duplicate().convertToFloat();
 			//gs.blur(ip_x, sigma);
 			gs.blurGaussian(ip_x, 0.4 * sigma, 0.4 * sigma,  0.0002);
 			Convolver c = new Convolver();
 			float[] sobelFilter_x = {1f,2f,1f,0f,0f,0f,-1f,-2f,-1f};
 			c.convolveFloat(ip_x, sobelFilter_x, 3, 3);
 
-			ImageProcessor ip_y = channels[ch].getProcessor().convertToFloat();
+			ImageProcessor ip_y = channels[ch].getProcessor().duplicate().convertToFloat();
 			//gs.blur(ip_y, sigma);
 			gs.blurGaussian(ip_y, 0.4 * sigma, 0.4 * sigma,  0.0002);
 			c = new Convolver();
@@ -846,14 +846,14 @@ public class FeatureStack
 				{
 
 					GaussianBlur gs = new GaussianBlur();
-					ImageProcessor ip_x = channels[ch].getProcessor().convertToFloat();
+					ImageProcessor ip_x = channels[ch].getProcessor().duplicate().convertToFloat();
 					//gs.blur(ip_x, sigma);
 					gs.blurGaussian(ip_x, 0.4 * sigma, 0.4 * sigma,  0.0002);
 					Convolver c = new Convolver();
 					float[] sobelFilter_x = {1f,2f,1f,0f,0f,0f,-1f,-2f,-1f};
 					c.convolveFloat(ip_x, sobelFilter_x, 3, 3);
 
-					ImageProcessor ip_y = channels[ch].getProcessor().convertToFloat();
+					ImageProcessor ip_y = channels[ch].getProcessor().duplicate().convertToFloat();
 					//gs.blur(ip_y, sigma);
 					gs.blurGaussian(ip_y, 0.4 * sigma, 0.4 * sigma,  0.0002);
 					c = new Convolver();
@@ -898,29 +898,23 @@ public class FeatureStack
 		ImagePlus[] results = new ImagePlus[ channels.length ];
 		
 		for(int ch=0; ch < channels.length; ch++)
-		{
-		
-			ImageProcessor ip_x = channels[ch].getProcessor().convertToFloat();
-			//gs.blur(ip_x, sigma);
-			gs.blurGaussian(ip_x, 0.4 * sigma, 0.4 * sigma,  0.0002);
+		{		
+			ImageProcessor ip_x = channels[ch].getProcessor().duplicate().convertToFloat();
+			gs.blurGaussian(ip_x, 0.4 * sigma, 0.4 * sigma,  0.0002);		
 			c.convolveFloat(ip_x, sobelFilter_x, 3, 3);		
 
-			ImageProcessor ip_y = channels[ch].getProcessor().convertToFloat();
-			//gs.blur(ip_y, sigma);
+			ImageProcessor ip_y = channels[ch].getProcessor().duplicate().convertToFloat();
 			gs.blurGaussian(ip_y, 0.4 * sigma, 0.4 * sigma,  0.0002);
 			c = new Convolver();
 			c.convolveFloat(ip_y, sobelFilter_y, 3, 3);
 
 			ImageProcessor ip_xx = ip_x.duplicate();
-			//gs.blur(ip_xx, sigma);		
 			c.convolveFloat(ip_xx, sobelFilter_x, 3, 3);		
 
 			ImageProcessor ip_xy = ip_x.duplicate();
-			//gs.blur(ip_xy, sigma);		
 			c.convolveFloat(ip_xy, sobelFilter_y, 3, 3);		
 
 			ImageProcessor ip_yy = ip_y.duplicate();
-			//gs.blur(ip_yy, sigma);		
 			c.convolveFloat(ip_yy, sobelFilter_y, 3, 3);		
 
 			ImageProcessor ip = new FloatProcessor(width, height);
@@ -938,8 +932,11 @@ public class FeatureStack
 			for (int x=0; x<width; x++){
 				for (int y=0; y<height; y++)
 				{
+					// a
 					float s_xx = ip_xx.getf(x,y);
+					// b, c
 					float s_xy = ip_xy.getf(x,y);
+					// d
 					float s_yy = ip_yy.getf(x,y);
 					// Hessian module: sqrt (a^2 + b*c + d^2)
 					ip.setf(x,y, (float) Math.sqrt(s_xx*s_xx + s_xy*s_xy+ s_yy*s_yy));
@@ -949,11 +946,9 @@ public class FeatureStack
 					// Determinant: a*d - c*b
 					final float determinant = (float) s_xx*s_yy-s_xy*s_xy;
 					ipDet.setf(x,y, determinant);
+					
 					// Ratio
-					//ipRatio.setf(x,y, (float)(trace*trace) / determinant);
-					ip.setf(x,y, (float) Math.sqrt(s_xx*s_xx + s_xy*s_xy+ s_yy*s_yy));
-					ipTr.setf(x,y, (float) s_xx + s_yy);
-					ipDet.setf(x,y, (float) s_xx*s_yy-s_xy*s_xy);
+					//ipRatio.setf(x,y, (float)(trace*trace) / determinant);																												
 					// First eigenvalue: (a + d) / 2 + sqrt( ( 4*b^2 + (a - d)^2) ) / 2 )
 					ipEig1.setf(x,y, (float) ( trace/2.0 + Math.sqrt((4*s_xy*s_xy + (s_xx - s_yy)*(s_xx - s_yy)) / 2.0 ) ) );
 					// Second eigenvalue: (a + d) / 2 - sqrt( ( 4*b^2 + (a - d)^2) ) / 2 )
@@ -1038,25 +1033,22 @@ public class FeatureStack
 				for(int ch=0; ch < channels.length; ch++)
 				{
 
-					ImageProcessor ip_x = channels[ch].getProcessor().convertToFloat();
+					ImageProcessor ip_x = channels[ch].getProcessor().duplicate().convertToFloat();
 					gs.blurGaussian(ip_x, 0.4 * sigma, 0.4 * sigma,  0.0002);		
 					c.convolveFloat(ip_x, sobelFilter_x, 3, 3);		
 
-					ImageProcessor ip_y = channels[ch].getProcessor().convertToFloat();
+					ImageProcessor ip_y = channels[ch].getProcessor().duplicate().convertToFloat();
 					gs.blurGaussian(ip_y, 0.4 * sigma, 0.4 * sigma,  0.0002);
 					c = new Convolver();
 					c.convolveFloat(ip_y, sobelFilter_y, 3, 3);
 
 					ImageProcessor ip_xx = ip_x.duplicate();
-					//gs.blur(ip_xx, sigma);		
 					c.convolveFloat(ip_xx, sobelFilter_x, 3, 3);		
 
 					ImageProcessor ip_xy = ip_x.duplicate();
-					//gs.blur(ip_xy, sigma);		
 					c.convolveFloat(ip_xy, sobelFilter_y, 3, 3);		
 
 					ImageProcessor ip_yy = ip_y.duplicate();
-					//gs.blur(ip_yy, sigma);		
 					c.convolveFloat(ip_yy, sobelFilter_y, 3, 3);		
 
 					ImageProcessor ip = new FloatProcessor(width, height);
@@ -1074,8 +1066,11 @@ public class FeatureStack
 					for (int x=0; x<width; x++){
 						for (int y=0; y<height; y++)
 						{
+							// a
 							float s_xx = ip_xx.getf(x,y);
+							// b, c
 							float s_xy = ip_xy.getf(x,y);
+							// d
 							float s_yy = ip_yy.getf(x,y);
 							// Hessian module: sqrt (a^2 + b*c + d^2)
 							ip.setf(x,y, (float) Math.sqrt(s_xx*s_xx + s_xy*s_xy+ s_yy*s_yy));
@@ -1085,11 +1080,9 @@ public class FeatureStack
 							// Determinant: a*d - c*b
 							final float determinant = (float) s_xx*s_yy-s_xy*s_xy;
 							ipDet.setf(x,y, determinant);
+							
 							// Ratio
-							//ipRatio.setf(x,y, (float)(trace*trace) / determinant);
-							ip.setf(x,y, (float) Math.sqrt(s_xx*s_xx + s_xy*s_xy+ s_yy*s_yy));
-							ipTr.setf(x,y, (float) s_xx + s_yy);
-							ipDet.setf(x,y, (float) s_xx*s_yy-s_xy*s_xy);
+							//ipRatio.setf(x,y, (float)(trace*trace) / determinant);																												
 							// First eigenvalue: (a + d) / 2 + sqrt( ( 4*b^2 + (a - d)^2) ) / 2 )
 							ipEig1.setf(x,y, (float) ( trace/2.0 + Math.sqrt((4*s_xy*s_xy + (s_xx - s_yy)*(s_xx - s_yy)) / 2.0 ) ) );
 							// Second eigenvalue: (a + d) / 2 - sqrt( ( 4*b^2 + (a - d)^2) ) / 2 )

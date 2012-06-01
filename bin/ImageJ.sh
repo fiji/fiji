@@ -154,7 +154,8 @@ discover_tools_jar () {
 
 case "$main_class" in
 fiji.Main|ij.ImageJ)
-	ij_options="-port7 $ij_options"
+	ij_options="$main_class -port7 $ij_options"
+	main_class="imagej.ClassLauncher -ijjarpath jars/ -ijjarpath plugins/"
 	CLASSPATH="$FIJI_ROOT/jars/ij-launcher.jar$PATHSEPARATOR$FIJI_ROOT/jars/ij.jar$PATHSEPARATOR$FIJI_ROOT/jars/javassist.jar"
 	;;
 fiji.build.Fake)

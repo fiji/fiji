@@ -34,6 +34,7 @@ import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.SpotImp;
 import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.features.FeatureModel;
 import fiji.plugin.trackmate.segmentation.LogSegmenter;
 import fiji.plugin.trackmate.segmentation.SegmenterSettings;
 import fiji.plugin.trackmate.segmentation.SpotSegmenter;
@@ -118,10 +119,62 @@ public class TmXmlReader {
 			model.setTrackSpots(readTrackSpots(graph));
 			model.setTrackEdges(readTrackEdges(graph));
 		}
+		// Track features
+		readTrackFeatures(model.getFeatureModel());
+		
 		// Return
 		return model;
 	}
 
+	
+	
+	public void readTrackFeatures(FeatureModel featureModel) {
+		
+		Element allTracksElement = root.getChild(TRACK_COLLECTION_ELEMENT_KEY);
+		if (null == allTracksElement)
+			return;
+		
+		featureModel.initFeatureMap();
+
+		// Load tracks
+		@SuppressWarnings("unchecked")
+		List<Element> trackElements = allTracksElement.getChildren(TRACK_ELEMENT_KEY);
+		for (Element trackElement : trackElements) {
+			
+			int trackID = -1;
+			try {
+				trackID = trackElement.getAttribute(TRACK_ID_ATTRIBUTE_NAME).getIntValue();
+			} catch (DataConversionException e1) {
+				logger.error("Found a track with invalid trackID. Skipping.\n");
+				continue;
+			}
+			
+			@SuppressWarnings("unchecked")
+			List<Attribute> attributes = trackElement.getAttributes();
+			for(Attribute attribute : attributes) {
+				
+				String attName = attribute.getName();
+				if (attName.equals(TRACK_ID_ATTRIBUTE_NAME)) { // Skip trackID attribute
+					continue;
+				}
+
+				Float attVal = Float.NaN;
+				try {
+					attVal = attribute.getFloatValue();
+				} catch (DataConversionException e) {
+					logger.error("Track "+trackID+": Cannot read the feature "+attName+" value. Skipping.\n");
+					continue;
+				}
+				
+				featureModel.putTrackFeature(trackID, attName, attVal); 
+				
+			}
+			
+			
+		}
+		
+	}
+	
 
 	/**
 	 * Return the initial threshold on quality stored in this file.
