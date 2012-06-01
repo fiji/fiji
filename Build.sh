@@ -180,7 +180,7 @@ do
 	test "$d/jre" || continue
 	if test -z "$JAVA_HOME" || test "$d" -nt "$JAVA_HOME"
 	then
-		JAVA_HOME="$CWD$d/jre"
+		JAVA_HOME="$CWD/$d/jre"
 	fi
 done
 
