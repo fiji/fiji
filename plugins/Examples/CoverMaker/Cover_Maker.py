@@ -1,3 +1,6 @@
+# Cover Maker was written by PAvel Tomancak with minor help of
+# Albert Cardona & Johannes Schindelin (Pop & Mom)
+
 from ij import IJ
 from ij.io import FileSaver
 from math import sqrt, pow
