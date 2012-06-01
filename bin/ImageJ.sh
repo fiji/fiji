@@ -6,8 +6,10 @@
 # bend over for SunOS' sh, and use `` instead of $()
 DIRECTORY="`dirname "$0"`"
 PATHSEPARATOR=:
+ISWINDOWS=
 case "$(uname -s)" in
 MINGW*)
+	ISWINDOWS=t
 	PATHSEPARATOR=";"
 	FIJI_ROOT="$(cd "$DIRECTORY" && pwd -W)"
 	;;
@@ -147,9 +149,14 @@ discover_tools_jar () {
 	done
 	if test -n "$javac"
 	then
-		javac="${javac%/bin/javac}/lib/tools.jar"
+		JAVA_HOME="${javac%/bin/javac}"
+		if test -n "$ISWINDOWS"
+		then
+			JAVA_HOME="$(cd "$JAVA_HOME" && pwd -W)"
+		fi
+		export JAVA_HOME
+		echo "$JAVA_HOME/lib/tools.jar"
 	fi
-	echo "$javac"
 }
 
 case "$main_class" in
