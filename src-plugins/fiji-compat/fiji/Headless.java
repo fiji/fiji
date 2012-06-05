@@ -124,11 +124,16 @@ public class Headless extends JavassistHelper {
 		for (CtMethod method : fakeClass.getMethods())
 			available.add(stripPackage(method.getLongName()));
 		for (CtMethod original : originalClass.getDeclaredMethods()) {
-			if (available.contains(stripPackage(original.getLongName())))
+			if (available.contains(stripPackage(original.getLongName()))) {
+				if (verbose > 1)
+					System.err.println("Skipping available method " + original);
 				continue;
+			}
 
 			CtMethod method = makeStubMethod(fakeClass, original);
 			fakeClass.addMethod(method);
+			if (verbose > 1)
+				System.err.println("adding missing method " + method);
 		}
 
 		// interfaces
