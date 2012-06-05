@@ -2,7 +2,7 @@
 
 FIJIROOT="$(dirname "$0")/.."
 FIJI="$FIJIROOT"/ImageJ
-RETRO="$FIJIROOT"/retro/retrotranslator-transformer-1.2.7.jar
+RETRO="$FIJIROOT"/retro/retrotranslator-transformer-1.2.9.jar
 TARGETVERSION=$TARGETVERSION${TARGETVERSION:-1.3}
 
 die () {
