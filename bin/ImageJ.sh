@@ -29,6 +29,7 @@ sq_quote () {
 	echo "$1" | sed "s/[]\"\'\\\\(){}[\!\$ 	;]/\\\\&/g"
 }
 
+first_java_options=
 java_options=
 ij_options=
 main_class=fiji.Main
@@ -76,6 +77,13 @@ EOF
 		;;
 	?,--dry-run)
 		dry_run=t
+		;;
+	?,--headless)
+		first_java_options="$first_java_options -Djava.awt.headless=true"
+		;;
+	?,--mem=*)
+		memory=${option#--mem=}
+		first_java_options="$first_java_options -Xmx$memory"
 		;;
 	?,--jython)
 		main_class=org.python.util.jython
@@ -223,5 +231,6 @@ eval java $EXT_OPTION \
 	-Dfiji.executable="`sq_quote "$EXECUTABLE_NAME"`" \
 	-Dij.executable="`sq_quote "$EXECUTABLE_NAME"`" \
 	`cat "$FIJI_ROOT"/jvm.cfg 2> /dev/null` \
+	$first_java_options \
 	$java_options \
 	$main_class $ij_options
