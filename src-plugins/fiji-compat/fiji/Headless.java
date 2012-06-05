@@ -67,7 +67,7 @@ public class Headless extends JavassistHelper {
 		nameMap = new ClassMap();
 
 		CtClass clazz = get("ij.gui.GenericDialog");
-		Set<String> override = new HashSet<String>(Arrays.asList(new String[] { "paint", "getInsets" }));
+		Set<String> override = new HashSet<String>(Arrays.asList(new String[] { "paint", "getInsets", "showHelp" }));
 		for (CtMethod method : clazz.getMethods())
 			if (override.contains(method.getName())) {
 				CtMethod stub = makeStubMethod(clazz, method);
