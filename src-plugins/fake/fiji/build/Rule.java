@@ -294,7 +294,7 @@ public abstract class Rule implements Comparable<Rule> {
 
 		// check the classpath
 		for (String jarFile : Util.splitPaths(getVar("CLASSPATH"))) {
-			Rule rule = getRule(jarFile);
+			Rule rule = getRule(Util.stripIJDir(jarFile));
 			if (rule != null)
 				result.add(rule);
 		}
