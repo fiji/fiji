@@ -116,7 +116,8 @@ FreeBSD)
 		JAVA_HOME=/usr/local/jdk1.6.0/jre
 		export JAVA_HOME
 	fi
-	if ! test -f "$JAVA_HOME/jre/lib/ext/vecmath.jar" && ! test -f "$JAVA_HOME/lib/ext/vecmath.jar"
+	if ! test -f "$JAVA_HOME/jre/lib/ext/vecmath.jar" &&
+		! test -f "$JAVA_HOME/lib/ext/vecmath.jar"
 	then
 		echo "You are missing Java3D. Please install with"
 		echo ""
