@@ -198,6 +198,12 @@ public class Util {
 		return join(list, " ");
 	}
 
+	public static String stripIJDir(String path) {
+		if (Fake.ijHome == null)
+			return path;
+		return Util.stripPrefix(path, Fake.ijHome);
+	}
+
 	public static String stripPrefix(String string, String prefix) {
 		if (!string.startsWith(prefix))
 			return string;

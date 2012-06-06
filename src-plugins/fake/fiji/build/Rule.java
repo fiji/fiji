@@ -393,10 +393,7 @@ public abstract class Rule implements Comparable<Rule> {
 		String dir = getVar("builddir");
 		if (dir == null || dir.equals(""))
 			return null;
-		String suffix = target;
-		String ijDir = System.getProperty("ij.dir");
-		if (ijDir != null)
-			suffix = Util.stripPrefix(suffix, ijDir);
+		String suffix = Util.stripIJDir(target);
 		// strip DOS drive prefix
 		if (suffix.length() > 2 && suffix.charAt(1) == ':')
 			suffix = suffix.substring(2);
