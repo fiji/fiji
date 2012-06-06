@@ -141,6 +141,8 @@ public class Fake {
 			ijHome = ijHome.substring(5, slash + 1);
 			if (ijHome.endsWith("/src-plugins/"))
 				ijHome = Util.stripSuffix(ijHome, "src-plugins/");
+			else if (ijHome.endsWith("/build/jars/"))
+				ijHome = Util.stripSuffix(ijHome, "build/jars/");
 		}
 		if (Util.getPlatform().startsWith("win") && ijHome.startsWith("/"))
 			ijHome = ijHome.substring(1);
