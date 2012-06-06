@@ -81,7 +81,8 @@ ensure_fake_is_built () {
 }
 
 PATHSEP=:
-case "$(uname -s)" in
+UNAME_S="$(uname -s)"
+case "$UNAME_S" in
 Darwin)
 	JAVA_HOME=/System/Library/Frameworks/JavaVM.framework/Home
 	java_submodule=macosx-java3d
@@ -216,6 +217,16 @@ win64)
 		test "$CWD"/ImageJ.exe -nt "$CWD"/$jar ||
 		cp precompiled/ImageJ-win64.exe ImageJ.exe
 	esac
+esac
+
+# JAVA_HOME needs to be a DOS path for Windows from here on
+case "$UNAME_S" in
+MINGW*)
+	export JAVA_HOME="$(cd "$JAVA_HOME" && pwd -W)"
+	;;
+CYGWIN*)
+	export JAVA_HOME="$(cygpath -d "$JAVA_HOME")"
+	;;
 esac
 
 sh "$CWD/bin/ImageJ.sh" --build "$@"
