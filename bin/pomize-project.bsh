@@ -37,6 +37,10 @@ void moveSources(File sourceDirectory, File targetJavaDirectory, File targetReso
 		File targetJavadocFile = new File(file.getName().equals("overview.html") ?  targetJavadocDirectory.getParentFile() : targetJavadocDirectory, file.getName());
 		if (file.isDirectory() && !file.getAbsolutePath().endsWith("/src/main/java") && !file.getAbsolutePath().endsWith("/src/main/resources") && !file.getName().startsWith("."))
 			moveSources(file, targetJavaFile, targetResourceFile, targetJavadocFile);
+		else if (file.getPath().startsWith("src-plugins/Script_Editor/templates/")) {
+			SimpleExecuter.exec(fijiDir, new String[] { "mkdir", "-p", targetResourceDirectory.getPath() });
+			SimpleExecuter.exec(fijiDir, new String[] { "git", "mv", file.getPath(), targetResourceFile.getPath() });
+		}
 		else if (file.getName().endsWith(".java")) {
 			SimpleExecuter.exec(fijiDir, new String[] { "mkdir", "-p", targetJavaDirectory.getPath() });
 			SimpleExecuter.exec(fijiDir, new String[] { "git", "mv", file.getPath(), targetJavaFile.getPath() });
