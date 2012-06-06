@@ -75,7 +75,7 @@ ensure_fake_is_built () {
 	 rm -rf build/jars/fake/ &&
 	 mkdir -p build/jars/fake/ &&
 	 : compile classes
-	 javac -source 1.5 -target 1.5 -classpath precompiled/javac.jar -d build/jars/fake/ $(find src-plugins/fake/ -name \*.java) &&
+	 java -jar precompiled/javac.jar -source 1.5 -target 1.5 -classpath precompiled/javac.jar -d build/jars/fake/ $(find src-plugins/fake/ -name \*.java) &&
 	 : compile .jar using Fiji Build
 	 java -classpath build/jars/fake/"$PATHSEP"precompiled/javac.jar fiji.build.Fake jars/fake.jar-rebuild ImageJ)
 }
@@ -84,7 +84,7 @@ PATHSEP=:
 UNAME_S="$(uname -s)"
 case "$UNAME_S" in
 Darwin)
-	JAVA_HOME=/System/Library/Frameworks/JavaVM.framework/Home
+	JAVA_HOME=/System/Library/Frameworks/JavaVM.framework/Versions/1.6/Home
 	java_submodule=macosx-java3d
 	case "$(uname -r)" in
 	8.*) platform=tiger;;

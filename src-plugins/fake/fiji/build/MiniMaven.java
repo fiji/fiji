@@ -46,7 +46,7 @@ import org.xml.sax.XMLReader;
 import org.xml.sax.helpers.DefaultHandler;
 
 public class MiniMaven {
-	protected String endLine = System.console() == null ? "\n" : "\033[K\r";
+	protected String endLine = isInteractiveConsole() ? "\033[K\r" : "\n";
 	protected boolean verbose, debug = false, downloadAutomatically, offlineMode, ignoreMavenRepositories;
 	protected int updateInterval = 24 * 60; // by default, check once per 24h for new snapshot versions
 	protected PrintStream err;
@@ -54,6 +54,15 @@ public class MiniMaven {
 	protected Stack<File> multiProjectRoots = new Stack<File>();
 	protected Set<File> excludedFromMultiProjects = new HashSet<File>();
 	protected Fake fake;
+
+	protected static boolean isInteractiveConsole() {
+		// We want to compile/run with Java5, so we cannot test System.console() directly
+		try {
+			return null != System.class.getMethod("console").invoke(null);
+		} catch (Throwable t) {
+			return false;
+		}
+	}
 
 	public MiniMaven(Fake fake, PrintStream err, boolean verbose) throws FakeException {
 		this(fake, err, verbose, false);

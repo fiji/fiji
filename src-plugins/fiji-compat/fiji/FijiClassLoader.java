@@ -324,7 +324,7 @@ public class FijiClassLoader extends URLClassLoader {
 			File tmpFile = File.createTempFile("retro-", ".jar");
 			SimpleExecuter executer = new SimpleExecuter(new String[] {
 				System.getProperty("ij.executable"),
-				"--jar", System.getProperty("ij.dir") + "/retro/retrotranslator-transformer-1.2.7.jar",
+				"--jar", System.getProperty("ij.dir") + "/retro/retrotranslator-transformer-1.2.9.jar",
 				"-srcjar", path,
 				"-destjar", tmpFile.getCanonicalPath(),
 				"-target", "1.5"
