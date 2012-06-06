@@ -26,6 +26,7 @@ if (bsh.args.length == 0) {
 
 File fijiDir = new File(System.getProperty("fiji.dir"));
 
+warnings = "";
 void moveSources(File sourceDirectory, File targetJavaDirectory, File targetResourceDirectory, File targetJavadocDirectory) {
 	File[] list = sourceDirectory.listFiles();
 	if (list == null)
@@ -50,8 +51,10 @@ void moveSources(File sourceDirectory, File targetJavaDirectory, File targetReso
 				SimpleExecuter.exec(fijiDir, new String[] { "mkdir", "-p", targetJavadocFile.getParentFile().getPath() });
 				SimpleExecuter.exec(fijiDir, new String[] { "git", "mv", file.getPath(), targetJavadocFile.getPath() });
 			}
-			else
+			else {
+				warnings += "Warning: did not move " + file + "\n";
 				print("Warning: did not move " + file);
+			}
 		}
 	}
 }
@@ -328,6 +331,9 @@ for (Rule rule : rules) {
 	stripPath = stripPath.substring(stripPath.lastIndexOf('/') + 1);
 	SimpleExecuter.exec(fijiDir, new String[] { "git", "commit", "-m", "Mavenize " + stripPath });
 }
+
+if (!warnings.equals(""))
+	System.err.println("\nWarnings:\n" + warnings);
 
 if (errors > 0)
 	System.exit(1);
