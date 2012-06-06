@@ -109,7 +109,12 @@ String getGroupId(String artifact) {
 	return "fiji";
 }
 
+String getMainClass(Rule rule) {
+	return rule.getVar("MAINCLASS");
+}
+
 void writePOM(String target, Rule rule) {
+	String mainClass = getMainClass(rule);
 	String versionRegex = "(.*?)-([\\.0-9]*(-SNAPSHOT)?)";
 	Pattern versionPattern = Pattern.compile(versionRegex);
 	dependencies = "";
@@ -156,21 +161,22 @@ void writePOM(String target, Rule rule) {
 			+ dependencies
 			+ "\t</dependencies>\n"
 			+ "\n")
-		+ "\t<build>\n"
-		+ "\t\t<plugins>\n"
-		+ "\t\t\t<plugin>\n"
-		+ "\t\t\t\t<artifactId>maven-jar-plugin</artifactId>\n"
-		+ "\t\t\t\t<configuration>\n"
-		+ "\t\t\t\t\t<archive>\n"
-		+ "\t\t\t\t\t\t<manifest>\n"
-		//+ "\t\t\t\t\t\t\t<packageName>" + getPackageName() + "</packageName>\n"
-		+ "\t\t\t\t\t\t</manifest>\n"
-		+ "\t\t\t\t\t</archive>\n"
-		+ "\t\t\t\t</configuration>\n"
-		+ "\t\t\t</plugin>\n"
-		+ "\t\t</plugins>\n"
-		+ "\t</build>\n"
-		+ "\n"
+		+ (mainClass == null ? "" :
+			"\t<build>\n"
+			+ "\t\t<plugins>\n"
+			+ "\t\t\t<plugin>\n"
+			+ "\t\t\t\t<artifactId>maven-jar-plugin</artifactId>\n"
+			+ "\t\t\t\t<configuration>\n"
+			+ "\t\t\t\t\t<archive>\n"
+			+ "\t\t\t\t\t\t<manifest>\n"
+			+ "\t\t\t\t\t\t\t<mainClass>" + mainClass + "</mainClass>\n"
+			+ "\t\t\t\t\t\t</manifest>\n"
+			+ "\t\t\t\t\t</archive>\n"
+			+ "\t\t\t\t</configuration>\n"
+			+ "\t\t\t</plugin>\n"
+			+ "\t\t</plugins>\n"
+			+ "\t</build>\n"
+			+ "\n")
 		+ "</project>";
 	writeAndAddFile(pom, new File(fijiDir, rule.getStripPath() + "pom.xml"));
 }
@@ -202,23 +208,6 @@ void fsckEclipse(String stripPath) {
 		+ "org.eclipse.jdt.apt.genSrcDir=target/classes\n"
 		+ "org.eclipse.jdt.apt.reconcileEnabled=false\n";
 	writeAndAddFile(settings, new File(fijiDir, stripPath + ".settings/org.eclipse.jdt.apt.core.prefs"));
-}
-
-boolean handleMainClass(Rule rule, String stripPath) {
-	String mainClass = rule.getVar("MAINCLASS");
-	if (mainClass == null)
-		return true;
-
-	file = new File(fijiDir, rule.getStripPath() + "src/main/resources/META-INF/MANIFEST.MF");
-	if (file.exists()) {
-		print("Cannot set main-class " + mainClass + ": " + file + " exists already!");
-		return false;
-	}
-
-	manifest = "Manifest-Version: 1.0\n"
-		+ "Main-Class: " + mainClass + "\n";
-	writeAndAddFile(manifest, file);
-	return true;
 }
 
 void editFakefile(String target, String stripPath) {
@@ -333,10 +322,6 @@ for (Rule rule : rules) {
 	editParentPOM(stripPath);
 	fsckEclipse(stripPath);
 	editFakefile(target, stripPath);
-	if (!handleMainClass(rule, stripPath)) {
-		errors++;
-		continue;
-	}
 
 	if (stripPath.endsWith("/"))
 		stripPath = stripPath.substring(0, stripPath.length() - 1);
