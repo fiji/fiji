@@ -11,6 +11,11 @@ snapshot) mode=snapshots;;
 *) echo "Usage: $0 [release|snapshot]" >&2; exit 1;;
 esac
 platform="$2"
+case "$platform" in
+osx*)
+	platform=macosx
+	;;
+esac
 
 groupId=net/imagej
 artifactId=ij-launcher
