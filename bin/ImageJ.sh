@@ -7,11 +7,18 @@
 DIRECTORY="`dirname "$0"`"
 PATHSEPARATOR=:
 ISWINDOWS=
+ISCYGWIN=
 case "$(uname -s)" in
 MINGW*)
 	ISWINDOWS=t
 	PATHSEPARATOR=";"
 	FIJI_ROOT="$(cd "$DIRECTORY" && pwd -W)"
+	;;
+CYGWIN*)
+	ISWINDOWS=t
+	ISCYGWIN=t
+	PATHSEPARATOR=";"
+	FIJI_ROOT="$(cygpath -d "$(cd "$DIRECTORY" && pwd)" | tr \\\\ /)"
 	;;
 *)
 	FIJI_ROOT="$(cd "$DIRECTORY" && pwd)"
