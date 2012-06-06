@@ -295,7 +295,6 @@ parser = fake.parse(new FileInputStream(new File(fijiDir, "Fakefile")), fijiDir)
 parser.parseRules(new ArrayList());
 
 errors = 0;
-message = "";
 
 if (bsh.args.length == 1 && bsh.args[0].equals("--all")) {
 	bsh.args = new String[0];
@@ -342,10 +341,9 @@ for (Rule rule : rules) {
 	if (stripPath.endsWith("/"))
 		stripPath = stripPath.substring(0, stripPath.length() - 1);
 	stripPath = stripPath.substring(stripPath.lastIndexOf('/') + 1);
-	message += (message.equals("") ? "" : ", ") + stripPath;
+	SimpleExecuter.exec(fijiDir, new String[] { "git", "commit", "-m", "Mavenize " + stripPath });
 }
 
 if (errors > 0)
 	System.exit(1);
 
-SimpleExecuter.exec(fijiDir, new String[] { "git", "commit", "-m", "Mavenize " + message });
