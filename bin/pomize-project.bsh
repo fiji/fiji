@@ -109,18 +109,20 @@ void writeAndAddFile(String contents, File file) {
 	SimpleExecuter.exec(fijiDir, new String[] { "git", "add", file.getPath() });
 }
 
-String getGroupId(String artifact) {
+String[] getGroupIdAndVersion(String artifact) {
 	if ("ij".equals(artifact))
-		return "net.imagej";
+		return new String[] { "net.imagej", "${imagej1.version}" };
 	if ("junit".equals(artifact))
-		return "junit";
-	if ("jzlib".equals(artifact) || "jsch".equals(artifact))
-		return "com.jcraft";
+		return new String[] { "junit", "${junit.version}" };
+	if ("jzlib".equals(artifact))
+		return new String[] { "com.jcraft", "1.0.7" };
+	if ("jsch".equals(artifact))
+		return new String[] { "com.jcraft", "0.1.37" };
 	if ("javassist".equals(artifact))
-		return "org.javassist";
+		return new String[] { "org.javassist", "3.16.1.GA" };
 	if ("Image_5D".equals(artifact))
-		return "net.imagej";
-	return "fiji";
+		return new String[] { "net.imagej", "1.2.5" };
+	return new String[] { "fiji", "${imagej.version}" };
 }
 
 String getMainClass(Rule rule) {
@@ -140,7 +142,10 @@ void writePOM(String target, Rule rule) {
 			artifact = matcher.group(1);
 			version = matcher.group(2);
 		}
-		group = getGroupId(artifact);
+		String[] groupAndVersion = getGroupIdAndVersion(artifact);
+		group = groupAndVersion[0];
+		if (version == null)
+			version = groupAndVersion[1];
 		if (rule.target.endsWith("/" + artifact + ".jar"))
 			continue;
 
