@@ -772,6 +772,9 @@ public class MiniMaven {
 				File file = new File(System.getProperty("ij.dir"), "jars/" + jarName);
 				if (file.exists())
 					return fakePOM(file, dependency);
+				file = new File(System.getProperty("ij.dir"), "plugins/" + jarName);
+				if (file.exists())
+					return fakePOM(file, dependency);
 				if (!quiet)
 					err.println("Cannot find version for artifact " + dependency.artifactId + " (dependency of " + coordinate.artifactId + ")");
 				return cacheAndReturn(key, null);
