@@ -10,6 +10,7 @@ release) mode=releases;;
 snapshot) mode=snapshots;;
 *) echo "Usage: $0 [release|snapshot]" >&2; exit 1;;
 esac
+platform="$2"
 
 groupId=net/imagej
 artifactId=ij-launcher
@@ -76,18 +77,54 @@ download () {
 	target=$(echo "$2" | sed 's/ImageJ-/fiji-/')
 	case "$target" in fiji-linux32) target=fiji-linux;; esac
 	cp $2 $target
+	if test ! -z "$platform"
+	then
+		cp $2 ImageJ$exe
+		cp $2 fiji$exe
+	fi
+}
+
+download_platform () {
+	case "$1" in
+	win32)
+		download x86-Windows ImageJ-win32.exe
+		;;
+	win64)
+		download amd64-Windows ImageJ-win64.exe
+		;;
+	tiger)
+		download i386-MacOSX Contents/MacOS/ImageJ-tiger
+		;;
+	macosx)
+		download x86_64-MacOSX Contents/MacOS/ImageJ-macosx
+		;;
+	linux)
+		download i386-Linux ImageJ-linux32
+		;;
+	linux32)
+		download i386-Linux ImageJ-linux32
+		;;
+	linux64)
+		download amd64-Linux ImageJ-linux64
+		;;
+	*)
+		echo "Unknown platform: $1" >&2
+		exit 1
+		;;
+	esac
 }
 
 curl $baseurl/$basename.nar > jars/ij-launcher.jar
 ./bin/fix-java6-classes.sh jars/ij-launcher.jar
 
-download x86-Windows ImageJ-win32.exe
-download amd64-Windows ImageJ-win64.exe
-
-download i386-MacOSX Contents/MacOS/ImageJ-tiger
-download x86_64-MacOSX Contents/MacOS/ImageJ-macosx
-
-download i386-Linux ImageJ-linux32
-download amd64-Linux ImageJ-linux64
+if test -z "$platform"
+then
+	for p in win32 win64 tiger macosx linux32 linux64
+	do
+		download_platform $p
+	done
+else
+	download_platform "$platform"
+fi
 
 rm -rf $tmpdir
