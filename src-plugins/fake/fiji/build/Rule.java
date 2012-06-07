@@ -472,7 +472,7 @@ public abstract class Rule implements Comparable<Rule> {
 				+ " because of " + configPath);
 		}
 
-		File file = new File(cwd, source);
+		File file = new File(Util.makePath(cwd, source));
 		InputStream input = new FileInputStream(file);
 		JarInputStream in = new JarInputStream(input);
 
