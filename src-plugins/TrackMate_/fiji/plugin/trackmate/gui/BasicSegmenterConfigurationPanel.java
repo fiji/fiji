@@ -12,7 +12,7 @@ public class BasicSegmenterConfigurationPanel extends LogSegmenterConfigurationP
 
 	public BasicSegmenterConfigurationPanel() {
 		super();
-		JComponent[] uselessComponents = new JComponent[] {
+		final JComponent[] uselessComponents = new JComponent[] {
 				super.jCheckBoxMedianFilter,
 				super.jCheckSubPixel, 
 				super.jLabelThreshold,
@@ -21,7 +21,7 @@ public class BasicSegmenterConfigurationPanel extends LogSegmenterConfigurationP
 		for(JComponent c : uselessComponents)
 			c.setVisible(false);
 	}
-	
+
 	@Override
 	public void setSegmenterSettings(TrackMateModel model) {
 		jTextFieldBlobDiameter.setText(""+(((BasicSegmenterSettings)model.getSettings().segmenterSettings).expectedRadius * 2));
@@ -32,12 +32,12 @@ public class BasicSegmenterConfigurationPanel extends LogSegmenterConfigurationP
 				.replace("<p>", "<p align=\"justify\">")
 				.replace("<html>", "<html><p align=\"justify\">"));
 	}
-	
+
 	@Override
 	public SegmenterSettings getSegmenterSettings() {
 		BasicSegmenterSettings ss = new BasicSegmenterSettings();
 		ss.expectedRadius = Float.parseFloat(jTextFieldBlobDiameter.getText())/2;
 		return ss;
 	}
-	
+
 }

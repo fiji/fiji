@@ -23,7 +23,7 @@ import fiji.plugin.trackmate.tracking.TrackerSettings;
  * @author Jean-Yves Tinevez <tinevez@pasteur.fr> - 2010-2011
  */
 public class SimpleLAPTrackerSettingsPanel extends TrackerConfigurationPanel {
-	
+
 	private static final long serialVersionUID = 4099537392544048109L;
 	private JLabel jLabelLinkingMaxDistanceUnit;
 	private JLabel jLabelTrackerName;
@@ -33,29 +33,29 @@ public class SimpleLAPTrackerSettingsPanel extends TrackerConfigurationPanel {
 	private JNumericTextField jTextFieldGapClosingDistanceCutoff;
 	private JNumericTextField jTextFieldLinkingDistance;
 	private JLabel jLabelTrackerDescription;
-	
+
 	private LAPTrackerSettings settings;
 
 	/*
 	 * CONSTRUCTOR
 	 */
-	
-	
+
+
 	public SimpleLAPTrackerSettingsPanel() {
 		initGUI();
 	}
-	
+
 	/*
 	 * PUBLIC METHODS
 	 */
-	
+
 	@Override
 	public void setTrackerSettings(TrackMateModel model) {
 		this.settings = (LAPTrackerSettings) model.getSettings().trackerSettings;
 		echoSettings(model);
-		
+
 	};
-	
+
 	@Override
 	public TrackerSettings getTrackerSettings() {
 		// Default ones
@@ -74,7 +74,7 @@ public class SimpleLAPTrackerSettingsPanel extends TrackerConfigurationPanel {
 	/*
 	 * PRIVATE METHODS
 	 */
-	
+
 	private void echoSettings(TrackMateModel model) {
 		jLabelTrackerName.setText(model.getSettings().tracker.toString());
 		jLabelTrackerDescription.setText(model.getSettings().tracker.getInfoText()
@@ -88,7 +88,7 @@ public class SimpleLAPTrackerSettingsPanel extends TrackerConfigurationPanel {
 		jLabelGapClosingTimeCutoffUnit.setText(model.getSettings().timeUnits);
 		jLabelLinkingMaxDistanceUnit.setText(model.getSettings().spaceUnits);
 	}
-	
+
 	private void initGUI() {
 		try {
 			this.setPreferredSize(new java.awt.Dimension(300, 500));
@@ -167,7 +167,7 @@ public class SimpleLAPTrackerSettingsPanel extends TrackerConfigurationPanel {
 				this.add(jLabelGapClosingTimeCutoffUnit, new GridBagConstraints(2, 6, 1, 1, 0.0, 0.0, GridBagConstraints.EAST, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 10), 0, 0));
 				jLabelGapClosingTimeCutoffUnit.setFont(FONT);
 			}
-			
+
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

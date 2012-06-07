@@ -287,20 +287,33 @@ public class LAPTracker extends MultiThreadedBenchmarkAlgorithm implements SpotT
 
 		// Skip 2nd step if there is no rules to link track segments
 		if (!settings.allowGapClosing && !settings.allowSplitting && !settings.allowMerging) {
+			logger.setProgress(0.75f);
 			return true;
 		}
 
 		// Step 2 - Link track segments into final tracks
 
 		// Create cost matrix
+		logger.setStatus("Creating cost matrix");
 		tstart = System.currentTimeMillis();
-		if (!createTrackSegmentCostMatrix()) return false;
+		if (!createTrackSegmentCostMatrix()) {
+			logger.error("  Cost matrix for track segments failed on following error: "+errorMessage+"\n");
+			logger.error("  Skipping track segment LAP.\n");
+			logger.setProgress(0);
+			logger.setStatus("");
+			tend = System.currentTimeMillis();
+			processingTime += (tend-tstart);
+			logger.log(String.format("  Track segment LAP aborted after %.1f s.\n", (tend-tstart)/1e3f));
+			return true; // We return true because we can RECOVER from this error.
+		}
+		
 		tend = System.currentTimeMillis();
 		logger.setProgress(0.75f);
 		logger.log(String.format("  Cost matrix for track segments created in %.1f s.\n", (tend-tstart)/1e3f));
 		processingTime += (tend-tstart);
 
 		// Solve LAP
+		logger.setStatus("Solving track segment LAP");
 		tstart = System.currentTimeMillis();
 		if (!linkTrackSegmentsToFinalTracks()) return false;
 		tend = System.currentTimeMillis();

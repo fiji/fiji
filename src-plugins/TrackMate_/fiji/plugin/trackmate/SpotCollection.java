@@ -9,20 +9,23 @@ import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
+import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import mpicbg.imglib.multithreading.SimpleMultiThreading;
 
 /**
- * A utility class that wrap the {@link TreeMap} we use to store the spots contained
+ * A utility class that wrap the {@link SortedMap} we use to store the spots contained
  * in each frame with a few utility methods.
- * @author Jean-Yves Tinevez <jeanyves.tinevez@gmail.com> - Feb 6, 2011
+ * <p>
+ * Internally we rely on ConcurrentSkipListMap to allow concurrent access without clashes.
+ * @author Jean-Yves Tinevez <jeanyves.tinevez@gmail.com> - Feb - June 2011
  *
  */
-public class SpotCollection implements Iterable<Spot>,  SortedMap<Integer, List<Spot>>  {
+public class SpotCollection implements Iterable<Spot>, SortedMap<Integer, List<Spot>>  {
 
 	/** The frame by frame list of spot this object wrap. */
-	private TreeMap<Integer, List<Spot>> content;
+	private ConcurrentSkipListMap<Integer, List<Spot>> content;
 
 	/*
 	 * CONSTRUCTORS
@@ -32,7 +35,7 @@ public class SpotCollection implements Iterable<Spot>,  SortedMap<Integer, List<
 	 * Construct a new SpotCollection by wrapping the given {@link TreeMap} (and using its 
 	 * comparator, if any).
 	 */
-	public SpotCollection(TreeMap<Integer, List<Spot>> content) {
+	public SpotCollection(ConcurrentSkipListMap<Integer, List<Spot>> content) {
 		this.content = content;
 
 	}
@@ -41,7 +44,7 @@ public class SpotCollection implements Iterable<Spot>,  SortedMap<Integer, List<
 	 * Construct a new empty spot collection, with the natural order based comparator.
 	 */
 	public SpotCollection() {
-		this(new TreeMap<Integer, List<Spot>>());
+		this(new ConcurrentSkipListMap<Integer, List<Spot>>());
 	}
 
 	/*

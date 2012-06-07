@@ -1,4 +1,6 @@
 package fiji.plugin.trackmate.gui;
+import static fiji.plugin.trackmate.gui.TrackMateWizard.FONT;
+import static fiji.plugin.trackmate.gui.TrackMateWizard.SMALL_FONT;
 import ij.ImagePlus;
 import ij.WindowManager;
 
@@ -15,29 +17,17 @@ import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-
-import javax.swing.WindowConstants;
 import javax.swing.SwingUtilities;
-import static fiji.plugin.trackmate.gui.TrackMateWizard.FONT;
-import static fiji.plugin.trackmate.gui.TrackMateWizard.SMALL_FONT;
+import javax.swing.WindowConstants;
 
 
 public class ImagePlusChooser extends javax.swing.JFrame {
 
 	private static final long serialVersionUID = 322598397229876595L;
 
-	{
-		//Set Look & Feel
-		try {
-			javax.swing.UIManager.setLookAndFeel(javax.swing.UIManager.getSystemLookAndFeelClassName());
-		} catch(Exception e) {
-			e.printStackTrace();
-		}
-	}
-
 	public final ActionEvent OK_BUTTON_PUSHED = new ActionEvent(this, 0, "OK");
 	public final ActionEvent CANCEL_BUTTON_PUSHED = new ActionEvent(this, 1, "Cancel");
-	
+
 	private JPanel jPanelMain;
 	private JLabel jLabelSelect;
 	private JComboBox jComboBoxImage;
@@ -47,8 +37,8 @@ public class ImagePlusChooser extends javax.swing.JFrame {
 	private ArrayList<ActionListener> listeners = new ArrayList<ActionListener>();
 
 	/**
-	* Auto-generated main method to display this JFrame
-	*/
+	 * Auto-generated main method to display this JFrame
+	 */
 	public static void main(String[] args) {
 		SwingUtilities.invokeLater(new Runnable() {
 			public void run() {
@@ -58,11 +48,11 @@ public class ImagePlusChooser extends javax.swing.JFrame {
 			}
 		});
 	}
-	
+
 	/*
 	 * CONSTRUCTOR
 	 */
-	
+
 	public ImagePlusChooser() {
 		super();
 		initGUI();
@@ -85,20 +75,20 @@ public class ImagePlusChooser extends javax.swing.JFrame {
 			public void windowActivated(WindowEvent e) {}
 		});
 	}
-	
-	
+
+
 	/*
 	 * METHODS
 	 */
-	
+
 	public void addActionListener(ActionListener listener) {
 		listeners.add(listener);
 	}
-	
+
 	public boolean removeActionListener(ActionListener listener) {
 		return listeners.remove(listener);
 	}
-	
+
 	/**
 	 * Return the selected {@link ImagePlus} in the combo list, or <code>null</code> if 
 	 * the first choice "3D viewer" was selected.
@@ -110,18 +100,18 @@ public class ImagePlusChooser extends javax.swing.JFrame {
 		else 
 			return images.get(index-1);
 	}
-	
-	
+
+
 	/*
 	 * PRIVATE METHODS
 	 */
-	
+
 	private void fireAction(ActionEvent event) {
 		for(ActionListener listener : listeners) 
 			listener.actionPerformed(event);
 	}
-	
-	
+
+
 	/**
 	 * Refresh the name list of images, from the field {@link #images}, and send it
 	 * to the {@link JComboBox} that display then.
@@ -151,8 +141,8 @@ public class ImagePlusChooser extends javax.swing.JFrame {
 		}
 		return image_names;
 	}
-	
-	
+
+
 	private void initGUI() {
 		try {
 			setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);

@@ -61,15 +61,15 @@ public class FilterGuiPanel extends ActionListenablePanel implements ChangeListe
 	/*
 	 * CONSTRUCTOR
 	 */
-	
+
 	public FilterGuiPanel() {
 		initGUI();
 	}
-	
+
 	/*
 	 * PUBLIC METHODS
 	 */
-	
+
 	/**
 	 * Set the feature filters to display and layout this panel. Calling this method
 	 * re-instantiate some components, so that they reflect the passed arguments.
@@ -93,7 +93,7 @@ public class FilterGuiPanel extends ActionListenablePanel implements ChangeListe
 		for (int i = 0; i < n_panels; i++) {
 			removeThresholdPanel();
 		}
-		
+
 		if (null != featureValues) {
 
 			if (null != filters) {
@@ -108,7 +108,7 @@ public class FilterGuiPanel extends ActionListenablePanel implements ChangeListe
 
 			}
 		}
-		
+
 		// Color panel
 		if (jPanelColorByFeatureGUI != null) {
 			jPanelBottom.remove(jPanelColorByFeatureGUI);
@@ -120,7 +120,7 @@ public class FilterGuiPanel extends ActionListenablePanel implements ChangeListe
 
 		// Title
 		jTopLabel.setText("      Set filters on "+objectDescription);
-		
+
 		// Info text
 		updateInfoText();
 	}
@@ -192,7 +192,7 @@ public class FilterGuiPanel extends ActionListenablePanel implements ChangeListe
 	public void addFilterPanel(FeatureFilter filter) {
 		if (null == filter)
 			return;
-		
+
 		int filterIndex = features.indexOf(filter.feature);
 		FilterPanel tp = new FilterPanel(features, featureNames, featureValues, filterIndex);
 		tp.setThreshold(filter.value);
@@ -250,7 +250,7 @@ public class FilterGuiPanel extends ActionListenablePanel implements ChangeListe
 				break;
 			}
 		}
-		
+
 		if (nobjects == 0)	{
 			info = "No objects.";
 		} else if (featureFilters == null || featureFilters.isEmpty() ) {

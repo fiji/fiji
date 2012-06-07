@@ -24,17 +24,17 @@ public class JPanelFeatureSelectionGui extends javax.swing.JPanel {
 	private JPanel jPanelButtons;
 	private JButton jButtonRemove;
 	private JButton jButtonAdd;
-	
+
 	private Stack<JPanelFeaturePenalty> featurePanels = new Stack<JPanelFeaturePenalty>();
 	private List<String> features;
 	private Map<String, String> featureNames;
 	private int index;
-	
+
 	public JPanelFeatureSelectionGui() {
 		initGUI();
 		index = -1;
 	}
-	
+
 	/*
 	 * PUBLIC METHODS
 	 */
@@ -67,14 +67,14 @@ public class JPanelFeatureSelectionGui extends javax.swing.JPanel {
 		// Add buttons back
 		add(jPanelButtons);
 	}
-	
+
 	public Map<String, Double>	getFeatureWeights() {
 		Map<String, Double> weights = new HashMap<String, Double>(featurePanels.size());
 		for (JPanelFeaturePenalty panel : featurePanels) 
 			weights.put(panel.getSelectedFeature(), panel.getPenaltyWeight());
 		return weights;
 	}
-	
+
 	@Override
 	public void setEnabled(boolean enabled) {
 		super.setEnabled(enabled);
@@ -86,11 +86,11 @@ public class JPanelFeatureSelectionGui extends javax.swing.JPanel {
 		for(Component component : components)
 			component.setEnabled(enabled);
 	}
-	
+
 	/*
 	 * PRIVATE METHODS
 	 */
-	
+
 	private void addButtonPushed() {
 		index = index + 1;
 		if (index >= features.size())
@@ -104,7 +104,7 @@ public class JPanelFeatureSelectionGui extends javax.swing.JPanel {
 		setSize(size.width, size.height + panel.getSize().height);
 		revalidate();
 	}
-	
+
 	private void removeButtonPushed() {
 		if (featurePanels.isEmpty())
 			return;
@@ -114,7 +114,7 @@ public class JPanelFeatureSelectionGui extends javax.swing.JPanel {
 		setSize(size.width, size.height - panel.getSize().height);
 		revalidate();
 	}
-	
+
 	private void initGUI() {
 		try {
 			BoxLayout layout = new BoxLayout(this, BoxLayout.Y_AXIS);
@@ -132,7 +132,7 @@ public class JPanelFeatureSelectionGui extends javax.swing.JPanel {
 					jButtonRemove.addActionListener(new ActionListener() {
 						public void actionPerformed(ActionEvent e) {
 							removeButtonPushed();
-							
+
 						}
 					});
 				}

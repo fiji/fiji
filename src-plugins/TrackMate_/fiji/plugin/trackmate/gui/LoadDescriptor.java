@@ -6,7 +6,7 @@ public class LoadDescriptor extends SomeDialogDescriptor {
 
 
 	public static final String DESCRIPTOR = "LoadingPanel";
-	
+
 	@Override
 	public String getDescriptorID() {
 		return DESCRIPTOR;

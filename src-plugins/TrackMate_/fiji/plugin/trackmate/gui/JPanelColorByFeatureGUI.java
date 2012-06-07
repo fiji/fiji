@@ -28,7 +28,7 @@ public class JPanelColorByFeatureGUI extends ActionListenablePanel {
 	/*
 	 * FIELDS
 	 */
-		
+
 	private static final long serialVersionUID = 498572562002300656L;
 	/**
 	 * This action is fired when the feature to color in the "Set color by feature"
@@ -40,13 +40,13 @@ public class JPanelColorByFeatureGUI extends ActionListenablePanel {
 	private JPanel jPanelByFeature;
 	private Canvas canvasColor;
 	private JPanel jPanelColor;
-	
+
 	protected InterpolatePaintScale colorMap = InterpolatePaintScale.Jet;
 
 	/*
 	 * DEFAULT VISIBILITY
 	 */
-	
+
 	Map<String, double[]> featureValues;
 	String setColorByFeature;
 	private Map<String, String> featureNames;
@@ -58,20 +58,19 @@ public class JPanelColorByFeatureGUI extends ActionListenablePanel {
 	/*
 	 * CONSTRUCTOR
 	 */
-	
+
 	public JPanelColorByFeatureGUI(final List<String> features, final Map<String, String> featureNames, final ActionListenablePanel caller) {
 		super();
 		this.features = features;
 		this.featureNames = featureNames;
 		this.caller = caller;
 		initGUI();
-		
 	}
-	
+
 	/*
 	 * PUBLIC METHODS
 	 */
-	
+
 	/**
 	 * Forward the enabled flag to all components off this panel.
 	 */
@@ -81,12 +80,12 @@ public class JPanelColorByFeatureGUI extends ActionListenablePanel {
 		jComboBoxSetColorBy.setEnabled(enabled);
 		canvasColor.setEnabled(enabled);
 	}
-	
-	
+
+
 	/*
 	 * PRIVATE METHODS
 	 */
-	
+
 	/**
 	 * Forward the 'color by feature' action to the caller of this GUI.
 	 */
@@ -98,13 +97,13 @@ public class JPanelColorByFeatureGUI extends ActionListenablePanel {
 			setColorByFeature = features.get(selection-1);
 		caller.fireAction(COLOR_FEATURE_CHANGED);
 	}
-	
+
 	private void repaintColorCanvas(Graphics g) {
 		if (null == setColorByFeature) {
 			g.clearRect(0, 0, canvasColor.getWidth(), canvasColor.getHeight());
 			return;
 		}
-		
+
 		final double[] values = featureValues.get(setColorByFeature);
 		if (null == values) {
 			g.clearRect(0, 0, canvasColor.getWidth(), canvasColor.getHeight());
@@ -114,11 +113,11 @@ public class JPanelColorByFeatureGUI extends ActionListenablePanel {
 		double min = Float.POSITIVE_INFINITY;
 		double val;
 		for (int i = 0; i < values.length; i++) {
-				val = values[i];
-				if (val > max) max = val;
-				if (val < min) min = val;
+			val = values[i];
+			if (val > max) max = val;
+			if (val < min) min = val;
 		}
-		
+
 		final int width = canvasColor.getWidth();
 		final int height = canvasColor.getHeight();
 		float alpha;
@@ -135,10 +134,10 @@ public class JPanelColorByFeatureGUI extends ActionListenablePanel {
 		g.drawString(minStr, 1, height/2 + fm.getHeight()/2);
 		g.drawString(maxStr, width - fm.stringWidth(maxStr)-1, height/2 + fm.getHeight()/2);
 	}
-	
+
 
 	private void initGUI() {
-		
+
 		{
 			BorderLayout layout = new BorderLayout();
 			setLayout(layout);

@@ -12,13 +12,16 @@ public class SegmenterConfigurationPanelDescriptor implements WizardPanelDescrip
 	public static final String DESCRIPTOR = "SegmenterConfigurationPanel";
 	private TrackMate_ plugin;
 	private SegmenterConfigurationPanel configPanel;
+	private TrackMateWizard wizard;
 	
 	/*
 	 * METHODS
 	 */
 
 	@Override
-	public void setWizard(TrackMateWizard wizard) { }
+	public void setWizard(TrackMateWizard wizard) { 
+		this.wizard = wizard;
+	}
 
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	@Override
@@ -70,6 +73,7 @@ public class SegmenterConfigurationPanelDescriptor implements WizardPanelDescrip
 	@Override
 	public void aboutToDisplayPanel() {
 		configPanel.setSegmenterSettings(plugin.getModel());
+		wizard.setNextButtonEnabled(true);
 	}
 
 	@Override

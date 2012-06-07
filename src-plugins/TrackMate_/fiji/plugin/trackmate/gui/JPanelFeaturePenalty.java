@@ -20,18 +20,18 @@ public class JPanelFeaturePenalty extends javax.swing.JPanel {
 	private final List<String> features;
 	private Map<String, String> featureNames;
 
-	public JPanelFeaturePenalty(List<String> features, Map<String, String> featureNames, int index) {
+	public JPanelFeaturePenalty(final List<String> features, final Map<String, String> featureNames, final int index) {
 		super();
 		this.features = features;
 		this.featureNames = featureNames;
 		initGUI();
 		jComboBoxFeature.setSelectedIndex(index);
 	}
-	
+
 	/*
 	 * PUBLIC METHODS
 	 */
-	
+
 	public void setSelectedFeature(String feature, double weight) {
 		int index = features.indexOf(feature);
 		if (index < 0) {
@@ -40,26 +40,26 @@ public class JPanelFeaturePenalty extends javax.swing.JPanel {
 		jComboBoxFeature.setSelectedIndex(index);
 		jTextFieldFeatureWeight.setText(""+weight);
 	}
-	
+
 	public String getSelectedFeature() {
 		return features.get(jComboBoxFeature.getSelectedIndex());
 	}
-	
+
 	public double getPenaltyWeight() {
 		return Double.parseDouble(jTextFieldFeatureWeight.getText());
 	}
-	
+
 	@Override
 	public void setEnabled(boolean enabled) {
 		super.setEnabled(enabled);
 		jComboBoxFeature.setEnabled(enabled);
 		jTextFieldFeatureWeight.setEnabled(enabled);
 	}
-	
+
 	/*
 	 * PRIVATE METHODS
 	 */
-	
+
 	private void initGUI() {
 		try {
 			this.setPreferredSize(new java.awt.Dimension(280, 40));

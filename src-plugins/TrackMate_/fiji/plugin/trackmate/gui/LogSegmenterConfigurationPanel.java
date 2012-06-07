@@ -44,20 +44,20 @@ public class LogSegmenterConfigurationPanel extends SegmenterConfigurationPanel 
 	protected JCheckBox jCheckSubPixel;
 	/** The {@link LogSegmenterSettings} object set by this panel. */
 	private LogSegmenterSettings settings = new LogSegmenterSettings();
-	
+
 	/*
 	 * CONSTRUCTOR
 	 */
-	
-	
+
+
 	public LogSegmenterConfigurationPanel() {
 		initGUI();
 	}
-	
+
 	/*
 	 * METHODS
 	 */
-	
+
 	/**
 	 * Update the settings object given with the parameters this panel allow to tune its
 	 * {@link SegmenterSettings} field, with the sub-fields
@@ -73,18 +73,18 @@ public class LogSegmenterConfigurationPanel extends SegmenterConfigurationPanel 
 		settings.doSubPixelLocalization = jCheckSubPixel.isSelected();
 		return settings;
 	}
-	
+
 	@Override
 	public void setSegmenterSettings(TrackMateModel model) {
 		this.settings = (LogSegmenterSettings) model.getSettings().segmenterSettings;
 		echoSettings(model);
 	}
-	
-	
+
+
 	/*
 	 * PRIVATE METHODS
 	 */
-	
+
 	/**
 	 * Fill the text fields with parameters grabbed from current ImagePlus.
 	 */
@@ -94,7 +94,7 @@ public class LogSegmenterConfigurationPanel extends SegmenterConfigurationPanel 
 			return;
 		jTextFieldThreshold.setText(String.format("%.0f", imp.getProcessor().getMinThreshold()));
 	}
-	
+
 	private void echoSettings(TrackMateModel model) {
 		jLabelBlobDiameterUnit.setText(model.getSettings().spaceUnits);
 		jLabelSegmenterName.setText(model.getSettings().segmenter.toString());
@@ -102,24 +102,24 @@ public class LogSegmenterConfigurationPanel extends SegmenterConfigurationPanel 
 				.replace("<br>", "")
 				.replace("<p>", "<p align=\"justify\">")
 				.replace("<html>", "<html><p align=\"justify\">"));
-		
+
 		jTextFieldBlobDiameter.setText(""+(2*settings.expectedRadius));
 		jCheckBoxMedianFilter.setSelected(settings.useMedianFilter);
 		jTextFieldThreshold.setText(""+settings.threshold);
 		jCheckSubPixel.setSelected(settings.doSubPixelLocalization);
 	}
-	
+
 	protected void initGUI() {
 		try {
 			GridBagLayout thisLayout = new GridBagLayout();
 			this.setPreferredSize(new java.awt.Dimension(246, 399));
 			thisLayout.rowWeights = new double[] {0.0, 0.0, 0.5, 0.0, 0.0, 0.0, 0.0, 0.5, 0.0};
 			thisLayout.rowHeights = new int[] {15, 15, 7, 15, 15, 15, 15, 7, 15};
-//			thisLayout.rowWeights = new double[] {0.0, 0.0, 0.5, 0.0, 0.0, 0.0, 0.5, 0.0};
-//			thisLayout.rowHeights = new int[] {15, 15, 7, 15, 15, 15, 7, 15};
+			//			thisLayout.rowWeights = new double[] {0.0, 0.0, 0.5, 0.0, 0.0, 0.0, 0.5, 0.0};
+			//			thisLayout.rowHeights = new int[] {15, 15, 7, 15, 15, 15, 7, 15};
 			thisLayout.columnWeights = new double[] {0.1, 0.1, 0.1};
 			thisLayout.columnWidths = new int[] {7, 7, 7};
-			
+
 			this.setLayout(thisLayout);
 			{
 				jLabel1 = new JLabel();

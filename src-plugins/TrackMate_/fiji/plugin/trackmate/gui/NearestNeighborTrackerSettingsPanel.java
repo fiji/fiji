@@ -1,16 +1,17 @@
 package fiji.plugin.trackmate.gui;
-import java.awt.Font;
-
-import javax.swing.JLabel;
 
 import static fiji.plugin.trackmate.gui.TrackMateWizard.BIG_FONT;
 import static fiji.plugin.trackmate.gui.TrackMateWizard.FONT;
 import static fiji.plugin.trackmate.gui.TrackMateWizard.TEXTFIELD_DIMENSION;
 
+import java.awt.Font;
+
+import javax.swing.JLabel;
+import javax.swing.SwingConstants;
+
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.tracking.TrackerSettings;
 import fiji.plugin.trackmate.tracking.kdtree.NearestNeighborTrackerSettings;
-import javax.swing.SwingConstants;
 
 public class NearestNeighborTrackerSettingsPanel extends TrackerConfigurationPanel {
 
@@ -53,7 +54,7 @@ public class NearestNeighborTrackerSettingsPanel extends TrackerConfigurationPan
 		lblSettingsForTracker.setBounds(10, 11, 280, 20);
 		lblSettingsForTracker.setFont(FONT);
 		add(lblSettingsForTracker);
-		
+
 
 		labelTracker = new JLabel("<tracker name>");
 		labelTracker.setFont(BIG_FONT);
@@ -76,7 +77,7 @@ public class NearestNeighborTrackerSettingsPanel extends TrackerConfigurationPan
 		maxDistField.setBounds(184, 316, 62, 16);
 		maxDistField.setSize(TEXTFIELD_DIMENSION);
 		add(maxDistField);
-		
+
 		labelUnits = new JLabel("<unit>");
 		labelUnits.setFont(FONT);
 		labelUnits.setBounds(236, 314, 34, 20);
