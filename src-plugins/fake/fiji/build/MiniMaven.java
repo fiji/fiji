@@ -1035,6 +1035,10 @@ public class MiniMaven {
 				targetVersion = string;
 			else if (prefix.equals(">project>build>plugins>plugin>configuration>archive>manifest>mainClass") && "maven-jar-plugin".equals(currentPluginName))
 				mainClass = string;
+			/* This would be needed to compile clojure.jar. However, it does not work because we do not support the antrun plugin
+			else if (prefix.equals(">project>build>plugins>plugin>executions>execution>configuration>sources>source") && "build-helper-maven-plugin".equals(currentPluginName))
+				sourceDirectory = string;
+			*/
 			else if (debug)
 				err.println("Ignoring " + prefix);
 		}
