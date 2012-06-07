@@ -89,13 +89,17 @@ String readFile(File file) {
 	return out.toString();
 }
 
-String getBaseName(String target) {
+String getArtifactId(String target) {
 	String key = target;
 	if (key.endsWith(".jar"))
 		key = key.substring(0, key.length() - 4);
 	int slash = key.lastIndexOf('/');
 	if (slash >= 0)
 		key = key.substring(slash + 1);
+	if (key.equals("j3dcore"))
+		return "j3d-core";
+	if (key.equals("j3dutils"))
+		return "j3d-core-utils";
 	return key;
 }
 
@@ -182,7 +186,7 @@ void writePOM(String target, Rule rule) {
 	Pattern versionPattern = Pattern.compile(versionRegex);
 	dependencies = "";
 	for (String target : rule.getJarDependencies()) {
-		artifact = getBaseName(target);
+		artifact = getArtifactId(target);
 		version = null;
 		Matcher matcher = versionPattern.matcher(artifact);
 		if (matcher.matches()) {
@@ -203,8 +207,8 @@ void writePOM(String target, Rule rule) {
 			+ "\t\t</dependency>\n";
 	}
 
-	baseName = getBaseName(target);
-	groupAndVersion = getGroupIdAndVersion(baseName);
+	artifact = getArtifactId(target);
+	groupAndVersion = getGroupIdAndVersion(artifact);
 	pom = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
 		+ "<project xmlns=\"http://maven.apache.org/POM/4.0.0\"\n"
 		+ "\txmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n"
@@ -218,7 +222,7 @@ void writePOM(String target, Rule rule) {
 		+ "\t\t<version>2.0.0-SNAPSHOT</version>\n"
 		+ "\t</parent>\n"
 		+ "\n"
-		+ "\t<artifactId>" + baseName + "</artifactId>\n"
+		+ "\t<artifactId>" + artifact + "</artifactId>\n"
 		+ (groupAndVersion[0].equals("sc.fiji") ? "" : "\t<groupId>" + groupAndVersion[0] + "</groupId>\n")
 		+ (groupAndVersion[1].equals("${imagej.version}") ? "" : "\t<version>" + groupAndVersion[1] + "</version>\n")
 		+ "\n"
