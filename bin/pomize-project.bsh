@@ -26,6 +26,11 @@ if (bsh.args.length == 0) {
 
 File fijiDir = new File(System.getProperty("fiji.dir"));
 
+boolean isLicenseOrReadme(String fileName) {
+	fileName = fileName.toLowerCase();
+	return fileName.startsWith("license") || fileName.startsWith("readme") || fileName.startsWith("copying");
+}
+
 warnings = "";
 void moveSources(File sourceDirectory, File targetJavaDirectory, File targetResourceDirectory, File targetJavadocDirectory) {
 	File[] list = sourceDirectory.listFiles();
@@ -47,7 +52,7 @@ void moveSources(File sourceDirectory, File targetJavaDirectory, File targetReso
 		}
 		else if (file.isFile() && !new SimpleExecuter(fijiDir, new String[] { "git", "ls-files", file.getAbsolutePath() }).getOutput().equals("")) {
 			name = file.getName();
-			if (name.equals("plugins.config") || name.endsWith(".gif") || name.endsWith(".jpg") || name.endsWith(".png") || name.endsWith(".properties") || file.getAbsolutePath().indexOf("/services/") > 0) {
+			if (name.equals("plugins.config") || name.endsWith(".gif") || name.endsWith(".jpg") || name.endsWith(".png") || name.endsWith(".properties") || file.getAbsolutePath().indexOf("/services/") > 0 || isLicenseOrReadme(file.getName())) {
 				SimpleExecuter.exec(fijiDir, new String[] { "mkdir", "-p", targetResourceDirectory.getPath() });
 				SimpleExecuter.exec(fijiDir, new String[] { "git", "mv", file.getPath(), targetResourceFile.getPath() });
 			}
