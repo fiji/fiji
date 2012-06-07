@@ -13,19 +13,19 @@ public class LAPTrackerSettingsPanel extends TrackerConfigurationPanel {
 
 	private static final long serialVersionUID = 1L;
 	private JPanelTrackerSettingsMain jPanelMain;
-	
+
 	/*
 	 * CONSTRUCTOR
 	 */
-	
+
 	public LAPTrackerSettingsPanel() {
 		initGUI();
 	}
-	
+
 	/*
 	 * PUBLIC METHODS
 	 */
-	
+
 	@Override
 	public TrackerSettings getTrackerSettings() {
 		return jPanelMain.getSettings();
@@ -35,11 +35,11 @@ public class LAPTrackerSettingsPanel extends TrackerConfigurationPanel {
 	public void setTrackerSettings(TrackMateModel model) {
 		jPanelMain.echoSettings(model);
 	}
-	
+
 	/*
 	 * PRIVATE METHODS
 	 */
-	
+
 	private void initGUI() {
 		try {
 			BorderLayout thisLayout = new BorderLayout();

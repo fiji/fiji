@@ -36,6 +36,7 @@ public class LogPanel extends ActionListenablePanel {
 	public LogPanel() {
 		super();
 		initGUI();
+
 		logger = new Logger() {
 
 			@Override

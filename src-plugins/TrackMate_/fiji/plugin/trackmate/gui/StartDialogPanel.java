@@ -105,7 +105,7 @@ public class StartDialogPanel extends ActionListenablePanel implements WizardPan
 	public String getDescriptorID() {
 		return DESCRIPTOR;
 	}
-	
+
 	@Override
 	public String getComponentID() {
 		return DESCRIPTOR;
@@ -223,20 +223,20 @@ public class StartDialogPanel extends ActionListenablePanel implements WizardPan
 	 * enable the {@link #target} component.
 	 */
 	private void refresh() {
-		
+
 		if (null == imp) {
 			// Lock next button, because we still do not have a valid target image.
 			wizard.setNextButtonEnabled(false);
 			return;
 		}
-		
+
 		if (imp.getType() == ImagePlus.COLOR_RGB) {
 			// We do not know how to process RGB images
 			jLabelImageName.setText(imp.getShortTitle()+" is RGB: invalid.");
 			wizard.setNextButtonEnabled(false);
 			return;
 		}
-		
+
 		jLabelImageName.setText("Target: "+imp.getShortTitle());
 		jTextFieldPixelWidth.setText(String.format("%g", imp.getCalibration().pixelWidth));
 		jTextFieldPixelHeight.setText(String.format("%g", imp.getCalibration().pixelHeight));

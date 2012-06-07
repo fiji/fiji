@@ -19,33 +19,33 @@ import fiji.plugin.trackmate.InfoTextable;
  * A panel to let the user choose what displayer he wants to use.
  */
 public class ListChooserPanel <K extends InfoTextable> extends ActionListenablePanel {
-	
+
 	private static final long serialVersionUID = -1837635847479649545L;
 	protected JLabel jLabelHeader;
 	protected JComboBox jComboBoxChoice;
 	protected List<K> list;
 	protected JLabel jLabelHelpText;
 	protected String typeName;
-	
+
 	/*
 	 * CONSTRUCTOR
 	 */
-	
+
 	public ListChooserPanel(List<K> list, String typeName) {
 		super();
 		this.typeName = typeName;
 		this.list = list;
 		initGUI();
 	}
-	
+
 	/*
 	 * PUBLIC METHODS
 	 */
-	
+
 	public K getChoice() {
 		return list.get(jComboBoxChoice.getSelectedIndex());
 	}
-	
+
 
 	/*
 	 * PRIVATE METHODS
@@ -90,13 +90,13 @@ public class ListChooserPanel <K extends InfoTextable> extends ActionListenableP
 			e.printStackTrace();
 		}
 	}
-	
+
 	private void echo(K choice) {
 		jLabelHelpText.setText(choice.getInfoText()
 				.replace("<br>", "")
 				.replace("<p>", "<p align=\"justify\">")
 				.replace("<html>", "<html><p align=\"justify\">")
-			);
+				);
 	}
-	
+
 }

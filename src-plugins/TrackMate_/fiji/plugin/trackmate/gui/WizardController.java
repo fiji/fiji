@@ -163,23 +163,12 @@ public class WizardController implements ActionListener {
 
 		if (event == wizard.NEXT_BUTTON_PRESSED && actionFlag) {
 
-			new Thread("TrackMate moving to next state thread") {
-				@Override
-				public void run() {
-					next();
-				}
-			}.start();
-			
+			next();
+
 
 		} else if (event == wizard.PREVIOUS_BUTTON_PRESSED && actionFlag) {
 
-			new Thread("TrackMate moving to previous state thread") {
-				@Override
-				public void run() {
-					previous();
-				}
-			}.start();
-
+			previous();
 
 		} else if (event == wizard.LOAD_BUTTON_PRESSED && actionFlag) {
 
@@ -189,14 +178,8 @@ public class WizardController implements ActionListener {
 			wizard.setLoadButtonEnabled(false);
 			wizard.setPreviousButtonEnabled(false);
 			wizard.setNextButtonEnabled(false);
-			// Do the main job in another thread.
-			new Thread("TrackMate loading thread") {
-				@Override
-				public void run() {
-					load();
-				}
-			}.start();
-			
+
+			load();
 
 		} else if (event == wizard.SAVE_BUTTON_PRESSED && actionFlag) {
 
@@ -208,13 +191,8 @@ public class WizardController implements ActionListener {
 			wizard.setLoadButtonEnabled(false);
 			wizard.setPreviousButtonEnabled(false);
 			wizard.setNextButtonEnabled(false);
-			new Thread("TrackMate saving thread") {
-				@Override
-				public void run() {
-					save();
-				}
-			}.start();
 
+			save();
 
 		} else if ((event == wizard.NEXT_BUTTON_PRESSED || 
 				event == wizard.PREVIOUS_BUTTON_PRESSED || 
@@ -237,49 +215,53 @@ public class WizardController implements ActionListener {
 
 			// Display Track scheme
 			displayerPanel.jButtonShowTrackScheme.setEnabled(false);
-			new Thread("TrackScheme launching thread") {
-				public void run() {
-					try {
-						TrackSchemeFrame trackScheme = new TrackSchemeFrame(plugin.getModel());
-						trackScheme.setVisible(true);
-					} finally {
-						displayerPanel.jButtonShowTrackScheme.setEnabled(true);
-					}
-				}
-			}.start();
 
-		
+			try {
+				TrackSchemeFrame trackScheme = new TrackSchemeFrame(plugin.getModel());
+				trackScheme.setVisible(true);
+			} finally {
+				displayerPanel.jButtonShowTrackScheme.setEnabled(true);
+			}
+
 		}
 	}
 
 
 	private void next() {
 
-		// Execute leave action of the old panel
-		WizardPanelDescriptor oldDescriptor = wizard.getCurrentPanelDescriptor();
-		if (oldDescriptor != null) {
-			oldDescriptor.aboutToHidePanel();
+		wizard.setNextButtonEnabled(false);
+		try {
+
+			// Execute leave action of the old panel
+			WizardPanelDescriptor oldDescriptor = wizard.getCurrentPanelDescriptor();
+			if (oldDescriptor != null) {
+				oldDescriptor.aboutToHidePanel();
+			}
+
+			String id = oldDescriptor.getNextDescriptorID();
+			WizardPanelDescriptor panelDescriptor  = wizard.getPanelDescriptorFor(id);
+
+			// Check if the new panel has a next panel. If not, disable the next button
+			if (null == panelDescriptor.getNextDescriptorID()) {
+				wizard.setNextButtonEnabled(false);
+			}
+
+			// Re-enable the previous button, in case it was disabled
+			wizard.setPreviousButtonEnabled(true);
+
+			// Execute about to be displayed action of the new one
+			panelDescriptor.aboutToDisplayPanel();
+
+			// Display matching panel
+			wizard.showDescriptorPanelFor(id);
+
+			//  Show the panel in the dialog, and execute action after display
+			panelDescriptor.displayingPanel();
+
+		} finally {
+			
+			
 		}
-
-		String id = oldDescriptor.getNextDescriptorID();
-		WizardPanelDescriptor panelDescriptor  = wizard.getPanelDescriptorFor(id);
-
-		// Check if the new panel has a next panel. If not, disable the next button
-		if (null == panelDescriptor.getNextDescriptorID()) {
-			wizard.setNextButtonEnabled(false);
-		}
-
-		// Re-enable the previous button, in case it was disabled
-		wizard.setPreviousButtonEnabled(true);
-
-		// Execute about to be displayed action of the new one
-		panelDescriptor.aboutToDisplayPanel();
-
-		// Display matching panel
-		wizard.showDescriptorPanelFor(id);
-
-		//  Show the panel in the dialog, and execute action after display
-		panelDescriptor.displayingPanel();        
 
 	}
 

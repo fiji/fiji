@@ -27,7 +27,6 @@ public class ActionChooserPanel extends ListChooserPanel<TrackMateAction> implem
 	public static final String DESCRIPTOR = "ActionChooserPanel";
 	public final ActionEvent ACTION_STARTED = new ActionEvent(this, 0, "ActionStarted");
 	public final ActionEvent ACTION_FINISHED = new ActionEvent(this, 1, "ActionFinished");
-//	private TrackMateModel model;
 	private LogPanel logPanel;
 	private Logger logger;
 	private TrackMateWizard wizard;

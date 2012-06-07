@@ -12,10 +12,12 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
+import java.util.concurrent.ExecutionException;
 
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.SwingWorker;
 import javax.swing.WindowConstants;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -52,16 +54,17 @@ public class InitFilterPanel extends ActionListenablePanel implements WizardPane
 	private JPanel jPanelText;
 	private TrackMate_ plugin;
 	private Logger logger;
+	private TrackMateWizard wizard;
 
-	
+
 	/**
 	 * Default constructor, initialize component. 
 	 */
 	public InitFilterPanel() {
 		initGUI();
 	}
-	
-	
+
+
 	/*
 	 * PUBLIC METHOD
 	 */
@@ -72,9 +75,10 @@ public class InitFilterPanel extends ActionListenablePanel implements WizardPane
 	public FeatureFilter getFeatureThreshold() {
 		return new FeatureFilter(jPanelThreshold.getKey(), new Float(jPanelThreshold.getThreshold()), jPanelThreshold.isAboveThreshold());
 	}
-	
+
 	@Override
 	public void setWizard(TrackMateWizard wizard) { 
+		this.wizard = wizard;
 		this.logger = wizard.getLogger();
 	}
 
@@ -112,23 +116,49 @@ public class InitFilterPanel extends ActionListenablePanel implements WizardPane
 
 	@Override
 	public void aboutToDisplayPanel() {
-		TrackMateModel model = plugin.getModel();
-		
-		// Remove and redisplay threshold panel
-		features = model.getFeatureModel().getSpotFeatureValues();
-		regenerateThresholdPanel(features);
+		final TrackMateModel model = plugin.getModel();
 
-		Float initialFilterValue = model.getInitialSpotFilterValue();
-		if (null != initialFilterValue)
-			jPanelThreshold.setThreshold(initialFilterValue);
-		else
-			jPanelThreshold.setThreshold(0);
-		thresholdChanged();
+		SwingWorker<Map<String, double[]>, Void> worker = new SwingWorker<Map<String, double[]>, Void>() {
+
+			@Override
+			protected Map<String, double[]> doInBackground() throws Exception {
+				return model.getFeatureModel().getSpotFeatureValues();
+			}
+
+			@Override
+			protected void done() {
+				try {
+					features = get();
+
+					// Remove and redisplay threshold panel
+					regenerateThresholdPanel(features);
+
+					Float initialFilterValue = model.getInitialSpotFilterValue();
+					if (null != initialFilterValue)
+						jPanelThreshold.setThreshold(initialFilterValue);
+					else
+						jPanelThreshold.setThreshold(0);
+					thresholdChanged();
+
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (ExecutionException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+
+			}
+		};
+
+		worker.execute();
+
 	}
 
 	@Override
 	public void displayingPanel() {
 		thresholdChanged();
+		wizard.setNextButtonEnabled(true);
 	}
 
 	@Override
@@ -158,7 +188,7 @@ public class InitFilterPanel extends ActionListenablePanel implements WizardPane
 		if (jPanelThreshold != null) {
 			this.remove(jPanelThreshold);
 		}
-		
+
 		ArrayList<String> keys = new ArrayList<String>(1);
 		keys.add(Spot.QUALITY);
 		HashMap<String, String> keyNames = new HashMap<String, String>(1);
@@ -176,7 +206,7 @@ public class InitFilterPanel extends ActionListenablePanel implements WizardPane
 			}
 		});
 	}
-	
+
 	private void thresholdChanged() {
 		double threshold  = jPanelThreshold.getThreshold();
 		boolean isAbove = jPanelThreshold.isAboveThreshold();
@@ -203,7 +233,7 @@ public class InitFilterPanel extends ActionListenablePanel implements WizardPane
 			BorderLayout thisLayout = new BorderLayout();
 			this.setLayout(thisLayout);
 			this.setPreferredSize(new java.awt.Dimension(300, 500));
-			
+
 			{
 				jPanelFields = new JPanel();
 				this.add(jPanelFields, BorderLayout.SOUTH);
@@ -272,7 +302,7 @@ public class InitFilterPanel extends ActionListenablePanel implements WizardPane
 		InitFilterPanel panel = new InitFilterPanel();
 		panel.setPlugin(new TrackMate_(model));
 		panel.aboutToDisplayPanel();
-		
+
 		JFrame frame = new JFrame();
 		frame.getContentPane().add(panel);
 		panel.displayingPanel();

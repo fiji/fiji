@@ -47,6 +47,7 @@ public class SegmenterChoiceDescriptor implements WizardPanelDescriptor {
 	@Override
 	public void aboutToDisplayPanel() {
 		setCurrentChoiceFromPlugin();
+		wizard.setNextButtonEnabled(true);
 	}
 	
 	private void setCurrentChoiceFromPlugin() {
