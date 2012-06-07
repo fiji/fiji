@@ -47,7 +47,7 @@ Darwin)
 Linux)
 	os=Linux
 	case "$force32,$(uname -m)" in
-	t,x86_64)
+	,x86_64)
 		platform=linux64
 		arch=amd64
 		;;
