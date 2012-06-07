@@ -52,7 +52,7 @@ void moveSources(File sourceDirectory, File targetJavaDirectory, File targetReso
 		}
 		else if (file.isFile() && !new SimpleExecuter(fijiDir, new String[] { "git", "ls-files", file.getAbsolutePath() }).getOutput().equals("")) {
 			name = file.getName();
-			if (name.equals("plugins.config") || name.endsWith(".gif") || name.endsWith(".jpg") || name.endsWith(".png") || name.endsWith(".properties") || file.getAbsolutePath().indexOf("/services/") > 0 || isLicenseOrReadme(file.getName())) {
+			if (name.equals("plugins.config") || name.endsWith(".gif") || name.endsWith(".jpg") || name.endsWith(".png") || name.endsWith(".txt") || name.endsWith(".properties") || file.getAbsolutePath().indexOf("/services/") > 0 || isLicenseOrReadme(file.getName())) {
 				SimpleExecuter.exec(fijiDir, new String[] { "mkdir", "-p", targetResourceDirectory.getPath() });
 				SimpleExecuter.exec(fijiDir, new String[] { "git", "mv", file.getPath(), targetResourceFile.getPath() });
 			}
