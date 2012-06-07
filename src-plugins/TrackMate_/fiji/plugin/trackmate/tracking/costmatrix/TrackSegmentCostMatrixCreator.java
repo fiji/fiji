@@ -173,6 +173,7 @@ public class TrackSegmentCostMatrixCreator extends LAPTrackerCostMatrixCreator {
 			return false;
 		}
 		
+		try {
 		// 2 - Get a list of the middle points that can participate in merging and splitting
 		middlePoints = getTrackSegmentMiddlePoints(trackSegments);
 		
@@ -196,8 +197,14 @@ public class TrackSegmentCostMatrixCreator extends LAPTrackerCostMatrixCreator {
 		costs.setMatrix(topLeft.getRowDimension(), numRows - 1, 0, topLeft.getColumnDimension() - 1, bottomLeft);				// Initiating and merging alternative
 		costs.setMatrix(0, topLeft.getRowDimension() - 1, topLeft.getColumnDimension(), numCols - 1, topRight);					// Terminating and splitting alternative
 		costs.setMatrix(topLeft.getRowDimension(), numRows - 1, topLeft.getColumnDimension(), numCols - 1, bottomRight);		// Lower right (transpose of gap closing, mathematically required for LAP)		
-		
 		return true;
+		
+		} catch (OutOfMemoryError ome) {
+			errorMessage = "Not enough memory.";
+			costs = null;
+			return false;
+		}
+		
 	}
 	
 	
