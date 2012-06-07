@@ -156,6 +156,8 @@ void writePOM(String target, Rule rule) {
 			+ "\t\t</dependency>\n";
 	}
 
+	baseName = getBaseName(target);
+	groupAndVersion = getGroupIdAndVersion(baseName);
 	pom = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
 		+ "<project xmlns=\"http://maven.apache.org/POM/4.0.0\"\n"
 		+ "\txmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n"
@@ -164,12 +166,14 @@ void writePOM(String target, Rule rule) {
 		+ "\t<modelVersion>4.0.0</modelVersion>\n"
 		+ "\n"
 		+ "\t<parent>\n"
-		+ "\t\t<groupId>fiji</groupId>\n"
+		+ "\t\t<groupId>sc.fiji</groupId>\n"
 		+ "\t\t<artifactId>pom-fiji-plugins</artifactId>\n"
 		+ "\t\t<version>2.0.0-SNAPSHOT</version>\n"
 		+ "\t</parent>\n"
 		+ "\n"
-		+ "\t<artifactId>" + getBaseName(target) + "</artifactId>\n"
+		+ "\t<artifactId>" + baseName + "</artifactId>\n"
+		+ (groupAndVersion[0].equals("sc.fiji") ? "" : "\t<groupId>" + groupAndVersion[0] + "</groupId>\n")
+		+ (groupAndVersion[1].equals("${imagej.version}") ? "" : "\t<version>" + groupAndVersion[1] + "</version>\n")
 		+ "\n"
 		+ "\t<name>" + target + "</name>\n"
 		+ "\t<description></description>\n"
