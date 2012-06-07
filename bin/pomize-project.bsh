@@ -331,6 +331,7 @@ for (Rule rule : rules) {
 
 	String stripPath = rule.getStripPath();
 
+	SimpleExecuter.exec(fijiDir, new String[] { "rm", "-rf", stripPath + "/target" });
 	moveSources(stripPath);
 	writePOM(target, rule);
 	editParentPOM(stripPath);
