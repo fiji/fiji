@@ -11,7 +11,9 @@
 		<version>2.0.0-SNAPSHOT</version>
 	</parent>
 
+	<groupId>jama</groupId>
 	<artifactId>Jama</artifactId>
+	<version>1.0.2</version>
 
 	<name>jars/Jama.jar</name>
 	<description></description>
