@@ -521,7 +521,7 @@ misc/headless.jar[bin/make-headless-jar.bsh] <- jars/fiji-compat.jar jars/javass
 # We re-use ImageJ2's launcher now, so let's use the updater to perform
 # the job.
 
-ImageJ[sh bin/update-launcher.sh] <- plugins/Fiji_Updater.jar
+ImageJ[sh bin/download-launchers.sh snapshot $PLATFORM] <- plugins/Fiji_Updater.jar
 
 # legacy launcher
 
