@@ -109,20 +109,67 @@ void writeAndAddFile(String contents, File file) {
 	SimpleExecuter.exec(fijiDir, new String[] { "git", "add", file.getPath() });
 }
 
+String[] groupAndVersionMappings = {
+	"batik:batik:1.8",
+	"com.fifesoft:autocomplete:0.4",
+	"com.fifesoft:rsyntaxtextarea:1.4.1",
+	"com.itextpdf:itextpdf:5.1.1",
+	"com.jcraft:jsch:0.1.42",
+	"com.jcraft:jzlib:1.0.7",
+	"edu.mines:mines-jtk:20100113",
+	"jama:Jama:1.0.2",
+	"java3d:j3d-core-utils:1.5.2",
+	"java3d:j3d-core:1.5.2",
+	"java3d:vecmath:1.5.2",
+	"jfree:jcommon:1.0.15",
+	"jfree:jfreechart:1.0.13",
+	"jgraph:jgraphx:1.10.0.3",
+	"jgrapht:jgrapht-jdk1.6:0.8.1",
+	"junit:junit:${junit.version}",
+	"loci:loci_tools:4.4-SNAPSHOT",
+	"mpicbg:imglib-algorithms:${imagej.version}",
+	"mpicbg:imglib-ij:${imagej.version}",
+	"mpicbg:imglib-io:${imagej.version}",
+	"mpicbg:imglib:${imagej.version}",
+	"mpicbg:mpicbg:${imagej.version}",
+	"mpicbg:mpicbg_:${imagej.version}",
+	"net.imagej:Image_5D:1.2.5",
+	"net.imagej:ij:${imagej1.version}",
+	"net.imglib2:imglib2-algorithms-gpl:${imagej.version}",
+	"net.imglib2:imglib2-algorithms:${imagej.version}",
+	"net.imglib2:imglib2-ij:${imagej.version}",
+	"net.imglib2:imglib2-io:${imagej.version}",
+	"net.imglib2:imglib2-ops:${imagej.version}",
+	"net.imglib2:imglib2-ui:${imagej.version}",
+	"net.imglib2:imglib2:${imagej.version}",
+	"net.java.dev.jna:jna:3.2.7",
+	"nz.ac.waikato.cms.weka:weka-dev:3.7.6",
+	"org.apache.commons:commons-math:3.0-SNAPSHOT",
+	"org.beanshell:bsh:2.0b4",
+	"org.clojure:clojure:1.3.0",
+	"org.javassist:javassist:3.14.0-GA",
+	"org.jdom:jdom:1.1",
+	"org.jdom:jdom-contrib:1.1.3",
+	"org.jpedal:jpedalSTD:2.80b11",
+	"org.jruby:jruby:1.6.7.2",
+	"org.python:jython:2.5.2",
+	"rhino:js:1.7R2",
+	// fall-back
+	"sc.fiji::${imagej.version}"
+};
+
 String[] getGroupIdAndVersion(String artifact) {
-	if ("ij".equals(artifact))
-		return new String[] { "net.imagej", "${imagej1.version}" };
-	if ("junit".equals(artifact))
-		return new String[] { "junit", "${junit.version}" };
-	if ("jzlib".equals(artifact))
-		return new String[] { "com.jcraft", "1.0.7" };
-	if ("jsch".equals(artifact))
-		return new String[] { "com.jcraft", "0.1.37" };
-	if ("javassist".equals(artifact))
-		return new String[] { "org.javassist", "3.16.1.GA" };
-	if ("Image_5D".equals(artifact))
-		return new String[] { "net.imagej", "1.2.5" };
-	return new String[] { "fiji", "${imagej.version}" };
+	for (String groupAndVersion : groupAndVersionMappings) {
+		String[] list = groupAndVersion.split(":");
+		if (list.length != 3) {
+			System.err.println("Invalid mapping: " + groupAndVersion);
+			System.exit(1);
+		}
+		if (list[1].equals("") || list[1].equals(artifact))
+			return new String[] { list[0], list[2] };
+	}
+	System.err.println("Last mapping must have empty artifactId: " + groupAndVersionMappings[groupAndVersionMappings.length - 1]);
+	System.exit(1);
 }
 
 String getMainClass(Rule rule) {
