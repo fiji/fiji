@@ -66,7 +66,7 @@ public class CompileNativeLibrary extends Rule {
 	protected boolean linkCPlusPlus = false;
 	protected String libraryBaseName;
 	protected File jarFile, buildDir;
-	protected String platform;
+	protected String platform, jarTarget;
 
 	/**
 	 * A rule for compiling native libraries.
@@ -74,11 +74,12 @@ public class CompileNativeLibrary extends Rule {
 	 * @param parser the enclosing Fakefile parser
 	 * @param libraryBaseName the baseName (without the "lib" prefix and the file extension
 	 * @param jarFile the jarFile to scan for native methods
+	 * @param jarTarget the .jar target (for specific LIBS and CFLAGS variables)
 	 * @param buildDir the directory into which the intermediate files should go
 	 * @param prerequisites a list of .h, .c, .cxx or .cpp files to consider for compilation
 	 */
-	public CompileNativeLibrary(Parser parser, String libraryBaseName, File jarFile, File buildDir, List<String> prerequisites) {
-		this(parser, libraryBaseName, makeTargetPath(libraryBaseName, parser.cwd.getAbsolutePath()), hostPlatform, jarFile, buildDir, prerequisites);
+	public CompileNativeLibrary(Parser parser, String libraryBaseName, File jarFile, String jarTarget, File buildDir, List<String> prerequisites) {
+		this(parser, libraryBaseName, makeTargetPath(libraryBaseName, parser.cwd.getAbsolutePath()), hostPlatform, jarFile, jarTarget, buildDir, prerequisites);
 	}
 
 	/**
@@ -91,15 +92,17 @@ public class CompileNativeLibrary extends Rule {
 	 * @param target the path to the library to be generated
 	 * @param platform the platform for which to compile (e.g. "win32")
 	 * @param jarFile the jarFile to scan for native methods
+	 * @param jarTarget the .jar target (for specific LIBS and CFLAGS variables)
 	 * @param buildDir the directory into which the intermediate files should go
 	 * @param prerequisites a list of .h, .c, .cxx or .cpp files to consider for compilation
 	 */
-	public CompileNativeLibrary(Parser parser, String libraryBaseName, String target, String platform, File jarFile, File buildDir, List<String> prerequisites) {
+	public CompileNativeLibrary(Parser parser, String libraryBaseName, String target, String platform, File jarFile, String jarTarget, File buildDir, List<String> prerequisites) {
 		super(parser, target, prerequisites);
 
 		this.platform = platform;
 		this.libraryBaseName = libraryBaseName;
 		this.jarFile = jarFile;
+		this.jarTarget = jarTarget;
 		this.buildDir = buildDir;
 
 		for (String prereq : prerequisites)
@@ -279,11 +282,11 @@ public class CompileNativeLibrary extends Rule {
 
 	@Override
 	public String getVar(String key, String subkey) {
-		String result = parser.getVariable(key + "(" + libraryBaseName + ")");
+		String result = (String)parser.variables.get(key + "(" + libraryBaseName + ")");
 		if (result != null)
 			return result;
-		if (jarFile != null) {
-			result = parser.getVariable(key + "(" + jarFile.getName() + ")");
+		if (jarTarget != null) {
+			result = (String)parser.variables.get(key + "(" + jarTarget + ")");
 			if (result != null)
 				return result;
 		}
@@ -305,7 +308,7 @@ public class CompileNativeLibrary extends Rule {
 
 	@Override
 	public CompileNativeLibrary copy() {
-		CompileNativeLibrary copy = new CompileNativeLibrary(parser, libraryBaseName, jarFile, buildDir, prerequisites);
+		CompileNativeLibrary copy = new CompileNativeLibrary(parser, libraryBaseName, jarFile, jarTarget, buildDir, prerequisites);
 		copy.prerequisiteString = prerequisiteString;
 		return copy;
 	}

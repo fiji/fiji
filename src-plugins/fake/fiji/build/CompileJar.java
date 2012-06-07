@@ -27,7 +27,7 @@ public class CompileJar extends Rule {
 		List<String> nativeSources = CompileNativeLibrary.filterNativeSources(prerequisites);
 		if (nativeSources.size() > 0) {
 			File buildDir = getVarBool("includeSources") ? getBuildDir() : null;
-			compileLibrary = new CompileNativeLibrary(parser, getBaseName(target), new File(target), buildDir, nativeSources);
+			compileLibrary = new CompileNativeLibrary(parser, getBaseName(target), new File(Util.makePath(parser.cwd, target)), target, buildDir, nativeSources);
 			if (parser.allRules.containsKey(compileLibrary.target) && (parser.getRule(compileLibrary.target) instanceof CompileNativeLibrary))
 				compileLibrary = (CompileNativeLibrary)parser.getRule(compileLibrary.target);
 			else
