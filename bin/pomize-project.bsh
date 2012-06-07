@@ -100,6 +100,8 @@ String getArtifactId(String target) {
 		return "j3d-core";
 	if (key.equals("j3dutils"))
 		return "j3d-core-utils";
+	if (key.equals("edu_mines_jtk"))
+		return "mines-jtk";
 	return key;
 }
 
