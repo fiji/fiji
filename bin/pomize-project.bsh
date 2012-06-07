@@ -187,8 +187,13 @@ void writePOM(String target, Rule rule) {
 	String versionRegex = "(.*?)-([\\.0-9]*(-SNAPSHOT)?)";
 	Pattern versionPattern = Pattern.compile(versionRegex);
 	dependencies = "";
+	boolean needsToolsJar = false;
 	for (String target : rule.getJarDependencies()) {
 		artifact = getArtifactId(target);
+		if (artifact.equals("tools")) {
+			needsToolsJar = true;
+			continue;
+		}
 		version = null;
 		Matcher matcher = versionPattern.matcher(artifact);
 		if (matcher.matches()) {
@@ -253,6 +258,27 @@ void writePOM(String target, Rule rule) {
 			+ "\t\t</plugins>\n"
 			+ "\t</build>\n"
 			+ "\n")
+		+ (!needsToolsJar ? "" :
+			"\t<profiles>\n"
+			+ "\t\t<profile>\n"
+			+ "\t\t\t<id>javac</id>\n"
+			+ "\t\t\t<activation>\n"
+			+ "\t\t\t\t<file>\n"
+			+ "\t\t\t\t\t<!-- NB: Custom properties do not work here, so we hardcode. -->\n"
+			+ "\t\t\t\t\t<exists>${java.home}/../lib/tools.jar</exists>\n"
+			+ "\t\t\t\t</file>\n"
+			+ "\t\t\t</activation>\n"
+			+ "\t\t\t<dependencies>\n"
+			+ "\t\t\t\t<dependency>\n"
+			+ "\t\t\t\t\t<groupId>com.sun</groupId>\n"
+			+ "\t\t\t\t\t<artifactId>tools</artifactId>\n"
+			+ "\t\t\t\t\t<version>1.4.2</version>\n"
+			+ "\t\t\t\t\t<scope>system</scope>\n"
+			+ "\t\t\t\t\t<systemPath>${java.home}/../lib/tools.jar</systemPath>\n"
+			+ "\t\t\t\t</dependency>\n"
+			+ "\t\t\t</dependencies>\n"
+			+ "\t\t</profile>\n"
+			+ "\t</profiles>\n")
 		+ "</project>";
 	writeAndAddFile(pom, new File(fijiDir, rule.getStripPath() + "pom.xml"));
 }
