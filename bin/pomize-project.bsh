@@ -60,6 +60,8 @@ void moveSources(File sourceDirectory, File targetJavaDirectory, File targetReso
 				SimpleExecuter.exec(fijiDir, new String[] { "mkdir", "-p", targetJavadocFile.getParentFile().getPath() });
 				SimpleExecuter.exec(fijiDir, new String[] { "git", "mv", file.getPath(), targetJavadocFile.getPath() });
 			}
+			else if (file.getName().equals("Makefile"))
+				SimpleExecuter.exec(fijiDir, new String[] { "git", "mv", file.getPath(), file.getPath() + ".old" });
 			else {
 				warnings += "Warning: did not move " + file + "\n";
 				print("Warning: did not move " + file);
