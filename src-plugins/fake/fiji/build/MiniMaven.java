@@ -985,6 +985,14 @@ public class MiniMaven {
 				isCurrentProfile = new File(directory, string).exists();
 			else if (!isCurrentProfile && prefix.equals(">project>profiles>profile>activation>activeByDefault"))
 				isCurrentProfile = "true".equalsIgnoreCase(string);
+			else if (!isCurrentProfile && prefix.equals(">project>profiles>profile>activation>property>name")) {
+				boolean negate = false;
+				if (string.startsWith("!")) {
+					negate = true;
+					string = string.substring(1);
+				}
+				isCurrentProfile = negate ^ (expand("${" + string + "}") != null);
+			}
 			else if (prefix.equals(">project>repositories>repository>url"))
 				repositories.add(string);
 			else if (prefix.equals(">project>build>sourceDirectory"))
