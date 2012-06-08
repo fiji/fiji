@@ -855,9 +855,9 @@ public class FeatureStack3D
 				
 				((ColorProcessor)(originalImage.getImageStack().getProcessor( n ).duplicate())).getRGB(redPixels, greenPixels, bluePixels);
 				
-				isRed.addSlice( redBp.convertToFloat() );
-				isGreen.addSlice( greenBp.convertToFloat() );
-				isBlue.addSlice( blueBp.convertToFloat() );
+				isRed.addSlice( null, redBp.convertToFloat() );
+				isGreen.addSlice( null, greenBp.convertToFloat() );
+				isBlue.addSlice( null, blueBp.convertToFloat() );
 
 			}
 			
