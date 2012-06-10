@@ -57,12 +57,14 @@ public class FilterGuiPanel extends ActionListenablePanel implements ChangeListe
 	private String objectDescription;
 	private Map<String, String> featureNames;
 	private JLabel jTopLabel;
+	private Updater updater;
 
 	/*
 	 * CONSTRUCTOR
 	 */
 
 	public FilterGuiPanel() {
+		this.updater = new Updater();
 		initGUI();
 	}
 
@@ -130,12 +132,8 @@ public class FilterGuiPanel extends ActionListenablePanel implements ChangeListe
 	 */
 	@Override
 	public void stateChanged(ChangeEvent e) {
-		featureFilters = new ArrayList<FeatureFilter>(thresholdPanels.size());
-		for (FilterPanel tp : thresholdPanels) {
-			featureFilters.add(new FeatureFilter(tp.getKey(), new Float(tp.getThreshold()), tp.isAboveThreshold()));
-		}
-		fireThresholdChanged(e);
-		updateInfoText();
+		updater.setTargetEvent(e);
+		updater.doUpdate();
 	}
 
 	/**
@@ -367,6 +365,77 @@ public class FilterGuiPanel extends ActionListenablePanel implements ChangeListe
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
+		}
+	}
+	
+	/**
+	 * This is a helper class that delegates the
+	 * repainting of the destination window to another thread.
+	 * 
+	 * @author Albert Cardona
+	 */
+	private class Updater extends Thread {
+		long request = 0;
+		private ChangeEvent event;
+
+		// Constructor autostarts thread
+		Updater() {
+			super("TrackMate FilterGuiPanel repaint thread");
+			setPriority(Thread.NORM_PRIORITY);
+			start();
+		}
+
+		public void setTargetEvent(ChangeEvent e) {
+			this.event = e;
+			
+		}
+
+		void doUpdate() {
+			if (isInterrupted())
+				return;
+			synchronized (this) {
+				request++;
+				notify();
+			}
+		}
+
+		@SuppressWarnings("unused")
+		void quit() {
+			interrupt();
+			synchronized (this) {
+				notify();
+			}
+		}
+
+		public void run() {
+			while (!isInterrupted()) {
+				try {
+					final long r;
+					synchronized (this) {
+						r = request;
+					}
+					// Call update from this thread
+					if (r > 0) {
+						
+						featureFilters = new ArrayList<FeatureFilter>(thresholdPanels.size());
+						for (FilterPanel tp : thresholdPanels) {
+							featureFilters.add(new FeatureFilter(tp.getKey(), new Float(tp.getThreshold()), tp.isAboveThreshold()));
+						}
+						fireThresholdChanged(event);
+						updateInfoText();
+						
+					}
+						
+					synchronized (this) {
+						if (r == request) {
+							request = 0; // reset
+							wait();
+						}
+						// else loop through to update again
+					}
+				} catch (Exception e) {
+				}
+			}
 		}
 	}
 }

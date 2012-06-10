@@ -55,12 +55,14 @@ public class InitFilterPanel extends ActionListenablePanel implements WizardPane
 	private TrackMate_ plugin;
 	private Logger logger;
 	private TrackMateWizard wizard;
+	private Updater updater;
 
 
 	/**
 	 * Default constructor, initialize component. 
 	 */
 	public InitFilterPanel() {
+		updater = new Updater();
 		initGUI();
 	}
 
@@ -134,17 +136,20 @@ public class InitFilterPanel extends ActionListenablePanel implements WizardPane
 					regenerateThresholdPanel(features);
 
 					Float initialFilterValue = model.getInitialSpotFilterValue();
-					if (null != initialFilterValue)
+					if (null != initialFilterValue) {
 						jPanelThreshold.setThreshold(initialFilterValue);
-					else
+					} else {
 						jPanelThreshold.setThreshold(0);
-					thresholdChanged();
+					}
+					updater.doUpdate();
 
 				} catch (InterruptedException e) {
 					e.printStackTrace();
 				} catch (ExecutionException e) {
 					e.printStackTrace();
 				}
+				
+				wizard.setNextButtonEnabled(true);
 			}
 		};
 
@@ -152,10 +157,7 @@ public class InitFilterPanel extends ActionListenablePanel implements WizardPane
 	}
 
 	@Override
-	public void displayingPanel() {
-		
-		wizard.setNextButtonEnabled(true);
-	}
+	public void displayingPanel() {	}
 
 	@Override
 	public void aboutToHidePanel() {
@@ -182,6 +184,10 @@ public class InitFilterPanel extends ActionListenablePanel implements WizardPane
 
 		// Remove old one if there is one already
 		if (jPanelThreshold != null) {
+			ChangeListener[] listeners = jPanelThreshold.getChangeListeners().toArray(new ChangeListener[] {});
+			for(ChangeListener listener : listeners) {
+				jPanelThreshold.removeChangeListener(listener);
+			}
 			this.remove(jPanelThreshold);
 		}
 
@@ -189,8 +195,8 @@ public class InitFilterPanel extends ActionListenablePanel implements WizardPane
 		keys.add(Spot.QUALITY);
 		HashMap<String, String> keyNames = new HashMap<String, String>(1);
 		keyNames.put(Spot.QUALITY, Spot.FEATURE_NAMES.get(Spot.QUALITY));
+
 		jPanelThreshold = new FilterPanel(features, keys, keyNames);
-		
 		jPanelThreshold.jComboBoxFeature.setEnabled(false);
 		jPanelThreshold.jRadioButtonAbove.setEnabled(false);
 		jPanelThreshold.jRadioButtonBelow.setEnabled(false);
@@ -198,7 +204,7 @@ public class InitFilterPanel extends ActionListenablePanel implements WizardPane
 		jPanelThreshold.setPreferredSize(new java.awt.Dimension(300, 200));
 		jPanelThreshold.addChangeListener(new ChangeListener() {
 			public void stateChanged(ChangeEvent e) {
-				thresholdChanged();
+				updater.doUpdate();
 			}
 		});
 	}
@@ -307,4 +313,66 @@ public class InitFilterPanel extends ActionListenablePanel implements WizardPane
 		frame.setVisible(true);
 	}
 
+	
+	
+	/*
+	 * NESTED CLASSES
+	 */
+
+	/**
+	 * This is a helper class that delegates the
+	 * repainting of the destination window to another thread.
+	 * 
+	 * @author Albert Cardona
+	 */
+	private class Updater extends Thread {
+		long request = 0;
+
+		// Constructor autostarts thread
+		Updater() {
+			super("TrackMate InitFilterPanel repaint thread");
+			setPriority(Thread.NORM_PRIORITY);
+			start();
+		}
+
+		void doUpdate() {
+			if (isInterrupted())
+				return;
+			synchronized (this) {
+				request++;
+				notify();
+			}
+		}
+
+		@SuppressWarnings("unused")
+		void quit() {
+			interrupt();
+			synchronized (this) {
+				notify();
+			}
+		}
+
+		public void run() {
+			while (!isInterrupted()) {
+				try {
+					final long r;
+					synchronized (this) {
+						r = request;
+					}
+					// Call update from this thread
+					if (r > 0)
+						thresholdChanged();
+					synchronized (this) {
+						if (r == request) {
+							request = 0; // reset
+							wait();
+						}
+						// else loop through to update again
+					}
+				} catch (Exception e) {
+				}
+			}
+		}
+	}
+	
 }
