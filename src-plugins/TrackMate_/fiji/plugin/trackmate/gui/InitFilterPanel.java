@@ -141,23 +141,19 @@ public class InitFilterPanel extends ActionListenablePanel implements WizardPane
 					thresholdChanged();
 
 				} catch (InterruptedException e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 				} catch (ExecutionException e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
-
 			}
 		};
 
 		worker.execute();
-
 	}
 
 	@Override
 	public void displayingPanel() {
-		thresholdChanged();
+		
 		wizard.setNextButtonEnabled(true);
 	}
 

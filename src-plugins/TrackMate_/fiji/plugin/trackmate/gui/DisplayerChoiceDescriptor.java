@@ -55,7 +55,9 @@ public class DisplayerChoiceDescriptor implements WizardPanelDescriptor {
 	public void aboutToDisplayPanel() {	}
 
 	@Override
-	public void displayingPanel() { }
+	public void displayingPanel() {
+		wizard.setNextButtonEnabled(true);
+	}
 
 	@Override
 	public void aboutToHidePanel() {

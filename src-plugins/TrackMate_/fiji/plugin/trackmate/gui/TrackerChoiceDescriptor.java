@@ -49,7 +49,9 @@ public class TrackerChoiceDescriptor implements WizardPanelDescriptor {
 	}
 
 	@Override
-	public void displayingPanel() { }
+	public void displayingPanel() { 
+		wizard.setNextButtonEnabled(true);
+	}
 
 	@Override
 	public void aboutToHidePanel() {
@@ -79,6 +81,7 @@ public class TrackerChoiceDescriptor implements WizardPanelDescriptor {
 		// Instantiate next descriptor for the wizard
 		TrackerConfigurationPanelDescriptor descriptor = new TrackerConfigurationPanelDescriptor();
 		descriptor.setPlugin(plugin);
+		descriptor.setWizard(wizard);
 		wizard.registerWizardDescriptor(TrackerConfigurationPanelDescriptor.DESCRIPTOR, descriptor);
 	}
 

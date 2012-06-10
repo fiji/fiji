@@ -88,6 +88,8 @@ public class TrackFilterDescriptor implements WizardPanelDescriptor {
 						plugin.execTrackFiltering();
 					}
 				});
+				
+				wizard.setNextButtonEnabled(true);
 			}
 		});
 	}

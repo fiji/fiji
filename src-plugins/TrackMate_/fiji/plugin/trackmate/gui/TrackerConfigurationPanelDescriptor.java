@@ -12,13 +12,16 @@ public class TrackerConfigurationPanelDescriptor implements WizardPanelDescripto
 	public static final String DESCRIPTOR = "TrackerConfigurationPanel";
 	private TrackMate_ plugin;
 	private TrackerConfigurationPanel configPanel;
+	private TrackMateWizard wizard;
 	
 	/*
 	 * METHODS
 	 */
 
 	@Override
-	public void setWizard(TrackMateWizard wizard) { }
+	public void setWizard(TrackMateWizard wizard) { 
+		this.wizard = wizard;
+	}
 
 	@Override
 	public void setPlugin(TrackMate_ plugin) {
@@ -68,7 +71,9 @@ public class TrackerConfigurationPanelDescriptor implements WizardPanelDescripto
 	}
 
 	@Override
-	public void displayingPanel() {	}
+	public void displayingPanel() {	
+		wizard.setNextButtonEnabled(true);
+	}
 
 	@Override
 	public void aboutToHidePanel() {

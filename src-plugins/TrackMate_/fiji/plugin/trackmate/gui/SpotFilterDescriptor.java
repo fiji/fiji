@@ -92,6 +92,7 @@ public class SpotFilterDescriptor implements WizardPanelDescriptor {
 				});
 
 				component.stateChanged(null); // force redraw
+				wizard.setNextButtonEnabled(true);
 			}
 		});
 	}

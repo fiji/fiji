@@ -130,7 +130,9 @@ public class DisplayerPanel extends ActionListenablePanel implements WizardPanel
 	}
 
 	@Override
-	public void displayingPanel() { }
+	public void displayingPanel() { 
+		wizard.setNextButtonEnabled(true);
+	}
 
 
 	@Override
