@@ -601,54 +601,13 @@ public class Stitching_Grid implements PlugIn
 
 				final int maxT = timeHack ? sizeT : 1;
 
-				// generate a mapping from native indices to Plane element indices
-				final HashMap< Integer, Integer > planeMap = new HashMap< Integer, Integer >();
-				final int planeCount = retrieve.getPlaneCount( series );
-				for ( int p = 0; p < planeCount; ++p )
-				{
-					final int theZ = retrieve.getPlaneTheZ( series, p ).getValue();
-					final int theC = retrieve.getPlaneTheC( series, p ).getValue();
-					final int theT = retrieve.getPlaneTheT( series, p ).getValue();
-					final int index = r.getIndex( theZ, theC, theT );
-					planeMap.put( index, p );
-				}
-
 				for ( int t = 0; t < maxT; ++t )
 				{
-					final int index = r.getIndex(0, 0, t);
-
-					double locationX = 0, locationY = 0, locationZ = 0;
-
-					if ( planeMap.containsKey( index ) )
-					{
-						final int planeIndex = planeMap.get( index );
-
-						// stage coordinates (per plane and series)
-						Double tmp;
-
-						tmp = retrieve.getPlanePositionX( series, planeIndex );
-						if ( tmp != null )
-							locationX = tmp;
-						if ( IJ.debugMode )
-							IJ.log( "locationX:  " + locationX );
-
-						tmp = retrieve.getPlanePositionY( series, planeIndex );
-						if ( tmp != null )
-							locationY = tmp;
-						if ( IJ.debugMode )
-							IJ.log( "locationY:  " + locationY );
-
-						tmp = retrieve.getPlanePositionZ( series, planeIndex );
-						if ( tmp != null )
-							locationZ = tmp;
-						if ( IJ.debugMode )
-							IJ.log( "locationZ:  " + locationZ );
-					}
-					else
-					{
-						if ( IJ.debugMode )
-							IJ.log( "Missing Plane element: series=" + series + ", t=" + t );
-					}
+					double[] location =
+						CommonFunctions.getPlanePosition( r, retrieve, series, t );
+					double locationX = location[0];
+					double locationY = location[1];
+					double locationZ = location[2];
 
 					if ( !ignoreCalibration )
 					{

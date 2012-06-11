@@ -36,6 +36,7 @@ import loci.formats.IFormatReader;
 import loci.formats.meta.IMetadata;
 import loci.formats.meta.MetadataRetrieve;
 import loci.formats.services.OMEXMLService;
+import stitching.CommonFunctions;
 import stitching.GridLayout;
 import stitching.ImageInformation;
 import stitching.model.TranslationModel2D;
@@ -199,32 +200,10 @@ public class Stitch_Multiple_Series_File implements PlugIn
 				final MetadataRetrieve retrieve = service.asRetrieve(r.getMetadataStore());
 
 				// stage coordinates (per plane and series)
-				Double tmp;
-				double locationX, locationY, locationZ;
-				
-				tmp = retrieve.getPlanePositionX( series, 0 );
-				if ( tmp != null )
-					locationX = tmp;
-				else
-					locationX = 0;				
-				if ( IJ.debugMode )
-					IJ.log( "locationX:  " + locationX );
-				
-				tmp = retrieve.getPlanePositionY( series, 0 );
-				if ( tmp != null )
-					locationY = tmp;
-				else
-					locationY = 0;				
-				if ( IJ.debugMode )
-					IJ.log( "locationY:  " + locationY );
-				
-				tmp = retrieve.getPlanePositionZ( series, 0 );
-				if ( tmp != null )
-					locationZ = tmp;
-				else
-					locationZ = 0;				
-				if ( IJ.debugMode )
-					IJ.log( "locationZ:  " + locationZ );
+				double[] location = CommonFunctions.getPlanePosition( r, retrieve, series, 0 );
+				double locationX = location[0];
+				double locationY = location[1];
+				double locationZ = location[2];
 
 				if ( !ignoreCalibration )
 				{
