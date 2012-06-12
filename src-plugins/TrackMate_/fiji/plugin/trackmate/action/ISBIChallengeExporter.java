@@ -81,11 +81,11 @@ public class ISBIChallengeExporter extends AbstractTMAction {
 	@Override
 	public String getInfoText() {
 		return "<html>" +
-				"Export the current model content to an XML file following the " +
+				"Export the current model content to a XML file following the " +
 				"ISBI 2012 particle tracking challenge format, as specified on " +
 				"<a href='http://bioimageanalysis.org/track/'></a>. " +
 				"<p> " +
-				"Only tracks are exported. If there is not track, this action " +
+				"Only tracks are exported. If there is no track, this action " +
 				"does nothing. " +
 				"</html>";
 	}
@@ -122,10 +122,12 @@ public class ISBIChallengeExporter extends AbstractTMAction {
 		content.setAttribute(DATE_ATT, new Date().toString());
 
 		logger.setStatus("Marshalling...");
+		Integer[] visibleTracks = model.getVisibleTrackIndices().toArray(new Integer[] {});
 		for (int i = 0 ; i < model.getNFilteredTracks() ; i++) {
 
 			Element trackElement = new Element(TRACK_KEY);
-			Set<Spot> track = model.getTrackSpots(i);
+			int trackindex = visibleTracks[i];
+			Set<Spot> track = model.getTrackSpots(trackindex);
 			// Sort them by time 
 			TreeSet<Spot> sortedTrack = new TreeSet<Spot>(Spot.frameComparator);
 			sortedTrack.addAll(track);
