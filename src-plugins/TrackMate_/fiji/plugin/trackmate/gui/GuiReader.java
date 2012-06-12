@@ -169,6 +169,7 @@ public class GuiReader {
 			// Instantiate descriptor for the segmenter configuration and update it
 			SegmenterConfigurationPanelDescriptor segmConfDescriptor = new SegmenterConfigurationPanelDescriptor();
 			segmConfDescriptor.setPlugin(plugin);
+			segmConfDescriptor.setWizard(wizard);
 			wizard.registerWizardDescriptor(SegmenterConfigurationPanelDescriptor.DESCRIPTOR, segmConfDescriptor);
 			segmConfDescriptor.aboutToDisplayPanel();
 		}
