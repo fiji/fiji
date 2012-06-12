@@ -2,8 +2,8 @@ package fiji.plugin.trackmate;
 
 import fiji.plugin.trackmate.action.CaptureOverlayAction;
 import fiji.plugin.trackmate.action.CopyOverlayAction;
+import fiji.plugin.trackmate.action.ExportTracksToXML;
 import fiji.plugin.trackmate.action.GrabSpotImageAction;
-import fiji.plugin.trackmate.action.ISBIChallengeExporter;
 import fiji.plugin.trackmate.action.LinkNew3DViewerAction;
 import fiji.plugin.trackmate.action.PlotNSpotsVsTimeAction;
 import fiji.plugin.trackmate.action.RadiusToEstimatedAction;
@@ -324,7 +324,8 @@ public class TrackMate_ implements PlugIn {
 		actions.add(new RecalculateFeatureAction());
 		actions.add(new ResetRadiusAction());
 		actions.add(new RadiusToEstimatedAction());
-		actions.add(new ISBIChallengeExporter());
+//		actions.add(new fiji.plugin.trackmate.action.ISBIChallengeExporter());
+		actions.add(new ExportTracksToXML());
 		return actions;
 	}
 	
