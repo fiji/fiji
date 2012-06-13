@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.jgrapht.alg.ConnectivityInspector;
+import org.jgrapht.alg.DijkstraShortestPath;
 import org.jgrapht.event.GraphEdgeChangeEvent;
 import org.jgrapht.event.GraphListener;
 import org.jgrapht.event.GraphVertexChangeEvent;
@@ -405,6 +406,22 @@ public class TrackMateModel {
 				return str;
 	}
 
+	/**
+	 * Return shortest path between two connected spot, using Dijkstra's algorithm.
+	 * <p>
+	 * Return <code>null</code> if the two spots are not connected by a track, or if 
+	 * one of the spot do not belong to the graph.
+	 *  
+	 * @param source  the spot to start the path with
+	 * @param target  the spot to stop the path with
+	 */
+	public List<DefaultWeightedEdge> dijkstraShortestPath(final Spot source, final Spot target) {
+		DijkstraShortestPath<Spot, DefaultWeightedEdge> pathFinder = new DijkstraShortestPath<Spot, DefaultWeightedEdge>(graph, source, target);
+		List<DefaultWeightedEdge> path = pathFinder.getPathEdgeList();
+		return path;
+	}
+	
+	
 	
 
 	/*
