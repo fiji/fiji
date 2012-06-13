@@ -84,7 +84,9 @@ public class SpotIconGrabber extends IndependentSpotFeatureAnalyzer {
 		LocalizableByDimCursor targetCursor = crop.createLocalizableByDimCursor();
 		
 		try {
-			sourceCursor.setPosition(slice, 2);
+			if (img.getNumDimensions() > 2) {
+				sourceCursor.setPosition(slice, 2);
+			}
 			for (int i = 0; i < width; i++) {
 				sourceCursor.setPosition(i + x, 0);
 				targetCursor.setPosition(i, 0);
