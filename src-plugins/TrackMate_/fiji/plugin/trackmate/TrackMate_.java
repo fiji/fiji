@@ -3,6 +3,7 @@ package fiji.plugin.trackmate;
 import fiji.plugin.trackmate.action.CaptureOverlayAction;
 import fiji.plugin.trackmate.action.CopyOverlayAction;
 import fiji.plugin.trackmate.action.ExportTracksToXML;
+import fiji.plugin.trackmate.action.ExtractTrackStackAction;
 import fiji.plugin.trackmate.action.GrabSpotImageAction;
 import fiji.plugin.trackmate.action.LinkNew3DViewerAction;
 import fiji.plugin.trackmate.action.PlotNSpotsVsTimeAction;
@@ -316,6 +317,7 @@ public class TrackMate_ implements PlugIn {
 	protected List<TrackMateAction> createTrackMateActionList() {
 		List<TrackMateAction> actions = new ArrayList<TrackMateAction>(10);
 		actions.add(new GrabSpotImageAction());
+		actions.add(new ExtractTrackStackAction());
 		actions.add(new LinkNew3DViewerAction());
 		actions.add(new CopyOverlayAction());
 		actions.add(new PlotNSpotsVsTimeAction());

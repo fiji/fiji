@@ -1,5 +1,7 @@
 package fiji.plugin.trackmate.tests;
 
+import ij.IJ;
+
 import java.io.File;
 
 import fiji.plugin.trackmate.Logger;
@@ -12,10 +14,16 @@ import fiji.plugin.trackmate.gui.WizardController;
 
 public class GUIReader_TestDrive {
 	
-	private static final File file = new File("/Users/tinevez/Desktop/Data/FakeTracks.xml");
 	
 	public static void main(String args[]) {
 
+		File file;
+		if (IJ.isWindows()) {
+			file = new File("E:/Users/JeanYves/Desktop/Data/FakeTracks.xml");
+		} else {
+			file = new File("/Users/tinevez/Desktop/Data/FakeTracks.xml");
+		}
+		
 		ij.ImageJ.main(args);
 		
 		TrackMate_ plugin = new TrackMate_();

@@ -17,6 +17,7 @@ import mpicbg.imglib.cursor.LocalizableByDimCursor;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.image.display.imagej.ImageJFunctions;
 import mpicbg.imglib.outofbounds.OutOfBoundsStrategyValueFactory;
+import mpicbg.imglib.type.numeric.RealType;
 
 import com.mxgraph.util.mxBase64;
 
@@ -39,13 +40,10 @@ public class SpotIconGrabber extends IndependentSpotFeatureAnalyzer {
 		int y = Math.round((spot.getFeature(Spot.POSITION_Y) - radius) / calibration[1]);
 		int width = Math.round(2 * radius / calibration[0]);
 		int height = Math.round(2 * radius / calibration[1]);
-		
+
 		// Copy cropped view
-		Image crop = img.createNewImage(new int[] {width, height});
-		LocalizableByDimCursor sourceCursor = img.createLocalizableByDimCursor(new OutOfBoundsStrategyValueFactory(img.createType()));
-		LocalizableByDimCursor targetCursor = crop.createLocalizableByDimCursor();
+		int slice = 0;
 		if (img.getNumDimensions() > 2) {
-			int slice = 0;
 			slice = Math.round(spot.getFeature(Spot.POSITION_Z) / calibration[2]);
 			if (slice < 0) {
 				slice = 0;
@@ -53,10 +51,40 @@ public class SpotIconGrabber extends IndependentSpotFeatureAnalyzer {
 			if (slice >= img.getDimension(2)) {
 				slice = img.getDimension(2) -1;
 			}
-			sourceCursor.setPosition(slice, 2);
 		}
+
+		Image crop = grabImage(x, y, slice, width, height);
+
+		// Convert to ImagePlus
+		ImagePlus imp = ImageJFunctions.copyToImagePlus(crop);
+		ImageProcessor ip = imp.getProcessor();
+		ip.resetMinAndMax();
+
+		// Convert to base64
+		ByteArrayOutputStream bos = new ByteArrayOutputStream();
+		BufferedImage img = ip.getBufferedImage();
+		try {
+			ImageIO.write(img, "png", bos);
+			spot.setImageString(mxBase64.encodeToString(bos.toByteArray(), false));
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
+
+
+	}
+
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	public final Image grabImage(int x, int y, int slice, int width, int height) {
+		// Copy cropped view
+		Image crop = img.createNewImage(new int[] { width, height });
+		RealType zeroType = img.createType();
+		zeroType.setZero();
+		LocalizableByDimCursor sourceCursor = img.createLocalizableByDimCursor(new OutOfBoundsStrategyValueFactory(zeroType));
+		LocalizableByDimCursor targetCursor = crop.createLocalizableByDimCursor();
 		
 		try {
+			sourceCursor.setPosition(slice, 2);
 			for (int i = 0; i < width; i++) {
 				sourceCursor.setPosition(i + x, 0);
 				targetCursor.setPosition(i, 0);
@@ -66,36 +94,19 @@ public class SpotIconGrabber extends IndependentSpotFeatureAnalyzer {
 					targetCursor.getType().set(sourceCursor.getType());
 				}
 			}
-			// Convert to ImagePlus
-			ImagePlus imp = ImageJFunctions.copyToImagePlus(crop);
-			ImageProcessor ip = imp.getProcessor();
-			ip.resetMinAndMax();
-
-			// Convert to base64
-			ByteArrayOutputStream bos = new ByteArrayOutputStream();
-			BufferedImage img = ip.getBufferedImage();
-			try {
-				ImageIO.write(img, "png", bos);
-				spot.setImageString(mxBase64.encodeToString(bos.toByteArray(), false));
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-		} catch (ArrayIndexOutOfBoundsException aioe) {
-			// Do nothing, we do not set the icon field
 		} finally {
 			targetCursor.close();
 			sourceCursor.close();
 		}
-		
+		return crop;
 	}
-	
-	
+
 	/*
 	 * FEATURE OUTPUT
 	 * We always return the empty list or map, because we do not want the spot icon feature
 	 * or whatever it would be to appear in the normal, numerical feature list.
 	 */
-	
+
 	@Override
 	public Collection<String> getFeatures() {
 		return new ArrayList<String>();
