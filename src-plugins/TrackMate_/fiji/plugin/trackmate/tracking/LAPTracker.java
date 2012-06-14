@@ -287,7 +287,8 @@ public class LAPTracker extends MultiThreadedBenchmarkAlgorithm implements SpotT
 
 		// Skip 2nd step if there is no rules to link track segments
 		if (!settings.allowGapClosing && !settings.allowSplitting && !settings.allowMerging) {
-			logger.setProgress(0.75f);
+			logger.setProgress(1);
+			logger.setStatus("");
 			return true;
 		}
 
@@ -304,6 +305,8 @@ public class LAPTracker extends MultiThreadedBenchmarkAlgorithm implements SpotT
 			tend = System.currentTimeMillis();
 			processingTime += (tend-tstart);
 			logger.log(String.format("  Track segment LAP aborted after %.1f s.\n", (tend-tstart)/1e3f));
+			logger.setProgress(0);
+			logger.setStatus("");
 			return true; // We return true because we can RECOVER from this error.
 		}
 		
@@ -331,6 +334,7 @@ public class LAPTracker extends MultiThreadedBenchmarkAlgorithm implements SpotT
 	 */
 	public boolean createTrackSegmentCostMatrix() {
 		TrackSegmentCostMatrixCreator segCosts = new TrackSegmentCostMatrixCreator(trackSegments, settings);
+		segCosts.setLogger(logger);
 		if (!segCosts.checkInput() || !segCosts.process()) {
 			errorMessage = BASE_ERROR_MESSAGE + segCosts.getErrorMessage();
 			return false;
@@ -384,7 +388,12 @@ public class LAPTracker extends MultiThreadedBenchmarkAlgorithm implements SpotT
 		int[][] finalTrackSolutions = solveLAPForFinalTracks();
 
 		if (DEBUG) {
-			LAPUtils.displayCostMatrix(segmentCosts, trackSegments.size(), splittingMiddlePoints.size(), settings.blockingValue, finalTrackSolutions);
+			if (trackSegments.size() > 100) {
+				System.out.println("Final cost matrix is "+segmentCosts.length+" x " + segmentCosts[0].length+".\n" +
+						"Too big to display.");
+			} else {
+				LAPUtils.displayCostMatrix(segmentCosts, trackSegments.size(), splittingMiddlePoints.size(), settings.blockingValue, finalTrackSolutions);
+			}
 		}
 
 		// Compile LAP solutions into final tracks

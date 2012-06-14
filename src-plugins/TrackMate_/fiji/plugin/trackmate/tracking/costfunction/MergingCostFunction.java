@@ -57,9 +57,9 @@ public class MergingCostFunction {
 	public Matrix getCostFunction(final List<SortedSet<Spot>> trackSegments, final List<Spot> middlePoints) {
 		final Matrix m = new Matrix(trackSegments.size(), middlePoints.size());
 
-		// If we are not allow to make gap-closing, simply fill the matrix with blocking values.
+		// If we are not allow to catch merging events, simply fill the matrix with blocking values.
 		if (!allowed) {
-			return new Matrix(trackSegments.size(), middlePoints.size(), blockingValue);
+			return new Matrix(trackSegments.size(), 0, blockingValue);
 		}
 
 		// Prepare threads

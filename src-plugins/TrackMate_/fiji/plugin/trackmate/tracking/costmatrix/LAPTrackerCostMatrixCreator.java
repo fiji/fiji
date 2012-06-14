@@ -47,15 +47,13 @@ public abstract class LAPTrackerCostMatrixCreator implements CostMatrixCreator {
 	
 	/**
 	 * Takes the submatrix of costs defined by rows 0 to numRows - 1 and columns
-	 * 0 to numCols - 1, inverts it, and sets any non-BLOCKED value to be cutoff.
-	 * 
+	 * 0 to numCols - 1, transpose it, and sets any non-BLOCKED value to be cutoff.
+	 * <p>
 	 * The reasoning for this is explained in the supplementary notes of the paper,
-	 * but basically it has to be made this way so that the LAP is solvable
-	 * (mathematical requirement).
+	 * but basically it has to be made this way so that the LAP is solvable. 
 	 */
 	protected Matrix getLowerRight(Matrix topLeft, double cutoff) {
-		Matrix lowerRight = topLeft.copy();
-		lowerRight = lowerRight.transpose();
+		Matrix lowerRight = topLeft.transpose();
 		for (int i = 0; i < lowerRight.getRowDimension(); i++) {
 			for (int j = 0; j < lowerRight.getColumnDimension(); j++) {
 				if (lowerRight.get(i, j) < settings.blockingValue) {
