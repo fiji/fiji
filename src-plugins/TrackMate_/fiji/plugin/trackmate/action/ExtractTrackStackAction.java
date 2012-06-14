@@ -108,7 +108,7 @@ public class ExtractTrackStackAction extends AbstractTMAction {
 		// Common coordinates
 		Settings settings = model.getSettings();
 		float[] calibration = settings.getCalibration();
-		final int targetChannel = settings.imp.getC(); // We do this for current channel
+		final int targetChannel = settings.imp.getChannel(); // We do this for current channel
 		final int width 	= (int) Math.ceil(2 * radius * RESIZE_FACTOR / calibration[0]);
 		final int height 	= (int) Math.ceil(2 * radius * RESIZE_FACTOR / calibration[0]);
 		
