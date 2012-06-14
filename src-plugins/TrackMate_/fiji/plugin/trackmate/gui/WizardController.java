@@ -163,12 +163,20 @@ public class WizardController implements ActionListener {
 
 		if (event == wizard.NEXT_BUTTON_PRESSED && actionFlag) {
 
-			next();
+			new Thread("TrackMate moving to next step thread.") {
+				public void run() {
+					next();
+				};
+			}.start();
 
 
 		} else if (event == wizard.PREVIOUS_BUTTON_PRESSED && actionFlag) {
 
-			previous();
+			new Thread("TrackMate moving to previous step thread.") {
+				public void run() {
+					previous();
+				};
+			}.start();
 
 		} else if (event == wizard.LOAD_BUTTON_PRESSED && actionFlag) {
 
@@ -179,7 +187,11 @@ public class WizardController implements ActionListener {
 			wizard.setPreviousButtonEnabled(false);
 			wizard.setNextButtonEnabled(false);
 
-			load();
+			new Thread("TrackMate moving to load state thread.") {
+				public void run() {
+					load();
+				};
+			}.start();
 
 		} else if (event == wizard.SAVE_BUTTON_PRESSED && actionFlag) {
 
@@ -192,7 +204,11 @@ public class WizardController implements ActionListener {
 			wizard.setPreviousButtonEnabled(false);
 			wizard.setNextButtonEnabled(false);
 
-			save();
+			new Thread("TrackMate moving to save state thread.") {
+				public void run() {
+					save();
+				};
+			}.start();
 
 		} else if ((event == wizard.NEXT_BUTTON_PRESSED || 
 				event == wizard.PREVIOUS_BUTTON_PRESSED || 
