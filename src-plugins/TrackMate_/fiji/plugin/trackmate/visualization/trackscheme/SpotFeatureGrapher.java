@@ -112,8 +112,14 @@ public class SpotFeatureGrapher extends JFrame {
 			{
 				for(String feature : featuresThisDimension) {
 					XYSeries series = new XYSeries(featureNames.get(feature));
-					for(Spot spot : spots)
-						series.add(spot.getFeature(xFeature), spot.getFeature(feature));
+					for(Spot spot : spots) {
+						Float x = spot.getFeature(xFeature);
+						Float y = spot.getFeature(feature);
+						if (null == x || null == y) {
+							continue;
+						}
+						series.add(x.doubleValue(), y.doubleValue());
+					}
 					pointDataset.addSeries(series);
 				}
 			}
@@ -145,7 +151,7 @@ public class SpotFeatureGrapher extends JFrame {
 			// Data-set for edges
 			XYEdgeSeriesCollection edgeDataset = new XYEdgeSeriesCollection();
 			{
-				double x0, x1, y0, y1;
+				Float x0, x1, y0, y1;
 				XYEdgeSeries edgeSeries;
 				Spot source, target;
 				for(String yFeature : featuresThisDimension) {
@@ -157,7 +163,10 @@ public class SpotFeatureGrapher extends JFrame {
 						y0 = source.getFeature(yFeature);
 						x1 = target.getFeature(xFeature);
 						y1 = target.getFeature(yFeature);
-						edgeSeries.addEdge(x0, y0, x1, y1);
+						if (null == x0 || null == y0 || null == x1 || null == y1) {
+							continue;
+						}
+						edgeSeries.addEdge(x0.doubleValue(), y0.doubleValue(), x1.doubleValue(), y1.doubleValue());
 					}
 					edgeDataset.addSeries(edgeSeries);
 				}
