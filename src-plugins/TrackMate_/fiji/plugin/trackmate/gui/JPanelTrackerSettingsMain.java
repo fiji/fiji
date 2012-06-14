@@ -29,7 +29,7 @@ public class JPanelTrackerSettingsMain extends javax.swing.JPanel {
 
 	private static final long serialVersionUID = -3775536792625326253L;
 
-	private JLabel jLabelTrackDescription;
+//	private JLabel jLabelTrackDescription;
 	private JLabel jLabelSplittingMaxDistanceUnit;
 	private JNumericTextField jTextFieldSplittingMaxDistance;
 	private JCheckBox jCheckBoxAllowSplitting;
@@ -81,10 +81,10 @@ public class JPanelTrackerSettingsMain extends javax.swing.JPanel {
 
 		if (null != model.getSettings().tracker) {
 			jLabelTrackerName.setText(model.getSettings().tracker.toString());
-			jLabelTrackDescription.setText(model.getSettings().tracker.getInfoText()
-					.replace("<br>", "")
-					.replace("<p>", "<p align=\"justify\">")
-					.replace("<html>", "<html><p align=\"justify\">"));
+//			jLabelTrackDescription.setText(model.getSettings().tracker.getInfoText()
+//					.replace("<br>", "")
+//					.replace("<p>", "<p align=\"justify\">")
+//					.replace("<html>", "<html><p align=\"justify\">"));
 		}
 
 		jLabelLinkingMaxDistanceUnits.setText(model.getSettings().spaceUnits);
@@ -186,7 +186,8 @@ public class JPanelTrackerSettingsMain extends javax.swing.JPanel {
 			GridBagLayout thisLayout = new GridBagLayout();
 			thisLayout.columnWidths = new int[] {180, 50, 50};
 			thisLayout.columnWeights = new double[] {0.1, 0.8, 0.1};
-			thisLayout.rowHeights = new int[] {15, 20, 60, 15, 10, 15, 95, 15, 15, 15, 15, 15, 95, 15, 15, 15, 15, 15, 95, 15, 15, 15, 15, 15, 95};
+//			thisLayout.rowHeights = new int[] {15, 20, 60, 15, 10, 15, 95, 15, 15, 15, 15, 15, 95, 15, 15, 15, 15, 15, 95, 15, 15, 15, 15, 15, 95};
+			thisLayout.rowHeights = new int[] {15, 20, 0, 15, 10, 15, 95, 15, 15, 15, 15, 15, 95, 15, 15, 15, 15, 15, 95, 15, 15, 15, 15, 15, 95};
 			thisLayout.rowWeights = new double[] {0.0, 0.1, 0.25, 0.1, 0.0, 0.0, 0.25, 0.1, 0.0, 0.0, 0.0, 0.0, 0.25, 0.1, 0.0, 0.0, 0.0, 0.0, 0.25, 0.1, 0.0, 0.0, 0.0, 0.0, 0.0};
 			this.setLayout(thisLayout);
 			{
@@ -202,11 +203,11 @@ public class JPanelTrackerSettingsMain extends javax.swing.JPanel {
 				jLabelTrackerName.setHorizontalAlignment(SwingConstants.CENTER);
 				jLabelTrackerName.setFont(BIG_FONT);
 			}
-			{
-				jLabelTrackDescription = new JLabel();
-				this.add(jLabelTrackDescription, new GridBagConstraints(0, 2, 3, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(10, 10, 10, 10), 0, 0));
-				jLabelTrackDescription.setFont(SMALL_FONT.deriveFont(Font.ITALIC));
-			}
+//			{
+//				jLabelTrackDescription = new JLabel();
+//				this.add(jLabelTrackDescription, new GridBagConstraints(0, 2, 3, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(10, 10, 10, 10), 0, 0));
+//				jLabelTrackDescription.setFont(SMALL_FONT.deriveFont(Font.ITALIC));
+//			}
 			{
 				JLabel jLabel2 = new JLabel();
 				this.add(jLabel2, new GridBagConstraints(0, 3, 3, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(0, 10, 0, 10), 0, 0));

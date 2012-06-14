@@ -27,9 +27,7 @@ import fiji.plugin.trackmate.segmentation.LogSegmenter;
 import fiji.plugin.trackmate.segmentation.ManualSegmenter;
 import fiji.plugin.trackmate.segmentation.SpotSegmenter;
 import fiji.plugin.trackmate.tracking.FastLAPTracker;
-import fiji.plugin.trackmate.tracking.LAPTracker;
 import fiji.plugin.trackmate.tracking.SimpleFastLAPTracker;
-import fiji.plugin.trackmate.tracking.SimpleLAPTracker;
 import fiji.plugin.trackmate.tracking.SpotTracker;
 import fiji.plugin.trackmate.tracking.kdtree.NearestNeighborTracker;
 import fiji.plugin.trackmate.util.TMUtils;
@@ -287,8 +285,8 @@ public class TrackMate_ implements PlugIn {
 		List<SpotTracker> trackers = new ArrayList<SpotTracker>(5);
 		trackers.add(new SimpleFastLAPTracker());
 		trackers.add(new FastLAPTracker());
-		trackers.add(new SimpleLAPTracker());
-		trackers.add(new LAPTracker());
+//		trackers.add(new fiji.plugin.trackmate.tracking.SimpleLAPTracker());
+//		trackers.add(new fiji.plugin.trackmate.tracking.LAPTracker());
 		trackers.add(new NearestNeighborTracker());
 		return trackers;
 		
