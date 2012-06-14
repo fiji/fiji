@@ -13,12 +13,14 @@ import org.jgrapht.alg.DijkstraShortestPath;
 import org.jgrapht.event.GraphEdgeChangeEvent;
 import org.jgrapht.event.GraphListener;
 import org.jgrapht.event.GraphVertexChangeEvent;
+import org.jgrapht.graph.AsUnweightedGraph;
 import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.graph.ListenableUndirectedGraph;
 import org.jgrapht.graph.SimpleWeightedGraph;
 import org.jgrapht.traverse.DepthFirstIterator;
 
 import fiji.plugin.trackmate.features.FeatureModel;
+import fiji.plugin.trackmate.visualization.TrackMateModelView;
 
 /**
  * <h1>The model for the data managed by TrackMate plugin.</h1>
@@ -408,6 +410,8 @@ public class TrackMateModel {
 
 	/**
 	 * @return shortest path between two connected spot, using Dijkstra's algorithm.
+	 * The edge weights, if any, are ignored here, meaning that the returned path is
+	 * the shortest in terms of number of edges.
 	 * <p>
 	 * Return <code>null</code> if the two spots are not connected by a track, or if 
 	 * one of the spot do not belong to the graph, or if the {@link #graph} field is
@@ -420,7 +424,8 @@ public class TrackMateModel {
 		if (null == graph) {
 			return null;
 		}
-		DijkstraShortestPath<Spot, DefaultWeightedEdge> pathFinder = new DijkstraShortestPath<Spot, DefaultWeightedEdge>(graph, source, target);
+		AsUnweightedGraph<Spot, DefaultWeightedEdge> unWeightedGrah = new  AsUnweightedGraph<Spot, DefaultWeightedEdge>(graph);
+		DijkstraShortestPath<Spot, DefaultWeightedEdge> pathFinder = new DijkstraShortestPath<Spot, DefaultWeightedEdge>(unWeightedGrah, source, target);
 		List<DefaultWeightedEdge> path = pathFinder.getPathEdgeList();
 		return path;
 	}

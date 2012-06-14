@@ -78,10 +78,6 @@ public class ExtractTrackStackAction extends AbstractTMAction {
 			return;
 		}
 		
-		// Add it to selection
-		model.clearEdgeSelection();
-		model.addEdgeToSelection(edges);
-
 		// Build spot list
 		// & Get largest diameter
 		List<Spot> path = new ArrayList<Spot>(edges.size());
@@ -104,15 +100,10 @@ public class ExtractTrackStackAction extends AbstractTMAction {
 		}
 		path.add(end);
 		
-		
 		// Sort spot by ascending frame number
 		TreeSet<Spot> sortedSpots = new TreeSet<Spot>(Spot.frameComparator);
 		sortedSpots.addAll(path);
 		nspots = sortedSpots.size();
-
-		// Send spots to the selection model
-		model.clearSpotSelection();
-		model.addSpotToSelection(sortedSpots);
 
 		// Common coordinates
 		Settings settings = model.getSettings();
@@ -128,7 +119,6 @@ public class ExtractTrackStackAction extends AbstractTMAction {
 		int zpos = 0;
 		for (Spot spot : sortedSpots) {
 			
-
 			// Extract image for current frame
 			int frame = model.getSpots().getFrame(spot);
 			Image img = TMUtils.getUncroppedSingleFrameAsImage(settings.imp, frame, targetChannel);
