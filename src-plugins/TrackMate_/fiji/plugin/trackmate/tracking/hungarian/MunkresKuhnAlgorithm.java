@@ -86,7 +86,7 @@ import java.util.Arrays;
  * @author Johannes Schindelin
  */
 
-public class SchindelinHungarianAlgorithm implements AssignmentAlgorithm {
+public class MunkresKuhnAlgorithm implements AssignmentAlgorithm {
 	public final double NO_EDGE_VALUE = Double.MAX_VALUE;
 
 	protected int M, N; // M is the size of X, and N the size of Y
@@ -356,7 +356,7 @@ public class SchindelinHungarianAlgorithm implements AssignmentAlgorithm {
 			System.err.println(Arrays.toString(weight[i]));
 		}
 
-		SchindelinHungarianAlgorithm algo = new SchindelinHungarianAlgorithm();
+		MunkresKuhnAlgorithm algo = new MunkresKuhnAlgorithm();
 		algo.computeAssignments(weight);
 		for (int x = 0; x < algo.M; x++)
 			System.err.println("map " + x + " to " + algo.matchingY[x]);
