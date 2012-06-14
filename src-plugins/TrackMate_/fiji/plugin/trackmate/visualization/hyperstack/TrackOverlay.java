@@ -17,9 +17,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
-
-import mpicbg.imglib.multithreading.SimpleMultiThreading;
 
 import org.jfree.chart.renderer.InterpolatePaintScale;
 import org.jgrapht.graph.DefaultWeightedEdge;
@@ -138,8 +135,8 @@ public class TrackOverlay implements Overlay {
 			g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER));
 
 		// Determine bounds for limited view modes
-		final int minT;
-		final int maxT;
+		int minT = 0;
+		int maxT = 0;
 		switch (trackDisplayMode) {
 		case TrackMateModelView.TRACK_DISPLAY_MODE_LOCAL:
 		case TrackMateModelView.TRACK_DISPLAY_MODE_LOCAL_QUICK:
@@ -156,12 +153,9 @@ public class TrackOverlay implements Overlay {
 			minT = currentFrame - trackDisplayDepth;
 			maxT = currentFrame;
 			break;
-		default:
-			minT = 0;
-			maxT = 0;
 		}
 
-		float sourceFrame;
+		float sourceFrame, transparency;
 		switch (trackDisplayMode) {
 
 		case TrackMateModelView.TRACK_DISPLAY_MODE_WHOLE: {
@@ -186,8 +180,8 @@ public class TrackOverlay implements Overlay {
 		case TrackMateModelView.TRACK_DISPLAY_MODE_LOCAL_BACKWARD_QUICK: {
 
 			g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
-			for (int i : filteredTrackIndices) {
 
+			for (int i : filteredTrackIndices) {
 				g2d.setColor(edgeColors.get(i));
 				final Set<DefaultWeightedEdge> track= trackEdges.get(i);
 
@@ -213,46 +207,24 @@ public class TrackOverlay implements Overlay {
 
 			g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
+			for (int i : filteredTrackIndices) {
+				g2d.setColor(edgeColors.get(i));
+				final Set<DefaultWeightedEdge> track= trackEdges.get(i);
 
-			final AtomicInteger ai = new AtomicInteger(0);
-			Thread[] threads = SimpleMultiThreading.newThreads();
-			final Integer[] indices = filteredTrackIndices.toArray(new Integer[] {});
+				for (DefaultWeightedEdge edge : track) {
+					if (highlight.contains(edge))
+						continue;
 
-			for (int it = 0; it < threads.length; it++) {
-				threads[it] = new Thread("TrackMate_ TrackOverlay painting thread") {
+					source = model.getEdgeSource(edge);
+					sourceFrame = source.getFeature(Spot.POSITION_T) / dt;
+					if (sourceFrame < minT || sourceFrame >= maxT)
+						continue;
 
-					@Override
-					public void run() {
-
-						Spot source, target;
-						float sourceFrame, transparency;
-						int trackIndex;
-
-						for (int index = ai.getAndIncrement(); index <filteredTrackIndices.size(); index = ai.getAndIncrement()) {
-
-							trackIndex = indices[index];
-							g2d.setColor(edgeColors.get(trackIndex));
-							final Set<DefaultWeightedEdge> track= trackEdges.get(trackIndex);
-
-							for (DefaultWeightedEdge edge : track) {
-								if (highlight.contains(edge))
-									continue;
-
-								source = model.getEdgeSource(edge);
-								sourceFrame = source.getFeature(Spot.POSITION_T) / dt;
-								if (sourceFrame < minT || sourceFrame >= maxT)
-									continue;
-
-								transparency = 1 - Math.abs(sourceFrame-currentFrame) / trackDisplayDepth;
-								target = model.getEdgeTarget(edge);
-								drawEdge(g2d, source, target, xcorner, ycorner, mag, transparency);
-							}
-						}
-					}
-				};
+					transparency = 1 - Math.abs(sourceFrame-currentFrame) / trackDisplayDepth;
+					target = model.getEdgeTarget(edge);
+					drawEdge(g2d, source, target, xcorner, ycorner, mag, transparency);
+				}
 			}
-
-			SimpleMultiThreading.startAndJoin(threads);
 			break;
 
 		}
