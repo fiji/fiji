@@ -148,16 +148,21 @@ public class DisplayerPanel extends ActionListenablePanel implements WizardPanel
 	}
 
 	@Override
-	protected void fireAction(ActionEvent event) {
-		// Intercept event coming from the JPanelSpotColorGUI, and translate it for views
-		if (event == jPanelSpotColor.COLOR_FEATURE_CHANGED) {
-			for (TrackMateModelView view : views) {
-				view.setDisplaySettings(KEY_SPOT_COLOR_FEATURE, jPanelSpotColor.setColorByFeature);
-				view.refresh();
+	protected void fireAction(final ActionEvent event) {
+		new Thread("TrackMate dispatch displayer panel action thread") {
+			@Override
+			public void run() {
+				// Intercept event coming from the JPanelSpotColorGUI, and translate it for views
+				if (event == jPanelSpotColor.COLOR_FEATURE_CHANGED) {
+					for (TrackMateModelView view : views) {
+						view.setDisplaySettings(KEY_SPOT_COLOR_FEATURE, jPanelSpotColor.setColorByFeature);
+						view.refresh();
+					}
+				} else {
+					DisplayerPanel.super.fireAction(event);
+				}
 			}
-		} else {
-			super.fireAction(event);
-		}
+		}.start();
 	}
 
 	/**
