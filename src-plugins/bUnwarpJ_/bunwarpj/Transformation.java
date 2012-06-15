@@ -27,7 +27,6 @@ package bunwarpj;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
-import ij.Macro;
 import ij.io.SaveDialog;
 import ij.process.ColorProcessor;
 import ij.process.FloatProcessor;
@@ -4864,7 +4863,7 @@ public class Transformation
 			if( this.dialog.isMacroCall() )
 			{				
 				//IJ.log(" Macro args: " + dialog.getMacroArgs());
-				if( bIsReverse )
+				if( false == bIsReverse )
 				{
 					int i0 = dialog.getMacroArgs().indexOf( "save_direct_transformation" );
 					int i1 = dialog.getMacroArgs().indexOf( " ", i0 + 26 );
