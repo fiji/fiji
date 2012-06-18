@@ -4,11 +4,12 @@ import java.util.ArrayList;
 
 public class BlendingPixelFusion implements PixelFusion
 {
+	public static double fractionBlended = 0.2;
+	
 	final int numDimensions;
 	final int numImages;
 	final int[][] dimensions;
 	final float percentScaling;
-	final float[] dimensionScaling;
 	final float[] border;
 	
 	final ArrayList< ? extends ImageInterpolation< ? > > images;
@@ -22,7 +23,7 @@ public class BlendingPixelFusion implements PixelFusion
 	 */
 	public BlendingPixelFusion( final ArrayList< ? extends ImageInterpolation< ? > > images )
 	{
-		this( images, 0.2f );
+		this( images, (float)fractionBlended );
 	}	
 	/**
 	 * Instantiates the per-pixel blending
@@ -30,7 +31,7 @@ public class BlendingPixelFusion implements PixelFusion
 	 * @param images - all input images (the position in the list has to be the same as Id provided by addValue!)
 	 * @param percentScaling - which percentage of the image should be blended ( e.g. 0,3 means 15% on the left and 15% on the right)
 	 */
-	public BlendingPixelFusion( final ArrayList< ? extends ImageInterpolation< ? > > images, final float fractionBlended )
+	private BlendingPixelFusion( final ArrayList< ? extends ImageInterpolation< ? > > images, final float fractionBlended )
 	{
 		this.images = images;
 		this.percentScaling = fractionBlended;
@@ -43,12 +44,8 @@ public class BlendingPixelFusion implements PixelFusion
 			for ( int d = 0; d < numDimensions; ++d )
 				dimensions[ i ][ d ] = images.get( i ).getImage().getDimension( d ) - 1; 
 
-		this.dimensionScaling = new float[ numDimensions ];
 		this.border = new float[ numDimensions ];
-		
-		for ( int d = 0; d < numDimensions; ++d )
-			dimensionScaling[ d ] = 1;
-		
+
 		// reset
 		clear();
 	}
@@ -60,7 +57,7 @@ public class BlendingPixelFusion implements PixelFusion
 	public void addValue( final float value, final int imageId, final float[] localPosition ) 
 	{
 		// we are always inside the image, so we do not want 0.0
-		final double weight = Math.max( 0.00001, computeWeight( localPosition, dimensions[ imageId ], border, dimensionScaling, percentScaling ) );
+		final double weight = Math.max( 0.00001, computeWeight( localPosition, dimensions[ imageId ], border, percentScaling ) );
 		
 		weightSum += weight;
 		valueSum += value * weight;
@@ -89,7 +86,7 @@ public class BlendingPixelFusion implements PixelFusion
 	 * @param percentScaling
 	 * @return
 	 */
-	final public static double computeWeight( final float[] location, final int[] dimensions, final float[] border, final float[] dimensionScaling, final float percentScaling )
+	final public static double computeWeight( final float[] location, final int[] dimensions, final float[] border, final float percentScaling )
 	{		
 		// compute multiplicative distance to the respective borders [0...1]
 		double minDistance = 1;
@@ -100,16 +97,7 @@ public class BlendingPixelFusion implements PixelFusion
 			final double localImgPos = location[ dim ];
 			
 			// the distance to the border that is closer
-			double value;
-			if ( dimensionScaling != null && dimensionScaling[ dim ] != 0 )
-			{
-				value = Math.max( 0, Math.min( localImgPos - border[ dim ]/dimensionScaling[ dim ], (dimensions[ dim ] - 1) - localImgPos - border[ dim ]/dimensionScaling[ dim ] ) );
-				value *= dimensionScaling[ dim ];
-			}
-			else
-			{
-				value = Math.max( 0, Math.min( localImgPos - border[ dim ], (dimensions[ dim ] - 1) - localImgPos - border[ dim ] ) );				
-			}
+			double value = Math.max( 1, Math.min( localImgPos - border[ dim ] + 1, (dimensions[ dim ] - 1) - localImgPos - border[ dim ] + 1 ) );
 						
 			final float imgAreaBlend = Math.round( percentScaling * 0.5f * dimensions[ dim ] );
 			
@@ -123,8 +111,8 @@ public class BlendingPixelFusion implements PixelFusion
 		
 		if ( minDistance == 1 )
 			return 1;
-		else if ( minDistance == 0)
-			return 0;
+		else if ( minDistance <= 0 )
+			return 0.0000001;
 		else
 			return ( Math.cos( (1 - minDistance) * Math.PI ) + 1 ) / 2;				
 	}

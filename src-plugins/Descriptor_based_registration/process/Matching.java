@@ -9,6 +9,10 @@ import ij.gui.PointRoi;
 import ij.gui.Roi;
 import ij.measure.Calibration;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Vector;
@@ -44,6 +48,7 @@ import mpicbg.spim.registration.ViewStructure;
 import mpicbg.spim.registration.bead.BeadRegistration;
 import mpicbg.spim.registration.detection.DetectionSegmentation;
 import mpicbg.spim.segmentation.InteractiveDoG;
+import mpicbg.stitching.TextFileAccess;
 import plugin.DescriptorParameters;
 import plugin.Descriptor_based_registration;
 import plugin.Descriptor_based_series_registration;
@@ -496,7 +501,7 @@ public class Matching
 		
 		String statement = computeRANSAC( candidates, finalInliers, finalModel, (float)params.ransacThreshold );
 		//IJ.log( "First ransac: " + explanation + ": " + statement );
-		IJ.log( "first model: " + finalModel );
+		//IJ.log( "first model: " + finalModel );
 		//IJ.log( "Z1 " + zStretching1 );
 		//IJ.log( "Z2 " + zStretching2 );
 
@@ -536,7 +541,7 @@ public class Matching
 				Model<?> model2 = params.model.copy();
 				String tmpStatement = computeRANSAC( candidates, inliers, model2, (float)params.ransacThreshold );
 				
-				IJ.log( "ransac " + i + ": " + explanation + ": " + tmpStatement );
+				//IJ.log( "ransac " + i + ": " + explanation + ": " + tmpStatement );
 				
 				numInliers = inliers.size();
 				//IJ.log( explanation + ": " + statement );
@@ -573,6 +578,54 @@ public class Matching
 				
 				IJ.log( particleA.id + " <-> " + particleB.id );
 			}	
+		}
+		
+		// write out this pair to disk
+		if ( DescriptorParameters.correspondenceDirectory != null )
+		{
+			final File dir = new File( DescriptorParameters.correspondenceDirectory );
+			
+			if ( dir.exists() )
+			{
+				if ( dir.isDirectory() )
+				{
+					String ex2 = explanation.replaceAll( "<->", "-" );
+					final File file = new File( DescriptorParameters.correspondenceDirectory, ex2 + ".txt" );
+					final PrintWriter out = openFileWrite( file );
+					
+					if ( out == null )
+					{
+						IJ.log( "Could not create file: " + file );											
+					}
+					else
+					{
+						if  ( params.dimensionality == 3 )
+							out.println( "x0" + "\t" + "y0" + "\t" + "z0" + "\t" + "x1" + "\t" + "y1" + "\t" + "z1" );
+						else
+							out.println( "x0" + "\t" + "y0" + "\t" + "x1" + "\t" + "y1" );
+	
+						for ( final PointMatch pm : finalInliers )
+						{
+							Particle particleA = (Particle)pm.getP1();
+							Particle particleB = (Particle)pm.getP2();
+							
+							if  ( params.dimensionality == 3 )
+								out.println( particleA.getL()[ 0 ] + "\t" + particleA.getL()[ 1 ] + "\t" + particleA.getL()[ 2 ]/particleA.zStretching + "\t" + particleB.getL()[ 0 ] + "\t" + particleB.getL()[ 1 ] + "\t" + particleB.getL()[ 2 ]/particleB.zStretching );
+							else
+								out.println( particleA.getL()[ 0 ] + "\t" + particleA.getL()[ 1 ] + "\t" + particleB.getL()[ 0 ] + "\t" + particleB.getL()[ 1 ] );
+						}					
+						out.close();
+					}
+				}
+				else
+				{
+					IJ.log( "Directory(?) " + dir  + " is NO directory, cannot write out correspondences." );					
+				}
+			}
+			else
+			{
+				IJ.log( "Directory " + dir  + " does not exist, cannot write out correspondences." );
+			}
 		}
 		
 		return finalModel;
@@ -919,7 +972,22 @@ public class Matching
 	{
 		return DetectionSegmentation.extractBeadsLaPlaceImgLib( image, new OutOfBoundsStrategyMirrorFactory<FloatType>(), 0.5f, sigma1, sigma2, threshold, threshold/4, lookForMaxima, lookForMinima, ViewStructure.DEBUG_MAIN );
 	}
-	
+
+	private static PrintWriter openFileWrite(final File file)
+	{
+		PrintWriter outputFile;
+		try
+		{
+			outputFile = new PrintWriter(new FileWriter(file));
+		}
+		catch (IOException e)
+		{
+			System.out.println("TextFileAccess.openFileWrite(): " + e);
+			outputFile = null;
+		}
+		return (outputFile);
+	}
+
 	protected static int[] removeInvalidAndCollectStatistics( ArrayList<DifferenceOfGaussianPeak<FloatType>> peaks )
 	{
 		int min = 0;

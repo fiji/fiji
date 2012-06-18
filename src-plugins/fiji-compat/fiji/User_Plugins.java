@@ -133,6 +133,7 @@ public class User_Plugins implements PlugIn {
 				for (int i = 0; i < plugins.getItemCount(); i++)
 					if (plugins.getItem(i).getLabel().equals("-")) {
 						plugins.insert("Install PlugIn...", i);
+						plugins.getItem(i).addActionListener(IJ.getInstance());
 						break;
 					}
 		}

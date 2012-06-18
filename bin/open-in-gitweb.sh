@@ -15,7 +15,12 @@ get_url () {
 	url=$(git config remote.origin.url)
 	if test -z "$url"
 	then
-		remote=$(git config branch.master.remote) &&
+		branch=$(git rev-parse --symbolic-full-name HEAD) &&
+		remote=$(git config branch.${branch#refs/heads/}.remote) &&
+		if test -z "$remote"
+		then
+			remote=$(git config branch.master.remote)
+		fi &&
 		url=$(git config remote.$remote.url) &&
 		test ! -z "$url"
 	fi || {
@@ -49,7 +54,19 @@ get_url () {
 		imageja.git) project=ImageJA.git;;
 		esac
 
-		echo "http://fiji.sc/cgi-bin/gitweb.cgi?p=$project"
+		case $project in
+		ImageJA.git|fiji.git)
+			echo "http://github.com/fiji/${project%.git}"
+			;;
+		imagej2/.git|imagej.git)
+			case $project in imagej2/.git) project=imagej;; esac
+			project=${project%.git}
+			echo "http://github.com/imagej/$project"
+			;;
+		*)
+			echo "http://fiji.sc/cgi-bin/gitweb.cgi?p=$project"
+			;;
+		esac
 		;;
 	esac
 }
@@ -69,11 +86,29 @@ do
 		HEAD=$(git rev-parse --symbolic-full-name HEAD) &&
 		arg=$(git ls-files --full-name "${arg##*/}") &&
 		url=$(get_url) &&
-		$BROWSER "$url;a=blob;f=$arg;hb=$HEAD$linenumber")
+		case "$url" in
+		*github.com*)
+			case "$linenumber" in '#l'*) linenumber=#L${linenumber#\#l};; esac
+			url="$url/blob/${HEAD#refs/heads/}/$arg$linenumber"
+			;;
+		*)
+			url="$url;a=blob;f=$arg;hb=$HEAD$linenumber"
+			;;
+		esac &&
+		$BROWSER "$url")
 	else
 		HEAD=$(git rev-parse --symbolic-full-name HEAD) &&
 		arg=$(git rev-parse --verify "$arg") &&
 		url=$(get_url) &&
-		$BROWSER "$url;a=commitdiff;h=$arg;hb=$HEAD"
+		case "$url" in
+		*github.com*)
+			test -z "$arg" && arg=${HEAD#refs/heads/}
+			url="$url/commit/$arg"
+			;;
+		*)
+			url="$url;a=commitdiff;h=$arg;hb=$HEAD"
+			;;
+		esac &&
+		$BROWSER "$url"
 	fi || break
 done

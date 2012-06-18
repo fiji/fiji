@@ -1,5 +1,5 @@
 #!/bin/sh
-''''exec "$(dirname "$0")"/../ImageJ --headless --jython "$0" "$@" # (call again with fiji)'''
+''''exec "$(dirname "$0")"/ImageJ.sh --headless --jython "$0" "$@" # (call again with fiji)'''
 
 from fiji import User_Plugins
 from ij import IJ
@@ -19,7 +19,7 @@ the Wiki.
 It fetches information on menu item position and files called by
 letting fiji.User_Plugins parse the jars.
 
-J.Y. Tinevez - 2009, J. Schindelin - 2010
+J.Y. Tinevez - 2009, J. Schindelin - 2010,2012
 """
 
 def walktree(top = ".", depthfirst = True):
@@ -59,7 +59,7 @@ def getTree(menuPath):
         parentMenuPath, dummy = splitLast(menuPath, '>', '')
         parentTree = getTree(parentMenuPath)
         parentTree.append([menuPath, result])
-        allElements[menuPath] = result
+        allElements.put(menuPath, result)
     return result
 
 def appendPlugin(menuPath, name, class_name, package_name, type, path = None):
@@ -72,6 +72,8 @@ def appendJar(jarfile_path, type):
     """Analyze the content of a plugins.config embeded in a jar, and get the
     location of its indexed compenents."""
     for line in User_Plugins(False).getJarPluginList(File(jarfile_path), 'Plugins'):
+        if line[1] == '-':
+            continue
         packageName, className = splitLast(line[2], '.')
         appendPlugin(line[0], line[1], className, packageName, type, jarfile_path)
 
@@ -104,6 +106,8 @@ def createPluginsTree(ij_folder):
 def treeToString(tree, level=1):
     global firstNode
     result = ''
+
+    tree.sort()
 
     # first handle the commands
     for element in tree:
@@ -149,7 +153,8 @@ PLUGINS_TYPE = {JAR_EXTENSION:'java jar file',
                 '.class':'java class file',
                 '.txt':'macro',
                 '.ijm':'macro',
-                '.js':'javascript file',
+                '.bsh':'beanshell script',
+                '.js':'javascript script',
                 '.rb':'jruby script',
                 '.py':'jython script',
                 '.clj':'clojure script'}
@@ -165,12 +170,16 @@ allElements[''] = []
 
 uploadToWiki = False
 compareToWiki = False
+color = '--color=none'
 if len(sys.argv) > 1 and sys.argv[1] == '--upload-to-wiki':
     uploadToWiki = True
     sys.argv = sys.argv[:1] + sys.argv[2:]
 elif len(sys.argv) > 1 and sys.argv[1] == '--compare-to-wiki':
     compareToWiki = True
     sys.argv = sys.argv[:1] + sys.argv[2:]
+    if len(sys.argv) > 1 and sys.argv[1] == '--color':
+        color = '--color'
+        sys.argv = sys.argv[:1] + sys.argv[2:]
 
 if len(sys.argv) < 2:
     ij_folder = os.path.curdir
@@ -203,7 +212,7 @@ if uploadToWiki or compareToWiki:
             writer2 = FileWriter(file2)
             writer2.write(result)
             writer2.close()
-            diff = SimpleExecuter(['git', 'diff', '--patience', '--no-index', '--src-prefix=wiki/', '--dst-prefix=local/', file1.getAbsolutePath(), file2.getAbsolutePath()])
+            diff = SimpleExecuter(['git', 'diff', color, '--ignore-space-at-eol', '--patience', '--no-index', '--src-prefix=wiki/', '--dst-prefix=local/', file1.getAbsolutePath(), file2.getAbsolutePath()])
             file1.delete()
             file2.delete()
             print diff.getOutput()

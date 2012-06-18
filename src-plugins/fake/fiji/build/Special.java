@@ -10,4 +10,9 @@ public abstract class Special extends Rule {
 	boolean checkUpToDate() {
 		return false;
 	}
+
+	@Override
+	public Special copy() {
+		throw new UnsupportedOperationException();
+	}
 }

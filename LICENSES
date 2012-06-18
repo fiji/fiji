@@ -24,9 +24,11 @@ Abbreviations:
 Name					File					Author(s)						Contact								License
 ----					----					---------						--------------							-------
 * Anisotropic Diffusion 2D 		Anisotropic_Diffusion_2D.jar 		http://rsb.info.nih.gov/ij/plugins/download/Anisotropic_Diffusion_2D.java						GPL
+* Balloon Segmentation	 		BalloonSegmentation_.jar 		Lionel Dupuy						Lionel.Dupuy@hutton.ac.uk					GPL
 * Batik 				batik.jar 				http://xmlgraphics.apache.org/batik/contributors.html									AL
 * Bean Shell language 			bsh.jar 											http://www.beanshell.org/ 					SPL/LGPL
 * Bean Shell Interpreter 		BSH_Interpreter.jar			Johannes Schindelin					Johannes.Schindelin@gmx.de					GPL
+* Bleach Corrector	 		CorrectBleach_.jar			Kota Miura						miura@embl.de							GPL
 * bUnwarpJ				bUnwarpJ_.jar				Ignacio	Arganda et al.					ignacio.arganda@uam.es						GPL
 * Clojure				clojure.jar				Rich Hickey						http://clojure.sourceforge.net/					EPL
 * Clojure Interpreter			Clojure_Interpreter.jar 		Albert Cardona 						acardona@ini.phys.ethz.ch					GPL
@@ -57,6 +59,8 @@ Name					File					Author(s)						Contact								License
 * Javascript Rhino Engine 		js.jar 					http://www.mozilla.org/rhino/ 				http://www.mozilla.org/rhino/ 					MPL 1.1/GPL 2  see http://developer.mozilla.org/en/docs/Rhino_License
 * Javascript Interpreter 		Javascript_Interpreter.jar 		Albert Cardona 						acardona@ini.phys.ethz.ch 					GPL
 * JFreeChart	 			jfreechart.jar 				http://www.jfree.org/jfreechart/			http://www.jfree.org/jfreechart/ 				LGPL
+* JGraphT					jgrapht-jdk1.6.jar			http://jgrapht.org/							http://jgrapht.org/							LGPL
+* JGraphX					jgraphx.jar					http://www.jgraph.com/						http://www.jgraph.com/						BSD
 * JPedal PDF library 			jpedalSTD.jar 				http://www.jpedal.org/ 					http://www.jpedal.org/ 						GPL/commercial
 * JRuby Interpreter 			JRuby_Interpreter.jar			Mark Longair						Mark.Longair@ed.ac.uk						GPL
 * JRuby 				jruby.jar				Thomas E. Enebo						http://jruby.codehaus.org/					CPL/GPL/LGPL

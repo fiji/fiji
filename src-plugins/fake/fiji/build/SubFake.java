@@ -12,6 +12,8 @@ public class SubFake extends Rule {
 	protected String baseName;
 	protected String source;
 	protected String configPath;
+	protected POM pom;
+	protected boolean pomRead;
 
 	SubFake(Parser parser, String target, List<String> prerequisites) {
 		super(parser, target, prerequisites);
@@ -34,6 +36,16 @@ public class SubFake extends Rule {
 	boolean checkUpToDate() {
 		if (!upToDate(configPath))
 			return false;
+
+		// check the classpath
+		for (String path : Util.splitPaths(getVar("CLASSPATH"))) {
+			Rule rule = (Rule)parser.allRules.get(path);
+			if (rule != null && !rule.upToDate()) {
+				verbose(target + " is not up-to-date because of " + path);
+				return false;
+			}
+		}
+
 		File target = new File(this.target);
 		for (String directory : prerequisites) try {
 			if (!checkUpToDate(directory, target))
@@ -94,40 +106,49 @@ public class SubFake extends Rule {
 	}
 
 	public POM getPOM() {
+		if (pomRead)
+			return pom;
 		File file = new File(Util.makePath(parser.cwd, getLastPrerequisite()), "pom.xml");
-		if (!file.exists())
-			return null;
-		// look for parent POMs (e.g. in modules/)
-		for (;;) {
-			File parent = file.getParentFile();
-			if (parent == null)
-				break;
-			parent = parent.getParentFile();
-			if (parent == null)
-				break;
-			File file2 = new File(parent, "pom.xml");
-			if (!file2.exists())
-				break;
-			file = file2;
+		if (!file.exists()) {
+			pomRead = true;
+			return pom;
 		}
 		String targetBasename = jarName.substring(jarName.lastIndexOf('/') + 1);
 		if (targetBasename.endsWith(".jar"))
 			targetBasename = targetBasename.substring(0, targetBasename.length() - 4);
 		// TODO: targetBasename could end in "-<version>"
 		try {
-			POM pom = new MiniMaven(parser.fake, parser.fake.err, getVarBool("VERBOSE"), getVarBool("DEBUG")).parse(file);
-			if (targetBasename.equals(pom.getArtifact()))
-				return pom;
-			return pom.findPOM(new Coordinate(null, targetBasename, null));
+			MiniMaven miniMaven = new MiniMaven(parser.fake, parser.fake.err, getVarBool("VERBOSE"), getVarBool("DEBUG"));
+			miniMaven.downloadAutomatically = !miniMaven.offlineMode;
+			MiniMaven.ensureIJDirIsSet();
+			String ijDir = System.getProperty("ij.dir");
+			File submodules = new File(ijDir, "modules");
+			File srcPlugins = new File(ijDir, "src-plugins");
+			if (submodules.exists())
+				miniMaven.addMultiProjectRoot(submodules);
+			if (srcPlugins.exists())
+				miniMaven.addMultiProjectRoot(srcPlugins);
+			miniMaven.excludeFromMultiProjects(file.getParentFile());
+			pom = miniMaven.parse(file);
+			if (!targetBasename.equals(pom.getArtifact()))
+				pom = pom.findPOM(new Coordinate(null, targetBasename, null), miniMaven.verbose, miniMaven.downloadAutomatically);
 		} catch (Exception e) {
 			e.printStackTrace(parser.fake.err);
-			return null;
 		}
+		pomRead = true;
+		return pom;
 	}
 
 	void action() throws FakeException {
 		String directory = getLastPrerequisite();
 		checkObsoleteLocation(directory);
+
+		// check the classpath
+		for (String path : Util.splitPaths(getVar("CLASSPATH"))) {
+			Rule rule = (Rule)parser.allRules.get(path);
+			if (rule != null && !rule.upToDate())
+				rule.action();
+		}
 
 		if (getFakefile() != null || new File(directory, "Makefile").exists())
 			fakeOrMake(jarName);
@@ -259,5 +280,12 @@ public class SubFake extends Rule {
 		else
 			throw new FakeException("Detected submodule in obsolete location: " + submodule.getAbsolutePath()
 				+ "\nTo move submodules automatically, call Fiji Build again with moveSubmodules=true");
+	}
+
+	@Override
+	public SubFake copy() {
+		SubFake copy = new SubFake(parser, target, prerequisites);
+		copy.prerequisiteString = prerequisiteString;
+		return copy;
 	}
 }

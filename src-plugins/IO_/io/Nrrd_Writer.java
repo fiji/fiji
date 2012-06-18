@@ -31,6 +31,7 @@ import ij.IJ;
 import ij.ImagePlus;
 import ij.WindowManager;
 import ij.io.FileInfo;
+import ij.VirtualStack;
 import ij.io.ImageWriter;
 import ij.io.SaveDialog;
 import ij.measure.Calibration;
@@ -60,7 +61,7 @@ public class Nrrd_Writer implements PlugIn {
 	// See http://teem.sourceforge.net/nrrd/format.html#centers
 	static final String defaultNrrdCentering="node";	
 	
-	String setNrrdEncoding(String enc) throws IOException {
+	public String setNrrdEncoding(String enc) throws IOException {
 		enc=enc.toLowerCase();
 		if (enc.equals("raw")) nrrdEncoding="raw";
 		else if (enc.equals("gz") || enc.equals("gzip")) nrrdEncoding="gzip";
@@ -101,7 +102,12 @@ public class Nrrd_Writer implements PlugIn {
 			return;
 		}
 		FileInfo fi = imp.getFileInfo();
-
+		// This check and set is required to for ImageWriter to handle virtual
+		// stacks which have fi.pixels=null
+		boolean virtualStack = imp.getStackSize()>1 && imp.getStack().isVirtual();
+		if (virtualStack) {
+			fi.virtualStack = (VirtualStack)imp.getStack();
+		}
 		// Make sure that we can save this kind of image
 		if(imgTypeString==null) {
 			imgTypeString=imgType(fi.fileType);
@@ -123,6 +129,12 @@ public class Nrrd_Writer implements PlugIn {
 			IJ.showStatus("");
 		}
 	}
+	
+	public void save(ImagePlus imp, String path){
+		File f = new File(path);
+		save(imp, f.getParent(),f.getName());
+	}
+	
 	void writeImage(FileInfo fi, Calibration cal) throws IOException {
 		FileOutputStream out = new FileOutputStream(new File(fi.directory, fi.fileName));
 		// First write out the full header

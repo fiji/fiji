@@ -138,6 +138,8 @@ public class FeatureStackArray
 	public void set(FeatureStack fs, int index)
 	{
 		this.featureStackArray[ index ] = fs;
+		if( referenceStackIndex == -1 )
+			this.referenceStackIndex = index;
 	}
 	
 	/**

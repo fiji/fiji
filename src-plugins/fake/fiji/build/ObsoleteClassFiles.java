@@ -19,6 +19,8 @@ public class ObsoleteClassFiles {
 
 	public ObsoleteClassFiles(PrintStream err, File sourceDirectory, File targetDirectory) {
 		obsoleteFiles = new ArrayList<File>();
+		if (targetDirectory == null)
+			targetDirectory = sourceDirectory;
 		init(sourceDirectory, targetDirectory);
 	}
 

@@ -23,6 +23,8 @@ package trainableSegmentation.utils;
 import java.awt.Color;
 import java.util.ArrayList;
 
+import javax.vecmath.Point3f;
+
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
@@ -38,6 +40,7 @@ import ij.process.ImageStatistics;
 import trainableSegmentation.metrics.ClassificationStatistics;
 import util.FindConnectedRegions;
 import util.FindConnectedRegions.Results;
+import weka.core.Instances;
 
 /**
  * This class implements useful methods for the Weka Segmentation library.
@@ -143,6 +146,122 @@ public class Utils {
 		pl.setSize(540, 512);
 		pl.setColor(Color.GREEN);
 		pl.show();
+	}
+	
+	/**
+	 * Plot the Receiver operating characteristic curve
+	 * @param stats classification statistics
+	 */
+	public static void plotROC(
+			ArrayList< ClassificationStatistics > stats)
+	{
+		// Extract true positive and true negative rates
+		float[] tpr = new float[ stats.size() ];
+		float[] fpr = new float[ stats.size() ];
+		
+		for(int i = 0; i < tpr.length; i++)
+		{
+			tpr[i] = (float) stats.get(i).recall;
+			fpr[i] = (float) (1f - stats.get(i).specificity);
+		}
+
+		Plot pl = new Plot("Receiver Operating Characteristic curve", "False Positive Rate (1 - specificity)", "True Positive Rate or sensitivity", fpr, tpr );		
+		pl.setLimits(0, 1, 0, 1);
+		pl.setSize(540, 512);
+		pl.setColor(Color.RED);
+		pl.show();
+	}
+	
+	/**
+	 * Get area under the Precision/Recall curve
+	 * @param stats classification statistics with the ROC curve information
+	 * @return area under the input curve
+	 */
+	public static double getPrecRecArea(
+			ArrayList< ClassificationStatistics > stats)
+	{
+		
+		final int n = stats.size();
+		double area = 0;
+	    double xlast = stats.get( n - 1 ).recall;
+	    
+	    // start from the first real precision/recall pair (not the artificial zero point)
+	    for (int i = n - 2; i >= 0; i--) 
+	    {
+	      double recallDelta = stats.get( i ).recall - xlast;
+	      area += (stats.get( i ).precision * recallDelta);
+	      
+	      xlast = stats.get( i ).recall;
+	    }
+	    
+
+	    return area;
+	}
+	
+	  /**
+	   * Calculates the area under the ROC curve as the Wilcoxon-Mann-Whitney statistic.
+	   *
+	   * @param tcurve a previously extracted threshold curve Instances.
+	   * @return the ROC area, or Double.NaN if you don't pass in 
+	   * a ThresholdCurve generated Instances. 
+	   */
+	  public static double getROCArea(ArrayList< ClassificationStatistics > stats) 
+	  {
+		  final int n = stats.size();
+		  double area = 0;
+
+		  double cumNeg = 0.0;
+		  
+		  // Get total number of positives and negatives assuming the first
+		  // element of the list corresponds to threshold 0 (so all samples are
+		  // considered positive)
+		  final double totalPos = stats.get( 0 ).truePositives;
+		  final double totalNeg = stats.get( 0 ).falsePositives;
+		  
+		  for (int i = 0; i < n; i++) 
+		  {
+			  double cip, cin;
+			  if (i < n - 1) 
+			  {
+				  cip = stats.get( i ).truePositives - stats.get( i + 1 ).truePositives;
+				  cin = stats.get( i ).falsePositives - stats.get( i + 1 ).falsePositives;
+			  } else {
+				  cip = stats.get( n - 1 ).truePositives;
+				  cin = stats.get( n - 1 ).falsePositives;
+			  }
+			  area += cip * (cumNeg + (0.5 * cin));
+			  cumNeg += cin;
+		  }
+		  area /= (totalNeg * totalPos);
+
+		  return area;
+	  }
+	
+
+	/**
+	 * Get Kappa statistic
+	 * @param stats classification statistics
+	 * @return Kappa statistic
+	 */
+	public static double getKappa(
+			ClassificationStatistics stats)
+	{
+		
+		double correct = stats.truePositives + stats.trueNegatives;
+		double numSamples = stats.truePositives + stats.falsePositives + stats.falseNegatives + stats.trueNegatives;
+
+		double chanceAgreement = (stats.truePositives + stats.falsePositives) * (stats.truePositives + stats.falseNegatives)
+					+ (stats.falseNegatives + stats.trueNegatives) * (stats.falsePositives + stats.trueNegatives);
+
+		chanceAgreement /= (numSamples * numSamples);
+		correct /= numSamples;
+
+		double kappa = 1.0;
+		if (chanceAgreement < 1) 
+		     	kappa = (correct - chanceAgreement) / (1 - chanceAgreement);
+	    
+
+	    return kappa;
 	}
 	
 	
@@ -452,36 +571,34 @@ public class Utils {
 		
 		// Localize small objects by the difference with the original thresholded image
 		ByteProcessor th2 = (ByteProcessor) th.duplicate();
-		th2.copyBits(thresholded, 0, 0, Blitter.DIFFERENCE);
-								
+		th2.copyBits(thresholded, 0, 0, Blitter.DIFFERENCE);				
+		
+		byte[] th2pixels = (byte[])th2.getPixels();
+		final float[] probPixels = (float[])probabilityMap.getPixels();
+				
 		// Set those pixels to background in the probability image
-		for(int x=0; x<th2.getWidth(); x++)
-			for(int y=0; y<th2.getHeight(); y++)
-			{
-				if( th2.getPixelValue(x, y) > 0)
-					probabilityMap.putPixelValue(x, y, 0);
-			}
-		
-		// Fill holes in the thresholded components image
-		fill( th, 255, 0 );
-		
-		// Localize holes by the difference with the original thresholded image
+		for(int i=0; i<th2pixels.length; i++)
+		{
+			if( th2pixels[ i ] != 0)
+				probPixels[ i ] = 0;
+		}
+				
+		// Localize holes by the removing them first from the image
+		// without small objects and then looking at the difference
 		th2 = (ByteProcessor) th.duplicate();
 		
-		//(new ImagePlus( "th", th)).show();
-		
-		th2.copyBits(thresholded, 0, 0, Blitter.DIFFERENCE);
-								
-		//(new ImagePlus( "th2 diff", th2)).show();
-		//(new ImagePlus( "thresholded", thresholded)).show();
-		
+		// Fill holes in the thresholded components image
+		fill( th2, 255, 0 );
+						
+		th2.copyBits(th, 0, 0, Blitter.DIFFERENCE);
+		th2pixels = (byte[])th2.getPixels();
+										
 		// Set those pixels to foreground in the probability image
-		for(int x=0; x<th2.getWidth(); x++)
-			for(int y=0; y<th2.getHeight(); y++)
-			{
-				if( th2.getPixelValue(x, y) > 0)
-					probabilityMap.putPixelValue(x, y, 1);
-			}
+		for(int i=0; i<th2pixels.length; i++)
+		{
+			if( th2pixels[ i ] != 0)
+				probPixels[ i ] = 1;
+		}
 		
 	}
 	
@@ -512,5 +629,59 @@ public class Utils {
 		}
 	}
 	
+	/**
+	 * Get the binary class coordinates from a label image (2D image or stack)
+	 * 
+	 * @param labelImage labels (they can be in any format, black = 0)
+	 * @param mask binary mask to select the pixels to be extracted
+	 * @return array with the two lists (black and white) of sample coordinates
+	 */
+	public static ArrayList< Point3f >[] getClassCoordinates( 
+			ImagePlus labelImage,
+			ImagePlus mask)
+	{
+		final ArrayList< Point3f >[] classPoints = new ArrayList[2];
+		classPoints[ 0 ] = new ArrayList< Point3f >();
+		classPoints[ 1 ] = new ArrayList< Point3f >();
+		
+		final int width = labelImage.getWidth();
+		final int height = labelImage.getHeight();
+		final int size = labelImage.getImageStackSize();
+		
+		if( null != mask )
+		{					
+			for(int slice = 1; slice <= size; slice ++)
+			{
+				final float[] labelsPix = (float[]) labelImage.getImageStack().getProcessor( slice ).convertToFloat().getPixels();
+				final float[] maskPix = (float[]) mask.getImageStack().getProcessor( slice ).convertToFloat().getPixels();
+				
+				for(int x = 0; x < width; x++)
+					for( int y = 0; y < height; y++ )
+						if( maskPix[ x + y * width] > 0 )
+						{
+							if( labelsPix[ x + y * width] != 0)				
+								classPoints[ 1 ].add( new Point3f( new float[]{ x, y, slice-1}) );					
+							else				
+								classPoints[ 0 ].add( new Point3f( new float[]{ x, y, slice-1}) );
+						}
+			}
+		}
+		else
+		{
+			for(int slice = 1; slice <= size; slice ++)
+			{
+				final float[] labelsPix = (float[]) labelImage.getImageStack().getProcessor( slice ).convertToFloat().getPixels();
+				
+				for(int x = 0; x < width; x++)
+					for( int y = 0; y < height; y++ )					
+							if( labelsPix[ x + y * width] != 0)				
+								classPoints[ 1 ].add( new Point3f( new float[]{ x, y, slice-1}) );					
+							else				
+								classPoints[ 0 ].add( new Point3f( new float[]{ x, y, slice-1}) );
+					
+			}
+		}
+		return classPoints;
+	}
 	
 }

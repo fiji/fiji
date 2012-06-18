@@ -85,6 +85,12 @@ public class Javascript_Interpreter extends AbstractInterpreter {
 			cx.setApplicationClassLoader(IJ.getClassLoader());
 			Scriptable scope = new ImporterTopLevel(cx);
 			new Javascript_Interpreter(cx, scope).importAll();
+			cx.evaluateString(scope, "function load(path) {\n"
+				+ "importClass(Packages.org.mozilla.javascript.Context);\n"
+				+ "importClass(Packages.java.io.FileReader);\n"
+				+ "var cx = Context.getCurrentContext();\n"
+				+ "cx.evaluateReader(this, new FileReader(path), path, 1, null);\n"
+				+ "}", "<init>", 1, null);
 			return scope;
 		} catch (Throwable t) { }
 

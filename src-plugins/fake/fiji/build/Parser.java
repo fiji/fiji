@@ -27,7 +27,7 @@ public class Parser {
 	String line;
 	int lineNumber;
 	File cwd;
-	protected Map<String, Rule> allRules = new HashMap<String, Rule>();
+	protected Map<String, Rule> allRules = new TreeMap<String, Rule>();
 	protected Set<String> allPrerequisites = new HashSet<String>();
 	protected Set<String> allPlatforms;
 	protected Rule allRule;
@@ -756,13 +756,9 @@ public class Parser {
 		if (fallBack == null)
 			throw new FakeException("No precompiled and "
 				+ "no fallback for " + target + "!");
-		// TODO: clone it
-		synchronized(fallBack) {
-			String save = fallBack.target;
-			fallBack.target = target;
-			fallBack.make();
-			fallBack.target = save;
-		}
+		fallBack = fallBack.copy();
+		fallBack.target = target;
+		fallBack.make();
 	}
 
 	public Rule getRule(String rule) {

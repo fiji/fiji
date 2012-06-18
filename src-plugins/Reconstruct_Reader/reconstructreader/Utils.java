@@ -120,10 +120,11 @@ public final class Utils {
                 {
                     weird |= xcoef[i] != 0 || ycoef[i] != 0;
                 }
-                if (weird)
+                if (weird && !trans.hasAttribute("weird"))
                 {
                     System.err.println("Non affine tranforms are unsupported." +
                             " Expect weirdness at index " + index);
+                    trans.setAttribute("weird", "true");
                 }
                 break;
         }

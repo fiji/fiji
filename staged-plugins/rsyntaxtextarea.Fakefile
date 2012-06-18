@@ -5,4 +5,4 @@ all <- $JAR
 
 $JAR <- $DISTDIR/$JAR
 
-$DISTDIR/$JAR[../../ImageJ --ant -Ddebuglevel=none $ANTTARGET] <-
+$DISTDIR/$JAR[../../bin/ImageJ.sh --ant -Ddebuglevel=none $ANTTARGET] <-

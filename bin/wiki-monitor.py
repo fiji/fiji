@@ -1,5 +1,5 @@
 #!/bin/sh
-''''exec "$(dirname "$0")"/../ImageJ --jython --headless --mem=64m "$0" "$@" # (call again with fiji)'''
+''''exec "$(dirname "$0")"/ImageJ.sh --jython --headless --mem=64m "$0" "$@" # (call again with fiji)'''
 
 # This script allows you to monitor a Wiki conveniently, by looking at the
 # Special:RecentChanges page, and comparing it with the version it found
@@ -68,7 +68,11 @@ f.close()
 result = ''
 for line in response.split('\n'):
 	i = line.find('<h4>')
-	if i >= 0:
+	if line.find('<div') > 0 and line.find('mainContent') > 0:
+		result = ''
+	elif line.find('</div') > 0 and line.find('mainContent') > 0:
+		break
+	elif i >= 0:
 		line = line[i + 4:]
 		if line.endswith('</h4>'):
 			line = line[:-5]

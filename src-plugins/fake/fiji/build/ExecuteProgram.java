@@ -2,7 +2,7 @@ package fiji.build;
 
 import java.io.File;
 
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.List;
 
 public class ExecuteProgram extends Rule {
@@ -19,16 +19,25 @@ public class ExecuteProgram extends Rule {
 	}
 
 	public Iterable<Rule> getDependencies() throws FakeException {
+		Iterable<Rule> result = super.getDependencies();
+		List<Rule> additional = new ArrayList<Rule>();
 		String prereq = null;
 		String argv0 = getArgv0();
 		if (argv0.endsWith(".py"))
 			prereq = "jars/jython.jar";
 		else if (argv0.endsWith(".bsh"))
 			prereq = "jars/bsh.jar";
-		Rule rule = prereq == null ? null : parser.getRule(prereq);
-		if (rule == null)
-			return super.getDependencies();
-		return new MultiIterable<Rule>(super.getDependencies(), Collections.<Rule>singleton(rule));
+		if (prereq != null) {
+			Rule rule = parser.getRule(prereq);
+			if (rule != null)
+				additional.add(rule);
+			Rule launcher = parser.getRule("ImageJ");
+			if (launcher != null)
+				additional.add(launcher);
+			if (additional.size() > 0)
+				return new MultiIterable<Rule>(result, additional);
+		}
+		return result;
 	}
 
 	boolean checkUpToDate() {
@@ -47,7 +56,7 @@ public class ExecuteProgram extends Rule {
 		}
 
 		// special-case ant, since it's slow
-		if (program.startsWith("../../fiji --ant") &&
+		if ((program.startsWith("../../fiji --ant") || program.startsWith("../../ImageJ --ant")) &&
 				prerequisites.size() == 0 &&
 				upToDateRecursive(parser.cwd, new File(target)))
 			return true;
@@ -73,5 +82,12 @@ public class ExecuteProgram extends Rule {
 	protected void clean(boolean dryRun) {
 		if (!"".equals(program))
 			super.clean(dryRun);
+	}
+
+	@Override
+	public ExecuteProgram copy() {
+		ExecuteProgram copy = new ExecuteProgram(parser, target, prerequisites, program);
+		copy.prerequisiteString = prerequisiteString;
+		return copy;
 	}
 }

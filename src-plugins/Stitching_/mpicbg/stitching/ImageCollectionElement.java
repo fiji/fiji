@@ -71,6 +71,9 @@ public class ImageCollectionElement
 		}
 		else
 		{
+			// TODO: Unify this image loading mechanism with the one in
+			// plugin/Stitching_Grid.java. Otherwise changes to how images
+			// are loaded must be made in multiple places in the code.
 			if ( imp != null )
 				imp.close();
 			
@@ -102,6 +105,10 @@ public class ImageCollectionElement
 				if ( imp.length > 1 )
 				{
 					IJ.log( "LOCI does not open the file '" + file + "'correctly, it opens the image and splits it - maybe you should convert all input files first to TIFF?" );
+					
+					for ( ImagePlus i : imp )
+						i.close();
+					
 					return null;
 				}
 				else

@@ -1749,7 +1749,7 @@ public class Gen extends JCTree.Visitor {
          */
         Item makeNewArray(DiagnosticPosition pos, Type type, int ndims) {
             Type elemtype = types.elemtype(type);
-            if (types.dimensions(elemtype) + ndims > ClassFile.MAX_DIMENSIONS) {
+            if (types.dimensions(type) > ClassFile.MAX_DIMENSIONS) {
                 log.error(pos, "limit.dimensions");
                 nerrs++;
             }

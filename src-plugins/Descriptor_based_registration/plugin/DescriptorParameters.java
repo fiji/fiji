@@ -45,6 +45,11 @@ public class DescriptorParameters
 	 */
 	public static double minSimilarity = 100;
 	
+	/**
+	 * Writes out all corresponding points of all pairs if this is set to a directory
+	 */
+	public static String correspondenceDirectory = null;
+	
 	// for debug
 	public static boolean printAllSimilarities = false;
 

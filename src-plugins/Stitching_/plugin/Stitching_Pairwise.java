@@ -415,11 +415,12 @@ public class Stitching_Pairwise implements PlugIn
 		else
 			ci = fuse( new UnsignedByteType(), imp1, imp2, models, params );
 		
-		ci.setTitle( params.fusedName );
-		
 		if ( ci != null )
+		{
+			ci.setTitle( params.fusedName );
 			ci.show();
-		
+		}
+
 		IJ.log( "Finished ... (" + (System.currentTimeMillis() - start) + " ms)");
 	}
 	
@@ -431,7 +432,7 @@ public class Stitching_Pairwise implements PlugIn
 		
 		if ( params.fusionMethod < 5 )
 		{
-			ImagePlus imp = Fusion.fuse( targetType, images, models, params.dimensionality, params.subpixelAccuracy, params.fusionMethod, null );
+			ImagePlus imp = Fusion.fuse( targetType, images, models, params.dimensionality, params.subpixelAccuracy, params.fusionMethod, null, false );
 			return imp;
 		}
 		else if ( params.fusionMethod == 5 ) // overlay

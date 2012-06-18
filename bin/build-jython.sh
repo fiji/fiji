@@ -23,17 +23,10 @@ then
 	die "Could not fetch the Python library files"
 fi
 
-../../ImageJ --ant -Dpython.lib="$PYTHON_LIB" -f jython/build.xml jar-complete copy-lib >&2 ||
+../../bin/ImageJ.sh --ant -Dpython.lib="$PYTHON_LIB" -f jython/build.xml jar-complete copy-lib >&2 ||
 die "Could not run ant"
 
-case $(uname -s) in
-    Darwin)
-        JAR=jar
-        ;;
-    *)
-        JAR=$(../../ImageJ --print-java-home)/../bin/jar
-        ;;
-esac
+JAR=jar
 
 rm -rf unpacked &&
 mkdir unpacked && (

@@ -172,7 +172,8 @@ public class Stitch_Multiple_Series_File implements PlugIn
 
 			final int numSeries = r.getSeriesCount();
 			
-			// IJ.log( "numSeries:  " + numSeries );
+			if ( IJ.debugMode )
+				IJ.log( "numSeries:  " + numSeries );
 			
 			if ( numSeries == 1 )
 			{
@@ -186,14 +187,16 @@ public class Stitch_Multiple_Series_File implements PlugIn
 				if ( r.getSizeZ() > 1 )
 					dim = 3;
 
-			// IJ.log( "dim:  " + dim );
+			if ( IJ.debugMode )
+				IJ.log( "dim:  " + dim );
 
 			for ( int series = 0; series < numSeries; ++series )
 			{
-				// IJ.log( "fetching data for series:  " + series );
+				if ( IJ.debugMode )
+					IJ.log( "fetching data for series:  " + series );
 				r.setSeries( series );
 
-				final MetadataRetrieve retrieve = (MetadataRetrieve)r.getMetadataStore();
+				final MetadataRetrieve retrieve = service.asRetrieve(r.getMetadataStore());
 
 				// stage coordinates (per plane and series)
 				Double tmp;
@@ -204,21 +207,24 @@ public class Stitch_Multiple_Series_File implements PlugIn
 					locationX = tmp;
 				else
 					locationX = 0;				
-				// IJ.log( "locationX:  " + locationX );
+				if ( IJ.debugMode )
+					IJ.log( "locationX:  " + locationX );
 				
 				tmp = retrieve.getPlanePositionY( series, 0 );
 				if ( tmp != null )
 					locationY = tmp;
 				else
 					locationY = 0;				
-				// IJ.log( "locationY:  " + locationY );
+				if ( IJ.debugMode )
+					IJ.log( "locationY:  " + locationY );
 				
 				tmp = retrieve.getPlanePositionZ( series, 0 );
 				if ( tmp != null )
 					locationZ = tmp;
 				else
 					locationZ = 0;				
-				// IJ.log( "locationZ:  " + locationZ );
+				if ( IJ.debugMode )
+					IJ.log( "locationZ:  " + locationZ );
 
 				if ( !ignoreCalibration )
 				{
@@ -232,30 +238,36 @@ public class Stitch_Multiple_Series_File implements PlugIn
 					if ( posX >= 0 && cal != null && cal.floatValue() != 0 )
 						calX = cal.floatValue(); 
 	
-					// IJ.log( "calibrationX:  " + calX );
+					if ( IJ.debugMode )
+						IJ.log( "calibrationX:  " + calX );
 	
 					final int posY = dimOrder.indexOf( 'Y' );
 					cal = retrieve.getPixelsPhysicalSizeY( 0 ).getValue();
 					if ( posY >= 0 && cal != null && cal.floatValue() != 0 )
 						calY = cal.floatValue();
 	
-					// IJ.log( "calibrationY:  " + calY );
+					if ( IJ.debugMode )
+						IJ.log( "calibrationY:  " + calY );
 	
 					final int posZ = dimOrder.indexOf( 'Z' );
 					cal = retrieve.getPixelsPhysicalSizeZ( 0 ).getValue();
 					if ( posZ >= 0 && cal != null && cal.floatValue() != 0 )
 						calZ = cal.floatValue();
 				
-					// IJ.log( "calibrationZ:  " + calZ );
+					if ( IJ.debugMode )
+						IJ.log( "calibrationZ:  " + calZ );
 	
 					// location in pixel values;
 					locationX /= calX;
 					locationY /= calY;
 					locationZ /= calZ;
 				}
-				// IJ.log( "locationX [px]:  " + locationX );
-				// IJ.log( "locationY [px]:  " + locationY );
-				// IJ.log( "locationZ [px]:  " + locationZ );
+				if ( IJ.debugMode )
+				{
+					IJ.log( "locationX [px]:  " + locationX );
+					IJ.log( "locationY [px]:  " + locationY );
+					IJ.log( "locationZ [px]:  " + locationZ );
+				}
 
 				// increase overlap if desired
 				locationX *= (100.0-increaseOverlap)/100.0;
