@@ -178,8 +178,8 @@ public class SpearmanRankCorrelation<T extends RealType< T >> extends Algorithm<
 	 * @return Spearman's rank correlation t-statistic
 	 */
 	public static double getTStatistic(double rho, int n) {
-		double rho_squared = rhoValue * rhoValue;
-		return ( rhoValue * Math.sqrt((n - 2) / (1 - rho_squared)) );
+		double rho_squared = rho * rho;
+		return rho * Math.sqrt( (n - 2) / (1 - rho_squared) );
 	}
 	
 	/**
