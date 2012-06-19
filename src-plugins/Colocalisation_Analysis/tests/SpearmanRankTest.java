@@ -31,7 +31,7 @@ public class SpearmanRankTest extends ColocalisationTest {
 		// calculate Spearman's Rank rho value
 		double rho = SpearmanRankCorrelation.calculateSpearmanRank(cursor);
 		// Rho value = 0.5463...
-		assertTrue(rho > 0.54 && rho < 0.55);
+		assertTrue(rho > 0.546 && rho < 0.547);
 	}
 
 	/**
@@ -75,20 +75,13 @@ public class SpearmanRankTest extends ColocalisationTest {
 			{3,30}
 		 };
 		int n = data.length;
-		double[] x = new double[n];
-		double[] y = new double[n];
-		
-		for (int i = 0; i<n; i++) {
-			x[i] = data[i][0];
-			y[i] = data[i][1];
-		}
 		
 		/*
 		 * Check the arithmetic for the rho calculation.
-		 * Rho is exactly -0.1743 using the exact calculation for Spearman's rho 
-		 * as implemented here.
+		 * Rho is exactly -0.1743 (to 4 decimal points) using the 
+		 * exact calculation for Spearman's rho as implemented here.
 		 */
-		double rho = SpearmanRankCorrelation.calculateRho(x, y);
+		double rho = SpearmanRankCorrelation.calculateSpearmanRank(data);
 		assertEquals(-0.1743, rho, 0.001);
 		
 		// check the degrees of freedom calculation ( df = n - 2 )
@@ -100,7 +93,7 @@ public class SpearmanRankTest extends ColocalisationTest {
 		// The t-stat = -0.6382
 		double tstat = 0.0;
 		tstat = SpearmanRankCorrelation.getTStatistic(rho, df);
-		assertTrue((tstat > -0.64) && (tstat < -0.63));
+		assertEquals(-0.6382, tstat, 0.01);
 	}
 	
 	/**
