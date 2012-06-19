@@ -4865,15 +4865,41 @@ public class Transformation
 				//IJ.log(" Macro args: " + dialog.getMacroArgs());
 				if( false == bIsReverse )
 				{
-					int i0 = dialog.getMacroArgs().indexOf( "save_direct_transformation" );
-					int i1 = dialog.getMacroArgs().indexOf( " ", i0 + 26 );
-					filename = i1 == -1 ?  dialog.getMacroArgs().substring( i0+27 ) : dialog.getMacroArgs().substring( i0+27, i1 );
+					int i0 = dialog.getMacroArgs().indexOf( "save_direct_transformation=[" );
+					if ( i0 == -1 )
+					{
+						i0 = dialog.getMacroArgs().indexOf( "save_direct_transformation=" );
+						int i1 = dialog.getMacroArgs().indexOf( " ", i0 + 26 );
+						filename = i1 == -1 ?  dialog.getMacroArgs().substring( i0+27 ) : dialog.getMacroArgs().substring( i0+27, i1 );
+					}
+					else
+					{
+						int i1 = dialog.getMacroArgs().indexOf( "]", i0 + 26 );
+						filename = i1 == -1 ?  dialog.getMacroArgs().substring( i0+28 ) : dialog.getMacroArgs().substring( i0+28, i1 );
+					}
+					
+					if ( filename.length() == 0)
+						filename = "./" + sourceImp.getTitle() + "_direct_transf.txt"; 
+					
 				}
 				else
 				{
-					int i0 = dialog.getMacroArgs().indexOf( "save_inverse_transformation" );
-					int i1 = dialog.getMacroArgs().indexOf( " ", i0 + 27 );
-					filename = i1 == -1 ?  dialog.getMacroArgs().substring( i0+28 ) : dialog.getMacroArgs().substring( i0+28, i1 );
+					int i0 = dialog.getMacroArgs().indexOf( "save_inverse_transformation=[" );
+					if ( i0 == -1 )
+					{
+						i0 = dialog.getMacroArgs().indexOf( "save_inverse_transformation=" );
+						int i1 = dialog.getMacroArgs().indexOf( " ", i0 + 27 );
+						filename = i1 == -1 ?  dialog.getMacroArgs().substring( i0+28 ) : dialog.getMacroArgs().substring( i0+28, i1 );
+					}
+					else
+					{
+						int i1 = dialog.getMacroArgs().indexOf( "]", i0 + 27 );
+						filename = i1 == -1 ?  dialog.getMacroArgs().substring( i0+29 ) : dialog.getMacroArgs().substring( i0+29, i1 );
+					}
+					
+					if ( filename.length() == 0)
+						filename = "./" + targetImp.getTitle() + "_inverse_transf.txt";
+					
 				}	
 			}
 			else
@@ -4912,6 +4938,7 @@ public class Transformation
 			}
 		}
 
+		
 		// Save the file
 		MiscTools.saveElasticTransformation(intervals, cx, cy, filename);
 	}
