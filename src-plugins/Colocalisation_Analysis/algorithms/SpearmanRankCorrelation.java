@@ -78,10 +78,6 @@ public class SpearmanRankCorrelation<T extends RealType< T >> extends Algorithm<
 		cursor.reset();
 		
 		data = new double[n][2];
-		ch1raw = new double[n];
-		ch2raw = new double[n];
-		ch1ranks = new double[n];
-		ch2ranks = new double[n];
 		
 		for (int i = 0; i < n; i++) {
 			cursor.fwd();
@@ -89,10 +85,25 @@ public class SpearmanRankCorrelation<T extends RealType< T >> extends Algorithm<
 			T type2 = cursor.getChannel2();
 			data[i][0] = type1.getRealDouble();
 			data[i][1] = type2.getRealDouble();
-			ch1raw[i] = data[i][0];
-			ch2raw[i] = data[i][1];
 		}
 		
+		return calculateSpearmanRank(data);
+	}
+
+	/**
+	 * Calculates Spearman's Rank Correlation Coefficient (Spearman's rho) for
+	 * two images.
+	 *
+	 * @param data A 2D array containing the data to be ranked
+	 * @return Spearman's rank correlation coefficient (rho) value
+	 */
+	public static double calculateSpearmanRank(double[][] data) {
+		final int n = data.length;
+		ch1raw = new double[n];
+		ch2raw = new double[n];
+		ch1ranks = new double[n];
+		ch2ranks = new double[n];
+
 		/**
 		 * Here's the concept. Rank-transform the data, then run 
 		 * the Pearson correlation on the transformed data.
