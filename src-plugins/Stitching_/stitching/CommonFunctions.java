@@ -1086,8 +1086,6 @@ public class CommonFunctions
 
 	public static final double[] getPlanePosition( final IFormatReader r, final MetadataRetrieve retrieve, int series, int t )
 	{
-		IJ.log("====== Beginning getPlanePosition =====");//TEMP
-
 		// generate a mapping from native indices to Plane element indices
 		final HashMap< Integer, Integer > planeMap = new HashMap< Integer, Integer >();
 		final int planeCount = retrieve.getPlaneCount( series );
@@ -1119,7 +1117,6 @@ public class CommonFunctions
 			IJ.log( "locationZ:  " + locationZ );
 		}
 
-		IJ.log("====== Computed: " + locationX + " , " + locationY + " , " + locationZ + " =====");//CTR TEMP
 		return new double[] { locationX, locationY, locationZ };
 	}
 
