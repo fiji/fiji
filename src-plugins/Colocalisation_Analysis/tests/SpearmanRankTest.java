@@ -92,8 +92,8 @@ public class SpearmanRankTest extends ColocalisationTest {
 		// check the t-statistic calculation ( t = rho * sqrt( df / (1-rho^2) ) )
 		// The t-stat = -0.6382
 		double tstat = 0.0;
-		tstat = SpearmanRankCorrelation.getTStatistic(rho, df);
-		assertEquals(-0.6382, tstat, 0.01);
+		tstat = SpearmanRankCorrelation.getTStatistic(rho, n);
+		assertEquals(-0.6382, tstat, 0.001);
 	}
 	
 	/**
