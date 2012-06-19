@@ -77,7 +77,6 @@ public class SpearmanRankCorrelation<T extends RealType< T >> extends Algorithm<
 		}
 		cursor.reset();
 		
-		//data = new double[2][n];
 		data = new double[n][2];
 		ch1raw = new double[n];
 		ch2raw = new double[n];
@@ -108,10 +107,11 @@ public class SpearmanRankCorrelation<T extends RealType< T >> extends Algorithm<
 		
 		// Step 1: Sort the raw data, by column #2 (arbitrary choice).
 		Arrays.sort(data, new Comparator<double[]>() {
-		public int compare(double[] row1, double[] row2) {
-			return Double.compare(row1[1], row2[1]);
+			@Override
+			public int compare(double[] row1, double[] row2) {
+				return Double.compare(row1[1], row2[1]);
 			}
-			});
+		});
 		
 		for (int i = 0; i < n; i++) {
 			ch2raw[i] = data[i][1];
@@ -125,10 +125,11 @@ public class SpearmanRankCorrelation<T extends RealType< T >> extends Algorithm<
 		
 		// Step 2: Repeat step 1 with the other data column.
 		Arrays.sort(data, new Comparator<double[]>() {
+			@Override
 			public int compare(double[] row1, double[] row2) {
 				return Double.compare(row1[0], row2[0]);
 			}
-			});
+		});
 		
 		for (int i = 0; i < n; i++) {
 			ch1raw[i] = data[i][0];
