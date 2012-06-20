@@ -28,7 +28,7 @@ public class MandersColocalizationTest extends ColocalisationTest {
 				Views.iterable(mandersAlwaysTrueMask).localizingCursor());
 
 		r = mc.calculateMandersCorrelation(cursor,
-				Util.getTypeFromInterval(mandersA).createVariable());
+				Util.getTypeFromRandomAccess(mandersA).createVariable());
 
 		assertEquals(1.0d, r.m1, 0.0001);
 		assertEquals(1.0d, r.m2, 0.0001);
@@ -40,7 +40,7 @@ public class MandersColocalizationTest extends ColocalisationTest {
 				Views.iterable(mandersAlwaysTrueMask).localizingCursor());
 
 		r = mc.calculateMandersCorrelation(cursor,
-				Util.getTypeFromInterval(mandersA).createVariable());
+				Util.getTypeFromRandomAccess(mandersA).createVariable());
 
 		assertEquals(0.75d, r.m1, 0.0001);
 		assertEquals(0.75d, r.m2, 0.0001);
@@ -52,7 +52,7 @@ public class MandersColocalizationTest extends ColocalisationTest {
 				Views.iterable(mandersAlwaysTrueMask).localizingCursor());
 		
 		r = mc.calculateMandersCorrelation(cursor,
-				Util.getTypeFromInterval(mandersA).createVariable());
+				Util.getTypeFromRandomAccess(mandersA).createVariable());
 		
 		assertEquals(0.5d, r.m1, 0.0001);
 		assertEquals(0.5d, r.m2, 0.0001);
@@ -64,7 +64,7 @@ public class MandersColocalizationTest extends ColocalisationTest {
 				Views.iterable(mandersAlwaysTrueMask).localizingCursor());
 
 		r = mc.calculateMandersCorrelation(cursor,
-				Util.getTypeFromInterval(mandersA).createVariable());
+				Util.getTypeFromRandomAccess(mandersA).createVariable());
 
 		assertEquals(0.25d, r.m1, 0.0001);
 		assertEquals(0.25d, r.m2, 0.0001);
@@ -76,7 +76,7 @@ public class MandersColocalizationTest extends ColocalisationTest {
 				Views.iterable(mandersAlwaysTrueMask).localizingCursor());
 
 		r = mc.calculateMandersCorrelation(cursor,
-				Util.getTypeFromInterval(mandersA).createVariable());
+				Util.getTypeFromRandomAccess(mandersA).createVariable());
 
 		assertEquals(0.0d, r.m1, 0.0001);
 		assertEquals(0.0d, r.m2, 0.0001);
@@ -88,7 +88,7 @@ public class MandersColocalizationTest extends ColocalisationTest {
 				Views.iterable(mandersAlwaysTrueMask).localizingCursor());
 
 		r = mc.calculateMandersCorrelation(cursor,
-				Util.getTypeFromInterval(mandersA).createVariable());
+				Util.getTypeFromRandomAccess(mandersA).createVariable());
 
 		assertEquals(0.25d, r.m1, 0.0001);
 		assertEquals(0.3333d, r.m2, 0.0001);
@@ -100,7 +100,7 @@ public class MandersColocalizationTest extends ColocalisationTest {
 				Views.iterable(mandersAlwaysTrueMask).localizingCursor());
 
 		r = mc.calculateMandersCorrelation(cursor,
-				Util.getTypeFromInterval(mandersA).createVariable());
+				Util.getTypeFromRandomAccess(mandersA).createVariable());
 
 		assertEquals(0.25d, r.m1, 0.0001);
 		assertEquals(0.50d, r.m2, 0.0001);
@@ -112,7 +112,7 @@ public class MandersColocalizationTest extends ColocalisationTest {
 				Views.iterable(mandersAlwaysTrueMask).localizingCursor());
 
 		r = mc.calculateMandersCorrelation(cursor,
-				Util.getTypeFromInterval(mandersA).createVariable());
+				Util.getTypeFromRandomAccess(mandersA).createVariable());
 
 		assertEquals(0.25d, r.m1, 0.0001);
 		assertEquals(1.00d, r.m2, 0.0001);
@@ -124,7 +124,7 @@ public class MandersColocalizationTest extends ColocalisationTest {
 				Views.iterable(mandersAlwaysTrueMask).localizingCursor());
 
 		r = mc.calculateMandersCorrelation(cursor,
-				Util.getTypeFromInterval(mandersA).createVariable());
+				Util.getTypeFromRandomAccess(mandersA).createVariable());
 
 		assertEquals(0.083d, r.m1, 0.001);
 		assertEquals(0.75d, r.m2, 0.0001);

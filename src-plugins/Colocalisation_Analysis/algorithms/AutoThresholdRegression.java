@@ -123,8 +123,8 @@ public class AutoThresholdRegression<T extends RealType< T >> extends Algorithm<
 		double ch2ThreshMax = container.getMaxCh2();
 
 		// define some image type specific threshold variables
-		T thresholdCh1 = Util.getTypeFromInterval(img1).createVariable();
-		T thresholdCh2 = Util.getTypeFromInterval(img2).createVariable();
+		T thresholdCh1 = Util.getTypeFromRandomAccess(img1).createVariable();
+		T thresholdCh2 = Util.getTypeFromRandomAccess(img2).createVariable();
 		// reset the previously created cursor
 		cursor.reset();
 
@@ -178,7 +178,7 @@ public class AutoThresholdRegression<T extends RealType< T >> extends Algorithm<
 		/* Get min and max value of image data type. Since type of image
 		 * one and two are the same, we dont't need to distinguish them.
 		 */
-		T dummyT = Util.getTypeFromInterval(img1).createVariable();
+		T dummyT = Util.getTypeFromRandomAccess(img1).createVariable();
 		double minVal = dummyT.getMinValue();
 		double maxVal = dummyT.getMaxValue();
 
@@ -186,10 +186,10 @@ public class AutoThresholdRegression<T extends RealType< T >> extends Algorithm<
 		 * min value for now. For the max threshold we do a clipping
 		 * to make it fit into the image type.
 		 */
-		ch1MinThreshold = Util.getTypeFromInterval(img1).createVariable();
+		ch1MinThreshold = Util.getTypeFromRandomAccess(img1).createVariable();
 		ch1MinThreshold.setReal(minVal);
 
-		ch1MaxThreshold = Util.getTypeFromInterval(img1).createVariable();
+		ch1MaxThreshold = Util.getTypeFromRandomAccess(img1).createVariable();
 		if ( minVal > ch1ThreshMax )
 			ch1MaxThreshold.setReal( minVal );
 		else if ( maxVal < ch1ThreshMax )
@@ -197,10 +197,10 @@ public class AutoThresholdRegression<T extends RealType< T >> extends Algorithm<
 		else
 			ch1MaxThreshold.setReal( ch1ThreshMax );
 
-		ch2MinThreshold = Util.getTypeFromInterval(img2).createVariable();
+		ch2MinThreshold = Util.getTypeFromRandomAccess(img2).createVariable();
 		ch2MinThreshold.setReal(minVal);
 
-		ch2MaxThreshold = Util.getTypeFromInterval(img2).createVariable();
+		ch2MaxThreshold = Util.getTypeFromRandomAccess(img2).createVariable();
 		if ( minVal > ch2ThreshMax )
 			ch2MaxThreshold.setReal( minVal );
 		else if ( maxVal < ch2ThreshMax )

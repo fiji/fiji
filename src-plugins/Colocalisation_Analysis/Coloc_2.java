@@ -661,7 +661,7 @@ public class Coloc_2<T extends RealType< T > & NativeType< T >> implements PlugI
 		// prepare output image
 		ImgFactory<T> maskFactory = new ArrayImgFactory<T>();
 		//Img<T> maskImage = maskFactory.create( size, name );
-		RandomAccessibleInterval<T> maskImage = maskFactory.create( size, Util.getTypeFromInterval(image).createVariable() );
+		RandomAccessibleInterval<T> maskImage = maskFactory.create( size, Util.getTypeFromRandomAccess(image).createVariable() );
 		RandomAccess<T> maskCursor = maskImage.randomAccess();
 		// go through the visible data and copy it to the output
 		while (cursor.hasNext()) {

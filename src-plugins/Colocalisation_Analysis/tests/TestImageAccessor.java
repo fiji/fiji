@@ -17,6 +17,7 @@ import net.imglib2.Interval;
 import net.imglib2.Localizable;
 import net.imglib2.Point;
 import net.imglib2.RandomAccess;
+import net.imglib2.RandomAccessible;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.TwinCursor;
 import net.imglib2.algorithm.gauss.Gauss;
@@ -249,15 +250,15 @@ public class TestImageAccessor {
 		final long[] dim = new long[ img.numDimensions() ];
 		img.dimensions(dim);
 		RandomAccessibleInterval<T> output = outputFactory.create( dim,
-				Util.getTypeFromInterval(img).createVariable() );
+				Util.getTypeFromRandomAccess(img).createVariable() );
 
 		final long[] pos = new long[ img.numDimensions() ];
 		Arrays.fill(pos, 0);
 		Localizable origin = new Point(pos);
 
 		ImgFactory<FloatType> tempFactory = new ArrayImgFactory<FloatType>();
-
-		Gauss.inFloat(sigma, Views.extendMirrorSingle(img), interval, output, origin, tempFactory);
+		RandomAccessible<T> input = Views.extendMirrorSingle(img);
+		Gauss.inFloat(sigma, input, interval, output, origin, tempFactory);
 
 		return output;
 	}
@@ -277,7 +278,7 @@ public class TestImageAccessor {
 		image.dimensions(dim);
 		ArrayImgFactory<T> imgFactory = new ArrayImgFactory<T>();
 		RandomAccessibleInterval<T> invImg = imgFactory.create(
-				dim, Util.getTypeFromInterval(image).createVariable() ); // "Inverted " + image.getName());
+				dim, Util.getTypeFromRandomAccess(image).createVariable() ); // "Inverted " + image.getName());
 		RandomAccess<T> invCursor = invImg.randomAccess();
 
 		while (imgCursor.hasNext()) {
@@ -296,7 +297,7 @@ public class TestImageAccessor {
 	 */
 	public static <T extends RealType<T> & NativeType<T>> RandomAccessibleInterval<T> makeBinaryImage(
 			RandomAccessibleInterval<T> image) {
-		T binSplitValue = Util.getTypeFromInterval(image).createVariable();
+		T binSplitValue = Util.getTypeFromRandomAccess(image).createVariable();
 		binSplitValue.setReal( binSplitValue.getMaxValue() * 0.5 );
 		return TestImageAccessor.makeBinaryImage(image, binSplitValue);
 	}
@@ -314,7 +315,7 @@ public class TestImageAccessor {
 		image.dimensions(dim);
 		ArrayImgFactory<T> imgFactory = new ArrayImgFactory<T>();
 		RandomAccessibleInterval<T> binImg = imgFactory.create( dim,
-				Util.getTypeFromInterval(image).createVariable() ); // "Binary image of " + image.getName());
+				Util.getTypeFromRandomAccess(image).createVariable() ); // "Binary image of " + image.getName());
 		RandomAccess<T> invCursor = binImg.randomAccess();
 
 		while (imgCursor.hasNext()) {

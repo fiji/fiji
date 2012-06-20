@@ -57,7 +57,7 @@ public class SingleWindowDisplay<T extends RealType<T>> extends JFrame implement
 	protected static final int WIN_HEIGHT = 600;
 
 	// a static list for keeping track of all other SingleWindowDisplays
-	protected static ArrayList<SingleWindowDisplay> displays = new ArrayList<SingleWindowDisplay>();
+	protected static ArrayList<SingleWindowDisplay<?>> displays = new ArrayList<SingleWindowDisplay<?>>();
 
 	// indicates if original images should be displayed or not
 	protected boolean displayOriginalImages = false;
