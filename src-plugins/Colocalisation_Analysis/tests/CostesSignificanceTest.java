@@ -3,7 +3,6 @@ package tests;
 import static org.junit.Assert.assertTrue;
 import gadgets.DataContainer;
 import net.imglib2.RandomAccessibleInterval;
-import net.imglib2.img.Img;
 import net.imglib2.type.numeric.real.FloatType;
 
 import org.junit.Test;

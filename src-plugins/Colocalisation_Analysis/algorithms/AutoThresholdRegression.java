@@ -2,7 +2,6 @@ package algorithms;
 
 import gadgets.DataContainer;
 import gadgets.ThresholdMode;
-import net.imglib2.RandomAccessible;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.TwinCursor;
 import net.imglib2.type.logic.BitType;

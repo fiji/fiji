@@ -193,10 +193,10 @@ public class SingleWindowDisplay<T extends RealType<T>> extends JFrame implement
 	public void process() {
 		// if wanted, display source images
 		if ( displayOriginalImages ) {
-			listOfImages.add( new NamedContainer(
+			listOfImages.add( new NamedContainer<RandomAccessibleInterval<? extends RealType<?>> >(
 					dataContainer.getSourceImage1(),
 					dataContainer.getSourceImage1Name() ) );
-			listOfImages.add( new NamedContainer(
+			listOfImages.add( new NamedContainer<RandomAccessibleInterval<? extends RealType<?>> >(
 					dataContainer.getSourceImage2(),
 					dataContainer.getSourceImage2Name() ) );
 		}
@@ -213,11 +213,13 @@ public class SingleWindowDisplay<T extends RealType<T>> extends JFrame implement
 	}
 
 	public void handleImage(RandomAccessibleInterval<T> image, String name) {
-		listOfImages.add( new NamedContainer( image, name ) );
+		listOfImages.add( new NamedContainer<RandomAccessibleInterval<? extends RealType<?>> >(
+				image, name ) );
 	}
 
 	public void handleHistogram(Histogram2D<T> histogram, String name) {
-		listOfImages.add( new NamedContainer( histogram.getPlotImage(), name ) );
+		listOfImages.add( new NamedContainer<RandomAccessibleInterval<? extends RealType<?>> >(
+				histogram.getPlotImage(), name ) );
 		mapOf2DHistograms.put(histogram.getPlotImage(), histogram);
 		// link the histogram to a LUT
 		listOfLUTs.put(histogram.getPlotImage(), "Fire");

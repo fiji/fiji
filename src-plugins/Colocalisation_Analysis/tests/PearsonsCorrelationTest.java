@@ -4,7 +4,6 @@ import static org.junit.Assert.assertEquals;
 import gadgets.MaskFactory;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.TwinCursor;
-import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.type.logic.BitType;
 import net.imglib2.type.numeric.integer.UnsignedByteType;
 import net.imglib2.type.numeric.real.FloatType;
