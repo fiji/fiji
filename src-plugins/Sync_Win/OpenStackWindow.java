@@ -61,12 +61,10 @@ public class OpenStackWindow extends StackWindow {
 	final DisplayChangeEvent event;
 	if (source == cSelector)
 		event = new DisplayChangeEvent(this, DisplayChangeEvent.CHANNEL, cSelector.getValue());
-	else if (source == zSelector)
-		event = new DisplayChangeEvent(this, DisplayChangeEvent.Z, zSelector.getValue());
 	else if (source == tSelector)
 		event = new DisplayChangeEvent(this, DisplayChangeEvent.T, tSelector.getValue());
-	else
-		throw new RuntimeException("Unknown source: " + source);
+	else /* default to z */
+		event = new DisplayChangeEvent(this, DisplayChangeEvent.Z, zSelector.getValue());
         displayChangeListener.displayChanged(event);
     }
 
