@@ -296,7 +296,7 @@ public class Histogram2D<T extends RealType< T >> extends Algorithm<T> {
 	 * @return The x value of the data point location
 	 */
 	protected int getXValue(double ch1Val, double ch1BinWidth, double ch2Val, double ch2BinWidth) {
-		return (int)(ch1Val * ch1BinWidth);
+		return (int)(ch1Val * ch1BinWidth + 0.5);
 	}
 
 	/**
@@ -306,7 +306,7 @@ public class Histogram2D<T extends RealType< T >> extends Algorithm<T> {
 	 * @return The x value of the data point location
 	 */
 	protected int getYValue(double ch1Val, double ch1BinWidth, double ch2Val, double ch2BinWidth) {
-		return (yBins - 1) - (int)(ch2Val * ch2BinWidth);
+		return (yBins - 1) - (int)(ch2Val * ch2BinWidth + 0.5);
 	}
 
 	protected double getXMin(DataContainer<T> container) {
