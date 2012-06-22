@@ -276,7 +276,7 @@ public class SingleWindowDisplay<T extends RealType<T>> extends JFrame implement
 			+ "h1 {color: black; font-weight: bold; font-size: 10px;}"
 			+ "h1.warn {color: red;}"
 			+ "h1.nowarn {color: green;}"
-			+ "table {width: 175px;}"
+			+ "table {width: auto;}"
 			+ "td { border-width:1px; border-style: solid; vertical-align:top; overflow:hidden;}"
 			+ "</style>");
 	    out.print("</head>");
