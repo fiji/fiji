@@ -73,6 +73,15 @@ tmpdir=.tmp.$$
 mkdir $tmpdir
 
 download () {
+	case $2,$mode in
+	*.exe,snapshots)
+		# Jenkins provided beautiful .exe files with icons for us
+		fiji=fiji-${2#ImageJ-}
+		curl -O http://jenkins.imagej.net/view/ImageJ/job/Windows-Fiji-launcher-with-icons/label=Windows/lastSuccessfulBuild/artifact/$fiji
+		cp $fiji $2
+		return
+		;;
+	esac
 	case $2 in */*) mkdir -p ${2%/*};; esac
 	curl $baseurl/$basename-$1-gcc-executable.nar > $tmpdir/$1.zip
 	exe=; case "$2" in *.exe) exe=.exe;; esac
