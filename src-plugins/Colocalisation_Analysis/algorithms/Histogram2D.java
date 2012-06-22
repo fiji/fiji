@@ -270,6 +270,9 @@ public class Histogram2D<T extends RealType< T >> extends Algorithm<T> {
 	 */
 	protected double getXBinWidth(DataContainer<T> container) {
 		double ch1Max = getMaxCh1(container);
+		// make sure we don't make the bins wider than one
+		ch1Max = ch1Max < xBins ? xBins : ch1Max;
+		// return the width of one bin in the grid
 		return (double) xBins / (double)(ch1Max + 1);
 	}
 
@@ -280,6 +283,9 @@ public class Histogram2D<T extends RealType< T >> extends Algorithm<T> {
 	 */
 	protected double getYBinWidth(DataContainer<T> container) {
 		double ch2Max = getMaxCh2(container);
+		// make sure we don't make the bins higher than one
+		ch2Max = ch2Max < yBins ? yBins : ch2Max;
+		// return the width of one bin in the grid
 		return (double) yBins / (double)(ch2Max + 1);
 	}
 
