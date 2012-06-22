@@ -191,6 +191,7 @@ public class Histogram2D<T extends RealType< T >> extends Algorithm<T> {
 			plotImage.randomAccess();
 
 		// iterate over images
+		long[] pos = new long[ plotImage.numDimensions() ];
 		while (cursor.hasNext()) {
 			cursor.fwd();
 			double ch1 = cursor.getChannel1().getRealDouble();
@@ -198,10 +199,10 @@ public class Histogram2D<T extends RealType< T >> extends Algorithm<T> {
 			/* Scale values for both channels to fit in the range.
 			 * Moreover mirror the y value on the x axis.
 			 */
-			int scaledXvalue = getXValue(ch1, ch1BinWidth, ch2, ch2BinWidth);
-			int scaledYvalue = getYValue(ch1, ch1BinWidth, ch2, ch2BinWidth);
+			pos[0] = getXValue(ch1, ch1BinWidth, ch2, ch2BinWidth);
+			pos[1] = getYValue(ch1, ch1BinWidth, ch2, ch2BinWidth);
 			// set position of input/output cursor
-			histogram2DCursor.setPosition( new int[] {scaledXvalue, scaledYvalue});
+			histogram2DCursor.setPosition( pos );
 			// get current value at position and increment it
 			long count = histogram2DCursor.get().getIntegerLong();
 			count++;
