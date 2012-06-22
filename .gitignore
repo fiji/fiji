@@ -35,12 +35,6 @@
 /mmgr_dal_*
 /netbeans/
 /nightly-build/
-/precompiled/ImageJ-leopard
-/precompiled/ImageJ-tiger-i686
-/precompiled/ImageJ-tiger-ppc
-/precompiled/fiji-leopard
-/precompiled/fiji-tiger-i686
-/precompiled/fiji-tiger-ppc
 /root-x86_64-pc-linux
 /samples/
 /src-plugins/*/target/

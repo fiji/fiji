@@ -64,7 +64,7 @@ public class Util {
 			.toString().replace("jar:file:", "")
 			.replace("plugins/Fiji_Updater.jar!/"
 				+ "fiji/updater/util/Util.class", "");
-		isDeveloper = new File(ijRoot + "/ImageJ.c").exists();
+		isDeveloper = new File(ijRoot + "/.git").exists();
 		platform = getPlatform();
 
 		platforms = new String[] {

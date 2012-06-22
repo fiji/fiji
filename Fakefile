@@ -529,18 +529,6 @@ fiji[bin/copy-file.bsh $PRE $TARGET] <- ImageJ
 
 # Precompiled stuff
 
-LAUNCHER(*)=precompiled/ImageJ-$PLATFORM
-LAUNCHER(win32)=precompiled/ImageJ-win32.exe
-LAUNCHER(win64)=precompiled/ImageJ-win64.exe
-LAUNCHER(osx10.4)=precompiled/ImageJ-macosx
-LAUNCHER(osx10.5)=precompiled/ImageJ-macosx precompiled/ImageJ-tiger
-precompile-ImageJ[] <- $LAUNCHER
-
-precompiled/ImageJ-tiger[bin/copy-file.bsh $PRE $TARGET] <- ImageJ-tiger
-precompiled/ImageJ-macosx[bin/copy-file.bsh $PRE $TARGET] <- ImageJ-macosx
-# this rule only matches precompiled/ImageJ-$PLATFORM
-precompiled/ImageJ-*[bin/copy-file.bsh $PRE $TARGET] <- ImageJ
-
 precompile-fake[] <- precompiled/fake.jar
 precompiled/fake.jar <- jars/fake.jar
 precompiled/javac.jar <- jars/javac.jar
