@@ -77,7 +77,7 @@ esac
 
 path=modules/imagej2/core/launcher
 artifactId=ij-launcher
-version=$(sed -n 's-.*<version>\([^${}]*\)</version>.*-\1-p' < $path/pom.xml)
+version=$(sed -n 's-.*<version>\([^${}]*\)</version>.*-\1-p' < $path/pom.xml | head -n 1)
 
 IJDIR="$(pwd)"
 eval ./bin/maven.sh $mvnopts $debugoption -f $path/pom.xml &&
