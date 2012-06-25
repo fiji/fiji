@@ -8,6 +8,8 @@ import ij.ImagePlus;
 import ij.gui.Roi;
 
 import java.awt.Rectangle;
+import java.util.ArrayList;
+import java.util.List;
 
 import mpicbg.imglib.type.numeric.RealType;
 
@@ -59,6 +61,22 @@ public class Settings {
 	
 	public SegmenterSettings segmenterSettings = null;
 	public TrackerSettings trackerSettings = null;
+	
+	// Filters
+	
+	/**
+	 * The feature filter list that is used to generate {@link #filteredSpots}
+	 * from {@link #spots}.
+	 */
+	protected List<FeatureFilter> spotFilters = new ArrayList<FeatureFilter>();
+	/**
+	 * The initial quality filter value that is used to clip spots of low
+	 * quality from {@link TrackMateModel#spots}.
+	 */
+	public Float initialSpotFilterValue;
+	/** The track filter list that is used to prune track and spots. */
+	protected List<FeatureFilter> trackFilters = new ArrayList<FeatureFilter>();
+	
 	
 	/*
 	 * CONSTRUCTORS
@@ -145,5 +163,57 @@ public class Settings {
 		str += String.format("  Target channel for segmentation: %d\n", segmentationChannel);
 		return str;
 	}
+	
+	/*
+	 * FEATURE FILTERS
+	 */
+
+	/**
+	 * Add a filter to the list of spot filters to deal with when executing
+	 * {@link #execFiltering()}.
+	 */
+	public void addSpotFilter(final FeatureFilter filter) {
+		spotFilters.add(filter);
+	}
+
+	public void removeSpotFilter(final FeatureFilter filter) {
+		spotFilters.remove(filter);
+	}
+
+	/** Remove all spot filters stored in this model. */
+	public void clearSpotFilters() {
+		spotFilters.clear();
+	}
+
+	public List<FeatureFilter> getSpotFilters() {
+		return spotFilters;
+	}
+
+	public void setSpotFilters(List<FeatureFilter> spotFilters) {
+		this.spotFilters = spotFilters;
+	}
+
+	/** Add a filter to the list of track filters. */
+	public void addTrackFilter(final FeatureFilter filter) {
+		trackFilters.add(filter);
+	}
+
+	public void removeTrackFilter(final FeatureFilter filter) {
+		trackFilters.remove(filter);
+	}
+
+	/** Remove all track filters stored in this model. */
+	public void clearTrackFilters() {
+		trackFilters.clear();
+	}
+
+	public List<FeatureFilter> getTrackFilters() {
+		return trackFilters;
+	}
+
+	public void setTrackFilters(List<FeatureFilter> trackFilters) {
+		this.trackFilters = trackFilters;
+	}
+
 
 }

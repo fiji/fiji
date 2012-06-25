@@ -75,7 +75,7 @@ public class SingleFrame_TestDrive {
 		
 		// Filter on quality
 		FeatureFilter filter = new FeatureFilter(Spot.QUALITY, 2f, true);
-		model.addSpotFilter(filter);
+		settings.addSpotFilter(filter);
 		plugin.execSpotFiltering();
 		
 		// Display results

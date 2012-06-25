@@ -59,7 +59,7 @@ public class TrackFilterDescriptor implements WizardPanelDescriptor {
 	@Override
 	public void aboutToDisplayPanel() {
 		TrackMateModel model = plugin.getModel();
-		component.setTarget(model.getFeatureModel().getTrackFeatures(), model.getTrackFilters(),  
+		component.setTarget(model.getFeatureModel().getTrackFeatures(), model.getSettings().getTrackFilters(),  
 				model.getFeatureModel().getTrackFeatureNames(), model.getFeatureModel().getTrackFeatureValues(), "tracks"); 
 	}
 
@@ -84,7 +84,7 @@ public class TrackFilterDescriptor implements WizardPanelDescriptor {
 					@Override
 					public void stateChanged(ChangeEvent event) {
 						// We set the thresholds field of the model but do not touch its selected spot field yet.
-						plugin.getModel().setTrackFilters(component.getFeatureFilters());
+						plugin.getModel().getSettings().setTrackFilters(component.getFeatureFilters());
 						plugin.execTrackFiltering();
 					}
 				});
@@ -100,7 +100,7 @@ public class TrackFilterDescriptor implements WizardPanelDescriptor {
 		logger.log("Performing track filtering on the following features:\n", Logger.BLUE_COLOR);
 		List<FeatureFilter> featureFilters = component.getFeatureFilters();
 		final TrackMateModel model = plugin.getModel();
-		model.setTrackFilters(featureFilters);
+		model.getSettings().setTrackFilters(featureFilters);
 		plugin.execTrackFiltering();
 
 		if (featureFilters == null || featureFilters.isEmpty()) {

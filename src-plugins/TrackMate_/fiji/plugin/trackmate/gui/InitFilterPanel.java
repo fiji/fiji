@@ -135,7 +135,7 @@ public class InitFilterPanel extends ActionListenablePanel implements WizardPane
 					// Remove and redisplay threshold panel
 					regenerateThresholdPanel(features);
 
-					Float initialFilterValue = model.getInitialSpotFilterValue();
+					Float initialFilterValue = model.getSettings().initialSpotFilterValue;
 					if (null != initialFilterValue) {
 						jPanelThreshold.setThreshold(initialFilterValue);
 					} else {
@@ -168,7 +168,7 @@ public class InitFilterPanel extends ActionListenablePanel implements WizardPane
 		int ntotal = 0;
 		for (Collection<Spot> spots : model.getSpots().values())
 			ntotal += spots.size();
-		model.setInitialSpotFilterValue(initialThreshold.value);
+		model.getSettings().initialSpotFilterValue = initialThreshold.value;
 		plugin.execInitialSpotFiltering();
 		int nselected = 0;
 		for (Collection<Spot> spots : model.getSpots().values())

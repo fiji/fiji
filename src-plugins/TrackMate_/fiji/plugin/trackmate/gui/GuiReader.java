@@ -208,7 +208,7 @@ public class GuiReader {
 			}
 
 			// Store it in model
-			model.setInitialSpotFilterValue(initialThreshold.value);
+			model.getSettings().initialSpotFilterValue = initialThreshold.value;
 			logger.log("  Reading initial spot filter done.\n");
 
 		}		
@@ -234,7 +234,7 @@ public class GuiReader {
 			}
 
 			// Store thresholds in model
-			model.setSpotFilters(featureThresholds);
+			model.getSettings().setSpotFilters(featureThresholds);
 			spotFilterDescriptor.aboutToDisplayPanel();
 			logger.log("  Reading spot filters done.\n");
 		}
@@ -313,8 +313,8 @@ public class GuiReader {
 		}
 
 		{ // Try reading track filters
-			model.setTrackFilters(reader.getTrackFeatureFilters());
-			if (model.getTrackFilters() == null) {
+			model.getSettings().setTrackFilters(reader.getTrackFeatureFilters());
+			if (model.getSettings().getTrackFilters() == null) {
 				targetDescriptor = TrackFilterDescriptor.DESCRIPTOR;
 				displayer.setModel(model);
 				displayer.render();

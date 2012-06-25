@@ -97,8 +97,8 @@ public class TmXmlReader {
 		// Spot Filters
 		List<FeatureFilter> spotFilters = getSpotFeatureFilters();
 		FeatureFilter initialFilter = getInitialFilter();
-		model.setInitialSpotFilterValue(initialFilter.value);
-		model.setSpotFilters(spotFilters);
+		model.getSettings().initialSpotFilterValue = initialFilter.value;
+		model.getSettings().setSpotFilters(spotFilters);
 		// Spots
 		SpotCollection allSpots = getAllSpots();
 		SpotCollection filteredSpots = getFilteredSpots(allSpots);
@@ -111,7 +111,7 @@ public class TmXmlReader {
 		}
 		// Track Filters
 		List<FeatureFilter> trackFilters = getTrackFeatureFilters();
-		model.setTrackFilters(trackFilters);
+		model.getSettings().setTrackFilters(trackFilters);
 		// Filtered tracks
 		Set<Integer> filteredTrackIndices = getFilteredTracks();
 		if (null != filteredTrackIndices) {

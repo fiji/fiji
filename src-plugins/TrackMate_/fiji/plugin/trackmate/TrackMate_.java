@@ -533,7 +533,7 @@ public class TrackMate_ implements PlugIn {
 	 * @see #setInitialFilter(Float)
 	 */
 	public void execInitialSpotFiltering() {
-		Float initialSpotFilterValue = model.getInitialSpotFilterValue();
+		Float initialSpotFilterValue = model.getSettings().initialSpotFilterValue;
 		FeatureFilter featureFilter = new FeatureFilter(Spot.QUALITY, initialSpotFilterValue, true);
 		model.setSpots(model.getSpots().filter(featureFilter), true);
 	}
@@ -554,7 +554,7 @@ public class TrackMate_ implements PlugIn {
 	 * @see #getFilteredSpots()
 	 */
 	public void execSpotFiltering() {
-		model.setFilteredSpots(model.getSpots().filter(model.getSpotFilters()), true);
+		model.setFilteredSpots(model.getSpots().filter(model.getSettings().getSpotFilters()), true);
 	}
 
 	public void execTrackFiltering() {
@@ -562,7 +562,7 @@ public class TrackMate_ implements PlugIn {
 
 		for (int trackIndex = 0; trackIndex < model.getNTracks(); trackIndex++) {
 			boolean trackIsOk = true;
-			for(FeatureFilter filter : model.getTrackFilters()) {
+			for(FeatureFilter filter : model.getSettings().getTrackFilters()) {
 				Float tval = filter.value;
 				Float val = model.getFeatureModel().getTrackFeature(trackIndex, filter.feature);
 				if (null == val)

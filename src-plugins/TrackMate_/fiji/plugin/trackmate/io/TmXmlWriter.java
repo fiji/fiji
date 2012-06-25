@@ -81,7 +81,7 @@ public class TmXmlWriter {
 	 * Append the initial threshold on quality to the {@link Document}.
 	 */
 	public void appendInitialSpotFilter() {
-		echoInitialSpotFilter(model.getInitialSpotFilterValue());
+		echoInitialSpotFilter(model.getSettings().initialSpotFilterValue);
 	}
 
 	/**
@@ -327,7 +327,7 @@ public class TmXmlWriter {
 	}
 
 	private void echoSpotFilters() {
-		List<FeatureFilter> featureThresholds = model.getSpotFilters();
+		List<FeatureFilter> featureThresholds = model.getSettings().getSpotFilters();
 
 		Element allTresholdElement = new Element(SPOT_FILTER_COLLECTION_ELEMENT_KEY);
 		for (FeatureFilter threshold : featureThresholds) {
@@ -343,7 +343,7 @@ public class TmXmlWriter {
 	}
 
 	private void echoTrackFilters() {
-		List<FeatureFilter> featureThresholds = model.getTrackFilters();
+		List<FeatureFilter> featureThresholds = model.getSettings().getTrackFilters();
 
 		Element allTresholdElement = new Element(TRACK_FILTER_COLLECTION_ELEMENT_KEY);
 		for (FeatureFilter threshold : featureThresholds) {

@@ -143,16 +143,7 @@ public class TrackMateModel {
 	protected SpotCollection spots = new SpotCollection();
 	/** Contain the spots retained for tracking, after filtering by features. */
 	protected SpotCollection filteredSpots = new SpotCollection();
-	/**
-	 * The feature filter list that is used to generate {@link #filteredSpots}
-	 * from {@link #spots}.
-	 */
-	protected List<FeatureFilter> spotFilters = new ArrayList<FeatureFilter>();
-	/**
-	 * The initial quality filter value that is used to clip spots of low
-	 * quality from {@link #spots}.
-	 */
-	protected Float initialSpotFilterValue;
+	
 
 	// TRACKS
 
@@ -169,8 +160,7 @@ public class TrackMateModel {
 	protected List<Set<DefaultWeightedEdge>> trackEdges = new ArrayList<Set<DefaultWeightedEdge>>();
 	/** The spots contained in the list of spots. */
 	protected List<Set<Spot>> trackSpots = new ArrayList<Set<Spot>>();
-	/** The track filter list that is used to prune track and spots. */
-	protected List<FeatureFilter> trackFilters = new ArrayList<FeatureFilter>();
+	
 	/**
 	 * The visible track indices. Is a set made of the indices of tracks (in
 	 * {@link #trackEdges} and {@link #trackSpots}) that are retained after
@@ -641,72 +631,6 @@ public class TrackMateModel {
 		this.trackSpots = null;
 	}
 
-	/*
-	 * FEATURE FILTERS
-	 */
-
-	/**
-	 * Add a filter to the list of spot filters to deal with when executing
-	 * {@link #execFiltering()}.
-	 */
-	public void addSpotFilter(final FeatureFilter filter) {
-		spotFilters.add(filter);
-	}
-
-	public void removeSpotFilter(final FeatureFilter filter) {
-		spotFilters.remove(filter);
-	}
-
-	/** Remove all spot filters stored in this model. */
-	public void clearSpotFilters() {
-		spotFilters.clear();
-	}
-
-	public List<FeatureFilter> getSpotFilters() {
-		return spotFilters;
-	}
-
-	public void setSpotFilters(List<FeatureFilter> spotFilters) {
-		this.spotFilters = spotFilters;
-	}
-
-	/**
-	 * Return the initial filter value on {@link SpotFeature#QUALITY} stored in
-	 * this model.
-	 */
-	public Float getInitialSpotFilterValue() {
-		return initialSpotFilterValue;
-	}
-
-	/**
-	 * Set the initial filter value on {@link SpotFeature#QUALITY} stored in
-	 * this model.
-	 */
-	public void setInitialSpotFilterValue(Float initialSpotFilterValue) {
-		this.initialSpotFilterValue = initialSpotFilterValue;
-	}
-
-	/** Add a filter to the list of track filters. */
-	public void addTrackFilter(final FeatureFilter filter) {
-		trackFilters.add(filter);
-	}
-
-	public void removeTrackFilter(final FeatureFilter filter) {
-		trackFilters.remove(filter);
-	}
-
-	/** Remove all track filters stored in this model. */
-	public void clearTrackFilters() {
-		trackFilters.clear();
-	}
-
-	public List<FeatureFilter> getTrackFilters() {
-		return trackFilters;
-	}
-
-	public void setTrackFilters(List<FeatureFilter> trackFilters) {
-		this.trackFilters = trackFilters;
-	}
 
 	/*
 	 * LOGGER
@@ -732,8 +656,7 @@ public class TrackMateModel {
 	 */
 
 	/**
-	 * Return the {@link Settings} object that determines the behavior of this
-	 * plugin.
+	 * Return the {@link Settings} object that determines the behavior of this plugin.
 	 */
 	public Settings getSettings() {
 		return settings;
