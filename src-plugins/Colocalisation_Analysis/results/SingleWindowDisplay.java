@@ -443,14 +443,14 @@ public class SingleWindowDisplay<T extends RealType<T>> extends JFrame implement
 				if (isHistogram(currentlyDisplayedImageResult)) {
 					Histogram2D<T> histogram = mapOf2DHistograms.get(currentlyDisplayedImageResult);
 
-					// for a histogram we need to invert the Y axis
-					y = (int)currentlyDisplayedImageResult.dimension(1) - y;
-
 					synchronized( pixelAccessCursor )
 					{
 						// set position of output cursor
 						pixelAccessCursor.setPosition(x, 0);
 						pixelAccessCursor.setPosition(y, 1);
+
+						// for a histogram coordinate display we need to invert the Y axis
+						y = (int)currentlyDisplayedImageResult.dimension(1) - 1 - y;
 
 						// get current value at position
 						RandomAccess<LongType> cursor = (RandomAccess<LongType>)pixelAccessCursor;
