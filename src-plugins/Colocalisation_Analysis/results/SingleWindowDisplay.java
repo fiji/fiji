@@ -24,6 +24,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseMotionListener;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.ArrayList;
@@ -51,7 +53,7 @@ import algorithms.Histogram2D;
  * and offers features like the use of different LUTs.
  *
  */
-public class SingleWindowDisplay<T extends RealType<T>> extends JFrame implements ResultHandler<T>, ItemListener, ActionListener, ClipboardOwner {
+public class SingleWindowDisplay<T extends RealType<T>> extends JFrame implements ResultHandler<T>, ItemListener, ActionListener, ClipboardOwner, MouseMotionListener {
 	private static final long serialVersionUID = -5642321584354176878L;
 	protected static final int WIN_WIDTH = 350;
 	protected static final int WIN_HEIGHT = 600;
@@ -125,7 +127,7 @@ public class SingleWindowDisplay<T extends RealType<T>> extends JFrame implement
 		dropDownList.addItemListener(this);
 
 		imagePanel = new JImagePanel(ij.IJ.createImage("dummy", "8-bit", 10, 10, 1));
-
+		imagePanel.addMouseMotionListener(this);
 
 		// Create something to display it in
 		final JEditorPane editor = new JEditorPane();
@@ -276,7 +278,7 @@ public class SingleWindowDisplay<T extends RealType<T>> extends JFrame implement
 			+ "h1 {color: black; font-weight: bold; font-size: 10px;}"
 			+ "h1.warn {color: red;}"
 			+ "h1.nowarn {color: green;}"
-			+ "table {width: 175px;}"
+			+ "table {width: auto;}"
 			+ "td { border-width:1px; border-style: solid; vertical-align:top; overflow:hidden;}"
 			+ "</style>");
 	    out.print("</head>");
@@ -388,51 +390,93 @@ public class SingleWindowDisplay<T extends RealType<T>> extends JFrame implement
 		}
 	}
 
-	public void mouseMoved( final int x, final int y) {
-	final ImageJ ij = IJ.getInstance();
-	if (ij != null && currentlyDisplayedImageResult != null) {
-		/* If Alt key is not pressed, display the calibrated data.
-		 * If not, display image positions and data.
-		 * Non log image intensity from original image or 2D histogram result is always shown in status bar,
-		 * not the log intensity that might actually be displayed in the image.
-		 */
-		if (!IJ.altKeyDown()){
+	@Override
+	public void mouseDragged(MouseEvent e) {
+		// nothing to do here
+	}
 
-			// the alt key is not pressed use x and y values that are bin widths or calibrated intensities not the x y image coordinates.
-			if (isHistogram(currentlyDisplayedImageResult)) {
-				Histogram2D<T> histogram = mapOf2DHistograms.get(currentlyDisplayedImageResult);
+	@Override
+	public void mouseMoved(MouseEvent e) {
+		if (e.getSource().equals(imagePanel)) {
+			/*
+			 *  calculate the mouse position relative to the upper left
+			 *  corner of the displayed image.
+			 */
+			final int imgWidth = imagePanel.getSrcRect().width;
+			final int imgHeight = imagePanel.getSrcRect().height;
+			int displayWidth = (int)(imgWidth * imagePanel.getMagnification());
+			int displayHeight = (int)(imgHeight * imagePanel.getMagnification());
+			int offsetX = (imagePanel.getWidth() - displayWidth) / 2;
+			int offsetY = (imagePanel.getHeight() - displayHeight) / 2;
+			int onImageX = imagePanel.screenX(e.getX() - offsetX);
+			int onImageY = imagePanel.screenY(e.getY() - offsetY);
 
-				synchronized( pixelAccessCursor )
-				{
-					// set position of output cursor
-					pixelAccessCursor.setPosition(x, 0);
-					pixelAccessCursor.setPosition(y, 1);
+			// make sure we stay within the image boundaries
+			if (onImageX >= 0 && onImageX < imgWidth
+					&& onImageY >= 0 && onImageY < imgHeight ) {
+				mouseMoved(onImageX, onImageY);
+			} else {
+				IJ.showStatus("");
+			}
+		}
+	}
 
-					// get current value at position
-					RandomAccess<LongType> cursor = (RandomAccess<LongType>)pixelAccessCursor;
-					long val = cursor.get().getIntegerLong();
+	/**
+	 * Displays information about the pixel below the mouse cursor of
+	 * the currently displayed image result. The coordinates passed are
+	 * expected to be within the image boundaries.
+	 *
+	 * @param x
+	 * @param y
+	 */
+	public void mouseMoved( int x, int y) {
+		final ImageJ ij = IJ.getInstance();
+		if (ij != null && currentlyDisplayedImageResult != null) {
+			/* If Alt key is not pressed, display the calibrated data.
+			 * If not, display image positions and data.
+			 * Non log image intensity from original image or 2D histogram result is always shown in status bar,
+			 * not the log intensity that might actually be displayed in the image.
+			 */
+			if (!IJ.altKeyDown()) {
 
-					double calibratedXBinBottom = histogram.getXMin() + x / histogram.getXBinWidth();
-					double calibratedXBinTop = histogram.getXMin() + (x + 1) / histogram.getXBinWidth();
+				// the alt key is not pressed use x and y values that are bin widths or calibrated intensities not the x y image coordinates.
+				if (isHistogram(currentlyDisplayedImageResult)) {
+					Histogram2D<T> histogram = mapOf2DHistograms.get(currentlyDisplayedImageResult);
 
-					double calibratedYBinBottom = histogram.getYMin() + y / histogram.getYBinWidth();
-					double calibratedYBinTop = histogram.getYMin() + (y + 1) / histogram.getYBinWidth();
+					synchronized( pixelAccessCursor )
+					{
+						// set position of output cursor
+						pixelAccessCursor.setPosition(x, 0);
+						pixelAccessCursor.setPosition(y, 1);
 
-					IJ.showStatus("x = " + IJ.d2s(calibratedXBinBottom) + " to " + IJ.d2s(calibratedXBinTop) +
-							", y = " + IJ.d2s(calibratedYBinBottom) + " to " + IJ.d2s(calibratedYBinTop) + ", value = " + val );
+						// for a histogram coordinate display we need to invert the Y axis
+						y = (int)currentlyDisplayedImageResult.dimension(1) - 1 - y;
+
+						// get current value at position
+						RandomAccess<LongType> cursor = (RandomAccess<LongType>)pixelAccessCursor;
+						long val = cursor.get().getIntegerLong();
+
+						double calibratedXBinBottom = histogram.getXMin() + x / histogram.getXBinWidth();
+						double calibratedXBinTop = histogram.getXMin() + (x + 1) / histogram.getXBinWidth();
+
+						double calibratedYBinBottom = histogram.getYMin() + y / histogram.getYBinWidth();
+						double calibratedYBinTop = histogram.getYMin() + (y + 1) / histogram.getYBinWidth();
+
+						IJ.showStatus("x = " + IJ.d2s(calibratedXBinBottom) + " to " + IJ.d2s(calibratedXBinTop) +
+								", y = " + IJ.d2s(calibratedYBinBottom) + " to " + IJ.d2s(calibratedYBinTop) + ", value = " + val );
+					}
+				} else {
+					RandomAccessibleInterval<T> img = (RandomAccessibleInterval<T>) currentlyDisplayedImageResult;
+					ImagePlus imp = ImageJFunctions.wrapFloat( img, "TODO" );
+					imp.mouseMoved(x, y);
 				}
 			} else {
+				// alt key is down, so show the image coordinates for x y in status bar.
 				RandomAccessibleInterval<T> img = (RandomAccessibleInterval<T>) currentlyDisplayedImageResult;
 				ImagePlus imp = ImageJFunctions.wrapFloat( img, "TODO" );
 				imp.mouseMoved(x, y);
 			}
-		} else {
-			// alt key is down, so show the image coordinates for x y in status bar.
-			RandomAccessibleInterval<T> img = (RandomAccessibleInterval<T>) currentlyDisplayedImageResult;
-			ImagePlus imp = ImageJFunctions.wrapFloat( img, "TODO" );
-			imp.mouseMoved(x, y);
 		}
-	}
     }
 
 	/**
@@ -553,6 +597,7 @@ public class SingleWindowDisplay<T extends RealType<T>> extends JFrame implement
 
 		drawImage(img);
 		toggleLogarithmic(log.isSelected());
+
 		// ensure a valid layout, we changed the image
 		getContentPane().validate();
 		getContentPane().repaint();

@@ -191,6 +191,7 @@ public class Histogram2D<T extends RealType< T >> extends Algorithm<T> {
 			plotImage.randomAccess();
 
 		// iterate over images
+		long[] pos = new long[ plotImage.numDimensions() ];
 		while (cursor.hasNext()) {
 			cursor.fwd();
 			double ch1 = cursor.getChannel1().getRealDouble();
@@ -198,10 +199,10 @@ public class Histogram2D<T extends RealType< T >> extends Algorithm<T> {
 			/* Scale values for both channels to fit in the range.
 			 * Moreover mirror the y value on the x axis.
 			 */
-			int scaledXvalue = getXValue(ch1, ch1BinWidth, ch2, ch2BinWidth);
-			int scaledYvalue = getYValue(ch1, ch1BinWidth, ch2, ch2BinWidth);
+			pos[0] = getXValue(ch1, ch1BinWidth, ch2, ch2BinWidth);
+			pos[1] = getYValue(ch1, ch1BinWidth, ch2, ch2BinWidth);
 			// set position of input/output cursor
-			histogram2DCursor.setPosition( new int[] {scaledXvalue, scaledYvalue});
+			histogram2DCursor.setPosition( pos );
 			// get current value at position and increment it
 			long count = histogram2DCursor.get().getIntegerLong();
 			count++;
@@ -269,7 +270,10 @@ public class Histogram2D<T extends RealType< T >> extends Algorithm<T> {
 	 */
 	protected double getXBinWidth(DataContainer<T> container) {
 		double ch1Max = getMaxCh1(container);
-		return (double) xBins / (double)(ch1Max + 1);
+		// make sure we don't make the bins wider than one
+		ch1Max = ch1Max < xBins ? xBins : ch1Max + 1;
+		// return the width of one bin in the grid
+		return (double) xBins / (double) ch1Max;
 	}
 
 	/**
@@ -279,7 +283,10 @@ public class Histogram2D<T extends RealType< T >> extends Algorithm<T> {
 	 */
 	protected double getYBinWidth(DataContainer<T> container) {
 		double ch2Max = getMaxCh2(container);
-		return (double) yBins / (double)(ch2Max + 1);
+		// make sure we don't make the bins higher than one
+		ch2Max = ch2Max < yBins ? yBins : ch2Max + 1;
+		// return the width of one bin in the grid
+		return (double) yBins / (double) ch2Max;
 	}
 
 	/**
@@ -289,7 +296,7 @@ public class Histogram2D<T extends RealType< T >> extends Algorithm<T> {
 	 * @return The x value of the data point location
 	 */
 	protected int getXValue(double ch1Val, double ch1BinWidth, double ch2Val, double ch2BinWidth) {
-		return (int)(ch1Val * ch1BinWidth);
+		return (int)(ch1Val * ch1BinWidth + 0.5);
 	}
 
 	/**
@@ -299,7 +306,7 @@ public class Histogram2D<T extends RealType< T >> extends Algorithm<T> {
 	 * @return The x value of the data point location
 	 */
 	protected int getYValue(double ch1Val, double ch1BinWidth, double ch2Val, double ch2BinWidth) {
-		return (yBins - 1) - (int)(ch2Val * ch2BinWidth);
+		return (yBins - 1) - (int)(ch2Val * ch2BinWidth + 0.5);
 	}
 
 	protected double getXMin(DataContainer<T> container) {

@@ -257,6 +257,13 @@ public class Coloc_2<T extends RealType< T > & NativeType< T >> implements PlugI
 
 		ImagePlus imp1 = WindowManager.getImage(gd.getNextChoiceIndex() + 1);
 		ImagePlus imp2 = WindowManager.getImage(gd.getNextChoiceIndex() + 1);
+
+		// make sure both images have the same bit-depth
+		if (imp1.getBitDepth() != imp2.getBitDepth()) {
+			IJ.showMessage("Both images must have the same bit-depth.");
+			return false;
+		}
+
 		// get information about the mask/ROI to use
 		indexMask = gd.getNextChoiceIndex();
 		if (indexMask == 0)
