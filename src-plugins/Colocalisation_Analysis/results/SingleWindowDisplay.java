@@ -24,6 +24,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseMotionListener;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.ArrayList;
@@ -51,7 +53,7 @@ import algorithms.Histogram2D;
  * and offers features like the use of different LUTs.
  *
  */
-public class SingleWindowDisplay<T extends RealType<T>> extends JFrame implements ResultHandler<T>, ItemListener, ActionListener, ClipboardOwner {
+public class SingleWindowDisplay<T extends RealType<T>> extends JFrame implements ResultHandler<T>, ItemListener, ActionListener, ClipboardOwner, MouseMotionListener {
 	private static final long serialVersionUID = -5642321584354176878L;
 	protected static final int WIN_WIDTH = 350;
 	protected static final int WIN_HEIGHT = 600;
@@ -125,7 +127,7 @@ public class SingleWindowDisplay<T extends RealType<T>> extends JFrame implement
 		dropDownList.addItemListener(this);
 
 		imagePanel = new JImagePanel(ij.IJ.createImage("dummy", "8-bit", 10, 10, 1));
-
+		imagePanel.addMouseMotionListener(this);
 
 		// Create something to display it in
 		final JEditorPane editor = new JEditorPane();
@@ -388,7 +390,36 @@ public class SingleWindowDisplay<T extends RealType<T>> extends JFrame implement
 		}
 	}
 
-	public void mouseMoved( final int x, final int y) {
+	@Override
+	public void mouseDragged(MouseEvent e) {
+		// nothing to do here
+	}
+
+	@Override
+	public void mouseMoved(MouseEvent e) {
+		if (e.getSource().equals(imagePanel)) {
+			/*
+			 *  calculate the mouse position relative to the upper left
+			 *  corner of the displayed image.
+			 */
+			final int imgWidth = imagePanel.getSrcRect().width;
+			final int imgHeight = imagePanel.getSrcRect().height;
+			int displayWidth = (int)(imgWidth * imagePanel.getMagnification());
+			int displayHeight = (int)(imgHeight * imagePanel.getMagnification());
+			int offsetX = (imagePanel.getWidth() - displayWidth) / 2;
+			int offsetY = (imagePanel.getHeight() - displayHeight) / 2;
+			int onImageX = imagePanel.screenX(e.getX() - offsetX);
+			int onImageY = imagePanel.screenY(e.getY() - offsetY);
+
+			// make sure we stay within the image boundaries
+			if (onImageX >= 0 && onImageX < imgWidth
+					&& onImageY >= 0 && onImageY < imgHeight ) {
+				mouseMoved(onImageX, onImageY);
+			}
+		}
+	}
+
+	public void mouseMoved( int x, int y) {
 	final ImageJ ij = IJ.getInstance();
 	if (ij != null && currentlyDisplayedImageResult != null) {
 		/* If Alt key is not pressed, display the calibrated data.
@@ -401,6 +432,9 @@ public class SingleWindowDisplay<T extends RealType<T>> extends JFrame implement
 			// the alt key is not pressed use x and y values that are bin widths or calibrated intensities not the x y image coordinates.
 			if (isHistogram(currentlyDisplayedImageResult)) {
 				Histogram2D<T> histogram = mapOf2DHistograms.get(currentlyDisplayedImageResult);
+
+				// for a histogram we need to invert the Y axis
+				y = (int)currentlyDisplayedImageResult.dimension(1) - y;
 
 				synchronized( pixelAccessCursor )
 				{
