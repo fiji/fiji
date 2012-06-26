@@ -415,6 +415,8 @@ public class SingleWindowDisplay<T extends RealType<T>> extends JFrame implement
 			if (onImageX >= 0 && onImageX < imgWidth
 					&& onImageY >= 0 && onImageY < imgHeight ) {
 				mouseMoved(onImageX, onImageY);
+			} else {
+				IJ.showStatus("");
 			}
 		}
 	}
