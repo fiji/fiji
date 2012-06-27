@@ -202,23 +202,6 @@ ensure_fake_is_built || {
 	exit 1
 }
 
-# on Win64, with a 32-bit compiler, do not try to compile
-case $platform in
-win64)
-	W64_GCC=/src/mingw-w64/sysroot/bin/x86_64-w64-mingw32-gcc.exe
-	test -f "$W64_GCC" && export CC="$W64_GCC"
-
-	case "$CC,$(gcc --version)" in
-	,*mingw32*)
-		# cannot compile! Fall back to copying
-		test "$CWD"/ImageJ.exe -nt "$CWD"/ImageJ.c &&
-		test "$CWD"/ImageJ.exe -nt "$CWD"/precompiled/ImageJ-win64.exe &&
-		test "$CWD"/ImageJ.exe -nt "$CWD"/Fakefile &&
-		test "$CWD"/ImageJ.exe -nt "$CWD"/$jar ||
-		cp precompiled/ImageJ-win64.exe ImageJ.exe
-	esac
-esac
-
 # JAVA_HOME needs to be a DOS path for Windows from here on
 case "$UNAME_S" in
 MINGW*)
