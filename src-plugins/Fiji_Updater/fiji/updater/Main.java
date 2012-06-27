@@ -377,7 +377,21 @@ public class Main {
 			System.exit(0);
 		}
 
-		Util.useSystemProxies();
+		String http_proxy = System.getenv("http_proxy");
+		if (http_proxy != null && http_proxy.startsWith("http://")) {
+			int colon = http_proxy.indexOf(':', 7);
+			int slash = http_proxy.indexOf('/', 7);
+			int port = 80;
+			if (colon < 0)
+				http_proxy = slash < 0 ? http_proxy.substring(7) : http_proxy.substring(7, slash);
+			else {
+				port = Integer.parseInt(slash < 0 ? http_proxy.substring(colon + 1) : http_proxy.substring(colon + 1, slash));
+				http_proxy = http_proxy.substring(7, colon);
+			}
+			System.setProperty("http.proxyHost", http_proxy);
+			System.setProperty("http.proxyPort", "" + port);
+		} else
+			Util.useSystemProxies();
 		Authenticator.setDefault(new ProxyAuthenticator());
 
 		String command = args[0];
