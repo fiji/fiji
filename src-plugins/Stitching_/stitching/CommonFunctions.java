@@ -1105,10 +1105,25 @@ public class CommonFunctions
 		final int planeIndex = planeMap.containsKey( index ) ? planeMap.get( index ) : 0;
 		final boolean hasPlane = planeIndex < retrieve.getPlaneCount( series );
 
+		// CTR HACK: Recover gracefully when StageLabel element is missing.
+		// This avoids a problem with the OMEXMLMetadataImpl implementation,
+		// which currently does not check for null on the StageLabel object.
+		Double stageLabelX = null, stageLabelY = null, stageLabelZ = null;
+		try
+		{
+			stageLabelX = retrieve.getStageLabelX( series );
+			stageLabelY = retrieve.getStageLabelY( series );
+			stageLabelZ = retrieve.getStageLabelZ( series );
+		}
+		catch (final NullPointerException exc)
+		{
+			// ignore
+		}
+
 		// stage coordinates (for the given series and plane)
-		final double locationX = getPosition( hasPlane ? retrieve.getPlanePositionX( series, planeIndex ) : null, retrieve.getStageLabelX( series ) );
-		final double locationY = getPosition( hasPlane ? retrieve.getPlanePositionY( series, planeIndex ) : null, retrieve.getStageLabelY( series ) );
-		final double locationZ = getPosition( hasPlane ? retrieve.getPlanePositionZ( series, planeIndex ) : null, retrieve.getStageLabelZ( series ) );
+		final double locationX = getPosition( hasPlane ? retrieve.getPlanePositionX( series, planeIndex ) : null, stageLabelX );
+		final double locationY = getPosition( hasPlane ? retrieve.getPlanePositionY( series, planeIndex ) : null, stageLabelY );
+		final double locationZ = getPosition( hasPlane ? retrieve.getPlanePositionZ( series, planeIndex ) : null, stageLabelZ );
 
 		if ( IJ.debugMode )
 		{
