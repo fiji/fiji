@@ -286,7 +286,7 @@ public class Stitch_Multiple_Series_File implements PlugIn
 		}
 		catch ( Exception ex ) 
 		{ 
-			IJ.log("Exception: " + ex.getMessage());
+			IJ.handleException(ex);
 			ex.printStackTrace();
 			return null; 
 		}

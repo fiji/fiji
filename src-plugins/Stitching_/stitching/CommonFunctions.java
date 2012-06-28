@@ -312,8 +312,8 @@ public class CommonFunctions
 			
 			imp = new ImagePlus(fileName, stack);
 		}
-		catch (IOException exc) { IJ.log("IOException: " + exc.getMessage()); return null;}
-		catch (FormatException exc) { IJ.log("FormatException: " + exc.getMessage()); return null;}
+		catch (IOException exc) { IJ.handleException(exc); return null;}
+		catch (FormatException exc) { IJ.handleException(exc); return null;}
 	                
 		return imp;
 	}

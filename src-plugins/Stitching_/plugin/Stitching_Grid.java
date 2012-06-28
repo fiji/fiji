@@ -676,7 +676,7 @@ public class Stitching_Grid implements PlugIn
 		}
 		catch ( Exception ex ) 
 		{ 
-			IJ.log("Exception: " + ex.getMessage());
+			IJ.handleException(ex);
 			ex.printStackTrace();
 			return null; 
 		}
