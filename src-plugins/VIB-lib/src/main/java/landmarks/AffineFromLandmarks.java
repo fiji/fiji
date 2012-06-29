@@ -46,21 +46,21 @@ public class AffineFromLandmarks extends RegistrationAlgorithm {
 
                 double sum_squared_differences = 0.0;
 
-                for (Iterator i=common.listIterator();i.hasNext();) {
-                        String s = (String)i.next();
+                for (Iterator<String> i=common.listIterator();i.hasNext();) {
+                        String s = i.next();
                         NamedPointWorld p0 = null;
                         NamedPointWorld p1 = null;
 
-                        for (Iterator i0=inImage0.listIterator();i0.hasNext();) {
-                                NamedPointWorld current=(NamedPointWorld)i0.next();
+                        for (ListIterator<NamedPointWorld> i0=inImage0.listIterator();i0.hasNext();) {
+                                NamedPointWorld current=i0.next();
                                 if (s.equals(current.getName())) {
                                         p0 = current;
                                         break;
                                 }
                         }
 
-                        for (Iterator i1=inImage1.listIterator();i1.hasNext();) {
-                                NamedPointWorld current=(NamedPointWorld)i1.next();
+                        for (ListIterator<NamedPointWorld> i1=inImage1.listIterator();i1.hasNext();) {
+                                NamedPointWorld current=i1.next();
                                 if (s.equals(current.getName())) {
                                         p1 = current;
                                         break;
@@ -227,7 +227,7 @@ public class AffineFromLandmarks extends RegistrationAlgorithm {
                         if(n==0) {
                                 error += " (none in common)";
                         } else {
-                                for(Iterator i=commonPointNames.iterator();i.hasNext();)
+                                for(Iterator<String> i=commonPointNames.iterator();i.hasNext();)
                                         error += "\n    "+i.next();
                         }
                         IJ.error(error);

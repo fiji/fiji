@@ -213,7 +213,7 @@ public class Install_J3D implements PlugIn {
 		if(files.size() == 0)
 			throw new Exception("Could not find j3d-jre.zip in "
 				+ downloaded);
-		File j3djre = (File)files.get(0);
+		File j3djre = files.get(0);
 
 		/*
 		 * if not on a Mac, the j3djre zip file can just be extracted
@@ -342,7 +342,7 @@ public class Install_J3D implements PlugIn {
 		Enumeration<? extends ZipEntry> en = zfile.entries();
 		List<File> extracted = new ArrayList<File>();
 		while(en.hasMoreElements()) {
-			ZipEntry ze = (ZipEntry)en.nextElement();
+			ZipEntry ze = en.nextElement();
 			if(ze.isDirectory()) {
 				File newDir = createFolder(
 					dir.getAbsolutePath(), ze.getName(), false);

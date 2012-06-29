@@ -55,14 +55,14 @@ public class AmiraTable extends TextWindow {
 	}
 
 	public Hashtable<String, String> getParameters() {
-		return (Hashtable)properties.get("Parameters");
+		return (Hashtable<String, String>)properties.get("Parameters");
 	}
 
 	public String get(String key) {
 		Hashtable<String, String> p = getParameters();
 		if (p == null)
 			return null;
-		return (String)p.get(key);
+		return p.get(key);
 	}
 
 	public void put(String key, String value) {

@@ -65,7 +65,7 @@ public class SphereIterators {
 	public static double[][] SampleSphereSurface(double radius, double spacing,double zfactor) {
 		spacing/=radius;
 		double N=Math.PI/spacing;
-		double totalLength=(int)4*N;
+		double totalLength=4*N;
 		int count=(int)(totalLength*1.0/spacing);
 		double[][] result = new double[count][3];
 
@@ -147,7 +147,7 @@ public class SphereIterators {
 
 	public static int[][] SphereIterator(double radius,
 			double xFactor, double yFactor, double zFactor) {
-		Vector result = new Vector();
+		Vector<int[]> result = new Vector<int[]>();
 		double r2 = radius * radius;
 		int zDiff = (int)Math.floor(radius / zFactor);
 		for(int z = -zDiff; z <= zDiff; z++) {
@@ -167,7 +167,7 @@ public class SphereIterators {
 		}
 		int[][] ret=new int[result.size()][3];
 		for(int i=0;i<ret.length;i++)
-			ret[i]=(int[])result.get(i);
+			ret[i]=result.get(i);
 		return ret;
 	}
 
@@ -183,7 +183,7 @@ public class SphereIterators {
 	}
 
 	public static int[][] HalfSphereIterator(double radius,double[] normal,double zfactor) {
-		Vector result=new Vector();
+		Vector<int[]> result=new Vector<int[]>();
 		int[][] sphereIterator=SphereIterator(radius,zfactor);
 		for(int i=0;i<sphereIterator.length;i++)
 			try {
@@ -193,7 +193,7 @@ public class SphereIterators {
 			} catch(Exception e) { /* do not count */ }
 		int[][] ret=new int[result.size()][3];
 		for(int i=0;i<ret.length;i++)
-			ret[i]=(int[])result.get(i);
+			ret[i]=result.get(i);
 		return ret;
 	}
 
@@ -213,7 +213,7 @@ public class SphereIterators {
 		int[][][] result=new int[length][][];
 		int[][] sphereIterator=SphereIterator(radius,zfactor);
 		for(int i=0;i<normals.length-1;i++) {
-			Vector v=new Vector();
+			Vector<int[]> v=new Vector<int[]>();
 			for(int j=0;j<sphereIterator.length;j++)
 				try {
 					if(isUpperHalf(sphereIterator[j],normals[i])!=isUpperHalf(sphereIterator[j],normals[i+1]))
@@ -221,7 +221,7 @@ public class SphereIterators {
 				} catch(Exception e) { /* do not count */ }
 			result[i]=new int[v.size()][3];
 			for(int j=0;j<result[i].length;j++)
-				result[i][j]=(int[])v.get(j);
+				result[i][j]=v.get(j);
 		}
 		return result;
 	}

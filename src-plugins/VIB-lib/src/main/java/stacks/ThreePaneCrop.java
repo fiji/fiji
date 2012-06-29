@@ -242,9 +242,9 @@ class CropDialog extends Dialog implements ActionListener, WindowListener {
 			ArrayList<ImagePlus> toCrop = new ArrayList<ImagePlus>();
 			toCrop.add(owner.xy);
 			for( int i = 0; i < otherImagesCheckboxes.size(); ++ i ) {
-				Checkbox c = (Checkbox)otherImagesCheckboxes.get(i);
+				Checkbox c = otherImagesCheckboxes.get(i);
 				if( c.getState() )
-					toCrop.add((ImagePlus)otherImages.get(i));
+					toCrop.add(otherImages.get(i));
 			}
 			owner.performMultipleCrops(toCrop);
 		} else if( source == cancelButton ) {
@@ -578,11 +578,11 @@ public class ThreePaneCrop extends ThreePanes {
 
 	public void performMultipleCrops( ArrayList<ImagePlus> images ) {
 
-		for( Iterator i = images.iterator();
+		for( Iterator<ImagePlus> i = images.iterator();
 		     i.hasNext();
 			) {
 
-			ImagePlus imp = (ImagePlus)i.next();
+			ImagePlus imp = i.next();
 
 			ImagePlus newImagePlus =
 				performCrop(

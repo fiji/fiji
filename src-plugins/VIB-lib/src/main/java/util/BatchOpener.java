@@ -230,7 +230,7 @@ public class BatchOpener {
 					Object newInstance = c.newInstance();
 
 					/* This version of open doesn't show() them... */
-					Class[] parameterTypes = { String.class,
+					Class<?>[] parameterTypes = { String.class,
 								    String.class,
 								    Boolean.TYPE,
 								    Boolean.TYPE,
@@ -333,7 +333,7 @@ public class BatchOpener {
 					Class<?> c = loader.loadClass("leica.Leica_SP_Reader");
 					Object newInstance = c.newInstance();
 
-					Class[] parameterTypes = { String.class };
+					Class<?>[] parameterTypes = { String.class };
 					Object[] parameters = new Object[1];
 					parameters[0] = path;
 					Method m = c.getMethod( "run", parameterTypes );
@@ -397,13 +397,12 @@ public class BatchOpener {
 			ImagePlus invokeResult = IJ.openImage(path);
 			ImagePlus[] result;
 
-			if( invokeResult instanceof ImagePlus &&
-				((ImagePlus)invokeResult).isComposite()) {
+			if( invokeResult != null && invokeResult.isComposite()) {
 				CompositeImage composite = (CompositeImage)invokeResult;
 				result = splitChannelsToArray(composite,true);
 			} else {
 				result = new ImagePlus[1];
-				result[0] = (ImagePlus)invokeResult;
+				result[0] = invokeResult;
 			}
 
 			return new ChannelsAndLoader(result,loaderUsed);

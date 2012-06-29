@@ -71,7 +71,7 @@ public class Recent_Commands implements ActionListener, CommandListener, KeyList
 	JButton okay, cancel, options;
 
 	public void runInteractively() {
-		Vector recent = getMostRecent(recentListSize);
+		Vector<String> recent = getMostRecent(recentListSize);
 		if (recent.size() == 0) {
 			JOptionPane.showMessageDialog(IJ.getInstance(),
 				"No recent commands available!");

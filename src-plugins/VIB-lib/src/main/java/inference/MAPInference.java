@@ -23,11 +23,11 @@ public class MAPInference {
 		initCount();
 	}
 
-	public void setData(java.util.Vector data_) {
+	public void setData(java.util.Vector<Integer> data_) {
 		int size=data_.size();
 		data=new int[size];
 		for(int i=0;i<size;i++)
-			data[i]=((Integer)data_.get(i)).intValue();
+			data[i]=data_.get(i);
 		initCount();
 	}
 

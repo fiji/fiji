@@ -29,9 +29,9 @@ public class SegmentationViewerCanvas extends ImageCanvas {
 	int w,h,d;
 	Color[] label_colors; // these are the up to 256 material colors
 
-	Vector[] contours; // each element is a vector of polygons
-	Vector[] colors; // these are the corresponding colors
-	Vector[] indices; // these are the corresponding material IDs
+	Vector<GeneralPath>[] contours; // each element is a vector of polygons
+	Vector<Color>[] colors; // these are the corresponding colors
+	Vector<Integer>[] indices; // these are the corresponding material IDs
 
 	private final boolean debug = false;
 
@@ -102,9 +102,8 @@ public class SegmentationViewerCanvas extends ImageCanvas {
 			createContoursIfNotExist(slice);
 			
 			for (int i = 0; i < indices[slice-1].size(); i++)
-				if (((Integer)indices[slice-1].get(i)).intValue()
-				    == materialId)
-					return (GeneralPath)contours[slice-1].get(i);
+				if (indices[slice-1].get(i).intValue() == materialId)
+					return contours[slice-1].get(i);
 			return null;
 		}
 	}
@@ -232,7 +231,7 @@ public class SegmentationViewerCanvas extends ImageCanvas {
 			indices[slice]=new Vector();
 
 			// actually find the outlines
-			ArrayList polygons = new ArrayList();
+			// ArrayList polygons = new ArrayList();
 			outline = new Outline[2 * w + 2];
 
 			for (int y = 0; y <= h; y++)
@@ -425,8 +424,8 @@ public class SegmentationViewerCanvas extends ImageCanvas {
 		double magnification=getMagnification();
 
 		for(int i=0;i<contours[slice-1].size();i++) {
-			g.setColor((Color)colors[slice-1].get(i));
-			Shape poly = (Shape)contours[slice-1].get(i);
+			g.setColor(colors[slice-1].get(i));
+			Shape poly = contours[slice-1].get(i);
 
 			// take offset into account (magnification very high)
 			if(magnification!=1.0) {
@@ -440,7 +439,7 @@ public class SegmentationViewerCanvas extends ImageCanvas {
 
 			((Graphics2D)g).draw(poly);
 			if(mode==FILL) {
-				Color c=(Color)colors[slice-1].get(i);
+				Color c=colors[slice-1].get(i);
 				Color c1=new Color(c.getRed(),c.getGreen(),c.getBlue(),alpha);
 				g.setColor(c1);
 				((Graphics2D)g).fill(poly);

@@ -146,7 +146,7 @@ public class ImageMetaData {
 
 		transformations = new Transformation[transforms.size()];
 		for (int i = 0; i < transformations.length; i++)
-			transformations[i] = (Transformation)transforms.get(i);
+			transformations[i] = transforms.get(i);
 	}
 
 	private final static String AMIRA_HEADINGS = "Nr\tMaterial\tCount\t"
@@ -189,7 +189,7 @@ public class ImageMetaData {
 
 		String[] result = new String[list.size()];
 		for (int i = 0; i < result.length; i++)
-			result[i] = (String)list.get(i);
+			result[i] = list.get(i);
 		return result;
 	}
 

@@ -201,7 +201,7 @@ public abstract class AbstractTrackingTool extends AbstractTool implements Mouse
 			return;
 		List labels = manager.getList();
 		@SuppressWarnings("unchecked")
-		Hashtable<String, Roi> table = (Hashtable<String, Roi>)manager.getROIs();
+		Hashtable<String, Roi> table = manager.getROIs();
 		for (int i = 0; i < labels.getItemCount(); i++) {
 			String label = labels.getItem(i);
 			int index = manager.getSliceNumber(label) - 1;

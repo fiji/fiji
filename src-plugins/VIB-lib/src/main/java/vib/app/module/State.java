@@ -49,7 +49,7 @@ public class State {
 		channels = new String[options.numChannels][imageCount];
 
 		for (int i = 0; i < imageCount; i++) {
-			File file = (File)options.fileGroup.get(i);
+			File file = options.fileGroup.get(i);
 			String baseName = file.getName();
 			for (int j = 0; j < options.numChannels; j++)
 				// TODO: how to determine 2nd channel's path?

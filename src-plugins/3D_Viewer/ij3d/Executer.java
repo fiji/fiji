@@ -1547,7 +1547,7 @@ public class Executer {
 		w = (int)gd.getNextNumber();
 		h = (int)gd.getNextNumber();
 
-		Map<String, Integer> props = (Map<String, Integer>) univ.getCanvas().queryProperties();
+		Map<String, Integer> props = univ.getCanvas().queryProperties();
 		int maxW = props.get("textureWidthMax");
 		int maxH = props.get("textureHeightMax");
 

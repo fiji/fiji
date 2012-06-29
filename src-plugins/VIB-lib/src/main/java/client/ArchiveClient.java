@@ -65,7 +65,7 @@ class APIRequestThread extends Thread {
 	}
 
 	public ArrayList< String [] > doUploadRequest( String apiURL,
-						       Hashtable parametersForPost,
+						       Hashtable<String, String> parametersForPost,
 						       byte [] data,
 						       String cookie_value ) {
 
@@ -111,10 +111,10 @@ class APIRequestThread extends Thread {
 			
 			System.out.println("Writing data to output (upload) stream...");
 			
-			for (Enumeration e = parametersForPost.keys() ; e.hasMoreElements() ; ) {
+			for (Enumeration<String> e = parametersForPost.keys() ; e.hasMoreElements() ; ) {
 
-				String key = (String)e.nextElement();
-				String value = (String)parametersForPost.get(key);
+				String key = e.nextElement();
+				String value = parametersForPost.get(key);
 
 				System.err.println(""+key+" => "+value);
 
@@ -190,7 +190,7 @@ class APIRequestThread extends Thread {
 					String [] tokens_array = new String[tokens.size()];
 					
 					for( int i=0; i < tokens.size(); ++i )
-						tokens_array[i] = (String)tokens.get(i);
+						tokens_array[i] = tokens.get(i);
 
 					result.add(tokens_array);
 				}
@@ -319,7 +319,7 @@ public class ArchiveClient {
 
 	
 
-	public ArrayList< String [] > synchronousRequest( Hashtable parametersForPost,
+	public ArrayList< String [] > synchronousRequest( Hashtable<String, String> parametersForPost,
 				   byte [] data ) {
 
 		String cookie_value = parameterHash.get("cookie-value");
@@ -337,7 +337,7 @@ public class ArchiveClient {
 						       cookie_value );
 
 		for( int i = 0; i < returned_data.size(); ++i ) {
-			String [] line = (String [])returned_data.get(i);
+			String [] line = returned_data.get(i);
 			System.err.print("Got line: ");
 			for( int j = 0; j < line.length; ++j ) {
 				System.err.print( line[j] + ";\t" );
@@ -368,14 +368,14 @@ public class ArchiveClient {
 	}
 
 	public String getValue(String key) {
-		return (String)parameterHash.get(key);
+		return parameterHash.get(key);
 	}
 
 	public boolean hasKey(String key) {
 		return parameterHash.containsKey(key);
 	}
 
-	public Enumeration keys() {
+	public Enumeration<String> keys() {
 		return parameterHash.keys();
 	}
 
@@ -389,10 +389,10 @@ public class ArchiveClient {
 		parameters.put("md5sum",getValue("md5sum"));
 			
 		ArrayList< String [] > tsv_results = synchronousRequest(parameters,null);
-		int tags = Integer.parseInt(((String [])tsv_results.get(0))[1]); // FIXME error checking
+		int tags = Integer.parseInt(tsv_results.get(0)[1]); // FIXME error checking
 		int matching_channel = -1;
 		for( int i = 0; i < tags; ++i ) {
-			String [] row = (String [])tsv_results.get(i);
+			String [] row = tsv_results.get(i);
 			if( tag.equalsIgnoreCase(row[1]) ) {
 				matching_channel = Integer.parseInt(row[0]);
 				break;

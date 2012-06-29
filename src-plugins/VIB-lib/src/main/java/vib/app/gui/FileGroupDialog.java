@@ -157,7 +157,7 @@ public class FileGroupDialog extends Panel
 	}
 
 	private void createList() {
-		list.clear();
+		list.removeAll();
 		for(int i = 0; i < files.size(); i++) {
 			if(showWholePath)
 				list.add(files.get(i).getAbsolutePath());

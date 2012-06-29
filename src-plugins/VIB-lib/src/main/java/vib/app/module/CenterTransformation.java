@@ -31,8 +31,8 @@ public class CenterTransformation extends Module {
 		ImageMetaData templStats =
 			new ImageMetaData(templStatisticsPath);
 
-		ArrayList templCenters = new ArrayList();
-		ArrayList centers = new ArrayList();
+		ArrayList<Point3d> templCenters = new ArrayList<Point3d>();
+		ArrayList<Point3d> centers = new ArrayList<Point3d>();
 		// skip i == 0 (it's Exterior)
 		for (int i = 1; i < templStats.materials.length; i++) {
 			ImageMetaData.Material m1 = templStats.materials[i];
@@ -56,8 +56,8 @@ public class CenterTransformation extends Module {
 		Point3d[] c1 = new Point3d[centers.size()];
 		Point3d[] c2 = new Point3d[centers.size()];
 		for (int i = 0; i < c1.length; i++) {
-			c1[i] = (Point3d)templCenters.get(i);
-			c2[i] = (Point3d)centers.get(i);
+			c1[i] = templCenters.get(i);
+			c2[i] = centers.get(i);
 		}
 		FloatMatrix matrix = FloatMatrix.bestRigid(c2, c1);
 		stats.setMatrix(transformLabel, matrix);

@@ -166,7 +166,7 @@ public class AverageBrain extends Module {
 
 	class AverageLabels extends Method {
 		byte[][] labels;
-		Vector[] tuples;
+		Vector<Tuple>[] tuples;
 		final static int maxProb = 100;
 
 		public AverageLabels() {
@@ -174,7 +174,7 @@ public class AverageBrain extends Module {
 			labels = new byte[d][w * h];
 			tuples = new Vector[256];
 			for (int i = 0; i < 256; i++)
-				tuples[i] = new Vector();
+				tuples[i] = new Vector<Tuple>();
 		}
 
 		public void accumulate(int i, int j, int k,
@@ -197,7 +197,7 @@ public class AverageBrain extends Module {
 				if (c1 > 0)
 					newTuple = new Tuple(l1, c1, l);
 				else {
-					Tuple old = (Tuple)tuples[l1].get(-c1);
+					Tuple old = tuples[l1].get(-c1);
 					newTuple = new Tuple(old, l);
 				}
 				if (newTuple.labels[0] != (byte)l1) {
@@ -219,7 +219,7 @@ public class AverageBrain extends Module {
 				label += 256;
 			int c = cumul[k][i + j * w];
 			if (c <= 0) {
-				Tuple t = (Tuple)tuples[label].get(-c);
+				Tuple t = tuples[label].get(-c);
 				c = t.counts[0];
 			}
 			return c * maxProb / count;

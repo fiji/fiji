@@ -46,7 +46,7 @@ public class CustomCanvas extends SegmentationViewerCanvas {
 
 	public void processCanvasEvent(double magn) {
 		for(int i = 0; i < listener.size(); i++) {
-			((CanvasListener)listener.get(i)).magnificationChanged(magn);
+			listener.get(i).magnificationChanged(magn);
 		}
 	}
 	

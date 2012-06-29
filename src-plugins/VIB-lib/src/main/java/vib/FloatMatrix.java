@@ -971,7 +971,7 @@ public class FloatMatrix {
 	}
 	
 	public static FloatMatrix[] parseMatrices(String m) {
-		Vector vector = new Vector();
+		Vector<FloatMatrix> vector = new Vector<FloatMatrix>();
 		StringTokenizer tokenizer = new StringTokenizer(m, ",");
 		while (tokenizer.hasMoreTokens()) {
 			String matrix = tokenizer.nextToken().trim();
@@ -982,7 +982,7 @@ public class FloatMatrix {
 		}
 		FloatMatrix[] result = new FloatMatrix[vector.size()];
 		for (int i = 0; i < result.length; i++)
-			result[i] = (FloatMatrix)vector.get(i);
+			result[i] = vector.get(i);
 		return result;
 	}
 	

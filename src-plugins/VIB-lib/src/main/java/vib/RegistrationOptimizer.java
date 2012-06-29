@@ -183,7 +183,7 @@ public abstract class RegistrationOptimizer {
 		Collections.sort(refinements);
 
 		for (int i = 0; i < refinements.size(); i++) {
-			Refinement refinement = (Refinement)refinements.get(i);
+			Refinement refinement = refinements.get(i);
 			x[i] = refinement.best;
 			orderedEulerParams[i] = refinement.adjustInitial(x[i]);
 			if(verbose) 

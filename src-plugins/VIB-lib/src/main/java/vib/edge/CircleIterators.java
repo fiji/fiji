@@ -8,7 +8,7 @@ public class CircleIterators {
 	}
 
 	public static int[][] FullCircle(double radius,boolean withOrigin) {
-		List list = new ArrayList();
+		List<int[]> list = new ArrayList<int[]>();
 		for(int i=(int)radius;i>=0;i--) {
 			int quarter=(int)Math.sqrt(radius*radius-i*i);
 			for(int j=-quarter;j<=quarter;j++) {
@@ -32,7 +32,7 @@ public class CircleIterators {
 		int count = list.size();
 		int[][] result = new int[count][2];
 		for(int i=0;i<count;i++)
-			result[i]=(int[])list.get(count-1-i);
+			result[i]=list.get(count-1-i);
 		return result;
 	}
 
@@ -49,7 +49,7 @@ public class CircleIterators {
 	   sorted counter clockwise by angle, starting with the
 	   right most coordinate */
 	public static int[][] SortedHalfCircle(double radius) {
-		List list = new ArrayList();
+		List<int[]> list = new ArrayList<int[]>();
 		for(int i=(int)radius;i>=0;i--) {
 			int quarter=(int)Math.sqrt(radius*radius-i*i);
 			for(int j=(i>0?-quarter:1);j<=quarter;j++) {
@@ -63,7 +63,7 @@ public class CircleIterators {
 		int count = list.size();
 		int[][] result = new int[count][2];
 		for(int i=0;i<count;i++)
-			result[i]=(int[])list.get(count-1-i);
+			result[i]=list.get(count-1-i);
 		return result;
 	}
 
@@ -74,7 +74,7 @@ public class CircleIterators {
 	// TODO: maybe there's a more efficient way to do it?
 	public static int[][][] Edgelets(int [][] shc,double radius) {
 		int[][][] result=new int[shc.length][][];
-		List plist = new ArrayList();
+		List<int[]> plist = new ArrayList<int[]>();
 		for(int k=0;k<shc.length;k++) {
 			double dist=Math.sqrt(shc[k][0]*shc[k][0]+shc[k][1]*shc[k][1]);
 			double dx=shc[k][0]/dist;
@@ -97,7 +97,7 @@ public class CircleIterators {
 			result[k]=new int[(int)(plist.size())][2];
 			
 			for(int i=0;i<(int)(plist.size());i++) {
-				result[k][i]=(int[])plist.get(i);
+				result[k][i]=plist.get(i);
 			}
 			plist.clear();
 		}
@@ -145,10 +145,10 @@ public class CircleIterators {
 /* According to this comparator, p1<p2 iff the angle of p1 is smaller than
    the angle of p2, or in the case the angles are equal, the length of p1
    is smaller than that of p2. */
-class PointComparator implements Comparator {
-	public int compare(Object a,Object b) {
-		int[] c=(int[])a;
-		int[] d=(int[])b;
+class PointComparator implements Comparator<int[]> {
+	public int compare(int[] a, int[] b) {
+		int[] c=a;
+		int[] d=b;
 		int result = c[0]*d[1]-c[1]*d[0];
 		if(result==0)
 			return Math.abs(c[0])+Math.abs(c[1])-Math.abs(d[0])-Math.abs(d[1]);
@@ -158,16 +158,16 @@ class PointComparator implements Comparator {
 }
 
 /* This compares points by their distance to 0. */
-class DistanceComparator implements Comparator {
+class DistanceComparator implements Comparator<int[]> {
 	boolean ascending;
 
 	public DistanceComparator(boolean a) {
 		ascending=a;
 	}
 
-	public int compare(Object a,Object b) {
-		int[] c=(int[])a;
-		int[] d=(int[])b;
+	public int compare(int[] a,int[] b) {
+		int[] c=a;
+		int[] d=b;
 		return (d[0]*d[0]+d[1]*d[1]-c[0]*c[0]-c[1]*c[1])
 			*(ascending?-1:1);
 	}

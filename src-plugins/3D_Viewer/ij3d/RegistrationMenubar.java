@@ -206,7 +206,7 @@ public class RegistrationMenubar extends JMenuBar implements ActionListener,
 		DecimalFormat df = new DecimalFormat("00.000");
 		String message = "Points used for registration\n \n";
 		for(int i = 0; i < sett.size(); i++) {
-			BenesNamedPoint bnp = (BenesNamedPoint)sett.get(i);
+			BenesNamedPoint bnp = sett.get(i);
 			message += (bnp.getName() + "    "
 				+ df.format(bnp.x) + "    "
 				+ df.format(bnp.y) + "    "
@@ -220,8 +220,8 @@ public class RegistrationMenubar extends JMenuBar implements ActionListener,
 		BenesNamedPoint[] sm = new BenesNamedPoint[setm.size()];
 		BenesNamedPoint[] st = new BenesNamedPoint[sett.size()];
 		FastMatrix fm = FastMatrix.bestRigid(
-			(BenesNamedPoint[])setm.toArray(sm),
-			(BenesNamedPoint[])sett.toArray(st));
+			setm.toArray(sm),
+			sett.toArray(st));
 
 		// reset the transformation of the template
 		// and set the transformation of the model.
@@ -244,7 +244,7 @@ public class RegistrationMenubar extends JMenuBar implements ActionListener,
 
 	public void closeAllDialogs() {
 		while(openDialogs.size() > 0) {
-			GenericDialog gd = (GenericDialog)openDialogs.get(0);
+			GenericDialog gd = openDialogs.get(0);
 			gd.dispose();
 			openDialogs.remove(gd);
 		}

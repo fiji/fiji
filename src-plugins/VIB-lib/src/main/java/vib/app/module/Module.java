@@ -6,7 +6,7 @@ import vib.app.gui.Console;
 
 public abstract class Module {
 	protected Console console;
-	protected static Vector listeners = new Vector();
+	protected static Vector<ModuleListener> listeners = new Vector<ModuleListener>();
 	private static boolean exception = false;
 
 	public abstract String getName();
@@ -51,15 +51,14 @@ public abstract class Module {
 	}
 
 	public void finished(int index) {
-		for(Iterator it = listeners(); it.hasNext();) {
-			((ModuleListener)it.next()).moduleFinished(this, index);
+		for(Iterator<ModuleListener> it = listeners(); it.hasNext();) {
+			it.next().moduleFinished(this, index);
 		}
 	}
 
 	public void exceptionOccurred(int index) {
-		for(Iterator it = listeners(); it.hasNext();) {
-			((ModuleListener)it.next()).
-					exceptionOccurred(this, index);
+		for(Iterator<ModuleListener> it = listeners(); it.hasNext();) {
+			it.next().exceptionOccurred(this, index);
 		}
 	}
 
@@ -67,7 +66,7 @@ public abstract class Module {
 		listeners.add(l);
 	}
 
-	public static Iterator listeners() {
+	public static Iterator<ModuleListener> listeners() {
 		return listeners.iterator();
 	}
 }

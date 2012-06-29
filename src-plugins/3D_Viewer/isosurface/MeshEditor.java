@@ -33,7 +33,7 @@ public class MeshEditor {
 			// process one triangle at a time
 			Point3f p1 = triangles.get(i);
 			Point3f p2 = triangles.get(i+1);
-			Point3f p3 = (Point3f)triangles.get(i+2);
+			Point3f p3 = triangles.get(i+2);
 			build(p1, p2, p3, ht);
 			build(p2, p3, p1, ht);
 			build(p3, p1, p2, ht);

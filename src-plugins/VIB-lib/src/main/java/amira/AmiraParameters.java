@@ -220,7 +220,7 @@ public class AmiraParameters {
 		if(list==null) {
 			list="";
 			for(int i=0;i<materials.size();i++)
-				list+=(i>0?",":"")+(String)materials.get(i);
+				list+=(i>0?",":"")+materials.get(i);
 			parameters.put("MaterialList",list);
 		} else {
 			materials.clear();
@@ -253,7 +253,7 @@ public class AmiraParameters {
 		if (t == null)
 			return list;
 		for(Enumeration<String> e=t.keys();e.hasMoreElements();) {
-			String key=(String)e.nextElement();
+			String key=e.nextElement();
 			list+=prefix+key+" "+getProperty(t,key,prefix)+"\n";
 		}
 		return list;
@@ -277,9 +277,9 @@ public class AmiraParameters {
 		String result="{",sep="\n";
 		// treat special case "Materials": preserve order
 		Hashtable subMap=(Hashtable)value;
-		Enumeration e=(key.equals("Materials")?materials.elements():subMap.keys());
+		Enumeration<String> e=(key.equals("Materials")?materials.elements():subMap.keys());
 		while(e.hasMoreElements()) {
-			String subKey=(String)e.nextElement();
+			String subKey=e.nextElement();
 			String subValue=getProperty(subMap,subKey,prefix);
 			result+=sep+prefix+subKey+" "+subValue;
 			if(!subValue.equals("") && !subValue.endsWith("}"))
@@ -392,7 +392,7 @@ public class AmiraParameters {
 	}
 
 	public String getMaterialName(int id) {
-		return (String)materials.get(id);
+		return materials.get(id);
 	}
 
 	public int getMaterialID(String name) {
@@ -585,7 +585,7 @@ public class AmiraParameters {
 		String[] list = new String[v.size()];
 		boolean hasDefault = false;
 		for (int i = 0; i < list.length; i++) {
-			list[i] = (String)v.get(i);
+			list[i] = v.get(i);
 			if (list[i].equals(defaultValue))
 				hasDefault = true;
 		}
@@ -732,7 +732,7 @@ public class AmiraParameters {
 
 		String[] result = new String[v.size()];
 		for (int i = 0; i < result.length; i++)
-			result[i] = (String)v.get(i);
+			result[i] = v.get(i);
 		return result;
 	}
 

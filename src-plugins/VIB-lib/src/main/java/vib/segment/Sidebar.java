@@ -141,7 +141,7 @@ public class Sidebar extends Panel implements CustomCanvas.CanvasListener, ItemL
 			return;
 		}
 		selected -= labelImages.size();
-		String materials = (String)defaultMaterials.get(selected);
+		String materials = defaultMaterials.get(selected);
 		if (!currentLabelsAreNew)
 			setLabelImage(null);
 		ImagePlus labels = cc.getLabels();

@@ -112,7 +112,7 @@ public class Point3d {
 
 		Point3d[] result = new Point3d[list.size()];
 		for (int i = 0; i < result.length; i++)
-			result[i] = (Point3d)list.get(i);
+			result[i] = list.get(i);
 		return result;
 	}
 	

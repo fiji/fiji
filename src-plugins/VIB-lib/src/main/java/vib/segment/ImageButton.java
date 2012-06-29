@@ -416,7 +416,7 @@ public class ImageButton extends Canvas implements MouseListener {
         return pref;
     }
 
-    Vector actionListeners = new Vector();
+    Vector<ActionListener> actionListeners = new Vector<ActionListener>();
 
 	public void setActionCommand(String command) {
 		this.command = command;
@@ -435,9 +435,9 @@ public class ImageButton extends Canvas implements MouseListener {
     }
 
     protected void processActionEvent(ActionEvent e) {
-	Iterator iter = actionListeners.iterator();
+	Iterator<ActionListener> iter = actionListeners.iterator();
 	while(iter.hasNext()) {
-	    ActionListener l = (ActionListener)iter.next();
+	    ActionListener l = iter.next();
 	    l.actionPerformed(e);
 	}
     }

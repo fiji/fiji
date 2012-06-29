@@ -30,7 +30,7 @@ public class SplitChannels extends Module {
 		if (index < 0)
 			file = new File(state.options.templatePath);
 		else
-			file = (File)state.options.fileGroup.get(index);
+			file = state.options.fileGroup.get(index);
 		String path = file.getAbsolutePath();
 
 		boolean upToDate = true;

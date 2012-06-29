@@ -59,7 +59,7 @@ public class NucleiConfiguration
 	public float sigma = 2.153f;
 	public boolean lookForMaxima = true;				
 	
-	public TranslationInvariantFixedModel getFixedModel( final Model ransacModel )
+	public TranslationInvariantFixedModel getFixedModel( final Model<?> ransacModel )
 	{
 		//System.out.println( "\nRansac model:" );
 		System.out.println( ransacModel );
@@ -91,7 +91,7 @@ public class NucleiConfiguration
 		return fixedModel;
 	}
 
-	public FixedModel getFixedTranslationModel( final Model ransacModel )
+	public FixedModel getFixedTranslationModel( final Model<?> ransacModel )
 	{
 		System.out.println( ransacModel );
 		

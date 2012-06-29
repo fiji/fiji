@@ -38,9 +38,9 @@ import java.util.Set;
  *
  * Created July 2005. Derived from an earlier, messier version.
  */
-public class Simplex extends AbstractSet implements Set {
+public class Simplex extends AbstractSet<Pnt> implements Set<Pnt> {
 
-    private List vertices;                  // The simplex's vertices
+    private List<Pnt> vertices;                  // The simplex's vertices
     private long idNumber;                  // The id number
     private static long idGenerator = 0;    // Used to create id numbers
     public static boolean moreInfo = false; // True iff more info in toString
@@ -50,10 +50,10 @@ public class Simplex extends AbstractSet implements Set {
      * @param collection a Collection holding the Simplex vertices
      * @throws IllegalArgumentException if there are duplicate vertices
      */
-    public Simplex (Collection collection) {
-        this.vertices = Collections.unmodifiableList(new ArrayList(collection));
+    public Simplex(Collection<Pnt> collection) {
+        this.vertices = Collections.unmodifiableList(new ArrayList<Pnt>(collection));
         this.idNumber = idGenerator++;
-        Set noDups = new HashSet(this);
+        Set<Pnt> noDups = new HashSet<Pnt>(this);
         if (noDups.size() != this.vertices.size())
             throw new IllegalArgumentException("Duplicate vertices in Simplex");
     }
@@ -63,15 +63,27 @@ public class Simplex extends AbstractSet implements Set {
      * @param vertices the vertices of the Simplex.
      * @throws IllegalArgumentException if there are duplicate vertices
      */
-    public Simplex (Object[] vertices) {
+    public Simplex(Pnt[] vertices) {
         this(Arrays.asList(vertices));
+    }
+    
+    /**
+     * Constructor.
+     * @param vertices the vertices of the Simplex.
+     * @throws IllegalArgumentException if there are duplicate vertices
+     * 
+     * @deprecated Use {@link #Simplex(String[])} instead.
+     */
+    @Deprecated
+    public Simplex(Object[] vertices) {
+        this(Arrays.asList((Pnt[])vertices));
     }
 
     /**
      * String representation.
      * @return the String representation of this Simplex
      */
-    public String toString () {
+    public String toString() {
         if (!moreInfo) return "Simplex" + idNumber;
         return "Simplex" + idNumber + super.toString();
     }
@@ -80,7 +92,7 @@ public class Simplex extends AbstractSet implements Set {
      * Dimension of the Simplex.
      * @return dimension of Simplex (one less than number of vertices)
      */
-    public int dimension () {
+    public int dimension() {
         return this.vertices.size() - 1;
     }
 
@@ -91,8 +103,8 @@ public class Simplex extends AbstractSet implements Set {
      * @param simplex the other Simplex
      * @return true iff this Simplex is a neighbor of simplex
      */
-    public boolean isNeighbor (Simplex simplex) {
-        HashSet h = new HashSet(this);
+    public boolean isNeighbor(Simplex simplex) {
+        HashSet<Pnt> h = new HashSet<Pnt>(this);
         h.removeAll(simplex);
         return (this.size() == simplex.size()) && (h.size() == 1);
     }
@@ -102,11 +114,11 @@ public class Simplex extends AbstractSet implements Set {
      * Each facet is a set of vertices.
      * @return an Iterable for the facets of this Simplex
      */
-    public List facets () {
-        List theFacets = new LinkedList();
-        for (Iterator it = this.iterator(); it.hasNext();) {
+    public List<Set<Pnt>> facets() {
+        List<Set<Pnt>> theFacets = new LinkedList<Set<Pnt>>();
+        for (Iterator<Pnt> it = this.iterator(); it.hasNext();) {
             Object v = it.next();
-            Set facet = new HashSet(this);
+            Set<Pnt> facet = new HashSet<Pnt>(this);
             facet.remove(v);
             theFacets.add(facet);
         }
@@ -118,12 +130,12 @@ public class Simplex extends AbstractSet implements Set {
      * The boundary is a Set of facets where each facet is a Set of vertices.
      * @return an Iterator for the facets that make up the boundary
      */
-    public static Set boundary (Set simplexSet) {
-        Set theBoundary = new HashSet();
-        for (Iterator it = simplexSet.iterator(); it.hasNext();) {
-            Simplex simplex = (Simplex) it.next();
-            for (Iterator otherIt = simplex.facets().iterator(); otherIt.hasNext();) {
-                Set facet = (Set) otherIt.next();
+    public static Set<Set<Pnt>> boundary(Set<Simplex> simplexSet) {
+        Set<Set<Pnt>> theBoundary = new HashSet<Set<Pnt>>();
+        for (Iterator<Simplex> it = simplexSet.iterator(); it.hasNext();) {
+            Simplex simplex = it.next();
+            for (Iterator<Set<Pnt>> otherIt = simplex.facets().iterator(); otherIt.hasNext();) {
+                Set<Pnt> facet = otherIt.next();
                 if (theBoundary.contains(facet)) theBoundary.remove(facet);
                 else theBoundary.add(facet);
             }
@@ -136,21 +148,21 @@ public class Simplex extends AbstractSet implements Set {
     /**
      * @return Iterator for Simplex's vertices.
      */
-    public Iterator iterator () {
+    public Iterator<Pnt> iterator() {
         return this.vertices.iterator();
     }
 
     /**
      * @return the size (# of vertices) of this Simplex
      */
-    public int size () {
+    public int size() {
         return this.vertices.size();
     }
 
     /**
      * @return the hashCode of this Simplex
      */
-    public int hashCode () {
+    public int hashCode() {
         return (int)(idNumber^(idNumber>>>32));
     }
 
@@ -158,7 +170,7 @@ public class Simplex extends AbstractSet implements Set {
      * We want to allow for different simplices that share the same vertex set.
      * @return true for equal Simplices
      */
-    public boolean equals (Object o) {
+    public boolean equals(Object o) {
         return (this == o);
     }
 }

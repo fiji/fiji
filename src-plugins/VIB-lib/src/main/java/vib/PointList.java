@@ -130,7 +130,7 @@ public class PointList implements Iterable<BenesNamedPoint>{
 		Point3d p = new Point3d(x, y, z);
 		tol *= tol;
 		for(int i = 0; i < points.size(); i++) {
-			BenesNamedPoint bnp = (BenesNamedPoint)points.get(i);
+			BenesNamedPoint bnp = points.get(i);
 			if(p.distance2(bnp) < tol)
 				return i;
 		}

@@ -38,15 +38,15 @@ import java.util.Set;
  */
 public class Triangulation {
 
-    private HashMap neighbors;  // Maps Simplex to Set of neighbors
+    private HashMap<Simplex, HashSet<Simplex>> neighbors;  // Maps Simplex to Set of neighbors
 
     /**
      * Constructor.
      * @param simplex the initial Simplex.
      */
-    public Triangulation (Simplex simplex) {
-        neighbors = new HashMap();
-        neighbors.put(simplex, new HashSet());
+    public Triangulation(Simplex simplex) {
+        neighbors = new HashMap<Simplex, HashSet<Simplex>>();
+        neighbors.put(simplex, new HashSet<Simplex>());
     }
 
     /**
@@ -54,7 +54,7 @@ public class Triangulation {
      * Shows number of simplices currently in the Triangulation.
      * @return a String representing the Triangulation
      */
-    public String toString () {
+    public String toString() {
         return "Triangulation (with " + neighbors.size() + " elements)";
     }
 
@@ -62,7 +62,7 @@ public class Triangulation {
      * Size (# of Simplices) in Triangulation.
      * @return the number of Simplices in this Triangulation
      */
-    public int size () {
+    public int size() {
         return neighbors.size();
     }
 
@@ -71,7 +71,7 @@ public class Triangulation {
      * @param simplex the simplex to check
      * @return true iff the simplex is in this Triangulation
      */
-    public boolean contains (Simplex simplex) {
+    public boolean contains(Simplex simplex) {
         return this.neighbors.containsKey(simplex);
     }
 
@@ -79,7 +79,7 @@ public class Triangulation {
      * Iterator.
      * @return an iterator for every Simplex in the Triangulation
      */
-    public Iterator iterator () {
+    public Iterator<Simplex> iterator() {
         return Collections.unmodifiableSet(this.neighbors.keySet()).iterator();
     }
 
@@ -87,15 +87,15 @@ public class Triangulation {
      * Print stuff about a Triangulation.
      * Used for debugging.
      */
-    public void printStuff () {
+    public void printStuff() {
         boolean remember = Simplex.moreInfo;
         System.out.println("Neighbor data for " + this);
-        for (Iterator it = neighbors.keySet().iterator(); it.hasNext();) {
-            Simplex simplex = (Simplex) it.next();
+        for (Iterator<Simplex> it = neighbors.keySet().iterator(); it.hasNext();) {
+            Simplex simplex = it.next();
             Simplex.moreInfo = true;
             System.out.print("    " + simplex + ":");
             Simplex.moreInfo = false;
-            for (Iterator otherIt = ((Set) neighbors.get(simplex)).iterator();
+            for (Iterator<Simplex> otherIt = (neighbors.get(simplex)).iterator();
                  otherIt.hasNext();)
                 System.out.print(" " + otherIt.next());
             System.out.println();
@@ -115,11 +115,11 @@ public class Triangulation {
     public Simplex neighborOpposite (Object vertex, Simplex simplex) {
         if (!simplex.contains(vertex))
             throw new IllegalArgumentException("Bad vertex; not in simplex");
-        SimplexLoop: for (Iterator it = ((Set) neighbors.get(simplex)).iterator();
+        SimplexLoop: for (Iterator<Simplex> it = (neighbors.get(simplex)).iterator();
                           it.hasNext();) {
-            Simplex s = (Simplex) it.next();
-            for (Iterator otherIt = simplex.iterator(); otherIt.hasNext(); ) {
-                Object v = otherIt.next();
+            Simplex s = it.next();
+            for (Iterator<Pnt> otherIt = simplex.iterator(); otherIt.hasNext(); ) {
+                Pnt v = otherIt.next();
                 if (v.equals(vertex)) continue;
                 if (!s.contains(v)) continue SimplexLoop;
             }
@@ -133,8 +133,8 @@ public class Triangulation {
      * @param simplex a Simplex
      * @return the Set of neighbors of simplex
      */
-    public Set neighbors (Simplex simplex) {
-        return new HashSet((Set) this.neighbors.get(simplex));
+    public Set<Simplex> neighbors (Simplex simplex) {
+        return new HashSet<Simplex>(this.neighbors.get(simplex));
     }
 
     /* Modification */
@@ -146,34 +146,33 @@ public class Triangulation {
      * @param oldSet set of Simplices to be replaced
      * @param newSet set of replacement Simplices
      */
-    public void update (Set oldSet,
-                        Set newSet) {
+    public void update(Set<Simplex> oldSet, Set<Simplex> newSet) {
         // Collect all simplices neighboring the oldSet
-        Set allNeighbors = new HashSet();
-        for (Iterator it = oldSet.iterator(); it.hasNext();)
-            allNeighbors.addAll((Set) neighbors.get((Simplex) it.next()));
+        Set<Simplex> allNeighbors = new HashSet<Simplex>();
+        for (Iterator<Simplex> it = oldSet.iterator(); it.hasNext();)
+            allNeighbors.addAll(neighbors.get(it.next()));
         // Delete the oldSet
-        for (Iterator it = oldSet.iterator(); it.hasNext();) {
-            Simplex simplex = (Simplex) it.next();
-            for (Iterator otherIt = ((Set) neighbors.get(simplex)).iterator();
+        for (Iterator<Simplex> it = oldSet.iterator(); it.hasNext();) {
+            Simplex simplex = it.next();
+            for (Iterator<Simplex> otherIt = neighbors.get(simplex).iterator();
                  otherIt.hasNext();)
-                ((Set) neighbors.get(otherIt.next())).remove(simplex);
+                neighbors.get(otherIt.next()).remove(simplex);
             neighbors.remove(simplex);
             allNeighbors.remove(simplex);
         }
         // Include the newSet simplices as possible neighbors
         allNeighbors.addAll(newSet);
         // Create entries for the simplices in the newSet
-        for (Iterator it = newSet.iterator(); it.hasNext();)
-            neighbors.put((Simplex) it.next(), new HashSet());
+        for (Iterator<Simplex> it = newSet.iterator(); it.hasNext();)
+            neighbors.put(it.next(), new HashSet<Simplex>());
         // Update all the neighbors info
-        for (Iterator it = newSet.iterator(); it.hasNext();) {
-            Simplex s1 = (Simplex) it.next();
-            for (Iterator otherIt = allNeighbors.iterator(); otherIt.hasNext();) {
-                Simplex s2 = (Simplex) otherIt.next();
+        for (Iterator<Simplex> it = newSet.iterator(); it.hasNext();) {
+            Simplex s1 = it.next();
+            for (Iterator<Simplex> otherIt = allNeighbors.iterator(); otherIt.hasNext();) {
+                Simplex s2 = otherIt.next();
                 if (!s1.isNeighbor(s2)) continue;
-                ((Set) neighbors.get(s1)).add(s2);
-                ((Set) neighbors.get(s2)).add(s1);
+                neighbors.get(s1).add(s2);
+                neighbors.get(s2).add(s1);
             }
         }
     }
