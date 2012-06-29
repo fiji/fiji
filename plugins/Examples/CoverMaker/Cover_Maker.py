@@ -320,7 +320,7 @@ ratio = float(imp.getWidth()) / float(imp.getHeight())
 (dbpath, width, height, tilewidth, tileheight) = Dialog(imp)
 
 # run program
-ip = CropInputImage(imp.processor, tilewidth, tileheight)
+ip = CropInputImage(imp.getProcessor(), tilewidth, tileheight)
 tileName, tileIndex, cols, rows = CreateCover(ip, tilewidth, tileheight, dbpath)
 
 # save output
