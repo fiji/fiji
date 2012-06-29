@@ -13,6 +13,7 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JScrollPane;
 import javax.swing.JTree;
+import javax.swing.WindowConstants;
 
 import javax.swing.event.TreeWillExpandListener;
 import javax.swing.event.TreeExpansionEvent;
@@ -50,7 +51,7 @@ public class Object_Inspector implements PlugIn, TreeWillExpandListener {
 		frame.setContentPane(pane);
 		frame.setMinimumSize(new Dimension(600, 500));
 		frame.pack();
-		frame.setDefaultCloseOperation(frame.DISPOSE_ON_CLOSE);
+		frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 		frame.setVisible(true);
 	}
 
@@ -82,7 +83,7 @@ public class Object_Inspector implements PlugIn, TreeWillExpandListener {
 				return;
 			}
 
-			Class clazz = object.getClass();
+			Class<?> clazz = object.getClass();
 			while (clazz != null && clazz != Object.class) {
 				node(wrapper, "Fields of " + clazz.getName());
 				for (Field field : clazz.getDeclaredFields())
@@ -100,7 +101,7 @@ public class Object_Inspector implements PlugIn, TreeWillExpandListener {
 	public static Object get(Object object, String fieldName) {
 		if (object == null)
 			return "<object is null>";
-		Class clazz = object.getClass();
+		Class<?> clazz = object.getClass();
 		while (clazz != null) try {
 			Field field = clazz.getDeclaredField(fieldName);
 			field.setAccessible(true);
@@ -119,7 +120,7 @@ public class Object_Inspector implements PlugIn, TreeWillExpandListener {
 		return null;
 	}
 
-	protected static String getName(Class clazz, Object object) {
+	protected static String getName(Class<?> clazz, Object object) {
 		if (clazz.isArray())
 			return clazz.getComponentType() + "[" + (object == null ? "": "" + Array.getLength(object)) + "]";
 		return clazz.getName();
@@ -145,7 +146,7 @@ public class Object_Inspector implements PlugIn, TreeWillExpandListener {
 				+ " (" + getName(field.getType(), get(field, object)) + ")", get(field, object));
 		}
 
-		public ObjectWrapper(Class clazz, String title, Object object) {
+		public ObjectWrapper(Class<?> clazz, String title, Object object) {
 			super(object);
 			this.title = title;
 			if (clazz.isPrimitive() || clazz == String.class) {

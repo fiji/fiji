@@ -61,7 +61,7 @@ public class AmiraMeshEncoder {
 	public boolean writeHeader(ImagePlus ip) {
 		try {
 			AmiraParameters parameters=new AmiraParameters(ip);
-			if (parameters.isAmiraLabelfield(ip))
+			if (AmiraParameters.isAmiraLabelfield(ip))
 				mode = RLE;
 			Date date=new Date();
 			file.writeBytes("# AmiraMesh 3D BINARY 2.0\n"

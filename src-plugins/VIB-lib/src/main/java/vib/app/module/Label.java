@@ -24,7 +24,7 @@ public class Label extends Module {
 		int refChannel = state.options.refChannel - 1;
 		String imagePath = state.getImagePath(refChannel, index);
 		String labelPath = state.getImagePath(-1, index);
-		if (state.upToDate(imagePath, labelPath))
+		if (State.upToDate(imagePath, labelPath))
 			return;
 
 		ImagePlus image = state.getImage(imagePath);

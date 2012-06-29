@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import util.StupidLog;
+import vib.RegistrationOptimizer.Refinement;
 
 public abstract class RegistrationOptimizer {
 
@@ -166,7 +167,7 @@ public abstract class RegistrationOptimizer {
 			}
 		}
 
-		ArrayList refinements = new ArrayList();
+		ArrayList<Refinement> refinements = new ArrayList<Refinement>();
 		double[][] x = new double[24][6];
 		for (int i = 0; i < 24; i++) {
 			if(verbose) 
@@ -210,7 +211,7 @@ public abstract class RegistrationOptimizer {
 
 	double translateMax, angleMax;
 
-	class Refinement implements MultivariateFunction, Comparable {
+	class Refinement implements MultivariateFunction, Comparable<Refinement> {
 		// TODO: static class Refinement implements MFWithGradient {
 		public boolean showStatus = false;
 		double min;
@@ -311,11 +312,10 @@ public abstract class RegistrationOptimizer {
 			return initial;
 		}
 
-		public int compareTo(Object other) {
-			Refinement o = (Refinement)other;
-			if (min < o.min)
+		public int compareTo(Refinement r) {
+			if (min < r.min)
 				return -1;
-			else if (min > o.min)
+			else if (min > r.min)
 				return +1;
 			else
 				return 0;

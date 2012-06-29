@@ -54,7 +54,7 @@ public class ScenegraphDebugger {
 			}
 		}
 
-		public Enumeration children() {
+		public Enumeration<J3DNode> children() {
 			if(children != null) {
 				return Collections.enumeration(Arrays.asList(children));
 			}

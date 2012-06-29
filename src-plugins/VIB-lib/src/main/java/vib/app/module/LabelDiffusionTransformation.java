@@ -36,7 +36,7 @@ public class LabelDiffusionTransformation extends Module {
 			String imagePath = state.getResampledPath(i, index);
 			String warpedPath = state.getWarpedPath(i, index);
 			String statisticsPath = state.getStatisticsPath(index);
-			if (state.upToDate(new String[] { imagePath,
+			if (State.upToDate(new String[] { imagePath,
 					statisticsPath }, warpedPath))
 				continue;
 

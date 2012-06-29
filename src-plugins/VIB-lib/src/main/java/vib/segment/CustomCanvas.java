@@ -4,13 +4,15 @@ import ij.measure.Calibration;
 import ij.ImagePlus;
 import ij.IJ;
 import vib.SegmentationViewerCanvas;
+import vib.segment.CustomCanvas.CanvasListener;
+
 import java.awt.*;
 import java.awt.event.*;
 import java.util.Vector;
 
 public class CustomCanvas extends SegmentationViewerCanvas {
 
-	private Vector listener = new Vector();
+	private Vector<CanvasListener> listener = new Vector<CanvasListener>();
 	
 	public CustomCanvas(ImagePlus imp) {
 		super(imp);

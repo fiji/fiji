@@ -79,7 +79,7 @@ public abstract class CustomMesh extends Shape3D {
 		changed = true;
 	}
 
-	public List getMesh() {
+	public List<Point3f> getMesh() {
 		return mesh;
 	}
 

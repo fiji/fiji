@@ -16,6 +16,7 @@ import java.util.Enumeration;
 import java.util.Hashtable;
 
 import vib.FloatMatrix;
+import vib.app.ImageMetaData.Transformation;
 
 public class ImageMetaData {
 	public static class Material {
@@ -128,17 +129,17 @@ public class ImageMetaData {
 			materials[i].centerZ = Double.parseDouble(values[6]);
 		}
 
-		Hashtable props = table.getParameters();
+		Hashtable<String, String> props = table.getParameters();
 		table.close();
-		ArrayList transforms = new ArrayList();
-		Enumeration keys = props.keys();
+		ArrayList<Transformation> transforms = new ArrayList<Transformation>();
+		Enumeration<String> keys = props.keys();
 		while (keys.hasMoreElements()) {
-			String key = (String)keys.nextElement();
+			String key = keys.nextElement();
 			if (key.indexOf("Transformation") < 0)
 				continue;
 			Transformation t = new Transformation();
 			t.name = key;
-			String matrix = (String)props.get(key);
+			String matrix = props.get(key);
 			t.matrix = FloatMatrix.parseMatrix(matrix);
 			transforms.add(t);
 		}
@@ -165,7 +166,7 @@ public class ImageMetaData {
 		AmiraTable table = new AmiraTable("Statistics for " +
 			path, AMIRA_HEADINGS, data, true);
 
-		Hashtable p = table.getParameters();
+		Hashtable<String, String> p = table.getParameters();
 		for (int i = 0; i < transformations.length; i++) {
 			Transformation t = transformations[i];
 			p.put(t.name, t.matrix.toStringForAmira());
@@ -175,7 +176,7 @@ public class ImageMetaData {
 	}
 
 	private static String[] split(String line) {
-		ArrayList list = new ArrayList();
+		ArrayList<String> list = new ArrayList<String>();
 		int tab = -1;
 		do {
 			int lastTab = tab;

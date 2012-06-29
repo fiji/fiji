@@ -33,7 +33,7 @@ public class Resample extends Module {
 	private void run(State state, int channel, int index) {
 		String imagePath = state.getImagePath(channel, index);
 		String resampledPath = state.getResampledPath(channel, index);
-		if (state.upToDate(imagePath, resampledPath))
+		if (State.upToDate(imagePath, resampledPath))
 			return;
 
 		ImagePlus image = state.getImage(imagePath);

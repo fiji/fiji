@@ -168,8 +168,8 @@ public class FileGroupDialog extends Panel
 
 	// From: http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4899516
 	
-	private static java.util.List textURIListToFileList(String data) {
-		java.util.List list = new java.util.ArrayList(1);
+	private static java.util.List<File> textURIListToFileList(String data) {
+		java.util.List<File> list = new java.util.ArrayList<File>(1);
 		for (java.util.StringTokenizer st = new java.util.StringTokenizer(data, "\r\n"); st.hasMoreTokens();) {
 			String s = st.nextToken();
 			if (s.startsWith("#")) {
@@ -199,11 +199,11 @@ public class FileGroupDialog extends Panel
 		try {
 			Transferable t = e.getTransferable();
 			
-			java.util.List l = null;
+			java.util.List<File> l = null;
 			
 			if(t.isDataFlavorSupported(
 				   DataFlavor.javaFileListFlavor)) {
-				l = (java.util.List) t.getTransferData(
+				l = (java.util.List<File>) t.getTransferData(
 					DataFlavor.javaFileListFlavor);
 				
 			} else {
@@ -222,9 +222,9 @@ public class FileGroupDialog extends Panel
 			}
 			
                         if(l != null) {
-                                Iterator it;
+                                Iterator<File> it;
                                 for(it = l.iterator(); it.hasNext();) {
-                                        File f = (File)it.next();
+                                        File f = it.next();
                                         files.add(f.getAbsolutePath());
                                 }
                                 update();

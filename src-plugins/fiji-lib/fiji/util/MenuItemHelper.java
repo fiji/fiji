@@ -25,9 +25,10 @@ public class MenuItemHelper {
 
 	protected void populateMap() {
 		lastWord2Label = new HashMap<String, List<String>>();
-		for (Object label : Menus.getCommands().keySet()) {
-			String lastWord = getLastWord((String)label);
-			List list = lastWord2Label.get(lastWord);
+		for (Object o : Menus.getCommands().keySet()) {
+			String label = (String) o;
+			String lastWord = getLastWord(label);
+			List<String> list = lastWord2Label.get(lastWord);
 			if (list == null) {
 				list = new ArrayList<String>();
 				lastWord2Label.put(lastWord, list);
@@ -54,7 +55,7 @@ public class MenuItemHelper {
 		if (paren > 0)
 			className = className.substring(0, paren);
 		try {
-			Class clazz = IJ.getClassLoader().loadClass(className);
+			Class<?> clazz = IJ.getClassLoader().loadClass(className);
 			int dot = className.lastIndexOf('.');
 			String fileName = className.substring(dot + 1) + ".class";
 			String resource = clazz.getResource(fileName).toString();

@@ -105,7 +105,7 @@ public class Point3d {
 	}
 	
 	public static Point3d[] parsePoints(String s){
-		ArrayList list = new ArrayList();
+		ArrayList<Point3d> list = new ArrayList<Point3d>();
 		StringTokenizer st = new StringTokenizer(s,",");
 		while(st.hasMoreTokens())
 			list.add(parsePoint(st.nextToken().trim()));

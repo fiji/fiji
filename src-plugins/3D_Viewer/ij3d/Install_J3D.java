@@ -71,7 +71,8 @@ public class Install_J3D implements PlugIn {
 	 */
 	public static void main(String[] args) {
 		overwrite = true;
-		if (!new Install_J3D().autoInstall())
+		new Install_J3D();
+		if (!Install_J3D.autoInstall())
 			System.exit(1);
 	}
 
@@ -94,7 +95,7 @@ public class Install_J3D implements PlugIn {
 			return null;
 		}
 		VirtualUniverse univ = new VirtualUniverse();
-		return (String)univ.getProperties().
+		return (String)VirtualUniverse.getProperties().
 				get("j3d.specification.version");
 	}
 
@@ -338,7 +339,7 @@ public class Install_J3D implements PlugIn {
 			throw new Exception(zipfile.getAbsolutePath() +
 				" is not a valid zip file.");
 		}
-		Enumeration en = zfile.entries();
+		Enumeration<? extends ZipEntry> en = zfile.entries();
 		List<File> extracted = new ArrayList<File>();
 		while(en.hasMoreElements()) {
 			ZipEntry ze = (ZipEntry)en.nextElement();

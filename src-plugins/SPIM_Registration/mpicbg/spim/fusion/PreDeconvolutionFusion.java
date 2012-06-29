@@ -130,8 +130,8 @@ public class PreDeconvolutionFusion extends SPIMImageFusion
 		try
 		{
 			boolean successful = true;
-			for ( IsolatedPixelWeightener[] iso : isoWinit )
-				for ( IsolatedPixelWeightener i : iso )
+			for ( IsolatedPixelWeightener<?>[] iso : isoWinit )
+				for ( IsolatedPixelWeightener<?> i : iso )
 					if ( i == null )
 						successful = false;
 						

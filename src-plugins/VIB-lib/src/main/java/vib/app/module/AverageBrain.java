@@ -16,6 +16,7 @@ import vib.FastMatrix;
 import vib.InterpolatedImage;
 import vib.TransformedImage;
 import vib.VIB;
+import vib.app.module.AverageBrain.Tuple;
 
 public class AverageBrain extends Module {
 	int[][] cumul;
@@ -50,7 +51,7 @@ public class AverageBrain extends Module {
 	private ImagePlus scratch;
 
 	public void doit(State state, String[] images, String outputPath) {
-		if (state.upToDate(images, outputPath))
+		if (State.upToDate(images, outputPath))
 			return;
 		if (matrices == null)
 			matrices = getMatrices(state);
@@ -307,10 +308,10 @@ public class AverageBrain extends Module {
 			return true;
 		}
 
-		public int getIndex(Vector tuples) {
+		public int getIndex(Vector<Tuple> tuples) {
 			int count = tuples.size();
 			for (int i = 0; i < count; i++)
-				if (equals((Tuple)tuples.get(i)))
+				if (equals(tuples.get(i)))
 					return i;
 			tuples.add(this);
 			return count;

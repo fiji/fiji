@@ -87,7 +87,7 @@ public abstract class AbstractTool implements ImageListener, WindowFocusListener
 		if (!clearTools)
 			toolID = toolbar.addTool(getToolName() + " - " + getToolIcon());
 		if (toolID < 0 && clearToolsIfNecessary) {
-			int previousID = toolbar.getToolId();
+			int previousID = Toolbar.getToolId();
 			toolbar.addMacroTool(getToolName() + " - " + getToolIcon(), null, 0);
 			toolID = toolbar.getToolId(getToolName());
 			if (previousID == toolID)
@@ -98,7 +98,7 @@ public abstract class AbstractTool implements ImageListener, WindowFocusListener
 			return;
 		}
 		toolbar.setTool(toolID);
-		if (toolbar.getToolId() != toolID) {
+		if (Toolbar.getToolId() != toolID) {
 			IJ.error("Could not set tool (id = " + toolID + ")");
 			return;
 		}

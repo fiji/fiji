@@ -2,7 +2,7 @@
 
 package landmarks;
 
-public class RegistrationResult implements Comparable {
+public class RegistrationResult implements Comparable<RegistrationResult> {
 
 	int overlay_width;
 	int overlay_height;
@@ -27,8 +27,7 @@ public class RegistrationResult implements Comparable {
 	double point_would_be_moved_to_y;
 	double point_would_be_moved_to_z;
 	
-	public int compareTo(Object otherRegistrationResult) {
-		RegistrationResult other = (RegistrationResult) otherRegistrationResult;
+	public int compareTo(RegistrationResult other) {
 		return Double.compare(score, other.score);
 	}
 	

@@ -230,21 +230,21 @@ public class BatchOpener {
 					Object newInstance = c.newInstance();
 
 					/* This version of open doesn't show() them... */
-					Class [] parameterTypes = { String.class,
+					Class[] parameterTypes = { String.class,
 								    String.class,
 								    Boolean.TYPE,
 								    Boolean.TYPE,
 								    Boolean.TYPE };
 
 					Method m = c.getMethod( "open", parameterTypes );
-					Object [] parameters = new Object[5];
+					Object[] parameters = new Object[5];
 					parameters[0] = file.getParent();
 					parameters[1] = file.getName();
 					parameters[2] = false;
 					parameters[3] = false;
 					parameters[4] = false;
 
-					ImagePlus [] result;
+					ImagePlus[] result;
 					Object invokeResult = m.invoke(newInstance,parameters);
 					if( invokeResult instanceof ImagePlus &&
 						((ImagePlus)invokeResult).isComposite()) {
@@ -333,8 +333,8 @@ public class BatchOpener {
 					Class<?> c = loader.loadClass("leica.Leica_SP_Reader");
 					Object newInstance = c.newInstance();
 
-					Class [] parameterTypes = { String.class };
-					Object [] parameters = new Object[1];
+					Class[] parameterTypes = { String.class };
+					Object[] parameters = new Object[1];
 					parameters[0] = path;
 					Method m = c.getMethod( "run", parameterTypes );
 					m.invoke(newInstance,parameters);
@@ -578,8 +578,8 @@ public class BatchOpener {
 		for( int si = 0; si < possibleClassNames.length; ++si ) {
 			String className = possibleClassNames[si];
 			try {
-				Class c = Class.forName(className);
-				PlugIn p = (PlugIn)c.newInstance();
+				Class<PlugIn> c = (Class<PlugIn>) Class.forName(className);
+				PlugIn p = c.newInstance();
 				p.run(path);
 				imp = (ImagePlus)p;
 				break;

@@ -35,7 +35,7 @@ public class SplitChannels extends Module {
 
 		boolean upToDate = true;
 		for (int i = 0; i < numChannels; i++)
-			if (!state.upToDate(path,
+			if (!State.upToDate(path,
 						state.getImagePath(i, index)))
 				upToDate = false;
 

@@ -183,11 +183,11 @@ public abstract class DefaultUniverse extends SimpleUniverse
 	protected final Switch attributesSwitch;
 	private BitSet attributesMask = new BitSet(2);
 
-	private List listeners = new ArrayList();
+	private List<UniverseListener> listeners = new ArrayList<UniverseListener>();
 	private boolean transformed = false;
 
 	public abstract Content getSelected();
-	public abstract Iterator contents();
+	public abstract Iterator<Content> contents();
 
 	/**
 	 * Constructor.

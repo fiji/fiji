@@ -45,6 +45,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -616,7 +617,7 @@ public class Executer {
 
 	public void smoothAllMeshes() {
 		// process each Mesh in a separate thread
-		final Collection all = univ.getContents();
+		final Collection<Content> all = univ.getContents();
 		final Content[] c = new Content[all.size()];
 		all.toArray(c);
 		final AtomicInteger ai = new AtomicInteger(0);
@@ -1132,8 +1133,8 @@ public class Executer {
 	}
 
 	public void showAllCoordinateSystems(boolean b) {
-		for (Iterator it = univ.contents(); it.hasNext(); )
-			((Content)it.next()).showCoordinateSystem(b);
+		for (Iterator<Content> it = univ.contents(); it.hasNext(); )
+			it.next().showCoordinateSystem(b);
 	}
 
 
@@ -1201,7 +1202,7 @@ public class Executer {
 
 	public void register() {
 		// Select the contents used for registration
-		Collection contents = univ.getContents();
+		Collection<Content> contents = univ.getContents();
 		if(contents.size() < 2) {
 			IJ.error("At least two bodies are " +
 				"required for registration");
@@ -1546,9 +1547,9 @@ public class Executer {
 		w = (int)gd.getNextNumber();
 		h = (int)gd.getNextNumber();
 
-		Map props = univ.getCanvas().queryProperties();
-		int maxW = (Integer)props.get("textureWidthMax");
-		int maxH = (Integer)props.get("textureHeightMax");
+		Map<String, Integer> props = (Map<String, Integer>) univ.getCanvas().queryProperties();
+		int maxW = props.get("textureWidthMax");
+		int maxH = props.get("textureHeightMax");
 
 		if(w < 0 || w >= maxW || h < 0 || h >= maxH) {
 			IJ.error("Width must be between 0 and " + maxW +
@@ -1628,18 +1629,18 @@ public class Executer {
 	public void j3dproperties() {
 		TextWindow tw = new TextWindow("Java 3D Properties",
 			"Key\tValue", "", 512, 512);
-		Map props = Image3DUniverse.getProperties();
+		Map<String, Integer> universeProps = Image3DUniverse.getProperties();
 		tw.append("Java 3D properties\n \n");
-		for(Iterator it = props.entrySet().iterator();
+		for(Iterator<Map.Entry<String, Integer>> it = universeProps.entrySet().iterator();
 						it.hasNext();) {
-			Map.Entry me = (Map.Entry)it.next();
+			Map.Entry<String, ?> me = it.next();
 			tw.append(me.getKey() + "\t" + me.getValue());
 		}
-		props = univ.getCanvas().queryProperties();
+		Map<String, Integer> canvasProps = univ.getCanvas().queryProperties();
 		tw.append(" \nRendering properties\n \n");
-		for(Iterator it = props.entrySet().iterator();
+		for(Iterator<Entry<String, Integer>> it = canvasProps.entrySet().iterator();
 						it.hasNext();) {
-			Map.Entry me = (Map.Entry)it.next();
+			Entry<String, Integer> me = it.next();
 			tw.append(me.getKey() + "\t" + me.getValue());
 		}
 	}

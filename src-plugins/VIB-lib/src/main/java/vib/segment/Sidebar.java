@@ -42,12 +42,12 @@ public class Sidebar extends Panel implements CustomCanvas.CanvasListener, ItemL
 	private ImageButton bThreshold, bOpen, bClose;
 	private Checkbox check3d;
 	private Choice labelImagesChoice;
-	private Vector labelImages;
+	private Vector<ImagePlus> labelImages;
 
 
 	private ActionListener al;
 	private MaterialList materials;
-	private Vector defaultMaterials;
+	private Vector<String> defaultMaterials;
 	private boolean currentLabelsAreNew = false;
 	
 	
@@ -183,8 +183,8 @@ public class Sidebar extends Panel implements CustomCanvas.CanvasListener, ItemL
 	
 	private Choice addLabelImageChoice() {
 		labelImagesChoice = new Choice();
-		labelImages = new Vector();
-		defaultMaterials = new Vector();
+		labelImages = new Vector<ImagePlus>();
+		defaultMaterials = new Vector<String>();
 		int count = WindowManager.getWindowCount();
 
 		// TODO: add image listener

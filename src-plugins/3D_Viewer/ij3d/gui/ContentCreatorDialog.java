@@ -44,7 +44,7 @@ public class ContentCreatorDialog {
 
 		// setup default values
 		int img_count = WindowManager.getImageCount();
-		Vector windows = new Vector();
+		Vector<String> windows = new Vector<String>();
 		if(file != null) {
 			windows.add(file.getAbsolutePath());
 		} else {

@@ -30,7 +30,7 @@ public class Rounded_Rectangle implements PlugInFilter {
 
 	public void run(ImageProcessor ip) {
 		Roi roi = image.getRoi();
-		if (roi == null || roi.getType() != roi.RECTANGLE) {
+		if (roi == null || roi.getType() != Roi.RECTANGLE) {
 			IJ.error("Need a rectangular selection!");
 			return;
 		}
@@ -100,7 +100,7 @@ public class Rounded_Rectangle implements PlugInFilter {
 				break;
 			case PathIterator.SEG_LINETO:
 			case PathIterator.SEG_MOVETO:
-				System.err.println((type == iter.SEG_LINETO ?
+				System.err.println((type == PathIterator.SEG_LINETO ?
 							"line" : "move")
 					+ "to (" + coords[0] + ", "
 					+ coords[1] + ")");
