@@ -96,6 +96,7 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.Serializable;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Arrays;
@@ -193,7 +194,7 @@ private static boolean hidden = false;
 private static boolean quickAndDirtyScaling = false;
 private static boolean rotate = true;
 private static boolean smartDecolorization = true;
-private static final Stack preMosaic = new Stack();
+private static final Stack<Serializable> preMosaic = new Stack<Serializable>();
 private static final int LOAD_ABORT = -1;
 private static final int LOAD_ALL = 3;
 private static final int LOAD_NO_MORE = 0;
@@ -526,7 +527,7 @@ public void run (
 	final PluginClassLoader loader = new PluginClassLoader(
 		Menus.getPlugInsPath());
 	try {
-		final Class ancillaryPlugin = loader.loadClass("TurboReg_");
+		final Class<?> ancillaryPlugin = loader.loadClass("TurboReg_");
 	} catch (ClassNotFoundException e) {
 		IJ.error("Please download TurboReg_ from\n"
 			+ "http://bigwww.epfl.ch/thevenaz/turboreg/");
@@ -765,7 +766,7 @@ public static void setActivatedMenus (
 public void setBlend (
 	final boolean blend
 ) {
-	this.blend = blend;
+	MosaicJ_.blend = blend;
 	if (blend) {
 		blending.setLabel("Deactivate Blending");
 	}
@@ -778,7 +779,7 @@ public void setBlend (
 public void setCreateOutputLog (
 	final boolean createOutputLog
 ) {
-	this.createOutputLog = createOutputLog;
+	MosaicJ_.createOutputLog = createOutputLog;
 	if (createOutputLog) {
 		outputLog.setLabel("Deactivate Log File");
 	}
@@ -791,7 +792,7 @@ public void setCreateOutputLog (
 public void setQuickAndDirtyScaling (
 	final boolean quickAndDirtyScaling
 ) {
-	this.quickAndDirtyScaling = quickAndDirtyScaling;
+	MosaicJ_.quickAndDirtyScaling = quickAndDirtyScaling;
 	if (quickAndDirtyScaling) {
 		quickAndDirty.setLabel("Deactivate Quick&Dirty Scaling");
 	}
@@ -804,7 +805,7 @@ public void setQuickAndDirtyScaling (
 public void setRotate (
 	final boolean rotate
 ) {
-	this.rotate = rotate;
+	MosaicJ_.rotate = rotate;
 	if (rotate) {
 		rotation.setLabel("Deactivate Rotation");
 	}
@@ -817,7 +818,7 @@ public void setRotate (
 public void setSmartDecolorization (
 	final boolean smartDecolorization
 ) {
-	this.smartDecolorization = smartDecolorization;
+	MosaicJ_.smartDecolorization = smartDecolorization;
 	if (smartDecolorization) {
 		decolorization.setLabel("Deactivate Smart Color Conversion");
 	}
@@ -830,7 +831,7 @@ public void setSmartDecolorization (
 public void updateScale (
 	final int reductionFactor
 ) {
-	this.reductionFactor = reductionFactor;
+	MosaicJ_.reductionFactor = reductionFactor;
 	setTitle("MosaicJ " + getMagnificationAsString());
 	getContentPane().add(progressBar, BorderLayout.NORTH);
 	getContentPane().validate();
@@ -920,7 +921,7 @@ private void loadPreMosaic (
 private int loadThumb (
 	final String filePath,
 	final int loadPolicy,
-	final Stack justLoaded,
+	final Stack<MosaicJThumb> justLoaded,
 	final int slice,
 	final boolean frozen,
 	final double grayContrast,
@@ -939,7 +940,7 @@ private int loadThumb (
 			"Stop Opening",
 			"Cancel"
 		};
-		final int option = new JOptionPane().showOptionDialog(this,
+		final int option = JOptionPane.showOptionDialog(this,
 			"Unable to open\n" + filePath + "\n",
 			"Select an Option", JOptionPane.YES_NO_CANCEL_OPTION,
 			JOptionPane.WARNING_MESSAGE, null, options, options[0]);
@@ -956,7 +957,7 @@ private int loadThumb (
 			case JOptionPane.CLOSED_OPTION:
 			case 3: {
 				while (!justLoaded.isEmpty()) {
-					final MosaicJThumb thumb = (MosaicJThumb)justLoaded.pop();
+					final MosaicJThumb thumb = justLoaded.pop();
 					if (!thumb.isStowed()) {
 						thumb.stow();
 					}
@@ -1025,7 +1026,7 @@ private void openManyFiles (
 	}
 	final String[] file = directory.list();
 	int loadPolicy = LOAD_SOME;
-	final Stack justLoaded = new Stack();
+	final Stack<MosaicJThumb> justLoaded = new Stack<MosaicJThumb>();
 	getContentPane().add(progressBar, BorderLayout.NORTH);
 	getContentPane().validate();
 	progressBar.setMaximum(file.length);
@@ -1062,7 +1063,7 @@ private void openOneFile (
 		return;
 	}
 	loadThumb(openDialog.getDirectory() + openDialog.getFileName(),
-		LOAD_ONE, new Stack(), 0, false, 0.0, 0.0, null);
+		LOAD_ONE, new Stack<MosaicJThumb>(), 0, false, 0.0, 0.0, null);
 } /* end openOneFile */
 
 /*------------------------------------------------------------------*/
@@ -1109,7 +1110,7 @@ private void replay (
 	final String filename
 ) {
 	preMosaic.removeAllElements();
-	final Stack line = new Stack();
+	final Stack<String> line = new Stack<String>();
 	int coloredMosaic = 0;
 	int width = 0;
 	int height = 0;
@@ -1187,7 +1188,7 @@ private void replay (
 	}
 	for (int k = 1, K = line.size(); (k <= K); k++) {
 		progressBar.setValue(k);
-		String tile = (String)line.pop();
+		String tile = line.pop();
 		final String[] data = tile.split("\t", -1);
 		final double[][] sourcePoints = new double[3][2];
 		final double[][] targetPoints = new double[3][2];
@@ -1244,15 +1245,13 @@ private void replay (
 } /* replay */
 
 /*------------------------------------------------------------------*/
-private void restoreThumbs (
-	final Stack preMosaic
-) {
+private void restoreThumbs (final Stack<Serializable> preMosaic) {
 	int loadPolicy = LOAD_SOME;
 	getContentPane().add(progressBar, BorderLayout.NORTH);
 	getContentPane().validate();
 	progressBar.setMaximum(preMosaic.size() / 8);
-	final Stack justLoaded = new Stack();
-	final Iterator i = preMosaic.iterator();
+	final Stack<MosaicJThumb> justLoaded = new Stack<MosaicJThumb>();
+	final Iterator<Serializable> i = preMosaic.iterator();
 	int k = 0;
 	MosaicJThumb firstThumb = null;
 	Point firstTrueLocation = null;
@@ -1276,7 +1275,7 @@ private void restoreThumbs (
 			getContentPane().validate();
 			break;
 		}
-		MosaicJThumb thumb = (MosaicJThumb)justLoaded.peek();
+		MosaicJThumb thumb = justLoaded.peek();
 		if ((0 < slice) && !localized) {
 			firstThumb = thumb;
 			firstTrueLocation = trueLocation;
@@ -1307,7 +1306,7 @@ private void savePreMosaic (
 ) {
 	try {
 		final FileWriter fw = new FileWriter(filename);
-		final Iterator i = preMosaic.iterator();
+		final Iterator<Serializable> i = preMosaic.iterator();
 		while (i.hasNext()) {
 			final String filePath = (String)i.next();
 			final boolean frozen = ((Boolean)i.next()).booleanValue();
@@ -1425,9 +1424,7 @@ public MosaicJCredits (
 /*====================================================================
 |	MosaicJEdge
 \===================================================================*/
-class MosaicJEdge
-	implements
-		Comparable
+class MosaicJEdge implements Comparable<MosaicJEdge>
 
 { /* begin class MosaicJEdge */
 
@@ -1461,13 +1458,11 @@ public MosaicJEdge (
 ....................................................................*/
 
 /*------------------------------------------------------------------*/
-public int compareTo (
-	final Object obj
-) {
-	if (edgeWeight < ((MosaicJEdge)obj).getEdgeWeight()) {
+public int compareTo(final MosaicJEdge obj) {
+	if (edgeWeight < obj.getEdgeWeight()) {
 		return(-1);
 	}
-	if (((MosaicJEdge)obj).getEdgeWeight() < edgeWeight) {
+	if (obj.getEdgeWeight() < edgeWeight) {
 		return(1);
 	}
 	return(0);
@@ -1586,9 +1581,9 @@ private MosaicJThumb thumb = null;
 private Point trueLocation = null;
 private boolean frozen = false;
 private boolean selected = false;
-private final Stack children = new Stack();
-private final Stack outline = new Stack();
-private final Stack overlap = new Stack();
+private final Stack<MosaicJHierarchy> children = new Stack<MosaicJHierarchy>();
+private final Stack<Point> outline = new Stack<Point>();
+private final Stack<Rectangle> overlap = new Stack<Rectangle>();
 private int reductionFactor = 1;
 
 /*....................................................................
@@ -1633,9 +1628,9 @@ public void setLocation (
 	final Rectangle bounds = new Rectangle(getBounds());
 	bounds.translate(dx, dy);
 	setBounds(bounds);
-	final Iterator i = children.iterator();
+	final Iterator<MosaicJHierarchy> i = children.iterator();
 	while (i.hasNext()) {
-		final MosaicJHierarchy thumbs = (MosaicJHierarchy)i.next();
+		final MosaicJHierarchy thumbs = i.next();
 		final Point p = new Point(thumbs.getLocation());
 		p.translate(dx, dy);
 		thumbs.setLocation(p);
@@ -1678,9 +1673,9 @@ public boolean contains (
 	final int x,
 	final int y
 ) {
-	final Iterator i = children.iterator();
+	final Iterator<MosaicJHierarchy> i = children.iterator();
 	while (i.hasNext()) {
-		if (((MosaicJHierarchy)i.next()).contains(x, y)) {
+		if (i.next().contains(x, y)) {
 			return(true);
 		}
 	}
@@ -1691,7 +1686,7 @@ public boolean contains (
 } /* end contains */
 
 /*------------------------------------------------------------------*/
-public Stack getChildren (
+public Stack<MosaicJHierarchy> getChildren (
 ) {
 	return(children);
 } /* end getChildren */
@@ -1703,12 +1698,12 @@ public MosaicJThumb getThumb (
 } /* end getThumb */
 
 /*------------------------------------------------------------------*/
-public Stack getThumbs (
+public Stack<MosaicJThumb> getThumbs (
 ) {
-	final Stack thumbs = new Stack();
-	final Iterator i = children.iterator();
+	final Stack<MosaicJThumb> thumbs = new Stack<MosaicJThumb>();
+	final Iterator<MosaicJHierarchy> i = children.iterator();
 	while (i.hasNext()) {
-		thumbs.addAll(((MosaicJHierarchy)i.next()).getThumbs());
+		thumbs.addAll(i.next().getThumbs());
 	}
 	if (thumb != null) {
 		thumbs.push(thumb);
@@ -1756,9 +1751,9 @@ public void paintOutline (
 	}
 	final int dx = getLocation().x;
 	final int dy = getLocation().y;
-	final Iterator i = outline.iterator();
+	final Iterator<Point> i = outline.iterator();
 	while (i.hasNext()) {
-		final Point p = (Point)i.next();
+		final Point p = i.next();
 		g.fillRect(p.x + dx, p.y + dy, 1, 1);
 	}
 } /* end paintOutline */
@@ -1767,9 +1762,9 @@ public void paintOutline (
 public void setFrozen (
 	final boolean frozen
 ) {
-	final Iterator i = children.iterator();
+	final Iterator<MosaicJHierarchy> i = children.iterator();
 	while (i.hasNext()) {
-		final MosaicJHierarchy thumbs = (MosaicJHierarchy)i.next();
+		final MosaicJHierarchy thumbs = i.next();
 		thumbs.setFrozen(frozen);
 	}
 	if (thumb != null) {
@@ -1793,9 +1788,9 @@ public void updateReductionfactor (
 	final Rectangle bounds = new Rectangle(new Point(
 		trueLocation.x / reductionFactor, trueLocation.y / reductionFactor),
 		new Dimension(0, 0));
-	final Iterator i = children.iterator();
+	final Iterator<MosaicJHierarchy> i = children.iterator();
 	while (i.hasNext()) {
-		final MosaicJHierarchy thumbs = (MosaicJHierarchy)i.next();
+		final MosaicJHierarchy thumbs = i.next();
 		thumbs.updateReductionfactor(reductionFactor);
 		bounds.add(thumbs.getBounds());
 	}
@@ -1819,14 +1814,14 @@ public void updateReductionfactor (
 private void createOutline (
 ) {
 	outline.removeAllElements();
-	final Iterator i = children.iterator();
+	final Iterator<MosaicJHierarchy> i = children.iterator();
 	while (i.hasNext()) {
-		final MosaicJHierarchy thumbs = (MosaicJHierarchy)i.next();
+		final MosaicJHierarchy thumbs = i.next();
 		final int dx = thumbs.getBounds().x - getBounds().x;
 		final int dy = thumbs.getBounds().y - getBounds().y;
-		final Stack partialOutline = thumbs.getOutline();
+		final Stack<Point> partialOutline = thumbs.getOutline();
 		while (!partialOutline.isEmpty()) {
-			final Point p = new Point((Point)partialOutline.pop());
+			final Point p = new Point(partialOutline.pop());
 			p.translate(dx, dy);
 			if (!overlapContains(p)) {
 				outline.push(p);
@@ -1853,13 +1848,13 @@ private void createOverlap (
 	overlap.removeAllElements();
 	final int dx = -getBounds().x;
 	final int dy = -getBounds().y;
-	final Stack thumbs = getThumbs();
+	final Stack<MosaicJThumb> thumbs = getThumbs();
 	while (!thumbs.isEmpty()) {
-		final Rectangle currentArea = ((MosaicJThumb)thumbs.pop()).getBounds();
-		final Iterator i = thumbs.iterator();
+		final Rectangle currentArea = thumbs.pop().getBounds();
+		final Iterator<MosaicJThumb> i = thumbs.iterator();
 		while (i.hasNext()) {
 			final Rectangle commonArea = currentArea.intersection(
-				((MosaicJThumb)i.next()).getBounds());
+				i.next().getBounds());
 			if (!commonArea.isEmpty()) {
 				commonArea.translate(dx, dy);
 				overlap.push(commonArea);
@@ -1869,9 +1864,9 @@ private void createOverlap (
 } /* end createOverlap */
 
 /*------------------------------------------------------------------*/
-private Stack getOutline (
+private Stack<Point> getOutline (
 ) {
-	return((Stack)outline.clone());
+	return((Stack<Point>)outline.clone());
 } /* end getOutline */
 
 /*------------------------------------------------------------------*/
@@ -1885,9 +1880,9 @@ private boolean overlapContains (
 	final Point p
 ) {
 	boolean inside = false;
-	final Iterator i = overlap.iterator();
+	final Iterator<Rectangle> i = overlap.iterator();
 	while (i.hasNext() && (!inside)) {
-		inside |= ((Rectangle)i.next()).contains(p);
+		inside |= i.next().contains(p);
 	}
 	return(inside);
 } /* end overlapContains */
@@ -1914,8 +1909,8 @@ class MosaicJPlayField
 private Dimension playFieldSize = null;
 private JScrollPane workScrollPane = null;
 private Point mouse = null;
-private final Stack selectedThumbs = new Stack();
-private final Stack stackingOrder = new Stack();
+private final Stack<MosaicJHierarchy> selectedThumbs = new Stack<MosaicJHierarchy>();
+private final Stack<MosaicJHierarchy> stackingOrder = new Stack<MosaicJHierarchy>();
 private int minHeight = 0;
 private int minWidth = 0;
 private int reductionFactor = 1;
@@ -1964,17 +1959,17 @@ public void paint (
 	}
 	boolean backmost = true;
 	boolean containsGroup = false;
-	final Iterator i = stackingOrder.iterator();
+	final Iterator<MosaicJHierarchy> i = stackingOrder.iterator();
 	while (i.hasNext()) {
-		final MosaicJHierarchy thumbs = (MosaicJHierarchy)i.next();
+		final MosaicJHierarchy thumbs = i.next();
 		if (thumbs.isVisible()) {
-			final Stack j = thumbs.getThumbs();
+			final Stack<MosaicJThumb> j = thumbs.getThumbs();
 			while (!j.isEmpty()) {
-				final MosaicJThumb thumb = (MosaicJThumb)j.pop();
+				final MosaicJThumb thumb = j.pop();
 				thumb.setOpacity(thumb.getBounds(), 0xFF);
-				final Iterator k = getOverlap(thumb).iterator();
+				final Iterator<Rectangle> k = getOverlap(thumb).iterator();
 				while (k.hasNext()) {
-					thumb.setOpacity((Rectangle)k.next(), 0x7F);
+					thumb.setOpacity(k.next(), 0x7F);
 				}
 				thumb.paint(g);
 			}
@@ -1999,9 +1994,9 @@ public void paint (
 public Component getComponentAt (
 	final Point p
 ) {
-	final Stack i = (Stack)stackingOrder.clone();
+	final Stack<MosaicJHierarchy> i = (Stack<MosaicJHierarchy>)stackingOrder.clone();
 	while (!i.isEmpty()) {
-		final MosaicJHierarchy thumbs = (MosaicJHierarchy)i.pop();
+		final MosaicJHierarchy thumbs = i.pop();
 		if ((thumbs.isVisible()) && (thumbs.contains(p))) {
 			return(thumbs);
 		}
@@ -2090,9 +2085,9 @@ public void layoutContainer (
 	}
 	viewport.setViewPosition(o);
 	if ((dx != 0) || (dy != 0)) {
-		final Iterator i = stackingOrder.iterator();
+		final Iterator<MosaicJHierarchy> i = stackingOrder.iterator();
 		while (i.hasNext()) {
-			final MosaicJHierarchy thumbs = (MosaicJHierarchy)i.next();
+			final MosaicJHierarchy thumbs = i.next();
 			final Point p = new Point(thumbs.getLocation());
 			p.translate(dx, dy);
 			thumbs.setLocation(p);
@@ -2230,7 +2225,7 @@ public void mouseMoved (
 public void deselectThumbs (
 ) {
 	while (!selectedThumbs.isEmpty()) {
-		final MosaicJHierarchy thumbs = (MosaicJHierarchy)selectedThumbs.pop();
+		final MosaicJHierarchy thumbs = selectedThumbs.pop();
 		thumbs.setSelected(false);
 		final Rectangle bounds = thumbs.getBounds();
 		repaint(bounds.x, bounds.y, bounds.width, bounds.height);
@@ -2241,7 +2236,7 @@ public void deselectThumbs (
 public void forgetSelectedThumbs (
 ) {
 	while (!selectedThumbs.isEmpty()) {
-		final MosaicJHierarchy thumbs = (MosaicJHierarchy)selectedThumbs.pop();
+		final MosaicJHierarchy thumbs = selectedThumbs.pop();
 		if (thumbs.hasChildren()) {
 			selectedThumbs.push(thumbs);
 			ungroupSelectedThumbs();
@@ -2258,16 +2253,16 @@ public void forgetSelectedThumbs (
 /*------------------------------------------------------------------*/
 public void freezeSelectedThumbs (
 ) {
-	Iterator i = selectedThumbs.iterator();
+	Iterator<MosaicJHierarchy> i = selectedThumbs.iterator();
 	while (i.hasNext()) {
-		final MosaicJHierarchy thumbs = (MosaicJHierarchy)i.next();
+		final MosaicJHierarchy thumbs = i.next();
 		thumbs.setFrozen(true);
 	}
 	repaint();
 } /* end freezeSelectedThumbs */
 
 /*------------------------------------------------------------------*/
-public Stack getStackingOrder (
+public Stack<MosaicJHierarchy> getStackingOrder (
 ) {
 	return(stackingOrder);
 } /* end getStackingOrder */
@@ -2277,13 +2272,13 @@ public void groupSelectedThumbs (
 ) {
 	boolean frozen = false;
 	boolean homogenous = true;
-	Iterator i = selectedThumbs.iterator();
+	Iterator<MosaicJHierarchy> i = selectedThumbs.iterator();
 	if (i.hasNext()) {
-		final MosaicJHierarchy thumbs = (MosaicJHierarchy)i.next();
+		final MosaicJHierarchy thumbs = i.next();
 		frozen = thumbs.isFrozen();
 	}
 	while (i.hasNext()) {
-		final MosaicJHierarchy thumbs = (MosaicJHierarchy)i.next();
+		final MosaicJHierarchy thumbs = i.next();
 		homogenous = (frozen == thumbs.isFrozen());
 	}
 	if (!homogenous) {
@@ -2292,7 +2287,7 @@ public void groupSelectedThumbs (
 			"Unfreeze All",
 			"Cancel"
 		};
-		final int option = new JOptionPane().showOptionDialog(this,
+		final int option = JOptionPane.showOptionDialog(this,
 			"Grouping a mixture of frozen and unfrozen tiles\n",
 			"Select an Option", JOptionPane.YES_NO_CANCEL_OPTION,
 			JOptionPane.WARNING_MESSAGE, null, options, options[2]);
@@ -2319,7 +2314,7 @@ public void groupSelectedThumbs (
 	}
 	final MosaicJHierarchy group = new MosaicJHierarchy(reductionFactor);
 	while (!selectedThumbs.isEmpty()) {
-		final MosaicJHierarchy thumbs = (MosaicJHierarchy)selectedThumbs.pop();
+		final MosaicJHierarchy thumbs = selectedThumbs.pop();
 		stackingOrder.remove(thumbs);
 		group.add(thumbs);
 	}
@@ -2332,7 +2327,7 @@ public void groupSelectedThumbs (
 public void hideSelectedThumbs (
 ) {
 	while (!selectedThumbs.isEmpty()) {
-		final MosaicJHierarchy thumbs = (MosaicJHierarchy)selectedThumbs.pop();
+		final MosaicJHierarchy thumbs = selectedThumbs.pop();
 		thumbs.setSelected(false);
 		thumbs.setVisible(false);
 	}
@@ -2343,12 +2338,12 @@ public void hideSelectedThumbs (
 public void maximizeContrastSelectedThumbs (
 ) {
 	MosaicJThumb.setMinAndMaxGrays(1.0, -1.0);
-	Iterator i = selectedThumbs.iterator();
+	Iterator<MosaicJHierarchy> i = selectedThumbs.iterator();
 	while (i.hasNext()) {
-		final MosaicJHierarchy thumbs = (MosaicJHierarchy)i.next();
-		final Stack j = thumbs.getThumbs();
+		final MosaicJHierarchy thumbs = i.next();
+		final Stack<MosaicJThumb> j = thumbs.getThumbs();
 		while (!j.isEmpty()) {
-			final MosaicJThumb thumb = (MosaicJThumb)j.pop();
+			final MosaicJThumb thumb = j.pop();
 			thumb.updateMinAndMax();
 		}
 	}
@@ -2360,10 +2355,10 @@ public void maximizeContrastSelectedThumbs (
 	final double grayOffset = -MosaicJThumb.getMin();
 	i = selectedThumbs.iterator();
 	while (i.hasNext()) {
-		final MosaicJHierarchy thumbs = (MosaicJHierarchy)i.next();
-		final Stack j = thumbs.getThumbs();
+		final MosaicJHierarchy thumbs = i.next();
+		final Stack<MosaicJThumb> j = thumbs.getThumbs();
 		while (!j.isEmpty()) {
-			final MosaicJThumb thumb = (MosaicJThumb)j.pop();
+			final MosaicJThumb thumb = j.pop();
 			thumb.setContrastAndOffset(grayContrast, grayOffset);
 		}
 	}
@@ -2372,15 +2367,15 @@ public void maximizeContrastSelectedThumbs (
 
 /*------------------------------------------------------------------*/
 public void recordThumbs (
-	final Stack preMosaic
+	final Stack<Serializable> preMosaic
 ) {
 	preMosaic.removeAllElements();
-	final Iterator i = stackingOrder.iterator();
+	final Iterator<MosaicJHierarchy> i = stackingOrder.iterator();
 	while (i.hasNext()) {
-		final MosaicJHierarchy thumbs = (MosaicJHierarchy)i.next();
-		final Stack j = thumbs.getThumbs();
+		final MosaicJHierarchy thumbs = i.next();
+		final Stack<MosaicJThumb> j = thumbs.getThumbs();
 		while (!j.isEmpty()) {
-			final MosaicJThumb thumb = (MosaicJThumb)j.pop();
+			final MosaicJThumb thumb = j.pop();
 			preMosaic.push(thumb.getFilePath());
 			preMosaic.push(new Boolean(thumb.isFrozen()));
 			preMosaic.push(new Integer(thumb.getSlice()));
@@ -2397,12 +2392,12 @@ public void recordThumbs (
 /*------------------------------------------------------------------*/
 public void resetContrastSelectedThumbs (
 ) {
-	final Iterator i = selectedThumbs.iterator();
+	final Iterator<MosaicJHierarchy> i = selectedThumbs.iterator();
 	while (i.hasNext()) {
-		final MosaicJHierarchy thumbs = (MosaicJHierarchy)i.next();
-		final Stack j = thumbs.getThumbs();
+		final MosaicJHierarchy thumbs = i.next();
+		final Stack<MosaicJThumb> j = thumbs.getThumbs();
 		while (!j.isEmpty()) {
-			final MosaicJThumb thumb = (MosaicJThumb)j.pop();
+			final MosaicJThumb thumb = j.pop();
 			thumb.setContrastAndOffset(1.0, 0.0);
 		}
 	}
@@ -2412,9 +2407,9 @@ public void resetContrastSelectedThumbs (
 /*------------------------------------------------------------------*/
 public void selectAll (
 ) {
-	final Iterator i = stackingOrder.iterator();
+	final Iterator<MosaicJHierarchy> i = stackingOrder.iterator();
 	while (i.hasNext()) {
-		select((MosaicJHierarchy)i.next());
+		select(i.next());
 	}
 } /* end selectAll */
 
@@ -2422,7 +2417,7 @@ public void selectAll (
 public void sendToBackSelectedThumbs (
 ) {
 	while (!selectedThumbs.isEmpty()) {
-		final MosaicJHierarchy thumbs = (MosaicJHierarchy)selectedThumbs.pop();
+		final MosaicJHierarchy thumbs = selectedThumbs.pop();
 		stackingOrder.remove(thumbs);
 		stackingOrder.add(0, thumbs);
 		thumbs.setSelected(false);
@@ -2439,12 +2434,12 @@ public void setContrastSelectedThumbs (
 	MosaicJThumb.setMinAndMaxGrays(min, max);
 	final double grayContrast = 255.0 / (max - min);
 	final double grayOffset = -min;
-	final Iterator i = selectedThumbs.iterator();
+	final Iterator<MosaicJHierarchy> i = selectedThumbs.iterator();
 	while (i.hasNext()) {
-		final MosaicJHierarchy thumbs = (MosaicJHierarchy)i.next();
-		final Stack j = thumbs.getThumbs();
+		final MosaicJHierarchy thumbs = i.next();
+		final Stack<MosaicJThumb> j = thumbs.getThumbs();
 		while (!j.isEmpty()) {
-			final MosaicJThumb thumb = (MosaicJThumb)j.pop();
+			final MosaicJThumb thumb = j.pop();
 			thumb.setContrastAndOffset(grayContrast, grayOffset);
 		}
 	}
@@ -2459,9 +2454,9 @@ public void setReductionFactor (
 		this.reductionFactor = reductionFactor;
 		return;
 	}
-	Iterator i = stackingOrder.iterator();
+	Iterator<MosaicJHierarchy> i = stackingOrder.iterator();
 	while (i.hasNext()) {
-		((MosaicJHierarchy)i.next()).updateReductionfactor(reductionFactor);
+		i.next().updateReductionfactor(reductionFactor);
 	}
 	Point translation = null;
 	if (reductionFactor < this.reductionFactor) {
@@ -2473,7 +2468,7 @@ public void setReductionFactor (
 	if ((translation.x != 0) || (translation.y != 0)) {
 		i = stackingOrder.iterator();
 		while (i.hasNext()) {
-			final MosaicJHierarchy thumbs = (MosaicJHierarchy)i.next();
+			final MosaicJHierarchy thumbs = i.next();
 			final Point p = new Point(thumbs.getLocation());
 			p.translate(translation.x, translation.y);
 			thumbs.setLocation(p);
@@ -2488,9 +2483,9 @@ public void setReductionFactor (
 public void showAll (
 ) {
 	deselectThumbs();
-	final Iterator i = stackingOrder.iterator();
+	final Iterator<MosaicJHierarchy> i = stackingOrder.iterator();
 	while (i.hasNext()) {
-		((MosaicJHierarchy)i.next()).setVisible(true);
+		i.next().setVisible(true);
 	}
 	repaint();
 } /* end showAll */
@@ -2499,7 +2494,7 @@ public void showAll (
 public void stowSelectedThumbs (
 ) {
 	while (!selectedThumbs.isEmpty()) {
-		final MosaicJHierarchy thumbs = (MosaicJHierarchy)selectedThumbs.pop();
+		final MosaicJHierarchy thumbs = selectedThumbs.pop();
 		if (thumbs.hasChildren()) {
 			selectedThumbs.push(thumbs);
 			ungroupSelectedThumbs();
@@ -2521,9 +2516,9 @@ public void translateSelectedThumbs (
 	final int dx,
 	final int dy
 ) {
-	final Iterator i = selectedThumbs.iterator();
+	final Iterator<MosaicJHierarchy> i = selectedThumbs.iterator();
 	while (i.hasNext()) {
-		final MosaicJHierarchy thumbs = (MosaicJHierarchy)i.next();
+		final MosaicJHierarchy thumbs = i.next();
 		final Point p = new Point(thumbs.getLocation());
 		p.translate(dx, dy);
 		thumbs.setLocation(p);
@@ -2535,9 +2530,9 @@ public void translateSelectedThumbs (
 /*------------------------------------------------------------------*/
 public void unfreezeSelectedThumbs (
 ) {
-	Iterator i = selectedThumbs.iterator();
+	Iterator<MosaicJHierarchy> i = selectedThumbs.iterator();
 	while (i.hasNext()) {
-		final MosaicJHierarchy thumbs = (MosaicJHierarchy)i.next();
+		final MosaicJHierarchy thumbs = i.next();
 		thumbs.setFrozen(false);
 	}
 	repaint();
@@ -2546,14 +2541,14 @@ public void unfreezeSelectedThumbs (
 /*------------------------------------------------------------------*/
 public void ungroupSelectedThumbs (
 ) {
-	final Stack ungrouped = new Stack();
+	final Stack<MosaicJHierarchy> ungrouped = new Stack<MosaicJHierarchy>();
 	while (!selectedThumbs.isEmpty()) {
-		final MosaicJHierarchy thumbs = (MosaicJHierarchy)selectedThumbs.pop();
+		final MosaicJHierarchy thumbs = selectedThumbs.pop();
 		if (thumbs.hasChildren()) {
 			stackingOrder.remove(thumbs);
-			final Stack children = thumbs.getChildren();
+			final Stack<MosaicJHierarchy> children = thumbs.getChildren();
 			while (!children.isEmpty()) {
-				final MosaicJHierarchy child = (MosaicJHierarchy)children.pop();
+				final MosaicJHierarchy child = children.pop();
 				stackingOrder.push(child);
 				ungrouped.push(child);
 			}
@@ -2563,7 +2558,7 @@ public void ungroupSelectedThumbs (
 		}
 	}
 	while (!ungrouped.isEmpty()) {
-		select((MosaicJHierarchy)ungrouped.pop());
+		select(ungrouped.pop());
 	}
 } /* end ungroupSelectedThumbs */
 
@@ -2583,32 +2578,32 @@ public void deselect (
 
 /*------------------------------------------------------------------*/
 private Rectangle getCircumbscribedRectangle (
-	final Stack thumbs
+	final Stack<MosaicJHierarchy> thumbs
 ) {
 	if (thumbs.isEmpty()) {
 		return(null);
 	}
-	final Iterator i = thumbs.iterator();
+	final Iterator<MosaicJHierarchy> i = thumbs.iterator();
 	final Rectangle playFieldRectangle =
-		((MosaicJHierarchy)i.next()).getBounds();
+		i.next().getBounds();
 	while (i.hasNext()) {
-		playFieldRectangle.add(((MosaicJHierarchy)i.next()).getBounds());
+		playFieldRectangle.add(i.next().getBounds());
 	}
 	return(playFieldRectangle);
 } /* end getCircumbscribedRectangle */
 
 /*------------------------------------------------------------------*/
-private Stack getOverlap (
+private Stack<Rectangle> getOverlap (
 	final MosaicJThumb currentThumb
 ) {
-	final Stack overlap = new Stack();
-	final Iterator i = stackingOrder.iterator();
+	final Stack<Rectangle> overlap = new Stack<Rectangle>();
+	final Iterator<MosaicJHierarchy> i = stackingOrder.iterator();
 	while (i.hasNext()) {
-		final MosaicJHierarchy thumbs = (MosaicJHierarchy)i.next();
+		final MosaicJHierarchy thumbs = i.next();
 		if (thumbs.isVisible()) {
-			final Stack j = thumbs.getThumbs();
+			final Stack<MosaicJThumb> j = thumbs.getThumbs();
 			while (!j.isEmpty()) {
-				final MosaicJThumb thumb = (MosaicJThumb)j.pop();
+				final MosaicJThumb thumb = j.pop();
 				if (thumb == currentThumb) {
 					return(overlap);
 				}
@@ -3039,9 +3034,9 @@ public MosaicJThumb (
 ) {
 	this.id = id;
 	this.isColored = isColored;
-	this.thumbnailArea = thumbnailArea;
-	this.thumbnailScrollPane = thumbnailScrollPane;
-	this.playField = playField;
+	MosaicJThumb.thumbnailArea = thumbnailArea;
+	MosaicJThumb.thumbnailScrollPane = thumbnailScrollPane;
+	MosaicJThumb.playField = playField;
 	if (colorWeight != null) {
 		this.grayContrast = grayContrast;
 		this.grayOffset = grayOffset;
@@ -4642,13 +4637,13 @@ class MosaicJTree
 static public boolean createMosaic (
 	final JProgressBar progressBar,
 	final JFrame parent,
-	final Stack stackingOrder,
+	final Stack<MosaicJHierarchy> stackingOrder,
 	final boolean blend,
 	final boolean rotate,
 	final boolean createOutputLog
 ) {
 	final double[][] edgeWeight = getEdgeWeight(stackingOrder);
-	final Stack connectedComponent =
+	final Stack<Integer> connectedComponent =
 		MosaicJTree.countConnectedComponents(edgeWeight);
 	if (2 < connectedComponent.size()) {
 		final String[] options = {
@@ -4656,7 +4651,8 @@ static public boolean createMosaic (
 			"Abort Creation",
 			"Cancel"
 		};
-		final int option = new JOptionPane().showOptionDialog(parent,
+		new JOptionPane();
+		final int option = JOptionPane.showOptionDialog(parent,
 			"There are " + (connectedComponent.size() / 2) + " mosaics\n",
 			"Select an Option", JOptionPane.YES_NO_CANCEL_OPTION,
 			JOptionPane.WARNING_MESSAGE, null, options, options[0]);
@@ -4694,13 +4690,13 @@ static public boolean createMosaic (
 			}
 		}
 	}
-	final Stack vertices = new Stack();
-	final Stack tree = getMaximumSpanningTree(stackingOrder, edgeWeight,
+	final Stack<MosaicJThumb> vertices = new Stack<MosaicJThumb>();
+	final Stack<MosaicJEdge> tree = getMaximumSpanningTree(stackingOrder, edgeWeight,
 		getRoot(connectedComponent), vertices);
 	ImagePlus globalImage = null;
 	if (tree.isEmpty()) {
-		tree.push(new MosaicJEdge((MosaicJThumb)vertices.peek(),
-			(MosaicJThumb)vertices.peek(), 1.0));
+		tree.push(new MosaicJEdge(vertices.peek(),
+			vertices.peek(), 1.0));
 		globalImage = getGlobalImage(tree, vertices, progressBar, blend, fw);
 		globalImage.show();
 		globalImage.updateAndDraw();
@@ -4709,10 +4705,10 @@ static public boolean createMosaic (
 		parent.getContentPane().add(progressBar, BorderLayout.NORTH);
 		parent.getContentPane().validate();
 		progressBar.setMaximum(tree.size() + vertices.size());
-		final Iterator i = tree.iterator();
+		final Iterator<MosaicJEdge> i = tree.iterator();
 		for (int k = 1, K = tree.size(); (k <= K); k++) {
 			progressBar.setValue(k);
-			localAlign((MosaicJEdge)i.next(), rotate);
+			localAlign(i.next(), rotate);
 		}
 		globalImage = getGlobalImage(tree, vertices, progressBar, blend, fw);
 		globalImage.show();
@@ -5070,10 +5066,10 @@ static public ImagePlus normalizeGlobalImage (
 ....................................................................*/
 
 /*------------------------------------------------------------------*/
-static private Stack countConnectedComponents (
+static private Stack<Integer> countConnectedComponents (
 	final double[][] edgeWeight
 ) {
-	final Stack connectedComponents = new Stack();
+	final Stack<Integer> connectedComponents = new Stack<Integer>();
 	final boolean[][] adjacency =
 		new boolean[edgeWeight.length][edgeWeight.length];
 	for (int i = 0, I = adjacency.length; (i < I); i++) {
@@ -5081,7 +5077,7 @@ static private Stack countConnectedComponents (
 			adjacency[i][j] = (edgeWeight[i][j] != 0.0);
 		}
 	}
-	final Stack neighbor = new Stack();
+	final Stack<Integer> neighbor = new Stack<Integer>();
 	for (int i = 0, I = adjacency.length; (i < I); i++) {
 		for (int j = 0, J = adjacency.length; (j < J); j++) {
 			if (adjacency[i][j]) {
@@ -5096,7 +5092,7 @@ static private Stack countConnectedComponents (
 		connectedComponents.push(neighbor.peek());
 		int tiles = 0;
 		while (!neighbor.isEmpty()) {
-			final int j = ((Integer)neighbor.pop()).intValue();
+			final int j = neighbor.pop().intValue();
 			tiles++;
 			for (int k = 0, K = adjacency.length; (k < K); k++) {
 				if (adjacency[j][k]) {
@@ -5115,21 +5111,21 @@ static private Stack countConnectedComponents (
 
 /*------------------------------------------------------------------*/
 static private double[][] getEdgeWeight (
-	final Stack stackingOrder
+	final Stack<MosaicJHierarchy> stackingOrder
 ) {
-	final Stack thumbs = new Stack();
-	final Iterator k = stackingOrder.iterator();
+	final Stack<MosaicJThumb> thumbs = new Stack<MosaicJThumb>();
+	final Iterator<MosaicJHierarchy> k = stackingOrder.iterator();
 	while (k.hasNext()) {
-		thumbs.addAll(((MosaicJHierarchy)k.next()).getThumbs());
+		thumbs.addAll(k.next().getThumbs());
 	}
 	final double[][] edgeWeight = new double[thumbs.size()][thumbs.size()];
 	for (int i = 0, I = thumbs.size(); (i < I); i++) {
 		final Rectangle uTrueBounds =
-			((MosaicJThumb)thumbs.elementAt(i)).getTrueBounds();
+			thumbs.elementAt(i).getTrueBounds();
 		edgeWeight[i][i] = (double)(uTrueBounds.width * uTrueBounds.height);
 		for (int j = 0, J = i; (j < J); j++) {
 			final Rectangle vTrueBounds =
-				((MosaicJThumb)thumbs.elementAt(j)).getTrueBounds();
+				thumbs.elementAt(j).getTrueBounds();
 			if (uTrueBounds.intersects(vTrueBounds)) {
 				final Rectangle area = uTrueBounds.intersection(vTrueBounds);
 				edgeWeight[i][j] = (double)(area.width * area.height);
@@ -5145,16 +5141,16 @@ static private double[][] getEdgeWeight (
 
 /*------------------------------------------------------------------*/
 static private ImagePlus getGlobalImage (
-	Stack tree,
-	final Stack vertices,
+	Stack<MosaicJEdge> tree,
+	final Stack<MosaicJThumb> vertices,
 	final JProgressBar progressBar,
 	final boolean blend,
 	final FileWriter fw
 ) {
-	tree = (Stack)tree.clone();
-	final Stack neighbors = new Stack();
+	tree = (Stack<MosaicJEdge>)tree.clone();
+	final Stack<Stack<MosaicJThumb>> neighbors = new Stack<Stack<MosaicJThumb>>();
 	for (int k = 0, K = vertices.size(); (k < K); k++) {
-		final MosaicJThumb thumb = (MosaicJThumb)vertices.elementAt(k);
+		final MosaicJThumb thumb = vertices.elementAt(k);
 		if (thumb.isFrozen()) {
 			final double[][] targetTransform = new double[3][3];
 			for (int i = 0; (i < 3); i++) {
@@ -5165,13 +5161,13 @@ static private ImagePlus getGlobalImage (
 			targetTransform[0][2] = (double)thumb.getTrueLocation().x;
 			targetTransform[1][2] = (double)thumb.getTrueLocation().y;
 			thumb.setGlobalTransform(targetTransform);
-			final Stack neighbor = new Stack();
+			final Stack<MosaicJThumb> neighbor = new Stack<MosaicJThumb>();
 			neighbor.push(thumb);
 			neighbors.push(neighbor);
 		}
 	}
 	if (neighbors.isEmpty()) {
-		final MosaicJThumb thumb = ((MosaicJEdge)tree.peek()).getTarget();
+		final MosaicJThumb thumb = tree.peek().getTarget();
 		thumb.setFrozen(true);
 		final double[][] targetTransform = new double[3][3];
 		for (int i = 0; (i < 3); i++) {
@@ -5182,23 +5178,23 @@ static private ImagePlus getGlobalImage (
 		targetTransform[0][2] = (double)thumb.getTrueLocation().x;
 		targetTransform[1][2] = (double)thumb.getTrueLocation().y;
 		thumb.setGlobalTransform(targetTransform);
-		final Stack neighbor = new Stack();
+		final Stack<MosaicJThumb> neighbor = new Stack<MosaicJThumb>();
 		neighbor.push(thumb);
 		neighbors.push(neighbor);
 	}
 	while (!neighbors.isEmpty()) {
-		final Iterator n = neighbors.iterator();
+		final Iterator<Stack<MosaicJThumb>> n = neighbors.iterator();
 		while (n.hasNext()) {
-			final Stack neighbor = (Stack)n.next();
+			final Stack<MosaicJThumb> neighbor = n.next();
 			if (neighbor.isEmpty()) {
 				n.remove();
 				continue;
 			}
-			final MosaicJThumb target = (MosaicJThumb)neighbor.pop();
+			final MosaicJThumb target = neighbor.pop();
 			final double[][] targetTransform = target.getGlobalTransform();
-			final Iterator t = tree.iterator();
+			final Iterator<MosaicJEdge> t = tree.iterator();
 			while (t.hasNext()) {
-				final MosaicJEdge edge = (MosaicJEdge)t.next();
+				final MosaicJEdge edge = t.next();
 				final MosaicJThumb source = edge.getNeighbor(target);
 				if (source != null) {
 					if (source.hasGlobalTransform()) {
@@ -5239,7 +5235,7 @@ static private ImagePlus getGlobalImage (
 	double highY = Double.NEGATIVE_INFINITY;
 	boolean coloredMosaic = false;
 	for (int k = 0, K = vertices.size(); (k < K); k++) {
-		final MosaicJThumb thumb = (MosaicJThumb)vertices.elementAt(k);
+		final MosaicJThumb thumb = vertices.elementAt(k);
 		coloredMosaic |= thumb.isColored();
 		width[k] = thumb.getTrueBounds().width;
 		height[k] = thumb.getTrueBounds().height;
@@ -5347,7 +5343,7 @@ static private ImagePlus getGlobalImage (
 		}
 	}
 	for (int k = 0, K = vertices.size(); (k < K); k++) {
-		final MosaicJThumb thumb = (MosaicJThumb)vertices.elementAt(k);
+		final MosaicJThumb thumb = vertices.elementAt(k);
 		progressBar.setValue(vertices.size() + k);
 		final double[][] sourcePoints = {
 			{(double)(width[k] - 1), 0.0},
@@ -5375,8 +5371,8 @@ static private ImagePlus getGlobalImage (
 				fw.write("\t" + targetPoints[2][1]);
 				fw.write("\t" + bottomRight[k][0]);
 				fw.write("\t" + bottomRight[k][1]);
-				fw.write("\t" + -((MosaicJThumb)thumb).getSlice());
-				fw.write("\t" + ((MosaicJThumb)thumb).getFilePath() + "\n");
+				fw.write("\t" + -thumb.getSlice());
+				fw.write("\t" + thumb.getFilePath() + "\n");
 			} catch (IOException e) {
 				IJ.log("IOException " + e.getMessage());
 				return(globalImage);
@@ -5404,16 +5400,16 @@ static private ImagePlus getGlobalImage (
 } /* end getGlobalImage */
 
 /*------------------------------------------------------------------*/
-static private Stack getMaximumSpanningTree (
-	final Stack stackingOrder,
+static private Stack<MosaicJEdge> getMaximumSpanningTree (
+	final Stack<MosaicJHierarchy> stackingOrder,
 	final double[][] edgeWeight,
 	final int root,
-	final Stack vertices
+	final Stack<MosaicJThumb> vertices
 ) {
-	final Stack thumbs = new Stack();
-	final Iterator k = stackingOrder.iterator();
+	final Stack<MosaicJThumb> thumbs = new Stack<MosaicJThumb>();
+	final Iterator<MosaicJHierarchy> k = stackingOrder.iterator();
 	while (k.hasNext()) {
-		thumbs.addAll(((MosaicJHierarchy)k.next()).getThumbs());
+		thumbs.addAll(k.next().getThumbs());
 	}
 	final boolean[][] disconnectedEdge =
 		new boolean[edgeWeight.length][edgeWeight.length];
@@ -5422,17 +5418,17 @@ static private Stack getMaximumSpanningTree (
 			disconnectedEdge[i][j] = (edgeWeight[i][j] != 0.0);
 		}
 	}
-	final Stack neighbor = new Stack();
+	final Stack<Integer> neighbor = new Stack<Integer>();
 	neighbor.push(new Integer(root));
-	vertices.push((MosaicJThumb)thumbs.elementAt(root));
+	vertices.push(thumbs.elementAt(root));
 	while (!neighbor.isEmpty()) {
-		final int i = ((Integer)neighbor.pop()).intValue();
+		final int i = neighbor.pop().intValue();
 		for (int j = 0, J = disconnectedEdge.length; (j < J); j++) {
 			if (disconnectedEdge[i][j]) {
 				if (i != j) {
 					neighbor.push(new Integer(j));
-					if (!vertices.contains((MosaicJThumb)thumbs.elementAt(j))) {
-						vertices.push((MosaicJThumb)thumbs.elementAt(j));
+					if (!vertices.contains(thumbs.elementAt(j))) {
+						vertices.push(thumbs.elementAt(j));
 					}
 				}
 				disconnectedEdge[i][j] = false;
@@ -5440,19 +5436,19 @@ static private Stack getMaximumSpanningTree (
 			}
 		}
 	}
-	final Stack edges = new Stack();
+	final Stack<MosaicJEdge> edges = new Stack<MosaicJEdge>();
 	for (int i = 0, I = disconnectedEdge.length; (i < I); i++) {
 		for (int j = 0, J = i; (j < J); j++) {
 			if ((edgeWeight[i][j] != 0.0) && (!disconnectedEdge[i][j])) {
-				edges.push(new MosaicJEdge((MosaicJThumb)thumbs.elementAt(i),
-					(MosaicJThumb)thumbs.elementAt(j), edgeWeight[i][j]));
+				edges.push(new MosaicJEdge(thumbs.elementAt(i),
+					thumbs.elementAt(j), edgeWeight[i][j]));
 			}
 		}
 	}
 	final MosaicJEdge[] graph =
-		(MosaicJEdge[])edges.toArray(new MosaicJEdge[0]);
+		edges.toArray(new MosaicJEdge[0]);
 	Arrays.sort(graph);
-	final Stack tree = new Stack();
+	final Stack<MosaicJEdge> tree = new Stack<MosaicJEdge>();
 	for (int n = graph.length - 1; (0 <= n); n--) {
 		final MosaicJEdge edge = graph[n];
 		if (!pathExists(tree, edge.getSource(), edge.getTarget())) {
@@ -5467,13 +5463,13 @@ static private Stack getMaximumSpanningTree (
 
 /*------------------------------------------------------------------*/
 static private int getRoot (
-	final Stack connectedComponent
+	final Stack<Integer> connectedComponent
 ) {
-	int largest = ((Integer)connectedComponent.pop()).intValue();
-	int root = ((Integer)connectedComponent.pop()).intValue();
+	int largest = connectedComponent.pop().intValue();
+	int root = connectedComponent.pop().intValue();
 	while (!connectedComponent.isEmpty()) {
-		final int large = ((Integer)connectedComponent.pop()).intValue();
-		final int vertex = ((Integer)connectedComponent.pop()).intValue();
+		final int large = connectedComponent.pop().intValue();
+		final int vertex = connectedComponent.pop().intValue();
 		if (largest < large) {
 			largest = large;
 			root = vertex;
@@ -5606,18 +5602,18 @@ static private void localAlign (
 
 /*------------------------------------------------------------------*/
 static private boolean pathExists (
-	Stack tree,
+	Stack<MosaicJEdge> tree,
 	MosaicJThumb u,
 	final MosaicJThumb v
 ) {
-	tree = (Stack)tree.clone();
-	final Stack neighbor = new Stack();
+	tree = (Stack<MosaicJEdge>)tree.clone();
+	final Stack<MosaicJThumb> neighbor = new Stack<MosaicJThumb>();
 	neighbor.push(u);
 	while (!neighbor.isEmpty()) {
-		u = (MosaicJThumb)neighbor.pop();
-		final Iterator i = tree.iterator();
+		u = neighbor.pop();
+		final Iterator<MosaicJEdge> i = tree.iterator();
 		while (i.hasNext()) {
-			final MosaicJThumb thumb = ((MosaicJEdge)i.next()).getNeighbor(u);
+			final MosaicJThumb thumb = i.next().getNeighbor(u);
 			if (thumb != null) {
 				if (thumb == v) {
 					return(true);

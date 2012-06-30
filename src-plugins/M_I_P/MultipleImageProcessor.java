@@ -58,6 +58,7 @@ San Juan, PR 00936-5067
 
 
 import ij.plugin.*;
+
 import java.awt.*;
 import java.io.*;
 import java.util.*;
@@ -209,7 +210,7 @@ public void run(String arg)
 //      MenuBar menuBar = new MenuBar();
 //      Menu menu = new Menu("About");
 //      MenuItem ciarItem = new MenuItem("CIAR...");
-//      MenuItem vhpItem = new MenuItem("VHP Preprocecing Program..");
+//      MenuItem vhpItem = new MenuItem("VHP Preprocessing Program..");
       
       JMenuBar menuBar = new JMenuBar();
       JMenu menu = new JMenu("About");
@@ -220,7 +221,7 @@ public void run(String arg)
         BrowserLauncher hb = new BrowserLauncher(); 
         
 		try{
-		hb.openURL("http://rcmi.rcm.upr.edu/research/inform.html");
+		BrowserLauncher.openURL("http://rcmi.rcm.upr.edu/research/inform.html");
       		}catch( Exception f ){
         	JOptionPane.showMessageDialog(null,"http://rcmi.rcm.upr.edu/research/inform.html");
 		}
@@ -486,8 +487,8 @@ public void convert(String dir1, String dir2,String original,String format, Stri
 				String parameter = new String();
 				String parameter2 = new String();
 				String parameter3= new String();
-				parameter = "name=" + (String)list[i] + " type=RGB fill_with=black width=2148 height=1316 slices=1";
-				parameter2 = "name=" + (String)list[i] + " type=RGB fill_with=black width=2048 height=1216 slices=1";
+				parameter = "name=" + list[i] + " type=RGB fill_with=black width=2148 height=1316 slices=1";
+				parameter2 = "name=" + list[i] + " type=RGB fill_with=black width=2048 height=1216 slices=1";
 				parameter3 = "width=2048 height=1500 position=Top-Center zero";
 				
 											

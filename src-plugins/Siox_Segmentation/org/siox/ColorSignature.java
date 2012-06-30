@@ -43,8 +43,8 @@ class ColorSignature
 	// 2005-11-02 1.01 changed clusters1 and cluster2 from Vector to ArrayList
 	// 2005-11-02 1.00 initial release
 
-	private static ArrayList clusters1=new ArrayList();
-	private static ArrayList clusters2=new ArrayList();
+	private static ArrayList<float[][]> clusters1=new ArrayList<float[][]>();
+	private static ArrayList<float[]> clusters2=new ArrayList<float[]>();
 
 	/**
 	 * Stage one of clustering.
@@ -54,7 +54,7 @@ class ColorSignature
 	 * @param limits float[] the cluster diameters
 	 * @param length int the total number of points to be processed from points
 	 */
-	private static void stageone(float[][] points, int depth, ArrayList clusters, float[] limits, int length)
+	private static void stageone(float[][] points, int depth, ArrayList<float[][]> clusters, float[] limits, int length)
 	{
 		if (length<1) {
 			return;
@@ -112,7 +112,7 @@ class ColorSignature
 	 * @param total int the total number of points as given to stageone
 	 * @param threshold should be 0.01 - abstraction threshold
 	 */
-	private static void stagetwo(float[][] points, int depth, ArrayList clusters, float[] limits, int total, float threshold)
+	private static void stagetwo(float[][] points, int depth, ArrayList<float[]> clusters, float[] limits, int total, float threshold)
 	{
 		if (points.length<1) {
 			return;
@@ -192,7 +192,7 @@ class ColorSignature
 
 		float[][] centroids=new float[clusters1.size()][];
 		for (int i=0; i<clusters1.size(); i++) {
-			float[][] cluster=(float[][])clusters1.get(i);
+			float[][] cluster=clusters1.get(i);
 			float[] centroid=new float[cluster[0].length+1]; // +1 for the cardinality
 			for (int k=0; k<cluster.length; k++) {
 				for (int j=0; j<cluster[k].length; j++) {
@@ -207,7 +207,7 @@ class ColorSignature
 		}
 		stagetwo(centroids, 0, clusters2, limits, length, threshold); // 0.1 -> see paper by tomasi
 
-		float[][] res=(float[][])clusters2.toArray(new float[0][0]);
+		float[][] res=clusters2.toArray(new float[0][0]);
 		return res;
 	}
 

@@ -177,8 +177,7 @@ public class InfoFrame extends JFrame {
 				Reader reader = ServiceMediator.getReader();
 				reader.updateMetadata(imp);
 				LSMFileInfo openLSM = (LSMFileInfo) imp.getOriginalFileInfo();
-				CZLSMInfoExtended cz = (CZLSMInfoExtended) ((ImageDirectory) openLSM.imageDirectories
-						.get(0)).TIF_CZ_LSMINFO;
+				CZLSMInfoExtended cz = (CZLSMInfoExtended) openLSM.imageDirectories.get(0).TIF_CZ_LSMINFO;
 
 				EventList events = cz.eventList;
 				if (events != null) {
@@ -237,7 +236,7 @@ public class InfoFrame extends JFrame {
 			String channels = IJ.d2s(cz.DimensionChannels, 0);
 			String scantype = "";
 
-			switch ((int) cz.ScanType) {
+			switch (cz.ScanType) {
 			case 0:
 				scantype = "Normal X-Y-Z scan";
 				break;
@@ -266,13 +265,13 @@ public class InfoFrame extends JFrame {
 				scantype = "UNKNOWN !";
 				break;
 			}
-			Recording r = (Recording) cz.scanInfo.recordings.get(0);
+			Recording r = cz.scanInfo.recordings.get(0);
 			String objective = (String) r.records.get("ENTRY_OBJECTIVE");
 			String user = (String) r.records.get("USER");
-			double zoomx = ((Double) r.records.get("ZOOM_X")).doubleValue();
-			double zoomy = ((Double) r.records.get("ZOOM_Y")).doubleValue();
+			double zoomx = (Double) r.records.get("ZOOM_X");
+			double zoomy = (Double) r.records.get("ZOOM_Y");
 
-			double zoomz = ((Double) r.records.get("ZOOM_Z")).doubleValue();
+			double zoomz = (Double) r.records.get("ZOOM_Z");
 
 			double planeSpacing = ((Double) r.records.get("PLANE_SPACING"))
 					.doubleValue();

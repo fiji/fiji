@@ -3,6 +3,7 @@ import java.awt.Color;
 import java.util.*;
 import java.io.*;
 import java.lang.Float;
+
 import ij.*;
 import ij.gui.*;
 import ij.io.*;
@@ -144,12 +145,12 @@ public class MTrack2_ implements PlugInFilter, Measurements  {
 		rt.reset();
 
 		// create storage for particle positions
-		List[] theParticles = new ArrayList[nFrames];
+		List<particle>[] theParticles = new ArrayList[nFrames];
 		int trackCount=0;
 
 		// record particle positions for each frame in an ArrayList
 		for (int iFrame=1; iFrame<=nFrames; iFrame++) {
-			theParticles[iFrame-1]=new ArrayList();
+			theParticles[iFrame-1]=new ArrayList<particle>();
 			rt.reset();
 			ParticleAnalyzer pa = new ParticleAnalyzer(options, measurements, rt, minSize, maxSize);
 			pa.analyze(imp, stack.getProcessor(iFrame));
@@ -170,14 +171,14 @@ public class MTrack2_ implements PlugInFilter, Measurements  {
 
 		// now assemble tracks out of the particle lists
 		// Also record to which track a particle belongs in ArrayLists
-		List theTracks = new ArrayList();
+		List<List<particle>> theTracks = new ArrayList<List<particle>>();
 		for (int i=0; i<=(nFrames-1); i++) {
 			IJ.showProgress((double)i/nFrames);
-			for (ListIterator j=theParticles[i].listIterator();j.hasNext();) {
-				particle aParticle=(particle) j.next();
+			for (ListIterator<particle> j=theParticles[i].listIterator();j.hasNext();) {
+				particle aParticle= j.next();
 				if (!aParticle.inTrack) {
 					// This must be the beginning of a new track
-					List aTrack = new ArrayList();
+					List<particle> aTrack = new ArrayList<particle>();
 					trackCount++;
 					aParticle.inTrack=true;
 					aParticle.trackNr=trackCount;
@@ -190,8 +191,8 @@ public class MTrack2_ implements PlugInFilter, Measurements  {
 					for (int iF=i+1; iF<=(nFrames-1);iF++) {
 						boolean foundOne=false;
 						particle newParticle=new particle();
-						for (ListIterator jF=theParticles[iF].listIterator();jF.hasNext() && searchOn;) { 
-							particle testParticle =(particle) jF.next();
+						for (ListIterator<particle> jF=theParticles[iF].listIterator();jF.hasNext() && searchOn;) { 
+							particle testParticle = jF.next();
 							float distance = testParticle.distance(oldParticle);
 							// record a particle when it is within the search radius, and when it had not yet been claimed by another track
 							if ( (distance < maxVelocity) && !testParticle.inTrack) {
@@ -246,8 +247,8 @@ public class MTrack2_ implements PlugInFilter, Measurements  {
 		// As a side-effect, this makes the code quite complicated
 		String strHeadings = "Frame";
 		int frameCount=1;
-		for (ListIterator iT=theTracks.listIterator(); iT.hasNext();) {
-			List bTrack=(ArrayList) iT.next();
+		for (ListIterator<List<particle>> iT=theTracks.listIterator(); iT.hasNext();) {
+			List<particle> bTrack= iT.next();
 			if (bTrack.size() >= minTrackLength) {
 				if (frameCount <= maxColumns)
 					strHeadings += "\tX" + frameCount + "\tY" + frameCount +"\tFlag" + frameCount;
@@ -293,15 +294,15 @@ public class MTrack2_ implements PlugInFilter, Measurements  {
 					String strLine = "" + (i+1);
 					int trackNr=0;
 					int listTrackNr=0;
-					for (ListIterator iT=theTracks.listIterator(); iT.hasNext();) {
+					for (ListIterator<List<particle>> iT=theTracks.listIterator(); iT.hasNext();) {
 						trackNr++;
-						List bTrack=(ArrayList) iT.next();
+						List<particle> bTrack=iT.next();
 						boolean particleFound=false;
 						if (bTrack.size() >= minTrackLength) {
 							listTrackNr++;
 							if ( (listTrackNr>((j-1)*maxColumns)) && (listTrackNr<=(j*maxColumns))) {
-								for (ListIterator k=theParticles[i].listIterator();k.hasNext() && !particleFound;) {
-									particle aParticle=(particle) k.next();
+								for (ListIterator<particle> k=theParticles[i].listIterator();k.hasNext() && !particleFound;) {
+									particle aParticle= k.next();
 									if (aParticle.trackNr==trackNr) {
 										particleFound=true;
 										if (aParticle.flag) 
@@ -336,15 +337,15 @@ public class MTrack2_ implements PlugInFilter, Measurements  {
 						String strLine = "" + (i+1);
 						int trackNr=0;
 						int listTrackNr=0;
-						for (ListIterator iT=theTracks.listIterator(); iT.hasNext();) {
+						for (ListIterator<List<particle>> iT=theTracks.listIterator(); iT.hasNext();) {
 							trackNr++;
-							List bTrack=(ArrayList) iT.next();
+							List<particle> bTrack= iT.next();
 							boolean particleFound=false;
 							if (bTrack.size() >= minTrackLength) {
 								listTrackNr++;
 								if ( (listTrackNr>((j-1)*maxColumns)) && (listTrackNr<=(j*maxColumns))) {
-									for (ListIterator k=theParticles[i].listIterator();k.hasNext() && !particleFound;) {
-										particle aParticle=(particle) k.next();
+									for (ListIterator<particle> k=theParticles[i].listIterator();k.hasNext() && !particleFound;) {
+										particle aParticle=k.next();
 										if (aParticle.trackNr==trackNr) {
 											particleFound=true;
 											if (aParticle.flag) 
@@ -369,18 +370,18 @@ public class MTrack2_ implements PlugInFilter, Measurements  {
 					double x1, y1, x2, y2;
 					int trackNr=0;
 					int displayTrackNr=0;
-					for (ListIterator iT=theTracks.listIterator(); iT.hasNext();) {
+					for (ListIterator<List<particle>> iT=theTracks.listIterator(); iT.hasNext();) {
 						trackNr++;
-						List bTrack=(ArrayList) iT.next();
+						List<particle> bTrack=iT.next();
 						if (bTrack.size() >= minTrackLength) {
 							displayTrackNr++;
-							ListIterator jT=bTrack.listIterator();
-							particle oldParticle=(particle) jT.next();
+							ListIterator<particle> jT=bTrack.listIterator();
+							particle oldParticle=jT.next();
 							particle firstParticle=new particle();
 							firstParticle.copy(oldParticle);
 							frames[displayTrackNr-1]=bTrack.size();
 							for (;jT.hasNext();) {
-								particle newParticle=(particle) jT.next();
+								particle newParticle=jT.next();
 								lengths[displayTrackNr-1]+=Math.sqrt(sqr(oldParticle.x-newParticle.x)+sqr(oldParticle.y-newParticle.y));
 								oldParticle=newParticle;
 							}
@@ -421,13 +422,13 @@ public class MTrack2_ implements PlugInFilter, Measurements  {
 				// hack to only show tracks longerthan minTrackLength
 				int trackNr=0;
 				int displayTrackNr=0;
-				for (ListIterator iT=theTracks.listIterator(); iT.hasNext();) {
+				for (ListIterator<List<particle>> iT=theTracks.listIterator(); iT.hasNext();) {
 					trackNr++;
-					List bTrack=(ArrayList) iT.next();
+					List<particle> bTrack=iT.next();
 					if (bTrack.size() >= minTrackLength) {
 						displayTrackNr++;
-						for (ListIterator k=theParticles[i].listIterator();k.hasNext();) {
-							particle aParticle=(particle) k.next();
+						for (ListIterator<particle> k=theParticles[i].listIterator();k.hasNext();) {
+							particle aParticle=k.next();
 							if (aParticle.trackNr==trackNr) {
 								strPart=""+displayTrackNr;
 								if (bShowPositions) {
@@ -458,18 +459,18 @@ public class MTrack2_ implements PlugInFilter, Measurements  {
 			double x1, y1, x2, y2;
 			int trackNr=0;
 			int displayTrackNr=0;
-			for (ListIterator iT=theTracks.listIterator(); iT.hasNext();) {
+			for (ListIterator<List<particle>> iT=theTracks.listIterator(); iT.hasNext();) {
 				trackNr++;
-				List bTrack=(ArrayList) iT.next();
+				List<particle> bTrack=iT.next();
 				if (bTrack.size() >= minTrackLength) {
 					displayTrackNr++;
-					ListIterator jT=bTrack.listIterator();
-					particle oldParticle=(particle) jT.next();
+					ListIterator<particle> jT=bTrack.listIterator();
+					particle oldParticle=jT.next();
 					particle firstParticle=new particle();
 					firstParticle.copy(oldParticle);
 					frames[displayTrackNr-1]=bTrack.size();
 					for (;jT.hasNext();) {
-						particle newParticle=(particle) jT.next();
+						particle newParticle=jT.next();
 						lengths[displayTrackNr-1]+=Math.sqrt(sqr(oldParticle.x-newParticle.x)+sqr(oldParticle.y-newParticle.y));
 						oldParticle=newParticle;
 					}
@@ -496,14 +497,14 @@ public class MTrack2_ implements PlugInFilter, Measurements  {
 			ip.fill();
 			trackCount=0;
 			int color;
-			for (ListIterator iT=theTracks.listIterator();iT.hasNext();) {
+			for (ListIterator<List<particle>> iT=theTracks.listIterator();iT.hasNext();) {
 				trackCount++;
-				List bTrack=(ArrayList) iT.next();
+				List<particle> bTrack=iT.next();
 				if (bTrack.size() >= minTrackLength) {
-					ListIterator jT=bTrack.listIterator();
-					particle oldParticle=(particle) jT.next();
+					ListIterator<particle> jT=bTrack.listIterator();
+					particle oldParticle=jT.next();
 					for (;jT.hasNext();) {
-						particle newParticle=(particle) jT.next();
+						particle newParticle=jT.next();
 						color =Math.min(trackCount+1,254);
 						ip.setValue(color);
 						ip.moveTo((int)oldParticle.x, (int)oldParticle.y);

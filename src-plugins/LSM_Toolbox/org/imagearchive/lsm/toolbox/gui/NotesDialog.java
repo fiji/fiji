@@ -91,10 +91,10 @@ public class NotesDialog extends JDialog {
 			LSMFileInfo lsm = (LSMFileInfo)imp.getOriginalFileInfo();
 
 		ArrayList<ImageDirectory> imageDirectories = lsm.imageDirectories;
-		ImageDirectory imDir = (ImageDirectory)(imageDirectories.get(0));
+		ImageDirectory imDir = imageDirectories.get(0);
 		if (imDir == null) return;
 		CZLSMInfoExtended cz = (CZLSMInfoExtended )imDir.TIF_CZ_LSMINFO;
-		Recording r = (Recording) cz.scanInfo.recordings.get(0);
+		Recording r = cz.scanInfo.recordings.get(0);
 		if (r == null)  return;
 				String shortNotes = (String) r.records.get("ENTRY_DESCRIPTION");
 				String detailedNotes = (String) r.records.get("ENTRY_NOTES");

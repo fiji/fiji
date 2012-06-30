@@ -52,12 +52,12 @@ class PlaneROI extends ROI {
             return false;
         for (int i=0;i<PlanesS[0].size();i++)
             {
-            Sx= x-((Integer) PlanesS[0].elementAt(i)).intValue();
-            Sy= y-((Integer) PlanesS[1].elementAt(i)).intValue();
-            Sz= z-((Integer) PlanesS[2].elementAt(i)).intValue();
-            Dx=((Double) PlanesD[0].elementAt(i)).doubleValue();
-            Dy=((Double) PlanesD[1].elementAt(i)).doubleValue();
-            Dz=((Double) PlanesD[2].elementAt(i)).doubleValue();
+            Sx= x-PlanesS[0].elementAt(i);
+            Sy= y-PlanesS[1].elementAt(i);
+            Sz= z-PlanesS[2].elementAt(i);
+            Dx=PlanesD[0].elementAt(i);
+            Dy=PlanesD[1].elementAt(i);
+            Dz=PlanesD[2].elementAt(i);
             if (Dx*Sx+Dy*Sy+Dz*Sz < 0.0)
                 return false;
             }

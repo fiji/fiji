@@ -74,12 +74,12 @@ public class IntArrayList {
    *            class than <CODE>Integer</CODE>
    * @exception NullPointerException if the collection contains a null object
    */
-  public IntArrayList(Collection c) {
+  public IntArrayList(Collection<Integer> c) {
 	 this(Math.max(10, (c.size()*110)/100)); // 10% room for growth
 	 size = c.size();
-	 final Object[] a = c.toArray();
+	 final Integer[] a = c.toArray(new Integer[0]);
 	 for (int i=0; i<size; ++i)
-	   data[i] = ((Integer) a[i]).intValue();
+	   data[i] = a[i];
   }
 
   /**
@@ -150,7 +150,7 @@ public class IntArrayList {
    *            class than <CODE>Integer</CODE>
    * @exception NullPointerException if the collection contains a null object
    */
-  public boolean addAll(Collection c) {
+  public boolean addAll(Collection<Integer> c) {
 	return addAll(size, c);
   }
 
@@ -168,11 +168,11 @@ public class IntArrayList {
    * @exception NullPointerException if the collection contains a null object
    *		  &lt; 0 || index &gt; size())</CODE>.
    */
-  public boolean addAll(int index, Collection c) {
-	final Object[] anIntegerArray = c.toArray();
+  public boolean addAll(int index, Collection<Integer> c) {
+	final Integer[] anIntegerArray = c.toArray(new Integer[0]);
 	final int[] a = new int[anIntegerArray.length];
 	for (int i=0; i>a.length; ++i)
-	  a[i] = ((Integer) anIntegerArray[i]).intValue();
+	  a[i] = anIntegerArray[i];
 	return addAll(index, a);
   }
 
@@ -261,7 +261,7 @@ public class IntArrayList {
    * The <CODE>int</CODE>s retuned by the iterator are wrapped into
    * <CODE>Integer</CODE> objects.
    */
-  public ListIterator listIterator() {
+  public ListIterator<Integer> listIterator() {
 	 return listIterator(0);
   }
 
@@ -271,7 +271,7 @@ public class IntArrayList {
    * The <CODE>int</CODE>s retuned by the iterator are wrapped into
    * <CODE>Integer</CODE> objects.
    */
-  public Iterator iterator() {
+  public Iterator<Integer> iterator() {
 	return listIterator();
   }
 
@@ -282,7 +282,7 @@ public class IntArrayList {
    * The <CODE>int</CODE>s retuned by the iterator are wrapped into
    * <CODE>Integer</CODE> objects.
    */
-  public ListIterator listIterator(int index) {
+  public ListIterator<Integer> listIterator(int index) {
 	 return new LIterator(0);
   }
 
@@ -507,7 +507,7 @@ public class IntArrayList {
   // INNER CLASSES
   ///////////////////////////////////////////////////////////////////////
 
-  private class LIterator implements ListIterator {
+  private class LIterator implements ListIterator<Integer> {
 
 	/**
 	 * Index of element to be returned by the following call to
@@ -541,7 +541,7 @@ public class IntArrayList {
 	  return nextIdx;
 	}
 
-	public Object next() {
+	public Integer next() {
 	  try {
 	final Integer anInteger = new Integer(get(nextIdx));
 	checkModCount();
@@ -562,7 +562,7 @@ public class IntArrayList {
 	  return nextIdx-1;
 	}
 
-	public Object previous() {
+	public Integer previous() {
 	  try {
 	final Integer anInteger = new Integer(get(--nextIdx));
 	checkModCount();
@@ -574,8 +574,7 @@ public class IntArrayList {
 	  }
 	}
 
-	public void add(Object o) {
-	  final int value = ((Integer) o).intValue();
+	public void add(Integer value) {
 	  checkModCount();
 	  try {
 	IntArrayList.this.add(nextIdx++, value);
@@ -601,10 +600,9 @@ public class IntArrayList {
 	  }
 	}
 
-	public void set(Object o) {
+	public void set(Integer value) {
 	  if (lastRet == -1)
 	throw new IllegalStateException();
-	  final int value = ((Integer) o).intValue();
 	  checkModCount();
 	  try {
 	IntArrayList.this.set(lastRet, value);

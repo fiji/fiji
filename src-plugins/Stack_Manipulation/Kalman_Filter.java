@@ -6,10 +6,10 @@ import ij.io.*;
 import ij.*;
 import ij.gui.*;
 import ij.util.StringSorter;
-import ij.plugin.PlugIn;
 import ij.plugin.*;
 import ij.process.*;
 import javax.swing.*;
+
 import java.awt.event.*;
 import javax.swing.event.*;
 /* Christopher Philip Mauer. Copyright (c) 2003.
@@ -341,7 +341,7 @@ public class Kalman_Filter implements PlugIn{
 			panel1.add(new JLabel("fps"));
 			panel1.add(fpsval);
 			cp.add(panel1, BorderLayout.NORTH);
-			Hashtable labelTable = new Hashtable();
+			Hashtable<Integer, JLabel> labelTable = new Hashtable<Integer, JLabel>();
 			for(int i=0;i<=100;i=i+20)labelTable.put(new Integer(i),
 			new JLabel(String.valueOf((double)i/100.0)));
 			gslider = new JSlider(0,100,(int)(gain*100));

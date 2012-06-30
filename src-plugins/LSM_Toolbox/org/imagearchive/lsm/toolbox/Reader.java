@@ -51,7 +51,7 @@ public class Reader {
 		if (imp == null) return null;
 		reader.updateMetadata(imp);
 		LSMFileInfo lsm = (LSMFileInfo) imp.getOriginalFileInfo();
-		ImageDirectory imDir = (ImageDirectory) lsm.imageDirectories.get(0);
+		ImageDirectory imDir = lsm.imageDirectories.get(0);
 		CZLSMInfoExtended cz = (CZLSMInfoExtended) imDir.TIF_CZ_LSMINFO;
 		return cz;
 	}
@@ -110,8 +110,7 @@ public class Reader {
 		for (int i = 0; i < lsmFi.imageDirectories.size(); i++) {
 			System.err.println("Imdir " + i);
 			System.err.println("=============\n");
-			ImageDirectory imDir = (ImageDirectory) lsmFi.imageDirectories
-					.get(i);
+			ImageDirectory imDir = lsmFi.imageDirectories.get(i);
 			System.err.println("ImDir data:\n" + imDir.toString());
 			if (imDir.TIF_CZ_LSMINFO != null)
 				System.err.println("CZ-Info data:\n"
@@ -129,7 +128,7 @@ public class Reader {
 			LSMFileInfo lsm = (LSMFileInfo) imp.getOriginalFileInfo();
 			if (lsm.fullyRead == true)
 				return;
-			ImageDirectory imDir = (ImageDirectory) lsm.imageDirectories.get(0);
+			ImageDirectory imDir = lsm.imageDirectories.get(0);
 			if (imDir == null)
 				return;
 			long offset = imDir.TIF_CZ_LSMINFO_OFFSET;
@@ -152,8 +151,7 @@ public class Reader {
 						+ System.getProperty("file.separator") + lsm.fileName),
 						"r");
 				RandomAccessStream stream = new RandomAccessStream(file);
-				ImageDirectory imDir = (ImageDirectory) lsm.imageDirectories
-						.get(0);
+				ImageDirectory imDir = lsm.imageDirectories.get(0);
 				if (imDir == null)
 					return;
 				long offset = imDir.TIF_CZ_LSMINFO_OFFSET;
@@ -505,7 +503,7 @@ public class Reader {
 			}
 
 		}
-		return (Laser[]) v.toArray(new Laser[v.size()]);
+		return v.toArray(new Laser[v.size()]);
 
 	}
 
@@ -527,8 +525,7 @@ public class Reader {
 			}
 
 		}
-		return (IlluminationChannel[]) vdc.toArray(new IlluminationChannel[vdc
-				.size()]);
+		return vdc.toArray(new IlluminationChannel[vdc.size()]);
 	}
 
 	private Track[] getTrackBlock(RandomAccessStream stream) {
@@ -571,7 +568,7 @@ public class Reader {
 				tag.entry = 0;
 			}
 		}
-		return (Track[]) v.toArray(new Track[v.size()]);
+		return v.toArray(new Track[v.size()]);
 	}
 
 	private DetectionChannel[] getDetectionChannelBlock(
@@ -592,7 +589,7 @@ public class Reader {
 		}
 		DetectionChannel[] dc = new DetectionChannel[vdc.size()];
 		for (int i = 0; i < vdc.size(); i++) {
-			dc[i] = (DetectionChannel) vdc.get(i);
+			dc[i] = vdc.get(i);
 		}
 		return dc;
 	}
@@ -613,7 +610,7 @@ public class Reader {
 			}
 
 		}
-		return (BeamSplitter[]) vdc.toArray(new BeamSplitter[vdc.size()]);
+		return vdc.toArray(new BeamSplitter[vdc.size()]);
 	}
 
 	private Marker[] getMarkerBlock(RandomAccessStream stream) {
@@ -631,7 +628,7 @@ public class Reader {
 				tag.entry = 0;
 			}
 		}
-		return (Marker[]) v.toArray(new Marker[v.size()]);
+		return v.toArray(new Marker[v.size()]);
 	}
 
 	private Timer[] getTimerBlock(RandomAccessStream stream) {
@@ -650,7 +647,7 @@ public class Reader {
 				tag.entry = 0;
 			}
 		}
-		return (Timer[]) v.toArray(new Timer[v.size()]);
+		return v.toArray(new Timer[v.size()]);
 	}
 
 	private DataChannel[] getDataChannelBlock(RandomAccessStream stream) {
@@ -671,7 +668,7 @@ public class Reader {
 			}
 
 		}
-		return (DataChannel[]) vdc.toArray(new DataChannel[vdc.size()]);
+		return vdc.toArray(new DataChannel[vdc.size()]);
 	}
 
 	private LinkedHashMap<String, Object> getRecords(RandomAccessStream stream,

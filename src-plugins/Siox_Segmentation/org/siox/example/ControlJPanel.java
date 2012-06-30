@@ -129,9 +129,9 @@ public class ControlJPanel extends JPanel
 	// Internal variables
 
 	/** WindowListeners added to any image display dialog. */
-	private final ArrayList arrayListOfWindowListener = new ArrayList();
+	private final ArrayList<WindowListener> arrayListOfWindowListener = new ArrayList<WindowListener>();
 	/** InternalFrameListeners added to any internal frame with image display. */
-	private final ArrayList arrayListOfJifListener = new ArrayList();
+	private final ArrayList<InternalFrameListener> arrayListOfJifListener = new ArrayList<InternalFrameListener>();
 	/** One of the status constants, denotes current processing step. */
 	private int status = NO_IMAGE_LOADED_STATUS;
 	/** Should image displays be checked for unsaved changes before closing them? */
@@ -464,7 +464,7 @@ public class ControlJPanel extends JPanel
 				jif.setDefaultCloseOperation(JInternalFrame.DO_NOTHING_ON_CLOSE);
 				synchronized (arrayListOfJifListener) {
 				  final InternalFrameListener[] jifListeners =
-					  (InternalFrameListener[]) arrayListOfJifListener.toArray(new InternalFrameListener[0]);
+					  arrayListOfJifListener.toArray(new InternalFrameListener[0]);
 				  for (int i=0; i<jifListeners.length; ++i) {
 					  jif.addInternalFrameListener(jifListeners[i]);
 				  }
@@ -482,7 +482,7 @@ public class ControlJPanel extends JPanel
 				jDialog.setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
 				synchronized (arrayListOfWindowListener) {
 				  final WindowListener[] winListeners =
-					  (WindowListener[]) arrayListOfWindowListener.toArray(new WindowListener[0]);
+					  arrayListOfWindowListener.toArray(new WindowListener[0]);
 				  for (int i=0; i<winListeners.length; ++i) {
 					jDialog.addWindowListener(winListeners[i]);
 				  }

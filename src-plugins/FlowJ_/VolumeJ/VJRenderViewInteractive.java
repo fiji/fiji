@@ -95,7 +95,7 @@ public class VJRenderViewInteractive extends VJRenderView
         public synchronized void run()
         {
                 running = true;
-		this.setPriority(this.MIN_PRIORITY);
+		this.setPriority(VJRenderViewInteractive.MIN_PRIORITY);
 		newView();
 		while (running);
         }

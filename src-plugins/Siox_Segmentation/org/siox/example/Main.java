@@ -121,11 +121,11 @@ public class Main extends JApplet
 	// button group of set ruler menus
 	private final ButtonGroup rulerGroup = new ButtonGroup();
 	// all zoom actions by command string
-	private final HashMap hashMapOfZooms = new HashMap();
+	private final HashMap<String, Action> hashMapOfZooms = new HashMap<String, Action>();
 	// all bg actions by command string
-	private final HashMap hashMapOfBgs = new HashMap();
+	private final HashMap<String, Action> hashMapOfBgs = new HashMap<String, Action>();
 	// all ruler actions by command string
-	private final HashMap hashMapOfRulers = new HashMap();
+	private final HashMap<String, Action> hashMapOfRulers = new HashMap<String, Action>();
 
 	/** Contructor used for both, Applet and application. */
 	public Main()
@@ -360,15 +360,15 @@ public class Main extends JApplet
 		if (open) {
 			// restore zoom
 			final String zoomCmd = zoomGroup.getSelection().getActionCommand();
-			final Action zoomAction = (Action) hashMapOfZooms.get(zoomCmd);
+			final Action zoomAction = hashMapOfZooms.get(zoomCmd);
 			zoomAction.actionPerformed(null);
 			// restore bg setting
 			final String bgCmd = bgGroup.getSelection().getActionCommand();
-			final Action bgAction = (Action) hashMapOfBgs.get(bgCmd);
+			final Action bgAction = hashMapOfBgs.get(bgCmd);
 			bgAction.actionPerformed(null);
 			// restore ruler setting
 			final String rulerCmd = rulerGroup.getSelection().getActionCommand();
-			final Action rulerAction = (Action) hashMapOfRulers.get(rulerCmd);
+			final Action rulerAction = hashMapOfRulers.get(rulerCmd);
 			rulerAction.actionPerformed(null);
 		}
 	}

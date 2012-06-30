@@ -20,7 +20,7 @@ public class DenseFieldLevelSet implements StagedAlgorithm
    private byte[][] status = null;
    private BufferedImage inImg = null;
    private BufferedImage img = null;
-   private LinkedList<BandElement> contour = new LinkedList();
+   private LinkedList<BandElement> contour = new LinkedList<BandElement>();
    //   private Raster inData = null;
    private FastMarching fm = null;
    private boolean needInit = true;

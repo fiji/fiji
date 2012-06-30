@@ -84,7 +84,7 @@ public class View5D_ extends PlugInFrame implements PlugIn, WindowListener {
     public void UpdatePanels()  // update all panels
         {
             for (int i=0;i<panels.size();i++)
-                ((ImgPanel) panels.elementAt(i)).c1.UpdateAllNoCoord();
+                panels.elementAt(i).c1.UpdateAllNoCoord();
         }
         
         
@@ -271,7 +271,7 @@ public class View5D_ extends PlugInFrame implements PlugIn, WindowListener {
 					   //data3d.SetValueScale(nr,ScaleV,OffsetV,NameV,UnitV);
 					}
 			   // if (data3d.Times - Times <= 1)
-	               ((ImgPanel) panels.elementAt(0)).CheckScrollBar();
+	               panels.elementAt(0).CheckScrollBar();
 			}
 			}
                 
@@ -337,7 +337,7 @@ public class View5D_ extends PlugInFrame implements PlugIn, WindowListener {
                     NumberFormat  nf = java.text.NumberFormat.getNumberInstance(Locale.US);
 
                     String LUTName="User defined "+nf.format(lastLUT-Bundle.ElementModels+1);
-                    ((ImgPanel) panels.firstElement()).c1.label.PixDisplay.AddColorMenu(LUTName,lastLUT);
+                    panels.firstElement().c1.label.PixDisplay.AddColorMenu(LUTName,lastLUT);
                     data3d.SetColorModelNr(data3d.ActiveElement,lastLUT);
 		    if (! data3d.SetThresh(0,lt.getMapSize()-1))  // Set to the correct initial thresholds
 		    	 data3d.InvalidateSlices();
@@ -352,12 +352,12 @@ public class View5D_ extends PlugInFrame implements PlugIn, WindowListener {
             for (int i=0;i<panels.size();i++) 
             {   // c2.scale == X is the master
                 // System.out.println("Locking Aspect on panel " + i + "\n");
-            	((ImgPanel) panels.elementAt(i)).c1.AspectFromView=true;
-            	((ImgPanel) panels.elementAt(i)).c2.AspectFromView=true;
-            	((ImgPanel) panels.elementAt(i)).c3.AspectFromView=true;
-                ((ImgPanel) panels.elementAt(i)).c1.AspectLocked.setState(true);
-                ((ImgPanel) panels.elementAt(i)).c2.AspectLocked.setState(true);
-                ((ImgPanel) panels.elementAt(i)).c3.AspectLocked.setState(true);
+            	panels.elementAt(i).c1.AspectFromView=true;
+            	panels.elementAt(i).c2.AspectFromView=true;
+            	panels.elementAt(i).c3.AspectFromView=true;
+                panels.elementAt(i).c1.AspectLocked.setState(true);
+                panels.elementAt(i).c2.AspectLocked.setState(true);
+                panels.elementAt(i).c3.AspectLocked.setState(true);
             }
         }
         }

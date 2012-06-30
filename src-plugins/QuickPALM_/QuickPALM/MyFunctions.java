@@ -92,7 +92,7 @@ class MyFunctions
 			imp = ij.IJ.openImage(imname);
 			try
 			{
-				Thread.currentThread().sleep(1);
+				Thread.sleep(1);
 			}
 			catch(Exception e)
 			{

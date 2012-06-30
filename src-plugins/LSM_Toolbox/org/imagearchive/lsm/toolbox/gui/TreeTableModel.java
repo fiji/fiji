@@ -57,7 +57,7 @@ class TreeTableModel extends AbstractTableModel {
 			String tag;
 			data = new Object[dataMap.size()][2];
 			for (int i = 0; iterator.hasNext(); i++) {
-				tag = (String) iterator.next();
+				tag = iterator.next();
 				data[i][0] = tag;
 				data[i][1] = dataMap.get(tag);
 			}
@@ -72,7 +72,7 @@ class TreeTableModel extends AbstractTableModel {
 		String tag;
 		data = new Object[dataMap.size()][2];
 		for (int i = 0; iterator.hasNext(); i++) {
-			tag = (String) iterator.next();
+			tag = iterator.next();
 			if (tag.indexOf("<UNKNOWN@") == -1)
 				filteredMap.put(tag,dataMap.get(tag));
 		}

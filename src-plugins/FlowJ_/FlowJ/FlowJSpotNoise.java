@@ -61,7 +61,7 @@ public class FlowJSpotNoise
 	  public FlowJSpotNoise()  {}
 	  public FlowJSpotNoise(byte [] pixels, int maxp, int maxq, double sigmas)
 	  {
-			this.pixels = (Object) pixels;
+			this.pixels = pixels;
 			this.maxp = maxp;
 			this.maxq = maxq;
 			this.sigmas = sigmas;
@@ -69,7 +69,7 @@ public class FlowJSpotNoise
 	  }
 	  public FlowJSpotNoise(int [] pixels, int maxp, int maxq, double sigmas)
 	  {
-			this.pixels = (Object) pixels;
+			this.pixels = pixels;
 			isInt = true;
 			//ingerited from SpotNoise.
 			this.maxp = maxp;

@@ -110,7 +110,7 @@ public class VJIsosurfaceRender extends VJRenderer
 		// Create a place to store extra interpolated voxel information for color rendering.
 		VJValue sample0 = null;
 		if (outputType == COLORINT && v instanceof VolumeRGB)
-		   sample0 = (VJValue) (new VJValueHSB());
+		   sample0 = new VJValueHSB();
 		else
 		   sample0 = new VJValue();
 		VJValue sample1 = new VJValue();

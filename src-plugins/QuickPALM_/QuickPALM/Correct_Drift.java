@@ -140,7 +140,7 @@ public class Correct_Drift implements PlugIn
 		// Calculate the center of each cluster
 		for (int r=0;r<dg.nrois;r++)
 		{
-			roi = dg.rois[r].getBoundingRect();			
+			roi = dg.rois[r].getBounds();			
 			xstart=(int) Math.round(roi.x/magn);
 			xend=(int) Math.round((roi.x+roi.width)/magn);
 			ystart=(int) Math.round(roi.y/magn);

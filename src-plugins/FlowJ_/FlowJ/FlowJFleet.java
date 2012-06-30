@@ -145,7 +145,7 @@ public class FlowJFleet
 			}
 			if (debug)
 			{
-				  ImageProcessor ip = (ImageProcessor) (new FloatProcessor(width*5, height*5, pixels, null));
+				  ImageProcessor ip = new FloatProcessor(width*5, height*5, pixels, null);
 				  ImagePlus imp = new ImagePlus("responses", ip);
 				  imp.show();
 			}

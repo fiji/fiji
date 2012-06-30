@@ -229,7 +229,7 @@ class ColorHistogramWindow extends ImageWindow implements Measurements, ActionLi
         
         Rectangle rect;
         try {
-            rect=imp.getRoi(). getBoundingRect();
+            rect=imp.getRoi(). getBounds();
             //area=rect.width*rect.height;
             //IJ.log("b width "+rect.width+" b height "+rect.height);
         }

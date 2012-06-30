@@ -226,9 +226,9 @@ public class SegmentationViewerCanvas extends ImageCanvas {
 		 * the partial outline.
 		 */
 		public void initContours() {
-			contours[slice]=new Vector();
-			colors[slice]=new Vector();
-			indices[slice]=new Vector();
+			contours[slice]=new Vector<GeneralPath>();
+			colors[slice]=new Vector<Color>();
+			indices[slice]=new Vector<Integer>();
 
 			// actually find the outlines
 			// ArrayList polygons = new ArrayList();

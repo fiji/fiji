@@ -300,8 +300,8 @@ public class bUnwarpJ_ implements PlugIn
 
        while ((!sourceStack.empty()) && (!targetStack.empty())) 
        {
-    	   Point sourcePoint = (Point)sourceStack.pop();
-    	   Point targetPoint = (Point)targetStack.pop();
+    	   Point sourcePoint = sourceStack.pop();
+    	   Point targetPoint = targetStack.pop();
     	   sourcePh.addPoint(sourcePoint.x, sourcePoint.y);
     	   targetPh.addPoint(targetPoint.x, targetPoint.y);
        }
@@ -441,8 +441,8 @@ public class bUnwarpJ_ implements PlugIn
 
           while ((!sourceStack.empty()) && (!targetStack.empty())) 
           {
-             Point sourcePoint = (Point)sourceStack.pop();
-             Point targetPoint = (Point)targetStack.pop();
+             Point sourcePoint = sourceStack.pop();
+             Point targetPoint = targetStack.pop();
              sourcePh.addPoint(sourcePoint.x, sourcePoint.y);
              targetPh.addPoint(targetPoint.x, targetPoint.y);
           }
@@ -583,8 +583,8 @@ public class bUnwarpJ_ implements PlugIn
 
        while ((!sourceStack.empty()) && (!targetStack.empty())) 
        {
-    	   Point sourcePoint = (Point)sourceStack.pop();
-    	   Point targetPoint = (Point)targetStack.pop();
+    	   Point sourcePoint = sourceStack.pop();
+    	   Point targetPoint = targetStack.pop();
     	   sourcePh.addPoint(sourcePoint.x, sourcePoint.y);
     	   targetPh.addPoint(targetPoint.x, targetPoint.y);
        }
@@ -727,8 +727,8 @@ public class bUnwarpJ_ implements PlugIn
 
        while ((!sourcePoints.empty()) && (!targetPoints.empty())) 
        {
-    	   Point sourcePoint = (Point)sourcePoints.pop();
-    	   Point targetPoint = (Point)targetPoints.pop();
+    	   Point sourcePoint = sourcePoints.pop();
+    	   Point targetPoint = targetPoints.pop();
     	   sourcePh.addPoint(sourcePoint.x, sourcePoint.y);
     	   targetPh.addPoint(targetPoint.x, targetPoint.y);
        }
@@ -989,8 +989,8 @@ public class bUnwarpJ_ implements PlugIn
 
     		while ((!sourceStack.empty()) && (!targetStack.empty())) 
     		{
-    			Point sourcePoint = (Point)sourceStack.pop();
-    			Point targetPoint = (Point)targetStack.pop();
+    			Point sourcePoint = sourceStack.pop();
+    			Point targetPoint = targetStack.pop();
     			sourcePh.addPoint(sourcePoint.x, sourcePoint.y);
     			targetPh.addPoint(targetPoint.x, targetPoint.y);
     		}
@@ -1138,18 +1138,18 @@ public class bUnwarpJ_ implements PlugIn
        String fn_target_mask = args[2];
        String fn_source = args[3];
        String fn_source_mask = args[4];
-       int min_scale_deformation = ((Integer) new Integer(args[5])).intValue();
-       int max_scale_deformation = ((Integer) new Integer(args[6])).intValue();
-       int max_subsamp_fact = ((Integer) new Integer(args[7])).intValue();
-       double  divWeight = ((Double) new Double(args[8])).doubleValue();
-       double  curlWeight = ((Double) new Double(args[9])).doubleValue();
-       double  imageWeight = ((Double) new Double(args[10])).doubleValue();
+       int min_scale_deformation = new Integer(args[5]);
+       int max_scale_deformation = new Integer(args[6]);
+       int max_subsamp_fact = new Integer(args[7]);
+       double  divWeight = new Double(args[8]);
+       double  curlWeight = new Double(args[9]);
+       double  imageWeight = new Double(args[10]);
        
        int     accurate_mode = MainDialog.ACCURATE_MODE;
        
        boolean save_transformation = false;
 
-       double  consistencyWeight = ((Double) new Double(args[11])).doubleValue();
+       double  consistencyWeight = new Double(args[11]);
 
        String fn_out_1 = args[12];
        String fn_out_2 = args[13];
@@ -1162,7 +1162,7 @@ public class bUnwarpJ_ implements PlugIn
        {
           if(args[14].equals("-landmark"))
           {
-              landmarkWeight = ((Double) new Double(args[15])).doubleValue();
+              landmarkWeight = new Double(args[15]);
               fn_landmark = args[16];
           }
           else if(args[14].equals("-affine"))
@@ -1304,8 +1304,8 @@ public class bUnwarpJ_ implements PlugIn
 
           while ((!sourceStack.empty()) && (!targetStack.empty())) 
           {
-             Point sourcePoint = (Point)sourceStack.pop();
-             Point targetPoint = (Point)targetStack.pop();
+             Point sourcePoint = sourceStack.pop();
+             Point targetPoint = targetStack.pop();
              sourcePh.addPoint(sourcePoint.x, sourcePoint.y);
              targetPh.addPoint(targetPoint.x, targetPoint.y);
           }
@@ -1427,7 +1427,7 @@ public class bUnwarpJ_ implements PlugIn
        final ImagePlus[] imageList = new ImagePlus[stack.size()];
        int k = 0;
        while (!stack.isEmpty()) {
-          imageList[k++] = (ImagePlus)stack.pop();
+          imageList[k++] = stack.pop();
        }
        return(imageList);
     } /* end createImageList */

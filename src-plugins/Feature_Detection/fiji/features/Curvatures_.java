@@ -25,9 +25,7 @@ import ij.plugin.PlugIn;
 import ij.IJ;
 import ij.ImagePlus;
 
-import java.util.Arrays;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Comparator;
 import java.util.Collections;
 
@@ -36,9 +34,7 @@ import mpicbg.imglib.image.ImageFactory;
 import mpicbg.imglib.image.ImagePlusAdapter;
 import mpicbg.imglib.type.numeric.RealType;
 import mpicbg.imglib.type.numeric.real.FloatType;
-import mpicbg.imglib.algorithm.gauss.GaussianConvolution;
 import mpicbg.imglib.algorithm.gauss.GaussianConvolutionReal;
-import mpicbg.imglib.outofbounds.OutOfBoundsStrategy;
 import mpicbg.imglib.outofbounds.OutOfBoundsStrategyMirrorFactory;
 import mpicbg.imglib.image.display.imagej.ImageJFunctions;
 import mpicbg.imglib.container.array.ArrayContainerFactory;
@@ -54,10 +50,9 @@ public class Curvatures_<T extends RealType<T>> implements PlugIn {
 	/* This comparator is useful for sorting a collection of Float
 	   objects by their absolute value, largest first */
 
-	public class ReverseAbsoluteFloatComparator implements Comparator {
-		public int compare(Object d1, Object d2) {
-			return Double.compare( Math.abs(((Float)d2).floatValue()),
-					       Math.abs(((Float)d1).floatValue()) );
+	public class ReverseAbsoluteFloatComparator implements Comparator<Float> {
+		public int compare(Float d1, Float d2) {
+			return Double.compare(Math.abs(d2), Math.abs(d1));
 		}
 	}
 
@@ -70,7 +65,7 @@ public class Curvatures_<T extends RealType<T>> implements PlugIn {
 		/* Various cursors may go outside the image, in which
 		   case we supply mirror values: */
 
-		OutOfBoundsStrategyMirrorFactory osmf = new OutOfBoundsStrategyMirrorFactory<T>();
+		OutOfBoundsStrategyMirrorFactory<T> osmf = new OutOfBoundsStrategyMirrorFactory<T>();
 
 		LocalizableByDimCursor<T> cursor = input.createLocalizableByDimCursor( osmf );
 

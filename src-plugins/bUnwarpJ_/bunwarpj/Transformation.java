@@ -1276,7 +1276,7 @@ public class Transformation
 		if (auxTargetPh!=null) targetVector = auxTargetPh.getPoints();
 		for (int k = 0; k<K; k++)
 		{
-			final Point targetPoint = (Point)targetVector.elementAt(k);
+			final Point targetPoint = targetVector.elementAt(k);
 			double x = auxFactorWidth * (double)targetPoint.x;
 			double y = auxFactorHeight * (double)targetPoint.y;
 			final double[] bx = xWeight(x, intervals, true, bIsReverse);
@@ -1717,20 +1717,20 @@ public class Transformation
 					X[i][j] = (i == j) ? (1.0F) : (0.0F);
 				}
 			}
-			X[0][2] = auxFactorWidth * (double)(((Point)sourceVector.firstElement()).x
-					- ((Point)targetVector.firstElement()).x);
-			X[1][2] = auxFactorHeight * (double)(((Point)sourceVector.firstElement()).y
-					- ((Point)targetVector.firstElement()).y);
+			X[0][2] = auxFactorWidth * (double)(sourceVector.firstElement().x
+					- targetVector.firstElement().x);
+			X[1][2] = auxFactorHeight * (double)(sourceVector.firstElement().y
+					- targetVector.firstElement().y);
 			break;
 		case 2:
-			final double x0 = auxFactorWidth  * ((Point)sourceVector.elementAt(0)).x;
-			final double y0 = auxFactorHeight * ((Point)sourceVector.elementAt(0)).y;
-			final double x1 = auxFactorWidth  * ((Point)sourceVector.elementAt(1)).x;
-			final double y1 = auxFactorHeight * ((Point)sourceVector.elementAt(1)).y;
-			final double u0 = auxFactorWidth  * ((Point)targetVector.elementAt(0)).x;
-			final double v0 = auxFactorHeight * ((Point)targetVector.elementAt(0)).y;
-			final double u1 = auxFactorWidth  * ((Point)targetVector.elementAt(1)).x;
-			final double v1 = auxFactorHeight * ((Point)targetVector.elementAt(1)).y;
+			final double x0 = auxFactorWidth  * sourceVector.elementAt(0).x;
+			final double y0 = auxFactorHeight * sourceVector.elementAt(0).y;
+			final double x1 = auxFactorWidth  * sourceVector.elementAt(1).x;
+			final double y1 = auxFactorHeight * sourceVector.elementAt(1).y;
+			final double u0 = auxFactorWidth  * targetVector.elementAt(0).x;
+			final double v0 = auxFactorHeight * targetVector.elementAt(0).y;
+			final double u1 = auxFactorWidth  * targetVector.elementAt(1).x;
+			final double v1 = auxFactorHeight * targetVector.elementAt(1).y;
 			sourceVector.addElement(new Point((int)(x1 + y0 - y1), (int)(x1 + y1 - x0)));
 			targetVector.addElement(new Point((int)(u1 + v0 - v1), (int)(u1 + v1 - u0)));
 			removeLastPoint=1;
@@ -1745,8 +1745,8 @@ public class Transformation
 			}
 		for (int k = 0; (k < n); k++)
 		{
-			final Point sourcePoint = (Point)sourceVector.elementAt(k);
-			final Point targetPoint = (Point)targetVector.elementAt(k);
+			final Point sourcePoint = sourceVector.elementAt(k);
+			final Point targetPoint = targetVector.elementAt(k);
 			final double sx = auxFactorWidth * (double)sourcePoint.x;
 			final double sy = auxFactorHeight* (double)sourcePoint.y;
 			final double tx = auxFactorWidth * (double)targetPoint.x;
@@ -2001,8 +2001,8 @@ public class Transformation
 		final int K = auxTargetPh.getPoints().size();
 		for (int k=0; k<K; k++)
 		{
-			final Point sourcePoint = (Point)sourceVector.elementAt(k);
-			final Point targetPoint = (Point)targetVector.elementAt(k);
+			final Point sourcePoint = sourceVector.elementAt(k);
+			final Point targetPoint = targetVector.elementAt(k);
 
 			double u = auxFactorWidth  * (double)targetPoint.x;
 			double v = auxFactorHeight * (double)targetPoint.y;
@@ -2240,8 +2240,8 @@ public class Transformation
 
 		for (int k=0; k<K; k++)
 		{
-			final Point sourcePoint = (Point)sourceVector.elementAt(k);
-			final Point targetPoint = (Point)targetVector.elementAt(k);
+			final Point sourcePoint = sourceVector.elementAt(k);
+			final Point targetPoint = targetVector.elementAt(k);
 			dx[k] = auxFactorWidth  * (sourcePoint.x - targetPoint.x);
 			dy[k] = auxFactorHeight * (sourcePoint.y - targetPoint.y);
 		}
@@ -2416,10 +2416,10 @@ public class Transformation
 					X[i][j] = (i == j) ? (1.0F) : (0.0F);
 				}
 			}
-			X[0][2] = auxFactorWidth  * (double)(((Point)sourceVector.firstElement()).x
-					- ((Point)targetVector.firstElement()).x);
-			X[1][2] = auxFactorHeight * (double)(((Point)sourceVector.firstElement()).y
-					- ((Point)targetVector.firstElement()).y);
+			X[0][2] = auxFactorWidth  * (double)(sourceVector.firstElement().x
+					- targetVector.firstElement().x);
+			X[1][2] = auxFactorHeight * (double)(sourceVector.firstElement().y
+					- targetVector.firstElement().y);
 			break;
 		default:
 			double xTargetAverage = 0.0F;
@@ -2427,7 +2427,7 @@ public class Transformation
 
 		for (int i = 0; (i < n); i++)
 		{
-			final Point p = (Point)targetVector.elementAt(i);
+			final Point p = targetVector.elementAt(i);
 			xTargetAverage += auxFactorWidth  * (double)p.x;
 			yTargetAverage += auxFactorHeight * (double)p.y;
 		}
@@ -2440,7 +2440,7 @@ public class Transformation
 
 		for (int i = 0; (i < n); i++)
 		{
-			final Point p = (Point)targetVector.elementAt(i);
+			final Point p = targetVector.elementAt(i);
 			xCenteredTarget[i] = auxFactorWidth *(double)p.x - xTargetAverage;
 			yCenteredTarget[i] = auxFactorHeight*(double)p.y - yTargetAverage;
 		}
@@ -2450,7 +2450,7 @@ public class Transformation
 
 		for (int i = 0; (i < n); i++)
 		{
-			final Point p = (Point)sourceVector.elementAt(i);
+			final Point p = sourceVector.elementAt(i);
 			xSourceAverage += auxFactorWidth *(double)p.x;
 			ySourceAverage += auxFactorHeight*(double)p.y;
 		}
@@ -2463,7 +2463,7 @@ public class Transformation
 
 		for (int i = 0; (i < n); i++)
 		{
-			final Point p = (Point)sourceVector.elementAt(i);
+			final Point p = sourceVector.elementAt(i);
 			xCenteredSource[i] = auxFactorWidth *(double)p.x - xSourceAverage;
 			yCenteredSource[i] = auxFactorHeight*(double)p.y - ySourceAverage;
 		}
@@ -2571,8 +2571,8 @@ public class Transformation
 		for (int k=0; k<K; k++)
 		{
 			// Get the landmark coordinate in the target image
-			final Point sourcePoint = (Point)sourceVector.elementAt(k);
-			final Point targetPoint = (Point)targetVector.elementAt(k);
+			final Point sourcePoint = sourceVector.elementAt(k);
+			final Point targetPoint = targetVector.elementAt(k);
 			double u = auxFactorWidth  * (double)targetPoint.x;
 			double v = auxFactorHeight * (double)targetPoint.y;
 
@@ -3501,8 +3501,8 @@ public class Transformation
 			for (int kp=0; kp<K; kp++)
 			{
 				// Get the landmark coordinate in the target image
-				final Point sourcePoint = (Point)sourceVector.elementAt(kp);
-				final Point targetPoint = (Point)targetVector.elementAt(kp);
+				final Point sourcePoint = sourceVector.elementAt(kp);
+				final Point targetPoint = targetVector.elementAt(kp);
 				double u = auxFactorWidth *(double)targetPoint.x;
 				double v = auxFactorHeight*(double)targetPoint.y;
 
@@ -3981,8 +3981,8 @@ public class Transformation
 			for (int kp=0; kp<K; kp++)
 			{
 				// Get the landmark coordinate in the target image
-				final Point sourcePoint = (Point)sourceVector.elementAt(kp);
-				final Point targetPoint = (Point)targetVector.elementAt(kp);
+				final Point sourcePoint = sourceVector.elementAt(kp);
+				final Point targetPoint = targetVector.elementAt(kp);
 				double u = auxFactorWidth *(double)targetPoint.x;
 				double v = auxFactorHeight*(double)targetPoint.y;
 

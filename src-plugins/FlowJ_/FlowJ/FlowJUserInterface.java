@@ -48,7 +48,7 @@ public class FlowJUserInterface extends ImagePlus implements ActionListener, Cli
         private float          rho, tau, sigmas, sigmat;
         private int             region, xError, yError, frame;
         private FlowJFlow     	trueFlow, flow;
-        private Vector          flows;
+        private Vector<FlowJFlow>          flows;
         private FlowJError  	flowError;
         private ImagePlus       imp;
         private String          description = "";
@@ -159,7 +159,7 @@ public class FlowJUserInterface extends ImagePlus implements ActionListener, Cli
 		  Panel params = new Panel();
 		  params.setLayout(new GridLayout(0, 2));
 		  if (hasVolume)
-                        frameField = CreateTextField(params, "Central slice:", ""+((int) imp.getStackSize() / 2), 0);
+                        frameField = CreateTextField(params, "Central slice:", ""+(imp.getStackSize() / 2), 0);
 		  String [] salgorithm = { "Lucas & Kanade", "Uras", "Singh", "Fleet & Jepson" };
 		  algorithmChoice = CreateChoice(params, "Algorithm", salgorithm, 0);
 		  gradientChoice = CreateChoice(params, "Gradient method:", FlowJLucas.sderiv, 0);
@@ -238,7 +238,7 @@ public class FlowJUserInterface extends ImagePlus implements ActionListener, Cli
                 if (flows.size() == 1)
                 {
 		        ImageProcessor ip;
-                        FlowJFlow flow = (FlowJFlow) flows.elementAt(0);
+                        FlowJFlow flow = flows.elementAt(0);
     	                if (staticCheckbox.getState())
                                 // include the static background (grayscale) image.
                                 ip = flow.mapImage(stack.getProcessor((int) getFloatField(frameField)),
@@ -256,7 +256,7 @@ public class FlowJUserInterface extends ImagePlus implements ActionListener, Cli
                         ImageStack is = new ImageStack(ip.getWidth(), ip.getHeight());
                         for (int frame = 0; frame < stack.getSize(); frame++)
                         {
-                                FlowJFlow flow = (FlowJFlow) flows.elementAt(frame);
+                                FlowJFlow flow = flows.elementAt(frame);
                                 if (flow != null)
                                 {
                                         ip = flow.mapImage(stack.getProcessor(frame+1),
@@ -420,7 +420,7 @@ public class FlowJUserInterface extends ImagePlus implements ActionListener, Cli
 	{
                 long start = System.currentTimeMillis();
                 IJ.showStatus("Computing 2D optical flow...");
-                flows = new Vector();
+                flows = new Vector<FlowJFlow>();
                 if (! all)
                 {
                         int frame = (int) getFloatField(frameField);

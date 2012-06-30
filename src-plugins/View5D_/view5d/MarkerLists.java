@@ -66,7 +66,7 @@ public class MarkerLists extends Object { // This class manages multiple lists o
     MarkerList GetMarkerList(int list) {
     	if (list < 0) return null;
     	if (ListOfLists != null)
-    		return (MarkerList) ListOfLists.elementAt(list);
+    		return ListOfLists.elementAt(list);
     	else
     		return null;
     }

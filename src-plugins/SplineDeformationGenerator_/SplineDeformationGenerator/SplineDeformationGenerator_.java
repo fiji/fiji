@@ -320,9 +320,9 @@ public class SplineDeformationGenerator_
                         
         // Read input parameters
         String fn_source   = args[1];
-        int min_scale      = ((Integer) new Integer(args[2])).intValue();
-        int max_scale      = ((Integer) new Integer(args[3])).intValue();
-        double noiseSpline = ((Double) new Double(args[4])).doubleValue();
+        int min_scale      = Integer.parseInt(args[2]);
+        int max_scale      = Integer.parseInt(args[3]);
+        double noiseSpline = Double.parseDouble(args[4]);
         String fn_out      = args[5];
         String fn_tnf      = "";
 
@@ -400,9 +400,9 @@ public class SplineDeformationGenerator_
        
         // Read input parameters
         String fn_source       = args[1];
-        int num_of_magnifiers  = ((Integer) new Integer(args[2])).intValue();
-        double magnifier_power = ((Double) new Double(args[3])).doubleValue();
-        double magnifier_size  = ((Double) new Double(args[4])).doubleValue();
+        int num_of_magnifiers  = Integer.parseInt(args[2]);
+        double magnifier_power = Double.parseDouble(args[3]);
+        double magnifier_size  = Double.parseDouble(args[4]);
         
         String fn_out      = args[5];
         String fn_tnf      = "";
@@ -482,8 +482,8 @@ public class SplineDeformationGenerator_
         
         // Read input parameters
         String fn_source   = args[1];
-        double noise_scale = ((Double) new Double(args[2])).doubleValue();
-        double noise_shift = ((Double) new Double(args[3])).doubleValue();
+        double noise_scale = Double.parseDouble(args[2]);
+        double noise_shift = Double.parseDouble(args[3]);
         String fn_out      = args[4];
         String fn_tnf      = "";
 
@@ -561,8 +561,8 @@ public class SplineDeformationGenerator_
         
         // Read input parameters
         String fn_source  = args[1];
-        double noise_K1   = ((Double) new Double(args[2])).doubleValue();
-        double noise_K2   = ((Double) new Double(args[3])).doubleValue();
+        double noise_K1   = Double.parseDouble(args[2]);
+        double noise_K2   = Double.parseDouble(args[3]);
         String fn_out     = args[4];
         String fn_tnf     = "";
 
@@ -643,8 +643,8 @@ public class SplineDeformationGenerator_
         
         // Read input parameters
         String fn_source        = args[1];
-        double length_reduction = ((Double) new Double(args[2])).doubleValue();
-        double max_shift        = ((Double) new Double(args[3])).doubleValue();
+        double length_reduction = Double.parseDouble(args[2]);
+        double max_shift        = Double.parseDouble(args[3]);
         String fn_out           = args[4];
         String fn_tnf           = "";
 
@@ -716,13 +716,13 @@ public class SplineDeformationGenerator_
     private ImagePlus[] createImageList () 
     {
         final int[] windowList = WindowManager.getIDList();
-        final Stack stack = new Stack();
+        final Stack<ImagePlus> stack = new Stack<ImagePlus>();
         for (int k = 0; ((windowList != null) && (k < windowList.length)); k++) 
         {
             final ImagePlus imp = WindowManager.getImage(windowList[k]);
             final int inputType = imp.getType();
-            if ((imp.getStackSize() == 1) || (inputType == imp.GRAY8) || (inputType == imp.GRAY16)
-                    || (inputType == imp.GRAY32)) 
+            if ((imp.getStackSize() == 1) || (inputType == ImagePlus.GRAY8) || (inputType == ImagePlus.GRAY16)
+                    || (inputType == ImagePlus.GRAY32)) 
             {
                 stack.push(imp);
             }
@@ -731,7 +731,7 @@ public class SplineDeformationGenerator_
         int k = 0;
         while (!stack.isEmpty()) 
         {
-            imageList[k++] = (ImagePlus)stack.pop();
+            imageList[k++] = stack.pop();
         }
         return(imageList);
     } /* end createImageList */

@@ -33,7 +33,7 @@ public // Obtain a slice perpendicular to the confocal plane along a collumn of 
 class CenterlineSlice {
 	public ImagePlus i1;				// reference image
 	private ImageStack stack1;			// related stack
-    public Vector Points;				// points defining the path along which to slice the image
+    public Vector<double[]> Points;				// points defining the path along which to slice the image
     private int nx,ny,nz;
 	byte[] r,g,b;						// red green blue
 
@@ -50,7 +50,7 @@ class CenterlineSlice {
 	    g = new byte[nx*ny];
 	    b = new byte[nx*ny];
 
-	    Points = new Vector();
+	    Points = new Vector<double[]>();
     }
 
     public void GenerateSlice()
@@ -63,8 +63,8 @@ class CenterlineSlice {
 	        ip1.getRGB(r,g,b);
 		for (int i=0;i<Points.size();i++)
 		{
-			double x = ((double[])(Points.get(i)))[0];
-			double y = ((double[])(Points.get(i)))[1];
+			double x = Points.get(i)[0];
+			double y = Points.get(i)[1];
 			int[] pix = AveragePixelValue(x, y);
 				cp.putPixel(i,j, (((int)pix[0] & 0xff) <<16)+ (((int)pix[1] & 0xff) << 8) + ((int)pix[2] & 0xff));
 		}

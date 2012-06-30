@@ -50,11 +50,11 @@ public class CPDragAndDrop implements DropTargetListener {
 		try {
 			Transferable t = dtde.getTransferable();
 			if (t.isDataFlavorSupported(DataFlavor.javaFileListFlavor)) {
-				Object data = t.getTransferData(DataFlavor.javaFileListFlavor);
-				Iterator iterator = ((List) data).iterator();
+				List<File> data = (List<File>) t.getTransferData(DataFlavor.javaFileListFlavor);
+				Iterator<File> iterator = data.iterator();
 				// IJ.log("drop");
 				while (iterator.hasNext()) {
-					final File file = (File) iterator.next();
+					final File file = iterator.next();
 					// IJ.log("dopen: "+file.getAbsolutePath());
 					final Reader reader = ServiceMediator.getReader();
 					SwingUtilities.invokeLater(new Runnable() {

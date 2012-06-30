@@ -35,7 +35,7 @@ import java.util.Set;
  * @version 1.01
  * @see java.util.HashMap
  */
-public class IntHashMap {
+public class IntHashMap<V> {
 	
   // CHANGELOG
   // 2005-11-21 1.01 fixed rehash size bug
@@ -50,7 +50,7 @@ public class IntHashMap {
   private static final int ENTRIES = 2;
 
   /** The hashmap data. */
-  private Entry[] data;
+  private Entry<V>[] data;
   /** The total number of entries in the map. */
   private int size;
   /**
@@ -92,13 +92,13 @@ public class IntHashMap {
   /**
    * Constructs a new HashMap with the same mappings as the specified map.
    */
-  public IntHashMap(Map aMap) {
+  public IntHashMap(Map<Integer, Object> aMap) {
 	this(Math.max(2*aMap.size(), 16), 0.75f); // some space for growing
 	putAll(aMap);
   }
 
   /** Constructs a new HashMap with the same mappings as the specified Map. */
-  public IntHashMap(IntHashMap anIntHashMap) {
+  public IntHashMap(IntHashMap<V> anIntHashMap) {
 	this(Math.max(2*anIntHashMap.size(), 16), 0.75f);//some space for growing
 	putAll(anIntHashMap);
   }
@@ -108,7 +108,7 @@ public class IntHashMap {
   public void clear(){
 	if (size > 0) {
 	  ++modCount;
-	  Arrays.fill((Object[]) data, 0, size-1, null);
+	  Arrays.fill(data, 0, size-1, null);
 	  size = 0;
 	}
   }
@@ -118,7 +118,7 @@ public class IntHashMap {
    * are not cloned.
    */
   public Object clone() {
-	final IntHashMap anIntHashMap = new IntHashMap(data.length, loadFactor);
+	final IntHashMap<V> anIntHashMap = new IntHashMap<V>(data.length, loadFactor);
 	System.arraycopy(data, 0, anIntHashMap.data, 0, size);
 	anIntHashMap.size = size;
 	return anIntHashMap;
@@ -132,9 +132,9 @@ public class IntHashMap {
 
   /** Returns true if this map contains a mapping for the specified key. */
   public boolean containsKey(int key) {
-	final Entry[] table = data;
+	final Entry<V>[] table = data;
 	final int idx = hash(key, table.length);
-	for (Entry anEntry=table[idx]; anEntry!=null; anEntry=anEntry.next)
+	for (Entry<V> anEntry=table[idx]; anEntry!=null; anEntry=anEntry.next)
 	  if (anEntry.key==key)
 		return true;
 	return false;
@@ -150,15 +150,15 @@ public class IntHashMap {
 
   /** Returns true if this map maps one or more keys to the specified value. */
   public boolean containsValue(Object value) {
-	final Entry[] table = data;
+	final Entry<V>[] table = data;
 	if (value == null) {
 	  for (int i=0; i<data.length; ++i)
-		for (Entry anEntry=table[i]; anEntry!=null; anEntry=anEntry.next)
+		for (Entry<V> anEntry=table[i]; anEntry!=null; anEntry=anEntry.next)
 		  if (null == anEntry.value)
 			return true;
 	} else {
 	  for (int i=0; i<data.length; ++i)
-		for (Entry anEntry=table[i]; anEntry!=null; anEntry=anEntry.next)
+		for (Entry<V> anEntry=table[i]; anEntry!=null; anEntry=anEntry.next)
 		  if (value.equals(anEntry.value))
 			return true;
 	}
@@ -166,29 +166,29 @@ public class IntHashMap {
   }
 
   /**  Returns a collection view of the mappings contained in this map. */
-  public Set entrySet(){
-	return new AbstractSet() {
+  public Set<Entry<V>> entrySet(){
+	return new AbstractSet<Entry<V>>() {
 		public void clear() {
 		  IntHashMap.this.clear();
 		}
-		public boolean contains(Object o) {
+		public boolean contains(final Object o) {
 		  if (!(o instanceof Map.Entry))
 			return false;
-		  final Entry searched = (Entry) o;
-		  final Entry[] table = IntHashMap.this.data;
+		  final Entry<V> searched = (Entry<V>) o;
+		  final Entry<V>[] table = IntHashMap.this.data;
 		  final int idx = IntHashMap.this.hash(searched.key, table.length);
-		  for (Entry entry=table[idx]; entry!=null; entry=entry.next)
+		  for (Entry<V> entry=table[idx]; entry!=null; entry=entry.next)
 			if (entry.equals(searched))
 			  return true;
 		  return false;
 		}
-		public Iterator iterator() {
-		  return new MapIterator(ENTRIES);
+		public Iterator<Entry<V>> iterator() {
+		  return new MapIterator<Entry<V>>(ENTRIES);
 		}
-		public boolean remove(Object o) {
+		public boolean remove(final Object o) {
 		  if (!(o instanceof Entry))
 			return false;
-		  return IntHashMap.this.removeEntry((Entry) o);
+		  return IntHashMap.this.removeEntry((Entry<V>) o);
 		}
 		public int size() {
 		  return IntHashMap.this.size;
@@ -202,12 +202,12 @@ public class IntHashMap {
 	  return true;
 	if (!(o instanceof IntHashMap))
 	  return false;
-	final IntHashMap anIntHashMap = (IntHashMap) o;
+	final IntHashMap<V> anIntHashMap = (IntHashMap<V>) o;
 	if (anIntHashMap.size != size)
 	  return false;
-	final Iterator anIterator = entrySet().iterator();
+	final Iterator<Entry<V>> anIterator = entrySet().iterator();
 	while ( anIterator.hasNext()) {
-	  final Entry anEntry = (Entry) anIterator.next();
+	  final Entry<V> anEntry = anIterator.next();
 	  if (anEntry.value == null) {
 		if (!(anIntHashMap.containsKey(anEntry.key)
 			  && anIntHashMap.get(anEntry.key)==null))
@@ -224,10 +224,10 @@ public class IntHashMap {
    * Returns the value to which the specified key is mapped in this
    * hashmap, or null if the map contains no mapping for this key.
    */
-  public Object get(int key){
-	final Entry[] table = data;
+  public V get(int key){
+	final Entry<V>[] table = data;
 	final int idx =  hash(key, table.length);
-	for (Entry anEntry=table[idx]; anEntry!=null; anEntry=anEntry.next)
+	for (Entry<V> anEntry=table[idx]; anEntry!=null; anEntry=anEntry.next)
 	  if (anEntry.key==key)
 		return anEntry.value;
 	return null;
@@ -244,7 +244,7 @@ public class IntHashMap {
   /** Returns the hash code value for this map. */
   public int hashCode(){
 	int hash = 0;
-	final Iterator anIterator = entrySet().iterator();
+	final Iterator<Entry<V>> anIterator = entrySet().iterator();
 	while (anIterator.hasNext())
 	  hash += anIterator.next().hashCode();
 	return hash;
@@ -259,10 +259,10 @@ public class IntHashMap {
    * Returns a set view of the keys contained in this map, with the int
    * keys wrapped into <CODE>Integer</CODE> objects.
    */
-  public Set keySet(){
-	return new AbstractSet() {
-		public Iterator iterator() {
-		  return new MapIterator(KEYS);
+  public Set<Integer> keySet() {
+	return new AbstractSet<Integer>() {
+		public Iterator<Integer> iterator() {
+		  return new MapIterator<Integer>(KEYS);
 		}
 		public int size() {
 		  return IntHashMap.this.size;
@@ -273,7 +273,7 @@ public class IntHashMap {
 		public boolean remove(Object o) {
 		  if (!(o instanceof Integer))
 			return false;
-		  final Entry entry =
+		  final Entry<V> entry =
 			IntHashMap.this.removeEntryByKey(((Integer) o).intValue());
 		  if (entry != null)
 			entry.value = null; // help gc
@@ -291,13 +291,13 @@ public class IntHashMap {
    * @return the previous value of the specified key in this map
    *         or <CODE>null</CODE> if it did not have one.
    */
-  public Object put(int key, Object value) {
+  public V put(int key, V value) {
 	// already present in map?
-	Entry[] table = data;
+	Entry<V>[] table = data;
 	int idx = hash(key, table.length);
-	for (Entry anEntry=table[idx]; anEntry!=null; anEntry=anEntry.next)
+	for (Entry<V> anEntry=table[idx]; anEntry!=null; anEntry=anEntry.next)
 	  if (anEntry.key==key) {
-		final Object old = anEntry.value;
+		final V old = anEntry.value;
 		anEntry.value = value;
 		return old;
 	  }
@@ -305,14 +305,14 @@ public class IntHashMap {
 	// check for resize
 	if (size >= threshold) {
 	  // increase table size and rehash:
-	  final Entry[] oldData = data;
-	  final Entry[] newData = new Entry[2*oldData.length+1];
+	  final Entry<V>[] oldData = data;
+	  final Entry<V>[] newData = new Entry[2*oldData.length+1];
 	  ++modCount;
 	  threshold = (int) (newData.length * loadFactor);
 	  for (int i=0; i<oldData.length; ++i) {
-		Entry entry=oldData[i];
+		Entry<V> entry=oldData[i];
 		while (entry!=null) {
-		  final Entry curr = entry;
+		  final Entry<V> curr = entry;
 		  entry = entry.next;
 		  final int newIdx = hash(curr.key, newData.length);
 		  curr.next = newData[newIdx];
@@ -325,7 +325,7 @@ public class IntHashMap {
 	  idx = hash(key, table.length);
 	}
 	// add new entry
-	table[idx] = new Entry(key, value, table[idx]);
+	table[idx] = new Entry<V>(key, value, table[idx]);
 	++size;
 	return null;
   }
@@ -338,10 +338,10 @@ public class IntHashMap {
 	return put(key.intValue(), value);
   }
 
-  private void putAll(Iterator aMapEntryInterator) {
+  private<T extends Map.Entry<Integer, Object>> void putAll(Iterator<T> aMapEntryInterator) {
 	while (aMapEntryInterator.hasNext()) {
-	  Map.Entry anEntry = (Map.Entry) aMapEntryInterator.next();
-	  put(((Integer) anEntry.getKey()).intValue(), anEntry.getValue());
+	  T anEntry = aMapEntryInterator.next();
+	  put(anEntry.getKey(), anEntry.getValue());
 	}
   }
 
@@ -362,15 +362,15 @@ public class IntHashMap {
    * @exception ClassCastException if a key of class other than Integer is
    *            contained in the given map.
    */
-  public void putAll(Map aMap){
+  public void putAll(Map<Integer, Object> aMap){
 	putAll(aMap.entrySet().iterator());
   }
 
   // for set returned by entrySet()
-  private boolean removeEntry(Entry anEntry) {
-	final Entry[] table = data;
+  private boolean removeEntry(Entry<V> anEntry) {
+	final Entry<V>[] table = data;
 	final int idx = hash(anEntry.key, table.length);
-	for (Entry curr=table[idx],prev=null; curr!=null; prev=curr,curr=curr.next)
+	for (Entry<V> curr=table[idx],prev=null; curr!=null; prev=curr,curr=curr.next)
 	  if (anEntry.equals(curr)) {
 		++modCount;
 		if (prev == null)
@@ -382,10 +382,10 @@ public class IntHashMap {
 	return false;
   }
 
-  public Entry removeEntryByKey(int key){
-	final Entry[] table = data;
+  public Entry<V> removeEntryByKey(int key){
+	final Entry<V>[] table = data;
 	final int idx = hash(key, table.length);
-	for (Entry curr=table[idx],prev=null; curr!=null; prev=curr,curr=curr.next)
+	for (Entry<V> curr=table[idx],prev=null; curr!=null; prev=curr,curr=curr.next)
 	  if (curr.key==key) {
 		++modCount;
 		if (prev == null)
@@ -404,7 +404,7 @@ public class IntHashMap {
    *         or <CODE>null</CODE> if the key did not have a mapping.
    */
   public Object remove(int key){
-	final Entry removed = removeEntryByKey(key);
+	final Entry<V> removed = removeEntryByKey(key);
 	if (removed != null) {
 	  final Object value = removed.value;
 	  removed.value = null; // help gc
@@ -428,16 +428,16 @@ public class IntHashMap {
 
   /** Returns a string representation of this map. */
   public String toString(){
-	final Iterator anIterator = entrySet().iterator();
+	final Iterator<Entry<V>> anIterator = entrySet().iterator();
 	final StringBuffer aStringBuffer = new StringBuffer();
 	aStringBuffer.append("IntHashMap{");
 	if (anIterator.hasNext()) {
-	  final Entry anEntry = (Entry) anIterator.next();
+	  final Entry<V> anEntry = anIterator.next();
 	  aStringBuffer.append(anEntry.key).append("=").append(anEntry.value);
 	}
 	while (anIterator.hasNext()) {
 	  aStringBuffer.append(",");
-	  final Entry anEntry = (Entry) anIterator.next();
+	  final Entry<V> anEntry = anIterator.next();
 	  aStringBuffer.append(anEntry.key+"="+anEntry.value);
 	}
 	aStringBuffer.append("}");
@@ -445,10 +445,10 @@ public class IntHashMap {
   }
 
   /** Returns a collection view of the values contained in this map. */
-  public Collection values() {
-	return new AbstractCollection() {
-		public Iterator iterator() {
-		  return new MapIterator(VALUES);
+  public Collection<V> values() {
+	return new AbstractCollection<V>() {
+		public Iterator<V> iterator() {
+		  return new MapIterator<V>(VALUES);
 		}
 		public int size() {
 		  return size;
@@ -467,7 +467,7 @@ public class IntHashMap {
   ///////////////////////////////////////////////////////////////////////////
 
   /** Class for representing a key-value-pair in the map. */
-  private static class Entry implements Map.Entry, Serializable {
+  private static class Entry<V> implements Map.Entry<Integer, V>, Serializable {
 
 	/**
 	 * Generated serial version UID
@@ -475,10 +475,10 @@ public class IntHashMap {
 	private static final long serialVersionUID = 577580285278842632L;
 	
 	final int key;
-	Object value;
-	Entry next;
+	V value;
+	Entry<V> next;
 
-	Entry(int key, Object value, Entry next) {
+	Entry(int key, V value, Entry<V> next) {
 	  this.key = key;
 	  this.value = value;
 	  this.next = next;
@@ -488,18 +488,18 @@ public class IntHashMap {
 	public boolean equals(Object o) {
 	  if (!(o instanceof Entry))
 		return false;
-	  final Entry anEntry = (Entry) o;
+	  final Entry<V> anEntry = (Entry<V>) o;
 	  return (key==anEntry.key) &&
 		((value==null)?(anEntry.value==null):(value.equals(anEntry.value)));
 	}
 
 	/** Returns the key corresponding to this entry, wrapped to an Integer. */
-	public Object getKey() {
-	  return new Integer(key);
+	public Integer getKey() {
+	  return key;
 	}
 
 	/** Returns the value corresponding to this entry. */
-	public Object getValue() {
+	public V getValue() {
 	  return value;
 	}
 
@@ -509,20 +509,20 @@ public class IntHashMap {
 	}
 
 	/** Replaces the value in this entry with the specified value. */
-	public Object setValue(Object value) {
-	  final Object oldValue = this.value;
+	public V setValue(V value) {
+	  final V oldValue = this.value;
 	  this.value = value;
 	  return oldValue;
 	}
   }
 
-  /** Class for provinding the iterators on the map. */
-  private class MapIterator implements Iterator {
+  /** Class for providing the iterators on the map. */
+  private class MapIterator<E> implements Iterator<E> {
 
-	private final Entry[] table = IntHashMap.this.data;
+	private final Entry<V>[] table = IntHashMap.this.data;
 	private int index = -1;
-	private Entry currEntry = null;
-	private Entry prevEntry = null;
+	private Entry<V> currEntry = null;
+	private Entry<V> prevEntry = null;
 	private int validModCount = IntHashMap.this.modCount;
 	// Iterator for keys, values, or entries?
 	private int type;
@@ -533,7 +533,7 @@ public class IntHashMap {
 	}
 
 	public boolean hasNext() {
-	  Entry entry = currEntry;
+	  Entry<V> entry = currEntry;
 	  int i = index;
 	  while (entry==null && i<table.length)
 		entry = table[++i];
@@ -541,10 +541,10 @@ public class IntHashMap {
 	  return (currEntry=table[index]) != null;
 	}
 
-	public Object next() {
+	public E next() {
 	  if (modCount != validModCount)
 		throw new ConcurrentModificationException();
-	  Entry entry = currEntry;
+	  Entry<V> entry = currEntry;
 	  int i = index;
 	  while (entry==null && i<table.length)
 		entry = table[++i];
@@ -554,10 +554,9 @@ public class IntHashMap {
 	  prevEntry = currEntry;
 	  currEntry = entry.next;
 	  if (type == ENTRIES)
-		return entry;
+		return (E) entry;
 	  else
-		return (type==KEYS)
-		  ? ((Object) (new Integer(entry.key))) : entry.value;
+		return (E) ((type==KEYS) ? entry.key : entry.value);
 	}
 
 	public void remove() {

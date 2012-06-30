@@ -276,7 +276,7 @@ public class MultipleKymograph_ implements PlugIn {
 			x[i]+=shift;
 			y[i]+=shift;
 		}
-        		Rectangle r = roi.getBoundingRect();
+        		Rectangle r = roi.getBounds();
         		int xbase = r.x;
         		int ybase = r.y;
         		double length = 0.0;

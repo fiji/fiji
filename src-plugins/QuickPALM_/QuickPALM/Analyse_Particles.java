@@ -116,7 +116,7 @@ public class Analyse_Particles implements PlugIn
 						{
 							try
 							{
-								Thread.currentThread().sleep(1);
+								Thread.sleep(1);
 							}
 							catch(Exception e)
 							{

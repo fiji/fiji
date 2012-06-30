@@ -32,7 +32,7 @@ public class DomXmlExporter {
 		ImagePlus imp = reader.open(filename, false);
 		reader.updateMetadata(imp);
 		LSMFileInfo lsm = (LSMFileInfo) imp.getOriginalFileInfo();
-		ImageDirectory imDir = (ImageDirectory) lsm.imageDirectories.get(0);
+		ImageDirectory imDir = lsm.imageDirectories.get(0);
 		CZLSMInfoExtended cz = (CZLSMInfoExtended) imDir.TIF_CZ_LSMINFO;
 		return buildTree(cz,filter);
 	}
@@ -79,7 +79,7 @@ public class DomXmlExporter {
 			root.appendChild(child);
 
 			for (int i = 0; i < recordings.size(); i++) {
-				Recording recording = (Recording) recordings.get(i);
+				Recording recording = recordings.get(i);
 				Element rec = doc.createElement("Recording");
 				rec = populateNode(rec, Recording.data, recording.records);
 				if (recording.lasers != null) {
@@ -262,20 +262,20 @@ public class DomXmlExporter {
 			Object o = records.get(data[i][2]);
 			if (o != null) {
 				String s = "";
-				if ((Enum) data[i][1] == DataType.STRING)
+				if (data[i][1] == DataType.STRING)
 					s = o.toString();
-				if ((Enum) data[i][1] == DataType.INTEGER)
+				if (data[i][1] == DataType.INTEGER)
 					s = Integer.toString((Integer) o);
-				if ((Enum) data[i][1] == DataType.LONG)
+				if (data[i][1] == DataType.LONG)
 					s = Long.toString((Long) o);
-				if ((Enum) data[i][1] == DataType.DOUBLE)
+				if (data[i][1] == DataType.DOUBLE)
 					s = Double.toString((Double) o);
 
 				String id = Long.toString((Long) data[i][0]);
 				Element node = doc.createElement(((String) data[i][2]));
 				// node.setAttribute("name", (String) data[i][2]);
 				node.setAttribute("id", id);
-				node.setAttribute("type", ((Enum) data[i][1]).toString());
+				node.setAttribute("type", (data[i][1]).toString());
 				node.appendChild(doc.createTextNode(s));
 				pNode.appendChild(node);
 			}
@@ -283,7 +283,7 @@ public class DomXmlExporter {
 		return pNode;
 	}
 
-	private Element addNode(Element pNode, String name, Enum e, Object value) {
+	private Element addNode(Element pNode, String name, Enum<DataType> e, Object value) {
 		Element node = doc.createElement(name);
 		// node.setAttribute("name", name);
 		node.setAttribute("type", e.toString());
@@ -293,7 +293,7 @@ public class DomXmlExporter {
 		return pNode;
 	}
 
-	private String getDataType(Enum e) {
+	private String getDataType(Enum<DataType> e) {
 		return e.toString();
 	}
 }

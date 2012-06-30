@@ -815,8 +815,8 @@ public class Balloon extends Thread  	/* BEGIN Balloon class definition */
 		YY= new double[n1];						// new balloon
 		for (int i=0;i<n1;i++)
 			{
-			 XX[i] = (Double)(Xnew.get(i));
-			 YY[i] = (Double)(Ynew.get(i));
+			 XX[i] = Xnew.get(i);
+			 YY[i] = Ynew.get(i);
 			}
 		n0 = n1 ;
 		if (n0> POP.max_n0){POP.max_n0 = n0;}
