@@ -33,7 +33,7 @@ public class LsmImageTableModel extends AbstractTableModel{
     }
 
     public Object getValueAt(int row, int col) {
-        File file = (File)files.get(row);
+        File file = files.get(row);
         if (col == 0)
 		return file.getName();
         if (col == 1)
@@ -81,7 +81,7 @@ public class LsmImageTableModel extends AbstractTableModel{
         setValueAt(file,row,col);
     }
     public File getFileAt(int row, int col){
-        return (File)files.get(row*columnTitles.length+col);
+        return files.get(row*columnTitles.length+col);
     }
 
     public ArrayList<File> getFiles() {

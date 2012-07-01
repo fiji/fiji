@@ -96,10 +96,10 @@ public class LevelSetFactory {
 			double grey_tol = ((Double) param_val.get(Parameter.TOL_GRAYSCALE)).doubleValue();
 			
 			if (verbose > 0) {
-				IJ.log(((String) param_desc.get(Parameter.CONVERGENCE)) + " = " + convergence );
-				IJ.log(((String) param_desc.get(Parameter.W_ADVECTION)) + " = " + advection );
-				IJ.log(((String) param_desc.get(Parameter.W_CURVATURE)) + " = " + curvature );
-				IJ.log(((String) param_desc.get(Parameter.TOL_GRAYSCALE)) + " = " + grey_tol );
+				IJ.log((param_desc.get(Parameter.CONVERGENCE)) + " = " + convergence );
+				IJ.log((param_desc.get(Parameter.W_ADVECTION)) + " = " + advection );
+				IJ.log((param_desc.get(Parameter.W_CURVATURE)) + " = " + curvature );
+				IJ.log((param_desc.get(Parameter.TOL_GRAYSCALE)) + " = " + grey_tol );
 			}
 			
 			return new ActiveContours(image, img_progress, init_state, 
@@ -113,10 +113,10 @@ public class LevelSetFactory {
 			double propagation = ((Double) param_val.get(Parameter.W_PROPAGATION)).doubleValue();
 			
 			if (verbose > 0) {
-				IJ.log(((String) param_desc.get(Parameter.CONVERGENCE)) + " = " + convergence );
-				IJ.log(((String) param_desc.get(Parameter.W_ADVECTION)) + " = " + advection );
-				IJ.log(((String) param_desc.get(Parameter.W_CURVATURE)) + " = " + curvature );
-				IJ.log(((String) param_desc.get(Parameter.W_PROPAGATION)) + " = " + propagation );
+				IJ.log((param_desc.get(Parameter.CONVERGENCE)) + " = " + convergence );
+				IJ.log((param_desc.get(Parameter.W_ADVECTION)) + " = " + advection );
+				IJ.log((param_desc.get(Parameter.W_CURVATURE)) + " = " + curvature );
+				IJ.log((param_desc.get(Parameter.W_PROPAGATION)) + " = " + propagation );
 			}
 
 			return new GeodesicActiveContour(image, img_progress, init_state, 

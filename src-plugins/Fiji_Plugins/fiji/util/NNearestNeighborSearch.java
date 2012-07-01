@@ -57,10 +57,10 @@ public class NNearestNeighborSearch<T extends Leaf<T>>
 						point.distanceTo(leaf); index++);
 			else {
 				index = Arrays.binarySearch(result, leaf,
-					new Comparator() {
-					public int compare(Object a, Object b) {
-						float distA = point.distanceTo((T)a);
-						float distB = point.distanceTo((T)b);
+					new Comparator<T>() {
+					public int compare(T a, T b) {
+						float distA = point.distanceTo(a);
+						float distB = point.distanceTo(b);
 						return distA < distB ? -1 :
 							distA > distB ? +1 : 0;
 					}

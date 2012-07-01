@@ -14,8 +14,7 @@ public class StampUtils {
 	public static String getTStamps(Reader reader, ImagePlus imp) {
 		reader.updateMetadata(imp);
 		LSMFileInfo openLSM = (LSMFileInfo) imp.getOriginalFileInfo();
-		CZLSMInfoExtended cz = (CZLSMInfoExtended) ((ImageDirectory) openLSM.imageDirectories
-				.get(0)).TIF_CZ_LSMINFO;
+		CZLSMInfoExtended cz = (CZLSMInfoExtended) openLSM.imageDirectories.get(0).TIF_CZ_LSMINFO;
 		int n = new Long(cz.timeStamps.NumberTimeStamps).intValue();
 		String[] stamps = new String[n];
 		for (int k = 0; k < n; k++)
@@ -26,10 +25,9 @@ public class StampUtils {
 	public static String getZStamps(Reader reader, ImagePlus imp) {
 		reader.updateMetadata(imp);
 		LSMFileInfo openLSM = (LSMFileInfo) imp.getOriginalFileInfo();
-		CZLSMInfoExtended cz = (CZLSMInfoExtended) ((ImageDirectory) openLSM.imageDirectories
-				.get(0)).TIF_CZ_LSMINFO;
-		Recording r = (Recording) cz.scanInfo.recordings.get(0);
-		double planeSpacing = ((Double) r.records.get("PLANE_SPACING")).doubleValue();
+		CZLSMInfoExtended cz = (CZLSMInfoExtended) openLSM.imageDirectories.get(0).TIF_CZ_LSMINFO;
+		Recording r = cz.scanInfo.recordings.get(0);
+		double planeSpacing = ((Double) r.records.get("PLANE_SPACING"));
 		double ps = 0;
 		String[] stamps = new String[(int) cz.DimensionZ];
 		for (int k = 0; k < cz.DimensionZ; k++){
@@ -42,8 +40,7 @@ public class StampUtils {
 	public static String getLStamps(Reader reader, ImagePlus imp) {
 		reader.updateMetadata(imp);
 		LSMFileInfo openLSM = (LSMFileInfo) imp.getOriginalFileInfo();
-		CZLSMInfoExtended cz = (CZLSMInfoExtended) ((ImageDirectory) openLSM.imageDirectories
-				.get(0)).TIF_CZ_LSMINFO;
+		CZLSMInfoExtended cz = (CZLSMInfoExtended) openLSM.imageDirectories.get(0).TIF_CZ_LSMINFO;
 		if (cz.SpectralScan != 1) {
 			IJ
 					.error("Image not issued from spectral scan. Lambda stamp obsolete!");
@@ -60,8 +57,7 @@ public class StampUtils {
 	public static String getEvents(Reader reader, ImagePlus imp) {
 		reader.updateMetadata(imp);
 		LSMFileInfo openLSM = (LSMFileInfo) imp.getOriginalFileInfo();
-		CZLSMInfoExtended cz = (CZLSMInfoExtended) ((ImageDirectory) openLSM.imageDirectories
-				.get(0)).TIF_CZ_LSMINFO;
+		CZLSMInfoExtended cz = (CZLSMInfoExtended) openLSM.imageDirectories.get(0).TIF_CZ_LSMINFO;
 
 		EventList events = cz.eventList;
 		StringBuffer buffer = new StringBuffer();

@@ -55,7 +55,7 @@ public class LabelBinaryOps implements PlugInFilter{
 		ArrayList<Integer> dilateOffset = new ArrayList<Integer>();
         Rectangle bounds;
 		if(roi != null){
-			bounds = roi.getBoundingRect();
+			bounds = roi.getBounds();
 		}else{
 			bounds = new Rectangle(0,0,width, pixelData.length/width);
 		}
@@ -101,7 +101,7 @@ public class LabelBinaryOps implements PlugInFilter{
 
 		Rectangle bounds;
 		if(roi != null){
-			bounds = roi.getBoundingRect();
+			bounds = roi.getBounds();
 		}else{
 			bounds = new Rectangle(0,0,width, pixelData.length/width);
 		}

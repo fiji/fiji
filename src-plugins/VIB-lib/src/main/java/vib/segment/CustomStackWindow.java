@@ -184,9 +184,9 @@ public class CustomStackWindow extends StackWindow
 		updateRois();
 		new Thread(new Runnable() {
 			public void run() {
-				setCursor(Cursor.WAIT_CURSOR);
+				setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
 				new BinaryInterpolator().run(cc.getImage(), savedRois);
-				setCursor(Cursor.DEFAULT_CURSOR);
+				setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
 			}
 		}).start();
 		cc.requestFocus();
@@ -256,7 +256,7 @@ public class CustomStackWindow extends StackWindow
 		int w = labels.getWidth(), h = labels.getHeight();
 		ImageProcessor labP = labels.getStack().getProcessor(slice);
 		labP.setRoi(roi);
-		Rectangle bounds = roi.getBoundingRect();
+		Rectangle bounds = roi.getBounds();
 		int x1 = bounds.x > 0 ? bounds.x : 0;
 		int y1 = bounds.y > 0 ? bounds.y : 0;
 		int x2 = x1 + bounds.width <= w ? x1 + bounds.width : w;
@@ -287,7 +287,7 @@ public class CustomStackWindow extends StackWindow
 		int w = labels.getWidth(), h = labels.getHeight();
 		ImageProcessor labP = labels.getStack().getProcessor(slice);
 		labP.setRoi(roi);
-		Rectangle bounds = roi.getBoundingRect();
+		Rectangle bounds = roi.getBounds();
 
 		int x1 = bounds.x > 0 ? bounds.x : 0;
 		int y1 = bounds.y > 0 ? bounds.y : 0;

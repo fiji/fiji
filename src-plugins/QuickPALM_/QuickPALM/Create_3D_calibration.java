@@ -76,7 +76,7 @@ public class Create_3D_calibration implements PlugIn
 			sSum = 0;
 			for (int r=0;r<dg.rois.length;r++)
 			{
-				roi = dg.rois[r].getBoundingRect();
+				roi = dg.rois[r].getBounds();
 				results = fx.getParticleForCalibration(ip, dg, roi.x, roi.x+roi.width, roi.y, roi.y+roi.height);
 				sgnl[r][s-1]=results[0];
 				xstd[r][s-1]=results[3]+results[4];

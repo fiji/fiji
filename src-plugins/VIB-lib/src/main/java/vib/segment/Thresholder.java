@@ -60,7 +60,7 @@ public class Thresholder {
 		gd.addCheckbox("show binary", false);
 		gd.addSlider("slice", 1, image.getStackSize(),
 				image.getCurrentSlice());
-		Vector<Scrollbar> sliders = (Vector<Scrollbar>)gd.getSliders();
+		Vector<Scrollbar> sliders = gd.getSliders();
 		final Scrollbar minSlider = sliders.get(0);
 		final Scrollbar maxSlider = sliders.get(1);
 		final Scrollbar iterationSlider = sliders.get(2);
@@ -154,7 +154,7 @@ public class Thresholder {
 		byte[] c = (byte[])copy.getPixels();
 
 		int w = ip.getWidth(), h = ip.getHeight();
-		Rectangle bounds = roi.getBoundingRect();
+		Rectangle bounds = roi.getBounds();
 		int x1 = Math.min(0, bounds.x);
 		int y1 = Math.min(0, bounds.y);
 		int x2 = Math.max(w, x1 + bounds.width);

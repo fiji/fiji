@@ -40,13 +40,13 @@ public abstract class VJClassifiers
         // If you define a new VJClassifier, you will have to add it to "classes", for it
         // to be available to the renderer.
         // Applets do not support dynamic loading of .class files.
-        public static Vector classes = new Vector();
+        public static Vector<Class<?>> classes = new Vector<Class<?>>();
 
         public static void initClassifiers()
         {
                 if (classes.size() < 1)
                 {
-                        classes = new Vector();
+                        classes = new Vector<Class<?>>();
                         classes.addElement((new VJClassifierLNoIndex()).getClass());
                         classes.addElement((new VJClassifierIsosurface()).getClass());
                         classes.addElement((new VJClassifierGradientCT()).getClass());
@@ -70,7 +70,7 @@ public abstract class VJClassifiers
                         VJClassifier instance = null;
                         try
                         {
-                                instance = (VJClassifier) ((Class)classes.elementAt(i)).newInstance();
+                                instance = (VJClassifier) ((Class<?>)classes.elementAt(i)).newInstance();
                         }
                         catch (InstantiationException e) { VJUserInterface.write("Cannot instantiate "+e);}
                         catch (IllegalAccessException e) {VJUserInterface.write("Cannot instantiate (acc)");}
@@ -86,7 +86,7 @@ public abstract class VJClassifiers
          * Return the class belonging to index i.
 	 * @param i the number of the class.
          */
-        public static Class getClass(int i) { return (Class)classes.elementAt(i); }
+        public static Class getClass(int i) { return classes.elementAt(i); }
         /**
 	 * @param i the number of the class.
          * @return the VJClassifier belonging to index i.

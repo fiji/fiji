@@ -19,15 +19,16 @@ package utils;
 import ij.*;
 import ij.process.*;
 import java.util.*;
+
 import Jama.*;
 import ij.plugin.filter.*;
 
 public class Watershed
 {
 	int IM[][];											// the image personal format (DEPRECATRED)
-	ArrayList VERTEX = new ArrayList();						// cell vertices
-	ArrayList CELL = new ArrayList();							// Cell definition (1 cell = list of vertices)
-	ArrayList active_growth2 = new ArrayList();		//xxx	// active pixel for checking neighbors for merging
+	ArrayList<ArrayList<Integer>> VERTEX = new ArrayList<ArrayList<Integer>>();						// cell vertices
+	ArrayList<ArrayList<Integer>> CELL = new ArrayList<ArrayList<Integer>>();							// Cell definition (1 cell = list of vertices)
+	ArrayList<ArrayList<Matrix>> active_growth2 = new ArrayList<ArrayList<Matrix>>();		//xxx	// active pixel for checking neighbors for merging
 	double[] CENTx;										// lsit of Cell center x position
 	double[] CENTy;										// lsit of Cell center y position
 	Matrix[] NEGB = new Matrix[8];						// neighbor of a pixel
@@ -143,12 +144,12 @@ private void Flow_opt(int init, int stop_level)
 		{
 		IJ.showStatus("Watershed Finding bounds: " + (int)((double)(i)/(double)(stop_level)*100) +"%");
 		double x = 0;
-		ArrayList Vtmp = (ArrayList)(active_growth2.get(i));
+		ArrayList<Matrix> Vtmp = active_growth2.get(i);
 		int act_s = Vtmp.size();
 		while (act_s>0)// & (inc < 500))    			// loop for considering also plateau
 			{
 			update_Wactive2(i);
-			act_s = ((ArrayList)active_growth2.get(i)).size();
+			act_s = active_growth2.get(i).size();
 			max_iter +=1;
 			}
 		}
@@ -160,20 +161,20 @@ private void Flow_opt(int init, int stop_level)
 /** UPDATE THE GROWING REGION IN THE IMAGE (2nd generation algo) */
 private int update_Wactive2(int level)
 {
-	ArrayList lst = new ArrayList();
-	lst = (ArrayList)(((ArrayList)(active_growth2.get(level))).clone());
+	ArrayList<Matrix> lst = new ArrayList<Matrix>();
+	lst = (ArrayList<Matrix>) active_growth2.get(level).clone();
 	Matrix x;
 	int stop = 1;
 	int im,jm,basin;
 	int n = lst.size();
 
-	((ArrayList)(active_growth2.get(level))).clear();
+	active_growth2.get(level).clear();
 
 
 	// - get the basin to the flow level: level
 	int index = 0;
 	for (int k=0;k<n;k++) {
-		x = (Matrix)(lst.get(k));
+		x = lst.get(k);
         im = (int)(x.get(0,0));
         jm = (int)(x.get(0,1));
 		//if (im == 495)
@@ -194,7 +195,7 @@ private int update_Wactive2(int level)
 			if (IMB[i0][j0][2] <499 & IM2[i0][j0]<499)
 				{
 				double[][] addedPoint = {{i0,j0,basin}};
-				((ArrayList)(active_growth2.get( Math.max((int)level,Math.min((int)negbi.get(0,0),255)) ))).add(new Matrix(addedPoint));
+				active_growth2.get( Math.max((int)level,Math.min((int)negbi.get(0,0),255)) ).add(new Matrix(addedPoint));
 
 				if (Math.max((int)level,Math.min((int)negbi.get(0,0),255))==0)
 					{
@@ -237,15 +238,15 @@ private void append_i2(double x, double y, int k)
 {
 	for (int i=0;i<256;i++)
 	{
-		ArrayList row = new ArrayList();
+		ArrayList<Matrix> row = new ArrayList<Matrix>();
 		active_growth2.add(row);
 	}
-	ArrayList r= new ArrayList();
+	ArrayList<Integer> r= new ArrayList<Integer>();
 	r.add(new Integer(-1));
 	CELL.add(r);
 
 	Matrix vec;
-	ArrayList row = new ArrayList();
+	//ArrayList row = new ArrayList();
 	if (k==0)										// outside the plant: several seeds points are inserted for the SAME BASIN at boundaries
 	{
     int n_bseeds1 = 4;
@@ -256,20 +257,20 @@ private void append_i2(double x, double y, int k)
 			double[][] addedPoint1 = {{i*sx/n_edg+2,4,0}};
 			level = IM2[i*sx/n_edg+2][4];
 			Matrix MAT = new Matrix(addedPoint1);
-			((ArrayList)active_growth2.get(level)).add(MAT);
+			active_growth2.get(level).add(MAT);
 
 			double[][] addedPoint2 = {{4,i*sy/n_edg + 2,0}};
 			level = IM2[4][i*sy/n_edg + 2];
-			((ArrayList)active_growth2.get(level)).add(new Matrix(addedPoint2));
+			active_growth2.get(level).add(new Matrix(addedPoint2));
 
 			double[][] addedPoint3 = {{i*sx/n_edg + 2,sy - 4,0}};
 			level = IM2[i*sx/n_edg + 2][sy - 4];
-			((ArrayList)active_growth2.get(level)).add(new Matrix(addedPoint3));
+			active_growth2.get(level).add(new Matrix(addedPoint3));
 
 
 			double[][] addedPoint4 = {{sx - 4,i*sy/n_edg + 2,0}};
 			level = IM2[sx - 4][i*sy/n_edg + 2];
-			((ArrayList)active_growth2.get(level)).add(new Matrix(addedPoint4));
+			active_growth2.get(level).add(new Matrix(addedPoint4));
 
 
 			IMB[i*sx/n_edg+2][4][2] = 500;
@@ -283,7 +284,7 @@ private void append_i2(double x, double y, int k)
 		{
 			int level = Math.min(IM2[(int)x][(int)y],255);
 			double[][] addedPoint = {{x,y,k}};
-			((ArrayList)active_growth2.get(level)).add(new Matrix(addedPoint));
+			active_growth2.get(level).add(new Matrix(addedPoint));
 			IMB[(int)x][(int)y][2] = 500;
 		}
 
@@ -293,8 +294,8 @@ private void append_i2(double x, double y, int k)
 /** ADD A NEW VERTEX TO THE DATA STRUCTURE (CELL and VERTEX)*/
 private void append_v(int x, int y, int[] LL)
 {
-	ArrayList r = new ArrayList();;										// to append CELL
-	ArrayList row = new ArrayList();;										// to append to VERTEX
+	ArrayList<Integer> r = new ArrayList<Integer>();										// to append CELL
+	ArrayList<Integer> row = new ArrayList<Integer>();										// to append to VERTEX
 	row.add(new Integer(x));
 	row.add( new Integer(y));
 	int Lsize = LL.length;
@@ -309,12 +310,12 @@ private void append_v(int x, int y, int[] LL)
 	// Add the new vertex to the cells sharing this node
 	for (int i=0;i<Lsize;i++)
 	{
-		if ( ( (Integer)((ArrayList)(CELL.get((int)(LL[i]/1000)-1))).get(0) ).intValue() < 0   ) {
+		if ( (CELL.get((int)(LL[i]/1000)-1)).get(0) < 0   ) {
 		r.add(new Integer(n_vertex-1));
 		}
 		else
 		{
-		r = (ArrayList)CELL.get((int)(LL[i]/1000)-1);
+		r = CELL.get((int)(LL[i]/1000)-1);
 		r.add(new Integer(n_vertex-1));
 		}
 		CELL.set((int)(LL[i]/1000)-1,r);   /** should be set(...)*/
@@ -394,7 +395,7 @@ private void neighbour(int i, int j)
 /** SORT THE NEIGHBOURS OF A PIXEL ACCORDING TO THEIR LUMINANCE VALUE */
 private int[] _sort(int ii, int jj)
 {
-	ArrayList row = new ArrayList();
+	ArrayList<Integer> row = new ArrayList<Integer>();
 	int LI = IM2[ii][jj];
 
 	if (LI>Max_field)
@@ -409,7 +410,7 @@ private int[] _sort(int ii, int jj)
 			int add = 1;
 			for (int j=0;j<n;j++)
 			{
-				if ( (int)(x.get(0,0)) == ((Integer)row.get(j)).intValue())
+				if ( (int)(x.get(0,0)) == row.get(j))
 				{
 					add = 0;
 					break;
@@ -423,7 +424,7 @@ private int[] _sort(int ii, int jj)
 	int Rrow[]= new int[row.size()];
 	for (int i=0;i<row.size();i++)
 	{
-		Rrow[i] = ((Integer)(row.get(i))).intValue();
+		Rrow[i] = row.get(i);
 	}
 	Arrays.sort(Rrow);
 	return Rrow;

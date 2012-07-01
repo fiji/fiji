@@ -133,8 +133,7 @@ public class SelectImageDialog extends JDialog {
 				boolean add = false;
 				if (fi != null && fi instanceof LSMFileInfo) {
 					LSMFileInfo lsm = (LSMFileInfo) fi;
-					CZLSMInfoExtended cz = (CZLSMInfoExtended) ((ImageDirectory)lsm.imageDirectories
-							.get(0)).TIF_CZ_LSMINFO;
+					CZLSMInfoExtended cz = (CZLSMInfoExtended) lsm.imageDirectories.get(0).TIF_CZ_LSMINFO;
 					if (filter == MasterModel.TIME)
 						if (cz.DimensionTime > 1)
 							add = true;
@@ -167,8 +166,7 @@ public class SelectImageDialog extends JDialog {
 				int[] selectedIndices = imageList.getSelectedIndices();
 				values = new int[selectedIndices.length];
 				for (int i = 0; i < selectedIndices.length; i++) {
-					ListBoxImage im = (ListBoxImage) fileInfos
-							.get(selectedIndices[i]);
+					ListBoxImage im = fileInfos.get(selectedIndices[i]);
 					values[i] = im.imageIndex;
 				}
 				returnVal = OK_OPTION;

@@ -44,7 +44,7 @@ public class BatchConverter {
 		ImagePlus imp = r.open(f.getParent(), f.getName(), false, false);
 		if (imp != null && imp.getStackSize() > 0) {
 			LSMFileInfo lsm = (LSMFileInfo) imp.getOriginalFileInfo();
-			CZLSMInfo cz = (CZLSMInfo)((ImageDirectory)lsm.imageDirectories.get(0)).TIF_CZ_LSMINFO;
+			CZLSMInfo cz = (CZLSMInfo)lsm.imageDirectories.get(0).TIF_CZ_LSMINFO;
 			if (sepDir) {
 				finalDir = outputDir + System.getProperty("file.separator")
 						+ f.getName();

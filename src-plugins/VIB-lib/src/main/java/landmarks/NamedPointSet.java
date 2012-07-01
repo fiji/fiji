@@ -121,15 +121,15 @@ public class NamedPointSet {
 		pointsWorld = new ArrayList<NamedPointWorld>();
 	}
 
-	public ListIterator listIterator() {
+	public ListIterator<NamedPointWorld> listIterator() {
 		return pointsWorld.listIterator();
 	}
 
 	public NamedPointSet transformPointsWith( OrderedTransformations o ) {
 		NamedPointSet result = new NamedPointSet();
-		Iterator i0;
+		Iterator<NamedPointWorld> i0;
 		for( i0 = pointsWorld.listIterator(); i0.hasNext(); ) {
-			NamedPointWorld p = (NamedPointWorld)i0.next();
+			NamedPointWorld p = i0.next();
 			NamedPointWorld transformed = p.transformWith(o);
 			result.add( transformed );
 		}
@@ -148,7 +148,7 @@ public class NamedPointSet {
 	}
 
 	synchronized public NamedPointWorld delete(int i) {
-		return (NamedPointWorld)pointsWorld.remove(i);
+		return pointsWorld.remove(i);
 	}
 
 	public NamedPointWorld get(int i) {
@@ -168,8 +168,8 @@ public class NamedPointSet {
 	public String[] getPointNames(){
 		String[] sa= new String[pointsWorld.size()];
 		int i=0;
-		for (Iterator it = listIterator(); it.hasNext();) {
-			NamedPointWorld p = (NamedPointWorld)it.next();
+		for (ListIterator<NamedPointWorld> it = listIterator(); it.hasNext();) {
+			NamedPointWorld p = it.next();
 			sa[i++]=p.name;
 		}
 		return sa;

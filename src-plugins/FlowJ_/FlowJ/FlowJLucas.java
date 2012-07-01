@@ -233,14 +233,14 @@ public class FlowJLucas
                                         // convolve in the remaining directions with the spatial kernels.
                                         // Create a buffer volume.
                                         VolumeFloat temp = new VolumeFloat(is.getWidth(), is.getHeight(), 1);
-                                        temp.convolvex(dx, (Kernel1D) sgradientKernel);
-                                        dx.convolvey(temp, (Kernel1D) sKernel);
+                                        temp.convolvex(dx, sgradientKernel);
+                                        dx.convolvey(temp, sKernel);
                                         // convolve in the remaining directions for y derivatives.
-                                        temp.convolvex(dy, (Kernel1D) sKernel);
-                                        dy.convolvey(temp, (Kernel1D) sgradientKernel);
+                                        temp.convolvex(dy, sKernel);
+                                        dy.convolvey(temp, sgradientKernel);
                                         // convolve in the remaining directions for t derivatives.
-                                        temp.convolvex(dt, (Kernel1D) sKernel);
-                                        dt.convolvey(temp, (Kernel1D) sKernel);
+                                        temp.convolvex(dt, sKernel);
+                                        dt.convolvey(temp, sKernel);
                                         break;
                                 case SUBTRACT:
                                         v = new VolumeFloat(is.getWidth(), is.getHeight(), 2);

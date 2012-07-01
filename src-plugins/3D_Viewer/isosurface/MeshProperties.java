@@ -21,7 +21,7 @@ public class MeshProperties {
 	 * @param cm contains the center of gravity after the calculation
 	 * @param inertia contains the inertia matrix after the calculation.
 	 */
-	public static double compute(List p, Point3d cm, double[][] inertia) {
+	public static double compute(List<Point3f> p, Point3d cm, double[][] inertia) {
 
 		int tmax = p.size() / 3;
 		final double[] mult = {1d/6, 1d/24, 1d/24,1d/24, 1d/60, 1d/60,
@@ -35,15 +35,15 @@ public class MeshProperties {
 			// get vertices of triangle t
 			int i0 = 3 * t, i1 = 3 * t + 1, i2 = 3 * t + 2;
 
-			double x0 = ((Point3f)p.get(i0)).x;
-			double y0 = ((Point3f)p.get(i0)).y;
-			double z0 = ((Point3f)p.get(i0)).z;
-			double x1 = ((Point3f)p.get(i1)).x;
-			double y1 = ((Point3f)p.get(i1)).y;
-			double z1 = ((Point3f)p.get(i1)).z;
-			double x2 = ((Point3f)p.get(i2)).x;
-			double y2 = ((Point3f)p.get(i2)).y;
-			double z2 = ((Point3f)p.get(i2)).z;
+			double x0 = p.get(i0).x;
+			double y0 = p.get(i0).y;
+			double z0 = p.get(i0).z;
+			double x1 = p.get(i1).x;
+			double y1 = p.get(i1).y;
+			double z1 = p.get(i1).z;
+			double x2 = p.get(i2).x;
+			double y2 = p.get(i2).y;
+			double z2 = p.get(i2).z;
 
 			// get edges and cross product of edges
 			double a1 = x1 - x0, b1 = y1 - y0, c1 = z1 - z0;
@@ -110,7 +110,7 @@ public class MeshProperties {
 	}
 
 	public static void calculateMinMaxPoint(
-			List mesh, Point3d min, Point3d max) {
+			List<Point3f> mesh, Point3d min, Point3d max) {
 
 		if(mesh == null)
 			return;
@@ -118,7 +118,7 @@ public class MeshProperties {
 		min.x = min.y = min.z = Double.MAX_VALUE;
 		max.x = max.y = max.z = Double.MIN_VALUE;
 		for(int i = 0; i < mesh.size(); i++) {
-			Point3f p = (Point3f)mesh.get(i);
+			Point3f p = mesh.get(i);
 			if(p.x < min.x) min.x = p.x;
 			if(p.y < min.y) min.y = p.y;
 			if(p.z < min.z) min.z = p.z;

@@ -42,10 +42,10 @@ public class MeshExporter {
 
 	private MeshExporter() {}
 
-	static private Collection<Content> filterMeshes(final Collection contents) {
+	static private Collection<Content> filterMeshes(final Collection<Content> contents) {
 		ArrayList<Content> meshes = new ArrayList<Content>();
-		for (Iterator it = contents.iterator(); it.hasNext(); ) {
-			Content c = (Content)it.next();
+		for (Iterator<Content> it = contents.iterator(); it.hasNext(); ) {
+			Content c = it.next();
 			ContentNode node = c.getContent();
 			if (node instanceof voltex.VoltexGroup
 			 || node instanceof orthoslice.OrthoGroup
@@ -60,7 +60,7 @@ public class MeshExporter {
 	/**
 	 * @Deprecated
 	 */
-	static public void saveAsWaveFront(Collection contents_) {
+	static public void saveAsWaveFront(Collection<Content> contents_) {
 		File obj_file = Executer.promptForFile("Save WaveFront", "untitled", ".obj");
 		if(obj_file == null)
 			return;
@@ -69,7 +69,7 @@ public class MeshExporter {
 
 
 	/** Accepts a collection of MeshGroup objects. */
-	static public void saveAsWaveFront(Collection contents_, File obj_file) {
+	static public void saveAsWaveFront(Collection<Content> contents_, File obj_file) {
 		if (null == contents_ || 0 == contents_.size())
 			return;
 		Collection<Content> contents = filterMeshes(contents_);
@@ -104,14 +104,14 @@ public class MeshExporter {
 	/**
 	 * @Deprecated
 	 */
-	static public void saveAsDXF(Collection contents_) {
+	static public void saveAsDXF(Collection<Content> contents_) {
 		File dxf_file = Executer.promptForFile("Save as DXF", "untitled", ".dxf");
 		if(dxf_file == null)
 			return;
 		saveAsDXF(contents_, dxf_file);
 	}
 
-	static public void saveAsDXF(Collection meshgroups, File dxf_file) {
+	static public void saveAsDXF(Collection<Content> meshgroups, File dxf_file) {
 		if (null == meshgroups || 0 == meshgroups.size()) return;
 		meshgroups = filterMeshes(meshgroups);
 		if (0 == meshgroups.size()) {
@@ -131,10 +131,10 @@ public class MeshExporter {
 		}
 	}
 
-	static public void writeDXF(final Collection contents, final Writer w) throws IOException {
+	static public void writeDXF(final Collection<Content> contents, final Writer w) throws IOException {
 		w.write("0\nSECTION\n2\nENTITIES\n");   //header of file
-		for (Iterator it = contents.iterator(); it.hasNext(); ) {
-			Content ob = (Content)it.next();
+		for (Iterator<Content> it = contents.iterator(); it.hasNext(); ) {
+			Content ob = it.next();
 
 			CustomMesh cmesh=null;
 
@@ -147,7 +147,7 @@ public class MeshExporter {
 			} else
 				continue;
 
-			final List triangles = cmesh.getMesh();
+			final List<Point3f> triangles = cmesh.getMesh();
 
 			String title = ob.getName().replaceAll(" ", "_").replaceAll("#", "--");
 			Mtl mat = new Mtl(1 - ob.getTransparency(), cmesh.getColor());
@@ -159,7 +159,7 @@ public class MeshExporter {
 	/**
 	 * @Deprecated
 	 */
-	static public void saveAsSTL(Collection contents_, int filetype) {
+	static public void saveAsSTL(Collection<Content> contents_, int filetype) {
 		String title = "Save as STL (" +
 			((filetype == ASCII) ? "ASCII" : "binary") + ")";
 		File stl_file = Executer.promptForFile(title, "untitled", ".stl");
@@ -168,7 +168,7 @@ public class MeshExporter {
 		saveAsSTL(contents_, stl_file, filetype);
 	}
 
-	public static void saveAsSTL(Collection meshgroups, File stl_file, int filetype) {
+	public static void saveAsSTL(Collection<Content> meshgroups, File stl_file, int filetype) {
 		if (null == meshgroups || 0 == meshgroups.size())
 			return;
 		meshgroups = filterMeshes(meshgroups);
@@ -204,13 +204,13 @@ public class MeshExporter {
 		}
 	}
 
-	private static void writeBinarySTL(Collection meshgroups,
+	private static void writeBinarySTL(Collection<Content> meshgroups,
 			DataOutputStream out) {
 			
 		// get all the meshes and sort them into a hash
 		HashMap<String, CustomMesh> meshes = new HashMap<String, CustomMesh>();
 		for (Iterator<Content> it = meshgroups.iterator(); it.hasNext();) {
-			Content mob = (Content) it.next();
+			Content mob = it.next();
 
 			ContentNode node = mob.getContent();
 			// First CustomMultiMesh, which is also a CustomMeshNode:
@@ -314,7 +314,7 @@ public class MeshExporter {
 			// get all the meshes and sort them into a hash
 			HashMap<String, CustomMesh> meshes = new HashMap<String, CustomMesh>();
 			for (Iterator<Content> it = meshgroups.iterator(); it.hasNext();) {
-				Content mob = (Content) it.next();
+				Content mob = it.next();
 
 				ContentNode node = mob.getContent();
 				// First CustomMultiMesh, which is also a CustomMeshNode:
@@ -389,7 +389,7 @@ public class MeshExporter {
 	}
 
 	@Deprecated
-	static public String createDXF(final Collection contents) {
+	static public String createDXF(final Collection<Content> contents) {
 		StringWriter sw = new StringWriter();
 		try {
 			writeDXF(contents, sw);
@@ -398,7 +398,7 @@ public class MeshExporter {
 	}
 
 	@Deprecated
-	static public void writeTrianglesDXF(final StringBuffer sb, final List triangles, final String the_group, final String the_color) {
+	static public void writeTrianglesDXF(final StringBuffer sb, final List<Point3f> triangles, final String the_group, final String the_color) {
 		try {
 			StringWriter sw = new StringWriter();
 			writeTrianglesDXF(sw, triangles, the_group, the_color);
@@ -408,7 +408,7 @@ public class MeshExporter {
 		}
 	}
 
-	static private void writeTrianglesDXF(final Writer w, final List triangles, final String the_group, final String the_color) throws IOException {
+	static private void writeTrianglesDXF(final Writer w, final List<Point3f> triangles, final String the_group, final String the_color) throws IOException {
 
 		final char L = '\n';
 		final String s10 = "10\n"; final String s11 = "11\n"; final String s12 = "12\n"; final String s13 = "13\n";
@@ -455,7 +455,7 @@ public class MeshExporter {
 	 * - the contents of the .mtl file with material data
 	 */
 	@Deprecated
-	static public String[] createWaveFront(Collection contents, String mtl_filename) {
+	static public String[] createWaveFront(Collection<Content> contents, String mtl_filename) {
 		StringWriter sw_obj = new StringWriter();
 		StringWriter sw_mtl = new StringWriter();
 		try {
@@ -467,11 +467,11 @@ public class MeshExporter {
 		return null;
 	}
 
-	static public void writeAsWaveFront(Collection contents, String mtl_filename, Writer w_obj, Writer w_mtl) throws IOException {
+	static public void writeAsWaveFront(Collection<Content> contents, String mtl_filename, Writer w_obj, Writer w_mtl) throws IOException {
 		HashMap<String, CustomMesh> meshes = new HashMap<String, CustomMesh>();
 
-		for(Iterator it = contents.iterator(); it.hasNext(); ) {
-			Content mob = (Content)it.next();
+		for(Iterator<Content> it = contents.iterator(); it.hasNext(); ) {
+			Content mob = it.next();
 			
 			ContentNode node = mob.getContent();
 
@@ -565,6 +565,7 @@ public class MeshExporter {
 			OutputStreamWriter dos = new OutputStreamWriter(new BufferedOutputStream(new FileOutputStream(f), data.length()), "8859_1"); // encoding in Latin 1 (for macosx not to mess around
 			dos.write(data, 0, data.length());
 			dos.flush();
+			dos.close();
 		} catch (Exception e) {
 			e.printStackTrace();
 			IJ.showMessage("ERROR: Most likely did NOT save your file.");

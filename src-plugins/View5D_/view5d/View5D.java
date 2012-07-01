@@ -43,7 +43,7 @@ public class View5D extends Applet {
   public void UpdatePanels()  // update all panels
         {
             for (int i=0;i<panels.size();i++)
-                ((ImgPanel) panels.elementAt(i)).c1.UpdateAllNoCoord();
+                panels.elementAt(i).c1.UpdateAllNoCoord();
         }
  
    /* The code below is necessary to include the software as a plugin into Matlab and DipImage (Univ. Delft) */

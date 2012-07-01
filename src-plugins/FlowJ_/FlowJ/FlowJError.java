@@ -102,7 +102,7 @@ public class FlowJError
    */
    public float average(Roi roi)
    {
-		  Rectangle r = roi.getBoundingRect();
+		  Rectangle r = roi.getBounds();
 		  float psiSum = 0;
 		  int s = 0;
 		  for (int y = 0; y < r.height; y++)

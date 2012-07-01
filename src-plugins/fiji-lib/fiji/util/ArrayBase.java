@@ -5,12 +5,12 @@ import java.lang.reflect.Array;
 import java.util.Iterator;
 
 public abstract class ArrayBase<ArrayType, BaseType>  implements Iterable<BaseType> {
-	protected Class type;
+	protected Class<BaseType> type;
 	protected int actualSize;
 	protected int allocated;
 	protected int maximumGrowth;
 
-	public ArrayBase(int size, int growth, Class type) {
+	public ArrayBase(int size, int growth, Class<BaseType> type) {
 		this.type = type;
 		ArrayType array = (ArrayType)Array.newInstance(type, size);
 		allocated = size;
@@ -18,7 +18,7 @@ public abstract class ArrayBase<ArrayType, BaseType>  implements Iterable<BaseTy
 		setArray(array);
 	}
 
-	public ArrayBase(int size, Class type) {
+	public ArrayBase(int size, Class<BaseType> type) {
 		this(size, Integer.MAX_VALUE, type);
 	}
 	protected abstract ArrayType getArray();

@@ -172,7 +172,7 @@ public class NrrdInfo {
 						dataFiles=new File[nh.dataFiles.size()];
 						
 						for(int i=0;i<dataFiles.length;i++){
-							dataFiles[i]=makeCheckedFile((String) nh.dataFiles.get(i));
+							dataFiles[i]=makeCheckedFile(nh.dataFiles.get(i));
 						}
 					} else {
 						dataFiles=new File[1];
@@ -409,13 +409,13 @@ public class NrrdInfo {
 	
 	public String[] getStringField(String key){
 		if(nh.fields.containsKey(key)){
-			return (String[]) nh.fields.get(key);
+			return nh.fields.get(key);
 		} else return null;
 	}
 		 
 	public double[] getDoubleField(String key){
 		if(nh.fields.containsKey(key)){
-			String[] sa=(String[]) nh.fields.get(key);
+			String[] sa=nh.fields.get(key);
 			double[] da=new double[sa.length];
 			for(int i=0;i<sa.length;i++){
 				// only string "NaN" -> (double) NaN
@@ -428,7 +428,7 @@ public class NrrdInfo {
 
 	public long[] getLongField(String key){
 		if(nh.fields.containsKey(key)){
-			String[] sa=(String[]) nh.fields.get(key);
+			String[] sa=nh.fields.get(key);
 			long[] la=new long[sa.length];
 			for(int i=0;i<sa.length;i++){
 				la[i] = new Long(sa[i]).longValue();
@@ -438,7 +438,7 @@ public class NrrdInfo {
 	}
 	public int[] getIntegerField(String key){
 		if(nh.fields.containsKey(key)){
-			String[] sa=(String[]) nh.fields.get(key);
+			String[] sa=nh.fields.get(key);
 			int[] ia=new int[sa.length];
 			for(int i=0;i<sa.length;i++){
 				ia[i] = new Integer(sa[i]).intValue();

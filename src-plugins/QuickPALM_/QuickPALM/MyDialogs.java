@@ -108,23 +108,23 @@ class MyDialogs
 	
 	public boolean getCalibrationFile()
 	{
-		java.lang.String cal_dir = prefs.get("QuickPALM.cal_dir", ".");
-		java.lang.String cal_file = prefs.get("QuickPALM.cal_file", "Astigmatism calibration.xls");
+		java.lang.String cal_dir = Prefs.get("QuickPALM.cal_dir", ".");
+		java.lang.String cal_file = Prefs.get("QuickPALM.cal_file", "Astigmatism calibration.xls");
 		OpenDialog chooser = new OpenDialog("Astigmatism calibration", cal_dir, cal_file);
 		calfile = chooser.getDirectory()+chooser.getFileName();
-		prefs.set("QuickPALM.cal_dir", chooser.getDirectory());
-		prefs.set("QuickPALM.cal_file", chooser.getFileName());
+		Prefs.set("QuickPALM.cal_dir", chooser.getDirectory());
+		Prefs.set("QuickPALM.cal_file", chooser.getFileName());
 		return true;
 	}
 	
 	public boolean getParticlesTableFile()
 	{
-		java.lang.String ptable_dir = prefs.get("QuickPALM.ptable_dir", ".");
-		java.lang.String ptable_file = prefs.get("QuickPALM.ptable_file", "Particles Table.xls");
+		java.lang.String ptable_dir = Prefs.get("QuickPALM.ptable_dir", ".");
+		java.lang.String ptable_file = Prefs.get("QuickPALM.ptable_file", "Particles Table.xls");
 		OpenDialog chooser = new OpenDialog("Load Particles Table", ptable_dir, ptable_file);
 		ptablefile = chooser.getDirectory()+chooser.getFileName();
-		prefs.set("QuickPALM.ptable_dir", chooser.getDirectory());
-		prefs.set("QuickPALM.ptable_file", chooser.getFileName());
+		Prefs.set("QuickPALM.ptable_dir", chooser.getDirectory());
+		Prefs.set("QuickPALM.ptable_file", chooser.getFileName());
 		return true;
 	}
 	
@@ -217,31 +217,31 @@ class MyDialogs
 		models[4]="4th degree polynomial";
 
 		GenericDialog gd = new GenericDialog("3D PALM calibration");
-		gd.addNumericField("Maximum FWHM (in px)", prefs.get("QuickPALM.3Dcal_fwhm", 20), 0);
-		gd.addNumericField("Particle local threshold (% maximum intensity)", prefs.get("QuickPALM.pthrsh", 20), 0);
-       	gd.addNumericField("Z-spacing (nm)", prefs.get("QuickPALM.z-step", 10), 2);
-		gd.addNumericField("Calibration Z-smoothing (radius)", prefs.get("QuickPALM.window", 1), 0);
-		gd.addChoice("Model", models, prefs.get("QuickPALM.model", models[3]));
-		gd.addCheckbox("Show divergence of bead positions against model", prefs.get("QuickPALM.3Dcal_showDivergence", false));
-		gd.addCheckbox("Show extra particle info", prefs.get("QuickPALM.3Dcal_showExtraInfo", false));
+		gd.addNumericField("Maximum FWHM (in px)", Prefs.get("QuickPALM.3Dcal_fwhm", 20), 0);
+		gd.addNumericField("Particle local threshold (% maximum intensity)", Prefs.get("QuickPALM.pthrsh", 20), 0);
+       	gd.addNumericField("Z-spacing (nm)", Prefs.get("QuickPALM.z-step", 10), 2);
+		gd.addNumericField("Calibration Z-smoothing (radius)", Prefs.get("QuickPALM.window", 1), 0);
+		gd.addChoice("Model", models, Prefs.get("QuickPALM.model", models[3]));
+		gd.addCheckbox("Show divergence of bead positions against model", Prefs.get("QuickPALM.3Dcal_showDivergence", false));
+		gd.addCheckbox("Show extra particle info", Prefs.get("QuickPALM.3Dcal_showExtraInfo", false));
 		gd.addMessage("\n\nDon't forget to save the table in the end...");
 		gd.showDialog();
 		if (gd.wasCanceled())
             return false;
 		fwhm = gd.getNextNumber();
-		prefs.set("QuickPALM.QuickPALM.3Dcal_fwhm", fwhm);
+		Prefs.set("QuickPALM.QuickPALM.3Dcal_fwhm", fwhm);
 		pthrsh = gd.getNextNumber()/100;
-		prefs.set("QuickPALM.pthrsh", pthrsh*100);
+		Prefs.set("QuickPALM.pthrsh", pthrsh*100);
 		cal_z = gd.getNextNumber();
-		prefs.set("QuickPALM.z-step", cal_z);
+		Prefs.set("QuickPALM.z-step", cal_z);
 		window = (int) gd.getNextNumber();
-		prefs.set("QuickPALM.window", window);
+		Prefs.set("QuickPALM.window", window);
 		model = gd.getNextChoice();
-		prefs.set("QuickPALM.model", model);
+		Prefs.set("QuickPALM.model", model);
 		part_divergence = gd.getNextBoolean();
-		prefs.set("QuickPALM.3Dcal_showDivergence", part_divergence);
+		Prefs.set("QuickPALM.3Dcal_showDivergence", part_divergence);
 		part_extrainfo = gd.getNextBoolean();
-		prefs.set("QuickPALM.3Dcal_showExtraInfo", part_extrainfo);
+		Prefs.set("QuickPALM.3Dcal_showExtraInfo", part_extrainfo);
 		return true;
 	}
 	
@@ -253,13 +253,13 @@ class MyDialogs
 		view_modes[3]="2D particle intensity (8-bit)";
 		
 		GenericDialog gd = new GenericDialog("Reconstruct PALM/STORM Dataset");
-		gd.addNumericField("Target pixel size for the rendered image (nm)", prefs.get("QuickPALM.viewer_tpixelsize", 30), 2);
-		gd.addNumericField("Original image width (px)", prefs.get("QuickPALM.viewer_owidth", 512), 2);
-		gd.addNumericField("Original image height (px)", prefs.get("QuickPALM.viewer_oheight", 512), 2);
-		gd.addChoice("View mode", view_modes, prefs.get("QuickPALM.view_mode", view_modes[1]));
+		gd.addNumericField("Target pixel size for the rendered image (nm)", Prefs.get("QuickPALM.viewer_tpixelsize", 30), 2);
+		gd.addNumericField("Original image width (px)", Prefs.get("QuickPALM.viewer_owidth", 512), 2);
+		gd.addNumericField("Original image height (px)", Prefs.get("QuickPALM.viewer_oheight", 512), 2);
+		gd.addChoice("View mode", view_modes, Prefs.get("QuickPALM.view_mode", view_modes[1]));
 		//gd.addNumericField("Allow image saturation (%)", prefs.get("QuickPALM.saturation", 50), 0);
 		
-		gd.addCheckbox("Simulate sub-difraction spot (gaussian convolution - only 2D)", prefs.get("QuickPALM.viewer_doConvolve", true));
+		gd.addCheckbox("Simulate sub-difraction spot (gaussian convolution - only 2D)", Prefs.get("QuickPALM.viewer_doConvolve", true));
 		//gd.addCheckbox("Make 3D stack", prefs.get("QuickPALM.viewer_do3d", false));
 		//gd.addCheckbox("Make movie", prefs.get("QuickPALM.viewer_doMovie", false));
 		gd.addCheckbox("Make 3D stack", false);
@@ -269,46 +269,46 @@ class MyDialogs
 		
 		// -----------------------------------------
 		gd.addMessage("-- Simulate sub-difraction spot settings (used only if selected) --");
-		gd.addNumericField("FWHM of the spot", prefs.get("QuickPALM.viewer_fwhm", 30), 2);
+		gd.addNumericField("FWHM of the spot", Prefs.get("QuickPALM.viewer_fwhm", 30), 2);
 		gd.addMessage("\n");
 		
 		// -----------------------------------------
 		gd.addMessage("-- Make 3D stack settings (used only if selected) --");
-		gd.addNumericField("Z-spacing between slices (nm)", prefs.get("QuickPALM.viewer_zstep", 50), 2);
-		gd.addNumericField("Merge particle Z-position above (nm - 0 for full Z range)", prefs.get("QuickPALM.viewer_mergeabove", 0), 2);
-		gd.addNumericField("Merge particle Z-position bellow (nm - 0 for full Z range)",prefs.get("QuickPALM.viewer_mergebellow", 0), 2);
+		gd.addNumericField("Z-spacing between slices (nm)", Prefs.get("QuickPALM.viewer_zstep", 50), 2);
+		gd.addNumericField("Merge particle Z-position above (nm - 0 for full Z range)", Prefs.get("QuickPALM.viewer_mergeabove", 0), 2);
+		gd.addNumericField("Merge particle Z-position bellow (nm - 0 for full Z range)",Prefs.get("QuickPALM.viewer_mergebellow", 0), 2);
 		gd.addMessage("\n");
 		
 		// -----------------------------------------
 		gd.addMessage("-- Make movie settings (used only if selected) --");
-		gd.addNumericField("Make a reconstruction in every N frames", prefs.get("QuickPALM.viewer_update", 10), 0);
-		gd.addNumericField("Accumulate N neighboring frames for each reconstruction\n(set to 0 to accumulate all the preceding frames)", prefs.get("QuickPALM.viewer_accumulate", 100), 0);
+		gd.addNumericField("Make a reconstruction in every N frames", Prefs.get("QuickPALM.viewer_update", 10), 0);
+		gd.addNumericField("Accumulate N neighboring frames for each reconstruction\n(set to 0 to accumulate all the preceding frames)", Prefs.get("QuickPALM.viewer_accumulate", 100), 0);
 	
 		gd.showDialog();
 		if (gd.wasCanceled())
             return false;
 		
 		viewer_tpixelsize = gd.getNextNumber();
-		prefs.set("QuickPALM.viewer_tpixelsize", viewer_tpixelsize );
+		Prefs.set("QuickPALM.viewer_tpixelsize", viewer_tpixelsize );
 		viewer_owidth = (int) gd.getNextNumber();
-		prefs.set("QuickPALM.viewer_owidth", viewer_owidth);
+		Prefs.set("QuickPALM.viewer_owidth", viewer_owidth);
 		viewer_oheight = (int) gd.getNextNumber();
-		prefs.set("QuickPALM.viewer_oheight", viewer_oheight);
+		Prefs.set("QuickPALM.viewer_oheight", viewer_oheight);
 		view_mode = gd.getNextChoice();
-		prefs.set("QuickPALM.view_mode", view_mode);
+		Prefs.set("QuickPALM.view_mode", view_mode);
 		
 		viewer_doConvolve = gd.getNextBoolean();
-		prefs.set("QuickPALM.viewer_doConvolve", viewer_doConvolve);
+		Prefs.set("QuickPALM.viewer_doConvolve", viewer_doConvolve);
 		viewer_do3d = gd.getNextBoolean();
-		prefs.set("QuickPALM.viewer_do3d", viewer_do3d);
+		Prefs.set("QuickPALM.viewer_do3d", viewer_do3d);
 		viewer_doMovie = gd.getNextBoolean();
-		prefs.set("QuickPALM.viewer_doMovie", viewer_doMovie);
+		Prefs.set("QuickPALM.viewer_doMovie", viewer_doMovie);
 		//viewer_doSave = gd.getNextBoolean();
 		//prefs.set("QuickPALM.viewer_doSave", viewer_doSave);
 		
 		// -- Simulate sub-difraction spot
 		viewer_fwhm = gd.getNextNumber();
-		prefs.set("QuickPALM.viewer_fwhm", viewer_fwhm);
+		Prefs.set("QuickPALM.viewer_fwhm", viewer_fwhm);
 		
 		// -- Show B&W
 		//viewer_is8bit = gd.getNextBoolean();
@@ -316,31 +316,31 @@ class MyDialogs
 		
 		// -- Make 3D stack
 		viewer_zstep = gd.getNextNumber();
-		prefs.set("QuickPALM.viewer_zstep", viewer_zstep);
+		Prefs.set("QuickPALM.viewer_zstep", viewer_zstep);
 		viewer_mergeabove = gd.getNextNumber();
-		prefs.set("QuickPALM.viewer_mergeabove", viewer_mergeabove);
+		Prefs.set("QuickPALM.viewer_mergeabove", viewer_mergeabove);
 		viewer_mergebellow = gd.getNextNumber();
-		prefs.set("QuickPALM.viewer_mergebellow", viewer_mergebellow);
+		Prefs.set("QuickPALM.viewer_mergebellow", viewer_mergebellow);
 		
 		// -- Make Movie
 		viewer_update = (int) gd.getNextNumber();
-		prefs.set("QuickPALM.viewer_update", viewer_update);
+		Prefs.set("QuickPALM.viewer_update", viewer_update);
 		viewer_accumulate = (int) gd.getNextNumber();
-		prefs.set("QuickPALM.viewer_accumulate", viewer_accumulate);
+		Prefs.set("QuickPALM.viewer_accumulate", viewer_accumulate);
 		
 		return true;
 	}
 
 	public boolean analyseParticles(MyFunctions f) {	
 		GenericDialog gd = new GenericDialog("Analyse PALM/STORM Particles");
-		gd.addNumericField("Minimum SNR", prefs.get("QuickPALM.snr", 5), 2);
-		gd.addNumericField("Maximum FWHM (in px)", prefs.get("QuickPALM.fwhm", 4), 0);
-		gd.addNumericField("Image plane pixel size (nm)", prefs.get("QuickPALM.pixelsize", 106), 2);
-		gd.addCheckbox("Smart SNR", prefs.get("QuickPALM.smartsnr", true));
-		gd.addCheckbox("3D PALM (astigmatism) - will require calibration file", prefs.get("QuickPALM.is3d", false));
-		gd.addCheckbox("Online rendering", prefs.get("QuickPALM.view", true));
-		gd.addCheckbox("Attach to running acquisition", prefs.get("QuickPALM.attach", false));
-		gd.addCheckbox("Stream particle info directly into file", prefs.get("QuickPALM.stream", true));
+		gd.addNumericField("Minimum SNR", Prefs.get("QuickPALM.snr", 5), 2);
+		gd.addNumericField("Maximum FWHM (in px)", Prefs.get("QuickPALM.fwhm", 4), 0);
+		gd.addNumericField("Image plane pixel size (nm)", Prefs.get("QuickPALM.pixelsize", 106), 2);
+		gd.addCheckbox("Smart SNR", Prefs.get("QuickPALM.smartsnr", true));
+		gd.addCheckbox("3D PALM (astigmatism) - will require calibration file", Prefs.get("QuickPALM.is3d", false));
+		gd.addCheckbox("Online rendering", Prefs.get("QuickPALM.view", true));
+		gd.addCheckbox("Attach to running acquisition", Prefs.get("QuickPALM.attach", false));
+		gd.addCheckbox("Stream particle info directly into file", Prefs.get("QuickPALM.stream", true));
 		gd.addMessage("\n");
 		// -----------------------------------------
 		gd.addMessage("-- Online rendering settings (used only if selected) --");
@@ -353,17 +353,17 @@ class MyDialogs
 		// -----------------------------------------
 		gd.addMessage("-- Attach to running acquisition settings (used only if selected) --");
 		gd.addMessage("\n");
-		gd.addStringField("_Image name pattern (NN...NN represents the numerical change)", prefs.get("QuickPALM.pattern", "imgNNNNNNNNN.tif"), 20);
+		gd.addStringField("_Image name pattern (NN...NN represents the numerical change)", Prefs.get("QuickPALM.pattern", "imgNNNNNNNNN.tif"), 20);
 		gd.addNumericField("Start NN...NN with", 0, 0);
 		gd.addNumericField("In acquisition max. wait time for new image (ms)", 50, 0);
 		gd.addMessage("\n");
 		// -----------------------------------------
 		gd.addMessage("-- Advanced settings (don't normally need to be changed) --");
 		gd.addMessage("\n");
-		gd.addNumericField("_Minimum symmetry (%)", prefs.get("QuickPALM.symmetry", 50), 0);
-		gd.addNumericField("Local threshold (% maximum intensity)", prefs.get("QuickPALM.lthreshold", 20), 0);
-		gd.addNumericField("_Maximum iterations per frame", prefs.get("QuickPALM.maxiter", 1000), 0);
-		gd.addNumericField("Threads (each takes ~3*[frame size] in memory)", prefs.get("QuickPALM.nthreads", 50), 0);
+		gd.addNumericField("_Minimum symmetry (%)", Prefs.get("QuickPALM.symmetry", 50), 0);
+		gd.addNumericField("Local threshold (% maximum intensity)", Prefs.get("QuickPALM.lthreshold", 20), 0);
+		gd.addNumericField("_Maximum iterations per frame", Prefs.get("QuickPALM.maxiter", 1000), 0);
+		gd.addNumericField("Threads (each takes ~3*[frame size] in memory)", Prefs.get("QuickPALM.nthreads", 50), 0);
 		gd.addMessage("\n\nDon't forget to save the table in the end...");
 		
 		gd.showDialog();
@@ -371,28 +371,28 @@ class MyDialogs
             return false;
 
 		snr = (int) gd.getNextNumber();
-		prefs.set("QuickPALM.snr", snr);
+		Prefs.set("QuickPALM.snr", snr);
 		fwhm = gd.getNextNumber();
-		prefs.set("QuickPALM.fwhm", fwhm);
+		Prefs.set("QuickPALM.fwhm", fwhm);
 		pixelsize = gd.getNextNumber();
-		prefs.set("QuickPALM.pixelsize", pixelsize);
+		Prefs.set("QuickPALM.pixelsize", pixelsize);
 		
 		smartsnr = gd.getNextBoolean();
-		prefs.set("QuickPALM.smartsnr", smartsnr);
+		Prefs.set("QuickPALM.smartsnr", smartsnr);
 		is3d = gd.getNextBoolean();
-		prefs.set("QuickPALM.is3d", is3d);
+		Prefs.set("QuickPALM.is3d", is3d);
 		view = gd.getNextBoolean();
-		prefs.set("QuickPALM.view", view);
+		Prefs.set("QuickPALM.view", view);
 		attach = gd.getNextBoolean();
-		prefs.set("QuickPALM.attach", attach);
+		Prefs.set("QuickPALM.attach", attach);
 		
 		if (gd.getNextBoolean())
 		{
 			f.psave = new ParticleSaver();
 			f.psave.setup();
-			prefs.set("QuickPALM.stream", true);
+			Prefs.set("QuickPALM.stream", true);
 		}
-		else prefs.set("QuickPALM.stream", false);
+		else Prefs.set("QuickPALM.stream", false);
 		//--
 		
 		magn = pixelsize/gd.getNextNumber();
@@ -401,7 +401,7 @@ class MyDialogs
 		
 		//--
 		pattern = gd.getNextString().trim();
-		prefs.set("QuickPALM.pattern", pattern);
+		Prefs.set("QuickPALM.pattern", pattern);
 		prefix = pattern.substring(0, pattern.indexOf("N"));
 		sufix = pattern.substring(pattern.lastIndexOf("N")+1, pattern.length());
 		nimchars = pattern.split("N").length-1;
@@ -411,13 +411,13 @@ class MyDialogs
 		//--
 		
 		symmetry = gd.getNextNumber()/100;
-		prefs.set("QuickPALM.symmetry", symmetry);
+		Prefs.set("QuickPALM.symmetry", symmetry);
 		pthrsh = gd.getNextNumber()/100;
-		prefs.set("QuickPALM.lthreshold", pthrsh*100);
+		Prefs.set("QuickPALM.lthreshold", pthrsh*100);
 		maxpart = (int) gd.getNextNumber();
-		prefs.set("QuickPALM.maxiter", maxpart);
+		Prefs.set("QuickPALM.maxiter", maxpart);
 		threads = (int) gd.getNextNumber();
-		prefs.set("QuickPALM.nthreads", threads);
+		Prefs.set("QuickPALM.nthreads", threads);
 		
 		return true;
 	}

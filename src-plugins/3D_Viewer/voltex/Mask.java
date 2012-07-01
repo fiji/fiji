@@ -250,30 +250,30 @@ public class Mask extends VoltexVolume {
 // 			});
 // 		}
 
-		Vector choices = gd.getChoices();
+		Vector<Choice> choices = gd.getChoices();
 		// color
-		final Choice c1 = (Choice)choices.get(0);
+		final Choice c1 = choices.get(0);
 		c1.addItemListener(new ItemListener() {
 			public void itemStateChanged(ItemEvent e) {
 				setColorMethod(BlendMethod.values()[c1.getSelectedIndex()]);
 			}
 		});
 
-		final Choice c2 = (Choice)choices.get(1);
+		final Choice c2 = choices.get(1);
 		c2.addItemListener(new ItemListener() {
 			public void itemStateChanged(ItemEvent e) {
 				setColorSource(0, BlendSource.values()[c2.getSelectedIndex()]);
 			}
 		});
 
-		final Choice c3 = (Choice)choices.get(2);
+		final Choice c3 = choices.get(2);
 		c3.addItemListener(new ItemListener() {
 			public void itemStateChanged(ItemEvent e) {
 				setColorSource(1, BlendSource.values()[c3.getSelectedIndex()]);
 			}
 		});
 
-		final Choice c4 = (Choice)choices.get(3);
+		final Choice c4 = choices.get(3);
 		c4.addItemListener(new ItemListener() {
 			public void itemStateChanged(ItemEvent e) {
 				setColorSource(2, BlendSource.values()[c4.getSelectedIndex()]);
@@ -281,28 +281,28 @@ public class Mask extends VoltexVolume {
 		});
 
 		// alpha
-		final Choice c5 = (Choice)choices.get(4);
+		final Choice c5 = choices.get(4);
 		c5.addItemListener(new ItemListener() {
 			public void itemStateChanged(ItemEvent e) {
 				setAlphaMethod(BlendMethod.values()[c5.getSelectedIndex()]);
 			}
 		});
 
-		final Choice c6 = (Choice)choices.get(5);
+		final Choice c6 = choices.get(5);
 		c6.addItemListener(new ItemListener() {
 			public void itemStateChanged(ItemEvent e) {
 				setAlphaSource(0, BlendSource.values()[c6.getSelectedIndex()]);
 			}
 		});
 
-		final Choice c7 = (Choice)choices.get(6);
+		final Choice c7 = choices.get(6);
 		c7.addItemListener(new ItemListener() {
 			public void itemStateChanged(ItemEvent e) {
 				setAlphaSource(1, BlendSource.values()[c7.getSelectedIndex()]);
 			}
 		});
 
-		final Choice c8 = (Choice)choices.get(7);
+		final Choice c8 = choices.get(7);
 		c8.addItemListener(new ItemListener() {
 			public void itemStateChanged(ItemEvent e) {
 				setAlphaSource(2, BlendSource.values()[c8.getSelectedIndex()]);
@@ -310,8 +310,8 @@ public class Mask extends VoltexVolume {
 		});
 
 		// blend color
-		Vector sliders = gd.getSliders();
-		final Scrollbar s1 = (Scrollbar)sliders.get(0);
+		Vector<Scrollbar> sliders = gd.getSliders();
+		final Scrollbar s1 = sliders.get(0);
 		s1.addAdjustmentListener(new AdjustmentListener() {
 			public void adjustmentValueChanged(AdjustmentEvent e) {
 				blendColor.x = s1.getValue() / 255f;
@@ -319,7 +319,7 @@ public class Mask extends VoltexVolume {
 			}
 		});
 
-		final Scrollbar s2 = (Scrollbar)sliders.get(1);
+		final Scrollbar s2 = sliders.get(1);
 		s2.addAdjustmentListener(new AdjustmentListener() {
 			public void adjustmentValueChanged(AdjustmentEvent e) {
 				blendColor.y = s2.getValue() / 255f;
@@ -327,7 +327,7 @@ public class Mask extends VoltexVolume {
 			}
 		});
 
-		final Scrollbar s3 = (Scrollbar)sliders.get(2);
+		final Scrollbar s3 = sliders.get(2);
 		s3.addAdjustmentListener(new AdjustmentListener() {
 			public void adjustmentValueChanged(AdjustmentEvent e) {
 				blendColor.z = s3.getValue() / 255f;
@@ -335,7 +335,7 @@ public class Mask extends VoltexVolume {
 			}
 		});
 
-		final Scrollbar s4 = (Scrollbar)sliders.get(3);
+		final Scrollbar s4 = sliders.get(3);
 		s4.addAdjustmentListener(new AdjustmentListener() {
 			public void adjustmentValueChanged(AdjustmentEvent e) {
 				blendColor.w = s4.getValue() / 255f;

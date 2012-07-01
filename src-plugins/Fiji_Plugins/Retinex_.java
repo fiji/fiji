@@ -46,6 +46,8 @@ import ij.*;
 import ij.process.*;
 import ij.gui.*;
 import ij.plugin.*;
+
+import java.awt.Scrollbar;
 import java.util.Vector;
 import ij.plugin.filter.GaussianBlur;
 
@@ -101,8 +103,8 @@ public class Retinex_ implements PlugIn {
 			return;
 
 		// 3 - Retrieve parameters from the dialog
-		levelValue =(int) gd.getNextChoiceIndex();
-		Vector sliderValues = gd.getSliders();
+		levelValue = gd.getNextChoiceIndex();
+		Vector<Scrollbar> sliderValues = gd.getSliders();
 		scaleValue= (int)gd.getNextNumber();
 		scaleDivValue= (int)gd.getNextNumber();
 		dynamicValue= (float)gd.getNextNumber();

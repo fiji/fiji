@@ -423,11 +423,9 @@ public class ControlPanelFrame extends JFrame {
 						reader.updateMetadata(imp);
 						LSMFileInfo openLSM = (LSMFileInfo) imp
 								.getOriginalFileInfo();
-						CZLSMInfoExtended cz = (CZLSMInfoExtended) ((ImageDirectory) openLSM.imageDirectories
-								.get(0)).TIF_CZ_LSMINFO;
-						Recording r = (Recording) cz.scanInfo.recordings.get(0);
-						double planeSpacing = ((Double) r.records
-								.get("PLANE_SPACING")).doubleValue();
+						CZLSMInfoExtended cz = (CZLSMInfoExtended) openLSM.imageDirectories.get(0).TIF_CZ_LSMINFO;
+						Recording r = cz.scanInfo.recordings.get(0);
+						double planeSpacing = ((Double) r.records.get("PLANE_SPACING"));
 						if (choice.equals("Dump to textfile")) {
 							String twstr = new String("");
 							double ps = 0;
@@ -481,8 +479,7 @@ public class ControlPanelFrame extends JFrame {
 						reader.updateMetadata(imp);
 						LSMFileInfo openLSM = (LSMFileInfo) imp
 								.getOriginalFileInfo();
-						CZLSMInfoExtended cz = (CZLSMInfoExtended) ((ImageDirectory) openLSM.imageDirectories
-								.get(0)).TIF_CZ_LSMINFO;
+						CZLSMInfoExtended cz = (CZLSMInfoExtended) openLSM.imageDirectories.get(0).TIF_CZ_LSMINFO;
 						if (choice.equals("Dump to textfile")) {
 							String twstr = new String("");
 							for (int k = 0; k < cz.timeStamps.NumberTimeStamps; k++)
@@ -533,8 +530,7 @@ public class ControlPanelFrame extends JFrame {
 						reader.updateMetadata(imp);
 						LSMFileInfo openLSM = (LSMFileInfo) imp
 								.getOriginalFileInfo();
-						CZLSMInfoExtended cz = (CZLSMInfoExtended) ((ImageDirectory) openLSM.imageDirectories
-								.get(0)).TIF_CZ_LSMINFO;
+						CZLSMInfoExtended cz = (CZLSMInfoExtended) openLSM.imageDirectories.get(0).TIF_CZ_LSMINFO;
 
 						if (cz.SpectralScan != 1) {
 							IJ
@@ -587,9 +583,8 @@ public class ControlPanelFrame extends JFrame {
 									reader.updateMetadata(imp);
 									LSMFileInfo openLSM = (LSMFileInfo) imp
 											.getOriginalFileInfo();
-									CZLSMInfoExtended cz = (CZLSMInfoExtended) ((ImageDirectory) openLSM.imageDirectories
-											.get(0)).TIF_CZ_LSMINFO;
-									Class i5Dc = null;
+									CZLSMInfoExtended cz = (CZLSMInfoExtended) openLSM.imageDirectories.get(0).TIF_CZ_LSMINFO;
+									Class<?> i5Dc = null;
 									if (imp == null || imp.getStackSize() == 0) {
 										IJ.error("Could not open file.");
 										return;
@@ -603,7 +598,7 @@ public class ControlPanelFrame extends JFrame {
 											e2.printStackTrace();
 										}
 									}
-									Constructor i5Dcon = null;
+									Constructor<?> i5Dcon = null;
 
 									Object o = null;
 									try {
@@ -776,8 +771,7 @@ public class ControlPanelFrame extends JFrame {
 						FileInfo fi = imp.getOriginalFileInfo();
 						if (fi != null && fi instanceof LSMFileInfo) {
 							LSMFileInfo lsm = (LSMFileInfo) fi;
-							CZLSMInfoExtended cz = (CZLSMInfoExtended) ((ImageDirectory) lsm.imageDirectories
-									.get(0)).TIF_CZ_LSMINFO;
+							CZLSMInfoExtended cz = (CZLSMInfoExtended) lsm.imageDirectories.get(0).TIF_CZ_LSMINFO;
 							// System.err.println("dimz:" + cz.DimensionZ);
 							// if (cz.DimensionZ/imageVals.length)
 							// long depth = (long) (cz.DimensionZ /
@@ -834,10 +828,9 @@ public class ControlPanelFrame extends JFrame {
 			y = roi.y + roi.height;
 		}
 		Color c = Toolbar.getForegroundColor();
-		CZLSMInfoExtended cz = (CZLSMInfoExtended) ((ImageDirectory) lfi.imageDirectories
-				.get(0)).TIF_CZ_LSMINFO;
+		CZLSMInfoExtended cz = (CZLSMInfoExtended) lfi.imageDirectories.get(0).TIF_CZ_LSMINFO;
 		if (cz.DimensionZ != 1) {
-			Recording r = (Recording) cz.scanInfo.recordings.get(0);
+			Recording r = cz.scanInfo.recordings.get(0);
 			double planeSpacing = ((Double) r.records.get("PLANE_SPACING"))
 					.doubleValue();
 			int stackPosition = 1;
@@ -880,8 +873,7 @@ public class ControlPanelFrame extends JFrame {
 			y = roi.y + roi.height;
 		}
 		Color c = Toolbar.getForegroundColor();
-		CZLSMInfoExtended cz = (CZLSMInfoExtended) ((ImageDirectory) lfi.imageDirectories
-				.get(0)).TIF_CZ_LSMINFO;
+		CZLSMInfoExtended cz = (CZLSMInfoExtended) lfi.imageDirectories.get(0).TIF_CZ_LSMINFO;
 		if (cz.DimensionTime > 1) {
 			int stackPosition = 1;
 			for (int i = 1; i <= cz.DimensionTime; i++)
@@ -916,8 +908,7 @@ public class ControlPanelFrame extends JFrame {
 			x = roi.x;
 			y = roi.y + roi.height;
 		}
-		CZLSMInfoExtended cz = (CZLSMInfoExtended) ((ImageDirectory) lfi.imageDirectories
-				.get(0)).TIF_CZ_LSMINFO;
+		CZLSMInfoExtended cz = (CZLSMInfoExtended) lfi.imageDirectories.get(0).TIF_CZ_LSMINFO;
 		ImageStack stack = imp.getStack();
 		Font font = new Font("SansSerif", Font.PLAIN, 20);
 		Color c = Toolbar.getForegroundColor();

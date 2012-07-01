@@ -21,19 +21,19 @@ public class MeshEditor {
 	 * fraction K (0, 1). 
 	 */
 	static public void smooth(final CustomTriangleMesh c, final float K) {
-		final List triangles = c.getMesh();
+		final List<Point3f> triangles = c.getMesh();
 		if (0 != triangles.size() % 3) {
 			System.out.println("MeshEditor.smooth: need a list of points multiple of 3.");
 			return;
 		}
 		// for each unique point, find which other points are linked by one edge to it.
 		// In the triangles List, there are only points, but each sequence of 3 points makes a triangle.
-		final Hashtable ht = new Hashtable();
+		final Hashtable<Point3f, PointGroup> ht = new Hashtable<Point3f, PointGroup>();
 		for (int i=0; i<triangles.size(); i+=3) {
 			// process one triangle at a time
-			Point3f p1 = (Point3f)triangles.get(i);
-			Point3f p2 = (Point3f)triangles.get(i+1);
-			Point3f p3 = (Point3f)triangles.get(i+2);
+			Point3f p1 = triangles.get(i);
+			Point3f p2 = triangles.get(i+1);
+			Point3f p3 = triangles.get(i+2);
 			build(p1, p2, p3, ht);
 			build(p2, p3, p1, ht);
 			build(p3, p1, p2, ht);
@@ -48,8 +48,8 @@ public class MeshEditor {
 			pg.applyVector(ht);
 		}
 		*/
-		for (Iterator it = ht.values().iterator(); it.hasNext(); ) {
-			PointGroup pg = (PointGroup)it.next();
+		for (Iterator<PointGroup> it = ht.values().iterator(); it.hasNext(); ) {
+			PointGroup pg = it.next();
 			pg.smoothMembers(K);
 		}
 
@@ -60,8 +60,8 @@ public class MeshEditor {
 	/** Represents one point in 3D space that appears in multiple instances within the triangles list. */
 	static private class PointGroup {
 		Point3f first;
-		HashSet edges = new HashSet();
-		ArrayList members = new ArrayList(); // can't be a HashSet, because points will compare as equal
+		HashSet<Point3f> edges = new HashSet<Point3f>();
+		ArrayList<Point3f> members = new ArrayList<Point3f>(); // can't be a HashSet, because points will compare as equal
 		float vx, vy, vz;
 
 		PointGroup(Point3f first) {
@@ -79,8 +79,8 @@ public class MeshEditor {
 			vx = 0;
 			vy = 0;
 			vz = 0;
-			for (Iterator it = edges.iterator(); it.hasNext(); ) {
-				Point3f po = (Point3f)it.next();
+			for (Iterator<Point3f> it = edges.iterator(); it.hasNext(); ) {
+				Point3f po = it.next();
 				vx += po.x;
 				vy += po.y;
 				vz += po.z;
@@ -89,8 +89,8 @@ public class MeshEditor {
 			vx = (vx/size - first.x) * K;
 			vy = (vy/size - first.y) * K;
 			vz = (vz/size - first.z) * K;
-			for (Iterator it = members.iterator(); it.hasNext(); ) {
-				Point3f m = (Point3f)it.next();
+			for (Iterator<Point3f> it = members.iterator(); it.hasNext(); ) {
+				Point3f m = it.next();
 				m.x += vx;
 				m.y += vy;
 				m.z += vz;
@@ -101,8 +101,8 @@ public class MeshEditor {
 			vx = 0;
 			vy = 0;
 			vz = 0;
-			for (Iterator it = edges.iterator(); it.hasNext(); ) {
-				Point3f po = (Point3f)it.next();
+			for (Iterator<Point3f> it = edges.iterator(); it.hasNext(); ) {
+				Point3f po = it.next();
 				vx += po.x;
 				vy += po.y;
 				vz += po.z;
@@ -112,12 +112,12 @@ public class MeshEditor {
 			vy = (vy/size - first.y) * K;
 			vz = (vz/size - first.z) * K;
 		}
-		void applyVector(Hashtable ht) {
+		void applyVector(Hashtable<Point3f, PointGroup> ht) {
 			// compute average displacement vector for all neighbors, i.e. edge points
 			float ax=0, ay=0, az=0;
 			int count = 0;
-			for (Iterator it = edges.iterator(); it.hasNext(); ) {
-				PointGroup pg = (PointGroup)ht.get(it.next());
+			for (Iterator<Point3f> it = edges.iterator(); it.hasNext(); ) {
+				PointGroup pg = ht.get(it.next());
 				if (null == pg) continue;
 				count++;
 				ax += pg.vx;
@@ -132,8 +132,8 @@ public class MeshEditor {
 			ay /= count;
 			az /= count;
 			// apply to each member the smoothing vector minus average neighborhood smoothing vector to avoid shrinking
-			for (Iterator it = members.iterator(); it.hasNext(); ) {
-				Point3f m = (Point3f)it.next();
+			for (Iterator<Point3f> it = members.iterator(); it.hasNext(); ) {
+				Point3f m = it.next();
 				m.x += vx;// - ax;
 				m.y += vy;// - ay;
 				m.z += vz;// - az;
@@ -142,8 +142,8 @@ public class MeshEditor {
 	}
 
 	/** Build a list of points that are just one edge away from p1, and store them in the Hashtable.  */
-	static private void build(Point3f p1, Point3f p2, Point3f p3, Hashtable ht) {
-		PointGroup pg = (PointGroup)ht.get(p1);
+	static private void build(Point3f p1, Point3f p2, Point3f p3, Hashtable<Point3f, PointGroup> ht) {
+		PointGroup pg = ht.get(p1);
 		if (null != pg) {
 			pg.addMember(p1);
 		} else {

@@ -318,10 +318,10 @@ public class ImageWindow3D extends JFrame implements UniverseListener {
 		 */
 		public void addTo(DefaultUniverse universe) {
 			try {
-				Class[] params = {
+				Class<?>[] params = {
 					RenderingErrorListener.class
 				};
-				Class c = universe.getClass();
+				Class<? extends DefaultUniverse> c = universe.getClass();
 				String name = "addRenderingErrorListener";
 				Method m = c.getMethod(name, params);
 				Object[] list = { this };

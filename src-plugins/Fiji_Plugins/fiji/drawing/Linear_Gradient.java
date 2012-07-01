@@ -24,7 +24,7 @@ public class Linear_Gradient implements PlugInFilter {
 
 	public void run(ImageProcessor ip) {
 		Roi roi = image.getRoi();
-		if (roi == null || roi.getType() != roi.LINE) {
+		if (roi == null || roi.getType() != Roi.LINE) {
 			IJ.error("Need a linear selection");
 			return;
 		}

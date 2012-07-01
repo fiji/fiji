@@ -53,10 +53,10 @@ public class Reader {
 			WindowFocusListener listener = null;
 			ImageWindow window = imp.getWindow();
 			if (window != null) try {
-				Class toolbox = Class
+				Class<?> toolbox = Class
 						.forName("org.imagearchive.lsm.toolbox.gui.ImageFocusListener");
 				Object o = null;
-				Constructor toolboxCon = toolbox.getConstructor(new Class[] {});
+				Constructor<?> toolboxCon = toolbox.getConstructor(new Class[] {});
 				o = toolboxCon.newInstance(new Object[] {});
 				listener = (WindowFocusListener) o;
 				Method toolboxMet = o.getClass().getMethod("windowGainedFocus",new Class[] {WindowEvent.class});
@@ -384,7 +384,7 @@ public class Reader {
 					break;
 				ch = (char) in;
 				if (addchar == true) {
-					String achar = new Character((char) ch).toString();
+					String achar = String.valueOf(ch);
 					if (ch != 0x00)
 						tempstr += achar;
 					else
@@ -498,8 +498,7 @@ public class Reader {
 
 	public ImagePlus open(RandomAccessStream stream, LSMFileInfo lsmFi,
 			boolean verbose, boolean thumb) {
-		ImageDirectory firstImDir = (ImageDirectory) lsmFi.imageDirectories
-				.get(0);
+		ImageDirectory firstImDir = lsmFi.imageDirectories.get(0);
 		if (firstImDir == null) {
 			if (verbose)
 				IJ.error("LSM ImageDir null.");
@@ -549,8 +548,7 @@ public class Reader {
 
 	private ImagePlus readStack(RandomAccessStream stream, LSMFileInfo lsmFi,
 			CZLSMInfo cz, boolean thumb) {
-		ImageDirectory firstImDir = (ImageDirectory) lsmFi.imageDirectories
-				.get(0);
+		ImageDirectory firstImDir = lsmFi.imageDirectories.get(0);
 		lsmFi.url = "";
 		lsmFi.fileFormat = FileInfo.TIFF;
 		lsmFi.pixelDepth = cz.VoxelSizeZ * 1000000;
@@ -602,8 +600,7 @@ public class Reader {
 		lsmFi.stripOffsets = new int[1];
 		lsmFi.stripLengths = new int[1];
 		for (int imageCounter = 0; imageCounter < lsmFi.imageDirectories.size(); imageCounter++) {
-			ImageDirectory imDir = (ImageDirectory) lsmFi.imageDirectories
-					.get(imageCounter);
+			ImageDirectory imDir = lsmFi.imageDirectories.get(imageCounter);
 			for (int i = 0; i < imDir.TIF_STRIPBYTECOUNTS.length; i++)
 
 				if (imDir.TIF_COMPRESSION == 5) {
@@ -656,7 +653,7 @@ public class Reader {
 						} catch (IOException e) {
 							e.printStackTrace();
 						}
-						pixels = reader.readPixels((InputStream) stream);
+						pixels = reader.readPixels(stream);
 						st.addSlice("", pixels);
 					}
 				}
@@ -680,7 +677,7 @@ public class Reader {
 
 							e.printStackTrace();
 						}
-						pixels = reader.readPixels((InputStream) stream);
+						pixels = reader.readPixels(stream);
 						st.addSlice("", pixels);
 					}
 				}
@@ -739,7 +736,7 @@ public class Reader {
 	}
 
 	public ImagePlus setInfo(ImagePlus imp, LSMFileInfo lsm) {
-		ImageDirectory imDir = (ImageDirectory) lsm.imageDirectories.get(0);
+		ImageDirectory imDir = lsm.imageDirectories.get(0);
 		if (imDir == null)
 			return null;
 		CZLSMInfo cz = (CZLSMInfo) imDir.TIF_CZ_LSMINFO;

@@ -25,9 +25,9 @@ import java.util.LinkedHashMap;
  */
 public class NrrdHeader {
 	String filename,directory;
-	LinkedHashMap tags;
-	LinkedHashMap fields;
-	ArrayList header,comments; 
+	LinkedHashMap<String, String> tags;
+	LinkedHashMap<String, String[]> fields;
+	ArrayList<String> header,comments; 
 	String magic;
 	// A special field and a special tag respectively
 	String content,contentType;
@@ -39,7 +39,7 @@ public class NrrdHeader {
 	// If the data file spec looks like: data file: LIST [<subdim>]
 	// and the filenames are on multiple additional lines 
 	boolean multiLineDataFile=false;
-	ArrayList dataFiles;
+	ArrayList<String> dataFiles;
 	
 	// For handling the basic magic-less text format 
 	StringBuffer textData;
@@ -56,7 +56,7 @@ public class NrrdHeader {
 		StringBuffer sb=new StringBuffer();
 		if(header==null || header.size()<1) return null;
 		
-		Iterator it = header.iterator();
+		Iterator<String> it = header.iterator();
 		while (it.hasNext()){
 			sb.append(it.next()+"\n");
 		}
@@ -68,12 +68,12 @@ public class NrrdHeader {
 	}
 	
 	void init(){
-		tags=new LinkedHashMap();
-		fields=new LinkedHashMap();
-		header=new ArrayList();
-		comments=new ArrayList();
+		tags=new LinkedHashMap<String, String>();
+		fields=new LinkedHashMap<String, String[]>();
+		header=new ArrayList<String>();
+		comments=new ArrayList<String>();
 		textData=new StringBuffer();
-		dataFiles=new ArrayList();
+		dataFiles=new ArrayList<String>();
 		detachedHeader=false;
 		multiLineDataFile=false;
 	}
@@ -101,11 +101,11 @@ public class NrrdHeader {
 		// This expands the field value arrays
 		if(fields==null || fields.size()<1) return null;
 		StringBuffer sb=new StringBuffer("{");
-		Iterator it = fields.keySet().iterator();
+		Iterator<String> it = fields.keySet().iterator();
 		String fieldname;
 		while (it.hasNext()){
-			fieldname=(String) it.next();
-			String sa=Arrays.toString((String[]) fields.get(fieldname));
+			fieldname=it.next();
+			String sa=Arrays.toString(fields.get(fieldname));
 			if(sa!=null) sb.append(fieldname+"="+sa);
 			if(it.hasNext()) sb.append(", ");
 		}

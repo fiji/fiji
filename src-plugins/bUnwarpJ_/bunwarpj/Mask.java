@@ -282,7 +282,7 @@ public class Mask
        int imax=listMaskPoints.size();
        for (int i=0; i<imax; i++)
        {
-          Point p=(Point)listMaskPoints.elementAt(i);
+          Point p=listMaskPoints.elementAt(i);
           polygon.addPoint(p.x,p.y);
        }
     }

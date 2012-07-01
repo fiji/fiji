@@ -27,7 +27,7 @@ public class LabelCenterTransformation extends Module {
 		ImageMetaData templStats = state.getStatistics(-1);
 		ImageMetaData stats = new ImageMetaData(statisticsPath);
 		boolean needsUpDate =
-			!state.upToDate(labelPath, statisticsPath);
+			!State.upToDate(labelPath, statisticsPath);
 		String transformLabel =
 			state.getTransformLabel(Options.LABEL_DIFFUSION);
 

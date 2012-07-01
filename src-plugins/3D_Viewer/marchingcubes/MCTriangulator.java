@@ -22,7 +22,7 @@ import vib.NaiveResampler;
 
 public class MCTriangulator implements Triangulator {
 
-	public List getTriangles(ImagePlus image, int threshold, 
+	public List<Point3f> getTriangles(ImagePlus image, int threshold, 
 					boolean[] channels, int resamplingF) {
 
 		if(resamplingF != 1)
@@ -36,7 +36,7 @@ public class MCTriangulator implements Triangulator {
 		volume.setAverage(true);
 
 		// get triangles
-		List l = MCCube.getTriangles(volume, threshold);
+		List<Point3f> l = MCCube.getTriangles(volume, threshold);
 		return l;
 	}
 
@@ -46,7 +46,7 @@ public class MCTriangulator implements Triangulator {
 	 * @param origin The translation of the origin, in 3D.
 	 */
 	public<T extends RealType<T>> List<Point3f> getTriangles(Image<T> img, int threshold, float[] origin) throws Exception {
-		return MCCube.getTriangles(new ImgLibVolume(img, origin), threshold);
+		return MCCube.getTriangles(new ImgLibVolume<T>(img, origin), threshold);
 	}
 
 	static public void zeroPad(final ImagePlus imp) {

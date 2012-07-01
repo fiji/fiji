@@ -32,7 +32,7 @@ public class ExtensionFileFilter extends FileFilter {
 	// 2005-11-10 1.00 initial release
 
 	/** Lookup structure for accepted file extensions. */
-	private final HashSet extensionSet;
+	private final HashSet<String> extensionSet;
 	/** Textual description of this filter. */
 	private final String descString;
 
@@ -47,7 +47,7 @@ public class ExtensionFileFilter extends FileFilter {
 	 */
 	public ExtensionFileFilter(String descString, String[] extensions) {
 		this.descString = descString;
-	extensionSet = new HashSet(Arrays.asList(extensions));
+	extensionSet = new HashSet<String>(Arrays.asList(extensions));
 	}
 
 	/** Returns the file extension of the given name. */

@@ -79,7 +79,7 @@ public abstract class CustomMesh extends Shape3D {
 		changed = true;
 	}
 
-	public List getMesh() {
+	public List<Point3f> getMesh() {
 		return mesh;
 	}
 
@@ -117,7 +117,7 @@ public abstract class CustomMesh extends Shape3D {
 		min.x = min.y = min.z = Float.MAX_VALUE;
 		max.x = max.y = max.z = Float.MIN_VALUE;
 		for(int i = 0; i < mesh.size(); i++) {
-			Point3f p = (Point3f)mesh.get(i);
+			Point3f p = mesh.get(i);
 			if(p.x < min.x) min.x = p.x;
 			if(p.y < min.y) min.y = p.y;
 			if(p.z < min.z) min.z = p.z;

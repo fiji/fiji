@@ -162,7 +162,7 @@ public class BatchDialog extends JDialog {
 						IJ.error("You have to select some files or a directory containing images first!");
 						return;
 					}
-				ArrayList list = ((LsmImageTableModel)sourceTable.getModel()).getFiles();
+				ArrayList<File> list = ((LsmImageTableModel)sourceTable.getModel()).getFiles();
 				if (outputTF.getText()!= "" | (outputDir.isDirectory() | outputDir.exists())){
 					if (!outputDir.exists()){
 						int result = JOptionPane.showConfirmDialog(new JFrame(), "The output directory does not exist. Do you want to create it and continue the processing?", "Create directory", JOptionPane.YES_NO_OPTION);
@@ -220,12 +220,12 @@ public class BatchDialog extends JDialog {
 
 	}
 
-	public void doConvert(ArrayList list, File outputDir){
+	public void doConvert(ArrayList<File> list, File outputDir){
 		BatchConverter converter = new BatchConverter(masterModel);
 		IJ.showStatus("Conversion started");
 		for (int i = 0; i < list.size(); i++){
 			 IJ.showStatus("Converting "+i+"/"+list.size());
-			 converter.convertFile(((File)list.get(i)).getAbsolutePath(),outputDir.getAbsolutePath(),
+			 converter.convertFile(list.get(i).getAbsolutePath(),outputDir.getAbsolutePath(),
 					 (String)formatCombo.getSelectedItem(),verboseCB.isSelected(),
 					 dirCB.isSelected());
 		 }

@@ -21,9 +21,9 @@ public class ScenegraphDebugger {
 	private static void displayTree(Node node, String indent) {
 		System.out.println(indent + node);
 		if(node instanceof Group) {
-			Enumeration ch = ((Group)node).getAllChildren();
+			Enumeration<Node> ch = ((Group)node).getAllChildren();
 			while(ch.hasMoreElements())
-				displayTree((Node)ch.nextElement(), indent + "   ");
+				displayTree(ch.nextElement(), indent + "   ");
 		}
 	}
 
@@ -54,7 +54,7 @@ public class ScenegraphDebugger {
 			}
 		}
 
-		public Enumeration children() {
+		public Enumeration<J3DNode> children() {
 			if(children != null) {
 				return Collections.enumeration(Arrays.asList(children));
 			}

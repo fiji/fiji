@@ -379,7 +379,7 @@ public class Counter3D {
                                 if (z>1 && objID[offset (x, y, z-1)]==currID) surf-=cal.pixelWidth*cal.pixelHeight;
                                 if (z<=nbSlices-1 && objID[offset (x, y, z+1)]==currID) surf-=cal.pixelWidth*cal.pixelHeight;
                             }
-                            ((Object3D) (obj.get(currID-1))).addVoxel(x, y, z, imgArray[currPos], isSurf[currPos], surf);
+                            obj.get(currID-1).addVoxel(x, y, z, imgArray[currPos], isSurf[currPos], surf);
                         }
                         currPos++;
                     }
@@ -399,7 +399,7 @@ public class Counter3D {
     public Object3D getObject(int index){
         if (!getObjects) getObjects();
         if (index<0 || index>=nbObj) return null;
-        return (Object3D) obj.get(index);
+        return obj.get(index);
     }
     
     /**
@@ -430,7 +430,7 @@ public class Counter3D {
      *
      * @return the list of all found objects as a Object3D array.
      */
-    public Vector getObjectsList(){
+    public Vector<Object3D> getObjectsList(){
         if (!getObjects) getObjects();
         return obj;
     }
@@ -473,7 +473,7 @@ public class Counter3D {
         centreOfMass=new float[obj.size()][3];
         
         for (int i=0; i<obj.size(); i++){
-            Object3D currObj=(Object3D) obj.get(i);
+            Object3D currObj=obj.get(i);
             float [] tmp=currObj.c_mass;
             for (int j=0; j<3; j++) centreOfMass[i][j]=tmp[j];
         }
@@ -521,7 +521,7 @@ public class Counter3D {
         centroid=new float[obj.size()][3];
         
         for (int i=0; i<obj.size(); i++){
-            Object3D currObj=(Object3D) obj.get(i);
+            Object3D currObj=obj.get(i);
             float [] tmp=currObj.centroid;
             for (int j=0; j<3; j++) centroid[i][j]=tmp[j];
         }
@@ -590,7 +590,7 @@ public class Counter3D {
         surfCoord=new int[nbSurfPix][4];
         
         for (int i=0; i<nbObj; i++){
-            Object3D currObj=(Object3D) obj.get(i);
+            Object3D currObj=obj.get(i);
             for (int j=0; j<currObj.surf_size; j++){
                 surfCoord[index][0]=i+1;
                 for (int k=1; k<4; k++) surfCoord[index][k]=currObj.obj_voxels[j][k-1];
@@ -733,7 +733,7 @@ public class Counter3D {
         for (int i=0; i<header.length; i++) rt.setHeading(i, header[i]);
         for (int i=0; i<nbObj; i++){
             rt.incrementCounter();
-            Object3D currObj=(Object3D) obj.get(i);
+            Object3D currObj=obj.get(i);
             
             if (Prefs.get("3D-OC-Options_volume.boolean", true)) rt.setValue("Volume ("+unit+"^3)", i, currObj.size*calXYZ);
             if (Prefs.get("3D-OC-Options_surface.boolean", true)) rt.setValue("Surface ("+unit+"^2)", i, currObj.surf_cal);

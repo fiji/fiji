@@ -33,7 +33,6 @@
 // General Packages
 import ij.*;
 import ij.gui.*;
-import ij.gui.Overlay;
 import ij.io.*;
 import ij.process.*;
 import ij.gui.ProgressBar;
@@ -47,7 +46,6 @@ import java.awt.*;
 import java.awt.event.*;
 import java.awt.font.*;
 import java.awt.geom.*;
-import java.awt.geom.GeneralPath;
 import java.awt.Graphics2D;
 import java.awt.Graphics2D.*;
 import java.awt.image.BufferedImage;
@@ -65,6 +63,7 @@ import java.io.FileOutputStream;
 import java.io.*;
 import java.io.File.*;
 import java.util.*;
+
 import javax.swing.*;
 import javax.swing.AbstractButton.*;
 import javax.swing.JComponent.*;
@@ -181,7 +180,7 @@ implements ActionListener, AdjustmentListener, ItemListener,
 		Tb.setTool(Toolbar.HAND);
 
 
-		if (i1.getType() != i1.GRAY8) {
+		if (i1.getType() != ImagePlus.GRAY8) {
 			IJ.error("Sorry, this plugin currently works with 8bit grey scale images!");
 			dispose();
 			return;
@@ -349,8 +348,8 @@ implements ActionListener, AdjustmentListener, ItemListener,
 		{
 			for (int i=0;i<pop.N;i++)
 			{
-				xc = (float) ( (Balloon)(pop.BallList.get(i)) ).x0;
-				yc = (float) ( (Balloon)(pop.BallList.get(i)) ).y0;
+				xc = (float) pop.BallList.get(i).x0;
+				yc = (float) pop.BallList.get(i).y0;
 				float arm  = 5;
 
 				// Label Cell number
@@ -371,8 +370,8 @@ implements ActionListener, AdjustmentListener, ItemListener,
 
 			for (int i=0;i<pop.N;i++)
 			{
-				xc = (float) ( (Balloon)(pop.BallList.get(i)) ).x0;
-				yc = (float) ( (Balloon)(pop.BallList.get(i)) ).y0;
+				xc = (float) pop.BallList.get(i).x0;
+				yc = (float) pop.BallList.get(i).y0;
 				float arm  = 5;
 
 				// label cell position
@@ -396,11 +395,11 @@ implements ActionListener, AdjustmentListener, ItemListener,
 		{
 			float x1,y1,x2,y2;
 			int N = pop.N;
-			ArrayList balloons = pop.BallList;
+			ArrayList<Balloon> balloons = pop.BallList;
 
 			for (int i=0;i<N;i++)
 			{
-				Point P1 = ((Balloon)(balloons.get(i))).getPoint();
+				Point P1 = balloons.get(i).getPoint();
 				x1 = (float)(P1.getX());
 				y1 = (float)(P1.getY());
 
@@ -410,7 +409,7 @@ implements ActionListener, AdjustmentListener, ItemListener,
 					{
 						// label connection between cells (potential neighbours)
 						java.awt.geom.GeneralPath Tshape = new GeneralPath();
-						Point P2 = ((Balloon)(balloons.get(j))).getPoint();
+						Point P2 = balloons.get(j).getPoint();
 						x2 = (float)(P2.getX());
 						y2 = (float)(P2.getY());
 						Tshape.moveTo(x1, y1);
@@ -431,23 +430,23 @@ implements ActionListener, AdjustmentListener, ItemListener,
 		{
 			float x1,y1,x2,y2;
 			int N = pop.N;
-			ArrayList balloons = pop.BallList;
+			ArrayList<Balloon> balloons = pop.BallList;
 
 			for (int i=0;i<N;i++)
 			{
-				Point P1 = ((Balloon)(balloons.get(i))).getPoint();
+				Point P1 = balloons.get(i).getPoint();
 				x1 = (float)(P1.getX());
 				y1 = (float)(P1.getY());
 
 				// draw connection between cell in contact
 				for (int j=0;j<i;j++)
 				{
-					for (int k =0; k<((Balloon)(pop.BallList.get(i))).n0;k++)
+					for (int k =0; k<(pop.BallList.get(i)).n0;k++)
 					{
 						if (pop.contacts[i][k]==j)
 						{
 							java.awt.geom.GeneralPath Cshape = new GeneralPath();
-							Point P2 = ((Balloon)(balloons.get(j))).getPoint();
+							Point P2 = balloons.get(j).getPoint();
 							x2 = (float)(P2.getX());
 							y2 = (float)(P2.getY());
 							Cshape.moveTo(x1, y1);
@@ -473,12 +472,12 @@ implements ActionListener, AdjustmentListener, ItemListener,
 			for (int i=0;i<N;i++)
 			{
 				Balloon bal;
-				bal = (Balloon)(pop.BallList.get(i));
+				bal = pop.BallList.get(i);
 				int n = bal.XX.length;
 
 				// filtering (for testing purposes)
 				boolean isToDraw = true;
-				Balloon B0 = ((Balloon)(pop.BallList.get(i)));
+				Balloon B0 = pop.BallList.get(i);
 				B0.mass_geometry();
 				if (pop.contacts != null)
 				{
@@ -511,12 +510,12 @@ implements ActionListener, AdjustmentListener, ItemListener,
 		for (int i=0;i<N;i++)
 		{
 			Balloon bal;
-			bal = (Balloon)(pop.BallList.get(i));
+			bal = pop.BallList.get(i);
 			int n = bal.XX.length;
 
 			// filtering (for testing purposes)
 			boolean isToDraw = true;
-			Balloon B0 = ((Balloon)(pop.BallList.get(i)));
+			Balloon B0 = pop.BallList.get(i);
 			B0.mass_geometry();
 			if (pop.contacts != null)
 			{
@@ -606,8 +605,8 @@ implements ActionListener, AdjustmentListener, ItemListener,
 //-------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------
 	 */
-	/**creates a population of palloons from a list of points in the image*/
-	public void InitiateBalloons (ArrayList X0, ArrayList Y0)
+	/**creates a population of balloons from a list of points in the image*/
+	public void InitiateBalloons (ArrayList<Double> X0, ArrayList<Double> Y0)
 	{
 		// set the right data
 		currentSlice = i1.getCurrentSlice();
@@ -638,7 +637,7 @@ implements ActionListener, AdjustmentListener, ItemListener,
 		int candidate = -1;
 		for (int i=0;i<pop.BallList.size();i++)
 		{
-			Point P = ((Balloon)(pop.BallList.get(i))).getPoint();
+			Point P = pop.BallList.get(i).getPoint();
 			double d = (x0-P.getX())*(x0-P.getX()) + (y0-P.getY())*(y0-P.getY());
 			if (d<min_distance)
 			{
@@ -665,7 +664,7 @@ implements ActionListener, AdjustmentListener, ItemListener,
 			int candidate = -1;
 			for (int i=0;i<pop.BallList.size();i++)
 			{
-				Point P = ((Balloon)(pop.BallList.get(i))).getPoint();
+				Point P = pop.BallList.get(i).getPoint();
 				double d = (x0-P.getX())*(x0-P.getX()) + (y0-P.getY())*(y0-P.getY());
 				if (d<min_distance)
 				{
@@ -678,7 +677,7 @@ implements ActionListener, AdjustmentListener, ItemListener,
 		}
 		else if  (is_movepoint == true & id_movepoint>-1)
 		{
-			Balloon B = (Balloon)(pop.BallList.get(id_movepoint));
+			Balloon B = pop.BallList.get(id_movepoint);
 			B.translateTo(x0,y0);
 			is_movepoint = false;
 			id_movepoint = -1;
@@ -722,7 +721,7 @@ implements ActionListener, AdjustmentListener, ItemListener,
 				{
 					rt.incrementCounter();
 					Balloon bal;
-					bal = (Balloon)(pop.BallList.get(i));
+					bal = pop.BallList.get(i);
 					bal.mass_geometry();
 					rt.addValue("X",bal.x0);
 					rt.addValue("Y",bal.y0);
@@ -1002,7 +1001,7 @@ implements ActionListener, AdjustmentListener, ItemListener,
 		constraint.anchor = GridBagConstraints.NORTHWEST;
 		constraint.insets = new Insets(space, space, space, space);
 		constraint.weightx = IJ.isMacintosh()?90:100;
-		constraint.fill = constraint.HORIZONTAL;
+		constraint.fill = GridBagConstraints.HORIZONTAL;
 		ActionLayout.setConstraints(comp, constraint);
 		pn.add(comp);
 	}
@@ -1450,7 +1449,7 @@ implements ActionListener, AdjustmentListener, ItemListener,
 			int id = Integer.parseInt(txtCellID.getText());
 			if (id<(pop.BallList).size())
 			{
-				bal1 = (Balloon)(pop.BallList.get(id));
+				bal1 = pop.BallList.get(id);
 
 				int[][] bounds = bal1.Cexpand(false);
 				int[] XXi = bounds[0];
@@ -1573,12 +1572,12 @@ implements ActionListener, AdjustmentListener, ItemListener,
 		Roi roi = i1.getRoi();
 		if (roi !=null)
 		{
-			if (roi.getType() == roi.POLYGON & selected_cell>-1) // modify the selected cell
+			if (roi.getType() == Roi.POLYGON & selected_cell>-1) // modify the selected cell
 			{
 				Polygon p = roi.getPolygon();
 				int[] XXi = p.xpoints;
 				int[] YYi = p.ypoints;
-				bal1 = (Balloon)(pop.BallList.get(selected_cell));
+				bal1 = pop.BallList.get(selected_cell);
 				bal1.setXX(XXi);
 				bal1.setYY(YYi);
 				bal1.mass_geometry();
@@ -1590,7 +1589,7 @@ implements ActionListener, AdjustmentListener, ItemListener,
 				drawPop();
 				showOverlay();
 			}
-			else if (roi.getType() == roi.POLYGON & selected_cell==-1)	// modify the boundaries
+			else if (roi.getType() == Roi.POLYGON & selected_cell==-1)	// modify the boundaries
 			{
 				Polygon p = roi.getPolygon();
 				int[] XXi = p.xpoints;

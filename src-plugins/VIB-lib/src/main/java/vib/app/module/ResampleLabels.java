@@ -18,7 +18,7 @@ public class ResampleLabels extends Module {
 			return;
 		String labelPath = state.getImagePath(-1, index);
 		String resampledPath = state.getResampledPath(-1, index);
-		if (state.upToDate(labelPath, resampledPath))
+		if (State.upToDate(labelPath, resampledPath))
 			return;
 
 		ImagePlus image = state.getImage(labelPath);

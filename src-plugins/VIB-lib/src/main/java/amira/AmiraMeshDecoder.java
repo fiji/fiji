@@ -38,7 +38,7 @@ public class AmiraMeshDecoder {
 	private String[] colFormat;
 	private String[] colName;
 
-	public void AmiraMeshDecoder() {
+	public AmiraMeshDecoder() {
 		width=height=numSlices=-1;
 		endOffsetOfPreamble=-1;
 		rleOverrunLength=0;

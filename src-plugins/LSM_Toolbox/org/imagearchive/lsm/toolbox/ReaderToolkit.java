@@ -49,7 +49,7 @@ public class ReaderToolkit {
                     break;
                 ch = (char) in;
                 if (addchar == true) {
-                    String achar = new Character((char) ch).toString();
+                    String achar = String.valueOf(ch);
                     if (ch != 0x00)
                         tempstr += achar;
                     else

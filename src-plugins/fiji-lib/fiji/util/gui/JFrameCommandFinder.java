@@ -20,7 +20,7 @@ public class JFrameCommandFinder extends CommandFinderBase {
 	public void populateActions() {
 		for (int i = 0; i < menuBar.getMenuCount(); i++) {
 			JMenu menu = menuBar.getMenu(i);
-			populateActions(menu, menu.getLabel());
+			populateActions(menu, menu.getText());
 		}
 	}
 
@@ -29,7 +29,7 @@ public class JFrameCommandFinder extends CommandFinderBase {
 			JMenuItem item = menu.getItem(i);
 			if (item == null)
 				continue;
-			String location = menuLocation + ">" + item.getLabel();
+			String location = menuLocation + ">" + item.getText();
 			if (item instanceof JMenu)
 				populateActions((JMenu)item, location);
 			else
@@ -41,7 +41,7 @@ public class JFrameCommandFinder extends CommandFinderBase {
 		JMenuItem menuItem;
 
 		public JMenuItemAction(JMenuItem menuItem, String menuLocation) {
-			super(menuItem.getLabel(), menuLocation);
+			super(menuItem.getText(), menuLocation);
 			this.menuItem = menuItem;
 		}
 

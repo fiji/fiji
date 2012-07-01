@@ -205,7 +205,7 @@ public class BalloonPopulation
 			N-=1;
 			for (int k=0;k<N;k++)
 				{
-				Balloon B = (Balloon)(BallList.get(k));
+				Balloon B = BallList.get(k);
 				B.id = k;
 				}
 			}
@@ -265,7 +265,7 @@ public class BalloonPopulation
 		mass_Geometry ();
 		if (BallList.size()>0)
 			 {
-				Balloon B = (Balloon)(BallList.get(0));
+				Balloon B = BallList.get(0);
 				contacts = new int[N][max_n0];
 				for (int i=0;i<N;i++) { for (int j=0;j<B.n0;j++) { contacts[i][j] = -10; } }  // no contact
 			 }
@@ -288,7 +288,7 @@ public class BalloonPopulation
 		mass_Geometry ();
 		if (BallList.size()>0)
 			 {
-				Balloon B = (Balloon)(BallList.get(0));
+				Balloon B = BallList.get(0);
 				int[][]NewContacts = new int[N][max_n0];
 				for (int i=0;i<N;i++) { for (int j=0;j<B.n0/2;j++) {
 					NewContacts[i][(2*j)%B.n0] = contacts[i][j];
@@ -350,8 +350,8 @@ public class BalloonPopulation
 			}
 	/** Uses the properties of the lines connecting 2 points to decide if these points belong to the same cell	*/
 		private float couple(int j, int x, int y) {
-			int xj = ((Balloon)(BallList.get(j))).x0;
-			int yj = ((Balloon)(BallList.get(j))).y0;
+			int xj = BallList.get(j).x0;
+			int yj = BallList.get(j).y0;
 			int xk = x;
 			int yk = y;
 
@@ -420,8 +420,8 @@ public class BalloonPopulation
 			for (int i=N-1;i>-1;i--)
 				{
 				int rem = 0;
-				double xi = (double)((Balloon)(BallList.get(i))).x0;
-				double yi = (double)((Balloon)(BallList.get(i))).y0;
+				double xi = (double)BallList.get(i).x0;
+				double yi = (double)BallList.get(i).y0;
 				deletion[i] = false;
 				for (int j=0;j<N;j++)
 					{
@@ -524,7 +524,7 @@ public class BalloonPopulation
 	{
 	for (int i=0;i<N;i++)
 		{
-		Balloon B1 = (Balloon)(BallList.get(i));
+		Balloon B1 = BallList.get(i);
 		B1.refineStructure();
 		}
 	ConnectRefinedBalloons();
@@ -541,7 +541,7 @@ public class BalloonPopulation
 	{
 		for (int i=0;i<N;i++)
 		{
-		Balloon B1 = (Balloon)(BallList.get(i));
+		Balloon B1 = BallList.get(i);
 		B1.loadProperties();
 		B1.init();
 		B1.InitiateGrowingRegion ();
@@ -555,7 +555,7 @@ public class BalloonPopulation
 		/* initialise the "contacts" matrix with no initial contacts. Cf comments at the declaration of contacts */
 		 if (BallList.size()>0)
 			{
-			Balloon B = (Balloon)(BallList.get(0));
+			Balloon B = BallList.get(0);
 			contacts = new int[N][max_n0];
 			for (int i=0;i<N;i++)
 				{
@@ -563,7 +563,7 @@ public class BalloonPopulation
 					{
 					contacts[i][j] = -10;     // no contact
 					}
-			B = (Balloon)(BallList.get(i));
+			B = BallList.get(i);
 				}
 			}
 		 else
@@ -605,10 +605,10 @@ public class BalloonPopulation
 								/* For each triangle (Pi,Pj,Pk), check if there is any Pa included in the circle bounding
 								the triangle + some tolerance */
 		                        Point Pi,Pj,Pk,Pa;
-		                        Pi = ((Balloon)BallList.get(i)).getPoint();
-		                        Pj = ((Balloon)BallList.get(j)).getPoint();
-		                        Pk = ((Balloon)BallList.get(k)).getPoint();
-		                        Pa = ((Balloon)BallList.get(a)).getPoint();
+		                        Pi = BallList.get(i).getPoint();
+		                        Pj = BallList.get(j).getPoint();
+		                        Pk = BallList.get(k).getPoint();
+		                        Pa = BallList.get(a).getPoint();
 
 		                        Polygon triangle = new Polygon();
 		                        if (contains(Pi,Pj,Pk,Pa)) {          // contains is the function that implement a specific criteria for excluding points
@@ -637,8 +637,8 @@ public class BalloonPopulation
 			ArrayList<double[]> KNLIST = new ArrayList<double[]>();
 		     for (int i = 0; i < N; i++) {
 		         for (int j = 0; j < N; j++) {
-	                 Point Pi = ((Balloon)BallList.get(i)).getPoint();
-	                 Point Pj = ((Balloon)BallList.get(j)).getPoint();
+	                 Point Pi = BallList.get(i).getPoint();
+	                 Point Pj = BallList.get(j).getPoint();
 				 double xi = Pi.getX();  									// first point of the triangle
 				 double yi = Pi.getY();										//				""
 				 double xj = Pj.getX();										// second point of the triangle
@@ -689,7 +689,7 @@ public class BalloonPopulation
 			for (int i=0;i<N;i++)
 				{
 
-				Balloon B = (Balloon)(BallList.get(i));
+				Balloon B = BallList.get(i);
 
 				if (B.docontact == false & t%period_contact_check == 0)						// coarse contact checking
 				{Tick_contact(B);}
@@ -711,7 +711,7 @@ public class BalloonPopulation
 		//
 		for (int i=0;i<N;i++)
 		{
-			Balloon B = (Balloon)(BallList.get(i));
+			Balloon B = BallList.get(i);
 			B.init_opt();												// reset internal forces
 		}
 
@@ -722,7 +722,7 @@ public class BalloonPopulation
 		for (int i=0;i<N;i++)
 			{
 
-			Balloon B = (Balloon)(BallList.get(i));
+			Balloon B = BallList.get(i);
 
 			if (B.docontact == false & t%period_contact_check == 0)						// coarse contact checking
 			{Tick_contact(B);}
@@ -731,8 +731,8 @@ public class BalloonPopulation
 
 			B.Optimize_inc();												// inflate the individual balloon
 
-			Double r_ini = (Double)((B.history_radius).get(0)); //Float.valueOf
-			Double r_end = (Double)((B.history_radius).get(B.length_history-1)); //
+			Double r_ini = (B.history_radius).get(0); //Float.valueOf
+			Double r_end = (B.history_radius).get(B.length_history-1); //
 			if (2*(r_end-r_ini)/(r_end + r_ini) <0.0001){B.is_growing = false;}
 			if (B.is_growing == true){is_growing = true;}
 			}
@@ -763,7 +763,7 @@ public class BalloonPopulation
 					for (int j=0;j<N;j++)
 						{
 						Balloon Bj;
-						Bj = (Balloon)BallList.get(j);
+						Bj = BallList.get(j);
 						double dx = (B.x0-Bj.x0);
 						double dy = (B.y0-Bj.y0);
 						if (topo[i][j] && i!=j && B.radius + Bj.radius > fine_contact_check*Math.sqrt(dx*dx+dy*dy))
@@ -929,7 +929,7 @@ public class BalloonPopulation
 	{	/* BEGIN mass_Geometry*/
 	for (int i=0;i<N;i++)
 		{
-		Balloon B = (Balloon)(BallList.get(i));
+		Balloon B = BallList.get(i);
 		B.mass_geometry();
 		}
 	} /* END mass_Geometry*/
@@ -965,7 +965,7 @@ public class BalloonPopulation
 		for (int i=0;i<BallList.size();i++)
 		{
 			Balloon bal;
-			bal = (Balloon)BallList.get(i);
+			bal = BallList.get(i);
 			bal.Fill_balloon(imp);
 		}
 
@@ -995,7 +995,7 @@ public class BalloonPopulation
 		// draw boundaries
 		for (int i=0;i<BallList.size();i++)
 		{
-			Balloon bal = (Balloon)BallList.get(i);
+			Balloon bal = BallList.get(i);
 			if (bal.id_line == 2) {
 				bal.Fill_balloon(imp, Math.min((int)(Math.pow(bal.n_generation,2)*10),255));
 				}
@@ -1012,7 +1012,7 @@ public class BalloonPopulation
 		int [][] LIST = new int[N][2];
 		for (int i=0;i<N;i++)
 		{
-			Balloon B = (Balloon)(BallList.get(i));
+			Balloon B = BallList.get(i);
 			LIST[i][0] = B.x0;
 			LIST[i][1] = B.y0;
 		}

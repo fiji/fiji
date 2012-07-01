@@ -151,7 +151,7 @@ public class FlowJFlow
                 Return the surface area in pixels.
         */
         {
-		  Rectangle r = roi.getBoundingRect();
+		  Rectangle r = roi.getBounds();
 		  float xSum = 0;
 		  float ySum = 0;
 		  int s = 0;
@@ -312,7 +312,7 @@ public class FlowJFlow
    {
 		  Rectangle r=null;
 		  if (roi instanceof Roi)
-				r = roi.getBoundingRect();
+				r = roi.getBounds();
 		  int fulls = 0;
 		  for (int y = 0; y < getHeight(); y++)
 		  {

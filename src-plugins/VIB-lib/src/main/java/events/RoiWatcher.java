@@ -128,7 +128,7 @@ public static final long POLL_TIME = 10;
                     System.out.println("oldRoi = " + oldRoi);
 					fireRoiChange(new RoiEvent(ip));
 					
-					oldRoi = (Roi) newRoi;
+					oldRoi = newRoi;
 				}
 			}
 		}

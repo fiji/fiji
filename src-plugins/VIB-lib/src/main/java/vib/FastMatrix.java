@@ -971,7 +971,7 @@ public class FastMatrix {
 	}
 	
 	public static FastMatrix[] parseMatrices(String m) {
-		Vector vector = new Vector();
+		Vector<FastMatrix> vector = new Vector<FastMatrix>();
 		StringTokenizer tokenizer = new StringTokenizer(m, ",");
 		while (tokenizer.hasMoreTokens()) {
 			String matrix = tokenizer.nextToken().trim();
@@ -982,7 +982,7 @@ public class FastMatrix {
 		}
 		FastMatrix[] result = new FastMatrix[vector.size()];
 		for (int i = 0; i < result.length; i++)
-			result[i] = (FastMatrix)vector.get(i);
+			result[i] = vector.get(i);
 		return result;
 	}
 	

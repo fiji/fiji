@@ -71,9 +71,9 @@ public class AmiraParameters {
 		this.width = width;
 		this.height = height;
 		this.depth = depth;
-		Hashtable table=(Hashtable)parameters.get("Parameters");
+		Hashtable<String, String> table=(Hashtable<String, String>)parameters.get("Parameters");
 		if(table==null) {
-			table=new Hashtable();
+			table=new Hashtable<String, String>();
 			parameters.put("Parameters",table);
 		}
 		table.put("BoundingBox","0.0 "+(width*voxelWidth)+" 0.0 "+(height*voxelHeight)+" 0.0 "+(depth*voxelDepth));
@@ -141,7 +141,7 @@ public class AmiraParameters {
 	private static Pattern colorPattern;
 
 	private Properties parameters;
-	private Vector materials;
+	private Vector<String> materials;
 
 	private void assertPatternsInitialized() {
 		if(parameterKeyPattern==null) {
@@ -161,7 +161,7 @@ public class AmiraParameters {
 	}
 
 	/* returns false, if read key/value pair was last of that level */
-	private boolean parseParameters(Hashtable map,boolean isMaterial) {
+	private boolean parseParameters(Hashtable<String, Object> map,boolean isMaterial) {
 		assertPatternsInitialized();
 		Matcher m=parameterKeyPattern.matcher(line);
 		if(m.matches()) {
@@ -171,11 +171,11 @@ public class AmiraParameters {
 			if(m3.matches()) {
 				if(isMaterial) {
 					if(materials==null)
-						materials=new Vector();
+						materials=new Vector<String>();
 					materials.add(key);
 				}
 				line=m3.group(1);
-				Hashtable subMap=new Hashtable();
+				Hashtable<String, Object> subMap=new Hashtable<String, Object>();
 				map.put(key,subMap);
 				while(parseParameters(subMap,key.equals("Materials")));
 				return true;
@@ -215,12 +215,12 @@ public class AmiraParameters {
 
 	void initializeMaterials() {
 		if(materials==null)
-			materials=new Vector();
+			materials=new Vector<String>();
 		String list=(String)parameters.get("MaterialList");
 		if(list==null) {
 			list="";
 			for(int i=0;i<materials.size();i++)
-				list+=(i>0?",":"")+(String)materials.get(i);
+				list+=(i>0?",":"")+materials.get(i);
 			parameters.put("MaterialList",list);
 		} else {
 			materials.clear();
@@ -249,11 +249,11 @@ public class AmiraParameters {
 
 	public String toString() {
 		String list="",prefix="\t";
-		Hashtable t=(Hashtable)parameters.get("Parameters");
+		Hashtable<String, Object> t=(Hashtable<String, Object>)parameters.get("Parameters");
 		if (t == null)
 			return list;
-		for(Enumeration e=t.keys();e.hasMoreElements();) {
-			String key=(String)e.nextElement();
+		for(Enumeration<String> e=t.keys();e.hasMoreElements();) {
+			String key=e.nextElement();
 			list+=prefix+key+" "+getProperty(t,key,prefix)+"\n";
 		}
 		return list;
@@ -277,9 +277,9 @@ public class AmiraParameters {
 		String result="{",sep="\n";
 		// treat special case "Materials": preserve order
 		Hashtable subMap=(Hashtable)value;
-		Enumeration e=(key.equals("Materials")?materials.elements():subMap.keys());
+		Enumeration<String> e=(key.equals("Materials")?materials.elements():subMap.keys());
 		while(e.hasMoreElements()) {
-			String subKey=(String)e.nextElement();
+			String subKey=e.nextElement();
 			String subValue=getProperty(subMap,subKey,prefix);
 			result+=sep+prefix+subKey+" "+subValue;
 			if(!subValue.equals("") && !subValue.endsWith("}"))
@@ -333,8 +333,8 @@ public class AmiraParameters {
 	}
 
 	public void setParameters(Properties prop) {
-		for(Enumeration e=parameters.keys();e.hasMoreElements();) {
-			String key=(String)e.nextElement();
+		for(Enumeration<Object> e= parameters.keys();e.hasMoreElements();) {
+			String key= (String)e.nextElement();
 			prop.put(key,parameters.get(key));
 		}
 	}
@@ -353,17 +353,17 @@ public class AmiraParameters {
 	}
 
 	public int addMaterial(String name,double red,double green,double blue) {
-		Hashtable m=getMaterials();
+		Hashtable<String, Object> m=getMaterials();
 		if(m==null) {
 			m=new Hashtable();
 			((Hashtable)parameters.get("Parameters")).put("Materials",m);
 		}
-		Hashtable color=new Hashtable();
+		Hashtable<String, String> color=new Hashtable<String, String>();
 		color.put("Color",red+" "+green+" "+blue);
 		m.put(name,color);
 
 		if(materials==null)
-			materials=new Vector();
+			materials=new Vector<String>();
 		materials.add(name);
 
 		String list=(String)parameters.get("MaterialList");
@@ -392,7 +392,7 @@ public class AmiraParameters {
 	}
 
 	public String getMaterialName(int id) {
-		return (String)materials.get(id);
+		return materials.get(id);
 	}
 
 	public int getMaterialID(String name) {
@@ -436,7 +436,7 @@ public class AmiraParameters {
 			blue=color[2];
 
 		materials.set(id,name);
-		Hashtable c=new Hashtable();
+		Hashtable<String, String> c=new Hashtable<String, String>();
 		c.put("Color",red+" "+green+" "+blue);
 		getMaterials().put(name,c);
 
@@ -492,7 +492,7 @@ public class AmiraParameters {
 
 	public static boolean addImageList(GenericDialog g, String title,
 			String type, IsA isA) {
-		Vector vector = new Vector();
+		Vector<String> vector = new Vector<String>();
 		ImagePlus im;
 		for(int i = 1; (im = WindowManager.getImage(i)) != null; i++)
 			if (isA.isA(im))
@@ -528,7 +528,7 @@ public class AmiraParameters {
 	}
 
 	public static boolean addAmiraTableList(GenericDialog g, String t) {
-		Vector vector = new Vector();
+		Vector<String> vector = new Vector<String>();
 		MenuBar mbar = Menus.getMenuBar();
 		Menu menu = null;
 		for (int i = 0; i < mbar.getMenuCount(); i++)
@@ -554,7 +554,7 @@ public class AmiraParameters {
 
 	public static int addWindowList(GenericDialog g, String title,
 			boolean onlyWithAmiraParameters) {
-		Vector v = new Vector();
+		Vector<String> v = new Vector<String>();
 		if (Interpreter.isBatchMode())
 			v.add(Macro.getValue(Macro.getOptions(),
 						"window", "(null)"));
@@ -575,17 +575,17 @@ public class AmiraParameters {
 			return addChoice(g, title, v);
 	}
 
-	public static int addChoice(GenericDialog g, String title, Vector v) {
+	public static int addChoice(GenericDialog g, String title, Vector<String> v) {
 		return addChoice(g, title, v,
 				v.size() > 0 ? (String)v.get(0) : "");
 	}
 
-	public static int addChoice(GenericDialog g, String title, Vector v,
+	public static int addChoice(GenericDialog g, String title, Vector<String> v,
 			String defaultValue) {
 		String[] list = new String[v.size()];
 		boolean hasDefault = false;
 		for (int i = 0; i < list.length; i++) {
-			list[i] = (String)v.get(i);
+			list[i] = v.get(i);
 			if (list[i].equals(defaultValue))
 				hasDefault = true;
 		}
@@ -710,7 +710,7 @@ public class AmiraParameters {
 	}
 
 	public static String[] getWindowList() {
-		Vector v = new Vector();
+		Vector<String> v = new Vector<String>();
 		MenuBar mbar = Menus.getMenuBar();
 		Menu menu = null;
 		for (int i = 0; i < mbar.getMenuCount(); i++)
@@ -732,7 +732,7 @@ public class AmiraParameters {
 
 		String[] result = new String[v.size()];
 		for (int i = 0; i < result.length; i++)
-			result[i] = (String)v.get(i);
+			result[i] = v.get(i);
 		return result;
 	}
 

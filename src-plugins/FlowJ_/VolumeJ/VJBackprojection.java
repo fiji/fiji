@@ -77,7 +77,7 @@ public class VJBackprojection
                         VJProjection vjp = new VJProjection(deltaAngle,
                                 imp.getStack().getImageArray(), n, width, height);
                         vjp.backproject(v);
-                        (new ImagePlus("backprojection ", ((VolumeFloat) v).getImageStack())).show();
+                        (new ImagePlus("backprojection ", v.getImageStack())).show();
                 }
         }
 }

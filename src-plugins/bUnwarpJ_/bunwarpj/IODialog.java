@@ -268,8 +268,8 @@ public class IODialog extends Dialog implements ActionListener
 		sourcePh.removePoints();
 		targetPh.removePoints();
 		while ((!sourceStack.empty()) && (!targetStack.empty())) {
-			Point sourcePoint = (Point)sourceStack.pop();
-			Point targetPoint = (Point)targetStack.pop();
+			Point sourcePoint = sourceStack.pop();
+			Point targetPoint = targetStack.pop();
 			sourcePh.addPoint(sourcePoint.x, sourcePoint.y);
 			targetPh.addPoint(targetPoint.x, targetPoint.y);
 		}
@@ -1036,7 +1036,7 @@ public class IODialog extends Dialog implements ActionListener
 				while (n.length() < 5) {
 					n = " " + n;
 				}
-				sourcePoint = (Point)sourceList.elementAt(k);
+				sourcePoint = sourceList.elementAt(k);
 				xSource = "" + sourcePoint.x;
 				while (xSource.length() < 7) {
 					xSource = " " + xSource;
@@ -1045,7 +1045,7 @@ public class IODialog extends Dialog implements ActionListener
 				while (ySource.length() < 7) {
 					ySource = " " + ySource;
 				}
-				targetPoint = (Point)targetList.elementAt(k);
+				targetPoint = targetList.elementAt(k);
 				xTarget = "" + targetPoint.x;
 				while (xTarget.length() < 7) {
 					xTarget = " " + xTarget;
@@ -1086,7 +1086,7 @@ public class IODialog extends Dialog implements ActionListener
 			while (n.length() < 5) {
 				n = " " + n;
 			}
-			sourcePoint = (Point)sourceList.elementAt(k);
+			sourcePoint = sourceList.elementAt(k);
 			xTarget = "" + sourcePoint.x;
 			while (xTarget.length() < 7) {
 				xTarget = " " + xTarget;
@@ -1095,7 +1095,7 @@ public class IODialog extends Dialog implements ActionListener
 			while (yTarget.length() < 7) {
 				yTarget = " " + yTarget;
 			}
-			targetPoint = (Point)targetList.elementAt(k);
+			targetPoint = targetList.elementAt(k);
 			xSource = "" + targetPoint.x;
 			while (xSource.length() < 7) {
 				xSource = " " + xSource;

@@ -71,7 +71,7 @@ public class Recent_Commands implements ActionListener, CommandListener, KeyList
 	JButton okay, cancel, options;
 
 	public void runInteractively() {
-		Vector recent = getMostRecent(recentListSize);
+		Vector<String> recent = getMostRecent(recentListSize);
 		if (recent.size() == 0) {
 			JOptionPane.showMessageDialog(IJ.getInstance(),
 				"No recent commands available!");
@@ -86,7 +86,7 @@ public class Recent_Commands implements ActionListener, CommandListener, KeyList
 		dialog = new JDialog(IJ.getInstance(), "Recent Commands", true);
 		dialog.setLayout(new GridBagLayout());
 		GridBagConstraints c = new GridBagConstraints();
-		c.fill = c.HORIZONTAL;
+		c.fill = GridBagConstraints.HORIZONTAL;
 		c.gridy = c.gridx = 0;
 		dialog.add(new JLabel("Recent Commands:"), c);
 		c.gridy++; c.gridx = 0;
@@ -115,7 +115,7 @@ public class Recent_Commands implements ActionListener, CommandListener, KeyList
 		dialog.setVisible(true);
 	}
 
-	JList makeJList(Vector items) {
+	JList makeJList(Vector<?> items) {
 		JList list = new JList(items);
 		list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		list.addListSelectionListener(this);
@@ -233,8 +233,8 @@ public class Recent_Commands implements ActionListener, CommandListener, KeyList
 		return "".equals(value) ? 0 : Integer.parseInt(value);
 	}
 
-	protected Vector getMostRecent(int maxCount) {
-		Vector result = new Vector();
+	protected Vector<String> getMostRecent(int maxCount) {
+		Vector<String> result = new Vector<String>();
 		Set<String> all = suppressRepeatedCommands ?
 			new HashSet<String>() : null;
 		int listIndex = getListIndex();
@@ -255,8 +255,8 @@ public class Recent_Commands implements ActionListener, CommandListener, KeyList
 		return result;
 	}
 
-	protected Vector getMostFrequent(int maxCount) {
-		Vector result = new Vector();
+	protected Vector<String> getMostFrequent(int maxCount) {
+		Vector<String> result = new Vector<String>();
 		final Map<String, Integer> map = new HashMap<String, Integer>();
 		for (int i = 0; i < maxLRUSize; i++) {
 			String command = Prefs.get(PREFS_KEY + i, null);
@@ -280,7 +280,7 @@ public class Recent_Commands implements ActionListener, CommandListener, KeyList
 				return false;
 			}
 		});
-		return new Vector(result.subList(0, Math.min(result.size(), maxCount)));
+		return new Vector<String>(result.subList(0, Math.min(result.size(), maxCount)));
 	}
 
 	void readPrefs() {

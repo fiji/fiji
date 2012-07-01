@@ -16,7 +16,6 @@ import customnode.FullInfoMesh;
 
 public class InteractiveMeshDecimation {
 	public void run(final CustomTriangleMesh ctm) {
-		@SuppressWarnings("unchecked")
 		final FullInfoMesh fim = new FullInfoMesh(ctm.getMesh());
 		final EdgeContraction ec = new EdgeContraction(fim, false);
 		@SuppressWarnings("serial")

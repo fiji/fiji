@@ -360,7 +360,7 @@ public class DetailsFrame extends JFrame {
 		searchCoordinates = null;
 
 		while (nodes.hasMoreElements() && (result == null)) {
-			node = (DefaultMutableTreeNode) nodes.nextElement();
+			node = nodes.nextElement();
 			String nodeTitle = node.getUserObject().toString();
 
 			if (nodeTitle.toLowerCase().indexOf(string) > 0) {
@@ -432,7 +432,7 @@ public class DetailsFrame extends JFrame {
 
 	protected void dumpXmlData() {
 		if (lsm == null) return;
-		ImageDirectory imDir = (ImageDirectory) lsm.imageDirectories.get(0);
+		ImageDirectory imDir = lsm.imageDirectories.get(0);
 		CZLSMInfoExtended cz = (CZLSMInfoExtended) imDir.TIF_CZ_LSMINFO;
 		new TextWindow("XML SCANINFO DUMP", new DomXmlExporter().buildTree(cz,filterButton.isSelected()), 250, 400);
 	}
@@ -441,7 +441,7 @@ public class DetailsFrame extends JFrame {
 
 		((DefaultMutableTreeNode) detailsTree.getModel().getRoot())
 				.removeAllChildren();
-		ImageDirectory imDir = (ImageDirectory) lsm.imageDirectories.get(0);
+		ImageDirectory imDir = lsm.imageDirectories.get(0);
 		CZLSMInfoExtended cz = (CZLSMInfoExtended) imDir.TIF_CZ_LSMINFO;
 		InfoNode czNode = new InfoNode("CarlZeiss", convertCZ(cz));
 		((DefaultMutableTreeNode) treemodel.getRoot()).add(czNode);
@@ -588,7 +588,7 @@ public class DetailsFrame extends JFrame {
 	}
 
 	private void expandEntireTree(DefaultMutableTreeNode tNode) {
-		TreePath tp = new TreePath(((DefaultMutableTreeNode) tNode).getPath());
+		TreePath tp = new TreePath(tNode.getPath());
 		detailsTree.expandPath(tp);
 
 		for (int i = 0; i < tNode.getChildCount(); i++) {
@@ -597,7 +597,7 @@ public class DetailsFrame extends JFrame {
 	}
 
 	private StringBuffer getTreeAsStringBuffer() {
-		ImageDirectory imDir = (ImageDirectory) lsm.imageDirectories.get(0);
+		ImageDirectory imDir = lsm.imageDirectories.get(0);
 		CZLSMInfoExtended cz = (CZLSMInfoExtended) imDir.TIF_CZ_LSMINFO;
 		StringBuffer sb = new StringBuffer();
 
@@ -668,7 +668,7 @@ public class DetailsFrame extends JFrame {
 		if (hm != null) {
 			Iterator<String> iterator = hm.keySet().iterator();
 			for (int i = 0; iterator.hasNext(); i++) {
-				String tag = (String) iterator.next();
+				String tag = iterator.next();
 				sb.append(tag + ":\t" + hm.get(tag) + "\n");
 			}
 		}

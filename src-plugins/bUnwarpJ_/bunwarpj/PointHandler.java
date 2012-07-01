@@ -267,7 +267,7 @@ public class PointHandler extends Roi
 			final int dy = (int)(mag / 2.0);
 			for (int k = 0; (k < numPoints); k++)
 			{
-				final Point p = (Point)listPoints.elementAt(k);
+				final Point p = listPoints.elementAt(k);
 				//g.setColor(spectrum[((Integer)listColors.elementAt(k)).intValue()]);
 				g.setColor(listColors.elementAt(k));
 				
@@ -376,12 +376,12 @@ public class PointHandler extends Roi
 			int CIRCLE_RADIUS=CROSS_HALFSIZE/2;
 			int CIRCLE_DIAMETER=2*CIRCLE_RADIUS;
 			for (int i=0; i<numberMaskPoints; i++) {
-				final Point p = (Point)listMaskPoints.elementAt(i);
+				final Point p = listMaskPoints.elementAt(i);
 				g.setColor(Color.yellow);
 				g.drawOval(ic.screenX(p.x)-CIRCLE_RADIUS+dx, ic.screenY(p.y)-CIRCLE_RADIUS+dy,
 						CIRCLE_DIAMETER, CIRCLE_DIAMETER);
 				if (i!=0) {
-					Point previous_p=(Point)listMaskPoints.elementAt(i-1);
+					Point previous_p=listMaskPoints.elementAt(i-1);
 					g.drawLine(ic.screenX(p.x)+dx,ic.screenY(p.y)+dy,
 							ic.screenX(previous_p.x)+dx,ic.screenY(previous_p.y)+dy);
 				}
@@ -409,14 +409,14 @@ public class PointHandler extends Roi
 		x = ic.offScreenX(x);
 		y = ic.offScreenY(y);
 
-		Point p = new Point((Point)listPoints.elementAt(currentPoint));
+		Point p = new Point(listPoints.elementAt(currentPoint));
 
 		double distance = (double)(x - p.x) * (double)(x - p.x)
 		+ (double)(y - p.y) * (double)(y - p.y);
 
 		for (int k = 0; (k < numPoints); k++)
 		{
-			p = (Point)listPoints.elementAt(k);
+			p = listPoints.elementAt(k);
 			final double candidate = (double)(x - p.x) * (double)(x - p.x)
 			+ (double)(y - p.y) * (double)(y - p.y);
 			if (candidate < distance)

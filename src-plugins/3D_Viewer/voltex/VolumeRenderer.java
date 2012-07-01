@@ -370,7 +370,7 @@ public class VolumeRenderer implements AxisConstants {
 		if (!node.isLive()) 
 			return null;
 		//  get viewplatforms's location in virutal world
-		Canvas3D canvas = (Canvas3D)view.getCanvas3D(0);
+		Canvas3D canvas = view.getCanvas3D(0);
 		canvas.getCenterEyeInImagePlate(viewPosition);
 		canvas.getImagePlateToVworld(t);
 		t.transform(viewPosition);

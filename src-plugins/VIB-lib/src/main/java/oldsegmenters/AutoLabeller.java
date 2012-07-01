@@ -87,7 +87,7 @@ public abstract class AutoLabeller {
 		for (int i = 0; i < 256; i++) {
 			byte pixelIntensity = ByteProbability.INTEGER_TO_BYTE[i];
 			double total = 0;
-			double totalVolume=0;
+			double totalVolume = 0;
 
 			StringBuffer buf = new StringBuffer("intesity = ").append(i).append(" ");
 
@@ -285,7 +285,7 @@ public abstract class AutoLabeller {
 
 	public abstract void segment(SegmentatorModel model);
 
-	public class LabelStats implements Comparable {
+	public class LabelStats implements Comparable<LabelStats> {
 		byte id;
 		String name;
 
@@ -317,8 +317,8 @@ public abstract class AutoLabeller {
 			return buf.toString();
 		}
 
-		public int compareTo(Object o) {
-			return ((LabelStats) o).id < id ? 1 : -1;
+		public int compareTo(LabelStats ls) {
+			return ls.id < id ? 1 : -1;
 		}
 	}
 }

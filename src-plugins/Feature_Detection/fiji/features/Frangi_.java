@@ -29,7 +29,6 @@ import ij.measure.Calibration;
 
 import java.text.DecimalFormat;
 
-import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Comparator;
@@ -45,9 +44,7 @@ import mpicbg.imglib.image.ImagePlusAdapter;
 import mpicbg.imglib.type.numeric.RealType;
 import mpicbg.imglib.type.numeric.real.FloatType;
 import mpicbg.imglib.type.numeric.integer.ByteType;
-import mpicbg.imglib.algorithm.gauss.GaussianConvolution;
 import mpicbg.imglib.algorithm.gauss.GaussianConvolutionReal;
-import mpicbg.imglib.outofbounds.OutOfBoundsStrategy;
 import mpicbg.imglib.outofbounds.OutOfBoundsStrategyMirrorFactory;
 import mpicbg.imglib.image.display.imagej.ImageJFunctions;
 import mpicbg.imglib.container.array.ArrayContainerFactory;
@@ -63,10 +60,9 @@ public class Frangi_<T extends RealType<T>> implements PlugIn {
 
 	/** A comparator for sorting floats by absolute value */
 
-	public static class AbsoluteFloatComparator implements Comparator {
-		public int compare(Object d1, Object d2) {
-			return Double.compare( Math.abs(((Float)d1).floatValue()),
-					       Math.abs(((Float)d2).floatValue()) );
+	public static class AbsoluteFloatComparator implements Comparator<Float> {
+		public int compare(Float d1, Float d2) {
+			return Double.compare( Math.abs(d1), Math.abs(d2) );
 		}
 	}
 
@@ -145,7 +141,7 @@ public class Frangi_<T extends RealType<T>> implements PlugIn {
 			/* The cursors may go outside the image, in which case
 			   we supply mirror values: */
 
-			OutOfBoundsStrategyMirrorFactory osmf = new OutOfBoundsStrategyMirrorFactory<T>();
+			OutOfBoundsStrategyMirrorFactory<T> osmf = new OutOfBoundsStrategyMirrorFactory<T>();
 
 			LocalizableByDimCursor<T> cursor = input.createLocalizableByDimCursor( osmf );
 
@@ -422,7 +418,7 @@ public class Frangi_<T extends RealType<T>> implements PlugIn {
 		   specified: */
 
 		int scale = 0;
-		for( VesselnessCalculator vc : calculators ) {
+		for( VesselnessCalculator<T> vc : calculators ) {
 			Image<FloatType> image = vc.getResult();
 			vesselImages.add( image );
 			if( showFilteredImages ) {

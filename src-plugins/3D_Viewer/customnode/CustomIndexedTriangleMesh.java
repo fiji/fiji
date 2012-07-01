@@ -75,7 +75,7 @@ public class CustomIndexedTriangleMesh extends CustomMesh {
 	}
 
 	@Override
-	public List getMesh() {
+	public List<Point3f> getMesh() {
 		return mesh;
 	}
 

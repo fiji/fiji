@@ -83,7 +83,7 @@ public class Kuwahara_LinearStructure_Filter_v3  implements PlugInFilter {
 			}
 
 			// set pointer in imsKernel to the value stored in rotLineStack
-			imsKernel.addSlice("kernel", (short[]) rotLineStack[iAngle]);
+			imsKernel.addSlice("kernel", rotLineStack[iAngle]);
 		}
 
 		// display kernels (just for checking)

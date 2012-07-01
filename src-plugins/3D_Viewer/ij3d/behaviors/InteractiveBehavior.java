@@ -97,7 +97,7 @@ public class InteractiveBehavior extends Behavior {
 	/**
 	 * @see Behavior#processStimulus(Enumeration) Behavior.processStimulus
 	 */
-	public void processStimulus(Enumeration criteria) {
+	public void processStimulus(Enumeration/*<WakeupOnAWTEvent>*/ criteria) {
 		/*
 		if(!univ.ui.isHandTool() &&
 			!univ.ui.isMagnifierTool() &&
@@ -109,7 +109,7 @@ public class InteractiveBehavior extends Behavior {
 		*/
 		while(criteria.hasMoreElements()) {
 			WakeupOnAWTEvent wakeup = (WakeupOnAWTEvent)criteria.nextElement();
-			AWTEvent[] events = (AWTEvent[])wakeup.getAWTEvent();
+			AWTEvent[] events = wakeup.getAWTEvent();
 			for(AWTEvent evt : events) {
 				if(evt instanceof MouseEvent)
 					doProcess((MouseEvent)evt);
@@ -359,7 +359,7 @@ public class InteractiveBehavior extends Behavior {
 			if(univ.ui.isPointTool()) {
 				Content sel = c;
 				if(sel == null && ((Image3DUniverse)univ).getContents().size() == 1)
-					sel = (Content)univ.contents().next();
+					sel = univ.contents().next();
 				if(sel != null) {
 					sel.showPointList(true);
 					e.consume();

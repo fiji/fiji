@@ -134,7 +134,7 @@ public class Show_Colour_Surfaces implements PlugIn {
 			IJ.error("The background colour must have an index from 0 to "+(colours-1)+" inclusive");
 			return;
 		}
-		HashMap<Integer,Boolean> coloursUsedInImage = new HashMap();
+		HashMap<Integer,Boolean> coloursUsedInImage = new HashMap<Integer,Boolean>();
 		for( int c = 0; c < colours; ++c ) {
 			coloursUsedInImage.put( c, false );
 		}

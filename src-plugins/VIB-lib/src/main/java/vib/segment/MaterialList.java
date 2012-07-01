@@ -289,9 +289,9 @@ public class MaterialList extends ScrollPane implements ActionListener, ItemList
 		public void processKeyEvent(KeyEvent e) {
 			if (e.getID() == KeyEvent.KEY_PRESSED) {
 				int code = e.getKeyCode();
-				if (code == e.VK_UP && selectedIndex > 0)
+				if (code == KeyEvent.VK_UP && selectedIndex > 0)
 					ensureVisible(--selectedIndex, true);
-				else if (code == e.VK_DOWN && selectedIndex
+				else if (code == KeyEvent.VK_DOWN && selectedIndex
 						< getItemCount() - 1)
 					ensureVisible(++selectedIndex, true);
 			}

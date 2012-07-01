@@ -224,7 +224,7 @@ class MarkerList extends Object {
         if (p < 0) p = 0;  // This can happen, if the active list is cleared and Active Point in the current list is searched for
         // System.out.println("Get Point Nr "+p+", coords ("+((APoint) MyPoints.elementAt(p)).coord[3] +", "+((APoint) MyPoints.elementAt(p)).coord[4]+")");
         //(p < 0) return null;
-        return (APoint) MyPoints.elementAt(p);
+        return MyPoints.elementAt(p);
     }
 
     int NumMarkers() 

@@ -20,11 +20,9 @@
 
 package delaunay;
 
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
-import java.util.NoSuchElementException;
 import java.util.Set;
 
 /**
@@ -64,7 +62,7 @@ public class DelaunayTriangulation extends Triangulation {
         if (!this.contains(triangle)) triangle = null;
 
         // Try a directed walk (this works fine in 2D, but can fail in 3D)
-        Set visited = new HashSet();
+        Set<Simplex> visited = new HashSet<Simplex>();
         while (triangle != null) {
             if (visited.contains(triangle)) { // This should never happen
                 System.out.println("Warning: Caught in a locate loop");
@@ -72,15 +70,15 @@ public class DelaunayTriangulation extends Triangulation {
             }
             visited.add(triangle);
             // Corner opposite point
-            Pnt corner = point.isOutside((Pnt[]) triangle.toArray(new Pnt[0]));
+            Pnt corner = point.isOutside(triangle.toArray(new Pnt[0]));
             if (corner == null) return triangle;
             triangle = this.neighborOpposite(corner, triangle);
         }
         // No luck; try brute force
         System.out.println("Warning: Checking all triangles for " + point);
-        for (Iterator it = this.iterator(); it.hasNext();) {
-            Simplex tri = (Simplex) it.next();
-            if (point.isOutside((Pnt[]) tri.toArray(new Pnt[0])) == null) return tri;
+        for (Iterator<Simplex> it = this.iterator(); it.hasNext();) {
+            Simplex tri = it.next();
+            if (point.isOutside(tri.toArray(new Pnt[0])) == null) return tri;
         }
         // No such triangle
         System.out.println("Warning: No triangle holds " + point);
@@ -92,11 +90,11 @@ public class DelaunayTriangulation extends Triangulation {
      * @param site the new Pnt
      * @return set of all new triangles created
      */
-    public Set delaunayPlace (Pnt site) {
-        Set newTriangles = new HashSet();
-        Set oldTriangles = new HashSet();
-        Set doneSet = new HashSet();
-        LinkedList waitingQ = new LinkedList();
+    public Set<Simplex> delaunayPlace (Pnt site) {
+        Set<Simplex> newTriangles = new HashSet<Simplex>();
+        Set<Simplex> oldTriangles = new HashSet<Simplex>();
+        Set<Simplex> doneSet = new HashSet<Simplex>();
+        LinkedList<Simplex> waitingQ = new LinkedList<Simplex>();
 
         // Locate containing triangle
         if (debug) System.out.println("Locate");
@@ -109,12 +107,12 @@ public class DelaunayTriangulation extends Triangulation {
         if (debug) System.out.println("Cavity");
         waitingQ.add(triangle);
         while (!waitingQ.isEmpty()) {
-            triangle = (Simplex) waitingQ.removeFirst();
-            if (site.vsCircumcircle((Pnt[]) triangle.toArray(new Pnt[0])) == 1) continue;
+            triangle = waitingQ.removeFirst();
+            if (site.vsCircumcircle(triangle.toArray(new Pnt[0])) == 1) continue;
             oldTriangles.add(triangle);
-            Iterator it = this.neighbors(triangle).iterator();
+            Iterator<Simplex> it = this.neighbors(triangle).iterator();
             for (; it.hasNext();) {
-                Simplex tri = (Simplex) it.next();
+                Simplex tri = it.next();
                 if (doneSet.contains(tri)) continue;
                 doneSet.add(tri);
                 waitingQ.add(tri);
@@ -122,8 +120,8 @@ public class DelaunayTriangulation extends Triangulation {
         }
         // Create the new triangles
         if (debug) System.out.println("Create");
-        for (Iterator it = Simplex.boundary(oldTriangles).iterator(); it.hasNext();) {
-            Set facet = (Set) it.next();
+        for (Iterator<Set<Pnt>> it = Simplex.boundary(oldTriangles).iterator(); it.hasNext();) {
+            Set<Pnt> facet = it.next();
             facet.add(site);
             newTriangles.add(new Simplex(facet));
         }
@@ -132,7 +130,7 @@ public class DelaunayTriangulation extends Triangulation {
         this.update(oldTriangles, newTriangles);
 
         // Update mostRecent triangle
-        if (!newTriangles.isEmpty()) mostRecent = (Simplex) newTriangles.iterator().next();
+        if (!newTriangles.isEmpty()) mostRecent = newTriangles.iterator().next();
         return newTriangles;
     }
 

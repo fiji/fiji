@@ -54,19 +54,19 @@ public class AmiraTable extends TextWindow {
 		return properties;
 	}
 
-	public Hashtable getParameters() {
-		return (Hashtable)properties.get("Parameters");
+	public Hashtable<String, String> getParameters() {
+		return (Hashtable<String, String>)properties.get("Parameters");
 	}
 
 	public String get(String key) {
-		Hashtable p = getParameters();
+		Hashtable<String, String> p = getParameters();
 		if (p == null)
 			return null;
-		return (String)p.get(key);
+		return p.get(key);
 	}
 
 	public void put(String key, String value) {
-		Hashtable p = getParameters();
+		Hashtable<String, String> p = getParameters();
 		if (p == null)
 			return;
 		p.put(key, value);

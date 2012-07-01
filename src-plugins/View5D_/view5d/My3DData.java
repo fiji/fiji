@@ -887,7 +887,7 @@ public class My3DData extends Object {
     }
 
     public Bundle GetBundleAt(int e) {
-	return ((Bundle) MyBundle.elementAt(e));
+	return MyBundle.elementAt(e);
     }
 
     public void ToggleLog(int newVal) {
@@ -1534,9 +1534,9 @@ public class My3DData extends Object {
         {
             for (int e=0;e<Elements;e++)
             {
-                ((ASlice) ProjsAtTime(time)[0].elementAt(e)).Invalidate();
-                ((ASlice) ProjsAtTime(time)[1].elementAt(e)).Invalidate();
-                ((ASlice) ProjsAtTime(time)[2].elementAt(e)).Invalidate();
+                ProjsAtTime(time)[0].elementAt(e).Invalidate();
+                ProjsAtTime(time)[1].elementAt(e).Invalidate();
+                ProjsAtTime(time)[2].elementAt(e).Invalidate();
                 BundleAt(e).Invalidate();
             }
         ColorProjsAtTime(time)[0].Invalidate();
@@ -1545,9 +1545,9 @@ public class My3DData extends Object {
         }
         else
             {
-                ((ASlice) ProjsAtTime(time)[0].elementAt(which)).Invalidate();
-                ((ASlice) ProjsAtTime(time)[1].elementAt(which)).Invalidate();
-                ((ASlice) ProjsAtTime(time)[2].elementAt(which)).Invalidate();
+                ProjsAtTime(time)[0].elementAt(which).Invalidate();
+                ProjsAtTime(time)[1].elementAt(which).Invalidate();
+                ProjsAtTime(time)[2].elementAt(which).Invalidate();
                 BundleAt(which).Invalidate();
                 if (InOverlayDispl(which))
                 {
@@ -1766,7 +1766,7 @@ public class My3DData extends Object {
     public void CloneLastElements() // Clones the elements for all timesteps
     {
         for (int t=0;t<Times;t++)
-            CloneElement((AnElement) ElementsAtTime(t).lastElement());
+            CloneElement(ElementsAtTime(t).lastElement());
     }
     
     private AnElement GNE(int DataType, int NumBytes, int NumBits, Vector<AnElement> ElementList, Vector<ASlice> ProjList[])  // just generate the element, not the bundle
@@ -1874,9 +1874,9 @@ public class My3DData extends Object {
 		            ElementsAtTime(Times-1),ProjsAtTime(Times-1));   // append the required number of elements
 
 		MyColorProjection = new ASlice[3];    // this manages color projections
-        MyColorProjection[0]=new ASlice(0,(AnElement) ElementsAtTime(Times-1).firstElement());
-        MyColorProjection[1]=new ASlice(1,(AnElement) ElementsAtTime(Times-1).firstElement());
-        MyColorProjection[2]=new ASlice(2,(AnElement) ElementsAtTime(Times-1).firstElement());
+        MyColorProjection[0]=new ASlice(0,ElementsAtTime(Times-1).firstElement());
+        MyColorProjection[1]=new ASlice(1,ElementsAtTime(Times-1).firstElement());
+        MyColorProjection[2]=new ASlice(2,ElementsAtTime(Times-1).firstElement());
         MyTimeColorProj.addElement(MyColorProjection);
 	    //System.out.println("Generated New Time\n");
       	sizes[3]=Elements;
@@ -2137,14 +2137,14 @@ public class My3DData extends Object {
 
     public AnElement ElementAt(int num, int time) {
         if (num >= 0 && time >= 0)
-            return (AnElement) ElementsAtTime(time).elementAt(num);
+            return ElementsAtTime(time).elementAt(num);
         else
             return null;
     }
 
     public AnElement ElementAt(int num) {
         if (num >= 0)
-            return (AnElement) MyElements.elementAt(num);
+            return MyElements.elementAt(num);
         else
             return null;
     }
@@ -2735,11 +2735,11 @@ public class My3DData extends Object {
     }
 
     ASlice ActProj(int DimNr) {
-        return (ASlice) MyProjections[DimNr].elementAt(ActiveElement);
+        return MyProjections[DimNr].elementAt(ActiveElement);
     }
     
     ASlice ProjAt(int DimNr, int e) {
-        return (ASlice) MyProjections[DimNr].elementAt(e);
+        return MyProjections[DimNr].elementAt(e);
     }
 
     public void ToggleProj(int DimNr,boolean mipmode) {
@@ -2833,21 +2833,21 @@ public My3DData(My3DData other) {   // operates on the same data but allows diff
     MyElements = MyTimes.elementAt(0);
     MyProjections = MyTimeProj.elementAt(0);
 
-    MySlice[0] = new ASlice(0,((AnElement) MyElements.firstElement()));
-    MySlice[1] = new ASlice(1,((AnElement) MyElements.firstElement()));
-    MySlice[2] = new ASlice(2,((AnElement) MyElements.firstElement()));
-    MyColorSlice[0] = new ASlice(0,((AnElement) MyElements.firstElement()));
-    MyColorSlice[1] = new ASlice(1,((AnElement) MyElements.firstElement()));
-    MyColorSlice[2] = new ASlice(2,((AnElement) MyElements.firstElement()));
+    MySlice[0] = new ASlice(0,MyElements.firstElement());
+    MySlice[1] = new ASlice(1,MyElements.firstElement());
+    MySlice[2] = new ASlice(2,MyElements.firstElement());
+    MyColorSlice[0] = new ASlice(0,MyElements.firstElement());
+    MyColorSlice[1] = new ASlice(1,MyElements.firstElement());
+    MyColorSlice[2] = new ASlice(2,MyElements.firstElement());
     for (int t=0; t < other.Times; t++)
       {
         MyColorProjection = new ASlice[3];    // this manages color projections
-        MyColorProjection[0]=new ASlice(0,(AnElement) ElementsAtTime(t).firstElement());
-        MyColorProjection[1]=new ASlice(1,(AnElement) ElementsAtTime(t).firstElement());
-        MyColorProjection[2]=new ASlice(2,(AnElement) ElementsAtTime(t).firstElement());
+        MyColorProjection[0]=new ASlice(0,ElementsAtTime(t).firstElement());
+        MyColorProjection[1]=new ASlice(1,ElementsAtTime(t).firstElement());
+        MyColorProjection[2]=new ASlice(2,ElementsAtTime(t).firstElement());
         MyTimeColorProj.addElement(MyColorProjection);
       }
-    MyColorProjection = (ASlice []) MyTimeColorProj.elementAt(0);
+    MyColorProjection = MyTimeColorProj.elementAt(0);
     ActiveElement=other.ActiveElement;
     ActiveTime=other.ActiveTime;
     }
@@ -2949,8 +2949,8 @@ public My3DData(Container myapp,int sizex,int sizey, int sizez,
 
         MyElements = MyTimes.elementAt(0);
         MyProjections = MyTimeProj.elementAt(0);
-        String [] nNames = (String []) Names.clone();
-        String [] nUnits = (String []) Units.clone();
+        String [] nNames = Names.clone();
+        String [] nUnits = Units.clone();
         
 	for (int e = 0; e < elements; e++) {  // The line below will generate a new element for every time point
             GenerateNewElement(myType,NumBytes,NumBits,Scales,Offsets,ScaleV,OffsetV,nNames,nUnits);
@@ -2958,12 +2958,12 @@ public My3DData(Container myapp,int sizex,int sizey, int sizez,
 	for (int t=0; t < times; t++)
           {
             MyColorProjection = new ASlice[3];    // this manages color projections
-            MyColorProjection[0]=new ASlice(0,(AnElement) ElementsAtTime(t).firstElement());
-            MyColorProjection[1]=new ASlice(1,(AnElement) ElementsAtTime(t).firstElement());
-            MyColorProjection[2]=new ASlice(2,(AnElement) ElementsAtTime(t).firstElement());
+            MyColorProjection[0]=new ASlice(0,ElementsAtTime(t).firstElement());
+            MyColorProjection[1]=new ASlice(1,ElementsAtTime(t).firstElement());
+            MyColorProjection[2]=new ASlice(2,ElementsAtTime(t).firstElement());
             MyTimeColorProj.addElement(MyColorProjection);
           }
-        MyColorProjection = (ASlice []) MyTimeColorProj.elementAt(0);
+        MyColorProjection = MyTimeColorProj.elementAt(0);
         }
     catch(Exception e)
 	{
@@ -2975,12 +2975,12 @@ public My3DData(Container myapp,int sizex,int sizey, int sizez,
     if (Elements!=elements)
         System.out.println("Error initializing elements: Wrong count: Elements = "+Elements+", elements = "+elements+"\n");
     
-    MySlice[0] = new ASlice(0,((AnElement) MyElements.firstElement()));
-    MySlice[1] = new ASlice(1,((AnElement) MyElements.firstElement()));
-    MySlice[2] = new ASlice(2,((AnElement) MyElements.firstElement()));
-    MyColorSlice[0] = new ASlice(0,((AnElement) MyElements.firstElement()));
-    MyColorSlice[1] = new ASlice(1,((AnElement) MyElements.firstElement()));
-    MyColorSlice[2] = new ASlice(2,((AnElement) MyElements.firstElement()));
+    MySlice[0] = new ASlice(0,MyElements.firstElement());
+    MySlice[1] = new ASlice(1,MyElements.firstElement());
+    MySlice[2] = new ASlice(2,MyElements.firstElement());
+    MyColorSlice[0] = new ASlice(0,MyElements.firstElement());
+    MyColorSlice[1] = new ASlice(1,MyElements.firstElement());
+    MyColorSlice[2] = new ASlice(2,MyElements.firstElement());
 
     ClearPolyROIs();  // Generates Empty Polygons
     elemR =-1;elemG =-1;elemB =-1;

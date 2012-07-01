@@ -47,7 +47,8 @@ public class _3D_objects_counter implements PlugIn, AdjustmentListener, FocusLis
     String title, redirectTo;
     int thr, minSize, maxSize, dotSize, fontSize;
     boolean excludeOnEdges, showObj, showSurf, showCentro, showCOM, showNb, whiteNb, newRT, showStat, showMaskedImg, closeImg, showSummary, redirect;
-    Vector sliders, values;
+    Vector<Scrollbar> sliders;
+    Vector<TextField> values;
     
     public void run(String arg) {
         if (IJ.versionLessThan("1.39i")) return;
@@ -128,11 +129,11 @@ public class _3D_objects_counter implements PlugIn, AdjustmentListener, FocusLis
         gd.addSlider("Slice", 1, nbSlices, nbSlices/2);
         
         sliders=gd.getSliders();
-        ((Scrollbar)sliders.elementAt(0)).addAdjustmentListener(this);
-        ((Scrollbar)sliders.elementAt(1)).addAdjustmentListener(this);
+        sliders.elementAt(0).addAdjustmentListener(this);
+        sliders.elementAt(1).addAdjustmentListener(this);
         values = gd.getNumericFields();
-        ((TextField)values.elementAt(0)).addFocusListener(this);
-        ((TextField)values.elementAt(1)).addFocusListener(this);
+        values.elementAt(0).addFocusListener(this);
+        values.elementAt(1).addFocusListener(this);
         
         gd.addMessage("Size filter: ");
         gd.addNumericField("Min.",minSize, 0);
@@ -208,15 +209,15 @@ public class _3D_objects_counter implements PlugIn, AdjustmentListener, FocusLis
     
     public void focusLost(FocusEvent e) {
         if (e.getSource().equals(values.elementAt(0))){
-            int val=(int) Tools.parseDouble(((TextField)values.elementAt(0)).getText());
+            int val=(int) Tools.parseDouble(values.elementAt(0).getText());
             val=(int) Math.min(max, Math.max(min, val));
-            ((TextField)values.elementAt(0)).setText(""+val);
+            values.elementAt(0).setText(""+val);
         }
 
         if (e.getSource().equals(values.elementAt(1))){
-            int val=(int) Tools.parseDouble(((TextField)values.elementAt(1)).getText());
+            int val=(int) Tools.parseDouble(values.elementAt(1).getText());
             val=(int) Math.min(max, Math.max(min, val));
-            ((TextField)values.elementAt(1)).setText(""+val);
+            values.elementAt(1).setText(""+val);
         }
 
         updateImg();
@@ -226,8 +227,8 @@ public class _3D_objects_counter implements PlugIn, AdjustmentListener, FocusLis
     }
 
     private void updateImg(){
-        thr=((Scrollbar)sliders.elementAt(0)).getValue();
-        imp.setSlice(((Scrollbar)sliders.elementAt(1)).getValue());
+        thr=sliders.elementAt(0).getValue();
+        imp.setSlice(sliders.elementAt(1).getValue());
         imp.resetDisplayRange();
         ip.setThreshold(thr, max, ImageProcessor.RED_LUT);
     }

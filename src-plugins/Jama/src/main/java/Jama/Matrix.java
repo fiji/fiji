@@ -995,7 +995,7 @@ public class Matrix implements Cloneable, java.io.Serializable {
       tokenizer.wordChars(0,255);
       tokenizer.whitespaceChars(0, ' ');
       tokenizer.eolIsSignificant(true);
-      java.util.Vector v = new java.util.Vector();
+      java.util.Vector<Object> v = new java.util.Vector<Object>();
 
       // Ignore initial empty lines
       while (tokenizer.nextToken() == StreamTokenizer.TT_EOL);

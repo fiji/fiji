@@ -336,7 +336,7 @@ public class MersenneTwisterFast implements Serializable
 	y ^= (y << 15) & TEMPERING_MASK_C;      // TEMPERING_SHIFT_T(y)
 	y ^= (y >>> 18);                        // TEMPERING_SHIFT_L(y)
 
-	return (boolean)((y >>> 31) != 0);
+	return ((y >>> 31) != 0);
 	}
 
 

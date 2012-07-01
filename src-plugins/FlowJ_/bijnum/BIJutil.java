@@ -61,7 +61,7 @@ public class BIJutil
                 int width = imp.getWidth();
                 if (imp.getRoi() != null)
                 {
-                        Rectangle roiRect = imp.getRoi().getBoundingRect();
+                        Rectangle roiRect = imp.getRoi().getBounds();
                         width = roiRect.width;
                 }
                 return width;
@@ -192,7 +192,7 @@ public class BIJutil
                         int x = 0; int y = 0;
                         if (imp.getRoi() != null)
                         {
-                                Rectangle roiRect = imp.getRoi().getBoundingRect();
+                                Rectangle roiRect = imp.getRoi().getBounds();
                                 width = roiRect.width;
                                 height = roiRect.height;
                                 x = roiRect.x; y = roiRect.y;
@@ -302,7 +302,7 @@ public class BIJutil
 		int x = 0; int y = 0;
 		if (imp.getRoi() != null)
 	        {
-			Rectangle roiRect = imp.getRoi().getBoundingRect();
+			Rectangle roiRect = imp.getRoi().getBounds();
 			width = roiRect.width;
 			height = roiRect.height;
 			x = roiRect.x; y = roiRect.y;
@@ -337,7 +337,7 @@ public class BIJutil
 		int x = 0; int y = 0;
 		if (imp.getRoi() != null)
 	        {
-			Rectangle roiRect = imp.getRoi().getBoundingRect();
+			Rectangle roiRect = imp.getRoi().getBounds();
 			width = roiRect.width;
 			height = roiRect.height;
 			x = roiRect.x; y = roiRect.y;

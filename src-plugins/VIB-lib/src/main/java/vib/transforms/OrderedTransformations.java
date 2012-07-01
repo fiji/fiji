@@ -32,7 +32,7 @@ public class OrderedTransformations {
 	
 	private ArrayList<Transform> listOfTransforms;
 	
-	public Object clone() {
+	public OrderedTransformations clone() {
 		OrderedTransformations result=new OrderedTransformations();
 		
 		ArrayList<Transform> clonedList=(ArrayList<Transform>)this.listOfTransforms.clone();
@@ -69,8 +69,8 @@ public class OrderedTransformations {
 		
 		int j=0;
 		
-		for( Iterator i = o.listOfTransforms.iterator(); i.hasNext(); ) {
-			Transform f = (Transform)i.next();
+		for( Iterator<Transform> i = o.listOfTransforms.iterator(); i.hasNext(); ) {
+			Transform f = i.next();
 			listOfTransforms.add(j,f);
 			++j;
 		}
@@ -79,8 +79,8 @@ public class OrderedTransformations {
 	
 	public void addLast( OrderedTransformations o ) {
 		
-		for( Iterator i = o.listOfTransforms.iterator(); i.hasNext(); ) {
-			Transform f = (Transform)i.next();
+		for( Iterator<Transform> i = o.listOfTransforms.iterator(); i.hasNext(); ) {
+			Transform f = i.next();
 			addLast(f);
 		}
 		
@@ -91,7 +91,7 @@ public class OrderedTransformations {
 	}
 	
 	public Transform getComponentTransform( int i ) {
-		return (Transform)listOfTransforms.get(i);
+		return listOfTransforms.get(i);
 	}
 	
 	public String toString( ) {
@@ -99,8 +99,8 @@ public class OrderedTransformations {
 		String result = "";
 		
 		int j = 0;
-		for( Iterator i = listOfTransforms.iterator(); i.hasNext(); ++j ) {
-			Transform f = (Transform)i.next();
+		for( Iterator<Transform> i = listOfTransforms.iterator(); i.hasNext(); ++j ) {
+			Transform f = i.next();
 			result += "Transformation " + j + " is:\n";
 			result += f.toStringIndented( "   " );
 		}
@@ -112,12 +112,12 @@ public class OrderedTransformations {
 	
 	public void reduce( ) {
 		
-		Iterator i;
+		Iterator<Transform> i;
 		
 		// Remove any identities...
 		
 		for( i = listOfTransforms.iterator(); i.hasNext(); ) {
-			Transform f = (Transform)i.next();
+			Transform f = i.next();
 			if( f.isIdentity() )
 				i.remove();
 		}
@@ -142,11 +142,11 @@ public class OrderedTransformations {
             */
 
 			if( last == null )
-				last = (Transform)i.next();
+				last = i.next();
 			
 			while( i.hasNext() ) {
 				
-				Transform next = (Transform)i.next();
+				Transform next = i.next();
 				
 				Transform compositionResult = last.composeWith( next );
 				
@@ -189,9 +189,9 @@ public class OrderedTransformations {
 	
 	public OrderedTransformations inverse( ) {
 		
-		ArrayList newList = new ArrayList<Transform>();
+		ArrayList<Transform> newList = new ArrayList<Transform>();
 		
-		ListIterator i;
+		ListIterator<Transform> i;
 		
 		// Move to the end of the list...
 		
@@ -203,7 +203,7 @@ public class OrderedTransformations {
 		
 		while( i.hasPrevious() ) {
 			
-			Transform f = (Transform)i.previous();
+			Transform f = i.previous();
 			
 			Transform f_inverted = f.inverse();
 			
@@ -362,7 +362,7 @@ public class OrderedTransformations {
 					y_in_domain = ((int)transformedPoint[1]);
 					z_in_domain = ((int)transformedPoint[2]);
 					
-					int value_in_template = (int)( 0xFF & templatePixels[ x + y * w0 ] );
+					int value_in_template = 0xFF & templatePixels[ x + y * w0 ];
 					int value_in_domain;
 					
 					if( ( x_in_domain >= 0 ) && ( x_in_domain < w1 ) &&
@@ -371,10 +371,10 @@ public class OrderedTransformations {
 						
 						byte [] domainPixels = (byte[])stack1.getPixels( z_in_domain + 1 );
 						
-						value_in_domain = (int)( 0xFF & domainPixels[ x_in_domain + y_in_domain * w1 ] );
+						value_in_domain = 0xFF & domainPixels[ x_in_domain + y_in_domain * w1 ];
 						
 						int difference = value_in_domain - value_in_template;
-						sumSquaredDifferences += (long)( difference * difference );
+						sumSquaredDifferences += difference * difference;
 						numberOfPixelsConsidered += 1;
 						
 					}
@@ -455,7 +455,7 @@ public class OrderedTransformations {
 					y_in_domain = ((int)transformedPoint[1]);
 					z_in_domain = ((int)transformedPoint[2]);
 					
-					int value_in_template = (int)( 0xFF & templatePixels[ x + y * w0 ] );
+					int value_in_template = 0xFF & templatePixels[ x + y * w0 ];
 					if( value_in_template < threshold0.value )
 						value_in_template = 0;
 					
@@ -467,7 +467,7 @@ public class OrderedTransformations {
 						
 						byte [] domainPixels = (byte[])stack1.getPixels( z_in_domain + 1 );
 						
-						value_in_domain = (int)( 0xFF & domainPixels[ x_in_domain + y_in_domain * w1 ] );
+						value_in_domain = 0xFF & domainPixels[ x_in_domain + y_in_domain * w1 ];
 						
 						if( value_in_domain < threshold1.value )
 							value_in_domain = 0;
@@ -479,7 +479,7 @@ public class OrderedTransformations {
 					}
 					
 					int difference = value_in_domain - value_in_template;
-					sumSquaredDifferences += (long)( difference * difference );
+					sumSquaredDifferences += difference * difference;
 					numberOfPixelsConsidered += 1;
 					
 				}

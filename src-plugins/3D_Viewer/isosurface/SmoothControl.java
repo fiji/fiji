@@ -61,7 +61,7 @@ public class SmoothControl {
 		/** Add meshes to the internal list of copies when appropriate. */
 		private void copy(final Image3DUniverse univ, final boolean all) {
 			if (all)
-				for (final Content c : (Collection<Content>)(Collection)univ.getContents())
+				for (final Content c : univ.getContents())
 					add(c);
 	 		else
 				add(univ.getSelected());
@@ -266,7 +266,7 @@ public class SmoothControl {
 						// Smooth meshes
 						if (1 == choiceValue) {
 							// All meshes
-							for (final Content c : (Collection<Content>)(Collection) univ.getContents()) {
+							for (final Content c : univ.getContents()) {
 								if (0 == all[0] && 1 == choiceValue && c == univ.getSelected()) continue; // skip selected when going from selected to all.
 								smooth(c, iterations, originals);
 							}

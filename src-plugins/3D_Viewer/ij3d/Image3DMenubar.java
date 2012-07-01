@@ -706,7 +706,7 @@ public class Image3DMenubar extends JMenuBar implements ActionListener,
 		if(c != null)
 			return c;
 		if(univ.getContents().size() == 1)
-			return (Content)univ.contents().next();
+			return univ.contents().next();
 		return null;
 	}
 

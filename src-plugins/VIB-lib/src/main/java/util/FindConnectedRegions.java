@@ -99,7 +99,7 @@ public class FindConnectedRegions {
 	}
 
 	/* An inner class to make the results list sortable. */
-	private class Region implements Comparable {
+	private class Region implements Comparable<Region> {
 
 		Region(int value, String materialName, int points, boolean sameValue) {
 			byteImage = true;
@@ -121,9 +121,8 @@ public class FindConnectedRegions {
 		int value;
 		boolean sameValue;
 
-		public int compareTo(Object otherRegion) {
-			Region o = (Region) otherRegion;
-			return (points < o.points) ? -1 : ((points > o.points) ? 1 : 0);
+		public int compareTo(Region or) {
+			return (points < or.points) ? -1 : ((points > or.points) ? 1 : 0);
 		}
 
 		@Override
@@ -211,7 +210,7 @@ public class FindConnectedRegions {
 
 		Results results = new Results();
 		if( imagePerRegion )
-			results.perRegion = new ArrayList();
+			results.perRegion = new ArrayList<ImagePlus>();
 		results.regionInfo = new ArrayList<Region>();
 
 		ImageCalculator iCalc = new ImageCalculator();

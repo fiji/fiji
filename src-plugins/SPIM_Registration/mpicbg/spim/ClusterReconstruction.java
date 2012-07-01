@@ -262,8 +262,8 @@ public class ClusterReconstruction
 
 	static {
 		try {
-			Class file = Class.forName("java.io.File");
-			Class[] types = { boolean.class, boolean.class };
+			Class<?> file = Class.forName("java.io.File");
+			Class<?>[] types = { boolean.class, boolean.class };
 			setReadable = file.getMethod("setReadable", types);
 			setWritable = file.getMethod("setWritable", types);
 			setExecutable = file.getMethod("setExecutable", types);

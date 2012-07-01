@@ -53,7 +53,7 @@ public class ImageProgressContainer extends ImageContainer {
 		cproc_pixels = new int[stack_size][];
 
 		for ( int i = 0; i < stack_size; i++ ) {
-			sproc[i] = ( ColorProcessor )iproc[i].duplicate().convertToRGB();
+			sproc[i] = iproc[i].duplicate().convertToRGB();
 			cproc_pixels[i] = (int []) sproc[i].getPixels();
 		}
 

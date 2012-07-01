@@ -82,7 +82,7 @@ public abstract class SparseFieldLevelSet implements StagedAlgorithm
    private static final int INITIAL_LISTSIZE = 500;
    
    // List that holds the layer lists
-   private final ArrayList[] layers = new ArrayList[2 * NUM_LAYERS + 1];
+   private final ArrayList<BandElement>[] layers = new ArrayList[2 * NUM_LAYERS + 1];
    
    // Lists for iterative layer change procedure
    private ArrayList<BandElement> outside_list = new ArrayList<BandElement>(INITIAL_LISTSIZE);
@@ -211,7 +211,7 @@ public abstract class SparseFieldLevelSet implements StagedAlgorithm
       // Create layer lists
       for (int i = 0; i < (NUM_LAYERS * 2 + 1); i++)
       {
-         layers[i] = new ArrayList(INITIAL_LISTSIZE);
+         layers[i] = new ArrayList<BandElement>(INITIAL_LISTSIZE);
       }
       
       this.img = source.deepCopy();
@@ -621,7 +621,7 @@ public abstract class SparseFieldLevelSet implements StagedAlgorithm
     * scheduling voxels for update that move into the active layer
     */ 
    final private void updateZeroLayerNeighbours(final int x, final int y, final int z, final int layer,
-           final double temp_phi, final List update_list)
+           final double temp_phi, final List<BandElement> update_list)
    {
       final Iterator<BandElement> neighbours = neighbourhood(x, y, z);
       while (neighbours.hasNext())

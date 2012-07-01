@@ -6,7 +6,7 @@ import javax.media.j3d.GeometryArray;
 import javax.media.j3d.ImageComponent2D;
 import javax.media.j3d.Shape3D;
 
-public class ShapeGroup implements Comparable {
+public class ShapeGroup implements Comparable<ShapeGroup> {
 
 	float pos;
 	Shape3D shape;
@@ -52,8 +52,7 @@ public class ShapeGroup implements Comparable {
 		return AppearanceCreator.instance().getAppearance(cdata, index);
 	}
 
-	public int compareTo(Object o) {
-		ShapeGroup sg = (ShapeGroup)o;
+	public int compareTo(ShapeGroup sg) {
 		if(pos < sg.pos) return -1;
 		if(pos > sg.pos) return +1;
 		return 0;

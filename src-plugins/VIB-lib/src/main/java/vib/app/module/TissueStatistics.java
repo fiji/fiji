@@ -23,7 +23,7 @@ public class TissueStatistics extends Module {
 
 		String statisticsPath = state.getStatisticsPath(index);
 		String labelsPath = state.getImagePath(-1, index);
-		if (state.upToDate(labelsPath, statisticsPath))
+		if (State.upToDate(labelsPath, statisticsPath))
 			return;
 
 		ImagePlus labelField = state.getImage(labelsPath);

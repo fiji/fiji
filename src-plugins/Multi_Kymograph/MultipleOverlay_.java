@@ -102,7 +102,7 @@ public class MultipleOverlay_ implements PlugIn {
 			int n = ((PolygonRoi)roi).getNCoordinates();
         	int[] cx = ((PolygonRoi)roi).getXCoordinates();
         	int[] cy = ((PolygonRoi)roi).getYCoordinates();
-			Rectangle rect=roi.getBoundingRect();
+			Rectangle rect=roi.getBounds();
 			
 			int x0=rect.x;
 			int y0=rect.y;
@@ -137,18 +137,20 @@ public class MultipleOverlay_ implements PlugIn {
 		int roiType = roi.getType();
 		pixels[0]++;		
 		if (roiType==Roi.LINE) {
+			Line lineRoi = (Line) roi;
 			pixels[num]=2;
-			pixels[num+1]=(short) ((Line)roi).x1;
-			pixels[num+2]=(short) ((Line)roi).x2;
-			pixels[num+3]=(short) ((Line)roi).y1;
-			pixels[num+4]=(short) ((Line)roi).y2;
+			pixels[num+1]=(short) lineRoi.x1;
+			pixels[num+2]=(short) lineRoi.x2;
+			pixels[num+3]=(short) lineRoi.y1;
+			pixels[num+4]=(short) lineRoi.y2;
 					 
 		}
 		else 	{
-			int n = ((PolygonRoi)roi).getNCoordinates();
-			int[] cx = ((PolygonRoi)roi).getXCoordinates();
-        			int[] cy = ((PolygonRoi)roi).getYCoordinates();
-			Rectangle rect=roi.getBoundingRect();
+			PolygonRoi polyRoi = (PolygonRoi) roi;
+			int n = polyRoi.getNCoordinates();
+			int[] cx = polyRoi.getXCoordinates();
+        			int[] cy = polyRoi.getYCoordinates();
+			Rectangle rect=roi.getBounds();
 			int x0=rect.x;
 			int y0=rect.y;
         			

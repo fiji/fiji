@@ -79,7 +79,7 @@ public class Kinematics {
 				 boolean add = false;
 				 for (int k=0;k<(PopList[j]).BallList.size();k++) 	// for each elements in BallList
 				 {	 kk = (k+i)%((PopList[j]).BallList.size());   	// start from i because i and id may correspond
-					 Balloon bal = (Balloon)((PopList[j]).BallList.get(kk));
+					 Balloon bal = PopList[j].BallList.get(kk);
 					 if(bal.id == i) {add = true; break;}
 				 }
 				 if (add == true){ball_trajectory[i][j] = kk;}
@@ -100,7 +100,7 @@ public class Kinematics {
 			{
 				if (ball_trajectory[i][t]>0)
 				{
-					Balloon bal = (Balloon)((PopList[t]).BallList.get(ball_trajectory[i][t]));
+					Balloon bal = PopList[t].BallList.get(ball_trajectory[i][t]);
 					sig_vol[t] = bal.sig_vol;						// volumetric straining
 					StrainVector[t] = bal.StrainVector;				// principal axis
 					Sxx[t] = bal.StrainValues[0];							//
@@ -114,8 +114,8 @@ public class Kinematics {
 				// Cell division: inherit mechanical strain from mother
 				if (ball_trajectory[i][t+1]>-1 & ball_trajectory[i][t]>-1 & vol[t+1]/vol[t]<0.75)
 				{
-					Balloon bal0 = (Balloon)((PopList[t]).BallList.get(ball_trajectory[i][t]));
-					Balloon bal1 = (Balloon)((PopList[t+1]).BallList.get(ball_trajectory[i][t+1]));
+					Balloon bal0 = PopList[t].BallList.get(ball_trajectory[i][t]);
+					Balloon bal1 = PopList[t+1].BallList.get(ball_trajectory[i][t+1]);
 					bal1.StrainVector = bal0.StrainVector;
 					bal1.StrainValues = bal0.StrainValues;
 					bal1.sig_vol = bal0.sig_vol;
@@ -123,7 +123,7 @@ public class Kinematics {
 				// time averaging
 				if (ball_trajectory[i][t]>-1 & ball_trajectory[i][t+1]>-1 & ball_trajectory[i][t-1]>0)
 				{
-					Balloon bal = (Balloon)((PopList[t]).BallList.get(ball_trajectory[i][t]));
+					Balloon bal = (PopList[t]).BallList.get(ball_trajectory[i][t]);
 				}
 			}
 		}
@@ -162,7 +162,7 @@ public class Kinematics {
 					BalloonPopulation pop_div = PopList[j];
 					for (int k=0;k<pop_div.BallList.size();k++)
 					{
-						Balloon bal = (Balloon)pop_div.BallList.get(k);
+						Balloon bal = pop_div.BallList.get(k);
 						if (bal.id_line == 6) {
 							ip_kine.setLineWidth(4);
 							ip_kine.setColor(new Color(0,250,0));  //
@@ -196,8 +196,8 @@ public class Kinematics {
 		 // copy attributes from old cells from the previous sequence
 		 for (int i=0;i<BP.N;i++)
 		 {
-			 Balloon Bnew = (Balloon)(BP1.BallList.get(i));
-			 Balloon Bmother= (Balloon)(BP.BallList.get(i));
+			 Balloon Bnew = BP1.BallList.get(i);
+			 Balloon Bmother= BP.BallList.get(i);
 			 Bnew.id_mother = Bmother.id_mother;
 			 Bnew.n_generation = Bmother.n_generation;
 			 Bnew.id_line = Bmother.id_line;
@@ -235,14 +235,14 @@ public class Kinematics {
 					// local final properties
 					double score = 15;
 
-					Balloon Bnew = (Balloon)(BP1.BallList.get(i));		// new cell found
+					Balloon Bnew = BP1.BallList.get(i);		// new cell found
 					int[] new_neighb = BP1.contacts[i]; 				// neighbours of the new cell
-					Balloon Bmother= (Balloon)(BP.BallList.get(0)); // initiate the mother cell
+					Balloon Bmother= BP.BallList.get(0); // initiate the mother cell
 
 					for (int j=0;j<BP.N;j++)  /** run through all potential mother cells  */
 					 {
 						// local candidate properties
-						Balloon Bcandidate = (Balloon)(BP.BallList.get(j));  //  candidate to be examined (from the previous sequence)
+						Balloon Bcandidate = BP.BallList.get(j);  //  candidate to be examined (from the previous sequence)
 						int[] candidate_neighb_0 = BP.contacts[j];			 //  neighbours of the candidate
 						int[] candidate_neighb_1 = BP1.contacts[j];			 	 //  neighbours of the candidate
 						double score_candidate = 15;
@@ -258,7 +258,7 @@ public class Kinematics {
 					 }
 
 					 // the second daugther cell produced during the same division
-					 Balloon Bpair = (Balloon)(BP1.BallList.get(Bmother.id));
+					 Balloon Bpair = BP1.BallList.get(Bmother.id);
 
 
 					 // update the final_topo so that it is used as a starting point for the next cell to be matched
@@ -284,9 +284,9 @@ public class Kinematics {
 			for (int i=0;i<n_new;i++)
 			{
 				 // get the two daughter and mother cells
-				 Balloon Bmother = (Balloon)(BP.BallList.get(IDmothers[i]));			// mother cell
-				 Balloon Bpair = (Balloon)(BP1.BallList.get(IDmothers[i]));				// daughter 1 (id< BP.N)
-				 Balloon Bnew = (Balloon)(BP1.BallList.get(BP.N + i));			// daughter 2 (id=> BP.N)
+				 Balloon Bmother = BP.BallList.get(IDmothers[i]);			// mother cell
+				 Balloon Bpair = BP1.BallList.get(IDmothers[i]);				// daughter 1 (id< BP.N)
+				 Balloon Bnew = BP1.BallList.get(BP.N + i);			// daughter 2 (id=> BP.N)
 
 				 // Write the lineage properties of each cell
 				 Bnew.n_generation = Bmother.n_generation + 1;			// generation number
@@ -376,9 +376,9 @@ public class Kinematics {
 		double score = Math.sqrt(dist/norm0);
 
 		// variation in cell size before and after needs to be minimal
-		Balloon Bnew = (Balloon)(BP1.BallList.get(new_id));		// new cell
-		Balloon Bpair = (Balloon)(BP1.BallList.get(candidate_id));		// new cell
-		Balloon Bmother= (Balloon)(BP0.BallList.get(candidate_id)); // initiate the mother cell
+		Balloon Bnew = BP1.BallList.get(new_id);		// new cell
+		Balloon Bpair = BP1.BallList.get(candidate_id);		// new cell
+		Balloon Bmother= BP0.BallList.get(candidate_id); // initiate the mother cell
 		double delta_volume = (Bnew.area + Bpair.area - Bmother.area)/Bmother.area;
 		if (delta_volume<-0.15 | delta_volume > 0.25){score+=2;}
 
@@ -400,7 +400,7 @@ public class Kinematics {
 		//
 		//	identify the points that constitute the plan of cell difivion of the cell and place them in div_plan
 		//
-		Vector div_plan = new Vector();					// list of points that constitue the cell wall
+		Vector<double[]> div_plan = new Vector<double[]>();					// list of points that constitue the cell wall
 		for (int j=0;j<bal1.n0;j++)
 			{
 			if (BP1.contacts[bal1.id][j] == bal2.id)
@@ -420,7 +420,7 @@ public class Kinematics {
 				double[] xy = {(x0+x1)/2, (y0+y1)/2};
 				xm+=(x0+x1)/2; ym+=(y0+y1)/2;
 
-				Balloon bal_mother = (Balloon)(BP0.BallList.get(bal1.id_mother));
+				Balloon bal_mother = BP0.BallList.get(bal1.id_mother);
 				div_plan.addElement(xy);
 				}
 			}
@@ -432,7 +432,7 @@ public class Kinematics {
 		//
 		//  least square to fin the line going through the points
 		//
-		Balloon Bmother = (Balloon)(BP0.BallList.get(bal1.id_mother));
+		Balloon Bmother = BP0.BallList.get(bal1.id_mother);
 
 		for (int j=0;j<div_plan.size();j++)
 		{
@@ -514,8 +514,8 @@ public class Kinematics {
 		for (int i=0;i<BP.N;i++)
 			{
 
-			Balloon B0 = (Balloon)(BP.BallList.get(i));
-			Balloon B1 = (Balloon)(BP1.BallList.get(i));
+			Balloon B0 = BP.BallList.get(i);
+			Balloon B1 = BP1.BallList.get(i);
 			double dIxx,dIyy,dIxy, Ixx, Iyy, Ixy;//
 
 			/**   Displacement field based on displacements of center of mass */
@@ -533,8 +533,8 @@ public class Kinematics {
 
 			// Extract X,Y and displacement for the set of neighbour vertices
 			int n=0;
-			Vector V = new Vector();
-			Vector PXY = new Vector();
+			Vector<double[]> V = new Vector<double[]>();
+			Vector<double[]> PXY = new Vector<double[]>();
 
 			for (int j=-1;j<BP.N;j++)
 				{
@@ -548,8 +548,8 @@ public class Kinematics {
 
 				else if (BP1.topo[i][j])//(neig_list[j]>0)
 					{
-					Balloon B0n = (Balloon)(BP.BallList.get(j));
-					Balloon B1n = (Balloon)(BP1.BallList.get(j));
+					Balloon B0n = BP.BallList.get(j);
+					Balloon B1n = BP1.BallList.get(j);
 
 					double[] u = {B1n.x0-B0n.x0, B1n.y0-B0n.y0};
 					double[] xy = {B0n.x0, B0n.y0};

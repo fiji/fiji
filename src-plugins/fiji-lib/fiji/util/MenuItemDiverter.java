@@ -32,7 +32,7 @@ import java.util.Hashtable;
 public abstract class MenuItemDiverter implements KeyListener, PlugIn, WindowFocusListener {
 	protected static ImageJ ij;
 	protected static Cursor cursor, diversionCursor;
-	protected static Hashtable actions;
+	protected static Hashtable<Object, String> actions;
 
 	protected abstract String getTitle();
 
@@ -61,8 +61,8 @@ public abstract class MenuItemDiverter implements KeyListener, PlugIn, WindowFoc
 		if (ij == null)
 			return;
 
-		actions = new Hashtable();
-		Hashtable table = Menus.getCommands();
+		actions = new Hashtable<Object, String>();
+		Hashtable<Object, String> table = Menus.getCommands();
 		if (table.size() == 0) {
 			IJ.error("No menu items found!");
 			return;
@@ -96,7 +96,7 @@ public abstract class MenuItemDiverter implements KeyListener, PlugIn, WindowFoc
 	public void resetActions() {
 		if (actions == null)
 			return;
-		Hashtable table = Menus.getCommands();
+		Hashtable<Object, String> table = Menus.getCommands();
 		for (Object key : table.keySet()) {
 			if (!table.get(key).equals(getAction(key)))
 				continue;

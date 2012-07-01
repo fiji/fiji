@@ -96,7 +96,7 @@ public class BalloonSequence
 	 }
 
 	 /***/
-	 public void setSequence(int currentSlice, ImageProcessor ipWallSegment, ArrayList X0, ArrayList Y0, int rgbchannel)
+	 public void setSequence(int currentSlice, ImageProcessor ipWallSegment, ArrayList<Double> X0, ArrayList<Double> Y0, int rgbchannel)
 	 {
 			channel = rgbchannel;
 			PopList[currentSlice] = new BalloonPopulation(ipWallSegment, currentSlice, channel);
@@ -105,8 +105,8 @@ public class BalloonSequence
 			double y;
 			for (int i=0;i<X0.size();i++)
 			{
-				x = ((Double) (X0.get(i))).doubleValue();
-				y = ((Double) (Y0.get(i))).doubleValue();
+				x = X0.get(i);
+				y = Y0.get(i);
 				PopList[currentSlice].AddNewBalloon((int)x,(int)y);			// XXX
 			}
 	 }
@@ -168,7 +168,7 @@ public class BalloonSequence
 		// find the first balloon available
 		int ini_pop = 0;
 		while (PopList[ini_pop].N<=0){ini_pop+=1;}
-		Balloon bal0 = (Balloon)((PopList[ini_pop].BallList).get(0));
+		Balloon bal0 = PopList[ini_pop].BallList.get(0);
 
 
 		// write the header
@@ -185,7 +185,7 @@ public class BalloonSequence
 			for (int j = 0; j<pop.N; j++) {
 
 				// get the corrresponding balloon
-				Balloon bal = (Balloon)((pop.BallList).get(j));
+				Balloon bal = pop.BallList.get(j);
 
 				// write center
 				info.append("%%\tCenter:");
@@ -212,7 +212,7 @@ public class BalloonSequence
 		for (int j = 0; j<pop.N; j++) {
 
 			// get the corrresponding balloon
-			Balloon bal = (Balloon)((pop.BallList).get(j));
+			Balloon bal = pop.BallList.get(j);
 
 			// write center
 			info.append("***\tBalloon:");
@@ -336,7 +336,7 @@ public class BalloonSequence
 					index_vert = Integer.parseInt(parts[2].trim());
 					nbh_id = Integer.parseInt(parts[3].trim());
 
-					Balloon bal = (Balloon)((pop.BallList).get(index_bal));
+					Balloon bal = pop.BallList.get(index_bal);
 					pop.contacts[index_bal][index_vert]	= nbh_id;
 					if (nbh_id>=0)
 						{

@@ -183,11 +183,11 @@ public abstract class DefaultUniverse extends SimpleUniverse
 	protected final Switch attributesSwitch;
 	private BitSet attributesMask = new BitSet(2);
 
-	private List listeners = new ArrayList();
+	private List<UniverseListener> listeners = new ArrayList<UniverseListener>();
 	private boolean transformed = false;
 
 	public abstract Content getSelected();
-	public abstract Iterator contents();
+	public abstract Iterator<Content> contents();
 
 	/**
 	 * Constructor.
@@ -686,7 +686,7 @@ public abstract class DefaultUniverse extends SimpleUniverse
 	 */
 	public void fireUniverseClosed() {
 		for(int i = 0; i < listeners.size(); i++) {
-			UniverseListener l = (UniverseListener)listeners.get(i);
+			UniverseListener l = listeners.get(i);
 			l.universeClosed();
 		}
 	}
@@ -697,7 +697,7 @@ public abstract class DefaultUniverse extends SimpleUniverse
 	 */
 	public void fireTransformationStarted() {
 		for(int i = 0; i < listeners.size(); i++) {
-			UniverseListener l = (UniverseListener)listeners.get(i);
+			UniverseListener l = listeners.get(i);
 			l.transformationStarted(getCanvas().getView());
 		}
 	}
@@ -708,7 +708,7 @@ public abstract class DefaultUniverse extends SimpleUniverse
 	 */
 	public void fireTransformationUpdated() {
 		for(int i = 0; i < listeners.size(); i++) {
-			UniverseListener l = (UniverseListener)listeners.get(i);
+			UniverseListener l = listeners.get(i);
 			l.transformationUpdated(getCanvas().getView());
 		}
 	}
@@ -719,7 +719,7 @@ public abstract class DefaultUniverse extends SimpleUniverse
 	 */
 	public void fireTransformationFinished() {
 		for(int i = 0; i < listeners.size(); i++) {
-			UniverseListener l = (UniverseListener)listeners.get(i);
+			UniverseListener l = listeners.get(i);
 			l.transformationFinished(getCanvas().getView());
 		}
 	}
@@ -730,7 +730,7 @@ public abstract class DefaultUniverse extends SimpleUniverse
 	 */
 	public void fireContentAdded(Content c) {
 		for(int i = 0; i < listeners.size(); i++) {
-			UniverseListener l = (UniverseListener)listeners.get(i);
+			UniverseListener l = listeners.get(i);
 			l.contentAdded(c);
 		}
 	}
@@ -741,7 +741,7 @@ public abstract class DefaultUniverse extends SimpleUniverse
 	 */
 	public void fireContentChanged(Content c) {
 		for(int i = 0; i < listeners.size(); i++) {
-			UniverseListener l = (UniverseListener)listeners.get(i);
+			UniverseListener l = listeners.get(i);
 			l.contentChanged(c);
 		}
 	}
@@ -752,7 +752,7 @@ public abstract class DefaultUniverse extends SimpleUniverse
 	 */
 	public void fireContentRemoved(Content c) {
 		for(int i = 0; i < listeners.size(); i++) {
-			UniverseListener l = (UniverseListener)listeners.get(i);
+			UniverseListener l = listeners.get(i);
 			l.contentRemoved(c);
 		}
 	}
@@ -763,7 +763,7 @@ public abstract class DefaultUniverse extends SimpleUniverse
 	 */
 	public void fireContentSelected(Content c) {
 		for(int i = 0; i < listeners.size(); i++) {
-			UniverseListener l = (UniverseListener)listeners.get(i);
+			UniverseListener l = listeners.get(i);
 			l.contentSelected(c);
 		}
 	}
@@ -774,7 +774,7 @@ public abstract class DefaultUniverse extends SimpleUniverse
 	 */
 	public void fireCanvasResized() {
 		for(int i = 0; i < listeners.size(); i++) {
-			UniverseListener l = (UniverseListener)listeners.get(i);
+			UniverseListener l = listeners.get(i);
 			l.canvasResized();
 		}
 	}

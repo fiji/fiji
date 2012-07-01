@@ -217,7 +217,7 @@ public class VJViewspaceRender extends VJRenderer
                                 ((byte []) pixels)[index] = (byte) value;
                         }
                 }
-                return (Object) pixels;
+                return pixels;
         }
         /**
          * Advance all rays of the viewspace. vectorstep contains the amount in x,y,z.

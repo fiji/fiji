@@ -624,14 +624,14 @@ public class Image3DUniverse extends DefaultAnimatableUniverse {
 		Point3d min = new Point3d();
 		Point3d max = new Point3d();
 
-		Iterator it = contents();
-		Content c = (Content)it.next();
+		Iterator<Content> it = contents();
+		Content c = it.next();
 		c.getMin(min);
 		c.getMax(max);
 		globalMin.set(min);
 		globalMax.set(max);
 		while(it.hasNext()) {
-			c = (Content)it.next();
+			c = it.next();
 			c.getMin(min);
 			c.getMax(max);
 			if(min.x < globalMin.x) globalMin.x = min.x;
@@ -1337,7 +1337,7 @@ public class Image3DUniverse extends DefaultAnimatableUniverse {
 	 * Use addTriangleMesh instead.
 	 */
 	@Deprecated
-	public Content addMesh(List mesh, Color3f color, String name,
+	public Content addMesh(List<Point3f> mesh, Color3f color, String name,
 			    float scale, int threshold) {
 		  Content c = addMesh(mesh, color, name, threshold);
 		  return c;
@@ -1390,7 +1390,7 @@ public class Image3DUniverse extends DefaultAnimatableUniverse {
 	 * universe.
 	 */
 	@Override
-	public Iterator contents() {
+	public Iterator<Content> contents() {
 		return contents.values().iterator();
 	}
 
@@ -1399,7 +1399,7 @@ public class Image3DUniverse extends DefaultAnimatableUniverse {
 	 * contents of this universe.
 	 * @return
 	 */
-	public Collection getContents() {
+	public Collection<Content> getContents() {
 		if(contents == null)
 			return null;
 		return contents.values();

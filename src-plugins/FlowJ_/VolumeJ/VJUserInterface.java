@@ -291,7 +291,7 @@ implements ActionListener, ClipboardOwner, ItemListener, KeyListener
 	 */
 	public void actionPerformed(ActionEvent e)
 	{
-		perform((AWTEvent) e);
+		perform(e);
 	}
 	/**
 	 * React to action e.
@@ -299,7 +299,7 @@ implements ActionListener, ClipboardOwner, ItemListener, KeyListener
 	 */
 	public void itemStateChanged(ItemEvent e)
 	{
-		perform((AWTEvent) e);
+		perform(e);
 	}
 	/**
 	 * React to action e.
@@ -308,7 +308,7 @@ implements ActionListener, ClipboardOwner, ItemListener, KeyListener
 	public void keyTyped(KeyEvent e) {}
 	public void keyPressed(KeyEvent e)
 	{
-		perform((AWTEvent) e);
+		perform(e);
 	}
 	/**
 	 * Activate the rendering buttons, depending on whether or
@@ -549,7 +549,7 @@ implements ActionListener, ClipboardOwner, ItemListener, KeyListener
 		}
 		else if (imp.getStack().getImageArray()[0] instanceof float [])
 		{
-			v = (Volume) new VolumeFloat(imp.getStack(),
+			v = new VolumeFloat(imp.getStack(),
 				aspectx, aspecty, aspectz);
 			// Should depend on indexing. Check flag here.
 			renderer.setOutputGrayscale();
