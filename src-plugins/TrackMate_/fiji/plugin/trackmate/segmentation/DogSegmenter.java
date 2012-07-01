@@ -82,6 +82,13 @@ public class DogSegmenter<T extends RealType<T>> extends AbstractSpotSegmenter<T
 		minPeakValue = 0; // settings.threshold;
 		
 		final DifferenceOfGaussianRealNI<T, FloatType> dog = new DifferenceOfGaussianRealNI<T, FloatType>(intermediateImage, imageFactory, oobs2, sigma1, sigma2, minPeakValue, 1.0, calibration);
+		/* The DogSegmenter class will be called in a multi-threaded way, so the DifferenceOfGaussianRealNI
+		 * does not need to be multi-threaded. On top of that, reports from users on win32 platform 
+		 * indicate that multi-threading generates some silent problems, with some frames (first ones
+		 * being not present in the final SpotColleciton. 
+		 * On 64-bit platforms, I could see that keeping the DogRNI multi-threaded translated by a 
+		 * speedup of about 10%, which I sacrifice without hesitation if i can make the plugin more stable. */
+		dog.setNumThreads(1);
 		
 		// Keep laplace image if needed
 		if (settings.doSubPixelLocalization)
