@@ -1,6 +1,5 @@
 package fiji.plugin.trackmate.visualization.hyperstack;
 
-import ij.ImageListener;
 import ij.ImagePlus;
 import ij.gui.NewImage;
 import ij.gui.StackWindow;
@@ -161,36 +160,20 @@ public class HyperStackDisplayer extends AbstractTrackMateModelView  {
 			this.imp = NewImage.createByteImage("Empty", settings.width, settings.height, settings.nframes*settings.nslices, NewImage.FILL_BLACK);
 			this.imp.setDimensions(1, settings.nslices, settings.nframes);
 		}
+		clear();
 		imp.setOpenAsHyperStack(true);
-		canvas = new OverlayedImageCanvas(imp);
-		window = new StackWindow(imp, canvas);
-		window.setVisible(true);
 		//
 		spotOverlay = createSpotOverlay();
 		//
 		trackOverlay = createTrackOverlay(); 
 		//
+		canvas = new OverlayedImageCanvas(imp);
+		window = new StackWindow(imp, canvas);
+		window.setVisible(true);
 		canvas.addOverlay(spotOverlay);
 		canvas.addOverlay(trackOverlay);
 		imp.updateAndDraw();
 		registerEditTool();
-		//		 Add a listener to unregister this instance from model listener list
-		ImagePlus.addImageListener(new ImageListener() {
-			@Override
-			public void imageUpdated(ImagePlus imp) {}
-			@Override
-			public void imageOpened(ImagePlus imp) {}
-			@Override
-			public void imageClosed(ImagePlus source ) {
-				if (imp != source)
-					return;
-				if (DEBUG)
-					System.out.println("[HyperStackDisplayer] imp closing, removing me from model listener");
-				model.removeTrackMateModelChangeListener(HyperStackDisplayer.this);
-				model.removeTrackMateSelectionChangeListener(HyperStackDisplayer.this);
-				editTool.imageClosed(imp);
-			}
-		});
 	}
 
 

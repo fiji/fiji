@@ -24,6 +24,8 @@ public abstract class AbstractTrackMateModelView implements TrackMateSelectionCh
 	 * FIELDS
 	 */
 
+	private final static boolean DEBUG = false;
+	
 	/**
 	 * A map of String/Object that configures the look and feel of the display.
 	 */
@@ -61,6 +63,9 @@ public abstract class AbstractTrackMateModelView implements TrackMateSelectionCh
 		if (null != this.model) {
 			this.model.removeTrackMateModelChangeListener(this);
 			this.model.removeTrackMateSelectionChangeListener(this);
+		}
+		if (DEBUG) {
+			System.out.println("[AbstractTrackMateModelView] Registering "+this.hashCode()+" as listener of "+model);
 		}
 		this.model = model;
 		this.model.addTrackMateModelChangeListener(this);

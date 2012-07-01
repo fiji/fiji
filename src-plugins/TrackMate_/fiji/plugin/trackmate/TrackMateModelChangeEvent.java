@@ -33,8 +33,7 @@ public class TrackMateModelChangeEvent extends EventObject {
 	 */
 	public static final int 	SPOTS_FILTERED = 5;
 	/** 
-	 * Event type indicating that the tracks of the model were computed, and 
-	 * are now accessible through {@link TrackMateModel#getTrackGraph()}. 
+	 * Event type indicating that the tracks of the model were computed. 
 	 */
 	public static final int 	TRACKS_COMPUTED = 6;
 	/** 
