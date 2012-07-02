@@ -114,11 +114,12 @@ public class Stack_Splitter implements PlugIn {
 
             // Create a suitable label, using the slice label if possible
             sImLabel = imp.getStack().getSliceLabel(n);
-            if (sImLabel.length() < 1) {
+            if (sImLabel == null || sImLabel.length() < 1) {
                 sImLabel = "slice"+df.format(n)+"_"+sLabel;
             }
             // Create new image corresponding to this slice.
             ImagePlus im = new ImagePlus(sImLabel, newip);
+            im.setCalibration(imp.getCalibration());
 
             // Show this image.
             im.show();

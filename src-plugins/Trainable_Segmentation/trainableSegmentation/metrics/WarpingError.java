@@ -327,7 +327,7 @@ public class WarpingError extends Metrics {
 		for(double th = minThreshold; th<=maxThreshold; th += stepThreshold)
 		{						
 			if( verbose )
-				IJ.log("  Calculating splits and mergers for threshold value " + String.format("%.2f", th) + "...");
+				IJ.log("  Calculating splits and mergers for threshold value " + String.format("%.3f", th) + "...");
 			ClusteredWarpingMismatches[] cwm = 
 						getClusteredWarpingMismatches(originalLabels, proposedLabels, 
 														mask, th, clusterByError, -1);		
@@ -380,7 +380,7 @@ public class WarpingError extends Metrics {
 		for(double th = minThreshold; th<=maxThreshold; th += stepThreshold)
 		{						
 			if( verbose )
-				IJ.log("  Calculating splits and mergers for threshold value " + String.format("%.2f", th) + "...");
+				IJ.log("  Calculating splits and mergers for threshold value " + String.format("%.3f", th) + "...");
 			ClusteredWarpingMismatches[] cwm = 
 						getClusteredWarpingMismatches(originalLabels, proposedLabels, 
 														mask, th, clusterByError, radius );		
@@ -434,7 +434,7 @@ public class WarpingError extends Metrics {
 		for(double th = minThreshold; th<=maxThreshold; th += stepThreshold)
 		{						
 			if( verbose )
-				IJ.log("  Calculating splits and mergers for threshold value " + String.format("%.2f", th) + "...");
+				IJ.log("  Calculating splits and mergers for threshold value " + String.format("%.3f", th) + "...");
 			double error = getMetricValue( th, clusterByError );
 			if ( verbose )
 				IJ.log("    error = " + error);
@@ -483,7 +483,7 @@ public class WarpingError extends Metrics {
 		for(double th = minThreshold; th<=maxThreshold; th += stepThreshold)
 		{						
 			if ( verbose )
-				IJ.log("  Calculating splits and mergers for threshold value " + String.format("%.2f", th) + "...");
+				IJ.log("  Calculating splits and mergers for threshold value " + String.format("%.3f", th) + "...");
 			double error = getMetricValue( th, clusterByError, radius );
 			if ( verbose )
 				IJ.log("    error = " + error);
@@ -498,6 +498,43 @@ public class WarpingError extends Metrics {
 			IJ.log(" **  Minimum error = " + minError + ", with threshold = " + bestTh + " **\n");
 						
 		return minError;
+	}
+	
+	/**
+	 * Get the best F-score of the pixel error between proposed and original labels
+	 * over a set of thresholds 
+	 * 
+	 * @param minThreshold minimum threshold value to binarize the input images
+	 * @param maxThreshold maximum threshold value to binarize the input images
+	 * @param stepThreshold threshold step value to use during binarization
+	 * @param verbose flag to print or not output information
+	 * @return maximal F-score of the pixel error
+	 */
+	public double getPixelErrorMaximalFScore(
+			double minThreshold,
+			double maxThreshold,
+			double stepThreshold )
+	{
+		ArrayList<ClassificationStatistics> stats = getPrecisionRecallStats( minThreshold, maxThreshold, stepThreshold );
+	    // trainableSegmentation.utils.Utils.plotPrecisionRecall( stats );    
+	    double maxFScore = 0;
+	    double th = 0;
+	    double bestTh = 0;
+	    
+	    for(ClassificationStatistics stat : stats)
+	    {
+	    	if (stat.fScore > maxFScore)
+	    	{
+	    		maxFScore = stat.fScore;
+	    		bestTh = th;  
+	    	}
+	    	th += stepThreshold;
+	    }	 
+	    
+	    if( verbose )
+			IJ.log(" ** Best F-score = " + maxFScore + ", with threshold = " + bestTh + " **\n");
+	    
+	    return maxFScore;
 	}
 	
 	/**
@@ -525,6 +562,9 @@ public class WarpingError extends Metrics {
 				
 		for(double th =  minThreshold; th <= maxThreshold; th += stepThreshold)
 		{
+			if( verbose )
+				IJ.log("  Calculating warping error statistics for threshold value " + String.format("%.3f", th) + "...");
+			
 			WarpingResults[] wrs = simplePointWarp2dMT(originalLabels, proposedLabels, mask, th);
 			
 			ImageStack is = new ImageStack( originalLabels.getWidth(), originalLabels.getHeight() );
@@ -532,16 +572,137 @@ public class WarpingError extends Metrics {
 				is.addSlice("warped source slice " + (i+1), wrs[i].warpedSource.getProcessor() );
 			
 			ImagePlus warpedSource = new ImagePlus ("warped source", is);
-			
-			if( verbose )
-				IJ.log("  Calculating warping error statistics for threshold value " + String.format("%.2f", th) + "...");
-			
+									
 			// We calculate the precision-recall value between the warped original labels and the 
 			// proposed labels 
-			cs.add( (new PixelError( warpedSource, proposedLabels)).getPrecisionRecallStats( th ) );
+			PixelError pixelError = new PixelError( warpedSource, proposedLabels);			
+			ClassificationStatistics stats = pixelError.getPrecisionRecallStats( th );
+			if( verbose )
+				IJ.log("   F-score = " + stats.fScore );
+			cs.add( stats );
 		}		
 		return cs;
 	}
+	
+	/**
+	 * Get the best F-score of the pixel error between proposed and original labels
+	 * (and all the way around) over a set of thresholds 
+	 * 
+	 * @param minThreshold minimum threshold value to binarize the input images
+	 * @param maxThreshold maximum threshold value to binarize the input images
+	 * @param stepThreshold threshold step value to use during binarization
+	 * @param verbose flag to print or not output information
+	 * @return maximal F-score of the pixel error
+	 */
+	public double getDualPixelErrorMaximalFScore(
+			double minThreshold,
+			double maxThreshold,
+			double stepThreshold )
+	{
+		ArrayList<ClassificationStatistics> stats = getDualPrecisionRecallStats( minThreshold, maxThreshold, stepThreshold );
+	    // trainableSegmentation.utils.Utils.plotPrecisionRecall( stats );    
+	    double maxFScore = 0;
+	    double th = 0;
+	    double bestTh = 0;
+	    
+	    for(ClassificationStatistics stat : stats)
+	    {
+	    	if (stat.fScore > maxFScore)
+	    	{
+	    		maxFScore = stat.fScore;
+	    		bestTh = th;  
+	    	}
+	    	th += stepThreshold;
+	    }	 
+	    
+	    if( verbose )
+			IJ.log(" ** Best F-score = " + maxFScore + ", with threshold = " + bestTh + " **\n");
+	    
+	    return maxFScore;
+	}
+	
+	/**
+	 * Calculate the precision-recall values based on pixel error between 
+	 * some warped 2D original labels and the corresponding proposed labels
+	 * in both directions (from original labels to proposal and reversely). 
+	 * 
+	 * @param minThreshold minimum threshold value to binarize the input images
+	 * @param maxThreshold maximum threshold value to binarize the input images
+	 * @param stepThreshold threshold step value to use during binarization
+	 * @return pixel error value and derived statistics for each threshold
+	 */
+	public ArrayList< ClassificationStatistics > getDualPrecisionRecallStats(
+			double minThreshold,
+			double maxThreshold,
+			double stepThreshold)
+	{
+		
+		if( minThreshold < 0 || minThreshold >= maxThreshold || maxThreshold > 1)
+		{
+			IJ.log("Error: unvalid threshold values.");
+			return null;
+		}
+						
+		ArrayList< ClassificationStatistics > cs = new ArrayList<ClassificationStatistics>();
+				
+		for(double th =  minThreshold; th <= maxThreshold; th += stepThreshold)
+		{
+			if( verbose )
+				IJ.log("  Calculating warping error statistics for threshold value " + String.format("%.3f", th) + "...");
+			
+			WarpingResults[] wrs = simplePointWarp2dMT(originalLabels, proposedLabels, mask, th);
+			
+			ImageStack is = new ImageStack( originalLabels.getWidth(), originalLabels.getHeight() );
+			for(int i = 0; i < wrs.length; i ++)
+				is.addSlice("warped source slice " + (i+1), wrs[i].warpedSource.getProcessor() );
+			
+			ImagePlus warpedSource = new ImagePlus ("warped source", is);
+									
+			// We calculate first the precision-recall value between the warped 
+			// original labels and the proposed labels 
+			PixelError pixelError = new PixelError( warpedSource, proposedLabels );			
+			ClassificationStatistics stats = pixelError.getPrecisionRecallStats( th );
+			
+			// ... and then from warped proposed labels to original labels 
+			
+			// apply threshold to proposed labels so they are binary
+			double max = proposedLabels.getImageStack().getProcessor( 1 ) instanceof ByteProcessor ? 255 : 1.0;
+			ImagePlus proposal8bit = proposedLabels.duplicate();	
+			IJ.setThreshold( proposal8bit, th + 0.00001, max);
+			IJ.run( proposal8bit, "Convert to Mask", "  black");
+			
+			// warp proposal into original labels
+			wrs = simplePointWarp2dMT( proposal8bit, originalLabels, mask, th);
+			
+			is = new ImageStack( originalLabels.getWidth(), originalLabels.getHeight() );
+			for(int i = 0; i < wrs.length; i ++)
+				is.addSlice("warped source slice " + (i+1), wrs[i].warpedSource.getProcessor() );
+			
+			warpedSource = new ImagePlus ("warped source", is);
+									
+			// then calculate pixel error
+			pixelError = new PixelError( warpedSource, originalLabels );			
+			
+			
+			ClassificationStatistics statsInverse = pixelError.getPrecisionRecallStats( th );
+			
+			// Join statistics and average errors		
+			stats.metricValue = (stats.metricValue + statsInverse.metricValue) / 2.0;
+			
+			ClassificationStatistics finalStats = new ClassificationStatistics(
+					stats.truePositives + statsInverse.truePositives,
+					stats.trueNegatives + statsInverse.trueNegatives, 
+					stats.falsePositives + statsInverse.falsePositives,
+					stats.falseNegatives + statsInverse.falseNegatives,
+					(stats.metricValue + statsInverse.metricValue) / 2.0); 
+			
+			if( verbose )
+				IJ.log("   F-score = " + finalStats.fScore );						
+			cs.add( finalStats );
+		}		
+		return cs;
+	}
+	
 	
 	/**
 	 * Calculate the precision-recall values based on Rand index between 
@@ -568,22 +729,63 @@ public class WarpingError extends Metrics {
 				
 		for(double th =  minThreshold; th <= maxThreshold; th += stepThreshold)
 		{
+			if( verbose )
+				IJ.log("  Calculating warping error statistics for threshold value " + String.format("%.3f", th) + "...");
+			
 			WarpingResults[] wrs = simplePointWarp2dMT(originalLabels, proposedLabels, mask, th);
 			
 			ImageStack is = new ImageStack( originalLabels.getWidth(), originalLabels.getHeight() );
 			for(int i = 0; i < wrs.length; i ++)
 				is.addSlice("warped source slice " + (i+1), wrs[i].warpedSource.getProcessor() );
 			
-			ImagePlus warpedSource = new ImagePlus ("warped source", is);
-			
-			if( verbose )
-				IJ.log("  Calculating warping error statistics for threshold value " + String.format("%.2f", th) + "...");
+			ImagePlus warpedSource = new ImagePlus ("warped source", is);						
 			
 			// We calculate the precision-recall value between the warped original labels and the 
 			// proposed labels 
-			cs.add( (new RandError( warpedSource, proposedLabels)).getRandIndexStats( th ) );
+			RandError randError = new RandError( warpedSource, proposedLabels );			
+			ClassificationStatistics stats = randError.getRandIndexStats( th );
+			if( verbose )
+				IJ.log("   F-score = " + stats.fScore );			
+			cs.add( stats );
 		}		
 		return cs;
+	}
+	
+	/**
+	 * Get the best F-score of the Rand index based on Rand index between 
+	 * some warped 2D original labels and the corresponding proposed labels. 
+	 * 
+	 * @param minThreshold minimum threshold value to binarize the input images
+	 * @param maxThreshold maximum threshold value to binarize the input images
+	 * @param stepThreshold threshold step value to use during binarization
+	 * @return maximal F-score of the Rand index
+	 */
+	public double getRandIndexMaximalFScore(
+			double minThreshold,
+			double maxThreshold,
+			double stepThreshold)
+	{
+		ArrayList<ClassificationStatistics> stats = getRandIndexStats( minThreshold, maxThreshold, stepThreshold );
+	    // trainableSegmentation.utils.Utils.plotPrecisionRecall( stats );    
+	    
+	    double maxFScore = 0;
+	    double th = 0;
+	    double bestTh = 0;
+	    
+	    for(ClassificationStatistics stat : stats)
+	    {
+	    	if (stat.fScore > maxFScore)
+	    	{
+	    		maxFScore = stat.fScore;
+	    		bestTh = th;  
+	    	}
+	    	th += stepThreshold;
+	    }	 
+	    
+	    if( verbose )
+			IJ.log(" ** Best F-score = " + maxFScore + ", with threshold = " + bestTh + " **\n");
+	    
+	    return maxFScore;
 	}
 
 	/**

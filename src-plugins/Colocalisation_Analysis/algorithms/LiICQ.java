@@ -1,10 +1,12 @@
 package algorithms;
 
 import gadgets.DataContainer;
-import mpicbg.imglib.cursor.special.TwinCursor;
-import mpicbg.imglib.image.Image;
-import mpicbg.imglib.type.logic.BitType;
-import mpicbg.imglib.type.numeric.RealType;
+import net.imglib2.RandomAccessible;
+import net.imglib2.RandomAccessibleInterval;
+import net.imglib2.TwinCursor;
+import net.imglib2.type.logic.BitType;
+import net.imglib2.type.numeric.RealType;
+import net.imglib2.view.Views;
 import results.ResultHandler;
 
 /**
@@ -13,7 +15,7 @@ import results.ResultHandler;
  *
  * @param <T>
  */
-public class LiICQ<T extends RealType<T>> extends Algorithm<T> {
+public class LiICQ<T extends RealType< T >> extends Algorithm<T> {
 	// the resulting ICQ value
 	double icqValue;
 
@@ -28,15 +30,14 @@ public class LiICQ<T extends RealType<T>> extends Algorithm<T> {
 		double mean2 = container.getMeanCh2();
 
 		// get the 2 images for the calculation of Li's ICQ
-		Image<T> img1 = container.getSourceImage1();
-		Image<T> img2 = container.getSourceImage2();
-		Image<BitType> mask = container.getMask();
+		RandomAccessible<T> img1 = container.getSourceImage1();
+		RandomAccessible<T> img2 = container.getSourceImage2();
+		RandomAccessibleInterval<BitType> mask = container.getMask();
 
-		TwinCursor<T> cursor = new TwinCursor<T>(img1.createLocalizableByDimCursor(),
-				img2.createLocalizableByDimCursor(), mask.createLocalizableCursor());
+		TwinCursor<T> cursor = new TwinCursor<T>(img1.randomAccess(),
+				img2.randomAccess(), Views.iterable(mask).localizingCursor());
 		// calculate ICQ value
 		icqValue = calculateLisICQ(cursor, mean1, mean2);
-		cursor.close();
 	}
 
 	/**
@@ -53,7 +54,7 @@ public class LiICQ<T extends RealType<T>> extends Algorithm<T> {
 		 * of Li's product of the difference of means.
 		 */
 		long numPositiveProducts = 0;
-		long numNegariveProducts = 0;
+		long numNegativeProducts = 0;
 		// iterate over image
 		while (cursor.hasNext()) {
 			cursor.fwd();
@@ -66,7 +67,7 @@ public class LiICQ<T extends RealType<T>> extends Algorithm<T> {
 
 			// check for positive and negative values
 			if (productOfDifferenceOfMeans < 0.0 )
-				++numNegariveProducts;
+				++numNegativeProducts;
 			else
 				++numPositiveProducts;
 		}
@@ -74,7 +75,7 @@ public class LiICQ<T extends RealType<T>> extends Algorithm<T> {
 		/* calculate Li's ICQ value by dividing the amount of "positive pixels" to the
 		 * total number of pixels. Then shift it in the -0.5,0.5 range.
 		 */
-		return ( (double) numPositiveProducts / (double) (numNegariveProducts + numPositiveProducts) ) - 0.5;
+		return ( (double) numPositiveProducts / (double) (numNegativeProducts + numPositiveProducts) ) - 0.5;
 	}
 
 	@Override

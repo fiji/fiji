@@ -75,15 +75,16 @@ ensure_fake_is_built () {
 	 rm -rf build/jars/fake/ &&
 	 mkdir -p build/jars/fake/ &&
 	 : compile classes
-	 javac -source 1.5 -target 1.5 -classpath precompiled/javac.jar -d build/jars/fake/ $(find src-plugins/fake/ -name \*.java) &&
+	 java -jar precompiled/javac.jar -source 1.5 -target 1.5 -classpath precompiled/javac.jar -d build/jars/fake/ $(find src-plugins/fake/ -name \*.java) &&
 	 : compile .jar using Fiji Build
-	 java -classpath build/jars/fake/"$PATHSEP"precompiled/javac.jar fiji.build.Fake jars/fake.jar-rebuild ImageJ)
+	 java -classpath build/jars/fake/"$PATHSEP"precompiled/javac.jar fiji.build.Fake jars/fake.jar-rebuild)
 }
 
 PATHSEP=:
-case "$(uname -s)" in
+UNAME_S="$(uname -s)"
+case "$UNAME_S" in
 Darwin)
-	JAVA_HOME=/System/Library/Frameworks/JavaVM.framework/Home
+	JAVA_HOME=/System/Library/Frameworks/JavaVM.framework/Versions/1.6/Home
 	java_submodule=macosx-java3d
 	case "$(uname -r)" in
 	8.*) platform=tiger;;
@@ -116,7 +117,8 @@ FreeBSD)
 		JAVA_HOME=/usr/local/jdk1.6.0/jre
 		export JAVA_HOME
 	fi
-	if ! test -f "$JAVA_HOME/jre/lib/ext/vecmath.jar" && ! test -f "$JAVA_HOME/lib/ext/vecmath.jar"
+	if ! test -f "$JAVA_HOME/jre/lib/ext/vecmath.jar" &&
+		! test -f "$JAVA_HOME/lib/ext/vecmath.jar"
 	then
 		echo "You are missing Java3D. Please install with"
 		echo ""
@@ -165,18 +167,31 @@ test -f "$CWD"/java/"$java_submodule"/Home/lib/ext/vecmath.jar || {
 	}
 }
 
+case "$JAVA_HOME" in
+[A-Z]:*)
+	# assume this is MSys
+	JAVA_HOME="$(cd "$JAVA_HOME" && pwd)" ||
+	unset JAVA_HOME
+	;;
+esac
+
 test -n "$JAVA_HOME" &&
 test -d "$JAVA_HOME" ||
 for d in java/$java_submodule/*
 do
+	test "$d/jre" || continue
 	if test -z "$JAVA_HOME" || test "$d" -nt "$JAVA_HOME"
 	then
-		JAVA_HOME="$d"
+		JAVA_HOME="$CWD/$d/jre"
 	fi
 done
 
 if test -d "$JAVA_HOME"
 then
+	if test -d "$JAVA_HOME/jre"
+	then
+		JAVA_HOME="$JAVA_HOME/jre"
+	fi
 	export PATH=$JAVA_HOME/bin:$PATH
 fi
 
@@ -187,21 +202,14 @@ ensure_fake_is_built || {
 	exit 1
 }
 
-# on Win64, with a 32-bit compiler, do not try to compile
-case $platform in
-win64)
-	W64_GCC=/src/mingw-w64/sysroot/bin/x86_64-w64-mingw32-gcc.exe
-	test -f "$W64_GCC" && export CC="$W64_GCC"
-
-	case "$CC,$(gcc --version)" in
-	,*mingw32*)
-		# cannot compile! Fall back to copying
-		test "$CWD"/ImageJ.exe -nt "$CWD"/ImageJ.c &&
-		test "$CWD"/ImageJ.exe -nt "$CWD"/precompiled/ImageJ-win64.exe &&
-		test "$CWD"/ImageJ.exe -nt "$CWD"/Fakefile &&
-		test "$CWD"/ImageJ.exe -nt "$CWD"/$jar ||
-		cp precompiled/ImageJ-win64.exe ImageJ.exe
-	esac
+# JAVA_HOME needs to be a DOS path for Windows from here on
+case "$UNAME_S" in
+MINGW*)
+	export JAVA_HOME="$(cd "$JAVA_HOME" && pwd -W)"
+	;;
+CYGWIN*)
+	export JAVA_HOME="$(cygpath -d "$JAVA_HOME")"
+	;;
 esac
 
 sh "$CWD/bin/ImageJ.sh" --build "$@"

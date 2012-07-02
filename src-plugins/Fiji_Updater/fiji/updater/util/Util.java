@@ -64,7 +64,7 @@ public class Util {
 			.toString().replace("jar:file:", "")
 			.replace("plugins/Fiji_Updater.jar!/"
 				+ "fiji/updater/util/Util.class", "");
-		isDeveloper = new File(ijRoot + "/ImageJ.c").exists();
+		isDeveloper = new File(ijRoot + "/.git").exists();
 		platform = getPlatform();
 
 		platforms = new String[] {
@@ -191,7 +191,13 @@ public class Util {
 
 			for (JarEntry entry : list) {
 				digest.update(entry.getName().getBytes("ASCII"));
-				updateDigest(jar.getInputStream(entry), digest);
+				InputStream inputStream = jar.getInputStream(entry);
+				// .properties files have a date in a comment; let's ignore this for the checksum
+				// For backwards-compatibility, activate the .properties mangling only from June 15th, 2012
+				if (entry.getTime() >= 1339718400000l && entry.getName().endsWith(".properties")) {
+					inputStream = new SkipHashedLines(inputStream);
+				}
+				updateDigest(inputStream, digest);
 			}
 		}
 		return toHex(digest.digest());
@@ -342,6 +348,16 @@ public class Util {
 		out.write(contents.getBytes());
 		out.close();
 		result.renameTo(file);
+	}
+
+	// This method protects us from Java5's absence of File.canExecute
+	public static boolean canExecute(File file) {
+		try {
+			return file.canExecute();
+		} catch (Throwable t) {
+			// ignore
+			return false;
+		}
 	}
 
 	public static boolean patchInfoPList(String executable) throws IOException {

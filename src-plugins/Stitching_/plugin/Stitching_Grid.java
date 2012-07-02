@@ -80,6 +80,8 @@ public class Stitching_Grid implements PlugIn
 	public static boolean defaultOnlyPreview = false;
 	public static int defaultMemorySpeedChoice = 0;
 	
+	public static boolean defaultQuickFusion = true;
+	
 	public static String[] resultChoices = { "Fuse and display", "Write to disk" };
 	public static int defaultResult = 0;
 	public static String defaultOutputDirectory = "";
@@ -499,12 +501,32 @@ public class Stitching_Grid implements PlugIn
 	
 			ImagePlus imp = null;
 			
+			// test if there is no overlap between any of the tiles
+			// if so fusion can be much faster
+			boolean noOverlap = false;
+			if ( overlapX == 0 && overlapY == 0 && params.computeOverlap == false && params.subpixelAccuracy == false && grid.getType() < 4 )
+			{
+				final GenericDialogPlus gd3 = new GenericDialogPlus( "Use fast fusion algorithm" );
+				gd3.addMessage( "There seems to be no overlap between any of the tiles." );
+				gd3.addCheckbox( "Use fast fusion?", defaultQuickFusion );
+				
+				gd3.showDialog();
+				
+				if ( gd3.wasCanceled() )
+					return;
+				
+				noOverlap = defaultQuickFusion = gd3.getNextBoolean();
+				
+				if ( noOverlap )
+					IJ.log( "There is no overlap between any of the tiles, using faster fusion algorithm." );
+			}
+			
 			if ( is32bit )
-				imp = Fusion.fuse( new FloatType(), images, models, params.dimensionality, params.subpixelAccuracy, params.fusionMethod, params.outputDirectory );
+				imp = Fusion.fuse( new FloatType(), images, models, params.dimensionality, params.subpixelAccuracy, params.fusionMethod, params.outputDirectory, noOverlap );
 			else if ( is16bit )
-				imp = Fusion.fuse( new UnsignedShortType(), images, models, params.dimensionality, params.subpixelAccuracy, params.fusionMethod, params.outputDirectory );
+				imp = Fusion.fuse( new UnsignedShortType(), images, models, params.dimensionality, params.subpixelAccuracy, params.fusionMethod, params.outputDirectory, noOverlap );
 			else if ( is8bit )
-				imp = Fusion.fuse( new UnsignedByteType(), images, models, params.dimensionality, params.subpixelAccuracy, params.fusionMethod, params.outputDirectory );
+				imp = Fusion.fuse( new UnsignedByteType(), images, models, params.dimensionality, params.subpixelAccuracy, params.fusionMethod, params.outputDirectory, noOverlap );
 			else
 				IJ.log( "Unknown image type for fusion." );
 			
@@ -512,7 +534,10 @@ public class Stitching_Grid implements PlugIn
 			IJ.log( "Finished ... (" + (System.currentTimeMillis() - startTime) + " ms)");
 			
 			if ( imp != null )
+			{
+				imp.setTitle( "Fused" );
 				imp.show();
+			}
 		}
 		
     	// close all images
@@ -576,54 +601,13 @@ public class Stitching_Grid implements PlugIn
 
 				final int maxT = timeHack ? sizeT : 1;
 
-				// generate a mapping from native indices to Plane element indices
-				final HashMap< Integer, Integer > planeMap = new HashMap< Integer, Integer >();
-				final int planeCount = retrieve.getPlaneCount( series );
-				for ( int p = 0; p < planeCount; ++p )
-				{
-					final int theZ = retrieve.getPlaneTheZ( series, p ).getValue();
-					final int theC = retrieve.getPlaneTheC( series, p ).getValue();
-					final int theT = retrieve.getPlaneTheT( series, p ).getValue();
-					final int index = r.getIndex( theZ, theC, theT );
-					planeMap.put( index, p );
-				}
-
 				for ( int t = 0; t < maxT; ++t )
 				{
-					final int index = r.getIndex(0, 0, t);
-
-					double locationX = 0, locationY = 0, locationZ = 0;
-
-					if ( planeMap.containsKey( index ) )
-					{
-						final int planeIndex = planeMap.get( index );
-
-						// stage coordinates (per plane and series)
-						Double tmp;
-
-						tmp = retrieve.getPlanePositionX( series, planeIndex );
-						if ( tmp != null )
-							locationX = tmp;
-						if ( IJ.debugMode )
-							IJ.log( "locationX:  " + locationX );
-
-						tmp = retrieve.getPlanePositionY( series, planeIndex );
-						if ( tmp != null )
-							locationY = tmp;
-						if ( IJ.debugMode )
-							IJ.log( "locationY:  " + locationY );
-
-						tmp = retrieve.getPlanePositionZ( series, planeIndex );
-						if ( tmp != null )
-							locationZ = tmp;
-						if ( IJ.debugMode )
-							IJ.log( "locationZ:  " + locationZ );
-					}
-					else
-					{
-						if ( IJ.debugMode )
-							IJ.log( "Missing Plane element: series=" + series + ", t=" + t );
-					}
+					double[] location =
+						CommonFunctions.getPlanePosition( r, retrieve, series, t );
+					double locationX = location[0];
+					double locationY = location[1];
+					double locationZ = location[2];
 
 					if ( !ignoreCalibration )
 					{
@@ -692,7 +676,7 @@ public class Stitching_Grid implements PlugIn
 		}
 		catch ( Exception ex ) 
 		{ 
-			IJ.log("Exception: " + ex.getMessage());
+			IJ.handleException(ex);
 			ex.printStackTrace();
 			return null; 
 		}

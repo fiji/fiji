@@ -5,6 +5,7 @@ import com.jcraft.jsch.UserInfo;
 import fiji.updater.java.UpdateJava;
 
 import fiji.updater.logic.Checksummer;
+import fiji.updater.logic.Dependency;
 import fiji.updater.logic.FileUploader;
 import fiji.updater.logic.PluginCollection;
 import fiji.updater.logic.PluginCollection.Filter;
@@ -180,6 +181,17 @@ public class Main {
 					+ plugin.filename);
 	}
 
+	protected void addDependencies(PluginObject file, Set<PluginObject> all) {
+		if (all.contains(file))
+			return;
+		all.add(file);
+		for (Dependency dependency : file.getDependencies()) {
+			PluginObject file2 = plugins.getPlugin(dependency.filename);
+			if (file2 != null)
+				addDependencies(file2, all);
+		}
+	}
+
 	public void update(List<String> files) {
 		update(files, false);
 	}
@@ -189,8 +201,15 @@ public class Main {
 	}
 
 	public void update(List<String> files, boolean force, boolean pristine) {
-		checksum(files);
+		// Include all dependencies
+		Set<PluginObject> all = new HashSet<PluginObject>();
 		for (PluginObject plugin : plugins.filter(new FileFilter(files)))
+			addDependencies(plugin, all);
+		files.clear();
+		for (PluginObject file : all)
+			files.add(file.filename);
+		checksum(files);
+		for (PluginObject plugin : all)
 			switch (plugin.getStatus()) {
 			case MODIFIED:
 				if (!force) {
@@ -358,7 +377,21 @@ public class Main {
 			System.exit(0);
 		}
 
-		Util.useSystemProxies();
+		String http_proxy = System.getenv("http_proxy");
+		if (http_proxy != null && http_proxy.startsWith("http://")) {
+			int colon = http_proxy.indexOf(':', 7);
+			int slash = http_proxy.indexOf('/', 7);
+			int port = 80;
+			if (colon < 0)
+				http_proxy = slash < 0 ? http_proxy.substring(7) : http_proxy.substring(7, slash);
+			else {
+				port = Integer.parseInt(slash < 0 ? http_proxy.substring(colon + 1) : http_proxy.substring(colon + 1, slash));
+				http_proxy = http_proxy.substring(7, colon);
+			}
+			System.setProperty("http.proxyHost", http_proxy);
+			System.setProperty("http.proxyPort", "" + port);
+		} else
+			Util.useSystemProxies();
 		Authenticator.setDefault(new ProxyAuthenticator());
 
 		String command = args[0];

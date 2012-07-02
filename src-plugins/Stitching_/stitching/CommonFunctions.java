@@ -27,11 +27,13 @@ import java.awt.event.MouseEvent;
 import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.HashMap;
 
 import loci.formats.ChannelSeparator;
 import loci.formats.FormatException;
 import loci.formats.FormatTools;
 import loci.formats.IFormatReader;
+import loci.formats.meta.MetadataRetrieve;
 
 import edu.mines.jtk.dsp.FftComplex;
 import edu.mines.jtk.dsp.FftReal;
@@ -310,8 +312,8 @@ public class CommonFunctions
 			
 			imp = new ImagePlus(fileName, stack);
 		}
-		catch (IOException exc) { IJ.log("IOException: " + exc.getMessage()); return null;}
-		catch (FormatException exc) { IJ.log("FormatException: " + exc.getMessage()); return null;}
+		catch (IOException exc) { IJ.handleException(exc); return null;}
+		catch (FormatException exc) { IJ.handleException(exc); return null;}
 	                
 		return imp;
 	}
@@ -1080,6 +1082,70 @@ public class CommonFunctions
 			float[] pixelTmp = (float[]) imageStack[z];
 			return pixelTmp[x + y * width];
 		}
+	}
+
+	public static final double[] getPlanePosition( final IFormatReader r, final MetadataRetrieve retrieve, int series, int t )
+	{
+		// generate a mapping from native indices to Plane element indices
+		final HashMap< Integer, Integer > planeMap = new HashMap< Integer, Integer >();
+		final int planeCount = retrieve.getPlaneCount( series );
+		for ( int p = 0; p < planeCount; ++p )
+		{
+			final int theZ = retrieve.getPlaneTheZ( series, p ).getValue();
+			final int theC = retrieve.getPlaneTheC( series, p ).getValue();
+			final int theT = retrieve.getPlaneTheT( series, p ).getValue();
+			final int index = r.getIndex( theZ, theC, theT );
+			planeMap.put( index, p );
+		}
+
+		// get reader index of time point t
+		final int index = r.getIndex( 0, 0, t );
+
+		// convert reader index to plane element index
+		final int planeIndex = planeMap.containsKey( index ) ? planeMap.get( index ) : 0;
+		final boolean hasPlane = planeIndex < retrieve.getPlaneCount( series );
+
+		// CTR HACK: Recover gracefully when StageLabel element is missing.
+		// This avoids a problem with the OMEXMLMetadataImpl implementation,
+		// which currently does not check for null on the StageLabel object.
+		Double stageLabelX = null, stageLabelY = null, stageLabelZ = null;
+		try
+		{
+			stageLabelX = retrieve.getStageLabelX( series );
+			stageLabelY = retrieve.getStageLabelY( series );
+			stageLabelZ = retrieve.getStageLabelZ( series );
+		}
+		catch (final NullPointerException exc)
+		{
+			// ignore
+		}
+
+		// stage coordinates (for the given series and plane)
+		final double locationX = getPosition( hasPlane ? retrieve.getPlanePositionX( series, planeIndex ) : null, stageLabelX );
+		final double locationY = getPosition( hasPlane ? retrieve.getPlanePositionY( series, planeIndex ) : null, stageLabelY );
+		final double locationZ = getPosition( hasPlane ? retrieve.getPlanePositionZ( series, planeIndex ) : null, stageLabelZ );
+
+		if ( IJ.debugMode )
+		{
+			IJ.log( "locationX:  " + locationX );
+			IJ.log( "locationY:  " + locationY );
+			IJ.log( "locationZ:  " + locationZ );
+		}
+
+		return new double[] { locationX, locationY, locationZ };
+	}
+
+	private static double getPosition( final Double planePos, final Double stageLabel )
+	{
+		// check plane position
+		if ( planePos != null )
+			return planePos;
+
+		// check global stage label
+		if ( stageLabel != null )
+			return stageLabel;
+
+		return 0;
 	}
 
 }

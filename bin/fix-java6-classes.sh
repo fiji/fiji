@@ -1,8 +1,8 @@
 #!/bin/sh
 
 FIJIROOT="$(dirname "$0")/.."
-FIJI="$FIJIROOT"/ImageJ
-RETRO="$FIJIROOT"/retro/retrotranslator-transformer-1.2.7.jar
+FIJI="$FIJIROOT"/bin/ImageJ.sh
+RETRO="$FIJIROOT"/retro/retrotranslator-transformer-1.2.9.jar
 TARGETVERSION=$TARGETVERSION${TARGETVERSION:-1.3}
 
 die () {
@@ -12,7 +12,7 @@ die () {
 
 case $# in
 0)
-	OFFENDERS=$(cd "$FIJIROOT" && ./ImageJ tests/class_versions.py |
+	OFFENDERS=$(cd "$FIJIROOT" && ./bin/ImageJ.sh tests/class_versions.py |
 		sed -n -e 's/(.*//' -e 's/^\t//p' |
 		uniq)
 	;;
@@ -21,19 +21,25 @@ case $# in
 	;;
 esac
 
-TMPDIR="$(mktemp -d)"
+TMPDIR="$(mktemp -d fixXXXXXX 2> /dev/null)" || {
+	TMPDIR=.tmp.dir.$$
+	mkdir -p $TMPDIR
+}
+
 for f in $OFFENDERS
 do
 	echo "Fixing $f..."
 	case "$f" in
 	*.jar)
-		"$FIJI" --jar "$RETRO" \
+		"$FIJI" -classpath "$RETRO" \
+			--main-class net.sf.retrotranslator.transformer.Retrotranslator -- \
 			-srcjar "$f" -destjar "$f".new -target $TARGETVERSION &&
 		mv -f "$f".new "$f"
 		;;
 	*.class)
 		mv "$f" "$TMPDIR" &&
-		"$FIJI" --jar "$RETRO" \
+		"$FIJI" -classpath "$RETRO" \
+			--main-class net.sf.retrotranslator.transformer.Retrotranslator -- \
 			-srcdir "$TMPDIR" -destdir $(dirname "$f") -target $TARGETVERSION
 		;;
 	*)

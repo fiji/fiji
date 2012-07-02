@@ -17,6 +17,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import mpicbg.imglib.container.array.ArrayContainerFactory;
 import mpicbg.imglib.container.imageplus.ImagePlusContainer;
 import mpicbg.imglib.container.imageplus.ImagePlusContainerFactory;
+import mpicbg.imglib.cursor.LocalizableByDimCursor;
 import mpicbg.imglib.cursor.LocalizableCursor;
 import mpicbg.imglib.exception.ImgLibException;
 import mpicbg.imglib.image.Image;
@@ -54,7 +55,7 @@ public class Fusion
 	 * @param subpixelResolution - if there is no subpixel resolution, we do not need to convert to float as no interpolation is necessary, we can compute everything with RealType
 	 */
 	public static < T extends RealType< T > > ImagePlus fuse( final T targetType, final ArrayList< ImagePlus > images, final ArrayList< InvertibleBoundable > models, 
-			final int dimensionality, final boolean subpixelResolution, final int fusionType, final String outputDirectory )
+			final int dimensionality, final boolean subpixelResolution, final int fusionType, final String outputDirectory, final boolean noOverlap )
 	{
 		// first we need to estimate the boundaries of the new image
 		final float[] offset = new float[ dimensionality ];
@@ -163,7 +164,10 @@ public class Fusion
 
 					if ( outputDirectory == null )
 					{
-						fuseBlock( out, blockData, offset, models, fusion );
+						if ( noOverlap )
+							fuseBlockNoOverlap( out, blockData, offset, models );
+						else
+							fuseBlock( out, blockData, offset, models, fusion );
 					}
 					else
 					{
@@ -321,6 +325,65 @@ A:        					for ( int i = 0; i < numImages; ++i )
             		}
 
                 }
+            });
+        
+        SimpleMultiThreading.startAndJoin( threads );
+	}
+
+	/**
+	 * Fuse one slice/volume (one channel)
+	 * 
+	 * @param output - same the type of the ImagePlus input
+	 * @param input - FloatType, because of Interpolation that needs to be done
+	 * @param transform - the transformation
+	 */
+	protected static <T extends RealType<T>> void fuseBlockNoOverlap( final Image<T> output, final ArrayList< ? extends ImageInterpolation< ? extends RealType< ? > > > input, final float[] offset, 
+			final ArrayList< InvertibleBoundable > transform )
+	{
+		final int numDimensions = output.getNumDimensions();
+		final int numImages = input.size();
+		
+		// run multithreaded
+		final AtomicInteger ai = new AtomicInteger(0);					
+        final Thread[] threads = SimpleMultiThreading.newThreads( numImages );
+
+        for (int ithread = 0; ithread < threads.length; ++ithread)
+            threads[ithread] = new Thread( new Runnable()
+            {
+                public void run()
+                {
+                	// Thread ID
+                	final int myImage = ai.getAndIncrement();
+        
+                	final Image< ? extends RealType<?> > image = input.get( myImage ).getImage();
+                	final int[] translation = new int[ numDimensions ];
+                	
+                	final InvertibleBoundable t = transform.get( myImage );
+            		final float[] tmp = new float[ numDimensions ];
+            		t.applyInPlace( tmp );
+ 
+            		for ( int d = 0; d < numDimensions; ++d )
+            			translation[ d ] = Math.round( tmp[ d ] );
+
+            		final LocalizableCursor< ? extends RealType<?> > cursor = image.createLocalizableCursor();
+            		final LocalizableByDimCursor< ? extends RealType<?> > randomAccess = output.createLocalizableByDimCursor();
+            		final int[] pos = new int[ numDimensions ];
+            		
+            		while ( cursor.hasNext() )
+            		{
+            			cursor.fwd();
+            			cursor.getPosition( pos );
+            			
+                		for ( int d = 0; d < numDimensions; ++d )
+                		{
+                			pos[ d ] += translation[ d ];
+                			pos[ d ] -= offset[ d ];
+                		}
+                		
+                		randomAccess.setPosition( pos );
+                		randomAccess.getType().setReal( cursor.getType().getRealFloat() );
+            		}           		
+                 }
             });
         
         SimpleMultiThreading.startAndJoin( threads );
@@ -559,7 +622,7 @@ A:		        	for ( int i = 0; i < numImages; ++i )
 		
 		// test blending
 		ImageFactory< FloatType > f = new ImageFactory<FloatType>( new FloatType(), new ArrayContainerFactory() );
-		Image< FloatType > img = f.createImage( new int[] { 1024, 100 } ); 
+		Image< FloatType > img = f.createImage( new int[] { 400, 400 } ); 
 		
 		LocalizableCursor< FloatType > c = img.createLocalizableCursor();
 		final int numDimensions = img.getNumDimensions();
@@ -567,14 +630,9 @@ A:		        	for ( int i = 0; i < numImages; ++i )
 		
 		// for blending
 		final int[] dimensions = img.getDimensions();
-		final float percentScaling = 0.3f;
-		final float[] dimensionScaling = new float[ numDimensions ];
+		final float percentScaling = 0.2f;
 		final float[] border = new float[ numDimensions ];
-		for ( int d = 0; d < numDimensions; ++d )
-			dimensionScaling[ d ] = 1;
-		
-		//dimensionScaling[ 1 ] = 0.5f;
-			
+					
 		while ( c.hasNext() )
 		{
 			c.fwd();
@@ -582,7 +640,7 @@ A:		        	for ( int i = 0; i < numImages; ++i )
 			for ( int d = 0; d < numDimensions; ++d )
 				tmp[ d ] = c.getPosition( d );
 			
-			c.getType().set( (float)BlendingPixelFusion.computeWeight( tmp, dimensions, border, dimensionScaling, percentScaling ) );
+			c.getType().set( (float)BlendingPixelFusion.computeWeight( tmp, dimensions, border, percentScaling ) );
 		}
 		
 		ImageJFunctions.show( img );

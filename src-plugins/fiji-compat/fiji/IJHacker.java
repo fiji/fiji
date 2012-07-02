@@ -272,7 +272,12 @@ public class IJHacker extends JavassistHelper {
 			@Override
 			public void edit(FieldAccess access) throws CannotCompileException {
 				if (access.getFieldName().equals("bioformats") && access.isWriter())
-					access.replace("bioformats = ij.IJ.getClassLoader().loadClass(\"loci.plugins.LociImporter\") != null;");
+					access.replace("try {"
+						+ "    ij.IJ.getClassLoader().loadClass(\"loci.plugins.LociImporter\");"
+						+ "    bioformats = true;"
+						+ "} catch (ClassNotFoundException e) {"
+						+ "    bioformats = false;"
+						+ "}");
 			}
 		});
 		// open text in the Fiji Editor

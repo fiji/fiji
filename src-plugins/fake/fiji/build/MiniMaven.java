@@ -46,7 +46,7 @@ import org.xml.sax.XMLReader;
 import org.xml.sax.helpers.DefaultHandler;
 
 public class MiniMaven {
-	protected String endLine = System.console() == null ? "\n" : "\033[K\r";
+	protected String endLine = isInteractiveConsole() ? "\033[K\r" : "\n";
 	protected boolean verbose, debug = false, downloadAutomatically, offlineMode, ignoreMavenRepositories;
 	protected int updateInterval = 24 * 60; // by default, check once per 24h for new snapshot versions
 	protected PrintStream err;
@@ -54,6 +54,15 @@ public class MiniMaven {
 	protected Stack<File> multiProjectRoots = new Stack<File>();
 	protected Set<File> excludedFromMultiProjects = new HashSet<File>();
 	protected Fake fake;
+
+	protected static boolean isInteractiveConsole() {
+		// We want to compile/run with Java5, so we cannot test System.console() directly
+		try {
+			return null != System.class.getMethod("console").invoke(null);
+		} catch (Throwable t) {
+			return false;
+		}
+	}
 
 	public MiniMaven(Fake fake, PrintStream err, boolean verbose) throws FakeException {
 		this(fake, err, verbose, false);
@@ -154,7 +163,7 @@ public class MiniMaven {
 			pom.target = new File(directory, fileName);
 		}
 
-		String key = pom.expand(pom.coordinate.groupId) + ">" + pom.expand(pom.coordinate.artifactId);
+		String key = pom.expand(pom.coordinate).getKey();
 		if (!localPOMCache.containsKey(key))
 			localPOMCache.put(key, pom);
 
@@ -177,7 +186,7 @@ public class MiniMaven {
 		else if (dependency.artifactId.equals("jfreechart"))
 			pom.dependencies.add(new Coordinate("jfree", "jcommon", "1.0.16"));
 
-		String key = dependency.groupId + ">" + dependency.artifactId;
+		String key = dependency.getKey();
 		if (localPOMCache.containsKey(key))
 			err.println("Warning: " + target + " overrides " + localPOMCache.get(key));
 		localPOMCache.put(key, pom);
@@ -204,6 +213,7 @@ public class MiniMaven {
 	protected static class Coordinate {
 		protected String groupId, artifactId, version, systemPath, classifier, scope;
 		protected boolean optional;
+		private String snapshotVersion;
 
 		public Coordinate() {}
 
@@ -247,9 +257,17 @@ public class MiniMaven {
 
 		public String getFileName(boolean withProjectPrefix, boolean withClassifier, String fileExtension) {
 			return (withProjectPrefix ? groupId + "/" : "")
-				+ artifactId + "-" + version
+				+ artifactId + "-" + (snapshotVersion != null ? snapshotVersion : version)
 				+ (withClassifier && classifier != null ? "-" + classifier : "")
 				+ (fileExtension != null ? "." + fileExtension : "");
+		}
+
+		public String getKey() {
+			return groupId + ">" + artifactId + (classifier == null ? "" : ">" + classifier);
+		}
+
+		public void setSnapshotVersion(String version) {
+			snapshotVersion = version;
 		}
 
 		@Override
@@ -542,7 +560,7 @@ public class MiniMaven {
 		}
 
 		public String getJarName() {
-			return coordinate.artifactId + '-' + coordinate.version + ".jar";
+			return coordinate.getJarName();
 		}
 
 		public File getTarget() {
@@ -737,7 +755,7 @@ public class MiniMaven {
 			if (dependency.groupId == null && dependency.artifactId.equals("jdom"))
 				dependency.groupId = "jdom";
 			// fall back to Fiji's modules/, $HOME/.m2/repository/ and Fiji's jars/ and plugins/ directories
-			String key = dependency.groupId + ">" + dependency.artifactId;
+			String key = dependency.getKey();
 			if (localPOMCache.containsKey(key)) {
 				POM result = localPOMCache.get(key); // may be null
 				if (result == null || dependency.version == null || compareVersion(dependency.version, result.coordinate.version) <= 0)
@@ -794,7 +812,7 @@ public class MiniMaven {
 					return null;
 				}
 				if (dependency.version.endsWith("-SNAPSHOT"))
-					dependency.version = parseSnapshotVersion(new File(path, "maven-metadata-snapshot.xml"));
+					dependency.setSnapshotVersion(parseSnapshotVersion(new File(path, "maven-metadata-snapshot.xml")));
 			} catch (FileNotFoundException e) { /* ignore */ }
 			else {
 				File file = findInFijiDirectories(dependency);
@@ -851,7 +869,7 @@ public class MiniMaven {
 					parse(file, null);
 				}
 			}
-			String key = dependency.groupId + ">" + dependency.artifactId;
+			String key = dependency.getKey();
 			return localPOMCache.get(key);
 		}
 
@@ -885,7 +903,7 @@ public class MiniMaven {
 					e.printStackTrace(err);
 					err.println("Could not download " + dependency.artifactId + ": " + e.getMessage());
 				}
-				String key = dependency.groupId + ">" + dependency.artifactId;
+				String key = dependency.getKey();
 				localPOMCache.put(key, null);
 				return false;
 			}
@@ -1081,7 +1099,7 @@ public class MiniMaven {
 		}
 
 		public void append(StringBuilder builder, String indent) {
-			builder.append(indent + coordinate.groupId + ">" + coordinate.artifactId + "\n");
+			builder.append(indent + coordinate.getKey() + "\n");
 			if (children != null)
 				for (POM child : getChildren())
 					if (child == null)
@@ -1103,9 +1121,10 @@ public class MiniMaven {
 			String message = quiet ? null : "Checking for new snapshot of " + dependency.artifactId;
 			String metadataURL = repositoryURL + path + "maven-metadata.xml";
 			downloadAndVerify(metadataURL, directory, snapshotMetaData.getName(), message);
-			dependency.version = parseSnapshotVersion(snapshotMetaData);
-			if (dependency.version == null)
+			String snapshotVersion = parseSnapshotVersion(snapshotMetaData);
+			if (snapshotVersion == null)
 				throw new IOException("No version found in " + metadataURL);
+			dependency.setSnapshotVersion(snapshotVersion);
 			if (new File(directory, dependency.getJarName()).exists() &&
 					new File(directory, dependency.getPOMName()).exists())
 				return;
@@ -1415,7 +1434,7 @@ public class MiniMaven {
 
 	public static void main(String[] args) throws Exception {
 		ensureIJDirIsSet();
-		MiniMaven miniMaven = new MiniMaven(null, System.err, false);
+		MiniMaven miniMaven = new MiniMaven(null, System.err, "true".equals(getSystemProperty("minimaven.verbose", "false")));
 		POM root = miniMaven.parse(new File("pom.xml"), null);
 		String command = args.length == 0 ? "compile-and-run" : args[0];
 		String artifactId = getSystemProperty("artifactId", root.coordinate.artifactId.equals("pom-ij-base") ? "ij-app" : root.coordinate.artifactId);

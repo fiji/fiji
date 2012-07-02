@@ -44,10 +44,14 @@ public class HandleExtraFileTypes extends ImagePlus implements PlugIn {
 	public void run(String path) {
 		if (path.equals("")) return;
 		File theFile = new File(path);
-		String directory = theFile.getParent().replace('\\', '/');
 		String fileName = theFile.getName();
+		String directory = theFile.getParent();
 		if (directory == null) directory = "";
-		else if (!directory.endsWith("/")) directory += "/";
+		else {
+			directory = directory.replace('\\', '/');
+			if (!directory.endsWith("/"))
+				directory += "/";
+		}
 
 		// Try and recognise file type and load the file if recognised
 		ImagePlus imp = openImage(directory, fileName, path);
@@ -341,6 +345,9 @@ public class HandleExtraFileTypes extends ImagePlus implements PlugIn {
 		if (name.matches("[iI]\\d{7}\\.[mM]\\p{XDigit}{2}")) {
 			return tryPlugIn("org.doube.bonej.pqct.Read_Stratec_File", path);
 		}
+
+		if (name.endsWith(".obj") || name.endsWith(".dxf") || name.endsWith(".stl"))
+			return tryPlugIn("ImageJ_3D_Viewer", path);
 
 		// ****************** MODIFY HERE ******************
 		// do what ever you have to do to recognise your own file type

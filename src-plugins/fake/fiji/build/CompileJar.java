@@ -27,7 +27,7 @@ public class CompileJar extends Rule {
 		List<String> nativeSources = CompileNativeLibrary.filterNativeSources(prerequisites);
 		if (nativeSources.size() > 0) {
 			File buildDir = getVarBool("includeSources") ? getBuildDir() : null;
-			compileLibrary = new CompileNativeLibrary(parser, getBaseName(target), new File(target), buildDir, nativeSources);
+			compileLibrary = new CompileNativeLibrary(parser, getBaseName(target), new File(Util.makePath(parser.cwd, target)), target, buildDir, nativeSources);
 			if (parser.allRules.containsKey(compileLibrary.target) && (parser.getRule(compileLibrary.target) instanceof CompileNativeLibrary))
 				compileLibrary = (CompileNativeLibrary)parser.getRule(compileLibrary.target);
 			else
@@ -54,7 +54,8 @@ public class CompileJar extends Rule {
 			parser.fake.expandToSet(getVar("EXCLUDE"), parser.cwd);
 		if (getVar("PREBUILTDIR") == null) {
 			compileJavas(prerequisites, buildDir, exclude, noCompile);
-			new ObsoleteClassFiles(parser.fake.err, new File(Util.makePath(parser.cwd, getStripPath())), buildDir).removeFiles();
+			if (!target.equals("jacl.jar")) // known to mix *two* directories of sources
+				new ObsoleteClassFiles(parser.fake.err, new File(Util.makePath(parser.cwd, getStripPath())), buildDir).removeFiles();
 		}
 		List<String> files = parser.fake.java2classFiles(prerequisites,
 			parser.cwd, buildDir, exclude, noCompile);

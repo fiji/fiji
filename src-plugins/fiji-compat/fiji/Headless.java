@@ -67,7 +67,7 @@ public class Headless extends JavassistHelper {
 		nameMap = new ClassMap();
 
 		CtClass clazz = get("ij.gui.GenericDialog");
-		Set<String> override = new HashSet<String>(Arrays.asList(new String[] { "paint", "getInsets" }));
+		Set<String> override = new HashSet<String>(Arrays.asList(new String[] { "paint", "getInsets", "showHelp" }));
 		for (CtMethod method : clazz.getMethods())
 			if (override.contains(method.getName())) {
 				CtMethod stub = makeStubMethod(clazz, method);
@@ -124,11 +124,16 @@ public class Headless extends JavassistHelper {
 		for (CtMethod method : fakeClass.getMethods())
 			available.add(stripPackage(method.getLongName()));
 		for (CtMethod original : originalClass.getDeclaredMethods()) {
-			if (available.contains(stripPackage(original.getLongName())))
+			if (available.contains(stripPackage(original.getLongName()))) {
+				if (verbose > 1)
+					System.err.println("Skipping available method " + original);
 				continue;
+			}
 
 			CtMethod method = makeStubMethod(fakeClass, original);
 			fakeClass.addMethod(method);
+			if (verbose > 1)
+				System.err.println("adding missing method " + method);
 		}
 
 		// interfaces

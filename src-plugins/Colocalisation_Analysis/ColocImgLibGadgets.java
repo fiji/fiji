@@ -1,23 +1,24 @@
-import ij.plugin.PlugIn;
 import ij.IJ;
 import ij.ImagePlus;
-import ij.WindowManager;
-import mpicbg.imglib.cursor.Cursor;
-import mpicbg.imglib.image.Image;
-import mpicbg.imglib.image.ImageFactory;
-import mpicbg.imglib.image.ImagePlusAdapter;
-import mpicbg.imglib.type.numeric.RealType;
-import mpicbg.imglib.container.imageplus.ImagePlusContainerFactory;
-import mpicbg.imglib.container.ContainerFactory;
-import ij.measure.Measurements;
-import java.util.Collections;
+import ij.plugin.PlugIn;
+
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 
-public class ColocImgLibGadgets<T extends RealType<T>> implements PlugIn {
+import net.imglib2.Cursor;
+import net.imglib2.algorithm.math.ImageStatistics;
+import net.imglib2.img.ImagePlusAdapter;
+import net.imglib2.img.Img;
+import net.imglib2.img.ImgFactory;
+import net.imglib2.img.array.ArrayImgFactory;
+import net.imglib2.type.NativeType;
+import net.imglib2.type.numeric.RealType;
 
-  protected Image<T> img1, img2;
+public class ColocImgLibGadgets<T extends RealType<T> & NativeType<T>> implements PlugIn {
+
+  protected Img<T> img1, img2;
 
   public void run(String arg) {
 	ImagePlus imp1 = IJ.openImage("/Users/dan/Documents/Dresden/ipf/colocPluginDesign/red.tif");
@@ -27,24 +28,24 @@ public class ColocImgLibGadgets<T extends RealType<T>> implements PlugIn {
 
 	double person = calculatePerson();
 
-	Image<T> ranImg = generateRandomImageStack(img1, new int[] {2,2,1});
+	Img<T> ranImg = generateRandomImageStack(img1, new int[] {2,2,1});
   }
 
   /**
    * To randomize blockwise we enumerate the blocks, shuffle that list and
    * write the data to their new position based on the shuffled list.
    */
-  protected Image<T> generateRandomImageStack(Image<T> img, int[] blockDimensions) {
-	int numberOfDimensions = Math.min(img.getNumDimensions(), blockDimensions.length);
+  protected Img<T> generateRandomImageStack(Img<T> img, int[] blockDimensions) {
+	int numberOfDimensions = Math.min(img.numDimensions(), blockDimensions.length);
 	int numberOfBlocks = 0;
-	int[] numberOfBlocksPerDimension = new int[numberOfDimensions];
+	long[] numberOfBlocksPerDimension = new long[numberOfDimensions];
 
 	for (int i = 0 ; i<numberOfDimensions; i++){
-		if (img.getDimension(i) % blockDimensions[i] != 0){
+		if (img.dimension(i) % blockDimensions[i] != 0){
 			System.out.println("sorry, for now image dims must be divisable by block size");
 			return null;
 		}
-		numberOfBlocksPerDimension[i] = img.getDimension(i) / blockDimensions[i];
+		numberOfBlocksPerDimension[i] = img.dimension(i) / blockDimensions[i];
 		numberOfBlocks *= numberOfBlocksPerDimension[i];
 	}
 	List<Integer> allTheBlocks = new ArrayList<Integer>(numberOfBlocks);
@@ -52,30 +53,31 @@ public class ColocImgLibGadgets<T extends RealType<T>> implements PlugIn {
 		allTheBlocks.add(new Integer(i));
 	}
 	Collections.shuffle(allTheBlocks, new Random());
-	Cursor<T> cursor = img.createCursor();
+	Cursor<T> cursor = img.cursor();
 
 	// create factories for new image stack
-	ContainerFactory containerFactory = new ImagePlusContainerFactory();
-	ImageFactory<T> imgFactory = new ImageFactory<T>(cursor.getType(), containerFactory);
+	//ContainerFactory containerFactory = new ImagePlusContainerFactory();
+	ImgFactory<T> imgFactory = new ArrayImgFactory<T>();
+	//new ImageFactory<T>(cursor.getType(), containerFactory);
 
-	// crete a new stack for the random images
-	Image<T> randomStack = imgFactory.createImage(img.getDimensions());
+	// create a new stack for the random images
+	final long[] dim = new long[ img.numDimensions() ];
+	img.dimensions(dim);
+	Img<T> randomStack = imgFactory.create(dim, img.firstElement().createVariable());
 
 	// iterate over image data
 	while (cursor.hasNext()) {
 		cursor.fwd();
-		T type = cursor.getType();
+		T type = cursor.get();
 		// type.getRealDouble();
 	}
-
-	cursor.close();
 
 	return randomStack;
   }
 
   protected double calculatePerson() {
-	Cursor<T> cursor1 = img1.createCursor();
-	Cursor<T> cursor2 = img2.createCursor();
+	Cursor<T> cursor1 = img1.cursor();
+	Cursor<T> cursor2 = img2.cursor();
 
 	double mean1 = getImageMean(img1);
 	double mean2 = getImageMean(img2);
@@ -88,10 +90,6 @@ public class ColocImgLibGadgets<T extends RealType<T>> implements PlugIn {
 	// End performance testing
 	long finishTime = System.currentTimeMillis();
 	long elapsed = finishTime - startTime;
-
-	// close the cursors
-	cursor1.close();
-	cursor2.close();
 
 	// print some output
 	IJ.write("mean of ch1: " + mean1 + " " + "mean of ch2: " + mean2);
@@ -108,9 +106,9 @@ public class ColocImgLibGadgets<T extends RealType<T>> implements PlugIn {
 	while (cursor1.hasNext() && cursor2.hasNext()) {
 		cursor1.fwd();
 		cursor2.fwd();
-		T type1 = cursor1.getType();
+		T type1 = cursor1.get();
 		double ch1diff = type1.getRealDouble() - mean1;
-		T type2 = cursor2.getType();
+		T type2 = cursor2.get();
 		double ch2diff = type2.getRealDouble() - mean2;
 		pearsonDenominator += ch1diff*ch2diff;
 		ch1diffSquaredSum += (ch1diff*ch1diff);
@@ -120,17 +118,14 @@ public class ColocImgLibGadgets<T extends RealType<T>> implements PlugIn {
 	return pearsonDenominator / pearsonNumerator;
   }
 
-  protected double getImageMean(Image<T> img) {
+  protected double getImageMean(Img<T> img) {
 	  double sum = 0;
-	  Cursor<T> cursor = img.createCursor();
+	  Cursor<T> cursor = img.cursor();
 	  while (cursor.hasNext()) {
 		  cursor.fwd();
-		  T type = cursor.getType();
+		  T type = cursor.get();
 		  sum += type.getRealDouble();
 	  }
-	  cursor.close();
-	  return sum / img.getNumPixels();
+	  return sum / ImageStatistics.getNumPixels(img);
   }
-
-
 }

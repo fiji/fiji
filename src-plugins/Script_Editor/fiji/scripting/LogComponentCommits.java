@@ -180,10 +180,6 @@ public class LogComponentCommits {
 
 		if (rule != null && rule.getClass().getName().endsWith("SubFake"))
 			SimpleExecuter.exec(new File(ijDir, rule.getLastPrerequisite()), out, cmdarray);
-		else if (component.startsWith("precompiled/ImageJ-") || component.startsWith("ImageJ-")) {
-			cmdarray[cmdarray.length - 1] = "ImageJ.c";
-			SimpleExecuter.exec(new File(ijDir), out, cmdarray);
-		}
 		else {
 			String path = rule == null ? component : rule.getPrerequisiteString();
 			int starstar = path.indexOf("**");

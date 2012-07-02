@@ -527,7 +527,7 @@ public abstract class Rule implements Comparable<Rule> {
 		return parser.cwd;
 	}
 
-	@Override
+	/* Java5 does not like @Override for methods implementing an interface */
 	public int compareTo(Rule other) {
 		return target.compareTo(other.target);
 	}

@@ -2122,14 +2122,14 @@ public class Weka_Segmentation implements PlugIn
 		}
 
 		final float newMaxSigma = (float) gd.getNextNumber();
-		if(newMaxSigma != wekaSegmentation.getMaximumSigma() && newMaxSigma > wekaSegmentation.getMinimumSigma())
+		if(newMaxSigma != wekaSegmentation.getMaximumSigma() && newMaxSigma >= wekaSegmentation.getMinimumSigma())
 		{
 			featuresChanged = true;
 			// Macro recording
 			record(SET_MAXIMUM_SIGMA, new String[] { Float.toString( newMaxSigma )});
 			wekaSegmentation.setMaximumSigma(newMaxSigma);
 		}
-		if(wekaSegmentation.getMinimumSigma() >= wekaSegmentation.getMaximumSigma())
+		if(wekaSegmentation.getMinimumSigma() > wekaSegmentation.getMaximumSigma())
 		{
 			IJ.error("Error in the field of view parameters: they will be reset to default values");
 			wekaSegmentation.setMinimumSigma(0f);

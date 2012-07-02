@@ -1,7 +1,7 @@
 package algorithms;
 
-import mpicbg.imglib.cursor.special.TwinCursor;
-import mpicbg.imglib.type.numeric.RealType;
+import net.imglib2.TwinCursor;
+import net.imglib2.type.numeric.RealType;
 
 /**
  * A class allowing an easy accumulation of values visited by a
@@ -13,7 +13,7 @@ import mpicbg.imglib.type.numeric.RealType;
  * 
  * @author Johannes Schindelin and Tom Kazimiers
  */
-public abstract class Accumulator<T extends RealType<T>> {
+public abstract class Accumulator<T extends RealType< T >> {
 	protected double x, y, xx, xy, yy;
 	protected int count;
 

@@ -188,7 +188,6 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/IsoData_Classifier.jar \
 	plugins/RATS_.jar \
 	plugins/Directionality_.jar \
-	jars/ij-launcher.jar \
 	plugins/Image_Expression_Parser.jar \
 	plugins/Algorithm_Launcher.jar \
 	plugins/VIB_.jar \
@@ -225,6 +224,7 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/Kuwahara_Filter.jar \
 	plugins/Action_Bar.jar \
 	plugins/Multi_Kymograph.jar \
+	plugins/TrackMate_.jar \
 	plugins/Colour_Deconvolution.jar \
 	plugins/Dichromacy_.jar \
 	plugins/Threshold_Colour.jar \
@@ -306,26 +306,26 @@ CLASSPATH(jars/imglib2-ops.jar)=jars/imglib2.jar
 jars/imglib2-ops.jar <- modules/imglib/
 CLASSPATH(jars/imglib2-ui.jar)=jars/imglib2.jar:jars/imglib2-io.jar:plugins/loci_tools.jar
 jars/imglib2-ui.jar <- jars/imglib2-io.jar modules/imglib/
-jars/clojure.jar <- ImageJ modules/clojure/
-plugins/loci_tools.jar <- ImageJ modules/bio-formats/
+jars/clojure.jar <- modules/clojure/
+plugins/loci_tools.jar <- modules/bio-formats/
 CLASSPATH(plugins/loci_tools.jar)=jars/imglib2.jar
 CLASSPATH(jars/VectorString.jar)=jars/ij.jar:jars/Jama.jar:$JAVA3D_JARS
 jars/VectorString.jar <- modules/TrakEM2/
-CLASSPATH(plugins/TrakEM2_.jar)=jars/ij.jar:jars/jai_core.jar:jars/jai_codec.jar:jars/VectorString.jar:jars/postgresql.jar:jars/jcommon.jar:jars/jfreechart.jar:jars/edu_mines_jtk.jar:jars/VIB-lib.jar:plugins/VIB_.jar:jars/mpicbg.jar:plugins/loci_tools.jar:plugins/bUnwarpJ_.jar:plugins/level_sets.jar:plugins/Fiji_Plugins.jar:jars/Jama.jar:jars/imglib.jar:jars/imglib-algorithms.jar:jars/imglib-ij.jar:plugins/Simple_Neurite_Tracer.jar:plugins/3D_Viewer.jar:plugins/Lasso_and_Blow_Tool.jar:$JAVA3D_JARS
+CLASSPATH(plugins/TrakEM2_.jar)=jars/ij.jar:jars/jai_core.jar:jars/jai_codec.jar:jars/VectorString.jar:jars/postgresql.jar:jars/jcommon.jar:jars/jfreechart.jar:jars/edu_mines_jtk.jar:jars/VIB-lib.jar:plugins/VIB_.jar:jars/mpicbg.jar:plugins/loci_tools.jar:plugins/bUnwarpJ_.jar:plugins/level_sets.jar:plugins/Fiji_Plugins.jar:jars/Jama.jar:jars/imglib.jar:jars/imglib-algorithms.jar:jars/imglib-ij.jar:plugins/Simple_Neurite_Tracer.jar:plugins/3D_Viewer.jar:plugins/Lasso_and_Blow_Tool.jar:plugins/mpicbg_.jar:$JAVA3D_JARS
 plugins/TrakEM2_.jar <- modules/TrakEM2/
 plugins/ij-ImageIO_.jar <- modules/ij-plugins/
-jars/jacl.jar <- ImageJ modules/tcljava/
-jars/batik.jar <- ImageJ modules/batik/
-jars/junit.jar <- ImageJ modules/junit/
-jars/rsyntaxtextarea.jar <- ImageJ modules/RSyntaxTextArea/
-jars/autocomplete.jar <- ImageJ modules/AutoComplete/
-jars/weka.jar <- ImageJ jars/fiji-compat.jar modules/weka/
-jars/jython.jar <- ImageJ modules/jython/
-jars/commons-math.jar <- ImageJ modules/commons-math/
+jars/jacl.jar <- modules/tcljava/
+jars/batik.jar <- modules/batik/
+jars/junit.jar <- modules/junit/
+jars/rsyntaxtextarea.jar <- modules/RSyntaxTextArea/
+jars/autocomplete.jar <- modules/AutoComplete/
+jars/weka.jar <- jars/fiji-compat.jar modules/weka/
+jars/jython.jar <- modules/jython/
+jars/commons-math.jar <- modules/commons-math/
 jars/javassist.jar <- modules/javassist/
 jars/jsch.jar <- modules/jsch/
 COPYDEPENDENCIES(jars/ij-app.jar)=true
-jars/ij-app.jar <- ImageJ jars/ij.jar jars/imglib2.jar modules/imagej2/
+jars/ij-app.jar <- jars/ij.jar jars/imglib2.jar modules/imagej2/
 CLASSPATH(plugins/Image_5D.jar)=jars/ij.jar
 plugins/Image_5D.jar <- modules/image5d/
 
@@ -338,8 +338,6 @@ libs[] <- jars/test-fiji.jar jars/zs.jar jars/VIB-lib.jar jars/Jama.jar \
 plugins/Record_Screen.jar <- src-plugins/Record_Screen/ src-plugins/Record_Screen/**/*
 
 plugins/Trainable_Segmentation.jar <- src-plugins/Trainable_Segmentation/**/*java src-plugins/Trainable_Segmentation/trainableSegmentation/images/*png src-plugins/Trainable_Segmentation/*
-
-mainClass(jars/ij-launcher.jar)=imagej.ClassLauncher
 
 mainClass(jars/fiji-compat.jar)=fiji.Main
 
@@ -379,11 +377,12 @@ MAINCLASS(plugins/Interactive_3D_Surface_Plot.jar)=Interactive_3D_Surface_Plot
 CLASSPATH(plugins/Stitching_.jar)=jars/ij.jar:plugins/loci_tools.jar:jars/fiji-lib.jar:jars/imglib.jar:jars/imglib-algorithms.jar:jars/imglib-ij.jar:jars/edu_mines_jtk.jar:plugins/Fiji_Plugins.jar:jars/mpicbg.jar
 CLASSPATH(plugins/Fiji_Plugins.jar)=jars/ij.jar:jars/jsch.jar:jars/fiji-lib.jar:jars/VIB-lib.jar
 MAINCLASS(plugins/Fiji_Updater.jar)=fiji.updater.Main
+CLASSPATH(plugins/TrackMate_.jar)=jars/itextpdf.jar:jars/batik.jar:jars/ij.jar:plugins/3D_Viewer.jar:plugins/loci_tools.jar:jars/fiji-lib.jar:jars/imglib.jar:jars/imglib-ij.jar:jars/imglib-io.jar:jars/imglib-algorithms.jar:jars/jdom.jar:jars/jdom-contrib.jar:jars/jgraphx.jar:jars/jgrapht-jdk1.6.jar:jars/jfreechart.jar:jars/jcommon.jar:jars/Jama.jar:$JAVA3D_JARS
 CLASSPATH(plugins/Fiji_Updater.jar)=jars/ij.jar:jars/jsch.jar
 CLASSPATH(plugins/IO_.jar)=jars/ij.jar:jars/batik.jar:jars/jpedalSTD.jar:jars/itextpdf.jar:jars/jzlib.jar
 CLASSPATH(plugins/Sync_Win.jar)=jars/ij.jar:plugins/Image_5D.jar
 CLASSPATH(plugins/Fiji_Developer.jar)=jars/ij.jar:plugins/Script_Editor.jar:plugins/Fiji_Plugins.jar:jars/rsyntaxtextarea.jar:plugins/3D_Viewer.jar:$JAVA3D_JARS
-CLASSPATH(plugins/Trainable_Segmentation.jar)=jars/ij.jar:jars/weka.jar:plugins/Stitching_.jar:jars/fiji-lib.jar:plugins/Anisotropic_Diffusion_2D.jar:jars/Jama.jar:jars/VIB-lib.jar:jars/commons-math.jar:jars/imglib.jar:jars/imglib-ij.jar:jars/imglib-algorithms.jar:jars/imagescience.jar:$JAVA3D_JARS
+CLASSPATH(plugins/Trainable_Segmentation.jar)=jars/ij.jar:jars/weka.jar:plugins/Stitching_.jar:jars/fiji-lib.jar:plugins/Anisotropic_Diffusion_2D.jar:jars/Jama.jar:jars/VIB-lib.jar:jars/commons-math.jar:jars/imglib.jar:jars/imglib-ij.jar:jars/imglib-algorithms.jar:jars/imagescience.jar:jars/imglib2.jar:jars/imglib2-ij.jar:jars/imglib2-algorithms.jar:$JAVA3D_JARS
 CLASSPATH(plugins/VIB_.jar)=jars/ij.jar:$JAVA3D_JARS:jars/VIB-lib.jar:jars/pal-optimization.jar:plugins/3D_Viewer.jar:jars/imglib.jar:jars/fiji-lib.jar
 CLASSPATH(jars/VIB-lib.jar)=jars/ij.jar:jars/Jama.jar:jars/junit.jar:jars/pal-optimization.jar:jars/jzlib.jar:jars/fiji-lib.jar
 CLASSPATH(plugins/Simple_Neurite_Tracer.jar)=jars/ij.jar:$JAVA3D_JARS:jars/VIB-lib.jar:plugins/VIB_.jar:jars/pal-optimization.jar:jars/junit.jar:plugins/3D_Viewer.jar:jars/commons-math.jar:jars/jfreechart.jar:jars/jcommon.jar:jars/batik.jar:plugins/AnalyzeSkeleton_.jar:plugins/Skeletonize3D_.jar
@@ -400,7 +399,7 @@ CLASSPATH(plugins/TransformJ_.jar)=jars/ij.jar:jars/imagescience.jar
 CLASSPATH(plugins/FeatureJ_.jar)=jars/ij.jar:jars/imagescience.jar
 CLASSPATH(plugins/RandomJ_.jar)=jars/ij.jar:jars/imagescience.jar
 CLASSPATH(plugins/Auto_Threshold.jar)=jars/ij.jar
-CLASSPATH(plugins/Colocalisation_Analysis.jar)=jars/ij.jar:jars/imglib.jar:jars/imglib-ij.jar:jars/imglib-algorithms.jar:jars/junit.jar:jars/itextpdf.jar:jars/fiji-lib.jar
+CLASSPATH(plugins/Colocalisation_Analysis.jar)=jars/ij.jar:jars/imglib2.jar:jars/imglib2-ij.jar:jars/imglib2-algorithms.jar:jars/junit.jar:jars/itextpdf.jar:jars/fiji-lib.jar
 CLASSPATH(plugins/Series_Labeler.jar)=jars/ij.jar
 CLASSPATH(plugins/Gray_Morphology.jar)=jars/ij.jar
 CLASSPATH(plugins/IsoData_Classifier.jar)=jars/ij.jar
@@ -428,7 +427,7 @@ CLASSPATH(plugins/LocalThickness_.jar)=jars/ij.jar
 CLASSPATH(plugins/Volume_Viewer.jar)=jars/ij.jar
 CLASSPATH(jars/batik.jar)=jars/jacl.jar:plugins/loci_tools.jar:jars/jython.jar
 CLASSPATH(plugins/Stack_Manipulation.jar)=jars/ij.jar
-CLASSPATH(jars/fiji-compat.jar)=jars/ij-launcher.jar:jars/ij.jar:jars/javassist.jar
+CLASSPATH(jars/fiji-compat.jar)=jars/ij.jar:jars/javassist.jar
 CLASSPATH(plugins/TurboReg_.jar)=jars/ij.jar
 CLASSPATH(plugins/RATS_.jar)=jars/ij.jar
 CLASSPATH(plugins/Interactive_3D_Surface_Plot.jar)=jars/ij.jar
@@ -480,6 +479,8 @@ CLASSPATH(plugins/CorrectBleach_.jar)=jars/ij.jar
 # pom.xml sub-projects
 
 jars/VIB-lib.jar <- src-plugins/VIB-lib/pom.xml
+jars/pal-optimization.jar <- src-plugins/pal-optimization/pom.xml
+jars/Jama.jar <- src-plugins/Jama/pom.xml
 
 # pre-Java5 generics ;-)
 
@@ -515,79 +516,16 @@ misc/headless.jar[bin/make-headless-jar.bsh] <- jars/fiji-compat.jar jars/javass
 
 # ImageJ launcher
 
-# The variables CFLAGS, LDFLAGS and LIBS will be used for compiling
-# C and C++ programs.
-COMMONCFLAGS=-Wall -Iincludes
-WINOPTS=-mwindows -DMINGW32
-CFLAGS(win32)=$COMMONCFLAGS $WINOPTS -mno-cygwin
-CFLAGS(win64)=$COMMONCFLAGS $WINOPTS
+# We re-use ImageJ2's launcher now, so let's use the updater to perform
+# the job.
 
-# Include 64-bit architectures only in ./ImageJ (as opposed to ./ImageJ-tiger),
-# and only on MacOSX
-MACOPTS(osx10.3)=-I/System/Library/Frameworks/JavaVM.Framework/Headers -Iincludes \
-	-DMACOSX
-MACOPTS(osx10.4)=$MACOPTS(osx10.3) -mmacosx-version-min=10.3 -arch i386 -arch ppc
-MACOPTS(osx10.5)=$MACOPTS(osx10.3) -mmacosx-version-min=10.4 -arch i386 -arch x86_64
-CFLAGS(macosx)=$MACOPTS
-
-CFLAGS(linux32)=$COMMONCFLAGS -DIPV6_MAYBE_BROKEN -fno-stack-protector
-CFLAGS(linux64)=$COMMONCFLAGS -DIPV6_MAYBE_BROKEN -fno-stack-protector -rdynamic -g
-
-LDFLAGS(win32)=$LDFLAGS $WINOPTS
-
-CFLAGS(freebsd)=$COMMONCFLAGS
-
-CFLAGS(ImageJ)=$COMMONCFLAGS $MACOPTS
-LDFLAGS(ImageJ)=$LDFLAGS $MACOPTS
-
-LIBS(linux32)=-ldl -lpthread
-LIBS(linux64)=-ldl -lpthread
-LIBS(macosx)=-weak -framework CoreFoundation -framework ApplicationServices \
-	-framework JavaVM
-
-CLASSPATH(ImageJ)=jars/ij-launcher.jar:jars/fiji-compat.jar:jars/ij.jar:jars/javassist.jar
-ImageJ <- ImageJ.c
-
-CFLAGS(ImageJ-macosx)=$COMMONCFLAGS $MACOPTS(osx10.5)
-LDFLAGS(ImageJ-macosx)=$LDFLAGS $MACOPTS(osx10.5)
-ImageJ-macosx <- ImageJ.c
-
-CFLAGS(ImageJ-tiger)=$COMMONCFLAGS $MACOPTS(osx10.4)
-LDFLAGS(ImageJ-tiger)=$LDFLAGS $MACOPTS(osx10.4)
-ImageJ-tiger <- ImageJ.c
-
-CFLAGS(ImageJ-panther)=$COMMONCFLAGS $MACOPTS(osx10.3)
-LDFLAGS(ImageJ-panther)=$LDFLAGS $MACOPTS(osx10.3)
-ImageJ-panther <- ImageJ.c
-
-# Cross-compiling (works only on Linux64 so far)
-
-all-cross[] <- cross-win32 cross-win64 cross-linux32 cross-macosx cross-tiger
-# cross-tiger does not work yet
-
-cross-tiger[bin/cross-compiler.bsh tiger \
-	$CFLAGS(ImageJ-panther) $LIBS(macosx)] <- ImageJ.c
-cross-macosx[bin/cross-compiler.bsh macosx \
-	$CFLAGS(ImageJ-panther) $LIBS(macosx)] <- ImageJ.c
-cross-*[bin/cross-compiler.bsh * $CFLAGS(*) $LDFLAGS(*) $LIBS(*)] <- ImageJ.c
+ImageJ[sh bin/download-launchers.sh snapshot $PLATFORM] <- plugins/Fiji_Updater.jar
 
 # legacy launcher
 
 fiji[bin/copy-file.bsh $PRE $TARGET] <- ImageJ
 
 # Precompiled stuff
-
-LAUNCHER(*)=precompiled/ImageJ-$PLATFORM
-LAUNCHER(win32)=precompiled/ImageJ-win32.exe
-LAUNCHER(win64)=precompiled/ImageJ-win64.exe
-LAUNCHER(osx10.4)=precompiled/ImageJ-macosx
-LAUNCHER(osx10.5)=precompiled/ImageJ-macosx precompiled/ImageJ-tiger
-precompile-ImageJ[] <- $LAUNCHER
-
-precompiled/ImageJ-tiger[bin/copy-file.bsh $PRE $TARGET] <- ImageJ-tiger
-precompiled/ImageJ-macosx[bin/copy-file.bsh $PRE $TARGET] <- ImageJ-macosx
-# this rule only matches precompiled/ImageJ-$PLATFORM
-precompiled/ImageJ-*[bin/copy-file.bsh $PRE $TARGET] <- ImageJ
 
 precompile-fake[] <- precompiled/fake.jar
 precompiled/fake.jar <- jars/fake.jar
@@ -641,8 +579,8 @@ precompile[] <- precompile-ImageJ precompile-fake precompile-submodules
 
 # precompiled fall back
 
-missingPrecompiledFallBack[./ImageJ --update update $TARGET] <- ImageJ \
-	jars/ij-launcher.jar jars/fiji-compat.jar plugins/Fiji_Updater.jar
+missingPrecompiledFallBack[sh ./bin/ImageJ.sh --update update $TARGET] <- \
+	plugins/Fiji_Updater.jar
 
 # Portable application/.app
 

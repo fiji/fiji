@@ -921,8 +921,10 @@ public class ClassReader extends ClassFile implements Completer {
                         // ensure array large enough
                         if (register >= parameterNameIndices.length) {
                             int newSize = Math.max(register, parameterNameIndices.length + 8);
-                            parameterNameIndices =
-                                    Arrays.copyOf(parameterNameIndices, newSize);
+                            int[] newParameterNameIndices = new int[newSize];
+                            System.arraycopy(parameterNameIndices, 0, newParameterNameIndices, 0,
+                                parameterNameIndices.length);
+                            parameterNameIndices = newParameterNameIndices;
                         }
                         parameterNameIndices[register] = nameIndex;
                         haveParameterNameIndices = true;

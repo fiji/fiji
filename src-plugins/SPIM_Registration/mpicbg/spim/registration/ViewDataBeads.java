@@ -36,29 +36,29 @@ public class ViewDataBeads implements Comparable< ViewDataBeads >
 	 * @param zStretching - the z/xy stretching
 	 */
 	public <M extends AbstractAffineModel3D<M>> ViewDataBeads( final int id, final M model, final String fileName, final double zStretching )
-	{		
+	{
 		setID( id );
 		setFileName( fileName );
 		setZStretching( zStretching );
-		
+
 		this.uninitializedModel = model.copy();
 		this.tile = new TileSPIM<M>( model.copy(), this );
 		this.beads = new BeadStructure();
-		this.nuclei = new NucleusStructure(); 
+		this.nuclei = new NucleusStructure();
 	}
-	
+
 	/**
 	 * An uninitialized {@link AbstractAffineModel3D}
 	 */
 	final AbstractAffineModel3D<?> uninitializedModel;
 	public AbstractAffineModel3D<?> getUninitializedModel() { return uninitializedModel; }
-	
+
 	/**
 	 * if the view is connected to any other view or excluded from the registration because no true correspondences were found
 	 * @return true if it is connected, otherwise false
 	 */
 	public boolean isConnected() { return getViewErrorStatistics().getNumConnectedViews() > 0; }
-		
+
 	/**
 	 * The structure of the views that will be aligned
 	 */
@@ -66,7 +66,7 @@ public class ViewDataBeads implements Comparable< ViewDataBeads >
 	protected void setViewStructure( final ViewStructure viewStructure ) { this.viewStructure = viewStructure; }
 	public ViewStructure getViewStructure() { return viewStructure; }
 	public int getNumViews() { return getViewStructure().getViews().size(); }
-	
+
 	/**
 	 * The Object for storing the potential beads
 	 */
@@ -87,12 +87,12 @@ public class ViewDataBeads implements Comparable< ViewDataBeads >
 	protected ViewErrorStatistics viewError = null;
 	public void initErrorStatistics() { this.viewError = new ViewErrorStatistics( this ); }
 	public ViewErrorStatistics getViewErrorStatistics() { return viewError; }
-	
+
 	/**
 	 * For segmentation, future use
 	 */
 	//public SegmentationProperties segmentationProperties;
-	
+
 	/**
 	 * for 3d visualization
 	 */
@@ -118,7 +118,7 @@ public class ViewDataBeads implements Comparable< ViewDataBeads >
 	protected float initialSigma = 1.8f;
 	protected float minPeakValue = 0.01f;
 	protected float minInitialPeakValue = 0.001f;
-	
+
 	/**
 	 * the timepoint of this view
 	 */
@@ -134,7 +134,7 @@ public class ViewDataBeads implements Comparable< ViewDataBeads >
 	public void setUseForRegistration( final boolean useForRegistration ) { this.useForRegistration = useForRegistration; }
 	public boolean getUseForFusion() { return useForFusion; }
 	public void setUseForFusion( final boolean useForFusion ) { this.useForFusion = useForFusion; }
-	
+
 	public void setInitialSigma( final float s ) { this.initialSigma = s; }
 	public void setMinPeakValue( final float m ) { this.minPeakValue = m; this.minInitialPeakValue = m/10f;}
 	public void setMinInitialPeakValue( final float m ) { this.minInitialPeakValue = m;}
@@ -155,28 +155,28 @@ public class ViewDataBeads implements Comparable< ViewDataBeads >
 	 */
 	protected int illumination;
 	public int getIllumination() { return illumination; }
-	public void setIllumination( int illumination )	{ this.illumination = illumination; }
+	public void setIllumination( final int illumination )	{ this.illumination = illumination; }
 
 	/**
 	 * The file name of the current view
 	 */
 	private String fileName;
 	public String getFileName() { return fileName; }
-	public void setFileName( final String fileName ) 
-	{ 
+	public void setFileName( final String fileName )
+	{
 		this.fileName = fileName;
 		this.shortName = IOFunctions.getShortName( fileName );
 	}
-	
+
 	/**
 	 * The short version of the file name of the current view
 	 */
 	private String shortName;
 	public String getName() { return shortName; }
-	public void setName( String shortName ) { this.shortName = shortName; }
-			
+	public void setName( final String shortName ) { this.shortName = shortName; }
+
 	/**
-	 * The tile of this view which is responsible for the global optimization 
+	 * The tile of this view which is responsible for the global optimization
 	 */
 	final private TileSPIM tile;
 	public TileSPIM getTile() { return tile; }
@@ -189,7 +189,7 @@ public class ViewDataBeads implements Comparable< ViewDataBeads >
 	{
 		final Matrix4f matrix = new Matrix4f();
 		final float[] m = ((AbstractAffineModel3D<?>)getTile().getModel()).getMatrix( null );
-		
+
 		matrix.m00 = m[ 0 ];
 		matrix.m01 = m[ 1 ];
 		matrix.m02 = m[ 2 ];
@@ -206,10 +206,10 @@ public class ViewDataBeads implements Comparable< ViewDataBeads >
 		matrix.m31 = 0;
 		matrix.m32 = 0;
 		matrix.m33 = 1;
-			
+
 		return new Transform3D( matrix );
 	}
-			
+
 	/**
 	 * The z-stretching of the input stack
 	 */
@@ -220,26 +220,26 @@ public class ViewDataBeads implements Comparable< ViewDataBeads >
 	/**
 	 * The size of the input stack
 	 */
-	protected int[] imageSize = null;	
-	public int[] getImageSize() 
+	protected int[] imageSize = null;
+	public int[] getImageSize()
 	{
 		if ( imageSize == null )
 			loadDimensions();
-		
-		return imageSize.clone();	
+
+		return imageSize.clone();
 	}
 	public void setImageSize( final int[] size ) { this.imageSize = size; }
 
 	/**
 	 * The offset of the input stack
 	 */
-	protected int[] imageSizeOffset = null;	
-	public int[] getImageSizeOffset() 
+	protected int[] imageSizeOffset = null;
+	public int[] getImageSizeOffset()
 	{
 		if ( imageSizeOffset == null )
 			return new int[ getImageSize().length ];
-		
-		return imageSizeOffset.clone();	
+
+		return imageSizeOffset.clone();
 	}
 	public void setImageSizeOffset( final int[] imageSizeOffset ) { this.imageSizeOffset = imageSizeOffset; }
 
@@ -271,20 +271,20 @@ public class ViewDataBeads implements Comparable< ViewDataBeads >
 	 * The link to the input image of this view
 	 * @return the link or null unable to open
 	 */
-	public Image<FloatType> getImage( final boolean normalize ) 
+	public Image<FloatType> getImage( final boolean normalize )
 	{
 		return getImage( getViewStructure().getSPIMConfiguration().imageFactory, normalize );
 	}
-	
+
 	/**
-	 * The currently downsampled image cached 
+	 * The currently downsampled image cached
 	 */
 	protected Image<FloatType> downSampledImage = null;
 	protected int currentDownSamplingFactor = -1;
 
 	/**
 	 * Gets a downsampled and normalized [0...1] version of the input image
-	 * 
+	 *
 	 * @param downSamplingFactor - the factor
 	 */
 	public Image<FloatType> getDownSampledImage( final int downSamplingFactor )
@@ -294,7 +294,7 @@ public class ViewDataBeads implements Comparable< ViewDataBeads >
 
 	/**
 	 * Gets a downsampled version of the input image
-	 * 
+	 *
 	 * @param downSamplingFactor - the factor
 	 * @param normalize - if normalized to [0...1] or not
 	 * @return
@@ -304,29 +304,29 @@ public class ViewDataBeads implements Comparable< ViewDataBeads >
 		// if there is no downsampling we just return the image as is
 		if ( downSamplingFactor == 1 )
 			return getImage();
-		
+
 		// we have the image already here
 		if ( downSampledImage != null && downSamplingFactor == currentDownSamplingFactor )
 			return downSampledImage;
-		
+
 		if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_MAIN )
 			IOFunctions.println( "Computing " + downSamplingFactor + "x Downsampling for " + getName() );
-		
+
 		currentDownSamplingFactor = downSamplingFactor;
 		final Image<FloatType> img = getImage();
-		
+
 		final DownSample<FloatType> downSample = new DownSample<FloatType>( img, 1.0f / downSamplingFactor );
 		if ( !downSample.checkInput() || !downSample.process() )
 		{
 			IOFunctions.println("Error, cannot downSample image: " + downSample.getErrorMessage() );
 			return null;
 		}
-		
+
 		downSampledImage = downSample.getResult();
-		
+
 		return downSampledImage;
 	}
-	
+
 	protected boolean mirrorVertically = false, mirrorHorizontally = false;
 	public void setMirrorHorizontally( final boolean state ) { mirrorHorizontally = state; }
 	public void setMirrorVertically( final boolean state ) { mirrorVertically = state; }
@@ -337,22 +337,22 @@ public class ViewDataBeads implements Comparable< ViewDataBeads >
 	 * The link to the input image of this view normalized to [0...1]
 	 * @return the link or null unable to open
 	 */
-	public Image<FloatType> getImage( final ContainerFactory imageFactory ) 
+	public Image<FloatType> getImage( final ContainerFactory imageFactory )
 	{
 		return getImage( imageFactory, true );
 	}
-	
+
 	/**
 	 * The link to the input image of this view
 	 * @return the link or null unable to open
 	 */
-	public Image<FloatType> getImage( final ContainerFactory imageFactory, final boolean normalize ) 
-	{		
+	public Image<FloatType> getImage( final ContainerFactory imageFactory, final boolean normalize )
+	{
 		if ( image == null )
 		{
 			if ( getViewStructure().getSPIMConfiguration().isHuiskenFormat() )
 			{
-				SPIMExperiment exp = getViewStructure().getSPIMConfiguration().getSpimExperiment();
+				final SPIMExperiment exp = getViewStructure().getSPIMConfiguration().getSpimExperiment();
 				final int s = exp.sampleStart;
 				final int r = exp.regionStart;
 				final int f = exp.frameStart;
@@ -377,46 +377,47 @@ public class ViewDataBeads implements Comparable< ViewDataBeads >
 					imp = exp.openNotProjected( s, timePoint, timePoint, r, angle, channel, zMin, zMax, f, f, yMin, yMax, xMin, xMax, SPIMExperiment.X, SPIMExperiment.Y, SPIMExperiment.Z, false );
 				}
 				image = ImageJFunctions.convertFloat( imp );
+				image.setCalibration( new float[]{ 1, 1, (float)getViewStructure().getSPIMConfiguration().getZStretchingHuisken() } );
 			}
 			else
 			{
-				String s = getFileName();
-				
+				final String s = getFileName();
+
 				//TODO: REMOVE!!!!!!
 				//if ( s.contains("red-h2amcherry-nuclei") )
 				//	s = s.replace( "red-h2amcherry-nuclei", "green-rasgfp-membranes" ) + ".tif";
-				
+
 				//System.out.println( s );
-				
+
 				image = LOCI.openLOCIFloatType( s, imageFactory );
-				
+
 				if ( image == null )
 				{
 					IJ.error( "Cannot find file: " + s );
 					return null;
 				}
 			}
-			
+
 			// set different calibration if override is activated
 			if ( getViewStructure().getSPIMConfiguration().overrideImageZStretching )
 				image.setCalibration( new float[]{ 1, 1, (float)getViewStructure().getSPIMConfiguration().zStretching } );
-			
+
 			if ( getMirrorHorizontally() )
 			{
-				IOFunctions.println( "Mirroring horizontally: " + this ); 
+				IOFunctions.println( "Mirroring horizontally: " + this );
 				final MirrorImage<FloatType> mirror = new MirrorImage<FloatType>( image, 0 );
 				mirror.process();
 			}
-			
+
 			if ( getMirrorVertically() )
 			{
-				IOFunctions.println( "Mirroring vertically: " + this ); 
+				IOFunctions.println( "Mirroring vertically: " + this );
 				final MirrorImage<FloatType> mirror = new MirrorImage<FloatType>( image, 1 );
-				mirror.process();				
+				mirror.process();
 			}
-			
+
 			image.setName( getName() );
-			
+
 			if ( normalize )
 			{
 				final float[] minmax = normalizeImage( image );
@@ -426,17 +427,23 @@ public class ViewDataBeads implements Comparable< ViewDataBeads >
 			}
 			else
 			{
-				image.getDisplay().setMinMax();				
-				minValue = (float)image.getDisplay().getMin();				
-				maxValue = (float)image.getDisplay().getMax();				
+				image.getDisplay().setMinMax();
+				minValue = (float)image.getDisplay().getMin();
+				maxValue = (float)image.getDisplay().getMax();
 				isNormalized = false;
 			}
 			setImageSize( image.getDimensions() );
-						
+
 			// now write dims for further use
-			IOFunctions.writeDim( this, getViewStructure().getSPIMConfiguration().registrationFiledirectory );			
+			IOFunctions.writeDim( this, getViewStructure().getSPIMConfiguration().registrationFiledirectory );
 		}
-		
+
+		if ( isNormalized && !normalize)
+			unnormalizeImage();
+
+		if ( !isNormalized && normalize)
+			normalizeImage();
+
 		return image;
 	}
 
@@ -452,7 +459,7 @@ public class ViewDataBeads implements Comparable< ViewDataBeads >
 
 			for ( final FloatType f : image )
 				f.set( f.get() * diff + minValue );
-			
+
 			isNormalized = false;
 		}
 	}
@@ -466,10 +473,10 @@ public class ViewDataBeads implements Comparable< ViewDataBeads >
 		else if ( !isNormalized )
 		{
 			final float diff = maxValue - minValue;
-			
+
 			for ( final FloatType f : image )
 				f.set( (f.get() - minValue) / diff );
-			
+
 			isNormalized = true;
 		}
 	}
@@ -481,38 +488,38 @@ public class ViewDataBeads implements Comparable< ViewDataBeads >
 	public static float[] normalizeImage( final Image<FloatType> image )
 	{
 		image.getDisplay().setMinMax();
-		
+
 		final float min = (float)image.getDisplay().getMin();
 		final float max = (float)image.getDisplay().getMax();
 		final float diff = max - min;
-		
+
 		if ( Float.isNaN( diff ) || Float.isInfinite(diff) || diff == 0 )
 		{
 			IOFunctions.println("Cannot normalize image " + image.getName() + ", min=" + min + "  + max=" + max );
 			return new float[]{ min, max };
 		}
-		
+
 		final Cursor<FloatType> cursor = image.createCursor();
-		
+
 		while ( cursor.hasNext() )
 		{
 			cursor.fwd();
-			
+
 			final float value = cursor.getType().get();
 			final float norm = (value - min) / diff;
-			
+
 			cursor.getType().set( norm );
 		}
-		
+
 		image.getDisplay().setMinMax(0, 1);
-		
+
 		return new float[]{ min, max };
 	}
-	
+
 	/**
 	 * Closes the input image stack of this view
 	 */
-	public void closeImage() 
+	public void closeImage()
 	{
 		if ( image != null )
 		{
@@ -520,66 +527,66 @@ public class ViewDataBeads implements Comparable< ViewDataBeads >
 			image = null;
 		}
 	}
-		
+
 	@Override
 	public String toString() { return getName() + " (id = " + getID() + ")"; }
-	
+
 	/**
 	 * Loads the registration matrix and the errors from the *.registration files in the registration file directory
-	 * 
+	 *
 	 * @return true if successful, false otherwise
 	 */
 	public boolean loadRegistration()
 	{
 		if ( getViewStructure().debugLevel <= ViewStructure.DEBUG_ALL )
 			IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Loading " + this + " registration");
-		
-		String dir = getViewStructure().getSPIMConfiguration().registrationFiledirectory;
-		boolean readReg = IOFunctions.readRegistration( this, dir + getName() + ".registration" );
-		
+
+		final String dir = getViewStructure().getSPIMConfiguration().registrationFiledirectory;
+		final boolean readReg = IOFunctions.readRegistration( this, dir + getName() + ".registration" );
+
 		if ( !readReg )
 		{
 			if ( getViewStructure().debugLevel <= ViewStructure.DEBUG_ERRORONLY )
 				IOFunctions.println("Cannot read registration for " + this );
 			return false;
-		}		
-		
+		}
+
 		return true;
 	}
 
 	/**
 	 * Loads the registration matrix and the errors relative to a reference timepoint from the *.registration files in the registration file directory
-	 * 
+	 *
 	 * @return true if successful, false otherwise
 	 */
 	public boolean loadRegistrationTimePoint( final int referenceTimePoint )
 	{
 		if ( getViewStructure().debugLevel <= ViewStructure.DEBUG_ALL )
 			IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Loading " + this + " registration relative to time point " + referenceTimePoint );
-		
-		String dir = getViewStructure().getSPIMConfiguration().registrationFiledirectory;
-		boolean readReg = IOFunctions.readRegistration( this, dir + getName() + ".registration.to_" + referenceTimePoint );
-		
+
+		final String dir = getViewStructure().getSPIMConfiguration().registrationFiledirectory;
+		final boolean readReg = IOFunctions.readRegistration( this, dir + getName() + ".registration.to_" + referenceTimePoint );
+
 		if ( !readReg )
 		{
 			if ( getViewStructure().debugLevel <= ViewStructure.DEBUG_ERRORONLY )
 				IOFunctions.println("Cannot read registration for " + this + " relative to time point " + referenceTimePoint );
 			return false;
-		}		
-		
+		}
+
 		return true;
 	}
 
 	/**
 	 * Writes the registration matrix and the errors into the *.registration files in the registration file directory
-	 *  
+	 *
 	 * @return true if successful, false otherwise
 	 */
 	public boolean writeRegistration()
 	{
 		if ( getViewStructure().debugLevel <= ViewStructure.DEBUG_ALL )
 			IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Writing " + this + " registration");
-		
+
 		return IOFunctions.writeRegistration( this, getViewStructure().getSPIMConfiguration().registrationFiledirectory );
 	}
 
@@ -592,83 +599,83 @@ public class ViewDataBeads implements Comparable< ViewDataBeads >
 	{
 		if ( getViewStructure().debugLevel <= ViewStructure.DEBUG_ALL )
 			IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Writing " + this + " registration relative to time point " + referenceTimePoint );
-		
+
 		return IOFunctions.writeRegistration( this, getViewStructure().getSPIMConfiguration().registrationFiledirectory, ".to_" + referenceTimePoint );
 	}
-	
+
 	/**
 	 * Loads the bead detections and its correspondences candidates as well as true correspondences from the *.beads.txt files in the registration file directory
-	 * 
+	 *
 	 * @return true if successful, false otherwise
 	 */
 	public boolean loadSegmentation()
 	{
 		if ( getViewStructure().debugLevel <= ViewStructure.DEBUG_ALL )
 			IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Loading " + this + " segmentation");
-		
-		boolean readSeg = IOFunctions.readSegmentation( this, getViewStructure().getSPIMConfiguration().registrationFiledirectory, getViewStructure().getSPIMConfiguration() );
+
+		final boolean readSeg = IOFunctions.readSegmentation( this, getViewStructure().getSPIMConfiguration().registrationFiledirectory, getViewStructure().getSPIMConfiguration() );
 
 		if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_ALL )
 		{
 			if ( getBeadStructure() != null )
-				IOFunctions.println("Loaded " + getBeadStructure().getDetectionList().size() + " beads for " + getName() + "[" + getImageSize()[0] + "x" + getImageSize()[1] + "x" + getImageSize()[2] + "]" );				
+				IOFunctions.println("Loaded " + getBeadStructure().getDetectionList().size() + " beads for " + getName() + "[" + getImageSize()[0] + "x" + getImageSize()[1] + "x" + getImageSize()[2] + "]" );
 			else
 				IOFunctions.println("Detection loading FAILED for " + getName() + "[" + getImageSize()[0] + "x" + getImageSize()[1] + "x" + getImageSize()[2] + "]" );
 		}
-		
+
 		if (!readSeg)
 		{
 			if ( getViewStructure().debugLevel <= ViewStructure.DEBUG_ERRORONLY )
 				IOFunctions.println("Cannot read segmentation for " + this );
 			return false;
-		}		
-		
+		}
+
 		return true;
 	}
-	
+
 	/**
 	 * Writes the segmentated beads, correspondence candidates and ransac correspondences into the *.beads.txt files in the registration file directory
-	 *  
+	 *
 	 * @return true if successful, false otherwise
 	 */
 	public boolean writeSegmentation()
 	{
 		if ( getViewStructure().debugLevel <= ViewStructure.DEBUG_ALL )
 			IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Writing " + this + " registration");
-		
+
 		return IOFunctions.writeSegmentation( this, getViewStructure().getSPIMConfiguration().registrationFiledirectory );
 	}
 
 	/**
 	 * Loads the dimensions from the *.dim files in the registration file directory
-	 * 
+	 *
 	 * @return true if successful, false otherwise
 	 */
 	public boolean loadDimensions()
 	{
 		if ( getViewStructure().getDebugLevel() <= ViewStructure.DEBUG_ALL )
 			IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Loading " + this + " dimensions");
-		
-		boolean readDim = IOFunctions.readDim( this, getViewStructure().getSPIMConfiguration().registrationFiledirectory );
+
+		final boolean readDim = IOFunctions.readDim( this, getViewStructure().getSPIMConfiguration().registrationFiledirectory );
 
 		if ( !readDim )
 		{
 			if ( getViewStructure().debugLevel <= ViewStructure.DEBUG_ERRORONLY )
 				IOFunctions.println("Cannot read dimensions for " + this + ", trying to open image to determine them.");
-			
+
 			if ( getImage() == null )
 				return false;
 
 			closeImage();
-			
+
 			if ( getImageSize() != null )
 				return true;
 		}
-		
+
 		return readDim;
 	}
 	@Override
-	public int compareTo( final ViewDataBeads o ) 
+	public int compareTo( final ViewDataBeads o )
 	{
 		if ( getID() < o.getID() )
 			return -1;
@@ -677,5 +684,5 @@ public class ViewDataBeads implements Comparable< ViewDataBeads >
 		else
 			return 1;
 	}
-	
+
 }

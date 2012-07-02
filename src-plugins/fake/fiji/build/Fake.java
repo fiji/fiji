@@ -141,6 +141,8 @@ public class Fake {
 			ijHome = ijHome.substring(5, slash + 1);
 			if (ijHome.endsWith("/src-plugins/"))
 				ijHome = Util.stripSuffix(ijHome, "src-plugins/");
+			else if (ijHome.endsWith("/build/jars/"))
+				ijHome = Util.stripSuffix(ijHome, "build/jars/");
 		}
 		if (Util.getPlatform().startsWith("win") && ijHome.startsWith("/"))
 			ijHome = ijHome.substring(1);
@@ -927,6 +929,13 @@ public class Fake {
 
 		/* stupid, stupid Windows... */
 		if (Util.getPlatform().startsWith("win")) {
+			// handle .sh scripts
+			if (args[0].endsWith(".sh")) {
+				String[] newArgs = new String[args.length + 1];
+				newArgs[0] = "sh.exe";
+				System.arraycopy(args, 0, newArgs, 1, args.length);
+				args = newArgs;
+			}
 			for (int i = 0; i < args.length; i++)
 				args[i] = quoteArg(args[i]);
 			// stupid, stupid, stupid Windows taking all my time!!!
