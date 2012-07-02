@@ -408,7 +408,6 @@ CLASSPATH(plugins/LocalThickness_.jar)=jars/ij.jar
 CLASSPATH(jars/batik.jar)=jars/jacl.jar:plugins/loci_tools.jar:jars/jython.jar
 CLASSPATH(plugins/Stack_Manipulation.jar)=jars/ij.jar
 CLASSPATH(jars/fiji-compat.jar)=jars/ij.jar:jars/javassist.jar
-CLASSPATH(plugins/TurboReg_.jar)=jars/ij.jar
 CLASSPATH(plugins/RATS_.jar)=jars/ij.jar
 CLASSPATH(jars/fiji-lib.jar)=jars/ij.jar
 CLASSPATH(jars/ij.jar)=jars/javac.jar
@@ -476,6 +475,7 @@ plugins/Fiji_Updater.jar <- src-plugins/Fiji_Updater/pom.xml
 plugins/LSM_Reader.jar <- src-plugins/LSM_Reader/pom.xml
 plugins/AnalyzeSkeleton_.jar <- src-plugins/AnalyzeSkeleton_/pom.xml
 plugins/Skeletonize3D_.jar <- src-plugins/Skeletonize3D_/pom.xml
+plugins/TurboReg_.jar <- src-plugins/TurboReg_/pom.xml
 
 # pre-Java5 generics ;-)
 

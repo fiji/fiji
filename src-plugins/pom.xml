@@ -42,6 +42,7 @@
 		<module>LSM_Reader</module>
 		<module>AnalyzeSkeleton_</module>
 		<module>Skeletonize3D_</module>
+		<module>TurboReg_</module>
 	</modules>
 
 	<!-- NB: for project parent -->
