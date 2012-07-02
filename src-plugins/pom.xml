@@ -96,6 +96,7 @@
 		<module>Action_Bar</module>
 		<module>Multi_Kymograph</module>
 		<module>Colour_Deconvolution</module>
+		<module>Dichromacy_</module>
 	</modules>
 
 	<!-- NB: for project parent -->

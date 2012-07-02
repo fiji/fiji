@@ -389,7 +389,6 @@ LIBS(plugins/JNI_Example.jar)=-lm
 CLASSPATH(plugins/JNI_Example.jar)=jars/ij.jar:jars/fiji-lib.jar
 CLASSPATH(plugins/Reconstruct_Reader.jar)=jars/ij.jar:plugins/TrakEM2_.jar
 CLASSPATH(plugins/FS_Align_TrakEM2.jar)=jars/ij.jar:plugins/TrakEM2_.jar
-CLASSPATH(plugins/Dichromacy_.jar)=jars/ij.jar
 CLASSPATH(plugins/Threshold_Colour.jar)=jars/ij.jar
 CLASSPATH(plugins/Helmholtz_Analysis.jar)=jars/ij.jar
 CLASSPATH(plugins/Fiji_Package_Maker.jar)=jars/ij.jar:plugins/Fiji_Updater.jar:jars/fiji-lib.jar
@@ -474,6 +473,7 @@ plugins/Kuwahara_Filter.jar <- src-plugins/Kuwahara_Filter/pom.xml
 plugins/Action_Bar.jar <- src-plugins/Action_Bar/pom.xml
 plugins/Multi_Kymograph.jar <- src-plugins/Multi_Kymograph/pom.xml
 plugins/Colour_Deconvolution.jar <- src-plugins/Colour_Deconvolution/pom.xml
+plugins/Dichromacy_.jar <- src-plugins/Dichromacy_/pom.xml
 
 # pre-Java5 generics ;-)
 
