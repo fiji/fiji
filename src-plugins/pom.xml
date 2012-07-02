@@ -127,6 +127,7 @@
 		<module>Trainable_Segmentation</module>
 		<module>jep</module>
 		<module>Image_Expression_Parser</module>
+		<module>SPIM_Opener</module>
 	</modules>
 
 	<!-- NB: for project parent -->
