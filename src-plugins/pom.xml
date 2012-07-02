@@ -113,6 +113,7 @@
 		<module>fiji-lib</module>
 		<module>Lasso_and_Blow_Tool</module>
 		<module>Fiji_Plugins</module>
+		<module>VIB_</module>
 	</modules>
 
 	<!-- NB: for project parent -->
