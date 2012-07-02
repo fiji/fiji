@@ -48,6 +48,7 @@
 		<module>ToAST_</module>
 		<module>MTrack2_</module>
 		<module>Time_Stamper</module>
+		<module>Series_Labeler</module>
 	</modules>
 
 	<!-- NB: for project parent -->
