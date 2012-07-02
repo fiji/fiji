@@ -55,6 +55,7 @@
 		<module>FlowJ_</module>
 		<module>PIV_analyser</module>
 		<module>Video_Editing</module>
+		<module>Sync_Win</module>
 	</modules>
 
 	<!-- NB: for project parent -->
