@@ -214,7 +214,6 @@ hs_err*.log
 /plugins/RATS_.jar
 /plugins/RandomJ_.jar
 /plugins/Reconstruct_Reader.jar
-/plugins/Record_Screen.jar
 /plugins/Refresh_Javas.jar
 /plugins/SPIM_Opener.jar
 /plugins/SPIM_Registration.jar
@@ -276,7 +275,6 @@ hs_err*.log
 /plugins/Stack_Manipulation.jar
 /plugins/FlowJ_.jar
 /plugins/PIV_analyser.jar
-/plugins/Record_Screen.jar
 /plugins/Video_Editing.jar
 /jars/zs.jar
 /plugins/Sync_Win.jar

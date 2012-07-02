@@ -173,7 +173,6 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/Stack_Manipulation.jar \
 	plugins/FlowJ_.jar \
 	plugins/PIV_analyser.jar \
-	plugins/Record_Screen.jar \
 	plugins/Video_Editing.jar \
 	plugins/Sync_Win.jar \
 	plugins/Gray_Morphology.jar \
@@ -335,7 +334,6 @@ libs[] <- jars/test-fiji.jar jars/zs.jar jars/VIB-lib.jar jars/Jama.jar \
 	jars/pal-optimization.jar jars/Updater_Fix.jar plugins/JNI_Example.jar \
 	plugins/FFMPEG_IO.jar \
 
-plugins/Record_Screen.jar <- src-plugins/Record_Screen/ src-plugins/Record_Screen/**/*
 
 plugins/Trainable_Segmentation.jar <- src-plugins/Trainable_Segmentation/**/*java src-plugins/Trainable_Segmentation/trainableSegmentation/images/*png src-plugins/Trainable_Segmentation/*
 
