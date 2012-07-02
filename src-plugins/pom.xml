@@ -82,6 +82,7 @@
 		<module>imagescience</module>
 		<module>TransformJ_</module>
 		<module>FeatureJ_</module>
+		<module>RandomJ_</module>
 	</modules>
 
 	<!-- NB: for project parent -->
