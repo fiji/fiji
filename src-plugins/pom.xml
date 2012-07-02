@@ -69,6 +69,7 @@
 		<module>Anisotropic_Diffusion_2D</module>
 		<module>Simple_Neurite_Tracer</module>
 		<module>QuickPALM_</module>
+		<module>3D_Viewer</module>
 	</modules>
 
 	<!-- NB: for project parent -->

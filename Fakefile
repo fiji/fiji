@@ -369,7 +369,6 @@ CLASSPATH(plugins/Trainable_Segmentation.jar)=jars/ij.jar:jars/weka.jar:plugins/
 CLASSPATH(plugins/VIB_.jar)=jars/ij.jar:$JAVA3D_JARS:jars/VIB-lib.jar:jars/pal-optimization.jar:plugins/3D_Viewer.jar:jars/imglib.jar:jars/fiji-lib.jar
 CLASSPATH(jars/VIB-lib.jar)=jars/ij.jar:jars/Jama.jar:jars/junit.jar:jars/pal-optimization.jar:jars/jzlib.jar:jars/fiji-lib.jar
 CLASSPATH(plugins/SPIM_Opener.jar)=jars/ij.jar:jars/fiji-lib.jar
-CLASSPATH(plugins/3D_Viewer.jar)=jars/ij.jar:jars/VIB-lib.jar:jars/imglib.jar:jars/Jama.jar:$JAVA3D_JARS
 CLASSPATH(jars/jep.jar)=jars/ij.jar:jars/Jama.jar:jars/junit.jar
 CLASSPATH(plugins/SPIM_Registration.jar)=jars/ij.jar:$JAVA3D_JARS:jars/imglib.jar:jars/mpicbg.jar:plugins/3D_Viewer.jar:jars/weka.jar:jars/fiji-lib.jar:plugins/loci_tools.jar:plugins/Fiji_Plugins.jar:jars/VIB-lib.jar:jars/Jama.jar:jars/imglib-algorithms.jar:jars/imglib-ij.jar:jars/imglib-io.jar:jars/jfreechart.jar:jars/jcommon.jar:plugins/SPIM_Opener.jar
 CLASSPATH(plugins/Descriptor_based_registration.jar)=jars/ij.jar:jars/imglib.jar:jars/mpicbg.jar:jars/fiji-lib.jar:plugins/Fiji_Plugins.jar:jars/VIB-lib.jar:jars/Jama.jar:jars/imglib-algorithms.jar:jars/imglib-ij.jar:jars/imglib-io.jar:plugins/SPIM_Registration.jar:plugins/Stitching_.jar:$JAVA3D_JARS
@@ -473,6 +472,7 @@ plugins/Algorithm_Launcher.jar <- src-plugins/Algorithm_Launcher/pom.xml
 plugins/Anisotropic_Diffusion_2D.jar <- src-plugins/Anisotropic_Diffusion_2D/pom.xml
 plugins/Simple_Neurite_Tracer.jar <- src-plugins/Simple_Neurite_Tracer/pom.xml
 plugins/QuickPALM_.jar <- src-plugins/QuickPALM_/pom.xml
+plugins/3D_Viewer.jar <- src-plugins/3D_Viewer/pom.xml
 
 # pre-Java5 generics ;-)
 
