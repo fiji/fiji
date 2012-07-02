@@ -33,6 +33,7 @@
 		<module>Analyze_Reader_Writer</module>
 		<module>Color_Histogram</module>
 		<module>Color_Inspector_3D</module>
+		<module>M_I_P</module>
 	</modules>
 
 	<!-- NB: for project parent -->
