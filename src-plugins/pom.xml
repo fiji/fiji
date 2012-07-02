@@ -60,6 +60,7 @@
 		<module>LocalThickness_</module>
 		<module>Fiji_Developer</module>
 		<module>Manual_Tracking</module>
+		<module>Calculator_Plus</module>
 	</modules>
 
 	<!-- NB: for project parent -->
