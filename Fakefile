@@ -394,7 +394,6 @@ CLASSPATH(plugins/StackReg_.jar)=jars/ij.jar
 CLASSPATH(plugins/Lasso_and_Blow_Tool.jar)=jars/ij.jar:jars/fiji-lib.jar
 CLASSPATH(plugins/Linear_Kuwahara.jar)=jars/ij.jar
 CLASSPATH(plugins/Thread_Killer.jar)=jars/ij.jar
-CLASSPATH(plugins/SheppLogan_.jar)=jars/ij.jar
 CLASSPATH(jars/wavelets.jar)=jars/ij.jar
 CLASSPATH(jars/imageware.jar)=jars/ij.jar
 CLASSPATH(plugins/Extended_Depth_Field.jar)=jars/ij.jar:jars/imageware.jar:jars/wavelets.jar
@@ -473,6 +472,7 @@ plugins/TopoJ_.jar <- src-plugins/TopoJ_/pom.xml
 plugins/Differentials_.jar <- src-plugins/Differentials_/pom.xml
 plugins/MosaicJ_.jar <- src-plugins/MosaicJ_/pom.xml
 plugins/PointPicker_.jar <- src-plugins/PointPicker_/pom.xml
+plugins/SheppLogan_.jar <- src-plugins/SheppLogan_/pom.xml
 
 # pre-Java5 generics ;-)
 
