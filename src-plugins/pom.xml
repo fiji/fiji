@@ -130,6 +130,7 @@
 		<module>SPIM_Opener</module>
 		<module>SPIM_Registration</module>
 		<module>Graph_Cut</module>
+		<module>weave_jy2java</module>
 	</modules>
 
 	<!-- NB: for project parent -->
