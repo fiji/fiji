@@ -98,6 +98,7 @@
 		<module>Colour_Deconvolution</module>
 		<module>Dichromacy_</module>
 		<module>Threshold_Colour</module>
+		<module>Helmholtz_Analysis</module>
 	</modules>
 
 	<!-- NB: for project parent -->
