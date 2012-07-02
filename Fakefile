@@ -341,7 +341,6 @@ mainClass(jars/fiji-compat.jar)=fiji.Main
 
 
 CLASSPATH(plugins/Refresh_Javas.jar)=jars/ij.jar:jars/fiji-scripting.jar:jars/fake.jar:jars/fiji-compat.jar
-CLASSPATH(plugins/Javascript_.jar)=jars/ij.jar:jars/fiji-scripting.jar:jars/js.jar
 MAINCLASS(plugins/Script_Editor.jar)=fiji.scripting.Script_Editor
 CLASSPATH(plugins/Script_Editor.jar)=jars/ij.jar:jars/rsyntaxtextarea.jar:jars/autocomplete.jar:plugins/Clojure_Interpreter.jar:plugins/JRuby_Interpreter.jar:plugins/Javascript_.jar:plugins/Jython_Interpreter.jar:plugins/Refresh_Javas.jar:plugins/BeanShell_Interpreter.jar:plugins/CLI_.jar:jars/fiji-scripting.jar:jars/fiji-compat.jar:jars/imglib2.jar:jars/fiji-lib.jar:jars/fake.jar:$TOOLS_JAR:jars/jfreechart.jar:jars/imglib2-ij.jar:jars/commons-math.jar
 NO_COMPILE(plugins/Script_Editor.jar)=src-plugins/Script_Editor/templates/**/*
@@ -474,6 +473,7 @@ plugins/VIB_.jar <- src-plugins/VIB_/pom.xml
 plugins/register_virtual_stack_slices.jar <- src-plugins/register_virtual_stack_slices/pom.xml
 plugins/Siox_Segmentation.jar <- src-plugins/Siox_Segmentation/pom.xml
 plugins/CLI_.jar <- src-plugins/CLI_/pom.xml
+plugins/Javascript_.jar <- src-plugins/Javascript_/pom.xml
 
 # pre-Java5 generics ;-)
 

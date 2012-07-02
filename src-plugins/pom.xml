@@ -117,6 +117,7 @@
 		<module>register_virtual_stack_slices</module>
 		<module>Siox_Segmentation</module>
 		<module>CLI_</module>
+		<module>Javascript_</module>
 	</modules>
 
 	<!-- NB: for project parent -->
