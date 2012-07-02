@@ -52,6 +52,7 @@
 		<module>Statistical_Region_Merging</module>
 		<module>Auto_Threshold</module>
 		<module>Stack_Manipulation</module>
+		<module>FlowJ_</module>
 	</modules>
 
 	<!-- NB: for project parent -->
