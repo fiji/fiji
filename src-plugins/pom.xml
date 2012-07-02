@@ -65,6 +65,7 @@
 		<module>IsoData_Classifier</module>
 		<module>RATS_</module>
 		<module>Directionality_</module>
+		<module>Algorithm_Launcher</module>
 	</modules>
 
 	<!-- NB: for project parent -->

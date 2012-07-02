@@ -361,10 +361,6 @@ CLASSPATH(plugins/register_virtual_stack_slices.jar)=jars/ij.jar:plugins/TrakEM2
 CLASSPATH(plugins/Siox_Segmentation.jar)=jars/ij.jar:jars/fiji-lib.jar
 CLASSPATH(plugins/Image_Expression_Parser.jar)=jars/ij.jar:jars/jep.jar:jars/imglib.jar:jars/junit.jar:jars/imglib-algorithms.jar:jars/imglib-ij.jar
 
-CLASSPATH(plugins/Algorithm_Launcher.jar)=jars/ij.jar:jars/imglib.jar:jars/imglib-ij.jar
-plugins/Algorithm_Launcher.jar <- \
-	src-plugins/Algorithm_Launcher/**/*.java \
-	src-plugins/Algorithm_Launcher/**/*.config
 
 CLASSPATH(plugins/Stitching_.jar)=jars/ij.jar:plugins/loci_tools.jar:jars/fiji-lib.jar:jars/imglib.jar:jars/imglib-algorithms.jar:jars/imglib-ij.jar:jars/edu_mines_jtk.jar:plugins/Fiji_Plugins.jar:jars/mpicbg.jar
 CLASSPATH(plugins/Fiji_Plugins.jar)=jars/ij.jar:jars/jsch.jar:jars/fiji-lib.jar:jars/VIB-lib.jar
@@ -476,6 +472,7 @@ plugins/3D_Objects_Counter.jar <- src-plugins/3D_Objects_Counter/pom.xml
 plugins/IsoData_Classifier.jar <- src-plugins/IsoData_Classifier/pom.xml
 plugins/RATS_.jar <- src-plugins/RATS_/pom.xml
 plugins/Directionality_.jar <- src-plugins/Directionality_/pom.xml
+plugins/Algorithm_Launcher.jar <- src-plugins/Algorithm_Launcher/pom.xml
 
 # pre-Java5 generics ;-)
 
