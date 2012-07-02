@@ -358,7 +358,6 @@ src-plugins/Script_Editor/function.png[bin/copy-file.bsh $PRE $TARGET] <- images
 
 CLASSPATH(jars/zs.jar)=jars/Jama.jar
 CLASSPATH(plugins/register_virtual_stack_slices.jar)=jars/ij.jar:plugins/TrakEM2_.jar:jars/mpicbg.jar:plugins/bUnwarpJ_.jar:jars/fiji-lib.jar
-CLASSPATH(plugins/registration_3d.jar)=jars/ij.jar:jars/edu_mines_jtk.jar
 CLASSPATH(plugins/Siox_Segmentation.jar)=jars/ij.jar:jars/fiji-lib.jar
 CLASSPATH(plugins/Image_Expression_Parser.jar)=jars/ij.jar:jars/jep.jar:jars/imglib.jar:jars/junit.jar:jars/imglib-algorithms.jar:jars/imglib-ij.jar
 
@@ -479,6 +478,7 @@ jars/pal-optimization.jar <- src-plugins/pal-optimization/pom.xml
 jars/Jama.jar <- src-plugins/Jama/pom.xml
 plugins/blockmatching_.jar <- src-plugins/blockmatching_/pom.xml
 plugins/bUnwarpJ_.jar <- src-plugins/bUnwarpJ_/pom.xml
+plugins/registration_3d.jar <- src-plugins/registration_3d/pom.xml
 
 # pre-Java5 generics ;-)
 

@@ -25,6 +25,7 @@
 		<module>Jama</module>
 		<module>blockmatching_</module>
 		<module>bUnwarpJ_</module>
+		<module>registration_3d</module>
 	</modules>
 
 	<!-- NB: for project parent -->
