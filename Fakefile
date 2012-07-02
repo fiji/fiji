@@ -394,7 +394,6 @@ CLASSPATH(plugins/Manual_Tracking.jar)=jars/ij.jar:plugins/Image_5D.jar
 CLASSPATH(jars/autocomplete.jar)=jars/rsyntaxtextarea.jar
 CLASSPATH(jars/jython.jar)=jars/junit.jar:jars/jna.jar
 CLASSPATH(plugins/loci_tools.jar)=jars/ij.jar
-CLASSPATH(plugins/LocalThickness_.jar)=jars/ij.jar
 CLASSPATH(jars/batik.jar)=jars/jacl.jar:plugins/loci_tools.jar:jars/jython.jar
 CLASSPATH(jars/fiji-compat.jar)=jars/ij.jar:jars/javassist.jar
 CLASSPATH(plugins/RATS_.jar)=jars/ij.jar
@@ -476,6 +475,7 @@ plugins/PIV_analyser.jar <- src-plugins/PIV_analyser/pom.xml
 plugins/Video_Editing.jar <- src-plugins/Video_Editing/pom.xml
 plugins/Sync_Win.jar <- src-plugins/Sync_Win/pom.xml
 plugins/Gray_Morphology.jar <- src-plugins/Gray_Morphology/pom.xml
+plugins/LocalThickness_.jar <- src-plugins/LocalThickness_/pom.xml
 
 # pre-Java5 generics ;-)
 

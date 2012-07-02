@@ -57,6 +57,7 @@
 		<module>Video_Editing</module>
 		<module>Sync_Win</module>
 		<module>Gray_Morphology</module>
+		<module>LocalThickness_</module>
 	</modules>
 
 	<!-- NB: for project parent -->
