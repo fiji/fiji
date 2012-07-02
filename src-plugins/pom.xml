@@ -90,6 +90,7 @@
 		<module>wavelets</module>
 		<module>imageware</module>
 		<module>Extended_Depth_Field</module>
+		<module>panorama_</module>
 	</modules>
 
 	<!-- NB: for project parent -->
