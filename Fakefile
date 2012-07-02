@@ -372,7 +372,6 @@ CLASSPATH(plugins/SPIM_Opener.jar)=jars/ij.jar:jars/fiji-lib.jar
 CLASSPATH(jars/jep.jar)=jars/ij.jar:jars/Jama.jar:jars/junit.jar
 CLASSPATH(plugins/SPIM_Registration.jar)=jars/ij.jar:$JAVA3D_JARS:jars/imglib.jar:jars/mpicbg.jar:plugins/3D_Viewer.jar:jars/weka.jar:jars/fiji-lib.jar:plugins/loci_tools.jar:plugins/Fiji_Plugins.jar:jars/VIB-lib.jar:jars/Jama.jar:jars/imglib-algorithms.jar:jars/imglib-ij.jar:jars/imglib-io.jar:jars/jfreechart.jar:jars/jcommon.jar:plugins/SPIM_Opener.jar
 CLASSPATH(plugins/Descriptor_based_registration.jar)=jars/ij.jar:jars/imglib.jar:jars/mpicbg.jar:jars/fiji-lib.jar:plugins/Fiji_Plugins.jar:jars/VIB-lib.jar:jars/Jama.jar:jars/imglib-algorithms.jar:jars/imglib-ij.jar:jars/imglib-io.jar:plugins/SPIM_Registration.jar:plugins/Stitching_.jar:$JAVA3D_JARS
-CLASSPATH(plugins/TopoJ_.jar)=jars/ij.jar:jars/Jama.jar
 CLASSPATH(jars/imagescience.jar)=jars/ij.jar:plugins/Image_5D.jar
 CLASSPATH(plugins/Arrow_.jar)=jars/ij.jar:jars/fiji-lib.jar
 CLASSPATH(plugins/TransformJ_.jar)=jars/ij.jar:jars/imagescience.jar
@@ -473,6 +472,7 @@ plugins/Simple_Neurite_Tracer.jar <- src-plugins/Simple_Neurite_Tracer/pom.xml
 plugins/QuickPALM_.jar <- src-plugins/QuickPALM_/pom.xml
 plugins/3D_Viewer.jar <- src-plugins/3D_Viewer/pom.xml
 plugins/CPU_Meter.jar <- src-plugins/CPU_Meter/pom.xml
+plugins/TopoJ_.jar <- src-plugins/TopoJ_/pom.xml
 
 # pre-Java5 generics ;-)
 
