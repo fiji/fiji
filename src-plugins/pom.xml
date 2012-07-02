@@ -26,6 +26,7 @@
 		<module>blockmatching_</module>
 		<module>bUnwarpJ_</module>
 		<module>registration_3d</module>
+		<module>IO_</module>
 	</modules>
 
 	<!-- NB: for project parent -->
