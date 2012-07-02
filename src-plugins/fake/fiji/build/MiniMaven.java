@@ -115,8 +115,7 @@ public class MiniMaven {
 		//reader.setXMLErrorHandler(...);
 		reader.parse(new InputSource(new FileInputStream(file)));
 
-		File sourceDirectory = pom.getSourceDirectory();
-		if (sourceDirectory.exists()) {
+		if (pom.packaging.equals("jar") && !directory.getPath().startsWith(new File(System.getProperty("user.home"), ".m2/repository").getPath())) {
 			pom.buildFromSource = true;
 			pom.target = new File(directory, "target/classes");
 		}
@@ -296,6 +295,7 @@ public class MiniMaven {
 		protected List<Coordinate> dependencies = new ArrayList<Coordinate>();
 		protected Set<String> repositories = new TreeSet<String>();
 		protected String sourceVersion, targetVersion, mainClass;
+		protected String packaging = "jar";
 
 		// only used during parsing
 		protected String prefix = "";
@@ -987,6 +987,8 @@ public class MiniMaven {
 				coordinate.artifactId = string;
 			else if (prefix.equals(">project>version"))
 				coordinate.version = string;
+			else if (prefix.equals(">project>packaging"))
+				packaging = string;
 			else if (prefix.equals(">project>modules"))
 				buildFromSource = true; // might not be building a target
 			else if (prefix.equals(">project>modules>module"))
