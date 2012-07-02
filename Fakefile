@@ -379,7 +379,6 @@ CLASSPATH(plugins/TransformJ_.jar)=jars/ij.jar:jars/imagescience.jar
 CLASSPATH(plugins/FeatureJ_.jar)=jars/ij.jar:jars/imagescience.jar
 CLASSPATH(plugins/RandomJ_.jar)=jars/ij.jar:jars/imagescience.jar
 CLASSPATH(plugins/Colocalisation_Analysis.jar)=jars/ij.jar:jars/imglib2.jar:jars/imglib2-ij.jar:jars/imglib2-algorithms.jar:jars/junit.jar:jars/itextpdf.jar:jars/fiji-lib.jar
-CLASSPATH(plugins/CPU_Meter.jar)=jars/jna.jar:jars/ij.jar
 CLASSPATH(jars/autocomplete.jar)=jars/rsyntaxtextarea.jar
 CLASSPATH(jars/jython.jar)=jars/junit.jar:jars/jna.jar
 CLASSPATH(plugins/loci_tools.jar)=jars/ij.jar
@@ -473,6 +472,7 @@ plugins/Anisotropic_Diffusion_2D.jar <- src-plugins/Anisotropic_Diffusion_2D/pom
 plugins/Simple_Neurite_Tracer.jar <- src-plugins/Simple_Neurite_Tracer/pom.xml
 plugins/QuickPALM_.jar <- src-plugins/QuickPALM_/pom.xml
 plugins/3D_Viewer.jar <- src-plugins/3D_Viewer/pom.xml
+plugins/CPU_Meter.jar <- src-plugins/CPU_Meter/pom.xml
 
 # pre-Java5 generics ;-)
 

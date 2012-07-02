@@ -70,6 +70,7 @@
 		<module>Simple_Neurite_Tracer</module>
 		<module>QuickPALM_</module>
 		<module>3D_Viewer</module>
+		<module>CPU_Meter</module>
 	</modules>
 
 	<!-- NB: for project parent -->
