@@ -23,6 +23,7 @@
 		<module>VIB-lib</module>
 		<module>pal-optimization</module>
 		<module>Jama</module>
+		<module>blockmatching_</module>
 	</modules>
 
 	<!-- NB: for project parent -->
