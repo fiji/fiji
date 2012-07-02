@@ -387,7 +387,6 @@ CLASSPATH(jars/weave_jy2java.jar)=plugins/Refresh_Javas.jar:jars/fiji-scripting.
 LIBS(plugins/JNI_Example.jar)=-lm
 CLASSPATH(plugins/JNI_Example.jar)=jars/ij.jar:jars/fiji-lib.jar
 CLASSPATH(plugins/Fiji_Package_Maker.jar)=jars/ij.jar:plugins/Fiji_Updater.jar:jars/fiji-lib.jar
-CLASSPATH(plugins/CorrectBleach_.jar)=jars/ij.jar
 
 # pom.xml sub-projects
 
@@ -474,6 +473,7 @@ plugins/Reconstruct_Reader.jar <- src-plugins/Reconstruct_Reader/pom.xml
 plugins/FS_Align_TrakEM2.jar <- src-plugins/FS_Align_TrakEM2/pom.xml
 jars/fiji-compat.jar <- src-plugins/fiji-compat/pom.xml
 plugins/BalloonSegmentation_.jar <- src-plugins/BalloonSegmentation_/pom.xml
+plugins/CorrectBleach_.jar <- src-plugins/CorrectBleach_/pom.xml
 
 # pre-Java5 generics ;-)
 
