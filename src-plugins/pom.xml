@@ -39,6 +39,7 @@
 		<module>Volume_Viewer</module>
 		<module>IJ_Robot</module>
 		<module>Fiji_Updater</module>
+		<module>LSM_Reader</module>
 	</modules>
 
 	<!-- NB: for project parent -->

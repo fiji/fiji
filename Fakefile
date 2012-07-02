@@ -405,7 +405,6 @@ CLASSPATH(plugins/Statistical_Region_Merging.jar)=jars/ij.jar
 CLASSPATH(plugins/PIV_analyser.jar)=jars/ij.jar
 CLASSPATH(plugins/Skeletonize3D_.jar)=jars/ij.jar
 CLASSPATH(plugins/MTrack2_.jar)=jars/ij.jar
-CLASSPATH(plugins/LSM_Reader.jar)=jars/ij.jar
 CLASSPATH(plugins/loci_tools.jar)=jars/ij.jar
 CLASSPATH(plugins/LocalThickness_.jar)=jars/ij.jar
 CLASSPATH(jars/batik.jar)=jars/jacl.jar:plugins/loci_tools.jar:jars/jython.jar
@@ -476,6 +475,7 @@ plugins/View5D_.jar <- src-plugins/View5D_/pom.xml
 plugins/Volume_Viewer.jar <- src-plugins/Volume_Viewer/pom.xml
 plugins/IJ_Robot.jar <- src-plugins/IJ_Robot/pom.xml
 plugins/Fiji_Updater.jar <- src-plugins/Fiji_Updater/pom.xml
+plugins/LSM_Reader.jar <- src-plugins/LSM_Reader/pom.xml
 
 # pre-Java5 generics ;-)
 
