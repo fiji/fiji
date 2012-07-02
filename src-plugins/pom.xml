@@ -79,6 +79,7 @@
 		<module>StackReg_</module>
 		<module>UnwarpJ_</module>
 		<module>Snakuscule_</module>
+		<module>imagescience</module>
 	</modules>
 
 	<!-- NB: for project parent -->
