@@ -399,7 +399,6 @@ CLASSPATH(jars/fiji-lib.jar)=jars/ij.jar
 CLASSPATH(jars/ij.jar)=jars/javac.jar
 CLASSPATH(plugins/QuickPALM_.jar)=jars/ij.jar
 CLASSPATH(plugins/ij-ImageIO_.jar)=jars/ij.jar:jars/jai_core.jar:jars/jai_codec.jar
-CLASSPATH(plugins/3D_Objects_Counter.jar)=jars/ij.jar
 CLASSPATH(plugins/Snakuscule_.jar)=jars/ij.jar
 CLASSPATH(plugins/UnwarpJ_.jar)=jars/ij.jar
 CLASSPATH(plugins/Graph_Cut.jar)=jars/ij.jar:jars/imglib.jar:jars/imglib-ij.jar:jars/fiji-lib.jar
@@ -476,6 +475,7 @@ plugins/LocalThickness_.jar <- src-plugins/LocalThickness_/pom.xml
 plugins/Fiji_Developer.jar <- src-plugins/Fiji_Developer/pom.xml
 plugins/Manual_Tracking.jar <- src-plugins/Manual_Tracking/pom.xml
 plugins/Calculator_Plus.jar <- src-plugins/Calculator_Plus/pom.xml
+plugins/3D_Objects_Counter.jar <- src-plugins/3D_Objects_Counter/pom.xml
 
 # pre-Java5 generics ;-)
 

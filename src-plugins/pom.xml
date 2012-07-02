@@ -61,6 +61,7 @@
 		<module>Fiji_Developer</module>
 		<module>Manual_Tracking</module>
 		<module>Calculator_Plus</module>
+		<module>3D_Objects_Counter</module>
 	</modules>
 
 	<!-- NB: for project parent -->
