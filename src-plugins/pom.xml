@@ -126,6 +126,7 @@
 		<module>Script_Editor</module>
 		<module>Trainable_Segmentation</module>
 		<module>jep</module>
+		<module>Image_Expression_Parser</module>
 	</modules>
 
 	<!-- NB: for project parent -->
