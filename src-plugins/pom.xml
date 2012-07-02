@@ -109,6 +109,7 @@
 		<module>Jython_Interpreter</module>
 		<module>Clojure_Interpreter</module>
 		<module>JRuby_Interpreter</module>
+		<module>BeanShell_Interpreter</module>
 	</modules>
 
 	<!-- NB: for project parent -->
