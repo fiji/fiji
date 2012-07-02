@@ -373,7 +373,6 @@ CLASSPATH(jars/jep.jar)=jars/ij.jar:jars/Jama.jar:jars/junit.jar
 CLASSPATH(plugins/SPIM_Registration.jar)=jars/ij.jar:$JAVA3D_JARS:jars/imglib.jar:jars/mpicbg.jar:plugins/3D_Viewer.jar:jars/weka.jar:jars/fiji-lib.jar:plugins/loci_tools.jar:plugins/Fiji_Plugins.jar:jars/VIB-lib.jar:jars/Jama.jar:jars/imglib-algorithms.jar:jars/imglib-ij.jar:jars/imglib-io.jar:jars/jfreechart.jar:jars/jcommon.jar:plugins/SPIM_Opener.jar
 CLASSPATH(plugins/Descriptor_based_registration.jar)=jars/ij.jar:jars/imglib.jar:jars/mpicbg.jar:jars/fiji-lib.jar:plugins/Fiji_Plugins.jar:jars/VIB-lib.jar:jars/Jama.jar:jars/imglib-algorithms.jar:jars/imglib-ij.jar:jars/imglib-io.jar:plugins/SPIM_Registration.jar:plugins/Stitching_.jar:$JAVA3D_JARS
 CLASSPATH(plugins/Arrow_.jar)=jars/ij.jar:jars/fiji-lib.jar
-CLASSPATH(plugins/TransformJ_.jar)=jars/ij.jar:jars/imagescience.jar
 CLASSPATH(plugins/FeatureJ_.jar)=jars/ij.jar:jars/imagescience.jar
 CLASSPATH(plugins/RandomJ_.jar)=jars/ij.jar:jars/imagescience.jar
 CLASSPATH(plugins/Colocalisation_Analysis.jar)=jars/ij.jar:jars/imglib2.jar:jars/imglib2-ij.jar:jars/imglib2-algorithms.jar:jars/junit.jar:jars/itextpdf.jar:jars/fiji-lib.jar
@@ -473,6 +472,7 @@ plugins/StackReg_.jar <- src-plugins/StackReg_/pom.xml
 plugins/UnwarpJ_.jar <- src-plugins/UnwarpJ_/pom.xml
 plugins/Snakuscule_.jar <- src-plugins/Snakuscule_/pom.xml
 jars/imagescience.jar <- src-plugins/imagescience/pom.xml
+plugins/TransformJ_.jar <- src-plugins/TransformJ_/pom.xml
 
 # pre-Java5 generics ;-)
 

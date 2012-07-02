@@ -80,6 +80,7 @@
 		<module>UnwarpJ_</module>
 		<module>Snakuscule_</module>
 		<module>imagescience</module>
+		<module>TransformJ_</module>
 	</modules>
 
 	<!-- NB: for project parent -->
