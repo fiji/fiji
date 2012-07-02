@@ -402,7 +402,6 @@ CLASSPATH(jars/jython.jar)=jars/junit.jar:jars/jna.jar
 CLASSPATH(plugins/Video_Editing.jar)=jars/ij.jar
 CLASSPATH(plugins/Statistical_Region_Merging.jar)=jars/ij.jar
 CLASSPATH(plugins/PIV_analyser.jar)=jars/ij.jar
-CLASSPATH(plugins/Skeletonize3D_.jar)=jars/ij.jar
 CLASSPATH(plugins/MTrack2_.jar)=jars/ij.jar
 CLASSPATH(plugins/loci_tools.jar)=jars/ij.jar
 CLASSPATH(plugins/LocalThickness_.jar)=jars/ij.jar
@@ -476,6 +475,7 @@ plugins/IJ_Robot.jar <- src-plugins/IJ_Robot/pom.xml
 plugins/Fiji_Updater.jar <- src-plugins/Fiji_Updater/pom.xml
 plugins/LSM_Reader.jar <- src-plugins/LSM_Reader/pom.xml
 plugins/AnalyzeSkeleton_.jar <- src-plugins/AnalyzeSkeleton_/pom.xml
+plugins/Skeletonize3D_.jar <- src-plugins/Skeletonize3D_/pom.xml
 
 # pre-Java5 generics ;-)
 
