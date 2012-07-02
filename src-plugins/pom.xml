@@ -84,6 +84,7 @@
 		<module>FeatureJ_</module>
 		<module>RandomJ_</module>
 		<module>Linear_Kuwahara</module>
+		<module>Thread_Killer</module>
 	</modules>
 
 	<!-- NB: for project parent -->
