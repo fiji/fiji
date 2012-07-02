@@ -372,7 +372,6 @@ CLASSPATH(jars/autocomplete.jar)=jars/rsyntaxtextarea.jar
 CLASSPATH(jars/jython.jar)=jars/junit.jar:jars/jna.jar
 CLASSPATH(plugins/loci_tools.jar)=jars/ij.jar
 CLASSPATH(jars/batik.jar)=jars/jacl.jar:plugins/loci_tools.jar:jars/jython.jar
-CLASSPATH(jars/fiji-lib.jar)=jars/ij.jar
 CLASSPATH(jars/ij.jar)=jars/javac.jar
 CLASSPATH(plugins/ij-ImageIO_.jar)=jars/ij.jar:jars/jai_core.jar:jars/jai_codec.jar
 CLASSPATH(plugins/Graph_Cut.jar)=jars/ij.jar:jars/imglib.jar:jars/imglib-ij.jar:jars/fiji-lib.jar
@@ -474,6 +473,7 @@ plugins/Jython_Interpreter.jar <- src-plugins/Jython_Interpreter/pom.xml
 plugins/Clojure_Interpreter.jar <- src-plugins/Clojure_Interpreter/pom.xml
 plugins/JRuby_Interpreter.jar <- src-plugins/JRuby_Interpreter/pom.xml
 plugins/BeanShell_Interpreter.jar <- src-plugins/BeanShell_Interpreter/pom.xml
+jars/fiji-lib.jar <- src-plugins/fiji-lib/pom.xml
 
 # pre-Java5 generics ;-)
 
