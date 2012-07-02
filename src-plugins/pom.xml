@@ -97,6 +97,7 @@
 		<module>Multi_Kymograph</module>
 		<module>Colour_Deconvolution</module>
 		<module>Dichromacy_</module>
+		<module>Threshold_Colour</module>
 	</modules>
 
 	<!-- NB: for project parent -->
