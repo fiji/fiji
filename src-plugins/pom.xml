@@ -66,6 +66,7 @@
 		<module>RATS_</module>
 		<module>Directionality_</module>
 		<module>Algorithm_Launcher</module>
+		<module>Anisotropic_Diffusion_2D</module>
 	</modules>
 
 	<!-- NB: for project parent -->
