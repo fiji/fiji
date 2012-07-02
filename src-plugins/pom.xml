@@ -133,6 +133,7 @@
 		<module>weave_jy2java</module>
 		<module>TrackMate_</module>
 		<module>Descriptor_based_registration</module>
+		<module>Fiji_Package_Maker</module>
 	</modules>
 
 	<!-- NB: for project parent -->

@@ -355,7 +355,6 @@ CLASSPATH(jars/ij.jar)=jars/javac.jar
 CLASSPATH(plugins/ij-ImageIO_.jar)=jars/ij.jar:jars/jai_core.jar:jars/jai_codec.jar
 LIBS(plugins/JNI_Example.jar)=-lm
 CLASSPATH(plugins/JNI_Example.jar)=jars/ij.jar:jars/fiji-lib.jar
-CLASSPATH(plugins/Fiji_Package_Maker.jar)=jars/ij.jar:plugins/Fiji_Updater.jar:jars/fiji-lib.jar
 
 # pom.xml sub-projects
 
@@ -472,6 +471,7 @@ plugins/Graph_Cut.jar <- src-plugins/Graph_Cut/pom.xml
 jars/weave_jy2java.jar <- src-plugins/weave_jy2java/pom.xml
 plugins/TrackMate_.jar <- src-plugins/TrackMate_/pom.xml
 plugins/Descriptor_based_registration.jar <- src-plugins/Descriptor_based_registration/pom.xml
+plugins/Fiji_Package_Maker.jar <- src-plugins/Fiji_Package_Maker/pom.xml
 
 # pre-Java5 generics ;-)
 
