@@ -402,7 +402,6 @@ CLASSPATH(plugins/CPU_Meter.jar)=jars/jna.jar:jars/ij.jar
 CLASSPATH(plugins/M_I_P.jar)=jars/ij.jar
 CLASSPATH(plugins/level_sets.jar)=jars/ij.jar
 CLASSPATH(plugins/Anisotropic_Diffusion_2D.jar)=jars/ij.jar
-CLASSPATH(plugins/SplineDeformationGenerator_.jar)=jars/ij.jar
 CLASSPATH(plugins/Manual_Tracking.jar)=jars/ij.jar:plugins/Image_5D.jar
 CLASSPATH(plugins/IJ_Robot.jar)=jars/ij.jar
 CLASSPATH(jars/autocomplete.jar)=jars/rsyntaxtextarea.jar
@@ -478,6 +477,7 @@ plugins/bUnwarpJ_.jar <- src-plugins/bUnwarpJ_/pom.xml
 plugins/registration_3d.jar <- src-plugins/registration_3d/pom.xml
 plugins/IO_.jar <- src-plugins/IO_/pom.xml
 plugins/LSM_Toolbox.jar <- src-plugins/LSM_Toolbox/pom.xml
+plugins/SplineDeformationGenerator_.jar <- src-plugins/SplineDeformationGenerator_/pom.xml
 
 # pre-Java5 generics ;-)
 

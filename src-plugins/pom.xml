@@ -28,6 +28,7 @@
 		<module>registration_3d</module>
 		<module>IO_</module>
 		<module>LSM_Toolbox</module>
+		<module>SplineDeformationGenerator_</module>
 	</modules>
 
 	<!-- NB: for project parent -->
