@@ -132,6 +132,7 @@
 		<module>Graph_Cut</module>
 		<module>weave_jy2java</module>
 		<module>TrackMate_</module>
+		<module>Descriptor_based_registration</module>
 	</modules>
 
 	<!-- NB: for project parent -->
