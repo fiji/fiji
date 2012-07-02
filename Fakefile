@@ -369,9 +369,7 @@ plugins/Algorithm_Launcher.jar <- \
 CLASSPATH(plugins/Directionality_.jar)=jars/ij.jar:jars/jfreechart.jar:jars/jcommon.jar
 CLASSPATH(plugins/Stitching_.jar)=jars/ij.jar:plugins/loci_tools.jar:jars/fiji-lib.jar:jars/imglib.jar:jars/imglib-algorithms.jar:jars/imglib-ij.jar:jars/edu_mines_jtk.jar:plugins/Fiji_Plugins.jar:jars/mpicbg.jar
 CLASSPATH(plugins/Fiji_Plugins.jar)=jars/ij.jar:jars/jsch.jar:jars/fiji-lib.jar:jars/VIB-lib.jar
-MAINCLASS(plugins/Fiji_Updater.jar)=fiji.updater.Main
 CLASSPATH(plugins/TrackMate_.jar)=jars/itextpdf.jar:jars/batik.jar:jars/ij.jar:plugins/3D_Viewer.jar:plugins/loci_tools.jar:jars/fiji-lib.jar:jars/imglib.jar:jars/imglib-ij.jar:jars/imglib-io.jar:jars/imglib-algorithms.jar:jars/jdom.jar:jars/jdom-contrib.jar:jars/jgraphx.jar:jars/jgrapht-jdk1.6.jar:jars/jfreechart.jar:jars/jcommon.jar:jars/Jama.jar:$JAVA3D_JARS
-CLASSPATH(plugins/Fiji_Updater.jar)=jars/ij.jar:jars/jsch.jar
 CLASSPATH(plugins/Sync_Win.jar)=jars/ij.jar:plugins/Image_5D.jar
 CLASSPATH(plugins/Fiji_Developer.jar)=jars/ij.jar:plugins/Script_Editor.jar:plugins/Fiji_Plugins.jar:jars/rsyntaxtextarea.jar:plugins/3D_Viewer.jar:$JAVA3D_JARS
 CLASSPATH(plugins/Trainable_Segmentation.jar)=jars/ij.jar:jars/weka.jar:plugins/Stitching_.jar:jars/fiji-lib.jar:plugins/Anisotropic_Diffusion_2D.jar:jars/Jama.jar:jars/VIB-lib.jar:jars/commons-math.jar:jars/imglib.jar:jars/imglib-ij.jar:jars/imglib-algorithms.jar:jars/imagescience.jar:jars/imglib2.jar:jars/imglib2-ij.jar:jars/imglib2-algorithms.jar:$JAVA3D_JARS
@@ -477,6 +475,7 @@ plugins/Interactive_3D_Surface_Plot.jar <- src-plugins/Interactive_3D_Surface_Pl
 plugins/View5D_.jar <- src-plugins/View5D_/pom.xml
 plugins/Volume_Viewer.jar <- src-plugins/Volume_Viewer/pom.xml
 plugins/IJ_Robot.jar <- src-plugins/IJ_Robot/pom.xml
+plugins/Fiji_Updater.jar <- src-plugins/Fiji_Updater/pom.xml
 
 # pre-Java5 generics ;-)
 

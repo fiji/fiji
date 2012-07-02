@@ -38,6 +38,7 @@
 		<module>View5D_</module>
 		<module>Volume_Viewer</module>
 		<module>IJ_Robot</module>
+		<module>Fiji_Updater</module>
 	</modules>
 
 	<!-- NB: for project parent -->
