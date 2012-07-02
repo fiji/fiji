@@ -393,7 +393,6 @@ CLASSPATH(jars/jython.jar)=jars/junit.jar:jars/jna.jar
 CLASSPATH(plugins/loci_tools.jar)=jars/ij.jar
 CLASSPATH(jars/batik.jar)=jars/jacl.jar:plugins/loci_tools.jar:jars/jython.jar
 CLASSPATH(jars/fiji-compat.jar)=jars/ij.jar:jars/javassist.jar
-CLASSPATH(plugins/RATS_.jar)=jars/ij.jar
 CLASSPATH(jars/fiji-lib.jar)=jars/ij.jar
 CLASSPATH(jars/ij.jar)=jars/javac.jar
 CLASSPATH(plugins/QuickPALM_.jar)=jars/ij.jar
@@ -476,6 +475,7 @@ plugins/Manual_Tracking.jar <- src-plugins/Manual_Tracking/pom.xml
 plugins/Calculator_Plus.jar <- src-plugins/Calculator_Plus/pom.xml
 plugins/3D_Objects_Counter.jar <- src-plugins/3D_Objects_Counter/pom.xml
 plugins/IsoData_Classifier.jar <- src-plugins/IsoData_Classifier/pom.xml
+plugins/RATS_.jar <- src-plugins/RATS_/pom.xml
 
 # pre-Java5 generics ;-)
 
