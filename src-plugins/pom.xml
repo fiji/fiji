@@ -53,6 +53,7 @@
 		<module>Auto_Threshold</module>
 		<module>Stack_Manipulation</module>
 		<module>FlowJ_</module>
+		<module>PIV_analyser</module>
 	</modules>
 
 	<!-- NB: for project parent -->
