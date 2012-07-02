@@ -119,6 +119,7 @@
 		<module>CLI_</module>
 		<module>Javascript_</module>
 		<module>Stitching_</module>
+		<module>fake</module>
 	</modules>
 
 	<!-- NB: for project parent -->

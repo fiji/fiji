@@ -474,6 +474,7 @@ plugins/Siox_Segmentation.jar <- src-plugins/Siox_Segmentation/pom.xml
 plugins/CLI_.jar <- src-plugins/CLI_/pom.xml
 plugins/Javascript_.jar <- src-plugins/Javascript_/pom.xml
 plugins/Stitching_.jar <- src-plugins/Stitching_/pom.xml
+jars/fake.jar <- src-plugins/fake/pom.xml
 
 # pre-Java5 generics ;-)
 
@@ -625,5 +626,3 @@ check-*[bin/up-to-date-check.py * precompiled/*_.jar] <-
 
 # Fake itself
 
-MAINCLASS(jars/fake.jar)=fiji.build.Fake
-jars/fake.jar <- src-plugins/fake/**/*.java
