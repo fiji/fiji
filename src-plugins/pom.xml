@@ -72,6 +72,7 @@
 		<module>3D_Viewer</module>
 		<module>CPU_Meter</module>
 		<module>TopoJ_</module>
+		<module>Differentials_</module>
 	</modules>
 
 	<!-- NB: for project parent -->
