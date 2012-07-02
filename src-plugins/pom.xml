@@ -31,6 +31,7 @@
 		<module>SplineDeformationGenerator_</module>
 		<module>level_sets</module>
 		<module>Analyze_Reader_Writer</module>
+		<module>Color_Histogram</module>
 	</modules>
 
 	<!-- NB: for project parent -->
