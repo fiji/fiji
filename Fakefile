@@ -412,7 +412,6 @@ CLASSPATH(plugins/Calculator_Plus.jar)=jars/ij.jar
 CLASSPATH(plugins/QuickPALM_.jar)=jars/ij.jar
 CLASSPATH(plugins/ij-ImageIO_.jar)=jars/ij.jar:jars/jai_core.jar:jars/jai_codec.jar
 CLASSPATH(plugins/FlowJ_.jar)=jars/ij.jar
-CLASSPATH(plugins/Time_Stamper.jar)=jars/ij.jar
 CLASSPATH(plugins/3D_Objects_Counter.jar)=jars/ij.jar
 CLASSPATH(plugins/Snakuscule_.jar)=jars/ij.jar
 CLASSPATH(plugins/UnwarpJ_.jar)=jars/ij.jar
@@ -476,6 +475,7 @@ plugins/Feature_Detection.jar <- src-plugins/Feature_Detection/pom.xml
 plugins/Bug_Submitter.jar <- src-plugins/Bug_Submitter/pom.xml
 plugins/ToAST_.jar <- src-plugins/ToAST_/pom.xml
 plugins/MTrack2_.jar <- src-plugins/MTrack2_/pom.xml
+plugins/Time_Stamper.jar <- src-plugins/Time_Stamper/pom.xml
 
 # pre-Java5 generics ;-)
 

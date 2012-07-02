@@ -47,6 +47,7 @@
 		<module>Bug_Submitter</module>
 		<module>ToAST_</module>
 		<module>MTrack2_</module>
+		<module>Time_Stamper</module>
 	</modules>
 
 	<!-- NB: for project parent -->
