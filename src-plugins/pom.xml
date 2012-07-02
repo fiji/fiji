@@ -62,6 +62,7 @@
 		<module>Manual_Tracking</module>
 		<module>Calculator_Plus</module>
 		<module>3D_Objects_Counter</module>
+		<module>IsoData_Classifier</module>
 	</modules>
 
 	<!-- NB: for project parent -->
