@@ -64,6 +64,7 @@
 		<module>3D_Objects_Counter</module>
 		<module>IsoData_Classifier</module>
 		<module>RATS_</module>
+		<module>Directionality_</module>
 	</modules>
 
 	<!-- NB: for project parent -->
