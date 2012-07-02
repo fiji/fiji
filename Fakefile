@@ -423,7 +423,6 @@ CLASSPATH(plugins/Calculator_Plus.jar)=jars/ij.jar
 CLASSPATH(plugins/QuickPALM_.jar)=jars/ij.jar
 CLASSPATH(plugins/ij-ImageIO_.jar)=jars/ij.jar:jars/jai_core.jar:jars/jai_codec.jar
 CLASSPATH(plugins/FlowJ_.jar)=jars/ij.jar
-CLASSPATH(plugins/View5D_.jar)=jars/ij.jar
 CLASSPATH(plugins/Time_Stamper.jar)=jars/ij.jar
 CLASSPATH(plugins/3D_Objects_Counter.jar)=jars/ij.jar
 CLASSPATH(plugins/Snakuscule_.jar)=jars/ij.jar
@@ -477,6 +476,7 @@ plugins/Color_Histogram.jar <- src-plugins/Color_Histogram/pom.xml
 plugins/Color_Inspector_3D.jar <- src-plugins/Color_Inspector_3D/pom.xml
 plugins/M_I_P.jar <- src-plugins/M_I_P/pom.xml
 plugins/Interactive_3D_Surface_Plot.jar <- src-plugins/Interactive_3D_Surface_Plot/pom.xml
+plugins/View5D_.jar <- src-plugins/View5D_/pom.xml
 
 # pre-Java5 generics ;-)
 

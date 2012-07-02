@@ -35,6 +35,7 @@
 		<module>Color_Inspector_3D</module>
 		<module>M_I_P</module>
 		<module>Interactive_3D_Surface_Plot</module>
+		<module>View5D_</module>
 	</modules>
 
 	<!-- NB: for project parent -->
