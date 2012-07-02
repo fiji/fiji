@@ -104,6 +104,7 @@
 		<module>fiji-compat</module>
 		<module>BalloonSegmentation_</module>
 		<module>CorrectBleach_</module>
+		<module>javac</module>
 	</modules>
 
 	<!-- NB: for project parent -->

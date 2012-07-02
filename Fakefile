@@ -339,7 +339,6 @@ plugins/Trainable_Segmentation.jar <- src-plugins/Trainable_Segmentation/**/*jav
 
 mainClass(jars/fiji-compat.jar)=fiji.Main
 
-MAINCLASS(jars/javac.jar)=com.sun.tools.javac.Main
 
 CLASSPATH(jars/fiji-scripting.jar)=jars/ij.jar:jars/jython.jar:jars/fiji-compat.jar:jars/bsh.jar:jars/js.jar
 CLASSPATH(plugins/Refresh_Javas.jar)=jars/ij.jar:jars/fiji-scripting.jar:jars/fake.jar:jars/fiji-compat.jar
@@ -474,6 +473,7 @@ plugins/FS_Align_TrakEM2.jar <- src-plugins/FS_Align_TrakEM2/pom.xml
 jars/fiji-compat.jar <- src-plugins/fiji-compat/pom.xml
 plugins/BalloonSegmentation_.jar <- src-plugins/BalloonSegmentation_/pom.xml
 plugins/CorrectBleach_.jar <- src-plugins/CorrectBleach_/pom.xml
+jars/javac.jar <- src-plugins/javac/pom.xml
 
 # pre-Java5 generics ;-)
 
