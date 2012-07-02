@@ -51,6 +51,7 @@
 		<module>Series_Labeler</module>
 		<module>Statistical_Region_Merging</module>
 		<module>Auto_Threshold</module>
+		<module>Stack_Manipulation</module>
 	</modules>
 
 	<!-- NB: for project parent -->

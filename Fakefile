@@ -400,7 +400,6 @@ CLASSPATH(plugins/PIV_analyser.jar)=jars/ij.jar
 CLASSPATH(plugins/loci_tools.jar)=jars/ij.jar
 CLASSPATH(plugins/LocalThickness_.jar)=jars/ij.jar
 CLASSPATH(jars/batik.jar)=jars/jacl.jar:plugins/loci_tools.jar:jars/jython.jar
-CLASSPATH(plugins/Stack_Manipulation.jar)=jars/ij.jar
 CLASSPATH(jars/fiji-compat.jar)=jars/ij.jar:jars/javassist.jar
 CLASSPATH(plugins/RATS_.jar)=jars/ij.jar
 CLASSPATH(jars/fiji-lib.jar)=jars/ij.jar
@@ -476,6 +475,7 @@ plugins/Time_Stamper.jar <- src-plugins/Time_Stamper/pom.xml
 plugins/Series_Labeler.jar <- src-plugins/Series_Labeler/pom.xml
 plugins/Statistical_Region_Merging.jar <- src-plugins/Statistical_Region_Merging/pom.xml
 plugins/Auto_Threshold.jar <- src-plugins/Auto_Threshold/pom.xml
+plugins/Stack_Manipulation.jar <- src-plugins/Stack_Manipulation/pom.xml
 
 # pre-Java5 generics ;-)
 
