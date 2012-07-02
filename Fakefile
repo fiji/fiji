@@ -385,7 +385,6 @@ CLASSPATH(plugins/ij-ImageIO_.jar)=jars/ij.jar:jars/jai_core.jar:jars/jai_codec.
 CLASSPATH(plugins/Graph_Cut.jar)=jars/ij.jar:jars/imglib.jar:jars/imglib-ij.jar:jars/fiji-lib.jar
 CLASSPATH(jars/mij.jar)=jars/ij.jar
 CLASSPATH(plugins/Lasso_and_Blow_Tool.jar)=jars/ij.jar:jars/fiji-lib.jar
-CLASSPATH(plugins/Linear_Kuwahara.jar)=jars/ij.jar
 CLASSPATH(plugins/Thread_Killer.jar)=jars/ij.jar
 CLASSPATH(jars/wavelets.jar)=jars/ij.jar
 CLASSPATH(jars/imageware.jar)=jars/ij.jar
@@ -473,6 +472,7 @@ jars/imagescience.jar <- src-plugins/imagescience/pom.xml
 plugins/TransformJ_.jar <- src-plugins/TransformJ_/pom.xml
 plugins/FeatureJ_.jar <- src-plugins/FeatureJ_/pom.xml
 plugins/RandomJ_.jar <- src-plugins/RandomJ_/pom.xml
+plugins/Linear_Kuwahara.jar <- src-plugins/Linear_Kuwahara/pom.xml
 
 # pre-Java5 generics ;-)
 

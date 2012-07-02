@@ -83,6 +83,7 @@
 		<module>TransformJ_</module>
 		<module>FeatureJ_</module>
 		<module>RandomJ_</module>
+		<module>Linear_Kuwahara</module>
 	</modules>
 
 	<!-- NB: for project parent -->
