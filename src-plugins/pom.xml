@@ -106,6 +106,7 @@
 		<module>CorrectBleach_</module>
 		<module>javac</module>
 		<module>fiji-scripting</module>
+		<module>Jython_Interpreter</module>
 	</modules>
 
 	<!-- NB: for project parent -->
