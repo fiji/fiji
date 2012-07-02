@@ -375,7 +375,6 @@ CLASSPATH(jars/batik.jar)=jars/jacl.jar:plugins/loci_tools.jar:jars/jython.jar
 CLASSPATH(jars/ij.jar)=jars/javac.jar
 CLASSPATH(plugins/ij-ImageIO_.jar)=jars/ij.jar:jars/jai_core.jar:jars/jai_codec.jar
 CLASSPATH(plugins/Graph_Cut.jar)=jars/ij.jar:jars/imglib.jar:jars/imglib-ij.jar:jars/fiji-lib.jar
-CLASSPATH(plugins/Lasso_and_Blow_Tool.jar)=jars/ij.jar:jars/fiji-lib.jar
 CLASSPATH(jars/weave_jy2java.jar)=plugins/Refresh_Javas.jar:jars/fiji-scripting.jar:jars/fiji-compat.jar:jars/ij.jar:plugins/Script_Editor.jar
 LIBS(plugins/JNI_Example.jar)=-lm
 CLASSPATH(plugins/JNI_Example.jar)=jars/ij.jar:jars/fiji-lib.jar
@@ -474,6 +473,7 @@ plugins/Clojure_Interpreter.jar <- src-plugins/Clojure_Interpreter/pom.xml
 plugins/JRuby_Interpreter.jar <- src-plugins/JRuby_Interpreter/pom.xml
 plugins/BeanShell_Interpreter.jar <- src-plugins/BeanShell_Interpreter/pom.xml
 jars/fiji-lib.jar <- src-plugins/fiji-lib/pom.xml
+plugins/Lasso_and_Blow_Tool.jar <- src-plugins/Lasso_and_Blow_Tool/pom.xml
 
 # pre-Java5 generics ;-)
 
