@@ -367,8 +367,6 @@ plugins/Algorithm_Launcher.jar <- \
 	src-plugins/Algorithm_Launcher/**/*.config
 
 CLASSPATH(plugins/Directionality_.jar)=jars/ij.jar:jars/jfreechart.jar:jars/jcommon.jar
-CLASSPATH(plugins/LSM_Toolbox.jar)=jars/ij.jar:plugins/LSM_Reader.jar
-MAINCLASS(plugins/LSM_Toolbox.jar)=org.imagearchive.lsm.toolbox.gui.AboutDialog
 MAINCLASS(plugins/Interactive_3D_Surface_Plot.jar)=Interactive_3D_Surface_Plot
 CLASSPATH(plugins/Stitching_.jar)=jars/ij.jar:plugins/loci_tools.jar:jars/fiji-lib.jar:jars/imglib.jar:jars/imglib-algorithms.jar:jars/imglib-ij.jar:jars/edu_mines_jtk.jar:plugins/Fiji_Plugins.jar:jars/mpicbg.jar
 CLASSPATH(plugins/Fiji_Plugins.jar)=jars/ij.jar:jars/jsch.jar:jars/fiji-lib.jar:jars/VIB-lib.jar
@@ -479,6 +477,7 @@ plugins/blockmatching_.jar <- src-plugins/blockmatching_/pom.xml
 plugins/bUnwarpJ_.jar <- src-plugins/bUnwarpJ_/pom.xml
 plugins/registration_3d.jar <- src-plugins/registration_3d/pom.xml
 plugins/IO_.jar <- src-plugins/IO_/pom.xml
+plugins/LSM_Toolbox.jar <- src-plugins/LSM_Toolbox/pom.xml
 
 # pre-Java5 generics ;-)
 

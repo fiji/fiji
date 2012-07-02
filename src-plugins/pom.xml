@@ -27,6 +27,7 @@
 		<module>bUnwarpJ_</module>
 		<module>registration_3d</module>
 		<module>IO_</module>
+		<module>LSM_Toolbox</module>
 	</modules>
 
 	<!-- NB: for project parent -->
