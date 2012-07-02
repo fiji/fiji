@@ -89,6 +89,7 @@
 		<module>mij</module>
 		<module>wavelets</module>
 		<module>imageware</module>
+		<module>Extended_Depth_Field</module>
 	</modules>
 
 	<!-- NB: for project parent -->
