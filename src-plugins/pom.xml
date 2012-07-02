@@ -112,6 +112,7 @@
 		<module>BeanShell_Interpreter</module>
 		<module>fiji-lib</module>
 		<module>Lasso_and_Blow_Tool</module>
+		<module>Fiji_Plugins</module>
 	</modules>
 
 	<!-- NB: for project parent -->
