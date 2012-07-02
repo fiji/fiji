@@ -351,7 +351,6 @@ src-plugins/Script_Editor/var.png[bin/copy-file.bsh $PRE $TARGET] <- images/var.
 src-plugins/Script_Editor/function.png[bin/copy-file.bsh $PRE $TARGET] <- images/function.png
 
 CLASSPATH(jars/zs.jar)=jars/Jama.jar
-CLASSPATH(plugins/register_virtual_stack_slices.jar)=jars/ij.jar:plugins/TrakEM2_.jar:jars/mpicbg.jar:plugins/bUnwarpJ_.jar:jars/fiji-lib.jar
 CLASSPATH(plugins/Siox_Segmentation.jar)=jars/ij.jar:jars/fiji-lib.jar
 CLASSPATH(plugins/Image_Expression_Parser.jar)=jars/ij.jar:jars/jep.jar:jars/imglib.jar:jars/junit.jar:jars/imglib-algorithms.jar:jars/imglib-ij.jar
 
@@ -474,6 +473,7 @@ jars/fiji-lib.jar <- src-plugins/fiji-lib/pom.xml
 plugins/Lasso_and_Blow_Tool.jar <- src-plugins/Lasso_and_Blow_Tool/pom.xml
 plugins/Fiji_Plugins.jar <- src-plugins/Fiji_Plugins/pom.xml
 plugins/VIB_.jar <- src-plugins/VIB_/pom.xml
+plugins/register_virtual_stack_slices.jar <- src-plugins/register_virtual_stack_slices/pom.xml
 
 # pre-Java5 generics ;-)
 
