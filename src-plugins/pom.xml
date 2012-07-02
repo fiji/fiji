@@ -85,6 +85,7 @@
 		<module>RandomJ_</module>
 		<module>Linear_Kuwahara</module>
 		<module>Thread_Killer</module>
+		<module>Samples_</module>
 	</modules>
 
 	<!-- NB: for project parent -->

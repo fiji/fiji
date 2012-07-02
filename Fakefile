@@ -473,6 +473,7 @@ plugins/FeatureJ_.jar <- src-plugins/FeatureJ_/pom.xml
 plugins/RandomJ_.jar <- src-plugins/RandomJ_/pom.xml
 plugins/Linear_Kuwahara.jar <- src-plugins/Linear_Kuwahara/pom.xml
 plugins/Thread_Killer.jar <- src-plugins/Thread_Killer/pom.xml
+plugins/Samples_.jar <- src-plugins/Samples_/pom.xml
 
 # pre-Java5 generics ;-)
 
