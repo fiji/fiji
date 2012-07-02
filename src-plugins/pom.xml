@@ -93,6 +93,7 @@
 		<module>panorama_</module>
 		<module>3D_Blob_Segmentation</module>
 		<module>Kuwahara_Filter</module>
+		<module>Action_Bar</module>
 	</modules>
 
 	<!-- NB: for project parent -->
