@@ -99,6 +99,7 @@
 		<module>Dichromacy_</module>
 		<module>Threshold_Colour</module>
 		<module>Helmholtz_Analysis</module>
+		<module>Reconstruct_Reader</module>
 	</modules>
 
 	<!-- NB: for project parent -->
