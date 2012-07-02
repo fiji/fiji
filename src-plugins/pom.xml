@@ -87,6 +87,7 @@
 		<module>Thread_Killer</module>
 		<module>Samples_</module>
 		<module>mij</module>
+		<module>wavelets</module>
 	</modules>
 
 	<!-- NB: for project parent -->
