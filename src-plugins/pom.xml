@@ -101,6 +101,7 @@
 		<module>Helmholtz_Analysis</module>
 		<module>Reconstruct_Reader</module>
 		<module>FS_Align_TrakEM2</module>
+		<module>fiji-compat</module>
 	</modules>
 
 	<!-- NB: for project parent -->

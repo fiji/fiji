@@ -378,7 +378,6 @@ CLASSPATH(jars/autocomplete.jar)=jars/rsyntaxtextarea.jar
 CLASSPATH(jars/jython.jar)=jars/junit.jar:jars/jna.jar
 CLASSPATH(plugins/loci_tools.jar)=jars/ij.jar
 CLASSPATH(jars/batik.jar)=jars/jacl.jar:plugins/loci_tools.jar:jars/jython.jar
-CLASSPATH(jars/fiji-compat.jar)=jars/ij.jar:jars/javassist.jar
 CLASSPATH(jars/fiji-lib.jar)=jars/ij.jar
 CLASSPATH(jars/ij.jar)=jars/javac.jar
 CLASSPATH(plugins/ij-ImageIO_.jar)=jars/ij.jar:jars/jai_core.jar:jars/jai_codec.jar
@@ -474,6 +473,7 @@ plugins/Threshold_Colour.jar <- src-plugins/Threshold_Colour/pom.xml
 plugins/Helmholtz_Analysis.jar <- src-plugins/Helmholtz_Analysis/pom.xml
 plugins/Reconstruct_Reader.jar <- src-plugins/Reconstruct_Reader/pom.xml
 plugins/FS_Align_TrakEM2.jar <- src-plugins/FS_Align_TrakEM2/pom.xml
+jars/fiji-compat.jar <- src-plugins/fiji-compat/pom.xml
 
 # pre-Java5 generics ;-)
 
