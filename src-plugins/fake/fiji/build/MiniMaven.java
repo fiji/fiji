@@ -1423,7 +1423,7 @@ public class MiniMaven {
 			else
 				throw new RuntimeException("Funny ?-) " + ijDir);
 		}
-		for (String suffix : new String[] { "fake.jar", File.separator, "jars", "build", File.separator })
+		for (String suffix : new String[] { "fake.jar", "fake", File.separator, "jars", File.separator, "build", File.separator })
 			if (ijDir.endsWith(suffix))
 				ijDir = ijDir.substring(0, ijDir.length() - suffix.length());
 		System.setProperty("ij.dir", ijDir);
