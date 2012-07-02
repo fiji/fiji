@@ -387,7 +387,6 @@ CLASSPATH(plugins/Lasso_and_Blow_Tool.jar)=jars/ij.jar:jars/fiji-lib.jar
 CLASSPATH(jars/weave_jy2java.jar)=plugins/Refresh_Javas.jar:jars/fiji-scripting.jar:jars/fiji-compat.jar:jars/ij.jar:plugins/Script_Editor.jar
 LIBS(plugins/JNI_Example.jar)=-lm
 CLASSPATH(plugins/JNI_Example.jar)=jars/ij.jar:jars/fiji-lib.jar
-CLASSPATH(plugins/Multi_Kymograph.jar)=jars/ij.jar
 CLASSPATH(plugins/Reconstruct_Reader.jar)=jars/ij.jar:plugins/TrakEM2_.jar
 CLASSPATH(plugins/FS_Align_TrakEM2.jar)=jars/ij.jar:plugins/TrakEM2_.jar
 CLASSPATH(plugins/Colour_Deconvolution.jar)=jars/ij.jar
@@ -474,6 +473,7 @@ plugins/panorama_.jar <- src-plugins/panorama_/pom.xml
 plugins/3D_Blob_Segmentation.jar <- src-plugins/3D_Blob_Segmentation/pom.xml
 plugins/Kuwahara_Filter.jar <- src-plugins/Kuwahara_Filter/pom.xml
 plugins/Action_Bar.jar <- src-plugins/Action_Bar/pom.xml
+plugins/Multi_Kymograph.jar <- src-plugins/Multi_Kymograph/pom.xml
 
 # pre-Java5 generics ;-)
 
