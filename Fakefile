@@ -388,7 +388,6 @@ CLASSPATH(jars/batik.jar)=jars/jacl.jar:plugins/loci_tools.jar:jars/jython.jar
 CLASSPATH(jars/fiji-compat.jar)=jars/ij.jar:jars/javassist.jar
 CLASSPATH(jars/fiji-lib.jar)=jars/ij.jar
 CLASSPATH(jars/ij.jar)=jars/javac.jar
-CLASSPATH(plugins/QuickPALM_.jar)=jars/ij.jar
 CLASSPATH(plugins/ij-ImageIO_.jar)=jars/ij.jar:jars/jai_core.jar:jars/jai_codec.jar
 CLASSPATH(plugins/Snakuscule_.jar)=jars/ij.jar
 CLASSPATH(plugins/UnwarpJ_.jar)=jars/ij.jar
@@ -473,6 +472,7 @@ plugins/Directionality_.jar <- src-plugins/Directionality_/pom.xml
 plugins/Algorithm_Launcher.jar <- src-plugins/Algorithm_Launcher/pom.xml
 plugins/Anisotropic_Diffusion_2D.jar <- src-plugins/Anisotropic_Diffusion_2D/pom.xml
 plugins/Simple_Neurite_Tracer.jar <- src-plugins/Simple_Neurite_Tracer/pom.xml
+plugins/QuickPALM_.jar <- src-plugins/QuickPALM_/pom.xml
 
 # pre-Java5 generics ;-)
 
