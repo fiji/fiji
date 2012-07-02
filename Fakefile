@@ -392,7 +392,6 @@ CLASSPATH(plugins/Colocalisation_Analysis.jar)=jars/ij.jar:jars/imglib2.jar:jars
 CLASSPATH(plugins/Series_Labeler.jar)=jars/ij.jar
 CLASSPATH(plugins/Gray_Morphology.jar)=jars/ij.jar
 CLASSPATH(plugins/IsoData_Classifier.jar)=jars/ij.jar
-CLASSPATH(plugins/ToAST_.jar)=jars/ij.jar
 CLASSPATH(plugins/CPU_Meter.jar)=jars/jna.jar:jars/ij.jar
 CLASSPATH(plugins/Anisotropic_Diffusion_2D.jar)=jars/ij.jar
 CLASSPATH(plugins/Manual_Tracking.jar)=jars/ij.jar:plugins/Image_5D.jar
@@ -476,6 +475,7 @@ plugins/Skeletonize3D_.jar <- src-plugins/Skeletonize3D_/pom.xml
 plugins/TurboReg_.jar <- src-plugins/TurboReg_/pom.xml
 plugins/Feature_Detection.jar <- src-plugins/Feature_Detection/pom.xml
 plugins/Bug_Submitter.jar <- src-plugins/Bug_Submitter/pom.xml
+plugins/ToAST_.jar <- src-plugins/ToAST_/pom.xml
 
 # pre-Java5 generics ;-)
 
