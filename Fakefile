@@ -400,7 +400,6 @@ CLASSPATH(jars/jython.jar)=jars/junit.jar:jars/jna.jar
 CLASSPATH(plugins/Video_Editing.jar)=jars/ij.jar
 CLASSPATH(plugins/Statistical_Region_Merging.jar)=jars/ij.jar
 CLASSPATH(plugins/PIV_analyser.jar)=jars/ij.jar
-CLASSPATH(plugins/MTrack2_.jar)=jars/ij.jar
 CLASSPATH(plugins/loci_tools.jar)=jars/ij.jar
 CLASSPATH(plugins/LocalThickness_.jar)=jars/ij.jar
 CLASSPATH(jars/batik.jar)=jars/jacl.jar:plugins/loci_tools.jar:jars/jython.jar
@@ -476,6 +475,7 @@ plugins/TurboReg_.jar <- src-plugins/TurboReg_/pom.xml
 plugins/Feature_Detection.jar <- src-plugins/Feature_Detection/pom.xml
 plugins/Bug_Submitter.jar <- src-plugins/Bug_Submitter/pom.xml
 plugins/ToAST_.jar <- src-plugins/ToAST_/pom.xml
+plugins/MTrack2_.jar <- src-plugins/MTrack2_/pom.xml
 
 # pre-Java5 generics ;-)
 
