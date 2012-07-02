@@ -95,6 +95,7 @@
 		<module>Kuwahara_Filter</module>
 		<module>Action_Bar</module>
 		<module>Multi_Kymograph</module>
+		<module>Colour_Deconvolution</module>
 	</modules>
 
 	<!-- NB: for project parent -->
