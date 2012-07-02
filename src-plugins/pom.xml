@@ -118,6 +118,7 @@
 		<module>Siox_Segmentation</module>
 		<module>CLI_</module>
 		<module>Javascript_</module>
+		<module>Stitching_</module>
 	</modules>
 
 	<!-- NB: for project parent -->

@@ -352,7 +352,6 @@ CLASSPATH(jars/zs.jar)=jars/Jama.jar
 CLASSPATH(plugins/Image_Expression_Parser.jar)=jars/ij.jar:jars/jep.jar:jars/imglib.jar:jars/junit.jar:jars/imglib-algorithms.jar:jars/imglib-ij.jar
 
 
-CLASSPATH(plugins/Stitching_.jar)=jars/ij.jar:plugins/loci_tools.jar:jars/fiji-lib.jar:jars/imglib.jar:jars/imglib-algorithms.jar:jars/imglib-ij.jar:jars/edu_mines_jtk.jar:plugins/Fiji_Plugins.jar:jars/mpicbg.jar
 CLASSPATH(plugins/TrackMate_.jar)=jars/itextpdf.jar:jars/batik.jar:jars/ij.jar:plugins/3D_Viewer.jar:plugins/loci_tools.jar:jars/fiji-lib.jar:jars/imglib.jar:jars/imglib-ij.jar:jars/imglib-io.jar:jars/imglib-algorithms.jar:jars/jdom.jar:jars/jdom-contrib.jar:jars/jgraphx.jar:jars/jgrapht-jdk1.6.jar:jars/jfreechart.jar:jars/jcommon.jar:jars/Jama.jar:$JAVA3D_JARS
 CLASSPATH(plugins/Trainable_Segmentation.jar)=jars/ij.jar:jars/weka.jar:plugins/Stitching_.jar:jars/fiji-lib.jar:plugins/Anisotropic_Diffusion_2D.jar:jars/Jama.jar:jars/VIB-lib.jar:jars/commons-math.jar:jars/imglib.jar:jars/imglib-ij.jar:jars/imglib-algorithms.jar:jars/imagescience.jar:jars/imglib2.jar:jars/imglib2-ij.jar:jars/imglib2-algorithms.jar:$JAVA3D_JARS
 CLASSPATH(jars/VIB-lib.jar)=jars/ij.jar:jars/Jama.jar:jars/junit.jar:jars/pal-optimization.jar:jars/jzlib.jar:jars/fiji-lib.jar
@@ -474,6 +473,7 @@ plugins/register_virtual_stack_slices.jar <- src-plugins/register_virtual_stack_
 plugins/Siox_Segmentation.jar <- src-plugins/Siox_Segmentation/pom.xml
 plugins/CLI_.jar <- src-plugins/CLI_/pom.xml
 plugins/Javascript_.jar <- src-plugins/Javascript_/pom.xml
+plugins/Stitching_.jar <- src-plugins/Stitching_/pom.xml
 
 # pre-Java5 generics ;-)
 
