@@ -120,6 +120,7 @@
 		<module>Javascript_</module>
 		<module>Stitching_</module>
 		<module>fake</module>
+		<module>Refresh_Javas</module>
 	</modules>
 
 	<!-- NB: for project parent -->
