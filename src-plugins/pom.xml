@@ -32,6 +32,7 @@
 		<module>level_sets</module>
 		<module>Analyze_Reader_Writer</module>
 		<module>Color_Histogram</module>
+		<module>Color_Inspector_3D</module>
 	</modules>
 
 	<!-- NB: for project parent -->

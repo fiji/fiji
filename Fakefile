@@ -409,7 +409,6 @@ CLASSPATH(plugins/Video_Editing.jar)=jars/ij.jar
 CLASSPATH(plugins/Statistical_Region_Merging.jar)=jars/ij.jar
 CLASSPATH(plugins/PIV_analyser.jar)=jars/ij.jar
 CLASSPATH(plugins/Skeletonize3D_.jar)=jars/ij.jar
-CLASSPATH(plugins/Color_Inspector_3D.jar)=jars/ij.jar
 CLASSPATH(plugins/MTrack2_.jar)=jars/ij.jar
 CLASSPATH(plugins/LSM_Reader.jar)=jars/ij.jar
 CLASSPATH(plugins/loci_tools.jar)=jars/ij.jar
@@ -478,6 +477,7 @@ plugins/SplineDeformationGenerator_.jar <- src-plugins/SplineDeformationGenerato
 plugins/level_sets.jar <- src-plugins/level_sets/pom.xml
 plugins/Analyze_Reader_Writer.jar <- src-plugins/Analyze_Reader_Writer/pom.xml
 plugins/Color_Histogram.jar <- src-plugins/Color_Histogram/pom.xml
+plugins/Color_Inspector_3D.jar <- src-plugins/Color_Inspector_3D/pom.xml
 
 # pre-Java5 generics ;-)
 
