@@ -124,6 +124,7 @@
 		<module>Arrow_</module>
 		<module>Colocalisation_Analysis</module>
 		<module>Script_Editor</module>
+		<module>Trainable_Segmentation</module>
 	</modules>
 
 	<!-- NB: for project parent -->
