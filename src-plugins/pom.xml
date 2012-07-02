@@ -122,6 +122,7 @@
 		<module>fake</module>
 		<module>Refresh_Javas</module>
 		<module>Arrow_</module>
+		<module>Colocalisation_Analysis</module>
 	</modules>
 
 	<!-- NB: for project parent -->
