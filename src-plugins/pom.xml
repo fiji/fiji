@@ -105,6 +105,7 @@
 		<module>BalloonSegmentation_</module>
 		<module>CorrectBleach_</module>
 		<module>javac</module>
+		<module>fiji-scripting</module>
 	</modules>
 
 	<!-- NB: for project parent -->

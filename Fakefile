@@ -340,7 +340,6 @@ plugins/Trainable_Segmentation.jar <- src-plugins/Trainable_Segmentation/**/*jav
 mainClass(jars/fiji-compat.jar)=fiji.Main
 
 
-CLASSPATH(jars/fiji-scripting.jar)=jars/ij.jar:jars/jython.jar:jars/fiji-compat.jar:jars/bsh.jar:jars/js.jar
 CLASSPATH(plugins/Refresh_Javas.jar)=jars/ij.jar:jars/fiji-scripting.jar:jars/fake.jar:jars/fiji-compat.jar
 CLASSPATH(plugins/Jython_Interpreter.jar)=jars/ij.jar:jars/fiji-scripting.jar:jars/jython.jar
 CLASSPATH(plugins/Clojure_Interpreter.jar)=jars/ij.jar:jars/fiji-scripting.jar:jars/clojure.jar
@@ -474,6 +473,7 @@ jars/fiji-compat.jar <- src-plugins/fiji-compat/pom.xml
 plugins/BalloonSegmentation_.jar <- src-plugins/BalloonSegmentation_/pom.xml
 plugins/CorrectBleach_.jar <- src-plugins/CorrectBleach_/pom.xml
 jars/javac.jar <- src-plugins/javac/pom.xml
+jars/fiji-scripting.jar <- src-plugins/fiji-scripting/pom.xml
 
 # pre-Java5 generics ;-)
 
