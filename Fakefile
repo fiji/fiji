@@ -472,6 +472,7 @@ jars/weave_jy2java.jar <- src-plugins/weave_jy2java/pom.xml
 plugins/TrackMate_.jar <- src-plugins/TrackMate_/pom.xml
 plugins/Descriptor_based_registration.jar <- src-plugins/Descriptor_based_registration/pom.xml
 plugins/Fiji_Package_Maker.jar <- src-plugins/Fiji_Package_Maker/pom.xml
+jars/Updater_Fix.jar <- src-plugins/Updater_Fix/pom.xml
 
 # pre-Java5 generics ;-)
 
@@ -486,7 +487,6 @@ src-plugins/VIB-lib/math3d/Eigensystem2x2Float.java[src-plugins/VIB-lib/sed.py $
 MAINCLASS(jars/test-fiji.jar)=fiji.Tests
 CLASSPATH(jars/test-fiji.jar)=jars/junit.jar
 
-MAINCLASS(jars/Updater_Fix.jar)=fiji.updater.Fix
 
 # This also compiles lib/<platform>/<ffmpeg-library>
 CLASSPATH(plugins/FFMPEG_IO.jar)=jars/ij.jar

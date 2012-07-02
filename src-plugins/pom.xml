@@ -134,6 +134,7 @@
 		<module>TrackMate_</module>
 		<module>Descriptor_based_registration</module>
 		<module>Fiji_Package_Maker</module>
+		<module>Updater_Fix</module>
 	</modules>
 
 	<!-- NB: for project parent -->
