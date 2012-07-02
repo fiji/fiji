@@ -390,7 +390,6 @@ CLASSPATH(plugins/Snakuscule_.jar)=jars/ij.jar
 CLASSPATH(plugins/UnwarpJ_.jar)=jars/ij.jar
 CLASSPATH(plugins/Graph_Cut.jar)=jars/ij.jar:jars/imglib.jar:jars/imglib-ij.jar:jars/fiji-lib.jar
 CLASSPATH(jars/mij.jar)=jars/ij.jar
-CLASSPATH(plugins/StackReg_.jar)=jars/ij.jar
 CLASSPATH(plugins/Lasso_and_Blow_Tool.jar)=jars/ij.jar:jars/fiji-lib.jar
 CLASSPATH(plugins/Linear_Kuwahara.jar)=jars/ij.jar
 CLASSPATH(plugins/Thread_Killer.jar)=jars/ij.jar
@@ -473,6 +472,7 @@ plugins/Differentials_.jar <- src-plugins/Differentials_/pom.xml
 plugins/MosaicJ_.jar <- src-plugins/MosaicJ_/pom.xml
 plugins/PointPicker_.jar <- src-plugins/PointPicker_/pom.xml
 plugins/SheppLogan_.jar <- src-plugins/SheppLogan_/pom.xml
+plugins/StackReg_.jar <- src-plugins/StackReg_/pom.xml
 
 # pre-Java5 generics ;-)
 
