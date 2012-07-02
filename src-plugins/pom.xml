@@ -115,6 +115,7 @@
 		<module>Fiji_Plugins</module>
 		<module>VIB_</module>
 		<module>register_virtual_stack_slices</module>
+		<module>Siox_Segmentation</module>
 	</modules>
 
 	<!-- NB: for project parent -->
