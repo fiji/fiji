@@ -432,7 +432,6 @@ CLASSPATH(jars/fiji-lib.jar)=jars/ij.jar
 CLASSPATH(jars/ij.jar)=jars/javac.jar
 CLASSPATH(plugins/Analyze_Reader_Writer.jar)=jars/ij.jar
 CLASSPATH(plugins/Calculator_Plus.jar)=jars/ij.jar
-CLASSPATH(plugins/bUnwarpJ_.jar)=jars/ij.jar
 CLASSPATH(plugins/QuickPALM_.jar)=jars/ij.jar
 CLASSPATH(plugins/ij-ImageIO_.jar)=jars/ij.jar:jars/jai_core.jar:jars/jai_codec.jar
 CLASSPATH(plugins/FlowJ_.jar)=jars/ij.jar
@@ -479,6 +478,7 @@ jars/VIB-lib.jar <- src-plugins/VIB-lib/pom.xml
 jars/pal-optimization.jar <- src-plugins/pal-optimization/pom.xml
 jars/Jama.jar <- src-plugins/Jama/pom.xml
 plugins/blockmatching_.jar <- src-plugins/blockmatching_/pom.xml
+plugins/bUnwarpJ_.jar <- src-plugins/bUnwarpJ_/pom.xml
 
 # pre-Java5 generics ;-)
 

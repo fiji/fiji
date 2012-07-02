@@ -24,6 +24,7 @@
 		<module>pal-optimization</module>
 		<module>Jama</module>
 		<module>blockmatching_</module>
+		<module>bUnwarpJ_</module>
 	</modules>
 
 	<!-- NB: for project parent -->
