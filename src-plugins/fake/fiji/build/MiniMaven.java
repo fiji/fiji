@@ -627,6 +627,15 @@ public class MiniMaven {
 						continue;
 					}
 				}
+				// make sure that snapshot .pom files are updated once a day
+				if (!offlineMode && downloadAutomatically && pom != null && dependency.version != null &&
+						dependency.version.endsWith("-SNAPSHOT") && dependency.snapshotVersion == null &&
+						pom.directory.getPath().startsWith(new File(System.getProperty("user.home"), ".m2/repsitory").getPath())) {
+					if (maybeDownloadAutomatically(dependency, !verbose, downloadAutomatically)) {
+						dependency.setSnapshotVersion(parseSnapshotVersion(new File(pom.directory, "maven-metadata-snapshot.xml")));
+						pom = parse(pom.directory, null, dependency.classifier);
+					}
+				}
 				if (pom == null && downloadAutomatically)
 					pom = findPOM(expanded, !verbose, downloadAutomatically);
 				if (pom == null || result.contains(pom))
