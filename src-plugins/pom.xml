@@ -54,6 +54,7 @@
 		<module>Stack_Manipulation</module>
 		<module>FlowJ_</module>
 		<module>PIV_analyser</module>
+		<module>Video_Editing</module>
 	</modules>
 
 	<!-- NB: for project parent -->
