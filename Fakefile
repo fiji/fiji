@@ -400,7 +400,6 @@ CLASSPATH(plugins/AnalyzeSkeleton_.jar)=jars/ij.jar
 CLASSPATH(plugins/CPU_Meter.jar)=jars/jna.jar:jars/ij.jar
 CLASSPATH(plugins/Anisotropic_Diffusion_2D.jar)=jars/ij.jar
 CLASSPATH(plugins/Manual_Tracking.jar)=jars/ij.jar:plugins/Image_5D.jar
-CLASSPATH(plugins/IJ_Robot.jar)=jars/ij.jar
 CLASSPATH(jars/autocomplete.jar)=jars/rsyntaxtextarea.jar
 CLASSPATH(jars/jython.jar)=jars/junit.jar:jars/jna.jar
 CLASSPATH(plugins/Video_Editing.jar)=jars/ij.jar
@@ -477,6 +476,7 @@ plugins/M_I_P.jar <- src-plugins/M_I_P/pom.xml
 plugins/Interactive_3D_Surface_Plot.jar <- src-plugins/Interactive_3D_Surface_Plot/pom.xml
 plugins/View5D_.jar <- src-plugins/View5D_/pom.xml
 plugins/Volume_Viewer.jar <- src-plugins/Volume_Viewer/pom.xml
+plugins/IJ_Robot.jar <- src-plugins/IJ_Robot/pom.xml
 
 # pre-Java5 generics ;-)
 
