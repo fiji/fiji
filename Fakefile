@@ -391,7 +391,6 @@ CLASSPATH(plugins/UnwarpJ_.jar)=jars/ij.jar
 CLASSPATH(plugins/Graph_Cut.jar)=jars/ij.jar:jars/imglib.jar:jars/imglib-ij.jar:jars/fiji-lib.jar
 CLASSPATH(jars/mij.jar)=jars/ij.jar
 CLASSPATH(plugins/StackReg_.jar)=jars/ij.jar
-CLASSPATH(plugins/PointPicker_.jar)=jars/ij.jar
 CLASSPATH(plugins/Lasso_and_Blow_Tool.jar)=jars/ij.jar:jars/fiji-lib.jar
 CLASSPATH(plugins/Linear_Kuwahara.jar)=jars/ij.jar
 CLASSPATH(plugins/Thread_Killer.jar)=jars/ij.jar
@@ -473,6 +472,7 @@ plugins/CPU_Meter.jar <- src-plugins/CPU_Meter/pom.xml
 plugins/TopoJ_.jar <- src-plugins/TopoJ_/pom.xml
 plugins/Differentials_.jar <- src-plugins/Differentials_/pom.xml
 plugins/MosaicJ_.jar <- src-plugins/MosaicJ_/pom.xml
+plugins/PointPicker_.jar <- src-plugins/PointPicker_/pom.xml
 
 # pre-Java5 generics ;-)
 
