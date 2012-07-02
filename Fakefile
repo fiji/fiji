@@ -397,7 +397,6 @@ CLASSPATH(plugins/Manual_Tracking.jar)=jars/ij.jar:plugins/Image_5D.jar
 CLASSPATH(jars/autocomplete.jar)=jars/rsyntaxtextarea.jar
 CLASSPATH(jars/jython.jar)=jars/junit.jar:jars/jna.jar
 CLASSPATH(plugins/Video_Editing.jar)=jars/ij.jar
-CLASSPATH(plugins/Statistical_Region_Merging.jar)=jars/ij.jar
 CLASSPATH(plugins/PIV_analyser.jar)=jars/ij.jar
 CLASSPATH(plugins/loci_tools.jar)=jars/ij.jar
 CLASSPATH(plugins/LocalThickness_.jar)=jars/ij.jar
@@ -476,6 +475,7 @@ plugins/ToAST_.jar <- src-plugins/ToAST_/pom.xml
 plugins/MTrack2_.jar <- src-plugins/MTrack2_/pom.xml
 plugins/Time_Stamper.jar <- src-plugins/Time_Stamper/pom.xml
 plugins/Series_Labeler.jar <- src-plugins/Series_Labeler/pom.xml
+plugins/Statistical_Region_Merging.jar <- src-plugins/Statistical_Region_Merging/pom.xml
 
 # pre-Java5 generics ;-)
 
