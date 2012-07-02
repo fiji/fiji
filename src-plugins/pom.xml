@@ -44,6 +44,7 @@
 		<module>Skeletonize3D_</module>
 		<module>TurboReg_</module>
 		<module>Feature_Detection</module>
+		<module>Bug_Submitter</module>
 	</modules>
 
 	<!-- NB: for project parent -->
