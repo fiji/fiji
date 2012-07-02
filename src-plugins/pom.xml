@@ -91,6 +91,7 @@
 		<module>imageware</module>
 		<module>Extended_Depth_Field</module>
 		<module>panorama_</module>
+		<module>3D_Blob_Segmentation</module>
 	</modules>
 
 	<!-- NB: for project parent -->
