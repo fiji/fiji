@@ -367,7 +367,6 @@ plugins/Algorithm_Launcher.jar <- \
 	src-plugins/Algorithm_Launcher/**/*.config
 
 CLASSPATH(plugins/Directionality_.jar)=jars/ij.jar:jars/jfreechart.jar:jars/jcommon.jar
-MAINCLASS(plugins/Interactive_3D_Surface_Plot.jar)=Interactive_3D_Surface_Plot
 CLASSPATH(plugins/Stitching_.jar)=jars/ij.jar:plugins/loci_tools.jar:jars/fiji-lib.jar:jars/imglib.jar:jars/imglib-algorithms.jar:jars/imglib-ij.jar:jars/edu_mines_jtk.jar:plugins/Fiji_Plugins.jar:jars/mpicbg.jar
 CLASSPATH(plugins/Fiji_Plugins.jar)=jars/ij.jar:jars/jsch.jar:jars/fiji-lib.jar:jars/VIB-lib.jar
 MAINCLASS(plugins/Fiji_Updater.jar)=fiji.updater.Main
@@ -418,7 +417,6 @@ CLASSPATH(plugins/Stack_Manipulation.jar)=jars/ij.jar
 CLASSPATH(jars/fiji-compat.jar)=jars/ij.jar:jars/javassist.jar
 CLASSPATH(plugins/TurboReg_.jar)=jars/ij.jar
 CLASSPATH(plugins/RATS_.jar)=jars/ij.jar
-CLASSPATH(plugins/Interactive_3D_Surface_Plot.jar)=jars/ij.jar
 CLASSPATH(jars/fiji-lib.jar)=jars/ij.jar
 CLASSPATH(jars/ij.jar)=jars/javac.jar
 CLASSPATH(plugins/Calculator_Plus.jar)=jars/ij.jar
@@ -478,6 +476,7 @@ plugins/Analyze_Reader_Writer.jar <- src-plugins/Analyze_Reader_Writer/pom.xml
 plugins/Color_Histogram.jar <- src-plugins/Color_Histogram/pom.xml
 plugins/Color_Inspector_3D.jar <- src-plugins/Color_Inspector_3D/pom.xml
 plugins/M_I_P.jar <- src-plugins/M_I_P/pom.xml
+plugins/Interactive_3D_Surface_Plot.jar <- src-plugins/Interactive_3D_Surface_Plot/pom.xml
 
 # pre-Java5 generics ;-)
 

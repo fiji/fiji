@@ -34,6 +34,7 @@
 		<module>Color_Histogram</module>
 		<module>Color_Inspector_3D</module>
 		<module>M_I_P</module>
+		<module>Interactive_3D_Surface_Plot</module>
 	</modules>
 
 	<!-- NB: for project parent -->
