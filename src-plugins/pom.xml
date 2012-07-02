@@ -100,6 +100,7 @@
 		<module>Threshold_Colour</module>
 		<module>Helmholtz_Analysis</module>
 		<module>Reconstruct_Reader</module>
+		<module>FS_Align_TrakEM2</module>
 	</modules>
 
 	<!-- NB: for project parent -->
