@@ -126,8 +126,12 @@ public class SubFake extends Rule {
 			File srcPlugins = new File(ijDir, "src-plugins");
 			if (submodules.exists())
 				miniMaven.addMultiProjectRoot(submodules);
-			if (srcPlugins.exists())
+			if (srcPlugins.exists()) {
 				miniMaven.addMultiProjectRoot(srcPlugins);
+				File pom = new File(srcPlugins, "pom.xml");
+				if (pom.exists())
+					miniMaven.parse(pom);
+			}
 			miniMaven.excludeFromMultiProjects(file.getParentFile());
 			pom = miniMaven.parse(file);
 			if (!targetBasename.equals(pom.getArtifact()))
