@@ -129,6 +129,7 @@
 		<module>Image_Expression_Parser</module>
 		<module>SPIM_Opener</module>
 		<module>SPIM_Registration</module>
+		<module>Graph_Cut</module>
 	</modules>
 
 	<!-- NB: for project parent -->

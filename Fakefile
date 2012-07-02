@@ -355,7 +355,6 @@ CLASSPATH(plugins/loci_tools.jar)=jars/ij.jar
 CLASSPATH(jars/batik.jar)=jars/jacl.jar:plugins/loci_tools.jar:jars/jython.jar
 CLASSPATH(jars/ij.jar)=jars/javac.jar
 CLASSPATH(plugins/ij-ImageIO_.jar)=jars/ij.jar:jars/jai_core.jar:jars/jai_codec.jar
-CLASSPATH(plugins/Graph_Cut.jar)=jars/ij.jar:jars/imglib.jar:jars/imglib-ij.jar:jars/fiji-lib.jar
 CLASSPATH(jars/weave_jy2java.jar)=plugins/Refresh_Javas.jar:jars/fiji-scripting.jar:jars/fiji-compat.jar:jars/ij.jar:plugins/Script_Editor.jar
 LIBS(plugins/JNI_Example.jar)=-lm
 CLASSPATH(plugins/JNI_Example.jar)=jars/ij.jar:jars/fiji-lib.jar
@@ -472,6 +471,7 @@ jars/jep.jar <- src-plugins/jep/pom.xml
 plugins/Image_Expression_Parser.jar <- src-plugins/Image_Expression_Parser/pom.xml
 plugins/SPIM_Opener.jar <- src-plugins/SPIM_Opener/pom.xml
 plugins/SPIM_Registration.jar <- src-plugins/SPIM_Registration/pom.xml
+plugins/Graph_Cut.jar <- src-plugins/Graph_Cut/pom.xml
 
 # pre-Java5 generics ;-)
 
