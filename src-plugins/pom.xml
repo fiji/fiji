@@ -92,6 +92,7 @@
 		<module>Extended_Depth_Field</module>
 		<module>panorama_</module>
 		<module>3D_Blob_Segmentation</module>
+		<module>Kuwahara_Filter</module>
 	</modules>
 
 	<!-- NB: for project parent -->
