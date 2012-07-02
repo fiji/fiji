@@ -121,6 +121,7 @@
 		<module>Stitching_</module>
 		<module>fake</module>
 		<module>Refresh_Javas</module>
+		<module>Arrow_</module>
 	</modules>
 
 	<!-- NB: for project parent -->
