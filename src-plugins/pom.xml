@@ -58,6 +58,7 @@
 		<module>Sync_Win</module>
 		<module>Gray_Morphology</module>
 		<module>LocalThickness_</module>
+		<module>Fiji_Developer</module>
 	</modules>
 
 	<!-- NB: for project parent -->
