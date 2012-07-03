@@ -3,6 +3,7 @@ package mpicbg.spim.registration;
 import ij.IJ;
 import ij.ImagePlus;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Date;
 
@@ -13,6 +14,7 @@ import javax.vecmath.Matrix4f;
 import mpicbg.imglib.algorithm.gauss.DownSample;
 import mpicbg.imglib.algorithm.mirror.MirrorImage;
 import mpicbg.imglib.container.ContainerFactory;
+import mpicbg.imglib.container.cell.CellContainerFactory;
 import mpicbg.imglib.cursor.Cursor;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.image.display.imagej.ImageJFunctions;
@@ -393,8 +395,25 @@ public class ViewDataBeads implements Comparable< ViewDataBeads >
 
 				if ( image == null )
 				{
-					IJ.error( "Cannot find file: " + s );
-					return null;
+					IJ.log( "Cannot open file: " + s );
+					
+					File f = new File( s );
+					if ( f.exists() )
+					{
+						IJ.log( "File: " + f.getAbsolutePath() + " exists, trying to open with CellImg." );
+						image = LOCI.openLOCIFloatType( s, new CellContainerFactory( 256 ) );
+						
+						if ( image == null )
+						{
+							IJ.log( "Opening file: " + f.getAbsolutePath() + " with CellImg failed, too." );
+							return null;
+						}
+					}
+					else
+					{
+						IJ.log( "File does not exist: " + f.getAbsolutePath() );
+						return null;	
+					}
 				}
 			}
 
