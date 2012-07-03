@@ -379,8 +379,8 @@ public class MiniMaven {
 			List<String> notUpToDates = new ArrayList<String>();
 			long lastModified = addRecursively(notUpToDates, source, ".java", target, ".class", false);
 			int count = notUpToDates.size();
-			if (count != 0)
-				return false;
+			if (count == 0)
+				return true;
 			long lastModified2 = updateRecursively(new File(source.getParentFile(), "resources"), target, true);
 			if (lastModified < lastModified2)
 				lastModified = lastModified2;
