@@ -5,13 +5,14 @@ import java.util.Date;
 import java.util.Vector;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import mpicbg.imglib.algorithm.integral.IntegralImageLong;
 import mpicbg.imglib.algorithm.scalespace.DifferenceOfGaussianPeak;
 import mpicbg.imglib.algorithm.scalespace.DifferenceOfGaussianReal1;
 import mpicbg.imglib.algorithm.scalespace.SubpixelLocalization;
 import mpicbg.imglib.cursor.LocalizableByDimCursor;
 import mpicbg.imglib.cursor.LocalizableCursor;
+import mpicbg.imglib.function.Converter;
 import mpicbg.imglib.image.Image;
-import mpicbg.imglib.image.display.imagej.ImageJFunctions;
 import mpicbg.imglib.multithreading.Chunk;
 import mpicbg.imglib.multithreading.SimpleMultiThreading;
 import mpicbg.imglib.outofbounds.OutOfBoundsStrategyFactory;
@@ -19,7 +20,9 @@ import mpicbg.imglib.outofbounds.OutOfBoundsStrategyMirrorFactory;
 import mpicbg.imglib.type.numeric.RealType;
 import mpicbg.imglib.type.numeric.integer.LongType;
 import mpicbg.imglib.type.numeric.real.FloatType;
+import mpicbg.imglib.util.Util;
 import mpicbg.spim.io.IOFunctions;
+import mpicbg.spim.registration.ViewDataBeads;
 import mpicbg.spim.registration.ViewStructure;
 
 public class DetectionSegmentation 
@@ -210,6 +213,31 @@ public class DetectionSegmentation
 		return sigmaDiff;
 	}
 
+	public static ArrayList< DifferenceOfGaussianPeak< FloatType > > extractBeadsIntegralImage( 
+			final ViewDataBeads view, final float minIntensity )
+	{
+		final Image< FloatType > img = view.getImage( false ); 
+		IntegralImageLong< FloatType > intImg = new IntegralImageLong<FloatType>( img, new LongType(), new Converter< FloatType, LongType >()
+		{
+			@Override
+			public void convert( final FloatType input, final LongType output ) { output.set( Util.round( input.get() ) ); } 
+		} );
+		intImg.process();
+		final Image< LongType > integralImg = intImg.getResult();
+
+		final FloatType min = new FloatType();
+		final FloatType max = new FloatType();
+		
+		computeMinMax( img, min, max );
+		
+		//final Image< FloatType > dom = img.createNewImage();
+		
+		// in-place
+		computeDifferencOfMean( integralImg, img, 3, 3, 3, 5, 5, 5, min.get(), max.get() );
+		
+		return null;
+	}
+	
 	final private static void computeDifferencOfMean( final Image< LongType> integralImg, final Image< FloatType > domImg, final int sx1, final int sy1, final int sz1, final int sx2, final int sy2, final int sz2, final float min, final float max  )
 	{
 		final float sumPixels1 = sx1 * sy1 * sz1;
