@@ -2,15 +2,23 @@ package mpicbg.spim.registration.detection;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.Vector;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import mpicbg.imglib.algorithm.scalespace.DifferenceOfGaussianPeak;
 import mpicbg.imglib.algorithm.scalespace.DifferenceOfGaussianReal1;
 import mpicbg.imglib.algorithm.scalespace.SubpixelLocalization;
+import mpicbg.imglib.cursor.LocalizableByDimCursor;
+import mpicbg.imglib.cursor.LocalizableCursor;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.image.display.imagej.ImageJFunctions;
+import mpicbg.imglib.multithreading.Chunk;
+import mpicbg.imglib.multithreading.SimpleMultiThreading;
 import mpicbg.imglib.outofbounds.OutOfBoundsStrategyFactory;
 import mpicbg.imglib.outofbounds.OutOfBoundsStrategyMirrorFactory;
 import mpicbg.imglib.type.numeric.RealType;
+import mpicbg.imglib.type.numeric.integer.LongType;
+import mpicbg.imglib.type.numeric.real.FloatType;
 import mpicbg.spim.io.IOFunctions;
 import mpicbg.spim.registration.ViewStructure;
 
@@ -200,5 +208,139 @@ public class DetectionSegmentation
 		sigmaDiff[ 1 ] = getDiffSigma( imageSigma, sigma[ 1 ] );
 
 		return sigmaDiff;
-	}	
+	}
+
+	final private static void computeDifferencOfMean( final Image< LongType> integralImg, final Image< FloatType > domImg, final int sx1, final int sy1, final int sz1, final int sx2, final int sy2, final int sz2, final float min, final float max  )
+	{
+		final float sumPixels1 = sx1 * sy1 * sz1;
+		final float sumPixels2 = sx2 * sy2 * sz2;
+		
+		final int sx1Half = sx1 / 2;
+		final int sy1Half = sy1 / 2;
+		final int sz1Half = sz1 / 2;
+
+		final int sx2Half = sx2 / 2;
+		final int sy2Half = sy2 / 2;
+		final int sz2Half = sz2 / 2;
+		
+		final int sxHalfMax = Math.max( sx1Half, sx2Half );
+		final int syHalfMax = Math.max( sy1Half, sy2Half );
+		final int szHalfMax = Math.max( sz1Half, sz2Half );
+
+		final int w = domImg.getDimension( 0 ) - ( Math.max( sx1, sx2 ) / 2 ) * 2;
+		final int h = domImg.getDimension( 1 ) - ( Math.max( sy1, sy2 ) / 2 ) * 2;
+		final int d = domImg.getDimension( 2 ) - ( Math.max( sz1, sz2 ) / 2 ) * 2;
+				
+		final long imageSize = domImg.getNumPixels();
+
+		final AtomicInteger ai = new AtomicInteger(0);					
+        final Thread[] threads = SimpleMultiThreading.newThreads();
+
+        final Vector<Chunk> threadChunks = SimpleMultiThreading.divideIntoChunks( imageSize, threads.length );
+		
+        for (int ithread = 0; ithread < threads.length; ++ithread)
+            threads[ithread] = new Thread(new Runnable()
+            {
+                public void run()
+                {
+                	// Thread ID
+                	final int myNumber = ai.getAndIncrement();
+        
+                	// get chunk of pixels to process
+                	final Chunk myChunk = threadChunks.get( myNumber );
+                	final long loopSize = myChunk.getLoopSize();
+                	
+            		final LocalizableCursor< FloatType > cursor = domImg.createLocalizableCursor();
+            		final LocalizableByDimCursor< LongType > randomAccess = integralImg.createLocalizableByDimCursor();
+
+            		cursor.fwd( myChunk.getStartPosition() );
+            		
+            		// do as many pixels as wanted by this thread
+                    for ( long j = 0; j < loopSize; ++j )
+                    {                    	
+            			final FloatType result = cursor.next();
+            			
+            			final int x = cursor.getPosition( 0 );
+            			final int y = cursor.getPosition( 1 );
+            			final int z = cursor.getPosition( 2 );
+            			
+            			final int xt = x - sxHalfMax;
+            			final int yt = y - syHalfMax;
+            			final int zt = z - szHalfMax;
+            			
+            			if ( xt >= 0 && yt >= 0 && zt >= 0 && xt < w && yt < h && zt < d )
+            			{
+            				final float s1 = computeSum( x - sx1Half, y - sy1Half, z - sz1Half, sx1, sy1, sz1, randomAccess ) / sumPixels1;
+            				final float s2 = computeSum( x - sx2Half, y - sy2Half, z - sz2Half, sx2, sy2, sz2, randomAccess ) / sumPixels2;
+            			
+            				result.set( ( s2 - s1 ) / ( max - min ) );
+            			}
+                    }
+                }
+            });
+        
+        SimpleMultiThreading.startAndJoin( threads );
+ 	}
+	
+	/**
+	 * Compute the average in the area
+	 * 
+	 * @param fromX - start coordinate in x (exclusive in integral image coordinates, inclusive in image coordinates)
+	 * @param fromY - start coordinate in y (exclusive in integral image coordinates, inclusive in image coordinates)
+	 * @param fromZ - start coordinate in z (exclusive in integral image coordinates, inclusive in image coordinates)
+	 * @param sX - number of pixels in x
+	 * @param sY - number of pixels in y
+	 * @param sZ - number of pixels in z
+	 * @param randomAccess - randomAccess on the integral image
+	 * @return
+	 */
+	final private static long computeSum( final int fromX, final int fromY, final int fromZ, final int vX, final int vY, final int vZ, final LocalizableByDimCursor< LongType > randomAccess )
+	{
+		randomAccess.setPosition( fromX, 0 );
+		randomAccess.setPosition( fromY, 1 );
+		randomAccess.setPosition( fromZ, 2 );
+		
+		long sum = -randomAccess.getType().get();
+		
+		randomAccess.move( vX, 0 );
+		sum += randomAccess.getType().get();
+		
+		randomAccess.move( vY, 1 );
+		sum += -randomAccess.getType().get();
+		
+		randomAccess.move( -vX, 0 );
+		sum += randomAccess.getType().get();
+		
+		randomAccess.move( vZ, 2 );
+		sum += -randomAccess.getType().get();
+		
+		randomAccess.move( vX, 0 );
+		sum += randomAccess.getType().get();
+		
+		randomAccess.move( -vY, 1 );
+		sum += -randomAccess.getType().get();
+		
+		randomAccess.move( -vX, 0 );
+		sum += randomAccess.getType().get();
+		
+		return sum;
+	}
+
+	final static void computeMinMax( final Image< FloatType > img, final FloatType min, final FloatType max )
+	{
+		min.set( Float.MAX_VALUE );
+		max.set( Float.MIN_VALUE );
+		
+		for ( final FloatType t : img )
+		{
+			final float value = t.get();
+			
+			if ( value > max.get() )
+				max.set( value );
+			
+			if ( value < min.get() )
+				min.set( value );
+		}
+	}
+
 }
