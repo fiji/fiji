@@ -125,21 +125,23 @@ public class GuiReader {
 		passNewPluginToWizard();
 
 		{ // Read settings
+			logger.log("  Loading settings...");
 			settings = reader.getSettings();
-			logger.log("  Reading settings done.\n");
+			echoDone();
 
 			// Try to read image
+			logger.log("  Loading image...");
 			imp = reader.getImage();		
 			if (null == imp) {
 				// Provide a dummy empty image if linked image can't be found
-				logger.log("Could not find image "+settings.imageFileName+" in "+settings.imageFolder+". Substituting dummy image.\n");
+				logger.log("\nCould not find image "+settings.imageFileName+" in "+settings.imageFolder+". Substituting dummy image.\n");
 				imp = NewImage.createByteImage("Empty", settings.width, settings.height, settings.nframes * settings.nslices, NewImage.FILL_BLACK);
 				imp.setDimensions(1, settings.nslices, settings.nframes);
 			}
 
 			settings.imp = imp;
 			model.setSettings(settings);
-			logger.log("  Reading image done.\n");
+			echoDone();
 			// We display it only if we have a GUI
 
 			// Update start panel
@@ -149,18 +151,19 @@ public class GuiReader {
 
 
 		{ // Try to read segmenter settings
+			logger.log("  Reading segmenter settings...");
 			reader.getSegmenterSettings(settings);
 			SegmenterSettings segmenterSettings = settings.segmenterSettings;
 			if (null == segmenterSettings) {
+				echoNotFound();
 				// Stop at start panel
 				targetDescriptor = StartDialogPanel.DESCRIPTOR;
 				if (!imp.isVisible())
 					imp.show();
-				logger.log("Loading data finished.\n");
+				echoLoadingFinished();
 				return;
 			}
-
-			logger.log("  Reading segmenter settings done.\n");
+			echoDone();
 
 			// Update 2nd panel: segmenter choice
 			SegmenterChoiceDescriptor segmenterChoiceDescriptor = (SegmenterChoiceDescriptor) wizard.getPanelDescriptorFor(SegmenterChoiceDescriptor.DESCRIPTOR);
@@ -176,19 +179,21 @@ public class GuiReader {
 
 
 		{ // Try to read spots
+			logger.log("  Loading spots...");
 			SpotCollection spots = reader.getAllSpots();
 			if (null == spots) {
+				echoNotFound();
 				// No spots, so we stop here, and switch to the segmenter panel
 				targetDescriptor = SegmenterConfigurationPanelDescriptor.DESCRIPTOR;
 				if (!imp.isVisible())
 					imp.show();
-				logger.log("Loading data finished.\n");
+				echoLoadingFinished();
 				return;
 			}
 
 			// We have a spot field, update the model.
 			model.setSpots(spots, false);
-			logger.log("  Reading spots done.\n");
+			echoDone();
 
 			// Next panel that needs to know is the initial filter one
 			InitFilterPanel panel = (InitFilterPanel) wizard.getPanelDescriptorFor(InitFilterPanel.DESCRIPTOR);
@@ -197,19 +202,21 @@ public class GuiReader {
 
 
 		{ // Try to read the initial threshold
+			logger.log("  Loading initial spot filter...");
 			FeatureFilter initialThreshold = reader.getInitialFilter();
 			if (initialThreshold == null) {
+				echoNotFound();
 				// No initial threshold, so set it
 				targetDescriptor = InitFilterPanel.DESCRIPTOR;
 				if (!imp.isVisible())
 					imp.show();
-				logger.log("Loading data finished.\n");
+				echoLoadingFinished();
 				return;
 			}
 
 			// Store it in model
 			model.getSettings().initialSpotFilterValue = initialThreshold.value;
-			logger.log("  Reading initial spot filter done.\n");
+			echoDone();
 
 		}		
 
@@ -218,8 +225,10 @@ public class GuiReader {
 		spotFilterDescriptor.setPlugin(plugin);
 
 		{ // Try to read feature thresholds
+			logger.log("  Loading spot filters...");
 			List<FeatureFilter> featureThresholds = reader.getSpotFeatureFilters();
 			if (null == featureThresholds) {
+				echoNotFound();
 				// No feature thresholds, we assume we have the features calculated, and put ourselves
 				// in a state such that the threshold GUI will be displayed.
 				spotFilterDescriptor.aboutToDisplayPanel();
@@ -229,20 +238,22 @@ public class GuiReader {
 				wizard.setDisplayer(displayer);
 				if (!imp.isVisible())
 					imp.show();
-				logger.log("Loading data finished.\n");
+				echoLoadingFinished();
 				return;
 			}
 
 			// Store thresholds in model
 			model.getSettings().setSpotFilters(featureThresholds);
 			spotFilterDescriptor.aboutToDisplayPanel();
-			logger.log("  Reading spot filters done.\n");
+			echoDone();
 		}
 
 
 		{ // Try to read spot selection
+			logger.log("  Loading spot selection...");
 			SpotCollection selectedSpots = reader.getFilteredSpots(model.getSpots());
 			if (null == selectedSpots) {
+				echoNotFound();
 				// No spot selection, so we display the feature threshold GUI, with the loaded feature threshold
 				// already in place.
 				targetDescriptor = SpotFilterDescriptor.DESCRIPTOR;
@@ -251,19 +262,21 @@ public class GuiReader {
 				wizard.setDisplayer(displayer);
 				if (!imp.isVisible())
 					imp.show();
-				logger.log("Loading data finished.\n");
+				echoLoadingFinished();
 				return;
 			}
 
 			model.setFilteredSpots(selectedSpots, false);
-			logger.log("  Reading spot selection done.\n");
+			echoDone();
 		}
 
 
 		{ // Try to read tracker settings
+			logger.log("  Loading tracker settings...");
 			reader.getTrackerSettings(settings);
 			TrackerSettings trackerSettings = settings.trackerSettings;
 			if (null == trackerSettings) {
+				echoNotFound();
 				model.setSettings(settings);
 				targetDescriptor = SpotFilterDescriptor.DESCRIPTOR;
 				displayer.setModel(model);
@@ -271,12 +284,12 @@ public class GuiReader {
 				wizard.setDisplayer(displayer);
 				if (!imp.isVisible())
 					imp.show();
-				logger.log("Loading data finished.\n");
+				echoLoadingFinished();
 				return;
 			}
 
 			model.setSettings(settings);
-			logger.log("  Reading tracker settings done.\n");
+			echoDone();
 		}
 
 
@@ -293,8 +306,10 @@ public class GuiReader {
 
 
 		{ // Try reading the tracks
+			logger.log("  Loading tracks...");
 			SimpleWeightedGraph<Spot, DefaultWeightedEdge> graph = reader.readTrackGraph(model.getFilteredSpots());
 			if (graph == null) {
+				echoNotFound();
 				targetDescriptor = TrackerConfigurationPanelDescriptor.DESCRIPTOR;
 				displayer.setModel(model);
 				displayer.render();
@@ -302,29 +317,31 @@ public class GuiReader {
 				if (!imp.isVisible())
 					imp.show();
 				trackerDescriptor.aboutToDisplayPanel();
-				logger.log("Loading data finished.\n");
+				echoLoadingFinished();
 				return;
 			}
 			model.setGraph(graph);
 			model.setTrackSpots(reader.readTrackSpots(graph));
 			model.setTrackEdges(reader.readTrackEdges(graph));
 			trackerDescriptor.aboutToDisplayPanel();
-			logger.log("  Reading tracks done.\n");
+			echoDone();
 		}
 
 		{ // Try reading track filters
+			logger.log("  Loading track filters...");
 			model.getSettings().setTrackFilters(reader.getTrackFeatureFilters());
 			if (model.getSettings().getTrackFilters() == null) {
+				echoNotFound();
 				targetDescriptor = TrackFilterDescriptor.DESCRIPTOR;
 				displayer.setModel(model);
 				displayer.render();
 				wizard.setDisplayer(displayer);
 				if (!imp.isVisible())
 					imp.show();
-				logger.log("Loading data finished.\n");
+				echoLoadingFinished();
 				return;
 			}
-			logger.log("  Reading track filters done.\n");
+			echoDone();
 		}
 
 
@@ -332,8 +349,10 @@ public class GuiReader {
 		TrackFilterDescriptor trackFilterDescriptor = (TrackFilterDescriptor) wizard.getPanelDescriptorFor(TrackFilterDescriptor.DESCRIPTOR);
 
 		{ // Try reading track selection
+			logger.log("  Loading track selection...");
 			model.setVisibleTrackIndices(reader.getFilteredTracks(), false);
 			if (model.getVisibleTrackIndices() == null) {
+				echoNotFound();
 				targetDescriptor = TrackFilterDescriptor.DESCRIPTOR;
 				displayer.setModel(model);
 				displayer.render();
@@ -341,11 +360,11 @@ public class GuiReader {
 				if (!imp.isVisible())
 					imp.show();
 				trackFilterDescriptor.aboutToDisplayPanel();
-				logger.log("Loading data finished.\n");
+				echoLoadingFinished();
 				return;
 			}
 			trackFilterDescriptor.aboutToDisplayPanel();
-			logger.log("  Reading track selection done.\n");
+			echoDone();
 		}
 
 		targetDescriptor = DisplayerPanel.DESCRIPTOR;
@@ -359,7 +378,7 @@ public class GuiReader {
 		DisplayerPanel displayerPanel = (DisplayerPanel) wizard.getPanelDescriptorFor(DisplayerPanel.DESCRIPTOR);
 		displayerPanel.aboutToDisplayPanel();
 
-		logger.log("Loading data finished.\n");
+		echoLoadingFinished();
 	}
 
 	/**
@@ -425,4 +444,17 @@ public class GuiReader {
 			descriptor.setPlugin(plugin);
 		}
 	}
+	
+	private void echoDone() {
+		logger.log("\b\b\b done.\n");
+	}
+	
+	private void echoNotFound() {
+		logger.log(" Not found.\n");
+	}
+	
+	private void echoLoadingFinished() {
+		logger.log("Loading data finished.\n");
+	}
+	
 }
