@@ -478,7 +478,7 @@ public class TrackMate_ implements PlugIn {
 		final AtomicInteger ai = new AtomicInteger(settings.tstart);
 		for (int ithread = 0; ithread < threads.length; ithread++) {
 
-			threads[ithread] = new Thread("TrackMate spot feature calculating thread "+(1+ithread)+"/"+threads.length) {  
+			threads[ithread] = new Thread("TrackMate spot detection thread "+(1+ithread)+"/"+threads.length) {  
 
 				public void run() {
 

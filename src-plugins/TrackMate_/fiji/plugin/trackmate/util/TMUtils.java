@@ -873,6 +873,10 @@ public class TMUtils {
 		case TIME:
 			units = settings.timeUnits;
 			break;
+		case VELOCITY:
+			units = settings.spaceUnits + "/" + settings.timeUnits;
+		default:
+			break;
 		}
 		return units;
 	}
