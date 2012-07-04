@@ -646,7 +646,6 @@ public class MiniMaven {
 						pom.directory.getPath().startsWith(mavenRepository.getPath())) {
 					if (maybeDownloadAutomatically(dependency, !verbose, downloadAutomatically)) {
 						dependency.setSnapshotVersion(parseSnapshotVersion(new File(pom.directory, "maven-metadata-snapshot.xml")));
-						pom = parse(pom.directory, null, dependency.classifier);
 					}
 				}
 				if (pom == null && downloadAutomatically)
