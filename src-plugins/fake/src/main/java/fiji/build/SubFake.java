@@ -105,6 +105,8 @@ public class SubFake extends Rule {
 		return file.exists() ? file : null;
 	}
 
+	protected MiniMaven miniMaven;
+
 	public POM getPOM() {
 		if (pomRead)
 			return pom;
@@ -118,22 +120,24 @@ public class SubFake extends Rule {
 			targetBasename = targetBasename.substring(0, targetBasename.length() - 4);
 		// TODO: targetBasename could end in "-<version>"
 		try {
-			MiniMaven miniMaven = new MiniMaven(parser.fake, parser.fake.err, getVarBool("VERBOSE"), getVarBool("DEBUG"));
-			miniMaven.downloadAutomatically = !miniMaven.offlineMode;
-			MiniMaven.ensureIJDirIsSet();
-			String ijDir = System.getProperty("ij.dir");
-			File submodules = new File(ijDir, "modules");
-			File srcPlugins = new File(ijDir, "src-plugins");
-			miniMaven.excludeFromMultiProjects(file.getParentFile());
-			if (submodules.exists()) {
-				miniMaven.excludeFromMultiProjects(new File(submodules, "clojure"));
-				miniMaven.addMultiProjectRoot(submodules);
-			}
-			if (srcPlugins.exists()) {
-				miniMaven.addMultiProjectRoot(srcPlugins);
-				File pom = new File(srcPlugins, "pom.xml");
-				if (pom.exists())
-					miniMaven.parse(pom);
+			if (miniMaven == null) {
+				miniMaven = new MiniMaven(parser.fake, parser.fake.err, getVarBool("VERBOSE"), getVarBool("DEBUG"));
+				miniMaven.downloadAutomatically = !miniMaven.offlineMode;
+				MiniMaven.ensureIJDirIsSet();
+				String ijDir = System.getProperty("ij.dir");
+				File submodules = new File(ijDir, "modules");
+				File srcPlugins = new File(ijDir, "src-plugins");
+				miniMaven.excludeFromMultiProjects(file.getParentFile());
+				if (submodules.exists()) {
+					miniMaven.excludeFromMultiProjects(new File(submodules, "clojure"));
+					miniMaven.addMultiProjectRoot(submodules);
+				}
+				if (srcPlugins.exists()) {
+					miniMaven.addMultiProjectRoot(srcPlugins);
+					File pom = new File(srcPlugins, "pom.xml");
+					if (pom.exists())
+						miniMaven.parse(pom);
+				}
 			}
 			pom = miniMaven.parse(file);
 			if (!targetBasename.equals(pom.getArtifact()))
