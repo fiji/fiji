@@ -217,7 +217,7 @@ public class DetectionSegmentation
 			final ViewDataBeads view, final float minIntensity )
 	{
 		final Image< FloatType > img = view.getImage( false ); 
-		IntegralImageLong< FloatType > intImg = new IntegralImageLong<FloatType>( img, new LongType(), new Converter< FloatType, LongType >()
+		IntegralImageLong< FloatType > intImg = new IntegralImageLong<FloatType>( img, new Converter< FloatType, LongType >()
 		{
 			@Override
 			public void convert( final FloatType input, final LongType output ) { output.set( Util.round( input.get() ) ); } 
