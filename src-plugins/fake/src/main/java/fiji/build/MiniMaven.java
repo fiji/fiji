@@ -124,7 +124,9 @@ public class MiniMaven {
 		XMLReader reader = SAXParserFactory.newInstance().newSAXParser().getXMLReader();
 		reader.setContentHandler(pom);
 		//reader.setXMLErrorHandler(...);
-		reader.parse(new InputSource(new FileInputStream(file)));
+		FileInputStream in = new FileInputStream(file);
+		reader.parse(new InputSource(in));
+		in.close();
 
 		if (pom.packaging.equals("jar") && !directory.getPath().startsWith(mavenRepository.getPath())) {
 			pom.buildFromSource = true;
