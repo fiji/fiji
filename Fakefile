@@ -103,7 +103,6 @@ SUBMODULE_TARGETS=\
 	jars/VectorString.jar \
 	plugins/TrakEM2_.jar \
 	plugins/mpicbg_.jar \
-	jars/clojure.jar \
 	plugins/ij-ImageIO_.jar \
 	jars/jacl.jar \
 	jars/batik.jar \
@@ -302,7 +301,6 @@ CLASSPATH(jars/imglib2-scripting.jar)=jars/ij.jar:jars/imglib2.jar:jars/imglib2-
 jars/imglib2-scripting.jar <- modules/imglib/
 CLASSPATH(jars/imglib2-ops.jar)=jars/imglib2.jar
 jars/imglib2-ops.jar <- modules/imglib/
-jars/clojure.jar <- modules/clojure/
 plugins/loci_tools.jar <- modules/bio-formats/
 CLASSPATH(plugins/loci_tools.jar)=jars/imglib2.jar
 CLASSPATH(jars/VectorString.jar)=jars/ij.jar:jars/Jama.jar:$JAVA3D_JARS
@@ -529,7 +527,6 @@ precompile-submodules[] <- \
 	precompiled/TrakEM2_.jar \
 	precompiled/mpicbg_.jar \
 	precompiled/mpicbg.jar \
-	precompiled/clojure.jar \
 	precompiled/ij-ImageIO_.jar \
 	precompiled/jacl.jar \
 	precompiled/batik.jar \
@@ -545,7 +542,6 @@ precompile-submodules[] <- \
 	precompiled/jsch.jar \
 
 precompiled/ij.jar <- jars/ij.jar
-precompiled/clojure.jar <- jars/clojure.jar
 precompiled/jacl.jar <- jars/jacl.jar
 precompiled/batik.jar <- jars/batik.jar
 precompiled/junit.jar <- jars/junit.jar

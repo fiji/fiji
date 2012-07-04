@@ -124,15 +124,17 @@ public class SubFake extends Rule {
 			String ijDir = System.getProperty("ij.dir");
 			File submodules = new File(ijDir, "modules");
 			File srcPlugins = new File(ijDir, "src-plugins");
-			if (submodules.exists())
+			miniMaven.excludeFromMultiProjects(file.getParentFile());
+			if (submodules.exists()) {
+				miniMaven.excludeFromMultiProjects(new File(submodules, "clojure"));
 				miniMaven.addMultiProjectRoot(submodules);
+			}
 			if (srcPlugins.exists()) {
 				miniMaven.addMultiProjectRoot(srcPlugins);
 				File pom = new File(srcPlugins, "pom.xml");
 				if (pom.exists())
 					miniMaven.parse(pom);
 			}
-			miniMaven.excludeFromMultiProjects(file.getParentFile());
 			pom = miniMaven.parse(file);
 			if (!targetBasename.equals(pom.getArtifact()))
 				pom = pom.findPOM(new Coordinate(null, targetBasename, null), miniMaven.verbose, miniMaven.downloadAutomatically);
