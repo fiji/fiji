@@ -212,7 +212,7 @@ public class DetectionSegmentation
 
 		return sigmaDiff;
 	}
-
+	/*
 	public static ArrayList< DifferenceOfGaussianPeak< FloatType > > extractBeadsIntegralImage( 
 			final ViewDataBeads view, final float minIntensity )
 	{
@@ -310,7 +310,7 @@ public class DetectionSegmentation
         SimpleMultiThreading.startAndJoin( threads );
  	}
 	
-	/**
+	**
 	 * Compute the average in the area
 	 * 
 	 * @param fromX - start coordinate in x (exclusive in integral image coordinates, inclusive in image coordinates)
@@ -321,7 +321,7 @@ public class DetectionSegmentation
 	 * @param sZ - number of pixels in z
 	 * @param randomAccess - randomAccess on the integral image
 	 * @return
-	 */
+	 *
 	final private static long computeSum( final int fromX, final int fromY, final int fromZ, final int vX, final int vY, final int vZ, final LocalizableByDimCursor< LongType > randomAccess )
 	{
 		randomAccess.setPosition( fromX, 0 );
@@ -370,5 +370,5 @@ public class DetectionSegmentation
 				min.set( value );
 		}
 	}
-
+	*/
 }
