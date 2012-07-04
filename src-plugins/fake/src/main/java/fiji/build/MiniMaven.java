@@ -54,6 +54,17 @@ public class MiniMaven {
 	protected Stack<File> multiProjectRoots = new Stack<File>();
 	protected Set<File> excludedFromMultiProjects = new HashSet<File>();
 	protected Fake fake;
+	protected final static File mavenRepository;
+
+	static {
+		File repository = new File(System.getProperty("user.home"), ".m2/repository");
+		try {
+			repository = repository.getCanonicalFile();
+		} catch (IOException e) {
+			// ignore
+		}
+		mavenRepository = repository;
+	}
 
 	protected static boolean isInteractiveConsole() {
 		// We want to compile/run with Java5, so we cannot test System.console() directly
@@ -115,7 +126,7 @@ public class MiniMaven {
 		//reader.setXMLErrorHandler(...);
 		reader.parse(new InputSource(new FileInputStream(file)));
 
-		if (pom.packaging.equals("jar") && !directory.getPath().startsWith(new File(System.getProperty("user.home"), ".m2/repository").getPath())) {
+		if (pom.packaging.equals("jar") && !directory.getPath().startsWith(mavenRepository.getPath())) {
 			pom.buildFromSource = true;
 			pom.target = new File(directory, "target/classes");
 		}
@@ -630,7 +641,7 @@ public class MiniMaven {
 				// make sure that snapshot .pom files are updated once a day
 				if (!offlineMode && downloadAutomatically && pom != null && dependency.version != null &&
 						dependency.version.endsWith("-SNAPSHOT") && dependency.snapshotVersion == null &&
-						pom.directory.getPath().startsWith(new File(System.getProperty("user.home"), ".m2/repsitory").getPath())) {
+						pom.directory.getPath().startsWith(mavenRepository.getPath())) {
 					if (maybeDownloadAutomatically(dependency, !verbose, downloadAutomatically)) {
 						dependency.setSnapshotVersion(parseSnapshotVersion(new File(pom.directory, "maven-metadata-snapshot.xml")));
 						pom = parse(pom.directory, null, dependency.classifier);
@@ -784,7 +795,7 @@ public class MiniMaven {
 				return cacheAndReturn(key, null);
 			}
 
-			String path = System.getProperty("user.home") + "/.m2/repository/" + dependency.groupId.replace('.', '/') + "/" + dependency.artifactId + "/";
+			String path = mavenRepository.getPath() + "/" + dependency.groupId.replace('.', '/') + "/" + dependency.artifactId + "/";
 			if (dependency.version == null)
 				dependency.version = findLocallyCachedVersion(path);
 			if (dependency.version == null) {
@@ -1122,7 +1133,7 @@ public class MiniMaven {
 
 	protected void downloadAndVerify(String repositoryURL, Coordinate dependency, boolean quiet) throws MalformedURLException, IOException, NoSuchAlgorithmException, ParserConfigurationException, SAXException {
 		String path = "/" + dependency.groupId.replace('.', '/') + "/" + dependency.artifactId + "/" + dependency.version + "/";
-		File directory = new File(System.getProperty("user.home") + "/.m2/repository" + path);
+		File directory = new File(mavenRepository, path);
 		if (dependency.version.endsWith("-SNAPSHOT")) {
 			// Only check snapshots once per day
 			File snapshotMetaData = new File(directory, "maven-metadata-snapshot.xml");
@@ -1142,7 +1153,7 @@ public class MiniMaven {
 		}
 		else if (dependency.version.startsWith("[")) {
 			path = "/" + dependency.groupId.replace('.', '/') + "/" + dependency.artifactId + "/";
-			directory = new File(System.getProperty("user.home") + "/.m2/repository" + path);
+			directory = new File(mavenRepository, path);
 
 			// Only check versions once per day
 			File versionMetaData = new File(directory, "maven-metadata-version.xml");
@@ -1156,7 +1167,7 @@ public class MiniMaven {
 			if (dependency.version == null)
 				throw new IOException("No version found in " + metadataURL);
 			path = "/" + dependency.groupId.replace('.', '/') + "/" + dependency.artifactId + "/" + dependency.version + "/";
-			directory = new File(System.getProperty("user.home") + "/.m2/repository" + path);
+			directory = new File(mavenRepository, path);
 			if (new File(directory, dependency.getJarName()).exists() &&
 					new File(directory, dependency.getPOMName()).exists())
 				return;
