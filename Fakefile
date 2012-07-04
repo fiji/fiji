@@ -121,7 +121,6 @@ SUBMODULE_TARGETS=\
 	jars/imglib2-algorithms-gpl.jar \
 	jars/imglib2-ij.jar \
 	jars/imglib2-io.jar \
-	jars/imglib2-ui.jar \
 	jars/mpicbg.jar \
 	jars/commons-math.jar \
 	jars/javassist.jar \
@@ -303,8 +302,6 @@ CLASSPATH(jars/imglib2-scripting.jar)=jars/ij.jar:jars/imglib2.jar:jars/imglib2-
 jars/imglib2-scripting.jar <- modules/imglib/
 CLASSPATH(jars/imglib2-ops.jar)=jars/imglib2.jar
 jars/imglib2-ops.jar <- modules/imglib/
-CLASSPATH(jars/imglib2-ui.jar)=jars/imglib2.jar:jars/imglib2-io.jar:plugins/loci_tools.jar
-jars/imglib2-ui.jar <- jars/imglib2-io.jar modules/imglib/
 jars/clojure.jar <- modules/clojure/
 plugins/loci_tools.jar <- modules/bio-formats/
 CLASSPATH(plugins/loci_tools.jar)=jars/imglib2.jar

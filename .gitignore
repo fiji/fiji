@@ -371,7 +371,6 @@ hs_err*.log
 /modules/imglib/imglib2-io.jar
 /modules/imglib/imglib2-ops.jar
 /modules/imglib/imglib2-scripting.jar
-/modules/imglib/imglib2-ui.jar
 /modules/imglib/imglib2.jar
 /modules/javassist/build/
 /modules/javassist/html/
@@ -407,7 +406,6 @@ hs_err*.log
 /jars/imglib2-ij.jar
 /jars/imglib2-io.jar
 /jars/imglib2-ops.jar
-/jars/imglib2-ui.jar
 /jars/imglib2.jar
 
 # Bio-Formats #
