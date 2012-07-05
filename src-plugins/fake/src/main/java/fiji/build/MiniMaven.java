@@ -1,6 +1,7 @@
 package fiji.build;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -32,6 +33,7 @@ import java.util.Stack;
 import java.util.TreeSet;
 
 import java.util.jar.JarOutputStream;
+import java.util.jar.Manifest;
 
 import java.util.zip.ZipEntry;
 
@@ -500,7 +502,20 @@ public class MiniMaven {
 			}
 
 			if (makeJar) {
-				JarOutputStream out = new JarOutputStream(new FileOutputStream(getTarget()));
+				JarOutputStream out;
+				if (mainClass == null)
+					out = new JarOutputStream(new FileOutputStream(getTarget()));
+				else {
+					Manifest manifest = null;
+					if (mainClass != null) {
+						String text = "Manifest-Version: 1.0\nMain-Class: " + mainClass + "\n";
+						InputStream input = new ByteArrayInputStream(text.getBytes());
+						try {
+							manifest = new Manifest(input);
+						} catch(Exception e) { }
+					}
+					out = new JarOutputStream(new FileOutputStream(getTarget()), manifest);
+				}
 				addToJarRecursively(out, target, "");
 				out.close();
 			}
