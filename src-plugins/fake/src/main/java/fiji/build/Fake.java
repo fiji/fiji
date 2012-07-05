@@ -139,7 +139,9 @@ public class Fake {
 		}
 		else if (ijHome.startsWith("file:/")) {
 			ijHome = ijHome.substring(5, slash + 1);
-			if (ijHome.endsWith("/src-plugins/"))
+			if (ijHome.endsWith("/src-plugins/fake/target/"))
+				ijHome = Util.stripSuffix(ijHome, "src-plugins/fake/target/");
+			else if (ijHome.endsWith("/src-plugins/"))
 				ijHome = Util.stripSuffix(ijHome, "src-plugins/");
 			else if (ijHome.endsWith("/build/jars/"))
 				ijHome = Util.stripSuffix(ijHome, "build/jars/");
