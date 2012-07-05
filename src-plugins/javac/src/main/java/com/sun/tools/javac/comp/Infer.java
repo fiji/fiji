@@ -353,43 +353,53 @@ public class Infer {
             }
         }
 
-        // minimize as yet undetermined type variables
-        for (Type t : undetvars)
-            minimizeInst((UndetVar) t, warn);
+        int undetCount = undetvars.length();
+        for (;;) {
+            // minimize as yet undetermined type variables
+            for (Type t : undetvars)
+                minimizeInst((UndetVar) t, warn);
 
-        /** Type variables instantiated to bottom */
-        ListBuffer<Type> restvars = new ListBuffer<Type>();
+            /** Type variables instantiated to bottom */
+            ListBuffer<Type> restvars = new ListBuffer<Type>();
 
-        /** Instantiated types or TypeVars if under-constrained */
-        ListBuffer<Type> insttypes = new ListBuffer<Type>();
+            /** Instantiated types or TypeVars if under-constrained */
+            ListBuffer<Type> insttypes = new ListBuffer<Type>();
 
-        /** Instantiated types or UndetVars if under-constrained */
-        ListBuffer<Type> undettypes = new ListBuffer<Type>();
+            /** Instantiated types or UndetVars if under-constrained */
+            ListBuffer<Type> undettypes = new ListBuffer<Type>();
 
-        for (Type t : undetvars) {
-            UndetVar uv = (UndetVar)t;
-            if (uv.inst.tag == BOT) {
-                restvars.append(uv.qtype);
-                insttypes.append(uv.qtype);
-                undettypes.append(uv);
-                uv.inst = null;
-            } else {
-                insttypes.append(uv.inst);
-                undettypes.append(uv.inst);
+            for (Type t : undetvars) {
+                UndetVar uv = (UndetVar)t;
+                if (uv.inst.tag == BOT) {
+                    restvars.append(uv.qtype);
+                    insttypes.append(uv.qtype);
+                    undettypes.append(uv);
+                    uv.inst = null;
+                } else {
+                    insttypes.append(uv.inst);
+                    undettypes.append(uv.inst);
+                }
             }
-        }
-        checkWithinBounds(tvars, undettypes.toList(), warn);
+            checkWithinBounds(tvars, undettypes.toList(), warn);
 
-        if (!restvars.isEmpty()) {
-            // if there are uninstantiated variables,
-            // quantify result type with them
-            mt = new MethodType(mt.argtypes,
-                                new ForAll(restvars.toList(), mt.restype),
-                                mt.thrown, syms.methodClass);
-        }
+            // if we managed to resolve some types, but there are still
+            // some undetermined types, try again
+            if (undetCount > 0 && undetCount != restvars.length()) {
+                undetCount = restvars.length();
+                continue;
+            }
 
-        // return instantiated version of method type
-        return types.subst(mt, tvars, insttypes.toList());
+            if (!restvars.isEmpty()) {
+                // if there are uninstantiated variables,
+                // quantify result type with them
+                mt = new MethodType(mt.argtypes,
+                                    new ForAll(restvars.toList(), mt.restype),
+                                    mt.thrown, syms.methodClass);
+            }
+
+            // return instantiated version of method type
+            return types.subst(mt, tvars, insttypes.toList());
+        }
     }
     //where
 
