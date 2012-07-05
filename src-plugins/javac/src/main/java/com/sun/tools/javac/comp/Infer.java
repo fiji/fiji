@@ -299,42 +299,36 @@ public class Infer {
      */
     public Type instantiateMethod(List<Type> tvars,
                                   MethodType mt,
-                                  final List<Type> argtypes,
-                                  final boolean allowBoxing,
-                                  final boolean useVarargs,
-                                  final Warner warn) throws InferenceException {
+                                  List<Type> argtypes,
+                                  boolean allowBoxing,
+                                  boolean useVarargs,
+                                  Warner warn) throws NoInstanceException {
         //-System.err.println("instantiateMethod(" + tvars + ", " + mt + ", " + argtypes + ")"); //DEBUG
         List<Type> undetvars = Type.map(tvars, fromTypeVarFun);
         List<Type> formals = mt.argtypes;
-        //need to capture exactly once - otherwise subsequent
-        //applicability checks might fail
-        final List<Type> capturedArgs = types.capture(argtypes);
-        List<Type> actuals = capturedArgs;
-        List<Type> actualsNoCapture = argtypes;
+
         // instantiate all polymorphic argument types and
         // set up lower bounds constraints for undetvars
         Type varargsFormal = useVarargs ? formals.last() : null;
-        while (actuals.nonEmpty() && formals.head != varargsFormal) {
-            Type formal = formals.head;
-            Type actual = actuals.head.baseType();
-            Type actualNoCapture = actualsNoCapture.head.baseType();
-            if (actual.tag == FORALL)
-                actual = instantiateArg((ForAll)actual, formal, tvars, warn);
-            Type undetFormal = types.subst(formal, tvars, undetvars);
+        while (argtypes.nonEmpty() && formals.head != varargsFormal) {
+            Type ft = formals.head;
+            Type at = argtypes.head.baseType();
+            if (at.tag == FORALL)
+                at = instantiateArg((ForAll) at, ft, tvars, warn);
+            Type sft = types.subst(ft, tvars, undetvars);
             boolean works = allowBoxing
-                ? types.isConvertible(actual, undetFormal, warn)
-                : types.isSubtypeUnchecked(actual, undetFormal, warn);
+                ? types.isConvertible(at, sft, warn)
+                : types.isSubtypeUnchecked(at, sft, warn);
             if (!works) {
                 throw unambiguousNoInstanceException
                     .setMessage("no.conforming.assignment.exists",
-                                tvars, actualNoCapture, formal);
+                                tvars, at, ft);
             }
             formals = formals.tail;
-            actuals = actuals.tail;
-            actualsNoCapture = actualsNoCapture.tail;
+            argtypes = argtypes.tail;
         }
         if (formals.head != varargsFormal || // not enough args
-            !useVarargs && actuals.nonEmpty()) { // too many args
+            !useVarargs && argtypes.nonEmpty()) { // too many args
             // argument lists differ in length
             throw unambiguousNoInstanceException
                 .setMessage("arg.length.mismatch");
@@ -342,21 +336,20 @@ public class Infer {
 
         // for varargs arguments as well
         if (useVarargs) {
-            Type elemType = types.elemtype(varargsFormal);
-            Type elemUndet = types.subst(elemType, tvars, undetvars);
-            while (actuals.nonEmpty()) {
-                Type actual = actuals.head.baseType();
-                Type actualNoCapture = actualsNoCapture.head.baseType();
-                if (actual.tag == FORALL)
-                    actual = instantiateArg((ForAll)actual, elemType, tvars, warn);
-                boolean works = types.isConvertible(actual, elemUndet, warn);
+            Type elt = types.elemtype(varargsFormal);
+            Type sft = types.subst(elt, tvars, undetvars);
+            while (argtypes.nonEmpty()) {
+                Type ft = sft;
+                Type at = argtypes.head.baseType();
+                if (at.tag == FORALL)
+                    at = instantiateArg((ForAll) at, ft, tvars, warn);
+                boolean works = types.isConvertible(at, sft, warn);
                 if (!works) {
                     throw unambiguousNoInstanceException
                         .setMessage("no.conforming.assignment.exists",
-                                    tvars, actualNoCapture, elemType);
+                                    tvars, at, ft);
                 }
-                actuals = actuals.tail;
-                actualsNoCapture = actualsNoCapture.tail;
+                argtypes = argtypes.tail;
             }
         }
 
@@ -366,9 +359,6 @@ public class Infer {
 
         /** Type variables instantiated to bottom */
         ListBuffer<Type> restvars = new ListBuffer<Type>();
-
-        /** Undet vars instantiated to bottom */
-        final ListBuffer<Type> restundet = new ListBuffer<Type>();
 
         /** Instantiated types or TypeVars if under-constrained */
         ListBuffer<Type> insttypes = new ListBuffer<Type>();
@@ -380,7 +370,6 @@ public class Infer {
             UndetVar uv = (UndetVar)t;
             if (uv.inst.tag == BOT) {
                 restvars.append(uv.qtype);
-                restundet.append(uv);
                 insttypes.append(uv.qtype);
                 undettypes.append(uv);
                 uv.inst = null;
