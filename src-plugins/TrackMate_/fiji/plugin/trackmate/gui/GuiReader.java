@@ -7,14 +7,12 @@ import ij.gui.NewImage;
 import java.awt.FileDialog;
 import java.io.File;
 import java.io.FilenameFilter;
-import java.io.IOException;
 import java.util.List;
 
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
-import org.jdom.JDOMException;
 import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.graph.SimpleWeightedGraph;
 
@@ -104,18 +102,10 @@ public class GuiReader {
 		// Open and parse file
 		logger.log("Opening file "+file.getName()+'\n');
 		TmXmlReader reader = new TmXmlReader(file, logger);
-		try {
-			reader.parse();
-		} catch (JDOMException e) {
-			logger.error("Problem parsing "+file.getName()+", it is not a valid TrackMate XML file.\nError message is:\n"
-					+e.getLocalizedMessage()+'\n');
-		} catch (IOException e) {
-			logger.error("Problem reading "+file.getName()
-					+".\nError message is:\n"+e.getLocalizedMessage()+'\n');
-		}
+		reader.parse();
 		logger.log("  Parsing file done.\n");
 
-
+		
 		// Retrieve data and update GUI
 		Settings settings = null;
 		ImagePlus imp = null;
@@ -251,7 +241,7 @@ public class GuiReader {
 
 		{ // Try to read spot selection
 			logger.log("  Loading spot selection...");
-			SpotCollection selectedSpots = reader.getFilteredSpots(model.getSpots());
+			SpotCollection selectedSpots = reader.getFilteredSpots();
 			if (null == selectedSpots) {
 				echoNotFound();
 				// No spot selection, so we display the feature threshold GUI, with the loaded feature threshold
@@ -307,7 +297,7 @@ public class GuiReader {
 
 		{ // Try reading the tracks
 			logger.log("  Loading tracks...");
-			SimpleWeightedGraph<Spot, DefaultWeightedEdge> graph = reader.readTrackGraph(model.getFilteredSpots());
+			SimpleWeightedGraph<Spot, DefaultWeightedEdge> graph = reader.readTrackGraph();
 			if (graph == null) {
 				echoNotFound();
 				targetDescriptor = TrackerConfigurationPanelDescriptor.DESCRIPTOR;
@@ -323,6 +313,7 @@ public class GuiReader {
 			model.setGraph(graph);
 			model.setTrackSpots(reader.readTrackSpots(graph));
 			model.setTrackEdges(reader.readTrackEdges(graph));
+			reader.readTrackFeatures(model.getFeatureModel());
 			trackerDescriptor.aboutToDisplayPanel();
 			echoDone();
 		}

@@ -38,9 +38,9 @@ public class GUIReader_TestDrive {
 		
 		
 		GuiReader greader = new GuiReader(wizard);
+		file = greader.askForFile(file);
 
 		System.out.println("Opening file: "+file.getAbsolutePath());		
-		greader.askForFile(file);
 		
 		plugin = greader.getPlugin();
 		greader.loadFile(file);

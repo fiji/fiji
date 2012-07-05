@@ -25,8 +25,9 @@ public class HangingTracking_TestDrive {
 
 		TmXmlReader reader = new TmXmlReader(file, Logger.DEFAULT_LOGGER);
 		reader.parse();
+		@SuppressWarnings("unused")
 		SpotCollection spots = reader.getAllSpots();
-		SpotCollection filteredSpots = reader.getFilteredSpots(spots);
+		SpotCollection filteredSpots = reader.getFilteredSpots();
 		TrackMateModel model = reader.getModel();
 
 		int frame = 1;

@@ -76,8 +76,9 @@ public class TmXmlKeys {
 	 * ALL SPOTS element
 	 */
 
-	public static final String SPOT_COLLECTION_ELEMENT_KEY 			= "AllSpots";
-	public static final String SPOT_FRAME_COLLECTION_ELEMENT_KEY 	= "SpotsInFrame"; 
+	public static final String SPOT_COLLECTION_ELEMENT_KEY 				= "AllSpots";
+	public static final String SPOT_COLLECTION_NSPOTS_ATTRIBUTE_NAME 	= "nspots";
+	public static final String SPOT_FRAME_COLLECTION_ELEMENT_KEY 		= "SpotsInFrame"; 
 	public static final String SPOT_ELEMENT_KEY 						= "Spot"; 
 
 	/*

@@ -298,6 +298,8 @@ public class TmXmlWriter {
 		Element spotElement;
 		Element frameSpotsElement;
 		Element spotCollection = new Element(SPOT_COLLECTION_ELEMENT_KEY);
+		// Store total number of spots
+		spotCollection.setAttribute(SPOT_COLLECTION_NSPOTS_ATTRIBUTE_NAME, ""+allSpots.getNSpots());
 
 		for(int frame : allSpots.keySet()) {
 

@@ -170,7 +170,10 @@ public class TMUtils {
 
 
 
-
+	/** 
+	 * Read and return an integer attribute from a JDom {@link Element}, and substitute a default value of 0
+	 * if the attribute is not found or of the wrong type.
+	 */
 	public static  final int readIntAttribute(Element element, String name, Logger logger) {
 		return readIntAttribute(element, name, logger, 0);
 	}

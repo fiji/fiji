@@ -1,9 +1,6 @@
 package fiji.plugin.trackmate.tests;
 
 import java.io.File;
-import java.io.IOException;
-
-import org.jdom.JDOMException;
 
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.TrackMateModel;
@@ -32,14 +29,8 @@ public class NNTrackerTest {
 		TmXmlReader reader = new TmXmlReader(file, Logger.DEFAULT_LOGGER);
 		TrackMateModel model = null;
 		// Parse
-		try {
-			reader.parse();
-			model = reader.getModel();
-		} catch (JDOMException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+		reader.parse();
+		model = reader.getModel();
 		
 		System.out.println("All spots: "+ model.getSpots());
 		System.out.println("Filtered spots: "+ model.getFilteredSpots());

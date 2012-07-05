@@ -12,9 +12,11 @@ import ij.ImagePlus;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import mpicbg.imglib.type.numeric.RealType;
 
@@ -44,14 +46,24 @@ import fiji.plugin.trackmate.tracking.TrackerSettings;
 
 
 public class TmXmlReader {
-	
-	private static final boolean DEBUG = false;
 
+	private static final boolean DEBUG = false;
+//	private static final boolean useMultithreading = TrackMate_.DEFAULT_USE_MULTITHREADING; // Not yet
 
 	private Document document = null;
 	private File file;
 	private Element root;
 	private Logger logger;
+	/** A map of all spots loaded. We need this for performance, since we need to recreate 
+	 * both the filtered spot collection and the tracks graph from the same spot objects 
+	 * that the main spot collection.. In the file, they are referenced by their {@link Spot#ID()},
+	 * and parsing them all to retrieve the one with the right ID is a drag.
+	 * We made this cache a {@link ConcurrentHashMap} because we hope to load large data in a 
+	 * multi-threaded way.
+	 */
+	private ConcurrentHashMap<Integer, Spot> cache;
+	/** A flag to indicate whether we already parsed the file. */
+	private boolean parsed = false;
 
 	/*
 	 * CONSTRUCTOR
@@ -73,11 +85,19 @@ public class TmXmlReader {
 	 * Parse the file to create a JDom {@link Document}. This method must be called before using any of
 	 * the other getter methods.
 	 */
-	public void parse() throws JDOMException,  IOException {
-		//		SAXBuilder sb = new LineNumberSAXBuilder();
+	public void parse() {
 		SAXBuilder sb = new SAXBuilder();
-		document = sb.build(file);
+		try {
+			document = sb.build(file);
+		} catch (JDOMException e) {
+			logger.error("Problem parsing "+file.getName()+", it is not a valid TrackMate XML file.\nError message is:\n"
+					+e.getLocalizedMessage()+'\n');
+		} catch (IOException e) {
+			logger.error("Problem reading "+file.getName()
+					+".\nError message is:\n"+e.getLocalizedMessage()+'\n');
+		}
 		root = document.getRootElement();
+		parsed = true;
 	}
 
 	/**
@@ -86,6 +106,9 @@ public class TmXmlReader {
 	 * @throws DataConversionException 
 	 */
 	public TrackMateModel getModel() {
+		if (!parsed)
+			parse();
+
 		TrackMateModel model = new TrackMateModel();
 		// Settings
 		Settings settings = getSettings();
@@ -101,11 +124,11 @@ public class TmXmlReader {
 		model.getSettings().setSpotFilters(spotFilters);
 		// Spots
 		SpotCollection allSpots = getAllSpots();
-		SpotCollection filteredSpots = getFilteredSpots(allSpots);
+		SpotCollection filteredSpots = getFilteredSpots();
 		model.setSpots(allSpots, false);
 		model.setFilteredSpots(filteredSpots, false);
 		// Tracks
-		SimpleWeightedGraph<Spot, DefaultWeightedEdge> graph = readTrackGraph(filteredSpots);
+		SimpleWeightedGraph<Spot, DefaultWeightedEdge> graph = readTrackGraph();
 		if (null != graph) {
 			model.setGraph(graph);
 		}
@@ -121,26 +144,28 @@ public class TmXmlReader {
 		}
 		// Track features
 		readTrackFeatures(model.getFeatureModel());
-		
+
 		// Return
 		return model;
 	}
 
-	
-	
+
+
 	public void readTrackFeatures(FeatureModel featureModel) {
-		
+		if (!parsed)
+			parse();
+
 		Element allTracksElement = root.getChild(TRACK_COLLECTION_ELEMENT_KEY);
 		if (null == allTracksElement)
 			return;
-		
+
 		featureModel.initFeatureMap();
 
 		// Load tracks
 		@SuppressWarnings("unchecked")
 		List<Element> trackElements = allTracksElement.getChildren(TRACK_ELEMENT_KEY);
 		for (Element trackElement : trackElements) {
-			
+
 			int trackID = -1;
 			try {
 				trackID = trackElement.getAttribute(TRACK_ID_ATTRIBUTE_NAME).getIntValue();
@@ -148,11 +173,11 @@ public class TmXmlReader {
 				logger.error("Found a track with invalid trackID. Skipping.\n");
 				continue;
 			}
-			
+
 			@SuppressWarnings("unchecked")
 			List<Attribute> attributes = trackElement.getAttributes();
 			for(Attribute attribute : attributes) {
-				
+
 				String attName = attribute.getName();
 				if (attName.equals(TRACK_ID_ATTRIBUTE_NAME)) { // Skip trackID attribute
 					continue;
@@ -165,22 +190,25 @@ public class TmXmlReader {
 					logger.error("Track "+trackID+": Cannot read the feature "+attName+" value. Skipping.\n");
 					continue;
 				}
-				
+
 				featureModel.putTrackFeature(trackID, attName, attVal); 
-				
+
 			}
-			
-			
+
+
 		}
-		
+
 	}
-	
+
 
 	/**
 	 * Return the initial threshold on quality stored in this file.
 	 * Return <code>null</code> if the initial threshold data cannot be found in the file.
 	 */
 	public FeatureFilter getInitialFilter()  {
+		if (!parsed)
+			parse();
+
 		Element itEl = root.getChild(INITIAL_SPOT_FILTER_ELEMENT_KEY);
 		if (null == itEl)
 			return null;
@@ -198,6 +226,9 @@ public class TmXmlReader {
 	 */
 	@SuppressWarnings("unchecked")
 	public List<FeatureFilter> getSpotFeatureFilters() {
+		if (!parsed)
+			parse();
+
 		List<FeatureFilter> featureThresholds = new ArrayList<FeatureFilter>();
 		Element ftCollectionEl = root.getChild(SPOT_FILTER_COLLECTION_ELEMENT_KEY);
 		if (null == ftCollectionEl)
@@ -219,6 +250,9 @@ public class TmXmlReader {
 	 */
 	@SuppressWarnings("unchecked")
 	public List<FeatureFilter> getTrackFeatureFilters() {
+		if (!parsed)
+			parse();
+
 		List<FeatureFilter> featureThresholds = new ArrayList<FeatureFilter>();
 		Element ftCollectionEl = root.getChild(TRACK_FILTER_COLLECTION_ELEMENT_KEY);
 		if (null == ftCollectionEl)
@@ -244,6 +278,9 @@ public class TmXmlReader {
 	 * @throws DataConversionException 
 	 */
 	public Settings getSettings() {
+		if (!parsed)
+			parse();
+
 		Settings settings = new Settings();
 		// Basic settings
 		Element settingsEl = root.getChild(SETTINGS_ELEMENT_KEY);
@@ -291,6 +328,9 @@ public class TmXmlReader {
 	 */
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public void getSegmenterSettings(Settings settings) {
+		if (!parsed)
+			parse();
+
 		Element element = root.getChild(SEGMENTER_SETTINGS_ELEMENT_KEY);
 		if (null == element) {
 			return;
@@ -366,6 +406,9 @@ public class TmXmlReader {
 	 * @param settings  the base {@link Settings} object to update.
 	 */
 	public void getTrackerSettings(Settings settings) {
+		if (!parsed)
+			parse();
+
 		Element element = root.getChild(TRACKER_SETTINGS_ELEMENT_KEY);
 		if (null == element) {
 			return;
@@ -430,16 +473,46 @@ public class TmXmlReader {
 
 	/**
 	 * Return the list of all spots stored in this file.
-	 * @throws DataConversionException  if the attribute values are not formatted properly in the file.
+	 * <p>
+	 * Internally, this methods also builds the cache field, which will be required by the
+	 * following methods:
+	 * <ul>
+	 * 	<li> {@link #getFilteredSpots()}
+	 * 	<li> {@link #readTrackGraph()}
+	 * 	<li> {@link #readTrackEdges(SimpleWeightedGraph)}
+	 * 	<li> {@link #readTrackSpots(SimpleWeightedGraph)}
+	 * </ul>
+	 * It is therefore sensible to call this method first, just afther {@link #parse()}ing the file.
+	 * If not called, this method will be called anyway by the other methods to build the cache.
+	 * 
 	 * @return  a {@link SpotCollection}. Return <code>null</code> if the spot section is not present in the file.
 	 */
 	@SuppressWarnings("unchecked")
 	public SpotCollection getAllSpots() {
+		if (!parsed)
+			parse();
+
+		// Root element for collection
 		Element spotCollection = root.getChild(SPOT_COLLECTION_ELEMENT_KEY);
 		if (null == spotCollection)
 			return null;
 
+		// Retrieve children elements for each frame
 		List<Element> frameContent = spotCollection.getChildren(SPOT_FRAME_COLLECTION_ELEMENT_KEY);
+
+		// Determine total number of spots
+		int nspots = readIntAttribute(spotCollection, SPOT_COLLECTION_NSPOTS_ATTRIBUTE_NAME, Logger.VOID_LOGGER);
+		if (nspots == 0) {
+			// Could not find it or read it. Determine it by quick sweeping through children element
+			for (Element currentFrameContent : frameContent) {
+				nspots += currentFrameContent.getChildren(SPOT_ELEMENT_KEY).size();
+			}
+		}
+
+		// Instantiate cache
+		cache = new ConcurrentHashMap<Integer, Spot>(nspots);
+
+		// Load collection and build cache
 		int currentFrame = 0;
 		ArrayList<Spot> spotList;
 		SpotCollection allSpots = new SpotCollection();
@@ -452,6 +525,7 @@ public class TmXmlReader {
 			for (Element spotElement : spotContent) {
 				Spot spot = createSpotFrom(spotElement);
 				spotList.add(spot);
+				cache.put(spot.ID(), spot);
 			}
 
 			allSpots.put(currentFrame, spotList);	
@@ -471,38 +545,34 @@ public class TmXmlReader {
 	 * Return <code>null</code> if the spot selection section does is not present in the file.
 	 */
 	@SuppressWarnings("unchecked")
-	public SpotCollection getFilteredSpots(SpotCollection allSpots)  {
+	public SpotCollection getFilteredSpots()  {
+		if (!parsed)
+			parse();
+
 		Element selectedSpotCollection = root.getChild(FILTERED_SPOT_ELEMENT_KEY);
 		if (null == selectedSpotCollection)
 			return null;
+
+		if (null == cache)
+			getAllSpots(); // build it if it's not here
 
 		int currentFrame = 0;
 		int ID;
 		ArrayList<Spot> spotList;
 		List<Element> spotContent;
-		List<Spot> spotsThisFrame;
 		SpotCollection spotSelection = new SpotCollection();
 		List<Element> frameContent = selectedSpotCollection.getChildren(FILTERED_SPOT_COLLECTION_ELEMENT_KEY);
 
 		for (Element currentFrameContent : frameContent) {
 			currentFrame = readIntAttribute(currentFrameContent, FRAME_ATTRIBUTE_NAME, logger);
-			// Get spot list from main list
-			spotsThisFrame = allSpots.get(currentFrame);
-			if (null == spotsThisFrame)
-				continue;
 
 			spotContent = currentFrameContent.getChildren(SPOT_ID_ELEMENT_KEY);
 			spotList = new ArrayList<Spot>(spotContent.size());
 			// Loop over all spot element
 			for (Element spotEl : spotContent) {
+				// Find corresponding spot in cache
 				ID = readIntAttribute(spotEl, SPOT_ID_ATTRIBUTE_NAME, logger);
-				// Find corresponding spot in main list
-				for (Spot spot : spotsThisFrame) {
-					if (ID == spot.ID()) {
-						spotList.add(spot);
-						break;
-					}
-				}
+				spotList.add(cache.get(ID));
 			}
 
 			spotSelection.put(currentFrame, spotList);
@@ -519,15 +589,18 @@ public class TmXmlReader {
 	 * @param selectedSpots  the spot selection from which tracks area made 
 	 */
 	@SuppressWarnings("unchecked")
-	public SimpleWeightedGraph<Spot, DefaultWeightedEdge> readTrackGraph(final SpotCollection spots) {
+	public SimpleWeightedGraph<Spot, DefaultWeightedEdge> readTrackGraph() {
+		if (!parsed)
+			parse();
 
 		Element allTracksElement = root.getChild(TRACK_COLLECTION_ELEMENT_KEY);
 		if (null == allTracksElement)
 			return null;
 
+		if (null == cache) 
+			getAllSpots(); // build the cache if it's not there
+
 		final SimpleWeightedGraph<Spot, DefaultWeightedEdge> graph = new SimpleWeightedGraph<Spot, DefaultWeightedEdge>(DefaultWeightedEdge.class);
-		for (Spot spot : spots)
-			graph.addVertex(spot);
 
 		// Load tracks
 		List<Element> trackElements = allTracksElement.getChildren(TRACK_ELEMENT_KEY);
@@ -535,7 +608,6 @@ public class TmXmlReader {
 		int sourceID, targetID;
 		Spot sourceSpot, targetSpot;
 		double weight = 0;
-		boolean sourceFound, targetFound;
 
 		for (Element trackElement : trackElements) {
 
@@ -544,45 +616,45 @@ public class TmXmlReader {
 
 			edgeElements = trackElement.getChildren(TRACK_EDGE_ELEMENT_KEY);
 			for (Element edgeElement : edgeElements) {
+
 				// Get source and target ID for this edge
 				sourceID = readIntAttribute(edgeElement, TRACK_EDGE_SOURCE_ATTRIBUTE_NAME, logger);
 				targetID = readIntAttribute(edgeElement, TRACK_EDGE_TARGET_ATTRIBUTE_NAME, logger);
+
+				// Get matching spots from the cache
+				sourceSpot = cache.get(sourceID);
+				targetSpot = cache.get(targetID);
+
+				// Get weight
 				if (null != edgeElement.getAttribute(TRACK_EDGE_WEIGHT_ATTRIBUTE_NAME))
 					weight   	= readDoubleAttribute(edgeElement, TRACK_EDGE_WEIGHT_ATTRIBUTE_NAME, logger);
 				else 
 					weight  	= 0;
-				// Retrieve corresponding spots from their ID
-				targetFound = false;
-				sourceFound = false;
-				targetSpot = null;
-				sourceSpot = null;
-				for (Spot spot : spots) {
-					if (!sourceFound  && spot.ID() == sourceID) {
-						sourceSpot = spot;
-						sourceFound = true;
-					}
-					if (!targetFound  && spot.ID() == targetID) {
-						targetSpot = spot;
-						targetFound = true;
-					}
-					if (targetFound && sourceFound) {
-						if (sourceSpot.equals(targetSpot)) {
-							//							LineNumberElement lne = (LineNumberElement) edgeElement;
-							logger.error("Bad edge found for track "+trackID);
-							//									+": loop edge at line "+lne.getStartLine()+". Skipping.\n");
-							break;
-						}
-						DefaultWeightedEdge edge = graph.addEdge(sourceSpot, targetSpot);
-						if (edge == null) {
-							//							LineNumberElement lne = (LineNumberElement) edgeElement;
-							logger.error("Bad edge found for track "+trackID);
-							//									+": duplicate edge at line "+lne.getStartLine()+". Skipping.\n");
-							break;
-						} else {
-							graph.setEdgeWeight(edge, weight);
-						}
-						break;
-					}
+
+				// Error check
+				if (null == sourceSpot) {
+					logger.error("Unknown spot ID: "+sourceID);
+					continue;
+				}
+				if (null == targetSpot) {
+					logger.error("Unknown spot ID: "+targetID);
+					continue;
+				}
+				if (sourceSpot.equals(targetSpot)) {
+					logger.error("Bad edge found for track "+trackID);
+					continue;
+				}
+
+				// Add spots to graph and build edge
+				graph.addVertex(sourceSpot);
+				graph.addVertex(targetSpot);
+				DefaultWeightedEdge edge = graph.addEdge(sourceSpot, targetSpot);
+
+				if (edge == null) {
+					logger.error("Bad edge found for track "+trackID);
+					continue;
+				} else {
+					graph.setEdgeWeight(edge, weight);
 				}
 			}
 		}
@@ -604,13 +676,15 @@ public class TmXmlReader {
 	 */
 	@SuppressWarnings("unchecked")
 	public List<Set<Spot>> readTrackSpots(final SimpleWeightedGraph<Spot, DefaultWeightedEdge> graph) {
+		if (!parsed)
+			parse();
 
 		Element allTracksElement = root.getChild(TRACK_COLLECTION_ELEMENT_KEY);
 		if (null == allTracksElement)
 			return null;
-
-		// Retrieve all spots from the graph
-		final Set<Spot> spots = graph.vertexSet();
+		
+		if (null == cache)
+			getAllSpots(); // build the cache if it's not there
 
 		// Load tracks
 		List<Element> trackElements = allTracksElement.getChildren(TRACK_ELEMENT_KEY);
@@ -625,14 +699,13 @@ public class TmXmlReader {
 
 		List<Element> edgeElements;
 		int sourceID, targetID;
-		boolean sourceFound, targetFound;
+		Spot sourceSpot, targetSpot;
 
 		for (Element trackElement : trackElements) {
 
 			// Get track ID as it is saved on disk
 			int trackID = readIntAttribute(trackElement, TRACK_ID_ATTRIBUTE_NAME, logger);
 
-			
 			// Instantiate current track
 			HashSet<Spot> track = new HashSet<Spot>(2*trackElements.size()); // approx
 
@@ -642,37 +715,19 @@ public class TmXmlReader {
 				// Get source and target ID for this edge
 				sourceID = readIntAttribute(edgeElement, TRACK_EDGE_SOURCE_ATTRIBUTE_NAME, logger);
 				targetID = readIntAttribute(edgeElement, TRACK_EDGE_TARGET_ATTRIBUTE_NAME, logger);
-
-				// Retrieve corresponding spots from their ID
-				targetFound = false;
-				sourceFound = false;
 				
-				for (Spot spot : spots) {
-					if (!sourceFound  && spot.ID() == sourceID) {
-						track.add(spot);
-						sourceFound = true;
-						if (DEBUG) {
-							System.out.println("[TmXmlReader] readTrackSpots: in track "+trackID+", found spot "+spot);
-							System.out.println("[TmXmlReader] readTrackSpots: the track "+trackID+" has the following spots: "+track);
-						}
-					}
-					if (!targetFound  && spot.ID() == targetID) {
-						track.add(spot);
-						targetFound = true;
-						if (DEBUG) {
-							System.out.println("[TmXmlReader] readTrackSpots: in track "+trackID+", found spot "+spot);
-							System.out.println("[TmXmlReader] readTrackSpots: the track "+trackID+" has the following spots: "+track);
-						}
-					}
-					if (targetFound && sourceFound) {
-						break;
-					}
-				}
+				// Get spots from the cache
+				sourceSpot = cache.get(sourceID);
+				targetSpot = cache.get(targetID);
+				
+				// Add them to current track
+				track.add(sourceSpot);
+				track.add(targetSpot);
 
 			} // looping over all edges
 
 			trackSpots.set(trackID, track);
-			
+
 			if (DEBUG) {
 				System.out.println("[TmXmlReader] readTrackSpots: the track "+trackID+" has the following spots: "+track);
 			}
@@ -697,13 +752,15 @@ public class TmXmlReader {
 	 */
 	@SuppressWarnings("unchecked")
 	public List<Set<DefaultWeightedEdge>> readTrackEdges(final SimpleWeightedGraph<Spot, DefaultWeightedEdge> graph) {
+		if (!parsed)
+			parse();
 
 		Element allTracksElement = root.getChild(TRACK_COLLECTION_ELEMENT_KEY);
 		if (null == allTracksElement)
 			return null;
-
-		// Retrieve all spots from the graph
-		final Set<Spot> spots = graph.vertexSet();
+		
+		if (null == cache)
+			getAllSpots(); // build cache if it's not there
 
 		// Load tracks
 		List<Element> trackElements = allTracksElement.getChildren(TRACK_ELEMENT_KEY);
@@ -719,7 +776,6 @@ public class TmXmlReader {
 		List<Element> edgeElements;
 		int sourceID, targetID;
 		Spot sourceSpot, targetSpot;
-		boolean sourceFound, targetFound;
 
 		for (Element trackElement : trackElements) {
 
@@ -737,46 +793,27 @@ public class TmXmlReader {
 				// Get source and target ID for this edge
 				sourceID = readIntAttribute(edgeElement, TRACK_EDGE_SOURCE_ATTRIBUTE_NAME, logger);
 				targetID = readIntAttribute(edgeElement, TRACK_EDGE_TARGET_ATTRIBUTE_NAME, logger);
+				
+				// Get spots from cache
+				sourceSpot = cache.get(sourceID);
+				targetSpot = cache.get(targetID);
+				
+				// Retrieve possible edges from graph
+				Set<DefaultWeightedEdge> edges = graph.getAllEdges(sourceSpot, targetSpot);
 
-				// Retrieve corresponding spots from their ID
-				targetFound = false;
-				sourceFound = false;
-				targetSpot = null;
-				sourceSpot = null;
-
-				for (Spot spot : spots) {
-					if (!sourceFound  && spot.ID() == sourceID) {
-						sourceSpot = spot;
-						sourceFound = true;
-					}
-					if (!targetFound  && spot.ID() == targetID) {
-						targetSpot = spot;
-						targetFound = true;
-					}
-					if (targetFound && sourceFound) {
-						if (sourceSpot.equals(targetSpot)) {
-							logger.error("Bad edge found for track "+trackID+": target spot equals source spot.\n");
-							break;
-						}
-						
-						// Retrieve possible edges from graph
-						Set<DefaultWeightedEdge> edges = graph.getAllEdges(sourceSpot, targetSpot);
-						
-						if (edges.size() != 1) {
-							logger.error("Bad edge found for track "+trackID+": found "+edges.size()+" edges.\n");
-							break;
-						} else {
-							DefaultWeightedEdge edge = edges.iterator().next();
-							track.add(edge);
-							if (DEBUG) {
-								System.out.println("[TmXmlReader] readTrackEdges: in track "+trackID+", found edge "+edge);
-							}
-
-						}
-						break;
+				// Add edges to track
+				if (edges.size() != 1) {
+					logger.error("Bad edge found for track "+trackID+": found "+edges.size()+" edges.\n");
+					continue;
+				} else {
+					DefaultWeightedEdge edge = edges.iterator().next();
+					track.add(edge);
+					if (DEBUG) {
+						System.out.println("[TmXmlReader] readTrackEdges: in track "+trackID+", found edge "+edge);
 					}
 
 				}
+				
 			} // looping over all edges
 
 			trackEdges.set(trackID, track);
@@ -791,24 +828,50 @@ public class TmXmlReader {
 	 * @throws DataConversionException 
 	 */
 	public Set<Integer> getFilteredTracks() {
+		if (!parsed)
+			parse();
+
 		Element filteredTracksElement = root.getChild(FILTERED_TRACK_ELEMENT_KEY);
 		if (null == filteredTracksElement)
 			return null;
 
-		// Work because the track splitting from the graph is deterministic
+		// We double-check that all trackID in the filtered list exist in the track list
+		// First, prepare a sorted array of all track IDs
+		Element allTracksElement = root.getChild(TRACK_COLLECTION_ELEMENT_KEY);
+		@SuppressWarnings("unchecked")
+		List<Element> trackElements = allTracksElement.getChildren(TRACK_ELEMENT_KEY);
+		int[] IDs = new int[trackElements.size()];
+		int index = 0;
+		for (Element trackElement : trackElements) {
+			int trackID = readIntAttribute(trackElement, TRACK_ID_ATTRIBUTE_NAME, logger);
+			IDs[index] = trackID;
+			index++;
+		}
+		Arrays.sort(IDs);
+		
 		@SuppressWarnings("unchecked")
 		List<Element> elements = filteredTracksElement.getChildren(TRACK_ID_ELEMENT_KEY);
 		HashSet<Integer> filteredTrackIndices = new HashSet<Integer>(elements.size());
 		for (Element indexElement : elements) {
 			Integer trackID = readIntAttribute(indexElement, TRACK_ID_ATTRIBUTE_NAME, logger);
 			if (null != trackID) {
-				filteredTrackIndices.add(trackID);
+				
+				// Check if this one exist in the list
+				int search = Arrays.binarySearch(IDs, trackID);
+				if (search < 0) {
+					logger.error("Invalid filtered track index: "+trackID+". Track ID does not exist.\n");
+				} else {
+					filteredTrackIndices.add(trackID);
+				}
 			}
 		}
 		return filteredTrackIndices;
 	}
 
 	public ImagePlus getImage()  {
+		if (!parsed)
+			parse();
+
 		Element imageInfoElement = root.getChild(IMAGE_ELEMENT_KEY);
 		if (null == imageInfoElement)
 			return null;
