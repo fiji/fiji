@@ -105,7 +105,7 @@ public class SubFake extends Rule {
 		return file.exists() ? file : null;
 	}
 
-	protected MiniMaven miniMaven;
+	protected static MiniMaven miniMaven;
 
 	public POM getPOM() {
 		if (pomRead)
