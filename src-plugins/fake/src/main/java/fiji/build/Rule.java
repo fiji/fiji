@@ -205,6 +205,8 @@ public abstract class Rule implements Comparable<Rule> {
 				e.printStackTrace();
 			new File(target).delete();
 			error(e.getMessage());
+			if (e instanceof FakeException)
+				throw (FakeException)e;
 		}
 		wasAlreadyInvoked = false;
 	}
