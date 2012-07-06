@@ -53,6 +53,7 @@ public class MiniMaven {
 	protected int updateInterval = 24 * 60; // by default, check once per 24h for new snapshot versions
 	protected PrintStream err;
 	protected Map<String, POM> localPOMCache = new HashMap<String, POM>();
+	protected Map<File, POM> file2pom = new HashMap<File, POM>();
 	protected Stack<File> multiProjectRoots = new Stack<File>();
 	protected Set<File> excludedFromMultiProjects = new HashSet<File>();
 	protected Fake fake;
@@ -114,6 +115,9 @@ public class MiniMaven {
 	}
 
 	public POM parse(File file, POM parent, String classifier) throws IOException, ParserConfigurationException, SAXException {
+		if (file2pom.containsKey(file))
+			return file2pom.get(file);
+
 		if (!file.exists())
 			return null;
 		if (verbose)
@@ -181,6 +185,7 @@ public class MiniMaven {
 		if (!localPOMCache.containsKey(key))
 			localPOMCache.put(key, pom);
 
+		file2pom.put(file, pom);
 		return pom;
 	}
 
