@@ -126,8 +126,10 @@ public class MiniMaven {
 		File directory = file.getCanonicalFile().getParentFile();
 		POM pom = new POM(directory, parent);
 		pom.coordinate.classifier = classifier;
-		if (parent != null)
+		if (parent != null) {
 			pom.sourceDirectory = parent.sourceDirectory;
+			pom.includeImplementationBuild = parent.includeImplementationBuild;
+		}
 		XMLReader reader = SAXParserFactory.newInstance().newSAXParser().getXMLReader();
 		reader.setContentHandler(pom);
 		//reader.setXMLErrorHandler(...);
@@ -182,6 +184,8 @@ public class MiniMaven {
 			if (pom.parent != null) {
 				if (pom.parent.parent == pom)
 					pom.parent.parent = null;
+				if (pom.parent.includeImplementationBuild)
+					pom.includeImplementationBuild = true;
 				pom.parent.addChild(pom);
 			}
 		}
@@ -316,6 +320,7 @@ public class MiniMaven {
 		protected List<Coordinate> dependencies = new ArrayList<Coordinate>();
 		protected Set<String> repositories = new TreeSet<String>();
 		protected String sourceVersion, targetVersion, mainClass;
+		protected boolean includeImplementationBuild;
 		protected String packaging = "jar";
 
 		// only used during parsing
@@ -343,6 +348,7 @@ public class MiniMaven {
 				coordinate.groupId = parent.coordinate.groupId;
 				coordinate.version = parent.coordinate.version;
 				parentCoordinate = parent.coordinate;
+				includeImplementationBuild = parent.includeImplementationBuild;
 			}
 		}
 
@@ -509,10 +515,14 @@ public class MiniMaven {
 
 			if (makeJar) {
 				JarOutputStream out;
-				if (mainClass == null)
+				if (mainClass == null && !includeImplementationBuild)
 					out = new JarOutputStream(new FileOutputStream(getTarget()));
 				else {
-					String text = "Manifest-Version: 1.0\nMain-Class: " + mainClass + "\n";
+					String text = "Manifest-Version: 1.0\n";
+					if (mainClass != null)
+						text += "Main-Class: " + mainClass + "\n";
+					if (includeImplementationBuild)
+						text += "Implementation-Build: " + getImplementationBuild(directory) + "\n";
 					InputStream input = new ByteArrayInputStream(text.getBytes());
 					Manifest manifest = null;
 					try {
@@ -1087,8 +1097,11 @@ public class MiniMaven {
 						checkParentTag("version", parentCoordinate.version, string);
 				}
 			}
-			else if (prefix.equals(">project>build>plugins>plugin>artifactId"))
+			else if (prefix.equals(">project>build>plugins>plugin>artifactId")) {
 				currentPluginName = string;
+				if (string.equals("buildnumber-maven-plugin"))
+					includeImplementationBuild = true;
+			}
 			else if (prefix.equals(">project>build>plugins>plugin>configuration>source") && "maven-compiler-plugin".equals(currentPluginName))
 				sourceVersion = string;
 			else if (prefix.equals(">project>build>plugins>plugin>configuration>target") && "maven-compiler-plugin".equals(currentPluginName))
@@ -1469,6 +1482,23 @@ public class MiniMaven {
 			if (ijDir.endsWith(suffix))
 				ijDir = ijDir.substring(0, ijDir.length() - suffix.length());
 		System.setProperty("ij.dir", ijDir);
+	}
+
+	protected String getImplementationBuild(File file) {
+		if (!file.isAbsolute()) try {
+			file = file.getCanonicalFile();
+		}
+		catch (IOException e) {
+			file = file.getAbsoluteFile();
+		}
+		for (;;) {
+			File gitDir = new File(file, ".git");
+			if (gitDir.exists())
+				return exec(gitDir, "git", "rev-parse", "HEAD");
+			file = file.getParentFile();
+			if (file == null)
+				return null;
+		}
 	}
 
 	protected String exec(File gitDir, String... args) {
