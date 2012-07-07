@@ -113,7 +113,6 @@ EOF
 		;;
 	?,--build)
 		main_class=fiji.build.Fake
-		first_java_options="$first_java_options -Xmx128m"
 		;;
 	?,--update)
 		main_class=fiji.updater.Main
