@@ -135,6 +135,21 @@ public class MiniMaven {
 		reader.parse(new InputSource(in));
 		in.close();
 
+		pom.children = new POM[pom.modules.size()];
+		for (int i = 0; i < pom.children.length; i++) {
+			file = new File(directory, pom.modules.get(i) + "/pom.xml");
+			pom.children[i] = parse(file, pom);
+		}
+
+		if (pom.target == null) {
+			String fileName = pom.coordinate.getJarName();
+			pom.target = new File(directory, fileName);
+		}
+
+		String key = pom.expand(pom.coordinate).getKey();
+		if (!localPOMCache.containsKey(key))
+			localPOMCache.put(key, pom);
+
 		if (pom.packaging.equals("jar") && !directory.getPath().startsWith(mavenRepository.getPath())) {
 			pom.buildFromSource = true;
 			pom.target = new File(directory, "target/classes");
@@ -170,21 +185,6 @@ public class MiniMaven {
 				pom.parent.addChild(pom);
 			}
 		}
-
-		pom.children = new POM[pom.modules.size()];
-		for (int i = 0; i < pom.children.length; i++) {
-			file = new File(directory, pom.modules.get(i) + "/pom.xml");
-			pom.children[i] = parse(file, pom);
-		}
-
-		if (pom.target == null) {
-			String fileName = pom.coordinate.getJarName();
-			pom.target = new File(directory, fileName);
-		}
-
-		String key = pom.expand(pom.coordinate).getKey();
-		if (!localPOMCache.containsKey(key))
-			localPOMCache.put(key, pom);
 
 		file2pom.put(file, pom);
 		return pom;
