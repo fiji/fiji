@@ -1494,7 +1494,7 @@ public class MiniMaven {
 		for (;;) {
 			File gitDir = new File(file, ".git");
 			if (gitDir.exists())
-				return exec(gitDir, "git", "rev-parse", "HEAD");
+				return exec(gitDir.getParentFile(), "git", "rev-parse", "HEAD");
 			file = file.getParentFile();
 			if (file == null)
 				return null;
