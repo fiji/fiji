@@ -137,6 +137,22 @@
 		<module>Updater_Fix</module>
 	</modules>
 
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>buildnumber-maven-plugin</artifactId>
+			</plugin>
+		</plugins>
+	</build>
+
+	<scm>
+		<connection>scm:git:git://github.com/fiji/fiji</connection>
+		<developerConnection>scm:git:git@github.com:fiji/fiji</developerConnection>
+		<tag>HEAD</tag>
+		<url>https://github.com/fiji/fiji</url>
+	</scm>
+
 	<!-- NB: for project parent -->
 	<repositories>
 		<repository>
