@@ -168,8 +168,15 @@ public class SubFake extends Rule {
 				pom.downloadDependencies();
 				pom.buildJar();
 				copyJar(pom.getTarget().getPath(), target, parser.cwd, configPath);
-				if (getVarBool("copyDependencies"))
-					pom.copyDependencies(new File(target).getAbsoluteFile().getParentFile(), true);
+				if (getVarBool("copyDependencies")) {
+					File destination = new File(target).getAbsoluteFile().getParentFile();
+					if (destination.getName().equals("plugins")) {
+						destination = new File(destination.getParentFile(), "jars");
+						if (!destination.isDirectory() && !destination.mkdirs())
+							throw new FakeException("Could not make directory " + destination);
+					}
+					pom.copyDependencies(destination, true);
+				}
 				return;
 			} catch (Exception e) {
 				e.printStackTrace(parser.fake.err);
