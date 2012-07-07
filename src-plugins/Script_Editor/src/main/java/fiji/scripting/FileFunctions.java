@@ -78,6 +78,13 @@ public class FileFunctions {
 		ijDir = dir;
 	}
 
+	public static final String GIT_PATH_PROP = "git.path";
+
+	protected static String gitCmd() {
+		String fijiGit = System.getProperty(GIT_PATH_PROP);
+		return fijiGit == null ? "git" : fijiGit;
+	}
+
 	protected TextEditor parent;
 
 	public FileFunctions(TextEditor parent) {
@@ -609,7 +616,7 @@ public class FileFunctions {
 
 		try {
 			String[] cmdarray = {
-				"git", "ls-files", "--exclude-standard", "--other", "."
+				gitCmd(), "ls-files", "--exclude-standard", "--other", "."
 			};
 			SimpleExecuter e = new SimpleExecuter(cmdarray, root);
 			if (e.getExitCode() != 0) {
@@ -621,7 +628,7 @@ public class FileFunctions {
 				if (JOptionPane.showConfirmDialog(parent,
 						"Do you want to commit the following untracked files?\n\n" + firstNLines(out, 10)) == JOptionPane.YES_OPTION) {
 					cmdarray = new String[] {
-						"git", "add", "-N", "."
+						gitCmd(), "add", "-N", "."
 					};
 					e = new SimpleExecuter(cmdarray, root);
 					if (e.getExitCode() != 0) {
@@ -641,7 +648,7 @@ public class FileFunctions {
 		final String config = isInFijiGit && new File(configPath).exists() ? configPath : null;
 		try {
 			String[] cmdarray = {
-				"git", "diff", "--", "."
+				gitCmd(), "diff", "--", "."
 			};
 			if (config != null)
 				cmdarray = append(cmdarray, config);
@@ -716,7 +723,7 @@ public class FileFunctions {
 					}
 
 					String[] cmdarray = {
-						"git", "commit", "-s", "-F", "-", "--", "."
+						gitCmd(), "commit", "-s", "-F", "-", "--", "."
 					};
 					if (config != null)
 						cmdarray = append(cmdarray, config);
@@ -848,7 +855,7 @@ public class FileFunctions {
 		parent.getTab().showErrors();
 		try {
 			SimpleExecuter executer = new SimpleExecuter(new String[] {
-				"git", "grep", "-n", searchTerm
+				gitCmd(), "grep", "-n", searchTerm
 			}, handler, handler, directory);
 			parent.errorHandler = handler.errorHandler;
 		} catch (IOException e) {
@@ -870,8 +877,8 @@ public class FileFunctions {
 
 	public String git(File gitDirectory, File workingDirectory, String... args) {
 		try {
-			args = append(gitDirectory == null ? new String[] { "git" } :
-				new String[] { "git", "--git-dir=" + gitDirectory.getAbsolutePath()}, args);
+			args = append(gitDirectory == null ? new String[] { gitCmd() } :
+				new String[] { gitCmd(), "--git-dir=" + gitDirectory.getAbsolutePath()}, args);
 			SimpleExecuter gitConfig = new SimpleExecuter(args, workingDirectory);
 			if (gitConfig.getExitCode() == 0)
 				return stripSuffix(gitConfig.getOutput(), "\n");
