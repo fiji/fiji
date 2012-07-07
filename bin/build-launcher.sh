@@ -47,7 +47,7 @@ Darwin)
 Linux)
 	os=Linux
 	case "$force32,$(uname -m)" in
-	t,x86_64)
+	,x86_64)
 		platform=linux64
 		arch=amd64
 		;;
@@ -77,12 +77,14 @@ esac
 
 path=modules/imagej2/core/launcher
 artifactId=ij-launcher
-version=$(sed -n 's-.*<version>\([^${}]*\)</version>.*-\1-p' < $path/pom.xml)
+version=$(sed -n 's-.*<version>\([^${}]*\)</version>.*-\1-p' < $path/pom.xml | head -n 1)
 
 IJDIR="$(pwd)"
 eval ./bin/maven.sh $mvnopts $debugoption -f $path/pom.xml &&
 cp $path/target/nar/$artifactId-$version-$arch-$os-gcc-executable/bin/$arch-$os-gcc/$artifactId ${macprefix}ImageJ-$platform$exe &&
 
 cp ${macprefix}ImageJ-$platform$exe ${macprefix}fiji-$platform$exe &&
+cp ${macprefix}ImageJ-$platform$exe ${macprefix}ImageJ$exe &&
+cp ${macprefix}ImageJ-$platform$exe ${macprefix}fiji$exe &&
 
 cp $path/target/$artifactId-$version.jar jars/$artifactId.jar
