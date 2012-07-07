@@ -9,6 +9,7 @@ import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.PrintStream;
 
@@ -1470,6 +1471,63 @@ public class MiniMaven {
 			if (ijDir.endsWith(suffix))
 				ijDir = ijDir.substring(0, ijDir.length() - suffix.length());
 		System.setProperty("ij.dir", ijDir);
+	}
+
+	protected String exec(File gitDir, String... args) {
+		try {
+			Process process = Runtime.getRuntime().exec(args, null, gitDir);
+			process.getOutputStream().close();
+			ReadInto err = new ReadInto(process.getErrorStream(), true);
+			ReadInto out = new ReadInto(process.getInputStream(), false);
+			try {
+				process.waitFor();
+				err.join();
+				out.join();
+			}
+			catch (InterruptedException e) {
+				throw new RuntimeException(e);
+			}
+			if (process.exitValue() != 0)
+				throw new RuntimeException("Error executing " + Arrays.toString(args) + "\n" + err);
+			return out.toString();
+		}
+		catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	protected class ReadInto extends Thread {
+		protected BufferedReader reader;
+		protected boolean echoToStderr;
+		protected StringBuilder buffer = new StringBuilder();
+
+		public ReadInto(InputStream in, boolean echoToStderr) {
+			reader = new BufferedReader(new InputStreamReader(in));
+			this.echoToStderr = echoToStderr;
+			start();
+		}
+
+		public void run() {
+			for (;;) try {
+				String line = reader.readLine();
+				if (line == null)
+					break;
+				if (echoToStderr)
+					err.print(line);
+				buffer.append(line);
+				Thread.sleep(0);
+			}
+			catch (InterruptedException e) { /* just stop */ }
+			catch (IOException e) { /* just stop */ }
+			try {
+				reader.close();
+			}
+			catch (IOException e) { /* just stop */ }
+		}
+
+		public String toString() {
+			return buffer.toString();
+		}
 	}
 
 	private final static String usage = "Usage: MiniMaven [command]\n"
