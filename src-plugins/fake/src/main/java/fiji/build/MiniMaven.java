@@ -512,14 +512,12 @@ public class MiniMaven {
 				if (mainClass == null)
 					out = new JarOutputStream(new FileOutputStream(getTarget()));
 				else {
+					String text = "Manifest-Version: 1.0\nMain-Class: " + mainClass + "\n";
+					InputStream input = new ByteArrayInputStream(text.getBytes());
 					Manifest manifest = null;
-					if (mainClass != null) {
-						String text = "Manifest-Version: 1.0\nMain-Class: " + mainClass + "\n";
-						InputStream input = new ByteArrayInputStream(text.getBytes());
-						try {
-							manifest = new Manifest(input);
-						} catch(Exception e) { }
-					}
+					try {
+						manifest = new Manifest(input);
+					} catch(Exception e) { }
 					out = new JarOutputStream(new FileOutputStream(getTarget()), manifest);
 				}
 				addToJarRecursively(out, target, "");
