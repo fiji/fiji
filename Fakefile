@@ -74,6 +74,9 @@ ignoreMissingFakefiles=true
 # When a submodule could not be made, fall back to copying from this directory
 precompiledDirectory=precompiled/
 
+# Copy the dependencies to jars/
+copyDependencies=true
+
 buildDir=build/
 
 FIJI_JAVA_HOME(linux32)=java/linux/jdk1.6.0_24/jre
@@ -318,7 +321,6 @@ jars/jython.jar <- modules/jython/
 jars/commons-math.jar <- modules/commons-math/
 jars/javassist.jar <- modules/javassist/
 jars/jsch.jar <- modules/jsch/
-COPYDEPENDENCIES(jars/ij-app.jar)=true
 jars/ij-app.jar <- jars/ij.jar jars/imglib2.jar modules/imagej2/
 CLASSPATH(plugins/Image_5D.jar)=jars/ij.jar
 plugins/Image_5D.jar <- modules/image5d/
