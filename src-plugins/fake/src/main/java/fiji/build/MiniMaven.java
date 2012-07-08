@@ -53,11 +53,11 @@ public class MiniMaven {
 	protected boolean verbose, debug = false, downloadAutomatically, offlineMode, ignoreMavenRepositories;
 	protected int updateInterval = 24 * 60; // by default, check once per 24h for new snapshot versions
 	protected PrintStream err;
+	protected JavaCompiler javac;
 	protected Map<String, POM> localPOMCache = new HashMap<String, POM>();
 	protected Map<File, POM> file2pom = new HashMap<File, POM>();
 	protected Stack<File> multiProjectRoots = new Stack<File>();
 	protected Set<File> excludedFromMultiProjects = new HashSet<File>();
-	protected Fake fake;
 	protected final static File mavenRepository;
 
 	static {
@@ -84,8 +84,8 @@ public class MiniMaven {
 	}
 
 	public MiniMaven(Fake fake, PrintStream err, boolean verbose, boolean debug) throws FakeException {
-		this.fake = fake == null ? new Fake() : fake;
 		this.err = err;
+		javac = new JavaCompiler(err, err);
 		this.verbose = verbose;
 		this.debug = debug;
 		if ("true".equalsIgnoreCase(System.getProperty("minimaven.offline")))
@@ -427,8 +427,8 @@ public class MiniMaven {
 					err.println("using the class path: " + classPath);
 				}
 				String[] array = arguments.toArray(new String[arguments.size()]);
-				if (fake != null)
-					fake.callJavac(array, verbose);
+				if (javac != null)
+					javac.call(array, verbose);
 			}
 
 			updateRecursively(new File(source.getParentFile(), "resources"), target, false);

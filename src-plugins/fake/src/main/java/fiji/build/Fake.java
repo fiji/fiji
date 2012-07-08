@@ -41,8 +41,6 @@ import java.util.jar.Manifest;
 import java.util.zip.ZipException;
 
 public class Fake {
-	protected static Method javac;
-	protected static String toolsPath;
 	protected static String fijiBuildJar;
 	protected static long mtimeFijiBuild;
 	public PrintStream out = System.out, err = System.err;
@@ -183,18 +181,6 @@ public class Fake {
 				bshJar = ijHome + "/precompiled/bsh.jar";
 		}
 		getClassLoader(bshJar);
-	}
-
-	protected static void discoverJavac() throws IOException {
-		String path = ijHome + "jars/javac.jar";
-		if (!new File(path).exists()) {
-			path = ijHome + "precompiled/javac.jar";
-			if (!new File(path).exists()) {
-				System.err.println("No javac.jar found (looked in " + ijHome + ")!");
-				return;
-			}
-		}
-		getClassLoader(path);
 	}
 
 	protected List<String> discoverJars() throws FakeException {
@@ -530,56 +516,6 @@ public class Fake {
 		if (buildDir == null)
 			sortClassesAtEnd(result);
 		return result;
-	}
-
-	// this function handles the javac singleton
-	protected void callJavac(String[] arguments,
-			boolean verbose) throws FakeException {
-		synchronized(this) {
-			try {
-				if (javac == null) {
-					discoverJavac();
-					JarClassLoader loader = (JarClassLoader)
-						getClassLoader(toolsPath);
-					String className = "com.sun.tools.javac.Main";
-					Class<?> main = loader.forceLoadClass(className);
-					Class<?>[] argsType = new Class[] {
-						arguments.getClass(),
-						PrintWriter.class
-					};
-					javac = main.getMethod("compile", argsType);
-				}
-
-				Object result = javac.invoke(null,
-						new Object[] { arguments, new PrintWriter(err) });
-				if (!result.equals(new Integer(0))) {
-					FakeException e = new FakeException("Compile error");
-					e.printStackTrace();
-					throw e;
-				}
-				return;
-			} catch (FakeException e) {
-				/* was compile error */
-				throw e;
-			} catch (Exception e) {
-				e.printStackTrace(err);
-				err.println("Could not find javac " + e
-					+ " (tools path = " + toolsPath + "), "
-					+ "falling back to system javac");
-			}
-		}
-
-		// fall back to calling javac
-		String[] newArguments = new String[arguments.length + 1];
-		newArguments[0] = "javac";
-		System.arraycopy(arguments, 0, newArguments, 1,
-				arguments.length);
-		try {
-			execute(newArguments, new File("."), verbose);
-		} catch (Exception e) {
-			throw new FakeException("Could not even fall back "
-				+ " to javac in the PATH");
-		}
 	}
 
 	// returns all .java files in the list, and returns a list where

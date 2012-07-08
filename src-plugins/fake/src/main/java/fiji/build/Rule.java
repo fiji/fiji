@@ -407,7 +407,6 @@ public abstract class Rule implements Comparable<Rule> {
 	List<String> compileJavas(List<String> javas, File buildDir,
 			Set<String> exclude, Set<String> noCompile)
 			throws FakeException {
-		parser.fake.toolsPath = getVar("TOOLSPATH");
 		return parser.fake.compileJavas(javas, parser.cwd, buildDir,
 			getVar("JAVAVERSION"),
 			getVarBool("DEBUG"),
