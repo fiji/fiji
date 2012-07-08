@@ -571,7 +571,7 @@ public class POM extends DefaultHandler implements Comparable<POM> {
 			if (!maybeDownloadAutomatically(dependency, quiet, downloadAutomatically))
 				return null;
 			if (dependency.version.startsWith("["))
-				dependency.version = env.parseVersion(new File(path, "maven-metadata-version.xml"));
+				dependency.version = VersionPOMHandler.parse(new File(path, "maven-metadata-version.xml"));
 		} catch (FileNotFoundException e) { /* ignore */ }
 		path += dependency.version + "/";
 		if (dependency.version.endsWith("-SNAPSHOT")) try {
