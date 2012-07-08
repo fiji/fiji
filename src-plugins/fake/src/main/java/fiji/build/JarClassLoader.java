@@ -28,6 +28,23 @@ public class JarClassLoader extends ClassLoader {
 		cache = new HashMap<String, Class<?>>();
 	}
 
+	public JarClassLoader(String... paths) throws IOException {
+		this();
+		for (String path : paths)
+			add(path);
+	}
+
+	public synchronized void add(String path) throws IOException {
+		if (jarFilesMap.containsKey(path))
+			return;
+		JarFile jar = new JarFile(path);
+		/* n.b. We don't need to synchronize
+		   fetching since nothing is ever removed */
+		jarFilesMap.put(path, jar);
+		jarFilesNames.add(path);
+		jarFilesObjects.add(jar);
+	}
+
 	public URL getResource(String name) {
 		int n = jarFilesNames.size();
 		for (int i = n - 1; i >= 0; --i) {

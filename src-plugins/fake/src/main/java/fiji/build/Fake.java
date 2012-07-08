@@ -636,7 +636,7 @@ public class Fake {
 		}
 
 		try {
-			callJavac(args, verbose);
+			new JavaCompiler(err, out).call(args, verbose);
 		} catch (FakeException e) {
 			throw e;
 		} catch (Exception e) {
@@ -1215,17 +1215,8 @@ public class Fake {
 			throws IOException {
 		if (classLoader == null)
 			classLoader = new JarClassLoader();
-		if (jarFile != null &&
-		    ! classLoader.jarFilesMap.containsKey(jarFile)) {
-			JarFile jar = new JarFile(jarFile);
-			synchronized (classLoader) {
-				/* n.b. We don't need to synchronize
-				   fetching since nothing is ever removed */
-				classLoader.jarFilesMap.put(jarFile, jar);
-				classLoader.jarFilesNames.add(jarFile);
-				classLoader.jarFilesObjects.add(jar);
-			}
-		}
+		if (jarFile != null)
+			classLoader.add(jarFile);
 		return classLoader;
 	}
 
