@@ -1,6 +1,5 @@
 package fiji.build;
 
-import fiji.build.MiniMaven.Coordinate;
 import fiji.build.MiniMaven.POM;
 
 import java.io.File;
