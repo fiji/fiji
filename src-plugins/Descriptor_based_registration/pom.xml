@@ -60,7 +60,7 @@
 		<dependency>
 			<groupId>mpicbg</groupId>
 			<artifactId>mpicbg</artifactId>
-			<version>${imagej.version}</version>
+			<version>20120621</version>
 		</dependency>
 		<dependency>
 			<groupId>java3d</groupId>
