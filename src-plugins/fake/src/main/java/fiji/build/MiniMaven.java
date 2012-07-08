@@ -519,8 +519,8 @@ public class MiniMaven {
 		try {
 			Process process = Runtime.getRuntime().exec(args, null, gitDir);
 			process.getOutputStream().close();
-			ReadInto err = new ReadInto(process.getErrorStream(), true);
-			ReadInto out = new ReadInto(process.getInputStream(), false);
+			ReadInto err = new ReadInto(process.getErrorStream(), this.err);
+			ReadInto out = new ReadInto(process.getInputStream(), null);
 			try {
 				process.waitFor();
 				err.join();
@@ -535,40 +535,6 @@ public class MiniMaven {
 		}
 		catch (IOException e) {
 			throw new RuntimeException(e);
-		}
-	}
-
-	protected class ReadInto extends Thread {
-		protected BufferedReader reader;
-		protected boolean echoToStderr;
-		protected StringBuilder buffer = new StringBuilder();
-
-		public ReadInto(InputStream in, boolean echoToStderr) {
-			reader = new BufferedReader(new InputStreamReader(in));
-			this.echoToStderr = echoToStderr;
-			start();
-		}
-
-		public void run() {
-			for (;;) try {
-				String line = reader.readLine();
-				if (line == null)
-					break;
-				if (echoToStderr)
-					err.print(line);
-				buffer.append(line);
-				Thread.sleep(0);
-			}
-			catch (InterruptedException e) { /* just stop */ }
-			catch (IOException e) { /* just stop */ }
-			try {
-				reader.close();
-			}
-			catch (IOException e) { /* just stop */ }
-		}
-
-		public String toString() {
-			return buffer.toString();
 		}
 	}
 
