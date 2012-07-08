@@ -1,5 +1,7 @@
 package fiji.build;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -38,7 +40,11 @@ public class SnapshotPOMHandler extends DefaultHandler {
 			buildNumber = new String(ch, start, length).trim();
 	}
 
-	protected static String parse(InputStream in) throws IOException, ParserConfigurationException, SAXException {
+	public static String parse(File xml) throws IOException, ParserConfigurationException, SAXException {
+		return SnapshotPOMHandler.parse(new FileInputStream(xml));
+	}
+
+	public static String parse(InputStream in) throws IOException, ParserConfigurationException, SAXException {
 		SnapshotPOMHandler handler = new SnapshotPOMHandler();
 		XMLReader reader = SAXParserFactory.newInstance().newSAXParser().getXMLReader();
 		reader.setContentHandler(handler);

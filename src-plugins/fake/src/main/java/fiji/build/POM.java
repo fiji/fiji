@@ -394,7 +394,7 @@ public class POM extends DefaultHandler implements Comparable<POM> {
 					dependency.version.endsWith("-SNAPSHOT") && dependency.snapshotVersion == null &&
 					pom.directory.getPath().startsWith(env.mavenRepository.getPath())) {
 				if (maybeDownloadAutomatically(dependency, !env.verbose, downloadAutomatically)) {
-					dependency.setSnapshotVersion(env.parseSnapshotVersion(new File(pom.directory, "maven-metadata-snapshot.xml")));
+					dependency.setSnapshotVersion(SnapshotPOMHandler.parse(new File(pom.directory, "maven-metadata-snapshot.xml")));
 				}
 			}
 			if (pom == null && downloadAutomatically)
@@ -582,7 +582,7 @@ public class POM extends DefaultHandler implements Comparable<POM> {
 				return null;
 			}
 			if (dependency.version.endsWith("-SNAPSHOT"))
-				dependency.setSnapshotVersion(env.parseSnapshotVersion(new File(path, "maven-metadata-snapshot.xml")));
+				dependency.setSnapshotVersion(SnapshotPOMHandler.parse(new File(path, "maven-metadata-snapshot.xml")));
 		} catch (FileNotFoundException e) { /* ignore */ }
 		else {
 			File file = findInFijiDirectories(dependency);

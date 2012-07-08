@@ -266,7 +266,7 @@ public class MiniMaven {
 			String message = quiet ? null : "Checking for new snapshot of " + dependency.artifactId;
 			String metadataURL = repositoryURL + path + "maven-metadata.xml";
 			downloadAndVerify(metadataURL, directory, snapshotMetaData.getName(), message);
-			String snapshotVersion = parseSnapshotVersion(snapshotMetaData);
+			String snapshotVersion = SnapshotPOMHandler.parse(snapshotMetaData);
 			if (snapshotVersion == null)
 				throw new IOException("No version found in " + metadataURL);
 			dependency.setSnapshotVersion(snapshotVersion);
@@ -327,10 +327,6 @@ public class MiniMaven {
 				throw new IOException("SHA1 mismatch: " + sha1 + ": " + Integer.toHexString(value) + " != " + Integer.toHexString(d));
 		}
 		fileStream.close();
-	}
-
-	protected static String parseSnapshotVersion(File xml) throws IOException, ParserConfigurationException, SAXException {
-		return SnapshotPOMHandler.parse(new FileInputStream(xml));
 	}
 
 	protected static String parseVersion(File xml) throws IOException, ParserConfigurationException, SAXException {
