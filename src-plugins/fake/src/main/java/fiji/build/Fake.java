@@ -1130,9 +1130,7 @@ public class Fake {
 				}
 				all.make();
 			} else
-				// Try "make"
-				execute(new String[] { "make" },
-					new File(directory), verbose);
+				throw new FakeException("Make no longer supported!");
 		} catch (Exception e) {
 			if (!(e instanceof FakeException))
 				e.printStackTrace();
