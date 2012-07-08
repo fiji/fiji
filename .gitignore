@@ -6,6 +6,8 @@
 .checksums
 .metadata
 .project
+.classpath
+.settings/
 /.recent-changes.*
 /CoreLog.txt
 /Fiji.app
