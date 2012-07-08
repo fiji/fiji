@@ -1,6 +1,8 @@
 package fiji.build;
 
-import fiji.build.POM;
+import fiji.build.minimaven.BuildEnvironment;
+import fiji.build.minimaven.Coordinate;
+import fiji.build.minimaven.POM;
 
 import java.io.File;
 import java.util.List;
@@ -119,9 +121,10 @@ public class SubFake extends Rule {
 			targetBasename = targetBasename.substring(0, targetBasename.length() - 4);
 		// TODO: targetBasename could end in "-<version>"
 		try {
+			boolean verbose = getVarBool("VERBOSE");
+			boolean debug = getVarBool("DEBUG");
 			if (miniMaven == null) {
-				miniMaven = new BuildEnvironment(parser.fake.err, getVarBool("VERBOSE"), getVarBool("DEBUG"));
-				miniMaven.downloadAutomatically = !miniMaven.offlineMode;
+				miniMaven = new BuildEnvironment(parser.fake.err, true, verbose, debug);
 				MiniMaven.ensureIJDirIsSet();
 				String ijDir = System.getProperty("ij.dir");
 				File submodules = new File(ijDir, "modules");
@@ -139,8 +142,8 @@ public class SubFake extends Rule {
 				}
 			}
 			pom = miniMaven.parse(file);
-			if (!targetBasename.equals(pom.getArtifact()))
-				pom = pom.findPOM(new Coordinate(null, targetBasename, null), miniMaven.verbose, miniMaven.downloadAutomatically);
+			if (!targetBasename.equals(pom.getArtifactId()))
+				pom = pom.findPOM(new Coordinate(null, targetBasename, null), verbose, miniMaven.getDownloadAutomatically());
 		} catch (Exception e) {
 			e.printStackTrace(parser.fake.err);
 		}

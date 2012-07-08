@@ -1,4 +1,6 @@
-package fiji.build;
+package fiji.build.minimaven;
+
+import fiji.build.minimaven.JavaCompiler.CompileError;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
@@ -151,10 +153,6 @@ public class POM extends DefaultHandler implements Comparable<POM> {
 		return expand(sourceDirectory);
 	}
 
-	public void buildJar() throws FakeException, IOException, ParserConfigurationException, SAXException {
-		build(true);
-	}
-
 	protected void addToJarRecursively(JarOutputStream out, File directory, String prefix) throws IOException {
 		for (File file : directory.listFiles())
 			if (file.isFile()) {
@@ -165,11 +163,15 @@ public class POM extends DefaultHandler implements Comparable<POM> {
 				addToJarRecursively(out, file, prefix + file.getName() + "/");
 	}
 
-	public void build() throws FakeException, IOException, ParserConfigurationException, SAXException {
+	public void buildJar() throws CompileError, IOException, ParserConfigurationException, SAXException {
+		build(true);
+	}
+
+	public void build() throws CompileError, IOException, ParserConfigurationException, SAXException {
 		build(false);
 	}
 
-	public void build(boolean makeJar) throws FakeException, IOException, ParserConfigurationException, SAXException {
+	public void build(boolean makeJar) throws CompileError, IOException, ParserConfigurationException, SAXException {
 		if (!buildFromSource || built)
 			return;
 		boolean forceFullBuild = false;
@@ -309,11 +311,15 @@ public class POM extends DefaultHandler implements Comparable<POM> {
 		return lastModified;
 	}
 
-	public String getGroup() {
+	public Coordinate getCoordinate() {
+		return coordinate;
+	}
+
+	public String getGroupId() {
 		return coordinate.groupId;
 	}
 
-	public String getArtifact() {
+	public String getArtifactId() {
 		return coordinate.artifactId;
 	}
 
@@ -325,10 +331,18 @@ public class POM extends DefaultHandler implements Comparable<POM> {
 		return coordinate.getJarName();
 	}
 
+	public String getMainClass() {
+		return mainClass;
+	}
+
 	public File getTarget() {
 		if (!buildFromSource)
 			return target;
 		return new File(new File(directory, "target"), getJarName());
+	}
+
+	public boolean getBuildFromSource() {
+		return buildFromSource;
 	}
 
 	public String getClassPath(boolean forCompile) throws IOException, ParserConfigurationException, SAXException {
@@ -469,13 +483,13 @@ public class POM extends DefaultHandler implements Comparable<POM> {
 		return parent.getProperty(key);
 	}
 
-	protected POM[] getChildren() {
+	public POM[] getChildren() {
 		if (children == null)
 			return new POM[0];
 		return children;
 	}
 
-	protected POM getRoot() {
+	public POM getRoot() {
 		POM result = this;
 		while (result.parent != null)
 			result = result.parent;
@@ -498,7 +512,7 @@ public class POM extends DefaultHandler implements Comparable<POM> {
 				child.getRepositories(result);
 	}
 
-	protected POM findPOM(Coordinate dependency, boolean quiet, boolean downloadAutomatically) throws IOException, ParserConfigurationException, SAXException {
+	public POM findPOM(Coordinate dependency, boolean quiet, boolean downloadAutomatically) throws IOException, ParserConfigurationException, SAXException {
 		if (dependency.artifactId.equals(expand(coordinate.artifactId)) &&
 				(dependency.groupId == null || dependency.groupId.equals(expand(coordinate.groupId))) &&
 				(dependency.version == null || coordinate.version == null || dependency.version.equals(expand(coordinate.version))))
@@ -755,7 +769,7 @@ public class POM extends DefaultHandler implements Comparable<POM> {
 		else if (prefix.equals(">project>dependencies>dependency>classifier"))
 			latestDependency.classifier = string;
 		else if (prefix.equals(">project>profiles>profile>id")) {
-			isCurrentProfile = (!Util.getPlatform().equals("macosx") && "javac".equals(string)) || (coordinate.artifactId.equals("javassist") && (string.equals("jdk16") || string.equals("default-tools")));
+			isCurrentProfile = (!System.getProperty("os.name").equals("Mac OS X") && "javac".equals(string)) || (coordinate.artifactId.equals("javassist") && (string.equals("jdk16") || string.equals("default-tools")));
 			if (env.debug)
 				env.err.println((isCurrentProfile ? "Activating" : "Ignoring") + " profile " + string);
 		}

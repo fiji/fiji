@@ -1,4 +1,4 @@
-package fiji.build;
+package fiji.build.minimaven;
 
 import java.io.BufferedReader;
 import java.io.IOException;

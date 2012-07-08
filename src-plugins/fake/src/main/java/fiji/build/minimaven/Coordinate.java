@@ -1,4 +1,4 @@
-package fiji.build;
+package fiji.build.minimaven;
 
 public class Coordinate {
 	protected String groupId, artifactId, version, systemPath, classifier, scope, snapshotVersion;

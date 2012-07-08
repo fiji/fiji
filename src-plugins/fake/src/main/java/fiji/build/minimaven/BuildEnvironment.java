@@ -1,4 +1,4 @@
-package fiji.build;
+package fiji.build.minimaven;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -50,6 +50,10 @@ public class BuildEnvironment {
 		mavenRepository = repository;
 	}
 
+	public boolean getDownloadAutomatically() {
+		return downloadAutomatically && !offlineMode;
+	}
+
 	protected static boolean isInteractiveConsole() {
 		// We want to compile/run with Java5, so we cannot test System.console() directly
 		try {
@@ -59,9 +63,10 @@ public class BuildEnvironment {
 		}
 	}
 
-	public BuildEnvironment(PrintStream err, boolean verbose, boolean debug) throws FakeException {
+	public BuildEnvironment(PrintStream err, boolean downloadAutomatically, boolean verbose, boolean debug) {
 		this.err = err;
 		javac = new JavaCompiler(err, err);
+		this.downloadAutomatically = downloadAutomatically;
 		this.verbose = verbose;
 		this.debug = debug;
 		if ("true".equalsIgnoreCase(System.getProperty("minimaven.offline")))

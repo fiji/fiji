@@ -3,10 +3,10 @@ package fiji.scripting;
 import fiji.SimpleExecuter;
 
 import fiji.build.Fake;
-import fiji.build.POM;
 import fiji.build.Parser;
 import fiji.build.Rule;
 import fiji.build.SubFake;
+import fiji.build.minimaven.POM;
 
 import ij.IJ;
 

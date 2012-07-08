@@ -1,5 +1,6 @@
-package fiji.build;
+package fiji.build.minimaven;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -117,7 +118,7 @@ public class JarClassLoader extends ClassLoader {
 		if (input == null)
 			throw new ClassNotFoundException(name);
 		try {
-			byte[] buffer = Util.readStream(input);
+			byte[] buffer = readStream(input);
 			input.close();
 			result = defineClass(name,
 					buffer, 0, buffer.length);
@@ -132,5 +133,19 @@ public class JarClassLoader extends ClassLoader {
 				super.loadClass(name, resolve) : null;
 			return result;
 		}
+	}
+
+	protected static byte[] readStream(InputStream in) throws IOException {
+		byte[] buffer = new byte[16384];
+		ByteArrayOutputStream out = new ByteArrayOutputStream();
+		for (;;) {
+			int count = in.read(buffer);
+			if (count < 0)
+				break;
+			out.write(buffer, 0, count);
+		}
+		in.close();
+		out.close();
+		return out.toByteArray();
 	}
 }

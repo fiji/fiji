@@ -40,10 +40,15 @@ import java.util.jar.Manifest;
 
 import java.util.zip.ZipException;
 
+import fiji.build.minimaven.JarClassLoader;
+import fiji.build.minimaven.JavaCompiler;
+import fiji.build.minimaven.JavaCompiler.CompileError;
+
 public class Fake {
 	protected static String fijiBuildJar;
 	protected static long mtimeFijiBuild;
 	public PrintStream out = System.out, err = System.err;
+	protected JavaCompiler javac;
 
 	public static void main(String[] args) {
 		checkObsoleteLauncher();
@@ -571,10 +576,12 @@ public class Fake {
 			err.println(output);
 		}
 
+		if (javac == null)
+			javac = new JavaCompiler(err, out);
 		try {
-			new JavaCompiler(err, out).call(args, verbose);
-		} catch (FakeException e) {
-			throw e;
+			javac.call(args, verbose);
+		} catch (CompileError e) {
+			throw new FakeException(e.getMessage(), e);
 		} catch (Exception e) {
 			e.printStackTrace();
 			throw new FakeException("Compile error: " + e);

@@ -1,5 +1,9 @@
 package fiji.build;
 
+import fiji.build.minimaven.BuildEnvironment;
+import fiji.build.minimaven.Coordinate;
+import fiji.build.minimaven.POM;
+
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -78,12 +82,13 @@ public class MiniMaven {
 
 	public static void main(String[] args) throws Exception {
 		ensureIJDirIsSet();
-		BuildEnvironment miniMaven = new BuildEnvironment(System.err, "true".equals(getSystemProperty("minimaven.verbose", "false")), false);
-		POM root = miniMaven.parse(new File("pom.xml"), null);
+		PrintStream err = System.err;
+		BuildEnvironment env = new BuildEnvironment(err, false, "true".equals(getSystemProperty("minimaven.verbose", "false")), false);
+		POM root = env.parse(new File("pom.xml"), null);
 		String command = args.length == 0 ? "compile-and-run" : args[0];
-		String artifactId = getSystemProperty("artifactId", root.coordinate.artifactId.equals("pom-ij-base") ? "ij-app" : root.coordinate.artifactId);
+		String artifactId = getSystemProperty("artifactId", root.getArtifactId().equals("pom-ij-base") ? "ij-app" : root.getArtifactId());
 
-		POM pom = root.findPOM(new Coordinate(null, artifactId, null), false, miniMaven.downloadAutomatically);
+		POM pom = root.findPOM(new Coordinate(null, artifactId, null), false, env.getDownloadAutomatically());
 		if (pom == null)
 			pom = root;
 		if (command.equals("compile") || command.equals("build") || command.equals("compile-and-run")) {
@@ -94,13 +99,13 @@ public class MiniMaven {
 				return;
 		}
 		else if (command.equals("jar") || command.equals("jars")) {
-			if (!pom.buildFromSource) {
+			if (!pom.getBuildFromSource()) {
 				System.err.println("Cannot build " + pom + " from source");
 				System.exit(1);
 			}
 			pom.buildJar();
 			if (command.equals("jars"))
-				pom.copyDependencies(new File(pom.directory, "target"), true);
+				pom.copyDependencies(pom.getTarget(), true);
 			return;
 		}
 		if (command.equals("clean"))
@@ -108,9 +113,9 @@ public class MiniMaven {
 		else if (command.equals("get") || command.equals("get-dependencies"))
 			pom.downloadDependencies();
 		else if (command.equals("run")) {
-			String mainClass = getSystemProperty("mainClass", pom.mainClass);
+			String mainClass = getSystemProperty("mainClass", pom.getMainClass());
 			if (mainClass == null) {
-				miniMaven.err.println("No main class specified in pom " + pom.coordinate);
+				err.println("No main class specified in pom " + pom.getCoordinate());
 				System.exit(1);
 			}
 			String[] paths = pom.getClassPath(false).split(File.pathSeparator);
@@ -125,14 +130,14 @@ public class MiniMaven {
 			main.invoke(null, new Object[] { new String[0] });
 		}
 		else if (command.equals("classpath"))
-			miniMaven.err.println(pom.getClassPath(false));
+			err.println(pom.getClassPath(false));
 		else if (command.equals("list")) {
 			Set<POM> result = new TreeSet<POM>();
 			Stack<POM> stack = new Stack<POM>();
 			stack.push(pom.getRoot());
 			while (!stack.empty()) {
 				pom = stack.pop();
-				if (result.contains(pom) || !pom.buildFromSource)
+				if (result.contains(pom) || !pom.getBuildFromSource())
 					continue;
 				result.add(pom);
 				for (POM child : pom.getChildren())
@@ -142,7 +147,7 @@ public class MiniMaven {
 				System.err.println(pom2);
 		}
 		else
-			miniMaven.err.println("Unhandled command: " + command + "\n" + usage);
+			err.println("Unhandled command: " + command + "\n" + usage);
 	}
 
 	protected static String getSystemProperty(String key, String defaultValue) {
