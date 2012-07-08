@@ -1,6 +1,6 @@
 package fiji.build;
 
-import fiji.build.MiniMaven.POM;
+import fiji.build.POM;
 
 import java.io.File;
 import java.util.List;
