@@ -27,7 +27,7 @@ import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
 public class POM extends DefaultHandler implements Comparable<POM> {
-	protected final MiniMaven env;
+	protected final BuildEnvironment env;
 	protected boolean buildFromSource, built;
 	protected File directory, target;
 	protected String sourceDirectory = "src/main/java";
@@ -61,7 +61,7 @@ public class POM extends DefaultHandler implements Comparable<POM> {
 		return child;
 	}
 
-	protected POM(final MiniMaven miniMaven, File directory, POM parent) {
+	protected POM(final BuildEnvironment miniMaven, File directory, POM parent) {
 		env = miniMaven;
 		this.directory = directory;
 		this.parent = parent;

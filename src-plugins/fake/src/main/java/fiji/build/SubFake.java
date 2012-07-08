@@ -104,7 +104,7 @@ public class SubFake extends Rule {
 		return file.exists() ? file : null;
 	}
 
-	protected static MiniMaven miniMaven;
+	protected static BuildEnvironment miniMaven;
 
 	public POM getPOM() {
 		if (pomRead)
@@ -120,7 +120,7 @@ public class SubFake extends Rule {
 		// TODO: targetBasename could end in "-<version>"
 		try {
 			if (miniMaven == null) {
-				miniMaven = new MiniMaven(parser.fake, parser.fake.err, getVarBool("VERBOSE"), getVarBool("DEBUG"));
+				miniMaven = new BuildEnvironment(parser.fake.err, getVarBool("VERBOSE"), getVarBool("DEBUG"));
 				miniMaven.downloadAutomatically = !miniMaven.offlineMode;
 				MiniMaven.ensureIJDirIsSet();
 				String ijDir = System.getProperty("ij.dir");
