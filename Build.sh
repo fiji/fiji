@@ -77,7 +77,7 @@ ensure_fake_is_built () {
 	 : compile classes
 	 java -jar precompiled/javac.jar -source 1.5 -target 1.5 -classpath precompiled/javac.jar -d src-plugins/fake/target/classes $(find src-plugins/fake/ -name \*.java) &&
 	 : compile .jar using Fiji Build
-	 java -classpath src-plugins/fake/target/classes"$PATHSEP"precompiled/javac.jar fiji.build.Fake jars/fake.jar-rebuild)
+	 java -Dij.dir="$CWD" -classpath src-plugins/fake/target/classes"$PATHSEP"precompiled/javac.jar fiji.build.Fake jars/fake.jar-rebuild)
 }
 
 PATHSEP=:
