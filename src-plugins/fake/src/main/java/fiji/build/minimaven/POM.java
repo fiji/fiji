@@ -101,10 +101,6 @@ public class POM extends DefaultHandler implements Comparable<POM> {
 	}
 
 	protected void download(Coordinate dependency, boolean quiet) throws FileNotFoundException {
-		if (dependency.version == null) {
-			env.err.println("Version of " + dependency.artifactId + " is null; Skipping.");
-			return;
-		}
 		for (String url : getRoot().getRepositories()) try {
 			env.downloadAndVerify(url, dependency, quiet);
 			return;
@@ -434,8 +430,6 @@ public class POM extends DefaultHandler implements Comparable<POM> {
 		String artifactId = expand(dependency.artifactId);
 		String version = expand(dependency.version);
 		String classifier = expand(dependency.classifier);
-		if (version == null && "aopalliance".equals(artifactId))
-			optional = true; // guice has recorded this without a version
 		String systemPath = expand(dependency.systemPath);
 		return new Coordinate(groupId, artifactId, version, scope, optional, systemPath, classifier);
 	}
@@ -512,36 +506,17 @@ public class POM extends DefaultHandler implements Comparable<POM> {
 	}
 
 	public POM findPOM(Coordinate dependency, boolean quiet, boolean downloadAutomatically) throws IOException, ParserConfigurationException, SAXException {
+		if (dependency.version == null && "aopalliance".equals(dependency.artifactId))
+			dependency.version = "1.0";
 		if (dependency.artifactId.equals(expand(coordinate.artifactId)) &&
-				(dependency.groupId == null || dependency.groupId.equals(expand(coordinate.groupId))) &&
-				(dependency.version == null || coordinate.version == null || dependency.version.equals(expand(coordinate.version))))
+				dependency.groupId.equals(expand(coordinate.groupId)) &&
+				dependency.version.equals(expand(coordinate.version)))
 			return this;
-		if (dependency.groupId == null) {
-			POM result = null;
-			for (String key : env.localPOMCache.keySet()) {
-				POM pom = env.localPOMCache.get(key);
-				if (pom == null || pom.coordinate == null || pom.coordinate.artifactId == null)
-					continue;
-				if (dependency.artifactId.equals(pom.coordinate.artifactId)) {
-					if (result == null)
-						result = pom;
-					else {
-						env.err.println("Artifact ID " + dependency.artifactId + " is not unique! (group IDs '"
-							+ result.coordinate.groupId + "' and '" + pom.coordinate.groupId + "' match)");
-						return null;
-					}
-				}
-			}
-			return result;
-		}
-
-		if (dependency.groupId == null && dependency.artifactId.equals("jdom"))
-			dependency.groupId = "jdom";
 		// fall back to Fiji's modules/, $HOME/.m2/repository/ and Fiji's jars/ and plugins/ directories
 		String key = dependency.getKey();
 		if (env.localPOMCache.containsKey(key)) {
 			POM result = env.localPOMCache.get(key); // may be null
-			if (result == null || dependency.version == null || BuildEnvironment.compareVersion(dependency.version, result.coordinate.version) <= 0)
+			if (result == null || BuildEnvironment.compareVersion(dependency.version, result.coordinate.version) <= 0)
 				return result;
 		}
 
@@ -559,28 +534,7 @@ public class POM extends DefaultHandler implements Comparable<POM> {
 		}
 
 		String path = BuildEnvironment.mavenRepository.getPath() + "/" + dependency.groupId.replace('.', '/') + "/" + dependency.artifactId + "/";
-		if (dependency.version == null)
-			dependency.version = findLocallyCachedVersion(path);
-		if (dependency.version == null) {
-			if (dependency.artifactId.equals("scifio"))
-				dependency.version = "4.4-SNAPSHOT";
-			else if (dependency.artifactId.equals("Image_5D"))
-				dependency.version = "1.2.5";
-		}
-		if (dependency.version == null) {
-			// try to find the .jar in Fiji's jars/ dir
-			String jarName = dependency.artifactId + ".jar";
-			File file = new File(System.getProperty("ij.dir"), "jars/" + jarName);
-			if (file.exists())
-				return env.fakePOM(file, dependency);
-			file = new File(System.getProperty("ij.dir"), "plugins/" + jarName);
-			if (file.exists())
-				return env.fakePOM(file, dependency);
-			if (!quiet)
-				env.err.println("Cannot find version for artifact " + dependency.artifactId + " (dependency of " + coordinate.artifactId + ")");
-			return cacheAndReturn(key, null);
-		}
-		else if (dependency.version.startsWith("[")) try {
+		if (dependency.version.startsWith("[")) try {
 			if (!maybeDownloadAutomatically(dependency, quiet, downloadAutomatically))
 				return null;
 			if (dependency.version.startsWith("["))
