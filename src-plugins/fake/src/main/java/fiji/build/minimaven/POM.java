@@ -366,7 +366,7 @@ public class POM extends DefaultHandler implements Comparable<POM> {
 		for (POM pom : getDependencies(true, env.downloadAutomatically, "test", "provided")) {
 			File file = pom.getTarget();
 			File destination = new File(directory, pom.coordinate.artifactId + ".jar");
-			if (file.exists() && (!destination.exists() || destination.lastModified() < file.lastModified()))
+			if (file.exists() && (!onlyNewer || (!destination.exists() || destination.lastModified() < file.lastModified())))
 				BuildEnvironment.copyFile(file, destination);
 		}
 	}
