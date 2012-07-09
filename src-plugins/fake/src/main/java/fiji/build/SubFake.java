@@ -142,8 +142,13 @@ public class SubFake extends Rule {
 				}
 			}
 			pom = miniMaven.parse(file);
-			if (!targetBasename.equals(pom.getArtifactId()))
-				pom = pom.findPOM(new Coordinate(null, targetBasename, null), verbose, miniMaven.getDownloadAutomatically());
+			if (!targetBasename.equals(pom.getArtifactId())) {
+				String groupId = pom.getGroupId();
+				if (targetBasename.equals("imglib") || targetBasename.startsWith("imglib-"))
+					groupId = "mpicbg";
+				pom = pom.findPOM(new Coordinate(groupId, targetBasename, pom.getVersion()),
+					verbose, miniMaven.getDownloadAutomatically());
+			}
 		} catch (Exception e) {
 			e.printStackTrace(parser.fake.err);
 		}
