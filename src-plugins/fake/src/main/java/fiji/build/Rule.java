@@ -97,7 +97,7 @@ public abstract class Rule implements Comparable<Rule> {
 
 		if (getVarBool("rebuildIfFakeIsNewer")) {
 			if (modifiedTime < parser.mtimeFakefile)
-				return upToDateError(file, new File(parser.path));
+				return upToDateError(file, new File(Parser.path));
 			if (modifiedTime < Fake.mtimeFijiBuild)
 				return upToDateError(new File(Fake.fijiBuildJar), file);
 		}
@@ -323,7 +323,7 @@ public abstract class Rule implements Comparable<Rule> {
 	}
 
 	public List<String> getDependenciesAsStrings() {
-		List<String> dependencies = new ArrayList(prerequisites);
+		List<String> dependencies = new ArrayList<String>(prerequisites);
 		Collections.addAll(dependencies, Util.splitPaths(getVar("CLASSPATH")));
 		return dependencies;
 	}
@@ -485,7 +485,7 @@ public abstract class Rule implements Comparable<Rule> {
 			new JarOutputStream(output) :
 			new JarOutputStream(output, manifest);
 
-		parser.fake.addPluginsConfigToJar(out, configPath);
+		Fake.addPluginsConfigToJar(out, configPath);
 
 		JarEntry entry;
 		while ((entry = in.getNextJarEntry()) != null) {

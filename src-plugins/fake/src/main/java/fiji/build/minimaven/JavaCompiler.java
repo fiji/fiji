@@ -60,6 +60,7 @@ public class JavaCompiler {
 	}
 
 	public static class CompileError extends Exception {
+		private static final long serialVersionUID = 1L;
 		protected Object result;
 
 		public CompileError(Object result) {

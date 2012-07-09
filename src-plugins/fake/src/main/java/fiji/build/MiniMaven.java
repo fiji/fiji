@@ -1,56 +1,17 @@
 package fiji.build;
 
-import fiji.build.minimaven.BuildEnvironment;
-import fiji.build.minimaven.Coordinate;
-import fiji.build.minimaven.POM;
-
-import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
 import java.io.PrintStream;
-
 import java.lang.reflect.Method;
-
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
-
-import java.security.DigestInputStream;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.Stack;
 import java.util.TreeSet;
 
-import java.util.jar.JarOutputStream;
-import java.util.jar.Manifest;
-
-import java.util.zip.ZipEntry;
-
-import javax.xml.parsers.SAXParserFactory;
-import javax.xml.parsers.ParserConfigurationException;
-
-import org.xml.sax.Attributes;
-import org.xml.sax.InputSource;
-import org.xml.sax.SAXException;
-import org.xml.sax.XMLReader;
-
-import org.xml.sax.helpers.DefaultHandler;
+import fiji.build.minimaven.BuildEnvironment;
+import fiji.build.minimaven.Coordinate;
+import fiji.build.minimaven.POM;
 
 public class MiniMaven {
 	public static void ensureIJDirIsSet() {
@@ -125,7 +86,7 @@ public class MiniMaven {
 			URLClassLoader classLoader = new URLClassLoader(urls);
 			// needed for sezpoz
 			Thread.currentThread().setContextClassLoader(classLoader);
-			Class clazz = classLoader.loadClass(mainClass);
+			Class<?> clazz = classLoader.loadClass(mainClass);
 			Method main = clazz.getMethod("main", new Class[] { String[].class });
 			main.invoke(null, new Object[] { new String[0] });
 		}

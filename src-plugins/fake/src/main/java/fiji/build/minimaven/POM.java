@@ -12,7 +12,6 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -82,7 +81,7 @@ public class POM extends DefaultHandler implements Comparable<POM> {
 			if (child != null)
 				child.clean();
 		if (target.isDirectory())
-			env.rmRF(target);
+			BuildEnvironment.rmRF(target);
 		else if (target.exists())
 			target.delete();
 		File jar = getTarget();
@@ -157,7 +156,7 @@ public class POM extends DefaultHandler implements Comparable<POM> {
 		for (File file : directory.listFiles())
 			if (file.isFile()) {
 				out.putNextEntry(new ZipEntry(prefix + file.getName()));
-				env.copy(new FileInputStream(file), out, false);
+				BuildEnvironment.copy(new FileInputStream(file), out, false);
 			}
 			else if (file.isDirectory())
 				addToJarRecursively(out, file, prefix + file.getName() + "/");
@@ -232,7 +231,7 @@ public class POM extends DefaultHandler implements Comparable<POM> {
 		if (pom.exists()) {
 			File targetFile = new File(target, "META-INF/maven/" + coordinate.groupId + "/" + coordinate.artifactId + "/pom.xml");
 			targetFile.getParentFile().mkdirs();
-			env.copyFile(pom, targetFile);
+			BuildEnvironment.copyFile(pom, targetFile);
 		}
 
 		if (makeJar) {
@@ -305,7 +304,7 @@ public class POM extends DefaultHandler implements Comparable<POM> {
 				if (dryRun || (targetFile.exists() && targetFile.lastModified() >= lastModified2))
 					continue;
 				targetFile.getParentFile().mkdirs();
-				env.copyFile(file, targetFile);
+				BuildEnvironment.copyFile(file, targetFile);
 			}
 		}
 		return lastModified;
@@ -372,7 +371,7 @@ public class POM extends DefaultHandler implements Comparable<POM> {
 			File file = pom.getTarget();
 			File destination = new File(directory, pom.coordinate.artifactId + ".jar");
 			if (file.exists() && (!destination.exists() || destination.lastModified() < file.lastModified()))
-				env.copyFile(file, destination);
+				BuildEnvironment.copyFile(file, destination);
 		}
 	}
 
@@ -406,7 +405,7 @@ public class POM extends DefaultHandler implements Comparable<POM> {
 			// make sure that snapshot .pom files are updated once a day
 			if (!env.offlineMode && downloadAutomatically && pom != null && dependency.version != null &&
 					dependency.version.endsWith("-SNAPSHOT") && dependency.snapshotVersion == null &&
-					pom.directory.getPath().startsWith(env.mavenRepository.getPath())) {
+					pom.directory.getPath().startsWith(BuildEnvironment.mavenRepository.getPath())) {
 				if (maybeDownloadAutomatically(dependency, !env.verbose, downloadAutomatically)) {
 					dependency.setSnapshotVersion(SnapshotPOMHandler.parse(new File(pom.directory, "maven-metadata-snapshot.xml")));
 				}
@@ -542,7 +541,7 @@ public class POM extends DefaultHandler implements Comparable<POM> {
 		String key = dependency.getKey();
 		if (env.localPOMCache.containsKey(key)) {
 			POM result = env.localPOMCache.get(key); // may be null
-			if (result == null || dependency.version == null || env.compareVersion(dependency.version, result.coordinate.version) <= 0)
+			if (result == null || dependency.version == null || BuildEnvironment.compareVersion(dependency.version, result.coordinate.version) <= 0)
 				return result;
 		}
 
@@ -559,7 +558,7 @@ public class POM extends DefaultHandler implements Comparable<POM> {
 			return cacheAndReturn(key, null);
 		}
 
-		String path = env.mavenRepository.getPath() + "/" + dependency.groupId.replace('.', '/') + "/" + dependency.artifactId + "/";
+		String path = BuildEnvironment.mavenRepository.getPath() + "/" + dependency.groupId.replace('.', '/') + "/" + dependency.artifactId + "/";
 		if (dependency.version == null)
 			dependency.version = findLocallyCachedVersion(path);
 		if (dependency.version == null) {
@@ -861,7 +860,7 @@ public class POM extends DefaultHandler implements Comparable<POM> {
 		if (result != 0)
 			return result;
 		if (coordinate.version != null && other.coordinate.version != null)
-			return env.compareVersion(coordinate.version, other.coordinate.version);
+			return BuildEnvironment.compareVersion(coordinate.version, other.coordinate.version);
 		return 0;
 	}
 

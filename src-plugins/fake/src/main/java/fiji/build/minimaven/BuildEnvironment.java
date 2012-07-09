@@ -140,7 +140,6 @@ public class BuildEnvironment {
 
 		if (pom.parentCoordinate != null && pom.parent == null) {
 			Coordinate dependency = pom.expand(pom.parentCoordinate);
-			POM root = pom.getRoot();
 			pom.parent = pom.findPOM(dependency, true, false);
 
 			if (pom.parent == null) {
