@@ -551,7 +551,7 @@ public class POM extends DefaultHandler implements Comparable<POM> {
 			if (dependency.version.endsWith("-SNAPSHOT"))
 				dependency.setSnapshotVersion(SnapshotPOMHandler.parse(new File(path, "maven-metadata-snapshot.xml")));
 		} catch (FileNotFoundException e) { /* ignore */ }
-		else {
+		else if (env.ignoreMavenRepositories) {
 			File file = findInFijiDirectories(dependency);
 			if (file != null)
 				return env.fakePOM(file, dependency);
