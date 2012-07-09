@@ -3,12 +3,12 @@ package fiji.plugin.trackmate.segmentation;
 import java.util.ArrayList;
 import java.util.List;
 
-import mpicbg.imglib.algorithm.fft.FourierConvolution;
-import mpicbg.imglib.algorithm.math.PickImagePeaks;
-import mpicbg.imglib.algorithm.scalespace.DifferenceOfGaussian.SpecialPoint;
-import mpicbg.imglib.algorithm.scalespace.DifferenceOfGaussianPeak;
-import mpicbg.imglib.algorithm.scalespace.SubpixelLocalization;
-import mpicbg.imglib.container.array.ArrayContainerFactory;
+import net.imglib2.algorithm.fft.FourierConvolution;
+import net.imglib2.algorithm.math.PickImagePeaks;
+import net.imglib2.algorithm.scalespace.DifferenceOfGaussian.SpecialPoint;
+import net.imglib2.algorithm.scalespace.DifferenceOfGaussianPeak;
+import net.imglib2.algorithm.scalespace.SubpixelLocalization;
+import net.imglib2.container.array.ArrayContainerFactory;
 import mpicbg.imglib.cursor.LocalizableByDimCursor;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.image.ImageFactory;

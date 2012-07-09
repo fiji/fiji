@@ -8,11 +8,11 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.graph.SimpleWeightedGraph;
 
-import mpicbg.imglib.algorithm.MultiThreadedBenchmarkAlgorithm;
-import mpicbg.imglib.algorithm.kdtree.KDTree;
-import mpicbg.imglib.algorithm.kdtree.NNearestNeighborSearch;
-import mpicbg.imglib.algorithm.kdtree.NearestNeighborSearch;
-import mpicbg.imglib.multithreading.SimpleMultiThreading;
+import net.imglib2.algorithm.MultiThreadedBenchmarkAlgorithm;
+import net.imglib2.algorithm.kdtree.KDTree;
+import net.imglib2.algorithm.kdtree.NNearestNeighborSearch;
+import net.imglib2.algorithm.kdtree.NearestNeighborSearch;
+import net.imglib2.multithreading.SimpleMultiThreading;
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;

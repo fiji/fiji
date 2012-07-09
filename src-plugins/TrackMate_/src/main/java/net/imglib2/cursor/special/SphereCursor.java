@@ -1,19 +1,21 @@
-package mpicbg.imglib.cursor.special;
+package net.imglib2.cursor.special;
 
 import ij.ImagePlus;
-import mpicbg.imglib.container.array.ArrayContainerFactory;
-import mpicbg.imglib.cursor.Cursor;
-import mpicbg.imglib.cursor.Localizable;
-import mpicbg.imglib.cursor.LocalizableByDimCursor;
-import mpicbg.imglib.cursor.LocalizableCursor;
-import mpicbg.imglib.image.Image;
-import mpicbg.imglib.image.ImageFactory;
-import mpicbg.imglib.image.display.imagej.ImageJFunctions;
-import mpicbg.imglib.outofbounds.OutOfBoundsStrategyFactory;
-import mpicbg.imglib.outofbounds.OutOfBoundsStrategyValueFactory;
-import mpicbg.imglib.type.Type;
-import mpicbg.imglib.type.numeric.integer.UnsignedByteType;
-import mpicbg.imglib.type.numeric.real.FloatType;
+import net.imglib2.Cursor;
+import net.imglib2.Localizable;
+import net.imglib2.RandomAccess;
+import net.imglib2.cursor.special.DomainCursor;
+import net.imglib2.cursor.special.Utils;
+import net.imglib2.img.Img;
+import net.imglib2.img.array.ArrayImgFactory;
+import net.imglib2.img.display.imagej.ImageJFunctions;
+import net.imglib2.outofbounds.OutOfBoundsFactory;
+import net.imglib2.outofbounds.OutOfBoundsMirrorFactory;
+import net.imglib2.outofbounds.OutOfBoundsMirrorFactory.Boundary;
+import net.imglib2.type.Type;
+import net.imglib2.type.numeric.integer.UnsignedByteType;
+import net.imglib2.type.numeric.real.FloatType;
+import net.imglib2.view.Views;
 
 /**
  * This class implements a {@link LocalizableCursor} that iterates over all the pixel within the volume
@@ -65,6 +67,7 @@ import mpicbg.imglib.type.numeric.real.FloatType;
  */
 public final class SphereCursor<T extends Type<T>> extends DomainCursor<T> {
 
+	private final OutOfBoundsFactory<T, Img<T>> oobf;
 	/** The state of the cursor. */
 	private CursorState state, nextState;
 	/** Store the position index. */
@@ -108,13 +111,14 @@ public final class SphereCursor<T extends Type<T>> extends DomainCursor<T> {
 	 * a calibration of 1 in all directions will be used
 	 * @param outOfBoundsFactory  the {@link OutOfBoundsStrategyFactory} that will be used to handle off-bound locations
 	 */
-	public SphereCursor(final Image<T> img, final float[] center, float radius, final float[] calibration, final OutOfBoundsStrategyFactory<T> outOfBoundsFactory) {
-		if (img.getDimensions().length != 3) 
+	public SphereCursor(final Img<T> img, final float[] center, float radius, final float[] calibration, final OutOfBoundsFactory<T, Img<T>> outOfBoundsFactory) {
+		if (img.numDimensions() != 3) 
 			throw new IllegalArgumentException(
-					String.format("SphereCursor: must get a 3D image, got a %dD image.", img.getDimensions().length));
+					String.format("SphereCursor: must get a 3D image, got a %dD image.", img.numDimensions()));
+		this.oobf = outOfBoundsFactory;
 		this.img = img;
 		this.size = radius;
-		this.cursor = img.createLocalizableByDimCursor(outOfBoundsFactory);		
+		this.cursor = Views.extend(img, outOfBoundsFactory).randomAccess();		
 		if (null == calibration) 
 			this.calibration = new float[] { 1, 1, 1 };
 		else 
@@ -138,8 +142,8 @@ public final class SphereCursor<T extends Type<T>> extends DomainCursor<T> {
 	 * @param calibration  the spatial calibration (pixel size); if <code>null</code>, 
 	 * a calibration of 1 in all directions will be used
 	 */
-	public SphereCursor(final Image<T> img, final float[] center, float radius, final float[] calibration) {
-		this(img, center, radius, calibration, new OutOfBoundsStrategyValueFactory<T>());
+	public SphereCursor(final Img<T> img, final float[] center, float radius, final float[] calibration) {
+		this(img, center, radius, calibration, new OutOfBoundsMirrorFactory<T, Img<T>>(Boundary.SINGLE));
 	}
 
 	/**
@@ -151,44 +155,12 @@ public final class SphereCursor<T extends Type<T>> extends DomainCursor<T> {
 	 * @param calibration  the spatial calibration (pixel size); if <code>null</code>, 
 	 * a calibration of 1 in all directions will be used
 	 */
-	public SphereCursor(final Image<T> img, final double[] center, double radius, final double[] calibration) {
+	public SphereCursor(final Img<T> img, final double[] center, double radius, final double[] calibration) {
 		// Simply cast to float
 		this(img, 
 				new float[] {(float)center[0], (float) center[1], (float) center[2]}, 
 				(float) radius, 
 				null == calibration ? null : new float[] {(float) calibration[0], (float) calibration[1], (float) calibration[2] } );
-	}
-
-	/**
-	 * Construct a {@link SphereCursor} on a 3D image, using the spatial calibration
-	 * stored in the image and a default {@link OutOfBoundsStrategyValueFactory}
-	 * to handle off-bounds locations.
-	 * 
-	 * @param img  the image, must be 3D
-	 * @param center  the ball center, in physical units
-	 * @param radius  the ball radius, in physical units
-	 * @see Image#setCalibration(float[])
-	 */
-	public SphereCursor(final Image<T> img, final float[] center, float radius) {
-		this(img, center, radius, img.getCalibration());
-	}
-
-	/**
-	 * Construct a {@link SphereCursor} on a 3D image, using the spatial calibration
-	 * stored in the image and a default {@link OutOfBoundsStrategyValueFactory}
-	 * to handle off-bounds locations.
-	 * 
-	 * @param img  the image, must be 3D
-	 * @param center  the ball center, in physical units
-	 * @param radius  the ball radius, in physical units
-	 * @see Image#setCalibration(float[])
-	 */
-	public SphereCursor(final Image<T> img, final double[] center, double radius) {
-		// Simply cast to float
-		this(img, 
-				new float[] {(float)center[0], (float) center[1], (float) center[2]}, 
-				(float) radius, 
-				img.getCalibration() );
 	}
 
 	/**
@@ -202,19 +174,19 @@ public final class SphereCursor<T extends Type<T>> extends DomainCursor<T> {
 	 * @param calibration  the spatial calibration (pixel size); if <code>null</code>, 
 	 * a calibration of 1 in all directions will be used
 	 */
-	public SphereCursor(final Image<T> img, final Localizable centerCursor, float radius, final float[] calibration,
-			OutOfBoundsStrategyFactory<T> outOfBoundsFactory) {
-		if (img.getDimensions().length != 3) 
-			throw new IllegalArgumentException(
-					String.format("SphereCursor: must get a 3D image, got a %dD image.", img.getDimensions().length));
+	public SphereCursor(final Img<T> img, final Localizable centerCursor, float radius, final float[] calibration,
+			OutOfBoundsFactory<T, Img<T>> outOfBoundsFactory) {
+		if (img.numDimensions() != 3) 
+			throw new IllegalArgumentException(String.format("SphereCursor: must get a 3D image, got a %dD image.", img.numDimensions()) );
+		this.oobf = outOfBoundsFactory;
 		this.img = img;
 		this.size = radius;
-		this.cursor = img.createLocalizableByDimCursor(outOfBoundsFactory);		
+		this.cursor =  Views.extend(img, outOfBoundsFactory).randomAccess();
 		if (null == calibration) 
 			this.calibration  = new float[] { 1, 1, 1};
 		else
 			this.calibration = calibration.clone();
-		origin = centerCursor.getPosition();
+		centerCursor.localize(origin);
 		// Instantiate it once, and with large size, so that we do not have to instantiate every time we move in Z
 		rxs = new int [ Math.max(Math.round(radius/calibration[1]), Math.round(radius/calibration[0]))  +  1 ];
 		rys = new int[Math.round(radius/calibration[2])+1];
@@ -231,24 +203,10 @@ public final class SphereCursor<T extends Type<T>> extends DomainCursor<T> {
 	 * @param centerCursor  the cursor which position will set the sphere center 
 	 * @param radius  the ball radius, in physical units
 	 */
-	public SphereCursor(final Image<T> img, final Localizable centerCursor, float radius, final float[] calibration) {
-		this(img, centerCursor, radius, calibration, new OutOfBoundsStrategyValueFactory<T>());
+	public SphereCursor(final Img<T> img, final Localizable centerCursor, float radius, final float[] calibration) {
+		this(img, centerCursor, radius, calibration, new OutOfBoundsMirrorFactory<T, Img<T>>(Boundary.SINGLE));
 	}
 	
-	
-	/**
-	 * Construct a {@link SphereCursor} on a 3D image, using the spatial calibration
-	 * stored in the image and a default {@link OutOfBoundsStrategyValueFactory}
-	 * to handle off-bounds locations. The center of the sphere
-	 * is set by the {@link Localizable} given in argument.
-	 * 
-	 * @param img  the image, must be 3D
-	 * @param centerCursor  the localizable object which position will set the sphere center 
-	 * @param radius  the ball radius, in physical units
-	 */
-	public SphereCursor(final Image<T> img, final Localizable centerCursor, float radius) {
-		this(img, centerCursor, radius, img.getCalibration(), new OutOfBoundsStrategyValueFactory<T>());
-	}
 	
 	/*
 	 * SPECIFIC SPHEREVOLUME METHODS
@@ -434,7 +392,7 @@ public final class SphereCursor<T extends Type<T>> extends DomainCursor<T> {
 
 	@Override
 	public final void reset() {
-		cursor.reset();
+		cursor.setPosition(origin);
 		state = CursorState.INITIALIZED;
 		mirrorZ = false;
 		doneZ = false;
@@ -449,10 +407,8 @@ public final class SphereCursor<T extends Type<T>> extends DomainCursor<T> {
 
 	public static void main(String[] args) {
 
-		Image<UnsignedByteType> testImage = new ImageFactory<UnsignedByteType>(
-				new UnsignedByteType(),
-				new ArrayContainerFactory()
-		).createImage(new int[] {40, 40, 40}); //{80, 80, 40}); // 40µm x 40µm x 40µm
+		Img<UnsignedByteType> testImage = new ArrayImgFactory<UnsignedByteType>()
+				.create(new int[] {40, 40, 40}, new UnsignedByteType()); //{80, 80, 40}); // 40µm x 40µm x 40µm
 
 		float radius = 5; // µm
 		float[] calibration = new float[] {1, 1, 1}; //{0.5f, 0.5f, 1}; 
@@ -465,19 +421,17 @@ public final class SphereCursor<T extends Type<T>> extends DomainCursor<T> {
 		while(cursor.hasNext()) {
 			volume++;
 			cursor.fwd();
-//			cursor.getType().set((int) cursor.getDistanceSquared()); // to check we paint a sphere in physical coordinates
-			cursor.getType().inc(); // to check we did not walk multiple times on a single pixel
+//			cursor.get().set((int) cursor.getDistanceSquared()); // to check we paint a sphere in physical coordinates
+			cursor.get().inc(); // to check we did not walk multiple times on a single pixel
 		}
-		cursor.close();
 
 		int  maxPixelValue = 0;
-		Cursor<UnsignedByteType> c = testImage.createCursor();
+		Cursor<UnsignedByteType> c = testImage.cursor();
 		while(c.hasNext()) {
 			c.fwd();
-			if (c.getType().get() > maxPixelValue) 
-				maxPixelValue = c.getType().get();
+			if (c.get().get() > maxPixelValue) 
+				maxPixelValue = c.get().get();
 		}
-		c.close();
 
 		System.out.println(String.format("Cursor for a sphere of radius %.1f", radius));
 		System.out.println(String.format("Volume iterated prediction: %d pixels.", cursor.getNPixels()));
@@ -488,7 +442,7 @@ public final class SphereCursor<T extends Type<T>> extends DomainCursor<T> {
 		// Visualize results
 		ij.ImageJ.main(args);
 
-		ImagePlus imp = ImageJFunctions.copyToImagePlus(testImage);
+		ImagePlus imp = net.imglib2.img.display.imagej.ImageJFunctions.wrap(testImage, testImage.toString());
 		imp.getCalibration().pixelWidth = calibration[0];
 		imp.getCalibration().pixelHeight = calibration[1];
 		imp.getCalibration().pixelDepth = calibration[2];
@@ -500,12 +454,11 @@ public final class SphereCursor<T extends Type<T>> extends DomainCursor<T> {
 		// Iterates over all pixels of the image, using the sphere cursor as a neighborhood cursor.
 		// We simply convolve.
 		
-		Image<FloatType> newImage = new ImageFactory<FloatType>(
-				new FloatType(),
-				new ArrayContainerFactory()
-			).createImage(testImage.getDimensions());
-		LocalizableCursor<UnsignedByteType> mainCursor = testImage.createLocalizableCursor();
-		LocalizableByDimCursor<FloatType> destCursor = newImage.createLocalizableByDimCursor();
+		long[] dimensions = new long[testImage.numDimensions()];
+		testImage.dimensions(dimensions);
+		Img<FloatType> newImage = new ArrayImgFactory<FloatType>().create(dimensions, new FloatType());
+		Cursor<UnsignedByteType> mainCursor = testImage.localizingCursor();
+		RandomAccess<FloatType> destCursor = newImage.randomAccess();
 		SphereCursor<UnsignedByteType> sphereCursor = new SphereCursor<UnsignedByteType>(testImage, mainCursor, iRadius, calibration);
 		System.out.println("\nUsing the disc cursor to convolve the whole image with a disc of radius " + iRadius + "...");
 		int sum;
@@ -517,24 +470,30 @@ public final class SphereCursor<T extends Type<T>> extends DomainCursor<T> {
 			sum = 0;
 			while (sphereCursor.hasNext()) {
 				sphereCursor.fwd();
-				sum += sphereCursor.getType().get();
+				sum += sphereCursor.get().get();
 				pixelNumber++;
 			}
 			destCursor.setPosition(mainCursor);
-			destCursor.getType().set(sum);
+			destCursor.get().set(sum);
 		}
-		sphereCursor.close();
-		mainCursor.close();
-		destCursor.close();
 		long end = System.currentTimeMillis();
 		System.out.println(String.format("Iterated over in total %d pixels in %d ms: %.1e pixel/s.", pixelNumber, (end-start), pixelNumber/((float) (end-start)/1000) ));
 		
-		ImagePlus dest = ImageJFunctions.copyToImagePlus(newImage);
+		ImagePlus dest = ImageJFunctions.wrap(newImage, newImage.toString());
 		dest.getCalibration().pixelWidth = calibration[0];
 		dest.getCalibration().pixelHeight = calibration[1];
 		dest.getCalibration().pixelDepth = calibration[2];
 		dest.getCalibration().setUnit("um");
 		dest.show();
 		
+	}
+
+	@Override
+	public Cursor<T> copyCursor() {
+		float[] center = new float[img.numDimensions()];
+		for (int i = 0; i < center.length; i++) {
+			center[i] = origin[i] * calibration[i];
+		}
+		return new SphereCursor<T>(img, center , size, calibration, oobf);
 	}
 }

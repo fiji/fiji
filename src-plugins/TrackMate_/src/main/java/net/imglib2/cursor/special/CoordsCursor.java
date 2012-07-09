@@ -1,7 +1,8 @@
-package mpicbg.imglib.cursor.special;
+package net.imglib2.cursor.special;
 
-import mpicbg.imglib.cursor.Localizable;
-import mpicbg.imglib.type.Type;
+import net.imglib2.Localizable;
+import net.imglib2.cursor.special.AbstractSpecialCursor;
+import net.imglib2.type.Type;
 
 /**
  * Abstract cursor that offers facilities to move the cursor <i>origin</i> (whatever this means
@@ -42,7 +43,7 @@ public abstract class CoordsCursor <T extends Type<T>> extends AbstractSpecialCu
 	 * This <b>resets</b> this cursor.
 	 */
 	public final void moveCenterTo(final Localizable localizable) {
-		localizable.getPosition(origin);
+		localizable.localize(origin);
 		reset();
 	}
 	

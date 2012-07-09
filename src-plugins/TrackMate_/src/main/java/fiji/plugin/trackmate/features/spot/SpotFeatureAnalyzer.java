@@ -2,8 +2,9 @@ package fiji.plugin.trackmate.features.spot;
 
 import java.util.Collection;
 
-import mpicbg.imglib.image.Image;
-import mpicbg.imglib.type.numeric.RealType;
+import net.imglib2.img.Img;
+import net.imglib2.type.numeric.RealType;
+
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.features.FeatureAnalyzer;
 
@@ -29,10 +30,9 @@ public interface SpotFeatureAnalyzer extends FeatureAnalyzer {
 	
 	/**
 	 * Sets the image data this analyzer will operate on to grab the features it generates.
-	 * We require the spatial calibration to be given as well, for we do not trust the  
-	 * {@link Image#getCalibration()} field.
+	 * We require the spatial calibration to be given as well.
 	 */
-	public void setTarget(Image<? extends RealType<?>> img, float[] calibration);
+	public void setTarget(Img<? extends RealType<?>> img, float[] calibration);
 	
 	
 	/**

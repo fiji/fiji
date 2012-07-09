@@ -8,13 +8,12 @@ import java.util.List;
 
 import org.jdom.JDOMException;
 
-import mpicbg.imglib.container.array.ArrayContainerFactory;
-import mpicbg.imglib.cursor.special.SphereCursor;
-import mpicbg.imglib.image.Image;
-import mpicbg.imglib.image.ImageFactory;
-import mpicbg.imglib.image.display.imagej.ImageJFunctions;
-import mpicbg.imglib.type.numeric.integer.UnsignedByteType;
-import mpicbg.imglib.type.numeric.real.FloatType;
+import net.imglib2.cursor.special.SphereCursor;
+import net.imglib2.img.Img;
+import net.imglib2.img.array.ArrayImgFactory;
+import net.imglib2.img.display.imagej.ImageJFunctions;
+import net.imglib2.type.numeric.integer.UnsignedByteType;
+import net.imglib2.type.numeric.real.FloatType;
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
@@ -36,13 +35,13 @@ public class RadiusEstimator_TestDrive {
 		
 		ImagePlus imp = reader.getImage();
 		imp.setDimensions(1, 41, 1); // otherwise it is 4D
-		Image<? extends FloatType> img= ImageJFunctions.wrap(imp);
+		Img<? extends FloatType> img = ImageJFunctions.wrap(imp);
 		
 		TrackMateModel model = reader.getModel();
 		model.getSettings().imp = imp;
 		
 		RadiusEstimator es = new RadiusEstimator();
-		es.setTarget(img, img.getCalibration());
+		es.setTarget(img, new float[] { 0.2f, 0.2f, 1 } );
 		
 		SpotCollection allSpots = model.getSpots();
 		model.setFilteredSpots(allSpots, false);
@@ -86,10 +85,7 @@ public class RadiusEstimator_TestDrive {
 		float[] calibration = new float[] {1, 1, 1};
 		
 		// Create 3 spots image
-		Image<UnsignedByteType> testImage = new ImageFactory<UnsignedByteType>(
-					new UnsignedByteType(),
-					new ArrayContainerFactory()
-				).createImage(new int[] {200, 200, 400});
+		Img<UnsignedByteType> testImage = new ArrayImgFactory<UnsignedByteType>().create(new int[] {200, 200, 400}, new UnsignedByteType());
 
 		SphereCursor<UnsignedByteType> cursor;
 		int index = 0;
@@ -102,12 +98,11 @@ public class RadiusEstimator_TestDrive {
 					calibration);
 			while (cursor.hasNext())
 				cursor.next().set(on);
-			cursor.close();
 			index++;			
 		}
 				
 		ij.ImageJ.main(args);
-		ij.ImagePlus imp = mpicbg.imglib.image.display.imagej.ImageJFunctions.copyToImagePlus(testImage);
+		ij.ImagePlus imp = ImageJFunctions.wrap(testImage, testImage.toString());
 		imp.show();
 		
 		// Apply the estimator

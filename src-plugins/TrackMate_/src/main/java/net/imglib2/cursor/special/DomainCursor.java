@@ -1,9 +1,10 @@
 /**
  * 
  */
-package mpicbg.imglib.cursor.special;
+package net.imglib2.cursor.special;
 
-import mpicbg.imglib.type.Type;
+import net.imglib2.cursor.special.CoordsCursor;
+import net.imglib2.type.Type;
 
 /**
  * Abstract class for {@link CoordsCursor}s that iterate over a domain which size can be

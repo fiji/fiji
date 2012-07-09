@@ -1,4 +1,4 @@
-package mpicbg.imglib.cursor.special;
+package net.imglib2.cursor.special;
 
 /**
  * Util class made of static methods, meant to simplify the writing of special cursors.

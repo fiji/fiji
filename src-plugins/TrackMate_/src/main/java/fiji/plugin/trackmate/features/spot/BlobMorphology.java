@@ -6,14 +6,13 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
-import mpicbg.imglib.container.array.ArrayContainerFactory;
-import mpicbg.imglib.cursor.special.DiscCursor;
-import mpicbg.imglib.cursor.special.SphereCursor;
-import mpicbg.imglib.image.Image;
-import mpicbg.imglib.image.ImageFactory;
-import mpicbg.imglib.image.display.imagej.ImageJFunctions;
-import mpicbg.imglib.type.numeric.RealType;
-import mpicbg.imglib.type.numeric.integer.UnsignedByteType;
+import net.imglib2.cursor.special.DiscCursor;
+import net.imglib2.cursor.special.SphereCursor;
+import net.imglib2.img.Img;
+import net.imglib2.img.array.ArrayImgFactory;
+import net.imglib2.img.display.imagej.ImageJFunctions;
+import net.imglib2.type.numeric.RealType;
+import net.imglib2.type.numeric.integer.UnsignedByteType;
 import Jama.EigenvalueDecomposition;
 import Jama.Matrix;
 import fiji.plugin.trackmate.Dimension;
@@ -57,9 +56,9 @@ import fiji.plugin.trackmate.SpotImp;
  * 	<li> otherwise it has the value {@link #SCALENE}; the spot's shape has nothing particular
  * </ul>
  * 
- * @author Jean-Yves Tinevez <jeanyves.tinevez@gmail.com> Apr 1, 2011
+ * @author Jean-Yves Tinevez <jeanyves.tinevez@gmail.com> Apr 1, 2011 - 2012
  *
- * @param <T>  the type of the input {@link Image}
+ * @param <T>  the type of the input {@link Img}
  */
 public class BlobMorphology extends IndependentSpotFeatureAnalyzer {
 
@@ -150,7 +149,7 @@ public class BlobMorphology extends IndependentSpotFeatureAnalyzer {
 		for (int i = 0; i < coords.length; i++) 
 			coords[i] = spot.getFeature(Spot.POSITION_FEATURES[i]);
 
-		if (img.getNumDimensions() == 3) {
+		if (img.numDimensions() == 3) {
 
 			// 3D case
 			
@@ -159,11 +158,11 @@ public class BlobMorphology extends IndependentSpotFeatureAnalyzer {
 			double x2, y2, z2;
 			double mass, totalmass = 0;
 			double Ixx = 0, Iyy = 0, Izz = 0, Ixy = 0, Ixz = 0, Iyz = 0;
-			int[] position = cursor.createPositionArray();
+			int[] position = new int[img.numDimensions()];
 
 			while (cursor.hasNext()) {
 				cursor.fwd();
-				mass = cursor.getType().getRealDouble();
+				mass = cursor.get().getRealDouble();
 				cursor.getRelativePosition(position);
 				x = position[0] * calibration[0];
 				y = position[1] * calibration[1];
@@ -179,7 +178,6 @@ public class BlobMorphology extends IndependentSpotFeatureAnalyzer {
 				Ixz -= mass*x*z;
 				Iyz -= mass*y*z;
 			}
-			cursor.close();
 
 			Matrix mat = new Matrix( new double[][] { 
 					{ Ixx, Ixy, Ixz },
@@ -237,7 +235,7 @@ public class BlobMorphology extends IndependentSpotFeatureAnalyzer {
 			// Store the Spot morphology (needs to be outside the above loop)
 			spot.putFeature(MORPHOLOGY, estimateMorphology(semiaxes_ordered));
 			
-		} else if (img.getNumDimensions() == 2) {
+		} else if (img.numDimensions() == 2) {
 			
 			// 2D case
 			
@@ -246,11 +244,11 @@ public class BlobMorphology extends IndependentSpotFeatureAnalyzer {
 			double x2, y2;
 			double mass, totalmass = 0;
 			double Ixx = 0, Iyy = 0, Ixy = 0;
-			int[] position = cursor.createPositionArray();
+			int[] position = new int[img.numDimensions()];
 
 			while (cursor.hasNext()) {
 				cursor.fwd();
-				mass = cursor.getType().getRealDouble();
+				mass = cursor.get().getRealDouble();
 				cursor.getRelativePosition(position);
 				x = position[0] * calibration[0];
 				y = position[1] * calibration[1];
@@ -261,7 +259,6 @@ public class BlobMorphology extends IndependentSpotFeatureAnalyzer {
 				Iyy += mass*(x2);
 				Ixy -= mass*x*y;
 			}
-			cursor.close();
 
 			Matrix mat = new Matrix( new double[][] { 
 					{ Ixx, Ixy},
@@ -378,10 +375,7 @@ public class BlobMorphology extends IndependentSpotFeatureAnalyzer {
 		float[] calibration = new float[] {1, 1};
 		
 		// Create blank image
-		Image<UnsignedByteType> img = new ImageFactory<UnsignedByteType>(
-				new UnsignedByteType(),
-				new ArrayContainerFactory()
-			).createImage(new int[] {200, 200});
+		Img<UnsignedByteType> img = new ArrayImgFactory<UnsignedByteType>().create(new int[] {200, 200}, new UnsignedByteType());
 		final byte on = (byte) 255;
 		
 		// Create an ellipse 
@@ -401,16 +395,14 @@ public class BlobMorphology extends IndependentSpotFeatureAnalyzer {
 			term = r2*cosphi*cosphi/a/a +
 				r2*sinphi*sinphi/b/b; 
 			if (term <= 1) 
-				sc.getType().set(on);
+				sc.get().set(on);
 		}
-		sc.close();
 		long end = System.currentTimeMillis();
 		System.out.println("Ellipse creation done in " + (end-start) + " ms.");
 		System.out.println();
 		
 		ij.ImageJ.main(args);
-		img.getDisplay().setMinMax();
-		ImageJFunctions.copyToImagePlus(img).show();
+		ImageJFunctions.show(img);
 		
 		start = System.currentTimeMillis();
 		BlobMorphology bm = new BlobMorphology();
