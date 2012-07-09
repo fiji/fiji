@@ -508,6 +508,8 @@ public class POM extends DefaultHandler implements Comparable<POM> {
 	public POM findPOM(Coordinate dependency, boolean quiet, boolean downloadAutomatically) throws IOException, ParserConfigurationException, SAXException {
 		if (dependency.version == null && "aopalliance".equals(dependency.artifactId))
 			dependency.version = "1.0";
+		if (dependency.version == null && "provided".equals(dependency.scope))
+			return null;
 		if (dependency.artifactId.equals(expand(coordinate.artifactId)) &&
 				dependency.groupId.equals(expand(coordinate.groupId)) &&
 				dependency.version.equals(expand(coordinate.version)))
