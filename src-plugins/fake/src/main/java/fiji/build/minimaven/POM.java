@@ -591,7 +591,10 @@ public class POM extends DefaultHandler implements Comparable<POM> {
 	protected POM findInMultiProjects(Coordinate dependency) throws IOException, ParserConfigurationException, SAXException {
 		env.parseMultiProjects();
 		String key = dependency.getKey();
-		return env.localPOMCache.get(key);
+		POM result = env.localPOMCache.get(key);
+		if (result != null && BuildEnvironment.compareVersion(dependency.version, result.coordinate.version) <= 0)
+			return result;
+		return null;
 	}
 
 	protected File findInFijiDirectories(Coordinate dependency) {
