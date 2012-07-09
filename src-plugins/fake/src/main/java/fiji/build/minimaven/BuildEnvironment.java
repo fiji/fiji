@@ -427,6 +427,8 @@ public class BuildEnvironment {
 	}
 
 	protected static int compareVersion(String version1, String version2) {
+		if (version1 == null)
+			return version2 == null ? 0 : -1;
 		if (version1.equals(version2))
 			return 0;
 		String[] split1 = version1.split("\\.");
