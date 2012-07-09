@@ -117,6 +117,12 @@ public class BuildEnvironment {
 		FileInputStream in = new FileInputStream(file);
 		reader.parse(new InputSource(in));
 		in.close();
+		if (pom.coordinate.artifactId == null || pom.coordinate.artifactId.equals(""))
+			throw new SAXException("Missing artifactId: " + file);
+		if (pom.coordinate.groupId == null || pom.coordinate.groupId.equals(""))
+			throw new SAXException("Missing groupId: " + file);
+		if (pom.coordinate.version == null || pom.coordinate.version.equals(""))
+			throw new SAXException("Missing version: " + file);
 
 		pom.children = new POM[pom.modules.size()];
 		for (int i = 0; i < pom.children.length; i++) {
