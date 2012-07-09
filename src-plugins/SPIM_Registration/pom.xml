@@ -109,7 +109,7 @@
 		</dependency>
 		<dependency>
 			<groupId>loci</groupId>
-			<artifactId>loci_tools</artifactId>
+			<artifactId>scifio</artifactId>
 			<version>4.4-SNAPSHOT</version>
 		</dependency>
 	</dependencies>
