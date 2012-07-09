@@ -5,8 +5,16 @@ import fiji.build.minimaven.Coordinate;
 import fiji.build.minimaven.POM;
 
 import java.io.File;
+import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
 import java.util.StringTokenizer;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
+
+import javax.xml.parsers.ParserConfigurationException;
+
+import org.xml.sax.SAXException;
 
 public class SubFake extends Rule {
 	protected String jarName;
@@ -176,13 +184,7 @@ public class SubFake extends Rule {
 				pom.buildJar();
 				copyJar(pom.getTarget().getPath(), target, parser.cwd, configPath);
 				if (getVarBool("copyDependencies")) {
-					File destination = new File(target).getAbsoluteFile().getParentFile();
-					if (destination.getName().equals("plugins")) {
-						destination = new File(destination.getParentFile(), "jars");
-						if (!destination.isDirectory() && !destination.mkdirs())
-							throw new FakeException("Could not make directory " + destination);
-					}
-					pom.copyDependencies(destination, true);
+					copyDependencies(pom, new File(target).getAbsoluteFile().getParentFile());
 				}
 				return;
 			} catch (Exception e) {
@@ -224,6 +226,49 @@ public class SubFake extends Rule {
 				+ "/" + baseName + ".Fakefile",
 			getBuildDir(),
 			subTarget);
+	}
+
+	// if targetDirectory is one of jars/ & plugins/ and the other exists also, be clever
+	protected void copyDependencies(POM pom, File targetDirectory) throws IOException, ParserConfigurationException, SAXException {
+		File plugins = null;
+		if (targetDirectory.getName().equals("plugins")) {
+			File jars = new File(targetDirectory.getParentFile(), "jars");
+			if (jars.isDirectory()) {
+				plugins = targetDirectory;
+				targetDirectory = jars;
+			}
+		}
+		else if (targetDirectory.getName().equals("jars")) {
+			plugins = new File(targetDirectory.getParentFile(), "plugins");
+			if (!plugins.isDirectory())
+				plugins = null;
+		}
+
+		for (POM dependency : pom.getDependencies(true, false, "test", "provided")) {
+			File file = dependency.getTarget();
+			File directory = plugins != null && isImageJ1Plugin(file) ? plugins : targetDirectory;
+			File destination = new File(directory, dependency.getArtifactId() + ".jar");
+			if (file.exists() && (!destination.exists() || destination.lastModified() < file.lastModified()))
+				BuildEnvironment.copyFile(file, destination);
+		}
+	}
+
+	protected boolean isImageJ1Plugin(File file) {
+		String name = file.getName();
+		if (!name.endsWith(".jar") || name.indexOf('_') < 0 || !file.exists())
+			return false;
+		try {
+			JarFile jar = new JarFile(file);
+			for (JarEntry entry : Collections.list(jar.entries()))
+				if (entry.getName().equals("plugins.config")) {
+					jar.close();
+					return true;
+			}
+			jar.close();
+		} catch (Throwable t) {
+			// obviously not a plugin...
+		}
+		return false;
 	}
 
 	String getVarPath(String variable, String subkey) {

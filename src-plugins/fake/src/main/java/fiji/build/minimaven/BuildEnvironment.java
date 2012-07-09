@@ -405,15 +405,15 @@ public class BuildEnvironment {
 		return result;
 	}
 
-	protected static void copyFile(File source, File target) throws IOException {
+	public static void copyFile(File source, File target) throws IOException {
 		copy(new FileInputStream(source), target);
 	}
 
-	protected static void copy(InputStream in, File target) throws IOException {
+	public static void copy(InputStream in, File target) throws IOException {
 		copy(in, new FileOutputStream(target), true);
 	}
 
-	protected static void copy(InputStream in, OutputStream out, boolean closeOutput) throws IOException {
+	public static void copy(InputStream in, OutputStream out, boolean closeOutput) throws IOException {
 		byte[] buffer = new byte[131072];
 		for (;;) {
 			int count = in.read(buffer);
