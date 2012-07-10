@@ -5,6 +5,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 
+import fiji.plugin.trackmate.detection.subpixel.SubPixelLocalization;
+
 import net.imglib2.Cursor;
 import net.imglib2.RandomAccess;
 import net.imglib2.algorithm.Benchmark;
@@ -41,72 +43,35 @@ public class PickImagePeaks <T extends RealType<T>> implements OutputAlgorithm<I
 	private long pTime;
 	private Img<BitType> peakImage;
 	private ImgFactory<BitType> peakContainerFactory;
-	final private ArrayList<int[]> peakLocList;
+	final private ArrayList<long[]> peakLocList;
 	private final double[] suppressAxis;
 	private double suppressSum;
 
-	private class Peak implements Comparable<Peak>
-	{
-		private final T peakVal;
-		private final int[] pos;
+	private class Peak extends SubPixelLocalization<T> {
 
-		public Peak(final int[] inPos, final T val)
-		{
-			peakVal = val;
-			pos = inPos;
+		public Peak(final long[] inPos, final T val) {
+			super(inPos, val, LocationType.MAX);
 		}
 		
-		@Override
-		public int compareTo(final Peak inPeak) {
-			/*
-			 * You're probably wondering why this is negated.
-			 * It is because Collections.sort() sorts only in the forward direction.
-			 * I want these to be sorted in the descending order, and the Collections.sort
-			 * method is the only thing that should ever touch Peak.compareTo.
-			 * This is faster than sorting, then reversing.
-			 */
-			//return -(this.peakVal.compareTo(inPeak.peakVal));
-			//float hereVal = peakVal.
-			//f//loat thereVal = inPeak.peakVal.getReal();
-			if (peakVal.compareTo(inPeak.peakVal) == 1)
-			{
-				return -1;
-			}
-			else if (peakVal.compareTo(inPeak.peakVal) == 0)
-			{
-				return 0;
-			}
-			else
-			{
-				return 1;
-			}
-		}
 		
-		public int[] getPosition()
-		{
-			return pos;
-		}
-		
-		public double distanceFactor(final int inPos[])
-		{
-			double val = 0;
-			for (int i = 0; i < pos.length; i++)
-			{
-				val += Math.pow((((double) pos[i] - inPos[i]) / (double)suppressAxis[i]), 2.0);
+		public double distanceFactor(final int inPos[])	{
+			double val2 = 0;
+			double val;
+			for (int i = 0; i < numDimensions(); i++) {
+				val = (pixelCoordinates[i] - inPos[i]) / suppressAxis[i];
+				val += val * val;
 			}
-			val =  Math.sqrt(val);
-			
-			return val;
+			val2 =  Math.sqrt(val2);
+			return val2;
 		}
 		
 	}
 	
-	public PickImagePeaks(final Img<T> inputImage)
-	{
+	public PickImagePeaks(final Img<T> inputImage)	{
 		image = inputImage;
 		pTime = 0;
 		peakContainerFactory = null;
-		peakLocList = new ArrayList<int[]>();
+		peakLocList = new ArrayList<long[]>();
 		peakImage = null;
 		suppressAxis = new double[inputImage.numDimensions()];
 		Arrays.fill(suppressAxis, 0);
@@ -133,7 +98,7 @@ public class PickImagePeaks <T extends RealType<T>> implements OutputAlgorithm<I
 			
 			T type;
 			//populate the suppression list.
-			for (int[] pos : peakLocList)				
+			for (long[] pos : peakLocList)				
 			{
 				imCursor.setPosition(pos);
 				type = imCursor.get().copy();
@@ -146,7 +111,7 @@ public class PickImagePeaks <T extends RealType<T>> implements OutputAlgorithm<I
 			for (Peak p : suppressionList)
 			{
 				boolean isOK = true;
-				for (int[] pos : peakLocList)
+				for (long[] pos : peakLocList)
 				{
 					if (p.distanceFactor(pos) < 1)
 					{
@@ -294,7 +259,7 @@ public class PickImagePeaks <T extends RealType<T>> implements OutputAlgorithm<I
 	 * 
 	 * @return an ArrayList containing peak locations
 	 */
-	public ArrayList<int[]> getPeakList()
+	public ArrayList<long[]> getPeakList()
 	{
 		if (peakLocList.isEmpty() && peakImage!=null)
 		{			
@@ -306,7 +271,7 @@ public class PickImagePeaks <T extends RealType<T>> implements OutputAlgorithm<I
 				pkCursor.fwd();
 				if (pkCursor.get().get())
 				{
-					final int[] pos = new int[peakImage.numDimensions()];
+					final long[] pos = new long[peakImage.numDimensions()];
 					pkCursor.localize(pos);
 					peakLocList.add(pos);
 				}				

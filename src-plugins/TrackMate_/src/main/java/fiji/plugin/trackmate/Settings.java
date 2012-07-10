@@ -1,7 +1,7 @@
 package fiji.plugin.trackmate;
 
-import fiji.plugin.trackmate.segmentation.SegmenterSettings;
-import fiji.plugin.trackmate.segmentation.SpotSegmenter;
+import fiji.plugin.trackmate.detection.SegmenterSettings;
+import fiji.plugin.trackmate.detection.SpotSegmenter;
 import fiji.plugin.trackmate.tracking.SpotTracker;
 import fiji.plugin.trackmate.tracking.TrackerSettings;
 import ij.ImagePlus;

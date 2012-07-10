@@ -5,9 +5,9 @@ import javax.swing.ImageIcon;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.TrackMate_;
+import fiji.plugin.trackmate.detection.BasicSegmenterSettings;
+import fiji.plugin.trackmate.detection.SegmenterSettings;
 import fiji.plugin.trackmate.gui.DisplayerPanel;
-import fiji.plugin.trackmate.segmentation.BasicSegmenterSettings;
-import fiji.plugin.trackmate.segmentation.SegmenterSettings;
 
 public class ResetRadiusAction extends AbstractTMAction {
 

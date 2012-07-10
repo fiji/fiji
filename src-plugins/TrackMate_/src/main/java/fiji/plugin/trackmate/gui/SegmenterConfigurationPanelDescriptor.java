@@ -3,9 +3,9 @@ package fiji.plugin.trackmate.gui;
 import java.awt.Component;
 
 import fiji.plugin.trackmate.TrackMate_;
-import fiji.plugin.trackmate.segmentation.ManualSegmenter;
-import fiji.plugin.trackmate.segmentation.SegmenterSettings;
-import fiji.plugin.trackmate.segmentation.SpotSegmenter;
+import fiji.plugin.trackmate.detection.ManualSegmenter;
+import fiji.plugin.trackmate.detection.SegmenterSettings;
+import fiji.plugin.trackmate.detection.SpotSegmenter;
 
 public class SegmenterConfigurationPanelDescriptor implements WizardPanelDescriptor {
 

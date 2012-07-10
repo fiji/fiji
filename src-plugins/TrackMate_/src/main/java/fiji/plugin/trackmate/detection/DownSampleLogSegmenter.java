@@ -1,4 +1,4 @@
-package fiji.plugin.trackmate.segmentation;
+package fiji.plugin.trackmate.detection;
 
 import net.imglib2.Cursor;
 import net.imglib2.RandomAccess;

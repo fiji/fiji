@@ -3,8 +3,8 @@ package fiji.plugin.trackmate.gui;
 import javax.swing.JComponent;
 
 import fiji.plugin.trackmate.TrackMateModel;
-import fiji.plugin.trackmate.segmentation.BasicSegmenterSettings;
-import fiji.plugin.trackmate.segmentation.SegmenterSettings;
+import fiji.plugin.trackmate.detection.BasicSegmenterSettings;
+import fiji.plugin.trackmate.detection.SegmenterSettings;
 
 public class BasicSegmenterConfigurationPanel extends LogSegmenterConfigurationPanel {
 

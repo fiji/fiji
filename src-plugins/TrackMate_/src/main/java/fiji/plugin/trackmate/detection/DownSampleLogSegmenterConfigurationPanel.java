@@ -1,4 +1,4 @@
-package fiji.plugin.trackmate.segmentation;
+package fiji.plugin.trackmate.detection;
 
 import static fiji.plugin.trackmate.gui.TrackMateWizard.FONT;
 

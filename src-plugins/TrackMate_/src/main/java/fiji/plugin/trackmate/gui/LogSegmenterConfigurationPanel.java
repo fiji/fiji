@@ -20,8 +20,8 @@ import javax.swing.JLabel;
 import javax.swing.JTextField;
 
 import fiji.plugin.trackmate.TrackMateModel;
-import fiji.plugin.trackmate.segmentation.LogSegmenterSettings;
-import fiji.plugin.trackmate.segmentation.SegmenterSettings;
+import fiji.plugin.trackmate.detection.LogSegmenterSettings;
+import fiji.plugin.trackmate.detection.SegmenterSettings;
 
 /**
  * Configuration panel for spot segmenters based on LoG segmentation. 

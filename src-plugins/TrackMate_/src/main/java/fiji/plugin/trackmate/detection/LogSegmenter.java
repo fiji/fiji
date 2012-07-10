@@ -1,4 +1,4 @@
-package fiji.plugin.trackmate.segmentation;
+package fiji.plugin.trackmate.detection;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -13,6 +13,9 @@ import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.real.FloatType;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotImp;
+import fiji.plugin.trackmate.detection.subpixel.QuadraticSubpixelLocalization;
+import fiji.plugin.trackmate.detection.subpixel.SubPixelLocalization;
+import fiji.plugin.trackmate.detection.subpixel.SubPixelLocalization.LocationType;
 
 public class LogSegmenter <T extends RealType<T>> extends AbstractSpotSegmenter<T> {
 
@@ -95,28 +98,28 @@ public class LogSegmenter <T extends RealType<T>> extends AbstractSpotSegmenter<
 		}
 
 		// Get peaks location and values
-		final ArrayList<int[]> peaks = peakPicker.getPeakList();
+		final ArrayList<int[]> centers = peakPicker.getPeakList();
 		final RandomAccess<T> cursor = intermediateImage.randomAccess();
 		// Prune values lower than threshold
-		List<DifferenceOfGaussianPeak<T>> dogPeaks = new ArrayList<DifferenceOfGaussianPeak<T>>();
+		List<SubPixelLocalization<T>> dogPeaks = new ArrayList<SubPixelLocalization<T>>();
 		final List<T> pruned_values = new ArrayList<T>();
-		final SpecialPoint specialPoint = SpecialPoint.MAX;
-		for (int i = 0; i < peaks.size(); i++) {
-			int[] peak = peaks.get(i);
-			cursor.setPosition(peak);
+		final LocationType specialPoint = LocationType.MAX;
+		for (int i = 0; i < centers.size(); i++) {
+			int[] center = centers.get(i);
+			cursor.setPosition(center);
 			T value = cursor.get().copy();
 			if (value.getRealFloat() < settings.threshold) {
 				break; // because peaks are sorted, we can exit loop here
 			}
-			DifferenceOfGaussianPeak<T> dogPeak = new DifferenceOfGaussianPeak<T>(peak, value, specialPoint);
-			dogPeaks.add(dogPeak);
+			SubPixelLocalization<T> peak = new SubPixelLocalization<T>(center, value, specialPoint);
+			dogPeaks.add(peak);
 			pruned_values.add(value);
 		}
 
 		// Do sub-pixel localization
 		if (settings.doSubPixelLocalization ) {
 			// Create localizer and apply it to the list
-			final SubpixelLocalization<T> locator = new SubpixelLocalization<T>(intermediateImage, dogPeaks);
+			final QuadraticSubpixelLocalization<T> locator = new QuadraticSubpixelLocalization<T>(intermediateImage, dogPeaks);
 			locator.setNumThreads(1); // Since the calls to a segmenter  are already multi-threaded.
 			locator.setCanMoveOutside(true);
 			if ( !locator.checkInput() || !locator.process() )	{

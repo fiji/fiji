@@ -3,7 +3,7 @@ package fiji.plugin.trackmate.gui;
 import java.awt.Component;
 
 import fiji.plugin.trackmate.TrackMate_;
-import fiji.plugin.trackmate.segmentation.ManualSegmenter;
+import fiji.plugin.trackmate.detection.ManualSegmenter;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
 
 public class DisplayerChoiceDescriptor implements WizardPanelDescriptor {

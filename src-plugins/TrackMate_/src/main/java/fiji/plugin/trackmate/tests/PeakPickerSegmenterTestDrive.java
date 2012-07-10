@@ -14,9 +14,9 @@ import net.imglib2.type.numeric.integer.UnsignedByteType;
 import net.imglib2.util.Util;
 
 import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.segmentation.LogSegmenterSettings;
-import fiji.plugin.trackmate.segmentation.LogSegmenter;
-import fiji.plugin.trackmate.segmentation.SpotSegmenter;
+import fiji.plugin.trackmate.detection.LogSegmenter;
+import fiji.plugin.trackmate.detection.LogSegmenterSettings;
+import fiji.plugin.trackmate.detection.SpotSegmenter;
 
 public class PeakPickerSegmenterTestDrive {
 

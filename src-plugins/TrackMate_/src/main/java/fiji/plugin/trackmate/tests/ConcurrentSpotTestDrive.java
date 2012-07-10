@@ -5,8 +5,8 @@ import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.SpotImp;
 import fiji.plugin.trackmate.TrackMate_;
-import fiji.plugin.trackmate.segmentation.DogSegmenter;
-import fiji.plugin.trackmate.segmentation.LogSegmenterSettings;
+import fiji.plugin.trackmate.detection.DogSegmenter;
+import fiji.plugin.trackmate.detection.LogSegmenterSettings;
 import ij.ImagePlus;
 import ij.gui.NewImage;
 

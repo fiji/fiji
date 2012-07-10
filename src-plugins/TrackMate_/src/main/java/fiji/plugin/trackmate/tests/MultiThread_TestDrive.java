@@ -8,8 +8,8 @@ import org.jdom.JDOMException;
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMate_;
+import fiji.plugin.trackmate.detection.DownSampleLogSegmenter;
 import fiji.plugin.trackmate.io.TmXmlReader;
-import fiji.plugin.trackmate.segmentation.DownSampleLogSegmenter;
 import fiji.plugin.trackmate.tracking.LAPTracker;
 import fiji.plugin.trackmate.tracking.LAPTrackerSettings;
 

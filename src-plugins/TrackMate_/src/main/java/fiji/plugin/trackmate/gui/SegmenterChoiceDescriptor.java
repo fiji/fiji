@@ -5,8 +5,8 @@ import java.awt.Component;
 import net.imglib2.type.numeric.RealType;
 
 import fiji.plugin.trackmate.TrackMate_;
-import fiji.plugin.trackmate.segmentation.SegmenterSettings;
-import fiji.plugin.trackmate.segmentation.SpotSegmenter;
+import fiji.plugin.trackmate.detection.SegmenterSettings;
+import fiji.plugin.trackmate.detection.SpotSegmenter;
 
 public class SegmenterChoiceDescriptor implements WizardPanelDescriptor {
 

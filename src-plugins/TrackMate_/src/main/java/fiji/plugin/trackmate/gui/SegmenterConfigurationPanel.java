@@ -2,7 +2,7 @@ package fiji.plugin.trackmate.gui;
 
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.TrackMateModel;
-import fiji.plugin.trackmate.segmentation.SegmenterSettings;
+import fiji.plugin.trackmate.detection.SegmenterSettings;
 
 /**
  * The mother class for all the configuration panels that can configure a certain
