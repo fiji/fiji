@@ -16,8 +16,8 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-import mpicbg.imglib.image.Image;
-import mpicbg.imglib.type.numeric.integer.UnsignedByteType;
+import net.imglib2.img.Img;
+import net.imglib2.type.numeric.integer.UnsignedByteType;
 
 public class SingleFrame_TestDrive {
 	
@@ -56,14 +56,14 @@ public class SingleFrame_TestDrive {
 
 		// Grab single frame as Imglib image
 		@SuppressWarnings("unchecked")
-		Image<UnsignedByteType> img = (Image<UnsignedByteType>) TMUtils.getCroppedSingleFrameAsImage(imp, frame, segmentationChannel, settings); // will be cropped according to settings
+		Img<UnsignedByteType> img = (Img<UnsignedByteType>) TMUtils.getCroppedSingleFrameAsImage(imp, frame, segmentationChannel, settings); // will be cropped according to settings
 		
 		// Check to see if it is right
 		ij.ImageJ.main(args);
 //		 mpicbg.imglib.image.display.imagej.ImageJFunctions.copyToImagePlus(img, ImagePlus.GRAY8).show();
 		
 		// Segment it using individual segmenter
-		segmenter.setTarget(img, img.getCalibration(), lss );
+		segmenter.setTarget(img, settings.getCalibration(), lss );
 		if (!(segmenter.checkInput() && segmenter.process())) {
 			System.err.println("Problem in segmentation: "+segmenter.getErrorMessage());
 			return;

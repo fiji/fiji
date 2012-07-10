@@ -12,8 +12,8 @@ import java.util.TreeSet;
 
 import javax.swing.ImageIcon;
 
-import mpicbg.imglib.image.Image;
-import mpicbg.imglib.image.display.imagej.ImageJFunctions;
+import net.imglib2.img.Img;
+import net.imglib2.img.display.imagej.ImageJFunctions;
 
 import org.jgrapht.graph.DefaultWeightedEdge;
 
@@ -121,28 +121,28 @@ public class ExtractTrackStackAction extends AbstractTMAction {
 			
 			// Extract image for current frame
 			int frame = model.getSpots().getFrame(spot);
-			Image img = TMUtils.getUncroppedSingleFrameAsImage(settings.imp, frame, targetChannel);
+			Img img = TMUtils.getUncroppedSingleFrameAsImage(settings.imp, frame, targetChannel);
 			
 			// Compute target coordinates for current spot
 			int x = Math.round((spot.getFeature(Spot.POSITION_X)) / calibration[0]) - width/2; 
 			int y = Math.round((spot.getFeature(Spot.POSITION_Y)) / calibration[1]) - height/2;
-			int slice = 0;
-			if (img.getNumDimensions() > 2) {
+			long slice = 0;
+			if (img.numDimensions() > 2) {
 				slice = Math.round(spot.getFeature(Spot.POSITION_Z) / calibration[2]);
 				if (slice < 0) {
 					slice = 0;
 				}
-				if (slice >= img.getDimension(2)) {
-					slice = img.getDimension(2) -1;
+				if (slice >= img.dimension(2)) {
+					slice = img.dimension(2) -1;
 				}
 			}
 			
 			SpotIconGrabber grabber = new SpotIconGrabber();
 			grabber.setTarget(img, calibration);
-			Image crop = grabber.grabImage(x, y, slice, width, height);
+			Img crop = grabber.grabImage(x, y, slice, width, height);
 			
 			// Copy to central holder
-			stack.addSlice(spot.toString(), ImageJFunctions.copyToImagePlus(crop).getProcessor());
+			stack.addSlice(spot.toString(), ImageJFunctions.wrap(crop, crop.toString()).getProcessor());
 			
 			logger.setProgress((float) (zpos + 1) / nspots);
 			zpos++;

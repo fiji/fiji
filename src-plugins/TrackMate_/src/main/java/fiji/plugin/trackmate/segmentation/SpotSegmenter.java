@@ -2,10 +2,11 @@ package fiji.plugin.trackmate.segmentation;
 
 import java.util.List;
 
-import mpicbg.imglib.algorithm.Algorithm;
-import mpicbg.imglib.algorithm.Benchmark;
-import mpicbg.imglib.image.Image;
-import mpicbg.imglib.type.numeric.RealType;
+import net.imglib2.algorithm.Algorithm;
+import net.imglib2.algorithm.Benchmark;
+import net.imglib2.img.Img;
+import net.imglib2.type.numeric.RealType;
+
 import fiji.plugin.trackmate.InfoTextable;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.TrackMate_;
@@ -30,7 +31,7 @@ public interface SpotSegmenter <T extends RealType<T>> extends Algorithm, Benchm
 	 * The calibration float array will be used to convert pixel coordinates 
 	 * in physical spot coordinates. 
 	 */
-	public void setTarget(Image<T> image, float[] calibration, SegmenterSettings settings);
+	public void setTarget(Img<T> image, float[] calibration, SegmenterSettings settings);
 	
 	/**
 	 * Return the list of Spot resulting from the segmentation process. 

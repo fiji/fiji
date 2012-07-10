@@ -3,13 +3,11 @@ package fiji.plugin.trackmate.segmentation;
 import java.util.ArrayList;
 import java.util.List;
 
-import mpicbg.imglib.algorithm.roi.MedianFilter;
-import mpicbg.imglib.algorithm.roi.StructuringElement;
-import mpicbg.imglib.cursor.Cursor;
-import mpicbg.imglib.image.Image;
-import mpicbg.imglib.outofbounds.OutOfBoundsStrategyMirrorFactory;
-import mpicbg.imglib.type.logic.BitType;
-import mpicbg.imglib.type.numeric.RealType;
+import net.imglib2.Cursor;
+import net.imglib2.img.Img;
+import net.imglib2.type.logic.BitType;
+import net.imglib2.type.numeric.RealType;
+
 import fiji.plugin.trackmate.Spot;
 
 /**
@@ -28,7 +26,7 @@ public abstract class AbstractSpotSegmenter <T extends RealType<T>> implements S
 	/**
 	 * The image to segment. Will not modified.
 	 */
-	protected Image<T> img;
+	protected Img<T> img;
 	/** 
 	 * The calibration array to convert pixel coordinates in physical spot coordinates.
 	 * Negative or zero values ill generate an error.
@@ -64,8 +62,8 @@ public abstract class AbstractSpotSegmenter <T extends RealType<T>> implements S
 			errorMessage = baseErrorMessage + "Image is null.";
 			return false;
 		}
-		if (!(img.getNumDimensions() == 2 || img.getNumDimensions() == 3)) {
-			errorMessage = baseErrorMessage + "Image must be 2D or 3D, got " + img.getNumDimensions() +"D.";
+		if (!(img.numDimensions() == 2 || img.numDimensions() == 3)) {
+			errorMessage = baseErrorMessage + "Image must be 2D or 3D, got " + img.numDimensions() +"D.";
 			return false;
 		}
 		if (calibration == null) {
@@ -88,7 +86,7 @@ public abstract class AbstractSpotSegmenter <T extends RealType<T>> implements S
 	}
 		
 	@Override
-	public void setTarget(Image<T> image, float[] calibration, SegmenterSettings settings) {
+	public void setTarget(Img<T> image, float[] calibration, SegmenterSettings settings) {
 		this.spots = new ArrayList<Spot>();
 		this.img = image;
 		this.calibration = calibration;
@@ -113,10 +111,10 @@ public abstract class AbstractSpotSegmenter <T extends RealType<T>> implements S
 	/**
 	 * Apply a median filter to the {@link #intermediateImage} field, which gets updated.
 	 */
-	protected Image<T> applyMedianFilter(Image<T> image) {
+	protected Img<T> applyMedianFilter(Img<T> image) {
 		createSquareStrel();
 		@SuppressWarnings({ "rawtypes", "unchecked" })
-		final MedianFilter<T> medFilt = new MedianFilter(image, strel, new OutOfBoundsStrategyMirrorFactory()); 
+		final MedianFilter<T> medFilt = new MedianFilter(image, strel, new OutOfBoundsSingleMirrorFactory()); 
 		if (!medFilt.process()) {
 			errorMessage = baseErrorMessage + "Failed in applying median filter";
 			return null;
@@ -133,14 +131,14 @@ public abstract class AbstractSpotSegmenter <T extends RealType<T>> implements S
 	 * a median filter applied.
 	 */
 	private void createSquareStrel() {
-		int numDim = img.getNumDimensions();
+		int numDim = img.numDimensions();
 		// Need to figure out the dimensionality of the image in order to create a StructuringElement of the correct dimensionality (StructuringElement needs to have same dimensionality as the image):
 		if (numDim == 3) {  // 3D case
 			strel = new StructuringElement(new int[]{3, 3, 1}, "3D Square");  // unoptimized shape for 3D case. Note here that we manually are making this shape (not using a class method). This code is courtesy of Larry Lindsey
 			Cursor<BitType> c = strel.createCursor();  // in this case, the shape is manually made, so we have to manually set it, too.
 			while (c.hasNext()) { 
 			    c.fwd(); 
-			    c.getType().setOne(); 
+			    c.get().setOne(); 
 			} 
 			c.close(); 
 		} else if (numDim == 2)  			// 2D case

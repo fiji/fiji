@@ -13,11 +13,12 @@ import java.util.Map;
 
 import javax.imageio.ImageIO;
 
-import mpicbg.imglib.cursor.LocalizableByDimCursor;
-import mpicbg.imglib.image.Image;
-import mpicbg.imglib.image.display.imagej.ImageJFunctions;
-import mpicbg.imglib.outofbounds.OutOfBoundsStrategyValueFactory;
-import mpicbg.imglib.type.numeric.RealType;
+import net.imglib2.RandomAccess;
+import net.imglib2.img.Img;
+import net.imglib2.img.display.imagej.ImageJFunctions;
+import net.imglib2.outofbounds.OutOfBoundsConstantValueFactory;
+import net.imglib2.type.numeric.RealType;
+import net.imglib2.view.Views;
 
 import com.mxgraph.util.mxBase64;
 
@@ -29,9 +30,8 @@ import fiji.plugin.trackmate.Spot;
  * its coordinates and an {@link ImagePlus} that contain the pixel data.
  * @author Jean-Yves Tinevez <jeanyves.tinevez@gmail.com> - Dec 2010 - 2012
  */
-public class SpotIconGrabber extends IndependentSpotFeatureAnalyzer {
+public class SpotIconGrabber<T extends RealType<T>> extends IndependentSpotFeatureAnalyzer<T> {
 
-	@SuppressWarnings({ "rawtypes", "unchecked" })
 	@Override
 	public void  process(Spot spot) {
 		// Get crop coordinates
@@ -42,21 +42,21 @@ public class SpotIconGrabber extends IndependentSpotFeatureAnalyzer {
 		int height = Math.round(2 * radius / calibration[1]);
 
 		// Copy cropped view
-		int slice = 0;
-		if (img.getNumDimensions() > 2) {
+		long slice = 0;
+		if (img.numDimensions() > 2) {
 			slice = Math.round(spot.getFeature(Spot.POSITION_Z) / calibration[2]);
 			if (slice < 0) {
 				slice = 0;
 			}
-			if (slice >= img.getDimension(2)) {
-				slice = img.getDimension(2) -1;
+			if (slice >= img.dimension(2)) {
+				slice = img.dimension(2) -1;
 			}
 		}
 
-		Image crop = grabImage(x, y, slice, width, height);
+		Img<T> crop = grabImage(x, y, slice, width, height);
 
 		// Convert to ImagePlus
-		ImagePlus imp = ImageJFunctions.copyToImagePlus(crop);
+		ImagePlus imp = ImageJFunctions.wrap(crop, crop.toString());
 		ImageProcessor ip = imp.getProcessor();
 		ip.resetMinAndMax();
 
@@ -74,31 +74,30 @@ public class SpotIconGrabber extends IndependentSpotFeatureAnalyzer {
 
 	}
 
-	@SuppressWarnings({ "rawtypes", "unchecked" })
-	public final Image grabImage(int x, int y, int slice, int width, int height) {
+	public final Img<T> grabImage(int x, int y, long slice, int width, int height) {
+
 		// Copy cropped view
-		Image crop = img.createNewImage(new int[] { width, height });
-		RealType zeroType = img.createType();
+		Img<T> crop = img.factory().create(new int[] { width, height }, img.firstElement().copy());
+
+		T zeroType = img.firstElement().createVariable();
 		zeroType.setZero();
-		LocalizableByDimCursor sourceCursor = img.createLocalizableByDimCursor(new OutOfBoundsStrategyValueFactory(zeroType));
-		LocalizableByDimCursor targetCursor = crop.createLocalizableByDimCursor();
-		
-		try {
-			if (img.getNumDimensions() > 2) {
-				sourceCursor.setPosition(slice, 2);
+
+		OutOfBoundsConstantValueFactory<T, Img<T>> oobf 
+		= new OutOfBoundsConstantValueFactory<T, Img<T>>(zeroType);
+		RandomAccess<T> sourceCursor = Views.extend(img, oobf).randomAccess();
+		RandomAccess<T> targetCursor = crop.randomAccess();
+
+		if (img.numDimensions() > 2) {
+			sourceCursor.setPosition(slice, 2);
+		}
+		for (int i = 0; i < width; i++) {
+			sourceCursor.setPosition(i + x, 0);
+			targetCursor.setPosition(i, 0);
+			for (int j = 0; j < height; j++) {
+				sourceCursor.setPosition(j + y, 1);
+				targetCursor.setPosition(j, 1);
+				targetCursor.get().set(sourceCursor.get());
 			}
-			for (int i = 0; i < width; i++) {
-				sourceCursor.setPosition(i + x, 0);
-				targetCursor.setPosition(i, 0);
-				for (int j = 0; j < height; j++) {
-					sourceCursor.setPosition(j + y, 1);
-					targetCursor.setPosition(j, 1);
-					targetCursor.getType().set(sourceCursor.getType());
-				}
-			}
-		} finally {
-			targetCursor.close();
-			sourceCursor.close();
 		}
 		return crop;
 	}

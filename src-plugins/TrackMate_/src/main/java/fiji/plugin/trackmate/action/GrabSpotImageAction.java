@@ -4,7 +4,8 @@ import java.util.List;
 
 import javax.swing.ImageIcon;
 
-import mpicbg.imglib.image.Image;
+import net.imglib2.img.Img;
+import net.imglib2.type.numeric.RealType;
 
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.Settings;
@@ -38,7 +39,7 @@ public class GrabSpotImageAction extends AbstractTMAction {
 		SpotCollection allSpots = model.getFilteredSpots();
 		for (int frame : allSpots.keySet()) {
 			List<Spot> spots = allSpots.get(frame);
-			Image img = TMUtils.getUncroppedSingleFrameAsImage(settings.imp, frame, targetChannel);
+			Img<? extends RealType<?>> img = TMUtils.getUncroppedSingleFrameAsImage(settings.imp, frame, targetChannel);
 			SpotIconGrabber grabber = new SpotIconGrabber();
 			grabber.setTarget(img, calibration);
 			grabber.process(spots);			

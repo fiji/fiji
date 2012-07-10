@@ -2,6 +2,8 @@ package fiji.plugin.trackmate.features.spot;
 
 import java.util.Collection;
 
+import net.imglib2.type.numeric.RealType;
+
 import fiji.plugin.trackmate.Spot;
 
 /**
@@ -10,7 +12,7 @@ import fiji.plugin.trackmate.Spot;
  * @author Jean-Yves Tinevez, 2010-2011
  *
  */
-public abstract class IndependentSpotFeatureAnalyzer extends AbstractSpotFeatureAnalyzer {
+public abstract class IndependentSpotFeatureAnalyzer<T extends RealType<T>> extends AbstractSpotFeatureAnalyzer<T> {
 
 	@Override
 	public void process(Collection<Spot> spots) {

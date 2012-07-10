@@ -1,7 +1,6 @@
 package fiji.plugin.trackmate.tracking.kdtree;
 
 import fiji.plugin.trackmate.Spot;
-import mpicbg.imglib.algorithm.kdtree.node.Leaf;
 
 public class SpotNode implements Leaf<SpotNode> {
 

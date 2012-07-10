@@ -1,6 +1,6 @@
 package fiji.plugin.trackmate.segmentation;
 
-import mpicbg.imglib.type.numeric.RealType;
+import net.imglib2.type.numeric.RealType;
 
 public class ManualSegmenter <T extends RealType<T>> extends AbstractSpotSegmenter<T> {
 

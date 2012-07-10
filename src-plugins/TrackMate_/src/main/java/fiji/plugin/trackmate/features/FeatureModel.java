@@ -6,9 +6,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import mpicbg.imglib.image.Image;
-import mpicbg.imglib.multithreading.SimpleMultiThreading;
-import mpicbg.imglib.type.numeric.RealType;
+import net.imglib2.img.Img;
+import net.imglib2.multithreading.SimpleMultiThreading;
+import net.imglib2.type.numeric.RealType;
 
 import fiji.plugin.trackmate.Dimension;
 import fiji.plugin.trackmate.Logger;
@@ -39,7 +39,7 @@ public class FeatureModel {
 	 * @see #updateFeatures(List) 
 	 * @see #updateFeatures(Spot)
 	 */
-	protected List<SpotFeatureAnalyzer> spotFeatureAnalyzers = new ArrayList<SpotFeatureAnalyzer>();
+	protected List<SpotFeatureAnalyzer<? extends RealType<?>>> spotFeatureAnalyzers = new ArrayList<SpotFeatureAnalyzer<? extends RealType<?>>>();
 
 	/** The list of spot features that are available for the spots of this model. */
 	private List<String> spotFeatures;
@@ -73,7 +73,7 @@ public class FeatureModel {
 	public FeatureModel(TrackMateModel model) {
 		this.model = model;
 		// To initialize the spot features with the basic features:
-		setSpotFeatureAnalyzers(new ArrayList<SpotFeatureAnalyzer>());
+		setSpotFeatureAnalyzers(new ArrayList<SpotFeatureAnalyzer<? extends RealType<?>>>());
 	}
 
 
@@ -119,9 +119,9 @@ public class FeatureModel {
 	public void computeSpotFeatures(final SpotCollection toCompute, final List<String> features) {
 
 		/* 0 - Determine what analyzers are needed */
-		final List<SpotFeatureAnalyzer> selectedAnalyzers = new ArrayList<SpotFeatureAnalyzer>(); // We want to keep ordering
+		final List<SpotFeatureAnalyzer<? extends RealType<?>>> selectedAnalyzers = new ArrayList<SpotFeatureAnalyzer<? extends RealType<?>>>(); // We want to keep ordering
 		for (String feature : features) {
-			for (SpotFeatureAnalyzer analyzer : spotFeatureAnalyzers) {
+			for (SpotFeatureAnalyzer<? extends RealType<?>> analyzer : spotFeatureAnalyzers) {
 				if (analyzer.getFeatures().contains(feature) && !selectedAnalyzers.contains(analyzer)) {
 					selectedAnalyzers.add(analyzer);
 				}
@@ -153,7 +153,7 @@ public class FeatureModel {
 	 * @see #updateFeatures(List) 
 	 * @see #updateFeatures(Spot)
 	 */
-	public void setSpotFeatureAnalyzers(List<SpotFeatureAnalyzer> featureAnalyzers) {
+	public void setSpotFeatureAnalyzers(List<SpotFeatureAnalyzer<? extends RealType<?>>> featureAnalyzers) {
 		this.spotFeatureAnalyzers = featureAnalyzers;
 
 		spotFeatures = new ArrayList<String>();
@@ -168,7 +168,7 @@ public class FeatureModel {
 		spotFeatureDimensions.putAll(Spot.FEATURE_DIMENSIONS);
 
 		// Features from analyzers
-		for(SpotFeatureAnalyzer analyzer : spotFeatureAnalyzers) {
+		for(SpotFeatureAnalyzer<? extends RealType<?>> analyzer : spotFeatureAnalyzers) {
 			spotFeatures.addAll(analyzer.getFeatures());
 			spotFeatureNames.putAll(analyzer.getFeatureNames());
 			spotFeatureShortNames.putAll(analyzer.getFeatureShortNames());
@@ -250,7 +250,7 @@ public class FeatureModel {
 	 * @param toCompute
 	 * @param analyzers
 	 */
-	private void computeSpotFeaturesAgent(final SpotCollection toCompute, final List<SpotFeatureAnalyzer> analyzers) {
+	private void computeSpotFeaturesAgent(final SpotCollection toCompute, final List<SpotFeatureAnalyzer<? extends RealType<?>>> analyzers) {
 
 		final Settings settings = model.getSettings();
 		final Logger logger = model.getLogger();
@@ -294,7 +294,7 @@ public class FeatureModel {
 
 						int frame = frameSet.get(index);
 						List<Spot> spotsThisFrame = toCompute.get(frame);
-						Image<? extends RealType<?>> img = TMUtils.getCroppedSingleFrameAsImage(settings.imp, frame, targetChannel, uncroppedSettings);
+						Img<? extends RealType<?>> img = TMUtils.getCroppedSingleFrameAsImage(settings.imp, frame, targetChannel, uncroppedSettings);
 
 						for (SpotFeatureAnalyzer analyzer : analyzers) {
 							analyzer.setTarget(img, calibration);

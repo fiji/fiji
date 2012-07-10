@@ -1,6 +1,7 @@
 package fiji.plugin.trackmate.visualization.trackscheme;
 
-import mpicbg.imglib.image.Image;
+import net.imglib2.img.Img;
+import net.imglib2.type.numeric.RealType;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.TrackMateModel;
@@ -9,11 +10,12 @@ import fiji.plugin.trackmate.util.TMUtils;
 
 public class SpotImageUpdater {
 	
-	private final SpotIconGrabber grabber;
+	private final SpotIconGrabber<? extends RealType<?>> grabber;
 	private final TrackMateModel model;
 	private final float[] calibration;
 	private Integer previousFrame;
 
+	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public SpotImageUpdater(final TrackMateModel model) {
 		this.model = model;
 		this.grabber = new SpotIconGrabber();
@@ -35,7 +37,7 @@ public class SpotImageUpdater {
 		} else {
 			Settings settings = model.getSettings();
 			int targetChannel = settings.segmentationChannel; // TODO: be more flexible about that
-			Image img = TMUtils.getUncroppedSingleFrameAsImage(settings.imp, frame, targetChannel); // We have to use the un-cropped version, since the spots are referring to the un-cropped image at this time.
+			Img img = TMUtils.getUncroppedSingleFrameAsImage(settings.imp, frame, targetChannel); // We have to use the un-cropped version, since the spots are referring to the un-cropped image at this time.
 			grabber.setTarget(img, calibration);
 			previousFrame = frame;
 		}

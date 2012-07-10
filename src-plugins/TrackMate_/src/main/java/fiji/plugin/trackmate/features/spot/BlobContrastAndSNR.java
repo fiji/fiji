@@ -5,10 +5,11 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
-import mpicbg.imglib.cursor.special.DiscCursor;
-import mpicbg.imglib.cursor.special.DomainCursor;
-import mpicbg.imglib.cursor.special.SphereCursor;
-import mpicbg.imglib.type.numeric.RealType;
+import net.imglib2.cursor.special.DiscCursor;
+import net.imglib2.cursor.special.DomainCursor;
+import net.imglib2.cursor.special.SphereCursor;
+import net.imglib2.type.numeric.RealType;
+
 import fiji.plugin.trackmate.Dimension;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.features.FeatureAnalyzer;
@@ -30,7 +31,7 @@ import fiji.plugin.trackmate.features.FeatureAnalyzer;
  *  
  * @author Jean-Yves Tinevez <jeanyves.tinevez@gmail.com> 2011 - 2012
  */
-public class BlobContrastAndSNR extends IndependentSpotFeatureAnalyzer {
+public class BlobContrastAndSNR<T extends RealType<T>> extends IndependentSpotFeatureAnalyzer<T> {
 
 	/** The single feature key name that this analyzer computes. */
 	public static final String						CONTRAST = 	"CONTRAST";
@@ -70,8 +71,8 @@ public class BlobContrastAndSNR extends IndependentSpotFeatureAnalyzer {
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	protected float[] getContrastAndSNR(final Spot spot) {
 		final float radius = spot.getFeature(Spot.RADIUS);
-		final DomainCursor<? extends RealType<?>> cursor;
-		if (img.getNumDimensions() == 3) 
+		final DomainCursor<T> cursor;
+		if (img.numDimensions() == 3) 
 			cursor = new SphereCursor(img, spot.getPosition(coords), radius * (1+RAD_PERCENTAGE), calibration);
 		else
 			cursor = new DiscCursor(img, spot.getPosition(coords), radius * (1+RAD_PERCENTAGE), calibration);
@@ -87,10 +88,9 @@ public class BlobContrastAndSNR extends IndependentSpotFeatureAnalyzer {
 			dist2 = cursor.getDistanceSquared();
 			if (dist2 > radius2) {
 				n_out++;
-				sum_out += cursor.getType().getRealFloat();				
+				sum_out += cursor.get().getRealFloat();				
 			} 
 		}
-		cursor.close();
 		float mean_out = sum_out / n_out;
 		float mean_in = spot.getFeature(BlobDescriptiveStatistics.MEAN_INTENSITY);
 		float std_in  = spot.getFeature(BlobDescriptiveStatistics.STANDARD_DEVIATION);

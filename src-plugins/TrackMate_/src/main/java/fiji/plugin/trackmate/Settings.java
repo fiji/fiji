@@ -11,7 +11,7 @@ import java.awt.Rectangle;
 import java.util.ArrayList;
 import java.util.List;
 
-import mpicbg.imglib.type.numeric.RealType;
+import net.imglib2.type.numeric.RealType;
 
 /**
  * This class is used to store user settings for the {@link TrackMate_} plugin.

@@ -2,7 +2,7 @@ package fiji.plugin.trackmate.gui;
 
 import java.awt.Component;
 
-import mpicbg.imglib.type.numeric.RealType;
+import net.imglib2.type.numeric.RealType;
 
 import fiji.plugin.trackmate.TrackMate_;
 import fiji.plugin.trackmate.segmentation.SegmenterSettings;

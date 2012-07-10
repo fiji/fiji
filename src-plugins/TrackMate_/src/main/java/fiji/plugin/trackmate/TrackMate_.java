@@ -45,9 +45,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import mpicbg.imglib.image.Image;
-import mpicbg.imglib.multithreading.SimpleMultiThreading;
-import mpicbg.imglib.type.numeric.RealType;
+import net.imglib2.img.Img;
+import net.imglib2.multithreading.SimpleMultiThreading;
+import net.imglib2.type.numeric.RealType;
 
 import org.jgrapht.graph.SimpleWeightedGraph;
 
@@ -70,7 +70,7 @@ public class TrackMate_ implements PlugIn {
 	protected TrackMateModel model;
 	protected boolean useMultithreading = DEFAULT_USE_MULTITHREADING;
 
-	protected List<SpotFeatureAnalyzer> spotFeatureAnalyzers;
+	protected List<SpotFeatureAnalyzer<? extends RealType<?>>> spotFeatureAnalyzers;
 	protected List<TrackFeatureAnalyzer> trackFeatureAnalyzers;
 	/** The list of {@link SpotSegmenter} that will be offered to choose amongst to the user. */
 	protected List<SpotSegmenter<? extends RealType<?>>> spotSegmenters;
@@ -200,7 +200,7 @@ public class TrackMate_ implements PlugIn {
 	
 	
 	@SuppressWarnings({ "unchecked", "rawtypes" })
-	protected List<Spot> execSingleFrameSegmentation(final Image<?  extends RealType<?>> img, Settings settings, int frameIndex) {
+	protected List<Spot> execSingleFrameSegmentation(final Img<?  extends RealType<?>> img, Settings settings, int frameIndex) {
 		
 		final float[] calibration = settings.getCalibration();
 		SpotSegmenter segmenter = settings.segmenter.createNewSegmenter();
@@ -265,8 +265,8 @@ public class TrackMate_ implements PlugIn {
 	 * Create the list of {@link SpotFeatureAnalyzer} that will be used to compute spot features.
 	 * Overwrite this method if you want to add your {@link SpotFeatureAnalyzer}.
 	 */
-	protected List<SpotFeatureAnalyzer> createSpotFeatureAnalyzerList() {
-		List<SpotFeatureAnalyzer> analyzers = new ArrayList<SpotFeatureAnalyzer>(5);
+	protected List<SpotFeatureAnalyzer<? extends RealType<?>>> createSpotFeatureAnalyzerList() {
+		List<SpotFeatureAnalyzer<? extends RealType<?>>> analyzers = new ArrayList<SpotFeatureAnalyzer<? extends RealType<?>>>(5);
 		analyzers.add(new BlobDescriptiveStatistics());
 		analyzers.add(new BlobContrastAndSNR()); // must be after the statistics one
 		analyzers.add(new RadiusEstimator());
@@ -348,7 +348,7 @@ public class TrackMate_ implements PlugIn {
 	 * to the model, using the {@link TrackMateModel#setSpotFeatureAnalyzers(List)} method. 
 	 * @see #createSpotFeatureAnalyzerList()
 	 */
-	public List<SpotFeatureAnalyzer> getAvailableSpotFeatureAnalyzers() {
+	public List<SpotFeatureAnalyzer<? extends RealType<?>>> getAvailableSpotFeatureAnalyzers() {
 		return spotFeatureAnalyzers;
 	}
 	
@@ -484,7 +484,7 @@ public class TrackMate_ implements PlugIn {
 
 					for (int i = ai.getAndIncrement(); i <= settings.tend; i = ai.getAndIncrement()) {
 
-						Image<? extends RealType<?>> img = TMUtils.getCroppedSingleFrameAsImage(imp, i, segmentationChannel, settings); // will be cropped according to settings
+						Img<? extends RealType<?>> img = TMUtils.getCroppedSingleFrameAsImage(imp, i, segmentationChannel, settings); // will be cropped according to settings
 						List<Spot> s = execSingleFrameSegmentation(img, settings, i);
 						
 						// Add segmentation feature other than position

@@ -5,14 +5,15 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
-import mpicbg.imglib.cursor.special.DiscCursor;
-import mpicbg.imglib.cursor.special.DomainCursor;
-import mpicbg.imglib.cursor.special.SphereCursor;
-import mpicbg.imglib.type.numeric.RealType;
+import net.imglib2.cursor.special.DiscCursor;
+import net.imglib2.cursor.special.DomainCursor;
+import net.imglib2.cursor.special.SphereCursor;
+import net.imglib2.type.numeric.RealType;
+
 import fiji.plugin.trackmate.Dimension;
 import fiji.plugin.trackmate.Spot;
 
-public class RadiusEstimator extends IndependentSpotFeatureAnalyzer {
+public class RadiusEstimator<T extends RealType<T>> extends IndependentSpotFeatureAnalyzer<T> {
 
 	/*
 	 * CONSTANT
@@ -57,7 +58,7 @@ public class RadiusEstimator extends IndependentSpotFeatureAnalyzer {
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	@Override
 	public void process(Spot spot) {
-		coords = new float[img.getNumDimensions()];
+		coords = new float[img.numDimensions()];
 		for (int i = 0; i < coords.length; i++) {
 			coords[i] = spot.getFeature(Spot.POSITION_FEATURES[i]);
 		}
@@ -74,8 +75,8 @@ public class RadiusEstimator extends IndependentSpotFeatureAnalyzer {
 		final float[] ring_intensities = new float[nDiameters];
 		final int[]    ring_volumes = new int[nDiameters];
 
-		final DomainCursor<? extends RealType<?>> cursor;
-		if (img.getNumDimensions() == 3)
+		final DomainCursor<T> cursor;
+		if (img.numDimensions() == 3)
 			cursor = new SphereCursor(img, coords, diameters[nDiameters-2]/2, calibration);
 		else
 			cursor = new DiscCursor(img, coords, diameters[nDiameters-2]/2, calibration);
@@ -85,7 +86,7 @@ public class RadiusEstimator extends IndependentSpotFeatureAnalyzer {
 			cursor.fwd();
 			d2 = cursor.getDistanceSquared();
 			for(i = 0 ; i < nDiameters-1 && d2 > r2[i] ; i++) {}
-			ring_intensities[i] += cursor.getType().getRealDouble();
+			ring_intensities[i] += cursor.get().getRealDouble();
 			ring_volumes[i]++;
 		}
 

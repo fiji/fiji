@@ -26,12 +26,11 @@ import javax.swing.WindowConstants;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
-import mpicbg.imglib.container.array.ArrayContainerFactory;
-import mpicbg.imglib.cursor.special.SphereCursor;
-import mpicbg.imglib.image.Image;
-import mpicbg.imglib.image.ImageFactory;
-import mpicbg.imglib.image.display.imagej.ImageJFunctions;
-import mpicbg.imglib.type.numeric.integer.UnsignedByteType;
+import net.imglib2.cursor.special.SphereCursor;
+import net.imglib2.img.Img;
+import net.imglib2.img.array.ArrayImgFactory;
+import net.imglib2.img.display.imagej.ImageJFunctions;
+import net.imglib2.type.numeric.integer.UnsignedByteType;
 
 public class SpotDisplayer3DTestDrive {
 
@@ -49,10 +48,9 @@ public class SpotDisplayer3DTestDrive {
 		
 		// Create 3D image
 		System.out.println("Creating image....");
-		Image<UnsignedByteType> img = new ImageFactory<UnsignedByteType>(
-				new UnsignedByteType(),
-				new ArrayContainerFactory()
-		).createImage(new int[] {(int) (WIDTH/CALIBRATION[0]), (int) (HEIGHT/CALIBRATION[1]), (int) (DEPTH/CALIBRATION[2])}); 
+		Img<UnsignedByteType> img = new ArrayImgFactory<UnsignedByteType>()
+				.create(new int[] {(int) (WIDTH/CALIBRATION[0]), (int) (HEIGHT/CALIBRATION[1]), (int) (DEPTH/CALIBRATION[2])},
+						new UnsignedByteType()); 
 
 		// Random blobs
 		float[] radiuses = new float[N_BLOBS];
@@ -75,13 +73,12 @@ public class SpotDisplayer3DTestDrive {
 			while(cursor.hasNext()) 
 				cursor.next().set(intensities[i]);		
 		}
-		cursor.close();
 		
 		// Start ImageJ
 		ij.ImageJ.main(args);
 		
-		// Cast the Image the ImagePlus and convert to 8-bit
-		ImagePlus imp = ImageJFunctions.copyToImagePlus(img);
+		// Cast the Img the ImagePlus and convert to 8-bit
+		ImagePlus imp = ImageJFunctions.wrap(img, img.toString());
 		if (imp.getType() != ImagePlus.GRAY8)
 			new StackConverter(imp).convertToGray8();
 
@@ -102,7 +99,7 @@ public class SpotDisplayer3DTestDrive {
 		}
 		
 		System.out.println("Grabbing features...");
-		BlobDescriptiveStatistics analyzer = new BlobDescriptiveStatistics();
+		BlobDescriptiveStatistics<UnsignedByteType> analyzer = new BlobDescriptiveStatistics<UnsignedByteType>();
 		analyzer.setTarget(img, CALIBRATION);
 		analyzer.process(spots);
 		for (Spot s : spots) 

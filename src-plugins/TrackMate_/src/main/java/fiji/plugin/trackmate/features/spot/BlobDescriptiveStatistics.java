@@ -5,15 +5,16 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
-import mpicbg.imglib.cursor.special.DiscCursor;
-import mpicbg.imglib.cursor.special.DomainCursor;
-import mpicbg.imglib.cursor.special.SphereCursor;
-import mpicbg.imglib.type.numeric.RealType;
-import mpicbg.imglib.util.Util;
+import net.imglib2.cursor.special.DiscCursor;
+import net.imglib2.cursor.special.DomainCursor;
+import net.imglib2.cursor.special.SphereCursor;
+import net.imglib2.type.numeric.RealType;
+import net.imglib2.util.Util;
+
 import fiji.plugin.trackmate.Dimension;
 import fiji.plugin.trackmate.Spot;
 
-public class BlobDescriptiveStatistics extends IndependentSpotFeatureAnalyzer {
+public class BlobDescriptiveStatistics<T extends RealType<T>> extends IndependentSpotFeatureAnalyzer<T> {
 
 	/*
 	 * CONSTANTS
@@ -88,10 +89,10 @@ public class BlobDescriptiveStatistics extends IndependentSpotFeatureAnalyzer {
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	@Override
 	public void process(Spot spot) {
-		final DomainCursor<? extends RealType<?>> cursor;
+		final DomainCursor<T> cursor;
 		final float[] coords;
 		final float radius = spot.getFeature(Spot.RADIUS);
-		if (img.getNumDimensions() == 3) {
+		if (img.numDimensions() == 3) {
 			cursor = new SphereCursor(img, new float[3], radius, calibration);
 			coords = new float[3];
 		} else { 
@@ -122,7 +123,7 @@ public class BlobDescriptiveStatistics extends IndependentSpotFeatureAnalyzer {
 		
 		while (cursor.hasNext()) {
 			cursor.next();
-			val = cursor.getType().getRealFloat();
+			val = cursor.get().getRealFloat();
 			// For median, min and max
 			pixel_values[n] = val;
 			// For variance and mean

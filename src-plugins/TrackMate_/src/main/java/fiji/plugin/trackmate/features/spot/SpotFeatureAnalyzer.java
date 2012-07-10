@@ -25,14 +25,14 @@ import fiji.plugin.trackmate.features.FeatureAnalyzer;
  * The spot collection to operate on is given through the method {@link #process(Collection)},
  * and it must update the feature map of each spot directly, calling {@link Spot#putFeature(String, float)}.
  */
-public interface SpotFeatureAnalyzer extends FeatureAnalyzer {
+public interface SpotFeatureAnalyzer<T extends RealType<T>> extends FeatureAnalyzer {
 	
 	
 	/**
 	 * Sets the image data this analyzer will operate on to grab the features it generates.
 	 * We require the spatial calibration to be given as well.
 	 */
-	public void setTarget(Img<? extends RealType<?>> img, float[] calibration);
+	public void setTarget(Img<T> img, float[] calibration);
 	
 	
 	/**

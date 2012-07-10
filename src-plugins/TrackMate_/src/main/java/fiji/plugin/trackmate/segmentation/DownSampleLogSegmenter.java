@@ -1,9 +1,10 @@
 package fiji.plugin.trackmate.segmentation;
 
-import mpicbg.imglib.cursor.LocalizableByDimCursor;
-import mpicbg.imglib.cursor.LocalizableCursor;
-import mpicbg.imglib.image.Image;
-import mpicbg.imglib.type.numeric.RealType;
+import net.imglib2.Cursor;
+import net.imglib2.RandomAccess;
+import net.imglib2.img.Img;
+import net.imglib2.type.numeric.RealType;
+
 
 public class DownSampleLogSegmenter <T extends RealType<T> > extends AbstractSpotSegmenter<T> {
 
@@ -27,7 +28,7 @@ public class DownSampleLogSegmenter <T extends RealType<T> > extends AbstractSpo
 	};
 
 	@Override
-	public void setTarget(Image<T> image, float[] calibration,	SegmenterSettings settings) {
+	public void setTarget(Img<T> image, float[] calibration,	SegmenterSettings settings) {
 		super.setTarget(image, calibration, settings);
 		this.settings = (DownSampleLogSegmenterSettings) settings;
 	}
@@ -53,34 +54,34 @@ public class DownSampleLogSegmenter <T extends RealType<T> > extends AbstractSpo
 		// 0. Prepare new dimensions
 
 		int downSamplingFactor = settings.downSamplingFactor;
-		int[] dimensions = new int[img.getNumDimensions()];
-		int[] dsarr = new int[img.getNumDimensions()];
-		float[] dwnCalibration = new float[img.getNumDimensions()];
+		long[] dimensions = new long[img.numDimensions()];
+		int[] dsarr = new int[img.numDimensions()];
+		float[] dwnCalibration = new float[img.numDimensions()];
 		for (int i = 0; i < 2; i++) {
-			dimensions[i] = img.getDimension(i) / downSamplingFactor;
+			dimensions[i] = img.dimension(i) / downSamplingFactor;
 			dsarr[i] = downSamplingFactor;
 			dwnCalibration[i] = calibration[i] * downSamplingFactor;
 		}
-		if (img.getNumDimensions() > 2) {
+		if (img.numDimensions() > 2) {
 			// 3D
 			float zratio = calibration[2] / calibration[0]; // Z spacing is how much bigger
 			int zdownsampling = (int) (downSamplingFactor / zratio); // temper z downsampling
 			zdownsampling = Math.max(1, zdownsampling); // but at least 1
-			dimensions[2] = img.getDimension(2) / zdownsampling;
+			dimensions[2] = img.dimension(2) / zdownsampling;
 			dsarr[2] = zdownsampling;
 			dwnCalibration[2] = calibration[2] * zdownsampling;
 		}
 		
 		// 1. Downsample the image
 
-		Image<T> downsampled = img.createNewImage(dimensions);
-		LocalizableCursor<T> dwnCursor = downsampled.createLocalizableCursor();
-		LocalizableByDimCursor<T> srcCursor = img.createLocalizableByDimCursor();
-		int[] pos = dwnCursor.createPositionArray();
+		Img<T> downsampled = img.factory().create(dimensions, img.firstElement().createVariable());
+		Cursor<T> dwnCursor = downsampled.localizingCursor();
+		RandomAccess<T> srcCursor = img.randomAccess();
+		int[] pos = new int[img.numDimensions()];
 		
 		while (dwnCursor.hasNext()) {
 			dwnCursor.fwd();
-			dwnCursor.getPosition(pos);
+			dwnCursor.localize(pos);
 			
 			// Scale up position
 			for (int i = 0; i < pos.length; i++) {
@@ -91,10 +92,8 @@ public class DownSampleLogSegmenter <T extends RealType<T> > extends AbstractSpo
 			srcCursor.setPosition(pos);
 			
 			// Copy pixel data
-			dwnCursor.getType().set(srcCursor.getType());
+			dwnCursor.get().set(srcCursor.get());
 		}
-		dwnCursor.close();
-		srcCursor.close();
 
 		// 2. Segment downsampled image
 

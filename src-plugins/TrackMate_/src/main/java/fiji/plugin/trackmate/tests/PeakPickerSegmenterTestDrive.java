@@ -6,13 +6,13 @@ import java.util.Random;
 
 import javax.vecmath.Point3f;
 
-import mpicbg.imglib.container.array.ArrayContainerFactory;
-import mpicbg.imglib.cursor.special.SphereCursor;
-import mpicbg.imglib.image.Image;
-import mpicbg.imglib.image.ImageFactory;
-import mpicbg.imglib.image.display.imagej.ImageJFunctions;
-import mpicbg.imglib.type.numeric.integer.UnsignedByteType;
-import mpicbg.imglib.util.Util;
+import net.imglib2.cursor.special.SphereCursor;
+import net.imglib2.img.Img;
+import net.imglib2.img.array.ArrayImgFactory;
+import net.imglib2.img.display.imagej.ImageJFunctions;
+import net.imglib2.type.numeric.integer.UnsignedByteType;
+import net.imglib2.util.Util;
+
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.segmentation.LogSegmenterSettings;
 import fiji.plugin.trackmate.segmentation.LogSegmenter;
@@ -31,10 +31,9 @@ public class PeakPickerSegmenterTestDrive {
 		final float[] CALIBRATION = new float[] {0.5f, 0.5f, 1}; 
 		
 		// Create 3D image
-		Image<UnsignedByteType> img = new ImageFactory<UnsignedByteType>(
-				new UnsignedByteType(),
-				new ArrayContainerFactory()
-		).createImage(new int[] {(int) (WIDTH/CALIBRATION[0]), (int) (HEIGHT/CALIBRATION[1]), (int) (DEPTH/CALIBRATION[2])}); 
+		Img<UnsignedByteType> img = new ArrayImgFactory<UnsignedByteType>()
+				.create(new int[] {(int) (WIDTH/CALIBRATION[0]), (int) (HEIGHT/CALIBRATION[1]), (int) (DEPTH/CALIBRATION[2])}, 
+						new UnsignedByteType()); 
 
 		// Random blobs
 		float[] radiuses = new float[N_BLOBS];
@@ -58,7 +57,6 @@ public class PeakPickerSegmenterTestDrive {
 			while(cursor.hasNext()) 
 				cursor.next().set(intensities[i]);		
 		}
-		cursor.close();
 
 		// Instantiate segmenter
 		LogSegmenterSettings settings = new LogSegmenterSettings();
@@ -76,7 +74,7 @@ public class PeakPickerSegmenterTestDrive {
 		long end = System.currentTimeMillis();
 		
 		// Display image
-		ImageJFunctions.copyToImagePlus(img).show();
+		ImageJFunctions.show(img);
 		
 		// Display results
 		int spot_found = spots.size();

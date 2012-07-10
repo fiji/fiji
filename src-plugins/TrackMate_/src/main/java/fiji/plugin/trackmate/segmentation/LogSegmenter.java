@@ -3,17 +3,14 @@ package fiji.plugin.trackmate.segmentation;
 import java.util.ArrayList;
 import java.util.List;
 
+import net.imglib2.RandomAccess;
 import net.imglib2.algorithm.fft.FourierConvolution;
 import net.imglib2.algorithm.math.PickImagePeaks;
-import net.imglib2.algorithm.scalespace.DifferenceOfGaussian.SpecialPoint;
-import net.imglib2.algorithm.scalespace.DifferenceOfGaussianPeak;
-import net.imglib2.algorithm.scalespace.SubpixelLocalization;
-import net.imglib2.container.array.ArrayContainerFactory;
-import mpicbg.imglib.cursor.LocalizableByDimCursor;
-import mpicbg.imglib.image.Image;
-import mpicbg.imglib.image.ImageFactory;
-import mpicbg.imglib.type.numeric.RealType;
-import mpicbg.imglib.type.numeric.real.FloatType;
+import net.imglib2.img.Img;
+import net.imglib2.img.ImgFactory;
+import net.imglib2.img.array.ArrayImgFactory;
+import net.imglib2.type.numeric.RealType;
+import net.imglib2.type.numeric.real.FloatType;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotImp;
 
@@ -37,14 +34,14 @@ public class LogSegmenter <T extends RealType<T>> extends AbstractSpotSegmenter<
 	/*
 	 * METHODS
 	 */
-	
+
 	@Override
 	public SpotSegmenter<T> createNewSegmenter() {
 		return new LogSegmenter<T>();
 	}
-	
+
 	@Override
-	public void setTarget(Image<T> image, float[] calibration, SegmenterSettings settings) {
+	public void setTarget(Img<T> image, float[] calibration, SegmenterSettings settings) {
 		super.setTarget(image, calibration, settings);
 		this.settings = (LogSegmenterSettings) settings;
 	}
@@ -58,7 +55,7 @@ public class LogSegmenter <T extends RealType<T>> extends AbstractSpotSegmenter<
 	public boolean process() {
 
 		// Deal with median filter:
-		Image<T> intermediateImage = img;
+		Img<T> intermediateImage = img;
 		if (settings.useMedianFilter) {
 			intermediateImage = applyMedianFilter(intermediateImage);
 			if (null == intermediateImage) {
@@ -67,9 +64,9 @@ public class LogSegmenter <T extends RealType<T>> extends AbstractSpotSegmenter<
 		}
 
 		float radius = settings.expectedRadius;
-		float sigma = (float) (radius / Math.sqrt(img.getNumDimensions())); // optimal sigma for LoG approach and dimensionality
-		ImageFactory<FloatType> factory = new ImageFactory<FloatType>(new FloatType(), new ArrayContainerFactory());
-		Image<FloatType> gaussianKernel = FourierConvolution.getGaussianKernel(factory, sigma, img.getNumDimensions());
+		float sigma = (float) (radius / Math.sqrt(img.numDimensions())); // optimal sigma for LoG approach and dimensionality
+		ImgFactory<FloatType> factory = new ArrayImgFactory<FloatType>();
+		Img<FloatType> gaussianKernel = FourierConvolution.createGaussianKernel(factory, sigma, img.numDimensions());
 		final FourierConvolution<T, FloatType> fConvGauss = new FourierConvolution<T, FloatType>(intermediateImage, gaussianKernel);
 		if (!fConvGauss.checkInput() || !fConvGauss.process()) {
 			errorMessage = baseErrorMessage + "Fourier convolution with Gaussian failed:\n" + fConvGauss.getErrorMessage() ;
@@ -77,7 +74,7 @@ public class LogSegmenter <T extends RealType<T>> extends AbstractSpotSegmenter<
 		}
 		intermediateImage = fConvGauss.getResult();
 
-		Image<FloatType> laplacianKernel = createLaplacianKernel();
+		Img<FloatType> laplacianKernel = createLaplacianKernel();
 		final FourierConvolution<T, FloatType> fConvLaplacian = new FourierConvolution<T, FloatType>(intermediateImage, laplacianKernel);
 		if (!fConvLaplacian.checkInput() || !fConvLaplacian.process()) {
 			errorMessage = baseErrorMessage + "Fourier Convolution with Laplacian failed:\n" + fConvLaplacian.getErrorMessage() ;
@@ -86,12 +83,12 @@ public class LogSegmenter <T extends RealType<T>> extends AbstractSpotSegmenter<
 		intermediateImage = fConvLaplacian.getResult();	
 
 		PickImagePeaks<T> peakPicker = new PickImagePeaks<T>(intermediateImage);
-		double[] suppressionRadiuses = new double[img.getNumDimensions()];
-		for (int i = 0; i < img.getNumDimensions(); i++) 
+		double[] suppressionRadiuses = new double[img.numDimensions()];
+		for (int i = 0; i < img.numDimensions(); i++) 
 			suppressionRadiuses[i] = radius / calibration[i];
 		peakPicker.setSuppression(suppressionRadiuses); // in pixels
 		peakPicker.setAllowBorderPeak(true);
-		
+
 		if (!peakPicker.checkInput() || !peakPicker.process()) {
 			errorMessage = baseErrorMessage +"Could not run the peak picker algorithm:\n" + peakPicker.getErrorMessage();
 			return false;
@@ -99,7 +96,7 @@ public class LogSegmenter <T extends RealType<T>> extends AbstractSpotSegmenter<
 
 		// Get peaks location and values
 		final ArrayList<int[]> peaks = peakPicker.getPeakList();
-		final LocalizableByDimCursor<T> cursor = intermediateImage.createLocalizableByDimCursor();
+		final RandomAccess<T> cursor = intermediateImage.randomAccess();
 		// Prune values lower than threshold
 		List<DifferenceOfGaussianPeak<T>> dogPeaks = new ArrayList<DifferenceOfGaussianPeak<T>>();
 		final List<T> pruned_values = new ArrayList<T>();
@@ -107,7 +104,7 @@ public class LogSegmenter <T extends RealType<T>> extends AbstractSpotSegmenter<
 		for (int i = 0; i < peaks.size(); i++) {
 			int[] peak = peaks.get(i);
 			cursor.setPosition(peak);
-			T value = cursor.getType().copy();
+			T value = cursor.get().copy();
 			if (value.getRealFloat() < settings.threshold) {
 				break; // because peaks are sorted, we can exit loop here
 			}
@@ -115,7 +112,7 @@ public class LogSegmenter <T extends RealType<T>> extends AbstractSpotSegmenter<
 			dogPeaks.add(dogPeak);
 			pruned_values.add(value);
 		}
-		
+
 		// Do sub-pixel localization
 		if (settings.doSubPixelLocalization ) {
 			// Create localizer and apply it to the list
@@ -128,7 +125,7 @@ public class LogSegmenter <T extends RealType<T>> extends AbstractSpotSegmenter<
 			}
 			dogPeaks = locator.getDoGPeaks();
 		}
-		
+
 		// Create spots
 		spots.clear();
 		for (int j = 0; j < dogPeaks.size(); j++) {
@@ -136,10 +133,10 @@ public class LogSegmenter <T extends RealType<T>> extends AbstractSpotSegmenter<
 			DifferenceOfGaussianPeak<T> dogPeak = dogPeaks.get(j); 
 			float[] coords = new float[3];
 			if (settings.doSubPixelLocalization) {
-				for (int i = 0; i < img.getNumDimensions(); i++) 
+				for (int i = 0; i < img.numDimensions(); i++) 
 					coords[i] = dogPeak.getSubPixelPosition(i) * calibration[i];
 			} else {
-				for (int i = 0; i < img.getNumDimensions(); i++) 
+				for (int i = 0; i < img.numDimensions(); i++) 
 					coords[i] = dogPeak.getPosition(i) * calibration[i];
 			}
 			Spot spot = new SpotImp(coords);
@@ -147,7 +144,7 @@ public class LogSegmenter <T extends RealType<T>> extends AbstractSpotSegmenter<
 			spot.putFeature(Spot.RADIUS, settings.expectedRadius);
 			spots.add(spot);
 		}
-		
+
 		return true;
 	}
 
@@ -167,23 +164,23 @@ public class LogSegmenter <T extends RealType<T>> extends AbstractSpotSegmenter<
 	public String toString() {
 		return "LoG segmenter";
 	}
-	
+
 	/*
 	 * PRIVATE METHODS
 	 */
 
 
-	private Image<FloatType> createLaplacianKernel() {
-		final ImageFactory<FloatType> factory = new ImageFactory<FloatType>(new FloatType(), new ArrayContainerFactory());
-		int numDim = img.getNumDimensions();
-		Image<FloatType> laplacianKernel = null;
+	private Img<FloatType> createLaplacianKernel() {
+		final ImgFactory<FloatType> factory = new ArrayImgFactory<FloatType>();
+		int numDim = img.numDimensions();
+		Img<FloatType> laplacianKernel = null;
 		if (numDim == 3) {
 			final float laplacianArray[][][] = new float[][][]{ { {0,-1/18,0},{-1/18,-1/18,-1/18},{0,-1/18,0} }, { {-1/18,-1/18,-1/18}, {-1/18,1,-1/18}, {-1/18,-1/18,-1/18} }, { {0,-1/18,0},{-1/18,-1/18,-1/18},{0,-1/18,0} } }; // laplace kernel found here: http://en.wikipedia.org/wiki/Discrete_Laplace_operator
-			laplacianKernel = factory.createImage(new int[]{3, 3, 3}, "Laplacian");
+			laplacianKernel = factory.create(new int[]{3, 3, 3}, new FloatType());
 			quickKernel3D(laplacianArray, laplacianKernel);
 		} else if (numDim == 2) {
 			final float laplacianArray[][] = new float[][]{ {-1/8,-1/8,-1/8},{-1/8,1,-1/8},{-1/8,-1/8,-1/8} }; // laplace kernel found here: http://en.wikipedia.org/wiki/Discrete_Laplace_operator
-			laplacianKernel = factory.createImage(new int[]{3, 3}, "Laplacian");
+			laplacianKernel = factory.create(new int[]{3, 3}, new FloatType());
 			quickKernel2D(laplacianArray, laplacianKernel);
 		} 
 		return laplacianKernel;
@@ -194,8 +191,8 @@ public class LogSegmenter <T extends RealType<T>> extends AbstractSpotSegmenter<
 	 */
 
 
-	private static void quickKernel2D(float[][] vals, Image<FloatType> kern)	{
-		final LocalizableByDimCursor<FloatType> cursor = kern.createLocalizableByDimCursor();
+	private static void quickKernel2D(float[][] vals, Img<FloatType> kern)	{
+		final RandomAccess<FloatType> cursor = kern.randomAccess();
 		final int[] pos = new int[2];
 
 		for (int i = 0; i < vals.length; ++i) 
@@ -203,13 +200,12 @@ public class LogSegmenter <T extends RealType<T>> extends AbstractSpotSegmenter<
 				pos[0] = i;
 				pos[1] = j;
 				cursor.setPosition(pos);
-				cursor.getType().set(vals[i][j]);
+				cursor.get().set(vals[i][j]);
 			}
-		cursor.close();		
 	}
 
-	private static void quickKernel3D(float[][][] vals, Image<FloatType> kern)	{
-		final LocalizableByDimCursor<FloatType> cursor = kern.createLocalizableByDimCursor();
+	private static void quickKernel3D(float[][][] vals, Img<FloatType> kern)	{
+		final RandomAccess<FloatType> cursor = kern.randomAccess();
 		final int[] pos = new int[3];
 
 		for (int i = 0; i < vals.length; ++i) 
@@ -219,9 +215,8 @@ public class LogSegmenter <T extends RealType<T>> extends AbstractSpotSegmenter<
 					pos[1] = j;
 					pos[2] = k;
 					cursor.setPosition(pos);
-					cursor.getType().set(vals[i][j][k]);
+					cursor.get().set(vals[i][j][k]);
 				}
-		cursor.close();		
 	}
 
 
