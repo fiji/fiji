@@ -73,6 +73,7 @@ tmpdir=.tmp.$$
 mkdir $tmpdir
 
 download () {
+	exe=; case "$2" in *.exe) exe=.exe;; esac
 	case $2,$mode in
 	*.exe,snapshots)
 		# Jenkins provided beautiful .exe files with icons for us
@@ -83,7 +84,6 @@ download () {
 	*)
 		case $2 in */*) mkdir -p ${2%/*};; esac
 		curl $baseurl/$basename-$1-gcc-executable.nar > $tmpdir/$1.zip
-		exe=; case "$2" in *.exe) exe=.exe;; esac
 		unzip -p $tmpdir/$1.zip bin/$1-gcc/ij-launcher$exe > $2
 		chmod a+x $2
 		test -n "$exe" && add_win_logo "$2"

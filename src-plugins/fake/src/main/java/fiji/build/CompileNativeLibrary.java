@@ -22,7 +22,6 @@ public class CompileNativeLibrary extends Rule {
 
 	static {
 		ijDir = System.getProperty("ij.dir");
-		String os = System.getProperty("os.name");
 		hostIs64Bit = System.getProperty("os.arch", "").indexOf("64") >= 0;
 		String osName = System.getProperty("os.name", "<unknown>");
 		if (osName.equals("Linux")) {

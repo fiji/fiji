@@ -137,6 +137,22 @@
 		<module>Updater_Fix</module>
 	</modules>
 
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>buildnumber-maven-plugin</artifactId>
+			</plugin>
+		</plugins>
+	</build>
+
+	<scm>
+		<connection>scm:git:git://github.com/fiji/fiji</connection>
+		<developerConnection>scm:git:git@github.com:fiji/fiji</developerConnection>
+		<tag>HEAD</tag>
+		<url>https://github.com/fiji/fiji</url>
+	</scm>
+
 	<!-- NB: for project parent -->
 	<repositories>
 		<repository>
@@ -170,6 +186,22 @@
 					</plugin>
 				</plugins>
 			</build>
+		</profile>
+		<!-- HACK: We want to enforce annotation processing with sezpoz in Eclipse, to prepare for ImageJ2. So we have that enables by default in .factorypath, referring to sezpoz in the local Maven repository. Let's make sure it is there -->
+		<profile>
+			<id>eclipse</id>
+			<activation>
+				<property>
+					<name>m2e.version</name>
+				</property>
+			</activation>
+			<dependencies>
+				<dependency>
+					<groupId>net.java.sezpoz</groupId>
+					<artifactId>sezpoz</artifactId>
+					<version>${sezpoz.version}</version>
+				</dependency>
+			</dependencies>
 		</profile>
 	</profiles>
 

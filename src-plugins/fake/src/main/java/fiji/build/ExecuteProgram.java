@@ -18,6 +18,7 @@ public class ExecuteProgram extends Rule {
 		return space < 0 ? program : program.substring(0, space);
 	}
 
+	@SuppressWarnings("unchecked")
 	public Iterable<Rule> getDependencies() throws FakeException {
 		Iterable<Rule> result = super.getDependencies();
 		List<Rule> additional = new ArrayList<Rule>();

@@ -112,11 +112,6 @@
 			<artifactId>3D_Viewer</artifactId>
 			<version>${imagej.version}</version>
 		</dependency>
-		<dependency>
-			<groupId>loci</groupId>
-			<artifactId>loci_tools</artifactId>
-			<version>4.4-SNAPSHOT</version>
-		</dependency>
 	</dependencies>
 
 </project>

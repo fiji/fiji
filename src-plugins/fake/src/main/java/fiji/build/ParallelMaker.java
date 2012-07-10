@@ -164,6 +164,8 @@ public class ParallelMaker {
 	}
 
 	protected class DependencyFakeException extends FakeException {
+		private static final long serialVersionUID = 1L;
+
 		public DependencyFakeException(List<Rule> rules) {
 			super("Problem in dependenc" + (rules.size() == 1 ? "y" : "ies")
 				+ " " + getTargetsAsString(rules));

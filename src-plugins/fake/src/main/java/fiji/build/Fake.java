@@ -12,7 +12,6 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.PrintStream;
-import java.io.PrintWriter;
 import java.io.Reader;
 import java.io.UnsupportedEncodingException;
 
@@ -30,7 +29,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.StringTokenizer;
 
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
@@ -40,12 +38,15 @@ import java.util.jar.Manifest;
 
 import java.util.zip.ZipException;
 
+import fiji.build.minimaven.JarClassLoader;
+import fiji.build.minimaven.JavaCompiler;
+import fiji.build.minimaven.JavaCompiler.CompileError;
+
 public class Fake {
-	protected static Method javac;
-	protected static String toolsPath;
 	protected static String fijiBuildJar;
 	protected static long mtimeFijiBuild;
 	public PrintStream out = System.out, err = System.err;
+	protected JavaCompiler javac;
 
 	public static void main(String[] args) {
 		checkObsoleteLauncher();
@@ -139,7 +140,9 @@ public class Fake {
 		}
 		else if (ijHome.startsWith("file:/")) {
 			ijHome = ijHome.substring(5, slash + 1);
-			if (ijHome.endsWith("/src-plugins/"))
+			if (ijHome.endsWith("/src-plugins/fake/target/"))
+				ijHome = Util.stripSuffix(ijHome, "src-plugins/fake/target/");
+			else if (ijHome.endsWith("/src-plugins/"))
 				ijHome = Util.stripSuffix(ijHome, "src-plugins/");
 			else if (ijHome.endsWith("/build/jars/"))
 				ijHome = Util.stripSuffix(ijHome, "build/jars/");
@@ -181,18 +184,6 @@ public class Fake {
 				bshJar = ijHome + "/precompiled/bsh.jar";
 		}
 		getClassLoader(bshJar);
-	}
-
-	protected static void discoverJavac() throws IOException {
-		String path = ijHome + "jars/javac.jar";
-		if (!new File(path).exists()) {
-			path = ijHome + "precompiled/javac.jar";
-			if (!new File(path).exists()) {
-				System.err.println("No javac.jar found (looked in " + ijHome + ")!");
-				return;
-			}
-		}
-		getClassLoader(path);
 	}
 
 	protected List<String> discoverJars() throws FakeException {
@@ -530,56 +521,6 @@ public class Fake {
 		return result;
 	}
 
-	// this function handles the javac singleton
-	protected void callJavac(String[] arguments,
-			boolean verbose) throws FakeException {
-		synchronized(this) {
-			try {
-				if (javac == null) {
-					discoverJavac();
-					JarClassLoader loader = (JarClassLoader)
-						getClassLoader(toolsPath);
-					String className = "com.sun.tools.javac.Main";
-					Class<?> main = loader.forceLoadClass(className);
-					Class<?>[] argsType = new Class[] {
-						arguments.getClass(),
-						PrintWriter.class
-					};
-					javac = main.getMethod("compile", argsType);
-				}
-
-				Object result = javac.invoke(null,
-						new Object[] { arguments, new PrintWriter(err) });
-				if (!result.equals(new Integer(0))) {
-					FakeException e = new FakeException("Compile error");
-					e.printStackTrace();
-					throw e;
-				}
-				return;
-			} catch (FakeException e) {
-				/* was compile error */
-				throw e;
-			} catch (Exception e) {
-				e.printStackTrace(err);
-				err.println("Could not find javac " + e
-					+ " (tools path = " + toolsPath + "), "
-					+ "falling back to system javac");
-			}
-		}
-
-		// fall back to calling javac
-		String[] newArguments = new String[arguments.length + 1];
-		newArguments[0] = "javac";
-		System.arraycopy(arguments, 0, newArguments, 1,
-				arguments.length);
-		try {
-			execute(newArguments, new File("."), verbose);
-		} catch (Exception e) {
-			throw new FakeException("Could not even fall back "
-				+ " to javac in the PATH");
-		}
-	}
-
 	// returns all .java files in the list, and returns a list where
 	// all the .java files have been replaced by their .class files.
 	protected List<String> compileJavas(List<String> javas, File cwd, File buildDir,
@@ -633,10 +574,12 @@ public class Fake {
 			err.println(output);
 		}
 
+		if (javac == null)
+			javac = new JavaCompiler(err, out);
 		try {
-			callJavac(args, verbose);
-		} catch (FakeException e) {
-			throw e;
+			javac.call(args, verbose);
+		} catch (CompileError e) {
+			throw new FakeException(e.getMessage(), e);
 		} catch (Exception e) {
 			e.printStackTrace();
 			throw new FakeException("Compile error: " + e);
@@ -1128,9 +1071,7 @@ public class Fake {
 				}
 				all.make();
 			} else
-				// Try "make"
-				execute(new String[] { "make" },
-					new File(directory), verbose);
+				throw new FakeException("Make no longer supported!");
 		} catch (Exception e) {
 			if (!(e instanceof FakeException))
 				e.printStackTrace();
@@ -1215,17 +1156,8 @@ public class Fake {
 			throws IOException {
 		if (classLoader == null)
 			classLoader = new JarClassLoader();
-		if (jarFile != null &&
-		    ! classLoader.jarFilesMap.containsKey(jarFile)) {
-			JarFile jar = new JarFile(jarFile);
-			synchronized (classLoader) {
-				/* n.b. We don't need to synchronize
-				   fetching since nothing is ever removed */
-				classLoader.jarFilesMap.put(jarFile, jar);
-				classLoader.jarFilesNames.add(jarFile);
-				classLoader.jarFilesObjects.add(jar);
-			}
-		}
+		if (jarFile != null)
+			classLoader.add(jarFile);
 		return classLoader;
 	}
 

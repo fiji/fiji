@@ -79,7 +79,7 @@ public class CompileCProgram extends Rule {
 		try {
 			Util.moveFileOutOfTheWay(file);
 		} catch(FakeException e) {
-			file = parser.fake.moveToUpdateDirectory(file);
+			file = Fake.moveToUpdateDirectory(file);
 		}
 		List<String> arguments = new ArrayList<String>();
 		arguments.add(linkCPlusPlus ? gxx() : gcc());

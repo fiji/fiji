@@ -50,7 +50,7 @@
 		<dependency>
 			<groupId>mpicbg</groupId>
 			<artifactId>mpicbg</artifactId>
-			<version>${imagej.version}</version>
+			<version>20120621</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
@@ -59,7 +59,22 @@
 		</dependency>
 		<dependency>
 			<groupId>loci</groupId>
-			<artifactId>loci_tools</artifactId>
+			<artifactId>loci-common</artifactId>
+			<version>4.4-SNAPSHOT</version>
+		</dependency>
+		<dependency>
+			<groupId>loci</groupId>
+			<artifactId>loci_plugins</artifactId>
+			<version>4.4-SNAPSHOT</version>
+		</dependency>
+		<dependency>
+			<groupId>loci</groupId>
+			<artifactId>ome-xml</artifactId>
+			<version>4.4-SNAPSHOT</version>
+		</dependency>
+		<dependency>
+			<groupId>loci</groupId>
+			<artifactId>scifio</artifactId>
 			<version>4.4-SNAPSHOT</version>
 		</dependency>
 	</dependencies>

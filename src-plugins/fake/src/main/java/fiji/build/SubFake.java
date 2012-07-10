@@ -1,11 +1,20 @@
 package fiji.build;
 
-import fiji.build.MiniMaven.Coordinate;
-import fiji.build.MiniMaven.POM;
+import fiji.build.minimaven.BuildEnvironment;
+import fiji.build.minimaven.Coordinate;
+import fiji.build.minimaven.POM;
 
 import java.io.File;
+import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
 import java.util.StringTokenizer;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
+
+import javax.xml.parsers.ParserConfigurationException;
+
+import org.xml.sax.SAXException;
 
 public class SubFake extends Rule {
 	protected String jarName;
@@ -105,7 +114,7 @@ public class SubFake extends Rule {
 		return file.exists() ? file : null;
 	}
 
-	protected MiniMaven miniMaven;
+	protected static BuildEnvironment miniMaven;
 
 	public POM getPOM() {
 		if (pomRead)
@@ -120,9 +129,10 @@ public class SubFake extends Rule {
 			targetBasename = targetBasename.substring(0, targetBasename.length() - 4);
 		// TODO: targetBasename could end in "-<version>"
 		try {
+			boolean verbose = getVarBool("VERBOSE");
+			boolean debug = getVarBool("DEBUG");
 			if (miniMaven == null) {
-				miniMaven = new MiniMaven(parser.fake, parser.fake.err, getVarBool("VERBOSE"), getVarBool("DEBUG"));
-				miniMaven.downloadAutomatically = !miniMaven.offlineMode;
+				miniMaven = new BuildEnvironment(parser.fake.err, true, verbose, debug);
 				MiniMaven.ensureIJDirIsSet();
 				String ijDir = System.getProperty("ij.dir");
 				File submodules = new File(ijDir, "modules");
@@ -140,8 +150,13 @@ public class SubFake extends Rule {
 				}
 			}
 			pom = miniMaven.parse(file);
-			if (!targetBasename.equals(pom.getArtifact()))
-				pom = pom.findPOM(new Coordinate(null, targetBasename, null), miniMaven.verbose, miniMaven.downloadAutomatically);
+			if (!targetBasename.equals(pom.getArtifactId())) {
+				String groupId = pom.getGroupId();
+				if (targetBasename.equals("imglib") || targetBasename.startsWith("imglib-"))
+					groupId = "mpicbg";
+				pom = pom.findPOM(new Coordinate(groupId, targetBasename, pom.getVersion()),
+					verbose, miniMaven.getDownloadAutomatically());
+			}
 		} catch (Exception e) {
 			e.printStackTrace(parser.fake.err);
 		}
@@ -168,8 +183,9 @@ public class SubFake extends Rule {
 				pom.downloadDependencies();
 				pom.buildJar();
 				copyJar(pom.getTarget().getPath(), target, parser.cwd, configPath);
-				if (getVarBool("copyDependencies"))
-					pom.copyDependencies(new File(target).getAbsoluteFile().getParentFile(), true);
+				if (getVarBool("copyDependencies")) {
+					copyDependencies(pom, new File(target).getAbsoluteFile().getParentFile());
+				}
 				return;
 			} catch (Exception e) {
 				e.printStackTrace(parser.fake.err);
@@ -210,6 +226,49 @@ public class SubFake extends Rule {
 				+ "/" + baseName + ".Fakefile",
 			getBuildDir(),
 			subTarget);
+	}
+
+	// if targetDirectory is one of jars/ & plugins/ and the other exists also, be clever
+	protected void copyDependencies(POM pom, File targetDirectory) throws IOException, ParserConfigurationException, SAXException {
+		File plugins = null;
+		if (targetDirectory.getName().equals("plugins")) {
+			File jars = new File(targetDirectory.getParentFile(), "jars");
+			if (jars.isDirectory()) {
+				plugins = targetDirectory;
+				targetDirectory = jars;
+			}
+		}
+		else if (targetDirectory.getName().equals("jars")) {
+			plugins = new File(targetDirectory.getParentFile(), "plugins");
+			if (!plugins.isDirectory())
+				plugins = null;
+		}
+
+		for (POM dependency : pom.getDependencies(true, false, "test", "provided")) {
+			File file = dependency.getTarget();
+			File directory = plugins != null && isImageJ1Plugin(file) ? plugins : targetDirectory;
+			File destination = new File(directory, dependency.getArtifactId() + ".jar");
+			if (file.exists() && (!destination.exists() || destination.lastModified() < file.lastModified()))
+				BuildEnvironment.copyFile(file, destination);
+		}
+	}
+
+	protected boolean isImageJ1Plugin(File file) {
+		String name = file.getName();
+		if (!name.endsWith(".jar") || name.indexOf('_') < 0 || !file.exists())
+			return false;
+		try {
+			JarFile jar = new JarFile(file);
+			for (JarEntry entry : Collections.list(jar.entries()))
+				if (entry.getName().equals("plugins.config")) {
+					jar.close();
+					return true;
+			}
+			jar.close();
+		} catch (Throwable t) {
+			// obviously not a plugin...
+		}
+		return false;
 	}
 
 	String getVarPath(String variable, String subkey) {

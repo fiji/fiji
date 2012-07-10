@@ -624,7 +624,7 @@ public class Parser {
 				if (separator.equals(":"))
 					separator = File.separator;
 				for (String file : files)
-					string += separator + fake.quoteArg(file);
+					string += separator + Fake.quoteArg(file);
 			}
 			value = string;
 		}

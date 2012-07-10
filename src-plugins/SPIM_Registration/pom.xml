@@ -70,7 +70,7 @@
 		<dependency>
 			<groupId>mpicbg</groupId>
 			<artifactId>mpicbg</artifactId>
-			<version>${imagej.version}</version>
+			<version>20120621</version>
 		</dependency>
 		<dependency>
 			<groupId>nz.ac.waikato.cms.weka</groupId>
@@ -109,7 +109,7 @@
 		</dependency>
 		<dependency>
 			<groupId>loci</groupId>
-			<artifactId>loci_tools</artifactId>
+			<artifactId>scifio</artifactId>
 			<version>4.4-SNAPSHOT</version>
 		</dependency>
 	</dependencies>

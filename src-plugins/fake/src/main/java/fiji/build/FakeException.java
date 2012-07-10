@@ -8,6 +8,10 @@ public class FakeException extends Exception {
 		super(message);
 	}
 
+	public FakeException(String message, Throwable cause) {
+		super(message, cause);
+	}
+
 	public String toString() {
 		return getMessage();
 	}
