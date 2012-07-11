@@ -6,6 +6,7 @@ import java.util.List;
 import net.imglib2.RandomAccess;
 import net.imglib2.algorithm.fft.FourierConvolution;
 import net.imglib2.algorithm.math.PickImagePeaks;
+import net.imglib2.exception.IncompatibleTypeException;
 import net.imglib2.img.Img;
 import net.imglib2.img.ImgFactory;
 import net.imglib2.img.array.ArrayImgFactory;
@@ -70,7 +71,13 @@ public class LogSegmenter <T extends RealType<T>> extends AbstractSpotSegmenter<
 		float sigma = (float) (radius / Math.sqrt(img.numDimensions())); // optimal sigma for LoG approach and dimensionality
 		ImgFactory<FloatType> factory = new ArrayImgFactory<FloatType>();
 		Img<FloatType> gaussianKernel = FourierConvolution.createGaussianKernel(factory, sigma, img.numDimensions());
-		final FourierConvolution<T, FloatType> fConvGauss = new FourierConvolution<T, FloatType>(intermediateImage, gaussianKernel);
+		FourierConvolution<T, FloatType> fConvGauss;
+		try {
+			fConvGauss = new FourierConvolution<T, FloatType>(intermediateImage, gaussianKernel);
+		} catch (IncompatibleTypeException e) {
+			errorMessage = baseErrorMessage + "Fourier convolution failed: "+e.getMessage();
+			return false;
+		}
 		if (!fConvGauss.checkInput() || !fConvGauss.process()) {
 			errorMessage = baseErrorMessage + "Fourier convolution with Gaussian failed:\n" + fConvGauss.getErrorMessage() ;
 			return false;
@@ -78,7 +85,13 @@ public class LogSegmenter <T extends RealType<T>> extends AbstractSpotSegmenter<
 		intermediateImage = fConvGauss.getResult();
 
 		Img<FloatType> laplacianKernel = createLaplacianKernel();
-		final FourierConvolution<T, FloatType> fConvLaplacian = new FourierConvolution<T, FloatType>(intermediateImage, laplacianKernel);
+		FourierConvolution<T, FloatType> fConvLaplacian;
+		try {
+			fConvLaplacian = new FourierConvolution<T, FloatType>(intermediateImage, laplacianKernel);
+		} catch (IncompatibleTypeException e) {
+			errorMessage = baseErrorMessage + "Fourier convolution failed: "+e.getMessage();
+			return false;
+		}
 		if (!fConvLaplacian.checkInput() || !fConvLaplacian.process()) {
 			errorMessage = baseErrorMessage + "Fourier Convolution with Laplacian failed:\n" + fConvLaplacian.getErrorMessage() ;
 			return false;
@@ -98,52 +111,47 @@ public class LogSegmenter <T extends RealType<T>> extends AbstractSpotSegmenter<
 		}
 
 		// Get peaks location and values
-		final ArrayList<int[]> centers = peakPicker.getPeakList();
+		final ArrayList<long[]> centers = peakPicker.getPeakList();
 		final RandomAccess<T> cursor = intermediateImage.randomAccess();
 		// Prune values lower than threshold
-		List<SubPixelLocalization<T>> dogPeaks = new ArrayList<SubPixelLocalization<T>>();
+		List<SubPixelLocalization<T>> peaks = new ArrayList<SubPixelLocalization<T>>();
 		final List<T> pruned_values = new ArrayList<T>();
 		final LocationType specialPoint = LocationType.MAX;
 		for (int i = 0; i < centers.size(); i++) {
-			int[] center = centers.get(i);
+			long[] center = centers.get(i);
 			cursor.setPosition(center);
 			T value = cursor.get().copy();
 			if (value.getRealFloat() < settings.threshold) {
 				break; // because peaks are sorted, we can exit loop here
 			}
 			SubPixelLocalization<T> peak = new SubPixelLocalization<T>(center, value, specialPoint);
-			dogPeaks.add(peak);
+			peaks.add(peak);
 			pruned_values.add(value);
 		}
 
 		// Do sub-pixel localization
 		if (settings.doSubPixelLocalization ) {
-			// Create localizer and apply it to the list
-			final QuadraticSubpixelLocalization<T> locator = new QuadraticSubpixelLocalization<T>(intermediateImage, dogPeaks);
+			// Create localizer and apply it to the list. The list obbejct will be updated
+			final QuadraticSubpixelLocalization<T> locator = new QuadraticSubpixelLocalization<T>(intermediateImage, peaks);
 			locator.setNumThreads(1); // Since the calls to a segmenter  are already multi-threaded.
 			locator.setCanMoveOutside(true);
 			if ( !locator.checkInput() || !locator.process() )	{
 				errorMessage = baseErrorMessage + locator.getErrorMessage();
 				return false;
 			}
-			dogPeaks = locator.getDoGPeaks();
 		}
 
 		// Create spots
 		spots.clear();
-		for (int j = 0; j < dogPeaks.size(); j++) {
+		for (int j = 0; j < peaks.size(); j++) {
 
-			DifferenceOfGaussianPeak<T> dogPeak = dogPeaks.get(j); 
+			SubPixelLocalization<T> peak = peaks.get(j); 
 			float[] coords = new float[3];
-			if (settings.doSubPixelLocalization) {
-				for (int i = 0; i < img.numDimensions(); i++) 
-					coords[i] = dogPeak.getSubPixelPosition(i) * calibration[i];
-			} else {
-				for (int i = 0; i < img.numDimensions(); i++) 
-					coords[i] = dogPeak.getPosition(i) * calibration[i];
+			for (int i = 0; i < img.numDimensions(); i++) {
+				coords[i] = peak.getFloatPosition(i) * calibration[i];
 			}
 			Spot spot = new SpotImp(coords);
-			spot.putFeature(Spot.QUALITY, pruned_values.get(j).getRealFloat());
+			spot.putFeature(Spot.QUALITY, peak.getValue().getRealFloat());
 			spot.putFeature(Spot.RADIUS, settings.expectedRadius);
 			spots.add(spot);
 		}

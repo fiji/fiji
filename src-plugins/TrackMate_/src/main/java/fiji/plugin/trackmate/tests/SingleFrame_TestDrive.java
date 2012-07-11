@@ -5,7 +5,7 @@ import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMate_;
-import fiji.plugin.trackmate.detection.DogSegmenter;
+import fiji.plugin.trackmate.detection.LogSegmenter;
 import fiji.plugin.trackmate.detection.LogSegmenterSettings;
 import fiji.plugin.trackmate.util.TMUtils;
 import fiji.plugin.trackmate.visualization.hyperstack.HyperStackDisplayer;
@@ -32,7 +32,7 @@ public class SingleFrame_TestDrive {
 		int frame = 0; // 0-based
 
 		// Prepare segmenter instance
-		DogSegmenter<UnsignedByteType> segmenter = new DogSegmenter<UnsignedByteType>();
+		LogSegmenter<UnsignedByteType> segmenter = new LogSegmenter<UnsignedByteType>();
 		LogSegmenterSettings lss = new LogSegmenterSettings();
 		lss.doSubPixelLocalization = false;
 		lss.expectedRadius = 2f;

@@ -412,8 +412,8 @@ public class TMUtils {
 
 		ImagePlus ipSingleFrame = new ImagePlus(imp.getShortTitle()+"-Frame_" + Integer.toString(iFrame + 1), frame);
 		ipSingleFrame.setCalibration(imp.getCalibration());
-		Img<? extends RealType> obj =  ImagePlusAdapter.wrap(ipSingleFrame);
-		Img<? extends RealType<?>> img = (Img<? extends RealType<?>>) obj;
+		Img obj =  ImagePlusAdapter.wrap(ipSingleFrame);
+		Img img = (Img<? extends RealType<?>>) obj;
 		return img;
 	}
 

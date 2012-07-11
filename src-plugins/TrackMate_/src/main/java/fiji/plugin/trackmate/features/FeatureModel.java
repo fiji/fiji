@@ -288,6 +288,7 @@ public class FeatureModel {
 			threads[ithread] = new Thread(
 					"TrackMate spot feature calculating thread " + (1 + ithread) + "/" + threads.length) {
 
+				@SuppressWarnings({ "rawtypes", "unchecked" })
 				public void run() {
 
 					for (int index = ai.getAndIncrement(); index < numFrames; index = ai.getAndIncrement()) {

@@ -6,14 +6,16 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
-import org.jdom.JDOMException;
-
 import net.imglib2.cursor.special.SphereCursor;
 import net.imglib2.img.Img;
 import net.imglib2.img.array.ArrayImgFactory;
 import net.imglib2.img.display.imagej.ImageJFunctions;
+import net.imglib2.type.NativeType;
+import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.integer.UnsignedByteType;
-import net.imglib2.type.numeric.real.FloatType;
+
+import org.jdom.JDOMException;
+
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
@@ -27,7 +29,7 @@ import fiji.plugin.trackmate.visualization.hyperstack.HyperStackDisplayer;
 
 public class RadiusEstimator_TestDrive {
 	
-	public static void main(String[] args) throws JDOMException, IOException {
+	public static <T extends NativeType<T> & RealType<T>> void main(String[] args) throws JDOMException, IOException {
 		
 		File testFile = new File("/Users/tinevez/Desktop/Data/Celegans-5pc_17timepoints-1.xml");
 		TmXmlReader reader = new TmXmlReader(testFile, Logger.DEFAULT_LOGGER);
@@ -35,12 +37,12 @@ public class RadiusEstimator_TestDrive {
 		
 		ImagePlus imp = reader.getImage();
 		imp.setDimensions(1, 41, 1); // otherwise it is 4D
-		Img<? extends FloatType> img = ImageJFunctions.wrap(imp);
+		Img<T> img = ImageJFunctions.wrap(imp);
 		
 		TrackMateModel model = reader.getModel();
 		model.getSettings().imp = imp;
 		
-		RadiusEstimator es = new RadiusEstimator();
+		RadiusEstimator<T> es = new RadiusEstimator<T>();
 		es.setTarget(img, new float[] { 0.2f, 0.2f, 1 } );
 		
 		SpotCollection allSpots = model.getSpots();
@@ -106,7 +108,7 @@ public class RadiusEstimator_TestDrive {
 		imp.show();
 		
 		// Apply the estimator
-		RadiusEstimator es = new RadiusEstimator();
+		RadiusEstimator<UnsignedByteType> es = new RadiusEstimator<UnsignedByteType>();
 		es.setTarget(testImage, calibration);
 //		es.nDiameters = 20;
 		

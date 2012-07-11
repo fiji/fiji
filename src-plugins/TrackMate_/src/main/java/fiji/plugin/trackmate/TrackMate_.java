@@ -12,7 +12,6 @@ import fiji.plugin.trackmate.action.RecalculateFeatureAction;
 import fiji.plugin.trackmate.action.ResetRadiusAction;
 import fiji.plugin.trackmate.action.ResetSpotTimeFeatureAction;
 import fiji.plugin.trackmate.action.TrackMateAction;
-import fiji.plugin.trackmate.detection.DogSegmenter;
 import fiji.plugin.trackmate.detection.DownSampleLogSegmenter;
 import fiji.plugin.trackmate.detection.LogSegmenter;
 import fiji.plugin.trackmate.detection.ManualSegmenter;
@@ -251,9 +250,8 @@ public class TrackMate_ implements PlugIn {
 	 */
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	protected List<SpotSegmenter<? extends RealType<?>>> createSegmenterList() {
-		List<SpotSegmenter<? extends RealType<?>>> spotSegmenters = new ArrayList<SpotSegmenter<? extends RealType<?>>>(4);
+		List<SpotSegmenter<? extends RealType<?>>> spotSegmenters = new ArrayList<SpotSegmenter<? extends RealType<?>>>(3);
 		spotSegmenters.add(new LogSegmenter());
-		spotSegmenters.add(new DogSegmenter());
 		spotSegmenters.add(new DownSampleLogSegmenter());
 		spotSegmenters.add(new ManualSegmenter());
 		return spotSegmenters;

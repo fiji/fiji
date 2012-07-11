@@ -5,14 +5,14 @@ import java.util.List;
 import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import net.imglib2.RealPoint;
+import net.imglib2.algorithm.MultiThreadedBenchmarkAlgorithm;
+import net.imglib2.collection.KDTree;
+import net.imglib2.multithreading.SimpleMultiThreading;
+
 import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.graph.SimpleWeightedGraph;
 
-import net.imglib2.algorithm.MultiThreadedBenchmarkAlgorithm;
-import net.imglib2.algorithm.kdtree.KDTree;
-import net.imglib2.algorithm.kdtree.NNearestNeighborSearch;
-import net.imglib2.algorithm.kdtree.NearestNeighborSearch;
-import net.imglib2.multithreading.SimpleMultiThreading;
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
@@ -74,71 +74,40 @@ public class NearestNeighborTracker extends MultiThreadedBenchmarkAlgorithm	impl
 						int targetFrame = frames.higher(i);
 						List<Spot> sourceSpots = spots.get(sourceFrame);
 						List<Spot> targetSpots = spots.get(targetFrame);
-
-						// Build KD-tree for target frame
-						ArrayList<SpotNode> targetNodes = new ArrayList<SpotNode>(targetSpots.size());
-						for (Spot spot : targetSpots) {
-							targetNodes.add(new SpotNode(spot));
+						
+						List<RealPoint> targetCoords = new ArrayList<RealPoint>(targetSpots.size());
+						List<FlagNode<Spot>> targetNodes = new ArrayList<FlagNode<Spot>>(targetSpots.size());
+						for(Spot spot : targetSpots) {
+							targetCoords.add(new RealPoint(spot.getPosition(null)));
+							targetNodes.add(new FlagNode<Spot>(spot));
 						}
-						KDTree<SpotNode> kdTree = new KDTree<SpotNode>(targetNodes);
-						NearestNeighborSearch<SpotNode> search = new NearestNeighborSearch<SpotNode>(kdTree);
-						NNearestNeighborSearch<SpotNode> multiSearch = new NNearestNeighborSearch<SpotNode>(kdTree);
-
+						
+						
+						KDTree<FlagNode<Spot>> tree = new KDTree<FlagNode<Spot>>(targetNodes, targetCoords);
+						NearestNeighborFlagSearchOnKDTree<Spot> search = new NearestNeighborFlagSearchOnKDTree<Spot>(tree);
+						
 						// For each spot in the source frame, find its nearest neighbor in the target frame
 						for (Spot source : sourceSpots) {
 
-							SpotNode sourceNode = new SpotNode(source);
-							SpotNode targetNode = search.findNearestNeighbor(sourceNode);
-							double squareDist = targetNode.distanceTo(sourceNode);
+							RealPoint sourceCoords = new RealPoint(source.getPosition(null));
+							search.search(sourceCoords);
+							
+							double squareDist = search.getSquareDistance();
+							FlagNode<Spot> targetNode = search.getSampler().get();
+							
 							if (squareDist > maxDistSquare) {
 								// The closest we could find is too far. We skip this source spot and do not create a link
 								continue;								
 							}
 
-							boolean doNotCreateALink = false;
-							if (targetNode.isAssigned) {
-								// Bad luck: the closes node we have found is already taken. So we need to find the
-								// closest one, not yet taken, and not farther than the max dist.
-								// This is inefficient because we always recalculate the first neighbors, which we
-								// had at the previous iteration. We do it like that for the moment, keeping in mind
-								// that for this application, such situations are marginal.
-								for (int currentNeighbor = 2; currentNeighbor < targetNodes.size(); currentNeighbor++) {
-
-									SpotNode[] found = multiSearch.findNNearestNeighbors(sourceNode, currentNeighbor);
-									targetNode = found[currentNeighbor-1];
-
-									squareDist = targetNode.distanceTo(sourceNode);
-									if (squareDist > maxDistSquare) {
-										// We have found that the next closest node is already too far. Give up and stop searching.
-										doNotCreateALink = true;
-										break;				
-									}
-
-									if (!targetNode.isAssigned) {
-										// Success! We finally found one that is both within max dist and free. We stop
-										// searching and create a link
-										break;
-									}
-									
-									// Damn. This one is taken as well. So we look further.
-								}
-								
-								// If we reached this point, that means that we exhausted all target nodes and still
-								// did not find one that is both free and within max dist. So we give up, and set 
-								// a flag that states not to create a link.
-								doNotCreateALink = true;
-							}
-
-							if (doNotCreateALink) {
-								// The closest we could find is too far. We skip this source spot and do not create a link
-								continue;
-							}
-
 							// Everything is ok. This mode is free and below max dist. We create a link
 							// and mark this node as assigned.
-							DefaultWeightedEdge edge = graph.addEdge(source, targetNode.getSpot());
-							graph.setEdgeWeight(edge, squareDist);
-							targetNode.isAssigned = true;
+
+							targetNode.setVisited(true);
+							synchronized (graph) {
+								DefaultWeightedEdge edge = graph.addEdge(source, targetNode.getValue());
+								graph.setEdgeWeight(edge, squareDist);
+							}
 
 						}
 						logger.setProgress(progress.incrementAndGet() / (float)frames.size() );
@@ -215,5 +184,7 @@ public class NearestNeighborTracker extends MultiThreadedBenchmarkAlgorithm	impl
 			graph.addVertex(spot);
 	}
 
+	
+	
 
 }

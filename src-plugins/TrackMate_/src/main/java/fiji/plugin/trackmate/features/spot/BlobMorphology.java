@@ -60,7 +60,7 @@ import fiji.plugin.trackmate.SpotImp;
  *
  * @param <T>  the type of the input {@link Img}
  */
-public class BlobMorphology extends IndependentSpotFeatureAnalyzer {
+public class BlobMorphology<T extends RealType<T>> extends IndependentSpotFeatureAnalyzer<T> {
 
 	/*
 	 * CONSTANTS
@@ -405,7 +405,7 @@ public class BlobMorphology extends IndependentSpotFeatureAnalyzer {
 		ImageJFunctions.show(img);
 		
 		start = System.currentTimeMillis();
-		BlobMorphology bm = new BlobMorphology();
+		BlobMorphology<UnsignedByteType> bm = new BlobMorphology<UnsignedByteType>();
 		bm.setTarget(img, calibration);
 		SpotImp spot = new SpotImp(center);
 		spot.putFeature(Spot.RADIUS, max_radius);

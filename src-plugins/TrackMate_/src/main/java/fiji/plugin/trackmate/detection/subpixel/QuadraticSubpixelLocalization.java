@@ -46,7 +46,7 @@ import Jama.SingularValueDecomposition;
 public class QuadraticSubpixelLocalization< T extends RealType<T> > implements Algorithm, Benchmark, MultiThreaded {
 	
 	protected final Img<T> laPlacian;
-	protected final List<long[]> centers;
+	protected final List<SubPixelLocalization<T>> peaks;
 	
 	protected int maxNumMoves = 4;
 	protected boolean allowMaximaTolerance = false;
@@ -60,10 +60,14 @@ public class QuadraticSubpixelLocalization< T extends RealType<T> > implements A
 	protected int numThreads = 1;
 	protected String errorMessage = "";
 	
-	public QuadraticSubpixelLocalization( final Img<T> laPlacian, final List<long[]> centers )	{
+	/*
+	 * CONSTRUCTOR
+	 */
+	
+	public QuadraticSubpixelLocalization( final Img<T> laPlacian, final List<SubPixelLocalization<T>> peaks )	{
 		setNumThreads();
 		this.laPlacian = laPlacian;
-		this.centers = centers;
+		this.peaks = peaks;
 		this.allowedToMoveInDim = new boolean[ laPlacian.numDimensions() ];
 		
 		// principally one can move in any dimension
@@ -72,6 +76,10 @@ public class QuadraticSubpixelLocalization< T extends RealType<T> > implements A
 		
 		this.doubleArrayFactory = new ArrayImgFactory<DoubleType>();
 	}
+	
+	/*
+	 * SETTER & GETTERS
+	 */
 	
 	public void setAllowMaximaTolerance( final boolean allowMaximaTolerance ) { this.allowMaximaTolerance = allowMaximaTolerance; }
 	public void setCanMoveOutside( final boolean canMoveOutside ) { this.canMoveOutside = canMoveOutside; }
@@ -86,6 +94,11 @@ public class QuadraticSubpixelLocalization< T extends RealType<T> > implements A
 	public int getMaxNumMoves() { return maxNumMoves; }
 	public boolean[] getAllowedToMoveInDim() { return allowedToMoveInDim.clone(); }
 
+	/*
+	 * METHODS
+	 */
+	
+	
 	protected boolean handleFailure( final SubPixelLocalization<T> peak, final String error )	{
 		peak.setLocationType( SubPixelLocalization.LocationType.INVALID );
 		peak.setErrorMessage( error );
@@ -104,16 +117,12 @@ public class QuadraticSubpixelLocalization< T extends RealType<T> > implements A
 		for (int ithread = 0; ithread < threads.length; ++ithread)
 	        threads[ithread] = new Thread(new Runnable()   {
 	            public void run() {
-	            	final RandomAccess<T> cursor = laPlacian.randomAccess();
 	            	final int myNumber = ai.getAndIncrement();
 	            	
-	            	for ( int i = 0; i < centers.size(); ++i ) {
+	            	for ( int i = 0; i < peaks.size(); ++i ) {
 	            		if ( i % numThreads == myNumber ) {
-	            			final long[] center;	            			
-	            			synchronized ( centers ) { center = centers.get( i ); }
-	            			cursor.setPosition(center);
-	            			T value = cursor.get().copy();
-	            			SubPixelLocalization<T> peak = new SubPixelLocalization<T>(center, value);
+	            			final SubPixelLocalization<T> peak;	            			
+	            			synchronized ( peaks ) { peak = peaks.get( i ); }
 	            			analyzePeak( peak );
 	            		}
 	            	}
@@ -577,11 +586,11 @@ public class QuadraticSubpixelLocalization< T extends RealType<T> > implements A
 		} else if ( laPlacian == null ) {
 			errorMessage = "SubpixelLocalization: [Img<T> img] is null.";
 			return false;
-		} else if ( centers == null ) {
-			errorMessage = "SubpixelLocalization: [List<DifferenceOfGaussianPeak<T>> peaks] is null.";
+		} else if ( peaks == null ) {
+			errorMessage = "SubpixelLocalization: [List<SubPixelLocalization<T>> peaks] is null.";
 			return false;
-		} else if ( centers.size() == 0 ) {
-			errorMessage = "SubpixelLocalization: [List<DifferenceOfGaussianPeak<T>> peaks] is empty.";
+		} else if ( peaks.size() == 0 ) {
+			errorMessage = "SubpixelLocalization: [List<SubPixelLocalization<T>> peaks] is empty.";
 			return false;
 		} else
 			return true;
