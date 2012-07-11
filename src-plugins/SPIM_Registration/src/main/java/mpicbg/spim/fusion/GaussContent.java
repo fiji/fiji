@@ -1,12 +1,14 @@
 package mpicbg.spim.fusion;
 
 import ij.IJ;
+import ij.ImagePlus;
 import mpicbg.imglib.algorithm.fft.FourierConvolution;
 import mpicbg.imglib.container.ContainerFactory;
 import mpicbg.imglib.container.array.ArrayContainerFactory;
 import mpicbg.imglib.cursor.Cursor;
 import mpicbg.imglib.cursor.LocalizableByDimCursor;
 import mpicbg.imglib.image.Image;
+import mpicbg.imglib.image.display.imagej.ImageJFunctions;
 import mpicbg.imglib.outofbounds.OutOfBoundsStrategyFactory;
 import mpicbg.imglib.type.numeric.real.FloatType;
 import mpicbg.spim.io.SPIMConfiguration;
@@ -45,6 +47,7 @@ public class GaussContent extends IsolatedPixelWeightener<GaussContent>
 	
 			// compute I*sigma1
 			FourierConvolution<FloatType, FloatType> fftConv1 = new FourierConvolution<FloatType, FloatType>( view.getImage(), kernel1 );
+			
 			fftConv1.setNumThreads( numThreads );
 			fftConv1.process();		
 			final Image<FloatType> conv1 = fftConv1.getResult();
@@ -72,7 +75,7 @@ public class GaussContent extends IsolatedPixelWeightener<GaussContent>
 			fftConv2.process();	
 			
 			gaussContent = fftConv2.getResult();
-	
+
 			fftConv2.close();
 			fftConv2 = null;
 			

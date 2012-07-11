@@ -10,6 +10,7 @@ import mpicbg.imglib.cursor.LocalizableByDimCursor;
 import mpicbg.imglib.cursor.LocalizableCursor;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.image.ImageFactory;
+import mpicbg.imglib.image.display.imagej.ImageJFunctions;
 import mpicbg.imglib.interpolation.Interpolator;
 import mpicbg.imglib.multithreading.SimpleMultiThreading;
 import mpicbg.imglib.type.numeric.real.FloatType;
@@ -162,6 +163,10 @@ public class MappingFusionParalell extends SPIMImageFusion
 
 			models[ i ] = (AbstractAffineModel3D<?>)views.get( i ).getTile().getModel();
 		}
+		
+		// unnormalize all views prior to starting the fusion (otherwise it might be called more than once due to multi-threading)
+		for (int view = 0; view < numViews ; view++)
+			views.get( view ).getImage( false );
 
 		final int[][] imageSizes = new int[numViews][];
 		for ( int i = 0; i < numViews; ++i )
@@ -293,11 +298,11 @@ public class MappingFusionParalell extends SPIMImageFusion
 												weight *= isoIterators[ i ][ view ].getType().get();
 		    								}
 
-		    								tmp[ 0 ] = tmpCoordinates[view].x;
-		    								tmp[ 1 ] = tmpCoordinates[view].y;
-		    								tmp[ 2 ] = tmpCoordinates[view].z;
+		    								//tmp[ 0 ] = tmpCoordinates[view].x;
+		    								//tmp[ 1 ] = tmpCoordinates[view].y;
+		    								//tmp[ 2 ] = tmpCoordinates[view].z;
 
-		    								interpolators[view].moveTo( tmp );
+		    								interpolators[view].setPosition( locf[ view ] );
 
 		    								value += weight * interpolators[view].getType().get();
 		    								sumWeights += weight;
