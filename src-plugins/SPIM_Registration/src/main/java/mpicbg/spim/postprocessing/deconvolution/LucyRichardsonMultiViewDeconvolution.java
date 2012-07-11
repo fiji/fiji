@@ -25,6 +25,7 @@ import mpicbg.util.RealSum;
 public class LucyRichardsonMultiViewDeconvolution
 {
 	public static boolean debug = false;
+	public static int debugInterval = 10;
 	
 	public static Image<FloatType> lucyRichardsonMultiView( final ArrayList<LucyRichardsonFFT> data, final int minIterations, final int maxIterations, final boolean multiplicative, final double lambda, final int numThreads )
 	{
@@ -342,7 +343,7 @@ public class LucyRichardsonMultiViewDeconvolution
 			System.out.println( i + "\t" + sumChange + "\t" + maxChange );
 			
 			
-			if ( debug && i % 10 == 0 )
+			if ( debug && i % debugInterval == 0 )
 			{
 				Image<FloatType> psiCopy = psi.clone();
 				//ViewDataBeads.normalizeImage( psiCopy );
