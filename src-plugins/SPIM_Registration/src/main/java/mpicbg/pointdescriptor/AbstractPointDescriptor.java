@@ -7,7 +7,6 @@ import mpicbg.imglib.util.Util;
 import mpicbg.models.Point;
 import mpicbg.models.PointMatch;
 import mpicbg.pointdescriptor.exception.NoSuitablePointsException;
-import mpicbg.pointdescriptor.fit.FitResult;
 import mpicbg.pointdescriptor.matcher.Matcher;
 import mpicbg.pointdescriptor.similarity.SimilarityMeasure;
 
@@ -93,7 +92,7 @@ public abstract class AbstractPointDescriptor< P extends Point, F extends Abstra
 		for ( final ArrayList<PointMatch> matches : matchesList )
 		{
 			/* fit the model and apply to local point descriptor */
-			final FitResult fitResult = fitMatches( matches );
+			final Object fitResult = fitMatches( matches );
 			
 			/* compute the similarity */							
 			final double similarity = similarityMeasure.getSimilarity( matches ) * matcher.getNormalizationFactor( matches, fitResult );
@@ -141,7 +140,7 @@ public abstract class AbstractPointDescriptor< P extends Point, F extends Abstra
 	 *
 	public abstract CoordinateTransform fit( final ArrayList<PointMatch> pointMatch );
 	*/	
-	public abstract FitResult fitMatches( final ArrayList<PointMatch> matches );
+	public abstract Object fitMatches( final ArrayList<PointMatch> matches );
 	
 	/**
 	 * Tells if the descriptormatching should reset the world coordinates after the matching

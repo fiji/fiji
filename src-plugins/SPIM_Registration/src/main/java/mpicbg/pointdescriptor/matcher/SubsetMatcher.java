@@ -4,7 +4,6 @@ import java.util.ArrayList;
 
 import mpicbg.models.PointMatch;
 import mpicbg.pointdescriptor.AbstractPointDescriptor;
-import mpicbg.pointdescriptor.fit.FitResult;
 
 public class SubsetMatcher implements Matcher
 {
@@ -67,7 +66,7 @@ public class SubsetMatcher implements Matcher
 	}
 
 	@Override
-	public double getNormalizationFactor( final ArrayList<PointMatch> matches, final FitResult fitResult ) { return 1;	}
+	public double getNormalizationFactor( final ArrayList<PointMatch> matches, final Object fitResult ) { return 1;	}
 
 	private static int factorial( final int n )
 	{

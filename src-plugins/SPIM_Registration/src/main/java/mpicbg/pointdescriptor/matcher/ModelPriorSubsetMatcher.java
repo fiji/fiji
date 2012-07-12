@@ -9,7 +9,6 @@ import javax.vecmath.Vector3f;
 
 import mpicbg.models.PointMatch;
 import mpicbg.models.RigidModel3D;
-import mpicbg.pointdescriptor.fit.FitResult;
 import mpicbg.pointdescriptor.model.TranslationInvariantRigidModel3D;
 import mpicbg.util.TransformUtils;
 
@@ -43,7 +42,7 @@ public class ModelPriorSubsetMatcher extends SubsetMatcher
 	}
 
 	@Override
-	public double getNormalizationFactor( final ArrayList<PointMatch> matches, final FitResult fitResult ) 
+	public double getNormalizationFactor( final ArrayList<PointMatch> matches, final Object fitResult ) 
 	{
 		final TranslationInvariantRigidModel3D matchModel = (TranslationInvariantRigidModel3D)fitResult;
 		
