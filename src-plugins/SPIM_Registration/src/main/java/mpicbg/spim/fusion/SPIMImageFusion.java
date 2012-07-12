@@ -11,6 +11,7 @@ import mpicbg.imglib.image.display.imagej.ImageJFunctions;
 import mpicbg.imglib.type.numeric.real.FloatType;
 import mpicbg.models.AbstractAffineModel3D;
 import mpicbg.spim.io.IOFunctions;
+import mpicbg.spim.io.ImgLibSaver;
 import mpicbg.spim.io.SPIMConfiguration;
 import mpicbg.spim.registration.ViewDataBeads;
 import mpicbg.spim.registration.ViewStructure;
@@ -48,8 +49,7 @@ public abstract class SPIMImageFusion
 	public ImagePlus getFusedImageCopy() { return ImageJFunctions.copyToImagePlus( getFusedImage() ); } 
 	public ImagePlus getFusedImageVirtual() { return ImageJFunctions.displayAsVirtualStack( getFusedImage() ); } 
 	public void closeImages() { getFusedImage().close(); }
-	public boolean saveAsTiffs( final String dir, final String name, final int channelIndex ) { return ImageJFunctions.saveAsTiffs( getFusedImage(), dir, name + "_ch" + viewStructure.getChannelNum( channelIndex ), ImageJFunctions.GRAY32 ); }  
-
+	public boolean saveAsTiffs( final String dir, final String name, final int channelIndex ) { return ImgLibSaver.saveAsTiffs( getFusedImage(), dir, name + "_ch" + viewStructure.getChannelNum( channelIndex ), ImageJFunctions.GRAY32 ); }  
 	
 	public Point3f getOutputImageMinCoordinate() { return min; }
 	public Point3f getOutputImageMaxCoordinate() { return max; }
