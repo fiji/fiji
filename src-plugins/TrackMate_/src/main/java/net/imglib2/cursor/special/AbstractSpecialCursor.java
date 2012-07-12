@@ -4,7 +4,7 @@ import mpicbg.imglib.cursor.LocalizableByDimCursor;
 import net.imglib2.Cursor;
 import net.imglib2.Sampler;
 import net.imglib2.img.Img;
-import net.imglib2.outofbounds.OutOfBoundsRandomAccess;
+import net.imglib2.outofbounds.OutOfBounds;
 import net.imglib2.type.Type;
 
 /**
@@ -22,7 +22,7 @@ public abstract class AbstractSpecialCursor <T extends Type<T>> implements Curso
 	 */
 	
 	/** The cursor that will be used internally to iterate in the domain. */ 
-	protected OutOfBoundsRandomAccess<T> cursor;
+	protected OutOfBounds<T> cursor;
 	/** The Image this cursors operates on. */
 	protected Img<T> img;
 	/** True if the iteration is not done yet. */
