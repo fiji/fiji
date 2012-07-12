@@ -232,6 +232,10 @@ public class MappingFusionSequential extends SPIMImageFusion
 				isoWinit = new IsolatedPixelWeightener[ 0 ][ 0 ];
 			}
 
+			// unnormalize all views prior to starting the fusion (otherwise it might be called more than once due to multi-threading)
+			for (int view = viewIndexStart; view < viewIndexEnd; view++)
+				views.get( view ).getImage( false );
+
 			final IsolatedPixelWeightener<?>[][] isoW = isoWinit;
 
 			ai.set( 0 );

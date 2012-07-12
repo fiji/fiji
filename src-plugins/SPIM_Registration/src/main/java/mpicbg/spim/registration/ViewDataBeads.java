@@ -452,11 +452,11 @@ public class ViewDataBeads implements Comparable< ViewDataBeads >
 				isNormalized = false;
 			}
 			setImageSize( image.getDimensions() );
-
+			
 			// now write dims for further use
 			IOFunctions.writeDim( this, getViewStructure().getSPIMConfiguration().registrationFiledirectory );
 		}
-
+		
 		if ( isNormalized && !normalize)
 			unnormalizeImage();
 
