@@ -11,7 +11,7 @@ public class Utils {
 	 * The parameter <code>a</code> is the axis half-length in the X direction, and <code>b</code>
 	 * is the axis half-length in the Y direction. 
 	 * <p>
-	 * The half-widhts will be stored in the array <code>lineBounds</code>, which must be of size equal
+	 * The half-widths will be stored in the array <code>lineBounds</code>, which must be of size equal
 	 * to at least <code>b+1</code>.
 	 * <p>
 	 * This is an implementation of the McIlroy's algorithm, adapted freely from 

@@ -5,13 +5,13 @@ import net.imglib2.Cursor;
 import net.imglib2.ExtendedRandomAccessibleInterval;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.Sampler;
-import net.imglib2.outofbounds.OutOfBoundsRandomAccess;
+import net.imglib2.outofbounds.OutOfBounds;
 
 public class SquareNeighborhoodCursor3x3<T> implements Cursor<T>, Bounded {
 
 	private final ExtendedRandomAccessibleInterval<T,RandomAccessibleInterval<T>> source;
 	private final long[] center;
-	private final OutOfBoundsRandomAccess<T> ra;
+	private final OutOfBounds<T> ra;
 	private int index = -1;
 	private boolean hasNext;
 	
