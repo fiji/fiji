@@ -11,10 +11,14 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
+import javax.swing.JOptionPane;
+
 import ij.IJ;
+import ij.macro.Interpreter;
 
 /**
  * This class just hands off to the ImageJ Updater
@@ -47,6 +51,88 @@ public class Adapter {
 
 	private static ClassLoader remoteClassLoader;
 	private static Object progress;
+
+	/**
+	 * This implements the up-to-date check on startup, based on the ImageJ
+	 * updater.
+	 * 
+	 * @return the status as a {@link String}
+	 */
+	public static String checkOrShowDialog() {
+		String result = check();
+		if (result.toUpperCase().endsWith("AUTHENTICATION")) {
+			IJ.showStatus("Please run Help>Update Fiji occasionally");
+			return null;
+		}
+		if (result.toUpperCase().equals("UPDATEABLE") && !isBatchMode())
+			showDialog();
+		return result;
+	}
+
+	/**
+	 * Show the dialog asking whether to run the ImageJ updater now when there
+	 * are updates available.
+	 * 
+	 * Note: we do not check the latest nag here, as that is the job of the
+	 * {@link #check()} method.
+	 */
+	public static void showDialog() {
+		Object[] options = {
+			"Yes, please",
+			"Never",
+			"Remind me later"
+		};
+		switch (JOptionPane.showOptionDialog(null,
+				"There are updates available.\nDo you want to start the ImageJ Updater now?",
+				"Up-to-date check", JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE,
+				null, options, options[0])) {
+		case 0:
+			runUpdater();
+			break;
+		case 1:
+			setLatestNag(Long.MAX_VALUE);
+			break;
+		case 2:
+			setLatestNag(new Date().getTime() / 1000);
+			break;
+		case JOptionPane.CLOSED_OPTION:
+			// do nothing
+		}
+	}
+
+	/**
+	 * This returns true if this seems to be the Debian packaged
+	 * version of Fiji, or false otherwise.
+	 */
+	public static boolean isDebian() {
+		String debianProperty = System.getProperty("fiji.debian");
+		return debianProperty != null && debianProperty.equals("true");
+	}
+
+	/**
+	 * Determine whether we should not bother to show the dialog.
+	 * 
+	 * @return whether we're in batch mode or other circumstances indicate we
+	 *         should not run the ImageJ updater interactively
+	 */
+	protected static boolean isBatchMode() {
+		return IJ.getInstance() == null || !IJ.getInstance().isVisible()
+			|| Interpreter.isBatchMode();
+	}
+
+	/**
+	 * Get the number of milliseconds after the UNIX epoch when we last asked.
+	 * 
+	 * @param epoch
+	 *            the number of milliseconds
+	 */
+	protected static void setLatestNag(long epoch) {
+		try {
+			invokeStatic(UPTODATE_CLASS_NAME, "setLatestNag", epoch);
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
 
 	/**
 	 * Run the ImageJ updater (Swing).
