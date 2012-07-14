@@ -1,5 +1,6 @@
 package fiji.updater;
 
+import ij.IJ;
 import ij.plugin.PlugIn;
 
 import fiji.updater.logic.Checksummer;
@@ -51,123 +52,19 @@ public class Updater implements PlugIn {
 	public static boolean debug, testRun, hidden;
 
 	public void run(String arg) {
-		UserInterface.set(new IJ1UserInterface());
-
-		if (errorIfDebian())
-			return;
-
-		if (new File(Util.ijRoot, "update").exists()) {
-			UserInterface.get().error("Fiji restart required to finalize previous update");
-			return;
-		}
-		Util.useSystemProxies();
-
-		final PluginCollection plugins = new PluginCollection();
 		try {
-			plugins.read();
-		}
-		catch (FileNotFoundException e) { /* ignore */ }
-		catch (Exception e) {
-			e.printStackTrace();
-			UserInterface.get().error("There was an error reading the cached metadata: " + e);
-			return;
-		}
-
-		Authenticator.setDefault(new GraphicalAuthenticator());
-
-		final UpdaterFrame main = new UpdaterFrame(plugins, hidden);
-		main.setEasyMode(true);
-
-		Progress progress = main.getProgress("Starting up...");
-		XMLFileDownloader downloader = new XMLFileDownloader(plugins);
-		downloader.addProgress(progress);
-		try {
-			downloader.start();
-		} catch (Canceled e) {
-			downloader.done();
-			main.error("Canceled");
-			return;
-		} catch (Exception e) {
-			e.printStackTrace();
-			downloader.done();
-			String message;
-			if (e instanceof UnknownHostException)
-				message = "Failed to lookup host "
-					+ e.getMessage();
-			else
-				message = "Download/checksum failed: " + e;
-			main.error(message);
-			return;
-		}
-
-		String warnings = downloader.getWarnings();
-		if (!warnings.equals(""))
-			main.warn(warnings);
-
-		progress = main.getProgress("Matching with local files...");
-		Checksummer checksummer = new Checksummer(plugins, progress);
-		try {
-			if (debug)
-				checksummer.done();
-			else
-				checksummer.updateFromLocal();
-		} catch (Canceled e) {
-			checksummer.done();
-			main.error("Canceled");
-			return;
-		}
-
-		PluginObject updater = plugins.getPlugin("plugins/Fiji_Updater.jar");
-		if ((updater != null && updater.getStatus() == PluginObject.Status.UPDATEABLE)) {
-			if (SwingTools.showQuestion(hidden, main, "Update the updater",
-					"There is an update available for the Fiji Updater. Install now?")) {
-				// download just the updater
-				main.updateTheUpdater();
-
-				// overwrite the original updater
-				if (!overwriteWithUpdated(updater))
-					main.info("Please restart Fiji and call Help>Update Fiji to continue the update");
-				else
-					/*
-					 * Start a new Thread that refreshes the menus and restarts the updater;
-					 * the new updater has to be restarted in another thread to avoid clashes
-					 * with the current updater.
-					 */
-					SwingUtilities.invokeLater(new Runnable() {
-						public void run() {
-							new Executer("Refresh Menus").run();
-							new Executer("Update Fiji", null);
-						}
-					});
+			final Adapter adapter = new Adapter(true);
+			if ("check".equals(arg)) {
+				// "quick" is used on startup; don't produce an error in the Debian packaged version
+				if (Adapter.isDebian())
+					return;
+				adapter.checkOrShowDialog();
+				return;
 			}
-			// we do not save the plugins to prevent the mtime from changing
-			return;
+			adapter.runUpdater();
+		} catch (Throwable t) {
+			IJ.handleException(t);
 		}
-
-		main.setVisible(true);
-
-		if ("update".equals(arg)) {
-			plugins.markForUpdate(false);
-			main.setViewOption(Option.UPDATEABLE);
-			if (testRun)
-				System.err.println("forceable updates: "
-					+ Util.join(", ",
-						plugins.updateable(true))
-					+ ", changes: "
-					+ Util.join(", ", plugins.changes()));
-			else if (plugins.hasForcableUpdates()) {
-				main.warn("There are locally modified files!");
-				if (plugins.hasUploadableSites() && !plugins.hasChanges()) {
-					main.setViewOption(Option
-							.LOCALLY_MODIFIED);
-					main.setEasyMode(false);
-				}
-			}
-			else if (!plugins.hasChanges())
-				main.info("Your Fiji is up to date!");
-		}
-
-		main.updatePluginsTable();
 	}
 
 	protected static boolean overwriteWithUpdated(PluginObject plugin) {
@@ -228,5 +125,9 @@ public class Updater implements PlugIn {
 			}
 		}
 		return file.renameTo(backup);
+	}
+
+	public static void main(String[] args) {
+		new Updater().run("");
 	}
 }

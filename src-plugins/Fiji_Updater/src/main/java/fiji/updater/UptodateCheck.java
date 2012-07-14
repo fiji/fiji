@@ -32,24 +32,8 @@ public class UptodateCheck implements PlugIn {
 	protected final static String PROXY_NEEDS_AUTHENTICATION = "Your HTTP proxy requires authentication";
 
 	public void run(String arg) {
-		UserInterface.set(new IJ1UserInterface());
-		Util.useSystemProxies();
-		if ("quick".equals(arg)) {
-			// "quick" is used on startup; don't produce an error in the Debian packaged version
-			if (Updater.isDebian())
-				return;
-			checkOrShowDialog();
-		} else {
-			if (Updater.errorIfDebian())
-				return;
-			if ("verbose".equals(arg)) {
-				String result = checkOrShowDialog();
-				if (result != null)
-					UserInterface.get().info(result, "Up-to-date check");
-			}
-			else if ("config".equals(arg) && !isBatchMode())
-				config();
-		}
+		if ("quick".equals(arg))
+			new Updater().run("check");
 	}
 
 	public String checkOrShowDialog() {

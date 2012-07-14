@@ -43,7 +43,9 @@ import javax.xml.parsers.ParserConfigurationException;
 import org.xml.sax.SAXException;
 
 /**
- * This class is the command-line interface into Fiji's Updater.
+ * Access the command-line interface of the ImageJ Updater
+ *
+ * @author Johannes Schindelin
  */
 public class Main {
 	protected PluginCollection plugins;
@@ -372,53 +374,7 @@ public class Main {
 	}
 
 	public static void main(String[] args) {
-		if (args.length == 0) {
-			usage();
-			System.exit(0);
-		}
-
-		String http_proxy = System.getenv("http_proxy");
-		if (http_proxy != null && http_proxy.startsWith("http://")) {
-			int colon = http_proxy.indexOf(':', 7);
-			int slash = http_proxy.indexOf('/', 7);
-			int port = 80;
-			if (colon < 0)
-				http_proxy = slash < 0 ? http_proxy.substring(7) : http_proxy.substring(7, slash);
-			else {
-				port = Integer.parseInt(slash < 0 ? http_proxy.substring(colon + 1) : http_proxy.substring(colon + 1, slash));
-				http_proxy = http_proxy.substring(7, colon);
-			}
-			System.setProperty("http.proxyHost", http_proxy);
-			System.setProperty("http.proxyPort", "" + port);
-		} else
-			Util.useSystemProxies();
-		Authenticator.setDefault(new ProxyAuthenticator());
-
-		String command = args[0];
-		if (command.equals("list"))
-			getInstance().list(makeList(args, 1));
-		else if (command.equals("list-current"))
-			getInstance().listCurrent(makeList(args, 1));
-		else if (command.equals("list-uptodate"))
-			getInstance().listUptodate(makeList(args, 1));
-		else if (command.equals("list-not-uptodate"))
-			getInstance().listNotUptodate(makeList(args, 1));
-		else if (command.equals("list-updateable"))
-			getInstance().listUpdateable(makeList(args, 1));
-		else if (command.equals("list-modified"))
-			getInstance().listModified(makeList(args, 1));
-		else if (command.equals("update"))
-			getInstance().update(makeList(args, 1));
-		else if (command.equals("update-force"))
-			getInstance().update(makeList(args, 1), true);
-		else if (command.equals("update-force-pristine"))
-			getInstance().update(makeList(args, 1), true, true);
-		else if (command.equals("update-java"))
-			new UpdateJava().run(null);
-		else if (command.equals("upload"))
-			getInstance().upload(makeList(args, 1));
-		else
-			usage();
+		new Adapter(false).runCommandLineUpdater(args);
 	}
 
 	protected static class ProxyAuthenticator extends Authenticator {
