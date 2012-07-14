@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.jar.Attributes.Name;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
 import java.util.zip.ZipEntry;
@@ -230,23 +231,25 @@ public class POM extends DefaultHandler implements Comparable<POM> {
 			BuildEnvironment.copyFile(pom, targetFile);
 		}
 
-		if (makeJar) {
-			JarOutputStream out;
-			if (mainClass == null && !includeImplementationBuild)
-				out = new JarOutputStream(new FileOutputStream(getTarget()));
+		if (mainClass != null || includeImplementationBuild) {
+			File file = new File(target, "META-INF/MANIFEST.MF");
+			Manifest manifest = null;
+			if (file.exists())
+				manifest = new Manifest(new FileInputStream(file));
 			else {
-				String text = "Manifest-Version: 1.0\n";
-				if (mainClass != null)
-					text += "Main-Class: " + mainClass + "\n";
-				if (includeImplementationBuild)
-					text += "Implementation-Build: " + env.getImplementationBuild(directory) + "\n";
-				InputStream input = new ByteArrayInputStream(text.getBytes());
-				Manifest manifest = null;
-				try {
-					manifest = new Manifest(input);
-				} catch(Exception e) { }
-				out = new JarOutputStream(new FileOutputStream(getTarget()), manifest);
+				manifest = new Manifest();
+				manifest.getMainAttributes().put(Name.MANIFEST_VERSION, "1.0");
+				file.getParentFile().mkdirs();
 			}
+			if (mainClass != null)
+				manifest.getMainAttributes().put(Name.MAIN_CLASS, mainClass);
+			if (includeImplementationBuild)
+				manifest.getMainAttributes().put(new Name("Implementation-Build"), env.getImplementationBuild(directory));
+			manifest.write(new FileOutputStream(file));
+		}
+
+		if (makeJar) {
+			JarOutputStream out = new JarOutputStream(new FileOutputStream(getTarget()));
 			addToJarRecursively(out, target, "");
 			out.close();
 		}
