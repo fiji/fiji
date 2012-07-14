@@ -2,6 +2,8 @@ package fiji.updater;
 
 import java.awt.Frame;
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.OutputStream;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -14,6 +16,7 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.zip.GZIPOutputStream;
 
 import javax.swing.JOptionPane;
 
@@ -48,6 +51,8 @@ public class Adapter {
 	private final static String SWING_PROGRESS_CLASS_NAME = "imagej.updater.gui.ProgressDialog";
 	private final static String CHECKSUMMER_CLASS_NAME = "imagej.updater.core.Checksummer";
 	private final static String COLLECTION_CLASS_NAME = "imagej.updater.core.FilesCollection";
+	private static final String DOWNLOADER_CLASS_NAME = "imagej.updater.core.XMLFileDownloader";
+	private final static String INSTALLER_CLASS_NAME = "imagej.updater.core.Installer";
 
 	private static ClassLoader remoteClassLoader;
 	private static Object progress;
@@ -141,6 +146,13 @@ public class Adapter {
 		@SuppressWarnings("unchecked")
 		Class<Runnable> updaterClass = (Class<Runnable>)loadClass(UPDATER_CLASS_NAME);
 		if (updaterClass != null) try {
+			if (remoteClassLoader != null) try {
+				firstTime();
+			} catch (Throwable t) {
+				t.printStackTrace();
+				IJ.error("Could not download the ImageJ Updater!");
+				return;
+			}
 			updaterClass.newInstance().run();
 		} catch (InstantiationException e) {
 			IJ.error("Could not instantiate the Updater: " + e.getMessage());
@@ -148,6 +160,65 @@ public class Adapter {
 		} catch (IllegalAccessException e) {
 			IJ.error("Could not access the Updater: " + e.getMessage());
 			return;
+		}
+	}
+
+	/**
+	 * If this is the first time we hand off to the ImageJ Updater, let's
+	 * install the Updater.
+	 * 
+	 * This is the trickiest method of this class because it relies on the API
+	 * of the ImageJ updater as it was current at the time of writing. So it
+	 * really relies on the classes being available via a URLClassLoader
+	 * accessing the precise file versions specified in the {@link #JARS},
+	 * {@link #VERSIONS} and {@link #TIMESTAMPS} fields.
+	 * 
+	 * @throws Exception
+	 */
+	protected static void firstTime() throws Exception {
+		File ijDir = new File(System.getProperty("ij.dir"));
+
+		List<String> filenames = new ArrayList<String>();
+		for (int i = 0; i < JARS.length; i++)
+			filenames.add("jars/" + JARS[i] + VERSIONS[i] + ".jar");
+
+		Map<String, Object> files = newInstance(COLLECTION_CLASS_NAME, ijDir);
+		try {
+			invoke(files, "read");
+		} catch (Exception e) { /* ignore */ }
+		Object downloader = newInstance(DOWNLOADER_CLASS_NAME, files);
+		invoke(downloader, "addProgress", getProgress());
+		invoke(downloader, "start", false);
+		Object checksummer = newInstance(CHECKSUMMER_CLASS_NAME, files, getProgress());
+		invoke(checksummer, "updateFromLocal", filenames);
+		for (String key : files.keySet())
+			invoke(files.get(key), "setNoAction");
+		for (String filename : filenames)
+			invoke(files.get(filename), "stageForUpdate", files, false);
+		Object installer = newInstance(INSTALLER_CLASS_NAME, files, getProgress());
+		invoke(installer, "start");
+		invoke(installer, "moveUpdatedIntoPlace");
+
+		List<URL> classPath = new ArrayList<URL>();
+		Object guiFile = invoke(files, "get", "jars/" + JARS[0] + ".jar");
+		Iterable<Object> dependencies = invoke(guiFile, "getFileDependencies", files, true);
+		for (Object file : dependencies)
+			classPath.add(new File(ijDir, (String)invoke(file, "getLocalFilename", false)).toURI().toURL());
+		remoteClassLoader = new URLClassLoader(classPath.toArray(new URL[classPath.size()]));
+		progress = loadClass(progress.getClass().getName());
+
+		File dbXmlGz = new File(ijDir, "db.xml.gz");
+		if (!dbXmlGz.exists()) {
+			OutputStream out = new GZIPOutputStream(new FileOutputStream(dbXmlGz));
+			out.write("<pluginRecords><update-site name=\"Fiji\" url=\"http://fiji.sc/update/\" timestamp=\"0\"/></pluginRecords>".getBytes());
+			out.close();
+		}
+
+		// Blow away ImageJ's class loader so we can pick up the newly downloaded classes
+		try {
+			invokeStatic("ij.IJ", "run", "Refresh Menus");
+		} catch (Throwable t) {
+			ui.handleException(t);
 		}
 	}
 
@@ -413,11 +484,13 @@ public class Adapter {
 			if (parameters[i] != null) {
 				Class<?> clazz = parameters[i].getClass();
 				if (types[i].isPrimitive()) {
-					if (types[i] != Long.TYPE && types[i] != Integer.TYPE)
+					if (types[i] != Long.TYPE && types[i] != Integer.TYPE && types[i] != Boolean.TYPE)
 						throw new RuntimeException("unsupported primitive type " + clazz);
 					if (types[i] == Long.TYPE && clazz != Long.class)
 						return false;
-					else if (types[i] == Integer.TYPE && clazz != Integer.TYPE)
+					else if (types[i] == Integer.TYPE && clazz != Integer.class)
+						return false;
+					else if (types[i] == Boolean.TYPE && clazz != Boolean.class)
 						return false;
 				}
 				else if (!types[i].isAssignableFrom(clazz))
