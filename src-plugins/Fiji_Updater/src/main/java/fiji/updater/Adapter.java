@@ -1,0 +1,427 @@
+package fiji.updater;
+
+import java.awt.Frame;
+import java.io.File;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+
+import ij.IJ;
+
+/**
+ * This class just hands off to the ImageJ Updater
+ *
+ * The Fiji Updater moved to a new home: ImageJ2. To this end, we will hand off to the
+ * ImageJ Updater by using a URLClassLoader with a set of known-good .jar files from the
+ * ImageJ Update site, unless the classes can be found locally already.
+ *
+ * @author Johannes Schindelin
+ */
+public class Adapter {
+	public final static String JARS_PREFIX = "http://update.imagej.net/jars/";
+	public final static String[] JARS = {
+		"ij-ui-swing-updater", "ij-updater-core", "ij-core",
+		"log4j", "slf4j-log4j12", "slf4j-api", "sezpoz"
+	};
+	public final static String[] VERSIONS = {
+		"-2.0.0-SNAPSHOT", "-2.0.0-SNAPSHOT", "-2.0.0-SNAPSHOT",
+		"-1.2.14", "-1.5.10", "-1.5.10", "-1.9"
+	};
+	public final static String[] TIMESTAMPS = {
+		"20120724094913", "20120724094913", "20120724094913",
+		"20120404210913", "20120404210913", "20120404210913", "20120404210913"
+	};
+	public final static String UPDATER_CLASS_NAME = "imagej.updater.gui.ImageJUpdater";
+	private final static String UPTODATE_CLASS_NAME = "imagej.updater.core.UpToDate";
+	private final static String SWING_PROGRESS_CLASS_NAME = "imagej.updater.gui.ProgressDialog";
+	private final static String CHECKSUMMER_CLASS_NAME = "imagej.updater.core.Checksummer";
+	private final static String COLLECTION_CLASS_NAME = "imagej.updater.core.FilesCollection";
+
+	private static ClassLoader remoteClassLoader;
+	private static Object progress;
+
+	/**
+	 * Run the ImageJ updater (Swing).
+	 */
+	public static void runUpdater() {
+		@SuppressWarnings("unchecked")
+		Class<Runnable> updaterClass = (Class<Runnable>)loadClass(UPDATER_CLASS_NAME);
+		if (updaterClass != null) try {
+			updaterClass.newInstance().run();
+		} catch (InstantiationException e) {
+			IJ.error("Could not instantiate the Updater: " + e.getMessage());
+			return;
+		} catch (IllegalAccessException e) {
+			IJ.error("Could not access the Updater: " + e.getMessage());
+			return;
+		}
+	}
+
+	/**
+	 * Utility method for the quick up-to-date check in {@link fiji.Main}
+	 *
+	 * @return a tag describing whether we should run the Updater
+	 */
+	public static String check() {
+		try {
+			return invokeStatic(UPTODATE_CLASS_NAME, "check").toString();
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	/**
+	 * Utility method for the {@link fiji.packaging.Package_Maker}
+	 *
+	 * @return the list of files the Updater cares about
+	 * @throws Exception
+	 */
+	@SuppressWarnings("unchecked")
+	public static Collection<String> getFileList() throws Exception {
+		Map<String, Object> collection = newInstance(COLLECTION_CLASS_NAME, new File(System.getProperty("ij.dir")));
+		Object checksummer = newInstance(CHECKSUMMER_CLASS_NAME, collection, getProgress());
+
+		try {
+			invoke(checksummer, "updateFromLocal");
+		} catch (Throwable t) {
+			IJ.error("Canceled");
+			return null;
+		}
+
+		invoke(collection, "sort");
+		List<String> result = new ArrayList<String>();
+		for (Object file : (Iterable<Object>)collection) {
+			result.add((String)invoke(file, "getLocalFilename"));
+		}
+
+		return result;
+	}
+
+	/**
+	 * Utility method for the {@link Bug_Submitter.Bug_Submitter}
+	 *
+	 * @return the list of files known to the Updater, with versions, as a String
+	 */
+	public static String getInstalledVersions() {
+		try {
+			Map<String, Object> collection = newInstance(COLLECTION_CLASS_NAME, new File(System.getProperty("ij.dir")));
+			Object checksummer = newInstance(CHECKSUMMER_CLASS_NAME, collection, getProgress());
+
+			try {
+				invoke(checksummer, "updateFromLocal");
+			} catch (Throwable t) {
+				IJ.error("Canceled");
+				return null;
+			}
+
+			Map<String, Object> checksums = invoke(checksummer, "getCachedChecksums");
+
+			StringBuffer sb = new StringBuffer();
+
+			for (Map.Entry<String, Object> entry : checksums.entrySet()) {
+				    String file = entry.getKey();
+				    Object version = entry.getValue();
+				    sb.append("  ").append(get(version, "checksum")).append(" ");
+				    sb.append(get(version, "timestamp")).append(" ");
+				    sb.append(file).append("\n");
+			}
+
+			return sb.toString();
+		} catch (Exception e) {
+			IJ.handleException(e);
+			return null;
+		}
+	}
+
+	/**
+	 * Get the current progress object.
+	 * 
+	 * Make a new one if none has been instantiated yet.
+	 * 
+	 * @return the progress object
+	 * @throws SecurityException
+	 * @throws NoSuchMethodException
+	 * @throws IllegalArgumentException
+	 * @throws InstantiationException
+	 * @throws IllegalAccessException
+	 * @throws InvocationTargetException
+	 */
+	protected static Object getProgress() throws SecurityException, NoSuchMethodException, IllegalArgumentException, InstantiationException, IllegalAccessException, InvocationTargetException {
+		if (progress == null)
+			progress = newInstance(SWING_PROGRESS_CLASS_NAME, (Frame)null);
+		return progress;
+	}
+
+	/**
+	 * Instantiate a new class.
+	 * 
+	 * This method uses the current URLClassLoader to load the specified class
+	 * and find a constructor that matches the given parameters. It works
+	 * completely by reflection to avoid the need to link at compile time to the
+	 * ImageJ2 dependencies. The Fiji Updater was designed to update only
+	 * plugins/Fiji_Updater.jar in case it was updateable, which is why we
+	 * cannot simply make ImageJ2 a dependency of the Fiji Updater.
+	 * 
+	 * @param className
+	 *            the class to load
+	 * @param parameters
+	 *            the parameters to pass to the constructor matching them
+	 * @return the instance
+	 * @throws SecurityException
+	 * @throws NoSuchMethodException
+	 * @throws IllegalArgumentException
+	 * @throws InstantiationException
+	 * @throws IllegalAccessException
+	 * @throws InvocationTargetException
+	 */
+	@SuppressWarnings("unchecked")
+	private static<T> T newInstance(String className, Object... parameters) throws SecurityException, NoSuchMethodException, IllegalArgumentException, InstantiationException, IllegalAccessException, InvocationTargetException {
+		Class<?> clazz = loadClass(className);
+		for (Constructor<?> constructor : clazz.getConstructors()) {
+			if (doParametersMatch(constructor.getParameterTypes(), parameters))
+				return (T)constructor.newInstance(parameters);
+		}
+		throw new NoSuchMethodException("No matching constructor found");
+	}
+
+	/**
+	 * Invoke a method on an object instantiated by
+	 * {@link #newInstance(String, Object...)}.
+	 * 
+	 * This method tries to find a method matching the given name and the
+	 * parameter list. Just like {@link #newInstance(String, Object...)}, this
+	 * works via reflection to avoid a compile-time dependency on ImageJ2.
+	 * 
+	 * @param object
+	 *            the object whose method is to be called
+	 * @param methodName
+	 *            the name of the method to be called
+	 * @param parameters
+	 *            the parameters to pass to the method
+	 * @return the return value of the method, if any
+	 * @throws SecurityException
+	 * @throws NoSuchMethodException
+	 * @throws IllegalArgumentException
+	 * @throws IllegalAccessException
+	 * @throws InvocationTargetException
+	 */
+	@SuppressWarnings("unchecked")
+	private static<T> T invoke(Object object, String methodName, Object... parameters) throws SecurityException, NoSuchMethodException, IllegalArgumentException, IllegalAccessException, InvocationTargetException {
+		for (Method method : object.getClass().getMethods()) {
+			if (method.getName().equals(methodName) && doParametersMatch(method.getParameterTypes(), parameters))
+				return (T)method.invoke(object, parameters);
+		}
+		throw new NoSuchMethodException("No matching method found");
+	}
+
+	/**
+	 * Invoke a static method of a given class.
+	 * 
+	 * This method tries to find a static method matching the given name and the
+	 * parameter list. Just like {@link #newInstance(String, Object...)}, this
+	 * works via reflection to avoid a compile-time dependency on ImageJ2.
+	 * 
+	 * @param className
+	 *            the name of the class whose static method is to be called
+	 * @param methodName
+	 *            the name of the static method to be called
+	 * @param parameters
+	 *            the parameters to pass to the static method
+	 * @return the return value of the static method, if any
+	 * @throws SecurityException
+	 * @throws NoSuchMethodException
+	 * @throws IllegalArgumentException
+	 * @throws IllegalAccessException
+	 * @throws InvocationTargetException
+	 */
+	@SuppressWarnings("unchecked")
+	private static<T> T invokeStatic(String className, String methodName, Object... parameters) throws SecurityException, NoSuchMethodException, IllegalArgumentException, IllegalAccessException, InvocationTargetException {
+		Class<?> clazz = loadClass(className);
+		for (Method method : clazz.getMethods()) {
+			if (method.getName().equals(methodName) && doParametersMatch(method.getParameterTypes(), parameters))
+				return (T)method.invoke(null, parameters);
+		}
+		throw new NoSuchMethodException("No matching method found");
+	}
+
+	/**
+	 * Access a field of a given object.
+	 * 
+	 * This method finds the field of a given name in the object. It does not
+	 * look recursively into the super-class to find the field, because these
+	 * methods really are only meant to be used in the context of this class and
+	 * not be of generic value.
+	 * 
+	 * Note that no attempt is made to call {@link Field#setAccessible(boolean)}
+	 * , i.e. you will only be able to access public fields defined in the
+	 * top-level class of the object.
+	 * 
+	 * @param object
+	 *            the object whose field needs to be accessed
+	 * @param fieldName
+	 *            the name of the field
+	 * @return the value of the field
+	 * @throws SecurityException
+	 * @throws NoSuchFieldException
+	 * @throws IllegalArgumentException
+	 * @throws IllegalAccessException
+	 */
+	@SuppressWarnings("unchecked")
+	private static<T> T get(Object object, String fieldName) throws SecurityException, NoSuchFieldException, IllegalArgumentException, IllegalAccessException {
+		Field field = object.getClass().getField(fieldName);
+		return (T) field.get(object);
+	}
+
+	/**
+	 * Set the value of a field of a given object.
+	 * 
+	 * This method finds the field of a given name in the object and sets its
+	 * value. It does not look recursively into the super-class to find the
+	 * field, because these methods really are only meant to be used in the
+	 * context of this class and not be of generic value.
+	 * 
+	 * Note that no attempt is made to call {@link Field#setAccessible(boolean)}
+	 * , i.e. you will only be able to access public fields defined in the
+	 * top-level class of the object.
+	 * 
+	 * @param object
+	 *            the object whose field needs to be accessed
+	 * @param fieldName
+	 *            the name of the field
+	 * @param value
+	 *            the value of the field
+	 * @throws SecurityException
+	 * @throws NoSuchFieldException
+	 * @throws IllegalArgumentException
+	 * @throws IllegalAccessException
+	 */
+	@SuppressWarnings("unused")
+	private static void set(Object object, String fieldName, Object value) throws SecurityException, NoSuchFieldException, IllegalArgumentException, IllegalAccessException {
+		Field field = object.getClass().getField(fieldName);
+		field.set(object, value);
+	}
+
+	/**
+	 * Check whether a list of parameters matches a list of parameter types.
+	 * 
+	 * This is used to find matching constructors and (possibly static) methods.
+	 * 
+	 * @param types
+	 *            the parameter types
+	 * @param parameters
+	 *            the parameters
+	 * @return whether the parameters match the types
+	 */
+	private static boolean doParametersMatch(Class<?>[] types, Object[] parameters) {
+		if (types.length != parameters.length)
+			return false;
+		for (int i = 0; i < types.length; i++)
+			if (parameters[i] != null) {
+				Class<?> clazz = parameters[i].getClass();
+				if (types[i].isPrimitive()) {
+					if (types[i] != Long.TYPE && types[i] != Integer.TYPE)
+						throw new RuntimeException("unsupported primitive type " + clazz);
+					if (types[i] == Long.TYPE && clazz != Long.class)
+						return false;
+					else if (types[i] == Integer.TYPE && clazz != Integer.TYPE)
+						return false;
+				}
+				else if (!types[i].isAssignableFrom(clazz))
+					return false;
+				}
+		return true;
+	}
+
+	/**
+	 * Load an ImageJ updater class, possibly from the ImageJ update site.
+	 * 
+	 * This method tries to find the class locally first. If the ImageJ updater
+	 * has been installed at some stage, the current class loader -- which is
+	 * the {@code FijiClassLoader} available via {@code IJ.getClassLoader()} --
+	 * will find it.
+	 * 
+	 * Otherwise we fall back to instantiating a URLClassLoader with known deep
+	 * links into the ImageJ update site.
+	 * 
+	 * @param name
+	 *            the name of the class to load
+	 * @return the class object
+	 */
+	protected static Class<?> loadClass(String name) {
+		ClassLoader currentLoader = Adapter.class.getClassLoader();
+		Class<?> result = null;
+		try {
+			result = currentLoader.loadClass(name);
+		} catch (Throwable t) {
+			if (remoteClassLoader == null) {
+				// fall back to instantiating a URLClassLoader
+				final URL[] urls = new URL[JARS.length];
+				for (int i = 0; i < urls.length; i++) try {
+					urls[i] = new URL(JARS_PREFIX + JARS[i] + VERSIONS[i] + ".jar-" + TIMESTAMPS[i]);
+				} catch (MalformedURLException e) {
+					IJ.error("Invalid Updater URL: " + e.getMessage());
+					return null;
+				}
+				remoteClassLoader = new URLClassLoader(urls, currentLoader);
+				// now we need to make sure that ij.dir is set properly because
+				// FileUtils.getBaseDirectory() will be quite lost
+				ensureIJDirIsSet();
+			}
+			try {
+				result = remoteClassLoader.loadClass(name);
+			} catch (ClassNotFoundException e) {
+				IJ.error("Could not find the class: " + e.getMessage());
+				return null;
+			}
+		}
+		return result;
+	}
+
+	/**
+	 * Make sure that the property <i>ij.dir</i> is set.
+	 * 
+	 * When launching the ImageJ updater, we do not want it to guess from its
+	 * <i>.jar</i> location (which might be a {@link http://...} URL) what the
+	 * current ImageJ root directory might be.
+	 * 
+	 * Happily, ImageJ2 respects the property <i>ij.dir</i>, as long as that
+	 * directory exists.
+	 * 
+	 * @throws RuntimeException
+	 */
+	public static void ensureIJDirIsSet() {
+		String ijDir = System.getProperty("ij.dir");
+		if (ijDir != null && new File(ijDir).isDirectory())
+			return;
+		ijDir = Adapter.class.getResource("Adapter.class").toString();
+		for (String prefix : new String[] { "jar:", "file:" })
+			if (ijDir.startsWith(prefix))
+				ijDir = ijDir.substring(prefix.length());
+		int bang = ijDir.indexOf("!/");
+		if (bang >= 0) {
+			ijDir = ijDir.substring(0, bang);
+			if (ijDir.endsWith(".jar"))
+				ijDir = new File(ijDir).getParent();
+		}
+		else {
+			String suffix = "/" + Adapter.class.getName().replace('.', '/') + ".class";
+			if (!ijDir.endsWith(suffix))
+				throw new RuntimeException("Funny ?-) " + ijDir);
+			ijDir = ijDir.substring(0, ijDir.length() - suffix.length());
+		}
+		for (String suffix : new String[] { "classes", "/", "target", "/", "Fiji_Updater", "/", "src-plugins", "jars", "plugins", "/", "build", "/" })
+			if (ijDir.endsWith(suffix))
+				ijDir = ijDir.substring(0, ijDir.length() - suffix.length());
+		if (!new File(ijDir).isDirectory())
+			throw new RuntimeException("Could not infer ImageJ root directory; please set the ij.dir property accordingly!");
+		System.setProperty("ij.dir", ijDir);
+	}
+}
