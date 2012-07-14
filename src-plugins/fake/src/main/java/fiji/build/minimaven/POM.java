@@ -152,6 +152,9 @@ public class POM extends DefaultHandler implements Comparable<POM> {
 	protected void addToJarRecursively(JarOutputStream out, File directory, String prefix) throws IOException {
 		for (File file : directory.listFiles())
 			if (file.isFile()) {
+				// For backwards-compatibility with the Fiji Updater, let's not include pom.properties files in the Updater itself
+				if (file.getAbsolutePath().endsWith("/Fiji_Updater/target/classes/META-INF/maven/sc.fiji/Fiji_Updater/pom.properties"))
+					continue;
 				out.putNextEntry(new ZipEntry(prefix + file.getName()));
 				BuildEnvironment.copy(new FileInputStream(file), out, false);
 			}
@@ -243,7 +246,7 @@ public class POM extends DefaultHandler implements Comparable<POM> {
 			}
 			if (mainClass != null)
 				manifest.getMainAttributes().put(Name.MAIN_CLASS, mainClass);
-			if (includeImplementationBuild)
+			if (includeImplementationBuild && !getArtifactId().equals("Fiji_Updater"))
 				manifest.getMainAttributes().put(new Name("Implementation-Build"), env.getImplementationBuild(directory));
 			manifest.write(new FileOutputStream(file));
 		}
