@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import mpicbg.models.Point;
 import mpicbg.models.PointMatch;
 import mpicbg.pointdescriptor.exception.NoSuitablePointsException;
-import mpicbg.pointdescriptor.fit.FitResult;
 import mpicbg.pointdescriptor.matcher.Matcher;
 import mpicbg.pointdescriptor.similarity.SimilarityMeasure;
 
@@ -22,7 +21,7 @@ public class SimplePointDescriptor < P extends Point > extends AbstractPointDesc
 	}
 
 	@Override
-	public FitResult fitMatches( final ArrayList<PointMatch> matches ) { return null; }
+	public Object fitMatches( final ArrayList<PointMatch> matches ) { return null; }
 
 	@Override
 	public boolean resetWorldCoordinatesAfterMatching() { return false; }

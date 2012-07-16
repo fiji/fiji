@@ -1,7 +1,5 @@
 package mpicbg.spim.fusion;
 
-import ij.IJ;
-
 import java.util.ArrayList;
 import java.util.Date;
 

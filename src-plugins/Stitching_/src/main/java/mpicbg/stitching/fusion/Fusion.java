@@ -586,19 +586,30 @@ A:		        	for ( int i = 0; i < numImages; ++i )
 		final float[] minImg = new float[ dimensionality ];
 		final float[] maxImg = new float[ dimensionality ];
 
-		for ( int d = 0; d < dimensionality; ++d )
+		if ( max.length == 1 )
 		{
-			// the image might be rotated so that min is actually max
-			maxImg[ d ] = Math.max( Math.max( max[ 0 ][ d ], max[ 1 ][ d ] ), Math.max( min[ 0 ][ d ], min[ 1 ][ d ]) );
-			minImg[ d ] = Math.min( Math.min( max[ 0 ][ d ], max[ 1 ][ d ] ), Math.min( min[ 0 ][ d ], min[ 1 ][ d ]) );
-			
-			for ( int i = 2; i < numImages * numTimePoints; ++i )
+			// just one image
+			for ( int d = 0; d < dimensionality; ++d )
 			{
-				maxImg[ d ] = Math.max( maxImg[ d ], Math.max( min[ i ][ d ], max[ i ][ d ]) );
-				minImg[ d ] = Math.min( minImg[ d ], Math.min( min[ i ][ d ], max[ i ][ d ]) );	
+				maxImg[ d ] = Math.max( max[ 0 ][ d ], min[ 0 ][ d ] );
+				minImg[ d ] = Math.min( max[ 0 ][ d ], min[ 0 ][ d ] );				
 			}
 		}
-		
+		else
+		{
+			for ( int d = 0; d < dimensionality; ++d )
+			{
+				// the image might be rotated so that min is actually max
+				maxImg[ d ] = Math.max( Math.max( max[ 0 ][ d ], max[ 1 ][ d ] ), Math.max( min[ 0 ][ d ], min[ 1 ][ d ]) );
+				minImg[ d ] = Math.min( Math.min( max[ 0 ][ d ], max[ 1 ][ d ] ), Math.min( min[ 0 ][ d ], min[ 1 ][ d ]) );
+				
+				for ( int i = 2; i < numImages * numTimePoints; ++i )
+				{
+					maxImg[ d ] = Math.max( maxImg[ d ], Math.max( min[ i ][ d ], max[ i ][ d ]) );
+					minImg[ d ] = Math.min( minImg[ d ], Math.min( min[ i ][ d ], max[ i ][ d ]) );	
+				}
+			}
+		}
 		//IJ.log( "output: " + Util.printCoordinates( minImg ) + " -> " + Util.printCoordinates( maxImg ) );
 
 		// the size of the new image

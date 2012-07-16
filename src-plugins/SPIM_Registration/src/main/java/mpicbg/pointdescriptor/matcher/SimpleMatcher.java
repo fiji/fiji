@@ -4,7 +4,6 @@ import java.util.ArrayList;
 
 import mpicbg.models.PointMatch;
 import mpicbg.pointdescriptor.AbstractPointDescriptor;
-import mpicbg.pointdescriptor.fit.FitResult;
 
 public class SimpleMatcher implements Matcher
 {
@@ -36,5 +35,5 @@ public class SimpleMatcher implements Matcher
 	public int getRequiredNumNeighbors() { return numNeighbors; }
 
 	@Override
-	public double getNormalizationFactor( final ArrayList<PointMatch> matches, final FitResult fitResult ) { return 1;	}
+	public double getNormalizationFactor( final ArrayList<PointMatch> matches, final Object fitResult ) { return 1;	}
 }

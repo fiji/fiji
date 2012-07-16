@@ -49,7 +49,7 @@ public class MiniMaven {
 		String command = args.length == 0 ? "compile-and-run" : args[0];
 		String artifactId = getSystemProperty("artifactId", root.getArtifactId().equals("pom-ij-base") ? "ij-app" : root.getArtifactId());
 
-		POM pom = root.findPOM(new Coordinate(null, artifactId, null), false, env.getDownloadAutomatically());
+		POM pom = findPOM(root, artifactId);
 		if (pom == null)
 			pom = root;
 		if (command.equals("compile") || command.equals("build") || command.equals("compile-and-run")) {
@@ -109,6 +109,17 @@ public class MiniMaven {
 		}
 		else
 			err.println("Unhandled command: " + command + "\n" + usage);
+	}
+
+	protected static POM findPOM(POM root, String artifactId) {
+		if (artifactId == null || artifactId.equals(root.getArtifactId()))
+			return root;
+		for (POM child : root.getChildren()) {
+			POM pom = findPOM(child, artifactId);
+			if (pom != null)
+				return pom;
+		}
+		return null;
 	}
 
 	protected static String getSystemProperty(String key, String defaultValue) {

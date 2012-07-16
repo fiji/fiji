@@ -8,7 +8,6 @@ import javax.vecmath.Vector3f;
 import mpicbg.models.Point;
 import mpicbg.models.PointMatch;
 import mpicbg.pointdescriptor.exception.NoSuitablePointsException;
-import mpicbg.pointdescriptor.fit.FitResult;
 import fiji.util.node.Leaf;
 
 public class LocalCoordinateSystemPointDescriptor < P extends Point > extends AbstractPointDescriptor< P, LocalCoordinateSystemPointDescriptor<P> > 
@@ -55,7 +54,7 @@ public class LocalCoordinateSystemPointDescriptor < P extends Point > extends Ab
 	 * Not necessary as the main matching method is overwritten
 	 */
 	@Override
-	public FitResult fitMatches( final ArrayList<PointMatch> matches )  { return null; }
+	public Object fitMatches( final ArrayList<PointMatch> matches )  { return null; }
 	
 	public void buildLocalCoordinateSystem( final ArrayList< LinkedPoint< P > > neighbors, final boolean normalize )
 	{

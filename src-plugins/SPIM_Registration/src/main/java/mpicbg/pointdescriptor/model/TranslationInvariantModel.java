@@ -3,7 +3,6 @@ package mpicbg.pointdescriptor.model;
 import mpicbg.models.AbstractModel;
 import mpicbg.models.Model;
 import mpicbg.pointdescriptor.AbstractPointDescriptor;
-import mpicbg.pointdescriptor.fit.FitResult;
 
 /**
  * This class is a subtle hint that {@link Model}s which are used to fit {@link AbstractPointDescriptor}s should be translation invariant. 
@@ -12,7 +11,7 @@ import mpicbg.pointdescriptor.fit.FitResult;
  *
  * @param <M> something that extends {@link Model}
  */
-public abstract class TranslationInvariantModel< M extends TranslationInvariantModel< M > > extends AbstractModel< M > implements FitResult
+public abstract class TranslationInvariantModel< M extends TranslationInvariantModel< M > > extends AbstractModel< M >
 {
 	/**
 	 * The {@link TranslationInvariantModel} can tell which dimensions it supports.

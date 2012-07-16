@@ -6,7 +6,6 @@ import mpicbg.models.Point;
 import mpicbg.models.PointMatch;
 import mpicbg.pointdescriptor.AbstractPointDescriptor;
 import mpicbg.pointdescriptor.LinkedPoint;
-import mpicbg.pointdescriptor.fit.FitResult;
 
 public interface Matcher
 {
@@ -22,7 +21,7 @@ public interface Matcher
 	 * @param matches the set of {@link PointMatch}es
 	 * @return The normalization factor for a certain set of {@link PointMatch}es 
 	 */
-	public double getNormalizationFactor( final ArrayList<PointMatch> matches, FitResult fitResult );
+	public double getNormalizationFactor( final ArrayList<PointMatch> matches, Object fitResult );
 	
 	/**
 	 * @return The number of nearest neighbors required for this {@link Matcher} 
