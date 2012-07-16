@@ -58,9 +58,13 @@ public class Adapter {
 
 	/**
 	 * Construct a new Adapter object.
+	 * 
+	 * @param useIJ1
+	 *            whether to use ImageJ 1.x' graphical user interface or an
+	 *            stderr-based one instead
 	 */
-	public Adapter() {
-		ui = new ImageJ1UI();
+	public Adapter(boolean useIJ1) {
+		ui = useIJ1 ? new ImageJ1UI() : new StderrUI();
 	}
 
 	/**
