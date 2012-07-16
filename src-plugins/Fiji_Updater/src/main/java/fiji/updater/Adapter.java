@@ -20,9 +20,6 @@ import java.util.zip.GZIPOutputStream;
 
 import javax.swing.JOptionPane;
 
-import ij.IJ;
-import ij.macro.Interpreter;
-
 /**
  * This class just hands off to the ImageJ Updater
  *
@@ -57,19 +54,28 @@ public class Adapter {
 	private static ClassLoader remoteClassLoader;
 	private static Object progress;
 
+	private UI ui;
+
+	/**
+	 * Construct a new Adapter object.
+	 */
+	public Adapter() {
+		ui = new ImageJ1UI();
+	}
+
 	/**
 	 * This implements the up-to-date check on startup, based on the ImageJ
 	 * updater.
 	 * 
 	 * @return the status as a {@link String}
 	 */
-	public static String checkOrShowDialog() {
+	public String checkOrShowDialog() {
 		String result = check();
 		if (result.toUpperCase().endsWith("AUTHENTICATION")) {
-			IJ.showStatus("Please run Help>Update Fiji occasionally");
+			ui.showStatus("Please run Help>Update Fiji occasionally");
 			return null;
 		}
-		if (result.toUpperCase().equals("UPDATEABLE") && !isBatchMode())
+		if (result.toUpperCase().equals("UPDATEABLE") && !ui.isBatchMode())
 			showDialog();
 		return result;
 	}
@@ -81,7 +87,7 @@ public class Adapter {
 	 * Note: we do not check the latest nag here, as that is the job of the
 	 * {@link #check()} method.
 	 */
-	public static void showDialog() {
+	public void showDialog() {
 		Object[] options = {
 			"Yes, please",
 			"Never",
@@ -115,23 +121,12 @@ public class Adapter {
 	}
 
 	/**
-	 * Determine whether we should not bother to show the dialog.
-	 * 
-	 * @return whether we're in batch mode or other circumstances indicate we
-	 *         should not run the ImageJ updater interactively
-	 */
-	protected static boolean isBatchMode() {
-		return IJ.getInstance() == null || !IJ.getInstance().isVisible()
-			|| Interpreter.isBatchMode();
-	}
-
-	/**
 	 * Get the number of milliseconds after the UNIX epoch when we last asked.
 	 * 
 	 * @param epoch
 	 *            the number of milliseconds
 	 */
-	protected static void setLatestNag(long epoch) {
+	protected void setLatestNag(long epoch) {
 		try {
 			invokeStatic(UPTODATE_CLASS_NAME, "setLatestNag", epoch);
 		} catch (Exception e) {
@@ -142,7 +137,7 @@ public class Adapter {
 	/**
 	 * Run the ImageJ updater (Swing).
 	 */
-	public static void runUpdater() {
+	public void runUpdater() {
 		@SuppressWarnings("unchecked")
 		Class<Runnable> updaterClass = (Class<Runnable>)loadClass(UPDATER_CLASS_NAME);
 		if (updaterClass != null) try {
@@ -150,15 +145,15 @@ public class Adapter {
 				firstTime();
 			} catch (Throwable t) {
 				t.printStackTrace();
-				IJ.error("Could not download the ImageJ Updater!");
+				ui.error("Could not download the ImageJ Updater!");
 				return;
 			}
 			updaterClass.newInstance().run();
 		} catch (InstantiationException e) {
-			IJ.error("Could not instantiate the Updater: " + e.getMessage());
+			ui.error("Could not instantiate the Updater: " + e.getMessage());
 			return;
 		} catch (IllegalAccessException e) {
-			IJ.error("Could not access the Updater: " + e.getMessage());
+			ui.error("Could not access the Updater: " + e.getMessage());
 			return;
 		}
 	}
@@ -175,7 +170,7 @@ public class Adapter {
 	 * 
 	 * @throws Exception
 	 */
-	protected static void firstTime() throws Exception {
+	protected void firstTime() throws Exception {
 		File ijDir = new File(System.getProperty("ij.dir"));
 
 		List<String> filenames = new ArrayList<String>();
@@ -227,7 +222,7 @@ public class Adapter {
 	 *
 	 * @return a tag describing whether we should run the Updater
 	 */
-	public static String check() {
+	public String check() {
 		try {
 			return invokeStatic(UPTODATE_CLASS_NAME, "check").toString();
 		} catch (Exception e) {
@@ -242,14 +237,14 @@ public class Adapter {
 	 * @throws Exception
 	 */
 	@SuppressWarnings("unchecked")
-	public static Collection<String> getFileList() throws Exception {
+	public Collection<String> getFileList() throws Exception {
 		Map<String, Object> collection = newInstance(COLLECTION_CLASS_NAME, new File(System.getProperty("ij.dir")));
 		Object checksummer = newInstance(CHECKSUMMER_CLASS_NAME, collection, getProgress());
 
 		try {
 			invoke(checksummer, "updateFromLocal");
 		} catch (Throwable t) {
-			IJ.error("Canceled");
+			ui.error("Canceled");
 			return null;
 		}
 
@@ -267,7 +262,7 @@ public class Adapter {
 	 *
 	 * @return the list of files known to the Updater, with versions, as a String
 	 */
-	public static String getInstalledVersions() {
+	public String getInstalledVersions() {
 		try {
 			Map<String, Object> collection = newInstance(COLLECTION_CLASS_NAME, new File(System.getProperty("ij.dir")));
 			Object checksummer = newInstance(CHECKSUMMER_CLASS_NAME, collection, getProgress());
@@ -275,7 +270,7 @@ public class Adapter {
 			try {
 				invoke(checksummer, "updateFromLocal");
 			} catch (Throwable t) {
-				IJ.error("Canceled");
+				ui.error("Canceled");
 				return null;
 			}
 
@@ -293,7 +288,7 @@ public class Adapter {
 
 			return sb.toString();
 		} catch (Exception e) {
-			IJ.handleException(e);
+			ui.handleException(e);
 			return null;
 		}
 	}
@@ -311,7 +306,7 @@ public class Adapter {
 	 * @throws IllegalAccessException
 	 * @throws InvocationTargetException
 	 */
-	protected static Object getProgress() throws SecurityException, NoSuchMethodException, IllegalArgumentException, InstantiationException, IllegalAccessException, InvocationTargetException {
+	protected Object getProgress() throws SecurityException, NoSuchMethodException, IllegalArgumentException, InstantiationException, IllegalAccessException, InvocationTargetException {
 		if (progress == null)
 			progress = newInstance(SWING_PROGRESS_CLASS_NAME, (Frame)null);
 		return progress;
@@ -340,7 +335,7 @@ public class Adapter {
 	 * @throws InvocationTargetException
 	 */
 	@SuppressWarnings("unchecked")
-	private static<T> T newInstance(String className, Object... parameters) throws SecurityException, NoSuchMethodException, IllegalArgumentException, InstantiationException, IllegalAccessException, InvocationTargetException {
+	private<T> T newInstance(String className, Object... parameters) throws SecurityException, NoSuchMethodException, IllegalArgumentException, InstantiationException, IllegalAccessException, InvocationTargetException {
 		Class<?> clazz = loadClass(className);
 		for (Constructor<?> constructor : clazz.getConstructors()) {
 			if (doParametersMatch(constructor.getParameterTypes(), parameters))
@@ -400,7 +395,7 @@ public class Adapter {
 	 * @throws InvocationTargetException
 	 */
 	@SuppressWarnings("unchecked")
-	private static<T> T invokeStatic(String className, String methodName, Object... parameters) throws SecurityException, NoSuchMethodException, IllegalArgumentException, IllegalAccessException, InvocationTargetException {
+	private<T> T invokeStatic(String className, String methodName, Object... parameters) throws SecurityException, NoSuchMethodException, IllegalArgumentException, IllegalAccessException, InvocationTargetException {
 		Class<?> clazz = loadClass(className);
 		for (Method method : clazz.getMethods()) {
 			if (method.getName().equals(methodName) && doParametersMatch(method.getParameterTypes(), parameters))
@@ -514,7 +509,7 @@ public class Adapter {
 	 *            the name of the class to load
 	 * @return the class object
 	 */
-	protected static Class<?> loadClass(String name) {
+	protected Class<?> loadClass(String name) {
 		ClassLoader currentLoader = Adapter.class.getClassLoader();
 		Class<?> result = null;
 		try {
@@ -526,7 +521,7 @@ public class Adapter {
 				for (int i = 0; i < urls.length; i++) try {
 					urls[i] = new URL(JARS_PREFIX + JARS[i] + VERSIONS[i] + ".jar-" + TIMESTAMPS[i]);
 				} catch (MalformedURLException e) {
-					IJ.error("Invalid Updater URL: " + e.getMessage());
+					ui.error("Invalid Updater URL: " + e.getMessage());
 					return null;
 				}
 				remoteClassLoader = new URLClassLoader(urls, currentLoader);
@@ -537,7 +532,7 @@ public class Adapter {
 			try {
 				result = remoteClassLoader.loadClass(name);
 			} catch (ClassNotFoundException e) {
-				IJ.error("Could not find the class: " + e.getMessage());
+				ui.error("Could not find the class: " + e.getMessage());
 				return null;
 			}
 		}
