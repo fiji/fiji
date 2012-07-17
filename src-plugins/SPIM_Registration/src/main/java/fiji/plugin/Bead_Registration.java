@@ -156,6 +156,8 @@ public class Bead_Registration implements PlugIn
 	final String timeLapseRegistrationTypes[] = new String[] { "Manually", "Automatically" };
 	static int defaultTimeLapseRegistration = 0;
 	
+	private SPIMConfiguration conf;
+
 	public SPIMConfiguration singleChannel()
 	{
 		final GenericDialogPlus gd = new GenericDialogPlus( "Single Channel Bead-based Registration" );
@@ -201,6 +203,11 @@ public class Bead_Registration implements PlugIn
 			@Override
 			public boolean dialogItemChanged( GenericDialog dialog, AWTEvent e )
 			{
+				if ( e == null )
+				{
+					conf = getConfiguration( dialog );
+					return true;
+				}
 				if ( e instanceof TextEvent && e.getID() == TextEvent.TEXT_VALUE_CHANGED && e.getSource() == tfSpimDataDirectory )
 				{
 					TextField tf = ( TextField ) e.getSource();
@@ -259,7 +266,12 @@ public class Bead_Registration implements PlugIn
 		
 		if ( gd.wasCanceled() )
 			return null;
-		
+
+		return conf;
+	}
+
+	private static SPIMConfiguration getConfiguration( GenericDialog gd )
+	{
 		spimDataDirectory = gd.getNextString();
 		fileNamePattern = gd.getNextString();
 		timepoints = gd.getNextString();
@@ -325,7 +337,7 @@ public class Bead_Registration implements PlugIn
 		conf.anglePattern = angles;
 		conf.inputFilePattern = fileNamePattern;
 
-		f = new File( spimDataDirectory );
+		File f = new File( spimDataDirectory );
 		if ( f.exists() && f.isFile() && f.getName().endsWith( ".xml" ) )
 		{
 			conf.spimExperiment = new SPIMExperiment( f.getAbsolutePath() );
