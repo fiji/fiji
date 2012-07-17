@@ -7,12 +7,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import net.imglib2.type.NativeType;
+import net.imglib2.type.numeric.RealType;
+
 import fiji.plugin.trackmate.Dimension;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.util.TrackSplitter;
 
-public class TrackBranchingAnalyzer implements TrackFeatureAnalyzer {
+public class TrackBranchingAnalyzer<T extends RealType<T> & NativeType<T>> implements TrackFeatureAnalyzer<T> {
 
 	/*
 	 * CONSTANTS
@@ -56,7 +59,7 @@ public class TrackBranchingAnalyzer implements TrackFeatureAnalyzer {
 	
 	
 	@Override
-	public void process(final TrackMateModel model) {
+	public void process(final TrackMateModel<T> model) {
 		final List<Set<Spot>> allTracks = model.getTrackSpots();
 		for (int i = 0; i < model.getNTracks(); i++) {
 			final Set<Spot> track = allTracks.get(i);
@@ -80,10 +83,10 @@ public class TrackBranchingAnalyzer implements TrackFeatureAnalyzer {
 				}
 			}
 			// Put feature data
-			model.getFeatureModel().putTrackFeature(i, NUMBER_SPLITS, (float) nsplits);
-			model.getFeatureModel().putTrackFeature(i, NUMBER_MERGES, (float) nmerges);
-			model.getFeatureModel().putTrackFeature(i, NUMBER_COMPLEX, (float) ncomplex);
-			model.getFeatureModel().putTrackFeature(i, NUMBER_SPOTS, (float) track.size());
+			model.getFeatureModel().putTrackFeature(i, NUMBER_SPLITS, (double) nsplits);
+			model.getFeatureModel().putTrackFeature(i, NUMBER_MERGES, (double) nmerges);
+			model.getFeatureModel().putTrackFeature(i, NUMBER_COMPLEX, (double) ncomplex);
+			model.getFeatureModel().putTrackFeature(i, NUMBER_SPOTS, (double) track.size());
 		}
 
 	}

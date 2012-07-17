@@ -8,6 +8,7 @@ import java.util.Map;
 import net.imglib2.cursor.special.DiscCursor;
 import net.imglib2.cursor.special.DomainCursor;
 import net.imglib2.cursor.special.SphereCursor;
+import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.util.Util;
 
@@ -90,31 +91,31 @@ public class BlobDescriptiveStatistics<T extends RealType<T>> extends Independen
 	@Override
 	public void process(Spot spot) {
 		final DomainCursor<T> cursor;
-		final float[] coords;
-		final float radius = spot.getFeature(Spot.RADIUS);
+		final double[] coords;
+		final double radius = spot.getFeature(Spot.RADIUS);
 		if (img.numDimensions() == 3) {
-			cursor = new SphereCursor(img, new float[3], radius, calibration);
-			coords = new float[3];
+			cursor = new SphereCursor(img, new double[3], radius);
+			coords = new double[3];
 		} else { 
-			cursor = new DiscCursor(img, new float[2], radius, calibration);
-			coords = new float[2];
+			cursor = new DiscCursor(img, new double[2], radius);
+			coords = new double[2];
 		}
 		final int npixels = cursor.getNPixels();
 
 		// For variance, kurtosis and skewness 
-		float sum = 0;
+		double sum = 0;
 		
-		float mean = 0;
-	    float M2 = 0;
-	    float M3 = 0;
-	    float M4 = 0;
-	    float delta, delta_n, delta_n2;
-	    float term1;
+		double mean = 0;
+	    double M2 = 0;
+	    double M3 = 0;
+	    double M4 = 0;
+	    double delta, delta_n, delta_n2;
+	    double term1;
 	    int n1;
 		
 	    // Others
-		float val;
-		final float[] pixel_values = new float[npixels];
+		double val;
+		final double[] pixel_values = new double[npixels];
 		int n = 0;
 		
 		for (int i = 0; i < coords.length; i++)
@@ -143,20 +144,20 @@ public class BlobDescriptiveStatistics<T extends RealType<T>> extends Independen
 		}
 	
 		Util.quicksort(pixel_values, 0, npixels-1);
-		float median = pixel_values[npixels/2];
-		float min = pixel_values[0];
-		float max = pixel_values[npixels-1];
+		double median = pixel_values[npixels/2];
+		double min = pixel_values[0];
+		double max = pixel_values[npixels-1];
 		mean = sum / npixels;
-		float variance = M2 / (npixels-1);
-		float kurtosis = (n*M4) / (M2*M2) - 3;
-		float skewness = (float) ( Math.sqrt(n) * M3 / Math.pow(M2, 3/2.0) );
+		double variance = M2 / (npixels-1);
+		double kurtosis = (n*M4) / (M2*M2) - 3;
+		double skewness = Math.sqrt(n) * M3 / Math.pow(M2, 3/2.0);
 		
 		spot.putFeature(MEDIAN_INTENSITY, median);
 		spot.putFeature(MIN_INTENSITY, min);
 		spot.putFeature(MAX_INTENSITY, max);
 		spot.putFeature(MEAN_INTENSITY, mean);
 		spot.putFeature(VARIANCE, variance);
-		spot.putFeature(STANDARD_DEVIATION, (float) Math.sqrt(variance));
+		spot.putFeature(STANDARD_DEVIATION, Math.sqrt(variance));
 		spot.putFeature(TOTAL_INTENSITY, sum);
 		spot.putFeature(KURTOSIS, kurtosis);
 		spot.putFeature(SKEWNESS, skewness);

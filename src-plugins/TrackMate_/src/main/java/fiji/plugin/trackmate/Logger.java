@@ -60,7 +60,7 @@ public abstract class Logger extends PrintWriter {
 	 * Set the progress value of the process logged by this logger. 
 	 * Values should be between 0 and 1, 1 meaning the process if finished.
 	 */
-	public abstract void setProgress(float val);
+	public abstract void setProgress(double val);
 	
 	/**
 	 * Set the status to be displayed by this logger.
@@ -76,7 +76,7 @@ public abstract class Logger extends PrintWriter {
 		@Override
 		public void setStatus(String status) { }
 		@Override
-		public void setProgress(float val) { }
+		public void setProgress(double val) { }
 		@Override
 		public void log(String message, Color color) { }		
 		@Override
@@ -99,7 +99,7 @@ public abstract class Logger extends PrintWriter {
 			System.err.print(message);
 		}
 		@Override
-		public void setProgress(float val) {}
+		public void setProgress(double val) {}
 		
 		@Override
 		public void setStatus(String status) {

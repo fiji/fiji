@@ -6,9 +6,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import net.imglib2.img.Img;
+import net.imglib2.img.ImgPlus;
 import net.imglib2.multithreading.SimpleMultiThreading;
+import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
+import net.imglib2.view.HyperSliceImgPlus;
 
 import fiji.plugin.trackmate.Dimension;
 import fiji.plugin.trackmate.Logger;
@@ -26,7 +28,7 @@ import fiji.plugin.trackmate.util.TMUtils;
  * @author Jean-Yves Tinevez, 2011
  *
  */
-public class FeatureModel {
+public class FeatureModel <T extends RealType<T> & NativeType<T>> {
 
 	/*
 	 * FIELDS
@@ -39,7 +41,7 @@ public class FeatureModel {
 	 * @see #updateFeatures(List) 
 	 * @see #updateFeatures(Spot)
 	 */
-	protected List<SpotFeatureAnalyzer<? extends RealType<?>>> spotFeatureAnalyzers = new ArrayList<SpotFeatureAnalyzer<? extends RealType<?>>>();
+	protected List<SpotFeatureAnalyzer<T>> spotFeatureAnalyzers = new ArrayList<SpotFeatureAnalyzer<T>>();
 
 	/** The list of spot features that are available for the spots of this model. */
 	private List<String> spotFeatures;
@@ -50,7 +52,7 @@ public class FeatureModel {
 	/** The map of the spot feature dimension. */
 	private Map<String, Dimension> spotFeatureDimensions;
 
-	protected List<TrackFeatureAnalyzer> trackFeatureAnalyzers = new ArrayList<TrackFeatureAnalyzer>();
+	protected List<TrackFeatureAnalyzer<T>> trackFeatureAnalyzers = new ArrayList<TrackFeatureAnalyzer<T>>();
 	private ArrayList<String> trackFeatures = new ArrayList<String>();
 	private HashMap<String, String> trackFeatureNames = new HashMap<String, String>();
 	private HashMap<String, String> trackFeatureShortNames = new HashMap<String, String>();
@@ -61,19 +63,19 @@ public class FeatureModel {
 	 * {@link #trackEdges} and {@link #trackSpots}. The feature map maps each
 	 * track feature to its float value for the selected track.
 	 */
-	protected List<Map<String, Float>> trackFeatureValues;
+	protected List<Map<String, Double>> trackFeatureValues;
 
-	private TrackMateModel model;
+	private TrackMateModel<T> model;
 
 
 	/*
 	 * CONSTRUCTOR
 	 */
 
-	public FeatureModel(TrackMateModel model) {
+	public FeatureModel(TrackMateModel<T> model) {
 		this.model = model;
 		// To initialize the spot features with the basic features:
-		setSpotFeatureAnalyzers(new ArrayList<SpotFeatureAnalyzer<? extends RealType<?>>>());
+		setSpotFeatureAnalyzers(new ArrayList<SpotFeatureAnalyzer<T>>());
 	}
 
 
@@ -119,9 +121,9 @@ public class FeatureModel {
 	public void computeSpotFeatures(final SpotCollection toCompute, final List<String> features) {
 
 		/* 0 - Determine what analyzers are needed */
-		final List<SpotFeatureAnalyzer<? extends RealType<?>>> selectedAnalyzers = new ArrayList<SpotFeatureAnalyzer<? extends RealType<?>>>(); // We want to keep ordering
+		final List<SpotFeatureAnalyzer<T>> selectedAnalyzers = new ArrayList<SpotFeatureAnalyzer<T>>(); // We want to keep ordering
 		for (String feature : features) {
-			for (SpotFeatureAnalyzer<? extends RealType<?>> analyzer : spotFeatureAnalyzers) {
+			for (SpotFeatureAnalyzer<T> analyzer : spotFeatureAnalyzers) {
 				if (analyzer.getFeatures().contains(feature) && !selectedAnalyzers.contains(analyzer)) {
 					selectedAnalyzers.add(analyzer);
 				}
@@ -153,7 +155,7 @@ public class FeatureModel {
 	 * @see #updateFeatures(List) 
 	 * @see #updateFeatures(Spot)
 	 */
-	public void setSpotFeatureAnalyzers(List<SpotFeatureAnalyzer<? extends RealType<?>>> featureAnalyzers) {
+	public void setSpotFeatureAnalyzers(List<SpotFeatureAnalyzer<T>> featureAnalyzers) {
 		this.spotFeatureAnalyzers = featureAnalyzers;
 
 		spotFeatures = new ArrayList<String>();
@@ -168,7 +170,7 @@ public class FeatureModel {
 		spotFeatureDimensions.putAll(Spot.FEATURE_DIMENSIONS);
 
 		// Features from analyzers
-		for(SpotFeatureAnalyzer<? extends RealType<?>> analyzer : spotFeatureAnalyzers) {
+		for(SpotFeatureAnalyzer<T> analyzer : spotFeatureAnalyzers) {
 			spotFeatures.addAll(analyzer.getFeatures());
 			spotFeatureNames.putAll(analyzer.getFeatureNames());
 			spotFeatureShortNames.putAll(analyzer.getFeatureShortNames());
@@ -217,7 +219,7 @@ public class FeatureModel {
 	 * 
 	 * @see #computeTrackFeatures()
 	 */
-	public void setTrackFeatureAnalyzers(List<TrackFeatureAnalyzer> featureAnalyzers) {
+	public void setTrackFeatureAnalyzers(List<TrackFeatureAnalyzer<T>> featureAnalyzers) {
 		this.trackFeatureAnalyzers = featureAnalyzers;
 
 		trackFeatures = new ArrayList<String>();
@@ -225,7 +227,7 @@ public class FeatureModel {
 		trackFeatureShortNames = new HashMap<String, String>();
 		trackFeatureDimensions = new HashMap<String, Dimension>();
 
-		for(TrackFeatureAnalyzer analyzer : trackFeatureAnalyzers) {
+		for(TrackFeatureAnalyzer<T> analyzer : trackFeatureAnalyzers) {
 			trackFeatures.addAll(analyzer.getFeatures());
 			trackFeatureNames.putAll(analyzer.getFeatureNames());
 			trackFeatureShortNames.putAll(analyzer.getFeatureShortNames());
@@ -250,18 +252,17 @@ public class FeatureModel {
 	 * @param toCompute
 	 * @param analyzers
 	 */
-	private void computeSpotFeaturesAgent(final SpotCollection toCompute, final List<SpotFeatureAnalyzer<? extends RealType<?>>> analyzers) {
+	private void computeSpotFeaturesAgent(final SpotCollection toCompute, final List<SpotFeatureAnalyzer<T>> analyzers) {
 
-		final Settings settings = model.getSettings();
+		final Settings<T> settings = model.getSettings();
 		final Logger logger = model.getLogger();
 		
 		// Can't compute any spot feature without an image to compute on.
-		if (settings.imp == null)
+		if (settings.img == null)
 			return;
 
 		final List<Integer> frameSet = new ArrayList<Integer>(toCompute.keySet());
 		final int numFrames = frameSet.size();
-		final float[] calibration = settings.getCalibration();
 
 		final AtomicInteger ai = new AtomicInteger(0);
 		final AtomicInteger progress = new AtomicInteger(0);
@@ -272,15 +273,9 @@ public class FeatureModel {
 		 * coordinates are with respect to the top-left corner of the image, we
 		 * must not generate a cropped version of the image, but a full
 		 * snapshot. */
-		final Settings uncroppedSettings = new Settings();
-		uncroppedSettings.xstart = 1;
-		uncroppedSettings.xend = settings.imp.getWidth();
-		uncroppedSettings.ystart = 1;
-		uncroppedSettings.yend = settings.imp.getHeight();
-		uncroppedSettings.zstart = 1;
-		uncroppedSettings.zend = settings.imp.getNSlices();
-		// Set the target channel for feature calculation. For now, we simple take the current one. // TODO: be more flexible 
-		final int targetChannel = settings.imp.getChannel();
+	
+		final int targetChannel = settings.segmentationChannel - 1;
+		final ImgPlus<T> imgC = HyperSliceImgPlus.fixChannelAxis(settings.img, targetChannel);
 
 		// Prepare the thread array
 		for (int ithread = 0; ithread < threads.length; ithread++) {
@@ -295,10 +290,11 @@ public class FeatureModel {
 
 						int frame = frameSet.get(index);
 						List<Spot> spotsThisFrame = toCompute.get(frame);
-						Img<? extends RealType<?>> img = TMUtils.getCroppedSingleFrameAsImage(settings.imp, frame, targetChannel, uncroppedSettings);
+						
+						ImgPlus<T> imgCT = HyperSliceImgPlus.fixTimeAxis(imgC, frame);
 
 						for (SpotFeatureAnalyzer analyzer : analyzers) {
-							analyzer.setTarget(img, calibration);
+							analyzer.setTarget(imgCT);
 							analyzer.process(spotsThisFrame);
 						}
 
@@ -355,7 +351,7 @@ public class FeatureModel {
 		return trackFeatureDimensions;
 	}
 
-	public void putTrackFeature(final int trackIndex, final String feature, final Float value) {
+	public void putTrackFeature(final int trackIndex, final String feature, final Double value) {
 		trackFeatureValues.get(trackIndex).put(feature, value);
 		
 		// FIXME We store the found feature name if it is not already in the feature name list 
@@ -367,13 +363,13 @@ public class FeatureModel {
 		
 	}
 
-	public Float getTrackFeature(final int trackIndex, final String feature) {
+	public Double getTrackFeature(final int trackIndex, final String feature) {
 		return trackFeatureValues.get(trackIndex).get(feature);
 	}
 
 	public Map<String, double[]> getTrackFeatureValues() {
 		final Map<String, double[]> featureValues = new HashMap<String, double[]>();
-		Float val;
+		Double val;
 		int nTracks = model.getNTracks();
 		for (String feature : trackFeatures) {
 			// Make a double array to comply to JFreeChart histograms
@@ -399,9 +395,9 @@ public class FeatureModel {
 	 * Instantiate an empty feature 2D map.
 	 */
 	public void initFeatureMap() {
-		this.trackFeatureValues = new ArrayList<Map<String, Float>>(model.getNTracks());
+		this.trackFeatureValues = new ArrayList<Map<String, Double>>(model.getNTracks());
 		for (int i = 0; i < model.getNTracks(); i++) {
-			Map<String, Float> featureMap = new HashMap<String, Float>(trackFeatures.size());
+			Map<String, Double> featureMap = new HashMap<String, Double>(trackFeatures.size());
 			trackFeatureValues.add(featureMap);
 		}
 	}
@@ -411,7 +407,7 @@ public class FeatureModel {
 	 */
 	public void computeTrackFeatures() {
 		initFeatureMap();
-		for (TrackFeatureAnalyzer analyzer : trackFeatureAnalyzers)
+		for (TrackFeatureAnalyzer<T> analyzer : trackFeatureAnalyzers)
 			analyzer.process(model);
 	}
 

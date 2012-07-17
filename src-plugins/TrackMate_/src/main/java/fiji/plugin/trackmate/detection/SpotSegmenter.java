@@ -4,9 +4,8 @@ import java.util.List;
 
 import net.imglib2.algorithm.Algorithm;
 import net.imglib2.algorithm.Benchmark;
-import net.imglib2.img.Img;
+import net.imglib2.img.ImgPlus;
 import net.imglib2.type.numeric.RealType;
-
 import fiji.plugin.trackmate.InfoTextable;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.TrackMate_;
@@ -28,10 +27,11 @@ public interface SpotSegmenter <T extends RealType<T>> extends Algorithm, Benchm
 	/**
 	 * Set the image that will be segmented by this algorithm, with the settings specified
 	 * in the concrete {@link SegmenterSettings} object.
-	 * The calibration float array will be used to convert pixel coordinates 
+	 * The target {@link ImgPlus} needs to have a proper sptial calibration 
+	 * for it will be used to convert pixel coordinates 
 	 * in physical spot coordinates. 
 	 */
-	public void setTarget(Img<T> image, float[] calibration, SegmenterSettings settings);
+	public void setTarget(ImgPlus<T> image, SegmenterSettings settings);
 	
 	/**
 	 * Return the list of Spot resulting from the segmentation process. 

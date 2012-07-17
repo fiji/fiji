@@ -2,8 +2,9 @@ package fiji.plugin.trackmate.features.spot;
 
 import java.util.Collection;
 
-import net.imglib2.img.Img;
-import net.imglib2.type.numeric.RealType;
+import net.imglib2.img.ImgPlus;
+import net.imglib2.type.NativeType;
+import net.imglib2.type.numeric.NumericType;
 
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.features.FeatureAnalyzer;
@@ -19,20 +20,20 @@ import fiji.plugin.trackmate.features.FeatureAnalyzer;
  * Feature key names are for historical reason all capitalized in an enum manner. For instance: POSITION_X,
  * MAX_INTENSITY, etc... They must be suitable to be used as a attribute key in an xml file.
  * <p>
- * The image data to operate on is set using the {@link #setTarget(Image, float[])} method. This 
+ * The image data to operate on is set using the {@link #setTarget(ImgPlus<T>)} method. This 
  * allow the concrete implementation to have an empty constructor.
  * <p>
  * The spot collection to operate on is given through the method {@link #process(Collection)},
- * and it must update the feature map of each spot directly, calling {@link Spot#putFeature(String, float)}.
+ * and it must update the feature map of each spot directly, calling {@link Spot#putFeature(String, double)}.
  */
-public interface SpotFeatureAnalyzer<T extends RealType<T>> extends FeatureAnalyzer {
+public interface SpotFeatureAnalyzer<T> extends FeatureAnalyzer {
 	
 	
 	/**
 	 * Sets the image data this analyzer will operate on to grab the features it generates.
-	 * We require the spatial calibration to be given as well.
+	 * The spatial calibration will be taken from the source {@link ImgPlus}.
 	 */
-	public void setTarget(Img<T> img, float[] calibration);
+	public void setTarget(ImgPlus<T> img);
 	
 	
 	/**

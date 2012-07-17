@@ -9,6 +9,7 @@ import net.imglib2.algorithm.math.PickImagePeaks;
 import net.imglib2.exception.IncompatibleTypeException;
 import net.imglib2.img.Img;
 import net.imglib2.img.ImgFactory;
+import net.imglib2.img.ImgPlus;
 import net.imglib2.img.array.ArrayImgFactory;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.real.FloatType;
@@ -17,6 +18,7 @@ import fiji.plugin.trackmate.SpotImp;
 import fiji.plugin.trackmate.detection.subpixel.QuadraticSubpixelLocalization;
 import fiji.plugin.trackmate.detection.subpixel.SubPixelLocalization;
 import fiji.plugin.trackmate.detection.subpixel.SubPixelLocalization.LocationType;
+import fiji.plugin.trackmate.util.TMUtils;
 
 public class LogSegmenter <T extends RealType<T>> extends AbstractSpotSegmenter<T> {
 
@@ -45,8 +47,8 @@ public class LogSegmenter <T extends RealType<T>> extends AbstractSpotSegmenter<
 	}
 
 	@Override
-	public void setTarget(Img<T> image, float[] calibration, SegmenterSettings settings) {
-		super.setTarget(image, calibration, settings);
+	public void setTarget(ImgPlus<T> image, SegmenterSettings settings) {
+		super.setTarget(image, settings);
 		this.settings = (LogSegmenterSettings) settings;
 	}
 
@@ -100,8 +102,9 @@ public class LogSegmenter <T extends RealType<T>> extends AbstractSpotSegmenter<
 
 		PickImagePeaks<T> peakPicker = new PickImagePeaks<T>(intermediateImage);
 		double[] suppressionRadiuses = new double[img.numDimensions()];
+		final double[] calibration = TMUtils.getSpatialCalibration(img);
 		for (int i = 0; i < img.numDimensions(); i++) 
-			suppressionRadiuses[i] = radius / calibration[i];
+			suppressionRadiuses[i] = radius / calibration [i];
 		peakPicker.setSuppression(suppressionRadiuses); // in pixels
 		peakPicker.setAllowBorderPeak(true);
 
@@ -146,7 +149,7 @@ public class LogSegmenter <T extends RealType<T>> extends AbstractSpotSegmenter<
 		for (int j = 0; j < peaks.size(); j++) {
 
 			SubPixelLocalization<T> peak = peaks.get(j); 
-			float[] coords = new float[3];
+			double[] coords = new double[3];
 			for (int i = 0; i < img.numDimensions(); i++) {
 				coords[i] = peak.getFloatPosition(i) * calibration[i];
 			}

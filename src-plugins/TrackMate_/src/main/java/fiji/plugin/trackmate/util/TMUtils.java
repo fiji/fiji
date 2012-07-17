@@ -29,8 +29,12 @@ import java.util.regex.Pattern;
 import javax.swing.JFileChooser;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
+import mpicbg.imglib.util.Util;
 import net.imglib2.img.ImagePlusAdapter;
 import net.imglib2.img.Img;
+import net.imglib2.img.ImgPlus;
+import net.imglib2.meta.Axes;
+import net.imglib2.meta.Metadata;
 import net.imglib2.multithreading.SimpleMultiThreading;
 import net.imglib2.type.numeric.RealType;
 
@@ -193,8 +197,8 @@ public class TMUtils {
 		return val;
 	}
 
-	public static  final float readFloatAttribute(Element element, String name, Logger logger) {
-		float val = 0;
+	public static  final double readFloatAttribute(Element element, String name, Logger logger) {
+		double val = 0;
 		Attribute att = element.getAttribute(name);
 		if (null == att) {
 			logger.error("Could not find attribute "+name+" for element "+element.getName()+", substituting default value.\n");
@@ -258,10 +262,10 @@ public class TMUtils {
 	 * This is meant to deal with a crpoped image. The translation will bring the spot
 	 * coordinates back to the top-left corner of the un-cropped image reference. 
 	 */
-	public static void translateSpots(final Collection<Spot> spots, float dx, float dy, float dz) {
-		float[] dval = new float[] {dx, dy, dz};
+	public static void translateSpots(final Collection<Spot> spots, double dx, double dy, double dz) {
+		double[] dval = new double[] {dx, dy, dz};
 		String[] features = new String[] { Spot.POSITION_X, Spot.POSITION_Y, Spot.POSITION_Z }; 
-		Float val;
+		Double val;
 		for(Spot spot : spots) {
 			for (int i = 0; i < features.length; i++) {
 				val = spot.getFeature(features[i]);
@@ -318,7 +322,7 @@ public class TMUtils {
 		Collections.sort(spots, createDescendingComparatorFor(feature));
 		final List<Spot> acceptedSpots = new ArrayList<Spot>(spots.size());
 		boolean ok;
-		float r2;
+		double r2;
 		for (final Spot spot : spots) {
 			ok = true;
 			for (final Spot target : acceptedSpots) {
@@ -428,7 +432,7 @@ public class TMUtils {
 		TreeMap<Integer, List<Spot>> selectedSpots = new TreeMap<Integer, List<Spot>>();
 		Collection<Spot> spotThisFrame, spotToRemove;
 		List<Spot> spotToKeep;
-		Float val, tval;	
+		Double val, tval;	
 
 		for (int timepoint : spots.keySet()) {
 
@@ -476,7 +480,7 @@ public class TMUtils {
 		TreeMap<Integer, List<Spot>> selectedSpots = new TreeMap<Integer, List<Spot>>();
 		Collection<Spot> spotThisFrame, spotToRemove;
 		List<Spot> spotToKeep;
-		Float val, tval;	
+		Double val, tval;	
 
 		for (int timepoint : spots.keySet()) {
 
@@ -516,12 +520,25 @@ public class TMUtils {
 		return selectedSpots;
 	}
 
-
-
-	/*
-	 * PRIVATE METHODS
+	
+	/**
+	 * Return the xyz calibration stored in an {@link Metadata} in a 3-elements
+	 * double array. Calibration is ordered as X, Y, Z. If one axis is not found,
+	 * then the calibration for this axis takes the value of 1.
 	 */
-
+	public static final double[] getSpatialCalibration(final Metadata img) {
+		final double[] calibration = Util.getArrayFromValue(1d, 3);
+		for (int d = 0; d < img.numDimensions(); d++) {
+			if (img.axis(d).equals(Axes.X)) {
+				calibration[0] = img.calibration(d);
+			} else if (img.axis(d).equals(Axes.Y)) {
+				calibration[1] = img.calibration(d);
+			} else if (img.axis(d).equals(Axes.Z)) {
+				calibration[2] = img.calibration(d);
+			}
+		}
+		return calibration;
+	}
 
 	/**
 	 * Returns an estimate of the <code>p</code>th percentile of the values
@@ -539,7 +556,7 @@ public class TMUtils {
 		if (size == 1) {
 			return values[0]; // always return single value for n = 1
 		}
-		double n = (double) size;
+		double n = size;
 		double pos = p * (n + 1);
 		double fpos = Math.floor(pos);
 		int intPos = (int) fpos;
@@ -612,7 +629,7 @@ public class TMUtils {
 				public void run() {
 
 					int index;
-					Float val;
+					Double val;
 					boolean noDataFlag = true;
 
 					for (int i = ai.getAndIncrement(); i < features.size(); i = ai.getAndIncrement()) {
@@ -636,7 +653,7 @@ public class TMUtils {
 							featureValues.put(feature, values);
 						}
 					
-						logger.setProgress(progress.incrementAndGet() / (float) features.size());
+						logger.setProgress(progress.incrementAndGet() / (double) features.size());
 					}
 				}
 				
@@ -758,13 +775,13 @@ public class TMUtils {
 			wF = total - wB;                 // Weight Foreground
 			if (wF == 0) break;
 
-			sumB += (float) (t * hist[t]);
+			sumB += (t * hist[t]);
 
 			double mB = sumB / wB;            // Mean Background
 			double mF = (sum - sumB) / wF;    // Mean Foreground
 
 			// Calculate Between Class Variance
-			double varBetween = (float)wB * (float)wF * (mB - mF) * (mB - mF);
+			double varBetween = wB * wF * (mB - mF) * (mB - mF);
 
 			// Check if new maximum found
 			if (varBetween > varMax) {
@@ -783,7 +800,7 @@ public class TMUtils {
 	 * position features X, Y, Z.
 	 */
 	public static final double euclideanDistanceSquared(Spot i, Spot j) {
-		final Float xi, xj, yi, yj, zi, zj;
+		final Double xi, xj, yi, yj, zi, zj;
 		double eucD = 0;
 		xi = i.getFeature(Spot.POSITION_X);
 		xj = j.getFeature(Spot.POSITION_X);

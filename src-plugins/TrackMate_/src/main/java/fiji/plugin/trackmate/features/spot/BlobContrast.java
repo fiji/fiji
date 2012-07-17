@@ -28,14 +28,14 @@ public class BlobContrast<T extends RealType<T>> extends IndependentSpotFeatureA
 		FEATURE_DIMENSIONS.put(CONTRAST, Dimension.NONE);
 	}
 	
-	protected static final float RAD_PERCENTAGE = .5f;  
+	protected static final double RAD_PERCENTAGE = .5f;  
 	/** Utility holder. */
-	private float[] coords = new float[3];
+	private double[] coords = new double[3];
 	
 
 	@Override
 	public void process(Spot spot) {
-		float contrast = getContrast(spot);
+		double contrast = getContrast(spot);
 		spot.putFeature(CONTRAST, Math.abs(contrast));
 	}
 	
@@ -45,20 +45,19 @@ public class BlobContrast<T extends RealType<T>> extends IndependentSpotFeatureA
 	 * @param diameter  the diameter to search for is in physical units
 	 * @return
 	 */
-	@SuppressWarnings({ "unchecked", "rawtypes" })
-	protected float getContrast(final Spot spot) {
-		final float radius = spot.getFeature(Spot.RADIUS);
+	protected double getContrast(final Spot spot) {
+		final double radius = spot.getFeature(Spot.RADIUS);
 		final DomainCursor<T> cursor;
 		if (img.numDimensions() == 3) 
-			cursor = new SphereCursor(img, spot.getPosition(coords), radius * (1+RAD_PERCENTAGE), calibration);
+			cursor = new SphereCursor(img, spot.getPosition(coords), radius * (1+RAD_PERCENTAGE));
 		else
-			cursor = new DiscCursor(img, spot.getPosition(coords), radius * (1+RAD_PERCENTAGE), calibration);
+			cursor = new DiscCursor(img, spot.getPosition(coords), radius * (1+RAD_PERCENTAGE));
 		int innerRingVolume = 0;
 		int outerRingVolume = 0 ;
-		float radius2 = radius * radius;
-		float innerRadius2 = radius2 * (1-RAD_PERCENTAGE) * (1-RAD_PERCENTAGE);
-		float innerTotalIntensity = 0;
-		float outerTotalIntensity = 0;
+		double radius2 = radius * radius;
+		double innerRadius2 = radius2 * (1-RAD_PERCENTAGE) * (1-RAD_PERCENTAGE);
+		double innerTotalIntensity = 0;
+		double outerTotalIntensity = 0;
 		double dist2;
 		
 		while(cursor.hasNext()) {
@@ -73,8 +72,8 @@ public class BlobContrast<T extends RealType<T>> extends IndependentSpotFeatureA
 			}
 		}
 		
-		float innerMeanIntensity = innerTotalIntensity / innerRingVolume; 
-		float outerMeanIntensity = outerTotalIntensity / outerRingVolume;
+		double innerMeanIntensity = innerTotalIntensity / innerRingVolume; 
+		double outerMeanIntensity = outerTotalIntensity / outerRingVolume;
 		return innerMeanIntensity - outerMeanIntensity;
 	}
 	

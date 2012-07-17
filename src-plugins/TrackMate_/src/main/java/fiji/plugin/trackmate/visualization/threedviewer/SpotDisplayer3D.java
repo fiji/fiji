@@ -5,7 +5,6 @@ import ij3d.Content;
 import ij3d.ContentCreator;
 import ij3d.ContentInstant;
 import ij3d.Image3DUniverse;
-import ij3d.UniverseListener;
 
 import java.awt.Color;
 import java.util.ArrayList;
@@ -14,9 +13,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.TreeMap;
 
-import javax.media.j3d.View;
 import javax.vecmath.Color3f;
-import javax.vecmath.Point4f;
+import javax.vecmath.Point4d;
+
+import net.imglib2.type.NativeType;
+import net.imglib2.type.numeric.RealType;
 
 import org.jfree.chart.renderer.InterpolatePaintScale;
 import org.jgrapht.graph.DefaultWeightedEdge;
@@ -30,7 +31,7 @@ import fiji.plugin.trackmate.util.TMUtils;
 import fiji.plugin.trackmate.visualization.AbstractTrackMateModelView;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
 
-public class SpotDisplayer3D extends AbstractTrackMateModelView {
+public class SpotDisplayer3D <T extends RealType<T> & NativeType<T>> extends AbstractTrackMateModelView<T> {
 
 	public static final int DEFAULT_RESAMPLING_FACTOR = 4;
 	public static final int DEFAULT_THRESHOLD = 50;
@@ -40,7 +41,7 @@ public class SpotDisplayer3D extends AbstractTrackMateModelView {
 	private static final String SPOT_CONTENT_NAME = "Spots";
 
 	private TreeMap<Integer, SpotGroupNode<Spot>> blobs;	
-	private TrackDisplayNode trackNode;
+	private TrackDisplayNode<T> trackNode;
 	private Content spotContent;
 	private Content trackContent;
 	private final Image3DUniverse universe;
@@ -49,37 +50,12 @@ public class SpotDisplayer3D extends AbstractTrackMateModelView {
 	private HashMap<Spot, Color3f> previousColorHighlight;
 	private HashMap<Spot, Integer> previousFrameHighlight;
 	private HashMap<DefaultWeightedEdge, Color> previousEdgeHighlight;
-	private UniverseListener unregisterListener = new UniverseListener() {			
-		@Override
-		public void universeClosed() {
-			SpotDisplayer3D.this.model.removeTrackMateModelChangeListener(SpotDisplayer3D.this);
-			SpotDisplayer3D.this.model.removeTrackMateSelectionChangeListener(SpotDisplayer3D.this);
-		}
-		@Override
-		public void transformationUpdated(View view) {}
-		@Override
-		public void transformationStarted(View view) {}
-		@Override
-		public void transformationFinished(View view) {}
-		@Override
-		public void contentSelected(Content c) {}
-		@Override
-		public void contentRemoved(Content c) {}
-		@Override
-		public void contentChanged(Content c) {}
-		@Override
-		public void contentAdded(Content c) {}
-		@Override
-		public void canvasResized() {}
-	};
-	private Settings settings;
+	private Settings<T> settings;
 	/**  the flag specifying whether to render image data or not. By default, it is true. */
 	private boolean doRenderImage = true;
 
 	public SpotDisplayer3D() {
 		universe = new Image3DUniverse();
-		// Add a listener to unregister this instance from the model listener list when closing
-		universe.addUniverseListener(unregisterListener);
 	}
 
 	/*
@@ -88,7 +64,7 @@ public class SpotDisplayer3D extends AbstractTrackMateModelView {
 
 	
 	@Override
-	public void setModel(TrackMateModel model) {
+	public void setModel(TrackMateModel<T> model) {
 		this.settings = model.getSettings();
 		super.setModel(model);
 		if (model.getSpots() != null) {
@@ -214,12 +190,12 @@ public class SpotDisplayer3D extends AbstractTrackMateModelView {
 		}
 
 		universe.show();
-		if (doRenderImage && null != settings.imp) {
-			if (!settings.imp.isVisible())
-				settings.imp.show();
+		if (doRenderImage && null != settings.img) {
+//			if (!settings.imp.isVisible())
+//				settings.imp.show();
 			ImagePlus[] images = TMUtils.makeImageForViewer(settings);
 			final Content imageContent = ContentCreator.createContent(
-					settings.imp.getTitle(), 
+					settings.img.getName(), 
 					images, 
 					Content.VOLUME, 
 					SpotDisplayer3D.DEFAULT_RESAMPLING_FACTOR, 
@@ -305,7 +281,7 @@ public class SpotDisplayer3D extends AbstractTrackMateModelView {
 
 	private Content makeTrackContent() {
 		// Prepare tracks instant
-		trackNode = new TrackDisplayNode(model, displaySettings);
+		trackNode = new TrackDisplayNode<T>(model, displaySettings);
 		universe.addTimelapseListener(trackNode);
 
 		// Pass tracks instant to all instants
@@ -332,15 +308,15 @@ public class SpotDisplayer3D extends AbstractTrackMateModelView {
 
 		for(Integer i : model.getSpots().keySet()) {
 			spotsThisFrame = model.getSpots().get(i);
-			HashMap<Spot, Point4f> centers = new HashMap<Spot, Point4f>(spotsThisFrame.size());
-			float[] pos;
-			float radius;
-			float[] coords = new float[3];
+			HashMap<Spot, Point4d> centers = new HashMap<Spot, Point4d>(spotsThisFrame.size());
+			double[] pos;
+			double radius;
+			double[] coords = new double[3];
 			for(Spot spot : spotsThisFrame) {
 				spot.getPosition(coords);
 				radius = spot.getFeature(Spot.RADIUS);
-				pos = new float[] {coords[0], coords[1], coords[2], radius*radiusRatio};
-				centers.put(spot, new Point4f(pos));
+				pos = new double[] {coords[0], coords[1], coords[2], radius*radiusRatio};
+				centers.put(spot, new Point4d(pos));
 			}
 			blobGroup = new SpotGroupNode<Spot>(centers, new Color3f(color));
 			contentThisFrame = new ContentInstant("Spots_frame_"+i);
@@ -384,9 +360,9 @@ public class SpotDisplayer3D extends AbstractTrackMateModelView {
 				blobs.get(key).setColor(new Color3f(color));
 		} else {
 			// Get min & max
-			float min = Float.POSITIVE_INFINITY;
-			float max = Float.NEGATIVE_INFINITY;
-			Float val;
+			double min = Float.POSITIVE_INFINITY;
+			double max = Float.NEGATIVE_INFINITY;
+			Double val;
 			for (int key : model.getSpots().keySet()) {
 				for (Spot spot : model.getSpots().get(key)) {
 					val = spot.getFeature(feature);

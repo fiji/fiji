@@ -3,8 +3,9 @@ package fiji.plugin.trackmate.detection;
 import net.imglib2.Cursor;
 import net.imglib2.RandomAccess;
 import net.imglib2.img.Img;
+import net.imglib2.img.ImgPlus;
 import net.imglib2.type.numeric.RealType;
-
+import fiji.plugin.trackmate.util.TMUtils;
 
 public class DownSampleLogSegmenter <T extends RealType<T> > extends AbstractSpotSegmenter<T> {
 
@@ -28,8 +29,8 @@ public class DownSampleLogSegmenter <T extends RealType<T> > extends AbstractSpo
 	};
 
 	@Override
-	public void setTarget(Img<T> image, float[] calibration,	SegmenterSettings settings) {
-		super.setTarget(image, calibration, settings);
+	public void setTarget(final ImgPlus<T> image, final SegmenterSettings settings) {
+		super.setTarget(image, settings);
 		this.settings = (DownSampleLogSegmenterSettings) settings;
 	}
 
@@ -56,7 +57,8 @@ public class DownSampleLogSegmenter <T extends RealType<T> > extends AbstractSpo
 		int downSamplingFactor = settings.downSamplingFactor;
 		long[] dimensions = new long[img.numDimensions()];
 		int[] dsarr = new int[img.numDimensions()];
-		float[] dwnCalibration = new float[img.numDimensions()];
+		double[] dwnCalibration = new double[img.numDimensions()];
+		double[] calibration = TMUtils.getSpatialCalibration(img);
 		for (int i = 0; i < 2; i++) {
 			dimensions[i] = img.dimension(i) / downSamplingFactor;
 			dsarr[i] = downSamplingFactor;
@@ -64,7 +66,7 @@ public class DownSampleLogSegmenter <T extends RealType<T> > extends AbstractSpo
 		}
 		if (img.numDimensions() > 2) {
 			// 3D
-			float zratio = calibration[2] / calibration[0]; // Z spacing is how much bigger
+			double zratio = calibration[2] / calibration[0]; // Z spacing is how much bigger
 			int zdownsampling = (int) (downSamplingFactor / zratio); // temper z downsampling
 			zdownsampling = Math.max(1, zdownsampling); // but at least 1
 			dimensions[2] = img.dimension(2) / zdownsampling;
@@ -75,6 +77,9 @@ public class DownSampleLogSegmenter <T extends RealType<T> > extends AbstractSpo
 		// 1. Downsample the image
 
 		Img<T> downsampled = img.factory().create(dimensions, img.firstElement().createVariable());
+		ImgPlus<T> dsimg = new ImgPlus<T>(downsampled, img);
+		dsimg.setCalibration(dwnCalibration);
+		
 		Cursor<T> dwnCursor = downsampled.localizingCursor();
 		RandomAccess<T> srcCursor = img.randomAccess();
 		int[] pos = new int[img.numDimensions()];
@@ -106,7 +111,7 @@ public class DownSampleLogSegmenter <T extends RealType<T> > extends AbstractSpo
 
 		// 2.2 Instantiate segmenter
 		LogSegmenter<T> segmenter = new LogSegmenter<T>();
-		segmenter.setTarget(downsampled, dwnCalibration, logSettings);
+		segmenter.setTarget(dsimg, logSettings);
 
 		// 2.3 Execute segmentation
 		if (!segmenter.checkInput() || !segmenter.process()) {

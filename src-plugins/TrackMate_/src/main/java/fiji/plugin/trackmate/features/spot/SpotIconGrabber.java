@@ -17,29 +17,31 @@ import net.imglib2.RandomAccess;
 import net.imglib2.img.Img;
 import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.outofbounds.OutOfBoundsConstantValueFactory;
-import net.imglib2.type.numeric.RealType;
+import net.imglib2.type.numeric.NumericType;
 import net.imglib2.view.Views;
 
 import com.mxgraph.util.mxBase64;
 
 import fiji.plugin.trackmate.Dimension;
 import fiji.plugin.trackmate.Spot;
+import fiji.plugin.trackmate.util.TMUtils;
 
 /**
  * This class is used to take a snapshot of a {@link Spot} object (or collection) from 
  * its coordinates and an {@link ImagePlus} that contain the pixel data.
  * @author Jean-Yves Tinevez <jeanyves.tinevez@gmail.com> - Dec 2010 - 2012
  */
-public class SpotIconGrabber<T extends RealType<T>> extends IndependentSpotFeatureAnalyzer<T> {
+public class SpotIconGrabber<T extends NumericType<T>> extends IndependentSpotFeatureAnalyzer<T> {
 
 	@Override
 	public void  process(Spot spot) {
 		// Get crop coordinates
-		final float radius = spot.getFeature(Spot.RADIUS); // physical units, REQUIRED!
-		int x = Math.round((spot.getFeature(Spot.POSITION_X) - radius) / calibration[0]); 
-		int y = Math.round((spot.getFeature(Spot.POSITION_Y) - radius) / calibration[1]);
-		int width = Math.round(2 * radius / calibration[0]);
-		int height = Math.round(2 * radius / calibration[1]);
+		final double[] calibration = TMUtils.getSpatialCalibration(img);
+		final double radius = spot.getFeature(Spot.RADIUS); // physical units, REQUIRED!
+		long x = Math.round((spot.getFeature(Spot.POSITION_X) - radius) / calibration[0]); 
+		long y = Math.round((spot.getFeature(Spot.POSITION_Y) - radius) / calibration[1]);
+		long width = Math.round(2 * radius / calibration[0]);
+		long height = Math.round(2 * radius / calibration[1]);
 
 		// Copy cropped view
 		long slice = 0;
@@ -74,10 +76,10 @@ public class SpotIconGrabber<T extends RealType<T>> extends IndependentSpotFeatu
 
 	}
 
-	public final Img<T> grabImage(int x, int y, long slice, int width, int height) {
+	public final Img<T> grabImage(long x, long y, long slice, long width, long height) {
 
 		// Copy cropped view
-		Img<T> crop = img.factory().create(new int[] { width, height }, img.firstElement().copy());
+		Img<T> crop = img.factory().create(new long[] { width, height }, img.firstElement().copy());
 
 		T zeroType = img.firstElement().createVariable();
 		zeroType.setZero();

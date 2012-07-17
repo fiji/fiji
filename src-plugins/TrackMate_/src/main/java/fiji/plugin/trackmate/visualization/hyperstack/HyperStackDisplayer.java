@@ -8,6 +8,11 @@ import java.awt.Point;
 import java.util.Collection;
 import java.util.List;
 
+import net.imglib2.exception.ImgLibException;
+import net.imglib2.img.imageplus.ImagePlusImg;
+import net.imglib2.type.NativeType;
+import net.imglib2.type.numeric.RealType;
+
 import org.jgrapht.graph.DefaultWeightedEdge;
 
 import fiji.plugin.trackmate.Settings;
@@ -15,22 +20,23 @@ import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotImp;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMateModelChangeEvent;
+import fiji.plugin.trackmate.util.TMUtils;
 import fiji.plugin.trackmate.visualization.AbstractTrackMateModelView;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
 import fiji.util.gui.OverlayedImageCanvas;
 
-public class HyperStackDisplayer extends AbstractTrackMateModelView  {
+public class HyperStackDisplayer <T extends RealType<T> & NativeType<T>> extends AbstractTrackMateModelView<T>  {
 
 	private static final boolean DEBUG = false;
 	protected ImagePlus imp;
 	OverlayedImageCanvas canvas;
-	float[] calibration;
-	Settings settings;
+	double[] calibration;
+	Settings<T> settings;
 	private StackWindow window;
-	SpotOverlay spotOverlay;
-	private TrackOverlay trackOverlay;
+	SpotOverlay<T> spotOverlay;
+	private TrackOverlay<T> trackOverlay;
 
-	private SpotEditTool editTool;
+	private SpotEditTool<T> editTool;
 
 	/*
 	 * CONSTRUCTORS
@@ -45,10 +51,10 @@ public class HyperStackDisplayer extends AbstractTrackMateModelView  {
 	final Spot getCLickLocation(final Point point) {
 		final double ix = canvas.offScreenXD(point.x) + 0.5f;
 		final double iy =  canvas.offScreenYD(point.y) + 0.5f;
-		final float x = (float) (ix * calibration[0]);
-		final float y = (float) (iy * calibration[1]);
-		final float z = (imp.getSlice()-1) * calibration[2];
-		return new SpotImp(new float[] {x, y, z});
+		final double x = ix * calibration[0];
+		final double y = iy * calibration[1];
+		final double z = (imp.getSlice()-1) * calibration[2];
+		return new SpotImp(new double[] {x, y, z});
 	}
 
 	/*
@@ -59,24 +65,29 @@ public class HyperStackDisplayer extends AbstractTrackMateModelView  {
 	 * Hook for subclassers. Instantiate here the overlay you want to use for the spots. 
 	 * @return
 	 */
-	protected SpotOverlay createSpotOverlay() {
-		return new SpotOverlay(model, imp, displaySettings);
+	protected SpotOverlay<T> createSpotOverlay() {
+		return new SpotOverlay<T>(model, imp, displaySettings);
 	}
 
 	/**
 	 * Hook for subclassers. Instantiate here the overlay you want to use for the spots. 
 	 * @return
 	 */
-	protected TrackOverlay createTrackOverlay() {
-		return new TrackOverlay(model, imp, displaySettings);
+	protected TrackOverlay<T> createTrackOverlay() {
+		return new TrackOverlay<T>(model, imp, displaySettings);
 	}
 
+	@SuppressWarnings("rawtypes")
 	@Override
-	public void setModel(TrackMateModel model) {
+	public void setModel(TrackMateModel<T> model) {
 		super.setModel(model);
 		this.settings = model.getSettings();
-		this.imp = settings.imp;
-		this.calibration = settings.getCalibration();
+		try {
+			this.imp = ( (ImagePlusImg) settings.img.getImg()).getImagePlus();
+		} catch (ImgLibException e) {
+			e.printStackTrace();
+		}
+		this.calibration = TMUtils.getSpatialCalibration(settings.img);
 	}
 
 	/*
@@ -150,8 +161,8 @@ public class HyperStackDisplayer extends AbstractTrackMateModelView  {
 		}
 		if (frame == -1)
 			return;
-		int z = Math.round(spot.getFeature(Spot.POSITION_Z) / calibration[2] ) + 1;
-		imp.setPosition(1, z, frame+1);
+		long z = Math.round(spot.getFeature(Spot.POSITION_Z) / calibration[2] ) + 1;
+		imp.setPosition(1, (int) z, frame+1);
 	}
 
 	@Override

@@ -51,16 +51,16 @@ public class BlobContrastAndSNR<T extends RealType<T>> extends IndependentSpotFe
 		FEATURE_DIMENSIONS.put(SNR, Dimension.NONE);
 	}
 	
-	protected static final float RAD_PERCENTAGE = 1f;  
+	protected static final double RAD_PERCENTAGE = 1f;  
 	/** Utility holder. */
-	private float[] coords = new float[3];
+	private double[] coords = new double[3];
 	
 	
 	@Override
 	public void process(Spot spot) {
-		float[] vals = getContrastAndSNR(spot);
-		float contrast = vals[0];
-		float snr = vals[1];
+		double[] vals = getContrastAndSNR(spot);
+		double contrast = vals[0];
+		double snr = vals[1];
 		spot.putFeature(CONTRAST, contrast);
 		spot.putFeature(SNR, snr);
 	}
@@ -69,18 +69,18 @@ public class BlobContrastAndSNR<T extends RealType<T>> extends IndependentSpotFe
 	 * Compute the contrast for the given spot.
 	 */
 	@SuppressWarnings({ "unchecked", "rawtypes" })
-	protected float[] getContrastAndSNR(final Spot spot) {
-		final float radius = spot.getFeature(Spot.RADIUS);
+	protected double[] getContrastAndSNR(final Spot spot) {
+		final double radius = spot.getFeature(Spot.RADIUS);
 		final DomainCursor<T> cursor;
 		if (img.numDimensions() == 3) 
-			cursor = new SphereCursor(img, spot.getPosition(coords), radius * (1+RAD_PERCENTAGE), calibration);
+			cursor = new SphereCursor(img, spot.getPosition(coords), radius * (1+RAD_PERCENTAGE));
 		else
-			cursor = new DiscCursor(img, spot.getPosition(coords), radius * (1+RAD_PERCENTAGE), calibration);
+			cursor = new DiscCursor(img, spot.getPosition(coords), radius * (1+RAD_PERCENTAGE));
 		
-		float radius2 = radius * radius;
+		double radius2 = radius * radius;
 		int n_out = 0; // inner number of pixels
 		double dist2;
-		float sum_out = 0;
+		double sum_out = 0;
 		
 		// Compute mean in the outter ring
 		while(cursor.hasNext()) {
@@ -91,17 +91,17 @@ public class BlobContrastAndSNR<T extends RealType<T>> extends IndependentSpotFe
 				sum_out += cursor.get().getRealFloat();				
 			} 
 		}
-		float mean_out = sum_out / n_out;
-		float mean_in = spot.getFeature(BlobDescriptiveStatistics.MEAN_INTENSITY);
-		float std_in  = spot.getFeature(BlobDescriptiveStatistics.STANDARD_DEVIATION);
+		double mean_out = sum_out / n_out;
+		double mean_in = spot.getFeature(BlobDescriptiveStatistics.MEAN_INTENSITY);
+		double std_in  = spot.getFeature(BlobDescriptiveStatistics.STANDARD_DEVIATION);
 
 		// Compute contrast
-		float contrast = (mean_in - mean_out) / (mean_in + mean_out);
+		double contrast = (mean_in - mean_out) / (mean_in + mean_out);
 		
 		// Compute snr
-		float snr = (mean_in - mean_out) / std_in;
+		double snr = (mean_in - mean_out) / std_in;
 		
-		final float[] ret = new float[2];
+		final double[] ret = new double[2];
 		ret[0] = contrast;
 		ret[1] = snr;
 		return ret;

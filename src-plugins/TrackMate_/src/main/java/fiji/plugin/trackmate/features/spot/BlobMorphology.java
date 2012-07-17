@@ -9,6 +9,7 @@ import java.util.Map;
 import net.imglib2.cursor.special.DiscCursor;
 import net.imglib2.cursor.special.SphereCursor;
 import net.imglib2.img.Img;
+import net.imglib2.img.ImgPlus;
 import net.imglib2.img.array.ArrayImgFactory;
 import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.type.numeric.RealType;
@@ -18,6 +19,7 @@ import Jama.Matrix;
 import fiji.plugin.trackmate.Dimension;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotImp;
+import fiji.plugin.trackmate.util.TMUtils;
 
 /**
  * This {@link SpotFeatureAnalyzer} computes morphology features for the given spots. 
@@ -134,7 +136,7 @@ public class BlobMorphology<T extends RealType<T>> extends IndependentSpotFeatur
 	 */
 	
 	/** Utility holder. */
-	private float[] coords = new float[3];
+	private double[] coords = new double[3];
 	
 	/*
 	 * PUBLIC METHODS
@@ -145,15 +147,17 @@ public class BlobMorphology<T extends RealType<T>> extends IndependentSpotFeatur
 	@Override
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public void process(final Spot spot) {
-		final float radius = spot.getFeature(Spot.RADIUS);
+		final double radius = spot.getFeature(Spot.RADIUS);
 		for (int i = 0; i < coords.length; i++) 
 			coords[i] = spot.getFeature(Spot.POSITION_FEATURES[i]);
 
+		final double[] calibration = TMUtils.getSpatialCalibration(img);
+		
 		if (img.numDimensions() == 3) {
 
 			// 3D case
 			
-			final SphereCursor<? extends RealType<?>> cursor = new SphereCursor(img, coords, radius, calibration);
+			final SphereCursor<T> cursor = new SphereCursor(img, coords, radius);
 			double x, y, z;
 			double x2, y2, z2;
 			double mass, totalmass = 0;
@@ -227,9 +231,9 @@ public class BlobMorphology<T extends RealType<T>> extends IndependentSpotFeatur
 					phi -= Math.PI; 
 
 				// Store in descending order
-				spot.putFeature(featurelist_sa[i], (float) semiaxes_ordered[i]);
-				spot.putFeature(featurelist_phi[i], (float) phi);
-				spot.putFeature(featurelist_theta[i], (float) theta);
+				spot.putFeature(featurelist_sa[i], (double) semiaxes_ordered[i]);
+				spot.putFeature(featurelist_phi[i], (double) phi);
+				spot.putFeature(featurelist_theta[i], (double) theta);
 			}
 
 			// Store the Spot morphology (needs to be outside the above loop)
@@ -239,7 +243,7 @@ public class BlobMorphology<T extends RealType<T>> extends IndependentSpotFeatur
 			
 			// 2D case
 			
-			final DiscCursor<? extends RealType<?>> cursor = new DiscCursor(img, coords, radius, calibration);
+			final DiscCursor<T> cursor = new DiscCursor(img, coords, radius);
 			double x, y;
 			double x2, y2;
 			double mass, totalmass = 0;
@@ -301,9 +305,9 @@ public class BlobMorphology<T extends RealType<T>> extends IndependentSpotFeatur
 					phi -= Math.PI; 
 
 				// Store in descending order
-				spot.putFeature(featurelist_sa[i], (float) semiaxes_ordered[i]);
-				spot.putFeature(featurelist_phi[i], (float) phi);
-				spot.putFeature(featurelist_theta[i], (float) theta);
+				spot.putFeature(featurelist_sa[i], (double) semiaxes_ordered[i]);
+				spot.putFeature(featurelist_phi[i], (double) phi);
+				spot.putFeature(featurelist_theta[i], (double) theta);
 			}
 			spot.putFeature(featurelist_sa[2], 0);
 			spot.putFeature(featurelist_phi[2], 0);
@@ -367,23 +371,26 @@ public class BlobMorphology<T extends RealType<T>> extends IndependentSpotFeatur
 		int size_x = 200;
 		int size_y = 200;
 		
-		float a = 10;
-		float b = 5;
-		float phi_r = (float) Math.toRadians(30);
+		double a = 10;
+		double b = 5;
+		double phi_r = (double) Math.toRadians(30);
 
-		float max_radius = Math.max(a, b);
-		float[] calibration = new float[] {1, 1};
+		double max_radius = Math.max(a, b);
+		double[] calibration = new double[] {1, 1};
 		
 		// Create blank image
-		Img<UnsignedByteType> img = new ArrayImgFactory<UnsignedByteType>().create(new int[] {200, 200}, new UnsignedByteType());
+		Img<UnsignedByteType> img = new ArrayImgFactory<UnsignedByteType>()
+				.create(new int[] {200, 200}, new UnsignedByteType());
+		ImgPlus<UnsignedByteType> imgplus = new ImgPlus<UnsignedByteType>(img);
+		imgplus.setCalibration(calibration);
 		final byte on = (byte) 255;
 		
 		// Create an ellipse 
 		long start = System.currentTimeMillis();
 		System.out.println(String.format("Creating an ellipse with a = %.1f, b = %.1f", a, b));
 		System.out.println(String.format("phi = %.1f", Math.toDegrees(phi_r)));
-		float[] center = new float[] { size_x/2, size_y/2, 0 };
-		DiscCursor<UnsignedByteType> sc = new DiscCursor<UnsignedByteType>(img, center, max_radius, calibration);
+		double[] center = new double[] { size_x/2, size_y/2, 0 };
+		DiscCursor<UnsignedByteType> sc = new DiscCursor<UnsignedByteType>(imgplus, center, max_radius);
 		double r2, phi, term;
 		double cosphi, sinphi;
 		while (sc.hasNext()) {
@@ -402,17 +409,17 @@ public class BlobMorphology<T extends RealType<T>> extends IndependentSpotFeatur
 		System.out.println();
 		
 		ij.ImageJ.main(args);
-		ImageJFunctions.show(img);
+		ImageJFunctions.show(imgplus);
 		
 		start = System.currentTimeMillis();
 		BlobMorphology<UnsignedByteType> bm = new BlobMorphology<UnsignedByteType>();
-		bm.setTarget(img, calibration);
+		bm.setTarget(imgplus);
 		SpotImp spot = new SpotImp(center);
 		spot.putFeature(Spot.RADIUS, max_radius);
 		bm.process(spot);
 		end = System.currentTimeMillis();
 		System.out.println("Blob morphology analyzed in " + (end-start) + " ms.");
-		float phiv, thetav, lv;
+		double phiv, thetav, lv;
 		for (int j = 0; j < 2; j++) {
 			lv = spot.getFeature(featurelist_sa[j]);
 			phiv = spot.getFeature(featurelist_phi[j]);
@@ -431,14 +438,14 @@ public class BlobMorphology<T extends RealType<T>> extends IndependentSpotFeatur
 		int size_y = 200;
 		int size_z = 200;
 		
-		float a = 5.5f;
-		float b = 4.9f;
-		float c = 5;
-		float theta_r = (float) Math.toRadians(0); // I am unable to have it working for theta_r != 0
-		float phi_r = (float) Math.toRadians(45);
+		double a = 5.5f;
+		double b = 4.9f;
+		double c = 5;
+		double theta_r = (double) Math.toRadians(0); // I am unable to have it working for theta_r != 0
+		double phi_r = (double) Math.toRadians(45);
 
-		float max_radius = Math.max(a, Math.max(b, c));
-		float[] calibration = new float[] {1, 1, 1};
+		double max_radius = Math.max(a, Math.max(b, c));
+		double[] calibration = new double[] {1, 1, 1};
 		
 		// Create blank image
 		Image<UnsignedByteType> img = new ImageFactory<UnsignedByteType>(
@@ -451,7 +458,7 @@ public class BlobMorphology<T extends RealType<T>> extends IndependentSpotFeatur
 		long start = System.currentTimeMillis();
 		System.out.println(String.format("Creating an ellipse with a = %.1f, b = %.1f, c = %.1f", a, b, c));
 		System.out.println(String.format("phi = %.1f and theta = %.1f", Math.toDegrees(phi_r), Math.toDegrees(theta_r)));
-		float[] center = new float[] { size_x/2, size_y/2, size_z/2 };
+		double[] center = new double[] { size_x/2, size_y/2, size_z/2 };
 		SphereCursor<UnsignedByteType> sc = new SphereCursor<UnsignedByteType>(img, center, max_radius, calibration);
 		double r2, theta, phi, term;
 		double cosphi, sinphi, costheta, sintheta;
@@ -486,7 +493,7 @@ public class BlobMorphology<T extends RealType<T>> extends IndependentSpotFeatur
 		bm.process(spot);
 		end = System.currentTimeMillis();
 		System.out.println("Blob morphology analyzed in " + (end-start) + " ms.");
-		float phiv, thetav, lv;
+		double phiv, thetav, lv;
 		for (int j = 0; j < 3; j++) {
 			lv = spot.getFeature(featurelist_sa[j]);
 			phiv = spot.getFeature(featurelist_phi[j]);

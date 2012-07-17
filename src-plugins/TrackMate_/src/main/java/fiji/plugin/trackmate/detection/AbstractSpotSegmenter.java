@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import net.imglib2.img.Img;
+import net.imglib2.img.ImgPlus;
 import net.imglib2.type.numeric.RealType;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.detection.util.MedianFilter3x3;
@@ -22,19 +23,14 @@ public abstract class AbstractSpotSegmenter <T extends RealType<T>> implements S
 	protected String baseErrorMessage = "";
 	
 	/** The image to segment. Will not modified. */
-	protected Img<T> img;
-	/**  The calibration array to convert pixel coordinates in physical spot coordinates.
-	 * Negative or zero values ill generate an error. */
-	protected float[] calibration = new float[] {1, 1, 1}; // always 3d;
+	protected ImgPlus<T> img;
 	/** The list of {@link Spot} that will be populated by this segmenter. */
 	protected List<Spot> spots = new ArrayList<Spot>(); // because this implementation is fast to add elements at the end of the list
 	/** The error message generated when something goes wrong. */
 	protected String errorMessage = null;
-
 	/** The settings for this segmenter. Contains all parameters needed to perform segmentation
 	 * for the concrete segmenter implementation. */
 	protected SegmenterSettings settings;
-
 	/** The processing time in ms. */
 	protected long processingTime;
 	
@@ -53,16 +49,6 @@ public abstract class AbstractSpotSegmenter <T extends RealType<T>> implements S
 			errorMessage = baseErrorMessage + "Image must be 2D or 3D, got " + img.numDimensions() +"D.";
 			return false;
 		}
-		if (calibration == null) {
-			errorMessage = baseErrorMessage + "Calibration array is null";
-			return false;
-		}
-		for (int i = 0; i < calibration.length; i++) {
-			if (calibration[i] <= 0) {
-				errorMessage = baseErrorMessage + "Calibration array has negative or 0 elements.";
-				return false;
-			}
-		}
 		return true;
 	};
 	
@@ -73,10 +59,9 @@ public abstract class AbstractSpotSegmenter <T extends RealType<T>> implements S
 	}
 		
 	@Override
-	public void setTarget(Img<T> image, float[] calibration, SegmenterSettings settings) {
+	public void setTarget(final ImgPlus<T> image, final SegmenterSettings settings) {
 		this.spots = new ArrayList<Spot>();
 		this.img = image;
-		this.calibration = calibration;
 		this.settings = settings;
 	}
 		

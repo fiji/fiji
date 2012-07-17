@@ -18,11 +18,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import net.imglib2.type.NativeType;
+import net.imglib2.type.numeric.RealType;
+
 import org.jfree.chart.renderer.InterpolatePaintScale;
 import org.jgrapht.graph.DefaultWeightedEdge;
 
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.util.TMUtils;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
 import fiji.util.gui.OverlayedImageCanvas.Overlay;
 
@@ -30,21 +34,21 @@ import fiji.util.gui.OverlayedImageCanvas.Overlay;
  * The overlay class in charge of drawing the tracks on the hyperstack window.
  * @author Jean-Yves Tinevez <jeanyves.tinevez@gmail.com> 2010 - 2011
  */
-public class TrackOverlay implements Overlay {
-	protected float[] calibration;
-	protected ImagePlus imp;
+public class TrackOverlay <T extends RealType<T> & NativeType<T>> implements Overlay {
+	protected final double[] calibration;
+	protected final ImagePlus imp;
 	protected Map<Integer, Color> edgeColors;
 	protected Collection<DefaultWeightedEdge> highlight = new HashSet<DefaultWeightedEdge>();
 	protected Map<String, Object> displaySettings;
-	protected TrackMateModel model;
+	protected final TrackMateModel<T> model;
 
 	/*
 	 * CONSTRUCTOR
 	 */
 
-	public TrackOverlay(final TrackMateModel model, final ImagePlus imp, final Map<String, Object> displaySettings) {
+	public TrackOverlay(final TrackMateModel<T> model, final ImagePlus imp, final Map<String, Object> displaySettings) {
 		this.model = model;
-		this.calibration = model.getSettings().getCalibration();
+		this.calibration = TMUtils.getSpatialCalibration(model.getSettings().img);
 		this.imp = imp;
 		this.displaySettings = displaySettings;
 		computeTrackColors();
@@ -69,26 +73,26 @@ public class TrackOverlay implements Overlay {
 		if (feature != null) {
 
 			// Get min & max
-			double min = Float.POSITIVE_INFINITY;
-			double max = Float.NEGATIVE_INFINITY;
+			double min = Double.POSITIVE_INFINITY;
+			double max = Double.NEGATIVE_INFINITY;
 			for (double val : model.getFeatureModel().getTrackFeatureValues().get(feature)) {
 				if (val > max) max = val;
 				if (val < min) min = val;
 			}
 
 			for(int i : model.getVisibleTrackIndices()) {
-				Float val = model.getFeatureModel().getTrackFeature(i, feature);
+				Double val = model.getFeatureModel().getTrackFeature(i, feature);
 				if (null == val) {
 					edgeColors.put(i, defaultColor); // if feature is not calculated
 				} else {
-					edgeColors.put(i, colorMap.getPaint((float) (val-min) / (max-min)));
+					edgeColors.put(i, colorMap.getPaint((double) (val-min) / (max-min)));
 				}
 			}
 
 		} else {
 			int index = 0;
 			for(int i : model.getVisibleTrackIndices()) {
-				edgeColors.put(i, colorMap.getPaint((float) index / (ntracks-1)));
+				edgeColors.put(i, colorMap.getPaint((double) index / (ntracks-1)));
 				index ++;
 			}
 		}
@@ -110,8 +114,8 @@ public class TrackOverlay implements Overlay {
 		final Composite originalComposite = g2d.getComposite();
 		final Stroke originalStroke = g2d.getStroke();
 		final Color originalColor = g2d.getColor();	
-		final float dt = model.getSettings().dt;
-		final float mag = (float) magnification;
+		final double dt = model.getSettings().dt;
+		final double mag = (double) magnification;
 		Spot source, target;
 
 		// Deal with highlighted edges first: brute and thick display
@@ -155,7 +159,8 @@ public class TrackOverlay implements Overlay {
 			break;
 		}
 
-		float sourceFrame, transparency;
+		double sourceFrame;
+		float transparency;
 		switch (trackDisplayMode) {
 
 		case TrackMateModelView.TRACK_DISPLAY_MODE_WHOLE: {
@@ -220,7 +225,7 @@ public class TrackOverlay implements Overlay {
 					if (sourceFrame < minT || sourceFrame >= maxT)
 						continue;
 
-					transparency = 1 - Math.abs(sourceFrame-currentFrame) / trackDisplayDepth;
+					transparency = (float) (1 - Math.abs(sourceFrame-currentFrame) / trackDisplayDepth);
 					target = model.getEdgeTarget(edge);
 					drawEdge(g2d, source, target, xcorner, ycorner, mag, transparency);
 				}
@@ -246,27 +251,27 @@ public class TrackOverlay implements Overlay {
 	 */
 
 	protected void drawEdge(final Graphics2D g2d, final Spot source, final Spot target,
-			final int xcorner, final int ycorner, final float magnification, final float transparency) {
+			final int xcorner, final int ycorner, final double magnification, final float transparency) {
 		// Find x & y in physical coordinates
-		final float x0i = source.getFeature(Spot.POSITION_X);
-		final float y0i = source.getFeature(Spot.POSITION_Y);
-		final float x1i = target.getFeature(Spot.POSITION_X);
-		final float y1i = target.getFeature(Spot.POSITION_Y);
+		final double x0i = source.getFeature(Spot.POSITION_X);
+		final double y0i = source.getFeature(Spot.POSITION_Y);
+		final double x1i = target.getFeature(Spot.POSITION_X);
+		final double y1i = target.getFeature(Spot.POSITION_Y);
 		// In pixel units
-		final float x0p = x0i / calibration[0] + 0.5f;
-		final float y0p = y0i / calibration[1] + 0.5f;
-		final float x1p = x1i / calibration[0] + 0.5f;
-		final float y1p = y1i / calibration[1] + 0.5f;
+		final double x0p = x0i / calibration[0] + 0.5f;
+		final double y0p = y0i / calibration[1] + 0.5f;
+		final double x1p = x1i / calibration[0] + 0.5f;
+		final double y1p = y1i / calibration[1] + 0.5f;
 		// Scale to image zoom
-		final float x0s = (x0p - xcorner) * magnification ;
-		final float y0s = (y0p - ycorner) * magnification ;
-		final float x1s = (x1p - xcorner) * magnification ;
-		final float y1s = (y1p - ycorner) * magnification ;
+		final double x0s = (x0p - xcorner) * magnification ;
+		final double y0s = (y0p - ycorner) * magnification ;
+		final double x1s = (x1p - xcorner) * magnification ;
+		final double y1s = (y1p - ycorner) * magnification ;
 		// Round
-		final int x0 = Math.round(x0s);
-		final int y0 = Math.round(y0s);
-		final int x1 = Math.round(x1s);
-		final int y1 = Math.round(y1s);
+		final int x0 = (int) Math.round(x0s);
+		final int y0 = (int) Math.round(y0s);
+		final int x1 = (int) Math.round(x1s);
+		final int y1 = (int) Math.round(y1s);
 
 		g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, transparency));
 		g2d.drawLine(x0, y0, x1, y1);
@@ -274,27 +279,27 @@ public class TrackOverlay implements Overlay {
 	}
 
 	protected void drawEdge(final Graphics2D g2d, final Spot source, final Spot target,
-			final int xcorner, final int ycorner, final float magnification) {
+			final int xcorner, final int ycorner, final double magnification) {
 		// Find x & y in physical coordinates
-		final float x0i = source.getFeature(Spot.POSITION_X);
-		final float y0i = source.getFeature(Spot.POSITION_Y);
-		final float x1i = target.getFeature(Spot.POSITION_X);
-		final float y1i = target.getFeature(Spot.POSITION_Y);
+		final double x0i = source.getFeature(Spot.POSITION_X);
+		final double y0i = source.getFeature(Spot.POSITION_Y);
+		final double x1i = target.getFeature(Spot.POSITION_X);
+		final double y1i = target.getFeature(Spot.POSITION_Y);
 		// In pixel units
-		final float x0p = x0i / calibration[0] + 0.5f;
-		final float y0p = y0i / calibration[1] + 0.5f;
-		final float x1p = x1i / calibration[0] + 0.5f;
-		final float y1p = y1i / calibration[1] + 0.5f; // so that spot centers are displayed on the pixel centers
+		final double x0p = x0i / calibration[0] + 0.5f;
+		final double y0p = y0i / calibration[1] + 0.5f;
+		final double x1p = x1i / calibration[0] + 0.5f;
+		final double y1p = y1i / calibration[1] + 0.5f; // so that spot centers are displayed on the pixel centers
 		// Scale to image zoom
-		final float x0s = (x0p - xcorner) * magnification ;
-		final float y0s = (y0p - ycorner) * magnification ;
-		final float x1s = (x1p - xcorner) * magnification ;
-		final float y1s = (y1p - ycorner) * magnification ;
+		final double x0s = (x0p - xcorner) * magnification ;
+		final double y0s = (y0p - ycorner) * magnification ;
+		final double x1s = (x1p - xcorner) * magnification ;
+		final double y1s = (y1p - ycorner) * magnification ;
 		// Round
-		final int x0 = Math.round(x0s);
-		final int y0 = Math.round(y0s);
-		final int x1 = Math.round(x1s);
-		final int y1 = Math.round(y1s);
+		final int x0 = (int) Math.round(x0s);
+		final int y0 = (int) Math.round(y0s);
+		final int x1 = (int) Math.round(x1s);
+		final int y1 = (int) Math.round(y1s);
 
 		g2d.drawLine(x0, y0, x1, y1);
 

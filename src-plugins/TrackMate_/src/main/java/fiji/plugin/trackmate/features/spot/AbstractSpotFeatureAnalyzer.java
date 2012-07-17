@@ -1,19 +1,17 @@
 package fiji.plugin.trackmate.features.spot;
 
-import net.imglib2.img.Img;
-import net.imglib2.type.numeric.RealType;
+import net.imglib2.img.ImgPlus;
+import net.imglib2.type.NativeType;
+import net.imglib2.type.numeric.NumericType;
 
-public abstract class AbstractSpotFeatureAnalyzer<T extends RealType<T>> implements SpotFeatureAnalyzer<T> {
+public abstract class AbstractSpotFeatureAnalyzer<T> implements SpotFeatureAnalyzer<T> {
 	
 	/** The image data to operate on. */
-	protected Img<T> img;
-	/** The spatial calibration of the field {@link #img} */
-	protected  float[] calibration;
+	protected ImgPlus<T> img;
 
 	@Override
-	public void setTarget(Img<T> image, float[] calibration) {
+	public void setTarget(ImgPlus<T> image) {
 		this.img = image;
-		this.calibration = calibration;
 	}
 
 }

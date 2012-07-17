@@ -8,6 +8,8 @@ import java.util.Map;
 import java.util.Set;
 
 import mpicbg.imglib.util.Util;
+import net.imglib2.type.NativeType;
+import net.imglib2.type.numeric.RealType;
 
 import org.jgrapht.graph.DefaultWeightedEdge;
 
@@ -15,7 +17,7 @@ import fiji.plugin.trackmate.Dimension;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.TrackMateModel;
 
-public class TrackSpeedStatisticsAnalyzer implements TrackFeatureAnalyzer {
+public class TrackSpeedStatisticsAnalyzer<T extends RealType<T> & NativeType<T>> implements TrackFeatureAnalyzer<T> {
 
 
 	/*
@@ -74,7 +76,7 @@ public class TrackSpeedStatisticsAnalyzer implements TrackFeatureAnalyzer {
 	 */
 	
 	@Override
-	public void process(TrackMateModel model) {
+	public void process(TrackMateModel<T> model) {
 		
 		for(int index=0; index<model.getNTracks(); index++) {
 			
@@ -102,8 +104,8 @@ public class TrackSpeedStatisticsAnalyzer implements TrackFeatureAnalyzer {
 				Spot target = model.getEdgeTarget(edge);
 				
 				// Edge velocity
-				Float d2 = source.squareDistanceTo(target);
-				Float dt = source.diffTo(target, Spot.POSITION_T);
+				Double d2 = source.squareDistanceTo(target);
+				Double dt = source.diffTo(target, Spot.POSITION_T);
 				if (d2 == null || dt == null)
 					continue;
 				val = Math.sqrt(d2) / Math.abs(dt);
@@ -135,13 +137,13 @@ public class TrackSpeedStatisticsAnalyzer implements TrackFeatureAnalyzer {
 			double kurtosis = (n*M4) / (M2*M2) - 3;
 			double skewness =  Math.sqrt(n) * M3 / Math.pow(M2, 3/2.0) ;
 			
-			model.getFeatureModel().putTrackFeature(index, TRACK_MEDIAN_SPEED, (float) median);
-			model.getFeatureModel().putTrackFeature(index, TRACK_MIN_SPEED, (float) min);
-			model.getFeatureModel().putTrackFeature(index, TRACK_MAX_SPEED, (float) max);
-			model.getFeatureModel().putTrackFeature(index, TRACK_MEAN_SPEED, (float) mean);
-			model.getFeatureModel().putTrackFeature(index, TRACK_SPEED_STANDARD_DEVIATION, (float) Math.sqrt(variance));
-			model.getFeatureModel().putTrackFeature(index, TRACK_SPEED_KURTOSIS, (float) kurtosis);
-			model.getFeatureModel().putTrackFeature(index, TRACK_SPEED_SKEWNESS, (float) skewness);
+			model.getFeatureModel().putTrackFeature(index, TRACK_MEDIAN_SPEED, median);
+			model.getFeatureModel().putTrackFeature(index, TRACK_MIN_SPEED, min);
+			model.getFeatureModel().putTrackFeature(index, TRACK_MAX_SPEED, max);
+			model.getFeatureModel().putTrackFeature(index, TRACK_MEAN_SPEED, mean);
+			model.getFeatureModel().putTrackFeature(index, TRACK_SPEED_STANDARD_DEVIATION,  Math.sqrt(variance));
+			model.getFeatureModel().putTrackFeature(index, TRACK_SPEED_KURTOSIS, kurtosis);
+			model.getFeatureModel().putTrackFeature(index, TRACK_SPEED_SKEWNESS, skewness);
 			
 		}
 	}

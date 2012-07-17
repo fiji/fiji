@@ -4,7 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import mpicbg.imglib.util.Util;
+import net.imglib2.util.Util;
 
 /**
  * Plain implementation of the {@link Spot} interface.
@@ -22,7 +22,7 @@ public class SpotImp implements Spot {
 	public static AtomicInteger IDcounter = new AtomicInteger(0); 
 	
 	/** Store the individual features, and their values. */
-	private HashMap<String, Float> features = new HashMap<String, Float>();
+	private HashMap<String, Double> features = new HashMap<String, Double>();
 	/** A user-supplied name for this spot. */
 	private String name;
 	/** This spot ID */
@@ -37,12 +37,12 @@ public class SpotImp implements Spot {
 	/**
 	 * Instantiate a Spot. 
 	 * <p>
-	 * The given coordinate float array <b>must</b> have 3 elements. If the 3rd one is not
+	 * The given coordinate double array <b>must</b> have 3 elements. If the 3rd one is not
 	 * used (2D case), it can be set to a constant value 0. This constructor ensures that
 	 * none of the {@link Spot#POSITION_FEATURES} will be <code>null</code>, and ensure relevance
 	 * when calculating distances and so on.
 	 */
-	public SpotImp(float[] coordinates, String name) {
+	public SpotImp(double[] coordinates, String name) {
 		this.ID = IDcounter.getAndIncrement();
 		for (int i = 0; i < 3; i++)
 			putFeature(POSITION_FEATURES[i], coordinates[i]);
@@ -52,7 +52,7 @@ public class SpotImp implements Spot {
 			this.name = name;
 	}
 	
-	public SpotImp(float[] coordinates) {
+	public SpotImp(double[] coordinates) {
 		this(coordinates, null);
 	}
 	
@@ -76,11 +76,11 @@ public class SpotImp implements Spot {
 	public Spot clone() {
 		SpotImp newSpot = new SpotImp(ID);
 		// Deal with features
-		Float val;
+		Double val;
 		for(String key : features.keySet()) {
 			val = features.get(key);
 			if (null != val)
-				val = new Float(val);
+				val = new Double(val);
 			newSpot.putFeature(key, val);
 		}
 		// Deal with name
@@ -89,9 +89,9 @@ public class SpotImp implements Spot {
 	};
 	
 	/**
-	 * Convenience method that returns the X, Y and optionally Z feature in a float array.
+	 * Convenience method that returns the X, Y and optionally Z feature in a double array.
 	 */
-	public void getCoordinates(float[] coords) {
+	public void getCoordinates(double[] coords) {
 		for (int i = 0; i < coords.length; i++)
 			coords[i] = getFeature(POSITION_FEATURES[i]);
 	}
@@ -137,7 +137,7 @@ public class SpotImp implements Spot {
 		s.append("Time: "+getFeature(Spot.POSITION_T)+'\n');
 
 		// Coordinates
-		float[] coordinates = getPosition(null);
+		double[] coordinates = getPosition(null);
 		if (null == coordinates)
 			s.append("Position: <no coordinates>\n");
 		else 
@@ -148,7 +148,7 @@ public class SpotImp implements Spot {
 			s.append("No features calculated\n");
 		else {
 			s.append("Feature list:\n");
-			float val;
+			double val;
 			for (String key : features.keySet()) {
 				s.append("\t"+key.toString()+": ");
 				val = features.get(key);
@@ -163,9 +163,9 @@ public class SpotImp implements Spot {
 	}
 	
 	@Override
-	public float[] getPosition(float[] position) {
+	public double[] getPosition(double[] position) {
 		if (null == position) 
-			position = new float[3];
+			position = new double[3];
 		for (int i = 0; i < 3; i++) 
 			position[i] = getFeature(POSITION_FEATURES[i]);
 		return position;
@@ -176,43 +176,43 @@ public class SpotImp implements Spot {
 	 */
 	
 	
-	public Map<String,Float> getFeatures() {
+	public Map<String,Double> getFeatures() {
 		return features;
 	}
 	
 	@Override
-	public final Float getFeature(final String feature) {
+	public final Double getFeature(final String feature) {
 		return features.get(feature);
 	}
 	
 	@Override
-	public final void putFeature(final String feature, final float value) {
+	public final void putFeature(final String feature, final double value) {
 		features.put(feature, value);
 	}
 
 	@Override
-	public Float diffTo(Spot s, String feature) {
-		Float f1 = features.get(feature);
-		Float f2 = s.getFeature(feature);
+	public Double diffTo(Spot s, String feature) {
+		Double f1 = features.get(feature);
+		Double f2 = s.getFeature(feature);
 		if (f1 == null || f2 == null)
 			return null;
 		return f1 - f2;
 	}
 	
 	@Override
-	public Float normalizeDiffTo(Spot s, String feature) {
-		final Float a = features.get(feature);
-		final Float b = s.getFeature(feature);
+	public Double normalizeDiffTo(Spot s, String feature) {
+		final Double a = features.get(feature);
+		final Double b = s.getFeature(feature);
 		if (a == -b)
-			return 0f;
+			return 0d;
 		else
 			return Math.abs(a-b)/((a+b)/2);
 	}
 
 	@Override
-	public Float squareDistanceTo(Spot s) {
-		Float sumSquared = 0f;
-		Float thisVal, otherVal;
+	public Double squareDistanceTo(Spot s) {
+		Double sumSquared = 0d;
+		Double thisVal, otherVal;
 		
 		for (String f : POSITION_FEATURES) {
 			thisVal = features.get(f);

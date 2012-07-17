@@ -20,6 +20,9 @@ import java.util.List;
 
 import javax.swing.SwingUtilities;
 
+import net.imglib2.type.NativeType;
+import net.imglib2.type.numeric.RealType;
+
 import org.jgrapht.graph.DefaultWeightedEdge;
 
 import fiji.plugin.trackmate.Spot;
@@ -29,12 +32,12 @@ import fiji.plugin.trackmate.detection.BasicSegmenterSettings;
 import fiji.plugin.trackmate.detection.SegmenterSettings;
 import fiji.tool.AbstractTool;
 
-public class SpotEditTool extends AbstractTool implements MouseMotionListener, MouseListener, MouseWheelListener, KeyListener {
+public class SpotEditTool<T extends RealType<T> & NativeType<T>> extends AbstractTool implements MouseMotionListener, MouseListener, MouseWheelListener, KeyListener {
 
 	private static final boolean DEBUG = false;
 
-	private static final float COARSE_STEP = 2;
-	private static final float FINE_STEP = 0.2f;
+	private static final double COARSE_STEP = 2;
+	private static final double FINE_STEP = 0.2f;
 	private static final String TOOL_NAME = "Spot edit tool";
 	private static final String TOOL_ICON = "C444D01C777D11C999D21C000D31C777L4151C222D61"
 			+ "CcccD71C222D81C331D91Ceb5Da1Cd95Lb1c1Cda3Dd1Ca82De1C000Df1"
@@ -53,14 +56,15 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 			+ "C641L0e1eCa72D2eCb73D3eCc94D4e";
 
 	/** Fall back default radius when the settings does not give a default radius to use. */
-	private static final float FALL_BACK_RADIUS = 5;
+	private static final double FALL_BACK_RADIUS = 5;
 
 
+	@SuppressWarnings("rawtypes")
 	private static SpotEditTool instance;
 	private HashMap<ImagePlus, Spot> editedSpots = new HashMap<ImagePlus, Spot>();
-	private HashMap<ImagePlus, HyperStackDisplayer> displayers = new HashMap<ImagePlus, HyperStackDisplayer>();
+	private HashMap<ImagePlus, HyperStackDisplayer<T>> displayers = new HashMap<ImagePlus, HyperStackDisplayer<T>>();
 	/** The radius of the previously edited spot. */
-	private Float previousRadius = null;
+	private Double previousRadius = null;
 
 	private Spot quickEditedSpot;
 
@@ -78,9 +82,10 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 	 * Return the singleton instance for this tool. If it was not previously instantiated, this calls
 	 * instantiates it. 
 	 */
-	public static SpotEditTool getInstance() {
+	@SuppressWarnings("unchecked")
+	public static <T extends RealType<T> & NativeType<T>> SpotEditTool<T> getInstance() {
 		if (null == instance) {
-			instance = new SpotEditTool();
+			instance = new SpotEditTool<T>();
 			if (DEBUG)
 				System.out.println("[SpotEditTool] Instantiating: "+instance);
 		}
@@ -117,7 +122,7 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 	 * Register the given {@link HyperStackDisplayer}. If this method id not called, the tool will not
 	 * respond.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      
 	 */
-	public void register(final ImagePlus imp, final HyperStackDisplayer displayer) {
+	public void register(final ImagePlus imp, final HyperStackDisplayer<T> displayer) {
 		if (DEBUG)
 			System.out.println("[SpotEditTool] Registering "+imp+" and "+displayer);
 		displayers.put(imp, displayer);
@@ -131,7 +136,7 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 	public void mouseClicked(MouseEvent e) {
 		
 		final ImagePlus imp = getImagePlus(e);
-		final HyperStackDisplayer displayer = displayers.get(imp);
+		final HyperStackDisplayer<T> displayer = displayers.get(imp);
 		if (DEBUG) {
 			System.out.println("[SpotEditTool] @mouseClicked");
 			System.out.println("[SpotEditTool] Got "+imp+ " as ImagePlus");
@@ -148,7 +153,7 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 
 		final Spot clickLocation = displayer.getCLickLocation(e.getPoint());
 		final int frame = displayer.imp.getFrame() - 1;
-		final TrackMateModel model = displayer.getModel();
+		final TrackMateModel<T> model = displayer.getModel();
 		Spot target = model.getFilteredSpots().getSpotAt(clickLocation, frame);
 		Spot editedSpot = editedSpots.get(imp);
 
@@ -183,7 +188,7 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 
 			if (null == editedSpot) {
 				// No spot is currently edited, we pick one to edit
-				float radius;
+				double radius;
 				if (null != target && null != target.getFeature(Spot.RADIUS)) {
 					radius = target.getFeature(Spot.RADIUS);
 				} else {
@@ -216,11 +221,11 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 
 				// A hack: we update the current z and t of the edited spot to the current one, 
 				// because it is not updated otherwise: there is no way to listen to slice change
-				final float zslice = (displayer.imp.getSlice()-1) * displayer.calibration[2];
+				final double zslice = (displayer.imp.getSlice()-1) * displayer.calibration[2];
 				editedSpot.putFeature(Spot.POSITION_Z, zslice);
 				Integer initFrame = displayer.getModel().getFilteredSpots().getFrame(editedSpot);
 				// Move it in Z
-				final float z = (displayer.imp.getSlice()-1) * displayer.calibration[2];
+				final double z = (displayer.imp.getSlice()-1) * displayer.calibration[2];
 				editedSpot.putFeature(Spot.POSITION_Z, z);
 				editedSpot.putFeature(Spot.POSITION_T, frame * displayer.settings.dt);
 
@@ -271,7 +276,7 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 	@Override
 	public void mouseDragged(MouseEvent e) {
 		final ImagePlus imp = getImagePlus(e);
-		final HyperStackDisplayer displayer = displayers.get(imp);
+		final HyperStackDisplayer<T> displayer = displayers.get(imp);
 		if (null == displayer)
 			return;
 		Spot editedSpot = editedSpots.get(imp);
@@ -279,9 +284,9 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 			return;
 		final double ix = displayer.canvas.offScreenXD(e.getX()) + 0.5f;  // relative to pixel center
 		final double iy =  displayer.canvas.offScreenYD(e.getY()) + 0.5f;
-		final float x = (float) (ix * displayer.calibration[0]);
-		final float y = (float) (iy * displayer.calibration[1]);
-		final float z = (displayer.imp.getSlice()-1) * displayer.calibration[2];
+		final double x = (double) (ix * displayer.calibration[0]);
+		final double y = (double) (iy * displayer.calibration[1]);
+		final double z = (displayer.imp.getSlice()-1) * displayer.calibration[2];
 		editedSpot.putFeature(Spot.POSITION_X, x);
 		editedSpot.putFeature(Spot.POSITION_Y, y);
 		editedSpot.putFeature(Spot.POSITION_Z, z);
@@ -294,7 +299,7 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 		if (quickEditedSpot == null)
 			return;
 		final ImagePlus imp = getImagePlus(e);
-		final HyperStackDisplayer displayer = displayers.get(imp);
+		final HyperStackDisplayer<T> displayer = displayers.get(imp);
 		if (null == displayer)
 			return;
 		Spot editedSpot = editedSpots.get(imp);
@@ -303,9 +308,9 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 
 		final double ix = displayer.canvas.offScreenXD(e.getX()) + 0.5f;  // relative to pixel center
 		final double iy =  displayer.canvas.offScreenYD(e.getY()) + 0.5f;
-		final float x = (float) (ix * displayer.calibration[0]);
-		final float y = (float) (iy * displayer.calibration[1]);
-		final float z = (displayer.imp.getSlice()-1) * displayer.calibration[2];
+		final double x = (double) (ix * displayer.calibration[0]);
+		final double y = (double) (iy * displayer.calibration[1]);
+		final double z = (displayer.imp.getSlice()-1) * displayer.calibration[2];
 		quickEditedSpot.putFeature(Spot.POSITION_X, x);
 		quickEditedSpot.putFeature(Spot.POSITION_Y, y);
 		quickEditedSpot.putFeature(Spot.POSITION_Z, z);
@@ -321,13 +326,13 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 	@Override
 	public void mouseWheelMoved(MouseWheelEvent e) {
 		final ImagePlus imp = getImagePlus(e);
-		final HyperStackDisplayer displayer = displayers.get(imp);
+		final HyperStackDisplayer<T> displayer = displayers.get(imp);
 		if (null == displayer)
 			return;
 		Spot editedSpot = editedSpots.get(imp);
 		if (null == editedSpot || !e.isAltDown())
 			return;
-		float radius = editedSpot.getFeature(Spot.RADIUS);
+		double radius = editedSpot.getFeature(Spot.RADIUS);
 		if (e.isShiftDown()) 
 			radius += e.getWheelRotation() * displayer.calibration[0] * COARSE_STEP;
 		else 
@@ -354,11 +359,11 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 		final ImagePlus imp = getImagePlus(e);
 		if (imp == null)
 			return;
-		final HyperStackDisplayer displayer = displayers.get(imp);
+		final HyperStackDisplayer<T> displayer = displayers.get(imp);
 		if (null == displayer)
 			return;
 
-		TrackMateModel model = displayer.getModel();
+		TrackMateModel<T> model = displayer.getModel();
 		Spot editedSpot = editedSpots.get(imp);
 
 		int keycode = e.getKeyCode(); 
@@ -405,7 +410,7 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 
 			if (null == editedSpot) {
 				// Create and drop a new spot
-				float radius;
+				double radius;
 				if (null != previousRadius) {
 					radius = previousRadius; 
 				} else { 
@@ -420,7 +425,7 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 				Point mouseLocation = MouseInfo.getPointerInfo().getLocation();
 				SwingUtilities.convertPointFromScreen(mouseLocation, displayer.canvas);
 				Spot newSpot = displayer.getCLickLocation(mouseLocation);
-				float zpos = (displayer.imp.getSlice()-1) * displayer.calibration[2];
+				double zpos = (displayer.imp.getSlice()-1) * displayer.calibration[2];
 				int frame = displayer.imp.getFrame() - 1;
 				newSpot.putFeature(Spot.POSITION_T, frame * displayer.settings.dt);
 				newSpot.putFeature(Spot.POSITION_Z, zpos);
@@ -512,7 +517,7 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 				} else {
 					factor = 1;
 				}
-				float radius = target.getFeature(Spot.RADIUS);
+				double radius = target.getFeature(Spot.RADIUS);
 				if (e.isShiftDown()) 
 					radius += factor * displayer.calibration[0] * COARSE_STEP;
 				else 
@@ -552,14 +557,14 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 					ArrayList<Spot> copiedSpots = new ArrayList<Spot>(previousFrameSpots.size());
 					HashSet<String> featuresKey = new HashSet<String>(previousFrameSpots.get(0).getFeatures().keySet());
 					featuresKey.remove(Spot.POSITION_T); // Deal with time separately
-					float dt = model.getSettings().dt;
+					double dt = model.getSettings().dt;
 					if (dt == 0)
 						dt = 1;
 					
 					for(Spot spot : previousFrameSpots) {
 						Spot newSpot = new SpotImp(spot.getPosition(null), spot.getName());
 						// Deal with features
-						Float val;
+						Double val;
 						for(String key : featuresKey) {
 							val = spot.getFeature(key);
 							if (val == null) {
@@ -614,10 +619,10 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 			final ImagePlus imp = getImagePlus(e);
 			if (imp == null)
 				return;
-			final HyperStackDisplayer displayer = displayers.get(imp);
+			final HyperStackDisplayer<T> displayer = displayers.get(imp);
 			if (null == displayer)
 				return;
-			TrackMateModel model = displayer.getModel();
+			TrackMateModel<T> model = displayer.getModel();
 			model.beginUpdate();
 			try {
 				model.updateFeatures(quickEditedSpot);

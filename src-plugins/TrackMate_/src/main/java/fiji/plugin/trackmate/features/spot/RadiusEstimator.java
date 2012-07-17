@@ -32,8 +32,8 @@ public class RadiusEstimator<T extends RealType<T>> extends IndependentSpotFeatu
 		FEATURE_DIMENSIONS.put(ESTIMATED_DIAMETER, Dimension.LENGTH);
 	}
 	
-	private static final float MIN_DIAMETER_RATIO = 0.1f;
-	private static final float MAX_DIAMETER_RATIO = 2;
+	private static final double MIN_DIAMETER_RATIO = 0.1f;
+	private static final double MAX_DIAMETER_RATIO = 2;
 	
 	
 	/*
@@ -41,7 +41,7 @@ public class RadiusEstimator<T extends RealType<T>> extends IndependentSpotFeatu
 	 */
 	
 	/** Utility holder. */
-	private float[] coords;
+	private double[] coords;
 	/** The number of different diameters to try. */
 	protected int nDiameters = 20;
 
@@ -58,28 +58,28 @@ public class RadiusEstimator<T extends RealType<T>> extends IndependentSpotFeatu
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	@Override
 	public void process(Spot spot) {
-		coords = new float[img.numDimensions()];
+		coords = new double[img.numDimensions()];
 		for (int i = 0; i < coords.length; i++) {
 			coords[i] = spot.getFeature(Spot.POSITION_FEATURES[i]);
 		}
 
 		// Get diameter array and radius squared
-		final float radius = spot.getFeature(Spot.RADIUS);
-		final float[] diameters = prepareDiameters(radius*2, nDiameters);
-		final float[] r2 = new float[nDiameters];
+		final double radius = spot.getFeature(Spot.RADIUS);
+		final double[] diameters = prepareDiameters(radius*2, nDiameters);
+		final double[] r2 = new double[nDiameters];
 		for (int i = 0; i < r2.length; i++) {
 			r2[i] = diameters[i] * diameters[i] / 4 ;
 		}
 		
 		// Calculate total intensity in balls
-		final float[] ring_intensities = new float[nDiameters];
+		final double[] ring_intensities = new double[nDiameters];
 		final int[]    ring_volumes = new int[nDiameters];
 
 		final DomainCursor<T> cursor;
 		if (img.numDimensions() == 3)
-			cursor = new SphereCursor(img, coords, diameters[nDiameters-2]/2, calibration);
+			cursor = new SphereCursor(img, coords, diameters[nDiameters-2]/2);
 		else
-			cursor = new DiscCursor(img, coords, diameters[nDiameters-2]/2, calibration);
+			cursor = new DiscCursor(img, coords, diameters[nDiameters-2]/2);
 		double d2;
 		int i;
 		while(cursor.hasNext())  {
@@ -91,19 +91,19 @@ public class RadiusEstimator<T extends RealType<T>> extends IndependentSpotFeatu
 		}
 
 		// Calculate mean intensities from ring volumes
-		final float[] mean_intensities = new float[diameters.length];
+		final double[] mean_intensities = new double[diameters.length];
 		for (int j = 0; j < mean_intensities.length; j++) 
 			mean_intensities[j] = ring_intensities[j] / ring_volumes[j];
 		
 		// Calculate contrasts as minus difference between outer and inner rings mean intensity
-		final float[] contrasts = new float[diameters.length - 1];
+		final double[] contrasts = new double[diameters.length - 1];
 		for (int j = 0; j < contrasts.length; j++) {
 			contrasts[j] = - ( mean_intensities[j+1] - mean_intensities[j] );
 //			System.out.println(String.format("For diameter %.1f, found contrast of %.1f", diameters[j], contrasts[j])); 
 		}
 		
 		// Find max contrast
-		float maxConstrast = Float.NEGATIVE_INFINITY;
+		double maxConstrast = Float.NEGATIVE_INFINITY;
 		int maxIndex = 0;
 		for (int j = 0; j < contrasts.length; j++) {
 			if (contrasts[j] > maxConstrast) {
@@ -112,7 +112,7 @@ public class RadiusEstimator<T extends RealType<T>> extends IndependentSpotFeatu
 			}
 		}
 		
-		float bestDiameter;
+		double bestDiameter;
 		if ( 1 >= maxIndex || contrasts.length-1 == maxIndex) {
 			bestDiameter = diameters[maxIndex];
 		} else {
@@ -124,18 +124,18 @@ public class RadiusEstimator<T extends RealType<T>> extends IndependentSpotFeatu
 		spot.putFeature(ESTIMATED_DIAMETER, bestDiameter);		
 	}
 	
-	private static final float quadratic1DInterpolation(float x1, float y1, float x2, float y2, float x3, float y3) {
-		final float d2 = 2 * ( (y3-y2)/(x3-x2) - (y2-y1)/(x2-x1) ) / (x3-x1);
+	private static final double quadratic1DInterpolation(double x1, double y1, double x2, double y2, double x3, double y3) {
+		final double d2 = 2 * ( (y3-y2)/(x3-x2) - (y2-y1)/(x2-x1) ) / (x3-x1);
 		if (d2==0)
 			return x2;
 		else {
-			final float d1 = (y3-y2)/(x3-x2) - d2/2 * (x3-x2);
+			final double d1 = (y3-y2)/(x3-x2) - d2/2 * (x3-x2);
 			return x2 -d1/d2;
 		}
 	}
 	
-	private static final float[] prepareDiameters(float centralDiameter, int nDiameters) {
-		final float[] diameters = new float[nDiameters];
+	private static final double[] prepareDiameters(double centralDiameter, int nDiameters) {
+		final double[] diameters = new double[nDiameters];
 		for (int i = 0; i < diameters.length; i++) {
 			diameters[i] = centralDiameter * ( MIN_DIAMETER_RATIO   
 				+ i * (MAX_DIAMETER_RATIO - MIN_DIAMETER_RATIO)/(nDiameters-1) );

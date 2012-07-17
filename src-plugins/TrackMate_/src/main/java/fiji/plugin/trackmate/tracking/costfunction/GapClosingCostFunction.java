@@ -81,7 +81,7 @@ public class GapClosingCostFunction {
 
 						SortedSet<Spot> seg1 = trackSegments.get(i);
 						Spot end = seg1.last();				// get last Spot of seg1
-						Float tend = end.getFeature(Spot.POSITION_T); // we want at least tstart > tend
+						Double tend = end.getFeature(Spot.POSITION_T); // we want at least tstart > tend
 
 						// Set the gap closing scores for each segment start and end pair
 						for (int j = 0; j < n; j++) {
@@ -94,7 +94,7 @@ public class GapClosingCostFunction {
 
 							SortedSet<Spot> seg2 = trackSegments.get(j);
 							Spot start = seg2.first();			// get first Spot of seg2
-							Float tstart = start.getFeature(Spot.POSITION_T);
+							Double tstart = start.getFeature(Spot.POSITION_T);
 
 							// Frame cutoff
 							if (tstart - tend > timeCutoff || tend >= tstart) {

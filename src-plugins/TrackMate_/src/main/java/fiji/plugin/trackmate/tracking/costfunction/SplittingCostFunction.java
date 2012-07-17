@@ -114,8 +114,8 @@ public class SplittingCostFunction {
 							}
 
 							// Frame threshold - middle Spot must be one frame behind of the start Spot
-							Float tstart = start.getFeature(Spot.POSITION_T);
-							Float tmiddle = middle.getFeature(Spot.POSITION_T);
+							Double tstart = start.getFeature(Spot.POSITION_T);
+							Double tmiddle = middle.getFeature(Spot.POSITION_T);
 							if ( (tstart - tmiddle > timeCutoff) || (tstart - tmiddle <= 0) ) {
 								m.set(i, j, blockingValue);
 								continue;

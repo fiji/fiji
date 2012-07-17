@@ -7,22 +7,28 @@ import fiji.plugin.trackmate.tracking.TrackerSettings;
 import ij.ImagePlus;
 import ij.gui.Roi;
 
+import java.awt.Polygon;
 import java.awt.Rectangle;
 import java.util.ArrayList;
 import java.util.List;
 
+import net.imglib2.img.ImagePlusAdapter;
+import net.imglib2.img.ImgPlus;
+import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
 
 /**
  * This class is used to store user settings for the {@link TrackMate_} plugin.
  * It is simply made of public fields 
  */
-public class Settings {
+public class Settings <T extends RealType<T> & NativeType<T>> {
 	
-	public static final Settings DEFAULT = new Settings();
-			
-	/** The ImagePlus to operate on. */
-	public ImagePlus imp;
+	/** The ImgPlus to operate on. */
+	public ImgPlus<T> img;
+	/** The polygon of interest. This will be used to crop the image and to discard 
+	 * found spots out of the polygon. If <code>null</code>, the whole image is 
+	 * considered. */
+	public Polygon polygon;
 	// Crop cube
 	/** The time-frame index, <b>0-based</b>, of the first time-point to process. */
 	public int tstart;
@@ -56,7 +62,7 @@ public class Settings {
 	public String timeUnits 		= "frames";
 	public String spaceUnits 		= "pixels";
 	
-	public SpotSegmenter<? extends RealType<?>> segmenter;
+	public SpotSegmenter<T> segmenter;
 	public SpotTracker tracker;
 	
 	public SegmenterSettings segmenterSettings = null;
@@ -93,7 +99,7 @@ public class Settings {
 	 */
 	public Settings(ImagePlus imp) {
 		// Source image
-		this.imp = imp;
+		this.img = ImagePlusAdapter.wrapImgPlus(imp);
 		// File info
 		this.imageFileName = imp.getFileInfo().fileName;
 		this.imageFolder = imp.getFileInfo().directory;
@@ -125,12 +131,14 @@ public class Settings {
 			this.xend = width-1;
 			this.ystart = 0;
 			this.yend = height-1;
+			this.polygon = null;
 		} else {
 			Rectangle boundingRect = roi.getBounds();
 			this.xstart = boundingRect.x; 
 			this.xend = boundingRect.width;
 			this.ystart = boundingRect.y;
 			this.yend = boundingRect.height+boundingRect.y;
+			this.polygon = roi.getPolygon();
 		}
 		// The rest is left to the user
 	}
@@ -151,10 +159,10 @@ public class Settings {
 	@Override
 	public String toString() {
 		String str = ""; 
-		if (null == imp) {
-			str = "Image with:\n";
+		if (null == img) {
+			str = "Blank image with:\n";
 		} else {
-			str = "For image: "+imp.getShortTitle()+'\n';			
+			str = "For image: "+img.getName()+'\n';			
 		}
 		str += String.format("  X = %4d - %4d, dx = %g %s\n", xstart, xend, dx, spaceUnits);
 		str += String.format("  Y = %4d - %4d, dy = %g %s\n", ystart, yend, dy, spaceUnits);

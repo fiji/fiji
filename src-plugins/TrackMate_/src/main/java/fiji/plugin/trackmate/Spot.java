@@ -10,7 +10,7 @@ import fiji.plugin.trackmate.util.TMUtils;
 
 /**
  * Interface for objects that can store and retrieve feature values.
- * @author Jean-Yves Tinevez <jeanyves.tinevez@gmail.com> - Sep 2010 - 2011
+ * @author Jean-Yves Tinevez <jeanyves.tinevez@gmail.com> - Sep 2010 - 2012
  *
  */
 public interface Spot {
@@ -23,7 +23,7 @@ public interface Spot {
 	public final static Comparator<Spot> frameComparator = new Comparator<Spot>() {
 		@Override
 		public int compare(Spot o1, Spot o2) {
-			final float diff = o2.diffTo(o1, POSITION_T);
+			final double diff = o2.diffTo(o1, POSITION_T);
 			if (diff == 0) 
 				return 0;
 			else if (diff < 0)
@@ -68,7 +68,7 @@ public interface Spot {
 	/**
 	 * Specify the numerical value of a feature for this spot.
 	 */
-	public void putFeature(String feature, float value);
+	public void putFeature(String feature, double value);
 
 	/**
 	 * Returns the value mapped to the given spot feature.
@@ -76,30 +76,30 @@ public interface Spot {
 	 * @return The value corresponding to this {@link SpotFeature}, 
 	 * <code>null</code> if it has not been set.
 	 */
-	public Float getFeature(String feature);
+	public Double getFeature(String feature);
 
 	/**
 	 * Returns the Map of spot features  for this Spot.
 	 * @return  a Map with spot feature names as keys. 
 	 */
-	public Map<String, Float> getFeatures();
+	public Map<String, Double> getFeatures();
 
 	/**
-	 * Utility method that store the position features in the 3 elements float array.
+	 * Utility method that store the position features in the 3 elements double array.
 	 * If the given array is <code>null</code>, a new array is created.
 	 */
-	public float[] getPosition(float[] position);
+	public double[] getPosition(double[] position);
 
 	/**
 	 * Return the square distance from this spot to another, using the position features
 	 */
-	public Float squareDistanceTo(Spot s);
+	public Double squareDistanceTo(Spot s);
 
 	/**
 	 * Return the difference of the feature value of this spot with the one of the given spot.
 	 * By construction, this operation is anti-symmetric (A.diffTo(B) = - B.diffTo(A)).
 	 */
-	public Float diffTo(Spot s, String feature);
+	public Double diffTo(Spot s, String feature);
 
 	/**
 	 * Return the absolute normalized difference of the feature value of this spot 
@@ -110,7 +110,7 @@ public interface Spot {
 	 * <p>
 	 * By construction, this operation is symmetric (A.normalizeDiffTo(B) = B.normalizeDiffTo(A)).
 	 */
-	public Float normalizeDiffTo(Spot s, String feature);
+	public Double normalizeDiffTo(Spot s, String feature);
 
 	/**
 	 * Return the ID number of the spot, use for saving. 

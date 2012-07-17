@@ -6,6 +6,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
+import net.imglib2.type.NativeType;
+import net.imglib2.type.numeric.RealType;
+
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMateModelChangeListener;
@@ -18,7 +21,7 @@ import fiji.plugin.trackmate.TrackMateSelectionChangeListener;
  * <p>
  * @author Jean-Yves Tinevez <jeanyves.tinevez@gmail.com> Jan 2011
  */
-public abstract class AbstractTrackMateModelView implements TrackMateSelectionChangeListener, TrackMateSelectionView, TrackMateModelView, TrackMateModelChangeListener {
+public abstract class AbstractTrackMateModelView<T extends RealType<T> & NativeType<T>> implements TrackMateSelectionChangeListener, TrackMateSelectionView, TrackMateModelView<T>, TrackMateModelChangeListener {
 
 	/*
 	 * FIELDS
@@ -32,7 +35,7 @@ public abstract class AbstractTrackMateModelView implements TrackMateSelectionCh
 	protected Map<String, Object> displaySettings = new HashMap<String, Object>();
 
 	/** The model displayed by this class. */
-	protected TrackMateModel model;
+	protected TrackMateModel<T> model;
 	
 	/** The track colors. */
 	protected Map<Set<Spot>, Color> trackColors;
@@ -54,12 +57,12 @@ public abstract class AbstractTrackMateModelView implements TrackMateSelectionCh
 	 */
 
 	@Override
-	public TrackMateModel getModel() {
+	public TrackMateModel<T> getModel() {
 		return model;
 	}
 
 	@Override
-	public void setModel(TrackMateModel model) {
+	public void setModel(TrackMateModel <T>model) {
 		if (null != this.model) {
 			this.model.removeTrackMateModelChangeListener(this);
 			this.model.removeTrackMateSelectionChangeListener(this);

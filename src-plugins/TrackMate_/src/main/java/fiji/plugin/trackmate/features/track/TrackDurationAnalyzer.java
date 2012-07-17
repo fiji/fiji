@@ -7,11 +7,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import net.imglib2.type.NativeType;
+import net.imglib2.type.numeric.RealType;
+
 import fiji.plugin.trackmate.Dimension;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.TrackMateModel;
 
-public class TrackDurationAnalyzer implements TrackFeatureAnalyzer {
+public class TrackDurationAnalyzer<T extends RealType<T> & NativeType<T>> implements TrackFeatureAnalyzer<T> {
 	
 	
 	public static final String 		TRACK_DURATION = "TRACK_DURATION";
@@ -51,14 +54,14 @@ public class TrackDurationAnalyzer implements TrackFeatureAnalyzer {
 	 */
 
 	@Override
-	public void process(final TrackMateModel model) {
+	public void process(final TrackMateModel<T> model) {
 		// I love brute force.
 		final List<Set<Spot>> allTracks = model.getTrackSpots();
 		for(int index=0; index<model.getNTracks(); index++) {
 			Set<Spot> track = allTracks.get(index);
-			float minT = Float.POSITIVE_INFINITY;
-			float maxT = Float.NEGATIVE_INFINITY;
-			Float t;
+			double minT = Double.POSITIVE_INFINITY;
+			double maxT = Double.NEGATIVE_INFINITY;
+			Double t;
 			boolean allNull = true;
 			Spot startSpot = null;
 			Spot endSpot = null;
@@ -80,7 +83,7 @@ public class TrackDurationAnalyzer implements TrackFeatureAnalyzer {
 				model.getFeatureModel().putTrackFeature(index, TRACK_DURATION, (maxT-minT));
 				model.getFeatureModel().putTrackFeature(index, TRACK_START, minT);
 				model.getFeatureModel().putTrackFeature(index, TRACK_STOP, maxT);
-				model.getFeatureModel().putTrackFeature(index, TRACK_DISPLACEMENT, (float) Math.sqrt(startSpot.squareDistanceTo(endSpot)));
+				model.getFeatureModel().putTrackFeature(index, TRACK_DISPLACEMENT, (double) Math.sqrt(startSpot.squareDistanceTo(endSpot)));
 			}
 		}
 	}

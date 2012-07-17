@@ -8,6 +8,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import net.imglib2.type.NativeType;
+import net.imglib2.type.numeric.RealType;
+
 import org.jgrapht.alg.ConnectivityInspector;
 import org.jgrapht.alg.DijkstraShortestPath;
 import org.jgrapht.event.GraphEdgeChangeEvent;
@@ -120,7 +123,7 @@ import fiji.plugin.trackmate.visualization.TrackMateModelView;
  * @author Jean-Yves Tinevez <tinevez@pasteur.fr> - 2010-2011
  * 
  */
-public class TrackMateModel {
+public class TrackMateModel <T extends RealType<T> & NativeType<T>> {
 
 	/*
 	 * CONSTANTS
@@ -135,7 +138,7 @@ public class TrackMateModel {
 
 	// FEATURES
 	
-	FeatureModel featureModel;
+	FeatureModel<T> featureModel;
 	
 	// SPOTS
 
@@ -217,7 +220,7 @@ public class TrackMateModel {
 	/** The logger to append processes messages */
 	protected Logger logger = Logger.DEFAULT_LOGGER;
 	/** The settings that determine processes actions */
-	protected Settings settings = new Settings();;
+	protected Settings<T> settings = new Settings<T>();
 
 	// LISTENERS
 
@@ -240,7 +243,7 @@ public class TrackMateModel {
 
 	public TrackMateModel() {
 		graph.addGraphListener(new MyGraphListener());
-		featureModel = new FeatureModel(this);
+		featureModel = new FeatureModel<T>(this);
 	}
 
 
@@ -658,7 +661,7 @@ public class TrackMateModel {
 	/**
 	 * Return the {@link Settings} object that determines the behavior of this plugin.
 	 */
-	public Settings getSettings() {
+	public Settings<T> getSettings() {
 		return settings;
 	}
 
@@ -670,7 +673,7 @@ public class TrackMateModel {
 	 * @see #execTracking()
 	 */
 
-	public void setSettings(Settings settings) {
+	public void setSettings(Settings<T> settings) {
 		this.settings = settings;
 	}
 
@@ -678,7 +681,7 @@ public class TrackMateModel {
 	 * FEATURES
 	 */
 
-	public FeatureModel getFeatureModel() {
+	public FeatureModel<T> getFeatureModel() {
 		return featureModel;
 	}
 	

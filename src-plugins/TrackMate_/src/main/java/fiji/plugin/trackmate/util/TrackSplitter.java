@@ -6,6 +6,9 @@ import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
+import net.imglib2.type.NativeType;
+import net.imglib2.type.numeric.RealType;
+
 import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.traverse.DepthFirstIterator;
 
@@ -13,7 +16,7 @@ import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotImp;
 import fiji.plugin.trackmate.TrackMateModel;
 
-public class TrackSplitter {
+public class TrackSplitter <T extends RealType<T> & NativeType<T>> {
 
 	public static final int LONE_VERTEX			= 0;
 	public static final int BRANCH_START		= 1;
@@ -26,9 +29,9 @@ public class TrackSplitter {
 	public static final int COMPLEX_POINT		= 128;
 	public static final int NOT_IN_GRAPH		= 256;
 	
-	private TrackMateModel model; 
+	private TrackMateModel<T> model; 
 	
-	public TrackSplitter(final TrackMateModel model) {
+	public TrackSplitter(final TrackMateModel<T> model) {
 		this.model = model;
 	}
 	
@@ -110,7 +113,7 @@ public class TrackSplitter {
 		return prunedBranches;
 	}
 	
-	public static final int getVertexType(final TrackMateModel model, final Spot spot) {
+	public static final <T extends RealType<T> & NativeType<T>> int getVertexType(final TrackMateModel<T> model, final Spot spot) {
 		if (!model.getFilteredSpots().getAllSpots().contains(spot))
 			return NOT_IN_GRAPH;
 		
@@ -120,7 +123,6 @@ public class TrackSplitter {
 		if (nConnections == 0) 
 			return LONE_VERTEX;
 		
-//		float t0 = spot.getFeature(SpotFeature.POSITION_T);
 		int t0 = model.getSpots().getFrame(spot);
 
 		if (nConnections == 1) {
@@ -128,7 +130,6 @@ public class TrackSplitter {
 			Spot other = model.getEdgeSource(edge);
 			if (other == spot)
 				other = model.getEdgeTarget(edge);
-//			float t1 = other.getFeature(SpotFeature.POSITION_T);
 			int t1 = model.getSpots().getFrame(other);
 			if (t1 > t0)
 				return BRANCH_START;
@@ -142,13 +143,13 @@ public class TrackSplitter {
 			Spot other1 = model.getEdgeSource(edge1);
 			if (other1 == spot)
 				other1 = model.getEdgeTarget(edge1);
-//			float t1 = other1.getFeature(SpotFeature.POSITION_T);
+//			double t1 = other1.getFeature(SpotFeature.POSITION_T);
 			int t1 = model.getSpots().getFrame(other1);
 			DefaultWeightedEdge edge2 = it.next();
 			Spot other2 = model.getEdgeSource(edge2);
 			if (other2 == spot)
 				other2 = model.getEdgeTarget(edge2);
-//			float t2 = other2.getFeature(SpotFeature.POSITION_T);
+//			double t2 = other2.getFeature(SpotFeature.POSITION_T);
 			int t2 = model.getSpots().getFrame(other2);
 			if ( (t2>t0 && t0>t1) || (t2<t0 && t0<t1) )
 				return BRIDGE;
@@ -164,7 +165,7 @@ public class TrackSplitter {
 			Spot other = model.getEdgeSource(edge);
 			if (other == spot)
 				other = model.getEdgeTarget(edge);
-			float t = other.getFeature(Spot.POSITION_T);
+			double t = other.getFeature(Spot.POSITION_T);
 			if (t > t0)
 				after++;
 			if (t < t0) 

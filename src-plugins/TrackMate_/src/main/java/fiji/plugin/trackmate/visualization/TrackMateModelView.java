@@ -3,12 +3,15 @@ package fiji.plugin.trackmate.visualization;
 import java.awt.Color;
 import java.util.Map;
 
+import net.imglib2.type.NativeType;
+import net.imglib2.type.numeric.RealType;
+
 import org.jfree.chart.renderer.InterpolatePaintScale;
 
 import fiji.plugin.trackmate.InfoTextable;
 import fiji.plugin.trackmate.TrackMateModel;
 
-public interface TrackMateModelView extends InfoTextable {
+public interface TrackMateModelView<T extends RealType<T> & NativeType<T>> extends InfoTextable {
 
 
 
@@ -211,9 +214,9 @@ public interface TrackMateModelView extends InfoTextable {
 	public void clear();
 
 	
-	public TrackMateModel getModel();
+	public TrackMateModel<T> getModel();
 
-	public void setModel(TrackMateModel model);
+	public void setModel(TrackMateModel<T> model);
 
 	public Map<String, Object> getDisplaySettings();
 

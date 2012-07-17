@@ -27,13 +27,16 @@ import javax.vecmath.Color4f;
 import javax.vecmath.Point3d;
 import javax.vecmath.Tuple3d;
 
+import net.imglib2.type.NativeType;
+import net.imglib2.type.numeric.RealType;
+
 import org.jfree.chart.renderer.InterpolatePaintScale;
 import org.jgrapht.graph.DefaultWeightedEdge;
 
-public class TrackDisplayNode extends ContentNode implements TimelapseListener {
+public class TrackDisplayNode <T extends RealType<T> & NativeType<T>> extends ContentNode implements TimelapseListener {
 
 	/** The model, needed to retrieve connectivity. */
-	protected TrackMateModel model;
+	protected TrackMateModel<T> model;
 
 	protected Map<String, Object> displaySettings;
 
@@ -79,7 +82,7 @@ public class TrackDisplayNode extends ContentNode implements TimelapseListener {
 	 * CONSTRUCTOR
 	 */
 
-	public TrackDisplayNode(TrackMateModel model, final Map<String, Object> displaySettings) {
+	public TrackDisplayNode(TrackMateModel<T> model, final Map<String, Object> displaySettings) {
 		this.model = model;
 		this.displaySettings = displaySettings;
 
@@ -442,7 +445,7 @@ public class TrackDisplayNode extends ContentNode implements TimelapseListener {
 		lines = new ArrayList<LineArray>(ntracks);
 
 		// Holder for coordinates (array ref will not be used, just its elements)
-		float[] coordinates = new float[3];
+		double[] coordinates = new double[3];
 
 		// Common line appearance
 		Appearance appearance = new Appearance();
@@ -549,7 +552,7 @@ public class TrackDisplayNode extends ContentNode implements TimelapseListener {
 		double xmax = Double.NEGATIVE_INFINITY;
 		double ymax = Double.NEGATIVE_INFINITY;
 		double zmax = Double.NEGATIVE_INFINITY;
-		float radius;
+		double radius;
 		for (Spot spot : model.getFilteredSpots()) {
 			radius = spot.getFeature(Spot.RADIUS);
 			if (xmax < spot.getFeature(Spot.POSITION_X) + radius)
@@ -570,7 +573,7 @@ public class TrackDisplayNode extends ContentNode implements TimelapseListener {
 		double xmin = Double.POSITIVE_INFINITY;
 		double ymin = Double.POSITIVE_INFINITY;
 		double zmin = Double.POSITIVE_INFINITY;
-		float radius;
+		double radius;
 		for (Spot spot : model.getFilteredSpots()) {
 			radius = spot.getFeature(Spot.RADIUS);
 			if (xmin > spot.getFeature(Spot.POSITION_X) - radius)
