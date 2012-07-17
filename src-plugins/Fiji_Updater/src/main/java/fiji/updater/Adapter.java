@@ -46,10 +46,12 @@ public class Adapter {
 	public final static String UPDATER_CLASS_NAME = "imagej.updater.gui.ImageJUpdater";
 	private final static String UPTODATE_CLASS_NAME = "imagej.updater.core.UpToDate";
 	private final static String SWING_PROGRESS_CLASS_NAME = "imagej.updater.gui.ProgressDialog";
+	private final static String STDERR_PROGRESS_CLASS_NAME = "imagej.updater.util.StderrProgress";
 	private final static String CHECKSUMMER_CLASS_NAME = "imagej.updater.core.Checksummer";
 	private final static String COLLECTION_CLASS_NAME = "imagej.updater.core.FilesCollection";
 	private static final String DOWNLOADER_CLASS_NAME = "imagej.updater.core.XMLFileDownloader";
 	private final static String INSTALLER_CLASS_NAME = "imagej.updater.core.Installer";
+	private static final String COMMAND_LINE_CLASS_NAME = "imagej.updater.ui.CommandLine";
 
 	private static ClassLoader remoteClassLoader;
 	private static Object progress;
@@ -158,6 +160,30 @@ public class Adapter {
 			return;
 		} catch (IllegalAccessException e) {
 			ui.error("Could not access the Updater: " + e.getMessage());
+			return;
+		}
+	}
+
+	public void runCommandLineUpdater(String[] args) {
+		try {
+			progress = newInstance(STDERR_PROGRESS_CLASS_NAME);
+		} catch (Exception e) {
+			ui.error("The Updater could not get the progress object:");
+			ui.handleException(e);
+			return;
+		}
+		if (progress != null) try {
+			if (remoteClassLoader != null) try {
+				firstTime();
+			} catch (Throwable t) {
+				t.printStackTrace();
+				ui.error("Could not download the ImageJ Updater!");
+				return;
+			}
+			invokeStatic(COMMAND_LINE_CLASS_NAME, "main", (Object)args);
+		} catch (Throwable t) {
+			ui.error("Could not access the Updater:");
+			ui.handleException(t);
 			return;
 		}
 	}
