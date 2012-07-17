@@ -4,6 +4,7 @@ import fiji.plugin.timelapsedisplay.GraphFrame;
 import fiji.plugin.timelapsedisplay.TimeLapseDisplay;
 import fiji.util.gui.GenericDialogPlus;
 import ij.IJ;
+import ij.ImageJ;
 import ij.ImagePlus;
 import ij.gui.DialogListener;
 import ij.gui.GenericDialog;
@@ -811,5 +812,21 @@ public class Bead_Registration implements PlugIn
 				}
 			});
 		}
-	}	
+	}
+
+	public static void main(String[] args) {
+		Class<Bead_Registration> clazz = Bead_Registration.class;
+		String className = clazz.getName();
+		String relativePath = "/" + className.replace('.', '/') + ".class";
+		String directory = clazz.getResource(relativePath).getPath();
+		directory = directory.substring(0,  directory.length() - relativePath.length());
+		if (directory.endsWith("/classes")) directory = directory.substring(0, directory.length() - "/classes".length());
+		System.setProperty("plugins.dir", directory);
+
+		new ImageJ();
+		IJ.run("Record...");
+		// this does not work: the recorder ignores anything run via IJ.run()
+		//IJ.run("Bead-based registration");
+		IJ.run("Find Commands...");
+	}
 }
