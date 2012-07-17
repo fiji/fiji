@@ -160,6 +160,7 @@ public class Bead_Registration implements PlugIn
 
 	public SPIMConfiguration singleChannel()
 	{
+		conf = null;
 		final GenericDialogPlus gd = new GenericDialogPlus( "Single Channel Bead-based Registration" );
 		
 		gd.addDirectoryOrFileField( "SPIM_data_directory", spimDataDirectory );
@@ -205,7 +206,10 @@ public class Bead_Registration implements PlugIn
 			{
 				if ( e == null )
 				{
-					conf = getConfiguration( dialog );
+					if ( !gd.wasCanceled() )
+					{
+						conf = getConfiguration( dialog );
+					}
 					return true;
 				}
 				if ( e instanceof TextEvent && e.getID() == TextEvent.TEXT_VALUE_CHANGED && e.getSource() == tfSpimDataDirectory )
