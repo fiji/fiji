@@ -3,7 +3,6 @@ package fiji.plugin.trackmate.io;
 import static fiji.plugin.trackmate.io.TmXmlKeys.*;
 import static fiji.plugin.trackmate.util.TMUtils.readBooleanAttribute;
 import static fiji.plugin.trackmate.util.TMUtils.readDoubleAttribute;
-import static fiji.plugin.trackmate.util.TMUtils.readFloatAttribute;
 import static fiji.plugin.trackmate.util.TMUtils.readIntAttribute;
 
 import ij.IJ;
@@ -17,8 +16,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-
-import mpicbg.imglib.type.numeric.RealType;
 
 import org.jdom.Attribute;
 import org.jdom.DataConversionException;
@@ -105,6 +102,7 @@ public class TmXmlReader {
 	 * Fields not set in the field will be <code>null</code> in the model. 
 	 * @throws DataConversionException 
 	 */
+	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public TrackMateModel getModel() {
 		if (!parsed)
 			parse();
@@ -114,7 +112,7 @@ public class TmXmlReader {
 		Settings settings = getSettings();
 		getSegmenterSettings(settings);
 		getTrackerSettings(settings);
-		settings.imp = getImage();
+//		settings.imp = getImage();
 		model.setSettings(settings);
 
 		// Spot Filters
@@ -151,6 +149,7 @@ public class TmXmlReader {
 
 
 
+	@SuppressWarnings("rawtypes")
 	public void readTrackFeatures(FeatureModel featureModel) {
 		if (!parsed)
 			parse();
@@ -183,9 +182,9 @@ public class TmXmlReader {
 					continue;
 				}
 
-				Float attVal = Float.NaN;
+				Double attVal = Double.NaN;
 				try {
-					attVal = attribute.getFloatValue();
+					attVal = attribute.getDoubleValue();
 				} catch (DataConversionException e) {
 					logger.error("Track "+trackID+": Cannot read the feature "+attName+" value. Skipping.\n");
 					continue;
@@ -213,7 +212,7 @@ public class TmXmlReader {
 		if (null == itEl)
 			return null;
 		String feature 	= itEl.getAttributeValue(FILTER_FEATURE_ATTRIBUTE_NAME);
-		Float value 	= readFloatAttribute(itEl, FILTER_VALUE_ATTRIBUTE_NAME, logger);
+		Double value 	= readDoubleAttribute(itEl, FILTER_VALUE_ATTRIBUTE_NAME, logger);
 		boolean isAbove	= readBooleanAttribute(itEl, FILTER_ABOVE_ATTRIBUTE_NAME, logger);
 		FeatureFilter ft = new FeatureFilter(feature, value, isAbove);
 		return ft;
@@ -236,7 +235,7 @@ public class TmXmlReader {
 		List<Element> ftEls = ftCollectionEl.getChildren(FILTER_ELEMENT_KEY);
 		for (Element ftEl : ftEls) {
 			String feature 	= ftEl.getAttributeValue(FILTER_FEATURE_ATTRIBUTE_NAME);
-			Float value 	= readFloatAttribute(ftEl, FILTER_VALUE_ATTRIBUTE_NAME, logger);
+			Double value 	= readDoubleAttribute(ftEl, FILTER_VALUE_ATTRIBUTE_NAME, logger);
 			boolean isAbove	= readBooleanAttribute(ftEl, FILTER_ABOVE_ATTRIBUTE_NAME, logger);
 			FeatureFilter ft = new FeatureFilter(feature, value, isAbove);
 			featureThresholds.add(ft);
@@ -260,7 +259,7 @@ public class TmXmlReader {
 		List<Element> ftEls = ftCollectionEl.getChildren(FILTER_ELEMENT_KEY);
 		for (Element ftEl : ftEls) {
 			String feature 	= ftEl.getAttributeValue(FILTER_FEATURE_ATTRIBUTE_NAME);
-			Float value 	= readFloatAttribute(ftEl, FILTER_VALUE_ATTRIBUTE_NAME, logger);
+			Double value 	= readDoubleAttribute(ftEl, FILTER_VALUE_ATTRIBUTE_NAME, logger);
 			boolean isAbove	= readBooleanAttribute(ftEl, FILTER_ABOVE_ATTRIBUTE_NAME, logger);
 			FeatureFilter ft = new FeatureFilter(feature, value, isAbove);
 			featureThresholds.add(ft);
@@ -277,6 +276,7 @@ public class TmXmlReader {
 	 * @return  a full Settings object
 	 * @throws DataConversionException 
 	 */
+	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public Settings getSettings() {
 		if (!parsed)
 			parse();
@@ -298,10 +298,10 @@ public class TmXmlReader {
 		// Image info settings
 		Element infoEl 	= root.getChild(IMAGE_ELEMENT_KEY);
 		if (null != infoEl) {
-			settings.dx				= readFloatAttribute(infoEl, IMAGE_PIXEL_WIDTH_ATTRIBUTE_NAME, logger);
-			settings.dy				= readFloatAttribute(infoEl, IMAGE_PIXEL_HEIGHT_ATTRIBUTE_NAME, logger);
-			settings.dz				= readFloatAttribute(infoEl, IMAGE_VOXEL_DEPTH_ATTRIBUTE_NAME, logger);
-			settings.dt				= readFloatAttribute(infoEl, IMAGE_TIME_INTERVAL_ATTRIBUTE_NAME, logger);
+			settings.dx				= readDoubleAttribute(infoEl, IMAGE_PIXEL_WIDTH_ATTRIBUTE_NAME, logger);
+			settings.dy				= readDoubleAttribute(infoEl, IMAGE_PIXEL_HEIGHT_ATTRIBUTE_NAME, logger);
+			settings.dz				= readDoubleAttribute(infoEl, IMAGE_VOXEL_DEPTH_ATTRIBUTE_NAME, logger);
+			settings.dt				= readDoubleAttribute(infoEl, IMAGE_TIME_INTERVAL_ATTRIBUTE_NAME, logger);
 			settings.width			= readIntAttribute(infoEl, IMAGE_WIDTH_ATTRIBUTE_NAME, logger, 512);
 			settings.height			= readIntAttribute(infoEl, IMAGE_HEIGHT_ATTRIBUTE_NAME, logger, 512);
 			settings.nslices		= readIntAttribute(infoEl, IMAGE_NSLICES_ATTRIBUTE_NAME, logger, 1);
@@ -337,7 +337,7 @@ public class TmXmlReader {
 		}
 
 		// Deal with segmenter
-		SpotSegmenter<? extends RealType<?>> segmenter;
+		SpotSegmenter segmenter;
 		String segmenterClassName = element.getAttributeValue(SEGMENTER_CLASS_ATTRIBUTE_NAME);
 		if (null == segmenterClassName) {
 			logger.error("Segmenter class is not present.\n");
@@ -405,6 +405,7 @@ public class TmXmlReader {
 	 *   
 	 * @param settings  the base {@link Settings} object to update.
 	 */
+	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public void getTrackerSettings(Settings settings) {
 		if (!parsed)
 			parse();

@@ -20,6 +20,9 @@ import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 
+import net.imglib2.type.NativeType;
+import net.imglib2.type.numeric.RealType;
+
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ExportableChartPanel;
 import org.jfree.chart.JFreeChart;
@@ -36,7 +39,7 @@ import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.util.TMUtils;
 
-public class SpotFeatureGrapher extends JFrame {
+public class SpotFeatureGrapher<T extends RealType<T> & NativeType<T>> extends JFrame {
 
 	private static final long serialVersionUID = 5983064022212100254L;
 	private static final Shape DEFAULT_SHAPE = new Ellipse2D.Double(-3, -3, 6, 6);
@@ -44,7 +47,7 @@ public class SpotFeatureGrapher extends JFrame {
 	private String xFeature;
 	private Set<String> yFeatures;
 	private List<Spot> spots;
-	private TrackMateModel model;
+	private TrackMateModel<T> model;
 	private Dimension xDimension;
 	private Map<String, Dimension> yDimensions;
 	private Map<String, String> featureNames;
@@ -53,7 +56,7 @@ public class SpotFeatureGrapher extends JFrame {
 	 * CONSTRUCTOR
 	 */
 
-	public SpotFeatureGrapher(final String xFeature, final Set<String> yFeatures, final List<Spot> spots, final TrackMateModel model) {
+	public SpotFeatureGrapher(final String xFeature, final Set<String> yFeatures, final List<Spot> spots, final TrackMateModel<T> model) {
 		this.xFeature = xFeature;
 		this.xDimension = model.getFeatureModel().getSpotFeatureDimensions().get(xFeature);
 		this.yFeatures = yFeatures;
@@ -71,7 +74,7 @@ public class SpotFeatureGrapher extends JFrame {
 	
 	private void initGUI() {
 				
-		final Settings settings = model.getSettings();
+		final Settings<T> settings = model.getSettings();
 		
 		// X label
 		String xAxisLabel = xFeature + " (" + TMUtils.getUnitsFor(xDimension, settings)+")";
@@ -113,8 +116,8 @@ public class SpotFeatureGrapher extends JFrame {
 				for(String feature : featuresThisDimension) {
 					XYSeries series = new XYSeries(featureNames.get(feature));
 					for(Spot spot : spots) {
-						Float x = spot.getFeature(xFeature);
-						Float y = spot.getFeature(feature);
+						Double x = spot.getFeature(xFeature);
+						Double y = spot.getFeature(feature);
 						if (null == x || null == y) {
 							continue;
 						}
@@ -151,7 +154,7 @@ public class SpotFeatureGrapher extends JFrame {
 			// Data-set for edges
 			XYEdgeSeriesCollection edgeDataset = new XYEdgeSeriesCollection();
 			{
-				Float x0, x1, y0, y1;
+				Double x0, x1, y0, y1;
 				XYEdgeSeries edgeSeries;
 				Spot source, target;
 				for(String yFeature : featuresThisDimension) {

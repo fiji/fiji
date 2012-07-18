@@ -3,9 +3,6 @@ package fiji.plugin.trackmate.features.spot;
 import java.util.Collection;
 
 import net.imglib2.img.ImgPlus;
-import net.imglib2.type.NativeType;
-import net.imglib2.type.numeric.NumericType;
-
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.features.FeatureAnalyzer;
 

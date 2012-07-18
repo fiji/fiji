@@ -14,6 +14,9 @@ import java.util.Map;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
+import net.imglib2.type.NativeType;
+import net.imglib2.type.numeric.RealType;
+
 import com.mxgraph.canvas.mxGraphics2DCanvas;
 import com.mxgraph.model.mxCell;
 import com.mxgraph.swing.mxGraphComponent;
@@ -30,18 +33,18 @@ import com.mxgraph.view.mxGraph;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.TrackMateModel;
 
-public class mxTrackGraphComponent extends mxGraphComponent implements mxIEventListener {
+public class mxTrackGraphComponent <T extends RealType<T> & NativeType<T>> extends mxGraphComponent implements mxIEventListener {
 
 	private static final long serialVersionUID = -1L;
 	private static final Color BACKGROUND_COLOR_1 	= Color.GRAY;
 	private static final Color BACKGROUND_COLOR_2 	= Color.LIGHT_GRAY;
 	private static final Color LINE_COLOR 			= Color.BLACK;
 
-	private TreeSet<Float> instants;
-	private TreeMap<Float, Integer> rows;
+	private TreeSet<Double> instants;
+	private TreeMap<Double, Integer> rows;
 	private int[] columnWidths = null;
 	private Color[] columnColors;
-	private TrackSchemeFrame frame;
+	private TrackSchemeFrame<T> frame;
 	
 	/** If true, will paint background decorations. */
 	private boolean doPaintDecorations = TrackSchemeFrame.DEFAULT_DO_PAINT_DECORATIONS;
@@ -50,14 +53,14 @@ public class mxTrackGraphComponent extends mxGraphComponent implements mxIEventL
 	 * CONSTRUCTOR
 	 */
 	
-	public mxTrackGraphComponent(TrackSchemeFrame frame) {
+	public mxTrackGraphComponent(TrackSchemeFrame<T> frame) {
 		super(frame.getGraph());
 		this.frame = frame;
 		getViewport().setOpaque(true);
 		getViewport().setBackground(BACKGROUND_COLOR_1);
 		setZoomFactor(2.0);
 
-		instants = new TreeSet<Float>();
+		instants = new TreeSet<Double>();
 		for (Spot s : frame.getModel().getFilteredSpots())
 			instants.add(s.getFeature(Spot.POSITION_T));
 
@@ -300,7 +303,7 @@ public class mxTrackGraphComponent extends mxGraphComponent implements mxIEventL
 		g.setFont(FONT.deriveFont(12*scale).deriveFont(Font.BOLD));
 
 		g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-		for(Float instant : instants) {
+		for(Double instant : instants) {
 			if (xcs > paintBounds.x && y > paintBounds.y - ycs && y < paintBounds.y + paintBounds.height) {
 				g.drawString(String.format("%.1f "+frame.getModel().getSettings().timeUnits, instant), x, y);
 				g.drawString(String.format("frame %.0f", (instant+1)/frame.getModel().getSettings().dt), x, Math.round(y+12*scale));
@@ -322,11 +325,11 @@ public class mxTrackGraphComponent extends mxGraphComponent implements mxIEventL
 		}
 	}
 
-	public void setRowForInstant(TreeMap<Float, Integer> rowForInstant) {
+	public void setRowForInstant(TreeMap<Double, Integer> rowForInstant) {
 		rows = rowForInstant;
 	}
 
-	public TreeMap<Float, Integer> getRowForInstant() {
+	public TreeMap<Double, Integer> getRowForInstant() {
 		return rows;
 	}
 

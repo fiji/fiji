@@ -12,6 +12,9 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
+import net.imglib2.type.NativeType;
+import net.imglib2.type.numeric.RealType;
+
 import org.jdom.Attribute;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -28,13 +31,13 @@ import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.detection.SegmenterSettings;
 import fiji.plugin.trackmate.tracking.TrackerSettings;
 
-public class TmXmlWriter {
+public class TmXmlWriter <T extends RealType<T> & NativeType<T>> {
 
 	/*
 	 * FIELD
 	 */
 
-	private TrackMateModel model;
+	private TrackMateModel<T> model;
 	private Element root;
 	private Logger logger;
 
@@ -42,7 +45,7 @@ public class TmXmlWriter {
 	 * CONSTRUCTORS
 	 */
 
-	public TmXmlWriter(TrackMateModel model, Logger logger) {
+	public TmXmlWriter(TrackMateModel<T> model, Logger logger) {
 		this.model = model;
 		this.root = new Element(ROOT_ELEMENT_KEY);
 		root.setAttribute(PLUGIN_VERSION_ATTRIBUTE_NAME, fiji.plugin.trackmate.TrackMate_.PLUGIN_NAME_VERSION);
@@ -158,7 +161,7 @@ public class TmXmlWriter {
 	 */
 
 	private void echoBaseSettings() {
-		Settings settings = model.getSettings();
+		Settings<T> settings = model.getSettings();
 		Element settingsElement = new Element(SETTINGS_ELEMENT_KEY);
 		settingsElement.setAttribute(SETTINGS_XSTART_ATTRIBUTE_NAME, ""+settings.xstart);
 		settingsElement.setAttribute(SETTINGS_XEND_ATTRIBUTE_NAME, ""+settings.xend);
@@ -223,7 +226,7 @@ public class TmXmlWriter {
 			// Echo attributes and features
 			trackElement.setAttribute(TRACK_ID_ATTRIBUTE_NAME, ""+trackIndex);
 			for(String feature : model.getFeatureModel().getTrackFeatureValues().keySet()) {
-				Float val = model.getFeatureModel().getTrackFeature(trackIndex, feature);
+				Double val = model.getFeatureModel().getTrackFeature(trackIndex, feature);
 				if (null == val) {
 					continue;
 				}
@@ -268,8 +271,8 @@ public class TmXmlWriter {
 	}
 
 	private void echoImageInfo() {
-		Settings settings = model.getSettings();
-		if (null == settings || null == settings.imp)
+		Settings<T> settings = model.getSettings();
+		if (null == settings || null == settings.img)
 			return;
 		Element imEl = new Element(IMAGE_ELEMENT_KEY);
 		imEl.setAttribute(IMAGE_FILENAME_ATTRIBUTE_NAME, 		settings.imageFileName);
@@ -318,7 +321,7 @@ public class TmXmlWriter {
 		return;
 	}
 
-	private void echoInitialSpotFilter(final Float qualityThreshold) {
+	private void echoInitialSpotFilter(final Double qualityThreshold) {
 		Element itElement = new Element(INITIAL_SPOT_FILTER_ELEMENT_KEY);
 		itElement.setAttribute(FILTER_FEATURE_ATTRIBUTE_NAME, Spot.QUALITY);
 		itElement.setAttribute(FILTER_VALUE_ATTRIBUTE_NAME, ""+qualityThreshold);
@@ -394,7 +397,7 @@ public class TmXmlWriter {
 		attributes.add(IDattribute);
 		Attribute nameAttribute = new Attribute(SPOT_NAME_ATTRIBUTE_NAME, spot.getName());
 		attributes.add(nameAttribute);
-		Float val;
+		Double val;
 		Attribute featureAttribute;
 		for (String feature : spot.getFeatures().keySet()) {
 			val = spot.getFeature(feature);

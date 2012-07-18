@@ -1,9 +1,11 @@
 package fiji.plugin.trackmate.tracking;
 
+import net.imglib2.type.NativeType;
+import net.imglib2.type.numeric.RealType;
 import fiji.plugin.trackmate.tracking.hungarian.AssignmentAlgorithm;
 import fiji.plugin.trackmate.tracking.hungarian.MunkresKuhnAlgorithm;
 
-public class FastLAPTracker extends LAPTracker {
+public class FastLAPTracker <T extends RealType<T> & NativeType<T>> extends LAPTracker<T> {
 
 	@Override
 	protected AssignmentAlgorithm createAssignmentProblemSolver() {

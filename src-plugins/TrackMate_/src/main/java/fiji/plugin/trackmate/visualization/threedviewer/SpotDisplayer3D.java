@@ -16,6 +16,7 @@ import java.util.TreeMap;
 import javax.vecmath.Color3f;
 import javax.vecmath.Point4d;
 
+import net.imglib2.exception.ImgLibException;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
 
@@ -193,17 +194,22 @@ public class SpotDisplayer3D <T extends RealType<T> & NativeType<T>> extends Abs
 		if (doRenderImage && null != settings.img) {
 //			if (!settings.imp.isVisible())
 //				settings.imp.show();
-			ImagePlus[] images = TMUtils.makeImageForViewer(settings);
-			final Content imageContent = ContentCreator.createContent(
-					settings.img.getName(), 
-					images, 
-					Content.VOLUME, 
-					SpotDisplayer3D.DEFAULT_RESAMPLING_FACTOR, 
-					0,
-					null, 
-					SpotDisplayer3D.DEFAULT_THRESHOLD, 
-					new boolean[] {true, true, true});
-			universe.addContentLater(imageContent);	
+			ImagePlus[] images;
+			try {
+				images = TMUtils.makeImageForViewer(settings);
+				final Content imageContent = ContentCreator.createContent(
+						settings.img.getName(), 
+						images, 
+						Content.VOLUME, 
+						SpotDisplayer3D.DEFAULT_RESAMPLING_FACTOR, 
+						0,
+						null, 
+						SpotDisplayer3D.DEFAULT_THRESHOLD, 
+						new boolean[] {true, true, true});
+				universe.addContentLater(imageContent);	
+			} catch (ImgLibException e) {
+				e.printStackTrace();
+			}
 		} else {
 			universe.updateStartAndEndTime(blobs.firstKey(), blobs.lastKey());
 		}

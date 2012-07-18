@@ -1,26 +1,24 @@
 package fiji.plugin.trackmate.visualization.trackscheme;
 
-import net.imglib2.img.Img;
+import net.imglib2.img.ImgPlus;
+import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
+import net.imglib2.view.HyperSliceImgPlus;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.features.spot.SpotIconGrabber;
-import fiji.plugin.trackmate.util.TMUtils;
 
-public class SpotImageUpdater {
+public class SpotImageUpdater <T extends RealType<T> & NativeType<T>> {
 	
-	private final SpotIconGrabber<? extends RealType<?>> grabber;
-	private final TrackMateModel model;
-	private final float[] calibration;
+	private final SpotIconGrabber<T> grabber;
+	private final TrackMateModel<T> model;
 	private Integer previousFrame;
 
-	@SuppressWarnings({ "rawtypes", "unchecked" })
-	public SpotImageUpdater(final TrackMateModel model) {
+	public SpotImageUpdater(final TrackMateModel<T> model) {
 		this.model = model;
-		this.grabber = new SpotIconGrabber();
+		this.grabber = new SpotIconGrabber<T>();
 		this.previousFrame = -1;
-		this.calibration = model.getSettings().getCalibration();
 	}
 
 	/**
@@ -36,9 +34,11 @@ public class SpotImageUpdater {
 			// Keep the same image than in memory
 		} else {
 			Settings settings = model.getSettings();
-			int targetChannel = settings.segmentationChannel; // TODO: be more flexible about that
-			Img img = TMUtils.getUncroppedSingleFrameAsImage(settings.imp, frame, targetChannel); // We have to use the un-cropped version, since the spots are referring to the un-cropped image at this time.
-			grabber.setTarget(img, calibration);
+			int targetChannel = settings.segmentationChannel - 1; // TODO: be more flexible about that
+			ImgPlus<T> img = HyperSliceImgPlus.fixTimeAxis( 
+					HyperSliceImgPlus.fixChannelAxis(settings.img, targetChannel), 
+					frame);
+			grabber.setTarget(img);
 			previousFrame = frame;
 		}
 		grabber.process(spot);			

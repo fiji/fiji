@@ -8,6 +8,10 @@ import java.awt.event.ActionListener;
 import javax.swing.ImageIcon;
 import javax.swing.JFrame;
 
+import net.imglib2.img.ImagePlusAdapter;
+import net.imglib2.type.NativeType;
+import net.imglib2.type.numeric.RealType;
+
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMate_;
 import fiji.plugin.trackmate.gui.DisplayerPanel;
@@ -16,7 +20,7 @@ import fiji.plugin.trackmate.visualization.TrackMateModelView;
 import fiji.plugin.trackmate.visualization.hyperstack.HyperStackDisplayer;
 import fiji.plugin.trackmate.visualization.threedviewer.SpotDisplayer3D;
 
-public class CopyOverlayAction extends AbstractTMAction {
+public class CopyOverlayAction<T extends RealType<T> & NativeType<T>> extends AbstractTMAction<T> {
 
 	private static final ImageIcon COPY_OVERLAY_ICON = new ImageIcon(DisplayerPanel.class.getResource("images/page_copy.png"));
 	
@@ -25,7 +29,7 @@ public class CopyOverlayAction extends AbstractTMAction {
 	}	
 	
 	@Override
-	public void execute(final TrackMate_ plugin) {
+	public void execute(final TrackMate_<T> plugin) {
 		final ImagePlusChooser impChooser = new ImagePlusChooser();
 		impChooser.setLocationRelativeTo(null);
 		impChooser.setVisible(true);
@@ -35,20 +39,20 @@ public class CopyOverlayAction extends AbstractTMAction {
 				if (e == impChooser.OK_BUTTON_PUSHED) {
 					new Thread("TrackMate copying thread") {
 						public void run() {
-							TrackMateModel model = plugin.getModel();
+							TrackMateModel<T> model = plugin.getModel();
 							// Instantiate displayer
 							ImagePlus dest = impChooser.getSelectedImagePlus();
 							impChooser.setVisible(false);
-							TrackMateModelView newDisplayer;
+							TrackMateModelView<T> newDisplayer;
 							String title;
 							if (null == dest) {
 								logger.log("Copying data and overlay to new 3D viewer\n");
-								newDisplayer = new SpotDisplayer3D();
+								newDisplayer = new SpotDisplayer3D<T>();
 								title = "3D viewer overlay";
 							} else {
 								logger.log("Copying overlay to "+dest.getShortTitle()+"\n");
-								model.getSettings().imp = dest; // TODO TODO DANGER DANGER
-								newDisplayer = new HyperStackDisplayer();
+								model.getSettings().img = ImagePlusAdapter.wrapImgPlus(dest); // TODO TODO DANGER DANGER
+								newDisplayer = new HyperStackDisplayer<T>();
 								title = dest.getShortTitle() + " ctrl";
 							}
 							newDisplayer.setModel(model);

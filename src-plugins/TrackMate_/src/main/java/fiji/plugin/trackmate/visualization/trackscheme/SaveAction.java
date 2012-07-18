@@ -20,6 +20,9 @@ import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.filechooser.FileFilter;
 
+import net.imglib2.type.NativeType;
+import net.imglib2.type.numeric.RealType;
+
 import com.itextpdf.text.DocumentException;
 import com.itextpdf.text.pdf.PdfContentByte;
 import com.itextpdf.text.pdf.PdfWriter;
@@ -39,26 +42,17 @@ import com.mxgraph.view.mxGraph;
 
 import fiji.plugin.trackmate.util.DefaultFileFilter;
 
-/**
- * $Id: EditorActions.java,v 1.35 2011-02-14 15:45:58 gaudenz Exp $
- * Copyright (c) 2001-2010, Gaudenz Alder, David Benson
- * 
- * All rights reserved.
- * 
- * See LICENSE file for license details. If you are unable to locate
- * this file please contact info (at) jgraph (dot) com.
- */
-public class SaveAction extends AbstractAction {
+public class SaveAction  <T extends RealType<T> & NativeType<T>> extends AbstractAction {
 
 	private static final long serialVersionUID = 7672151690754466760L;
 	private static final ImageIcon ICON = new ImageIcon(TrackSchemeFrame.class.getResource("resources/camera_export.png"));
 	protected String lastDir = null;
-	protected TrackSchemeFrame frame;
+	protected TrackSchemeFrame<T> frame;
 
 	/**
 	 * 
 	 */
-	public SaveAction(TrackSchemeFrame frame) {
+	public SaveAction(TrackSchemeFrame<T> frame) {
 		putValue(Action.SMALL_ICON, ICON);
 		this.frame = frame;
 
@@ -67,7 +61,7 @@ public class SaveAction extends AbstractAction {
 	/**
 	 * Saves XML+PNG format.
 	 */
-	protected void saveXmlPng(TrackSchemeFrame frame, String filename, Color bg) throws IOException {
+	protected void saveXmlPng(TrackSchemeFrame<T> frame, String filename, Color bg) throws IOException {
 		mxGraphComponent graphComponent = frame.getGraphComponent();
 		mxGraph graph = frame.getGraph();
 

@@ -133,7 +133,7 @@ public class SpotCollection implements Iterable<Spot>, SortedMap<Integer, List<S
 
 					Collection<Spot> spotThisFrame, spotToRemove;
 					List<Spot> spotToKeep;
-					Float val, tval;	
+					Double val, tval;	
 
 					for (int i = ai.getAndIncrement(); i < keys.length; i = ai.getAndIncrement()) {
 					
@@ -186,7 +186,7 @@ public class SpotCollection implements Iterable<Spot>, SortedMap<Integer, List<S
 		SpotCollection selectedSpots = new SpotCollection();
 		Collection<Spot> spotThisFrame, spotToRemove;
 		List<Spot> spotToKeep;
-		Float val, tval;	
+		Double val, tval;	
 
 		for (int timepoint : content.keySet()) {
 
@@ -235,8 +235,8 @@ public class SpotCollection implements Iterable<Spot>, SortedMap<Integer, List<S
 		final List<Spot> spots = content.get(frame);
 		if (null == spots)	
 			return null;
-		float d2;
-		float minDist = Float.POSITIVE_INFINITY;
+		double d2;
+		double minDist = Double.POSITIVE_INFINITY;
 		Spot target = null;
 		for(Spot s : spots) {
 			d2 = s.squareDistanceTo(location);
@@ -258,7 +258,7 @@ public class SpotCollection implements Iterable<Spot>, SortedMap<Integer, List<S
 		final List<Spot> spots = content.get(frame);
 		if (null == spots)	
 			return null;
-		float d2;
+		double d2;
 		for(Spot s : spots) {
 			d2 = s.squareDistanceTo(location);
 			if (d2 < s.getFeature(Spot.RADIUS) * s.getFeature(Spot.RADIUS)) {
@@ -275,19 +275,20 @@ public class SpotCollection implements Iterable<Spot>, SortedMap<Integer, List<S
 	 * spots in the frame is exhausted, a shorter set is returned.
 	 * <p>
 	 * The list is ordered by increasing distance to the given location.
+	 *  TODO Rewrite using kD tree.
 	 */
 	public final List<Spot> getNClosestSpots(final Spot location, final int frame, int n) {
 		final List<Spot> spots = content.get(frame);
-		final TreeMap<Float, Spot> distanceToSpot = new TreeMap<Float, Spot>();
+		final TreeMap<Double, Spot> distanceToSpot = new TreeMap<Double, Spot>();
 
-		float d2;
+		double d2;
 		for(Spot s : spots) {
 			d2 = s.squareDistanceTo(location);
 			distanceToSpot.put(d2, s);
 		}
 
 		final List<Spot> selectedSpots = new ArrayList<Spot>(n);
-		final Iterator<Float> it = distanceToSpot.keySet().iterator();
+		final Iterator<Double> it = distanceToSpot.keySet().iterator();
 		while (n > 0 && it.hasNext()) {
 			selectedSpots.add(distanceToSpot.get(it.next()));
 			n--;

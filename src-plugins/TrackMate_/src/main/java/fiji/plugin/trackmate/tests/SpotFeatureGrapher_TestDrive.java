@@ -6,6 +6,9 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 
+import net.imglib2.type.NativeType;
+import net.imglib2.type.numeric.RealType;
+
 import org.jdom.JDOMException;
 import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.graph.SimpleWeightedGraph;
@@ -21,21 +24,21 @@ import fiji.plugin.trackmate.visualization.trackscheme.TrackSchemeFrame;
 
 public class SpotFeatureGrapher_TestDrive {
 
-	public static void main(String[] args) throws JDOMException, IOException {
+	public static <T extends RealType<T> & NativeType<T>> void main(String[] args) throws JDOMException, IOException {
 
 		// Load objects 
 		File file = new File("/Users/tinevez/Desktop/Data/Tree.xml");
 		TmXmlReader reader = new TmXmlReader(file, Logger.DEFAULT_LOGGER);
 		reader.parse();
-		final TrackMateModel model = reader.getModel();
+		final TrackMateModel<T> model = reader.getModel();
 		List<Spot> spots = model.getFilteredSpots().getAllSpots();
 		
 		HashSet<String> Y = new HashSet<String>(1);
 		Y.add(Spot.POSITION_T);
-		SpotFeatureGrapher grapher = new SpotFeatureGrapher(Spot.POSITION_X, Y, spots, model);
+		SpotFeatureGrapher<T> grapher = new SpotFeatureGrapher<T>(Spot.POSITION_X, Y, spots, model);
 		grapher.setVisible(true);
 		
-		TrackSchemeFrame trackScheme = new TrackSchemeFrame(model);
+		TrackSchemeFrame<T> trackScheme = new TrackSchemeFrame<T>(model);
 		trackScheme.setVisible(true);
 		
 	}
@@ -44,15 +47,15 @@ public class SpotFeatureGrapher_TestDrive {
 	 *  Another example: spots that go in spiral
 	 */
 	@SuppressWarnings("unused")
-	private static TrackMateModel getSpiralModel() {
+	private static <T extends RealType<T> & NativeType<T>> TrackMateModel<T> getSpiralModel() {
 		
 		final int N_SPOTS = 50;
 		List<Spot> spots = new ArrayList<Spot>(N_SPOTS);
 		SpotCollection sc = new SpotCollection();
 		for (int i = 0; i < N_SPOTS; i++) {
-			float[] coordinates = new float[3];
-			coordinates[0] = (float) (100 + 100 * i / 100. * Math.cos(i / 100. * 5 * 2*Math.PI)); 
-			coordinates[1] = (float) (100 + 100 * i / 100. * Math.sin(i / 100. * 5 * 2*Math.PI));
+			double[] coordinates = new double[3];
+			coordinates[0] = 100 + 100 * i / 100. * Math.cos(i / 100. * 5 * 2*Math.PI); 
+			coordinates[1] = 100 + 100 * i / 100. * Math.sin(i / 100. * 5 * 2*Math.PI);
 			coordinates[2] = 0;
 			Spot spot = new SpotImp(coordinates);
 			spot.putFeature(Spot.POSITION_T, i);
@@ -65,7 +68,7 @@ public class SpotFeatureGrapher_TestDrive {
 			sc.put(i, ts);
 		}
 		
-		TrackMateModel model = new TrackMateModel();
+		TrackMateModel<T> model = new TrackMateModel<T>();
 		model.setSpots(sc, false);
 		model.setFilteredSpots(sc, false);
 		

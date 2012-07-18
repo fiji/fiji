@@ -2,6 +2,9 @@ package fiji.plugin.trackmate.action;
 
 import javax.swing.ImageIcon;
 
+import net.imglib2.type.NativeType;
+import net.imglib2.type.numeric.RealType;
+
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.TrackMate_;
@@ -9,7 +12,7 @@ import fiji.plugin.trackmate.detection.BasicSegmenterSettings;
 import fiji.plugin.trackmate.detection.SegmenterSettings;
 import fiji.plugin.trackmate.gui.DisplayerPanel;
 
-public class ResetRadiusAction extends AbstractTMAction {
+public class ResetRadiusAction<T extends RealType<T> & NativeType<T>> extends AbstractTMAction<T> {
 
 	private static final ImageIcon ICON = new ImageIcon(DisplayerPanel.class.getResource("images/lightbulb_off.png"));
 	private static final float FALL_BACK_RADIUS = 5;
@@ -19,7 +22,7 @@ public class ResetRadiusAction extends AbstractTMAction {
 	}
 	
 	@Override
-	public void execute(final TrackMate_ plugin) {
+	public void execute(final TrackMate_<T> plugin) {
 		final SegmenterSettings segSettings = plugin.getModel().getSettings().segmenterSettings;
 		final float radius;
 		if (segSettings instanceof BasicSegmenterSettings) {

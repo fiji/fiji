@@ -6,9 +6,12 @@ import ij.ImagePlus;
 
 import java.io.File;
 
+import net.imglib2.type.NativeType;
+import net.imglib2.type.numeric.RealType;
+
 public class TrackMate_TestDrive {
 	
-	public static void main(String[] args) {
+	public static <T extends RealType<T> & NativeType<T>> void main(String[] args) {
 
 //		System.out.println("Java3D version: "+Install_J3D.getJava3DVersion());
 		
@@ -23,7 +26,7 @@ public class TrackMate_TestDrive {
 		ImagePlus imp = IJ.openImage(file.getAbsolutePath());
 		imp.show();
 		
-		TrackMate_ st = new TrackMate_();
+		TrackMate_<T> st = new TrackMate_<T>();
 		System.out.println("Running the plugin...");
 		st.run(null); // launch the GUI;
 	}

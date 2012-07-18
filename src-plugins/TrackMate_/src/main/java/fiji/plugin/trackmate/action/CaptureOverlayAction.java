@@ -15,11 +15,17 @@ import ij.process.ColorProcessor;
 
 import javax.swing.ImageIcon;
 
+import net.imglib2.exception.ImgLibException;
+import net.imglib2.img.Img;
+import net.imglib2.img.imageplus.ImagePlusImg;
+import net.imglib2.type.NativeType;
+import net.imglib2.type.numeric.RealType;
+
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMate_;
 import fiji.plugin.trackmate.visualization.trackscheme.TrackSchemeFrame;
 
-public class CaptureOverlayAction extends AbstractTMAction {
+public class CaptureOverlayAction<T extends RealType<T> & NativeType<T>> extends AbstractTMAction<T> {
 
 	private static final ImageIcon ICON = new ImageIcon(TrackSchemeFrame.class.getResource("resources/camera_go.png"));
 
@@ -28,12 +34,20 @@ public class CaptureOverlayAction extends AbstractTMAction {
 	}
 
 	@Override
-	public void execute(TrackMate_ plugin) {
+	public void execute(TrackMate_<T> plugin) {
 		logger.log("Capturing TrackMate overlay.\n");
 		logger.log("  Preparing and allocating memory...");
 		try {
-			final TrackMateModel model = plugin.getModel();
-			final ImagePlus imp = model.getSettings().imp;
+			final TrackMateModel<T> model = plugin.getModel();
+			
+			Img<T> img = model.getSettings().img.getImg();
+			if (!(img instanceof ImagePlusImg)) {
+				logger.error("Source image comes from an ImagePlus, was a "+img.getClass()+"\n");
+				return;
+			}
+			
+			@SuppressWarnings("rawtypes")
+			final ImagePlus imp = ( (ImagePlusImg) model.getSettings().img.getImg() ).getImagePlus();
 			final ImageWindow win = imp.getWindow();
 			win.toFront();
 			final Point loc = win.getLocation();
@@ -57,12 +71,14 @@ public class CaptureOverlayAction extends AbstractTMAction {
 				logger.setProgress((float) i / imp.getStackSize());
 				imp.setPosition(i+1);
 				IJ.wait(200);
-				final Image img = robot.createScreenCapture(r);
-				final ColorProcessor cp = new ColorProcessor(img);
+				final Image image = robot.createScreenCapture(r);
+				final ColorProcessor cp = new ColorProcessor(image);
 				stack.addSlice(null, cp);
 			}
 			new ImagePlus("TrackMate capture", stack).show();
 			logger.log(" done.\n");
+		} catch (ImgLibException ie) {
+			logger.error("Unable to retrieve underlying ImagePlus:\n"+ie.getLocalizedMessage()+"\n");
 		} finally {
 			logger.setProgress(0);
 		}

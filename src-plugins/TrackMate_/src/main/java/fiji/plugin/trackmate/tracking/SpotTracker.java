@@ -1,6 +1,8 @@
 package fiji.plugin.trackmate.tracking;
 
 import mpicbg.imglib.algorithm.Algorithm;
+import net.imglib2.type.NativeType;
+import net.imglib2.type.numeric.RealType;
 
 import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.graph.SimpleWeightedGraph;
@@ -19,7 +21,7 @@ import fiji.plugin.trackmate.TrackMateModel;
  * use a weighted graph, though the weights themselves are not used for subsequent steps. It is 
  * suggested to use edge weight to report the cost of a link. 
  */
-public interface SpotTracker extends Algorithm, InfoTextable {
+public interface SpotTracker <T extends RealType<T> & NativeType<T>> extends Algorithm, InfoTextable {
 	
 	/**
 	 * Set the {@link TrackMateModel} to operate on. We give the whole model,
@@ -28,7 +30,7 @@ public interface SpotTracker extends Algorithm, InfoTextable {
 	 * {@link TrackMateModel#getFilteredSpots()} and using the tracker settings
 	 * in the settings field.
 	 */
-	public void setModel(TrackMateModel model);
+	public void setModel(TrackMateModel<T> model);
 	
 	/**
 	 * Set the logger used to echo log messages.

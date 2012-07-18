@@ -7,9 +7,13 @@ import java.io.IOException;
 import java.util.List;
 
 import net.imglib2.cursor.special.SphereCursor;
+import net.imglib2.img.ImagePlusAdapter;
 import net.imglib2.img.Img;
+import net.imglib2.img.ImgPlus;
 import net.imglib2.img.array.ArrayImgFactory;
 import net.imglib2.img.display.imagej.ImageJFunctions;
+import net.imglib2.meta.Axes;
+import net.imglib2.meta.AxisType;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.integer.UnsignedByteType;
@@ -37,13 +41,13 @@ public class RadiusEstimator_TestDrive {
 		
 		ImagePlus imp = reader.getImage();
 		imp.setDimensions(1, 41, 1); // otherwise it is 4D
-		Img<T> img = ImageJFunctions.wrap(imp);
+		ImgPlus<T> img = ImagePlusAdapter.wrapImgPlus(imp);
 		
-		TrackMateModel model = reader.getModel();
-		model.getSettings().imp = imp;
+		TrackMateModel<T> model = reader.getModel();
+		model.getSettings().img = img;
 		
 		RadiusEstimator<T> es = new RadiusEstimator<T>();
-		es.setTarget(img, new float[] { 0.2f, 0.2f, 1 } );
+		es.setTarget(img);
 		
 		SpotCollection allSpots = model.getSpots();
 		model.setFilteredSpots(allSpots, false);
@@ -62,11 +66,11 @@ public class RadiusEstimator_TestDrive {
 		}
 
 		// Modify spot radius to estimated
-		RadiusToEstimatedAction action = new RadiusToEstimatedAction();
-		action.execute(new TrackMate_(model));
+		RadiusToEstimatedAction<T> action = new RadiusToEstimatedAction<T>();
+		action.execute(new TrackMate_<T>(model));
 		
 		// View
-		HyperStackDisplayer displayer = new HyperStackDisplayer();
+		HyperStackDisplayer<T> displayer = new HyperStackDisplayer<T>();
 		displayer.setModel(model);
 		displayer.render();
 		displayer.refresh();
@@ -76,19 +80,22 @@ public class RadiusEstimator_TestDrive {
 	/**
 	 * For testing purposes
 	 */
-	public static void main2(String[] args) {
+	public static <T extends RealType<T> & NativeType<T>> void main2(String[] args) {
 		
 		final byte on = (byte) 255;
-		SpotImp s1 = new SpotImp(new float[] {100, 100, 100});
-		SpotImp s2 = new SpotImp(new float[] {100, 100, 200});
-		SpotImp s3 = new SpotImp(new float[] {100, 100, 300});
+		SpotImp s1 = new SpotImp(new double[] {100, 100, 100});
+		SpotImp s2 = new SpotImp(new double[] {100, 100, 200});
+		SpotImp s3 = new SpotImp(new double[] {100, 100, 300});
 		SpotImp[] spots = new SpotImp[] {s1, s2, s3};
-		float[] radiuses = new float[]  {12, 20, 32};
-		float[] calibration = new float[] {1, 1, 1};
+		double[] radiuses = new double[]  {12, 20, 32};
+		double[] calibration = new double[] {1, 1, 1};
+		AxisType[] axes = new AxisType[] { Axes.X, Axes.Y, Axes.Z };
 		
 		// Create 3 spots image
-		Img<UnsignedByteType> testImage = new ArrayImgFactory<UnsignedByteType>().create(new int[] {200, 200, 400}, new UnsignedByteType());
-
+		Img<UnsignedByteType> img = new ArrayImgFactory<UnsignedByteType>().create(new int[] {200, 200, 400}, new UnsignedByteType());
+		ImgPlus<UnsignedByteType> testImage = new ImgPlus<UnsignedByteType>(img, "Test", axes, calibration); 
+		
+		
 		SphereCursor<UnsignedByteType> cursor;
 		int index = 0;
 		for (SpotImp s : spots) {
@@ -109,7 +116,7 @@ public class RadiusEstimator_TestDrive {
 		
 		// Apply the estimator
 		RadiusEstimator<UnsignedByteType> es = new RadiusEstimator<UnsignedByteType>();
-		es.setTarget(testImage, calibration);
+		es.setTarget(testImage);
 //		es.nDiameters = 20;
 		
 		SpotImp s;

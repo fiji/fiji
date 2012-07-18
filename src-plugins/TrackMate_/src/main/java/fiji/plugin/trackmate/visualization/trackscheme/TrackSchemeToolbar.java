@@ -25,9 +25,12 @@ import javax.swing.JToolBar;
 import javax.swing.JViewport;
 import javax.swing.SwingConstants;
 
+import net.imglib2.type.NativeType;
+import net.imglib2.type.numeric.RealType;
+
 import com.mxgraph.util.mxCellRenderer;
 
-public class TrackSchemeToolbar extends JToolBar {
+public class TrackSchemeToolbar <T extends RealType<T> & NativeType<T>> extends JToolBar {
 	
 	private static final long serialVersionUID = 3442140463984241266L;
 	private static final ImageIcon LINKING_ON_ICON 	= new ImageIcon(TrackSchemeFrame.class.getResource("resources/connect.png")); 
@@ -52,9 +55,9 @@ public class TrackSchemeToolbar extends JToolBar {
 	
 	private static final ImageIcon SELECT_STYLE_ICON = new ImageIcon(TrackSchemeFrame.class.getResource("resources/style.png"));
 	
-	private TrackSchemeFrame frame;
+	private TrackSchemeFrame<T> frame;
 
-	public TrackSchemeToolbar(TrackSchemeFrame frame) {
+	public TrackSchemeToolbar(TrackSchemeFrame<T> frame) {
 		super("Track Scheme toolbat", JToolBar.HORIZONTAL);
 		this.frame = frame;
 		init();
@@ -200,7 +203,7 @@ public class TrackSchemeToolbar extends JToolBar {
 				imp.show();
 			}
 		};
-		final Action saveAction = new SaveAction(frame);
+		final Action saveAction = new SaveAction<T>(frame);
 		final JButton captureUndecoratedButton = new JButton(captureUndecoratedAction);
 		final JButton captureDecoratedButton = new JButton(captureDecoratedAction);
 		final JButton saveButton = new JButton(saveAction);
@@ -282,7 +285,7 @@ public class TrackSchemeToolbar extends JToolBar {
 				@Override
 				public void actionPerformed(ActionEvent e) {
 					String selectedStyle = (String) selectStyleBox.getSelectedItem();
-					mxTrackGraphLayout layout = frame.getGraphLayout();
+					mxTrackGraphLayout<T> layout = frame.getGraphLayout();
 					if (!selectedStyle.equals(layout.selectedStyle)) {
 						layout.selectedStyle = selectedStyle;
 						layout.execute(frame);

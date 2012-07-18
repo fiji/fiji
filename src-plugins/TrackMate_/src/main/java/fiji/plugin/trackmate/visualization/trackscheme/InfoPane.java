@@ -29,6 +29,9 @@ import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.JTableHeader;
 
+import net.imglib2.type.NativeType;
+import net.imglib2.type.numeric.RealType;
+
 import org.jgrapht.graph.DefaultWeightedEdge;
 
 import fiji.plugin.trackmate.Spot;
@@ -38,7 +41,7 @@ import fiji.plugin.trackmate.TrackMateSelectionChangeListener;
 import fiji.plugin.trackmate.util.TMUtils;
 import fiji.plugin.trackmate.visualization.TrackMateSelectionView;
 
-public class InfoPane extends JPanel implements TrackMateSelectionView, TrackMateSelectionChangeListener {
+public class InfoPane <T extends RealType<T> & NativeType<T>> extends JPanel implements TrackMateSelectionView, TrackMateSelectionChangeListener {
 
 	private static final long serialVersionUID = -1L;
 
@@ -67,7 +70,7 @@ public class InfoPane extends JPanel implements TrackMateSelectionView, TrackMat
 	private JTable table;
 	private JScrollPane scrollTable;
 	private boolean doHighlightSelection = true;
-	private TrackMateModel model;
+	private TrackMateModel<T> model;
 	private List<String> features;
 	private Map<String, String> featureNames;
 
@@ -75,7 +78,7 @@ public class InfoPane extends JPanel implements TrackMateSelectionView, TrackMat
 	 * CONSTRUCTOR
 	 */
 
-	public InfoPane(final TrackMateModel model) {
+	public InfoPane(final TrackMateModel<T> model) {
 		this.model = model;
 		this.features = model.getFeatureModel().getSpotFeatures();
 		this.featureNames = model.getFeatureModel().getSpotFeatureShortNames();

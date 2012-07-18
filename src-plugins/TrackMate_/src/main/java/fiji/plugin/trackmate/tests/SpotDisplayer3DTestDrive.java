@@ -28,8 +28,11 @@ import javax.swing.event.ChangeListener;
 
 import net.imglib2.cursor.special.SphereCursor;
 import net.imglib2.img.Img;
+import net.imglib2.img.ImgPlus;
 import net.imglib2.img.array.ArrayImgFactory;
 import net.imglib2.img.display.imagej.ImageJFunctions;
+import net.imglib2.meta.Axes;
+import net.imglib2.meta.AxisType;
 import net.imglib2.type.numeric.integer.UnsignedByteType;
 
 public class SpotDisplayer3DTestDrive {
@@ -39,29 +42,32 @@ public class SpotDisplayer3DTestDrive {
 		System.out.println(Install_J3D.getJava3DVersion());
 				
 		final int N_BLOBS = 20;
-		final float RADIUS = 5; // µm
+		final double RADIUS = 5; // µm
 		final Random RAN = new Random();
-		final float WIDTH = 100; // µm
-		final float HEIGHT = 100; // µm
-		final float DEPTH = 50; // µm
-		final float[] CALIBRATION = new float[] {0.5f, 0.5f, 1}; 
+		final double WIDTH = 100; // µm
+		final double HEIGHT = 100; // µm
+		final double DEPTH = 50; // µm
+		final double[] CALIBRATION = new double[] {0.5, 0.5, 1}; 
+		final AxisType[] AXES = new AxisType[] { Axes.X, Axes.Y, Axes.Z };
 		
 		// Create 3D image
 		System.out.println("Creating image....");
-		Img<UnsignedByteType> img = new ArrayImgFactory<UnsignedByteType>()
+		Img<UnsignedByteType> source = new ArrayImgFactory<UnsignedByteType>()
 				.create(new int[] {(int) (WIDTH/CALIBRATION[0]), (int) (HEIGHT/CALIBRATION[1]), (int) (DEPTH/CALIBRATION[2])},
-						new UnsignedByteType()); 
+						new UnsignedByteType());
+		ImgPlus<UnsignedByteType> img = new ImgPlus<UnsignedByteType>(source, "test", AXES, CALIBRATION); 
+		
 
 		// Random blobs
-		float[] radiuses = new float[N_BLOBS];
-		ArrayList<float[]> centers = new ArrayList<float[]>(N_BLOBS);
+		double[] radiuses = new double[N_BLOBS];
+		ArrayList<double[]> centers = new ArrayList<double[]>(N_BLOBS);
 		int[] intensities = new int[N_BLOBS]; 
 		for (int i = 0; i < N_BLOBS; i++) {
-			radiuses[i] = (float) (RADIUS + RAN.nextGaussian());
-			float x = WIDTH * RAN.nextFloat();
-			float y = HEIGHT * RAN.nextFloat();
-			float z = DEPTH * RAN.nextFloat();
-			centers.add(i, new float[] {x, y, z});
+			radiuses[i] = RADIUS + RAN.nextGaussian();
+			double x = WIDTH * RAN.nextDouble();
+			double y = HEIGHT * RAN.nextDouble();
+			double z = DEPTH * RAN.nextDouble();
+			centers.add(i, new double[] {x, y, z});
 			intensities[i] = RAN.nextInt(200);
 		}
 		
@@ -100,7 +106,7 @@ public class SpotDisplayer3DTestDrive {
 		
 		System.out.println("Grabbing features...");
 		BlobDescriptiveStatistics<UnsignedByteType> analyzer = new BlobDescriptiveStatistics<UnsignedByteType>();
-		analyzer.setTarget(img, CALIBRATION);
+		analyzer.setTarget(img);
 		analyzer.process(spots);
 		for (Spot s : spots) 
 			System.out.println(s);
@@ -108,10 +114,10 @@ public class SpotDisplayer3DTestDrive {
 		// Launch renderer
 		final SpotCollection allSpots = new SpotCollection();
 		allSpots.put(0, spots);
-		final TrackMate_ plugin = new TrackMate_();
+		final TrackMate_<UnsignedByteType> plugin = new TrackMate_<UnsignedByteType>();
 		plugin.getModel().setSpots(allSpots, false);
-		plugin.getModel().getSettings().imp = imp;
-		final SpotDisplayer3D displayer = new SpotDisplayer3D();
+		plugin.getModel().getSettings().img = img;
+		final SpotDisplayer3D<UnsignedByteType> displayer = new SpotDisplayer3D<UnsignedByteType>();
 		displayer.setModel(plugin.getModel());
 		displayer.render();
 		

@@ -23,6 +23,9 @@ import javax.swing.JFrame;
 import javax.swing.JSplitPane;
 import javax.swing.JToolBar;
 
+import net.imglib2.type.NativeType;
+import net.imglib2.type.numeric.RealType;
+
 import org.jgrapht.graph.DefaultWeightedEdge;
 
 import com.mxgraph.model.mxCell;
@@ -50,7 +53,7 @@ import fiji.plugin.trackmate.visualization.AbstractTrackMateModelView;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
 import fiji.plugin.trackmate.visualization.TrackMateSelectionView;
 
-public class TrackSchemeFrame extends JFrame implements TrackMateModelChangeListener, TrackMateSelectionChangeListener, TrackMateModelView, TrackMateSelectionView {
+public class TrackSchemeFrame  <T extends RealType<T> & NativeType<T>> extends JFrame implements TrackMateModelChangeListener, TrackMateSelectionChangeListener, TrackMateModelView<T>, TrackMateSelectionView {
 
 	/*
 	 * CONSTANTS
@@ -82,23 +85,23 @@ public class TrackSchemeFrame extends JFrame implements TrackMateModelChangeList
 	/** Do we display the background decorations by default? */
 	static final boolean DEFAULT_DO_PAINT_DECORATIONS = true;
 	
-	private Settings settings;
-	private JGraphXAdapter graph;
+	private Settings<T> settings;
+	/** The model this instance is a view of (Yoda I speak like). */
+	private TrackMateModel<T> model;
+	private JGraphXAdapter<T> graph;
 
 	/** The side pane in which spot selection info will be displayed.	 */
-	private InfoPane infoPane;
+	private InfoPane<T> infoPane;
 	/** The graph component in charge of painting the graph. */
-	private mxTrackGraphComponent graphComponent;
+	private mxTrackGraphComponent<T> graphComponent;
 	/** The layout manager that can be called to re-arrange cells in the graph. */
-	private mxTrackGraphLayout graphLayout;
+	private mxTrackGraphLayout<T> graphLayout;
 	/** A flag used to prevent double event firing when setting the selection programmatically. */
 	private boolean doFireSelectionChangeEvent = true;
 	/** A flag used to prevent double event firing when setting the selection programmatically. */
 	private boolean doFireModelChangeEvent = true;
-	/** The model this instance is a view of (Yoda I speak like). */
-	private TrackMateModel model;
 	private Map<String, Object> displaySettings = new HashMap<String, Object>();
-	private SpotImageUpdater spotImageUpdater;
+	private SpotImageUpdater<T> spotImageUpdater;
 
 
 
@@ -146,12 +149,12 @@ public class TrackSchemeFrame extends JFrame implements TrackMateModelChangeList
 	 * CONSTRUCTORS
 	 */
 
-	public TrackSchemeFrame(TrackMateModel model)  {
+	public TrackSchemeFrame(TrackMateModel<T> model)  {
 		setModel(model);
 		initDisplaySettings();
 		init();
 		setSize(DEFAULT_SIZE);
-		this.spotImageUpdater = new SpotImageUpdater(model);
+		this.spotImageUpdater = new SpotImageUpdater<T>(model);
 	}
 
 	/*
@@ -159,12 +162,12 @@ public class TrackSchemeFrame extends JFrame implements TrackMateModelChangeList
 	 */
 
 	@Override
-	public TrackMateModel getModel() {
+	public TrackMateModel<T> getModel() {
 		return model;
 	}
 
 	@Override
-	public void setModel(TrackMateModel model) {
+	public void setModel(TrackMateModel<T> model) {
 		// Model listeners
 		if (null != this.model) {
 			this.model.removeTrackMateModelChangeListener(this);
@@ -176,10 +179,10 @@ public class TrackSchemeFrame extends JFrame implements TrackMateModelChangeList
 		// Graph to mirror model
 		this.graph = createGraph();
 		this.settings = model.getSettings();
-		this.graphLayout = new mxTrackGraphLayout(model, graph, settings.dx);
+		this.graphLayout = new mxTrackGraphLayout<T>(model, graph, settings.dx);
 		String title = "Track scheme";
-		if (null != settings.imp)
-			title += ": "+settings.imp.getShortTitle();
+		if (null != settings.img)
+			title += ": "+settings.img.getName();
 		setTitle(title);
 	}
 
@@ -296,7 +299,7 @@ public class TrackSchemeFrame extends JFrame implements TrackMateModelChangeList
 								String style = cell.getStyle();
 								style = mxStyleUtils.setStyle(style, mxConstants.STYLE_IMAGE, "data:image/base64,"+spot.getImageString());
 								graph.getModel().setStyle(cell, style);
-								int height = Math.min(DEFAULT_CELL_WIDTH, Math.round(2 * spot.getFeature(Spot.RADIUS) / settings.dx));
+								long height = Math.min(DEFAULT_CELL_WIDTH, Math.round(2 * spot.getFeature(Spot.RADIUS) / settings.dx));
 								height = Math.max(height, DEFAULT_CELL_HEIGHT/3);
 								graph.getModel().getGeometry(cell).setHeight(height);
 
@@ -365,7 +368,7 @@ public class TrackSchemeFrame extends JFrame implements TrackMateModelChangeList
 		if (spots.isEmpty())
 			return;
 
-		SpotFeatureGrapher grapher = new SpotFeatureGrapher(xFeature, yFeatures, new ArrayList<Spot>(spots), model);
+		SpotFeatureGrapher<T> grapher = new SpotFeatureGrapher<T>(xFeature, yFeatures, new ArrayList<Spot>(spots), model);
 		grapher.setVisible(true);
 
 	}
@@ -391,8 +394,8 @@ public class TrackSchemeFrame extends JFrame implements TrackMateModelChangeList
 	 * Used to instantiate and configure the {@link JGraphXAdapter} that will be used for display.
 	 * Hook for subclassers.
 	 */
-	protected JGraphXAdapter createGraph() {
-		final JGraphXAdapter graph = new JGraphXAdapter(model);
+	protected JGraphXAdapter<T> createGraph() {
+		final JGraphXAdapter<T> graph = new JGraphXAdapter<T>(model);
 		graph.setAllowLoops(false);
 		graph.setAllowDanglingEdges(false);
 		graph.setCellsCloneable(false);
@@ -434,8 +437,8 @@ public class TrackSchemeFrame extends JFrame implements TrackMateModelChangeList
 	 * Instantiate the graph component in charge of painting the graph.
 	 * Hook for sub-classers.
 	 */
-	protected mxTrackGraphComponent createGraphComponent() {
-		final mxTrackGraphComponent gc = new mxTrackGraphComponent(this);
+	protected mxTrackGraphComponent<T> createGraphComponent() {
+		final mxTrackGraphComponent<T> gc = new mxTrackGraphComponent<T>(this);
 		gc.getVerticalScrollBar().setUnitIncrement(16);
 		gc.getHorizontalScrollBar().setUnitIncrement(16);
 		gc.setExportEnabled(true); // Seems to be required to have a preview when we move cells. Also give the ability to export a cell as an image clipping 
@@ -465,14 +468,14 @@ public class TrackSchemeFrame extends JFrame implements TrackMateModelChangeList
 	 * Instantiate the toolbar of the track scheme. Hook for sub-classers.
 	 */
 	protected JToolBar createToolBar() {
-		return new TrackSchemeToolbar(this);
+		return new TrackSchemeToolbar<T>(this);
 	}
 
 	/**
 	 *  PopupMenu
 	 */
 	protected void displayPopupMenu(final Object cell, final Point point) {
-		TrackSchemePopupMenu menu = new TrackSchemePopupMenu(this, cell,  model, graph, point);
+		TrackSchemePopupMenu<T> menu = new TrackSchemePopupMenu<T>(this, cell,  model, graph, point);
 		menu.show(graphComponent.getViewport().getView(), (int) point.getX(), (int) point.getY());
 	}
 
@@ -489,7 +492,7 @@ public class TrackSchemeFrame extends JFrame implements TrackMateModelChangeList
 		// Instantiate JGraphX cell
 		cellAdded = graph.addJGraphTVertex(spot);
 		// Position it
-		float instant = spot.getFeature(Spot.POSITION_T);
+		double instant = spot.getFeature(Spot.POSITION_T);
 		double x = (targetColumn-1) * X_COLUMN_SIZE - DEFAULT_CELL_WIDTH/2;
 		Integer row = graphComponent.getRowForInstant().get(instant);
 		if (null == row) {
@@ -503,7 +506,7 @@ public class TrackSchemeFrame extends JFrame implements TrackMateModelChangeList
 			row = row + 1;
 		}
 		double y = (0.5 + row) * Y_COLUMN_SIZE - DEFAULT_CELL_HEIGHT/2; 
-		int height = Math.min(DEFAULT_CELL_WIDTH, Math.round(2 * spot.getFeature(Spot.RADIUS) / settings.dx));
+		long height = Math.min(DEFAULT_CELL_WIDTH, Math.round(2 * spot.getFeature(Spot.RADIUS) / settings.dx));
 		height = Math.max(height, 12);
 		mxGeometry geometry = new mxGeometry(x, y, DEFAULT_CELL_WIDTH, height);
 		cellAdded.setGeometry(geometry);
@@ -714,7 +717,7 @@ public class TrackSchemeFrame extends JFrame implements TrackMateModelChangeList
 		doTrackLayout();
 
 		// Add the info pane
-		infoPane = new InfoPane(model);
+		infoPane = new InfoPane<T>(model);
 		JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, infoPane, graphComponent);
 		splitPane.setDividerLocation(170);
 		getContentPane().add(splitPane, BorderLayout.CENTER);
@@ -758,18 +761,18 @@ public class TrackSchemeFrame extends JFrame implements TrackMateModelChangeList
 	/**
 	 * Return the {@link JGraphXAdapter} that serves as a model for the graph displayed in this frame.
 	 */
-	public JGraphXAdapter getGraph() {
+	public JGraphXAdapter<T> getGraph() {
 		return graph;
 	}
 
-	public mxTrackGraphComponent getGraphComponent() {
+	public mxTrackGraphComponent<T> getGraphComponent() {
 		return graphComponent;
 	}
 	
 	/**
 	 * Return the graph layout in charge of arranging the cells on the graph.
 	 */
-	public mxTrackGraphLayout getGraphLayout() {
+	public mxTrackGraphLayout<T> getGraphLayout() {
 		return graphLayout;	
 	}
 

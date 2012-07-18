@@ -49,10 +49,10 @@ public class Settings <T extends RealType<T> & NativeType<T>> {
 	/** Target channel for segmentation, <b>1-based</b>. */
 	public int segmentationChannel = 1;
 	// Image info
-	public float dt 	= 1;
-	public float dx 	= 1;
-	public float dy 	= 1;
-	public float dz 	= 1;
+	public double dt 	= 1;
+	public double dx 	= 1;
+	public double dy 	= 1;
+	public double dz 	= 1;
 	public int width;
 	public int height;
 	public int nslices;
@@ -63,7 +63,7 @@ public class Settings <T extends RealType<T> & NativeType<T>> {
 	public String spaceUnits 		= "pixels";
 	
 	public SpotSegmenter<T> segmenter;
-	public SpotTracker tracker;
+	public SpotTracker<T> tracker;
 	
 	public SegmenterSettings segmenterSettings = null;
 	public TrackerSettings trackerSettings = null;
@@ -79,7 +79,7 @@ public class Settings <T extends RealType<T> & NativeType<T>> {
 	 * The initial quality filter value that is used to clip spots of low
 	 * quality from {@link TrackMateModel#spots}.
 	 */
-	public Float initialSpotFilterValue;
+	public Double initialSpotFilterValue;
 	/** The track filter list that is used to prune track and spots. */
 	protected List<FeatureFilter> trackFilters = new ArrayList<FeatureFilter>();
 	
@@ -146,15 +146,6 @@ public class Settings <T extends RealType<T> & NativeType<T>> {
 	/*
 	 * METHODS
 	 */
-		
-	/**
-	 * A utility method that returns a new float array with the 3 elements building the spatial calibration
-	 * (pixel size).
-	 */
-	public float[] getCalibration() {
-		return new float[] {dx, dy, dz};
-	}
-	
 	
 	@Override
 	public String toString() {

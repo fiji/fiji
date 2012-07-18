@@ -1,6 +1,9 @@
 package fiji.plugin.trackmate.tracking;
 
-public class SimpleFastLAPTracker extends FastLAPTracker {
+import net.imglib2.type.NativeType;
+import net.imglib2.type.numeric.RealType;
+
+public class SimpleFastLAPTracker <T extends RealType<T> & NativeType<T>> extends FastLAPTracker<T> {
 
 	public SimpleFastLAPTracker() {
 		super();

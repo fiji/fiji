@@ -2,6 +2,9 @@ package fiji.plugin.trackmate.tests;
 
 import java.io.File;
 
+import net.imglib2.type.NativeType;
+import net.imglib2.type.numeric.RealType;
+
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.io.TmXmlReader;
@@ -19,14 +22,14 @@ public class LAPTrackerTestDrive {
 	 * MAIN METHOD
 	 */
 	
-	public static void main(String args[]) {
+	public static <T extends RealType<T> & NativeType<T>> void main(String args[]) {
 		
 		File file = SPLITTING_CASE_3;
 		
 		// 1 - Load test spots
 		System.out.println("Opening file: "+file.getAbsolutePath());		
 		TmXmlReader reader = new TmXmlReader(file, Logger.DEFAULT_LOGGER);
-		TrackMateModel model = null;
+		TrackMateModel<T> model = null;
 		// Parse
 		reader.parse();
 		model = reader.getModel();
@@ -58,8 +61,7 @@ public class LAPTrackerTestDrive {
 		
 		// 2 - Track the test spots
 		long start = System.currentTimeMillis();
-		LAPTracker lap;
-		lap = new LAPTracker();
+		LAPTracker<T> lap = new LAPTracker<T>();
 		lap.setModel(model);
 		lap.setLogger(Logger.DEFAULT_LOGGER);
 
@@ -93,7 +95,7 @@ public class LAPTrackerTestDrive {
 		// Load Image
 		ij.ImageJ.main(args);
 		
-		TrackMateModelView sd2d = new HyperStackDisplayer();
+		TrackMateModelView<T> sd2d = new HyperStackDisplayer<T>();
 		sd2d.setModel(model);
 		sd2d.render();
 		sd2d.setDisplaySettings(TrackMateModelView.KEY_TRACK_DISPLAY_MODE, TrackMateModelView.TRACK_DISPLAY_MODE_WHOLE);

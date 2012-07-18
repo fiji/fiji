@@ -1,5 +1,7 @@
 package fiji.plugin.trackmate.tests;
 
+import net.imglib2.type.NativeType;
+import net.imglib2.type.numeric.RealType;
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.io.TmXmlWriter;
@@ -7,9 +9,9 @@ import fiji.plugin.trackmate.tracking.SimpleLAPTracker;
 
 public class ClassNames_TestDrive {
 
-	public static void main(String[] args) {
+	public static <T extends RealType<T> & NativeType<T>> void main(String[] args) {
 		
-		SimpleLAPTracker obj = new SimpleLAPTracker();
+		SimpleLAPTracker<T> obj = new SimpleLAPTracker<T>();
 		
 		System.out.println();
 		System.out.println("Object:");
@@ -30,12 +32,12 @@ public class ClassNames_TestDrive {
 		System.out.println();
 		System.out.println();
 		
-		TrackMateModel model = new TrackMateModel();
-		model.getSettings().tracker = new SimpleLAPTracker();
+		TrackMateModel<T> model = new TrackMateModel<T>();
+		model.getSettings().tracker = new SimpleLAPTracker<T>();
 		
 		model.getSettings().trackerSettings = model.getSettings().tracker.createDefaultSettings();
 		
-		TmXmlWriter writer = new TmXmlWriter(model, Logger.DEFAULT_LOGGER);
+		TmXmlWriter<T> writer = new TmXmlWriter<T>(model, Logger.DEFAULT_LOGGER);
 		writer.appendTrackerSettings();
 		
 		System.out.println(writer.toString());

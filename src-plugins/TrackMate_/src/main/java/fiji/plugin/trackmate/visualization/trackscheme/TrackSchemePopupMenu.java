@@ -13,6 +13,9 @@ import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.JPopupMenu;
 
+import net.imglib2.type.NativeType;
+import net.imglib2.type.numeric.RealType;
+
 import org.jgrapht.graph.DefaultWeightedEdge;
 
 import com.mxgraph.model.mxCell;
@@ -24,7 +27,7 @@ import com.mxgraph.util.mxEventSource.mxIEventListener;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.TrackMateModel;
 
-public class TrackSchemePopupMenu extends JPopupMenu {
+public class TrackSchemePopupMenu<T extends RealType<T> & NativeType<T>> extends JPopupMenu {
 
 	private static final long serialVersionUID = -5168784267411318961L;
 	private static final boolean DEBUG = true;
@@ -35,7 +38,7 @@ public class TrackSchemePopupMenu extends JPopupMenu {
 	/**
 	 * The TrackScheme instance.
 	 */
-	private TrackSchemeFrame frame;
+	private TrackSchemeFrame<T> frame;
 	/**
 	 * The right-click location.
 	 */
@@ -43,13 +46,13 @@ public class TrackSchemePopupMenu extends JPopupMenu {
 	/**
 	 * The TrackMate model.
 	 */
-	private TrackMateModel model;
+	private TrackMateModel<T> model;
 	/**
 	 * The JGraphX model.
 	 */
-	private JGraphXAdapter graph;
+	private JGraphXAdapter<T> graph;
 
-	public TrackSchemePopupMenu(final TrackSchemeFrame frame, final Object cell, final TrackMateModel model, final JGraphXAdapter graph, final Point point) {
+	public TrackSchemePopupMenu(final TrackSchemeFrame<T> frame, final Object cell, final TrackMateModel<T> model, final JGraphXAdapter<T> graph, final Point point) {
 		this.frame = frame;
 		this.cell = cell;
 		this.model = model;
@@ -170,7 +173,7 @@ public class TrackSchemePopupMenu extends JPopupMenu {
 	private void linkSpots() {
 
 		// Sort spots by time
-		TreeMap<Float, Spot> spotsInTime = new TreeMap<Float, Spot>();
+		TreeMap<Double, Spot> spotsInTime = new TreeMap<Double, Spot>();
 		for (Spot spot : model.getSpotSelection()) {
 			spotsInTime.put(spot.getFeature(Spot.POSITION_T), spot);
 		}
@@ -182,8 +185,8 @@ public class TrackSchemePopupMenu extends JPopupMenu {
 		model.beginUpdate();
 		graph.getModel().beginUpdate();
 		try {
-			Iterator<Float> it = spotsInTime.keySet().iterator();
-			Float previousTime = it.next();
+			Iterator<Double> it = spotsInTime.keySet().iterator();
+			Double previousTime = it.next();
 			Spot previousSpot = spotsInTime.get(previousTime);
 			// If this spot belong to an invisible track, we make it visible
 			Integer index = model.getTrackIndexOf(previousSpot);
@@ -192,7 +195,7 @@ public class TrackSchemePopupMenu extends JPopupMenu {
 			}
 
 			while(it.hasNext()) {
-				Float currentTime = it.next();
+				Double currentTime = it.next();
 				Spot currentSpot = spotsInTime.get(currentTime);
 				// If this spot belong to an invisible track, we make it visible
 				index = model.getTrackIndexOf(currentSpot);

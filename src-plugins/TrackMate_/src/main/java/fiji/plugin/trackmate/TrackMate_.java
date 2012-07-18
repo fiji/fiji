@@ -70,15 +70,15 @@ public class TrackMate_<T extends RealType<T> & NativeType<T>>  implements PlugI
 	protected boolean useMultithreading = DEFAULT_USE_MULTITHREADING;
 
 	protected List<SpotFeatureAnalyzer<T>> spotFeatureAnalyzers;
-	protected List<TrackFeatureAnalyzer> trackFeatureAnalyzers;
+	protected List<TrackFeatureAnalyzer<T>> trackFeatureAnalyzers;
 	/** The list of {@link SpotSegmenter} that will be offered to choose amongst to the user. */
 	protected List<SpotSegmenter<T>> spotSegmenters;
 	/** The list of {@link TrackMateModelView} that will be offered to choose amongst to the user. */
-	protected List<TrackMateModelView> trackMateModelViews;
+	protected List<TrackMateModelView<T>> trackMateModelViews;
 	/** The list of {@link TrackMateModelView} that will be offered to choose amongst to the user. */
-	protected List<TrackMateAction> trackMateActions;
+	protected List<TrackMateAction<T>> trackMateActions;
 	/** The list of {@link SpotTracker} that will be offered to choose amongst to the user. */
-	protected List<SpotTracker> spotTrackers;
+	protected List<SpotTracker<T>> spotTrackers;
 
 	/*
 	 * CONSTRUCTORS
@@ -173,7 +173,7 @@ public class TrackMate_<T extends RealType<T> & NativeType<T>>  implements PlugI
 	protected List<Spot> translateAndPruneSpots(final List<Spot> spotsThisFrame, final Settings<T> settings) {
 		
 		// Put them back in the right referential 
-		final float[] calibration = settings.getCalibration();
+		final double[] calibration = TMUtils.getSpatialCalibration(settings.img);
 		TMUtils.translateSpots(spotsThisFrame, 
 				settings.xstart * calibration[0], 
 				settings.ystart * calibration[1], 
@@ -226,10 +226,10 @@ public class TrackMate_<T extends RealType<T> & NativeType<T>>  implements PlugI
 	 * <p>
 	 * Create the list of available {@link TrackMateModelView} the will be offered to choose from.
 	 */
-	protected List<TrackMateModelView> createTrackMateModelViewList() {
-		List<TrackMateModelView> trackMateModelViews = new ArrayList<TrackMateModelView>(2);
-		trackMateModelViews.add(new HyperStackDisplayer());
-		trackMateModelViews.add(new SpotDisplayer3D());
+	protected List<TrackMateModelView<T>> createTrackMateModelViewList() {
+		List<TrackMateModelView<T>> trackMateModelViews = new ArrayList<TrackMateModelView<T>>(2);
+		trackMateModelViews.add(new HyperStackDisplayer<T>());
+		trackMateModelViews.add(new SpotDisplayer3D<T>());
 		return trackMateModelViews;
 	}
 	
@@ -272,13 +272,13 @@ public class TrackMate_<T extends RealType<T> & NativeType<T>>  implements PlugI
 	 * Create the list of {@link SpotTracker} that will be used to build tracks.
 	 * Overwrite this method if you want to add your {@link SpotTracker}.
 	 */
-	protected List<SpotTracker> createSpotTrackerList() {
-		List<SpotTracker> trackers = new ArrayList<SpotTracker>(5);
-		trackers.add(new SimpleFastLAPTracker());
-		trackers.add(new FastLAPTracker());
+	protected List<SpotTracker<T>> createSpotTrackerList() {
+		List<SpotTracker<T>> trackers = new ArrayList<SpotTracker<T>>(5);
+		trackers.add(new SimpleFastLAPTracker<T>());
+		trackers.add(new FastLAPTracker<T>());
 //		trackers.add(new fiji.plugin.trackmate.tracking.SimpleLAPTracker());
 //		trackers.add(new fiji.plugin.trackmate.tracking.LAPTracker());
-		trackers.add(new NearestNeighborTracker());
+		trackers.add(new NearestNeighborTracker<T>());
 		return trackers;
 		
 	}
@@ -289,10 +289,10 @@ public class TrackMate_<T extends RealType<T> & NativeType<T>>  implements PlugI
 	 * Create the list of {@link TrackFeatureAnalyzer} that will be used to compute track features.
 	 * Overwrite this method if you want to add your {@link TrackFeatureAnalyzer}.
 	 */
-	protected List<TrackFeatureAnalyzer> createTrackFeatureAnalyzerList() {
-		List<TrackFeatureAnalyzer> analyzers = new ArrayList<TrackFeatureAnalyzer>(3);
+	protected List<TrackFeatureAnalyzer<T>> createTrackFeatureAnalyzerList() {
+		List<TrackFeatureAnalyzer<T>> analyzers = new ArrayList<TrackFeatureAnalyzer<T>>(3);
 //		analyzers.add(new TrackBranchingAnalyzer());
-		analyzers.add(new TrackDurationAnalyzer());
+		analyzers.add(new TrackDurationAnalyzer<T>());
 //		analyzers.add(new TrackSpeedStatisticsAnalyzer());
 		return analyzers;
 	}
@@ -303,20 +303,20 @@ public class TrackMate_<T extends RealType<T> & NativeType<T>>  implements PlugI
 	 * Create the list of {@link TrackMateAction} that will be offered to use.
 	 * Overwrite this method if you want to add your {@link TrackMateAction}.
 	 */
-	protected List<TrackMateAction> createTrackMateActionList() {
-		List<TrackMateAction> actions = new ArrayList<TrackMateAction>(10);
-		actions.add(new GrabSpotImageAction());
-		actions.add(new ExtractTrackStackAction());
-		actions.add(new LinkNew3DViewerAction());
-		actions.add(new CopyOverlayAction());
-		actions.add(new PlotNSpotsVsTimeAction());
-		actions.add(new CaptureOverlayAction());
-		actions.add(new ResetSpotTimeFeatureAction());
-		actions.add(new RecalculateFeatureAction());
-		actions.add(new ResetRadiusAction());
-		actions.add(new RadiusToEstimatedAction());
-//		actions.add(new fiji.plugin.trackmate.action.ISBIChallengeExporter());
-		actions.add(new ExportTracksToXML());
+	protected List<TrackMateAction<T>> createTrackMateActionList() {
+		List<TrackMateAction<T>> actions = new ArrayList<TrackMateAction<T>>(10);
+		actions.add(new GrabSpotImageAction<T>());
+		actions.add(new ExtractTrackStackAction<T>());
+		actions.add(new LinkNew3DViewerAction<T>());
+		actions.add(new CopyOverlayAction<T>());
+		actions.add(new PlotNSpotsVsTimeAction<T>());
+		actions.add(new CaptureOverlayAction<T>());
+		actions.add(new ResetSpotTimeFeatureAction<T>());
+		actions.add(new RecalculateFeatureAction<T>());
+		actions.add(new ResetRadiusAction<T>());
+		actions.add(new RadiusToEstimatedAction<T>());
+//		actions.add(new fiji.plugin.trackmate.action.ISBIChallengeExporter<T>());
+		actions.add(new ExportTracksToXML<T>());
 		return actions;
 	}
 	
@@ -353,7 +353,7 @@ public class TrackMate_<T extends RealType<T> & NativeType<T>>  implements PlugI
 	/**
 	 * Return a list of the {@link SpotTracker} that are currently registered in this plugin.
 	 */
-	public List<SpotTracker> getAvailableSpotTrackers() {
+	public List<SpotTracker<T>> getAvailableSpotTrackers() {
 		return spotTrackers;
 	}
 
@@ -361,14 +361,14 @@ public class TrackMate_<T extends RealType<T> & NativeType<T>>  implements PlugI
 	/**
 	 * Return a list of the {@link TrackMateModelView} that are currently registered in this plugin.
 	 */
-	public List<TrackMateModelView> getAvailableTrackMateModelViews() {
+	public List<TrackMateModelView<T>> getAvailableTrackMateModelViews() {
 		return trackMateModelViews;
 	}
 	
 	/**
 	 * Return a list of the {@link TrackMateAction} that are currently registered in this plugin.
 	 */
-	public List<TrackMateAction> getAvailableActions() {
+	public List<TrackMateAction<T>> getAvailableActions() {
 		return trackMateActions;
 	}
 
@@ -406,7 +406,7 @@ public class TrackMate_<T extends RealType<T> & NativeType<T>>  implements PlugI
 	 * @see #getTrackGraph()
 	 */ 
 	public void execTracking() {
-		SpotTracker tracker = model.getSettings().tracker;
+		SpotTracker<T> tracker = model.getSettings().tracker;
 		tracker.setModel(model);
 		tracker.setLogger(model.getLogger());
 		if (tracker.checkInput() && tracker.process()) {
@@ -529,7 +529,7 @@ public class TrackMate_<T extends RealType<T> & NativeType<T>>  implements PlugI
 	 * @see #setInitialFilter(Float)
 	 */
 	public void execInitialSpotFiltering() {
-		Float initialSpotFilterValue = model.getSettings().initialSpotFilterValue;
+		Double initialSpotFilterValue = model.getSettings().initialSpotFilterValue;
 		FeatureFilter featureFilter = new FeatureFilter(Spot.QUALITY, initialSpotFilterValue, true);
 		model.setSpots(model.getSpots().filter(featureFilter), true);
 	}
@@ -559,8 +559,8 @@ public class TrackMate_<T extends RealType<T> & NativeType<T>>  implements PlugI
 		for (int trackIndex = 0; trackIndex < model.getNTracks(); trackIndex++) {
 			boolean trackIsOk = true;
 			for(FeatureFilter filter : model.getSettings().getTrackFilters()) {
-				Float tval = filter.value;
-				Float val = model.getFeatureModel().getTrackFeature(trackIndex, filter.feature);
+				Double tval = filter.value;
+				Double val = model.getFeatureModel().getTrackFeature(trackIndex, filter.feature);
 				if (null == val)
 					continue;
 

@@ -6,6 +6,9 @@ import static fiji.plugin.trackmate.gui.TrackMateWizard.SMALL_FONT;
 import javax.swing.ImageIcon;
 import javax.swing.JFrame;
 
+import net.imglib2.type.NativeType;
+import net.imglib2.type.numeric.RealType;
+
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ExportableChartPanel;
 import org.jfree.chart.JFreeChart;
@@ -18,7 +21,7 @@ import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMate_;
 import fiji.plugin.trackmate.visualization.trackscheme.TrackSchemeFrame;
 
-public class PlotNSpotsVsTimeAction extends AbstractTMAction {
+public class PlotNSpotsVsTimeAction<T extends RealType<T> & NativeType<T>> extends AbstractTMAction<T> {
 
 	private static final ImageIcon ICON = new ImageIcon(TrackSchemeFrame.class.getResource("resources/plots.png"));
 
@@ -27,9 +30,9 @@ public class PlotNSpotsVsTimeAction extends AbstractTMAction {
 	}
 	
 	@Override
-	public void execute(TrackMate_ plugin) {
+	public void execute(TrackMate_<T> plugin) {
 		// Collect data
-		final TrackMateModel model = plugin.getModel();
+		final TrackMateModel<T> model = plugin.getModel();
 		final double dt = model.getSettings().dt;
 		final SpotCollection spots = model.getFilteredSpots();
 		final int nFrames = spots.keySet().size();
@@ -44,7 +47,7 @@ public class PlotNSpotsVsTimeAction extends AbstractTMAction {
 		// Plot data
 		String xAxisLabel = "Time ("+model.getSettings().timeUnits+")";
 		String yAxisLabel = "N spots";
-		String title = "Nspots vs Time for "+model.getSettings().imp.getShortTitle();
+		String title = "Nspots vs Time for "+model.getSettings().img.getName();
 		DefaultXYDataset dataset = new DefaultXYDataset();
 		dataset.addSeries("Nspots", data);
 		

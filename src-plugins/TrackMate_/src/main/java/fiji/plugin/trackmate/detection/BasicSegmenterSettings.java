@@ -17,10 +17,10 @@ public class BasicSegmenterSettings implements SegmenterSettings {
 	
 	private static final String SEGMENTER_SETTINGS_EXPECTED_RADIUS_ATTRIBUTE_NAME 	= "expectedradius";
 
-	private static final float DEFAULT_EXPECTED_DIAMETER	= 10f;
+	private static final double DEFAULT_EXPECTED_DIAMETER	= 10;
 
 	/** The expected spot diameter in physical units. */
-	public float 	expectedRadius = DEFAULT_EXPECTED_DIAMETER/2;
+	public double 	expectedRadius = DEFAULT_EXPECTED_DIAMETER/2;
 	
 	/*
 	 * METHODS

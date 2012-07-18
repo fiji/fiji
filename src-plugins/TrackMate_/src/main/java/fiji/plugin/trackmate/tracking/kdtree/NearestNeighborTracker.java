@@ -9,6 +9,8 @@ import net.imglib2.RealPoint;
 import net.imglib2.algorithm.MultiThreadedBenchmarkAlgorithm;
 import net.imglib2.collection.KDTree;
 import net.imglib2.multithreading.SimpleMultiThreading;
+import net.imglib2.type.NativeType;
+import net.imglib2.type.numeric.RealType;
 
 import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.graph.SimpleWeightedGraph;
@@ -20,7 +22,7 @@ import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.tracking.SpotTracker;
 import fiji.plugin.trackmate.tracking.TrackerSettings;
 
-public class NearestNeighborTracker extends MultiThreadedBenchmarkAlgorithm	implements SpotTracker {
+public class NearestNeighborTracker <T extends RealType<T> & NativeType<T>> extends MultiThreadedBenchmarkAlgorithm	implements SpotTracker<T> {
 
 	/*
 	 * FIELDS
@@ -156,7 +158,7 @@ public class NearestNeighborTracker extends MultiThreadedBenchmarkAlgorithm	impl
 	}
 
 	@Override
-	public void setModel(TrackMateModel model) {
+	public void setModel(TrackMateModel<T> model) {
 		this.spots = model.getFilteredSpots();
 		this.settings = (NearestNeighborTrackerSettings) model.getSettings().trackerSettings;
 		reset();

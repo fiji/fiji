@@ -10,6 +10,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import net.imglib2.algorithm.MultiThreadedBenchmarkAlgorithm;
 import net.imglib2.multithreading.SimpleMultiThreading;
+import net.imglib2.type.NativeType;
+import net.imglib2.type.numeric.RealType;
 
 import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.graph.SimpleWeightedGraph;
@@ -110,7 +112,7 @@ import fiji.plugin.trackmate.tracking.hungarian.HungarianAlgorithm;
  * 
  * @author Nicholas Perry
  */
-public class LAPTracker extends MultiThreadedBenchmarkAlgorithm implements SpotTracker {
+public class LAPTracker <T extends RealType<T> & NativeType<T>> extends MultiThreadedBenchmarkAlgorithm implements SpotTracker<T> {
 
 	private final static String BASE_ERROR_MESSAGE = "LAPTracker: ";
 	private static final boolean DEBUG = false;
@@ -178,7 +180,7 @@ public class LAPTracker extends MultiThreadedBenchmarkAlgorithm implements SpotT
 	 */
 
 	@Override
-	public void setModel(TrackMateModel model) {
+	public void setModel(TrackMateModel<T> model) {
 		this.spots = model.getFilteredSpots();
 		this.settings = (LAPTrackerSettings) model.getSettings().trackerSettings;
 		reset();

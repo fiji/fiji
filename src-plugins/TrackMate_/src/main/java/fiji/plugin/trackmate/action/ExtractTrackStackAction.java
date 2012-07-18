@@ -13,7 +13,11 @@ import java.util.TreeSet;
 import javax.swing.ImageIcon;
 
 import net.imglib2.img.Img;
+import net.imglib2.img.ImgPlus;
 import net.imglib2.img.display.imagej.ImageJFunctions;
+import net.imglib2.type.NativeType;
+import net.imglib2.type.numeric.RealType;
+import net.imglib2.view.HyperSliceImgPlus;
 
 import org.jgrapht.graph.DefaultWeightedEdge;
 
@@ -25,7 +29,7 @@ import fiji.plugin.trackmate.features.spot.SpotIconGrabber;
 import fiji.plugin.trackmate.gui.TrackMateWizard;
 import fiji.plugin.trackmate.util.TMUtils;
 
-public class ExtractTrackStackAction extends AbstractTMAction {
+public class ExtractTrackStackAction<T extends RealType<T> & NativeType<T>> extends AbstractTMAction<T> {
 
 	private static final ImageIcon ICON = new ImageIcon(TrackMateWizard.class.getResource("images/magnifier.png"));
 	/** By how much we resize the capture window to get a nice border around the spot. */
@@ -45,12 +49,11 @@ public class ExtractTrackStackAction extends AbstractTMAction {
 	 * METHODS
 	 */
 	
-	@SuppressWarnings({ "unchecked", "rawtypes" })
 	@Override
-	public void execute(TrackMate_ plugin) {
+	public void execute(TrackMate_<T> plugin) {
 		logger.log("Capturing track stack.\n");
 		
-		TrackMateModel model = plugin.getModel();
+		TrackMateModel<T> model = plugin.getModel();
 		Set<Spot> selection = model.getSpotSelection();
 		int nspots = selection.size();
 		if (nspots != 2) {
@@ -84,7 +87,7 @@ public class ExtractTrackStackAction extends AbstractTMAction {
 		path.add(start);
 		Spot previous = start;
 		Spot current;
-		float radius = Math.abs(start.getFeature(Spot.RADIUS));
+		double radius = Math.abs(start.getFeature(Spot.RADIUS));
 		for (DefaultWeightedEdge edge : edges) {
 			
 			current = model.getEdgeSource(edge);
@@ -92,7 +95,7 @@ public class ExtractTrackStackAction extends AbstractTMAction {
 				current = model.getEdgeTarget(edge); // We have to check both in case of bad oriented edges
 			}
 			path.add(current);
-			float ct = Math.abs(current.getFeature(Spot.RADIUS));
+			double ct = Math.abs(current.getFeature(Spot.RADIUS));
 			if (ct > radius) {
 				radius = ct;
 			}
@@ -106,11 +109,14 @@ public class ExtractTrackStackAction extends AbstractTMAction {
 		nspots = sortedSpots.size();
 
 		// Common coordinates
-		Settings settings = model.getSettings();
-		float[] calibration = settings.getCalibration();
-		final int targetChannel = settings.imp.getChannel(); // We do this for current channel
+		Settings<T> settings = model.getSettings();
+		double[] calibration = TMUtils.getSpatialCalibration(settings.img);
+		final int targetChannel = settings.segmentationChannel - 1; // We do this for the segmentation channel TODO be more flexible
 		final int width 	= (int) Math.ceil(2 * radius * RESIZE_FACTOR / calibration[0]);
 		final int height 	= (int) Math.ceil(2 * radius * RESIZE_FACTOR / calibration[0]);
+		
+		// Extract target channel
+		final ImgPlus<T> imgC = HyperSliceImgPlus.fixChannelAxis(settings.img, targetChannel);
 		
 		// Prepare new image holder:
 		ImageStack stack = new ImageStack(width, height);
@@ -121,25 +127,27 @@ public class ExtractTrackStackAction extends AbstractTMAction {
 			
 			// Extract image for current frame
 			int frame = model.getSpots().getFrame(spot);
-			Img img = TMUtils.getUncroppedSingleFrameAsImage(settings.imp, frame, targetChannel);
+			
+			
+			ImgPlus<T> imgCT = HyperSliceImgPlus.fixTimeAxis(imgC, frame);
 			
 			// Compute target coordinates for current spot
-			int x = Math.round((spot.getFeature(Spot.POSITION_X)) / calibration[0]) - width/2; 
-			int y = Math.round((spot.getFeature(Spot.POSITION_Y)) / calibration[1]) - height/2;
+			int x = (int) (Math.round((spot.getFeature(Spot.POSITION_X)) / calibration[0]) - width/2); 
+			int y = (int) (Math.round((spot.getFeature(Spot.POSITION_Y)) / calibration[1]) - height/2);
 			long slice = 0;
-			if (img.numDimensions() > 2) {
+			if (imgCT.numDimensions() > 2) {
 				slice = Math.round(spot.getFeature(Spot.POSITION_Z) / calibration[2]);
 				if (slice < 0) {
 					slice = 0;
 				}
-				if (slice >= img.dimension(2)) {
-					slice = img.dimension(2) -1;
+				if (slice >= imgCT.dimension(2)) {
+					slice = imgCT.dimension(2) -1;
 				}
 			}
 			
-			SpotIconGrabber grabber = new SpotIconGrabber();
-			grabber.setTarget(img, calibration);
-			Img crop = grabber.grabImage(x, y, slice, width, height);
+			SpotIconGrabber<T> grabber = new SpotIconGrabber<T>();
+			grabber.setTarget(imgCT);
+			Img<T> crop = grabber.grabImage(x, y, slice, width, height);
 			
 			// Copy to central holder
 			stack.addSlice(spot.toString(), ImageJFunctions.wrap(crop, crop.toString()).getProcessor());
@@ -153,11 +161,11 @@ public class ExtractTrackStackAction extends AbstractTMAction {
 		ImagePlus stackTrack = new ImagePlus("", stack);
 		stackTrack.setTitle("Path from "+start+" to "+end);
 		Calibration impCal = stackTrack.getCalibration();
-		impCal.setTimeUnit(settings.imp.getCalibration().getTimeUnit());
-		impCal.setUnit(settings.imp.getCalibration().getUnit());
-		impCal.pixelWidth 		= settings.imp.getCalibration().pixelWidth;
-		impCal.pixelHeight 		= settings.imp.getCalibration().pixelHeight;
-		impCal.frameInterval 	= settings.imp.getCalibration().frameInterval;
+//		impCal.setTimeUnit(settings.imp.getCalibration().getTimeUnit());
+//		impCal.setUnit(settings.imp.getCalibration().getUnit());
+		impCal.pixelWidth 		= calibration[0];
+		impCal.pixelHeight 		= calibration[1];
+		impCal.frameInterval 	= settings.dt;
 		stackTrack.setDimensions(1, 1, nspots);
 
 		//Display it

@@ -10,6 +10,9 @@ import java.util.TreeSet;
 
 import javax.swing.ImageIcon;
 
+import net.imglib2.type.NativeType;
+import net.imglib2.type.numeric.RealType;
+
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.output.Format;
@@ -21,7 +24,7 @@ import fiji.plugin.trackmate.TrackMate_;
 import fiji.plugin.trackmate.gui.TrackMateWizard;
 import fiji.plugin.trackmate.util.TMUtils;
 
-public class ExportTracksToXML extends AbstractTMAction {
+public class ExportTracksToXML<T extends RealType<T> & NativeType<T>> extends AbstractTMAction<T> {
 
 	private static final ImageIcon ICON = new ImageIcon(TrackMateWizard.class.getResource("images/page_save.png"));
 	
@@ -38,10 +41,10 @@ public class ExportTracksToXML extends AbstractTMAction {
 	 */
 
 	@Override
-	public void execute(TrackMate_ plugin) {
+	public void execute(TrackMate_<T> plugin) {
 
 		logger.log("Exporting tracks to simple XML format.\n");
-		final TrackMateModel model = plugin.getModel();
+		final TrackMateModel<T> model = plugin.getModel();
 		int ntracks = model.getNFilteredTracks();
 		if (ntracks == 0) {
 			logger.log("No visible track found. Aborting.\n");
@@ -97,7 +100,7 @@ public class ExportTracksToXML extends AbstractTMAction {
 		return "Export tracks to XML file";
 	}
 
-	private Element marshall(TrackMateModel model) {
+	private Element marshall(TrackMateModel<T> model) {
 		Element root = new Element("root");
 		Element content = new Element(CONTENT_KEY);
 		
@@ -118,9 +121,9 @@ public class ExportTracksToXML extends AbstractTMAction {
 
 			for (Spot spot : sortedTrack) {
 				int frame = model.getFilteredSpots().getFrame(spot);
-				float x = spot.getFeature(Spot.POSITION_X);
-				float y = spot.getFeature(Spot.POSITION_Y);
-				float z = spot.getFeature(Spot.POSITION_Z);
+				double x = spot.getFeature(Spot.POSITION_X);
+				double y = spot.getFeature(Spot.POSITION_Y);
+				double z = spot.getFeature(Spot.POSITION_Z);
 
 				Element spotElement = new Element(SPOT_KEY);
 				spotElement.setAttribute(T_ATT, ""+frame);

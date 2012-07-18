@@ -6,6 +6,10 @@ import ij.ImagePlus;
 import java.io.File;
 import java.io.IOException;
 
+import net.imglib2.img.ImagePlusAdapter;
+import net.imglib2.type.NativeType;
+import net.imglib2.type.numeric.RealType;
+
 import org.jdom.JDOMException;
 
 import fiji.plugin.trackmate.FeatureFilter;
@@ -23,7 +27,7 @@ import fiji.plugin.trackmate.visualization.trackscheme.TrackSchemeFrame;
 public class TrackVisualizerTestDrive {
 
 	
-	public static void main(String[] args) throws JDOMException, IOException {
+	public static <T extends RealType<T> & NativeType<T>>  void main(String[] args) throws JDOMException, IOException {
 	
 		File file;
 		if (!IJ.isWindows()) {
@@ -37,8 +41,8 @@ public class TrackVisualizerTestDrive {
 		reader.parse();
 		
 		// Load objects 
-		final TrackMateModel model = reader.getModel();
-		TrackMate_ plugin = new TrackMate_(model);
+		final TrackMateModel<T> model = reader.getModel();
+		TrackMate_<T> plugin = new TrackMate_<T>(model);
 		
 		System.out.println("From the XML file:");
 		System.out.println("Found "+model.getNTracks()+" tracks in total.");
@@ -48,7 +52,7 @@ public class TrackVisualizerTestDrive {
 			System.out.println(" - "+model.trackToString(i));
 		}
 		
-		FeatureFilter filter = new FeatureFilter(TrackBranchingAnalyzer.NUMBER_SPOTS, 50f, true);
+		FeatureFilter filter = new FeatureFilter(TrackBranchingAnalyzer.NUMBER_SPOTS, 50d, true);
 		model.getSettings().addTrackFilter(filter);
 		plugin.execTrackFiltering();
 		System.out.println();
@@ -56,9 +60,9 @@ public class TrackVisualizerTestDrive {
 		System.out.println("After filtering, retaining "+model.getNFilteredTracks()+" tracks.");
 			
 		ImagePlus imp = reader.getImage();
-		Settings settings = reader.getSettings();
+		Settings<T> settings = reader.getSettings();
 		reader.getSegmenterSettings(settings);
-		settings.imp = imp;
+		settings.img = ImagePlusAdapter.wrapImgPlus(imp);
 		
 		// Launch ImageJ and display
 		if (null != imp) {
@@ -66,18 +70,18 @@ public class TrackVisualizerTestDrive {
 			imp.show();
 		}
 		
-		GrabSpotImageAction grabber = new GrabSpotImageAction();
+		GrabSpotImageAction<T> grabber = new GrabSpotImageAction<T>();
 		grabber.execute(plugin);
 		
 		
 		// Instantiate displayer
-		final TrackMateModelView displayer = new HyperStackDisplayer();
+		final TrackMateModelView<T> displayer = new HyperStackDisplayer<T>();
 		displayer.setModel(model);
 		displayer.render();
 		displayer.refresh();
 		
 		// Display Track scheme
-		final TrackSchemeFrame frame = new TrackSchemeFrame(model);
+		final TrackSchemeFrame<T> frame = new TrackSchemeFrame<T>(model);
 		frame.setVisible(true);
 		
 	}

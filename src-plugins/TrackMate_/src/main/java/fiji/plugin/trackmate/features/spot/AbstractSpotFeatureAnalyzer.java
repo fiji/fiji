@@ -1,8 +1,6 @@
 package fiji.plugin.trackmate.features.spot;
 
 import net.imglib2.img.ImgPlus;
-import net.imglib2.type.NativeType;
-import net.imglib2.type.numeric.NumericType;
 
 public abstract class AbstractSpotFeatureAnalyzer<T> implements SpotFeatureAnalyzer<T> {
 	

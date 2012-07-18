@@ -1,5 +1,7 @@
 package fiji.plugin.trackmate.tests;
 
+import net.imglib2.type.NativeType;
+import net.imglib2.type.numeric.RealType;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotImp;
 import fiji.plugin.trackmate.TrackMateModel;
@@ -11,19 +13,19 @@ public class TrackMateModel_TestDrive {
 	/**
 	 * @param args
 	 */
-	public static void main(String[] args) {
+	public static <T extends RealType<T> & NativeType<T>> void main(String[] args) {
 
 		// Create a model with 5 spots, that forms a single branch track
-		TrackMateModel model = new TrackMateModel();
+		TrackMateModel<T> model = new TrackMateModel<T>();
 
 		// Add an event listener now
 		model.addTrackMateModelChangeListener(new EventLogger());
 
-		Spot s1 = new SpotImp(new float[3], "S1");
-		Spot s2 = new SpotImp(new float[3], "S2");
-		Spot s3 = new SpotImp(new float[3], "S3");
-		Spot s4 = new SpotImp(new float[3], "S4");
-		Spot s5 = new SpotImp(new float[3], "S5");
+		Spot s1 = new SpotImp(new double[3], "S1");
+		Spot s2 = new SpotImp(new double[3], "S2");
+		Spot s3 = new SpotImp(new double[3], "S3");
+		Spot s4 = new SpotImp(new double[3], "S4");
+		Spot s5 = new SpotImp(new double[3], "S5");
 
 		
 		System.out.println("Create the graph in one update:");

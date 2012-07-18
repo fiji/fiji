@@ -14,6 +14,9 @@ import java.util.SortedSet;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
+import net.imglib2.type.NativeType;
+import net.imglib2.type.numeric.RealType;
+
 import org.jfree.chart.renderer.InterpolatePaintScale;
 import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.traverse.DepthFirstIterator;
@@ -39,44 +42,37 @@ import fiji.plugin.trackmate.util.TrackSplitter;
  * @author Jean-Yves Tinevez <jeanyves.tinevez@gmail.com> - Mar 2011 - 2012
  *
  */
-public class mxTrackGraphLayout extends mxGraphLayout {
+public class mxTrackGraphLayout <T extends RealType<T> & NativeType<T>> extends mxGraphLayout {
 
 	private static final int SWIMLANE_HEADER_SIZE = 30;
 	private static final boolean DEBUG = false;
 
-	private JGraphXAdapter graph;
+	private JGraphXAdapter<T> graph;
 	private int[] columnWidths;
 	protected InterpolatePaintScale colorMap = InterpolatePaintScale.Jet;
 	/** The style to use to apply to cells, can be changed by the user. */
 	protected String selectedStyle = TrackSchemeFrame.DEFAULT_STYLE_NAME;
 	
 	private Color[] trackColorArray;
-	private TreeMap<Float, Integer> rows;
-	/**
-	 * The spatial calibration in X. We need it to compute cell's height from spot radiuses.
-	 */
-	private float dx;
-	/**
-	 * Do we group branches and display branch cells.
-	 * False by default.
-	 */
+	private TreeMap<Double, Integer> rows;
+	/** The spatial calibration in X. We need it to compute cell's height from spot radiuses.  */
+	private double  dx;
+	/**  Do we group branches and display branch cells.
+	 * False by default. */
 	private boolean doBranchGrouping = false;
-	/**
-	 * Do we display costs along edges? Default set by mother frame
-	 */
+	/**  Do we display costs along edges? Default set by mother frame. */
 	private boolean doDisplayCosts = TrackSchemeFrame.DEFAULT_DO_DISPLAY_COSTS_ON_EDGES;
-	/**
-	 * Used to keep a reference to the branch cell which will contain spot cells.
+	/**  Used to keep a reference to the branch cell which will contain spot cells.
 	 * We need this to be able to purge them from the graph when we redo a layout.	 */
 	private ArrayList<mxCell> branchCells = new ArrayList<mxCell>();
 
-	private TrackMateModel model;
+	private TrackMateModel<T> model;
 
 	/*
 	 * CONSTRUCTOR
 	 */
 
-	public mxTrackGraphLayout(final TrackMateModel model, final JGraphXAdapter graph, float dx) {
+	public mxTrackGraphLayout(final TrackMateModel<T> model, final JGraphXAdapter<T> graph, double dx) {
 		super(graph);
 		this.graph = graph;
 		this.model = model;
@@ -106,7 +102,7 @@ public class mxTrackGraphLayout extends mxGraphLayout {
 			HashMap<Integer, Color> trackColors = new HashMap<Integer, Color>(ntracks, 1);
 			int colorIndex = 0;
 			for (int i : model.getVisibleTrackIndices()) { 				
-				trackColors.put(i, colorMap.getPaint((float) colorIndex / (ntracks-1)));
+				trackColors.put(i, colorMap.getPaint( (double) colorIndex / (ntracks-1)));
 				colorIndex++;
 			}
 			
@@ -115,19 +111,19 @@ public class mxTrackGraphLayout extends mxGraphLayout {
 			}
 
 			// Collect unique instants
-			SortedSet<Float> instants = new TreeSet<Float>();
+			SortedSet<Double> instants = new TreeSet<Double>();
 			for (Spot s : model.getFilteredSpots()) {
 				instants.add(s.getFeature(Spot.POSITION_T));
 			}
 
-			TreeMap<Float, Integer> columns = new TreeMap<Float, Integer>();
-			for(Float instant : instants) {
+			TreeMap<Double, Integer> columns = new TreeMap<Double, Integer>();
+			for(Double instant : instants) {
 				columns.put(instant, -1);
 			}
 
 			// Build row indices from instants
-			rows = new TreeMap<Float, Integer>();
-			Iterator<Float> it = instants.iterator();
+			rows = new TreeMap<Double, Integer>();
+			Iterator<Double> it = instants.iterator();
 			int rowIndex = 1; // Start at 1 to let room for column headers
 			while (it.hasNext()) {
 				rows.put(it.next(), rowIndex);
@@ -201,7 +197,7 @@ public class mxTrackGraphLayout extends mxGraphLayout {
 					style = selectedStyle + ";" + style;
 
 					// Determine in what column to put the spot
-					Float instant = spot.getFeature(Spot.POSITION_T);
+					Double instant = spot.getFeature(Spot.POSITION_T);
 					int freeColumn = columns.get(instant) + 1;
 
 					// If we have no direct edge with the previous spot, we add 1 to the current column
@@ -272,7 +268,7 @@ public class mxTrackGraphLayout extends mxGraphLayout {
 				}
 
 
-				for(Float instant : instants) {
+				for(Double instant : instants) {
 					columns.put(instant, currentColumn+1);
 				}
 
@@ -285,7 +281,7 @@ public class mxTrackGraphLayout extends mxGraphLayout {
 
 				if (doBranchGrouping ) {
 
-					ArrayList<ArrayList<Spot>> branches = new TrackSplitter(model).splitTrackInBranches(track);
+					ArrayList<ArrayList<Spot>> branches = new TrackSplitter<T>(model).splitTrackInBranches(track);
 
 					int partIndex = 1;
 
@@ -354,7 +350,7 @@ public int[] getTrackColumnWidths() {
 /**
  * Return map linking the the row number for a given instant.
  */
-public TreeMap<Float, Integer> getRowForInstant() {
+public TreeMap<Double, Integer> getRowForInstant() {
 	return rows;
 }
 

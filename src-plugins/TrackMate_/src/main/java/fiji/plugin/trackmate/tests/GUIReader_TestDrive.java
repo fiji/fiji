@@ -4,6 +4,9 @@ import ij.IJ;
 
 import java.io.File;
 
+import net.imglib2.type.NativeType;
+import net.imglib2.type.numeric.RealType;
+
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.TrackMate_;
 import fiji.plugin.trackmate.gui.DisplayerPanel;
@@ -15,7 +18,7 @@ import fiji.plugin.trackmate.gui.WizardController;
 public class GUIReader_TestDrive {
 	
 	
-	public static void main(String args[]) {
+	public static <T extends RealType<T> & NativeType<T>> void main(String args[]) {
 
 		File file;
 		if (IJ.isWindows()) {
@@ -26,7 +29,7 @@ public class GUIReader_TestDrive {
 		
 		ij.ImageJ.main(args);
 		
-		TrackMate_ plugin = new TrackMate_();
+		TrackMate_<T> plugin = new TrackMate_<T>();
 		plugin.setLogger(Logger.DEFAULT_LOGGER);
 
 		plugin.initModules();

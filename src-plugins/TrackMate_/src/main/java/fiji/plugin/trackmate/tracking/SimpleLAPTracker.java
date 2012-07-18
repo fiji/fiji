@@ -1,7 +1,10 @@
 package fiji.plugin.trackmate.tracking;
 
+import net.imglib2.type.NativeType;
+import net.imglib2.type.numeric.RealType;
 
-public class SimpleLAPTracker extends LAPTracker {
+
+public class SimpleLAPTracker <T extends RealType<T> & NativeType<T>> extends LAPTracker<T> {
 
 	@Override
 	public String toString() {
