@@ -5351,6 +5351,10 @@ public class WekaSegmentation {
 	public void setFeatureStackArray(FeatureStackArray fsa)
 	{
 		this.featureStackArray = fsa;
+		// set feature stacks to be updated during train and test 
+		featureStackToUpdateTrain = new boolean[featureStackArray.getSize()];
+		featureStackToUpdateTest = new boolean[featureStackArray.getSize()];
+		Arrays.fill(featureStackToUpdateTest, true);
 	}
 
 	/**
