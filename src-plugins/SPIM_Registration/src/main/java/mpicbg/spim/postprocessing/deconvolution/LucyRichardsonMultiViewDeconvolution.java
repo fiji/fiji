@@ -7,19 +7,13 @@ import java.math.MathContext;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.concurrent.atomic.AtomicInteger;
-import weka.classifiers.meta.AdditiveRegression;
 
 import mpicbg.imglib.algorithm.fft.FourierConvolution;
-import mpicbg.imglib.container.array.ArrayContainerFactory;
 import mpicbg.imglib.cursor.Cursor;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.image.display.imagej.ImageJFunctions;
-import mpicbg.imglib.io.LOCI;
 import mpicbg.imglib.multithreading.SimpleMultiThreading;
 import mpicbg.imglib.type.numeric.real.FloatType;
-import mpicbg.spim.io.IOFunctions;
-import mpicbg.spim.io.SPIMConfiguration;
-import mpicbg.spim.registration.ViewDataBeads;
 import mpicbg.util.RealSum;
 
 public class LucyRichardsonMultiViewDeconvolution
@@ -385,7 +379,7 @@ public class LucyRichardsonMultiViewDeconvolution
 		final Cursor<FloatType> cursor = cursorsImage.get( 0 );
 
 		// sum overlapping area individually
-A:		while ( cursor.hasNext() )
+/*A:*/	while ( cursor.hasNext() )
 		{
 			for ( final Cursor<FloatType> c : cursorsImage )
 				c.fwd();
