@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import net.imglib2.img.ImagePlusAdapter;
 import net.imglib2.img.ImgPlus;
 import net.imglib2.multithreading.SimpleMultiThreading;
 import net.imglib2.type.NativeType;
@@ -258,7 +259,7 @@ public class FeatureModel <T extends RealType<T> & NativeType<T>> {
 		final Logger logger = model.getLogger();
 		
 		// Can't compute any spot feature without an image to compute on.
-		if (settings.img == null)
+		if (settings.imp == null)
 			return;
 
 		final List<Integer> frameSet = new ArrayList<Integer>(toCompute.keySet());
@@ -274,8 +275,9 @@ public class FeatureModel <T extends RealType<T> & NativeType<T>> {
 		 * must not generate a cropped version of the image, but a full
 		 * snapshot. */
 	
+		final ImgPlus<T> img = ImagePlusAdapter.wrapImgPlus(settings.imp);
 		final int targetChannel = settings.segmentationChannel - 1;
-		final ImgPlus<T> imgC = HyperSliceImgPlus.fixChannelAxis(settings.img, targetChannel);
+		final ImgPlus<T> imgC = HyperSliceImgPlus.fixChannelAxis(img, targetChannel);
 
 		// Prepare the thread array
 		for (int ithread = 0; ithread < threads.length; ithread++) {

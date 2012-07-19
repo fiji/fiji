@@ -8,8 +8,6 @@ import java.awt.Point;
 import java.util.Collection;
 import java.util.List;
 
-import net.imglib2.exception.ImgLibException;
-import net.imglib2.img.imageplus.ImagePlusImg;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
 
@@ -77,17 +75,12 @@ public class HyperStackDisplayer <T extends RealType<T> & NativeType<T>> extends
 		return new TrackOverlay<T>(model, imp, displaySettings);
 	}
 
-	@SuppressWarnings("rawtypes")
 	@Override
 	public void setModel(TrackMateModel<T> model) {
 		super.setModel(model);
 		this.settings = model.getSettings();
-		try {
-			this.imp = ( (ImagePlusImg) settings.img.getImg()).getImagePlus();
-		} catch (ImgLibException e) {
-			e.printStackTrace();
-		}
-		this.calibration = TMUtils.getSpatialCalibration(settings.img);
+		this.imp = settings.imp;
+		this.calibration = TMUtils.getSpatialCalibration(settings.imp);
 	}
 
 	/*

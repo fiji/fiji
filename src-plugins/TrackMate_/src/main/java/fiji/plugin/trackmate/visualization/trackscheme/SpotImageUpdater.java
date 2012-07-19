@@ -1,5 +1,6 @@
 package fiji.plugin.trackmate.visualization.trackscheme;
 
+import net.imglib2.img.ImagePlusAdapter;
 import net.imglib2.img.ImgPlus;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
@@ -24,7 +25,6 @@ public class SpotImageUpdater <T extends RealType<T> & NativeType<T>> {
 	/**
 	 * Update the image string of the given spot, based on the raw images contained in the given model.
 	 */
-	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public void update(final Spot spot) {
 
 		Integer frame = model.getSpots().getFrame(spot);
@@ -33,12 +33,13 @@ public class SpotImageUpdater <T extends RealType<T> & NativeType<T>> {
 		if (frame == previousFrame) {
 			// Keep the same image than in memory
 		} else {
-			Settings settings = model.getSettings();
+			Settings<T> settings = model.getSettings();
+			ImgPlus<T> img = ImagePlusAdapter.wrapImgPlus(settings.imp);
 			int targetChannel = settings.segmentationChannel - 1; // TODO: be more flexible about that
-			ImgPlus<T> img = HyperSliceImgPlus.fixTimeAxis( 
-					HyperSliceImgPlus.fixChannelAxis(settings.img, targetChannel), 
+			ImgPlus<T> imgCT = HyperSliceImgPlus.fixTimeAxis( 
+					HyperSliceImgPlus.fixChannelAxis(img, targetChannel), 
 					frame);
-			grabber.setTarget(img);
+			grabber.setTarget(imgCT);
 			previousFrame = frame;
 		}
 		grabber.process(spot);			

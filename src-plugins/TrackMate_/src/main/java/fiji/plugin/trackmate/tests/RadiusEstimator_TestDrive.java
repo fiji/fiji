@@ -6,7 +6,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
-import net.imglib2.cursor.special.SphereCursor;
+import net.imglib2.algorithm.region.localneighborhood.SphereNeighborhood;
 import net.imglib2.img.ImagePlusAdapter;
 import net.imglib2.img.Img;
 import net.imglib2.img.ImgPlus;
@@ -36,7 +36,7 @@ public class RadiusEstimator_TestDrive {
 	public static <T extends NativeType<T> & RealType<T>> void main(String[] args) throws JDOMException, IOException {
 		
 		File testFile = new File("/Users/tinevez/Desktop/Data/Celegans-5pc_17timepoints-1.xml");
-		TmXmlReader reader = new TmXmlReader(testFile, Logger.DEFAULT_LOGGER);
+		TmXmlReader<T> reader = new TmXmlReader<T>(testFile, Logger.DEFAULT_LOGGER);
 		reader.parse();
 		
 		ImagePlus imp = reader.getImage();
@@ -44,7 +44,7 @@ public class RadiusEstimator_TestDrive {
 		ImgPlus<T> img = ImagePlusAdapter.wrapImgPlus(imp);
 		
 		TrackMateModel<T> model = reader.getModel();
-		model.getSettings().img = img;
+		model.getSettings().imp = imp;
 		
 		RadiusEstimator<T> es = new RadiusEstimator<T>();
 		es.setTarget(img);
@@ -95,18 +95,15 @@ public class RadiusEstimator_TestDrive {
 		Img<UnsignedByteType> img = new ArrayImgFactory<UnsignedByteType>().create(new int[] {200, 200, 400}, new UnsignedByteType());
 		ImgPlus<UnsignedByteType> testImage = new ImgPlus<UnsignedByteType>(img, "Test", axes, calibration); 
 		
-		
-		SphereCursor<UnsignedByteType> cursor;
+		SphereNeighborhood<UnsignedByteType> sphere = new SphereNeighborhood<UnsignedByteType>(testImage, 0);
 		int index = 0;
 		for (SpotImp s : spots) {
 			s.putFeature(Spot.RADIUS, radiuses[index]);
-			cursor = new SphereCursor<UnsignedByteType>(
-					testImage,
-					s.getPosition(null),
-					radiuses[index],
-					calibration);
-			while (cursor.hasNext())
-				cursor.next().set(on);
+			sphere.setPosition(s);
+			sphere.setRadius(radiuses[index]);
+			for(UnsignedByteType pixel : sphere) {
+				pixel.set(on);
+			}
 			index++;			
 		}
 				

@@ -1,5 +1,8 @@
 package fiji.plugin.trackmate.detection;
 
+import net.imglib2.type.NativeType;
+import net.imglib2.type.numeric.RealType;
+
 import org.jdom.Attribute;
 import org.jdom.Element;
 
@@ -22,12 +25,12 @@ import fiji.plugin.trackmate.io.TmXmlKeys;
  * @author Jean-Yves Tinevez <jeanyves.tinevez@gmail.com> 2010, 2011
  *
  */
-public interface SegmenterSettings {
+public interface SegmenterSettings <T extends RealType<T> & NativeType<T>> {
 
 	/**
 	 * @return  an GUI panel that is able to configure this concrete settings object.
 	 */
-	public SegmenterConfigurationPanel createConfigurationPanel();
+	public SegmenterConfigurationPanel<T> createConfigurationPanel();
 	
 	/**
 	 * Marshall this concrete instance to a JDom element, ready for saving to XML.

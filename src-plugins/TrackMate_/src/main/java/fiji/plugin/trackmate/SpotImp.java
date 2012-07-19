@@ -4,11 +4,13 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import net.imglib2.Localizable;
+import net.imglib2.RealLocalizable;
 import net.imglib2.util.Util;
 
 /**
  * Plain implementation of the {@link Spot} interface.
- * @author Jean-Yves Tinevez <jeanyves.tinevez@gmail.com> Sep 16, 2010
+ * @author Jean-Yves Tinevez <jeanyves.tinevez@gmail.com> Sep 16, 2010, 2012
  *
  */
 public class SpotImp implements Spot {
@@ -56,6 +58,20 @@ public class SpotImp implements Spot {
 		this(coordinates, null);
 	}
 	
+	public SpotImp(RealLocalizable localizable, String name) {
+		this.ID = IDcounter.getAndIncrement();
+		if (null == name)
+			this.name = "ID"+ID;
+		else
+			this.name = name;
+		setPosition(localizable);
+	}
+
+	public SpotImp(RealLocalizable localizable) {
+		this(localizable, null);
+	}
+
+	
 	/**
 	 * Blank constructor meant to be used when loading a spot collection from a file. <b>Will</b> mess with
 	 * the {@link #IDcounter} field, so this constructor should not be used for normal spot creation. 
@@ -87,14 +103,6 @@ public class SpotImp implements Spot {
 		newSpot.name = name;
 		return newSpot;
 	};
-	
-	/**
-	 * Convenience method that returns the X, Y and optionally Z feature in a double array.
-	 */
-	public void getCoordinates(double[] coords) {
-		for (int i = 0; i < coords.length; i++)
-			coords[i] = getFeature(POSITION_FEATURES[i]);
-	}
 	
 	@Override
 	public String getName() {
@@ -137,11 +145,9 @@ public class SpotImp implements Spot {
 		s.append("Time: "+getFeature(Spot.POSITION_T)+'\n');
 
 		// Coordinates
-		double[] coordinates = getPosition(null);
-		if (null == coordinates)
-			s.append("Position: <no coordinates>\n");
-		else 
-			s.append("Position: "+Util.printCoordinates(coordinates)+"\n");
+		double[] coordinates = new double[3];
+		localize(coordinates);
+		s.append("Position: "+Util.printCoordinates(coordinates)+"\n");
 		
 		// Feature list
 		if (null == features || features.size() < 1) 
@@ -162,19 +168,9 @@ public class SpotImp implements Spot {
 		return s.toString();
 	}
 	
-	@Override
-	public double[] getPosition(double[] position) {
-		if (null == position) 
-			position = new double[3];
-		for (int i = 0; i < 3; i++) 
-			position[i] = getFeature(POSITION_FEATURES[i]);
-		return position;
-	}
-	
 	/*
 	 * FEATURE RELATED METHODS
 	 */
-	
 	
 	public Map<String,Double> getFeatures() {
 		return features;
@@ -230,6 +226,200 @@ public class SpotImp implements Spot {
 	@Override
 	public String getImageString() {
 		return imageString;
+	}
+
+	@Override
+	public void move(float distance, int d) {
+		String targetFeature = POSITION_FEATURES[d];
+		double val = features.get(targetFeature) + distance;
+		features.put(targetFeature, val);
+	}
+
+	@Override
+	public void move(double distance, int d) {
+		String targetFeature = POSITION_FEATURES[d];
+		double val = features.get(targetFeature) + distance;
+		features.put(targetFeature, val);
+	}
+
+	@Override
+	public void move(RealLocalizable localizable) {
+		for (int d = 0; d < localizable.numDimensions(); d++) {
+			String targetFeature = POSITION_FEATURES[d];
+			double val = features.get(targetFeature) + localizable.getDoublePosition(d);
+			features.put(targetFeature, val);
+		}
+	}
+
+	@Override
+	public void move(float[] distance) {
+		for (int d = 0; d < distance.length; d++) {
+			String targetFeature = POSITION_FEATURES[d];
+			double val = features.get(targetFeature) + distance[d];
+			features.put(targetFeature, val);
+		}
+	}
+
+	@Override
+	public void move(double[] distance) {
+		for (int d = 0; d < distance.length; d++) {
+			String targetFeature = POSITION_FEATURES[d];
+			double val = features.get(targetFeature) + distance[d];
+			features.put(targetFeature, val);
+		}
+	}
+
+	@Override
+	public void setPosition(RealLocalizable localizable) {
+		for (int d = 0; d < localizable.numDimensions(); d++) {
+			String targetFeature = POSITION_FEATURES[d];
+			features.put(targetFeature, localizable.getDoublePosition(d));
+		}
+	}
+
+	@Override
+	public void setPosition(float[] position) {
+		for (int d = 0; d < position.length; d++) {
+			String targetFeature = POSITION_FEATURES[d];
+			features.put(targetFeature, (double) position[d]);
+		}
+	}
+
+	@Override
+	public void setPosition(double[] position) {
+		for (int d = 0; d < position.length; d++) {
+			String targetFeature = POSITION_FEATURES[d];
+			features.put(targetFeature, position[d]);
+		}
+	}
+
+	@Override
+	public void setPosition(float position, int d) {
+		String targetFeature = POSITION_FEATURES[d];
+		features.put(targetFeature, (double) position);
+	}
+
+	@Override
+	public void setPosition(double position, int d) {
+		String targetFeature = POSITION_FEATURES[d];
+		features.put(targetFeature, position);
+	}
+
+	@Override
+	public void fwd(int d) {
+		String targetFeature = POSITION_FEATURES[d];
+		features.put(targetFeature, features.get(targetFeature) + 1d );
+	}
+
+	@Override
+	public void bck(int d) {
+		String targetFeature = POSITION_FEATURES[d];
+		features.put(targetFeature, features.get(targetFeature) - 1d );
+	}
+
+	@Override
+	public void move(int distance, int d) {
+		String targetFeature = POSITION_FEATURES[d];
+		features.put(targetFeature, features.get(targetFeature) + distance );
+	}
+
+	@Override
+	public void move(long distance, int d) {
+		String targetFeature = POSITION_FEATURES[d];
+		features.put(targetFeature, features.get(targetFeature) + distance );
+	}
+
+	@Override
+	public void move(Localizable localizable) {
+		for (int d = 0; d < localizable.numDimensions(); d++) {
+			String targetFeature = POSITION_FEATURES[d];
+			features.put(targetFeature, features.get(targetFeature) + localizable.getDoublePosition(d) );
+		}
+	}
+
+	@Override
+	public void move(int[] distance) {
+		for (int d = 0; d < distance.length; d++) {
+			String targetFeature = POSITION_FEATURES[d];
+			features.put(targetFeature, features.get(targetFeature) + distance[d] );
+		}
+	}
+
+	@Override
+	public void move(long[] distance) {
+		for (int d = 0; d < distance.length; d++) {
+			String targetFeature = POSITION_FEATURES[d];
+			features.put(targetFeature, features.get(targetFeature) + distance[d] );
+		}
+	}
+
+	@Override
+	public void setPosition(Localizable localizable) {
+		for (int d = 0; d < localizable.numDimensions(); d++) {
+			String targetFeature = POSITION_FEATURES[d];
+			features.put(targetFeature, localizable.getDoublePosition(d));
+		}
+	}
+
+	@Override
+	public void setPosition(int[] position) {
+		for (int d = 0; d < position.length; d++) {
+			String targetFeature = POSITION_FEATURES[d];
+			features.put(targetFeature, (double) position[d]);
+		}
+	}
+
+	@Override
+	public void setPosition(long[] position) {
+		for (int d = 0; d < position.length; d++) {
+			String targetFeature = POSITION_FEATURES[d];
+			features.put(targetFeature, (double) position[d]);
+		}
+	}
+
+	@Override
+	public void setPosition(int position, int d) {
+		String targetFeature = POSITION_FEATURES[d];
+		features.put(targetFeature, (double) position);
+	}
+
+	@Override
+	public void setPosition(long position, int d) {
+		String targetFeature = POSITION_FEATURES[d];
+		features.put(targetFeature, (double) position);
+	}
+
+	@Override
+	public int numDimensions() {
+		return 3; // is always 3D
+	}
+
+	@Override
+	public void localize(float[] position) {
+		for (int d = 0; d < position.length; d++) {
+			String targetFeature = POSITION_FEATURES[d];
+			position[d] = getFeature(targetFeature).floatValue();
+		}
+	}
+
+	@Override
+	public void localize(double[] position) {
+		for (int d = 0; d < position.length; d++) {
+			String targetFeature = POSITION_FEATURES[d];
+			position[d] = getFeature(targetFeature);
+		}
+	}
+
+	@Override
+	public float getFloatPosition(int d) {
+		String targetFeature = POSITION_FEATURES[d];
+		return getFeature(targetFeature).floatValue();
+	}
+
+	@Override
+	public double getDoublePosition(int d) {
+		String targetFeature = POSITION_FEATURES[d];
+		return getFeature(targetFeature);
 	}
 	
 }

@@ -5,9 +5,10 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
-import net.imglib2.cursor.special.DiscCursor;
-import net.imglib2.cursor.special.DomainCursor;
-import net.imglib2.cursor.special.SphereCursor;
+import net.imglib2.algorithm.region.localneighborhood.DiscNeighborhood;
+import net.imglib2.algorithm.region.localneighborhood.RealPositionableAbstractNeighborhood;
+import net.imglib2.algorithm.region.localneighborhood.RealPositionableNeighborhoodCursor;
+import net.imglib2.algorithm.region.localneighborhood.SphereNeighborhood;
 import net.imglib2.type.numeric.RealType;
 
 import fiji.plugin.trackmate.Dimension;
@@ -40,8 +41,6 @@ public class RadiusEstimator<T extends RealType<T>> extends IndependentSpotFeatu
 	 * FIELDS
 	 */
 	
-	/** Utility holder. */
-	private double[] coords;
 	/** The number of different diameters to try. */
 	protected int nDiameters = 20;
 
@@ -55,14 +54,9 @@ public class RadiusEstimator<T extends RealType<T>> extends IndependentSpotFeatu
 	 */
 	public RadiusEstimator() { }	
 
-	@SuppressWarnings({ "unchecked", "rawtypes" })
 	@Override
-	public void process(Spot spot) {
-		coords = new double[img.numDimensions()];
-		for (int i = 0; i < coords.length; i++) {
-			coords[i] = spot.getFeature(Spot.POSITION_FEATURES[i]);
-		}
-
+	public void process(final Spot spot) {
+		
 		// Get diameter array and radius squared
 		final double radius = spot.getFeature(Spot.RADIUS);
 		final double[] diameters = prepareDiameters(radius*2, nDiameters);
@@ -75,13 +69,19 @@ public class RadiusEstimator<T extends RealType<T>> extends IndependentSpotFeatu
 		final double[] ring_intensities = new double[nDiameters];
 		final int[]    ring_volumes = new int[nDiameters];
 
-		final DomainCursor<T> cursor;
-		if (img.numDimensions() == 3)
-			cursor = new SphereCursor(img, coords, diameters[nDiameters-2]/2);
-		else
-			cursor = new DiscCursor(img, coords, diameters[nDiameters-2]/2);
+
+		final RealPositionableAbstractNeighborhood<T> neighborhood;
+		if (img.numDimensions() == 3) {
+			neighborhood = new SphereNeighborhood<T>(img, diameters[nDiameters-2]/2);
+			neighborhood.setPosition(spot);
+		} else {
+			neighborhood = new DiscNeighborhood<T>(img, diameters[nDiameters-2]/2);
+			neighborhood.setPosition(spot);
+		}
+		
 		double d2;
 		int i;
+		RealPositionableNeighborhoodCursor<T> cursor = neighborhood.cursor();
 		while(cursor.hasNext())  {
 			cursor.fwd();
 			d2 = cursor.getDistanceSquared();

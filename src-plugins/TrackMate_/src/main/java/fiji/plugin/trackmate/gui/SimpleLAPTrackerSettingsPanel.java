@@ -12,6 +12,9 @@ import java.awt.Insets;
 import javax.swing.JLabel;
 import javax.swing.SwingConstants;
 
+import net.imglib2.type.NativeType;
+import net.imglib2.type.numeric.RealType;
+
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.tracking.LAPTracker;
 import fiji.plugin.trackmate.tracking.LAPTrackerSettings;
@@ -22,7 +25,7 @@ import fiji.plugin.trackmate.tracking.TrackerSettings;
  * 
  * @author Jean-Yves Tinevez <tinevez@pasteur.fr> - 2010-2011
  */
-public class SimpleLAPTrackerSettingsPanel extends TrackerConfigurationPanel {
+public class SimpleLAPTrackerSettingsPanel <T extends RealType<T> & NativeType<T>> extends TrackerConfigurationPanel<T> {
 
 	private static final long serialVersionUID = 4099537392544048109L;
 	private JLabel jLabelLinkingMaxDistanceUnit;
@@ -34,7 +37,7 @@ public class SimpleLAPTrackerSettingsPanel extends TrackerConfigurationPanel {
 	private JNumericTextField jTextFieldLinkingDistance;
 	private JLabel jLabelTrackerDescription;
 
-	private LAPTrackerSettings settings;
+	private LAPTrackerSettings<T> settings;
 
 	/*
 	 * CONSTRUCTOR
@@ -50,14 +53,14 @@ public class SimpleLAPTrackerSettingsPanel extends TrackerConfigurationPanel {
 	 */
 
 	@Override
-	public void setTrackerSettings(TrackMateModel model) {
-		this.settings = (LAPTrackerSettings) model.getSettings().trackerSettings;
+	public void setTrackerSettings(TrackMateModel<T> model) {
+		this.settings = (LAPTrackerSettings<T>) model.getSettings().trackerSettings;
 		echoSettings(model);
 
 	};
 
 	@Override
-	public TrackerSettings getTrackerSettings() {
+	public TrackerSettings<T> getTrackerSettings() {
 		// Default ones
 		settings.allowMerging 		= false;
 		settings.allowSplitting 	= false;
@@ -75,7 +78,7 @@ public class SimpleLAPTrackerSettingsPanel extends TrackerConfigurationPanel {
 	 * PRIVATE METHODS
 	 */
 
-	private void echoSettings(TrackMateModel model) {
+	private void echoSettings(TrackMateModel<T> model) {
 		jLabelTrackerName.setText(model.getSettings().tracker.toString());
 		jLabelTrackerDescription.setText(model.getSettings().tracker.getInfoText()
 				.replace("<br>", "")

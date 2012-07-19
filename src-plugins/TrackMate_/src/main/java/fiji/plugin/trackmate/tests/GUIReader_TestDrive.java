@@ -34,13 +34,13 @@ public class GUIReader_TestDrive {
 
 		plugin.initModules();
 		
-		WizardController controller = new WizardController(plugin);
-		TrackMateWizard wizard = controller.getWizard();
+		WizardController<T> controller = new WizardController<T>(plugin);
+		TrackMateWizard<T> wizard = controller.getWizard();
 		
 		wizard.showDescriptorPanelFor(LoadDescriptor.DESCRIPTOR);
 		
 		
-		GuiReader greader = new GuiReader(wizard);
+		GuiReader<T> greader = new GuiReader<T>(wizard);
 		file = greader.askForFile(file);
 
 		System.out.println("Opening file: "+file.getAbsolutePath());		
@@ -49,9 +49,6 @@ public class GUIReader_TestDrive {
 		greader.loadFile(file);
 		
 		wizard.showDescriptorPanelFor(DisplayerPanel.DESCRIPTOR);
-		
-		
-		
 		
 	}
 

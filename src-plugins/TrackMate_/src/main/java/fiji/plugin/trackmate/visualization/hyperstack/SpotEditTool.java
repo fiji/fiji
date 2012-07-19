@@ -192,9 +192,9 @@ public class SpotEditTool<T extends RealType<T> & NativeType<T>> extends Abstrac
 				if (null != target && null != target.getFeature(Spot.RADIUS)) {
 					radius = target.getFeature(Spot.RADIUS);
 				} else {
-					SegmenterSettings ss = displayer.settings.segmenterSettings;
+					SegmenterSettings<T> ss = displayer.settings.segmenterSettings;
 					if (ss instanceof BasicSegmenterSettings) {
-						radius = ((BasicSegmenterSettings)displayer.settings.segmenterSettings).expectedRadius;
+						radius = ((BasicSegmenterSettings<T>)displayer.settings.segmenterSettings).expectedRadius;
 					} else {
 						radius = FALL_BACK_RADIUS;
 					}
@@ -414,9 +414,9 @@ public class SpotEditTool<T extends RealType<T> & NativeType<T>> extends Abstrac
 				if (null != previousRadius) {
 					radius = previousRadius; 
 				} else { 
-					SegmenterSettings ss = displayer.settings.segmenterSettings;
+					SegmenterSettings<T> ss = displayer.settings.segmenterSettings;
 					if (ss instanceof BasicSegmenterSettings) {
-						radius = ((BasicSegmenterSettings)displayer.settings.segmenterSettings).expectedRadius;
+						radius = ( (BasicSegmenterSettings<T>) displayer.settings.segmenterSettings ).expectedRadius;
 					} else {
 						radius = FALL_BACK_RADIUS;
 					}
@@ -562,7 +562,7 @@ public class SpotEditTool<T extends RealType<T> & NativeType<T>> extends Abstrac
 						dt = 1;
 					
 					for(Spot spot : previousFrameSpots) {
-						Spot newSpot = new SpotImp(spot.getPosition(null), spot.getName());
+						Spot newSpot = new SpotImp(spot, spot.getName());
 						// Deal with features
 						Double val;
 						for(String key : featuresKey) {

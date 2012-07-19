@@ -1,5 +1,7 @@
 package fiji.plugin.trackmate.gui;
 
+import net.imglib2.type.NativeType;
+import net.imglib2.type.numeric.RealType;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.detection.SegmenterSettings;
@@ -11,7 +13,7 @@ import fiji.plugin.trackmate.detection.SegmenterSettings;
  * @author Jean-Yves Tinevez <jeanyves.tinevez@gmail.com> 2011
  *
  */
-public abstract class SegmenterConfigurationPanel extends ActionListenablePanel {
+public abstract class SegmenterConfigurationPanel <T extends RealType<T> & NativeType<T>> extends ActionListenablePanel {
 
 	private static final long serialVersionUID = -3740053698736400575L;
 
@@ -23,13 +25,13 @@ public abstract class SegmenterConfigurationPanel extends ActionListenablePanel 
 	 * But some specialized settings might require to access the declared 
 	 * features or other data to generate a proper settings object. 
 	 */
-	public abstract void setSegmenterSettings(TrackMateModel model);
+	public abstract void setSegmenterSettings(TrackMateModel<T> model);
 	
 	/**
 	 * @return  the {@link SegmenterSettings} object with its field values set
 	 * by this panel.
 	 */
-	public abstract SegmenterSettings getSegmenterSettings();
+	public abstract SegmenterSettings<T> getSegmenterSettings();
 	
 	
 }

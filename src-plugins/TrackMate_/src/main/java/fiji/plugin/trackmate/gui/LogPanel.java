@@ -72,7 +72,7 @@ public class LogPanel extends ActionListenablePanel {
 			}
 			
 			@Override
-			public void setProgress(float val) {
+			public void setProgress(double val) {
 				if (val < 0) val =0;
 				if (val > 1) val = 1;
 				final int intVal = (int) (val*100);

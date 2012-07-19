@@ -5,6 +5,7 @@ import java.util.List;
 
 import net.imglib2.img.Img;
 import net.imglib2.img.ImgPlus;
+import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.detection.util.MedianFilter3x3;
@@ -14,7 +15,7 @@ import fiji.plugin.trackmate.detection.util.MedianFilter3x3;
  * interface and offer convenience methods and protected fields.
  * @author Jean-Yves Tinevez <jeanyves.tinevez@gmail.com> Sep 27, 2010
  */
-public abstract class AbstractSpotSegmenter <T extends RealType<T>> implements SpotSegmenter<T> {
+public abstract class AbstractSpotSegmenter <T extends RealType<T> & NativeType<T>> implements SpotSegmenter<T> {
 	
 	/*
 	 * PROTECTED FIELDS
@@ -30,7 +31,7 @@ public abstract class AbstractSpotSegmenter <T extends RealType<T>> implements S
 	protected String errorMessage = null;
 	/** The settings for this segmenter. Contains all parameters needed to perform segmentation
 	 * for the concrete segmenter implementation. */
-	protected SegmenterSettings settings;
+	protected SegmenterSettings<T> settings;
 	/** The processing time in ms. */
 	protected long processingTime;
 	
@@ -59,7 +60,7 @@ public abstract class AbstractSpotSegmenter <T extends RealType<T>> implements S
 	}
 		
 	@Override
-	public void setTarget(final ImgPlus<T> image, final SegmenterSettings settings) {
+	public void setTarget(final ImgPlus<T> image, final SegmenterSettings<T> settings) {
 		this.spots = new ArrayList<Spot>();
 		this.img = image;
 		this.settings = settings;

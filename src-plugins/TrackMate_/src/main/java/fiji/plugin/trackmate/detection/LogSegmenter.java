@@ -11,6 +11,7 @@ import net.imglib2.img.Img;
 import net.imglib2.img.ImgFactory;
 import net.imglib2.img.ImgPlus;
 import net.imglib2.img.array.ArrayImgFactory;
+import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.real.FloatType;
 import fiji.plugin.trackmate.Spot;
@@ -20,14 +21,14 @@ import fiji.plugin.trackmate.detection.subpixel.SubPixelLocalization;
 import fiji.plugin.trackmate.detection.subpixel.SubPixelLocalization.LocationType;
 import fiji.plugin.trackmate.util.TMUtils;
 
-public class LogSegmenter <T extends RealType<T>> extends AbstractSpotSegmenter<T> {
+public class LogSegmenter <T extends RealType<T>  & NativeType<T>> extends AbstractSpotSegmenter<T> {
 
 	/*
 	 * FIELDS
 	 */
 
 	private final static String BASE_ERROR_MESSAGE = "LogSegmenter: ";
-	private LogSegmenterSettings settings;
+	private LogSegmenterSettings<T> settings;
 
 	/*
 	 * CONSTRUCTORS
@@ -47,14 +48,14 @@ public class LogSegmenter <T extends RealType<T>> extends AbstractSpotSegmenter<
 	}
 
 	@Override
-	public void setTarget(ImgPlus<T> image, SegmenterSettings settings) {
+	public void setTarget(ImgPlus<T> image, SegmenterSettings<T> settings) {
 		super.setTarget(image, settings);
-		this.settings = (LogSegmenterSettings) settings;
+		this.settings = (LogSegmenterSettings<T>) settings;
 	}
 
 	@Override
-	public SegmenterSettings createDefaultSettings() {
-		return new LogSegmenterSettings();
+	public SegmenterSettings<T> createDefaultSettings() {
+		return new LogSegmenterSettings<T>();
 	}
 
 	@Override
@@ -69,8 +70,8 @@ public class LogSegmenter <T extends RealType<T>> extends AbstractSpotSegmenter<
 			}
 		}
 
-		float radius = settings.expectedRadius;
-		float sigma = (float) (radius / Math.sqrt(img.numDimensions())); // optimal sigma for LoG approach and dimensionality
+		double radius = settings.expectedRadius;
+		double sigma = radius / Math.sqrt(img.numDimensions()); // optimal sigma for LoG approach and dimensionality
 		ImgFactory<FloatType> factory = new ArrayImgFactory<FloatType>();
 		Img<FloatType> gaussianKernel = FourierConvolution.createGaussianKernel(factory, sigma, img.numDimensions());
 		FourierConvolution<T, FloatType> fConvGauss;

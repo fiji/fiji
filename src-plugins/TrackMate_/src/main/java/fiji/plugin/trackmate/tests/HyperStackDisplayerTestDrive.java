@@ -25,7 +25,7 @@ public class HyperStackDisplayerTestDrive {
 
 	public static <T extends RealType<T> & NativeType<T>>void main(String[] args) throws JDOMException, IOException {
 		
-		TmXmlReader reader = new TmXmlReader(file, Logger.DEFAULT_LOGGER);
+		TmXmlReader<T> reader = new TmXmlReader<T>(file, Logger.DEFAULT_LOGGER);
 		reader.parse();
 		
 		ij.ImageJ.main(args);
@@ -35,7 +35,7 @@ public class HyperStackDisplayerTestDrive {
 		action.execute(new TrackMate_<T>(model));
 
 		// Grab spot icons
-		if (null != model.getSettings().img)
+		if (null != model.getSettings().imp)
 			model.getFeatureModel().computeSpotFeatures(model.getSpots());
 				
 		final TrackMateModelView<T> displayer = new HyperStackDisplayer<T>();

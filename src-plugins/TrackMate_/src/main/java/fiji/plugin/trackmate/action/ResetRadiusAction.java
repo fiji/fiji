@@ -23,10 +23,10 @@ public class ResetRadiusAction<T extends RealType<T> & NativeType<T>> extends Ab
 	
 	@Override
 	public void execute(final TrackMate_<T> plugin) {
-		final SegmenterSettings segSettings = plugin.getModel().getSettings().segmenterSettings;
-		final float radius;
+		final SegmenterSettings<T> segSettings = plugin.getModel().getSettings().segmenterSettings;
+		final double radius;
 		if (segSettings instanceof BasicSegmenterSettings) {
-			radius = ((BasicSegmenterSettings) segSettings).expectedRadius;
+			radius = ((BasicSegmenterSettings<T>) segSettings).expectedRadius;
 		} else {
 			radius = FALL_BACK_RADIUS;
 			logger.error("Could not determine expected radius from settings. Falling back to "+FALL_BACK_RADIUS+" "

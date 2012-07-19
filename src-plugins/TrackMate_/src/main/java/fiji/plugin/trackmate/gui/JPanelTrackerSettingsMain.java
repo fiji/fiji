@@ -20,12 +20,15 @@ import javax.swing.JLabel;
 import javax.swing.JScrollPane;
 import javax.swing.SwingConstants;
 
+import net.imglib2.type.NativeType;
+import net.imglib2.type.numeric.RealType;
+
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.tracking.LAPTrackerSettings;
 import fiji.plugin.trackmate.tracking.TrackerSettings;
 
-public class JPanelTrackerSettingsMain extends javax.swing.JPanel {
+public class JPanelTrackerSettingsMain <T extends RealType<T> & NativeType<T>> extends javax.swing.JPanel {
 
 	private static final long serialVersionUID = -3775536792625326253L;
 
@@ -75,9 +78,9 @@ public class JPanelTrackerSettingsMain extends javax.swing.JPanel {
 	 */
 
 
-	void echoSettings(TrackMateModel model) {
+	void echoSettings(TrackMateModel<T> model) {
 
-		LAPTrackerSettings settings = (LAPTrackerSettings) model.getSettings().trackerSettings;
+		LAPTrackerSettings<T> settings = (LAPTrackerSettings<T>) model.getSettings().trackerSettings;
 
 		if (null != model.getSettings().tracker) {
 			jLabelTrackerName.setText(model.getSettings().tracker.toString());
@@ -140,8 +143,8 @@ public class JPanelTrackerSettingsMain extends javax.swing.JPanel {
 	 * settings entered by the user on this panel. Only the {@link Settings#trackerSettings} field
 	 * and sub-fields will be updated here.
 	 */
-	public TrackerSettings getSettings() {
-		LAPTrackerSettings settings = new LAPTrackerSettings();
+	public TrackerSettings<T> getSettings() {
+		LAPTrackerSettings<T> settings = new LAPTrackerSettings<T>();
 
 		settings.linkingDistanceCutOff = Double.parseDouble(jTextFieldLinkingMaxDistance.getText());
 		settings.linkingFeaturePenalties = jPanelLinkingFeatures.getFeatureWeights();

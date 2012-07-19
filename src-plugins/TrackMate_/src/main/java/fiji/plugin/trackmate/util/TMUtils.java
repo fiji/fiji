@@ -28,8 +28,6 @@ import javax.swing.JFileChooser;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
 import net.imglib2.exception.ImgLibException;
-import net.imglib2.img.Img;
-import net.imglib2.img.imageplus.ImagePlusImg;
 import net.imglib2.meta.Axes;
 import net.imglib2.meta.Metadata;
 import net.imglib2.multithreading.SimpleMultiThreading;
@@ -366,29 +364,29 @@ public class TMUtils {
 	 * @param settings  the settings object that will be used to compute the crop rectangle
 	 * @return  a 3D or 2D {@link Img} with the single time-point required 
 	 */
-//	@SuppressWarnings({ "rawtypes", "unchecked" })
-//	public static Img<? extends RealType<?>> getCroppedSingleFrameAsImage(ImagePlus imp, int iFrame, int iChannel, Settings settings) {
-//		ImageStack stack = imp.getImageStack();
-//		ImageStack frame = new ImageStack(settings.xend-settings.xstart, settings.yend-settings.ystart, stack.getColorModel());
-//		int numSlices = imp.getNSlices();
-//
-//		// ...create the slice by combining the ImageProcessors, one for each Z in the stack.
-//		ImageProcessor ip, croppedIp;
-//		Roi cropRoi = new Roi(settings.xstart, settings.ystart, settings.xend-settings.xstart, settings.yend-settings.ystart);
-//		for (int j = settings.zstart; j <= settings.zend; j++) {
-//			int stackIndex = imp.getStackIndex(iChannel, j, iFrame+1);
-//			ip = stack.getProcessor(stackIndex);
-//			ip .setRoi(cropRoi);
-//			croppedIp = ip.crop();
-//			frame.addSlice(Integer.toString(j + (iFrame * numSlices)), croppedIp);
-//		}
-//
-//		ImagePlus ipSingleFrame = new ImagePlus(imp.getShortTitle()+"-Frame_" + Integer.toString(iFrame + 1), frame);
-//		ipSingleFrame.setCalibration(imp.getCalibration());
-//		Img<? extends RealType> obj =  ImagePlusAdapter.wrap(ipSingleFrame);
-//		Img<? extends RealType<?>> img = (Img<? extends RealType<?>>) obj;
-//		return img;
-//	}
+	//	@SuppressWarnings({ "rawtypes", "unchecked" })
+	//	public static Img<? extends RealType<?>> getCroppedSingleFrameAsImage(ImagePlus imp, int iFrame, int iChannel, Settings settings) {
+	//		ImageStack stack = imp.getImageStack();
+	//		ImageStack frame = new ImageStack(settings.xend-settings.xstart, settings.yend-settings.ystart, stack.getColorModel());
+	//		int numSlices = imp.getNSlices();
+	//
+	//		// ...create the slice by combining the ImageProcessors, one for each Z in the stack.
+	//		ImageProcessor ip, croppedIp;
+	//		Roi cropRoi = new Roi(settings.xstart, settings.ystart, settings.xend-settings.xstart, settings.yend-settings.ystart);
+	//		for (int j = settings.zstart; j <= settings.zend; j++) {
+	//			int stackIndex = imp.getStackIndex(iChannel, j, iFrame+1);
+	//			ip = stack.getProcessor(stackIndex);
+	//			ip .setRoi(cropRoi);
+	//			croppedIp = ip.crop();
+	//			frame.addSlice(Integer.toString(j + (iFrame * numSlices)), croppedIp);
+	//		}
+	//
+	//		ImagePlus ipSingleFrame = new ImagePlus(imp.getShortTitle()+"-Frame_" + Integer.toString(iFrame + 1), frame);
+	//		ipSingleFrame.setCalibration(imp.getCalibration());
+	//		Img<? extends RealType> obj =  ImagePlusAdapter.wrap(ipSingleFrame);
+	//		Img<? extends RealType<?>> img = (Img<? extends RealType<?>>) obj;
+	//		return img;
+	//	}
 
 	/**
 	 * Return a copy 3D stack or a 2D slice as an {@link Img} corresponding to the frame number <code>iFrame</code>
@@ -399,26 +397,26 @@ public class TMUtils {
 	 * @param iChannel  the channel number to extract, careful: <b>1-based</b>
 	 * @return  a 3D or 2D {@link Img} with the single time-point required 
 	 */
-//	@SuppressWarnings({ "rawtypes", "unchecked" })
-//	public static Img<? extends RealType<?>> getUncroppedSingleFrameAsImage(ImagePlus imp, int iFrame, int iChannel) {
-//		ImageStack stack = imp.getImageStack();
-//		ImageStack frame = new ImageStack(imp.getWidth(), imp.getHeight(), stack.getColorModel());
-//		int numSlices = imp.getNSlices();
-//
-//		// ...create the slice by combining the ImageProcessors, one for each Z in the stack.
-//		ImageProcessor ip;
-//		for (int j = 1; j <= numSlices; j++) {
-//			int stackIndex = imp.getStackIndex(iChannel, j, iFrame+1);
-//			ip = stack.getProcessor(stackIndex);
-//			frame.addSlice(Integer.toString(j + (iFrame * numSlices)), ip.duplicate());
-//		}
-//
-//		ImagePlus ipSingleFrame = new ImagePlus(imp.getShortTitle()+"-Frame_" + Integer.toString(iFrame + 1), frame);
-//		ipSingleFrame.setCalibration(imp.getCalibration());
-//		Img obj =  ImagePlusAdapter.wrap(ipSingleFrame);
-//		Img img = (Img<? extends RealType<?>>) obj;
-//		return img;
-//	}
+	//	@SuppressWarnings({ "rawtypes", "unchecked" })
+	//	public static Img<? extends RealType<?>> getUncroppedSingleFrameAsImage(ImagePlus imp, int iFrame, int iChannel) {
+	//		ImageStack stack = imp.getImageStack();
+	//		ImageStack frame = new ImageStack(imp.getWidth(), imp.getHeight(), stack.getColorModel());
+	//		int numSlices = imp.getNSlices();
+	//
+	//		// ...create the slice by combining the ImageProcessors, one for each Z in the stack.
+	//		ImageProcessor ip;
+	//		for (int j = 1; j <= numSlices; j++) {
+	//			int stackIndex = imp.getStackIndex(iChannel, j, iFrame+1);
+	//			ip = stack.getProcessor(stackIndex);
+	//			frame.addSlice(Integer.toString(j + (iFrame * numSlices)), ip.duplicate());
+	//		}
+	//
+	//		ImagePlus ipSingleFrame = new ImagePlus(imp.getShortTitle()+"-Frame_" + Integer.toString(iFrame + 1), frame);
+	//		ipSingleFrame.setCalibration(imp.getCalibration());
+	//		Img obj =  ImagePlusAdapter.wrap(ipSingleFrame);
+	//		Img img = (Img<? extends RealType<?>>) obj;
+	//		return img;
+	//	}
 
 
 	/**
@@ -519,7 +517,7 @@ public class TMUtils {
 		return selectedSpots;
 	}
 
-	
+
 	/**
 	 * Return the xyz calibration stored in an {@link Metadata} in a 3-elements
 	 * double array. Calibration is ordered as X, Y, Z. If one axis is not found,
@@ -536,6 +534,15 @@ public class TMUtils {
 				calibration[2] = img.calibration(d);
 			}
 		}
+		return calibration;
+	}
+
+	public static double[] getSpatialCalibration(ImagePlus imp) {
+		final double[] calibration = Util.getArrayFromValue(1d, 3);
+		calibration[0] = imp.getCalibration().pixelWidth;
+		calibration[1] = imp.getCalibration().pixelHeight;
+		if (imp.getNSlices() > 1)
+			calibration[2] = imp.getCalibration().pixelDepth;
 		return calibration;
 	}
 
@@ -634,7 +641,7 @@ public class TMUtils {
 					for (int i = ai.getAndIncrement(); i < features.size(); i = ai.getAndIncrement()) {
 
 						String feature = features.get(i);
-						
+
 						// Make a double array to comply to JFreeChart histograms
 						double[] values = new double[spotNumber];
 						index = 0;
@@ -651,15 +658,15 @@ public class TMUtils {
 						} else { 
 							featureValues.put(feature, values);
 						}
-					
+
 						logger.setProgress(progress.incrementAndGet() / (double) features.size());
 					}
 				}
-				
+
 			};
 
 		}
-		
+
 		logger.setStatus("Collecting feature values");
 		SimpleMultiThreading.startAndJoin(threads);
 		logger.setProgress(0);
@@ -823,14 +830,8 @@ public class TMUtils {
 	 * @throws ImgLibException 
 	 */
 	public static final <T extends RealType<T> & NativeType<T>> ImagePlus[] makeImageForViewer(final Settings<T> settings) throws ImgLibException {
-		
-		Img<T> sourceimg = settings.img.getImg();
-		if (!(sourceimg instanceof ImagePlusImg)) {
-			throw new ImgLibException("The target image does not wrap an ImagePlus.");
-		}
-		
-		@SuppressWarnings("rawtypes")
-		final ImagePlus origImp = ( (ImagePlusImg) sourceimg ).getImagePlus();
+
+		final ImagePlus origImp = settings.imp;
 		origImp.killRoi();
 		final ImagePlus imp;
 
@@ -907,6 +908,8 @@ public class TMUtils {
 		}
 		return units;
 	}
+
+
 
 
 }

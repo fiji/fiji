@@ -4,6 +4,7 @@ import java.util.List;
 
 import javax.swing.ImageIcon;
 
+import net.imglib2.img.ImagePlusAdapter;
 import net.imglib2.img.ImgPlus;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
@@ -33,11 +34,13 @@ public class GrabSpotImageAction<T extends RealType<T> & NativeType<T>> extends 
 		model.setLogger(logger);
 		Settings<T> settings = model.getSettings();
 		final int targetChannel = settings.segmentationChannel - 1; // TODO: maybe be more flexible about that
+		final ImgPlus<T> source = ImagePlusAdapter.wrapImgPlus(settings.imp);
+		final ImgPlus<T> imgC = HyperSliceImgPlus.fixChannelAxis(source, targetChannel);
 		
 		SpotCollection allSpots = model.getFilteredSpots();
 		for (int frame : allSpots.keySet()) {
 			List<Spot> spots = allSpots.get(frame);
-			ImgPlus<T> img = HyperSliceImgPlus.fixTimeAxis( HyperSliceImgPlus.fixChannelAxis(settings.img, targetChannel), frame ); 
+			ImgPlus<T> img = HyperSliceImgPlus.fixTimeAxis( imgC , frame ); 
 			SpotIconGrabber<T> grabber = new SpotIconGrabber<T>();
 			grabber.setTarget(img);
 			grabber.process(spots);			

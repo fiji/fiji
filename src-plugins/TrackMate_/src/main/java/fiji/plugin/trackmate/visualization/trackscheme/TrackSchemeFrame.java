@@ -181,8 +181,8 @@ public class TrackSchemeFrame  <T extends RealType<T> & NativeType<T>> extends J
 		this.settings = model.getSettings();
 		this.graphLayout = new mxTrackGraphLayout<T>(model, graph, settings.dx);
 		String title = "Track scheme";
-		if (null != settings.img)
-			title += ": "+settings.img.getName();
+		if (null != settings.imp)
+			title += ": "+settings.imp.getTitle();
 		setTitle(title);
 	}
 

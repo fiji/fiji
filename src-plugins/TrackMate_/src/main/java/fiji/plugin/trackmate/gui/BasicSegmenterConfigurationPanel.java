@@ -2,11 +2,14 @@ package fiji.plugin.trackmate.gui;
 
 import javax.swing.JComponent;
 
+import net.imglib2.type.NativeType;
+import net.imglib2.type.numeric.RealType;
+
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.detection.BasicSegmenterSettings;
 import fiji.plugin.trackmate.detection.SegmenterSettings;
 
-public class BasicSegmenterConfigurationPanel extends LogSegmenterConfigurationPanel {
+public class BasicSegmenterConfigurationPanel <T extends RealType<T> & NativeType<T>> extends LogSegmenterConfigurationPanel<T> {
 
 	private static final long serialVersionUID = 4298482387638112651L;
 
@@ -23,8 +26,8 @@ public class BasicSegmenterConfigurationPanel extends LogSegmenterConfigurationP
 	}
 
 	@Override
-	public void setSegmenterSettings(TrackMateModel model) {
-		jTextFieldBlobDiameter.setText(""+(((BasicSegmenterSettings)model.getSettings().segmenterSettings).expectedRadius * 2));
+	public void setSegmenterSettings(TrackMateModel<T> model) {
+		jTextFieldBlobDiameter.setText(""+(((BasicSegmenterSettings<T>)model.getSettings().segmenterSettings).expectedRadius * 2));
 		jLabelBlobDiameterUnit.setText(model.getSettings().spaceUnits);
 		jLabelSegmenterName.setText(model.getSettings().segmenter.toString());
 		jLabelHelpText.setText(model.getSettings().segmenter.getInfoText()
@@ -34,8 +37,8 @@ public class BasicSegmenterConfigurationPanel extends LogSegmenterConfigurationP
 	}
 
 	@Override
-	public SegmenterSettings getSegmenterSettings() {
-		BasicSegmenterSettings ss = new BasicSegmenterSettings();
+	public SegmenterSettings<T> getSegmenterSettings() {
+		BasicSegmenterSettings<T> ss = new BasicSegmenterSettings<T>();
 		ss.expectedRadius = Float.parseFloat(jTextFieldBlobDiameter.getText())/2;
 		return ss;
 	}

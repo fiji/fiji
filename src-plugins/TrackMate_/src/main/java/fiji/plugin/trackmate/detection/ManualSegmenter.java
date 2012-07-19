@@ -1,12 +1,13 @@
 package fiji.plugin.trackmate.detection;
 
+import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
 
-public class ManualSegmenter <T extends RealType<T>> extends AbstractSpotSegmenter<T> {
+public class ManualSegmenter <T extends RealType<T>  & NativeType<T>> extends AbstractSpotSegmenter<T> {
 
 	@Override
-	public SegmenterSettings createDefaultSettings() {
-		return new BasicSegmenterSettings();
+	public SegmenterSettings<T> createDefaultSettings() {
+		return new BasicSegmenterSettings<T>();
 	}
 
 	@Override

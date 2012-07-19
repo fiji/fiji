@@ -4,6 +4,7 @@ import fiji.plugin.trackmate.detection.SegmenterSettings;
 import fiji.plugin.trackmate.detection.SpotSegmenter;
 import fiji.plugin.trackmate.tracking.SpotTracker;
 import fiji.plugin.trackmate.tracking.TrackerSettings;
+import fiji.plugin.trackmate.visualization.TrackMateModelView;
 import ij.ImagePlus;
 import ij.gui.Roi;
 
@@ -12,8 +13,6 @@ import java.awt.Rectangle;
 import java.util.ArrayList;
 import java.util.List;
 
-import net.imglib2.img.ImagePlusAdapter;
-import net.imglib2.img.ImgPlus;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
 
@@ -23,8 +22,9 @@ import net.imglib2.type.numeric.RealType;
  */
 public class Settings <T extends RealType<T> & NativeType<T>> {
 	
-	/** The ImgPlus to operate on. */
-	public ImgPlus<T> img;
+	/** The ImagePlus to operate on. Will also be used by some {@link TrackMateModelView} 
+	 * as a GUI target. */
+	public ImagePlus imp;
 	/** The polygon of interest. This will be used to crop the image and to discard 
 	 * found spots out of the polygon. If <code>null</code>, the whole image is 
 	 * considered. */
@@ -65,8 +65,8 @@ public class Settings <T extends RealType<T> & NativeType<T>> {
 	public SpotSegmenter<T> segmenter;
 	public SpotTracker<T> tracker;
 	
-	public SegmenterSettings segmenterSettings = null;
-	public TrackerSettings trackerSettings = null;
+	public SegmenterSettings<T> segmenterSettings = null;
+	public TrackerSettings<T> trackerSettings = null;
 	
 	// Filters
 	
@@ -99,7 +99,7 @@ public class Settings <T extends RealType<T> & NativeType<T>> {
 	 */
 	public Settings(ImagePlus imp) {
 		// Source image
-		this.img = ImagePlusAdapter.wrapImgPlus(imp);
+		this.imp = imp;
 		// File info
 		this.imageFileName = imp.getFileInfo().fileName;
 		this.imageFolder = imp.getFileInfo().directory;
@@ -150,10 +150,10 @@ public class Settings <T extends RealType<T> & NativeType<T>> {
 	@Override
 	public String toString() {
 		String str = ""; 
-		if (null == img) {
+		if (null == imp) {
 			str = "Blank image with:\n";
 		} else {
-			str = "For image: "+img.getName()+'\n';			
+			str = "For image: "+imp.getShortTitle()+'\n';			
 		}
 		str += String.format("  X = %4d - %4d, dx = %g %s\n", xstart, xend, dx, spaceUnits);
 		str += String.format("  Y = %4d - %4d, dy = %g %s\n", ystart, yend, dy, spaceUnits);

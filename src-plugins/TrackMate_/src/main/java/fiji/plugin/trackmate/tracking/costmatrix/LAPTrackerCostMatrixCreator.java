@@ -1,5 +1,7 @@
 package fiji.plugin.trackmate.tracking.costmatrix;
 
+import net.imglib2.type.NativeType;
+import net.imglib2.type.numeric.RealType;
 import Jama.Matrix;
 import fiji.plugin.trackmate.tracking.LAPTracker;
 import fiji.plugin.trackmate.tracking.LAPTrackerSettings;
@@ -12,7 +14,7 @@ import fiji.plugin.trackmate.tracking.LAPTrackerSettings;
  * @author Nicholas Perry
  *
  */
-public abstract class LAPTrackerCostMatrixCreator implements CostMatrixCreator {
+public abstract class LAPTrackerCostMatrixCreator <T extends RealType<T> & NativeType<T>> implements CostMatrixCreator {
 
 	/** The cost matrix created by the class. */
 	protected Matrix costs;
@@ -21,13 +23,13 @@ public abstract class LAPTrackerCostMatrixCreator implements CostMatrixCreator {
 	/** Stores whether the user has run checkInput() or not. */
 	protected boolean inputChecked = false;
 	/** The settings to comply to create a cost matrix. */
-	protected LAPTrackerSettings settings;
+	protected LAPTrackerSettings<T> settings;
 	
 	/*
 	 * CONSTRUCTOR
 	 */
 	
-	protected LAPTrackerCostMatrixCreator(LAPTrackerSettings settings) {
+	protected LAPTrackerCostMatrixCreator(LAPTrackerSettings<T> settings) {
 		this.settings = settings;
 	}
 	

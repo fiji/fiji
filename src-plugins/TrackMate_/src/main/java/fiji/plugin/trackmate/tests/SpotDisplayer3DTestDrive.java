@@ -26,7 +26,7 @@ import javax.swing.WindowConstants;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
-import net.imglib2.cursor.special.SphereCursor;
+import net.imglib2.algorithm.region.localneighborhood.SphereNeighborhood;
 import net.imglib2.img.Img;
 import net.imglib2.img.ImgPlus;
 import net.imglib2.img.array.ArrayImgFactory;
@@ -72,12 +72,14 @@ public class SpotDisplayer3DTestDrive {
 		}
 		
 		// Put the blobs in the image
-		final SphereCursor<UnsignedByteType> cursor = new SphereCursor<UnsignedByteType>(img, centers.get(0), radiuses[0],	CALIBRATION);
+		final SphereNeighborhood<UnsignedByteType> sphere = new SphereNeighborhood<UnsignedByteType>(img, 0);
+		sphere.setPosition(centers.get(0));
 		for (int i = 0; i < N_BLOBS; i++) {
-			cursor.setSize(radiuses[i]);
-			cursor.moveCenterToCoordinates(centers.get(i));
-			while(cursor.hasNext()) 
-				cursor.next().set(intensities[i]);		
+			sphere.setRadius(radiuses[i]);
+			sphere.setPosition(centers.get(i));
+			for (UnsignedByteType pixel : sphere) {
+				pixel.set(intensities[i]);
+			}
 		}
 		
 		// Start ImageJ
@@ -116,7 +118,7 @@ public class SpotDisplayer3DTestDrive {
 		allSpots.put(0, spots);
 		final TrackMate_<UnsignedByteType> plugin = new TrackMate_<UnsignedByteType>();
 		plugin.getModel().setSpots(allSpots, false);
-		plugin.getModel().getSettings().img = img;
+		plugin.getModel().getSettings().imp = imp;
 		final SpotDisplayer3D<UnsignedByteType> displayer = new SpotDisplayer3D<UnsignedByteType>();
 		displayer.setModel(plugin.getModel());
 		displayer.render();

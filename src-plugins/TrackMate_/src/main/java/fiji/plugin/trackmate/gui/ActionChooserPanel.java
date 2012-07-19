@@ -15,11 +15,14 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JList;
 
+import net.imglib2.type.NativeType;
+import net.imglib2.type.numeric.RealType;
+
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.TrackMate_;
 import fiji.plugin.trackmate.action.TrackMateAction;
 
-public class ActionChooserPanel extends ListChooserPanel<TrackMateAction> implements WizardPanelDescriptor {
+public class ActionChooserPanel <T extends RealType<T> & NativeType<T>> extends ListChooserPanel<TrackMateAction<T>> implements WizardPanelDescriptor<T> {
 
 	private static final long serialVersionUID = 1L;
 	private static final Icon EXECUTE_ICON = new ImageIcon(TrackMateWizard.class.getResource("images/control_play_blue.png"));
@@ -29,10 +32,10 @@ public class ActionChooserPanel extends ListChooserPanel<TrackMateAction> implem
 	public final ActionEvent ACTION_FINISHED = new ActionEvent(this, 1, "ActionFinished");
 	private LogPanel logPanel;
 	private Logger logger;
-	private TrackMateWizard wizard;
-	private TrackMate_ plugin;
+	private TrackMateWizard<T> wizard;
+	private TrackMate_<T> plugin;
 
-	public ActionChooserPanel(TrackMate_ plugin) {
+	public ActionChooserPanel(TrackMate_<T> plugin) {
 		super(plugin.getAvailableActions(), "action");
 		this.logPanel = new LogPanel();
 		this.logger = logPanel.getLogger();
@@ -44,12 +47,12 @@ public class ActionChooserPanel extends ListChooserPanel<TrackMateAction> implem
 	 */
 	
 	@Override
-	public void setWizard(TrackMateWizard wizard) {
+	public void setWizard(TrackMateWizard<T> wizard) {
 		this.wizard = wizard;
 	}
 
 	@Override
-	public void setPlugin(TrackMate_ plugin) {
+	public void setPlugin(TrackMate_<T> plugin) {
 		this.plugin = plugin; // duplicate but we need the plugin at construction
 	}
 
@@ -110,7 +113,7 @@ public class ActionChooserPanel extends ListChooserPanel<TrackMateAction> implem
 						try {
 							executeButton.setEnabled(false);
 							fireAction(ACTION_STARTED);
-							TrackMateAction action = getChoice();
+							TrackMateAction<T> action = getChoice();
 							action.setLogger(logger);
 							action.setWizard(wizard);
 							action.execute(plugin);
@@ -139,9 +142,9 @@ public class ActionChooserPanel extends ListChooserPanel<TrackMateAction> implem
 	 * MAIN METHOD
 	 */
 	
-	public static void main(String[] args) {
+	public static <T extends RealType<T> & NativeType<T>> void main(String[] args) {
 		JFrame frame = new JFrame();
-		frame.getContentPane().add(new ActionChooserPanel(new TrackMate_()));
+		frame.getContentPane().add(new ActionChooserPanel<T>(new TrackMate_<T>()));
 		frame.setSize(300, 520);
 		frame.setVisible(true);
 	}

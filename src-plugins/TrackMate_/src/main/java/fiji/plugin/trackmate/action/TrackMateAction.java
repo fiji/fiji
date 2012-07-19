@@ -38,6 +38,6 @@ public interface TrackMateAction<T extends RealType<T> & NativeType<T>>  extends
 	/**
 	 * Set the GUI that launched this action, in case the action needs accessing it or updating it.
 	 */
-	public void setWizard(TrackMateWizard wizard);
+	public void setWizard(TrackMateWizard<T> wizard);
 		
 }

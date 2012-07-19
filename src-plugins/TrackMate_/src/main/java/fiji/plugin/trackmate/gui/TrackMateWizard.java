@@ -22,6 +22,9 @@ import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 import javax.swing.WindowConstants;
 
+import net.imglib2.type.NativeType;
+import net.imglib2.type.numeric.RealType;
+
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
 
@@ -31,7 +34,7 @@ import fiji.plugin.trackmate.visualization.TrackMateModelView;
  * 
  * @author Jean-Yves Tinevez <tinevez@pasteur.fr> - September 2010 - 2011
  */
-public class TrackMateWizard extends javax.swing.JFrame implements ActionListener {
+public class TrackMateWizard <T extends RealType<T> & NativeType<T>> extends javax.swing.JFrame implements ActionListener {
 
 	JButton jButtonSave;
 	JButton jButtonLoad;
@@ -75,15 +78,15 @@ public class TrackMateWizard extends javax.swing.JFrame implements ActionListene
 	 * FIELDS
 	 */
 
-	private WizardPanelDescriptor currentDescriptor;
-	private HashMap<String, WizardPanelDescriptor> descriptorHashmap = new HashMap<String, WizardPanelDescriptor>();
+	private WizardPanelDescriptor<T> currentDescriptor;
+	private HashMap<String, WizardPanelDescriptor<T>> descriptorHashmap = new HashMap<String, WizardPanelDescriptor<T>>();
 	private ArrayList<ActionListener> listeners = new ArrayList<ActionListener>();
 
 	private JPanel jPanelButtons;
 	private JPanel jPanelMain;
 	private LogPanel logPanel;
 	private CardLayout cardLayout;
-	private TrackMateModelView displayer;
+	private TrackMateModelView<T> displayer;
 	private Component component;
 
 
@@ -132,14 +135,14 @@ public class TrackMateWizard extends javax.swing.JFrame implements ActionListene
 	/**
 	 * @return a reference to the {@link TrackMateModelView} linked to this wizard.
 	 */
-	public TrackMateModelView getDisplayer() {
+	public TrackMateModelView<T> getDisplayer() {
 		return displayer;
 	}
 
 	/**
 	 * Set the {@link TrackMateModelView} to be linked to this wizard.
 	 */
-	public void setDisplayer(TrackMateModelView displayer) {
+	public void setDisplayer(TrackMateModelView<T> displayer) {
 		this.displayer = displayer;
 	}
 	
@@ -160,7 +163,7 @@ public class TrackMateWizard extends javax.swing.JFrame implements ActionListene
 	 * @return the collection of {@link WizardPanelDescriptor} currently
 	 * registered in this wizard.
 	 */
-	public Collection<WizardPanelDescriptor> getWizardPanelDescriptors() {
+	public Collection<WizardPanelDescriptor<T>> getWizardPanelDescriptors() {
 		return descriptorHashmap.values();
 	}
 
@@ -169,7 +172,7 @@ public class TrackMateWizard extends javax.swing.JFrame implements ActionListene
 	 * @param id String-based identifier
 	 * @param descriptor WizardPanelDescriptor that describes the panel
 	 */    
-	public void registerWizardDescriptor(String id, WizardPanelDescriptor descriptor) {
+	public void registerWizardDescriptor(String id, WizardPanelDescriptor<T> descriptor) {
 		descriptorHashmap.put(id, descriptor);
 	}
 	
@@ -193,11 +196,11 @@ public class TrackMateWizard extends javax.swing.JFrame implements ActionListene
 	 * Returns the currently displayed WizardPanelDescriptor.
 	 * @return The currently displayed WizardPanelDescriptor
 	 */    
-	public WizardPanelDescriptor getCurrentPanelDescriptor() {
+	public WizardPanelDescriptor<T> getCurrentPanelDescriptor() {
 		return currentDescriptor;
 	}
 
-	public WizardPanelDescriptor getPanelDescriptorFor(Object id) {
+	public WizardPanelDescriptor<T> getPanelDescriptorFor(Object id) {
 		return descriptorHashmap.get(id);
 	}
 

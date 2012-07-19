@@ -42,6 +42,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import net.imglib2.img.ImagePlusAdapter;
 import net.imglib2.img.ImgPlus;
 import net.imglib2.multithreading.SimpleMultiThreading;
 import net.imglib2.type.NativeType;
@@ -173,7 +174,7 @@ public class TrackMate_<T extends RealType<T> & NativeType<T>>  implements PlugI
 	protected List<Spot> translateAndPruneSpots(final List<Spot> spotsThisFrame, final Settings<T> settings) {
 		
 		// Put them back in the right referential 
-		final double[] calibration = TMUtils.getSpatialCalibration(settings.img);
+		final double[] calibration = TMUtils.getSpatialCalibration(settings.imp);
 		TMUtils.translateSpots(spotsThisFrame, 
 				settings.xstart * calibration[0], 
 				settings.ystart * calibration[1], 
@@ -218,7 +219,7 @@ public class TrackMate_<T extends RealType<T> & NativeType<T>>  implements PlugI
 	 * to suit your needs.
 	 */
 	protected void launchGUI() {
-		new WizardController(this);
+		new WizardController<T>(this);
 	}
 	
 	/**
@@ -432,9 +433,9 @@ public class TrackMate_<T extends RealType<T> & NativeType<T>>  implements PlugI
 		final Settings<T> settings = model.getSettings();
 		final int segmentationChannel = settings.segmentationChannel;
 		final Logger logger = model.getLogger();
-		final ImgPlus<T> img = settings.img;
+		final ImagePlus imp = settings.imp;
 		
-		if (null == img) {
+		if (null == imp) {
 			logger.error("No image to operate on.\n");
 			return;
 		}
@@ -458,7 +459,8 @@ public class TrackMate_<T extends RealType<T> & NativeType<T>>  implements PlugI
 		final AtomicInteger spotFound = new AtomicInteger(0);
 		final AtomicInteger progress = new AtomicInteger(0);
 
-		final ImgPlus<T> imgC = HyperSliceImgPlus.fixChannelAxis(img, segmentationChannel-1); // channel index is 1-based
+		final ImgPlus<T> img = ImagePlusAdapter.wrapImgPlus(imp);
+		final ImgPlus<T> imgC = HyperSliceImgPlus.fixChannelAxis(img , segmentationChannel-1); // channel index is 1-based
 
 		final Thread[] threads;
 		if (useMultithreading) {

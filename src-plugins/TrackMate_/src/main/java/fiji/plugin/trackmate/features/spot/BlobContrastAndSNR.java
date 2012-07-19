@@ -5,9 +5,10 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
-import net.imglib2.cursor.special.DiscCursor;
-import net.imglib2.cursor.special.DomainCursor;
-import net.imglib2.cursor.special.SphereCursor;
+import net.imglib2.algorithm.region.localneighborhood.DiscNeighborhood;
+import net.imglib2.algorithm.region.localneighborhood.RealPositionableAbstractNeighborhood;
+import net.imglib2.algorithm.region.localneighborhood.RealPositionableNeighborhoodCursor;
+import net.imglib2.algorithm.region.localneighborhood.SphereNeighborhood;
 import net.imglib2.type.numeric.RealType;
 
 import fiji.plugin.trackmate.Dimension;
@@ -52,8 +53,6 @@ public class BlobContrastAndSNR<T extends RealType<T>> extends IndependentSpotFe
 	}
 	
 	protected static final double RAD_PERCENTAGE = 1f;  
-	/** Utility holder. */
-	private double[] coords = new double[3];
 	
 	
 	@Override
@@ -68,21 +67,25 @@ public class BlobContrastAndSNR<T extends RealType<T>> extends IndependentSpotFe
 	/**
 	 * Compute the contrast for the given spot.
 	 */
-	@SuppressWarnings({ "unchecked", "rawtypes" })
 	protected double[] getContrastAndSNR(final Spot spot) {
 		final double radius = spot.getFeature(Spot.RADIUS);
-		final DomainCursor<T> cursor;
-		if (img.numDimensions() == 3) 
-			cursor = new SphereCursor(img, spot.getPosition(coords), radius * (1+RAD_PERCENTAGE));
-		else
-			cursor = new DiscCursor(img, spot.getPosition(coords), radius * (1+RAD_PERCENTAGE));
+		
+		final RealPositionableAbstractNeighborhood<T> neighborhood;
+		if (img.numDimensions() == 3) {
+			neighborhood = new SphereNeighborhood<T>(img, radius * (1+RAD_PERCENTAGE));
+			neighborhood.setPosition(spot);
+		} else {
+			neighborhood = new DiscNeighborhood<T>(img, radius * (1+RAD_PERCENTAGE));
+			neighborhood.setPosition(spot);
+		}
 		
 		double radius2 = radius * radius;
 		int n_out = 0; // inner number of pixels
 		double dist2;
 		double sum_out = 0;
 		
-		// Compute mean in the outter ring
+		// Compute mean in the outer ring
+		RealPositionableNeighborhoodCursor<T> cursor = neighborhood.cursor();
 		while(cursor.hasNext()) {
 			cursor.fwd();
 			dist2 = cursor.getDistanceSquared();

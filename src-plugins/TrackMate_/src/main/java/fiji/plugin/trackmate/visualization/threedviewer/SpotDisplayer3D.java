@@ -191,14 +191,14 @@ public class SpotDisplayer3D <T extends RealType<T> & NativeType<T>> extends Abs
 		}
 
 		universe.show();
-		if (doRenderImage && null != settings.img) {
+		if (doRenderImage && null != settings.imp) {
 //			if (!settings.imp.isVisible())
 //				settings.imp.show();
 			ImagePlus[] images;
 			try {
 				images = TMUtils.makeImageForViewer(settings);
 				final Content imageContent = ContentCreator.createContent(
-						settings.img.getName(), 
+						settings.imp.getShortTitle(), 
 						images, 
 						Content.VOLUME, 
 						SpotDisplayer3D.DEFAULT_RESAMPLING_FACTOR, 
@@ -319,7 +319,7 @@ public class SpotDisplayer3D <T extends RealType<T> & NativeType<T>> extends Abs
 			double radius;
 			double[] coords = new double[3];
 			for(Spot spot : spotsThisFrame) {
-				spot.getPosition(coords);
+				spot.localize(coords);
 				radius = spot.getFeature(Spot.RADIUS);
 				pos = new double[] {coords[0], coords[1], coords[2], radius*radiusRatio};
 				centers.put(spot, new Point4d(pos));

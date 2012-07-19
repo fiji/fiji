@@ -9,11 +9,14 @@ import java.awt.Font;
 import javax.swing.JLabel;
 import javax.swing.SwingConstants;
 
+import net.imglib2.type.NativeType;
+import net.imglib2.type.numeric.RealType;
+
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.tracking.TrackerSettings;
 import fiji.plugin.trackmate.tracking.kdtree.NearestNeighborTrackerSettings;
 
-public class NearestNeighborTrackerSettingsPanel extends TrackerConfigurationPanel {
+public class NearestNeighborTrackerSettingsPanel <T extends RealType<T> & NativeType<T>> extends TrackerConfigurationPanel<T> {
 
 	private static final long serialVersionUID = 1L;
 	private JNumericTextField maxDistField;
@@ -27,15 +30,15 @@ public class NearestNeighborTrackerSettingsPanel extends TrackerConfigurationPan
 	}
 
 	@Override
-	public TrackerSettings getTrackerSettings() {
-		NearestNeighborTrackerSettings settings = new NearestNeighborTrackerSettings();
+	public TrackerSettings<T> getTrackerSettings() {
+		NearestNeighborTrackerSettings<T> settings = new NearestNeighborTrackerSettings<T>();
 		settings.maxLinkingDistance = maxDistField.getValue();
 		return settings;
 	}
 
 	@Override
-	public void setTrackerSettings(TrackMateModel model) {
-		NearestNeighborTrackerSettings settings = (NearestNeighborTrackerSettings) model.getSettings().trackerSettings;
+	public void setTrackerSettings(TrackMateModel<T> model) {
+		NearestNeighborTrackerSettings<T> settings = (NearestNeighborTrackerSettings<T>) model.getSettings().trackerSettings;
 		maxDistField.setText(""+settings.maxLinkingDistance);
 		labelTracker.setText(model.getSettings().tracker.toString());
 		labelTrackerDescription.setText(model.getSettings().tracker.getInfoText()

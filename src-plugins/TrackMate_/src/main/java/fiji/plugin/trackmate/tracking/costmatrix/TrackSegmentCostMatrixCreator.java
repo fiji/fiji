@@ -5,6 +5,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.SortedSet;
 
+import net.imglib2.type.NativeType;
+import net.imglib2.type.numeric.RealType;
+
 import Jama.Matrix;
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.Spot;
@@ -85,7 +88,7 @@ import fiji.plugin.trackmate.util.TMUtils;
  *
  */
 
-public class TrackSegmentCostMatrixCreator extends LAPTrackerCostMatrixCreator {
+public class TrackSegmentCostMatrixCreator <T extends RealType<T> & NativeType<T>> extends LAPTrackerCostMatrixCreator<T> {
 
 
 	private static final boolean PRUNING_OPTIMIZATION = true;
@@ -112,7 +115,7 @@ public class TrackSegmentCostMatrixCreator extends LAPTrackerCostMatrixCreator {
 	 * an <code>ArrayList</code> of <code>Spots</code>.
 	 */
 
-	public TrackSegmentCostMatrixCreator(List<SortedSet<Spot>> trackSegments, LAPTrackerSettings settings) {
+	public TrackSegmentCostMatrixCreator(List<SortedSet<Spot>> trackSegments, LAPTrackerSettings<T> settings) {
 		super(settings);
 		this.trackSegments = trackSegments;
 	}
@@ -311,7 +314,7 @@ public class TrackSegmentCostMatrixCreator extends LAPTrackerCostMatrixCreator {
 	 * Uses a gap closing cost function to fill in the gap closing costs sub-matrix.
 	 */
 	private Matrix getGapClosingCostSubMatrix() {
-		GapClosingCostFunction gapClosing = new GapClosingCostFunction(settings);
+		GapClosingCostFunction<T> gapClosing = new GapClosingCostFunction<T>(settings);
 		return gapClosing.getCostFunction(trackSegments);
 	}
 
@@ -320,7 +323,7 @@ public class TrackSegmentCostMatrixCreator extends LAPTrackerCostMatrixCreator {
 	 * Uses a merging cost function to fill in the merging costs sub-matrix.
 	 */
 	private Matrix getMergingScores() {
-		MergingCostFunction merging = new MergingCostFunction(settings);
+		MergingCostFunction<T> merging = new MergingCostFunction<T>(settings);
 		Matrix mergingScores = merging.getCostFunction(trackSegments, middlePoints);
 		if (PRUNING_OPTIMIZATION) {
 			mergingMiddlePoints = new ArrayList<Spot>();
@@ -413,7 +416,7 @@ public class TrackSegmentCostMatrixCreator extends LAPTrackerCostMatrixCreator {
 	 * Uses a splitting cost function to fill in the splitting costs submatrix.
 	 */
 	private Matrix getSplittingScores() {
-		SplittingCostFunction splitting = new SplittingCostFunction(settings); 
+		SplittingCostFunction<T> splitting = new SplittingCostFunction<T>(settings); 
 		Matrix splittingScores = splitting.getCostFunction(trackSegments, middlePoints);
 		if (PRUNING_OPTIMIZATION) {
 			splittingMiddlePoints = new ArrayList<Spot>();

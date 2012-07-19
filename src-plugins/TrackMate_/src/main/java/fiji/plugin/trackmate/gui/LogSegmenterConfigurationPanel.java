@@ -19,6 +19,9 @@ import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JTextField;
 
+import net.imglib2.type.NativeType;
+import net.imglib2.type.numeric.RealType;
+
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.detection.LogSegmenterSettings;
 import fiji.plugin.trackmate.detection.SegmenterSettings;
@@ -28,7 +31,7 @@ import fiji.plugin.trackmate.detection.SegmenterSettings;
  * 
  * @author Jean-Yves Tinevez <jeanyves.tinevez@gmail.com> 2010 - 2011
  */
-public class LogSegmenterConfigurationPanel extends SegmenterConfigurationPanel {
+public class LogSegmenterConfigurationPanel <T extends RealType<T> & NativeType<T>> extends SegmenterConfigurationPanel<T> {
 
 	private static final long serialVersionUID = 4519313560718180405L;
 	private JLabel jLabel1;
@@ -43,7 +46,7 @@ public class LogSegmenterConfigurationPanel extends SegmenterConfigurationPanel 
 	protected JTextField jTextFieldBlobDiameter;
 	protected JCheckBox jCheckSubPixel;
 	/** The {@link LogSegmenterSettings} object set by this panel. */
-	private LogSegmenterSettings settings = new LogSegmenterSettings();
+	private LogSegmenterSettings<T> settings = new LogSegmenterSettings<T>();
 
 	/*
 	 * CONSTRUCTOR
@@ -66,7 +69,7 @@ public class LogSegmenterConfigurationPanel extends SegmenterConfigurationPanel 
 	 * @return  the updated Settings
 	 */
 	@Override
-	public SegmenterSettings getSegmenterSettings() {
+	public SegmenterSettings<T> getSegmenterSettings() {
 		settings.expectedRadius = Float.parseFloat(jTextFieldBlobDiameter.getText())/2;
 		settings.threshold = Float.parseFloat(jTextFieldThreshold.getText());
 		settings.useMedianFilter = jCheckBoxMedianFilter.isSelected();
@@ -75,8 +78,8 @@ public class LogSegmenterConfigurationPanel extends SegmenterConfigurationPanel 
 	}
 
 	@Override
-	public void setSegmenterSettings(TrackMateModel model) {
-		this.settings = (LogSegmenterSettings) model.getSettings().segmenterSettings;
+	public void setSegmenterSettings(TrackMateModel<T> model) {
+		this.settings = (LogSegmenterSettings<T>) model.getSettings().segmenterSettings;
 		echoSettings(model);
 	}
 
@@ -95,7 +98,7 @@ public class LogSegmenterConfigurationPanel extends SegmenterConfigurationPanel 
 		jTextFieldThreshold.setText(String.format("%.0f", imp.getProcessor().getMinThreshold()));
 	}
 
-	private void echoSettings(TrackMateModel model) {
+	private void echoSettings(TrackMateModel<T> model) {
 		jLabelBlobDiameterUnit.setText(model.getSettings().spaceUnits);
 		jLabelSegmenterName.setText(model.getSettings().segmenter.toString());
 		jLabelHelpText.setText(model.getSettings().segmenter.getInfoText()

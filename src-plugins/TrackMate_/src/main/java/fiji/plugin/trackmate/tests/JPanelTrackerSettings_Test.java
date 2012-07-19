@@ -13,10 +13,10 @@ public class JPanelTrackerSettings_Test {
 
 	public static <T extends RealType<T> & NativeType<T>> void main(String[] args) {
 		
-		LAPTrackerSettingsPanel panel = new LAPTrackerSettingsPanel();
+		LAPTrackerSettingsPanel<T> panel = new LAPTrackerSettingsPanel<T>();
 		
 		TrackMateModel<T> model = new TrackMateModel<T>();
-		model.getSettings().trackerSettings = new LAPTrackerSettings();
+		model.getSettings().trackerSettings = new LAPTrackerSettings<T>();
 		panel.setTrackerSettings(model);
 		
 		JFrame frame = new JFrame();

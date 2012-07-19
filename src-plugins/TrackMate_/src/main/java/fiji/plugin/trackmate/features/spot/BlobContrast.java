@@ -5,9 +5,10 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
-import net.imglib2.cursor.special.DiscCursor;
-import net.imglib2.cursor.special.DomainCursor;
-import net.imglib2.cursor.special.SphereCursor;
+import net.imglib2.algorithm.region.localneighborhood.DiscNeighborhood;
+import net.imglib2.algorithm.region.localneighborhood.RealPositionableAbstractNeighborhood;
+import net.imglib2.algorithm.region.localneighborhood.RealPositionableNeighborhoodCursor;
+import net.imglib2.algorithm.region.localneighborhood.SphereNeighborhood;
 import net.imglib2.type.numeric.RealType;
 
 import fiji.plugin.trackmate.Dimension;
@@ -29,8 +30,6 @@ public class BlobContrast<T extends RealType<T>> extends IndependentSpotFeatureA
 	}
 	
 	protected static final double RAD_PERCENTAGE = .5f;  
-	/** Utility holder. */
-	private double[] coords = new double[3];
 	
 
 	@Override
@@ -47,28 +46,34 @@ public class BlobContrast<T extends RealType<T>> extends IndependentSpotFeatureA
 	 */
 	protected double getContrast(final Spot spot) {
 		final double radius = spot.getFeature(Spot.RADIUS);
-		final DomainCursor<T> cursor;
-		if (img.numDimensions() == 3) 
-			cursor = new SphereCursor(img, spot.getPosition(coords), radius * (1+RAD_PERCENTAGE));
-		else
-			cursor = new DiscCursor(img, spot.getPosition(coords), radius * (1+RAD_PERCENTAGE));
-		int innerRingVolume = 0;
-		int outerRingVolume = 0 ;
+
+		final RealPositionableAbstractNeighborhood<T> neighborhood;
+		if (img.numDimensions() == 3) {
+			neighborhood = new SphereNeighborhood<T>(img, radius * (1+RAD_PERCENTAGE));
+			neighborhood.setPosition(spot);
+		} else {
+			neighborhood = new DiscNeighborhood<T>(img, radius * (1+RAD_PERCENTAGE));
+			neighborhood.setPosition(spot);
+		}
+		
+		long innerRingVolume = 0;
+		long outerRingVolume = 0 ;
 		double radius2 = radius * radius;
 		double innerRadius2 = radius2 * (1-RAD_PERCENTAGE) * (1-RAD_PERCENTAGE);
 		double innerTotalIntensity = 0;
 		double outerTotalIntensity = 0;
 		double dist2;
 		
+		RealPositionableNeighborhoodCursor<T> cursor = neighborhood.cursor();
 		while(cursor.hasNext()) {
 			cursor.fwd();
 			dist2 = cursor.getDistanceSquared();
 			if (dist2 > radius2) {
 				outerRingVolume++;
-				outerTotalIntensity += cursor.get().getRealFloat();				
+				outerTotalIntensity += cursor.get().getRealDouble();		
 			} else if (dist2 > innerRadius2) {
 				innerRingVolume++;
-				innerTotalIntensity += cursor.get().getRealFloat();
+				innerTotalIntensity += cursor.get().getRealDouble();
 			}
 		}
 		

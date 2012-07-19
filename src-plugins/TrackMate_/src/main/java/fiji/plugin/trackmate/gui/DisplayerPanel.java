@@ -36,6 +36,9 @@ import javax.swing.SwingConstants;
 import javax.swing.WindowConstants;
 import javax.swing.border.LineBorder;
 
+import net.imglib2.type.NativeType;
+import net.imglib2.type.numeric.RealType;
+
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMate_;
 import fiji.plugin.trackmate.visualization.AbstractTrackMateModelView;
@@ -46,7 +49,7 @@ import fiji.plugin.trackmate.visualization.TrackMateModelView;
  * This GUI takes the role of a controller.
  * @author Jean-Yves Tinevez <tinevez@pasteur.fr>   -  2010 - 2011
  */
-public class DisplayerPanel extends ActionListenablePanel implements WizardPanelDescriptor {
+public class DisplayerPanel<T extends RealType<T> & NativeType<T>> extends ActionListenablePanel implements WizardPanelDescriptor<T> {
 
 	private static final long serialVersionUID = 1L;
 
@@ -71,9 +74,9 @@ public class DisplayerPanel extends ActionListenablePanel implements WizardPanel
 	/**
 	 * The set of {@link TrackMateModelView} views controlled by this controller.
 	 */
-	private Set<TrackMateModelView> views = new HashSet<TrackMateModelView>();
-	private TrackMate_ plugin;
-	private TrackMateWizard wizard;
+	private Set<TrackMateModelView<T>> views = new HashSet<TrackMateModelView<T>>();
+	private TrackMate_<T> plugin;
+	private TrackMateWizard<T> wizard;
 
 	/*
 	 * CONSTRUCTOR 
@@ -88,12 +91,12 @@ public class DisplayerPanel extends ActionListenablePanel implements WizardPanel
 	 */
 
 	@Override
-	public void setWizard(TrackMateWizard wizard) {
+	public void setWizard(TrackMateWizard<T> wizard) {
 		this.wizard = wizard;
 	}
 
 	@Override
-	public void setPlugin(TrackMate_ plugin) {
+	public void setPlugin(TrackMate_<T> plugin) {
 		this.plugin = plugin;
 	}
 
@@ -141,7 +144,7 @@ public class DisplayerPanel extends ActionListenablePanel implements WizardPanel
 	/**
 	 * Add the given {@link TrackMateModelView} to the list managed by this controller.
 	 */
-	public void register(final TrackMateModelView view) {
+	public void register(final TrackMateModelView<T> view) {
 		if (!views.contains(view)) {
 			views.add(view);
 		}
@@ -154,7 +157,7 @@ public class DisplayerPanel extends ActionListenablePanel implements WizardPanel
 			public void run() {
 				// Intercept event coming from the JPanelSpotColorGUI, and translate it for views
 				if (event == jPanelSpotColor.COLOR_FEATURE_CHANGED) {
-					for (TrackMateModelView view : views) {
+					for (TrackMateModelView<T> view : views) {
 						view.setDisplaySettings(KEY_SPOT_COLOR_FEATURE, jPanelSpotColor.setColorByFeature);
 						view.refresh();
 					}
@@ -187,7 +190,7 @@ public class DisplayerPanel extends ActionListenablePanel implements WizardPanel
 	 * PRIVATE METHODS
 	 */
 
-	private void setModel(TrackMateModel model) {
+	private void setModel(TrackMateModel<T> model) {
 		Map<String, double[]> featureValues = model.getFeatureModel().getSpotFeatureValues();
 		List<String> features = model.getFeatureModel().getSpotFeatures();
 		Map<String, String> featureNames = model.getFeatureModel().getSpotFeatureNames();
@@ -198,7 +201,7 @@ public class DisplayerPanel extends ActionListenablePanel implements WizardPanel
 			jPanelSpotColor.addActionListener(new ActionListener() {
 				@Override
 				public void actionPerformed(ActionEvent e) {
-					for(TrackMateModelView view : views) {
+					for(TrackMateModelView<T> view : views) {
 						view.setDisplaySettings(KEY_SPOT_COLOR_FEATURE, jPanelSpotColor.setColorByFeature);
 						view.refresh();
 					}							
@@ -247,7 +250,7 @@ public class DisplayerPanel extends ActionListenablePanel implements WizardPanel
 					jComboBoxDisplayMode.addActionListener(new ActionListener() {
 						@Override
 						public void actionPerformed(ActionEvent e) {
-							for(TrackMateModelView view : views) {
+							for(TrackMateModelView<T> view : views) {
 								view.setDisplaySettings(KEY_TRACK_DISPLAY_MODE, jComboBoxDisplayMode.getSelectedIndex());
 								view.refresh();
 							}
@@ -270,7 +273,7 @@ public class DisplayerPanel extends ActionListenablePanel implements WizardPanel
 								depth = Integer.parseInt(jTextFieldFrameDepth.getText());
 							else
 								depth = (int) 1e9;
-							for(TrackMateModelView view : views) {
+							for(TrackMateModelView<T> view : views) {
 								view.setDisplaySettings(KEY_TRACK_DISPLAY_DEPTH, depth);
 								view.refresh();
 							}
@@ -294,7 +297,7 @@ public class DisplayerPanel extends ActionListenablePanel implements WizardPanel
 						@Override
 						public void actionPerformed(ActionEvent e) {
 							int depth = Integer.parseInt(jTextFieldFrameDepth.getText());
-							for(TrackMateModelView view : views) {
+							for(TrackMateModelView<T> view : views) {
 								view.setDisplaySettings(KEY_TRACK_DISPLAY_DEPTH, depth);
 								view.refresh();
 							}
@@ -314,7 +317,7 @@ public class DisplayerPanel extends ActionListenablePanel implements WizardPanel
 					public void actionPerformed(ActionEvent e) {
 						boolean isSelected = jCheckBoxDisplayTracks.isSelected();
 						jPanelTrackOptions.setEnabled(isSelected);
-						for(TrackMateModelView view : views) {
+						for(TrackMateModelView<T> view : views) {
 							view.setDisplaySettings(KEY_TRACKS_VISIBLE, isSelected);
 							view.refresh();
 						}
@@ -333,7 +336,7 @@ public class DisplayerPanel extends ActionListenablePanel implements WizardPanel
 					public void actionPerformed(ActionEvent e) {
 						boolean isSelected = jCheckBoxDisplaySpots.isSelected();
 						jPanelSpotOptions.setEnabled(isSelected);
-						for(TrackMateModelView view : views) {
+						for(TrackMateModelView<T> view : views) {
 							view.setDisplaySettings(KEY_SPOTS_VISIBLE, isSelected);
 							view.refresh();
 						}
@@ -367,7 +370,7 @@ public class DisplayerPanel extends ActionListenablePanel implements WizardPanel
 					jTextFieldSpotRadius.addActionListener(new ActionListener() {
 						@Override
 						public void actionPerformed(ActionEvent e) {
-							for(TrackMateModelView view : views) {
+							for(TrackMateModelView<T> view : views) {
 								view.setDisplaySettings(KEY_SPOT_RADIUS_RATIO, (float) jTextFieldSpotRadius.getValue());
 								view.refresh();
 							}
@@ -376,7 +379,7 @@ public class DisplayerPanel extends ActionListenablePanel implements WizardPanel
 					jTextFieldSpotRadius.addFocusListener(new FocusListener() {
 						@Override
 						public void focusLost(FocusEvent e) {
-							for(TrackMateModelView view : views) {
+							for(TrackMateModelView<T> view : views) {
 								view.setDisplaySettings(KEY_SPOT_RADIUS_RATIO, (float) jTextFieldSpotRadius.getValue());
 								view.refresh();
 							}							
@@ -394,7 +397,7 @@ public class DisplayerPanel extends ActionListenablePanel implements WizardPanel
 					jCheckBoxDisplayNames.addActionListener(new ActionListener() {
 						@Override
 						public void actionPerformed(ActionEvent e) {
-							for(TrackMateModelView view : views) {
+							for(TrackMateModelView<T> view : views) {
 								view.setDisplaySettings(KEY_DISPLAY_SPOT_NAMES, jCheckBoxDisplayNames.isSelected());
 								view.refresh();
 							}
@@ -433,12 +436,12 @@ public class DisplayerPanel extends ActionListenablePanel implements WizardPanel
 	 * MAIN METHOD
 	 */
 
-	public static void main(String[] args) {
+	public static <T extends RealType<T> & NativeType<T>> void main(String[] args) {
 		JFrame frame = new JFrame();
 		frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 		frame.pack();
 		frame.setVisible(true);
-		DisplayerPanel displayerPanel_IL = new DisplayerPanel();
+		DisplayerPanel<T> displayerPanel_IL = new DisplayerPanel<T>();
 		frame.getContentPane().add(displayerPanel_IL);
 		displayerPanel_IL.setPreferredSize(new java.awt.Dimension(300, 469));
 	}

@@ -25,7 +25,7 @@ public class LinkNew3DViewerAction<T extends RealType<T> & NativeType<T>> extend
 				SpotDisplayer3D<T> newDisplayer = new SpotDisplayer3D<T>();
 				newDisplayer.setRenderImageData(false);
 				newDisplayer.setModel(plugin.getModel());
-				DisplayerPanel displayerPanel = (DisplayerPanel) wizard.getPanelDescriptorFor(DisplayerPanel.DESCRIPTOR);
+				DisplayerPanel<T> displayerPanel = (DisplayerPanel<T>) wizard.getPanelDescriptorFor(DisplayerPanel.DESCRIPTOR);
 				if (null != displayerPanel) {
 					displayerPanel.register(newDisplayer);
 					displayerPanel.updateDisplaySettings(newDisplayer.getDisplaySettings());

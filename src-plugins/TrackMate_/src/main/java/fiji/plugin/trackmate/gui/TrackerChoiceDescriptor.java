@@ -2,17 +2,20 @@ package fiji.plugin.trackmate.gui;
 
 import java.awt.Component;
 
+import net.imglib2.type.NativeType;
+import net.imglib2.type.numeric.RealType;
+
 import fiji.plugin.trackmate.TrackMate_;
 import fiji.plugin.trackmate.tracking.LAPTrackerSettings;
 import fiji.plugin.trackmate.tracking.SpotTracker;
 import fiji.plugin.trackmate.tracking.TrackerSettings;
 
-public class TrackerChoiceDescriptor implements WizardPanelDescriptor {
+public class TrackerChoiceDescriptor <T extends RealType<T> & NativeType<T>> implements WizardPanelDescriptor<T> {
 
 	public static final String DESCRIPTOR = "TrackerChoice";
-	private ListChooserPanel<SpotTracker> component;
-	private TrackMate_ plugin;
-	private TrackMateWizard wizard;
+	private ListChooserPanel<SpotTracker<T>> component;
+	private TrackMate_<T> plugin;
+	private TrackMateWizard<T> wizard;
 	
 	/*
 	 * METHODS
@@ -56,13 +59,13 @@ public class TrackerChoiceDescriptor implements WizardPanelDescriptor {
 	@Override
 	public void aboutToHidePanel() {
 		// Set the settings field of the model
-		SpotTracker tracker = component.getChoice();
+		SpotTracker<T> tracker = component.getChoice();
 		plugin.getModel().getSettings().tracker = tracker;
 
 		// Compare current settings with default ones, and substitute default ones
 		// only if the old ones are absent or not compatible with it.
-		TrackerSettings defaultSettings = tracker.createDefaultSettings();
-		TrackerSettings currentSettings = plugin.getModel().getSettings().trackerSettings;
+		TrackerSettings<T> defaultSettings = tracker.createDefaultSettings();
+		TrackerSettings<T> currentSettings = plugin.getModel().getSettings().trackerSettings;
 		
 		if (null == currentSettings || currentSettings.getClass() != defaultSettings.getClass()) {
 		
@@ -71,34 +74,34 @@ public class TrackerChoiceDescriptor implements WizardPanelDescriptor {
 		} else if (currentSettings instanceof LAPTrackerSettings) {
 
 			// Deal with special case: the LAPTrackerSettings that exists in 2 flavor
-			LAPTrackerSettings clapts = (LAPTrackerSettings) currentSettings;
-			LAPTrackerSettings dlapts = (LAPTrackerSettings) defaultSettings;
+			LAPTrackerSettings<T> clapts = (LAPTrackerSettings<T>) currentSettings;
+			LAPTrackerSettings<T> dlapts = (LAPTrackerSettings<T>) defaultSettings;
 			// We copy the #useSimpleConfigPanel field to the current settings 
 			clapts.setUseSimpleConfigPanel(dlapts.isUseSimpleConfigPanel());
 		
 		} 
 		 
 		// Instantiate next descriptor for the wizard
-		TrackerConfigurationPanelDescriptor descriptor = new TrackerConfigurationPanelDescriptor();
+		TrackerConfigurationPanelDescriptor<T> descriptor = new TrackerConfigurationPanelDescriptor<T>();
 		descriptor.setPlugin(plugin);
 		descriptor.setWizard(wizard);
 		wizard.registerWizardDescriptor(TrackerConfigurationPanelDescriptor.DESCRIPTOR, descriptor);
 	}
 
 	@Override
-	public void setPlugin(TrackMate_ plugin) {
+	public void setPlugin(TrackMate_<T> plugin) {
 		this.plugin = plugin;
-		this.component = new ListChooserPanel<SpotTracker>(plugin.getAvailableSpotTrackers(), "tracker");
+		this.component = new ListChooserPanel<SpotTracker<T>>(plugin.getAvailableSpotTrackers(), "tracker");
 		setCurrentChoiceFromPlugin();
 	}
 
 	@Override
-	public void setWizard(TrackMateWizard wizard) {	
+	public void setWizard(TrackMateWizard<T> wizard) {	
 		this.wizard = wizard;
 	}
 
 	void setCurrentChoiceFromPlugin() {
-		SpotTracker tracker = plugin.getModel().getSettings().tracker; 
+		SpotTracker<T> tracker = plugin.getModel().getSettings().tracker; 
 		if (tracker != null) {
 			int index = 0;
 			for (int i = 0; i < plugin.getAvailableSpotTrackers().size(); i++) {

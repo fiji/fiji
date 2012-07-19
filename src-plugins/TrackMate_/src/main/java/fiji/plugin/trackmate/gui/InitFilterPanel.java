@@ -22,6 +22,9 @@ import javax.swing.WindowConstants;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
+import net.imglib2.type.NativeType;
+import net.imglib2.type.numeric.RealType;
+
 import fiji.plugin.trackmate.FeatureFilter;
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.Spot;
@@ -30,7 +33,7 @@ import fiji.plugin.trackmate.SpotImp;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMate_;
 
-public class InitFilterPanel extends ActionListenablePanel implements WizardPanelDescriptor {
+public class InitFilterPanel <T extends RealType<T> & NativeType<T>> extends ActionListenablePanel implements WizardPanelDescriptor<T> {
 
 	private static final long serialVersionUID = 1L;
 	private static final String EXPLANATION_TEXT = "<html><p align=\"justify\">" +
@@ -52,9 +55,9 @@ public class InitFilterPanel extends ActionListenablePanel implements WizardPane
 	private JLabel jLabelExplanation;
 	private JLabel jLabelSelectedSpots;
 	private JPanel jPanelText;
-	private TrackMate_ plugin;
+	private TrackMate_<T> plugin;
 	private Logger logger;
-	private TrackMateWizard wizard;
+	private TrackMateWizard<T> wizard;
 	private Updater updater;
 
 
@@ -75,17 +78,17 @@ public class InitFilterPanel extends ActionListenablePanel implements WizardPane
 	 * Return the feature threshold on quality set by this panel. 
 	 */
 	public FeatureFilter getFeatureThreshold() {
-		return new FeatureFilter(jPanelThreshold.getKey(), new Float(jPanelThreshold.getThreshold()), jPanelThreshold.isAboveThreshold());
+		return new FeatureFilter(jPanelThreshold.getKey(), new Double(jPanelThreshold.getThreshold()), jPanelThreshold.isAboveThreshold());
 	}
 
 	@Override
-	public void setWizard(TrackMateWizard wizard) { 
+	public void setWizard(TrackMateWizard<T> wizard) { 
 		this.wizard = wizard;
 		this.logger = wizard.getLogger();
 	}
 
 	@Override
-	public void setPlugin(TrackMate_ plugin) {
+	public void setPlugin(TrackMate_<T> plugin) {
 		this.plugin = plugin;
 	}
 
@@ -118,7 +121,7 @@ public class InitFilterPanel extends ActionListenablePanel implements WizardPane
 
 	@Override
 	public void aboutToDisplayPanel() {
-		final TrackMateModel model = plugin.getModel();
+		final TrackMateModel<T> model = plugin.getModel();
 
 		SwingWorker<Map<String, double[]>, Void> worker = new SwingWorker<Map<String, double[]>, Void>() {
 
@@ -135,7 +138,7 @@ public class InitFilterPanel extends ActionListenablePanel implements WizardPane
 					// Remove and redisplay threshold panel
 					regenerateThresholdPanel(features);
 
-					Float initialFilterValue = model.getSettings().initialSpotFilterValue;
+					Double initialFilterValue = model.getSettings().initialSpotFilterValue;
 					if (null != initialFilterValue) {
 						jPanelThreshold.setThreshold(initialFilterValue);
 					} else {
@@ -161,7 +164,7 @@ public class InitFilterPanel extends ActionListenablePanel implements WizardPane
 
 	@Override
 	public void aboutToHidePanel() {
-		final TrackMateModel model = plugin.getModel();
+		final TrackMateModel<T> model = plugin.getModel();
 		FeatureFilter initialThreshold = getFeatureThreshold();
 		String str = "Initial thresholding with a quality threshold above "+ String.format("%.1f", initialThreshold.value) + " ...\n";
 		logger.log(str,Logger.BLUE_COLOR);
@@ -284,7 +287,7 @@ public class InitFilterPanel extends ActionListenablePanel implements WizardPane
 	 * Auto-generated main method to display this 
 	 * JPanel inside a new JFrame.
 	 */
-	public static void main(String[] args) {
+	public static <T extends RealType<T> & NativeType<T>>void main(String[] args) {
 		// Prepare fake data
 		final int N_ITEMS = 100;
 		final Random ran = new Random();
@@ -298,11 +301,11 @@ public class InitFilterPanel extends ActionListenablePanel implements WizardPane
 			spot.putFeature(Spot.QUALITY, val);
 			spots.add(spot, 0);
 		}
-		TrackMateModel model = new TrackMateModel();
+		TrackMateModel<T> model = new TrackMateModel<T>();
 		model.setSpots(spots, false);
 
-		InitFilterPanel panel = new InitFilterPanel();
-		panel.setPlugin(new TrackMate_(model));
+		InitFilterPanel<T> panel = new InitFilterPanel<T>();
+		panel.setPlugin(new TrackMate_<T>(model));
 		panel.aboutToDisplayPanel();
 
 		JFrame frame = new JFrame();

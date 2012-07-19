@@ -2,7 +2,10 @@ package fiji.plugin.trackmate.gui;
 
 import java.io.File;
 
-public class LoadDescriptor extends SomeDialogDescriptor {
+import net.imglib2.type.NativeType;
+import net.imglib2.type.numeric.RealType;
+
+public class LoadDescriptor <T extends RealType<T> & NativeType<T>> extends SomeDialogDescriptor<T> {
 
 
 	public static final String DESCRIPTOR = "LoadingPanel";
@@ -20,13 +23,13 @@ public class LoadDescriptor extends SomeDialogDescriptor {
 			if (null == file) {
 				File folder = new File(System.getProperty("user.dir")).getParentFile().getParentFile();
 				try {
-					file = new File(folder.getPath() + File.separator + plugin.getModel().getSettings().img.getName() +".xml");
+					file = new File(folder.getPath() + File.separator + plugin.getModel().getSettings().imp.getTitle() +".xml");
 				} catch (NullPointerException npe) {
 					file = new File(folder.getPath() + File.separator + "TrackMateData.xml");
 				}
 			}
 
-			GuiReader reader = new GuiReader(wizard);
+			GuiReader<T> reader = new GuiReader<T>(wizard);
 			File tmpFile = reader.askForFile(file);
 			if (null == tmpFile) {
 				wizard.setNextButtonEnabled(true);

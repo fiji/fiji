@@ -29,7 +29,7 @@ public class NNTrackerTest {
 		
 		// 1 - Load test spots
 		System.out.println("Opening file: "+file.getAbsolutePath());		
-		TmXmlReader reader = new TmXmlReader(file, Logger.DEFAULT_LOGGER);
+		TmXmlReader<T> reader = new TmXmlReader<T>(file, Logger.DEFAULT_LOGGER);
 		TrackMateModel<T> model = null;
 		// Parse
 		reader.parse();
@@ -43,7 +43,7 @@ public class NNTrackerTest {
 		System.out.println();
 		
 		// 1.5 - Set the tracking settings
-		NearestNeighborTrackerSettings settings = new NearestNeighborTrackerSettings();
+		NearestNeighborTrackerSettings<T> settings = new NearestNeighborTrackerSettings<T>();
 		settings.maxLinkingDistance = 15;
 		
 		System.out.println("Tracker settings:");

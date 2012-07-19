@@ -5,6 +5,7 @@ import java.util.List;
 import net.imglib2.algorithm.Algorithm;
 import net.imglib2.algorithm.Benchmark;
 import net.imglib2.img.ImgPlus;
+import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
 import fiji.plugin.trackmate.InfoTextable;
 import fiji.plugin.trackmate.Spot;
@@ -22,7 +23,7 @@ import fiji.plugin.trackmate.TrackMate_;
  * @author Jean-Yves Tinevez <jeanyves.tinevez@gmail.com> 2010 - 2010
  *
  */
-public interface SpotSegmenter <T extends RealType<T>> extends Algorithm, Benchmark, InfoTextable {
+public interface SpotSegmenter <T extends RealType<T> & NativeType<T>> extends Algorithm, Benchmark, InfoTextable {
 
 	/**
 	 * Set the image that will be segmented by this algorithm, with the settings specified
@@ -31,7 +32,7 @@ public interface SpotSegmenter <T extends RealType<T>> extends Algorithm, Benchm
 	 * for it will be used to convert pixel coordinates 
 	 * in physical spot coordinates. 
 	 */
-	public void setTarget(ImgPlus<T> image, SegmenterSettings settings);
+	public void setTarget(ImgPlus<T> image, SegmenterSettings<T> settings);
 	
 	/**
 	 * Return the list of Spot resulting from the segmentation process. 
@@ -43,7 +44,7 @@ public interface SpotSegmenter <T extends RealType<T>> extends Algorithm, Benchm
 	 * The concrete implementation returned will be of type {@link SegmenterSettings}, but the actual instance
 	 * will be one suitable for the concrete segmenter implementation.
 	 */
-	public SegmenterSettings createDefaultSettings();
+	public SegmenterSettings<T> createDefaultSettings();
 	
 	/**
 	 * @return  a new instance of the concrete implementation.

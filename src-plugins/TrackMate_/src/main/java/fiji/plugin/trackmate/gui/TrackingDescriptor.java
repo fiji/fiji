@@ -2,28 +2,31 @@ package fiji.plugin.trackmate.gui;
 
 import java.awt.Component;
 
+import net.imglib2.type.NativeType;
+import net.imglib2.type.numeric.RealType;
+
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMate_;
 
-public class TrackingDescriptor implements WizardPanelDescriptor {
+public class TrackingDescriptor <T extends RealType<T> & NativeType<T>> implements WizardPanelDescriptor<T> {
 
 	public static final String DESCRIPTOR = "TrackingPanel";
 	private LogPanel logPanel;
-	private TrackMate_ plugin;
-	private TrackMateWizard wizard;
+	private TrackMate_<T> plugin;
+	private TrackMateWizard<T> wizard;
 	private Logger logger;
 	
 
 	@Override
-	public void setWizard(TrackMateWizard wizard) { 
+	public void setWizard(TrackMateWizard<T> wizard) { 
 		this.wizard = wizard;
 		this.logPanel = wizard.getLogPanel();
 		this.logger = wizard.getLogger();
 	}
 
 	@Override
-	public void setPlugin(TrackMate_ plugin) {
+	public void setPlugin(TrackMate_<T> plugin) {
 		this.plugin = plugin;
 	}
 
@@ -58,7 +61,7 @@ public class TrackingDescriptor implements WizardPanelDescriptor {
 	@Override
 	public void displayingPanel() {
 		wizard.setNextButtonEnabled(false);
-		final TrackMateModel model = plugin.getModel();
+		final TrackMateModel<T> model = plugin.getModel();
 		logger.log("Starting tracking using "+model.getSettings().tracker.toString()+"\n", Logger.BLUE_COLOR);
 		logger.log("with settings:\n");
 		logger.log(model.getSettings().trackerSettings.toString());

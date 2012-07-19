@@ -5,6 +5,9 @@ import java.util.Map;
 import java.util.SortedSet;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import net.imglib2.type.NativeType;
+import net.imglib2.type.numeric.RealType;
+
 import mpicbg.imglib.multithreading.SimpleMultiThreading;
 import Jama.Matrix;
 import fiji.plugin.trackmate.Spot;
@@ -31,7 +34,7 @@ import fiji.plugin.trackmate.tracking.LAPUtils;
  * @author Jean-Yves Tinevez
  *
  */
-public class MergingCostFunction {
+public class MergingCostFunction <T extends RealType<T> & NativeType<T>> {
 
 	/** If false, gap closing will be prohibited. */
 	private boolean allowed;
@@ -46,7 +49,7 @@ public class MergingCostFunction {
 	/** A flag stating if we should use multi--threading for some calculations. */
 	protected boolean useMultithreading = fiji.plugin.trackmate.TrackMate_.DEFAULT_USE_MULTITHREADING;
 
-	public MergingCostFunction(LAPTrackerSettings settings) {
+	public MergingCostFunction(LAPTrackerSettings<T> settings) {
 		this.maxDist 			= settings.mergingDistanceCutoff;
 		this.timeCutoff 		= settings.mergingTimeCutoff;
 		this.blockingValue		= settings.blockingValue;

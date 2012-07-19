@@ -198,7 +198,7 @@ public class TmXmlWriter <T extends RealType<T> & NativeType<T>> {
 		if (null != model.getSettings().tracker) {
 			element.setAttribute(TRACKER_CLASS_ATTRIBUTE_NAME, model.getSettings().tracker.getClass().getName());
 		}
-		TrackerSettings settings = model.getSettings().trackerSettings;
+		TrackerSettings<T> settings = model.getSettings().trackerSettings;
 		if (null != settings) {
 			element.setAttribute(TRACKER_SETTINGS_CLASS_ATTRIBUTE_NAME, settings.getClass().getName());
 			settings.marshall(element);
@@ -272,7 +272,7 @@ public class TmXmlWriter <T extends RealType<T> & NativeType<T>> {
 
 	private void echoImageInfo() {
 		Settings<T> settings = model.getSettings();
-		if (null == settings || null == settings.img)
+		if (null == settings || null == settings.imp)
 			return;
 		Element imEl = new Element(IMAGE_ELEMENT_KEY);
 		imEl.setAttribute(IMAGE_FILENAME_ATTRIBUTE_NAME, 		settings.imageFileName);

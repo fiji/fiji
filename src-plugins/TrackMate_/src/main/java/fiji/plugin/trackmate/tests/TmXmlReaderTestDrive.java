@@ -20,7 +20,7 @@ public class TmXmlReaderTestDrive {
 		//		ij.ImageJ.main(args);
 
 		System.out.println("Opening file: "+file.getAbsolutePath());		
-		TmXmlReader reader = new TmXmlReader(file, Logger.DEFAULT_LOGGER);
+		TmXmlReader<T> reader = new TmXmlReader<T>(file, Logger.DEFAULT_LOGGER);
 		TrackMateModel<T> model = null;
 		// Parse
 		reader.parse();

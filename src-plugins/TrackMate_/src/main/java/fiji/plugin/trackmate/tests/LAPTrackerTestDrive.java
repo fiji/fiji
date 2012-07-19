@@ -28,7 +28,7 @@ public class LAPTrackerTestDrive {
 		
 		// 1 - Load test spots
 		System.out.println("Opening file: "+file.getAbsolutePath());		
-		TmXmlReader reader = new TmXmlReader(file, Logger.DEFAULT_LOGGER);
+		TmXmlReader<T> reader = new TmXmlReader<T>(file, Logger.DEFAULT_LOGGER);
 		TrackMateModel<T> model = null;
 		// Parse
 		reader.parse();
@@ -42,7 +42,7 @@ public class LAPTrackerTestDrive {
 		System.out.println();
 		
 		// 1.5 - Set the tracking settings
-		LAPTrackerSettings settings = new LAPTrackerSettings();
+		LAPTrackerSettings<T> settings = new LAPTrackerSettings<T>();
 		settings.linkingDistanceCutOff = 10;
 		settings.allowGapClosing = false;
 		settings.gapClosingDistanceCutoff = 15;

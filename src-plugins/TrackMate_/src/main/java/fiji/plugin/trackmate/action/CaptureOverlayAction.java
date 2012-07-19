@@ -1,11 +1,5 @@
 package fiji.plugin.trackmate.action;
 
-import java.awt.AWTException;
-import java.awt.Image;
-import java.awt.Point;
-import java.awt.Rectangle;
-import java.awt.Robot;
-
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
@@ -13,14 +7,16 @@ import ij.gui.ImageCanvas;
 import ij.gui.ImageWindow;
 import ij.process.ColorProcessor;
 
+import java.awt.AWTException;
+import java.awt.Image;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.Robot;
+
 import javax.swing.ImageIcon;
 
-import net.imglib2.exception.ImgLibException;
-import net.imglib2.img.Img;
-import net.imglib2.img.imageplus.ImagePlusImg;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
-
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMate_;
 import fiji.plugin.trackmate.visualization.trackscheme.TrackSchemeFrame;
@@ -39,15 +35,7 @@ public class CaptureOverlayAction<T extends RealType<T> & NativeType<T>> extends
 		logger.log("  Preparing and allocating memory...");
 		try {
 			final TrackMateModel<T> model = plugin.getModel();
-			
-			Img<T> img = model.getSettings().img.getImg();
-			if (!(img instanceof ImagePlusImg)) {
-				logger.error("Source image comes from an ImagePlus, was a "+img.getClass()+"\n");
-				return;
-			}
-			
-			@SuppressWarnings("rawtypes")
-			final ImagePlus imp = ( (ImagePlusImg) model.getSettings().img.getImg() ).getImagePlus();
+			final ImagePlus imp =  model.getSettings().imp;
 			final ImageWindow win = imp.getWindow();
 			win.toFront();
 			final Point loc = win.getLocation();
@@ -77,8 +65,6 @@ public class CaptureOverlayAction<T extends RealType<T> & NativeType<T>> extends
 			}
 			new ImagePlus("TrackMate capture", stack).show();
 			logger.log(" done.\n");
-		} catch (ImgLibException ie) {
-			logger.error("Unable to retrieve underlying ImagePlus:\n"+ie.getLocalizedMessage()+"\n");
 		} finally {
 			logger.setProgress(0);
 		}

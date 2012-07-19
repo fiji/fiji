@@ -34,7 +34,7 @@ public class SingleFrame_TestDrive {
 
 		// Prepare segmenter instance
 		LogSegmenter<UnsignedByteType> segmenter = new LogSegmenter<UnsignedByteType>();
-		LogSegmenterSettings lss = new LogSegmenterSettings();
+		LogSegmenterSettings<UnsignedByteType> lss = new LogSegmenterSettings<UnsignedByteType>();
 		lss.doSubPixelLocalization = false;
 		lss.expectedRadius = 2f;
 		

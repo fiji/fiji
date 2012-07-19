@@ -2,28 +2,31 @@ package fiji.plugin.trackmate.gui;
 
 import java.awt.Component;
 
+import net.imglib2.type.NativeType;
+import net.imglib2.type.numeric.RealType;
+
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.TrackMate_;
 
-public class SegmentationDescriptor implements WizardPanelDescriptor {
+public class SegmentationDescriptor <T extends RealType<T> & NativeType<T>> implements WizardPanelDescriptor<T> {
 	
 	public static final String DESCRIPTOR = "SegmentationPanel";
 	protected LogPanel logPanel;
-	protected TrackMate_ plugin;
-	protected TrackMateWizard wizard;
+	protected TrackMate_<T> plugin;
+	protected TrackMateWizard<T> wizard;
 	protected Logger logger;
 	
 
 	@Override
-	public void setWizard(TrackMateWizard wizard) { 
+	public void setWizard(TrackMateWizard<T> wizard) { 
 		this.wizard = wizard;
 		this.logPanel = wizard.getLogPanel();
 		this.logger = wizard.getLogger();
 	}
 
 	@Override
-	public void setPlugin(TrackMate_ plugin) {
+	public void setPlugin(TrackMate_<T> plugin) {
 		this.plugin = plugin;
 	}
 
@@ -58,7 +61,7 @@ public class SegmentationDescriptor implements WizardPanelDescriptor {
 	@Override
 	public void displayingPanel() {
 		wizard.setNextButtonEnabled(false);
-		final Settings settings = plugin.getModel().getSettings();
+		final Settings<T> settings = plugin.getModel().getSettings();
 		logger.log("Starting segmentation using "+settings.segmenter.toString()+"\n", Logger.BLUE_COLOR);
 		logger.log("with settings:\n");
 		logger.log(settings.toString());

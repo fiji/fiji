@@ -6,7 +6,6 @@ import ij.ImagePlus;
 import java.io.File;
 import java.io.IOException;
 
-import net.imglib2.img.ImagePlusAdapter;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
 
@@ -37,7 +36,7 @@ public class TrackVisualizerTestDrive {
 		}
 		ij.ImageJ.main(args);
 		
-		TmXmlReader reader = new TmXmlReader(file, Logger.DEFAULT_LOGGER);
+		TmXmlReader<T> reader = new TmXmlReader<T>(file, Logger.DEFAULT_LOGGER);
 		reader.parse();
 		
 		// Load objects 
@@ -62,7 +61,7 @@ public class TrackVisualizerTestDrive {
 		ImagePlus imp = reader.getImage();
 		Settings<T> settings = reader.getSettings();
 		reader.getSegmenterSettings(settings);
-		settings.img = ImagePlusAdapter.wrapImgPlus(imp);
+		settings.imp = imp;
 		
 		// Launch ImageJ and display
 		if (null != imp) {

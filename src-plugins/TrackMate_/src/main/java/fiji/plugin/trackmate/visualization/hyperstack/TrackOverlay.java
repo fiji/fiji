@@ -48,7 +48,7 @@ public class TrackOverlay <T extends RealType<T> & NativeType<T>> implements Ove
 
 	public TrackOverlay(final TrackMateModel<T> model, final ImagePlus imp, final Map<String, Object> displaySettings) {
 		this.model = model;
-		this.calibration = TMUtils.getSpatialCalibration(model.getSettings().img);
+		this.calibration = TMUtils.getSpatialCalibration(model.getSettings().imp);
 		this.imp = imp;
 		this.displaySettings = displaySettings;
 		computeTrackColors();

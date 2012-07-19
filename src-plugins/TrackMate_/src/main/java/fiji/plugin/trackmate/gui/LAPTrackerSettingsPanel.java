@@ -5,14 +5,17 @@ import java.awt.Dimension;
 
 import javax.swing.JScrollPane;
 
+import net.imglib2.type.NativeType;
+import net.imglib2.type.numeric.RealType;
+
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.tracking.TrackerSettings;
 
 
-public class LAPTrackerSettingsPanel extends TrackerConfigurationPanel {
+public class LAPTrackerSettingsPanel <T extends RealType<T> & NativeType<T>> extends TrackerConfigurationPanel<T> {
 
 	private static final long serialVersionUID = 1L;
-	private JPanelTrackerSettingsMain jPanelMain;
+	private JPanelTrackerSettingsMain<T> jPanelMain;
 
 	/*
 	 * CONSTRUCTOR
@@ -27,12 +30,12 @@ public class LAPTrackerSettingsPanel extends TrackerConfigurationPanel {
 	 */
 
 	@Override
-	public TrackerSettings getTrackerSettings() {
+	public TrackerSettings<T> getTrackerSettings() {
 		return jPanelMain.getSettings();
 	}
 
 	@Override
-	public void setTrackerSettings(TrackMateModel model) {
+	public void setTrackerSettings(TrackMateModel<T> model) {
 		jPanelMain.echoSettings(model);
 	}
 
@@ -52,7 +55,7 @@ public class LAPTrackerSettingsPanel extends TrackerConfigurationPanel {
 				jScrollPaneMain.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
 				jScrollPaneMain.getVerticalScrollBar().setUnitIncrement(24);
 				{
-					jPanelMain = new JPanelTrackerSettingsMain();
+					jPanelMain = new JPanelTrackerSettingsMain<T>();
 					jScrollPaneMain.setViewportView(jPanelMain);
 				}
 			}

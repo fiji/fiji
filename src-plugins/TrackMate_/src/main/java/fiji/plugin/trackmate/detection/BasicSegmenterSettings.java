@@ -1,5 +1,8 @@
 package fiji.plugin.trackmate.detection;
 
+import net.imglib2.type.NativeType;
+import net.imglib2.type.numeric.RealType;
+
 import org.jdom.Attribute;
 import org.jdom.Element;
 
@@ -13,7 +16,7 @@ import fiji.plugin.trackmate.gui.SegmenterConfigurationPanel;
  * @author Jean-Yves Tinevez <jeanyves.tinevez@gmail.com> 2011
  *
  */
-public class BasicSegmenterSettings implements SegmenterSettings {
+public class BasicSegmenterSettings <T extends RealType<T> & NativeType<T>> implements SegmenterSettings<T> {
 	
 	private static final String SEGMENTER_SETTINGS_EXPECTED_RADIUS_ATTRIBUTE_NAME 	= "expectedradius";
 
@@ -35,8 +38,8 @@ public class BasicSegmenterSettings implements SegmenterSettings {
 	
 	
 	@Override
-	public SegmenterConfigurationPanel createConfigurationPanel() {
-		return new BasicSegmenterConfigurationPanel();
+	public SegmenterConfigurationPanel<T> createConfigurationPanel() {
+		return new BasicSegmenterConfigurationPanel<T>();
 	}
 	
 	@Override

@@ -1,17 +1,20 @@
 package fiji.plugin.trackmate.tracking;
 
+import net.imglib2.type.NativeType;
+import net.imglib2.type.numeric.RealType;
+
 import org.jdom.Attribute;
 import org.jdom.Element;
 
 import fiji.plugin.trackmate.gui.TrackerConfigurationPanel;
 import fiji.plugin.trackmate.io.TmXmlKeys;
 
-public interface TrackerSettings {
+public interface TrackerSettings <T extends RealType<T> & NativeType<T>> {
 
 	/**
 	 * @return  an GUI panel that is able to configure this concrete settings object.
 	 */
-	public TrackerConfigurationPanel createConfigurationPanel();
+	public TrackerConfigurationPanel<T> createConfigurationPanel();
 
 	/**
 	 * Marshall this concrete instance to a JDom element, ready for saving to XML.

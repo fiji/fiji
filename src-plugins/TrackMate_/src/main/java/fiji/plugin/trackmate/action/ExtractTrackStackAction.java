@@ -12,6 +12,7 @@ import java.util.TreeSet;
 
 import javax.swing.ImageIcon;
 
+import net.imglib2.img.ImagePlusAdapter;
 import net.imglib2.img.Img;
 import net.imglib2.img.ImgPlus;
 import net.imglib2.img.display.imagej.ImageJFunctions;
@@ -110,13 +111,14 @@ public class ExtractTrackStackAction<T extends RealType<T> & NativeType<T>> exte
 
 		// Common coordinates
 		Settings<T> settings = model.getSettings();
-		double[] calibration = TMUtils.getSpatialCalibration(settings.img);
+		double[] calibration = TMUtils.getSpatialCalibration(settings.imp);
 		final int targetChannel = settings.segmentationChannel - 1; // We do this for the segmentation channel TODO be more flexible
 		final int width 	= (int) Math.ceil(2 * radius * RESIZE_FACTOR / calibration[0]);
-		final int height 	= (int) Math.ceil(2 * radius * RESIZE_FACTOR / calibration[0]);
+		final int height 	= (int) Math.ceil(2 * radius * RESIZE_FACTOR / calibration[1]);
 		
 		// Extract target channel
-		final ImgPlus<T> imgC = HyperSliceImgPlus.fixChannelAxis(settings.img, targetChannel);
+		ImgPlus<T> img = ImagePlusAdapter.wrapImgPlus(settings.imp);
+		final ImgPlus<T> imgC = HyperSliceImgPlus.fixChannelAxis(img, targetChannel);
 		
 		// Prepare new image holder:
 		ImageStack stack = new ImageStack(width, height);

@@ -31,7 +31,7 @@ public class NearestNeighborTracker <T extends RealType<T> & NativeType<T>> exte
 	private SpotCollection spots;
 	private Logger logger = Logger.DEFAULT_LOGGER;
 	private SimpleWeightedGraph<Spot, DefaultWeightedEdge> graph;
-	private NearestNeighborTrackerSettings settings;
+	private NearestNeighborTrackerSettings<T> settings;
 
 	/*
 	 * CONSTRUCTOR
@@ -80,7 +80,7 @@ public class NearestNeighborTracker <T extends RealType<T> & NativeType<T>> exte
 						List<RealPoint> targetCoords = new ArrayList<RealPoint>(targetSpots.size());
 						List<FlagNode<Spot>> targetNodes = new ArrayList<FlagNode<Spot>>(targetSpots.size());
 						for(Spot spot : targetSpots) {
-							targetCoords.add(new RealPoint(spot.getPosition(null)));
+							targetCoords.add(new RealPoint(spot));
 							targetNodes.add(new FlagNode<Spot>(spot));
 						}
 						
@@ -91,7 +91,7 @@ public class NearestNeighborTracker <T extends RealType<T> & NativeType<T>> exte
 						// For each spot in the source frame, find its nearest neighbor in the target frame
 						for (Spot source : sourceSpots) {
 
-							RealPoint sourceCoords = new RealPoint(source.getPosition(null));
+							RealPoint sourceCoords = new RealPoint(source);
 							search.search(sourceCoords);
 							
 							double squareDist = search.getSquareDistance();
@@ -160,7 +160,7 @@ public class NearestNeighborTracker <T extends RealType<T> & NativeType<T>> exte
 	@Override
 	public void setModel(TrackMateModel<T> model) {
 		this.spots = model.getFilteredSpots();
-		this.settings = (NearestNeighborTrackerSettings) model.getSettings().trackerSettings;
+		this.settings = (NearestNeighborTrackerSettings<T>) model.getSettings().trackerSettings;
 		reset();
 	}
 
@@ -176,8 +176,8 @@ public class NearestNeighborTracker <T extends RealType<T> & NativeType<T>> exte
 	}
 
 	@Override
-	public TrackerSettings createDefaultSettings() {
-		return new NearestNeighborTrackerSettings();
+	public TrackerSettings<T> createDefaultSettings() {
+		return new NearestNeighborTrackerSettings<T>();
 	}
 
 	public void reset() {

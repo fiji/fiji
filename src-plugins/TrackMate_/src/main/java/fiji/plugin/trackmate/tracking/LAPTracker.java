@@ -158,7 +158,7 @@ public class LAPTracker <T extends RealType<T> & NativeType<T>> extends MultiThr
 	/** The Spot collection that will be linked in the {@link #graph.} */
 	protected SpotCollection spots;
 	/** The settings object that configures this tracker. */
-	protected LAPTrackerSettings settings;
+	protected LAPTrackerSettings<T> settings;
 
 	/*	
 	 * PROTECTED METHODS
@@ -182,7 +182,7 @@ public class LAPTracker <T extends RealType<T> & NativeType<T>> extends MultiThr
 	@Override
 	public void setModel(TrackMateModel<T> model) {
 		this.spots = model.getFilteredSpots();
-		this.settings = (LAPTrackerSettings) model.getSettings().trackerSettings;
+		this.settings = (LAPTrackerSettings<T>) model.getSettings().trackerSettings;
 		reset();
 	}
 
@@ -335,7 +335,7 @@ public class LAPTracker <T extends RealType<T> & NativeType<T>> extends MultiThr
 	 * @return True if executes successfully, false otherwise.
 	 */
 	public boolean createTrackSegmentCostMatrix() {
-		TrackSegmentCostMatrixCreator segCosts = new TrackSegmentCostMatrixCreator(trackSegments, settings);
+		TrackSegmentCostMatrixCreator<T> segCosts = new TrackSegmentCostMatrixCreator<T>(trackSegments, settings);
 		segCosts.setLogger(logger);
 		if (!segCosts.checkInput() || !segCosts.process()) {
 			errorMessage = BASE_ERROR_MESSAGE + segCosts.getErrorMessage();
@@ -519,9 +519,9 @@ public class LAPTracker <T extends RealType<T> & NativeType<T>> extends MultiThr
 	 * @param settings  the tracker settings that specifies how this cost should be created
 	 * @return  the cost matrix as an array of array of double
 	 */
-	protected double[][] createFrameToFrameLinkingCostMatrix(final List<Spot> t0, List<Spot> t1, final LAPTrackerSettings settings) {
+	protected double[][] createFrameToFrameLinkingCostMatrix(final List<Spot> t0, List<Spot> t1, final LAPTrackerSettings<T> settings) {
 		// Create cost matrix
-		LinkingCostMatrixCreator objCosts = new LinkingCostMatrixCreator(t0, t1, settings);
+		LinkingCostMatrixCreator<T> objCosts = new LinkingCostMatrixCreator<T>(t0, t1, settings);
 		if (!objCosts.checkInput() || !objCosts.process()) {
 			errorMessage = BASE_ERROR_MESSAGE + objCosts.getErrorMessage();
 			return null;
@@ -700,8 +700,8 @@ public class LAPTracker <T extends RealType<T> & NativeType<T>> extends MultiThr
 	}
 	
 	@Override
-	public TrackerSettings createDefaultSettings() {
-		return new LAPTrackerSettings();
+	public TrackerSettings<T> createDefaultSettings() {
+		return new LAPTrackerSettings<T>();
 	}
 
 	@Override

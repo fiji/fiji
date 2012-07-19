@@ -5,6 +5,9 @@ import java.util.Map;
 import java.util.SortedSet;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import net.imglib2.type.NativeType;
+import net.imglib2.type.numeric.RealType;
+
 import mpicbg.imglib.multithreading.SimpleMultiThreading;
 import Jama.Matrix;
 import fiji.plugin.trackmate.Spot;
@@ -30,7 +33,7 @@ import fiji.plugin.trackmate.tracking.LAPUtils;
  * @author Nicholas Perry
  * @author Jean-Yves Tinevez
  */
-public class GapClosingCostFunction {
+public class GapClosingCostFunction <T extends RealType<T> & NativeType<T>> {
 
 	/** If false, gap closing will be prohibited. */
 	private boolean allowed;
@@ -44,7 +47,7 @@ public class GapClosingCostFunction {
 	protected boolean useMultithreading = fiji.plugin.trackmate.TrackMate_.DEFAULT_USE_MULTITHREADING;
 
 
-	public GapClosingCostFunction(LAPTrackerSettings settings) {
+	public GapClosingCostFunction(LAPTrackerSettings<T> settings) {
 		this.timeCutoff 		= settings.gapClosingTimeCutoff;
 		this.maxDist 			= settings.gapClosingDistanceCutoff;
 		this.blockingValue		= settings.blockingValue;

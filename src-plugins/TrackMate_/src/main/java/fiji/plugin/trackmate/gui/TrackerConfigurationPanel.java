@@ -1,5 +1,7 @@
 package fiji.plugin.trackmate.gui;
 
+import net.imglib2.type.NativeType;
+import net.imglib2.type.numeric.RealType;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.tracking.TrackerSettings;
@@ -9,7 +11,7 @@ import fiji.plugin.trackmate.tracking.TrackerSettings;
  * @author Jean-Yves Tinevez <jeanyves.tinevez@gmail.com> 2011
  *
  */
-public abstract class TrackerConfigurationPanel extends ActionListenablePanel {
+public abstract class TrackerConfigurationPanel <T extends RealType<T> & NativeType<T>> extends ActionListenablePanel {
 
 	private static final long serialVersionUID = -5752429080747619688L;
 
@@ -17,7 +19,7 @@ public abstract class TrackerConfigurationPanel extends ActionListenablePanel {
 	 * Update the {@link TrackerSettings} object given at the creation of this panel with the
 	 * settings entered by the user on this panel. 
 	 */
-	public abstract TrackerSettings getTrackerSettings();
+	public abstract TrackerSettings<T> getTrackerSettings();
 	
 	/**
 	 * Echo the parameters of the given instance of {@link TrackerSettings} on
@@ -27,5 +29,5 @@ public abstract class TrackerConfigurationPanel extends ActionListenablePanel {
 	 * But some specialized settings might require to access the declared 
 	 * features or other data to generate a proper settings object. 
 	 */
-	public abstract void setTrackerSettings(TrackMateModel model);
+	public abstract void setTrackerSettings(TrackMateModel<T> model);
 }

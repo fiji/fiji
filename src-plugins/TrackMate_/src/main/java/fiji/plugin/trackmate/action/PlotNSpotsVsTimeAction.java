@@ -47,7 +47,7 @@ public class PlotNSpotsVsTimeAction<T extends RealType<T> & NativeType<T>> exten
 		// Plot data
 		String xAxisLabel = "Time ("+model.getSettings().timeUnits+")";
 		String yAxisLabel = "N spots";
-		String title = "Nspots vs Time for "+model.getSettings().img.getName();
+		String title = "Nspots vs Time for "+model.getSettings().imp.getShortTitle();
 		DefaultXYDataset dataset = new DefaultXYDataset();
 		dataset.addSeries("Nspots", data);
 		

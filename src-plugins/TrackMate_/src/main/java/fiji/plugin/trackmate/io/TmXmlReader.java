@@ -17,6 +17,9 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
+import net.imglib2.type.NativeType;
+import net.imglib2.type.numeric.RealType;
+
 import org.jdom.Attribute;
 import org.jdom.DataConversionException;
 import org.jdom.Document;
@@ -42,7 +45,7 @@ import fiji.plugin.trackmate.tracking.SpotTracker;
 import fiji.plugin.trackmate.tracking.TrackerSettings;
 
 
-public class TmXmlReader {
+public class TmXmlReader <T extends RealType<T> & NativeType<T>> {
 
 	private static final boolean DEBUG = false;
 //	private static final boolean useMultithreading = TrackMate_.DEFAULT_USE_MULTITHREADING; // Not yet
@@ -102,14 +105,13 @@ public class TmXmlReader {
 	 * Fields not set in the field will be <code>null</code> in the model. 
 	 * @throws DataConversionException 
 	 */
-	@SuppressWarnings({ "rawtypes", "unchecked" })
-	public TrackMateModel getModel() {
+	public TrackMateModel<T> getModel() {
 		if (!parsed)
 			parse();
 
-		TrackMateModel model = new TrackMateModel();
+		TrackMateModel<T> model = new TrackMateModel<T>();
 		// Settings
-		Settings settings = getSettings();
+		Settings<T> settings = getSettings();
 		getSegmenterSettings(settings);
 		getTrackerSettings(settings);
 //		settings.imp = getImage();
@@ -149,8 +151,7 @@ public class TmXmlReader {
 
 
 
-	@SuppressWarnings("rawtypes")
-	public void readTrackFeatures(FeatureModel featureModel) {
+	public void readTrackFeatures(FeatureModel<T> featureModel) {
 		if (!parsed)
 			parse();
 
@@ -223,7 +224,6 @@ public class TmXmlReader {
 	 * Return the list of {@link FeatureFilter} for spots stored in this file.
 	 * Return <code>null</code> if the spot feature filters data cannot be found in the file.
 	 */
-	@SuppressWarnings("unchecked")
 	public List<FeatureFilter> getSpotFeatureFilters() {
 		if (!parsed)
 			parse();
@@ -232,6 +232,7 @@ public class TmXmlReader {
 		Element ftCollectionEl = root.getChild(SPOT_FILTER_COLLECTION_ELEMENT_KEY);
 		if (null == ftCollectionEl)
 			return null;
+		@SuppressWarnings("unchecked")
 		List<Element> ftEls = ftCollectionEl.getChildren(FILTER_ELEMENT_KEY);
 		for (Element ftEl : ftEls) {
 			String feature 	= ftEl.getAttributeValue(FILTER_FEATURE_ATTRIBUTE_NAME);
@@ -247,7 +248,6 @@ public class TmXmlReader {
 	 * Return the list of {@link FeatureFilter} for tracks stored in this file.
 	 * Return <code>null</code> if the track feature filters data cannot be found in the file.
 	 */
-	@SuppressWarnings("unchecked")
 	public List<FeatureFilter> getTrackFeatureFilters() {
 		if (!parsed)
 			parse();
@@ -256,6 +256,7 @@ public class TmXmlReader {
 		Element ftCollectionEl = root.getChild(TRACK_FILTER_COLLECTION_ELEMENT_KEY);
 		if (null == ftCollectionEl)
 			return null;
+		@SuppressWarnings("unchecked")
 		List<Element> ftEls = ftCollectionEl.getChildren(FILTER_ELEMENT_KEY);
 		for (Element ftEl : ftEls) {
 			String feature 	= ftEl.getAttributeValue(FILTER_FEATURE_ATTRIBUTE_NAME);
@@ -276,12 +277,11 @@ public class TmXmlReader {
 	 * @return  a full Settings object
 	 * @throws DataConversionException 
 	 */
-	@SuppressWarnings({ "rawtypes", "unchecked" })
-	public Settings getSettings() {
+	public Settings<T> getSettings() {
 		if (!parsed)
 			parse();
 
-		Settings settings = new Settings();
+		Settings<T> settings = new Settings<T>();
 		// Basic settings
 		Element settingsEl = root.getChild(SETTINGS_ELEMENT_KEY);
 		if (null != settingsEl) {
@@ -326,8 +326,8 @@ public class TmXmlReader {
 	 *   
 	 * @param settings  the base {@link Settings} object to update.
 	 */
-	@SuppressWarnings({ "unchecked", "rawtypes" })
-	public void getSegmenterSettings(Settings settings) {
+	@SuppressWarnings("unchecked")
+	public void getSegmenterSettings(Settings<T> settings) {
 		if (!parsed)
 			parse();
 
@@ -337,33 +337,33 @@ public class TmXmlReader {
 		}
 
 		// Deal with segmenter
-		SpotSegmenter segmenter;
+		SpotSegmenter<T> segmenter;
 		String segmenterClassName = element.getAttributeValue(SEGMENTER_CLASS_ATTRIBUTE_NAME);
 		if (null == segmenterClassName) {
 			logger.error("Segmenter class is not present.\n");
 			logger.error("Substituting default.\n");
-			segmenter = new LogSegmenter();
+			segmenter = new LogSegmenter<T>();
 		} else {
 			try {
-				segmenter = (SpotSegmenter) Class.forName(segmenterClassName).newInstance();
+				segmenter = (SpotSegmenter<T>) Class.forName(segmenterClassName).newInstance();
 			} catch (InstantiationException e) {
 				logger.error("Unable to instantiate segmenter class: "+e.getLocalizedMessage()+"\n");
 				logger.error("Substituting default.\n");
-				segmenter = new LogSegmenter();
+				segmenter = new LogSegmenter<T>();
 			} catch (IllegalAccessException e) {
 				logger.error("Unable to instantiate segmenter class: "+e.getLocalizedMessage()+"\n");
 				logger.error("Substituting default.\n");
-				segmenter = new LogSegmenter();
+				segmenter = new LogSegmenter<T>();
 			} catch (ClassNotFoundException e) {
 				logger.error("Unable to find segmenter class: "+e.getLocalizedMessage()+"\n");
 				logger.error("Substituting default.\n");
-				segmenter = new LogSegmenter();
+				segmenter = new LogSegmenter<T>();
 			}
 		}
 		settings.segmenter = segmenter;
 
 		// Deal with segmenter settings
-		SegmenterSettings ss = segmenter.createDefaultSettings();
+		SegmenterSettings<T> ss = segmenter.createDefaultSettings();
 		String segmenterSettingsClassName = element.getAttributeValue(SEGMENTER_SETTINGS_CLASS_ATTRIBUTE_NAME);
 
 		if (null == segmenterSettingsClassName) {

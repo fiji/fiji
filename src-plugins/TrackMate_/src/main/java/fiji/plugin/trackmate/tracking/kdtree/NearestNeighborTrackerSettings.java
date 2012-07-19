@@ -1,5 +1,8 @@
 package fiji.plugin.trackmate.tracking.kdtree;
 
+import net.imglib2.type.NativeType;
+import net.imglib2.type.numeric.RealType;
+
 import org.jdom.Element;
 
 import fiji.plugin.trackmate.Logger;
@@ -8,7 +11,7 @@ import fiji.plugin.trackmate.gui.TrackerConfigurationPanel;
 import fiji.plugin.trackmate.tracking.TrackerSettings;
 import fiji.plugin.trackmate.util.TMUtils;
 
-public class NearestNeighborTrackerSettings implements TrackerSettings {
+public class NearestNeighborTrackerSettings<T extends RealType<T> & NativeType<T>> implements TrackerSettings<T> {
 
 	private static final double DEFAULT_MAX_LINKING_DISTANCE = 10;
 	private static final String MAX_LINKING_DISTANCE_ATTRIBUTE = "maxdistance";
@@ -19,8 +22,8 @@ public class NearestNeighborTrackerSettings implements TrackerSettings {
 	public double maxLinkingDistance = DEFAULT_MAX_LINKING_DISTANCE;
 	
 	@Override
-	public TrackerConfigurationPanel createConfigurationPanel() {
-		return new NearestNeighborTrackerSettingsPanel();
+	public TrackerConfigurationPanel<T> createConfigurationPanel() {
+		return new NearestNeighborTrackerSettingsPanel<T>();
 	}
 
 	@Override

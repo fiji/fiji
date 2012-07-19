@@ -4,6 +4,9 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.Map;
 
+import net.imglib2.RealLocalizable;
+import net.imglib2.RealPositionable;
+
 import com.mxgraph.util.mxBase64;
 
 import fiji.plugin.trackmate.util.TMUtils;
@@ -13,7 +16,7 @@ import fiji.plugin.trackmate.util.TMUtils;
  * @author Jean-Yves Tinevez <jeanyves.tinevez@gmail.com> - Sep 2010 - 2012
  *
  */
-public interface Spot {
+public interface Spot extends RealPositionable, RealLocalizable {
 
 	/*
 	 * PUBLIC UTILITY CONSTANTS
@@ -31,6 +34,7 @@ public interface Spot {
 			else 
 				return -1;
 		}
+		
 	};
 
 	/** The name of the spot quality feature. */
@@ -83,12 +87,6 @@ public interface Spot {
 	 * @return  a Map with spot feature names as keys. 
 	 */
 	public Map<String, Double> getFeatures();
-
-	/**
-	 * Utility method that store the position features in the 3 elements double array.
-	 * If the given array is <code>null</code>, a new array is created.
-	 */
-	public double[] getPosition(double[] position);
 
 	/**
 	 * Return the square distance from this spot to another, using the position features

@@ -2,6 +2,9 @@ package fiji.plugin.trackmate.tracking.costmatrix;
 
 import java.util.List;
 
+import net.imglib2.type.NativeType;
+import net.imglib2.type.numeric.RealType;
+
 import Jama.Matrix;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.tracking.LAPTrackerSettings;
@@ -21,7 +24,7 @@ import fiji.plugin.trackmate.tracking.costfunction.LinkingCostFunction;
  * @author Nicholas Perry
  *
  */
-public class LinkingCostMatrixCreator extends LAPTrackerCostMatrixCreator {
+public class LinkingCostMatrixCreator<T extends RealType<T> & NativeType<T>> extends LAPTrackerCostMatrixCreator<T> {
 
 	/** The Spots belonging to time frame t. */
 	protected final List<Spot> t0;
@@ -35,7 +38,7 @@ public class LinkingCostMatrixCreator extends LAPTrackerCostMatrixCreator {
 	 */
 
 
-	public LinkingCostMatrixCreator(final List<Spot> t0, final List<Spot> t1, final LAPTrackerSettings settings) {
+	public LinkingCostMatrixCreator(final List<Spot> t0, final List<Spot> t1, final LAPTrackerSettings<T> settings) {
 		super(settings);
 		this.t0 = t0;
 		this.t1 = t1;
@@ -127,7 +130,7 @@ public class LinkingCostMatrixCreator extends LAPTrackerCostMatrixCreator {
 	 * Creates a sub-matrix which holds the linking scores between objects, and returns it.
 	 */
 	private Matrix getLinkingCostSubMatrix() {
-		LinkingCostFunction linkingCosts = new LinkingCostFunction(settings);
+		LinkingCostFunction<T> linkingCosts = new LinkingCostFunction<T>(settings);
 		return linkingCosts.getCostFunction(t0, t1);
 	}
 }

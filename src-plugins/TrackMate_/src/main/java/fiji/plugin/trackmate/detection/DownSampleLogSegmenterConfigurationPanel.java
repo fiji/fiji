@@ -8,11 +8,14 @@ import java.awt.Insets;
 
 import javax.swing.JLabel;
 
+import net.imglib2.type.NativeType;
+import net.imglib2.type.numeric.RealType;
+
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.gui.JNumericTextField;
 import fiji.plugin.trackmate.gui.LogSegmenterConfigurationPanel;
 
-public class DownSampleLogSegmenterConfigurationPanel extends LogSegmenterConfigurationPanel {
+public class DownSampleLogSegmenterConfigurationPanel <T extends RealType<T>  & NativeType<T>> extends LogSegmenterConfigurationPanel<T> {
 
 	private static final long serialVersionUID = 3840748523863902343L;
 	private JLabel jLabelDownSample;
@@ -45,16 +48,16 @@ public class DownSampleLogSegmenterConfigurationPanel extends LogSegmenterConfig
 	}
 	
 	@Override
-	public SegmenterSettings getSegmenterSettings() {
-		LogSegmenterSettings lss = (LogSegmenterSettings) super.getSegmenterSettings();
-		DownSampleLogSegmenterSettings dss = copyToDSLSS(lss);
+	public SegmenterSettings<T> getSegmenterSettings() {
+		LogSegmenterSettings<T> lss = (LogSegmenterSettings<T>) super.getSegmenterSettings();
+		DownSampleLogSegmenterSettings<T> dss = copyToDSLSS(lss);
 		dss.downSamplingFactor = Integer.parseInt(jTextFieldDownSample.getText());
 		return dss;
 	}
 	
 	@Override
-	public void setSegmenterSettings(TrackMateModel model) {
-		DownSampleLogSegmenterSettings settings = (DownSampleLogSegmenterSettings) model.getSettings().segmenterSettings;
+	public void setSegmenterSettings(TrackMateModel<T> model) {
+		DownSampleLogSegmenterSettings<T> settings = (DownSampleLogSegmenterSettings<T>) model.getSettings().segmenterSettings;
 		
 		jLabelBlobDiameterUnit.setText(model.getSettings().spaceUnits);
 		jLabelSegmenterName.setText(model.getSettings().segmenter.toString());
@@ -67,16 +70,16 @@ public class DownSampleLogSegmenterConfigurationPanel extends LogSegmenterConfig
 	}
 	
 
-	public static DownSampleLogSegmenterSettings copyToDSLSS(LogSegmenterSettings lss) {
-		DownSampleLogSegmenterSettings dss = new DownSampleLogSegmenterSettings();
+	public static <T extends RealType<T>  & NativeType<T>> DownSampleLogSegmenterSettings<T> copyToDSLSS(LogSegmenterSettings<T> lss) {
+		DownSampleLogSegmenterSettings<T> dss = new DownSampleLogSegmenterSettings<T>();
 		dss.expectedRadius 	= lss.expectedRadius;
 		dss.threshold		= lss.threshold;
 		dss.useMedianFilter	= lss.useMedianFilter;
 		return dss;
 	}
 	
-	public static LogSegmenterSettings copyToLSS(DownSampleLogSegmenterSettings dss) {
-		LogSegmenterSettings lss = new LogSegmenterSettings();
+	public static <T extends RealType<T>  & NativeType<T>> LogSegmenterSettings<T> copyToLSS(DownSampleLogSegmenterSettings<T> dss) {
+		LogSegmenterSettings<T> lss = new LogSegmenterSettings<T>();
 		lss.expectedRadius 	= dss.expectedRadius;
 		lss.threshold		= dss.threshold;
 		lss.useMedianFilter	= dss.useMedianFilter;

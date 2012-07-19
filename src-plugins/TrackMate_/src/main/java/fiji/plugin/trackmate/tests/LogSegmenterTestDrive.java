@@ -5,9 +5,8 @@ import java.util.Collection;
 import java.util.Random;
 
 import javax.vecmath.Point3d;
-import javax.vecmath.Point3f;
 
-import net.imglib2.cursor.special.SphereCursor;
+import net.imglib2.algorithm.region.localneighborhood.SphereNeighborhood;
 import net.imglib2.img.Img;
 import net.imglib2.img.ImgPlus;
 import net.imglib2.img.array.ArrayImgFactory;
@@ -16,7 +15,6 @@ import net.imglib2.meta.Axes;
 import net.imglib2.meta.AxisType;
 import net.imglib2.type.numeric.integer.UnsignedByteType;
 import net.imglib2.util.Util;
-
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.detection.DownSampleLogSegmenter;
 import fiji.plugin.trackmate.detection.LogSegmenterSettings;
@@ -62,16 +60,17 @@ public class LogSegmenterTestDrive {
 		}
 		
 		// Put the blobs in the image
-		final SphereCursor<UnsignedByteType> cursor = new SphereCursor<UnsignedByteType>(img, centers.get(0), radiuses[0],	CALIBRATION);
+		final SphereNeighborhood<UnsignedByteType> sphere = new SphereNeighborhood<UnsignedByteType>(img, radiuses[0]);
 		for (int i = 0; i < N_BLOBS; i++) {
-			cursor.setSize(radiuses[i]);
-			cursor.moveCenterToCoordinates(centers.get(i));
-			while(cursor.hasNext()) 
-				cursor.next().set(intensities[i]);		
+			sphere.setRadius(radiuses[i]);
+			sphere.setPosition(centers.get(i));
+			for(UnsignedByteType pixel : sphere) {
+				pixel.set(intensities[i]);
+			}
 		}
 
 		// Instantiate segmenter
-		LogSegmenterSettings settings = new LogSegmenterSettings();
+		LogSegmenterSettings<UnsignedByteType> settings = new LogSegmenterSettings<UnsignedByteType>();
 		settings.expectedRadius = RADIUS;
 		SpotSegmenter<UnsignedByteType> segmenter = new DownSampleLogSegmenter<UnsignedByteType>();
 		segmenter.setTarget(img, settings);
@@ -106,7 +105,7 @@ public class LogSegmenterTestDrive {
 			min_dist = Float.POSITIVE_INFINITY;
 			for (Spot s : spot_list) {
 				
-				s.getPosition(coords);
+				s.localize(coords);
 				p1 = new Point3d(coords);
 
 				for (int j = 0; j < centers.size(); j++) {
@@ -122,7 +121,8 @@ public class LogSegmenterTestDrive {
 			
 			spot_list.remove(best_spot);
 			best_match = centers.remove(best_index);
-			System.out.println("Blob coordinates: " + Util.printCoordinates(best_spot.getPosition(coords)));
+			best_spot.localize(coords);
+			System.out.println("Blob coordinates: " + Util.printCoordinates(coords));
 			System.out.println(String.format("  Best matching center at distance %.1f with coords: " + Util.printCoordinates(best_match), min_dist));			
 		}
 		System.out.println();

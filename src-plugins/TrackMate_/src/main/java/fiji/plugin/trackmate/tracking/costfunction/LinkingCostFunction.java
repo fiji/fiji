@@ -2,6 +2,9 @@ package fiji.plugin.trackmate.tracking.costfunction;
 
 import java.util.List;
 
+import net.imglib2.type.NativeType;
+import net.imglib2.type.numeric.RealType;
+
 import Jama.Matrix;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.tracking.LAPTrackerSettings;
@@ -21,11 +24,11 @@ import fiji.plugin.trackmate.tracking.LAPUtils;
  * @author Jean-Yves Tinevez
  *
  */
-public class LinkingCostFunction implements CostFunctions {
+public class LinkingCostFunction <T extends RealType<T> & NativeType<T>> implements CostFunctions {
 	
-	protected LAPTrackerSettings settings;
+	protected LAPTrackerSettings<T> settings;
 	
-	public LinkingCostFunction(LAPTrackerSettings settings) {
+	public LinkingCostFunction(LAPTrackerSettings<T> settings) {
 		this.settings = settings;
 	}
 	

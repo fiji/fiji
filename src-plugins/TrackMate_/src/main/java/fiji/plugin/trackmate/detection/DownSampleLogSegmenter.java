@@ -4,13 +4,14 @@ import net.imglib2.Cursor;
 import net.imglib2.RandomAccess;
 import net.imglib2.img.Img;
 import net.imglib2.img.ImgPlus;
+import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
 import fiji.plugin.trackmate.util.TMUtils;
 
-public class DownSampleLogSegmenter <T extends RealType<T> > extends AbstractSpotSegmenter<T> {
+public class DownSampleLogSegmenter <T extends RealType<T>  & NativeType<T>> extends AbstractSpotSegmenter<T> {
 
 	private final static String BASE_ERROR_MESSAGE = "DownSampleLogSegmenter: ";
-	private DownSampleLogSegmenterSettings settings;
+	private DownSampleLogSegmenterSettings<T> settings;
 
 	/*
 	 * CONSTRUCTORS
@@ -29,9 +30,9 @@ public class DownSampleLogSegmenter <T extends RealType<T> > extends AbstractSpo
 	};
 
 	@Override
-	public void setTarget(final ImgPlus<T> image, final SegmenterSettings settings) {
+	public void setTarget(final ImgPlus<T> image, final SegmenterSettings<T> settings) {
 		super.setTarget(image, settings);
-		this.settings = (DownSampleLogSegmenterSettings) settings;
+		this.settings = (DownSampleLogSegmenterSettings<T>) settings;
 	}
 
 	@Override
@@ -40,8 +41,8 @@ public class DownSampleLogSegmenter <T extends RealType<T> > extends AbstractSpo
 	}
 
 	@Override
-	public SegmenterSettings createDefaultSettings() {
-		return new DownSampleLogSegmenterSettings();
+	public SegmenterSettings<T> createDefaultSettings() {
+		return new DownSampleLogSegmenterSettings<T>();
 	}
 
 
@@ -103,7 +104,7 @@ public class DownSampleLogSegmenter <T extends RealType<T> > extends AbstractSpo
 		// 2. Segment downsampled image
 
 		// 2.1. Create settings object
-		LogSegmenterSettings logSettings = new LogSegmenterSettings();
+		LogSegmenterSettings<T> logSettings = new LogSegmenterSettings<T>();
 		logSettings.expectedRadius = settings.expectedRadius; 
 		logSettings.threshold = settings.threshold;
 		logSettings.doSubPixelLocalization = true;;

@@ -5,10 +5,9 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
-import net.imglib2.cursor.special.DiscCursor;
-import net.imglib2.cursor.special.DomainCursor;
-import net.imglib2.cursor.special.SphereCursor;
-import net.imglib2.type.NativeType;
+import net.imglib2.algorithm.region.localneighborhood.DiscNeighborhood;
+import net.imglib2.algorithm.region.localneighborhood.RealPositionableAbstractNeighborhood;
+import net.imglib2.algorithm.region.localneighborhood.SphereNeighborhood;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.util.Util;
 
@@ -87,20 +86,20 @@ public class BlobDescriptiveStatistics<T extends RealType<T>> extends Independen
 	 * Compute descriptive statistics items for this spot. Implementation follows
 	 * {@link http://en.wikipedia.org/wiki/Algorithms_for_calculating_variance}.
 	 */
-	@SuppressWarnings({ "rawtypes", "unchecked" })
 	@Override
 	public void process(Spot spot) {
-		final DomainCursor<T> cursor;
-		final double[] coords;
+
+		// Prepare neighborhood
 		final double radius = spot.getFeature(Spot.RADIUS);
+		final RealPositionableAbstractNeighborhood<T> neighborhood;
 		if (img.numDimensions() == 3) {
-			cursor = new SphereCursor(img, new double[3], radius);
-			coords = new double[3];
-		} else { 
-			cursor = new DiscCursor(img, new double[2], radius);
-			coords = new double[2];
+			neighborhood = new SphereNeighborhood<T>(img, radius);
+			neighborhood.setPosition(spot);
+		} else {
+			neighborhood = new DiscNeighborhood<T>(img, radius);
+			neighborhood.setPosition(spot);
 		}
-		final int npixels = cursor.getNPixels();
+		final int npixels = (int) neighborhood.size();
 
 		// For variance, kurtosis and skewness 
 		double sum = 0;
@@ -118,13 +117,9 @@ public class BlobDescriptiveStatistics<T extends RealType<T>> extends Independen
 		final double[] pixel_values = new double[npixels];
 		int n = 0;
 		
-		for (int i = 0; i < coords.length; i++)
-			coords[i] = spot.getFeature(Spot.POSITION_FEATURES[i]);
-		cursor.moveCenterToCoordinates(coords);
-		
-		while (cursor.hasNext()) {
-			cursor.next();
-			val = cursor.get().getRealFloat();
+		for ( T pixel : neighborhood ) {
+			
+			val = pixel.getRealDouble();
 			// For median, min and max
 			pixel_values[n] = val;
 			// For variance and mean

@@ -4,6 +4,9 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 
+import net.imglib2.type.NativeType;
+import net.imglib2.type.numeric.RealType;
+
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.io.TmXmlWriter;
@@ -14,9 +17,9 @@ import fiji.plugin.trackmate.io.TmXmlWriter;
  * 
  * @author Jean-Yves Tinevez <jeanyves.tinevez@gmail.com>  2011 - 2012
  */
-public class GuiSaver {
+public class GuiSaver <T extends RealType<T> & NativeType<T>> {
 
-	private TrackMateWizard wizard;
+	private TrackMateWizard<T> wizard;
 	private Logger logger = Logger.VOID_LOGGER;
 
 	/*
@@ -28,7 +31,7 @@ public class GuiSaver {
 	 * set according to the data found in the file read.
 	 * @param wizard
 	 */
-	public GuiSaver(TrackMateWizard wizard) {
+	public GuiSaver(TrackMateWizard<T> wizard) {
 		this.wizard = wizard;
 		logger = wizard.getLogger();
 	}
@@ -38,13 +41,13 @@ public class GuiSaver {
 	 */
 
 
-	public void writeFile(final File file, final TrackMateModel model, final String targetID) {
+	public void writeFile(final File file, final TrackMateModel<T> model, final String targetID) {
 
-		TmXmlWriter writer = new TmXmlWriter(model, logger);
+		TmXmlWriter<T> writer = new TmXmlWriter<T>(model, logger);
 
 		if (targetID.equals(StartDialogPanel.DESCRIPTOR) || targetID.equals(SegmenterChoiceDescriptor.DESCRIPTOR) ) {
 
-			model.setSettings( ((StartDialogPanel) wizard.getPanelDescriptorFor(StartDialogPanel.DESCRIPTOR)).getSettings());
+			model.setSettings( ((StartDialogPanel<T>) wizard.getPanelDescriptorFor(StartDialogPanel.DESCRIPTOR)).getSettings());
 			writer.appendBasicSettings(); 
 			
 		} else if ( targetID.equals(SegmenterConfigurationPanelDescriptor.DESCRIPTOR) ) {

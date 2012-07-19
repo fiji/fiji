@@ -47,7 +47,7 @@ public interface SpotTracker <T extends RealType<T> & NativeType<T>> extends Alg
 	 * The concrete implementation returned will be of type {@link TrackerSettings}, but the actual instance
 	 * will be one suitable for the concrete tracker implementation.
 	 */
-	public TrackerSettings createDefaultSettings();
+	public TrackerSettings<T> createDefaultSettings();
 	
 	/**
 	 * @return  the name of this spot tracker.

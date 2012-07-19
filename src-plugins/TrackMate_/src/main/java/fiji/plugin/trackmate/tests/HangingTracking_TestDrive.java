@@ -26,7 +26,7 @@ public class HangingTracking_TestDrive {
 
 	public static <T extends RealType<T> & NativeType<T>> void main(String[] args) throws JDOMException, IOException {
 
-		TmXmlReader reader = new TmXmlReader(file, Logger.DEFAULT_LOGGER);
+		TmXmlReader<T> reader = new TmXmlReader<T>(file, Logger.DEFAULT_LOGGER);
 		reader.parse();
 		@SuppressWarnings("unused")
 		SpotCollection spots = reader.getAllSpots();
@@ -39,7 +39,7 @@ public class HangingTracking_TestDrive {
 		System.out.println("Without feature condition:");
 		Settings<T> settings = new Settings<T>();
 		reader.getTrackerSettings(settings);
-		LAPTrackerSettings trackerSettings = (LAPTrackerSettings) settings.trackerSettings;
+		LAPTrackerSettings<T> trackerSettings = (LAPTrackerSettings<T>) settings.trackerSettings;
 		trackerSettings.linkingDistanceCutOff = 60;
 		model.getSettings().trackerSettings = trackerSettings;
 		

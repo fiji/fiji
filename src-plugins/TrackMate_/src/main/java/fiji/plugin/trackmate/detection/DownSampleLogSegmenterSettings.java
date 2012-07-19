@@ -3,6 +3,9 @@ package fiji.plugin.trackmate.detection;
 import java.util.ArrayList;
 import java.util.List;
 
+import net.imglib2.type.NativeType;
+import net.imglib2.type.numeric.RealType;
+
 import org.jdom.Attribute;
 import org.jdom.Element;
 
@@ -15,7 +18,7 @@ import fiji.plugin.trackmate.util.TMUtils;
  * 
  * @author Jean-Yves Tinevez <tinevez@pasteur.fr> 2011
  */
-public class DownSampleLogSegmenterSettings extends BasicSegmenterSettings {
+public class DownSampleLogSegmenterSettings <T extends RealType<T>  & NativeType<T>> extends BasicSegmenterSettings<T> {
 
 	private static final String SEGMENTER_SETTINGS_THRESHOLD_ATTRIBUTE_NAME 			= "threshold";
 	private static final String SEGMENTER_SETTINGS_USE_MEDIAN_ATTRIBUTE_NAME			= "usemedianfilter";
@@ -41,8 +44,8 @@ public class DownSampleLogSegmenterSettings extends BasicSegmenterSettings {
 	}
 	
 	@Override
-	public SegmenterConfigurationPanel createConfigurationPanel() {
-		return new DownSampleLogSegmenterConfigurationPanel();
+	public SegmenterConfigurationPanel<T> createConfigurationPanel() {
+		return new DownSampleLogSegmenterConfigurationPanel<T>();
 	}
 	
 	@Override

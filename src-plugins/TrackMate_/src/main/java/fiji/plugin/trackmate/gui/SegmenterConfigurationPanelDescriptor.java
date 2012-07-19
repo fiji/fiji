@@ -2,38 +2,40 @@ package fiji.plugin.trackmate.gui;
 
 import java.awt.Component;
 
+import net.imglib2.type.NativeType;
+import net.imglib2.type.numeric.RealType;
+
 import fiji.plugin.trackmate.TrackMate_;
 import fiji.plugin.trackmate.detection.ManualSegmenter;
 import fiji.plugin.trackmate.detection.SegmenterSettings;
 import fiji.plugin.trackmate.detection.SpotSegmenter;
 
-public class SegmenterConfigurationPanelDescriptor implements WizardPanelDescriptor {
+public class SegmenterConfigurationPanelDescriptor <T extends RealType<T> & NativeType<T>> implements WizardPanelDescriptor<T> {
 
 	public static final String DESCRIPTOR = "SegmenterConfigurationPanel";
-	private TrackMate_ plugin;
-	private SegmenterConfigurationPanel configPanel;
-	private TrackMateWizard wizard;
+	private TrackMate_<T> plugin;
+	private SegmenterConfigurationPanel<T> configPanel;
+	private TrackMateWizard<T> wizard;
 	
 	/*
 	 * METHODS
 	 */
 
 	@Override
-	public void setWizard(TrackMateWizard wizard) { 
+	public void setWizard(TrackMateWizard<T> wizard) { 
 		this.wizard = wizard;
 	}
 
-	@SuppressWarnings({ "rawtypes", "unchecked" })
 	@Override
-	public void setPlugin(TrackMate_ plugin) {
+	public void setPlugin(TrackMate_<T> plugin) {
 		this.plugin = plugin;
-		SegmenterSettings settings = plugin.getModel().getSettings().segmenterSettings;
+		SegmenterSettings<T> settings = plugin.getModel().getSettings().segmenterSettings;
 		// Bulletproof null
 		if (null == settings) {
-			SpotSegmenter segmenter = plugin.getModel().getSettings().segmenter;
+			SpotSegmenter<T> segmenter = plugin.getModel().getSettings().segmenter;
 			if (null == segmenter) {
 				// try to make it right with a default
-				segmenter = new ManualSegmenter();
+				segmenter = new ManualSegmenter<T>();
 				plugin.getModel().getSettings().segmenter = segmenter;
 			}
 			settings = segmenter.createDefaultSettings();

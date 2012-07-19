@@ -8,7 +8,6 @@ import java.awt.event.ActionListener;
 import javax.swing.ImageIcon;
 import javax.swing.JFrame;
 
-import net.imglib2.img.ImagePlusAdapter;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
 
@@ -51,14 +50,14 @@ public class CopyOverlayAction<T extends RealType<T> & NativeType<T>> extends Ab
 								title = "3D viewer overlay";
 							} else {
 								logger.log("Copying overlay to "+dest.getShortTitle()+"\n");
-								model.getSettings().img = ImagePlusAdapter.wrapImgPlus(dest); // TODO TODO DANGER DANGER
+								model.getSettings().imp = dest; // TODO TODO DANGER DANGER
 								newDisplayer = new HyperStackDisplayer<T>();
 								title = dest.getShortTitle() + " ctrl";
 							}
 							newDisplayer.setModel(model);
 							newDisplayer.render();
 							
-							final DisplayerPanel newDisplayerPanel = new DisplayerPanel();
+							final DisplayerPanel<T> newDisplayerPanel = new DisplayerPanel<T>();
 							newDisplayerPanel.setPlugin(plugin);
 							newDisplayerPanel.register(newDisplayer);
 							JFrame newFrame = new JFrame(); 

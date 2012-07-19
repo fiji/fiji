@@ -486,10 +486,14 @@ public class TrackDisplayNode <T extends RealType<T> & NativeType<T>> extends Co
 				Spot source = model.getEdgeSource(edge);
 
 				// Add coords and colors of each vertex
-				line.setCoordinate(edgeIndex, source.getPosition(coordinates));
+				coordinates = new double[3];
+				source.localize(coordinates);
+				line.setCoordinate(edgeIndex, coordinates);
 				line.setColor(edgeIndex, color);
 				edgeIndex++;
-				line.setCoordinate(edgeIndex, target.getPosition(coordinates));
+				coordinates = new double[3];
+				target.localize(coordinates);
+				line.setCoordinate(edgeIndex, coordinates);
 				line.setColor(edgeIndex, color);
 				edgeIndex++;
 

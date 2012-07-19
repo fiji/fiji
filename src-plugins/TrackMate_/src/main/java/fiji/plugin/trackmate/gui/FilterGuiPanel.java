@@ -419,7 +419,7 @@ public class FilterGuiPanel extends ActionListenablePanel implements ChangeListe
 						
 						featureFilters = new ArrayList<FeatureFilter>(thresholdPanels.size());
 						for (FilterPanel tp : thresholdPanels) {
-							featureFilters.add(new FeatureFilter(tp.getKey(), new Float(tp.getThreshold()), tp.isAboveThreshold()));
+							featureFilters.add(new FeatureFilter(tp.getKey(), new Double(tp.getThreshold()), tp.isAboveThreshold()));
 						}
 						fireThresholdChanged(event);
 						updateInfoText();

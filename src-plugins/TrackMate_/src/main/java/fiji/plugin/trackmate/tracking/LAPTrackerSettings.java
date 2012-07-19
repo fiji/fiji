@@ -7,6 +7,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import net.imglib2.type.NativeType;
+import net.imglib2.type.numeric.RealType;
+
 import org.jdom.Attribute;
 import org.jdom.DataConversionException;
 import org.jdom.Element;
@@ -16,7 +19,7 @@ import fiji.plugin.trackmate.gui.LAPTrackerSettingsPanel;
 import fiji.plugin.trackmate.gui.SimpleLAPTrackerSettingsPanel;
 import fiji.plugin.trackmate.gui.TrackerConfigurationPanel;
 
-public class LAPTrackerSettings implements TrackerSettings {
+public class LAPTrackerSettings<T extends RealType<T> & NativeType<T>> implements TrackerSettings<T> {
 
 	/*
 	 * MARSHALLING CONSTANTS
@@ -159,11 +162,11 @@ public class LAPTrackerSettings implements TrackerSettings {
 	}
 
 	@Override
-	public TrackerConfigurationPanel createConfigurationPanel() {
+	public TrackerConfigurationPanel<T> createConfigurationPanel() {
 		if (useSimpleConfigPanel) {
-			return new SimpleLAPTrackerSettingsPanel();
+			return new SimpleLAPTrackerSettingsPanel<T>();
 		} else {
-			return new LAPTrackerSettingsPanel();
+			return new LAPTrackerSettingsPanel<T>();
 		}
 	}
 	

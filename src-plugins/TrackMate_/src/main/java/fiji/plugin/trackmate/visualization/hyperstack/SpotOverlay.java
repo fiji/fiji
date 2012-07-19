@@ -59,7 +59,7 @@ public class SpotOverlay<T extends RealType<T> & NativeType<T>> implements Overl
 	public SpotOverlay(final TrackMateModel<T> model, final ImagePlus imp, final Map<String, Object> displaySettings) {
 		this.model = model;
 		this.imp = imp;
-		this.calibration = TMUtils.getSpatialCalibration(model.getSettings().img);
+		this.calibration = TMUtils.getSpatialCalibration(model.getSettings().imp);
 		this.displaySettings = displaySettings; 
 		computeSpotColors();
 	}

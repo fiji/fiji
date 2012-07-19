@@ -2,37 +2,40 @@ package fiji.plugin.trackmate.gui;
 
 import java.awt.Component;
 
+import net.imglib2.type.NativeType;
+import net.imglib2.type.numeric.RealType;
+
 import fiji.plugin.trackmate.TrackMate_;
 import fiji.plugin.trackmate.tracking.SpotTracker;
 import fiji.plugin.trackmate.tracking.TrackerSettings;
 import fiji.plugin.trackmate.tracking.kdtree.NearestNeighborTracker;
 
-public class TrackerConfigurationPanelDescriptor implements WizardPanelDescriptor {
+public class TrackerConfigurationPanelDescriptor <T extends RealType<T> & NativeType<T>> implements WizardPanelDescriptor<T> {
 
 	public static final String DESCRIPTOR = "TrackerConfigurationPanel";
-	private TrackMate_ plugin;
-	private TrackerConfigurationPanel configPanel;
-	private TrackMateWizard wizard;
+	private TrackMate_<T> plugin;
+	private TrackerConfigurationPanel<T> configPanel;
+	private TrackMateWizard<T> wizard;
 	
 	/*
 	 * METHODS
 	 */
 
 	@Override
-	public void setWizard(TrackMateWizard wizard) { 
+	public void setWizard(TrackMateWizard<T> wizard) { 
 		this.wizard = wizard;
 	}
 
 	@Override
-	public void setPlugin(TrackMate_ plugin) {
+	public void setPlugin(TrackMate_<T> plugin) {
 		this.plugin = plugin;
-		TrackerSettings settings = plugin.getModel().getSettings().trackerSettings;
+		TrackerSettings<T> settings = plugin.getModel().getSettings().trackerSettings;
 		// Bulletproof null
 		if (null == settings) {
-			SpotTracker tracker = plugin.getModel().getSettings().tracker;
+			SpotTracker<T> tracker = plugin.getModel().getSettings().tracker;
 			if (null == tracker) {
 				// try to make it right with a default
-				tracker = new NearestNeighborTracker();
+				tracker = new NearestNeighborTracker<T>();
 				plugin.getModel().getSettings().tracker = tracker;
 			}
 			settings = tracker.createDefaultSettings();

@@ -12,7 +12,7 @@ public abstract class AbstractTMAction<T extends RealType<T> & NativeType<T>> im
 
 	protected Logger logger = Logger.VOID_LOGGER;
 	protected ImageIcon icon = null;
-	protected TrackMateWizard wizard;
+	protected TrackMateWizard<T> wizard;
 	
 	@Override
 	public void setLogger(Logger logger) {
@@ -25,7 +25,7 @@ public abstract class AbstractTMAction<T extends RealType<T> & NativeType<T>> im
 	}
 	
 	@Override
-	public void setWizard(TrackMateWizard wizard) {
+	public void setWizard(TrackMateWizard<T> wizard) {
 		this.wizard = wizard;
 	}
 }

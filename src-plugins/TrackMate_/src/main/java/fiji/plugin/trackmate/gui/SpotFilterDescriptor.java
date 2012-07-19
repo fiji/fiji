@@ -9,26 +9,29 @@ import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
+import net.imglib2.type.NativeType;
+import net.imglib2.type.numeric.RealType;
+
 import fiji.plugin.trackmate.FeatureFilter;
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMate_;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
 
-public class SpotFilterDescriptor implements WizardPanelDescriptor {
+public class SpotFilterDescriptor <T extends RealType<T> & NativeType<T>> implements WizardPanelDescriptor<T> {
 
 	public static final String DESCRIPTOR = "SpotFilter";
-	private TrackMateWizard wizard;
+	private TrackMateWizard<T> wizard;
 	private FilterGuiPanel component = new FilterGuiPanel();
-	private TrackMate_ plugin;
+	private TrackMate_<T> plugin;
 	
 	@Override
-	public void setWizard(TrackMateWizard wizard) {
+	public void setWizard(TrackMateWizard<T> wizard) {
 		this.wizard = wizard;
 	}
 
 	@Override
-	public void setPlugin(TrackMate_ plugin) {
+	public void setPlugin(TrackMate_<T> plugin) {
 		this.plugin = plugin;
 	}
 
@@ -59,7 +62,7 @@ public class SpotFilterDescriptor implements WizardPanelDescriptor {
 
 	@Override
 	public void aboutToDisplayPanel() {
-		TrackMateModel model = plugin.getModel();
+		TrackMateModel<T> model = plugin.getModel();
 		component.setTarget(model.getFeatureModel().getSpotFeatures(), model.getSettings().getSpotFilters(),  
 				model.getFeatureModel().getSpotFeatureNames(), model.getFeatureModel().getSpotFeatureValues(), "spots"); 
 	}
@@ -68,7 +71,7 @@ public class SpotFilterDescriptor implements WizardPanelDescriptor {
 	public void displayingPanel() {
 		
 		 // Link displayer and component
-		final TrackMateModelView displayer = wizard.getDisplayer();
+		final TrackMateModelView<T> displayer = wizard.getDisplayer();
 		SwingUtilities.invokeLater(new Runnable() {			
 			@Override
 			public void run() {
@@ -101,7 +104,7 @@ public class SpotFilterDescriptor implements WizardPanelDescriptor {
 	public void aboutToHidePanel() {
 		Logger logger = wizard.getLogger();
 		logger.log("Performing spot filtering on the following features:\n", Logger.BLUE_COLOR);
-		final TrackMateModel model = plugin.getModel();
+		final TrackMateModel<T> model = plugin.getModel();
 		List<FeatureFilter> featureFilters = component.getFeatureFilters();
 		model.getSettings().setSpotFilters(featureFilters);
 		plugin.execSpotFiltering();

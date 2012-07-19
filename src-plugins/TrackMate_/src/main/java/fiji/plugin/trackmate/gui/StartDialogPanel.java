@@ -24,9 +24,12 @@ import javax.swing.WindowConstants;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
-public class StartDialogPanel extends ActionListenablePanel implements WizardPanelDescriptor {
+import net.imglib2.type.NativeType;
+import net.imglib2.type.numeric.RealType;
 
-	private static final long serialVersionUID = -5495612173611259921L;
+public class StartDialogPanel <T extends RealType<T> & NativeType<T>> extends ActionListenablePanel implements WizardPanelDescriptor<T> {
+
+	private static final long serialVersionUID = -1L;
 
 	public static final String DESCRIPTOR = "StartDialog";
 
@@ -65,30 +68,30 @@ public class StartDialogPanel extends ActionListenablePanel implements WizardPan
 	private JSlider sliderChannel;
 
 	private ImagePlus imp;
-	private Settings settings;
+	private Settings<T> settings;
 	private JLabel lblSegmentInChannel;
 	private JLabel labelChannel;
 
-	private TrackMate_ plugin;
-	private TrackMateWizard wizard;
+	private TrackMate_<T> plugin;
+	private TrackMateWizard<T> wizard;
 
 	/*
 	 * WIZARDPANELDESCRIPTOR METHODS
 	 */
 
 	@Override
-	public void setWizard(TrackMateWizard wizard) {
+	public void setWizard(TrackMateWizard<T> wizard) {
 		this.wizard = wizard;
 	}
 
 	@Override
-	public void setPlugin(TrackMate_ plugin) {
+	public void setPlugin(TrackMate_<T> plugin) {
 		this.plugin = plugin;
 		if (null == plugin) {
-			this.settings = new Settings();
+			this.settings = new Settings<T>();
 		} else {
 			if (null == settings) {
-				this.settings = new Settings();
+				this.settings = new Settings<T>();
 			} else {
 				this.settings = plugin.getModel().getSettings();
 			}
@@ -155,8 +158,8 @@ public class StartDialogPanel extends ActionListenablePanel implements WizardPan
 	 * is created.
 	 * @return  the updated Settings
 	 */
-	public Settings getSettings() {
-		settings.imp =  imp;
+	public Settings<T> getSettings() {
+		settings.imp = imp;
 		// Crop cube
 		settings.tstart = Math.round(Float.parseFloat(jTextFieldTStart.getText()));
 		settings.tend 	= Math.round(Float.parseFloat(jTextFieldTEnd.getText()));
@@ -179,7 +182,7 @@ public class StartDialogPanel extends ActionListenablePanel implements WizardPan
 		settings.height		= imp.getHeight();
 		settings.nslices	= imp.getNSlices();
 		settings.nframes	= imp.getNFrames();
-		if (null != settings.imp.getOriginalFileInfo()) {
+		if (null != imp.getOriginalFileInfo()) {
 			settings.imageFileName	= imp.getOriginalFileInfo().fileName;
 			settings.imageFolder 	= imp.getOriginalFileInfo().directory;
 		}
@@ -194,7 +197,7 @@ public class StartDialogPanel extends ActionListenablePanel implements WizardPan
 	/**
 	 * Fill the text fields with the parameters grabbed in the {@link Settings} argument.
 	 */
-	private void echoSettings(Settings settings) {
+	private void echoSettings(Settings<T> settings) {
 		jLabelImageName.setText(settings.imp.getTitle());
 		jTextFieldPixelWidth.setText(""+settings.dx);
 		jTextFieldPixelHeight.setText(""+settings.dy);
@@ -549,7 +552,7 @@ public class StartDialogPanel extends ActionListenablePanel implements WizardPan
 	 * Auto-generated main method to display this 
 	 * JPanel inside a new JFrame.
 	 */
-	public static void main(String[] args) {
+	public static <T extends RealType<T> & NativeType<T>> void main(String[] args) {
 		JFrame frame = new JFrame();
 		ij.ImageJ.main(args);
 		ImagePlus imp = NewImage.createByteImage("Test_image", 20, 100, 20, NewImage.FILL_BLACK);
@@ -561,7 +564,7 @@ public class StartDialogPanel extends ActionListenablePanel implements WizardPan
 		imp.setRoi(new Roi(10, 20, 5, 60));
 		imp.show();
 
-		StartDialogPanel panel = new StartDialogPanel();
+		StartDialogPanel<T> panel = new StartDialogPanel<T>();
 		panel.setPlugin(null);
 
 		frame.getContentPane().add(panel);

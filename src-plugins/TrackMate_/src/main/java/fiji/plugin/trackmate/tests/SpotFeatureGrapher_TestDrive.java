@@ -28,7 +28,7 @@ public class SpotFeatureGrapher_TestDrive {
 
 		// Load objects 
 		File file = new File("/Users/tinevez/Desktop/Data/Tree.xml");
-		TmXmlReader reader = new TmXmlReader(file, Logger.DEFAULT_LOGGER);
+		TmXmlReader<T> reader = new TmXmlReader<T>(file, Logger.DEFAULT_LOGGER);
 		reader.parse();
 		final TrackMateModel<T> model = reader.getModel();
 		List<Spot> spots = model.getFilteredSpots().getAllSpots();

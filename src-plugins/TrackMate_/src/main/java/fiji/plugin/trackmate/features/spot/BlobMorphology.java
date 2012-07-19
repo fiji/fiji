@@ -6,8 +6,10 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
-import net.imglib2.cursor.special.DiscCursor;
-import net.imglib2.cursor.special.SphereCursor;
+import net.imglib2.algorithm.region.localneighborhood.DiscCursor;
+import net.imglib2.algorithm.region.localneighborhood.DiscNeighborhood;
+import net.imglib2.algorithm.region.localneighborhood.SphereCursor;
+import net.imglib2.algorithm.region.localneighborhood.SphereNeighborhood;
 import net.imglib2.img.Img;
 import net.imglib2.img.ImgPlus;
 import net.imglib2.img.array.ArrayImgFactory;
@@ -19,7 +21,6 @@ import Jama.Matrix;
 import fiji.plugin.trackmate.Dimension;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotImp;
-import fiji.plugin.trackmate.util.TMUtils;
 
 /**
  * This {@link SpotFeatureAnalyzer} computes morphology features for the given spots. 
@@ -130,47 +131,38 @@ public class BlobMorphology<T extends RealType<T>> extends IndependentSpotFeatur
 	/** Significance factor to determine when a semiaxis length should be
 	 *  considered significantly larger than the others. */
 	private static final double SIGNIFICANCE_FACTOR = 1.2;
-	
-	/*
-	 * FIELDS
-	 */
-	
-	/** Utility holder. */
-	private double[] coords = new double[3];
-	
+
 	/*
 	 * PUBLIC METHODS
 	 */
 	
 	
-	
 	@Override
-	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public void process(final Spot spot) {
-		final double radius = spot.getFeature(Spot.RADIUS);
-		for (int i = 0; i < coords.length; i++) 
-			coords[i] = spot.getFeature(Spot.POSITION_FEATURES[i]);
 
-		final double[] calibration = TMUtils.getSpatialCalibration(img);
+		final double radius = spot.getFeature(Spot.RADIUS);
 		
 		if (img.numDimensions() == 3) {
 
 			// 3D case
 			
-			final SphereCursor<T> cursor = new SphereCursor(img, coords, radius);
+			final SphereNeighborhood<T> sphere = new SphereNeighborhood<T>(img, radius);
+			sphere.setPosition(spot);
+			final SphereCursor<T> cursor = sphere.cursor();
+			
 			double x, y, z;
 			double x2, y2, z2;
 			double mass, totalmass = 0;
 			double Ixx = 0, Iyy = 0, Izz = 0, Ixy = 0, Ixz = 0, Iyz = 0;
-			int[] position = new int[img.numDimensions()];
+			double[] position = new double[img.numDimensions()];
 
 			while (cursor.hasNext()) {
 				cursor.fwd();
 				mass = cursor.get().getRealDouble();
 				cursor.getRelativePosition(position);
-				x = position[0] * calibration[0];
-				y = position[1] * calibration[1];
-				z = position[2] * calibration[2];
+				x = position[0];
+				y = position[1];
+				z = position[2];
 				totalmass += mass;
 				x2 = x*x;
 				y2 = y*y;
@@ -243,19 +235,21 @@ public class BlobMorphology<T extends RealType<T>> extends IndependentSpotFeatur
 			
 			// 2D case
 			
-			final DiscCursor<T> cursor = new DiscCursor(img, coords, radius);
+			final DiscNeighborhood<T> neighborhood = new DiscNeighborhood<T>(img, radius);
+			neighborhood.setPosition(spot);
+			final DiscCursor<T> cursor = neighborhood.cursor();
 			double x, y;
 			double x2, y2;
 			double mass, totalmass = 0;
 			double Ixx = 0, Iyy = 0, Ixy = 0;
-			int[] position = new int[img.numDimensions()];
+			double[] position = new double[img.numDimensions()];
 
 			while (cursor.hasNext()) {
 				cursor.fwd();
 				mass = cursor.get().getRealDouble();
 				cursor.getRelativePosition(position);
-				x = position[0] * calibration[0];
-				y = position[1] * calibration[1];
+				x = position[0];
+				y = position[1];
 				totalmass += mass;
 				x2 = x*x;
 				y2 = y*y;
@@ -390,7 +384,11 @@ public class BlobMorphology<T extends RealType<T>> extends IndependentSpotFeatur
 		System.out.println(String.format("Creating an ellipse with a = %.1f, b = %.1f", a, b));
 		System.out.println(String.format("phi = %.1f", Math.toDegrees(phi_r)));
 		double[] center = new double[] { size_x/2, size_y/2, 0 };
-		DiscCursor<UnsignedByteType> sc = new DiscCursor<UnsignedByteType>(imgplus, center, max_radius);
+		
+		DiscNeighborhood<UnsignedByteType> disc = new DiscNeighborhood<UnsignedByteType>(imgplus, max_radius);
+		disc.setPosition(center);
+		DiscCursor<UnsignedByteType> sc = disc.cursor();
+		
 		double r2, phi, term;
 		double cosphi, sinphi;
 		while (sc.hasNext()) {

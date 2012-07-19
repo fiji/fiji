@@ -5,6 +5,9 @@ import java.util.Map;
 import java.util.SortedSet;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import net.imglib2.type.NativeType;
+import net.imglib2.type.numeric.RealType;
+
 import mpicbg.imglib.multithreading.SimpleMultiThreading;
 import Jama.Matrix;
 import fiji.plugin.trackmate.Spot;
@@ -31,7 +34,7 @@ import fiji.plugin.trackmate.tracking.LAPUtils;
  * @author Jean-Yves Tinevez
  *
  */
-public class SplittingCostFunction {
+public class SplittingCostFunction <T extends RealType<T> & NativeType<T>> {
 
 	private static final boolean DEBUG = false;
 
@@ -55,7 +58,7 @@ public class SplittingCostFunction {
 	 */
 
 
-	public SplittingCostFunction(LAPTrackerSettings settings) {
+	public SplittingCostFunction(LAPTrackerSettings<T> settings) {
 		this.allowSplitting 	= settings.allowSplitting;
 		this.maxDist 			= settings.splittingDistanceCutoff;
 		this.timeCutoff 		= settings.splittingTimeCutoff;
@@ -99,7 +102,7 @@ public class SplittingCostFunction {
 						Spot middle = middlePoints.get(i);
 						if (DEBUG)
 							System.out.println(String.format("Current middle spot: x=%.1f, y=%.1f, t=%.1f", 
-									middle.getPosition(null)[0], middle.getPosition(null)[1], middle.getFeature(Spot.POSITION_T)));
+									middle.getDoublePosition(0), middle.getDoublePosition(1), middle.getFeature(Spot.POSITION_T)));
 
 						for (int j = 0; j < trackSegments.size(); j++) {
 

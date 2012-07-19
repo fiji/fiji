@@ -22,8 +22,8 @@ public class SimpleLAPTracker <T extends RealType<T> & NativeType<T>> extends LA
 	}
 	
 	@Override
-	public TrackerSettings createDefaultSettings() {
-		LAPTrackerSettings ts = new LAPTrackerSettings();
+	public TrackerSettings<T> createDefaultSettings() {
+		LAPTrackerSettings<T> ts = new LAPTrackerSettings<T>();
 		ts.setUseSimpleConfigPanel(true);
 		ts.allowMerging = false;
 		ts.allowSplitting = false;
