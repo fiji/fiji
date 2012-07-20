@@ -92,7 +92,7 @@ public class DetectorChoiceDescriptor <T extends RealType<T> & NativeType<T>> im
 	@Override
 	public void setPlugin(TrackMate_<T> plugin) {
 		this.plugin = plugin;
-		this.component = new ListChooserPanel<SpotDetector<T>>(plugin.getAvailableSpotDetectors(), "segmenter");
+		this.component = new ListChooserPanel<SpotDetector<T>>(plugin.getAvailableSpotDetectors(), "detector");
 		setCurrentChoiceFromPlugin();
 	}
 

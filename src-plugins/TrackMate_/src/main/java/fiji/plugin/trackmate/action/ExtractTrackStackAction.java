@@ -163,8 +163,8 @@ public class ExtractTrackStackAction<T extends RealType<T> & NativeType<T>> exte
 		ImagePlus stackTrack = new ImagePlus("", stack);
 		stackTrack.setTitle("Path from "+start+" to "+end);
 		Calibration impCal = stackTrack.getCalibration();
-//		impCal.setTimeUnit(settings.imp.getCalibration().getTimeUnit());
-//		impCal.setUnit(settings.imp.getCalibration().getUnit());
+		impCal.setTimeUnit(settings.imp.getCalibration().getTimeUnit());
+		impCal.setUnit(settings.imp.getCalibration().getUnit());
 		impCal.pixelWidth 		= calibration[0];
 		impCal.pixelHeight 		= calibration[1];
 		impCal.frameInterval 	= settings.dt;

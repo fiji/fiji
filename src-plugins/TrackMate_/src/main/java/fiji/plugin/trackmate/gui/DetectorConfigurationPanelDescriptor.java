@@ -12,7 +12,7 @@ import fiji.plugin.trackmate.detection.SpotDetector;
 
 public class DetectorConfigurationPanelDescriptor <T extends RealType<T> & NativeType<T>> implements WizardPanelDescriptor<T> {
 
-	public static final String DESCRIPTOR = "SegmenterConfigurationPanel";
+	public static final String DESCRIPTOR = "DetectorConfigurationPanel";
 	private TrackMate_<T> plugin;
 	private DetectorConfigurationPanel<T> configPanel;
 	private TrackMateWizard<T> wizard;

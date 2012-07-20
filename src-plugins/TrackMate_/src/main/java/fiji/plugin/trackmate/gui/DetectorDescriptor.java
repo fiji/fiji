@@ -11,7 +11,7 @@ import fiji.plugin.trackmate.TrackMate_;
 
 public class DetectorDescriptor <T extends RealType<T> & NativeType<T>> implements WizardPanelDescriptor<T> {
 	
-	public static final String DESCRIPTOR = "SegmentationPanel";
+	public static final String DESCRIPTOR = "DetectionPanel";
 	protected LogPanel logPanel;
 	protected TrackMate_<T> plugin;
 	protected TrackMateWizard<T> wizard;
@@ -62,11 +62,11 @@ public class DetectorDescriptor <T extends RealType<T> & NativeType<T>> implemen
 	public void displayingPanel() {
 		wizard.setNextButtonEnabled(false);
 		final Settings<T> settings = plugin.getModel().getSettings();
-		logger.log("Starting segmentation using "+settings.detector.toString()+"\n", Logger.BLUE_COLOR);
+		logger.log("Starting detection using "+settings.detector.toString()+"\n", Logger.BLUE_COLOR);
 		logger.log("with settings:\n");
 		logger.log(settings.toString());
 		logger.log(settings.detectorSettings.toString());
-		new Thread("TrackMate segmentation mother thread") {					
+		new Thread("TrackMate detection mother thread") {					
 			public void run() {
 				long start = System.currentTimeMillis();
 				try {
@@ -77,7 +77,7 @@ public class DetectorDescriptor <T extends RealType<T> & NativeType<T>> implemen
 				} finally {
 					wizard.setNextButtonEnabled(true);
 					long end = System.currentTimeMillis();
-					logger.log(String.format("Segmentation done in %.1f s.\n", (end-start)/1e3f), Logger.BLUE_COLOR);
+					logger.log(String.format("Detection done in %.1f s.\n", (end-start)/1e3f), Logger.BLUE_COLOR);
 				}
 			}
 		}.start();
