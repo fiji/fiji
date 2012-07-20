@@ -28,7 +28,7 @@ import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.TrackMateModel;
-import fiji.plugin.trackmate.detection.SegmenterSettings;
+import fiji.plugin.trackmate.detection.DetectorSettings;
 import fiji.plugin.trackmate.tracking.TrackerSettings;
 
 public class TmXmlWriter <T extends RealType<T> & NativeType<T>> {
@@ -67,10 +67,10 @@ public class TmXmlWriter <T extends RealType<T> & NativeType<T>> {
 	}
 
 	/**
-	 * Append the {@link SegmenterSettings} to the {@link Document}.
+	 * Append the {@link DetectorSettings} to the {@link Document}.
 	 */
-	public void appendSegmenterSettings() {
-		echoSegmenterSettings();
+	public void appendDetectorSettings() {
+		echoDetectorSettings();
 	}
 
 	/**
@@ -171,23 +171,23 @@ public class TmXmlWriter <T extends RealType<T> & NativeType<T>> {
 		settingsElement.setAttribute(SETTINGS_ZEND_ATTRIBUTE_NAME, ""+settings.zend);
 		settingsElement.setAttribute(SETTINGS_TSTART_ATTRIBUTE_NAME, ""+settings.tstart);
 		settingsElement.setAttribute(SETTINGS_TEND_ATTRIBUTE_NAME, ""+settings.tend);
-		settingsElement.setAttribute(SETTINGS_SEGMENTATION_CHANNEL_ATTRIBUTE_NAME, ""+settings.segmentationChannel);
+		settingsElement.setAttribute(SETTINGS_DETECTION_CHANNEL_ATTRIBUTE_NAME, ""+settings.detectionChannel);
 		root.addContent(settingsElement);
 		logger.log("  Appending base settings.\n");
 		return;
 	}
 
-	private void echoSegmenterSettings() {
-		Element el = new Element(SEGMENTER_SETTINGS_ELEMENT_KEY);
-		if (null != model.getSettings().segmenter) {
-			el.setAttribute(SEGMENTER_CLASS_ATTRIBUTE_NAME, model.getSettings().segmenter.getClass().getName());
+	private void echoDetectorSettings() {
+		Element el = new Element(DETECTOR_SETTINGS_ELEMENT_KEY);
+		if (null != model.getSettings().detector) {
+			el.setAttribute(DETECTOR_CLASS_ATTRIBUTE_NAME, model.getSettings().detector.getClass().getName());
 		}
-		if (null != model.getSettings().segmenterSettings) {
-			el.setAttribute(SEGMENTER_SETTINGS_CLASS_ATTRIBUTE_NAME, model.getSettings().segmenterSettings.getClass().getName());
-			model.getSettings().segmenterSettings.marshall(el);
-			logger.log("  Appending segmenter settings.\n"); 
+		if (null != model.getSettings().detectorSettings) {
+			el.setAttribute(DETECTOR_SETTINGS_CLASS_ATTRIBUTE_NAME, model.getSettings().detectorSettings.getClass().getName());
+			model.getSettings().detectorSettings.marshall(el);
+			logger.log("  Appending detector settings.\n"); 
 		} else {
-			logger.log("  Segmenter settings are null.\n");
+			logger.log("  Detector settings are null.\n");
 		}
 		root.addContent(el);
 		return;

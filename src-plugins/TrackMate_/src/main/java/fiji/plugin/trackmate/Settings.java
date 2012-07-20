@@ -1,7 +1,7 @@
 package fiji.plugin.trackmate;
 
-import fiji.plugin.trackmate.detection.SegmenterSettings;
-import fiji.plugin.trackmate.detection.SpotSegmenter;
+import fiji.plugin.trackmate.detection.DetectorSettings;
+import fiji.plugin.trackmate.detection.SpotDetector;
 import fiji.plugin.trackmate.tracking.SpotTracker;
 import fiji.plugin.trackmate.tracking.TrackerSettings;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
@@ -46,8 +46,8 @@ public class Settings <T extends RealType<T> & NativeType<T>> {
 	public int zstart;
 	/** The lowest pixel Z position, <b>0-based</b>, of the volume to process. */
 	public int zend;
-	/** Target channel for segmentation, <b>1-based</b>. */
-	public int segmentationChannel = 1;
+	/** Target channel for detection, <b>1-based</b>. */
+	public int detectionChannel = 1;
 	// Image info
 	public double dt 	= 1;
 	public double dx 	= 1;
@@ -62,10 +62,10 @@ public class Settings <T extends RealType<T> & NativeType<T>> {
 	public String timeUnits 		= "frames";
 	public String spaceUnits 		= "pixels";
 	
-	public SpotSegmenter<T> segmenter;
+	public SpotDetector<T> detector;
 	public SpotTracker<T> tracker;
 	
-	public SegmenterSettings<T> segmenterSettings = null;
+	public DetectorSettings<T> detectorSettings = null;
 	public TrackerSettings<T> trackerSettings = null;
 	
 	// Filters
@@ -159,7 +159,7 @@ public class Settings <T extends RealType<T> & NativeType<T>> {
 		str += String.format("  Y = %4d - %4d, dy = %g %s\n", ystart, yend, dy, spaceUnits);
 		str += String.format("  Z = %4d - %4d, dz = %g %s\n", zstart, zend, dz, spaceUnits);
 		str += String.format("  T = %4d - %4d, dt = %g %s\n", tstart, tend, dt, timeUnits);
-		str += String.format("  Target channel for segmentation: %d\n", segmentationChannel);
+		str += String.format("  Target channel for detection: %d\n", detectionChannel);
 		return str;
 	}
 	

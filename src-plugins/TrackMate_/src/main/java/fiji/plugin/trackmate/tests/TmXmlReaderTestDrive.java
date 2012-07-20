@@ -29,9 +29,9 @@ public class TmXmlReaderTestDrive {
 		System.out.println(model.getSettings());
 
 		System.out.println();
-		System.out.println("Segmenter was: "+model.getSettings().segmenter.toString());
+		System.out.println("Detector was: "+model.getSettings().detector.toString());
 		System.out.println("With settings:");
-		System.out.println(model.getSettings().segmenterSettings);
+		System.out.println(model.getSettings().detectorSettings);
 
 		System.out.println();
 		System.out.println("Tracker was: "+model.getSettings().tracker.toString());

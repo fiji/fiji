@@ -45,33 +45,33 @@ public class GuiSaver <T extends RealType<T> & NativeType<T>> {
 
 		TmXmlWriter<T> writer = new TmXmlWriter<T>(model, logger);
 
-		if (targetID.equals(StartDialogPanel.DESCRIPTOR) || targetID.equals(SegmenterChoiceDescriptor.DESCRIPTOR) ) {
+		if (targetID.equals(StartDialogPanel.DESCRIPTOR) || targetID.equals(DetectorChoiceDescriptor.DESCRIPTOR) ) {
 
 			model.setSettings( ((StartDialogPanel<T>) wizard.getPanelDescriptorFor(StartDialogPanel.DESCRIPTOR)).getSettings());
 			writer.appendBasicSettings(); 
 			
-		} else if ( targetID.equals(SegmenterConfigurationPanelDescriptor.DESCRIPTOR) ) {
+		} else if ( targetID.equals(DetectorConfigurationPanelDescriptor.DESCRIPTOR) ) {
 
 				writer.appendBasicSettings();
-				writer.appendSegmenterSettings();
+				writer.appendDetectorSettings();
 
-		} else if (targetID.equals(SegmentationDescriptor.DESCRIPTOR) || targetID.equals(InitFilterPanel.DESCRIPTOR) ) {
+		} else if (targetID.equals(DetectorDescriptor.DESCRIPTOR) || targetID.equals(InitFilterPanel.DESCRIPTOR) ) {
 
 			writer.appendBasicSettings();
-			writer.appendSegmenterSettings();
+			writer.appendDetectorSettings();
 			writer.appendSpots();
 
 		} else if  (targetID.equals(LaunchDisplayerDescriptor.DESCRIPTOR) || targetID.equals(DisplayerChoiceDescriptor.DESCRIPTOR) ) {
 
 			writer.appendBasicSettings();
-			writer.appendSegmenterSettings();
+			writer.appendDetectorSettings();
 			writer.appendInitialSpotFilter();
 			writer.appendSpots();
 			
 		} else if  (targetID.equals(SpotFilterDescriptor.DESCRIPTOR) || targetID.equals(TrackerChoiceDescriptor.DESCRIPTOR) ) {
 			
 			writer.appendBasicSettings();
-			writer.appendSegmenterSettings();
+			writer.appendDetectorSettings();
 			writer.appendInitialSpotFilter();
 			writer.appendSpotFilters();
 			writer.appendSpots();
@@ -79,7 +79,7 @@ public class GuiSaver <T extends RealType<T> & NativeType<T>> {
 		} else if  (targetID.equals(TrackerConfigurationPanelDescriptor.DESCRIPTOR) ) {
 
 			writer.appendBasicSettings();
-			writer.appendSegmenterSettings();
+			writer.appendDetectorSettings();
 			writer.appendTrackerSettings();
 			writer.appendInitialSpotFilter();
 			writer.appendSpotFilters();
@@ -89,7 +89,7 @@ public class GuiSaver <T extends RealType<T> & NativeType<T>> {
 		} else if  (targetID.equals(TrackingDescriptor.DESCRIPTOR)) {
 
 			writer.appendBasicSettings();
-			writer.appendSegmenterSettings();
+			writer.appendDetectorSettings();
 			writer.appendTrackerSettings();
 			writer.appendInitialSpotFilter();
 			writer.appendSpotFilters();
@@ -100,7 +100,7 @@ public class GuiSaver <T extends RealType<T> & NativeType<T>> {
 		} else if  (targetID.equals(TrackFilterDescriptor.DESCRIPTOR) ) {
 
 			writer.appendBasicSettings();
-			writer.appendSegmenterSettings();
+			writer.appendDetectorSettings();
 			writer.appendTrackerSettings();
 			writer.appendInitialSpotFilter();
 			writer.appendSpotFilters();
@@ -112,7 +112,7 @@ public class GuiSaver <T extends RealType<T> & NativeType<T>> {
 		} else {
 			
 			writer.appendBasicSettings();
-			writer.appendSegmenterSettings();
+			writer.appendDetectorSettings();
 			writer.appendTrackerSettings();
 			writer.appendInitialSpotFilter();
 			writer.appendSpotFilters();

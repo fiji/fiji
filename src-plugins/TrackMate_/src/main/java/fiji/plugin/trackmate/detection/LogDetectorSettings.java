@@ -9,25 +9,25 @@ import net.imglib2.type.numeric.RealType;
 import org.jdom.Attribute;
 import org.jdom.Element;
 
-import fiji.plugin.trackmate.gui.LogSegmenterConfigurationPanel;
-import fiji.plugin.trackmate.gui.SegmenterConfigurationPanel;
+import fiji.plugin.trackmate.gui.LogDetectorConfigurationPanel;
+import fiji.plugin.trackmate.gui.DetectorConfigurationPanel;
 
 /**
- * A segmenter settings object valid for most spot segmenters based on Log filtering,
+ * A detector settings object valid for most spot detectors based on Log filtering,
  * 
  * @author Jean-Yves Tinevez <jeanyves.tinevez@gmail.com> 2010-2011
  */
-public class LogSegmenterSettings <T extends RealType<T> & NativeType<T>> extends BasicSegmenterSettings<T> {
+public class LogDetectorSettings <T extends RealType<T> & NativeType<T>> extends BasicDetectorSettings<T> {
 
-	private static final String SEGMENTER_SETTINGS_THRESHOLD_ATTRIBUTE_NAME 	= "threshold";
-	private static final String SEGMENTER_SETTINGS_USE_MEDIAN_ATTRIBUTE_NAME	= "usemedianfilter";
-	private static final String SEGMENTER_SETTINGS_DO_SUBPIXEL_ATTRIBUTE_NAME	= "doSubPixelLocalization";
+	private static final String DETECTOR_SETTINGS_THRESHOLD_ATTRIBUTE_NAME 	= "threshold";
+	private static final String DETECTOR_SETTINGS_USE_MEDIAN_ATTRIBUTE_NAME	= "usemedianfilter";
+	private static final String DETECTOR_SETTINGS_DO_SUBPIXEL_ATTRIBUTE_NAME	= "doSubPixelLocalization";
 
 	private static final boolean 	DEFAULT_DO_SUBPIXEL_LOCALIZATION = true;
 	
 	/** The pixel value under which any peak will be discarded from further analysis. */
 	public float 	threshold = 		0;
-	/** If true, a median filter will be applied before segmenting. */
+	/** If true, a median filter will be applied before detection. */
 	public boolean useMedianFilter;
 	/** If true, spot locations will be interpolated so as to reach sub-pixel localization	 */
 	public boolean doSubPixelLocalization = DEFAULT_DO_SUBPIXEL_LOCALIZATION;
@@ -43,8 +43,8 @@ public class LogSegmenterSettings <T extends RealType<T> & NativeType<T>> extend
 	}
 	
 	@Override
-	public SegmenterConfigurationPanel<T> createConfigurationPanel() {
-		return new LogSegmenterConfigurationPanel<T>();
+	public DetectorConfigurationPanel<T> createConfigurationPanel() {
+		return new LogDetectorConfigurationPanel<T>();
 	}
 	
 	@Override
@@ -58,17 +58,17 @@ public class LogSegmenterSettings <T extends RealType<T> & NativeType<T>> extend
 	public void unmarshall(Element element) {
 		super.unmarshall(element); // Deal with expected radius
 		try {
-			float val = Float.parseFloat(element.getAttributeValue(SEGMENTER_SETTINGS_THRESHOLD_ATTRIBUTE_NAME));
+			float val = Float.parseFloat(element.getAttributeValue(DETECTOR_SETTINGS_THRESHOLD_ATTRIBUTE_NAME));
 			threshold = val;
 		} catch (NumberFormatException nfe) { }
-		useMedianFilter = Boolean.parseBoolean(element.getAttributeValue(SEGMENTER_SETTINGS_USE_MEDIAN_ATTRIBUTE_NAME));
-		doSubPixelLocalization = Boolean.parseBoolean(element.getAttributeValue(SEGMENTER_SETTINGS_DO_SUBPIXEL_ATTRIBUTE_NAME));
+		useMedianFilter = Boolean.parseBoolean(element.getAttributeValue(DETECTOR_SETTINGS_USE_MEDIAN_ATTRIBUTE_NAME));
+		doSubPixelLocalization = Boolean.parseBoolean(element.getAttributeValue(DETECTOR_SETTINGS_DO_SUBPIXEL_ATTRIBUTE_NAME));
 	}
 	
 	protected List<Attribute> getAttributes() {
-		Attribute attThreshold 	= new Attribute(SEGMENTER_SETTINGS_THRESHOLD_ATTRIBUTE_NAME, ""+threshold);
-		Attribute attMedian 	= new Attribute(SEGMENTER_SETTINGS_USE_MEDIAN_ATTRIBUTE_NAME, ""+useMedianFilter);
-		Attribute attSubpixel 	= new Attribute(SEGMENTER_SETTINGS_DO_SUBPIXEL_ATTRIBUTE_NAME, ""+doSubPixelLocalization);
+		Attribute attThreshold 	= new Attribute(DETECTOR_SETTINGS_THRESHOLD_ATTRIBUTE_NAME, ""+threshold);
+		Attribute attMedian 	= new Attribute(DETECTOR_SETTINGS_USE_MEDIAN_ATTRIBUTE_NAME, ""+useMedianFilter);
+		Attribute attSubpixel 	= new Attribute(DETECTOR_SETTINGS_DO_SUBPIXEL_ATTRIBUTE_NAME, ""+doSubPixelLocalization);
 		List<Attribute> atts = new ArrayList<Attribute>(4);
 		atts.add(super.getAttribute());
 		atts.add(attThreshold);

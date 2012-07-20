@@ -6,15 +6,15 @@ import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
 
 import fiji.plugin.trackmate.TrackMate_;
-import fiji.plugin.trackmate.detection.ManualSegmenter;
-import fiji.plugin.trackmate.detection.SegmenterSettings;
-import fiji.plugin.trackmate.detection.SpotSegmenter;
+import fiji.plugin.trackmate.detection.ManualDetector;
+import fiji.plugin.trackmate.detection.DetectorSettings;
+import fiji.plugin.trackmate.detection.SpotDetector;
 
-public class SegmenterConfigurationPanelDescriptor <T extends RealType<T> & NativeType<T>> implements WizardPanelDescriptor<T> {
+public class DetectorConfigurationPanelDescriptor <T extends RealType<T> & NativeType<T>> implements WizardPanelDescriptor<T> {
 
 	public static final String DESCRIPTOR = "SegmenterConfigurationPanel";
 	private TrackMate_<T> plugin;
-	private SegmenterConfigurationPanel<T> configPanel;
+	private DetectorConfigurationPanel<T> configPanel;
 	private TrackMateWizard<T> wizard;
 	
 	/*
@@ -29,14 +29,14 @@ public class SegmenterConfigurationPanelDescriptor <T extends RealType<T> & Nati
 	@Override
 	public void setPlugin(TrackMate_<T> plugin) {
 		this.plugin = plugin;
-		SegmenterSettings<T> settings = plugin.getModel().getSettings().segmenterSettings;
+		DetectorSettings<T> settings = plugin.getModel().getSettings().detectorSettings;
 		// Bulletproof null
 		if (null == settings) {
-			SpotSegmenter<T> segmenter = plugin.getModel().getSettings().segmenter;
+			SpotDetector<T> segmenter = plugin.getModel().getSettings().detector;
 			if (null == segmenter) {
 				// try to make it right with a default
-				segmenter = new ManualSegmenter<T>();
-				plugin.getModel().getSettings().segmenter = segmenter;
+				segmenter = new ManualDetector<T>();
+				plugin.getModel().getSettings().detector = segmenter;
 			}
 			settings = segmenter.createDefaultSettings();
 		}
@@ -60,21 +60,21 @@ public class SegmenterConfigurationPanelDescriptor <T extends RealType<T> & Nati
 
 	@Override
 	public String getNextDescriptorID() {
-		if (plugin.getModel().getSettings().segmenter.getClass() == ManualSegmenter.class) {
+		if (plugin.getModel().getSettings().detector.getClass() == ManualDetector.class) {
 			return DisplayerChoiceDescriptor.DESCRIPTOR;
 		} else {
-			return SegmentationDescriptor.DESCRIPTOR;
+			return DetectorDescriptor.DESCRIPTOR;
 		}
 	}
 
 	@Override
 	public String getPreviousDescriptorID() {
-		return SegmenterChoiceDescriptor.DESCRIPTOR;
+		return DetectorChoiceDescriptor.DESCRIPTOR;
 	}
 
 	@Override
 	public void aboutToDisplayPanel() {
-		configPanel.setSegmenterSettings(plugin.getModel());
+		configPanel.setDetectorSettings(plugin.getModel());
 		wizard.setNextButtonEnabled(true);
 	}
 
@@ -83,7 +83,7 @@ public class SegmenterConfigurationPanelDescriptor <T extends RealType<T> & Nati
 
 	@Override
 	public void aboutToHidePanel() {
-		plugin.getModel().getSettings().segmenterSettings = configPanel.getSegmenterSettings();
+		plugin.getModel().getSettings().detectorSettings = configPanel.getDetectorSettings();
 	}
 
 }

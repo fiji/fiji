@@ -6,14 +6,14 @@ import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
 
 import fiji.plugin.trackmate.TrackMateModel;
-import fiji.plugin.trackmate.detection.BasicSegmenterSettings;
-import fiji.plugin.trackmate.detection.SegmenterSettings;
+import fiji.plugin.trackmate.detection.BasicDetectorSettings;
+import fiji.plugin.trackmate.detection.DetectorSettings;
 
-public class BasicSegmenterConfigurationPanel <T extends RealType<T> & NativeType<T>> extends LogSegmenterConfigurationPanel<T> {
+public class BasicDetectorConfigurationPanel <T extends RealType<T> & NativeType<T>> extends LogDetectorConfigurationPanel<T> {
 
 	private static final long serialVersionUID = 4298482387638112651L;
 
-	public BasicSegmenterConfigurationPanel() {
+	public BasicDetectorConfigurationPanel() {
 		super();
 		final JComponent[] uselessComponents = new JComponent[] {
 				super.jCheckBoxMedianFilter,
@@ -26,19 +26,19 @@ public class BasicSegmenterConfigurationPanel <T extends RealType<T> & NativeTyp
 	}
 
 	@Override
-	public void setSegmenterSettings(TrackMateModel<T> model) {
-		jTextFieldBlobDiameter.setText(""+(((BasicSegmenterSettings<T>)model.getSettings().segmenterSettings).expectedRadius * 2));
+	public void setDetectorSettings(TrackMateModel<T> model) {
+		jTextFieldBlobDiameter.setText(""+(((BasicDetectorSettings<T>)model.getSettings().detectorSettings).expectedRadius * 2));
 		jLabelBlobDiameterUnit.setText(model.getSettings().spaceUnits);
-		jLabelSegmenterName.setText(model.getSettings().segmenter.toString());
-		jLabelHelpText.setText(model.getSettings().segmenter.getInfoText()
+		jLabelSegmenterName.setText(model.getSettings().detector.toString());
+		jLabelHelpText.setText(model.getSettings().detector.getInfoText()
 				.replace("<br>", "")
 				.replace("<p>", "<p align=\"justify\">")
 				.replace("<html>", "<html><p align=\"justify\">"));
 	}
 
 	@Override
-	public SegmenterSettings<T> getSegmenterSettings() {
-		BasicSegmenterSettings<T> ss = new BasicSegmenterSettings<T>();
+	public DetectorSettings<T> getDetectorSettings() {
+		BasicDetectorSettings<T> ss = new BasicDetectorSettings<T>();
 		ss.expectedRadius = Float.parseFloat(jTextFieldBlobDiameter.getText())/2;
 		return ss;
 	}

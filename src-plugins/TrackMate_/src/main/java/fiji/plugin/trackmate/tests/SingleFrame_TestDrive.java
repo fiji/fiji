@@ -5,8 +5,8 @@ import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMate_;
-import fiji.plugin.trackmate.detection.LogSegmenter;
-import fiji.plugin.trackmate.detection.LogSegmenterSettings;
+import fiji.plugin.trackmate.detection.LogDetector;
+import fiji.plugin.trackmate.detection.LogDetectorSettings;
 import fiji.plugin.trackmate.visualization.hyperstack.HyperStackDisplayer;
 import ij.IJ;
 import ij.ImagePlus;
@@ -29,22 +29,22 @@ public class SingleFrame_TestDrive {
 		ImagePlus imp = IJ.openImage(file.getAbsolutePath());
 		
 		// Set segmentation target
-		int segmentationChannel = 1;
+		int detectionChannel = 1;
 		int frame = 0; // 0-based
 
-		// Prepare segmenter instance
-		LogSegmenter<UnsignedByteType> segmenter = new LogSegmenter<UnsignedByteType>();
-		LogSegmenterSettings<UnsignedByteType> lss = new LogSegmenterSettings<UnsignedByteType>();
+		// Prepare detector instance
+		LogDetector<UnsignedByteType> detector = new LogDetector<UnsignedByteType>();
+		LogDetectorSettings<UnsignedByteType> lss = new LogDetectorSettings<UnsignedByteType>();
 		lss.doSubPixelLocalization = false;
 		lss.expectedRadius = 2f;
 		
 		// Build settings object
 		Settings<UnsignedByteType> settings = new Settings<UnsignedByteType>(imp);
-		settings.segmentationChannel = segmentationChannel;
+		settings.detectionChannel = detectionChannel;
 		settings.tstart = frame;
 		settings.tend = frame;
-		settings.segmenter = segmenter;
-		settings.segmenterSettings = lss;
+		settings.detector = detector;
+		settings.detectorSettings = lss;
 		
 		// Feed this to the model & plugin
 		TrackMateModel<UnsignedByteType> model = new TrackMateModel<UnsignedByteType>();
@@ -53,25 +53,25 @@ public class SingleFrame_TestDrive {
 		TrackMate_<UnsignedByteType> plugin = new TrackMate_<UnsignedByteType>(model);
 		
 		// Segment using the plugin
-//		plugin.execSegmentation();
+//		plugin.execDetection();
 
 		// Grab single frame as Imglib image
 		ImgPlus<UnsignedByteType> img = ImagePlusAdapter.wrapImgPlus(imp);
 		ImgPlus<UnsignedByteType> imgCT = HyperSliceImgPlus.fixTimeAxis(
-				HyperSliceImgPlus.fixChannelAxis(img, segmentationChannel-1), 
+				HyperSliceImgPlus.fixChannelAxis(img, detectionChannel-1), 
 				frame);
 		
 		// Check to see if it is right
 		ij.ImageJ.main(args);
 //		 mpicbg.imglib.image.display.imagej.ImageJFunctions.copyToImagePlus(img, ImagePlus.GRAY8).show();
 		
-		// Segment it using individual segmenter
-		segmenter.setTarget(imgCT, lss );
-		if (!(segmenter.checkInput() && segmenter.process())) {
-			System.err.println("Problem in segmentation: "+segmenter.getErrorMessage());
+		// Segment it using individual detector
+		detector.setTarget(imgCT, lss );
+		if (!(detector.checkInput() && detector.process())) {
+			System.err.println("Problem in detection: "+detector.getErrorMessage());
 			return;
 		}
-		List<Spot> spots = segmenter.getResult();
+		List<Spot> spots = detector.getResult();
 
 		// Add found spots to existing model
 		model.getSpots().get(frame).addAll(spots);

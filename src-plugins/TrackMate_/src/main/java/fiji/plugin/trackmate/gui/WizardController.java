@@ -134,9 +134,9 @@ public class WizardController<T extends RealType<T> & NativeType<T>> implements 
 	protected List<WizardPanelDescriptor<T>> createWizardPanelDescriptorList() {
 		List<WizardPanelDescriptor<T>> descriptors = new ArrayList<WizardPanelDescriptor<T>>(14);
 		descriptors.add(new StartDialogPanel<T>());
-		descriptors.add(new SegmenterChoiceDescriptor<T>());
-		//		descriptors.add(new SegmenterConfigurationPanelDescriptor()); // will be instantiated on the fly, see SegmenterChoiceDescriptor
-		descriptors.add(new SegmentationDescriptor<T>());
+		descriptors.add(new DetectorChoiceDescriptor<T>());
+		//		descriptors.add(new DetectorConfigurationPanelDescriptor()); // will be instantiated on the fly, see DetectorChoiceDescriptor
+		descriptors.add(new DetectorDescriptor<T>());
 		descriptors.add(new InitFilterPanel<T>());
 		descriptors.add(new DisplayerChoiceDescriptor<T>());
 		descriptors.add(new LaunchDisplayerDescriptor<T>());

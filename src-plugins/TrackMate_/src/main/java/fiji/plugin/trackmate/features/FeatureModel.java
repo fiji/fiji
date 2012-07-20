@@ -90,7 +90,7 @@ public class FeatureModel <T extends RealType<T> & NativeType<T>> {
 	
 
 	/**
-	 * Calculate given features for the all segmented spots of this model,
+	 * Calculate given features for the all detected spots of this model,
 	 * according to the {@link Settings} set in the model.
 	 * <p>
 	 * Features are calculated for each spot, using their location, and the raw
@@ -276,7 +276,7 @@ public class FeatureModel <T extends RealType<T> & NativeType<T>> {
 		 * snapshot. */
 	
 		final ImgPlus<T> img = ImagePlusAdapter.wrapImgPlus(settings.imp);
-		final int targetChannel = settings.segmentationChannel - 1;
+		final int targetChannel = settings.detectionChannel - 1;
 		final ImgPlus<T> imgC = HyperSliceImgPlus.fixChannelAxis(img, targetChannel);
 
 		// Prepare the thread array

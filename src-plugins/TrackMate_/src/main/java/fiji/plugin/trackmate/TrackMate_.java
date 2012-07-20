@@ -12,10 +12,10 @@ import fiji.plugin.trackmate.action.RecalculateFeatureAction;
 import fiji.plugin.trackmate.action.ResetRadiusAction;
 import fiji.plugin.trackmate.action.ResetSpotTimeFeatureAction;
 import fiji.plugin.trackmate.action.TrackMateAction;
-import fiji.plugin.trackmate.detection.DownSampleLogSegmenter;
-import fiji.plugin.trackmate.detection.LogSegmenter;
-import fiji.plugin.trackmate.detection.ManualSegmenter;
-import fiji.plugin.trackmate.detection.SpotSegmenter;
+import fiji.plugin.trackmate.detection.DownsampleLogDetector;
+import fiji.plugin.trackmate.detection.LogDetector;
+import fiji.plugin.trackmate.detection.ManualDetector;
+import fiji.plugin.trackmate.detection.SpotDetector;
 import fiji.plugin.trackmate.features.spot.BlobContrastAndSNR;
 import fiji.plugin.trackmate.features.spot.BlobDescriptiveStatistics;
 import fiji.plugin.trackmate.features.spot.BlobMorphology;
@@ -72,8 +72,8 @@ public class TrackMate_<T extends RealType<T> & NativeType<T>>  implements PlugI
 
 	protected List<SpotFeatureAnalyzer<T>> spotFeatureAnalyzers;
 	protected List<TrackFeatureAnalyzer<T>> trackFeatureAnalyzers;
-	/** The list of {@link SpotSegmenter} that will be offered to choose amongst to the user. */
-	protected List<SpotSegmenter<T>> spotSegmenters;
+	/** The list of {@link SpotDetector} that will be offered to choose amongst to the user. */
+	protected List<SpotDetector<T>> spotDetectors;
 	/** The list of {@link TrackMateModelView} that will be offered to choose amongst to the user. */
 	protected List<TrackMateModelView<T>> trackMateModelViews;
 	/** The list of {@link TrackMateModelView} that will be offered to choose amongst to the user. */
@@ -130,7 +130,7 @@ public class TrackMate_<T extends RealType<T> & NativeType<T>>  implements PlugI
 	 * be used when calling {@link #computeSpotFeatures()};
 	 * 	<li> {@link #trackFeatureAnalyzers}: the list of track feature analyzers that will
 	 * be used when calling {@link #computeTrackFeatures()};
-	 * 	<li> {@link #spotSegmenters}: the list of {@link SpotSegmenter}s that will be offered 
+	 * 	<li> {@link #spotDetectors}: the list of {@link SpotDetector}s that will be offered 
 	 * to the user to choose from;
 	 * 	<li> {@link #spotTrackers}: the list of {@link SpotTracker}s that will be offered 
 	 * to the user to choose from;
@@ -143,7 +143,7 @@ public class TrackMate_<T extends RealType<T> & NativeType<T>>  implements PlugI
 	public void initModules() {
 		this.spotFeatureAnalyzers 	= createSpotFeatureAnalyzerList();
 		this.trackFeatureAnalyzers 	= createTrackFeatureAnalyzerList();
-		this.spotSegmenters 		= createSegmenterList();
+		this.spotDetectors 			= createDetectorList();
 		this.spotTrackers 			= createSpotTrackerList();
 		this.trackMateModelViews 	= createTrackMateModelViewList();
 		this.trackMateActions 		= createTrackMateActionList();
@@ -158,7 +158,7 @@ public class TrackMate_<T extends RealType<T> & NativeType<T>>  implements PlugI
 	/**
 	 * This method exists for the following reason:
 	 * <p>
-	 * The segmenter receives at each frame a cropped image to operate on, depending
+	 * The detector receives at each frame a cropped image to operate on, depending
 	 * on the user specifying a ROI. It therefore returns spots whose coordinates are 
 	 * with respect to the top-left corner of the ROI, not of the original image. 
 	 * <p>
@@ -194,17 +194,17 @@ public class TrackMate_<T extends RealType<T> & NativeType<T>>  implements PlugI
 	}
 	
 	
-	protected List<Spot> execSingleFrameSegmentation(final ImgPlus<T> img, Settings<T> settings) {
+	protected List<Spot> execSingleFrameDetection(final ImgPlus<T> img, Settings<T> settings) {
 		
-		SpotSegmenter<T> segmenter = settings.segmenter.createNewSegmenter();
-		segmenter.setTarget(img, settings.segmenterSettings);
+		SpotDetector<T> detector = settings.detector.createNewDetector();
+		detector.setTarget(img, settings.detectorSettings);
 
-		if (segmenter.checkInput() && segmenter.process()) {
-			List<Spot> spotsThisFrame = segmenter.getResult();
+		if (detector.checkInput() && detector.process()) {
+			List<Spot> spotsThisFrame = detector.getResult();
 			return translateAndPruneSpots(spotsThisFrame, settings);
 			
 		} else {
-			model.getLogger().error(segmenter.getErrorMessage()+'\n');
+			model.getLogger().error(detector.getErrorMessage()+'\n');
 			return null;
 		}
 
@@ -238,17 +238,16 @@ public class TrackMate_<T extends RealType<T> & NativeType<T>>  implements PlugI
 	/**
 	 * Hook for subclassers.
 	 * <p>
-	 * Create the list of {@link SpotSegmenter} that will be offered to choose from. 
-	 * Override it to add your own segmenter.
+	 * Create the list of {@link SpotDetector} that will be offered to choose from. 
+	 * Override it to add your own detector.
 	 * @return
 	 */
-	@SuppressWarnings({ "rawtypes", "unchecked" })
-	protected List<SpotSegmenter<T>> createSegmenterList() {
-		List<SpotSegmenter<T>> spotSegmenters = new ArrayList<SpotSegmenter<T>>(3);
-		spotSegmenters.add(new LogSegmenter());
-		spotSegmenters.add(new DownSampleLogSegmenter());
-		spotSegmenters.add(new ManualSegmenter());
-		return spotSegmenters;
+	protected List<SpotDetector<T>> createDetectorList() {
+		List<SpotDetector<T>> spotDetectors = new ArrayList<SpotDetector<T>>(3);
+		spotDetectors.add(new LogDetector<T>());
+		spotDetectors.add(new DownsampleLogDetector<T>());
+		spotDetectors.add(new ManualDetector<T>());
+		return spotDetectors;
 	}
 	
 	/**
@@ -345,10 +344,10 @@ public class TrackMate_<T extends RealType<T> & NativeType<T>>  implements PlugI
 	}
 	
 	/**
-	 * Return a list of the {@link SpotSegmenter} that are currently registered in this plugin.
+	 * Return a list of the {@link SpotDetector} that are currently registered in this plugin.
 	 */
-	public List<SpotSegmenter<T>> getAvailableSpotSegmenters() {
-		return spotSegmenters;
+	public List<SpotDetector<T>> getAvailableSpotDetectors() {
+		return spotDetectors;
 	}
 	
 	/**
@@ -379,7 +378,7 @@ public class TrackMate_<T extends RealType<T> & NativeType<T>>  implements PlugI
 	 */
 
 	/**
-	 * Calculate all features for all segmented spots.
+	 * Calculate all features for all detected spots.
 	 * <p>
 	 * Features are calculated for each spot, using their location, and the raw image. 
 	 */
@@ -417,10 +416,10 @@ public class TrackMate_<T extends RealType<T> & NativeType<T>>  implements PlugI
 	}
 
 	/** 
-	 * Execute the segmentation part.
+	 * Execute the detection part.
 	 * <p>
 	 * This method looks for bright blobs: bright object of approximately spherical shape, whose expected 
-	 * diameter is given in argument. The method used for segmentation depends on the {@link SpotSegmenter} 
+	 * diameter is given in argument. The method used for segmentation depends on the {@link SpotDetector} 
 	 * chosen, and set in {@link #settings};
 	 * <p>
 	 * This gives us a collection of spots, which at this stage simply wrap a physical center location.
@@ -429,9 +428,9 @@ public class TrackMate_<T extends RealType<T> & NativeType<T>>  implements PlugI
 	 * 
 	 * @see #getSpots()
 	 */
-	public void execSegmentation() {
+	public void execDetection() {
 		final Settings<T> settings = model.getSettings();
-		final int segmentationChannel = settings.segmentationChannel;
+		final int detectionChannel = settings.detectionChannel;
 		final Logger logger = model.getLogger();
 		final ImagePlus imp = settings.imp;
 		
@@ -439,18 +438,18 @@ public class TrackMate_<T extends RealType<T> & NativeType<T>>  implements PlugI
 			logger.error("No image to operate on.\n");
 			return;
 		}
-		if (null == settings.segmenter) {
-			logger.error("No segmenter selected.\n");
+		if (null == settings.detector) {
+			logger.error("No detector selected.\n");
 			return;
 		}
-		if (null == settings.segmenterSettings) {
-			logger.error("No segmenter settings set.\n");
+		if (null == settings.detectorSettings) {
+			logger.error("No detector settings set.\n");
 			return;
 		}
-		if (!settings.segmenterSettings.getClass().equals(settings.segmenter.createDefaultSettings().getClass())) {
-			logger.error(String.format("Segmenter settings class does not match segmenter class: %s vs %s.\n", 
-					settings.segmenterSettings.getClass().getSimpleName(),
-					settings.segmenter.createDefaultSettings().getClass().getSimpleName()));
+		if (!settings.detectorSettings.getClass().equals(settings.detector.createDefaultSettings().getClass())) {
+			logger.error(String.format("Detector settings class does not match detector class: %s vs %s.\n", 
+					settings.detectorSettings.getClass().getSimpleName(),
+					settings.detector.createDefaultSettings().getClass().getSimpleName()));
 			return;
 		}
 		
@@ -460,7 +459,7 @@ public class TrackMate_<T extends RealType<T> & NativeType<T>>  implements PlugI
 		final AtomicInteger progress = new AtomicInteger(0);
 
 		final ImgPlus<T> img = ImagePlusAdapter.wrapImgPlus(imp);
-		final ImgPlus<T> imgC = HyperSliceImgPlus.fixChannelAxis(img , segmentationChannel-1); // channel index is 1-based
+		final ImgPlus<T> imgC = HyperSliceImgPlus.fixChannelAxis(img , detectionChannel-1); // channel index is 1-based
 
 		final Thread[] threads;
 		if (useMultithreading) {
@@ -483,9 +482,9 @@ public class TrackMate_<T extends RealType<T> & NativeType<T>>  implements PlugI
 						ImgPlus<T> imgT = HyperSliceImgPlus.fixTimeAxis(imgC, frame);
 						
 						// Segment it
-						List<Spot> s = execSingleFrameSegmentation(imgT, settings);
+						List<Spot> s = execSingleFrameDetection(imgT, settings);
 						
-						// Add segmentation feature other than position
+						// Add detection feature other than position
 						for (Spot spot : s) {
 							spot.putFeature(Spot.POSITION_T, frame * settings.dt);
 						}
@@ -499,7 +498,7 @@ public class TrackMate_<T extends RealType<T> & NativeType<T>>  implements PlugI
 			};
 		}
 
-		logger.setStatus("Segmenting...");
+		logger.setStatus("Detection...");
 		logger.setProgress(0);
 
 		SimpleMultiThreading.startAndJoin(threads);
@@ -514,14 +513,14 @@ public class TrackMate_<T extends RealType<T> & NativeType<T>>  implements PlugI
 	/**
 	 * Execute the initial spot filtering part.
 	 *<p>
-	 * Because of the presence of noise, it is possible that some of the regional maxima found in the segmenting step have
+	 * Because of the presence of noise, it is possible that some of the regional maxima found in the detection step have
 	 * identified noise, rather than objects of interest. This can generates a very high number of spots, which is
 	 * inconvenient to deal with when it comes to  computing their features, or displaying them.
 	 * <p>
-	 * Any {@link SpotSegmenter} is expected to at least compute the {@link SpotFeature#QUALITY} value for each spot
+	 * Any {@link SpotDetector} is expected to at least compute the {@link SpotFeature#QUALITY} value for each spot
 	 * it creates, so it is possible to set up an initial filtering on this Feature, prior to any other operation. 
 	 * <p>
-	 * This method simply takes all the segmented spots, and discard those whose quality value is below the threshold set 
+	 * This method simply takes all the detected spots, and discard those whose quality value is below the threshold set 
 	 * by {@link #setInitialSpotFilter(Float)}. The spot field is overwritten, and discarded spots can't be recalled.
 	 * <p>
 	 * The {@link TrackMateModelChangeListener}s of this model will be notified with a {@link TrackMateModelChangeEvent#SPOTS_COMPUTED}
@@ -539,11 +538,11 @@ public class TrackMate_<T extends RealType<T> & NativeType<T>>  implements PlugI
 	/**
 	 * Execute the spot feature filtering part.
 	 *<p>
-	 * Because of the presence of noise, it is possible that some of the regional maxima found in the segmenting step have
+	 * Because of the presence of noise, it is possible that some of the regional maxima found in the detection step have
 	 * identified noise, rather than objects of interest. A filtering operation based on the calculated features in this
 	 * step should allow to rule them out.
 	 * <p>
-	 * This method simply takes all the segmented spots, and store in the field {@link #filteredSpots}
+	 * This method simply takes all the detected spots, and store in the field {@link #filteredSpots}
 	 * the spots whose features satisfy all of the filters entered with the method {@link #addFilter(SpotFilter)}.
 	 * <p>
 	 * The {@link TrackMateModelChangeListener}s of this model will be notified with a {@link TrackMateModelChangeEvent#SPOTS_FILTERED}

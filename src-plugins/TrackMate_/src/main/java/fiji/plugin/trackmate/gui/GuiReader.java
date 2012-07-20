@@ -26,7 +26,7 @@ import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMate_;
-import fiji.plugin.trackmate.detection.SegmenterSettings;
+import fiji.plugin.trackmate.detection.DetectorSettings;
 import fiji.plugin.trackmate.io.TmXmlReader;
 import fiji.plugin.trackmate.tracking.TrackerSettings;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
@@ -143,11 +143,11 @@ public class GuiReader <T extends RealType<T> & NativeType<T>> {
 		}
 
 
-		{ // Try to read segmenter settings
-			logger.log("  Reading segmenter settings...");
-			reader.getSegmenterSettings(settings);
-			SegmenterSettings<T> segmenterSettings = settings.segmenterSettings;
-			if (null == segmenterSettings) {
+		{ // Try to read detector settings
+			logger.log("  Reading detector settings...");
+			reader.getDetectorSettings(settings);
+			DetectorSettings<T> detectorSettings = settings.detectorSettings;
+			if (null == detectorSettings) {
 				echoNotFound();
 				// Stop at start panel
 				targetDescriptor = StartDialogPanel.DESCRIPTOR;
@@ -158,16 +158,16 @@ public class GuiReader <T extends RealType<T> & NativeType<T>> {
 			}
 			echoDone();
 
-			// Update 2nd panel: segmenter choice
-			SegmenterChoiceDescriptor<T> segmenterChoiceDescriptor = (SegmenterChoiceDescriptor<T>) wizard.getPanelDescriptorFor(SegmenterChoiceDescriptor.DESCRIPTOR);
-			segmenterChoiceDescriptor.aboutToDisplayPanel();
+			// Update 2nd panel: detector choice
+			DetectorChoiceDescriptor<T> detectorChoiceDescriptor = (DetectorChoiceDescriptor<T>) wizard.getPanelDescriptorFor(DetectorChoiceDescriptor.DESCRIPTOR);
+			detectorChoiceDescriptor.aboutToDisplayPanel();
 
-			// Instantiate descriptor for the segmenter configuration and update it
-			SegmenterConfigurationPanelDescriptor<T> segmConfDescriptor = new SegmenterConfigurationPanelDescriptor<T>();
-			segmConfDescriptor.setPlugin(plugin);
-			segmConfDescriptor.setWizard(wizard);
-			wizard.registerWizardDescriptor(SegmenterConfigurationPanelDescriptor.DESCRIPTOR, segmConfDescriptor);
-			segmConfDescriptor.aboutToDisplayPanel();
+			// Instantiate descriptor for the detector configuration and update it
+			DetectorConfigurationPanelDescriptor<T> detectConfDescriptor = new DetectorConfigurationPanelDescriptor<T>();
+			detectConfDescriptor.setPlugin(plugin);
+			detectConfDescriptor.setWizard(wizard);
+			wizard.registerWizardDescriptor(DetectorConfigurationPanelDescriptor.DESCRIPTOR, detectConfDescriptor);
+			detectConfDescriptor.aboutToDisplayPanel();
 		}
 
 
@@ -176,8 +176,8 @@ public class GuiReader <T extends RealType<T> & NativeType<T>> {
 			SpotCollection spots = reader.getAllSpots();
 			if (null == spots) {
 				echoNotFound();
-				// No spots, so we stop here, and switch to the segmenter panel
-				targetDescriptor = SegmenterConfigurationPanelDescriptor.DESCRIPTOR;
+				// No spots, so we stop here, and switch to the detector panel
+				targetDescriptor = DetectorConfigurationPanelDescriptor.DESCRIPTOR;
 				if (!imp.isVisible())
 					imp.show();
 				echoLoadingFinished();

@@ -29,7 +29,7 @@ import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
 
 /**
- * A view for the TrackMate_ plugin, strongly inspired from the spots segmentation GUI of the Imaris® software 
+ * A view for the TrackMate_ plugin, strongly inspired from the spots detection GUI of the Imaris® software 
  * from Bitplane ({@link http://www.bitplane.com/}).
  * 
  * @author Jean-Yves Tinevez <tinevez@pasteur.fr> - September 2010 - 2011

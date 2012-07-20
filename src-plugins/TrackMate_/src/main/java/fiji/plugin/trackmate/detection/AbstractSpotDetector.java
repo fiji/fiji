@@ -11,11 +11,11 @@ import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.detection.util.MedianFilter3x3;
 
 /**
- * This abstract class for spot segmented plainly implements the {@link SpotSegmenter}
+ * This abstract class for spot segmented plainly implements the {@link SpotDetector}
  * interface and offer convenience methods and protected fields.
  * @author Jean-Yves Tinevez <jeanyves.tinevez@gmail.com> Sep 27, 2010
  */
-public abstract class AbstractSpotSegmenter <T extends RealType<T> & NativeType<T>> implements SpotSegmenter<T> {
+public abstract class AbstractSpotDetector <T extends RealType<T> & NativeType<T>> implements SpotDetector<T> {
 	
 	/*
 	 * PROTECTED FIELDS
@@ -25,18 +25,18 @@ public abstract class AbstractSpotSegmenter <T extends RealType<T> & NativeType<
 	
 	/** The image to segment. Will not modified. */
 	protected ImgPlus<T> img;
-	/** The list of {@link Spot} that will be populated by this segmenter. */
+	/** The list of {@link Spot} that will be populated by this detector. */
 	protected List<Spot> spots = new ArrayList<Spot>(); // because this implementation is fast to add elements at the end of the list
 	/** The error message generated when something goes wrong. */
 	protected String errorMessage = null;
-	/** The settings for this segmenter. Contains all parameters needed to perform segmentation
-	 * for the concrete segmenter implementation. */
-	protected SegmenterSettings<T> settings;
+	/** The settings for this detector. Contains all parameters needed to perform segmentation
+	 * for the concrete detector implementation. */
+	protected DetectorSettings<T> settings;
 	/** The processing time in ms. */
 	protected long processingTime;
 	
 	/*
-	 * SPOTSEGMENTER METHODS
+	 * SPOTDETECTOR METHODS
 	 */
 		
 	@Override
@@ -60,7 +60,7 @@ public abstract class AbstractSpotSegmenter <T extends RealType<T> & NativeType<
 	}
 		
 	@Override
-	public void setTarget(final ImgPlus<T> image, final SegmenterSettings<T> settings) {
+	public void setTarget(final ImgPlus<T> image, final DetectorSettings<T> settings) {
 		this.spots = new ArrayList<Spot>();
 		this.img = image;
 		this.settings = settings;

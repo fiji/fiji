@@ -8,7 +8,7 @@ import org.jdom.JDOMException;
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMate_;
-import fiji.plugin.trackmate.detection.DownSampleLogSegmenter;
+import fiji.plugin.trackmate.detection.DownsampleLogDetector;
 import fiji.plugin.trackmate.io.TmXmlReader;
 import fiji.plugin.trackmate.tracking.LAPTracker;
 import fiji.plugin.trackmate.tracking.LAPTrackerSettings;
@@ -26,11 +26,11 @@ public class MultiThread_TestDrive {
 		reader.parse();
 		TrackMateModel model = reader.getModel();
 
-		model.getSettings().segmenter = new DownSampleLogSegmenter();
+		model.getSettings().detector = new DownsampleLogDetector();
 		model.getSettings().trackerSettings = new LAPTrackerSettings();
 
 		System.out.println(model.getSettings());
-		System.out.println(model.getSettings().segmenterSettings);
+		System.out.println(model.getSettings().detectorSettings);
 		System.out.println(model.getSettings().trackerSettings);
 
 		TrackMate_ plugin = new TrackMate_(model);

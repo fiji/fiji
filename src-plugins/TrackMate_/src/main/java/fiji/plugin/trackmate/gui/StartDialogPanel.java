@@ -116,7 +116,7 @@ public class StartDialogPanel <T extends RealType<T> & NativeType<T>> extends Ac
 
 	@Override
 	public String getNextDescriptorID() {
-		return SegmenterChoiceDescriptor.DESCRIPTOR;
+		return DetectorChoiceDescriptor.DESCRIPTOR;
 	}
 
 	@Override
@@ -169,8 +169,8 @@ public class StartDialogPanel <T extends RealType<T> & NativeType<T>> extends Ac
 		settings.yend 	= Math.round(Float.parseFloat(jTextFieldYEnd.getText()));
 		settings.zstart = Math.round(Float.parseFloat(jTextFieldZStart.getText()));
 		settings.zend 	= Math.round(Float.parseFloat(jTextFieldZEnd.getText()));
-		// Segmentation channel
-		settings.segmentationChannel = sliderChannel.getValue(); // 1-based
+		// Detection channel
+		settings.detectionChannel = sliderChannel.getValue(); // 1-based
 		// Image info
 		settings.dx 	= Float.parseFloat(jTextFieldPixelWidth.getText());
 		settings.dy 	= Float.parseFloat(jTextFieldPixelHeight.getText());
@@ -215,9 +215,9 @@ public class StartDialogPanel <T extends RealType<T> & NativeType<T>> extends Ac
 		jTextFieldZEnd.setText(""+settings.zend);
 		jTextFieldTStart.setText(""+settings.tstart); 
 		jTextFieldTEnd.setText(""+settings.tend);
-		// Target segmentation channel
-		sliderChannel.setValue(settings.segmentationChannel);
-		labelChannel.setText(""+(settings.segmentationChannel));
+		// Target detection channel
+		sliderChannel.setValue(settings.detectionChannel);
+		labelChannel.setText(""+(settings.detectionChannel));
 	}
 
 

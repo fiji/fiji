@@ -33,7 +33,7 @@ public class GrabSpotImageAction<T extends RealType<T> & NativeType<T>> extends 
 		Logger oldLogger = model.getLogger();
 		model.setLogger(logger);
 		Settings<T> settings = model.getSettings();
-		final int targetChannel = settings.segmentationChannel - 1; // TODO: maybe be more flexible about that
+		final int targetChannel = settings.detectionChannel - 1; // TODO: maybe be more flexible about that
 		final ImgPlus<T> source = ImagePlusAdapter.wrapImgPlus(settings.imp);
 		final ImgPlus<T> imgC = HyperSliceImgPlus.fixChannelAxis(source, targetChannel);
 		

@@ -36,15 +36,15 @@ public class TmXmlKeys {
 	public static final String SETTINGS_YEND_ATTRIBUTE_NAME 		= "yend";
 	public static final String SETTINGS_ZEND_ATTRIBUTE_NAME 		= "zend";
 	public static final String SETTINGS_TEND_ATTRIBUTE_NAME 		= "tend";
-	public static final String SETTINGS_SEGMENTATION_CHANNEL_ATTRIBUTE_NAME 		= "segmentationchannel";
+	public static final String SETTINGS_DETECTION_CHANNEL_ATTRIBUTE_NAME 		= "detectionchannel";
 
 	/*
-	 * SEGMENTER SETTINGS
+	 * DETECTOR SETTINGS
 	 */
 	
-	public static final String SEGMENTER_SETTINGS_ELEMENT_KEY 			= "SegmenterSettings";
-	public static final String SEGMENTER_SETTINGS_CLASS_ATTRIBUTE_NAME 	= "segmentersettingsclass";
-	public static final String SEGMENTER_CLASS_ATTRIBUTE_NAME 			= "segmenterclass";
+	public static final String DETECTOR_SETTINGS_ELEMENT_KEY 			= "DetectorSettings";
+	public static final String DETECTOR_SETTINGS_CLASS_ATTRIBUTE_NAME 	= "detectorsettingsclass";
+	public static final String DETECTOR_CLASS_ATTRIBUTE_NAME 			= "detectorclass";
 
 	/*
 	 * TRACKER SETTINGS

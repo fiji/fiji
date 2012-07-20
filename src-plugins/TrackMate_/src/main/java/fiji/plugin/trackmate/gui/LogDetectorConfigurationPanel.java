@@ -23,15 +23,15 @@ import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
 
 import fiji.plugin.trackmate.TrackMateModel;
-import fiji.plugin.trackmate.detection.LogSegmenterSettings;
-import fiji.plugin.trackmate.detection.SegmenterSettings;
+import fiji.plugin.trackmate.detection.LogDetectorSettings;
+import fiji.plugin.trackmate.detection.DetectorSettings;
 
 /**
- * Configuration panel for spot segmenters based on LoG segmentation. 
+ * Configuration panel for spot detectors based on LoG detector. 
  * 
  * @author Jean-Yves Tinevez <jeanyves.tinevez@gmail.com> 2010 - 2011
  */
-public class LogSegmenterConfigurationPanel <T extends RealType<T> & NativeType<T>> extends SegmenterConfigurationPanel<T> {
+public class LogDetectorConfigurationPanel <T extends RealType<T> & NativeType<T>> extends DetectorConfigurationPanel<T> {
 
 	private static final long serialVersionUID = 4519313560718180405L;
 	private JLabel jLabel1;
@@ -45,15 +45,15 @@ public class LogSegmenterConfigurationPanel <T extends RealType<T> & NativeType<
 	protected JLabel jLabelBlobDiameterUnit;
 	protected JTextField jTextFieldBlobDiameter;
 	protected JCheckBox jCheckSubPixel;
-	/** The {@link LogSegmenterSettings} object set by this panel. */
-	private LogSegmenterSettings<T> settings = new LogSegmenterSettings<T>();
+	/** The {@link LogDetectorSettings} object set by this panel. */
+	private LogDetectorSettings<T> settings = new LogDetectorSettings<T>();
 
 	/*
 	 * CONSTRUCTOR
 	 */
 
 
-	public LogSegmenterConfigurationPanel() {
+	public LogDetectorConfigurationPanel() {
 		initGUI();
 	}
 
@@ -63,13 +63,13 @@ public class LogSegmenterConfigurationPanel <T extends RealType<T> & NativeType<
 
 	/**
 	 * Update the settings object given with the parameters this panel allow to tune its
-	 * {@link SegmenterSettings} field, with the sub-fields
-	 * {@link SegmenterSettings#expectedDiameter}, {@link SegmenterSettings#useMedianFilter} and
-	 * {@link SegmenterSettings#threshold}.
+	 * {@link DetectorSettings} field, with the sub-fields
+	 * {@link DetectorSettings#expectedDiameter}, {@link DetectorSettings#useMedianFilter} and
+	 * {@link DetectorSettings#threshold}.
 	 * @return  the updated Settings
 	 */
 	@Override
-	public SegmenterSettings<T> getSegmenterSettings() {
+	public DetectorSettings<T> getDetectorSettings() {
 		settings.expectedRadius = Float.parseFloat(jTextFieldBlobDiameter.getText())/2;
 		settings.threshold = Float.parseFloat(jTextFieldThreshold.getText());
 		settings.useMedianFilter = jCheckBoxMedianFilter.isSelected();
@@ -78,8 +78,8 @@ public class LogSegmenterConfigurationPanel <T extends RealType<T> & NativeType<
 	}
 
 	@Override
-	public void setSegmenterSettings(TrackMateModel<T> model) {
-		this.settings = (LogSegmenterSettings<T>) model.getSettings().segmenterSettings;
+	public void setDetectorSettings(TrackMateModel<T> model) {
+		this.settings = (LogDetectorSettings<T>) model.getSettings().detectorSettings;
 		echoSettings(model);
 	}
 
@@ -100,8 +100,8 @@ public class LogSegmenterConfigurationPanel <T extends RealType<T> & NativeType<
 
 	private void echoSettings(TrackMateModel<T> model) {
 		jLabelBlobDiameterUnit.setText(model.getSettings().spaceUnits);
-		jLabelSegmenterName.setText(model.getSettings().segmenter.toString());
-		jLabelHelpText.setText(model.getSettings().segmenter.getInfoText()
+		jLabelSegmenterName.setText(model.getSettings().detector.toString());
+		jLabelHelpText.setText(model.getSettings().detector.getInfoText()
 				.replace("<br>", "")
 				.replace("<p>", "<p align=\"justify\">")
 				.replace("<html>", "<html><p align=\"justify\">"));
@@ -127,7 +127,7 @@ public class LogSegmenterConfigurationPanel <T extends RealType<T> & NativeType<
 			{
 				jLabel1 = new JLabel();
 				this.add(jLabel1, new GridBagConstraints(0, 0, 3, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(10, 10, 0, 10), 0, 0));
-				jLabel1.setText("Settings for segmenter:");
+				jLabel1.setText("Settings for detector:");
 				jLabel1.setFont(FONT);
 			}
 			{

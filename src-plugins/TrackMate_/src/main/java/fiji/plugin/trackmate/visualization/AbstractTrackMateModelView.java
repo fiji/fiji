@@ -16,7 +16,7 @@ import fiji.plugin.trackmate.TrackMateSelectionChangeEvent;
 import fiji.plugin.trackmate.TrackMateSelectionChangeListener;
 
 /**
- * An abstract class for spot displayers, that can overlay segmented spots and tracks on top
+ * An abstract class for spot displayers, that can overlay detected spots and tracks on top
  * of the image data.
  * <p>
  * @author Jean-Yves Tinevez <jeanyves.tinevez@gmail.com> Jan 2011

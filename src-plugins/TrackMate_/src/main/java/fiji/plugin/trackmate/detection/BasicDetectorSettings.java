@@ -6,19 +6,19 @@ import net.imglib2.type.numeric.RealType;
 import org.jdom.Attribute;
 import org.jdom.Element;
 
-import fiji.plugin.trackmate.gui.BasicSegmenterConfigurationPanel;
-import fiji.plugin.trackmate.gui.SegmenterConfigurationPanel;
+import fiji.plugin.trackmate.gui.BasicDetectorConfigurationPanel;
+import fiji.plugin.trackmate.gui.DetectorConfigurationPanel;
 
 
 /**
  * A simple settings, made of only one field (the expected radius),
- * suitable for manual segmenters.
+ * suitable for manual segmentation.
  * @author Jean-Yves Tinevez <jeanyves.tinevez@gmail.com> 2011
  *
  */
-public class BasicSegmenterSettings <T extends RealType<T> & NativeType<T>> implements SegmenterSettings<T> {
+public class BasicDetectorSettings <T extends RealType<T> & NativeType<T>> implements DetectorSettings<T> {
 	
-	private static final String SEGMENTER_SETTINGS_EXPECTED_RADIUS_ATTRIBUTE_NAME 	= "expectedradius";
+	private static final String DETECTOR_SETTINGS_EXPECTED_RADIUS_ATTRIBUTE_NAME 	= "expectedradius";
 
 	private static final double DEFAULT_EXPECTED_DIAMETER	= 10;
 
@@ -38,8 +38,8 @@ public class BasicSegmenterSettings <T extends RealType<T> & NativeType<T>> impl
 	
 	
 	@Override
-	public SegmenterConfigurationPanel<T> createConfigurationPanel() {
-		return new BasicSegmenterConfigurationPanel<T>();
+	public DetectorConfigurationPanel<T> createConfigurationPanel() {
+		return new BasicDetectorConfigurationPanel<T>();
 	}
 	
 	@Override
@@ -50,7 +50,7 @@ public class BasicSegmenterSettings <T extends RealType<T> & NativeType<T>> impl
 	@Override
 	public void unmarshall(Element element) {
 		try {
-			float val = Float.parseFloat(element.getAttributeValue(SEGMENTER_SETTINGS_EXPECTED_RADIUS_ATTRIBUTE_NAME));
+			float val = Float.parseFloat(element.getAttributeValue(DETECTOR_SETTINGS_EXPECTED_RADIUS_ATTRIBUTE_NAME));
 			expectedRadius = val;
 		} catch (NumberFormatException nfe) {
 			// Do nothing. We keep the current instance settings
@@ -61,7 +61,7 @@ public class BasicSegmenterSettings <T extends RealType<T> & NativeType<T>> impl
 	 * Return a JDom attribute that contains the expected radius.
 	 */
 	protected Attribute getAttribute() {
-		Attribute att = new Attribute(SEGMENTER_SETTINGS_EXPECTED_RADIUS_ATTRIBUTE_NAME, ""+expectedRadius);
+		Attribute att = new Attribute(DETECTOR_SETTINGS_EXPECTED_RADIUS_ATTRIBUTE_NAME, ""+expectedRadius);
 		return att;
 	}
 }

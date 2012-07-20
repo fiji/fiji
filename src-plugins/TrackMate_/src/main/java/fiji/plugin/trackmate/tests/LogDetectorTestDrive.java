@@ -16,16 +16,16 @@ import net.imglib2.meta.AxisType;
 import net.imglib2.type.numeric.integer.UnsignedByteType;
 import net.imglib2.util.Util;
 import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.detection.DownSampleLogSegmenter;
-import fiji.plugin.trackmate.detection.LogSegmenterSettings;
-import fiji.plugin.trackmate.detection.SpotSegmenter;
+import fiji.plugin.trackmate.detection.DownsampleLogDetector;
+import fiji.plugin.trackmate.detection.LogDetectorSettings;
+import fiji.plugin.trackmate.detection.SpotDetector;
 
 /**
- * Test class for {@link DownSampleLogSegmenter}
+ * Test class for {@link DownsampleLogDetector}
  * @author Jean-Yves Tinevez
  *
  */
-public class LogSegmenterTestDrive {
+public class LogDetectorTestDrive {
 	
 	public static void main(String[] args) {
 
@@ -70,9 +70,9 @@ public class LogSegmenterTestDrive {
 		}
 
 		// Instantiate segmenter
-		LogSegmenterSettings<UnsignedByteType> settings = new LogSegmenterSettings<UnsignedByteType>();
+		LogDetectorSettings<UnsignedByteType> settings = new LogDetectorSettings<UnsignedByteType>();
 		settings.expectedRadius = RADIUS;
-		SpotSegmenter<UnsignedByteType> segmenter = new DownSampleLogSegmenter<UnsignedByteType>();
+		SpotDetector<UnsignedByteType> segmenter = new DownsampleLogDetector<UnsignedByteType>();
 		segmenter.setTarget(img, settings);
 		
 		// Segment

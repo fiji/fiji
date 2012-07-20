@@ -8,16 +8,16 @@ import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
 import fiji.plugin.trackmate.util.TMUtils;
 
-public class DownSampleLogSegmenter <T extends RealType<T>  & NativeType<T>> extends AbstractSpotSegmenter<T> {
+public class DownsampleLogDetector <T extends RealType<T>  & NativeType<T>> extends AbstractSpotDetector<T> {
 
-	private final static String BASE_ERROR_MESSAGE = "DownSampleLogSegmenter: ";
-	private DownSampleLogSegmenterSettings<T> settings;
+	private final static String BASE_ERROR_MESSAGE = "DownSampleLogDetector: ";
+	private DownSampleLogDetectorSettings<T> settings;
 
 	/*
 	 * CONSTRUCTORS
 	 */
 
-	public DownSampleLogSegmenter() {
+	public DownsampleLogDetector() {
 		this.baseErrorMessage = BASE_ERROR_MESSAGE;
 	}
 
@@ -25,14 +25,14 @@ public class DownSampleLogSegmenter <T extends RealType<T>  & NativeType<T>> ext
 	 * PUBLIC METHODS
 	 */
 
-	public SpotSegmenter<T> createNewSegmenter() {
-		return new DownSampleLogSegmenter<T>();
+	public SpotDetector<T> createNewDetector() {
+		return new DownsampleLogDetector<T>();
 	};
 
 	@Override
-	public void setTarget(final ImgPlus<T> image, final SegmenterSettings<T> settings) {
+	public void setTarget(final ImgPlus<T> image, final DetectorSettings<T> settings) {
 		super.setTarget(image, settings);
-		this.settings = (DownSampleLogSegmenterSettings<T>) settings;
+		this.settings = (DownSampleLogDetectorSettings<T>) settings;
 	}
 
 	@Override
@@ -41,8 +41,8 @@ public class DownSampleLogSegmenter <T extends RealType<T>  & NativeType<T>> ext
 	}
 
 	@Override
-	public SegmenterSettings<T> createDefaultSettings() {
-		return new DownSampleLogSegmenterSettings<T>();
+	public DetectorSettings<T> createDefaultSettings() {
+		return new DownSampleLogDetectorSettings<T>();
 	}
 
 
@@ -104,24 +104,24 @@ public class DownSampleLogSegmenter <T extends RealType<T>  & NativeType<T>> ext
 		// 2. Segment downsampled image
 
 		// 2.1. Create settings object
-		LogSegmenterSettings<T> logSettings = new LogSegmenterSettings<T>();
+		LogDetectorSettings<T> logSettings = new LogDetectorSettings<T>();
 		logSettings.expectedRadius = settings.expectedRadius; 
 		logSettings.threshold = settings.threshold;
 		logSettings.doSubPixelLocalization = true;;
 		logSettings.useMedianFilter = settings.useMedianFilter;
 
-		// 2.2 Instantiate segmenter
-		LogSegmenter<T> segmenter = new LogSegmenter<T>();
-		segmenter.setTarget(dsimg, logSettings);
+		// 2.2 Instantiate detector
+		LogDetector<T> detector = new LogDetector<T>();
+		detector.setTarget(dsimg, logSettings);
 
-		// 2.3 Execute segmentation
-		if (!segmenter.checkInput() || !segmenter.process()) {
-			errorMessage = BASE_ERROR_MESSAGE + segmenter.getErrorMessage();
+		// 2.3 Execute detection
+		if (!detector.checkInput() || !detector.process()) {
+			errorMessage = BASE_ERROR_MESSAGE + detector.getErrorMessage();
 			return false;
 		}
 		
 		// 3. Benefits
-		spots = segmenter.getResult();
+		spots = detector.getResult();
 		
 		return true;
 	}
@@ -129,7 +129,7 @@ public class DownSampleLogSegmenter <T extends RealType<T>  & NativeType<T>> ext
 	@Override
 	public String getInfoText() {
 		return "<html>" +
-				"This segmenter is basically identical to the LoG segmenter, except <br>" +
+				"This detector is basically identical to the LoG detector, except <br>" +
 				"that images are downsampled before filtering, giving it a good <br>" +
 				"kick in speed, particularly for large spot sizes. It is the fastest for <br>" +
 				"large spot sizes (>&nbsp;~20 pixels), at the cost of precision in localization. " +
@@ -138,7 +138,7 @@ public class DownSampleLogSegmenter <T extends RealType<T>  & NativeType<T>> ext
 
 	@Override
 	public String toString() {
-		return "Downsampled LoG segmenter";
+		return "Downsampled LoG detector";
 	}
 
 }

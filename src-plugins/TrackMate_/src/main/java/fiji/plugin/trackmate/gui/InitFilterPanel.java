@@ -42,7 +42,7 @@ public class InitFilterPanel <T extends RealType<T> & NativeType<T>> extends Act
 			"time in the case of a very large number of spots. " +
 			"<br/> " +
 			"Warning: the spot filtered here will be discarded: they will not be saved " +
-			"and cannot be retrieved by any other means than re-doing the segmentation " +
+			"and cannot be retrieved by any other means than re-doing the detection " +
 			"step." +
 			"</html>";
 	private static final String SELECTED_SPOT_STRING = "Selected spots: %d out of %d";
@@ -116,7 +116,7 @@ public class InitFilterPanel <T extends RealType<T> & NativeType<T>> extends Act
 
 	@Override
 	public String getPreviousDescriptorID() {
-		return SegmentationDescriptor.DESCRIPTOR;
+		return DetectorDescriptor.DESCRIPTOR;
 	}
 
 	@Override

@@ -60,7 +60,7 @@ public class TrackVisualizerTestDrive {
 			
 		ImagePlus imp = reader.getImage();
 		Settings<T> settings = reader.getSettings();
-		reader.getSegmenterSettings(settings);
+		reader.getDetectorSettings(settings);
 		settings.imp = imp;
 		
 		// Launch ImageJ and display

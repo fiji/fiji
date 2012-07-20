@@ -52,7 +52,7 @@ public interface Spot extends RealPositionable, RealLocalizable {
 
 	/** The position features. */
 	public final static String[] POSITION_FEATURES = TMUtils.POSITION_FEATURES;
-	/** The 6 privileged spot features that must be set by a spot segmenter. */
+	/** The 6 privileged spot features that must be set by a spot detector. */
 	public final static Collection<String> FEATURES = TMUtils.FEATURES;
 	/** The 6 privileged spot feature names. */
 	public final static Map<String, String> FEATURE_NAMES = TMUtils.FEATURE_NAMES;

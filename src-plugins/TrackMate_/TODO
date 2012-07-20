@@ -39,7 +39,7 @@ Features:
 - Implement edge features. Maybe not.
 
 
-Segmenting:
+Detection:
 - Implement the C.elegans algo from Santella et al 2010.
 - Implement an algorithm to segment cell imaged in phase-contrast.
 

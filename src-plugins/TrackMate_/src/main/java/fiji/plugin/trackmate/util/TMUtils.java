@@ -74,7 +74,7 @@ public class TMUtils {
 
 	/** The position features. */
 	public final static String[] POSITION_FEATURES = new String[] { POSITION_X, POSITION_Y, POSITION_Z };
-	/** The 6 privileged spot features that must be set by a spot segmenter. */
+	/** The 6 privileged spot features that must be set by a spot detector. */
 	public final static Collection<String> FEATURES = new ArrayList<String>(6);
 	/** The 6 privileged spot feature names. */
 	public final static Map<String, String> FEATURE_NAMES = new HashMap<String, String>(6);

@@ -3,11 +3,11 @@ package fiji.plugin.trackmate.detection;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
 
-public class ManualSegmenter <T extends RealType<T>  & NativeType<T>> extends AbstractSpotSegmenter<T> {
+public class ManualDetector <T extends RealType<T>  & NativeType<T>> extends AbstractSpotDetector<T> {
 
 	@Override
-	public SegmenterSettings<T> createDefaultSettings() {
-		return new BasicSegmenterSettings<T>();
+	public DetectorSettings<T> createDefaultSettings() {
+		return new BasicDetectorSettings<T>();
 	}
 
 	@Override
@@ -18,7 +18,7 @@ public class ManualSegmenter <T extends RealType<T>  & NativeType<T>> extends Ab
 	@Override
 	public String getInfoText() {
 		return "<html>" +
-				"Selecting this will skip the automatic segmentation phase, and jump directly <br>" +
+				"Selecting this will skip the automatic detection phase, and jump directly <br>" +
 				"to manual segmentation. A default spot size will be asked for. " +
 				"</html>";
 	}
@@ -29,8 +29,8 @@ public class ManualSegmenter <T extends RealType<T>  & NativeType<T>> extends Ab
 	}
 	
 	@Override
-	public SpotSegmenter<T> createNewSegmenter() {
-		return new ManualSegmenter<T>();
+	public SpotDetector<T> createNewDetector() {
+		return new ManualDetector<T>();
 	}
 	
 }

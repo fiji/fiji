@@ -9,7 +9,7 @@ import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.TrackMate_;
 
-public class SegmentationDescriptor <T extends RealType<T> & NativeType<T>> implements WizardPanelDescriptor<T> {
+public class DetectorDescriptor <T extends RealType<T> & NativeType<T>> implements WizardPanelDescriptor<T> {
 	
 	public static final String DESCRIPTOR = "SegmentationPanel";
 	protected LogPanel logPanel;
@@ -52,7 +52,7 @@ public class SegmentationDescriptor <T extends RealType<T> & NativeType<T>> impl
 
 	@Override
 	public String getPreviousDescriptorID() {
-		return SegmenterConfigurationPanelDescriptor.DESCRIPTOR;
+		return DetectorConfigurationPanelDescriptor.DESCRIPTOR;
 	}
 
 	@Override
@@ -62,15 +62,15 @@ public class SegmentationDescriptor <T extends RealType<T> & NativeType<T>> impl
 	public void displayingPanel() {
 		wizard.setNextButtonEnabled(false);
 		final Settings<T> settings = plugin.getModel().getSettings();
-		logger.log("Starting segmentation using "+settings.segmenter.toString()+"\n", Logger.BLUE_COLOR);
+		logger.log("Starting segmentation using "+settings.detector.toString()+"\n", Logger.BLUE_COLOR);
 		logger.log("with settings:\n");
 		logger.log(settings.toString());
-		logger.log(settings.segmenterSettings.toString());
+		logger.log(settings.detectorSettings.toString());
 		new Thread("TrackMate segmentation mother thread") {					
 			public void run() {
 				long start = System.currentTimeMillis();
 				try {
-					plugin.execSegmentation();
+					plugin.execDetection();
 				} catch (Exception e) {
 					logger.error("An error occured:\n"+e+'\n');
 					e.printStackTrace(logger);

@@ -28,8 +28,8 @@ import org.jgrapht.graph.DefaultWeightedEdge;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotImp;
 import fiji.plugin.trackmate.TrackMateModel;
-import fiji.plugin.trackmate.detection.BasicSegmenterSettings;
-import fiji.plugin.trackmate.detection.SegmenterSettings;
+import fiji.plugin.trackmate.detection.BasicDetectorSettings;
+import fiji.plugin.trackmate.detection.DetectorSettings;
 import fiji.tool.AbstractTool;
 
 public class SpotEditTool<T extends RealType<T> & NativeType<T>> extends AbstractTool implements MouseMotionListener, MouseListener, MouseWheelListener, KeyListener {
@@ -192,9 +192,9 @@ public class SpotEditTool<T extends RealType<T> & NativeType<T>> extends Abstrac
 				if (null != target && null != target.getFeature(Spot.RADIUS)) {
 					radius = target.getFeature(Spot.RADIUS);
 				} else {
-					SegmenterSettings<T> ss = displayer.settings.segmenterSettings;
-					if (ss instanceof BasicSegmenterSettings) {
-						radius = ((BasicSegmenterSettings<T>)displayer.settings.segmenterSettings).expectedRadius;
+					DetectorSettings<T> ss = displayer.settings.detectorSettings;
+					if (ss instanceof BasicDetectorSettings) {
+						radius = ((BasicDetectorSettings<T>)displayer.settings.detectorSettings).expectedRadius;
 					} else {
 						radius = FALL_BACK_RADIUS;
 					}
@@ -414,9 +414,9 @@ public class SpotEditTool<T extends RealType<T> & NativeType<T>> extends Abstrac
 				if (null != previousRadius) {
 					radius = previousRadius; 
 				} else { 
-					SegmenterSettings<T> ss = displayer.settings.segmenterSettings;
-					if (ss instanceof BasicSegmenterSettings) {
-						radius = ( (BasicSegmenterSettings<T>) displayer.settings.segmenterSettings ).expectedRadius;
+					DetectorSettings<T> ss = displayer.settings.detectorSettings;
+					if (ss instanceof BasicDetectorSettings) {
+						radius = ( (BasicDetectorSettings<T>) displayer.settings.detectorSettings ).expectedRadius;
 					} else {
 						radius = FALL_BACK_RADIUS;
 					}

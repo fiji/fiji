@@ -8,8 +8,8 @@ import net.imglib2.type.numeric.RealType;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.TrackMate_;
-import fiji.plugin.trackmate.detection.BasicSegmenterSettings;
-import fiji.plugin.trackmate.detection.SegmenterSettings;
+import fiji.plugin.trackmate.detection.BasicDetectorSettings;
+import fiji.plugin.trackmate.detection.DetectorSettings;
 import fiji.plugin.trackmate.gui.DisplayerPanel;
 
 public class ResetRadiusAction<T extends RealType<T> & NativeType<T>> extends AbstractTMAction<T> {
@@ -23,10 +23,10 @@ public class ResetRadiusAction<T extends RealType<T> & NativeType<T>> extends Ab
 	
 	@Override
 	public void execute(final TrackMate_<T> plugin) {
-		final SegmenterSettings<T> segSettings = plugin.getModel().getSettings().segmenterSettings;
+		final DetectorSettings<T> segSettings = plugin.getModel().getSettings().detectorSettings;
 		final double radius;
-		if (segSettings instanceof BasicSegmenterSettings) {
-			radius = ((BasicSegmenterSettings<T>) segSettings).expectedRadius;
+		if (segSettings instanceof BasicDetectorSettings) {
+			radius = ((BasicDetectorSettings<T>) segSettings).expectedRadius;
 		} else {
 			radius = FALL_BACK_RADIUS;
 			logger.error("Could not determine expected radius from settings. Falling back to "+FALL_BACK_RADIUS+" "
@@ -45,7 +45,7 @@ public class ResetRadiusAction<T extends RealType<T> & NativeType<T>> extends Ab
 	public String getInfoText() {
 		return "<html>" +
 				"This action resets the radius of all retained spots back to the value <br> " +
-				"given in the segmenter settings. " +
+				"given in the detector settings. " +
 				"</html>";
 	}
 	

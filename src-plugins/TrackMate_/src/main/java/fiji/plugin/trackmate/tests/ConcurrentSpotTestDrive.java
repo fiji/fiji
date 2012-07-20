@@ -5,8 +5,8 @@ import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.SpotImp;
 import fiji.plugin.trackmate.TrackMate_;
-import fiji.plugin.trackmate.detection.LogSegmenter;
-import fiji.plugin.trackmate.detection.LogSegmenterSettings;
+import fiji.plugin.trackmate.detection.LogDetector;
+import fiji.plugin.trackmate.detection.LogDetectorSettings;
 import ij.ImagePlus;
 import ij.gui.NewImage;
 
@@ -35,16 +35,16 @@ public class ConcurrentSpotTestDrive {
 		
 		// Make settings
 		Settings settings = new Settings(imp);
-		settings.segmenter = new LogSegmenter();
-		LogSegmenterSettings dss = new LogSegmenterSettings();
+		settings.detector = new LogDetector();
+		LogDetectorSettings dss = new LogDetectorSettings();
 		dss.expectedRadius = 2f;
-		settings.segmenterSettings = dss;
+		settings.detectorSettings = dss;
 
 		// Instantiate plugin
 		TrackMate_ plugin = new TrackMate_(settings);
 		
-		// Execute segmentation
-		plugin.execSegmentation();
+		// Execute detection
+		plugin.execDetection();
 		
 		// Retrieve spots
 		SpotCollection spots = plugin.getModel().getSpots();

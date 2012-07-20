@@ -35,7 +35,7 @@ public class SpotImageUpdater <T extends RealType<T> & NativeType<T>> {
 		} else {
 			Settings<T> settings = model.getSettings();
 			ImgPlus<T> img = ImagePlusAdapter.wrapImgPlus(settings.imp);
-			int targetChannel = settings.segmentationChannel - 1; // TODO: be more flexible about that
+			int targetChannel = settings.detectionChannel - 1; // TODO: be more flexible about that
 			ImgPlus<T> imgCT = HyperSliceImgPlus.fixTimeAxis( 
 					HyperSliceImgPlus.fixChannelAxis(img, targetChannel), 
 					frame);

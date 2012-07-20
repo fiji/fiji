@@ -13,9 +13,9 @@ import net.imglib2.type.numeric.RealType;
 
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.gui.JNumericTextField;
-import fiji.plugin.trackmate.gui.LogSegmenterConfigurationPanel;
+import fiji.plugin.trackmate.gui.LogDetectorConfigurationPanel;
 
-public class DownSampleLogSegmenterConfigurationPanel <T extends RealType<T>  & NativeType<T>> extends LogSegmenterConfigurationPanel<T> {
+public class DownSampleLogDetectorConfigurationPanel <T extends RealType<T>  & NativeType<T>> extends LogDetectorConfigurationPanel<T> {
 
 	private static final long serialVersionUID = 3840748523863902343L;
 	private JLabel jLabelDownSample;
@@ -48,20 +48,20 @@ public class DownSampleLogSegmenterConfigurationPanel <T extends RealType<T>  & 
 	}
 	
 	@Override
-	public SegmenterSettings<T> getSegmenterSettings() {
-		LogSegmenterSettings<T> lss = (LogSegmenterSettings<T>) super.getSegmenterSettings();
-		DownSampleLogSegmenterSettings<T> dss = copyToDSLSS(lss);
+	public DetectorSettings<T> getDetectorSettings() {
+		LogDetectorSettings<T> lss = (LogDetectorSettings<T>) super.getDetectorSettings();
+		DownSampleLogDetectorSettings<T> dss = copyToDSLSS(lss);
 		dss.downSamplingFactor = Integer.parseInt(jTextFieldDownSample.getText());
 		return dss;
 	}
 	
 	@Override
-	public void setSegmenterSettings(TrackMateModel<T> model) {
-		DownSampleLogSegmenterSettings<T> settings = (DownSampleLogSegmenterSettings<T>) model.getSettings().segmenterSettings;
+	public void setDetectorSettings(TrackMateModel<T> model) {
+		DownSampleLogDetectorSettings<T> settings = (DownSampleLogDetectorSettings<T>) model.getSettings().detectorSettings;
 		
 		jLabelBlobDiameterUnit.setText(model.getSettings().spaceUnits);
-		jLabelSegmenterName.setText(model.getSettings().segmenter.toString());
-		jLabelHelpText.setText(model.getSettings().segmenter.getInfoText().replace("<br>", "").replace("<html>", "<html><p align=\"justify\">"));
+		jLabelSegmenterName.setText(model.getSettings().detector.toString());
+		jLabelHelpText.setText(model.getSettings().detector.getInfoText().replace("<br>", "").replace("<html>", "<html><p align=\"justify\">"));
 		
 		jTextFieldBlobDiameter.setText(""+(2*settings.expectedRadius));
 		jCheckBoxMedianFilter.setSelected(settings.useMedianFilter);
@@ -70,16 +70,16 @@ public class DownSampleLogSegmenterConfigurationPanel <T extends RealType<T>  & 
 	}
 	
 
-	public static <T extends RealType<T>  & NativeType<T>> DownSampleLogSegmenterSettings<T> copyToDSLSS(LogSegmenterSettings<T> lss) {
-		DownSampleLogSegmenterSettings<T> dss = new DownSampleLogSegmenterSettings<T>();
+	public static <T extends RealType<T>  & NativeType<T>> DownSampleLogDetectorSettings<T> copyToDSLSS(LogDetectorSettings<T> lss) {
+		DownSampleLogDetectorSettings<T> dss = new DownSampleLogDetectorSettings<T>();
 		dss.expectedRadius 	= lss.expectedRadius;
 		dss.threshold		= lss.threshold;
 		dss.useMedianFilter	= lss.useMedianFilter;
 		return dss;
 	}
 	
-	public static <T extends RealType<T>  & NativeType<T>> LogSegmenterSettings<T> copyToLSS(DownSampleLogSegmenterSettings<T> dss) {
-		LogSegmenterSettings<T> lss = new LogSegmenterSettings<T>();
+	public static <T extends RealType<T>  & NativeType<T>> LogDetectorSettings<T> copyToLSS(DownSampleLogDetectorSettings<T> dss) {
+		LogDetectorSettings<T> lss = new LogDetectorSettings<T>();
 		lss.expectedRadius 	= dss.expectedRadius;
 		lss.threshold		= dss.threshold;
 		lss.useMedianFilter	= dss.useMedianFilter;

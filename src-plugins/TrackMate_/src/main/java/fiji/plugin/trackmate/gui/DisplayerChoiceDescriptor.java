@@ -6,7 +6,7 @@ import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
 
 import fiji.plugin.trackmate.TrackMate_;
-import fiji.plugin.trackmate.detection.ManualSegmenter;
+import fiji.plugin.trackmate.detection.ManualDetector;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
 
 public class DisplayerChoiceDescriptor<T extends RealType<T> & NativeType<T>> implements WizardPanelDescriptor<T> {
@@ -47,8 +47,8 @@ public class DisplayerChoiceDescriptor<T extends RealType<T> & NativeType<T>> im
 
 	@Override
 	public String getPreviousDescriptorID() {
-		if (plugin.getModel().getSettings().segmenter.getClass() == ManualSegmenter.class) {
-			return SegmenterConfigurationPanelDescriptor.DESCRIPTOR;
+		if (plugin.getModel().getSettings().detector.getClass() == ManualDetector.class) {
+			return DetectorConfigurationPanelDescriptor.DESCRIPTOR;
 		} else {
 			return InitFilterPanel.DESCRIPTOR;
 		}

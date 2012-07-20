@@ -256,7 +256,7 @@ public class SpotDisplayer3D <T extends RealType<T> & NativeType<T>> extends Abs
 				"<p>" +
 				"This displayer does not allow manual editing of spots. Use it only for <br>" +
 				"for very specific cases where you need to have a good 3D image to judge <br>" +
-				"the quality of segmentation and tracking. If you don't, use the hyperstack <br>" +
+				"the quality of detection and tracking. If you don't, use the hyperstack <br>" +
 				"displayer; you can generate a 3D viewer at the last step of tracking that will <br>" +
 				"be in sync with the hyperstack displayer. " +
 				"</html>"; 

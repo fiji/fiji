@@ -21,20 +21,20 @@ import fiji.plugin.trackmate.detection.subpixel.SubPixelLocalization;
 import fiji.plugin.trackmate.detection.subpixel.SubPixelLocalization.LocationType;
 import fiji.plugin.trackmate.util.TMUtils;
 
-public class LogSegmenter <T extends RealType<T>  & NativeType<T>> extends AbstractSpotSegmenter<T> {
+public class LogDetector <T extends RealType<T>  & NativeType<T>> extends AbstractSpotDetector<T> {
 
 	/*
 	 * FIELDS
 	 */
 
-	private final static String BASE_ERROR_MESSAGE = "LogSegmenter: ";
-	private LogSegmenterSettings<T> settings;
+	private final static String BASE_ERROR_MESSAGE = "LogDetector: ";
+	private LogDetectorSettings<T> settings;
 
 	/*
 	 * CONSTRUCTORS
 	 */
 
-	public LogSegmenter() {
+	public LogDetector() {
 		baseErrorMessage = BASE_ERROR_MESSAGE;
 	}
 
@@ -43,19 +43,19 @@ public class LogSegmenter <T extends RealType<T>  & NativeType<T>> extends Abstr
 	 */
 
 	@Override
-	public SpotSegmenter<T> createNewSegmenter() {
-		return new LogSegmenter<T>();
+	public SpotDetector<T> createNewDetector() {
+		return new LogDetector<T>();
 	}
 
 	@Override
-	public void setTarget(ImgPlus<T> image, SegmenterSettings<T> settings) {
+	public void setTarget(ImgPlus<T> image, DetectorSettings<T> settings) {
 		super.setTarget(image, settings);
-		this.settings = (LogSegmenterSettings<T>) settings;
+		this.settings = (LogDetectorSettings<T>) settings;
 	}
 
 	@Override
-	public SegmenterSettings<T> createDefaultSettings() {
-		return new LogSegmenterSettings<T>();
+	public DetectorSettings<T> createDefaultSettings() {
+		return new LogDetectorSettings<T>();
 	}
 
 	@Override
@@ -135,9 +135,9 @@ public class LogSegmenter <T extends RealType<T>  & NativeType<T>> extends Abstr
 
 		// Do sub-pixel localization
 		if (settings.doSubPixelLocalization ) {
-			// Create localizer and apply it to the list. The list obbejct will be updated
+			// Create localizer and apply it to the list. The list object will be updated
 			final QuadraticSubpixelLocalization<T> locator = new QuadraticSubpixelLocalization<T>(intermediateImage, peaks);
-			locator.setNumThreads(1); // Since the calls to a segmenter  are already multi-threaded.
+			locator.setNumThreads(1); // Since the calls to a detector  are already multi-threaded.
 			locator.setCanMoveOutside(true);
 			if ( !locator.checkInput() || !locator.process() )	{
 				errorMessage = baseErrorMessage + locator.getErrorMessage();
@@ -166,7 +166,7 @@ public class LogSegmenter <T extends RealType<T>  & NativeType<T>> extends Abstr
 	@Override
 	public String getInfoText() {
 		return "<html>" +
-				"This segmenter applies a LoG (Laplacian of Gaussian) filter <br>" +
+				"This detector applies a LoG (Laplacian of Gaussian) filter <br>" +
 				"to the image, with a sigma suited to the blob estimated size. <br>" +
 				"Calculations are made in the Fourier space. The maxima in the <br>" +
 				"filtered image are searched for, and maxima too close from each <br>" +
@@ -177,7 +177,7 @@ public class LogSegmenter <T extends RealType<T>  & NativeType<T>> extends Abstr
 
 	@Override
 	public String toString() {
-		return "LoG segmenter";
+		return "LoG detector";
 	}
 
 	/*
