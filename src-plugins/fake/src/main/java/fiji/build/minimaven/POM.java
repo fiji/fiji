@@ -122,8 +122,8 @@ public class POM extends DefaultHandler implements Comparable<POM> {
 		List<String> notUpToDates = new ArrayList<String>();
 		long lastModified = addRecursively(notUpToDates, source, ".java", target, ".class", false);
 		int count = notUpToDates.size();
-		if (count == 0)
-			return true;
+		if (count > 0)
+			return false;
 		long lastModified2 = updateRecursively(new File(source.getParentFile(), "resources"), target, true);
 		if (lastModified < lastModified2)
 			lastModified = lastModified2;
@@ -279,7 +279,7 @@ public class POM extends DefaultHandler implements Comparable<POM> {
 				long lastModified2 = file.lastModified();
 				if (lastModified < lastModified2)
 					lastModified = lastModified2;
-				if (!includeUpToDates || !targetFile.exists() || targetFile.lastModified() < lastModified2)
+				if (includeUpToDates || !targetFile.exists() || targetFile.lastModified() < lastModified2)
 					list.add(file.getPath());
 			}
 		return lastModified;
