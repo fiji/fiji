@@ -21,10 +21,16 @@ import fiji.plugin.trackmate.visualization.threedviewer.SpotDisplayer3D;
 
 public class CopyOverlayAction<T extends RealType<T> & NativeType<T>> extends AbstractTMAction<T> {
 
-	private static final ImageIcon COPY_OVERLAY_ICON = new ImageIcon(DisplayerPanel.class.getResource("images/page_copy.png"));
+	public static final ImageIcon ICON = new ImageIcon(DisplayerPanel.class.getResource("images/page_copy.png"));
+	public static final String NAME = "Copy overlay to...";
+	public static final String INFO_TEXT = "<html>" +
+			"This action copies the overlay (spots and tracks) to a new existing ImageJ window <br> " +
+			"or to a new 3D viewer window. This can be useful to have the tracks and spots <br> " +
+			"displayed on a modified image. <br> " +
+			"</html>" ;
 	
 	public CopyOverlayAction() {
-		icon = COPY_OVERLAY_ICON;
+		icon = ICON;
 	}	
 	
 	@Override
@@ -82,16 +88,12 @@ public class CopyOverlayAction<T extends RealType<T> & NativeType<T>> extends Ab
 
 	@Override
 	public String getInfoText() {
-		return "<html>" +
-			"This action copies the overlay (spots and tracks) to a new existing ImageJ window <br> " +
-			"or to a new 3D viewer window. This can be useful to have the tracks and spots <br> " +
-			"displayed on a modified image. <br> " +
-			"</html>" ;
+		return INFO_TEXT;
 	}
 	
 	@Override
 	public String toString() {
-		return "Copy overlay to...";
+		return NAME;
 	}
 
 }

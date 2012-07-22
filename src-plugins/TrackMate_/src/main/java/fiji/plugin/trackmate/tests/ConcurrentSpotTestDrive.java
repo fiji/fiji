@@ -35,7 +35,7 @@ public class ConcurrentSpotTestDrive {
 		
 		// Make settings
 		Settings settings = new Settings(imp);
-		settings.detector = new LogDetector();
+		settings.detector = LogDetector.NAME; 
 		LogDetectorSettings dss = new LogDetectorSettings();
 		dss.expectedRadius = 2f;
 		settings.detectorSettings = dss;

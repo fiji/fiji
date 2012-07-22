@@ -11,6 +11,13 @@ import fiji.plugin.trackmate.util.TMUtils;
 public class DownsampleLogDetector <T extends RealType<T>  & NativeType<T>> extends AbstractSpotDetector<T> {
 
 	private final static String BASE_ERROR_MESSAGE = "DownSampleLogDetector: ";
+	public static final String NAME =  "Downsampled LoG detector";
+	public static final String INFO_TEXT = "<html>" +
+			"This detector is basically identical to the LoG detector, except <br>" +
+			"that images are downsampled before filtering, giving it a good <br>" +
+			"kick in speed, particularly for large spot sizes. It is the fastest for <br>" +
+			"large spot sizes (>&nbsp;~20 pixels), at the cost of precision in localization. " +
+			"</html>";
 	private DownSampleLogDetectorSettings<T> settings;
 
 	/*
@@ -25,10 +32,6 @@ public class DownsampleLogDetector <T extends RealType<T>  & NativeType<T>> exte
 	 * PUBLIC METHODS
 	 */
 
-	public SpotDetector<T> createNewDetector() {
-		return new DownsampleLogDetector<T>();
-	};
-
 	@Override
 	public void setTarget(final ImgPlus<T> image, final DetectorSettings<T> settings) {
 		super.setTarget(image, settings);
@@ -39,12 +42,6 @@ public class DownsampleLogDetector <T extends RealType<T>  & NativeType<T>> exte
 	public boolean checkInput() {
 		return super.checkInput();
 	}
-
-	@Override
-	public DetectorSettings<T> createDefaultSettings() {
-		return new DownSampleLogDetectorSettings<T>();
-	}
-
 
 	/*
 	 * ALGORITHM METHODS
@@ -128,17 +125,12 @@ public class DownsampleLogDetector <T extends RealType<T>  & NativeType<T>> exte
 
 	@Override
 	public String getInfoText() {
-		return "<html>" +
-				"This detector is basically identical to the LoG detector, except <br>" +
-				"that images are downsampled before filtering, giving it a good <br>" +
-				"kick in speed, particularly for large spot sizes. It is the fastest for <br>" +
-				"large spot sizes (>&nbsp;~20 pixels), at the cost of precision in localization. " +
-				"</html>";
+		return INFO_TEXT;
 	}
 
 	@Override
 	public String toString() {
-		return "Downsampled LoG detector";
+		return NAME;
 	}
 
 }

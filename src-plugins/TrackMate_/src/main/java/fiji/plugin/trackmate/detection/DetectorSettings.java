@@ -6,7 +6,6 @@ import net.imglib2.type.numeric.RealType;
 import org.jdom.Attribute;
 import org.jdom.Element;
 
-import fiji.plugin.trackmate.gui.DetectorConfigurationPanel;
 import fiji.plugin.trackmate.io.TmXmlKeys;
 
 /** 
@@ -27,11 +26,6 @@ import fiji.plugin.trackmate.io.TmXmlKeys;
  */
 public interface DetectorSettings <T extends RealType<T> & NativeType<T>> {
 
-	/**
-	 * @return  an GUI panel that is able to configure this concrete settings object.
-	 */
-	public DetectorConfigurationPanel<T> createConfigurationPanel();
-	
 	/**
 	 * Marshall this concrete instance to a JDom element, ready for saving to XML.
 	 * <p>

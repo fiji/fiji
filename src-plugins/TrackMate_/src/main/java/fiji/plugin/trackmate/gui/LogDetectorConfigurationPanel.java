@@ -23,6 +23,7 @@ import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
 
 import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.detection.LogDetector;
 import fiji.plugin.trackmate.detection.LogDetectorSettings;
 import fiji.plugin.trackmate.detection.DetectorSettings;
 
@@ -101,7 +102,7 @@ public class LogDetectorConfigurationPanel <T extends RealType<T> & NativeType<T
 	private void echoSettings(TrackMateModel<T> model) {
 		jLabelBlobDiameterUnit.setText(model.getSettings().spaceUnits);
 		jLabelSegmenterName.setText(model.getSettings().detector.toString());
-		jLabelHelpText.setText(model.getSettings().detector.getInfoText()
+		jLabelHelpText.setText(LogDetector.INFO_TEXT
 				.replace("<br>", "")
 				.replace("<p>", "<p align=\"justify\">")
 				.replace("<html>", "<html><p align=\"justify\">"));

@@ -13,7 +13,12 @@ import fiji.plugin.trackmate.gui.DisplayerPanel;
 
 public class RadiusToEstimatedAction<T extends RealType<T> & NativeType<T>> extends AbstractTMAction<T> {
 
-	private static final ImageIcon ICON = new ImageIcon(DisplayerPanel.class.getResource("images/lightbulb.png"));
+	public static final ImageIcon ICON = new ImageIcon(DisplayerPanel.class.getResource("images/lightbulb.png"));
+	public static final String NAME = "Set radius to estimated value";
+	public static final String INFO_TEXT =  "<html>" +
+				"This action changes the radius feature of all retained spots <br> " +
+				"to its estimated value, calculated with the radius estimator <br> " +
+				"</html>" ;
 	
 	public RadiusToEstimatedAction() {
 		this.icon = ICON;
@@ -21,15 +26,12 @@ public class RadiusToEstimatedAction<T extends RealType<T> & NativeType<T>> exte
 	
 	@Override
 	public String getInfoText() {
-		return "<html>" +
-				"This action changes the radius feature of all retained spots <br> " +
-				"to its estimated value, calculated with the radius estimator <br> " +
-				"</html>" ;
+		return INFO_TEXT;
 	}
 	
 	@Override
 	public String toString() {
-		return "Set radius to estimated value";
+		return NAME;
 	}
 
 	@Override

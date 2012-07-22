@@ -61,7 +61,7 @@ public class DownSampleLogDetectorConfigurationPanel <T extends RealType<T>  & N
 		
 		jLabelBlobDiameterUnit.setText(model.getSettings().spaceUnits);
 		jLabelSegmenterName.setText(model.getSettings().detector.toString());
-		jLabelHelpText.setText(model.getSettings().detector.getInfoText().replace("<br>", "").replace("<html>", "<html><p align=\"justify\">"));
+		jLabelHelpText.setText(DownsampleLogDetector.INFO_TEXT.replace("<br>", "").replace("<html>", "<html><p align=\"justify\">"));
 		
 		jTextFieldBlobDiameter.setText(""+(2*settings.expectedRadius));
 		jCheckBoxMedianFilter.setSelected(settings.useMedianFilter);

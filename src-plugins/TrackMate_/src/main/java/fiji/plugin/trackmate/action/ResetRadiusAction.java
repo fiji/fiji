@@ -14,7 +14,12 @@ import fiji.plugin.trackmate.gui.DisplayerPanel;
 
 public class ResetRadiusAction<T extends RealType<T> & NativeType<T>> extends AbstractTMAction<T> {
 
-	private static final ImageIcon ICON = new ImageIcon(DisplayerPanel.class.getResource("images/lightbulb_off.png"));
+	public static final ImageIcon ICON = new ImageIcon(DisplayerPanel.class.getResource("images/lightbulb_off.png"));
+	public static final String NAME = null;
+	public static final String INFO_TEXT = "<html>" +
+				"This action resets the radius of all retained spots back to the value <br> " +
+				"given in the detector settings. " +
+				"</html>";
 	private static final float FALL_BACK_RADIUS = 5;
 
 	public ResetRadiusAction() {
@@ -43,14 +48,11 @@ public class ResetRadiusAction<T extends RealType<T> & NativeType<T>> extends Ab
 
 	@Override
 	public String getInfoText() {
-		return "<html>" +
-				"This action resets the radius of all retained spots back to the value <br> " +
-				"given in the detector settings. " +
-				"</html>";
+		return INFO_TEXT;
 	}
 	
 	@Override
 	public String toString() {
-		return "Reset radius to expected value";
+		return NAME;
 	}
 }

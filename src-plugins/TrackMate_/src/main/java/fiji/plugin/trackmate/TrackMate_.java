@@ -1,20 +1,6 @@
 package fiji.plugin.trackmate;
 
-import fiji.plugin.trackmate.action.CaptureOverlayAction;
-import fiji.plugin.trackmate.action.CopyOverlayAction;
-import fiji.plugin.trackmate.action.ExportTracksToXML;
-import fiji.plugin.trackmate.action.ExtractTrackStackAction;
-import fiji.plugin.trackmate.action.GrabSpotImageAction;
-import fiji.plugin.trackmate.action.LinkNew3DViewerAction;
-import fiji.plugin.trackmate.action.PlotNSpotsVsTimeAction;
-import fiji.plugin.trackmate.action.RadiusToEstimatedAction;
-import fiji.plugin.trackmate.action.RecalculateFeatureAction;
-import fiji.plugin.trackmate.action.ResetRadiusAction;
-import fiji.plugin.trackmate.action.ResetSpotTimeFeatureAction;
 import fiji.plugin.trackmate.action.TrackMateAction;
-import fiji.plugin.trackmate.detection.DownsampleLogDetector;
-import fiji.plugin.trackmate.detection.LogDetector;
-import fiji.plugin.trackmate.detection.ManualDetector;
 import fiji.plugin.trackmate.detection.SpotDetector;
 import fiji.plugin.trackmate.features.spot.BlobContrastAndSNR;
 import fiji.plugin.trackmate.features.spot.BlobDescriptiveStatistics;
@@ -31,8 +17,7 @@ import fiji.plugin.trackmate.tracking.SpotTracker;
 import fiji.plugin.trackmate.tracking.kdtree.NearestNeighborTracker;
 import fiji.plugin.trackmate.util.TMUtils;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
-import fiji.plugin.trackmate.visualization.hyperstack.HyperStackDisplayer;
-import fiji.plugin.trackmate.visualization.threedviewer.SpotDisplayer3D;
+import fiji.plugin.trackmate.visualization.TrackMateSelectionView;
 import ij.ImagePlus;
 import ij.WindowManager;
 import ij.plugin.PlugIn;
@@ -63,8 +48,8 @@ import org.jgrapht.graph.SimpleWeightedGraph;
  */
 public class TrackMate_<T extends RealType<T> & NativeType<T>>  implements PlugIn {
 
-	public static final String PLUGIN_NAME_STR = "Track Mate";
-	public static final String PLUGIN_NAME_VERSION = "1.2";
+	public static final String PLUGIN_NAME_STR = "TrackMate";
+	public static final String PLUGIN_NAME_VERSION = "1.3";
 	public static final boolean DEFAULT_USE_MULTITHREADING = true;
 
 	protected TrackMateModel<T> model;
@@ -72,14 +57,14 @@ public class TrackMate_<T extends RealType<T> & NativeType<T>>  implements PlugI
 
 	protected List<SpotFeatureAnalyzer<T>> spotFeatureAnalyzers;
 	protected List<TrackFeatureAnalyzer<T>> trackFeatureAnalyzers;
-	/** The list of {@link SpotDetector} that will be offered to choose amongst to the user. */
-	protected List<SpotDetector<T>> spotDetectors;
-	/** The list of {@link TrackMateModelView} that will be offered to choose amongst to the user. */
-	protected List<TrackMateModelView<T>> trackMateModelViews;
-	/** The list of {@link TrackMateModelView} that will be offered to choose amongst to the user. */
-	protected List<TrackMateAction<T>> trackMateActions;
+	/** The factory that provides this plugin with available {@link TrackMateModelView}s. */
+	protected ViewFactory<T> viewFactory;
+	/** The factory that provides this plugin with available {@link TrackMateAction}s. */
+	protected ActionFactory<T> actionFactory;
 	/** The list of {@link SpotTracker} that will be offered to choose amongst to the user. */
 	protected List<SpotTracker<T>> spotTrackers;
+	/** The {@link SpotDetector} factory that provide the GUI with the list of available detectors. */
+	protected DetectorFactory<T> detectorFactory;
 
 	/*
 	 * CONSTRUCTORS
@@ -134,19 +119,19 @@ public class TrackMate_<T extends RealType<T> & NativeType<T>>  implements PlugI
 	 * to the user to choose from;
 	 * 	<li> {@link #spotTrackers}: the list of {@link SpotTracker}s that will be offered 
 	 * to the user to choose from;
-	 * 	<li> {@link #trackMateModelViews}: the list of {@link TrackMateModelView}s (the "displayers")
+	 * 	<li> {@link #viewFactory}: the list of {@link TrackMateModelView}s (the "displayers")
 	 * that will be offered to the user to choose from;
-	 * 	<li> {@link #trackMateActions}:  the list of {@link TrackMateAction}s that will be 
+	 * 	<li> {@link #actionFactory}:  the list of {@link TrackMateAction}s that will be 
 	 * offered to the user to choose from.
 	 * </ul>
 	 */
 	public void initModules() {
 		this.spotFeatureAnalyzers 	= createSpotFeatureAnalyzerList();
 		this.trackFeatureAnalyzers 	= createTrackFeatureAnalyzerList();
-		this.spotDetectors 			= createDetectorList();
+		this.detectorFactory		= createDetectorFactory();
 		this.spotTrackers 			= createSpotTrackerList();
-		this.trackMateModelViews 	= createTrackMateModelViewList();
-		this.trackMateActions 		= createTrackMateActionList();
+		this.viewFactory 			= createViewFactory();
+		this.actionFactory 			= createActionFactory();
 		model.getFeatureModel().setSpotFeatureAnalyzers(spotFeatureAnalyzers);
 		model.getFeatureModel().setTrackFeatureAnalyzers(trackFeatureAnalyzers);
 	}
@@ -196,7 +181,7 @@ public class TrackMate_<T extends RealType<T> & NativeType<T>>  implements PlugI
 	
 	protected List<Spot> execSingleFrameDetection(final ImgPlus<T> img, Settings<T> settings) {
 		
-		SpotDetector<T> detector = settings.detector.createNewDetector();
+		SpotDetector<T> detector = detectorFactory.getDetector(settings.detector);
 		detector.setTarget(img, settings.detectorSettings);
 
 		if (detector.checkInput() && detector.process()) {
@@ -225,29 +210,20 @@ public class TrackMate_<T extends RealType<T> & NativeType<T>>  implements PlugI
 	/**
 	 * Hook for subclassers.
 	 * <p>
-	 * Create the list of available {@link TrackMateModelView} the will be offered to choose from.
+	 *  Create view factory containing available spot {@link TrackMateSelectionView}s.
 	 */
-	protected List<TrackMateModelView<T>> createTrackMateModelViewList() {
-		List<TrackMateModelView<T>> trackMateModelViews = new ArrayList<TrackMateModelView<T>>(2);
-		trackMateModelViews.add(new HyperStackDisplayer<T>());
-		trackMateModelViews.add(new SpotDisplayer3D<T>());
-		return trackMateModelViews;
+	protected ViewFactory<T> createViewFactory() {
+		return new ViewFactory<T>();
 	}
 	
 	
 	/**
 	 * Hook for subclassers.
 	 * <p>
-	 * Create the list of {@link SpotDetector} that will be offered to choose from. 
-	 * Override it to add your own detector.
-	 * @return
+	 * Create detector factory containing available spot {@link SpotDetector}s.
 	 */
-	protected List<SpotDetector<T>> createDetectorList() {
-		List<SpotDetector<T>> spotDetectors = new ArrayList<SpotDetector<T>>(3);
-		spotDetectors.add(new LogDetector<T>());
-		spotDetectors.add(new DownsampleLogDetector<T>());
-		spotDetectors.add(new ManualDetector<T>());
-		return spotDetectors;
+	protected DetectorFactory<T> createDetectorFactory() {
+		return new DetectorFactory<T>();
 	}
 	
 	/**
@@ -300,24 +276,10 @@ public class TrackMate_<T extends RealType<T> & NativeType<T>>  implements PlugI
 	/**
 	 * Hook for subclassers.
 	 * <p>
-	 * Create the list of {@link TrackMateAction} that will be offered to use.
-	 * Overwrite this method if you want to add your {@link TrackMateAction}.
+	 * Create action factory containing available spot {@link TrackMateAction}s.
 	 */
-	protected List<TrackMateAction<T>> createTrackMateActionList() {
-		List<TrackMateAction<T>> actions = new ArrayList<TrackMateAction<T>>(10);
-		actions.add(new GrabSpotImageAction<T>());
-		actions.add(new ExtractTrackStackAction<T>());
-		actions.add(new LinkNew3DViewerAction<T>());
-		actions.add(new CopyOverlayAction<T>());
-		actions.add(new PlotNSpotsVsTimeAction<T>());
-		actions.add(new CaptureOverlayAction<T>());
-		actions.add(new ResetSpotTimeFeatureAction<T>());
-		actions.add(new RecalculateFeatureAction<T>());
-		actions.add(new ResetRadiusAction<T>());
-		actions.add(new RadiusToEstimatedAction<T>());
-//		actions.add(new fiji.plugin.trackmate.action.ISBIChallengeExporter<T>());
-		actions.add(new ExportTracksToXML<T>());
-		return actions;
+	protected ActionFactory<T> createActionFactory() {
+		return new ActionFactory<T>();
 	}
 	
 	/*
@@ -346,8 +308,8 @@ public class TrackMate_<T extends RealType<T> & NativeType<T>>  implements PlugI
 	/**
 	 * Return a list of the {@link SpotDetector} that are currently registered in this plugin.
 	 */
-	public List<SpotDetector<T>> getAvailableSpotDetectors() {
-		return spotDetectors;
+	public DetectorFactory<T> getDetectorFactory() {
+		return detectorFactory;
 	}
 	
 	/**
@@ -361,15 +323,15 @@ public class TrackMate_<T extends RealType<T> & NativeType<T>>  implements PlugI
 	/**
 	 * Return a list of the {@link TrackMateModelView} that are currently registered in this plugin.
 	 */
-	public List<TrackMateModelView<T>> getAvailableTrackMateModelViews() {
-		return trackMateModelViews;
+	public ViewFactory<T> getViewFactory() {
+		return viewFactory;
 	}
 	
 	/**
 	 * Return a list of the {@link TrackMateAction} that are currently registered in this plugin.
 	 */
-	public List<TrackMateAction<T>> getAvailableActions() {
-		return trackMateActions;
+	public ActionFactory<T> getActionFactory() {
+		return actionFactory;
 	}
 
 	
@@ -446,10 +408,10 @@ public class TrackMate_<T extends RealType<T> & NativeType<T>>  implements PlugI
 			logger.error("No detector settings set.\n");
 			return;
 		}
-		if (!settings.detectorSettings.getClass().equals(settings.detector.createDefaultSettings().getClass())) {
+		if (!settings.detectorSettings.getClass().equals( detectorFactory.getDefaultSettings(settings.detector).getClass())) {
 			logger.error(String.format("Detector settings class does not match detector class: %s vs %s.\n", 
 					settings.detectorSettings.getClass().getSimpleName(),
-					settings.detector.createDefaultSettings().getClass().getSimpleName()));
+					detectorFactory.getDefaultSettings(settings.detector).getClass().getSimpleName()));
 			return;
 		}
 		
@@ -583,4 +545,8 @@ public class TrackMate_<T extends RealType<T> & NativeType<T>>  implements PlugI
 		model.setVisibleTrackIndices(filteredTrackIndices, true);
 	}
 
+	
+	public String toString() {
+		return PLUGIN_NAME_STR + "v" + PLUGIN_NAME_VERSION;
+	};
 }

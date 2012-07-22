@@ -32,9 +32,23 @@ import fiji.plugin.trackmate.util.TMUtils;
 
 public class ExtractTrackStackAction<T extends RealType<T> & NativeType<T>> extends AbstractTMAction<T> {
 
-	private static final ImageIcon ICON = new ImageIcon(TrackMateWizard.class.getResource("images/magnifier.png"));
+	public static final String NAME = "Extract track stack";
+	public static final String INFO_TEXT =  "<html> " +
+			"Generate a stack of images taken from the track " +
+			"that joins two selected spots. " +
+			"<p>" +
+			"There must be exactly 2 spots selected for this action " +
+			"to work, and they must belong to a track that connects " +
+			"them." +
+			"<p>" +
+			"A stack of images will be generated from the spots that join " +
+			"them, defining the image size with the largest spot encountered. " +
+			"The central spot slice is taken in case of 3D data." +
+			"</html>";
+	public static final ImageIcon ICON = new ImageIcon(TrackMateWizard.class.getResource("images/magnifier.png"));
 	/** By how much we resize the capture window to get a nice border around the spot. */
 	private static final float RESIZE_FACTOR = 1.5f;
+	
 	
 	
 	
@@ -178,23 +192,12 @@ public class ExtractTrackStackAction<T extends RealType<T> & NativeType<T>> exte
 
 	@Override
 	public String getInfoText() {
-		return "<html> " +
-				"Generate a stack of images taken from the track " +
-				"that joins two selected spots. " +
-				"<p>" +
-				"There must be exactly 2 spots selected for this action " +
-				"to work, and they must belong to a track that connects " +
-				"them." +
-				"<p>" +
-				"A stack of images will be generated from the spots that join " +
-				"them, defining the image size with the largest spot encountered. " +
-				"The central spot slice is taken in case of 3D data." +
-				"</html>";
+		return INFO_TEXT;
 	}
 	
 	@Override
 	public String toString() {
-		return "Extract track stack";
+		return NAME;
 	}
 
 }

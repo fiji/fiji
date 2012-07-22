@@ -23,7 +23,18 @@ import fiji.plugin.trackmate.visualization.trackscheme.TrackSchemeFrame;
 
 public class CaptureOverlayAction<T extends RealType<T> & NativeType<T>> extends AbstractTMAction<T> {
 
-	private static final ImageIcon ICON = new ImageIcon(TrackSchemeFrame.class.getResource("resources/camera_go.png"));
+	public static final ImageIcon ICON = new ImageIcon(TrackSchemeFrame.class.getResource("resources/camera_go.png"));
+	public static final String NAME = "Capture overlay";
+	public static final String INFO_TEXT = "<html>" +
+			"If the current displayer is the HyperstackDisplayer, this action <br>" +
+			"will capture the TrackMate overlay with current display settings. <br>" +
+			"That is: a new RGB stack will be created (careful with large data) where <br>" +
+			"each frame contains a RGB snapshot of the TrackMate display. " +
+			"<p>" +
+			"It can take long since we pause between each frame to ensure the whole <br>" +
+			"overlay is redrawn. The current zoom is taken into account. <br>" +
+			"Also, make sure nothing is moved over the image while capturing. "+
+			"</html>";
 
 	public CaptureOverlayAction() {
 		this.icon = ICON;
@@ -72,21 +83,12 @@ public class CaptureOverlayAction<T extends RealType<T> & NativeType<T>> extends
 
 	@Override
 	public String getInfoText() {
-		return "<html>" +
-				"If the current displayer is the HyperstackDisplayer, this action <br>" +
-				"will capture the TrackMate overlay with current display settings. <br>" +
-				"That is: a new RGB stack will be created (careful with large data) where <br>" +
-				"each frame contains a RGB snapshot of the TrackMate display. " +
-				"<p>" +
-				"It can take long since we pause between each frame to ensure the whole <br>" +
-				"overlay is redrawn. The current zoom is taken into account. <br>" +
-				"Also, make sure nothing is moved over the image while capturing. "+
-				"</html>";
+		return INFO_TEXT;
 	}
 
 	@Override
 	public String toString() {
-		return "Capture overlay";
+		return NAME;
 	}
 
 }

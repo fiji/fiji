@@ -36,6 +36,7 @@ import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.SpotImp;
 import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.TrackMate_;
 import fiji.plugin.trackmate.detection.LogDetector;
 import fiji.plugin.trackmate.detection.DetectorSettings;
 import fiji.plugin.trackmate.detection.SpotDetector;
@@ -48,12 +49,17 @@ import fiji.plugin.trackmate.tracking.TrackerSettings;
 public class TmXmlReader <T extends RealType<T> & NativeType<T>> {
 
 	private static final boolean DEBUG = false;
-//	private static final boolean useMultithreading = TrackMate_.DEFAULT_USE_MULTITHREADING; // Not yet
+	//	private static final boolean useMultithreading = TrackMate_.DEFAULT_USE_MULTITHREADING; // Not yet
 
 	private Document document = null;
 	private File file;
 	private Element root;
 	private Logger logger;
+	/** The plugin instance to operate on. This must be provided, in the case we want to load 
+	 * a file created with a subclass of {@link TrackMate_} (e.g. with new factories) so that 
+	 * correct detectors, etc... can be instantiated from the extended plugin.
+	 */
+	private final TrackMate_<T> plugin;
 	/** A map of all spots loaded. We need this for performance, since we need to recreate 
 	 * both the filtered spot collection and the tracks graph from the same spot objects 
 	 * that the main spot collection.. In the file, they are referenced by their {@link Spot#ID()},
@@ -66,16 +72,27 @@ public class TmXmlReader <T extends RealType<T> & NativeType<T>> {
 	private boolean parsed = false;
 
 	/*
-	 * CONSTRUCTOR
+	 * CONSTRUCTORS
 	 */
 
 	/**
 	 * Initialize this reader to read the file given in argument. No actual parsing is made at construction.
+	 * <p>
+	 * A plugin instance must be provided, in the case we want to load 
+	 * a file created with a subclass of {@link TrackMate_} (e.g. with new factories) so that 
+	 * correct detectors, etc... can be instantiated from the extended plugin. But the passed instance 
+	 * is left untouched by the loading process.
 	 */
-	public TmXmlReader(File file, Logger logger) {
+	public TmXmlReader(File file, Logger logger, TrackMate_<T> plugin) {
 		this.file = file;
 		this.logger = logger;
+		this.plugin = plugin;
 	}
+
+	public TmXmlReader(File file, Logger logger) {
+		this(file, logger, new TrackMate_<T>());
+	}
+
 
 	/*
 	 * PUBLIC METHODS
@@ -114,7 +131,7 @@ public class TmXmlReader <T extends RealType<T> & NativeType<T>> {
 		Settings<T> settings = getSettings();
 		getDetectorSettings(settings);
 		getTrackerSettings(settings);
-//		settings.imp = getImage();
+		//		settings.imp = getImage();
 		model.setSettings(settings);
 
 		// Spot Filters
@@ -326,7 +343,6 @@ public class TmXmlReader <T extends RealType<T> & NativeType<T>> {
 	 *   
 	 * @param settings  the base {@link Settings} object to update.
 	 */
-	@SuppressWarnings("unchecked")
 	public void getDetectorSettings(Settings<T> settings) {
 		if (!parsed)
 			parse();
@@ -338,32 +354,24 @@ public class TmXmlReader <T extends RealType<T> & NativeType<T>> {
 
 		// Deal with detector
 		SpotDetector<T> detector;
-		String detectorClassName = element.getAttributeValue(DETECTOR_CLASS_ATTRIBUTE_NAME);
-		if (null == detectorClassName) {
-			logger.error("Detector class is not present.\n");
+		String detectorName = element.getAttributeValue(DETECTOR_CLASS_ATTRIBUTE_NAME);
+		if (null == detectorName) {
+			logger.error("Detector attribute is not present.\n");
 			logger.error("Substituting default.\n");
-			detector = new LogDetector<T>();
+			detectorName = LogDetector.NAME;
 		} else {
-			try {
-				detector = (SpotDetector<T>) Class.forName(detectorClassName).newInstance();
-			} catch (InstantiationException e) {
-				logger.error("Unable to instantiate detector class: "+e.getLocalizedMessage()+"\n");
-				logger.error("Substituting default.\n");
-				detector = new LogDetector<T>();
-			} catch (IllegalAccessException e) {
-				logger.error("Unable to instantiate detector class: "+e.getLocalizedMessage()+"\n");
-				logger.error("Substituting default.\n");
-				detector = new LogDetector<T>();
-			} catch (ClassNotFoundException e) {
-				logger.error("Unable to find detector class: "+e.getLocalizedMessage()+"\n");
+			// Check whether we can find a matching detector in the plugin instance
+			detector = plugin.getDetectorFactory().getDetector(detectorName);
+			if (null == detector) {
+				logger.error("Unable to find detector class in plugin "+plugin.toString()+"\n");
 				logger.error("Substituting default.\n");
 				detector = new LogDetector<T>();
 			}
 		}
-		settings.detector = detector;
+		settings.detector = detectorName;
 
 		// Deal with detector settings
-		DetectorSettings<T> ss = detector.createDefaultSettings();
+		DetectorSettings<T> ss = plugin.getDetectorFactory().getDefaultSettings(detectorName);
 		String detectorSettingsClassName = element.getAttributeValue(DETECTOR_SETTINGS_CLASS_ATTRIBUTE_NAME);
 
 		if (null == detectorSettingsClassName) {
@@ -683,7 +691,7 @@ public class TmXmlReader <T extends RealType<T> & NativeType<T>> {
 		Element allTracksElement = root.getChild(TRACK_COLLECTION_ELEMENT_KEY);
 		if (null == allTracksElement)
 			return null;
-		
+
 		if (null == cache)
 			getAllSpots(); // build the cache if it's not there
 
@@ -716,11 +724,11 @@ public class TmXmlReader <T extends RealType<T> & NativeType<T>> {
 				// Get source and target ID for this edge
 				sourceID = readIntAttribute(edgeElement, TRACK_EDGE_SOURCE_ATTRIBUTE_NAME, logger);
 				targetID = readIntAttribute(edgeElement, TRACK_EDGE_TARGET_ATTRIBUTE_NAME, logger);
-				
+
 				// Get spots from the cache
 				sourceSpot = cache.get(sourceID);
 				targetSpot = cache.get(targetID);
-				
+
 				// Add them to current track
 				track.add(sourceSpot);
 				track.add(targetSpot);
@@ -759,7 +767,7 @@ public class TmXmlReader <T extends RealType<T> & NativeType<T>> {
 		Element allTracksElement = root.getChild(TRACK_COLLECTION_ELEMENT_KEY);
 		if (null == allTracksElement)
 			return null;
-		
+
 		if (null == cache)
 			getAllSpots(); // build cache if it's not there
 
@@ -794,11 +802,11 @@ public class TmXmlReader <T extends RealType<T> & NativeType<T>> {
 				// Get source and target ID for this edge
 				sourceID = readIntAttribute(edgeElement, TRACK_EDGE_SOURCE_ATTRIBUTE_NAME, logger);
 				targetID = readIntAttribute(edgeElement, TRACK_EDGE_TARGET_ATTRIBUTE_NAME, logger);
-				
+
 				// Get spots from cache
 				sourceSpot = cache.get(sourceID);
 				targetSpot = cache.get(targetID);
-				
+
 				// Retrieve possible edges from graph
 				Set<DefaultWeightedEdge> edges = graph.getAllEdges(sourceSpot, targetSpot);
 
@@ -814,7 +822,7 @@ public class TmXmlReader <T extends RealType<T> & NativeType<T>> {
 					}
 
 				}
-				
+
 			} // looping over all edges
 
 			trackEdges.set(trackID, track);
@@ -849,14 +857,14 @@ public class TmXmlReader <T extends RealType<T> & NativeType<T>> {
 			index++;
 		}
 		Arrays.sort(IDs);
-		
+
 		@SuppressWarnings("unchecked")
 		List<Element> elements = filteredTracksElement.getChildren(TRACK_ID_ELEMENT_KEY);
 		HashSet<Integer> filteredTrackIndices = new HashSet<Integer>(elements.size());
 		for (Element indexElement : elements) {
 			Integer trackID = readIntAttribute(indexElement, TRACK_ID_ATTRIBUTE_NAME, logger);
 			if (null != trackID) {
-				
+
 				// Check if this one exist in the list
 				int search = Arrays.binarySearch(IDs, trackID);
 				if (search < 0) {

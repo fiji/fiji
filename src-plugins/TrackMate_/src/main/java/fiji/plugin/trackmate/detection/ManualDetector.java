@@ -5,10 +5,11 @@ import net.imglib2.type.numeric.RealType;
 
 public class ManualDetector <T extends RealType<T>  & NativeType<T>> extends AbstractSpotDetector<T> {
 
-	@Override
-	public DetectorSettings<T> createDefaultSettings() {
-		return new BasicDetectorSettings<T>();
-	}
+	public static final String NAME = "Manual segmentation";
+	public static final String INFO_TEXT = "<html>" +
+			"Selecting this will skip the automatic detection phase, and jump directly <br>" +
+			"to manual segmentation. A default spot size will be asked for. " +
+			"</html>";
 
 	@Override
 	public boolean process() {
@@ -17,20 +18,12 @@ public class ManualDetector <T extends RealType<T>  & NativeType<T>> extends Abs
 
 	@Override
 	public String getInfoText() {
-		return "<html>" +
-				"Selecting this will skip the automatic detection phase, and jump directly <br>" +
-				"to manual segmentation. A default spot size will be asked for. " +
-				"</html>";
+		return INFO_TEXT;
 	}
 
 	@Override
 	public String toString() {
-		return "Manual segmentation";
-	}
-	
-	@Override
-	public SpotDetector<T> createNewDetector() {
-		return new ManualDetector<T>();
+		return NAME;
 	}
 	
 }

@@ -23,7 +23,12 @@ import fiji.plugin.trackmate.visualization.trackscheme.TrackSchemeFrame;
 
 public class PlotNSpotsVsTimeAction<T extends RealType<T> & NativeType<T>> extends AbstractTMAction<T> {
 
-	private static final ImageIcon ICON = new ImageIcon(TrackSchemeFrame.class.getResource("resources/plots.png"));
+	public static final ImageIcon ICON = new ImageIcon(TrackSchemeFrame.class.getResource("resources/plots.png"));
+	public static final String NAME = "Plot N spots vs time.";
+	public static final String INFO_TEXT =  "<html>" +
+			"Plot the number of spots in each frame as a function <br>" +
+			"of time. Only the filtered spots are taken into account. " +
+			"</html>";
 
 	public PlotNSpotsVsTimeAction() {
 		this.icon = ICON;
@@ -73,15 +78,12 @@ public class PlotNSpotsVsTimeAction<T extends RealType<T> & NativeType<T>> exten
 
 	@Override
 	public String getInfoText() {
-		return "<html>" +
-				"Plot the number of spots in each frame as a function <br>" +
-				"of time. Only the filtered spots are taken into account. " +
-				"</html>";
+		return INFO_TEXT;
 	}
 	
 	@Override
 	public String toString() {
-		return "Plot N spots vs time.";
+		return NAME;
 	}
 
 }

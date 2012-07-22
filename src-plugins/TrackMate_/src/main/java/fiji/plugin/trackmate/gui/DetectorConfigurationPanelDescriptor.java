@@ -30,17 +30,17 @@ public class DetectorConfigurationPanelDescriptor <T extends RealType<T> & Nativ
 	public void setPlugin(TrackMate_<T> plugin) {
 		this.plugin = plugin;
 		DetectorSettings<T> settings = plugin.getModel().getSettings().detectorSettings;
+		String detectorName = plugin.getModel().getSettings().detector;
 		// Bulletproof null
 		if (null == settings) {
-			SpotDetector<T> segmenter = plugin.getModel().getSettings().detector;
-			if (null == segmenter) {
+			SpotDetector<T> detector = plugin.getDetectorFactory().getDetector( detectorName );
+			if (null == detector) {
 				// try to make it right with a default
-				segmenter = new ManualDetector<T>();
-				plugin.getModel().getSettings().detector = segmenter;
+				plugin.getModel().getSettings().detector = ManualDetector.NAME;
 			}
-			settings = segmenter.createDefaultSettings();
+			settings = plugin.getDetectorFactory().getDefaultSettings( detectorName );
 		}
-		configPanel = settings.createConfigurationPanel();
+		configPanel = plugin.getDetectorFactory().getDetectorConfigurationPanel( detectorName );
 	}
 
 	@Override
@@ -60,7 +60,7 @@ public class DetectorConfigurationPanelDescriptor <T extends RealType<T> & Nativ
 
 	@Override
 	public String getNextDescriptorID() {
-		if (plugin.getModel().getSettings().detector.getClass() == ManualDetector.class) {
+		if (plugin.getModel().getSettings().detector.equals(ManualDetector.NAME)) {
 			return DisplayerChoiceDescriptor.DESCRIPTOR;
 		} else {
 			return DetectorDescriptor.DESCRIPTOR;

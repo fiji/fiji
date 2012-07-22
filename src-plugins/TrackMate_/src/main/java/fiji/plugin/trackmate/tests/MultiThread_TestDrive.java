@@ -26,7 +26,7 @@ public class MultiThread_TestDrive {
 		reader.parse();
 		TrackMateModel model = reader.getModel();
 
-		model.getSettings().detector = new DownsampleLogDetector();
+		model.getSettings().detector = DownsampleLogDetector.NAME;
 		model.getSettings().trackerSettings = new LAPTrackerSettings();
 
 		System.out.println(model.getSettings());

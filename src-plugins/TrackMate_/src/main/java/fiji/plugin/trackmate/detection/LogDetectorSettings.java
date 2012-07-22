@@ -9,9 +9,6 @@ import net.imglib2.type.numeric.RealType;
 import org.jdom.Attribute;
 import org.jdom.Element;
 
-import fiji.plugin.trackmate.gui.LogDetectorConfigurationPanel;
-import fiji.plugin.trackmate.gui.DetectorConfigurationPanel;
-
 /**
  * A detector settings object valid for most spot detectors based on Log filtering,
  * 
@@ -40,11 +37,6 @@ public class LogDetectorSettings <T extends RealType<T> & NativeType<T>> extends
 		str += "  Median filter: "+useMedianFilter+'\n';
 		str += "  Do sub-pixel localization: "+doSubPixelLocalization+'\n';
 	return str;
-	}
-	
-	@Override
-	public DetectorConfigurationPanel<T> createConfigurationPanel() {
-		return new LogDetectorConfigurationPanel<T>();
 	}
 	
 	@Override

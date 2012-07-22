@@ -26,7 +26,21 @@ import fiji.plugin.trackmate.util.TMUtils;
 
 public class ExportTracksToXML<T extends RealType<T> & NativeType<T>> extends AbstractTMAction<T> {
 
-	private static final ImageIcon ICON = new ImageIcon(TrackMateWizard.class.getResource("images/page_save.png"));
+	public static final ImageIcon ICON = new ImageIcon(TrackMateWizard.class.getResource("images/page_save.png"));
+	public static final String NAME = "Export tracks to XML file";
+	public static final String INFO_TEXT = "<html>" +
+				"Export the tracks in the current model content to a XML " +
+				"file in a simple format. " +
+				"<p> " +
+				"The file will have one element per track, and each track " +
+				"contains several spot elements. These spots are " +
+				"sorted by frame number, and have 4 numerical attributes: " +
+				"the frame number this spot is in, and its X, Y, Z position in " +
+				"physical units as specified in the image properties. " +
+				"<p>" +
+				"As such, this format <u>cannot</u> handle track merging and " +
+				"splitting properly, and is suited only for non-branching tracks." +
+				"</html>";
 	
 	/*
 	 * CONSTRUCTOR
@@ -80,24 +94,12 @@ public class ExportTracksToXML<T extends RealType<T> & NativeType<T>> extends Ab
 
 	@Override
 	public String getInfoText() {
-		return "<html>" +
-				"Export the tracks in the current model content to a XML " +
-				"file in a simple format. " +
-				"<p> " +
-				"The file will have one element per track, and each track " +
-				"contains several spot elements. These spots are " +
-				"sorted by frame number, and have 4 numerical attributes: " +
-				"the frame number this spot is in, and its X, Y, Z position in " +
-				"physical units as specified in the image properties. " +
-				"<p>" +
-				"As such, this format <u>cannot</u> handle track merging and " +
-				"splitting properly, and is suited only for non-branching tracks." +
-				"</html>";
+		return INFO_TEXT;
 	}
 
 	@Override
 	public String toString() {
-		return "Export tracks to XML file";
+		return NAME;
 	}
 
 	private Element marshall(TrackMateModel<T> model) {
@@ -157,5 +159,6 @@ public class ExportTracksToXML<T extends RealType<T> & NativeType<T>> extends Ab
 	private static final String Y_ATT = "y";
 	private static final String Z_ATT = "z";
 	private static final String T_ATT = "t";
+
 
 }

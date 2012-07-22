@@ -11,10 +11,12 @@ import fiji.plugin.trackmate.detection.DetectorSettings;
 
 public class BasicDetectorConfigurationPanel <T extends RealType<T> & NativeType<T>> extends LogDetectorConfigurationPanel<T> {
 
-	private static final long serialVersionUID = 4298482387638112651L;
+	private static final long serialVersionUID = -1L;
+	private final String infoText;
 
-	public BasicDetectorConfigurationPanel() {
+	public BasicDetectorConfigurationPanel(String infoText) {
 		super();
+		this.infoText = infoText;
 		final JComponent[] uselessComponents = new JComponent[] {
 				super.jCheckBoxMedianFilter,
 				super.jCheckSubPixel, 
@@ -30,7 +32,7 @@ public class BasicDetectorConfigurationPanel <T extends RealType<T> & NativeType
 		jTextFieldBlobDiameter.setText(""+(((BasicDetectorSettings<T>)model.getSettings().detectorSettings).expectedRadius * 2));
 		jLabelBlobDiameterUnit.setText(model.getSettings().spaceUnits);
 		jLabelSegmenterName.setText(model.getSettings().detector.toString());
-		jLabelHelpText.setText(model.getSettings().detector.getInfoText()
+		jLabelHelpText.setText(infoText
 				.replace("<br>", "")
 				.replace("<p>", "<p align=\"justify\">")
 				.replace("<html>", "<html><p align=\"justify\">"));

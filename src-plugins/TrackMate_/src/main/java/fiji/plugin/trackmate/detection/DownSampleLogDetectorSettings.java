@@ -10,7 +10,6 @@ import org.jdom.Attribute;
 import org.jdom.Element;
 
 import fiji.plugin.trackmate.Logger;
-import fiji.plugin.trackmate.gui.DetectorConfigurationPanel;
 import fiji.plugin.trackmate.util.TMUtils;
 
 /**
@@ -41,11 +40,6 @@ public class DownSampleLogDetectorSettings <T extends RealType<T>  & NativeType<
 		str += "  Median filter: "+useMedianFilter+'\n';
 		str += "  Downsampling factor: "+downSamplingFactor+'\n';
 	return str;
-	}
-	
-	@Override
-	public DetectorConfigurationPanel<T> createConfigurationPanel() {
-		return new DownSampleLogDetectorConfigurationPanel<T>();
 	}
 	
 	@Override

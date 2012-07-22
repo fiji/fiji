@@ -38,19 +38,6 @@ public interface SpotDetector <T extends RealType<T> & NativeType<T>> extends Al
 	 * Return the list of Spot resulting from the detection process. 
 	 */
 	public List<Spot> getResult();
-
-	/**
-	 * Create a default {@link DetectorSettings} implementation, suitable for this concrete spot detector.
-	 * The concrete implementation returned will be of type {@link DetectorSettings}, but the actual instance
-	 * will be one suitable for the concrete detector implementation.
-	 */
-	public DetectorSettings<T> createDefaultSettings();
-	
-	/**
-	 * @return  a new instance of the concrete implementation.
-	 */
-	public SpotDetector<T> createNewDetector();
-	
 	
 	/** 
 	 * @return  the name of this detector.

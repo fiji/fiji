@@ -21,7 +21,12 @@ import fiji.plugin.trackmate.gui.DisplayerPanel;
  */
 public class ResetSpotTimeFeatureAction<T extends RealType<T> & NativeType<T>> extends AbstractTMAction<T> {
 
-	private static final ImageIcon ICON = new ImageIcon(DisplayerPanel.class.getResource("images/time.png"));
+	public static final ImageIcon ICON = new ImageIcon(DisplayerPanel.class.getResource("images/time.png"));
+	public static final String NAME = "Reset spot time";
+	public static final String INFO_TEXT = "<html>" +
+			"Reset the time feature of all spots: it is set to the frame number "  +
+			"times the time resolution. " +
+			"</html>";
 	
 	public ResetSpotTimeFeatureAction() {
 		this.icon = ICON;
@@ -48,14 +53,11 @@ public class ResetSpotTimeFeatureAction<T extends RealType<T> & NativeType<T>> e
 
 	@Override
 	public String getInfoText() {
-		return "<html>" +
-				"Reset the time feature of all spots: it is set to the frame number "  +
-				"times the time resolution. " +
-				"</html>";
+		return INFO_TEXT;
 	}
 
 	@Override
 	public String toString() {
-		return "Reset spot time";
+		return NAME;
 	}
 }

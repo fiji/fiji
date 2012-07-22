@@ -26,6 +26,30 @@ import fiji.util.gui.OverlayedImageCanvas;
 public class HyperStackDisplayer <T extends RealType<T> & NativeType<T>> extends AbstractTrackMateModelView<T>  {
 
 	private static final boolean DEBUG = false;
+	public static final String NAME = "HyperStack Displayer";
+	public static final String INFO_TEXT = "<html>" +
+			"This displayer overlays the spots and tracks on the current <br>" +
+			"ImageJ hyperstack window. <br>" +
+			"<p> " +
+			"This displayer allows manual editing of spots, thanks to the spot <br> " +
+			"edit tool that appear in ImageJ toolbar." +
+			"<p>" +
+			"Double-clicking in a spot toggles the editing mode: The spot can <br> " +
+			"be moved around in a XY plane by mouse dragging. To move it in Z <br>" +
+			"or in time, simply change the current plane and time-point by <br>" +
+			"using the hyperstack sliders. To change its radius, hold the <br>" +
+			"<tt>alt</tt> key down and rotate the mouse-wheel. Holding the <br>" +
+			"<tt>shift</tt> key on top changes it faster. " +
+			"<p>" +
+			"Alternatively, keyboard can be used to edit spots: " +
+			"<ul>" +
+			"	<li><b>A</b> creates a new spot under the mouse" +
+			"	<li><b>D</b> deletes the spot under the mouse" +
+			"	<li><b>Q</b> and <b>E</b> decreases and increases the radius of the spot " +
+			"under the mouse (shift to go faster)" +
+			"	<li><b>Space</b> + mouse drag moves the spot under the mouse" +
+			"</ul>" +
+			"</html>";
 	protected ImagePlus imp;
 	OverlayedImageCanvas canvas;
 	double[] calibration;
@@ -194,34 +218,12 @@ public class HyperStackDisplayer <T extends RealType<T> & NativeType<T>> extends
 
 	@Override
 	public String getInfoText() {
-		return "<html>" +
-				"This displayer overlays the spots and tracks on the current <br>" +
-				"ImageJ hyperstack window. <br>" +
-				"<p> " +
-				"This displayer allows manual editing of spots, thanks to the spot <br> " +
-				"edit tool that appear in ImageJ toolbar." +
-				"<p>" +
-				"Double-clicking in a spot toggles the editing mode: The spot can <br> " +
-				"be moved around in a XY plane by mouse dragging. To move it in Z <br>" +
-				"or in time, simply change the current plane and time-point by <br>" +
-				"using the hyperstack sliders. To change its radius, hold the <br>" +
-				"<tt>alt</tt> key down and rotate the mouse-wheel. Holding the <br>" +
-				"<tt>shift</tt> key on top changes it faster. " +
-				"<p>" +
-				"Alternatively, keyboard can be used to edit spots: " +
-				"<ul>" +
-				"	<li><b>A</b> creates a new spot under the mouse" +
-				"	<li><b>D</b> deletes the spot under the mouse" +
-				"	<li><b>Q</b> and <b>E</b> decreases and increases the radius of the spot " +
-				"under the mouse (shift to go faster)" +
-				"	<li><b>Space</b> + mouse drag moves the spot under the mouse" +
-				"</ul>" +
-				"</html>";
+		return INFO_TEXT;
 	}
 	
 	@Override
 	public String toString() {
-		return "HyperStack Displayer";
+		return NAME;
 	}
 
 

@@ -12,7 +12,12 @@ import fiji.plugin.trackmate.gui.DisplayerPanel;
 
 public class RecalculateFeatureAction<T extends RealType<T> & NativeType<T>> extends AbstractTMAction<T> {
 
-	private static final ImageIcon ICON = new ImageIcon(DisplayerPanel.class.getResource("images/calculator.png"));
+	public static final ImageIcon ICON = new ImageIcon(DisplayerPanel.class.getResource("images/calculator.png"));
+	public static final String NAME = "Recompute all spot features";
+	public static final String INFO_TEXT = "<html>" +
+			"Calling this action causes the model to recompute all the feautures <br>" +
+			"for all the un-filtered spots." +
+			"</html>";
 	
 	public RecalculateFeatureAction() {
 		this.icon = ICON;
@@ -31,14 +36,11 @@ public class RecalculateFeatureAction<T extends RealType<T> & NativeType<T>> ext
 
 	@Override
 	public String getInfoText() {
-		return "<html>" +
-			"Calling this action causes the model to recompute all the feautures <br>" +
-			"for all the un-filtered spots." +
-			"</html>";
+		return INFO_TEXT;
 	}
 	
 	@Override
 	public String toString() {
-		return "Recompute all spot features";
+		return NAME;
 	}
 }

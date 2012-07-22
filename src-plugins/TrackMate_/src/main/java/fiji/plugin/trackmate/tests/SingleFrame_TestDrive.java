@@ -33,7 +33,7 @@ public class SingleFrame_TestDrive {
 		int frame = 0; // 0-based
 
 		// Prepare detector instance
-		LogDetector<UnsignedByteType> detector = new LogDetector<UnsignedByteType>();
+		String detectorName = LogDetector.NAME;
 		LogDetectorSettings<UnsignedByteType> lss = new LogDetectorSettings<UnsignedByteType>();
 		lss.doSubPixelLocalization = false;
 		lss.expectedRadius = 2f;
@@ -43,7 +43,7 @@ public class SingleFrame_TestDrive {
 		settings.detectionChannel = detectionChannel;
 		settings.tstart = frame;
 		settings.tend = frame;
-		settings.detector = detector;
+		settings.detector = detectorName;
 		settings.detectorSettings = lss;
 		
 		// Feed this to the model & plugin
@@ -65,8 +65,9 @@ public class SingleFrame_TestDrive {
 		ij.ImageJ.main(args);
 //		 mpicbg.imglib.image.display.imagej.ImageJFunctions.copyToImagePlus(img, ImagePlus.GRAY8).show();
 		
+		LogDetector<UnsignedByteType> detector = new LogDetector<UnsignedByteType>();
 		// Segment it using individual detector
-		detector.setTarget(imgCT, lss );
+		detector .setTarget(imgCT, lss );
 		if (!(detector.checkInput() && detector.process())) {
 			System.err.println("Problem in detection: "+detector.getErrorMessage());
 			return;

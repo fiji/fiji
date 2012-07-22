@@ -5,7 +5,9 @@ import static fiji.plugin.trackmate.gui.TrackMateWizard.FONT;
 import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 import javax.swing.DefaultListCellRenderer;
 import javax.swing.Icon;
@@ -22,7 +24,7 @@ import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.TrackMate_;
 import fiji.plugin.trackmate.action.TrackMateAction;
 
-public class ActionChooserPanel <T extends RealType<T> & NativeType<T>> extends ListChooserPanel<TrackMateAction<T>> implements WizardPanelDescriptor<T> {
+public class ActionChooserPanel <T extends RealType<T> & NativeType<T>> extends ListChooserPanel implements WizardPanelDescriptor<T> {
 
 	private static final long serialVersionUID = 1L;
 	private static final Icon EXECUTE_ICON = new ImageIcon(TrackMateWizard.class.getResource("images/control_play_blue.png"));
@@ -34,13 +36,21 @@ public class ActionChooserPanel <T extends RealType<T> & NativeType<T>> extends 
 	private Logger logger;
 	private TrackMateWizard<T> wizard;
 	private TrackMate_<T> plugin;
+	private List<ImageIcon> icons;
 
-	public ActionChooserPanel(TrackMate_<T> plugin) {
-		super(plugin.getAvailableActions(), "action");
+	/*
+	 * CONSTRUCTORS
+	 */
+	
+	
+	public ActionChooserPanel(final List<String> actions, final List<String> infoTexts, final List<ImageIcon> icons, TrackMate_<T> plugin) {
+		super(actions, infoTexts, "action");
+		this.icons = icons;
 		this.logPanel = new LogPanel();
 		this.logger = logPanel.getLogger();
 		init();
 	}
+	
 	
 	/*
 	 * PUBLIC METHODS
@@ -113,7 +123,8 @@ public class ActionChooserPanel <T extends RealType<T> & NativeType<T>> extends 
 						try {
 							executeButton.setEnabled(false);
 							fireAction(ACTION_STARTED);
-							TrackMateAction<T> action = getChoice();
+							String actionName = getChoice();
+							TrackMateAction<T> action = plugin.getActionFactory().getAction(actionName);
 							action.setLogger(logger);
 							action.setWizard(wizard);
 							action.execute(plugin);
@@ -127,13 +138,11 @@ public class ActionChooserPanel <T extends RealType<T> & NativeType<T>> extends 
 		});
 		add(executeButton);
 		
-		HashMap<String, ImageIcon> icons = new HashMap<String, ImageIcon>();
-		String[] names = new String[list.size()];
-		for (int i = 0; i < list.size(); i++) { 
-			names[i] = list.get(i).toString();
-			icons.put(names[i], list.get(i).getIcon());
+		HashMap<String, ImageIcon> iconMap = new HashMap<String, ImageIcon>();
+		for (int i = 0; i < icons.size(); i++) { 
+			iconMap.put(items.get(i), icons.get(i));
 		}
-		IconListRenderer renderer = new IconListRenderer(icons);
+		IconListRenderer renderer = new IconListRenderer(iconMap);
 		jComboBoxChoice.setRenderer(renderer);
 
 	}
@@ -142,9 +151,27 @@ public class ActionChooserPanel <T extends RealType<T> & NativeType<T>> extends 
 	 * MAIN METHOD
 	 */
 	
+	/**
+	 * Utility methods that fetches the available actions, their infos, and their icons 
+	 * from the factory available in the passed {@link TrackMate_} instance.
+	 */
+	public static <T extends RealType<T> & NativeType<T>> ActionChooserPanel<T> instantiateForPlugin(TrackMate_<T> plugin) {
+		List<String> actions = plugin.getActionFactory().getAvailableActions();
+		List<String> infoTexts = new ArrayList<String>(actions.size());
+		List<ImageIcon> icons = new ArrayList<ImageIcon>(actions.size());
+		for(String key : actions) {
+			infoTexts.add( plugin.getActionFactory().getInfoText(key) );
+			icons.add( plugin.getActionFactory().getIcon(key) );
+		}
+		return new ActionChooserPanel<T>(actions, infoTexts, icons, plugin);
+	}
+	
+	
 	public static <T extends RealType<T> & NativeType<T>> void main(String[] args) {
 		JFrame frame = new JFrame();
-		frame.getContentPane().add(new ActionChooserPanel<T>(new TrackMate_<T>()));
+		
+		TrackMate_<T> plugin = new TrackMate_<T>();
+		frame.getContentPane().add(instantiateForPlugin(plugin));
 		frame.setSize(300, 520);
 		frame.setVisible(true);
 	}

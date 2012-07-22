@@ -29,7 +29,16 @@ import fiji.plugin.trackmate.util.TMUtils;
 
 public class ISBIChallengeExporter<T extends RealType<T> & NativeType<T>> extends AbstractTMAction<T> {
 
-	private static final ImageIcon ICON = new ImageIcon(TrackMateWizard.class.getResource("images/ISBIlogo.png"));
+	public static final ImageIcon ICON = new ImageIcon(TrackMateWizard.class.getResource("images/ISBIlogo.png"));
+	public static final String NAME = "Export to ISBI challenge format";
+	public static final String INFO_TEXT = "<html>" +
+				"Export the current model content to a XML file following the " +
+				"ISBI 2012 particle tracking challenge format, as specified on " +
+				"<a href='http://bioimageanalysis.org/track/'></a>. " +
+				"<p> " +
+				"Only tracks are exported. If there is no track, this action " +
+				"does nothing. " +
+				"</html>";
 
 
 	/*
@@ -83,19 +92,12 @@ public class ISBIChallengeExporter<T extends RealType<T> & NativeType<T>> extend
 
 	@Override
 	public String getInfoText() {
-		return "<html>" +
-				"Export the current model content to a XML file following the " +
-				"ISBI 2012 particle tracking challenge format, as specified on " +
-				"<a href='http://bioimageanalysis.org/track/'></a>. " +
-				"<p> " +
-				"Only tracks are exported. If there is no track, this action " +
-				"does nothing. " +
-				"</html>";
+		return INFO_TEXT;
 	}
 
 	@Override
 	public String toString() {
-		return "Export to ISBI challenge format";
+		return NAME;
 	}
 
 	private Element marshall(TrackMateModel<T> model) {

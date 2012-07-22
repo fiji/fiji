@@ -20,7 +20,13 @@ import fiji.plugin.trackmate.gui.DisplayerPanel;
 
 public class GrabSpotImageAction<T extends RealType<T> & NativeType<T>> extends AbstractTMAction<T> {
 
-	private static final ImageIcon ICON = new ImageIcon(DisplayerPanel.class.getResource("images/photo_add.png"));
+	public static final ImageIcon ICON = new ImageIcon(DisplayerPanel.class.getResource("images/photo_add.png"));
+	public static final String NAME = "Grab spot images";
+	public static final String INFO_TEXT = "<html>" +
+			"Grab all spot images from the current image. " +
+			"This can be useful to update the image field of spots loaded from a file." +
+			"</html>";
+	
 	
 	public GrabSpotImageAction() {
 		this.icon = ICON;
@@ -53,15 +59,12 @@ public class GrabSpotImageAction<T extends RealType<T> & NativeType<T>> extends 
 
 	@Override
 	public String getInfoText() {
-		return "<html>" +
-		"Grab all spot images from the current image. " +
-		"This can be useful to update the image field of spots loaded from a file." +
-		"</html>";
+		return INFO_TEXT;
 	}
 	
 	@Override
 	public String toString() {
-		return "Grab spot images";
+		return NAME;
 	}
 
 }

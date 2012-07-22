@@ -1,7 +1,6 @@
 package fiji.plugin.trackmate;
 
 import fiji.plugin.trackmate.detection.DetectorSettings;
-import fiji.plugin.trackmate.detection.SpotDetector;
 import fiji.plugin.trackmate.tracking.SpotTracker;
 import fiji.plugin.trackmate.tracking.TrackerSettings;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
@@ -62,7 +61,8 @@ public class Settings <T extends RealType<T> & NativeType<T>> {
 	public String timeUnits 		= "frames";
 	public String spaceUnits 		= "pixels";
 	
-	public SpotDetector<T> detector;
+	/** The name of the detector to use. This name must be a key registered in {@link DetectorFactory}. */
+	public String detector;
 	public SpotTracker<T> tracker;
 	
 	public DetectorSettings<T> detectorSettings = null;

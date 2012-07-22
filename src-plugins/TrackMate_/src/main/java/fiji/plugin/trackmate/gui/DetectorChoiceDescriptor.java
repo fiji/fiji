@@ -1,6 +1,8 @@
 package fiji.plugin.trackmate.gui;
 
 import java.awt.Component;
+import java.util.ArrayList;
+import java.util.List;
 
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
@@ -11,8 +13,8 @@ import fiji.plugin.trackmate.detection.SpotDetector;
 
 public class DetectorChoiceDescriptor <T extends RealType<T> & NativeType<T>> implements WizardPanelDescriptor<T> {
 
-	public static final String DESCRIPTOR = "SegmenterChoice";
-	private ListChooserPanel<SpotDetector<T>> component;
+	public static final String DESCRIPTOR = "DetectorChoice";
+	private ListChooserPanel component;
 	private TrackMate_<T> plugin;
 	private TrackMateWizard<T> wizard;
 
@@ -52,15 +54,9 @@ public class DetectorChoiceDescriptor <T extends RealType<T> & NativeType<T>> im
 	}
 	
 	private void setCurrentChoiceFromPlugin() {
-		SpotDetector<? extends RealType<?>> segmenter = plugin.getModel().getSettings().detector; 
-		if (segmenter != null) {
-			int index = 0;
-			for (int i = 0; i < plugin.getAvailableSpotDetectors().size(); i++) {
-				if (segmenter.toString().equals(plugin.getAvailableSpotDetectors().get(i).toString())) {
-					index = i;
-					break;
-				}
-			}
+		SpotDetector<T> detector = plugin.getDetectorFactory().getDetector(plugin.getModel().getSettings().detector); 
+		if (detector != null) {
+			int index = plugin.getDetectorFactory().getAvailableDetectors().indexOf(detector);
 			component.jComboBoxChoice.setSelectedIndex(index);
 		}
 	}
@@ -71,12 +67,12 @@ public class DetectorChoiceDescriptor <T extends RealType<T> & NativeType<T>> im
 	@Override
 	public void aboutToHidePanel() {
 		// Set the settings field of the model
-		SpotDetector<T> segmenter = component.getChoice();
-		plugin.getModel().getSettings().detector = segmenter;
+		String detector = component.getChoice();
+		plugin.getModel().getSettings().detector = detector;
 		
 		// Compare current settings with default ones, and substitute default ones
 		// only if the old ones are absent or not compatible with it.
-		DetectorSettings<T> defaultSettings = segmenter.createDefaultSettings();
+		DetectorSettings<T> defaultSettings = plugin.getDetectorFactory().getDefaultSettings(detector);
 		DetectorSettings<T> currentSettings = plugin.getModel().getSettings().detectorSettings;
 		if (null == currentSettings || currentSettings.getClass() != defaultSettings.getClass()) {
 			plugin.getModel().getSettings().detectorSettings = defaultSettings;
@@ -92,7 +88,12 @@ public class DetectorChoiceDescriptor <T extends RealType<T> & NativeType<T>> im
 	@Override
 	public void setPlugin(TrackMate_<T> plugin) {
 		this.plugin = plugin;
-		this.component = new ListChooserPanel<SpotDetector<T>>(plugin.getAvailableSpotDetectors(), "detector");
+		List<String> detectorNames = plugin.getDetectorFactory().getAvailableDetectors();
+		List<String> infoTexts = new ArrayList<String>(detectorNames.size());
+		for(String key : detectorNames) {
+			infoTexts.add(plugin.getDetectorFactory().getInfoText(key));
+		}
+		this.component = new ListChooserPanel(detectorNames, infoTexts, "detector");
 		setCurrentChoiceFromPlugin();
 	}
 

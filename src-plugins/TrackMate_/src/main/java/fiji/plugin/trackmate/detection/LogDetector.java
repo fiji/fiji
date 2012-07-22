@@ -28,6 +28,15 @@ public class LogDetector <T extends RealType<T>  & NativeType<T>> extends Abstra
 	 */
 
 	private final static String BASE_ERROR_MESSAGE = "LogDetector: ";
+	public static final String NAME = "LoG detector";
+	public static final String INFO_TEXT = "<html>" +
+			"This detector applies a LoG (Laplacian of Gaussian) filter <br>" +
+			"to the image, with a sigma suited to the blob estimated size. <br>" +
+			"Calculations are made in the Fourier space. The maxima in the <br>" +
+			"filtered image are searched for, and maxima too close from each <br>" +
+			"other are suppressed. A quadratic fitting scheme allows to do <br>" +
+			"sub-pixel localization. " +
+			"</html>";
 	private LogDetectorSettings<T> settings;
 
 	/*
@@ -43,19 +52,9 @@ public class LogDetector <T extends RealType<T>  & NativeType<T>> extends Abstra
 	 */
 
 	@Override
-	public SpotDetector<T> createNewDetector() {
-		return new LogDetector<T>();
-	}
-
-	@Override
 	public void setTarget(ImgPlus<T> image, DetectorSettings<T> settings) {
 		super.setTarget(image, settings);
 		this.settings = (LogDetectorSettings<T>) settings;
-	}
-
-	@Override
-	public DetectorSettings<T> createDefaultSettings() {
-		return new LogDetectorSettings<T>();
 	}
 
 	@Override
@@ -165,19 +164,12 @@ public class LogDetector <T extends RealType<T>  & NativeType<T>> extends Abstra
 
 	@Override
 	public String getInfoText() {
-		return "<html>" +
-				"This detector applies a LoG (Laplacian of Gaussian) filter <br>" +
-				"to the image, with a sigma suited to the blob estimated size. <br>" +
-				"Calculations are made in the Fourier space. The maxima in the <br>" +
-				"filtered image are searched for, and maxima too close from each <br>" +
-				"other are suppressed. A quadratic fitting scheme allows to do <br>" +
-				"sub-pixel localization. " +
-				"</html>";	
+		return INFO_TEXT;	
 	}
 
 	@Override
 	public String toString() {
-		return "LoG detector";
+		return NAME;
 	}
 
 	/*

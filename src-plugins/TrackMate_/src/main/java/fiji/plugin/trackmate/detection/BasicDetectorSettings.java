@@ -6,10 +6,6 @@ import net.imglib2.type.numeric.RealType;
 import org.jdom.Attribute;
 import org.jdom.Element;
 
-import fiji.plugin.trackmate.gui.BasicDetectorConfigurationPanel;
-import fiji.plugin.trackmate.gui.DetectorConfigurationPanel;
-
-
 /**
  * A simple settings, made of only one field (the expected radius),
  * suitable for manual segmentation.
@@ -34,12 +30,6 @@ public class BasicDetectorSettings <T extends RealType<T> & NativeType<T>> imple
 		String str = "";
 		str += String.format("  Expected radius: %f\n", expectedRadius);
 		return str;
-	}
-	
-	
-	@Override
-	public DetectorConfigurationPanel<T> createConfigurationPanel() {
-		return new BasicDetectorConfigurationPanel<T>();
 	}
 	
 	@Override

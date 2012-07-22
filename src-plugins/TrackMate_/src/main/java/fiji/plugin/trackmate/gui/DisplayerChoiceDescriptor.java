@@ -1,6 +1,8 @@
 package fiji.plugin.trackmate.gui;
 
 import java.awt.Component;
+import java.util.ArrayList;
+import java.util.List;
 
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
@@ -13,7 +15,7 @@ public class DisplayerChoiceDescriptor<T extends RealType<T> & NativeType<T>> im
 
 	public static final String DESCRIPTOR = "DisplayerChoice";
 	private TrackMate_<T> plugin;
-	private ListChooserPanel<TrackMateModelView<T>> component;
+	private ListChooserPanel component;
 	private TrackMateWizard<T> wizard;
 	
 	/*
@@ -47,7 +49,7 @@ public class DisplayerChoiceDescriptor<T extends RealType<T> & NativeType<T>> im
 
 	@Override
 	public String getPreviousDescriptorID() {
-		if (plugin.getModel().getSettings().detector.getClass() == ManualDetector.class) {
+		if (plugin.getModel().getSettings().detector.equals(ManualDetector.NAME)) {
 			return DetectorConfigurationPanelDescriptor.DESCRIPTOR;
 		} else {
 			return InitFilterPanel.DESCRIPTOR;
@@ -64,16 +66,21 @@ public class DisplayerChoiceDescriptor<T extends RealType<T> & NativeType<T>> im
 
 	@Override
 	public void aboutToHidePanel() {
-		TrackMateModelView<T> displayer = component.getChoice();
+		String displayerName = component.getChoice();
+		TrackMateModelView<T> displayer = plugin.getViewFactory().getView(displayerName);
 		wizard.setDisplayer(displayer);
 	}
 
 	@Override
 	public void setPlugin(TrackMate_<T> plugin) {
 		this.plugin = plugin;
-		this.component = new ListChooserPanel<TrackMateModelView<T>>(plugin.getAvailableTrackMateModelViews(), "displayer");
+		List<String> viewerNames = plugin.getViewFactory().getAvailableViews();
+		List<String> infoTexts = new ArrayList<String>(viewerNames.size());
+		for(String key : viewerNames) {
+			infoTexts.add(plugin.getViewFactory().getInfoText(key));
+		}
+		this.component = new ListChooserPanel(viewerNames, infoTexts, "view");
 	}
-
 
 
 }
