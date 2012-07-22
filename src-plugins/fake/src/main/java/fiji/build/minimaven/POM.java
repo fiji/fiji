@@ -1,16 +1,12 @@
 package fiji.build.minimaven;
 
-import fiji.build.minimaven.JavaCompiler.CompileError;
-
 import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -27,6 +23,8 @@ import javax.xml.parsers.ParserConfigurationException;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
+
+import fiji.build.minimaven.JavaCompiler.CompileError;
 
 public class POM extends DefaultHandler implements Comparable<POM> {
 	protected final BuildEnvironment env;
