@@ -540,6 +540,10 @@ public class POM extends DefaultHandler implements Comparable<POM> {
 		}
 
 		String path = BuildEnvironment.mavenRepository.getPath() + "/" + dependency.groupId.replace('.', '/') + "/" + dependency.artifactId + "/";
+		if (dependency.version == null) {
+			env.err.println("Skipping invalid dependency (version unset): " + dependency);
+			return null;
+		}
 		if (dependency.version.startsWith("[")) try {
 			if (!maybeDownloadAutomatically(dependency, quiet, downloadAutomatically))
 				return null;
