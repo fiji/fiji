@@ -49,7 +49,6 @@ public class Fake {
 	protected JavaCompiler javac;
 
 	public static void main(String[] args) {
-		checkObsoleteLauncher();
 		if (runPrecompiledFakeIfNewer(args))
 			return;
 		try {
@@ -58,20 +57,6 @@ public class Fake {
 			System.err.println("Could not instantiate Fiji Build:");
 			e.printStackTrace();
 		}
-	}
-
-	public static void checkObsoleteLauncher() {
-		String launcher = System.getProperty("fiji.executable");
-		if (launcher == null)
-			return;
-		launcher = launcher.substring(launcher.lastIndexOf('/') + 1);
-		launcher = launcher.substring(launcher.lastIndexOf('\\') + 1);
-		if (!launcher.startsWith("fiji"))
-			return;
-		System.err.println("=================== !!!WARNING!!! ===================\n"
-			+ "Fiji Build was started using the 'fiji' executable!!!\n"
-			+ "Please use 'ImageJ' next time.\n"
-			+ "=====================================================");
 	}
 
 	public static boolean runPrecompiledFakeIfNewer(String[] args) {
