@@ -1,10 +1,10 @@
 package fiji.plugin;
 
+import fiji.Debug;
 import fiji.plugin.timelapsedisplay.GraphFrame;
 import fiji.plugin.timelapsedisplay.TimeLapseDisplay;
 import fiji.util.gui.GenericDialogPlus;
 import ij.IJ;
-import ij.ImageJ;
 import ij.ImagePlus;
 import ij.gui.DialogListener;
 import ij.gui.GenericDialog;
@@ -160,6 +160,7 @@ public class Bead_Registration implements PlugIn
 
 	public SPIMConfiguration singleChannel()
 	{
+		conf = null;
 		final GenericDialogPlus gd = new GenericDialogPlus( "Single Channel Bead-based Registration" );
 		
 		gd.addDirectoryOrFileField( "SPIM_data_directory", spimDataDirectory );
@@ -205,7 +206,10 @@ public class Bead_Registration implements PlugIn
 			{
 				if ( e == null )
 				{
-					conf = getConfiguration( dialog );
+					if ( !gd.wasCanceled() )
+					{
+						conf = getConfiguration( dialog );
+					}
 					return true;
 				}
 				if ( e instanceof TextEvent && e.getID() == TextEvent.TEXT_VALUE_CHANGED && e.getSource() == tfSpimDataDirectory )
@@ -827,18 +831,8 @@ public class Bead_Registration implements PlugIn
 	}
 
 	public static void main(String[] args) {
-		Class<Bead_Registration> clazz = Bead_Registration.class;
-		String className = clazz.getName();
-		String relativePath = "/" + className.replace('.', '/') + ".class";
-		String directory = clazz.getResource(relativePath).getPath();
-		directory = directory.substring(0,  directory.length() - relativePath.length());
-		if (directory.endsWith("/classes")) directory = directory.substring(0, directory.length() - "/classes".length());
-		System.setProperty("plugins.dir", directory);
-
-		new ImageJ();
-		IJ.run("Record...");
-		// this does not work: the recorder ignores anything run via IJ.run()
-		//IJ.run("Bead-based registration");
-		IJ.run("Find Commands...");
+		Debug.run("Record...", null);
+		Debug.run("Find Commands...", null);
+		Debug.run("Bead-based registration", null);
 	}
 }

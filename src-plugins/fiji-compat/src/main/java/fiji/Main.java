@@ -23,6 +23,7 @@ import java.awt.image.ImageProducer;
 import java.awt.event.AWTEventListener;
 import java.awt.event.WindowEvent;
 
+import java.io.File;
 import java.lang.reflect.Method;
 
 import java.net.URL;
