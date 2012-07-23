@@ -567,9 +567,7 @@ public class POM extends DefaultHandler implements Comparable<POM> {
 				return env.fakePOM(file, dependency);
 		}
 
-		path += dependency.getPOMName();
-
-		File file = new File(path);
+		File file = new File(path, dependency.getPOMName());
 		if (!file.exists()) {
 			if (downloadAutomatically) {
 				if (!maybeDownloadAutomatically(dependency, quiet, downloadAutomatically))
@@ -584,7 +582,7 @@ public class POM extends DefaultHandler implements Comparable<POM> {
 			}
 		}
 
-		POM result = env.parse(new File(path), null, dependency.classifier);
+		POM result = env.parse(new File(path, dependency.getPOMName()), null, dependency.classifier);
 		if (result != null) {
 			if (result.target.getName().endsWith("-SNAPSHOT.jar")) {
 				result.coordinate.version = dependency.version;
@@ -592,6 +590,14 @@ public class POM extends DefaultHandler implements Comparable<POM> {
 			}
 			if (result.parent == null)
 				result.parent = getRoot();
+			if (result.packaging.equals("jar") && !new File(path, dependency.getJarName()).exists()) {
+				if (downloadAutomatically)
+					download(dependency, quiet);
+				else {
+					env.localPOMCache.remove(key);
+					return null;
+				}
+			}
 		}
 		else if (!quiet && !dependency.optional)
 			env.err.println("Artifact " + dependency.artifactId + " not found" + (downloadAutomatically ? "" : "; consider 'get-dependencies'"));
