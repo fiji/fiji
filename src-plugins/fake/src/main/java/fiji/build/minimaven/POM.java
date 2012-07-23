@@ -632,7 +632,6 @@ public class POM extends DefaultHandler implements Comparable<POM> {
 		return pom;
 	}
 
-	// TODO: if there is no internet connection, do not try to download -SNAPSHOT versions
 	protected boolean maybeDownloadAutomatically(Coordinate dependency, boolean quiet, boolean downloadAutomatically) {
 		if (!downloadAutomatically || env.offlineMode)
 			return true;
