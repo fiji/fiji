@@ -26,6 +26,9 @@ import mpicbg.spim.io.SPIMConfiguration;
 import mpicbg.spim.postprocessing.deconvolution.ExtractPSF;
 import mpicbg.spim.postprocessing.deconvolution.LucyRichardsonFFT;
 import mpicbg.spim.postprocessing.deconvolution.LucyRichardsonMultiViewDeconvolution;
+import mpicbg.spim.postprocessing.deconvolution2.BayesMVDeconvolution;
+import mpicbg.spim.postprocessing.deconvolution2.LRFFT;
+import mpicbg.spim.postprocessing.deconvolution2.LRInput;
 import mpicbg.spim.registration.ViewDataBeads;
 import mpicbg.spim.registration.ViewStructure;
 
@@ -92,7 +95,8 @@ public class Multi_View_Deconvolution implements PlugIn
 		//
 		// run the deconvolution
 		//
-		final ArrayList<LucyRichardsonFFT> deconvolutionData = new ArrayList<LucyRichardsonFFT>();
+		//final ArrayList<LucyRichardsonFFT> deconvolutionData = new ArrayList<LucyRichardsonFFT>();
+		final LRInput deconvolutionData = new LRInput();
 		final int cpusPerView = Math.min( Runtime.getRuntime().availableProcessors(), Math.round( Runtime.getRuntime().availableProcessors() / (float)paralellViews ) );
 		
 		IJ.log( "Compute views in paralell: " + paralellViews );
@@ -119,16 +123,24 @@ public class Multi_View_Deconvolution implements PlugIn
 			//ImageJFunctions.copyToImagePlus( fusion.getWeightImage( view ) ).show();
 			//ImageJFunctions.copyToImagePlus( pointSpreadFunctions.get( view ) ).show();
 
-			deconvolutionData.add( new LucyRichardsonFFT( fusion.getFusedImage( view ), fusion.getWeightImage( view ), pointSpreadFunctions.get( view ), cpusPerView ) );
+			//deconvolutionData.add( new LucyRichardsonFFT( fusion.getFusedImage( view ), fusion.getWeightImage( view ), pointSpreadFunctions.get( view ), cpusPerView ) );
+			deconvolutionData.add( new LRFFT( fusion.getFusedImage( view ), fusion.getWeightImage( view ), pointSpreadFunctions.get( view ) ) );
 		}
 		
 		final Image<FloatType> deconvolved;
 		
+		/*
 		if ( useTikhonovRegularization )
 			deconvolved = LucyRichardsonMultiViewDeconvolution.lucyRichardsonMultiView( deconvolutionData, minNumIterations, maxNumIterations, multiplicative, lambda, paralellViews );
 		else
 			deconvolved = LucyRichardsonMultiViewDeconvolution.lucyRichardsonMultiView( deconvolutionData, minNumIterations, maxNumIterations, multiplicative, 0, paralellViews );
-				
+		*/
+		
+		if ( useTikhonovRegularization )
+			deconvolved = new BayesMVDeconvolution( deconvolutionData, maxNumIterations, lambda, "deconvolved" ).getPsi();
+		else
+			deconvolved = new BayesMVDeconvolution( deconvolutionData, maxNumIterations, 0, "deconvolved" ).getPsi();
+		
 		if ( conf.writeOutputImage || conf.showOutputImage )
 		{
 			String name = viewStructure.getSPIMConfiguration().inputFilePattern;			
