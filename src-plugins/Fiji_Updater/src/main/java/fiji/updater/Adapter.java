@@ -546,6 +546,7 @@ public class Adapter {
 			result = currentLoader.loadClass(name);
 		} catch (Throwable t) {
 			if (remoteClassLoader == null) {
+				ui.showStatus("Loading the remote ImageJ updater");
 				// fall back to instantiating a URLClassLoader
 				final URL[] urls = new URL[JARS.length];
 				for (int i = 0; i < urls.length; i++) try {
