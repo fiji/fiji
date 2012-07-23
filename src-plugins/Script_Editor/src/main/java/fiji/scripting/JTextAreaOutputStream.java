@@ -1,13 +1,11 @@
 package fiji.scripting;
 
-import java.io.IOException;
 import java.io.OutputStream;
 
 import javax.swing.JTextArea;
 
 import javax.swing.text.BadLocationException;
 
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
