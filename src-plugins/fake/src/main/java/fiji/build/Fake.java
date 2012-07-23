@@ -49,6 +49,7 @@ public class Fake {
 	protected JavaCompiler javac;
 
 	public static void main(String[] args) {
+		MiniMaven.ensureIJDirIsSet();
 		if (runPrecompiledFakeIfNewer(args))
 			return;
 		try {
