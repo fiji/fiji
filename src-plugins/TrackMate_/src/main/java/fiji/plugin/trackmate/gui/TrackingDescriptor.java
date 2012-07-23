@@ -62,7 +62,7 @@ public class TrackingDescriptor <T extends RealType<T> & NativeType<T>> implemen
 	public void displayingPanel() {
 		wizard.setNextButtonEnabled(false);
 		final TrackMateModel<T> model = plugin.getModel();
-		logger.log("Starting tracking using "+model.getSettings().tracker.toString()+"\n", Logger.BLUE_COLOR);
+		logger.log("Starting tracking using " + model.getSettings().tracker +"\n", Logger.BLUE_COLOR);
 		logger.log("with settings:\n");
 		logger.log(model.getSettings().trackerSettings.toString());
 		new Thread("TrackMate tracking thread") {					

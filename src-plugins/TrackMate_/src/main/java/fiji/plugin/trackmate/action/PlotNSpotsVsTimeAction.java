@@ -24,7 +24,7 @@ import fiji.plugin.trackmate.visualization.trackscheme.TrackSchemeFrame;
 public class PlotNSpotsVsTimeAction<T extends RealType<T> & NativeType<T>> extends AbstractTMAction<T> {
 
 	public static final ImageIcon ICON = new ImageIcon(TrackSchemeFrame.class.getResource("resources/plots.png"));
-	public static final String NAME = "Plot N spots vs time.";
+	public static final String NAME = "Plot N spots vs time";
 	public static final String INFO_TEXT =  "<html>" +
 			"Plot the number of spots in each frame as a function <br>" +
 			"of time. Only the filtered spots are taken into account. " +

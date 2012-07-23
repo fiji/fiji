@@ -106,8 +106,6 @@ public class ActionChooserPanel <T extends RealType<T> & NativeType<T>> extends 
 	
 	private void init() {
 		
-		jLabelHelpText.setSize(270, 150);
-		
 		logPanel.setBounds(8, 260, 276, 200);
 		add(logPanel);
 		
@@ -144,6 +142,7 @@ public class ActionChooserPanel <T extends RealType<T> & NativeType<T>> extends 
 		}
 		IconListRenderer renderer = new IconListRenderer(iconMap);
 		jComboBoxChoice.setRenderer(renderer);
+		jLabelHelpText.setSize(270, 150);
 
 	}
 	
@@ -163,6 +162,7 @@ public class ActionChooserPanel <T extends RealType<T> & NativeType<T>> extends 
 			infoTexts.add( plugin.getActionFactory().getInfoText(key) );
 			icons.add( plugin.getActionFactory().getIcon(key) );
 		}
+		
 		return new ActionChooserPanel<T>(actions, infoTexts, icons, plugin);
 	}
 	
@@ -171,6 +171,7 @@ public class ActionChooserPanel <T extends RealType<T> & NativeType<T>> extends 
 		JFrame frame = new JFrame();
 		
 		TrackMate_<T> plugin = new TrackMate_<T>();
+		plugin.initModules();
 		frame.getContentPane().add(instantiateForPlugin(plugin));
 		frame.setSize(300, 520);
 		frame.setVisible(true);

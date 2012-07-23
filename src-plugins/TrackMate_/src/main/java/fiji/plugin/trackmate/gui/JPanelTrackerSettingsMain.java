@@ -83,7 +83,7 @@ public class JPanelTrackerSettingsMain <T extends RealType<T> & NativeType<T>> e
 		LAPTrackerSettings<T> settings = (LAPTrackerSettings<T>) model.getSettings().trackerSettings;
 
 		if (null != model.getSettings().tracker) {
-			jLabelTrackerName.setText(model.getSettings().tracker.toString());
+			jLabelTrackerName.setText(model.getSettings().tracker);
 //			jLabelTrackDescription.setText(model.getSettings().tracker.getInfoText()
 //					.replace("<br>", "")
 //					.replace("<p>", "<p align=\"justify\">")

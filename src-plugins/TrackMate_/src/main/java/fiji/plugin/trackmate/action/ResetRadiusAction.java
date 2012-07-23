@@ -15,7 +15,7 @@ import fiji.plugin.trackmate.gui.DisplayerPanel;
 public class ResetRadiusAction<T extends RealType<T> & NativeType<T>> extends AbstractTMAction<T> {
 
 	public static final ImageIcon ICON = new ImageIcon(DisplayerPanel.class.getResource("images/lightbulb_off.png"));
-	public static final String NAME = null;
+	public static final String NAME = "Reset radius to default value";
 	public static final String INFO_TEXT = "<html>" +
 				"This action resets the radius of all retained spots back to the value <br> " +
 				"given in the detector settings. " +

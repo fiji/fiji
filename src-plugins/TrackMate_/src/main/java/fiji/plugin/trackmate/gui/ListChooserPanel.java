@@ -32,6 +32,7 @@ public class ListChooserPanel extends ActionListenablePanel {
 
 	public ListChooserPanel(List<String> items, List<String> infoTexts, String typeName) {
 		super();
+		this.infoTexts = infoTexts;
 		this.typeName = typeName;
 		this.items = items;
 		initGUI();
