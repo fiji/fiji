@@ -6,10 +6,6 @@ import ij.process.ImageProcessor;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
 
 import javax.imageio.ImageIO;
 
@@ -22,7 +18,6 @@ import net.imglib2.view.Views;
 
 import com.mxgraph.util.mxBase64;
 
-import fiji.plugin.trackmate.Dimension;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.util.TMUtils;
 
@@ -102,31 +97,5 @@ public class SpotIconGrabber<T extends NumericType<T>> extends IndependentSpotFe
 			}
 		}
 		return crop;
-	}
-
-	/*
-	 * FEATURE OUTPUT
-	 * We always return the empty list or map, because we do not want the spot icon feature
-	 * or whatever it would be to appear in the normal, numerical feature list.
-	 */
-
-	@Override
-	public Collection<String> getFeatures() {
-		return new ArrayList<String>();
-	}
-
-	@Override
-	public Map<String, String> getFeatureShortNames() {
-		return new HashMap<String, String>();
-	}
-
-	@Override
-	public Map<String, String> getFeatureNames() {
-		return new HashMap<String, String>();
-	}
-
-	@Override
-	public Map<String, Dimension> getFeatureDimensions() {
-		return new HashMap<String, Dimension>();
 	}
 }

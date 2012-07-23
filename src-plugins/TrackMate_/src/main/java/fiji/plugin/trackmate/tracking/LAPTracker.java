@@ -114,8 +114,17 @@ import fiji.plugin.trackmate.tracking.hungarian.HungarianAlgorithm;
  */
 public class LAPTracker <T extends RealType<T> & NativeType<T>> extends MultiThreadedBenchmarkAlgorithm implements SpotTracker<T> {
 
+	public static final String NAME = "LAP Tracker";
+	public static final String INFO_TEXT = "<html>" +
+			"This tracker is based on the Linear Assignment Problem mathematical framework. <br>" +
+			"Its implementation is derived from the following paper: <br>" +
+			"<i>Robust single-particle tracking in live-cell time-lapse sequences</i> - <br>" +
+			"Jaqaman <i> et al.</i>, 2008, Nature Methods. <br>" +
+			"</html>";
+
 	private final static String BASE_ERROR_MESSAGE = "LAPTracker: ";
 	private static final boolean DEBUG = false;
+
 
 	/** Logger used to echo progress on tracking. */
 	protected Logger logger = Logger.DEFAULT_LOGGER;
@@ -691,22 +700,12 @@ public class LAPTracker <T extends RealType<T> & NativeType<T>> extends MultiThr
 
 	@Override
 	public String getInfoText() {
-		return "<html>" +
-				"This tracker is based on the Linear Assignment Problem mathematical framework. <br>" +
-				"Its implementation is derived from the following paper: <br>" +
-				"<i>Robust single-particle tracking in live-cell time-lapse sequences</i> - <br>" +
-				"Jaqaman <i> et al.</i>, 2008, Nature Methods. <br>" +
-				"</html>";
+		return INFO_TEXT;
 	}
 	
 	@Override
-	public TrackerSettings<T> createDefaultSettings() {
-		return new LAPTrackerSettings<T>();
-	}
-
-	@Override
 	public String toString() {
-		return "LAP Tracker";
+		return NAME;
 	}
 	
 	@Override

@@ -23,7 +23,7 @@ public class DetectorFactory <T extends RealType<T> & NativeType<T>> {
 
 	
 	/** The detector names, in the order they will appear in the GUI.
-	 * These names will be used as keys to access relevant detecrtor classes.  */
+	 * These names will be used as keys to access relevant detector classes.  */
 	protected List<String> names;
 	
 	/*

@@ -23,9 +23,11 @@ public class NearestNeighborTrackerSettingsPanel <T extends RealType<T> & Native
 	private JLabel labelTrackerDescription;
 	private JLabel labelUnits;
 	private JLabel labelTracker;
+	private final String infoText;
 
 
-	public NearestNeighborTrackerSettingsPanel() {
+	public NearestNeighborTrackerSettingsPanel(String infoText) {
+		this.infoText = infoText;
 		initGUI();
 	}
 
@@ -41,7 +43,7 @@ public class NearestNeighborTrackerSettingsPanel <T extends RealType<T> & Native
 		NearestNeighborTrackerSettings<T> settings = (NearestNeighborTrackerSettings<T>) model.getSettings().trackerSettings;
 		maxDistField.setText(""+settings.maxLinkingDistance);
 		labelTracker.setText(model.getSettings().tracker.toString());
-		labelTrackerDescription.setText(model.getSettings().tracker.getInfoText()
+		labelTrackerDescription.setText(infoText
 				.replace("<br>", "")
 				.replace("<p>", "<p align=\"justify\">")
 				.replace("<html>", "<html><p align=\"justify\">"));

@@ -15,9 +15,6 @@ import org.jdom.DataConversionException;
 import org.jdom.Element;
 
 import fiji.plugin.trackmate.Logger;
-import fiji.plugin.trackmate.gui.LAPTrackerSettingsPanel;
-import fiji.plugin.trackmate.gui.SimpleLAPTrackerSettingsPanel;
-import fiji.plugin.trackmate.gui.TrackerConfigurationPanel;
 
 public class LAPTrackerSettings<T extends RealType<T> & NativeType<T>> implements TrackerSettings<T> {
 
@@ -113,13 +110,6 @@ public class LAPTrackerSettings<T extends RealType<T> & NativeType<T>> implement
 	/** Value used to block assignments when physically meaningless. */
 	public double blockingValue 				= Double.MAX_VALUE;
 
-
-	/*
-	 * PRIVATE FIELDS
-	 */
-	
-	private boolean useSimpleConfigPanel = false;
-
 	/*
 	 * METHODS
 	 */
@@ -159,33 +149,6 @@ public class LAPTrackerSettings<T extends RealType<T> & NativeType<T>> implement
 		}
 
 		return str;
-	}
-
-	@Override
-	public TrackerConfigurationPanel<T> createConfigurationPanel() {
-		if (useSimpleConfigPanel) {
-			return new SimpleLAPTrackerSettingsPanel<T>();
-		} else {
-			return new LAPTrackerSettingsPanel<T>();
-		}
-	}
-	
-	/**
-	 * If the flag is set to true, then this settings object will return the simplified 
-	 * config panel when called by {@link #createConfigurationPanel()}. Otherwise,
-	 * the full, standard, config panel is used. 
-	 */
-	public void setUseSimpleConfigPanel(boolean useSimpleConfigPanel) {
-		this.useSimpleConfigPanel = useSimpleConfigPanel;
-	}
-	
-	/**
-	 * Return whether this settings object will return the simplified 
-	 * config panel when called by {@link #createConfigurationPanel()}. Otherwise,
-	 * the full, standard, config panel is used. 
-	 */
-	public boolean isUseSimpleConfigPanel() {
-		return useSimpleConfigPanel;
 	}
 
 	@Override

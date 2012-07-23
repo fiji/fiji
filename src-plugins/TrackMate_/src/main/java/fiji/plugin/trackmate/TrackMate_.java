@@ -2,19 +2,11 @@ package fiji.plugin.trackmate;
 
 import fiji.plugin.trackmate.action.TrackMateAction;
 import fiji.plugin.trackmate.detection.SpotDetector;
-import fiji.plugin.trackmate.features.spot.BlobContrastAndSNR;
-import fiji.plugin.trackmate.features.spot.BlobDescriptiveStatistics;
-import fiji.plugin.trackmate.features.spot.BlobMorphology;
-import fiji.plugin.trackmate.features.spot.RadiusEstimator;
 import fiji.plugin.trackmate.features.spot.SpotFeatureAnalyzer;
-import fiji.plugin.trackmate.features.track.TrackDurationAnalyzer;
 import fiji.plugin.trackmate.features.track.TrackFeatureAnalyzer;
 import fiji.plugin.trackmate.gui.TrackMateWizard;
 import fiji.plugin.trackmate.gui.WizardController;
-import fiji.plugin.trackmate.tracking.FastLAPTracker;
-import fiji.plugin.trackmate.tracking.SimpleFastLAPTracker;
 import fiji.plugin.trackmate.tracking.SpotTracker;
-import fiji.plugin.trackmate.tracking.kdtree.NearestNeighborTracker;
 import fiji.plugin.trackmate.util.TMUtils;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
 import fiji.plugin.trackmate.visualization.TrackMateSelectionView;
@@ -55,14 +47,14 @@ public class TrackMate_<T extends RealType<T> & NativeType<T>>  implements PlugI
 	protected TrackMateModel<T> model;
 	protected boolean useMultithreading = DEFAULT_USE_MULTITHREADING;
 
-	protected List<SpotFeatureAnalyzer<T>> spotFeatureAnalyzers;
-	protected List<TrackFeatureAnalyzer<T>> trackFeatureAnalyzers;
+	protected SpotFeatureAnalyzerFactory<T> spotFeatureFactory;
+	protected TrackFeatureAnalyzerFactory<T> trackFeatureFactory;
 	/** The factory that provides this plugin with available {@link TrackMateModelView}s. */
 	protected ViewFactory<T> viewFactory;
 	/** The factory that provides this plugin with available {@link TrackMateAction}s. */
 	protected ActionFactory<T> actionFactory;
 	/** The list of {@link SpotTracker} that will be offered to choose amongst to the user. */
-	protected List<SpotTracker<T>> spotTrackers;
+	protected TrackerFactory<T> trackerFactory;
 	/** The {@link SpotDetector} factory that provide the GUI with the list of available detectors. */
 	protected DetectorFactory<T> detectorFactory;
 
@@ -111,13 +103,13 @@ public class TrackMate_<T extends RealType<T> & NativeType<T>>  implements PlugI
 	 * <p>
 	 * More precisely, the modules and fields instantiated by this method are:
 	 * <ul>
-	 * 	<li> {@link #spotFeatureAnalyzers}: the list of Spot feature analyzers that will
+	 * 	<li> {@link #spotFeatureFactory}: the list of Spot feature analyzers that will
 	 * be used when calling {@link #computeSpotFeatures()};
-	 * 	<li> {@link #trackFeatureAnalyzers}: the list of track feature analyzers that will
+	 * 	<li> {@link #trackFeatureFactory}: the list of track feature analyzers that will
 	 * be used when calling {@link #computeTrackFeatures()};
 	 * 	<li> {@link #spotDetectors}: the list of {@link SpotDetector}s that will be offered 
 	 * to the user to choose from;
-	 * 	<li> {@link #spotTrackers}: the list of {@link SpotTracker}s that will be offered 
+	 * 	<li> {@link #trackerFactory}: the list of {@link SpotTracker}s that will be offered 
 	 * to the user to choose from;
 	 * 	<li> {@link #viewFactory}: the list of {@link TrackMateModelView}s (the "displayers")
 	 * that will be offered to the user to choose from;
@@ -126,14 +118,14 @@ public class TrackMate_<T extends RealType<T> & NativeType<T>>  implements PlugI
 	 * </ul>
 	 */
 	public void initModules() {
-		this.spotFeatureAnalyzers 	= createSpotFeatureAnalyzerList();
-		this.trackFeatureAnalyzers 	= createTrackFeatureAnalyzerList();
+		this.spotFeatureFactory 	= createSpotFeatureAnalyzerFactory();
+		this.trackFeatureFactory 	= createTrackFeatureAnalyzerFactory();
 		this.detectorFactory		= createDetectorFactory();
-		this.spotTrackers 			= createSpotTrackerList();
+		this.trackerFactory 		= createTrackerFactory();
 		this.viewFactory 			= createViewFactory();
 		this.actionFactory 			= createActionFactory();
-		model.getFeatureModel().setSpotFeatureAnalyzers(spotFeatureAnalyzers);
-		model.getFeatureModel().setTrackFeatureAnalyzers(trackFeatureAnalyzers);
+		model.getFeatureModel().setSpotFeatureFactory(spotFeatureFactory);
+		model.getFeatureModel().setTrackFeatureFactory(trackFeatureFactory);
 	}
 	
 	/*
@@ -229,48 +221,28 @@ public class TrackMate_<T extends RealType<T> & NativeType<T>>  implements PlugI
 	/**
 	 * Hook for subclassers.
 	 * <p>
-	 * Create the list of {@link SpotFeatureAnalyzer} that will be used to compute spot features.
-	 * Overwrite this method if you want to add your {@link SpotFeatureAnalyzer}.
+	 * Create detector factory containing available spot {@link SpotFeatureAnalyzer}s.
 	 */
-	protected List<SpotFeatureAnalyzer<T>> createSpotFeatureAnalyzerList() {
-		List<SpotFeatureAnalyzer<T>> analyzers = new ArrayList<SpotFeatureAnalyzer<T>>(5);
-		analyzers.add(new BlobDescriptiveStatistics<T>());
-		analyzers.add(new BlobContrastAndSNR<T>()); // must be after the statistics one
-		analyzers.add(new RadiusEstimator<T>());
-		analyzers.add(new BlobMorphology<T>());
-//		analyzers.add(new SpotIconGrabber()); // Takes too long. And we need it only at the end, and we can do it with an action.
-		return analyzers;
+	protected SpotFeatureAnalyzerFactory<T> createSpotFeatureAnalyzerFactory() {
+		return new SpotFeatureAnalyzerFactory<T>();
 	}
 	
 	/**
 	 * Hook for subclassers.
 	 * <p>
-	 * Create the list of {@link SpotTracker} that will be used to build tracks.
-	 * Overwrite this method if you want to add your {@link SpotTracker}.
+	 * Create detector factory containing available spot {@link SpotTracker}s.
 	 */
-	protected List<SpotTracker<T>> createSpotTrackerList() {
-		List<SpotTracker<T>> trackers = new ArrayList<SpotTracker<T>>(5);
-		trackers.add(new SimpleFastLAPTracker<T>());
-		trackers.add(new FastLAPTracker<T>());
-//		trackers.add(new fiji.plugin.trackmate.tracking.SimpleLAPTracker());
-//		trackers.add(new fiji.plugin.trackmate.tracking.LAPTracker());
-		trackers.add(new NearestNeighborTracker<T>());
-		return trackers;
-		
+	protected TrackerFactory<T> createTrackerFactory() {
+		return new TrackerFactory<T>();
 	}
 	
 	/**
 	 * Hook for subclassers.
 	 * <p>
-	 * Create the list of {@link TrackFeatureAnalyzer} that will be used to compute track features.
-	 * Overwrite this method if you want to add your {@link TrackFeatureAnalyzer}.
+	* Create detector factory containing available spot {@link TrackFeatureAnalyzer}s.
 	 */
-	protected List<TrackFeatureAnalyzer<T>> createTrackFeatureAnalyzerList() {
-		List<TrackFeatureAnalyzer<T>> analyzers = new ArrayList<TrackFeatureAnalyzer<T>>(3);
-//		analyzers.add(new TrackBranchingAnalyzer());
-		analyzers.add(new TrackDurationAnalyzer<T>());
-//		analyzers.add(new TrackSpeedStatisticsAnalyzer());
-		return analyzers;
+	protected TrackFeatureAnalyzerFactory<T> createTrackFeatureAnalyzerFactory() {
+		return new TrackFeatureAnalyzerFactory<T>();
 	}
 	
 	/**
@@ -295,14 +267,11 @@ public class TrackMate_<T extends RealType<T> & NativeType<T>>  implements PlugI
 	}
 
 	/**
-	 * Return a list of the {@link SpotFeatureAnalyzer} that are currently registered in this plugin.
-	 * <p>
-	 * Note: the features that will be actually computed are a subset of this list and can be specified 
-	 * to the model, using the {@link TrackMateModel#setSpotFeatureAnalyzers(List)} method. 
-	 * @see #createSpotFeatureAnalyzerList()
+	 * @return the {@link SpotFeatureAnalyzerFactory} currently registered in this plugin.
+	 * @see #createSpotFeatureAnalyzerFactory()
 	 */
-	public List<SpotFeatureAnalyzer<T>> getAvailableSpotFeatureAnalyzers() {
-		return spotFeatureAnalyzers;
+	public SpotFeatureAnalyzerFactory<T> getAvailableSpotFeatureAnalyzers() {
+		return spotFeatureFactory;
 	}
 	
 	/**
@@ -315,8 +284,8 @@ public class TrackMate_<T extends RealType<T> & NativeType<T>>  implements PlugI
 	/**
 	 * Return a list of the {@link SpotTracker} that are currently registered in this plugin.
 	 */
-	public List<SpotTracker<T>> getAvailableSpotTrackers() {
-		return spotTrackers;
+	public TrackerFactory<T> getTrackerFactory() {
+		return trackerFactory;
 	}
 
 	
@@ -355,8 +324,6 @@ public class TrackMate_<T extends RealType<T> & NativeType<T>>  implements PlugI
 		model.computeTrackFeatures();
 	}
 
-
-
 	/**
 	 * Execute the tracking part.
 	 * <p>
@@ -368,7 +335,11 @@ public class TrackMate_<T extends RealType<T> & NativeType<T>>  implements PlugI
 	 * @see #getTrackGraph()
 	 */ 
 	public void execTracking() {
-		SpotTracker<T> tracker = model.getSettings().tracker;
+		String trackerName = model.getSettings().tracker;
+		SpotTracker<T> tracker = trackerFactory.getTracker(trackerName);
+		if (null == tracker) {
+			model.getLogger().error("Tracker named "+trackerName+" is not available in "+toString());
+		}
 		tracker.setModel(model);
 		tracker.setLogger(model.getLogger());
 		if (tracker.checkInput() && tracker.process()) {

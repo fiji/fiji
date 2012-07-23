@@ -41,6 +41,7 @@ public class DetectorConfigurationPanelDescriptor <T extends RealType<T> & Nativ
 			settings = plugin.getDetectorFactory().getDefaultSettings( detectorName );
 		}
 		configPanel = plugin.getDetectorFactory().getDetectorConfigurationPanel( detectorName );
+		configPanel.setDetectorSettings(plugin.getModel());
 	}
 
 	@Override

@@ -29,18 +29,20 @@ public class TrackerConfigurationPanelDescriptor <T extends RealType<T> & Native
 	@Override
 	public void setPlugin(TrackMate_<T> plugin) {
 		this.plugin = plugin;
+		String trackerName = plugin.getModel().getSettings().tracker;
 		TrackerSettings<T> settings = plugin.getModel().getSettings().trackerSettings;
 		// Bulletproof null
 		if (null == settings) {
-			SpotTracker<T> tracker = plugin.getModel().getSettings().tracker;
+			SpotTracker<T> tracker = plugin.getTrackerFactory().getTracker(trackerName);
 			if (null == tracker) {
 				// try to make it right with a default
-				tracker = new NearestNeighborTracker<T>();
-				plugin.getModel().getSettings().tracker = tracker;
+				trackerName = NearestNeighborTracker.NAME;
+				plugin.getModel().getSettings().tracker = trackerName;
 			}
-			settings = tracker.createDefaultSettings();
+			settings = plugin.getTrackerFactory().getDefaultSettings(trackerName);
 		}
-		configPanel = settings.createConfigurationPanel();
+		configPanel = plugin.getTrackerFactory().getTrackerConfigurationPanel(trackerName);
+		configPanel.setTrackerSettings(plugin.getModel());
 	}
 
 	@Override

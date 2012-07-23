@@ -1,7 +1,6 @@
 package fiji.plugin.trackmate.features.track;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -90,27 +89,4 @@ public class TrackBranchingAnalyzer<T extends RealType<T> & NativeType<T>> imple
 		}
 
 	}
-
-	@Override
-	public Map<String, String> getFeatureShortNames() {
-		return FEATURE_SHORT_NAMES;
-	}
-
-
-	@Override
-	public Map<String, String> getFeatureNames() {
-		return FEATURE_NAMES;
-	}
-
-
-	@Override
-	public Map<String, Dimension> getFeatureDimensions() {
-		return FEATURE_DIMENSIONS;
-	}
-
-	@Override
-	public Collection<String> getFeatures() {
-		return FEATURES;
-	}
-
 }

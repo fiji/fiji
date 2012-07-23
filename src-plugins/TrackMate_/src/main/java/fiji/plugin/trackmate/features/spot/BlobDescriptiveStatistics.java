@@ -1,16 +1,13 @@
 package fiji.plugin.trackmate.features.spot;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
-import java.util.Map;
 
 import net.imglib2.algorithm.region.localneighborhood.DiscNeighborhood;
 import net.imglib2.algorithm.region.localneighborhood.RealPositionableAbstractNeighborhood;
 import net.imglib2.algorithm.region.localneighborhood.SphereNeighborhood;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.util.Util;
-
 import fiji.plugin.trackmate.Dimension;
 import fiji.plugin.trackmate.Spot;
 
@@ -19,6 +16,8 @@ public class BlobDescriptiveStatistics<T extends RealType<T>> extends Independen
 	/*
 	 * CONSTANTS
 	 */
+	
+	public static final String NAME = "Spot descriptive statistics";
 	
 	public static final String	MEAN_INTENSITY 	= "MEAN_INTENSITY";
 	public static final String	MEDIAN_INTENSITY = "MEDIAN_INTENSITY";
@@ -156,27 +155,5 @@ public class BlobDescriptiveStatistics<T extends RealType<T>> extends Independen
 		spot.putFeature(TOTAL_INTENSITY, sum);
 		spot.putFeature(KURTOSIS, kurtosis);
 		spot.putFeature(SKEWNESS, skewness);
-	}
-
-	
-
-	@Override
-	public Collection<String> getFeatures() {
-		return FEATURES;
-	}
-	
-	@Override
-	public Map<String, String> getFeatureShortNames() {
-		return FEATURE_SHORT_NAMES;
-	}
-
-	@Override
-	public Map<String, String> getFeatureNames() {
-		return FEATURE_NAMES;
-	}
-
-	@Override
-	public Map<String, Dimension> getFeatureDimensions() {
-		return FEATURE_DIMENSIONS;
 	}
 }

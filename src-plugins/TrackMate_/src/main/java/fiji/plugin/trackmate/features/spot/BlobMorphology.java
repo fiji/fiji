@@ -2,9 +2,7 @@ package fiji.plugin.trackmate.features.spot;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.HashMap;
-import java.util.Map;
 
 import net.imglib2.algorithm.region.localneighborhood.DiscCursor;
 import net.imglib2.algorithm.region.localneighborhood.DiscNeighborhood;
@@ -75,10 +73,10 @@ public class BlobMorphology<T extends RealType<T>> extends IndependentSpotFeatur
 	/** The key name of the morphology feature this analyzer computes. */
 	public final static String MORPHOLOGY = "MORPHOLOGY";
 	
-	private static final ArrayList<String> 			FEATURES = new ArrayList<String>(10);
-	private static final HashMap<String, String> 	FEATURE_NAMES = new HashMap<String, String>(10);
-	private static final HashMap<String, String> 	FEATURE_SHORT_NAMES = new HashMap<String, String>(10);
-	private static final HashMap<String, Dimension> FEATURE_DIMENSIONS = new HashMap<String, Dimension>(10);
+	public static final ArrayList<String> 			FEATURES = new ArrayList<String>(10);
+	public static final HashMap<String, String> 	FEATURE_NAMES = new HashMap<String, String>(10);
+	public static final HashMap<String, String> 	FEATURE_SHORT_NAMES = new HashMap<String, String>(10);
+	public static final HashMap<String, Dimension> FEATURE_DIMENSIONS = new HashMap<String, Dimension>(10);
 	static {
 		FEATURES.add(MORPHOLOGY);
 		FEATURES.addAll(Arrays.asList(featurelist_sa));
@@ -131,6 +129,7 @@ public class BlobMorphology<T extends RealType<T>> extends IndependentSpotFeatur
 	/** Significance factor to determine when a semiaxis length should be
 	 *  considered significantly larger than the others. */
 	private static final double SIGNIFICANCE_FACTOR = 1.2;
+	public static final String NAME = "Blob morphology";
 
 	/*
 	 * PUBLIC METHODS
@@ -503,26 +502,4 @@ public class BlobMorphology<T extends RealType<T>> extends IndependentSpotFeatur
 		
 		*/
 	}
-
-
-	@Override
-	public Collection<String> getFeatures() {
-		return FEATURES;
-	}
-
-	@Override
-	public Map<String, String> getFeatureShortNames() {
-		return FEATURE_SHORT_NAMES;
-	}
-
-	@Override
-	public Map<String, String> getFeatureNames() {
-		return FEATURE_NAMES;
-	}
-
-	@Override
-	public Map<String, Dimension> getFeatureDimensions() {
-		return FEATURE_DIMENSIONS;
-	}
-
 }

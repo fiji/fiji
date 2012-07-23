@@ -20,7 +20,6 @@ import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.tracking.SpotTracker;
-import fiji.plugin.trackmate.tracking.TrackerSettings;
 
 public class NearestNeighborTracker <T extends RealType<T> & NativeType<T>> extends MultiThreadedBenchmarkAlgorithm	implements SpotTracker<T> {
 
@@ -28,6 +27,23 @@ public class NearestNeighborTracker <T extends RealType<T> & NativeType<T>> exte
 	 * FIELDS
 	 */
 
+	public static final String NAME = "Nearest neighbor search";
+	public static final String INFO_TEXT = "<html>" +
+				"This tracker is the most simple one, and is based on nearest neighbor <br>" +
+				"search. The spots in the target frame are searched for the nearest neighbor <br> " +
+				"of each spot in the source frame. If the spots found are closer than the <br>" +
+				"maximal allowed distance, a link between the two is created. <br>" +
+				"<p>" +
+				"The nearest neighbor search relies upon the KD-tree technique implemented <br>" +
+				"in imglib by Johannes Schindelin and friends. This ensure a very efficient " +
+				"tracking and makes this tracker suitable for situation where a huge number <br>" +
+				"of particles are to be tracked over a very large number of frames. However, <br>" +
+				"because of the naiveness of its principles, it can result in pathological <br>" +
+				"tracks. It can only do frame-to-frame linking; there cannot be any track <br>" +
+				"merging or splitting, and gaps will not be closed. Also, the end results are non-" +
+				"deterministic." +
+				" </html>";
+	
 	private SpotCollection spots;
 	private Logger logger = Logger.DEFAULT_LOGGER;
 	private SimpleWeightedGraph<Spot, DefaultWeightedEdge> graph;
@@ -136,25 +152,12 @@ public class NearestNeighborTracker <T extends RealType<T> & NativeType<T>> exte
 
 	@Override
 	public String toString() {
-		return "Nearest neighbor search";
+		return NAME;
 	}
 	
 	@Override
 	public String getInfoText() {
-		return "<html>" +
-				"This tracker is the most simple one, and is based on nearest neighbor <br>" +
-				"search. The spots in the target frame are searched for the nearest neighbor <br> " +
-				"of each spot in the source frame. If the spots found are closer than the <br>" +
-				"maximal allowed distance, a link between the two is created. <br>" +
-				"<p>" +
-				"The nearest neighbor search relies upon the KD-tree technique implemented <br>" +
-				"in imglib by Johannes Schindelin and friends. This ensure a very efficient " +
-				"tracking and makes this tracker suitable for situation where a huge number <br>" +
-				"of particles are to be tracked over a very large number of frames. However, <br>" +
-				"because of the naiveness of its principles, it can result in pathological <br>" +
-				"tracks. It can only do frame-to-frame linking; there cannot be any track <br>" +
-				"merging or splitting, and gaps will not be closed." +
-				" </html>";	
+		return INFO_TEXT;	
 	}
 
 	@Override
@@ -173,11 +176,6 @@ public class NearestNeighborTracker <T extends RealType<T> & NativeType<T>> exte
 	@Override
 	public SimpleWeightedGraph<Spot, DefaultWeightedEdge> getResult() {
 		return graph;
-	}
-
-	@Override
-	public TrackerSettings<T> createDefaultSettings() {
-		return new NearestNeighborTrackerSettings<T>();
 	}
 
 	public void reset() {

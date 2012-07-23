@@ -38,13 +38,15 @@ public class SimpleLAPTrackerSettingsPanel <T extends RealType<T> & NativeType<T
 	private JLabel jLabelTrackerDescription;
 
 	private LAPTrackerSettings<T> settings;
+	private final String infoText;
 
 	/*
 	 * CONSTRUCTOR
 	 */
 
 
-	public SimpleLAPTrackerSettingsPanel() {
+	public SimpleLAPTrackerSettingsPanel(String infoText) {
+		this.infoText = infoText;
 		initGUI();
 	}
 
@@ -80,7 +82,7 @@ public class SimpleLAPTrackerSettingsPanel <T extends RealType<T> & NativeType<T
 
 	private void echoSettings(TrackMateModel<T> model) {
 		jLabelTrackerName.setText(model.getSettings().tracker.toString());
-		jLabelTrackerDescription.setText(model.getSettings().tracker.getInfoText()
+		jLabelTrackerDescription.setText(infoText
 				.replace("<br>", "")
 				.replace("<p>", "<p align=\"justify\">")
 				.replace("<html>", "<html><p align=\"justify\">"));

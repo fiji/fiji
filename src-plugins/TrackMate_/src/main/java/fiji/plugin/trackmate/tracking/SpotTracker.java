@@ -43,13 +43,6 @@ public interface SpotTracker <T extends RealType<T> & NativeType<T>> extends Alg
 	public SimpleWeightedGraph<Spot, DefaultWeightedEdge> getResult();
 	
 	/**
-	 * Create a default {@link TrackerSettings} implementation, suitable for this concrete spot tracker.
-	 * The concrete implementation returned will be of type {@link TrackerSettings}, but the actual instance
-	 * will be one suitable for the concrete tracker implementation.
-	 */
-	public TrackerSettings<T> createDefaultSettings();
-	
-	/**
 	 * @return  the name of this spot tracker.
 	 */
 	@Override

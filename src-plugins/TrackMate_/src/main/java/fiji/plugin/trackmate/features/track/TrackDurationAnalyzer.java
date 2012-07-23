@@ -1,7 +1,6 @@
 package fiji.plugin.trackmate.features.track;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -16,16 +15,16 @@ import fiji.plugin.trackmate.TrackMateModel;
 
 public class TrackDurationAnalyzer<T extends RealType<T> & NativeType<T>> implements TrackFeatureAnalyzer<T> {
 	
-	
+	public static final String NAME = "Track duration";
 	public static final String 		TRACK_DURATION = "TRACK_DURATION";
 	public static final String 		TRACK_START = "TRACK_START";
 	public static final String 		TRACK_STOP = "TRACK_STOP";
 	public static final String 		TRACK_DISPLACEMENT = "TRACK_DISPLACEMENT";
 	
-	private static final List<String> FEATURES = new ArrayList<String>(4);
-	private static final Map<String, String> FEATURE_NAMES = new HashMap<String, String>(4);
-	private static final Map<String, String> FEATURE_SHORT_NAMES = new HashMap<String, String>(4);
-	private static final Map<String, Dimension> FEATURE_DIMENSIONS = new HashMap<String, Dimension>(4);
+	public static final List<String> FEATURES = new ArrayList<String>(4);
+	public static final Map<String, String> FEATURE_NAMES = new HashMap<String, String>(4);
+	public static final Map<String, String> FEATURE_SHORT_NAMES = new HashMap<String, String>(4);
+	public static final Map<String, Dimension> FEATURE_DIMENSIONS = new HashMap<String, Dimension>(4);
 	
 	static {
 		FEATURES.add(TRACK_DURATION);
@@ -87,28 +86,4 @@ public class TrackDurationAnalyzer<T extends RealType<T> & NativeType<T>> implem
 			}
 		}
 	}
-
-	@Override
-	public Map<String, String> getFeatureShortNames() {
-		return FEATURE_SHORT_NAMES;
-	}
-
-
-	@Override
-	public Map<String, String> getFeatureNames() {
-		return FEATURE_NAMES;
-	}
-
-
-	@Override
-	public Map<String, Dimension> getFeatureDimensions() {
-		return FEATURE_DIMENSIONS;
-	}
-
-	@Override
-	public Collection<String> getFeatures() {
-		return FEATURES;
-	}
-
-
 }

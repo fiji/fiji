@@ -1,19 +1,18 @@
 package fiji.plugin.trackmate.gui;
 
 import java.awt.Component;
+import java.util.ArrayList;
+import java.util.List;
 
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
-
 import fiji.plugin.trackmate.TrackMate_;
-import fiji.plugin.trackmate.tracking.LAPTrackerSettings;
-import fiji.plugin.trackmate.tracking.SpotTracker;
 import fiji.plugin.trackmate.tracking.TrackerSettings;
 
 public class TrackerChoiceDescriptor <T extends RealType<T> & NativeType<T>> implements WizardPanelDescriptor<T> {
 
 	public static final String DESCRIPTOR = "TrackerChoice";
-	private ListChooserPanel<SpotTracker<T>> component;
+	private ListChooserPanel component;
 	private TrackMate_<T> plugin;
 	private TrackMateWizard<T> wizard;
 	
@@ -59,26 +58,16 @@ public class TrackerChoiceDescriptor <T extends RealType<T> & NativeType<T>> imp
 	@Override
 	public void aboutToHidePanel() {
 		// Set the settings field of the model
-		SpotTracker<T> tracker = component.getChoice();
-		plugin.getModel().getSettings().tracker = tracker;
+		String trackerName = component.getChoice();
+		plugin.getModel().getSettings().tracker = trackerName;
 
 		// Compare current settings with default ones, and substitute default ones
 		// only if the old ones are absent or not compatible with it.
-		TrackerSettings<T> defaultSettings = tracker.createDefaultSettings();
+		TrackerSettings<T> defaultSettings = plugin.getTrackerFactory().getDefaultSettings(trackerName);
 		TrackerSettings<T> currentSettings = plugin.getModel().getSettings().trackerSettings;
 		
 		if (null == currentSettings || currentSettings.getClass() != defaultSettings.getClass()) {
-		
 			plugin.getModel().getSettings().trackerSettings = defaultSettings;
-		
-		} else if (currentSettings instanceof LAPTrackerSettings) {
-
-			// Deal with special case: the LAPTrackerSettings that exists in 2 flavor
-			LAPTrackerSettings<T> clapts = (LAPTrackerSettings<T>) currentSettings;
-			LAPTrackerSettings<T> dlapts = (LAPTrackerSettings<T>) defaultSettings;
-			// We copy the #useSimpleConfigPanel field to the current settings 
-			clapts.setUseSimpleConfigPanel(dlapts.isUseSimpleConfigPanel());
-		
 		} 
 		 
 		// Instantiate next descriptor for the wizard
@@ -91,7 +80,12 @@ public class TrackerChoiceDescriptor <T extends RealType<T> & NativeType<T>> imp
 	@Override
 	public void setPlugin(TrackMate_<T> plugin) {
 		this.plugin = plugin;
-		this.component = new ListChooserPanel<SpotTracker<T>>(plugin.getAvailableSpotTrackers(), "tracker");
+		List<String> trackerNames = plugin.getTrackerFactory().getAvailableTrackers();
+		List<String> infoTexts = new ArrayList<String>(trackerNames.size());
+		for(String key : trackerNames) {
+			infoTexts.add(plugin.getTrackerFactory().getInfoText(key));
+		}
+		this.component = new ListChooserPanel(trackerNames, infoTexts, "tracker");
 		setCurrentChoiceFromPlugin();
 	}
 
@@ -101,18 +95,11 @@ public class TrackerChoiceDescriptor <T extends RealType<T> & NativeType<T>> imp
 	}
 
 	void setCurrentChoiceFromPlugin() {
-		SpotTracker<T> tracker = plugin.getModel().getSettings().tracker; 
-		if (tracker != null) {
-			int index = 0;
-			for (int i = 0; i < plugin.getAvailableSpotTrackers().size(); i++) {
-				if (tracker.toString().equals(plugin.getAvailableSpotTrackers().get(i).toString())) {
-					index = i;
-					break;
-				}
-			}
+		String tracker = plugin.getModel().getSettings().tracker; 
+		int index = plugin.getTrackerFactory().getAvailableTrackers().indexOf(tracker);
+		if (index >= 0) {
 			component.jComboBoxChoice.setSelectedIndex(index);
 		}
 	}
-
 	
 }

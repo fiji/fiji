@@ -1,16 +1,13 @@
 package fiji.plugin.trackmate.features.spot;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
-import java.util.Map;
 
 import net.imglib2.algorithm.region.localneighborhood.DiscNeighborhood;
 import net.imglib2.algorithm.region.localneighborhood.RealPositionableAbstractNeighborhood;
 import net.imglib2.algorithm.region.localneighborhood.RealPositionableNeighborhoodCursor;
 import net.imglib2.algorithm.region.localneighborhood.SphereNeighborhood;
 import net.imglib2.type.numeric.RealType;
-
 import fiji.plugin.trackmate.Dimension;
 import fiji.plugin.trackmate.Spot;
 
@@ -22,10 +19,10 @@ public class RadiusEstimator<T extends RealType<T>> extends IndependentSpotFeatu
 	
 	/** The single feature key name that this analyzer computes. */
 	public static final String						ESTIMATED_DIAMETER = "ESTIMATED_DIAMETER";
-	private static final ArrayList<String> 			FEATURES = new ArrayList<String>(1);
-	private static final HashMap<String, String> 	FEATURE_NAMES = new HashMap<String, String>(1);
-	private static final HashMap<String, String> 	FEATURE_SHORT_NAMES = new HashMap<String, String>(1);
-	private static final HashMap<String, Dimension> FEATURE_DIMENSIONS = new HashMap<String, Dimension>(1);
+	public static final ArrayList<String> 			FEATURES = new ArrayList<String>(1);
+	public static final HashMap<String, String> 	FEATURE_NAMES = new HashMap<String, String>(1);
+	public static final HashMap<String, String> 	FEATURE_SHORT_NAMES = new HashMap<String, String>(1);
+	public static final HashMap<String, Dimension> FEATURE_DIMENSIONS = new HashMap<String, Dimension>(1);
 	static {
 		FEATURES.add(ESTIMATED_DIAMETER);
 		FEATURE_NAMES.put(ESTIMATED_DIAMETER, "Estimated diameter");
@@ -35,6 +32,7 @@ public class RadiusEstimator<T extends RealType<T>> extends IndependentSpotFeatu
 	
 	private static final double MIN_DIAMETER_RATIO = 0.1f;
 	private static final double MAX_DIAMETER_RATIO = 2;
+	public static final String NAME = "Spot radius estimator";
 	
 	
 	/*
@@ -141,25 +139,5 @@ public class RadiusEstimator<T extends RealType<T>> extends IndependentSpotFeatu
 				+ i * (MAX_DIAMETER_RATIO - MIN_DIAMETER_RATIO)/(nDiameters-1) );
 		}
 		return diameters;
-	}
-	
-	@Override
-	public Collection<String> getFeatures() {
-		return FEATURES;
-	}
-
-	@Override
-	public Map<String, String> getFeatureShortNames() {
-		return FEATURE_SHORT_NAMES;
-	}
-
-	@Override
-	public Map<String, String> getFeatureNames() {
-		return FEATURE_NAMES;
-	}
-
-	@Override
-	public Map<String, Dimension> getFeatureDimensions() {
-		return FEATURE_DIMENSIONS;
 	}
 }

@@ -6,8 +6,6 @@ import net.imglib2.type.numeric.RealType;
 import org.jdom.Element;
 
 import fiji.plugin.trackmate.Logger;
-import fiji.plugin.trackmate.gui.NearestNeighborTrackerSettingsPanel;
-import fiji.plugin.trackmate.gui.TrackerConfigurationPanel;
 import fiji.plugin.trackmate.tracking.TrackerSettings;
 import fiji.plugin.trackmate.util.TMUtils;
 
@@ -21,11 +19,6 @@ public class NearestNeighborTrackerSettings<T extends RealType<T> & NativeType<T
 	 */
 	public double maxLinkingDistance = DEFAULT_MAX_LINKING_DISTANCE;
 	
-	@Override
-	public TrackerConfigurationPanel<T> createConfigurationPanel() {
-		return new NearestNeighborTrackerSettingsPanel<T>();
-	}
-
 	@Override
 	public void marshall(Element element) {
 		element.setAttribute(MAX_LINKING_DISTANCE_ATTRIBUTE, ""+maxLinkingDistance);

@@ -18,6 +18,8 @@ import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
+import fiji.plugin.trackmate.SpotFeatureAnalyzerFactory;
+import fiji.plugin.trackmate.TrackFeatureAnalyzerFactory;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.features.spot.SpotFeatureAnalyzer;
 import fiji.plugin.trackmate.features.track.TrackFeatureAnalyzer;
@@ -35,15 +37,6 @@ public class FeatureModel <T extends RealType<T> & NativeType<T>> {
 	 * FIELDS
 	 */
 
-	/** 
-	 * The list of spot feature analyzer that will be used to compute spot features.
-	 * Setting this field will automatically sets the derived fields: {@link #spotFeatures},
-	 * {@link #spotFeatureNames}, {@link #spotFeatureShortNames} and {@link #spotFeatureDimensions}
-	 * @see #updateFeatures(List) 
-	 * @see #updateFeatures(Spot)
-	 */
-	protected List<SpotFeatureAnalyzer<T>> spotFeatureAnalyzers = new ArrayList<SpotFeatureAnalyzer<T>>();
-
 	/** The list of spot features that are available for the spots of this model. */
 	private List<String> spotFeatures;
 	/** The map of the spot feature names. */
@@ -53,7 +46,6 @@ public class FeatureModel <T extends RealType<T> & NativeType<T>> {
 	/** The map of the spot feature dimension. */
 	private Map<String, Dimension> spotFeatureDimensions;
 
-	protected List<TrackFeatureAnalyzer<T>> trackFeatureAnalyzers = new ArrayList<TrackFeatureAnalyzer<T>>();
 	private ArrayList<String> trackFeatures = new ArrayList<String>();
 	private HashMap<String, String> trackFeatureNames = new HashMap<String, String>();
 	private HashMap<String, String> trackFeatureShortNames = new HashMap<String, String>();
@@ -68,6 +60,10 @@ public class FeatureModel <T extends RealType<T> & NativeType<T>> {
 
 	private TrackMateModel<T> model;
 
+	protected SpotFeatureAnalyzerFactory<T> spotAnalyzerFactory;
+
+	protected TrackFeatureAnalyzerFactory<T> trackAnalyzerFactory;
+
 
 	/*
 	 * CONSTRUCTOR
@@ -76,7 +72,7 @@ public class FeatureModel <T extends RealType<T> & NativeType<T>> {
 	public FeatureModel(TrackMateModel<T> model) {
 		this.model = model;
 		// To initialize the spot features with the basic features:
-		setSpotFeatureAnalyzers(new ArrayList<SpotFeatureAnalyzer<T>>());
+		setSpotFeatureFactory(null);
 	}
 
 
@@ -124,9 +120,9 @@ public class FeatureModel <T extends RealType<T> & NativeType<T>> {
 		/* 0 - Determine what analyzers are needed */
 		final List<SpotFeatureAnalyzer<T>> selectedAnalyzers = new ArrayList<SpotFeatureAnalyzer<T>>(); // We want to keep ordering
 		for (String feature : features) {
-			for (SpotFeatureAnalyzer<T> analyzer : spotFeatureAnalyzers) {
-				if (analyzer.getFeatures().contains(feature) && !selectedAnalyzers.contains(analyzer)) {
-					selectedAnalyzers.add(analyzer);
+			for (String analyzer : spotAnalyzerFactory.getAvailableSpotFeatureAnalyzers()) {
+				if (spotAnalyzerFactory.getFeatures(analyzer).contains(feature) && !selectedAnalyzers.contains(analyzer)) {
+					selectedAnalyzers.add(spotAnalyzerFactory.getSpotFeatureAnalyzer(analyzer));
 				}
 			}
 		}
@@ -141,6 +137,11 @@ public class FeatureModel <T extends RealType<T> & NativeType<T>> {
 	 * image. 
 	 */
 	public void computeSpotFeatures(final SpotCollection toCompute) {
+		List<String> analyzerNames = spotAnalyzerFactory.getAvailableSpotFeatureAnalyzers();
+		List<SpotFeatureAnalyzer<T>> spotFeatureAnalyzers = new ArrayList<SpotFeatureAnalyzer<T>>(analyzerNames.size());
+		for (String analyzerName : analyzerNames) {
+			spotFeatureAnalyzers.add(spotAnalyzerFactory.getSpotFeatureAnalyzer(analyzerName));
+		}
 		computeSpotFeaturesAgent(toCompute, spotFeatureAnalyzers);
 	}
 
@@ -156,8 +157,8 @@ public class FeatureModel <T extends RealType<T> & NativeType<T>> {
 	 * @see #updateFeatures(List) 
 	 * @see #updateFeatures(Spot)
 	 */
-	public void setSpotFeatureAnalyzers(List<SpotFeatureAnalyzer<T>> featureAnalyzers) {
-		this.spotFeatureAnalyzers = featureAnalyzers;
+	public void setSpotFeatureFactory(final SpotFeatureAnalyzerFactory<T> spotAnalyzerFactory) {
+		this.spotAnalyzerFactory = spotAnalyzerFactory;
 
 		spotFeatures = new ArrayList<String>();
 		spotFeatureNames = new HashMap<String, String>();
@@ -171,11 +172,14 @@ public class FeatureModel <T extends RealType<T> & NativeType<T>> {
 		spotFeatureDimensions.putAll(Spot.FEATURE_DIMENSIONS);
 
 		// Features from analyzers
-		for(SpotFeatureAnalyzer<T> analyzer : spotFeatureAnalyzers) {
-			spotFeatures.addAll(analyzer.getFeatures());
-			spotFeatureNames.putAll(analyzer.getFeatureNames());
-			spotFeatureShortNames.putAll(analyzer.getFeatureShortNames());
-			spotFeatureDimensions.putAll(analyzer.getFeatureDimensions());
+		if (null != spotAnalyzerFactory) {
+			List<String> analyzers = spotAnalyzerFactory.getAvailableSpotFeatureAnalyzers();
+			for(String analyzer : analyzers) {
+				spotFeatures.addAll(spotAnalyzerFactory.getFeatures(analyzer));
+				spotFeatureNames.putAll(spotAnalyzerFactory.getFeatureNames(analyzer));
+				spotFeatureShortNames.putAll(spotAnalyzerFactory.getFeatureShortNames(analyzer));
+				spotFeatureDimensions.putAll(spotAnalyzerFactory.getFeatureDimensions(analyzer));
+			}
 		}
 	}
 
@@ -220,19 +224,19 @@ public class FeatureModel <T extends RealType<T> & NativeType<T>> {
 	 * 
 	 * @see #computeTrackFeatures()
 	 */
-	public void setTrackFeatureAnalyzers(List<TrackFeatureAnalyzer<T>> featureAnalyzers) {
-		this.trackFeatureAnalyzers = featureAnalyzers;
+	public void setTrackFeatureFactory(TrackFeatureAnalyzerFactory<T> trackAnalyzerFactory) {
+		this.trackAnalyzerFactory = trackAnalyzerFactory;
 
 		trackFeatures = new ArrayList<String>();
 		trackFeatureNames = new HashMap<String, String>();
 		trackFeatureShortNames = new HashMap<String, String>();
 		trackFeatureDimensions = new HashMap<String, Dimension>();
 
-		for(TrackFeatureAnalyzer<T> analyzer : trackFeatureAnalyzers) {
-			trackFeatures.addAll(analyzer.getFeatures());
-			trackFeatureNames.putAll(analyzer.getFeatureNames());
-			trackFeatureShortNames.putAll(analyzer.getFeatureShortNames());
-			trackFeatureDimensions.putAll(analyzer.getFeatureDimensions());
+		for (String analyzer : trackAnalyzerFactory.getAvailableTrackFeatureAnalyzers()) {
+			trackFeatures.addAll(trackAnalyzerFactory.getFeatures(analyzer));
+			trackFeatureNames.putAll(trackAnalyzerFactory.getFeatureNames(analyzer));
+			trackFeatureShortNames.putAll(trackAnalyzerFactory.getFeatureShortNames(analyzer));
+			trackFeatureDimensions.putAll(trackAnalyzerFactory.getFeatureDimensions(analyzer));
 		}
 	}
 
@@ -248,7 +252,7 @@ public class FeatureModel <T extends RealType<T> & NativeType<T>> {
 	}
 	
 	/**
-	 * The method in charge of computing spot features with the given {@link SpotFeatureAnalyzer}s, fot the
+	 * The method in charge of computing spot features with the given {@link SpotFeatureAnalyzer}s, for the
 	 * given {@link SpotCollection}.
 	 * @param toCompute
 	 * @param analyzers
@@ -409,8 +413,8 @@ public class FeatureModel <T extends RealType<T> & NativeType<T>> {
 	 */
 	public void computeTrackFeatures() {
 		initFeatureMap();
-		for (TrackFeatureAnalyzer<T> analyzer : trackFeatureAnalyzers)
-			analyzer.process(model);
+		for (String analyzer : trackAnalyzerFactory.getAvailableTrackFeatureAnalyzers())
+			trackAnalyzerFactory.getTrackFeatureAnalyzer(analyzer).process(model);
 	}
 
 

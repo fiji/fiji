@@ -4,15 +4,14 @@ import java.util.Collection;
 
 import net.imglib2.img.ImgPlus;
 import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.features.FeatureAnalyzer;
+import fiji.plugin.trackmate.SpotFeatureAnalyzerFactory;
 
 /**
  * Interface for a class that can compute feature on a collection of spots.
  * <p>
- * Concrete implementation must declare what features they can compute numerically, 
- * using the method {@link #getFeatures()}. The names and dimension of these 
- * features are also specified in 3 maps: {@link #getFeatureNames()}, {@link #getFeatureShortNames()}
- * and {@link #getFeatureDimensions()}.
+ * Concrete implementation should declare what features they can compute numerically,
+ * and make this info available in the {@link SpotFeatureAnalyzerFactory} that returns 
+ * them.
  * <p>
  * Feature key names are for historical reason all capitalized in an enum manner. For instance: POSITION_X,
  * MAX_INTENSITY, etc... They must be suitable to be used as a attribute key in an xml file.
@@ -23,7 +22,7 @@ import fiji.plugin.trackmate.features.FeatureAnalyzer;
  * The spot collection to operate on is given through the method {@link #process(Collection)},
  * and it must update the feature map of each spot directly, calling {@link Spot#putFeature(String, double)}.
  */
-public interface SpotFeatureAnalyzer<T> extends FeatureAnalyzer {
+public interface SpotFeatureAnalyzer<T>  {
 	
 	
 	/**

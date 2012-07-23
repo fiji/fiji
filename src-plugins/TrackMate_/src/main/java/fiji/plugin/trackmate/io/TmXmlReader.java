@@ -1,10 +1,63 @@
 package fiji.plugin.trackmate.io;
 
-import static fiji.plugin.trackmate.io.TmXmlKeys.*;
+import static fiji.plugin.trackmate.io.TmXmlKeys.DETECTOR_CLASS_ATTRIBUTE_NAME;
+import static fiji.plugin.trackmate.io.TmXmlKeys.DETECTOR_SETTINGS_CLASS_ATTRIBUTE_NAME;
+import static fiji.plugin.trackmate.io.TmXmlKeys.DETECTOR_SETTINGS_ELEMENT_KEY;
+import static fiji.plugin.trackmate.io.TmXmlKeys.FILTERED_SPOT_COLLECTION_ELEMENT_KEY;
+import static fiji.plugin.trackmate.io.TmXmlKeys.FILTERED_SPOT_ELEMENT_KEY;
+import static fiji.plugin.trackmate.io.TmXmlKeys.FILTERED_TRACK_ELEMENT_KEY;
+import static fiji.plugin.trackmate.io.TmXmlKeys.FILTER_ABOVE_ATTRIBUTE_NAME;
+import static fiji.plugin.trackmate.io.TmXmlKeys.FILTER_ELEMENT_KEY;
+import static fiji.plugin.trackmate.io.TmXmlKeys.FILTER_FEATURE_ATTRIBUTE_NAME;
+import static fiji.plugin.trackmate.io.TmXmlKeys.FILTER_VALUE_ATTRIBUTE_NAME;
+import static fiji.plugin.trackmate.io.TmXmlKeys.FRAME_ATTRIBUTE_NAME;
+import static fiji.plugin.trackmate.io.TmXmlKeys.IMAGE_ELEMENT_KEY;
+import static fiji.plugin.trackmate.io.TmXmlKeys.IMAGE_FILENAME_ATTRIBUTE_NAME;
+import static fiji.plugin.trackmate.io.TmXmlKeys.IMAGE_FOLDER_ATTRIBUTE_NAME;
+import static fiji.plugin.trackmate.io.TmXmlKeys.IMAGE_HEIGHT_ATTRIBUTE_NAME;
+import static fiji.plugin.trackmate.io.TmXmlKeys.IMAGE_NFRAMES_ATTRIBUTE_NAME;
+import static fiji.plugin.trackmate.io.TmXmlKeys.IMAGE_NSLICES_ATTRIBUTE_NAME;
+import static fiji.plugin.trackmate.io.TmXmlKeys.IMAGE_PIXEL_HEIGHT_ATTRIBUTE_NAME;
+import static fiji.plugin.trackmate.io.TmXmlKeys.IMAGE_PIXEL_WIDTH_ATTRIBUTE_NAME;
+import static fiji.plugin.trackmate.io.TmXmlKeys.IMAGE_SPATIAL_UNITS_ATTRIBUTE_NAME;
+import static fiji.plugin.trackmate.io.TmXmlKeys.IMAGE_TIME_INTERVAL_ATTRIBUTE_NAME;
+import static fiji.plugin.trackmate.io.TmXmlKeys.IMAGE_TIME_UNITS_ATTRIBUTE_NAME;
+import static fiji.plugin.trackmate.io.TmXmlKeys.IMAGE_VOXEL_DEPTH_ATTRIBUTE_NAME;
+import static fiji.plugin.trackmate.io.TmXmlKeys.IMAGE_WIDTH_ATTRIBUTE_NAME;
+import static fiji.plugin.trackmate.io.TmXmlKeys.INITIAL_SPOT_FILTER_ELEMENT_KEY;
+import static fiji.plugin.trackmate.io.TmXmlKeys.SETTINGS_DETECTION_CHANNEL_ATTRIBUTE_NAME;
+import static fiji.plugin.trackmate.io.TmXmlKeys.SETTINGS_ELEMENT_KEY;
+import static fiji.plugin.trackmate.io.TmXmlKeys.SETTINGS_TEND_ATTRIBUTE_NAME;
+import static fiji.plugin.trackmate.io.TmXmlKeys.SETTINGS_TSTART_ATTRIBUTE_NAME;
+import static fiji.plugin.trackmate.io.TmXmlKeys.SETTINGS_XEND_ATTRIBUTE_NAME;
+import static fiji.plugin.trackmate.io.TmXmlKeys.SETTINGS_XSTART_ATTRIBUTE_NAME;
+import static fiji.plugin.trackmate.io.TmXmlKeys.SETTINGS_YEND_ATTRIBUTE_NAME;
+import static fiji.plugin.trackmate.io.TmXmlKeys.SETTINGS_YSTART_ATTRIBUTE_NAME;
+import static fiji.plugin.trackmate.io.TmXmlKeys.SETTINGS_ZEND_ATTRIBUTE_NAME;
+import static fiji.plugin.trackmate.io.TmXmlKeys.SETTINGS_ZSTART_ATTRIBUTE_NAME;
+import static fiji.plugin.trackmate.io.TmXmlKeys.SPOT_COLLECTION_ELEMENT_KEY;
+import static fiji.plugin.trackmate.io.TmXmlKeys.SPOT_COLLECTION_NSPOTS_ATTRIBUTE_NAME;
+import static fiji.plugin.trackmate.io.TmXmlKeys.SPOT_ELEMENT_KEY;
+import static fiji.plugin.trackmate.io.TmXmlKeys.SPOT_FILTER_COLLECTION_ELEMENT_KEY;
+import static fiji.plugin.trackmate.io.TmXmlKeys.SPOT_FRAME_COLLECTION_ELEMENT_KEY;
+import static fiji.plugin.trackmate.io.TmXmlKeys.SPOT_ID_ATTRIBUTE_NAME;
+import static fiji.plugin.trackmate.io.TmXmlKeys.SPOT_ID_ELEMENT_KEY;
+import static fiji.plugin.trackmate.io.TmXmlKeys.SPOT_NAME_ATTRIBUTE_NAME;
+import static fiji.plugin.trackmate.io.TmXmlKeys.TRACKER_CLASS_ATTRIBUTE_NAME;
+import static fiji.plugin.trackmate.io.TmXmlKeys.TRACKER_SETTINGS_CLASS_ATTRIBUTE_NAME;
+import static fiji.plugin.trackmate.io.TmXmlKeys.TRACKER_SETTINGS_ELEMENT_KEY;
+import static fiji.plugin.trackmate.io.TmXmlKeys.TRACK_COLLECTION_ELEMENT_KEY;
+import static fiji.plugin.trackmate.io.TmXmlKeys.TRACK_EDGE_ELEMENT_KEY;
+import static fiji.plugin.trackmate.io.TmXmlKeys.TRACK_EDGE_SOURCE_ATTRIBUTE_NAME;
+import static fiji.plugin.trackmate.io.TmXmlKeys.TRACK_EDGE_TARGET_ATTRIBUTE_NAME;
+import static fiji.plugin.trackmate.io.TmXmlKeys.TRACK_EDGE_WEIGHT_ATTRIBUTE_NAME;
+import static fiji.plugin.trackmate.io.TmXmlKeys.TRACK_ELEMENT_KEY;
+import static fiji.plugin.trackmate.io.TmXmlKeys.TRACK_FILTER_COLLECTION_ELEMENT_KEY;
+import static fiji.plugin.trackmate.io.TmXmlKeys.TRACK_ID_ATTRIBUTE_NAME;
+import static fiji.plugin.trackmate.io.TmXmlKeys.TRACK_ID_ELEMENT_KEY;
 import static fiji.plugin.trackmate.util.TMUtils.readBooleanAttribute;
 import static fiji.plugin.trackmate.util.TMUtils.readDoubleAttribute;
 import static fiji.plugin.trackmate.util.TMUtils.readIntAttribute;
-
 import ij.IJ;
 import ij.ImagePlus;
 
@@ -37,13 +90,13 @@ import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.SpotImp;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMate_;
-import fiji.plugin.trackmate.detection.LogDetector;
 import fiji.plugin.trackmate.detection.DetectorSettings;
+import fiji.plugin.trackmate.detection.LogDetector;
 import fiji.plugin.trackmate.detection.SpotDetector;
 import fiji.plugin.trackmate.features.FeatureModel;
-import fiji.plugin.trackmate.tracking.SimpleFastLAPTracker;
 import fiji.plugin.trackmate.tracking.SpotTracker;
 import fiji.plugin.trackmate.tracking.TrackerSettings;
+import fiji.plugin.trackmate.tracking.kdtree.NearestNeighborTracker;
 
 
 public class TmXmlReader <T extends RealType<T> & NativeType<T>> {
@@ -353,7 +406,6 @@ public class TmXmlReader <T extends RealType<T> & NativeType<T>> {
 		}
 
 		// Deal with detector
-		SpotDetector<T> detector;
 		String detectorName = element.getAttributeValue(DETECTOR_CLASS_ATTRIBUTE_NAME);
 		if (null == detectorName) {
 			logger.error("Detector attribute is not present.\n");
@@ -361,11 +413,11 @@ public class TmXmlReader <T extends RealType<T> & NativeType<T>> {
 			detectorName = LogDetector.NAME;
 		} else {
 			// Check whether we can find a matching detector in the plugin instance
-			detector = plugin.getDetectorFactory().getDetector(detectorName);
+			SpotDetector<T> detector = plugin.getDetectorFactory().getDetector(detectorName);
 			if (null == detector) {
-				logger.error("Unable to find detector class in plugin "+plugin.toString()+"\n");
+				logger.error("Unable to find detector '"+detectorName+"' in plugin "+plugin.toString()+"\n");
 				logger.error("Substituting default.\n");
-				detector = new LogDetector<T>();
+				detectorName = LogDetector.NAME;
 			}
 		}
 		settings.detector = detectorName;
@@ -413,7 +465,6 @@ public class TmXmlReader <T extends RealType<T> & NativeType<T>> {
 	 *   
 	 * @param settings  the base {@link Settings} object to update.
 	 */
-	@SuppressWarnings("unchecked")
 	public void getTrackerSettings(Settings<T> settings) {
 		if (!parsed)
 			parse();
@@ -424,35 +475,25 @@ public class TmXmlReader <T extends RealType<T> & NativeType<T>> {
 		}
 
 		// Deal with tracker
-		SpotTracker<T> tracker;
-		String trackerClassName = element.getAttributeValue(TRACKER_CLASS_ATTRIBUTE_NAME);
-		if (null == trackerClassName) {
+		String trackerName = element.getAttributeValue(TRACKER_CLASS_ATTRIBUTE_NAME);
+		if (null == trackerName) {
 			logger.error("Tracker class is not present.\n");
 			logger.error("Substituting default.\n");
-			tracker = new SimpleFastLAPTracker<T>();
+			trackerName = NearestNeighborTracker.NAME;
 		} else {
-			try {
-				tracker = (SpotTracker<T>) Class.forName(trackerClassName).newInstance();
-			} catch (InstantiationException e) {
-				logger.error("Unable to instantiate tracker settings class: "+e.getLocalizedMessage()+"\n");
+			SpotTracker<T> tracker = plugin.getTrackerFactory().getTracker(trackerName);
+			if (null == tracker) {
+				logger.error("Unable to find tracker '"+trackerName+"' in plugin "+plugin.toString()+"\n");
 				logger.error("Substituting default.\n");
-				tracker = new SimpleFastLAPTracker<T>();
-			} catch (IllegalAccessException e) {
-				logger.error("Unable to instantiate tracker settings class: "+e.getLocalizedMessage()+"\n");
-				logger.error("Substituting default.\n");
-				tracker = new SimpleFastLAPTracker<T>();
-			} catch (ClassNotFoundException e) {
-				logger.error("Unable to find tracker settings class: "+e.getLocalizedMessage()+"\n");
-				logger.error("Substituting default.\n");
-				tracker = new SimpleFastLAPTracker<T>();
+				tracker = new NearestNeighborTracker<T>();
 			}
 		}
-		settings.tracker = tracker;
+		settings.tracker = trackerName;
 
 		// Deal with tracker settings
 		{
 			// To start with, we get a settings suitable for the tracker we have found 
-			TrackerSettings<T> ts = tracker.createDefaultSettings();
+			TrackerSettings<T> ts = plugin.getTrackerFactory().getDefaultSettings(trackerName);
 			String trackerSettingsClassName = element.getAttributeValue(TRACKER_SETTINGS_CLASS_ATTRIBUTE_NAME);
 			if (null == trackerSettingsClassName) {
 

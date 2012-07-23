@@ -1,16 +1,13 @@
 package fiji.plugin.trackmate.features.spot;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
-import java.util.Map;
 
 import net.imglib2.algorithm.region.localneighborhood.DiscNeighborhood;
 import net.imglib2.algorithm.region.localneighborhood.RealPositionableAbstractNeighborhood;
 import net.imglib2.algorithm.region.localneighborhood.RealPositionableNeighborhoodCursor;
 import net.imglib2.algorithm.region.localneighborhood.SphereNeighborhood;
 import net.imglib2.type.numeric.RealType;
-
 import fiji.plugin.trackmate.Dimension;
 import fiji.plugin.trackmate.Spot;
 
@@ -81,26 +78,4 @@ public class BlobContrast<T extends RealType<T>> extends IndependentSpotFeatureA
 		double outerMeanIntensity = outerTotalIntensity / outerRingVolume;
 		return innerMeanIntensity - outerMeanIntensity;
 	}
-	
-
-	@Override
-	public Collection<String> getFeatures() {
-		return FEATURES;
-	}
-
-	@Override
-	public Map<String, String> getFeatureShortNames() {
-		return FEATURE_SHORT_NAMES;
-	}
-
-	@Override
-	public Map<String, String> getFeatureNames() {
-		return FEATURE_NAMES;
-	}
-
-	@Override
-	public Map<String, Dimension> getFeatureDimensions() {
-		return FEATURE_DIMENSIONS;
-	}
-	
 }

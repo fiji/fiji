@@ -1,19 +1,15 @@
 package fiji.plugin.trackmate.features.spot;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
-import java.util.Map;
 
 import net.imglib2.algorithm.region.localneighborhood.DiscNeighborhood;
 import net.imglib2.algorithm.region.localneighborhood.RealPositionableAbstractNeighborhood;
 import net.imglib2.algorithm.region.localneighborhood.RealPositionableNeighborhoodCursor;
 import net.imglib2.algorithm.region.localneighborhood.SphereNeighborhood;
 import net.imglib2.type.numeric.RealType;
-
 import fiji.plugin.trackmate.Dimension;
 import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.features.FeatureAnalyzer;
 
 /**
  * This {@link FeatureAnalyzer} computes both the 
@@ -37,10 +33,10 @@ public class BlobContrastAndSNR<T extends RealType<T>> extends IndependentSpotFe
 	/** The single feature key name that this analyzer computes. */
 	public static final String						CONTRAST = 	"CONTRAST";
 	public static final String						SNR = 		"SNR";
-	private static final ArrayList<String> 			FEATURES = new ArrayList<String>(2);
-	private static final HashMap<String, String> 	FEATURE_NAMES = new HashMap<String, String>(2);
-	private static final HashMap<String, String> 	FEATURE_SHORT_NAMES = new HashMap<String, String>(2);
-	private static final HashMap<String, Dimension> FEATURE_DIMENSIONS = new HashMap<String, Dimension>(2);
+	public static final ArrayList<String> 			FEATURES = new ArrayList<String>(2);
+	public static final HashMap<String, String> 	FEATURE_NAMES = new HashMap<String, String>(2);
+	public static final HashMap<String, String> 	FEATURE_SHORT_NAMES = new HashMap<String, String>(2);
+	public static final HashMap<String, Dimension> FEATURE_DIMENSIONS = new HashMap<String, Dimension>(2);
 	static {
 		FEATURES.add(CONTRAST);
 		FEATURES.add(SNR);
@@ -52,7 +48,8 @@ public class BlobContrastAndSNR<T extends RealType<T>> extends IndependentSpotFe
 		FEATURE_DIMENSIONS.put(SNR, Dimension.NONE);
 	}
 	
-	protected static final double RAD_PERCENTAGE = 1f;  
+	protected static final double RAD_PERCENTAGE = 1f;
+	public static final String NAME = "Spot contrast and SNR";  
 	
 	
 	@Override
@@ -109,26 +106,4 @@ public class BlobContrastAndSNR<T extends RealType<T>> extends IndependentSpotFe
 		ret[1] = snr;
 		return ret;
 	}
-	
-
-	@Override
-	public Collection<String> getFeatures() {
-		return FEATURES;
-	}
-
-	@Override
-	public Map<String, String> getFeatureShortNames() {
-		return FEATURE_SHORT_NAMES;
-	}
-
-	@Override
-	public Map<String, String> getFeatureNames() {
-		return FEATURE_NAMES;
-	}
-
-	@Override
-	public Map<String, Dimension> getFeatureDimensions() {
-		return FEATURE_DIMENSIONS;
-	}
-	
 }
