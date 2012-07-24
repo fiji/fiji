@@ -131,12 +131,16 @@ public class FeatureModel <T extends RealType<T> & NativeType<T>> {
 	}
 
 	/**
-	 * Calculate all features for the given spot collection.
+	 * Calculate all features for the given spot collection. Does nothing
+	 * if the {@link #spotAnalyzerFactory} was not set, which is typically the 
+	 * case when the iniModules() method of the plugin has not been called. 
 	 * <p>
 	 * Features are calculated for each spot, using their location, and the raw
 	 * image. 
 	 */
 	public void computeSpotFeatures(final SpotCollection toCompute) {
+		if (null == spotAnalyzerFactory)
+			return;
 		List<String> analyzerNames = spotAnalyzerFactory.getAvailableSpotFeatureAnalyzers();
 		List<SpotFeatureAnalyzer<T>> spotFeatureAnalyzers = new ArrayList<SpotFeatureAnalyzer<T>>(analyzerNames.size());
 		for (String analyzerName : analyzerNames) {

@@ -46,7 +46,7 @@ public class TrackMateModelChangeEvent extends EventObject {
 	 * by adding, removing or changing the feature of some spots, and/or
 	 * adding or removing edges in the tracks.
 	 * Content of the modification can be accessed by {@link #getSpots()},
-	 * {@link #getSpotFlag()}, {@link #getFromFrame()} and {@link #getToFrame()}, 
+	 * {@link #getSpotFlags()}, {@link #getFromFrame()} and {@link #getToFrame()}, 
 	 * and for the tracks: {@link #getEdges()} and {@link #getEdgeFlags()}.
 	 */
 	public static final int 	MODEL_MODIFIED = 8;
@@ -114,24 +114,53 @@ public class TrackMateModelChangeEvent extends EventObject {
 	 */
 	public void setToFrame(List<Integer> toFrame) {
 		this.toFrame = toFrame;
-	}	
+	}
 
+	/**
+	 * @return  the list of spot that are affected by this event. Is <code>null</code>
+	 * if no spot is affected by this event.
+	 */
 	public List<Spot> getSpots() {
 		return spots;
 	}
 
+	/**
+	 * @return  the list of edges that are affected by this event. Is <code>null</code>
+	 * if no edge is affected by this event.
+	 */
 	public List<DefaultWeightedEdge> getEdges() {
 		return edges;
 	}
 
-	public List<Integer> getSpotFlag() {
+	/**
+	 * @return  the modification flag for each spot affected by this event.
+	 * @see #FLAG_SPOT_ADDED
+	 * @see #FLAG_SPOT_FRAME_CHANGED
+	 * @see #FLAG_SPOT_MODIFIED
+	 * @see #FLAG_SPOT_REMOVED
+	 */
+	public List<Integer> getSpotFlags() {
 		return spotFlags;
 	}
 
+	/**
+	 * @return  the modification flag for each link affected by this event.
+	 * @see #FLAG_EDGE_ADDED
+	 * @see #FLAG_EDGE_FRAME_CHANGED
+	 * @see #FLAG_EDGE_MODIFIED
+	 * @see #FLAG_EDGE_REMOVED
+	 */
 	public List<Integer> getEdgeFlags() {
 		return edgeFlags;
 	}
 
+	/**
+	 * @return  the modification flag for the given spot affected by this event.
+	 * @see #FLAG_SPOT_ADDED
+	 * @see #FLAG_SPOT_FRAME_CHANGED
+	 * @see #FLAG_SPOT_MODIFIED
+	 * @see #FLAG_SPOT_REMOVED
+	 */
 	public Integer getSpotFlag(Spot spot) {
 		int index =  spots.indexOf(spot);
 		if (-1 == index)
