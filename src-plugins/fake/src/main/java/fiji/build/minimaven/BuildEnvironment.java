@@ -166,8 +166,12 @@ public class BuildEnvironment {
 				if (pom.maybeDownloadAutomatically(pom.parentCoordinate, !verbose, downloadAutomatically))
 					pom.parent = pom.findPOM(dependency, !verbose, downloadAutomatically);
 			}
-			// prevent infinite loops (POMs without parents get the current root as parent)
-			if (pom.parent != null) {
+			if (pom.parent == null) {
+				throw new RuntimeException("Parent not found: " + pom.parentCoordinate
+						+ (downloadAutomatically ? "" : " (please call MiniMaven's 'download'"));
+			}
+			else {
+				// prevent infinite loops (POMs without parents get the current root as parent)
 				if (pom.parent.parent == pom)
 					pom.parent.parent = null;
 				if (pom.parent.includeImplementationBuild)

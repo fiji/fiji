@@ -1,9 +1,5 @@
 package fiji.packaging;
 
-import fiji.updater.ui.ij1.IJProgress;
-
-import fiji.updater.util.Util;
-
 import fiji.util.gui.GenericDialogPlus;
 
 import ij.IJ;
@@ -13,9 +9,10 @@ import ij.io.SaveDialog;
 import ij.plugin.PlugIn;
 
 import java.io.FileOutputStream;
-import java.io.IOException;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 public class Package_Maker implements PlugIn {
@@ -38,8 +35,8 @@ public class Package_Maker implements PlugIn {
 
 		Packager packager = packagers.get(gd.getNextChoiceIndex());
 
-		String platform = Util.platform;
-		String timestamp = Util.timestamp(System.currentTimeMillis());
+		String platform = Packager.getPlatform();
+		String timestamp = new SimpleDateFormat("yyyyMMddhhmmss").format(new Date());
 		String extension = packager.getExtension();
 		String fileName = "fiji-" + platform + "-" + timestamp;
 		SaveDialog save = new SaveDialog("Make Fiji Package", fileName, extension);
@@ -48,13 +45,13 @@ public class Package_Maker implements PlugIn {
 
 		String path = save.getDirectory() + save.getFileName();
 		try {
-			packager.initialize(new IJProgress());
+			packager.initialize();
 			packager.open(new FileOutputStream(path));
 			packager.addDefaultFiles();
 			packager.close();
 			IJ.showMessage("Wrote " + path);
 		}
-		catch (IOException e) {
+		catch (Exception e) {
 			e.printStackTrace();
 			IJ.error("Error writing " + path);
 		}
