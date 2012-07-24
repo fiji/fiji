@@ -154,6 +154,7 @@ public class Adapter {
 				ui.error("Could not download the ImageJ Updater!");
 				return;
 			}
+			Thread.currentThread().setContextClassLoader(updaterClass.getClassLoader());
 			updaterClass.newInstance().run();
 		} catch (InstantiationException e) {
 			ui.error("Could not instantiate the Updater: " + e.getMessage());
@@ -180,6 +181,7 @@ public class Adapter {
 				ui.error("Could not download the ImageJ Updater!");
 				return;
 			}
+			Thread.currentThread().setContextClassLoader(progress.getClass().getClassLoader());
 			invokeStatic(COMMAND_LINE_CLASS_NAME, "main", (Object)args);
 		} catch (Throwable t) {
 			ui.error("Could not access the Updater:");
