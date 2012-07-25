@@ -1,5 +1,9 @@
 package fiji.packaging;
 
+import fiji.updater.Adapter;
+
+import ij.IJ;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -8,9 +12,10 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Collection;
 
-import fiji.updater.Adapter;
-
 public abstract class Packager {
+	static {
+		Adapter.ensureIJDirIsSet();
+	}
 	protected File ijDir = new File(System.getProperty("ij.dir"));
 	protected Collection<String> files;
 	protected int count, total;
@@ -36,7 +41,7 @@ public abstract class Packager {
 	}
 
 	public void initialize() throws Exception {
-		files = new Adapter(true).getFileList();
+		files = new Adapter(IJ.getInstance() != null).getFileList();
 	}
 
 	protected void addDefaultFiles() throws IOException {
