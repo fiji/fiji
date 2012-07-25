@@ -1,5 +1,7 @@
 package fiji.plugin.trackmate;
 
+import java.util.Set;
+
 import org.jgrapht.graph.DefaultWeightedEdge;
 import org.junit.Test;
 import static org.junit.Assert.assertEquals;
@@ -18,15 +20,122 @@ public class TrackMateModelTest <T extends RealType<T> & NativeType<T>>   {
 
 
 	/**
+	 * Test if the track visibility is followed correctly.
+	 */
+	@Test
+	public void testTrackVisibility() {
+		TrackMateModel<T> model = new TrackMateModel<T>();
+		// Build track 1 with 5 spots
+		final Spot s1 = new SpotImp(new double[3], "S1");
+		final Spot s2 = new SpotImp(new double[3], "S2");
+		final Spot s3 = new SpotImp(new double[3], "S3");
+		final Spot s4 = new SpotImp(new double[3], "S4");
+		final Spot s5 = new SpotImp(new double[3], "S5");
+		// Build track 2 with 2 spots
+		final Spot s6 = new SpotImp(new double[3], "S6");
+		final Spot s7 = new SpotImp(new double[3], "S7");
+		// Build track 3 with 2 spots
+		final Spot s8 = new SpotImp(new double[3], "S8");
+		final Spot s9 = new SpotImp(new double[3], "S9");
+
+		model.beginUpdate();
+		try {
+
+			model.addSpotTo(s1, 0);
+			model.addSpotTo(s2, 1);
+			model.addSpotTo(s3, 2);
+			model.addSpotTo(s4, 3);
+			model.addSpotTo(s5, 4);
+			model.addEdge(s1, s2, 0);
+			model.addEdge(s2, s3, 0);
+			model.addEdge(s3, s4, 0);
+			model.addEdge(s4, s5, 0);
+
+			model.addSpotTo(s6, 0);
+			model.addSpotTo(s7, 1);
+			model.addEdge(s6, s7, 0);
+
+			model.addSpotTo(s8, 0);
+			model.addSpotTo(s9, 1);
+			model.addEdge(s8, s9, 0);
+
+		} finally {
+			model.endUpdate();
+		}
+
+		Set<Integer> visibleTracks = model.getVisibleTrackIndices();
+
+		// These must be 3 tracks visible
+		assertEquals(3, visibleTracks.size());
+		// with indices 0, 1, 2
+		assertTrue(visibleTracks.contains(0));
+		assertTrue(visibleTracks.contains(1));
+		assertTrue(visibleTracks.contains(2));
+
+		// Delete spot s3, make 2 tracks of the first one
+		model.beginUpdate();
+		try {
+			model.removeSpotFrom(s3, null);
+		} finally {
+			model.endUpdate();
+		}
+		
+		// These must be 4 tracks visible
+		visibleTracks = model.getVisibleTrackIndices();
+		assertEquals(4, visibleTracks.size());
+		// with indices 0, 1, 2 & 3
+		assertTrue(visibleTracks.contains(0));
+		assertTrue(visibleTracks.contains(1));
+		assertTrue(visibleTracks.contains(2));
+		assertTrue(visibleTracks.contains(3));
+
+		// Check in what track is the spot s4
+		int track2 = model.getTrackIndexOf(s4);
+//		System.out.println("The spot "+s4+" is in track "+track2);
+		
+		// Make it invisible
+		boolean modified = model.setTrackVisible(track2, false, false);
+		
+		// We must have modified something: it was visible, now it is invisible
+		assertTrue(modified);
+		
+		// These must be now 3 tracks visible
+		visibleTracks = model.getVisibleTrackIndices();
+		assertEquals(3, visibleTracks.size());
+		// out of 4
+		assertEquals(4, model.getNTracks());
+		// with indices different from track2
+		for(int index : visibleTracks) {
+			assertTrue( track2 != index ); 
+		}
+		
+		// Reconnect s2 and s4
+		model.beginUpdate();
+		try {
+			model.addEdge(s2, s4, 0);
+		} finally {
+			model.endUpdate();
+		}
+		
+		// These must be now 3 tracks visible: connecting a visible track with an invisible makes
+		// it all visible
+		visibleTracks = model.getVisibleTrackIndices();
+		assertEquals(3, visibleTracks.size());
+		// out of 3
+		assertEquals(3, model.getNTracks());
+	}
+
+
+	/**
 	 * Test the track number reported by the model as we modify it.
 	 */
 	@Test
 	public void testTrackNumber() {
 		TrackMateModel<T> model = new TrackMateModel<T>();
-		
+
 		// Empty model, should get 0 tracks
 		assertEquals(0, model.getNTracks());
-		
+
 		// Build track with 5 spots
 		final Spot s1 = new SpotImp(new double[3], "S1");
 		final Spot s2 = new SpotImp(new double[3], "S2");
@@ -48,10 +157,10 @@ public class TrackMateModelTest <T extends RealType<T> & NativeType<T>>   {
 		} finally {
 			model.endUpdate();
 		}
-		
+
 		// All spots are connected by edges, should build one track
 		assertEquals(1, model.getNTracks());
-		
+
 		// Remove middle spot
 		model.beginUpdate();
 		try {
@@ -59,10 +168,10 @@ public class TrackMateModelTest <T extends RealType<T> & NativeType<T>>   {
 		} finally {
 			model.endUpdate();
 		}
-		
+
 		// Track split in 2, should get 2 tracks
 		assertEquals(2, model.getNTracks());
-		
+
 		// Stitch back the two tracks
 		model.beginUpdate();
 		try {
@@ -70,13 +179,13 @@ public class TrackMateModelTest <T extends RealType<T> & NativeType<T>>   {
 		} finally {
 			model.endUpdate();
 		}
-		
+
 		// Stitched, so we should get back one track again
 		assertEquals(1, model.getNTracks());
 
 	}
-	
-	
+
+
 	/**
 	 * Test if manual adding spots and links in one update step is caught as a single 
 	 * event, and that this event is well configured.
@@ -189,15 +298,15 @@ public class TrackMateModelTest <T extends RealType<T> & NativeType<T>>   {
 		} finally {
 			model.endUpdate();
 		}
-		
+
 		/*
 		 * We ended up in having 2 tracks. 
 		 * We will now reconnect them by creating a new edge. This will generate an event
 		 * with 1 edge and 0 spots. 
 		 */
-		
+
 		model.removeTrackMateModelChangeListener(eventLogger);
-		
+
 		eventLogger = new TrackMateModelChangeListener() {
 			@Override
 			public void modelChanged(TrackMateModelChangeEvent event) {
@@ -223,9 +332,9 @@ public class TrackMateModelTest <T extends RealType<T> & NativeType<T>>   {
 				}
 			}
 		};
-		
+
 		model.addTrackMateModelChangeListener(eventLogger);
-		
+
 		model.beginUpdate();
 		try {
 			model.addEdge(s2, s4, -1);
@@ -234,16 +343,16 @@ public class TrackMateModelTest <T extends RealType<T> & NativeType<T>>   {
 		}
 
 	}
-	
-	
-	
-	
-	
-	
+
+
+
+
+
+
 	/*
 	 * EXAMPLE
 	 */
-	
+
 
 	public void exampleManipulation() {
 
@@ -349,7 +458,7 @@ public class TrackMateModelTest <T extends RealType<T> & NativeType<T>>   {
 	}
 
 
-	
+
 	public static <T extends RealType<T> & NativeType<T>>  void main(String[] args) {
 		new TrackMateModelTest<T>().exampleManipulation();
 	}

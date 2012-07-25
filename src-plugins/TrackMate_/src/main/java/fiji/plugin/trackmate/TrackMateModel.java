@@ -354,7 +354,12 @@ public class TrackMateModel <T extends RealType<T> & NativeType<T>> {
 	}
 
 	/**
-	 * Return the indices of the tracks that are marked as visible.
+	 * @return the indices of the tracks that are marked as visible.
+	 * <p>
+	 * <b>Note:</b> the actual {@link Set} object return by this method is 
+	 * re-instantiated every time a change is made to the model that affects
+	 * tracks. So this method needs to be called again after each change for
+	 * the indices to be accurate.
 	 * 
 	 * @see #execTrackFiltering()
 	 */
