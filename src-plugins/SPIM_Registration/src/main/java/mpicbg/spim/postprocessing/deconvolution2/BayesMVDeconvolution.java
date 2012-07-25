@@ -3,6 +3,7 @@ package mpicbg.spim.postprocessing.deconvolution2;
 import ij.IJ;
 
 import java.util.ArrayList;
+import java.util.Date;
 
 import mpicbg.imglib.algorithm.fft.FourierConvolution;
 import mpicbg.imglib.cursor.Cursor;
@@ -13,7 +14,7 @@ import mpicbg.imglib.type.numeric.real.FloatType;
 public class BayesMVDeconvolution implements Deconvolver
 {
 	public static boolean debug = false;
-	public static int debugInterval = 2;
+	public static int debugInterval = 1;
 	final static float minValue = 0.0001f;
 
 	final int numViews, numDimensions;
@@ -46,9 +47,10 @@ public class BayesMVDeconvolution implements Deconvolver
 		
 		this.avg = (float)AdjustInput.normAllImages( data );
 		
-		System.out.println( "Average intensity in overlapping area: " + avg );        
+		IJ.log( "Average intensity in overlapping area: " + avg );        
 		
-		ImageJFunctions.show( views.getViews().get( 0 ).getWeight() );
+		// init all views
+		views.init( true );
 		
 		//
 		// the real data image psi is initialized with the average 
@@ -88,6 +90,8 @@ public class BayesMVDeconvolution implements Deconvolver
 	final private static void runIteration( final Image< FloatType> psi, final ArrayList< LRFFT > data, 
 			final double lambda, final float minValue, final boolean collectStatistic, final int iteration )
 	{
+		IJ.log( "iteration: " + iteration + " (" + new Date(System.currentTimeMillis()) + ")" );
+		
 		final int numViews = data.size();
 
 		Image< FloatType > lastIteration = null;

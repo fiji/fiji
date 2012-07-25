@@ -24,8 +24,6 @@ import mpicbg.spim.io.ConfigurationParserException;
 import mpicbg.spim.io.IOFunctions;
 import mpicbg.spim.io.SPIMConfiguration;
 import mpicbg.spim.postprocessing.deconvolution.ExtractPSF;
-import mpicbg.spim.postprocessing.deconvolution.LucyRichardsonFFT;
-import mpicbg.spim.postprocessing.deconvolution.LucyRichardsonMultiViewDeconvolution;
 import mpicbg.spim.postprocessing.deconvolution2.BayesMVDeconvolution;
 import mpicbg.spim.postprocessing.deconvolution2.LRFFT;
 import mpicbg.spim.postprocessing.deconvolution2.LRInput;
@@ -59,24 +57,23 @@ public class Multi_View_Deconvolution implements PlugIn
 		// we need the individual images back by reference
 		conf.isDeconvolution = true;
 		
+		// set the instance to be called
+		conf.instance = this;
+		
 		// run the first part of fusion
 		final Reconstruction reconstruction = new Reconstruction( conf );
 		
+		// reconstruction calls deconvolve
+	}
+	
+	public void deconvolve( final Reconstruction reconstruction, final SPIMConfiguration conf )
+	{
 		// get the input images for the deconvolution
 		final ViewStructure viewStructure = reconstruction.getCurrentViewStructure();
 		final FusionControl fusionControl = viewStructure.getFusionControl();
 		final PreDeconvolutionFusion fusion = (PreDeconvolutionFusion)fusionControl.getFusion();
 		
 		final int numViews = viewStructure.getNumViews();
-		
-		final ArrayList< Image < FloatType > > images = new ArrayList< Image < FloatType > >();
-		final ArrayList< Image < FloatType > > weights = new ArrayList< Image < FloatType > >();
-		
-		for ( int view = 0; view < numViews; ++view )
-		{
-			images.add( fusion.getFusedImage( view ) );
-			weights.add( fusion.getWeightImage( view ) );
-		}
 		
 		// extract the beads
 		IJ.log( new Date( System.currentTimeMillis() ) +": Extracting Point spread functions." );
@@ -119,8 +116,8 @@ public class Multi_View_Deconvolution implements PlugIn
 		
 		for ( int view = 0; view < numViews; ++view )
 		{
-			//ImageJFunctions.copyToImagePlus( fusion.getFusedImage( view ) ).show();
-			//ImageJFunctions.copyToImagePlus( fusion.getWeightImage( view ) ).show();
+			//ImageJFunctions.show( fusion.getFusedImage( view ) );
+			//ImageJFunctions.show( fusion.getWeightImage( view ) );
 			//ImageJFunctions.copyToImagePlus( pointSpreadFunctions.get( view ) ).show();
 
 			//deconvolutionData.add( new LucyRichardsonFFT( fusion.getFusedImage( view ), fusion.getWeightImage( view ), pointSpreadFunctions.get( view ), cpusPerView ) );
@@ -129,6 +126,7 @@ public class Multi_View_Deconvolution implements PlugIn
 		
 		final Image<FloatType> deconvolved;
 		
+		// this is influenced a lot by whether normalization is required or not!
 		/*
 		if ( useTikhonovRegularization )
 			deconvolved = LucyRichardsonMultiViewDeconvolution.lucyRichardsonMultiView( deconvolutionData, minNumIterations, maxNumIterations, multiplicative, lambda, paralellViews );
@@ -163,7 +161,7 @@ public class Multi_View_Deconvolution implements PlugIn
 
 			if ( conf.writeOutputImage )
 				ImageJFunctions.saveAsTiffs( deconvolved, conf.outputdirectory, "DC(l=" + lambda + ")_" + name + "_ch" + viewStructure.getChannelNum( 0 ), ImageJFunctions.GRAY32 );
-		}
+		}		
 	}
 
 	public static boolean fusionUseContentBasedStatic = false;
@@ -497,10 +495,9 @@ public class Multi_View_Deconvolution implements PlugIn
 
 		conf.paralellFusion = false;
 		conf.sequentialFusion = false;
-		conf.multipleImageFusion = false;
 
 		// we need different output and weight images
-		conf.multipleImageFusion = true;
+		conf.multipleImageFusion = false;
 		
 		if ( displayFusedImageStatic  )
 			conf.showOutputImage = true;

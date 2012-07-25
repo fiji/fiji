@@ -1,5 +1,7 @@
 package mpicbg.spim.postprocessing.deconvolution2;
 
+import ij.IJ;
+
 import java.util.ArrayList;
 import java.util.Random;
 
@@ -47,6 +49,7 @@ public class AdjustInput
 	{
 		// the individual sums of the overlapping area
 		//final double[] sums = new double[ data.size() ];
+		int minNumOverlap = data.size();
 		
 		final RealSum sum = new RealSum();
 		// the number of overlapping pixels
@@ -92,7 +95,18 @@ public class AdjustInput
 				sum.add( sumLocal );
 				count += countLocal;
 			}
+			
+			if ( countLocal > 0 )
+				minNumOverlap = Math.min( countLocal, minNumOverlap );
 		}
+
+		
+		IJ.log( "Min number of overlapping views: " + minNumOverlap );
+		
+		for ( final LRFFT view : data )
+			for ( final FloatType t : view.getWeight() )
+				t.mul( minNumOverlap );
+		
 
 		if ( count == 0 )
 			return 1;

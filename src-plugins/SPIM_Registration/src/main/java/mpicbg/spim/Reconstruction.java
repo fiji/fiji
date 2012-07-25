@@ -190,8 +190,14 @@ public class Reconstruction
 			// close all images, except if called as deconvolution as we still need the data
 			//
 			if ( !conf.isDeconvolution )
+			{
 				for ( ViewDataBeads view : currentViewStructure.getViews() )
 					view.closeImage();
+			}
+			else
+			{
+				conf.instance.deconvolve( this, conf );
+			}
 		}		
 	}  	
 	
@@ -295,9 +301,15 @@ public class Reconstruction
 			// close all images, except if called as deconvolution as we still need the data
 			//
 			if ( !conf.isDeconvolution )
+			{
 				for ( ViewDataBeads view : currentViewStructure.getViews() )
 					view.closeImage();
-			
+			}
+			else
+			{
+				conf.instance.deconvolve( this, conf );
+			}
+
 			// collect some information if wanted
 			if ( conf.collectRegistrationStatistics )
 				stats.add( new RegistrationStatistics( currentViewStructure ) );

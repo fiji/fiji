@@ -39,7 +39,7 @@ public class FusionControl
 		{
 			// if we deconvolve we want a small border of black around the sample due to the PSF overlap
 			if ( conf.isDeconvolution )
-				combinedWeightenerFactories.add( new BlendingSimpleFactory( new float[] { 15, 15, 15 }, 0.6f ) );
+				combinedWeightenerFactories.add( new BlendingSimpleFactory( new float[] { 15, 15, 15 }, 0.3f ) );
 			else
 				combinedWeightenerFactories.add( new BlendingSimpleFactory( 0, 0.3f ) );
 		}
@@ -72,9 +72,7 @@ public class FusionControl
 			fusion.fuseSPIMImages( channelIndex );		
 			
 			if ( conf.isDeconvolution )
-			{
 				return;
-			}
 			
 			if (conf.showOutputImage)
 			{

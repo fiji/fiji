@@ -4,6 +4,8 @@ import java.io.File;
 import java.io.FilenameFilter;
 import java.util.ArrayList;
 
+import fiji.plugin.Multi_View_Deconvolution;
+
 import mpicbg.imglib.container.ContainerFactory;
 import mpicbg.imglib.container.array.ArrayContainerFactory;
 import mpicbg.imglib.interpolation.InterpolatorFactory;
@@ -88,6 +90,7 @@ public class SPIMConfiguration
     public int numParalellViews = 1;
     public boolean multipleImageFusion = false;
     public boolean isDeconvolution = false;
+    public Multi_View_Deconvolution instance = null;
 
     public boolean registerOnly = false;
     public boolean displayRegistration = false;
