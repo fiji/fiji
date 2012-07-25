@@ -12,6 +12,7 @@
 	</parent>
 
 	<artifactId>mij</artifactId>
+	<version>1.3.6-fiji</version>
 
 	<name>jars/mij.jar</name>
 	<description></description>

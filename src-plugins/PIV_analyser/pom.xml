@@ -12,6 +12,7 @@
 	</parent>
 
 	<artifactId>PIV_analyser</artifactId>
+	<version>1.1</version>
 
 	<name>plugins/PIV_analyser.jar</name>
 	<description></description>

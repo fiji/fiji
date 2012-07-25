@@ -12,6 +12,7 @@
 	</parent>
 
 	<artifactId>RandomJ_</artifactId>
+	<version>1.5.0</version>
 
 	<name>plugins/RandomJ_.jar</name>
 	<description></description>

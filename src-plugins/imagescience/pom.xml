@@ -12,6 +12,7 @@
 	</parent>
 
 	<artifactId>imagescience</artifactId>
+	<version>2.4.0</version>
 
 	<name>jars/imagescience.jar</name>
 	<description></description>

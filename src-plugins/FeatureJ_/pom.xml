@@ -12,6 +12,7 @@
 	</parent>
 
 	<artifactId>FeatureJ_</artifactId>
+	<version>1.6.0</version>
 
 	<name>plugins/FeatureJ_.jar</name>
 	<description></description>

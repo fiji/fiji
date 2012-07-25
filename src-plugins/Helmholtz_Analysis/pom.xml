@@ -12,6 +12,7 @@
 	</parent>
 
 	<artifactId>Helmholtz_Analysis</artifactId>
+	<version>2</version>
 
 	<name>plugins/Helmholtz_Analysis.jar</name>
 	<description></description>

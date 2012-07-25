@@ -12,6 +12,7 @@
 	</parent>
 
 	<artifactId>level_sets</artifactId>
+	<version>1.0</version>
 
 	<name>plugins/level_sets.jar</name>
 	<description></description>

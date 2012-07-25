@@ -12,6 +12,7 @@
 	</parent>
 
 	<artifactId>LSM_Toolbox</artifactId>
+	<version>4.0g</version>
 
 	<name>plugins/LSM_Toolbox.jar</name>
 	<description></description>

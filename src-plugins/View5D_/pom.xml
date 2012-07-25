@@ -12,6 +12,7 @@
 	</parent>
 
 	<artifactId>View5D_</artifactId>
+	<version>1.3.0</version>
 
 	<name>plugins/View5D_.jar</name>
 	<description></description>

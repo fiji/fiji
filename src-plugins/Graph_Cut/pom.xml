@@ -12,6 +12,7 @@
 	</parent>
 
 	<artifactId>Graph_Cut</artifactId>
+	<version>0.1</version>
 
 	<name>plugins/Graph_Cut.jar</name>
 	<description></description>
