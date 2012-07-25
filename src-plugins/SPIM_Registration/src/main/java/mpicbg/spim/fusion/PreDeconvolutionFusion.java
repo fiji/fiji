@@ -33,7 +33,7 @@ public class PreDeconvolutionFusion extends SPIMImageFusion
 		super( viewStructure, referenceViewStructure, isolatedWeightenerFactories, combinedWeightenerFactories );				
 		
 		// normalize the weights so the the sum for each pixel over all views is 1?
-		this.normalize = viewStructure.getSPIMConfiguration().normalizeWeightsDeconvolution;
+		this.normalize = true;
 		
 		if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_MAIN )
 			IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Reserving memory for fused image.");
