@@ -6,8 +6,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.vecmath.Point3f;
 
-import com.sun.net.httpserver.Authenticator.Success;
-
 import mpicbg.imglib.cursor.LocalizableByDimCursor;
 import mpicbg.imglib.cursor.LocalizableCursor;
 import mpicbg.imglib.image.Image;
@@ -26,6 +24,7 @@ public class PreDeconvolutionFusion extends SPIMImageFusion
 {
 	final Image<FloatType> images[], weights[];
 	final int numViews;
+	final boolean normalize;
 	
 	public PreDeconvolutionFusion( final ViewStructure viewStructure, final ViewStructure referenceViewStructure, 
 								  final ArrayList<IsolatedPixelWeightenerFactory<?>> isolatedWeightenerFactories, 
@@ -33,6 +32,8 @@ public class PreDeconvolutionFusion extends SPIMImageFusion
 	{
 		super( viewStructure, referenceViewStructure, isolatedWeightenerFactories, combinedWeightenerFactories );				
 		
+		// normalize the weights so the the sum for each pixel over all views is 1?
+		this.normalize = true;
 		
 		if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_MAIN )
 			IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Reserving memory for fused image.");
@@ -326,17 +327,23 @@ public class PreDeconvolutionFusion extends SPIMImageFusion
 		    								
 		    								interpolators[view].moveTo( tmp );
 		    								
-		    								//value += weight * interpolators[view].getType().get(); 
-		    								sumWeights += weight;
-		    								
-		    								// set the intensity, remember the weight
-		    								tmpWeights[ view ] = weight;
+		    								if ( normalize )
+		    								{
+			    								sumWeights += weight;
+			    								
+			    								// set the intensity, remember the weight
+			    								tmpWeights[ view ] = weight;
+		    								}
+		    								else
+		    								{
+		    									outWeights[ view ].getType().set( weight );
+		    								}
 		    								outIntensity[ view ].getType().set( interpolators[view].getType().get() );
 		    							}
 		    						}
 		    						
 		    						// set the normalized weights
-		    						if ( sumWeights > 0 )
+		    						if ( normalize && sumWeights > 0 )
 		    						{
 			    						for ( int view = 0; view < numViews; ++view )
 			    						{
