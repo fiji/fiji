@@ -196,7 +196,7 @@ public class Reconstruction
 			}
 			else
 			{
-				conf.instance.deconvolve( this, conf );
+				conf.instance.deconvolve( this, conf, currentViewStructure.getTimePoint() );
 			}
 		}		
 	}  	
@@ -307,7 +307,7 @@ public class Reconstruction
 			}
 			else
 			{
-				conf.instance.deconvolve( this, conf );
+				conf.instance.deconvolve( this, conf, conf.timepoints[timePointIndex] );
 			}
 
 			// collect some information if wanted

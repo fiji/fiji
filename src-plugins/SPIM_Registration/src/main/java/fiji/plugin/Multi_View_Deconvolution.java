@@ -66,7 +66,7 @@ public class Multi_View_Deconvolution implements PlugIn
 		// reconstruction calls deconvolve
 	}
 	
-	public void deconvolve( final Reconstruction reconstruction, final SPIMConfiguration conf )
+	public void deconvolve( final Reconstruction reconstruction, final SPIMConfiguration conf, final int timePoint )
 	{
 		// get the input images for the deconvolution
 		final ViewStructure viewStructure = reconstruction.getCurrentViewStructure();
@@ -160,7 +160,7 @@ public class Multi_View_Deconvolution implements PlugIn
 			}
 
 			if ( conf.writeOutputImage )
-				ImageJFunctions.saveAsTiffs( deconvolved, conf.outputdirectory, "DC(l=" + lambda + ")_" + name + "_ch" + viewStructure.getChannelNum( 0 ), ImageJFunctions.GRAY32 );
+				ImageJFunctions.saveAsTiffs( deconvolved, conf.outputdirectory, "DC(l=" + lambda + ")_"  + name + "_t" + timePoint + "_ch" + viewStructure.getChannelNum( 0 ), ImageJFunctions.GRAY32 );
 		}		
 	}
 
