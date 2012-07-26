@@ -23,7 +23,7 @@ public class ReadInto extends Thread {
 			if (line == null)
 				break;
 			if (err != null)
-				err.print(line);
+				err.println(line);
 			buffer.append(line);
 			Thread.sleep(0);
 		}

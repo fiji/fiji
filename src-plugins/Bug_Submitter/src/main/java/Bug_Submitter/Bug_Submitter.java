@@ -89,12 +89,7 @@ import java.awt.GridBagConstraints;
 import java.awt.Insets;
 import java.awt.Toolkit;
 
-import fiji.updater.UptodateCheck;
-import fiji.updater.logic.Checksummer;
-import fiji.updater.logic.PluginCollection;
-import fiji.updater.logic.PluginObject;
-import fiji.updater.ui.ProgressDialog;
-import fiji.updater.util.Canceled;
+import fiji.updater.Adapter;
 
 public class Bug_Submitter implements PlugIn {
 
@@ -199,34 +194,6 @@ public class Bug_Submitter implements PlugIn {
 		sb.append(System.getenv("JAVA_HOME"));
 		sb.append("\n  ij.dir => ");
 		sb.append(System.getProperty("ij.dir"));
-		return sb.toString();
-	}
-
-	protected String getInstalledVersions() {
-
-		ProgressDialog progress = new ProgressDialog(IJ.getInstance(),"Finding installed plugin versions...");
-		Checksummer checksummer = new Checksummer(new PluginCollection(), progress);
-		try {
-				checksummer.updateFromLocal();
-		} catch (Canceled e) {
-			checksummer.done();
-			IJ.error("Canceled");
-			return null;
-		}
-
-		Map<String, PluginObject.Version> checksums =
-			checksummer.getCachedChecksums();
-
-		StringBuffer sb = new StringBuffer();
-
-		for (Map.Entry<String, PluginObject.Version> entry : checksums.entrySet()) {
-			    String file = entry.getKey();
-			    PluginObject.Version version = entry.getValue();
-			    sb.append("  ").append(version.checksum).append(" ");
-			    sb.append(version.timestamp).append(" ");
-			    sb.append(file).append("\n");
-		}
-
 		return sb.toString();
 	}
 
@@ -527,7 +494,7 @@ public class Bug_Submitter implements PlugIn {
 		@Override
 		public synchronized void show() {
 			WindowManager.addWindow(this);
-			super.show();
+			super.setVisible(true);
 			try {
 				wait();
 			} catch (InterruptedException e) { }
@@ -754,17 +721,18 @@ public class Bug_Submitter implements PlugIn {
 			"bug and how to reproduce it here.]";
 
 	public void run( String ignore ) {
+		Adapter updater = new Adapter(true);
 
 		String summary = dummyBugTextSummary;
 		String description = dummyBugTextDescription+"\n"+
 			"\nInformation about your version of Java - "+
 			"this information is useful for the Fiji developers:\n\n"+
 			getUsefulSystemInformation()+
-			"\nThe up-to-date check says: "+(new UptodateCheck()).check()+"\n"+
+			"\nThe up-to-date check says: "+updater.check()+"\n"+
 			"\nInformation relevant to JAVA_HOME related problems:\n\n"+
 			getPathInformation()+
 			"\n\nInformation about the version of each plugin:\n\n"+
-			getInstalledVersions();
+			updater.getInstalledVersions();
 
 		while( true ) {
 
