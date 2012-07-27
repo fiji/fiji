@@ -86,7 +86,7 @@
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>Skeletonize3D_</artifactId>
-			<version>${imagej.version}</version>
+			<version>1.0</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>

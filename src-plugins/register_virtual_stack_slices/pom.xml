@@ -40,7 +40,7 @@
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>bUnwarpJ_</artifactId>
-			<version>${imagej.version}</version>
+			<version>2.6</version>
 		</dependency>
 	</dependencies>
 
