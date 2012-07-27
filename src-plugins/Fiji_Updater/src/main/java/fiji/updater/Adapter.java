@@ -342,7 +342,7 @@ public class Adapter {
 	 */
 	protected Object getProgress() throws SecurityException, NoSuchMethodException, IllegalArgumentException, InstantiationException, IllegalAccessException, InvocationTargetException {
 		if (progress == null)
-			progress = newInstance(progressClassName, (Frame)null);
+			progress = progressClassName == SWING_PROGRESS_CLASS_NAME ? newInstance(progressClassName, (Frame)null) : newInstance(progressClassName);
 		return progress;
 	}
 
