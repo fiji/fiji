@@ -488,13 +488,15 @@ public class Bug_Submitter implements PlugIn {
 		public void setVisible(boolean visible) {
 			if (visible)
 				WindowManager.addWindow(this);
+			else
+				WindowManager.removeWindow(this);
 			super.setVisible(visible);
 		}
 
 		@Override
 		public synchronized void show() {
 			WindowManager.addWindow(this);
-			super.setVisible(true);
+			super.show();
 			try {
 				wait();
 			} catch (InterruptedException e) { }
