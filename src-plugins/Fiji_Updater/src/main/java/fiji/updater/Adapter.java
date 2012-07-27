@@ -285,7 +285,7 @@ public class Adapter {
 		invoke(collection, "sort");
 		List<String> result = new ArrayList<String>();
 		for (Object file : (Iterable<Object>)collection) {
-			result.add((String)invoke(file, "getLocalFilename"));
+			result.add((String)invoke(file, "getLocalFilename", false));
 		}
 
 		return result;
