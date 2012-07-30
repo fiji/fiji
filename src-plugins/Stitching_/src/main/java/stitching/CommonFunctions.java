@@ -1086,6 +1086,11 @@ public class CommonFunctions
 
 	public static final double[] getPlanePosition( final IFormatReader r, final MetadataRetrieve retrieve, int series, int t )
 	{
+		return getPlanePosition(r, retrieve, series, t, false, false);
+	}
+
+	public static final double[] getPlanePosition( final IFormatReader r, final MetadataRetrieve retrieve, int series, int t, boolean invertX, boolean invertY )
+	{
 		// generate a mapping from native indices to Plane element indices
 		final HashMap< Integer, Integer > planeMap = new HashMap< Integer, Integer >();
 		final int planeCount = retrieve.getPlaneCount( series );
@@ -1121,9 +1126,9 @@ public class CommonFunctions
 		}
 
 		// stage coordinates (for the given series and plane)
-		final double locationX = getPosition( hasPlane ? retrieve.getPlanePositionX( series, planeIndex ) : null, stageLabelX );
-		final double locationY = getPosition( hasPlane ? retrieve.getPlanePositionY( series, planeIndex ) : null, stageLabelY );
-		final double locationZ = getPosition( hasPlane ? retrieve.getPlanePositionZ( series, planeIndex ) : null, stageLabelZ );
+		final double locationX = getPosition( hasPlane ? retrieve.getPlanePositionX( series, planeIndex ) : null, stageLabelX, invertX );
+		final double locationY = getPosition( hasPlane ? retrieve.getPlanePositionY( series, planeIndex ) : null, stageLabelY, invertY );
+		final double locationZ = getPosition( hasPlane ? retrieve.getPlanePositionZ( series, planeIndex ) : null, stageLabelZ, false );
 
 		if ( IJ.debugMode )
 		{
@@ -1135,15 +1140,15 @@ public class CommonFunctions
 		return new double[] { locationX, locationY, locationZ };
 	}
 
-	private static double getPosition( final Double planePos, final Double stageLabel )
+	private static double getPosition( final Double planePos, final Double stageLabel, final boolean invert )
 	{
 		// check plane position
 		if ( planePos != null )
-			return planePos;
+			return invert ? -planePos : planePos;
 
 		// check global stage label
 		if ( stageLabel != null )
-			return stageLabel;
+			return invert ? -stageLabel : stageLabel;
 
 		return 0;
 	}
