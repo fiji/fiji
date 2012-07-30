@@ -1,3 +1,5 @@
+package fiji.ffmpeg;
+
 // This class is not meant to be a fully-fledged
 // .h -> JNA converter as JNAerator tries to do.
 // It is meant to be just good enough for FFMPEG.
@@ -800,7 +802,7 @@ if (level == 0 && bitFieldBitCount > 0) throw new RuntimeException("Bit fields n
 		return buf.toString();
 	}
 
-	void handleHeaders(String pathToHeaders, String libName, String packageName, String outDir) throws IOException {
+	void handleHeaders(File pathToHeaders, String libName, String packageName, File outDir) throws IOException {
 		File outFile = new File(outDir, packageName.replace('.', '/') + "/" + libName + ".java");
 		outFile.getParentFile().mkdirs();
 		FileWriter out = new FileWriter(outFile);
@@ -823,8 +825,7 @@ if (level == 0 && bitFieldBitCount > 0) throw new RuntimeException("Bit fields n
 		out.write("public interface " + libName + " extends Library {\n");
 
 		print("Generating " + libName);
-		File path = new File(pathToHeaders);
-		String[] list = libName.equals("AVUTIL") ? path.list() :
+		String[] list = libName.equals("AVUTIL") ? pathToHeaders.list() :
 			(libName.equals("AVFORMAT") ?
 			 new String[] { "avformat.h", "avio.h" } :
 			 new String[] { libName.toLowerCase() + ".h" });
@@ -836,7 +837,7 @@ if (level == 0 && bitFieldBitCount > 0) throw new RuntimeException("Bit fields n
 				continue;
 			print("Translating " + file);
 			out.write("\n\t// Header: " + file + "\n");
-			String contents = readFile(new File(path, file));
+			String contents = readFile(new File(pathToHeaders, file));
 			contents = filterOutIf0(contents);
 			contents = filterOutComments(contents);
 			contents = filterOutGuard(contents).trim();
@@ -845,12 +846,6 @@ if (level == 0 && bitFieldBitCount > 0) throw new RuntimeException("Bit fields n
 			contents = toJNA(contents);
 			out.write(indent(contents, 1));
 		}
-
-		if (libName.equals("AVUTIL"))
-			out.write(indent("public interface AvLog extends Callback {\n"
-				+ "\tpublic void callback(String string);\n"
-				+ "}\n"
-				+ "public void avSetLogCallback(AvLog callback);\n", 1));
 		out.write("}\n");
 		out.close();
 	}
@@ -884,13 +879,14 @@ if (level == 0 && bitFieldBitCount > 0) throw new RuntimeException("Bit fields n
 		}
 		String ffmpegDir = addSlash(args[0]);
 		String outDir = addSlash(args[1]);
-
-		GenerateFFMPEGClasses generator = new GenerateFFMPEGClasses();
-
+		new GenerateFFMPEGClasses().generate(new File(ffmpegDir), new File(outDir));
+	}
+	
+	protected void generate(File ffmpegDir, File outDir) {
 		for (String lib : new String[] { "avutil", "avcore", "avdevice", "swscale", /* "avfilter", */ "avcodec", "avformat" }) {
-			generator.currentLib = lib.toUpperCase();
+			currentLib = lib.toUpperCase();
 			try {
-				generator.handleHeaders(ffmpegDir + "lib" + lib, generator.currentLib, "fiji.ffmpeg", outDir);
+				handleHeaders(new File(ffmpegDir, "lib" + lib), currentLib, "fiji.ffmpeg", outDir);
 			} catch (IOException e) {
 				handleException(e);
 				print("Could not handle " + lib + ": " + e);

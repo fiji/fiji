@@ -30,7 +30,7 @@ import fiji.ffmpeg.AVFORMAT.AVStream;
 import java.io.File;
 import java.io.IOException;
 
-public class IO extends FFMPEGSingle implements Progress {
+public class IO extends FFMPEG implements Progress {
 	protected AVFormatContext formatContext;
 	protected AVCodecContext codecContext;
 	protected AVCodec codec;
@@ -56,15 +56,6 @@ public class IO extends FFMPEGSingle implements Progress {
 
 	public void setProgress(Progress progress) {
 		this.progress = progress;
-		AVUTIL.avSetLogCallback(new AVUTIL.AvLog() {
-			public void callback(String message) {
-				try {
-					log(message);
-				} catch (Throwable t) {
-					t.printStackTrace();
-				}
-			}
-		});
 	}
 
 	public void start(String message) {
@@ -650,7 +641,7 @@ public class IO extends FFMPEGSingle implements Progress {
 
 		// some formats want stream headers to be separate
 		if ((new AVFORMAT.AVOutputFormat(formatContext.oformat).flags & AVFORMAT.AVFMT_GLOBALHEADER) != 0)
-			codecContext.flags |= AVFORMAT.CODEC_FLAG_GLOBAL_HEADER;
+			codecContext.flags |= AVCODEC.CODEC_FLAG_GLOBAL_HEADER;
 
 		return st;
 	}

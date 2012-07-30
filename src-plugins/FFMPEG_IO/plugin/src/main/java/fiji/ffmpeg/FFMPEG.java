@@ -14,7 +14,7 @@ public class FFMPEG extends JNALibraryLoader {
 	protected static AVDEVICE AVDEVICE;
 	protected static AVCODEC AVCODEC;
 	protected static AVFORMAT AVFORMAT;
-	//protected static SWScaleLibrary SWSCALE;
+	protected static SWSCALE SWSCALE;
 
 	public boolean loadFFMPEG() {
 		if (AVFORMAT != null)
@@ -31,6 +31,8 @@ public class FFMPEG extends JNALibraryLoader {
 				AVCODEC.LIBAVCODEC_VERSION_MAJOR, AVCODEC.class);
 			AVFORMAT = (AVFORMAT)loadLibrary("avformat",
 				AVFORMAT.LIBAVFORMAT_VERSION_MAJOR, AVFORMAT.class);
+			SWSCALE = (SWSCALE)loadLibrary("swscale",
+				SWSCALE.LIBSWSCALE_VERSION_MAJOR, SWSCALE.class);
 		} catch (UnsatisfiedLinkError e) {
 			showException(e);
 			return false;
