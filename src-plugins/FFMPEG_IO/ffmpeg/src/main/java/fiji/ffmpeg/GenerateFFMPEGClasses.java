@@ -267,6 +267,7 @@ public class GenerateFFMPEGClasses {
 
 	String currentLib;
 	TreeMap<String, String> name2lib = new TreeMap<String, String>();
+	TreeMap<String, String> majorVersions = new TreeMap<String, String>();
 
 	String addLibPrefix(String name) {
 		String lib = name2lib.get(name);
@@ -665,6 +666,8 @@ if (level == 0 && bitFieldBitCount > 0) throw new RuntimeException("Bit fields n
 			if (line.charAt(0) == '#') {
 				if ((matcher = match(definePattern, line)) != null &&
 						!skipDefine.matcher(matcher.group(1)).matches()) {
+					if (matcher.group(1).endsWith("_MAJOR"))
+						majorVersions.put(matcher.group(1), matcher.group(2));
 					if (matcher.group(2).startsWith("(") &&
 							line.charAt(line.indexOf(matcher.group(2)) - 1) != ' ')
 						continue; // cannot handle macros

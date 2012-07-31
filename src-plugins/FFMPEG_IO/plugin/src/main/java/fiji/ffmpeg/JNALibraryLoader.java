@@ -52,11 +52,9 @@ public class JNALibraryLoader {
 	}
 
 	protected static String getLibraryName(String name, int version) {
-		return (IJ.isWindows() ? "" : "lib")
-			+ name
-			+ (IJ.isWindows() && version >= 0 ? "-" + version : "")
-			+ "." + (IJ.isMacOSX() ? "dylib" :
-				IJ.isWindows() ? "dll" : "so");
+		if (IJ.isWindows())
+			return name + "-" + version + ".dll";
+		return "lib" + name + "." + (IJ.isMacOSX() ? "dylib" : "so") + "." + version;
 	}
 
 	protected static File getTempLibraryDirectory() {

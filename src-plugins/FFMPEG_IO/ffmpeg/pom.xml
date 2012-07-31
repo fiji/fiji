@@ -12,6 +12,7 @@
 	</parent>
 
 	<artifactId>ffmpeg-native</artifactId>
+	<packaging>jar</packaging>
 
 	<name>FFMPEG</name>
 	<description>This project builds the FFMPEG library on the current platform and wraps it in NAR-style .jar files.</description>
@@ -34,9 +35,107 @@
 					<mainClass>fiji.ffmpeg.CompileFFMPEG</mainClass>
 					<arguments>
 						<argument>${basedir}/target</argument>
+						<argument>${project.artifactId}-${project.version}</argument>
 					</arguments>
 					<includePluginDependencies>true</includePluginDependencies>
 				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-install-plugin</artifactId>
+				<version>2.3.1</version>
+				<executions>
+					<execution>
+						<id>attach-linux64-artifact</id>
+						<phase>install</phase>
+						<goals>
+							<goal>install-file</goal>
+						</goals>
+						<configuration>
+							<file>target/${project.artifactId}-${project.version}-amd64-Linux-gcc-shared.nar</file>
+							<artifactId>${project.artifactId}</artifactId>
+							<groupId>${project.groupId}</groupId>
+							<version>${project.version}</version>
+							<packaging>nar</packaging>
+							<classifier>amd64-Linux-gcc-shared</classifier>
+						</configuration>
+					</execution>
+					<execution>
+						<id>attach-linux32-artifact</id>
+						<phase>install</phase>
+						<goals>
+							<goal>install-file</goal>
+						</goals>
+						<configuration>
+							<file>target/${project.artifactId}-${project.version}-i386-Linux-gcc-shared.nar</file>
+							<artifactId>${project.artifactId}</artifactId>
+							<groupId>${project.groupId}</groupId>
+							<version>${project.version}</version>
+							<packaging>nar</packaging>
+							<classifier>i386-Linux-gcc-shared</classifier>
+						</configuration>
+					</execution>
+					<execution>
+						<id>attach-win64-artifact</id>
+						<phase>install</phase>
+						<goals>
+							<goal>install-file</goal>
+						</goals>
+						<configuration>
+							<file>target/${project.artifactId}-${project.version}-amd64-Windows-gcc-shared.nar</file>
+							<artifactId>${project.artifactId}</artifactId>
+							<groupId>${project.groupId}</groupId>
+							<version>${project.version}</version>
+							<packaging>nar</packaging>
+							<classifier>amd64-Windows-gcc-shared</classifier>
+						</configuration>
+					</execution>
+					<execution>
+						<id>attach-win32-artifact</id>
+						<phase>install</phase>
+						<goals>
+							<goal>install-file</goal>
+						</goals>
+						<configuration>
+							<file>target/${project.artifactId}-${project.version}-x86-Windows-gcc-shared.nar</file>
+							<artifactId>${project.artifactId}</artifactId>
+							<groupId>${project.groupId}</groupId>
+							<version>${project.version}</version>
+							<packaging>nar</packaging>
+							<classifier>x86-Windows-gcc-shared</classifier>
+						</configuration>
+					</execution>
+					<execution>
+						<id>attach-macosx64-artifact</id>
+						<phase>install</phase>
+						<goals>
+							<goal>install-file</goal>
+						</goals>
+						<configuration>
+							<file>target/${project.artifactId}-${project.version}-x86_64-MacOSX-gcc-shared.nar</file>
+							<artifactId>${project.artifactId}</artifactId>
+							<groupId>${project.groupId}</groupId>
+							<version>${project.version}</version>
+							<packaging>nar</packaging>
+							<classifier>x86_64-MacOSX-gcc-shared</classifier>
+						</configuration>
+					</execution>
+					<execution>
+						<id>attach-macosx32-artifact</id>
+						<phase>install</phase>
+						<goals>
+							<goal>install-file</goal>
+						</goals>
+						<configuration>
+							<file>target/${project.artifactId}-${project.version}-i386-MacOSX-gcc-shared.nar</file>
+							<artifactId>${project.artifactId}</artifactId>
+							<groupId>${project.groupId}</groupId>
+							<version>${project.version}</version>
+							<packaging>nar</packaging>
+							<classifier>i386-MacOSX-gcc-shared</classifier>
+						</configuration>
+					</execution>
+				</executions>
 			</plugin>
 		</plugins>
 
