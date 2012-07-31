@@ -1,38 +1,35 @@
 package fiji.ffmpeg;
 
-import com.sun.jna.Library;
-import com.sun.jna.Memory;
-import com.sun.jna.Native;
-import com.sun.jna.NativeLibrary;
-import com.sun.jna.Platform;
-import com.sun.jna.Pointer;
-import com.sun.jna.ptr.IntByReference;
-import com.sun.jna.ptr.PointerByReference;
-
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.VirtualStack;
-
-import ij.process.ColorProcessor;
 import ij.process.ByteProcessor;
+import ij.process.ColorProcessor;
 import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
+
+import java.io.File;
+import java.io.IOException;
+
+import com.sun.jna.Library;
+import com.sun.jna.Memory;
+import com.sun.jna.Native;
+import com.sun.jna.Platform;
+import com.sun.jna.Pointer;
+import com.sun.jna.ptr.IntByReference;
+import com.sun.jna.ptr.PointerByReference;
 
 import fiji.ffmpeg.AVCODEC.AVCodec;
 import fiji.ffmpeg.AVCODEC.AVCodecContext;
 import fiji.ffmpeg.AVCODEC.AVFrame;
 import fiji.ffmpeg.AVCODEC.AVPacket;
 import fiji.ffmpeg.AVCODEC.AVPicture;
-
 import fiji.ffmpeg.AVFORMAT.AVFormatContext;
 import fiji.ffmpeg.AVFORMAT.AVOutputFormat;
 import fiji.ffmpeg.AVFORMAT.AVStream;
 
 import fiji.ffmpeg.AVLOG.AvLog;
-
-import java.io.File;
-import java.io.IOException;
 
 public class IO extends FFMPEG implements Progress {
 	protected AVFormatContext formatContext;

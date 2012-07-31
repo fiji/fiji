@@ -2,11 +2,8 @@ package fiji.ffmpeg;
 
 import ij.IJ;
 import ij.ImagePlus;
-
 import ij.gui.GenericDialog;
-
 import ij.io.OpenDialog;
-
 import ij.plugin.PlugIn;
 
 import java.io.File;

@@ -1,11 +1,5 @@
 package fiji.ffmpeg;
 
-import com.sun.jna.Library;
-import com.sun.jna.Native;
-import com.sun.jna.NativeLibrary;
-import com.sun.jna.Pointer;
-import com.sun.jna.ptr.PointerByReference;
-
 import ij.IJ;
 
 import java.io.CharArrayWriter;
@@ -15,8 +9,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintWriter;
-
 import java.net.URL;
+
+import com.sun.jna.Library;
+import com.sun.jna.Native;
+import com.sun.jna.NativeLibrary;
 
 public class JNALibraryLoader {
 	protected static File libraryDirectory;
