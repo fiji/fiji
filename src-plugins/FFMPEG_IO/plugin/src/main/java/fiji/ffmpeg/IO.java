@@ -1,7 +1,10 @@
 package fiji.ffmpeg;
 
+import com.sun.jna.Library;
 import com.sun.jna.Memory;
+import com.sun.jna.Native;
 import com.sun.jna.NativeLibrary;
+import com.sun.jna.Platform;
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.IntByReference;
 import com.sun.jna.ptr.PointerByReference;
@@ -25,7 +28,8 @@ import fiji.ffmpeg.AVCODEC.AVPicture;
 import fiji.ffmpeg.AVFORMAT.AVFormatContext;
 import fiji.ffmpeg.AVFORMAT.AVOutputFormat;
 import fiji.ffmpeg.AVFORMAT.AVStream;
-//import fiji.ffmpeg.AVFORMAT.ByteIOContext;
+
+import fiji.ffmpeg.AVLOG.AvLog;
 
 import java.io.File;
 import java.io.IOException;
@@ -43,10 +47,22 @@ public class IO extends FFMPEG implements Progress {
 	protected AVPacket packet = new AVPacket();
 	protected Progress progress;
 
+	public interface C extends Library {
+		int snprintf(Pointer buffer, Long size, String fmt, Pointer va_list);
+	}
+
+	protected C C;
+
 	public IO() throws IOException {
 		super();
 		if (!loadFFMPEG())
 			throw new IOException("Could not load the FFMPEG library!");
+
+		AVLOG.avSetLogCallback(new AvLog() {
+			public void callback(String line) {
+				IJ.log(line);
+			}
+		});
 	}
 
 	public IO(Progress progress) throws IOException {

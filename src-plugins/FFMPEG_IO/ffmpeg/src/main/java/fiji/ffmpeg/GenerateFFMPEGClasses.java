@@ -528,7 +528,7 @@ if (level == 0 && bitFieldBitCount > 0) throw new RuntimeException("Bit fields n
 				String name2 = matcher.group(2);
 				String callback = camelCasify(name2);
 				buf.append("public static interface ").append(callback).append(" extends Callback {\n")
-					.append("\tpublic ").append(translateType(matcher.group(1), false))
+					.append("\tpublic ").append(translateType(matcher.group(1), true))
 					.append(" callback(");
 				buf.append(functionParameters(matcher.group(3)));
 				buf.append(");\n}\npublic ").append(callback).append(" ").append(name2).append(";\n");
@@ -743,6 +743,11 @@ if (level == 0 && bitFieldBitCount > 0) throw new RuntimeException("Bit fields n
 			if ((matcher = match(functionPattern, line)) != null) {
 				if (matcher.group(3).endsWith("va_list"))
 					buf.append("/* Skipping vararg function ").append(line).append(" */\n");
+				else if (line.equals("void avSetLogCallback(void (*callback)(const char *line));"))
+					buf.append("public interface AvLog extends Callback {\n"
+							+ "\tpublic void callback(String line);\n"
+							+ "}\n"
+							+ "public void avSetLogCallback(AvLog callback);\n");
 				else
 					buf.append(translateType(matcher.group(1), false))
 					.append(" ").append(matcher.group(2))
@@ -881,9 +886,9 @@ if (level == 0 && bitFieldBitCount > 0) throw new RuntimeException("Bit fields n
 		String outDir = addSlash(args[1]);
 		new GenerateFFMPEGClasses().generate(new File(ffmpegDir), new File(outDir));
 	}
-	
+
 	protected void generate(File ffmpegDir, File outDir) {
-		for (String lib : new String[] { "avutil", "avcore", "avdevice", "swscale", /* "avfilter", */ "avcodec", "avformat" }) {
+		for (String lib : new String[] { "avutil", "avcore", "avdevice", "swscale", /* "avfilter", */ "avcodec", "avformat", "avlog" }) {
 			currentLib = lib.toUpperCase();
 			try {
 				handleHeaders(new File(ffmpegDir, "lib" + lib), currentLib, "fiji.ffmpeg", outDir);
