@@ -64,9 +64,9 @@
 			<version>5.1.1</version>
 		</dependency>
 		<dependency>
-			<groupId>jfree</groupId>
+			<groupId>org.jfree</groupId>
 			<artifactId>jcommon</artifactId>
-			<version>1.0.15</version>
+			<version>1.0.17</version>
 		</dependency>
 		<dependency>
 			<groupId>org.jdom</groupId>
@@ -79,9 +79,9 @@
 			<version>1.1</version>
 		</dependency>
 		<dependency>
-			<groupId>jfree</groupId>
+			<groupId>org.jfree</groupId>
 			<artifactId>jfreechart</artifactId>
-			<version>1.0.13</version>
+			<version>1.0.14</version>
 		</dependency>
 		<dependency>
 			<groupId>jgrapht</groupId>

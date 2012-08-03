@@ -8,11 +8,13 @@ import java.awt.geom.Rectangle2D;
 
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.axis.ValueAxis;
+import org.jfree.chart.event.AnnotationChangeEvent;
 import org.jfree.chart.plot.PlotRenderingInfo;
 import org.jfree.chart.plot.XYPlot;
 
-public class XYTextSimpleAnnotation implements XYAnnotation {
+public class XYTextSimpleAnnotation extends AbstractXYAnnotation {
 	
+	private static final long serialVersionUID = 1L;
 	private float x, y;
 	private String text;
 	private Font font;
@@ -45,6 +47,7 @@ public class XYTextSimpleAnnotation implements XYAnnotation {
 	public void setLocation(float x, float y) {
 		this.x = x;
 		this.y = y;
+		notifyListeners(new AnnotationChangeEvent(this, this));
 	}
 	
 	public void setText(String text) { this.text = text; }
