@@ -195,7 +195,7 @@ public class GenerateFFMPEGClasses {
 		compile("^(?:extern )?(TYPE) *(IDENT)\\((void|((PARAMTYPE *(?:PARAMNAME)?, *)*PARAMTYPE *(?:PARAMNAME)?)?)\\) *(?:av_const *)?(?:av_malloc_attrib av_alloc_size\\(\\d+\\) *)?;$");
 	Pattern callbackPattern =
 		compile("^?(TYPE) *\\(\\*(IDENT)\\)\\((void|((PARAMTYPE *(?:PARAMNAME)?, *)*PARAMTYPE *(?:PARAMNAME)?)?)\\) *;$");
-	Pattern motionValTablePattern = 
+	Pattern motionValTablePattern =
 		compile("^?(TYPE) *\\(\\*(IDENT)((?:\\[[^\\]]*\\])*)\\) *((?:\\[[^\\]]*\\])*);$");
 	Pattern parameterPattern =
 		compile("^(PARAMTYPE) *(PARAMNAME)?$");
