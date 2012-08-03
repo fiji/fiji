@@ -2,11 +2,13 @@ package fiji.ffmpeg;
 
 import imagej.util.FileUtils;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
@@ -55,12 +57,18 @@ public class CompileFFMPEG {
 		File configure = new File(ffmpeg, "configure");
 		File configMak = new File(ffmpeg, "config.mak");
 		String mOption = "-m" + (is64Bit ? "64" : "32");
-		if (!configMak.exists() || configure.lastModified() > configMak.lastModified())
+		if (configMak.exists() && !narSuffix.equals(getNarSuffixOfLastBuild(ffmpeg))) {
+			exec(ffmpeg, "make", "clean");
+			configMak.delete();
+		}
+		if (!configMak.exists() || configure.lastModified() > configMak.lastModified()) {
 			exec(ffmpeg, "./configure",
 					"--enable-gpl",
 					"--enable-shared",
 					"--extra-ldflags=" + mOption + " -Wl,-rpath,\\\\\\$\\$\\$\\$ORIGIN/",
 					"--extra-cflags=" + mOption);
+			writeNarSuffix(ffmpeg);
+		}
 		exec(ffmpeg, "make", "V=1", "-j");
 
 		// Compile our helper
@@ -105,6 +113,22 @@ public class CompileFFMPEG {
 		}
 		jar.close();
 		System.err.println("Wrote " + jarFile);
+	}
+
+	private static String getNarSuffixOfLastBuild(final File ffmpeg) throws IOException {
+		final File file = new File(ffmpeg, ".nar-suffix");
+		if (!file.exists())
+			return null;
+		final BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file)));
+		final String line = reader.readLine();
+		reader.close();
+		return line;
+	}
+
+	private static void writeNarSuffix(final File ffmpeg) throws FileNotFoundException {
+		PrintStream out = new PrintStream(new FileOutputStream(new File(ffmpeg, ".nar-suffix")));
+		out.print(narSuffix);
+		out.close();
 	}
 
 	protected static void exec(File workingDirectory, String... args) {
