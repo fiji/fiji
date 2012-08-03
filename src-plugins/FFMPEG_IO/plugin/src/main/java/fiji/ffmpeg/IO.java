@@ -212,7 +212,7 @@ public class IO extends FFMPEG implements Progress {
 			factor = 1.0 / last;
 		ImageStack stack = new ImageStack(codecContext.width, codecContext.height);
 		int frameCounter = 0;
-		start("Writing " + path);
+		start("Reading " + path);
 		while (AVFORMAT.av_read_frame(formatContext, packet) >= 0 &&
 				(last < 0 || frameCounter < last)) {
 			// Is this a packet from the video stream?
