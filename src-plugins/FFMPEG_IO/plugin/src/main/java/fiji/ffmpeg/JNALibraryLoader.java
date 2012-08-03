@@ -66,7 +66,8 @@ public class JNALibraryLoader {
 		}
 	}
 
-	protected Object loadLibrary(String name, int version, Class libraryClass) {
+	@SuppressWarnings("unchecked")
+	protected<T> T loadLibrary(String name, int version, Class<T> libraryClass) {
 		String fileName = getLibraryName(name, version);
 		File file = new File(libraryDirectory, fileName);
 		if (!file.exists()) {
@@ -80,7 +81,7 @@ public class JNALibraryLoader {
 		}
 
 		NativeLibrary.addSearchPath(name, libraryDirectory.getAbsolutePath());
-		return Native.loadLibrary(name, libraryClass);
+		return (T)Native.loadLibrary(name, libraryClass);
 	}
 
 	protected static boolean copy(URL source, File target) {
