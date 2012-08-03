@@ -318,7 +318,6 @@ public class IO extends FFMPEG implements Progress {
 
 		// Close the codec
 		if (codecContext != null) {
-			AVCODEC.avcodec_close(codecContext);
 			codecContext = null;
 		}
 
@@ -494,7 +493,7 @@ public class IO extends FFMPEG implements Progress {
 			AVFORMAT.url_fclose(formatContext.pb);
 		}
 
-		//free();
+		free();
 	}
 
 	protected void writeVideoFrame(ImageProcessor ip, AVFormatContext formatContext, AVStream st) throws IOException {
