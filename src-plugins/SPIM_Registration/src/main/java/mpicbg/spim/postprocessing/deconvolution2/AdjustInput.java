@@ -45,7 +45,7 @@ public class AdjustInput
 		return sum.getSum();
 	}	
 
-	public static double normAllImages( final ArrayList<LRFFT> data )
+	public static double normAllImages( final ArrayList<LRFFT> data, final int speedUp )
 	{
 		// the individual sums of the overlapping area
 		//final double[] sums = new double[ data.size() ];
@@ -103,10 +103,15 @@ public class AdjustInput
 		
 		IJ.log( "Min number of overlapping views: " + minNumOverlap );
 		
+		minNumOverlap = Math.max( speedUp, minNumOverlap );
+		minNumOverlap = 1;
+		
+		IJ.log( "Speed-up: " + minNumOverlap );
+		/*
 		for ( final LRFFT view : data )
 			for ( final FloatType t : view.getWeight() )
 				t.mul( minNumOverlap );
-		
+		*/
 
 		if ( count == 0 )
 			return 1;
