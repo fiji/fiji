@@ -12,6 +12,7 @@
 	</parent>
 
 	<artifactId>Threshold_Colour</artifactId>
+	<version>2</version>
 
 	<name>plugins/Threshold_Colour.jar</name>
 	<description></description>

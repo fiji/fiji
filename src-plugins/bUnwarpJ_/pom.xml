@@ -12,6 +12,7 @@
 	</parent>
 
 	<artifactId>bUnwarpJ_</artifactId>
+	<version>2.6</version>
 
 	<name>plugins/bUnwarpJ_.jar</name>
 	<description></description>

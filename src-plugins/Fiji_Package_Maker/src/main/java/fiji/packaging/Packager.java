@@ -1,12 +1,8 @@
 package fiji.packaging;
 
-import fiji.updater.logic.Checksummer;
-import fiji.updater.logic.PluginCollection;
-import fiji.updater.logic.PluginObject;
+import fiji.updater.Adapter;
 
-import fiji.updater.util.Progress;
-import fiji.updater.util.StderrProgress;
-import fiji.updater.util.Util;
+import ij.IJ;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -14,10 +10,14 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Collection;
 
 public abstract class Packager {
-	protected PluginCollection plugins;
-	protected Progress progress;
+	static {
+		Adapter.ensureIJDirIsSet();
+	}
+	protected File ijDir = new File(System.getProperty("ij.dir"));
+	protected Collection<String> files;
 	protected int count, total;
 
 	protected byte[] buffer = new byte[16384];
@@ -40,48 +40,44 @@ public abstract class Packager {
 		in.close();
 	}
 
-	public void initialize(Progress progress) {
-		this.progress = progress;
-		plugins = new PluginCollection();
-		Checksummer checksummer = new Checksummer(plugins, progress);
-		checksummer.updateFromLocal();
+	public void initialize() throws Exception {
+		files = new Adapter(IJ.getInstance() != null).getFileList();
 	}
 
 	protected void addDefaultFiles() throws IOException {
-		if (progress != null) {
-			progress.setTitle("Packaging");
-			count = 0;
-			total = 4 + plugins.size();
-		}
-		addFile("db.xml.gz", false, progress);
+		addFile("db.xml.gz", false);
 		// Maybe ImageJ or ImageJ.exe exist?
-		addFile("ImageJ", true, progress);
-		addFile("ImageJ.exe", true, progress);
-		addFile("Contents/Info.plist", false, progress);
-		plugins.sort();
-		for (PluginObject plugin : plugins)
-			addFile(plugin.filename, plugin.executable, progress);
-		if (progress != null)
-			progress.done();
+		addFile("ImageJ", true);
+		addFile("ImageJ.exe", true);
+		addFile("Contents/Info.plist", false);
+		for (String fileName : files)
+			addFile(fileName, false);
 	}
 
-	protected boolean addFile(String fileName, boolean executable, Progress progress) throws IOException {
+	protected boolean addFile(String fileName, boolean executable) throws IOException {
 		count++;
 		if (fileName.equals("ImageJ-macosx") || fileName.equals("ImageJ-tiger"))
 			fileName = "Contents/MacOS/" + fileName;
-		File file = new File(Util.prefix(fileName));
+		File file = new File(ijDir, fileName);
 		if (!file.exists())
 			return false;
-		if (progress != null) {
-			progress.addItem(fileName);
-			progress.setCount(count, total);
-		}
-		putNextEntry("Fiji.app/" + fileName, executable, (int)file.length());
+		putNextEntry("Fiji.app/" + fileName, executable || file.canExecute(), (int)file.length());
 		write(new FileInputStream(file));
 		closeEntry();
-		if (progress != null)
-			progress.itemDone(fileName);
 		return true;
+	}
+
+	protected static String getPlatform() {
+		final boolean is64bit = System.getProperty("os.arch", "").indexOf("64") >= 0;
+		final String osName = System.getProperty("os.name", "<unknown>");
+		if (osName.equals("Linux"))
+			return "linux" + (is64bit ? "64" : "32");
+		if (osName.equals("Mac OS X"))
+			return "macosx";
+		if (osName.startsWith("Windows"))
+			return "win" + (is64bit ? "64" : "32");
+		// System.err.println("Unknown platform: " + osName);
+		return osName.toLowerCase();
 	}
 
 	public static void main(String[] args) {
@@ -111,12 +107,12 @@ public abstract class Packager {
 		String path = args[0];
 
 		try {
-			packager.initialize(new StderrProgress());
+			packager.initialize();
 			packager.open(new FileOutputStream(path));
 			packager.addDefaultFiles();
 			packager.close();
 		}
-		catch (IOException e) {
+		catch (Exception e) {
 			e.printStackTrace();
 			System.err.println("Error writing " + path);
 		}

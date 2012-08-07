@@ -20,6 +20,7 @@ public class StitchingParameters
 	public String fusedName;
 	public int checkPeaks;
 	public boolean computeOverlap, subpixelAccuracy;
+	public boolean invertX, invertY;
 	public double xOffset;
 	public double yOffset;
 	public double zOffset;

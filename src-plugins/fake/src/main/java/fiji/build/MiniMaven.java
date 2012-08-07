@@ -10,7 +10,6 @@ import java.util.Stack;
 import java.util.TreeSet;
 
 import fiji.build.minimaven.BuildEnvironment;
-import fiji.build.minimaven.Coordinate;
 import fiji.build.minimaven.POM;
 
 public class MiniMaven {

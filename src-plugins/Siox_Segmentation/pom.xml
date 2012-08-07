@@ -12,6 +12,7 @@
 	</parent>
 
 	<artifactId>Siox_Segmentation</artifactId>
+	<version>1.0</version>
 
 	<name>plugins/Siox_Segmentation.jar</name>
 	<description></description>

@@ -2,7 +2,7 @@
 
 CWD="$(cd "$(dirname "$0")" && pwd)"
 BASEURL=http://www.apache.org/dyn/closer.cgi/maven/binaries/
-DIR=apache-maven-2.2.1
+DIR=apache-maven-3.0.4
 TAR=$DIR-bin.tar.gz
 MVN="$CWD/$DIR/bin/mvn"
 

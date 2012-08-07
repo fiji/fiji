@@ -1,5 +1,6 @@
 package fiji.plugin;
 
+import fiji.Debug;
 import fiji.plugin.timelapsedisplay.GraphFrame;
 import fiji.plugin.timelapsedisplay.TimeLapseDisplay;
 import fiji.util.gui.GenericDialogPlus;
@@ -155,8 +156,11 @@ public class Bead_Registration implements PlugIn
 	final String timeLapseRegistrationTypes[] = new String[] { "Manually", "Automatically" };
 	static int defaultTimeLapseRegistration = 0;
 	
+	private SPIMConfiguration conf;
+
 	public SPIMConfiguration singleChannel()
 	{
+		conf = null;
 		final GenericDialogPlus gd = new GenericDialogPlus( "Single Channel Bead-based Registration" );
 		
 		gd.addDirectoryOrFileField( "SPIM_data_directory", spimDataDirectory );
@@ -200,6 +204,14 @@ public class Bead_Registration implements PlugIn
 			@Override
 			public boolean dialogItemChanged( GenericDialog dialog, AWTEvent e )
 			{
+				if ( e == null )
+				{
+					if ( !gd.wasCanceled() )
+					{
+						conf = getConfiguration( dialog );
+					}
+					return true;
+				}
 				if ( e instanceof TextEvent && e.getID() == TextEvent.TEXT_VALUE_CHANGED && e.getSource() == tfSpimDataDirectory )
 				{
 					TextField tf = ( TextField ) e.getSource();
@@ -258,7 +270,12 @@ public class Bead_Registration implements PlugIn
 		
 		if ( gd.wasCanceled() )
 			return null;
-		
+
+		return conf;
+	}
+
+	private static SPIMConfiguration getConfiguration( GenericDialog gd )
+	{
 		spimDataDirectory = gd.getNextString();
 		fileNamePattern = gd.getNextString();
 		timepoints = gd.getNextString();
@@ -324,7 +341,7 @@ public class Bead_Registration implements PlugIn
 		conf.anglePattern = angles;
 		conf.inputFilePattern = fileNamePattern;
 
-		f = new File( spimDataDirectory );
+		File f = new File( spimDataDirectory );
 		if ( f.exists() && f.isFile() && f.getName().endsWith( ".xml" ) )
 		{
 			conf.spimExperiment = new SPIMExperiment( f.getAbsolutePath() );
@@ -811,5 +828,11 @@ public class Bead_Registration implements PlugIn
 				}
 			});
 		}
-	}	
+	}
+
+	public static void main(String[] args) {
+		Debug.run("Record...", null);
+		Debug.run("Find Commands...", null);
+		Debug.run("Bead-based registration", null);
+	}
 }

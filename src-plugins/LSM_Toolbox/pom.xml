@@ -12,6 +12,7 @@
 	</parent>
 
 	<artifactId>LSM_Toolbox</artifactId>
+	<version>4.0g</version>
 
 	<name>plugins/LSM_Toolbox.jar</name>
 	<description></description>
@@ -25,7 +26,7 @@
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>LSM_Reader</artifactId>
-			<version>${imagej.version}</version>
+			<version>4.0g</version>
 		</dependency>
 	</dependencies>
 

@@ -12,6 +12,7 @@
 	</parent>
 
 	<artifactId>Directionality_</artifactId>
+	<version>2.0</version>
 
 	<name>plugins/Directionality_.jar</name>
 	<description></description>

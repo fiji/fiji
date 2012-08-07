@@ -12,6 +12,7 @@
 	</parent>
 
 	<artifactId>Auto_Threshold</artifactId>
+	<version>1.14</version>
 
 	<name>plugins/Auto_Threshold.jar</name>
 	<description></description>

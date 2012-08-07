@@ -139,7 +139,11 @@ public class FeatureStackArray
 	{
 		this.featureStackArray[ index ] = fs;
 		if( referenceStackIndex == -1 )
+		{
 			this.referenceStackIndex = index;
+			// set features
+			setEnabledFeatures( fs.getEnabledFeatures() );
+		}
 	}
 	
 	/**

@@ -182,6 +182,13 @@ public class SubFake extends Rule {
 			if (pom != null) try {
 				pom.downloadDependencies();
 				pom.buildJar();
+				String target = this.target;
+				if (getVarBool("keepVersion")) {
+					File unversioned = new File(Util.makePath(parser.cwd, target));
+					if (unversioned.exists())
+						unversioned.delete();
+					target = target.substring(0, target.indexOf('/') + 1) + pom.getJarName();
+				}
 				copyJar(pom.getTarget().getPath(), target, parser.cwd, configPath);
 				if (getVarBool("copyDependencies")) {
 					copyDependencies(pom, new File(target).getAbsoluteFile().getParentFile());
@@ -247,7 +254,15 @@ public class SubFake extends Rule {
 		for (POM dependency : pom.getDependencies(true, false, "test", "provided")) {
 			File file = dependency.getTarget();
 			File directory = plugins != null && isImageJ1Plugin(file) ? plugins : targetDirectory;
-			File destination = new File(directory, dependency.getArtifactId() + ".jar");
+			String jarName;
+			if (getVarBool("keepVersion") || dependency.getArtifactId().startsWith("imglib2")) {
+				File unversioned = new File(directory, dependency.getArtifactId() + ".jar");
+				if (unversioned.exists())
+					unversioned.delete();
+				jarName = dependency.getJarName();
+			} else
+				jarName = dependency.getArtifactId() + ".jar";
+			File destination = new File(directory, jarName);
 			if (file.exists() && (!destination.exists() || destination.lastModified() < file.lastModified()))
 				BuildEnvironment.copyFile(file, destination);
 		}
