@@ -63,13 +63,12 @@ public class Multi_View_Deconvolution implements PlugIn
 		// run the first part of fusion
 		final Reconstruction reconstruction = new Reconstruction( conf );
 		
-		// reconstruction calls deconvolve
+		// reconstruction calls deconvolve for each timepoint
 	}
 	
-	public void deconvolve( final Reconstruction reconstruction, final SPIMConfiguration conf, final int timePoint )
+	public void deconvolve( final ViewStructure viewStructure, final SPIMConfiguration conf, final int timePoint )
 	{
 		// get the input images for the deconvolution
-		final ViewStructure viewStructure = reconstruction.getCurrentViewStructure();
 		final FusionControl fusionControl = viewStructure.getFusionControl();
 		final PreDeconvolutionFusion fusion = (PreDeconvolutionFusion)fusionControl.getFusion();
 		
@@ -160,7 +159,7 @@ public class Multi_View_Deconvolution implements PlugIn
 			}
 
 			if ( conf.writeOutputImage )
-				ImageJFunctions.saveAsTiffs( deconvolved, conf.outputdirectory, "DC(l=" + lambda + ")_"  + name + "_t" + timePoint + "_ch" + viewStructure.getChannelNum( 0 ), ImageJFunctions.GRAY32 );
+				ImageJFunctions.saveAsTiffs( deconvolved, conf.outputdirectory, "DC(l=" + lambda + ")_t" + timePoint + "_ch" + viewStructure.getChannelNum( 0 ), ImageJFunctions.GRAY32 );
 		}		
 	}
 
