@@ -1,8 +1,5 @@
 package mpicbg.spim.io;
 
-import java.math.BigInteger;
-import loci.formats.FilePattern;
-
 public class ParsePattern
 {
 	public static void main(String[] args)
