@@ -39,7 +39,7 @@ public class BayesMVDeconvolution implements Deconvolver
 	ArrayList<LRFFT> data;
 	String name;
 	
-	public BayesMVDeconvolution( final LRInput views, final int numIterations, final double lambda, final String name )
+	public BayesMVDeconvolution( final LRInput views, final int numIterations, final double lambda, final String name, final boolean doBlocks, final int[] maxSize )
 	{
 		this.name = name;
 		this.data = views.getViews();

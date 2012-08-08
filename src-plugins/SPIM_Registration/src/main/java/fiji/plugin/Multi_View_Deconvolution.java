@@ -93,20 +93,11 @@ public class Multi_View_Deconvolution implements PlugIn
 		//
 		//final ArrayList<LucyRichardsonFFT> deconvolutionData = new ArrayList<LucyRichardsonFFT>();
 		final LRInput deconvolutionData = new LRInput();
-		final int cpusPerView = Math.min( Runtime.getRuntime().availableProcessors(), Math.round( Runtime.getRuntime().availableProcessors() / (float)paralellViews ) );
 		
-		IJ.log( "Compute views in paralell: " + paralellViews );
-		IJ.log( "CPUs per view: " + cpusPerView );
-		IJ.log( "Minimal number iterations: " + minNumIterations );
-		IJ.log( "Maximal number iterations: " + maxNumIterations );
+		IJ.log( "Number iterations: " + numIterations );
 		
 		IJ.log( "ImgLib container (input): " + conf.outputImageFactory.getClass().getSimpleName() );
 		IJ.log( "ImgLib container (output): " + conf.imageFactory.getClass().getSimpleName() );
-		
-		if ( multiplicative )
-			IJ.log( "Using a multiplicative multiview combination scheme." );
-		else
-			IJ.log( "Using an additive multiview combination scheme." );
 		
 		if ( useTikhonovRegularization )
 			IJ.log( "Using Tikhonov regularization (lambda = " + lambda + ")" );
@@ -134,9 +125,9 @@ public class Multi_View_Deconvolution implements PlugIn
 		*/
 		
 		if ( useTikhonovRegularization )
-			deconvolved = new BayesMVDeconvolution( deconvolutionData, maxNumIterations, lambda, "deconvolved" ).getPsi();
+			deconvolved = new BayesMVDeconvolution( deconvolutionData, numIterations, lambda, "deconvolved", useBlocks, blockSize ).getPsi();
 		else
-			deconvolved = new BayesMVDeconvolution( deconvolutionData, maxNumIterations, 0, "deconvolved" ).getPsi();
+			deconvolved = new BayesMVDeconvolution( deconvolutionData, numIterations, 0, "deconvolved", useBlocks, blockSize ).getPsi();
 		
 		if ( conf.writeOutputImage || conf.showOutputImage )
 		{
@@ -166,22 +157,22 @@ public class Multi_View_Deconvolution implements PlugIn
 	public static boolean fusionUseContentBasedStatic = false;
 	public static boolean displayFusedImageStatic = true;
 	public static boolean saveFusedImageStatic = true;
-	public static int defaultMinNumIterations = 20;
-	public static int defaultMaxNumIterations = 50;
+	public static int defaultNumIterations = 10;
 	public static boolean defaultUseTikhonovRegularization = true;
 	public static double defaultLambda = 0.006;
-	public static int defaultParalellViews = 0;
 	public static boolean showAveragePSF = true;
-	public static int defaultDeconvolutionScheme = 0;
 	public static int defaultContainer = 0;
+	public static int defaultComputationIndex = 0;
+	public static int defaultBlockSizeIndex = 0, defaultBlockSizeX = 256, defaultBlockSizeY = 256, defaultBlockSizeZ = 256;
 	
-	public static String[] deconvolutionScheme = new String[]{ "Multiplicative", "Additive" };
 	public static String[] imglibContainer = new String[]{ "Array container", "Planar container", "Cell container" };
+	public static String[] computationOn = new String[]{ "CPU (Java)", "GPU (Cuda via JNI)" };
+	public static String[] blocks = new String[]{ "Entire image at once", "in 64x64x64 blocks", "in 128x128x128 blocks", "in 256x256x256 blocks", "in 512x512x512 blocks", "specify maximal blocksize manually" };
 	
-	int minNumIterations, maxNumIterations, paralellViews, container;
-	boolean useTikhonovRegularization = true;
+	int numIterations, container, computationType, blockSizeIndex;
+	int[] blockSize = null;
+	boolean useTikhonovRegularization = true, useBlocks = false;
 	double lambda = 0.006;
-	boolean multiplicative = true;
 	
 	protected SPIMConfiguration getParameters() 
 	{
@@ -383,23 +374,13 @@ public class Multi_View_Deconvolution implements PlugIn
 		gd2.addNumericField( "Crop_output_image_size_x", Multi_View_Fusion.cropSizeXStatic, 0 );
 		gd2.addNumericField( "Crop_output_image_size_y", Multi_View_Fusion.cropSizeYStatic, 0 );
 		gd2.addNumericField( "Crop_output_image_size_z", Multi_View_Fusion.cropSizeZStatic, 0 );
-		gd2.addMessage( "" );		
-		gd2.addNumericField( "Minimal_number_of_iterations", defaultMinNumIterations, 0 );
-		gd2.addNumericField( "Maximal_number_of_iterations", defaultMaxNumIterations, 0 );
-		gd2.addChoice( "Type_of_multiview_combination", deconvolutionScheme, deconvolutionScheme[ defaultDeconvolutionScheme ] );
+		gd2.addMessage( "" );	
+		gd2.addNumericField( "Number_of_iterations", defaultNumIterations, 0 );
 		gd2.addCheckbox( "Use_Tikhonov_regularization", defaultUseTikhonovRegularization );
 		gd2.addNumericField( "Tikhonov_parameter", defaultLambda, 4 );
-		
-		final String[] views = new String[ numViews ];
-		views[ 0 ] = "All";
-		for ( int v = 1; v < numViews; v++ )
-			views[ v ] = "" + v;
-		
-		if ( defaultParalellViews >= views.length )
-			defaultParalellViews = views.length - 1;
-		
-		gd2.addChoice( "Process_views_in_paralell", views, views[ defaultParalellViews ] );
 		gd2.addChoice( "ImgLib_container", imglibContainer, imglibContainer[ defaultContainer ] );
+		gd2.addChoice( "Compute", blocks, blocks[ defaultBlockSizeIndex ] );
+		gd2.addChoice( "Compute_on", computationOn, computationOn[ defaultComputationIndex ] );
 		gd2.addCheckbox( "Show_averaged_PSF", showAveragePSF );
 		gd2.addMessage( "" );
 		gd2.addCheckbox( "Display_fused_image", displayFusedImageStatic );
@@ -475,22 +456,61 @@ public class Multi_View_Deconvolution implements PlugIn
 		Multi_View_Fusion.cropSizeYStatic = (int)Math.round( gd2.getNextNumber() );
 		Multi_View_Fusion.cropSizeZStatic = (int)Math.round( gd2.getNextNumber() );
 		
-		minNumIterations = defaultMinNumIterations = (int)Math.round( gd2.getNextNumber() );
-		maxNumIterations = defaultMaxNumIterations = (int)Math.round( gd2.getNextNumber() );
-		defaultDeconvolutionScheme = gd2.getNextChoiceIndex();
-		if ( defaultDeconvolutionScheme == 0 )
-			multiplicative = true;
-		else
-			multiplicative = false;
+		numIterations = defaultNumIterations = (int)Math.round( gd2.getNextNumber() );
 		useTikhonovRegularization = defaultUseTikhonovRegularization = gd2.getNextBoolean();
 		lambda = defaultLambda = gd2.getNextNumber();
-		paralellViews = defaultParalellViews = gd2.getNextChoiceIndex(); // 0 = all
-		if ( paralellViews == 0 )
-			paralellViews = numViews;
 		container = defaultContainer = gd2.getNextChoiceIndex();
+		blockSizeIndex = defaultBlockSizeIndex = gd2.getNextChoiceIndex();
+		computationType = defaultComputationIndex = gd2.getNextChoiceIndex();
 		showAveragePSF = gd2.getNextBoolean();
 		displayFusedImageStatic = gd2.getNextBoolean(); 
-		saveFusedImageStatic = gd2.getNextBoolean(); 		
+		saveFusedImageStatic = gd2.getNextBoolean();
+		
+		if ( blockSizeIndex == 0 )
+		{
+			this.useBlocks = false;
+			this.blockSize = null;
+		}
+		else if ( blockSizeIndex == 1 )
+		{
+			this.useBlocks = true;
+			this.blockSize = new int[]{ 64, 64, 64 };
+		}
+		else if ( blockSizeIndex == 2 )
+		{
+			this.useBlocks = true;
+			this.blockSize = new int[]{ 128, 128, 128 };
+		}
+		else if ( blockSizeIndex == 3 )
+		{
+			this.useBlocks = true;
+			this.blockSize = new int[]{ 256, 256, 256 };
+		}
+		else if ( blockSizeIndex == 4 )
+		{
+			this.useBlocks = true;
+			blockSize = new int[]{ 512, 512, 512 };
+		}
+		if ( blockSizeIndex == 5 )
+		{
+			GenericDialog gd3 = new GenericDialog( "Define block sizes" );
+			
+			gd3.addNumericField( "blocksize_x", defaultBlockSizeX, 0 );
+			gd3.addNumericField( "blocksize_y", defaultBlockSizeY, 0 );
+			gd3.addNumericField( "blocksize_z", defaultBlockSizeZ, 0 );
+			
+			gd3.showDialog();
+			
+			if ( gd2.wasCanceled() )
+				return null;
+			
+			defaultBlockSizeX = Math.max( 1, (int)Math.round( gd3.getNextNumber() ) );
+			defaultBlockSizeY = Math.max( 1, (int)Math.round( gd3.getNextNumber() ) );
+			defaultBlockSizeZ = Math.max( 1, (int)Math.round( gd3.getNextNumber() ) );
+
+			this.useBlocks = true;
+			this.blockSize = new int[]{ defaultBlockSizeX, defaultBlockSizeY, defaultBlockSizeZ };
+		}
 
 		conf.paralellFusion = false;
 		conf.sequentialFusion = false;
