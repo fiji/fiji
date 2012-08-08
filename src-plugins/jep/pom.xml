@@ -12,6 +12,7 @@
 	</parent>
 
 	<artifactId>jep</artifactId>
+	<version>2.4.1</version>
 
 	<name>jars/jep.jar</name>
 	<description></description>

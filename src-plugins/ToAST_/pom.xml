@@ -12,6 +12,7 @@
 	</parent>
 
 	<artifactId>ToAST_</artifactId>
+	<version>25</version>
 
 	<name>plugins/ToAST_.jar</name>
 	<description></description>

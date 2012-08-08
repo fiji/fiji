@@ -45,7 +45,7 @@
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>imagescience</artifactId>
-			<version>${imagej.version}</version>
+			<version>2.4.0</version>
 		</dependency>
 		<dependency>
 			<groupId>mpicbg</groupId>

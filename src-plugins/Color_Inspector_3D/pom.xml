@@ -12,6 +12,7 @@
 	</parent>
 
 	<artifactId>Color_Inspector_3D</artifactId>
+	<version>2.3</version>
 
 	<name>plugins/Color_Inspector_3D.jar</name>
 	<description></description>

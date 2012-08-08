@@ -47,6 +47,7 @@ public class Adapter {
 	private final static String UPTODATE_CLASS_NAME = "imagej.updater.core.UpToDate";
 	private final static String SWING_PROGRESS_CLASS_NAME = "imagej.updater.gui.ProgressDialog";
 	private final static String STDERR_PROGRESS_CLASS_NAME = "imagej.updater.util.StderrProgress";
+	private final String progressClassName;
 	private final static String CHECKSUMMER_CLASS_NAME = "imagej.updater.core.Checksummer";
 	private final static String COLLECTION_CLASS_NAME = "imagej.updater.core.FilesCollection";
 	private static final String DOWNLOADER_CLASS_NAME = "imagej.updater.core.XMLFileDownloader";
@@ -67,6 +68,7 @@ public class Adapter {
 	 */
 	public Adapter(boolean useIJ1) {
 		ui = useIJ1 ? new ImageJ1UI() : new StderrUI();
+		progressClassName = useIJ1 ? SWING_PROGRESS_CLASS_NAME : STDERR_PROGRESS_CLASS_NAME;
 	}
 
 	/**
@@ -167,7 +169,7 @@ public class Adapter {
 
 	public void runCommandLineUpdater(String[] args) {
 		try {
-			progress = newInstance(STDERR_PROGRESS_CLASS_NAME);
+			progress = newInstance(progressClassName);
 		} catch (Exception e) {
 			ui.error("The Updater could not get the progress object:");
 			ui.handleException(e);
@@ -283,7 +285,7 @@ public class Adapter {
 		invoke(collection, "sort");
 		List<String> result = new ArrayList<String>();
 		for (Object file : (Iterable<Object>)collection) {
-			result.add((String)invoke(file, "getLocalFilename"));
+			result.add((String)invoke(file, "getLocalFilename", false));
 		}
 
 		return result;
@@ -340,7 +342,7 @@ public class Adapter {
 	 */
 	protected Object getProgress() throws SecurityException, NoSuchMethodException, IllegalArgumentException, InstantiationException, IllegalAccessException, InvocationTargetException {
 		if (progress == null)
-			progress = newInstance(SWING_PROGRESS_CLASS_NAME, (Frame)null);
+			progress = progressClassName == SWING_PROGRESS_CLASS_NAME ? newInstance(progressClassName, (Frame)null) : newInstance(progressClassName);
 		return progress;
 	}
 

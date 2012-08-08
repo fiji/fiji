@@ -12,6 +12,7 @@
 	</parent>
 
 	<artifactId>FlowJ_</artifactId>
+	<version>1.29</version>
 
 	<name>plugins/FlowJ_.jar</name>
 	<description></description>

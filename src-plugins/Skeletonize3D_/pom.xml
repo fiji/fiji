@@ -12,6 +12,7 @@
 	</parent>
 
 	<artifactId>Skeletonize3D_</artifactId>
+	<version>1.0</version>
 
 	<name>plugins/Skeletonize3D_.jar</name>
 	<description></description>
