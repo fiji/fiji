@@ -352,7 +352,7 @@ public class POM extends DefaultHandler implements Comparable<POM> {
 		for (POM pom : getDependencies(true, env.downloadAutomatically, "test", forCompile ? "runtime" : "provided")) {
 			if (env.debug)
 				env.err.println("Adding dependency " + pom.coordinate + " to classpath");
-			builder.append(File.pathSeparator).append(pom.target);
+			builder.append(File.pathSeparator).append(pom.getTarget());
 		}
 		return builder.toString();
 	}
@@ -522,7 +522,7 @@ public class POM extends DefaultHandler implements Comparable<POM> {
 		String key = dependency.getKey();
 		if (env.localPOMCache.containsKey(key)) {
 			POM result = env.localPOMCache.get(key); // may be null
-			if (result == null || BuildEnvironment.compareVersion(dependency.version, result.coordinate.version) <= 0)
+			if (result == null || BuildEnvironment.compareVersion(dependency.getVersion(), result.coordinate.getVersion()) <= 0)
 				return result;
 		}
 
@@ -544,13 +544,13 @@ public class POM extends DefaultHandler implements Comparable<POM> {
 			env.err.println("Skipping invalid dependency (version unset): " + dependency);
 			return null;
 		}
-		if (dependency.version.startsWith("[")) try {
+		if (dependency.version.startsWith("[") && dependency.snapshotVersion == null) try {
 			if (!maybeDownloadAutomatically(dependency, quiet, downloadAutomatically))
 				return null;
 			if (dependency.version.startsWith("["))
-				dependency.version = VersionPOMHandler.parse(new File(path, "maven-metadata-version.xml"));
+				dependency.snapshotVersion = VersionPOMHandler.parse(new File(path, "maven-metadata-version.xml"));
 		} catch (FileNotFoundException e) { /* ignore */ }
-		path += dependency.version + "/";
+		path += dependency.getVersion() + "/";
 		if (dependency.version.endsWith("-SNAPSHOT")) try {
 			if (!maybeDownloadAutomatically(dependency, quiet, downloadAutomatically)) {
 				File file = findInFijiDirectories(dependency);
@@ -608,15 +608,15 @@ public class POM extends DefaultHandler implements Comparable<POM> {
 		env.parseMultiProjects();
 		String key = dependency.getKey();
 		POM result = env.localPOMCache.get(key);
-		if (result != null && BuildEnvironment.compareVersion(dependency.version, result.coordinate.version) <= 0)
+		if (result != null && BuildEnvironment.compareVersion(dependency.getVersion(), result.coordinate.getVersion()) <= 0)
 			return result;
 		return null;
 	}
 
 	protected File findInFijiDirectories(Coordinate dependency) {
 		for (String jarName : new String[] {
-			"jars/" + dependency.artifactId + "-" + dependency.version + ".jar",
-			"plugins/" + dependency.artifactId + "-" + dependency.version + ".jar",
+			"jars/" + dependency.artifactId + "-" + dependency.getVersion() + ".jar",
+			"plugins/" + dependency.artifactId + "-" + dependency.getVersion() + ".jar",
 			"jars/" + dependency.artifactId + ".jar",
 			"plugins/" + dependency.artifactId + ".jar"
 		}) {
@@ -677,7 +677,7 @@ public class POM extends DefaultHandler implements Comparable<POM> {
 		if (!properties.containsKey("project.groupId"))
 			properties.put("project.groupId", coordinate.groupId);
 		if (!properties.containsKey("project.version"))
-			properties.put("project.version", coordinate.version);
+			properties.put("project.version", coordinate.getVersion());
 	}
 
 	public void startElement(String uri, String name, String qualifiedName, Attributes attributes) {
@@ -831,9 +831,7 @@ public class POM extends DefaultHandler implements Comparable<POM> {
 			result = coordinate.groupId.compareTo(other.coordinate.groupId);
 		if (result != 0)
 			return result;
-		if (coordinate.version != null && other.coordinate.version != null)
-			return BuildEnvironment.compareVersion(coordinate.version, other.coordinate.version);
-		return 0;
+		return BuildEnvironment.compareVersion(coordinate.getVersion(), other.coordinate.getVersion());
 	}
 
 	public String toString() {

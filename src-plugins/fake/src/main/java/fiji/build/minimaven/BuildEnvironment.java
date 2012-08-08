@@ -121,7 +121,8 @@ public class BuildEnvironment {
 			throw new SAXException("Missing artifactId: " + file);
 		if (pom.coordinate.groupId == null || pom.coordinate.groupId.equals(""))
 			throw new SAXException("Missing groupId: " + file);
-		if (pom.coordinate.version == null || pom.coordinate.version.equals(""))
+		String version = pom.coordinate.getVersion();
+		if (version == null || version.equals(""))
 			throw new SAXException("Missing version: " + file);
 
 		pom.children = new POM[pom.modules.size()];
@@ -276,10 +277,10 @@ public class BuildEnvironment {
 			String message = quiet ? null : "Checking for new version of " + dependency.artifactId;
 			String metadataURL = repositoryURL + path + "maven-metadata.xml";
 			downloadAndVerify(metadataURL, directory, versionMetaData.getName(), message);
-			dependency.version = VersionPOMHandler.parse(versionMetaData);
-			if (dependency.version == null)
+			dependency.snapshotVersion = VersionPOMHandler.parse(versionMetaData);
+			if (dependency.snapshotVersion == null)
 				throw new IOException("No version found in " + metadataURL);
-			path = "/" + dependency.groupId.replace('.', '/') + "/" + dependency.artifactId + "/" + dependency.version + "/";
+			path = "/" + dependency.groupId.replace('.', '/') + "/" + dependency.artifactId + "/" + dependency.snapshotVersion + "/";
 			directory = new File(mavenRepository, path);
 			if (new File(directory, dependency.getJarName()).exists() &&
 					new File(directory, dependency.getPOMName()).exists())
