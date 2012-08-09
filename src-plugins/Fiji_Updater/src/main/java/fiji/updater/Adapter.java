@@ -247,7 +247,8 @@ public class Adapter {
 		try {
 			invokeStatic("ij.IJ", "run", "Refresh Menus");
 		} catch (Throwable t) {
-			ui.handleException(t);
+			if (!"Could not find class: ij.IJ".equals(t.getMessage()))
+				ui.handleException(t);
 		}
 	}
 
