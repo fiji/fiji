@@ -103,6 +103,11 @@ public class LRFFT
 		}
 	}
 	
+	public static void divideIntoBlocks( final int[] blockSize, final int[] kernelSize )
+	{
+		
+	}
+	
 	public static Image<FloatType> computeExponentialKernel( final Image<FloatType> kernel, final int numViews )
 	{
 		final Image<FloatType> exponentialKernel = kernel.clone();
