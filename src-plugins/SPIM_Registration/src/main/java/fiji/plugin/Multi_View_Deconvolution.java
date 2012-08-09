@@ -111,7 +111,7 @@ public class Multi_View_Deconvolution implements PlugIn
 			//ImageJFunctions.copyToImagePlus( pointSpreadFunctions.get( view ) ).show();
 
 			//deconvolutionData.add( new LucyRichardsonFFT( fusion.getFusedImage( view ), fusion.getWeightImage( view ), pointSpreadFunctions.get( view ), cpusPerView ) );
-			deconvolutionData.add( new LRFFT( fusion.getFusedImage( view ), fusion.getWeightImage( view ), pointSpreadFunctions.get( view ) ) );
+			deconvolutionData.add( new LRFFT( fusion.getFusedImage( view ), fusion.getWeightImage( view ), pointSpreadFunctions.get( view ), useCUDA, useBlocks, blockSize ) );
 		}
 		
 		final Image<FloatType> deconvolved;
@@ -125,9 +125,9 @@ public class Multi_View_Deconvolution implements PlugIn
 		*/
 		
 		if ( useTikhonovRegularization )
-			deconvolved = new BayesMVDeconvolution( deconvolutionData, numIterations, lambda, "deconvolved", useBlocks, blockSize ).getPsi();
+			deconvolved = new BayesMVDeconvolution( deconvolutionData, numIterations, lambda, "deconvolved" ).getPsi();
 		else
-			deconvolved = new BayesMVDeconvolution( deconvolutionData, numIterations, 0, "deconvolved", useBlocks, blockSize ).getPsi();
+			deconvolved = new BayesMVDeconvolution( deconvolutionData, numIterations, 0, "deconvolved" ).getPsi();
 		
 		if ( conf.writeOutputImage || conf.showOutputImage )
 		{
@@ -171,7 +171,7 @@ public class Multi_View_Deconvolution implements PlugIn
 	
 	int numIterations, container, computationType, blockSizeIndex;
 	int[] blockSize = null;
-	boolean useTikhonovRegularization = true, useBlocks = false;
+	boolean useTikhonovRegularization = true, useBlocks = false, useCUDA = false;
 	double lambda = 0.006;
 	
 	protected SPIMConfiguration getParameters() 

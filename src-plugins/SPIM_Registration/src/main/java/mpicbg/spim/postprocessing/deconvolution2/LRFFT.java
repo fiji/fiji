@@ -14,21 +14,30 @@ public class LRFFT
 	protected int numViews = 0;
 	boolean useExponentialKernel = false;
 	
+	final boolean useBlocks, useCUDA;
+	final int[] blockSize;
+	
 	/**
 	 * Used to determine if the Convolutions already have been computed for the current iteration
 	 */
 	int i = -1;
 	
-	public LRFFT( final Image<FloatType> image, final Image<FloatType> weight, final Image<FloatType> kernel )
+	public LRFFT( final Image<FloatType> image, final Image<FloatType> weight, final Image<FloatType> kernel, final boolean useCUDA, final boolean useBlocks, final int[] blockSize )
 	{
 		this.image = image;
 		this.kernel1 = kernel;
 		this.weight = weight;
+		this.useCUDA = useCUDA;
+		this.useBlocks = useBlocks;
+		if ( blockSize != null )
+			this.blockSize = blockSize.clone();
+		else
+			this.blockSize = null;
 	}
 
-	public LRFFT( final Image<FloatType> image, final Image<FloatType> kernel )
+	public LRFFT( final Image<FloatType> image, final Image<FloatType> kernel, final boolean useCUDA, final boolean useBlocks, final int[] blockSize )
 	{
-		this( image, new Image< FloatType > ( new ConstantContainer< FloatType >( image.getDimensions(), new FloatType( 1 ) ), new FloatType() ), kernel );
+		this( image, new Image< FloatType > ( new ConstantContainer< FloatType >( image.getDimensions(), new FloatType( 1 ) ), new FloatType() ), kernel, useCUDA, useBlocks, blockSize );
 	}
 
 	/**
@@ -69,15 +78,29 @@ public class LRFFT
 			this.kernel2 = computeInvertedKernel( this.kernel1 );
 		}
 		
-		// the first kernel is to compute the ratio between original image and current guess,
-		// so we need no exponent here
-		this.fftConvolution1 = new FourierConvolution<FloatType, FloatType>( this.image, this.kernel1 );	
-		this.fftConvolution1.setNumThreads();
-		this.fftConvolution1.setKeepImgFFT( false );
-		
-		this.fftConvolution2 = new FourierConvolution<FloatType, FloatType>( this.image, this.kernel2 );	
-		this.fftConvolution2.setNumThreads();
-		this.fftConvolution2.setKeepImgFFT( false );
+		if ( useCUDA )
+		{
+			// TODO: cuda & blocks			
+		}
+		else
+		{
+			if ( useBlocks )
+			{
+				// TODO: blocks
+			}
+			else
+			{
+				// the first kernel is to compute the ratio between original image and current guess,
+				// so we need no exponent here
+				this.fftConvolution1 = new FourierConvolution<FloatType, FloatType>( this.image, this.kernel1 );	
+				this.fftConvolution1.setNumThreads();
+				this.fftConvolution1.setKeepImgFFT( false );
+				
+				this.fftConvolution2 = new FourierConvolution<FloatType, FloatType>( this.image, this.kernel2 );	
+				this.fftConvolution2.setNumThreads();
+				this.fftConvolution2.setKeepImgFFT( false );
+			}
+		}
 	}
 	
 	public static Image<FloatType> computeExponentialKernel( final Image<FloatType> kernel, final int numViews )
@@ -121,7 +144,7 @@ public class LRFFT
 	{
 		this.kernel1 = kernel;
 		
-		init( useExponentialKernel );
+		init( this.useExponentialKernel );
 
 		setCurrentIteration( -1 );
 	}
@@ -130,26 +153,74 @@ public class LRFFT
 	public Image<FloatType> getWeight() { return weight; }
 	public Image<FloatType> getKernel1() { return kernel1; }
 	public Image<FloatType> getKernel2() { return kernel2; }
-	public Image<FloatType> getViewContribution() { return viewContribution; }
 	
 	public void setCurrentIteration( final int i ) { this.i = i; }
 	public int getCurrentIteration() { return i; }
-	
-	public FourierConvolution<FloatType, FloatType> getFFTConvolution1() { return fftConvolution1; }
-	public FourierConvolution<FloatType, FloatType> getFFTConvolution2() { return fftConvolution2; }
-	
-	public void setViewContribution( final Image<FloatType> viewContribution )
+
+	/**
+	 * convolves the image with kernel1
+	 * 
+	 * @param image - the image to convolve with
+	 * @return
+	 */
+	public Image< FloatType > convolve1( final Image< FloatType > image )
 	{
-		if ( this.viewContribution != null )
-			this.viewContribution.close();
-		
-		this.viewContribution = viewContribution;
+		if ( useCUDA )
+		{
+			// TODO: cuda & blocks
+			return null;
+		}
+		else
+		{
+			if ( useBlocks )
+			{
+				// TODO: blocks
+				return null;
+			}
+			else
+			{
+				final FourierConvolution<FloatType, FloatType> fftConv = fftConvolution1;
+				fftConv.replaceImage( image );
+				fftConv.process();			
+				return fftConv.getResult();				
+			}
+		}
 	}
-	
+
+	/**
+	 * convolves the image with kernel2 (inverted kernel1)
+	 * 
+	 * @param image - the image to convolve with
+	 * @return
+	 */
+	public Image< FloatType > convolve2( final Image< FloatType > image )
+	{
+		if ( useCUDA )
+		{
+			// TODO: cuda & blocks
+			return null;
+		}
+		else
+		{
+			if ( useBlocks )
+			{
+				// TODO: blocks
+				return null;
+			}
+			else
+			{
+				final FourierConvolution<FloatType, FloatType> fftConv = fftConvolution2;
+				fftConv.replaceImage( image );
+				fftConv.process();			
+				return fftConv.getResult();				
+			}
+		}
+	}
+
 	@Override
 	public LRFFT clone()
 	{
-		final LRFFT viewClone = new LRFFT( this.image.clone(), this.weight.clone(), this.kernel1.clone() );
+		final LRFFT viewClone = new LRFFT( this.image.clone(), this.weight.clone(), this.kernel1.clone(), useCUDA, useBlocks, blockSize );
 	
 		viewClone.numViews = numViews;
 		viewClone.useExponentialKernel = useExponentialKernel;

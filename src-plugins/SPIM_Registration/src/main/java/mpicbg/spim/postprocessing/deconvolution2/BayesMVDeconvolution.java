@@ -7,7 +7,6 @@ import java.util.Date;
 import java.util.Vector;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import mpicbg.imglib.algorithm.fft.FourierConvolution;
 import mpicbg.imglib.cursor.Cursor;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.image.display.imagej.ImageJFunctions;
@@ -17,7 +16,7 @@ import mpicbg.imglib.type.numeric.real.FloatType;
 
 public class BayesMVDeconvolution implements Deconvolver
 {
-	public static boolean debug = false;
+	public static boolean debug = true;
 	public static int debugInterval = 1;
 	final static float minValue = 0.0001f;
 	public static int speedUp = 1;
@@ -39,7 +38,7 @@ public class BayesMVDeconvolution implements Deconvolver
 	ArrayList<LRFFT> data;
 	String name;
 	
-	public BayesMVDeconvolution( final LRInput views, final int numIterations, final double lambda, final String name, final boolean doBlocks, final int[] maxSize )
+	public BayesMVDeconvolution( final LRInput views, final int numIterations, final double lambda, final String name )
 	{
 		this.name = name;
 		this.data = views.getViews();
@@ -115,13 +114,10 @@ public class BayesMVDeconvolution implements Deconvolver
 			final LRFFT processingData = data.get( view );
 						
 			// convolve psi (current guess of the image) with the PSF of the current view
-			final FourierConvolution<FloatType, FloatType> fftConvolution = processingData.getFFTConvolution1();
-			fftConvolution.replaceImage( psi );
-			fftConvolution.process();
+			final Image<FloatType> psiBlurred = processingData.convolve1( psi );
 			
 			//System.out.println( view + " 1: " + fftConvolution.getProcessingTime() + " ms." );
 			//System.out.println( view + " a: " + (time - System.currentTimeMillis()) + " ms." );
-			final Image<FloatType> psiBlurred = fftConvolution.getResult();
 			
 			// size = 666, 363, 537
 			
@@ -148,10 +144,8 @@ public class BayesMVDeconvolution implements Deconvolver
 			//System.out.println( view + " b: " + (time - System.currentTimeMillis()) + " ms." );
 
 			// blur the residuals image with the kernel
-			final FourierConvolution<FloatType, FloatType> invFFConvolution = processingData.getFFTConvolution2();
-			invFFConvolution.replaceImage( psiBlurred );
-			invFFConvolution.process();
-			
+	        final Image< FloatType > integral = processingData.convolve2( psiBlurred );
+
 			//System.out.println( view + " 2: " + invFFConvolution.getProcessingTime() + " ms." );
 			//System.out.println( view + " c: " + (time - System.currentTimeMillis()) + " ms." );
 
@@ -167,7 +161,7 @@ public class BayesMVDeconvolution implements Deconvolver
 	                	// get chunk of pixels to process
 	                	final Chunk myChunk = threadChunks.get( myNumber );
 	                	
-	            		computeFinalValues( myChunk.getStartPosition(), myChunk.getLoopSize(), psi, invFFConvolution, processingData, lambda );                		
+	            		computeFinalValues( myChunk.getStartPosition(), myChunk.getLoopSize(), psi, integral, processingData.getWeight(), lambda );                		
 	                }
 	            });
 	        
@@ -271,11 +265,11 @@ public class BayesMVDeconvolution implements Deconvolver
 		
 	}
 	
-	private static final void computeFinalValues( final long start, final long loopSize, final Image< FloatType > psi, final FourierConvolution<FloatType, FloatType> invFFConvolution, final LRFFT processingData, final double lambda )
+	private static final void computeFinalValues( final long start, final long loopSize, final Image< FloatType > psi, final Image<FloatType> integral, final Image<FloatType> weight, final double lambda )
 	{
 		final Cursor< FloatType > cursorPsi = psi.createCursor();
-		final Cursor< FloatType > cursorIntegral = invFFConvolution.getResult().createCursor();
-		final Cursor< FloatType > cursorWeight = processingData.getWeight().createCursor();
+		final Cursor< FloatType > cursorIntegral = integral.createCursor();
+		final Cursor< FloatType > cursorWeight = weight.createCursor();
 		
 		cursorPsi.fwd( start );
 		cursorIntegral.fwd( start );
