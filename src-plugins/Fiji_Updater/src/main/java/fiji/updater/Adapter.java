@@ -244,7 +244,7 @@ public class Adapter {
 		}
 
 		// Blow away ImageJ's class loader so we can pick up the newly downloaded classes
-		try {
+		if (progressClassName != SWING_PROGRESS_CLASS_NAME) try {
 			invokeStatic("ij.IJ", "run", "Refresh Menus");
 		} catch (Throwable t) {
 			if (!"Could not find class: ij.IJ".equals(t.getMessage()))
