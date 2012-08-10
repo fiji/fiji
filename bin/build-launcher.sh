@@ -54,7 +54,7 @@ Linux)
 	*)
 		platform=linux
 		arch=i386
-		mvnopts="-Dos.arch=$arch"
+		mvnopts="-Dos.arch=i386 -P i386-Linux -P !amd64-Linux"
 		;;
 	esac
 	;;
