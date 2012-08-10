@@ -7,6 +7,7 @@ import java.util.Vector;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import mpicbg.imglib.algorithm.fft.FourierConvolution;
+import mpicbg.imglib.container.array.Array;
 import mpicbg.imglib.container.array.ArrayContainerFactory;
 import mpicbg.imglib.container.basictypecontainer.array.FloatArray;
 import mpicbg.imglib.cursor.LocalizableByDimCursor;
@@ -91,10 +92,15 @@ public class Block
             {
                 public void run()
                 {
-                	// get chunk of pixels to process
-                	final Chunk myChunk = threadChunks.get( ai.getAndIncrement() );
+                	final int threadIdx = ai.getAndIncrement();
                 	
-            		copy( myChunk.getStartPosition(), myChunk.getLoopSize(), source, block, offset, inside, factory );
+                	// get chunk of pixels to process
+                	final Chunk myChunk = threadChunks.get( threadIdx );
+                	
+                	if ( source.getNumDimensions() == 3 )
+                		copy3d( threadIdx, numThreads, source, block, offset, inside, factory );
+                	else
+                		copy( myChunk.getStartPosition(), myChunk.getLoopSize(), source, block, offset, inside, factory );
                 }
             });
         
@@ -127,6 +133,47 @@ public class Block
 			
 			randomAccess.setPosition( tmp );
 			cursor.getType().set( randomAccess.getType() );
+		}
+	}
+
+	private static final void copy3d( final int threadIdx, final int numThreads, final Image< FloatType > source, final Image< FloatType > block, final int[] offset, final boolean inside, final OutOfBoundsStrategyFactory< FloatType > strategyFactory )
+	{
+		final int w = block.getDimension( 0 );
+		final int h = block.getDimension( 1 );
+		final int d = block.getDimension( 2 );
+		
+		final int offsetX = offset[ 0 ];
+		final int offsetY = offset[ 1 ];
+		final int offsetZ = offset[ 2 ];
+		
+		final float[] blockArray = ((FloatArray)((Array)block.getContainer()).update( null )).getCurrentStorageArray();
+		
+		final LocalizableByDimCursor<FloatType> randomAccess;
+		
+		if ( inside )
+			randomAccess = source.createLocalizableByDimCursor();
+		else
+			randomAccess = source.createLocalizableByDimCursor( strategyFactory );
+		
+		int i = 0;
+		
+		for ( int z = threadIdx; z < d; z += numThreads )
+		{
+			randomAccess.setPosition( z + offsetZ, 2 );
+			randomAccess.setPosition( offsetY, 1 );
+			
+			for ( int y = 0; y < h; ++y )
+			{
+				randomAccess.setPosition( offsetX, 0 );
+				
+				for ( int x = 0; x < w; ++x )
+				{
+					blockArray[ i++ ] = randomAccess.getType().get();
+					randomAccess.fwd( 0 );
+				}
+				
+				randomAccess.fwd( 1 );
+			}			
 		}
 	}
 
