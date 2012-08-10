@@ -107,7 +107,7 @@ public class BayesMVDeconvolution implements Deconvolver
 		else
 			lastIteration = null;
 
-		//long time = System.currentTimeMillis();
+		long time = System.currentTimeMillis();
 
 		for ( int view = 0; view < numViews; ++view )
 		{
@@ -117,7 +117,7 @@ public class BayesMVDeconvolution implements Deconvolver
 			final Image<FloatType> psiBlurred = processingData.convolve1( psi );
 			
 			//System.out.println( view + " 1: " + fftConvolution.getProcessingTime() + " ms." );
-			//System.out.println( view + " a: " + (time - System.currentTimeMillis()) + " ms." );
+			System.out.println( view + " a: " + (time - System.currentTimeMillis()) + " ms." );
 			
 			// size = 666, 363, 537
 			
@@ -143,11 +143,13 @@ public class BayesMVDeconvolution implements Deconvolver
 
 			//System.out.println( view + " b: " + (time - System.currentTimeMillis()) + " ms." );
 
+	        time = System.currentTimeMillis();
+	        
 			// blur the residuals image with the kernel
 	        final Image< FloatType > integral = processingData.convolve2( psiBlurred );
 
 			//System.out.println( view + " 2: " + invFFConvolution.getProcessingTime() + " ms." );
-			//System.out.println( view + " c: " + (time - System.currentTimeMillis()) + " ms." );
+			System.out.println( view + " b: " + (time - System.currentTimeMillis()) + " ms." );
 
 			ai.set( 0 );
 	        for ( int ithread = 0; ithread < threads.length; ++ithread )

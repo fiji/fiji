@@ -14,6 +14,7 @@ public interface CUDAConvolution extends Library
 	 */
 	
 	public float[] convolution3DfftCUDA( float[] im, int[] imDim, float[] kernel, int[] kernelDim, int devCUDA );
+	public void convolution3DfftCUDAInPlace( float[] im, int[] imDim, float[] kernel, int[] kernelDim, int devCUDA );
 	public int getCUDAcomputeCapabilityMinorVersion(int devCUDA);
 	public int getCUDAcomputeCapabilityMajorVersion(int devCUDA);
 	public int getNumDevicesCUDA();

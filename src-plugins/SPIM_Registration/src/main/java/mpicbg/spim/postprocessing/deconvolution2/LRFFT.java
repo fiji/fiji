@@ -228,11 +228,14 @@ public class LRFFT
 			{
 				blocks.get( i ).copyBlock( image, block );
 
-				// convolve block with kernel1 using CUDA				
-				final float[] convolved = cuda.convolution3DfftCUDA( ((FloatArray)block.getContainer()).getCurrentStorageArray(), getCUDACoordinates( blockSize ), 
-										   ((FloatArray)kernel1.getContainer()).getCurrentStorageArray(), getCUDACoordinates( kernel1.getDimensions() ), 0 );
+				// convolve block with kernel1 using CUDA
 				
-				blocks.get( i ).pasteBlock( result, createImageFromArray( convolved, blockSize ) );
+				//((FloatArray)((Array)block.getContainer()).update( null )).getCurrentStorageArray();
+				
+				cuda.convolution3DfftCUDAInPlace( ((FloatArray)((Array)block.getContainer()).update( null )).getCurrentStorageArray(), getCUDACoordinates( blockSize ), 
+						((FloatArray)((Array)kernel1.getContainer()).update( null )).getCurrentStorageArray(), getCUDACoordinates( kernel1.getDimensions() ), 0 );
+				
+				blocks.get( i ).pasteBlock( result, block );
 			}
 			
 			block.close();
@@ -317,10 +320,10 @@ public class LRFFT
 				blocks.get( i ).copyBlock( image, block );
 
 				// convolve block with kernel2 using CUDA
-				final float[] convolved = cuda.convolution3DfftCUDA( ((FloatArray)block.getContainer()).getCurrentStorageArray(), getCUDACoordinates( blockSize ), 
-										   ((FloatArray)kernel2.getContainer()).getCurrentStorageArray(), getCUDACoordinates( kernel2.getDimensions() ), 0 );
+				cuda.convolution3DfftCUDAInPlace( ((FloatArray)((Array)block.getContainer()).update( null )).getCurrentStorageArray(), getCUDACoordinates( blockSize ), 
+						((FloatArray)((Array)kernel2.getContainer()).update( null )).getCurrentStorageArray(), getCUDACoordinates( kernel2.getDimensions() ), 0 );
 
-				blocks.get( i ).pasteBlock( result,  createImageFromArray( convolved, blockSize ) );
+				blocks.get( i ).pasteBlock( result, block );
 			}
 			
 			block.close();
