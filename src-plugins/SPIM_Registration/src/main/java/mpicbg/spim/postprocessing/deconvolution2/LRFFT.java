@@ -4,14 +4,21 @@ import java.util.ArrayList;
 
 import mpicbg.imglib.algorithm.fft.FourierConvolution;
 import mpicbg.imglib.algorithm.mirror.MirrorImage;
+import mpicbg.imglib.container.array.Array;
 import mpicbg.imglib.container.array.ArrayContainerFactory;
+import mpicbg.imglib.container.basictypecontainer.FloatAccess;
+import mpicbg.imglib.container.basictypecontainer.array.FloatArray;
 import mpicbg.imglib.container.constant.ConstantContainer;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.image.ImageFactory;
 import mpicbg.imglib.type.numeric.real.FloatType;
 
+import com.sun.jna.Library;
+
 public class LRFFT 
 {
+	public static CUDAConvolution cuda = null;
+	
 	private Image<FloatType> image, weight, kernel1, kernel2;
 	Image<FloatType> viewContribution = null;
 	FourierConvolution<FloatType, FloatType> fftConvolution1, fftConvolution2;
@@ -114,6 +121,8 @@ public class LRFFT
 		{
 			this.fftConvolution1 = null;
 			this.fftConvolution2 = null;
+			
+			
 		}
 		else
 		{
@@ -215,9 +224,11 @@ public class LRFFT
 			{
 				blocks.get( i ).copyBlock( image, block );
 
-				// convolve block with kernel1 using CUDA
+				// convolve block with kernel1 using CUDA				
+				final float[] convolved = cuda.convolution3DfftCUDA( ((FloatArray)block.getContainer()).getCurrentStorageArray(), getCUDACoordinates( blockSize ), 
+										   ((FloatArray)kernel1.getContainer()).getCurrentStorageArray(), getCUDACoordinates( kernel1.getDimensions() ), 0 );
 				
-				blocks.get( i ).pasteBlock( result, null );
+				blocks.get( i ).pasteBlock( result, createImageFromArray( convolved, blockSize ) );
 			}
 			
 			block.close();
@@ -255,6 +266,31 @@ public class LRFFT
 		}
 	}
 
+	 final public static Image<FloatType> createImageFromArray( final float[] data, final int[] dim )
+    {
+        final FloatAccess access = new FloatArray( data );
+        final Array<FloatType, FloatAccess> array = 
+            new Array<FloatType, FloatAccess>(new ArrayContainerFactory(), access, dim, 1 );
+            
+        // create a Type that is linked to the container
+        final FloatType linkedType = new FloatType( array );
+        
+        // pass it to the DirectAccessContainer
+        array.setLinkedType( linkedType );
+        
+        return new Image<FloatType>(array, new FloatType());
+    }
+	 
+	private final static int[] getCUDACoordinates( final int[] c )
+	{
+		final int[] cuda = new int[ c.length ];
+		
+		for ( int d = 0; d < c.length; ++d )
+			cuda[ c.length - d - 1 ] = c[ d ];
+		
+		return cuda;
+	}
+	
 	/**
 	 * convolves the image with kernel2 (inverted kernel1)
 	 * 
@@ -273,8 +309,10 @@ public class LRFFT
 				blocks.get( i ).copyBlock( image, block );
 
 				// convolve block with kernel2 using CUDA
-				
-				blocks.get( i ).pasteBlock( result, null );
+				final float[] convolved = cuda.convolution3DfftCUDA( ((FloatArray)block.getContainer()).getCurrentStorageArray(), getCUDACoordinates( blockSize ), 
+										   ((FloatArray)kernel2.getContainer()).getCurrentStorageArray(), getCUDACoordinates( kernel2.getDimensions() ), 0 );
+
+				blocks.get( i ).pasteBlock( result,  createImageFromArray( convolved, blockSize ) );
 			}
 			
 			block.close();

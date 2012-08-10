@@ -9,13 +9,17 @@ import ij.plugin.PlugIn;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
+
+import com.sun.jna.Native;
 
 import mpicbg.imglib.container.array.ArrayContainerFactory;
 import mpicbg.imglib.container.cell.CellContainerFactory;
 import mpicbg.imglib.container.planar.PlanarContainerFactory;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.image.display.imagej.ImageJFunctions;
+import mpicbg.imglib.multithreading.SimpleMultiThreading;
 import mpicbg.imglib.type.numeric.real.FloatType;
 import mpicbg.imglib.util.Util;
 import mpicbg.spim.Reconstruction;
@@ -26,6 +30,7 @@ import mpicbg.spim.io.IOFunctions;
 import mpicbg.spim.io.SPIMConfiguration;
 import mpicbg.spim.postprocessing.deconvolution.ExtractPSF;
 import mpicbg.spim.postprocessing.deconvolution2.BayesMVDeconvolution;
+import mpicbg.spim.postprocessing.deconvolution2.CUDAConvolution;
 import mpicbg.spim.postprocessing.deconvolution2.LRFFT;
 import mpicbg.spim.postprocessing.deconvolution2.LRInput;
 import mpicbg.spim.registration.ViewDataBeads;
@@ -518,10 +523,43 @@ public class Multi_View_Deconvolution implements PlugIn
 		}
 		
 		if ( computationType == 0 )
+		{
 			useCUDA = false;
+		}
 		else
+		{
+			// well, do some testing first
+			try
+			{
+				LRFFT.cuda = (CUDAConvolution) Native.loadLibrary( "Convolution3D_fftCUDAlib", CUDAConvolution.class );
+			}
+			catch (Exception e )
+			{
+				IJ.log( "Cannot find CUDA JNA library: " + e );
+			}
+			
+			int numDevices = LRFFT.cuda.getNumDevicesCUDA();
+			IJ.log( "numdevices = " + numDevices );
+			
+			for ( int i = 0; i < numDevices; ++i )
+			{
+				byte[] name = new byte[ 256 ];
+				LRFFT.cuda.getNameDeviceCUDA( i, name );
+				
+				System.out.println( "name" );
+				for ( final byte b : name )
+					System.out.print( b );
+				System.out.println( );
+				
+				IJ.log( "name = " + Arrays.toString( name ) );
+				IJ.log( "mem = " + LRFFT.cuda.getMemDeviceCUDA( i ) );
+				IJ.log( "version = " + LRFFT.cuda.getCUDAcomputeCapabilityMajorVersion( i)  + "." + LRFFT.cuda.getCUDAcomputeCapabilityMinorVersion( i ) );
+			}
 			useCUDA = true;
-
+			
+			//SimpleMultiThreading.threadHaltUnClean();
+		}
+		
 		conf.paralellFusion = false;
 		conf.sequentialFusion = false;
 

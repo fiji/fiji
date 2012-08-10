@@ -112,6 +112,11 @@
 			<artifactId>scifio</artifactId>
 			<version>4.4-SNAPSHOT</version>
 		</dependency>
+		<dependency>
+			<groupId>net.java.dev.jna</groupId>
+			<artifactId>jna</artifactId>
+			<version>3.2.7</version>
+		</dependency>		
 	</dependencies>
 
 </project>
