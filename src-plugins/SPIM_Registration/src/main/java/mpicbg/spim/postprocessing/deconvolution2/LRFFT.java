@@ -64,7 +64,7 @@ public class LRFFT
 			for ( int d = 0; d < this.blockSize.length; ++d )
 				this.blockSize[ d ] = image.getDimension( d ) + kernel.getDimension( d ) - 1;
 			
-			this.blocks = Block.divideIntoBlocks( image.getDimensions(), blockSize, kernel.getDimensions() );
+			this.blocks = Block.divideIntoBlocks( image.getDimensions(), this.blockSize, kernel.getDimensions() );
 			this.factory = new ImageFactory< FloatType >( new FloatType(), new ArrayContainerFactory() );			
 		}
 		else
