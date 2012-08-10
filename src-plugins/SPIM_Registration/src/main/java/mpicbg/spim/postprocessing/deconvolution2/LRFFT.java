@@ -46,11 +46,11 @@ public class LRFFT
 		if ( useBlocks )
 		{
 			this.useBlocks = true;
-			
+									
 			this.blocks = Block.divideIntoBlocks( image.getDimensions(), blockSize, kernel.getDimensions() );
 			
 			// blocksize might change during division if they were too small
-			this.blockSize = blockSize.clone();
+			 this.blockSize = blockSize.clone();
 			
 			this.factory = new ImageFactory< FloatType >( new FloatType(), new ArrayContainerFactory() );
 		}
@@ -226,16 +226,22 @@ public class LRFFT
 			
 			for ( int i = 0; i < blocks.size(); ++i )
 			{
+				long time = System.currentTimeMillis();
 				blocks.get( i ).copyBlock( image, block );
+				System.out.println( " block " + i + ": copy " + (System.currentTimeMillis() - time) );
 
 				// convolve block with kernel1 using CUDA
 				
 				//((FloatArray)((Array)block.getContainer()).update( null )).getCurrentStorageArray();
 				
+				time = System.currentTimeMillis();				
 				cuda.convolution3DfftCUDAInPlace( ((FloatArray)((Array)block.getContainer()).update( null )).getCurrentStorageArray(), getCUDACoordinates( blockSize ), 
 						((FloatArray)((Array)kernel1.getContainer()).update( null )).getCurrentStorageArray(), getCUDACoordinates( kernel1.getDimensions() ), 0 );
-				
+				System.out.println( " block " + i + ": compute " + (System.currentTimeMillis() - time) );
+
+				time = System.currentTimeMillis();
 				blocks.get( i ).pasteBlock( result, block );
+				System.out.println( " block " + i + ": paste " + (System.currentTimeMillis() - time) );
 			}
 			
 			block.close();
@@ -253,12 +259,18 @@ public class LRFFT
 				
 				for ( int i = 0; i < blocks.size(); ++i )
 				{
+					long time = System.currentTimeMillis();
 					blocks.get( i ).copyBlock( image, block );
+					System.out.println( " block " + i + ": copy " + (System.currentTimeMillis() - time) );
 
+					time = System.currentTimeMillis();				
 					fftConvolution1.replaceImage( block );
 					fftConvolution1.process();
+					System.out.println( " block " + i + ": compute " + (System.currentTimeMillis() - time) );
 					
-					blocks.get( i ).pasteBlock( result, fftConvolution1.getResult() );
+					time = System.currentTimeMillis();				
+					blocks.get( i ).pasteBlock( result, fftConvolution1.getResult() );					
+					System.out.println( " block " + i + ": paste " + (System.currentTimeMillis() - time) );
 				}
 				
 				block.close();
@@ -268,10 +280,13 @@ public class LRFFT
 			else
 			{
 				IJ.log( "Using standard way ... " );
-				
+
+				long time = System.currentTimeMillis();
 				final FourierConvolution<FloatType, FloatType> fftConv = fftConvolution1;
 				fftConv.replaceImage( image );
-				fftConv.process();			
+				fftConv.process();
+				System.out.println( " block " + i + ": compute " + (System.currentTimeMillis() - time) );
+				
 				return fftConv.getResult();				
 			}
 		}
