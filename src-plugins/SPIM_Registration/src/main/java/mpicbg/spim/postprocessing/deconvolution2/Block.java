@@ -155,12 +155,13 @@ public class Block
 		else
 			randomAccess = source.createLocalizableByDimCursor( strategyFactory );
 		
-		int i = 0;
 		
 		for ( int z = threadIdx; z < d; z += numThreads )
 		{
 			randomAccess.setPosition( z + offsetZ, 2 );
 			randomAccess.setPosition( offsetY, 1 );
+			
+			int i = z * h * w;
 			
 			for ( int y = 0; y < h; ++y )
 			{
@@ -173,7 +174,7 @@ public class Block
 				}
 				
 				randomAccess.fwd( 1 );
-			}			
+			}
 		}
 	}
 
