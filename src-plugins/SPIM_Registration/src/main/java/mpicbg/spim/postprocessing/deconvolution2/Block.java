@@ -8,6 +8,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import mpicbg.imglib.algorithm.fft.FourierConvolution;
 import mpicbg.imglib.container.array.ArrayContainerFactory;
+import mpicbg.imglib.container.basictypecontainer.array.FloatArray;
 import mpicbg.imglib.cursor.LocalizableByDimCursor;
 import mpicbg.imglib.cursor.LocalizableCursor;
 import mpicbg.imglib.cursor.array.ArrayLocalizableCursor;
@@ -234,12 +235,12 @@ public class Block
 				++numBlocks[ d ];
 		}
 		
-		System.out.println( "imgSize " + Util.printCoordinates( imgSize ) );
-		System.out.println( "kernelSize " + Util.printCoordinates( kernelSize ) );
-		System.out.println( "blockSize " + Util.printCoordinates( blockSize ) );
-		System.out.println( "numBlocks " + Util.printCoordinates( numBlocks ) );
-		System.out.println( "effectiveSize " + Util.printCoordinates( effectiveSizeGeneral ) );
-		System.out.println( "effectiveLocalOffset " + Util.printCoordinates( effectiveLocalOffset ) );
+		// System.out.println( "imgSize " + Util.printCoordinates( imgSize ) );
+		// System.out.println( "kernelSize " + Util.printCoordinates( kernelSize ) );
+		// System.out.println( "blockSize " + Util.printCoordinates( blockSize ) );
+		// System.out.println( "numBlocks " + Util.printCoordinates( numBlocks ) );
+		// System.out.println( "effectiveSize " + Util.printCoordinates( effectiveSizeGeneral ) );
+		// System.out.println( "effectiveLocalOffset " + Util.printCoordinates( effectiveLocalOffset ) );
 				
 		// now we instantiate the individual blocks iterating over all dimensions
 		// we use the well-known ArrayLocalizableCursor for that
@@ -272,7 +273,7 @@ public class Block
 			}
 
 			blockList.add( new Block( blockSize, offset, effectiveSize, effectiveOffset, effectiveLocalOffset, inside ) );
-			System.out.println( "block " + Util.printCoordinates( currentBlock ) + " effectiveOffset: " + Util.printCoordinates( effectiveOffset ) + " effectiveSize: " + Util.printCoordinates( effectiveSize )  + " offset: " + Util.printCoordinates( offset ) + " inside: " + inside );
+			// System.out.println( "block " + Util.printCoordinates( currentBlock ) + " effectiveOffset: " + Util.printCoordinates( effectiveOffset ) + " effectiveSize: " + Util.printCoordinates( effectiveSize )  + " offset: " + Util.printCoordinates( offset ) + " inside: " + inside );
 		}
 			
 		return blockList;
@@ -282,6 +283,10 @@ public class Block
 	{
 		new ImageJ();
 		final Image< FloatType > img = LOCI.openLOCIFloatType( "/Users/preibischs/Desktop/Geburtstagsfaust.jpg", new ArrayContainerFactory() );
+		
+		float f = ((FloatArray)img.getContainer()).getCurrentStorageArray()[ 0 ];
+		
+		System.out.println( f );
 		
 		final Image< FloatType > kernel = FourierConvolution.createGaussianKernel( img.getContainerFactory(), new double[]{ 10, 10 } );
 		//ImageJFunctions.show( img );

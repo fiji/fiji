@@ -1,5 +1,7 @@
 package mpicbg.spim.postprocessing.deconvolution2;
 
+import ij.IJ;
+
 import java.util.ArrayList;
 
 import mpicbg.imglib.algorithm.fft.FourierConvolution;
@@ -217,6 +219,8 @@ public class LRFFT
 	{
 		if ( useCUDA )
 		{
+			IJ.log( "Using CUDA ... " );
+			
 			final Image< FloatType > result = image.createNewImage();
 			final Image< FloatType > block = factory.createImage( blockSize );
 			
@@ -239,6 +243,8 @@ public class LRFFT
 		{
 			if ( useBlocks )
 			{
+				IJ.log( "Using blocks ... " );
+				
 				final Image< FloatType > result = image.createNewImage();
 				final Image< FloatType > block = factory.createImage( blockSize );
 				
@@ -258,6 +264,8 @@ public class LRFFT
 			}
 			else
 			{
+				IJ.log( "Using standard way ... " );
+				
 				final FourierConvolution<FloatType, FloatType> fftConv = fftConvolution1;
 				fftConv.replaceImage( image );
 				fftConv.process();			
