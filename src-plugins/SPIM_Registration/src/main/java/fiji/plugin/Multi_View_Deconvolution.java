@@ -17,6 +17,7 @@ import mpicbg.imglib.container.planar.PlanarContainerFactory;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.image.display.imagej.ImageJFunctions;
 import mpicbg.imglib.type.numeric.real.FloatType;
+import mpicbg.imglib.util.Util;
 import mpicbg.spim.Reconstruction;
 import mpicbg.spim.fusion.FusionControl;
 import mpicbg.spim.fusion.PreDeconvolutionFusion;
@@ -95,6 +96,10 @@ public class Multi_View_Deconvolution implements PlugIn
 		final LRInput deconvolutionData = new LRInput();
 		
 		IJ.log( "Number iterations: " + numIterations );
+		IJ.log( "Using blocks: " + useBlocks );
+		if ( useBlocks )
+			IJ.log( "Block size: " + Util.printCoordinates( blockSize ) );
+		IJ.log( "Using CUDA: " + useCUDA );
 		
 		IJ.log( "ImgLib container (input): " + conf.outputImageFactory.getClass().getSimpleName() );
 		IJ.log( "ImgLib container (output): " + conf.imageFactory.getClass().getSimpleName() );
@@ -511,6 +516,11 @@ public class Multi_View_Deconvolution implements PlugIn
 			this.useBlocks = true;
 			this.blockSize = new int[]{ defaultBlockSizeX, defaultBlockSizeY, defaultBlockSizeZ };
 		}
+		
+		if ( computationType == 0 )
+			useCUDA = false;
+		else
+			useCUDA = true;
 
 		conf.paralellFusion = false;
 		conf.sequentialFusion = false;
