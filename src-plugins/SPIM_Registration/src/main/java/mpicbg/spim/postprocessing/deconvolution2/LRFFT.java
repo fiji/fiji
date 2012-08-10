@@ -134,12 +134,12 @@ public class LRFFT
 				
 				this.fftConvolution1 = new FourierConvolution<FloatType, FloatType>( block, this.kernel1 );	
 				this.fftConvolution1.setNumThreads();
-				this.fftConvolution1.setExtendImageByKernelSize( false );
+				//this.fftConvolution1.setExtendImageByKernelSize( false );
 				this.fftConvolution1.setKeepImgFFT( false );
 				
 				this.fftConvolution2 = new FourierConvolution<FloatType, FloatType>( block, this.kernel2 );	
 				this.fftConvolution2.setNumThreads();
-				this.fftConvolution2.setExtendImageByKernelSize( false );
+				//this.fftConvolution2.setExtendImageByKernelSize( false );
 				this.fftConvolution2.setKeepImgFFT( false );
 			}
 			else
