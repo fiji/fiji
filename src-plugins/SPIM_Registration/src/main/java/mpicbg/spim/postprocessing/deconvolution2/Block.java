@@ -315,7 +315,7 @@ public class Block
 		}
 
 		final FourierConvolution< FloatType, FloatType > t2 = new FourierConvolution<FloatType, FloatType>( blockImgs.get( 0 ), kernel );
-		t2.setExtendImageByKernelSize( false );
+		//t2.setExtendImageByKernelSize( false );
 
 			//for ( final FloatType t : block )
 			//	t.set( t.get() + 20*(i+1) );
