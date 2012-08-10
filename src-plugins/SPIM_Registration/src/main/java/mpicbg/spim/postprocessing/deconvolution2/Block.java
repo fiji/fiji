@@ -8,7 +8,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import mpicbg.imglib.algorithm.fft.FourierConvolution;
 import mpicbg.imglib.container.array.ArrayContainerFactory;
-import mpicbg.imglib.cursor.Cursor;
 import mpicbg.imglib.cursor.LocalizableByDimCursor;
 import mpicbg.imglib.cursor.LocalizableCursor;
 import mpicbg.imglib.cursor.array.ArrayLocalizableCursor;
@@ -20,7 +19,6 @@ import mpicbg.imglib.multithreading.Chunk;
 import mpicbg.imglib.multithreading.SimpleMultiThreading;
 import mpicbg.imglib.outofbounds.OutOfBoundsStrategyFactory;
 import mpicbg.imglib.outofbounds.OutOfBoundsStrategyMirrorFactory;
-import mpicbg.imglib.type.numeric.complex.ComplexFloatType;
 import mpicbg.imglib.type.numeric.real.FloatType;
 import mpicbg.imglib.util.Util;
 
@@ -62,7 +60,6 @@ public class Block
 	 */
 	final boolean inside;
 	
-	Image< FloatType > block;
 	final Vector< Chunk > threadChunks;
 	final int numThreads;
 	final static OutOfBoundsStrategyFactory< FloatType > factory = new OutOfBoundsStrategyMirrorFactory< FloatType >();
@@ -83,19 +80,9 @@ public class Block
 			n *= blockSize[ d ];
 		
 		this.threadChunks = SimpleMultiThreading.divideIntoChunks( n, numThreads );
-		this.block = new ImageFactory< FloatType >( new FloatType(), new ArrayContainerFactory() ).createImage( blockSize );
 	}
-	
-	public Image< FloatType > getBlock() { return block; }
-	public void setBlock( final Image< FloatType > block, final boolean deleteOld )
-	{
-		if ( deleteOld )
-			this.block.close();
 		
-		this.block = block;
-	}
-	
-	public void copyBlock( final Image< FloatType > source )
+	public void copyBlock( final Image< FloatType > source, final Image< FloatType > block )
 	{	
 		final AtomicInteger ai = new AtomicInteger(0);					
         final Thread[] threads = SimpleMultiThreading.newThreads( numThreads );
@@ -143,7 +130,7 @@ public class Block
 		}
 	}
 
-	public void pasteBlock( final Image< FloatType > target )
+	public void pasteBlock( final Image< FloatType > target, final Image< FloatType > block )
 	{	
 		final AtomicInteger ai = new AtomicInteger(0);					
         final Thread[] threads = SimpleMultiThreading.newThreads( numThreads );
@@ -154,8 +141,8 @@ public class Block
                 {
                 	// get chunk of pixels to process
                 	final Chunk myChunk = threadChunks.get( ai.getAndIncrement() );
-
-            		paste( myChunk.getStartPosition(), myChunk.getLoopSize(), target, block, offset, effectiveOffset, effectiveSize, effectiveLocalOffset );
+                	
+                	paste( myChunk.getStartPosition(), myChunk.getLoopSize(), target, block, offset, effectiveOffset, effectiveSize, effectiveLocalOffset );
                 }
             });
         
@@ -223,6 +210,15 @@ public class Block
 		for ( int d = 0; d < numDimensions; ++d )
 		{
 			effectiveSizeGeneral[ d ] = blockSize[ d ] - kernelSize[ d ] + 1;
+			
+			if ( effectiveSizeGeneral[ d ] <= 0 )
+			{
+				System.out.println( "Blocksize in dimension " + d + " (" + blockSize[ d ] + ") is smaller than the kernel (" + kernelSize[ d ] + ") which results in an negative effective size: " + effectiveSizeGeneral[ d ] + ", retrying with double the blocksize" );
+				blockSize[ d ] *= 2;
+				
+				return divideIntoBlocks( imgSize, blockSize, kernelSize );
+			}
+			
 			effectiveLocalOffset[ d ] = kernelSize[ d ] / 2;
 		}
 		
@@ -238,9 +234,12 @@ public class Block
 				++numBlocks[ d ];
 		}
 		
-		//System.out.println( "numBlocks " + Util.printCoordinates( numBlocks ) );
-		//System.out.println( "effectiveSize " + Util.printCoordinates( effectiveSize ) );
-		//System.out.println( "effectiveLocalOffset " + Util.printCoordinates( effectiveLocalOffset ) );
+		System.out.println( "imgSize " + Util.printCoordinates( imgSize ) );
+		System.out.println( "kernelSize " + Util.printCoordinates( kernelSize ) );
+		System.out.println( "blockSize " + Util.printCoordinates( blockSize ) );
+		System.out.println( "numBlocks " + Util.printCoordinates( numBlocks ) );
+		System.out.println( "effectiveSize " + Util.printCoordinates( effectiveSizeGeneral ) );
+		System.out.println( "effectiveLocalOffset " + Util.printCoordinates( effectiveLocalOffset ) );
 				
 		// now we instantiate the individual blocks iterating over all dimensions
 		// we use the well-known ArrayLocalizableCursor for that
@@ -273,7 +272,7 @@ public class Block
 			}
 
 			blockList.add( new Block( blockSize, offset, effectiveSize, effectiveOffset, effectiveLocalOffset, inside ) );
-			//System.out.println( "block " + Util.printCoordinates( currentBlock ) + " effectiveOffset: " + Util.printCoordinates( effectiveOffset ) + " effectiveSize: " + Util.printCoordinates( effectiveSize )  + " offset: " + Util.printCoordinates( offset ) + " inside: " + inside );
+			System.out.println( "block " + Util.printCoordinates( currentBlock ) + " effectiveOffset: " + Util.printCoordinates( effectiveOffset ) + " effectiveSize: " + Util.printCoordinates( effectiveSize )  + " offset: " + Util.printCoordinates( offset ) + " inside: " + inside );
 		}
 			
 		return blockList;
@@ -288,34 +287,41 @@ public class Block
 		//ImageJFunctions.show( img );
 		final FourierConvolution< FloatType, FloatType > t = new FourierConvolution<FloatType, FloatType>( img, kernel );
 		t.process();
-		ImageJFunctions.show( t.getResult() );
-		
+		ImageJFunctions.show( t.getResult() );		
 		
 		final int[] imgSize = img.getDimensions();//new int[]{ 256, 384 };
-		final int[] blockSize = new int[]{ 256, 256 }; 
+		final int[] blockSize = new int[]{ 256, 256 };
+		
+		for ( int d = 0; d < blockSize.length; ++d )
+			blockSize[ d ] = img.getDimension( d ) + kernel.getDimension( d ) - 1;
+		
 		final int[] kernelSize = kernel.getDimensions();//new int[]{ 51, 25 };
 		
 		final ArrayList< Block > blocks = Block.divideIntoBlocks( imgSize, blockSize, kernelSize );
 		
+		final ArrayList< Image< FloatType > > blockImgs = new ArrayList< Image< FloatType > >();
+		final ImageFactory< FloatType > factory = new ImageFactory< FloatType >( new FloatType(), new ArrayContainerFactory() );
+		
 		for ( int i = 0; i < blocks.size(); ++i )
 		{
-			blocks.get( i ).copyBlock( img );
+			final Image< FloatType > block = factory.createImage( blockSize );
+			blocks.get( i ).copyBlock( img, block );
+			blockImgs.add( block );
 			//ImageJFunctions.show( block );
 		}
-		
+
+		final FourierConvolution< FloatType, FloatType > t2 = new FourierConvolution<FloatType, FloatType>( blockImgs.get( 0 ), kernel );
+		t2.setExtendImageByKernelSize( false );
+
 			//for ( final FloatType t : block )
 			//	t.set( t.get() + 20*(i+1) );
 		for ( int i = 0; i < blocks.size(); ++i )
 		{
-			final FourierConvolution< FloatType, FloatType > t2 = new FourierConvolution<FloatType, FloatType>( blocks.get( i ).getBlock(), kernel );
+			t2.replaceImage( blockImgs.get( i ) );
 			t2.process();
-			blocks.get( i ).setBlock( t2.getResult(), true );
+			
+			blocks.get( i ).pasteBlock( img, t2.getResult() );
 			//ImageJFunctions.show( t.getResult() );
-		}
-		
-		for ( int i = 0; i < blocks.size(); ++i )
-		{
-			blocks.get( i ).pasteBlock( img );
 		}
 		ImageJFunctions.show( img );
 		
