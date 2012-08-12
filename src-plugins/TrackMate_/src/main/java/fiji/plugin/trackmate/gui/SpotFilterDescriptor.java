@@ -72,6 +72,7 @@ public class SpotFilterDescriptor <T extends RealType<T> & NativeType<T>> implem
 		
 		 // Link displayer and component
 		final TrackMateModelView<T> displayer = wizard.getDisplayer();
+		
 		SwingUtilities.invokeLater(new Runnable() {			
 			@Override
 			public void run() {

@@ -20,6 +20,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -618,7 +619,7 @@ public class TMUtils {
 	 * together.
 	 */
 	public static Map<String, double[]> getSpotFeatureValues(final SpotCollection spots, final List<String> features, final Logger logger) {
-		final Map<String, double[]> featureValues = new  HashMap<String, double[]>();
+		final Map<String, double[]> featureValues = new  ConcurrentHashMap<String, double[]>(features.size());
 		if (null == spots || spots.isEmpty())
 			return featureValues;
 		// Get the total quantity of spot we have
