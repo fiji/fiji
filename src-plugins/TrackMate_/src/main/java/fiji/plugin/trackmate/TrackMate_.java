@@ -41,7 +41,7 @@ import org.jgrapht.graph.SimpleWeightedGraph;
 public class TrackMate_<T extends RealType<T> & NativeType<T>>  implements PlugIn {
 
 	public static final String PLUGIN_NAME_STR = "TrackMate";
-	public static final String PLUGIN_NAME_VERSION = "1.3";
+	public static final String PLUGIN_NAME_VERSION = "1.3.0";
 	public static final boolean DEFAULT_USE_MULTITHREADING = true;
 
 	protected TrackMateModel<T> model;
