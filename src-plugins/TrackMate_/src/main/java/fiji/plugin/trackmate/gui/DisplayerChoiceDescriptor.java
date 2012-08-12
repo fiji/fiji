@@ -52,7 +52,7 @@ public class DisplayerChoiceDescriptor<T extends RealType<T> & NativeType<T>> im
 		if (plugin.getModel().getSettings().detector.equals(ManualDetector.NAME)) {
 			return DetectorConfigurationPanelDescriptor.DESCRIPTOR;
 		} else {
-			return InitFilterPanel.DESCRIPTOR;
+			return InitFilterDescriptor.DESCRIPTOR;
 		}
 	}
 

@@ -55,7 +55,7 @@ public class GuiSaver <T extends RealType<T> & NativeType<T>> {
 				writer.appendBasicSettings();
 				writer.appendDetectorSettings();
 
-		} else if (targetID.equals(DetectorDescriptor.DESCRIPTOR) || targetID.equals(InitFilterPanel.DESCRIPTOR) ) {
+		} else if (targetID.equals(DetectorDescriptor.DESCRIPTOR) || targetID.equals(InitFilterDescriptor.DESCRIPTOR) ) {
 
 			writer.appendBasicSettings();
 			writer.appendDetectorSettings();

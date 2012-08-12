@@ -47,7 +47,7 @@ public class DetectorDescriptor <T extends RealType<T> & NativeType<T>> implemen
 
 	@Override
 	public String getNextDescriptorID() {
-		return InitFilterPanel.DESCRIPTOR;
+		return InitFilterDescriptor.DESCRIPTOR;
 	}
 
 	@Override

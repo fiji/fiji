@@ -189,7 +189,7 @@ public class GuiReader <T extends RealType<T> & NativeType<T>> {
 			echoDone();
 
 			// Next panel that needs to know is the initial filter one
-			InitFilterPanel<T> panel = (InitFilterPanel<T>) wizard.getPanelDescriptorFor(InitFilterPanel.DESCRIPTOR);
+			InitFilterDescriptor<T> panel = (InitFilterDescriptor<T>) wizard.getPanelDescriptorFor(InitFilterDescriptor.DESCRIPTOR);
 			panel.aboutToDisplayPanel();
 		}
 
@@ -200,7 +200,7 @@ public class GuiReader <T extends RealType<T> & NativeType<T>> {
 			if (initialThreshold == null) {
 				echoNotFound();
 				// No initial threshold, so set it
-				targetDescriptor = InitFilterPanel.DESCRIPTOR;
+				targetDescriptor = InitFilterDescriptor.DESCRIPTOR;
 				if (!imp.isVisible())
 					imp.show();
 				echoLoadingFinished();

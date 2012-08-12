@@ -137,7 +137,7 @@ public class WizardController<T extends RealType<T> & NativeType<T>> implements 
 		descriptors.add(new DetectorChoiceDescriptor<T>());
 		//		descriptors.add(new DetectorConfigurationPanelDescriptor()); // will be instantiated on the fly, see DetectorChoiceDescriptor
 		descriptors.add(new DetectorDescriptor<T>());
-		descriptors.add(new InitFilterPanel<T>());
+		descriptors.add(new InitFilterDescriptor<T>());
 		descriptors.add(new DisplayerChoiceDescriptor<T>());
 		descriptors.add(new LaunchDisplayerDescriptor<T>());
 		descriptors.add(new SpotFilterDescriptor<T>());
