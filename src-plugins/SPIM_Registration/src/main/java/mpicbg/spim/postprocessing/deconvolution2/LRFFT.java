@@ -48,10 +48,10 @@ public class LRFFT
 			this.useBlocks = true;
 			
 			// define the blocksize so that it is one single block
-						this.blockSize = new int[ image.getNumDimensions() ];
+			this.blockSize = new int[ image.getNumDimensions() ];
 						
-						for ( int d = 0; d < this.blockSize.length; ++d )
-							this.blockSize[ d ] = image.getDimension( d ) + kernel.getDimension( d ) - 1;
+			for ( int d = 0; d < this.blockSize.length; ++d )
+				this.blockSize[ d ] = image.getDimension( d ) + kernel.getDimension( d ) - 1;
 						
 			this.blocks = Block.divideIntoBlocks( image.getDimensions(), this.blockSize, kernel.getDimensions() );
 			
@@ -237,9 +237,6 @@ public class LRFFT
 				System.out.println( " block " + i + ": copy " + (System.currentTimeMillis() - time) );
 
 				// convolve block with kernel1 using CUDA
-				
-				//((FloatArray)((Array)block.getContainer()).update( null )).getCurrentStorageArray();
-				
 				time = System.currentTimeMillis();				
 				cuda.convolution3DfftCUDAInPlace( ((FloatArray)((Array)block.getContainer()).update( null )).getCurrentStorageArray(), getCUDACoordinates( blockSize ), 
 						((FloatArray)((Array)kernel1.getContainer()).update( null )).getCurrentStorageArray(), getCUDACoordinates( kernel1.getDimensions() ), 0 );
