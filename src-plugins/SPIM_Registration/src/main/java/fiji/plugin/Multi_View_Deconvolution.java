@@ -9,14 +9,19 @@ import ij.plugin.PlugIn;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
+
+import com.sun.jna.Native;
 
 import mpicbg.imglib.container.array.ArrayContainerFactory;
 import mpicbg.imglib.container.cell.CellContainerFactory;
 import mpicbg.imglib.container.planar.PlanarContainerFactory;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.image.display.imagej.ImageJFunctions;
+import mpicbg.imglib.multithreading.SimpleMultiThreading;
 import mpicbg.imglib.type.numeric.real.FloatType;
+import mpicbg.imglib.util.Util;
 import mpicbg.spim.Reconstruction;
 import mpicbg.spim.fusion.FusionControl;
 import mpicbg.spim.fusion.PreDeconvolutionFusion;
@@ -25,6 +30,7 @@ import mpicbg.spim.io.IOFunctions;
 import mpicbg.spim.io.SPIMConfiguration;
 import mpicbg.spim.postprocessing.deconvolution.ExtractPSF;
 import mpicbg.spim.postprocessing.deconvolution2.BayesMVDeconvolution;
+import mpicbg.spim.postprocessing.deconvolution2.CUDAConvolution;
 import mpicbg.spim.postprocessing.deconvolution2.LRFFT;
 import mpicbg.spim.postprocessing.deconvolution2.LRInput;
 import mpicbg.spim.registration.ViewDataBeads;
@@ -63,13 +69,12 @@ public class Multi_View_Deconvolution implements PlugIn
 		// run the first part of fusion
 		final Reconstruction reconstruction = new Reconstruction( conf );
 		
-		// reconstruction calls deconvolve
+		// reconstruction calls deconvolve for each timepoint
 	}
 	
-	public void deconvolve( final Reconstruction reconstruction, final SPIMConfiguration conf, final int timePoint )
+	public void deconvolve( final ViewStructure viewStructure, final SPIMConfiguration conf, final int timePoint )
 	{
 		// get the input images for the deconvolution
-		final ViewStructure viewStructure = reconstruction.getCurrentViewStructure();
 		final FusionControl fusionControl = viewStructure.getFusionControl();
 		final PreDeconvolutionFusion fusion = (PreDeconvolutionFusion)fusionControl.getFusion();
 		
@@ -94,20 +99,15 @@ public class Multi_View_Deconvolution implements PlugIn
 		//
 		//final ArrayList<LucyRichardsonFFT> deconvolutionData = new ArrayList<LucyRichardsonFFT>();
 		final LRInput deconvolutionData = new LRInput();
-		final int cpusPerView = Math.min( Runtime.getRuntime().availableProcessors(), Math.round( Runtime.getRuntime().availableProcessors() / (float)paralellViews ) );
 		
-		IJ.log( "Compute views in paralell: " + paralellViews );
-		IJ.log( "CPUs per view: " + cpusPerView );
-		IJ.log( "Minimal number iterations: " + minNumIterations );
-		IJ.log( "Maximal number iterations: " + maxNumIterations );
+		IJ.log( "Number iterations: " + numIterations );
+		IJ.log( "Using blocks: " + useBlocks );
+		if ( useBlocks )
+			IJ.log( "Block size: " + Util.printCoordinates( blockSize ) );
+		IJ.log( "Using CUDA: " + useCUDA );
 		
 		IJ.log( "ImgLib container (input): " + conf.outputImageFactory.getClass().getSimpleName() );
 		IJ.log( "ImgLib container (output): " + conf.imageFactory.getClass().getSimpleName() );
-		
-		if ( multiplicative )
-			IJ.log( "Using a multiplicative multiview combination scheme." );
-		else
-			IJ.log( "Using an additive multiview combination scheme." );
 		
 		if ( useTikhonovRegularization )
 			IJ.log( "Using Tikhonov regularization (lambda = " + lambda + ")" );
@@ -121,7 +121,7 @@ public class Multi_View_Deconvolution implements PlugIn
 			//ImageJFunctions.copyToImagePlus( pointSpreadFunctions.get( view ) ).show();
 
 			//deconvolutionData.add( new LucyRichardsonFFT( fusion.getFusedImage( view ), fusion.getWeightImage( view ), pointSpreadFunctions.get( view ), cpusPerView ) );
-			deconvolutionData.add( new LRFFT( fusion.getFusedImage( view ), fusion.getWeightImage( view ), pointSpreadFunctions.get( view ) ) );
+			deconvolutionData.add( new LRFFT( fusion.getFusedImage( view ), fusion.getWeightImage( view ), pointSpreadFunctions.get( view ), useCUDA, useBlocks, blockSize ) );
 		}
 		
 		final Image<FloatType> deconvolved;
@@ -135,9 +135,9 @@ public class Multi_View_Deconvolution implements PlugIn
 		*/
 		
 		if ( useTikhonovRegularization )
-			deconvolved = new BayesMVDeconvolution( deconvolutionData, maxNumIterations, lambda, "deconvolved" ).getPsi();
+			deconvolved = new BayesMVDeconvolution( deconvolutionData, numIterations, lambda, "deconvolved" ).getPsi();
 		else
-			deconvolved = new BayesMVDeconvolution( deconvolutionData, maxNumIterations, 0, "deconvolved" ).getPsi();
+			deconvolved = new BayesMVDeconvolution( deconvolutionData, numIterations, 0, "deconvolved" ).getPsi();
 		
 		if ( conf.writeOutputImage || conf.showOutputImage )
 		{
@@ -160,29 +160,29 @@ public class Multi_View_Deconvolution implements PlugIn
 			}
 
 			if ( conf.writeOutputImage )
-				ImageJFunctions.saveAsTiffs( deconvolved, conf.outputdirectory, "DC(l=" + lambda + ")_"  + name + "_t" + timePoint + "_ch" + viewStructure.getChannelNum( 0 ), ImageJFunctions.GRAY32 );
+				ImageJFunctions.saveAsTiffs( deconvolved, conf.outputdirectory, "DC(l=" + lambda + ")_t" + timePoint + "_ch" + viewStructure.getChannelNum( 0 ), ImageJFunctions.GRAY32 );
 		}		
 	}
 
 	public static boolean fusionUseContentBasedStatic = false;
 	public static boolean displayFusedImageStatic = true;
 	public static boolean saveFusedImageStatic = true;
-	public static int defaultMinNumIterations = 20;
-	public static int defaultMaxNumIterations = 50;
+	public static int defaultNumIterations = 10;
 	public static boolean defaultUseTikhonovRegularization = true;
 	public static double defaultLambda = 0.006;
-	public static int defaultParalellViews = 0;
 	public static boolean showAveragePSF = true;
-	public static int defaultDeconvolutionScheme = 0;
 	public static int defaultContainer = 0;
+	public static int defaultComputationIndex = 0;
+	public static int defaultBlockSizeIndex = 0, defaultBlockSizeX = 256, defaultBlockSizeY = 256, defaultBlockSizeZ = 256;
 	
-	public static String[] deconvolutionScheme = new String[]{ "Multiplicative", "Additive" };
 	public static String[] imglibContainer = new String[]{ "Array container", "Planar container", "Cell container" };
+	public static String[] computationOn = new String[]{ "CPU (Java)", "GPU (Cuda via JNI)" };
+	public static String[] blocks = new String[]{ "Entire image at once", "in 64x64x64 blocks", "in 128x128x128 blocks", "in 256x256x256 blocks", "in 512x512x512 blocks", "specify maximal blocksize manually" };
 	
-	int minNumIterations, maxNumIterations, paralellViews, container;
-	boolean useTikhonovRegularization = true;
+	int numIterations, container, computationType, blockSizeIndex;
+	int[] blockSize = null;
+	boolean useTikhonovRegularization = true, useBlocks = false, useCUDA = false;
 	double lambda = 0.006;
-	boolean multiplicative = true;
 	
 	protected SPIMConfiguration getParameters() 
 	{
@@ -384,23 +384,13 @@ public class Multi_View_Deconvolution implements PlugIn
 		gd2.addNumericField( "Crop_output_image_size_x", Multi_View_Fusion.cropSizeXStatic, 0 );
 		gd2.addNumericField( "Crop_output_image_size_y", Multi_View_Fusion.cropSizeYStatic, 0 );
 		gd2.addNumericField( "Crop_output_image_size_z", Multi_View_Fusion.cropSizeZStatic, 0 );
-		gd2.addMessage( "" );		
-		gd2.addNumericField( "Minimal_number_of_iterations", defaultMinNumIterations, 0 );
-		gd2.addNumericField( "Maximal_number_of_iterations", defaultMaxNumIterations, 0 );
-		gd2.addChoice( "Type_of_multiview_combination", deconvolutionScheme, deconvolutionScheme[ defaultDeconvolutionScheme ] );
+		gd2.addMessage( "" );	
+		gd2.addNumericField( "Number_of_iterations", defaultNumIterations, 0 );
 		gd2.addCheckbox( "Use_Tikhonov_regularization", defaultUseTikhonovRegularization );
 		gd2.addNumericField( "Tikhonov_parameter", defaultLambda, 4 );
-		
-		final String[] views = new String[ numViews ];
-		views[ 0 ] = "All";
-		for ( int v = 1; v < numViews; v++ )
-			views[ v ] = "" + v;
-		
-		if ( defaultParalellViews >= views.length )
-			defaultParalellViews = views.length - 1;
-		
-		gd2.addChoice( "Process_views_in_paralell", views, views[ defaultParalellViews ] );
 		gd2.addChoice( "ImgLib_container", imglibContainer, imglibContainer[ defaultContainer ] );
+		gd2.addChoice( "Compute", blocks, blocks[ defaultBlockSizeIndex ] );
+		gd2.addChoice( "Compute_on", computationOn, computationOn[ defaultComputationIndex ] );
 		gd2.addCheckbox( "Show_averaged_PSF", showAveragePSF );
 		gd2.addMessage( "" );
 		gd2.addCheckbox( "Display_fused_image", displayFusedImageStatic );
@@ -476,23 +466,100 @@ public class Multi_View_Deconvolution implements PlugIn
 		Multi_View_Fusion.cropSizeYStatic = (int)Math.round( gd2.getNextNumber() );
 		Multi_View_Fusion.cropSizeZStatic = (int)Math.round( gd2.getNextNumber() );
 		
-		minNumIterations = defaultMinNumIterations = (int)Math.round( gd2.getNextNumber() );
-		maxNumIterations = defaultMaxNumIterations = (int)Math.round( gd2.getNextNumber() );
-		defaultDeconvolutionScheme = gd2.getNextChoiceIndex();
-		if ( defaultDeconvolutionScheme == 0 )
-			multiplicative = true;
-		else
-			multiplicative = false;
+		numIterations = defaultNumIterations = (int)Math.round( gd2.getNextNumber() );
 		useTikhonovRegularization = defaultUseTikhonovRegularization = gd2.getNextBoolean();
 		lambda = defaultLambda = gd2.getNextNumber();
-		paralellViews = defaultParalellViews = gd2.getNextChoiceIndex(); // 0 = all
-		if ( paralellViews == 0 )
-			paralellViews = numViews;
 		container = defaultContainer = gd2.getNextChoiceIndex();
+		blockSizeIndex = defaultBlockSizeIndex = gd2.getNextChoiceIndex();
+		computationType = defaultComputationIndex = gd2.getNextChoiceIndex();
 		showAveragePSF = gd2.getNextBoolean();
 		displayFusedImageStatic = gd2.getNextBoolean(); 
-		saveFusedImageStatic = gd2.getNextBoolean(); 		
+		saveFusedImageStatic = gd2.getNextBoolean();
+		
+		if ( blockSizeIndex == 0 )
+		{
+			this.useBlocks = false;
+			this.blockSize = null;
+		}
+		else if ( blockSizeIndex == 1 )
+		{
+			this.useBlocks = true;
+			this.blockSize = new int[]{ 64, 64, 64 };
+		}
+		else if ( blockSizeIndex == 2 )
+		{
+			this.useBlocks = true;
+			this.blockSize = new int[]{ 128, 128, 128 };
+		}
+		else if ( blockSizeIndex == 3 )
+		{
+			this.useBlocks = true;
+			this.blockSize = new int[]{ 256, 256, 256 };
+		}
+		else if ( blockSizeIndex == 4 )
+		{
+			this.useBlocks = true;
+			blockSize = new int[]{ 512, 512, 512 };
+		}
+		if ( blockSizeIndex == 5 )
+		{
+			GenericDialog gd3 = new GenericDialog( "Define block sizes" );
+			
+			gd3.addNumericField( "blocksize_x", defaultBlockSizeX, 0 );
+			gd3.addNumericField( "blocksize_y", defaultBlockSizeY, 0 );
+			gd3.addNumericField( "blocksize_z", defaultBlockSizeZ, 0 );
+			
+			gd3.showDialog();
+			
+			if ( gd2.wasCanceled() )
+				return null;
+			
+			defaultBlockSizeX = Math.max( 1, (int)Math.round( gd3.getNextNumber() ) );
+			defaultBlockSizeY = Math.max( 1, (int)Math.round( gd3.getNextNumber() ) );
+			defaultBlockSizeZ = Math.max( 1, (int)Math.round( gd3.getNextNumber() ) );
 
+			this.useBlocks = true;
+			this.blockSize = new int[]{ defaultBlockSizeX, defaultBlockSizeY, defaultBlockSizeZ };
+		}
+		
+		if ( computationType == 0 )
+		{
+			useCUDA = false;
+		}
+		else
+		{
+			// well, do some testing first
+			try
+			{
+				LRFFT.cuda = (CUDAConvolution) Native.loadLibrary( "Convolution3D_fftCUDAlib", CUDAConvolution.class );
+			}
+			catch (Exception e )
+			{
+				IJ.log( "Cannot find CUDA JNA library: " + e );
+			}
+			
+			int numDevices = LRFFT.cuda.getNumDevicesCUDA();
+			IJ.log( "numdevices = " + numDevices );
+			
+			for ( int i = 0; i < numDevices; ++i )
+			{
+				byte[] name = new byte[ 256 ];
+				LRFFT.cuda.getNameDeviceCUDA( i, name );
+				
+				System.out.println( "name" );
+				for ( final byte b : name )
+					System.out.print( b );
+				System.out.println( );
+				
+				IJ.log( "name = " + Arrays.toString( name ) );
+				IJ.log( "mem = " + LRFFT.cuda.getMemDeviceCUDA( i ) );
+				IJ.log( "version = " + LRFFT.cuda.getCUDAcomputeCapabilityMajorVersion( i)  + "." + LRFFT.cuda.getCUDAcomputeCapabilityMinorVersion( i ) );
+			}
+			useCUDA = true;
+			
+			//SimpleMultiThreading.threadHaltUnClean();
+		}
+		
 		conf.paralellFusion = false;
 		conf.sequentialFusion = false;
 

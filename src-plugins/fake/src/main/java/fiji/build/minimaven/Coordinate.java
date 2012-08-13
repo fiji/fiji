@@ -46,7 +46,7 @@ public class Coordinate {
 
 	public String getFileName(boolean withProjectPrefix, boolean withClassifier, String fileExtension) {
 		return (withProjectPrefix ? groupId + "/" : "")
-			+ artifactId + "-" + (snapshotVersion != null ? snapshotVersion : version)
+			+ artifactId + "-" + getVersion()
 			+ (withClassifier && classifier != null ? "-" + classifier : "")
 			+ (fileExtension != null ? "." + fileExtension : "");
 	}
@@ -57,6 +57,10 @@ public class Coordinate {
 
 	public void setSnapshotVersion(String version) {
 		snapshotVersion = version;
+	}
+
+	public String getVersion() {
+		return snapshotVersion != null ? snapshotVersion : version;
 	}
 
 	@Override
