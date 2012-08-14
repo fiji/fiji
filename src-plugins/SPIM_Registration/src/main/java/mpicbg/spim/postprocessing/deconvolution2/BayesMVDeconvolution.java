@@ -107,12 +107,13 @@ public class BayesMVDeconvolution implements Deconvolver
 		else
 			lastIteration = null;
 
-		long time = System.currentTimeMillis();
 
 		for ( int view = 0; view < numViews; ++view )
 		{
 			final LRFFT processingData = data.get( view );
 						
+			long time = System.currentTimeMillis();
+			
 			// convolve psi (current guess of the image) with the PSF of the current view
 			final Image<FloatType> psiBlurred = processingData.convolve1( psi );
 			

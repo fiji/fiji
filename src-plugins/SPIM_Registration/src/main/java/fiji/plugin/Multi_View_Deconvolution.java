@@ -44,7 +44,8 @@ import mpicbg.spim.registration.ViewStructure;
 public class Multi_View_Deconvolution implements PlugIn
 {
 	final private String myURL = "http://fly.mpi-cbg.de/preibisch";
-
+	public static int psfSize = 13;
+	
 	@Override
 	public void run(String arg0) 
 	{
@@ -83,13 +84,16 @@ public class Multi_View_Deconvolution implements PlugIn
 		// extract the beads
 		IJ.log( new Date( System.currentTimeMillis() ) +": Extracting Point spread functions." );
 		final ExtractPSF extractPSF = new ExtractPSF( viewStructure, showAveragePSF );
-		extractPSF.setPSFSize( 21, false );
+		extractPSF.setPSFSize( psfSize, false );
 		extractPSF.extract();
 		
 		final ArrayList< Image< FloatType > > pointSpreadFunctions = extractPSF.getPSFs();
 		
 		if ( showAveragePSF )
 			ImageJFunctions.show( extractPSF.getMaxProjectionAveragePSF() );
+		
+		//for ( final Image<FloatType> k : pointSpreadFunctions )
+		//mageJFunctions.show( pointSpreadFunctions.get( 0 ) );
 		
 		// now we close all the input images
 		for ( final ViewDataBeads view : viewStructure.getViews() )
