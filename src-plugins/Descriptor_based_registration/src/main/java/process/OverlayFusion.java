@@ -341,7 +341,7 @@ public class OverlayFusion
 	 * @param input - FloatType, because of Interpolation that needs to be done
 	 * @param transform - the transformation
 	 */
-	protected static <T extends RealType<T>> void fuseChannel( final Image<T> output, final Image<FloatType> input, final float[] offset, final InvertibleCoordinateTransform transform, final InterpolatorFactory< FloatType > factory )
+	public static <T extends RealType<T>> void fuseChannel( final Image<T> output, final Image<FloatType> input, final float[] offset, final InvertibleCoordinateTransform transform, final InterpolatorFactory< FloatType > factory )
 	{
 		final int dims = output.getNumDimensions();
 		long imageSize = output.getDimension( 0 );

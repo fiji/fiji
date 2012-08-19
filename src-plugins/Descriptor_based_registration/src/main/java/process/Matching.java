@@ -55,8 +55,17 @@ import plugin.Descriptor_based_series_registration;
 
 public class Matching 
 {
-	public static void descriptorBasedRegistration( final ImagePlus imp1, final ImagePlus imp2, final DescriptorParameters params )
+	/**
+	 * 
+	 * @param imp1
+	 * @param imp2
+	 * @param params
+	 * @return - the number of inliers
+	 */
+	public static int descriptorBasedRegistration( final ImagePlus imp1, final ImagePlus imp2, final DescriptorParameters params )
 	{
+		int numInliers = 0;
+		
 		Model<?> model1;
 		Model<?> model2;
 		
@@ -77,30 +86,35 @@ public class Matching
 			peaks1 = filterForROI( params.roi1, peaks1 );
 			peaks2 = filterForROI( params.roi2, peaks2 );
 			
-			if ( size1 != peaks1.size() )
+			if ( size1 != peaks1.size() && !params.silent )
 				IJ.log( peaks1.size() + " candidates remaining for " + imp1.getTitle() + " after filtering by ROI." );
 			
-			if ( size2 != peaks2.size() )
+			if ( size2 != peaks2.size() && !params.silent)
 				IJ.log( peaks2.size() + " candidates remaining for " + imp2.getTitle() + " after filtering by ROI." );
 			
 			final int minNumPeaks = params.numNeighbors + params.redundancy + 1; 
-			if ( peaks1.size() < minNumPeaks || peaks2.size() < minNumPeaks )
+			if ( peaks1.size() < minNumPeaks || peaks2.size() < minNumPeaks  )
 			{
-				IJ.log( "Not enough peaks in one of the images, should be at least " + minNumPeaks + ", " + imp1.getTitle() + 
-						" has " + peaks1.size() + "peaks, " + imp2.getTitle() + " has " + peaks2.size() + " peaks."  );
+				if ( !params.silent )
+					IJ.log( "Not enough peaks in one of the images, should be at least " + minNumPeaks + ", " + imp1.getTitle() + 
+							" has " + peaks1.size() + "peaks, " + imp2.getTitle() + " has " + peaks2.size() + " peaks."  );
 				
-				return;
+				return 0;
 			}
 
 			// compute ransac
 			ArrayList<PointMatch> finalInliers = new ArrayList<PointMatch>();
 			model1 = pairwiseMatching( finalInliers, peaks1, peaks2, zStretching1, zStretching2, params, "" );				
 			model2 = params.model.copy();
-			IJ.log( "" + model1 );
+			
+			numInliers = finalInliers.size();
+			
+			if ( !params.silent )
+				IJ.log( "" + model1 );
 			
 			// nothing found
 			if ( model1 == null || model2 == null )
-				return;
+				return 0;
 			
 			// set the static model
 			Descriptor_based_registration.lastModel1 = (InvertibleBoundable)model1.copy();
@@ -133,7 +147,8 @@ public class Matching
 				}
 				catch (Exception e) 
 				{
-					IJ.log( "WARNING: Cannot cast " + model1.getClass().getSimpleName() + " to AbstractAffineModel3d, cannot concatenate axial scaling." );
+					if ( !params.silent )
+						IJ.log( "WARNING: Cannot cast " + model1.getClass().getSimpleName() + " to AbstractAffineModel3d, cannot concatenate axial scaling." );
 				}
 				//IJ.log( "model1: " + model1 );
 				//IJ.log( "model2: " + model2 );
@@ -148,6 +163,8 @@ public class Matching
 			
 			composite.show();
 		}
+		
+		return numInliers;
 	}
 	
 	public static void descriptorBasedStackRegistration( final ImagePlus imp, final DescriptorParameters params )
@@ -562,12 +579,14 @@ public class Matching
 		}
 		else
 		{
-			IJ.log( explanation + ": " + statement + " - No inliers foundTipp: You could increase the number of neighbors, redundancy or use a model that has more degrees of freedom." );
+			if ( !params.silent )
+				IJ.log( explanation + ": " + statement + " - No inliers foundTipp: You could increase the number of neighbors, redundancy or use a model that has more degrees of freedom." );
 			finalInliers.clear();
 			return null;
 		}
 		
-		IJ.log( explanation + ": " + statement );
+		if ( !params.silent )
+			IJ.log( explanation + ": " + statement );
 		
 		if ( DescriptorParameters.printAllSimilarities )
 		{
@@ -649,8 +668,9 @@ public class Matching
 		
 		// remove invalid peaks
 		final int[] stats1 = removeInvalidAndCollectStatistics( peaks );
-				
-		IJ.log( "Found " + peaks.size() + " candidates for " + imp.getTitle() + " [" + timepoint + "] (" + stats1[ 1 ] + " maxima, " + stats1[ 0 ] + " minima)" );
+		
+		if ( !params.silent )
+			IJ.log( "Found " + peaks.size() + " candidates for " + imp.getTitle() + " [" + timepoint + "] (" + stats1[ 1 ] + " maxima, " + stats1[ 0 ] + " minima)" );
 		
 		return peaks;
 	}
