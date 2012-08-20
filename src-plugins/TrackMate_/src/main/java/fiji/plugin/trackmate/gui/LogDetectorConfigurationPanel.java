@@ -21,11 +21,9 @@ import javax.swing.JTextField;
 
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
-
 import fiji.plugin.trackmate.TrackMateModel;
-import fiji.plugin.trackmate.detection.LogDetector;
-import fiji.plugin.trackmate.detection.LogDetectorSettings;
 import fiji.plugin.trackmate.detection.DetectorSettings;
+import fiji.plugin.trackmate.detection.LogDetectorSettings;
 
 /**
  * Configuration panel for spot detectors based on LoG detector. 
@@ -48,13 +46,16 @@ public class LogDetectorConfigurationPanel <T extends RealType<T> & NativeType<T
 	protected JCheckBox jCheckSubPixel;
 	/** The {@link LogDetectorSettings} object set by this panel. */
 	private LogDetectorSettings<T> settings = new LogDetectorSettings<T>();
+	/** The HTML text that will be displayed as a help. */
+	protected String infoText;
 
 	/*
 	 * CONSTRUCTOR
 	 */
 
 
-	public LogDetectorConfigurationPanel() {
+	public LogDetectorConfigurationPanel(String infoText) {
+		this.infoText = infoText;
 		initGUI();
 	}
 
@@ -102,7 +103,7 @@ public class LogDetectorConfigurationPanel <T extends RealType<T> & NativeType<T
 	private void echoSettings(TrackMateModel<T> model) {
 		jLabelBlobDiameterUnit.setText(model.getSettings().spaceUnits);
 		jLabelSegmenterName.setText(model.getSettings().detector.toString());
-		jLabelHelpText.setText(LogDetector.INFO_TEXT
+		jLabelHelpText.setText(infoText
 				.replace("<br>", "")
 				.replace("<p>", "<p align=\"justify\">")
 				.replace("<html>", "<html><p align=\"justify\">"));

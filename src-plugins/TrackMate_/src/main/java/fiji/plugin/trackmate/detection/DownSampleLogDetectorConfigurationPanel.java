@@ -17,6 +17,10 @@ import fiji.plugin.trackmate.gui.LogDetectorConfigurationPanel;
 
 public class DownSampleLogDetectorConfigurationPanel <T extends RealType<T>  & NativeType<T>> extends LogDetectorConfigurationPanel<T> {
 
+	public DownSampleLogDetectorConfigurationPanel() {
+		super(DownsampleLogDetector.INFO_TEXT);
+	}
+
 	private static final long serialVersionUID = 3840748523863902343L;
 	private JLabel jLabelDownSample;
 	private JNumericTextField jTextFieldDownSample;

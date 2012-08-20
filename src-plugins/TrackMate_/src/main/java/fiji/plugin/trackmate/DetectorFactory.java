@@ -8,6 +8,7 @@ import net.imglib2.type.numeric.RealType;
 
 import fiji.plugin.trackmate.detection.BasicDetectorSettings;
 import fiji.plugin.trackmate.detection.DetectorSettings;
+import fiji.plugin.trackmate.detection.DogDetector;
 import fiji.plugin.trackmate.detection.DownSampleLogDetectorConfigurationPanel;
 import fiji.plugin.trackmate.detection.DownSampleLogDetectorSettings;
 import fiji.plugin.trackmate.detection.DownsampleLogDetector;
@@ -54,8 +55,9 @@ public class DetectorFactory <T extends RealType<T> & NativeType<T>> {
 	 */
 	protected void registerDetectors() {
 		// Names
-		names = new ArrayList<String>(3);
+		names = new ArrayList<String>(4);
 		names.add(LogDetector.NAME);
+		names.add(DogDetector.NAME);
 		names.add(DownsampleLogDetector.NAME);
 		names.add(ManualDetector.NAME);
 	}
@@ -73,8 +75,10 @@ public class DetectorFactory <T extends RealType<T> & NativeType<T>> {
 		case 0:
 			return new LogDetector<T>();
 		case 1:
-			return new DownsampleLogDetector<T>();
+			return new DogDetector<T>();
 		case 2:
+			return new DownsampleLogDetector<T>();
+		case 3:
 			return new ManualDetector<T>();
 		default:
 			return null;
@@ -93,10 +97,11 @@ public class DetectorFactory <T extends RealType<T> & NativeType<T>> {
 		}
 		switch (index) {
 		case 0:
-			return new LogDetectorSettings<T>();
 		case 1:
-			return new DownSampleLogDetectorSettings<T>();
+			return new LogDetectorSettings<T>();
 		case 2:
+			return new DownSampleLogDetectorSettings<T>();
+		case 3:
 			return new BasicDetectorSettings<T>();
 		default:
 			return null;
@@ -116,8 +121,10 @@ public class DetectorFactory <T extends RealType<T> & NativeType<T>> {
 		case 0:
 			return LogDetector.INFO_TEXT;
 		case 1:
-			return DownsampleLogDetector.INFO_TEXT;
+			return DogDetector.INFO_TEXT;
 		case 2:
+			return DownsampleLogDetector.INFO_TEXT;
+		case 3:
 			return ManualDetector.INFO_TEXT;
 		default:
 			return null;
@@ -137,10 +144,12 @@ public class DetectorFactory <T extends RealType<T> & NativeType<T>> {
 		}
 		switch (index) {
 		case 0:
-			return new LogDetectorConfigurationPanel<T>();
+			return new LogDetectorConfigurationPanel<T>(LogDetector.INFO_TEXT);
 		case 1:
-			return new DownSampleLogDetectorConfigurationPanel<T>();
+			return new LogDetectorConfigurationPanel<T>(DogDetector.INFO_TEXT);
 		case 2:
+			return new DownSampleLogDetectorConfigurationPanel<T>();
+		case 3:
 			return new BasicDetectorConfigurationPanel<T>(ManualDetector.INFO_TEXT);
 		default:
 			return null;

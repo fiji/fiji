@@ -12,11 +12,9 @@ import fiji.plugin.trackmate.detection.DetectorSettings;
 public class BasicDetectorConfigurationPanel <T extends RealType<T> & NativeType<T>> extends LogDetectorConfigurationPanel<T> {
 
 	private static final long serialVersionUID = -1L;
-	private final String infoText;
 
 	public BasicDetectorConfigurationPanel(String infoText) {
-		super();
-		this.infoText = infoText;
+		super(infoText);
 		final JComponent[] uselessComponents = new JComponent[] {
 				super.jCheckBoxMedianFilter,
 				super.jCheckSubPixel, 
