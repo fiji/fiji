@@ -28,7 +28,7 @@ public class DogDetector <T extends RealType<T>  & NativeType<T>> extends Abstra
 	 */
 	
 	public final static String BASE_ERROR_MESSAGE = "DogDetector: ";
-	public static final String NAME = "DoG segmenter";
+	public static final String NAME = "DoG detector";
 	public static final String INFO_TEXT = "<html>" +
 			"This segmenter is based on an approximation of the LoG operator <br> " +
 			"by differences of gaussian (DoG). Computations are made in direct space. <br>" +

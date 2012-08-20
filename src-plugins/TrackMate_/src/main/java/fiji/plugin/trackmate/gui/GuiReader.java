@@ -104,7 +104,7 @@ public class GuiReader <T extends RealType<T> & NativeType<T>> {
 
 		// Open and parse file
 		logger.log("Opening file "+file.getName()+'\n');
-		TmXmlReader<T> reader = new TmXmlReader<T>(file, logger);
+		TmXmlReader<T> reader = new TmXmlReader<T>(file, logger, plugin);
 		reader.parse();
 		logger.log("  Parsing file done.\n");
 
@@ -160,6 +160,7 @@ public class GuiReader <T extends RealType<T> & NativeType<T>> {
 
 			// Update 2nd panel: detector choice
 			DetectorChoiceDescriptor<T> detectorChoiceDescriptor = (DetectorChoiceDescriptor<T>) wizard.getPanelDescriptorFor(DetectorChoiceDescriptor.DESCRIPTOR);
+			detectorChoiceDescriptor.setPlugin(plugin);
 			detectorChoiceDescriptor.aboutToDisplayPanel();
 
 			// Instantiate descriptor for the detector configuration and update it
@@ -440,7 +441,7 @@ public class GuiReader <T extends RealType<T> & NativeType<T>> {
 	}
 	
 	private void echoDone() {
-		logger.log("\b\b\b done.\n");
+		logger.log(" done.\n"); 
 	}
 	
 	private void echoNotFound() {

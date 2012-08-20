@@ -2,7 +2,6 @@ package fiji.plugin.trackmate.tests;
 
 import fiji.plugin.trackmate.TrackMate_;
 import ij.IJ;
-import ij.ImagePlus;
 
 import java.io.File;
 
@@ -21,8 +20,8 @@ public class TrackMate_TestDrive {
 		}
 		
 		ij.ImageJ.main(args);
-		ImagePlus imp = IJ.openImage(file.getAbsolutePath());
-		imp.show();
+//		ij.ImagePlus imp = IJ.openImage(file.getAbsolutePath());
+//		imp.show();
 		
 		TrackMate_<T> st = new TrackMate_<T>();
 		System.out.println("Running the plugin...");

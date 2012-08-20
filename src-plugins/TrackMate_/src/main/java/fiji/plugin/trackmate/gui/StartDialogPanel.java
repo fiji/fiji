@@ -75,6 +75,12 @@ public class StartDialogPanel <T extends RealType<T> & NativeType<T>> extends Ac
 	private TrackMate_<T> plugin;
 	private TrackMateWizard<T> wizard;
 
+	
+	public StartDialogPanel() {
+		initGUI();
+	}
+	
+	
 	/*
 	 * WIZARDPANELDESCRIPTOR METHODS
 	 */
@@ -96,7 +102,6 @@ public class StartDialogPanel <T extends RealType<T> & NativeType<T>> extends Ac
 				this.settings = plugin.getModel().getSettings();
 			}
 		}
-		initGUI();
 	}
 
 	@Override

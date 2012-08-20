@@ -44,7 +44,7 @@ public class TmXmlKeys {
 	
 	public static final String DETECTOR_SETTINGS_ELEMENT_KEY 			= "DetectorSettings";
 	public static final String DETECTOR_SETTINGS_CLASS_ATTRIBUTE_NAME 	= "detectorsettingsclass";
-	public static final String DETECTOR_CLASS_ATTRIBUTE_NAME 			= "detectorclass";
+	public static final String DETECTOR_ATTRIBUTE_NAME 					= "detectorname";
 
 	/*
 	 * TRACKER SETTINGS
@@ -52,7 +52,7 @@ public class TmXmlKeys {
 	
 	public static final String TRACKER_SETTINGS_ELEMENT_KEY				= "TrackerSettings";
 	public static final String TRACKER_SETTINGS_CLASS_ATTRIBUTE_NAME	= "trackersettingsclass";
-	public static final String TRACKER_CLASS_ATTRIBUTE_NAME				= "trackerclass";
+	public static final String TRACKER_ATTRIBUTE_NAME					= "trackername";
 	
 	/*
 	 * IMAGE element

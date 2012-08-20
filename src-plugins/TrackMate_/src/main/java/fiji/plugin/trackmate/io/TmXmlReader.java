@@ -1,6 +1,6 @@
 package fiji.plugin.trackmate.io;
 
-import static fiji.plugin.trackmate.io.TmXmlKeys.DETECTOR_CLASS_ATTRIBUTE_NAME;
+import static fiji.plugin.trackmate.io.TmXmlKeys.DETECTOR_ATTRIBUTE_NAME;
 import static fiji.plugin.trackmate.io.TmXmlKeys.DETECTOR_SETTINGS_CLASS_ATTRIBUTE_NAME;
 import static fiji.plugin.trackmate.io.TmXmlKeys.DETECTOR_SETTINGS_ELEMENT_KEY;
 import static fiji.plugin.trackmate.io.TmXmlKeys.FILTERED_SPOT_COLLECTION_ELEMENT_KEY;
@@ -43,7 +43,7 @@ import static fiji.plugin.trackmate.io.TmXmlKeys.SPOT_FRAME_COLLECTION_ELEMENT_K
 import static fiji.plugin.trackmate.io.TmXmlKeys.SPOT_ID_ATTRIBUTE_NAME;
 import static fiji.plugin.trackmate.io.TmXmlKeys.SPOT_ID_ELEMENT_KEY;
 import static fiji.plugin.trackmate.io.TmXmlKeys.SPOT_NAME_ATTRIBUTE_NAME;
-import static fiji.plugin.trackmate.io.TmXmlKeys.TRACKER_CLASS_ATTRIBUTE_NAME;
+import static fiji.plugin.trackmate.io.TmXmlKeys.TRACKER_ATTRIBUTE_NAME;
 import static fiji.plugin.trackmate.io.TmXmlKeys.TRACKER_SETTINGS_CLASS_ATTRIBUTE_NAME;
 import static fiji.plugin.trackmate.io.TmXmlKeys.TRACKER_SETTINGS_ELEMENT_KEY;
 import static fiji.plugin.trackmate.io.TmXmlKeys.TRACK_COLLECTION_ELEMENT_KEY;
@@ -406,7 +406,7 @@ public class TmXmlReader <T extends RealType<T> & NativeType<T>> {
 		}
 
 		// Deal with detector
-		String detectorName = element.getAttributeValue(DETECTOR_CLASS_ATTRIBUTE_NAME);
+		String detectorName = element.getAttributeValue(DETECTOR_ATTRIBUTE_NAME);
 		if (null == detectorName) {
 			logger.error("Detector attribute is not present.\n");
 			logger.error("Substituting default.\n");
@@ -475,7 +475,7 @@ public class TmXmlReader <T extends RealType<T> & NativeType<T>> {
 		}
 
 		// Deal with tracker
-		String trackerName = element.getAttributeValue(TRACKER_CLASS_ATTRIBUTE_NAME);
+		String trackerName = element.getAttributeValue(TRACKER_ATTRIBUTE_NAME);
 		if (null == trackerName) {
 			logger.error("Tracker class is not present.\n");
 			logger.error("Substituting default.\n");

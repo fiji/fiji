@@ -180,7 +180,7 @@ public class TmXmlWriter <T extends RealType<T> & NativeType<T>> {
 	private void echoDetectorSettings() {
 		Element el = new Element(DETECTOR_SETTINGS_ELEMENT_KEY);
 		if (null != model.getSettings().detector) {
-			el.setAttribute(DETECTOR_CLASS_ATTRIBUTE_NAME, model.getSettings().detector.getClass().getName());
+			el.setAttribute(DETECTOR_ATTRIBUTE_NAME, model.getSettings().detector);
 		}
 		if (null != model.getSettings().detectorSettings) {
 			el.setAttribute(DETECTOR_SETTINGS_CLASS_ATTRIBUTE_NAME, model.getSettings().detectorSettings.getClass().getName());
@@ -196,7 +196,7 @@ public class TmXmlWriter <T extends RealType<T> & NativeType<T>> {
 	private void echoTrackerSettings() {
 		Element element = new Element(TRACKER_SETTINGS_ELEMENT_KEY);
 		if (null != model.getSettings().tracker) {
-			element.setAttribute(TRACKER_CLASS_ATTRIBUTE_NAME, model.getSettings().tracker.getClass().getName());
+			element.setAttribute(TRACKER_ATTRIBUTE_NAME, model.getSettings().tracker);
 		}
 		TrackerSettings<T> settings = model.getSettings().trackerSettings;
 		if (null != settings) {

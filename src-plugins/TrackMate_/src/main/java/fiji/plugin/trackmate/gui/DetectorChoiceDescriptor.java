@@ -6,10 +6,8 @@ import java.util.List;
 
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
-
 import fiji.plugin.trackmate.TrackMate_;
 import fiji.plugin.trackmate.detection.DetectorSettings;
-import fiji.plugin.trackmate.detection.SpotDetector;
 
 public class DetectorChoiceDescriptor <T extends RealType<T> & NativeType<T>> implements WizardPanelDescriptor<T> {
 
@@ -54,9 +52,13 @@ public class DetectorChoiceDescriptor <T extends RealType<T> & NativeType<T>> im
 	}
 	
 	private void setCurrentChoiceFromPlugin() {
-		SpotDetector<T> detector = plugin.getDetectorFactory().getDetector(plugin.getModel().getSettings().detector); 
+		String detector = plugin.getModel().getSettings().detector; 
 		if (detector != null) {
 			int index = plugin.getDetectorFactory().getAvailableDetectors().indexOf(detector);
+			if (index < 0) {
+				wizard.getLogger().error("[DetectorChoiceDescriptor] Cannot find detector named "+detector+" in current plugin.");
+				return;
+			}
 			component.jComboBoxChoice.setSelectedIndex(index);
 		}
 	}

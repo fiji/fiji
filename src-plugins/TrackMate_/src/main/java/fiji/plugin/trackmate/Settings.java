@@ -100,6 +100,11 @@ public class Settings <T extends RealType<T> & NativeType<T>> {
 	public Settings(ImagePlus imp) {
 		// Source image
 		this.imp = imp;
+		
+		if (null == imp) {
+			return; // we leave field default values
+		}
+		
 		// File info
 		this.imageFileName = imp.getFileInfo().fileName;
 		this.imageFolder = imp.getFileInfo().directory;
