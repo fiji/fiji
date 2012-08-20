@@ -94,6 +94,7 @@ public class TrackDisplayNode <T extends RealType<T> & NativeType<T>> extends Co
 
 		computeTrackColors();
 		makeMeshes();
+		setTrackVisible(model.getVisibleTrackIndices());
 	}
 
 	/*
