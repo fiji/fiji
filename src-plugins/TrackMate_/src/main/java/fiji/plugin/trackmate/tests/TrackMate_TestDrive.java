@@ -12,6 +12,7 @@ public class TrackMate_TestDrive {
 	
 	public static <T extends RealType<T> & NativeType<T>> void main(String[] args) {
 		
+		@SuppressWarnings("unused")
 		File file;
 		if (IJ.isWindows()) {
 			file = new File("E:/Users/JeanYves/Desktop/Data/FakeTracks.tif");

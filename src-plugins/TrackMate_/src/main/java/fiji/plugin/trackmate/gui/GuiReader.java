@@ -28,7 +28,9 @@ import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMate_;
 import fiji.plugin.trackmate.detection.DetectorSettings;
 import fiji.plugin.trackmate.io.TmXmlReader;
+import fiji.plugin.trackmate.io.TmXmlReader_v12;
 import fiji.plugin.trackmate.tracking.TrackerSettings;
+import fiji.plugin.trackmate.util.Version;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
 import fiji.plugin.trackmate.visualization.hyperstack.HyperStackDisplayer;
 
@@ -93,6 +95,7 @@ public class GuiReader <T extends RealType<T> & NativeType<T>> {
 	 * @param file  the file to load
 	 */
 	public void loadFile(File file) {
+		
 		// Init target fields
 		TrackMateModel<T> model = new TrackMateModel<T>();
 		plugin = new TrackMate_<T>(model);
@@ -108,6 +111,16 @@ public class GuiReader <T extends RealType<T> & NativeType<T>> {
 		reader.parse();
 		logger.log("  Parsing file done.\n");
 
+		// Check file version & deal with older save format
+		String fileVersionStr = reader.getVersion();
+		Version fileVersion = new Version(fileVersionStr);
+		Version currentVersion = new Version("1.3.0");
+		if (fileVersion.compareTo(currentVersion ) < 0) {
+			logger.log("  Detected an older file format: v"+fileVersionStr);
+			logger.log(" Converting on the fly.\n");
+			// We substitute an able reader
+			reader = new TmXmlReader_v12<T>(file, logger, plugin);
+		}
 		
 		// Retrieve data and update GUI
 		Settings<T> settings = null;

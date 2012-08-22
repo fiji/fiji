@@ -1,5 +1,6 @@
 package fiji.plugin.trackmate.io;
 
+import static fiji.plugin.trackmate.io.TmXmlKeys.PLUGIN_VERSION_ATTRIBUTE_NAME;
 import static fiji.plugin.trackmate.io.TmXmlKeys.DETECTOR_ATTRIBUTE_NAME;
 import static fiji.plugin.trackmate.io.TmXmlKeys.DETECTOR_SETTINGS_CLASS_ATTRIBUTE_NAME;
 import static fiji.plugin.trackmate.io.TmXmlKeys.DETECTOR_SETTINGS_ELEMENT_KEY;
@@ -101,18 +102,18 @@ import fiji.plugin.trackmate.tracking.kdtree.NearestNeighborTracker;
 
 public class TmXmlReader <T extends RealType<T> & NativeType<T>> {
 
-	private static final boolean DEBUG = false;
+	protected static final boolean DEBUG = false;
 	//	private static final boolean useMultithreading = TrackMate_.DEFAULT_USE_MULTITHREADING; // Not yet
 
-	private Document document = null;
-	private File file;
-	private Element root;
-	private Logger logger;
+	protected Document document = null;
+	protected File file;
+	protected Element root;
+	protected Logger logger;
 	/** The plugin instance to operate on. This must be provided, in the case we want to load 
 	 * a file created with a subclass of {@link TrackMate_} (e.g. with new factories) so that 
 	 * correct detectors, etc... can be instantiated from the extended plugin.
 	 */
-	private final TrackMate_<T> plugin;
+	protected final TrackMate_<T> plugin;
 	/** A map of all spots loaded. We need this for performance, since we need to recreate 
 	 * both the filtered spot collection and the tracks graph from the same spot objects 
 	 * that the main spot collection.. In the file, they are referenced by their {@link Spot#ID()},
@@ -120,9 +121,9 @@ public class TmXmlReader <T extends RealType<T> & NativeType<T>> {
 	 * We made this cache a {@link ConcurrentHashMap} because we hope to load large data in a 
 	 * multi-threaded way.
 	 */
-	private ConcurrentHashMap<Integer, Spot> cache;
+	protected ConcurrentHashMap<Integer, Spot> cache;
 	/** A flag to indicate whether we already parsed the file. */
-	private boolean parsed = false;
+	protected boolean parsed = false;
 
 	/*
 	 * CONSTRUCTORS
@@ -169,6 +170,13 @@ public class TmXmlReader <T extends RealType<T> & NativeType<T>> {
 		root = document.getRootElement();
 		parsed = true;
 	}
+	
+	/**
+	 * @return the version string stored in the file.
+	 */
+	public String getVersion() {
+		return root.getAttribute(PLUGIN_VERSION_ATTRIBUTE_NAME).getValue();
+	}
 
 	/**
 	 * Return a {@link TrackMateModel} from all the information stored in this file.
@@ -184,7 +192,7 @@ public class TmXmlReader <T extends RealType<T> & NativeType<T>> {
 		Settings<T> settings = getSettings();
 		getDetectorSettings(settings);
 		getTrackerSettings(settings);
-		//		settings.imp = getImage();
+		settings.imp = getImage();
 		model.setSettings(settings);
 
 		// Spot Filters
@@ -202,6 +210,7 @@ public class TmXmlReader <T extends RealType<T> & NativeType<T>> {
 		if (null != graph) {
 			model.setGraph(graph);
 		}
+		
 		// Track Filters
 		List<FeatureFilter> trackFilters = getTrackFeatureFilters();
 		model.getSettings().setTrackFilters(trackFilters);
@@ -443,7 +452,7 @@ public class TmXmlReader <T extends RealType<T> & NativeType<T>> {
 				// They do not match. We DO NOT give priority to what has been saved. That way we always
 				// have something that works (when invoking the process methods of the plugin).
 
-				logger.error("Tracker settings class ("+detectorSettingsClassName+") does not match tracker requirements (" +
+				logger.error("Tracker settings class ("+detectorSettingsClassName+") does not match detector requirements (" +
 						ss.getClass().getName()+"),\n");
 				logger.error("substituting default one.\n");
 
