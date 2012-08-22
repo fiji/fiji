@@ -64,15 +64,16 @@ public class SpotFilterDescriptor <T extends RealType<T> & NativeType<T>> implem
 	public void aboutToDisplayPanel() {
 		TrackMateModel<T> model = plugin.getModel();
 		component.setTarget(model.getFeatureModel().getSpotFeatures(), model.getSettings().getSpotFilters(),  
-				model.getFeatureModel().getSpotFeatureNames(), model.getFeatureModel().getSpotFeatureValues(), "spots"); 
+				model.getFeatureModel().getSpotFeatureNames(), model.getFeatureModel().getSpotFeatureValues(), "spots");
+		linkGuiToView();
 	}
 
 	@Override
-	public void displayingPanel() {
+	public void displayingPanel() {}
+	
+	public void linkGuiToView() {
 		
 		 // Link displayer and component
-		final TrackMateModelView<T> displayer = wizard.getDisplayer();
-		
 		SwingUtilities.invokeLater(new Runnable() {			
 			@Override
 			public void run() {
@@ -80,8 +81,9 @@ public class SpotFilterDescriptor <T extends RealType<T> & NativeType<T>> implem
 				component.addActionListener(new ActionListener() {
 					@Override
 					public void actionPerformed(ActionEvent event) {
-						displayer.setDisplaySettings(TrackMateModelView.KEY_SPOT_COLOR_FEATURE, component.getColorByFeature());
-						displayer.refresh();
+						
+						wizard.getDisplayer().setDisplaySettings(TrackMateModelView.KEY_SPOT_COLOR_FEATURE, component.getColorByFeature());
+						wizard.getDisplayer().refresh();
 					}
 				});
 
@@ -91,7 +93,7 @@ public class SpotFilterDescriptor <T extends RealType<T> & NativeType<T>> implem
 						// We set the thresholds field of the model but do not touch its selected spot field yet.
 						plugin.getModel().getSettings().setSpotFilters(component.getFeatureFilters());
 						plugin.execSpotFiltering();
-						displayer.refresh();
+						wizard.getDisplayer().refresh();
 					}
 				});
 

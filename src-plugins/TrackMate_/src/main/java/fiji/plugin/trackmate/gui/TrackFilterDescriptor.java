@@ -64,14 +64,16 @@ public class TrackFilterDescriptor <T extends RealType<T> & NativeType<T>> imple
 	public void aboutToDisplayPanel() {
 		TrackMateModel<T> model = plugin.getModel();
 		component.setTarget(model.getFeatureModel().getTrackFeatures(), model.getSettings().getTrackFilters(),  
-				model.getFeatureModel().getTrackFeatureNames(), model.getFeatureModel().getTrackFeatureValues(), "tracks"); 
+				model.getFeatureModel().getTrackFeatureNames(), model.getFeatureModel().getTrackFeatureValues(), "tracks");
+		linkGuiToView();
 	}
 
 	@Override
-	public void displayingPanel() {
+	public void displayingPanel() {}
+	
+	public void linkGuiToView() {
 
 		// Link displayer and component
-		final TrackMateModelView<T> displayer = wizard.getDisplayer();
 		SwingUtilities.invokeLater(new Runnable() {			
 			@Override
 			public void run() {
@@ -79,8 +81,8 @@ public class TrackFilterDescriptor <T extends RealType<T> & NativeType<T>> imple
 				component.addActionListener(new ActionListener() {
 					@Override
 					public void actionPerformed(ActionEvent event) {
-						displayer.setDisplaySettings(TrackMateModelView.KEY_TRACK_COLOR_FEATURE, component.getColorByFeature());
-						displayer.refresh();
+						wizard.getDisplayer().setDisplaySettings(TrackMateModelView.KEY_TRACK_COLOR_FEATURE, component.getColorByFeature());
+						wizard.getDisplayer().refresh();
 					}
 				});
 
