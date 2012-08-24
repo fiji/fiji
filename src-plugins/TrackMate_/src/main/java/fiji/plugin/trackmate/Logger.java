@@ -1,5 +1,7 @@
 package fiji.plugin.trackmate;
 
+import ij.IJ;
+
 import java.awt.Color;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -107,5 +109,32 @@ public abstract class Logger extends PrintWriter {
 		}
 	};
 	
+	/**
+	 * This {@link Logger} outputs to the ImageJ log window, and to the ImageJ toolbar
+	 * to report progress. Colors are ignored.
+	 */
+	public static Logger IJ_LOGGER = new Logger() {
+
+		@Override
+		public void log(String message, Color color) {
+			IJ.log(message);
+		}
+
+		@Override
+		public void error(String message) {
+			IJ.log(message);
+		}
+
+		@Override
+		public void setProgress(double val) {
+			IJ.showProgress(val);
+		}
+
+		@Override
+		public void setStatus(String status) {
+			IJ.showStatus(status);
+		}
+		
+	};
 	
 }
