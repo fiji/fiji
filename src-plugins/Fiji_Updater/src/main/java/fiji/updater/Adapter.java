@@ -35,7 +35,7 @@ public class Adapter {
 		"ij-ui-swing-updater", "ij-updater-core", "ij-core", "eventbus", "sezpoz"
 	};
 	public final static String[] VERSIONS = {
-		"-2.0.0-SNAPSHOT", "-2.0.0-SNAPSHOT", "-2.0.0-SNAPSHOT", "1.4", "-1.9"
+		"-2.0.0-SNAPSHOT", "-2.0.0-SNAPSHOT", "-2.0.0-SNAPSHOT", "-1.4", "-1.9"
 	};
 	public final static String[] TIMESTAMPS = {
 		"20120817173023", "20120817173023", "20120824223209", "20120404210913", "20120404210913"
