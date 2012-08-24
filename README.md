@@ -39,7 +39,7 @@ the environment, and call ImageJ.
 To pass arguments to ImageJ, just specify them on the command line.
 
 To pass arguments to the Java Virtual Machine, specify them on the command
-line, separating them from the ImageJ arguments (if any) with a "--".
+line, separating them from the ImageJ arguments (if any) with a `--`.
 In other words, if you want to override the memory setting, call Fiji
 like this:
 
