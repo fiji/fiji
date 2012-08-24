@@ -145,8 +145,8 @@ public class Adapter {
 	/**
 	 * Run the ImageJ updater (Swing).
 	 */
+	@SuppressWarnings("unchecked")
 	public void runUpdater() {
-		@SuppressWarnings("unchecked")
 		Class<Runnable> updaterClass = (Class<Runnable>)loadClass(UPDATER_CLASS_NAME);
 		if (updaterClass != null) try {
 			if (remoteClassLoader != null) try {
@@ -164,6 +164,18 @@ public class Adapter {
 		} catch (IllegalAccessException e) {
 			ui.error("Could not access the Updater: " + e.getMessage());
 			return;
+		} catch (Throwable t) {
+			// Fall back to running the updater from the remote update site
+			updaterClass = (Class<Runnable>)loadClass(UPDATER_CLASS_NAME, true);
+			Thread.currentThread().setContextClassLoader(updaterClass.getClassLoader());
+			try {
+				updaterClass.newInstance().run();
+			} catch (Throwable e) {
+				ui.handleException(e);
+				ui.error("Could not access the Updater: " + e.getMessage()
+						+ "\nPrevious exception: " + t.getMessage());
+				return;
+			}
 		}
 	}
 
@@ -545,7 +557,11 @@ public class Adapter {
 	 * @return the class object
 	 */
 	protected Class<?> loadClass(String name) {
-		ClassLoader currentLoader = Adapter.class.getClassLoader();
+		return loadClass(name, false);
+	}
+
+	protected Class<?> loadClass(String name, boolean forceRemote) {
+		ClassLoader currentLoader = forceRemote ? null : Adapter.class.getClassLoader();
 		Class<?> result = null;
 		try {
 			result = currentLoader.loadClass(name);
