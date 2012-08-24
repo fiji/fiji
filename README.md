@@ -71,22 +71,22 @@ See NOTES.
 Authors
 -------
 
-Albert Cardona
-Benjamin Schmid
-Cornelius Sicker
-Dan White
-Erwin Frise
-Gabriel Landini
-Greg Jefferis
-Ignacio Arganda-Carreras
-Jean-Yves Tinevez
-Johannes Schindelin
-Mark Longair
-Pavel Tomancak
-Stephan Preibisch
-Stephan Saalfeld
-Verena Kaynig
-and all the good people providing ImageJ and plugins
+* Albert Cardona
+* Benjamin Schmid
+* Cornelius Sicker
+* Dan White
+* Erwin Frise
+* Gabriel Landini
+* Greg Jefferis
+* Ignacio Arganda-Carreras
+* Jean-Yves Tinevez
+* Johannes Schindelin
+* Mark Longair
+* Pavel Tomancak
+* Stephan Preibisch
+* Stephan Saalfeld
+* Verena Kaynig
+* and all the good people providing ImageJ and plugins
 
 See also http://fiji.sc/wiki/index.php/Contributors
 
