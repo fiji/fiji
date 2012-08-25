@@ -322,9 +322,11 @@ public class SubFake extends Rule {
 
 	protected boolean isImageJ1Plugin(File file) {
 		String name = file.getName();
-		if (!name.endsWith(".jar") || name.indexOf('_') < 0 || !file.exists())
+		if (name.indexOf('_') < 0 || !file.exists())
 			return false;
-		try {
+		if (file.isDirectory())
+			return new File(file, "src/main/resources/plugins.config").exists();
+		if (name.endsWith(".jar")) try {
 			JarFile jar = new JarFile(file);
 			for (JarEntry entry : Collections.list(jar.entries()))
 				if (entry.getName().equals("plugins.config")) {
