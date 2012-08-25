@@ -385,10 +385,6 @@ src-plugins/VIB-lib/math3d/Eigensystem3x3Float.java[src-plugins/VIB-lib/sed.py $
 src-plugins/VIB-lib/math3d/Eigensystem2x2Float.java[src-plugins/VIB-lib/sed.py $PRE $TARGET] <- \
 	src-plugins/VIB-lib/math3d/Eigensystem2x2Double.java
 
-MAINCLASS(jars/test-fiji.jar)=fiji.Tests
-CLASSPATH(jars/test-fiji.jar)=jars/junit.jar
-
-
 # This also compiles lib/<platform>/<ffmpeg-library>
 CLASSPATH(plugins/FFMPEG_IO.jar)=jars/ij.jar
 plugins/FFMPEG_IO.jar[src-plugins/FFMPEG_IO/generate.bsh] <- src-plugins/FFMPEG_IO/**/*
