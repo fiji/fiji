@@ -334,10 +334,18 @@ public class POM extends DefaultHandler implements Comparable<POM> {
 		return mainClass;
 	}
 
+	public String getPackaging() {
+		return packaging;
+	}
+
 	public File getTarget() {
 		if (!buildFromSource)
 			return target;
 		return new File(new File(directory, "target"), getJarName());
+	}
+
+	public File getDirectory() {
+		return directory;
 	}
 
 	public boolean getBuildFromSource() {
