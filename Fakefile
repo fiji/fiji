@@ -107,7 +107,6 @@ SUBMODULE_TARGETS=\
 	plugins/Image_5D.jar \
 	plugins/TrakEM2_.jar \
 	plugins/ij-ImageIO_.jar \
-	plugins/loci_tools.jar \
 	plugins/mpicbg_.jar \
 
 PLUGIN_TARGETS=\
@@ -236,7 +235,6 @@ CLASSPATH(plugins/mpicbg_.jar)=jars/ij.jar:jars/mpicbg.jar
 plugins/mpicbg_.jar <- modules/mpicbg/
 CLASSPATH(jars/mpicbg.jar)=jars/ij.jar:jars/Jama.jar
 jars/mpicbg.jar <- modules/mpicbg/
-plugins/loci_tools.jar <- modules/bio-formats/
 CLASSPATH(jars/VectorString.jar)=jars/ij.jar:jars/Jama.jar:$JAVA3D_JARS
 jars/VectorString.jar <- modules/TrakEM2/
 CLASSPATH(plugins/TrakEM2_.jar)=jars/ij.jar:jars/jai_core.jar:jars/jai_codec.jar:jars/VectorString.jar:jars/postgresql.jar:jars/jcommon.jar:jars/jfreechart.jar:jars/edu_mines_jtk.jar:jars/VIB-lib.jar:plugins/VIB_.jar:jars/mpicbg.jar:plugins/loci_tools.jar:plugins/bUnwarpJ_.jar:plugins/level_sets.jar:plugins/Fiji_Plugins.jar:jars/Jama.jar:jars/imglib.jar:jars/imglib-algorithms.jar:jars/imglib-ij.jar:plugins/Simple_Neurite_Tracer.jar:plugins/3D_Viewer.jar:plugins/Lasso_and_Blow_Tool.jar:plugins/mpicbg_.jar:$JAVA3D_JARS
@@ -255,7 +253,6 @@ libs[] <- jars/test-fiji.jar jars/zs.jar jars/VIB-lib.jar jars/Jama.jar \
 	plugins/FFMPEG_IO.jar \
 
 CLASSPATH(jars/zs.jar)=jars/Jama.jar
-CLASSPATH(plugins/loci_tools.jar)=jars/ij.jar
 CLASSPATH(plugins/ij-ImageIO_.jar)=jars/ij.jar:jars/jai_core.jar:jars/jai_codec.jar
 LIBS(plugins/JNI_Example.jar)=-lm
 CLASSPATH(plugins/JNI_Example.jar)=jars/ij.jar:jars/fiji-lib.jar
