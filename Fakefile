@@ -134,7 +134,7 @@ plugins/TrakEM2_.jar <- modules/TrakEM2/
 plugins/ij-ImageIO_.jar <- modules/ij-plugins/
 
 # From submodules, using Maven/MiniMaven
-KEEPVERSION(jars/ij-app.jar)=true
+KEEPVERSION=true
 jars/ij-app.jar <- jars/ij.jar modules/imagej2/
 plugins/Image_5D.jar <- modules/image5d/
 
@@ -153,6 +153,7 @@ CLASSPATH(plugins/JNI_Example.jar)=jars/ij.jar:jars/fiji-lib.jar
 
 COPYDEPENDENCIES=true
 pom-fiji-plugins <- src-plugins/
+KEEPVERSION(plugins/Fiji_Updater.jar)=false
 
 # pre-Java5 generics ;-)
 
