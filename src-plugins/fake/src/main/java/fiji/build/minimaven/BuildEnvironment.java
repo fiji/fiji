@@ -50,6 +50,10 @@ public class BuildEnvironment {
 		mavenRepository = repository;
 	}
 
+	public void setVerbose(boolean verbose) {
+		this.verbose = verbose;
+	}
+
 	public boolean getDownloadAutomatically() {
 		return downloadAutomatically && !offlineMode;
 	}

@@ -153,6 +153,10 @@ public class SubFake extends Rule {
 	protected static BuildEnvironment miniMaven;
 
 	public POM getPOM() {
+		boolean verbose = getVarBool("VERBOSE");
+		if (miniMaven != null) {
+			miniMaven.setVerbose(verbose);
+		}
 		if (pomRead)
 			return pom;
 		File file = new File(Util.makePath(parser.cwd, getLastPrerequisite()), "pom.xml");
@@ -165,7 +169,6 @@ public class SubFake extends Rule {
 			targetBasename = targetBasename.substring(0, targetBasename.length() - 4);
 		// TODO: targetBasename could end in "-<version>"
 		try {
-			boolean verbose = getVarBool("VERBOSE");
 			boolean debug = getVarBool("DEBUG");
 			if (miniMaven == null) {
 				miniMaven = new BuildEnvironment(parser.fake.err, true, verbose, debug);
@@ -185,6 +188,7 @@ public class SubFake extends Rule {
 						miniMaven.parse(pom);
 				}
 			}
+			miniMaven.setVerbose(verbose);
 			pom = miniMaven.parse(file);
 			if (!targetBasename.equals(pom.getArtifactId())) {
 				String groupId = pom.getGroupId();
