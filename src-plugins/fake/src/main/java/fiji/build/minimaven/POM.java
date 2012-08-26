@@ -126,6 +126,12 @@ public class POM extends DefaultHandler implements Comparable<POM> {
 		List<String> notUpToDates = new ArrayList<String>();
 		long lastModified = addRecursively(notUpToDates, source, ".java", target, ".class", false);
 		int count = notUpToDates.size();
+
+		// ugly work-around for Bio-Formats: EFHSSF.java only contains commented-out code
+		if (count == 1 && notUpToDates.get(0).endsWith("poi/hssf/dev/EFHSSF.java")) {
+			count = 0;
+		}
+
 		if (count > 0) {
 			if (env.verbose) {
 				final StringBuilder files = new StringBuilder();
