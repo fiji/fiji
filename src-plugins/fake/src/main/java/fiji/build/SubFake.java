@@ -43,8 +43,10 @@ public class SubFake extends Rule {
 
 	@Override
 	boolean checkUpToDate() {
-		if (!upToDate(configPath))
+		if (!upToDate(configPath)) {
+			verbose(target + " is not up-to-date because of " + configPath);
 			return false;
+		}
 
 		// check the classpath
 		for (String path : Util.splitPaths(getVar("CLASSPATH"))) {
@@ -77,11 +79,22 @@ public class SubFake extends Rule {
 			}
 
 			POM pom = getPOM();
-			if (pom != null)
-				return pom.upToDate(true) && upToDate(pom.getTarget(), target);
+			if (pom != null) {
+				if (!pom.upToDate(true)) {
+					verbose("MiniMaven says " + target + " is not up-to-date");
+					return false;
+				}
+				if (!upToDate(pom.getTarget(), target)) {
+					verbose(pom.getTarget() + " is not up-to-date because of " + target);
+					return false;
+				}
+				return true;
+			}
 
-			if (!upToDateRecursive(new File(Util.makePath(parser.cwd, directory)), target, true))
+			if (!upToDateRecursive(new File(Util.makePath(parser.cwd, directory)), target, true)) {
+				verbose(target + " not up-to-date because of " + directory);
 				return false;
+			}
 		} catch (Exception e) {
 			e.printStackTrace(parser.fake.err);
 			return false;

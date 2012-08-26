@@ -114,23 +114,47 @@ public class POM extends DefaultHandler implements Comparable<POM> {
 		if (!buildFromSource)
 			return true;
 		for (POM child : getDependencies(true, env.downloadAutomatically, "test"))
-			if (child != null && !child.upToDate(includingJar))
+			if (child != null && !child.upToDate(includingJar)) {
+				if (env.verbose) {
+					env.err.println(getArtifactId() + " not up-to-date because of " + child.getArtifactId());
+				}
 				return false;
+			}
 
 		File source = getSourceDirectory();
 
 		List<String> notUpToDates = new ArrayList<String>();
 		long lastModified = addRecursively(notUpToDates, source, ".java", target, ".class", false);
 		int count = notUpToDates.size();
-		if (count > 0)
+		if (count > 0) {
+			if (env.verbose) {
+				final StringBuilder files = new StringBuilder();
+				int counter = 0;
+				for (String item : notUpToDates) {
+					if (counter > 3) {
+						files.append(", ...");
+						break;
+					}
+					else if (counter > 0) {
+						files.append(", ");
+					}
+					files.append(item);
+				}
+				env.err.println(getArtifactId() + " not up-to-date because " + count + " source files are not up-to-date (" + files + ")");
+			}
 			return false;
+		}
 		long lastModified2 = updateRecursively(new File(source.getParentFile(), "resources"), target, true);
 		if (lastModified < lastModified2)
 			lastModified = lastModified2;
 		if (includingJar) {
 			File jar = getTarget();
-			if (!jar.exists() || jar.lastModified() < lastModified)
+			if (!jar.exists() || jar.lastModified() < lastModified) {
+				if (env.verbose) {
+					env.err.println(getArtifactId() + " not up-to-date because " + jar + " is not up-to-date");
+				}
 				return false;
+			}
 		}
 		return true;
 	}
