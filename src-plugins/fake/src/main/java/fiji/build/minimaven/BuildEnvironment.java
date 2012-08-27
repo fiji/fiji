@@ -275,7 +275,7 @@ public class BuildEnvironment {
 
 			// Only check versions once per day
 			File versionMetaData = new File(directory, "maven-metadata-version.xml");
-			if (System.currentTimeMillis() - versionMetaData.lastModified() < 24 * 60 * 60 * 1000l)
+			if (System.currentTimeMillis() - versionMetaData.lastModified() < updateInterval * 60 * 1000l)
 				return;
 
 			String message = quiet ? null : "Checking for new version of " + dependency.artifactId;
