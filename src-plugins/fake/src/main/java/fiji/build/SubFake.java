@@ -361,6 +361,7 @@ public class SubFake extends Rule {
 		return result;
 	}
 
+	@Override
 	protected void clean(boolean dry_run) {
 		super.clean(dry_run);
 		clean(getLastPrerequisite() + jarName, dry_run);
@@ -374,6 +375,17 @@ public class SubFake extends Rule {
 		else {
 			POM pom = getPOM();
 			if (pom != null) {
+				boolean isIJ1Plugin = isImageJ1Plugin(pom.getDirectory());
+				final String subDirectory = isIJ1Plugin ? "plugins" : "jars";
+				final File targetDirectory = new File(System.getProperty("ij.dir"), subDirectory);
+				final File unversioned = new File(targetDirectory, pom.getArtifactId() + ".jar");
+				if (unversioned.exists()) {
+					unversioned.delete();
+				}
+				final File versioned = new File(targetDirectory, pom.getJarName());
+				if (versioned.exists()) {
+					versioned.delete();
+				}
 				try {
 					pom.clean();
 				} catch (Exception e) {
