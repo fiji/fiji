@@ -11,6 +11,7 @@ import java.io.IOException;
 
 public class Importer extends ImagePlus implements PlugIn {
 	/** Takes path as argument, or asks for it and then open the image.*/
+	@Override
 	public void run(final String arg) {
 		File file = null;
 		if (arg != null && arg.length() > 0)
@@ -40,7 +41,7 @@ public class Importer extends ImagePlus implements PlugIn {
 		try {
 			io = new IO(new IJProgress());
 			setStack(path, io.readMovie(path, useVirtualStack, first, last).getStack());
-			if (arg.equals(""))
+			if ("".equals(arg))
 				show();
 		} catch (IOException e) {
 			if (io != null)

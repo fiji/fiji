@@ -5,7 +5,7 @@ package fiji.ffmpeg;
  */
 
 public class FFMPEGSingle extends JNALibraryLoader {
-	protected interface FFMPEG extends AVUTIL, AVCORE, AVDEVICE, AVCODEC, AVFORMAT, AVLOG, SWSCALE { }
+	protected interface FFMPEG extends AVUTIL, AVCORE, AVDEVICE, AVCODEC, AVFORMAT, AVLOG, SWSCALE { /* this block left intentionally blank */ }
 	protected static FFMPEG AVUTIL;
 	protected static FFMPEG AVCORE;
 	protected static FFMPEG AVDEVICE;
@@ -20,7 +20,7 @@ public class FFMPEGSingle extends JNALibraryLoader {
 
 		try {
 			AVCORE = AVDEVICE = AVCODEC = AVFORMAT = AVLOG = SWSCALE = AVUTIL =
-				(FFMPEG)loadLibrary("ffmpeg", -1, FFMPEG.class);
+				loadLibrary("ffmpeg", -1, FFMPEG.class);
 		} catch (UnsatisfiedLinkError e) {
 			showException(e);
 			return false;
