@@ -442,10 +442,13 @@ public class POM extends DefaultHandler implements Comparable<POM> {
 			}
 			// make sure that snapshot .pom files are updated once a day
 			if (!env.offlineMode && downloadAutomatically && pom != null && dependency.version != null &&
-					dependency.version.endsWith("-SNAPSHOT") && dependency.snapshotVersion == null &&
+					(dependency.version.startsWith("[") || dependency.version.endsWith("-SNAPSHOT")) &&
 					pom.directory.getPath().startsWith(BuildEnvironment.mavenRepository.getPath())) {
 				if (maybeDownloadAutomatically(dependency, !env.verbose, downloadAutomatically)) {
-					dependency.setSnapshotVersion(SnapshotPOMHandler.parse(new File(pom.directory, "maven-metadata-snapshot.xml")));
+					if (dependency.version.startsWith("["))
+						dependency.setSnapshotVersion(VersionPOMHandler.parse(new File(pom.directory.getParentFile(), "maven-metadata-version.xml")));
+					else
+						dependency.setSnapshotVersion(SnapshotPOMHandler.parse(new File(pom.directory, "maven-metadata-snapshot.xml")));
 				}
 			}
 			if (pom == null && downloadAutomatically)
