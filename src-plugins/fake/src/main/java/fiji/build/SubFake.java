@@ -311,8 +311,9 @@ public class SubFake extends Rule {
 			File file = dependency.getTarget();
 			File directory = plugins != null && isImageJ1Plugin(file) ? plugins : targetDirectory;
 			String jarName;
-			if (getVarBool("keepVersion") || dependency.getArtifactId().startsWith("imglib2")) {
-				File unversioned = new File(directory, dependency.getArtifactId() + ".jar");
+			final String artifactId = dependency.getArtifactId();
+			if ((getVarBool("keepVersion") || artifactId.startsWith("imglib2")) && !artifactId.equals("Fiji_Updater")) {
+				File unversioned = new File(directory, artifactId + ".jar");
 				if (unversioned.exists())
 					unversioned.delete();
 				jarName = dependency.getJarName();
