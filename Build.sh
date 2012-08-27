@@ -81,7 +81,6 @@ ensure_fake_is_built () {
 	 java -jar precompiled/javac.jar -source 1.5 -target 1.5 -classpath precompiled/javac.jar -d src-plugins/fake/target/classes $(find src-plugins/fake/ -name \*.java) &&
 	 : compile .jar using MiniMaven
 	 (cd src-plugins &&
-	  java -Dij.dir="$CWD"/.. -classpath fake/target/classes"$PATHSEP"../precompiled/javac.jar -DartifactId=fake fiji.build.MiniMaven get-dependencies &&
 	  java -Dij.dir="$CWD"/.. -classpath fake/target/classes"$PATHSEP"../precompiled/javac.jar -DartifactId=fake fiji.build.MiniMaven jar &&
 	  cp fake/target/${FAKE_JAR#*/} ../jars/))
 }
