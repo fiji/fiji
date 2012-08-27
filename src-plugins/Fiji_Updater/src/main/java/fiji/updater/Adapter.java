@@ -32,16 +32,13 @@ import javax.swing.JOptionPane;
 public class Adapter {
 	public final static String JARS_PREFIX = "http://update.imagej.net/jars/";
 	public final static String[] JARS = {
-		"ij-ui-swing-updater", "ij-updater-core", "ij-core",
-		"log4j", "slf4j-log4j12", "slf4j-api", "sezpoz"
+		"ij-ui-swing-updater", "ij-updater-core", "ij-core", "eventbus", "sezpoz"
 	};
 	public final static String[] VERSIONS = {
-		"-2.0.0-SNAPSHOT", "-2.0.0-SNAPSHOT", "-2.0.0-SNAPSHOT",
-		"-1.2.14", "-1.5.10", "-1.5.10", "-1.9"
+		"-2.0.0-SNAPSHOT", "-2.0.0-SNAPSHOT", "-2.0.0-SNAPSHOT", "-1.4", "-1.9"
 	};
 	public final static String[] TIMESTAMPS = {
-		"20120724094913", "20120724094913", "20120724094913",
-		"20120404210913", "20120404210913", "20120404210913", "20120404210913"
+		"20120817173023", "20120817173023", "20120824223209", "20120404210913", "20120404210913"
 	};
 	public final static String UPDATER_CLASS_NAME = "imagej.updater.gui.ImageJUpdater";
 	private final static String UPTODATE_CLASS_NAME = "imagej.updater.core.UpToDate";
@@ -145,8 +142,8 @@ public class Adapter {
 	/**
 	 * Run the ImageJ updater (Swing).
 	 */
+	@SuppressWarnings("unchecked")
 	public void runUpdater() {
-		@SuppressWarnings("unchecked")
 		Class<Runnable> updaterClass = (Class<Runnable>)loadClass(UPDATER_CLASS_NAME);
 		if (updaterClass != null) try {
 			if (remoteClassLoader != null) try {
@@ -164,6 +161,18 @@ public class Adapter {
 		} catch (IllegalAccessException e) {
 			ui.error("Could not access the Updater: " + e.getMessage());
 			return;
+		} catch (Throwable t) {
+			// Fall back to running the updater from the remote update site
+			updaterClass = (Class<Runnable>)loadClass(UPDATER_CLASS_NAME, true);
+			Thread.currentThread().setContextClassLoader(updaterClass.getClassLoader());
+			try {
+				updaterClass.newInstance().run();
+			} catch (Throwable e) {
+				ui.handleException(e);
+				ui.error("Could not access the Updater: " + e.getMessage()
+						+ "\nPrevious exception: " + t.getMessage());
+				return;
+			}
 		}
 	}
 
@@ -545,7 +554,11 @@ public class Adapter {
 	 * @return the class object
 	 */
 	protected Class<?> loadClass(String name) {
-		ClassLoader currentLoader = Adapter.class.getClassLoader();
+		return loadClass(name, false);
+	}
+
+	protected Class<?> loadClass(String name, boolean forceRemote) {
+		ClassLoader currentLoader = forceRemote ? null : Adapter.class.getClassLoader();
 		Class<?> result = null;
 		try {
 			result = currentLoader.loadClass(name);
