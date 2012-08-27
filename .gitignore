@@ -215,20 +215,23 @@ hs_err*.log
 /plugins/mpicbg_-[0-9]*.jar
 
 # Dependencies copied by MiniMaven #
+/jars/bcmail-jdk14-[0-9]*.jar
+/jars/bcprov-jdk14-[0-9]*.jar
 /jars/bsh-[0-9]*.jar
 /jars/clibwrapper_jiio-[0-9]*.jar
 /jars/clojure-[0-9]*.jar
 /jars/commons-math-[0-9]*.jar
+/jars/itext-[0-9]*.jar
 /jars/itextpdf-[0-9]*.jar
-/jars/j3d-core-utils-[0-9]*.jar
 /jars/j3d-core-[0-9]*.jar
+/jars/j3d-core-utils-[0-9]*.jar
 /jars/jai_codec-[0-9]*.jar
 /jars/jama-[0-9]*.jar
 /jars/java-cup-[0-9]*.jar
 /jars/javassist-[0-9]*.jar
 /jars/jcommon-[0-9]*.jar
-/jars/jdom-contrib-[0-9]*.jar
 /jars/jdom-[0-9]*.jar
+/jars/jdom-contrib-[0-9]*.jar
 /jars/jfreechart-[0-9]*.jar
 /jars/jgrapht-jdk1.6-[0-9]*.jar
 /jars/jgraphx-[0-9]*.jar
@@ -399,3 +402,6 @@ hs_err*.log
 # Retrotranslator #
 /jars/backport-util-concurrent.jar
 /jars/retrotranslator-runtime.jar
+
+# Miscellaneous #
+/jars/Updater_Fix-[0-9]*.jar
