@@ -11,12 +11,15 @@
 		<version>2.0.0-SNAPSHOT</version>
 	</parent>
 
-	<groupId>sc.fiji</groupId>
 	<artifactId>pom-ffmpeg-io</artifactId>
 	<packaging>pom</packaging>
 
 	<name>FFMPEG I/O</name>
 	<description>A JNA wrapper around FFMPEG</description>
+
+	<properties>
+	    <ffmpeg.rootdir>${basedir}</ffmpeg.rootdir>
+	</properties>
 
 	<modules>
 		<module>ffmpeg</module>
