@@ -206,7 +206,7 @@ public class Fake {
 	}
 
 	// keep this synchronized with imagej.updater.core.FileObject
-	private static Pattern versionPattern = Pattern.compile("(.+?)(-\\d+(\\.\\d+)+[a-z]?(-[A-Za-z0-9.]+|\\.GA)*)(\\.jar(-[a-z]*)?)");
+	private static Pattern versionPattern = Pattern.compile("(.+?)(-\\d+(\\.\\d+)+[a-z]?\\d?(-[A-Za-z0-9.]+|\\.GA)*)(\\.jar(-[a-z]*)?)");
 
 	public static Matcher matchVersionedFilename(String filename) {
 		return versionPattern.matcher(filename);
