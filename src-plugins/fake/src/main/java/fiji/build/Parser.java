@@ -19,7 +19,6 @@ import java.util.Stack;
 import java.util.StringTokenizer;
 import java.util.TreeMap;
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class Parser {
 	public final static String path = "Fakefile";
@@ -254,9 +253,6 @@ public class Parser {
 		return null;
 	}
 
-	// keep this synchronized with imagej.updater.core.FileObject
-	private static Pattern versionPattern = Pattern.compile("(.+?)(-\\d+(\\.\\d+)+[a-z]?(-[A-Za-z0-9.]+|\\.GA)*)(\\.jar(-[a-z]*)?)");
-
 	public Rule parseRules(List<String> targets) throws FakeException {
 		Rule result = null;
 
@@ -363,7 +359,7 @@ public class Parser {
 		if (targets != null) {
 			for (int i = 0; i < targets.size(); i++) {
 				if (!allRules.containsKey(targets.get(i))) {
-					Matcher matcher = versionPattern.matcher(targets.get(i));
+					Matcher matcher = Fake.matchVersionedFilename(targets.get(i));
 					if (matcher.matches())
 						targets.set(i, matcher.group(1) + matcher.group(5));
 				}

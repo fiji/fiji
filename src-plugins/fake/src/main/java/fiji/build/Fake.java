@@ -5,6 +5,7 @@ import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FilenameFilter;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
@@ -35,6 +36,9 @@ import java.util.jar.JarFile;
 import java.util.jar.JarInputStream;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
+
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import java.util.zip.ZipException;
 
@@ -199,6 +203,13 @@ public class Fake {
 
 	protected String discoverClassPath() throws FakeException {
 		return Util.join(discoverJars(), File.pathSeparator);
+	}
+
+	// keep this synchronized with imagej.updater.core.FileObject
+	private static Pattern versionPattern = Pattern.compile("(.+?)(-\\d+(\\.\\d+)+[a-z]?(-[A-Za-z0-9.]+|\\.GA)*)(\\.jar(-[a-z]*)?)");
+
+	public static Matcher matchVersionedFilename(String filename) {
+		return versionPattern.matcher(filename);
 	}
 
 	/* input defaults to reading the Fakefile, cwd to "." */
