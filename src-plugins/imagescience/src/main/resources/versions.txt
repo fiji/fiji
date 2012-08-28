@@ -1,3 +1,6 @@
+2.4.1, December 21, 2011
+- Renamed the Wave2ARGB class to Wave2Color and improved its API.
+
 2.4.0, September 17, 2010
 - Completely redesigned and reimplemented the Progressor class.
 - Added a public Progressor object to all relevant classes.
@@ -87,4 +90,4 @@
 - Organizational changes to support distribution as a single jar-file.
 
 2.0.0, December 2, 2004
-- Complete reorganization of the previous library.
+- Major revision of the previous library.

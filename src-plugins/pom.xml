@@ -19,6 +19,10 @@
 	<name>Aggregator project for the Fiji plugins</name>
 	<description></description>
 
+	<properties>
+		<imagescience.version>2.4.1</imagescience.version>
+	</properties>
+
 	<modules>
 		<module>VIB-lib</module>
 		<module>pal-optimization</module>

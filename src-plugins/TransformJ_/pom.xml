@@ -26,7 +26,7 @@
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>imagescience</artifactId>
-			<version>2.4.0</version>
+			<version>${imagescience.version}</version>
 		</dependency>
 	</dependencies>
 
