@@ -21,6 +21,8 @@
 
 	<properties>
 		<imagescience.version>2.4.1</imagescience.version>
+		<jcommon.version>1.0.17</jcommon.version>
+		<jfreechart.version>1.0.14</jfreechart.version>
 	</properties>
 
 	<modules>
