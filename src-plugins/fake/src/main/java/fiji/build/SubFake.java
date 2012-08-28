@@ -307,7 +307,7 @@ public class SubFake extends Rule {
 				plugins = null;
 		}
 
-		for (POM dependency : pom.getDependencies(true, false, "test", "provided")) {
+		for (POM dependency : pom.getDependencies(true, false, "test", "provided", "system")) {
 			File file = dependency.getTarget();
 			File directory = plugins != null && isImageJ1Plugin(file) ? plugins : targetDirectory;
 			String jarName;
