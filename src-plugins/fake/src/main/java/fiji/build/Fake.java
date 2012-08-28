@@ -159,20 +159,12 @@ public class Fake {
 		setDefaultProperty("python.home", pythonHome);
 		setDefaultProperty("python.cachedir.skip", "false");
 		String jythonJar = pythonHome + "/jython.jar";
-		if (!new File(jythonJar).exists())
-			jythonJar = ijHome + "/precompiled/jython.jar";
 		getClassLoader(ijHome + "/jars/jna.jar");
-		if (new File(jythonJar).exists())
-			getClassLoader(jythonJar);
+		getClassLoader(jythonJar);
 	}
 
 	protected static void discoverBeanshell() throws IOException {
 		String bshJar = ijHome + "/jars/bsh.jar";
-		if (!new File(bshJar).exists()) {
-			bshJar = ijHome + "/jars/bsh.jar";
-			if (!new File(bshJar).exists())
-				bshJar = ijHome + "/precompiled/bsh.jar";
-		}
 		getClassLoader(bshJar);
 	}
 
@@ -1153,8 +1145,23 @@ public class Fake {
 			throws IOException {
 		if (classLoader == null)
 			classLoader = new JarClassLoader();
-		if (jarFile != null)
+		if (jarFile != null && jarFile.endsWith(".jar")) {
+			File file = new File(jarFile);
+			if (!file.exists()) {
+				final String baseName = Util.stripSuffix(file.getName(), ".jar");
+				File[] list = file.getParentFile().listFiles(new FilenameFilter() {
+					@Override
+					public boolean accept(File dir, String name) {
+						if (!name.startsWith(baseName) || !name.endsWith(".jar")) return false;
+						final Matcher matcher = matchVersionedFilename(name);
+						return matcher.matches() && matcher.group(1).equals(baseName);
+					}
+				});
+				if (list != null && list.length > 0)
+					jarFile = list[0].getPath();
+			}
 			classLoader.add(jarFile);
+		}
 		return classLoader;
 	}
 
