@@ -150,7 +150,7 @@ public class Adapter {
 				firstTime();
 			} catch (Throwable t) {
 				t.printStackTrace();
-				ui.error("Could not download the ImageJ Updater!");
+				fallBackToRemoteUpdater(t);
 				return;
 			}
 			Thread.currentThread().setContextClassLoader(updaterClass.getClassLoader());
@@ -162,17 +162,20 @@ public class Adapter {
 			ui.error("Could not access the Updater: " + e.getMessage());
 			return;
 		} catch (Throwable t) {
-			// Fall back to running the updater from the remote update site
-			updaterClass = (Class<Runnable>)loadClass(UPDATER_CLASS_NAME, true);
-			Thread.currentThread().setContextClassLoader(updaterClass.getClassLoader());
-			try {
-				updaterClass.newInstance().run();
-			} catch (Throwable e) {
-				ui.handleException(e);
-				ui.error("Could not access the Updater: " + e.getMessage()
-						+ "\nPrevious exception: " + t.getMessage());
-				return;
-			}
+			fallBackToRemoteUpdater(t);
+		}
+	}
+
+	// Fall back to running the updater from the remote update site
+	private void fallBackToRemoteUpdater(Throwable t) {
+		Class<Runnable> updaterClass = (Class<Runnable>)loadClass(UPDATER_CLASS_NAME, true);
+		Thread.currentThread().setContextClassLoader(updaterClass.getClassLoader());
+		try {
+			updaterClass.newInstance().run();
+		} catch (Throwable e) {
+			ui.handleException(e);
+			ui.error("Could not access the Updater: " + e.getMessage()
+					+ "\nPrevious exception: " + t.getMessage());
 		}
 	}
 
