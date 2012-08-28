@@ -219,6 +219,13 @@ public class Adapter {
 	protected void firstTime() throws Exception {
 		File ijDir = new File(System.getProperty("ij.dir"));
 
+		File dbXmlGz = new File(ijDir, "db.xml.gz");
+		if (!dbXmlGz.exists()) {
+			OutputStream out = new GZIPOutputStream(new FileOutputStream(dbXmlGz));
+			out.write("<pluginRecords><update-site name=\"Fiji\" url=\"http://fiji.sc/update/\" timestamp=\"0\"/></pluginRecords>".getBytes());
+			out.close();
+		}
+
 		List<String> filenames = new ArrayList<String>();
 		for (int i = 0; i < JARS.length; i++)
 			filenames.add("jars/" + JARS[i] + VERSIONS[i] + ".jar");
@@ -247,13 +254,6 @@ public class Adapter {
 			classPath.add(new File(ijDir, (String)invoke(file, "getLocalFilename", false)).toURI().toURL());
 		remoteClassLoader = new URLClassLoader(classPath.toArray(new URL[classPath.size()]));
 		progress = loadClass(progress.getClass().getName());
-
-		File dbXmlGz = new File(ijDir, "db.xml.gz");
-		if (!dbXmlGz.exists()) {
-			OutputStream out = new GZIPOutputStream(new FileOutputStream(dbXmlGz));
-			out.write("<pluginRecords><update-site name=\"Fiji\" url=\"http://fiji.sc/update/\" timestamp=\"0\"/></pluginRecords>".getBytes());
-			out.close();
-		}
 
 		// Blow away ImageJ's class loader so we can pick up the newly downloaded classes
 		if (progressClassName != SWING_PROGRESS_CLASS_NAME) try {
