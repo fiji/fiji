@@ -142,7 +142,6 @@ plugins/Image_5D.jar <- modules/image5d/
 libs[] <- jars/test-fiji.jar jars/zs.jar jars/VIB-lib.jar jars/Jama.jar \
 	jars/fiji-scripting.jar jars/fiji-lib.jar jars/jep.jar \
 	jars/pal-optimization.jar jars/Updater_Fix.jar plugins/JNI_Example.jar \
-	plugins/FFMPEG_IO.jar \
 
 CLASSPATH(jars/zs.jar)=jars/Jama.jar
 CLASSPATH(plugins/ij-ImageIO_.jar)=jars/ij.jar:jars/jai_core.jar:jars/jai_codec.jar
@@ -164,14 +163,6 @@ src-plugins/VIB-lib/math3d/Eigensystem3x3Float.java[src-plugins/VIB-lib/sed.py $
 	src-plugins/VIB-lib/math3d/Eigensystem3x3Double.java
 src-plugins/VIB-lib/math3d/Eigensystem2x2Float.java[src-plugins/VIB-lib/sed.py $PRE $TARGET] <- \
 	src-plugins/VIB-lib/math3d/Eigensystem2x2Double.java
-
-# This also compiles lib/<platform>/<ffmpeg-library>
-CLASSPATH(plugins/FFMPEG_IO.jar)=jars/ij.jar
-plugins/FFMPEG_IO.jar[src-plugins/FFMPEG_IO/generate.bsh] <- src-plugins/FFMPEG_IO/**/*
-
-# This compiles and cross-compiles lib/<platform>/<ffmpeg-library>
-CLASSPATH(plugins/FFMPEG_IO.jar-cross)=jars/ij.jar
-plugins/FFMPEG_IO.jar-cross[src-plugins/FFMPEG_IO/generate.bsh all] <- src-plugins/FFMPEG_IO/**/*
 
 # headless.jar
 
