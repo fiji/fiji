@@ -10,18 +10,15 @@ package fiji.ffmpeg;
 
 import ij.IJ;
 import ij.ImagePlus;
-import ij.ImageStack;
 import ij.WindowManager;
-
 import ij.gui.GenericDialog;
-
 import ij.io.SaveDialog;
-
 import ij.plugin.PlugIn;
 
 import java.io.IOException;
 
 public class Exporter implements PlugIn {
+	@Override
 	public void run(String arg) {
 		IO io;
 		try {
