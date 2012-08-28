@@ -153,8 +153,3 @@ Multi Kymograph:
 Unresolved (TODO):
 * Example/ scripts folder
 * Java Advanced Imaging jai_codec.jar, jai_core.jar, jai_imageio.jar
-
-
-Problematic:
-* imagescience.jar
-* TransformJ
