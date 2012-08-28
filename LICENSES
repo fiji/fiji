@@ -70,6 +70,7 @@ Name					File					Author(s)						Contact								License
 * jzlib 				jzlib.jar	 			ymnk 							jzlib@jcraft.com 						BSD-like http://www.jcraft.com/jzlib/LICENSE.txt
 * Kalman Stack Filter			contained in Stack_Manipulation.jar	Christopher Philip Mauer				-								BSD-like
 * Kuwahara Filter			Kuwahara_Filter.jar			Wayne Rasband						http://imagej.nih.gov/ij/plugins/kuwahara.html			PD
+* MTrackJ	 			MTrackJ_.jar	 			Erik Meijering	 					http://www.imagescience.org/meijering/software/mtrackj/		imagescience (see below)
 * Multi Kymograph			Multi_Kymograph.jar			Jens Rietdorf & Arne Seitz				http://www.embl.de/eamnet/html/body_kymograph.html		BSD
 * Linear Kuwahara			Linear_Kuwahara.jar			Christian Tischer													GPL
 * Local Thickness			LocalThickness_.jar			Bob Dougherty						rpd@optinav.com							BSD

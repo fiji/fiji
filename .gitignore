@@ -151,6 +151,7 @@ hs_err*.log
 /plugins/Linear_Kuwahara-[0-9]*.jar
 /plugins/LocalThickness_-[0-9]*.jar
 /plugins/MTrack2_-[0-9]*.jar
+/plugins/MTrackJ_-[0-9]*.jar
 /plugins/M_I_P-[0-9]*.jar
 /plugins/Manual_Tracking-[0-9]*.jar
 /plugins/MosaicJ_-[0-9]*.jar

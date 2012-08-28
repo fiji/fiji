@@ -139,6 +139,7 @@
 		<module>Descriptor_based_registration</module>
 		<module>Fiji_Package_Maker</module>
 		<module>Updater_Fix</module>
+		<module>MTrackJ_</module>
 	</modules>
 
 	<build>
