@@ -630,20 +630,26 @@ public abstract class DefaultUniverse extends SimpleUniverse
 		return win.getImagePlus();
 	}
 
+	Canvas3D offCanvas = null;
+
 	/**
 	 * Returns a snapshot of the given size.
 	 */
-	public ImagePlus takeSnapshot(int w, int h) {
-		GraphicsConfigTemplate3D templ = new GraphicsConfigTemplate3D();
+	public ImagePlus takeSnapshot(final int w, final int h) {
+		final GraphicsConfigTemplate3D templ = new GraphicsConfigTemplate3D();
 		templ.setDoubleBuffer(GraphicsConfigTemplate3D.UNNECESSARY);
-		GraphicsConfiguration gc = GraphicsEnvironment.
-				getLocalGraphicsEnvironment().
-				getDefaultScreenDevice().
-				getBestConfiguration(templ);
-		Canvas3D onCanvas = getCanvas();
-		Canvas3D offCanvas = new Canvas3D(gc, true);
-		Screen3D sOn = onCanvas.getScreen3D();
-		Screen3D sOff = offCanvas.getScreen3D();
+		final Canvas3D onCanvas = getCanvas();
+		if ( offCanvas == null )
+		{
+			final GraphicsConfiguration gc = GraphicsEnvironment.
+			getLocalGraphicsEnvironment().
+			getDefaultScreenDevice().
+			getBestConfiguration(templ);
+			offCanvas = new Canvas3D(gc, true);
+			System.out.println("construct canvas");
+		}
+		final Screen3D sOn = onCanvas.getScreen3D();
+		final Screen3D sOff = offCanvas.getScreen3D();
 		sOff.setSize(sOn.getSize());
 		sOff.setPhysicalScreenWidth(sOn.getPhysicalScreenWidth());
 		sOff.setPhysicalScreenHeight(sOn.getPhysicalScreenHeight());
