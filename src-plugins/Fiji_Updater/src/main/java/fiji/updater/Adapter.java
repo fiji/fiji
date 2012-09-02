@@ -32,16 +32,13 @@ import javax.swing.JOptionPane;
 public class Adapter {
 	public final static String JARS_PREFIX = "http://update.imagej.net/jars/";
 	public final static String[] JARS = {
-		"ij-ui-swing-updater", "ij-updater-core", "ij-core",
-		"log4j", "slf4j-log4j12", "slf4j-api", "sezpoz"
+		"ij-ui-swing-updater", "ij-updater-core", "ij-core", "eventbus", "sezpoz"
 	};
 	public final static String[] VERSIONS = {
-		"-2.0.0-SNAPSHOT", "-2.0.0-SNAPSHOT", "-2.0.0-SNAPSHOT",
-		"-1.2.14", "-1.5.10", "-1.5.10", "-1.9"
+		"-2.0.0-SNAPSHOT", "-2.0.0-SNAPSHOT", "-2.0.0-SNAPSHOT", "-1.4", "-1.9"
 	};
 	public final static String[] TIMESTAMPS = {
-		"20120724094913", "20120724094913", "20120724094913",
-		"20120404210913", "20120404210913", "20120404210913", "20120404210913"
+		"20120817173023", "20120817173023", "20120824223209", "20120404210913", "20120404210913"
 	};
 	public final static String UPDATER_CLASS_NAME = "imagej.updater.gui.ImageJUpdater";
 	private final static String UPTODATE_CLASS_NAME = "imagej.updater.core.UpToDate";
@@ -145,15 +142,15 @@ public class Adapter {
 	/**
 	 * Run the ImageJ updater (Swing).
 	 */
+	@SuppressWarnings("unchecked")
 	public void runUpdater() {
-		@SuppressWarnings("unchecked")
 		Class<Runnable> updaterClass = (Class<Runnable>)loadClass(UPDATER_CLASS_NAME);
 		if (updaterClass != null) try {
 			if (remoteClassLoader != null) try {
 				firstTime();
 			} catch (Throwable t) {
 				t.printStackTrace();
-				ui.error("Could not download the ImageJ Updater!");
+				fallBackToRemoteUpdater(t);
 				return;
 			}
 			Thread.currentThread().setContextClassLoader(updaterClass.getClassLoader());
@@ -164,6 +161,21 @@ public class Adapter {
 		} catch (IllegalAccessException e) {
 			ui.error("Could not access the Updater: " + e.getMessage());
 			return;
+		} catch (Throwable t) {
+			fallBackToRemoteUpdater(t);
+		}
+	}
+
+	// Fall back to running the updater from the remote update site
+	private void fallBackToRemoteUpdater(Throwable t) {
+		Class<Runnable> updaterClass = (Class<Runnable>)loadClass(UPDATER_CLASS_NAME, true);
+		Thread.currentThread().setContextClassLoader(updaterClass.getClassLoader());
+		try {
+			updaterClass.newInstance().run();
+		} catch (Throwable e) {
+			ui.handleException(e);
+			ui.error("Could not access the Updater: " + e.getMessage()
+					+ "\nPrevious exception: " + t.getMessage());
 		}
 	}
 
@@ -207,6 +219,13 @@ public class Adapter {
 	protected void firstTime() throws Exception {
 		File ijDir = new File(System.getProperty("ij.dir"));
 
+		File dbXmlGz = new File(ijDir, "db.xml.gz");
+		if (!dbXmlGz.exists()) {
+			OutputStream out = new GZIPOutputStream(new FileOutputStream(dbXmlGz));
+			out.write("<pluginRecords><update-site name=\"Fiji\" url=\"http://fiji.sc/update/\" timestamp=\"0\"/></pluginRecords>".getBytes());
+			out.close();
+		}
+
 		List<String> filenames = new ArrayList<String>();
 		for (int i = 0; i < JARS.length; i++)
 			filenames.add("jars/" + JARS[i] + VERSIONS[i] + ".jar");
@@ -235,13 +254,6 @@ public class Adapter {
 			classPath.add(new File(ijDir, (String)invoke(file, "getLocalFilename", false)).toURI().toURL());
 		remoteClassLoader = new URLClassLoader(classPath.toArray(new URL[classPath.size()]));
 		progress = loadClass(progress.getClass().getName());
-
-		File dbXmlGz = new File(ijDir, "db.xml.gz");
-		if (!dbXmlGz.exists()) {
-			OutputStream out = new GZIPOutputStream(new FileOutputStream(dbXmlGz));
-			out.write("<pluginRecords><update-site name=\"Fiji\" url=\"http://fiji.sc/update/\" timestamp=\"0\"/></pluginRecords>".getBytes());
-			out.close();
-		}
 
 		// Blow away ImageJ's class loader so we can pick up the newly downloaded classes
 		if (progressClassName != SWING_PROGRESS_CLASS_NAME) try {
@@ -545,7 +557,11 @@ public class Adapter {
 	 * @return the class object
 	 */
 	protected Class<?> loadClass(String name) {
-		ClassLoader currentLoader = Adapter.class.getClassLoader();
+		return loadClass(name, false);
+	}
+
+	protected Class<?> loadClass(String name, boolean forceRemote) {
+		ClassLoader currentLoader = forceRemote ? null : Adapter.class.getClassLoader();
 		Class<?> result = null;
 		try {
 			result = currentLoader.loadClass(name);

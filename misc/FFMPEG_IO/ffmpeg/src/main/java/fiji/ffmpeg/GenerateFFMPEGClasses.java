@@ -1,3 +1,5 @@
+package fiji.ffmpeg;
+
 // This class is not meant to be a fully-fledged
 // .h -> JNA converter as JNAerator tries to do.
 // It is meant to be just good enough for FFMPEG.
@@ -20,11 +22,11 @@ public class GenerateFFMPEGClasses {
 		protected boolean breakAtSpecials;
 		protected Stack<String> stack = new Stack<String>();
 
-		public LineIterator(String contents) {
+		public LineIterator(final String contents) {
 			this(contents, false);
 		}
 
-		public LineIterator(String contents, boolean breakAtSpecials) {
+		public LineIterator(final String contents, final boolean breakAtSpecials) {
 			this.contents = contents;
 			this.breakAtSpecials = breakAtSpecials;
 			offset = 0;
@@ -59,12 +61,12 @@ public class GenerateFFMPEGClasses {
 			return contents.substring(offset, nextOffset);
 		}
 
-		public void push(String line) {
+		public void push(final String line) {
 			stack.push(line);
 		}
 	}
 
-	String filterOutIf0(String contents) {
+	private String filterOutIf0(final String contents) {
 		StringBuffer buf = new StringBuffer();
 		LineIterator iter = new LineIterator(contents);
 		int nest = 0;
@@ -84,7 +86,7 @@ public class GenerateFFMPEGClasses {
 		return buf.toString();
 	}
 
-	String reduceEmptyLines(String contents) {
+	private String reduceEmptyLines(final String contents) {
 		StringBuffer buf = new StringBuffer();
 		int offset = 0, length = contents.length();
 		while (offset < length && contents.charAt(offset) == '\n')
@@ -103,7 +105,7 @@ public class GenerateFFMPEGClasses {
 		return buf.toString();
 	}
 
-	String filterOutComments(String contents) {
+	private String filterOutComments(final String contents) {
 		StringBuffer buf = new StringBuffer();
 		int length = contents.length();
 		for (int offset = 0; offset < length; offset++) {
@@ -148,7 +150,8 @@ public class GenerateFFMPEGClasses {
 		return buf.toString().trim();
 	}
 
-	String indent(String contents, int level) {
+	private String indent(final String contents, final int indentLevel) {
+		int level = indentLevel;
 		if (level < 1)
 			return contents;
 		String tabs = "\t";
@@ -165,7 +168,7 @@ public class GenerateFFMPEGClasses {
 		return buf.toString();
 	}
 
-	Pattern compile(String regex) {
+	private static Pattern compile(final String regex) {
 		return Pattern.compile(regex
 			.replace("PARAMTYPE", "(?:TYPE|TYPE *\\(\\*IDENT\\)\\([^\\)]*\\))")
 			.replace("PARAMNAME", "IDENT(?:\\[[^\\]]*\\])*")
@@ -178,60 +181,61 @@ public class GenerateFFMPEGClasses {
 			.replace("SPACE", " "), Pattern.DOTALL);
 	}
 
-	Pattern guardPattern =
+	private static Pattern guardPattern =
 		compile("^#ifndef (IDENT)[^\n]*\n"
 		+ " *#define (IDENT)[^\n]*\n"
 		+ "(.*\n|)"
 		+ " *#endif[^\n]*\n?$");
-	Pattern definePattern =
+	private static Pattern definePattern =
 		compile("^# *define (IDENT) *(.*) *$");
-	Pattern externVariablePattern =
+	private static Pattern externVariablePattern =
 		compile("^extern (TYPE) *(IDENT); *$");
-	Pattern staticVariablePattern =
+	private static Pattern staticVariablePattern =
 		compile("^static (TYPE) *(IDENT)( *\\[[^\\]]*\\])*( *=.*)?; *$");
-	Pattern functionPattern =
+	private static Pattern functionPattern =
 		compile("^(?:extern )?(TYPE) *(IDENT)\\((void|((PARAMTYPE *(?:PARAMNAME)?, *)*PARAMTYPE *(?:PARAMNAME)?)?)\\) *(?:av_const *)?(?:av_malloc_attrib av_alloc_size\\(\\d+\\) *)?;$");
-	Pattern callbackPattern =
+	private static Pattern callbackPattern =
 		compile("^?(TYPE) *\\(\\*(IDENT)\\)\\((void|((PARAMTYPE *(?:PARAMNAME)?, *)*PARAMTYPE *(?:PARAMNAME)?)?)\\) *;$");
-	Pattern motionValTablePattern = 
+	private static Pattern motionValTablePattern =
 		compile("^?(TYPE) *\\(\\*(IDENT)((?:\\[[^\\]]*\\])*)\\) *((?:\\[[^\\]]*\\])*);$");
-	Pattern parameterPattern =
+	private static Pattern parameterPattern =
 		compile("^(PARAMTYPE) *(PARAMNAME)?$");
-	Pattern enumPattern =
+	private static Pattern enumPattern =
 		//compile("^enum (IDENT)? *\\{ *((IDENT( *= *-?\\d+)?,? *)*) *,? *\\};$");
 		compile("^enum (IDENT)? *\\{([^\\}]*)\\};$");
-	Pattern skipDefine =
+	private static Pattern skipDefine =
 		compile("^(?:AV_(?:STRINGIFY|TOSTRING|GLUE|JOIN|PRAGMA|VERSION_INT|VERSION_DOT|VERSION|NOPTS_VALUE|TIME_BASE_Q)"
 			+ "|PIX_FMT_NE|CodecType|CODEC_TYPE_UNKNOWN|av_malloc_attrib"
 			+ "|FF_MM_(?:FORCE|MMX|3DNOW|SSE|SSE2|SSE2SLOW|3DNOWEXT|SSE3|SSE3SLOW|SSSE3|SSE4|SSE42|IWMMXT|ALTIVEC)"
 			+ ")"); // + "|(?:INT64_MIN|UINT64_MAX|INT_BIT|offsetof|LABEL_MANGLE|LOCAL_MANGLE|MANGLE|dprintf))");
-	Pattern structPattern =
+	private static Pattern structPattern =
 		compile("^(?:typedef )?struct (IDENT)? *\\{$");
-	Pattern structMemberPattern =
+	private static Pattern structMemberPattern =
 		compile("^(TYPE) *(IDENT(?: *, *IDENT)*)((?:\\[([^\\]]+)\\])*); *$");
-	Pattern bitFieldPattern =
+	private static Pattern bitFieldPattern =
 		compile("^(?:unsigned )?int (IDENT):(\\d+);$");
-	Pattern structEndPattern =
+	private static Pattern structEndPattern =
 		compile("^\\} *(IDENT)? *(?: DECLARE_ALIGNED\\([^\\)], *(IDENT)*\\) *)?(?:attribute_deprecated *)?;$");
-	Pattern privateStructs =
+	private static Pattern privateStructs =
 		compile("^(?:struct )?(SwsContext|AVSHA|AVAES|ReSampleContext|AVResampleContext|AVMetadata"
 			+ "|AVMetadataConv|ByteIOContext|URLContext)$");
 
-	protected String commonFrame;
+	private String commonFrame;
 
-	String filterOutGuard(String contents) {
+	private static String filterOutGuard(final String contents) {
 		Matcher matcher = guardPattern.matcher(contents);
 		if (matcher.matches() && matcher.group(1).trim().equals(matcher.group(2).trim()))
 			return matcher.group(3);
 		return contents;
 	}
 
-	Matcher match(Pattern pattern, String line) {
+	private static Matcher match(final Pattern pattern, final String line) {
 		Matcher matcher = pattern.matcher(line);
 		return matcher.matches() ? matcher : null;
 	}
 
-	String replace(String haystack, String needle, String replacement) {
+	private static String replace(final String text, final String needle, final String replacement) {
+		String haystack = text;
 		int offset = haystack.indexOf(needle);
 		while (offset >= 0) {
 			haystack = haystack.substring(0, offset)
@@ -242,13 +246,14 @@ public class GenerateFFMPEGClasses {
 		return haystack;
 	}
 
-	String capitalize(String name) {
+	private static String capitalize(final String name) {
 		if (name.length() == 0)
 			return name;
 		return name.substring(0, 1).toUpperCase() + name.substring(1);
 	}
 
-	String camelCasify(String name) {
+	private static String camelCasify(final String text) {
+		String name = text;
 		if (name.length() == 0)
 			return name;
 
@@ -259,21 +264,23 @@ public class GenerateFFMPEGClasses {
 		return name;
 	}
 
-	String stripPrefix(String string, String prefix) {
+	private static String stripPrefix(final String string, final String prefix) {
 		return string.startsWith(prefix) ? string.substring(prefix.length()) : string;
 	}
 
-	String currentLib;
-	TreeMap<String, String> name2lib = new TreeMap<String, String>();
+	private String currentLib;
+	private TreeMap<String, String> name2lib = new TreeMap<String, String>();
+	protected TreeMap<String, String> majorVersions = new TreeMap<String, String>();
 
-	String addLibPrefix(String name) {
+	private String addLibPrefix(final String name) {
 		String lib = name2lib.get(name);
 		if (lib == null || lib.equals(currentLib))
 			return name;
 		return lib + "." + name;
 	}
 
-	String plusStars(String string, int stars) {
+	private static String plusStars(final String string, final int starCount) {
+		int stars = starCount;
 		if (stars == 0)
 			return string;
 		String suffix = " ";
@@ -282,7 +289,8 @@ public class GenerateFFMPEGClasses {
 		return string + suffix;
 	}
 
-	String translateType(String type, boolean inStruct) {
+	private String translateType(final String originalType, final boolean inStruct) {
+		String type = originalType;
 		if (type.equals("const char *"))
 			return "String";
 		if (type.startsWith("Pointer "))
@@ -352,7 +360,7 @@ public class GenerateFFMPEGClasses {
 		return "PointerByReference /* " + plusStars(type, stars) + " */";
 	}
 
-	boolean unbalancedParens(String line) {
+	private static boolean unbalancedParens(final String line) {
 		int count = 0;
 		for (char c : line.toCharArray())
 			if (c == '(')
@@ -363,7 +371,7 @@ public class GenerateFFMPEGClasses {
 		return count > 0;
 	}
 
-	String functionParameters(String original) {
+	private String functionParameters(final String original) {
 		Matcher matcher;
 		StringBuffer buf = new StringBuffer();
 		int unnamedNumber = 1; // we call unnamed parameters param1, param2, etc
@@ -419,7 +427,7 @@ public class GenerateFFMPEGClasses {
 	protected int bitFieldBitCount = 0, bitFieldCount = 1;
 	protected StringBuffer bitFieldBuffer = new StringBuffer();
 
-	protected void flushBitField(StringBuffer out) {
+	protected void flushBitField(final StringBuffer out) {
 		if (bitFieldBitCount == 0)
 			return;
 		String name = "bitfield" + (bitFieldCount++);
@@ -429,7 +437,7 @@ public class GenerateFFMPEGClasses {
 		bitFieldBitCount = 0;
 	}
 
-	protected String bitField(int shift, int bits) {
+	protected String bitField(final int shift, final int bits) {
 		int index = shift / 32;
 		int left = shift - index * 32;
 		return (left > 0 ? "(" : "")
@@ -438,7 +446,7 @@ public class GenerateFFMPEGClasses {
 			+ " & 0x" + Integer.toHexString((int)((1l << bits) - 1)) + ")";
 	}
 
-	protected String setBitField(int shift, int bits) {
+	protected String setBitField(final int shift, final int bits) {
 		int index = shift / 32;
 		int left = shift - index * 32;
 		String mask = "0x" + Integer.toHexString(((1 << bits) - 1) << left);
@@ -447,13 +455,13 @@ public class GenerateFFMPEGClasses {
 			+ ") | (" + (left > 0 ? "(value << " + left + ")" : "value") + " & " + mask + ");\n";
 	}
 
-	protected void stageBitFieldEntry(String name, int bits) {
+	protected void stageBitFieldEntry(final String name, final int bitCount) {
+		int bits = bitCount;
 		if (bits > 31)
 			throw new RuntimeException("Can only handle bitfield entries < 32 bit");
 		// TODO: handle signed
-		String var = "bitfield" + bitFieldCount;
 		String setter = "public void " + name + "(int /* int:" + bits + " */ value) {\n";
-		bitFieldBuffer.append("public int ").append(name).append("() {\n\treturn ");
+		bitFieldBuffer.append("public int ").append(name + (name.equals("size") ? "_" : "")).append("() {\n\treturn ");
 		int index = bitFieldBitCount / 32;
 		int left = 32 - index * 32;
 		if (left == 0)
@@ -470,8 +478,10 @@ public class GenerateFFMPEGClasses {
 		bitFieldBitCount += bits;
 	}
 
-	String handleStruct(String line, int level, LineIterator iter) {
-if (level == 0 && bitFieldBitCount > 0) throw new RuntimeException("Bit fields not flushed!");
+	private String handleStruct(final String text, final int level, final LineIterator iter) {
+		String line = text;
+		if (level == 0 && bitFieldBitCount > 0)
+			throw new RuntimeException("Bit fields not flushed!");
 		Matcher matcher = match(structPattern, line);
 		if (matcher == null)
 			return null;
@@ -526,7 +536,7 @@ if (level == 0 && bitFieldBitCount > 0) throw new RuntimeException("Bit fields n
 				String name2 = matcher.group(2);
 				String callback = camelCasify(name2);
 				buf.append("public static interface ").append(callback).append(" extends Callback {\n")
-					.append("\tpublic ").append(translateType(matcher.group(1), false))
+					.append("\tpublic ").append(translateType(matcher.group(1), true))
 					.append(" callback(");
 				buf.append(functionParameters(matcher.group(3)));
 				buf.append(");\n}\npublic ").append(callback).append(" ").append(name2).append(";\n");
@@ -596,9 +606,9 @@ if (level == 0 && bitFieldBitCount > 0) throw new RuntimeException("Bit fields n
 				+ "\t\t// make a copy\n"
 				+ "\t\tpublic ByValue(" + name + " from) {\n"
 				+ "\t\t\tsuper();\n"
-				+ "\t\t\tbyte[] buffer = new byte[size()];\n"
-				+ "\t\t\tfrom.getPointer().read(0, buffer, 0, buffer.length);\n"
-				+ "\t\t\tgetPointer().write(0, buffer, 0, buffer.length);\n"
+				+ "\t\t\tbyte[] buffer_ = new byte[size()];\n"
+				+ "\t\t\tfrom.getPointer().read(0, buffer_, 0, buffer_.length);\n"
+				+ "\t\t\tgetPointer().write(0, buffer_, 0, buffer_.length);\n"
 				+ "\t\t\tread();\n"
 				+ "\t\t}\n"
 				+ "\t}\n"
@@ -620,7 +630,8 @@ if (level == 0 && bitFieldBitCount > 0) throw new RuntimeException("Bit fields n
 			+ indent("}\n", level);
 	}
 
-	String handleMacro(String value) {
+	private static String handleMacro(final String text) {
+		String value = text;
 		String[] parameters = value.substring(value.indexOf('(') + 1, value.lastIndexOf(')')).split("\\s*,\\s*");
 		if (value.startsWith("AV_VERSION_INT(")) {
 			value = ")";
@@ -644,7 +655,7 @@ if (level == 0 && bitFieldBitCount > 0) throw new RuntimeException("Bit fields n
 		throw new RuntimeException("Don't know how to handle macro " + value);
 	}
 
-	String toJNA(String contents) {
+	private String toJNA(final String contents) {
 		Matcher matcher;
 		StringBuffer buf = new StringBuffer();
 		LineIterator iter = new LineIterator(contents, false);
@@ -663,6 +674,8 @@ if (level == 0 && bitFieldBitCount > 0) throw new RuntimeException("Bit fields n
 			if (line.charAt(0) == '#') {
 				if ((matcher = match(definePattern, line)) != null &&
 						!skipDefine.matcher(matcher.group(1)).matches()) {
+					if (matcher.group(1).endsWith("_MAJOR"))
+						majorVersions.put(matcher.group(1), matcher.group(2));
 					if (matcher.group(2).startsWith("(") &&
 							line.charAt(line.indexOf(matcher.group(2)) - 1) != ' ')
 						continue; // cannot handle macros
@@ -741,6 +754,11 @@ if (level == 0 && bitFieldBitCount > 0) throw new RuntimeException("Bit fields n
 			if ((matcher = match(functionPattern, line)) != null) {
 				if (matcher.group(3).endsWith("va_list"))
 					buf.append("/* Skipping vararg function ").append(line).append(" */\n");
+				else if (line.equals("void avSetLogCallback(void (*callback)(const char *line));"))
+					buf.append("public interface AvLog extends Callback {\n"
+							+ "\tpublic void callback(String line);\n"
+							+ "}\n"
+							+ "public void avSetLogCallback(AvLog callback);\n");
 				else
 					buf.append(translateType(matcher.group(1), false))
 					.append(" ").append(matcher.group(2))
@@ -773,7 +791,7 @@ if (level == 0 && bitFieldBitCount > 0) throw new RuntimeException("Bit fields n
 		return buf.toString();
 	}
 
-	String readFile(File path) throws IOException {
+	private static String readFile(final File path) throws IOException {
 		FileReader reader = new FileReader(path);
 		StringBuffer buf = new StringBuffer();
 		char[] cBuf = new char[65536];
@@ -787,7 +805,7 @@ if (level == 0 && bitFieldBitCount > 0) throw new RuntimeException("Bit fields n
 		return buf.toString();
 	}
 
-	String preprocessWithoutDefines(String contents) {
+	private static String preprocessWithoutDefines(final String contents) {
 		StringBuffer buf = new StringBuffer();
 		LineIterator iter = new LineIterator(contents);
 		while (iter.next()) {
@@ -800,7 +818,7 @@ if (level == 0 && bitFieldBitCount > 0) throw new RuntimeException("Bit fields n
 		return buf.toString();
 	}
 
-	void handleHeaders(String pathToHeaders, String libName, String packageName, String outDir) throws IOException {
+	private void handleHeaders(final File pathToHeaders, final String libName, final String packageName, final File outDir) throws IOException {
 		File outFile = new File(outDir, packageName.replace('.', '/') + "/" + libName + ".java");
 		outFile.getParentFile().mkdirs();
 		FileWriter out = new FileWriter(outFile);
@@ -823,8 +841,7 @@ if (level == 0 && bitFieldBitCount > 0) throw new RuntimeException("Bit fields n
 		out.write("public interface " + libName + " extends Library {\n");
 
 		print("Generating " + libName);
-		File path = new File(pathToHeaders);
-		String[] list = libName.equals("AVUTIL") ? path.list() :
+		String[] list = libName.equals("AVUTIL") ? pathToHeaders.list() :
 			(libName.equals("AVFORMAT") ?
 			 new String[] { "avformat.h", "avio.h" } :
 			 new String[] { libName.toLowerCase() + ".h" });
@@ -836,7 +853,7 @@ if (level == 0 && bitFieldBitCount > 0) throw new RuntimeException("Bit fields n
 				continue;
 			print("Translating " + file);
 			out.write("\n\t// Header: " + file + "\n");
-			String contents = readFile(new File(path, file));
+			String contents = readFile(new File(pathToHeaders, file));
 			contents = filterOutIf0(contents);
 			contents = filterOutComments(contents);
 			contents = filterOutGuard(contents).trim();
@@ -845,17 +862,15 @@ if (level == 0 && bitFieldBitCount > 0) throw new RuntimeException("Bit fields n
 			contents = toJNA(contents);
 			out.write(indent(contents, 1));
 		}
-
-		if (libName.equals("AVUTIL"))
-			out.write(indent("public interface AvLog extends Callback {\n"
-				+ "\tpublic void callback(String string);\n"
-				+ "}\n"
-				+ "public void avSetLogCallback(AvLog callback);\n", 1));
+		out.write("\t/* avoid compiler warnings */\n");
+		out.write("\tinterface __Dummy__{\n");
+		out.write("\t\tvoid __dummy__(Callback a, Library b, NativeLong c, Pointer d, Structure e, DoubleByReference f, IntByReference g, LongByReference h, PointerByReference i, ShortByReference j);\n");
+		out.write("\t}\n");
 		out.write("}\n");
 		out.close();
 	}
 
-	public static int parseInt(String number) {
+	public static int parseInt(final String number) {
 		if (number.startsWith("0x"))
 			return Integer.parseInt(number.substring(2), 16);
 		if (number.length() > 1 && number.startsWith("0"))
@@ -863,34 +878,35 @@ if (level == 0 && bitFieldBitCount > 0) throw new RuntimeException("Bit fields n
 		return Integer.parseInt(number);
 	}
 
-	public static void print(String message) {
+	public static void print(final String message) {
 		System.err.println(message);
 	}
 
-	public static void handleException(Exception e) {
+	public static void handleException(final Exception e) {
 		e.printStackTrace();
 	}
 
-	public static String addSlash(String path) {
+	public static String addSlash(final String path) {
 		if (path.endsWith("/"))
 			return path;
 		return path + "/";
 	}
 
-	public static void main(String[] args) {
+	public static void main(final String[] args) {
 		if (args.length != 2) {
 			print("Usage: generator <ffmpeg-dir> <output-dir>");
 			System.exit(1);
 		}
 		String ffmpegDir = addSlash(args[0]);
 		String outDir = addSlash(args[1]);
+		new GenerateFFMPEGClasses().generate(new File(ffmpegDir), new File(outDir));
+	}
 
-		GenerateFFMPEGClasses generator = new GenerateFFMPEGClasses();
-
-		for (String lib : new String[] { "avutil", "avcore", "avdevice", "swscale", /* "avfilter", */ "avcodec", "avformat" }) {
-			generator.currentLib = lib.toUpperCase();
+	protected void generate(final File ffmpegDir, final File outDir) {
+		for (String lib : new String[] { "avutil", "avcore", "avdevice", "swscale", /* "avfilter", */ "avcodec", "avformat", "avlog" }) {
+			currentLib = lib.toUpperCase();
 			try {
-				generator.handleHeaders(ffmpegDir + "lib" + lib, generator.currentLib, "fiji.ffmpeg", outDir);
+				handleHeaders(new File(ffmpegDir, "lib" + lib), currentLib, "fiji.ffmpeg", outDir);
 			} catch (IOException e) {
 				handleException(e);
 				print("Could not handle " + lib + ": " + e);

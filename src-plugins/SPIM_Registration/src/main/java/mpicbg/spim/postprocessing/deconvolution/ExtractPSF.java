@@ -10,6 +10,7 @@ import mpicbg.imglib.cursor.LocalizableByDimCursor;
 import mpicbg.imglib.cursor.LocalizableCursor;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.image.ImageFactory;
+import mpicbg.imglib.image.display.imagej.ImageJFunctions;
 import mpicbg.imglib.interpolation.Interpolator;
 import mpicbg.imglib.interpolation.InterpolatorFactory;
 import mpicbg.imglib.interpolation.linear.LinearInterpolatorFactory;
@@ -159,7 +160,11 @@ public class ExtractPSF
 		
 		final int[] size = Util.getArrayFromValue( this.size, numDimensions );
 		if ( !this.isotropic )
-			size[ numDimensions - 1 ] /= Math.max( 1, views.get( 0 ).getZStretching()/2 );
+		{
+			size[ numDimensions - 1 ] *= Math.max( 1, 4.0/views.get( 0 ).getZStretching() );
+			if ( size[ numDimensions - 1 ] % 2 == 0 )
+				size[ numDimensions - 1 ]++;
+		}
 		
 		//IJ.log ( Util.printCoordinates( size ) );
 		
@@ -354,6 +359,9 @@ public class ExtractPSF
 		}	
 	
 		ViewDataBeads.normalizeImage( psf );
+		
+		// TODO: Remove
+		//ImageJFunctions.show( psf );
 		
 		return psf;
 	}

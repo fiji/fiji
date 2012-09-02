@@ -18,6 +18,7 @@ import java.util.Set;
 import java.util.Stack;
 import java.util.StringTokenizer;
 import java.util.TreeMap;
+import java.util.regex.Matcher;
 
 public class Parser {
 	public final static String path = "Fakefile";
@@ -356,6 +357,13 @@ public class Parser {
 		checkVariableNames();
 
 		if (targets != null) {
+			for (int i = 0; i < targets.size(); i++) {
+				if (!allRules.containsKey(targets.get(i))) {
+					Matcher matcher = Fake.matchVersionedFilename(targets.get(i));
+					if (matcher.matches())
+						targets.set(i, matcher.group(1) + matcher.group(5));
+				}
+			}
 			result = new All(this, "", targets);
 			allRules.put("", result);
 		}

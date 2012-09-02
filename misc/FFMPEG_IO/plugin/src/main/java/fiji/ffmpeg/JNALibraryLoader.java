@@ -1,11 +1,5 @@
 package fiji.ffmpeg;
 
-import com.sun.jna.Library;
-import com.sun.jna.Native;
-import com.sun.jna.NativeLibrary;
-import com.sun.jna.Pointer;
-import com.sun.jna.ptr.PointerByReference;
-
 import ij.IJ;
 
 import java.io.CharArrayWriter;
@@ -15,8 +9,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintWriter;
-
 import java.net.URL;
+
+import com.sun.jna.Library;
+import com.sun.jna.Native;
+import com.sun.jna.NativeLibrary;
 
 public class JNALibraryLoader {
 	protected static File libraryDirectory;
@@ -52,11 +49,9 @@ public class JNALibraryLoader {
 	}
 
 	protected static String getLibraryName(String name, int version) {
-		return (IJ.isWindows() ? "" : "lib")
-			+ name
-			+ (IJ.isWindows() && version >= 0 ? "-" + version : "")
-			+ "." + (IJ.isMacOSX() ? "dylib" :
-				IJ.isWindows() ? "dll" : "so");
+		if (IJ.isWindows())
+			return name + "-" + version + ".dll";
+		return "lib" + name + "." + (IJ.isMacOSX() ? "dylib" : "so") + "." + version;
 	}
 
 	protected static File getTempLibraryDirectory() {
@@ -71,7 +66,8 @@ public class JNALibraryLoader {
 		}
 	}
 
-	protected Object loadLibrary(String name, int version, Class libraryClass) {
+	@SuppressWarnings("unchecked")
+	protected<T> T loadLibrary(String name, int version, Class<T> libraryClass) {
 		String fileName = getLibraryName(name, version);
 		File file = new File(libraryDirectory, fileName);
 		if (!file.exists()) {
@@ -85,7 +81,7 @@ public class JNALibraryLoader {
 		}
 
 		NativeLibrary.addSearchPath(name, libraryDirectory.getAbsolutePath());
-		return Native.loadLibrary(name, libraryClass);
+		return (T)Native.loadLibrary(name, libraryClass);
 	}
 
 	protected static boolean copy(URL source, File target) {

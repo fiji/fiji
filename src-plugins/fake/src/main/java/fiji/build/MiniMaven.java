@@ -31,7 +31,7 @@ public class MiniMaven {
 			else
 				throw new RuntimeException("Funny ?-) " + ijDir);
 		}
-		for (String suffix : new String[] { "fake.jar", "fake", File.separator, "jars", File.separator, "build", File.separator })
+		for (String suffix : new String[] { "src-plugins/fake/target/classes", "fake.jar", "fake", "/", "jars", "/", "build", "/" })
 			if (ijDir.endsWith(suffix))
 				ijDir = ijDir.substring(0, ijDir.length() - suffix.length());
 		System.setProperty("ij.dir", ijDir);
@@ -43,7 +43,10 @@ public class MiniMaven {
 	public static void main(String[] args) throws Exception {
 		ensureIJDirIsSet();
 		PrintStream err = System.err;
-		BuildEnvironment env = new BuildEnvironment(err, false, "true".equals(getSystemProperty("minimaven.verbose", "false")), false);
+		BuildEnvironment env = new BuildEnvironment(err,
+			"true".equals(getSystemProperty("minimaven.download.automatically", "true")),
+			"true".equals(getSystemProperty("minimaven.verbose", "false")),
+			false);
 		POM root = env.parse(new File("pom.xml"), null);
 		String command = args.length == 0 ? "compile-and-run" : args[0];
 		String artifactId = getSystemProperty("artifactId", root.getArtifactId().equals("pom-ij-base") ? "ij-app" : root.getArtifactId());
