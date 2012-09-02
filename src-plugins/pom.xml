@@ -8,7 +8,7 @@
 	<parent>
 		<groupId>org.scijava</groupId>
 		<artifactId>pom-scijava</artifactId>
-		<version>1.16</version>
+		<version>1.19</version>
 	</parent>
 
 	<groupId>sc.fiji</groupId>
@@ -19,122 +19,129 @@
 	<name>Aggregator project for the Fiji plugins</name>
 	<description></description>
 
+	<properties>
+		<imagescience.version>2.4.1</imagescience.version>
+		<jcommon.version>1.0.17</jcommon.version>
+		<jfreechart.version>1.0.14</jfreechart.version>
+	</properties>
+
 	<modules>
-		<module>VIB-lib</module>
-		<module>pal-optimization</module>
-		<module>Jama</module>
-		<module>blockmatching_</module>
-		<module>bUnwarpJ_</module>
-		<module>registration_3d</module>
-		<module>IO_</module>
-		<module>LSM_Toolbox</module>
-		<module>SplineDeformationGenerator_</module>
-		<module>level_sets</module>
+		<module>3D_Blob_Segmentation</module>
+		<module>3D_Objects_Counter</module>
+		<module>3D_Viewer</module>
+		<module>Action_Bar</module>
+		<module>Algorithm_Launcher</module>
+		<module>AnalyzeSkeleton_</module>
 		<module>Analyze_Reader_Writer</module>
+		<module>Anisotropic_Diffusion_2D</module>
+		<module>Arrow_</module>
+		<module>Auto_Threshold</module>
+		<module>BalloonSegmentation_</module>
+		<module>BeanShell_Interpreter</module>
+		<module>Bug_Submitter</module>
+		<module>CLI_</module>
+		<module>CPU_Meter</module>
+		<module>Calculator_Plus</module>
+		<module>Clojure_Interpreter</module>
+		<module>Colocalisation_Analysis</module>
 		<module>Color_Histogram</module>
 		<module>Color_Inspector_3D</module>
-		<module>M_I_P</module>
-		<module>Interactive_3D_Surface_Plot</module>
-		<module>View5D_</module>
-		<module>Volume_Viewer</module>
-		<module>IJ_Robot</module>
-		<module>Fiji_Updater</module>
-		<module>LSM_Reader</module>
-		<module>AnalyzeSkeleton_</module>
-		<module>Skeletonize3D_</module>
-		<module>TurboReg_</module>
-		<module>Feature_Detection</module>
-		<module>Bug_Submitter</module>
-		<module>ToAST_</module>
-		<module>MTrack2_</module>
-		<module>Time_Stamper</module>
-		<module>Series_Labeler</module>
-		<module>Statistical_Region_Merging</module>
-		<module>Auto_Threshold</module>
-		<module>Stack_Manipulation</module>
-		<module>FlowJ_</module>
-		<module>PIV_analyser</module>
-		<module>Video_Editing</module>
-		<module>Sync_Win</module>
-		<module>Gray_Morphology</module>
-		<module>LocalThickness_</module>
-		<module>Fiji_Developer</module>
-		<module>Manual_Tracking</module>
-		<module>Calculator_Plus</module>
-		<module>3D_Objects_Counter</module>
-		<module>IsoData_Classifier</module>
-		<module>RATS_</module>
-		<module>Directionality_</module>
-		<module>Algorithm_Launcher</module>
-		<module>Anisotropic_Diffusion_2D</module>
-		<module>Simple_Neurite_Tracer</module>
-		<module>QuickPALM_</module>
-		<module>3D_Viewer</module>
-		<module>CPU_Meter</module>
-		<module>TopoJ_</module>
-		<module>Differentials_</module>
-		<module>MosaicJ_</module>
-		<module>PointPicker_</module>
-		<module>SheppLogan_</module>
-		<module>StackReg_</module>
-		<module>UnwarpJ_</module>
-		<module>Snakuscule_</module>
-		<module>imagescience</module>
-		<module>TransformJ_</module>
-		<module>FeatureJ_</module>
-		<module>RandomJ_</module>
-		<module>Linear_Kuwahara</module>
-		<module>Thread_Killer</module>
-		<module>Samples_</module>
-		<module>mij</module>
-		<module>wavelets</module>
-		<module>imageware</module>
-		<module>Extended_Depth_Field</module>
-		<module>panorama_</module>
-		<module>3D_Blob_Segmentation</module>
-		<module>Kuwahara_Filter</module>
-		<module>Action_Bar</module>
-		<module>Multi_Kymograph</module>
 		<module>Colour_Deconvolution</module>
-		<module>Dichromacy_</module>
-		<module>Threshold_Colour</module>
-		<module>Helmholtz_Analysis</module>
-		<module>Reconstruct_Reader</module>
-		<module>FS_Align_TrakEM2</module>
-		<module>fiji-compat</module>
-		<module>BalloonSegmentation_</module>
 		<module>CorrectBleach_</module>
-		<module>javac</module>
-		<module>fiji-scripting</module>
-		<module>Jython_Interpreter</module>
-		<module>Clojure_Interpreter</module>
-		<module>JRuby_Interpreter</module>
-		<module>BeanShell_Interpreter</module>
-		<module>fiji-lib</module>
-		<module>Lasso_and_Blow_Tool</module>
+		<module>Descriptor_based_registration</module>
+		<module>Dichromacy_</module>
+		<module>Differentials_</module>
+		<module>Directionality_</module>
+		<module>Extended_Depth_Field</module>
+		<module>FS_Align_TrakEM2</module>
+		<module>FeatureJ_</module>
+		<module>Feature_Detection</module>
+		<module>Fiji_Developer</module>
+		<module>Fiji_Package_Maker</module>
 		<module>Fiji_Plugins</module>
-		<module>VIB_</module>
-		<module>register_virtual_stack_slices</module>
-		<module>Siox_Segmentation</module>
-		<module>CLI_</module>
-		<module>Javascript_</module>
-		<module>Stitching_</module>
-		<module>fake</module>
-		<module>Refresh_Javas</module>
-		<module>Arrow_</module>
-		<module>Colocalisation_Analysis</module>
-		<module>Script_Editor</module>
-		<module>Trainable_Segmentation</module>
-		<module>jep</module>
+		<module>Fiji_Updater</module>
+		<module>FlowJ_</module>
+		<module>Graph_Cut</module>
+		<module>Gray_Morphology</module>
+		<module>Helmholtz_Analysis</module>
+		<module>IJ_Robot</module>
+		<module>IO_</module>
 		<module>Image_Expression_Parser</module>
+		<module>Interactive_3D_Surface_Plot</module>
+		<module>IsoData_Classifier</module>
+		<module>JRuby_Interpreter</module>
+		<module>Jama</module>
+		<module>Javascript_</module>
+		<module>Jython_Interpreter</module>
+		<module>Kuwahara_Filter</module>
+		<module>LSM_Reader</module>
+		<module>LSM_Toolbox</module>
+		<module>Lasso_and_Blow_Tool</module>
+		<module>Linear_Kuwahara</module>
+		<module>LocalThickness_</module>
+		<module>MTrack2_</module>
+		<module>MTrackJ_</module>
+		<module>M_I_P</module>
+		<module>Manual_Tracking</module>
+		<module>MosaicJ_</module>
+		<module>Multi_Kymograph</module>
+		<module>PIV_analyser</module>
+		<module>PointPicker_</module>
+		<module>QuickPALM_</module>
+		<module>RATS_</module>
+		<module>RandomJ_</module>
+		<module>Reconstruct_Reader</module>
+		<module>Refresh_Javas</module>
 		<module>SPIM_Opener</module>
 		<module>SPIM_Registration</module>
-		<module>Graph_Cut</module>
-		<module>weave_jy2java</module>
+		<module>Samples_</module>
+		<module>Script_Editor</module>
+		<module>Series_Labeler</module>
+		<module>SheppLogan_</module>
+		<module>Simple_Neurite_Tracer</module>
+		<module>Siox_Segmentation</module>
+		<module>Skeletonize3D_</module>
+		<module>Snakuscule_</module>
+		<module>SplineDeformationGenerator_</module>
+		<module>StackReg_</module>
+		<module>Stack_Manipulation</module>
+		<module>Statistical_Region_Merging</module>
+		<module>Stitching_</module>
+		<module>Sync_Win</module>
+		<module>Thread_Killer</module>
+		<module>Threshold_Colour</module>
+		<module>Time_Stamper</module>
+		<module>ToAST_</module>
+		<module>TopoJ_</module>
 		<module>TrackMate_</module>
-		<module>Descriptor_based_registration</module>
-		<module>Fiji_Package_Maker</module>
+		<module>Trainable_Segmentation</module>
+		<module>TransformJ_</module>
+		<module>TurboReg_</module>
+		<module>UnwarpJ_</module>
 		<module>Updater_Fix</module>
+		<module>VIB-lib</module>
+		<module>VIB_</module>
+		<module>Video_Editing</module>
+		<module>View5D_</module>
+		<module>Volume_Viewer</module>
+		<module>bUnwarpJ_</module>
+		<module>blockmatching_</module>
+		<module>fake</module>
+		<module>fiji-compat</module>
+		<module>fiji-lib</module>
+		<module>fiji-scripting</module>
+		<module>imagescience</module>
+		<module>imageware</module>
+		<module>javac</module>
+		<module>jep</module>
+		<module>level_sets</module>
+		<module>mij</module>
+		<module>pal-optimization</module>
+		<module>panorama_</module>
+		<module>register_virtual_stack_slices</module>
+		<module>registration_3d</module>
+		<module>wavelets</module>
+		<module>weave_jy2java</module>
 	</modules>
 
 	<build>

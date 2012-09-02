@@ -524,8 +524,8 @@ public class RandError extends Metrics
 	
 	/**
 	 * Calculate the Rand index between to clusters, as described by
-	 * William M. Rand \cite{Rand71}, but pruning out the zero component.
-	 * Otherwise the Rand index gets symmetric.
+	 * William M. Rand \cite{Rand71}, but pruning out the zero component in 
+	 * the ground truth (cluster 1).
 	 *
 	 * BibTeX:
 	 * <pre>
@@ -541,8 +541,8 @@ public class RandError extends Metrics
 	 * }
 	 * </pre>
 	 * 
-	 * @param cluster1 2D segmented image (objects are labeled with different numbers) 
-	 * @param cluster2 2D segmented image (objects are labeled with different numbers)
+	 * @param cluster1 ground truth, 2D segmented image (objects are labeled with different numbers) 
+	 * @param cluster2 prediction, 2D segmented image (objects are labeled with different numbers)
 	 * @return Rand index
 	 */
 	public double randIndex(
@@ -557,8 +557,14 @@ public class RandError extends Metrics
 		
 		double nPixels = pixels1.length;
 		
-		// number of pixels that are "in" (not background)
+		// number of pixels that are "in" (not background) in
+		// cluster number 1 (ground truth)
 		double n = 0;
+		
+		// reset min and max of the cluster processors 
+		// (needed in order to have correct min-max values)
+		cluster1.resetMinAndMax();
+		cluster2.resetMinAndMax();
 		
 		// Form the contingency matrix
 		int[][]cont = new int[(int) cluster1.getMax() + 1] [ (int) cluster2.getMax() + 1];		
@@ -596,23 +602,26 @@ public class RandError extends Metrics
 			for(int i=1; i<cont.length; i++)			
 				truePositives += cont[ i ][ j ] * ( cont[ i ][ j ] - 1 ) / 2;			
 						
-		// total number of pairs
+		// total number of pairs (after pruning background pixels
+		// of the ground truth)
 		double nPairsTotal = n * (n-1) / 2 ;
 		
+		// total number of positive samples in ground truth
 		double nPosTrue = 0;
 		for(int k=0; k<ni.length; k++)
 			nPosTrue += ni[ k ] * (ni[ k ]-1) /2;
 		
+		// number of pairs actually classified as positive (in the prediction)
 		double nPosActual = 0;
 		for(int k=0; k<nj.length; k++)
 			nPosActual += nj[ k ] * (nj[ k ]-1)/2;				
 				
 		// true negatives - type (ii): objects in the pair are placed in different 
 		// classes in cluster1 and in different classes in claster2
-		//double trueNegatives = (n*n + t2 - nis - njs) / 2;		
+		// trueNegatives = 	nNegTrue - falsePositives = (nPairsTotal - nPosTrue) - (nPosActual - truePositives)	
 		double trueNegatives = nPairsTotal + truePositives - nPosTrue - nPosActual;
 		
-		double agreements = truePositives + trueNegatives;		// number of agreements
+		double agreements = truePositives + trueNegatives;	// number of agreements
 		
 		double randIndex = agreements / nPairsTotal;
 		
@@ -622,8 +631,8 @@ public class RandError extends Metrics
 	
 	/**
 	 * Calculate the Rand index between to clusters, as described by
-	 * William M. Rand \cite{Rand71}, but pruning out the zero component.
-	 * Otherwise the Rand index gets symmetric.
+	 * William M. Rand \cite{Rand71}, but pruning out the zero component of
+	 * the ground truth, which leads to an asymmetric index.
 	 *
 	 * BibTeX:
 	 * <pre>
@@ -639,9 +648,9 @@ public class RandError extends Metrics
 	 * }
 	 * </pre>
 	 * 
-	 * @param cluster1 2D segmented image (objects are labeled with different numbers) 
-	 * @param cluster2 2D segmented image (objects are labeled with different numbers)
-	 * @return Rand index
+	 * @param cluster1 ground truth, 2D segmented image (objects are labeled with different numbers) 
+	 * @param cluster2 prediction, 2D segmented image (objects are labeled with different numbers)
+	 * @return Rand index value and prediction statistics
 	 */
 	public ClassificationStatistics getRandIndexStats(
 			ShortProcessor cluster1,
@@ -655,10 +664,12 @@ public class RandError extends Metrics
 		
 		double nPixels = pixels1.length;
 		
-		// number of pixels that are "in" (not background)
+		// number of pixels that are "in" (not background) in 
+		// the first cluster (ground truth)
 		double n = 0;
 		
-		// reset min and max of the cluster processors (neede in order to have correct values)
+		// reset min and max of the cluster processors 
+		// (needed in order to have correct min-max values)
 		cluster1.resetMinAndMax();
 		cluster2.resetMinAndMax();
 		
@@ -717,28 +728,31 @@ public class RandError extends Metrics
 			{
 				truePositives += cont[ i ][ j ] * ( cont[ i ][ j ] - 1.0 ) / 2.0;
 			}
-							
-						
-		// total number of pairs
+													
+		// total number of pairs after pruning the brackground
+		// pixels of the ground truth
 		double nPairsTotal = n * (n-1) / 2 ;
 		
-		// 
+		// number of true samples withing the ground truth
 		double nPosTrue = 0;
 		for(int k=0; k<ni.length; k++)
 			nPosTrue += ni[ k ] * (ni[ k ]-1) /2;
 		
 		// number of pairs that were actually classified as positive
+		// by the prediction
 		double nPosActual = 0;
 		for(int k=0; k<nj.length; k++)
 			nPosActual += nj[ k ] * (nj[ k ]-1)/2;				
 		
-		double nNegCorrect = nPairsTotal + truePositives - nPosTrue - nPosActual;
-		
 		// true negatives - type (ii): objects in the pair are placed in different 
 		// classes in cluster1 and in different classes in claster2
 		//double trueNegatives = (n*n + t2 - nis - njs) / 2;		
-		double trueNegatives = nNegCorrect;
-		
+		// Pairs correctly classified as negative (i.e. true negatives)
+		// Explanation: 
+		//     trueNegatives = total negatives - false positives =
+		//                   = (nPairsTotal - nPostTrue) - (nPosActual - truePositives)
+		double trueNegatives = nPairsTotal + truePositives - nPosTrue - nPosActual;
+						
 		// false positives - type (iii): objects in the pair are placed in different 
 		// classes in cluster1 and in the same class in claster2
 		double falsePositives = nPosActual - truePositives; //(njs - t2) / 2;
@@ -748,7 +762,7 @@ public class RandError extends Metrics
 		
 		// false negatives - type (iv): objects in the pair are placed in the same 
 		// class in cluster1 and in different classes in claster2		
-		double falseNegatives = nNegActual - nNegCorrect; //(nis - t2) / 2;
+		double falseNegatives = nNegActual - trueNegatives; //(nis - t2) / 2;
 		
 							
 		// number of pairs classified as negative
@@ -756,7 +770,7 @@ public class RandError extends Metrics
 		
 		// the number of incorrectly classified pairs
 		//double nPosIncorrect = nPosTrue-truePositives;
-		//double nNegIncorrect = nNegTrue-nNegCorrect;
+		//double nNegIncorrect = nNegTrue-trueNegatives;
 		//double nPairsIncorrect = nPosIncorrect + nNegIncorrect;
 
 		// clustering error
@@ -775,7 +789,6 @@ public class RandError extends Metrics
 	    IJ.log(" nPairsTotal = " + nPairsTotal);
 	    IJ.log(" nPosTrue = " + nPosTrue);
 	    IJ.log(" nPosActual = " + nPosActual);
-	    IJ.log(" nNegCorrect = " + nNegCorrect);
 	    IJ.log(" nNegActual = " + nNegActual);
 	    IJ.log("  clusteringError = " + clusteringError);
 	    IJ.log("  agreements / nPairsTotal = " + (agreements / nPairsTotal));

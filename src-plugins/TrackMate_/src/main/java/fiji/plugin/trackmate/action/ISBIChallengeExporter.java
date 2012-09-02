@@ -18,6 +18,7 @@ import org.jdom.Element;
 import org.jdom.output.Format;
 import org.jdom.output.XMLOutputter;
 
+import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMate_;
@@ -43,17 +44,7 @@ public class ISBIChallengeExporter extends AbstractTMAction {
 
 	@Override
 	public void execute(TrackMate_ plugin) {
-		logger.log("Exporting to ISBI 2012 particle tracking challenge format.\n");
 		final TrackMateModel model = plugin.getModel();
-		int ntracks = model.getNFilteredTracks();
-		if (ntracks == 0) {
-			logger.log("No visible track found. Aborting.\n");
-			return;
-		}
-
-		logger.log("  Preparing XML data.\n");
-		Element root = marshall(model);
-
 		File file;
 		File folder = new File(System.getProperty("user.dir")).getParentFile().getParentFile();
 		try {
@@ -64,6 +55,21 @@ public class ISBIChallengeExporter extends AbstractTMAction {
 			file = new File(folder.getPath() + File.separator + "ISBIChallenge2012Result.xml");
 		}
 		file = TMUtils.askForFile(file, wizard, logger);
+
+		exportToFile(model, file);
+	}
+	
+	public static void exportToFile(final TrackMateModel model, final File file) {
+		final Logger logger = model.getLogger();
+		logger.log("Exporting to ISBI 2012 particle tracking challenge format.\n");
+		int ntracks = model.getNFilteredTracks();
+		if (ntracks == 0) {
+			logger.log("No visible track found. Aborting.\n");
+			return;
+		}
+
+		logger.log("  Preparing XML data.\n");
+		Element root = marshall(model);
 
 		logger.log("  Writing to file.\n");
 		Document document = new Document(root);
@@ -77,6 +83,7 @@ public class ISBIChallengeExporter extends AbstractTMAction {
 		}
 		logger.log("Done.\n");
 	}
+	
 
 	@Override
 	public String getInfoText() {
@@ -95,7 +102,9 @@ public class ISBIChallengeExporter extends AbstractTMAction {
 		return "Export to ISBI challenge format";
 	}
 
-	private Element marshall(TrackMateModel model) {
+	private static final Element marshall(TrackMateModel model) {
+		final Logger logger = model.getLogger();
+		
 		Element root = new Element("root");
 		Element content = new Element(CONTENT_KEY);
 

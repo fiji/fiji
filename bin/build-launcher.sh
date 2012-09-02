@@ -87,4 +87,4 @@ cp ${macprefix}ImageJ-$platform$exe ${macprefix}fiji-$platform$exe &&
 cp ${macprefix}ImageJ-$platform$exe ${macprefix}ImageJ$exe &&
 cp ${macprefix}ImageJ-$platform$exe ${macprefix}fiji$exe &&
 
-cp $path/target/$artifactId-$version.jar jars/$artifactId.jar
+cp $path/target/$artifactId-$version.jar jars/$artifactId-$version.jar
