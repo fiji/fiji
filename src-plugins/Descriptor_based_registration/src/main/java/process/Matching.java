@@ -199,16 +199,20 @@ public class Matching
 			if ( params.roi1 != null )
 			{
 				int numMatches = countMatches( pairs );
-				IJ.log( "\nNumber of matches " + numMatches );
+				
+				if ( !params.silent )
+					IJ.log( "\nNumber of matches " + numMatches );
 				
 				// iterate until it converges
 				for ( int iteration = 0; iteration < 5; ++iteration )
 				{
-					IJ.log( "\nIteration " + (iteration+1) );
+					if ( !params.silent )
+						IJ.log( "\nIteration " + (iteration+1) );
 				
 					final int numMatches2 = performIteration( models, peaksComplete, numImages, params, zStretching );
 
-					IJ.log( "\nNumber of matches " + numMatches2 );
+					if ( !params.silent )
+						IJ.log( "\nNumber of matches " + numMatches2 );
 
 					if ( numMatches == numMatches2 )
 						break;
@@ -241,7 +245,8 @@ public class Matching
 				}
 				catch (Exception e) 
 				{
-					IJ.log( "WARNING: Cannot cast " + models.get( 0 ).getClass().getSimpleName() + " to AbstractAffineModel3d, cannot concatenate axial scaling." );
+					if ( !params.silent )
+						IJ.log( "WARNING: Cannot cast " + models.get( 0 ).getClass().getSimpleName() + " to AbstractAffineModel3d, cannot concatenate axial scaling." );
 				}
 			}
 			
@@ -261,7 +266,8 @@ public class Matching
 			if ( result != null ) 
 				result.show();
 			
-			IJ.log( "Finished" );
+			if ( !params.silent )
+				IJ.log( "Finished" );
 		}
 	}
 	
@@ -389,7 +395,8 @@ public class Matching
 			}
 			else 
 			{
-				IJ.log( "Tile " + t + " is not connected to any other tile, cannot compute a model" );
+				if ( !params.silent )
+					IJ.log( "Tile " + t + " is not connected to any other tile, cannot compute a model" );
 			}
 		}
 		
@@ -417,12 +424,14 @@ public class Matching
 			
 			if ( tile.getConnectedTiles().size() > 0 )
 			{
-				IJ.log( "Tile " + t + " (connected): " + tile.getModel()  );
+				if ( !params.silent )
+					IJ.log( "Tile " + t + " (connected): " + tile.getModel()  );
 				models.add( (InvertibleBoundable)tile.getModel() );
 			}
 			else
 			{
-				IJ.log( "Tile " + t + " (NOT connected): " + tile.getModel()  );
+				if ( !params.silent )
+					IJ.log( "Tile " + t + " (NOT connected): " + tile.getModel()  );
 				models.add( (InvertibleBoundable)params.model.copy() );
 			}
 		}
