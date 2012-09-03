@@ -50,15 +50,17 @@ get_java_home () {
 	fi
 }
 
+VERSION=$(sed -n 's/^.<version>\(.*\)<\/version>.*/\1/p' < src-plugins/pom.xml)
+FAKE_JAR=jars/fake-$VERSION.jar
 need_to_build_fake () {
 	(cd "$CWD" &&
-	 test -f jars/fake.jar || {
+	 test -f $FAKE_JAR || {
 		echo YesPlease
 		return
 	 }
 	 for source in $(find src-plugins/fake/ -name \*.java)
 	 do
-		test "$source" -nt jars/fake.jar && {
+		test "$source" -nt $FAKE_JAR && {
 			echo YesPlease
 			return
 		}
@@ -72,12 +74,15 @@ ensure_fake_is_built () {
 
 	(cd "$CWD" &&
 	 : blow previous builds away
+	 rm -f jars/fake.jar &&
 	 rm -rf src-plugins/fake/target/classes &&
 	 mkdir -p src-plugins/fake/target/classes &&
 	 : compile classes
 	 java -jar precompiled/javac.jar -source 1.5 -target 1.5 -classpath precompiled/javac.jar -d src-plugins/fake/target/classes $(find src-plugins/fake/ -name \*.java) &&
-	 : compile .jar using Fiji Build
-	 java -Dij.dir="$CWD" -classpath src-plugins/fake/target/classes"$PATHSEP"precompiled/javac.jar fiji.build.Fake jars/fake.jar-rebuild)
+	 : compile .jar using MiniMaven
+	 (cd src-plugins &&
+	  java -Dij.dir=.. -classpath fake/target/classes"$PATHSEP"../precompiled/javac.jar -DartifactId=fake fiji.build.MiniMaven jar &&
+	  cp fake/target/${FAKE_JAR#*/} ../jars/))
 }
 
 PATHSEP=:

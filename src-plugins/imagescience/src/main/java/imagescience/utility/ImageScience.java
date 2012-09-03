@@ -4,7 +4,7 @@ package imagescience.utility;
 public class ImageScience {
 	
 	private static final String NAME = "ImageScience";
-	private static final String VERSION = "2.4.0";
+	private static final String VERSION = "2.4.1";
 	
 	/** Default constructor. */
 	public ImageScience() { }

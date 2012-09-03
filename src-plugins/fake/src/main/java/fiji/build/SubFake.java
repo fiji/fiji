@@ -2,10 +2,12 @@ package fiji.build;
 
 import fiji.build.minimaven.BuildEnvironment;
 import fiji.build.minimaven.Coordinate;
+import fiji.build.minimaven.JavaCompiler.CompileError;
 import fiji.build.minimaven.POM;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.StringTokenizer;
@@ -39,12 +41,35 @@ public class SubFake extends Rule {
 		if (!new File(Util.makePath(parser.cwd, directory)).exists())
 			parser.fake.err.println("Warning: " + directory
 				+ " does not exist!");
+
+		// Special-case: if we're adding an aggregator pom, add implicit rules for all child poms
+		if (getFakefile() == null) {
+			POM pom = getPOM();
+			if (pom != null && "pom".equals(pom.getPackaging()))
+				addChildren(parser, pom);
+		}
+	}
+
+	protected void addChildren(Parser parser, POM pom) {
+		if (pom.getChildren() == null)
+			return;
+		for (POM child : pom.getChildren()) {
+			String packaging = child.getPackaging();
+			if (child.getBuildFromSource() && "jar".equals(packaging)) {
+				String target = (isImageJ1Plugin(child.getDirectory()) ? "plugins" : "jars") + "/" + child.getArtifactId() + ".jar";
+				parser.allRules.put(target, new SubFake(parser, target, Arrays.asList(child.getDirectory().getPath())));
+			}
+			else if ("pom".equals(packaging))
+				addChildren(parser, child);
+		}
 	}
 
 	@Override
 	boolean checkUpToDate() {
-		if (!upToDate(configPath))
+		if (!upToDate(configPath)) {
+			verbose(target + " is not up-to-date because of " + configPath);
 			return false;
+		}
 
 		// check the classpath
 		for (String path : Util.splitPaths(getVar("CLASSPATH"))) {
@@ -77,11 +102,22 @@ public class SubFake extends Rule {
 			}
 
 			POM pom = getPOM();
-			if (pom != null)
-				return pom.upToDate(true) && upToDate(pom.getTarget(), target);
+			if (pom != null) {
+				if (!pom.upToDate(true)) {
+					verbose("MiniMaven says " + target + " is not up-to-date");
+					return false;
+				}
+				if (!upToDate(pom.getTarget(), target)) {
+					verbose(pom.getTarget() + " is not up-to-date because of " + target);
+					return false;
+				}
+				return true;
+			}
 
-			if (!upToDateRecursive(new File(Util.makePath(parser.cwd, directory)), target, true))
+			if (!upToDateRecursive(new File(Util.makePath(parser.cwd, directory)), target, true)) {
+				verbose(target + " not up-to-date because of " + directory);
 				return false;
+			}
 		} catch (Exception e) {
 			e.printStackTrace(parser.fake.err);
 			return false;
@@ -117,6 +153,10 @@ public class SubFake extends Rule {
 	protected static BuildEnvironment miniMaven;
 
 	public POM getPOM() {
+		boolean verbose = getVarBool("VERBOSE");
+		if (miniMaven != null) {
+			miniMaven.setVerbose(verbose);
+		}
 		if (pomRead)
 			return pom;
 		File file = new File(Util.makePath(parser.cwd, getLastPrerequisite()), "pom.xml");
@@ -129,7 +169,6 @@ public class SubFake extends Rule {
 			targetBasename = targetBasename.substring(0, targetBasename.length() - 4);
 		// TODO: targetBasename could end in "-<version>"
 		try {
-			boolean verbose = getVarBool("VERBOSE");
 			boolean debug = getVarBool("DEBUG");
 			if (miniMaven == null) {
 				miniMaven = new BuildEnvironment(parser.fake.err, true, verbose, debug);
@@ -149,6 +188,7 @@ public class SubFake extends Rule {
 						miniMaven.parse(pom);
 				}
 			}
+			miniMaven.setVerbose(verbose);
 			pom = miniMaven.parse(file);
 			if (!targetBasename.equals(pom.getArtifactId())) {
 				String groupId = pom.getGroupId();
@@ -180,19 +220,7 @@ public class SubFake extends Rule {
 		else {
 			POM pom = getPOM();
 			if (pom != null) try {
-				pom.downloadDependencies();
-				pom.buildJar();
-				String target = this.target;
-				if (getVarBool("keepVersion")) {
-					File unversioned = new File(Util.makePath(parser.cwd, target));
-					if (unversioned.exists())
-						unversioned.delete();
-					target = target.substring(0, target.indexOf('/') + 1) + pom.getJarName();
-				}
-				copyJar(pom.getTarget().getPath(), target, parser.cwd, configPath);
-				if (getVarBool("copyDependencies")) {
-					copyDependencies(pom, new File(target).getAbsoluteFile().getParentFile());
-				}
+				buildPOM(pom);
 				return;
 			} catch (Exception e) {
 				e.printStackTrace(parser.fake.err);
@@ -219,6 +247,34 @@ public class SubFake extends Rule {
 
 		if (target.indexOf('.') >= 0)
 			copyJar(source, target, parser.cwd, configPath);
+	}
+
+	protected void buildPOM(final POM pom) throws CompileError, FakeException, IOException, ParserConfigurationException, SAXException {
+		if ("pom".equals(pom.getPackaging())) {
+			for (POM child : pom.getChildren())
+				buildPOM(child);
+			return;
+		}
+
+		boolean isIJ1Plugin = isImageJ1Plugin(pom.getDirectory());
+		final String subDirectory = isIJ1Plugin ? "plugins" : "jars";
+		final String unversionedPath = subDirectory + "/" + pom.getArtifactId() + ".jar";
+		boolean keepVersion = getVarBool("keepVersion", unversionedPath);
+		boolean copyDependencies = getVarBool("copyDependencies", unversionedPath);
+		final File targetDirectory = new File(System.getProperty("ij.dir"), subDirectory);
+		final File unversioned = new File(targetDirectory, pom.getArtifactId() + ".jar");
+		final File targetFile = keepVersion ? new File(targetDirectory, pom.getJarName()) : unversioned;
+		if (pom.upToDate(true) && upToDate(pom.getTarget(), targetFile))
+			return;
+		pom.downloadDependencies();
+		pom.buildJar();
+		if (keepVersion && unversioned.exists()) {
+			unversioned.delete();
+		}
+		copyJar(pom.getTarget().getPath(), targetFile.getPath(), parser.cwd, configPath);
+		if (copyDependencies) {
+			copyDependencies(pom, targetDirectory);
+		}
 	}
 
 	protected void fakeOrMake(String subTarget) throws FakeException {
@@ -251,12 +307,13 @@ public class SubFake extends Rule {
 				plugins = null;
 		}
 
-		for (POM dependency : pom.getDependencies(true, false, "test", "provided")) {
+		for (POM dependency : pom.getDependencies(true, false, "test", "provided", "system")) {
 			File file = dependency.getTarget();
 			File directory = plugins != null && isImageJ1Plugin(file) ? plugins : targetDirectory;
 			String jarName;
-			if (getVarBool("keepVersion") || dependency.getArtifactId().startsWith("imglib2")) {
-				File unversioned = new File(directory, dependency.getArtifactId() + ".jar");
+			final String artifactId = dependency.getArtifactId();
+			if ((getVarBool("keepVersion") || artifactId.startsWith("imglib2")) && !artifactId.equals("Fiji_Updater")) {
+				File unversioned = new File(directory, artifactId + ".jar");
 				if (unversioned.exists())
 					unversioned.delete();
 				jarName = dependency.getJarName();
@@ -270,9 +327,11 @@ public class SubFake extends Rule {
 
 	protected boolean isImageJ1Plugin(File file) {
 		String name = file.getName();
-		if (!name.endsWith(".jar") || name.indexOf('_') < 0 || !file.exists())
+		if (name.indexOf('_') < 0 || !file.exists())
 			return false;
-		try {
+		if (file.isDirectory())
+			return new File(file, "src/main/resources/plugins.config").exists();
+		if (name.endsWith(".jar")) try {
 			JarFile jar = new JarFile(file);
 			for (JarEntry entry : Collections.list(jar.entries()))
 				if (entry.getName().equals("plugins.config")) {
@@ -303,6 +362,7 @@ public class SubFake extends Rule {
 		return result;
 	}
 
+	@Override
 	protected void clean(boolean dry_run) {
 		super.clean(dry_run);
 		clean(getLastPrerequisite() + jarName, dry_run);
@@ -316,6 +376,17 @@ public class SubFake extends Rule {
 		else {
 			POM pom = getPOM();
 			if (pom != null) {
+				boolean isIJ1Plugin = isImageJ1Plugin(pom.getDirectory());
+				final String subDirectory = isIJ1Plugin ? "plugins" : "jars";
+				final File targetDirectory = new File(System.getProperty("ij.dir"), subDirectory);
+				final File unversioned = new File(targetDirectory, pom.getArtifactId() + ".jar");
+				if (unversioned.exists()) {
+					unversioned.delete();
+				}
+				final File versioned = new File(targetDirectory, pom.getJarName());
+				if (versioned.exists()) {
+					versioned.delete();
+				}
 				try {
 					pom.clean();
 				} catch (Exception e) {

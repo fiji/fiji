@@ -50,6 +50,10 @@ public class BuildEnvironment {
 		mavenRepository = repository;
 	}
 
+	public void setVerbose(boolean verbose) {
+		this.verbose = verbose;
+	}
+
 	public boolean getDownloadAutomatically() {
 		return downloadAutomatically && !offlineMode;
 	}
@@ -199,7 +203,7 @@ public class BuildEnvironment {
 		else if (dependency.artifactId.equals("imglib2-io"))
 			pom.dependencies.add(new Coordinate("loci", "bio-formats", "${bio-formats.version}"));
 		else if (dependency.artifactId.equals("jfreechart"))
-			pom.dependencies.add(new Coordinate("jfree", "jcommon", "1.0.16"));
+			pom.dependencies.add(new Coordinate("jfree", "jcommon", "1.0.17"));
 
 		String key = dependency.getKey();
 		if (localPOMCache.containsKey(key))
@@ -271,7 +275,7 @@ public class BuildEnvironment {
 
 			// Only check versions once per day
 			File versionMetaData = new File(directory, "maven-metadata-version.xml");
-			if (System.currentTimeMillis() - versionMetaData.lastModified() < 24 * 60 * 60 * 1000l)
+			if (System.currentTimeMillis() - versionMetaData.lastModified() < updateInterval * 60 * 1000l)
 				return;
 
 			String message = quiet ? null : "Checking for new version of " + dependency.artifactId;

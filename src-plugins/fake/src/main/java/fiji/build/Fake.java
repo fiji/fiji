@@ -5,6 +5,7 @@ import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FilenameFilter;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
@@ -35,6 +36,9 @@ import java.util.jar.JarFile;
 import java.util.jar.JarInputStream;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
+
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import java.util.zip.ZipException;
 
@@ -155,20 +159,12 @@ public class Fake {
 		setDefaultProperty("python.home", pythonHome);
 		setDefaultProperty("python.cachedir.skip", "false");
 		String jythonJar = pythonHome + "/jython.jar";
-		if (!new File(jythonJar).exists())
-			jythonJar = ijHome + "/precompiled/jython.jar";
 		getClassLoader(ijHome + "/jars/jna.jar");
-		if (new File(jythonJar).exists())
-			getClassLoader(jythonJar);
+		getClassLoader(jythonJar);
 	}
 
 	protected static void discoverBeanshell() throws IOException {
 		String bshJar = ijHome + "/jars/bsh.jar";
-		if (!new File(bshJar).exists()) {
-			bshJar = ijHome + "/jars/bsh.jar";
-			if (!new File(bshJar).exists())
-				bshJar = ijHome + "/precompiled/bsh.jar";
-		}
 		getClassLoader(bshJar);
 	}
 
@@ -199,6 +195,13 @@ public class Fake {
 
 	protected String discoverClassPath() throws FakeException {
 		return Util.join(discoverJars(), File.pathSeparator);
+	}
+
+	// keep this synchronized with imagej.updater.core.FileObject
+	private static Pattern versionPattern = Pattern.compile("(.+?)(-\\d+(\\.\\d+)+[a-z]?\\d?(-[A-Za-z0-9.]+|\\.GA)*)(\\.jar(-[a-z]*)?)");
+
+	public static Matcher matchVersionedFilename(String filename) {
+		return versionPattern.matcher(filename);
 	}
 
 	/* input defaults to reading the Fakefile, cwd to "." */
@@ -1142,8 +1145,23 @@ public class Fake {
 			throws IOException {
 		if (classLoader == null)
 			classLoader = new JarClassLoader();
-		if (jarFile != null)
+		if (jarFile != null && jarFile.endsWith(".jar")) {
+			File file = new File(jarFile);
+			if (!file.exists()) {
+				final String baseName = Util.stripSuffix(file.getName(), ".jar");
+				File[] list = file.getParentFile().listFiles(new FilenameFilter() {
+					@Override
+					public boolean accept(File dir, String name) {
+						if (!name.startsWith(baseName) || !name.endsWith(".jar")) return false;
+						final Matcher matcher = matchVersionedFilename(name);
+						return matcher.matches() && matcher.group(1).equals(baseName);
+					}
+				});
+				if (list != null && list.length > 0)
+					jarFile = list[0].getPath();
+			}
 			classLoader.add(jarFile);
+		}
 		return classLoader;
 	}
 

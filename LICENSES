@@ -59,8 +59,8 @@ Name					File					Author(s)						Contact								License
 * Javascript Rhino Engine 		js.jar 					http://www.mozilla.org/rhino/ 				http://www.mozilla.org/rhino/ 					MPL 1.1/GPL 2  see http://developer.mozilla.org/en/docs/Rhino_License
 * Javascript Interpreter 		Javascript_Interpreter.jar 		Albert Cardona 						acardona@ini.phys.ethz.ch 					GPL
 * JFreeChart	 			jfreechart.jar 				http://www.jfree.org/jfreechart/			http://www.jfree.org/jfreechart/ 				LGPL
-* JGraphT					jgrapht-jdk1.6.jar			http://jgrapht.org/							http://jgrapht.org/							LGPL
-* JGraphX					jgraphx.jar					http://www.jgraph.com/						http://www.jgraph.com/						BSD
+* JGraphT				jgrapht-jdk1.6.jar			http://jgrapht.org/					http://jgrapht.org/						LGPL
+* JGraphX				jgraphx.jar				http://www.jgraph.com/					http://www.jgraph.com/						BSD
 * JPedal PDF library 			jpedalSTD.jar 				http://www.jpedal.org/ 					http://www.jpedal.org/ 						GPL/commercial
 * JRuby Interpreter 			JRuby_Interpreter.jar			Mark Longair						Mark.Longair@ed.ac.uk						GPL
 * JRuby 				jruby.jar				Thomas E. Enebo						http://jruby.codehaus.org/					CPL/GPL/LGPL
@@ -70,6 +70,7 @@ Name					File					Author(s)						Contact								License
 * jzlib 				jzlib.jar	 			ymnk 							jzlib@jcraft.com 						BSD-like http://www.jcraft.com/jzlib/LICENSE.txt
 * Kalman Stack Filter			contained in Stack_Manipulation.jar	Christopher Philip Mauer				-								BSD-like
 * Kuwahara Filter			Kuwahara_Filter.jar			Wayne Rasband						http://imagej.nih.gov/ij/plugins/kuwahara.html			PD
+* MTrackJ	 			MTrackJ_.jar	 			Erik Meijering	 					http://www.imagescience.org/meijering/software/mtrackj/		imagescience (see below)
 * Multi Kymograph			Multi_Kymograph.jar			Jens Rietdorf & Arne Seitz				http://www.embl.de/eamnet/html/body_kymograph.html		BSD
 * Linear Kuwahara			Linear_Kuwahara.jar			Christian Tischer													GPL
 * Local Thickness			LocalThickness_.jar			Bob Dougherty						rpd@optinav.com							BSD
@@ -152,8 +153,3 @@ Multi Kymograph:
 Unresolved (TODO):
 * Example/ scripts folder
 * Java Advanced Imaging jai_codec.jar, jai_core.jar, jai_imageio.jar
-
-
-Problematic:
-* imagescience.jar
-* TransformJ

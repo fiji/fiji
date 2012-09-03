@@ -114,23 +114,53 @@ public class POM extends DefaultHandler implements Comparable<POM> {
 		if (!buildFromSource)
 			return true;
 		for (POM child : getDependencies(true, env.downloadAutomatically, "test"))
-			if (child != null && !child.upToDate(includingJar))
+			if (child != null && !child.upToDate(includingJar)) {
+				if (env.verbose) {
+					env.err.println(getArtifactId() + " not up-to-date because of " + child.getArtifactId());
+				}
 				return false;
+			}
 
 		File source = getSourceDirectory();
 
 		List<String> notUpToDates = new ArrayList<String>();
 		long lastModified = addRecursively(notUpToDates, source, ".java", target, ".class", false);
 		int count = notUpToDates.size();
-		if (count > 0)
+
+		// ugly work-around for Bio-Formats: EFHSSF.java only contains commented-out code
+		if (count == 1 && notUpToDates.get(0).endsWith("poi/hssf/dev/EFHSSF.java")) {
+			count = 0;
+		}
+
+		if (count > 0) {
+			if (env.verbose) {
+				final StringBuilder files = new StringBuilder();
+				int counter = 0;
+				for (String item : notUpToDates) {
+					if (counter > 3) {
+						files.append(", ...");
+						break;
+					}
+					else if (counter > 0) {
+						files.append(", ");
+					}
+					files.append(item);
+				}
+				env.err.println(getArtifactId() + " not up-to-date because " + count + " source files are not up-to-date (" + files + ")");
+			}
 			return false;
+		}
 		long lastModified2 = updateRecursively(new File(source.getParentFile(), "resources"), target, true);
 		if (lastModified < lastModified2)
 			lastModified = lastModified2;
 		if (includingJar) {
 			File jar = getTarget();
-			if (!jar.exists() || jar.lastModified() < lastModified)
+			if (!jar.exists() || jar.lastModified() < lastModified) {
+				if (env.verbose) {
+					env.err.println(getArtifactId() + " not up-to-date because " + jar + " is not up-to-date");
+				}
 				return false;
+			}
 		}
 		return true;
 	}
@@ -334,10 +364,18 @@ public class POM extends DefaultHandler implements Comparable<POM> {
 		return mainClass;
 	}
 
+	public String getPackaging() {
+		return packaging;
+	}
+
 	public File getTarget() {
 		if (!buildFromSource)
 			return target;
 		return new File(new File(directory, "target"), getJarName());
+	}
+
+	public File getDirectory() {
+		return directory;
 	}
 
 	public boolean getBuildFromSource() {
@@ -404,10 +442,13 @@ public class POM extends DefaultHandler implements Comparable<POM> {
 			}
 			// make sure that snapshot .pom files are updated once a day
 			if (!env.offlineMode && downloadAutomatically && pom != null && dependency.version != null &&
-					dependency.version.endsWith("-SNAPSHOT") && dependency.snapshotVersion == null &&
+					(dependency.version.startsWith("[") || dependency.version.endsWith("-SNAPSHOT")) &&
 					pom.directory.getPath().startsWith(BuildEnvironment.mavenRepository.getPath())) {
 				if (maybeDownloadAutomatically(dependency, !env.verbose, downloadAutomatically)) {
-					dependency.setSnapshotVersion(SnapshotPOMHandler.parse(new File(pom.directory, "maven-metadata-snapshot.xml")));
+					if (dependency.version.startsWith("["))
+						dependency.setSnapshotVersion(VersionPOMHandler.parse(new File(pom.directory.getParentFile(), "maven-metadata-version.xml")));
+					else
+						dependency.setSnapshotVersion(SnapshotPOMHandler.parse(new File(pom.directory, "maven-metadata-snapshot.xml")));
 				}
 			}
 			if (pom == null && downloadAutomatically)
