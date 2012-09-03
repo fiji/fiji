@@ -1,5 +1,11 @@
 package fiji.plugin.trackmate.io;
 
+import static fiji.plugin.trackmate.detection.DetectorKeys.KEY_DOWNSAMPLE_FACTOR;
+import static fiji.plugin.trackmate.detection.DetectorKeys.KEY_DO_MEDIAN_FILTERING;
+import static fiji.plugin.trackmate.detection.DetectorKeys.KEY_DO_SUBPIXEL_LOCALIZATION;
+import static fiji.plugin.trackmate.detection.DetectorKeys.KEY_RADIUS;
+import static fiji.plugin.trackmate.detection.DetectorKeys.KEY_THRESHOLD;
+import static fiji.plugin.trackmate.detection.DetectorKeys.KEY_TARGET_CHANNEL;
 import static fiji.plugin.trackmate.io.TmXmlKeys_v12.*;
 import static fiji.plugin.trackmate.util.TMUtils.readBooleanAttribute;
 import static fiji.plugin.trackmate.util.TMUtils.readFloatAttribute;
@@ -9,8 +15,10 @@ import ij.ImagePlus;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -23,6 +31,7 @@ import org.jdom.Element;
 import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.graph.SimpleWeightedGraph;
 
+import fiji.plugin.trackmate.DetectorProvider;
 import fiji.plugin.trackmate.FeatureFilter;
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.Settings;
@@ -31,14 +40,10 @@ import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.SpotImp;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMate_;
-import fiji.plugin.trackmate.detection.BasicDetectorSettings;
-import fiji.plugin.trackmate.detection.DetectorSettings;
-import fiji.plugin.trackmate.detection.DogDetector;
-import fiji.plugin.trackmate.detection.DownSampleLogDetectorSettings;
-import fiji.plugin.trackmate.detection.DownsampleLogDetector;
-import fiji.plugin.trackmate.detection.LogDetector;
-import fiji.plugin.trackmate.detection.LogDetectorSettings;
-import fiji.plugin.trackmate.detection.ManualDetector;
+import fiji.plugin.trackmate.detection.DogDetectorFactory;
+import fiji.plugin.trackmate.detection.DownsampleLogDetectorFactory;
+import fiji.plugin.trackmate.detection.LogDetectorFactory;
+import fiji.plugin.trackmate.detection.ManualDetectorFactory;
 import fiji.plugin.trackmate.tracking.FastLAPTracker;
 import fiji.plugin.trackmate.tracking.LAPTrackerSettings;
 import fiji.plugin.trackmate.tracking.SimpleFastLAPTracker;
@@ -47,19 +52,22 @@ import fiji.plugin.trackmate.tracking.TrackerSettings;
 import fiji.plugin.trackmate.tracking.kdtree.NearestNeighborTracker;
 import fiji.plugin.trackmate.tracking.kdtree.NearestNeighborTrackerSettings;
 
-
 /**
  * A compatibility xml loader than can load TrackMate xml file saved for version
  * prior to 1.3. In the code, we keep the previous vocable of "segmenter"...
  * The code here is extremely pedestrian; we deal with all particular cases
  * explicitly, and convert on the fly to v1.3 classes. 
- * @author JeanYves
+ * @author Jean-Yves Tinevez - 2012
  */
 public class TmXmlReader_v12<T extends RealType<T> & NativeType<T>> extends TmXmlReader<T>{
+
+	/** Stores error messages when reading parameters. */
+	private String errorMessage;
 
 	/*
 	 * CONSTRUCTORS
 	 */
+
 
 	public TmXmlReader_v12(File file, Logger logger, TrackMate_<T> plugin) {
 		super(file, logger, plugin);
@@ -92,19 +100,19 @@ public class TmXmlReader_v12<T extends RealType<T> & NativeType<T>> extends TmXm
 		FeatureFilter initialFilter = getInitialFilter();
 		model.getSettings().initialSpotFilterValue = initialFilter.value;
 		model.getSettings().setSpotFilters(spotFilters);
-		
+
 		// Spots
 		SpotCollection allSpots = getAllSpots();
 		SpotCollection filteredSpots = getFilteredSpots();
 		model.setSpots(allSpots, false);
 		model.setFilteredSpots(filteredSpots, false);
-		
+
 		// Tracks
 		SimpleWeightedGraph<Spot, DefaultWeightedEdge> graph = readTrackGraph();
 		if (null != graph) {
 			model.setGraph(graph);
 		}
-		
+
 		// Track Filters
 		List<FeatureFilter> trackFilters = getTrackFeatureFilters();
 		model.getSettings().setTrackFilters(trackFilters);
@@ -191,7 +199,6 @@ public class TmXmlReader_v12<T extends RealType<T> & NativeType<T>> extends TmXm
 			settings.zend   = readIntAttribute(settingsEl, SETTINGS_ZEND_ATTRIBUTE_NAME, logger, 10);
 			settings.tstart = readIntAttribute(settingsEl, SETTINGS_TSTART_ATTRIBUTE_NAME, logger, 1);
 			settings.tend   = readIntAttribute(settingsEl, SETTINGS_TEND_ATTRIBUTE_NAME, logger, 10);
-			settings.detectionChannel = readIntAttribute(settingsEl, SETTINGS_SEGMENTATION_CHANNEL_ATTRIBUTE_NAME, logger, 1);
 		}
 		// Image info settings
 		Element infoEl  = root.getChild(IMAGE_ELEMENT_KEY);
@@ -212,69 +219,82 @@ public class TmXmlReader_v12<T extends RealType<T> & NativeType<T>> extends TmXm
 		return settings;
 	}
 
-	/**
-	 * Update the given {@link Settings} object with the {@link SegmenterSettings} and {@link SpotSegmenter} fields
-	 * named {@link Settings#segmenterSettings} and {@link Settings#segmenter} read within the XML file
-	 * this reader is initialized with.
-	 * <p>
-	 * If the segmenter settings XML element is not present in the file, the {@link Settings}
-	 * object is not updated. If the segmenter settings or the segmenter info can be read,
-	 * but cannot be understood (most likely because the class the XML refers to is unknown)
-	 * then a default object is substituted.
-	 *
-	 * @param settings  the base {@link Settings} object to update.
-	 */
 	@Override
 	public void getDetectorSettings(Settings<T> settings) {
 		if (!parsed)
 			parse();
+
+		// We have to parse the settings element to fetch the target channel
+		int targetChannel = 1;
+		Element settingsEl = root.getChild(SETTINGS_ELEMENT_KEY);
+		if (null != settingsEl) {
+			targetChannel = readIntAttribute(settingsEl, SETTINGS_SEGMENTATION_CHANNEL_ATTRIBUTE_NAME, logger);
+		}
+		
+		// Get back to segmenter element
 		Element element = root.getChild(SEGMENTER_SETTINGS_ELEMENT_KEY);
 		if (null == element) {
 			return;
 		}
-
+		
 		// Deal with segmenter
-		String segmenterName;
+		String segmenterKey;
 		String segmenterClassName = element.getAttributeValue(SEGMENTER_CLASS_ATTRIBUTE_NAME);
 		if (null == segmenterClassName) {
 			logger.error("\nSegmenter class is not present.\n");
 			logger.error("Substituting default.\n");
-			segmenterName = LogDetector.NAME;
+			segmenterKey = LogDetectorFactory.DETECTOR_KEY;
 		} else {
 			if (segmenterClassName.equals("fiji.plugin.trackmate.segmentation.DogSegmenter")) {
-				segmenterName = DogDetector.NAME;
+				segmenterKey = DogDetectorFactory.DETECTOR_KEY;
 			} else if (segmenterClassName.equals("fiji.plugin.trackmate.segmentation.LogSegmenter")) {
-				segmenterName = LogDetector.NAME;
+				segmenterKey = LogDetectorFactory.DETECTOR_KEY;
 			} else if (segmenterClassName.equals("fiji.plugin.trackmate.segmentation.DownSamplingLogSegmenter")) {
-				segmenterName = DownsampleLogDetector.NAME;
+				segmenterKey = DownsampleLogDetectorFactory.DETECTOR_KEY;
 			} else if (segmenterClassName.equals("fiji.plugin.trackmate.segmentation.ManualSegmenter")) {
-				segmenterName = ManualDetector.NAME;
+				segmenterKey = ManualDetectorFactory.NAME;
 			} else {
 				logger.error("\nUnknown segmenter: "+segmenterClassName+".\n");
 				logger.error("Substituting default.\n");
-				segmenterName = LogDetector.NAME;
+				segmenterKey = LogDetectorFactory.DETECTOR_KEY;
 			}
 		}
-		settings.detector = segmenterName;
+		DetectorProvider<T> provider = plugin.getDetectorProvider();
+		boolean ok = provider.select(segmenterKey);
+		if (!ok) {
+			logger.error(provider.getErrorMessage());
+			logger.error("substituting default detector.\n");
+		}
+		settings.detectorFactory = provider.getDetectorFactory();
 
 		// Deal with segmenter settings
-		DetectorSettings<T> ds = plugin.getDetectorFactory().getDefaultSettings(segmenterName);
+		Map<String, Object> ds = new HashMap<String, Object>();
+
 		String segmenterSettingsClassName = element.getAttributeValue(SEGMENTER_SETTINGS_CLASS_ATTRIBUTE_NAME);
 
 		if (null == segmenterSettingsClassName) {
 
 			logger.error("\nSegmenter settings class is not present,\n");
 			logger.error("substituting default settings values.\n");
+			ds = provider.getDefaultSettings();
 
 		} else {
 
 			// Log segmenter & Dog segmenter
 			if (segmenterSettingsClassName.equals("fiji.plugin.trackmate.segmentation.LogSegmenterSettings"))  {
 
-				if (ds.getClass().equals(LogDetectorSettings.class)) {
+				if (segmenterKey.equals(LogDetectorFactory.DETECTOR_KEY) || segmenterKey.equals(DogDetectorFactory.DETECTOR_KEY)) {
 
-					// The saved class matched, we can updated the settings created above with the file content
-					ds.unmarshall(element);
+					// The saved class matched, we can update the settings created above with the file content
+					ok = readDouble(element, "expectedradius", ds, KEY_RADIUS)
+					&& readDouble(element, "threshold", ds, KEY_THRESHOLD)
+					&& readBoolean(element, "doSubPixelLocalization",  ds, KEY_DO_SUBPIXEL_LOCALIZATION)
+					&& readBoolean(element, "usemedianfilter", ds, KEY_DO_MEDIAN_FILTERING);
+					if (!ok) {
+						logger.error(errorMessage);
+						logger.error("substituting default settings values.\n");
+						ds = provider.getDefaultSettings();
+					}
 
 				} else {
 
@@ -284,15 +304,24 @@ public class TmXmlReader_v12<T extends RealType<T> & NativeType<T>> extends TmXm
 					logger.error("\nDetector settings class ("+segmenterSettingsClassName+") does not match detector requirements (" +
 							ds.getClass().getName()+"),\n");
 					logger.error("substituting default values.\n");
+					ds = provider.getDefaultSettings();
 				}
 
 			} else if (segmenterSettingsClassName.equals("fiji.plugin.trackmate.segmentation.DownSampleLogSegmenterSettings"))  {
 				// DownSample segmenter
 
-				if (ds.getClass().equals(DownSampleLogDetectorSettings.class)) {
+				if (segmenterKey.equals(DownsampleLogDetectorFactory.DETECTOR_KEY)) {
 
 					// The saved class matched, we can updated the settings created above with the file content
-					ds.unmarshall(element);
+					ok = readDouble(element, "expectedradius", ds, KEY_RADIUS)
+					&& readDouble(element, "threshold", ds, KEY_THRESHOLD)
+					&& readInteger(element, "downsamplingfactor", ds, KEY_DOWNSAMPLE_FACTOR);
+					if (!ok) {
+						logger.error(errorMessage);
+						logger.error("substituting default settings values.\n");
+						ds = provider.getDefaultSettings();
+					}
+
 
 				} else {
 
@@ -302,15 +331,21 @@ public class TmXmlReader_v12<T extends RealType<T> & NativeType<T>> extends TmXm
 					logger.error("\nDetector settings class ("+segmenterSettingsClassName+") does not match detector requirements (" +
 							ds.getClass().getName()+"),\n");
 					logger.error("substituting default values.\n");
+					ds = provider.getDefaultSettings();
 				}
 
 			} else if (segmenterSettingsClassName.equals("fiji.plugin.trackmate.segmentation.BasicSegmenterSettings"))  {
 				// Manual segmenter
 
-				if (ds.getClass().equals(BasicDetectorSettings.class)) {
+				if (segmenterKey.equals(ManualDetectorFactory.DETECTOR_KEY)) {
 
 					// The saved class matched, we can updated the settings created above with the file content
-					ds.unmarshall(element);
+					ok =  readDouble(element, "expectedradius", ds, KEY_RADIUS);
+					if (!ok) {
+						logger.error(errorMessage);
+						logger.error("substituting default settings values.\n");
+						ds = provider.getDefaultSettings();
+					}
 
 				} else {
 
@@ -320,15 +355,18 @@ public class TmXmlReader_v12<T extends RealType<T> & NativeType<T>> extends TmXm
 					logger.error("\nDetector settings class ("+segmenterSettingsClassName+") does not match tracker requirements (" +
 							ds.getClass().getName()+"),\n");
 					logger.error("substituting default values.\n");
+					ds = provider.getDefaultSettings();
 				}
 
 			} else {
 
 				logger.error("\nDetector settings class ("+segmenterSettingsClassName+") is unknown,\n");
 				logger.error("substituting default one.\n");
+				ds = provider.getDefaultSettings();
 
 			}
 		}
+		ds.put(KEY_TARGET_CHANNEL, targetChannel);
 		settings.detectorSettings = ds;
 	}
 
@@ -451,15 +489,15 @@ public class TmXmlReader_v12<T extends RealType<T> & NativeType<T>> extends TmXm
 		if (!parsed) {
 			parse();
 		}
-		
+
 		Element spotCollection = root.getChild(SPOT_COLLECTION_ELEMENT_KEY);
 		if (null == spotCollection)
 			return null;
-		
+
 		// Retrieve children elements for each frame
 		@SuppressWarnings("unchecked")
 		List<Element> frameContent = spotCollection.getChildren(SPOT_FRAME_COLLECTION_ELEMENT_KEY);
-		
+
 		// Determine total number of spots
 		int nspots = 0;
 		for (Element currentFrameContent : frameContent) {
@@ -468,7 +506,7 @@ public class TmXmlReader_v12<T extends RealType<T> & NativeType<T>> extends TmXm
 
 		// Instantiate cache
 		cache = new ConcurrentHashMap<Integer, Spot>(nspots);
-		
+
 		int currentFrame = 0;
 		ArrayList<Spot> spotList;
 		SpotCollection allSpots = new SpotCollection();
@@ -507,7 +545,7 @@ public class TmXmlReader_v12<T extends RealType<T> & NativeType<T>> extends TmXm
 		if (!parsed) {
 			parse();
 		}
-		
+
 		Element selectedSpotCollection = root.getChild(FILTERED_SPOT_ELEMENT_KEY);
 		if (null == selectedSpotCollection)
 			return null;
@@ -812,5 +850,54 @@ public class TmXmlReader_v12<T extends RealType<T> & NativeType<T>> extends TmXm
 			}
 		}
 		return spot;
+	}
+	
+
+	private boolean readDouble(final Element element, String attName, Map<String, Object> settings, String mapKey) {
+		String str = element.getAttributeValue(attName);
+		if (null == str) {
+			errorMessage = "Attribute "+attName+" could not be found in XML element.";
+			return false;
+		}
+		try {
+			double val = Double.parseDouble(str);
+			settings.put(mapKey, val);
+		} catch (NumberFormatException nfe) {
+			errorMessage = "Could not read "+attName+" attribute as a double value. Got "+str+".";
+			return false;
+		}
+		return true;
+	}
+
+	private boolean readInteger(final Element element, String attName, Map<String, Object> settings, String mapKey) {
+		String str = element.getAttributeValue(attName);
+		if (null == str) {
+			errorMessage = "Attribute "+attName+" could not be found in XML element.";
+			return false;
+		}
+		try {
+			int val = Integer.parseInt(str);
+			settings.put(mapKey, val);
+		} catch (NumberFormatException nfe) {
+			errorMessage = "Could not read "+attName+" attribute as an integer value. Got "+str+".";
+			return false;
+		}
+		return true;
+	}
+
+	private boolean readBoolean(final Element element, String attName, Map<String, Object> settings, String mapKey) {
+		String str = element.getAttributeValue(attName);
+		if (null == str) {
+			errorMessage = "Attribute "+attName+" could not be found in XML element.";
+			return false;
+		}
+		try {
+			boolean val = Boolean.parseBoolean(str);
+			settings.put(mapKey, val);
+		} catch (NumberFormatException nfe) {
+			errorMessage = "Could not read "+attName+" attribute as an boolean value. Got "+str+".";
+			return false;
+		}
+		return true;
 	}
 }

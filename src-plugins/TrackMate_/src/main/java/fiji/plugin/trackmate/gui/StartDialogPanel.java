@@ -18,11 +18,7 @@ import java.awt.event.ActionListener;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
-import javax.swing.JSlider;
-import javax.swing.SwingConstants;
 import javax.swing.WindowConstants;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
@@ -65,12 +61,9 @@ public class StartDialogPanel <T extends RealType<T> & NativeType<T>> extends Ac
 	private JNumericTextField jTextFieldTimeInterval;
 	private JLabel jLabelTimeInterval;
 	private JLabel jLabelUnits4;
-	private JSlider sliderChannel;
 
 	private ImagePlus imp;
 	private Settings<T> settings;
-	private JLabel lblSegmentInChannel;
-	private JLabel labelChannel;
 
 	private TrackMate_<T> plugin;
 	private TrackMateWizard<T> wizard;
@@ -174,8 +167,6 @@ public class StartDialogPanel <T extends RealType<T> & NativeType<T>> extends Ac
 		settings.yend 	= Math.round(Float.parseFloat(jTextFieldYEnd.getText()));
 		settings.zstart = Math.round(Float.parseFloat(jTextFieldZStart.getText()));
 		settings.zend 	= Math.round(Float.parseFloat(jTextFieldZEnd.getText()));
-		// Detection channel
-		settings.detectionChannel = sliderChannel.getValue(); // 1-based
 		// Image info
 		settings.dx 	= Float.parseFloat(jTextFieldPixelWidth.getText());
 		settings.dy 	= Float.parseFloat(jTextFieldPixelHeight.getText());
@@ -187,6 +178,12 @@ public class StartDialogPanel <T extends RealType<T> & NativeType<T>> extends Ac
 		settings.height		= imp.getHeight();
 		settings.nslices	= imp.getNSlices();
 		settings.nframes	= imp.getNFrames();
+		// Roi
+		Roi roi = imp.getRoi();
+		if (null != roi) {
+			settings.polygon = roi.getPolygon();
+		}
+		// File info
 		if (null != imp.getOriginalFileInfo()) {
 			settings.imageFileName	= imp.getOriginalFileInfo().fileName;
 			settings.imageFolder 	= imp.getOriginalFileInfo().directory;
@@ -220,9 +217,6 @@ public class StartDialogPanel <T extends RealType<T> & NativeType<T>> extends Ac
 		jTextFieldZEnd.setText(""+settings.zend);
 		jTextFieldTStart.setText(""+settings.tstart); 
 		jTextFieldTEnd.setText(""+settings.tend);
-		// Target detection channel
-		sliderChannel.setValue(settings.detectionChannel);
-		labelChannel.setText(""+(settings.detectionChannel));
 	}
 
 
@@ -272,20 +266,6 @@ public class StartDialogPanel <T extends RealType<T> & NativeType<T>> extends Ac
 		jTextFieldTStart.setText(""+0); 
 		jTextFieldTEnd.setText(""+(imp.getNFrames()-1));
 
-		// Deal with channels: the slider and channel labels are only visible if we find more than one channel.
-		int n_channels = imp.getNChannels();
-		sliderChannel.setMaximum(n_channels);
-		sliderChannel.setMinimum(1);
-		sliderChannel.setValue(imp.getChannel());
-		if (n_channels <= 1) {
-			labelChannel.setVisible(false);
-			lblSegmentInChannel.setVisible(false);
-			sliderChannel.setVisible(false);
-		} else {
-			labelChannel.setVisible(true);
-			lblSegmentInChannel.setVisible(true);
-			sliderChannel.setVisible(true);			
-		}
 		// Re-enable target component, because we have a valid target image to operate on.
 		wizard.setNextButtonEnabled(true);
 	}
@@ -510,25 +490,7 @@ public class StartDialogPanel <T extends RealType<T> & NativeType<T>> extends Ac
 				jTextFieldTEnd.setPreferredSize(TEXTFIELD_DIMENSION);
 				jTextFieldTEnd.setFont(SMALL_FONT);
 			}
-			{
-				lblSegmentInChannel = new JLabel("Segment in channel:");
-				lblSegmentInChannel.setFont(SMALL_FONT);
-				lblSegmentInChannel.setBounds(10, 368, 245, 17);
-				add(lblSegmentInChannel);
-
-				sliderChannel = new JSlider();
-				sliderChannel.setBounds(10, 396, 200, 23);
-				sliderChannel.addChangeListener(new ChangeListener() {
-					public void stateChanged(ChangeEvent e) { labelChannel.setText(""+sliderChannel.getValue()); }
-				});
-				add(sliderChannel);
-
-				labelChannel = new JLabel("1");
-				labelChannel.setHorizontalAlignment(SwingConstants.CENTER);
-				labelChannel.setBounds(226, 396, 29, 23);
-				labelChannel.setFont(SMALL_FONT);
-				add(labelChannel);
-			}
+			
 			{
 				jButtonRefresh = new JButton();
 				jButtonRefresh.setBounds(10, 430, 78, 21);

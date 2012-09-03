@@ -2,6 +2,7 @@ package fiji.plugin.trackmate;
 
 import fiji.plugin.trackmate.action.TrackMateAction;
 import fiji.plugin.trackmate.detection.SpotDetector;
+import fiji.plugin.trackmate.detection.SpotDetectorFactory;
 import fiji.plugin.trackmate.features.spot.SpotFeatureAnalyzer;
 import fiji.plugin.trackmate.features.track.TrackFeatureAnalyzer;
 import fiji.plugin.trackmate.gui.TrackMateWizard;
@@ -24,7 +25,7 @@ import net.imglib2.img.ImgPlus;
 import net.imglib2.multithreading.SimpleMultiThreading;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
-import net.imglib2.view.HyperSliceImgPlus;
+import net.imglib2.view.CropImgView;
 
 import org.jgrapht.graph.SimpleWeightedGraph;
 
@@ -55,8 +56,8 @@ public class TrackMate_<T extends RealType<T> & NativeType<T>>  implements PlugI
 	protected ActionFactory<T> actionFactory;
 	/** The list of {@link SpotTracker} that will be offered to choose amongst to the user. */
 	protected TrackerFactory<T> trackerFactory;
-	/** The {@link SpotDetector} factory that provide the GUI with the list of available detectors. */
-	protected DetectorFactory<T> detectorFactory;
+	/** The {@link DetectorProvider} that provides the GUI with the list of available detectors. */
+	protected DetectorProvider<T> detectorProvider;
 
 	/*
 	 * CONSTRUCTORS
@@ -70,7 +71,7 @@ public class TrackMate_<T extends RealType<T> & NativeType<T>>  implements PlugI
 	public TrackMate_() {
 		this(new TrackMateModel<T>());
 	}
-	
+
 	public TrackMate_(TrackMateModel<T> model) {
 		this.model = model;
 	}
@@ -98,7 +99,7 @@ public class TrackMate_<T extends RealType<T> & NativeType<T>>  implements PlugI
 	 * be used with the {@link TrackMateWizard} GUI. To use the plugin in batch mode
 	 * or in scripts, you do not need to call this method, which will save you the 
 	 * time needed to instantiate all the modules.
- 	 * This method to be called also if you are going to load a xml file and want the
+	 * This method to be called also if you are going to load a xml file and want the
 	 * GUI and {@link Settings} object properly reflecting the saved state.  
 	 * <p>
 	 * More precisely, the modules and fields instantiated by this method are:
@@ -120,18 +121,18 @@ public class TrackMate_<T extends RealType<T> & NativeType<T>>  implements PlugI
 	public void initModules() {
 		this.spotFeatureFactory 	= createSpotFeatureAnalyzerFactory();
 		this.trackFeatureFactory 	= createTrackFeatureAnalyzerFactory();
-		this.detectorFactory		= createDetectorFactory();
+		this.detectorProvider		= createDetectorFactory();
 		this.trackerFactory 		= createTrackerFactory();
 		this.viewFactory 			= createViewFactory();
 		this.actionFactory 			= createActionFactory();
 		model.getFeatureModel().setSpotFeatureFactory(spotFeatureFactory);
 		model.getFeatureModel().setTrackFeatureFactory(trackFeatureFactory);
 	}
-	
+
 	/*
 	 * PROTECTED METHODS
 	 */
-	
+
 	/**
 	 * This method exists for the following reason:
 	 * <p>
@@ -149,7 +150,7 @@ public class TrackMate_<T extends RealType<T> & NativeType<T>>  implements PlugI
 	 * pruned list. Or not.
 	 */
 	protected List<Spot> translateAndPruneSpots(final List<Spot> spotsThisFrame, final Settings<T> settings) {
-		
+
 		// Put them back in the right referential 
 		final double[] calibration = TMUtils.getSpatialCalibration(settings.imp);
 		TMUtils.translateSpots(spotsThisFrame, 
@@ -169,25 +170,8 @@ public class TrackMate_<T extends RealType<T> & NativeType<T>>  implements PlugI
 		}
 		return prunedSpots;
 	}
-	
-	
-	protected List<Spot> execSingleFrameDetection(final ImgPlus<T> img, Settings<T> settings) {
-		
-		SpotDetector<T> detector = detectorFactory.getDetector(settings.detector);
-		detector.setTarget(img, settings.detectorSettings);
 
-		if (detector.checkInput() && detector.process()) {
-			List<Spot> spotsThisFrame = detector.getResult();
-			return translateAndPruneSpots(spotsThisFrame, settings);
-			
-		} else {
-			model.getLogger().error(detector.getErrorMessage()+'\n');
-			return null;
-		}
 
-	}
-	
-	
 	/**
 	 * Hook for subclassers.
 	 * <p>
@@ -198,7 +182,7 @@ public class TrackMate_<T extends RealType<T> & NativeType<T>>  implements PlugI
 	protected void launchGUI() {
 		new WizardController<T>(this);
 	}
-	
+
 	/**
 	 * Hook for subclassers.
 	 * <p>
@@ -207,17 +191,17 @@ public class TrackMate_<T extends RealType<T> & NativeType<T>>  implements PlugI
 	protected ViewFactory<T> createViewFactory() {
 		return new ViewFactory<T>();
 	}
-	
-	
+
+
 	/**
 	 * Hook for subclassers.
 	 * <p>
-	 * Create detector factory containing available spot {@link SpotDetector}s.
+	 * Create detector provider that manages available {@link SpotDetectorFactory}.
 	 */
-	protected DetectorFactory<T> createDetectorFactory() {
-		return new DetectorFactory<T>();
+	protected DetectorProvider<T> createDetectorFactory() {
+		return new DetectorProvider<T>();
 	}
-	
+
 	/**
 	 * Hook for subclassers.
 	 * <p>
@@ -226,7 +210,7 @@ public class TrackMate_<T extends RealType<T> & NativeType<T>>  implements PlugI
 	protected SpotFeatureAnalyzerFactory<T> createSpotFeatureAnalyzerFactory() {
 		return new SpotFeatureAnalyzerFactory<T>();
 	}
-	
+
 	/**
 	 * Hook for subclassers.
 	 * <p>
@@ -235,16 +219,16 @@ public class TrackMate_<T extends RealType<T> & NativeType<T>>  implements PlugI
 	protected TrackerFactory<T> createTrackerFactory() {
 		return new TrackerFactory<T>();
 	}
-	
+
 	/**
 	 * Hook for subclassers.
 	 * <p>
-	* Create detector factory containing available spot {@link TrackFeatureAnalyzer}s.
+	 * Create detector factory containing available spot {@link TrackFeatureAnalyzer}s.
 	 */
 	protected TrackFeatureAnalyzerFactory<T> createTrackFeatureAnalyzerFactory() {
 		return new TrackFeatureAnalyzerFactory<T>();
 	}
-	
+
 	/**
 	 * Hook for subclassers.
 	 * <p>
@@ -253,7 +237,7 @@ public class TrackMate_<T extends RealType<T> & NativeType<T>>  implements PlugI
 	protected ActionFactory<T> createActionFactory() {
 		return new ActionFactory<T>();
 	}
-	
+
 	/*
 	 * METHODS
 	 */
@@ -273,14 +257,14 @@ public class TrackMate_<T extends RealType<T> & NativeType<T>>  implements PlugI
 	public SpotFeatureAnalyzerFactory<T> getAvailableSpotFeatureAnalyzers() {
 		return spotFeatureFactory;
 	}
-	
+
 	/**
 	 * Return a list of the {@link SpotDetector} that are currently registered in this plugin.
 	 */
-	public DetectorFactory<T> getDetectorFactory() {
-		return detectorFactory;
+	public DetectorProvider<T> getDetectorProvider() {
+		return detectorProvider;
 	}
-	
+
 	/**
 	 * Return a list of the {@link SpotTracker} that are currently registered in this plugin.
 	 */
@@ -288,14 +272,14 @@ public class TrackMate_<T extends RealType<T> & NativeType<T>>  implements PlugI
 		return trackerFactory;
 	}
 
-	
+
 	/**
 	 * Return a list of the {@link TrackMateModelView} that are currently registered in this plugin.
 	 */
 	public ViewFactory<T> getViewFactory() {
 		return viewFactory;
 	}
-	
+
 	/**
 	 * Return a list of the {@link TrackMateAction} that are currently registered in this plugin.
 	 */
@@ -303,7 +287,7 @@ public class TrackMate_<T extends RealType<T> & NativeType<T>>  implements PlugI
 		return actionFactory;
 	}
 
-	
+
 	/*
 	 * PROCESSES
 	 */
@@ -363,15 +347,9 @@ public class TrackMate_<T extends RealType<T> & NativeType<T>>  implements PlugI
 	 */
 	public void execDetection() {
 		final Settings<T> settings = model.getSettings();
-		final int detectionChannel = settings.detectionChannel;
+		final SpotDetectorFactory<T> factory = settings.detectorFactory;
 		final Logger logger = model.getLogger();
-		final ImagePlus imp = settings.imp;
-		
-		if (null == imp) {
-			logger.error("No image to operate on.\n");
-			return;
-		}
-		if (null == settings.detector) {
+		if (null == factory) {
 			logger.error("No detector selected.\n");
 			return;
 		}
@@ -379,23 +357,89 @@ public class TrackMate_<T extends RealType<T> & NativeType<T>>  implements PlugI
 			logger.error("No detector settings set.\n");
 			return;
 		}
-		if (!settings.detectorSettings.getClass().equals( detectorFactory.getDefaultSettings(settings.detector).getClass())) {
-			logger.error(String.format("Detector settings class does not match detector class: %s vs %s.\n", 
-					settings.detectorSettings.getClass().getSimpleName(),
-					detectorFactory.getDefaultSettings(settings.detector).getClass().getSimpleName()));
+		if (!detectorProvider.checkSettingsValidity(settings.detectorSettings)) {
+			logger.error("Settings do not match detector requirements:\n"+detectorProvider.getErrorMessage());
 			return;
 		}
-		
+
+		/*
+		 *  Prepare cropped image
+		 */
+		ImgPlus<T> rawImg = ImagePlusAdapter.wrapImgPlus(settings.imp);
+		ImgPlus<T> img;
+
+		// Check if we indeed wish to crop the source image. To this, we check
+		// the crop cube settings
+
+		if (settings.xstart != 0 
+				|| settings.ystart != 0
+				|| settings.zstart != 0
+				|| settings.xend != settings.imp.getWidth()-1
+				|| settings.yend != settings.imp.getHeight()-1
+				|| settings.zend != settings.imp.getNSlices()-1) {
+			// Yes, we want to crop
+
+			long[] max = new long[rawImg.numDimensions()];
+			long[] min = new long[rawImg.numDimensions()];
+			// X, we must have it
+			int xindex = TMUtils.findXAxisIndex(rawImg);
+			if (xindex < 0) {
+				logger.error("Source image has no X axis.\n");
+				return;
+			}
+			min[xindex] = settings.xstart;
+			max[xindex] = settings.xend;
+			// Y, we must have it
+			int yindex = TMUtils.findYAxisIndex(rawImg);
+			if (yindex < 0) {
+				logger.error("Source image has no Y axis.\n");
+				return;
+			}
+			min[yindex] = settings.ystart;
+			max[yindex] = settings.yend;
+			// Z, we MIGHT have it
+			int zindex = TMUtils.findZAxisIndex(rawImg);
+			if (zindex >= 0) {
+				min[zindex] = settings.zstart;
+				max[zindex] = settings.zend;
+			}
+			// CHANNEL, we might have it 
+			int cindex = TMUtils.findCAxisIndex(rawImg);
+			if (cindex >= 0) {
+				min[cindex] = 0;
+				max[cindex] = settings.imp.getNChannels();
+			}
+			// TIME, we might have it, but anyway we leave the start & end management to the threads below  
+			int tindex = TMUtils.findTAxisIndex(rawImg);
+			if (tindex >= 0) {
+				min[tindex] = 0;
+				max[tindex] = settings.imp.getNFrames();
+			}
+			// crop: we now have a cropped view of the source image
+			CropImgView<T> cropView = new CropImgView<T>(rawImg, min, max);
+			// Put back metadata in a new ImgPlus 
+			img = new ImgPlus<T>(cropView, rawImg);
+			
+		} else {
+			img = rawImg;
+		}
+
+		factory.setTarget(img, settings.detectorSettings);
+
 		final int numFrames = settings.tend - settings.tstart + 1;
+		// Final results holder, for all frames
 		final SpotCollection spots = new SpotCollection();
+		// To report progress
 		final AtomicInteger spotFound = new AtomicInteger(0);
 		final AtomicInteger progress = new AtomicInteger(0);
-
-		final ImgPlus<T> img = ImagePlusAdapter.wrapImgPlus(imp);
-		final ImgPlus<T> imgC = HyperSliceImgPlus.fixChannelAxis(img , detectionChannel-1); // channel index is 1-based
+		// To translate spots, later
+		final double[] calibration = TMUtils.getSpatialCalibration(settings.imp);
+		final double dx = settings.xstart * calibration[0];
+		final double dy = settings.ystart * calibration[1];
+		final double dz = settings.zstart * calibration[2];
 
 		final Thread[] threads;
-		if (useMultithreading) {
+		if (useMultithreading) { // TODO this is lame FIXME
 			threads = SimpleMultiThreading.newThreads();
 		} else {
 			threads = SimpleMultiThreading.newThreads(1);
@@ -410,21 +454,44 @@ public class TrackMate_<T extends RealType<T> & NativeType<T>>  implements PlugI
 				public void run() {
 
 					for (int frame = ai.getAndIncrement(); frame <= settings.tend; frame = ai.getAndIncrement()) {
-						
-						// Extract frame of interest
-						ImgPlus<T> imgT = HyperSliceImgPlus.fixTimeAxis(imgC, frame);
-						
-						// Segment it
-						List<Spot> s = execSingleFrameDetection(imgT, settings);
-						
-						// Add detection feature other than position
-						for (Spot spot : s) {
-							spot.putFeature(Spot.POSITION_T, frame * settings.dt);
-						}
-						spots.put(frame, s);
 
-						spotFound.addAndGet(s.size());
-						logger.setProgress(progress.incrementAndGet() / (float)numFrames );
+						// Yield detector for target frame
+						SpotDetector<T> detector = factory.getDetector(frame);
+
+						// Execute detection
+						if (detector.checkInput() && detector.process()) {
+							// On success,
+							// Get results,
+							List<Spot> spotsThisFrame = detector.getResult();
+							// Translate individual spots back to top-left corner of the image, if
+							// the raw image was cropped.
+							TMUtils.translateSpots(spotsThisFrame, dx, dy, dz);
+							// Prune if outside of ROI
+							List<Spot> prunedSpots;
+							if (null != settings.polygon) {
+								prunedSpots = new ArrayList<Spot>();
+								for (Spot spot : spotsThisFrame) {
+									if (settings.polygon.contains(spot.getFeature(Spot.POSITION_X)/calibration[0], spot.getFeature(Spot.POSITION_Y)/calibration[1])) 
+										prunedSpots.add(spot);
+								}
+							} else {
+								prunedSpots = spotsThisFrame;
+							}
+							// Add detection feature other than position
+							for (Spot spot : prunedSpots) {
+								spot.putFeature(Spot.POSITION_T, frame * settings.dt);
+							}
+							// Store final results for this frame
+							spots.put(frame, prunedSpots);
+							// Report 
+							spotFound.addAndGet(prunedSpots.size());
+							logger.setProgress(progress.incrementAndGet() / (double)numFrames );
+
+						} else {
+							// Fail: exit and report error.
+							model.getLogger().error(detector.getErrorMessage()+'\n');
+							return;
+						}
 
 					} // Finished looping over frames
 				}
@@ -440,7 +507,6 @@ public class TrackMate_<T extends RealType<T> & NativeType<T>>  implements PlugI
 		logger.log("Found "+spotFound.get()+" spots.\n");
 		logger.setProgress(1);
 		logger.setStatus("");
-		return;
 	}
 
 	/**
@@ -516,7 +582,7 @@ public class TrackMate_<T extends RealType<T> & NativeType<T>>  implements PlugI
 		model.setVisibleTrackIndices(filteredTrackIndices, true);
 	}
 
-	
+
 	public String toString() {
 		return PLUGIN_NAME_STR + "v" + PLUGIN_NAME_VERSION;
 	};

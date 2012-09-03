@@ -1,5 +1,9 @@
 package fiji.plugin.trackmate.visualization.trackscheme;
 
+import static fiji.plugin.trackmate.detection.DetectorKeys.KEY_TARGET_CHANNEL;
+
+import java.util.Map;
+
 import net.imglib2.img.ImagePlusAdapter;
 import net.imglib2.img.ImgPlus;
 import net.imglib2.type.NativeType;
@@ -35,7 +39,15 @@ public class SpotImageUpdater <T extends RealType<T> & NativeType<T>> {
 		} else {
 			Settings<T> settings = model.getSettings();
 			ImgPlus<T> img = ImagePlusAdapter.wrapImgPlus(settings.imp);
-			int targetChannel = settings.detectionChannel - 1; // TODO: be more flexible about that
+			int targetChannel = 0;
+			if (settings != null && settings.detectorSettings != null) {
+				// Try to extract it from detector settings target channel
+				Map<String, Object> ds = settings.detectorSettings;
+				Object obj = ds.get(KEY_TARGET_CHANNEL);
+				if (null != obj && obj instanceof Integer) {
+					targetChannel = ((Integer) obj) - 1;
+				}
+			} // TODO: be more flexible about that
 			ImgPlus<T> imgCT = HyperSliceImgPlus.fixTimeAxis( 
 					HyperSliceImgPlus.fixChannelAxis(img, targetChannel), 
 					frame);

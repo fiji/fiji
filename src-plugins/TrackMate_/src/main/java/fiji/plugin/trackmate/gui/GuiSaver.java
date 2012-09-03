@@ -43,7 +43,7 @@ public class GuiSaver <T extends RealType<T> & NativeType<T>> {
 
 	public void writeFile(final File file, final TrackMateModel<T> model, final String targetID) {
 
-		TmXmlWriter<T> writer = new TmXmlWriter<T>(model, logger);
+		TmXmlWriter<T> writer = new TmXmlWriter<T>(wizard.getController().getPlugin());
 
 		if (targetID.equals(StartDialogPanel.DESCRIPTOR) || targetID.equals(DetectorChoiceDescriptor.DESCRIPTOR) ) {
 

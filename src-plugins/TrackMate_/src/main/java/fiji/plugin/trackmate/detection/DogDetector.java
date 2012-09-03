@@ -21,30 +21,20 @@ import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotImp;
 import fiji.plugin.trackmate.util.TMUtils;
 
-public class DogDetector <T extends RealType<T>  & NativeType<T>> extends AbstractSpotDetector<T> {
+public class DogDetector <T extends RealType<T>  & NativeType<T>> extends LogDetector<T> {
 
 	/*
-	 * FIELDS
+	 * CONSTANTS
 	 */
 	
 	public final static String BASE_ERROR_MESSAGE = "DogDetector: ";
-	public static final String NAME = "DoG detector";
-	public static final String INFO_TEXT = "<html>" +
-			"This segmenter is based on an approximation of the LoG operator <br> " +
-			"by differences of gaussian (DoG). Computations are made in direct space. <br>" +
-			"It is the quickest for small spot sizes (< ~5 pixels). " +
-			"<p> " +
-			"Spots found too close are suppressed. This segmenter can do sub-pixel <br>" +
-			"localization of spots using a quadratic fitting scheme. It is based on <br>" +
-			"the scale-space framework made by Stephan Preibisch for ImgLib. " +
-			"</html>";	
-	private LogDetectorSettings<T> settings;
 	
 	/*
 	 * CONSTRUCTOR
 	 */
 	
-	public DogDetector() {
+	public DogDetector(final ImgPlus<T> img, final double radius, final double threshold, final boolean doSubPixelLocalization, final boolean doMedianFilter) {
+		super(img, radius, threshold, doSubPixelLocalization, doMedianFilter);
 		this.baseErrorMessage = BASE_ERROR_MESSAGE;
 	}
 	
@@ -53,22 +43,15 @@ public class DogDetector <T extends RealType<T>  & NativeType<T>> extends Abstra
 	 * METHODS
 	 */
 	
-	public SpotDetector<T> createNewDetector() {
-		return new DogDetector<T>();
-	};
-	
-	@Override
-	public void setTarget(ImgPlus<T> image, DetectorSettings<T> settings) {
-		super.setTarget(image, settings);
-		this.settings = (LogDetectorSettings<T>) settings;
-	}
 
 	@Override
 	public boolean process() {
 
+		long start = System.currentTimeMillis();
+		
 		// Deal with median filter:
 		Img<T> intermediateImage = img;
-		if (settings.useMedianFilter) {
+		if (doMedianFilter) {
 			intermediateImage = applyMedianFilter(intermediateImage);
 			if (null == intermediateImage) {
 				return false;
@@ -76,8 +59,6 @@ public class DogDetector <T extends RealType<T>  & NativeType<T>> extends Abstra
 		}
 		
 		final double[] calibration = TMUtils.getSpatialCalibration(img);
-		final double radius = settings.expectedRadius;
-		final float minPeakValue = settings.threshold;
 		
 		// First we need an image factory for FloatType
 		ImgFactory<FloatType> imageFactory;
@@ -99,7 +80,7 @@ public class DogDetector <T extends RealType<T>  & NativeType<T>> extends Abstra
 			sigma2[i] = Math.sqrt(img.numDimensions()) * sigma1[i];
 		}
 		
-		final DifferenceOfGaussian<T> dog = new DifferenceOfGaussian<T>(intermediateImage, imageFactory, oobs2, sigma1, sigma2, minPeakValue, 1.0);
+		final DifferenceOfGaussian<T> dog = new DifferenceOfGaussian<T>(intermediateImage, imageFactory, oobs2, sigma1, sigma2, threshold, 1.0);
 		/* The DogDetector class will be called in a multi-threaded way, so the DifferenceOfGaussianRealNI
 		 * does not need to be multi-threaded. On top of that, reports from users on win32 platform 
 		 * indicate that multi-threading generates some silent problems, with some frames (first ones
@@ -109,7 +90,7 @@ public class DogDetector <T extends RealType<T>  & NativeType<T>> extends Abstra
 		dog.setNumThreads(1);
 		
 		// Keep laplace image if needed
-		if (settings.doSubPixelLocalization)
+		if (doSubPixelLocalization)
 			dog.setKeepDoGImg(true);
 		
 		// Execute
@@ -128,14 +109,14 @@ public class DogDetector <T extends RealType<T>  & NativeType<T>> extends Abstra
 			if ( (dogpeak.getPeakType() != DifferenceOfGaussian.SpecialPoint.MAX))
 				continue;
 			cursor.setPosition(dogpeak);
-			if (cursor.get().getRealFloat() < settings.threshold)
+			if (cursor.get().getRealDouble() < threshold)
 				continue;
 			
 			pruned_list.add(dogpeak);
 		}
 		
 		// Deal with sub-pixel localization if required
-		if (settings.doSubPixelLocalization && pruned_list.size() > 0) {
+		if (doSubPixelLocalization && pruned_list.size() > 0) {
 			Img<FloatType> laplacian = dog.getDoGImg();
 			SubpixelLocalization<FloatType> locator = new SubpixelLocalization<FloatType>(laplacian , pruned_list);
 			locator.setNumThreads(1); // Since the calls to a segmenter  are already multi-threaded.
@@ -150,7 +131,7 @@ public class DogDetector <T extends RealType<T>  & NativeType<T>> extends Abstra
 		spots.clear();
 		for(DifferenceOfGaussianPeak<FloatType> dogpeak : pruned_list) {
 			double[] coords = new double[3];
-			if (settings.doSubPixelLocalization) {
+			if (doSubPixelLocalization) {
 				for (int i = 0; i < img.numDimensions(); i++) 
 					coords[i] = dogpeak.getSubPixelPosition(i) * calibration[i];
 			} else {
@@ -159,24 +140,16 @@ public class DogDetector <T extends RealType<T>  & NativeType<T>> extends Abstra
 			}
 			Spot spot = new SpotImp(coords);
 			spot.putFeature(Spot.QUALITY, -dogpeak.getValue().get());
-			spot.putFeature(Spot.RADIUS, settings.expectedRadius);
+			spot.putFeature(Spot.RADIUS, radius);
 			spots.add(spot);
 		}
 		
 		// Prune overlapping spots
 		spots = TMUtils.suppressSpots(spots, Spot.QUALITY);
 		
+		long end = System.currentTimeMillis();
+		processingTime = end - start;
+		
 		return true;
 	}
-	
-	@Override
-	public String toString() {
-		return NAME;
-	}
-	
-	@Override
-	public String getInfoText() {
-		return INFO_TEXT;
-	}
-
 }

@@ -1,5 +1,6 @@
 package fiji.plugin.trackmate.features;
 
+import static fiji.plugin.trackmate.detection.DetectorKeys.KEY_TARGET_CHANNEL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -284,7 +285,15 @@ public class FeatureModel <T extends RealType<T> & NativeType<T>> {
 		 * snapshot. */
 	
 		final ImgPlus<T> img = ImagePlusAdapter.wrapImgPlus(settings.imp);
-		final int targetChannel = settings.detectionChannel - 1;
+		int targetChannel = 0;
+		if (settings != null && settings.detectorSettings != null) {
+			// Try to extract it from detector settings target channel
+			Map<String, Object> ds = settings.detectorSettings;
+			Object obj = ds.get(KEY_TARGET_CHANNEL);
+			if (null != obj && obj instanceof Integer) {
+				targetChannel = ((Integer) obj) - 1;
+			}
+		}
 		final ImgPlus<T> imgC = HyperSliceImgPlus.fixChannelAxis(img, targetChannel);
 
 		// Prepare the thread array

@@ -8,6 +8,7 @@ import java.awt.FileDialog;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.util.List;
+import java.util.Map;
 
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
@@ -26,7 +27,6 @@ import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMate_;
-import fiji.plugin.trackmate.detection.DetectorSettings;
 import fiji.plugin.trackmate.io.TmXmlReader;
 import fiji.plugin.trackmate.io.TmXmlReader_v12;
 import fiji.plugin.trackmate.tracking.TrackerSettings;
@@ -159,7 +159,7 @@ public class GuiReader <T extends RealType<T> & NativeType<T>> {
 		{ // Try to read detector settings
 			logger.log("  Reading detector settings...");
 			reader.getDetectorSettings(settings);
-			DetectorSettings<T> detectorSettings = settings.detectorSettings;
+			Map<String, Object> detectorSettings = settings.detectorSettings;
 			if (null == detectorSettings) {
 				echoNotFound();
 				// Stop at start panel
@@ -180,8 +180,8 @@ public class GuiReader <T extends RealType<T> & NativeType<T>> {
 			DetectorConfigurationPanelDescriptor<T> detectConfDescriptor = new DetectorConfigurationPanelDescriptor<T>();
 			detectConfDescriptor.setPlugin(plugin);
 			detectConfDescriptor.setWizard(wizard);
+			detectConfDescriptor.updateComponent();
 			wizard.registerWizardDescriptor(DetectorConfigurationPanelDescriptor.DESCRIPTOR, detectConfDescriptor);
-			detectConfDescriptor.aboutToDisplayPanel();
 		}
 
 

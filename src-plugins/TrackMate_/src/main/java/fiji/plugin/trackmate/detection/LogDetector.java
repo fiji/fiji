@@ -19,57 +19,74 @@ import fiji.plugin.trackmate.SpotImp;
 import fiji.plugin.trackmate.detection.subpixel.QuadraticSubpixelLocalization;
 import fiji.plugin.trackmate.detection.subpixel.SubPixelLocalization;
 import fiji.plugin.trackmate.detection.subpixel.SubPixelLocalization.LocationType;
+import fiji.plugin.trackmate.detection.util.MedianFilter3x3;
 import fiji.plugin.trackmate.util.TMUtils;
 
-public class LogDetector <T extends RealType<T>  & NativeType<T>> extends AbstractSpotDetector<T> {
+public class LogDetector <T extends RealType<T>  & NativeType<T>> implements SpotDetector<T> {
 
 	/*
 	 * FIELDS
 	 */
 
 	private final static String BASE_ERROR_MESSAGE = "LogDetector: ";
-	public static final String NAME = "LoG detector";
-	public static final String INFO_TEXT = "<html>" +
-			"This detector applies a LoG (Laplacian of Gaussian) filter <br>" +
-			"to the image, with a sigma suited to the blob estimated size. <br>" +
-			"Calculations are made in the Fourier space. The maxima in the <br>" +
-			"filtered image are searched for, and maxima too close from each <br>" +
-			"other are suppressed. A quadratic fitting scheme allows to do <br>" +
-			"sub-pixel localization. " +
-			"</html>";
-	private LogDetectorSettings<T> settings;
+	/** The image to segment. Will not modified. */
+	protected ImgPlus<T> img;
+	protected double radius;
+	protected double threshold;
+	protected boolean doSubPixelLocalization;
+	protected boolean doMedianFilter;
+	protected String baseErrorMessage;
+	protected String errorMessage;
+	/** The list of {@link Spot} that will be populated by this detector. */
+	protected List<Spot> spots = new ArrayList<Spot>(); // because this implementation is fast to add elements at the end of the list
+	/** The processing time in ms. */
+	protected long processingTime;
 
 	/*
 	 * CONSTRUCTORS
 	 */
 
-	public LogDetector() {
-		baseErrorMessage = BASE_ERROR_MESSAGE;
+	public LogDetector(final ImgPlus<T> img, final double radius, final double threshold, final boolean doSubPixelLocalization, final boolean doMedianFilter) {
+		this.img = img;
+		this.radius = radius;
+		this.threshold = threshold;
+		this.doSubPixelLocalization = doSubPixelLocalization;
+		this.doMedianFilter = doMedianFilter;
+		this.baseErrorMessage = BASE_ERROR_MESSAGE;
 	}
 
 	/*
 	 * METHODS
 	 */
-
+	
 	@Override
-	public void setTarget(ImgPlus<T> image, DetectorSettings<T> settings) {
-		super.setTarget(image, settings);
-		this.settings = (LogDetectorSettings<T>) settings;
-	}
-
+	public boolean checkInput() {
+		if (null == img) {
+			errorMessage = baseErrorMessage + "Image is null.";
+			return false;
+		}
+		if (!(img.numDimensions() == 2 || img.numDimensions() == 3)) {
+			errorMessage = baseErrorMessage + "Image must be 2D or 3D, got " + img.numDimensions() +"D.";
+			return false;
+		}
+		return true;
+	};
+	
+	
 	@Override
 	public boolean process() {
+		
+		long start = System.currentTimeMillis();
 
 		// Deal with median filter:
 		Img<T> intermediateImage = img;
-		if (settings.useMedianFilter) {
+		if (doMedianFilter) {
 			intermediateImage = applyMedianFilter(intermediateImage);
 			if (null == intermediateImage) {
 				return false;
 			}
 		}
 
-		double radius = settings.expectedRadius;
 		double sigma = radius / Math.sqrt(img.numDimensions()); // optimal sigma for LoG approach and dimensionality
 		ImgFactory<FloatType> factory = new ArrayImgFactory<FloatType>();
 		Img<FloatType> gaussianKernel = FourierConvolution.createGaussianKernel(factory, sigma, img.numDimensions());
@@ -124,7 +141,7 @@ public class LogDetector <T extends RealType<T>  & NativeType<T>> extends Abstra
 			long[] center = centers.get(i);
 			cursor.setPosition(center);
 			T value = cursor.get().copy();
-			if (value.getRealFloat() < settings.threshold) {
+			if (value.getRealDouble() < threshold) {
 				break; // because peaks are sorted, we can exit loop here
 			}
 			SubPixelLocalization<T> peak = new SubPixelLocalization<T>(center, value, specialPoint);
@@ -133,7 +150,7 @@ public class LogDetector <T extends RealType<T>  & NativeType<T>> extends Abstra
 		}
 
 		// Do sub-pixel localization
-		if (settings.doSubPixelLocalization ) {
+		if (doSubPixelLocalization ) {
 			// Create localizer and apply it to the list. The list object will be updated
 			final QuadraticSubpixelLocalization<T> locator = new QuadraticSubpixelLocalization<T>(intermediateImage, peaks);
 			locator.setNumThreads(1); // Since the calls to a detector  are already multi-threaded.
@@ -151,26 +168,20 @@ public class LogDetector <T extends RealType<T>  & NativeType<T>> extends Abstra
 			SubPixelLocalization<T> peak = peaks.get(j); 
 			double[] coords = new double[3];
 			for (int i = 0; i < img.numDimensions(); i++) {
-				coords[i] = peak.getFloatPosition(i) * calibration[i];
+				coords[i] = peak.getDoublePosition(i) * calibration[i];
 			}
 			Spot spot = new SpotImp(coords);
-			spot.putFeature(Spot.QUALITY, peak.getValue().getRealFloat());
-			spot.putFeature(Spot.RADIUS, settings.expectedRadius);
+			spot.putFeature(Spot.QUALITY, peak.getValue().getRealDouble());
+			spot.putFeature(Spot.RADIUS, radius);
 			spots.add(spot);
 		}
 
+		long end = System.currentTimeMillis();
+		processingTime = end - start;
+		
 		return true;
 	}
 
-	@Override
-	public String getInfoText() {
-		return INFO_TEXT;	
-	}
-
-	@Override
-	public String toString() {
-		return NAME;
-	}
 
 	/*
 	 * PRIVATE METHODS
@@ -191,6 +202,18 @@ public class LogDetector <T extends RealType<T>  & NativeType<T>> extends Abstra
 			quickKernel2D(laplacianArray, laplacianKernel);
 		} 
 		return laplacianKernel;
+	}
+	
+	/**
+	 * Apply a simple 3x3 median filter to the target image.
+	 */
+	protected Img<T> applyMedianFilter(final Img<T> image) {
+		final MedianFilter3x3<T> medFilt = new MedianFilter3x3<T>(image); 
+		if (!medFilt.checkInput() && !medFilt.process()) {
+			errorMessage = baseErrorMessage + "Failed in applying median filter";
+			return null;
+		}
+		return medFilt.getResult(); 
 	}
 
 	/*
@@ -226,6 +249,21 @@ public class LogDetector <T extends RealType<T>  & NativeType<T>> extends Abstra
 				}
 	}
 
+	@Override
+	public List<Spot> getResult() {
+		return spots;
+	}
+		
+	@Override
+	public String getErrorMessage() {
+		return errorMessage ;
+	}
+	
+
+	@Override
+	public long getProcessingTime() {
+		return processingTime;
+	}
 
 
 }

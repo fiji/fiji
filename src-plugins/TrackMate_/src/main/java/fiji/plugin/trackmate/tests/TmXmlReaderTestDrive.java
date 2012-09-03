@@ -29,7 +29,7 @@ public class TmXmlReaderTestDrive {
 		System.out.println(model.getSettings());
 
 		System.out.println();
-		System.out.println("Detector was: "+model.getSettings().detector.toString());
+		System.out.println("Detector was: "+model.getSettings().detectorFactory.toString());
 		System.out.println("With settings:");
 		System.out.println(model.getSettings().detectorSettings);
 

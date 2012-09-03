@@ -8,6 +8,7 @@ import net.imglib2.type.numeric.RealType;
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.TrackMate_;
+import fiji.plugin.trackmate.util.TMUtils;
 
 public class DetectorDescriptor <T extends RealType<T> & NativeType<T>> implements WizardPanelDescriptor<T> {
 	
@@ -62,10 +63,10 @@ public class DetectorDescriptor <T extends RealType<T> & NativeType<T>> implemen
 	public void displayingPanel() {
 		wizard.setNextButtonEnabled(false);
 		final Settings<T> settings = plugin.getModel().getSettings();
-		logger.log("Starting detection using "+settings.detector.toString()+"\n", Logger.BLUE_COLOR);
+		logger.log("Starting detection using "+settings.detectorFactory.toString()+"\n", Logger.BLUE_COLOR);
 		logger.log("with settings:\n");
 		logger.log(settings.toString());
-		logger.log(settings.detectorSettings.toString());
+		logger.log(TMUtils.echoMap(settings.detectorSettings, 2));
 		new Thread("TrackMate detection mother thread") {					
 			public void run() {
 				long start = System.currentTimeMillis();

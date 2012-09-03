@@ -43,7 +43,8 @@ public class ExtractTrackStackAction<T extends RealType<T> & NativeType<T>> exte
 			"<p>" +
 			"A stack of images will be generated from the spots that join " +
 			"them, defining the image size with the largest spot encountered. " +
-			"The central spot slice is taken in case of 3D data." +
+			"The central spot slice is taken in case of 3D data. The currently " +
+			"selected channel is used. " +
 			"</html>";
 	public static final ImageIcon ICON = new ImageIcon(TrackMateWizard.class.getResource("images/magnifier.png"));
 	/** By how much we resize the capture window to get a nice border around the spot. */
@@ -126,7 +127,7 @@ public class ExtractTrackStackAction<T extends RealType<T> & NativeType<T>> exte
 		// Common coordinates
 		Settings<T> settings = model.getSettings();
 		double[] calibration = TMUtils.getSpatialCalibration(settings.imp);
-		final int targetChannel = settings.detectionChannel - 1; // We do this for the detection channel TODO be more flexible
+		int targetChannel = settings.imp.getC() - 1; // From current selection
 		final int width 	= (int) Math.ceil(2 * radius * RESIZE_FACTOR / calibration[0]);
 		final int height 	= (int) Math.ceil(2 * radius * RESIZE_FACTOR / calibration[1]);
 		

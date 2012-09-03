@@ -1,6 +1,9 @@
 package fiji.plugin.trackmate.action;
 
+import static fiji.plugin.trackmate.detection.DetectorKeys.KEY_TARGET_CHANNEL;
+
 import java.util.List;
+import java.util.Map;
 
 import javax.swing.ImageIcon;
 
@@ -39,7 +42,15 @@ public class GrabSpotImageAction<T extends RealType<T> & NativeType<T>> extends 
 		Logger oldLogger = model.getLogger();
 		model.setLogger(logger);
 		Settings<T> settings = model.getSettings();
-		final int targetChannel = settings.detectionChannel - 1; // TODO: maybe be more flexible about that
+		int targetChannel = 0;
+		if (settings != null && settings.detectorSettings != null) {
+			// Try to extract it from detector settings target channel
+			Map<String, Object> ds = settings.detectorSettings;
+			Object obj = ds.get(KEY_TARGET_CHANNEL);
+			if (null != obj && obj instanceof Integer) {
+				targetChannel = ((Integer) obj) - 1;
+			}
+		} // TODO: maybe be more flexible about that
 		final ImgPlus<T> source = ImagePlusAdapter.wrapImgPlus(settings.imp);
 		final ImgPlus<T> imgC = HyperSliceImgPlus.fixChannelAxis(source, targetChannel);
 		

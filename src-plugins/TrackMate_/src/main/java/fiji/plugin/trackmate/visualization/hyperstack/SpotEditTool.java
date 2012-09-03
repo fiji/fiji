@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 
 import javax.swing.SwingUtilities;
 
@@ -28,8 +29,7 @@ import org.jgrapht.graph.DefaultWeightedEdge;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotImp;
 import fiji.plugin.trackmate.TrackMateModel;
-import fiji.plugin.trackmate.detection.BasicDetectorSettings;
-import fiji.plugin.trackmate.detection.DetectorSettings;
+import fiji.plugin.trackmate.detection.DetectorKeys;
 import fiji.tool.AbstractTool;
 
 public class SpotEditTool<T extends RealType<T> & NativeType<T>> extends AbstractTool implements MouseMotionListener, MouseListener, MouseWheelListener, KeyListener {
@@ -192,11 +192,16 @@ public class SpotEditTool<T extends RealType<T> & NativeType<T>> extends Abstrac
 				if (null != target && null != target.getFeature(Spot.RADIUS)) {
 					radius = target.getFeature(Spot.RADIUS);
 				} else {
-					DetectorSettings<T> ss = displayer.settings.detectorSettings;
-					if (ss instanceof BasicDetectorSettings) {
-						radius = ((BasicDetectorSettings<T>)displayer.settings.detectorSettings).expectedRadius;
-					} else {
+					Map<String, Object> ss = displayer.settings.detectorSettings;
+					Object obj = ss.get(DetectorKeys.DEFAULT_RADIUS);
+					if (null == obj) {
 						radius = FALL_BACK_RADIUS;
+					} else {
+						if (Double.class.isInstance(obj)) {
+							radius = (Double) obj;
+						} else {
+							radius = FALL_BACK_RADIUS;
+						}
 					}
 				}
 				if (null == target || target.squareDistanceTo(clickLocation) > radius*radius) {
@@ -414,11 +419,16 @@ public class SpotEditTool<T extends RealType<T> & NativeType<T>> extends Abstrac
 				if (null != previousRadius) {
 					radius = previousRadius; 
 				} else { 
-					DetectorSettings<T> ss = displayer.settings.detectorSettings;
-					if (ss instanceof BasicDetectorSettings) {
-						radius = ( (BasicDetectorSettings<T>) displayer.settings.detectorSettings ).expectedRadius;
-					} else {
+					Map<String, Object> ss = displayer.settings.detectorSettings;
+					Object obj = ss.get(DetectorKeys.DEFAULT_RADIUS);
+					if (null == obj) {
 						radius = FALL_BACK_RADIUS;
+					} else {
+						if (Double.class.isInstance(obj)) {
+							radius = (Double) obj;
+						} else {
+							radius = FALL_BACK_RADIUS;
+						}
 					}
 				}
 

@@ -88,14 +88,16 @@ public class TrackMateWizard <T extends RealType<T> & NativeType<T>> extends jav
 	private CardLayout cardLayout;
 	private TrackMateModelView<T> displayer;
 	private Component component;
+	private final WizardController<T> controller;
 
 
 	/*
 	 * CONSTRUCTOR
 	 */
 
-	public TrackMateWizard(Component component) {
+	public TrackMateWizard(Component component, WizardController<T> controller) {
 		this.component = component;
+		this.controller = controller;
 		initGUI();
 		positionWindow();
 	}
@@ -103,6 +105,11 @@ public class TrackMateWizard <T extends RealType<T> & NativeType<T>> extends jav
 	/*
 	 * PUBLIC METHODS
 	 */
+	
+	/** Expose the controller managing this GUI. */
+	public WizardController<T> getController() {
+		return controller;
+	}
 
 	/** 
 	 * Add an {@link ActionListener} to the list of listeners of this GUI, that will be notified 

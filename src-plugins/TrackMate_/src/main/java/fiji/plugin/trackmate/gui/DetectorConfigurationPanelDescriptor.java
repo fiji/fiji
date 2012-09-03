@@ -1,14 +1,13 @@
 package fiji.plugin.trackmate.gui;
 
 import java.awt.Component;
+import java.util.Map;
 
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
-
+import fiji.plugin.trackmate.DetectorProvider;
 import fiji.plugin.trackmate.TrackMate_;
-import fiji.plugin.trackmate.detection.ManualDetector;
-import fiji.plugin.trackmate.detection.DetectorSettings;
-import fiji.plugin.trackmate.detection.SpotDetector;
+import fiji.plugin.trackmate.detection.ManualDetectorFactory;
 
 public class DetectorConfigurationPanelDescriptor <T extends RealType<T> & NativeType<T>> implements WizardPanelDescriptor<T> {
 
@@ -16,7 +15,7 @@ public class DetectorConfigurationPanelDescriptor <T extends RealType<T> & Nativ
 	private TrackMate_<T> plugin;
 	private DetectorConfigurationPanel<T> configPanel;
 	private TrackMateWizard<T> wizard;
-	
+
 	/*
 	 * METHODS
 	 */
@@ -29,19 +28,6 @@ public class DetectorConfigurationPanelDescriptor <T extends RealType<T> & Nativ
 	@Override
 	public void setPlugin(TrackMate_<T> plugin) {
 		this.plugin = plugin;
-		DetectorSettings<T> settings = plugin.getModel().getSettings().detectorSettings;
-		String detectorName = plugin.getModel().getSettings().detector;
-		// Bulletproof null
-		if (null == settings) {
-			SpotDetector<T> detector = plugin.getDetectorFactory().getDetector( detectorName );
-			if (null == detector) {
-				// try to make it right with a default
-				plugin.getModel().getSettings().detector = ManualDetector.NAME;
-			}
-			settings = plugin.getDetectorFactory().getDefaultSettings( detectorName );
-		}
-		configPanel = plugin.getDetectorFactory().getDetectorConfigurationPanel( detectorName );
-		configPanel.setDetectorSettings(plugin.getModel());
 	}
 
 	@Override
@@ -53,7 +39,7 @@ public class DetectorConfigurationPanelDescriptor <T extends RealType<T> & Nativ
 	public String getDescriptorID() {
 		return DESCRIPTOR;
 	}
-	
+
 	@Override
 	public String getComponentID() {
 		return DESCRIPTOR;
@@ -61,7 +47,7 @@ public class DetectorConfigurationPanelDescriptor <T extends RealType<T> & Nativ
 
 	@Override
 	public String getNextDescriptorID() {
-		if (plugin.getModel().getSettings().detector.equals(ManualDetector.NAME)) {
+		if (plugin.getModel().getSettings().detectorFactory.getKey().equals(ManualDetectorFactory.DETECTOR_KEY)) {
 			return DisplayerChoiceDescriptor.DESCRIPTOR;
 		} else {
 			return DetectorDescriptor.DESCRIPTOR;
@@ -73,9 +59,25 @@ public class DetectorConfigurationPanelDescriptor <T extends RealType<T> & Nativ
 		return DetectorChoiceDescriptor.DESCRIPTOR;
 	}
 
+	/**
+	 * Regenerate the config panel to reflect current settings stored in the plugin.
+	 */
+	public void updateComponent() {
+		// Regenerate panel
+		configPanel = plugin.getDetectorProvider().getDetectorConfigurationPanel(wizard.getController());
+		// We assume the provider is already configured with the right target detector factory
+		DetectorProvider<T> provider = plugin.getDetectorProvider(); 
+		Map<String, Object> settings = plugin.getModel().getSettings().detectorSettings;
+		// Bulletproof null
+		if (null == settings || !provider.checkSettingsValidity(settings)) {
+			settings = provider.getDefaultSettings();
+		}
+		configPanel.setSettings(settings);
+	}
+	
 	@Override
 	public void aboutToDisplayPanel() {
-		configPanel.setDetectorSettings(plugin.getModel());
+		updateComponent();
 		wizard.setNextButtonEnabled(true);
 	}
 
@@ -84,7 +86,7 @@ public class DetectorConfigurationPanelDescriptor <T extends RealType<T> & Nativ
 
 	@Override
 	public void aboutToHidePanel() {
-		plugin.getModel().getSettings().detectorSettings = configPanel.getDetectorSettings();
+		plugin.getModel().getSettings().detectorSettings = configPanel.getSettings();
 	}
 
 }

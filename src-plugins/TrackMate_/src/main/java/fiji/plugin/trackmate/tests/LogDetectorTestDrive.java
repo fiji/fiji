@@ -17,8 +17,7 @@ import net.imglib2.type.numeric.integer.UnsignedByteType;
 import net.imglib2.util.Util;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.detection.DownsampleLogDetector;
-import fiji.plugin.trackmate.detection.LogDetectorSettings;
-import fiji.plugin.trackmate.detection.SpotDetector;
+import fiji.plugin.trackmate.detection.LogDetector;
 
 /**
  * Test class for {@link DownsampleLogDetector}
@@ -69,19 +68,16 @@ public class LogDetectorTestDrive {
 			}
 		}
 
-		// Instantiate segmenter
-		LogDetectorSettings<UnsignedByteType> settings = new LogDetectorSettings<UnsignedByteType>();
-		settings.expectedRadius = RADIUS;
-		SpotDetector<UnsignedByteType> segmenter = new DownsampleLogDetector<UnsignedByteType>();
-		segmenter.setTarget(img, settings);
+		// Instantiate detector
+		LogDetector<UnsignedByteType> detector = new LogDetector<UnsignedByteType>(img, RADIUS, 0, true, false);
 		
 		// Segment
 		long start = System.currentTimeMillis();
-		if (!segmenter.checkInput() || !segmenter.process()) {
-			System.out.println(segmenter.getErrorMessage());
+		if (!detector.checkInput() || !detector.process()) {
+			System.out.println(detector.getErrorMessage());
 			return;
 		}
-		Collection<Spot> spots = segmenter.getResult();
+		Collection<Spot> spots = detector.getResult();
 		long end = System.currentTimeMillis();
 		
 		// Display image

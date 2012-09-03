@@ -30,6 +30,7 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 
 import net.imglib2.exception.ImgLibException;
 import net.imglib2.meta.Axes;
+import net.imglib2.meta.AxisType;
 import net.imglib2.meta.Metadata;
 import net.imglib2.multithreading.SimpleMultiThreading;
 import net.imglib2.type.NativeType;
@@ -121,6 +122,34 @@ public class TMUtils {
 	 */
 	
 	
+	
+	/**
+	 * Generate a string representation of a map, typically a settings map.
+	 */
+	public static final String echoMap(final Map<String, Object> map, int indent) {
+		// Build string
+		StringBuilder builder = new StringBuilder();
+		for (String key : map.keySet()) {
+			for (int i = 0; i < indent; i++) {
+				builder.append(" ");
+			}
+			builder.append("- ");
+			builder.append(key.toLowerCase().replace("_", " "));
+			builder.append(": ");
+			Object obj = map.get(key);
+			if (obj instanceof Map) {
+				builder.append('\n');
+				@SuppressWarnings("unchecked")
+				Map<String, Object> submap = (Map<String, Object>) obj;
+				builder.append(echoMap(submap , indent + 2));
+			} else {
+				builder.append(obj.toString());
+				builder.append('\n');
+			}
+		}
+		return builder.toString();
+	}
+	
 	/**
 	 * Prompt the user for a target xml file.
 	 *  
@@ -176,11 +205,11 @@ public class TMUtils {
 	 * Read and return an integer attribute from a JDom {@link Element}, and substitute a default value of 0
 	 * if the attribute is not found or of the wrong type.
 	 */
-	public static  final int readIntAttribute(Element element, String name, Logger logger) {
+	public static final int readIntAttribute(Element element, String name, Logger logger) {
 		return readIntAttribute(element, name, logger, 0);
 	}
 
-	public static  final int readIntAttribute(Element element, String name, Logger logger, int defaultValue) {
+	public static final int readIntAttribute(Element element, String name, Logger logger, int defaultValue) {
 		int val = defaultValue;
 		Attribute att = element.getAttribute(name);
 		if (null == att) {
@@ -195,7 +224,7 @@ public class TMUtils {
 		return val;
 	}
 
-	public static  final double readFloatAttribute(Element element, String name, Logger logger) {
+	public static final double readFloatAttribute(Element element, String name, Logger logger) {
 		double val = 0;
 		Attribute att = element.getAttribute(name);
 		if (null == att) {
@@ -210,7 +239,7 @@ public class TMUtils {
 		return val;
 	}
 
-	public static  final double readDoubleAttribute(Element element, String name, Logger logger) {
+	public static final double readDoubleAttribute(Element element, String name, Logger logger) {
 		double val = 0;
 		Attribute att = element.getAttribute(name);
 		if (null == att) {
@@ -225,7 +254,7 @@ public class TMUtils {
 		return val;
 	}
 
-	public static  final boolean readBooleanAttribute(Element element, String name, Logger logger) {
+	public static final boolean readBooleanAttribute(Element element, String name, Logger logger) {
 		boolean val = false;
 		Attribute att = element.getAttribute(name);
 		if (null == att) {
@@ -254,10 +283,10 @@ public class TMUtils {
 	}
 
 	/**
-	 * Return a copy of this collection of spot, translated by the amount specified in 
+	 * Translate each spot of the given collection by the amount specified in 
 	 * argument. The distances are all understood in physical units.
 	 * <p>
-	 * This is meant to deal with a crpoped image. The translation will bring the spot
+	 * This is meant to deal with a cropped image. The translation will bring the spot
 	 * coordinates back to the top-left corner of the un-cropped image reference. 
 	 */
 	public static void translateSpots(final Collection<Spot> spots, double dx, double dy, double dz) {
@@ -518,6 +547,41 @@ public class TMUtils {
 		return selectedSpots;
 	}
 
+	
+	/*
+	 * ImgPlus & calibration & axes 
+	 */
+	
+	/**
+	 * @return the index of the target axisd in the given metadata. Return -1 if 
+	 * the azis was not found.
+	 */
+	public static final int findAxisIndex(final Metadata img, final AxisType axis) {
+		AxisType[] axes = new AxisType[img.numDimensions()];
+		img.axes(axes);
+		int index = Arrays.asList(axes).indexOf(axis);
+		return index;
+	}
+
+	public static final int findXAxisIndex(final Metadata img) {
+		return findAxisIndex(img, Axes.X);
+	}
+
+	public static final int findYAxisIndex(final Metadata img) {
+		return findAxisIndex(img, Axes.Y);
+	}
+
+	public static final int findZAxisIndex(final Metadata img) {
+		return findAxisIndex(img, Axes.Z);
+	}
+	
+	public static final int findTAxisIndex(final Metadata img) {
+		return findAxisIndex(img, Axes.TIME);
+	}
+
+	public static final int findCAxisIndex(final Metadata img) {
+		return findAxisIndex(img, Axes.CHANNEL);
+	}
 
 	/**
 	 * Return the xyz calibration stored in an {@link Metadata} in a 3-elements

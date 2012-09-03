@@ -1,61 +1,6 @@
 package fiji.plugin.trackmate.io;
 
-import static fiji.plugin.trackmate.io.TmXmlKeys.PLUGIN_VERSION_ATTRIBUTE_NAME;
-import static fiji.plugin.trackmate.io.TmXmlKeys.DETECTOR_ATTRIBUTE_NAME;
-import static fiji.plugin.trackmate.io.TmXmlKeys.DETECTOR_SETTINGS_CLASS_ATTRIBUTE_NAME;
-import static fiji.plugin.trackmate.io.TmXmlKeys.DETECTOR_SETTINGS_ELEMENT_KEY;
-import static fiji.plugin.trackmate.io.TmXmlKeys.FILTERED_SPOT_COLLECTION_ELEMENT_KEY;
-import static fiji.plugin.trackmate.io.TmXmlKeys.FILTERED_SPOT_ELEMENT_KEY;
-import static fiji.plugin.trackmate.io.TmXmlKeys.FILTERED_TRACK_ELEMENT_KEY;
-import static fiji.plugin.trackmate.io.TmXmlKeys.FILTER_ABOVE_ATTRIBUTE_NAME;
-import static fiji.plugin.trackmate.io.TmXmlKeys.FILTER_ELEMENT_KEY;
-import static fiji.plugin.trackmate.io.TmXmlKeys.FILTER_FEATURE_ATTRIBUTE_NAME;
-import static fiji.plugin.trackmate.io.TmXmlKeys.FILTER_VALUE_ATTRIBUTE_NAME;
-import static fiji.plugin.trackmate.io.TmXmlKeys.FRAME_ATTRIBUTE_NAME;
-import static fiji.plugin.trackmate.io.TmXmlKeys.IMAGE_ELEMENT_KEY;
-import static fiji.plugin.trackmate.io.TmXmlKeys.IMAGE_FILENAME_ATTRIBUTE_NAME;
-import static fiji.plugin.trackmate.io.TmXmlKeys.IMAGE_FOLDER_ATTRIBUTE_NAME;
-import static fiji.plugin.trackmate.io.TmXmlKeys.IMAGE_HEIGHT_ATTRIBUTE_NAME;
-import static fiji.plugin.trackmate.io.TmXmlKeys.IMAGE_NFRAMES_ATTRIBUTE_NAME;
-import static fiji.plugin.trackmate.io.TmXmlKeys.IMAGE_NSLICES_ATTRIBUTE_NAME;
-import static fiji.plugin.trackmate.io.TmXmlKeys.IMAGE_PIXEL_HEIGHT_ATTRIBUTE_NAME;
-import static fiji.plugin.trackmate.io.TmXmlKeys.IMAGE_PIXEL_WIDTH_ATTRIBUTE_NAME;
-import static fiji.plugin.trackmate.io.TmXmlKeys.IMAGE_SPATIAL_UNITS_ATTRIBUTE_NAME;
-import static fiji.plugin.trackmate.io.TmXmlKeys.IMAGE_TIME_INTERVAL_ATTRIBUTE_NAME;
-import static fiji.plugin.trackmate.io.TmXmlKeys.IMAGE_TIME_UNITS_ATTRIBUTE_NAME;
-import static fiji.plugin.trackmate.io.TmXmlKeys.IMAGE_VOXEL_DEPTH_ATTRIBUTE_NAME;
-import static fiji.plugin.trackmate.io.TmXmlKeys.IMAGE_WIDTH_ATTRIBUTE_NAME;
-import static fiji.plugin.trackmate.io.TmXmlKeys.INITIAL_SPOT_FILTER_ELEMENT_KEY;
-import static fiji.plugin.trackmate.io.TmXmlKeys.SETTINGS_DETECTION_CHANNEL_ATTRIBUTE_NAME;
-import static fiji.plugin.trackmate.io.TmXmlKeys.SETTINGS_ELEMENT_KEY;
-import static fiji.plugin.trackmate.io.TmXmlKeys.SETTINGS_TEND_ATTRIBUTE_NAME;
-import static fiji.plugin.trackmate.io.TmXmlKeys.SETTINGS_TSTART_ATTRIBUTE_NAME;
-import static fiji.plugin.trackmate.io.TmXmlKeys.SETTINGS_XEND_ATTRIBUTE_NAME;
-import static fiji.plugin.trackmate.io.TmXmlKeys.SETTINGS_XSTART_ATTRIBUTE_NAME;
-import static fiji.plugin.trackmate.io.TmXmlKeys.SETTINGS_YEND_ATTRIBUTE_NAME;
-import static fiji.plugin.trackmate.io.TmXmlKeys.SETTINGS_YSTART_ATTRIBUTE_NAME;
-import static fiji.plugin.trackmate.io.TmXmlKeys.SETTINGS_ZEND_ATTRIBUTE_NAME;
-import static fiji.plugin.trackmate.io.TmXmlKeys.SETTINGS_ZSTART_ATTRIBUTE_NAME;
-import static fiji.plugin.trackmate.io.TmXmlKeys.SPOT_COLLECTION_ELEMENT_KEY;
-import static fiji.plugin.trackmate.io.TmXmlKeys.SPOT_COLLECTION_NSPOTS_ATTRIBUTE_NAME;
-import static fiji.plugin.trackmate.io.TmXmlKeys.SPOT_ELEMENT_KEY;
-import static fiji.plugin.trackmate.io.TmXmlKeys.SPOT_FILTER_COLLECTION_ELEMENT_KEY;
-import static fiji.plugin.trackmate.io.TmXmlKeys.SPOT_FRAME_COLLECTION_ELEMENT_KEY;
-import static fiji.plugin.trackmate.io.TmXmlKeys.SPOT_ID_ATTRIBUTE_NAME;
-import static fiji.plugin.trackmate.io.TmXmlKeys.SPOT_ID_ELEMENT_KEY;
-import static fiji.plugin.trackmate.io.TmXmlKeys.SPOT_NAME_ATTRIBUTE_NAME;
-import static fiji.plugin.trackmate.io.TmXmlKeys.TRACKER_ATTRIBUTE_NAME;
-import static fiji.plugin.trackmate.io.TmXmlKeys.TRACKER_SETTINGS_CLASS_ATTRIBUTE_NAME;
-import static fiji.plugin.trackmate.io.TmXmlKeys.TRACKER_SETTINGS_ELEMENT_KEY;
-import static fiji.plugin.trackmate.io.TmXmlKeys.TRACK_COLLECTION_ELEMENT_KEY;
-import static fiji.plugin.trackmate.io.TmXmlKeys.TRACK_EDGE_ELEMENT_KEY;
-import static fiji.plugin.trackmate.io.TmXmlKeys.TRACK_EDGE_SOURCE_ATTRIBUTE_NAME;
-import static fiji.plugin.trackmate.io.TmXmlKeys.TRACK_EDGE_TARGET_ATTRIBUTE_NAME;
-import static fiji.plugin.trackmate.io.TmXmlKeys.TRACK_EDGE_WEIGHT_ATTRIBUTE_NAME;
-import static fiji.plugin.trackmate.io.TmXmlKeys.TRACK_ELEMENT_KEY;
-import static fiji.plugin.trackmate.io.TmXmlKeys.TRACK_FILTER_COLLECTION_ELEMENT_KEY;
-import static fiji.plugin.trackmate.io.TmXmlKeys.TRACK_ID_ATTRIBUTE_NAME;
-import static fiji.plugin.trackmate.io.TmXmlKeys.TRACK_ID_ELEMENT_KEY;
+import static fiji.plugin.trackmate.io.TmXmlKeys.*;
 import static fiji.plugin.trackmate.util.TMUtils.readBooleanAttribute;
 import static fiji.plugin.trackmate.util.TMUtils.readDoubleAttribute;
 import static fiji.plugin.trackmate.util.TMUtils.readIntAttribute;
@@ -66,8 +11,10 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -83,6 +30,7 @@ import org.jdom.input.SAXBuilder;
 import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.graph.SimpleWeightedGraph;
 
+import fiji.plugin.trackmate.DetectorProvider;
 import fiji.plugin.trackmate.FeatureFilter;
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.Settings;
@@ -91,9 +39,7 @@ import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.SpotImp;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMate_;
-import fiji.plugin.trackmate.detection.DetectorSettings;
-import fiji.plugin.trackmate.detection.LogDetector;
-import fiji.plugin.trackmate.detection.SpotDetector;
+import fiji.plugin.trackmate.detection.SpotDetectorFactory;
 import fiji.plugin.trackmate.features.FeatureModel;
 import fiji.plugin.trackmate.tracking.SpotTracker;
 import fiji.plugin.trackmate.tracking.TrackerSettings;
@@ -372,7 +318,7 @@ public class TmXmlReader <T extends RealType<T> & NativeType<T>> {
 			settings.zend 	= readIntAttribute(settingsEl, SETTINGS_ZEND_ATTRIBUTE_NAME, logger, 10);
 			settings.tstart = readIntAttribute(settingsEl, SETTINGS_TSTART_ATTRIBUTE_NAME, logger, 1);
 			settings.tend 	= readIntAttribute(settingsEl, SETTINGS_TEND_ATTRIBUTE_NAME, logger, 10);
-			settings.detectionChannel = readIntAttribute(settingsEl, SETTINGS_DETECTION_CHANNEL_ATTRIBUTE_NAME, logger, 1);
+//			settings.detectionChannel = readIntAttribute(settingsEl, SETTINGS_DETECTION_CHANNEL_ATTRIBUTE_NAME, logger, 1);
 		}
 		// Image info settings
 		Element infoEl 	= root.getChild(IMAGE_ELEMENT_KEY);
@@ -394,15 +340,16 @@ public class TmXmlReader <T extends RealType<T> & NativeType<T>> {
 	}
 
 	/**
-	 * Update the given {@link Settings} object with the {@link DetectorSettings} and {@link SpotDetector} fields
-	 * named {@link Settings#detectorSettings} and {@link Settings#detector} read within the XML file
-	 * this reader is initialized with.
+	 * Update the given {@link Settings} object with the {@link SpotDetectorFactory} and settings map fields
+	 * named {@link Settings#detectorFactory}  and {@link Settings#detectorSettings} read within the XML file
+	 * this reader is initialized with. 
+	 * <p>
+	 * As a side effect, this method also configure the {@link DetectorProvider} stored in 
+	 * the passed {@link TrackMate_} plugin for the found target detector factory. 
 	 * <p>
 	 * If the detector settings XML element is not present in the file, the {@link Settings} 
-	 * object is not updated. If the detector settings or the detector info can be read, 
-	 * but cannot be understood (most likely because the class the XML refers to is unknown) 
-	 * then a default object is substituted.  
-	 *   
+	 * object is not updated. 
+
 	 * @param settings  the base {@link Settings} object to update.
 	 */
 	public void getDetectorSettings(Settings<T> settings) {
@@ -413,52 +360,19 @@ public class TmXmlReader <T extends RealType<T> & NativeType<T>> {
 		if (null == element) {
 			return;
 		}
-
-		// Deal with detector
-		String detectorName = element.getAttributeValue(DETECTOR_ATTRIBUTE_NAME);
-		if (null == detectorName) {
-			logger.error("Detector attribute is not present.\n");
-			logger.error("Substituting default.\n");
-			detectorName = LogDetector.NAME;
-		} else {
-			// Check whether we can find a matching detector in the plugin instance
-			SpotDetector<T> detector = plugin.getDetectorFactory().getDetector(detectorName);
-			if (null == detector) {
-				logger.error("Unable to find detector '"+detectorName+"' in plugin "+plugin.toString()+"\n");
-				logger.error("Substituting default.\n");
-				detectorName = LogDetector.NAME;
-			}
+		
+		DetectorProvider<T> provider = plugin.getDetectorProvider();
+		Map<String, Object> ds = new HashMap<String, Object>(); 
+		// All the hard work is delegated to the provider. 
+		boolean ok = provider.unmarshall(element, ds);
+		
+		if (!ok) {
+			logger.error(provider.getErrorMessage());
+			return;
 		}
-		settings.detector = detectorName;
 
-		// Deal with detector settings
-		DetectorSettings<T> ss = plugin.getDetectorFactory().getDefaultSettings(detectorName);
-		String detectorSettingsClassName = element.getAttributeValue(DETECTOR_SETTINGS_CLASS_ATTRIBUTE_NAME);
-
-		if (null == detectorSettingsClassName) {
-
-			logger.error("Detector settings class is not present,\n");
-			logger.error("substituting default one.\n");
-
-		} else {
-
-			if (detectorSettingsClassName.equals(ss.getClass().getName())) {
-
-				// The saved class matched, we can updated the settings created above with the file content
-				ss.unmarshall(element);
-
-			} else {
-
-				// They do not match. We DO NOT give priority to what has been saved. That way we always
-				// have something that works (when invoking the process methods of the plugin).
-
-				logger.error("Tracker settings class ("+detectorSettingsClassName+") does not match detector requirements (" +
-						ss.getClass().getName()+"),\n");
-				logger.error("substituting default one.\n");
-
-			}
-		}
-		settings.detectorSettings = ss;
+		settings.detectorSettings = ds;
+		settings.detectorFactory = provider.getDetectorFactory();
 
 	}
 

@@ -79,7 +79,7 @@ public class TmXmlKeys_v12 {
 
 	public static final String SPOT_COLLECTION_ELEMENT_KEY 			= "AllSpots";
 	public static final String SPOT_FRAME_COLLECTION_ELEMENT_KEY 	= "SpotsInFrame"; 
-	public static final String SPOT_ELEMENT_KEY 						= "Spot"; 
+	public static final String SPOT_ELEMENT_KEY 					= "Spot"; 
 
 	/*
 	 * INITIAL SPOT FILTER element

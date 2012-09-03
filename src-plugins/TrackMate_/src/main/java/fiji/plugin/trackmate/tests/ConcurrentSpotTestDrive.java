@@ -1,20 +1,17 @@
 package fiji.plugin.trackmate.tests;
 
+import fiji.plugin.trackmate.DetectorProvider;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.SpotImp;
 import fiji.plugin.trackmate.TrackMate_;
-import fiji.plugin.trackmate.detection.LogDetector;
-import fiji.plugin.trackmate.detection.LogDetectorSettings;
+import fiji.plugin.trackmate.detection.LogDetectorFactory;
 import ij.ImagePlus;
 import ij.gui.NewImage;
 
 public class ConcurrentSpotTestDrive {
 
-	/**
-	 * @param args
-	 */
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public static void main(String[] args) {
 		
@@ -34,11 +31,12 @@ public class ConcurrentSpotTestDrive {
 		// Run track mate on it
 		
 		// Make settings
+		DetectorProvider provider = new DetectorProvider();
+		provider.select(LogDetectorFactory.DETECTOR_KEY);
+		
 		Settings settings = new Settings(imp);
-		settings.detector = LogDetector.NAME; 
-		LogDetectorSettings dss = new LogDetectorSettings();
-		dss.expectedRadius = 2f;
-		settings.detectorSettings = dss;
+		settings.detectorFactory = provider.getDetectorFactory();
+		settings.detectorSettings = provider.getDefaultSettings();
 
 		// Instantiate plugin
 		TrackMate_ plugin = new TrackMate_(settings);

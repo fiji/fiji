@@ -1,6 +1,7 @@
 package fiji.plugin.trackmate;
 
-import fiji.plugin.trackmate.detection.DetectorSettings;
+import fiji.plugin.trackmate.detection.SpotDetector;
+import fiji.plugin.trackmate.detection.SpotDetectorFactory;
 import fiji.plugin.trackmate.tracking.TrackerSettings;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
 import ij.ImagePlus;
@@ -9,7 +10,9 @@ import ij.gui.Roi;
 import java.awt.Polygon;
 import java.awt.Rectangle;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
@@ -45,7 +48,7 @@ public class Settings <T extends RealType<T> & NativeType<T>> {
 	/** The lowest pixel Z position, <b>0-based</b>, of the volume to process. */
 	public int zend;
 	/** Target channel for detection, <b>1-based</b>. */
-	public int detectionChannel = 1;
+//	public int detectionChannel = 1;
 	// Image info
 	public double dt 	= 1;
 	public double dx 	= 1;
@@ -60,12 +63,14 @@ public class Settings <T extends RealType<T> & NativeType<T>> {
 	public String timeUnits 		= "frames";
 	public String spaceUnits 		= "pixels";
 	
-	/** The name of the detector to use. This name must be a key registered in {@link DetectorFactory}. */
-	public String detector;
+	/** The name of the detector factory to use. It will be used to generate {@link SpotDetector}
+	 * for each target frame. */
+	public SpotDetectorFactory<T> detectorFactory;
 	/** The name of the tracker to use. This name must be a key registered in {@link TrackerFactory}. */
 	public String tracker;
 	
-	public DetectorSettings<T> detectorSettings = null;
+	public Map<String, Object> detectorSettings = new HashMap<String, Object>();
+//	public Map<String, Object> trackerSettings = new HashMap<String, Object>();
 	public TrackerSettings<T> trackerSettings = null;
 	
 	// Filters
@@ -144,6 +149,7 @@ public class Settings <T extends RealType<T> & NativeType<T>> {
 			this.ystart = boundingRect.y;
 			this.yend = boundingRect.height+boundingRect.y;
 			this.polygon = roi.getPolygon();
+			
 		}
 		// The rest is left to the user
 	}
@@ -164,7 +170,7 @@ public class Settings <T extends RealType<T> & NativeType<T>> {
 		str += String.format("  Y = %4d - %4d, dy = %g %s\n", ystart, yend, dy, spaceUnits);
 		str += String.format("  Z = %4d - %4d, dz = %g %s\n", zstart, zend, dz, spaceUnits);
 		str += String.format("  T = %4d - %4d, dt = %g %s\n", tstart, tend, dt, timeUnits);
-		str += String.format("  Target channel for detection: %d\n", detectionChannel);
+//		str += String.format("  Target channel for detection: %d\n", detectionChannel);
 		return str;
 	}
 	

@@ -43,8 +43,6 @@ public class TmXmlKeys {
 	 */
 	
 	public static final String DETECTOR_SETTINGS_ELEMENT_KEY 			= "DetectorSettings";
-	public static final String DETECTOR_SETTINGS_CLASS_ATTRIBUTE_NAME 	= "detectorsettingsclass";
-	public static final String DETECTOR_ATTRIBUTE_NAME 					= "detectorname";
 
 	/*
 	 * TRACKER SETTINGS

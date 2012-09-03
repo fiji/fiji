@@ -1,30 +1,47 @@
 package fiji.plugin.trackmate.detection;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import net.imglib2.Cursor;
 import net.imglib2.RandomAccess;
 import net.imglib2.img.Img;
 import net.imglib2.img.ImgPlus;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
+import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.util.TMUtils;
 
-public class DownsampleLogDetector <T extends RealType<T>  & NativeType<T>> extends AbstractSpotDetector<T> {
+public class DownsampleLogDetector <T extends RealType<T>  & NativeType<T>> implements SpotDetector<T> {
 
 	private final static String BASE_ERROR_MESSAGE = "DownSampleLogDetector: ";
-	public static final String NAME =  "Downsampled LoG detector";
-	public static final String INFO_TEXT = "<html>" +
-			"This detector is basically identical to the LoG detector, except <br>" +
-			"that images are downsampled before filtering, giving it a good <br>" +
-			"kick in speed, particularly for large spot sizes. It is the fastest for <br>" +
-			"large spot sizes (>&nbsp;~20 pixels), at the cost of precision in localization. " +
-			"</html>";
-	private DownSampleLogDetectorSettings<T> settings;
+	
+	
+	/*
+	 * FIELDS
+	 */
+
+	/** The image to segment. Will not modified. */
+	protected final ImgPlus<T> img;
+	protected final double radius;
+	protected final double threshold;
+	protected final int downsamplingFactor;
+	protected String baseErrorMessage;
+	protected String errorMessage;
+	/** The list of {@link Spot} that will be populated by this detector. */
+	protected List<Spot> spots = new ArrayList<Spot>(); // because this implementation is fast to add elements at the end of the list
+	/** The processing time in ms. */
+	protected long processingTime;
 
 	/*
 	 * CONSTRUCTORS
 	 */
 
-	public DownsampleLogDetector() {
+	public DownsampleLogDetector(final ImgPlus<T> img, final double radius, final double threshold, final int downsamplingFactor) {
+		this.img = img;
+		this.radius = radius;
+		this.threshold = threshold;
+		this.downsamplingFactor = downsamplingFactor;
 		this.baseErrorMessage = BASE_ERROR_MESSAGE;
 	}
 
@@ -33,39 +50,43 @@ public class DownsampleLogDetector <T extends RealType<T>  & NativeType<T>> exte
 	 */
 
 	@Override
-	public void setTarget(final ImgPlus<T> image, final DetectorSettings<T> settings) {
-		super.setTarget(image, settings);
-		this.settings = (DownSampleLogDetectorSettings<T>) settings;
-	}
-
-	@Override
 	public boolean checkInput() {
-		return super.checkInput();
+		if (null == img) {
+			errorMessage = baseErrorMessage + "Image is null.";
+			return false;
+		}
+		if (!(img.numDimensions() == 2 || img.numDimensions() == 3)) {
+			errorMessage = baseErrorMessage + "Image must be 2D or 3D, got " + img.numDimensions() +"D.";
+			return false;
+		}
+		if (downsamplingFactor < 1) {
+			errorMessage = baseErrorMessage + "Downsampling factor must be above 1, was "+downsamplingFactor+".";
+			return false;
+		}
+		return true;
 	}
 
-	/*
-	 * ALGORITHM METHODS
-	 */
 
 	@Override
 	public boolean process() {
 		
+		long start = System.currentTimeMillis();
+		
 		// 0. Prepare new dimensions
 
-		int downSamplingFactor = settings.downSamplingFactor;
 		long[] dimensions = new long[img.numDimensions()];
 		int[] dsarr = new int[img.numDimensions()];
 		double[] dwnCalibration = new double[img.numDimensions()];
 		double[] calibration = TMUtils.getSpatialCalibration(img);
 		for (int i = 0; i < 2; i++) {
-			dimensions[i] = img.dimension(i) / downSamplingFactor;
-			dsarr[i] = downSamplingFactor;
-			dwnCalibration[i] = calibration[i] * downSamplingFactor;
+			dimensions[i] = img.dimension(i) / downsamplingFactor;
+			dsarr[i] = downsamplingFactor;
+			dwnCalibration[i] = calibration[i] * downsamplingFactor;
 		}
 		if (img.numDimensions() > 2) {
 			// 3D
 			double zratio = calibration[2] / calibration[0]; // Z spacing is how much bigger
-			int zdownsampling = (int) (downSamplingFactor / zratio); // temper z downsampling
+			int zdownsampling = (int) (downsamplingFactor / zratio); // temper z downsampling
 			zdownsampling = Math.max(1, zdownsampling); // but at least 1
 			dimensions[2] = img.dimension(2) / zdownsampling;
 			dsarr[2] = zdownsampling;
@@ -100,18 +121,10 @@ public class DownsampleLogDetector <T extends RealType<T>  & NativeType<T>> exte
 
 		// 2. Segment downsampled image
 
-		// 2.1. Create settings object
-		LogDetectorSettings<T> logSettings = new LogDetectorSettings<T>();
-		logSettings.expectedRadius = settings.expectedRadius; 
-		logSettings.threshold = settings.threshold;
-		logSettings.doSubPixelLocalization = true;;
-		logSettings.useMedianFilter = settings.useMedianFilter;
+		// 2.1 Instantiate detector
+		LogDetector<T> detector = new LogDetector<T>(dsimg, radius, threshold, false, false);
 
-		// 2.2 Instantiate detector
-		LogDetector<T> detector = new LogDetector<T>();
-		detector.setTarget(dsimg, logSettings);
-
-		// 2.3 Execute detection
+		// 2.2 Execute detection
 		if (!detector.checkInput() || !detector.process()) {
 			errorMessage = BASE_ERROR_MESSAGE + detector.getErrorMessage();
 			return false;
@@ -120,17 +133,24 @@ public class DownsampleLogDetector <T extends RealType<T>  & NativeType<T>> exte
 		// 3. Benefits
 		spots = detector.getResult();
 		
+		long end = System.currentTimeMillis();
+		processingTime = end - start;
+		
 		return true;
 	}
 
 	@Override
-	public String getInfoText() {
-		return INFO_TEXT;
+	public List<Spot> getResult() {
+		return spots;
 	}
 
 	@Override
-	public String toString() {
-		return NAME;
+	public String getErrorMessage() {
+		return errorMessage;
 	}
 
+	@Override
+	public long getProcessingTime() {
+		return processingTime;
+	}
 }

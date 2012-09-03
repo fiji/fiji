@@ -22,13 +22,14 @@ import org.jdom.output.Format;
 import org.jdom.output.XMLOutputter;
 import org.jgrapht.graph.DefaultWeightedEdge;
 
+import fiji.plugin.trackmate.DetectorProvider;
 import fiji.plugin.trackmate.FeatureFilter;
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.TrackMateModel;
-import fiji.plugin.trackmate.detection.DetectorSettings;
+import fiji.plugin.trackmate.TrackMate_;
 import fiji.plugin.trackmate.tracking.TrackerSettings;
 
 public class TmXmlWriter <T extends RealType<T> & NativeType<T>> {
@@ -40,19 +41,30 @@ public class TmXmlWriter <T extends RealType<T> & NativeType<T>> {
 	private TrackMateModel<T> model;
 	private Element root;
 	private Logger logger;
+	private TrackMate_<T> plugin;
 
 	/*
 	 * CONSTRUCTORS
 	 */
 
-	public TmXmlWriter(TrackMateModel<T> model, Logger logger) {
+	public TmXmlWriter(TrackMateModel<T> model, Logger logger, TrackMate_<T> plugin) {
 		this.model = model;
 		this.root = new Element(ROOT_ELEMENT_KEY);
 		root.setAttribute(PLUGIN_VERSION_ATTRIBUTE_NAME, fiji.plugin.trackmate.TrackMate_.PLUGIN_NAME_VERSION);
 		if (null == logger) 
 			logger = Logger.VOID_LOGGER;
 		this.logger = logger;
+		this.plugin = plugin;
 	}
+	
+	public TmXmlWriter(TrackMateModel<T> model, Logger logger) {
+		this(model,logger, new TrackMate_<T>());
+	}
+	
+	public TmXmlWriter(TrackMate_<T> plugin) {
+		this(plugin.getModel(), plugin.getModel().getLogger(), plugin);
+	}
+	
 	/*
 	 * PUBLIC METHODS
 	 */
@@ -139,7 +151,7 @@ public class TmXmlWriter <T extends RealType<T> & NativeType<T>> {
 		XMLOutputter outputter = new XMLOutputter(Format.getPrettyFormat());
 		outputter.output(document, new FileOutputStream(file));
 	}
-	
+
 	@Override
 	public String toString() {
 		String str = "";
@@ -171,7 +183,6 @@ public class TmXmlWriter <T extends RealType<T> & NativeType<T>> {
 		settingsElement.setAttribute(SETTINGS_ZEND_ATTRIBUTE_NAME, ""+settings.zend);
 		settingsElement.setAttribute(SETTINGS_TSTART_ATTRIBUTE_NAME, ""+settings.tstart);
 		settingsElement.setAttribute(SETTINGS_TEND_ATTRIBUTE_NAME, ""+settings.tend);
-		settingsElement.setAttribute(SETTINGS_DETECTION_CHANNEL_ATTRIBUTE_NAME, ""+settings.detectionChannel);
 		root.addContent(settingsElement);
 		logger.log("  Appending base settings.\n");
 		return;
@@ -179,15 +190,14 @@ public class TmXmlWriter <T extends RealType<T> & NativeType<T>> {
 
 	private void echoDetectorSettings() {
 		Element el = new Element(DETECTOR_SETTINGS_ELEMENT_KEY);
-		if (null != model.getSettings().detector) {
-			el.setAttribute(DETECTOR_ATTRIBUTE_NAME, model.getSettings().detector);
-		}
-		if (null != model.getSettings().detectorSettings) {
-			el.setAttribute(DETECTOR_SETTINGS_CLASS_ATTRIBUTE_NAME, model.getSettings().detectorSettings.getClass().getName());
-			model.getSettings().detectorSettings.marshall(el);
-			logger.log("  Appending detector settings.\n"); 
-		} else {
-			logger.log("  Detector settings are null.\n");
+		if (null != model.getSettings().detectorFactory  && null != model.getSettings().detectorSettings) {
+			DetectorProvider<T> provider = plugin.getDetectorProvider();
+			boolean ok = provider.select(model.getSettings().detectorFactory.getKey());
+			if (!ok) {
+				logger.error(provider.getErrorMessage());
+			} else {
+				provider.marshall(model.getSettings().detectorSettings, el);
+			}
 		}
 		root.addContent(el);
 		return;

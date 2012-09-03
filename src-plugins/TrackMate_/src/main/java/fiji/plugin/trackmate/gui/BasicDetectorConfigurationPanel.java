@@ -1,21 +1,26 @@
 package fiji.plugin.trackmate.gui;
 
+import static fiji.plugin.trackmate.detection.DetectorKeys.KEY_RADIUS;
+import ij.ImagePlus;
+
+import java.util.HashMap;
+import java.util.Map;
+
 import javax.swing.JComponent;
 
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
 
-import fiji.plugin.trackmate.TrackMateModel;
-import fiji.plugin.trackmate.detection.BasicDetectorSettings;
-import fiji.plugin.trackmate.detection.DetectorSettings;
-
 public class BasicDetectorConfigurationPanel <T extends RealType<T> & NativeType<T>> extends LogDetectorConfigurationPanel<T> {
 
 	private static final long serialVersionUID = -1L;
 
-	public BasicDetectorConfigurationPanel(String infoText) {
-		super(infoText);
+	public BasicDetectorConfigurationPanel(ImagePlus imp, String infoText, String detectorName, String spaceUnits)  {
+		super(imp, infoText, detectorName, spaceUnits);
 		final JComponent[] uselessComponents = new JComponent[] {
+				super.sliderChannel,
+				super.labelChannel,
+				super.lblSegmentInChannel,
 				super.jCheckBoxMedianFilter,
 				super.jCheckSubPixel, 
 				super.jLabelThreshold,
@@ -25,22 +30,17 @@ public class BasicDetectorConfigurationPanel <T extends RealType<T> & NativeType
 			c.setVisible(false);
 	}
 
+	
 	@Override
-	public void setDetectorSettings(TrackMateModel<T> model) {
-		jTextFieldBlobDiameter.setText(""+(((BasicDetectorSettings<T>)model.getSettings().detectorSettings).expectedRadius * 2));
-		jLabelBlobDiameterUnit.setText(model.getSettings().spaceUnits);
-		jLabelSegmenterName.setText(model.getSettings().detector.toString());
-		jLabelHelpText.setText(infoText
-				.replace("<br>", "")
-				.replace("<p>", "<p align=\"justify\">")
-				.replace("<html>", "<html><p align=\"justify\">"));
+	public void setSettings(final Map<String, Object> settings) {
+		jTextFieldBlobDiameter.setText("" + ( (Double) settings.get(KEY_RADIUS)* 2) );
 	}
 
 	@Override
-	public DetectorSettings<T> getDetectorSettings() {
-		BasicDetectorSettings<T> ss = new BasicDetectorSettings<T>();
-		ss.expectedRadius = Float.parseFloat(jTextFieldBlobDiameter.getText())/2;
-		return ss;
+	public Map<String, Object> getSettings() {
+		Map<String, Object> settings = new HashMap<String, Object>(1);
+		settings.put(KEY_RADIUS, Double.parseDouble(jTextFieldBlobDiameter.getText()));
+		return settings;
 	}
 
 }

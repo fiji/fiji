@@ -1,15 +1,13 @@
 package fiji.plugin.trackmate.action;
+import static fiji.plugin.trackmate.detection.DetectorKeys.KEY_RADIUS;
 
 import javax.swing.ImageIcon;
 
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
-
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.TrackMate_;
-import fiji.plugin.trackmate.detection.BasicDetectorSettings;
-import fiji.plugin.trackmate.detection.DetectorSettings;
 import fiji.plugin.trackmate.gui.DisplayerPanel;
 
 public class ResetRadiusAction<T extends RealType<T> & NativeType<T>> extends AbstractTMAction<T> {
@@ -20,7 +18,7 @@ public class ResetRadiusAction<T extends RealType<T> & NativeType<T>> extends Ab
 				"This action resets the radius of all retained spots back to the value <br> " +
 				"given in the detector settings. " +
 				"</html>";
-	private static final float FALL_BACK_RADIUS = 5;
+	private static final double FALL_BACK_RADIUS = 5;
 
 	public ResetRadiusAction() {
 	this.icon = ICON;
@@ -28,11 +26,8 @@ public class ResetRadiusAction<T extends RealType<T> & NativeType<T>> extends Ab
 	
 	@Override
 	public void execute(final TrackMate_<T> plugin) {
-		final DetectorSettings<T> segSettings = plugin.getModel().getSettings().detectorSettings;
-		final double radius;
-		if (segSettings instanceof BasicDetectorSettings) {
-			radius = ((BasicDetectorSettings<T>) segSettings).expectedRadius;
-		} else {
+		Double radius = (Double) plugin.getModel().getSettings().detectorSettings.get(KEY_RADIUS);
+		if (null == radius) {
 			radius = FALL_BACK_RADIUS;
 			logger.error("Could not determine expected radius from settings. Falling back to "+FALL_BACK_RADIUS+" "
 					 + plugin.getModel().getSettings().spaceUnits);

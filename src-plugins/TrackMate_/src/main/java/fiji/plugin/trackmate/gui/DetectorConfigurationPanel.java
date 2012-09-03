@@ -1,37 +1,34 @@
 package fiji.plugin.trackmate.gui;
 
+import java.util.Map;
+
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
-import fiji.plugin.trackmate.Settings;
-import fiji.plugin.trackmate.TrackMateModel;
-import fiji.plugin.trackmate.detection.DetectorSettings;
+import fiji.plugin.trackmate.detection.SpotDetectorFactory;
+import fiji.plugin.trackmate.tracking.SpotTracker;
 
 /**
- * The mother class for all the configuration panels that can configure a certain
- * sub-class of {@link DetectorSettings}.
+ * The mother class for all the configuration panels that can configure a {@link SpotDetectorFactory}
+ * or a {@link SpotTracker}.
  * 
- * @author Jean-Yves Tinevez <jeanyves.tinevez@gmail.com> 2011
+ * @author Jean-Yves Tinevez <jeanyves.tinevez@gmail.com> 2011 - 2012
  *
  */
 public abstract class DetectorConfigurationPanel <T extends RealType<T> & NativeType<T>> extends ActionListenablePanel {
 
-	private static final long serialVersionUID = -3740053698736400575L;
+	private static final long serialVersionUID = 1L;
 
 	/**
 	 * Echo the parameters of the given instance of {@link DetectorSettings} on
-	 * this panel. For convenience, we pass the whole model to this panel;
-	 * the configuration panel is expected to work only on the {@link Settings#detectorSettings}
-	 * field of the settings object in the model.
-	 * But some specialized settings might require to access the declared 
-	 * features or other data to generate a proper settings object. 
+	 * this panel.  
 	 */
-	public abstract void setDetectorSettings(TrackMateModel<T> model);
+	public abstract void setSettings(final Map<String, Object> settings);
 	
 	/**
-	 * @return  the {@link DetectorSettings} object with its field values set
+	 * @return  a new settings map object with its values set
 	 * by this panel.
 	 */
-	public abstract DetectorSettings<T> getDetectorSettings();
+	public abstract Map<String, Object> getSettings();
 	
 	
 }
