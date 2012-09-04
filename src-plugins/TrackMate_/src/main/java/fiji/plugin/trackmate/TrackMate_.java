@@ -55,7 +55,7 @@ public class TrackMate_<T extends RealType<T> & NativeType<T>>  implements PlugI
 	/** The factory that provides this plugin with available {@link TrackMateAction}s. */
 	protected ActionFactory<T> actionFactory;
 	/** The list of {@link SpotTracker} that will be offered to choose amongst to the user. */
-	protected TrackerFactory<T> trackerFactory;
+	protected TrackerProvider<T> trackerFactory;
 	/** The {@link DetectorProvider} that provides the GUI with the list of available detectors. */
 	protected DetectorProvider<T> detectorProvider;
 
@@ -216,8 +216,8 @@ public class TrackMate_<T extends RealType<T> & NativeType<T>>  implements PlugI
 	 * <p>
 	 * Create detector factory containing available spot {@link SpotTracker}s.
 	 */
-	protected TrackerFactory<T> createTrackerFactory() {
-		return new TrackerFactory<T>();
+	protected TrackerProvider<T> createTrackerFactory() {
+		return new TrackerProvider<T>();
 	}
 
 	/**
@@ -268,7 +268,7 @@ public class TrackMate_<T extends RealType<T> & NativeType<T>>  implements PlugI
 	/**
 	 * Return a list of the {@link SpotTracker} that are currently registered in this plugin.
 	 */
-	public TrackerFactory<T> getTrackerFactory() {
+	public TrackerProvider<T> getTrackerFactory() {
 		return trackerFactory;
 	}
 
@@ -480,6 +480,7 @@ public class TrackMate_<T extends RealType<T> & NativeType<T>>  implements PlugI
 							// Add detection feature other than position
 							for (Spot spot : prunedSpots) {
 								spot.putFeature(Spot.POSITION_T, frame * settings.dt);
+								spot.putFeature(Spot.FRAME, frame);
 							}
 							// Store final results for this frame
 							spots.put(frame, prunedSpots);

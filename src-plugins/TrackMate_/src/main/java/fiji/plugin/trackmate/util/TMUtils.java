@@ -73,6 +73,8 @@ public class TMUtils {
 	public static final String POSITION_Z = "POSITION_Z";
 	/** The name of the spot T position feature. */
 	public static final String POSITION_T = "POSITION_T";
+	/** The name of the frame feature. */
+	public static final String FRAME = "FRAME";
 
 	/** The position features. */
 	public final static String[] POSITION_FEATURES = new String[] { POSITION_X, POSITION_Y, POSITION_Z };

@@ -49,6 +49,8 @@ public interface Spot extends RealPositionable, RealLocalizable {
 	public static final String POSITION_Z = TMUtils.POSITION_Z;
 	/** The name of the spot T position feature. */
 	public static final String POSITION_T = TMUtils.POSITION_T;
+	/** The name of the frame feature. */
+	public static final String FRAME = TMUtils.FRAME;
 
 	/** The position features. */
 	public final static String[] POSITION_FEATURES = TMUtils.POSITION_FEATURES;
