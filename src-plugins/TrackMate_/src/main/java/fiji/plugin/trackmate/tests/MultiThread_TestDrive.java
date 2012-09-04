@@ -11,7 +11,7 @@ import fiji.plugin.trackmate.TrackMate_;
 import fiji.plugin.trackmate.detection.DownsampleLogDetectorFactory;
 import fiji.plugin.trackmate.io.TmXmlReader;
 import fiji.plugin.trackmate.tracking.LAPTracker;
-import fiji.plugin.trackmate.tracking.LAPTrackerSettings;
+import fiji.plugin.trackmate.tracking.TrackerKeys;
 
 public class MultiThread_TestDrive {
 
@@ -27,7 +27,7 @@ public class MultiThread_TestDrive {
 		TrackMateModel model = reader.getModel();
 
 		model.getSettings().detectorFactory = new DownsampleLogDetectorFactory();
-		model.getSettings().trackerSettings = new LAPTrackerSettings();
+		model.getSettings().trackerSettings = new TrackerKeys();
 
 		System.out.println(model.getSettings());
 		System.out.println(model.getSettings().detectorSettings);

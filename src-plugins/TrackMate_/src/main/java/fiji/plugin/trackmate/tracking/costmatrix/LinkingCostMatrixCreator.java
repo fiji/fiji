@@ -7,7 +7,7 @@ import net.imglib2.type.numeric.RealType;
 
 import Jama.Matrix;
 import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.tracking.LAPTrackerSettings;
+import fiji.plugin.trackmate.tracking.TrackerKeys;
 import fiji.plugin.trackmate.tracking.costfunction.LinkingCostFunction;
 
 /**
@@ -38,7 +38,7 @@ public class LinkingCostMatrixCreator<T extends RealType<T> & NativeType<T>> ext
 	 */
 
 
-	public LinkingCostMatrixCreator(final List<Spot> t0, final List<Spot> t1, final LAPTrackerSettings<T> settings) {
+	public LinkingCostMatrixCreator(final List<Spot> t0, final List<Spot> t1, final TrackerKeys<T> settings) {
 		super(settings);
 		this.t0 = t0;
 		this.t1 = t1;

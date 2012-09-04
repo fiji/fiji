@@ -25,7 +25,7 @@ import net.imglib2.type.numeric.RealType;
 
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.TrackMateModel;
-import fiji.plugin.trackmate.tracking.LAPTrackerSettings;
+import fiji.plugin.trackmate.tracking.TrackerKeys;
 import fiji.plugin.trackmate.tracking.TrackerSettings;
 
 public class JPanelTrackerSettingsMain <T extends RealType<T> & NativeType<T>> extends javax.swing.JPanel {
@@ -80,7 +80,7 @@ public class JPanelTrackerSettingsMain <T extends RealType<T> & NativeType<T>> e
 
 	void echoSettings(TrackMateModel<T> model) {
 
-		LAPTrackerSettings<T> settings = (LAPTrackerSettings<T>) model.getSettings().trackerSettings;
+		TrackerKeys<T> settings = (TrackerKeys<T>) model.getSettings().trackerSettings;
 
 		if (null != model.getSettings().tracker) {
 			jLabelTrackerName.setText(model.getSettings().tracker);
@@ -144,7 +144,7 @@ public class JPanelTrackerSettingsMain <T extends RealType<T> & NativeType<T>> e
 	 * and sub-fields will be updated here.
 	 */
 	public TrackerSettings<T> getSettings() {
-		LAPTrackerSettings<T> settings = new LAPTrackerSettings<T>();
+		TrackerKeys<T> settings = new TrackerKeys<T>();
 
 		settings.linkingDistanceCutOff = Double.parseDouble(jTextFieldLinkingMaxDistance.getText());
 		settings.linkingFeaturePenalties = jPanelLinkingFeatures.getFeatureWeights();

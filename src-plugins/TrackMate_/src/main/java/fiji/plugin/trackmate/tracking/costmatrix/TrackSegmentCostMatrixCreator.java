@@ -11,7 +11,7 @@ import net.imglib2.type.numeric.RealType;
 import Jama.Matrix;
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.tracking.LAPTrackerSettings;
+import fiji.plugin.trackmate.tracking.TrackerKeys;
 import fiji.plugin.trackmate.tracking.LAPUtils;
 import fiji.plugin.trackmate.tracking.costfunction.GapClosingCostFunction;
 import fiji.plugin.trackmate.tracking.costfunction.MergingCostFunction;
@@ -115,7 +115,7 @@ public class TrackSegmentCostMatrixCreator <T extends RealType<T> & NativeType<T
 	 * an <code>ArrayList</code> of <code>Spots</code>.
 	 */
 
-	public TrackSegmentCostMatrixCreator(List<SortedSet<Spot>> trackSegments, LAPTrackerSettings<T> settings) {
+	public TrackSegmentCostMatrixCreator(List<SortedSet<Spot>> trackSegments, TrackerKeys<T> settings) {
 		super(settings);
 		this.trackSegments = trackSegments;
 	}

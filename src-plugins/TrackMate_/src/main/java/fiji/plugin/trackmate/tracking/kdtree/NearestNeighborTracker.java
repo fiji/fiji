@@ -27,6 +27,7 @@ public class NearestNeighborTracker <T extends RealType<T> & NativeType<T>> exte
 	 * FIELDS
 	 */
 
+	public static final String TRACKER_KEY = "NEAREST_NEIGHBOR_TRACKER";
 	public static final String NAME = "Nearest neighbor search";
 	public static final String INFO_TEXT = "<html>" +
 				"This tracker is the most simple one, and is based on nearest neighbor <br>" +

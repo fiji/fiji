@@ -23,7 +23,7 @@ import fiji.plugin.trackmate.SpotImp;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.features.spot.BlobDescriptiveStatistics;
 import fiji.plugin.trackmate.tracking.LAPTracker;
-import fiji.plugin.trackmate.tracking.LAPTrackerSettings;
+import fiji.plugin.trackmate.tracking.TrackerKeys;
 
 
 public class LAPTrackerTest <T extends RealType<T> & NativeType<T> > {
@@ -64,7 +64,7 @@ public class LAPTrackerTest <T extends RealType<T> & NativeType<T> > {
 		groups.add(group2);
 
 		// Set the tracking settings
-		LAPTrackerSettings<T> trackerSettings = new LAPTrackerSettings<T>();
+		TrackerKeys<T> trackerSettings = new TrackerKeys<T>();
 		trackerSettings.linkingDistanceCutOff = 2;
 		trackerSettings.allowGapClosing = false;
 
@@ -131,7 +131,7 @@ public class LAPTrackerTest <T extends RealType<T> & NativeType<T> > {
 		groups.add(group2);
 
 		// Set the tracking settings
-		LAPTrackerSettings<T> trackerSettings = new LAPTrackerSettings<T>();
+		TrackerKeys<T> trackerSettings = new TrackerKeys<T>();
 		trackerSettings.linkingDistanceCutOff = 2;
 		trackerSettings.allowGapClosing = false;
 		trackerSettings.linkingFeaturePenalties.put(BlobDescriptiveStatistics.MEAN_INTENSITY, 1d);

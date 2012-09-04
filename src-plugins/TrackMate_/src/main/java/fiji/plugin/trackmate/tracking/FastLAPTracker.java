@@ -7,6 +7,7 @@ import fiji.plugin.trackmate.tracking.hungarian.MunkresKuhnAlgorithm;
 
 public class FastLAPTracker <T extends RealType<T> & NativeType<T>> extends LAPTracker<T> {
 	
+	public static final String TRACKER_KEY = "FAST_LAP_TRACKER";
 	public static final String NAME ="LAP Tracker";
 	public static final String INFO_TEXT = "<html>" +
 			"This tracker is based on the Linear Assignment Problem mathematical framework. <br>" +

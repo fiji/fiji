@@ -12,7 +12,7 @@ import mpicbg.imglib.multithreading.SimpleMultiThreading;
 import Jama.Matrix;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.tracking.LAPTracker;
-import fiji.plugin.trackmate.tracking.LAPTrackerSettings;
+import fiji.plugin.trackmate.tracking.TrackerKeys;
 import fiji.plugin.trackmate.tracking.LAPUtils;
 
 /**
@@ -58,7 +58,7 @@ public class SplittingCostFunction <T extends RealType<T> & NativeType<T>> {
 	 */
 
 
-	public SplittingCostFunction(LAPTrackerSettings<T> settings) {
+	public SplittingCostFunction(TrackerKeys<T> settings) {
 		this.allowSplitting 	= settings.allowSplitting;
 		this.maxDist 			= settings.splittingDistanceCutoff;
 		this.timeCutoff 		= settings.splittingTimeCutoff;

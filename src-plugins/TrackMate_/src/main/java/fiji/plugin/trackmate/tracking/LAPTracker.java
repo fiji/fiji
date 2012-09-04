@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -112,8 +113,9 @@ import fiji.plugin.trackmate.tracking.hungarian.HungarianAlgorithm;
  * 
  * @author Nicholas Perry
  */
-public class LAPTracker <T extends RealType<T> & NativeType<T>> extends MultiThreadedBenchmarkAlgorithm implements SpotTracker<T> {
+public class LAPTracker <T extends RealType<T> & NativeType<T>> extends MultiThreadedBenchmarkAlgorithm implements SpotTracker {
 
+	public static final String TRACKER_KEY = "LAP_TRACKER";
 	public static final String NAME = "LAP Tracker";
 	public static final String INFO_TEXT = "<html>" +
 			"This tracker is based on the Linear Assignment Problem mathematical framework. <br>" +
@@ -127,9 +129,7 @@ public class LAPTracker <T extends RealType<T> & NativeType<T>> extends MultiThr
 
 
 	/** Logger used to echo progress on tracking. */
-	protected Logger logger = Logger.DEFAULT_LOGGER;
-	/** Stores whether the user has run checkInput() or not. */
-	protected boolean inputChecked = false;
+	protected final Logger logger;
 
 	/** The cost matrix for linking individual track segments (step 2). */
 	protected double[][] segmentCosts = null;
@@ -165,10 +165,20 @@ public class LAPTracker <T extends RealType<T> & NativeType<T>> extends MultiThr
 	/** The graph this tracker will use to link spots. */
 	protected SimpleWeightedGraph<Spot, DefaultWeightedEdge> graph;
 	/** The Spot collection that will be linked in the {@link #graph.} */
-	protected SpotCollection spots;
-	/** The settings object that configures this tracker. */
-	protected LAPTrackerSettings<T> settings;
+	protected final SpotCollection spots;
+	/** The settings map that configures this tracker. */
+	protected final Map<String, Object> settings;
 
+	/*
+	 * CONSTRUCTOR
+	 */
+	
+	public LAPTracker(final SpotCollection spots, final Map<String, Object> settings, final Logger logger) {
+		this.spots = spots;
+		this.settings = settings;
+		this.logger = logger;
+	}
+	
 	/*	
 	 * PROTECTED METHODS
 	 */
@@ -188,13 +198,6 @@ public class LAPTracker <T extends RealType<T> & NativeType<T>> extends MultiThr
 	 * METHODS
 	 */
 
-	@Override
-	public void setModel(TrackMateModel<T> model) {
-		this.spots = model.getFilteredSpots();
-		this.settings = (LAPTrackerSettings<T>) model.getSettings().trackerSettings;
-		reset();
-	}
-
 	/**
 	 * Reset any link created in the graph result in this tracker, effectively creating a new graph, 
 	 * containing the spots but no edge.
@@ -205,6 +208,7 @@ public class LAPTracker <T extends RealType<T> & NativeType<T>> extends MultiThr
 			graph.addVertex(spot);
 	}
 
+	@Override
 	public SimpleWeightedGraph<Spot,DefaultWeightedEdge> getResult() {
 		return graph;
 	}
@@ -258,11 +262,16 @@ public class LAPTracker <T extends RealType<T> & NativeType<T>> extends MultiThr
 			}
 		}
 		if (empty) {
-			errorMessage = BASE_ERROR_MESSAGE + "The filtered spot collection is empty.";
+			errorMessage = BASE_ERROR_MESSAGE + "The spot collection is empty.";
 			return false;
 		}
 
-		inputChecked = true;
+		// Check parameters
+		StringBuilder errorHolder = new StringBuilder();
+		if (!LAPUtils.checkSettingsValidity(settings, errorHolder)) {
+			errorMessage = errorHolder.toString();
+			return false;
+		}
 		return true;
 	}
 
@@ -280,13 +289,6 @@ public class LAPTracker <T extends RealType<T> & NativeType<T>> extends MultiThr
 	public boolean process() {
 		long tend, tstart;
 
-		// Make sure checkInput() has been executed.
-		if (!inputChecked) {
-			errorMessage = BASE_ERROR_MESSAGE + "checkInput() must be executed before process().";
-			return false;
-		}
-
-		reset();
 		processingTime = 0;
 
 		// Step 1 - Link objects into track segments
@@ -528,7 +530,7 @@ public class LAPTracker <T extends RealType<T> & NativeType<T>> extends MultiThr
 	 * @param settings  the tracker settings that specifies how this cost should be created
 	 * @return  the cost matrix as an array of array of double
 	 */
-	protected double[][] createFrameToFrameLinkingCostMatrix(final List<Spot> t0, List<Spot> t1, final LAPTrackerSettings<T> settings) {
+	protected double[][] createFrameToFrameLinkingCostMatrix(final List<Spot> t0, List<Spot> t1, final TrackerKeys<T> settings) {
 		// Create cost matrix
 		LinkingCostMatrixCreator<T> objCosts = new LinkingCostMatrixCreator<T>(t0, t1, settings);
 		if (!objCosts.checkInput() || !objCosts.process()) {
@@ -699,18 +701,13 @@ public class LAPTracker <T extends RealType<T> & NativeType<T>> extends MultiThr
 	}
 
 	@Override
-	public String getInfoText() {
-		return INFO_TEXT;
-	}
-	
-	@Override
 	public String toString() {
 		return NAME;
 	}
 	
 	@Override
-	public void setLogger(Logger logger) {
-		this.logger = logger;
+	public String getKey() {
+		return TRACKER_KEY;
 	}
+	
 }
-

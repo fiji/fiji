@@ -12,7 +12,7 @@ import mpicbg.imglib.multithreading.SimpleMultiThreading;
 import Jama.Matrix;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.tracking.LAPTracker;
-import fiji.plugin.trackmate.tracking.LAPTrackerSettings;
+import fiji.plugin.trackmate.tracking.TrackerKeys;
 import fiji.plugin.trackmate.tracking.LAPUtils;
 
 /**
@@ -49,7 +49,7 @@ public class MergingCostFunction <T extends RealType<T> & NativeType<T>> {
 	/** A flag stating if we should use multi--threading for some calculations. */
 	protected boolean useMultithreading = fiji.plugin.trackmate.TrackMate_.DEFAULT_USE_MULTITHREADING;
 
-	public MergingCostFunction(LAPTrackerSettings<T> settings) {
+	public MergingCostFunction(TrackerKeys<T> settings) {
 		this.maxDist 			= settings.mergingDistanceCutoff;
 		this.timeCutoff 		= settings.mergingTimeCutoff;
 		this.blockingValue		= settings.blockingValue;

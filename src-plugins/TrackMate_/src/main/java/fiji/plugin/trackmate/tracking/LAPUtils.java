@@ -1,5 +1,7 @@
 package fiji.plugin.trackmate.tracking;
 
+import static fiji.plugin.trackmate.util.TMUtils.checkParameter;
+import static fiji.plugin.trackmate.tracking.TrackerKeys.*;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
@@ -74,6 +76,42 @@ public class LAPUtils {
 		return d2 * penalty * penalty;
 	}
 	
+	
+
+	/**
+	 * @return true if the settings map can be used with the LAP trackers. We do not check that all the spot features 
+	 * used in penalties are indeed found in all spots, because if such a feature is absent from one spot, the
+	 * LAP trackers simply ignores the penalty and does not generate an error.
+	 * @param settings the map to test.
+	 * @param errorHolder a {@link StringBuilder} that will contain an error message if the check is 
+	 * not successful.
+	 */
+	public static final boolean checkSettingsValidity(final Map<String, Object> settings, final StringBuilder errorHolder) {
+		if (null == settings) {
+			errorHolder.append("Settings map is null.\n");
+			return false;
+		}
+		boolean ok = true;
+		// Frame to frame linking
+		ok = ok & checkParameter(settings, KEY_LINKING_MAX_DISTANCE, Double.class, errorHolder);
+		ok = ok & checkParameter(settings, KEY_LINKING_FEATURE_PENALTIES, Map.class, errorHolder);
+		// Gap closing
+		ok = ok & checkParameter(settings, KEY_ALLOW_GAP_CLOSING, Boolean.class, errorHolder);
+		ok = ok & checkParameter(settings, KEY_GAP_CLOSING_MAX_DISTANCE, Double.class, errorHolder);
+		ok = ok & checkParameter(settings, KEY_GAP_CLOSING_MAX_FRAME_GAP, Integer.class, errorHolder);
+		// Splitting
+		ok = ok & checkParameter(settings, KEY_ALLOW_TRACK_SPLITTING, Boolean.class, errorHolder);
+		ok = ok & checkParameter(settings, KEY_SPLITTING_MAX_DISTANCE, Double.class, errorHolder);
+		ok = ok & checkParameter(settings, KEY_SPLITTING_FEATURE_PENALTIES, Map.class, errorHolder);
+		// Merging
+		ok = ok & checkParameter(settings, KEY_ALLOW_TRACK_MERGING, Boolean.class, errorHolder);
+		ok = ok & checkParameter(settings, KEY_MERGING_MAX_DISTANCE, Double.class, errorHolder);
+		ok = ok & checkParameter(settings, KEY_MERGING_FEATURE_PENALTIES, Map.class, errorHolder);
+		// Other
+		ok = ok & checkParameter(settings, KEY_ALTERNATIVE_LINKING_COST_FACTOR, Double.class, errorHolder);
+		ok = ok & checkParameter(settings, KEY_CUTOFF_PERCENTILE, Double.class, errorHolder);
+		return ok;
+	}
 	
 	public static final void echoMatrix(final double[][] m) {
 		int nlines = m.length;

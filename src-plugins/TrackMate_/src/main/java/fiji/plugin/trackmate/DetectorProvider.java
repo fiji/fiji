@@ -1,5 +1,6 @@
 package fiji.plugin.trackmate;
 
+import static fiji.plugin.trackmate.util.TMUtils.checkParameter;
 import static fiji.plugin.trackmate.detection.DetectorKeys.DEFAULT_DOWNSAMPLE_FACTOR;
 import static fiji.plugin.trackmate.detection.DetectorKeys.DEFAULT_DO_MEDIAN_FILTERING;
 import static fiji.plugin.trackmate.detection.DetectorKeys.DEFAULT_DO_SUBPIXEL_LOCALIZATION;
@@ -54,14 +55,14 @@ public class DetectorProvider <T extends RealType<T> & NativeType<T>> {
 	 */
 
 	/**
-	 * This factory provides the GUI with the spot detectors currently available in the 
+	 * This provider provides the GUI with the spot detectors currently available in the 
 	 * TrackMate plugin. Each detector is identified by a key String, which can be used 
 	 * to retrieve new instance of the detector, settings for the target detector and a 
 	 * GUI panel able to configure these settings.
 	 * <p>
 	 * If you want to add custom detectors to TrackMate, a simple way is to extend this
-	 * factory so that it is registered with the custom detectors and provide this 
-	 * extended factory to the {@link TrackMate_} plugin.
+	 * factory so that it is registered with the custom detectors and pass this 
+	 * extended provider to the {@link TrackMate_} plugin.
 	 */
 	public DetectorProvider() {
 		registerDetectors();
@@ -340,16 +341,20 @@ public class DetectorProvider <T extends RealType<T> & NativeType<T>> {
 	 * @return  true if the settings map can be used with the target factory. If not, check {@link #getErrorMessage()}
 	 */
 	public boolean checkSettingsValidity(final Map<String, Object> settings) {
+		// TODO inspect the whole map even if there is 1 error, and make better explanatory messages id undesired keys are there
 
 		if (null == settings) {
 			errorMessage = "Settings map is null";
 			return false;
 		}
+
+		StringBuilder str = new StringBuilder();
 		
 		if (currentKey.equals(ManualDetectorFactory.DETECTOR_KEY)) {
 
-			boolean ok = checkParameter(settings, KEY_RADIUS, Double.class);
+			boolean ok = checkParameter(settings, KEY_RADIUS, Double.class, str);
 			if (!ok) {
+				errorMessage = str.toString();
 				return false;
 			}
 			if (settings.size() != 1) {
@@ -361,12 +366,13 @@ public class DetectorProvider <T extends RealType<T> & NativeType<T>> {
 		} else if (currentKey.equals(LogDetectorFactory.DETECTOR_KEY) 
 				|| currentKey.equals(DogDetectorFactory.DETECTOR_KEY)) {
 
-			boolean ok = checkParameter(settings, KEY_TARGET_CHANNEL, Integer.class)
-					&& checkParameter(settings, KEY_RADIUS, Double.class) 
-					&& checkParameter(settings, KEY_THRESHOLD, Double.class)
-					&& checkParameter(settings, KEY_DO_MEDIAN_FILTERING, Boolean.class)
-					&& checkParameter(settings, KEY_DO_SUBPIXEL_LOCALIZATION, Boolean.class);
+			boolean ok = checkParameter(settings, KEY_TARGET_CHANNEL, Integer.class, str)
+					&& checkParameter(settings, KEY_RADIUS, Double.class, str) 
+					&& checkParameter(settings, KEY_THRESHOLD, Double.class, str)
+					&& checkParameter(settings, KEY_DO_MEDIAN_FILTERING, Boolean.class, str)
+					&& checkParameter(settings, KEY_DO_SUBPIXEL_LOCALIZATION, Boolean.class, str);
 			if (!ok) {
+				errorMessage = str.toString();
 				return false;
 			}
 			if (settings.size() != 5) {
@@ -377,11 +383,12 @@ public class DetectorProvider <T extends RealType<T> & NativeType<T>> {
 
 		} else if (currentKey.equals(DownsampleLogDetectorFactory.DETECTOR_KEY)) {
 
-			boolean ok = checkParameter(settings, KEY_TARGET_CHANNEL, Integer.class)
-					&& checkParameter(settings, KEY_RADIUS, Double.class) 
-					&& checkParameter(settings, KEY_THRESHOLD, Double.class)
-					&& checkParameter(settings, KEY_DOWNSAMPLE_FACTOR, Integer.class);
+			boolean ok = checkParameter(settings, KEY_TARGET_CHANNEL, Integer.class, str)
+					&& checkParameter(settings, KEY_RADIUS, Double.class, str) 
+					&& checkParameter(settings, KEY_THRESHOLD, Double.class, str)
+					&& checkParameter(settings, KEY_DOWNSAMPLE_FACTOR, Integer.class, str);
 			if (!ok) {
+				errorMessage = str.toString();
 				return false;
 			}
 			if (settings.size() != 4) {
@@ -523,21 +530,4 @@ public class DetectorProvider <T extends RealType<T> & NativeType<T>> {
 		}
 		return true;
 	}
-
-	protected boolean checkParameter(Map<String, Object> settings, String parameterKey, Class<?> expectedClass) {
-		Object obj = settings.get(parameterKey);
-		if (null == obj) {
-			errorMessage = "Parameter "+parameterKey+" could not be found in settings map.\n";
-			return true;
-		}
-		if (!expectedClass.isInstance(obj)) {
-			errorMessage = "Value for parameter "+parameterKey+" is not of the right class. Expected "+expectedClass.getName()+", got "+obj.getClass().getName()+".\n";
-			return false;
-		}
-		return true;
-	}
-
-
-
-
 }

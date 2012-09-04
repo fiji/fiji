@@ -1,9 +1,5 @@
 package fiji.plugin.trackmate;
 
-import fiji.plugin.trackmate.detection.SpotDetector;
-import fiji.plugin.trackmate.detection.SpotDetectorFactory;
-import fiji.plugin.trackmate.tracking.TrackerSettings;
-import fiji.plugin.trackmate.visualization.TrackMateModelView;
 import ij.ImagePlus;
 import ij.gui.Roi;
 
@@ -16,6 +12,9 @@ import java.util.Map;
 
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
+import fiji.plugin.trackmate.detection.SpotDetector;
+import fiji.plugin.trackmate.detection.SpotDetectorFactory;
+import fiji.plugin.trackmate.visualization.TrackMateModelView;
 
 /**
  * This class is used to store user settings for the {@link TrackMate_} plugin.
@@ -66,12 +65,11 @@ public class Settings <T extends RealType<T> & NativeType<T>> {
 	/** The name of the detector factory to use. It will be used to generate {@link SpotDetector}
 	 * for each target frame. */
 	public SpotDetectorFactory<T> detectorFactory;
-	/** The name of the tracker to use. This name must be a key registered in {@link TrackerFactory}. */
+	/** The name of the tracker to use. This name must be a key registered in {@link TrackerProvider}. */
 	public String tracker;
 	
 	public Map<String, Object> detectorSettings = new HashMap<String, Object>();
-//	public Map<String, Object> trackerSettings = new HashMap<String, Object>();
-	public TrackerSettings<T> trackerSettings = null;
+	public Map<String, Object> trackerSettings = new HashMap<String, Object>();
 	
 	// Filters
 	

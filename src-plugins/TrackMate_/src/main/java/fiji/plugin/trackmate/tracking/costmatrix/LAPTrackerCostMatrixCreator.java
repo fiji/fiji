@@ -4,7 +4,7 @@ import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
 import Jama.Matrix;
 import fiji.plugin.trackmate.tracking.LAPTracker;
-import fiji.plugin.trackmate.tracking.LAPTrackerSettings;
+import fiji.plugin.trackmate.tracking.TrackerKeys;
 
 /**
  * Contains the mutually shared fields and private functions used by the two 
@@ -23,13 +23,13 @@ public abstract class LAPTrackerCostMatrixCreator <T extends RealType<T> & Nativ
 	/** Stores whether the user has run checkInput() or not. */
 	protected boolean inputChecked = false;
 	/** The settings to comply to create a cost matrix. */
-	protected LAPTrackerSettings<T> settings;
+	protected TrackerKeys<T> settings;
 	
 	/*
 	 * CONSTRUCTOR
 	 */
 	
-	protected LAPTrackerCostMatrixCreator(LAPTrackerSettings<T> settings) {
+	protected LAPTrackerCostMatrixCreator(TrackerKeys<T> settings) {
 		this.settings = settings;
 	}
 	

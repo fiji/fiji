@@ -17,7 +17,7 @@ import net.imglib2.type.numeric.RealType;
 
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.tracking.LAPTracker;
-import fiji.plugin.trackmate.tracking.LAPTrackerSettings;
+import fiji.plugin.trackmate.tracking.TrackerKeys;
 import fiji.plugin.trackmate.tracking.TrackerSettings;
 
 /**
@@ -37,7 +37,7 @@ public class SimpleLAPTrackerSettingsPanel <T extends RealType<T> & NativeType<T
 	private JNumericTextField jTextFieldLinkingDistance;
 	private JLabel jLabelTrackerDescription;
 
-	private LAPTrackerSettings<T> settings;
+	private TrackerKeys<T> settings;
 	private final String infoText;
 
 	/*
@@ -56,7 +56,7 @@ public class SimpleLAPTrackerSettingsPanel <T extends RealType<T> & NativeType<T
 
 	@Override
 	public void setTrackerSettings(TrackMateModel<T> model) {
-		this.settings = (LAPTrackerSettings<T>) model.getSettings().trackerSettings;
+		this.settings = (TrackerKeys<T>) model.getSettings().trackerSettings;
 		echoSettings(model);
 
 	};

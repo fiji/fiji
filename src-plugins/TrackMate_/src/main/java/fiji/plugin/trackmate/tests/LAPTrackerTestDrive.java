@@ -9,7 +9,7 @@ import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.io.TmXmlReader;
 import fiji.plugin.trackmate.tracking.LAPTracker;
-import fiji.plugin.trackmate.tracking.LAPTrackerSettings;
+import fiji.plugin.trackmate.tracking.TrackerKeys;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
 import fiji.plugin.trackmate.visualization.hyperstack.HyperStackDisplayer;
 
@@ -42,7 +42,7 @@ public class LAPTrackerTestDrive {
 		System.out.println();
 		
 		// 1.5 - Set the tracking settings
-		LAPTrackerSettings<T> settings = new LAPTrackerSettings<T>();
+		TrackerKeys<T> settings = new TrackerKeys<T>();
 		settings.linkingDistanceCutOff = 10;
 		settings.allowGapClosing = false;
 		settings.gapClosingDistanceCutoff = 15;

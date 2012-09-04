@@ -5,7 +5,7 @@ import net.imglib2.type.numeric.RealType;
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.io.TmXmlWriter;
-import fiji.plugin.trackmate.tracking.LAPTrackerSettings;
+import fiji.plugin.trackmate.tracking.TrackerKeys;
 import fiji.plugin.trackmate.tracking.SimpleLAPTracker;
 
 public class ClassNames_TestDrive {
@@ -36,7 +36,7 @@ public class ClassNames_TestDrive {
 		TrackMateModel<T> model = new TrackMateModel<T>();
 		model.getSettings().tracker = SimpleLAPTracker.NAME;
 		
-		model.getSettings().trackerSettings = new LAPTrackerSettings<T>();
+		model.getSettings().trackerSettings = new TrackerKeys<T>();
 		
 		TmXmlWriter<T> writer = new TmXmlWriter<T>(model, Logger.DEFAULT_LOGGER);
 		writer.appendTrackerSettings();
