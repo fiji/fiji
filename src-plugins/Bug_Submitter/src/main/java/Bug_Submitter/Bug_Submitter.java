@@ -260,7 +260,7 @@ public class Bug_Submitter implements PlugIn {
 			String line = null;
 			boolean authenticationFailed = false;
 			while( (line = br.readLine()) != null ) {
-				authenticationReply.append(line);
+				authenticationReply.append(line).append("\n");
 				if( badAuthentication.matcher(line).matches() ) {
 					authenticationFailed = true;
 				}
@@ -350,7 +350,7 @@ public class Bug_Submitter implements PlugIn {
 			br = new BufferedReader( new InputStreamReader(is) );
 			line = null;
 			while( (line = br.readLine()) != null ) {
-				submissionReply.append(line);
+				submissionReply.append(line).append("\n");
 				Matcher submittedMatcher = successfullySubmitted.matcher(line);
 				if( submittedMatcher.matches() ) {
 					bugNumber = Integer.parseInt( submittedMatcher.group(1), 10 );
