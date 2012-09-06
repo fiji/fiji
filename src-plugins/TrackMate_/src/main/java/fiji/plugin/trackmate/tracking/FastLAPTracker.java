@@ -1,12 +1,14 @@
 package fiji.plugin.trackmate.tracking;
 
-import net.imglib2.type.NativeType;
-import net.imglib2.type.numeric.RealType;
+import java.util.Map;
+
+import fiji.plugin.trackmate.Logger;
+import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.tracking.hungarian.AssignmentAlgorithm;
 import fiji.plugin.trackmate.tracking.hungarian.MunkresKuhnAlgorithm;
 
-public class FastLAPTracker <T extends RealType<T> & NativeType<T>> extends LAPTracker<T> {
-	
+public class FastLAPTracker extends LAPTracker {
+
 	public static final String TRACKER_KEY = "FAST_LAP_TRACKER";
 	public static final String NAME ="LAP Tracker";
 	public static final String INFO_TEXT = "<html>" +
@@ -26,7 +28,15 @@ public class FastLAPTracker <T extends RealType<T> & NativeType<T>> extends LAPT
 			"<p>" +
 			"Solving the LAP relies on the Munkres-Kuhn solver, <br> " +
 			"that solves an assignment problem in O(n^3) instead of O(n^4)." +
-			" </html>";	
+			" </html>";
+	
+	public FastLAPTracker(SpotCollection spots, Map<String, Object> settings, Logger logger) {
+		super(spots, settings, logger);
+	}
+	
+	public FastLAPTracker(SpotCollection spots, Map<String, Object> settings) {
+		this(spots, settings, Logger.VOID_LOGGER);
+	}
 	
 	@Override
 	protected AssignmentAlgorithm createAssignmentProblemSolver() {
@@ -34,12 +44,12 @@ public class FastLAPTracker <T extends RealType<T> & NativeType<T>> extends LAPT
 	}
 
 	@Override
-	public String getInfoText() {
-		return INFO_TEXT;
+	public String toString() {
+		return NAME;
 	}
 	
 	@Override
-	public String toString() {
-		return NAME;
+	public String getKey() {
+		return TRACKER_KEY;
 	}
 }

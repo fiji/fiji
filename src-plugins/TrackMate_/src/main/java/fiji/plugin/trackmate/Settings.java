@@ -14,6 +14,7 @@ import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
 import fiji.plugin.trackmate.detection.SpotDetector;
 import fiji.plugin.trackmate.detection.SpotDetectorFactory;
+import fiji.plugin.trackmate.tracking.SpotTracker;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
 
 /**
@@ -65,8 +66,8 @@ public class Settings <T extends RealType<T> & NativeType<T>> {
 	/** The name of the detector factory to use. It will be used to generate {@link SpotDetector}
 	 * for each target frame. */
 	public SpotDetectorFactory<T> detectorFactory;
-	/** The name of the tracker to use. This name must be a key registered in {@link TrackerProvider}. */
-	public String tracker;
+	/** The the tracker to use. */
+	public SpotTracker tracker;
 	
 	public Map<String, Object> detectorSettings = new HashMap<String, Object>();
 	public Map<String, Object> trackerSettings = new HashMap<String, Object>();

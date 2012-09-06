@@ -1,11 +1,14 @@
 package fiji.plugin.trackmate.tracking;
 
-import net.imglib2.type.NativeType;
-import net.imglib2.type.numeric.RealType;
+import java.util.Map;
+
+import fiji.plugin.trackmate.Logger;
+import fiji.plugin.trackmate.SpotCollection;
 
 
-public class SimpleLAPTracker <T extends RealType<T> & NativeType<T>> extends LAPTracker<T> {
+public class SimpleLAPTracker extends LAPTracker {
 
+	public  static final String TRACKER_KEY = "SIMPLE_LAP_TRACKER";
 	public static final String NAME = "Simple LAP tracker";
 	public static final String INFO_TEXT = "<html>" +
 				"This tracker is identical to the LAP tracker present in this plugin, except that it <br>" +
@@ -14,14 +17,22 @@ public class SimpleLAPTracker <T extends RealType<T> & NativeType<T>> extends LA
 				"in having non-branching tracks." +
 				" </html>";
 
+	public SimpleLAPTracker(SpotCollection spots, Map<String, Object> settings,	Logger logger) {
+		super(spots, settings, logger);
+	}
+	
+	public SimpleLAPTracker(SpotCollection spots, Map<String, Object> settings) {
+		this(spots, settings, Logger.VOID_LOGGER);
+	}
+
 	@Override
 	public String toString() {
 		return NAME;
 	}
 
 	@Override
-	public String getInfoText() {
-		return INFO_TEXT;
+	public String getKey() {
+		return TRACKER_KEY;
 	}
 	
 }

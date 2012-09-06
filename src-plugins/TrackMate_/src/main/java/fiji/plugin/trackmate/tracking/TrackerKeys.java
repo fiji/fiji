@@ -13,9 +13,9 @@ public interface TrackerKeys {
 	
 	public static final String TRACKER_SETTINGS_ALLOW_EVENT_ATTNAME				= "allowed";
 	// Alternative costs & blocking
-	public static final String TRACKER_SETTINGS_ALTERNATE_COST_FACTOR_ATTNAME 		= "alternatecostfactor";
-	public static final String TRACKER_SETTINGS_CUTOFF_PERCENTILE_ATTNAME			= "cutoffpercentile";
-	public static final String TRACKER_SETTINGS_BLOCKING_VALUE_ATTNAME				= "blockingvalue";
+	public static final String TRACKER_SETTINGS_ALTERNATE_COST_FACTOR_ATTNAME 	= "alternatecostfactor";
+	public static final String TRACKER_SETTINGS_CUTOFF_PERCENTILE_ATTNAME		= "cutoffpercentile";
+	public static final String TRACKER_SETTINGS_BLOCKING_VALUE_ATTNAME			= "blockingvalue";
 	// Cutoff elements
 	public static final String TRACKER_SETTINGS_TIME_CUTOFF_ELEMENT				= "TimeCutoff";
 	public static final String TRACKER_SETTINGS_TIME_CUTOFF_ATTNAME				= "value";
@@ -25,7 +25,7 @@ public interface TrackerKeys {
 	public static final String TRACKER_SETTINGS_LINKING_ELEMENT					= "LinkingCondition";
 	public static final String TRACKER_SETTINGS_GAP_CLOSING_ELEMENT				= "GapClosingCondition";
 	public static final String TRACKER_SETTINGS_MERGING_ELEMENT					= "MergingCondition";
-	public static final String TRACKER_SETTINGS_SPLITTING_ELEMENT					= "SplittingCondition";
+	public static final String TRACKER_SETTINGS_SPLITTING_ELEMENT				= "SplittingCondition";
 
 
 	/*
@@ -143,8 +143,14 @@ public interface TrackerKeys {
 	public static final String KEY_CUTOFF_PERCENTILE = "CUTOFF_PERCENTILE";
 	
 	/** A default value for the {@value #KEY_CUTOFF_PERCENTILE} parameter. */
-	public static final double 	DEFAULT_CUTOFF_PERCENTILE 				= 0.9d;
-
+	public static final double DEFAULT_CUTOFF_PERCENTILE = 0.9d;
+	
+	/** Key for the parameter that stores the blocking value: cost for non-physical, forbidden links.
+	 * Expected values are {@link Double}s, and are typically very large.  */
+	public static final String KEY_BLOCKING_VALUE = "BLOCKING_VALUE";
+	
+	/** A default value for the {@value #KEY_BLOCKING_VALUE} parameter.  */ 
+	public static final double 	DEFAULT_BLOCKING_VALUE = Double.POSITIVE_INFINITY;
 	
 	/*
 	 * METHODS

@@ -1,13 +1,15 @@
 package fiji.plugin.trackmate.tracking.costfunction;
 
-import java.util.List;
+import static fiji.plugin.trackmate.tracking.TrackerKeys.KEY_BLOCKING_VALUE;
+import static fiji.plugin.trackmate.tracking.TrackerKeys.KEY_LINKING_FEATURE_PENALTIES;
+import static fiji.plugin.trackmate.tracking.TrackerKeys.KEY_LINKING_MAX_DISTANCE;
 
-import net.imglib2.type.NativeType;
-import net.imglib2.type.numeric.RealType;
+import java.util.List;
+import java.util.Map;
 
 import Jama.Matrix;
 import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.tracking.TrackerKeys;
+import fiji.plugin.trackmate.tracking.LAPTracker;
 import fiji.plugin.trackmate.tracking.LAPUtils;
 
 /**
@@ -24,12 +26,18 @@ import fiji.plugin.trackmate.tracking.LAPUtils;
  * @author Jean-Yves Tinevez
  *
  */
-public class LinkingCostFunction <T extends RealType<T> & NativeType<T>> implements CostFunctions {
+public class LinkingCostFunction implements CostFunctions {
 	
-	protected TrackerKeys<T> settings;
-	
-	public LinkingCostFunction(TrackerKeys<T> settings) {
-		this.settings = settings;
+
+	protected final double maxDist;
+	protected final Map<String, Double> featurePenalties;
+	protected final double blockingValue;
+
+	@SuppressWarnings("unchecked")
+	public LinkingCostFunction(final Map<String, Object> settings) {
+		this.maxDist = (Double) settings.get(KEY_LINKING_MAX_DISTANCE);
+		this.featurePenalties = (Map<String, Double>) settings.get(KEY_LINKING_FEATURE_PENALTIES);
+		this.blockingValue = (Double) settings.get(KEY_BLOCKING_VALUE);
 	}
 	
 	@Override
@@ -45,8 +53,7 @@ public class LinkingCostFunction <T extends RealType<T> & NativeType<T>> impleme
 			for (int j = 0; j < t1.size(); j++) {
 				
 				s1 = t1.get(j);
-				double cost = LAPUtils.computeLinkingCostFor(s0, s1, 
-						settings.linkingDistanceCutOff, settings.blockingValue, settings.linkingFeaturePenalties);
+				double cost = LAPUtils.computeLinkingCostFor(s0, s1, maxDist, blockingValue, featurePenalties);
 				m.set(i, j, cost);
 			}
 		}

@@ -1,27 +1,27 @@
 package fiji.plugin.trackmate;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.jdom.Element;
-
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
+
+import org.jdom.Element;
+
 import fiji.plugin.trackmate.detection.SpotDetectorFactory;
 import fiji.plugin.trackmate.gui.LAPTrackerSettingsPanel;
 import fiji.plugin.trackmate.gui.NearestNeighborTrackerSettingsPanel;
 import fiji.plugin.trackmate.gui.SimpleLAPTrackerSettingsPanel;
 import fiji.plugin.trackmate.gui.TrackerConfigurationPanel;
 import fiji.plugin.trackmate.tracking.FastLAPTracker;
-import fiji.plugin.trackmate.tracking.TrackerKeys;
 import fiji.plugin.trackmate.tracking.SimpleFastLAPTracker;
 import fiji.plugin.trackmate.tracking.SpotTracker;
-import fiji.plugin.trackmate.tracking.TrackerSettings;
+import fiji.plugin.trackmate.tracking.TrackerKeys;
 import fiji.plugin.trackmate.tracking.kdtree.NearestNeighborTracker;
-import fiji.plugin.trackmate.tracking.kdtree.NearestNeighborTrackerSettings;
 
-public class TrackerProvider <T extends RealType<T> & NativeType<T>> {
+public class TrackerProvider <T extends RealType<T> & NativeType<T>> implements TrackerKeys {
 
 
 	/** The tracker names, in the order they will appear in the GUI.
@@ -125,15 +125,17 @@ public class TrackerProvider <T extends RealType<T> & NativeType<T>> {
 		
 		final Map<String, Object> settings = model.getSettings().trackerSettings;
 		final SpotCollection spots = model.getFilteredSpots();
+		final Logger logger = model.getLogger();
 		
 		if (currentKey.equals(SimpleFastLAPTracker.TRACKER_KEY)) {
-			return new SimpleFastLAPTracker<T>(spots, settings);
+			return new SimpleFastLAPTracker(spots, settings, logger);
 			
 		} else if (currentKey.equals(FastLAPTracker.TRACKER_KEY)) {
-			return new FastLAPTracker<T>(spots, settings);
+			return new FastLAPTracker(spots, settings, logger);
 			
 		} else if (currentKey.equals(NearestNeighborTracker.TRACKER_KEY)) {
-			return new NearestNeighborTracker<T>(spots, settings);
+			final double maxDist = (Double) settings.get(KEY_LINKING_MAX_DISTANCE);
+			return new NearestNeighborTracker(spots, maxDist, logger);
 			
 		} else {
 			return null;
@@ -144,19 +146,17 @@ public class TrackerProvider <T extends RealType<T> & NativeType<T>> {
 	 * @return the html String containing a descriptive information about the target tracker,
 	 * or <code>null</code> if it is unknown to this factory.
 	 */
-	public String getInfoText(String key) {
-		int index = keys.indexOf(key);
-		if (index < 0) {
-			return null;
-		}
-		switch (index) {
-		case 0:
+	public String getInfoText() {
+		if (currentKey.equals(SimpleFastLAPTracker.TRACKER_KEY)) {
 			return SimpleFastLAPTracker.INFO_TEXT;
-		case 1:
+			
+		} else if (currentKey.equals(FastLAPTracker.TRACKER_KEY)) {
 			return FastLAPTracker.INFO_TEXT;
-		case 2:
+			
+		} else if (currentKey.equals(NearestNeighborTracker.TRACKER_KEY)) {
 			return NearestNeighborTracker.INFO_TEXT;
-		default:
+			
+		} else {
 			return null;
 		}
 	}
@@ -167,28 +167,75 @@ public class TrackerProvider <T extends RealType<T> & NativeType<T>> {
 	 * If the key is unknown to this factory, <code>null</code> is returned. 
 	 */
 
-	public TrackerConfigurationPanel<T> getTrackerConfigurationPanel(String key) 	{
-		int index = keys.indexOf(key);
-		if (index < 0) {
-			return null;
-		}
-		switch (index) {
-		case 0:
+	public TrackerConfigurationPanel<T> getTrackerConfigurationPanel() 	{
+		if (currentKey.equals(SimpleFastLAPTracker.TRACKER_KEY)) {
 			return new SimpleLAPTrackerSettingsPanel<T>(SimpleFastLAPTracker.INFO_TEXT);
-		case 1:
+			
+		} else if (currentKey.equals(FastLAPTracker.TRACKER_KEY)) {
 			return new LAPTrackerSettingsPanel<T>();
-		case 2:
+			
+		} else if (currentKey.equals(NearestNeighborTracker.TRACKER_KEY)) {
 			return new NearestNeighborTrackerSettingsPanel<T>(NearestNeighborTracker.INFO_TEXT);
-		default:
+			
+		} else {
 			return null;
 		}
 	}
-
+	
 	/**
-	 * @return a list of the tracker names available through this factory.
+	 * @return a new default settings map suitable for the target tracker identified by 
+	 * the {@link #currentKey}. Settings are instantiated with default values.  
+	 * If the key is unknown to this provider, <code>null</code> is returned. 
 	 */
-	public List<String> getAvailableTrackers() {
+	public Map<String, Object> getDefaultSettings() {
+		Map<String, Object> settings = new HashMap<String, Object>();
+
+		if (currentKey.equals(SimpleFastLAPTracker.TRACKER_KEY) || currentKey.equals(FastLAPTracker.TRACKER_KEY)) {
+			// Linking
+			settings.put(KEY_LINKING_MAX_DISTANCE, DEFAULT_LINKING_MAX_DISTANCE);
+			settings.put(KEY_LINKING_FEATURE_PENALTIES, DEFAULT_LINKING_FEATURE_PENALTIES);
+			// Gap closing
+			settings.put(KEY_ALLOW_GAP_CLOSING, DEFAULT_ALLOW_GAP_CLOSING);
+			settings.put(KEY_GAP_CLOSING_MAX_FRAME_GAP, DEFAULT_GAP_CLOSING_MAX_FRAME_GAP);
+			settings.put(KEY_GAP_CLOSING_MAX_DISTANCE, DEFAULT_GAP_CLOSING_MAX_DISTANCE);
+			settings.put(KEY_GAP_CLOSING_FEATURE_PENALTIES, DEFAULT_GAP_CLOSING_FEATURE_PENALTIES);
+			// Track splitting
+			settings.put(KEY_ALLOW_TRACK_SPLITTING, DEFAULT_ALLOW_TRACK_SPLITTING);
+			settings.put(KEY_SPLITTING_MAX_DISTANCE, DEFAULT_SPLITTING_MAX_DISTANCE);
+			settings.put(KEY_SPLITTING_FEATURE_PENALTIES, DEFAULT_SPLITTING_FEATURE_PENALTIES);
+			// Track merging
+			settings.put(KEY_ALLOW_TRACK_MERGING, DEFAULT_ALLOW_TRACK_MERGING);
+			settings.put(KEY_MERGING_MAX_DISTANCE, DEFAULT_MERGING_MAX_DISTANCE);
+			settings.put(KEY_MERGING_FEATURE_PENALTIES, DEFAULT_MERGING_FEATURE_PENALTIES);
+			// Others
+			settings.put(KEY_BLOCKING_VALUE, DEFAULT_BLOCKING_VALUE);
+			settings.put(KEY_ALTERNATIVE_LINKING_COST_FACTOR, DEFAULT_ALTERNATIVE_LINKING_COST_FACTOR);
+			settings.put(KEY_CUTOFF_PERCENTILE, DEFAULT_CUTOFF_PERCENTILE);
+			
+		} else if (currentKey.equals(NearestNeighborTracker.TRACKER_KEY)) {
+			settings.put(KEY_LINKING_MAX_DISTANCE, DEFAULT_LINKING_MAX_DISTANCE);
+			
+		} else {
+			return null;
+		}
+		return settings;
+
+	}
+
+
+	/**  @return a list of the tracker keys available through this provider.  */
+	public List<String> getTrackerKeys() {
 		return keys;
 	}
 
+	/**  @return a list of the tracker info texts available through this provider.  */
+	public List<String> getTrackerInfoTexts() {
+		return infoTexts;
+	}
+	
+	/**  @return a list of the tracker names available through this provider.  */
+	public List<String> getTrackerNames() {
+		return names;
+	}
+	
 }

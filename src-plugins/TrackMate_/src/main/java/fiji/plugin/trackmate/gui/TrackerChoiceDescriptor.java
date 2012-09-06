@@ -80,7 +80,7 @@ public class TrackerChoiceDescriptor <T extends RealType<T> & NativeType<T>> imp
 	@Override
 	public void setPlugin(TrackMate_<T> plugin) {
 		this.plugin = plugin;
-		List<String> trackerNames = plugin.getTrackerFactory().getAvailableTrackers();
+		List<String> trackerNames = plugin.getTrackerFactory().getTrackerKeys();
 		List<String> infoTexts = new ArrayList<String>(trackerNames.size());
 		for(String key : trackerNames) {
 			infoTexts.add(plugin.getTrackerFactory().getInfoText(key));
@@ -96,7 +96,7 @@ public class TrackerChoiceDescriptor <T extends RealType<T> & NativeType<T>> imp
 
 	void setCurrentChoiceFromPlugin() {
 		String tracker = plugin.getModel().getSettings().tracker; 
-		int index = plugin.getTrackerFactory().getAvailableTrackers().indexOf(tracker);
+		int index = plugin.getTrackerFactory().getTrackerKeys().indexOf(tracker);
 		if (index >= 0) {
 			component.jComboBoxChoice.setSelectedIndex(index);
 		}

@@ -110,6 +110,7 @@ public class LAPUtils {
 		// Other
 		ok = ok & checkParameter(settings, KEY_ALTERNATIVE_LINKING_COST_FACTOR, Double.class, errorHolder);
 		ok = ok & checkParameter(settings, KEY_CUTOFF_PERCENTILE, Double.class, errorHolder);
+		ok = ok & checkParameter(settings, KEY_BLOCKING_VALUE, Double.class, errorHolder);
 		return ok;
 	}
 	

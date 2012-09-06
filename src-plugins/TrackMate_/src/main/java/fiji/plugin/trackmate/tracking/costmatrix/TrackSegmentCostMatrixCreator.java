@@ -1,17 +1,20 @@
 package fiji.plugin.trackmate.tracking.costmatrix;
 
+import static fiji.plugin.trackmate.tracking.TrackerKeys.KEY_ALLOW_TRACK_MERGING;
+import static fiji.plugin.trackmate.tracking.TrackerKeys.KEY_ALLOW_TRACK_SPLITTING;
+import static fiji.plugin.trackmate.tracking.TrackerKeys.KEY_ALTERNATIVE_LINKING_COST_FACTOR;
+import static fiji.plugin.trackmate.tracking.TrackerKeys.KEY_BLOCKING_VALUE;
+import static fiji.plugin.trackmate.tracking.TrackerKeys.KEY_CUTOFF_PERCENTILE;
+
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.SortedSet;
-
-import net.imglib2.type.NativeType;
-import net.imglib2.type.numeric.RealType;
 
 import Jama.Matrix;
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.tracking.TrackerKeys;
 import fiji.plugin.trackmate.tracking.LAPUtils;
 import fiji.plugin.trackmate.tracking.costfunction.GapClosingCostFunction;
 import fiji.plugin.trackmate.tracking.costfunction.MergingCostFunction;
@@ -88,7 +91,7 @@ import fiji.plugin.trackmate.util.TMUtils;
  *
  */
 
-public class TrackSegmentCostMatrixCreator <T extends RealType<T> & NativeType<T>> extends LAPTrackerCostMatrixCreator<T> {
+public class TrackSegmentCostMatrixCreator extends LAPTrackerCostMatrixCreator {
 
 
 	private static final boolean PRUNING_OPTIMIZATION = true;
@@ -115,7 +118,7 @@ public class TrackSegmentCostMatrixCreator <T extends RealType<T> & NativeType<T
 	 * an <code>ArrayList</code> of <code>Spots</code>.
 	 */
 
-	public TrackSegmentCostMatrixCreator(List<SortedSet<Spot>> trackSegments, TrackerKeys<T> settings) {
+	public TrackSegmentCostMatrixCreator(final List<SortedSet<Spot>> trackSegments, final Map<String, Object> settings) {
 		super(settings);
 		this.trackSegments = trackSegments;
 	}
@@ -134,8 +137,11 @@ public class TrackSegmentCostMatrixCreator <T extends RealType<T> & NativeType<T
 			errorMessage = "There are no track segments.";
 			return false;
 		}
-
-		inputChecked = true;
+		StringBuilder errorHolder = new StringBuilder();;
+		if (!LAPUtils.checkSettingsValidity(settings, errorHolder )) {
+			errorMessage = errorHolder.toString();
+			return false;
+		}
 		return true;
 	}
 
@@ -169,17 +175,15 @@ public class TrackSegmentCostMatrixCreator <T extends RealType<T> & NativeType<T
 
 	@Override
 	public boolean process() {
-
-		// 1 - Confirm that checkInput() has been executed already.
-		if (!inputChecked) {
-			errorMessage = "You must run checkInput() before running process().";
-			return false;
-		}
+		
+		// 1 - Get parameter values
+		final boolean allowSplitting = (Boolean) settings.get(KEY_ALLOW_TRACK_SPLITTING);
+		final boolean allowMerging = (Boolean) settings.get(KEY_ALLOW_TRACK_MERGING);
 
 		try {
 			// 2 - Get a list of the middle points that can participate in merging and splitting
 
-			if (settings.allowMerging || settings.allowSplitting) {
+			if (allowMerging || allowSplitting) {
 				middlePoints = getTrackSegmentMiddlePoints(trackSegments); 
 			} else {
 				// If we can skip matrix creation for merging and splitting, 
@@ -263,7 +267,12 @@ public class TrackSegmentCostMatrixCreator <T extends RealType<T> & NativeType<T
 		logger.setProgress(0.55f);
 		Matrix gapClosingScores = getGapClosingCostSubMatrix();
 
-		if (!settings.allowMerging && !settings.allowSplitting) {
+		// Get parameter values
+		final boolean allowSplitting = (Boolean) settings.get(KEY_ALLOW_TRACK_SPLITTING);
+		final boolean allowMerging = (Boolean) settings.get(KEY_ALLOW_TRACK_MERGING);
+		final double blockingValue = (Double) settings.get(KEY_BLOCKING_VALUE);
+		
+		if (!allowMerging && !allowSplitting) {
 
 			// We skip the rest and only keep this modest matrix.
 			topLeft = gapClosingScores;
@@ -281,7 +290,7 @@ public class TrackSegmentCostMatrixCreator <T extends RealType<T> & NativeType<T
 			logger.setProgress(0.65f);
 			splittingScores = getSplittingScores();
 
-			middle = new Matrix(splittingMiddlePoints.size(), mergingMiddlePoints.size(), settings.blockingValue);
+			middle = new Matrix(splittingMiddlePoints.size(), mergingMiddlePoints.size(), blockingValue);
 
 			// Initialize the top left quadrant
 			final int numRows = trackSegments.size() + splittingMiddlePoints.size();
@@ -314,7 +323,7 @@ public class TrackSegmentCostMatrixCreator <T extends RealType<T> & NativeType<T
 	 * Uses a gap closing cost function to fill in the gap closing costs sub-matrix.
 	 */
 	private Matrix getGapClosingCostSubMatrix() {
-		GapClosingCostFunction<T> gapClosing = new GapClosingCostFunction<T>(settings);
+		GapClosingCostFunction gapClosing = new GapClosingCostFunction(settings);
 		return gapClosing.getCostFunction(trackSegments);
 	}
 
@@ -323,7 +332,7 @@ public class TrackSegmentCostMatrixCreator <T extends RealType<T> & NativeType<T
 	 * Uses a merging cost function to fill in the merging costs sub-matrix.
 	 */
 	private Matrix getMergingScores() {
-		MergingCostFunction<T> merging = new MergingCostFunction<T>(settings);
+		MergingCostFunction merging = new MergingCostFunction(settings);
 		Matrix mergingScores = merging.getCostFunction(trackSegments, middlePoints);
 		if (PRUNING_OPTIMIZATION) {
 			mergingMiddlePoints = new ArrayList<Spot>();
@@ -341,7 +350,7 @@ public class TrackSegmentCostMatrixCreator <T extends RealType<T> & NativeType<T
 	 * values). Returns the pruned matrix with the empty columns.
 	 */
 	private Matrix pruneColumns (Matrix m, List<Spot> keptMiddleSpots) {
-
+		final double blockingValue = (Double) settings.get(KEY_BLOCKING_VALUE);
 		// Find all columns that contain a cost (a value != BLOCKED)
 		double[][] full = m.copy().getArray();
 		ArrayList<double[]> usefulColumns = new ArrayList<double[]>();
@@ -350,7 +359,7 @@ public class TrackSegmentCostMatrixCreator <T extends RealType<T> & NativeType<T
 			double[] curCol = new double[m.getRowDimension()];
 			for (int i = 0; i < m.getRowDimension(); i++) {
 				curCol[i] = full[i][j];
-				if (full[i][j] < settings.blockingValue) {
+				if (full[i][j] < blockingValue) {
 					containsCost = true;
 				}
 			}
@@ -380,7 +389,7 @@ public class TrackSegmentCostMatrixCreator <T extends RealType<T> & NativeType<T
 	 * values). Returns the pruned matrix with the empty rows.
 	 */
 	private Matrix pruneRows (Matrix m, List<Spot> keptMiddleSpots) {
-
+		final double blockingValue = (Double) settings.get(KEY_BLOCKING_VALUE);
 		// Find all rows that contain a cost (a value != BLOCKED)
 		double[][] full = m.copy().getArray();
 		double[] curRow;
@@ -389,7 +398,7 @@ public class TrackSegmentCostMatrixCreator <T extends RealType<T> & NativeType<T
 			boolean containsCost = false;
 			curRow = full[i];
 			for (int j = 0; j < m.getColumnDimension(); j++) {
-				if (curRow[j] < settings.blockingValue) {
+				if (curRow[j] < blockingValue) {
 					containsCost = true;
 				}
 			}
@@ -416,7 +425,7 @@ public class TrackSegmentCostMatrixCreator <T extends RealType<T> & NativeType<T
 	 * Uses a splitting cost function to fill in the splitting costs submatrix.
 	 */
 	private Matrix getSplittingScores() {
-		SplittingCostFunction<T> splitting = new SplittingCostFunction<T>(settings); 
+		SplittingCostFunction splitting = new SplittingCostFunction(settings); 
 		Matrix splittingScores = splitting.getCostFunction(trackSegments, middlePoints);
 		if (PRUNING_OPTIMIZATION) {
 			splittingMiddlePoints = new ArrayList<Spot>();
@@ -433,12 +442,15 @@ public class TrackSegmentCostMatrixCreator <T extends RealType<T> & NativeType<T
 	 * splitting matrices to assign the top right and bottom left score matrices.
 	 */
 	private double getCutoff(Matrix m) {
-
+		final double blockingValue = (Double) settings.get(KEY_BLOCKING_VALUE);
+		final double cutoffPercentile = (Double) settings.get(KEY_CUTOFF_PERCENTILE);
+		final double alternativeLinkingCostFactor = (Double) settings.get(KEY_ALTERNATIVE_LINKING_COST_FACTOR);
+		
 		// Get a list of all non-BLOCKED cost
 		ArrayList<Double> scores = new ArrayList<Double>();
 		for (int i = 0; i < m.getRowDimension(); i++) {
 			for (int j = 0; j < m.getColumnDimension(); j++) {
-				if (m.get(i, j) < settings.blockingValue) {
+				if (m.get(i, j) < blockingValue) {
 					scores.add(m.get(i, j));
 				}
 			}
@@ -449,10 +461,10 @@ public class TrackSegmentCostMatrixCreator <T extends RealType<T> & NativeType<T
 		for (int i = 0; i < scores.size(); i++) {
 			scoreArr[i] = scores.get(i);
 		}
-		double cutoff = TMUtils.getPercentile(scoreArr, settings.cutoffPercentile); 
-		if (!(cutoff < settings.blockingValue)) {
+		double cutoff = TMUtils.getPercentile(scoreArr, cutoffPercentile); 
+		if (!(cutoff < blockingValue)) {
 			cutoff = 10.0d; // TODO how to fix this? In this case, there are no costs in the matrix, so nothing to calculate the cutoff values from
 		}
-		return settings.alternativeObjectLinkingCostFactor * cutoff;
+		return alternativeLinkingCostFactor * cutoff;
 	}
 }

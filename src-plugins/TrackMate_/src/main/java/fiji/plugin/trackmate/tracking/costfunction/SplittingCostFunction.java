@@ -1,18 +1,19 @@
 package fiji.plugin.trackmate.tracking.costfunction;
 
+import static fiji.plugin.trackmate.tracking.TrackerKeys.KEY_ALLOW_TRACK_SPLITTING;
+import static fiji.plugin.trackmate.tracking.TrackerKeys.KEY_BLOCKING_VALUE;
+import static fiji.plugin.trackmate.tracking.TrackerKeys.KEY_SPLITTING_FEATURE_PENALTIES;
+import static fiji.plugin.trackmate.tracking.TrackerKeys.KEY_SPLITTING_MAX_DISTANCE;
+
 import java.util.List;
 import java.util.Map;
 import java.util.SortedSet;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import net.imglib2.type.NativeType;
-import net.imglib2.type.numeric.RealType;
-
 import mpicbg.imglib.multithreading.SimpleMultiThreading;
 import Jama.Matrix;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.tracking.LAPTracker;
-import fiji.plugin.trackmate.tracking.TrackerKeys;
 import fiji.plugin.trackmate.tracking.LAPUtils;
 
 /**
@@ -34,22 +35,18 @@ import fiji.plugin.trackmate.tracking.LAPUtils;
  * @author Jean-Yves Tinevez
  *
  */
-public class SplittingCostFunction <T extends RealType<T> & NativeType<T>> {
+public class SplittingCostFunction {
 
 	private static final boolean DEBUG = false;
 
-	/** The time cutoff */
-	protected double timeCutoff;
 	/** The distance threshold. */
-	protected double maxDist;
+	protected final double maxDist;
 	/** The value used to block an assignment in the cost matrix. */
-	protected double blockingValue;
+	protected final double blockingValue;
 	/** Thresholds for the feature ratios. */
-	protected Map<String, Double> featurePenalties;
-
+	protected final Map<String, Double> featurePenalties;
 	private boolean allowSplitting;
-
-	/** A flag stating if we should use multi--threading for some calculations. */
+	/** A flag stating if we should use multi--threading for some calculations. */ // FIXME THIS IS LAME
 	protected boolean useMultithreading = fiji.plugin.trackmate.TrackMate_.DEFAULT_USE_MULTITHREADING;
 
 
@@ -58,12 +55,12 @@ public class SplittingCostFunction <T extends RealType<T> & NativeType<T>> {
 	 */
 
 
-	public SplittingCostFunction(TrackerKeys<T> settings) {
-		this.allowSplitting 	= settings.allowSplitting;
-		this.maxDist 			= settings.splittingDistanceCutoff;
-		this.timeCutoff 		= settings.splittingTimeCutoff;
-		this.blockingValue 		= settings.blockingValue;
-		this.featurePenalties 	= settings.splittingFeaturePenalties;
+	@SuppressWarnings("unchecked")
+	public SplittingCostFunction(final Map<String, Object> settings) {
+		this.maxDist 			= (Double) settings.get(KEY_SPLITTING_MAX_DISTANCE);
+		this.blockingValue		= (Double) settings.get(KEY_BLOCKING_VALUE);
+		this.featurePenalties	= (Map<String, Double>) settings.get(KEY_SPLITTING_FEATURE_PENALTIES);
+		this.allowSplitting		= (Boolean) settings.get(KEY_ALLOW_TRACK_SPLITTING);
 	}
 
 	/*
@@ -117,9 +114,9 @@ public class SplittingCostFunction <T extends RealType<T> & NativeType<T>> {
 							}
 
 							// Frame threshold - middle Spot must be one frame behind of the start Spot
-							Double tstart = start.getFeature(Spot.POSITION_T);
-							Double tmiddle = middle.getFeature(Spot.POSITION_T);
-							if ( (tstart - tmiddle > timeCutoff) || (tstart - tmiddle <= 0) ) {
+							int startFrame = start.getFeature(Spot.POSITION_T).intValue();
+							int middleFrame = middle.getFeature(Spot.POSITION_T).intValue();
+							if (startFrame - middleFrame != 1 ) {
 								m.set(i, j, blockingValue);
 								continue;
 							}

@@ -1,9 +1,12 @@
 package fiji.plugin.trackmate.tracking;
 
-import net.imglib2.type.NativeType;
-import net.imglib2.type.numeric.RealType;
+import java.util.Map;
 
-public class SimpleFastLAPTracker <T extends RealType<T> & NativeType<T>> extends FastLAPTracker<T> {
+import fiji.plugin.trackmate.Logger;
+import fiji.plugin.trackmate.SpotCollection;
+
+public class SimpleFastLAPTracker extends FastLAPTracker {
+
 
 	public static final String TRACKER_KEY = "SIMPLE_FAST_LAP_TRACKER";
 	public static final String NAME = "Simple LAP tracker";
@@ -14,10 +17,14 @@ public class SimpleFastLAPTracker <T extends RealType<T> & NativeType<T>> extend
 			"in having non-branching tracks." +
 			" </html>";	
 	
-	
-	public SimpleFastLAPTracker() {
-		super();
+	public SimpleFastLAPTracker(SpotCollection spots, Map<String, Object> settings, Logger logger) {
+		super(spots, settings, logger);
 	}
+	
+	public SimpleFastLAPTracker(SpotCollection spots, Map<String, Object> settings) {
+		this(spots, settings, Logger.VOID_LOGGER);
+	}
+	
 	
 	@Override
 	public String toString() {
@@ -25,8 +32,7 @@ public class SimpleFastLAPTracker <T extends RealType<T> & NativeType<T>> extend
 	}
 
 	@Override
-	public String getInfoText() {
-		return INFO_TEXT;
-	}
-
+	public String getKey() {
+		return TRACKER_KEY;
+}
 }

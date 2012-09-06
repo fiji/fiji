@@ -217,7 +217,7 @@ public class TrackMate_<T extends RealType<T> & NativeType<T>>  implements PlugI
 	 * Create detector factory containing available spot {@link SpotTracker}s.
 	 */
 	protected TrackerProvider<T> createTrackerFactory() {
-		return new TrackerProvider<T>();
+		return new TrackerProvider<T>(model);
 	}
 
 	/**
@@ -319,13 +319,7 @@ public class TrackMate_<T extends RealType<T> & NativeType<T>>  implements PlugI
 	 * @see #getTrackGraph()
 	 */ 
 	public void execTracking() {
-		String trackerName = model.getSettings().tracker;
-		SpotTracker<T> tracker = trackerFactory.getTracker(trackerName);
-		if (null == tracker) {
-			model.getLogger().error("Tracker named "+trackerName+" is not available in "+toString());
-		}
-		tracker.setModel(model);
-		tracker.setLogger(model.getLogger());
+		SpotTracker tracker =  model.getSettings().tracker;
 		if (tracker.checkInput() && tracker.process()) {
 			model.setGraph(tracker.getResult());
 		} else

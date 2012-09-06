@@ -9,8 +9,6 @@ import net.imglib2.RealPoint;
 import net.imglib2.algorithm.MultiThreadedBenchmarkAlgorithm;
 import net.imglib2.collection.KDTree;
 import net.imglib2.multithreading.SimpleMultiThreading;
-import net.imglib2.type.NativeType;
-import net.imglib2.type.numeric.RealType;
 
 import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.graph.SimpleWeightedGraph;
@@ -18,10 +16,9 @@ import org.jgrapht.graph.SimpleWeightedGraph;
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
-import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.tracking.SpotTracker;
 
-public class NearestNeighborTracker <T extends RealType<T> & NativeType<T>> extends MultiThreadedBenchmarkAlgorithm	implements SpotTracker<T> {
+public class NearestNeighborTracker extends MultiThreadedBenchmarkAlgorithm	implements SpotTracker {
 
 	/*
 	 * FIELDS
@@ -45,17 +42,23 @@ public class NearestNeighborTracker <T extends RealType<T> & NativeType<T>> exte
 				"deterministic." +
 				" </html>";
 	
-	private SpotCollection spots;
-	private Logger logger = Logger.DEFAULT_LOGGER;
-	private SimpleWeightedGraph<Spot, DefaultWeightedEdge> graph;
-	private NearestNeighborTrackerSettings<T> settings;
+	protected final SpotCollection spots;
+	protected final Logger logger;
+	protected SimpleWeightedGraph<Spot, DefaultWeightedEdge> graph;
+	protected final double maxLinkingDistance;
 
 	/*
 	 * CONSTRUCTOR
 	 */
 
-	public NearestNeighborTracker() {
-		super();
+	public NearestNeighborTracker(final SpotCollection spots, final double maxLinkingDistance, final Logger logger) {
+		this.spots = spots;
+		this.maxLinkingDistance = maxLinkingDistance;
+		this.logger = logger;
+	}
+
+	public NearestNeighborTracker(final SpotCollection spots, final double maxLinkingDistance) {
+		this(spots, maxLinkingDistance, Logger.VOID_LOGGER);
 	}
 
 
@@ -72,7 +75,9 @@ public class NearestNeighborTracker <T extends RealType<T> & NativeType<T>> exte
 	public boolean process() {
 		long start = System.currentTimeMillis();
 
-		final double maxDistSquare = settings.maxLinkingDistance * settings.maxLinkingDistance;
+		reset();
+		
+		final double maxDistSquare = maxLinkingDistance * maxLinkingDistance;
 
 		final TreeSet<Integer> frames = new TreeSet<Integer>(spots.keySet());
 		Thread[] threads = new Thread[numThreads];
@@ -155,24 +160,6 @@ public class NearestNeighborTracker <T extends RealType<T> & NativeType<T>> exte
 	public String toString() {
 		return NAME;
 	}
-	
-	@Override
-	public String getInfoText() {
-		return INFO_TEXT;	
-	}
-
-	@Override
-	public void setModel(TrackMateModel<T> model) {
-		this.spots = model.getFilteredSpots();
-		this.settings = (NearestNeighborTrackerSettings<T>) model.getSettings().trackerSettings;
-		reset();
-	}
-
-	@Override
-	public void setLogger(Logger logger) {
-		this.logger  = logger;
-
-	}
 
 	@Override
 	public SimpleWeightedGraph<Spot, DefaultWeightedEdge> getResult() {
@@ -183,6 +170,11 @@ public class NearestNeighborTracker <T extends RealType<T> & NativeType<T>> exte
 		graph = new SimpleWeightedGraph<Spot, DefaultWeightedEdge>(DefaultWeightedEdge.class);
 		for(Spot spot : spots) 
 			graph.addVertex(spot);
+	}
+
+	@Override
+	public String getKey() {
+		return TRACKER_KEY;
 	}
 
 	
