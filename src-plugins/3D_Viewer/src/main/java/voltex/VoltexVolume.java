@@ -232,6 +232,21 @@ public class VoltexVolume extends Volume {
 		return ret;
 	}
 
+	/**
+	 * Set the alpha channel to fully opaque. Returns
+	 * true if the data type of the textures have changed.
+	 */
+	@Override
+	public boolean setAlphaLUTFullyOpaque() {
+		boolean ret = super.setAlphaLUTFullyOpaque();
+		if(ret) {
+			initVoltexLoader();
+			createImageComponents();
+		}
+		updateData();
+		return ret;
+	}
+
 	private VoltexLoader voltexLoader;
 
 	/**
