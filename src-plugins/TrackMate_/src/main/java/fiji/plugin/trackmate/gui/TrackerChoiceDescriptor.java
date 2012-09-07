@@ -1,13 +1,13 @@
 package fiji.plugin.trackmate.gui;
 
 import java.awt.Component;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
 import fiji.plugin.trackmate.TrackMate_;
-import fiji.plugin.trackmate.tracking.TrackerSettings;
+import fiji.plugin.trackmate.TrackerProvider;
 
 public class TrackerChoiceDescriptor <T extends RealType<T> & NativeType<T>> implements WizardPanelDescriptor<T> {
 
@@ -57,19 +57,24 @@ public class TrackerChoiceDescriptor <T extends RealType<T> & NativeType<T>> imp
 
 	@Override
 	public void aboutToHidePanel() {
+		
+		// Configure the detector provider with choice made in panel
+		TrackerProvider<T> provider = plugin.getTrackerProvider();
+		int index = component.jComboBoxChoice.getSelectedIndex();
+		String key = provider.getKeys().get(index);
+		provider.select(key);
+
 		// Set the settings field of the model
-		String trackerName = component.getChoice();
-		plugin.getModel().getSettings().tracker = trackerName;
+		plugin.getModel().getSettings().tracker = provider.getTracker();
 
 		// Compare current settings with default ones, and substitute default ones
 		// only if the old ones are absent or not compatible with it.
-		TrackerSettings<T> defaultSettings = plugin.getTrackerProvider().getDefaultSettings(trackerName);
-		TrackerSettings<T> currentSettings = plugin.getModel().getSettings().trackerSettings;
+		Map<String, Object> currentSettings = plugin.getModel().getSettings().detectorSettings;
+		if (!provider.checkSettingsValidity(currentSettings)) {
+			Map<String, Object> defaultSettings = provider.getDefaultSettings();
+			plugin.getModel().getSettings().detectorSettings = defaultSettings;
+		}
 		
-		if (null == currentSettings || currentSettings.getClass() != defaultSettings.getClass()) {
-			plugin.getModel().getSettings().trackerSettings = defaultSettings;
-		} 
-		 
 		// Instantiate next descriptor for the wizard
 		TrackerConfigurationPanelDescriptor<T> descriptor = new TrackerConfigurationPanelDescriptor<T>();
 		descriptor.setPlugin(plugin);
@@ -80,11 +85,9 @@ public class TrackerChoiceDescriptor <T extends RealType<T> & NativeType<T>> imp
 	@Override
 	public void setPlugin(TrackMate_<T> plugin) {
 		this.plugin = plugin;
-		List<String> trackerNames = plugin.getTrackerProvider().getTrackerKeys();
-		List<String> infoTexts = new ArrayList<String>(trackerNames.size());
-		for(String key : trackerNames) {
-			infoTexts.add(plugin.getTrackerProvider().getInfoText(key));
-		}
+		TrackerProvider<T> provider = plugin.getTrackerProvider();
+		List<String> trackerNames = provider.getNames();
+		List<String> infoTexts = provider.getInfoTexts();
 		this.component = new ListChooserPanel(trackerNames, infoTexts, "tracker");
 		setCurrentChoiceFromPlugin();
 	}
@@ -95,11 +98,18 @@ public class TrackerChoiceDescriptor <T extends RealType<T> & NativeType<T>> imp
 	}
 
 	void setCurrentChoiceFromPlugin() {
-		String tracker = plugin.getModel().getSettings().tracker; 
-		int index = plugin.getTrackerProvider().getTrackerKeys().indexOf(tracker);
-		if (index >= 0) {
-			component.jComboBoxChoice.setSelectedIndex(index);
+		String key;
+		if (null != plugin.getModel().getSettings().tracker) {
+			key = plugin.getModel().getSettings().tracker.getKey();
+		} else {
+			key = plugin.getTrackerProvider().getCurrentKey(); // back to default 
 		}
+		int index = plugin.getTrackerProvider().getKeys().indexOf(key);
+		if (index < 0) {
+			wizard.getLogger().error("[TrackerChoiceDescriptor] Cannot find tracker named "+key+" in current plugin.");
+			return;
+		}
+		component.jComboBoxChoice.setSelectedIndex(index);
 	}
 	
 }

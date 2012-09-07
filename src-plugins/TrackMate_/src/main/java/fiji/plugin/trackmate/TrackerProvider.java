@@ -10,11 +10,14 @@ import net.imglib2.type.numeric.RealType;
 
 import org.jdom.Element;
 
+import fiji.plugin.trackmate.detection.DownsampleLogDetectorFactory;
+import fiji.plugin.trackmate.detection.SpotDetector;
 import fiji.plugin.trackmate.gui.ConfigurationPanel;
 import fiji.plugin.trackmate.gui.LAPTrackerSettingsPanel;
 import fiji.plugin.trackmate.gui.NearestNeighborTrackerSettingsPanel;
 import fiji.plugin.trackmate.gui.SimpleLAPTrackerSettingsPanel;
 import fiji.plugin.trackmate.tracking.FastLAPTracker;
+import fiji.plugin.trackmate.tracking.LAPUtils;
 import fiji.plugin.trackmate.tracking.SimpleFastLAPTracker;
 import fiji.plugin.trackmate.tracking.SpotTracker;
 import fiji.plugin.trackmate.tracking.TrackerKeys;
@@ -165,13 +168,13 @@ public class TrackerProvider <T extends RealType<T> & NativeType<T>> extends Abs
 		Map<String, String> featureNames = model.getFeatureModel().getSpotFeatureNames();
 		
 		if (currentKey.equals(SimpleFastLAPTracker.TRACKER_KEY)) {
-			return new SimpleLAPTrackerSettingsPanel(trackerName, SimpleFastLAPTracker.INFO_TEXT, spaceUnits, features, featureNames);
+			return new SimpleLAPTrackerSettingsPanel(trackerName, SimpleFastLAPTracker.INFO_TEXT, spaceUnits);
 			
 		} else if (currentKey.equals(FastLAPTracker.TRACKER_KEY)) {
 			return new LAPTrackerSettingsPanel(trackerName, spaceUnits, features, featureNames);
 			
 		} else if (currentKey.equals(NearestNeighborTracker.TRACKER_KEY)) {
-			return new NearestNeighborTrackerSettingsPanel<T>(NearestNeighborTracker.INFO_TEXT);
+			return new NearestNeighborTrackerSettingsPanel(trackerName, NearestNeighborTracker.INFO_TEXT, spaceUnits);
 			
 		} else {
 			return null;
@@ -184,31 +187,13 @@ public class TrackerProvider <T extends RealType<T> & NativeType<T>> extends Abs
 	 * If the key is unknown to this provider, <code>null</code> is returned. 
 	 */
 	public Map<String, Object> getDefaultSettings() {
-		Map<String, Object> settings = new HashMap<String, Object>();
+		Map<String, Object> settings;
 
 		if (currentKey.equals(SimpleFastLAPTracker.TRACKER_KEY) || currentKey.equals(FastLAPTracker.TRACKER_KEY)) {
-			// Linking
-			settings.put(KEY_LINKING_MAX_DISTANCE, DEFAULT_LINKING_MAX_DISTANCE);
-			settings.put(KEY_LINKING_FEATURE_PENALTIES, DEFAULT_LINKING_FEATURE_PENALTIES);
-			// Gap closing
-			settings.put(KEY_ALLOW_GAP_CLOSING, DEFAULT_ALLOW_GAP_CLOSING);
-			settings.put(KEY_GAP_CLOSING_MAX_FRAME_GAP, DEFAULT_GAP_CLOSING_MAX_FRAME_GAP);
-			settings.put(KEY_GAP_CLOSING_MAX_DISTANCE, DEFAULT_GAP_CLOSING_MAX_DISTANCE);
-			settings.put(KEY_GAP_CLOSING_FEATURE_PENALTIES, DEFAULT_GAP_CLOSING_FEATURE_PENALTIES);
-			// Track splitting
-			settings.put(KEY_ALLOW_TRACK_SPLITTING, DEFAULT_ALLOW_TRACK_SPLITTING);
-			settings.put(KEY_SPLITTING_MAX_DISTANCE, DEFAULT_SPLITTING_MAX_DISTANCE);
-			settings.put(KEY_SPLITTING_FEATURE_PENALTIES, DEFAULT_SPLITTING_FEATURE_PENALTIES);
-			// Track merging
-			settings.put(KEY_ALLOW_TRACK_MERGING, DEFAULT_ALLOW_TRACK_MERGING);
-			settings.put(KEY_MERGING_MAX_DISTANCE, DEFAULT_MERGING_MAX_DISTANCE);
-			settings.put(KEY_MERGING_FEATURE_PENALTIES, DEFAULT_MERGING_FEATURE_PENALTIES);
-			// Others
-			settings.put(KEY_BLOCKING_VALUE, DEFAULT_BLOCKING_VALUE);
-			settings.put(KEY_ALTERNATIVE_LINKING_COST_FACTOR, DEFAULT_ALTERNATIVE_LINKING_COST_FACTOR);
-			settings.put(KEY_CUTOFF_PERCENTILE, DEFAULT_CUTOFF_PERCENTILE);
+			settings = LAPUtils.getDefaultLAPSettingsMap();
 			
 		} else if (currentKey.equals(NearestNeighborTracker.TRACKER_KEY)) {
+			settings = new HashMap<String, Object>();
 			settings.put(KEY_LINKING_MAX_DISTANCE, DEFAULT_LINKING_MAX_DISTANCE);
 			
 		} else {
@@ -438,6 +423,88 @@ public class TrackerProvider <T extends RealType<T> & NativeType<T>> extends Abs
 		return names;
 	}
 
+	/**
+	 * Check the validity of the given settings map for the target {@link SpotDetector}
+	 * set in this provider. The validity check is strict: we check that all needed parameters
+	 * are here and are of the right class, and that there is no extra unwanted parameters.
+	 * @return  true if the settings map can be used with the target factory. If not, check {@link #getErrorMessage()}
+	 */
+	public boolean checkSettingsValidity(final Map<String, Object> settings) {
+		if (null == settings) {
+			errorMessage = "Settings map is null.\n";
+			return false;
+		}
+		
+		StringBuilder str = new StringBuilder();
+
+		if (currentKey.equals(FastLAPTracker.TRACKER_KEY) 
+				|| currentKey.equals(SimpleFastLAPTracker.TRACKER_KEY)) {
+
+			// Check non-map parameters
+			boolean ok = true;
+			// Linking
+			ok = ok & checkParameter(settings, KEY_LINKING_MAX_DISTANCE, Double.class, str);
+			ok = ok & checkFeatureMap(settings, KEY_LINKING_FEATURE_PENALTIES, str);
+			// Gap-closing
+			ok = ok & checkParameter(settings, KEY_ALLOW_GAP_CLOSING, Boolean.class, str);
+			ok = ok & checkParameter(settings, KEY_GAP_CLOSING_MAX_DISTANCE, Double.class, str);
+			ok = ok & checkParameter(settings, KEY_GAP_CLOSING_MAX_FRAME_GAP, Integer.class, str);
+			ok = ok & checkFeatureMap(settings, KEY_GAP_CLOSING_FEATURE_PENALTIES, str);
+			// Splitting
+			ok = ok & checkParameter(settings, KEY_ALLOW_TRACK_SPLITTING, Boolean.class, str);
+			ok = ok & checkParameter(settings, KEY_SPLITTING_MAX_DISTANCE, Double.class, str);
+			ok = ok & checkFeatureMap(settings, KEY_SPLITTING_FEATURE_PENALTIES, str);
+			// Merging
+			ok = ok & checkParameter(settings, KEY_ALLOW_TRACK_MERGING, Boolean.class, str);
+			ok = ok & checkParameter(settings, KEY_MERGING_MAX_DISTANCE, Double.class, str);
+			ok = ok & checkFeatureMap(settings, KEY_MERGING_FEATURE_PENALTIES, str);
+			// Others
+			ok = ok & checkParameter(settings, KEY_CUTOFF_PERCENTILE, Double.class, str);
+			ok = ok & checkParameter(settings, KEY_ALTERNATIVE_LINKING_COST_FACTOR, Double.class, str);
+			ok = ok & checkParameter(settings, KEY_BLOCKING_VALUE, Double.class, str);
+			
+			// Check keys 
+			List<String> mandatoryKeys = new ArrayList<String>();
+			mandatoryKeys.add(KEY_LINKING_MAX_DISTANCE);
+			mandatoryKeys.add(KEY_ALLOW_GAP_CLOSING);
+			mandatoryKeys.add(KEY_GAP_CLOSING_MAX_DISTANCE);
+			mandatoryKeys.add(KEY_GAP_CLOSING_MAX_FRAME_GAP);
+			mandatoryKeys.add(KEY_ALLOW_TRACK_SPLITTING);
+			mandatoryKeys.add(KEY_SPLITTING_MAX_DISTANCE);
+			mandatoryKeys.add(KEY_ALLOW_TRACK_MERGING);
+			mandatoryKeys.add(KEY_MERGING_MAX_DISTANCE);
+			List<String> optionalKeys = new ArrayList<String>();
+			optionalKeys.add(KEY_LINKING_FEATURE_PENALTIES);
+			optionalKeys.add(KEY_GAP_CLOSING_FEATURE_PENALTIES);
+			optionalKeys.add(KEY_SPLITTING_FEATURE_PENALTIES);
+			optionalKeys.add(KEY_MERGING_FEATURE_PENALTIES);
+			ok = ok & checkMapKeys(settings, mandatoryKeys, optionalKeys, str);
+			
+			if (!ok) {
+				errorMessage = str.toString();
+			}
+			return ok;
+
+		} else if (currentKey.equals(DownsampleLogDetectorFactory.DETECTOR_KEY)) {
+
+			boolean ok = true;
+			ok = ok & checkParameter(settings, KEY_LINKING_MAX_DISTANCE, Double.class, str);
+			List<String> mandatoryKeys = new ArrayList<String>();
+			mandatoryKeys.add(KEY_LINKING_MAX_DISTANCE);
+			ok = ok & checkMapKeys(settings, mandatoryKeys, null, str);
+
+			if (!ok) {
+				errorMessage = str.toString();
+			}
+			return ok;
+
+		} else {
+
+			errorMessage = "Unknow detector factory key: "+currentKey+".\n";
+			return false;
+
+		}
+	}
 	
 
 	private static String echoFeaturePenalties(final Map<String, Double> featurePenalties) {

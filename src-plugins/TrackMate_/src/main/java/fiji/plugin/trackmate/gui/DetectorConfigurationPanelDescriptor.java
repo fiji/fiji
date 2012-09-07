@@ -13,7 +13,7 @@ public class DetectorConfigurationPanelDescriptor <T extends RealType<T> & Nativ
 
 	public static final String DESCRIPTOR = "DetectorConfigurationPanel";
 	private TrackMate_<T> plugin;
-	private DetectorConfigurationPanel<T> configPanel;
+	private ConfigurationPanel configPanel;
 	private TrackMateWizard<T> wizard;
 
 	/*

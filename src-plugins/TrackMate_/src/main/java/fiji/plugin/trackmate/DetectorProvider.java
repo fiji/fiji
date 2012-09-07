@@ -1,6 +1,5 @@
 package fiji.plugin.trackmate;
 
-import static fiji.plugin.trackmate.util.TMUtils.checkParameter;
 import ij.ImagePlus;
 
 import java.util.ArrayList;
@@ -286,8 +285,6 @@ public class DetectorProvider <T extends RealType<T> & NativeType<T>> extends Ab
 	 * @return  true if the settings map can be used with the target factory. If not, check {@link #getErrorMessage()}
 	 */
 	public boolean checkSettingsValidity(final Map<String, Object> settings) {
-		// TODO inspect the whole map even if there is 1 error, and make better explanatory messages id undesired keys are there
-
 		if (null == settings) {
 			errorMessage = "Settings map is null.\n";
 			return false;

@@ -5,18 +5,15 @@ import static fiji.plugin.trackmate.gui.TrackMateWizard.FONT;
 import static fiji.plugin.trackmate.gui.TrackMateWizard.TEXTFIELD_DIMENSION;
 
 import java.awt.Font;
+import java.util.HashMap;
+import java.util.Map;
 
 import javax.swing.JLabel;
 import javax.swing.SwingConstants;
 
-import net.imglib2.type.NativeType;
-import net.imglib2.type.numeric.RealType;
+import fiji.plugin.trackmate.tracking.TrackerKeys;
 
-import fiji.plugin.trackmate.TrackMateModel;
-import fiji.plugin.trackmate.tracking.TrackerSettings;
-import fiji.plugin.trackmate.tracking.kdtree.NearestNeighborTrackerSettings;
-
-public class NearestNeighborTrackerSettingsPanel <T extends RealType<T> & NativeType<T>> extends TrackerConfigurationPanel<T> {
+public class NearestNeighborTrackerSettingsPanel extends ConfigurationPanel implements TrackerKeys {
 
 	private static final long serialVersionUID = 1L;
 	private JNumericTextField maxDistField;
@@ -24,30 +21,27 @@ public class NearestNeighborTrackerSettingsPanel <T extends RealType<T> & Native
 	private JLabel labelUnits;
 	private JLabel labelTracker;
 	private final String infoText;
+	private final String trackerName;
+	private final String spaceUnits;
 
 
-	public NearestNeighborTrackerSettingsPanel(String infoText) {
+	public NearestNeighborTrackerSettingsPanel(String trackerName, String infoText, String spaceUnits) {
+		this.trackerName = trackerName;
 		this.infoText = infoText;
+		this.spaceUnits = spaceUnits;
 		initGUI();
 	}
 
 	@Override
-	public TrackerSettings<T> getTrackerSettings() {
-		NearestNeighborTrackerSettings<T> settings = new NearestNeighborTrackerSettings<T>();
-		settings.maxLinkingDistance = maxDistField.getValue();
+	public Map<String, Object> getSettings() {
+		Map<String, Object> settings = new HashMap<String, Object>();
+		settings.put(KEY_LINKING_MAX_DISTANCE, maxDistField.getValue());
 		return settings;
 	}
 
 	@Override
-	public void setTrackerSettings(TrackMateModel<T> model) {
-		NearestNeighborTrackerSettings<T> settings = (NearestNeighborTrackerSettings<T>) model.getSettings().trackerSettings;
-		maxDistField.setText(""+settings.maxLinkingDistance);
-		labelTracker.setText(model.getSettings().tracker.toString());
-		labelTrackerDescription.setText(infoText
-				.replace("<br>", "")
-				.replace("<p>", "<p align=\"justify\">")
-				.replace("<html>", "<html><p align=\"justify\">"));
-		labelUnits.setText(model.getSettings().spaceUnits);
+	public void setSettings(final Map<String, Object> settings) {
+		maxDistField.setText(""+settings.get(KEY_LINKING_MAX_DISTANCE));
 	}
 
 
@@ -61,7 +55,7 @@ public class NearestNeighborTrackerSettingsPanel <T extends RealType<T> & Native
 		add(lblSettingsForTracker);
 
 
-		labelTracker = new JLabel("<tracker name>");
+		labelTracker = new JLabel(trackerName);
 		labelTracker.setFont(BIG_FONT);
 		labelTracker.setHorizontalAlignment(SwingConstants.CENTER);
 		labelTracker.setBounds(10, 42, 280, 20);
@@ -70,6 +64,10 @@ public class NearestNeighborTrackerSettingsPanel <T extends RealType<T> & Native
 		labelTrackerDescription = new JLabel("<tracker description>");
 		labelTrackerDescription.setFont(FONT.deriveFont(Font.ITALIC));
 		labelTrackerDescription.setBounds(10, 67, 280, 175);
+		labelTrackerDescription.setText(infoText
+				.replace("<br>", "")
+				.replace("<p>", "<p align=\"justify\">")
+				.replace("<html>", "<html><p align=\"justify\">"));
 		add(labelTrackerDescription);
 
 		JLabel lblMaximalLinkingDistance = new JLabel("Maximal linking distance: ");
@@ -83,7 +81,7 @@ public class NearestNeighborTrackerSettingsPanel <T extends RealType<T> & Native
 		maxDistField.setSize(TEXTFIELD_DIMENSION);
 		add(maxDistField);
 
-		labelUnits = new JLabel("<unit>");
+		labelUnits = new JLabel(spaceUnits);
 		labelUnits.setFont(FONT);
 		labelUnits.setBounds(236, 314, 34, 20);
 		add(labelUnits);

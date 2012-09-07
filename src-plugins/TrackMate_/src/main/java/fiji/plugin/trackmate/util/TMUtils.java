@@ -124,28 +124,6 @@ public class TMUtils {
 	 */
 	
 	/**
-	 * Check the presence and the validity of a key in a map, and test it is of the desired class.
-	 * @param map the map to inspect.
-	 * @param key  the key to find.
-	 * @param expectedClass  the expected class of the target value .
-	 * @param errorHolder will be appended with an error message.
-	 * @return  true if the key is found in the map, and map a value of the desired class.
-	 */
-	public static final boolean checkParameter(Map<String, Object> map, String key, Class<?> expectedClass, StringBuilder errorHolder) {
-		Object obj = map.get(key);
-		if (null == obj) {
-			errorHolder.append("Parameter "+key+" could not be found in settings map.\n");
-			return true;
-		}
-		if (!expectedClass.isInstance(obj)) {
-			errorHolder.append("Value for parameter "+key+" is not of the right class. Expected "+expectedClass.getName()+", got "+obj.getClass().getName()+".\n");
-			return false;
-		}
-		return true;
-	}
-
-	
-	/**
 	 * Generate a string representation of a map, typically a settings map.
 	 */
 	public static final String echoMap(final Map<String, Object> map, int indent) {

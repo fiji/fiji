@@ -5,6 +5,7 @@ import static fiji.plugin.trackmate.tracking.TrackerKeys.*;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
+import java.util.HashMap;
 import java.util.Map;
 
 import javax.swing.JFrame;
@@ -29,6 +30,35 @@ public class LAPUtils {
 	/*
 	 * STATIC METHODS - UTILS
 	 */
+	
+	/**
+	 * @return a new settings map filled with default values suitable for the LAP trackers.
+	 */
+	public static final Map<String, Object> getDefaultLAPSettingsMap() {
+		Map<String, Object> settings = new HashMap<String, Object>();
+		// Linking
+		settings.put(KEY_LINKING_MAX_DISTANCE, DEFAULT_LINKING_MAX_DISTANCE);
+		settings.put(KEY_LINKING_FEATURE_PENALTIES, DEFAULT_LINKING_FEATURE_PENALTIES);
+		// Gap closing
+		settings.put(KEY_ALLOW_GAP_CLOSING, DEFAULT_ALLOW_GAP_CLOSING);
+		settings.put(KEY_GAP_CLOSING_MAX_FRAME_GAP, DEFAULT_GAP_CLOSING_MAX_FRAME_GAP);
+		settings.put(KEY_GAP_CLOSING_MAX_DISTANCE, DEFAULT_GAP_CLOSING_MAX_DISTANCE);
+		settings.put(KEY_GAP_CLOSING_FEATURE_PENALTIES, DEFAULT_GAP_CLOSING_FEATURE_PENALTIES);
+		// Track splitting
+		settings.put(KEY_ALLOW_TRACK_SPLITTING, DEFAULT_ALLOW_TRACK_SPLITTING);
+		settings.put(KEY_SPLITTING_MAX_DISTANCE, DEFAULT_SPLITTING_MAX_DISTANCE);
+		settings.put(KEY_SPLITTING_FEATURE_PENALTIES, DEFAULT_SPLITTING_FEATURE_PENALTIES);
+		// Track merging
+		settings.put(KEY_ALLOW_TRACK_MERGING, DEFAULT_ALLOW_TRACK_MERGING);
+		settings.put(KEY_MERGING_MAX_DISTANCE, DEFAULT_MERGING_MAX_DISTANCE);
+		settings.put(KEY_MERGING_FEATURE_PENALTIES, DEFAULT_MERGING_FEATURE_PENALTIES);
+		// Others
+		settings.put(KEY_BLOCKING_VALUE, DEFAULT_BLOCKING_VALUE);
+		settings.put(KEY_ALTERNATIVE_LINKING_COST_FACTOR, DEFAULT_ALTERNATIVE_LINKING_COST_FACTOR);
+		settings.put(KEY_CUTOFF_PERCENTILE, DEFAULT_CUTOFF_PERCENTILE);
+		// return
+		return settings;
+	}
 	
 	/**
 	 * Compute the cost to link two spots, in the default way for the TrackMate plugin.

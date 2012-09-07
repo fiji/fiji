@@ -58,7 +58,7 @@ public class DetectorChoiceDescriptor <T extends RealType<T> & NativeType<T>> im
 		} else {
 			key = plugin.getDetectorProvider().getCurrentKey(); // back to default 
 		}
-		int index = plugin.getDetectorProvider().getDetectorKeys().indexOf(key);
+		int index = plugin.getDetectorProvider().getKeys().indexOf(key);
 		if (index < 0) {
 			wizard.getLogger().error("[DetectorChoiceDescriptor] Cannot find detector named "+key+" in current plugin.");
 			return;
@@ -75,7 +75,7 @@ public class DetectorChoiceDescriptor <T extends RealType<T> & NativeType<T>> im
 		// Configure the detector provider with choice made in panel
 		DetectorProvider<T> provider = plugin.getDetectorProvider();
 		int index = component.jComboBoxChoice.getSelectedIndex();
-		String key = provider.getDetectorKeys().get(index);
+		String key = provider.getKeys().get(index);
 		provider.select(key);
 		
 		plugin.getModel().getSettings().detectorFactory = provider.getDetectorFactory();
@@ -98,8 +98,8 @@ public class DetectorChoiceDescriptor <T extends RealType<T> & NativeType<T>> im
 	public void setPlugin(TrackMate_<T> plugin) {
 		this.plugin = plugin;
 		DetectorProvider<T> provider = plugin.getDetectorProvider();
-		List<String> detectorNames =  provider.getDetectorNames();
-		List<String> infoTexts = provider.getDetectorInfoTexts();
+		List<String> detectorNames =  provider.getNames();
+		List<String> infoTexts = provider.getInfoTexts();
 		this.component = new ListChooserPanel(detectorNames, infoTexts, "detector");
 		setCurrentChoiceFromPlugin();
 	}
