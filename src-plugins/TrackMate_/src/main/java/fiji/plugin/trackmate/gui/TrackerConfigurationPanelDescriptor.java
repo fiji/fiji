@@ -33,15 +33,15 @@ public class TrackerConfigurationPanelDescriptor <T extends RealType<T> & Native
 		TrackerSettings<T> settings = plugin.getModel().getSettings().trackerSettings;
 		// Bulletproof null
 		if (null == settings) {
-			SpotTracker<T> tracker = plugin.getTrackerFactory().getTracker(trackerName);
+			SpotTracker<T> tracker = plugin.getTrackerProvider().getTracker(trackerName);
 			if (null == tracker) {
 				// try to make it right with a default
 				trackerName = NearestNeighborTracker.NAME;
 				plugin.getModel().getSettings().tracker = trackerName;
 			}
-			settings = plugin.getTrackerFactory().getDefaultSettings(trackerName);
+			settings = plugin.getTrackerProvider().getDefaultSettings(trackerName);
 		}
-		configPanel = plugin.getTrackerFactory().getTrackerConfigurationPanel(trackerName);
+		configPanel = plugin.getTrackerProvider().getTrackerConfigurationPanel(trackerName);
 		configPanel.setTrackerSettings(plugin.getModel());
 	}
 

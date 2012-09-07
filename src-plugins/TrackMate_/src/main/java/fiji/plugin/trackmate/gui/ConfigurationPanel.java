@@ -2,19 +2,17 @@ package fiji.plugin.trackmate.gui;
 
 import java.util.Map;
 
-import net.imglib2.type.NativeType;
-import net.imglib2.type.numeric.RealType;
 import fiji.plugin.trackmate.detection.SpotDetectorFactory;
 import fiji.plugin.trackmate.tracking.SpotTracker;
 
 /**
- * The mother class for all the configuration panels that can configure a {@link SpotDetectorFactory}
- * or a {@link SpotTracker}.
+ * The mother class for all the configuration panels that can configure a {@link SpotDetectorFactory},
+ * a {@link SpotTracker}, ...
  * 
  * @author Jean-Yves Tinevez <jeanyves.tinevez@gmail.com> 2011 - 2012
  *
  */
-public abstract class DetectorConfigurationPanel <T extends RealType<T> & NativeType<T>> extends ActionListenablePanel {
+public abstract class ConfigurationPanel extends ActionListenablePanel {
 
 	private static final long serialVersionUID = 1L;
 

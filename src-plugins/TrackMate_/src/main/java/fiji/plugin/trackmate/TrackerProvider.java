@@ -10,19 +10,24 @@ import net.imglib2.type.numeric.RealType;
 
 import org.jdom.Element;
 
-import fiji.plugin.trackmate.detection.SpotDetectorFactory;
+import fiji.plugin.trackmate.gui.ConfigurationPanel;
 import fiji.plugin.trackmate.gui.LAPTrackerSettingsPanel;
 import fiji.plugin.trackmate.gui.NearestNeighborTrackerSettingsPanel;
 import fiji.plugin.trackmate.gui.SimpleLAPTrackerSettingsPanel;
-import fiji.plugin.trackmate.gui.TrackerConfigurationPanel;
 import fiji.plugin.trackmate.tracking.FastLAPTracker;
 import fiji.plugin.trackmate.tracking.SimpleFastLAPTracker;
 import fiji.plugin.trackmate.tracking.SpotTracker;
 import fiji.plugin.trackmate.tracking.TrackerKeys;
 import fiji.plugin.trackmate.tracking.kdtree.NearestNeighborTracker;
 
-public class TrackerProvider <T extends RealType<T> & NativeType<T>> implements TrackerKeys {
+public class TrackerProvider <T extends RealType<T> & NativeType<T>> extends AbstractProvider implements TrackerKeys {
 
+
+	protected static final String XML_ELEMENT_NAME_LINKING = "Linking";
+	protected static final String XML_ELEMENT_NAME_GAP_CLOSING = "GapClosing";
+	protected static final String XML_ELEMENT_NAME_MERGING = "TrackMerging";
+	protected static final String XML_ELEMENT_NAME_SPLITTING = "TrackSplitting";
+	protected static final String XML_ELEMENT_NAME_FEATURE_PENALTIES = "FeaturePenalties";
 
 	/** The tracker names, in the order they will appear in the GUI.
 	 * These names will be used as keys to access relevant tracker classes.  */
@@ -53,8 +58,8 @@ public class TrackerProvider <T extends RealType<T> & NativeType<T>> implements 
 	 */
 	public TrackerProvider(TrackMateModel<T> model) {
 		this.model = model;
+		this.currentKey = SimpleFastLAPTracker.TRACKER_KEY;
 		registerTrackers();
-		
 	}
 
 
@@ -81,40 +86,6 @@ public class TrackerProvider <T extends RealType<T> & NativeType<T>> implements 
 		names.add(SimpleFastLAPTracker.NAME);
 		names.add(FastLAPTracker.NAME);
 		names.add(NearestNeighborTracker.NAME);
-	}
-
-
-	/**
-	 * @return an error message for the last unsuccessful methods call
-	 * amongst {@link #select(String)}, {@link #marshall(Map, Element)},
-	 * {@link #unmarshall(Element, Map)}, {@link #checkSettingsValidity(Map)}.
-	 */
-	public String getErrorMessage() {
-		return errorMessage;
-	}
-
-	/**
-	 * Configure this provider for the target {@link SpotDetectorFactory} identified by 
-	 * the given key. If the key is not found in this provider's list, the 
-	 * provider state is not changed.
-	 * @return true if the given key was found and the target detector was changed.
-	 */
-	public boolean select(final String key) {
-		if (keys.contains(key)) {
-			currentKey = key;
-			errorMessage = null;
-			return true;
-		} else {
-			errorMessage = "Unknown tracker key: "+key+".\n";
-			return false;
-		}
-	}
-
-	/**
-	 * @return the currently selected key.
-	 */
-	public String getCurrentKey() {
-		return currentKey;
 	}
 	
 	/**
@@ -160,6 +131,25 @@ public class TrackerProvider <T extends RealType<T> & NativeType<T>> implements 
 			return null;
 		}
 	}
+	
+	/**
+	 * @return the name of the target tracker,
+	 * or <code>null</code> if it is unknown to this factory.
+	 */
+	public String getName() {
+		if (currentKey.equals(SimpleFastLAPTracker.TRACKER_KEY)) {
+			return SimpleFastLAPTracker.NAME;
+			
+		} else if (currentKey.equals(FastLAPTracker.TRACKER_KEY)) {
+			return FastLAPTracker.NAME;
+			
+		} else if (currentKey.equals(NearestNeighborTracker.TRACKER_KEY)) {
+			return NearestNeighborTracker.NAME;
+			
+		} else {
+			return null;
+		}
+	}
 
 	/**
 	 * @return a new GUI panel able to configure the settings suitable for the target tracker 
@@ -167,12 +157,18 @@ public class TrackerProvider <T extends RealType<T> & NativeType<T>> implements 
 	 * If the key is unknown to this factory, <code>null</code> is returned. 
 	 */
 
-	public TrackerConfigurationPanel<T> getTrackerConfigurationPanel() 	{
+	public ConfigurationPanel getTrackerConfigurationPanel() 	{
+		
+		String trackerName = getName();
+		String spaceUnits = model.getSettings().spaceUnits;
+		List<String> features = model.getFeatureModel().getSpotFeatures();
+		Map<String, String> featureNames = model.getFeatureModel().getSpotFeatureNames();
+		
 		if (currentKey.equals(SimpleFastLAPTracker.TRACKER_KEY)) {
-			return new SimpleLAPTrackerSettingsPanel<T>(SimpleFastLAPTracker.INFO_TEXT);
+			return new SimpleLAPTrackerSettingsPanel(trackerName, SimpleFastLAPTracker.INFO_TEXT, spaceUnits, features, featureNames);
 			
 		} else if (currentKey.equals(FastLAPTracker.TRACKER_KEY)) {
-			return new LAPTrackerSettingsPanel<T>();
+			return new LAPTrackerSettingsPanel(trackerName, spaceUnits, features, featureNames);
 			
 		} else if (currentKey.equals(NearestNeighborTracker.TRACKER_KEY)) {
 			return new NearestNeighborTrackerSettingsPanel<T>(NearestNeighborTracker.INFO_TEXT);
@@ -221,6 +217,210 @@ public class TrackerProvider <T extends RealType<T> & NativeType<T>> implements 
 		return settings;
 
 	}
+	
+	/**
+	 * Marshall a settings map to a JDom element, ready for saving to XML. 
+	 * The element is <b>updated</b> with new attributes.
+	 * <p>
+	 * Only parameters specific to the target tracker factory are marshalled.
+	 * The element also always receive an attribute named {@value TrackerKeys#XML_ATTRIBUTE_DETECTOR_NAME}
+	 * that saves the target {@link SpotTracker} key.
+	 * 
+	 * @return true if marshalling was successful. If not, check {@link #getErrorMessage()}
+	 */
+	public boolean marshall(final Map<String, Object> settings, Element element) {
+		
+		element.setAttribute(XML_ATTRIBUTE_TRACKER_NAME, currentKey);
+		if (currentKey.equals(SimpleFastLAPTracker.TRACKER_KEY) || currentKey.equals(FastLAPTracker.TRACKER_KEY)) {
+			
+			boolean ok = true;
+			
+			// Linking
+			Element linkingElement = new Element(XML_ELEMENT_NAME_LINKING);
+			ok = ok & writeAttribute(settings, linkingElement, KEY_LINKING_MAX_DISTANCE, Double.class);
+			// feature penalties
+			@SuppressWarnings("unchecked")
+			Map<String, Double> lfpm = (Map<String, Double>) settings.get(KEY_LINKING_FEATURE_PENALTIES);
+			Element lfpElement = new Element(XML_ELEMENT_NAME_FEATURE_PENALTIES);
+			marshallMap(lfpm, lfpElement);
+			linkingElement.addContent(lfpElement);
+			element.addContent(linkingElement);
+			
+			// Gap closing
+			Element gapClosingElement = new Element(XML_ELEMENT_NAME_GAP_CLOSING);
+			ok = ok & writeAttribute(settings, gapClosingElement, KEY_ALLOW_GAP_CLOSING, Boolean.class);
+			ok = ok & writeAttribute(settings, gapClosingElement, KEY_GAP_CLOSING_MAX_DISTANCE, Double.class);
+			ok = ok & writeAttribute(settings, gapClosingElement, KEY_GAP_CLOSING_MAX_FRAME_GAP, Integer.class);
+			// feature penalties
+			@SuppressWarnings("unchecked")
+			Map<String, Double> gcfpm = (Map<String, Double>) settings.get(KEY_GAP_CLOSING_FEATURE_PENALTIES);
+			Element gcfpElement = new Element(XML_ELEMENT_NAME_FEATURE_PENALTIES);
+			marshallMap(gcfpm, gcfpElement);
+			gapClosingElement.addContent(gcfpElement);
+			element.addContent(gapClosingElement);
+			
+			// Track splitting
+			Element trackSplittingElement = new Element(XML_ELEMENT_NAME_SPLITTING);
+			ok = ok & writeAttribute(settings, trackSplittingElement, KEY_ALLOW_TRACK_SPLITTING, Boolean.class);
+			ok = ok & writeAttribute(settings, trackSplittingElement, KEY_SPLITTING_MAX_DISTANCE, Double.class);
+			// feature penalties
+			@SuppressWarnings("unchecked")
+			Map<String, Double> tsfpm = (Map<String, Double>) settings.get(KEY_SPLITTING_FEATURE_PENALTIES);
+			Element tsfpElement = new Element(XML_ELEMENT_NAME_FEATURE_PENALTIES);
+			marshallMap(tsfpm, tsfpElement);
+			trackSplittingElement.addContent(tsfpElement);
+			element.addContent(trackSplittingElement);
+			
+			// Track merging
+			Element trackMergingElement = new Element(XML_ELEMENT_NAME_MERGING);
+			ok = ok & writeAttribute(settings, trackMergingElement, KEY_ALLOW_TRACK_MERGING, Boolean.class);
+			ok = ok & writeAttribute(settings, trackMergingElement, KEY_MERGING_MAX_DISTANCE, Double.class);
+			// feature penalties
+			@SuppressWarnings("unchecked")
+			Map<String, Double> tmfpm = (Map<String, Double>) settings.get(KEY_MERGING_FEATURE_PENALTIES);
+			Element tmfpElement = new Element(XML_ELEMENT_NAME_FEATURE_PENALTIES);
+			marshallMap(tmfpm, tmfpElement);
+			trackMergingElement.addContent(tmfpElement);
+			element.addContent(trackMergingElement);
+			
+			// Others
+			ok = ok & writeAttribute(settings, element, KEY_CUTOFF_PERCENTILE, Double.class);
+			ok = ok & writeAttribute(settings, element, KEY_ALTERNATIVE_LINKING_COST_FACTOR, Double.class);
+			ok = ok & writeAttribute(settings, element, KEY_BLOCKING_VALUE, Double.class);
+			
+			return ok;
+			
+		} else if (currentKey.equals(NearestNeighborTracker.TRACKER_KEY)) {
+			return writeAttribute(settings, element, KEY_LINKING_MAX_DISTANCE, Double.class);
+			
+		} else {
+
+			errorMessage = "Unknow detector factory key: "+currentKey+".\n";
+			return false;
+		}
+	}
+
+	/**
+	 * Un-marshall a JDom element to update a settings map, and sets the target 
+	 * tracker of this provider from the element. 
+	 * <p>
+	 * Concretely: the tracker key is read from the element, and is used to set 
+	 * the target {@link #currentKey} of this provider. The the specific settings 
+	 * map for the targeted tracker is updated from the element.
+	 * 
+	 * @param element the JDom element to read from.
+	 * @param settings the map to update. Is cleared prior to updating, so that it contains
+	 * only the parameters specific to the target tracker.
+	 * @return true if unmarshalling was successful. If not, check {@link #getErrorMessage()}
+	 */
+	public boolean unmarshall(Element element, final Map<String, Object> settings) {
+		
+		settings.clear();
+
+		String trackerKey = element.getAttributeValue(XML_ATTRIBUTE_TRACKER_NAME);
+		// Try to set the state of this provider from the key read in xml.
+		boolean ok = select(trackerKey);
+		if (!ok) {
+			errorMessage = "Tracker key found in XML ("+trackerKey+") is unknown to this provider.\n";
+			return false;
+		}
+
+		if (currentKey.equals(SimpleFastLAPTracker.TRACKER_KEY) || currentKey.equals(FastLAPTracker.TRACKER_KEY)) {
+			StringBuilder errorHolder = new StringBuilder(); 
+			
+			// Linking
+			Element linkingElement = element.getChild(XML_ELEMENT_NAME_LINKING);
+			if (null == linkingElement) {
+				errorHolder.append("Could not found the "+XML_ELEMENT_NAME_LINKING+" element in XML.\n");
+				ok = false;
+				
+			} else {
+				
+				ok = ok & readDoubleAttribute(linkingElement, settings, KEY_LINKING_MAX_DISTANCE);
+				// feature penalties
+				Map<String, Double> lfpMap = new HashMap<String, Double>();
+				Element lfpElement = linkingElement.getChild(XML_ELEMENT_NAME_FEATURE_PENALTIES);
+				if (null != lfpElement) {
+					ok = ok & unmarshallMap(lfpElement , lfpMap);
+				}
+				settings.put(KEY_LINKING_FEATURE_PENALTIES, lfpMap);
+			}
+			
+			// Gap closing
+			Element gapClosingElement = element.getChild(XML_ELEMENT_NAME_GAP_CLOSING);
+			if (null == gapClosingElement) {
+				errorHolder.append("Could not found the "+XML_ELEMENT_NAME_GAP_CLOSING+" element in XML.\n");
+				ok = false;
+				
+			} else {
+
+				ok = ok & readBooleanAttribute(gapClosingElement, settings, KEY_ALLOW_GAP_CLOSING);
+				ok = ok & readIntegerAttribute(gapClosingElement, settings, KEY_GAP_CLOSING_MAX_FRAME_GAP);
+				ok = ok & readDoubleAttribute(gapClosingElement, settings, KEY_GAP_CLOSING_MAX_DISTANCE);
+				// feature penalties
+				Map<String, Double> gcfpm = new HashMap<String, Double>();
+				Element gcfpElement = gapClosingElement.getChild(XML_ELEMENT_NAME_FEATURE_PENALTIES);
+				if (null != gcfpElement) {
+					ok = ok & unmarshallMap(gcfpElement, gcfpm);
+				}
+				settings.put(KEY_GAP_CLOSING_FEATURE_PENALTIES, gcfpm);
+			}
+
+			// Track splitting
+			Element trackSplittingElement = element.getChild(XML_ELEMENT_NAME_SPLITTING);
+			if (null == trackSplittingElement) {
+				errorHolder.append("Could not found the "+XML_ELEMENT_NAME_SPLITTING+" element in XML.\n");
+				ok = false;
+				
+			} else {
+				
+				ok = ok & readBooleanAttribute(trackSplittingElement, settings, KEY_ALLOW_TRACK_SPLITTING);
+				ok = ok & readDoubleAttribute(trackSplittingElement, settings, KEY_SPLITTING_MAX_DISTANCE);
+				// feature penalties
+				Map<String, Double> tsfpm = new HashMap<String, Double>();
+				Element tsfpElement = trackSplittingElement.getChild(XML_ELEMENT_NAME_FEATURE_PENALTIES);
+				if (null != tsfpElement) {
+					ok = ok & unmarshallMap(tsfpElement, tsfpm);
+				}
+				settings.put(KEY_SPLITTING_FEATURE_PENALTIES, tsfpm);
+			}
+
+			// Track merging
+			Element trackMergingElement = element.getChild(XML_ELEMENT_NAME_MERGING);
+			if (null == trackMergingElement) {
+				errorHolder.append("Could not found the "+XML_ELEMENT_NAME_MERGING+" element in XML.\n");
+				ok = false;
+
+			} else {
+
+				ok = ok & readBooleanAttribute(trackMergingElement, settings, KEY_ALLOW_TRACK_MERGING);
+				ok = ok & readDoubleAttribute(trackMergingElement, settings, KEY_MERGING_MAX_DISTANCE);
+				// feature penalties
+				Map<String, Double> tmfpm = new HashMap<String, Double>();
+				Element tmfpElement = trackMergingElement.getChild(XML_ELEMENT_NAME_FEATURE_PENALTIES);
+				if (null != tmfpElement) {
+					ok = ok & unmarshallMap(tmfpElement, tmfpm);
+				}
+				settings.put(KEY_MERGING_FEATURE_PENALTIES, tmfpm);
+			}
+
+			// Others
+			ok = ok & readDoubleAttribute(element, settings, KEY_CUTOFF_PERCENTILE);
+			ok = ok & readDoubleAttribute(element, settings, KEY_ALTERNATIVE_LINKING_COST_FACTOR);
+			ok = ok & readDoubleAttribute(element, settings, KEY_BLOCKING_VALUE);
+
+			if (!ok) {
+				errorMessage = errorHolder.toString();
+			}
+			return ok;
+
+		} else {
+
+			errorMessage = "Unknow tracker key: "+currentKey+".\n";
+			return false;
+
+		}
+	}
 
 
 	/**  @return a list of the tracker keys available through this provider.  */
@@ -237,5 +437,22 @@ public class TrackerProvider <T extends RealType<T> & NativeType<T>> implements 
 	public List<String> getTrackerNames() {
 		return names;
 	}
+
 	
+
+	private static String echoFeaturePenalties(final Map<String, Double> featurePenalties) {
+		String str = "";
+		if (featurePenalties.isEmpty()) 
+			str += "    - no feature penalties\n";
+		else {
+			str += "    - with feature penalties:\n";
+			for (String feature : featurePenalties.keySet()) {
+				str += "      - "+feature.toString() + ": weight = " + String.format("%.1f", featurePenalties.get(feature)) + '\n';
+			}
+		}
+		return str;
+
+	}
+
+
 }

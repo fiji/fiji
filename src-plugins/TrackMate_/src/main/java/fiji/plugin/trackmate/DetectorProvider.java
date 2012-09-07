@@ -1,24 +1,10 @@
 package fiji.plugin.trackmate;
 
 import static fiji.plugin.trackmate.util.TMUtils.checkParameter;
-import static fiji.plugin.trackmate.detection.DetectorKeys.DEFAULT_DOWNSAMPLE_FACTOR;
-import static fiji.plugin.trackmate.detection.DetectorKeys.DEFAULT_DO_MEDIAN_FILTERING;
-import static fiji.plugin.trackmate.detection.DetectorKeys.DEFAULT_DO_SUBPIXEL_LOCALIZATION;
-import static fiji.plugin.trackmate.detection.DetectorKeys.DEFAULT_RADIUS;
-import static fiji.plugin.trackmate.detection.DetectorKeys.DEFAULT_TARGET_CHANNEL;
-import static fiji.plugin.trackmate.detection.DetectorKeys.DEFAULT_THRESHOLD;
-import static fiji.plugin.trackmate.detection.DetectorKeys.KEY_DOWNSAMPLE_FACTOR;
-import static fiji.plugin.trackmate.detection.DetectorKeys.KEY_DO_MEDIAN_FILTERING;
-import static fiji.plugin.trackmate.detection.DetectorKeys.KEY_DO_SUBPIXEL_LOCALIZATION;
-import static fiji.plugin.trackmate.detection.DetectorKeys.KEY_RADIUS;
-import static fiji.plugin.trackmate.detection.DetectorKeys.KEY_TARGET_CHANNEL;
-import static fiji.plugin.trackmate.detection.DetectorKeys.KEY_THRESHOLD;
-import static fiji.plugin.trackmate.detection.DetectorKeys.XML_ATTRIBUTE_DETECTOR_NAME;
 import ij.ImagePlus;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import net.imglib2.type.NativeType;
@@ -34,21 +20,12 @@ import fiji.plugin.trackmate.detection.ManualDetectorFactory;
 import fiji.plugin.trackmate.detection.SpotDetector;
 import fiji.plugin.trackmate.detection.SpotDetectorFactory;
 import fiji.plugin.trackmate.gui.BasicDetectorConfigurationPanel;
-import fiji.plugin.trackmate.gui.DetectorConfigurationPanel;
+import fiji.plugin.trackmate.gui.ConfigurationPanel;
 import fiji.plugin.trackmate.gui.DownSampleLogDetectorConfigurationPanel;
 import fiji.plugin.trackmate.gui.LogDetectorConfigurationPanel;
 import fiji.plugin.trackmate.gui.WizardController;
 
-public class DetectorProvider <T extends RealType<T> & NativeType<T>> {
-
-
-	/** The detector names, in the order they will appear in the GUI.
-	 * These names will be used as keys to access relevant detector classes.  */
-	protected List<String> keys;
-	protected String currentKey = LogDetectorFactory.DETECTOR_KEY;
-	protected String errorMessage;
-	private ArrayList<String> names;
-	private ArrayList<String> infoTexts;
+public class DetectorProvider <T extends RealType<T> & NativeType<T>> extends AbstractProvider implements DetectorKeys {
 
 	/*
 	 * BLANK CONSTRUCTOR
@@ -66,6 +43,7 @@ public class DetectorProvider <T extends RealType<T> & NativeType<T>> {
 	 */
 	public DetectorProvider() {
 		registerDetectors();
+		currentKey = LogDetectorFactory.DETECTOR_KEY;
 	}
 
 
@@ -95,39 +73,6 @@ public class DetectorProvider <T extends RealType<T> & NativeType<T>> {
 		infoTexts.add(DogDetectorFactory.INFO_TEXT);
 		infoTexts.add(DownsampleLogDetectorFactory.INFO_TEXT);
 		infoTexts.add(ManualDetectorFactory.INFO_TEXT);
-	}
-
-	/**
-	 * @return an error message for the last unsuccessful methods call
-	 * amongst {@link #select(String)}, {@link #marshall(Map, Element)},
-	 * {@link #unmarshall(Element, Map)}, {@link #checkSettingsValidity(Map)}.
-	 */
-	public String getErrorMessage() {
-		return errorMessage;
-	}
-
-	/**
-	 * Configure this provider for the target {@link SpotDetectorFactory} identified by 
-	 * the given key. If the key is not found in this provider's list, the 
-	 * provider state is not changed.
-	 * @return true if the given key was found and the target detector was changed.
-	 */
-	public boolean select(final String key) {
-		if (keys.contains(key)) {
-			currentKey = key;
-			errorMessage = null;
-			return true;
-		} else {
-			errorMessage = "Unknown detector key: "+key+".\n";
-			return false;
-		}
-	}
-
-	/**
-	 * @return the currently selected key.
-	 */
-	public String getCurrentKey() {
-		return currentKey;
 	}
 
 	/**
@@ -176,7 +121,7 @@ public class DetectorProvider <T extends RealType<T> & NativeType<T>> {
 	 * Un-marshall a JDom element to update a settings map, and sets the target 
 	 * detector factory of this provider from the element. 
 	 * <p>
-	 * Concretely: the4 detector key is read from the element, and is used to set 
+	 * Concretely: the detector key is read from the element, and is used to set 
 	 * the target {@link #currentKey} of this provider. The the specific settings 
 	 * map for the targeted detector factory is updated from the element.
 	 * 
@@ -193,7 +138,7 @@ public class DetectorProvider <T extends RealType<T> & NativeType<T>> {
 		// Try to set the state of this provider from the key read in xml.
 		boolean ok = select(detectorKey);
 		if (!ok) {
-			errorMessage = "Detector key found in XML ("+detectorKey+") is unknown to this provider.";
+			errorMessage = "Detector key found in XML ("+detectorKey+") is unknown to this provider.\n";
 			return false;
 		}
 
@@ -217,7 +162,7 @@ public class DetectorProvider <T extends RealType<T> & NativeType<T>> {
 
 		} else {
 
-			errorMessage = "Unknow detector factory key: "+currentKey+".";
+			errorMessage = "Unknow detector factory key: "+currentKey+".\n";
 			return false;
 
 		}
@@ -312,7 +257,7 @@ public class DetectorProvider <T extends RealType<T> & NativeType<T>> {
 	 * panels. 
 	 */
 
-	public DetectorConfigurationPanel<T> getDetectorConfigurationPanel(final WizardController<T> controller) 	{
+	public ConfigurationPanel getDetectorConfigurationPanel(final WizardController<T> controller) 	{
 		
 		ImagePlus imp = controller.getPlugin().getModel().getSettings().imp;
 		String spaceUnits = controller.getPlugin().getModel().getSettings().spaceUnits;
@@ -344,7 +289,7 @@ public class DetectorProvider <T extends RealType<T> & NativeType<T>> {
 		// TODO inspect the whole map even if there is 1 error, and make better explanatory messages id undesired keys are there
 
 		if (null == settings) {
-			errorMessage = "Settings map is null";
+			errorMessage = "Settings map is null.\n";
 			return false;
 		}
 
@@ -405,59 +350,9 @@ public class DetectorProvider <T extends RealType<T> & NativeType<T>> {
 		}
 	}
 
-
-	/**
-	 * @return a list of the detector keys available through this provider.
-	 */
-	public List<String> getDetectorKeys() {
-		return keys;
-	}
-	
-	/**
-	 * @return a list of the detector names available through this provider.
-	 */
-	public List<String> getDetectorNames() {
-		return names;
-	}
-
-	/**
-	 * @return a list of the detector informative texts available through this provider.
-	 */
-	public List<String> getDetectorInfoTexts() {
-		return infoTexts;
-	}
-
-
 	/*
 	 * PROTECTED METHODS
 	 */
-
-	/**
-	 * Add a parameter attribute to the given element, taken from the given settings map. 
-	 * Basic checks are made to ensure that the parameter value can be found and is of 
-	 * the right class.
-	 * @param settings  the map to take the parameter value from
-	 * @param element  the JDom element to update
-	 * @param parameterKey  the key to the parameter value in the map
-	 * @param expectedClass  the expected class for the value
-	 * @return  true if the parameter was found, of the right class, and was successfully added to the element.
-	 */
-	protected boolean writeAttribute(final Map<String, Object> settings, Element element, String parameterKey, Class<?> expectedClass) {
-		Object obj = settings.get(parameterKey);
-
-		if (null == obj) {
-			errorMessage = "Could not find parameter "+parameterKey+" in settings map.\n";
-			return false;
-		}
-
-		if (!expectedClass.isInstance(obj)) {
-			errorMessage = "Exoected "+parameterKey+" parameter to be a "+expectedClass.getName()+" but was a "+obj.getClass().getName()+".\n";
-			return false;
-		}
-
-		element.setAttribute(parameterKey, ""+obj);
-		return true;
-	}
 
 	protected boolean writeTargetChannel(final Map<String, Object> settings, Element element) {
 		return writeAttribute(settings, element, KEY_TARGET_CHANNEL, Integer.class);
@@ -481,53 +376,5 @@ public class DetectorProvider <T extends RealType<T> & NativeType<T>> {
 
 	protected boolean writeDownsamplingFactor(final Map<String, Object> settings, Element element) {
 		return writeAttribute(settings, element, KEY_DOWNSAMPLE_FACTOR, Integer.class);
-	}
-
-	protected boolean readDoubleAttribute(final Element element, Map<String, Object> settings, String parameterKey) {
-		String str = element.getAttributeValue(parameterKey);
-		if (null == str) {
-			errorMessage = "Attribute "+parameterKey+" could not be found in XML element.\n";
-			return false;
-		}
-		try {
-			double val = Double.parseDouble(str);
-			settings.put(parameterKey, val);
-		} catch (NumberFormatException nfe) {
-			errorMessage = "Could not read "+parameterKey+" attribute as a double value. Got "+str+".\n";
-			return false;
-		}
-		return true;
-	}
-
-	protected boolean readIntegerAttribute(final Element element, Map<String, Object> settings, String parameterKey) {
-		String str = element.getAttributeValue(parameterKey);
-		if (null == str) {
-			errorMessage = "Attribute "+parameterKey+" could not be found in XML element.\n";
-			return false;
-		}
-		try {
-			int val = Integer.parseInt(str);
-			settings.put(parameterKey, val);
-		} catch (NumberFormatException nfe) {
-			errorMessage = "Could not read "+parameterKey+" attribute as an integer value. Got "+str+".\n";
-			return false;
-		}
-		return true;
-	}
-
-	protected boolean readBooleanAttribute(final Element element, Map<String, Object> settings, String parameterKey) {
-		String str = element.getAttributeValue(parameterKey);
-		if (null == str) {
-			errorMessage = "Attribute "+parameterKey+" could not be found in XML element.\n";
-			return false;
-		}
-		try {
-			boolean val = Boolean.parseBoolean(str);
-			settings.put(parameterKey, val);
-		} catch (NumberFormatException nfe) {
-			errorMessage = "Could not read "+parameterKey+" attribute as an boolean value. Got "+str+".";
-			return false;
-		}
-		return true;
 	}
 }

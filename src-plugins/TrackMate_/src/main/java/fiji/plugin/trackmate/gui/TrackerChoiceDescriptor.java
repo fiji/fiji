@@ -63,7 +63,7 @@ public class TrackerChoiceDescriptor <T extends RealType<T> & NativeType<T>> imp
 
 		// Compare current settings with default ones, and substitute default ones
 		// only if the old ones are absent or not compatible with it.
-		TrackerSettings<T> defaultSettings = plugin.getTrackerFactory().getDefaultSettings(trackerName);
+		TrackerSettings<T> defaultSettings = plugin.getTrackerProvider().getDefaultSettings(trackerName);
 		TrackerSettings<T> currentSettings = plugin.getModel().getSettings().trackerSettings;
 		
 		if (null == currentSettings || currentSettings.getClass() != defaultSettings.getClass()) {
@@ -80,10 +80,10 @@ public class TrackerChoiceDescriptor <T extends RealType<T> & NativeType<T>> imp
 	@Override
 	public void setPlugin(TrackMate_<T> plugin) {
 		this.plugin = plugin;
-		List<String> trackerNames = plugin.getTrackerFactory().getTrackerKeys();
+		List<String> trackerNames = plugin.getTrackerProvider().getTrackerKeys();
 		List<String> infoTexts = new ArrayList<String>(trackerNames.size());
 		for(String key : trackerNames) {
-			infoTexts.add(plugin.getTrackerFactory().getInfoText(key));
+			infoTexts.add(plugin.getTrackerProvider().getInfoText(key));
 		}
 		this.component = new ListChooserPanel(trackerNames, infoTexts, "tracker");
 		setCurrentChoiceFromPlugin();
@@ -96,7 +96,7 @@ public class TrackerChoiceDescriptor <T extends RealType<T> & NativeType<T>> imp
 
 	void setCurrentChoiceFromPlugin() {
 		String tracker = plugin.getModel().getSettings().tracker; 
-		int index = plugin.getTrackerFactory().getTrackerKeys().indexOf(tracker);
+		int index = plugin.getTrackerProvider().getTrackerKeys().indexOf(tracker);
 		if (index >= 0) {
 			component.jComboBoxChoice.setSelectedIndex(index);
 		}

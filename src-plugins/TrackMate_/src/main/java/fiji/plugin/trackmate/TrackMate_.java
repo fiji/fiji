@@ -268,7 +268,7 @@ public class TrackMate_<T extends RealType<T> & NativeType<T>>  implements PlugI
 	/**
 	 * Return a list of the {@link SpotTracker} that are currently registered in this plugin.
 	 */
-	public TrackerProvider<T> getTrackerFactory() {
+	public TrackerProvider<T> getTrackerProvider() {
 		return trackerFactory;
 	}
 

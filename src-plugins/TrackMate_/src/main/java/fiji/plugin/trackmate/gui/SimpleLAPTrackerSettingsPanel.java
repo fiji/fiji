@@ -8,26 +8,25 @@ import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.util.List;
+import java.util.Map;
 
 import javax.swing.JLabel;
 import javax.swing.SwingConstants;
 
-import net.imglib2.type.NativeType;
-import net.imglib2.type.numeric.RealType;
-
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.tracking.LAPTracker;
+import fiji.plugin.trackmate.tracking.SimpleFastLAPTracker;
 import fiji.plugin.trackmate.tracking.TrackerKeys;
-import fiji.plugin.trackmate.tracking.TrackerSettings;
 
 /**
  * A simplified configuration panel for the {@link LAPTracker}.
  * 
  * @author Jean-Yves Tinevez <tinevez@pasteur.fr> - 2010-2011
  */
-public class SimpleLAPTrackerSettingsPanel <T extends RealType<T> & NativeType<T>> extends TrackerConfigurationPanel<T> {
+public class SimpleLAPTrackerSettingsPanel extends ConfigurationPanel {
 
-	private static final long serialVersionUID = 4099537392544048109L;
+	private static final long serialVersionUID = -1L;
 	private JLabel jLabelLinkingMaxDistanceUnit;
 	private JLabel jLabelTrackerName;
 	private JLabel jLabelGapClosingTimeCutoffUnit;
@@ -37,16 +36,19 @@ public class SimpleLAPTrackerSettingsPanel <T extends RealType<T> & NativeType<T
 	private JNumericTextField jTextFieldLinkingDistance;
 	private JLabel jLabelTrackerDescription;
 
-	private TrackerKeys<T> settings;
-	private final String infoText;
+	private String infoText;
+	private String trackerName;
+	private String spaceUnits;
 
 	/*
 	 * CONSTRUCTOR
 	 */
 
 
-	public SimpleLAPTrackerSettingsPanel(String infoText) {
+	public SimpleLAPTrackerSettingsPanel(String trackerName, String infoText, String spaceUnits) {
+		this.trackerName = trackerName;
 		this.infoText = infoText;
+		this.spaceUnits = spaceUnits;
 		initGUI();
 	}
 
@@ -55,14 +57,13 @@ public class SimpleLAPTrackerSettingsPanel <T extends RealType<T> & NativeType<T
 	 */
 
 	@Override
-	public void setTrackerSettings(TrackMateModel<T> model) {
-		this.settings = (TrackerKeys<T>) model.getSettings().trackerSettings;
-		echoSettings(model);
+	public void setSettings(final Map<String, Object> settings) {
+		echoSettings(settings);
 
 	};
 
 	@Override
-	public TrackerSettings<T> getTrackerSettings() {
+	public Map<String, Object> getSettings() {
 		// Default ones
 		settings.allowMerging 		= false;
 		settings.allowSplitting 	= false;

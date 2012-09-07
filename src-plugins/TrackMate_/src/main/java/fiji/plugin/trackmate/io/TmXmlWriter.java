@@ -1,7 +1,5 @@
 package fiji.plugin.trackmate.io;
 
-import static fiji.plugin.trackmate.io.TmXmlKeys.*;
-
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -30,9 +28,9 @@ import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMate_;
-import fiji.plugin.trackmate.tracking.TrackerSettings;
+import fiji.plugin.trackmate.TrackerProvider;
 
-public class TmXmlWriter <T extends RealType<T> & NativeType<T>> {
+public class TmXmlWriter <T extends RealType<T> & NativeType<T>> implements TmXmlKeys {
 
 	/*
 	 * FIELD
@@ -185,7 +183,6 @@ public class TmXmlWriter <T extends RealType<T> & NativeType<T>> {
 		settingsElement.setAttribute(SETTINGS_TEND_ATTRIBUTE_NAME, ""+settings.tend);
 		root.addContent(settingsElement);
 		logger.log("  Appending base settings.\n");
-		return;
 	}
 
 	private void echoDetectorSettings() {
@@ -200,25 +197,22 @@ public class TmXmlWriter <T extends RealType<T> & NativeType<T>> {
 			}
 		}
 		root.addContent(el);
-		return;
+		logger.log("  Appending detector settings.\n");
 	}
 
 	private void echoTrackerSettings() {
-		Element element = new Element(TRACKER_SETTINGS_ELEMENT_KEY);
-		if (null != model.getSettings().tracker) {
-			element.setAttribute(TRACKER_ATTRIBUTE_NAME, model.getSettings().tracker);
+		Element el = new Element(TRACKER_SETTINGS_ELEMENT_KEY);
+		if (null != model.getSettings().tracker  && null != model.getSettings().trackerSettings) {
+			TrackerProvider<T> provider = plugin.getTrackerProvider();
+			boolean ok = provider.select(model.getSettings().tracker.getKey());
+			if (!ok) {
+				logger.error(provider.getErrorMessage());
+			} else {
+				provider.marshall(model.getSettings().trackerSettings, el);
+			}
 		}
-		TrackerSettings<T> settings = model.getSettings().trackerSettings;
-		if (null != settings) {
-			element.setAttribute(TRACKER_SETTINGS_CLASS_ATTRIBUTE_NAME, settings.getClass().getName());
-			settings.marshall(element);
-			logger.log("  Appending tracker settings.\n");
-		} else {
-			logger.log("  Tracker settings are null.\n");
-		}
-		// Add to root		
-		root.addContent(element);
-		return;
+		root.addContent(el);
+		logger.log("  Appending tracker settings.\n");
 	}
 
 	private void echoTracks() {

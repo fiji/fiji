@@ -29,7 +29,6 @@ import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMate_;
 import fiji.plugin.trackmate.io.TmXmlReader;
 import fiji.plugin.trackmate.io.TmXmlReader_v12;
-import fiji.plugin.trackmate.tracking.TrackerSettings;
 import fiji.plugin.trackmate.util.Version;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
 import fiji.plugin.trackmate.visualization.hyperstack.HyperStackDisplayer;
@@ -281,7 +280,7 @@ public class GuiReader <T extends RealType<T> & NativeType<T>> {
 		{ // Try to read tracker settings
 			logger.log("  Loading tracker settings...");
 			reader.getTrackerSettings(settings);
-			TrackerSettings<T> trackerSettings = settings.trackerSettings;
+			Map<String, Object> trackerSettings = settings.trackerSettings;
 			if (null == trackerSettings) {
 				echoNotFound();
 				model.setSettings(settings);

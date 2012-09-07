@@ -9,7 +9,7 @@ public interface DetectorKeys {
 	 * The attribute name for the {@link SpotDetectorFactory} key when
 	 * marshalling to or unmarhsalling from XML. 
 	 */
-	public static final String XML_ATTRIBUTE_DETECTOR_NAME = "detectorname";
+	public static final String XML_ATTRIBUTE_DETECTOR_NAME = "DETECTOR_NAME";
 	
 	/** The key identifying the parameter setting the target channel for detection
 	 * in a possible multi-channel image. Channels are here 1-numbered, meaning 

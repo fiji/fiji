@@ -34,7 +34,7 @@ import net.imglib2.type.numeric.RealType;
  * 
  * @author Jean-Yves Tinevez <jeanyves.tinevez@gmail.com> 2010 - 2011
  */
-public class LogDetectorConfigurationPanel <T extends RealType<T> & NativeType<T>> extends DetectorConfigurationPanel<T> {
+public class LogDetectorConfigurationPanel <T extends RealType<T> & NativeType<T>> extends ConfigurationPanel {
 
 	private static final long serialVersionUID = 4519313560718180405L;
 	private JLabel jLabel1;

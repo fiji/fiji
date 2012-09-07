@@ -1,6 +1,5 @@
 package fiji.plugin.trackmate.io;
 
-import static fiji.plugin.trackmate.io.TmXmlKeys.*;
 import static fiji.plugin.trackmate.util.TMUtils.readBooleanAttribute;
 import static fiji.plugin.trackmate.util.TMUtils.readDoubleAttribute;
 import static fiji.plugin.trackmate.util.TMUtils.readIntAttribute;
@@ -39,14 +38,13 @@ import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.SpotImp;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMate_;
+import fiji.plugin.trackmate.TrackerProvider;
 import fiji.plugin.trackmate.detection.SpotDetectorFactory;
 import fiji.plugin.trackmate.features.FeatureModel;
 import fiji.plugin.trackmate.tracking.SpotTracker;
-import fiji.plugin.trackmate.tracking.TrackerSettings;
-import fiji.plugin.trackmate.tracking.kdtree.NearestNeighborTracker;
 
 
-public class TmXmlReader <T extends RealType<T> & NativeType<T>> {
+public class TmXmlReader <T extends RealType<T> & NativeType<T>> implements TmXmlKeys {
 
 	protected static final boolean DEBUG = false;
 	//	private static final boolean useMultithreading = TrackMate_.DEFAULT_USE_MULTITHREADING; // Not yet
@@ -377,7 +375,7 @@ public class TmXmlReader <T extends RealType<T> & NativeType<T>> {
 	}
 
 	/**
-	 * Update the given {@link Settings} object with the {@link TrackerSettings} and {@link SpotTracker} fields
+	 * Update the given {@link Settings} object with {@link SpotTracker} proper settings map fields 
 	 * named {@link Settings#trackerSettings} and {@link Settings#tracker} read within the XML file
 	 * this reader is initialized with.
 	 * <p>
@@ -396,52 +394,19 @@ public class TmXmlReader <T extends RealType<T> & NativeType<T>> {
 		if (null == element) {
 			return;
 		}
-
-		// Deal with tracker
-		String trackerName = element.getAttributeValue(TRACKER_ATTRIBUTE_NAME);
-		if (null == trackerName) {
-			logger.error("Tracker class is not present.\n");
-			logger.error("Substituting default.\n");
-			trackerName = NearestNeighborTracker.NAME;
-		} else {
-			SpotTracker<T> tracker = plugin.getTrackerFactory().getTracker(trackerName);
-			if (null == tracker) {
-				logger.error("Unable to find tracker '"+trackerName+"' in plugin "+plugin.toString()+"\n");
-				logger.error("Substituting default.\n");
-				tracker = new NearestNeighborTracker<T>();
-			}
+		
+		TrackerProvider<T> provider = plugin.getTrackerProvider();
+		Map<String, Object> ds = new HashMap<String, Object>(); 
+		// All the hard work is delegated to the provider. 
+		boolean ok = provider.unmarshall(element, ds);
+		
+		if (!ok) {
+			logger.error(provider.getErrorMessage());
+			return;
 		}
-		settings.tracker = trackerName;
 
-		// Deal with tracker settings
-		{
-			// To start with, we get a settings suitable for the tracker we have found 
-			TrackerSettings<T> ts = plugin.getTrackerFactory().getDefaultSettings(trackerName);
-			String trackerSettingsClassName = element.getAttributeValue(TRACKER_SETTINGS_CLASS_ATTRIBUTE_NAME);
-			if (null == trackerSettingsClassName) {
-
-				logger.error("Tracker settings class is not present,\n");
-				logger.error("substituting default one.\n");
-
-			} else {
-
-				if (trackerSettingsClassName.equals(ts.getClass().getName())) {
-
-					// The saved class matched, we can updated the settings created above with the file content
-					ts.unmarshall(element);
-
-				} else {
-
-					// They do not match. We DO NOT give priority to what has been saved. That way we always
-					// have something that works (when invoking the process methods of the plugin).
-
-					logger.error("Tracker settings class ("+trackerSettingsClassName+") does not match tracker requirements (" +
-							ts.getClass().getName()+"),\n");
-					logger.error("substituting default one.\n");
-				}
-			}
-			settings.trackerSettings = ts;
-		}
+		settings.trackerSettings = ds;
+		settings.tracker = provider.getTracker();
 	}
 
 	/**

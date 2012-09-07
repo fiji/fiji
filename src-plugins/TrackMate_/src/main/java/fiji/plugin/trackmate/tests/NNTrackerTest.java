@@ -4,16 +4,15 @@ import java.io.File;
 
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
-
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.io.TmXmlReader;
+import fiji.plugin.trackmate.tracking.TrackerKeys;
 import fiji.plugin.trackmate.tracking.kdtree.NearestNeighborTracker;
-import fiji.plugin.trackmate.tracking.kdtree.NearestNeighborTrackerSettings;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
 import fiji.plugin.trackmate.visualization.hyperstack.HyperStackDisplayer;
 
-public class NNTrackerTest {
+public class NNTrackerTest implements TrackerKeys {
 
 	
 //	private static final File SPLITTING_CASE_3 = new File("/Users/tinevez/Desktop/Data/FakeTracks.xml");
@@ -42,19 +41,9 @@ public class NNTrackerTest {
 			System.out.println('\t'+model.trackToString(i));
 		System.out.println();
 		
-		// 1.5 - Set the tracking settings
-		NearestNeighborTrackerSettings<T> settings = new NearestNeighborTrackerSettings<T>();
-		settings.maxLinkingDistance = 15;
-		
-		System.out.println("Tracker settings:");
-		System.out.println(settings.toString());
-		model.getSettings().trackerSettings = settings;
-		
 		// 2 - Track the test spots
 		long start = System.currentTimeMillis();
-		NearestNeighborTracker<T> tracker = new NearestNeighborTracker<T>();
-		tracker.setModel(model);
-		tracker.setLogger(Logger.DEFAULT_LOGGER);
+		NearestNeighborTracker tracker = new NearestNeighborTracker(model.getFilteredSpots(), 15, Logger.DEFAULT_LOGGER);
 
 		if (!tracker.checkInput())
 			System.err.println("Error checking input: "+tracker.getErrorMessage());

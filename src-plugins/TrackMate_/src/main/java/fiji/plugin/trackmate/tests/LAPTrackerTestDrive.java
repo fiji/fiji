@@ -1,6 +1,8 @@
 package fiji.plugin.trackmate.tests;
 
 import java.io.File;
+import java.util.HashMap;
+import java.util.Map;
 
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
@@ -13,10 +15,10 @@ import fiji.plugin.trackmate.tracking.TrackerKeys;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
 import fiji.plugin.trackmate.visualization.hyperstack.HyperStackDisplayer;
 
-public class LAPTrackerTestDrive {
+public class LAPTrackerTestDrive implements TrackerKeys {
 	
-//	private static final File SPLITTING_CASE_3 = new File("/Users/tinevez/Desktop/Data/FakeTracks.xml");
-	private static final File SPLITTING_CASE_3 = new File("E:/Users/JeanYves/Desktop/Data/FakeTracks.xml");
+	private static final File SPLITTING_CASE_3 = new File("/Users/tinevez/Desktop/Data/FakeTracks.xml");
+//	private static final File SPLITTING_CASE_3 = new File("E:/Users/JeanYves/Desktop/Data/FakeTracks.xml");
 
 	/*
 	 * MAIN METHOD
@@ -42,28 +44,20 @@ public class LAPTrackerTestDrive {
 		System.out.println();
 		
 		// 1.5 - Set the tracking settings
-		TrackerKeys<T> settings = new TrackerKeys<T>();
-		settings.linkingDistanceCutOff = 10;
-		settings.allowGapClosing = false;
-		settings.gapClosingDistanceCutoff = 15;
-		settings.gapClosingTimeCutoff = 10;
-		settings.allowMerging = false;
-		settings.mergingDistanceCutoff = 10;
-		settings.mergingTimeCutoff = 2;
-		settings.mergingFeaturePenalties.clear();
-		settings.allowSplitting = false;
-		settings.splittingDistanceCutoff = 10;
-		settings.splittingTimeCutoff = 2;
-		settings.splittingFeaturePenalties.clear();
+		Map<String, Object> settings = new HashMap<String, Object>();
+		settings.put(KEY_LINKING_MAX_DISTANCE, 10d);
+		settings.put(KEY_ALLOW_GAP_CLOSING, false);
+		settings.put(KEY_GAP_CLOSING_MAX_DISTANCE, 15);
+		settings.put(KEY_ALLOW_TRACK_MERGING, false);
+		settings.put(KEY_MERGING_MAX_DISTANCE, 10);
+		settings.put(KEY_ALLOW_TRACK_SPLITTING, false);
+		settings.put(KEY_SPLITTING_MAX_DISTANCE, 10);
 		System.out.println("Tracker settings:");
-		System.out.println(settings.toString());
 		model.getSettings().trackerSettings = settings;
 		
 		// 2 - Track the test spots
 		long start = System.currentTimeMillis();
-		LAPTracker<T> lap = new LAPTracker<T>();
-		lap.setModel(model);
-		lap.setLogger(Logger.DEFAULT_LOGGER);
+		LAPTracker lap = new LAPTracker(model.getFilteredSpots(), settings, Logger.DEFAULT_LOGGER);
 
 		if (!lap.checkInput())
 			System.err.println("Error checking input: "+lap.getErrorMessage());
@@ -102,3 +96,4 @@ public class LAPTrackerTestDrive {
 	}
 
 }
+

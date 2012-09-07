@@ -32,6 +32,12 @@ public interface TrackerKeys {
 	 *
 	 */
 	
+	/**
+	 * The attribute name for the {@link SpotTracker} key when
+	 * marshalling to or unmarhsalling from XML. 
+	 */
+	public static final String XML_ATTRIBUTE_TRACKER_NAME = "TRACKER_NAME";
+	
 	/** Key for the parameter specifying the maximal linking distance. The expected value must be a 
 	 * Double and should be expressed in physical units.	 */
 	public static final String KEY_LINKING_MAX_DISTANCE = "LINKING_MAX_DISTANCE";

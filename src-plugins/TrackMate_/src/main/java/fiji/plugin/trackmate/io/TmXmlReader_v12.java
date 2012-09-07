@@ -1,12 +1,6 @@
 package fiji.plugin.trackmate.io;
 
-import static fiji.plugin.trackmate.detection.DetectorKeys.KEY_DOWNSAMPLE_FACTOR;
-import static fiji.plugin.trackmate.detection.DetectorKeys.KEY_DO_MEDIAN_FILTERING;
-import static fiji.plugin.trackmate.detection.DetectorKeys.KEY_DO_SUBPIXEL_LOCALIZATION;
-import static fiji.plugin.trackmate.detection.DetectorKeys.KEY_RADIUS;
-import static fiji.plugin.trackmate.detection.DetectorKeys.KEY_THRESHOLD;
-import static fiji.plugin.trackmate.detection.DetectorKeys.KEY_TARGET_CHANNEL;
-import static fiji.plugin.trackmate.io.TmXmlKeys_v12.*;
+
 import static fiji.plugin.trackmate.util.TMUtils.readBooleanAttribute;
 import static fiji.plugin.trackmate.util.TMUtils.readFloatAttribute;
 import static fiji.plugin.trackmate.util.TMUtils.readIntAttribute;
@@ -40,17 +34,18 @@ import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.SpotImp;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMate_;
+import fiji.plugin.trackmate.TrackerProvider;
+import fiji.plugin.trackmate.detection.DetectorKeys;
 import fiji.plugin.trackmate.detection.DogDetectorFactory;
 import fiji.plugin.trackmate.detection.DownsampleLogDetectorFactory;
 import fiji.plugin.trackmate.detection.LogDetectorFactory;
 import fiji.plugin.trackmate.detection.ManualDetectorFactory;
 import fiji.plugin.trackmate.tracking.FastLAPTracker;
-import fiji.plugin.trackmate.tracking.TrackerKeys;
 import fiji.plugin.trackmate.tracking.SimpleFastLAPTracker;
 import fiji.plugin.trackmate.tracking.SpotTracker;
-import fiji.plugin.trackmate.tracking.TrackerSettings;
+import fiji.plugin.trackmate.tracking.TrackerKeys;
 import fiji.plugin.trackmate.tracking.kdtree.NearestNeighborTracker;
-import fiji.plugin.trackmate.tracking.kdtree.NearestNeighborTrackerSettings;
+import fiji.plugin.trackmate.util.TMUtils;
 
 /**
  * A compatibility xml loader than can load TrackMate xml file saved for version
@@ -59,8 +54,30 @@ import fiji.plugin.trackmate.tracking.kdtree.NearestNeighborTrackerSettings;
  * explicitly, and convert on the fly to v1.3 classes. 
  * @author Jean-Yves Tinevez - 2012
  */
-public class TmXmlReader_v12<T extends RealType<T> & NativeType<T>> extends TmXmlReader<T>{
+public class TmXmlReader_v12<T extends RealType<T> & NativeType<T>> extends TmXmlReader<T> implements TrackerKeys, DetectorKeys, TmXmlKeys_v12 {
 
+	/*
+	 * XML KEY_v12S FOR V 1.2
+	 */
+	
+	private static final String TRACKER_SETTINGS_ALLOW_EVENT_ATTNAME_v12				= "allowed";
+	// Alternative costs & blocking
+	private static final String TRACKER_SETTINGS_ALTERNATE_COST_FACTOR_ATTNAME_v12 		= "alternatecostfactor";
+	private static final String TRACKER_SETTINGS_CUTOFF_PERCENTILE_ATTNAME_v12			= "cutoffpercentile";
+	private static final String TRACKER_SETTINGS_BLOCKING_VALUE_ATTNAME_v12				= "blockingvalue";
+	// Cutoff elements
+	private static final String TRACKER_SETTINGS_TIME_CUTOFF_ELEMENT				= "TimeCutoff";
+	private static final String TRACKER_SETTINGS_TIME_CUTOFF_ATTNAME_v12				= "value";
+	private static final String TRACKER_SETTINGS_DISTANCE_CUTOFF_ELEMENT			= "DistanceCutoff";
+	private static final String TRACKER_SETTINGS_DISTANCE_CUTOFF_ATTNAME_v12			= "value";
+	private static final String TRACKER_SETTINGS_FEATURE_ELEMENT					= "FeatureCondition";
+	private static final String TRACKER_SETTINGS_LINKING_ELEMENT					= "LinkingCondition";
+	private static final String TRACKER_SETTINGS_GAP_CLOSING_ELEMENT				= "GapClosingCondition";
+	private static final String TRACKER_SETTINGS_MERGING_ELEMENT					= "MergingCondition";
+	private static final String TRACKER_SETTINGS_SPLITTING_ELEMENT					= "SplittingCondition";
+	// Nearest meighbor tracker
+	private static final String MAX_LINKING_DISTANCE_ATTRIBUTE = "maxdistance";
+	
 	/** Stores error messages when reading parameters. */
 	private String errorMessage;
 
@@ -139,12 +156,12 @@ public class TmXmlReader_v12<T extends RealType<T> & NativeType<T>> extends TmXm
 	public FeatureFilter getInitialFilter()  {
 		if (!parsed)
 			parse();
-		Element itEl = root.getChild(INITIAL_SPOT_FILTER_ELEMENT_KEY);
+		Element itEl = root.getChild(INITIAL_SPOT_FILTER_ELEMENT_KEY_v12);
 		if (null == itEl)
 			return null;
-		String feature  = itEl.getAttributeValue(FILTER_FEATURE_ATTRIBUTE_NAME);
-		double value     = readFloatAttribute(itEl, FILTER_VALUE_ATTRIBUTE_NAME, logger);
-		boolean isAbove = readBooleanAttribute(itEl, FILTER_ABOVE_ATTRIBUTE_NAME, logger);
+		String feature  = itEl.getAttributeValue(FILTER_FEATURE_ATTRIBUTE_NAME_v12);
+		double value     = readFloatAttribute(itEl, FILTER_VALUE_ATTRIBUTE_NAME_v12, logger);
+		boolean isAbove = readBooleanAttribute(itEl, FILTER_ABOVE_ATTRIBUTE_NAME_v12, logger);
 		FeatureFilter ft = new FeatureFilter(feature, value, isAbove);
 		return ft;
 	}
@@ -159,15 +176,15 @@ public class TmXmlReader_v12<T extends RealType<T> & NativeType<T>> extends TmXm
 		if (!parsed)
 			parse();
 		List<FeatureFilter> featureThresholds = new ArrayList<FeatureFilter>();
-		Element ftCollectionEl = root.getChild(SPOT_FILTER_COLLECTION_ELEMENT_KEY);
+		Element ftCollectionEl = root.getChild(SPOT_FILTER_COLLECTION_ELEMENT_KEY_v12);
 		if (null == ftCollectionEl)
 			return null;
 		@SuppressWarnings("unchecked")
-		List<Element> ftEls = ftCollectionEl.getChildren(FILTER_ELEMENT_KEY);
+		List<Element> ftEls = ftCollectionEl.getChildren(FILTER_ELEMENT_KEY_v12);
 		for (Element ftEl : ftEls) {
-			String feature  = ftEl.getAttributeValue(FILTER_FEATURE_ATTRIBUTE_NAME);
-			double value     = readFloatAttribute(ftEl, FILTER_VALUE_ATTRIBUTE_NAME, logger);
-			boolean isAbove = readBooleanAttribute(ftEl, FILTER_ABOVE_ATTRIBUTE_NAME, logger);
+			String feature  = ftEl.getAttributeValue(FILTER_FEATURE_ATTRIBUTE_NAME_v12);
+			double value     = readFloatAttribute(ftEl, FILTER_VALUE_ATTRIBUTE_NAME_v12, logger);
+			boolean isAbove = readBooleanAttribute(ftEl, FILTER_ABOVE_ATTRIBUTE_NAME_v12, logger);
 			FeatureFilter ft = new FeatureFilter(feature, value, isAbove);
 			featureThresholds.add(ft);
 		}
@@ -189,32 +206,32 @@ public class TmXmlReader_v12<T extends RealType<T> & NativeType<T>> extends TmXm
 			parse();
 		Settings<T> settings = new Settings<T>();
 		// Basic settings
-		Element settingsEl = root.getChild(SETTINGS_ELEMENT_KEY);
+		Element settingsEl = root.getChild(SETTINGS_ELEMENT_KEY_v12);
 		if (null != settingsEl) {
-			settings.xstart = readIntAttribute(settingsEl, SETTINGS_XSTART_ATTRIBUTE_NAME, logger, 1);
-			settings.xend   = readIntAttribute(settingsEl, SETTINGS_XEND_ATTRIBUTE_NAME, logger, 512);
-			settings.ystart = readIntAttribute(settingsEl, SETTINGS_YSTART_ATTRIBUTE_NAME, logger, 1);
-			settings.yend   = readIntAttribute(settingsEl, SETTINGS_YEND_ATTRIBUTE_NAME, logger, 512);
-			settings.zstart = readIntAttribute(settingsEl, SETTINGS_ZSTART_ATTRIBUTE_NAME, logger, 1);
-			settings.zend   = readIntAttribute(settingsEl, SETTINGS_ZEND_ATTRIBUTE_NAME, logger, 10);
-			settings.tstart = readIntAttribute(settingsEl, SETTINGS_TSTART_ATTRIBUTE_NAME, logger, 1);
-			settings.tend   = readIntAttribute(settingsEl, SETTINGS_TEND_ATTRIBUTE_NAME, logger, 10);
+			settings.xstart = readIntAttribute(settingsEl, SETTINGS_XSTART_ATTRIBUTE_NAME_v12, logger, 1);
+			settings.xend   = readIntAttribute(settingsEl, SETTINGS_XEND_ATTRIBUTE_NAME_v12, logger, 512);
+			settings.ystart = readIntAttribute(settingsEl, SETTINGS_YSTART_ATTRIBUTE_NAME_v12, logger, 1);
+			settings.yend   = readIntAttribute(settingsEl, SETTINGS_YEND_ATTRIBUTE_NAME_v12, logger, 512);
+			settings.zstart = readIntAttribute(settingsEl, SETTINGS_ZSTART_ATTRIBUTE_NAME_v12, logger, 1);
+			settings.zend   = readIntAttribute(settingsEl, SETTINGS_ZEND_ATTRIBUTE_NAME_v12, logger, 10);
+			settings.tstart = readIntAttribute(settingsEl, SETTINGS_TSTART_ATTRIBUTE_NAME_v12, logger, 1);
+			settings.tend   = readIntAttribute(settingsEl, SETTINGS_TEND_ATTRIBUTE_NAME_v12, logger, 10);
 		}
 		// Image info settings
-		Element infoEl  = root.getChild(IMAGE_ELEMENT_KEY);
+		Element infoEl  = root.getChild(IMAGE_ELEMENT_KEY_v12);
 		if (null != infoEl) {
-			settings.dx             = readFloatAttribute(infoEl, IMAGE_PIXEL_WIDTH_ATTRIBUTE_NAME, logger);
-			settings.dy             = readFloatAttribute(infoEl, IMAGE_PIXEL_HEIGHT_ATTRIBUTE_NAME, logger);
-			settings.dz             = readFloatAttribute(infoEl, IMAGE_VOXEL_DEPTH_ATTRIBUTE_NAME, logger);
-			settings.dt             = readFloatAttribute(infoEl, IMAGE_TIME_INTERVAL_ATTRIBUTE_NAME, logger);
-			settings.width          = readIntAttribute(infoEl, IMAGE_WIDTH_ATTRIBUTE_NAME, logger, 512);
-			settings.height         = readIntAttribute(infoEl, IMAGE_HEIGHT_ATTRIBUTE_NAME, logger, 512);
-			settings.nslices        = readIntAttribute(infoEl, IMAGE_NSLICES_ATTRIBUTE_NAME, logger, 1);
-			settings.nframes        = readIntAttribute(infoEl, IMAGE_NFRAMES_ATTRIBUTE_NAME, logger, 1);
-			settings.spaceUnits     = infoEl.getAttributeValue(IMAGE_SPATIAL_UNITS_ATTRIBUTE_NAME);
-			settings.timeUnits      = infoEl.getAttributeValue(IMAGE_TIME_UNITS_ATTRIBUTE_NAME);
-			settings.imageFileName  = infoEl.getAttributeValue(IMAGE_FILENAME_ATTRIBUTE_NAME);
-			settings.imageFolder    = infoEl.getAttributeValue(IMAGE_FOLDER_ATTRIBUTE_NAME);
+			settings.dx             = readFloatAttribute(infoEl, IMAGE_PIXEL_WIDTH_ATTRIBUTE_NAME_v12, logger);
+			settings.dy             = readFloatAttribute(infoEl, IMAGE_PIXEL_HEIGHT_ATTRIBUTE_NAME_v12, logger);
+			settings.dz             = readFloatAttribute(infoEl, IMAGE_VOXEL_DEPTH_ATTRIBUTE_NAME_v12, logger);
+			settings.dt             = readFloatAttribute(infoEl, IMAGE_TIME_INTERVAL_ATTRIBUTE_NAME_v12, logger);
+			settings.width          = readIntAttribute(infoEl, IMAGE_WIDTH_ATTRIBUTE_NAME_v12, logger, 512);
+			settings.height         = readIntAttribute(infoEl, IMAGE_HEIGHT_ATTRIBUTE_NAME_v12, logger, 512);
+			settings.nslices        = readIntAttribute(infoEl, IMAGE_NSLICES_ATTRIBUTE_NAME_v12, logger, 1);
+			settings.nframes        = readIntAttribute(infoEl, IMAGE_NFRAMES_ATTRIBUTE_NAME_v12, logger, 1);
+			settings.spaceUnits     = infoEl.getAttributeValue(IMAGE_SPATIAL_UNITS_ATTRIBUTE_NAME_v12);
+			settings.timeUnits      = infoEl.getAttributeValue(IMAGE_TIME_UNITS_ATTRIBUTE_NAME_v12);
+			settings.imageFileName  = infoEl.getAttributeValue(IMAGE_FILENAME_v12_ATTRIBUTE_NAME_v12);
+			settings.imageFolder    = infoEl.getAttributeValue(IMAGE_FOLDER_ATTRIBUTE_NAME_v12);
 		}
 		return settings;
 	}
@@ -226,20 +243,20 @@ public class TmXmlReader_v12<T extends RealType<T> & NativeType<T>> extends TmXm
 
 		// We have to parse the settings element to fetch the target channel
 		int targetChannel = 1;
-		Element settingsEl = root.getChild(SETTINGS_ELEMENT_KEY);
+		Element settingsEl = root.getChild(SETTINGS_ELEMENT_KEY_v12);
 		if (null != settingsEl) {
-			targetChannel = readIntAttribute(settingsEl, SETTINGS_SEGMENTATION_CHANNEL_ATTRIBUTE_NAME, logger);
+			targetChannel = readIntAttribute(settingsEl, SETTINGS_SEGMENTATION_CHANNEL_ATTRIBUTE_NAME_v12, logger);
 		}
 		
 		// Get back to segmenter element
-		Element element = root.getChild(SEGMENTER_SETTINGS_ELEMENT_KEY);
+		Element element = root.getChild(SEGMENTER_SETTINGS_ELEMENT_KEY_v12);
 		if (null == element) {
 			return;
 		}
 		
 		// Deal with segmenter
 		String segmenterKey;
-		String segmenterClassName = element.getAttributeValue(SEGMENTER_CLASS_ATTRIBUTE_NAME);
+		String segmenterClassName = element.getAttributeValue(SEGMENTER_CLASS_ATTRIBUTE_NAME_v12);
 		if (null == segmenterClassName) {
 			logger.error("\nSegmenter class is not present.\n");
 			logger.error("Substituting default.\n");
@@ -252,7 +269,7 @@ public class TmXmlReader_v12<T extends RealType<T> & NativeType<T>> extends TmXm
 			} else if (segmenterClassName.equals("fiji.plugin.trackmate.segmentation.DownSamplingLogSegmenter")) {
 				segmenterKey = DownsampleLogDetectorFactory.DETECTOR_KEY;
 			} else if (segmenterClassName.equals("fiji.plugin.trackmate.segmentation.ManualSegmenter")) {
-				segmenterKey = ManualDetectorFactory.NAME;
+				segmenterKey = ManualDetectorFactory.DETECTOR_KEY;
 			} else {
 				logger.error("\nUnknown segmenter: "+segmenterClassName+".\n");
 				logger.error("Substituting default.\n");
@@ -263,19 +280,19 @@ public class TmXmlReader_v12<T extends RealType<T> & NativeType<T>> extends TmXm
 		boolean ok = provider.select(segmenterKey);
 		if (!ok) {
 			logger.error(provider.getErrorMessage());
-			logger.error("substituting default detector.\n");
+			logger.error("Substituting default detector.\n");
 		}
 		settings.detectorFactory = provider.getDetectorFactory();
 
 		// Deal with segmenter settings
 		Map<String, Object> ds = new HashMap<String, Object>();
 
-		String segmenterSettingsClassName = element.getAttributeValue(SEGMENTER_SETTINGS_CLASS_ATTRIBUTE_NAME);
+		String segmenterSettingsClassName = element.getAttributeValue(SEGMENTER_SETTINGS_CLASS_ATTRIBUTE_NAME_v12);
 
 		if (null == segmenterSettingsClassName) {
 
-			logger.error("\nSegmenter settings class is not present,\n");
-			logger.error("substituting default settings values.\n");
+			logger.error("\nSegmenter settings class is not present.\n");
+			logger.error("Substituting default settings values.\n");
 			ds = provider.getDefaultSettings();
 
 		} else {
@@ -386,61 +403,125 @@ public class TmXmlReader_v12<T extends RealType<T> & NativeType<T>> extends TmXm
 	public void getTrackerSettings(Settings<T> settings) {
 		if (!parsed)
 			parse();
-		Element element = root.getChild(TRACKER_SETTINGS_ELEMENT_KEY);
+		Element element = root.getChild(TRACKER_SETTINGS_ELEMENT_KEY_v12);
 		if (null == element) {
 			return;
 		}
 
 		// Deal with tracker
-		String trackerName;
-		String trackerClassName = element.getAttributeValue(TRACKER_CLASS_ATTRIBUTE_NAME);
+		String trackerKey;
+		String trackerClassName = element.getAttributeValue(TRACKER_CLASS_ATTRIBUTE_NAME_v12);
 
 		if (null == trackerClassName) {
 			logger.error("\nTracker class is not present.\n");
 			logger.error("Substituting default.\n");
-			trackerName = SimpleFastLAPTracker.NAME;
+			trackerKey = SimpleFastLAPTracker.TRACKER_KEY;
 
 		} else {
 
 			if (trackerClassName.equals("fiji.plugin.trackmate.tracking.SimpleFastLAPTracker") || 
 					trackerClassName.equals("fiji.plugin.trackmate.tracking.SimpleLAPTracker")) {
-				trackerName = SimpleFastLAPTracker.NAME; // convert to simple fast version
+				trackerKey = SimpleFastLAPTracker.TRACKER_KEY; // convert to simple fast version
 
 			} else if (trackerClassName.equals("fiji.plugin.trackmate.tracking.FastLAPTracker") || 
 					trackerClassName.equals("fiji.plugin.trackmate.tracking.LAPTracker")) {
-				trackerName = FastLAPTracker.NAME; // convert to fast version
+				trackerKey = FastLAPTracker.TRACKER_KEY; // convert to fast version
 
 			} else if (trackerClassName.equals("fiji.plugin.trackmate.tracking.kdtree.NearestNeighborTracker")) {
-				trackerName = NearestNeighborTracker.NAME;
+				trackerKey = NearestNeighborTracker.TRACKER_KEY;
 
 			} else {
 				logger.error("\nUnknown tracker: "+trackerClassName+".\n");
 				logger.error("Substituting default.\n");
-				trackerName = SimpleFastLAPTracker.NAME;
+				trackerKey = SimpleFastLAPTracker.TRACKER_KEY;
 			}
 		}
-		settings.tracker = trackerName;
+		TrackerProvider<T> provider = plugin.getTrackerProvider();
+		boolean ok = provider.select(trackerKey);
+		if (!ok) {
+			logger.error(provider.getErrorMessage());
+			logger.error("Substituting default tracker.\n");
+		}
+		settings.tracker = provider.getTracker();
 
 		// Deal with tracker settings
 		{
-			// To start with, we get a settings suitable for the tracker we have found
-			TrackerSettings<T> ts = plugin.getTrackerFactory().getDefaultSettings(trackerName);
-			String trackerSettingsClassName = element.getAttributeValue(TRACKER_SETTINGS_CLASS_ATTRIBUTE_NAME);
+			Map<String, Object> ts = new HashMap<String, Object>();
+			
+			String trackerSettingsClassName = element.getAttributeValue(TRACKER_SETTINGS_CLASS_ATTRIBUTE_NAME_v12);
+
 			if (null == trackerSettingsClassName) {
 
-				logger.error("\nTracker settings class is not present,\n");
-				logger.error("substituting default one.\n");
+				logger.error("\nTracker settings class is not present.\n");
+				logger.error("Substituting default one.\n");
+				ts = provider.getDefaultSettings();
 
 			} else {
 
 				// All LAP trackers
 				if (trackerSettingsClassName.equals("fiji.plugin.trackmate.tracking.LAPTrackerSettings"))  {
 
-					if (ts.getClass().equals(TrackerKeys.class)) {
+					if (trackerKey.equals(SimpleFastLAPTracker.TRACKER_KEY) 
+							|| trackerKey.equals(FastLAPTracker.TRACKER_KEY)) {
 
-						// The saved class matched, we can updated the settings created above with the file content
-						ts.unmarshall(element);
-
+						/*
+						 *  Read
+						 */
+						
+						double alternativeObjectLinkingCostFactor = TMUtils.readDoubleAttribute(element, TRACKER_SETTINGS_ALTERNATE_COST_FACTOR_ATTNAME_v12, Logger.VOID_LOGGER);
+						double cutoffPercentile 			= TMUtils.readDoubleAttribute(element, TRACKER_SETTINGS_CUTOFF_PERCENTILE_ATTNAME_v12, Logger.VOID_LOGGER);
+						double blockingValue				= TMUtils.readDoubleAttribute(element, TRACKER_SETTINGS_BLOCKING_VALUE_ATTNAME_v12, Logger.VOID_LOGGER);
+						// Linking
+						Element linkingElement = element.getChild(TRACKER_SETTINGS_LINKING_ELEMENT);
+						double linkingDistanceCutOff 		= readDistanceCutoffAttribute(linkingElement);
+						Map<String, Double> linkingFeaturePenalties = readTrackerFeatureMap(linkingElement);
+						// Gap-closing
+						Element gapClosingElement 			= element.getChild(TRACKER_SETTINGS_GAP_CLOSING_ELEMENT);
+						boolean allowGapClosing				= readBooleanAttribute(gapClosingElement, TRACKER_SETTINGS_ALLOW_EVENT_ATTNAME_v12, Logger.VOID_LOGGER);
+						double gapClosingDistanceCutoff 	= readDistanceCutoffAttribute(gapClosingElement);
+						double gapClosingTimeCutoff 		= readTimeCutoffAttribute(gapClosingElement); 
+						Map<String, Double> gapClosingFeaturePenalties = readTrackerFeatureMap(gapClosingElement);
+						// Splitting
+						Element splittingElement	= element.getChild(TRACKER_SETTINGS_SPLITTING_ELEMENT);
+						boolean allowSplitting				= readBooleanAttribute(splittingElement, TRACKER_SETTINGS_ALLOW_EVENT_ATTNAME_v12, Logger.VOID_LOGGER);
+						double splittingDistanceCutoff		= readDistanceCutoffAttribute(splittingElement);
+						@SuppressWarnings("unused")
+						double splittingTimeCutoff			= readTimeCutoffAttribute(splittingElement); // IGNORED
+						Map<String, Double> splittingFeaturePenalties = readTrackerFeatureMap(splittingElement);
+						// Merging
+						Element mergingElement 		= element.getChild(TRACKER_SETTINGS_MERGING_ELEMENT);
+						boolean allowMerging				= readBooleanAttribute(mergingElement, TRACKER_SETTINGS_ALLOW_EVENT_ATTNAME_v12, Logger.VOID_LOGGER);
+						double mergingDistanceCutoff		= readDistanceCutoffAttribute(mergingElement);
+						@SuppressWarnings("unused")
+						double mergingTimeCutoff			= readTimeCutoffAttribute(mergingElement); // IGNORED
+						Map<String, Double> mergingFeaturePenalties = readTrackerFeatureMap(mergingElement);
+						
+						/*
+						 * Store
+						 */
+						
+						ts.put(KEY_ALTERNATIVE_LINKING_COST_FACTOR, alternativeObjectLinkingCostFactor);
+						ts.put(KEY_CUTOFF_PERCENTILE, cutoffPercentile);
+						ts.put(KEY_BLOCKING_VALUE, blockingValue);
+						// Linking
+						ts.put(KEY_LINKING_MAX_DISTANCE, linkingDistanceCutOff);
+						ts.put(KEY_LINKING_FEATURE_PENALTIES, linkingFeaturePenalties);
+						// Gap-closing
+						ts.put(KEY_ALLOW_GAP_CLOSING, allowGapClosing);
+						ts.put(KEY_GAP_CLOSING_MAX_DISTANCE, gapClosingDistanceCutoff);
+						ts.put(KEY_GAP_CLOSING_MAX_FRAME_GAP, (int) (gapClosingTimeCutoff / settings.dt)); // CONVERTED
+						ts.put(KEY_GAP_CLOSING_FEATURE_PENALTIES, gapClosingFeaturePenalties);
+						// Splitting
+						ts.put(KEY_ALLOW_TRACK_SPLITTING, allowSplitting);
+						ts.put(KEY_SPLITTING_MAX_DISTANCE, splittingDistanceCutoff);
+						ts.put(KEY_SPLITTING_FEATURE_PENALTIES, splittingFeaturePenalties);
+						// the rest is IGNORED
+						// Merging
+						ts.put(KEY_ALLOW_TRACK_MERGING, allowMerging);
+						ts.put(KEY_MERGING_MAX_DISTANCE, mergingDistanceCutoff);
+						ts.put(KEY_MERGING_FEATURE_PENALTIES, mergingFeaturePenalties);
+						// the rest is ignored
+						
 					} else {
 
 						// They do not match. We DO NOT give priority to what has been saved. That way we always
@@ -453,10 +534,11 @@ public class TmXmlReader_v12<T extends RealType<T> & NativeType<T>> extends TmXm
 
 				} else if (trackerSettingsClassName.equals("fiji.plugin.trackmate.tracking.kdtree.NearestNeighborTrackerSettings"))  {
 
-					if (ts.getClass().equals(NearestNeighborTrackerSettings.class)) {
+					if (trackerKey.equals(NearestNeighborTracker.TRACKER_KEY)) {
 
 						// The saved class matched, we can updated the settings created above with the file content
-						ts.unmarshall(element);
+						double maxDist = TMUtils.readDoubleAttribute(element, MAX_LINKING_DISTANCE_ATTRIBUTE, Logger.VOID_LOGGER);
+						ts.put(KEY_LINKING_MAX_DISTANCE, maxDist);
 
 					} else {
 
@@ -470,8 +552,8 @@ public class TmXmlReader_v12<T extends RealType<T> & NativeType<T>> extends TmXm
 
 				} else {
 
-					logger.error("\nTracker settings class ("+trackerSettingsClassName+") is unknown,\n");
-					logger.error("substituting default one.\n");
+					logger.error("\nTracker settings class ("+trackerSettingsClassName+") is unknown.\n");
+					logger.error("Substituting default one.\n");
 
 				}
 			}
@@ -490,18 +572,18 @@ public class TmXmlReader_v12<T extends RealType<T> & NativeType<T>> extends TmXm
 			parse();
 		}
 
-		Element spotCollection = root.getChild(SPOT_COLLECTION_ELEMENT_KEY);
+		Element spotCollection = root.getChild(SPOT_COLLECTION_ELEMENT_KEY_v12);
 		if (null == spotCollection)
 			return null;
 
 		// Retrieve children elements for each frame
 		@SuppressWarnings("unchecked")
-		List<Element> frameContent = spotCollection.getChildren(SPOT_FRAME_COLLECTION_ELEMENT_KEY);
+		List<Element> frameContent = spotCollection.getChildren(SPOT_FRAME_COLLECTION_ELEMENT_KEY_v12);
 
 		// Determine total number of spots
 		int nspots = 0;
 		for (Element currentFrameContent : frameContent) {
-			nspots += currentFrameContent.getChildren(SPOT_ELEMENT_KEY).size();
+			nspots += currentFrameContent.getChildren(SPOT_ELEMENT_KEY_v12).size();
 		}
 
 		// Instantiate cache
@@ -513,9 +595,9 @@ public class TmXmlReader_v12<T extends RealType<T> & NativeType<T>> extends TmXm
 
 		for (Element currentFrameContent : frameContent) {
 
-			currentFrame = readIntAttribute(currentFrameContent, FRAME_ATTRIBUTE_NAME, logger);
+			currentFrame = readIntAttribute(currentFrameContent, FRAME_ATTRIBUTE_NAME_v12, logger);
 			@SuppressWarnings("unchecked")
-			List<Element> spotContent = currentFrameContent.getChildren(SPOT_ELEMENT_KEY);
+			List<Element> spotContent = currentFrameContent.getChildren(SPOT_ELEMENT_KEY_v12);
 			spotList = new ArrayList<Spot>(spotContent.size());
 			for (Element spotElement : spotContent) {
 				Spot spot = createSpotFrom(spotElement);
@@ -546,7 +628,7 @@ public class TmXmlReader_v12<T extends RealType<T> & NativeType<T>> extends TmXm
 			parse();
 		}
 
-		Element selectedSpotCollection = root.getChild(FILTERED_SPOT_ELEMENT_KEY);
+		Element selectedSpotCollection = root.getChild(FILTERED_SPOT_ELEMENT_KEY_v12);
 		if (null == selectedSpotCollection)
 			return null;
 
@@ -558,16 +640,16 @@ public class TmXmlReader_v12<T extends RealType<T> & NativeType<T>> extends TmXm
 		ArrayList<Spot> spotList;
 		List<Element> spotContent;
 		SpotCollection spotSelection = new SpotCollection();
-		List<Element> frameContent = selectedSpotCollection.getChildren(FILTERED_SPOT_COLLECTION_ELEMENT_KEY);
+		List<Element> frameContent = selectedSpotCollection.getChildren(FILTERED_SPOT_COLLECTION_ELEMENT_KEY_v12);
 
 		for (Element currentFrameContent : frameContent) {
-			currentFrame = readIntAttribute(currentFrameContent, FRAME_ATTRIBUTE_NAME, logger);
-			spotContent = currentFrameContent.getChildren(SPOT_ID_ELEMENT_KEY);
+			currentFrame = readIntAttribute(currentFrameContent, FRAME_ATTRIBUTE_NAME_v12, logger);
+			spotContent = currentFrameContent.getChildren(SPOT_ID_ELEMENT_KEY_v12);
 			spotList = new ArrayList<Spot>(spotContent.size());
 			// Loop over all spot element
 			for (Element spotEl : spotContent) {
 				// Find corresponding spot in cache
-				ID = readIntAttribute(spotEl, SPOT_ID_ATTRIBUTE_NAME, logger);
+				ID = readIntAttribute(spotEl, SPOT_ID_ATTRIBUTE_NAME_v12, logger);
 				spotList.add(cache.get(ID));
 			}
 
@@ -591,7 +673,7 @@ public class TmXmlReader_v12<T extends RealType<T> & NativeType<T>> extends TmXm
 	@SuppressWarnings("unchecked")
 	public List<Set<Spot>> readTrackSpots(final SimpleWeightedGraph<Spot, DefaultWeightedEdge> graph) {
 
-		Element allTracksElement = root.getChild(TRACK_COLLECTION_ELEMENT_KEY);
+		Element allTracksElement = root.getChild(TRACK_COLLECTION_ELEMENT_KEY_v12);
 		if (null == allTracksElement)
 			return null;
 
@@ -599,7 +681,7 @@ public class TmXmlReader_v12<T extends RealType<T> & NativeType<T>> extends TmXm
 		final Set<Spot> spots = graph.vertexSet();
 
 		// Load tracks
-		List<Element> trackElements = allTracksElement.getChildren(TRACK_ELEMENT_KEY);
+		List<Element> trackElements = allTracksElement.getChildren(TRACK_ELEMENT_KEY_v12);
 		final int nTracks = trackElements.size();
 
 		// Prepare holder for results
@@ -616,18 +698,18 @@ public class TmXmlReader_v12<T extends RealType<T> & NativeType<T>> extends TmXm
 		for (Element trackElement : trackElements) {
 
 			// Get track ID as it is saved on disk
-			int trackID = readIntAttribute(trackElement, TRACK_ID_ATTRIBUTE_NAME, logger);
+			int trackID = readIntAttribute(trackElement, TRACK_ID_ATTRIBUTE_NAME_v12, logger);
 
 
 			// Instantiate current track
 			HashSet<Spot> track = new HashSet<Spot>(2*trackElements.size()); // approx
 
-			edgeElements = trackElement.getChildren(TRACK_EDGE_ELEMENT_KEY);
+			edgeElements = trackElement.getChildren(TRACK_EDGE_ELEMENT_KEY_v12);
 			for (Element edgeElement : edgeElements) {
 
 				// Get source and target ID for this edge
-				sourceID = readIntAttribute(edgeElement, TRACK_EDGE_SOURCE_ATTRIBUTE_NAME, logger);
-				targetID = readIntAttribute(edgeElement, TRACK_EDGE_TARGET_ATTRIBUTE_NAME, logger);
+				sourceID = readIntAttribute(edgeElement, TRACK_EDGE_SOURCE_ATTRIBUTE_NAME_v12, logger);
+				targetID = readIntAttribute(edgeElement, TRACK_EDGE_TARGET_ATTRIBUTE_NAME_v12, logger);
 
 				// Retrieve corresponding spots from their ID
 				targetFound = false;
@@ -684,7 +766,7 @@ public class TmXmlReader_v12<T extends RealType<T> & NativeType<T>> extends TmXm
 	@SuppressWarnings("unchecked")
 	public List<Set<DefaultWeightedEdge>> readTrackEdges(final SimpleWeightedGraph<Spot, DefaultWeightedEdge> graph) {
 
-		Element allTracksElement = root.getChild(TRACK_COLLECTION_ELEMENT_KEY);
+		Element allTracksElement = root.getChild(TRACK_COLLECTION_ELEMENT_KEY_v12);
 		if (null == allTracksElement)
 			return null;
 
@@ -692,7 +774,7 @@ public class TmXmlReader_v12<T extends RealType<T> & NativeType<T>> extends TmXm
 		final Set<Spot> spots = graph.vertexSet();
 
 		// Load tracks
-		List<Element> trackElements = allTracksElement.getChildren(TRACK_ELEMENT_KEY);
+		List<Element> trackElements = allTracksElement.getChildren(TRACK_ELEMENT_KEY_v12);
 		final int nTracks = trackElements.size();
 
 		// Prepare holder for results
@@ -710,10 +792,10 @@ public class TmXmlReader_v12<T extends RealType<T> & NativeType<T>> extends TmXm
 		for (Element trackElement : trackElements) {
 
 			// Get all edge elements
-			edgeElements = trackElement.getChildren(TRACK_EDGE_ELEMENT_KEY);
+			edgeElements = trackElement.getChildren(TRACK_EDGE_ELEMENT_KEY_v12);
 
 			// Get track ID as it is saved on disk
-			int trackID = readIntAttribute(trackElement, TRACK_ID_ATTRIBUTE_NAME, logger);
+			int trackID = readIntAttribute(trackElement, TRACK_ID_ATTRIBUTE_NAME_v12, logger);
 
 			// Instantiate current track
 			HashSet<DefaultWeightedEdge> track = new HashSet<DefaultWeightedEdge>(edgeElements.size());
@@ -721,8 +803,8 @@ public class TmXmlReader_v12<T extends RealType<T> & NativeType<T>> extends TmXm
 			for (Element edgeElement : edgeElements) {
 
 				// Get source and target ID for this edge
-				sourceID = readIntAttribute(edgeElement, TRACK_EDGE_SOURCE_ATTRIBUTE_NAME, logger);
-				targetID = readIntAttribute(edgeElement, TRACK_EDGE_TARGET_ATTRIBUTE_NAME, logger);
+				sourceID = readIntAttribute(edgeElement, TRACK_EDGE_SOURCE_ATTRIBUTE_NAME_v12, logger);
+				targetID = readIntAttribute(edgeElement, TRACK_EDGE_TARGET_ATTRIBUTE_NAME_v12, logger);
 
 				// Retrieve corresponding spots from their ID
 				targetFound = false;
@@ -777,16 +859,16 @@ public class TmXmlReader_v12<T extends RealType<T> & NativeType<T>> extends TmXm
 	 * @throws DataConversionException
 	 */
 	public Set<Integer> getFilteredTracks() {
-		Element filteredTracksElement = root.getChild(FILTERED_TRACK_ELEMENT_KEY);
+		Element filteredTracksElement = root.getChild(FILTERED_TRACK_ELEMENT_KEY_v12);
 		if (null == filteredTracksElement)
 			return null;
 
 		// Work because the track splitting from the graph is deterministic
 		@SuppressWarnings("unchecked")
-		List<Element> elements = filteredTracksElement.getChildren(TRACK_ID_ELEMENT_KEY);
+		List<Element> elements = filteredTracksElement.getChildren(TRACK_ID_ELEMENT_KEY_v12);
 		HashSet<Integer> filteredTrackIndices = new HashSet<Integer>(elements.size());
 		for (Element indexElement : elements) {
-			Integer trackID = readIntAttribute(indexElement, TRACK_ID_ATTRIBUTE_NAME, logger);
+			Integer trackID = readIntAttribute(indexElement, TRACK_ID_ATTRIBUTE_NAME_v12, logger);
 			if (null != trackID) {
 				filteredTrackIndices.add(trackID);
 			}
@@ -798,11 +880,11 @@ public class TmXmlReader_v12<T extends RealType<T> & NativeType<T>> extends TmXm
 	public ImagePlus getImage()  {
 		if (!parsed)
 			parse();
-		Element imageInfoElement = root.getChild(IMAGE_ELEMENT_KEY);
+		Element imageInfoElement = root.getChild(IMAGE_ELEMENT_KEY_v12);
 		if (null == imageInfoElement)
 			return null;
-		String filename = imageInfoElement.getAttributeValue(IMAGE_FILENAME_ATTRIBUTE_NAME);
-		String folder   = imageInfoElement.getAttributeValue(IMAGE_FOLDER_ATTRIBUTE_NAME);
+		String filename = imageInfoElement.getAttributeValue(IMAGE_FILENAME_v12_ATTRIBUTE_NAME_v12);
+		String folder   = imageInfoElement.getAttributeValue(IMAGE_FOLDER_ATTRIBUTE_NAME_v12);
 		if (null == filename || filename.isEmpty())
 			return null;
 		if (null == folder || folder.isEmpty())
@@ -826,21 +908,21 @@ public class TmXmlReader_v12<T extends RealType<T> & NativeType<T>> extends TmXm
 	 */
 
 	private Spot createSpotFrom(Element spotEl) {
-		int ID = readIntAttribute(spotEl, SPOT_ID_ATTRIBUTE_NAME, logger);
+		int ID = readIntAttribute(spotEl, SPOT_ID_ATTRIBUTE_NAME_v12, logger);
 		Spot spot = new SpotImp(ID);
 
 		@SuppressWarnings("unchecked")
 		List<Attribute> atts = spotEl.getAttributes();
-		atts.remove(SPOT_ID_ATTRIBUTE_NAME);
+		atts.remove(SPOT_ID_ATTRIBUTE_NAME_v12);
 
-		String name = spotEl.getAttributeValue(SPOT_NAME_ATTRIBUTE_NAME);
+		String name = spotEl.getAttributeValue(SPOT_NAME_v12_ATTRIBUTE_NAME_v12);
 		if (null == name || name.equals(""))
 			name = "ID"+ID;
 		spot.setName(name);
-		atts.remove(SPOT_NAME_ATTRIBUTE_NAME);
+		atts.remove(SPOT_NAME_v12_ATTRIBUTE_NAME_v12);
 
 		for (Attribute att : atts) {
-			if (att.getName().equals(SPOT_NAME_ATTRIBUTE_NAME) || att.getName().equals(SPOT_ID_ATTRIBUTE_NAME)) {
+			if (att.getName().equals(SPOT_NAME_v12_ATTRIBUTE_NAME_v12) || att.getName().equals(SPOT_ID_ATTRIBUTE_NAME_v12)) {
 				continue;
 			}
 			try {
@@ -900,4 +982,48 @@ public class TmXmlReader_v12<T extends RealType<T> & NativeType<T>> extends TmXm
 		}
 		return true;
 	}
+
+	private static final double readDistanceCutoffAttribute(Element element) {
+		double val = 0;
+		try {
+			val = element.getChild(TRACKER_SETTINGS_DISTANCE_CUTOFF_ELEMENT)
+					.getAttribute(TRACKER_SETTINGS_DISTANCE_CUTOFF_ATTNAME_v12).getDoubleValue();
+		} catch (DataConversionException e) { }
+		return val;
+	}
+
+	private static final double readTimeCutoffAttribute(Element element) {
+		double val = 0;
+		try {
+			val = element.getChild(TRACKER_SETTINGS_TIME_CUTOFF_ELEMENT)
+					.getAttribute(TRACKER_SETTINGS_TIME_CUTOFF_ATTNAME_v12).getDoubleValue();
+		} catch (DataConversionException e) { }
+		return val;
+	}
+
+	/**
+	 * Look for all the sub-elements of <code>element</code> with the name TRACKER_SETTINGS_FEATURE_ELEMENT, 
+	 * fetch the feature attributes from them, and returns them in a map.
+	 */
+	@SuppressWarnings("unchecked")
+	private static final Map<String, Double> readTrackerFeatureMap(final Element element) {
+		Map<String, Double> map = new HashMap<String, Double>();
+		List<Element> featurelinkingElements = element.getChildren(TRACKER_SETTINGS_FEATURE_ELEMENT);
+		for (Element el : featurelinkingElements) {
+			List<Attribute> atts = el.getAttributes();
+			for (Attribute att : atts) {
+				String feature = att.getName();
+				Double cutoff;
+				try {
+					cutoff = att.getDoubleValue();
+				} catch (DataConversionException e) {
+					cutoff = 0d;
+				}
+				map.put(feature, cutoff);
+			}
+		}
+		return map;
+	}
+
 }
+
