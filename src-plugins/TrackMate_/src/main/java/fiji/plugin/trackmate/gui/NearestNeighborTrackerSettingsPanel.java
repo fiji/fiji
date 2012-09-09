@@ -63,7 +63,7 @@ public class NearestNeighborTrackerSettingsPanel extends ConfigurationPanel impl
 
 		labelTrackerDescription = new JLabel("<tracker description>");
 		labelTrackerDescription.setFont(FONT.deriveFont(Font.ITALIC));
-		labelTrackerDescription.setBounds(10, 67, 280, 175);
+		labelTrackerDescription.setBounds(10, 67, 280, 225);
 		labelTrackerDescription.setText(infoText
 				.replace("<br>", "")
 				.replace("<p>", "<p align=\"justify\">")

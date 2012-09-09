@@ -63,18 +63,18 @@ public class SimpleLAPTrackerSettingsPanel extends ConfigurationPanel implements
 	public Map<String, Object> getSettings() {
 		Map<String, Object> settings = new HashMap<String, Object>();
 		// Linking
-		settings.put(KEY_LINKING_FEATURE_PENALTIES, null);
+		settings.put(KEY_LINKING_FEATURE_PENALTIES, DEFAULT_LINKING_FEATURE_PENALTIES);
 		// Gap closing
 		settings.put(KEY_ALLOW_GAP_CLOSING, true);
-		settings.put(KEY_GAP_CLOSING_FEATURE_PENALTIES, null);
+		settings.put(KEY_GAP_CLOSING_FEATURE_PENALTIES, DEFAULT_GAP_CLOSING_FEATURE_PENALTIES);
 		// Track splitting
 		settings.put(KEY_ALLOW_TRACK_SPLITTING, false);
 		settings.put(KEY_SPLITTING_MAX_DISTANCE, DEFAULT_SPLITTING_MAX_DISTANCE);
-		settings.put(KEY_SPLITTING_FEATURE_PENALTIES, null);
+		settings.put(KEY_SPLITTING_FEATURE_PENALTIES, DEFAULT_SPLITTING_FEATURE_PENALTIES);
 		// Track merging
 		settings.put(KEY_ALLOW_TRACK_MERGING, false);
 		settings.put(KEY_MERGING_MAX_DISTANCE, DEFAULT_MERGING_MAX_DISTANCE);
-		settings.put(KEY_MERGING_FEATURE_PENALTIES, null);
+		settings.put(KEY_MERGING_FEATURE_PENALTIES, DEFAULT_MERGING_FEATURE_PENALTIES);
 		// Others
 		settings.put(KEY_BLOCKING_VALUE, DEFAULT_BLOCKING_VALUE);
 		settings.put(KEY_ALTERNATIVE_LINKING_COST_FACTOR, DEFAULT_ALTERNATIVE_LINKING_COST_FACTOR);

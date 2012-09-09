@@ -169,7 +169,7 @@ public class GuiReader <T extends RealType<T> & NativeType<T>> {
 				return;
 			}
 			echoDone();
-
+			
 			// Update 2nd panel: detector choice
 			DetectorChoiceDescriptor<T> detectorChoiceDescriptor = (DetectorChoiceDescriptor<T>) wizard.getPanelDescriptorFor(DetectorChoiceDescriptor.DESCRIPTOR);
 			detectorChoiceDescriptor.setPlugin(plugin);
@@ -306,7 +306,7 @@ public class GuiReader <T extends RealType<T> & NativeType<T>> {
 		// Instantiate descriptor for the tracker configuration and update it
 		TrackerConfigurationPanelDescriptor<T> trackerDescriptor = new TrackerConfigurationPanelDescriptor<T>();
 		trackerDescriptor.setPlugin(plugin);
-		trackerDescriptor.aboutToDisplayPanel(); // This will feed the new panel with the current settings content
+		trackerDescriptor.updateComponent(); // This will feed the new panel with the current settings content
 
 		wizard.registerWizardDescriptor(TrackerConfigurationPanelDescriptor.DESCRIPTOR, trackerDescriptor);
 
@@ -322,7 +322,7 @@ public class GuiReader <T extends RealType<T> & NativeType<T>> {
 				wizard.setDisplayer(displayer);
 				if (!imp.isVisible())
 					imp.show();
-				trackerDescriptor.aboutToDisplayPanel();
+				trackerDescriptor.updateComponent();
 				echoLoadingFinished();
 				return;
 			}
@@ -330,7 +330,7 @@ public class GuiReader <T extends RealType<T> & NativeType<T>> {
 			model.setTrackSpots(reader.readTrackSpots(graph));
 			model.setTrackEdges(reader.readTrackEdges(graph));
 			reader.readTrackFeatures(model.getFeatureModel());
-			trackerDescriptor.aboutToDisplayPanel();
+			trackerDescriptor.updateComponent();
 			echoDone();
 		}
 

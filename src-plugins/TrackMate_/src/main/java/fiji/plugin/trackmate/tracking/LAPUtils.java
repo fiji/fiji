@@ -1,12 +1,16 @@
 package fiji.plugin.trackmate.tracking;
 
+import static fiji.plugin.trackmate.util.TMUtils.checkMapKeys;
 import static fiji.plugin.trackmate.util.TMUtils.checkParameter;
-import static fiji.plugin.trackmate.tracking.TrackerKeys.*;
+
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -22,7 +26,7 @@ import javax.swing.table.TableModel;
 
 import fiji.plugin.trackmate.Spot;
 
-public class LAPUtils {
+public class LAPUtils implements TrackerKeys {
 
 	private static final Border RED_BORDER = new LineBorder(Color.RED); 
 	
@@ -30,6 +34,33 @@ public class LAPUtils {
 	/*
 	 * STATIC METHODS - UTILS
 	 */
+
+	/**
+	 * Utility method to put a value in a map, contained in a mother map. Here it is mainly use to
+	 * feed feature penalties to LAP tracker settings map. 
+	 * @param motherMap  the mother map
+	 * @param motherKey the key in the mother map that points to the child map
+	 * @param childKey  the key in the child map to put
+	 * @param childValue  the value in the child map to put
+	 * @param errorHolder  an error holder that will be appended with an error message if modifying the child 
+	 * map is unsuccessful.
+	 * @return  true if the child map could be modified correctly.
+	 */
+	public static final boolean addFeaturePenaltyToSettings(final Map<?, ?> motherMap, Object motherKey, Object childKey, Object childValue, StringBuilder errorHolder) {
+		Object childObj = motherMap.get(motherKey);
+		if (null == childObj) {
+			errorHolder.append("Mother map has no value for key "+motherKey+".\n");
+			return false;
+		}
+		if (!(childObj instanceof Map<?, ?>)) {
+			errorHolder.append("Value for key "+motherKey+" is not a map.\n");
+			return false;
+		}
+		@SuppressWarnings("unchecked")
+		Map<Object, Object> childMap = (Map<Object, Object>) childObj;
+		childMap.put(childKey, childValue);
+		return true;
+	}
 	
 	/**
 	 * @return a new settings map filled with default values suitable for the LAP trackers.
@@ -60,6 +91,21 @@ public class LAPUtils {
 		return settings;
 	}
 	
+
+	public static String echoFeaturePenalties(final Map<String, Double> featurePenalties) {
+		String str = "";
+		if (featurePenalties.isEmpty()) 
+			str += "    - no feature penalties\n";
+		else {
+			str += "    - with feature penalties:\n";
+			for (String feature : featurePenalties.keySet()) {
+				str += "      - "+feature.toString() + ": weight = " + String.format("%.1f", featurePenalties.get(feature)) + '\n';
+			}
+		}
+		return str;
+
+	}
+
 	/**
 	 * Compute the cost to link two spots, in the default way for the TrackMate plugin.
 	 * <p>
@@ -116,34 +162,99 @@ public class LAPUtils {
 	 * @param errorHolder a {@link StringBuilder} that will contain an error message if the check is 
 	 * not successful.
 	 */
-	public static final boolean checkSettingsValidity(final Map<String, Object> settings, final StringBuilder errorHolder) {
+	public static final boolean checkSettingsValidity(final Map<String, Object> settings, final StringBuilder str) {
 		if (null == settings) {
-			errorHolder.append("Settings map is null.\n");
+			str.append("Settings map is null.\n");
 			return false;
 		}
+
 		boolean ok = true;
-		// Frame to frame linking
-		ok = ok & checkParameter(settings, KEY_LINKING_MAX_DISTANCE, Double.class, errorHolder);
-		ok = ok & checkParameter(settings, KEY_LINKING_FEATURE_PENALTIES, Map.class, errorHolder);
-		// Gap closing
-		ok = ok & checkParameter(settings, KEY_ALLOW_GAP_CLOSING, Boolean.class, errorHolder);
-		ok = ok & checkParameter(settings, KEY_GAP_CLOSING_MAX_DISTANCE, Double.class, errorHolder);
-		ok = ok & checkParameter(settings, KEY_GAP_CLOSING_MAX_FRAME_GAP, Integer.class, errorHolder);
+		// Linking
+		ok = ok & checkParameter(settings, KEY_LINKING_MAX_DISTANCE, Double.class, str);
+		ok = ok & checkFeatureMap(settings, KEY_LINKING_FEATURE_PENALTIES, str);
+		// Gap-closing
+		ok = ok & checkParameter(settings, KEY_ALLOW_GAP_CLOSING, Boolean.class, str);
+		ok = ok & checkParameter(settings, KEY_GAP_CLOSING_MAX_DISTANCE, Double.class, str);
+		ok = ok & checkParameter(settings, KEY_GAP_CLOSING_MAX_FRAME_GAP, Integer.class, str);
+		ok = ok & checkFeatureMap(settings, KEY_GAP_CLOSING_FEATURE_PENALTIES, str);
 		// Splitting
-		ok = ok & checkParameter(settings, KEY_ALLOW_TRACK_SPLITTING, Boolean.class, errorHolder);
-		ok = ok & checkParameter(settings, KEY_SPLITTING_MAX_DISTANCE, Double.class, errorHolder);
-		ok = ok & checkParameter(settings, KEY_SPLITTING_FEATURE_PENALTIES, Map.class, errorHolder);
+		ok = ok & checkParameter(settings, KEY_ALLOW_TRACK_SPLITTING, Boolean.class, str);
+		ok = ok & checkParameter(settings, KEY_SPLITTING_MAX_DISTANCE, Double.class, str);
+		ok = ok & checkFeatureMap(settings, KEY_SPLITTING_FEATURE_PENALTIES, str);
 		// Merging
-		ok = ok & checkParameter(settings, KEY_ALLOW_TRACK_MERGING, Boolean.class, errorHolder);
-		ok = ok & checkParameter(settings, KEY_MERGING_MAX_DISTANCE, Double.class, errorHolder);
-		ok = ok & checkParameter(settings, KEY_MERGING_FEATURE_PENALTIES, Map.class, errorHolder);
-		// Other
-		ok = ok & checkParameter(settings, KEY_ALTERNATIVE_LINKING_COST_FACTOR, Double.class, errorHolder);
-		ok = ok & checkParameter(settings, KEY_CUTOFF_PERCENTILE, Double.class, errorHolder);
-		ok = ok & checkParameter(settings, KEY_BLOCKING_VALUE, Double.class, errorHolder);
+		ok = ok & checkParameter(settings, KEY_ALLOW_TRACK_MERGING, Boolean.class, str);
+		ok = ok & checkParameter(settings, KEY_MERGING_MAX_DISTANCE, Double.class, str);
+		ok = ok & checkFeatureMap(settings, KEY_MERGING_FEATURE_PENALTIES, str);
+		// Others
+		ok = ok & checkParameter(settings, KEY_CUTOFF_PERCENTILE, Double.class, str);
+		ok = ok & checkParameter(settings, KEY_ALTERNATIVE_LINKING_COST_FACTOR, Double.class, str);
+		ok = ok & checkParameter(settings, KEY_BLOCKING_VALUE, Double.class, str);
+		
+		// Check keys 
+		List<String> mandatoryKeys = new ArrayList<String>();
+		mandatoryKeys.add(KEY_LINKING_MAX_DISTANCE);
+		mandatoryKeys.add(KEY_ALLOW_GAP_CLOSING);
+		mandatoryKeys.add(KEY_GAP_CLOSING_MAX_DISTANCE);
+		mandatoryKeys.add(KEY_GAP_CLOSING_MAX_FRAME_GAP);
+		mandatoryKeys.add(KEY_ALLOW_TRACK_SPLITTING);
+		mandatoryKeys.add(KEY_SPLITTING_MAX_DISTANCE);
+		mandatoryKeys.add(KEY_ALLOW_TRACK_MERGING);
+		mandatoryKeys.add(KEY_MERGING_MAX_DISTANCE);
+		mandatoryKeys.add(KEY_ALTERNATIVE_LINKING_COST_FACTOR);
+		mandatoryKeys.add(KEY_CUTOFF_PERCENTILE);
+		mandatoryKeys.add(KEY_BLOCKING_VALUE);
+		List<String> optionalKeys = new ArrayList<String>();
+		optionalKeys.add(KEY_LINKING_FEATURE_PENALTIES);
+		optionalKeys.add(KEY_GAP_CLOSING_FEATURE_PENALTIES);
+		optionalKeys.add(KEY_SPLITTING_FEATURE_PENALTIES);
+		optionalKeys.add(KEY_MERGING_FEATURE_PENALTIES);
+		ok = ok & checkMapKeys(settings, mandatoryKeys, optionalKeys, str);
+
 		return ok;
 	}
 	
+
+	/**
+	 * Check the validity of a feature penalty map in a settings map. 
+	 * <p>
+	 * A feature penalty setting is valid if it is either <code>null</code> (not here, that is)
+	 * or an actual Map<String, Double>. Then, all its keys must be Strings and all its values 
+	 * as well.
+	 * 
+	 * @param map the map to inspect.
+	 * @param key  the key that should map to a feature penalty map.
+	 * @param errorHolder will be appended with an error message.
+	 * @return  true if the feature penalty map is valid.
+	 */
+	@SuppressWarnings("rawtypes")
+	public static final boolean checkFeatureMap(final Map<String, Object> map, final String featurePenaltiesKey, final StringBuilder errorHolder) {
+		Object obj = map.get(featurePenaltiesKey);
+		if (null == obj) {
+			return true; // NOt here is acceptable
+		}
+		if (!(obj instanceof Map)) {
+			errorHolder.append("Feature penalty map is not of the right class. Expected a Map, got a "+obj.getClass().getName()+".\n");
+			return false;
+		}
+		boolean ok = true;
+		Map fpMap = (Map) obj;
+		Set fpKeys = fpMap.keySet();
+		for(Object fpKey : fpKeys) {
+			if (!(fpKey instanceof String)) {
+				ok = false;
+				errorHolder.append("One key ("+fpKey.toString()+") in the map is not of the right class.\n" +
+						"Expected String, got "+fpKey.getClass().getName()+".\n"); 
+			}
+			Object fpVal = fpMap.get(fpKey);
+			if (!(fpVal instanceof String)) {
+				ok = false;
+				errorHolder.append("The value for key "+fpVal.toString()+" in the map is not of the right class.\n" +
+						"Expected String, got "+fpVal.getClass().getName()+".\n"); 
+			}
+		}
+		return ok;
+	}
+
 	public static final void echoMatrix(final double[][] m) {
 		int nlines = m.length;
 		if (nlines == 0) {

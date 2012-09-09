@@ -1,6 +1,7 @@
 package fiji.plugin.trackmate.tracking;
 
 import java.util.HashMap;
+import java.util.Map;
 
 import fiji.plugin.trackmate.Spot;
 
@@ -52,7 +53,7 @@ public interface TrackerKeys {
 	public static final String KEY_LINKING_FEATURE_PENALTIES = "LINKING_FEATURE_PENALTIES";
 	
 	/** A default value for the {@value #KEY_LINKING_FEATURE_PENALTIES} parameter.*/
-	public static final HashMap<String, Double> DEFAULT_LINKING_FEATURE_PENALTIES = new HashMap<String, Double>();
+	public static final Map<String, Double> DEFAULT_LINKING_FEATURE_PENALTIES = new HashMap<String, Double>();
 
 	/** Key for the parameter specifying whether we allow the detection of gap-closing events.
 	 * Expected values are {@link Boolean}s. */
@@ -86,7 +87,7 @@ public interface TrackerKeys {
 	public static final String KEY_GAP_CLOSING_FEATURE_PENALTIES = "GAP_CLOSING_FEATURE_PENALTIES";
 	
 	/** A default value for the {@value #KEY_GAP_CLOSING_FEATURE_PENALTIES} parameter. */
-	public static final HashMap<String, Double> DEFAULT_GAP_CLOSING_FEATURE_PENALTIES = new HashMap<String, Double>();
+	public static final Map<String, Double> DEFAULT_GAP_CLOSING_FEATURE_PENALTIES = new HashMap<String, Double>();
 
 	/** Key for the parameter specifying whether we allow the detection of merging events.
 	 * Expected values are {@link Boolean}s. */
@@ -111,7 +112,7 @@ public interface TrackerKeys {
 	public static final String KEY_MERGING_FEATURE_PENALTIES = "MERGING_FEATURE_PENALTIES";
 	
 	/** A default value for the {@value #KEY_MERGING_FEATURE_PENALTIES} parameter.  */
-	public static final HashMap<String, Double> DEFAULT_MERGING_FEATURE_PENALTIES = new HashMap<String, Double>();
+	public static final Map<String, Double> DEFAULT_MERGING_FEATURE_PENALTIES = new HashMap<String, Double>();
 
 	/** Key for the parameter specifying whether we allow the detection of splitting events.
 	 * Expected values are {@link Boolean}s. */
@@ -136,7 +137,7 @@ public interface TrackerKeys {
 	public static final String KEY_SPLITTING_FEATURE_PENALTIES = "SPLITTING_FEATURE_PENALTIES";
 	
 	/** A default value for the {@value #KEY_SPLITTING_FEATURE_PENALTIES} parameter.  */
-	public static final HashMap<String, Double> DEFAULT_SPLITTING_FEATURE_PENALTIES = new HashMap<String, Double>();
+	public static final Map<String, Double> DEFAULT_SPLITTING_FEATURE_PENALTIES = new HashMap<String, Double>();
 
 	/** Key for the parameter specifying the factor used to compute alternative linking costs.
 	 * Expected values are {@link Double}s.  */

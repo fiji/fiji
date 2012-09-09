@@ -2,13 +2,12 @@ package fiji.plugin.trackmate.tracking;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
-
-import net.imglib2.type.NativeType;
-import net.imglib2.type.numeric.RealType;
 
 import org.jgrapht.alg.ConnectivityInspector;
 import org.jgrapht.graph.DefaultWeightedEdge;
@@ -16,17 +15,13 @@ import org.jgrapht.graph.SimpleWeightedGraph;
 import org.junit.Test;
 
 import fiji.plugin.trackmate.Logger;
-import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.SpotImp;
-import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.features.spot.BlobDescriptiveStatistics;
-import fiji.plugin.trackmate.tracking.LAPTracker;
-import fiji.plugin.trackmate.tracking.TrackerKeys;
 
 
-public class LAPTrackerTest <T extends RealType<T> & NativeType<T> > {
+public class LAPTrackerTest implements TrackerKeys {
 
 	/**
 	 * Standard tracking
@@ -64,22 +59,12 @@ public class LAPTrackerTest <T extends RealType<T> & NativeType<T> > {
 		groups.add(group2);
 
 		// Set the tracking settings
-		TrackerKeys<T> trackerSettings = new TrackerKeys<T>();
-		trackerSettings.linkingDistanceCutOff = 2;
-		trackerSettings.allowGapClosing = false;
-
-		// Feed everything to the settings & model
-		TrackMateModel<T> model = new TrackMateModel<T>();
-		model.setFilteredSpots(spotCollection, false);
-
-		Settings<T> settings = model.getSettings();
-		settings.trackerSettings = trackerSettings;
-		settings.tracker = LAPTracker.NAME;
+		Map<String, Object> trackerSettings = LAPUtils.getDefaultLAPSettingsMap();
+		trackerSettings.put(KEY_LINKING_MAX_DISTANCE, 2);
+		trackerSettings.put(KEY_ALLOW_GAP_CLOSING, false);
 
 		// Instantiate tracker
-		LAPTracker<T> tracker = new LAPTracker<T>();
-		tracker.setModel(model);
-		tracker.setLogger(Logger.VOID_LOGGER);
+		LAPTracker tracker = new LAPTracker(spotCollection, trackerSettings, Logger.VOID_LOGGER);
 
 		// Check process
 		assertTrue(tracker.checkInput());
@@ -131,23 +116,17 @@ public class LAPTrackerTest <T extends RealType<T> & NativeType<T> > {
 		groups.add(group2);
 
 		// Set the tracking settings
-		TrackerKeys<T> trackerSettings = new TrackerKeys<T>();
-		trackerSettings.linkingDistanceCutOff = 2;
-		trackerSettings.allowGapClosing = false;
-		trackerSettings.linkingFeaturePenalties.put(BlobDescriptiveStatistics.MEAN_INTENSITY, 1d);
-
-		// Feed everything to the settings & model
-		TrackMateModel<T> model = new TrackMateModel<T>();
-		model.setFilteredSpots(spotCollection, false);
-
-		Settings<T> settings = model.getSettings();
-		settings.trackerSettings = trackerSettings;
-		settings.tracker = LAPTracker.NAME;
+		Map<String, Object> trackerSettings = LAPUtils.getDefaultLAPSettingsMap();
+		trackerSettings.put(KEY_LINKING_MAX_DISTANCE, 2);
+		trackerSettings.put(KEY_ALLOW_GAP_CLOSING, false);
+		StringBuilder errorHolder = new StringBuilder();
+		boolean ok = LAPUtils.addFeaturePenaltyToSettings(trackerSettings, KEY_LINKING_FEATURE_PENALTIES, BlobDescriptiveStatistics.MEAN_INTENSITY, 1d, errorHolder );
+		if (!ok) {
+			fail(errorHolder.toString());
+		}
 
 		// Instantiate tracker
-		LAPTracker<T> tracker = new LAPTracker<T>();
-		tracker.setModel(model);
-		tracker.setLogger(Logger.VOID_LOGGER);
+		LAPTracker tracker = new LAPTracker(spotCollection, trackerSettings, Logger.VOID_LOGGER);
 
 		// Check process
 		assertTrue(tracker.checkInput());
@@ -161,7 +140,6 @@ public class LAPTrackerTest <T extends RealType<T> & NativeType<T> > {
 
 
 	private static void verifyTracks(final SimpleWeightedGraph<Spot, DefaultWeightedEdge> graph, List<List<Spot>> groups, int nFrames) {
-
 
 		// Check that we have the right number of vertices
 		assertEquals("The tracking result graph has the wrong number of vertices, ", 

@@ -8,6 +8,7 @@ import fiji.plugin.trackmate.features.track.TrackFeatureAnalyzer;
 import fiji.plugin.trackmate.gui.TrackMateWizard;
 import fiji.plugin.trackmate.gui.WizardController;
 import fiji.plugin.trackmate.tracking.SpotTracker;
+import fiji.plugin.trackmate.util.CropImgView;
 import fiji.plugin.trackmate.util.TMUtils;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
 import fiji.plugin.trackmate.visualization.TrackMateSelectionView;
@@ -25,7 +26,6 @@ import net.imglib2.img.ImgPlus;
 import net.imglib2.multithreading.SimpleMultiThreading;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
-import net.imglib2.view.CropImgView;
 
 import org.jgrapht.graph.SimpleWeightedGraph;
 

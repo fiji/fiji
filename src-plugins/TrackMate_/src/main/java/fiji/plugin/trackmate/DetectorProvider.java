@@ -1,5 +1,6 @@
 package fiji.plugin.trackmate;
 
+import static fiji.plugin.trackmate.util.TMUtils.checkParameter;
 import ij.ImagePlus;
 
 import java.util.ArrayList;
@@ -141,30 +142,45 @@ public class DetectorProvider <T extends RealType<T> & NativeType<T>> extends Ab
 			return false;
 		}
 
+		StringBuilder errorHolder = new StringBuilder();
+		
 		if (currentKey.equals(ManualDetectorFactory.DETECTOR_KEY)) {
 
-			return readDoubleAttribute(element, settings, KEY_RADIUS);
+			return readDoubleAttribute(element, settings, KEY_RADIUS, errorHolder);
 
 		} else if (currentKey.equals(LogDetectorFactory.DETECTOR_KEY) 
 				|| currentKey.equals(DogDetectorFactory.DETECTOR_KEY)) {
 
-			return readDoubleAttribute(element, settings, KEY_RADIUS)
-					&& readDoubleAttribute(element, settings, KEY_THRESHOLD)
-					&& readBooleanAttribute(element, settings, KEY_DO_SUBPIXEL_LOCALIZATION)
-					&& readBooleanAttribute(element, settings, KEY_DO_MEDIAN_FILTERING);
+			ok = true;
+			ok = ok & readDoubleAttribute(element, settings, KEY_RADIUS, errorHolder);
+			ok = ok & readDoubleAttribute(element, settings, KEY_THRESHOLD, errorHolder);
+			ok = ok & readBooleanAttribute(element, settings, KEY_DO_SUBPIXEL_LOCALIZATION, errorHolder);
+			ok = ok & readBooleanAttribute(element, settings, KEY_DO_MEDIAN_FILTERING, errorHolder);
+			ok = ok & readIntegerAttribute(element, settings, KEY_TARGET_CHANNEL, errorHolder);
 
 		} else if (currentKey.equals(DownsampleLogDetectorFactory.DETECTOR_KEY)) {
 
-			return readDoubleAttribute(element, settings, KEY_RADIUS)
-					&& readDoubleAttribute(element, settings, KEY_THRESHOLD)
-					&& readIntegerAttribute(element, settings, KEY_DOWNSAMPLE_FACTOR);
+			ok = ok & readDoubleAttribute(element, settings, KEY_RADIUS, errorHolder);
+			ok = ok & readDoubleAttribute(element, settings, KEY_THRESHOLD, errorHolder);
+			ok = ok & readIntegerAttribute(element, settings, KEY_DOWNSAMPLE_FACTOR, errorHolder);
+			ok = ok & readIntegerAttribute(element, settings, KEY_TARGET_CHANNEL, errorHolder);
 
 		} else {
 
 			errorMessage = "Unknow detector factory key: "+currentKey+".\n";
 			return false;
-
 		}
+		
+		if (!checkSettingsValidity(settings)) {
+			ok = false;
+			errorHolder.append(errorMessage); // get the error from validoty check
+		}
+		
+		if (!ok) {
+			errorMessage = errorHolder.toString();
+		}
+		
+		return ok;
 	}
 
 

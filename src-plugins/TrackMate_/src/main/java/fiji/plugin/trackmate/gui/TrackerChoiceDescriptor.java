@@ -2,10 +2,10 @@ package fiji.plugin.trackmate.gui;
 
 import java.awt.Component;
 import java.util.List;
-import java.util.Map;
 
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
+import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.TrackMate_;
 import fiji.plugin.trackmate.TrackerProvider;
 
@@ -62,17 +62,20 @@ public class TrackerChoiceDescriptor <T extends RealType<T> & NativeType<T>> imp
 		TrackerProvider<T> provider = plugin.getTrackerProvider();
 		int index = component.jComboBoxChoice.getSelectedIndex();
 		String key = provider.getKeys().get(index);
-		provider.select(key);
-
-		// Set the settings field of the model
-		plugin.getModel().getSettings().tracker = provider.getTracker();
-
-		// Compare current settings with default ones, and substitute default ones
-		// only if the old ones are absent or not compatible with it.
-		Map<String, Object> currentSettings = plugin.getModel().getSettings().detectorSettings;
-		if (!provider.checkSettingsValidity(currentSettings)) {
-			Map<String, Object> defaultSettings = provider.getDefaultSettings();
-			plugin.getModel().getSettings().detectorSettings = defaultSettings;
+		
+		/* The next line will setup the TrackerProvider to return everything
+		 * linked to the targeted tracker when required. We do not instantiate
+		 * the tracker yet, because it would not receive the right settings, that
+		 * will be generated in the next GUI step.  
+		 * We nonetheless do a basic checking to ensure we received a known tracker. */
+		boolean ok = provider.select(key);
+		
+		// Check
+		if (!ok) {
+			Logger logger = wizard.getLogger();
+			logger.error("Choice panel returned a tracker unkown to this plugin:.\n" +
+					provider.getErrorMessage()+
+					"Using default "+provider.getCurrentKey());
 		}
 		
 		// Instantiate next descriptor for the wizard
@@ -98,6 +101,7 @@ public class TrackerChoiceDescriptor <T extends RealType<T> & NativeType<T>> imp
 	}
 
 	void setCurrentChoiceFromPlugin() {
+		
 		String key;
 		if (null != plugin.getModel().getSettings().tracker) {
 			key = plugin.getModel().getSettings().tracker.getKey();
@@ -105,6 +109,7 @@ public class TrackerChoiceDescriptor <T extends RealType<T> & NativeType<T>> imp
 			key = plugin.getTrackerProvider().getCurrentKey(); // back to default 
 		}
 		int index = plugin.getTrackerProvider().getKeys().indexOf(key);
+		
 		if (index < 0) {
 			wizard.getLogger().error("[TrackerChoiceDescriptor] Cannot find tracker named "+key+" in current plugin.");
 			return;

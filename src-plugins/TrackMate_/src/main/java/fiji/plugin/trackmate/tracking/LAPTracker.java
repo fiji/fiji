@@ -294,7 +294,7 @@ public class LAPTracker extends MultiThreadedBenchmarkAlgorithm implements SpotT
 	@Override
 	public boolean process() {
 		long tend, tstart;
-
+		reset();
 		processingTime = 0;
 		
 		// Step 0 - Extract parameter values

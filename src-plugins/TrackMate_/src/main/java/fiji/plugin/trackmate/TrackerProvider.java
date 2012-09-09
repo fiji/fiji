@@ -1,5 +1,8 @@
 package fiji.plugin.trackmate;
 
+import static fiji.plugin.trackmate.util.TMUtils.checkMapKeys;
+import static fiji.plugin.trackmate.util.TMUtils.checkParameter;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -10,7 +13,6 @@ import net.imglib2.type.numeric.RealType;
 
 import org.jdom.Element;
 
-import fiji.plugin.trackmate.detection.DownsampleLogDetectorFactory;
 import fiji.plugin.trackmate.detection.SpotDetector;
 import fiji.plugin.trackmate.gui.ConfigurationPanel;
 import fiji.plugin.trackmate.gui.LAPTrackerSettingsPanel;
@@ -32,13 +34,6 @@ public class TrackerProvider <T extends RealType<T> & NativeType<T>> extends Abs
 	protected static final String XML_ELEMENT_NAME_SPLITTING = "TrackSplitting";
 	protected static final String XML_ELEMENT_NAME_FEATURE_PENALTIES = "FeaturePenalties";
 
-	/** The tracker names, in the order they will appear in the GUI.
-	 * These names will be used as keys to access relevant tracker classes.  */
-	protected List<String> keys;
-	protected String currentKey = SimpleFastLAPTracker.TRACKER_KEY;
-	protected String errorMessage;
-	private ArrayList<String> names;
-	private ArrayList<String> infoTexts;
 	protected final TrackMateModel<T> model;
 
 	/*
@@ -77,7 +72,7 @@ public class TrackerProvider <T extends RealType<T> & NativeType<T>> extends Abs
 		// keys
 		keys = new ArrayList<String>();
 		keys.add(SimpleFastLAPTracker.TRACKER_KEY);
-		keys.add(SimpleFastLAPTracker.TRACKER_KEY);
+		keys.add(FastLAPTracker.TRACKER_KEY);
 		keys.add(NearestNeighborTracker.TRACKER_KEY);
 		// infoTexts
 		infoTexts = new ArrayList<String>();
@@ -90,27 +85,27 @@ public class TrackerProvider <T extends RealType<T> & NativeType<T>> extends Abs
 		names.add(FastLAPTracker.NAME);
 		names.add(NearestNeighborTracker.NAME);
 	}
-	
+
 	/**
 	 * @return a new instance of the target tracker identified by the key parameter. 
 	 * If the key is unknown to this factory, <code>null</code> is returned. 
 	 */
 	public SpotTracker getTracker() {
-		
+
 		final Map<String, Object> settings = model.getSettings().trackerSettings;
 		final SpotCollection spots = model.getFilteredSpots();
 		final Logger logger = model.getLogger();
-		
+
 		if (currentKey.equals(SimpleFastLAPTracker.TRACKER_KEY)) {
 			return new SimpleFastLAPTracker(spots, settings, logger);
-			
+
 		} else if (currentKey.equals(FastLAPTracker.TRACKER_KEY)) {
 			return new FastLAPTracker(spots, settings, logger);
-			
+
 		} else if (currentKey.equals(NearestNeighborTracker.TRACKER_KEY)) {
 			final double maxDist = (Double) settings.get(KEY_LINKING_MAX_DISTANCE);
 			return new NearestNeighborTracker(spots, maxDist, logger);
-			
+
 		} else {
 			return null;
 		}
@@ -123,18 +118,18 @@ public class TrackerProvider <T extends RealType<T> & NativeType<T>> extends Abs
 	public String getInfoText() {
 		if (currentKey.equals(SimpleFastLAPTracker.TRACKER_KEY)) {
 			return SimpleFastLAPTracker.INFO_TEXT;
-			
+
 		} else if (currentKey.equals(FastLAPTracker.TRACKER_KEY)) {
 			return FastLAPTracker.INFO_TEXT;
-			
+
 		} else if (currentKey.equals(NearestNeighborTracker.TRACKER_KEY)) {
 			return NearestNeighborTracker.INFO_TEXT;
-			
+
 		} else {
 			return null;
 		}
 	}
-	
+
 	/**
 	 * @return the name of the target tracker,
 	 * or <code>null</code> if it is unknown to this factory.
@@ -142,13 +137,13 @@ public class TrackerProvider <T extends RealType<T> & NativeType<T>> extends Abs
 	public String getName() {
 		if (currentKey.equals(SimpleFastLAPTracker.TRACKER_KEY)) {
 			return SimpleFastLAPTracker.NAME;
-			
+
 		} else if (currentKey.equals(FastLAPTracker.TRACKER_KEY)) {
 			return FastLAPTracker.NAME;
-			
+
 		} else if (currentKey.equals(NearestNeighborTracker.TRACKER_KEY)) {
 			return NearestNeighborTracker.NAME;
-			
+
 		} else {
 			return null;
 		}
@@ -161,26 +156,26 @@ public class TrackerProvider <T extends RealType<T> & NativeType<T>> extends Abs
 	 */
 
 	public ConfigurationPanel getTrackerConfigurationPanel() 	{
-		
+
 		String trackerName = getName();
 		String spaceUnits = model.getSettings().spaceUnits;
 		List<String> features = model.getFeatureModel().getSpotFeatures();
 		Map<String, String> featureNames = model.getFeatureModel().getSpotFeatureNames();
-		
+
 		if (currentKey.equals(SimpleFastLAPTracker.TRACKER_KEY)) {
 			return new SimpleLAPTrackerSettingsPanel(trackerName, SimpleFastLAPTracker.INFO_TEXT, spaceUnits);
-			
+
 		} else if (currentKey.equals(FastLAPTracker.TRACKER_KEY)) {
 			return new LAPTrackerSettingsPanel(trackerName, spaceUnits, features, featureNames);
-			
+
 		} else if (currentKey.equals(NearestNeighborTracker.TRACKER_KEY)) {
 			return new NearestNeighborTrackerSettingsPanel(trackerName, NearestNeighborTracker.INFO_TEXT, spaceUnits);
-			
+
 		} else {
 			return null;
 		}
 	}
-	
+
 	/**
 	 * @return a new default settings map suitable for the target tracker identified by 
 	 * the {@link #currentKey}. Settings are instantiated with default values.  
@@ -191,18 +186,18 @@ public class TrackerProvider <T extends RealType<T> & NativeType<T>> extends Abs
 
 		if (currentKey.equals(SimpleFastLAPTracker.TRACKER_KEY) || currentKey.equals(FastLAPTracker.TRACKER_KEY)) {
 			settings = LAPUtils.getDefaultLAPSettingsMap();
-			
+
 		} else if (currentKey.equals(NearestNeighborTracker.TRACKER_KEY)) {
 			settings = new HashMap<String, Object>();
 			settings.put(KEY_LINKING_MAX_DISTANCE, DEFAULT_LINKING_MAX_DISTANCE);
-			
+
 		} else {
 			return null;
 		}
 		return settings;
 
 	}
-	
+
 	/**
 	 * Marshall a settings map to a JDom element, ready for saving to XML. 
 	 * The element is <b>updated</b> with new attributes.
@@ -214,12 +209,12 @@ public class TrackerProvider <T extends RealType<T> & NativeType<T>> extends Abs
 	 * @return true if marshalling was successful. If not, check {@link #getErrorMessage()}
 	 */
 	public boolean marshall(final Map<String, Object> settings, Element element) {
-		
+
 		element.setAttribute(XML_ATTRIBUTE_TRACKER_NAME, currentKey);
 		if (currentKey.equals(SimpleFastLAPTracker.TRACKER_KEY) || currentKey.equals(FastLAPTracker.TRACKER_KEY)) {
-			
+
 			boolean ok = true;
-			
+
 			// Linking
 			Element linkingElement = new Element(XML_ELEMENT_NAME_LINKING);
 			ok = ok & writeAttribute(settings, linkingElement, KEY_LINKING_MAX_DISTANCE, Double.class);
@@ -230,7 +225,7 @@ public class TrackerProvider <T extends RealType<T> & NativeType<T>> extends Abs
 			marshallMap(lfpm, lfpElement);
 			linkingElement.addContent(lfpElement);
 			element.addContent(linkingElement);
-			
+
 			// Gap closing
 			Element gapClosingElement = new Element(XML_ELEMENT_NAME_GAP_CLOSING);
 			ok = ok & writeAttribute(settings, gapClosingElement, KEY_ALLOW_GAP_CLOSING, Boolean.class);
@@ -243,7 +238,7 @@ public class TrackerProvider <T extends RealType<T> & NativeType<T>> extends Abs
 			marshallMap(gcfpm, gcfpElement);
 			gapClosingElement.addContent(gcfpElement);
 			element.addContent(gapClosingElement);
-			
+
 			// Track splitting
 			Element trackSplittingElement = new Element(XML_ELEMENT_NAME_SPLITTING);
 			ok = ok & writeAttribute(settings, trackSplittingElement, KEY_ALLOW_TRACK_SPLITTING, Boolean.class);
@@ -255,7 +250,7 @@ public class TrackerProvider <T extends RealType<T> & NativeType<T>> extends Abs
 			marshallMap(tsfpm, tsfpElement);
 			trackSplittingElement.addContent(tsfpElement);
 			element.addContent(trackSplittingElement);
-			
+
 			// Track merging
 			Element trackMergingElement = new Element(XML_ELEMENT_NAME_MERGING);
 			ok = ok & writeAttribute(settings, trackMergingElement, KEY_ALLOW_TRACK_MERGING, Boolean.class);
@@ -267,17 +262,17 @@ public class TrackerProvider <T extends RealType<T> & NativeType<T>> extends Abs
 			marshallMap(tmfpm, tmfpElement);
 			trackMergingElement.addContent(tmfpElement);
 			element.addContent(trackMergingElement);
-			
+
 			// Others
 			ok = ok & writeAttribute(settings, element, KEY_CUTOFF_PERCENTILE, Double.class);
 			ok = ok & writeAttribute(settings, element, KEY_ALTERNATIVE_LINKING_COST_FACTOR, Double.class);
 			ok = ok & writeAttribute(settings, element, KEY_BLOCKING_VALUE, Double.class);
-			
+
 			return ok;
-			
+
 		} else if (currentKey.equals(NearestNeighborTracker.TRACKER_KEY)) {
 			return writeAttribute(settings, element, KEY_LINKING_MAX_DISTANCE, Double.class);
-			
+
 		} else {
 
 			errorMessage = "Unknow detector factory key: "+currentKey+".\n";
@@ -299,7 +294,7 @@ public class TrackerProvider <T extends RealType<T> & NativeType<T>> extends Abs
 	 * @return true if unmarshalling was successful. If not, check {@link #getErrorMessage()}
 	 */
 	public boolean unmarshall(Element element, final Map<String, Object> settings) {
-		
+
 		settings.clear();
 
 		String trackerKey = element.getAttributeValue(XML_ATTRIBUTE_TRACKER_NAME);
@@ -312,41 +307,41 @@ public class TrackerProvider <T extends RealType<T> & NativeType<T>> extends Abs
 
 		if (currentKey.equals(SimpleFastLAPTracker.TRACKER_KEY) || currentKey.equals(FastLAPTracker.TRACKER_KEY)) {
 			StringBuilder errorHolder = new StringBuilder(); 
-			
+
 			// Linking
 			Element linkingElement = element.getChild(XML_ELEMENT_NAME_LINKING);
 			if (null == linkingElement) {
 				errorHolder.append("Could not found the "+XML_ELEMENT_NAME_LINKING+" element in XML.\n");
 				ok = false;
-				
+
 			} else {
-				
-				ok = ok & readDoubleAttribute(linkingElement, settings, KEY_LINKING_MAX_DISTANCE);
+
+				ok = ok & readDoubleAttribute(linkingElement, settings, KEY_LINKING_MAX_DISTANCE, errorHolder);
 				// feature penalties
 				Map<String, Double> lfpMap = new HashMap<String, Double>();
 				Element lfpElement = linkingElement.getChild(XML_ELEMENT_NAME_FEATURE_PENALTIES);
 				if (null != lfpElement) {
-					ok = ok & unmarshallMap(lfpElement , lfpMap);
+					ok = ok & unmarshallMap(lfpElement , lfpMap, errorHolder);
 				}
 				settings.put(KEY_LINKING_FEATURE_PENALTIES, lfpMap);
 			}
-			
+
 			// Gap closing
 			Element gapClosingElement = element.getChild(XML_ELEMENT_NAME_GAP_CLOSING);
 			if (null == gapClosingElement) {
 				errorHolder.append("Could not found the "+XML_ELEMENT_NAME_GAP_CLOSING+" element in XML.\n");
 				ok = false;
-				
+
 			} else {
 
-				ok = ok & readBooleanAttribute(gapClosingElement, settings, KEY_ALLOW_GAP_CLOSING);
-				ok = ok & readIntegerAttribute(gapClosingElement, settings, KEY_GAP_CLOSING_MAX_FRAME_GAP);
-				ok = ok & readDoubleAttribute(gapClosingElement, settings, KEY_GAP_CLOSING_MAX_DISTANCE);
+				ok = ok & readBooleanAttribute(gapClosingElement, settings, KEY_ALLOW_GAP_CLOSING, errorHolder);
+				ok = ok & readIntegerAttribute(gapClosingElement, settings, KEY_GAP_CLOSING_MAX_FRAME_GAP, errorHolder);
+				ok = ok & readDoubleAttribute(gapClosingElement, settings, KEY_GAP_CLOSING_MAX_DISTANCE, errorHolder);
 				// feature penalties
 				Map<String, Double> gcfpm = new HashMap<String, Double>();
 				Element gcfpElement = gapClosingElement.getChild(XML_ELEMENT_NAME_FEATURE_PENALTIES);
 				if (null != gcfpElement) {
-					ok = ok & unmarshallMap(gcfpElement, gcfpm);
+					ok = ok & unmarshallMap(gcfpElement, gcfpm, errorHolder);
 				}
 				settings.put(KEY_GAP_CLOSING_FEATURE_PENALTIES, gcfpm);
 			}
@@ -356,16 +351,16 @@ public class TrackerProvider <T extends RealType<T> & NativeType<T>> extends Abs
 			if (null == trackSplittingElement) {
 				errorHolder.append("Could not found the "+XML_ELEMENT_NAME_SPLITTING+" element in XML.\n");
 				ok = false;
-				
+
 			} else {
-				
-				ok = ok & readBooleanAttribute(trackSplittingElement, settings, KEY_ALLOW_TRACK_SPLITTING);
-				ok = ok & readDoubleAttribute(trackSplittingElement, settings, KEY_SPLITTING_MAX_DISTANCE);
+
+				ok = ok & readBooleanAttribute(trackSplittingElement, settings, KEY_ALLOW_TRACK_SPLITTING, errorHolder);
+				ok = ok & readDoubleAttribute(trackSplittingElement, settings, KEY_SPLITTING_MAX_DISTANCE, errorHolder);
 				// feature penalties
 				Map<String, Double> tsfpm = new HashMap<String, Double>();
 				Element tsfpElement = trackSplittingElement.getChild(XML_ELEMENT_NAME_FEATURE_PENALTIES);
 				if (null != tsfpElement) {
-					ok = ok & unmarshallMap(tsfpElement, tsfpm);
+					ok = ok & unmarshallMap(tsfpElement, tsfpm, errorHolder);
 				}
 				settings.put(KEY_SPLITTING_FEATURE_PENALTIES, tsfpm);
 			}
@@ -378,27 +373,42 @@ public class TrackerProvider <T extends RealType<T> & NativeType<T>> extends Abs
 
 			} else {
 
-				ok = ok & readBooleanAttribute(trackMergingElement, settings, KEY_ALLOW_TRACK_MERGING);
-				ok = ok & readDoubleAttribute(trackMergingElement, settings, KEY_MERGING_MAX_DISTANCE);
+				ok = ok & readBooleanAttribute(trackMergingElement, settings, KEY_ALLOW_TRACK_MERGING, errorHolder);
+				ok = ok & readDoubleAttribute(trackMergingElement, settings, KEY_MERGING_MAX_DISTANCE, errorHolder);
 				// feature penalties
 				Map<String, Double> tmfpm = new HashMap<String, Double>();
 				Element tmfpElement = trackMergingElement.getChild(XML_ELEMENT_NAME_FEATURE_PENALTIES);
 				if (null != tmfpElement) {
-					ok = ok & unmarshallMap(tmfpElement, tmfpm);
+					ok = ok & unmarshallMap(tmfpElement, tmfpm, errorHolder);
 				}
 				settings.put(KEY_MERGING_FEATURE_PENALTIES, tmfpm);
 			}
 
 			// Others
-			ok = ok & readDoubleAttribute(element, settings, KEY_CUTOFF_PERCENTILE);
-			ok = ok & readDoubleAttribute(element, settings, KEY_ALTERNATIVE_LINKING_COST_FACTOR);
-			ok = ok & readDoubleAttribute(element, settings, KEY_BLOCKING_VALUE);
+			ok = ok & readDoubleAttribute(element, settings, KEY_CUTOFF_PERCENTILE, errorHolder);
+			ok = ok & readDoubleAttribute(element, settings, KEY_ALTERNATIVE_LINKING_COST_FACTOR, errorHolder);
+			ok = ok & readDoubleAttribute(element, settings, KEY_BLOCKING_VALUE, errorHolder);
+
+			if (!checkSettingsValidity(settings)) {
+				ok = false;
+				errorHolder.append(errorMessage); // append validity check message
+			}
 
 			if (!ok) {
 				errorMessage = errorHolder.toString();
 			}
 			return ok;
 
+		} else if (currentKey.equals(NearestNeighborTracker.TRACKER_KEY)) {
+			
+			StringBuilder errorHolder = new StringBuilder();
+			ok = ok & readDoubleAttribute(element, settings, KEY_LINKING_MAX_DISTANCE, errorHolder );
+			if (!ok) {
+				errorMessage = errorHolder.toString();
+			}
+			return ok;
+			
+			
 		} else {
 
 			errorMessage = "Unknow tracker key: "+currentKey+".\n";
@@ -417,7 +427,7 @@ public class TrackerProvider <T extends RealType<T> & NativeType<T>> extends Abs
 	public List<String> getTrackerInfoTexts() {
 		return infoTexts;
 	}
-	
+
 	/**  @return a list of the tracker names available through this provider.  */
 	public List<String> getTrackerNames() {
 		return names;
@@ -434,58 +444,19 @@ public class TrackerProvider <T extends RealType<T> & NativeType<T>> extends Abs
 			errorMessage = "Settings map is null.\n";
 			return false;
 		}
-		
+
 		StringBuilder str = new StringBuilder();
 
 		if (currentKey.equals(FastLAPTracker.TRACKER_KEY) 
 				|| currentKey.equals(SimpleFastLAPTracker.TRACKER_KEY)) {
 
-			// Check non-map parameters
-			boolean ok = true;
-			// Linking
-			ok = ok & checkParameter(settings, KEY_LINKING_MAX_DISTANCE, Double.class, str);
-			ok = ok & checkFeatureMap(settings, KEY_LINKING_FEATURE_PENALTIES, str);
-			// Gap-closing
-			ok = ok & checkParameter(settings, KEY_ALLOW_GAP_CLOSING, Boolean.class, str);
-			ok = ok & checkParameter(settings, KEY_GAP_CLOSING_MAX_DISTANCE, Double.class, str);
-			ok = ok & checkParameter(settings, KEY_GAP_CLOSING_MAX_FRAME_GAP, Integer.class, str);
-			ok = ok & checkFeatureMap(settings, KEY_GAP_CLOSING_FEATURE_PENALTIES, str);
-			// Splitting
-			ok = ok & checkParameter(settings, KEY_ALLOW_TRACK_SPLITTING, Boolean.class, str);
-			ok = ok & checkParameter(settings, KEY_SPLITTING_MAX_DISTANCE, Double.class, str);
-			ok = ok & checkFeatureMap(settings, KEY_SPLITTING_FEATURE_PENALTIES, str);
-			// Merging
-			ok = ok & checkParameter(settings, KEY_ALLOW_TRACK_MERGING, Boolean.class, str);
-			ok = ok & checkParameter(settings, KEY_MERGING_MAX_DISTANCE, Double.class, str);
-			ok = ok & checkFeatureMap(settings, KEY_MERGING_FEATURE_PENALTIES, str);
-			// Others
-			ok = ok & checkParameter(settings, KEY_CUTOFF_PERCENTILE, Double.class, str);
-			ok = ok & checkParameter(settings, KEY_ALTERNATIVE_LINKING_COST_FACTOR, Double.class, str);
-			ok = ok & checkParameter(settings, KEY_BLOCKING_VALUE, Double.class, str);
-			
-			// Check keys 
-			List<String> mandatoryKeys = new ArrayList<String>();
-			mandatoryKeys.add(KEY_LINKING_MAX_DISTANCE);
-			mandatoryKeys.add(KEY_ALLOW_GAP_CLOSING);
-			mandatoryKeys.add(KEY_GAP_CLOSING_MAX_DISTANCE);
-			mandatoryKeys.add(KEY_GAP_CLOSING_MAX_FRAME_GAP);
-			mandatoryKeys.add(KEY_ALLOW_TRACK_SPLITTING);
-			mandatoryKeys.add(KEY_SPLITTING_MAX_DISTANCE);
-			mandatoryKeys.add(KEY_ALLOW_TRACK_MERGING);
-			mandatoryKeys.add(KEY_MERGING_MAX_DISTANCE);
-			List<String> optionalKeys = new ArrayList<String>();
-			optionalKeys.add(KEY_LINKING_FEATURE_PENALTIES);
-			optionalKeys.add(KEY_GAP_CLOSING_FEATURE_PENALTIES);
-			optionalKeys.add(KEY_SPLITTING_FEATURE_PENALTIES);
-			optionalKeys.add(KEY_MERGING_FEATURE_PENALTIES);
-			ok = ok & checkMapKeys(settings, mandatoryKeys, optionalKeys, str);
-			
+			boolean ok = LAPUtils.checkSettingsValidity(settings, str);
 			if (!ok) {
 				errorMessage = str.toString();
 			}
 			return ok;
 
-		} else if (currentKey.equals(DownsampleLogDetectorFactory.DETECTOR_KEY)) {
+		} else if (currentKey.equals(NearestNeighborTracker.TRACKER_KEY)) {
 
 			boolean ok = true;
 			ok = ok & checkParameter(settings, KEY_LINKING_MAX_DISTANCE, Double.class, str);
@@ -505,21 +476,53 @@ public class TrackerProvider <T extends RealType<T> & NativeType<T>> extends Abs
 
 		}
 	}
-	
 
-	private static String echoFeaturePenalties(final Map<String, Double> featurePenalties) {
-		String str = "";
-		if (featurePenalties.isEmpty()) 
-			str += "    - no feature penalties\n";
-		else {
-			str += "    - with feature penalties:\n";
-			for (String feature : featurePenalties.keySet()) {
-				str += "      - "+feature.toString() + ": weight = " + String.format("%.1f", featurePenalties.get(feature)) + '\n';
-			}
+	/**
+	 * A utility method that builds a string representation of a settings map
+	 * owing to the currently selected tracker in this provider.
+	 */
+	@SuppressWarnings("unchecked")
+	public String toString(Map<String, Object> sm) {
+
+		if (!checkSettingsValidity(sm)) {
+			return errorMessage;
 		}
-		return str;
+		
+		StringBuilder str = new StringBuilder();
+		if (currentKey.equals(FastLAPTracker.TRACKER_KEY) || currentKey.equals(SimpleFastLAPTracker.TRACKER_KEY)) {
+			
+			str.append("  Linking conditions:\n");
+			str.append(String.format("    - max distance: %.1f\n", (Double) sm.get(KEY_LINKING_MAX_DISTANCE)));
+			str.append(LAPUtils.echoFeaturePenalties((Map<String, Double>) sm.get(KEY_LINKING_FEATURE_PENALTIES)));
 
+			if ((Boolean) sm.get(KEY_ALLOW_GAP_CLOSING)) {
+				str.append("  Gap-closing conditions:\n");
+				str.append(String.format("    - max distance: %.1f\n", (Double) sm.get(KEY_GAP_CLOSING_MAX_DISTANCE)));
+				str.append(String.format("    - max frame gap: %d\n", (Integer) sm.get(KEY_GAP_CLOSING_MAX_FRAME_GAP)));
+				str.append(LAPUtils.echoFeaturePenalties((Map<String, Double>) sm.get(KEY_GAP_CLOSING_FEATURE_PENALTIES)));
+			} else {
+				str.append("  Gap-closing not allowed.\n");
+			}
+
+			if ((Boolean) sm.get(KEY_ALLOW_TRACK_SPLITTING)) {
+				str.append("  Track splitting conditions:\n");
+				str.append(String.format("    - max distance: %.1f\n", (Double) sm.get(KEY_SPLITTING_MAX_DISTANCE)));
+				str.append(LAPUtils.echoFeaturePenalties((Map<String, Double>) sm.get(KEY_SPLITTING_FEATURE_PENALTIES)));
+			} else {
+				str.append("  Track splitting not allowed.\n");
+			}
+
+			if ((Boolean) sm.get(KEY_ALLOW_TRACK_MERGING)) {
+				str.append("  Track merging conditions:\n");
+				str.append(String.format("    - max distance: %.1f\n", (Double) sm.get(KEY_MERGING_MAX_DISTANCE)));
+				str.append(LAPUtils.echoFeaturePenalties((Map<String, Double>) sm.get(KEY_MERGING_FEATURE_PENALTIES)));
+			} else {
+				str.append("  Track merging not allowed.\n");
+			}
+		} else if (currentKey.equals(NearestNeighborTracker.TRACKER_KEY)) {
+			str.append(String.format("  Max distance: %.1f\n", (Double) sm.get(KEY_LINKING_MAX_DISTANCE)));
+		}
+		return str.toString();
 	}
-
 
 }

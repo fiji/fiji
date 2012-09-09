@@ -371,7 +371,6 @@ public class TmXmlReader <T extends RealType<T> & NativeType<T>> implements TmXm
 
 		settings.detectorSettings = ds;
 		settings.detectorFactory = provider.getDetectorFactory();
-
 	}
 
 	/**

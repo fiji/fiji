@@ -14,7 +14,6 @@ import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseWheelListener;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -23,6 +22,7 @@ import javax.swing.JLabel;
 import javax.swing.JScrollPane;
 import javax.swing.SwingConstants;
 
+import fiji.plugin.trackmate.tracking.LAPUtils;
 import fiji.plugin.trackmate.tracking.TrackerKeys;
 
 public class JPanelTrackerSettingsMain extends javax.swing.JPanel implements TrackerKeys {
@@ -117,7 +117,7 @@ public class JPanelTrackerSettingsMain extends javax.swing.JPanel implements Tra
 	 * @return a new settings {@link Map} with values taken from this panel.
 	 */
 	public Map<String, Object> getSettings() {
-		Map<String, Object> settings = new HashMap<String, Object>();
+		Map<String, Object> settings = LAPUtils.getDefaultLAPSettingsMap();
 
 		settings.put(KEY_LINKING_MAX_DISTANCE, Double.parseDouble(jTextFieldLinkingMaxDistance.getText()));
 		settings.put(KEY_LINKING_FEATURE_PENALTIES, jPanelLinkingFeatures.getFeaturePenalties());
@@ -349,7 +349,6 @@ public class JPanelTrackerSettingsMain extends javax.swing.JPanel implements Tra
 				jScrollPaneSplittingFeatures.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
 				jScrollPaneSplittingFeatures.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
 				jPanelSplittingFeatures = new JPanelFeatureSelectionGui();
-				jPanelMergingFeatures.setDisplayFeatures(features, featureNames);
 				jPanelSplittingFeatures.setDisplayFeatures(features, featureNames);
 				jScrollPaneSplittingFeatures.setViewportView(jPanelSplittingFeatures);
 			}
@@ -408,6 +407,7 @@ public class JPanelTrackerSettingsMain extends javax.swing.JPanel implements Tra
 				jScrollPaneMergingFeatures.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
 				jScrollPaneMergingFeatures.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
 				jPanelMergingFeatures = new JPanelFeatureSelectionGui();
+				jPanelMergingFeatures.setDisplayFeatures(features, featureNames);
 				jScrollPaneMergingFeatures.setViewportView(jPanelMergingFeatures);
 			}
 

@@ -6,6 +6,7 @@ import java.util.Map;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
 import fiji.plugin.trackmate.DetectorProvider;
+import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.TrackMate_;
 import fiji.plugin.trackmate.detection.ManualDetectorFactory;
 
@@ -86,7 +87,15 @@ public class DetectorConfigurationPanelDescriptor <T extends RealType<T> & Nativ
 
 	@Override
 	public void aboutToHidePanel() {
-		plugin.getModel().getSettings().detectorSettings = configPanel.getSettings();
+		Map<String, Object> settings = configPanel.getSettings();
+		DetectorProvider<T> detectorProvider = plugin.getDetectorProvider();
+		boolean settingsOk = detectorProvider.checkSettingsValidity(settings);
+		if (!settingsOk) {
+			Logger logger = wizard.getLogger();
+			logger.error("Config panel returned bad settings map:\n"+detectorProvider.getErrorMessage()+"Using defaults settings.\n");
+			settings = detectorProvider.getDefaultSettings();
+		}
+		plugin.getModel().getSettings().detectorSettings = settings;
 	}
 
 }
