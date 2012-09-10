@@ -60,16 +60,17 @@ public class LAPTrackerTest implements TrackerKeys {
 
 		// Set the tracking settings
 		Map<String, Object> trackerSettings = LAPUtils.getDefaultLAPSettingsMap();
-		trackerSettings.put(KEY_LINKING_MAX_DISTANCE, 2);
+		trackerSettings.put(KEY_LINKING_MAX_DISTANCE, 2d);
 		trackerSettings.put(KEY_ALLOW_GAP_CLOSING, false);
 
 		// Instantiate tracker
 		LAPTracker tracker = new LAPTracker(spotCollection, trackerSettings, Logger.VOID_LOGGER);
 
 		// Check process
-		assertTrue(tracker.checkInput());
-		assertTrue(tracker.process());
-
+		if (!tracker.checkInput() || !tracker.process()) {
+			fail(tracker.getErrorMessage());
+		}
+		
 		// Check results
 		SimpleWeightedGraph<Spot, DefaultWeightedEdge> graph = tracker.getResult();
 		verifyTracks(graph, groups, nFrames);
@@ -117,7 +118,7 @@ public class LAPTrackerTest implements TrackerKeys {
 
 		// Set the tracking settings
 		Map<String, Object> trackerSettings = LAPUtils.getDefaultLAPSettingsMap();
-		trackerSettings.put(KEY_LINKING_MAX_DISTANCE, 2);
+		trackerSettings.put(KEY_LINKING_MAX_DISTANCE, 2.);
 		trackerSettings.put(KEY_ALLOW_GAP_CLOSING, false);
 		StringBuilder errorHolder = new StringBuilder();
 		boolean ok = LAPUtils.addFeaturePenaltyToSettings(trackerSettings, KEY_LINKING_FEATURE_PENALTIES, BlobDescriptiveStatistics.MEAN_INTENSITY, 1d, errorHolder );
@@ -129,9 +130,10 @@ public class LAPTrackerTest implements TrackerKeys {
 		LAPTracker tracker = new LAPTracker(spotCollection, trackerSettings, Logger.VOID_LOGGER);
 
 		// Check process
-		assertTrue(tracker.checkInput());
-		assertTrue(tracker.process());
-
+		if (!tracker.checkInput() || !tracker.process()) {
+			fail(tracker.getErrorMessage());
+		}
+		
 		// Check results
 		SimpleWeightedGraph<Spot, DefaultWeightedEdge> graph = tracker.getResult();
 		verifyTracks(graph, groups, nFrames);

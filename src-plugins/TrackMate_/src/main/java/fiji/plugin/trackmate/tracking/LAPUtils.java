@@ -246,10 +246,10 @@ public class LAPUtils implements TrackerKeys {
 						"Expected String, got "+fpKey.getClass().getName()+".\n"); 
 			}
 			Object fpVal = fpMap.get(fpKey);
-			if (!(fpVal instanceof String)) {
+			if (!(fpVal instanceof Double)) {
 				ok = false;
 				errorHolder.append("The value for key "+fpVal.toString()+" in the map is not of the right class.\n" +
-						"Expected String, got "+fpVal.getClass().getName()+".\n"); 
+						"Expected Double, got "+fpVal.getClass().getName()+".\n"); 
 			}
 		}
 		return ok;
