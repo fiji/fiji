@@ -4,6 +4,13 @@ import static fiji.plugin.trackmate.detection.DetectorKeys.KEY_DOWNSAMPLE_FACTOR
 import static fiji.plugin.trackmate.detection.DetectorKeys.KEY_RADIUS;
 import static fiji.plugin.trackmate.detection.DetectorKeys.KEY_TARGET_CHANNEL;
 import static fiji.plugin.trackmate.detection.DetectorKeys.KEY_THRESHOLD;
+import static fiji.plugin.trackmate.util.TMUtils.checkMapKeys;
+import static fiji.plugin.trackmate.util.TMUtils.checkParameter;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
 import net.imglib2.img.ImgPlus;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
@@ -52,4 +59,37 @@ public class DownsampleLogDetectorFactory<T extends RealType<T> & NativeType<T>>
 	public String toString() {
 		return NAME;
 	}
+	
+	@Override
+	public boolean checkInput() {
+		StringBuilder errorHolder = new StringBuilder();
+		boolean ok = checkInput(settings, errorHolder);
+		if (!ok) {
+			errorMessage = errorHolder.toString();
+		}
+		return ok;
+	}
+	
+	/**
+	 * Check that the given settings map is suitable for the Downsample LoG detector.
+	 * @param settings  the map to test.
+	 * @param errorHolder  if not suitable, will contain an error message.
+	 * @return  true if the settings map is valid.
+	 */
+	public static final boolean checkInput(Map<String, Object> settings, StringBuilder errorHolder) {
+		boolean ok = true;
+		ok = ok & checkParameter(settings, KEY_TARGET_CHANNEL, Integer.class, errorHolder);
+		ok = ok & checkParameter(settings, KEY_RADIUS, Double.class, errorHolder) ;
+		ok = ok & checkParameter(settings, KEY_THRESHOLD, Double.class, errorHolder);
+		ok = ok & checkParameter(settings, KEY_DOWNSAMPLE_FACTOR, Integer.class, errorHolder);
+		List<String> mandatoryKeys = new ArrayList<String>();
+		mandatoryKeys.add(KEY_TARGET_CHANNEL);
+		mandatoryKeys.add(KEY_RADIUS);
+		mandatoryKeys.add(KEY_THRESHOLD);
+		mandatoryKeys.add(KEY_DOWNSAMPLE_FACTOR);
+		ok = ok & checkMapKeys(settings, mandatoryKeys, null, errorHolder);
+		return ok;	
+	}
+	
+	
 }

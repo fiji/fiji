@@ -1,6 +1,5 @@
 package fiji.plugin.trackmate;
 
-import static fiji.plugin.trackmate.util.TMUtils.checkParameter;
 import ij.ImagePlus;
 
 import java.util.ArrayList;
@@ -306,54 +305,31 @@ public class DetectorProvider <T extends RealType<T> & NativeType<T>> extends Ab
 			return false;
 		}
 
-		StringBuilder str = new StringBuilder();
-		
+		StringBuilder errorHolder = new StringBuilder();
 		if (currentKey.equals(ManualDetectorFactory.DETECTOR_KEY)) {
 
-			boolean ok = checkParameter(settings, KEY_RADIUS, Double.class, str);
+			boolean ok = ManualDetectorFactory.checkInput(settings, errorHolder);
 			if (!ok) {
-				errorMessage = str.toString();
-				return false;
+				errorMessage = errorHolder.toString();
 			}
-			if (settings.size() != 1) {
-				errorMessage = "Unwanted extra parameters in settings map.\n";
-				return false;
-			}
-			return true;
+			return ok;
 
 		} else if (currentKey.equals(LogDetectorFactory.DETECTOR_KEY) 
 				|| currentKey.equals(DogDetectorFactory.DETECTOR_KEY)) {
 
-			boolean ok = checkParameter(settings, KEY_TARGET_CHANNEL, Integer.class, str)
-					&& checkParameter(settings, KEY_RADIUS, Double.class, str) 
-					&& checkParameter(settings, KEY_THRESHOLD, Double.class, str)
-					&& checkParameter(settings, KEY_DO_MEDIAN_FILTERING, Boolean.class, str)
-					&& checkParameter(settings, KEY_DO_SUBPIXEL_LOCALIZATION, Boolean.class, str);
+			boolean ok = LogDetectorFactory.checkInput(settings, errorHolder);
 			if (!ok) {
-				errorMessage = str.toString();
-				return false;
+				errorMessage = errorHolder.toString();
 			}
-			if (settings.size() != 5) {
-				errorMessage = "Unwanted extra parameters in settings map.\n";
-				return false;
-			}
-			return true;
+			return ok;
 
 		} else if (currentKey.equals(DownsampleLogDetectorFactory.DETECTOR_KEY)) {
 
-			boolean ok = checkParameter(settings, KEY_TARGET_CHANNEL, Integer.class, str)
-					&& checkParameter(settings, KEY_RADIUS, Double.class, str) 
-					&& checkParameter(settings, KEY_THRESHOLD, Double.class, str)
-					&& checkParameter(settings, KEY_DOWNSAMPLE_FACTOR, Integer.class, str);
+			boolean ok = DownsampleLogDetectorFactory.checkInput(settings, errorHolder);
 			if (!ok) {
-				errorMessage = str.toString();
-				return false;
+				errorMessage = errorHolder.toString();
 			}
-			if (settings.size() != 4) {
-				errorMessage = "Unwanted extra parameters in settings map.\n";
-				return false;
-			}
-			return true;
+			return ok;
 
 		} else {
 

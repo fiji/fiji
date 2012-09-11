@@ -1,11 +1,14 @@
 package fiji.plugin.trackmate.tests;
 
 import java.io.File;
+import java.util.HashMap;
+import java.util.Map;
 
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.TrackMate_;
 import fiji.plugin.trackmate.io.TmXmlReader;
 import fiji.plugin.trackmate.tracking.TrackerKeys;
 import fiji.plugin.trackmate.tracking.kdtree.NearestNeighborTracker;
@@ -28,7 +31,9 @@ public class NNTrackerTest implements TrackerKeys {
 		
 		// 1 - Load test spots
 		System.out.println("Opening file: "+file.getAbsolutePath());		
-		TmXmlReader<T> reader = new TmXmlReader<T>(file, Logger.DEFAULT_LOGGER);
+		TrackMate_<T> plugin = new TrackMate_<T>();
+		plugin.initModules();
+		TmXmlReader<T> reader = new TmXmlReader<T>(file, plugin, Logger.DEFAULT_LOGGER);
 		TrackMateModel<T> model = null;
 		// Parse
 		reader.parse();
@@ -43,7 +48,10 @@ public class NNTrackerTest implements TrackerKeys {
 		
 		// 2 - Track the test spots
 		long start = System.currentTimeMillis();
-		NearestNeighborTracker tracker = new NearestNeighborTracker(model.getFilteredSpots(), 15, Logger.DEFAULT_LOGGER);
+		NearestNeighborTracker tracker = new NearestNeighborTracker(model.getFilteredSpots(), Logger.DEFAULT_LOGGER);
+		Map<String, Object> settings = new HashMap<String, Object>();
+		settings.put(KEY_LINKING_MAX_DISTANCE, 15d);
+		tracker.setSettings(settings );
 
 		if (!tracker.checkInput())
 			System.err.println("Error checking input: "+tracker.getErrorMessage());

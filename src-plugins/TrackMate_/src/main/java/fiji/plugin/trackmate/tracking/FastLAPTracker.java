@@ -1,7 +1,5 @@
 package fiji.plugin.trackmate.tracking;
 
-import java.util.Map;
-
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.tracking.hungarian.AssignmentAlgorithm;
@@ -30,12 +28,12 @@ public class FastLAPTracker extends LAPTracker {
 			"that solves an assignment problem in O(n^3) instead of O(n^4)." +
 			" </html>";
 	
-	public FastLAPTracker(SpotCollection spots, Map<String, Object> settings, Logger logger) {
-		super(spots, settings, logger);
+	public FastLAPTracker(SpotCollection spots, Logger logger) {
+		super(spots, logger);
 	}
 	
-	public FastLAPTracker(SpotCollection spots, Map<String, Object> settings) {
-		this(spots, settings, Logger.VOID_LOGGER);
+	public FastLAPTracker(SpotCollection spots) {
+		this(spots, Logger.VOID_LOGGER);
 	}
 	
 	@Override

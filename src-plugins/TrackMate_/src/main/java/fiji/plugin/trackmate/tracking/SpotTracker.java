@@ -1,5 +1,7 @@
 package fiji.plugin.trackmate.tracking;
 
+import java.util.Map;
+
 import net.imglib2.algorithm.OutputAlgorithm;
 
 import org.jgrapht.graph.DefaultWeightedEdge;
@@ -21,4 +23,7 @@ public interface SpotTracker extends  OutputAlgorithm<SimpleWeightedGraph<Spot, 
 
 	/** @return a unique String identifier for this tracker. */
 	public String getKey();
+	
+	/** Set the settings map to use with this tracker. */
+	public void setSettings(final Map<String, Object> settings);
 }

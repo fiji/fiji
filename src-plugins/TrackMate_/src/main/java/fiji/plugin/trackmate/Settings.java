@@ -86,6 +86,7 @@ public class Settings <T extends RealType<T> & NativeType<T>> {
 	public Double initialSpotFilterValue;
 	/** The track filter list that is used to prune track and spots. */
 	protected List<FeatureFilter> trackFilters = new ArrayList<FeatureFilter>();
+	protected String errorMessage;
 	
 	
 	/*
@@ -169,9 +170,41 @@ public class Settings <T extends RealType<T> & NativeType<T>> {
 		str += String.format("  Y = %4d - %4d, dy = %g %s\n", ystart, yend, dy, spaceUnits);
 		str += String.format("  Z = %4d - %4d, dz = %g %s\n", zstart, zend, dz, spaceUnits);
 		str += String.format("  T = %4d - %4d, dt = %g %s\n", tstart, tend, dt, timeUnits);
-//		str += String.format("  Target channel for detection: %d\n", detectionChannel);
 		return str;
 	}
+	
+	public boolean checkValidity() {
+		if (null == imp) {
+			errorMessage = "The source image is null.\n";
+			return false;
+		}
+		if (null == detectorFactory) {
+			errorMessage = "The detector factory is null.\n";
+			return false;
+		}
+		if (null == detectorSettings) {
+			errorMessage = "The detector settings is null.\n";
+			return false;
+		}
+		if (null == initialSpotFilterValue) {
+			errorMessage = "Initial spot quality threshold is not set.\n";
+			return false;
+		}
+		if (null == tracker) {
+			errorMessage = "The tracker in settings is null.\n";
+			return false;
+		}
+		if (!tracker.checkInput()) {
+			errorMessage = "The tracker has invalid input:\n"+tracker.getErrorMessage();
+			return false;
+		}
+		return true;
+	}
+	
+	public String getErrorMessage() {
+		return errorMessage;
+	}
+	
 	
 	/*
 	 * FEATURE FILTERS

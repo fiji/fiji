@@ -106,7 +106,7 @@ public class GuiReader <T extends RealType<T> & NativeType<T>> {
 
 		// Open and parse file
 		logger.log("Opening file "+file.getName()+'\n');
-		TmXmlReader<T> reader = new TmXmlReader<T>(file, logger, plugin);
+		TmXmlReader<T> reader = new TmXmlReader<T>(file, plugin, logger);
 		reader.parse();
 		logger.log("  Parsing file done.\n");
 
@@ -118,7 +118,7 @@ public class GuiReader <T extends RealType<T> & NativeType<T>> {
 			logger.log("  Detected an older file format: v"+fileVersionStr);
 			logger.log(" Converting on the fly.\n");
 			// We substitute an able reader
-			reader = new TmXmlReader_v12<T>(file, logger, plugin);
+			reader = new TmXmlReader_v12<T>(file, plugin, logger);
 		}
 		
 		// Retrieve data and update GUI

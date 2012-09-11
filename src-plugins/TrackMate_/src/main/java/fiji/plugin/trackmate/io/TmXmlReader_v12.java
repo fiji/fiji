@@ -86,12 +86,12 @@ public class TmXmlReader_v12<T extends RealType<T> & NativeType<T>> extends TmXm
 	 */
 
 
-	public TmXmlReader_v12(File file, Logger logger, TrackMate_<T> plugin) {
-		super(file, logger, plugin);
+	public TmXmlReader_v12(File file, TrackMate_<T> plugin, Logger logger) {
+		super(file, plugin, logger);
 	}
 
-	public TmXmlReader_v12(File file, Logger logger) {
-		super(file, logger);
+	public TmXmlReader_v12(File file, TrackMate_<T> plugin) {
+		super(file, plugin, Logger.VOID_LOGGER);
 	}
 
 	/*

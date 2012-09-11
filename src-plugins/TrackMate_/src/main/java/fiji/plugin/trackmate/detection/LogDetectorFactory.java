@@ -5,7 +5,11 @@ import static fiji.plugin.trackmate.detection.DetectorKeys.KEY_DO_SUBPIXEL_LOCAL
 import static fiji.plugin.trackmate.detection.DetectorKeys.KEY_RADIUS;
 import static fiji.plugin.trackmate.detection.DetectorKeys.KEY_TARGET_CHANNEL;
 import static fiji.plugin.trackmate.detection.DetectorKeys.KEY_THRESHOLD;
+import static fiji.plugin.trackmate.util.TMUtils.checkMapKeys;
+import static fiji.plugin.trackmate.util.TMUtils.checkParameter;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 import net.imglib2.img.ImgPlus;
@@ -42,6 +46,7 @@ public class LogDetectorFactory<T extends RealType<T> & NativeType<T>>  implemen
 	/** The image to operate on. Multiple frames, single channel.	 */
 	protected ImgPlus<T> img;
 	protected Map<String, Object> settings;
+	protected String errorMessage;
 
 	/*
 	 * METHODS
@@ -64,14 +69,54 @@ public class LogDetectorFactory<T extends RealType<T> & NativeType<T>>  implemen
 		final boolean doSubpixel = (Boolean) settings.get(KEY_DO_SUBPIXEL_LOCALIZATION);
 		return new LogDetector<T>(imgT, radius, threshold, doSubpixel, doMedian);
 	}
-	
+
 	@Override
 	public String getKey() {
 		return DETECTOR_KEY;
 	}
-	
+
 	@Override
 	public String toString() {
 		return NAME;
 	}
+
+	
+	@Override
+	public String getErrorMessage() {
+		return errorMessage;
+	}
+
+	@Override
+	public boolean checkInput() {
+		StringBuilder errorHolder = new StringBuilder();
+		boolean ok = checkInput(settings, errorHolder);
+		if (!ok) {
+			errorMessage = errorHolder.toString();
+		}
+		return ok;
+	}
+	
+	/**
+	 * Check that the given settings map is suitable for LoG based detectors.
+	 * @param settings  the map to test.
+	 * @param errorHolder  if not suitable, will contain an error message.
+	 * @return  true if the settings map is valid.
+	 */
+	public static boolean checkInput(Map<String, Object> settings, StringBuilder errorHolder) {
+		boolean ok = true;
+		ok = ok & checkParameter(settings, KEY_TARGET_CHANNEL, Integer.class, errorHolder);
+		ok = ok & checkParameter(settings, KEY_RADIUS, Double.class, errorHolder) ;
+		ok = ok & checkParameter(settings, KEY_THRESHOLD, Double.class, errorHolder);
+		ok = ok & checkParameter(settings, KEY_DO_MEDIAN_FILTERING, Boolean.class, errorHolder);
+		ok = ok & checkParameter(settings, KEY_DO_SUBPIXEL_LOCALIZATION, Boolean.class, errorHolder);
+		List<String> mandatoryKeys = new ArrayList<String>();
+		mandatoryKeys.add(KEY_TARGET_CHANNEL);
+		mandatoryKeys.add(KEY_RADIUS);
+		mandatoryKeys.add(KEY_THRESHOLD);
+		mandatoryKeys.add(KEY_DO_MEDIAN_FILTERING);
+		mandatoryKeys.add(KEY_DO_SUBPIXEL_LOCALIZATION);
+		ok = ok & checkMapKeys(settings, mandatoryKeys, null, errorHolder);
+		return ok;	
+	}
+
 }

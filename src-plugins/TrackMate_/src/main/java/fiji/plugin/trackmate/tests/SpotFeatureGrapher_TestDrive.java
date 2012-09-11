@@ -18,6 +18,7 @@ import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.SpotImp;
 import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.TrackMate_;
 import fiji.plugin.trackmate.io.TmXmlReader;
 import fiji.plugin.trackmate.visualization.trackscheme.SpotFeatureGrapher;
 import fiji.plugin.trackmate.visualization.trackscheme.TrackSchemeFrame;
@@ -28,7 +29,9 @@ public class SpotFeatureGrapher_TestDrive {
 
 		// Load objects 
 		File file = new File("/Users/tinevez/Desktop/Data/Tree.xml");
-		TmXmlReader<T> reader = new TmXmlReader<T>(file, Logger.DEFAULT_LOGGER);
+		TrackMate_<T> plugin = new TrackMate_<T>();
+		plugin.initModules();
+		TmXmlReader<T> reader = new TmXmlReader<T>(file, plugin, Logger.DEFAULT_LOGGER);
 		reader.parse();
 		final TrackMateModel<T> model = reader.getModel();
 		List<Spot> spots = model.getFilteredSpots().getAllSpots();

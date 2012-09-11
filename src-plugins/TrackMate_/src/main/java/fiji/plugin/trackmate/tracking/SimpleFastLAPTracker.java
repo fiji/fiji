@@ -17,12 +17,12 @@ public class SimpleFastLAPTracker extends FastLAPTracker {
 			"in having non-branching tracks." +
 			" </html>";	
 	
-	public SimpleFastLAPTracker(SpotCollection spots, Map<String, Object> settings, Logger logger) {
-		super(spots, settings, logger);
+	public SimpleFastLAPTracker(SpotCollection spots, Logger logger) {
+		super(spots, logger);
 	}
 	
 	public SimpleFastLAPTracker(SpotCollection spots, Map<String, Object> settings) {
-		this(spots, settings, Logger.VOID_LOGGER);
+		this(spots, Logger.VOID_LOGGER);
 	}
 	
 	

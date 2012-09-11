@@ -12,6 +12,8 @@ import java.util.TreeMap;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import net.imglib2.algorithm.MultiThreaded;
+
 import mpicbg.imglib.multithreading.SimpleMultiThreading;
 
 /**
@@ -19,13 +21,17 @@ import mpicbg.imglib.multithreading.SimpleMultiThreading;
  * in each frame with a few utility methods.
  * <p>
  * Internally we rely on ConcurrentSkipListMap to allow concurrent access without clashes.
+ * <p>
+ * This class is {@link MultiThreaded}. There are a few processes that can benefit from multithreaded
+ * computation ({@link #filter(Collection)}, {@link #filter(FeatureFilter)}
  * @author Jean-Yves Tinevez <jeanyves.tinevez@gmail.com> - Feb - June 2011
  *
  */
-public class SpotCollection implements Iterable<Spot>, SortedMap<Integer, List<Spot>>  {
+public class SpotCollection implements Iterable<Spot>, SortedMap<Integer, List<Spot>>, MultiThreaded  {
 
 	/** The frame by frame list of spot this object wrap. */
 	private ConcurrentSkipListMap<Integer, List<Spot>> content;
+	private int numThreads;
 
 	/*
 	 * CONSTRUCTORS
@@ -37,7 +43,7 @@ public class SpotCollection implements Iterable<Spot>, SortedMap<Integer, List<S
 	 */
 	public SpotCollection(ConcurrentSkipListMap<Integer, List<Spot>> content) {
 		this.content = content;
-
+		setNumThreads();
 	}
 
 	/**
@@ -116,6 +122,7 @@ public class SpotCollection implements Iterable<Spot>, SortedMap<Integer, List<S
 	 */
 	public final SpotCollection filter(final FeatureFilter featurefilter) {
 		final SpotCollection selectedSpots = new SpotCollection();
+		selectedSpots.setNumThreads(numThreads);
 
 		final int[] keys = new int[content.keySet().size()];
 		Iterator<Integer> it = content.keySet().iterator();
@@ -184,6 +191,7 @@ public class SpotCollection implements Iterable<Spot>, SortedMap<Integer, List<S
 	 */
 	public final SpotCollection filter(final Collection<FeatureFilter> filters) {
 		SpotCollection selectedSpots = new SpotCollection();
+		selectedSpots.setNumThreads(numThreads);
 		Collection<Spot> spotThisFrame, spotToRemove;
 		List<Spot> spotToKeep;
 		Double val, tval;	
@@ -458,6 +466,21 @@ public class SpotCollection implements Iterable<Spot>, SortedMap<Integer, List<S
 	@Override
 	public Set<java.util.Map.Entry<Integer, List<Spot>>> entrySet() {
 		return content.entrySet();
+	}
+
+	@Override
+	public void setNumThreads() {
+		this.numThreads = Runtime.getRuntime().availableProcessors();
+	}
+
+	@Override
+	public void setNumThreads(int numThreads) {
+		this.numThreads = numThreads;
+	}
+
+	@Override
+	public int getNumThreads() {
+		return numThreads;
 	}
 
 

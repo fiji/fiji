@@ -76,21 +76,21 @@ public class TmXmlReader <T extends RealType<T> & NativeType<T>> implements TmXm
 	/**
 	 * Initialize this reader to read the file given in argument. No actual parsing is made at construction.
 	 * <p>
-	 * A plugin instance must be provided, in the case we want to load 
+	 * A plugin instance must be provided, and this instance must be initialized with providers
+	 * (as in wehen calling {@link TrackMate_#initModules()}. This in the case we want to load 
 	 * a file created with a subclass of {@link TrackMate_} (e.g. with new factories) so that 
-	 * correct detectors, etc... can be instantiated from the extended plugin. But the passed instance 
-	 * is left untouched by the loading process.
+	 * correct detectors, etc... can be instantiated from the extended plugin. 
+	 * But the passed instance is left untouched by the loading process.
 	 */
-	public TmXmlReader(File file, Logger logger, TrackMate_<T> plugin) {
+	public TmXmlReader(File file, TrackMate_<T> plugin, Logger logger) {
 		this.file = file;
 		this.logger = logger;
 		this.plugin = plugin;
 	}
-
-	public TmXmlReader(File file, Logger logger) {
-		this(file, logger, new TrackMate_<T>());
+	
+	public TmXmlReader(File file, TrackMate_<T> plugin) {
+		this(file, plugin, Logger.VOID_LOGGER);
 	}
-
 
 	/*
 	 * PUBLIC METHODS

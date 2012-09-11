@@ -9,6 +9,7 @@ import net.imglib2.type.numeric.RealType;
 
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.TrackMate_;
 import fiji.plugin.trackmate.io.TmXmlReader;
 import fiji.plugin.trackmate.tracking.LAPTracker;
 import fiji.plugin.trackmate.tracking.TrackerKeys;
@@ -30,7 +31,9 @@ public class LAPTrackerTestDrive implements TrackerKeys {
 		
 		// 1 - Load test spots
 		System.out.println("Opening file: "+file.getAbsolutePath());		
-		TmXmlReader<T> reader = new TmXmlReader<T>(file, Logger.DEFAULT_LOGGER);
+		TrackMate_<T> plugin = new TrackMate_<T>();
+		plugin.initModules();
+		TmXmlReader<T> reader = new TmXmlReader<T>(file, plugin , Logger.DEFAULT_LOGGER);
 		TrackMateModel<T> model = null;
 		// Parse
 		reader.parse();
@@ -57,7 +60,8 @@ public class LAPTrackerTestDrive implements TrackerKeys {
 		
 		// 2 - Track the test spots
 		long start = System.currentTimeMillis();
-		LAPTracker lap = new LAPTracker(model.getFilteredSpots(), settings, Logger.DEFAULT_LOGGER);
+		LAPTracker lap = new LAPTracker(model.getFilteredSpots(), Logger.DEFAULT_LOGGER);
+		lap.setSettings(settings);
 
 		if (!lap.checkInput())
 			System.err.println("Error checking input: "+lap.getErrorMessage());

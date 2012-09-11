@@ -30,5 +30,15 @@ public interface SpotDetectorFactory<T extends RealType<T> & NativeType<T>> {
 	
 	/** @return a unique String identifier for this factory. */
 	public String getKey();
+
+	/** 
+	 * Check the validity of the given settings map for this factory.
+	 * If check fails, and error message can be obtained through {@link #getErrorMessage()}.  
+	 */
+	public boolean checkInput();
 	
+	/**
+	 * @return a meaningful error message.
+	 */
+	public String getErrorMessage();
 }

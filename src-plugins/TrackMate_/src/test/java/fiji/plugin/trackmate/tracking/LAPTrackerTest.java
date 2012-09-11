@@ -64,7 +64,8 @@ public class LAPTrackerTest implements TrackerKeys {
 		trackerSettings.put(KEY_ALLOW_GAP_CLOSING, false);
 
 		// Instantiate tracker
-		LAPTracker tracker = new LAPTracker(spotCollection, trackerSettings, Logger.VOID_LOGGER);
+		LAPTracker tracker = new LAPTracker(spotCollection, Logger.VOID_LOGGER);
+		tracker.setSettings(trackerSettings);
 
 		// Check process
 		if (!tracker.checkInput() || !tracker.process()) {
@@ -127,7 +128,8 @@ public class LAPTrackerTest implements TrackerKeys {
 		}
 
 		// Instantiate tracker
-		LAPTracker tracker = new LAPTracker(spotCollection, trackerSettings, Logger.VOID_LOGGER);
+		LAPTracker tracker = new LAPTracker(spotCollection, Logger.VOID_LOGGER);
+		tracker.setSettings(trackerSettings);
 
 		// Check process
 		if (!tracker.checkInput() || !tracker.process()) {

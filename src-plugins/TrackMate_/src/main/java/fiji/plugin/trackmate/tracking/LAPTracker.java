@@ -169,20 +169,19 @@ public class LAPTracker extends MultiThreadedBenchmarkAlgorithm implements SpotT
 	/** The Spot collection that will be linked in the {@link #graph.} */
 	protected final SpotCollection spots;
 	/** The settings map that configures this tracker. */
-	protected final Map<String, Object> settings;
+	protected Map<String, Object> settings;
 
 	/*
 	 * CONSTRUCTOR
 	 */
 	
-	public LAPTracker(final SpotCollection spots, final Map<String, Object> settings, final Logger logger) {
+	public LAPTracker(final SpotCollection spots,final Logger logger) {
 		this.spots = spots;
-		this.settings = settings;
 		this.logger = logger;
 	}
 	
-	public LAPTracker(final SpotCollection spots, final Map<String, Object> settings) {
-		this(spots, settings, Logger.VOID_LOGGER);
+	public LAPTracker(final SpotCollection spots) {
+		this(spots, Logger.VOID_LOGGER);
 	}
 	
 	/*	
@@ -204,6 +203,11 @@ public class LAPTracker extends MultiThreadedBenchmarkAlgorithm implements SpotT
 	 * METHODS
 	 */
 
+	@Override
+	public void setSettings(Map<String, Object> settings) {
+		this.settings = settings;
+	}
+	
 	/**
 	 * Reset any link created in the graph result in this tracker, effectively creating a new graph, 
 	 * containing the spots but no edge.

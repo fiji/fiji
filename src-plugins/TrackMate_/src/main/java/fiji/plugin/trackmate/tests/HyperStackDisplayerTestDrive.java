@@ -25,7 +25,9 @@ public class HyperStackDisplayerTestDrive {
 
 	public static <T extends RealType<T> & NativeType<T>>void main(String[] args) throws JDOMException, IOException {
 		
-		TmXmlReader<T> reader = new TmXmlReader<T>(file, Logger.DEFAULT_LOGGER);
+		TrackMate_<T> plugin = new TrackMate_<T>();
+		plugin.initModules();
+		TmXmlReader<T> reader = new TmXmlReader<T>(file, plugin , Logger.DEFAULT_LOGGER);
 		reader.parse();
 		
 		ij.ImageJ.main(args);

@@ -1,7 +1,12 @@
 package fiji.plugin.trackmate.tracking.kdtree;
 
+import static fiji.plugin.trackmate.util.TMUtils.checkMapKeys;
+import static fiji.plugin.trackmate.util.TMUtils.checkParameter;
+import static fiji.plugin.trackmate.tracking.TrackerKeys.KEY_LINKING_MAX_DISTANCE;
+
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -45,30 +50,39 @@ public class NearestNeighborTracker extends MultiThreadedBenchmarkAlgorithm	impl
 	protected final SpotCollection spots;
 	protected final Logger logger;
 	protected SimpleWeightedGraph<Spot, DefaultWeightedEdge> graph;
-	protected final double maxLinkingDistance;
+	protected Map<String, Object> settings;
 
 	/*
 	 * CONSTRUCTOR
 	 */
 
-	public NearestNeighborTracker(final SpotCollection spots, final double maxLinkingDistance, final Logger logger) {
+	public NearestNeighborTracker(final SpotCollection spots, final Logger logger) {
 		this.spots = spots;
-		this.maxLinkingDistance = maxLinkingDistance;
 		this.logger = logger;
 	}
 
-	public NearestNeighborTracker(final SpotCollection spots, final double maxLinkingDistance) {
-		this(spots, maxLinkingDistance, Logger.VOID_LOGGER);
+	public NearestNeighborTracker(final SpotCollection spots) {
+		this(spots, Logger.VOID_LOGGER);
 	}
 
 
 	/*
 	 * PUBLIC METHODS
 	 */
+	
+	@Override
+	public void setSettings(Map<String, Object> settings) {
+		this.settings = settings;
+	}
 
 	@Override
 	public boolean checkInput() {
-		return true;
+		StringBuilder errrorHolder = new StringBuilder();;
+		boolean ok = checkInput(settings, errrorHolder);
+		if (!ok) {
+			errorMessage = errrorHolder.toString();
+		}
+		return ok;
 	}
 
 	@Override
@@ -77,7 +91,8 @@ public class NearestNeighborTracker extends MultiThreadedBenchmarkAlgorithm	impl
 
 		reset();
 		
-		final double maxDistSquare = maxLinkingDistance * maxLinkingDistance;
+		final double maxLinkingDistance = (Double) settings.get(KEY_LINKING_MAX_DISTANCE);
+		final double maxDistSquare = maxLinkingDistance  * maxLinkingDistance;
 
 		final TreeSet<Integer> frames = new TreeSet<Integer>(spots.keySet());
 		Thread[] threads = new Thread[numThreads];
@@ -176,8 +191,12 @@ public class NearestNeighborTracker extends MultiThreadedBenchmarkAlgorithm	impl
 	public String getKey() {
 		return TRACKER_KEY;
 	}
-
 	
-	
-
+	public static boolean checkInput(final Map<String, Object> settings, StringBuilder errrorHolder) {
+		boolean ok = checkParameter(settings, KEY_LINKING_MAX_DISTANCE, Double.class, errrorHolder);
+		List<String> mandatoryKeys = new ArrayList<String>();
+		mandatoryKeys.add(KEY_LINKING_MAX_DISTANCE);
+		ok = ok & checkMapKeys(settings, mandatoryKeys, null, errrorHolder);
+		return ok;
+	}
 }

@@ -1,8 +1,5 @@
 package fiji.plugin.trackmate;
 
-import static fiji.plugin.trackmate.util.TMUtils.checkMapKeys;
-import static fiji.plugin.trackmate.util.TMUtils.checkParameter;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -92,23 +89,24 @@ public class TrackerProvider <T extends RealType<T> & NativeType<T>> extends Abs
 	 */
 	public SpotTracker getTracker() {
 
-		final Map<String, Object> settings = model.getSettings().trackerSettings;
 		final SpotCollection spots = model.getFilteredSpots();
 		final Logger logger = model.getLogger();
-
+		SpotTracker tracker;
 		if (currentKey.equals(SimpleFastLAPTracker.TRACKER_KEY)) {
-			return new SimpleFastLAPTracker(spots, settings, logger);
+			tracker = new SimpleFastLAPTracker(spots, logger);
 
 		} else if (currentKey.equals(FastLAPTracker.TRACKER_KEY)) {
-			return new FastLAPTracker(spots, settings, logger);
+			tracker = new FastLAPTracker(spots, logger);
 
 		} else if (currentKey.equals(NearestNeighborTracker.TRACKER_KEY)) {
-			final double maxDist = (Double) settings.get(KEY_LINKING_MAX_DISTANCE);
-			return new NearestNeighborTracker(spots, maxDist, logger);
+			tracker = new NearestNeighborTracker(spots, logger);
 
 		} else {
 			return null;
 		}
+		final Map<String, Object> settings = model.getSettings().trackerSettings;
+		tracker.setSettings(settings);
+		return tracker;
 	}
 
 	/**
@@ -446,11 +444,12 @@ public class TrackerProvider <T extends RealType<T> & NativeType<T>> extends Abs
 		}
 
 		StringBuilder str = new StringBuilder();
+		boolean ok = true;
 
 		if (currentKey.equals(FastLAPTracker.TRACKER_KEY) 
 				|| currentKey.equals(SimpleFastLAPTracker.TRACKER_KEY)) {
 
-			boolean ok = LAPUtils.checkSettingsValidity(settings, str);
+			ok = LAPUtils.checkSettingsValidity(settings, str);
 			if (!ok) {
 				errorMessage = str.toString();
 			}
@@ -458,12 +457,7 @@ public class TrackerProvider <T extends RealType<T> & NativeType<T>> extends Abs
 
 		} else if (currentKey.equals(NearestNeighborTracker.TRACKER_KEY)) {
 
-			boolean ok = true;
-			ok = ok & checkParameter(settings, KEY_LINKING_MAX_DISTANCE, Double.class, str);
-			List<String> mandatoryKeys = new ArrayList<String>();
-			mandatoryKeys.add(KEY_LINKING_MAX_DISTANCE);
-			ok = ok & checkMapKeys(settings, mandatoryKeys, null, str);
-
+			ok = NearestNeighborTracker.checkInput(settings, str);
 			if (!ok) {
 				errorMessage = str.toString();
 			}

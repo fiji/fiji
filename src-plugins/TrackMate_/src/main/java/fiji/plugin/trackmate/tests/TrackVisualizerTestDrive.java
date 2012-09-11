@@ -36,12 +36,13 @@ public class TrackVisualizerTestDrive {
 		}
 		ij.ImageJ.main(args);
 		
-		TmXmlReader<T> reader = new TmXmlReader<T>(file, Logger.DEFAULT_LOGGER);
+		TrackMate_<T> plugin = new TrackMate_<T>();
+		plugin.initModules();
+		TmXmlReader<T> reader = new TmXmlReader<T>(file, plugin , Logger.DEFAULT_LOGGER);
 		reader.parse();
 		
 		// Load objects 
 		final TrackMateModel<T> model = reader.getModel();
-		TrackMate_<T> plugin = new TrackMate_<T>(model);
 		
 		System.out.println("From the XML file:");
 		System.out.println("Found "+model.getNTracks()+" tracks in total.");

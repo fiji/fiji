@@ -19,8 +19,12 @@ import ij.plugin.PlugIn;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import net.imglib2.algorithm.Algorithm;
+import net.imglib2.algorithm.Benchmark;
+import net.imglib2.algorithm.MultiThreaded;
 import net.imglib2.img.ImagePlusAdapter;
 import net.imglib2.img.ImgPlus;
 import net.imglib2.multithreading.SimpleMultiThreading;
@@ -39,14 +43,16 @@ import org.jgrapht.graph.SimpleWeightedGraph;
  * @author Nicholas Perry, Jean-Yves Tinevez - Institut Pasteur - July 2010 - 2011 - 2012
  *
  */
-public class TrackMate_<T extends RealType<T> & NativeType<T>>  implements PlugIn {
+public class TrackMate_<T extends RealType<T> & NativeType<T>>  implements PlugIn, Benchmark, MultiThreaded, Algorithm {
 
 	public static final String PLUGIN_NAME_STR = "TrackMate";
 	public static final String PLUGIN_NAME_VERSION = "1.3.0";
 	public static final boolean DEFAULT_USE_MULTITHREADING = true;
 
+	/** 
+	 * The model this plugin will shape.
+	 */
 	protected TrackMateModel<T> model;
-	protected boolean useMultithreading = DEFAULT_USE_MULTITHREADING;
 
 	protected SpotFeatureAnalyzerFactory<T> spotFeatureFactory;
 	protected TrackFeatureAnalyzerFactory<T> trackFeatureFactory;
@@ -58,6 +64,9 @@ public class TrackMate_<T extends RealType<T> & NativeType<T>>  implements PlugI
 	protected TrackerProvider<T> trackerFactory;
 	/** The {@link DetectorProvider} that provides the GUI with the list of available detectors. */
 	protected DetectorProvider<T> detectorProvider;
+	protected long processingTime;
+	protected String errorMessage;
+	protected int numThreads = Runtime.getRuntime().availableProcessors();
 
 	/*
 	 * CONSTRUCTORS
@@ -298,6 +307,8 @@ public class TrackMate_<T extends RealType<T> & NativeType<T>>  implements PlugI
 	 * Features are calculated for each spot, using their location, and the raw image. 
 	 */
 	public void computeSpotFeatures() {
+		final Logger logger = model.getLogger();
+		logger.log("Computing spot features.\n");
 		model.getFeatureModel().computeSpotFeatures(model.getSpots());
 	}
 
@@ -305,6 +316,8 @@ public class TrackMate_<T extends RealType<T> & NativeType<T>>  implements PlugI
 	 * Calculate all features for all tracks.
 	 */
 	public void computeTrackFeatures() {
+		final Logger logger = model.getLogger();
+		logger.log("Computing track features.\n");
 		model.computeTrackFeatures();
 	}
 
@@ -318,42 +331,41 @@ public class TrackMate_<T extends RealType<T> & NativeType<T>>  implements PlugI
 	 * The {@link TrackMateModelChangeListener}s of this model will be notified when the successful process is over.
 	 * @see #getTrackGraph()
 	 */ 
-	public void execTracking() {
+	public boolean execTracking() {
+		final Logger logger = model.getLogger();
+		logger.log("Starting tracking process.\n");
 		SpotTracker tracker =  model.getSettings().tracker;
+		tracker.setSettings(model.getSettings().trackerSettings);
 		if (tracker.checkInput() && tracker.process()) {
 			model.setGraph(tracker.getResult());
-		} else
-			model.getLogger().error("Problem occured in tracking:\n"+tracker.getErrorMessage()+'\n');
+			return false;
+		} else {
+			errorMessage = "Tracking process failed:\n"+tracker.getErrorMessage();
+			return false;
+		}
 	}
 
 	/** 
 	 * Execute the detection part.
 	 * <p>
-	 * This method looks for bright blobs: bright object of approximately spherical shape, whose expected 
-	 * diameter is given in argument. The method used for segmentation depends on the {@link SpotDetector} 
-	 * chosen, and set in {@link #settings};
-	 * <p>
-	 * This gives us a collection of spots, which at this stage simply wrap a physical center location.
-	 * These spots are stored in a {@link SpotCollection} field, {@link #spots}, but listeners of this model
-	 * are <b>not</b> notified when the process is over.  
-	 * 
-	 * @see #getSpots()
+	 * This method configure the chosen {@link Settings#detectorFactory} with the source image 
+	 * and the detectr settings and execute the detection process for all the frames set 
+	 * in the {@link Settings} object of the target model.
+	 * @return true if the whole detection step has exectued correctly.
 	 */
-	public void execDetection() {
+	public boolean execDetection() {
+		final Logger logger = model.getLogger();
+		logger.log("Starting detection process.\n");
+		
 		final Settings<T> settings = model.getSettings();
 		final SpotDetectorFactory<T> factory = settings.detectorFactory;
-		final Logger logger = model.getLogger();
 		if (null == factory) {
-			logger.error("No detector selected.\n");
-			return;
+			errorMessage = "Detector factory is null.\n";
+			return false;
 		}
 		if (null == settings.detectorSettings) {
-			logger.error("No detector settings set.\n");
-			return;
-		}
-		if (!detectorProvider.checkSettingsValidity(settings.detectorSettings)) {
-			logger.error("Settings do not match detector requirements:\n"+detectorProvider.getErrorMessage());
-			return;
+			errorMessage  = "Detector settings is null.\n";
+			return false;
 		}
 
 		/*
@@ -378,16 +390,16 @@ public class TrackMate_<T extends RealType<T> & NativeType<T>>  implements PlugI
 			// X, we must have it
 			int xindex = TMUtils.findXAxisIndex(rawImg);
 			if (xindex < 0) {
-				logger.error("Source image has no X axis.\n");
-				return;
+				errorMessage = "Source image has no X axis.\n";
+				return false;
 			}
 			min[xindex] = settings.xstart;
 			max[xindex] = settings.xend;
 			// Y, we must have it
 			int yindex = TMUtils.findYAxisIndex(rawImg);
 			if (yindex < 0) {
-				logger.error("Source image has no Y axis.\n");
-				return;
+				errorMessage  = "Source image has no Y axis.\n";
+				return false;
 			}
 			min[yindex] = settings.ystart;
 			max[yindex] = settings.yend;
@@ -423,6 +435,7 @@ public class TrackMate_<T extends RealType<T> & NativeType<T>>  implements PlugI
 		final int numFrames = settings.tend - settings.tstart + 1;
 		// Final results holder, for all frames
 		final SpotCollection spots = new SpotCollection();
+		spots.setNumThreads(numThreads);
 		// To report progress
 		final AtomicInteger spotFound = new AtomicInteger(0);
 		final AtomicInteger progress = new AtomicInteger(0);
@@ -432,12 +445,8 @@ public class TrackMate_<T extends RealType<T> & NativeType<T>>  implements PlugI
 		final double dy = settings.ystart * calibration[1];
 		final double dz = settings.zstart * calibration[2];
 
-		final Thread[] threads;
-		if (useMultithreading) { // TODO this is lame FIXME
-			threads = SimpleMultiThreading.newThreads();
-		} else {
-			threads = SimpleMultiThreading.newThreads(1);
-		}
+		final Thread[] threads = SimpleMultiThreading.newThreads(numThreads);
+		final AtomicBoolean ok = new AtomicBoolean(true);
 
 		// Prepare the thread array
 		final AtomicInteger ai = new AtomicInteger(settings.tstart);
@@ -453,7 +462,7 @@ public class TrackMate_<T extends RealType<T> & NativeType<T>>  implements PlugI
 						SpotDetector<T> detector = factory.getDetector(frame);
 
 						// Execute detection
-						if (detector.checkInput() && detector.process()) {
+						if (ok.get() && detector.checkInput() && detector.process()) {
 							// On success,
 							// Get results,
 							List<Spot> spotsThisFrame = detector.getResult();
@@ -484,7 +493,8 @@ public class TrackMate_<T extends RealType<T> & NativeType<T>>  implements PlugI
 
 						} else {
 							// Fail: exit and report error.
-							model.getLogger().error(detector.getErrorMessage()+'\n');
+							ok.set(false);
+							errorMessage = detector.getErrorMessage();
 							return;
 						}
 
@@ -499,9 +509,14 @@ public class TrackMate_<T extends RealType<T> & NativeType<T>>  implements PlugI
 		SimpleMultiThreading.startAndJoin(threads);
 		model.setSpots(spots, true);
 
-		logger.log("Found "+spotFound.get()+" spots.\n");
+		if (ok.get()) {
+			logger.log("Found "+spotFound.get()+" spots.\n");
+		} else {
+			logger.error("Detection failed after "+progress.get()+" frame:\n"+errorMessage);
+		}
 		logger.setProgress(1);
 		logger.setStatus("");
+		return ok.get();
 	}
 
 	/**
@@ -523,10 +538,13 @@ public class TrackMate_<T extends RealType<T> & NativeType<T>>  implements PlugI
 	 * @see #getSpots()
 	 * @see #setInitialFilter(Float)
 	 */
-	public void execInitialSpotFiltering() {
+	public boolean execInitialSpotFiltering() {
+		final Logger logger = model.getLogger();
+		logger.log("Starting initial filtering process.\n");
 		Double initialSpotFilterValue = model.getSettings().initialSpotFilterValue;
 		FeatureFilter featureFilter = new FeatureFilter(Spot.QUALITY, initialSpotFilterValue, true);
 		model.setSpots(model.getSpots().filter(featureFilter), true);
+		return true;
 	}
 
 	/**
@@ -544,11 +562,16 @@ public class TrackMate_<T extends RealType<T> & NativeType<T>>  implements PlugI
 	 * 
 	 * @see #getFilteredSpots()
 	 */
-	public void execSpotFiltering() {
+	public boolean execSpotFiltering() {
+		final Logger logger = model.getLogger();
+		logger.log("Starting spot filtering process.\n");
 		model.setFilteredSpots(model.getSpots().filter(model.getSettings().getSpotFilters()), true);
+		return true;
 	}
 
-	public void execTrackFiltering() {
+	public boolean execTrackFiltering() {
+		final Logger logger = model.getLogger();
+		logger.log("Starting track filtering process.\n");
 		HashSet<Integer> filteredTrackIndices = new HashSet<Integer>(); // will work, for the hash of Integer is its int
 
 		for (int trackIndex = 0; trackIndex < model.getNTracks(); trackIndex++) {
@@ -575,10 +598,81 @@ public class TrackMate_<T extends RealType<T> & NativeType<T>>  implements PlugI
 				filteredTrackIndices.add(trackIndex);
 		}
 		model.setVisibleTrackIndices(filteredTrackIndices, true);
+		return true;
 	}
 
 
 	public String toString() {
 		return PLUGIN_NAME_STR + "v" + PLUGIN_NAME_VERSION;
+	}
+
+	/*
+	 * ALGORITHM METHODS
+	 */
+	
+	@Override
+	public boolean checkInput() {
+		if (null == model) {
+			errorMessage = "The model is null.\n";
+			return false;
+		}
+		Settings<T> settings = model.getSettings();
+		if (null == settings) {
+			errorMessage = "Settings in the model are null";
+			return false;
+		}
+		if (!settings.checkValidity()) {
+			errorMessage = settings.getErrorMessage();
+			return false;
+		}
+		return true;
+	}
+
+	@Override
+	public String getErrorMessage() {
+		return errorMessage;
+	}
+
+	@Override
+	public boolean process() {
+		if (!execDetection()) {
+			return false;
+		}
+		if (!execInitialSpotFiltering()) {
+			return false;
+		}
+		computeSpotFeatures();
+		if (!execSpotFiltering()) {
+			return false;
+		}
+		if (!execTracking()) {
+			return false;
+		}
+		computeTrackFeatures();
+		if (!execTrackFiltering()) {
+			return false;
+		}
+		return true;
+	}
+
+	@Override
+	public int getNumThreads() {
+		return numThreads;
+	}
+
+	@Override
+	public void setNumThreads() {
+		this.numThreads = Runtime.getRuntime().availableProcessors();  
+	}
+
+	@Override
+	public void setNumThreads(int numThreads) {
+		this.numThreads = numThreads;
+		
+	}
+
+	@Override
+	public long getProcessingTime() {
+		return processingTime;
 	};
 }
