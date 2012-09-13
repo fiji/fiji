@@ -364,8 +364,9 @@ public final class Utils {
         }
     }
 
-    public static void appendOpenPathXML(final StringBuilder sb, final double[] pts)
+    public static void appendOpenPathXML(final StringBuilder sb, final double[] dpts)
     {
+        float[] pts = doubleToFloat(dpts);
         sb.append("M ").append(pts[0]).append(" ").append(pts[1]).append(" ");
 
         for (int i = 2; i < pts.length ; i+=2)
@@ -380,8 +381,9 @@ public final class Utils {
         sb.append("z");
     }
 
-    public static void appendBezierPathXML(final StringBuilder sb, final double[] pts)
+    public static void appendBezierPathXML(final StringBuilder sb, final double[] dpts)
     {
+        float[] pts = doubleToFloat(dpts);
         sb.append("M ").append(pts[0]).append(",").append(pts[1]).append(" ");
 
         for (int i = 2; i < pts.length ; i+=2)
@@ -513,6 +515,17 @@ public final class Utils {
         t.printStackTrace(printWriter);
         return result.toString();
 
+    }
+    
+    // Temporary kluge function
+    public static float[] doubleToFloat(final double[] doubles)
+    {
+        float[] floats = new float[doubles.length];
+        for (int i = 0; i < doubles.length; ++i)
+        {
+            floats[i] = (float)doubles[i];
+        }
+        return floats;
     }
 }
 
