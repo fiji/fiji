@@ -14,8 +14,8 @@ import java.awt.Font;
 
 
 /**
- * @author Tiago Ferreira v2.2 Feb 13, 2012
- * @author Tom Maddock    v1.0 Oct 26, 2005
+ * @author Tiago Ferreira v2.2a Feb 13, 2012
+ * @author Tom Maddock    v1.0c Oct 26, 2005
  *
  * This plugin presents an automated way of conducting Sholl Analysis on a neuron's
  * dendritic structure. It's most native mode of operation is to analyze a neuron that has
@@ -28,12 +28,21 @@ import java.awt.Font;
  * This program is free software; you can redistribute it and/or modify it under the terms
  * of the GNU General Public License as published by the Free Software Foundation
  * (http://www.gnu.org/licenses/gpl.txt).
+ *
+ *  2.2a: Sholl mask respects the fit curve option
+ * 
+ *  To do:
+    - fix the crash.
+    - Extend to 3D (How does Simple Neurite Tracer do it)?
+    - Mask: 16-bit?
+ 
+ *  
  */
 
 public class Advanced_Sholl_Analysis implements PlugIn {
 
     /* Version Information */
-    public static final String VERSION = "2.2";
+    public static final String VERSION = "2.2a";
 
     /* Analysis Constants */
 
@@ -180,17 +189,17 @@ public class Advanced_Sholl_Analysis implements PlugIn {
             Verbose = gd.getNextBoolean();
             MakeMask = gd.getNextBoolean();
 
-            // Check the Start and End Points
+            // Check Start and End Points
             if (UnitStart >= UnitEnd) {
-                error("Invalid Parameters!  ");
+                error("Invalid Parameters!");
                 if (Recorder.getInstance()!=null) return;
             } else
                 break;
 
-            // Keep presenting the dialog until the user gets it right
+            // Keep presenting dialog until the user gets it right
         } while (true);
 
-        // Set the lower bound for these variables
+        // Set lower bounds of parameters
         double unitstep  = Math.max(scale, UnitStep);
         double unitwidth = Math.max(scale, UnitWidth);
         double unitstart = UnitStart; //Math.max(scale, UnitStart); //
@@ -214,7 +223,7 @@ public class Advanced_Sholl_Analysis implements PlugIn {
 
         IJ.showStatus("Counting intersections...");
 
-        // Analyze the data and return "classical" Sholl intersections
+        // Analyze the data and return raw Sholl intersections
         double[] yvalues = analyze(x, y, radii, (int)Math.round(unitwidth/scale), BinChoice, color, ip);
 
         IJ.showStatus("Making plot...");
@@ -227,7 +236,7 @@ public class Advanced_Sholl_Analysis implements PlugIn {
             IJ.showStatus("Creating intersections mask...");
 
             ImagePlus img2 = IJ.createImage(SHOLL_TYPES[ShollChoice]+" mask for "+ image.getTitle(),
-                                            "32-bit black", image.getWidth(), image.getHeight(), 1);
+                                            "16-bit black", image.getWidth(), image.getHeight(), 1);
 
             ImageProcessor ip2 = img2.getProcessor();
 
@@ -249,8 +258,13 @@ public class Advanced_Sholl_Analysis implements PlugIn {
             }
 
             IJ.showProgress(0, 0);
+			
+		    // mention type of mask in image label
+			String metadata = "Raw data";
+			if (FitCurve) metadata = "Fitted data";
+			img2.setProperty("Label", metadata);
 
-            // Adjust levels, apply calibration of original image and display mask
+            // Adjust levels, apply calibration of measured image and display mask
             double[] levels = Tools.getMinMax(grays);
             IJ.run(img2, "Fire", ""); //"Fire", "Ice", "Spectrum", "Redgreen"
             ip2.setMinAndMax(levels[0], levels[1]);
@@ -684,12 +698,20 @@ public class Advanced_Sholl_Analysis implements PlugIn {
         plot.addPoints(x, y, Plot.CIRCLE); //default color is black
 
         // Curve fitting
-        if (FitCurve && nsize<=6) {
+        if (!FitCurve) {
 
-            IJ.log("\nCurve fitting requires more than 6 sampled points"
-                  +"\nPlease adjust parameters..."); 
+			plot.show();
+			return y;
 
-        } else if (FitCurve && nsize>6) {
+        } else {
+			
+			if (nsize<=6) {
+				IJ.log("\nCurve fitting requires more than 6 sampled points"
+					   +"\nPlease adjust parameters...");
+				plot.show();
+				return y;
+				
+			}
 
             CurveFitter cf = new CurveFitter(x, y);
             //cf.setRestarts(4); // default: 2;
@@ -723,13 +745,13 @@ public class Advanced_Sholl_Analysis implements PlugIn {
 
             }
 
-            // get fitted values
+            // Get fitted values
             double[] parameters = cf.getParams();
             for (i=0; i<nsize; i++)
                 fy[i] = cf.f(parameters, x[i]);
 
 
-            // Linear Sholl: extract more specific parameters
+            // Linear Sholl: Calculate critical value (cv), critical radius (cr) & Nav
             if (mthd==SHOLL_N) {
 
                 // Calculate N_AV, the average of intersections over the whole area occupied
@@ -761,12 +783,11 @@ public class Advanced_Sholl_Analysis implements PlugIn {
                 // Adjust font size
                 plot.changeFont(new Font("SansSerif", Font.PLAIN, 11));
 
-                // Add mean value, Ramification (Schoenen) index and (fitted) coordinates of
-                // critical value to label
+                // Add mean value, Ramification (Schoenen) index, Cv, Cr and Nav to label
                 label = "RI: " + IJ.d2s(cvy/y[0], 2);
                 label = label +"\nNav= " + IJ.d2s(N_AV,2);
-                label = label +"\nNm= "+ IJ.d2s(cvy, 2);
-                label = label +"\nrc= "+ IJ.d2s(cvx, 2);
+                label = label +"\nCv= "+ IJ.d2s(cvy, 2);
+                label = label +"\nCr= "+ IJ.d2s(cvx, 2);
                 label = label +"\nPR: "+ DEGREES[PolyChoice];
 
                 // highlight mean value of function
@@ -801,11 +822,11 @@ public class Advanced_Sholl_Analysis implements PlugIn {
             plot.setJustification(ImageProcessor.RIGHT_JUSTIFY); //2
             plot.setColor(Color.black);
             plot.addLabel(0.99, 0.08, label);
+			
+			// Show the plot window and return data
+			plot.show();
+			return fy;
         }
-
-        // Show the plot window and return data
-        plot.show();
-        return y;
     }
 
 /* Allow error messages to open an URL */
