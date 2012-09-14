@@ -14,7 +14,7 @@ import java.awt.Font;
 
 
 /**
- * @author Tiago Ferreira v2.2a Feb 13, 2012
+ * @author Tiago Ferreira v2.0  Feb 13, 2012
  * @author Tom Maddock    v1.0c Oct 26, 2005
  *
  * This plugin presents an automated way of conducting Sholl Analysis on a neuron's
@@ -29,14 +29,6 @@ import java.awt.Font;
  * of the GNU General Public License as published by the Free Software Foundation
  * (http://www.gnu.org/licenses/gpl.txt).
  *
- *  2.2a: Sholl mask respects the fit curve option
- * 
- *  To do:
-    - fix the crash.
-    - Extend to 3D (How does Simple Neurite Tracer do it)?
-    - Mask: 16-bit?
- 
- *  
  */
 
 public class Advanced_Sholl_Analysis implements PlugIn {
@@ -114,7 +106,7 @@ public class Advanced_Sholl_Analysis implements PlugIn {
             scale = cal.pixelHeight;
         }
 
-        Roi roi = image.getRoi(); // Get the current ROI
+        Roi roi = image.getRoi(); // Get current ROI
 
         if (!IJ.macroRunning() && !((roi != null && roi.getType() == Roi.LINE) ||
                                     (roi != null && roi.getType() == Roi.POINT))) {
@@ -128,7 +120,7 @@ public class Advanced_Sholl_Analysis implements PlugIn {
         }
 
 
-        roi = image.getRoi(); // Get the ROI after prompting the user
+        roi = image.getRoi(); // Re-get ROI in case it has changed
 
         int x, y;
         if (roi != null && roi.getType() == Roi.LINE) {
@@ -204,12 +196,8 @@ public class Advanced_Sholl_Analysis implements PlugIn {
         double unitwidth = Math.max(scale, UnitWidth);
         double unitstart = UnitStart; //Math.max(scale, UnitStart); //
 
-        // Get the target color
-        int color = ip.getPixel(x, y);
-
         // Calculate how many samples we're taking
         int size = (int)((UnitEnd - unitstart) / unitstep) + 1;
-
 
         // Create an x-values and pixel radii array
         int[] radii = new int[size];
@@ -224,7 +212,7 @@ public class Advanced_Sholl_Analysis implements PlugIn {
         IJ.showStatus("Counting intersections...");
 
         // Analyze the data and return raw Sholl intersections
-        double[] yvalues = analyze(x, y, radii, (int)Math.round(unitwidth/scale), BinChoice, color, ip);
+        double[] yvalues = analyze(x, y, radii, (int)Math.round(unitwidth/scale), BinChoice, ip);
 
         IJ.showStatus("Making plot...");
 
@@ -251,7 +239,7 @@ public class Advanced_Sholl_Analysis implements PlugIn {
 
                 for (j = 0; j < points.length; j++) {
                     for (k = 0; k < points[j].length; k++) {
-                        if (ip.getPixel(points[j][0], points[j][1])==color)
+                        if (ip.getPixel(points[j][0], points[j][1])!=0)
                             ip2.putPixelValue(points[j][0], points[j][1], grays[i]);
                     }
                 }
@@ -279,7 +267,7 @@ public class Advanced_Sholl_Analysis implements PlugIn {
 /* Does the actual analysis. Accepts an array of radius values and takes the measurements
  * for each */
     static public double[] analyze(int x, int y, int[] radii, int binsize, int bintype,
-                                   int targetColor, ImageProcessor ip) {
+                                   ImageProcessor ip) {
 
         int i, j, k, r, rbin, sum, size;
         int[] binsamples, pixels;
@@ -316,7 +304,7 @@ public class Advanced_Sholl_Analysis implements PlugIn {
                 pixels = getPixels(ip, points);
 
                 // Count the number of intersections
-                binsamples[j] = countTargetGroups(pixels, points, targetColor, ip);
+                binsamples[j] = countTargetGroups(pixels, points, ip);
 
             }
 
@@ -358,28 +346,27 @@ public class Advanced_Sholl_Analysis implements PlugIn {
     }
 
 
-/* Counts how many groups of targetColor are present in the given data. A group consists
+/* Counts how many groups of non-zero pixels are present in the given data. A group consists
  * of adjacent pixels, where adjacency is true for all eight neighboring positions around
  * a given pixel. */
-    static public int countTargetGroups(int[] pixels, int[][] rawpoints, int targetColor,
-                                        ImageProcessor ip) {
+    static public int countTargetGroups(int[] pixels, int[][] rawpoints, ImageProcessor ip) {
 
         int i, j;
         int[][] points;
 
-        // Count how many targetcolors we have
+        // Count how many non-zero foreground we have
         for (i = 0, j = 0; i < pixels.length; i++)
-            if (pixels[i] == targetColor) j++;
+            if (pixels[i] != 0) j++;
 
         // Create an array to hold the targetpixels
         points = new int[j][2];
 
         // Copy all targetpixels into the array
         for (i = 0, j = 0; i < pixels.length; i++)
-            if (pixels[i] == targetColor)
+            if (pixels[i] != 0)
                 points[j++] = rawpoints[i];
 
-        return countGroups(points, 1.5, targetColor, ip);
+        return countGroups(points, 1.5, ip);
 
     }
 
@@ -388,8 +375,7 @@ public class Advanced_Sholl_Analysis implements PlugIn {
  * point in each group, there exists another point in the same group that is less than
  * threshold units of distance away. If a point is greater than threshold units away from
  * all other points, it is in its own group. */
-    static public int countGroups(int[][] points, double threshold, int tc,
-                                  ImageProcessor ip) {
+    static public int countGroups(int[][] points, double threshold, ImageProcessor ip) {
 
         double distance;
         int i, j, k, target, source, dx, dy, groups, len;
@@ -477,10 +463,10 @@ public class Advanced_Sholl_Analysis implements PlugIn {
                 px = getPixels(ip, points);
 
                 // Now perform the stair checks
-                if ((px[0]==tc && px[1]==tc && px[3]==tc && px[4]!=tc && px[6]!=tc && px[7]!=tc) ||
-                    (px[1]==tc && px[2]==tc && px[4]==tc && px[3]!=tc && px[5]!=tc && px[6]!=tc) ||
-                    (px[4]==tc && px[6]==tc && px[7]==tc && px[0]!=tc && px[1]!=tc && px[3]!=tc) ||
-                    (px[3]==tc && px[5]==tc && px[6]==tc && px[1]!=tc && px[2]!=tc && px[4]!=tc))
+                if ((px[0]!=0 && px[1]!=0 && px[3]!=0 && px[4]==0 && px[6]==0 && px[7]==0) ||
+                    (px[1]!=0 && px[2]!=0 && px[4]!=0 && px[3]==0 && px[5]==0 && px[6]==0) ||
+                    (px[4]!=0 && px[6]!=0 && px[7]!=0 && px[0]==0 && px[1]==0 && px[3]==0) ||
+                    (px[3]!=0 && px[5]!=0 && px[6]!=0 && px[1]==0 && px[2]==0 && px[4]==0))
 
                     groups--;
 
