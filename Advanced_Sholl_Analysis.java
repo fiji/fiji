@@ -17,13 +17,10 @@ import java.awt.Font;
  * @author Tiago Ferreira v2.0  Feb 13, 2012
  * @author Tom Maddock    v1.0c Oct 26, 2005
  *
- * This plugin presents an automated way of conducting Sholl Analysis on a neuron's
- * dendritic structure. It's most native mode of operation is to analyze a neuron that has
- * already been traced, yet it can also analyze a direct image of a neuron as long as that
- * image has been thresholded to ensure that every pixel defining the neuron has the same
- * intensity value.
+ * Performs 2D Sholl Analysis on binary images of arbors previously traced or segmented.
  * Several advanced analysis methods are available: Linear (N), Linear (N/S), Semi-log and
- * Log-log as described in Milosevic and Ristanovic, J Theor Biol (2007) 245(1)130-40
+ * Log-log as described in Milosevic and Ristanovic, J Theor Biol (2007) 245(1)130-40.
+ * Background is always considered 0, independently of Prefs.blackBackground
  *
  * This program is free software; you can redistribute it and/or modify it under the terms
  * of the GNU General Public License as published by the Free Software Foundation
@@ -33,35 +30,23 @@ import java.awt.Font;
 
 public class Advanced_Sholl_Analysis implements PlugIn {
 
-    /* Version Information */
-    public static final String VERSION = "2.2a";
-
-    /* Analysis Constants */
-
-    /* If the edge of a dendritic branch lies roughly tangent to a sampling circle, it is
-     * counted as having multiple intersections with that circle, causing the resulting
-     * graph to appear "spikey". This is caused by the interplay between the pixels in the
-     * circle and the edge. This variable enables an extra level of searching to try to
-     * find these "false positives" and throw them out, thereby making the analysis more
-     * accurate, but just a tad bit slower.*/
-    private static final boolean DoSpikeSupression = true;
-
-    /* This variable controls the width in pixels of circle circumference that is used to
-     count intersections. Testing reveals this is best left at 1. */
-    private static final int LineWidth = 1;
+    /* Plugin Information */
+    public static final String VERSION = "2.2b";
+    public static final String
+        URL = "http://imagejdocu.tudor.lu/doku.php?id=plugin:analysis:asa:start";
 
     /* Bin Function Type Definitions */
+    private static final String[] BIN_TYPES = {"Mean", "Median"};
     private static final int BIN_AVERAGE = 0;
     private static final int BIN_MEDIAN  = 1;
-    private static final String[] BIN_TYPES = {"Mean", "Median"};
 
     /* Sholl Type Definitions */
+    private static final String[]
+        SHOLL_TYPES = {"Intersections (N)", "Inters./Area (N/S)", "Semi-Log", "Log-Log"};
     private static final int SHOLL_N    = 0;
     private static final int SHOLL_NS   = 1;
     private static final int SHOLL_SLOG = 2;
     private static final int SHOLL_LOG  = 3;
-    private static final String[]
-        SHOLL_TYPES = {"Intersections (N)", "Inters./Area (N/S)", "Semi-Log", "Log-Log"};
     private static final String[]
         DEGREES= {"4th degree", "5th degree", "6th degree", "7th degree", "8th degree"};
 
@@ -82,6 +67,7 @@ public class Advanced_Sholl_Analysis implements PlugIn {
     private static GenericDialog gd = null;
 
     /* Common variables */
+    private static double scale = 1.0;
     private static double[] yscale;
     private static String yTitle;
 
@@ -97,16 +83,15 @@ public class Advanced_Sholl_Analysis implements PlugIn {
             return;
         }
 
-        Calibration cal = image.getCalibration(); // Get the image calibration
-        double scale = 1.0;                       // Set default dimensions info
-
-        // Get image dimension info from the calibration
+        // Get image calibration
+        Calibration cal = image.getCalibration();
         if (cal != null && cal.pixelHeight == cal.pixelWidth)  {
             ScaleUnit = cal.getUnits();
             scale = cal.pixelHeight;
         }
 
-        Roi roi = image.getRoi(); // Get current ROI
+        // Get current ROI
+        Roi roi = image.getRoi();
 
         if (!IJ.macroRunning() && !((roi != null && roi.getType() == Roi.LINE) ||
                                     (roi != null && roi.getType() == Roi.POINT))) {
@@ -163,7 +148,7 @@ public class Advanced_Sholl_Analysis implements PlugIn {
             gd.addCheckbox("Show parameters", Verbose);
             gd.setInsets(10, 6, 0);
             gd.addCheckbox("Create intersections mask", MakeMask);
-            gd.addHelp("http://imagejdocu.tudor.lu/doku.php?id=plugin:analysis:asa:start");
+            gd.addHelp(URL);
             gd.showDialog();
 
             // Stop if the user pressed cancel
@@ -191,6 +176,8 @@ public class Advanced_Sholl_Analysis implements PlugIn {
             // Keep presenting dialog until the user gets it right
         } while (true);
 
+        long start = System.currentTimeMillis();
+
         // Set lower bounds of parameters
         double unitstep  = Math.max(scale, UnitStep);
         double unitwidth = Math.max(scale, UnitWidth);
@@ -214,7 +201,7 @@ public class Advanced_Sholl_Analysis implements PlugIn {
         // Analyze the data and return raw Sholl intersections
         double[] yvalues = analyze(x, y, radii, (int)Math.round(unitwidth/scale), BinChoice, ip);
 
-        IJ.showStatus("Making plot...");
+        IJ.showStatus("Creating plot...");
 
         // Display the analysis and return transformed data
         double[] grays = plotValues(image.getTitle(), ShollChoice, radii, xvalues, yvalues, x, y);
@@ -224,33 +211,33 @@ public class Advanced_Sholl_Analysis implements PlugIn {
             IJ.showStatus("Creating intersections mask...");
 
             ImagePlus img2 = IJ.createImage(SHOLL_TYPES[ShollChoice]+" mask for "+ image.getTitle(),
-                                            "16-bit black", image.getWidth(), image.getHeight(), 1);
+                                            "32-bit black", image.getWidth(), image.getHeight(), 1);
 
             ImageProcessor ip2 = img2.getProcessor();
 
-            int[][] points; int i, j, k; double arbor;
-            int drawRadius; int drawSteps = grays.length;
-            int drawWidth = (int)( ((UnitEnd-unitstart)/scale)/drawSteps ) ;
+            int[][] points;
+            int i, j, k, l, drawRadius;
+            int drawSteps = grays.length;
+            int drawWidth = (int)( ((UnitEnd-unitstart)/scale)/drawSteps );
 
-            for (i=0; i<drawSteps; i++) {
+            for (i = 0; i < drawSteps; i++) {
                 IJ.showProgress(i, drawSteps);
-                drawRadius = (int)Math.round( (unitstart/scale) + (i*drawWidth) );
-                points = getCircumferencePoints(x, y, drawRadius, drawWidth);
-
-                for (j = 0; j < points.length; j++) {
-                    for (k = 0; k < points[j].length; k++) {
-                        if (ip.getPixel(points[j][0], points[j][1])!=0)
-                            ip2.putPixelValue(points[j][0], points[j][1], grays[i]);
+                drawRadius = (int)Math.round( (unitstart/scale) + (i*drawWidth) - drawWidth );
+                for (j = 0; j < drawWidth; j++) {               
+                    points = getCircumferencePoints(x, y, drawRadius++);
+                    for (k = 0; k < points.length; k++) {
+                        for (l = 0; l < points[k].length; l++) {
+                            if (ip.getPixel(points[k][0], points[k][1])!=0)
+                                ip2.putPixelValue(points[k][0], points[k][1], grays[i]);
+                        }
                     }
                 }
             }
-
-            IJ.showProgress(0, 0);
-			
-		    // mention type of mask in image label
-			String metadata = "Raw data";
-			if (FitCurve) metadata = "Fitted data";
-			img2.setProperty("Label", metadata);
+            
+            // Store type of data in mask label
+            String metadata = "Raw data";
+            if (FitCurve) metadata = "Fitted data";
+            img2.setProperty("Label", metadata);
 
             // Adjust levels, apply calibration of measured image and display mask
             double[] levels = Tools.getMinMax(grays);
@@ -259,7 +246,9 @@ public class Advanced_Sholl_Analysis implements PlugIn {
             img2.setCalibration(cal);
             img2.show();
         }
-
+        
+        IJ.showProgress(0, 0);
+        IJ.showStatus("Finished. "+ IJ.d2s((System.currentTimeMillis()-start)/1000.0, 2)+" seconds");
         gd = null;
     }
 
@@ -283,11 +272,11 @@ public class Advanced_Sholl_Analysis implements PlugIn {
         // Outer loop to control the analysis bins
         for (i = 0; i < size; i++) {
 
-            // Set the progress bar
-            IJ.showProgress(i, size);
-
             // Get the radius we are sampling
             r = radii[i];
+            
+            IJ.showStatus("Sampling... "+ i +"/"+ size +", r= "+ IJ.d2s(r*scale,2) + ScaleUnit);
+            IJ.showProgress(i, size);
 
             // Set the first radius for this bin
             rbin = r - (int)Math.round((double)binsize / 2.0);
@@ -300,7 +289,7 @@ public class Advanced_Sholl_Analysis implements PlugIn {
             for (; j < binsize; j++, rbin++) {
 
                 // Get the circle pixels for this radius
-                points = getCircumferencePoints(x, y, rbin, LineWidth);
+                points = getCircumferencePoints(x, y, rbin);
                 pixels = getPixels(ip, points);
 
                 // Count the number of intersections
@@ -339,16 +328,11 @@ public class Advanced_Sholl_Analysis implements PlugIn {
 
         }
 
-        // Set the progress bar
-        IJ.showProgress(0, 0);
-
         return data;
     }
 
 
-/* Counts how many groups of non-zero pixels are present in the given data. A group consists
- * of adjacent pixels, where adjacency is true for all eight neighboring positions around
- * a given pixel. */
+/* Counts how many groups of non-zero pixels are present in the given data. */
     static public int countTargetGroups(int[] pixels, int[][] rawpoints, ImageProcessor ip) {
 
         int i, j;
@@ -370,11 +354,12 @@ public class Advanced_Sholl_Analysis implements PlugIn {
 
     }
 
-
-/* For a set of points in 2d space, counts how many groups there are such that for every
+    
+/* For a set of points in 2D space, counts how many groups there are such that for every
  * point in each group, there exists another point in the same group that is less than
  * threshold units of distance away. If a point is greater than threshold units away from
- * all other points, it is in its own group. */
+ * all other points, it is in its own group. For threshold= 1.5 is this equivalent to
+ * 8-connected clusters? */
     static public int countGroups(int[][] points, double threshold, ImageProcessor ip) {
 
         double distance;
@@ -382,10 +367,6 @@ public class Advanced_Sholl_Analysis implements PlugIn {
 
         // Create an array to hold the point grouping data
         int[] grouping = new int[len = points.length];
-
-        // TF: Do not proceed if there are less than 4 points (e.g., if radius was zero)
-        // caused by rounding inaccuracies with certain start/end/step combinations
-        if (len<7) return 0;
 
         // Initialize each point to be in a unique group
         for (i = 0, groups = len; i < groups; i++)
@@ -409,7 +390,7 @@ public class Advanced_Sholl_Analysis implements PlugIn {
                     source = grouping[i];
                     target = grouping[j];
 
-                    // Chance all targets to sources
+                    // Change all targets to sources
                     for (k = 0; k < len; k++)
                         if (grouping[k] == target)
                             grouping[k] = source;
@@ -420,59 +401,53 @@ public class Advanced_Sholl_Analysis implements PlugIn {
                 }
             }
 
-        /* Our next task is to throw out 1-pixel groups satisfying the condition that they
-         * exist solely on the edge of a "stair" of target pixels. These such groups seem
-         * to significantly contribute to the number of "spikes" in the Sholl Analysis
-         * results, and although we cannot get all of them, this should suppress a great
-         * deal of the spikes. */
-        if (DoSpikeSupression) {
+       /* If the edge of the group lies tangent to the sampling circle, multiple
+        * intersections with that circle will be counted. We will try to find
+        * these "false positives" and throw them out. A way to attempt this (we
+        * will be missing some of them) is to throw out 1-pixel groups that
+        * exist solely on the edge of a "stair" of target pixels */         
+        boolean multigroup;
+        int[] px;
+        int[][] testpoints = new int[8][2];
 
-            boolean multigroup;
-            int[] px;
-            int[][] testpoints = new int[8][2];
-            byte pixelmask;
+        for (i = 0; i < len; i++) {
 
-            for (i = 0; i < len; i++) {
-
-                // Check for other members of this group
-                for (multigroup = false, j = 0; j < len; j++) {
-                    if (i == j) continue;
-                    if (grouping[i] == grouping[j]) {
-                        multigroup = true;
-                        break;
-                    }
+            // Check for other members of this group
+            for (multigroup = false, j = 0; j < len; j++) {
+                if (i == j) continue;
+                if (grouping[i] == grouping[j]) {
+                multigroup = true;
+                break;
                 }
-
-                // If not a single-pixel group, try again
-                if (multigroup) continue;
-
-                // Save the coordinates of this point
-                dx = points[i][0]; dy = points[i][1];
-
-                // Calculate the points surrounding this point
-                testpoints[0][0] = dx-1; testpoints[0][1] = dy+1;
-                testpoints[1][0] = dx  ; testpoints[1][1] = dy+1;
-                testpoints[2][0] = dx+1; testpoints[2][1] = dy+1;
-                testpoints[3][0] = dx-1; testpoints[3][1] = dy  ;
-                testpoints[4][0] = dx+1; testpoints[4][1] = dy  ;
-                testpoints[5][0] = dx-1; testpoints[5][1] = dy-1;
-                testpoints[6][0] = dx  ; testpoints[6][1] = dy-1;
-                testpoints[7][0] = dx+1; testpoints[7][1] = dy-1;
-
-                // Pull out the pixel values for these points
-                px = getPixels(ip, points);
-
-                // Now perform the stair checks
-                if ((px[0]!=0 && px[1]!=0 && px[3]!=0 && px[4]==0 && px[6]==0 && px[7]==0) ||
-                    (px[1]!=0 && px[2]!=0 && px[4]!=0 && px[3]==0 && px[5]==0 && px[6]==0) ||
-                    (px[4]!=0 && px[6]!=0 && px[7]!=0 && px[0]==0 && px[1]==0 && px[3]==0) ||
-                    (px[3]!=0 && px[5]!=0 && px[6]!=0 && px[1]==0 && px[2]==0 && px[4]==0))
-
-                    groups--;
-
             }
 
-        }
+            // If not a single-pixel group, try again
+            if (multigroup) continue;
+
+            // Save the coordinates of this point
+            dx = points[i][0]; dy = points[i][1];
+
+            // Calculate the 8 neighbors surrounding this point
+            testpoints[0][0] = dx-1; testpoints[0][1] = dy+1;
+            testpoints[1][0] = dx  ; testpoints[1][1] = dy+1;
+            testpoints[2][0] = dx+1; testpoints[2][1] = dy+1;
+            testpoints[3][0] = dx-1; testpoints[3][1] = dy  ;
+            testpoints[4][0] = dx+1; testpoints[4][1] = dy  ;
+            testpoints[5][0] = dx-1; testpoints[5][1] = dy-1;
+            testpoints[6][0] = dx  ; testpoints[6][1] = dy-1;
+            testpoints[7][0] = dx+1; testpoints[7][1] = dy-1;
+
+            // Pull out the pixel values for these points
+            px = getPixels(ip, testpoints);
+
+            // Now perform the stair checks
+            if ((px[0]!=0 && px[1]!=0 && px[3]!=0 && px[4]==0 && px[6]==0 && px[7]==0) ||
+                (px[1]!=0 && px[2]!=0 && px[4]!=0 && px[3]==0 && px[5]==0 && px[6]==0) ||
+                (px[4]!=0 && px[6]!=0 && px[7]!=0 && px[0]==0 && px[1]==0 && px[3]==0) ||
+                (px[3]!=0 && px[5]!=0 && px[6]!=0 && px[1]==0 && px[2]==0 && px[4]==0))
+
+                groups--;
+            }
 
         return groups;
     }
@@ -505,53 +480,17 @@ public class Advanced_Sholl_Analysis implements PlugIn {
         return pixels;
     }
 
-/* Return the location of pixels along a circumference of a given width */
-    static public int[][] getCircumferencePoints(int cx, int cy, int r, int width) {
-
-        int i, j, x;
-
-        // Shortcut for unit width
-        if (width == 1) return getCircumferencePoints(cx, cy, r);
-
-        // Create an array to store all the points
-        int[][][] points = new int[width][][];
-
-        // Choose which radius to start the circumference at
-        x = Math.max(0, r - (int)Math.round((double)width/2.0));
-
-        // Get the points for each individual circumference
-        for (i = 0; i < width; i++, x++)
-            points[i] = getCircumferencePoints(cx, cy, x);
-
-        // Figure out how many points there are in total
-        for (i = 0, x = 0; i < width; i++)
-            x += points[i].length;
-
-        // Create a new array to hold all the points
-        int[][] result = new int[x][];
-
-        // Copy all the points into the combined array
-        for (i = 0, x = 0; i < width; i++)
-            for (j = 0; j < points[i].length; j++)
-                result[x++] = points[i][j];
-
-        return result;
-    }
-
-/* Return the location of pixels clockwise along the circumference of the given circle */
+/* Returns the location of pixels clockwise along a (1-pixel wide) circumference 
+ * using  Bresenham's Circle Algorithm */
     static public int[][] getCircumferencePoints(int cx, int cy, int r) {
 
-
-        /* Implementation of Bresenham's Circle Algorithm */
-
-        // Initialize Algorithm Variables
+        // Initialize algorithm variables
         int i = 0, x = 0, y = r, err = 0, errR, errD;
 
         // Array to store first 1/8 of points relative to center
         int[][] data = new int[++r][2];
 
         do {
-
             // Add this point as part of the circumference
             data[i][0] = x; data[i++][1] = y;
 
@@ -560,17 +499,10 @@ public class Advanced_Sholl_Analysis implements PlugIn {
 
             // Choose which direction to go
             if (Math.abs(errD) < Math.abs(errR)) {
-
-                // Go down
-                y--; err = errD;
-
+                y--; err = errD; // Go down
             } else {
-
-                // Go right
-                x++; err = errR;
-
+                x++; err = errR; // Go right
             }
-
         } while (x <= y);
 
         // Create an array to hold the absolute coordinates
@@ -618,7 +550,7 @@ public class Advanced_Sholl_Analysis implements PlugIn {
 
     }
 
-/* Create the Sholl plot with fitted data */
+/* Create the Sholl plot */
     static public double[] plotValues(String ttl, int mthd, int[] r, double[] xpoints,
                                   double[] ypoints, int xcenter, int ycenter) {
 
@@ -686,18 +618,18 @@ public class Advanced_Sholl_Analysis implements PlugIn {
         // Curve fitting
         if (!FitCurve) {
 
-			plot.show();
-			return y;
+            plot.show();
+            return y;
 
         } else {
-			
-			if (nsize<=6) {
-				IJ.log("\nCurve fitting requires more than 6 sampled points"
-					   +"\nPlease adjust parameters...");
-				plot.show();
-				return y;
-				
-			}
+            
+            if (nsize<=6) {
+                IJ.log("\nCurve fitting requires more than 6 sampled points"
+                       +"\nPlease adjust parameters...");
+                plot.show();
+                return y;
+                
+            }
 
             CurveFitter cf = new CurveFitter(x, y);
             //cf.setRestarts(4); // default: 2;
@@ -721,11 +653,11 @@ public class Advanced_Sholl_Analysis implements PlugIn {
 
                 cf.doFit(CurveFitter.POWER, false);
 
-            } else if(mthd==SHOLL_SLOG) {
+            } else if (mthd==SHOLL_SLOG) {
 
                 cf.doFit(CurveFitter.STRAIGHT_LINE, false);
 
-            } else if(mthd==SHOLL_LOG) {
+            } else if (mthd==SHOLL_LOG) {
 
                 cf.doFit(CurveFitter.EXP_WITH_OFFSET, false);
 
@@ -752,8 +684,8 @@ public class Advanced_Sholl_Analysis implements PlugIn {
                 // Get index of highest fitted value
                 int maxidx = cf.getMax(fy);
 
-                // Get the coordinates of the "critical value", i.e, local maximum of polynomial.
-                // We'll iterate around maxidx and retrive the values empirically. This is
+                // Get coordinates of critical value, the local maximum of polynomial.
+                // We'll iterate around maxidx and retrive values empirically. This is
                 // obviously imprecise
                 int iterations  = 1000;
                 double cvxleft  = (x[maxidx-1] + x[maxidx])/2;
@@ -763,7 +695,7 @@ public class Advanced_Sholl_Analysis implements PlugIn {
                 for (i=0; i<iterations; i++) {
                     cvxtmp = cvxleft + (i*step);
                     cvytmp = cf.f(parameters, cvxtmp);
-                    if(cvytmp>cvy) { cvy = cvytmp; cvx = cvxtmp; }
+                    if (cvytmp>cvy) { cvy = cvytmp; cvx = cvxtmp; }
                 }
 
                 // Adjust font size
@@ -776,7 +708,7 @@ public class Advanced_Sholl_Analysis implements PlugIn {
                 label = label +"\nCr= "+ IJ.d2s(cvx, 2);
                 label = label +"\nPR: "+ DEGREES[PolyChoice];
 
-                // highlight mean value of function
+                // Highlight mean value of function
                 plot.setLineWidth(1);
                 plot.setColor(Color.lightGray);
                 plot.drawLine(xscale[0], N_AV, xscale[1], N_AV);
@@ -808,14 +740,14 @@ public class Advanced_Sholl_Analysis implements PlugIn {
             plot.setJustification(ImageProcessor.RIGHT_JUSTIFY); //2
             plot.setColor(Color.black);
             plot.addLabel(0.99, 0.08, label);
-			
-			// Show the plot window and return data
-			plot.show();
-			return fy;
+            
+            // Show the plot window and return data
+            plot.show();
+            return fy;
         }
     }
 
-/* Allow error messages to open an URL */
+/* Create improved error messages */
    void error(String error) {
         if (IJ.macroRunning())
             IJ.error("Advanced Sholl Analysis v" + VERSION, error);
@@ -823,7 +755,7 @@ public class Advanced_Sholl_Analysis implements PlugIn {
             GenericDialog gd = new GenericDialog("Advanced Sholl Analysis v" + VERSION);
             Font font = new Font("SansSerif", Font.PLAIN, 13);
             gd.addMessage(error, font);
-            gd.addHelp("http://imagejdocu.tudor.lu/doku.php?id=plugin:analysis:asa:start");
+            gd.addHelp(URL);
             gd.hideCancelButton();
             gd.showDialog();
         }
