@@ -129,7 +129,7 @@ public class TrackMateModel <T extends RealType<T> & NativeType<T>> {
 	 * CONSTANTS
 	 */
 
-	private static final boolean DEBUG = false;
+	private static final boolean DEBUG = true;
 	private static final boolean DEBUG_SELECTION = false;
 
 	/*
@@ -1020,15 +1020,9 @@ public class TrackMateModel <T extends RealType<T> & NativeType<T>> {
 		 * and if some spots have been removed (equivalent to remove edges). We do
 		 * NOT recompute tracks if spots have been added: they will not result in
 		 * new tracks made of single spots.	 */
-
 		int nEdgesToSignal = edgesAdded.size() + edgesRemoved.size();
 		if (nEdgesToSignal + spotsRemoved.size() > 0) {
 			computeTracksFromGraph();
-//						new Thread("TrackMate track features computing thread") {
-//							public void run() {
-//								computeTrackFeatures(); // We do it in a thread because it is a lengthy operation
-//							}
-//						}.start();
 		}
 
 		// Deal with new or moved spots: we need to update their features.
@@ -1141,8 +1135,14 @@ public class TrackMateModel <T extends RealType<T> & NativeType<T>> {
 			trackEdges.add(spotEdge);
 		}
 
+		// Try to infer correct visibility
+		final int ntracks = trackSpots.size();
+		final int noldtracks = oldTrackSpots.size();
+		final Set<Integer> oldTrackVisibility = visibleTrackIndices;
+		visibleTrackIndices = new HashSet<Integer>(noldtracks); // Approx
+
 		/* Deal with a special case: of there were no tracks at all before this call,
-		 * then oldTrackSpots is null. To avoid that, we set it to the new value. Also,
+		 * then oldTrackSpots is empty. To avoid that, we set it to the new value. Also,
 		 * since the the visibility set is empty, we will not get any new track visible.
 		 * So we seed it with all track indices, letting it propagate to new tracks. 
 		 * So that manually added track will have a visibility to on. */
@@ -1153,11 +1153,41 @@ public class TrackMateModel <T extends RealType<T> & NativeType<T>> {
 			}
 		}
 
-		// Try to infer correct visibility
-		final int ntracks = trackSpots.size();
-		final int noldtracks = oldTrackSpots.size();
-		final Set<Integer> oldTrackVisibility = visibleTrackIndices;
-		visibleTrackIndices = new HashSet<Integer>(noldtracks); // Approx
+		/* Another special case: if there is some completely new track appearing, it 
+		 * should be visible by default. How do we know that some tracks are "de novo"?
+		 * For de movo tracks, there is no spot in the Set<Spot> that can be found in 
+		 * oldTrackSpots. Also, we want to avoid having visible tracks of 1 spot, so
+		 * to be visible, de novo tracks must have more than 2 spots. 	 */
+		
+		// Pool all old spots together
+		List<Spot> allSpotsInOldTrackSpots = new ArrayList<Spot>();
+		for(Set<Spot> olTrack : oldTrackSpots) {
+			allSpotsInOldTrackSpots.addAll(olTrack);
+		}
+		
+		// Interrogate each new track one by one
+		for (int trackIndex = 0; trackIndex < ntracks; trackIndex++) {
+
+			Set<Spot> track = trackSpots.get(trackIndex);
+			if (track.size() < 2) 
+				continue;
+			
+			boolean shouldBeVisible = true;
+			for (final Spot spot : track) {
+				if (allSpotsInOldTrackSpots.contains(spot)) {
+					// At least one spot in the new track can be found in the old track list, so
+					// it cannot be a de novo track. 
+					shouldBeVisible = false;
+					break;
+				}
+			}
+			
+			if (shouldBeVisible) {
+				visibleTrackIndices.add(trackIndex);
+			}
+			
+		}
+		
 		// How to know if a new track should be visible or not?
 		// We can say this: the new track should be visible if it has at least
 		// one spot that can be found in a visible old track.
