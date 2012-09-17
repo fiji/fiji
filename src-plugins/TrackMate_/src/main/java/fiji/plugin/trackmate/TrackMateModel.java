@@ -923,6 +923,7 @@ public class TrackMateModel <T extends RealType<T> & NativeType<T>> {
 				System.out.println("[TrackMateModel] Removing spot " + spotToRemove + " from frame " + fromFrame);
 		}
 		filteredSpots.remove(spotToRemove, fromFrame);
+		spotSelection.remove(spotToRemove);
 		graph.removeVertex(spotToRemove);
 	}
 
@@ -948,6 +949,7 @@ public class TrackMateModel <T extends RealType<T> & NativeType<T>> {
 	public boolean removeEdge(final DefaultWeightedEdge edge) {
 		// Mother graph
 		boolean removed = graph.removeEdge(edge);
+		edgeSelection.remove(edge);
 		if (DEBUG)
 			System.out.println("[TrackMateModel] Removing edge " + edge + " between " + graph.getEdgeSource(edge) + " and " + graph.getEdgeTarget(edge));
 		return removed;
