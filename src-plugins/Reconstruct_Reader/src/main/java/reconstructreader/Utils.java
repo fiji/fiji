@@ -249,8 +249,8 @@ public final class Utils {
         return new double[tokr.countTokens()];
     }
 
-    public static int nodeValueToVector(String val,
-                                        final double[] matrix)
+
+    public static int nodeValueToVector(String val, final double[] matrix)
     {
         StringTokenizer t;
         int rCount = 0, i = 0;
@@ -384,13 +384,16 @@ public final class Utils {
     public static void appendBezierPathXML(final StringBuilder sb, final double[] dpts)
     {
         float[] pts = doubleToFloat(dpts);
-        sb.append("M ").append(pts[0]).append(",").append(pts[1]).append(" ");
-
-        for (int i = 2; i < pts.length ; i+=2)
+        if (pts.length > 0)
         {
-            sb.append("C ").append(pts[i-2]).append(",").append(pts[i - 1]).append(" ")
-                .append(pts[i]).append(",").append(pts[i + 1]).append(" ")
-                .append(pts[i]).append(",").append(pts[i + 1]);
+            sb.append("M ").append(pts[0]).append(",").append(pts[1]).append(" ");
+
+            for (int i = 2; i < pts.length ; i+=2)
+            {
+                sb.append("C ").append(pts[i-2]).append(",").append(pts[i - 1]).append(" ")
+                        .append(pts[i]).append(",").append(pts[i + 1]).append(" ")
+                        .append(pts[i]).append(",").append(pts[i + 1]);
+            }
         }
     }
 
@@ -444,29 +447,38 @@ public final class Utils {
                 (Element) contour.getParentNode(),
                 useMag, stackHeight, zoom, isDomainContour);
         //Now, we grab the points from the XML.
-        double[] pts = Utils.createNodeValueVector(contour.getAttribute("points"));
-        int nrows = Utils.nodeValueToVector(contour.getAttribute("points"), pts);
-
-        //If we got a different number of rows than expected, yell about it, but don't die.
-        if (nrows != 2)
+        final String contourValue = contour.getAttribute("points");
+        if (contourValue.trim().length() < 1)
         {
-            System.err.println("Nrows should have been 2, instead it was " + nrows
-                    + ", therefore, we're boned");
-            System.err.println("Points text: " + contour.getAttribute("points"));
+            return new double[0];
         }
-
-        //Apply the transform (I hope I hope I hope this worked out right).
-        trans.transform(pts, 0, pts, 0, pts.length / 2);
-
-        //Flip it vertically, as long as it isn't a domain contour.
-        if (!isDomainContour)
+        else
         {
-            for (int i = 1; i < pts.length; i+=2)
+            double[] pts = Utils.createNodeValueVector(contour.getAttribute("points"));
+            int nrows = Utils.nodeValueToVector(contour.getAttribute("points"), pts);
+
+            //If we got a different number of rows than expected, yell about it, but don't die.
+            if (nrows != 2)
             {
-                pts[i] = stackHeight - pts[i];
+                System.err.println("Nrows should have been 2, instead it was " + nrows
+                        + ", therefore, we're boned");
+                System.err.println("Points text: " + contour.getAttribute("points"));
+                System.err.println("Problem encountered while processing " + contour.getAttribute("name"));
             }
+
+            //Apply the transform (I hope I hope I hope this worked out right).
+            trans.transform(pts, 0, pts, 0, pts.length / 2);
+
+            //Flip it vertically, as long as it isn't a domain contour.
+            if (!isDomainContour)
+            {
+                for (int i = 1; i < pts.length; i+=2)
+                {
+                    pts[i] = stackHeight - pts[i];
+                }
+            }
+            return pts;
         }
-        return pts;
     }
 
     public static double[] getPathExtent(double[] pts)
