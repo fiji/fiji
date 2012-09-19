@@ -1,0 +1,48 @@
+To do:
+- Add an option for All methods?
+- Extend to 3D (How does Simple Neurite Tracer do it)?
+- Only works with point selection in IJ2 and is extremely slow.
+- Recheck if methods to retrieve ROIs are correct.
+
+Version 2.3a
+    - Fixed issue introduced in 2.3min which -1 tagged pixels were being counted
+    - Fixed rounding in mask drawing
+    - Center ROI is dislayed on mask
+	- Plot is named after analyzed image
+	- Improve order of Table columns
+	- showStatus more informative
+
+Version 2.3
+	- Results printed to a dedicated table
+	- Sholl decay is always calculated when fitting curve
+	- Fixed exception in cv calculation
+	- Impose valid parameters, rather than keep prompting the user (buggy, e.g.,
+	  when recording macros)
+    - Progress bar is more informative
+    - Major code cleaning
+    - Minor fixes
+
+Version 2.2
+	- Fixed offset of plot label
+	- Checks for reasonable Radius span value
+    - Code cleaning: more intuitive variable names
+	- Fix crashed caused by mis-evaluation in DoSpikeSupression
+
+
+
+        static public int countNeighbors(int[][] points, ImageProcessor ip) {
+
+        int i, j, k, target, source, dx, dy, groups, len;
+		
+        int len = points.length;
+
+        for (i = 0; i < points.length; i++) {
+            for (j = 0; j <  points[i].length; j++) {
+				IJ.doWand(points[i][0], points[i][1], 0.0, EIGHT_CONNECTED);
+					
+            }
+		}
+		
+	}
+	
+ 
