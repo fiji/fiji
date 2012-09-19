@@ -427,65 +427,65 @@ public class Advanced_Sholl_Analysis implements PlugIn {
                 }
             }
 
-boolean DoSpikeSupression = false;
+        boolean DoSpikeSupression = false;
         if (DoSpikeSupression) {
 
-        // If the edge of the group lies tangent to the sampling circle,
-        // multiple intersections with that circle will be counted. We will try
-        // to find these "false positives" and throw them out. A way to attempt
-        // this (we will be missing some of them) is to throw out 1-pixel groups
-        // that exist solely on the edge of a "stair" of target pixels
-        boolean multigroup;
-        int[] px;
-        int[][] testpoints = new int[8][2];
+            // If the edge of the group lies tangent to the sampling circle,
+            // multiple intersections with that circle will be counted. We will try
+            // to find these "false positives" and throw them out. A way to attempt
+            // this (we will be missing some of them) is to throw out 1-pixel groups
+            // that exist solely on the edge of a "stair" of target pixels
+            boolean multigroup;
+            int[] px;
+            int[][] testpoints = new int[8][2];
 
-        for (i = 0; i < len; i++) {
+            for (i = 0; i < len; i++) {
 
-            // Check for other members of this group
-            for (multigroup = false, j = 0; j < len; j++) {
-                if (i == j)
-                    continue;
-                if (grouping[i] == grouping[j]) {
-                    multigroup = true;
-                    break;
+                // Check for other members of this group
+                for (multigroup = false, j = 0; j < len; j++) {
+                    if (i == j)
+                        continue;
+                    if (grouping[i] == grouping[j]) {
+                        multigroup = true;
+                        break;
+                    }
                 }
-            }
 
-            // If not a single-pixel group, try again
-            if (multigroup)
-                continue;
+                // If not a single-pixel group, try again
+                if (multigroup)
+                    continue;
 
-            // Save the coordinates of this point
-            dx = points[i][0];
-            dy = points[i][1];
+                // Save the coordinates of this point
+                dx = points[i][0];
+                dy = points[i][1];
 
-            // Calculate the 8 neighbors surrounding this point
-            testpoints[0][0] = dx-1; testpoints[0][1] = dy+1;
-            testpoints[1][0] = dx  ; testpoints[1][1] = dy+1;
-            testpoints[2][0] = dx+1; testpoints[2][1] = dy+1;
-            testpoints[3][0] = dx-1; testpoints[3][1] = dy  ;
-            testpoints[4][0] = dx+1; testpoints[4][1] = dy  ;
-            testpoints[5][0] = dx-1; testpoints[5][1] = dy-1;
-            testpoints[6][0] = dx  ; testpoints[6][1] = dy-1;
-            testpoints[7][0] = dx+1; testpoints[7][1] = dy-1;
+                // Calculate the 8 neighbors surrounding this point
+                testpoints[0][0] = dx-1; testpoints[0][1] = dy+1;
+                testpoints[1][0] = dx  ; testpoints[1][1] = dy+1;
+                testpoints[2][0] = dx+1; testpoints[2][1] = dy+1;
+                testpoints[3][0] = dx-1; testpoints[3][1] = dy  ;
+                testpoints[4][0] = dx+1; testpoints[4][1] = dy  ;
+                testpoints[5][0] = dx-1; testpoints[5][1] = dy-1;
+                testpoints[6][0] = dx  ; testpoints[6][1] = dy-1;
+                testpoints[7][0] = dx+1; testpoints[7][1] = dy-1;
 
-            // Pull out the pixel values for these points
-            px = getPixels(ip, testpoints);
+                // Pull out the pixel values for these points
+                px = getPixels(ip, testpoints);
 
-            // Now perform the stair checks
-            if ( (px[0]==v && px[1]==v && px[3]==v  &&
-                  px[4]!=v && px[6]!=v && px[7]!=v) ||
-                 (px[1]==v && px[2]==v && px[4]==v  &&
-                  px[3]!=v && px[5]!=v && px[6]!=v) ||
-                 (px[4]==v && px[6]==v && px[7]==v  &&
-                  px[0]!=v && px[1]!=v && px[3]!=v) ||
-                 (px[3]==v && px[5]==v && px[6]==v  &&
-                  px[1]!=v && px[2]!=v && px[4]!=v) )
+                // Now perform the stair checks
+                if ( (px[0]==v && px[1]==v && px[3]==v  &&
+                      px[4]!=v && px[6]!=v && px[7]!=v) ||
+                     (px[1]==v && px[2]==v && px[4]==v  &&
+                      px[3]!=v && px[5]!=v && px[6]!=v) ||
+                     (px[4]==v && px[6]==v && px[7]==v  &&
+                      px[0]!=v && px[1]!=v && px[3]!=v) ||
+                     (px[3]==v && px[5]==v && px[6]==v  &&
+                      px[1]!=v && px[2]!=v && px[4]!=v) )
 
-                groups--;
+                    groups--;
 
-            }
-}
+                }
+        }
 
         return groups;
     }
