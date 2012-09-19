@@ -539,5 +539,98 @@ public final class Utils {
         }
         return floats;
     }
+    
+    public static ArrayList<String> getSeriesKeys()
+    {
+        ArrayList<String> keys = new ArrayList<String>(128);
+
+        keys.add("viewport");
+        keys.add("units");
+        keys.add("autoSaveSeries");
+        keys.add("autoSaveSection");
+        keys.add("warnSaveSection");
+        keys.add("beepDeleting");
+        keys.add("beepPaging");
+        keys.add("hideTraces");
+        keys.add("unhideTraces");
+        keys.add("hideDomains");
+        keys.add("unhideDomains");
+        keys.add("useAbsolutePaths");
+        keys.add("defaultThickness");
+        keys.add("zMidSection");
+        keys.add("thumbWidth");
+        keys.add("thumbHeight");
+        keys.add("fitThumbSections");
+        keys.add("firstThumbSection");
+        keys.add("lastThumbSection");
+        keys.add("skipSections");
+        keys.add("displayThumbContours");
+        keys.add("useFlipbookStyle");
+        keys.add("flipRate");
+        keys.add("useProxies");
+        keys.add("widthUseProxies");
+        keys.add("heightUseProxies");
+        keys.add("scaleProxies");
+        keys.add("significantDigits");
+        keys.add("defaultBorder");
+        keys.add("defaultFill");
+        keys.add("defaultMode");
+        keys.add("defaultName");
+        keys.add("defaultComment");
+        keys.add("listSectionThickness");
+        keys.add("listDomainSource");
+        keys.add("listDomainPixelsize");
+        keys.add("listDomainLength");
+        keys.add("listDomainArea");
+        keys.add("listDomainMidpoint");
+        keys.add("listTraceComment");
+        keys.add("listTraceLength");
+        keys.add("listTraceArea");
+        keys.add("listTraceCentroid");
+        keys.add("listTraceExtent");
+        keys.add("listTraceZ");
+        keys.add("listTraceThickness");
+        keys.add("listObjectRange");
+        keys.add("listObjectCount");
+        keys.add("listObjectSurfarea");
+        keys.add("listObjectFlatarea");
+        keys.add("listObjectVolume");
+        keys.add("listZTraceNote");
+        keys.add("listZTraceRange");
+        keys.add("listZTraceLength");
+        keys.add("borderColors");
+        keys.add("fillColors");
+        keys.add("offset3D");
+        keys.add("type3Dobject");
+        keys.add("first3Dsection");
+        keys.add("last3Dsection");
+        keys.add("max3Dconnection");
+        keys.add("upper3Dfaces");
+        keys.add("lower3Dfaces");
+        keys.add("faceNormals");
+        keys.add("vertexNormals");
+        keys.add("facets3D");
+        keys.add("dim3D");
+        keys.add("gridType");
+        keys.add("gridSize");
+        keys.add("gridDistance");
+        keys.add("gridNumber");
+        keys.add("hueStopWhen");
+        keys.add("hueStopValue");
+        keys.add("satStopWhen");
+        keys.add("satStopValue");
+        keys.add("brightStopWhen");
+        keys.add("brightStopValue");
+        keys.add("tracesStopWhen");
+        keys.add("areaStopPercent");
+        keys.add("areaStopSize");
+        keys.add("ContourMaskWidth");
+        keys.add("smoothingLength");
+        keys.add("mvmtIncrement");
+        keys.add("ctrlIncrement");
+        keys.add("shiftIncrement");
+
+        return keys;
+    }
 }
 

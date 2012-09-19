@@ -74,6 +74,11 @@ public class ReconstructSection {
 
         return thickness;
     }
+    
+    public double getPixelThickness()
+    {
+        return thickness / getMag();
+    }
 
     public void setThickness(double inThickness)
     {
@@ -103,7 +108,7 @@ public class ReconstructSection {
 
         sb.append("<t2_layer oid=\"")
                 .append(oid).append("\"\n" +
-                "thickness=\"").append(getThickness()).append("\"\n" +
+                "thickness=\"").append(getPixelThickness()).append("\"\n" +
                 "z=\"").append(getZ()).append("\"\n" +
                 "title=\"\"\n" +
                 ">\n");
