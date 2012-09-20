@@ -194,6 +194,7 @@ public class Advanced_Sholl_Analysis implements PlugIn {
             restrict    = gd.getNextBoolean();
             belowOrLeft = gd.getNextChoiceIndex();
         }
+
         fitCurve   = gd.getNextBoolean();
         verbose    = gd.getNextBoolean();
         polyChoice = gd.getNextChoiceIndex();
@@ -270,8 +271,9 @@ public class Advanced_Sholl_Analysis implements PlugIn {
 
         // Create intersections mask
         if (mask) {
+
             String metadata = fitCurve ? "Fitted data" : "Raw data";
-            ImagePlus mask = makeMask(img, grays, x, y, cal, metadata);
+            ImagePlus mask = makeMask(img, radii, grays, nSpans, x, y, cal, metadata);
             mask.show();
         }
 
@@ -514,7 +516,7 @@ public class Advanced_Sholl_Analysis implements PlugIn {
             y = points[i][1];
 
             // We already filtered out of bounds coordinates in
-            // getCircumferencePointsare so we just need to retrieve pixel values
+            // getCircumferencePoints so we just need to retrieve pixel values
             pixels[i] = ip.getPixel(points[i][0], points[i][1]);
 
         }
@@ -878,8 +880,8 @@ public class Advanced_Sholl_Analysis implements PlugIn {
     }
 
     /* Creates Sholl mask by applying values to foreground pixels of img*/
-    public ImagePlus makeMask(ImagePlus img, double[] values, int x, int y,
-            Calibration cal, String label) {
+    public ImagePlus makeMask(ImagePlus img, int[] radii, double[] values,
+            int drawWidth, int x, int y, Calibration cal, String label) {
 
         IJ.showStatus("Preparing intersections mask...");
 
@@ -891,27 +893,23 @@ public class Advanced_Sholl_Analysis implements PlugIn {
         ImageProcessor ip2 = img2.getProcessor();
 
         int[][] points;
-        int i, j, k, l, drawRadius;
-        int drawSteps = values.length;
-        int drawWidth = (int) (((endRadius - startRadius) / pxSize) / drawSteps);
+        int i, j, k, l;
+        int drawSteps = radii.length;
 
         for (i = 0; i < drawSteps; i++) {
 
             IJ.showProgress(i, drawSteps);
-            drawRadius = (int) ((startRadius / pxSize) + (i * drawWidth));
 
             for (j = 0; j < drawWidth; j++) {
-                points = getCircumferencePoints(x, y, drawRadius++);
-
+                points = getCircumferencePoints(x, y, radii[i]++);
                 for (k = 0; k < points.length; k++) {
                     for (l = 0; l < points[k].length; l++) {
-
                         if (ip.getPixel(points[k][0], points[k][1]) != 0)
                             ip2.putPixelValue(points[k][0], points[k][1], values[i]);
-
                     }
                 }
             }
+
         }
 
         // Apply calibration, set mask label and mark center of analysis
