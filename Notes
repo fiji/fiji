@@ -1,3 +1,6 @@
+Version 2.3b
+    - Analysis can be restricted to an area, using initial line as a chord
+
 Version 2.3a
     - Fixed issue introduced in 2.3min which -1 tagged pixels were being counted
     - Fixed rounding in mask drawing

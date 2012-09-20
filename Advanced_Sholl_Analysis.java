@@ -36,7 +36,7 @@ import java.util.Arrays;
 public class Advanced_Sholl_Analysis implements PlugIn {
 
     /* Plugin Information */
-    public static final String VERSION = "2.3a";
+    public static final String VERSION = "2.3b";
     public static final String URL = "http://imagejdocu.tudor.lu/doku.php?id=plugin:analysis:asa:start";
 
     /* Bin Function Type Definitions */
@@ -57,17 +57,25 @@ public class Advanced_Sholl_Analysis implements PlugIn {
     /* Default parameters and input values */
     private static double startRadius = 10.0;
     private static double endRadius   = 100.0;
-    private static double incStep     = 10;
+    private static double incStep     = 0;
     private static double spanWidth   = 0;
     private static int binChoice      = BIN_AVERAGE;
     private static int shollChoice    = SHOLL_N;
     private static boolean fitCurve   = true;
     private static int polyChoice     = 1;
     private static boolean verbose    = false;
-    private static boolean makeMask   = true;
-    private static String pxUnit      = "Pixels";
+    private static boolean mask       = true;
+    private static String pxUnit      = "pixels";
     private static double pxSize      = 1;
     private static int size;
+
+    /* Boundaries of analysis */
+    private static int[] bounds = new int[4];
+    private static boolean restrict = false;
+    private static Line chord;
+    private static double chordAngle;
+    private static int belowOrLeft = 0;
+    private static String[] QUADRANTS = { "Right of line", "Left of line" };
 
 
     public void run(String arg) {
@@ -90,6 +98,7 @@ public class Advanced_Sholl_Analysis implements PlugIn {
         if (cal != null && cal.pixelHeight == cal.pixelWidth) {
             pxUnit = cal.getUnits();
             pxSize = cal.pixelHeight;
+            spanWidth = 2*pxSize;
         }
 
         // Get current ROI
@@ -111,16 +120,22 @@ public class Advanced_Sholl_Analysis implements PlugIn {
 
         }
 
-        // Initialize center coordinates
         int x, y;
 
         if (roi != null && roi.getType() == Roi.LINE) {
 
-            // Get center coordinates and length of line
-            Line line = (Line) roi;
-            x = line.x1;
-            y = line.y1;
-            endRadius = line.getRawLength() * pxSize;
+            // Get center coordinates, length and angle of chord
+            chord = (Line)roi;
+            x = chord.x1;
+            y = chord.y1;
+            endRadius= chord.getLength(); // calibrated units
+
+            chordAngle= Math.abs(chord.getAngle(x, y, chord.x2, chord.y2));
+            if (chordAngle%90==0) {
+                restrict = true;
+                if (chordAngle!=90)
+                    { QUADRANTS[0] = "Above line";  QUADRANTS[1] ="Below line"; }
+            }
 
         } else if (roi != null && roi.getType() == Roi.POINT) {
 
@@ -142,17 +157,24 @@ public class Advanced_Sholl_Analysis implements PlugIn {
         gd.addNumericField("Starting radius:", startRadius, 2, 9, pxUnit);
         gd.addNumericField("Ending radius:", endRadius, 2, 9, pxUnit);
         gd.addNumericField("Radius_step size:", incStep, 2, 9, pxUnit);
-        gd.addNumericField("Radius_span:", 3*pxSize, 2, 9, pxUnit);
+        gd.addNumericField("Radius_span:", spanWidth, 2, 9, pxUnit);
         //gd.addSlider("Samples per radius:", 1, 20, 1);
         gd.addChoice("Span_type:", BIN_TYPES, BIN_TYPES[binChoice]);
         gd.addChoice("Sholl method:", SHOLL_TYPES, SHOLL_TYPES[shollChoice]);
+
+        if (restrict) {
+            gd.setInsets(6, 6, 3);
+            gd.addCheckbox("Restrict analysis to circular segment", false);
+            gd.addChoice("_", QUADRANTS, QUADRANTS[0]);
+        }
+
         gd.setInsets(10, 6, 0);
         gd.addCheckbox("Fit profile and compute descriptors", fitCurve);
         gd.setInsets(3, 34, 3);
         gd.addCheckbox("Show parameters", verbose);
         gd.addChoice("Polynomial:", DEGREES, DEGREES[polyChoice]);
         gd.setInsets(5, 6, 0);
-        gd.addCheckbox("Create intersections mask", makeMask);
+        gd.addCheckbox("Create intersections mask", mask);
         gd.setHelpLabel("Online Help");
         gd.addHelp(URL);
         gd.showDialog();
@@ -167,10 +189,45 @@ public class Advanced_Sholl_Analysis implements PlugIn {
         spanWidth   = Math.max(pxSize, gd.getNextNumber());
         binChoice   = gd.getNextChoiceIndex();
         shollChoice = gd.getNextChoiceIndex();
-        fitCurve    = gd.getNextBoolean();
-        verbose     = gd.getNextBoolean();
-        polyChoice  = gd.getNextChoiceIndex();
-        makeMask    = gd.getNextBoolean();
+
+        if (restrict) {
+            restrict    = gd.getNextBoolean();
+            belowOrLeft = gd.getNextChoiceIndex();
+        }
+        fitCurve   = gd.getNextBoolean();
+        verbose    = gd.getNextBoolean();
+        polyChoice = gd.getNextChoiceIndex();
+        mask       = gd.getNextBoolean();
+
+        // Define boundaries of analysis according to orthogonal chords
+        if (restrict) { // if restrict chord is already defined
+
+            if (chordAngle==0 || chordAngle==180) { // Horizontal chord
+
+                bounds[0] = 0;
+                bounds[1] = (belowOrLeft==1) ? y : 0;
+                bounds[2] = ip.getWidth();
+                bounds[3] = (belowOrLeft==1) ? ip.getHeight() : y;
+
+            } else if (chordAngle==90) { // Vertical chord
+
+                bounds[0] = (belowOrLeft==1) ? 0 : x;
+                bounds[1] = 0;
+                bounds[2] = (belowOrLeft==1) ? x : ip.getWidth();
+                bounds[3] = ip.getHeight();
+
+            }
+
+        } else {
+
+            bounds[0]= 0;
+            bounds[1]= 0;
+            bounds[2]= ip.getWidth();
+            bounds[3]= ip.getHeight();
+
+        }
+
+
 
         // Impose valid parameters
         startRadius = (startRadius > endRadius) ? pxSize : startRadius;
@@ -212,15 +269,15 @@ public class Advanced_Sholl_Analysis implements PlugIn {
         }
 
         // Create intersections mask
-        if (makeMask) {
+        if (mask) {
             String metadata = fitCurve ? "Fitted data" : "Raw data";
             ImagePlus mask = makeMask(img, grays, x, y, cal, metadata);
             mask.show();
         }
 
-        IJ.showStatus("Finished. "
-                + IJ.d2s((System.currentTimeMillis() - start) / 1000.0, 2)
-                + " seconds");
+        IJ.showProgress(0, 0);
+        IJ.showStatus("Finished. "+ IJ.d2s((System.currentTimeMillis()-start)/1000.0, 2)
+                    + " seconds");
 
     }
 
@@ -307,7 +364,7 @@ public class Advanced_Sholl_Analysis implements PlugIn {
      * A group consists of a formation of adjacent pixels, where adjacency
      * is true for all eight neighboring positions around a given pixel. */
     static public int countTargetGroups(int[] pixels, int[][] rawpoints, int v,
-            ImageProcessor ip) {
+           ImageProcessor ip) {
 
         int i, j;
         int[][] points;
@@ -456,12 +513,9 @@ public class Advanced_Sholl_Analysis implements PlugIn {
             x = points[i][0];
             y = points[i][1];
 
-            // Check if the coordinates are valid for the image
-            pixels[i] = (x< 0 || x>= ip.getWidth() || y< 0 || y>= ip.getHeight())
-
-            // Use -1 to indicate an invalid pixel location, otherwise get the
-            // pixel value in the image
-            ? -1 : ip.getPixel(points[i][0], points[i][1]);
+            // We already filtered out of bounds coordinates in
+            // getCircumferencePointsare so we just need to retrieve pixel values
+            pixels[i] = ip.getPixel(points[i][0], points[i][1]);
 
         }
 
@@ -541,8 +595,37 @@ public class Advanced_Sholl_Analysis implements PlugIn {
 
         }
 
+        // now remove pixels that are out of bounds
+        int pxX, pxY, count = 0, j= 0;
+
+        for (i = 0; i < refined.length; i++) {
+
+            // Pull the coordinates out of the array
+            pxX = points[i][0];
+            pxY = points[i][1];
+
+            if ( !(pxX< bounds[0] || pxX>= bounds[2] || pxY< bounds[1] || pxY>= bounds[3]))
+                count++;
+
+        }
+
+        // Create a new array to hold final pixels
+        int[][] fRefined = new int[count][2];
+
+        for (i = 0; i < refined.length; i++) {
+
+            pxX = points[i][0];
+            pxY = points[i][1];
+
+            if (!(pxX< bounds[0] || pxX>= bounds[2] || pxY< bounds[1] || pxY>= bounds[3])) {
+                fRefined[j][0]= pxX;
+                fRefined[j++][1]= pxY;
+            }
+
+        }
+
         // Return the array without duplicates
-        return refined;
+        return fRefined;
 
     }
 
@@ -662,8 +745,7 @@ public class Advanced_Sholl_Analysis implements PlugIn {
             // points is required for meaningful results
             if (nsize <= 6) {
                 IJ.log("\nSholl Analysis for " + ttl
-                     + ":\nCurve fitting not performed as it requires more"
-                     + "than 6\nsampled points. Parameters must be adjusted");
+                     + ":\nCurve fitting not performed: Not enough data points");
                 plot.show();
                 return y;
             }
