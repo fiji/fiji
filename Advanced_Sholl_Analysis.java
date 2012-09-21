@@ -36,7 +36,7 @@ import java.util.Arrays;
 public class Advanced_Sholl_Analysis implements PlugIn {
 
     /* Plugin Information */
-    public static final String VERSION = "2.3b";
+    public static final String VERSION = "2.3c";
     public static final String URL = "http://imagejdocu.tudor.lu/doku.php?id=plugin:analysis:asa:start";
 
     /* Bin Function Type Definitions */
