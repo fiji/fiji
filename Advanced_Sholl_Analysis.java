@@ -5,6 +5,7 @@ import ij.measure.Calibration;
 import ij.measure.CurveFitter;
 import ij.measure.ResultsTable;
 import ij.plugin.PlugIn;
+import ij.Prefs;
 import ij.process.ImageProcessor;
 import ij.util.Tools;
 import ij.WindowManager;
@@ -14,8 +15,8 @@ import java.awt.Color;
 import java.awt.Frame;
 import java.awt.Font;
 import java.awt.Rectangle;
+import java.io.*;
 import java.util.Arrays;
-
 /**
  * @author Tiago Ferreira v2.0 Feb 13, 2012
  * @author Tom Maddock    v1.0 Oct 26, 2005
@@ -36,7 +37,7 @@ import java.util.Arrays;
 public class Advanced_Sholl_Analysis implements PlugIn {
 
     /* Plugin Information */
-    public static final String VERSION = "2.3c";
+    public static final String VERSION = "2.3d";
     public static final String URL = "http://imagejdocu.tudor.lu/doku.php?id=plugin:analysis:asa:start";
 
     /* Bin Function Type Definitions */
@@ -85,12 +86,21 @@ public class Advanced_Sholl_Analysis implements PlugIn {
         // Get current image and the ImageProcessor for the image
         ImagePlus img = IJ.getImage();
         ImageProcessor ip = img.getProcessor();
+        String title = img.getTitle();
 
         // Make sure image is of the right type
         if (!ip.isBinary()) {
             error("8-bit binary image (Arbor: non-zero value) required.\n"
                 + "Use \"Image>Adjust>Threshold...\" to binarize image.");
             return;
+        }
+
+        // Retrieve image path and check if it is valid
+        boolean saveValues = false;
+        String imgPath = IJ.getDirectory("image");
+        if (imgPath!=null) {
+            File dir = new File(imgPath);
+            saveValues = dir.exists() && dir.isDirectory();
         }
 
         // Get image calibration and define Radius span accordingly
@@ -133,7 +143,7 @@ public class Advanced_Sholl_Analysis implements PlugIn {
             chordAngle= Math.abs(chord.getAngle(x, y, chord.x2, chord.y2));
             if (chordAngle%90==0) {
                 restrict = true;
-                if (chordAngle!=90)
+                if (chordAngle!=90.0)
                     { QUADRANTS[0] = "Above line";  QUADRANTS[1] ="Below line"; }
             }
 
@@ -175,6 +185,11 @@ public class Advanced_Sholl_Analysis implements PlugIn {
         gd.addChoice("Polynomial:", DEGREES, DEGREES[polyChoice]);
         gd.setInsets(5, 6, 0);
         gd.addCheckbox("Create intersections mask", mask);
+        gd.setInsets(5, 6, 0);
+
+        if (saveValues)
+            gd.addCheckbox("Save plot values on image folder", mask);
+
         gd.setHelpLabel("Online Help");
         gd.addHelp(URL);
         gd.showDialog();
@@ -199,6 +214,9 @@ public class Advanced_Sholl_Analysis implements PlugIn {
         verbose    = gd.getNextBoolean();
         polyChoice = gd.getNextChoiceIndex();
         mask       = gd.getNextBoolean();
+
+        if (saveValues)
+            saveValues = gd.getNextBoolean();
 
         // Define boundaries of analysis according to orthogonal chords
         if (restrict) { // if restrict chord is already defined
@@ -258,8 +276,8 @@ public class Advanced_Sholl_Analysis implements PlugIn {
         double[] yvalues = analyze(x, y, radii, nSpans, binChoice, ip);
 
         // Display the plot and return transformed data if valid counts exist
-        double[] grays = plotValues(img.getTitle(), shollChoice, radii,
-                xvalues, yvalues, nSpans, x, y);
+        double[] grays = plotValues(title, shollChoice, radii, xvalues, yvalues,
+            nSpans, x, y, saveValues, imgPath);
 
         // Exit if no valid data was gathered
         if (grays.length==0) {
@@ -271,8 +289,12 @@ public class Advanced_Sholl_Analysis implements PlugIn {
         if (mask) {
 
             String metadata = fitCurve ? "Fitted data" : "Raw data";
-            ImagePlus mask = makeMask(img, grays, x, y, cal, metadata);
-            mask.show();
+            ImagePlus mask = makeMask(img, title, grays, x, y, cal, metadata);
+            if (mask==null)
+                { IJ.beep(); IJ.showStatus("Mask could not be created"); }
+            else
+                mask.show();
+
         }
 
         IJ.showProgress(0, 0);
@@ -575,7 +597,7 @@ public class Advanced_Sholl_Analysis implements PlugIn {
         }
 
         // Count how many points are out of bounds, while eliminating duplicates.
-        // Duplicates are always at multiples of r
+        // Duplicates are always at multiples of r (8 points)
         int pxX, pxY, count = 0, j= 0;
         for (i = 0; i < points.length; i++) {
 
@@ -599,6 +621,7 @@ public class Advanced_Sholl_Analysis implements PlugIn {
 
                 refined[j][0]= pxX;
                 refined[j++][1]= pxY;
+
             }
 
         }
@@ -609,7 +632,8 @@ public class Advanced_Sholl_Analysis implements PlugIn {
 
     /* Creates Results table, Sholl plot and curve fitting */
     static public double[] plotValues(String ttl, int mthd, int[] r,
-            double[] xpoints, double[] ypoints, int spanSamples, int xcenter, int ycenter) {
+            double[] xpoints, double[] ypoints, int spanSamples, int xcenter,
+            int ycenter, boolean saveplot, String savepath) {
 
         IJ.showStatus("Preparing Results...");
 
@@ -650,8 +674,8 @@ public class Advanced_Sholl_Analysis implements PlugIn {
             rt = ((TextWindow) window).getTextPanel().getResultsTable();
 
         rt.incrementCounter();
-        rt.addLabel("Image", ttl + " (" + pxUnit + ")");
-        rt.addValue("Method N.", mthd+1);
+        rt.addLabel("Image", ttl +" ("+ pxUnit +")");
+        rt.addValue("Method #", mthd+1);
         rt.addValue("X center (px)", xcenter);
         rt.addValue("Y center (px)", ycenter);
         rt.addValue("Starting radius", startRadius);
@@ -848,24 +872,42 @@ public class Advanced_Sholl_Analysis implements PlugIn {
                     SHOLL_TYPES[mthd] + "] for " + ttl + cf.getResultString());
             }
 
-            // Show the plot window, update results and return fitted data
-            plot.show();
+            // Show the plot window, save plot values (if requested), update
+            // results and return fitted data
+            PlotWindow pw = plot.show();
+
+            if (saveplot) {
+
+                ResultsTable rtp = pw.getResultsTable();
+                savepath += File.separator + ttl.replaceFirst("[.][^.]+$", "")
+                         + "_Sholl-M"+ ( mthd + 1 ) + Prefs.get("options.ext", ".csv");
+                try {
+                    rtp.saveAs(savepath);
+                } catch (IOException e) {
+                    IJ.log(">>>> Sholl Analysis [" + SHOLL_TYPES[mthd] +
+                           "] for " + ttl +":\n"+ e);
+                }
+            }
+
             rt.show(shollTable);
             return fy;
         }
     }
 
     /* Creates Sholl mask by applying values to foreground pixels of img*/
-    public ImagePlus makeMask(ImagePlus img, double[] values, int x, int y,
-                Calibration cal, String label) {
+    public ImagePlus makeMask(ImagePlus img, String ttl, double[] values, int x,
+                int y, Calibration cal, String label) {
+
+        // No point in continuing if image is no longer available
+        ImageProcessor ip  = img.getProcessor();
+        if (ip==null) return null;
 
         IJ.showStatus("Preparing intersections mask...");
 
         ImagePlus img2 = IJ.createImage("Sholl mask [" +
-            SHOLL_TYPES[shollChoice] + "] for " + img.getTitle(),
-            "32-bit black", img.getWidth(), img.getHeight(), 1);
+            SHOLL_TYPES[shollChoice] + "] for " + ttl, "32-bit black",
+            ip.getWidth(), ip.getHeight(), 1);
 
-        ImageProcessor ip  = img.getProcessor();
         ImageProcessor ip2 = img2.getProcessor();
 
         int[][] points;

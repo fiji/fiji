@@ -1,5 +1,9 @@
+Version 2.3d
+    - Option to save Sholl profiles
+
 Version 2.3c
     - Fixed duplicated points in Bresenham's algorithm
+    - Foreground is any value greater than 0
 
 Version 2.3b
     - Analysis can be restricted to an area, using initial line as a chord
