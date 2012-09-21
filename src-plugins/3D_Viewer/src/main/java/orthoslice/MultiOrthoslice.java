@@ -38,7 +38,7 @@ public class MultiOrthoslice extends VolumeRenderer {
 	public MultiOrthoslice(ImagePlus img, Color3f color, 
 					float tr, boolean[] channels) {
 		super(img, color, tr, channels);
-		appCreator.setOpaqueTextures(true);
+		getVolume().setAlphaLUTFullyOpaque();
 		dimensions[0] = img.getWidth();
 		dimensions[1] = img.getHeight();
 		dimensions[2] = img.getStackSize();

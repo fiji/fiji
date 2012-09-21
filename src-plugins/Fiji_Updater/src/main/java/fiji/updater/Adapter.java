@@ -162,6 +162,7 @@ public class Adapter {
 			ui.error("Could not access the Updater: " + e.getMessage());
 			return;
 		} catch (Throwable t) {
+			t.printStackTrace();
 			fallBackToRemoteUpdater(t);
 		}
 	}

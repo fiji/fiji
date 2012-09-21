@@ -128,7 +128,7 @@ public class Bug_Submitter implements PlugIn {
 		return new String(newChars);
 	}
 
-	final String bugzillaBaseURI = "http://fiji.sc/cgi-bin/bugzilla/";
+	final String bugzillaBaseURI = "http://fiji.sc/bugzilla/";
 
 	static final int SUCCESS = 1;
 	static final int LOGIN_FAILURE = 2;
@@ -210,6 +210,8 @@ public class Bug_Submitter implements PlugIn {
 
 		Pattern cookiePattern = Pattern.compile("^(\\w+)=(\\w+);.*$");
 
+		Pattern tokenPattern = Pattern.compile(".*<input [^>]*name=\"token\" value=\"([^\"]*)\".*");
+
 		Pattern linuxPattern = Pattern.compile("^Linux.*$",Pattern.CASE_INSENSITIVE);
 		Pattern windowsPattern = Pattern.compile("^Windows.*$",Pattern.CASE_INSENSITIVE);
 		Pattern macPattern = Pattern.compile("^Mac ?OS.*$",Pattern.CASE_INSENSITIVE);
@@ -259,10 +261,16 @@ public class Bug_Submitter implements PlugIn {
 			BufferedReader br = new BufferedReader( new InputStreamReader(is) );
 			String line = null;
 			boolean authenticationFailed = false;
+			String token = "";
 			while( (line = br.readLine()) != null ) {
-				authenticationReply.append(line);
+				authenticationReply.append(line).append("\n");
 				if( badAuthentication.matcher(line).matches() ) {
 					authenticationFailed = true;
+				}
+				Matcher tokenMatcher = tokenPattern.matcher(line);
+				// only use the first token
+				if( "".equals(token) && tokenMatcher.matches() ) {
+					token = tokenMatcher.group(1);
 				}
 			}
 			if( authenticationFailed ) {
@@ -316,6 +324,7 @@ public class Bug_Submitter implements PlugIn {
 
 			ps = new PrintStream(connection.getOutputStream());
 			ps.println("product=Fiji"+
+				   "&token="+e(token)+
 				   "&component="+e(bugComponent)+
 				   "&rep_platform="+e(platformParameterValue)+
 				   "&op_sys="+e(osParameterValue)+
@@ -327,6 +336,8 @@ public class Bug_Submitter implements PlugIn {
 				   "&bug_status=NEW"+
 				   "&assigned_to="+e(bugzillaAssignee)+
 				   ccString+
+				   "&estimated_time="+
+				   "&deadline="+
 				   "&short_desc="+e(bugSubject)+
 				   "&comment="+e(bugText)+
 				   "&commentprivacy=0"+
@@ -350,7 +361,7 @@ public class Bug_Submitter implements PlugIn {
 			br = new BufferedReader( new InputStreamReader(is) );
 			line = null;
 			while( (line = br.readLine()) != null ) {
-				submissionReply.append(line);
+				submissionReply.append(line).append("\n");
 				Matcher submittedMatcher = successfullySubmitted.matcher(line);
 				if( submittedMatcher.matches() ) {
 					bugNumber = Integer.parseInt( submittedMatcher.group(1), 10 );
