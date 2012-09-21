@@ -88,8 +88,8 @@ public class Advanced_Sholl_Analysis implements PlugIn {
 
         // Make sure image is of the right type
         if (!ip.isBinary()) {
-            error("8-bit binary image (Arbor: 255; Background: 0) required.\n"
-                + "   Use \"Image>Adjust>Threshold...\" to binarize image.");
+            error("8-bit binary image (Arbor: non-zero value) required.\n"
+                + "Use \"Image>Adjust>Threshold...\" to binarize image.");
             return;
         }
 
@@ -228,8 +228,6 @@ public class Advanced_Sholl_Analysis implements PlugIn {
 
         }
 
-
-
         // Impose valid parameters
         startRadius = (startRadius > endRadius) ? pxSize : startRadius;
         incStep = (incStep > (endRadius - startRadius)) ? pxSize : incStep;
@@ -273,7 +271,7 @@ public class Advanced_Sholl_Analysis implements PlugIn {
         if (mask) {
 
             String metadata = fitCurve ? "Fitted data" : "Raw data";
-            ImagePlus mask = makeMask(img, radii, grays, nSpans, x, y, cal, metadata);
+            ImagePlus mask = makeMask(img, grays, x, y, cal, metadata);
             mask.show();
         }
 
@@ -322,7 +320,7 @@ public class Advanced_Sholl_Analysis implements PlugIn {
                 pixels = getPixels(ip, points);
 
                 // Count the number of intersections
-                binsamples[j] = countTargetGroups(pixels, points, 255, ip);
+                binsamples[j] = countTargetGroups(pixels, points, ip);
 
             }
 
@@ -365,7 +363,7 @@ public class Advanced_Sholl_Analysis implements PlugIn {
     /* Counts how many groups of value v are present in the given data.
      * A group consists of a formation of adjacent pixels, where adjacency
      * is true for all eight neighboring positions around a given pixel. */
-    static public int countTargetGroups(int[] pixels, int[][] rawpoints, int v,
+    static public int countTargetGroups(int[] pixels, int[][] rawpoints,
            ImageProcessor ip) {
 
         int i, j;
@@ -373,17 +371,17 @@ public class Advanced_Sholl_Analysis implements PlugIn {
 
         // Count how many target pixels (i.e., foreground, non-zero) we have
         for (i = 0, j = 0; i < pixels.length; i++)
-            if (pixels[i] == v) j++;
+            if (pixels[i] != 0) j++;
 
         // Create an array to hold target pixels
         points = new int[j][2];
 
         // Copy all target pixels into the array
         for (i = 0, j = 0; i < pixels.length; i++)
-            if (pixels[i] == v)
+            if (pixels[i] != 0)
                 points[j++] = rawpoints[i];
 
-        return countGroups(points, 1.5, 255, ip);
+        return countGroups(points, 1.5, ip);
 
     }
 
@@ -395,7 +393,7 @@ public class Advanced_Sholl_Analysis implements PlugIn {
      * in its own group. For threshold=1.5, this is equivalent to 8-connected
      * clusters
      */
-    static public int countGroups(int[][] points, double threshold, int v,
+    static public int countGroups(int[][] points, double threshold,
         ImageProcessor ip) {
 
         double distance;
@@ -483,14 +481,14 @@ public class Advanced_Sholl_Analysis implements PlugIn {
                 px = getPixels(ip, testpoints);
 
                 // Now perform the stair checks
-                if ( (px[0]==v && px[1]==v && px[3]==v  &&
-                      px[4]!=v && px[6]!=v && px[7]!=v) ||
-                     (px[1]==v && px[2]==v && px[4]==v  &&
-                      px[3]!=v && px[5]!=v && px[6]!=v) ||
-                     (px[4]==v && px[6]==v && px[7]==v  &&
-                      px[0]!=v && px[1]!=v && px[3]!=v) ||
-                     (px[3]==v && px[5]==v && px[6]==v  &&
-                      px[1]!=v && px[2]!=v && px[4]!=v) )
+                if ( (px[0]!=0 && px[1]!=0 && px[3]!=0  &&
+                      px[4]==0 && px[6]==0 && px[7]==0) ||
+                     (px[1]!=0 && px[2]!=0 && px[4]!=0  &&
+                      px[3]==0 && px[5]==0 && px[6]==0) ||
+                     (px[4]!=0 && px[6]!=0 && px[7]!=0  &&
+                      px[0]==0 && px[1]==0 && px[3]==0) ||
+                     (px[3]!=0 && px[5]!=0 && px[6]!=0  &&
+                      px[1]==0 && px[2]==0 && px[4]==0) )
 
                     groups--;
 
@@ -510,10 +508,6 @@ public class Advanced_Sholl_Analysis implements PlugIn {
 
         // Put the pixel value for each circumference point in the pixel array
         for (int i = 0; i < pixels.length; i++) {
-
-            // Pulls the coordinates out of the array
-            x = points[i][0];
-            y = points[i][1];
 
             // We already filtered out of bounds coordinates in
             // getCircumferencePoints so we just need to retrieve pixel values
@@ -580,55 +574,37 @@ public class Advanced_Sholl_Analysis implements PlugIn {
 
         }
 
-        // Create a new array to hold points without duplicates
-        int[][] refined = new int[Math.max(points.length - 8, 1)][2];
-
-        // Copy the first point manually
-        refined[0] = points[0];
-
-        // Loop through the rest of the points
-        for (i = 1, x = 1; i < points.length; i++) {
-
-            // Duplicates are always at multiples of r
-            if ((i + 1) % r == 0) continue;
-
-            // Copy the non-duplicate
-            refined[x++] = points[i];
-
-        }
-
-        // now remove pixels that are out of bounds
+        // Count how many points are out of bounds, while eliminating duplicates.
+        // Duplicates are always at multiples of r
         int pxX, pxY, count = 0, j= 0;
-
-        for (i = 0; i < refined.length; i++) {
+        for (i = 0; i < points.length; i++) {
 
             // Pull the coordinates out of the array
             pxX = points[i][0];
             pxY = points[i][1];
 
-            if ( !(pxX< bounds[0] || pxX>= bounds[2] || pxY< bounds[1] || pxY>= bounds[3]))
+            if ( (i+1)%r!= 0 && pxX>= bounds[0] && pxX<= bounds[2] && pxY>= bounds[1] && pxY<= bounds[3] )
                 count++;
-
         }
 
-        // Create a new array to hold final pixels
-        int[][] fRefined = new int[count][2];
+        // Create the final array containing only unique points within bounds
+        int[][] refined = new int[count][2];
 
-        for (i = 0; i < refined.length; i++) {
+        for (i = 0; i < points.length; i++) {
 
             pxX = points[i][0];
             pxY = points[i][1];
 
-            if (!(pxX< bounds[0] || pxX>= bounds[2] || pxY< bounds[1] || pxY>= bounds[3])) {
-                fRefined[j][0]= pxX;
-                fRefined[j++][1]= pxY;
+            if ( (i+1)%r!= 0 && pxX>= bounds[0] && pxX<= bounds[2] && pxY>= bounds[1] && pxY<= bounds[3] ) {
+
+                refined[j][0]= pxX;
+                refined[j++][1]= pxY;
             }
 
         }
 
-        // Return the array without duplicates
-        return fRefined;
-
+        // Return the array
+        return refined;
     }
 
     /* Creates Results table, Sholl plot and curve fitting */
@@ -880,8 +856,8 @@ public class Advanced_Sholl_Analysis implements PlugIn {
     }
 
     /* Creates Sholl mask by applying values to foreground pixels of img*/
-    public ImagePlus makeMask(ImagePlus img, int[] radii, double[] values,
-            int drawWidth, int x, int y, Calibration cal, String label) {
+    public ImagePlus makeMask(ImagePlus img, double[] values, int x, int y,
+                Calibration cal, String label) {
 
         IJ.showStatus("Preparing intersections mask...");
 
@@ -893,15 +869,17 @@ public class Advanced_Sholl_Analysis implements PlugIn {
         ImageProcessor ip2 = img2.getProcessor();
 
         int[][] points;
-        int i, j, k, l;
-        int drawSteps = radii.length;
+        int i, j, k, l, drawRadius;
+        int drawSteps = values.length;
+        int drawWidth = (int)Math.round((endRadius-startRadius)/(pxSize*drawSteps));
 
         for (i = 0; i < drawSteps; i++) {
 
             IJ.showProgress(i, drawSteps);
+            drawRadius = (int)Math.round((startRadius / pxSize) + (i * drawWidth));
 
             for (j = 0; j < drawWidth; j++) {
-                points = getCircumferencePoints(x, y, radii[i]++);
+                points = getCircumferencePoints(x, y, drawRadius++);
                 for (k = 0; k < points.length; k++) {
                     for (l = 0; l < points[k].length; l++) {
                         if (ip.getPixel(points[k][0], points[k][1]) != 0)

@@ -1,3 +1,6 @@
+Version 2.3c
+    - Fixed duplicated points in Bresenham's algorithm
+
 Version 2.3b
     - Analysis can be restricted to an area, using initial line as a chord
 
