@@ -37,7 +37,7 @@ import java.util.Arrays;
 public class Advanced_Sholl_Analysis implements PlugIn {
 
     /* Plugin Information */
-    public static final String VERSION = "2.3d";
+    public static final String VERSION = "2.5";
     public static final String URL = "http://imagejdocu.tudor.lu/doku.php?id=plugin:analysis:asa:start";
 
     /* Bin Function Type Definitions */
@@ -78,12 +78,14 @@ public class Advanced_Sholl_Analysis implements PlugIn {
     private static int belowOrLeft = 0;
     private static String[] QUADRANTS = { "Right of line", "Left of line" };
 
+    /* Saving Options */
+    private static boolean saveValues;
 
     public void run(String arg) {
 
         if (IJ.versionLessThan("1.46h")) return;
 
-        // Get current image and the ImageProcessor for the image
+        // Get current image, the ImageProcessor for the image and its title
         ImagePlus img = IJ.getImage();
         ImageProcessor ip = img.getProcessor();
         String title = img.getTitle();
@@ -96,7 +98,6 @@ public class Advanced_Sholl_Analysis implements PlugIn {
         }
 
         // Retrieve image path and check if it is valid
-        boolean saveValues = false;
         String imgPath = IJ.getDirectory("image");
         if (imgPath!=null) {
             File dir = new File(imgPath);
@@ -122,8 +123,8 @@ public class Advanced_Sholl_Analysis implements PlugIn {
                         + "the Point Selection Tool or, alternatively, by\n"
                         + "creating a straight line starting at the center.");
             wd.show();
-            if (wd.escPressed())
-                return;
+
+            if (wd.escPressed()) return;
 
             // Get new ROI, in case it has changed
             roi = img.getRoi();
@@ -185,10 +186,11 @@ public class Advanced_Sholl_Analysis implements PlugIn {
         gd.addChoice("Polynomial:", DEGREES, DEGREES[polyChoice]);
         gd.setInsets(5, 6, 0);
         gd.addCheckbox("Create intersections mask", mask);
-        gd.setInsets(5, 6, 0);
 
-        if (saveValues)
-            gd.addCheckbox("Save plot values on image folder", mask);
+        if (saveValues) {
+            gd.setInsets(5, 6, 0);
+            gd.addCheckbox("Save plot values on image folder", saveValues);
+        }
 
         gd.setHelpLabel("Online Help");
         gd.addHelp(URL);
@@ -322,11 +324,13 @@ public class Advanced_Sholl_Analysis implements PlugIn {
         // binsize is at least 1
         binsamples = new int[binsize];
 
+        IJ.resetEscape();
+
         // Outer loop to control the analysis bins
         for (i = 0; i < size; i++) {
 
-            IJ.showStatus("Sampling radius "+ i +"/"+ size +". "+ binsize
-                        + " measurement(s) per span...");
+            IJ.showStatus("Radius "+ i +"/"+ size +", "+ binsize
+                        + " measurement(s) per span. Press 'Esc' to abort...");
 
             // Get the radius we are sampling
             r = radii[i];
@@ -347,6 +351,8 @@ public class Advanced_Sholl_Analysis implements PlugIn {
             }
 
             IJ.showProgress(i, size * binsize);
+            if (IJ.escapePressed())
+                { IJ.beep(); mask = false; return data; }
 
             // Statistically combine bin data
             if (binsize > 1) {
@@ -879,10 +885,9 @@ public class Advanced_Sholl_Analysis implements PlugIn {
             if (saveplot) {
 
                 ResultsTable rtp = pw.getResultsTable();
-                savepath += File.separator + ttl.replaceFirst("[.][^.]+$", "")
-                         + "_Sholl-M"+ ( mthd + 1 ) + Prefs.get("options.ext", ".csv");
                 try {
-                    rtp.saveAs(savepath);
+                    rtp.saveAs(savepath +File.separator+ ttl.replaceFirst("[.][^.]+$", "")
+                            + "_Sholl-M"+ ( mthd + 1 ) + Prefs.get("options.ext", ".csv"));
                 } catch (IOException e) {
                     IJ.log(">>>> Sholl Analysis [" + SHOLL_TYPES[mthd] +
                            "] for " + ttl +":\n"+ e);
@@ -960,3 +965,4 @@ public class Advanced_Sholl_Analysis implements PlugIn {
         }
     }
 }
+
