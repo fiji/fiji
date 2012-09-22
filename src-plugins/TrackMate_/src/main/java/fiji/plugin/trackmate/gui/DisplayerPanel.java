@@ -98,6 +98,7 @@ public class DisplayerPanel<T extends RealType<T> & NativeType<T>> extends Actio
 	@Override
 	public void setPlugin(TrackMate_<T> plugin) {
 		this.plugin = plugin;
+		setModel(plugin.getModel());
 	}
 
 	@Override
@@ -208,7 +209,7 @@ public class DisplayerPanel<T extends RealType<T> & NativeType<T>> extends Actio
 				}
 			});
 		}
-		jPanelSpotColor.featureValues = featureValues;
+		jPanelSpotColor.setFeatureValues(featureValues);
 	}
 
 	private void initGUI() {

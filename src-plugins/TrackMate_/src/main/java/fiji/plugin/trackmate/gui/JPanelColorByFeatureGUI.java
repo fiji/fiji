@@ -47,7 +47,7 @@ public class JPanelColorByFeatureGUI extends ActionListenablePanel {
 	 * DEFAULT VISIBILITY
 	 */
 
-	Map<String, double[]> featureValues;
+	private Map<String, double[]> featureValues;
 	String setColorByFeature;
 	private Map<String, String> featureNames;
 	private List<String> features;
@@ -81,10 +81,14 @@ public class JPanelColorByFeatureGUI extends ActionListenablePanel {
 		canvasColor.setEnabled(enabled);
 	}
 
+	public String getSelectedFeature() {
+		return setColorByFeature;
+	}
 
 	/*
 	 * PRIVATE METHODS
 	 */
+	
 
 	/**
 	 * Forward the 'color by feature' action to the caller of this GUI.
@@ -195,5 +199,13 @@ public class JPanelColorByFeatureGUI extends ActionListenablePanel {
 				canvasColor.setPreferredSize(new java.awt.Dimension(270, 20));
 			}
 		}
+	}
+
+	public Map<String, double[]> getFeatureValues() {
+		return featureValues;
+	}
+
+	public void setFeatureValues(Map<String, double[]> featureValues) {
+		this.featureValues = featureValues;
 	}
 }

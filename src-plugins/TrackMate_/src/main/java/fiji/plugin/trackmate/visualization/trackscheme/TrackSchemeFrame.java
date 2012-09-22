@@ -793,20 +793,17 @@ public class TrackSchemeFrame  <T extends RealType<T> & NativeType<T>> extends J
 
 	@Override
 	public void render() {
-		// TODO Auto-generated method stub
-
+		setVisible(true);
 	}
 
 	@Override
 	public void refresh() {
-		// TODO Auto-generated method stub
-
+		System.out.println("[TrackSchemeFrame] refresh() called");
 	}
 
 	@Override
 	public void clear() {
-		// TODO Auto-generated method stub
-
+		System.out.println("[TrackSchemeFrame] clear() called");
 	}
 
 	@Override
