@@ -7,6 +7,7 @@ import ij.measure.ResultsTable;
 import ij.plugin.PlugIn;
 import ij.Prefs;
 import ij.process.ImageProcessor;
+import ij.ImageStack;
 import ij.util.Tools;
 import ij.WindowManager;
 import ij.text.*;
@@ -62,13 +63,19 @@ public class Advanced_Sholl_Analysis implements PlugIn {
     private static double spanWidth   = 0;
     private static int binChoice      = BIN_AVERAGE;
     private static int shollChoice    = SHOLL_N;
-    private static boolean fitCurve   = true;
     private static int polyChoice     = 1;
-    private static boolean verbose    = false;
-    private static boolean mask       = true;
-    private static String pxUnit      = "pixels";
-    private static double pxSize      = 1;
-    private static int size;
+    private static boolean fitCurve;
+    private static boolean verbose;
+    private static boolean mask;
+    private static boolean saveValues;
+
+    /* Common variables */
+    private static boolean IS_3D;
+    private static double x_spacing = 1;
+    private static double y_spacing = 1;
+    private static double z_spacing = 1;
+    private static double pxSize    = 1;
+    private static String Unit      = "pixels";
 
     /* Boundaries of analysis */
     private static int[] bounds = new int[4];
@@ -78,20 +85,23 @@ public class Advanced_Sholl_Analysis implements PlugIn {
     private static int belowOrLeft = 0;
     private static String[] QUADRANTS = { "Right of line", "Left of line" };
 
-    /* Saving Options */
-    private static boolean saveValues;
 
     public void run(String arg) {
 
         if (IJ.versionLessThan("1.46h")) return;
+
+        // Initialize center coordinates
+        int x, y, z;
 
         // Get current image, the ImageProcessor for the image and its title
         ImagePlus img = IJ.getImage();
         ImageProcessor ip = img.getProcessor();
         String title = img.getTitle();
 
+        IS_3D = img.getStackSize() > 1;
+
         // Make sure image is of the right type
-        if (!ip.isBinary()) {
+        if ( !ip.isBinary() ) { // (img.getType() != ImagePlus.GRAY8)
             error("8-bit binary image (Arbor: non-zero value) required.\n"
                 + "Use \"Image>Adjust>Threshold...\" to binarize image.");
             return;
@@ -99,16 +109,20 @@ public class Advanced_Sholl_Analysis implements PlugIn {
 
         // Retrieve image path and check if it is valid
         String imgPath = IJ.getDirectory("image");
+        boolean validPath = false;
         if (imgPath!=null) {
             File dir = new File(imgPath);
-            saveValues = dir.exists() && dir.isDirectory();
+            validPath = dir.exists() && dir.isDirectory();
         }
 
-        // Get image calibration and define Radius span accordingly
+        // Get image calibration
         Calibration cal = img.getCalibration();
-        if (cal != null && cal.pixelHeight == cal.pixelWidth) {
-            pxUnit = cal.getUnits();
-            pxSize = cal.pixelHeight;
+        if( cal != null ) {
+            x_spacing = cal.pixelWidth;
+            y_spacing = cal.pixelHeight;
+            z_spacing = cal.pixelDepth;
+            Unit = cal.getUnits();
+            pxSize = (x_spacing + y_spacing) / 2;
             spanWidth = 2*pxSize;
         }
 
@@ -126,12 +140,10 @@ public class Advanced_Sholl_Analysis implements PlugIn {
 
             if (wd.escPressed()) return;
 
-            // Get new ROI, in case it has changed
+            // Get new ROI in case it has changed
             roi = img.getRoi();
 
         }
-
-        int x, y;
 
         if (roi != null && roi.getType() == Roi.LINE) {
 
@@ -163,14 +175,21 @@ public class Advanced_Sholl_Analysis implements PlugIn {
             return;
         }
 
+        z =  img.getCurrentSlice();
+
         // Create the plugin dialog
         GenericDialog gd = new GenericDialog("Advanced Sholl Analysis v" + VERSION);
-        gd.addNumericField("Starting radius:", startRadius, 2, 9, pxUnit);
-        gd.addNumericField("Ending radius:", endRadius, 2, 9, pxUnit);
-        gd.addNumericField("Radius_step size:", incStep, 2, 9, pxUnit);
-        gd.addNumericField("Radius_span:", spanWidth, 2, 9, pxUnit);
-        //gd.addSlider("Samples per radius:", 1, 20, 1);
-        gd.addChoice("Span_type:", BIN_TYPES, BIN_TYPES[binChoice]);
+        gd.addNumericField("Starting radius:", startRadius, 2, 9, Unit);
+        gd.addNumericField("Ending radius:", endRadius, 2, 9, Unit);
+        gd.addNumericField("Radius_step size:", incStep, 2, 9, Unit);
+
+        if (!IS_3D) {
+            gd.addNumericField("Radius_span:", spanWidth, 2, 9, Unit);
+            //gd.addSlider("Samples per radius:", 1, 20, 1);
+            gd.addChoice("Span_type:", BIN_TYPES, BIN_TYPES[binChoice]);
+        } else
+            SHOLL_TYPES[SHOLL_NS] = SHOLL_TYPES[SHOLL_NS].replaceAll("Area", "Volume");
+
         gd.addChoice("Sholl method:", SHOLL_TYPES, SHOLL_TYPES[shollChoice]);
 
         if (restrict) {
@@ -187,7 +206,7 @@ public class Advanced_Sholl_Analysis implements PlugIn {
         gd.setInsets(5, 6, 0);
         gd.addCheckbox("Create intersections mask", mask);
 
-        if (saveValues) {
+        if (validPath) {
             gd.setInsets(5, 6, 0);
             gd.addCheckbox("Save plot values on image folder", saveValues);
         }
@@ -203,8 +222,11 @@ public class Advanced_Sholl_Analysis implements PlugIn {
         startRadius = Math.max(pxSize, gd.getNextNumber());
         endRadius   = Math.max(pxSize, gd.getNextNumber());
         incStep     = Math.max(pxSize, gd.getNextNumber());
-        spanWidth   = Math.max(pxSize, gd.getNextNumber());
-        binChoice   = gd.getNextChoiceIndex();
+
+        if (!IS_3D) {
+            spanWidth   = Math.max(pxSize, gd.getNextNumber());
+            binChoice   = gd.getNextChoiceIndex();
+        }
         shollChoice = gd.getNextChoiceIndex();
 
         if (restrict) {
@@ -217,7 +239,7 @@ public class Advanced_Sholl_Analysis implements PlugIn {
         polyChoice = gd.getNextChoiceIndex();
         mask       = gd.getNextBoolean();
 
-        if (saveValues)
+        if (validPath)
             saveValues = gd.getNextBoolean();
 
         // Define boundaries of analysis according to orthogonal chords
@@ -263,10 +285,12 @@ public class Advanced_Sholl_Analysis implements PlugIn {
         }
 
         long start = System.currentTimeMillis();
+        IJ.resetEscape();
 
         // Create arrays for x-values and radii
         int[] radii = new int[size];
         double[] xvalues = new double[size];
+        double[] yvalues = new double[size];
 
         // Populate arrays
         for (int i = 0; i < size; i++) {
@@ -274,34 +298,100 @@ public class Advanced_Sholl_Analysis implements PlugIn {
             radii[i] = (int) Math.round(xvalues[i] / pxSize);
         }
 
-        // Analyze the data and return raw Sholl intersections
-        double[] yvalues = analyze(x, y, radii, nSpans, binChoice, ip);
+        // Perform 2D analysis with spanWidth
+        if (!IS_3D) {
 
-        // Display the plot and return transformed data if valid counts exist
-        double[] grays = plotValues(title, shollChoice, radii, xvalues, yvalues,
-            nSpans, x, y, saveValues, imgPath);
+            // Analyze the data and return raw Sholl intersections
+            yvalues = analyze(x, y, radii, nSpans, binChoice, ip);
 
-        // Exit if no valid data was gathered
-        if (grays.length==0) {
-           error("All intersection counts were zero!");
-           return;
+        } else {
+
+            // Perform 3D Sholl
+            yvalues= analyze3D(x, y, z, xvalues, img);
+
         }
 
-        // Create intersections mask
-        if (mask) {
+        // Display the plot and return transformed data if valid counts exist
+        double[] grays = plotValues(title, shollChoice, xvalues, yvalues,
+            nSpans, x, y, saveValues, imgPath);
+
+        String finalmsg = "Done.";
+
+        // Create intersections mask, but check first if worth proceeding
+        if (grays.length==0) {
+            IJ.beep();
+            finalmsg = "Error: All intersection counts were zero!";
+
+        } else if (mask) {
 
             String metadata = fitCurve ? "Fitted data" : "Raw data";
-            ImagePlus mask = makeMask(img, title, grays, x, y, cal, metadata);
-            if (mask==null)
-                { IJ.beep(); IJ.showStatus("Mask could not be created"); }
+            ImagePlus maskimg = makeMask(img, title, grays, xvalues, x, y, z,
+            	cal, metadata);
+            if (maskimg==null)
+                { IJ.beep(); finalmsg = "Error: Mask could not be created!"; }
             else
-                mask.show();
+                maskimg.show();
 
         }
 
         IJ.showProgress(0, 0);
-        IJ.showStatus("Finished. "+ IJ.d2s((System.currentTimeMillis()-start)/1000.0, 2)
-                    + " seconds");
+        IJ.showStatus(IJ.d2s((System.currentTimeMillis()-start)/1000.0, 2)
+            +"s. "+ finalmsg);
+
+    }
+
+    static public double[] analyze3D(int xcenter, int ycenter, int zcenter,
+        double[] xvalues, ImagePlus img) {
+
+        int nspheres, counts;
+        double dx, dy, dz, distanceToRadius;
+
+        // Create an array to hold the results
+        double[] data = new double[nspheres = xvalues.length];
+
+        //  get image depth. with and height of area to be analyzed is already
+        // stored in bounds[]
+        int depth  = img.getNSlices();
+
+        // Get Image processor
+        ImageProcessor ip  = img.getProcessor();
+        ImageStack stack = img.getStack();
+
+        for (int i = 0; i < nspheres; i++) {
+
+            IJ.showStatus("3D Sholl: Sampling sphere "+ (i+1) +"/"+ nspheres
+                + ". Press 'Esc' to abort...");
+            IJ.showProgress(i, nspheres);
+            if ( IJ.escapePressed() ) { IJ.beep(); mask = false; return data; }
+
+        	counts = 0;
+        	for( int z = 1; z <= depth; ++z ) {
+
+        	    ip = stack.getProcessor(z);
+        	    dz = (z-zcenter) * z_spacing * (z-zcenter) * z_spacing;
+
+	            for( int y = bounds[1]; y < bounds[3]; ++y ) {
+
+            	    dy = (y-ycenter) * y_spacing * (y-ycenter) * y_spacing;
+
+    	            for( int x= bounds[0]; x < bounds[2]; ++x ) {
+
+        	            dx = (x-xcenter) * x_spacing * (x-xcenter) * x_spacing;
+                    	distanceToRadius = Math.sqrt(dx + dy + dz) - xvalues[i];
+                    	if ( Math.abs(distanceToRadius) <1 ) { //<=0.5
+                    		if (ip.get(x, y)!=0 ) {
+                    		    counts++;
+                    	      // ip.putPixelValue(x, y, counts);
+                    	    } // else { ip.putPixelValue(x, y, 0); }
+                        }
+                	}
+            	}
+        	}
+
+        	data[i]= counts;
+    	}
+
+    return data;
 
     }
 
@@ -323,8 +413,6 @@ public class Advanced_Sholl_Analysis implements PlugIn {
         // Create an array for the bin samples. We must ensure that the passed
         // binsize is at least 1
         binsamples = new int[binsize];
-
-        IJ.resetEscape();
 
         // Outer loop to control the analysis bins
         for (i = 0; i < size; i++) {
@@ -539,7 +627,8 @@ public class Advanced_Sholl_Analysis implements PlugIn {
 
             // We already filtered out of bounds coordinates in
             // getCircumferencePoints so we just need to retrieve pixel values
-            pixels[i] = ip.getPixel(points[i][0], points[i][1]);
+            // using get(x, y), faster than getPixel()
+            pixels[i] = ip.get(points[i][0], points[i][1]);
 
         }
 
@@ -611,7 +700,7 @@ public class Advanced_Sholl_Analysis implements PlugIn {
             pxX = points[i][0];
             pxY = points[i][1];
 
-            if ( (i+1)%r!= 0 && pxX>= bounds[0] && pxX<= bounds[2] && pxY>= bounds[1] && pxY<= bounds[3] )
+            if ( (i+1)%r!= 0 && pxX>= bounds[0] && pxX< bounds[2] && pxY>= bounds[1] && pxY< bounds[3] )
                 count++;
         }
 
@@ -623,7 +712,7 @@ public class Advanced_Sholl_Analysis implements PlugIn {
             pxX = points[i][0];
             pxY = points[i][1];
 
-            if ( (i+1)%r!= 0 && pxX>= bounds[0] && pxX<= bounds[2] && pxY>= bounds[1] && pxY<= bounds[3] ) {
+            if ( (i+1)%r!= 0 && pxX>= bounds[0] && pxX< bounds[2] && pxY>= bounds[1] && pxY< bounds[3] ) {
 
                 refined[j][0]= pxX;
                 refined[j++][1]= pxY;
@@ -637,9 +726,9 @@ public class Advanced_Sholl_Analysis implements PlugIn {
     }
 
     /* Creates Results table, Sholl plot and curve fitting */
-    static public double[] plotValues(String ttl, int mthd, int[] r,
-            double[] xpoints, double[] ypoints, int spanSamples, int xcenter,
-            int ycenter, boolean saveplot, String savepath) {
+    static public double[] plotValues(String ttl, int mthd, double[] xpoints,
+            double[] ypoints, int spanSamples, int xcenter, int ycenter,
+            boolean saveplot, String savepath) {
 
         IJ.showStatus("Preparing Results...");
 
@@ -658,14 +747,16 @@ public class Advanced_Sholl_Analysis implements PlugIn {
         double[] x = new double[nsize];
         double[] y = new double[nsize];
         double[] logY = new double[nsize];
+        double[] logY_3D = new double[nsize];
         double sumY = 0.0;
         for (i = 0, j = 0; i < size; i++) {
 
             if (ypoints[i] != 0.0) {
                 x[j] = xpoints[i];
                 y[j] = ypoints[i];
-                sumY += ypoints[i];
-                logY[j++] = Math.log(ypoints[i] / (Math.PI * r[i] * r[i]));
+                logY[j]    = Math.log( y[j] / (Math.PI * x[j]*x[j]) );
+                logY_3D[j] = Math.log( y[j] / (Math.PI * (x[j]*x[j]*x[j]) * 4/3) );
+                sumY += y[j++];
             }
 
         }
@@ -680,7 +771,7 @@ public class Advanced_Sholl_Analysis implements PlugIn {
             rt = ((TextWindow) window).getTextPanel().getResultsTable();
 
         rt.incrementCounter();
-        rt.addLabel("Image", ttl +" ("+ pxUnit +")");
+        rt.addLabel("Image", ttl +" ("+ Unit +")");
         rt.addValue("Method #", mthd+1);
         rt.addValue("X center (px)", xcenter);
         rt.addValue("Y center (px)", ycenter);
@@ -698,27 +789,34 @@ public class Advanced_Sholl_Analysis implements PlugIn {
         double[] xScale = Tools.getMinMax(x);
         double[] yScale = Tools.getMinMax(y);
         String yTitle = "N. of Intersections";
-        String xTitle = "Radius (" + pxUnit + ")";
+        String xTitle = IS_3D ? "3D distance (" + Unit + ")" : "2D distance (" + Unit + ")";
 
         // Adjust axes for log Methods
         if (mthd == SHOLL_SLOG || mthd == SHOLL_LOG) {
 
             yScale = Tools.getMinMax(logY);
-            yTitle = "log(N. Inters./Circle area)";
+            yTitle = IS_3D ? "log(N. Inters./Sphere volume)" : "log(N. Inters./Circle area)";
 
             if (mthd == SHOLL_LOG) {
                 for (i = 0; i < nsize; i++)
                     x[i] = Math.log(x[i]);
                 xScale = Tools.getMinMax(x);
-                xTitle = "log(Radius)";
+                xTitle = IS_3D ? "log(3D distance)" : "log(2D distance)";
             }
 
         } else if (mthd == SHOLL_NS) {
 
-            for (i = 0; i < nsize; i++)
-                y[i] = y[i] / (Math.PI * r[i] * r[i]);
+            if (IS_3D) {
+                yTitle = "N. Inters./Sphere volume (" + Unit + "\u00B3)";
+                for (i = 0; i < nsize; i++)
+                     y[i] = y[i] / ( 4/3 * Math.PI * (x[i] * x[i]* x[i]) );
+            } else {
+                yTitle = "N. Inters./Circle area (" + Unit + "\u00B2)";
+                for (i = 0; i < nsize; i++)
+                     y[i] = y[i] / (Math.PI * x[i] * x[i]);
+            }
+
             yScale = Tools.getMinMax(y);
-            yTitle = "N. Inters./Circle area (" + pxUnit + "\u00B2)";
 
         }
 
@@ -763,7 +861,12 @@ public class Advanced_Sholl_Analysis implements PlugIn {
 
             // By default, calculate the Sholl decay, i.e., the slope of the
             // fitted regression on Semi-log Sholl
-            CurveFitter cf = new CurveFitter(x, logY);
+            CurveFitter cf;
+            if (IS_3D)
+                cf = new CurveFitter(x, logY_3D);
+            else
+                cf = new CurveFitter(x, logY);
+
             cf.doFit(CurveFitter.STRAIGHT_LINE, false);
 
             // Get parameters of fit
@@ -900,52 +1003,99 @@ public class Advanced_Sholl_Analysis implements PlugIn {
     }
 
     /* Creates Sholl mask by applying values to foreground pixels of img*/
-    public ImagePlus makeMask(ImagePlus img, String ttl, double[] values, int x,
-                int y, Calibration cal, String label) {
-
-        // No point in continuing if image is no longer available
-        ImageProcessor ip  = img.getProcessor();
-        if (ip==null) return null;
-
-        IJ.showStatus("Preparing intersections mask...");
-
-        ImagePlus img2 = IJ.createImage("Sholl mask [" +
-            SHOLL_TYPES[shollChoice] + "] for " + ttl, "32-bit black",
-            ip.getWidth(), ip.getHeight(), 1);
-
-        ImageProcessor ip2 = img2.getProcessor();
+    public ImagePlus makeMask(ImagePlus img, String ttl, double[] values,
+    		double[] xvalues, int xcenter, int ycenter, int zcenter,
+    		Calibration cal, String label) {
 
         int[][] points;
         int i, j, k, l, drawRadius;
         int drawSteps = values.length;
         int drawWidth = (int)Math.round((endRadius-startRadius)/(pxSize*drawSteps));
 
-        for (i = 0; i < drawSteps; i++) {
+        // No point in continuing if image is no longer available, or if arrays
+        // do not match
+        ImageProcessor ip  = img.getProcessor();
+        if ( ip==null || drawSteps > xvalues.length ) return null;
 
-            IJ.showProgress(i, drawSteps);
-            drawRadius = (int)Math.round((startRadius / pxSize) + (i * drawWidth));
+        IJ.showStatus("Preparing intersections mask...");
 
-            for (j = 0; j < drawWidth; j++) {
-                points = getCircumferencePoints(x, y, drawRadius++);
-                for (k = 0; k < points.length; k++) {
-                    for (l = 0; l < points[k].length; l++) {
-                        if (ip.getPixel(points[k][0], points[k][1]) != 0)
-                            ip2.putPixelValue(points[k][0], points[k][1], values[i]);
-                    }
-                }
-            }
+        //  get image dimensions
+        int width  = img.getWidth();
+        int height = img.getHeight();
+        int depth  = img.getNSlices();
 
-        }
+        ImagePlus img2 = IJ.createImage("Sholl mask [" +
+            SHOLL_TYPES[shollChoice] + "] for " + ttl, "32-bit black", width,
+            height, depth);
+
+        ImageProcessor ip2 = img2.getProcessor();
+
+		if (!IS_3D) {
+			for (i = 0; i < drawSteps; i++) {
+
+				IJ.showProgress(i, drawSteps);
+				drawRadius = (int)Math.round((startRadius / pxSize) + (i * drawWidth));
+
+				for (j = 0; j < drawWidth; j++) {
+					points = getCircumferencePoints(xcenter, ycenter, drawRadius++);
+					for (k = 0; k < points.length; k++) {
+						for (l = 0; l < points[k].length; l++) {
+							if (ip.get(points[k][0], points[k][1]) != 0)
+								ip2.putPixelValue(points[k][0], points[k][1], values[i]);
+						}
+					}
+				}
+
+			}
+
+		} else {
+
+				double dx, dy, dz, distanceToRadius;
+				ImageStack originalstack = img.getStack();
+				ImageStack maskstack = img2.getStack();
+
+				for (i = 0; i < drawSteps; i++) {
+
+					IJ.showStatus("Creating 3D Sholl mask. Press 'Esc' to abort...");
+					IJ.showProgress(i, drawSteps);
+					if ( IJ.escapePressed() ) { IJ.beep(); return null; }
+
+					for( int z = 1; z <= depth; ++z ) {
+
+						ip = originalstack.getProcessor(z);
+						ip2 = maskstack.getProcessor(z);
+
+						dz = (z-zcenter) * z_spacing * (z-zcenter) * z_spacing;
+
+	                    for( int y = bounds[1]; y < bounds[3]; ++y ) {
+
+							dy = (y-ycenter) * y_spacing * (y-ycenter) * y_spacing;
+
+    	                    for( int x= bounds[0]; x < bounds[2]; ++x ) {
+
+								dx = (x-xcenter) * x_spacing * (x-xcenter) * x_spacing;
+								distanceToRadius = Math.sqrt(dx + dy + dz) - xvalues[i];
+								if ( Math.abs(distanceToRadius) < 1 ) { //<=0.5
+									if (ip.get(x, y)!=0 )
+										ip2.putPixelValue(x, y, values[i]);
+								}
+							}
+						}
+					}
+
+				}
+		}
 
         // Apply calibration, set mask label and mark center of analysis
         img2.setCalibration(cal);
         img2.setProperty("Label", label);
-        img2.setRoi(new PointRoi(x, y));
+        img2.setSlice(zcenter);
+        img2.setRoi(new PointRoi(xcenter, ycenter));
 
         // Adjust levels and return mask
         double[] levels = Tools.getMinMax(values);
+        img2.getProcessor().setMinAndMax(levels[0], levels[1]);
         IJ.run(img2, "Fire", ""); // "Fire", "Ice", "Spectrum", "Redgreen"
-        ip2.setMinAndMax(levels[0], levels[1]);
 
         return img2;
     }

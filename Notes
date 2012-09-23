@@ -1,3 +1,6 @@
+Version 3
+    - Performs 3D Sholl
+
 Version 2.5
     - Fixed duplicated points in Bresenham's algorithm
     - Foreground is any value greater than 0
