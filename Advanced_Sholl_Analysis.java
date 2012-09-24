@@ -40,7 +40,7 @@ import java.util.Arrays;
 public class Advanced_Sholl_Analysis implements PlugIn {
 
     /* Plugin Information */
-    public static final String VERSION = "3.0";
+    public static final String VERSION = "3.0a";
     public static final String URL = "http://imagejdocu.tudor.lu/doku.php?id=plugin:analysis:asa:start";
 
     /* Bin Function Type Definitions */
@@ -80,13 +80,15 @@ public class Advanced_Sholl_Analysis implements PlugIn {
     private static String Unit      = "pixels";
 
     /* Boundaries of analysis */
-    private static int[] bounds = new int[4];
     private static boolean restrict = false;
     private static Line chord;
     private static double chordAngle;
     private static int belowOrLeft = 0;
     private static String[] QUADRANTS = { "Right of line", "Left of line" };
-
+    private static int minX;
+    private static int maxX;
+    private static int minY;
+    private static int maxY;
 
     public void run(String arg) {
 
@@ -247,34 +249,6 @@ public class Advanced_Sholl_Analysis implements PlugIn {
         if (validPath)
             saveValues = gd.getNextBoolean();
 
-        // Define boundaries of analysis according to orthogonal chords
-        if (restrict) { // if restrict chord is already defined
-
-            if (chordAngle==0 || chordAngle==180) { // Horizontal chord
-
-                bounds[0] = 0;
-                bounds[1] = (belowOrLeft==1) ? y : 0;
-                bounds[2] = ip.getWidth();
-                bounds[3] = (belowOrLeft==1) ? ip.getHeight() : y;
-
-            } else if (chordAngle==90) { // Vertical chord
-
-                bounds[0] = (belowOrLeft==1) ? 0 : x;
-                bounds[1] = 0;
-                bounds[2] = (belowOrLeft==1) ? x : ip.getWidth();
-                bounds[3] = ip.getHeight();
-
-            }
-
-        } else {
-
-            bounds[0]= 0;
-            bounds[1]= 0;
-            bounds[2]= ip.getWidth();
-            bounds[3]= ip.getHeight();
-
-        }
-
         // Impose valid parameters
         startRadius = (startRadius > endRadius) ? pxSize : startRadius;
         if (IS_3D)
@@ -306,6 +280,30 @@ public class Advanced_Sholl_Analysis implements PlugIn {
             radii[i] = (int) Math.round(xvalues[i] / pxSize);
         }
 
+        // Define boundaries of analysis according to orthogonal chords
+        int maxradius = radii[size-1] + 5;
+
+        minX = Math.max(x-maxradius, 0);
+        maxX = Math.min(maxradius+x, ip.getWidth());
+        minY = Math.max(y-maxradius, 0);
+        maxY = Math.min(maxradius+y, ip.getHeight());
+
+        if (restrict) { // if restrict chord is already defined
+
+            if (chordAngle==0 || chordAngle==180) { // Horizontal chord
+
+                minY = (belowOrLeft==1) ? Math.max(y-maxradius, y) : minY;
+                maxY = (belowOrLeft==1) ? maxY : Math.min(maxradius+y, y);
+
+            } else if (chordAngle==90) { // Vertical chord
+
+                minX = (belowOrLeft==1) ? minX : Math.max(x-maxradius, x);
+                maxX = (belowOrLeft==1) ? Math.min(maxradius+x, x) : maxX;
+
+            }
+
+        }
+
         // Perform 2D analysis with spanWidth
         if (!IS_3D) {
 
@@ -321,7 +319,7 @@ public class Advanced_Sholl_Analysis implements PlugIn {
 
         // Display the plot and return transformed data if valid counts exist
         double[] grays = plotValues(title, shollChoice, xvalues, yvalues,
-            nSpans, x, y, saveValues, imgPath);
+            nSpans, x, y, z, saveValues, imgPath);
 
         String finalmsg = "Done.";
 
@@ -351,64 +349,116 @@ public class Advanced_Sholl_Analysis implements PlugIn {
     static public double[] analyze3D(int xcenter, int ycenter, int zcenter,
         double[] xvalues, ImagePlus img) {
 
-        int nspheres; int holdsum = 0; int zcount = 0;
         double dx, dy, dz, distanceToRadius;
+        int nspheres, count;
+
+        IJ.showStatus("3D Sholl: Preparing analysis...";
 
         // Create an array to hold the results
         double[] data = new double[nspheres = xvalues.length];
 
-        //  get image dimensions. Width and height of area to be analyzed is
+        // Get depth of stack. Width and height of slice area to be analyzed is
         // already stored in bounds[]
         int depth = img.getNSlices();
 
-        //  Create an array to hold the pixels of each slice
-        int[][] points = new int[(bounds[2]-bounds[0]+1) * (bounds[3]-bounds[1]+1)][2];
+        //  Create an array to hold all the possible voxels
+        int voxels = (maxX-minX+1) * (maxY-minY+1) * depth;
+        int[][] points = new int[voxels][3];
 
-        // Get Image processor
-        ImageProcessor ip  = img.getProcessor();
+        // Get Image Stack
         ImageStack stack = img.getStack();
+        ImageProcessor ip;
 
+        for (int s = 0; s < nspheres; s++) {
 
-        for (int i = 0; i < nspheres; i++) {
-
-            IJ.showStatus("3D Sholl: Sampling sphere "+ (i+1) +"/"+ nspheres
+            IJ.showStatus("Sampling sphere "+ (s+1) +"/"+ nspheres
                 + ". Press 'Esc' to abort...");
-            IJ.showProgress(i, nspheres);
+
             if (IJ.escapePressed()) { IJ.beep(); return data; }
 
-            holdsum =0;
+            count = 0;
             for( int z = 1; z <= depth; ++z ) {
 
                 ip = stack.getProcessor(z);
                 dz = (z-zcenter) * z_spacing * (z-zcenter) * z_spacing;
 
-                zcount = 0;
-                for( int y = bounds[1]; y < bounds[3]; ++y ) {
+                for( int y = minY; y < maxY; ++y ) {
 
                     dy = (y-ycenter) * y_spacing * (y-ycenter) * y_spacing;
 
-                    for( int x= bounds[0]; x < bounds[2]; ++x ) {
+                    for( int x= minX; x < maxX; ++x ) {
+
+                        IJ.showProgress(x*y*z, voxels);
 
                         dx = (x-xcenter) * x_spacing * (x-xcenter) * x_spacing;
-                        distanceToRadius = Math.sqrt(dx + dy + dz) - xvalues[i];
+                        distanceToRadius = Math.sqrt(dx + dy + dz) - xvalues[s];
 
                         if ( Math.abs(distanceToRadius) <1 ) {
 
                             if (ip.get(x, y)!=0 ) {
-                                points[zcount][0] = x;
-                                points[zcount++][1] = y;
+                                points[count][0] = x;
+                                points[count][1] = y;
+                                points[count++][2] = z;;
                             }
 
                         }
                     }
                 }
-                holdsum += countGroups(points, zcount, 1.5, ip);
             }
 
-            data[i] = holdsum;
+            // now we have all the 3d coordinates of all the points that intercepted
+            // Sholl spheres. Lets check if they belong to the same goup.
+            data[s] = count3Dgroups(points, count, 1.5);
 
         }
+
         return data;
+    }
+
+    static public int count3Dgroups(int[][] points, int lastIndex, double threshold) {
+
+        double distance;
+        int i, j, k, target, source, dx, dy, dz, groups, len;
+
+        // Create an array to hold the point grouping data
+        int[] grouping = new int[len = lastIndex];
+
+        // Initialize each point to be in a unique group
+        for (i = 0, groups = len; i < groups; i++)
+            grouping[i] = i + 1;
+
+        for (i = 0; i < len; i++)
+            for (j = 0; j < len; j++) {
+
+                // Don't compare the same point with itself
+                if (i == j)
+                    continue;
+
+                // Compute the distance between the two points
+                dx = points[i][0] - points[j][0];
+                dy = points[i][1] - points[j][1];
+                dz = points[i][2] - points[j][2];
+                distance = Math.sqrt(dx*dx + dy*dy + dz*dz);
+
+                // Should these two points be in the same group?
+                if ((distance <= threshold) && (grouping[i] != grouping[j])) {
+
+                    // Record which numbers we're changing
+                    source = grouping[i];
+                    target = grouping[j];
+
+                    // Change all targets to sources
+                    for (k = 0; k < len; k++)
+                        if (grouping[k] == target)
+                            grouping[k] = source;
+
+                    // Update the number of groups
+                    groups--;
+
+                }
+            }
+
+        return groups;
     }
 
     /*
@@ -717,7 +767,7 @@ public class Advanced_Sholl_Analysis implements PlugIn {
             pxX = points[i][0];
             pxY = points[i][1];
 
-            if ( (i+1)%r!= 0 && pxX>= bounds[0] && pxX< bounds[2] && pxY>= bounds[1] && pxY< bounds[3] )
+            if ( (i+1)%r!= 0 && pxX>= minX && pxX< maxX && pxY>= minY && pxY< maxY )
                 count++;
         }
 
@@ -729,7 +779,7 @@ public class Advanced_Sholl_Analysis implements PlugIn {
             pxX = points[i][0];
             pxY = points[i][1];
 
-            if ( (i+1)%r!= 0 && pxX>= bounds[0] && pxX< bounds[2] && pxY>= bounds[1] && pxY< bounds[3] ) {
+            if ( (i+1)%r!= 0 && pxX>= minX && pxX< maxX && pxY>= minY && pxY< maxY ) {
 
                 refined[j][0]= pxX;
                 refined[j++][1]= pxY;
@@ -745,7 +795,7 @@ public class Advanced_Sholl_Analysis implements PlugIn {
     /* Creates Results table, Sholl plot and curve fitting */
     static public double[] plotValues(String ttl, int mthd, double[] xpoints,
             double[] ypoints, int spanSamples, int xcenter, int ycenter,
-            boolean saveplot, String savepath) {
+            int zcenter, boolean saveplot, String savepath) {
 
         IJ.showStatus("Preparing Results...");
 
@@ -792,6 +842,7 @@ public class Advanced_Sholl_Analysis implements PlugIn {
         rt.addValue("Method #", mthd+1);
         rt.addValue("X center (px)", xcenter);
         rt.addValue("Y center (px)", ycenter);
+        rt.addValue("Z center (slice)", zcenter);
         rt.addValue("Starting radius", startRadius);
         rt.addValue("Ending radius", endRadius);
         rt.addValue("Radius step", incStep);
@@ -1084,11 +1135,11 @@ public class Advanced_Sholl_Analysis implements PlugIn {
 
                         dz = (z-zcenter) * z_spacing * (z-zcenter) * z_spacing;
 
-                        for( int y = bounds[1]; y < bounds[3]; ++y ) {
+                        for( int y = minY; y < maxY; ++y ) {
 
                             dy = (y-ycenter) * y_spacing * (y-ycenter) * y_spacing;
 
-                            for( int x= bounds[0]; x < bounds[2]; ++x ) {
+                            for( int x= minX; x < maxX; ++x ) {
 
                                 dx = (x-xcenter) * x_spacing * (x-xcenter) * x_spacing;
                                 distanceToRadius = Math.sqrt(dx + dy + dz) - xvalues[i];
