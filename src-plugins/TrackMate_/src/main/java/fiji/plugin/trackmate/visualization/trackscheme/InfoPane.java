@@ -31,17 +31,13 @@ import javax.swing.table.JTableHeader;
 
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
-
-import org.jgrapht.graph.DefaultWeightedEdge;
-
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMateSelectionChangeEvent;
 import fiji.plugin.trackmate.TrackMateSelectionChangeListener;
 import fiji.plugin.trackmate.util.TMUtils;
-import fiji.plugin.trackmate.visualization.TrackMateSelectionView;
 
-public class InfoPane <T extends RealType<T> & NativeType<T>> extends JPanel implements TrackMateSelectionView, TrackMateSelectionChangeListener {
+public class InfoPane <T extends RealType<T> & NativeType<T>> extends JPanel implements TrackMateSelectionChangeListener {
 
 	private static final long serialVersionUID = -1L;
 
@@ -112,23 +108,10 @@ public class InfoPane <T extends RealType<T> & NativeType<T>> extends JPanel imp
 	}
 
 	/**
-	 * Ignored.
-	 */
-	@Override
-	public void highlightEdges(Collection<DefaultWeightedEdge> edges) {}
-
-	/**
-	 * Ignored.
-	 */
-	@Override
-	public void centerViewOn(Spot spot) {}
-
-	/**
 	 * Show the given spot selection as a table displaying their individual features. 
 	 */
-	@Override
 	@SuppressWarnings("serial")
-	public void highlightSpots(Collection<Spot> spots) {
+	private void highlightSpots(Collection<Spot> spots) {
 		if (!doHighlightSelection)
 			return;
 		if (spots.size() == 0) {

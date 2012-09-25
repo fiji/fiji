@@ -5,7 +5,6 @@ import ij.gui.NewImage;
 import ij.gui.StackWindow;
 
 import java.awt.Point;
-import java.util.Collection;
 import java.util.List;
 
 import net.imglib2.type.NativeType;
@@ -18,6 +17,7 @@ import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotImp;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMateModelChangeEvent;
+import fiji.plugin.trackmate.TrackMateSelectionChangeEvent;
 import fiji.plugin.trackmate.util.TMUtils;
 import fiji.plugin.trackmate.visualization.AbstractTrackMateModelView;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
@@ -156,13 +156,13 @@ public class HyperStackDisplayer <T extends RealType<T> & NativeType<T>> extends
 	}
 
 	@Override
-	public void highlightEdges(Collection<DefaultWeightedEdge> edges) {
-		trackOverlay.setHighlight(edges);
-	}
-
-	@Override
-	public void highlightSpots(Collection<Spot> spots) {
-		spotOverlay.setSpotSelection(spots);
+	public void selectionChanged(TrackMateSelectionChangeEvent event) {
+		// Highlight selection
+		trackOverlay.setHighlight(model.getEdgeSelection());
+		spotOverlay.setSpotSelection(model.getSpotSelection());
+		// Center on last spot
+		super.selectionChanged(event);
+		// Redraw
 		imp.updateAndDraw();				
 	}
 

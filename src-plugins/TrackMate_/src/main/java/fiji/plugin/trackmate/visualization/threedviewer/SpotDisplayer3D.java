@@ -28,6 +28,7 @@ import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMateModelChangeEvent;
+import fiji.plugin.trackmate.TrackMateSelectionChangeEvent;
 import fiji.plugin.trackmate.util.TMUtils;
 import fiji.plugin.trackmate.visualization.AbstractTrackMateModelView;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
@@ -76,7 +77,7 @@ public class SpotDisplayer3D <T extends RealType<T> & NativeType<T>> extends Abs
 	 * OVERRIDDEN METHODS
 	 */
 
-	
+
 	@Override
 	public void setModel(TrackMateModel<T> model) {
 		this.settings = model.getSettings();
@@ -107,7 +108,7 @@ public class SpotDisplayer3D <T extends RealType<T> & NativeType<T>> extends Abs
 		case TrackMateModelChangeEvent.SPOTS_FILTERED:
 			for(int key : model.getFilteredSpots().keySet())
 				blobs.get(key).setVisible(model.getFilteredSpots().get(key));
-					break;
+			break;
 		case TrackMateModelChangeEvent.TRACKS_COMPUTED: 
 			trackContent = makeTrackContent();
 			universe.removeContent(TRACK_CONTENT_NAME);
@@ -122,31 +123,15 @@ public class SpotDisplayer3D <T extends RealType<T> & NativeType<T>> extends Abs
 	}
 
 	@Override
-	public void highlightSpots(Collection<Spot> spots) {
-		// Restore previous display settings for previously highlighted spot
-		if (null != previousSpotHighlight)
-			for (Spot spot : previousSpotHighlight)
-				blobs.get(previousFrameHighlight.get(spot)).setColor(spot, previousColorHighlight.get(spot));
-					previousSpotHighlight = new ArrayList<Spot>(spots.size());
-					previousColorHighlight = new HashMap<Spot, Color3f>(spots.size());
-					previousFrameHighlight = new HashMap<Spot, Integer>(spots.size());
-
-					SpotCollection sc = model.getFilteredSpots().subset(spots);
-					Color3f highlightColor = new Color3f((Color) displaySettings.get(KEY_HIGHLIGHT_COLOR));
-					List<Spot> st;
-					for(int frame : sc.keySet()) {
-						st = sc.get(frame);
-						for(Spot spot : st) {
-							// Store current settings
-							previousSpotHighlight.add(spot);
-							previousColorHighlight.put(spot, blobs.get(frame).getColor3f(spot));
-							previousFrameHighlight.put(spot, frame);
-
-							// Update target spot display
-							blobs.get(frame).setColor(spot, highlightColor);
-						}
-					}
+	public void selectionChanged(TrackMateSelectionChangeEvent event) {
+		// Highlight
+		highlightEdges(model.getEdgeSelection());
+		highlightSpots(model.getSpotSelection());
+		// Center on last spot
+		super.selectionChanged(event);
 	}
+
+
 
 	@Override
 	public void centerViewOn(Spot spot) {
@@ -163,23 +148,7 @@ public class SpotDisplayer3D <T extends RealType<T> & NativeType<T>> extends Abs
 		universe.showTimepoint(frame);
 	}
 
-	@Override
-	public void highlightEdges(Collection<DefaultWeightedEdge> edges) {
-		// Restore previous display settings for previously highlighted edges
-		if (null != previousEdgeHighlight)
-			for(DefaultWeightedEdge edge : previousEdgeHighlight.keySet())
-				trackNode.setColor(edge, previousEdgeHighlight.get(edge));
 
-					// Store current color settings
-					previousEdgeHighlight = new HashMap<DefaultWeightedEdge, Color>();
-					for(DefaultWeightedEdge edge :edges)
-						previousEdgeHighlight.put(edge, trackNode.getColor(edge));
-
-							// Change edge color
-							Color highlightColor = (Color) displaySettings.get(KEY_HIGHLIGHT_COLOR);
-							for(DefaultWeightedEdge edge :edges)
-								trackNode.setColor(edge, highlightColor);
-	}
 
 
 	@Override
@@ -205,8 +174,8 @@ public class SpotDisplayer3D <T extends RealType<T> & NativeType<T>> extends Abs
 
 		universe.show();
 		if (doRenderImage && null != settings.imp) {
-//			if (!settings.imp.isVisible())
-//				settings.imp.show();
+			//			if (!settings.imp.isVisible())
+			//				settings.imp.show();
 			ImagePlus[] images;
 			try {
 				images = TMUtils.makeImageForViewer(settings);
@@ -268,11 +237,11 @@ public class SpotDisplayer3D <T extends RealType<T> & NativeType<T>> extends Abs
 	public String toString() {
 		return NAME;
 	}
-	
+
 	/*
 	 * PUBLIC SPECIFIC METHODS
 	 */
-	
+
 	/**
 	 * Set a flag that specifies whether the next call to {@link #render()} will cause
 	 * image data to be imported and displayer in this viewer   
@@ -420,5 +389,48 @@ public class SpotDisplayer3D <T extends RealType<T> & NativeType<T>> extends Abs
 			}
 
 		}
+	}
+
+	private void highlightSpots(Collection<Spot> spots) {
+		// Restore previous display settings for previously highlighted spot
+		if (null != previousSpotHighlight)
+			for (Spot spot : previousSpotHighlight)
+				blobs.get(previousFrameHighlight.get(spot)).setColor(spot, previousColorHighlight.get(spot));
+		previousSpotHighlight = new ArrayList<Spot>(spots.size());
+		previousColorHighlight = new HashMap<Spot, Color3f>(spots.size());
+		previousFrameHighlight = new HashMap<Spot, Integer>(spots.size());
+
+		SpotCollection sc = model.getFilteredSpots().subset(spots);
+		Color3f highlightColor = new Color3f((Color) displaySettings.get(KEY_HIGHLIGHT_COLOR));
+		List<Spot> st;
+		for(int frame : sc.keySet()) {
+			st = sc.get(frame);
+			for(Spot spot : st) {
+				// Store current settings
+				previousSpotHighlight.add(spot);
+				previousColorHighlight.put(spot, blobs.get(frame).getColor3f(spot));
+				previousFrameHighlight.put(spot, frame);
+
+				// Update target spot display
+				blobs.get(frame).setColor(spot, highlightColor);
+			}
+		}
+	}
+
+	private void highlightEdges(Collection<DefaultWeightedEdge> edges) {
+		// Restore previous display settings for previously highlighted edges
+		if (null != previousEdgeHighlight)
+			for(DefaultWeightedEdge edge : previousEdgeHighlight.keySet())
+				trackNode.setColor(edge, previousEdgeHighlight.get(edge));
+
+		// Store current color settings
+		previousEdgeHighlight = new HashMap<DefaultWeightedEdge, Color>();
+		for(DefaultWeightedEdge edge :edges)
+			previousEdgeHighlight.put(edge, trackNode.getColor(edge));
+
+		// Change edge color
+		Color highlightColor = (Color) displaySettings.get(KEY_HIGHLIGHT_COLOR);
+		for(DefaultWeightedEdge edge :edges)
+			trackNode.setColor(edge, highlightColor);
 	}
 }

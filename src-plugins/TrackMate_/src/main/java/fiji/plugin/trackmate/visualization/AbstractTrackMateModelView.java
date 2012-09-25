@@ -21,7 +21,7 @@ import fiji.plugin.trackmate.TrackMateSelectionChangeListener;
  * <p>
  * @author Jean-Yves Tinevez <jeanyves.tinevez@gmail.com> Jan 2011
  */
-public abstract class AbstractTrackMateModelView<T extends RealType<T> & NativeType<T>> implements TrackMateSelectionChangeListener, TrackMateSelectionView, TrackMateModelView<T>, TrackMateModelChangeListener {
+public abstract class AbstractTrackMateModelView<T extends RealType<T> & NativeType<T>> implements TrackMateSelectionChangeListener, TrackMateModelView<T>, TrackMateModelChangeListener {
 
 	/*
 	 * FIELDS
@@ -108,14 +108,12 @@ public abstract class AbstractTrackMateModelView<T extends RealType<T> & NativeT
 		displaySettings.put(KEY_COLORMAP, DEFAULT_COLOR_MAP);
 	}
 	
-	/*
-	 * TMSelectionChangeListener
-	 */
 
+	/**
+	 * This needs to be overriden for concrete implementation to display selection.
+	 */
 	@Override
 	public void selectionChanged(TrackMateSelectionChangeEvent event) {
-		highlightSpots(model.getSpotSelection());
-		highlightEdges(model.getEdgeSelection());
 		// Center on selection if we added one spot exactly
 		Map<Spot, Boolean> spotsAdded = event.getSpots();
 		if (spotsAdded != null && spotsAdded.size() == 1) {

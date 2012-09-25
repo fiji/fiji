@@ -51,9 +51,8 @@ import fiji.plugin.trackmate.TrackMateSelectionChangeEvent;
 import fiji.plugin.trackmate.TrackMateSelectionChangeListener;
 import fiji.plugin.trackmate.visualization.AbstractTrackMateModelView;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
-import fiji.plugin.trackmate.visualization.TrackMateSelectionView;
 
-public class TrackSchemeFrame  <T extends RealType<T> & NativeType<T>> extends JFrame implements TrackMateModelChangeListener, TrackMateSelectionChangeListener, TrackMateModelView<T>, TrackMateSelectionView {
+public class TrackSchemeFrame  <T extends RealType<T> & NativeType<T>> extends JFrame implements TrackMateModelChangeListener, TrackMateSelectionChangeListener, TrackMateModelView<T> {
 
 	/*
 	 * CONSTANTS
@@ -230,12 +229,6 @@ public class TrackSchemeFrame  <T extends RealType<T> & NativeType<T>> extends J
 		}
 		doFireSelectionChangeEvent = true;
 	}
-
-	@Override
-	public void highlightSpots(Collection<Spot> spots) {}
-
-	@Override
-	public void highlightEdges(Collection<DefaultWeightedEdge> edges) {}
 
 	@Override
 	public void centerViewOn(Spot spot) {

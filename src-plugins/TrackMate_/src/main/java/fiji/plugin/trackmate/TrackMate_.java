@@ -11,7 +11,6 @@ import fiji.plugin.trackmate.tracking.SpotTracker;
 import fiji.plugin.trackmate.util.CropImgView;
 import fiji.plugin.trackmate.util.TMUtils;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
-import fiji.plugin.trackmate.visualization.TrackMateSelectionView;
 import ij.ImagePlus;
 import ij.WindowManager;
 import ij.plugin.PlugIn;

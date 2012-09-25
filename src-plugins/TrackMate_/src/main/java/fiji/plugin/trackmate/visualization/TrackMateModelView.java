@@ -9,6 +9,7 @@ import net.imglib2.type.numeric.RealType;
 import org.jfree.chart.renderer.InterpolatePaintScale;
 
 import fiji.plugin.trackmate.InfoTextable;
+import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.TrackMateModel;
 
 public interface TrackMateModelView<T extends RealType<T> & NativeType<T>> extends InfoTextable {
@@ -197,14 +198,17 @@ public interface TrackMateModelView<T extends RealType<T> & NativeType<T>> exten
 	 */
 
 	/**
-	 * Initialize this displayer and render it according to its concrete implementation and current
-	 * display settings. 
+	 * Initialize this displayer and render it according to its concrete implementation, 
+	 * target model.
+	 * @see #setModel(TrackMateModel)
 	 */
 	public void render();
 
 	/**
 	 * Refresh the displayer display with current model. If the underlying model was modified,
-	 * calling this method should be enough to update the display with changes.
+	 * or the display settings were changed, calling this method should be enough to update 
+	 * the display with changes.
+	 * @see #setDisplaySettings(String, Object)
 	 */
 	public void refresh();
 
@@ -212,15 +216,36 @@ public interface TrackMateModelView<T extends RealType<T> & NativeType<T>> exten
 	 * Remove any overlay (for spots or tracks) from this displayer.
 	 */
 	public void clear();
-
 	
+	/**
+	 * Center the view on the given spot.
+	 */
+	public void centerViewOn(final Spot spot);
+
+	/**
+	 * @return the {@link TrackMateModel} currently displayed in this view.
+	 */
 	public TrackMateModel<T> getModel();
 
+	/**
+	 * Set the target {@link TrackMateModel} that should be displayed in this view.
+	 */
 	public void setModel(TrackMateModel<T> model);
 
+	/**
+	 * @return the current display settings map.
+	 */
 	public Map<String, Object> getDisplaySettings();
 
+	/** 
+	 * Set a display parameter.
+	 * @param key  the key of the parameter to change.
+	 * @param value  the value for the display parameter
+	 */
 	public void setDisplaySettings(final String key, final Object value);
 	
+	/**
+	 * @return the value of a specific display parameter. 
+	 */
 	public Object getDisplaySettings(final String key);
 }
