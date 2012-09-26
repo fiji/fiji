@@ -258,9 +258,9 @@ public class TrackSchemeFrame  <T extends RealType<T> & NativeType<T>> extends J
 				try {
 					ArrayList<mxICell> cellsToRemove = new ArrayList<mxICell>();
 
-					int targetColumn = 0;
+					int targetColumn = 3;
 					for (int i = 0; i < graphComponent.getColumnWidths().length; i++)
-						targetColumn += graphComponent.getColumnWidths()[i];
+						targetColumn += (graphComponent.getColumnWidths()[i]-1);
 
 					if (event.getSpots() != null) {
 						for (Spot spot : event.getSpots() ) {
