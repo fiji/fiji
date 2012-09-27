@@ -8,11 +8,16 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FontMetrics;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.ConcurrentModificationException;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import javax.swing.AbstractListModel;
 import javax.swing.JLabel;
@@ -28,6 +33,9 @@ import javax.swing.event.AncestorListener;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.JTableHeader;
+
+import com.mxgraph.model.mxCell;
+import com.mxgraph.model.mxICell;
 
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
@@ -61,21 +69,22 @@ public class InfoPane <T extends RealType<T> & NativeType<T>> extends JPanel imp
 		}
 	}
 
-	FeaturePlotSelectionPanel featureSelectionPanel;
-
+	private FeaturePlotSelectionPanel featureSelectionPanel;
 	private JTable table;
 	private JScrollPane scrollTable;
 	private boolean doHighlightSelection = true;
-	private TrackMateModel<T> model;
 	private List<String> features;
 	private Map<String, String> featureNames;
+	private final TrackMateModel<T> model;
+	private final JGraphXAdapter<T> graph;
 
 	/*
 	 * CONSTRUCTOR
 	 */
 
-	public InfoPane(final TrackMateModel<T> model) {
+	public InfoPane(final TrackMateModel<T> model, final JGraphXAdapter<T> graph) {
 		this.model = model;
+		this.graph = graph;
 		this.features = model.getFeatureModel().getSpotFeatures();
 		this.featureNames = model.getFeatureModel().getSpotFeatureShortNames();
 		// Add a listener to ensure we remove this panel from the listener list of the model
@@ -152,7 +161,7 @@ public class InfoPane <T extends RealType<T> & NativeType<T>> extends JPanel imp
 			renderer.setOpaque(false);
 			renderer.setHorizontalAlignment(SwingConstants.RIGHT);
 			renderer.setFont(SMALL_FONT);
-			
+
 			FontMetrics fm = table.getGraphics().getFontMetrics(FONT);
 			for(int i=0; i<table.getColumnCount(); i++) {
 				table.setDefaultRenderer(table.getColumnClass(i), renderer);
@@ -198,7 +207,7 @@ public class InfoPane <T extends RealType<T> & NativeType<T>> extends JPanel imp
 		table.setPreferredScrollableViewportSize(new Dimension(120, 400));
 		table.getTableHeader().setOpaque(false);
 		table.setSelectionForeground(Color.YELLOW.darker());
-		table.setGridColor(TrackSchemeFrame.GRID_COLOR);
+		table.setGridColor(TrackScheme.GRID_COLOR);
 
 		JList rowHeader = new JList(lm);
 		rowHeader.setFixedCellHeight(table.getRowHeight());
@@ -217,10 +226,56 @@ public class InfoPane <T extends RealType<T> & NativeType<T>> extends JPanel imp
 		setLayout(new BorderLayout());
 		add(scrollTable, BorderLayout.CENTER);
 		add(featureSelectionPanel, BorderLayout.SOUTH);
+
+		// Add listener for plot events
+		featureSelectionPanel.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				String xFeature = featureSelectionPanel.getXKey();
+				Set<String> yFeatures = featureSelectionPanel.getYKeys();
+				plotSelectionData(xFeature, yFeatures);
+			}
+		});
+
+
 	}
 
-	public FeaturePlotSelectionPanel getFeatureSelectionPanel() {
-		return featureSelectionPanel;
+	public void plotSelectionData(String xFeature, Set<String> yFeatures) {
+
+		if (yFeatures.isEmpty())
+			return;
+
+		Object[] selectedCells = graph.getSelectionCells();
+		if (selectedCells == null || selectedCells.length == 0)
+			return;
+
+		HashSet<Spot> spots = new HashSet<Spot>();
+		for(Object obj : selectedCells) {
+			mxCell cell = (mxCell) obj;
+			if (cell.isVertex()) {
+				Spot spot = graph.getSpotFor(cell);
+
+				if (spot == null) {
+					// We might have a parent cell, that holds many vertices in it
+					// Retrieve them and add them if they are not already.
+					int n = cell.getChildCount();
+					for (int i = 0; i < n; i++) {
+						mxICell child = cell.getChildAt(i);
+						Spot childSpot = graph.getSpotFor(child);
+						if (null != childSpot)
+							spots.add(childSpot);
+					}
+
+				} else 
+					spots.add(spot);
+			}
+		}
+		if (spots.isEmpty())
+			return;
+
+		SpotFeatureGrapher<T> grapher = new SpotFeatureGrapher<T>(xFeature, yFeatures, new ArrayList<Spot>(spots), model);
+		grapher.setVisible(true);
+
 	}
 
 }

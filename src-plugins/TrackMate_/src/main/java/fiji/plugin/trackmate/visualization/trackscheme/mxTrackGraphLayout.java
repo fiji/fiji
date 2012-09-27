@@ -1,17 +1,15 @@
 package fiji.plugin.trackmate.visualization.trackscheme;
 
-import static fiji.plugin.trackmate.visualization.trackscheme.TrackSchemeFrame.DEFAULT_CELL_HEIGHT;
-import static fiji.plugin.trackmate.visualization.trackscheme.TrackSchemeFrame.DEFAULT_CELL_WIDTH;
-import static fiji.plugin.trackmate.visualization.trackscheme.TrackSchemeFrame.X_COLUMN_SIZE;
-import static fiji.plugin.trackmate.visualization.trackscheme.TrackSchemeFrame.Y_COLUMN_SIZE;
+import static fiji.plugin.trackmate.visualization.trackscheme.TrackScheme.DEFAULT_CELL_HEIGHT;
+import static fiji.plugin.trackmate.visualization.trackscheme.TrackScheme.DEFAULT_CELL_WIDTH;
+import static fiji.plugin.trackmate.visualization.trackscheme.TrackScheme.X_COLUMN_SIZE;
+import static fiji.plugin.trackmate.visualization.trackscheme.TrackScheme.Y_COLUMN_SIZE;
 
 import java.awt.Color;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Set;
 import java.util.SortedSet;
-import java.util.TreeMap;
 import java.util.TreeSet;
 
 import net.imglib2.type.NativeType;
@@ -47,46 +45,42 @@ public class mxTrackGraphLayout <T extends RealType<T> & NativeType<T>> extends 
 	private static final int SWIMLANE_HEADER_SIZE = 30;
 	private static final boolean DEBUG = false;
 
-	private JGraphXAdapter<T> graph;
 	private int[] columnWidths;
 	protected InterpolatePaintScale colorMap = InterpolatePaintScale.Jet;
 	/** The style to use to apply to cells, can be changed by the user. */
-	protected String selectedStyle = TrackSchemeFrame.DEFAULT_STYLE_NAME;
+	private String style = TrackScheme.DEFAULT_STYLE_NAME;
 	
 	private Color[] trackColorArray;
-	private TreeMap<Double, Integer> rows;
-	/** The spatial calibration in X. We need it to compute cell's height from spot radiuses.  */
-	private double  dx;
 	/**  Do we group branches and display branch cells.
 	 * False by default. */
 	private boolean doBranchGrouping = false;
 	/**  Do we display costs along edges? Default set by mother frame. */
-	private boolean doDisplayCosts = TrackSchemeFrame.DEFAULT_DO_DISPLAY_COSTS_ON_EDGES;
+	private boolean doDisplayCosts = TrackScheme.DEFAULT_DO_DISPLAY_COSTS_ON_EDGES;
 	/**  Used to keep a reference to the branch cell which will contain spot cells.
 	 * We need this to be able to purge them from the graph when we redo a layout.	 */
 	private ArrayList<mxCell> branchCells = new ArrayList<mxCell>();
-
-	private TrackMateModel<T> model;
+	/** The target model to draw spot from. */
+	private final TrackMateModel<T> model;
+	private final JGraphXAdapter<T> graph;
 
 	/*
 	 * CONSTRUCTOR
 	 */
 
-	public mxTrackGraphLayout(final TrackMateModel<T> model, final JGraphXAdapter<T> graph, double dx) {
+	public mxTrackGraphLayout(final JGraphXAdapter<T> graph, final TrackMateModel<T> model) {
 		super(graph);
 		this.graph = graph;
 		this.model = model;
-		this.dx = dx;
 	}
-	
+
 	/*
 	 * PUBLIC METHODS
 	 */
-	
+
 	public void setDoDisplayCosts(boolean doDisplayCosts) {
 		this.doDisplayCosts = doDisplayCosts;
 	}
-	
+
 	public boolean isDoDisplayCosts() {
 		return doDisplayCosts;
 	}
@@ -96,7 +90,7 @@ public class mxTrackGraphLayout <T extends RealType<T> & NativeType<T>> extends 
 
 		graph.getModel().beginUpdate();
 		try {
-			
+
 			// Generate colors
 			int ntracks = model.getNFilteredTracks();
 			HashMap<Integer, Color> trackColors = new HashMap<Integer, Color>(ntracks, 1);
@@ -105,30 +99,22 @@ public class mxTrackGraphLayout <T extends RealType<T> & NativeType<T>> extends 
 				trackColors.put(i, colorMap.getPaint( (double) colorIndex / (ntracks-1)));
 				colorIndex++;
 			}
-			
+
 			if (DEBUG) {
 				System.out.println("[mxTrackGraphLayout] execute: Found "+ntracks+" visible tracks.");
 			}
 
-			// Collect unique instants
-			SortedSet<Double> instants = new TreeSet<Double>();
-			for (Spot s : model.getFilteredSpots()) {
-				instants.add(s.getFeature(Spot.POSITION_T));
+			/* 
+			 * The columns array hold the column count for a given frame number
+			 */
+			int maxFrame = 0;
+			for(Spot spot : model.getFilteredSpots()) {
+				int frame = spot.getFeature(Spot.FRAME).intValue();
+				if (maxFrame < frame) {
+					maxFrame = frame;
+				}
 			}
-
-			TreeMap<Double, Integer> columns = new TreeMap<Double, Integer>();
-			for(Double instant : instants) {
-				columns.put(instant, -1);
-			}
-
-			// Build row indices from instants
-			rows = new TreeMap<Double, Integer>();
-			Iterator<Double> it = instants.iterator();
-			int rowIndex = 1; // Start at 1 to let room for column headers
-			while (it.hasNext()) {
-				rows.put(it.next(), rowIndex);
-				rowIndex++;
-			}
+			int[] columns = new int[maxFrame+1];
 
 			int currentColumn = 2;
 			int previousColumn = 0;
@@ -163,10 +149,10 @@ public class mxTrackGraphLayout <T extends RealType<T> & NativeType<T>> extends 
 					if (DEBUG) {
 						System.out.println("[mxTrackGraphLayout] execute: Track nbr "+i+" is empty, skipping.");
 					}
-					
+
 					continue;
 				}
-				
+
 				if (DEBUG) {
 					System.out.println("[mxTrackGraphLayout] execute: Track nbr "+i+": "+model.trackToString(i));
 				}
@@ -194,11 +180,11 @@ public class mxTrackGraphLayout <T extends RealType<T> & NativeType<T>> extends 
 					// Add selected style to style string
 					String style = cell.getStyle(); 
 					style = mxStyleUtils.removeAllStylenames(style);
-					style = selectedStyle + ";" + style;
+					style = style + ";" + style;
 
 					// Determine in what column to put the spot
-					Double instant = spot.getFeature(Spot.POSITION_T);
-					int freeColumn = columns.get(instant) + 1;
+					int frame = spot.getFeature(Spot.FRAME).intValue();
+					int freeColumn = columns[frame] + 1;
 
 					// If we have no direct edge with the previous spot, we add 1 to the current column
 					if (previousSpot != null && !model.containsEdge(spot, previousSpot)) {
@@ -210,16 +196,20 @@ public class mxTrackGraphLayout <T extends RealType<T> & NativeType<T>> extends 
 					currentColumn = targetColumn;
 
 					// Keep track of column filling
-					columns.put(instant, targetColumn);
+					columns[frame] = targetColumn;
 
 					// Compute cell position in absolute coords 
 
 					// Cell size
-					
+
 					// Ugly, but we have to do it here, where we set the geometry of cells.
+					double dx = model.getSettings().dx;
+					if (dx <=0) {
+						dx = 1;
+					}
 					double width 	= DEFAULT_CELL_WIDTH;
 					double height 	= DEFAULT_CELL_HEIGHT; 
-					if (selectedStyle.equals("Simple")) {
+					if (style.equals("Simple")) {
 						width 	= DEFAULT_CELL_HEIGHT / 2;
 						height 	= DEFAULT_CELL_HEIGHT / 2;
 						style = mxStyleUtils.setStyle(style, mxConstants.STYLE_FILLCOLOR, trackColorStr);
@@ -232,7 +222,7 @@ public class mxTrackGraphLayout <T extends RealType<T> & NativeType<T>> extends 
 					geometry.setHeight(height);
 					geometry.setWidth(width);
 					double x = (targetColumn) * X_COLUMN_SIZE - DEFAULT_CELL_WIDTH/2;
-					double y = (0.5 + rows.get(instant)) * Y_COLUMN_SIZE - DEFAULT_CELL_HEIGHT/2;
+					double y = (0.5 + frame) * Y_COLUMN_SIZE - DEFAULT_CELL_HEIGHT/2;
 					geometry.setX(x);
 					geometry.setY(y);
 
@@ -268,8 +258,9 @@ public class mxTrackGraphLayout <T extends RealType<T> & NativeType<T>> extends 
 				}
 
 
-				for(Double instant : instants) {
-					columns.put(instant, currentColumn+1);
+				// When done with a track, move all columns to the next free column
+				for (int j = 0; j < columns.length; j++) {
+					columns[j] = currentColumn + 1;
 				}
 
 				columnWidths[columnIndex] = currentColumn - previousColumn + 1;
@@ -340,58 +331,58 @@ public class mxTrackGraphLayout <T extends RealType<T> & NativeType<T>> extends 
 	}
 
 
-/**
- * Return the width in column units of each track after they are arranged by this GraphLayout.
- */
-public int[] getTrackColumnWidths() {
-	return columnWidths;
-}
+	/**
+	 * Return the width in column units of each track after they are arranged by this GraphLayout.
+	 */
+	public int[] getTrackColumnWidths() {
+		return columnWidths;
+	}
+	/**
+	 * Return the color affected to each track.
+	 */
+	public Color[] getTrackColors() {
+		return trackColorArray;
+	}
 
-/**
- * Return map linking the the row number for a given instant.
- */
-public TreeMap<Double, Integer> getRowForInstant() {
-	return rows;
-}
+	private mxCell makeParentCell(String trackColorStr, int trackIndex, int partIndex) {
+		// Set this as parent for the coming track in JGraphX
+		mxCell rootCell = (mxCell) graph.insertVertex(graph.getDefaultParent(), null, "Track "+trackIndex+"\nBranch "+partIndex, 100, 100, 100, 100);
+		rootCell.setConnectable(false);
 
-/**
- * Return the color affected to each track.
- */
-public Color[] getTrackColors() {
-	return trackColorArray;
-}
+		// Set the root style
+		String rootStyle = rootCell.getStyle();
+		rootStyle = mxStyleUtils.setStyle(rootStyle, mxConstants.STYLE_STROKECOLOR, "black");
+		rootStyle = mxStyleUtils.setStyle(rootStyle, mxConstants.STYLE_ROUNDED, "false");
+		rootStyle = mxStyleUtils.setStyle(rootStyle, mxConstants.STYLE_FILLCOLOR, Integer.toHexString(Color.DARK_GRAY.brighter().getRGB()).substring(2));
+		rootStyle = mxStyleUtils.setStyle(rootStyle, mxConstants.STYLE_DASHED, "true");
+		rootStyle = mxStyleUtils.setStyle(rootStyle, mxConstants.STYLE_VERTICAL_ALIGN, mxConstants.ALIGN_TOP);
+		rootStyle = mxStyleUtils.setStyle(rootStyle, mxConstants.STYLE_FONTCOLOR, trackColorStr);
+		rootStyle = mxStyleUtils.setStyle(rootStyle, mxConstants.STYLE_FONTSTYLE, ""+mxConstants.FONT_BOLD);
+		rootStyle = mxStyleUtils.setStyle(rootStyle, mxConstants.STYLE_SHAPE, ""+mxConstants.SHAPE_SWIMLANE);
+		rootStyle = mxStyleUtils.setStyle(rootStyle, mxConstants.STYLE_STARTSIZE, ""+SWIMLANE_HEADER_SIZE);
+		graph.getModel().setStyle(rootCell, rootStyle);
 
-private mxCell makeParentCell(String trackColorStr, int trackIndex, int partIndex) {
-	// Set this as parent for the coming track in JGraphX
-	mxCell rootCell = (mxCell) graph.insertVertex(graph.getDefaultParent(), null, "Track "+trackIndex+"\nBranch "+partIndex, 100, 100, 100, 100);
-	rootCell.setConnectable(false);
+		return rootCell;
+	}
 
-	// Set the root style
-	String rootStyle = rootCell.getStyle();
-	rootStyle = mxStyleUtils.setStyle(rootStyle, mxConstants.STYLE_STROKECOLOR, "black");
-	rootStyle = mxStyleUtils.setStyle(rootStyle, mxConstants.STYLE_ROUNDED, "false");
-	rootStyle = mxStyleUtils.setStyle(rootStyle, mxConstants.STYLE_FILLCOLOR, Integer.toHexString(Color.DARK_GRAY.brighter().getRGB()).substring(2));
-	rootStyle = mxStyleUtils.setStyle(rootStyle, mxConstants.STYLE_DASHED, "true");
-	rootStyle = mxStyleUtils.setStyle(rootStyle, mxConstants.STYLE_VERTICAL_ALIGN, mxConstants.ALIGN_TOP);
-	rootStyle = mxStyleUtils.setStyle(rootStyle, mxConstants.STYLE_FONTCOLOR, trackColorStr);
-	rootStyle = mxStyleUtils.setStyle(rootStyle, mxConstants.STYLE_FONTSTYLE, ""+mxConstants.FONT_BOLD);
-	rootStyle = mxStyleUtils.setStyle(rootStyle, mxConstants.STYLE_SHAPE, ""+mxConstants.SHAPE_SWIMLANE);
-	rootStyle = mxStyleUtils.setStyle(rootStyle, mxConstants.STYLE_STARTSIZE, ""+SWIMLANE_HEADER_SIZE);
-	graph.getModel().setStyle(rootCell, rootStyle);
+	public boolean isBranchGroupingEnabled() {
+		return doBranchGrouping;
+	}
 
-	return rootCell;
-}
+	public void setBranchGrouping(boolean enable) {
+		this.doBranchGrouping = enable;
+	}
 
-public boolean isBranchGroupingEnabled() {
-	return doBranchGrouping;
-}
+	public void setAllFolded(boolean collapsed) {
+		graph.foldCells(collapsed, false, branchCells.toArray());
+	}
 
-public void setBranchGrouping(boolean enable) {
-	this.doBranchGrouping = enable;
-}
+	public void setStyle(String style) {
+		this.style = style;
+	}
 
-public void setAllFolded(boolean collapsed) {
-	graph.foldCells(collapsed, false, branchCells.toArray());
-}
+	public String getStyle() {
+		return style;
+	}
 
 }

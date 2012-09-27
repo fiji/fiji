@@ -15,7 +15,7 @@ import fiji.plugin.trackmate.action.GrabSpotImageAction;
 import fiji.plugin.trackmate.io.TmXmlReader;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
 import fiji.plugin.trackmate.visualization.hyperstack.HyperStackDisplayer;
-import fiji.plugin.trackmate.visualization.trackscheme.TrackSchemeFrame;
+import fiji.plugin.trackmate.visualization.trackscheme.TrackScheme;
 
 
 public class HyperStackDisplayerTestDrive {
@@ -46,8 +46,8 @@ public class HyperStackDisplayerTestDrive {
 //		displayer.setDisplaySettings(TrackMateModelView.KEY_TRACK_DISPLAY_MODE, TrackMateModelView.TRACK_DISPLAY_MODE_LOCAL_FORWARD);
 		displayer.setDisplaySettings(TrackMateModelView.KEY_DISPLAY_SPOT_NAMES, true);
 		
-		final TrackSchemeFrame<T> trackScheme = new TrackSchemeFrame<T>(model);
-		trackScheme.setVisible(true);
+		final TrackScheme<T> trackScheme = new TrackScheme<T>(model);
+		trackScheme.render();
 		
 	}
 	

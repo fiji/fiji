@@ -11,8 +11,6 @@ import java.awt.RenderingHints;
 import java.awt.event.MouseEvent;
 import java.util.EventObject;
 import java.util.Map;
-import java.util.TreeMap;
-import java.util.TreeSet;
 
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
@@ -30,7 +28,6 @@ import com.mxgraph.util.mxPoint;
 import com.mxgraph.view.mxCellState;
 import com.mxgraph.view.mxGraph;
 
-import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.TrackMateModel;
 
 public class mxTrackGraphComponent <T extends RealType<T> & NativeType<T>> extends mxGraphComponent implements mxIEventListener {
@@ -40,29 +37,26 @@ public class mxTrackGraphComponent <T extends RealType<T> & NativeType<T>> exten
 	private static final Color BACKGROUND_COLOR_2 	= Color.LIGHT_GRAY;
 	private static final Color LINE_COLOR 			= Color.BLACK;
 
-	private TreeSet<Double> instants;
-	private TreeMap<Double, Integer> rows;
 	private int[] columnWidths = null;
 	private Color[] columnColors;
-	private TrackSchemeFrame<T> frame;
-	
+	private final TrackMateModel<T> model;
+	private final TrackScheme<T> trackScheme;
+
 	/** If true, will paint background decorations. */
-	private boolean doPaintDecorations = TrackSchemeFrame.DEFAULT_DO_PAINT_DECORATIONS;
+	private boolean doPaintDecorations = TrackScheme.DEFAULT_DO_PAINT_DECORATIONS;
 
 	/*
 	 * CONSTRUCTOR
 	 */
-	
-	public mxTrackGraphComponent(TrackSchemeFrame<T> frame) {
-		super(frame.getGraph());
-		this.frame = frame;
+
+	public mxTrackGraphComponent(final JGraphXAdapter<T> graph, final TrackMateModel<T> model, final TrackScheme<T> trackScheme) {
+		super(graph);
+		this.model = model;
+		this.trackScheme = trackScheme;
+		
 		getViewport().setOpaque(true);
 		getViewport().setBackground(BACKGROUND_COLOR_1);
 		setZoomFactor(2.0);
-
-		instants = new TreeSet<Double>();
-		for (Spot s : frame.getModel().getFilteredSpots())
-			instants.add(s.getFeature(Spot.POSITION_T));
 
 		connectionHandler.addListener(mxEvent.CONNECT, this);
 
@@ -78,11 +72,11 @@ public class mxTrackGraphComponent <T extends RealType<T> & NativeType<T>> exten
 	/*
 	 * METHODS
 	 */
-	
+
 	public void setDoPaintDecorations(boolean doPaintDecorations) {
 		this.doPaintDecorations = doPaintDecorations;
 	}
-	
+
 	public boolean isDoPaintDecorations() {
 		return doPaintDecorations;
 	}
@@ -266,10 +260,10 @@ public class mxTrackGraphComponent <T extends RealType<T> & NativeType<T>> exten
 	 */
 	@Override
 	public void paintBackground(Graphics g) {
-		
+
 		if (!doPaintDecorations)
 			return;
-		
+
 		Graphics2D g2d = (Graphics2D) g;
 		Rectangle paintBounds = g.getClipBounds();
 
@@ -278,8 +272,8 @@ public class mxTrackGraphComponent <T extends RealType<T> & NativeType<T>> exten
 		float scale = (float) graph.getView().getScale();
 
 		// Scaled sizes
-		int xcs 			= Math.round(TrackSchemeFrame.X_COLUMN_SIZE*scale);
-		int ycs 			= Math.round(TrackSchemeFrame.Y_COLUMN_SIZE*scale);
+		int xcs 			= Math.round(TrackScheme.X_COLUMN_SIZE * scale);
+		int ycs 			= Math.round(TrackScheme.Y_COLUMN_SIZE * scale);
 
 		// Alternating row color
 		g.setColor(BACKGROUND_COLOR_2);
@@ -301,14 +295,19 @@ public class mxTrackGraphComponent <T extends RealType<T> & NativeType<T>> exten
 		int x = xcs / 4;
 		y = 3 * ycs / 2;
 		g.setFont(FONT.deriveFont(12*scale).deriveFont(Font.BOLD));
-
+		final String timeUnits = model.getSettings().timeUnits;
+		final double dt = model.getSettings().dt;
 		g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-		for(Double instant : instants) {
-			if (xcs > paintBounds.x && y > paintBounds.y - ycs && y < paintBounds.y + paintBounds.height) {
-				g.drawString(String.format("%.1f "+frame.getModel().getSettings().timeUnits, instant), x, y);
-				g.drawString(String.format("frame %.0f", (instant+1)/frame.getModel().getSettings().dt), x, Math.round(y+12*scale));
+
+		if (xcs > paintBounds.x) {
+			while (y < height) {
+				if (y > paintBounds.y - ycs && y < paintBounds.y + paintBounds.height) {
+					int frame = y / ycs;
+					g.drawString(String.format("%.1f " + timeUnits, frame * dt), x, y);
+					g.drawString(String.format("frame %d", frame), x, Math.round(y+12*scale));
+				}
+				y += ycs;
 			}
-			y += ycs;
 		}
 
 		// Column headers
@@ -323,14 +322,10 @@ public class mxTrackGraphComponent <T extends RealType<T> & NativeType<T>> exten
 				g.drawLine(x, 0, x, height);
 			}
 		}
-	}
-
-	public void setRowForInstant(TreeMap<Double, Integer> rowForInstant) {
-		rows = rowForInstant;
-	}
-
-	public TreeMap<Double, Integer> getRowForInstant() {
-		return rows;
+		
+		// Last column header
+		g.setColor(TrackScheme.DEFAULT_COLOR);
+		g.drawString("New spots", x+20, ycs/2);
 	}
 
 	public void setColumnWidths(int[] columnWidths) {
@@ -354,7 +349,7 @@ public class mxTrackGraphComponent <T extends RealType<T> & NativeType<T>> exten
 		Map<String, Object> props = evt.getProperties();
 		Object obj = (Object) props.get("cell");
 		mxCell cell = (mxCell) obj;
-		frame.addEdgeManually(cell);
+		trackScheme.addEdgeManually(cell);
 		evt.consume();
 	}
 

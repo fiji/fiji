@@ -1,15 +1,10 @@
 package fiji.plugin.trackmate.visualization.trackscheme;
 
 import static fiji.plugin.trackmate.gui.TrackMateWizard.FONT;
-import ij.ImagePlus;
 
-import java.awt.Color;
 import java.awt.Dimension;
-import java.awt.Graphics2D;
-import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.image.BufferedImage;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -22,13 +17,10 @@ import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JToolBar;
-import javax.swing.JViewport;
 import javax.swing.SwingConstants;
 
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
-
-import com.mxgraph.util.mxCellRenderer;
 
 public class TrackSchemeToolbar <T extends RealType<T> & NativeType<T>> extends JToolBar {
 	
@@ -41,25 +33,22 @@ public class TrackSchemeToolbar <T extends RealType<T> & NativeType<T>> extends 
 	private static final ImageIcon REFRESH_ICON		= new ImageIcon(TrackSchemeFrame.class.getResource("resources/refresh.png"));
 	private static final ImageIcon CAPTURE_UNDECORATED_ICON = new ImageIcon(TrackSchemeFrame.class.getResource("resources/camera_go.png"));
 	private static final ImageIcon CAPTURE_DECORATED_ICON = new ImageIcon(TrackSchemeFrame.class.getResource("resources/camera_edit.png"));
-
-	private static final ImageIcon BRANCH_FOLDING_ON_ICON 	= new ImageIcon(TrackSchemeFrame.class.getResource("resources/shape_square.png"));
-	private static final ImageIcon BRANCH_FOLDING_OFF_ICON 	= new ImageIcon(TrackSchemeFrame.class.getResource("resources/shape_square-forbid.png"));
-	private static final ImageIcon FOLD_ALL_BRANCHES_ICON	= new ImageIcon(TrackSchemeFrame.class.getResource("resources/shape_group.png"));
-	private static final ImageIcon UNFOLD_ALL_BRANCHES_ICON	= new ImageIcon(TrackSchemeFrame.class.getResource("resources/shape_ungroup.png"));
-
+//	private static final ImageIcon BRANCH_FOLDING_ON_ICON 	= new ImageIcon(TrackSchemeFrame.class.getResource("resources/shape_square.png"));
+//	private static final ImageIcon BRANCH_FOLDING_OFF_ICON 	= new ImageIcon(TrackSchemeFrame.class.getResource("resources/shape_square-forbid.png"));
+//	private static final ImageIcon FOLD_ALL_BRANCHES_ICON	= new ImageIcon(TrackSchemeFrame.class.getResource("resources/shape_group.png"));
+//	private static final ImageIcon UNFOLD_ALL_BRANCHES_ICON	= new ImageIcon(TrackSchemeFrame.class.getResource("resources/shape_ungroup.png"));
 	private static final ImageIcon DISPLAY_COST_ON_ICON		= new ImageIcon(TrackSchemeFrame.class.getResource("resources/Label-icons.png"));
 	private static final ImageIcon DISPLAY_COST_OFF_ICON	= new ImageIcon(TrackSchemeFrame.class.getResource("resources/Label-icons-disabled.png"));
-	
 	private static final ImageIcon DISPLAY_DECORATIONS_ON_ICON	= new ImageIcon(TrackSchemeFrame.class.getResource("resources/application_view_columns.png"));
 	private static final ImageIcon DISPLAY_DECORATIONS_OFF_ICON	= new ImageIcon(TrackSchemeFrame.class.getResource("resources/application.png"));
-	
 	private static final ImageIcon SELECT_STYLE_ICON = new ImageIcon(TrackSchemeFrame.class.getResource("resources/style.png"));
-	
-	private TrackSchemeFrame<T> frame;
 
-	public TrackSchemeToolbar(TrackSchemeFrame<T> frame) {
-		super("Track Scheme toolbat", JToolBar.HORIZONTAL);
-		this.frame = frame;
+	private final TrackScheme<T> trackScheme;
+	
+
+	public TrackSchemeToolbar(final TrackScheme<T> trackScheme) {
+		super("Track Scheme toolbar", JToolBar.HORIZONTAL);
+		this.trackScheme = trackScheme;
 		init();
 	}
 	
@@ -72,17 +61,17 @@ public class TrackSchemeToolbar <T extends RealType<T> & NativeType<T>> extends 
 		 *  Toggle Connect Mode
 		 */
 		
-		boolean defaultLinkingEnabled = frame.defaultLinkingEnabled;
+		boolean defaultLinkingEnabled = false;
 		final Action toggleLinkingAction = new AbstractAction(null, defaultLinkingEnabled ? LINKING_ON_ICON : LINKING_OFF_ICON) {
 			public void actionPerformed(ActionEvent e) {
-				boolean enabled = frame.getGraphComponent().getConnectionHandler().isEnabled();
+				boolean enabled = trackScheme.toggleLinking();
 				ImageIcon connectIcon;
 				if (enabled)
 					connectIcon = LINKING_OFF_ICON;
 				else
 					connectIcon = LINKING_ON_ICON;
 				putValue(SMALL_ICON, connectIcon);
-				frame.getGraphComponent().getConnectionHandler().setEnabled(!enabled);
+
 			}
 			
 		};
@@ -101,17 +90,17 @@ public class TrackSchemeToolbar <T extends RealType<T> & NativeType<T>> extends 
 		final JButton  resetZoomButton = new JButton();
 		zoomInAction = new AbstractAction(null, ZOOM_IN_ICON) {
 			public void actionPerformed(ActionEvent e) {
-				frame.getGraphComponent().zoomIn();
+				trackScheme.zoomIn();
 			}
 		};
 		zoomOutAction = new AbstractAction(null, ZOOM_OUT_ICON) {
 			public void actionPerformed(ActionEvent e) {
-				frame.getGraphComponent().zoomOut();
+				trackScheme.zoomOut();
 			}
 		};
 		resetZoomAction  = new AbstractAction(null, RESET_ZOOM_ICON) {
 			public void actionPerformed(ActionEvent e) {
-				frame.getGraphComponent().zoomTo(1.0, false);
+				trackScheme.resetZoom();
 			}
 		};
 		zoomInButton.setAction(zoomInAction);
@@ -124,7 +113,7 @@ public class TrackSchemeToolbar <T extends RealType<T> & NativeType<T>> extends 
 		// Redo layout
 		final Action redoLayoutAction = new AbstractAction(null, REFRESH_ICON) {
 			public void actionPerformed(ActionEvent e) {
-				frame.doTrackLayout();
+				trackScheme.doTrackLayout();
 			}
 		};
 		final JButton redoLayoutButton = new JButton(redoLayoutAction);
@@ -134,76 +123,64 @@ public class TrackSchemeToolbar <T extends RealType<T> & NativeType<T>> extends 
 		 * Folding
 		 */
 		
-		boolean defaultEnabled = frame.getGraphLayout().isBranchGroupingEnabled();
-		final JButton foldAllButton = new JButton(null, FOLD_ALL_BRANCHES_ICON);
-		foldAllButton.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				frame.getGraphLayout().setAllFolded(true);
-			}
-		});
-		final JButton unFoldAllButton = new JButton(null, UNFOLD_ALL_BRANCHES_ICON);
-		unFoldAllButton.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				frame.getGraphLayout().setAllFolded(false);
-			}
-		});
-		final JButton toggleEnableFoldingButton = new JButton(null, 
-						defaultEnabled ? 
-						BRANCH_FOLDING_ON_ICON : BRANCH_FOLDING_OFF_ICON);
-		toggleEnableFoldingButton.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				boolean enabled = frame.getGraphLayout().isBranchGroupingEnabled();
-				frame.getGraphLayout().setBranchGrouping(!enabled);
-				
-				if (enabled) {
-					toggleEnableFoldingButton.setIcon(BRANCH_FOLDING_OFF_ICON);	
-					foldAllButton.setEnabled(false);
-					unFoldAllButton.setEnabled(false);
-				} else {
-					toggleEnableFoldingButton.setIcon(BRANCH_FOLDING_ON_ICON);
-					foldAllButton.setEnabled(true);
-					unFoldAllButton.setEnabled(true);
-				}
-			}
-		});
-		toggleEnableFoldingButton.setToolTipText("Toggle folding (redo layout)");
-		foldAllButton.setToolTipText("Fold all branches");
-		unFoldAllButton.setToolTipText("Unfold all branches");
-		if (!defaultEnabled) {
-			foldAllButton.setEnabled(false);
-			unFoldAllButton.setEnabled(false);
-		}
+//		boolean defaultEnabled = frame.getGraphLayout().isBranchGroupingEnabled();
+//		final JButton foldAllButton = new JButton(null, FOLD_ALL_BRANCHES_ICON);
+//		foldAllButton.addActionListener(new ActionListener() {
+//			@Override
+//			public void actionPerformed(ActionEvent e) {
+//				frame.getGraphLayout().setAllFolded(true);
+//			}
+//		});
+//		final JButton unFoldAllButton = new JButton(null, UNFOLD_ALL_BRANCHES_ICON);
+//		unFoldAllButton.addActionListener(new ActionListener() {
+//			@Override
+//			public void actionPerformed(ActionEvent e) {
+//				frame.getGraphLayout().setAllFolded(false);
+//			}
+//		});
+//		final JButton toggleEnableFoldingButton = new JButton(null, 
+//						defaultEnabled ? 
+//						BRANCH_FOLDING_ON_ICON : BRANCH_FOLDING_OFF_ICON);
+//		toggleEnableFoldingButton.addActionListener(new ActionListener() {
+//			@Override
+//			public void actionPerformed(ActionEvent e) {
+//				boolean enabled = frame.getGraphLayout().isBranchGroupingEnabled();
+//				frame.getGraphLayout().setBranchGrouping(!enabled);
+//				
+//				if (enabled) {
+//					toggleEnableFoldingButton.setIcon(BRANCH_FOLDING_OFF_ICON);	
+//					foldAllButton.setEnabled(false);
+//					unFoldAllButton.setEnabled(false);
+//				} else {
+//					toggleEnableFoldingButton.setIcon(BRANCH_FOLDING_ON_ICON);
+//					foldAllButton.setEnabled(true);
+//					unFoldAllButton.setEnabled(true);
+//				}
+//			}
+//		});
+//		toggleEnableFoldingButton.setToolTipText("Toggle folding (redo layout)");
+//		foldAllButton.setToolTipText("Fold all branches");
+//		unFoldAllButton.setToolTipText("Unfold all branches");
+//		if (!defaultEnabled) {
+//			foldAllButton.setEnabled(false);
+//			unFoldAllButton.setEnabled(false);
+//		}
 		
 		
 		// Capture 
 		final Action captureUndecoratedAction = new AbstractAction(null, CAPTURE_UNDECORATED_ICON) {			
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				BufferedImage image = mxCellRenderer.createBufferedImage(frame.getGraph(), null, 1, Color.WHITE, true, null, 
-						frame.getGraphComponent().getCanvas());
-				ImagePlus imp = new ImagePlus("Track scheme capture", image);
-				imp.show();
+				trackScheme.captureUndecorated();
 			}
 		};
 		final Action captureDecoratedAction = new AbstractAction(null, CAPTURE_DECORATED_ICON) {			
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				JViewport view = frame.getGraphComponent().getViewport();
-				Point currentPos = view.getViewPosition();
-				view.setViewPosition(new Point(0, 0)); // We have to do that otherwise, top left is not painted
-				Dimension size = view.getViewSize();
-				BufferedImage image =  (BufferedImage) view.createImage(size.width, size.height);
-				Graphics2D captureG = image.createGraphics();
-				view.paintComponents(captureG);
-				view.setViewPosition(currentPos);
-				ImagePlus imp = new ImagePlus("Track scheme capture", image);
-				imp.show();
+				trackScheme.captureDecorated();
 			}
 		};
-		final Action saveAction = new SaveAction<T>(frame);
+		final Action saveAction = new SaveAction<T>(trackScheme);
 		final JButton captureUndecoratedButton = new JButton(captureUndecoratedAction);
 		final JButton captureDecoratedButton = new JButton(captureDecoratedAction);
 		final JButton saveButton = new JButton(saveAction);
@@ -218,19 +195,18 @@ public class TrackSchemeToolbar <T extends RealType<T> & NativeType<T>> extends 
 
 		JButton toggleDisplayCostsButton;
 		{
-			boolean defaultDisplayCosts= TrackSchemeFrame.DEFAULT_DO_DISPLAY_COSTS_ON_EDGES;
+			boolean defaultDisplayCosts= TrackScheme.DEFAULT_DO_DISPLAY_COSTS_ON_EDGES;
 			final Action toggleDisplayCostsAction = new AbstractAction(null, defaultDisplayCosts ? DISPLAY_COST_ON_ICON : DISPLAY_COST_OFF_ICON) {
 				public void actionPerformed(ActionEvent e) {
-					boolean enabled = frame.getGraphLayout().isDoDisplayCosts();
+					boolean enabled = trackScheme.toggleDisplayCosts();
 					ImageIcon displayIcon;
 					if (enabled)
 						displayIcon = DISPLAY_COST_OFF_ICON;
 					else
 						displayIcon = DISPLAY_COST_ON_ICON;
 					putValue(SMALL_ICON, displayIcon);
-					frame.getGraphLayout().setDoDisplayCosts(!enabled);
-				}
 
+				}
 			};
 			toggleDisplayCostsButton = new JButton(toggleDisplayCostsAction);
 			toggleDisplayCostsButton.setToolTipText("Toggle costs display (redo layout)");
@@ -241,18 +217,16 @@ public class TrackSchemeToolbar <T extends RealType<T> & NativeType<T>> extends 
 		 */
 		JButton toggleDisplayDecorationsButton; 
 		{
-			boolean defaultDisplayDecorations= TrackSchemeFrame.DEFAULT_DO_PAINT_DECORATIONS;
+			boolean defaultDisplayDecorations= TrackScheme.DEFAULT_DO_PAINT_DECORATIONS;
 			final Action toggleDisplayDecorations = new AbstractAction(null, defaultDisplayDecorations ? DISPLAY_DECORATIONS_ON_ICON : DISPLAY_DECORATIONS_OFF_ICON) {
 				public void actionPerformed(ActionEvent e) {
-					boolean enabled = frame.getGraphComponent().isDoPaintDecorations();
+					boolean enabled = trackScheme.toggleDisplayDecoration();
 					ImageIcon displayIcon;
 					if (enabled)
 						displayIcon = DISPLAY_DECORATIONS_OFF_ICON;
 					else
 						displayIcon = DISPLAY_DECORATIONS_ON_ICON;
 					putValue(SMALL_ICON, displayIcon);
-					frame.getGraphComponent().setDoPaintDecorations(!enabled);
-					frame.getGraphComponent().repaint();
 				}
 
 			};
@@ -272,12 +246,12 @@ public class TrackSchemeToolbar <T extends RealType<T> & NativeType<T>> extends 
 		
 		final JComboBox selectStyleBox;
 		{
-			Map<String, Map<String, Object>> styles = frame.getGraph().getStylesheet().getStyles();
+			Map<String, Map<String, Object>> styles = trackScheme.getGraph().getStylesheet().getStyles();
 			Set<String> styleNames = new HashSet<String>(styles.keySet());
 			styleNames.remove("defaultEdge");
 			styleNames.remove("defaultVertex");
 			selectStyleBox = new JComboBox(styleNames.toArray());
-			selectStyleBox.setSelectedItem(TrackSchemeFrame.DEFAULT_STYLE_NAME);
+			selectStyleBox.setSelectedItem(TrackScheme.DEFAULT_STYLE_NAME);
 			selectStyleBox.setMaximumSize(new Dimension(100, 20));
 			selectStyleBox.setFont(FONT);
 			selectStyleBox.addActionListener(new ActionListener() {
@@ -285,10 +259,10 @@ public class TrackSchemeToolbar <T extends RealType<T> & NativeType<T>> extends 
 				@Override
 				public void actionPerformed(ActionEvent e) {
 					String selectedStyle = (String) selectStyleBox.getSelectedItem();
-					mxTrackGraphLayout<T> layout = frame.getGraphLayout();
-					if (!selectedStyle.equals(layout.selectedStyle)) {
-						layout.selectedStyle = selectedStyle;
-						layout.execute(frame);
+					mxTrackGraphLayout<T> layout = trackScheme.getGraphLayout();
+					if (!selectedStyle.equals(layout.getStyle())) {
+						layout.setStyle(selectedStyle);
+						trackScheme.doTrackLayout();
 					}
 				}
 			});

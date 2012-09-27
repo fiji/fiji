@@ -22,9 +22,9 @@ import fiji.plugin.trackmate.TrackMateModel;
 public class JGraphXAdapter  <T extends RealType<T> & NativeType<T>> extends mxGraph implements GraphListener<Spot, DefaultWeightedEdge> {
 
 	private HashMap<Spot, mxCell> 					vertexToCellMap 	= new HashMap<Spot, mxCell>();
-	private HashMap<DefaultWeightedEdge, mxICell> 	edgeToCellMap 		= new HashMap<DefaultWeightedEdge, mxICell>();
-	private HashMap<mxICell, Spot>					cellToVertexMap		= new HashMap<mxICell, Spot>();
-	private HashMap<mxICell, DefaultWeightedEdge>	cellToEdgeMap		= new HashMap<mxICell, DefaultWeightedEdge>();
+	private HashMap<DefaultWeightedEdge, mxCell> 	edgeToCellMap 		= new HashMap<DefaultWeightedEdge, mxCell>();
+	private HashMap<mxCell, Spot>					cellToVertexMap		= new HashMap<mxCell, Spot>();
+	private HashMap<mxCell, DefaultWeightedEdge>	cellToEdgeMap		= new HashMap<mxCell, DefaultWeightedEdge>();
 	private TrackMateModel<T> tmm;
 
 	/*
@@ -84,7 +84,7 @@ public class JGraphXAdapter  <T extends RealType<T> & NativeType<T>> extends mxG
 		return cell;
 	}
 
-	public mxICell addJGraphTEdge(DefaultWeightedEdge edge) {
+	public mxCell addJGraphTEdge(DefaultWeightedEdge edge) {
 		if (edgeToCellMap.containsKey(edge)) {
 			// cell for edge already existed, skip creation and return original cell.
 			return edgeToCellMap.get(edge);
@@ -109,7 +109,7 @@ public class JGraphXAdapter  <T extends RealType<T> & NativeType<T>> extends mxG
 		return cell;
 	}
 	
-	public void mapEdgeToCell(DefaultWeightedEdge edge, mxICell cell) {
+	public void mapEdgeToCell(DefaultWeightedEdge edge, mxCell cell) {
 		cellToEdgeMap.put(cell, edge);
 		edgeToCellMap.put(edge, cell);
 	}
@@ -122,15 +122,15 @@ public class JGraphXAdapter  <T extends RealType<T> & NativeType<T>> extends mxG
 		return cellToEdgeMap.get(cell);
 	}
 	
-	public mxICell getCellFor(Spot spot) {
+	public mxCell getCellFor(Spot spot) {
 		return vertexToCellMap.get(spot);
 	}
 	
-	public mxICell getCellFor(DefaultWeightedEdge edge) {
+	public mxCell getCellFor(DefaultWeightedEdge edge) {
 		return edgeToCellMap.get(edge);
 	}
 	
-	public Set<mxICell> getVertexCells() {
+	public Set<mxCell> getVertexCells() {
 		return cellToVertexMap.keySet();
 	}
 	
@@ -144,6 +144,9 @@ public class JGraphXAdapter  <T extends RealType<T> & NativeType<T>> extends mxG
 		cellToEdgeMap.remove(cell);
 	}
 
+	
+
+	
 
 	/*
 	 * GRAPH LISTENER

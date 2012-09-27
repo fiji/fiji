@@ -47,14 +47,14 @@ public class SaveAction  <T extends RealType<T> & NativeType<T>> extends Abstrac
 	private static final long serialVersionUID = 7672151690754466760L;
 	private static final ImageIcon ICON = new ImageIcon(TrackSchemeFrame.class.getResource("resources/camera_export.png"));
 	protected String lastDir = null;
-	protected TrackSchemeFrame<T> frame;
+	private final TrackScheme<T> trackScheme;
 
 	/**
 	 * 
 	 */
-	public SaveAction(TrackSchemeFrame<T> frame) {
+	public SaveAction(TrackScheme<T> trackScheme) {
 		putValue(Action.SMALL_ICON, ICON);
-		this.frame = frame;
+		this.trackScheme = trackScheme;
 
 	}
 
@@ -62,8 +62,8 @@ public class SaveAction  <T extends RealType<T> & NativeType<T>> extends Abstrac
 	 * Saves XML+PNG format.
 	 */
 	protected void saveXmlPng(TrackSchemeFrame<T> frame, String filename, Color bg) throws IOException {
-		mxGraphComponent graphComponent = frame.getGraphComponent();
-		mxGraph graph = frame.getGraph();
+		final mxGraphComponent graphComponent = trackScheme.getGUI().graphComponent;
+		final mxGraph graph = trackScheme.getGraph();
 
 		// Creates the image for the PNG file
 		BufferedImage image = mxCellRenderer.createBufferedImage(graph,	null, 1, bg, graphComponent.isAntiAlias(), null, graphComponent.getCanvas());
@@ -94,8 +94,8 @@ public class SaveAction  <T extends RealType<T> & NativeType<T>> extends Abstrac
 	 */
 	public void actionPerformed(ActionEvent e) {
 
-		mxGraphComponent graphComponent = frame.getGraphComponent();
-		mxGraph graph =frame.getGraph();
+		final mxGraphComponent graphComponent = trackScheme.getGUI().graphComponent;
+		final mxGraph graph = trackScheme.getGraph();
 		FileFilter selectedFilter = null;
 		DefaultFileFilter xmlPngFilter = new DefaultFileFilter(".png", "PNG+XML file (.png)");
 		FileFilter vmlFileFilter = new DefaultFileFilter(".html", "VML file (.html)");
@@ -212,7 +212,7 @@ public class SaveAction  <T extends RealType<T> & NativeType<T>> extends Abstrac
 				}
 
 				if (selectedFilter == xmlPngFilter || (ext.equalsIgnoreCase("png") && !dialogShown)) {
-					saveXmlPng(frame, filename, bg);
+					saveXmlPng(trackScheme.getGUI(), filename, bg);
 				} else {
 					BufferedImage image = mxCellRenderer.createBufferedImage(graph, null, 1, bg, graphComponent.isAntiAlias(), null, graphComponent.getCanvas());
 
@@ -231,7 +231,7 @@ public class SaveAction  <T extends RealType<T> & NativeType<T>> extends Abstrac
 	}
 
 	private void exportGraphToPdf(mxGraph graph, String filename) {
-		Rectangle bounds = new Rectangle(frame.getGraphComponent().getViewport().getViewSize());
+		Rectangle bounds = new Rectangle(trackScheme.getGUI().graphComponent.getViewport().getViewSize());
 		// step 1
 		com.itextpdf.text.Rectangle pageSize = new com.itextpdf.text.Rectangle(bounds.x, bounds.y, bounds.width, bounds.height);
 		com.itextpdf.text.Document document = new com.itextpdf.text.Document(pageSize);
@@ -245,7 +245,7 @@ public class SaveAction  <T extends RealType<T> & NativeType<T>> extends Abstrac
 			// step 4
 			PdfContentByte canvas = writer.getDirectContent();
 			g2 = canvas.createGraphics(pageSize.getWidth(), pageSize.getHeight());
-			frame.getGraphComponent().getViewport().paintComponents(g2);
+			trackScheme.getGUI().graphComponent.getViewport().paintComponents(g2);
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		} catch (DocumentException e) {

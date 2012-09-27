@@ -16,7 +16,7 @@ import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.TrackMate_;
-import fiji.plugin.trackmate.visualization.trackscheme.TrackSchemeFrame;
+import fiji.plugin.trackmate.visualization.trackscheme.TrackScheme;
 
 public class WizardController<T extends RealType<T> & NativeType<T>> implements ActionListener {
 
@@ -244,8 +244,8 @@ public class WizardController<T extends RealType<T> & NativeType<T>> implements 
 			displayerPanel.jButtonShowTrackScheme.setEnabled(false);
 
 			try {
-				TrackSchemeFrame<T> trackScheme = new TrackSchemeFrame<T>(plugin.getModel());
-				trackScheme.setVisible(true);
+				TrackScheme<T> trackScheme = new TrackScheme<T>(plugin.getModel());
+				trackScheme.render();
 			} finally {
 				displayerPanel.jButtonShowTrackScheme.setEnabled(true);
 			}

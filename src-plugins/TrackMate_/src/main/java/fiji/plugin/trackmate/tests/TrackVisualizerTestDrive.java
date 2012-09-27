@@ -1,16 +1,5 @@
 package fiji.plugin.trackmate.tests;
 
-import ij.IJ;
-import ij.ImagePlus;
-
-import java.io.File;
-import java.io.IOException;
-
-import net.imglib2.type.NativeType;
-import net.imglib2.type.numeric.RealType;
-
-import org.jdom.JDOMException;
-
 import fiji.plugin.trackmate.FeatureFilter;
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.Settings;
@@ -21,7 +10,17 @@ import fiji.plugin.trackmate.features.track.TrackBranchingAnalyzer;
 import fiji.plugin.trackmate.io.TmXmlReader;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
 import fiji.plugin.trackmate.visualization.hyperstack.HyperStackDisplayer;
-import fiji.plugin.trackmate.visualization.trackscheme.TrackSchemeFrame;
+import fiji.plugin.trackmate.visualization.trackscheme.TrackScheme;
+import ij.IJ;
+import ij.ImagePlus;
+
+import java.io.File;
+import java.io.IOException;
+
+import net.imglib2.type.NativeType;
+import net.imglib2.type.numeric.RealType;
+
+import org.jdom.JDOMException;
 
 public class TrackVisualizerTestDrive {
 
@@ -81,8 +80,7 @@ public class TrackVisualizerTestDrive {
 		displayer.refresh();
 		
 		// Display Track scheme
-		final TrackSchemeFrame<T> frame = new TrackSchemeFrame<T>(model);
-		frame.setVisible(true);
-		
+		final TrackScheme<T> trackScheme = new TrackScheme<T>(model);
+		trackScheme.render();
 	}
 }
