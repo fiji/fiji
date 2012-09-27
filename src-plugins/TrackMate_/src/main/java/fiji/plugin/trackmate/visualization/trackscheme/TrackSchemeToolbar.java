@@ -260,8 +260,8 @@ public class TrackSchemeToolbar <T extends RealType<T> & NativeType<T>> extends 
 				public void actionPerformed(ActionEvent e) {
 					String selectedStyle = (String) selectStyleBox.getSelectedItem();
 					mxTrackGraphLayout<T> layout = trackScheme.getGraphLayout();
-					if (!selectedStyle.equals(layout.getStyle())) {
-						layout.setStyle(selectedStyle);
+					if (!selectedStyle.equals(layout.getLayoutStyle())) {
+						layout.setLayoutStyle(selectedStyle);
 						trackScheme.doTrackLayout();
 					}
 				}

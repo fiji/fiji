@@ -30,6 +30,7 @@ import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotImp;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.detection.DetectorKeys;
+import fiji.plugin.trackmate.visualization.trackscheme.SpotImageUpdater;
 import fiji.tool.AbstractTool;
 
 public class SpotEditTool<T extends RealType<T> & NativeType<T>> extends AbstractTool implements MouseMotionListener, MouseListener, MouseWheelListener, KeyListener {
@@ -65,7 +66,6 @@ public class SpotEditTool<T extends RealType<T> & NativeType<T>> extends Abstrac
 	private HashMap<ImagePlus, HyperStackDisplayer<T>> displayers = new HashMap<ImagePlus, HyperStackDisplayer<T>>();
 	/** The radius of the previously edited spot. */
 	private Double previousRadius = null;
-
 	private Spot quickEditedSpot;
 
 
@@ -233,6 +233,10 @@ public class SpotEditTool<T extends RealType<T> & NativeType<T>> extends Abstrac
 				final double z = (displayer.imp.getSlice()-1) * displayer.calibration[2];
 				editedSpot.putFeature(Spot.POSITION_Z, z);
 				editedSpot.putFeature(Spot.POSITION_T, frame * displayer.settings.dt);
+				editedSpot.putFeature(Spot.FRAME, frame);
+				// Update spot image
+				SpotImageUpdater<T> spotImageUpdater = new SpotImageUpdater<T>(model);
+				spotImageUpdater.update(editedSpot);
 
 				model.beginUpdate();
 				try {
@@ -438,9 +442,13 @@ public class SpotEditTool<T extends RealType<T> & NativeType<T>> extends Abstrac
 				double zpos = (displayer.imp.getSlice()-1) * displayer.calibration[2];
 				int frame = displayer.imp.getFrame() - 1;
 				newSpot.putFeature(Spot.POSITION_T, frame * displayer.settings.dt);
+				newSpot.putFeature(Spot.FRAME, frame);
 				newSpot.putFeature(Spot.POSITION_Z, zpos);
 				newSpot.putFeature(Spot.RADIUS, radius);
-
+				// Update spot image
+				SpotImageUpdater<T> spotImageUpdater = new SpotImageUpdater<T>(model);
+				spotImageUpdater.update(newSpot);
+				
 				model.beginUpdate();
 				try {
 					model.addSpotTo(newSpot, frame);

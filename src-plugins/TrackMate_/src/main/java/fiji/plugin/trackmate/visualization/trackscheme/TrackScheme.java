@@ -60,23 +60,22 @@ public class TrackScheme <T extends RealType<T> & NativeType<T>> implements Trac
 	static final int DEFAULT_CELL_WIDTH = 128;
 	static final int DEFAULT_CELL_HEIGHT = 80;
 
-	public static final ImageIcon TRACK_SCHEME_ICON = new ImageIcon(TrackSchemeFrame.class.getResource("resources/track_scheme.png"));
-
+	public static final ImageIcon 	TRACK_SCHEME_ICON = new ImageIcon(TrackSchemeFrame.class.getResource("resources/track_scheme.png"));
+	public static final String 		DEFAULT_COLOR = "#FF00FF";
 	private static final Dimension 	DEFAULT_SIZE = new Dimension(800, 600);
 	static final String 			DEFAULT_STYLE_NAME = "Full"; 
 	static final int 				TABLE_CELL_WIDTH 		= 40;
 	static final Color 				GRID_COLOR = Color.GRAY;
 	/** Are linking costs displayed by default? Can be changed in the toolbar. */
-	static final boolean DEFAULT_DO_DISPLAY_COSTS_ON_EDGES = false;
+	static final boolean 			DEFAULT_DO_DISPLAY_COSTS_ON_EDGES = false;
 	/** Do we display the background decorations by default? */
-	static final boolean DEFAULT_DO_PAINT_DECORATIONS = true;
+	static final boolean 			DEFAULT_DO_PAINT_DECORATIONS = true;
+	
 	private static final Map<String, Map<String, Object>> VERTEX_STYLES;
 	private static final HashMap<String, Object> BASIC_VERTEX_STYLE = new HashMap<String, Object>();
 	private static final HashMap<String, Object> SIMPLE_VERTEX_STYLE = new HashMap<String, Object>();
 	private static final HashMap<String, Object> BASIC_EDGE_STYLE = new HashMap<String, Object>();
-
 	static {
-
 		BASIC_VERTEX_STYLE.put(mxConstants.STYLE_FILLCOLOR, "white");
 		BASIC_VERTEX_STYLE.put(mxConstants.STYLE_FONTCOLOR, "black");
 		BASIC_VERTEX_STYLE.put(mxConstants.STYLE_ALIGN, mxConstants.ALIGN_RIGHT);
@@ -84,7 +83,7 @@ public class TrackScheme <T extends RealType<T> & NativeType<T>> implements Trac
 		BASIC_VERTEX_STYLE.put(mxConstants.STYLE_IMAGE_ALIGN, mxConstants.ALIGN_LEFT);
 		BASIC_VERTEX_STYLE.put(mxConstants.STYLE_ROUNDED, true);
 		BASIC_VERTEX_STYLE.put(mxConstants.STYLE_PERIMETER, mxPerimeter.RectanglePerimeter);
-		BASIC_VERTEX_STYLE.put(mxConstants.STYLE_STROKECOLOR, "#FF00FF");
+		BASIC_VERTEX_STYLE.put(mxConstants.STYLE_STROKECOLOR, DEFAULT_COLOR);
 
 		SIMPLE_VERTEX_STYLE.put(mxConstants.STYLE_FILLCOLOR, "white");
 		SIMPLE_VERTEX_STYLE.put(mxConstants.STYLE_FONTCOLOR, "black");
@@ -93,7 +92,7 @@ public class TrackScheme <T extends RealType<T> & NativeType<T>> implements Trac
 		SIMPLE_VERTEX_STYLE.put(mxConstants.STYLE_IMAGE_ALIGN, mxConstants.ALIGN_LEFT);
 		SIMPLE_VERTEX_STYLE.put(mxConstants.STYLE_ROUNDED, true);
 		SIMPLE_VERTEX_STYLE.put(mxConstants.STYLE_PERIMETER, mxPerimeter.EllipsePerimeter);
-		SIMPLE_VERTEX_STYLE.put(mxConstants.STYLE_STROKECOLOR, "#FF00FF");
+		SIMPLE_VERTEX_STYLE.put(mxConstants.STYLE_STROKECOLOR, DEFAULT_COLOR);
 		SIMPLE_VERTEX_STYLE.put(mxConstants.STYLE_NOLABEL, true);
 
 		BASIC_EDGE_STYLE.put(mxConstants.STYLE_SHAPE, mxConstants.SHAPE_CONNECTOR);
@@ -102,7 +101,7 @@ public class TrackScheme <T extends RealType<T> & NativeType<T>> implements Trac
 		BASIC_EDGE_STYLE.put(mxConstants.STYLE_STARTARROW, mxConstants.NONE);
 		BASIC_EDGE_STYLE.put(mxConstants.STYLE_ENDARROW, mxConstants.NONE);
 		BASIC_EDGE_STYLE.put(mxConstants.STYLE_STROKEWIDTH, 2.0f);
-		BASIC_EDGE_STYLE.put(mxConstants.STYLE_STROKECOLOR, "#FF00FF");
+		BASIC_EDGE_STYLE.put(mxConstants.STYLE_STROKECOLOR, DEFAULT_COLOR);
 
 		VERTEX_STYLES = new HashMap<String, Map<String, Object> >(2);
 		VERTEX_STYLES.put(DEFAULT_STYLE_NAME, BASIC_VERTEX_STYLE);
@@ -114,8 +113,6 @@ public class TrackScheme <T extends RealType<T> & NativeType<T>> implements Trac
 	 * FIELDS
 	 */
 
-	/** The action that updates the thumbnail when a new spot is created.	 */
-	private SpotImageUpdater<T> spotImageUpdater;
 	/** The model this instance is a view of (Yoda I speak like). */
 	private TrackMateModel<T> model;
 	/** The frame in which we display the TrackScheme GUI. */
@@ -130,6 +127,18 @@ public class TrackScheme <T extends RealType<T> & NativeType<T>> implements Trac
 	private boolean doFireSelectionChangeEvent = true;
 	/** A flag used to prevent double event firing when setting the selection programmatically. */
 	private boolean doFireModelChangeEvent = true;
+	/**  
+	 * The current row length for each frame.
+	 * That is, for frame <code>i</code>, the number of cells on the row
+	 * corresponding to frame <code>i</code> is <code>rowLength.get(i)</code>.
+	 * This field is regenerated after each call to {@link #execute(Object)}.
+	 */
+	private Map<Integer, Integer> rowLengths = new HashMap<Integer, Integer>();
+	/** 
+	 * Stores the column index that is the first one after all the track columns.
+	 * This field is regenerated after each call to {@link #execute(Object)}.
+	 */
+	private int unlaidSpotColumn = 3;
 
 	/*
 	 * CONSTRUCTORS
@@ -145,6 +154,25 @@ public class TrackScheme <T extends RealType<T> & NativeType<T>> implements Trac
 	 * METHODS
 	 */
 
+	
+	/**
+	 * @return the column index that is the first one after all the track columns.
+	 */
+	public int getUnlaidSpotColumn() {
+		return unlaidSpotColumn;
+	}
+
+	/**
+	 * @return the first free column for the target row.
+	 */
+	public int getNextFreeColumn(int frame) {
+		Integer columnIndex = rowLengths.get(frame);
+		if (null == columnIndex) {
+			columnIndex = 2;
+		}
+		return columnIndex+1;
+	}
+	
 	/**
 	 * @return the GUI frame controlled by this class.
 	 */
@@ -223,11 +251,12 @@ public class TrackScheme <T extends RealType<T> & NativeType<T>> implements Trac
 			// mxCell not present in graph. Most likely because the corresponding spot belonged
 			// to an invisible track, and a cell was not created for it when TrackScheme was
 			// launched. So we create one on the fly now.
-			cell = insertSpotInGraph(spot, gui.getNextFreeColumn());
+			int row = getUnlaidSpotColumn();
+			cell = insertSpotInGraph(spot, row);
+			int frame = spot.getFeature(Spot.FRAME).intValue();
+			rowLengths.put(frame, row+1);
 		}
 
-		// Update spot image
-		spotImageUpdater.update(spot);
 		// Update cell look
 		String style = cell.getStyle();
 		style = mxStyleUtils.setStyle(style, mxConstants.STYLE_IMAGE, "data:image/base64,"+spot.getImageString());
@@ -276,11 +305,14 @@ public class TrackScheme <T extends RealType<T> & NativeType<T>> implements Trac
 			// Flag original track as visible
 			model.addTrackToVisibleList(trackIndex);
 			// Find adequate column
-			int targetColumn = gui.getNextFreeColumn();
+			int targetColumn = getUnlaidSpotColumn();
 			// Create cells for track
 			Set<Spot> trackSpots = model.getTrackSpots(trackIndex);
 			for (Spot trackSpot : trackSpots) {
-				insertSpotInGraph(trackSpot, targetColumn);
+				int frame = trackSpot.getFeature(Spot.FRAME).intValue();
+				int column = Math.max(targetColumn, getNextFreeColumn(frame));
+				insertSpotInGraph(trackSpot, column);
+				rowLengths.put(frame , column);
 			}
 			Set<DefaultWeightedEdge> trackEdges = model.getTrackEdges(trackIndex);
 			for (DefaultWeightedEdge trackEdge : trackEdges) {
@@ -419,16 +451,19 @@ public class TrackScheme <T extends RealType<T> & NativeType<T>> implements Trac
 		try {
 			ArrayList<mxICell> cellsToRemove = new ArrayList<mxICell>();
 
+			final int targetColumn = getUnlaidSpotColumn();
+			
 			// Deal with spots
 			if (event.getSpots() != null) {
 				for (Spot spot : event.getSpots() ) {
 
 					if (event.getSpotFlag(spot) == TrackMateModelChangeEvent.FLAG_SPOT_ADDED) {
 
-						// Update spot image
-						spotImageUpdater.update(spot);
+						int frame = spot.getFeature(Spot.FRAME).intValue();
 						// Put in the graph
-						insertSpotInGraph(spot, gui.getNextFreeColumn());
+						int column = Math.max(targetColumn, getNextFreeColumn(frame));
+						insertSpotInGraph(spot, column); // move in right+1 free column
+						rowLengths.put(frame, column);
 
 					} else if (event.getSpotFlag(spot) == TrackMateModelChangeEvent.FLAG_SPOT_MODIFIED) {
 
@@ -506,6 +541,7 @@ public class TrackScheme <T extends RealType<T> & NativeType<T>> implements Trac
 	@Override
 	public void render() {
 		initGUI();
+		doTrackLayout();
 	}
 
 	@Override
@@ -641,7 +677,6 @@ public class TrackScheme <T extends RealType<T> & NativeType<T>> implements Trac
 		this.graph = createGraph();
 		this.gui = new TrackSchemeFrame<T>(graph, model, this);
 		this.graphLayout = new mxTrackGraphLayout<T>(graph, model);
-		this.spotImageUpdater = new SpotImageUpdater<T>(model);
 		String title = "TrackScheme";
 		if (null != model.getSettings().imp)
 			title += ": "+model.getSettings().imp.getTitle();
@@ -772,6 +807,15 @@ public class TrackScheme <T extends RealType<T> & NativeType<T>> implements Trac
 		// We need to pass the column size to the graph component, so that it can paint the borders
 		gui.graphComponent.setColumnColor(graphLayout.getTrackColors());
 		gui.graphComponent.setColumnWidths(graphLayout.getTrackColumnWidths());
+		// 
+		rowLengths = graphLayout.getRowLengths();
+		int maxLength = 2;
+		for (int rowLength : rowLengths.values()) {
+			if (maxLength < rowLength) {
+				maxLength = rowLength;
+			}
+		}
+		unlaidSpotColumn = maxLength + 1;
 	}
 
 	public void captureUndecorated() {
@@ -870,7 +914,7 @@ public class TrackScheme <T extends RealType<T> & NativeType<T>> implements Trac
 		}
 
 		// Find adequate column
-		int targetColumn = gui.getNextFreeColumn();
+		int targetColumn = getUnlaidSpotColumn();
 
 		// Then link them in this order
 		model.beginUpdate();
@@ -903,7 +947,10 @@ public class TrackScheme <T extends RealType<T> & NativeType<T>> implements Trac
 				}
 				mxICell previousCell = graph.getCellFor(previousSpot);
 				if (null == previousCell) {
-					previousCell = insertSpotInGraph(previousSpot, targetColumn);
+					int frame = previousSpot.getFeature(Spot.FRAME).intValue();
+					int column = Math.max(targetColumn, getNextFreeColumn(frame));
+					rowLengths.put(frame , column);
+					previousCell = insertSpotInGraph(previousSpot, column);
 					if (DEBUG) {
 						System.out.println("[TrackScheme] linkSpots: creating cell "+previousCell+" for spot "+previousSpot);
 					}

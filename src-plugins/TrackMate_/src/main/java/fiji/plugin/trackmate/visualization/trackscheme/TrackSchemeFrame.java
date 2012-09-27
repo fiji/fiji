@@ -108,19 +108,6 @@ public class TrackSchemeFrame  <T extends RealType<T> & NativeType<T>> extends J
 		menu.show(graphComponent.getViewport().getView(), (int) point.getX(), (int) point.getY());
 	}
 
-	/**
-	 * Return the first free (no cell in lane) column index.
-	 */
-	public int getNextFreeColumn() {
-		int columnIndex = 3;
-		int[] columnWidths = graphComponent.getColumnWidths();
-		for (int i = 0; i < columnWidths.length; i++) {
-			columnIndex += columnWidths[i] - 1;
-		}
-		return columnIndex;
-	}
-
-
 	private void init() {
 		// Frame look
 		setIconImage(TrackScheme.TRACK_SCHEME_ICON.getImage());

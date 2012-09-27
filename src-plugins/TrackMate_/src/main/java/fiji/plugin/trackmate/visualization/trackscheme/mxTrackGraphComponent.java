@@ -37,8 +37,8 @@ public class mxTrackGraphComponent <T extends RealType<T> & NativeType<T>> exten
 	private static final Color BACKGROUND_COLOR_2 	= Color.LIGHT_GRAY;
 	private static final Color LINE_COLOR 			= Color.BLACK;
 
-	private int[] columnWidths = null;
-	private Color[] columnColors;
+	private int[] columnWidths = new int[0];
+	private Color[] columnColors = new Color[0];
 	private final TrackMateModel<T> model;
 	private final TrackScheme<T> trackScheme;
 
@@ -324,8 +324,8 @@ public class mxTrackGraphComponent <T extends RealType<T> & NativeType<T>> exten
 		}
 		
 		// Last column header
-		g.setColor(TrackScheme.DEFAULT_COLOR);
-		g.drawString("New spots", x+20, ycs/2);
+		g.setColor(Color.decode(TrackScheme.DEFAULT_COLOR));
+		g.drawString("Unlaid spots", x+20, ycs/2);
 	}
 
 	public void setColumnWidths(int[] columnWidths) {
