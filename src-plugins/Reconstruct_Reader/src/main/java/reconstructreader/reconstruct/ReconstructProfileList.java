@@ -30,7 +30,7 @@ public class ReconstructProfileList implements ContourSet
 
     public void addContour(final Element e, final ReconstructSection sec)
     {
-        ReconstructProfile rp = new ReconstructProfile(e, translator);
+        ReconstructProfile rp = new ReconstructProfile(e, translator, sec);
         sec.addProfile(rp);
         profileList.add(rp);
     }

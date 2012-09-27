@@ -99,6 +99,13 @@ public class ReconstructSection {
         return z;
     }
 
+    public double getHeight()
+    {
+        NodeList imageList = getDocument().getElementsByTagName("Image");
+        double wh[] = Utils.getReconstructImageWH(imageList.item(0));
+        return Double.isNaN(wh[1]) ? translator.getStackHeight() : wh[1];
+    }
+
     public void appendXML(final StringBuilder sb)
     {
         //double mag = translator.getMag();
