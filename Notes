@@ -1,8 +1,14 @@
 To fix:	
 	- 3D extremely slow!!
-	- private static Line chord;
-	- System.gc
-	
+    - MIP mask: Should drawWidth be defined by voxel depth?
+	- Benchmark: polynomials plugin makeSphere
+
+Version 3b
+    - Faster analyze 3D
+    - Removed spanwidth, to avoid confusions. nSpans is used throughout
+    - Since it only serves illustration purposes, mask is no longer a stack, but
+      a max-Z-projection of the analyzed stack.
+    - minZ, maxZ are now taken into account
 Version 3a
     - 3D Sholl: Performs connectivity checks (without spike suppression)
     - z-position of center is recorded in table
