@@ -383,7 +383,14 @@ public class FeatureModel <T extends RealType<T> & NativeType<T>> {
 	}
 
 	public Double getTrackFeature(final int trackIndex, final String feature) {
-		return trackFeatureValues.get(trackIndex).get(feature);
+		if (trackIndex >= trackFeatureValues.size()) {
+			return null; // Unknown track 
+		}
+		Map<String, Double> features = trackFeatureValues.get(trackIndex);
+		if (null == features) {
+			return null;
+		}
+		return features.get(feature);
 	}
 
 	public Map<String, double[]> getTrackFeatureValues() {
