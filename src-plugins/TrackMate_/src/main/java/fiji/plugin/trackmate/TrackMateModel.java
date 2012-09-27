@@ -129,7 +129,7 @@ public class TrackMateModel <T extends RealType<T> & NativeType<T>> {
 	 * CONSTANTS
 	 */
 
-	private static final boolean DEBUG = true;
+	private static final boolean DEBUG = false;
 	private static final boolean DEBUG_SELECTION = false;
 
 	/*

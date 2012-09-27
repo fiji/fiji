@@ -167,6 +167,18 @@ public class TrackMateModelChangeEvent extends EventObject {
 			return null;
 		return spotFlags.get(index);
 	}
+	
+	/**
+	 * @return  the modification flag for the given edge affected by this event.
+	 * @see #FLAG_EDGE_ADDED
+	 * @see #FLAG_EDGE_REMOVED
+	 */
+	public Integer getEdgeFlag(DefaultWeightedEdge edge) {
+		int index =  edges.indexOf(edge);
+		if (-1 == index)
+			return null;
+		return edgeFlags.get(index);
+	}
 
 	public List<Integer> getToFrame() {
 		return toFrame;

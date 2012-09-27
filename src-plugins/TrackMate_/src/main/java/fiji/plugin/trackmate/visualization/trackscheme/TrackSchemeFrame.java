@@ -83,7 +83,7 @@ public class TrackSchemeFrame  <T extends RealType<T> & NativeType<T>> extends J
 	static final boolean DEFAULT_DO_DISPLAY_COSTS_ON_EDGES = false;
 	/** Do we display the background decorations by default? */
 	static final boolean DEFAULT_DO_PAINT_DECORATIONS = true;
-	
+
 	private Settings<T> settings;
 	/** The model this instance is a view of (Yoda I speak like). */
 	private TrackMateModel<T> model;
@@ -129,7 +129,7 @@ public class TrackSchemeFrame  <T extends RealType<T> & NativeType<T>> extends J
 		SIMPLE_VERTEX_STYLE.put(mxConstants.STYLE_PERIMETER, mxPerimeter.EllipsePerimeter);
 		SIMPLE_VERTEX_STYLE.put(mxConstants.STYLE_STROKECOLOR, "#FF00FF");
 		SIMPLE_VERTEX_STYLE.put(mxConstants.STYLE_NOLABEL, true);
-		
+
 		BASIC_EDGE_STYLE.put(mxConstants.STYLE_SHAPE, mxConstants.SHAPE_CONNECTOR);
 		BASIC_EDGE_STYLE.put(mxConstants.STYLE_ALIGN, mxConstants.ALIGN_CENTER);
 		BASIC_EDGE_STYLE.put(mxConstants.STYLE_VERTICAL_ALIGN, mxConstants.ALIGN_MIDDLE);
@@ -137,7 +137,7 @@ public class TrackSchemeFrame  <T extends RealType<T> & NativeType<T>> extends J
 		BASIC_EDGE_STYLE.put(mxConstants.STYLE_ENDARROW, mxConstants.NONE);
 		BASIC_EDGE_STYLE.put(mxConstants.STYLE_STROKEWIDTH, 2.0f);
 		BASIC_EDGE_STYLE.put(mxConstants.STYLE_STROKECOLOR, "#FF00FF");
-		
+
 		VERTEX_STYLES = new HashMap<String, Map<String, Object> >(2);
 		VERTEX_STYLES.put(DEFAULT_STYLE_NAME, BASIC_VERTEX_STYLE);
 		VERTEX_STYLES.put("Simple", SIMPLE_VERTEX_STYLE);
@@ -250,67 +250,87 @@ public class TrackSchemeFrame  <T extends RealType<T> & NativeType<T>> extends J
 		if (event.getEventID() != TrackMateModelChangeEvent.MODEL_MODIFIED)
 			return;
 
-		new Thread() {
-			public void run() {
+		graph.getModel().beginUpdate();
+		try {
+			ArrayList<mxICell> cellsToRemove = new ArrayList<mxICell>();
 
+			int targetColumn = 3;
+			for (int i = 0; i < graphComponent.getColumnWidths().length; i++)
+				targetColumn += (graphComponent.getColumnWidths()[i]-1);
 
-				graph.getModel().beginUpdate();
-				try {
-					ArrayList<mxICell> cellsToRemove = new ArrayList<mxICell>();
+			// Deal with spots
+			if (event.getSpots() != null) {
+				for (Spot spot : event.getSpots() ) {
 
-					int targetColumn = 3;
-					for (int i = 0; i < graphComponent.getColumnWidths().length; i++)
-						targetColumn += (graphComponent.getColumnWidths()[i]-1);
+					if (event.getSpotFlag(spot) == TrackMateModelChangeEvent.FLAG_SPOT_ADDED) {
 
-					if (event.getSpots() != null) {
-						for (Spot spot : event.getSpots() ) {
+						// Update spot image
+						spotImageUpdater.update(spot);
+						// Put in the graph
+						insertSpotInGraph(spot, targetColumn);
+						targetColumn++;
 
-							if (event.getSpotFlag(spot) == TrackMateModelChangeEvent.FLAG_SPOT_ADDED) {
+					} else if (event.getSpotFlag(spot) == TrackMateModelChangeEvent.FLAG_SPOT_MODIFIED) {
 
-								// Update spot image
-								spotImageUpdater.update(spot);
-								// Put in the graph
-								insertSpotInGraph(spot, targetColumn);
-								targetColumn++;
-
-							} else if (event.getSpotFlag(spot) == TrackMateModelChangeEvent.FLAG_SPOT_MODIFIED) {
-
-								mxICell cell = graph.getCellFor(spot);
-								if (DEBUG)
-									System.out.println("[TrackSchemeFrame] modelChanged: updating cell for spot "+spot);
-								if (null == cell) {
-									// mxCell not present in graph. Most likely because the corresponding spot belonged
-									// to an invisible track, and a cell was not created for it when TrackScheme was
-									// launched. So we create one on the fly now.
-									cell = insertSpotInGraph(spot, targetColumn);
-								}
-
-								// Update spot image
-								spotImageUpdater.update(spot);
-
-								// Update cell look
-								String style = cell.getStyle();
-								style = mxStyleUtils.setStyle(style, mxConstants.STYLE_IMAGE, "data:image/base64,"+spot.getImageString());
-								graph.getModel().setStyle(cell, style);
-								long height = Math.min(DEFAULT_CELL_WIDTH, Math.round(2 * spot.getFeature(Spot.RADIUS) / settings.dx));
-								height = Math.max(height, DEFAULT_CELL_HEIGHT/3);
-								graph.getModel().getGeometry(cell).setHeight(height);
-
-							}  else if (event.getSpotFlag(spot) == TrackMateModelChangeEvent.FLAG_SPOT_REMOVED) {
-
-								mxICell cell = graph.getCellFor(spot);
-								cellsToRemove.add(cell);
-							}
-
+						mxICell cell = graph.getCellFor(spot);
+						if (DEBUG)
+							System.out.println("[TrackSchemeFrame] modelChanged: updating cell for spot "+spot);
+						if (null == cell) {
+							// mxCell not present in graph. Most likely because the corresponding spot belonged
+							// to an invisible track, and a cell was not created for it when TrackScheme was
+							// launched. So we create one on the fly now.
+							cell = insertSpotInGraph(spot, targetColumn);
 						}
-						graph.removeCells(cellsToRemove.toArray(), true);
-					}
-				} finally {
-					graph.getModel().endUpdate();
-				}
-			};
-		}.start();
 
+						// Update spot image
+						spotImageUpdater.update(spot);
+
+						// Update cell look
+						String style = cell.getStyle();
+						style = mxStyleUtils.setStyle(style, mxConstants.STYLE_IMAGE, "data:image/base64,"+spot.getImageString());
+						graph.getModel().setStyle(cell, style);
+						long height = Math.min(DEFAULT_CELL_WIDTH, Math.round(2 * spot.getFeature(Spot.RADIUS) / settings.dx));
+						height = Math.max(height, DEFAULT_CELL_HEIGHT/3);
+						graph.getModel().getGeometry(cell).setHeight(height);
+
+					}  else if (event.getSpotFlag(spot) == TrackMateModelChangeEvent.FLAG_SPOT_REMOVED) {
+
+						mxICell cell = graph.getCellFor(spot);
+						cellsToRemove.add(cell);
+
+					} 
+				}
+				graph.removeCells(cellsToRemove.toArray(), true);
+			}
+
+		} finally {
+			graph.getModel().endUpdate();
+		}
+
+		// Deal with edges
+		if (event.getEdges() != null) {
+
+			graph.getModel().beginUpdate();
+			try {
+				for (DefaultWeightedEdge edge : event.getEdges()) {
+					if (event.getEdgeFlag(edge) == TrackMateModelChangeEvent.FLAG_EDGE_ADDED) {
+
+						mxICell edgeCell = graph.getCellFor(edge);
+						if (null == edgeCell) {
+							edgeCell = graph.addJGraphTEdge(edge);
+						}
+
+						graph.getModel().add(graph.getDefaultParent(), edgeCell, 0);
+						String edgeStyle = edgeCell.getStyle();
+						edgeStyle = mxStyleUtils.setStyle(edgeStyle, mxSideTextShape.STYLE_DISPLAY_COST, ""+graphLayout.isDoDisplayCosts());
+						graph.getModel().setStyle(edgeCell, edgeStyle);
+
+					}
+				}
+			} finally {
+				graph.getModel().endUpdate();
+			}
+		}
 	}
 
 
@@ -398,7 +418,7 @@ public class TrackSchemeFrame  <T extends RealType<T> & NativeType<T>> extends J
 		graph.setGridEnabled(false);
 		graph.setLabelsVisible(true);
 		graph.setDropEnabled(false);
-		
+
 		mxStylesheet styleSheet = graph.getStylesheet();
 		styleSheet.setDefaultEdgeStyle(BASIC_EDGE_STYLE);
 		styleSheet.setDefaultVertexStyle(BASIC_VERTEX_STYLE);
@@ -479,25 +499,14 @@ public class TrackSchemeFrame  <T extends RealType<T> & NativeType<T>> extends J
 	protected mxICell insertSpotInGraph(Spot spot, int targetColumn) {
 		mxICell cellAdded = graph.getCellFor(spot);
 		if (cellAdded != null) {
-			// cell for spot already exist, do nothing and return orginal spot
+			// cell for spot already exist, do nothing and return original spot
 			return cellAdded;
 		}
 		// Instantiate JGraphX cell
 		cellAdded = graph.addJGraphTVertex(spot);
 		// Position it
-		double instant = spot.getFeature(Spot.POSITION_T);
+		int row = spot.getFeature(Spot.FRAME).intValue() + 1;
 		double x = (targetColumn-1) * X_COLUMN_SIZE - DEFAULT_CELL_WIDTH/2;
-		Integer row = graphComponent.getRowForInstant().get(instant);
-		if (null == row) {
-			// The spot added is set to a time that is not present yet in the tracks scheme
-			// So we had it to the last row, plus one.
-			row = 0;
-			for(Integer eRow : graphComponent.getRowForInstant().values()) {
-				if (eRow > row) 
-					row = eRow;
-			}
-			row = row + 1;
-		}
 		double y = (0.5 + row) * Y_COLUMN_SIZE - DEFAULT_CELL_HEIGHT/2; 
 		long height = Math.min(DEFAULT_CELL_WIDTH, Math.round(2 * spot.getFeature(Spot.RADIUS) / settings.dx));
 		height = Math.max(height, 12);
@@ -507,7 +516,6 @@ public class TrackSchemeFrame  <T extends RealType<T> & NativeType<T>> extends J
 		graph.getModel().setStyle(cellAdded, mxConstants.STYLE_IMAGE+"="+"data:image/base64,"+spot.getImageString());
 		return cellAdded;
 	}
-
 
 	protected void importTrack(int trackIndex) {
 		model.beginUpdate();
@@ -532,6 +540,9 @@ public class TrackSchemeFrame  <T extends RealType<T> & NativeType<T>> extends J
 		}
 	}
 
+
+
+
 	/**
 	 * This method is called when the user has created manually an edge in the graph, by dragging
 	 * a link between two spot cells. It checks whether the matching edge in the model exists, 
@@ -544,7 +555,7 @@ public class TrackSchemeFrame  <T extends RealType<T> & NativeType<T>> extends J
 			graph.getModel().beginUpdate();
 			model.beginUpdate();
 			try {
-				Spot source = graph.getSpotFor(((mxCell)cell).getSource());
+				Spot source = graph.getSpotFor(((mxCell) cell).getSource());
 				Spot target = graph.getSpotFor(((mxCell) cell).getTarget());
 				// We add a new jGraphT edge to the underlying model, if it does not exist yet.
 				DefaultWeightedEdge edge = model.getEdge(source, target); 
@@ -714,7 +725,7 @@ public class TrackSchemeFrame  <T extends RealType<T> & NativeType<T>> extends J
 		JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, infoPane, graphComponent);
 		splitPane.setDividerLocation(170);
 		getContentPane().add(splitPane, BorderLayout.CENTER);
-		
+
 		// Add listener for plot events
 		infoPane.featureSelectionPanel.addActionListener(new ActionListener() {
 			@Override
@@ -761,7 +772,7 @@ public class TrackSchemeFrame  <T extends RealType<T> & NativeType<T>> extends J
 	public mxTrackGraphComponent<T> getGraphComponent() {
 		return graphComponent;
 	}
-	
+
 	/**
 	 * Return the graph layout in charge of arranging the cells on the graph.
 	 */
