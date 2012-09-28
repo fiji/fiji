@@ -28,6 +28,8 @@ import java.io.OutputStreamWriter;
 import java.io.BufferedOutputStream;
 import java.io.FileOutputStream;
 import java.io.File;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.util.regex.Pattern;
 import ij.IJ;
 
@@ -178,10 +180,14 @@ public class Weaver {
 			}
 		}
 		try {
-			new Refresh_Javas().compile(f.getAbsolutePath(), null);
+			Refresh_Javas compiler = new Refresh_Javas();
+			OutputStream out = new IJLogOutputStream();
+			compiler.setOutputStreams(out, out);
+			compiler.compile(f.getAbsolutePath(), null);
 		} finally {
 			// 6. Set the temporary files for deletion when the JVM exits
 			// The .java file
+/*
 			f.deleteOnExit();
 			// The .class files, if any
 			for (File fc : f.getParentFile().listFiles()) {
@@ -189,6 +195,7 @@ public class Weaver {
 					fc.deleteOnExit();
 				}
 			}
+*/
 		}
 		// 7. Load the class file
 		URLClassLoader loader = new URLClassLoader(new URL[]{new URL("file://" + tmpDir)}, IJ.getClassLoader());
@@ -251,5 +258,68 @@ public class Weaver {
 			return new Type(sb.toString());
 		}
 		return new Type(c.getName());
+	}
+
+	protected static class IJLogOutputStream extends OutputStream {
+		public byte[] buffer = new byte[16384];
+		public int len;
+
+		protected synchronized void ensure(int length) {
+			if (buffer.length >= length)
+				return;
+
+			int newLength = buffer.length * 3 / 2;
+			if (newLength < length)
+				newLength = length + 16;
+			byte[] newBuffer = new byte[newLength];
+			System.arraycopy(buffer, 0, newBuffer, 0, len);
+			buffer = newBuffer;
+		}
+
+		public synchronized void write(int b) {
+			ensure(len + 1);
+			buffer[len++] = (byte)b;
+			if (b == '\n')
+				flush();
+		}
+
+		public synchronized void write(byte[] buffer) {
+			write(buffer, 0, buffer.length);
+		}
+
+		public synchronized void write(byte[] buffer, int offset, int length) {
+			int eol = length;
+			while (eol > 0)
+				if (buffer[eol - 1] == '\n')
+					break;
+				else
+					eol--;
+			if (eol >= 0) {
+				ensure(len + eol);
+				System.arraycopy(buffer, offset, this.buffer, len, eol);
+				len += eol;
+				flush();
+				length -= eol;
+				if (length == 0)
+					return;
+				offset += eol;
+			}
+			ensure(len + length);
+			System.arraycopy(buffer, offset, this.buffer, len, length);
+			len += length;
+		}
+
+		public void close() {
+			flush();
+		}
+
+		public synchronized void flush() {
+			if (len > 0) {
+				if (buffer[len - 1] == '\n')
+					len--;
+				IJ.log(new String(buffer, 0, len));
+			}
+			len = 0;
+		}
 	}
 }
