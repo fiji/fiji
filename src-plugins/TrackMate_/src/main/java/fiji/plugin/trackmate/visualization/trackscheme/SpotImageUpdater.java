@@ -31,7 +31,7 @@ public class SpotImageUpdater <T extends RealType<T> & NativeType<T>> {
 	 */
 	public void update(final Spot spot) {
 
-		Integer frame = model.getSpots().getFrame(spot);
+		Integer frame = spot.getFeature(Spot.FRAME).intValue();
 		if (null == frame)
 			return;
 		if (frame == previousFrame) {
