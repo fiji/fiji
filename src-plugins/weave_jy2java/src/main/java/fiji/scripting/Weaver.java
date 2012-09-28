@@ -24,12 +24,12 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.lang.reflect.Modifier;
-import java.io.OutputStreamWriter;
-import java.io.BufferedOutputStream;
 import java.io.FileOutputStream;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.Writer;
 import java.util.regex.Pattern;
 import ij.IJ;
 
@@ -149,9 +149,8 @@ public class Weaver {
 		sb.append("public final ").append(rt.getName())
 		  .append(" call() { ").append(code).append("\n}}");
 		// 4. Save the file to a temporary directory
-		String tmpDir = System.getProperty("java.io.tmpdir").replace('\\', '/');
-		if (!tmpDir.endsWith("/")) tmpDir += "/";
-		final File f = new File(tmpDir + "/weave/gen" + k + ".java");
+		File tmpDir = new File(System.getProperty("java.io.tmpdir"));
+		final File f = new File(tmpDir, "/weave/gen" + k + ".java");
 		if (!f.getParentFile().exists() && !f.getParentFile().mkdirs()) {
 			throw new Exception("Could not create directories for " + f);
 		}
@@ -161,15 +160,9 @@ public class Weaver {
 			if (null == ted) ted = new TextEditor("gen" + k + ".java", sb.toString());
 			else ted.newTab(sb.toString(), ".java");
 		}
-		OutputStreamWriter dos = null;
-		try {
-			// Encode in "Latin 1"
-			dos = new OutputStreamWriter(new BufferedOutputStream(new FileOutputStream(f), sb.length()), "8859_1");
-			dos.write(sb.toString(), 0, sb.length());
-			dos.flush();
-		} finally {
-			if (null != dos) dos.close();
-		}
+		Writer writer = new FileWriter(f);
+		writer.write(sb.toString());
+		writer.close();
 		// 5. Compile the file, removing first any class file names that match
 		final Pattern pclass = Pattern.compile("^gen" + k + ".*class$");
 		for (File fc : f.getParentFile().listFiles()) {
@@ -198,7 +191,7 @@ public class Weaver {
 */
 		}
 		// 7. Load the class file
-		URLClassLoader loader = new URLClassLoader(new URL[]{new URL("file://" + tmpDir)}, IJ.getClassLoader());
+		URLClassLoader loader = new URLClassLoader(new URL[]{tmpDir.toURI().toURL()}, IJ.getClassLoader());
 
 		try {
 			return (Callable<T>) loader.loadClass(className).newInstance();
