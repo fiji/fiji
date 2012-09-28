@@ -1,54 +1,57 @@
-To fix:	
-	- 3D extremely slow!!
-    - MIP mask: Should drawWidth be defined by voxel depth?
-	- Benchmark: polynomials plugin makeSphere
+Advanced Sholl Analysis
+Version 3d
+    - Small performance improvement: Analysis is now restricted to the volume of
+      the largest shell, rather than parsing all the voxels in the image
+
+Version 3c
+    - 3D Sholl is significantly faster, and usable for the first time, but
+      remains extremely slow
+    - Substituted "Radius span" with "Samples per radius" to avoid confusions,
+      imposing a draconian maximum to encourage continuos analyses
+    - Since it only serves illustration purposes, mask is now a MIP of the
+      analyzed stack
 
 Version 3b
-    - Faster analyze 3D
-    - Removed spanwidth, to avoid confusions. nSpans is used throughout
-    - Since it only serves illustration purposes, mask is no longer a stack, but
-      a max-Z-projection of the analyzed stack.
-    - minZ, maxZ are now taken into account
-Version 3a
-    - 3D Sholl: Performs connectivity checks (without spike suppression)
+    - 3D Sholl: Connectivity checks between slices (without spike suppression),
     - z-position of center is recorded in table
-    - Maximal Area of Analysis is now the square containing last circle, rather
-      than the entire image;
-    
-Version 3
-    - 3D Sholl: Checks connectivity within slice
-    - SInce connectivity is not done in z, the min set size mus be at least the z-spacing
+
+Version 3a
+    - 3D Sholl: Connectivity checks within slice
 
 Version 3
-    - Performs 3D Sholl
+    - Performs 3D Sholl, if input image is a stack
+    - It can analyze polarized arbors by restricting the analysis to hemicircles
+      or hemispheres. This requires the user to define the center of Analysis
+      with an orthogonal chord
 
 Version 2.5
     - Fixed duplicated points in Bresenham's algorithm
-    - Foreground is any value greater than 0
+    - Foreground is now any value greater than 0
     - Option to save Sholl profiles
-    - Can be aborted by holding Esc
+    - Long analysis can be aborted by holding Esc
 
 Version 2.4
     - Analysis can be restricted to an area, using initial line as a chord
     - Fixed issue introduced in 2.3min which -1 tagged pixels were being counted
     - Fixed rounding in mask drawing
     - Center ROI is dislayed on mask
-	- Plot is named after analyzed image
-	- Improved order of Table columns
-	- showStatus more informative
+    - Plot is named after analyzed image
+    - Improved Sholl Table
 
 Version 2.3
-	- Results printed to a dedicated table
-	- Sholl decay is always calculated when fitting curve
-	- Fixed exception in cv calculation
-	- Impose valid parameters, rather than keep prompting the user (buggy, e.g.,
-	  when recording macros)
+    - Results printed to a dedicated table
+    - Sholl decay is always calculated when fitting curve
+    - Fixed exception in cv calculation
+    - Impose valid parameters, rather than keep prompting the user (which is
+      buggy, e.g., when recording macros)
     - Progress bar is more informative
     - Major code cleaning
-    - Minor fixes
 
 Version 2.2
-	- Fixed offset of plot label
-	- Checks for reasonable Radius span value
+    - Fixed offset of plot label
+    - Checks for reasonable Radius span value
     - Code cleaning: more intuitive variable names
-	- Fix crashed caused by mis-evaluation in DoSpikeSupression
+    - Fix crashed caused by mis-evaluation in DoSpikeSupression
+
+Version 1.1-2.1
+     - Curve Fitting, modernization of Tom's code
