@@ -36,8 +36,9 @@ import ij.IJ;
 
 /* An utility class to inline java code inside any script of any language.
  * The code, passed on as a String, is placed into a static method without
- * arguments and with a default Object return value. The bindings (read: objects passed to itfrom the scripting language runtime, in a map), are placed
- * into static final private fields of the newly generated class.
+ * arguments and with a default Object return value. The bindings (read:
+ * objects passed to itfrom the scripting language runtime, in a map), are
+ * placed into static final private fields of the newly generated class.
  * Then the class is compiled. No reflection is used anywhere.
  * 
  * An example in jython:
@@ -54,8 +55,7 @@ w = Weaver.inline(
 	}
 	return sum;
 	""",
-	{"nums" : nums},
-	Double)
+	{"nums" : nums})
 
 print w.call()
  *
