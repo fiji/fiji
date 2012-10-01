@@ -16,6 +16,10 @@
 	<name>plugins/Trainable_Segmentation.jar</name>
 	<description></description>
 
+	<properties>
+		<imagej1.version>[1.46a,)</imagej1.version>
+	</properties>
+
 	<dependencies>
 		<dependency>
 			<groupId>jama</groupId>
