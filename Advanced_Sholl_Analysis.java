@@ -6,31 +6,30 @@
 
 import ij.IJ;
 import ij.ImagePlus;
+import ij.ImageStack;
+import ij.Prefs;
+import ij.WindowManager;
 import ij.gui.*;
 import ij.measure.Calibration;
 import ij.measure.CurveFitter;
 import ij.measure.ResultsTable;
 import ij.plugin.PlugIn;
 import ij.plugin.ZProjector;
-import ij.Prefs;
 import ij.process.*;
-import ij.ImageStack;
-import ij.util.Tools;
-import ij.WindowManager;
 import ij.text.*;
+import ij.util.Tools;
 
 import java.awt.Color;
-import java.awt.Frame;
 import java.awt.Font;
+import java.awt.Frame;
 import java.awt.Rectangle;
 import java.io.*;
 import java.util.Arrays;
 
-
 /**
- * Performs Sholl Analysis on binary images of previously segmented or traced arbors.
- * Several analysis methods are available: Linear (N), Linear (N/S), Semi-log and
- * Log-log as described in Milosevic and Ristanovic, J Theor Biol (2007) 245(1)130-40
+ * Performs Sholl Analysis on binary images of previously segmented arbors. Several
+ * analysis methods are available: Linear (N), Linear (N/S), Semi-log and Log-log
+ * as described in Milosevic and Ristanovic, J Theor Biol (2007) 245(1)130-40
  *
  * Background is always considered to be 0, independently of Prefs.blackBackground.
  *
@@ -111,10 +110,10 @@ public class Advanced_Sholl_Analysis implements PlugIn {
         }
 
         // Get image calibration
-        Calibration cal = img.getCalibration();
         double x_spacing = 1;
         double y_spacing = 1;
         double z_spacing = 1;
+        Calibration cal = img.getCalibration();
 
         if( cal != null ) {
             x_spacing = cal.pixelWidth;
@@ -135,10 +134,14 @@ public class Advanced_Sholl_Analysis implements PlugIn {
 
             img.deleteRoi();
             Toolbar.getInstance().setTool("line");
-            WaitForUserDialog wd = new WaitForUserDialog("Advanced Sholl Analysis v"
-                + VERSION,"Please define the center of analysis using\n"
-                        + "the Point Selection Tool or, alternatively, by\n"
-                        + "creating a straight line starting at the center.");
+
+            String msg = "Please define the largest Sholl radius by creating\n"
+                + "a straight line starting at the center of analysis.\n \n"
+                + "Alternatively, you can define the focus of the\n"
+                + "arbor using the Point Selection Tool.";
+
+            WaitForUserDialog wd = new WaitForUserDialog("Advanced Sholl Analysis v"+
+                                                         VERSION, msg);
             wd.show();
 
             if (wd.escPressed()) return;
@@ -189,7 +192,7 @@ public class Advanced_Sholl_Analysis implements PlugIn {
         // Check if we are dealing with a stack, anticipating 3D Sholl
         z =  img.getCurrentSlice();
         int depth = img.getNSlices();
-        boolean IS_3D = depth > 1;
+        IS_3D = depth > 1;
 
         // Create the plugin dialog
         GenericDialog gd = new GenericDialog("Advanced Sholl Analysis v" + VERSION);
@@ -358,7 +361,7 @@ public class Advanced_Sholl_Analysis implements PlugIn {
         }
 
         IJ.showProgress(0, 0);
-		IJ.showTime(img, img.getStartTime(), finalmsg);
+        IJ.showTime(img, img.getStartTime(), finalmsg);
 
     }
 
@@ -380,13 +383,12 @@ public class Advanced_Sholl_Analysis implements PlugIn {
         ImageStack stack = img.getStack();
 
         for (int s = 0; s < nspheres; s++) {
-
             IJ.showStatus("Sampling sphere "+ (s+1) +"/"+ nspheres + ". Press 'Esc' to abort...");
-            IJ.showProgress(s, nspheres);
             if (IJ.escapePressed()) { IJ.beep(); return data; }
 
             count = 0;
-            for ( int z = minZ; z <= maxZ; ++z )
+            for ( int z = minZ; z <= maxZ; ++z ) {
+                IJ.showProgress(z, maxZ+2); // exagerate final value to avoid flickering of bar
                 for ( int y = minY; y <= maxY; ++y )
                     for ( int x = minX; x <= maxX; ++x ) {
                         dx = (x-xc)*(x-xc);
@@ -401,6 +403,7 @@ public class Advanced_Sholl_Analysis implements PlugIn {
                             }
                         }
                     }
+                }
 
             // We now have the coordinates of the points intercepting this Sholl
             // sphere. Lets check if their respective pixels are clustered
@@ -408,8 +411,9 @@ public class Advanced_Sholl_Analysis implements PlugIn {
 
             // Since this all this is very computing intensive, exit as soon
             // as a spheres has no interceptions
-            	//if (count==0) return data;
+                //if (count==0) return data;
         }
+
         return data;
     }
 
@@ -466,11 +470,11 @@ public class Advanced_Sholl_Analysis implements PlugIn {
         // binsize is at least 1
         binsamples = new int[binsize];
 
+        IJ.showStatus("Sampling "+ size +" radii, "+ binsize
+                    + " measurement(s) per radius. Press 'Esc' to abort...");
+
         // Outer loop to control the analysis bins
         for (i = 0; i < size; i++) {
-
-            IJ.showStatus("Radius "+ i +"/"+ size +", "+ binsize
-                        + " measurement(s) per span. Press 'Esc' to abort...");
 
             // Get the radius we are sampling
             r = radii[i];
@@ -1091,7 +1095,7 @@ public class Advanced_Sholl_Analysis implements PlugIn {
 
             for (int j = 0; j < drawWidth; j++) {
 
-                // this will already exclude out-of-bound pixels
+                // this will already exclude pixels out of bounds
                 points = getCircumferencePoints(xc, yc, drawRadius++);
                 for (int k = 0; k < points.length; k++)
                     for (int l = 0; l < points[k].length; l++)
@@ -1109,7 +1113,7 @@ public class Advanced_Sholl_Analysis implements PlugIn {
         img2.setProperty("Label", label);
         img2.setRoi(new PointRoi(xc, yc));
         IJ.run(img2, "Fire", ""); // "Fire", "Ice", "Spectrum", "Redgreen"
-		return img2;
+        return img2;
     }
 
     /** Creates improved error messages */
@@ -1127,4 +1131,3 @@ public class Advanced_Sholl_Analysis implements PlugIn {
         }
     }
 }
-
