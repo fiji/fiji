@@ -70,7 +70,6 @@
 		<module>Interactive_3D_Surface_Plot</module>
 		<module>IsoData_Classifier</module>
 		<module>JRuby_Interpreter</module>
-		<module>Jama</module>
 		<module>Javascript_</module>
 		<module>Jython_Interpreter</module>
 		<module>Kuwahara_Filter</module>
