@@ -22,14 +22,42 @@ artifactId () {
 }
 
 version () {
-	echo "${1##*:}"
+	result="${1#*:}"
+	case "$result" in
+	*:*)
+		echo "${1##*:}"
+		;;
+	esac
 }
 
 # Given an xml, extract the first <tag>
 
 extract_tag () {
 	result="${2#*<$1>}"
-	echo "${result%%</$1>*}"
+	case "$result" in
+	"$2")
+		;;
+	*)
+		echo "${result%%</$1>*}"
+		;;
+	esac
+}
+
+# Given a GAV parameter, determine the base URL of the project
+
+project_url () {
+	gav="$1"
+	artifactId="$(artifactId "$gav")"
+	infix="$(groupId "$gav" | tr . /)/$artifactId"
+	version="$(version "$gav")"
+	case "$version" in
+	*SNAPSHOT)
+		echo "$root_url/snapshots/$infix"
+		;;
+	*)
+		echo "$root_url/releases/$infix"
+		;;
+	esac
 }
 
 # Given a GAV parameter, determine the URL of the .jar file
@@ -65,6 +93,32 @@ tmpfile () {
 	echo /tmp/precompiled.$i"$1"
 }
 
+# Given a GAV parameter, make a list of its dependencies (as GAV parameters)
+
+get_dependencies () {
+	url="$(jar_url "$1")"
+	pom="$(curl -s "${url%.jar}.pom")"
+	while true
+	do
+		case "$pom" in
+		*'<dependency>'*)
+			dependency="$(extract_tag dependency "$pom")"
+			groupId="$(extract_tag groupId "$dependency")"
+			test '${project.groupId}' = $groupId &&
+			groupId="$(groupId "$1")"
+			artifactId="$(extract_tag artifactId "$dependency")"
+			version="$(extract_tag version "$dependency")"
+			test '${project.version}' = $version &&
+			version="$(version "$1")"
+			echo "$groupId:$artifactId:$version"
+			pom="${pom#*</dependency>}"
+			;;
+		*)
+			break;
+		esac
+	done
+}
+
 # Given a GAV parameter, download the .jar file
 
 get_jar () {
@@ -82,6 +136,15 @@ commit)
 	unzip -p "$jar" META-INF/MANIFEST.MF |
 	sed -n -e 's/^Implementation-Build: *//pi'
 	rm "$jar"
+	;;
+deps|dependencies)
+	get_dependencies "$2"
+	;;
+latest-version)
+	metadata="$(curl -s "$(project_url "$2")"/maven-metadata.xml)"
+	latest="$(extract_tag latest "$metadata")"
+	test -n "$latest" || latest="$(extract_tag version "$metadata")"
+	echo "$latest"
 	;;
 *)
 	die "Usage: $0 [command] [argument...]"'
