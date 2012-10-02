@@ -45,7 +45,7 @@ import fiji.plugin.trackmate.util.TrackSplitter;
 public class mxTrackGraphLayout <T extends RealType<T> & NativeType<T>> extends mxGraphLayout {
 
 	private static final int SWIMLANE_HEADER_SIZE = 30;
-	private static final boolean DEBUG = true;
+	private static final boolean DEBUG = false;
 
 	private int[] columnWidths;
 	protected InterpolatePaintScale colorMap = InterpolatePaintScale.Jet;
@@ -342,13 +342,13 @@ public class mxTrackGraphLayout <T extends RealType<T> & NativeType<T>> extends 
 		// Add selected style to style string
 		String style = cell.getStyle(); 
 		style = mxStyleUtils.removeAllStylenames(style);
-		style = style + ";" + style;
+		style = layoutStyle + ";" + style;
 		
 		double height 	= DEFAULT_CELL_HEIGHT; 
 		double width 	= DEFAULT_CELL_WIDTH;
 
 		// Deal with styles
-		if (style.equals("Simple")) {
+		if (layoutStyle.equals("Simple")) {
 			width 	= DEFAULT_CELL_HEIGHT / 2;
 			height 	= DEFAULT_CELL_HEIGHT / 2;
 			style = mxStyleUtils.setStyle(style, mxConstants.STYLE_FILLCOLOR, colorStr);
