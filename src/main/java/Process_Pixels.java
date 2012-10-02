@@ -149,7 +149,7 @@ public class Process_Pixels implements PlugInFilter {
 		}
 	}
 
-	void showAbout() {
+	public void showAbout() {
 		IJ.showMessage("ProcessPixels",
 			"a template for processing each pixel of an image"
 		);
