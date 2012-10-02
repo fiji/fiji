@@ -1,4 +1,5 @@
 import ij.IJ;
+import ij.ImageJ;
 import ij.ImagePlus;
 import ij.gui.GenericDialog;
 import ij.plugin.filter.PlugInFilter;
@@ -153,5 +154,31 @@ public class Process_Pixels implements PlugInFilter {
 		IJ.showMessage("ProcessPixels",
 			"a template for processing each pixel of an image"
 		);
+	}
+
+	/**
+	 * Main method for debugging.
+	 *
+	 * For debugging, it is convenient to have a method that starts ImageJ, loads an
+	 * image and calls the plugin, e.g. after setting breakpoints.
+	 *
+	 * @param args unused
+	 */
+	public static void main(String[] args) {
+		// set the plugins.dir property to make the plugin appear in the Plugins menu
+		Class<?> clazz = Process_Pixels.class;
+		String url = clazz.getResource("/" + clazz.getName().replace('.', '/') + ".class").toString();
+		String pluginsDir = url.substring(5, url.length() - clazz.getName().length() - 6);
+		System.setProperty("plugins.dir", pluginsDir);
+
+		// start ImageJ
+		new ImageJ();
+
+		// open the Clown sample
+		ImagePlus image = IJ.openImage("http://imagej.net/images/clown.jpg");
+		image.show();
+
+		// run the plugin
+		IJ.runPlugIn(clazz.getName(), "");
 	}
 }

@@ -22,5 +22,10 @@ directory, run _Help&gt;Refresh Menus_ and the plugin will be available in
 _Process&gt;Process Pixels_ (this can be changed by editing
 _src/main/resources/plugins.config_).
 
+Developing plugins in an IDE is convenient, especially for debugging. To
+that end, the plugin contains a _main()_ method which sets the _plugins.dir_
+system property (so that the plugin is added to the Plugins menu), starts
+ImageJ, loads an image and runs the plugin.
+
 Since this project is intended as a starting point for your own
 developments, it is in the public domain.
