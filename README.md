@@ -21,3 +21,6 @@ _target/_ subdirectory. Simply copy it into your ImageJ's _plugins/_
 directory, run _Help&gt;Refresh Menus_ and the plugin will be available in
 _Process&gt;Process Pixels_ (this can be changed by editing
 _src/main/resources/plugins.config_).
+
+Since this project is intended as a starting point for your own
+developments, it is in the public domain.
