@@ -4,6 +4,9 @@
 # It employs precompiled.sh to find out whether a given artifact's source
 # code has changed since the latest deployment.
 
+# error out whenever a command fails
+set -e
+
 ij_dir="$(cd "$(dirname "$0")/.." && pwd)"
 helper="$ij_dir/bin/precompiled.sh"
 

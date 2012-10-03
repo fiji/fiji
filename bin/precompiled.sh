@@ -3,6 +3,9 @@
 # This script uses the ImageJ Maven repository at http://maven.imagej.net/
 # to fetch an artifact, or to determine the state of it.
 
+# error out whenever a command fails
+set -e
+
 root_url=http://maven.imagej.net/content/repositories
 ij_dir="$(cd "$(dirname "$0")"/.. && pwd)"
 
