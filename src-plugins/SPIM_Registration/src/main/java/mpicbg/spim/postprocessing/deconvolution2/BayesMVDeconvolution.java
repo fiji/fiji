@@ -87,7 +87,7 @@ public class BayesMVDeconvolution implements Deconvolver
 						this.stack.setSliceLabel( "Iteration 1", i + 1 );
 					
 					tmp.setTitle( "debug view" );
-					this.ci = new CompositeImage( tmp );
+					this.ci = new CompositeImage( tmp, CompositeImage.COMPOSITE );
 					this.ci.setDimensions( 1, this.psi.getDimension( 2 ), 1 );
 					this.ci.show();
 				}
@@ -98,7 +98,7 @@ public class BayesMVDeconvolution implements Deconvolver
 						this.stack.addSlice( "Iteration 2", t.getProcessor( i + 1 ) );
 					this.ci.close();
 					
-					this.ci = new CompositeImage( new ImagePlus( "debug view", this.stack ) );
+					this.ci = new CompositeImage( new ImagePlus( "debug view", this.stack ), CompositeImage.COMPOSITE );
 					this.ci.setDimensions( 1, this.psi.getDimension( 2 ), 2 );
 					this.ci.show();
 				}
