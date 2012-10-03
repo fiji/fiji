@@ -252,11 +252,12 @@ install_jar () {
 		if ! is_jar_installed "$gav"
 		then
 			tmp="$(get_jar "$gav")"
+			name="$(artifactId "$gav")-$(version "$gav").jar"
 			if is_ij1_plugin "$tmp"
 			then
-				mv "$tmp" "$ij_dir/plugins/"
+				mv "$tmp" "$ij_dir/plugins/$name"
 			else
-				mv "$tmp" "$ij_dir/jars/"
+				mv "$tmp" "$ij_dir/jars/$name"
 			fi
 		fi
 	done
