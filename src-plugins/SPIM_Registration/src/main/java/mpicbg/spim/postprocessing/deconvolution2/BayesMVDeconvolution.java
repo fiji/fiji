@@ -1,6 +1,9 @@
 package mpicbg.spim.postprocessing.deconvolution2;
 
+import ij.CompositeImage;
 import ij.IJ;
+import ij.ImagePlus;
+import ij.ImageStack;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -24,6 +27,9 @@ public class BayesMVDeconvolution implements Deconvolver
 	final int numViews, numDimensions;
     final float avg;
     final double lambda;
+    
+    ImageStack stack;
+    CompositeImage ci;
     
     boolean collectStatistics = true;
     
@@ -62,6 +68,8 @@ public class BayesMVDeconvolution implements Deconvolver
 		for ( final FloatType f : psi )
 			f.set( avg );
 		
+		//this.stack = new ImageStack( this.psi.getDimension( 0 ), this.psi.getDimension( 1 ) );
+		
 		// run the deconvolution
 		while ( i < numIterations )
 		{
@@ -69,13 +77,48 @@ public class BayesMVDeconvolution implements Deconvolver
 			
 			if ( debug && i % debugInterval == 0 )
 			{
+				psi.getDisplay().setMinMax( 0, 1 );
+				final ImagePlus tmp = ImageJFunctions.copyToImagePlus( psi );
+				
+				if ( this.stack == null )
+				{
+					this.stack = tmp.getImageStack();
+					for ( int i = 0; i < this.psi.getDimension( 2 ); ++i )
+						this.stack.setSliceLabel( "Iteration 1", i + 1 );
+					
+					tmp.setTitle( "debug view" );
+					this.ci = new CompositeImage( tmp );
+					this.ci.setDimensions( 1, this.psi.getDimension( 2 ), 1 );
+					this.ci.show();
+				}
+				else if ( stack.getSize() == this.psi.getDimension( 2 ) )
+				{
+					final ImageStack t = tmp.getImageStack();
+					for ( int i = 0; i < this.psi.getDimension( 2 ); ++i )
+						this.stack.addSlice( "Iteration 2", t.getProcessor( i + 1 ) );
+					this.ci.close();
+					
+					this.ci = new CompositeImage( new ImagePlus( "debug view", this.stack ) );
+					this.ci.setDimensions( 1, this.psi.getDimension( 2 ), 2 );
+					this.ci.show();
+				}
+				else
+				{
+					final ImageStack t = tmp.getImageStack();
+					for ( int i = 0; i < this.psi.getDimension( 2 ); ++i )
+						this.stack.addSlice( "Iteration " + i, t.getProcessor( i + 1 ) );
+
+					this.ci.setStack( this.stack, 1, this.psi.getDimension( 2 ), stack.getSize() / this.psi.getDimension( 2 ) );	
+				}
+				/*
 				Image<FloatType> psiCopy = psi.clone();
 				//ViewDataBeads.normalizeImage( psiCopy );
 				psiCopy.setName( "Iteration " + i + " l=" + lambda );
 				psiCopy.getDisplay().setMinMax( 0, 1 );
 				ImageJFunctions.copyToImagePlus( psiCopy ).show();
 				psiCopy.close();
-				psiCopy = null;			}
+				psiCopy = null;*/
+			}
 		}
 	}
 	
@@ -210,7 +253,7 @@ public class BayesMVDeconvolution implements Deconvolver
 			
 			IJ.log("------------------------------------------------");
 			IJ.log(" Iteration: " + iteration );
-			IJ.log(" Change: " + sumChange );
+			IJ.log(" Sum change: " + sumChange );
 			IJ.log(" Max Change per Pixel: " + maxChange );
 			IJ.log("------------------------------------------------");
 		}
