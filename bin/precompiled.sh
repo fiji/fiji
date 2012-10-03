@@ -253,6 +253,18 @@ Commands:
 
 commit <groupId>:<artifactId>:<version>
 	Gets the commit from which the given artifact was built
+
+dependencies <groupId>:<artifactId>:<version>
+	Lists the direct dependencies of the given artifact
+
+all-dependencies <groupId>:<artifactId>:<version>
+	Lists all dependencies of the given artifact, including itself and
+	transitive dependencies
+
+latest-version <groupId>:<artifactId>[:<version>]
+	Prints the current version of the given artifact (if "SNAPSHOT" is
+	passed as version, it prints the current snapshot version rather
+	than the release one)
 '
 	;;
 esac
