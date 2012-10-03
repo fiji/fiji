@@ -117,6 +117,9 @@ public class Multi_View_Deconvolution implements PlugIn
 			IJ.log( "Using Tikhonov regularization (lambda = " + lambda + ")" );
 		else
 			IJ.log( "Not using Tikhonov regularization" );
+
+		// set debug mode
+		BayesMVDeconvolution.debug = debugMode;
 		
 		for ( int view = 0; view < numViews; ++view )
 		{
@@ -175,6 +178,7 @@ public class Multi_View_Deconvolution implements PlugIn
 	public static boolean defaultUseTikhonovRegularization = true;
 	public static double defaultLambda = 0.006;
 	public static boolean showAveragePSF = true;
+	public static boolean defaultDebugMode = false;
 	public static int defaultContainer = 0;
 	public static int defaultComputationIndex = 0;
 	public static int defaultBlockSizeIndex = 0, defaultBlockSizeX = 256, defaultBlockSizeY = 256, defaultBlockSizeZ = 256;
@@ -185,7 +189,7 @@ public class Multi_View_Deconvolution implements PlugIn
 	
 	int numIterations, container, computationType, blockSizeIndex;
 	int[] blockSize = null;
-	boolean useTikhonovRegularization = true, useBlocks = false, useCUDA = false;
+	boolean useTikhonovRegularization = true, useBlocks = false, useCUDA = false, debugMode = false;
 	double lambda = 0.006;
 	
 	protected SPIMConfiguration getParameters() 
@@ -396,6 +400,7 @@ public class Multi_View_Deconvolution implements PlugIn
 		gd2.addChoice( "Compute", blocks, blocks[ defaultBlockSizeIndex ] );
 		gd2.addChoice( "Compute_on", computationOn, computationOn[ defaultComputationIndex ] );
 		gd2.addCheckbox( "Show_averaged_PSF", showAveragePSF );
+		gd2.addCheckbox( "Debug_mode", defaultDebugMode );
 		gd2.addMessage( "" );
 		gd2.addCheckbox( "Display_fused_image", displayFusedImageStatic );
 		gd2.addCheckbox( "Save_fused_image", saveFusedImageStatic );
@@ -477,6 +482,7 @@ public class Multi_View_Deconvolution implements PlugIn
 		blockSizeIndex = defaultBlockSizeIndex = gd2.getNextChoiceIndex();
 		computationType = defaultComputationIndex = gd2.getNextChoiceIndex();
 		showAveragePSF = gd2.getNextBoolean();
+		defaultDebugMode = debugMode = gd2.getNextBoolean();
 		displayFusedImageStatic = gd2.getNextBoolean(); 
 		saveFusedImageStatic = gd2.getNextBoolean();
 		
