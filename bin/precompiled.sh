@@ -286,7 +286,8 @@ case "$1" in
 commit)
 	jar="$(get_jar "$2")"
 	unzip -p "$jar" META-INF/MANIFEST.MF |
-	sed -n -e 's/^Implementation-Build: *//pi'
+	sed -n -e 's/^Implementation-Build: *//pi' |
+	tr -d '\r'
 	rm "$jar"
 	;;
 deps|dependencies)
