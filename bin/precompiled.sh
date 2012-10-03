@@ -90,6 +90,23 @@ pom_url () {
 	echo "${url%.jar}.pom"
 }
 
+# Given a POM file, find its GAV parameter
+
+gav_from_pom () {
+	pom="$(cat "$1")"
+	parent="$(extract_tag parent "$pom")"
+	pom="${pom#*$parent}"
+	pom="${pom%$(extract_tag dependencies "$pom")*}"
+	pom="${pom%$(extract_tag profiles "$pom")*}"
+	pom="${pom%$(extract_tag build "$pom")*}"
+	groupId="$(extract_tag groupId "$pom")"
+	test -n "$groupId" || groupId="$(extract_tag groupId "$parent")"
+	artifactId="$(extract_tag artifactId "$pom")"
+	version="$(extract_tag version "$pom")"
+	test -n "$version" || version="$(extract_tag version "$parent")"
+	echo "$groupId:$artifactId:$version"
+}
+
 # Given a GAV parameter possibly lacking a version, determine the latest version
 
 latest_version () {
@@ -283,6 +300,9 @@ all-deps|all-dependencies)
 latest-version)
 	latest_version "$2"
 	;;
+gav-from-pom)
+	gav_from_pom "$2"
+	;;
 install)
 	install_jar "$2"
 	;;
@@ -305,6 +325,9 @@ latest-version <groupId>:<artifactId>[:<version>]
 	Prints the current version of the given artifact (if "SNAPSHOT" is
 	passed as version, it prints the current snapshot version rather
 	than the release one)
+
+gav-from-pom <pom.xml>
+	Prints the GAV parameter described in the given pom.xml file
 
 install <groupId>:<artifactId>:<version>
 	Installs the given artifact and all its dependencies; ImageJ 1.x
