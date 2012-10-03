@@ -275,13 +275,13 @@ commit)
 deps|dependencies)
 	get_dependencies "$2"
 	;;
-latest-version)
-	latest_version "$2"
-	;;
 all-deps|all-dependencies)
 	get_all_dependencies "$2" |
 	tr ' ' '\n' |
 	grep -v '^$'
+	;;
+latest-version)
+	latest_version "$2"
 	;;
 install)
 	install_jar "$2"
