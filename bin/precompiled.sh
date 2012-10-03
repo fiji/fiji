@@ -4,6 +4,7 @@
 # to fetch an artifact, or to determine the state of it.
 
 root_url=http://maven.imagej.net/content/repositories
+ij_dir="$(cd "$(dirname "$0")"/.. && pwd)"
 
 die () {
 	echo "$*" >&2
@@ -226,6 +227,41 @@ get_jar () {
 	echo "$tmpfile"
 }
 
+# Given a GAV parameter, determine whether the .jar file is already in plugins/
+# or jars/
+
+is_jar_installed () {
+	artifactId="$(artifactId "$1")"
+	version="$(version "$1")"
+	test -f "$ij_dir/plugins/$artifactId-$version.jar" ||
+	test -f "$ij_dir/jars/$artifactId-$version.jar"
+}
+
+# Given a .jar file, determine whether it is an ImageJ 1.x plugin
+
+is_ij1_plugin () {
+	unzip -l "$1" plugins.config > /dev/null 2>&1
+}
+
+# Given a GAV parameter, download the .jar file and its dependencies as needed
+# and install them into plugins/ or jars/, respectively
+
+install_jar () {
+	for gav in $(get_all_dependencies "$1")
+	do
+		if ! is_jar_installed "$gav"
+		then
+			tmp="$(get_jar "$gav")"
+			if is_ij1_plugin "$tmp"
+			then
+				mv "$tmp" "$ij_dir/plugins/"
+			else
+				mv "$tmp" "$ij_dir/jars/"
+			fi
+		fi
+	done
+}
+
 # The main part
 
 case "$1" in
@@ -246,6 +282,9 @@ all-deps|all-dependencies)
 	tr ' ' '\n' |
 	grep -v '^$'
 	;;
+install)
+	install_jar "$2"
+	;;
 *)
 	die "Usage: $0 [command] [argument...]"'
 
@@ -265,6 +304,11 @@ latest-version <groupId>:<artifactId>[:<version>]
 	Prints the current version of the given artifact (if "SNAPSHOT" is
 	passed as version, it prints the current snapshot version rather
 	than the release one)
+
+install <groupId>:<artifactId>:<version>
+	Installs the given artifact and all its dependencies; ImageJ 1.x
+	plugins will be installed into plugins/, all other .jar files into
+	jars/
 '
 	;;
 esac
