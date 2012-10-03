@@ -324,7 +324,7 @@ public class Refresh_Javas extends RefreshScripts {
 			throws ClassNotFoundException, NoSuchMethodException,
 			       IllegalAccessException,
 			       InvocationTargetException {
-		String[] arguments = { "-g", path };
+		String[] arguments = { "-g", "-Xlint", path };
 		if (showDeprecation)
 			arguments = unshift(arguments, new String[] {
 				"-deprecation", "-Xlint:unchecked"

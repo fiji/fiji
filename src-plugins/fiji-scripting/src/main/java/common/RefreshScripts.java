@@ -377,7 +377,7 @@ abstract public class RefreshScripts implements PlugIn {
 			return "";
 
 		// strip out all plugin .jar files (to keep classPath short)
-		String pluginsPath = Menus.getPlugInsPath();
+		String pluginsPath = System.getProperty("ij.dir") + "/plugins";
 		if (pluginsPath == null)
 			return "";
 

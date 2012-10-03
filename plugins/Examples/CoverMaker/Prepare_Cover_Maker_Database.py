@@ -80,8 +80,11 @@ def PrepareDatabase(minw, maxw, baseDir, aspectRatio, majorWidth, majorHeight):
 					continue
 				# skip non RGBimages
 				if imp.getProcessor().getNChannels() != 3:
-					print "Skipping non RGB image:", id
-					continue
+					print "Converting non RGB image:", id
+					if imp.getStackSize() > 1:
+						StackConverter(imp).convertToRGB()
+					else:
+						ImageConverter(imp).convertToRGB()
 				#skip images with different aspect ratio
 				width = imp.getWidth()
 				height = imp.getHeight()

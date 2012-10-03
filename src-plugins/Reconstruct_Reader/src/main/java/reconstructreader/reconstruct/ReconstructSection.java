@@ -74,6 +74,11 @@ public class ReconstructSection {
 
         return thickness;
     }
+    
+    public double getPixelThickness()
+    {
+        return thickness / getMag();
+    }
 
     public void setThickness(double inThickness)
     {
@@ -94,6 +99,13 @@ public class ReconstructSection {
         return z;
     }
 
+    public double getHeight()
+    {
+        NodeList imageList = getDocument().getElementsByTagName("Image");
+        double wh[] = Utils.getReconstructImageWH(imageList.item(0));
+        return Double.isNaN(wh[1]) ? translator.getStackHeight() : wh[1];
+    }
+
     public void appendXML(final StringBuilder sb)
     {
         //double mag = translator.getMag();
@@ -103,7 +115,7 @@ public class ReconstructSection {
 
         sb.append("<t2_layer oid=\"")
                 .append(oid).append("\"\n" +
-                "thickness=\"").append(getThickness()).append("\"\n" +
+                "thickness=\"").append(getPixelThickness()).append("\"\n" +
                 "z=\"").append(getZ()).append("\"\n" +
                 "title=\"\"\n" +
                 ">\n");
