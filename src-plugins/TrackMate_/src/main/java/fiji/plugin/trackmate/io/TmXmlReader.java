@@ -131,7 +131,7 @@ public class TmXmlReader <T extends RealType<T> & NativeType<T>> implements TmXm
 		if (!parsed)
 			parse();
 
-		TrackMateModel<T> model = new TrackMateModel<T>();
+		TrackMateModel<T> model = plugin.getModel();
 		// Settings
 		Settings<T> settings = getSettings();
 		getDetectorSettings(settings);
