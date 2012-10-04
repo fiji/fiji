@@ -71,7 +71,7 @@ public class TrackSchemeFrame  <T extends RealType<T> & NativeType<T>> extends J
 		gc.getVerticalScrollBar().setUnitIncrement(16);
 		gc.getHorizontalScrollBar().setUnitIncrement(16);
 		gc.setExportEnabled(true); // Seems to be required to have a preview when we move cells. Also give the ability to export a cell as an image clipping 
-		gc.getConnectionHandler().setEnabled(false); // By default, can be changed in the track scheme toolbar
+		gc.getConnectionHandler().setEnabled(TrackScheme.DEFAULT_LINKING_ENABLED); // By default, can be changed in the track scheme toolbar
 
 		new mxRubberband(gc);
 		new mxKeyboardHandler(gc);

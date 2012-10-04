@@ -73,6 +73,8 @@ public class TrackScheme <T extends RealType<T> & NativeType<T>> implements Trac
 	static final boolean 			DEFAULT_DO_DISPLAY_COSTS_ON_EDGES = false;
 	/** Do we display the background decorations by default? */
 	static final boolean 			DEFAULT_DO_PAINT_DECORATIONS = true;
+	/** Do we toggle linking mode by default? */
+	static final boolean DEFAULT_LINKING_ENABLED = false;
 
 	private static final Map<String, Map<String, Object>> VERTEX_STYLES;
 	private static final HashMap<String, Object> BASIC_VERTEX_STYLE = new HashMap<String, Object>();

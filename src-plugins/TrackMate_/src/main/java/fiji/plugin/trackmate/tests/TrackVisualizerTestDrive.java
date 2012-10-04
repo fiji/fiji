@@ -55,7 +55,7 @@ public class TrackVisualizerTestDrive {
 		model.getSettings().addTrackFilter(filter);
 		plugin.execTrackFiltering();
 		System.out.println();
-		System.out.println("We had an extra track filter: "+filter);
+		System.out.println("We add an extra track filter: "+filter);
 		System.out.println("After filtering, retaining "+model.getNFilteredTracks()+" tracks.");
 			
 		ImagePlus imp = reader.getImage();

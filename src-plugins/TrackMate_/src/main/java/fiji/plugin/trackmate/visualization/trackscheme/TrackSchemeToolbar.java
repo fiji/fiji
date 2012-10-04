@@ -61,19 +61,19 @@ public class TrackSchemeToolbar <T extends RealType<T> & NativeType<T>> extends 
 		 *  Toggle Connect Mode
 		 */
 		
-		boolean defaultLinkingEnabled = false;
+		boolean defaultLinkingEnabled = TrackScheme.DEFAULT_LINKING_ENABLED;
 		final Action toggleLinkingAction = new AbstractAction(null, defaultLinkingEnabled ? LINKING_ON_ICON : LINKING_OFF_ICON) {
 			public void actionPerformed(ActionEvent e) {
 				boolean enabled = trackScheme.toggleLinking();
 				ImageIcon connectIcon;
-				if (enabled)
+				if (!enabled) {
 					connectIcon = LINKING_OFF_ICON;
-				else
+				} else {
 					connectIcon = LINKING_ON_ICON;
+				}
 				putValue(SMALL_ICON, connectIcon);
 
 			}
-			
 		};
 		final JButton toggleLinkingButton = new JButton(toggleLinkingAction);
 		toggleLinkingButton.setToolTipText("Toggle linking");
