@@ -23,7 +23,7 @@ public class LoadDescriptor <T extends RealType<T> & NativeType<T>> extends Some
 			if (null == file) {
 				File folder = new File(System.getProperty("user.dir")).getParentFile().getParentFile();
 				try {
-					file = new File(folder.getPath() + File.separator + plugin.getModel().getSettings().imp.getTitle() +".xml");
+					file = new File(folder.getPath() + File.separator + plugin.getModel().getSettings().imp.getShortTitle() +".xml");
 				} catch (NullPointerException npe) {
 					file = new File(folder.getPath() + File.separator + "TrackMateData.xml");
 				}
