@@ -118,7 +118,7 @@ public class ExportTracksToXML<T extends RealType<T> & NativeType<T>> extends Ab
 			
 			Set<Spot> track = model.getTrackSpots(trackindex);
 			// Sort them by time 
-			TreeSet<Spot> sortedTrack = new TreeSet<Spot>(Spot.frameComparator);
+			TreeSet<Spot> sortedTrack = new TreeSet<Spot>(Spot.timeComparator);
 			sortedTrack.addAll(track);
 
 			for (Spot spot : sortedTrack) {

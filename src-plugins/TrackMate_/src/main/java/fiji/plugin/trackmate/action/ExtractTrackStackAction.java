@@ -120,7 +120,7 @@ public class ExtractTrackStackAction<T extends RealType<T> & NativeType<T>> exte
 		path.add(end);
 		
 		// Sort spot by ascending frame number
-		TreeSet<Spot> sortedSpots = new TreeSet<Spot>(Spot.frameComparator);
+		TreeSet<Spot> sortedSpots = new TreeSet<Spot>(Spot.timeComparator);
 		sortedSpots.addAll(path);
 		nspots = sortedSpots.size();
 

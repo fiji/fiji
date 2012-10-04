@@ -181,7 +181,7 @@ public class mxTrackGraphLayout <T extends RealType<T> & NativeType<T>> extends 
 				}
 
 				// Sort by ascending order
-				SortedSet<Spot> sortedTrack = new TreeSet<Spot>(SpotImp.frameComparator);
+				SortedSet<Spot> sortedTrack = new TreeSet<Spot>(SpotImp.timeComparator);
 				sortedTrack.addAll(track);
 				Spot first = sortedTrack.first();
 

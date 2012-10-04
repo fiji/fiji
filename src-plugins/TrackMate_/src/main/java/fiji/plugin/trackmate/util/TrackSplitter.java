@@ -39,7 +39,7 @@ public class TrackSplitter <T extends RealType<T> & NativeType<T>> {
 	
 	public ArrayList<ArrayList<Spot>> splitTrackInBranches(Set<Spot> track) {
 		
-		SortedSet<Spot> sortedTrack = new TreeSet<Spot>(SpotImp.frameComparator);
+		SortedSet<Spot> sortedTrack = new TreeSet<Spot>(SpotImp.timeComparator);
 		sortedTrack.addAll(track);
 		Spot first = sortedTrack.first();
 

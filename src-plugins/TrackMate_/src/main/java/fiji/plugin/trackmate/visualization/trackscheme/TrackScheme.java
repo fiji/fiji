@@ -9,11 +9,13 @@ import java.awt.Point;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Stack;
 import java.util.TreeMap;
 
 import javax.swing.ImageIcon;
@@ -23,6 +25,7 @@ import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
 
 import org.jgrapht.graph.DefaultWeightedEdge;
+import org.jgrapht.traverse.DepthFirstIterator;
 
 import com.mxgraph.model.mxCell;
 import com.mxgraph.model.mxGeometry;
@@ -70,7 +73,7 @@ public class TrackScheme <T extends RealType<T> & NativeType<T>> implements Trac
 	static final boolean 			DEFAULT_DO_DISPLAY_COSTS_ON_EDGES = false;
 	/** Do we display the background decorations by default? */
 	static final boolean 			DEFAULT_DO_PAINT_DECORATIONS = true;
-	
+
 	private static final Map<String, Map<String, Object>> VERTEX_STYLES;
 	private static final HashMap<String, Object> BASIC_VERTEX_STYLE = new HashMap<String, Object>();
 	private static final HashMap<String, Object> SIMPLE_VERTEX_STYLE = new HashMap<String, Object>();
@@ -154,7 +157,7 @@ public class TrackScheme <T extends RealType<T> & NativeType<T>> implements Trac
 	 * METHODS
 	 */
 
-	
+
 	/**
 	 * @return the column index that is the first one after all the track columns.
 	 */
@@ -172,7 +175,7 @@ public class TrackScheme <T extends RealType<T> & NativeType<T>> implements Trac
 		}
 		return columnIndex+1;
 	}
-	
+
 	/**
 	 * @return the GUI frame controlled by this class.
 	 */
@@ -452,7 +455,7 @@ public class TrackScheme <T extends RealType<T> & NativeType<T>> implements Trac
 			ArrayList<mxICell> cellsToRemove = new ArrayList<mxICell>();
 
 			final int targetColumn = getUnlaidSpotColumn();
-			
+
 			// Deal with spots
 			if (event.getSpots() != null) {
 				for (Spot spot : event.getSpots() ) {
@@ -851,52 +854,133 @@ public class TrackScheme <T extends RealType<T> & NativeType<T>> implements Trac
 		return !enabled;
 	}
 
-	public void selectWholeTrack(ArrayList<mxCell> vertices, ArrayList<mxCell> edges) {
-		List<Set<Spot>> trackSpots = model.getTrackSpots();
-		List<Set<DefaultWeightedEdge>> trackEdges = model.getTrackEdges();
-		int ntracks = trackSpots.size();
-		for(int i=0; i<ntracks; i++) {
+	/**
+	 * Search and add all spots and links belonging to the same track(s) that of given <code>vertices</code> and 
+	 * <code>edges</code> to current selection. A <code>direction</code> parameter allow specifying
+	 * whether we should include only parts upwards in time, downwards in time or all the way through. 
+	 * @param vertices  the spots to include in search
+	 * @param edges  the edges to include in search
+	 * @param direction  the direction to go when searching. Positive integers will result in searching
+	 * upwards in time, negative integers downwards in time and 0 all the way through.
+	 */
+	public void selectTrack(final ArrayList<mxCell> vertices, final ArrayList<mxCell> edges, final int direction) {
 
-			Set<Spot> spots = trackSpots.get(i);
-			Set<DefaultWeightedEdge> dwes = trackEdges.get(i);
-
-			// From spots
-			for(mxCell cell : vertices) {
-				Spot spot = graph .getSpotFor(cell);
-				if (null == spot) {
-					if (DEBUG) {
-						System.out.println("[TrackScheme] selectWholeTrack: tried to retrieve cell "+cell+", unknown to spot map.");
-					}
-					continue;
+		// Look for spot and edges matching given mxCells
+		HashSet<Spot> inspectionSpots = new HashSet<Spot>();
+		for(mxCell cell : vertices) {
+			Spot spot = graph .getSpotFor(cell);
+			if (null == spot) {
+				if (DEBUG) {
+					System.out.println("[TrackScheme] selectWholeTrack: tried to retrieve cell "+cell+", unknown to spot map.");
 				}
-				if (spots.contains(spot)) {
-					model.addSpotToSelection(spots);
-					model.addEdgeToSelection(dwes);
-					vertices.remove(spot); // to speed up a bit
-					break;
-				}
-
+				continue;
 			}
-
-			// From spots
-			for(mxCell cell : edges) {
-				DefaultWeightedEdge dwe = graph.getEdgeFor(cell);
-				if (null == dwe) {
-					if (DEBUG) {
-						System.out.println("[TrackScheme] select whole track: tried to retrieve cell "+cell+", unknown to edge map.");
-					}
-					continue;
-				}
-				if (edges.contains(dwe)) {
-					model.addSpotToSelection(spots);
-					model.addEdgeToSelection(dwes);
-					vertices.remove(dwe); // to speed up a bit
-					break;
-				}
-
-			}
-
+			inspectionSpots.add(spot);
 		}
+		for(mxCell cell : edges) {
+			DefaultWeightedEdge dwe = graph.getEdgeFor(cell);
+			if (null == dwe) {
+				if (DEBUG) {
+					System.out.println("[TrackScheme] select whole track: tried to retrieve cell "+cell+", unknown to edge map.");
+				}
+				continue;
+			}
+			// We add connected spots to the list of spots to inspect
+			inspectionSpots.add(model.getEdgeSource(dwe));
+			inspectionSpots.add(model.getEdgeTarget(dwe));
+		}
+
+		// Walk across tracks to build selection
+		final Comparator<Spot> comparator = Spot.frameComparator;
+
+		final HashSet<Spot> spotSelection 				= new HashSet<Spot>();
+		final HashSet<DefaultWeightedEdge> edgeSelection 	= new HashSet<DefaultWeightedEdge>();
+
+		if (direction == 0) { // Unconditionally
+			for (Spot spot : inspectionSpots) {
+				spotSelection.add(spot);
+				DepthFirstIterator<Spot, DefaultWeightedEdge> walker = model.getDepthFirstIterator(spot);
+				while (walker.hasNext()) { 
+					Spot target = walker.next();
+					spotSelection.add(target); 
+					// Deal with edges
+					Set<DefaultWeightedEdge> targetEdges = model.edgesOf(target);
+					for(DefaultWeightedEdge targetEdge : targetEdges) {
+						edgeSelection.add(targetEdge);
+					}
+				}
+			}
+
+		} else if (direction > 0) { // Only upward in time 
+			for (Spot spot : inspectionSpots) {
+				spotSelection.add(spot);
+
+				// A bit more complicated: we want to walk in only one direction,
+				// when branching is occurring, we do not want to get back in time.
+				Stack<Spot> stack = new Stack<Spot>();
+				stack.add(spot);
+				while (!stack.isEmpty()) { 
+					Spot inspected = stack.pop();
+					Set<DefaultWeightedEdge> targetEdges = model.edgesOf(inspected);
+					for(DefaultWeightedEdge targetEdge : targetEdges) {
+						Spot other = model.getEdgeSource(targetEdge);
+						if (other == inspected) {
+							other = model.getEdgeTarget(targetEdge);
+						}
+
+						if (comparator.compare(inspected, other) > 0) {
+							spotSelection.add(other);
+							edgeSelection.add(targetEdge);
+							stack.add(other);
+						}
+
+					}
+				}
+			}
+
+		} else  { // Only downward in time 
+			for (Spot spot : inspectionSpots) {
+				spotSelection.add(spot);
+
+				// A bit more complicated: we want to walk in only one direction,
+				// when branching is occurring, we do not want to get back in time.
+				Stack<Spot> stack = new Stack<Spot>();
+				stack.add(spot);
+				while (!stack.isEmpty()) { 
+					Spot inspected = stack.pop();
+					Set<DefaultWeightedEdge> targetEdges = model.edgesOf(inspected);
+					for(DefaultWeightedEdge targetEdge : targetEdges) {
+						Spot other = model.getEdgeSource(targetEdge);
+						if (other == inspected) {
+							other = model.getEdgeTarget(targetEdge);
+						}
+
+						if (comparator.compare(inspected, other) < 0) {
+							spotSelection.add(other);
+							edgeSelection.add(targetEdge);
+							stack.add(other);
+						}
+
+					}
+				}
+			}
+		}
+
+		// Cut "tail": remove the first an last edges in time, so that the selection only has conencted 
+		// edges in it.
+		ArrayList<DefaultWeightedEdge> edgesToRemove = new ArrayList<DefaultWeightedEdge>();
+		for(DefaultWeightedEdge edge : edgeSelection) {
+			Spot source = model.getEdgeSource(edge);
+			Spot target = model.getEdgeTarget(edge);
+			if ( !(spotSelection.contains(source) && spotSelection.contains(target)) ) {
+				edgesToRemove.add(edge);
+			}
+		}
+		edgeSelection.removeAll(edgesToRemove);
+
+		// Set selection
+		model.addSpotToSelection(spotSelection);
+		model.addEdgeToSelection(edgeSelection);
 	}
 
 
@@ -994,6 +1078,5 @@ public class TrackScheme <T extends RealType<T> & NativeType<T>> implements Trac
 			graph.getModel().endUpdate();
 		}
 	}
-
 
 }

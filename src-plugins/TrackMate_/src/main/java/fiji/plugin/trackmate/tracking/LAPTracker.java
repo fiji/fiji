@@ -597,7 +597,7 @@ public class LAPTracker extends MultiThreadedBenchmarkAlgorithm implements SpotT
 		while (!spotPool.isEmpty()) {
 			source = spotPool.iterator().next();
 			graphIterator = new DepthFirstIterator<Spot, DefaultWeightedEdge>(graph, source);
-			trackSegment = new TreeSet<Spot>(Spot.frameComparator);
+			trackSegment = new TreeSet<Spot>(Spot.timeComparator);
 
 			while(graphIterator.hasNext()) {
 				current = graphIterator.next();

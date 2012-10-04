@@ -23,10 +23,25 @@ public interface Spot extends RealPositionable, RealLocalizable {
 	 */
 
 	/** A comparator used to sort spots by ascending time feature. */ 
-	public final static Comparator<Spot> frameComparator = new Comparator<Spot>() {
+	public final static Comparator<Spot> timeComparator = new Comparator<Spot>() {
 		@Override
 		public int compare(Spot o1, Spot o2) {
 			final double diff = o2.diffTo(o1, POSITION_T);
+			if (diff == 0) 
+				return 0;
+			else if (diff < 0)
+				return 1;
+			else 
+				return -1;
+		}
+		
+	};
+	
+	/** A comparator used to sort spots by ascending frame. */ 
+	public final static Comparator<Spot> frameComparator = new Comparator<Spot>() {
+		@Override
+		public int compare(Spot o1, Spot o2) {
+			final double diff = o2.diffTo(o1, FRAME);
 			if (diff == 0) 
 				return 0;
 			else if (diff < 0)

@@ -45,13 +45,23 @@ public class TrackSchemePopupMenu<T extends RealType<T> & NativeType<T>> extends
 
 
 	private void selectWholeTrack(final ArrayList<mxCell> vertices, final ArrayList<mxCell> edges) {
-		trackScheme.selectWholeTrack(vertices, edges);
+		trackScheme.selectTrack(vertices, edges, 0);
 	}
 
+	private void selectTrackDownwards(final ArrayList<mxCell> vertices, final ArrayList<mxCell> edges) {
+		trackScheme.selectTrack(vertices, edges, -1);
+	}
+
+	private void selectTrackUpwards(final ArrayList<mxCell> vertices, final ArrayList<mxCell> edges) {
+		trackScheme.selectTrack(vertices, edges, 1);
+	}
+
+	
 	private void editSpotName() {
 		trackScheme.getGUI().graphComponent.startEditingAtCell(cell);
 	}
 
+	@SuppressWarnings("unused")
 	private void toggleBranchFolding() {
 		Object parent;
 		if (trackScheme.getGraph().isCellFoldable(cell, true))
@@ -133,12 +143,24 @@ public class TrackSchemePopupMenu<T extends RealType<T> & NativeType<T>> extends
 				edges.add(cell);
 		}
 
+		
 
 		// Select whole tracks
+		if (vertices.size() > 0 || edges.size() > 0) {
+			
+			add(new AbstractAction("Select whole track") {
+				public void actionPerformed(ActionEvent e) { selectWholeTrack(vertices, edges);	}
+			});
 
-		add(new AbstractAction("Select whole track") {
-			public void actionPerformed(ActionEvent e) { selectWholeTrack(vertices, edges);	}
-		});
+			add(new AbstractAction("Select track downwards") {
+				public void actionPerformed(ActionEvent e) { selectTrackDownwards(vertices, edges);	}
+			});
+
+			add(new AbstractAction("Select track upwards") {
+				public void actionPerformed(ActionEvent e) { selectTrackUpwards(vertices, edges);	}
+			});
+
+		}
 
 		if (cell != null) {
 			// Edit
@@ -147,9 +169,9 @@ public class TrackSchemePopupMenu<T extends RealType<T> & NativeType<T>> extends
 			});
 
 			// Fold
-			add(new AbstractAction("Fold/Unfold branch") {
-				public void actionPerformed(ActionEvent e) { toggleBranchFolding(); }
-			});
+//			add(new AbstractAction("Fold/Unfold branch") {
+//				public void actionPerformed(ActionEvent e) { toggleBranchFolding(); }
+//			});
 
 
 		} else { 

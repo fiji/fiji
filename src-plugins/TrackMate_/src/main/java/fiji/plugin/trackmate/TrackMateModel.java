@@ -379,6 +379,12 @@ public class TrackMateModel <T extends RealType<T> & NativeType<T>> {
 		return graph.getEdgeWeight(edge);
 	}
 
+	/**
+	 * @return true if and only if this model contains a link going from the source spot 
+	 * to the target spot. Since we use an undirected graph, the same result is obtained 
+	 * when source and target are inverted. If any of the specified vertices does not exist 
+	 * in the graph, or if is null, returns false.
+	 */
 	public boolean containsEdge(final Spot source, final Spot target) {
 		return graph.containsEdge(source, target);
 	}
@@ -387,6 +393,10 @@ public class TrackMateModel <T extends RealType<T> & NativeType<T>> {
 		return graph.getEdge(source, target);
 	}
 
+	/**
+	 * @return a set of all links touching the specified spot. If no links are
+     * touching the specified spot returns an empty set.
+	 */
 	public Set<DefaultWeightedEdge> edgesOf(final Spot spot) {
 		return graph.edgesOf(spot);
 	}
