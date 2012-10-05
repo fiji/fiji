@@ -363,7 +363,7 @@ public class ExtractPSF
 		ViewDataBeads.normalizeImage( psf );
 		
 		// TODO: Remove
-		ImageJFunctions.show( psf );
+		//ImageJFunctions.show( psf );
 		
 		return psf;
 	}

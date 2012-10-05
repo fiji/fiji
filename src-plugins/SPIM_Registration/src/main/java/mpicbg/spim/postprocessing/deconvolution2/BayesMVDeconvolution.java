@@ -93,10 +93,13 @@ public class BayesMVDeconvolution implements Deconvolver
 				}
 				else if ( stack.getSize() == this.psi.getDimension( 2 ) )
 				{
+					IJ.log( "Stack size = " + this.stack.getSize() );
 					final ImageStack t = tmp.getImageStack();
 					for ( int i = 0; i < this.psi.getDimension( 2 ); ++i )
 						this.stack.addSlice( "Iteration 2", t.getProcessor( i + 1 ) );
-					this.ci.close();
+					IJ.log( "Stack size = " + this.stack.getSize() );
+					this.ci.hide();
+					IJ.log( "Stack size = " + this.stack.getSize() );
 					
 					this.ci = new CompositeImage( new ImagePlus( "debug view", this.stack ), CompositeImage.COMPOSITE );
 					this.ci.setDimensions( 1, this.psi.getDimension( 2 ), 2 );
@@ -150,7 +153,7 @@ public class BayesMVDeconvolution implements Deconvolver
 		else
 			lastIteration = null;
 
-
+		//int view = iteration % numViews;
 		for ( int view = 0; view < numViews; ++view )
 		{
 			final LRFFT processingData = data.get( view );

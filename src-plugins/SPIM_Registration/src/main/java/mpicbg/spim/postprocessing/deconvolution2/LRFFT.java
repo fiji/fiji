@@ -168,6 +168,8 @@ public class LRFFT
 		for ( final FloatType f : exponentialKernel )
 			f.set( pow( f.get(), numViews ) );
 		
+		//IJ.log("Jusrt using numViews/2 as exponent" );
+		
 		return exponentialKernel;
 	}
 
