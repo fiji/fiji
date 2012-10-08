@@ -7,9 +7,9 @@ import mpicbg.models.PointMatch;
 
 public class ComparePair 
 {
-	final int indexA, indexB;
-	Model<?> model;
-	final ArrayList<PointMatch> inliers = new ArrayList<PointMatch>();
+	final public int indexA, indexB;
+	public Model<?> model;
+	final public ArrayList<PointMatch> inliers = new ArrayList<PointMatch>();
 	
 	public ComparePair( final int indexA, final int indexB, final Model<?> model )
 	{
