@@ -76,8 +76,8 @@ public class BlobDescriptiveStatisticsTest {
 		test.setUp();
 		
 		DiscNeighborhood<UnsignedShortType> disc = new DiscNeighborhood<UnsignedShortType>(test.img2D, RADIUS);
-		disc.setPosition(CENTER[0], 0);
-		disc.setPosition(CENTER[1], 1);
+		disc.setPosition( Math.round(CENTER[0]/CALIBRATION[0]), 0);
+		disc.setPosition( Math.round(CENTER[1]/CALIBRATION[1]), 1);
 		for(UnsignedShortType pixel : disc) 
 			pixel.set(1500);
 		

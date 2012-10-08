@@ -45,7 +45,9 @@ public class RadiusEstimatorTest  <T extends NativeType<T> & RealType<T>>  {
 		int index = 0;
 		for (SpotImp s : spots) {
 			s.putFeature(Spot.RADIUS, radiuses[index]);
-			sphere.setPosition(s);
+			for (int d = 0; d < 3; d++) {
+				sphere.setPosition(Math.round(s.getDoublePosition(d) / calibration[d]), d);
+			}
 			sphere.setRadius(radiuses[index]);
 			for(UnsignedByteType pixel : sphere) {
 				pixel.set(on);
@@ -88,7 +90,9 @@ public class RadiusEstimatorTest  <T extends NativeType<T> & RealType<T>>  {
 		int index = 0;
 		for (SpotImp s : spots) {
 			s.putFeature(Spot.RADIUS, radiuses[index]);
-			sphere.setPosition(s);
+			for (int d = 0; d < 3; d++) {
+				sphere.setPosition(Math.round(s.getDoublePosition(d) / calibration[d]), d);
+			}
 			sphere.setRadius(radiuses[index]);
 			for(UnsignedByteType pixel : sphere) {
 				pixel.set(on);
