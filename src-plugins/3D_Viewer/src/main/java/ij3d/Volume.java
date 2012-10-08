@@ -106,13 +106,10 @@ public class Volume {
 		setImage(imp, ch);
 	}
 
-	public void setImage(ImagePlus imp, boolean[] ch) {
-		this.imp = imp;
-		this.channels = ch;
+	private void setLUTsFromImage(ImagePlus imp) {
 		switch(imp.getType()) {
 			case ImagePlus.GRAY8:
 			case ImagePlus.COLOR_256:
-				image = new ByteImage(imp);
 				IndexColorModel cm = (IndexColorModel)imp.
 					getProcessor().getCurrentColorModel();
 				for(int i = 0; i < 256; i++) {
@@ -123,7 +120,6 @@ public class Volume {
 				}
 				break;
 			case ImagePlus.COLOR_RGB:
-				image = new IntImage(imp);
 				for(int i = 0; i < 256; i++) {
 					rLUT[i] = gLUT[i] = bLUT[i] = i;
 					aLUT[i] = Math.min(254, i);
@@ -132,6 +128,23 @@ public class Volume {
 			default:
 				throw new IllegalArgumentException("Unsupported image type");
 		}
+	}
+
+	public void setImage(ImagePlus imp, boolean[] ch) {
+		this.imp = imp;
+		this.channels = ch;
+		switch(imp.getType()) {
+			case ImagePlus.GRAY8:
+			case ImagePlus.COLOR_256:
+				image = new ByteImage(imp);
+				break;
+			case ImagePlus.COLOR_RGB:
+				image = new IntImage(imp);
+				break;
+			default:
+				throw new IllegalArgumentException("Unsupported image type");
+		}
+		setLUTsFromImage(this.imp);
 
 		xDim = imp.getWidth();
 		yDim = imp.getHeight();
@@ -301,6 +314,20 @@ public class Volume {
 		this.gLUT = g;
 		this.bLUT = b;
 		this.aLUT = a;
+		if(initDataType()) {
+			initLoader();
+			return true;
+		}
+		return false;
+	}
+
+	/**
+	 * Set the alpha channel to fully opaque. Returns
+	 * true if the data type of the textures have changed.
+	 */
+	public boolean setAlphaLUTFullyOpaque() {
+		for(int i = 0; i < aLUT.length; i++)
+			aLUT[i] = 254;
 		if(initDataType()) {
 			initLoader();
 			return true;

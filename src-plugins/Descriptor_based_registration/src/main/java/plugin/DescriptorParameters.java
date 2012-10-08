@@ -6,7 +6,7 @@ import mpicbg.models.TranslationModel2D;
 import mpicbg.models.TranslationModel3D;
 
 public class DescriptorParameters 
-{
+{	
 	/**
 	 * How many iterations for a RANSAC
 	 */
@@ -74,6 +74,9 @@ public class DescriptorParameters
 	
 	public boolean setPointsRois = true;
 	
+	// Display anything?
+	public boolean silent = false;
+
 	// 0 == fuse in memory, 1 == write to disk, 2 == nothing
 	public int fuse = 0;
 	
