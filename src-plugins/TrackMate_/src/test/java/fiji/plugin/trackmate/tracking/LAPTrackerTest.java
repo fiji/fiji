@@ -11,7 +11,7 @@ import java.util.Set;
 
 import org.jgrapht.alg.ConnectivityInspector;
 import org.jgrapht.graph.DefaultWeightedEdge;
-import org.jgrapht.graph.SimpleWeightedGraph;
+import org.jgrapht.graph.SimpleDirectedWeightedGraph;
 import org.junit.Test;
 
 import fiji.plugin.trackmate.Logger;
@@ -73,7 +73,7 @@ public class LAPTrackerTest implements TrackerKeys {
 		}
 		
 		// Check results
-		SimpleWeightedGraph<Spot, DefaultWeightedEdge> graph = tracker.getResult();
+		SimpleDirectedWeightedGraph<Spot, DefaultWeightedEdge> graph = tracker.getResult();
 		verifyTracks(graph, groups, nFrames);
 	}
 
@@ -137,13 +137,13 @@ public class LAPTrackerTest implements TrackerKeys {
 		}
 		
 		// Check results
-		SimpleWeightedGraph<Spot, DefaultWeightedEdge> graph = tracker.getResult();
+		SimpleDirectedWeightedGraph<Spot, DefaultWeightedEdge> graph = tracker.getResult();
 		verifyTracks(graph, groups, nFrames);
 	}
 
 
 
-	private static void verifyTracks(final SimpleWeightedGraph<Spot, DefaultWeightedEdge> graph, List<List<Spot>> groups, int nFrames) {
+	private static void verifyTracks(final SimpleDirectedWeightedGraph<Spot, DefaultWeightedEdge> graph, List<List<Spot>> groups, int nFrames) {
 
 		// Check that we have the right number of vertices
 		assertEquals("The tracking result graph has the wrong number of vertices, ", 
