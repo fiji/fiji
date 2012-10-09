@@ -25,6 +25,7 @@ public class SpotNeighborhoodCursor<T extends RealType<T>> implements Cursor<T> 
 		this.calibration = sn.calibration;
 		this.center = sn.center;
 		this.pos = new long[cursor.numDimensions()];
+		reset();
 	}
 	
 	/*

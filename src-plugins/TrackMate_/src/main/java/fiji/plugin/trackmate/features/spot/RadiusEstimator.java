@@ -21,7 +21,7 @@ public class RadiusEstimator<T extends RealType<T>> extends IndependentSpotFeatu
 	public static final ArrayList<String> 			FEATURES = new ArrayList<String>(1);
 	public static final HashMap<String, String> 	FEATURE_NAMES = new HashMap<String, String>(1);
 	public static final HashMap<String, String> 	FEATURE_SHORT_NAMES = new HashMap<String, String>(1);
-	public static final HashMap<String, Dimension> FEATURE_DIMENSIONS = new HashMap<String, Dimension>(1);
+	public static final HashMap<String, Dimension> 	FEATURE_DIMENSIONS = new HashMap<String, Dimension>(1);
 	static {
 		FEATURES.add(ESTIMATED_DIAMETER);
 		FEATURE_NAMES.put(ESTIMATED_DIAMETER, "Estimated diameter");
@@ -89,9 +89,9 @@ public class RadiusEstimator<T extends RealType<T>> extends IndependentSpotFeatu
 		
 		// Calculate contrasts as minus difference between outer and inner rings mean intensity
 		final double[] contrasts = new double[diameters.length - 1];
-		for (int j = 0; j < contrasts.length; j++) {
-			contrasts[j] = - ( mean_intensities[j+1] - mean_intensities[j] );
-//			System.out.println(String.format("For diameter %.1f, found contrast of %.1f", diameters[j], contrasts[j])); 
+		for (int j = 0; j < contrasts.length-1; j++) {
+			contrasts[j+1] = - ( mean_intensities[j+1] - mean_intensities[j] );
+//			System.out.println(String.format("For diameter %.1f, found contrast of %.1f", diameters[j], contrasts[j])); //DEBUG
 		}
 		
 		// Find max contrast
