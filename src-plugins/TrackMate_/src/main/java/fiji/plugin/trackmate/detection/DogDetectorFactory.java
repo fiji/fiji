@@ -44,7 +44,7 @@ public class DogDetectorFactory<T extends RealType<T> & NativeType<T>> extends L
 		final double threshold = (Double) settings.get(KEY_THRESHOLD);
 		final boolean doMedian = (Boolean) settings.get(KEY_DO_MEDIAN_FILTERING);
 		final boolean doSubpixel = (Boolean) settings.get(KEY_DO_SUBPIXEL_LOCALIZATION);
-		return new LogDetector<T>(imgT, radius, threshold, doSubpixel, doMedian);
+		return new DogDetector<T>(imgT, radius, threshold, doSubpixel, doMedian);
 	}
 	
 	@Override
