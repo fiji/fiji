@@ -73,6 +73,9 @@ public class InitFilterDescriptor <T extends RealType<T> & NativeType<T>> implem
 
 	@Override
 	public void aboutToHidePanel() {
+		
+		component.updater.quit();
+		
 		final TrackMateModel<T> model = plugin.getModel();
 		FeatureFilter initialThreshold = component.getFeatureThreshold();
 		String str = "Initial thresholding with a quality threshold above "+ String.format("%.1f", initialThreshold.value) + " ...\n";

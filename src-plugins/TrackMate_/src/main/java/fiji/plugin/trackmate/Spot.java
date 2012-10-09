@@ -16,7 +16,7 @@ import fiji.plugin.trackmate.util.TMUtils;
  * @author Jean-Yves Tinevez <jeanyves.tinevez@gmail.com> - Sep 2010 - 2012
  *
  */
-public interface Spot extends RealPositionable, RealLocalizable {
+public interface Spot extends RealLocalizable, RealPositionable {
 
 	/*
 	 * PUBLIC UTILITY CONSTANTS

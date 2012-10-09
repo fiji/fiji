@@ -3,14 +3,12 @@ package fiji.plugin.trackmate.features.spot;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import net.imglib2.Cursor;
-import net.imglib2.algorithm.region.localneighborhood.AbstractNeighborhood;
-import net.imglib2.algorithm.region.localneighborhood.DiscNeighborhood;
-import net.imglib2.algorithm.region.localneighborhood.SphereNeighborhood;
-import net.imglib2.img.ImgPlus;
 import net.imglib2.type.numeric.RealType;
 import fiji.plugin.trackmate.Dimension;
 import fiji.plugin.trackmate.Spot;
+import fiji.plugin.trackmate.SpotImp;
+import fiji.plugin.trackmate.util.SpotNeighborhood;
+import fiji.plugin.trackmate.util.SpotNeighborhoodCursor;
 
 public class RadiusEstimator<T extends RealType<T>> extends IndependentSpotFeatureAnalyzer<T> {
 
@@ -23,7 +21,7 @@ public class RadiusEstimator<T extends RealType<T>> extends IndependentSpotFeatu
 	public static final ArrayList<String> 			FEATURES = new ArrayList<String>(1);
 	public static final HashMap<String, String> 	FEATURE_NAMES = new HashMap<String, String>(1);
 	public static final HashMap<String, String> 	FEATURE_SHORT_NAMES = new HashMap<String, String>(1);
-	public static final HashMap<String, Dimension> FEATURE_DIMENSIONS = new HashMap<String, Dimension>(1);
+	public static final HashMap<String, Dimension> 	FEATURE_DIMENSIONS = new HashMap<String, Dimension>(1);
 	static {
 		FEATURES.add(ESTIMATED_DIAMETER);
 		FEATURE_NAMES.put(ESTIMATED_DIAMETER, "Estimated diameter");
@@ -66,34 +64,23 @@ public class RadiusEstimator<T extends RealType<T>> extends IndependentSpotFeatu
 		
 		// Calculate total intensity in balls
 		final double[] ring_intensities = new double[nDiameters];
-		final int[]    ring_volumes = new int[nDiameters];
+		final int[]    ring_volumes 	= new int[nDiameters];
 
+		// A tmp spot we will use to iterate around the real spot
+		Spot tmpSpot = new SpotImp(spot);
+		tmpSpot.putFeature(Spot.RADIUS, diameters[nDiameters-2]/2);
 
-		final AbstractNeighborhood<T, ImgPlus<T>> neighborhood;
-		if (img.numDimensions() == 3) {
-			neighborhood = new SphereNeighborhood<T>(img, diameters[nDiameters-2]/2);
-		} else {
-			neighborhood = new DiscNeighborhood<T>(img, diameters[nDiameters-2]/2);
-		}
-		final long[] coords = new long[3];
-		for (int i = 0; i < coords.length; i++) {
-			coords[i] = Math.round( spot.getDoublePosition(i) / img.calibration(i) );
-		}
-		neighborhood.setPosition(coords);
-		
+		SpotNeighborhood<T> neighborhood = new SpotNeighborhood<T>(tmpSpot , img);
+		SpotNeighborhoodCursor<T> cursor = neighborhood.cursor();
 		double d2;
 		int i;
-		Cursor<T> cursor = neighborhood.cursor();
 		while(cursor.hasNext())  {
 			cursor.fwd();
-			d2 = 0;
-			for (int d = 0; d < coords.length; d++) {
-				double dx = ( coords[d] - cursor.getDoublePosition(d) ) * img.calibration(d);
-				d2 += dx * dx;
+			d2 = cursor.getDistanceSquared();
+			for(i = 0 ; i < nDiameters-1 && d2 > r2[i] ; i++) {
+				ring_intensities[i] += cursor.get().getRealDouble();
+				ring_volumes[i]++;
 			}
-			for(i = 0 ; i < nDiameters-1 && d2 > r2[i] ; i++) {}
-			ring_intensities[i] += cursor.get().getRealDouble();
-			ring_volumes[i]++;
 		}
 
 		// Calculate mean intensities from ring volumes
@@ -103,9 +90,9 @@ public class RadiusEstimator<T extends RealType<T>> extends IndependentSpotFeatu
 		
 		// Calculate contrasts as minus difference between outer and inner rings mean intensity
 		final double[] contrasts = new double[diameters.length - 1];
-		for (int j = 0; j < contrasts.length; j++) {
-			contrasts[j] = - ( mean_intensities[j+1] - mean_intensities[j] );
-//			System.out.println(String.format("For diameter %.1f, found contrast of %.1f", diameters[j], contrasts[j])); 
+		for (int j = 0; j < contrasts.length-1; j++) {
+			contrasts[j+1] = - ( mean_intensities[j+1] - mean_intensities[j] );
+//			System.out.println(String.format("For diameter %.1f, found contrast of %.1f", diameters[j], contrasts[j])); //DEBUG
 		}
 		
 		// Find max contrast

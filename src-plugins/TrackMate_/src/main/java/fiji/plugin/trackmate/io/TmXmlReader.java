@@ -416,8 +416,8 @@ public class TmXmlReader <T extends RealType<T> & NativeType<T>> implements TmXm
 	 * <ul>
 	 * 	<li> {@link #getFilteredSpots()}
 	 * 	<li> {@link #readTrackGraph()}
-	 * 	<li> {@link #readTrackEdges(SimpleWeightedGraph)}
-	 * 	<li> {@link #readTrackSpots(SimpleWeightedGraph)}
+	 * 	<li> {@link #readTrackEdges(SimpleDirectedWeightedGraph)}
+	 * 	<li> {@link #readTrackSpots(SimpleDirectedWeightedGraph)}
 	 * </ul>
 	 * It is therefore sensible to call this method first, just afther {@link #parse()}ing the file.
 	 * If not called, this method will be called anyway by the other methods to build the cache.
@@ -537,8 +537,7 @@ public class TmXmlReader <T extends RealType<T> & NativeType<T>> implements TmXm
 		if (null == cache) 
 			getAllSpots(); // build the cache if it's not there
 
-		final SimpleDirectedWeightedGraph<Spot, DefaultWeightedEdge> graph = 
-				new SimpleDirectedWeightedGraph<Spot, DefaultWeightedEdge>(DefaultWeightedEdge.class);
+		final SimpleDirectedWeightedGraph<Spot, DefaultWeightedEdge> graph = new SimpleDirectedWeightedGraph<Spot, DefaultWeightedEdge>(DefaultWeightedEdge.class);
 
 		// Load tracks
 		List<Element> trackElements = allTracksElement.getChildren(TRACK_ELEMENT_KEY);

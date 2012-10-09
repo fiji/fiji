@@ -1,9 +1,7 @@
 package fiji.plugin.trackmate.features.spot;
 
-import static org.junit.Assert.*;
-
+import static org.junit.Assert.assertEquals;
 import net.imglib2.RandomAccess;
-import net.imglib2.algorithm.region.localneighborhood.DiscNeighborhood;
 import net.imglib2.img.Img;
 import net.imglib2.img.ImgPlus;
 import net.imglib2.img.array.ArrayImgFactory;
@@ -16,6 +14,7 @@ import org.junit.Test;
 
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotImp;
+import fiji.plugin.trackmate.util.SpotNeighborhood;
 
 public class BlobDescriptiveStatisticsTest {
 
@@ -75,11 +74,12 @@ public class BlobDescriptiveStatisticsTest {
 		BlobDescriptiveStatisticsTest test = new BlobDescriptiveStatisticsTest();
 		test.setUp();
 		
-		DiscNeighborhood<UnsignedShortType> disc = new DiscNeighborhood<UnsignedShortType>(test.img2D, RADIUS);
-		disc.setPosition( Math.round(CENTER[0]/CALIBRATION[0]), 0);
-		disc.setPosition( Math.round(CENTER[1]/CALIBRATION[1]), 1);
-		for(UnsignedShortType pixel : disc) 
+		Spot tmpSpot = new SpotImp(CENTER);
+		tmpSpot.putFeature(Spot.RADIUS, RADIUS);
+		SpotNeighborhood<UnsignedShortType> disc = new SpotNeighborhood<UnsignedShortType>(tmpSpot, test.img2D);
+		for(UnsignedShortType pixel : disc) {
 			pixel.set(1500);
+		}
 		
 		ij.ImageJ.main(args);
 		net.imglib2.img.display.imagej.ImageJFunctions.show(test.img2D);
@@ -87,3 +87,4 @@ public class BlobDescriptiveStatisticsTest {
 	}
 
 }
+

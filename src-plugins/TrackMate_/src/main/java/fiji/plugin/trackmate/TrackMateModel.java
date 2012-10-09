@@ -81,7 +81,7 @@ import fiji.plugin.trackmate.visualization.TrackMateModelView;
  * 
  * <h3>{@link #graph}</h3>
  * 
- * The {@link SimpleWeightedGraph} that contains the map of links between spots.
+ * The {@link SimpleDirectedWeightedGraph} that contains the map of links between spots.
  * The vertices of the graph are the content of the {@link #spotSelection}
  * field. This is the only convenient way to store links in their more general
  * way we have thought of.
@@ -642,7 +642,8 @@ public class TrackMateModel <T extends RealType<T> & NativeType<T>> {
 	}
 
 	public void clearTracks() {
-		this.graph = new ListenableDirectedGraph<Spot, DefaultWeightedEdge>(new SimpleDirectedWeightedGraph<Spot, DefaultWeightedEdge>(DefaultWeightedEdge.class));
+		this.graph = new ListenableDirectedGraph<Spot, DefaultWeightedEdge>(
+				new SimpleDirectedWeightedGraph<Spot, DefaultWeightedEdge>(DefaultWeightedEdge.class));
 		this.graph.addGraphListener(new MyGraphListener());
 		this.trackEdges = null;
 		this.trackSpots = null;

@@ -8,6 +8,7 @@ import fiji.plugin.trackmate.SpotImp;
 import fiji.plugin.trackmate.TrackMate_;
 import fiji.plugin.trackmate.features.spot.BlobDescriptiveStatistics;
 import fiji.plugin.trackmate.gui.FilterGuiPanel;
+import fiji.plugin.trackmate.util.SpotNeighborhood;
 import fiji.plugin.trackmate.util.TMUtils;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
 import fiji.plugin.trackmate.visualization.threedviewer.SpotDisplayer3D;
@@ -26,7 +27,6 @@ import javax.swing.WindowConstants;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
-import net.imglib2.algorithm.region.localneighborhood.SphereNeighborhood;
 import net.imglib2.img.Img;
 import net.imglib2.img.ImgPlus;
 import net.imglib2.img.array.ArrayImgFactory;
@@ -72,12 +72,10 @@ public class SpotDisplayer3DTestDrive {
 		}
 		
 		// Put the blobs in the image
-		final SphereNeighborhood<UnsignedByteType> sphere = new SphereNeighborhood<UnsignedByteType>(img, 0);
 		for (int i = 0; i < N_BLOBS; i++) {
-			sphere.setRadius(radiuses[i]);
-			for (int d = 0; d < CALIBRATION.length; d++) {
-				sphere.setPosition( Math.round( centers.get(i)[d] / CALIBRATION[d]), d );
-			}
+			Spot tmpSpot = new SpotImp(centers.get(i));
+			tmpSpot.putFeature(Spot.RADIUS, radiuses[i]);
+			final SpotNeighborhood<UnsignedByteType> sphere = new SpotNeighborhood<UnsignedByteType>(tmpSpot, img);
 			for (UnsignedByteType pixel : sphere) {
 				pixel.set(intensities[i]);
 			}

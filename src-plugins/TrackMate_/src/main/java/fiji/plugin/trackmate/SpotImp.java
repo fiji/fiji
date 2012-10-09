@@ -148,7 +148,7 @@ public class SpotImp implements Spot {
 
 		// Coordinates
 		double[] coordinates = new double[3];
-		localize(coordinates);
+//		localize(coordinates);
 		s.append("Position: "+Util.printCoordinates(coordinates)+"\n");
 		
 		// Feature list
@@ -423,5 +423,4 @@ public class SpotImp implements Spot {
 		String targetFeature = POSITION_FEATURES[d];
 		return getFeature(targetFeature);
 	}
-	
 }

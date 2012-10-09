@@ -27,7 +27,7 @@ import fiji.plugin.trackmate.TrackMateModel;
  * 	<li> A link with the same spot for source and target is not allowed.  
  * </ul>
  */
-public interface SpotTracker extends OutputAlgorithm<SimpleDirectedWeightedGraph<Spot, DefaultWeightedEdge>> {
+public interface SpotTracker extends  OutputAlgorithm<SimpleDirectedWeightedGraph<Spot, DefaultWeightedEdge>> {
 
 	/** @return a unique String identifier for this tracker. */
 	public String getKey();

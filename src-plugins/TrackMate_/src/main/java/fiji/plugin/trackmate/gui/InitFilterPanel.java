@@ -47,7 +47,7 @@ public class InitFilterPanel <T extends RealType<T> & NativeType<T>> extends Act
 	private JLabel jLabelExplanation;
 	private JLabel jLabelSelectedSpots;
 	private JPanel jPanelText;
-	private Updater updater;
+	Updater updater;
 	private Map<String, double[]> features;
 
 
@@ -217,7 +217,7 @@ public class InitFilterPanel <T extends RealType<T> & NativeType<T>> extends Act
 	 * 
 	 * @author Albert Cardona
 	 */
-	private class Updater extends Thread {
+	class Updater extends Thread {
 		long request = 0;
 
 		// Constructor autostarts thread
@@ -236,7 +236,6 @@ public class InitFilterPanel <T extends RealType<T> & NativeType<T>> extends Act
 			}
 		}
 
-		@SuppressWarnings("unused")
 		void quit() {
 			interrupt();
 			synchronized (this) {

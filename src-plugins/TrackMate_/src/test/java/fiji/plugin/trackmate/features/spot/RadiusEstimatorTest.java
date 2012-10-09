@@ -1,8 +1,6 @@
 package fiji.plugin.trackmate.features.spot;
 
-import org.junit.Test;
 import static org.junit.Assert.assertEquals;
-import net.imglib2.algorithm.region.localneighborhood.SphereNeighborhood;
 import net.imglib2.img.Img;
 import net.imglib2.img.ImgPlus;
 import net.imglib2.img.array.ArrayImgFactory;
@@ -12,8 +10,12 @@ import net.imglib2.meta.AxisType;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.integer.UnsignedByteType;
+
+import org.junit.Test;
+
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotImp;
+import fiji.plugin.trackmate.util.SpotNeighborhood;
 
 public class RadiusEstimatorTest  <T extends NativeType<T> & RealType<T>>  {
 	
@@ -41,14 +43,10 @@ public class RadiusEstimatorTest  <T extends NativeType<T> & RealType<T>>  {
 		Img<UnsignedByteType> img = new ArrayImgFactory<UnsignedByteType>().create(new int[] {200, 200, 400}, new UnsignedByteType());
 		ImgPlus<UnsignedByteType> testImage = new ImgPlus<UnsignedByteType>(img, "Test", axes, calibration); 
 		
-		SphereNeighborhood<UnsignedByteType> sphere = new SphereNeighborhood<UnsignedByteType>(testImage, 0);
 		int index = 0;
 		for (SpotImp s : spots) {
 			s.putFeature(Spot.RADIUS, radiuses[index]);
-			for (int d = 0; d < 3; d++) {
-				sphere.setPosition(Math.round(s.getDoublePosition(d) / calibration[d]), d);
-			}
-			sphere.setRadius(radiuses[index]);
+			SpotNeighborhood<UnsignedByteType> sphere = new SpotNeighborhood<UnsignedByteType>(s, testImage);
 			for(UnsignedByteType pixel : sphere) {
 				pixel.set(on);
 			}
@@ -86,14 +84,10 @@ public class RadiusEstimatorTest  <T extends NativeType<T> & RealType<T>>  {
 		Img<UnsignedByteType> img = new ArrayImgFactory<UnsignedByteType>().create(new int[] {200, 200, 400}, new UnsignedByteType());
 		ImgPlus<UnsignedByteType> testImage = new ImgPlus<UnsignedByteType>(img, "Test", axes, calibration); 
 		
-		SphereNeighborhood<UnsignedByteType> sphere = new SphereNeighborhood<UnsignedByteType>(testImage, 0);
 		int index = 0;
 		for (SpotImp s : spots) {
 			s.putFeature(Spot.RADIUS, radiuses[index]);
-			for (int d = 0; d < 3; d++) {
-				sphere.setPosition(Math.round(s.getDoublePosition(d) / calibration[d]), d);
-			}
-			sphere.setRadius(radiuses[index]);
+			SpotNeighborhood<UnsignedByteType> sphere = new SpotNeighborhood<UnsignedByteType>(s, testImage);
 			for(UnsignedByteType pixel : sphere) {
 				pixel.set(on);
 			}

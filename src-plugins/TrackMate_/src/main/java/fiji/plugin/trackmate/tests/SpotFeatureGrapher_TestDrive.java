@@ -75,8 +75,7 @@ public class SpotFeatureGrapher_TestDrive {
 		model.setSpots(sc, false);
 		model.setFilteredSpots(sc, false);
 		
-		SimpleDirectedWeightedGraph<Spot, DefaultWeightedEdge> graph 
-		= new SimpleDirectedWeightedGraph<Spot, DefaultWeightedEdge>(DefaultWeightedEdge.class);
+		SimpleDirectedWeightedGraph<Spot, DefaultWeightedEdge> graph = new SimpleDirectedWeightedGraph<Spot, DefaultWeightedEdge>(DefaultWeightedEdge.class);
 		for (Spot spot : spots) {
 			graph.addVertex(spot);
 		}

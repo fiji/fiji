@@ -3,14 +3,11 @@ package fiji.plugin.trackmate.features.spot;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import net.imglib2.Cursor;
-import net.imglib2.algorithm.region.localneighborhood.AbstractNeighborhood;
-import net.imglib2.algorithm.region.localneighborhood.DiscNeighborhood;
-import net.imglib2.algorithm.region.localneighborhood.SphereNeighborhood;
-import net.imglib2.img.ImgPlus;
 import net.imglib2.type.numeric.RealType;
 import fiji.plugin.trackmate.Dimension;
 import fiji.plugin.trackmate.Spot;
+import fiji.plugin.trackmate.util.SpotNeighborhood;
+import fiji.plugin.trackmate.util.SpotNeighborhoodCursor;
 
 /**
  * This {@link FeatureAnalyzer} computes both the 
@@ -66,35 +63,20 @@ public class BlobContrastAndSNR<T extends RealType<T>> extends IndependentSpotFe
 	 * Compute the contrast for the given spot.
 	 */
 	protected double[] getContrastAndSNR(final Spot spot) {
+		
+		SpotNeighborhood<T> neighborhood = new SpotNeighborhood<T>(spot, img);
+
 		final double radius = spot.getFeature(Spot.RADIUS);
-		
-		final AbstractNeighborhood<T, ImgPlus<T>> neighborhood;
-		if (img.numDimensions() == 3) {
-			neighborhood = new SphereNeighborhood<T>(img, radius * (1+RAD_PERCENTAGE));
-		} else {
-			neighborhood = new DiscNeighborhood<T>(img, radius * (1+RAD_PERCENTAGE));
-		}
-		final long[] coords = new long[3];
-		for (int i = 0; i < coords.length; i++) {
-			coords[i] = Math.round( spot.getDoublePosition(i) / img.calibration(i) );
-		}
-		neighborhood.setPosition(coords);
-		
-		
 		double radius2 = radius * radius;
 		int n_out = 0; // inner number of pixels
 		double dist2;
 		double sum_out = 0;
 		
 		// Compute mean in the outer ring
-		Cursor<T> cursor = neighborhood.cursor();
+		SpotNeighborhoodCursor<T> cursor = neighborhood.cursor();
 		while(cursor.hasNext()) {
 			cursor.fwd();
-			dist2 = 0;
-			for (int d = 0; d < coords.length; d++) {
-				double dx = ( coords[d] - cursor.getDoublePosition(d) ) * img.calibration(d);
-				dist2 += dx * dx;
-			}
+			dist2 = cursor.getDistanceSquared();
 			if (dist2 > radius2) {
 				n_out++;
 				sum_out += cursor.get().getRealFloat();				
