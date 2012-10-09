@@ -18,7 +18,7 @@ import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
 
 import org.jgrapht.graph.DefaultWeightedEdge;
-import org.jgrapht.graph.SimpleWeightedGraph;
+import org.jgrapht.graph.SimpleDirectedWeightedGraph;
 
 import fiji.plugin.trackmate.FeatureFilter;
 import fiji.plugin.trackmate.Logger;
@@ -313,7 +313,7 @@ public class GuiReader <T extends RealType<T> & NativeType<T>> {
 
 		{ // Try reading the tracks
 			logger.log("  Loading tracks...");
-			SimpleWeightedGraph<Spot, DefaultWeightedEdge> graph = reader.readTrackGraph();
+			SimpleDirectedWeightedGraph<Spot, DefaultWeightedEdge> graph = reader.readTrackGraph();
 			if (graph == null) {
 				echoNotFound();
 				targetDescriptor = TrackerConfigurationPanelDescriptor.DESCRIPTOR;

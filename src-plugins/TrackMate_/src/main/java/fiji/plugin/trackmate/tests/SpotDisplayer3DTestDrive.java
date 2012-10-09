@@ -73,10 +73,11 @@ public class SpotDisplayer3DTestDrive {
 		
 		// Put the blobs in the image
 		final SphereNeighborhood<UnsignedByteType> sphere = new SphereNeighborhood<UnsignedByteType>(img, 0);
-		sphere.setPosition(centers.get(0));
 		for (int i = 0; i < N_BLOBS; i++) {
 			sphere.setRadius(radiuses[i]);
-			sphere.setPosition(centers.get(i));
+			for (int d = 0; d < CALIBRATION.length; d++) {
+				sphere.setPosition( Math.round( centers.get(i)[d] / CALIBRATION[d]), d );
+			}
 			for (UnsignedByteType pixel : sphere) {
 				pixel.set(intensities[i]);
 			}

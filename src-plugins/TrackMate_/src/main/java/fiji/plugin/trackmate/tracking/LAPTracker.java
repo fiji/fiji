@@ -18,7 +18,7 @@ import net.imglib2.algorithm.MultiThreadedBenchmarkAlgorithm;
 import net.imglib2.multithreading.SimpleMultiThreading;
 
 import org.jgrapht.graph.DefaultWeightedEdge;
-import org.jgrapht.graph.SimpleWeightedGraph;
+import org.jgrapht.graph.SimpleDirectedWeightedGraph;
 import org.jgrapht.traverse.DepthFirstIterator;
 
 import fiji.plugin.trackmate.Logger;
@@ -165,7 +165,7 @@ public class LAPTracker extends MultiThreadedBenchmarkAlgorithm implements SpotT
 	 * the track segment index that the middle point belongs to. */
 	protected int[] splittingMiddlePointsSegmentIndices;
 	/** The graph this tracker will use to link spots. */
-	protected SimpleWeightedGraph<Spot, DefaultWeightedEdge> graph;
+	protected SimpleDirectedWeightedGraph<Spot, DefaultWeightedEdge> graph;
 	/** The Spot collection that will be linked in the {@link #graph.} */
 	protected final SpotCollection spots;
 	/** The settings map that configures this tracker. */
@@ -213,13 +213,13 @@ public class LAPTracker extends MultiThreadedBenchmarkAlgorithm implements SpotT
 	 * containing the spots but no edge.
 	 */
 	public void reset() {
-		graph = new SimpleWeightedGraph<Spot, DefaultWeightedEdge>(DefaultWeightedEdge.class);
+		graph = new SimpleDirectedWeightedGraph<Spot, DefaultWeightedEdge>(DefaultWeightedEdge.class);
 		for(Spot spot : spots) 
 			graph.addVertex(spot);
 	}
 
 	@Override
-	public SimpleWeightedGraph<Spot,DefaultWeightedEdge> getResult() {
+	public SimpleDirectedWeightedGraph<Spot,DefaultWeightedEdge> getResult() {
 		return graph;
 	}
 
@@ -689,9 +689,8 @@ public class LAPTracker extends MultiThreadedBenchmarkAlgorithm implements SpotT
 					SortedSet<Spot> segmentStart = trackSegments.get(j);
 					Spot start = segmentStart.first();
 					Spot mother = splittingMiddlePoints.get(i - numTrackSegments);
-					Spot target = mother;
 					weight = segmentCosts[i][j];
-					DefaultWeightedEdge edge = graph.addEdge(start, target);
+					DefaultWeightedEdge edge = graph.addEdge(mother, start);
 					graph.setEdgeWeight(edge, weight);
 
 					if(DEBUG) {

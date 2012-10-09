@@ -3,10 +3,11 @@ package fiji.plugin.trackmate.features.spot;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import net.imglib2.Cursor;
+import net.imglib2.algorithm.region.localneighborhood.AbstractNeighborhood;
 import net.imglib2.algorithm.region.localneighborhood.DiscNeighborhood;
-import net.imglib2.algorithm.region.localneighborhood.RealPositionableAbstractNeighborhood;
-import net.imglib2.algorithm.region.localneighborhood.RealPositionableNeighborhoodCursor;
 import net.imglib2.algorithm.region.localneighborhood.SphereNeighborhood;
+import net.imglib2.img.ImgPlus;
 import net.imglib2.type.numeric.RealType;
 import fiji.plugin.trackmate.Dimension;
 import fiji.plugin.trackmate.Spot;
@@ -67,14 +68,18 @@ public class BlobContrastAndSNR<T extends RealType<T>> extends IndependentSpotFe
 	protected double[] getContrastAndSNR(final Spot spot) {
 		final double radius = spot.getFeature(Spot.RADIUS);
 		
-		final RealPositionableAbstractNeighborhood<T> neighborhood;
+		final AbstractNeighborhood<T, ImgPlus<T>> neighborhood;
 		if (img.numDimensions() == 3) {
 			neighborhood = new SphereNeighborhood<T>(img, radius * (1+RAD_PERCENTAGE));
-			neighborhood.setPosition(spot);
 		} else {
 			neighborhood = new DiscNeighborhood<T>(img, radius * (1+RAD_PERCENTAGE));
-			neighborhood.setPosition(spot);
 		}
+		final long[] coords = new long[3];
+		for (int i = 0; i < coords.length; i++) {
+			coords[i] = Math.round( spot.getDoublePosition(i) / img.calibration(i) );
+		}
+		neighborhood.setPosition(coords);
+		
 		
 		double radius2 = radius * radius;
 		int n_out = 0; // inner number of pixels
@@ -82,10 +87,14 @@ public class BlobContrastAndSNR<T extends RealType<T>> extends IndependentSpotFe
 		double sum_out = 0;
 		
 		// Compute mean in the outer ring
-		RealPositionableNeighborhoodCursor<T> cursor = neighborhood.cursor();
+		Cursor<T> cursor = neighborhood.cursor();
 		while(cursor.hasNext()) {
 			cursor.fwd();
-			dist2 = cursor.getDistanceSquared();
+			dist2 = 0;
+			for (int d = 0; d < coords.length; d++) {
+				double dx = ( coords[d] - cursor.getDoublePosition(d) ) * img.calibration(d);
+				dist2 += dx * dx;
+			}
 			if (dist2 > radius2) {
 				n_out++;
 				sum_out += cursor.get().getRealFloat();				

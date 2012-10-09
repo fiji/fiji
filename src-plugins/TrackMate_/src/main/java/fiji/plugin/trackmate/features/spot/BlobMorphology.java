@@ -146,7 +146,11 @@ public class BlobMorphology<T extends RealType<T>> extends IndependentSpotFeatur
 			// 3D case
 			
 			final SphereNeighborhood<T> sphere = new SphereNeighborhood<T>(img, radius);
-			sphere.setPosition(spot);
+			final long[] coords = new long[3];
+			for (int i = 0; i < coords.length; i++) {
+				coords[i] = Math.round( spot.getDoublePosition(i) / img.calibration(i) );
+			}
+			sphere.setPosition(coords);
 			final SphereCursor<T> cursor = sphere.cursor();
 			
 			double x, y, z;
@@ -235,7 +239,12 @@ public class BlobMorphology<T extends RealType<T>> extends IndependentSpotFeatur
 			// 2D case
 			
 			final DiscNeighborhood<T> neighborhood = new DiscNeighborhood<T>(img, radius);
-			neighborhood.setPosition(spot);
+			long[]  coords = new long[2];
+			for (int i = 0; i < coords .length; i++) {
+				coords[i] = Math.round( spot.getDoublePosition(i) / img.calibration(i) );
+			}
+			neighborhood.setPosition(coords);
+			
 			final DiscCursor<T> cursor = neighborhood.cursor();
 			double x, y;
 			double x2, y2;
@@ -382,7 +391,7 @@ public class BlobMorphology<T extends RealType<T>> extends IndependentSpotFeatur
 		long start = System.currentTimeMillis();
 		System.out.println(String.format("Creating an ellipse with a = %.1f, b = %.1f", a, b));
 		System.out.println(String.format("phi = %.1f", Math.toDegrees(phi_r)));
-		double[] center = new double[] { size_x/2, size_y/2, 0 };
+		long[] center = new long[] { size_x/2, size_y/2, 0 };
 		
 		DiscNeighborhood<UnsignedByteType> disc = new DiscNeighborhood<UnsignedByteType>(imgplus, max_radius);
 		disc.setPosition(center);
@@ -411,7 +420,8 @@ public class BlobMorphology<T extends RealType<T>> extends IndependentSpotFeatur
 		start = System.currentTimeMillis();
 		BlobMorphology<UnsignedByteType> bm = new BlobMorphology<UnsignedByteType>();
 		bm.setTarget(imgplus);
-		SpotImp spot = new SpotImp(center);
+		double[] centerD = new double[] { center[0], center[1] } ;
+		SpotImp spot = new SpotImp(centerD);
 		spot.putFeature(Spot.RADIUS, max_radius);
 		bm.process(spot);
 		end = System.currentTimeMillis();

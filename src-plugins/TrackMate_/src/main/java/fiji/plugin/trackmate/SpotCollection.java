@@ -309,6 +309,18 @@ public class SpotCollection implements Iterable<Spot>, SortedMap<Integer, List<S
 	 * in this collection, return <code>null</code>.
 	 */
 	public final Integer getFrame(final Spot spot) {
+		/* NOTE: we have to search manually for the frame, which costs time and his
+		 * a bit inelegant. The alternative would be to maintain a Map<Spot, Integer> 
+		 * that knows in what frame can be found is a spot.		 */
+		// Check if we can trust the Spot.FRAME feature
+		Double candidateFrame = spot.getFeature(Spot.FRAME);
+		if (null != candidateFrame) {
+			int cf = candidateFrame.intValue();
+			if (null != content.get(cf) && content.get(cf).contains(spot)) {
+				return cf;
+			}
+		}
+		// We have to find it manually
 		Integer frame = null;
 		for(Integer key : content.keySet()) {
 			if (content.get(key).contains(spot)) {
