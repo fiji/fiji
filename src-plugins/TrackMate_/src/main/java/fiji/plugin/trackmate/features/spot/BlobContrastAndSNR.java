@@ -3,13 +3,11 @@ package fiji.plugin.trackmate.features.spot;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import net.imglib2.algorithm.region.localneighborhood.DiscNeighborhood;
-import net.imglib2.algorithm.region.localneighborhood.RealPositionableAbstractNeighborhood;
-import net.imglib2.algorithm.region.localneighborhood.RealPositionableNeighborhoodCursor;
-import net.imglib2.algorithm.region.localneighborhood.SphereNeighborhood;
 import net.imglib2.type.numeric.RealType;
 import fiji.plugin.trackmate.Dimension;
 import fiji.plugin.trackmate.Spot;
+import fiji.plugin.trackmate.util.SpotNeighborhood;
+import fiji.plugin.trackmate.util.SpotNeighborhoodCursor;
 
 /**
  * This {@link FeatureAnalyzer} computes both the 
@@ -65,24 +63,17 @@ public class BlobContrastAndSNR<T extends RealType<T>> extends IndependentSpotFe
 	 * Compute the contrast for the given spot.
 	 */
 	protected double[] getContrastAndSNR(final Spot spot) {
+		
+		SpotNeighborhood<T> neighborhood = new SpotNeighborhood<T>(spot, img);
+		
 		final double radius = spot.getFeature(Spot.RADIUS);
-		
-		final RealPositionableAbstractNeighborhood<T> neighborhood;
-		if (img.numDimensions() == 3) {
-			neighborhood = new SphereNeighborhood<T>(img, radius * (1+RAD_PERCENTAGE));
-			neighborhood.setPosition(spot);
-		} else {
-			neighborhood = new DiscNeighborhood<T>(img, radius * (1+RAD_PERCENTAGE));
-			neighborhood.setPosition(spot);
-		}
-		
 		double radius2 = radius * radius;
 		int n_out = 0; // inner number of pixels
 		double dist2;
 		double sum_out = 0;
 		
 		// Compute mean in the outer ring
-		RealPositionableNeighborhoodCursor<T> cursor = neighborhood.cursor();
+		SpotNeighborhoodCursor<T> cursor = neighborhood.cursor();
 		while(cursor.hasNext()) {
 			cursor.fwd();
 			dist2 = cursor.getDistanceSquared();

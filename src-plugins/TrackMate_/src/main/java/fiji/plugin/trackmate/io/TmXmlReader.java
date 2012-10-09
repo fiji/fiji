@@ -27,7 +27,7 @@ import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jdom.input.SAXBuilder;
 import org.jgrapht.graph.DefaultWeightedEdge;
-import org.jgrapht.graph.SimpleWeightedGraph;
+import org.jgrapht.graph.SimpleDirectedWeightedGraph;
 
 import fiji.plugin.trackmate.DetectorProvider;
 import fiji.plugin.trackmate.FeatureFilter;
@@ -150,7 +150,7 @@ public class TmXmlReader <T extends RealType<T> & NativeType<T>> implements TmXm
 		model.setSpots(allSpots, false);
 		model.setFilteredSpots(filteredSpots, false);
 		// Tracks
-		SimpleWeightedGraph<Spot, DefaultWeightedEdge> graph = readTrackGraph();
+		SimpleDirectedWeightedGraph<Spot, DefaultWeightedEdge> graph = readTrackGraph();
 		if (null != graph) {
 			model.setGraph(graph);
 		}
@@ -416,8 +416,8 @@ public class TmXmlReader <T extends RealType<T> & NativeType<T>> implements TmXm
 	 * <ul>
 	 * 	<li> {@link #getFilteredSpots()}
 	 * 	<li> {@link #readTrackGraph()}
-	 * 	<li> {@link #readTrackEdges(SimpleWeightedGraph)}
-	 * 	<li> {@link #readTrackSpots(SimpleWeightedGraph)}
+	 * 	<li> {@link #readTrackEdges(SimpleDirectedWeightedGraph)}
+	 * 	<li> {@link #readTrackSpots(SimpleDirectedWeightedGraph)}
 	 * </ul>
 	 * It is therefore sensible to call this method first, just afther {@link #parse()}ing the file.
 	 * If not called, this method will be called anyway by the other methods to build the cache.
@@ -526,7 +526,7 @@ public class TmXmlReader <T extends RealType<T> & NativeType<T>> implements TmXm
 	 * @param selectedSpots  the spot selection from which tracks area made 
 	 */
 	@SuppressWarnings("unchecked")
-	public SimpleWeightedGraph<Spot, DefaultWeightedEdge> readTrackGraph() {
+	public SimpleDirectedWeightedGraph<Spot, DefaultWeightedEdge> readTrackGraph() {
 		if (!parsed)
 			parse();
 
@@ -537,7 +537,7 @@ public class TmXmlReader <T extends RealType<T> & NativeType<T>> implements TmXm
 		if (null == cache) 
 			getAllSpots(); // build the cache if it's not there
 
-		final SimpleWeightedGraph<Spot, DefaultWeightedEdge> graph = new SimpleWeightedGraph<Spot, DefaultWeightedEdge>(DefaultWeightedEdge.class);
+		final SimpleDirectedWeightedGraph<Spot, DefaultWeightedEdge> graph = new SimpleDirectedWeightedGraph<Spot, DefaultWeightedEdge>(DefaultWeightedEdge.class);
 
 		// Load tracks
 		List<Element> trackElements = allTracksElement.getChildren(TRACK_ELEMENT_KEY);
@@ -612,7 +612,7 @@ public class TmXmlReader <T extends RealType<T> & NativeType<T>> implements TmXm
 	 * @return  a list of tracks as a set of spots
 	 */
 	@SuppressWarnings("unchecked")
-	public List<Set<Spot>> readTrackSpots(final SimpleWeightedGraph<Spot, DefaultWeightedEdge> graph) {
+	public List<Set<Spot>> readTrackSpots(final SimpleDirectedWeightedGraph<Spot, DefaultWeightedEdge> graph) {
 		if (!parsed)
 			parse();
 
@@ -688,7 +688,7 @@ public class TmXmlReader <T extends RealType<T> & NativeType<T>> implements TmXm
 	 * @return  a list of tracks as a set of edges
 	 */
 	@SuppressWarnings("unchecked")
-	public List<Set<DefaultWeightedEdge>> readTrackEdges(final SimpleWeightedGraph<Spot, DefaultWeightedEdge> graph) {
+	public List<Set<DefaultWeightedEdge>> readTrackEdges(final SimpleDirectedWeightedGraph<Spot, DefaultWeightedEdge> graph) {
 		if (!parsed)
 			parse();
 

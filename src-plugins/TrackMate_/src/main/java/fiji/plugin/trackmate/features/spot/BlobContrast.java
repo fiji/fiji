@@ -3,13 +3,11 @@ package fiji.plugin.trackmate.features.spot;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import net.imglib2.algorithm.region.localneighborhood.DiscNeighborhood;
-import net.imglib2.algorithm.region.localneighborhood.RealPositionableAbstractNeighborhood;
-import net.imglib2.algorithm.region.localneighborhood.RealPositionableNeighborhoodCursor;
-import net.imglib2.algorithm.region.localneighborhood.SphereNeighborhood;
 import net.imglib2.type.numeric.RealType;
 import fiji.plugin.trackmate.Dimension;
 import fiji.plugin.trackmate.Spot;
+import fiji.plugin.trackmate.util.SpotNeighborhood;
+import fiji.plugin.trackmate.util.SpotNeighborhoodCursor;
 
 public class BlobContrast<T extends RealType<T>> extends IndependentSpotFeatureAnalyzer<T> {
 
@@ -42,17 +40,10 @@ public class BlobContrast<T extends RealType<T>> extends IndependentSpotFeatureA
 	 * @return
 	 */
 	protected double getContrast(final Spot spot) {
-		final double radius = spot.getFeature(Spot.RADIUS);
 
-		final RealPositionableAbstractNeighborhood<T> neighborhood;
-		if (img.numDimensions() == 3) {
-			neighborhood = new SphereNeighborhood<T>(img, radius * (1+RAD_PERCENTAGE));
-			neighborhood.setPosition(spot);
-		} else {
-			neighborhood = new DiscNeighborhood<T>(img, radius * (1+RAD_PERCENTAGE));
-			neighborhood.setPosition(spot);
-		}
+		final SpotNeighborhood<T> neighborhood = new SpotNeighborhood<T>(spot, img);
 		
+		final double radius = spot.getFeature(Spot.RADIUS);
 		long innerRingVolume = 0;
 		long outerRingVolume = 0 ;
 		double radius2 = radius * radius;
@@ -61,7 +52,7 @@ public class BlobContrast<T extends RealType<T>> extends IndependentSpotFeatureA
 		double outerTotalIntensity = 0;
 		double dist2;
 		
-		RealPositionableNeighborhoodCursor<T> cursor = neighborhood.cursor();
+		SpotNeighborhoodCursor<T> cursor = neighborhood.cursor();
 		while(cursor.hasNext()) {
 			cursor.fwd();
 			dist2 = cursor.getDistanceSquared();

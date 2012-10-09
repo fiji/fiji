@@ -3,13 +3,12 @@ package fiji.plugin.trackmate.features.spot;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import net.imglib2.algorithm.region.localneighborhood.DiscNeighborhood;
-import net.imglib2.algorithm.region.localneighborhood.RealPositionableAbstractNeighborhood;
-import net.imglib2.algorithm.region.localneighborhood.RealPositionableNeighborhoodCursor;
-import net.imglib2.algorithm.region.localneighborhood.SphereNeighborhood;
 import net.imglib2.type.numeric.RealType;
 import fiji.plugin.trackmate.Dimension;
 import fiji.plugin.trackmate.Spot;
+import fiji.plugin.trackmate.SpotImp;
+import fiji.plugin.trackmate.util.SpotNeighborhood;
+import fiji.plugin.trackmate.util.SpotNeighborhoodCursor;
 
 public class RadiusEstimator<T extends RealType<T>> extends IndependentSpotFeatureAnalyzer<T> {
 
@@ -65,21 +64,16 @@ public class RadiusEstimator<T extends RealType<T>> extends IndependentSpotFeatu
 		
 		// Calculate total intensity in balls
 		final double[] ring_intensities = new double[nDiameters];
-		final int[]    ring_volumes = new int[nDiameters];
+		final int[]    ring_volumes 	= new int[nDiameters];
 
+		// A tmp spot we will use to iterate around the real spot
+		Spot tmpSpot = new SpotImp(spot);
+		tmpSpot.putFeature(Spot.RADIUS, diameters[nDiameters-2]/2);
 
-		final RealPositionableAbstractNeighborhood<T> neighborhood;
-		if (img.numDimensions() == 3) {
-			neighborhood = new SphereNeighborhood<T>(img, diameters[nDiameters-2]/2);
-			neighborhood.setPosition(spot);
-		} else {
-			neighborhood = new DiscNeighborhood<T>(img, diameters[nDiameters-2]/2);
-			neighborhood.setPosition(spot);
-		}
-		
+		SpotNeighborhood<T> neighborhood = new SpotNeighborhood<T>(tmpSpot , img);
+		SpotNeighborhoodCursor<T> cursor = neighborhood.cursor();
 		double d2;
 		int i;
-		RealPositionableNeighborhoodCursor<T> cursor = neighborhood.cursor();
 		while(cursor.hasNext())  {
 			cursor.fwd();
 			d2 = cursor.getDistanceSquared();

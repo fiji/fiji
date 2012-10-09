@@ -18,8 +18,8 @@ import org.jgrapht.event.GraphListener;
 import org.jgrapht.event.GraphVertexChangeEvent;
 import org.jgrapht.graph.AsUnweightedGraph;
 import org.jgrapht.graph.DefaultWeightedEdge;
-import org.jgrapht.graph.ListenableUndirectedGraph;
-import org.jgrapht.graph.SimpleWeightedGraph;
+import org.jgrapht.graph.ListenableDirectedGraph;
+import org.jgrapht.graph.SimpleDirectedWeightedGraph;
 import org.jgrapht.traverse.DepthFirstIterator;
 
 import fiji.plugin.trackmate.features.FeatureModel;
@@ -81,7 +81,7 @@ import fiji.plugin.trackmate.visualization.TrackMateModelView;
  * 
  * <h3>{@link #graph}</h3>
  * 
- * The {@link SimpleWeightedGraph} that contains the map of links between spots.
+ * The {@link SimpleDirectedWeightedGraph} that contains the map of links between spots.
  * The vertices of the graph are the content of the {@link #spotSelection}
  * field. This is the only convenient way to store links in their more general
  * way we have thought of.
@@ -157,8 +157,8 @@ public class TrackMateModel <T extends RealType<T> & NativeType<T>> {
 	 * {@link #removeEdge(DefaultWeightedEdge)}, {@link #removeEdge(Spot, Spot)}
 	 * .
 	 */
-	protected ListenableUndirectedGraph<Spot, DefaultWeightedEdge> graph 
-		= new ListenableUndirectedGraph<Spot, DefaultWeightedEdge>(new SimpleWeightedGraph<Spot, DefaultWeightedEdge>(DefaultWeightedEdge.class));
+	protected ListenableDirectedGraph<Spot,DefaultWeightedEdge> graph 
+		= new ListenableDirectedGraph<Spot, DefaultWeightedEdge>(new SimpleDirectedWeightedGraph<Spot, DefaultWeightedEdge>(DefaultWeightedEdge.class));
 	/** The edges contained in the list of tracks. */
 	protected List<Set<DefaultWeightedEdge>> trackEdges = new ArrayList<Set<DefaultWeightedEdge>>();
 	/** The spots contained in the list of spots. */
@@ -625,8 +625,8 @@ public class TrackMateModel <T extends RealType<T> & NativeType<T>> {
 	 * <p>
 	 * Calling this method <b>overwrites<b> the current graph.
 	 */
-	public void setGraph(final SimpleWeightedGraph<Spot, DefaultWeightedEdge> graph) {
-		this.graph = new ListenableUndirectedGraph<Spot, DefaultWeightedEdge>(graph);
+	public void setGraph(final SimpleDirectedWeightedGraph<Spot, DefaultWeightedEdge> graph) {
+		this.graph = new ListenableDirectedGraph<Spot, DefaultWeightedEdge>(graph);
 		this.graph.addGraphListener(new MyGraphListener());
 		//
 		computeTracksFromGraph();
@@ -642,8 +642,8 @@ public class TrackMateModel <T extends RealType<T> & NativeType<T>> {
 	}
 
 	public void clearTracks() {
-		this.graph = new ListenableUndirectedGraph<Spot, DefaultWeightedEdge>(
-				new SimpleWeightedGraph<Spot, DefaultWeightedEdge>(DefaultWeightedEdge.class));
+		this.graph = new ListenableDirectedGraph<Spot, DefaultWeightedEdge>(
+				new SimpleDirectedWeightedGraph<Spot, DefaultWeightedEdge>(DefaultWeightedEdge.class));
 		this.graph.addGraphListener(new MyGraphListener());
 		this.trackEdges = null;
 		this.trackSpots = null;

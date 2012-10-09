@@ -23,7 +23,7 @@ import org.jdom.Attribute;
 import org.jdom.DataConversionException;
 import org.jdom.Element;
 import org.jgrapht.graph.DefaultWeightedEdge;
-import org.jgrapht.graph.SimpleWeightedGraph;
+import org.jgrapht.graph.SimpleDirectedWeightedGraph;
 
 import fiji.plugin.trackmate.DetectorProvider;
 import fiji.plugin.trackmate.FeatureFilter;
@@ -125,7 +125,7 @@ public class TmXmlReader_v12<T extends RealType<T> & NativeType<T>> extends TmXm
 		model.setFilteredSpots(filteredSpots, false);
 
 		// Tracks
-		SimpleWeightedGraph<Spot, DefaultWeightedEdge> graph = readTrackGraph();
+		SimpleDirectedWeightedGraph<Spot, DefaultWeightedEdge> graph = readTrackGraph();
 		if (null != graph) {
 			model.setGraph(graph);
 		}
@@ -671,7 +671,7 @@ public class TmXmlReader_v12<T extends RealType<T> & NativeType<T>> extends TmXm
 	 * @return  a list of tracks as a set of spots
 	 */
 	@SuppressWarnings("unchecked")
-	public List<Set<Spot>> readTrackSpots(final SimpleWeightedGraph<Spot, DefaultWeightedEdge> graph) {
+	public List<Set<Spot>> readTrackSpots(final SimpleDirectedWeightedGraph<Spot, DefaultWeightedEdge> graph) {
 
 		Element allTracksElement = root.getChild(TRACK_COLLECTION_ELEMENT_KEY_v12);
 		if (null == allTracksElement)
@@ -764,7 +764,7 @@ public class TmXmlReader_v12<T extends RealType<T> & NativeType<T>> extends TmXm
 	 * @return  a list of tracks as a set of edges
 	 */
 	@SuppressWarnings("unchecked")
-	public List<Set<DefaultWeightedEdge>> readTrackEdges(final SimpleWeightedGraph<Spot, DefaultWeightedEdge> graph) {
+	public List<Set<DefaultWeightedEdge>> readTrackEdges(final SimpleDirectedWeightedGraph<Spot, DefaultWeightedEdge> graph) {
 
 		Element allTracksElement = root.getChild(TRACK_COLLECTION_ELEMENT_KEY_v12);
 		if (null == allTracksElement)

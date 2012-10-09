@@ -1,9 +1,8 @@
 package fiji.plugin.trackmate.features.spot;
 
-import static org.junit.Assert.*;
-
+import static org.junit.Assert.assertEquals;
 import net.imglib2.RandomAccess;
-import net.imglib2.algorithm.region.localneighborhood.DiscNeighborhood;
+import net.imglib2.algorithm.region.localneighborhood.EllipseNeighborhood;
 import net.imglib2.img.Img;
 import net.imglib2.img.ImgPlus;
 import net.imglib2.img.array.ArrayImgFactory;
@@ -75,9 +74,11 @@ public class BlobDescriptiveStatisticsTest {
 		BlobDescriptiveStatisticsTest test = new BlobDescriptiveStatisticsTest();
 		test.setUp();
 		
-		DiscNeighborhood<UnsignedShortType> disc = new DiscNeighborhood<UnsignedShortType>(test.img2D, RADIUS);
-		disc.setPosition( Math.round(CENTER[0]/CALIBRATION[0]), 0);
-		disc.setPosition( Math.round(CENTER[1]/CALIBRATION[1]), 1);
+		EllipseNeighborhood<UnsignedShortType, ImgPlus<UnsignedShortType>> disc = 
+				new EllipseNeighborhood<UnsignedShortType, ImgPlus<UnsignedShortType>>(
+						test.img2D, 
+						new long[] { Math.round(CENTER[0]), Math.round(CENTER[1]) }, 
+						new long[] { Math.round(RADIUS), Math.round(RADIUS) });
 		for(UnsignedShortType pixel : disc) 
 			pixel.set(1500);
 		

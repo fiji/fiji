@@ -1,8 +1,8 @@
 package fiji.plugin.trackmate.tracking.kdtree;
 
+import static fiji.plugin.trackmate.tracking.TrackerKeys.KEY_LINKING_MAX_DISTANCE;
 import static fiji.plugin.trackmate.util.TMUtils.checkMapKeys;
 import static fiji.plugin.trackmate.util.TMUtils.checkParameter;
-import static fiji.plugin.trackmate.tracking.TrackerKeys.KEY_LINKING_MAX_DISTANCE;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -16,7 +16,7 @@ import net.imglib2.collection.KDTree;
 import net.imglib2.multithreading.SimpleMultiThreading;
 
 import org.jgrapht.graph.DefaultWeightedEdge;
-import org.jgrapht.graph.SimpleWeightedGraph;
+import org.jgrapht.graph.SimpleDirectedWeightedGraph;
 
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.Spot;
@@ -49,7 +49,7 @@ public class NearestNeighborTracker extends MultiThreadedBenchmarkAlgorithm	impl
 	
 	protected final SpotCollection spots;
 	protected final Logger logger;
-	protected SimpleWeightedGraph<Spot, DefaultWeightedEdge> graph;
+	protected SimpleDirectedWeightedGraph<Spot, DefaultWeightedEdge> graph;
 	protected Map<String, Object> settings;
 
 	/*
@@ -177,12 +177,12 @@ public class NearestNeighborTracker extends MultiThreadedBenchmarkAlgorithm	impl
 	}
 
 	@Override
-	public SimpleWeightedGraph<Spot, DefaultWeightedEdge> getResult() {
+	public SimpleDirectedWeightedGraph<Spot, DefaultWeightedEdge> getResult() {
 		return graph;
 	}
 
 	public void reset() {
-		graph = new SimpleWeightedGraph<Spot, DefaultWeightedEdge>(DefaultWeightedEdge.class);
+		graph = new SimpleDirectedWeightedGraph<Spot, DefaultWeightedEdge>(DefaultWeightedEdge.class);
 		for(Spot spot : spots) 
 			graph.addVertex(spot);
 	}

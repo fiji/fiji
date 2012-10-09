@@ -6,7 +6,6 @@ import java.util.Random;
 
 import javax.vecmath.Point3d;
 
-import net.imglib2.algorithm.region.localneighborhood.SphereNeighborhood;
 import net.imglib2.img.Img;
 import net.imglib2.img.ImgPlus;
 import net.imglib2.img.array.ArrayImgFactory;
@@ -16,8 +15,10 @@ import net.imglib2.meta.AxisType;
 import net.imglib2.type.numeric.integer.UnsignedByteType;
 import net.imglib2.util.Util;
 import fiji.plugin.trackmate.Spot;
+import fiji.plugin.trackmate.SpotImp;
 import fiji.plugin.trackmate.detection.DownsampleLogDetector;
 import fiji.plugin.trackmate.detection.LogDetector;
+import fiji.plugin.trackmate.util.SpotNeighborhood;
 
 /**
  * Test class for {@link DownsampleLogDetector}
@@ -59,10 +60,10 @@ public class LogDetectorTestDrive {
 		}
 		
 		// Put the blobs in the image
-		final SphereNeighborhood<UnsignedByteType> sphere = new SphereNeighborhood<UnsignedByteType>(img, radiuses[0]);
 		for (int i = 0; i < N_BLOBS; i++) {
-			sphere.setRadius(radiuses[i]);
-			sphere.setPosition(centers.get(i));
+			Spot tmpSpot = new SpotImp(centers.get(i));
+			tmpSpot.putFeature(Spot.RADIUS, radiuses[i]);
+			SpotNeighborhood<UnsignedByteType> sphere = new SpotNeighborhood<UnsignedByteType>(tmpSpot , img);
 			for(UnsignedByteType pixel : sphere) {
 				pixel.set(intensities[i]);
 			}

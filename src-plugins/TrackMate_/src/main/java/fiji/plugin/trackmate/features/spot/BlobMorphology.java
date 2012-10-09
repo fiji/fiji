@@ -4,10 +4,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 
-import net.imglib2.algorithm.region.localneighborhood.DiscCursor;
-import net.imglib2.algorithm.region.localneighborhood.DiscNeighborhood;
-import net.imglib2.algorithm.region.localneighborhood.SphereCursor;
-import net.imglib2.algorithm.region.localneighborhood.SphereNeighborhood;
+import net.imglib2.algorithm.region.localneighborhood.EllipseCursor;
+import net.imglib2.algorithm.region.localneighborhood.EllipseNeighborhood;
 import net.imglib2.img.Img;
 import net.imglib2.img.ImgPlus;
 import net.imglib2.img.array.ArrayImgFactory;
@@ -19,6 +17,8 @@ import Jama.Matrix;
 import fiji.plugin.trackmate.Dimension;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotImp;
+import fiji.plugin.trackmate.util.SpotNeighborhood;
+import fiji.plugin.trackmate.util.SpotNeighborhoodCursor;
 
 /**
  * This {@link SpotFeatureAnalyzer} computes morphology features for the given spots. 
@@ -139,15 +139,12 @@ public class BlobMorphology<T extends RealType<T>> extends IndependentSpotFeatur
 	@Override
 	public void process(final Spot spot) {
 
-		final double radius = spot.getFeature(Spot.RADIUS);
-		
 		if (img.numDimensions() == 3) {
 
 			// 3D case
 			
-			final SphereNeighborhood<T> sphere = new SphereNeighborhood<T>(img, radius);
-			sphere.setPosition(spot);
-			final SphereCursor<T> cursor = sphere.cursor();
+			final SpotNeighborhood<T> neighborhood = new SpotNeighborhood<T>(spot, img);
+			final SpotNeighborhoodCursor<T> cursor = neighborhood.cursor();
 			
 			double x, y, z;
 			double x2, y2, z2;
@@ -234,9 +231,8 @@ public class BlobMorphology<T extends RealType<T>> extends IndependentSpotFeatur
 			
 			// 2D case
 			
-			final DiscNeighborhood<T> neighborhood = new DiscNeighborhood<T>(img, radius);
-			neighborhood.setPosition(spot);
-			final DiscCursor<T> cursor = neighborhood.cursor();
+			final SpotNeighborhood<T> neighborhood = new SpotNeighborhood<T>(spot, img);
+			final SpotNeighborhoodCursor<T> cursor = neighborhood.cursor();
 			double x, y;
 			double x2, y2;
 			double mass, totalmass = 0;
@@ -364,11 +360,11 @@ public class BlobMorphology<T extends RealType<T>> extends IndependentSpotFeatur
 		int size_x = 200;
 		int size_y = 200;
 		
-		double a = 10;
-		double b = 5;
+		long a = 10;
+		long b = 5;
 		double phi_r = (double) Math.toRadians(30);
 
-		double max_radius = Math.max(a, b);
+		long max_radius = Math.max(a, b);
 		double[] calibration = new double[] {1, 1};
 		
 		// Create blank image
@@ -382,11 +378,11 @@ public class BlobMorphology<T extends RealType<T>> extends IndependentSpotFeatur
 		long start = System.currentTimeMillis();
 		System.out.println(String.format("Creating an ellipse with a = %.1f, b = %.1f", a, b));
 		System.out.println(String.format("phi = %.1f", Math.toDegrees(phi_r)));
-		double[] center = new double[] { size_x/2, size_y/2, 0 };
+		long[] center = new long[] { size_x/2, size_y/2};
+		long[] radiuses = new long[] { max_radius, max_radius };
 		
-		DiscNeighborhood<UnsignedByteType> disc = new DiscNeighborhood<UnsignedByteType>(imgplus, max_radius);
-		disc.setPosition(center);
-		DiscCursor<UnsignedByteType> sc = disc.cursor();
+		EllipseNeighborhood<UnsignedByteType, Img<UnsignedByteType>> disc = new EllipseNeighborhood<UnsignedByteType, Img<UnsignedByteType>>(img, center, radiuses);
+		EllipseCursor<UnsignedByteType> sc = disc.cursor();
 		
 		double r2, phi, term;
 		double cosphi, sinphi;
@@ -411,7 +407,7 @@ public class BlobMorphology<T extends RealType<T>> extends IndependentSpotFeatur
 		start = System.currentTimeMillis();
 		BlobMorphology<UnsignedByteType> bm = new BlobMorphology<UnsignedByteType>();
 		bm.setTarget(imgplus);
-		SpotImp spot = new SpotImp(center);
+		SpotImp spot = new SpotImp(new double[] { center[0], center[1] } );
 		spot.putFeature(Spot.RADIUS, max_radius);
 		bm.process(spot);
 		end = System.currentTimeMillis();

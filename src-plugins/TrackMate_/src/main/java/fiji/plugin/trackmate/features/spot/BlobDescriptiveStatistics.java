@@ -3,13 +3,11 @@ package fiji.plugin.trackmate.features.spot;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import net.imglib2.algorithm.region.localneighborhood.DiscNeighborhood;
-import net.imglib2.algorithm.region.localneighborhood.RealPositionableAbstractNeighborhood;
-import net.imglib2.algorithm.region.localneighborhood.SphereNeighborhood;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.util.Util;
 import fiji.plugin.trackmate.Dimension;
 import fiji.plugin.trackmate.Spot;
+import fiji.plugin.trackmate.util.SpotNeighborhood;
 
 public class BlobDescriptiveStatistics<T extends RealType<T>> extends IndependentSpotFeatureAnalyzer<T> {
 
@@ -89,15 +87,7 @@ public class BlobDescriptiveStatistics<T extends RealType<T>> extends Independen
 	public void process(Spot spot) {
 
 		// Prepare neighborhood
-		final double radius = spot.getFeature(Spot.RADIUS);
-		final RealPositionableAbstractNeighborhood<T> neighborhood;
-		if (img.numDimensions() == 3) {
-			neighborhood = new SphereNeighborhood<T>(img, radius);
-			neighborhood.setPosition(spot);
-		} else {
-			neighborhood = new DiscNeighborhood<T>(img, radius);
-			neighborhood.setPosition(spot);
-		}
+		SpotNeighborhood<T> neighborhood = new SpotNeighborhood<T>(spot, img);
 		final int npixels = (int) neighborhood.size();
 
 		// For variance, kurtosis and skewness 

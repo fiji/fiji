@@ -11,7 +11,7 @@ import net.imglib2.type.numeric.RealType;
 
 import org.jdom.JDOMException;
 import org.jgrapht.graph.DefaultWeightedEdge;
-import org.jgrapht.graph.SimpleWeightedGraph;
+import org.jgrapht.graph.SimpleDirectedWeightedGraph;
 
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.Spot;
@@ -75,7 +75,7 @@ public class SpotFeatureGrapher_TestDrive {
 		model.setSpots(sc, false);
 		model.setFilteredSpots(sc, false);
 		
-		SimpleWeightedGraph<Spot, DefaultWeightedEdge> graph = new SimpleWeightedGraph<Spot, DefaultWeightedEdge>(DefaultWeightedEdge.class);
+		SimpleDirectedWeightedGraph<Spot, DefaultWeightedEdge> graph = new SimpleDirectedWeightedGraph<Spot, DefaultWeightedEdge>(DefaultWeightedEdge.class);
 		for (Spot spot : spots) {
 			graph.addVertex(spot);
 		}

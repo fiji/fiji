@@ -8,7 +8,6 @@ import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.algorithm.legacy.scalespace.DifferenceOfGaussian;
 import net.imglib2.algorithm.legacy.scalespace.DifferenceOfGaussianPeak;
 import net.imglib2.algorithm.legacy.scalespace.SubpixelLocalization;
-import net.imglib2.exception.IncompatibleTypeException;
 import net.imglib2.img.Img;
 import net.imglib2.img.ImgFactory;
 import net.imglib2.img.ImgPlus;
@@ -60,18 +59,12 @@ public class DogDetector <T extends RealType<T>  & NativeType<T>> extends LogDet
 		
 		final double[] calibration = TMUtils.getSpatialCalibration(img);
 		
-		// First we need an image factory for FloatType
-		ImgFactory<FloatType> imageFactory;
-		try {
-			imageFactory = img.factory().imgFactory(new FloatType());
-		} catch (IncompatibleTypeException e) {
-			errorMessage = BASE_ERROR_MESSAGE + "Could not instantiate image factory.";
-			return false;
-		}
+		// First we need an image factory 
+		ImgFactory<T> imageFactory = img.factory();
 		
 		// And the out of bounds strategies for both types. It needs to be a value-oobs, with a constant
 		// value of 0; otherwise, we will miss maxima on the border of the image.
-		final OutOfBoundsFactory<FloatType, RandomAccessibleInterval<FloatType>> oobs2 = new OutOfBoundsMirrorExpWindowingFactory<FloatType, RandomAccessibleInterval<FloatType>>();
+		final OutOfBoundsFactory<T, RandomAccessibleInterval<T>> oobs2 = new OutOfBoundsMirrorExpWindowingFactory<T, RandomAccessibleInterval<T>>();
 		
 		double[] sigma1 = new double[img.numDimensions()];
 		double[] sigma2 = new double[img.numDimensions()];
