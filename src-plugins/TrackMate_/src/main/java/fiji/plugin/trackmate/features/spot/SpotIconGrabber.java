@@ -6,14 +6,16 @@ import ij.process.ImageProcessor;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.Collection;
 
 import javax.imageio.ImageIO;
 
 import net.imglib2.RandomAccess;
 import net.imglib2.img.Img;
+import net.imglib2.img.ImgPlus;
 import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.outofbounds.OutOfBoundsConstantValueFactory;
-import net.imglib2.type.numeric.NumericType;
+import net.imglib2.type.numeric.RealType;
 import net.imglib2.view.Views;
 
 import com.mxgraph.util.mxBase64;
@@ -26,7 +28,11 @@ import fiji.plugin.trackmate.util.TMUtils;
  * its coordinates and an {@link ImagePlus} that contain the pixel data.
  * @author Jean-Yves Tinevez <jeanyves.tinevez@gmail.com> - Dec 2010 - 2012
  */
-public class SpotIconGrabber<T extends NumericType<T>> extends IndependentSpotFeatureAnalyzer<T> {
+public class SpotIconGrabber<T extends RealType<T>> extends IndependentSpotFeatureAnalyzer<T> {
+
+	public SpotIconGrabber(ImgPlus<T> img, Collection<Spot> spots) {
+		super(img, spots);
+	}
 
 	@Override
 	public void  process(Spot spot) {
@@ -66,9 +72,6 @@ public class SpotIconGrabber<T extends NumericType<T>> extends IndependentSpotFe
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-
-
-
 	}
 
 	public final Img<T> grabImage(long x, long y, long slice, long width, long height) {

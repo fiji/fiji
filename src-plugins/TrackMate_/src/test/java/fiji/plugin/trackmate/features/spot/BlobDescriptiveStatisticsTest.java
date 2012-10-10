@@ -57,13 +57,13 @@ public class BlobDescriptiveStatisticsTest {
 
 	@Test
 	public void testProcessSpot2D() {
-		 BlobDescriptiveStatistics<UnsignedShortType> analyzer = new BlobDescriptiveStatistics<UnsignedShortType>();
+		 SpotIntensityAnalyzer<UnsignedShortType> analyzer = new SpotIntensityAnalyzer<UnsignedShortType>();
 		 analyzer.setTarget(img2D);
 		 analyzer.process(spot);
 		 
-		 assertEquals(TEST_VAL, spot.getFeature(BlobDescriptiveStatistics.MEAN_INTENSITY), Double.MIN_VALUE);
-		 assertEquals(TEST_VAL, spot.getFeature(BlobDescriptiveStatistics.MAX_INTENSITY), Double.MIN_VALUE);
-		 assertEquals(TEST_VAL, spot.getFeature(BlobDescriptiveStatistics.MIN_INTENSITY), Double.MIN_VALUE);
+		 assertEquals(TEST_VAL, spot.getFeature(SpotIntensityAnalyzer.MEAN_INTENSITY), Double.MIN_VALUE);
+		 assertEquals(TEST_VAL, spot.getFeature(SpotIntensityAnalyzer.MAX_INTENSITY), Double.MIN_VALUE);
+		 assertEquals(TEST_VAL, spot.getFeature(SpotIntensityAnalyzer.MIN_INTENSITY), Double.MIN_VALUE);
 	}
 	
 	

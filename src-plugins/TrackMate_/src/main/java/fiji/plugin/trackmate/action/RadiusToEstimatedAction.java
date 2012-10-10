@@ -8,7 +8,7 @@ import net.imglib2.type.numeric.RealType;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.TrackMate_;
-import fiji.plugin.trackmate.features.spot.RadiusEstimator;
+import fiji.plugin.trackmate.features.spot.SpotRadiusEstimator;
 import fiji.plugin.trackmate.gui.DisplayerPanel;
 
 public class RadiusToEstimatedAction<T extends RealType<T> & NativeType<T>> extends AbstractTMAction<T> {
@@ -41,7 +41,7 @@ public class RadiusToEstimatedAction<T extends RealType<T> & NativeType<T>> exte
 		int valid = 0;
 		int invalid = 0;
 		for(Spot spot : spots) {
-			Double diameter = spot.getFeature(RadiusEstimator.ESTIMATED_DIAMETER);
+			Double diameter = spot.getFeature(SpotRadiusEstimator.ESTIMATED_DIAMETER);
 			if (null == diameter || diameter == 0) {
 				invalid++;
 			} else {
@@ -52,10 +52,10 @@ public class RadiusToEstimatedAction<T extends RealType<T> & NativeType<T>> exte
 		if (invalid == 0) {
 			logger.log(String.format("%d spots changed.\n", valid));
 		} else if (valid == 0 ){
-			logger.log("All spots miss the "+RadiusEstimator.ESTIMATED_DIAMETER+" feature.\n");
+			logger.log("All spots miss the "+SpotRadiusEstimator.ESTIMATED_DIAMETER+" feature.\n");
 			logger.log("No modification made.\n");
 		} else {
-			logger.log("Some spots miss the "+RadiusEstimator.ESTIMATED_DIAMETER+" feature.\n");
+			logger.log("Some spots miss the "+SpotRadiusEstimator.ESTIMATED_DIAMETER+" feature.\n");
 			logger.log(String.format("Updated %d spots, left %d spots unchanged.\n", valid, invalid));
 		}
 		logger.log("Done.\n");

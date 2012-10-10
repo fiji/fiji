@@ -10,7 +10,7 @@ import net.imglib2.algorithm.region.localneighborhood.EllipseNeighborhood;
 import net.imglib2.algorithm.region.localneighborhood.EllipsoidNeighborhood;
 import net.imglib2.algorithm.region.localneighborhood.Neighborhood;
 import net.imglib2.img.ImgPlus;
-import net.imglib2.outofbounds.OutOfBoundsConstantValueFactory;
+import net.imglib2.outofbounds.OutOfBoundsMirrorExpWindowingFactory;
 import net.imglib2.type.numeric.RealType;
 import fiji.plugin.trackmate.Spot;
 
@@ -41,9 +41,7 @@ public class SpotNeighborhood<T extends RealType<T>> implements Neighborhood<T> 
 			span[d] = Math.round(spot.getFeature(Spot.RADIUS) / calibration[d]);
 		}
 		// Neighborhood
-		T value = img.firstElement().createVariable();
-		value.setZero();
-		OutOfBoundsConstantValueFactory<T, ImgPlus<T>> oob = new OutOfBoundsConstantValueFactory<T, ImgPlus<T>>(value);
+		OutOfBoundsMirrorExpWindowingFactory<T, ImgPlus<T>> oob = new OutOfBoundsMirrorExpWindowingFactory<T, ImgPlus<T>>();
 		if (img.numDimensions() == 2) {
 			this.neighborhood = new EllipseNeighborhood<T, ImgPlus<T>>(img, center, span, oob);
 		} else if (img.numDimensions() == 3) {

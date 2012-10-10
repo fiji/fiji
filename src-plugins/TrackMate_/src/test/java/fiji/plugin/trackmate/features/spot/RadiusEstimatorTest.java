@@ -54,7 +54,7 @@ public class RadiusEstimatorTest  <T extends NativeType<T> & RealType<T>>  {
 		}
 				
 		// Apply the estimator
-		RadiusEstimator<UnsignedByteType> es = new RadiusEstimator<UnsignedByteType>();
+		SpotRadiusEstimator<UnsignedByteType> es = new SpotRadiusEstimator<UnsignedByteType>();
 		es.setTarget(testImage);
 		
 		SpotImp s;
@@ -63,7 +63,7 @@ public class RadiusEstimatorTest  <T extends NativeType<T> & RealType<T>>  {
 			s = spots[i];
 			r = radiuses[i];
 			es.process(s);
-			assertEquals(2*r, s.getFeatures().get(RadiusEstimator.ESTIMATED_DIAMETER), 2*r * TOLERANCE);
+			assertEquals(2*r, s.getFeatures().get(SpotRadiusEstimator.ESTIMATED_DIAMETER), 2*r * TOLERANCE);
 		}
 		
 	}
@@ -99,7 +99,7 @@ public class RadiusEstimatorTest  <T extends NativeType<T> & RealType<T>>  {
 		imp.show();
 		
 		// Apply the estimator
-		RadiusEstimator<UnsignedByteType> es = new RadiusEstimator<UnsignedByteType>();
+		SpotRadiusEstimator<UnsignedByteType> es = new SpotRadiusEstimator<UnsignedByteType>();
 		es.setTarget(testImage);
 //		es.nDiameters = 20;
 		
@@ -113,7 +113,7 @@ public class RadiusEstimatorTest  <T extends NativeType<T> & RealType<T>>  {
 			es.process(s);
 			stop = System.currentTimeMillis();
 			System.out.println(String.format("For spot %d, found diameter %.1f, real value was %.1f.", 
-					i, s.getFeatures().get(RadiusEstimator.ESTIMATED_DIAMETER), 2*r));
+					i, s.getFeatures().get(SpotRadiusEstimator.ESTIMATED_DIAMETER), 2*r));
 			System.out.println("Computing time: "+(stop-start)+" ms.");
 		}
 	}

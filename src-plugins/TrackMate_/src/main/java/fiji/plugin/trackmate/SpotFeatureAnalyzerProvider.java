@@ -4,7 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import fiji.plugin.trackmate.features.spot.BlobContrastAndSNR;
+import fiji.plugin.trackmate.features.spot.IndependentSpotFeatureAnalyzer;
+import fiji.plugin.trackmate.features.spot.SpotContrastAndSNRAnalyzer;
 import fiji.plugin.trackmate.features.spot.BlobDescriptiveStatistics;
 import fiji.plugin.trackmate.features.spot.BlobMorphology;
 import fiji.plugin.trackmate.features.spot.RadiusEstimator;
@@ -14,7 +15,7 @@ import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
 
 /**
- * A factory for the spot analyzers provided in the GUI.
+ * A provider for the spot analyzer factories provided in the GUI.
  * <p>
  * Concrete implementation must declare what features they can compute numerically, 
  * using the method {@link #getFeatures(String)}. The names and dimension of these 
@@ -24,7 +25,7 @@ import net.imglib2.type.numeric.RealType;
  * Feature key names are for historical reason all capitalized in an enum manner. For instance: POSITION_X,
  * MAX_INTENSITY, etc... They must be suitable to be used as a attribute key in an xml file.
  */
-public class SpotFeatureAnalyzerFactory <T extends RealType<T> & NativeType<T>> {
+public class SpotFeatureAnalyzerProvider <T extends RealType<T> & NativeType<T>> {
 
 
 	/** The detector names, in the order they will appear in the GUI.
@@ -36,7 +37,7 @@ public class SpotFeatureAnalyzerFactory <T extends RealType<T> & NativeType<T>> 
 	 */
 
 	/**
-	 * This factory provides the GUI with the model spotFeatureAnalyzers currently available in the 
+	 * This provider provides the GUI with the model spotFeatureAnalyzers currently available in the 
 	 * TrackMate plugin. Each spotFeatureAnalyzer is identified by a key String, which can be used 
 	 * to retrieve new instance of the spotFeatureAnalyzer.
 	 * <p>
@@ -44,7 +45,7 @@ public class SpotFeatureAnalyzerFactory <T extends RealType<T> & NativeType<T>> 
 	 * factory so that it is registered with the custom spotFeatureAnalyzers and provide this 
 	 * extended factory to the {@link TrackMate_} plugin.
 	 */
-	public SpotFeatureAnalyzerFactory() {
+	public SpotFeatureAnalyzerProvider() {
 		registerSpotFeatureAnalyzers();
 	}
 
@@ -60,7 +61,7 @@ public class SpotFeatureAnalyzerFactory <T extends RealType<T> & NativeType<T>> 
 		// Names
 		names = new ArrayList<String>(4);
 		names.add(BlobDescriptiveStatistics.NAME);
-		names.add(BlobContrastAndSNR.NAME); // must be after the statistics one
+		names.add(IndependentSpotFeatureAnalyzer<T>.NAME); // must be after the statistics one
 		names.add(RadiusEstimator.NAME);
 		names.add(BlobMorphology.NAME);
 	}
@@ -78,7 +79,7 @@ public class SpotFeatureAnalyzerFactory <T extends RealType<T> & NativeType<T>> 
 		case 0:
 			return new BlobDescriptiveStatistics<T>();
 		case 1:
-			return new BlobContrastAndSNR<T>();
+			return new SpotContrastAndSNRAnalyzer<T>();
 		case 2:
 			return new RadiusEstimator<T>();
 		case 3:
@@ -109,7 +110,7 @@ public class SpotFeatureAnalyzerFactory <T extends RealType<T> & NativeType<T>> 
 		case 0:
 			return BlobDescriptiveStatistics.FEATURES;
 		case 1:
-			return BlobContrastAndSNR.FEATURES;
+			return IndependentSpotFeatureAnalyzer<T>.FEATURES;
 		case 2:
 			return RadiusEstimator.FEATURES;
 		case 3:
@@ -132,7 +133,7 @@ public class SpotFeatureAnalyzerFactory <T extends RealType<T> & NativeType<T>> 
 		case 0:
 			return BlobDescriptiveStatistics.FEATURE_SHORT_NAMES;
 		case 1:
-			return BlobContrastAndSNR.FEATURE_SHORT_NAMES;
+			return IndependentSpotFeatureAnalyzer<T>.FEATURE_SHORT_NAMES;
 		case 2:
 			return RadiusEstimator.FEATURE_SHORT_NAMES;
 		case 3:
@@ -155,7 +156,7 @@ public class SpotFeatureAnalyzerFactory <T extends RealType<T> & NativeType<T>> 
 		case 0:
 			return BlobDescriptiveStatistics.FEATURE_NAMES;
 		case 1:
-			return BlobContrastAndSNR.FEATURE_NAMES;
+			return IndependentSpotFeatureAnalyzer<T>.FEATURE_NAMES;
 		case 2:
 			return RadiusEstimator.FEATURE_NAMES;
 		case 3:
@@ -178,7 +179,7 @@ public class SpotFeatureAnalyzerFactory <T extends RealType<T> & NativeType<T>> 
 		case 0:
 			return BlobDescriptiveStatistics.FEATURE_DIMENSIONS;
 		case 1:
-			return BlobContrastAndSNR.FEATURE_DIMENSIONS;
+			return IndependentSpotFeatureAnalyzer<T>.FEATURE_DIMENSIONS;
 		case 2:
 			return RadiusEstimator.FEATURE_DIMENSIONS;
 		case 3:

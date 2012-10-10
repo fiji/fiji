@@ -157,6 +157,15 @@ public class SpotOverlay<T extends RealType<T> & NativeType<T>> implements Overl
 	
 	public void computeSpotColors() {
 		final String feature = (String) displaySettings.get(TrackMateModelView.KEY_SPOT_COLOR_FEATURE);
+		targetColor = new HashMap<Spot, Color>( model.getSpots().getNSpots());
+		// Check null
+		if (null == feature) {
+			for(Spot spot : model.getSpots()) {
+				targetColor.put(spot, TrackMateModelView.DEFAULT_COLOR);
+			}
+			return;
+		}
+		
 		// Get min & max
 		double min = Float.POSITIVE_INFINITY;
 		double max = Float.NEGATIVE_INFINITY;
@@ -170,7 +179,7 @@ public class SpotOverlay<T extends RealType<T> & NativeType<T>> implements Overl
 				if (val < min) min = val;
 			}
 		}
-		targetColor = new HashMap<Spot, Color>( model.getSpots().getNSpots());
+		
 		for(Spot spot : model.getSpots()) {
 			val = spot.getFeature(feature);
 			InterpolatePaintScale  colorMap = (InterpolatePaintScale) displaySettings.get(TrackMateModelView.KEY_COLORMAP);

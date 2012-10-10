@@ -244,6 +244,7 @@ public class TrackMateModel <T extends RealType<T> & NativeType<T>> {
 	public TrackMateModel() {
 		graph.addGraphListener(new MyGraphListener());
 		featureModel = new FeatureModel<T>(this);
+//		featureModel.setNumThreads(1); // DEBUG
 	}
 
 

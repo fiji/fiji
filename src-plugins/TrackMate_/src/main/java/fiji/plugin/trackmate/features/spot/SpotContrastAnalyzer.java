@@ -1,36 +1,26 @@
 package fiji.plugin.trackmate.features.spot;
 
-import java.util.ArrayList;
-import java.util.HashMap;
+import static fiji.plugin.trackmate.features.spot.SpotContrastAnalyzerFactory.KEY;
 
+import java.util.Collection;
+
+import net.imglib2.img.ImgPlus;
 import net.imglib2.type.numeric.RealType;
-import fiji.plugin.trackmate.Dimension;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.util.SpotNeighborhood;
 import fiji.plugin.trackmate.util.SpotNeighborhoodCursor;
 
-public class BlobContrast<T extends RealType<T>> extends IndependentSpotFeatureAnalyzer<T> {
+public class SpotContrastAnalyzer<T extends RealType<T>> extends IndependentSpotFeatureAnalyzer<T> {
 
-	/** The single feature key name that this analyzer computes. */
-	public static final String						CONTRAST = "CONTRAST";
-	private static final ArrayList<String> 			FEATURES = new ArrayList<String>(1);
-	private static final HashMap<String, String> 	FEATURE_NAMES = new HashMap<String, String>(1);
-	private static final HashMap<String, String> 	FEATURE_SHORT_NAMES = new HashMap<String, String>(1);
-	private static final HashMap<String, Dimension> FEATURE_DIMENSIONS = new HashMap<String, Dimension>(1);
-	static {
-		FEATURES.add(CONTRAST);
-		FEATURE_NAMES.put(CONTRAST, "Contrast");
-		FEATURE_SHORT_NAMES.put(CONTRAST, "Contrast");
-		FEATURE_DIMENSIONS.put(CONTRAST, Dimension.NONE);
+	protected static final double RAD_PERCENTAGE = .5f;
+	
+	public SpotContrastAnalyzer(final ImgPlus<T> img, final Collection<Spot> spots) {
+		super(img, spots);
 	}
 	
-	protected static final double RAD_PERCENTAGE = .5f;  
-	
-
-	@Override
-	public void process(Spot spot) {
+	public final void process(final Spot spot) {
 		double contrast = getContrast(spot);
-		spot.putFeature(CONTRAST, Math.abs(contrast));
+		spot.putFeature(KEY, Math.abs(contrast));
 	}
 	
 	/**
@@ -39,7 +29,7 @@ public class BlobContrast<T extends RealType<T>> extends IndependentSpotFeatureA
 	 * @param diameter  the diameter to search for is in physical units
 	 * @return
 	 */
-	protected double getContrast(final Spot spot) {
+	private final double getContrast(final Spot spot) {
 
 		final SpotNeighborhood<T> neighborhood = new SpotNeighborhood<T>(spot, img);
 		

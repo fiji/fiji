@@ -18,7 +18,7 @@ import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.SpotImp;
-import fiji.plugin.trackmate.features.spot.BlobDescriptiveStatistics;
+import fiji.plugin.trackmate.features.spot.SpotIntensityAnalyzer;
 
 
 public class LAPTrackerTest implements TrackerKeys {
@@ -102,8 +102,8 @@ public class LAPTrackerTest implements TrackerKeys {
 			spot1.setName("G1T"+i);
 			spot2.setName("G2T"+i);
 			// For this test, we need to put a different feature for each track
-			spot1.putFeature(BlobDescriptiveStatistics.MEAN_INTENSITY, 100);
-			spot2.putFeature(BlobDescriptiveStatistics.MEAN_INTENSITY, 200);
+			spot1.putFeature(SpotIntensityAnalyzer.MEAN_INTENSITY, 100);
+			spot2.putFeature(SpotIntensityAnalyzer.MEAN_INTENSITY, 200);
 
 			group1.add(spot1);
 			group2.add(spot2);
@@ -122,7 +122,7 @@ public class LAPTrackerTest implements TrackerKeys {
 		trackerSettings.put(KEY_LINKING_MAX_DISTANCE, 2.);
 		trackerSettings.put(KEY_ALLOW_GAP_CLOSING, false);
 		StringBuilder errorHolder = new StringBuilder();
-		boolean ok = LAPUtils.addFeaturePenaltyToSettings(trackerSettings, KEY_LINKING_FEATURE_PENALTIES, BlobDescriptiveStatistics.MEAN_INTENSITY, 1d, errorHolder );
+		boolean ok = LAPUtils.addFeaturePenaltyToSettings(trackerSettings, KEY_LINKING_FEATURE_PENALTIES, SpotIntensityAnalyzer.MEAN_INTENSITY, 1d, errorHolder );
 		if (!ok) {
 			fail(errorHolder.toString());
 		}

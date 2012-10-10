@@ -1,8 +1,16 @@
 package fiji.plugin.trackmate.features.spot;
 
-import java.util.ArrayList;
+import static fiji.plugin.trackmate.features.spot.SpotMorphologyAnalyzerFactory.MORPHOLOGY;
+import static fiji.plugin.trackmate.features.spot.SpotMorphologyAnalyzerFactory.OBLATE;
+import static fiji.plugin.trackmate.features.spot.SpotMorphologyAnalyzerFactory.PROLATE;
+import static fiji.plugin.trackmate.features.spot.SpotMorphologyAnalyzerFactory.SCALENE;
+import static fiji.plugin.trackmate.features.spot.SpotMorphologyAnalyzerFactory.SPHERE;
+import static fiji.plugin.trackmate.features.spot.SpotMorphologyAnalyzerFactory.featurelist_phi;
+import static fiji.plugin.trackmate.features.spot.SpotMorphologyAnalyzerFactory.featurelist_sa;
+import static fiji.plugin.trackmate.features.spot.SpotMorphologyAnalyzerFactory.featurelist_theta;
+
 import java.util.Arrays;
-import java.util.HashMap;
+import java.util.List;
 
 import net.imglib2.algorithm.region.localneighborhood.EllipseCursor;
 import net.imglib2.algorithm.region.localneighborhood.EllipseNeighborhood;
@@ -14,7 +22,6 @@ import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.integer.UnsignedByteType;
 import Jama.EigenvalueDecomposition;
 import Jama.Matrix;
-import fiji.plugin.trackmate.Dimension;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotImp;
 import fiji.plugin.trackmate.util.SpotNeighborhood;
@@ -58,86 +65,26 @@ import fiji.plugin.trackmate.util.SpotNeighborhoodCursor;
  * </ul>
  * 
  * @author Jean-Yves Tinevez <jeanyves.tinevez@gmail.com> Apr 1, 2011 - 2012
- *
- * @param <T>  the type of the input {@link Img}
  */
-public class BlobMorphology<T extends RealType<T>> extends IndependentSpotFeatureAnalyzer<T> {
+public class SpotMorphologyAnalyzer<T extends RealType<T>> extends IndependentSpotFeatureAnalyzer<T> {
 
-	/*
-	 * CONSTANTS
-	 */
-
-	private final static String[] featurelist_sa 	= { "ELLIPSOIDFIT_SEMIAXISLENGTH_C", "ELLIPSOIDFIT_SEMIAXISLENGTH_B", 	"ELLIPSOIDFIT_SEMIAXISLENGTH_A" };
-	private final static String[] featurelist_phi 	= { "ELLIPSOIDFIT_AXISPHI_C", 		"ELLIPSOIDFIT_AXISPHI_B", 			"ELLIPSOIDFIT_AXISPHI_A" };
-	private final static String[] featurelist_theta = { "ELLIPSOIDFIT_AXISTHETA_C", 	"ELLIPSOIDFIT_AXISTHETA_B", 		"ELLIPSOIDFIT_AXISTHETA_A" }; 
-	/** The key name of the morphology feature this analyzer computes. */
-	public final static String MORPHOLOGY = "MORPHOLOGY";
-	
-	public static final ArrayList<String> 			FEATURES = new ArrayList<String>(10);
-	public static final HashMap<String, String> 	FEATURE_NAMES = new HashMap<String, String>(10);
-	public static final HashMap<String, String> 	FEATURE_SHORT_NAMES = new HashMap<String, String>(10);
-	public static final HashMap<String, Dimension> FEATURE_DIMENSIONS = new HashMap<String, Dimension>(10);
-	static {
-		FEATURES.add(MORPHOLOGY);
-		FEATURES.addAll(Arrays.asList(featurelist_sa));
-		FEATURES.addAll(Arrays.asList(featurelist_phi));
-		FEATURES.addAll(Arrays.asList(featurelist_theta));
-		
-		FEATURE_NAMES.put(MORPHOLOGY, "Morphology");
-		FEATURE_NAMES.put(featurelist_sa[0], "Ellipsoid C semi-axis length");
-		FEATURE_NAMES.put(featurelist_sa[1], "Ellipsoid B semi-axis length");
-		FEATURE_NAMES.put(featurelist_sa[2], "Ellipsoid A semi-axis length");
-		FEATURE_NAMES.put(featurelist_phi[0], "Ellipsoid C axis φ azimuth");
-		FEATURE_NAMES.put(featurelist_phi[1], "Ellipsoid B axis φ azimuth");
-		FEATURE_NAMES.put(featurelist_phi[2], "Ellipsoid A axis φ azimuth");
-		FEATURE_NAMES.put(featurelist_theta[0], "Ellipsoid C axis θ azimuth");
-		FEATURE_NAMES.put(featurelist_theta[1], "Ellipsoid B axis θ azimuth");
-		FEATURE_NAMES.put(featurelist_theta[2], "Ellipsoid A axis θ azimuth");
-
-		FEATURE_SHORT_NAMES.put(MORPHOLOGY, "Morpho.");
-		FEATURE_SHORT_NAMES.put(featurelist_sa[0], "lc");
-		FEATURE_SHORT_NAMES.put(featurelist_sa[1], "lb");
-		FEATURE_SHORT_NAMES.put(featurelist_sa[2], "la");
-		FEATURE_SHORT_NAMES.put(featurelist_phi[0], "φc");
-		FEATURE_SHORT_NAMES.put(featurelist_phi[1], "φb");
-		FEATURE_SHORT_NAMES.put(featurelist_phi[2], "φa");
-		FEATURE_SHORT_NAMES.put(featurelist_theta[0], "θc");
-		FEATURE_SHORT_NAMES.put(featurelist_theta[1], "θb");
-		FEATURE_SHORT_NAMES.put(featurelist_theta[2], "θa");
-		
-		FEATURE_DIMENSIONS.put(MORPHOLOGY, Dimension.NONE);
-		FEATURE_DIMENSIONS.put(featurelist_sa[0], Dimension.LENGTH);
-		FEATURE_DIMENSIONS.put(featurelist_sa[1], Dimension.LENGTH);
-		FEATURE_DIMENSIONS.put(featurelist_sa[2], Dimension.LENGTH);
-		FEATURE_DIMENSIONS.put(featurelist_phi[0], Dimension.ANGLE);
-		FEATURE_DIMENSIONS.put(featurelist_phi[1], Dimension.ANGLE);
-		FEATURE_DIMENSIONS.put(featurelist_phi[2], Dimension.ANGLE);
-		FEATURE_DIMENSIONS.put(featurelist_sa[0], Dimension.ANGLE);
-		FEATURE_DIMENSIONS.put(featurelist_sa[1], Dimension.ANGLE);
-		FEATURE_DIMENSIONS.put(featurelist_sa[2], Dimension.ANGLE);
-
-	}
-	/** Spherical shape, that is roughly a = b = c. */
-	public static final int SPHERE = 0;
-	/** Oblate shape, disk shaped, that is roughly a = b > c. */
-	public static final int OBLATE = 1;
-	/** Prolate shape, rugby ball shape, that is roughly a = b < c. */
-	public static final int PROLATE = 2;
-	/** Scalene shape, nothing particular, a > b > c. */
-	public static final int SCALENE = 3;
-	
 	/** Significance factor to determine when a semiaxis length should be
 	 *  considered significantly larger than the others. */
 	private static final double SIGNIFICANCE_FACTOR = 1.2;
-	public static final String NAME = "Blob morphology";
+	
+
+	
+	public SpotMorphologyAnalyzer(ImgPlus<T> imgCT, List<Spot> spots) {
+		super(imgCT, spots);
+	}
 
 	/*
 	 * PUBLIC METHODS
 	 */
 	
-	
+
 	@Override
-	public void process(final Spot spot) {
+	public final void process(final Spot spot) {
 
 		if (img.numDimensions() == 3) {
 
@@ -403,12 +350,12 @@ public class BlobMorphology<T extends RealType<T>> extends IndependentSpotFeatur
 		ImageJFunctions.show(imgplus);
 		
 		start = System.currentTimeMillis();
-		BlobMorphology<UnsignedByteType> bm = new BlobMorphology<UnsignedByteType>();
-		bm.setTarget(imgplus);
 		SpotImp spot = new SpotImp(new double[] { center[0], center[1] } );
 		spot.putFeature(Spot.RADIUS, max_radius);
+
+		SpotMorphologyAnalyzer<UnsignedByteType> bm = new SpotMorphologyAnalyzer<UnsignedByteType>(imgplus, null);
 		bm.process(spot);
-		end = System.currentTimeMillis();
+
 		System.out.println("Blob morphology analyzed in " + (end-start) + " ms.");
 		double phiv, thetav, lv;
 		for (int j = 0; j < 2; j++) {

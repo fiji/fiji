@@ -44,6 +44,7 @@ import org.jfree.chart.renderer.xy.StandardXYBarPainter;
 import org.jfree.chart.renderer.xy.XYBarRenderer;
 import org.jfree.data.statistics.LogHistogramDataset;
 
+import fiji.plugin.trackmate.features.spot.IndependentSpotFeatureAnalyzer;
 import fiji.plugin.trackmate.util.TMUtils;
 
 /**
@@ -392,7 +393,7 @@ public class FilterPanel extends javax.swing.JPanel {
 		double mean;
 
 		String[] features = new String[] { 
-				fiji.plugin.trackmate.features.spot.BlobContrastAndSNR.CONTRAST, 
+				IndependentSpotFeatureAnalyzer<T>.CONTRAST, 
 				fiji.plugin.trackmate.features.spot.BlobMorphology.MORPHOLOGY, 
 				fiji.plugin.trackmate.features.spot.BlobDescriptiveStatistics.MEAN_INTENSITY };
 

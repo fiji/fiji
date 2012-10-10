@@ -1,7 +1,7 @@
 package fiji.plugin.trackmate;
 
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import net.imglib2.Localizable;
@@ -23,10 +23,8 @@ public class SpotImp implements Spot {
 	
 	public static AtomicInteger IDcounter = new AtomicInteger(0); 
 	
-	/** Store the individual features, and their values. Note that we use an actual
-	 * non-concurrent hash map. Therefore, you cannot put all the features of a single
-	 * spot in a multi-threaded fashion. */
-	private HashMap<String, Double> features = new HashMap<String, Double>();
+	/** Store the individual features, and their values. */
+	private final ConcurrentHashMap<String, Double> features = new ConcurrentHashMap<String, Double>();
 	/** A user-supplied name for this spot. */
 	private String name;
 	/** This spot ID */

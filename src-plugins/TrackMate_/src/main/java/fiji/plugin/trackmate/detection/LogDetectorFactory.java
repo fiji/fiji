@@ -62,7 +62,7 @@ public class LogDetectorFactory<T extends RealType<T> & NativeType<T>>  implemen
 	public SpotDetector<T> getDetector(final int frame) {
 		final int targetChannel = (Integer) settings.get(KEY_TARGET_CHANNEL) - 1; // parameter is 1-based
 		final ImgPlus<T> imgC = HyperSliceImgPlus.fixChannelAxis(img, targetChannel);
-		final ImgPlus<T> imgT = HyperSliceImgPlus.fixTimeAxis(imgC , frame);
+		final ImgPlus<T> imgT = HyperSliceImgPlus.fixTimeAxis(imgC, frame);
 		final double radius = (Double) settings.get(KEY_RADIUS);
 		final double threshold = (Double) settings.get(KEY_THRESHOLD);
 		final boolean doMedian = (Boolean) settings.get(KEY_DO_MEDIAN_FILTERING);

@@ -16,8 +16,7 @@ import net.imglib2.type.numeric.RealType;
 public interface SpotDetectorFactory<T extends RealType<T> & NativeType<T>> {
 	
 	/**
-	 * @return a new {@link SpotDetector} configured to operate on the given target
-	 * frame. 
+	 * @return a new {@link SpotDetector} configured to operate on the given target frame. 
 	 * @param frame  the frame index in the source image to operate on
 	 */
 	public SpotDetector<T> getDetector(final int frame);

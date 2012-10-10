@@ -1,44 +1,16 @@
 package fiji.plugin.trackmate.features.spot;
 
-import java.util.Collection;
-
-import net.imglib2.img.ImgPlus;
+import net.imglib2.algorithm.Algorithm;
+import net.imglib2.algorithm.Benchmark;
 import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.SpotFeatureAnalyzerFactory;
 
 /**
  * Interface for a class that can compute feature on a collection of spots.
  * <p>
- * Concrete implementation should declare what features they can compute numerically,
- * and make this info available in the {@link SpotFeatureAnalyzerFactory} that returns 
- * them.
- * <p>
- * Feature key names are for historical reason all capitalized in an enum manner. For instance: POSITION_X,
- * MAX_INTENSITY, etc... They must be suitable to be used as a attribute key in an xml file.
- * <p>
- * The image data to operate on is set using the {@link #setTarget(ImgPlus<T>)} method. This 
- * allow the concrete implementation to have an empty constructor.
- * <p>
- * The spot collection to operate on is given through the method {@link #process(Collection)},
- * and it must update the feature map of each spot directly, calling {@link Spot#putFeature(String, double)}.
+ * The spot collection to operate on is given at construction by the {@link SpotFeatureAnalyzerFactory}
+ * that instantiated and configured this instance. Calling the {@link #process()} method 
+ * result in updating the feature map of each spot directly, calling {@link Spot#putFeature(String, double)}.
  */
-public interface SpotFeatureAnalyzer<T>  {
-	
-	
-	/**
-	 * Sets the image data this analyzer will operate on to grab the features it generates.
-	 * The spatial calibration will be taken from the source {@link ImgPlus}.
-	 */
-	public void setTarget(ImgPlus<T> img);
-	
-	
-	/**
-	 * Compute all the spot features this analyzer can deal with 
-	 * on the given collection of spots. The spots have their
-	 * feature map updated by this method.
-	 * @param spots  the spots to evaluate. 
-	 */
-	public void process(Collection<Spot> spots);
-	
+public interface SpotFeatureAnalyzer<T> extends Algorithm, Benchmark {
 
 }
