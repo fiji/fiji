@@ -1,18 +1,17 @@
 package fiji.plugin.trackmate;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import fiji.plugin.trackmate.features.spot.IndependentSpotFeatureAnalyzer;
-import fiji.plugin.trackmate.features.spot.SpotContrastAndSNRAnalyzer;
-import fiji.plugin.trackmate.features.spot.BlobDescriptiveStatistics;
-import fiji.plugin.trackmate.features.spot.BlobMorphology;
-import fiji.plugin.trackmate.features.spot.RadiusEstimator;
-import fiji.plugin.trackmate.features.spot.SpotFeatureAnalyzer;
-
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
+import fiji.plugin.trackmate.features.spot.SpotContrastAndSNRAnalyzerFactory;
+import fiji.plugin.trackmate.features.spot.SpotFeatureAnalyzerFactory;
+import fiji.plugin.trackmate.features.spot.SpotIntensityAnalyzerFactory;
+import fiji.plugin.trackmate.features.spot.SpotMorphologyAnalyzerFactory;
+import fiji.plugin.trackmate.features.spot.SpotRadiusEstimatorFactory;
 
 /**
  * A provider for the spot analyzer factories provided in the GUI.
@@ -31,9 +30,14 @@ public class SpotFeatureAnalyzerProvider <T extends RealType<T> & NativeType<T>>
 	/** The detector names, in the order they will appear in the GUI.
 	 * These names will be used as keys to access relevant spot analyzer classes.  */
 	protected List<String> names;
+	protected Map<String, Map<String, String>> featureNames;
+	protected Map<String, List<String>> features;
+	protected Map<String, Map<String, String>> featureShortNames;
+	protected Map<String, Map<String, Dimension>> featureDimensions;
+	protected final TrackMateModel<T> model;
 
 	/*
-	 * BLANK CONSTRUCTOR
+	 * CONSTRUCTOR
 	 */
 
 	/**
@@ -45,7 +49,8 @@ public class SpotFeatureAnalyzerProvider <T extends RealType<T> & NativeType<T>>
 	 * factory so that it is registered with the custom spotFeatureAnalyzers and provide this 
 	 * extended factory to the {@link TrackMate_} plugin.
 	 */
-	public SpotFeatureAnalyzerProvider() {
+	public SpotFeatureAnalyzerProvider(TrackMateModel<T> model) {
+		this.model = model;
 		registerSpotFeatureAnalyzers();
 	}
 
@@ -60,30 +65,54 @@ public class SpotFeatureAnalyzerProvider <T extends RealType<T> & NativeType<T>>
 	protected void registerSpotFeatureAnalyzers() {
 		// Names
 		names = new ArrayList<String>(4);
-		names.add(BlobDescriptiveStatistics.NAME);
-		names.add(IndependentSpotFeatureAnalyzer<T>.NAME); // must be after the statistics one
-		names.add(RadiusEstimator.NAME);
-		names.add(BlobMorphology.NAME);
+		names.add(SpotIntensityAnalyzerFactory.KEY);
+		names.add(SpotContrastAndSNRAnalyzerFactory.KEY); // must be after the statistics one
+		names.add(SpotRadiusEstimatorFactory.KEY);
+		names.add(SpotMorphologyAnalyzerFactory.KEY);
+		// features
+		features = new HashMap<String, List<String>>();
+		features.put(SpotIntensityAnalyzerFactory.KEY, SpotIntensityAnalyzerFactory.FEATURES);
+		features.put(SpotContrastAndSNRAnalyzerFactory.KEY, SpotContrastAndSNRAnalyzerFactory.FEATURES);
+		features.put(SpotRadiusEstimatorFactory.KEY, SpotRadiusEstimatorFactory.FEATURES);
+		features.put(SpotMorphologyAnalyzerFactory.KEY, SpotMorphologyAnalyzerFactory.FEATURES);
+		// features names
+		featureNames = new HashMap<String, Map<String,String>>();
+		featureNames.put(SpotIntensityAnalyzerFactory.KEY, SpotIntensityAnalyzerFactory.FEATURE_NAMES);
+		featureNames.put(SpotContrastAndSNRAnalyzerFactory.KEY, SpotContrastAndSNRAnalyzerFactory.FEATURE_NAMES);
+		featureNames.put(SpotRadiusEstimatorFactory.KEY, SpotRadiusEstimatorFactory.FEATURE_NAMES);
+		featureNames.put(SpotMorphologyAnalyzerFactory.KEY, SpotMorphologyAnalyzerFactory.FEATURE_NAMES);
+		// features short names
+		featureShortNames = new HashMap<String, Map<String,String>>();
+		featureShortNames.put(SpotIntensityAnalyzerFactory.KEY, SpotIntensityAnalyzerFactory.FEATURE_SHORT_NAMES);
+		featureShortNames.put(SpotContrastAndSNRAnalyzerFactory.KEY, SpotContrastAndSNRAnalyzerFactory.FEATURE_SHORT_NAMES);
+		featureShortNames.put(SpotRadiusEstimatorFactory.KEY, SpotRadiusEstimatorFactory.FEATURE_SHORT_NAMES);
+		featureShortNames.put(SpotMorphologyAnalyzerFactory.KEY, SpotMorphologyAnalyzerFactory.FEATURE_SHORT_NAMES);
+		// feature dimensions
+		featureDimensions = new HashMap<String, Map<String,Dimension>>();
+		featureDimensions.put(SpotIntensityAnalyzerFactory.KEY, SpotIntensityAnalyzerFactory.FEATURE_DIMENSIONS);
+		featureDimensions.put(SpotContrastAndSNRAnalyzerFactory.KEY, SpotContrastAndSNRAnalyzerFactory.FEATURE_DIMENSIONS);
+		featureDimensions.put(SpotRadiusEstimatorFactory.KEY, SpotRadiusEstimatorFactory.FEATURE_DIMENSIONS);
+		featureDimensions.put(SpotMorphologyAnalyzerFactory.KEY, SpotMorphologyAnalyzerFactory.FEATURE_DIMENSIONS);
 	}
 
 	/**
 	 * @return a new instance of the target spotFeatureAnalyzer identified by the key parameter. 
 	 * If the key is unknown to this factory, <code>null</code> is returned. 
 	 */
-	public SpotFeatureAnalyzer<T> getSpotFeatureAnalyzer(String key) {
+	public SpotFeatureAnalyzerFactory<T> getSpotFeatureAnalyzer(String key) {
 		int index = names.indexOf(key);
 		if (index < 0) {
 			return null;
 		}
 		switch (index) {
 		case 0:
-			return new BlobDescriptiveStatistics<T>();
+			return new SpotIntensityAnalyzerFactory<T>(model);
 		case 1:
-			return new SpotContrastAndSNRAnalyzer<T>();
+			return new SpotContrastAndSNRAnalyzerFactory<T>(model);
 		case 2:
-			return new RadiusEstimator<T>();
+			return new SpotRadiusEstimatorFactory<T>(model);
 		case 3:
-			return new BlobMorphology<T>();
+			return new SpotMorphologyAnalyzerFactory<T>(model);
 		default:
 			return null;
 		}
@@ -102,22 +131,7 @@ public class SpotFeatureAnalyzerProvider <T extends RealType<T> & NativeType<T>>
 	 * if the analyzer is unknown to this factory.
 	 */
 	public List<String> getFeatures(String key) {
-		int index = names.indexOf(key);
-		if (index < 0) {
-			return null;
-		}
-		switch (index) {
-		case 0:
-			return BlobDescriptiveStatistics.FEATURES;
-		case 1:
-			return IndependentSpotFeatureAnalyzer<T>.FEATURES;
-		case 2:
-			return RadiusEstimator.FEATURES;
-		case 3:
-			return BlobMorphology.FEATURES;
-		default:
-			return null;
-		}
+		return features.get(key);
 	}
 
 	/**
@@ -125,22 +139,7 @@ public class SpotFeatureAnalyzerProvider <T extends RealType<T> & NativeType<T>>
 	 * or <code>null</code> if the analyzer is unknown to this factory.
 	 */
 	public Map<String, String> getFeatureShortNames(String key) {
-		int index = names.indexOf(key);
-		if (index < 0) {
-			return null;
-		}
-		switch (index) {
-		case 0:
-			return BlobDescriptiveStatistics.FEATURE_SHORT_NAMES;
-		case 1:
-			return IndependentSpotFeatureAnalyzer<T>.FEATURE_SHORT_NAMES;
-		case 2:
-			return RadiusEstimator.FEATURE_SHORT_NAMES;
-		case 3:
-			return BlobMorphology.FEATURE_SHORT_NAMES;
-		default:
-			return null;
-		}
+		return featureShortNames.get(key);
 	}
 
 	/**
@@ -148,22 +147,7 @@ public class SpotFeatureAnalyzerProvider <T extends RealType<T> & NativeType<T>>
 	 * or <code>null</code> if the analyzer is unknown to this factory.
 	 */
 	public Map<String, String> getFeatureNames(String key) {
-		int index = names.indexOf(key);
-		if (index < 0) {
-			return null;
-		}
-		switch (index) {
-		case 0:
-			return BlobDescriptiveStatistics.FEATURE_NAMES;
-		case 1:
-			return IndependentSpotFeatureAnalyzer<T>.FEATURE_NAMES;
-		case 2:
-			return RadiusEstimator.FEATURE_NAMES;
-		case 3:
-			return BlobMorphology.FEATURE_NAMES;
-		default:
-			return null;
-		}
+		return featureNames.get(key);
 	}
 
 	/**
@@ -171,22 +155,7 @@ public class SpotFeatureAnalyzerProvider <T extends RealType<T> & NativeType<T>>
 	 * or <code>null</code> if the analyzer is unknown to this factory.
 	 */
 	public Map<String, Dimension> getFeatureDimensions(String key) {
-		int index = names.indexOf(key);
-		if (index < 0) {
-			return null;
-		}
-		switch (index) {
-		case 0:
-			return BlobDescriptiveStatistics.FEATURE_DIMENSIONS;
-		case 1:
-			return IndependentSpotFeatureAnalyzer<T>.FEATURE_DIMENSIONS;
-		case 2:
-			return RadiusEstimator.FEATURE_DIMENSIONS;
-		case 3:
-			return BlobMorphology.FEATURE_DIMENSIONS;
-		default:
-			return null;
-		}
+		return featureDimensions.get(key);
 	}
 
 }

@@ -58,9 +58,8 @@ public class GrabSpotImageAction<T extends RealType<T> & NativeType<T>> extends 
 		for (int frame : allSpots.keySet()) {
 			List<Spot> spots = allSpots.get(frame);
 			ImgPlus<T> img = HyperSliceImgPlus.fixTimeAxis( imgC , frame ); 
-			SpotIconGrabber<T> grabber = new SpotIconGrabber<T>();
-			grabber.setTarget(img);
-			grabber.process(spots);			
+			SpotIconGrabber<T> grabber = new SpotIconGrabber<T>(img, spots);
+			grabber.process();			
 			logger.setProgress((float) (frame + 1) / allSpots.keySet().size());
 		}
 		model.setLogger(oldLogger);

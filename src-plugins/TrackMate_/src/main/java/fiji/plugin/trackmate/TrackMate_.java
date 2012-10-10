@@ -3,7 +3,6 @@ package fiji.plugin.trackmate;
 import fiji.plugin.trackmate.action.TrackMateAction;
 import fiji.plugin.trackmate.detection.SpotDetector;
 import fiji.plugin.trackmate.detection.SpotDetectorFactory;
-import fiji.plugin.trackmate.features.spot.SpotFeatureAnalyzer;
 import fiji.plugin.trackmate.features.track.TrackFeatureAnalyzer;
 import fiji.plugin.trackmate.gui.TrackMateWizard;
 import fiji.plugin.trackmate.gui.WizardController;
@@ -213,10 +212,10 @@ public class TrackMate_<T extends RealType<T> & NativeType<T>>  implements PlugI
 	/**
 	 * Hook for subclassers.
 	 * <p>
-	 * Create detector factory containing available spot {@link SpotFeatureAnalyzer}s.
+	 * Create the spot feature analyzer provider.
 	 */
 	protected SpotFeatureAnalyzerProvider<T> createSpotFeatureAnalyzerFactory() {
-		return new SpotFeatureAnalyzerProvider<T>();
+		return new SpotFeatureAnalyzerProvider<T>(model);
 	}
 
 	/**

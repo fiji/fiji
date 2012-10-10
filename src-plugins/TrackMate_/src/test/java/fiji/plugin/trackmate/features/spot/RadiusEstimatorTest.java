@@ -1,6 +1,7 @@
 package fiji.plugin.trackmate.features.spot;
 
 import static org.junit.Assert.assertEquals;
+import ij.ImageJ;
 import net.imglib2.img.Img;
 import net.imglib2.img.ImgPlus;
 import net.imglib2.img.array.ArrayImgFactory;
@@ -52,10 +53,9 @@ public class RadiusEstimatorTest  <T extends NativeType<T> & RealType<T>>  {
 			}
 			index++;			
 		}
-				
+	
 		// Apply the estimator
-		SpotRadiusEstimator<UnsignedByteType> es = new SpotRadiusEstimator<UnsignedByteType>();
-		es.setTarget(testImage);
+		SpotRadiusEstimator<UnsignedByteType> es = new SpotRadiusEstimator<UnsignedByteType>(testImage, null);
 		
 		SpotImp s;
 		double r;
@@ -63,7 +63,7 @@ public class RadiusEstimatorTest  <T extends NativeType<T> & RealType<T>>  {
 			s = spots[i];
 			r = radiuses[i];
 			es.process(s);
-			assertEquals(2*r, s.getFeatures().get(SpotRadiusEstimator.ESTIMATED_DIAMETER), 2*r * TOLERANCE);
+			assertEquals(2*r, s.getFeatures().get(SpotRadiusEstimatorFactory.ESTIMATED_DIAMETER), 2*r * TOLERANCE);
 		}
 		
 	}
@@ -94,14 +94,11 @@ public class RadiusEstimatorTest  <T extends NativeType<T> & RealType<T>>  {
 			index++;			
 		}
 				
-		ij.ImageJ.main(null);
 		ij.ImagePlus imp = ImageJFunctions.wrap(testImage, testImage.toString());
 		imp.show();
 		
 		// Apply the estimator
-		SpotRadiusEstimator<UnsignedByteType> es = new SpotRadiusEstimator<UnsignedByteType>();
-		es.setTarget(testImage);
-//		es.nDiameters = 20;
+		SpotRadiusEstimator<UnsignedByteType> es = new SpotRadiusEstimator<UnsignedByteType>(testImage, null);
 		
 		SpotImp s;
 		double r;
@@ -113,13 +110,14 @@ public class RadiusEstimatorTest  <T extends NativeType<T> & RealType<T>>  {
 			es.process(s);
 			stop = System.currentTimeMillis();
 			System.out.println(String.format("For spot %d, found diameter %.1f, real value was %.1f.", 
-					i, s.getFeatures().get(SpotRadiusEstimator.ESTIMATED_DIAMETER), 2*r));
+					i, s.getFeatures().get(SpotRadiusEstimatorFactory.ESTIMATED_DIAMETER), 2*r));
 			System.out.println("Computing time: "+(stop-start)+" ms.");
 		}
 	}
 	
 	
 	public static  <T extends NativeType<T> & RealType<T>>  void main(String[] args) {
+		ImageJ.main(args);
 		new RadiusEstimatorTest<T>().exampleEstimation();
 	}
 }

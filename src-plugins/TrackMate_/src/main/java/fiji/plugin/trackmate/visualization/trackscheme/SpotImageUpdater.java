@@ -16,13 +16,12 @@ import fiji.plugin.trackmate.features.spot.SpotIconGrabber;
 
 public class SpotImageUpdater <T extends RealType<T> & NativeType<T>> {
 	
-	private final SpotIconGrabber<T> grabber;
 	private final TrackMateModel<T> model;
 	private Integer previousFrame;
+	private SpotIconGrabber<T> grabber;
 
 	public SpotImageUpdater(final TrackMateModel<T> model) {
 		this.model = model;
-		this.grabber = new SpotIconGrabber<T>();
 		this.previousFrame = -1;
 	}
 
@@ -51,7 +50,7 @@ public class SpotImageUpdater <T extends RealType<T> & NativeType<T>> {
 			ImgPlus<T> imgCT = HyperSliceImgPlus.fixTimeAxis( 
 					HyperSliceImgPlus.fixChannelAxis(img, targetChannel), 
 					frame);
-			grabber.setTarget(imgCT);
+			grabber = new SpotIconGrabber<T>(imgCT, null);
 			previousFrame = frame;
 		}
 		grabber.process(spot);			

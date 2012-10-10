@@ -7,6 +7,7 @@ import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.SpotImp;
 import fiji.plugin.trackmate.TrackMate_;
 import fiji.plugin.trackmate.features.spot.SpotIntensityAnalyzer;
+import fiji.plugin.trackmate.features.spot.SpotIntensityAnalyzerFactory;
 import fiji.plugin.trackmate.gui.FilterGuiPanel;
 import fiji.plugin.trackmate.util.SpotNeighborhood;
 import fiji.plugin.trackmate.util.TMUtils;
@@ -106,9 +107,8 @@ public class SpotDisplayer3DTestDrive {
 		}
 		
 		System.out.println("Grabbing features...");
-		SpotIntensityAnalyzer<UnsignedByteType> analyzer = new SpotIntensityAnalyzer<UnsignedByteType>();
-		analyzer.setTarget(img);
-		analyzer.process(spots);
+		SpotIntensityAnalyzer<UnsignedByteType> analyzer = new SpotIntensityAnalyzer<UnsignedByteType>(img, spots);
+		analyzer.process();
 		for (Spot s : spots) 
 			System.out.println(s);
 
@@ -126,10 +126,10 @@ public class SpotDisplayer3DTestDrive {
 		List<FeatureFilter> ff = new ArrayList<FeatureFilter>();
 		final FilterGuiPanel gui = new FilterGuiPanel();
 		gui.setTarget(
-				SpotIntensityAnalyzer.FEATURES, 
+				SpotIntensityAnalyzerFactory.FEATURES, 
 				ff,
-				SpotIntensityAnalyzer.FEATURE_NAMES,
-				TMUtils.getSpotFeatureValues(allSpots, SpotIntensityAnalyzer.FEATURES, Logger.DEFAULT_LOGGER),
+				SpotIntensityAnalyzerFactory.FEATURE_NAMES,
+				TMUtils.getSpotFeatureValues(allSpots, SpotIntensityAnalyzerFactory.FEATURES, Logger.DEFAULT_LOGGER),
 				"spots");
 
 		// Set listeners
@@ -159,7 +159,7 @@ public class SpotDisplayer3DTestDrive {
 		frame.setVisible(true);
 
 		// Add a panel
-		gui.addFilterPanel(SpotIntensityAnalyzer.MEAN_INTENSITY);		
+		gui.addFilterPanel(SpotIntensityAnalyzerFactory.MEAN_INTENSITY);		
 		
 	}
 	

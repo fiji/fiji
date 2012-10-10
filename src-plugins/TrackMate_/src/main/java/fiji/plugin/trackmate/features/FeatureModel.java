@@ -1,20 +1,18 @@
 package fiji.plugin.trackmate.features;
 
 import static fiji.plugin.trackmate.detection.DetectorKeys.KEY_TARGET_CHANNEL;
+
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import net.imglib2.algorithm.MultiThreaded;
-import net.imglib2.img.ImagePlusAdapter;
-import net.imglib2.img.ImgPlus;
 import net.imglib2.multithreading.SimpleMultiThreading;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
-import net.imglib2.view.HyperSliceImgPlus;
-
 import fiji.plugin.trackmate.Dimension;
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.Settings;
@@ -86,7 +84,7 @@ public class FeatureModel <T extends RealType<T> & NativeType<T>> implements Mul
 	/*
 	 * SPOT FEATURES
 	 */
-	
+
 
 	/**
 	 * Calculate given features for the all detected spots of this model,
@@ -119,18 +117,19 @@ public class FeatureModel <T extends RealType<T> & NativeType<T>> implements Mul
 	 * at once, spots might received more data than required.
 	 */
 	public void computeSpotFeatures(final SpotCollection toCompute, final List<String> features) {
-
-		/* 0 - Determine what analyzers are needed */
-		final List<SpotFeatureAnalyzer<T>> selectedAnalyzers = new ArrayList<SpotFeatureAnalyzer<T>>(); // We want to keep ordering
-		for (String feature : features) {
-			for (String analyzer : spotAnalyzerProvider.getAvailableSpotFeatureAnalyzers()) {
-				if (spotAnalyzerProvider.getFeatures(analyzer).contains(feature) && !selectedAnalyzers.contains(analyzer)) {
-					selectedAnalyzers.add(spotAnalyzerProvider.getSpotFeatureAnalyzer(analyzer));
+		final HashSet<String> selectedKeys = new HashSet<String>(); // We want to keep ordering
+		for(String feature : features) {
+			for(String analyzer : spotAnalyzerProvider.getAvailableSpotFeatureAnalyzers()) {
+				if (spotAnalyzerProvider.getFeatures(analyzer).contains(feature)) {
+					selectedKeys.add(analyzer);
 				}
 			}
 		}
-		
-		computeSpotFeaturesAgent(toCompute, selectedAnalyzers);
+		List<SpotFeatureAnalyzerFactory<T>> selectedAnalyzers = new ArrayList<SpotFeatureAnalyzerFactory<T>>();
+		for(String key : selectedKeys) {
+			selectedAnalyzers.add(spotAnalyzerProvider.getSpotFeatureAnalyzer(key));
+		}
+		computeSpotFeaturesAgent(toCompute, selectedAnalyzers );
 	}
 
 	/**
@@ -145,7 +144,7 @@ public class FeatureModel <T extends RealType<T> & NativeType<T>> implements Mul
 		if (null == spotAnalyzerProvider)
 			return;
 		List<String> analyzerNames = spotAnalyzerProvider.getAvailableSpotFeatureAnalyzers();
-		List<SpotFeatureAnalyzer<T>> spotFeatureAnalyzers = new ArrayList<SpotFeatureAnalyzer<T>>(analyzerNames.size());
+		List<SpotFeatureAnalyzerFactory<T>> spotFeatureAnalyzers = new ArrayList<SpotFeatureAnalyzerFactory<T>>(analyzerNames.size());
 		for (String analyzerName : analyzerNames) {
 			spotFeatureAnalyzers.add(spotAnalyzerProvider.getSpotFeatureAnalyzer(analyzerName));
 		}
@@ -257,7 +256,7 @@ public class FeatureModel <T extends RealType<T> & NativeType<T>> implements Mul
 	public Map<String, double[]> getSpotFeatureValues() {
 		return TMUtils.getSpotFeatureValues(model.getSpots(), spotFeatures, model.getLogger());
 	}
-	
+
 	/**
 	 * The method in charge of computing spot features with the given {@link SpotFeatureAnalyzer}s, for the
 	 * given {@link SpotCollection}.
@@ -268,7 +267,7 @@ public class FeatureModel <T extends RealType<T> & NativeType<T>> implements Mul
 
 		final Settings<T> settings = model.getSettings();
 		final Logger logger = model.getLogger();
-		
+
 		// Can't compute any spot feature without an image to compute on.
 		if (settings.imp == null)
 			return;
@@ -279,7 +278,7 @@ public class FeatureModel <T extends RealType<T> & NativeType<T>> implements Mul
 		final AtomicInteger ai = new AtomicInteger(0);
 		final AtomicInteger progress = new AtomicInteger(0);
 		final Thread[] threads = SimpleMultiThreading.newThreads(numThreads);
-		
+
 		int tc = 0;
 		if (settings != null && settings.detectorSettings != null) {
 			// Try to extract it from detector settings target channel
@@ -323,7 +322,7 @@ public class FeatureModel <T extends RealType<T> & NativeType<T>> implements Mul
 	/*
 	 * TRACK FEATURES
 	 */
-	
+
 
 
 	/**
@@ -359,14 +358,14 @@ public class FeatureModel <T extends RealType<T> & NativeType<T>> implements Mul
 
 	public void putTrackFeature(final int trackIndex, final String feature, final Double value) {
 		trackFeatureValues.get(trackIndex).put(feature, value);
-		
+
 		// FIXME We store the found feature name if it is not already in the feature name list 
 		// This happens when we load a model from a file: the feature name list is empty, 
 		// because it is normally initiated from the plugin.
 		if (!trackFeatures.contains(feature)) {
 			trackFeatures.add(feature);
 		}
-		
+
 	}
 
 	public Double getTrackFeature(final int trackIndex, final String feature) {
@@ -403,7 +402,7 @@ public class FeatureModel <T extends RealType<T> & NativeType<T>> implements Mul
 		}
 		return featureValues;
 	}
-	
+
 	/**
 	 * Instantiate an empty feature 2D map.
 	 */

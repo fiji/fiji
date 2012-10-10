@@ -162,8 +162,7 @@ public class ExtractTrackStackAction<T extends RealType<T> & NativeType<T>> exte
 				}
 			}
 			
-			SpotIconGrabber<T> grabber = new SpotIconGrabber<T>();
-			grabber.setTarget(imgCT);
+			SpotIconGrabber<T> grabber = new SpotIconGrabber<T>(imgCT, null);
 			Img<T> crop = grabber.grabImage(x, y, slice, width, height);
 			
 			// Copy to central holder

@@ -59,7 +59,7 @@ public class SpotContrastAndSNRAnalyzerFactory<T extends RealType<T> & NativeTyp
 		final ImgPlus<T> img = ImagePlusAdapter.wrapImgPlus(model.getSettings().imp);
 		final ImgPlus<T> imgC = HyperSliceImgPlus.fixChannelAxis(img, channel);
 		final ImgPlus<T> imgCT = HyperSliceImgPlus.fixTimeAxis(imgC, frame);
-		final List<Spot> spots = model.getFilteredSpots().get(frame);
+		final List<Spot> spots = model.getSpots().get(frame);
 		return new SpotContrastAndSNRAnalyzer<T>(imgCT, spots);
 	}
 

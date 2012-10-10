@@ -52,21 +52,22 @@ public class SpotRadiusEstimator<T extends RealType<T>> extends IndependentSpotF
 
 		// A tmp spot we will use to iterate around the real spot
 		Spot tmpSpot = new SpotImp(spot);
-		tmpSpot.putFeature(Spot.RADIUS, diameters[nDiameters-2]/2);
+		tmpSpot.putFeature(Spot.RADIUS, diameters[nDiameters-1]/2);
 
 		SpotNeighborhood<T> neighborhood = new SpotNeighborhood<T>(tmpSpot , img);
 		SpotNeighborhoodCursor<T> cursor = neighborhood.cursor();
-		double d2;
+		double d2, val;
 		int i;
 		while(cursor.hasNext())  {
 			cursor.fwd();
 			d2 = cursor.getDistanceSquared();
-			for(i = 0 ; i < nDiameters-1 && d2 > r2[i] ; i++) {
-				ring_intensities[i] += cursor.get().getRealDouble();
+			val = cursor.get().getRealDouble();
+			for(i = 0 ; i < nDiameters && d2 > r2[i] ; i++) {
+				ring_intensities[i] += val;
 				ring_volumes[i]++;
 			}
 		}
-
+		
 		// Calculate mean intensities from ring volumes
 		final double[] mean_intensities = new double[diameters.length];
 		for (int j = 0; j < mean_intensities.length; j++) 
