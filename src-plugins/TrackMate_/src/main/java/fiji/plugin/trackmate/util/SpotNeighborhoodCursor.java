@@ -51,9 +51,10 @@ public class SpotNeighborhoodCursor<T extends RealType<T>> implements Cursor<T> 
 		cursor.localize(pos);
 		double sum = 0;
 		double dx = 0;
-		for (int d = 0; d < numDimensions(); d++)
+		for (int d = 0; d < pos.length; d++) {
 			dx = calibration[d] * ( pos[d] - center[d] );
-			sum += dx * dx;
+			sum += (dx * dx);
+		}
 		return sum;
 	}
 	
