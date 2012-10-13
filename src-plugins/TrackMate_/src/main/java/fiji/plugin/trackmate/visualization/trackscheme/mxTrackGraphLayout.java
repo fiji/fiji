@@ -45,7 +45,7 @@ import fiji.plugin.trackmate.util.TrackSplitter;
 public class mxTrackGraphLayout <T extends RealType<T> & NativeType<T>> extends mxGraphLayout {
 
 	private static final int SWIMLANE_HEADER_SIZE = 30;
-	private static final boolean DEBUG = false;
+	private static final boolean DEBUG = true;
 
 	private int[] columnWidths;
 	protected InterpolatePaintScale colorMap = InterpolatePaintScale.Jet;
@@ -99,7 +99,7 @@ public class mxTrackGraphLayout <T extends RealType<T> & NativeType<T>> extends 
 
 		/*
 		 * To be able to deal with lonely cells later (i.e. cells that are not part of a track),
-		 * we retrive the list of all cells.
+		 * we retrieve the list of all cells.
 		 */
 		Object[] objs = graph.getChildVertices(graph.getDefaultParent());
 		final ArrayList<mxCell> lonelyCells = new ArrayList<mxCell>(objs.length);
@@ -208,7 +208,7 @@ public class mxTrackGraphLayout <T extends RealType<T> & NativeType<T>> extends 
 					int freeColumn = columns[frame] + 1;
 
 					// If we have no direct edge with the previous spot, we add 1 to the current column
-					if (previousSpot != null && !model.containsEdge(spot, previousSpot)) {
+					if (previousSpot != null && !model.containsEdge(previousSpot, spot)) {
 						currentColumn = currentColumn + 1;
 					}
 					previousSpot = spot;

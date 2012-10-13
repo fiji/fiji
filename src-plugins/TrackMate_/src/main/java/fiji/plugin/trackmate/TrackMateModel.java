@@ -382,9 +382,12 @@ public class TrackMateModel <T extends RealType<T> & NativeType<T>> {
 
 	/**
 	 * @return true if and only if this model contains a link going from the source spot 
-	 * to the target spot. Since we use an undirected graph, the same result is obtained 
-	 * when source and target are inverted. If any of the specified vertices does not exist 
+	 * to the target spot. Careful: this methods takes into consideration the direction
+	 * of the edge. The result might be different if source and target are permuted since
+	 * we use a directed graph. If any of the specified vertices does not exist 
 	 * in the graph, or if is null, returns false.
+	 * @param source  the spot the edge to find starts from 
+	 * @param target  the spot the edge to find goes to
 	 */
 	public boolean containsEdge(final Spot source, final Spot target) {
 		return graph.containsEdge(source, target);
