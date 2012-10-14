@@ -342,39 +342,60 @@ public class TrackScheme <T extends RealType<T> & NativeType<T>> implements Trac
 			model.beginUpdate();
 			graphModel.beginUpdate();
 			try {
+				
 				Spot source = graph.getSpotFor(cell.getSource());
 				Spot target = graph.getSpotFor(cell.getTarget());
-				// We add a new jGraphT edge to the underlying model, if it does not exist yet.
-				DefaultWeightedEdge edge = model.getEdge(source, target); 
-				if (null == edge) {
-					edge = model.addEdge(source, target, -1);
-				} else {
-					// Ah. There was an existing edge in the model we were trying to re-add there, from the graph.
-					// We remove the graph edge we have added,
+
+				if (Spot.frameComparator.compare(source, target) == 0) {
+					// Prevent adding edges between spots that belong to the same frame
+					
 					if (DEBUG) {
-						System.out.println("[TrackScheme] addEdgeManually: edge pre-existed. Retrieve it.");
+						System.out.println("[TrackScheme] addEdgeManually: edge is between 2 spots belonging to the same frame. Removing it.");
 					}
 					graph.removeCells(new Object[] { cell } );
-					// And re-create a graph edge from the model edge.
-					cell = graph.addJGraphTEdge(edge);
-					cell.setValue(String.format("%.1f", model.getEdgeWeight(edge)));
-					// We also need now to check if the edge belonged to a visible track. If not,
-					// we make it visible.
-					int index = model.getTrackIndexOf(edge); 
-					// This will work, because track indices will be reprocessed only after the graphModel.endUpdate() 
-					// reaches 0. So now, it's like we are dealing with the track indices priori to modification.
-					if (model.isTrackVisible(index)) {
-						if (DEBUG) {
-							System.out.println("[TrackScheme] addEdgeManually: track was visible. Do nothing.");
-						}
-					} else {
-						if (DEBUG) {
-							System.out.println("[TrackScheme] addEdgeManually: track was invisible. Make it visible.");
-						}
-						importTrack(index);
+					
+				} else {
+					// We can add it to the model
+					
+					// Put them right in order: since we use a oriented graph,
+					// we want the source spot to precede in time.
+					if (Spot.frameComparator.compare(source, target) > 0) {
+						Spot tmp = source;
+						source = target;
+						target = tmp;
 					}
+					// We add a new jGraphT edge to the underlying model, if it does not exist yet.
+					DefaultWeightedEdge edge = model.getEdge(source, target); 
+					if (null == edge) {
+						edge = model.addEdge(source, target, -1);
+					} else {
+						// Ah. There was an existing edge in the model we were trying to re-add there, from the graph.
+						// We remove the graph edge we have added,
+						if (DEBUG) {
+							System.out.println("[TrackScheme] addEdgeManually: edge pre-existed. Retrieve it.");
+						}
+						graph.removeCells(new Object[] { cell } );
+						// And re-create a graph edge from the model edge.
+						cell = graph.addJGraphTEdge(edge);
+						cell.setValue(String.format("%.1f", model.getEdgeWeight(edge)));
+						// We also need now to check if the edge belonged to a visible track. If not,
+						// we make it visible.
+						int index = model.getTrackIndexOf(edge); 
+						// This will work, because track indices will be reprocessed only after the graphModel.endUpdate() 
+						// reaches 0. So now, it's like we are dealing with the track indices priori to modification.
+						if (model.isTrackVisible(index)) {
+							if (DEBUG) {
+								System.out.println("[TrackScheme] addEdgeManually: track was visible. Do nothing.");
+							}
+						} else {
+							if (DEBUG) {
+								System.out.println("[TrackScheme] addEdgeManually: track was invisible. Make it visible.");
+							}
+							importTrack(index);
+						}
+					}
+					graph.mapEdgeToCell(edge, cell);
 				}
-				graph.mapEdgeToCell(edge, cell);
 
 			} finally {
 				model.endUpdate();
@@ -849,7 +870,7 @@ public class TrackScheme <T extends RealType<T> & NativeType<T>> implements Trac
 		return !enabled;
 	}
 
-	public boolean  toggleDisplayDecoration() {
+	public boolean toggleDisplayDecoration() {
 		boolean enabled = gui.graphComponent.isDoPaintDecorations();
 		gui.graphComponent.setDoPaintDecorations(!enabled);
 		gui.graphComponent.repaint();
