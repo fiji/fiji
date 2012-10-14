@@ -9,7 +9,6 @@ import java.awt.Point;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -342,24 +341,24 @@ public class TrackScheme <T extends RealType<T> & NativeType<T>> implements Trac
 			model.beginUpdate();
 			graphModel.beginUpdate();
 			try {
-				
+
 				Spot source = graph.getSpotFor(cell.getSource());
 				Spot target = graph.getSpotFor(cell.getTarget());
 
 				if (Spot.frameComparator.compare(source, target) == 0) {
 					// Prevent adding edges between spots that belong to the same frame
-					
+
 					if (DEBUG) {
 						System.out.println("[TrackScheme] addEdgeManually: edge is between 2 spots belonging to the same frame. Removing it.");
 					}
 					graph.removeCells(new Object[] { cell } );
-					
+
 				} else {
 					// We can add it to the model
-					
+
 					// Put them right in order: since we use a oriented graph,
 					// we want the source spot to precede in time.
-					if (Spot.frameComparator.compare(source, target) > 0) {
+					if (Spot.frameComparator.compare(source, target) < 0) {
 						Spot tmp = source;
 						source = target;
 						target = tmp;
@@ -914,8 +913,6 @@ public class TrackScheme <T extends RealType<T> & NativeType<T>> implements Trac
 		}
 
 		// Walk across tracks to build selection
-		final Comparator<Spot> comparator = Spot.frameComparator;
-
 		final HashSet<Spot> spotSelection 				= new HashSet<Spot>();
 		final HashSet<DefaultWeightedEdge> edgeSelection 	= new HashSet<DefaultWeightedEdge>();
 
@@ -934,7 +931,7 @@ public class TrackScheme <T extends RealType<T> & NativeType<T>> implements Trac
 				}
 			}
 
-		} else if (direction > 0) { // Only upward in time 
+		} else { // Only upward or backward in time 
 			for (Spot spot : inspectionSpots) {
 				spotSelection.add(spot);
 
@@ -946,44 +943,19 @@ public class TrackScheme <T extends RealType<T> & NativeType<T>> implements Trac
 					Spot inspected = stack.pop();
 					Set<DefaultWeightedEdge> targetEdges = model.edgesOf(inspected);
 					for(DefaultWeightedEdge targetEdge : targetEdges) {
-						Spot other = model.getEdgeSource(targetEdge);
-						if (other == inspected) {
+						Spot other;
+						if (direction > 0) {
+							// Upward in time: we just have to search through edges using their source spots
+							other = model.getEdgeSource(targetEdge);
+						} else {
 							other = model.getEdgeTarget(targetEdge);
 						}
 
-						if (comparator.compare(inspected, other) > 0) {
+						if (other != inspected) {
 							spotSelection.add(other);
 							edgeSelection.add(targetEdge);
 							stack.add(other);
 						}
-
-					}
-				}
-			}
-
-		} else  { // Only downward in time 
-			for (Spot spot : inspectionSpots) {
-				spotSelection.add(spot);
-
-				// A bit more complicated: we want to walk in only one direction,
-				// when branching is occurring, we do not want to get back in time.
-				Stack<Spot> stack = new Stack<Spot>();
-				stack.add(spot);
-				while (!stack.isEmpty()) { 
-					Spot inspected = stack.pop();
-					Set<DefaultWeightedEdge> targetEdges = model.edgesOf(inspected);
-					for(DefaultWeightedEdge targetEdge : targetEdges) {
-						Spot other = model.getEdgeSource(targetEdge);
-						if (other == inspected) {
-							other = model.getEdgeTarget(targetEdge);
-						}
-
-						if (comparator.compare(inspected, other) < 0) {
-							spotSelection.add(other);
-							edgeSelection.add(targetEdge);
-							stack.add(other);
-						}
-
 					}
 				}
 			}
