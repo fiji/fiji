@@ -197,7 +197,7 @@ then
 	then
 		JAVA_HOME="$JAVA_HOME/jre"
 	fi
-	export PATH=$JAVA_HOME/bin:$PATH
+	export PATH="$JAVA_HOME/bin:$PATH"
 fi
 
 : build fake.jar, making sure javac is in the PATH

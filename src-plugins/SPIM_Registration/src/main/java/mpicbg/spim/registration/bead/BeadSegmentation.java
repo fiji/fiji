@@ -1,5 +1,7 @@
 package mpicbg.spim.registration.bead;
 
+import ij.IJ;
+
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
@@ -22,6 +24,8 @@ import mpicbg.imglib.outofbounds.OutOfBoundsStrategyValueFactory;
 import mpicbg.imglib.type.numeric.integer.IntType;
 import mpicbg.imglib.type.numeric.real.FloatType;
 import mpicbg.imglib.util.Util;
+import mpicbg.models.IllDefinedDataPointsException;
+import mpicbg.models.NotEnoughDataPointsException;
 import mpicbg.spim.io.IOFunctions;
 import mpicbg.spim.io.SPIMConfiguration;
 import mpicbg.spim.registration.ViewDataBeads;
@@ -230,7 +234,7 @@ public class BeadSegmentation
         	if ( peakList.get( i ).isMin() )
         		peakList.remove( i );
 		
-		final SubpixelLocalization<FloatType> spl = new SubpixelLocalization<FloatType>( dog.getDoGImage(), dog.getPeaks() );
+        final SubpixelLocalization<FloatType> spl = new SubpixelLocalization<FloatType>( dog.getDoGImage(), dog.getPeaks() );
 		spl.setAllowMaximaTolerance( true );
 		spl.setMaxNumMoves( 10 );
 		
@@ -241,7 +245,7 @@ public class BeadSegmentation
 		}
 
 		dog.getDoGImage().close();
-			
+    	
         final BeadStructure beads = new BeadStructure();
         int id = 0;
         final float[] pos = new float[ img.getNumDimensions() ];

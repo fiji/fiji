@@ -100,10 +100,16 @@ public class Multi_View_Fusion implements PlugIn
 		final TextField tfTimepoints = (TextField) gd.getStringFields().lastElement();
 		gd.addStringField( "Angles to process", Bead_Registration.angles );
 		final TextField tfAngles = (TextField) gd.getStringFields().lastElement();
-		
+
+		final TextField tfChannels;
 		if ( multichannel )
+		{
 			gd.addStringField( "Channels to process", allChannels );
-		
+			tfChannels = (TextField) gd.getStringFields().lastElement();
+		}
+		else
+			tfChannels = null;
+
 		gd.addMessage("");
 		gd.addMessage("This Plugin is developed by Stephan Preibisch\n" + myURL);
 
@@ -145,6 +151,20 @@ public class Multi_View_Fusion implements PlugIn
 							expAngles += a;
 						}
 						tfAngles.setText( expAngles );
+
+						if ( multichannel )
+						{
+							// set channels string
+							String expChannels = "";
+							for ( final String channel : exp.channels )
+							{
+								final int c = Integer.parseInt( channel.substring( 1, channel.length() ) );
+								if ( !expChannels.equals( "" ) )
+									expChannels += ",";
+								expChannels += c;
+							}
+							tfChannels.setText( expChannels );
+						}
 					}
 					else
 					{
@@ -160,6 +180,20 @@ public class Multi_View_Fusion implements PlugIn
 		{
 			// disable file pattern field
 			tfFilePattern.setEnabled( false );
+			if ( multichannel )
+			{
+				// set channels string
+				final SPIMExperiment exp = new SPIMExperiment( f.getAbsolutePath() );
+				String expChannels = "";
+				for ( final String channel : exp.channels )
+				{
+					final int c = Integer.parseInt( channel.substring( 1, channel.length() ) );
+					if ( !expChannels.equals( "" ) )
+						expChannels += ",";
+					expChannels += c;
+				}
+				tfChannels.setText( expChannels );
+			}
 		}
 		gd.showDialog();
 		
@@ -247,6 +281,7 @@ public class Multi_View_Fusion implements PlugIn
 		}
 		
 		// get filenames and so on...
+		conf.fuseOnly = true;
 		if ( !Bead_Registration.init( conf ) )
 			return null;
 		

@@ -391,8 +391,15 @@ public class ViewDataBeads implements Comparable< ViewDataBeads >
 
 				//System.out.println( s );
 
-				image = LOCI.openLOCIFloatType( s, imageFactory );
-
+				try
+				{
+					image = LOCI.openLOCIFloatType( s, imageFactory );
+				}
+				catch ( Exception e )
+				{
+					image = null;
+				}
+				
 				if ( image == null )
 				{
 					IJ.log( "Cannot open file: " + s );

@@ -167,7 +167,7 @@ public class ExtractPSF
 				size[ numDimensions - 1 ]++;
 		}
 		
-		//IJ.log ( Util.printCoordinates( size ) );
+		IJ.log ( "PSF size: " + Util.printCoordinates( size ) );
 		
 		final int[] maxSize = new int[ numDimensions ];
 		

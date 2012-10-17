@@ -44,7 +44,7 @@ import mpicbg.spim.registration.ViewStructure;
 public class Multi_View_Deconvolution implements PlugIn
 {
 	final private String myURL = "http://fly.mpi-cbg.de/preibisch";
-	public static int psfSize = 13;
+	public static int psfSize = 17;
 	
 	@Override
 	public void run(String arg0) 
