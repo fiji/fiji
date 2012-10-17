@@ -155,12 +155,6 @@ public class Adapter {
 			}
 			Thread.currentThread().setContextClassLoader(updaterClass.getClassLoader());
 			updaterClass.newInstance().run();
-		} catch (InstantiationException e) {
-			ui.error("Could not instantiate the Updater: " + e.getMessage());
-			return;
-		} catch (IllegalAccessException e) {
-			ui.error("Could not access the Updater: " + e.getMessage());
-			return;
 		} catch (Throwable t) {
 			t.printStackTrace();
 			fallBackToRemoteUpdater(t);
