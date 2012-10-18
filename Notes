@@ -1,38 +1,37 @@
 Advanced Sholl Analysis
+Version 3 (final)
+    - Allows (thresholded) grayscale images as input
+    - Fixed rounding errors with digitization of spheres
+    - Better handling of anisotropic voxels
+    - 3D Sholl is now ~25% faster
+    - Major code clean up, which solved several issues
+    - Precision in Sholl table is set by Analyze>Set Measurements...
+
 Version 3d
-    - Small performance improvement: Analysis is now restricted to the volume of
-      the largest shell, rather than parsing all the voxels in the image
+    - Analysis is now restricted to the volume of the largest Sholl shell, rather than
+      parsing all the voxels in the image
 
 Version 3c
-    - 3D Sholl is significantly faster, and usable for the first time, but
-      remains extremely slow
-    - Substituted "Radius span" with "Samples per radius" to avoid confusions,
-      imposing a draconian maximum to encourage continuos analyses
-    - Since it only serves illustration purposes, mask is now a MIP of the
-      analyzed stack
+    - 3D Sholl is significantly faster, and usable for the first time, but remains
+      extremely slow
+    - Substituted "Radius span" with "Samples per radius" to avoid confusions (user
+      request), imposing a draconian maximum to encourage "Continuos Sholl"
+    - Mask is a Maximum Intensity Projection of the analyzed stack
 
-Version 3b
-    - 3D Sholl: Connectivity checks between slices (without spike suppression),
-    - z-position of center is recorded in table
-
-Version 3a
-    - 3D Sholl: Connectivity checks within slice
-
-Version 3
-    - Performs 3D Sholl, if input image is a stack
-    - It can analyze polarized arbors by restricting the analysis to hemicircles
-      or hemispheres. This requires the user to define the center of Analysis
-      with an orthogonal chord
+Version 3a-b
+    - Performs 3D Sholl (without spike suppression), if input image is a stack
+    - Analyzes polarized arbors by restricting the analysis to hemicircles or hemispheres.
+      This requires the user to define the center of analysis with an orthogonal chord,
+      using the Straight Line Tool and holding Shift
 
 Version 2.5
     - Fixed duplicated points in Bresenham's algorithm
     - Foreground is now any value greater than 0
     - Option to save Sholl profiles
-    - Long analysis can be aborted by holding Esc
+    - Long analyses can be aborted by holding Esc
 
 Version 2.4
-    - Analysis can be restricted to an area, using initial line as a chord
-    - Fixed issue introduced in 2.3min which -1 tagged pixels were being counted
+    - Fixed a 2.3 regression in which -1 tagged pixels were being counted
     - Fixed rounding in mask drawing
     - Center ROI is dislayed on mask
     - Plot is named after analyzed image
@@ -40,18 +39,18 @@ Version 2.4
 
 Version 2.3
     - Results printed to a dedicated table
-    - Sholl decay is always calculated when fitting curve
+    - Sholl decay is always calculated when performing curve fitting
     - Fixed exception in cv calculation
     - Impose valid parameters, rather than keep prompting the user (which is
       buggy, e.g., when recording macros)
-    - Progress bar is more informative
     - Major code cleaning
 
-Version 2.2
-    - Fixed offset of plot label
-    - Checks for reasonable Radius span value
-    - Code cleaning: more intuitive variable names
-    - Fix crashed caused by mis-evaluation in DoSpikeSupression
+Version 2.1-2
+    - Fixed several bugs and regressions introduced in version 2.0
+    - Checks for reasonable Radius span values
 
-Version 1.1-2.1
+Version 2.0
      - Curve Fitting, modernization of Tom's code
+
+Version 1.0
+     - Initial version by Tom Maddock
