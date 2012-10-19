@@ -1,7 +1,17 @@
-/*
-   This program is free software; you can redistribute it and/or modify it under
-   the terms of the GNU General Public License as published by the Free Software
-   Foundation (http://www.gnu.org/licenses/gpl.txt)
+/* Copyright 2012 Tiago Ferreira, 2005 Tom Maddock
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 import ij.IJ;
@@ -36,8 +46,8 @@ import java.util.Arrays;
  * NB: For binary images, background is always considered to be 0, independently
  * of Prefs.blackBackground.
  *
- * @author Tiago Ferreira v3.0 Oct 12, 2012
- * @author Tom Maddock v1.0 Oct 26, 2005
+ * @author Tiago Ferreira v2.0, Feb 2012, v3.0 Oct, 2012
+ * @author Tom Maddock v1.0, Oct 2005
  */
 public class Advanced_Sholl_Analysis implements PlugIn {
 
@@ -124,7 +134,7 @@ public class Advanced_Sholl_Analysis implements PlugIn {
         if (cal.scaled()) {
             vxWH = Math.sqrt(cal.pixelWidth * cal.pixelHeight);
             vxD  = cal.pixelDepth;
-            unit = cal.getUnit();
+            unit = cal.getUnits();
         }
 
         final double vxSize = (is3D) ? Math.cbrt(vxWH*vxWH*vxD) : vxWH;
@@ -390,7 +400,6 @@ public class Advanced_Sholl_Analysis implements PlugIn {
         return trim;
     }
 
-
     /** Measures intersections for each sphere surface (pixel coordinates) */
     static public double[] analyze3D(final int xc, final int yc, final int zc,
             final int[] rawradii, final ImagePlus img) {
@@ -489,76 +498,6 @@ public class Advanced_Sholl_Analysis implements PlugIn {
             }
         }
         return voxels;
-    }
-
-/** test */
-    static public double[] analyze3Dalt(final int xc, final int yc, final int zc,
-            final int[] rawradii, final ImagePlus img) {
-
-        int nspheres, xmin, ymin, zmin, xmax, ymax, zmax, count;
-        double dx, value;
-
-        // Create an array to hold the results
-        final double[] data = new double[nspheres = rawradii.length];
-
-        // Get Image Stack
-        final ImageStack stack = img.getStack();
-        final int type = stack.getBitDepth();
-        int[] voxels;
-
-        // Get all the pixels of the analysis volume
-        if (type==8) {
-            voxels = getVoxels8(minX, minY, minZ, maxX, maxY, maxZ, stack);
-        } else if (type==16)
-            voxels = getVoxels16(minX, minY, minZ, maxX, maxY, maxZ, stack);
-        else
-            return null;
-
-        // Initialize the array holding surface points. It will smaller
-        // then the volume we are analyzing
-        final int[][] points = new int[voxels.length][3];
-        final int vw = maxY - minY;
-
-        for (int s = 0; s < nspheres; s++) {
-
-            IJ.showStatus("Sampling sphere "+ (s+1) +"/"+ nspheres +". Press 'Esc' to abort...");
-            if (IJ.escapePressed())
-                { IJ.beep(); mask = false; return data; }
-
-            xmin = Math.max(xc-rawradii[s], minX);
-            ymin = Math.max(yc-rawradii[s], minY);
-            zmin = Math.max(zc-rawradii[s], minZ);
-            xmax = Math.min(xc+rawradii[s], maxX);
-            ymax = Math.min(yc+rawradii[s], maxY);
-            zmax = Math.min(zc+rawradii[s], maxZ);
-            count = 0;
-
-            for (int z=zmin; z<=zmax; z++) {
-                IJ.showProgress(z, zmax+1);
-                for (int y=ymin; y<ymax; y++) {
-                    for (int x=xmin; x<xmax; x++) {
-                        dx = Math.sqrt((x-xc)*(x-xc)+(y-yc)*(y-yc)+(z-zc)*(z-zc));
-                        if (Math.abs(dx-rawradii[s])<0.5) {
-                            value = voxels[ (z-minZ)*vw*2 + (y-minY)*vw + x-minX];
-                            if (value >= lowerT && value <= upperT) {
-                                points[count][0]   = x;
-                                points[count][1]   = y;
-                                points[count++][2] = z;
-                            }
-                        }
-                    }
-                }
-            }
-
-            // We now have the the points intercepting the surface of this Sholl
-            // sphere. Lets check if their respective pixels are clustered
-            data[s] = count3Dgroups(points, count, 1.5);
-
-            // Since this all this is very computing intensive, exit as soon
-            // as a spheres has no interceptions
-                //if (count==0) return data;
-        }
-        return data;
     }
 
     /**
@@ -1020,11 +959,11 @@ public class Advanced_Sholl_Analysis implements PlugIn {
         final boolean yAxisnorm = mthd == SHOLL_NS;
 
         if (xAxislog) {
-            
+
             xTitle = is3D ? "log(3D distance)" : "log(2D distance)";
             for (i = 0; i < nsize; i++)
                 x[i] = Math.log(x[i]);
-            
+
         } else {
             xTitle = is3D ? "3D distance ("+ unit +")" : "2D distance ("+ unit +")";
         }
@@ -1044,7 +983,6 @@ public class Advanced_Sholl_Analysis implements PlugIn {
         } else {
             yTitle = "N. of Intersections";
         }
-
 
         // Create an empty plot: The plot constructor only allows the usage of the 'flags'
         // argument with initial arrays
@@ -1104,7 +1042,7 @@ public class Advanced_Sholl_Analysis implements PlugIn {
 
         // Initialize morphometric descriptors
         double cv = 0, cr = 0, mv = 0, ri = 0;
-        
+
         // Linear Sholl: Calculate Critical value (cv), Critical radius (cr),
         // Mean Sholl value (mv) and Ramification (Schoenen) index (ri)
         if (mthd == SHOLL_N) {
@@ -1147,7 +1085,7 @@ public class Advanced_Sholl_Analysis implements PlugIn {
             plotLabel.append("\nMv= "+ IJ.d2s(mv, 2));
             plotLabel.append("\nRI= "+ IJ.d2s(ri, 2));
             plotLabel.append("\n" + DEGREES[polyChoice]);
-            
+
         } else {
             cv = cr = mv = ri = Double.NaN;
         }
