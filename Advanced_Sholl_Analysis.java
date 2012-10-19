@@ -1,7 +1,17 @@
-/*
-   This program is free software; you can redistribute it and/or modify it under
-   the terms of the GNU General Public License as published by the Free Software
-   Foundation (http://www.gnu.org/licenses/gpl.txt)
+/* Copyright 2012 Tiago Ferreira, 2005 Tom Maddock
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 import ij.IJ;
@@ -36,8 +46,8 @@ import java.util.Arrays;
  * NB: For binary images, background is always considered to be 0, independently
  * of Prefs.blackBackground.
  *
- * @author Tiago Ferreira v3.0 Oct 12, 2012
- * @author Tom Maddock v1.0 Oct 26, 2005
+ * @author Tiago Ferreira v2.0, Feb 2012, v3.0 Oct, 2012
+ * @author Tom Maddock v1.0, Oct 2005
  */
 public class Advanced_Sholl_Analysis implements PlugIn {
 
@@ -76,11 +86,11 @@ public class Advanced_Sholl_Analysis implements PlugIn {
     private static boolean mask;
     private static boolean save;
 
-    // If the edge of the group lies tangent to the sampling circle, multiple
-    // intersections with that circle will be counted. With this flag on, we
-    // will try to find these "false positives" and throw them out. A way to
-    // attempt this (we will be missing some of them) is to throw out 1-pixel
-    // groups that exist solely on the edge of a "stair" of target pixels
+    // If the edge of a group of pixels lies tangent to the sampling circle, multiple
+    // intersections with that circle will be counted. With this flag on, we will try to
+    // find these "false positives" and throw them out. A way to attempt this (we will be
+    // missing some of them) is to throw out 1-pixel groups that exist solely on the edge
+    // of a "stair" of target pixels
     private static boolean doSpikeSupression = true;
 
     /* Common variables */
@@ -124,9 +134,8 @@ public class Advanced_Sholl_Analysis implements PlugIn {
         if (cal.scaled()) {
             vxWH = Math.sqrt(cal.pixelWidth * cal.pixelHeight);
             vxD  = cal.pixelDepth;
-            unit = cal.getUnit();
+            unit = cal.getUnits();
         }
-
         final double vxSize = (is3D) ? Math.cbrt(vxWH*vxWH*vxD) : vxWH;
 
         // Initialize center coordinates (in pixel units)
@@ -161,7 +170,7 @@ public class Advanced_Sholl_Analysis implements PlugIn {
             final Line chord = (Line) roi;
             x = chord.x1;
             y = chord.y1;
-            endRadius = chord.getLength(); // calibrated units
+            endRadius = vxSize * chord.getRawLength();
             chordAngle = Math.abs(chord.getAngle(x, y, chord.x2, chord.y2));
 
         // Point: Get center coordinates (x,y)
@@ -194,7 +203,7 @@ public class Advanced_Sholl_Analysis implements PlugIn {
 
         // Exit if there are no samples
         if (size==1) {
-            error(" Invalid Parameters: Ending Radius cannot be larger than\n"
+            error(" Invalid Parameters: Ending radius cannot be larger than\n"
                 + "Starting radius and Radius step size must be within range!");
             return;
         }
@@ -211,21 +220,20 @@ public class Advanced_Sholl_Analysis implements PlugIn {
         }
 
         // Define boundaries of analysis according to orthogonal chords (if any)
-        final int xymaxradius = (int) Math.round(radii[size-1]/vxWH);
-        final int zmaxradius  = (int) Math.round(radii[size-1]/vxD);
+        final int maxradius = (int) Math.round(radii[size-1]/vxSize);
 
-        minX = Math.max(x-xymaxradius, 0);
-        maxX = Math.min(xymaxradius+x, ip.getWidth());
-        minY = Math.max(y-xymaxradius, 0);
-        maxY = Math.min(xymaxradius+y, ip.getHeight());
-        minZ = Math.max(z-zmaxradius, 1);
-        maxZ = Math.min(zmaxradius+z, depth);
+        minX = Math.max(x-maxradius, 0);
+        maxX = Math.min(maxradius+x, ip.getWidth());
+        minY = Math.max(y-maxradius, 0);
+        maxY = Math.min(maxradius+y, ip.getHeight());
+        minZ = Math.max(z-maxradius, 1);
+        maxZ = Math.min(maxradius+z, depth);
 
         if (trimBounds) {
             if (trim.equalsIgnoreCase("above"))
-                maxY = (int) Math.min(y + xymaxradius, y);
+                maxY = (int) Math.min(y + maxradius, y);
             else if (trim.equalsIgnoreCase("below"))
-                minY = (int) Math.max(y - xymaxradius, y);
+                minY = (int) Math.max(y - maxradius, y);
             else if (trim.equalsIgnoreCase("right"))
                 minX = x;
             else if (trim.equalsIgnoreCase("left"))
@@ -265,7 +273,7 @@ public class Advanced_Sholl_Analysis implements PlugIn {
 
         } else if (mask) {
 
-            final ImagePlus maskimg = makeMask(img, title, grays, xymaxradius, x, y, cal);
+            final ImagePlus maskimg = makeMask(img, title, grays, maxradius, x, y, cal);
 
             if (maskimg == null) {
 
@@ -307,7 +315,7 @@ public class Advanced_Sholl_Analysis implements PlugIn {
 
         // Prepare choices for hemicircle/hemisphere analysis, an option
         // triggered by the presence of orthogonal lines (chords)
-        trimBounds = (chordAngle > 0 && chordAngle % 90 == 0);
+        trimBounds = (chordAngle > -1 && chordAngle % 90 == 0);
 
         // If an orthogonal chord exists, prompt for quadrants choice
         final String[] quads = new String[2];
@@ -321,7 +329,7 @@ public class Advanced_Sholl_Analysis implements PlugIn {
                 quads[0] = "Above line";
                 quads[1] = "Below line";
             }
-            final String hemi = is3D ? "spherical cap" : "circular segment";
+            final String hemi = is3D ? "hemisphere" : "hemicircle";
             gd.setInsets(12, 6, 3);
             gd.addCheckbox("Restrict analysis to "+ hemi, false);
             gd.addChoice("_", quads, quads[0]);
@@ -390,7 +398,6 @@ public class Advanced_Sholl_Analysis implements PlugIn {
         return trim;
     }
 
-
     /** Measures intersections for each sphere surface (pixel coordinates) */
     static public double[] analyze3D(final int xc, final int yc, final int zc,
             final int[] rawradii, final ImagePlus img) {
@@ -430,116 +437,6 @@ public class Advanced_Sholl_Analysis implements PlugIn {
                         dx = Math.sqrt((x-xc)*(x-xc)+(y-yc)*(y-yc)+(z-zc)*(z-zc));
                         if (Math.abs(dx-rawradii[s])<0.5) {
                             value = stack.getVoxel(x,y,z);
-                            if (value >= lowerT && value <= upperT) {
-                                points[count][0]   = x;
-                                points[count][1]   = y;
-                                points[count++][2] = z;
-                            }
-                        }
-                    }
-                }
-            }
-
-            // We now have the the points intercepting the surface of this Sholl
-            // sphere. Lets check if their respective pixels are clustered
-            data[s] = count3Dgroups(points, count, 1.5);
-
-            // Since this all this is very computing intensive, exit as soon
-            // as a spheres has no interceptions
-                //if (count==0) return data;
-        }
-        return data;
-    }
-
-    /**
-     * Returns the pixel array for the specified volume range of an 8-bit stack.
-     * Does not check if input range is within stack boundaries
-     */
-     private static int[] getVoxels8(final int x0, final int y0, final int z0, final int x1,
-            final int y1, final int z1, final ImageStack stack) {
-
-        final int width = stack.getWidth();
-        final int[] voxels = new int[ (x1-x0) * (y1-y0) * (z1-z0+1) ];
-        int i = 0;
-        for (int z=z0; z<=z1; z++) {
-            final byte[] bytes = (byte[])stack.getPixels(z);
-            for (int y=y0; y<y1; y++) {
-                for (int x=x0; x<x1; x++)
-                    voxels[i++] = bytes[y*width+x]&0xff; //tested this recreates the image
-            }
-        }
-        return voxels;
-    }
-
-    /**
-     * Returns the pixel array for the specified volume range of an 8-bit stack.
-     * Does not check if input range is within stack boundaries
-     */
-    private static int[] getVoxels16(final int x0, final int y0, final int z0, final int x1,
-            final int y1, final int z1, final ImageStack stack) {
-
-        final int width = stack.getWidth();
-        final int[] voxels = new int[ (x1-x0) * (y1-y0) * (z1-z0+1)];
-        int i = 0;
-        for (int z=z0; z<=z1; z++) {
-            final short[] shorts = (short[])stack.getPixels(z);
-            for (int y=y0; y<y1; y++) {
-                for (int x=x0; x<x1; x++)
-                    voxels[i++] = shorts[y*width+x]&0xffff;
-            }
-        }
-        return voxels;
-    }
-
-/** test */
-    static public double[] analyze3Dalt(final int xc, final int yc, final int zc,
-            final int[] rawradii, final ImagePlus img) {
-
-        int nspheres, xmin, ymin, zmin, xmax, ymax, zmax, count;
-        double dx, value;
-
-        // Create an array to hold the results
-        final double[] data = new double[nspheres = rawradii.length];
-
-        // Get Image Stack
-        final ImageStack stack = img.getStack();
-        final int type = stack.getBitDepth();
-        int[] voxels;
-
-        // Get all the pixels of the analysis volume
-        if (type==8) {
-            voxels = getVoxels8(minX, minY, minZ, maxX, maxY, maxZ, stack);
-        } else if (type==16)
-            voxels = getVoxels16(minX, minY, minZ, maxX, maxY, maxZ, stack);
-        else
-            return null;
-
-        // Initialize the array holding surface points. It will smaller
-        // then the volume we are analyzing
-        final int[][] points = new int[voxels.length][3];
-        final int vw = maxY - minY;
-
-        for (int s = 0; s < nspheres; s++) {
-
-            IJ.showStatus("Sampling sphere "+ (s+1) +"/"+ nspheres +". Press 'Esc' to abort...");
-            if (IJ.escapePressed())
-                { IJ.beep(); mask = false; return data; }
-
-            xmin = Math.max(xc-rawradii[s], minX);
-            ymin = Math.max(yc-rawradii[s], minY);
-            zmin = Math.max(zc-rawradii[s], minZ);
-            xmax = Math.min(xc+rawradii[s], maxX);
-            ymax = Math.min(yc+rawradii[s], maxY);
-            zmax = Math.min(zc+rawradii[s], maxZ);
-            count = 0;
-
-            for (int z=zmin; z<=zmax; z++) {
-                IJ.showProgress(z, zmax+1);
-                for (int y=ymin; y<ymax; y++) {
-                    for (int x=xmin; x<xmax; x++) {
-                        dx = Math.sqrt((x-xc)*(x-xc)+(y-yc)*(y-yc)+(z-zc)*(z-zc));
-                        if (Math.abs(dx-rawradii[s])<0.5) {
-                            value = voxels[ (z-minZ)*vw*2 + (y-minY)*vw + x-minX];
                             if (value >= lowerT && value <= upperT) {
                                 points[count][0]   = x;
                                 points[count][1]   = y;
@@ -793,14 +690,10 @@ public class Advanced_Sholl_Analysis implements PlugIn {
                 px = getPixels(ip, testpoints);
 
                 // Now perform the stair checks
-                if ( (px[0]!=0 && px[1]!=0 && px[3]!=0  &&
-                      px[4]==0 && px[6]==0 && px[7]==0) ||
-                     (px[1]!=0 && px[2]!=0 && px[4]!=0  &&
-                      px[3]==0 && px[5]==0 && px[6]==0) ||
-                     (px[4]!=0 && px[6]!=0 && px[7]!=0  &&
-                      px[0]==0 && px[1]==0 && px[3]==0) ||
-                     (px[3]!=0 && px[5]!=0 && px[6]!=0  &&
-                      px[1]==0 && px[2]==0 && px[4]==0) )
+                if ((px[0]!=0 && px[1]!=0 && px[3]!=0 && px[4]==0 && px[6]==0 && px[7]==0) ||
+                    (px[1]!=0 && px[2]!=0 && px[4]!=0 && px[3]==0 && px[5]==0 && px[6]==0) ||
+                    (px[4]!=0 && px[6]!=0 && px[7]!=0 && px[0]==0 && px[1]==0 && px[3]==0) ||
+                    (px[3]!=0 && px[5]!=0 && px[6]!=0 && px[1]==0 && px[2]==0 && px[4]==0))
 
                     groups--;
 
@@ -1020,11 +913,11 @@ public class Advanced_Sholl_Analysis implements PlugIn {
         final boolean yAxisnorm = mthd == SHOLL_NS;
 
         if (xAxislog) {
-            
+
             xTitle = is3D ? "log(3D distance)" : "log(2D distance)";
             for (i = 0; i < nsize; i++)
                 x[i] = Math.log(x[i]);
-            
+
         } else {
             xTitle = is3D ? "3D distance ("+ unit +")" : "2D distance ("+ unit +")";
         }
@@ -1044,7 +937,6 @@ public class Advanced_Sholl_Analysis implements PlugIn {
         } else {
             yTitle = "N. of Intersections";
         }
-
 
         // Create an empty plot: The plot constructor only allows the usage of the 'flags'
         // argument with initial arrays
@@ -1104,7 +996,7 @@ public class Advanced_Sholl_Analysis implements PlugIn {
 
         // Initialize morphometric descriptors
         double cv = 0, cr = 0, mv = 0, ri = 0;
-        
+
         // Linear Sholl: Calculate Critical value (cv), Critical radius (cr),
         // Mean Sholl value (mv) and Ramification (Schoenen) index (ri)
         if (mthd == SHOLL_N) {
@@ -1147,7 +1039,7 @@ public class Advanced_Sholl_Analysis implements PlugIn {
             plotLabel.append("\nMv= "+ IJ.d2s(mv, 2));
             plotLabel.append("\nRI= "+ IJ.d2s(ri, 2));
             plotLabel.append("\n" + DEGREES[polyChoice]);
-            
+
         } else {
             cv = cr = mv = ri = Double.NaN;
         }
@@ -1267,9 +1159,9 @@ public class Advanced_Sholl_Analysis implements PlugIn {
         final int type = ip.getBitDepth();
 
         if (type==24)
-            exitmsg = "RGB Color images are not supported.";
+            exitmsg = "RGB color images are not supported.";
         else if (type==32)
-            exitmsg = "32-bit Grayscale images are not supported.";
+            exitmsg = "32-bit grayscale images are not supported.";
         else if (ip.isBinary()) {
             lowerT = upperT = 255;
             if (ip.isInvertedLut()) {
@@ -1312,8 +1204,8 @@ public class Advanced_Sholl_Analysis implements PlugIn {
             IJ.error("Advanced Sholl Analysis Error", msg);
         else {
             final GenericDialog gd = new GenericDialog("Advanced Sholl Analysis Error");
-            final Font font = new Font("SansSerif", Font.PLAIN, 13);
-            gd.addMessage(msg, font);
+            gd.setInsets(0,0,0);
+            gd.addMessage(msg);
             gd.addHelp(URL);
             gd.setHelpLabel("Online Help");
             gd.hideCancelButton();
