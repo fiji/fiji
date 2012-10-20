@@ -2,7 +2,6 @@ package fiji.packaging;
 
 import java.io.IOException;
 import java.io.OutputStream;
-
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
@@ -40,6 +39,7 @@ public class TarPackager extends Packager {
 		fileOffset += len;
 	}
 
+	@Override
 	public void closeEntry() throws IOException {
 		if (fileOffset != fileSize)
 			throw new IOException("Short file");
@@ -50,6 +50,7 @@ public class TarPackager extends Packager {
 		}
 	}
 
+	@Override
 	public void close() throws IOException {
 		out.close();
 	}

@@ -1,6 +1,5 @@
 package fiji.packaging;
 
-import ij.IJ;
 import imagej.updater.core.Checksummer;
 import imagej.updater.core.FileObject;
 import imagej.updater.core.FilesCollection;
@@ -21,9 +20,9 @@ import java.util.List;
 public abstract class Packager {
 	protected File ijDir;
 	protected Collection<String> files;
-	protected int count, total;
 
 	protected byte[] buffer = new byte[16384];
+	private Progress progress;
 
 	public abstract String getExtension();
 
@@ -43,56 +42,33 @@ public abstract class Packager {
 		in.close();
 	}
 
-	public void initialize(String... platforms) throws Exception {
+	public void initialize(final Progress progress, boolean includeJRE, String... platforms) throws Exception {
+		this.progress = progress != null ? progress : new StderrProgress();
 		if (System.getProperty("ij.dir") == null)
 			throw new UnsupportedOperationException("Need an ij.dir property pointing to the ImageJ root!");
 		ijDir = new File(System.getProperty("ij.dir"));
-		files = getFileList(platforms);
+		files = new ArrayList<String>();
+		files.add("db.xml.gz");
+		// Maybe ImageJ or ImageJ.exe exist?
+		for (final String fileName : new String[] { "ImageJ", "ImageJ.exe" })
+			if (new File(ijDir, fileName).exists())
+				files.add("ImageJ");
+		files.add("Contents/Info.plist");
+		getFileList(platforms);
+		if (includeJRE)
+			getJREFiles(platforms);
 	}
 
-	private List<String> getFileList(String... platforms) {
-		final Progress progress = IJ.getInstance() == null ? new StderrProgress() : new Progress() {
-			@Override
-			public void setTitle(String title) {
-				IJ.showStatus(title);
-			}
-
-			@Override
-			public void setCount(int count, int total) {
-				IJ.showProgress(count, total);
-			}
-
-			@Override
-			public void addItem(Object item) {
-				IJ.showStatus("" + item);
-			}
-
-			@Override
-			public void setItemCount(int count, int total) {
-			}
-
-			@Override
-			public void itemDone(Object item) {
-			}
-
-			@Override
-			public void done() {
-				IJ.showStatus("Finished checksumming");
-			}
-
-		};
+	private void getFileList(String... platforms) {
 		final FilesCollection files = new FilesCollection(ijDir);
 		final Checksummer checksummer = new Checksummer(files, progress);
 
 		checksummer.updateFromLocal();
 		files.sort();
-		List<String> result = new ArrayList<String>();
 		for (final FileObject file : files) {
 			if (isForPlatforms(file, platforms))
-				result.add(file.getLocalFilename(false));
+				this.files.add(file.getLocalFilename(false));
 		}
-
-		return result;
 	}
 
 	private static boolean isForPlatforms(final FileObject file, String... platforms) {
@@ -105,17 +81,16 @@ public abstract class Packager {
 		return false;
 	}
 
-	protected void addDefaultFiles() throws IOException {
-		addFile("db.xml.gz", false);
-		// Maybe ImageJ or ImageJ.exe exist?
-		addFile("ImageJ", true);
-		addFile("ImageJ.exe", true);
-		addFile("Contents/Info.plist", false);
-		for (String fileName : files)
+	public void addDefaultFiles() throws IOException {
+		progress.setTitle("Writing files");
+		int count = 0;
+		for (String fileName : files) {
 			addFile(fileName, false);
+			progress.setCount(count++, files.size());
+		}
 	}
 
-	public void addJRE(String... platforms) throws IOException {
+	private void getJREFiles(String... platforms) throws IOException {
 		final File javaDir = new File(ijDir, "java");
 		final List<String> directories = new ArrayList<String>();
 		if (platforms.length == 0) {
@@ -150,7 +125,7 @@ public abstract class Packager {
 			}
 
 		for (final String dir : directories)
-			addDirectory(dir);
+			getFilesInDirectory(dir);
 	}
 
 	private static class NoHiddenFiles implements FilenameFilter {
@@ -179,21 +154,20 @@ public abstract class Packager {
 		return dirName + "/" + result.getName() + "/jre";
 	}
 
-	private boolean addDirectory(String dirName) throws IOException {
+	private boolean getFilesInDirectory(String dirName) throws IOException {
 		final File[] list = new File(ijDir, dirName).listFiles(new NoHiddenFiles());
 		if (list == null)
 			return false;
 		boolean result = true;
 		for (final File file : list)
 			if (file.isDirectory())
-				result = addDirectory(dirName + "/" + file.getName()) && result;
+				result = getFilesInDirectory(dirName + "/" + file.getName()) && result;
 			else if (file.isFile())
-				result = addFile(dirName + "/" + file.getName(), false) && result;
+				result = files.add(dirName + "/" + file.getName()) && result;
 		return result;
 	}
 
 	protected boolean addFile(String fileName, boolean executable) throws IOException {
-		count++;
 		if (fileName.equals("ImageJ-macosx") || fileName.equals("ImageJ-tiger"))
 			fileName = "Contents/MacOS/" + fileName;
 		File file = new File(ijDir, fileName);
@@ -264,11 +238,9 @@ public abstract class Packager {
 		String path = args[i];
 
 		try {
-			packager.initialize(platforms);
+			packager.initialize(null, includeJRE, platforms);
 			packager.open(new FileOutputStream(path));
 			packager.addDefaultFiles();
-			if (includeJRE)
-				packager.addJRE(platforms);
 			packager.close();
 		}
 		catch (Exception e) {
