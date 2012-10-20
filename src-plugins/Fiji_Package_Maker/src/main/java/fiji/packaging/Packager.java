@@ -130,22 +130,27 @@ public abstract class Packager {
 	}
 
 	public static void main(String[] args) {
+		int i = 0;
+		while (i < args.length && args[i].startsWith("-")) {
+			System.err.println("Unknown option: " + args[i]);
+			System.exit(1);
+		}
 		Packager packager = null;
-		if (args.length == 1) {
-			if (args[0].endsWith(".zip"))
+		if (i + 1 == args.length) {
+			if (args[i].endsWith(".zip"))
 				packager = new ZipPackager();
-			else if (args[0].endsWith(".tar"))
+			else if (args[i].endsWith(".tar"))
 				packager = new TarPackager();
-			else if (args[0].endsWith(".tar.gz") || args[0].endsWith(".tgz"))
+			else if (args[i].endsWith(".tar.gz") || args[0].endsWith(".tgz"))
 				packager = new TarGzPackager();
-			else if (args[0].endsWith(".tar.bz2") || args[0].endsWith(".tbz")) try {
+			else if (args[i].endsWith(".tar.bz2") || args[0].endsWith(".tbz")) try {
 				packager = new TarBz2Packager();
 			} catch (ClassNotFoundException e) {
 				e.printStackTrace();
 				System.exit(1);
 			}
 			else {
-				System.err.println("Unsupported archive format: " + args[0]);
+				System.err.println("Unsupported archive format: " + args[i]);
 				System.exit(1);
 			}
 		}
@@ -153,7 +158,7 @@ public abstract class Packager {
 			System.err.println("Usage: Package_Maker <filename>");
 			System.exit(1);
 		}
-		String path = args[0];
+		String path = args[i];
 
 		try {
 			packager.initialize();
