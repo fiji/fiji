@@ -230,7 +230,6 @@ public class Adapter {
 			invoke(files, "read");
 		} catch (Exception e) { /* ignore */ }
 		Object downloader = newInstance(DOWNLOADER_CLASS_NAME, files);
-		invoke(downloader, "addProgress", getProgress());
 		invoke(downloader, "start", false);
 		Object checksummer = newInstance(CHECKSUMMER_CLASS_NAME, files, getProgress());
 		invoke(checksummer, "updateFromLocal", filenames);
@@ -247,7 +246,7 @@ public class Adapter {
 		Iterable<Object> dependencies = invoke(guiFile, "getFileDependencies", files, true);
 		for (Object file : dependencies)
 			classPath.add(new File(ijDir, (String)invoke(file, "getLocalFilename", false)).toURI().toURL());
-		remoteClassLoader = new URLClassLoader(classPath.toArray(new URL[classPath.size()]));
+		remoteClassLoader = new URLClassLoader(classPath.toArray(new URL[classPath.size()]), String.class.getClassLoader());
 		progress = loadClass(progress.getClass().getName());
 
 		// Blow away ImageJ's class loader so we can pick up the newly downloaded classes
@@ -556,7 +555,7 @@ public class Adapter {
 	}
 
 	protected Class<?> loadClass(String name, boolean forceRemote) {
-		ClassLoader currentLoader = forceRemote ? null : Adapter.class.getClassLoader();
+		ClassLoader currentLoader = forceRemote ? null : (remoteClassLoader != null ? remoteClassLoader : Adapter.class.getClassLoader());
 		Class<?> result = null;
 		try {
 			result = currentLoader.loadClass(name);
