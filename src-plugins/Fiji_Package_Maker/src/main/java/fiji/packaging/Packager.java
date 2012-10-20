@@ -72,7 +72,7 @@ public abstract class Packager {
 	}
 
 	private static boolean isForPlatforms(final FileObject file, String... platforms) {
-		if (platforms.length == 0)
+		if (platforms.length == 0 || !file.getPlatforms().iterator().hasNext())
 			return true;
 		for (final String platform : platforms) {
 			if (file.isForPlatform(platform))
