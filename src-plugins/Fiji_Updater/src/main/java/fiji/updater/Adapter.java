@@ -571,7 +571,7 @@ public class Adapter {
 					ui.error("Invalid Updater URL: " + e.getMessage());
 					return null;
 				}
-				remoteClassLoader = new URLClassLoader(urls, currentLoader);
+				remoteClassLoader = new URLClassLoader(urls, String.class.getClassLoader());
 				// now we need to make sure that ij.dir is set properly because
 				// FileUtils.getBaseDirectory() will be quite lost
 				ensureIJDirIsSet();
