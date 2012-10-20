@@ -42,14 +42,14 @@ public abstract class Packager {
 		in.close();
 	}
 
-	public void initialize() throws Exception {
+	public void initialize(String... platforms) throws Exception {
 		if (System.getProperty("ij.dir") == null)
 			throw new UnsupportedOperationException("Need an ij.dir property pointing to the ImageJ root!");
 		ijDir = new File(System.getProperty("ij.dir"));
-		files = getFileList();
+		files = getFileList(platforms);
 	}
 
-	private List<String> getFileList() {
+	private List<String> getFileList(String... platforms) {
 		final Progress progress = IJ.getInstance() == null ? new StderrProgress() : new Progress() {
 			@Override
 			public void setTitle(String title) {
@@ -87,10 +87,21 @@ public abstract class Packager {
 		files.sort();
 		List<String> result = new ArrayList<String>();
 		for (final FileObject file : files) {
-			result.add(file.getLocalFilename(false));
+			if (isForPlatforms(file, platforms))
+				result.add(file.getLocalFilename(false));
 		}
 
 		return result;
+	}
+
+	private static boolean isForPlatforms(final FileObject file, String... platforms) {
+		if (platforms.length == 0)
+			return true;
+		for (final String platform : platforms) {
+			if (file.isForPlatform(platform))
+				return true;
+		}
+		return false;
 	}
 
 	protected void addDefaultFiles() throws IOException {
@@ -130,10 +141,21 @@ public abstract class Packager {
 	}
 
 	public static void main(String[] args) {
+		String[] platforms = {};
 		int i = 0;
 		while (i < args.length && args[i].startsWith("-")) {
-			System.err.println("Unknown option: " + args[i]);
-			System.exit(1);
+			if (args[i].startsWith("--platforms=")) {
+				platforms = args[i].substring("--platforms=".length()).split(",");
+				if (platforms.length == 1 && "".equals(platforms[0]))
+					platforms = new String[0];
+			}
+			else if (args[i].startsWith("-Dij.dir="))
+				System.setProperty("ij.dir", args[i].substring("-Dij.dir=".length()));
+			else {
+				System.err.println("Unknown option: " + args[i]);
+				System.exit(1);
+			}
+			i++;
 		}
 		Packager packager = null;
 		if (i + 1 == args.length) {
@@ -155,13 +177,13 @@ public abstract class Packager {
 			}
 		}
 		else {
-			System.err.println("Usage: Package_Maker <filename>");
+			System.err.println("Usage: Package_Maker [--platform=<platform>[,<platform>]] <filename>");
 			System.exit(1);
 		}
 		String path = args[i];
 
 		try {
-			packager.initialize();
+			packager.initialize(platforms);
 			packager.open(new FileOutputStream(path));
 			packager.addDefaultFiles();
 			packager.close();
