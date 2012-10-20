@@ -459,6 +459,49 @@ public class Advanced_Sholl_Analysis implements PlugIn {
     }
 
     /**
+<<<<<<< HEAD
+=======
+     * Returns the pixel array for the specified volume range of an 8-bit stack.
+     * Does not check if input range is within stack boundaries
+     */
+     private static int[] getVoxels8(final int x0, final int y0, final int z0, final int x1,
+            final int y1, final int z1, final ImageStack stack) {
+
+        final int width = stack.getWidth();
+        final int[] voxels = new int[ (x1-x0) * (y1-y0) * (z1-z0+1) ];
+        int i = 0;
+        for (int z=z0; z<=z1; z++) {
+            final byte[] bytes = (byte[])stack.getPixels(z);
+            for (int y=y0; y<y1; y++) {
+                for (int x=x0; x<x1; x++)
+                    voxels[i++] = bytes[y*width+x]&0xff; //tested this recreates the image
+            }
+        }
+        return voxels;
+    }
+
+    /**
+     * Returns the pixel array for the specified volume range of an 8-bit stack.
+     * Does not check if input range is within stack boundaries
+     */
+    private static int[] getVoxels16(final int x0, final int y0, final int z0, final int x1,
+            final int y1, final int z1, final ImageStack stack) {
+
+        final int width = stack.getWidth();
+        final int[] voxels = new int[ (x1-x0) * (y1-y0) * (z1-z0+1)];
+        int i = 0;
+        for (int z=z0; z<=z1; z++) {
+            final short[] shorts = (short[])stack.getPixels(z);
+            for (int y=y0; y<y1; y++) {
+                for (int x=x0; x<x1; x++)
+                    voxels[i++] = shorts[y*width+x]&0xffff;
+            }
+        }
+        return voxels;
+    }
+
+    /**
+>>>>>>> 4fe2ac9... Added copyright notice
      * Analogous to countGroups(), counts clusters of pixels from an array of 3D
      * coordinates, but without SpikeSupression
      */
