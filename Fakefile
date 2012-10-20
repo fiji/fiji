@@ -103,7 +103,6 @@ ENVOVERRIDES(TOOLS_JAR)=true
 SUBMODULE_TARGETS=\
 	jars/VectorString.jar \
 	jars/ij-app.jar \
-	jars/ij.jar \
 	plugins/Image_5D.jar \
 	plugins/TrakEM2_.jar \
 	plugins/ij-ImageIO_.jar \
@@ -122,7 +121,6 @@ DEBUG_ARGS=-agentlib:jdwp=transport=dt_socket,address=8000,server=y,suspend=n
 dev[./ImageJ $DEBUG_ARGS] <-
 
 # From submodules
-jars/ij.jar <- jars/javac.jar modules/ImageJA/
 CLASSPATH(plugins/mpicbg_.jar)=jars/ij.jar:jars/mpicbg.jar
 plugins/mpicbg_.jar <- modules/mpicbg/
 CLASSPATH(jars/mpicbg.jar)=jars/ij.jar:jars/Jama.jar
@@ -135,7 +133,7 @@ plugins/ij-ImageIO_.jar <- modules/ij-plugins/
 
 # From submodules, using Maven/MiniMaven
 KEEPVERSION=true
-jars/ij-app.jar <- jars/ij.jar modules/imagej2/
+jars/ij-app.jar <- modules/imagej2/
 plugins/Image_5D.jar <- modules/image5d/
 
 # From source
@@ -170,10 +168,9 @@ misc/headless.jar[bin/make-headless-jar.bsh] <- jars/fiji-compat.jar jars/javass
 
 # ImageJ launcher
 
-# We re-use ImageJ2's launcher now, so let's use the updater to perform
-# the job.
+# We re-use ImageJ2's launcher now, so let's use a shell script to download it from the Maven repository
 
-ImageJ[sh bin/download-launchers.sh snapshot $PLATFORM] <- plugins/Fiji_Updater.jar jars/ij.jar jars/jsch.jar
+ImageJ[sh bin/download-launchers.sh snapshot $PLATFORM] <-
 
 # legacy launcher
 
@@ -185,7 +182,7 @@ precompiled/javac.jar <- jars/javac.jar
 
 # precompiled fall back
 
-missingPrecompiledFallBack[sh ./bin/ImageJ.sh --update update $TARGET] <- \
+missingPrecompiledFallBack[fail to call sh ./bin/ImageJ.sh --update update $TARGET] <- \
 	plugins/Fiji_Updater.jar jars/ij.jar jars/jsch.jar
 
 # Portable application/.app
