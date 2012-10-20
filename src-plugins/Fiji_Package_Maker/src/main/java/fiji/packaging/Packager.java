@@ -1,8 +1,11 @@
 package fiji.packaging;
 
-import fiji.updater.Adapter;
-
 import ij.IJ;
+import imagej.updater.core.Checksummer;
+import imagej.updater.core.FileObject;
+import imagej.updater.core.FilesCollection;
+import imagej.updater.util.Progress;
+import imagej.updater.util.StderrProgress;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -10,13 +13,12 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 public abstract class Packager {
-	static {
-		Adapter.ensureIJDirIsSet();
-	}
-	protected File ijDir = new File(System.getProperty("ij.dir"));
+	protected File ijDir;
 	protected Collection<String> files;
 	protected int count, total;
 
@@ -41,7 +43,54 @@ public abstract class Packager {
 	}
 
 	public void initialize() throws Exception {
-		files = new Adapter(IJ.getInstance() != null).getFileList();
+		if (System.getProperty("ij.dir") == null)
+			throw new UnsupportedOperationException("Need an ij.dir property pointing to the ImageJ root!");
+		ijDir = new File(System.getProperty("ij.dir"));
+		files = getFileList();
+	}
+
+	private List<String> getFileList() {
+		final Progress progress = IJ.getInstance() == null ? new StderrProgress() : new Progress() {
+			@Override
+			public void setTitle(String title) {
+				IJ.showStatus(title);
+			}
+
+			@Override
+			public void setCount(int count, int total) {
+				IJ.showProgress(count, total);
+			}
+
+			@Override
+			public void addItem(Object item) {
+				IJ.showStatus("" + item);
+			}
+
+			@Override
+			public void setItemCount(int count, int total) {
+			}
+
+			@Override
+			public void itemDone(Object item) {
+			}
+
+			@Override
+			public void done() {
+				IJ.showStatus("Finished checksumming");
+			}
+
+		};
+		final FilesCollection files = new FilesCollection(ijDir);
+		final Checksummer checksummer = new Checksummer(files, progress);
+
+		checksummer.updateFromLocal();
+		files.sort();
+		List<String> result = new ArrayList<String>();
+		for (final FileObject file : files) {
+			result.add(file.getLocalFilename(false));
+		}
+
+		return result;
 	}
 
 	protected void addDefaultFiles() throws IOException {
