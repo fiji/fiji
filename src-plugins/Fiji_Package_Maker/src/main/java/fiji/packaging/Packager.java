@@ -180,9 +180,16 @@ public abstract class Packager {
 		File file = new File(ijDir, fileName);
 		if (!file.exists())
 			return false;
-		putNextEntry("Fiji.app/" + fileName, executable || file.canExecute(), (int)file.length());
-		write(new FileInputStream(file));
-		closeEntry();
+		try {
+			putNextEntry("Fiji.app/" + fileName, executable || file.canExecute(), (int)file.length());
+			write(new FileInputStream(file));
+			closeEntry();
+		} catch (IOException e) {
+			if (e.getMessage().startsWith("File name too long"))
+				System.err.println("Skipping: " + e.getMessage());
+			else
+				throw e;
+		}
 		return true;
 	}
 
