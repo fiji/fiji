@@ -42,6 +42,10 @@ public abstract class Packager {
 		in.close();
 	}
 
+	public void setRootDirectory(final File rootDirectory) {
+		ijDir = rootDirectory;
+	}
+
 	public void initialize(final Progress progress, boolean includeJRE, String... platforms) throws Exception {
 		this.progress = progress != null ? progress : new StderrProgress();
 		if (System.getProperty("ij.dir") == null)
@@ -174,7 +178,7 @@ public abstract class Packager {
 		return result;
 	}
 
-	protected boolean addFile(String fileName, boolean executable) throws IOException {
+	public boolean addFile(String fileName, boolean executable) throws IOException {
 		if (fileName.equals("ImageJ-macosx") || fileName.equals("ImageJ-tiger"))
 			fileName = "Contents/MacOS/" + fileName;
 		File file = new File(ijDir, fileName);
