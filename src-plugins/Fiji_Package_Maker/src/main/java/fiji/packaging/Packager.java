@@ -42,6 +42,10 @@ public abstract class Packager {
 		in.close();
 	}
 
+	public void setRootDirectory(final File rootDirectory) {
+		ijDir = rootDirectory;
+	}
+
 	public void initialize(final Progress progress, boolean includeJRE, String... platforms) throws Exception {
 		this.progress = progress != null ? progress : new StderrProgress();
 		if (System.getProperty("ij.dir") == null)
@@ -72,7 +76,7 @@ public abstract class Packager {
 	}
 
 	private static boolean isForPlatforms(final FileObject file, String... platforms) {
-		if (platforms.length == 0)
+		if (platforms.length == 0 || !file.getPlatforms().iterator().hasNext())
 			return true;
 		for (final String platform : platforms) {
 			if (file.isForPlatform(platform))
@@ -115,9 +119,16 @@ public abstract class Packager {
 					else if ("macosx".equals(platform) || "tiger".equals(platform))
 						dir = "macosx-java3d";
 
+					if ("macosx-java3d".equals(dir)) {
+						dir = "java/" + dir + "/Home";
+						if (new File(ijDir, dir).isDirectory())
+							directories.add(dir);
+						continue;
+					}
+
 					dir = getNewestJRE("java/" + dir);
 					if (dir == null) {
-						System.err.println("No JRE found for platform '" + platform);
+						System.err.println("No JRE found for platform '" + platform + "'");
 						System.exit(1);
 					}
 				}
@@ -167,15 +178,22 @@ public abstract class Packager {
 		return result;
 	}
 
-	protected boolean addFile(String fileName, boolean executable) throws IOException {
+	public boolean addFile(String fileName, boolean executable) throws IOException {
 		if (fileName.equals("ImageJ-macosx") || fileName.equals("ImageJ-tiger"))
 			fileName = "Contents/MacOS/" + fileName;
 		File file = new File(ijDir, fileName);
 		if (!file.exists())
 			return false;
-		putNextEntry("Fiji.app/" + fileName, executable || file.canExecute(), (int)file.length());
-		write(new FileInputStream(file));
-		closeEntry();
+		try {
+			putNextEntry("Fiji.app/" + fileName, executable || file.canExecute(), (int)file.length());
+			write(new FileInputStream(file));
+			closeEntry();
+		} catch (IOException e) {
+			if (e.getMessage().startsWith("File name too long"))
+				System.err.println("Skipping: " + e.getMessage());
+			else
+				throw e;
+		}
 		return true;
 	}
 
