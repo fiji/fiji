@@ -115,6 +115,13 @@ public abstract class Packager {
 					else if ("macosx".equals(platform) || "tiger".equals(platform))
 						dir = "macosx-java3d";
 
+					if ("macosx-java3d".equals(dir)) {
+						dir = "java/" + dir + "/Home";
+						if (new File(ijDir, dir).isDirectory())
+							directories.add(dir);
+						continue;
+					}
+
 					dir = getNewestJRE("java/" + dir);
 					if (dir == null) {
 						System.err.println("No JRE found for platform '" + platform);
