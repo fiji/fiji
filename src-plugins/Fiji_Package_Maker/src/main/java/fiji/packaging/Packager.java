@@ -124,7 +124,7 @@ public abstract class Packager {
 
 					dir = getNewestJRE("java/" + dir);
 					if (dir == null) {
-						System.err.println("No JRE found for platform '" + platform);
+						System.err.println("No JRE found for platform '" + platform + "'");
 						System.exit(1);
 					}
 				}
