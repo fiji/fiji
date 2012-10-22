@@ -86,6 +86,9 @@ public final class Utils {
 
         switch (dim)
         {
+            case 0:
+                matrix[0] = 1;
+                matrix[3] = 1;
             case 1:
                 matrix[0] = 1;
                 matrix[3] = 1;
