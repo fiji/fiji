@@ -34,6 +34,7 @@ import java.awt.Color;
 import java.awt.Font;
 import java.awt.Frame;
 import java.awt.Rectangle;
+import java.awt.image.IndexColorModel;
 import java.io.*;
 import java.util.Arrays;
 
@@ -84,6 +85,7 @@ public class Advanced_Sholl_Analysis implements PlugIn {
     private static boolean fitCurve;
     private static boolean verbose;
     private static boolean mask;
+    private static int maskBackground = 228;
     private static boolean save;
 
     // If the edge of a group of pixels lies tangent to the sampling circle, multiple
@@ -348,6 +350,7 @@ public class Advanced_Sholl_Analysis implements PlugIn {
 
         gd.setInsets(6, 6, 0);
         gd.addCheckbox("Create intersections mask", mask);
+        gd.addSlider("Background:", 0, 255, maskBackground);
 
         // Offer to save results if local image
         if (validPath) {
@@ -390,7 +393,7 @@ public class Advanced_Sholl_Analysis implements PlugIn {
         verbose = gd.getNextBoolean();
         polyChoice = gd.getNextChoiceIndex();
         mask = gd.getNextBoolean();
-
+        maskBackground = (int)gd.getNextNumber();
         if (validPath)
             save = gd.getNextBoolean();
 
@@ -1144,7 +1147,11 @@ public class Advanced_Sholl_Analysis implements PlugIn {
                     }
             }
         }
-        mp.resetMinAndMax();
+
+        // Apply LUT
+        mp.setColorModel(matlabJetColorMap(maskBackground));
+        final double[] range = Tools.getMinMax(values);
+        mp.setMinAndMax( 0, range[1] );
 
         final ImagePlus img2 = new ImagePlus("Sholl mask ["+ SHOLL_TYPES[shollChoice] +"] :: "+ ttl, mp);
 
@@ -1152,7 +1159,6 @@ public class Advanced_Sholl_Analysis implements PlugIn {
         img2.setCalibration(cal);
         img2.setProperty("Label", fitCurve ? "Fitted data" : "Raw data");
         img2.setRoi(new PointRoi(xc, yc));
-        IJ.run(img2, "Fire", ""); // "Fire", "Ice", "Spectrum", "Redgreen"
         return img2;
     }
 
@@ -1204,7 +1210,44 @@ public class Advanced_Sholl_Analysis implements PlugIn {
         return true;
     }
 
-    /** Creates improved error messages */
+    /**
+     * Returns an IndexColorModel where 0 (background) has the gray value (0-255) imposed
+     * by zerograyvalue and 1 to 255 are colored according to Matlab's jet color map
+     */
+    public static IndexColorModel matlabJetColorMap(final int zerograyvalue) {
+
+        // Initialize colors arrays, initialized with zero values
+        final byte[] reds   = new byte[256];
+        final byte[] greens = new byte[256];
+        final byte[] blues  = new byte[256];
+
+        // Set greens, index 0-32: 0
+        for( int i = 0; i < 256/4; i++ )         // index 32-96
+            greens[i+256/8] = (byte)(i*255*4/256);
+        for( int i = 256*3/8; i < 256*5/8; ++i ) // index 96-160
+            greens[i] = (byte)255;
+        for( int i = 0; i < 256/4; i++ )         // index 160-224
+            greens[i+256*5/8] = (byte)(255-(i*255*4/256));
+        for( int i = 256*7/8; i < 256; i++ )     // index 224-255
+            greens[i] = (byte)0;
+
+        // Set blues
+        for(int i = 0; i < 256*7/8; i++)         // index 0-224
+            blues[i] = greens[(i+256/4) % 256];
+        for(int i = 256*7/8; i < 256; i++)       // index 224-255
+            blues[i] = (byte)0;
+
+        // Set reds, index 0-32: 0
+        for(int i = 256/8; i < 256; i++)         // index 32-255
+            reds[i] = greens[(i+256*6/8) % 256];
+
+        // Set background color
+        reds[0] = greens[0] = blues[0] = (byte)Math.min(zerograyvalue,255);
+
+        return new IndexColorModel(8, 256, reds, greens, blues);
+    }
+
+    /** Creates improved error messages with help button */
     void error(final String msg) {
         if (IJ.macroRunning())
             IJ.error("Advanced Sholl Analysis Error", msg);

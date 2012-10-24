@@ -6,6 +6,7 @@ Version 3 (final)
     - 3D Sholl is now ~25% faster
     - Major code clean up, which solved several issues
     - Precision in Sholl table is set by Analyze>Set Measurements...
+	- Sholl mask is coded with Matlab's "jet" color map
 
 Version 3d
     - Analysis is now restricted to the volume of the largest Sholl shell, rather than
