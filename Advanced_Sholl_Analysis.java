@@ -11,7 +11,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
 import ij.IJ;
@@ -290,9 +290,9 @@ public class Advanced_Sholl_Analysis implements PlugIn {
     }
 
     /**
-     * Creates and shows the plugin dialog. Returns the region of the image (relative
-     * to the center) to be trimmed from the analysis "None", "Above","Below", "Right"
-     * or "Left". Returns null if dialog was canceled
+     * Creates the plugin dialog. Returns the region of the image (relative to the center)
+     * to be trimmed from the analysis "None", "Above","Below", "Right" or "Left".
+     * Returns null if dialog was canceled
      */
     private static String showDialog(final double chordAngle, final boolean is3D) {
 
@@ -313,8 +313,8 @@ public class Advanced_Sholl_Analysis implements PlugIn {
         gd.setInsets(12, 0, 0);
         gd.addChoice("Sholl method:", SHOLL_TYPES, SHOLL_TYPES[shollChoice]);
 
-        // Prepare choices for hemicircle/hemisphere analysis, an option
-        // triggered by the presence of orthogonal lines (chords)
+        // Prepare choices for hemicircle/hemisphere analysis, an option triggered by the
+        // presence of orthogonal lines (chords)
         trimBounds = (chordAngle > -1 && chordAngle % 90 == 0);
 
         // If an orthogonal chord exists, prompt for quadrants choice
@@ -459,49 +459,6 @@ public class Advanced_Sholl_Analysis implements PlugIn {
     }
 
     /**
-<<<<<<< HEAD
-=======
-     * Returns the pixel array for the specified volume range of an 8-bit stack.
-     * Does not check if input range is within stack boundaries
-     */
-     private static int[] getVoxels8(final int x0, final int y0, final int z0, final int x1,
-            final int y1, final int z1, final ImageStack stack) {
-
-        final int width = stack.getWidth();
-        final int[] voxels = new int[ (x1-x0) * (y1-y0) * (z1-z0+1) ];
-        int i = 0;
-        for (int z=z0; z<=z1; z++) {
-            final byte[] bytes = (byte[])stack.getPixels(z);
-            for (int y=y0; y<y1; y++) {
-                for (int x=x0; x<x1; x++)
-                    voxels[i++] = bytes[y*width+x]&0xff; //tested this recreates the image
-            }
-        }
-        return voxels;
-    }
-
-    /**
-     * Returns the pixel array for the specified volume range of an 8-bit stack.
-     * Does not check if input range is within stack boundaries
-     */
-    private static int[] getVoxels16(final int x0, final int y0, final int z0, final int x1,
-            final int y1, final int z1, final ImageStack stack) {
-
-        final int width = stack.getWidth();
-        final int[] voxels = new int[ (x1-x0) * (y1-y0) * (z1-z0+1)];
-        int i = 0;
-        for (int z=z0; z<=z1; z++) {
-            final short[] shorts = (short[])stack.getPixels(z);
-            for (int y=y0; y<y1; y++) {
-                for (int x=x0; x<x1; x++)
-                    voxels[i++] = shorts[y*width+x]&0xffff;
-            }
-        }
-        return voxels;
-    }
-
-    /**
->>>>>>> 4fe2ac9... Added copyright notice
      * Analogous to countGroups(), counts clusters of pixels from an array of 3D
      * coordinates, but without SpikeSupression
      */
@@ -885,18 +842,23 @@ public class Advanced_Sholl_Analysis implements PlugIn {
         final double[] x = new double[nsize];
         double[] y = new double[nsize];
         final double[] logY = new double[nsize];
-        double sumY = 0.0;
+        double sumY = 0; double maxIntersect = 0;
 
         for (i = 0, j = 0; i < size; i++) {
 
             if (ypoints[i] != 0.0) {
                 x[j] = xpoints[i];
                 y[j] = ypoints[i];
+
                 // Normalize log values to area of circle/volume of sphere
                 if (is3D)
                     logY[j] = Math.log(y[j] / (Math.PI * x[j]*x[j]*x[j] * 4/3));
                 else
                     logY[j] = Math.log(y[j] / (Math.PI * x[j]*x[j]));
+
+                // Retrieve raw statistics
+                if( y[j] > maxIntersect )
+                    maxIntersect = y[j];
                 sumY += y[j++];
             }
 
@@ -927,6 +889,7 @@ public class Advanced_Sholl_Analysis implements PlugIn {
         rt.addValue("Sampled radii", size);
         rt.addValue("Sum Inters.", sumY);
         rt.addValue("Avg Inters.", sumY/size);
+        rt.addValue("Max Inters.", maxIntersect);
         rt.addValue("Zero Inters.", size-nsize);
         rt.show(shollTable); // addResults();
 
