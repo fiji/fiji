@@ -87,9 +87,9 @@ public class FeatureStack3D
 			true,	/* Structure */
 			true,	/* Edges */
 			true,	/* Difference of Gaussian */
-			true,	/* Minimum */
-			true,	/* Maximum */
-			true,	/* Mean */
+			false,	/* Minimum */
+			false,	/* Maximum */
+			false,	/* Mean */
 	};
 	
 	
