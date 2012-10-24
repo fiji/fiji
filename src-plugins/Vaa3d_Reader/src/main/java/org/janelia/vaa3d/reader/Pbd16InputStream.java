@@ -26,7 +26,7 @@ public class Pbd16InputStream extends PbdInputStream
 	private short repeatValue;
 	private short decompressionPrior;
 	private byte d0,d1,d2,d3;
-	private byte sourceChar;
+	// private byte sourceChar;
 	private byte carryOver;
 	private byte oooooool = 1;
 	// private byte oooooolo = 2;
@@ -44,6 +44,17 @@ public class Pbd16InputStream extends PbdInputStream
 		shortBuffer = byteBuffer.asShortBuffer();
 	}
 
+	// for debugging
+	private short checkValue(short v) {
+		if (v < 0) {
+			// System.out.println("fizz");
+		}
+		if (v > 5000) {
+			// System.out.println("buzz");			
+		}
+		return v;
+	}
+	
 	@Override
 	public int read(byte[] b, int off, int len) 
 	throws IOException
@@ -98,96 +109,91 @@ public class Pbd16InputStream extends PbdInputStream
 				{
 	                // 332
 	                d0=d1=d2=d3=0;
-	                sourceChar=(byte)in.read();
-	                d0=sourceChar;
-	                d0 >>>= 5;
+	                int sourceChar2 = in.read();
+	                // sourceChar=(byte)sourceChar2;
+	                d0 = (byte)(sourceChar2 >>> 5);
 					short value = (short)(decompressionPrior+(d0<5?d0:4-d0));
-	                out.put(value);
+	                // out.put(value);
+	                out.put(checkValue(value));
 	                //if (debug) qDebug() << "debug: position " << (dp-1) << " diff value=" << target16Data[dp-1] << " d0=" << d0;
 	                leftToFill--;
 	                if (leftToFill==0) {
 	                    break;
 	                }
-	                d1=sourceChar;
-	                d1 >>>= 2;
-	                d1 &= ooooolll;
+	                d1 = (byte)((sourceChar2 >>> 2) & ooooolll);
 	                value = (short)(value + (d1<5?d1:4-d1));
-	                out.put(value);
+	                // out.put(value);
+	                out.put(checkValue(value));
 	                //if (debug) qDebug() << "debug: position " << (dp-1) << " diff value=" << target16Data[dp-1];
 	                leftToFill--;
 	                if (leftToFill==0) {
 	                    break;
 	                }
-	                d2=sourceChar;
-	                d2 &= ooooooll;
+	                d2 = (byte)((sourceChar2) & ooooooll);
 	                carryOver=d2;
 
 	                // 1331
 	                d0=d1=d2=d3=0;
-	                sourceChar=(byte)in.read();
-	                d0=sourceChar;
+	                sourceChar2 = in.read();
+	                // sourceChar=(byte)sourceChar2;
 	                carryOver <<= 1;
-	                d0 >>>= 7;
-	                d0 |= carryOver;
+	                d0 = (byte)((sourceChar2 >>> 7) | carryOver);
 	                value = (short)(value + (d0<5?d0:4-d0));
-	                out.put(value);
+	                // out.put(value);
+	                out.put(checkValue(value));
 	                //if (debug) qDebug() << "debug: position " << (dp-1) << " diff value=" << target16Data[dp-1];
 	                leftToFill--;
 	                if (leftToFill==0) {
 	                    break;
 	                }
-	                d1=sourceChar;
-	                d1 >>>= 4;
-	                d1 &= ooooolll;
+	                d1 = (byte)((sourceChar2 >>> 4) & ooooolll);
 	                value = (short)(value + (d1<5?d1:4-d1));
-	                out.put(value);
+	                // out.put(value);
+	                out.put(checkValue(value));
 	                //if (debug) qDebug() << "debug: position " << (dp-1) << " diff value=" << target16Data[dp-1];
 	                leftToFill--;
 	                if (leftToFill==0) {
 	                    break;
 	                }
-	                d2=sourceChar;
-	                d2 >>>= 1;
-	                d2 &= ooooolll;
+	                d2 = (byte)((sourceChar2 >>> 1) & ooooolll);
 	                value = (short)(value + (d2<5?d2:4-d2));
-	                out.put(value);
+	                // out.put(value);
+	                out.put(checkValue(value));
 	                //if (debug) qDebug() << "debug: position " << (dp-1) << " diff value=" << target16Data[dp-1];
 	                leftToFill--;
 	                if (leftToFill==0) {
 	                    break;
 	                }
-	                d3=sourceChar;
-	                d3 &= oooooool;
+	                d3 = (byte)((sourceChar2) & oooooool);
 	                carryOver=d3;
 
 	                // 233
 	                d0=d1=d2=d3=0;
-	                sourceChar=(byte)in.read();
-	                d0=sourceChar;
-	                d0 >>>= 6;
+	                sourceChar2 = in.read();
+	                // sourceChar=(byte)sourceChar2;
 	                carryOver <<= 2;
-	                d0 |= carryOver;
+	                d0 = (byte)((sourceChar2 >>> 6) | carryOver);
 	                value = (short)(value + (d0<5?d0:4-d0));
-	                out.put(value);
+	                // out.put(value);
+	                out.put(checkValue(value));
 	                //if (debug) qDebug() << "debug: position " << (dp-1) << " diff value=" << target16Data[dp-1];
 	                leftToFill--;
 	                if (leftToFill==0) {
 	                    break;
 	                }
-	                d1=sourceChar;
-	                d1 >>>= 3;
-	                d1 &= ooooolll;
+	                d1 = (byte)((sourceChar2 >>> 3) & ooooolll);
 	                value = (short)(value + (d1<5?d1:4-d1));
-	                out.put(value);
+	                // out.put(value);
+	                out.put(checkValue(value));
 	                //if (debug) qDebug() << "debug: position " << (dp-1) << " diff value=" << target16Data[dp-1];
 	                leftToFill--;
 	                if (leftToFill==0) {
 	                    break;
 	                }
-	                d2=sourceChar;
-	                d2 &= ooooolll;
+	                d2 = (byte)((sourceChar2) & ooooolll);
 	                value = (short)(value + (d2<5?d2:4-d2));
-	                out.put(value);
+	                // out.put(value);
+	                out.put(checkValue(value));
 	                //if (debug) qDebug() << "debug: position " << (dp-1) << " diff value=" << target16Data[dp-1];
 	                leftToFill--;
 	                if (leftToFill==0) {
@@ -202,6 +208,7 @@ public class Pbd16InputStream extends PbdInputStream
 			else if (state == State.STATE_REPEAT)
 			{
 				int repeatCount = Math.min(leftToFill, out.remaining());
+				checkValue(repeatValue);
 				for (int j = 0; j < repeatCount; ++j)
 					out.put(repeatValue);
 				leftToFill -= repeatCount;

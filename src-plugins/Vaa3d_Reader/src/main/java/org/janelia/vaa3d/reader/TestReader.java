@@ -13,6 +13,8 @@ import fiji.Debug; // requires fiji-lib as a dependency
  */
 class TestReader {
 	public static void main(String[] args) {
-		Debug.run("Open v3draw...", "nonexistent.v3draw");
+		try {
+			Debug.run("Open v3draw...", "nonexistent.v3draw");
+		} catch (Exception exc) {}
 	}
 }

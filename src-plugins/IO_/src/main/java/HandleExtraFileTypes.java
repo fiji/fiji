@@ -350,8 +350,12 @@ public class HandleExtraFileTypes extends ImagePlus implements PlugIn {
 			return tryPlugIn("ImageJ_3D_Viewer", path);
 
 		// Christopher Bruns: Read V3DRAW files from Vaa3D application
-		if ( name.endsWith(".v3draw") // uncompressed format 
-		  || name.endsWith(".v3dpbd") // pack-bits/difference compressed format
+		String vaa3dCookie = new String(buf, 0, 24);
+		if ( vaa3dCookie.equals("raw_image_stack_by_hpeng") // Peng uncompressed format 
+		  || vaa3dCookie.equals("v3d_volume_pkbitdf_encod") // Murphy pack-bits/difference compressed format
+		  // NOTE Myers variant not supported yet in this reader
+		  // || name.endsWith(".v3draw") // uncompressed format 
+		  // || name.endsWith(".v3dpbd") // pack-bits/difference compressed format
 				) 
 		{
 			return tryPlugIn("org.janelia.vaa3d.reader.Vaa3d_Reader", path);
