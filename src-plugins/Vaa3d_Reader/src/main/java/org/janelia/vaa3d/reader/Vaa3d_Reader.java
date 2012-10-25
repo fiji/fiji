@@ -7,10 +7,10 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.ByteBuffer;
 
-import ij.CompositeImage;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.io.OpenDialog;
+import ij.macro.Interpreter;
 import ij.measure.Calibration;
 import ij.plugin.PlugIn;
 import ij.process.ByteProcessor;
@@ -28,15 +28,7 @@ import ij.process.ShortProcessor;
  * @author Christopher M. Bruns
  *
  */
-public class Vaa3d_Reader extends CompositeImage implements PlugIn {
-	
-	/**
-	 * Default constructor passes temporary ImagePlus to CompositeImage
-	 * constructor, which class has no default constructor.
-	 */
-	public Vaa3d_Reader() {
-		super(IJ.createHyperStack("temp", 1, 1, 1, 1, 1, 8));
-	}
+public class Vaa3d_Reader extends ImagePlus implements PlugIn {
 	
 	/**
 	 * ImageJ plugin run() method, called by HandleExtraFileTypes class.
@@ -69,17 +61,19 @@ public class Vaa3d_Reader extends CompositeImage implements PlugIn {
     	}
     	catch (MalformedURLException exc) {}
         // else, ask:
-    	// TODO - Is there a GUI? You don't know!
-        OpenDialog od = new OpenDialog("Choose a .v3draw file", null);
-        String dir = od.getDirectory();
-        if (null == dir)
-        	return null;
-        file = new File(dir, od.getFileName());
-        try {
-        	if (file.exists())
-        		return file.toURI().toURL(); // File.toURL() is deprecated
-        }
-    	catch (MalformedURLException exc) {}
+    	// Is there a GUI? You don't know!
+    	if (!Interpreter.isBatchMode()) {
+	        OpenDialog od = new OpenDialog("Choose a .v3draw file", null);
+	        String dir = od.getDirectory();
+	        if (null == dir)
+	        	return null;
+	        file = new File(dir, od.getFileName());
+	        try {
+	        	if (file.exists())
+	        		return file.toURI().toURL(); // File.toURL() is deprecated
+	        }
+	    	catch (MalformedURLException exc) {}
+    	}
         return null;
     }  
 
@@ -122,7 +116,9 @@ public class Vaa3d_Reader extends CompositeImage implements PlugIn {
         		hyperStack.setZ(z + 1);
         		try {
         			sliceStream.loadNextSlice();
-        			IJ.showProgress(c*n_slices+z, n_channels*n_slices);
+        	    	if (!Interpreter.isBatchMode()) {
+        	    		IJ.showProgress(c*n_slices+z, n_channels*n_slices);
+        	    	}
         			ByteBuffer bb = sliceStream.getCurrentSlice().getByteBuffer();
         			bb.rewind();
         			switch (bytesPerPixel) {
@@ -160,7 +156,9 @@ public class Vaa3d_Reader extends CompositeImage implements PlugIn {
         }
         hyperStack.setC(1);
         hyperStack.setZ(1);
-		IJ.showProgress(n_channels*n_slices, n_channels*n_slices);
+    	if (!Interpreter.isBatchMode()) {
+    		IJ.showProgress(1.0);
+    	}
         
         // hyperStack.show(); // for testing only
         
@@ -188,10 +186,7 @@ public class Vaa3d_Reader extends CompositeImage implements PlugIn {
         }
         setC(1);
         
-        // System.out.println("isComposite " + isComposite()); // true
-        // System.out.println("isHyperStack " + isHyperStack()); // true
         setOpenAsHyperStack(true); // don't interleave channel slices
-        setMode(CompositeImage.COMPOSITE); // show all colors at once (works for 8-bit only?)
         
         return true;  
     }  
