@@ -843,8 +843,8 @@ public class Advanced_Sholl_Analysis implements PlugIn {
             return new double[0];
 
         final double[] x = new double[nsize];
-        double[] y = new double[nsize];
         final double[] logY = new double[nsize];
+        double[] y = new double[nsize];
         double sumY = 0; double maxIntersect = 0;
 
         for (i = 0, j = 0; i < size; i++) {
@@ -866,6 +866,11 @@ public class Advanced_Sholl_Analysis implements PlugIn {
             }
 
         }
+
+        // Calculate ramification index, the maximum of intersection divided by the n.
+        // of primary branches, assumed to be the n. intersections at starting radius
+        final double ri = maxIntersect / y[0];
+        plotLabel.append("RI= "+ IJ.d2s(ri, 2));
 
         // Place parameters on a dedicated table
         ResultsTable rt;
@@ -894,6 +899,7 @@ public class Advanced_Sholl_Analysis implements PlugIn {
         rt.addValue("Avg Inters.", sumY/size);
         rt.addValue("Max Inters.", maxIntersect);
         rt.addValue("Zero Inters.", size-nsize);
+        rt.addValue("Ramification index", ri);
         rt.show(shollTable); // addResults();
 
         // Calculate Sholl decay: the slope of fitted regression on Semi-log Sholl
@@ -901,9 +907,9 @@ public class Advanced_Sholl_Analysis implements PlugIn {
         cf.doFit(CurveFitter.STRAIGHT_LINE, false);
 
         double[] parameters = cf.getParams();
-        plotLabel.append("k= " + IJ.d2s(parameters[0], -3));
+        plotLabel.append("\nk= " + IJ.d2s(parameters[0], -3));
         rt.addValue("Sholl decay", parameters[0]);
-        rt.addValue("R^2 (decay)", cf.getRSquared());
+        rt.addValue("R^2 (decay regression)", cf.getRSquared());
 
         // Define a global analysis title
         final String longtitle = "Sholl ["+ SHOLL_TYPES[mthd] +"] :: "+ title;
@@ -954,10 +960,11 @@ public class Advanced_Sholl_Analysis implements PlugIn {
                         + Plot.Y_FORCE2GRID + Plot.Y_TICKS + Plot.Y_NUMBERS;
         final Plot plot = new Plot("Plot "+ longtitle, xTitle, yTitle, empty, empty, flags);
 
-        // Set plot limits
+        // Set plot limits and font
         final double[] xScale = Tools.getMinMax(x);
         final double[] yScale = Tools.getMinMax(y);
         plot.setLimits(xScale[0], xScale[1], yScale[0], yScale[1]);
+        plot.changeFont(new Font("SansSerif", Font.PLAIN, 11));
 
         // Add original data (default color is black)
         plot.setColor(Color.GRAY);
@@ -965,6 +972,8 @@ public class Advanced_Sholl_Analysis implements PlugIn {
 
         // Exit and return raw data if no fitting is done
         if (!fitCurve) {
+            plot.setColor(Color.BLACK);
+            plot.addLabel(0.8, 0.085, plotLabel.toString());
             plot.show();
             return y;
         }
@@ -1004,10 +1013,10 @@ public class Advanced_Sholl_Analysis implements PlugIn {
             fy[i] = cf.f(parameters, x[i]);
 
         // Initialize morphometric descriptors
-        double cv = 0, cr = 0, mv = 0, ri = 0;
+        double cv = 0, cr = 0, mv = 0, rif = 0;
 
         // Linear Sholl: Calculate Critical value (cv), Critical radius (cr),
-        // Mean Sholl value (mv) and Ramification (Schoenen) index (ri)
+        // Mean Sholl value (mv) and "fitted" Ramification (Schoenen) index (rif)
         if (mthd == SHOLL_N) {
 
             // Get coordinates of cv, the local maximum of polynomial. We'll
@@ -1039,32 +1048,30 @@ public class Advanced_Sholl_Analysis implements PlugIn {
             plot.setColor(Color.lightGray);
             plot.drawLine(xScale[0], mv, xScale[1], mv);
 
-            // Calculate the ramification index: cv/N. of primary branches
-            ri = cv / y[0];
+            // Calculate the "fitted" ramification index
+            rif = cv / y[0];
 
             // Append calculated parameters to plot label
             plotLabel.append("\nCv= "+ IJ.d2s(cv, 2));
             plotLabel.append("\nCr= "+ IJ.d2s(cr, 2));
             plotLabel.append("\nMv= "+ IJ.d2s(mv, 2));
-            plotLabel.append("\nRI= "+ IJ.d2s(ri, 2));
             plotLabel.append("\n" + DEGREES[polyChoice]);
 
         } else {
-            cv = cr = mv = ri = Double.NaN;
+            cv = cr = mv = rif = Double.NaN;
         }
 
         rt.addValue("Critical value", cv);
         rt.addValue("Critical radius", cr);
         rt.addValue("Mean value", mv);
-        rt.addValue("Ramification index", ri);
+        rt.addValue("Ramification index (cv)", rif);
         rt.addValue("Polyn. degree", mthd==SHOLL_N ? parameters.length-2 : Double.NaN);
 
         // Register quality of fit
         plotLabel.append("\nR\u00B2= "+ IJ.d2s(cf.getRSquared(), 3));
-        rt.addValue("R^2 (curve)", cf.getRSquared());
+        rt.addValue("R^2 (fit)", cf.getRSquared());
 
         // Add label to plot
-        plot.changeFont(new Font("SansSerif", Font.PLAIN, 11));
         plot.setColor(Color.BLACK);
         plot.addLabel(0.8, 0.085, plotLabel.toString());
 
