@@ -102,10 +102,14 @@ public class Vaa3d_Reader extends ImagePlus implements PlugIn {
         int bytesPerPixel  = sliceStream.getPixelBytes();
 
         // actually parse image file
+    	if (!Interpreter.isBatchMode())
+    		IJ.showStatus("Allocating volume memory...");
         ImagePlus hyperStack = IJ.createHyperStack(
         		new File(url.getPath()).getName(), 
         		width, height, n_channels, n_slices, 1, 
         		8 * bytesPerPixel);
+    	if (!Interpreter.isBatchMode())
+    		IJ.showStatus("Loading volume...");
         int nSlicePixels = width * height;
         ImageProcessor ip;
 		double max[] = new double[n_channels]; // track maximum intensity in each channel for display calibration
@@ -156,6 +160,8 @@ public class Vaa3d_Reader extends ImagePlus implements PlugIn {
         }
         hyperStack.setC(1);
         hyperStack.setZ(1);
+    	if (!Interpreter.isBatchMode())
+    		IJ.showStatus("Volume load complete.");
     	if (!Interpreter.isBatchMode()) {
     		IJ.showProgress(1.0);
     	}
