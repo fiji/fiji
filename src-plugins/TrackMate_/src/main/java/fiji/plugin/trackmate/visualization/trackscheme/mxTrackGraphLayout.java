@@ -45,7 +45,7 @@ import fiji.plugin.trackmate.util.TrackSplitter;
 public class mxTrackGraphLayout <T extends RealType<T> & NativeType<T>> extends mxGraphLayout {
 
 	private static final int SWIMLANE_HEADER_SIZE = 30;
-	private static final boolean DEBUG = true;
+	private static final boolean DEBUG = false;
 
 	private int[] columnWidths;
 	protected InterpolatePaintScale colorMap = InterpolatePaintScale.Jet;

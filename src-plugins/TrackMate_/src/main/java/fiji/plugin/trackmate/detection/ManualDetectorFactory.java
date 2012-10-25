@@ -14,7 +14,7 @@ import net.imglib2.type.numeric.RealType;
 
 public class ManualDetectorFactory <T extends RealType<T>  & NativeType<T>> implements SpotDetectorFactory<T> {
 
-	public static final String DETECTOR_KEY = "MANUL_DETECTOR";
+	public static final String DETECTOR_KEY = "MANUAL_DETECTOR";
 	public static final String NAME = "Manual annotation";
 	public static final String INFO_TEXT = "<html>" +
 			"Selecting this will skip the automatic detection phase, and jump directly <br>" +
