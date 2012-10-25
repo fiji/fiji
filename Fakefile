@@ -1,4 +1,5 @@
 	plugins/Vaa3d_Reader.jar \
+	plugins/Vaa3d_Reader.jar \
 # This is a configuration file for Fiji mAKE ("fake")
 #
 # The syntax of a Fakefile is meant to be very simple.

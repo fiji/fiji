@@ -12,7 +12,6 @@
 	</parent>
 
 	<artifactId>Vaa3d_Reader</artifactId>
-	<version>1.0</version>
 
 	<name>plugins/Vaa3d_Reader.jar</name>
 	<description>Custom reader for Vaa3D application 3D volume file formats .v3draw and .v3dpbd.</description>
