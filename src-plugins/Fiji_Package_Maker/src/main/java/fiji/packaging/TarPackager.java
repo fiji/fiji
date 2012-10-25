@@ -2,7 +2,6 @@ package fiji.packaging;
 
 import java.io.IOException;
 import java.io.OutputStream;
-
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
@@ -40,6 +39,7 @@ public class TarPackager extends Packager {
 		fileOffset += len;
 	}
 
+	@Override
 	public void closeEntry() throws IOException {
 		if (fileOffset != fileSize)
 			throw new IOException("Short file");
@@ -50,6 +50,7 @@ public class TarPackager extends Packager {
 		}
 	}
 
+	@Override
 	public void close() throws IOException {
 		out.close();
 	}
@@ -67,11 +68,36 @@ public class TarPackager extends Packager {
 	}
 
 	protected void writeHeader(String name, int mode, int size, int type) throws IOException {
-		if (name.length() > 99)
-			throw new IOException("File name too long: " + name);
-
 		// initialize to NULs
 		Arrays.fill(header, (byte)0);
+
+		if (name.length() > 99) {
+			// write extended header
+			String headerName = "ext-header." + name.hashCode();
+			String extendedHeader = makeExtendedHeader("path", name);
+			int extSize = extendedHeader.length();
+
+			Arrays.fill(header, (byte)0);
+			System.arraycopy(headerName.getBytes("ASCII"), 0, header, 0, headerName.length());
+			digits(0666, 0x64, 8); // mode
+			digits(1000, 0x6c, 8); // uid
+			digits(1000, 0x74, 8); // gid
+			digits(extSize, 0x7c, 12); // size
+			digits(epoch, 0x88, 12); // timestamp
+			header[0x9c] = 'x'; // extended header
+			System.arraycopy("ustar".getBytes("ASCII"), 0, header, 0x101, 5); // magic
+
+			checksumHeader();
+			out.write(header);
+			Arrays.fill(header, (byte)0);
+
+			out.write(extendedHeader.getBytes("ASCII"));
+			// pad
+			if ((extSize & 0x1ff) > 0)
+				out.write(header, 0, 0x200 - (extSize & 0x1ff));
+
+			name = "ext-name." + name.hashCode();
+		}
 
 		System.arraycopy(name.getBytes("ASCII"), 0, header, 0, name.length()); // name
 		digits(mode, 0x64, 8); // mode
@@ -82,6 +108,20 @@ public class TarPackager extends Packager {
 		if (type != 0)
 			header[0x9c] = (byte)(0x30 + type);
 
+		checksumHeader();
+
+		out.write(header);
+	}
+
+	protected String makeExtendedHeader(final String key, final String value) {
+		String result = key + "=" + value + "\n";
+		int len = result.length() + 2;
+		while (len != ("" + len + " " + result).length())
+			len = ("" + len + " " + result).length();
+		return "" + len + " " + result;
+	}
+
+	protected void checksumHeader() {
 		// checksum
 		Arrays.fill(header, 0x94, 0x9c, (byte)0x20); // checksum
 		int checksum = 0;
@@ -89,8 +129,6 @@ public class TarPackager extends Packager {
 			checksum += header[i] & 0xff;
 		// pretend it to be decimal
 		digits(checksum, 0x94, 7);
-
-		out.write(header);
 	}
 
 	protected void digits(long number, int offset, int len) {

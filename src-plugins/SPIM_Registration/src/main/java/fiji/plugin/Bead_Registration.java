@@ -141,6 +141,7 @@ public class Bead_Registration implements PlugIn
 	public static String timepoints = "18";
 	public static String fileNamePattern = "spim_TL{t}_Angle{a}.lsm";
 	public static String angles = "0-270:45";
+	public static boolean processAnglesSimultaneously = false;
 	
 	public static boolean loadSegmentation = false;
 	public static String[] beadBrightness = { "Very weak", "Weak", "Comparable to Sample", "Strong", "Advanced ...", "Interactive ..." };	
@@ -171,7 +172,8 @@ public class Bead_Registration implements PlugIn
 		final TextField tfTimepoints = (TextField) gd.getStringFields().lastElement();
 		gd.addStringField( "Angles_to_process", angles );
 		final TextField tfAngles = (TextField) gd.getStringFields().lastElement();
-
+		//gd.addCheckbox( "Process_angles_simultaneously (needs lots of RAM)", processAnglesSimultaneously );
+		
 		gd.addMessage( "" );		
 		
 		gd.addCheckbox( "Re-use_segmented_beads", loadSegmentation );
@@ -280,6 +282,7 @@ public class Bead_Registration implements PlugIn
 		fileNamePattern = gd.getNextString();
 		timepoints = gd.getNextString();
 		angles = gd.getNextString();
+		//processAnglesSimultaneously = gd.getNextBoolean();
 		
 		loadSegmentation = gd.getNextBoolean();
 		defaultBeadBrightness = gd.getNextChoiceIndex();
@@ -339,6 +342,7 @@ public class Bead_Registration implements PlugIn
 		conf.channelsToRegister = "";
 		conf.channelsToFuse = "";
 		conf.anglePattern = angles;
+		conf.multiThreadedOpening = processAnglesSimultaneously;
 		conf.inputFilePattern = fileNamePattern;
 
 		File f = new File( spimDataDirectory );
@@ -404,7 +408,8 @@ public class Bead_Registration implements PlugIn
 		final TextField tfBeadChannels = (TextField) gd.getStringFields().lastElement();
 		gd.addStringField( "Angles to process", angles );
 		final TextField tfAngles = (TextField) gd.getStringFields().lastElement();
-
+		//gd.addCheckbox( "Process_angles_simultaneously (needs lots of RAM)", processAnglesSimultaneously );
+		
 		gd.addMessage( "" );
 
 		gd.addCheckbox( "Re-use_segmented_beads", loadSegmentation );
@@ -524,7 +529,8 @@ public class Bead_Registration implements PlugIn
 		timepoints = gd.getNextString();
 		channelsBeadsMC = gd.getNextString();
 		angles = gd.getNextString();
-
+		//processAnglesSimultaneously = gd.getNextBoolean();
+		
 		loadSegmentation = gd.getNextBoolean();
 		overrideResolution = gd.getNextBoolean();
 		xyRes = gd.getNextNumber();
@@ -665,6 +671,7 @@ public class Bead_Registration implements PlugIn
 
 		conf.timepointPattern = timepoints;
 		conf.anglePattern = angles;
+		conf.multiThreadedOpening = processAnglesSimultaneously;
 		conf.channelPattern = channelsBeadsMC;
 		conf.channelsToRegister = channelsBeadsMC;
 		conf.channelsToFuse = "";
