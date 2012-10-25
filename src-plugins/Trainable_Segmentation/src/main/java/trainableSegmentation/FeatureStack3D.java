@@ -172,9 +172,6 @@ public class FeatureStack3D
 
 					imagescience.image.Image newimg = new FloatImage(img);
 					Differentiator diff = new Differentiator();
-
-IJ.log("getDerivatives: newimg dimensions: " + newimg.dimensions().x + " " + newimg.dimensions().y + " " + newimg.dimensions().z);
-IJ.log("getDerivatives: newimg aspects: " + newimg.aspects().x + " " + newimg.aspects().y  + " " + newimg.aspects().z);
 					
 					diff.run(newimg, sigma , xOrder, yOrder, zOrder);
 					newimg.aspects(aspects);
@@ -876,6 +873,10 @@ IJ.log("getDerivatives: newimg aspects: " + newimg.aspects().x + " " + newimg.as
 				is.addSlice("original-slice-" + i, originalImage.getImageStack().getProcessor(i).convertToFloat() );
 			channels[0] = new ImagePlus(originalImage.getTitle(), is );
 		}
+		
+		for(int i=0; i<channels.length; i++)
+			channels[i].setCalibration(originalImage.getCalibration());
+		
 		return channels;
 	}
 
