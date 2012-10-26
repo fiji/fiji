@@ -104,7 +104,7 @@ public class TmXmlReader_v12<T extends RealType<T> & NativeType<T>> extends TmXm
 	 * @throws DataConversionException
 	 */
 	public TrackMateModel<T> getModel() {
-		TrackMateModel<T> model = new TrackMateModel<T>();
+		TrackMateModel<T> model = plugin.getModel();
 		// Settings
 		Settings<T> settings = getSettings();
 		getDetectorSettings(settings);

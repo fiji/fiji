@@ -137,7 +137,7 @@ public class SpotDisplayer3DTestDrive {
 			@Override
 			public void stateChanged(ChangeEvent e) {
 				plugin.getModel().getSettings().setSpotFilters(gui.getFeatureFilters());
-				plugin.execSpotFiltering();
+				plugin.execSpotFiltering(false);
 			}
 		});
 		gui.addActionListener(new ActionListener() {

@@ -230,7 +230,7 @@ public class GuiReader <T extends RealType<T> & NativeType<T>> {
 		SpotFilterDescriptor<T> spotFilterDescriptor = (SpotFilterDescriptor<T>) wizard.getPanelDescriptorFor(SpotFilterDescriptor.DESCRIPTOR);
 		spotFilterDescriptor.setWizard(wizard);
 
-		{ // Try to read feature thresholds
+		{ // Try to read spot feature thresholds
 			logger.log("  Loading spot filters...");
 			List<FeatureFilter> featureThresholds = reader.getSpotFeatureFilters();
 			if (null == featureThresholds) {

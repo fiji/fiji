@@ -20,6 +20,7 @@ import fiji.plugin.trackmate.visualization.TrackMateModelView;
 
 public class SpotFilterDescriptor <T extends RealType<T> & NativeType<T>> implements WizardPanelDescriptor<T> {
 
+	private static final boolean DEBUG = false;
 	public static final String DESCRIPTOR = "SpotFilter";
 	private TrackMateWizard<T> wizard;
 	private FilterGuiPanel component = new FilterGuiPanel();
@@ -73,6 +74,10 @@ public class SpotFilterDescriptor <T extends RealType<T> & NativeType<T>> implem
 	
 	public void linkGuiToView() {
 		
+		if (DEBUG) {
+			System.out.println("[SpotFilterDescriptor] calling #linkGuiToView().");
+		}
+		
 		 // Link displayer and component
 		SwingUtilities.invokeLater(new Runnable() {			
 			@Override
@@ -90,14 +95,16 @@ public class SpotFilterDescriptor <T extends RealType<T> & NativeType<T>> implem
 				component.addChangeListener(new ChangeListener() {
 					@Override
 					public void stateChanged(ChangeEvent event) {
+						if (DEBUG) {
+							System.out.println("[SpotFilterDescriptor] stateChanged caught.");
+						}
 						// We set the thresholds field of the model but do not touch its selected spot field yet.
 						plugin.getModel().getSettings().setSpotFilters(component.getFeatureFilters());
-						plugin.execSpotFiltering();
+						plugin.execSpotFiltering(false);
 						wizard.getDisplayer().refresh();
 					}
 				});
 
-				component.stateChanged(null); // force redraw
 				wizard.setNextButtonEnabled(true);
 			}
 		});
@@ -110,7 +117,7 @@ public class SpotFilterDescriptor <T extends RealType<T> & NativeType<T>> implem
 		final TrackMateModel<T> model = plugin.getModel();
 		List<FeatureFilter> featureFilters = component.getFeatureFilters();
 		model.getSettings().setSpotFilters(featureFilters);
-		plugin.execSpotFiltering();
+		plugin.execSpotFiltering(false);
 
 		int ntotal = model.getSpots().getNSpots();
 		if (featureFilters == null || featureFilters.isEmpty()) {

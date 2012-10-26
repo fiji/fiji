@@ -557,12 +557,14 @@ public class TrackMate_<T extends RealType<T> & NativeType<T>>  implements PlugI
 	 * <p>
 	 * The {@link TrackMateModelChangeListener}s of this model will be notified with a {@link TrackMateModelChangeEvent#SPOTS_FILTERED}
 	 * event.
-	 * 
+	 * @param doLogIt  if true, will send a message to the {@link TrackMateModel#logger}.
 	 * @see #getFilteredSpots()
 	 */
-	public boolean execSpotFiltering() {
-		final Logger logger = model.getLogger();
-		logger.log("Starting spot filtering process.\n");
+	public boolean execSpotFiltering(boolean doLogIt) {
+		if (doLogIt) {
+			final Logger logger = model.getLogger();
+			logger.log("Starting spot filtering process.\n");
+		}
 		model.setFilteredSpots(model.getSpots().filter(model.getSettings().getSpotFilters()), true);
 		return true;
 	}
@@ -640,7 +642,7 @@ public class TrackMate_<T extends RealType<T> & NativeType<T>>  implements PlugI
 			return false;
 		}
 		computeSpotFeatures();
-		if (!execSpotFiltering()) {
+		if (!execSpotFiltering(true)) {
 			return false;
 		}
 		if (!execTracking()) {
