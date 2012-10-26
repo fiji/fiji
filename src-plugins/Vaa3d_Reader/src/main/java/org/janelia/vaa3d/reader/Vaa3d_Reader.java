@@ -8,6 +8,7 @@ import java.net.URL;
 import java.nio.ByteBuffer;
 
 import ij.IJ;
+import ij.CompositeImage;
 import ij.ImagePlus;
 import ij.io.OpenDialog;
 import ij.macro.Interpreter;
@@ -104,10 +105,15 @@ public class Vaa3d_Reader extends ImagePlus implements PlugIn {
         // actually parse image file
     	if (!Interpreter.isBatchMode())
     		IJ.showStatus("Allocating volume memory...");
-        ImagePlus hyperStack = IJ.createHyperStack(
-        		new File(url.getPath()).getName(), 
-        		width, height, n_channels, n_slices, 1, 
+        ImagePlus hyperStack = IJ.createImage(
+			new File(url.getPath()).getName(),
+			width, height, n_channels * n_slices,
         		8 * bytesPerPixel);
+	if (n_channels > 1) {
+		hyperStack.setDimensions(n_channels, n_slices, 1);
+		hyperStack = new CompositeImage(hyperStack, CompositeImage.COMPOSITE);
+		hyperStack.setOpenAsHyperStack(true);
+	}
     	if (!Interpreter.isBatchMode())
     		IJ.showStatus("Loading volume...");
         int nSlicePixels = width * height;
