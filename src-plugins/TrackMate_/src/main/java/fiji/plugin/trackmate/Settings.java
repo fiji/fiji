@@ -160,17 +160,93 @@ public class Settings <T extends RealType<T> & NativeType<T>> {
 	
 	@Override
 	public String toString() {
-		String str = ""; 
+		StringBuilder str = new StringBuilder(); 
+		
+		str.append("Image data:\n");
 		if (null == imp) {
-			str = "Blank image with:\n";
+			str.append("Source image not set.\n");
 		} else {
-			str = "For image: "+imp.getShortTitle()+'\n';			
+			str.append("For the image named: "+imp.getTitle() + ".\n");			
 		}
-		str += String.format("  X = %4d - %4d, dx = %g %s\n", xstart, xend, dx, spaceUnits);
-		str += String.format("  Y = %4d - %4d, dy = %g %s\n", ystart, yend, dy, spaceUnits);
-		str += String.format("  Z = %4d - %4d, dz = %g %s\n", zstart, zend, dz, spaceUnits);
-		str += String.format("  T = %4d - %4d, dt = %g %s\n", tstart, tend, dt, timeUnits);
-		return str;
+		if (imageFileName == null || imageFileName == "") {
+			str.append("Not matching any file.\n");
+		} else {
+			str.append("Matching file " + imageFileName + " ");
+			if (imageFolder == null || imageFolder == "") {
+				str.append("in current folder.\n");
+			} else {
+				str.append("in folder: "+imageFolder + "\n");
+			}
+		}
+		
+		str.append('\n');
+		str.append("Geometry:\n");
+		str.append(String.format("  X = %4d - %4d, dx = %g %s\n", xstart, xend, dx, spaceUnits));
+		str.append(String.format("  Y = %4d - %4d, dy = %g %s\n", ystart, yend, dy, spaceUnits));
+		str.append(String.format("  Z = %4d - %4d, dz = %g %s\n", zstart, zend, dz, spaceUnits));
+		str.append(String.format("  T = %4d - %4d, dt = %g %s\n", tstart, tend, dt, timeUnits));
+		
+		str.append('\n');
+		str.append("Spot detection:\n");
+		if (null == detectorFactory) {
+			str.append("No detector factory set.\n");
+		} else {
+			str.append("Detector: " + detectorFactory.toString() + ".\n");
+			if (null == detectorSettings) {
+				str.append("No detector settings found.\n");
+			} else {
+				str.append("Detector settings:\n");
+				str.append(detectorSettings);
+				str.append('\n');
+			}
+		}
+		
+		str.append('\n');
+		str.append("Initial spot filter:\n");
+		if (null == initialSpotFilterValue) {
+			str.append("No initial quality filter.\n");
+		} else {
+			str.append("Initial quality filter value: " + initialSpotFilterValue + ".\n");
+		}
+
+		str.append('\n');
+		str.append("Spot feature filters:\n");
+		if (spotFilters == null || spotFilters.size() == 0) {
+			str.append("No spot feature filters.\n");
+		} else {
+			str.append("Set with "+spotFilters.size()+" spot feature filters:\n");
+			for (FeatureFilter featureFilter : spotFilters) {
+				str.append(" - "+featureFilter + "\n");
+			}
+		}
+		
+		str.append('\n');
+		str.append("Particle linking:\n");
+		if (null == tracker) {
+			str.append("No spot tracker set.\n");
+		} else {
+			str.append("Tracker: " + tracker.toString() + ".\n");
+			if (null == trackerSettings) {
+				str.append("No tracker settings found.\n");
+			} else {
+				str.append("Tracker settings:\n");
+				str.append(trackerSettings);
+				str.append('\n');
+			}
+		}
+		
+		str.append('\n');
+		str.append("Track feature filters:\n");
+		if (trackFilters == null || trackFilters.size() == 0) {
+			str.append("No track feature filters.\n");
+		} else {
+			str.append("Set with "+trackFilters.size()+" track feature filters:\n");
+			for (FeatureFilter featureFilter : trackFilters) {
+				str.append(" - "+featureFilter + "\n");
+			}
+		}
+		
+		return str.toString();
 	}
 	
 	public boolean checkValidity() {

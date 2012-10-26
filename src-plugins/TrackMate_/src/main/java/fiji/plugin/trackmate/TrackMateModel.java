@@ -137,16 +137,16 @@ public class TrackMateModel <T extends RealType<T> & NativeType<T>> {
 	 */
 
 	// FEATURES
-	
+
 	FeatureModel<T> featureModel;
-	
+
 	// SPOTS
 
 	/** Contain the detection result, un-filtered. */
 	protected SpotCollection spots = new SpotCollection();
 	/** Contain the spots retained for tracking, after filtering by features. */
 	protected SpotCollection filteredSpots = new SpotCollection();
-	
+
 
 	// TRACKS
 
@@ -158,12 +158,12 @@ public class TrackMateModel <T extends RealType<T> & NativeType<T>> {
 	 * .
 	 */
 	protected ListenableDirectedGraph<Spot,DefaultWeightedEdge> graph 
-		= new ListenableDirectedGraph<Spot, DefaultWeightedEdge>(new SimpleDirectedWeightedGraph<Spot, DefaultWeightedEdge>(DefaultWeightedEdge.class));
+	= new ListenableDirectedGraph<Spot, DefaultWeightedEdge>(new SimpleDirectedWeightedGraph<Spot, DefaultWeightedEdge>(DefaultWeightedEdge.class));
 	/** The edges contained in the list of tracks. */
 	protected List<Set<DefaultWeightedEdge>> trackEdges = new ArrayList<Set<DefaultWeightedEdge>>();
 	/** The spots contained in the list of spots. */
 	protected List<Set<Spot>> trackSpots = new ArrayList<Set<Spot>>();
-	
+
 	/**
 	 * The visible track indices. Is a set made of the indices of tracks (in
 	 * {@link #trackEdges} and {@link #trackSpots}) that are retained after
@@ -172,7 +172,7 @@ public class TrackMateModel <T extends RealType<T> & NativeType<T>> {
 	 */
 	protected Set<Integer> visibleTrackIndices = new HashSet<Integer>();
 
-	
+
 
 	// TRANSACTION MODEL
 
@@ -231,7 +231,7 @@ public class TrackMateModel <T extends RealType<T> & NativeType<T>> {
 	protected List<TrackMateModelChangeListener> modelChangeListeners = new ArrayList<TrackMateModelChangeListener>();
 	/** The list of listener listening to change in selection. */
 	protected List<TrackMateSelectionChangeListener> selectionChangeListeners = new ArrayList<TrackMateSelectionChangeListener>();
-	
+
 
 
 
@@ -244,11 +244,45 @@ public class TrackMateModel <T extends RealType<T> & NativeType<T>> {
 	public TrackMateModel() {
 		graph.addGraphListener(new MyGraphListener());
 		featureModel = new FeatureModel<T>(this);
-//		featureModel.setNumThreads(1); // DEBUG
 	}
 
 
+	/*
+	 * UTILS METHODS
+	 */
 
+	@Override
+	public String toString() {
+		StringBuilder str = new StringBuilder();
+
+		str.append(settings);
+
+		str.append('\n');
+		if (null == spots || spots.size() == 0) {
+			str.append("No spots.\n");
+		} else {
+			str.append("Contains " + spots.getNSpots() + " spots in total.\n");
+		}
+		if (null == spots || spots.size() == 0) {
+			str.append("No filtered spots.\n");
+		} else {
+			str.append("Contains " + filteredSpots.getNSpots() + " filtered spots.\n");
+		}
+		
+		str.append('\n');
+		if (getNTracks() == 0) {
+			str.append("No tracks.\n");
+		} else {
+			str.append("Contains " + getNTracks() + " tracks in total.\n");
+		}
+		if (getNFilteredTracks() == 0) {
+			str.append("No filtered tracks.\n");
+		} else {
+			str.append("Contains " + getNFilteredTracks() + " filtered tracks.\n");
+		}
+		
+		return str.toString();
+	}
 
 
 
@@ -399,7 +433,7 @@ public class TrackMateModel <T extends RealType<T> & NativeType<T>> {
 
 	/**
 	 * @return a set of all links touching the specified spot. If no links are
-     * touching the specified spot returns an empty set.
+	 * touching the specified spot returns an empty set.
 	 */
 	public Set<DefaultWeightedEdge> edgesOf(final Spot spot) {
 		return graph.edgesOf(spot);
@@ -417,7 +451,7 @@ public class TrackMateModel <T extends RealType<T> & NativeType<T>> {
 		String str = "Track " + i + ": ";
 		for (String feature : featureModel.getTrackFeatures())
 			str += feature + " = "	+ featureModel.getTrackFeature(i, feature)+ ", ";
-				return str;
+		return str;
 	}
 
 	/**
@@ -441,9 +475,9 @@ public class TrackMateModel <T extends RealType<T> & NativeType<T>> {
 		List<DefaultWeightedEdge> path = pathFinder.getPathEdgeList();
 		return path;
 	}
-	
-	
-	
+
+
+
 
 	/*
 	 * GRAPH MODIFICATION
@@ -484,7 +518,7 @@ public class TrackMateModel <T extends RealType<T> & NativeType<T>> {
 	public List<Set<Spot>> getTrackSpots() {
 		return trackSpots;
 	}
-	
+
 	/**
 	 * Overwrite the list of tracks as a set of spots. 
 	 * <p>
@@ -703,7 +737,7 @@ public class TrackMateModel <T extends RealType<T> & NativeType<T>> {
 	public FeatureModel<T> getFeatureModel() {
 		return featureModel;
 	}
-	
+
 	/*
 	 * SELECTION METHODSs
 	 */
@@ -715,16 +749,16 @@ public class TrackMateModel <T extends RealType<T> & NativeType<T>> {
 		Map<Spot, Boolean> spotMap = new HashMap<Spot, Boolean>(spotSelection.size());
 		for (Spot spot : spotSelection)
 			spotMap.put(spot, false);
-				Map<DefaultWeightedEdge, Boolean> edgeMap = new HashMap<DefaultWeightedEdge, Boolean>(edgeSelection.size());
-				for (DefaultWeightedEdge edge : edgeSelection)
-					edgeMap.put(edge, false);
-						TrackMateSelectionChangeEvent event = new TrackMateSelectionChangeEvent(this, spotMap, edgeMap);
-						// Clear fields
-						clearSpotSelection();
-						clearEdgeSelection();
-						// Fire event
-						for (TrackMateSelectionChangeListener listener : selectionChangeListeners)
-							listener.selectionChanged(event);
+		Map<DefaultWeightedEdge, Boolean> edgeMap = new HashMap<DefaultWeightedEdge, Boolean>(edgeSelection.size());
+		for (DefaultWeightedEdge edge : edgeSelection)
+			edgeMap.put(edge, false);
+		TrackMateSelectionChangeEvent event = new TrackMateSelectionChangeEvent(this, spotMap, edgeMap);
+		// Clear fields
+		clearSpotSelection();
+		clearEdgeSelection();
+		// Fire event
+		for (TrackMateSelectionChangeListener listener : selectionChangeListeners)
+			listener.selectionChanged(event);
 	}
 
 	public void clearSpotSelection() {
@@ -734,12 +768,12 @@ public class TrackMateModel <T extends RealType<T> & NativeType<T>> {
 		Map<Spot, Boolean> spotMap = new HashMap<Spot, Boolean>(spotSelection.size());
 		for (Spot spot : spotSelection)
 			spotMap.put(spot, false);
-				TrackMateSelectionChangeEvent event = new TrackMateSelectionChangeEvent(this, spotMap, null);
-				// Clear field
-				spotSelection.clear();
-				// Fire event
-				for (TrackMateSelectionChangeListener listener : selectionChangeListeners)
-					listener.selectionChanged(event);
+		TrackMateSelectionChangeEvent event = new TrackMateSelectionChangeEvent(this, spotMap, null);
+		// Clear field
+		spotSelection.clear();
+		// Fire event
+		for (TrackMateSelectionChangeListener listener : selectionChangeListeners)
+			listener.selectionChanged(event);
 	}
 
 	public void clearEdgeSelection() {
@@ -749,12 +783,12 @@ public class TrackMateModel <T extends RealType<T> & NativeType<T>> {
 		Map<DefaultWeightedEdge, Boolean> edgeMap = new HashMap<DefaultWeightedEdge, Boolean>(edgeSelection.size());
 		for (DefaultWeightedEdge edge : edgeSelection)
 			edgeMap.put(edge, false);
-				TrackMateSelectionChangeEvent event = new TrackMateSelectionChangeEvent(this, null, edgeMap);
-				// Clear field
-				edgeSelection.clear();
-				// Fire event
-				for (TrackMateSelectionChangeListener listener : selectionChangeListeners)
-					listener.selectionChanged(event);
+		TrackMateSelectionChangeEvent event = new TrackMateSelectionChangeEvent(this, null, edgeMap);
+		// Clear field
+		edgeSelection.clear();
+		// Fire event
+		for (TrackMateSelectionChangeListener listener : selectionChangeListeners)
+			listener.selectionChanged(event);
 	}
 
 	public void addSpotToSelection(final Spot spot) {
@@ -1018,8 +1052,8 @@ public class TrackMateModel <T extends RealType<T> & NativeType<T>> {
 	/*
 	 * PRIVATE METHODS
 	 */
-	
-	
+
+
 	/**
 	 * Fire events. Regenerate fields derived from the filtered graph.
 	 */
@@ -1172,20 +1206,20 @@ public class TrackMateModel <T extends RealType<T> & NativeType<T>> {
 		 * For de movo tracks, there is no spot in the Set<Spot> that can be found in 
 		 * oldTrackSpots. Also, we want to avoid having visible tracks of 1 spot, so
 		 * to be visible, de novo tracks must have more than 2 spots. 	 */
-		
+
 		// Pool all old spots together
 		List<Spot> allSpotsInOldTrackSpots = new ArrayList<Spot>();
 		for(Set<Spot> olTrack : oldTrackSpots) {
 			allSpotsInOldTrackSpots.addAll(olTrack);
 		}
-		
+
 		// Interrogate each new track one by one
 		for (int trackIndex = 0; trackIndex < ntracks; trackIndex++) {
 
 			Set<Spot> track = trackSpots.get(trackIndex);
 			if (track.size() < 2) 
 				continue;
-			
+
 			boolean shouldBeVisible = true;
 			for (final Spot spot : track) {
 				if (allSpotsInOldTrackSpots.contains(spot)) {
@@ -1195,13 +1229,13 @@ public class TrackMateModel <T extends RealType<T> & NativeType<T>> {
 					break;
 				}
 			}
-			
+
 			if (shouldBeVisible) {
 				visibleTrackIndices.add(trackIndex);
 			}
-			
+
 		}
-		
+
 		// How to know if a new track should be visible or not?
 		// We can say this: the new track should be visible if it has at least
 		// one spot that can be found in a visible old track.
@@ -1227,7 +1261,7 @@ public class TrackMateModel <T extends RealType<T> & NativeType<T>> {
 		}
 	}
 
-	
+
 	/**
 	 * This listener class is made to deal with complex changes in the track graph.
 	 * <p>
