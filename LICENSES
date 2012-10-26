@@ -99,6 +99,7 @@ Name					File					Author(s)						Contact								License
 * TurboReg				TurboReg_.jar				Philippe Thévenaz					philippe.thevenaz@epfl.ch					Citationware (see below)
 * UnwarpJ				UnwarpJ_.jar				Carlos Oscar Sanchez Sorzano				http://bigwww.epfl.ch/thevenaz/UnwarpJ/				BIG (see below)
 * VIB as VIB_.jar plugin bundle		VIB_.jar, VIB-lib.jar			J. Schindelin, Benjamin Schmid, M. Longair		bene.schmid@gmail.com						GPL
+* Vaa3D Reader			Vaa3D_Reader.jar				Christopher M. Bruns					christopher.bruns@gmail.com					BSD
 * Video Editing			Video_Editing.jar				Benjamin Schmid						bene.schmid@gmail.com						GPL
 * View5D 				View5D_.jar 				Rainer Heintzmann					heintzmannd@gmail.com						GPL 2
 * Volume Viewer / 3D Reslicer 		Volume_Viewer.jar 			Kai Uwe Barthel 					k.barthel@fhtw-berlin.de 					PD
