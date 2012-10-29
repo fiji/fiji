@@ -1,12 +1,24 @@
 Advanced Sholl Analysis
+
+WISH LIST
+=========
+    - Restrict analysis to area ROIs (rather than quadrants?)
+
+RELEASE NOTES
+=============
+
 Version 3 (final)
-    - Allows (thresholded) grayscale images as input
-    - Fixed rounding errors with digitization of spheres
-    - Better handling of anisotropic voxels
+    - Allows thresholded grayscale images as input
     - 3D Sholl is now ~25% faster
-    - Major code clean up, which solved several issues
+    - Arbor size is calculated as the area/volume of the smallest bounding circle/sphere
+      that contains the segmented arbor
+    - Better handling of anisotropic voxels
     - Precision in Sholl table is set by Analyze>Set Measurements...
-	- Sholl mask is coded with Matlab's "jet" color map
+    - When End radius is empty (or NaN), the largest (hemi)circle/sphere is used. This
+      allows macros to easily process images without line selections
+    - Sholl mask is coded with Matlab's "jet" color map
+    - Fixed rounding errors with digitization of spheres
+    - Major code clean up, which solved several issues
 
 Version 3d
     - Analysis is now restricted to the volume of the largest Sholl shell, rather than

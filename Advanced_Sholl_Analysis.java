@@ -196,15 +196,24 @@ public class Advanced_Sholl_Analysis implements PlugIn {
             return;
 
         // Impose valid parameters
-        if (startRadius > endRadius)
-            startRadius = 0.0;
-        stepRadius = Math.max(vxSize, incStep);
+        final int wdth = ip.getWidth();
+        final int hght = ip.getHeight();
+
+        final int dx = ((trimBounds && trim.equalsIgnoreCase("right")) || x<=wdth/2)
+                       ? x-wdth : x;
+        final int dy = ((trimBounds && trim.equalsIgnoreCase("below")) || y<=hght/2)
+                       ? y-hght : y;
+        final int dz = (z<=depth/2) ? z-depth : z;
+        final double bndRadius = vxWH * Math.sqrt(dx*dx + dy*dy + dz*dz);
+
+        endRadius = Double.isNaN(endRadius) ? bndRadius : Math.min(endRadius, bndRadius);
+        stepRadius = Math.max(vxSize, Double.isNaN(incStep) ? 0 : incStep);
 
         // Calculate how many samples will be taken
         final int size = (int) ((endRadius-startRadius)/stepRadius)+1;
 
         // Exit if there are no samples
-        if (size==1) {
+        if (size<=1) {
             error(" Invalid Parameters: Ending radius cannot be larger than\n"
                 + "Starting radius and Radius step size must be within range!");
             return;
@@ -223,11 +232,10 @@ public class Advanced_Sholl_Analysis implements PlugIn {
 
         // Define boundaries of analysis according to orthogonal chords (if any)
         final int maxradius = (int) Math.round(radii[size-1]/vxSize);
-
         minX = Math.max(x-maxradius, 0);
-        maxX = Math.min(maxradius+x, ip.getWidth());
+        maxX = Math.min(maxradius+x, wdth);
         minY = Math.max(y-maxradius, 0);
-        maxY = Math.min(maxradius+y, ip.getHeight());
+        maxY = Math.min(maxradius+y, hght);
         minZ = Math.max(z-maxradius, 1);
         maxZ = Math.min(maxradius+z, depth);
 
@@ -246,7 +254,7 @@ public class Advanced_Sholl_Analysis implements PlugIn {
         // per radius. 3D: Analysis without nSpans
         if (is3D) {
 
-            // Retrieve raw distances using the interpolate isotropic voxel
+            // Retrieve raw distances using the interpolated isotropic voxel
             final int[] rawradii = new int[size];
             for (int i = 0; i < size; i++)
                 rawradii[i] = (int) Math.round(radii[i] / vxSize);
@@ -307,7 +315,7 @@ public class Advanced_Sholl_Analysis implements PlugIn {
 
         // If 2D, allow multiple samples per radius
         if (!is3D) {
-            gd.addNumericField("Samples per radius:", nSpans, 0, 3, "(1-10)");
+            gd.addSlider("Samples per radius:", 1, 10, nSpans);
             gd.setInsets(0, 0, 0);
             gd.addChoice("Samples_integration:", BIN_TYPES, BIN_TYPES[binChoice]);
         }
@@ -368,12 +376,11 @@ public class Advanced_Sholl_Analysis implements PlugIn {
 
         // Get values from dialog
         startRadius = Math.max(0, gd.getNextNumber());
-        endRadius = Math.max(0, gd.getNextNumber());
+        endRadius = gd.getNextNumber();
         incStep = Math.max(0, gd.getNextNumber());
 
         if (!is3D) {
-            nSpans = (int) Math.max(1, gd.getNextNumber());
-            nSpans = Math.min(nSpans, 10);
+            nSpans = Math.min(Math.max((int)gd.getNextNumber(), 1), 10);
             binChoice = gd.getNextChoiceIndex();
         }
 
@@ -393,7 +400,7 @@ public class Advanced_Sholl_Analysis implements PlugIn {
         verbose = gd.getNextBoolean();
         polyChoice = gd.getNextChoiceIndex();
         mask = gd.getNextBoolean();
-        maskBackground = (int)gd.getNextNumber();
+        maskBackground = Math.min(Math.max((int)gd.getNextNumber(), 0), 255);
         if (validPath)
             save = gd.getNextBoolean();
 
@@ -845,7 +852,7 @@ public class Advanced_Sholl_Analysis implements PlugIn {
         final double[] x = new double[nsize];
         final double[] logY = new double[nsize];
         double[] y = new double[nsize];
-        double sumY = 0; double maxIntersect = 0;
+        double sumY = 0, maxIntersect = 0, maxR = 0;
 
         for (i = 0, j = 0; i < size; i++) {
 
@@ -861,11 +868,15 @@ public class Advanced_Sholl_Analysis implements PlugIn {
 
                 // Retrieve raw statistics
                 if( y[j] > maxIntersect )
-                    maxIntersect = y[j];
+                    { maxIntersect = y[j]; maxR = x[j]; }
                 sumY += y[j++];
             }
 
         }
+
+        // Calculate the smallest circle/sphere enclosing the arbor
+        final double lastR = x[nsize-1];
+        final double field = is3D ? Math.PI*4/3*lastR*lastR*lastR : Math.PI*lastR*lastR;
 
         // Calculate ramification index, the maximum of intersection divided by the n.
         // of primary branches, assumed to be the n. intersections at starting radius
@@ -895,10 +906,13 @@ public class Advanced_Sholl_Analysis implements PlugIn {
         rt.addValue("Radius step", stepRadius);
         rt.addValue("Samples per radius", is3D ? 1 : nSpans);
         rt.addValue("Sampled radii", size);
+        rt.addValue("Intersecting radii", nsize);
         rt.addValue("Sum Inters.", sumY);
-        rt.addValue("Avg Inters.", sumY/size);
+        rt.addValue("Avg Inters.", sumY/nsize);
         rt.addValue("Max Inters.", maxIntersect);
-        rt.addValue("Zero Inters.", size-nsize);
+        rt.addValue("Max Inters. radius", maxR);
+        rt.addValue("Enclosing radius", lastR);
+        rt.addValue("Enclosed field", field);
         rt.addValue("Ramification index", ri);
         rt.show(shollTable); // addResults();
 
@@ -944,8 +958,8 @@ public class Advanced_Sholl_Analysis implements PlugIn {
 
         } else if (yAxisnorm) {
 
-                yTitle = is3D ? "N. Inters./Sphere volume (" + unit + "\u00B3)" :
-                                "N. Inters./Circle area (" + unit + "\u00B2)";
+                yTitle = is3D ? "N. Inters./Sphere volume ("+ unit +"\u00B3)" :
+                                "N. Inters./Circle area ("+ unit +"\u00B2)";
                 for (i=0; i<nsize; i++)
                     y[i] = Math.exp(logY[i]);
 
@@ -982,8 +996,8 @@ public class Advanced_Sholl_Analysis implements PlugIn {
         if (mthd!=SHOLL_SLOG )
             cf = new CurveFitter(x, y);
 
-        // cf.setRestarts(2); // default: 2;
-        // cf.setMaxIterations(25000); //default: 25000
+        //cf.setRestarts(4); // default: 2;
+        //cf.setMaxIterations(50000); //default: 25000
 
         if (mthd == SHOLL_N) {
             if (DEGREES[polyChoice].startsWith("4")) {
@@ -1002,6 +1016,8 @@ public class Advanced_Sholl_Analysis implements PlugIn {
         } else if (mthd == SHOLL_LOG) {
             cf.doFit(CurveFitter.EXP_WITH_OFFSET, false);
         }
+
+        //IJ.showStatus("Curve fitter status: " + cf.getStatusString());
 
         // Get parameters of fitted function
         if (mthd != SHOLL_SLOG)
@@ -1249,7 +1265,7 @@ public class Advanced_Sholl_Analysis implements PlugIn {
             reds[i] = greens[(i+256*6/8) % 256];
 
         // Set background color
-        reds[0] = greens[0] = blues[0] = (byte)Math.min(zerograyvalue,255);
+        reds[0] = greens[0] = blues[0] = (byte)zerograyvalue;
 
         return new IndexColorModel(8, 256, reds, greens, blues);
     }
