@@ -91,6 +91,19 @@ public class ArchipelagoServer
         }
 
     }
+    
+    public boolean join()
+    {
+        try
+        {
+            listenThread.join();
+            return true;
+        }
+        catch (InterruptedException ie)
+        {
+            return false;
+        }
+    }
 
 
 }

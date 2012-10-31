@@ -2,9 +2,11 @@ package archipelago.network.client;
 
 import archipelago.compute.ProcessManager;
 import archipelago.data.ClusterMessage;
+import archipelago.network.Cluster;
 import archipelago.network.MessageListener;
 import archipelago.network.MessageRX;
 import archipelago.network.MessageTX;
+import archipelago.network.server.ArchipelagoServer;
 
 import java.io.IOException;
 import java.net.Socket;
@@ -16,6 +18,11 @@ public class ArchipelagoClient implements MessageListener
     private final MessageTX tx;
     private final MessageRX rx;
 
+    public ArchipelagoClient(String host) throws IOException
+    {
+        this(host, Cluster.DEFAULT_PORT);
+    }
+    
     public ArchipelagoClient(String host, int port) throws IOException
     {
         socket = new Socket(host, port);
@@ -35,6 +42,11 @@ public class ArchipelagoClient implements MessageListener
         {
             close();
         }
+    }
+    
+    public boolean join()
+    {
+        return tx.join() && rx.join();
     }
     
     public void close()
