@@ -2,6 +2,7 @@ package archipelago.network;
 
 import archipelago.network.factory.JSchNodeShellFactory;
 import archipelago.network.factory.NodeShellFactory;
+import archipelago.network.server.ArchipelagoServer;
 
 import java.io.File;
 import java.io.IOException;
@@ -18,6 +19,8 @@ public class Cluster
     private int port;
     private NodeShellFactory nodeShellFactory;
     HashMap<InetAddress, ClusterNode> nodes;
+    private ArchipelagoServer server;
+    String clientExecRoot = "/nfs/data1/public/fiji/";
     
     public Cluster()
     {
@@ -28,6 +31,8 @@ public class Cluster
     {
         port = p;
         nodeShellFactory = new JSchNodeShellFactory(new File("/home/larry/.ssh/id_dsa"));
+        server = null;
+        
         try
         {
             nodes.put(InetAddress.getByName(("khlab-cortex")), new ClusterNode("khlab-cortex",
@@ -38,6 +43,14 @@ public class Cluster
             //
         }
     }
+    
+    public void startCluster()
+    {
+        server = new ArchipelagoServer(this);
+        server.start();
+        initNodes();
+    }
+    
     
     public int getServerPort()
     {
@@ -59,12 +72,25 @@ public class Cluster
             }
         }
     }
-    
-    public void initNodes()
+
+    public boolean join()
     {
-        for (ClusterNode node: nodes.values())
+        return server.join();
+    }
+    
+    protected void initNodes()
+    {
+        try
         {
-            node.exec("/data/fiji/fiji");
+            String host = InetAddress.getLocalHost().getCanonicalHostName();
+            for (ClusterNode node: nodes.values())
+            {
+                node.exec(clientExecRoot + "/fiji --jar-path " + clientExecRoot + "/plugins/ --main-class archipelago.Fiji_Archipelago " + InetAddress.getLocalHost());
+            }
+        }
+        catch (UnknownHostException uhe)
+        {
+
         }
     }
 
