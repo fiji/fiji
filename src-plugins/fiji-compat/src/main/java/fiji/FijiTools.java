@@ -5,6 +5,8 @@ import ij.IJ;
 import java.awt.Frame;
 
 import java.io.File;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
@@ -110,5 +112,13 @@ public class FijiTools {
 		if (dot < slash || dot < backslash)
 			return "";
 		return path.substring(dot + 1);
+	}
+
+	public static boolean stackTraceContains(String needle) {
+		final StringWriter writer = new StringWriter();
+		final PrintWriter out = new PrintWriter(writer);
+		new Exception().printStackTrace(out);
+		out.close();
+		return writer.toString().indexOf(needle) >= 0;
 	}
 }
