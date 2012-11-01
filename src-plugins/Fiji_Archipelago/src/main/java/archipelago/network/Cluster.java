@@ -1,56 +1,81 @@
 package archipelago.network;
 
-import archipelago.network.factory.JSchNodeShellFactory;
-import archipelago.network.factory.NodeShellFactory;
+
+import archipelago.ShellExecListener;
+import archipelago.network.shell.NodeShell;
 import archipelago.network.server.ArchipelagoServer;
 
-import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.TimeUnit;
 
 
 public class Cluster
 {
     public static int DEFAULT_PORT = 3501;
+    public static long DEFAULT_READY_TIMEOUT = 60000;
     private int port;
-    private NodeShellFactory nodeShellFactory;
-    HashMap<InetAddress, ClusterNode> nodes;
+    private NodeShell nodeShell;
+    private final HashMap<InetAddress, ClusterNode> nodes;
     private ArchipelagoServer server;
-    String clientExecRoot = "/nfs/data1/public/fiji/";
+    private String clientExecRoot = "/nfs/data1/home/larry/workspace/fiji/";
+    private final long readyTimeout;
+    private long startTime = 0;
     
-    public Cluster()
+    public Cluster(NodeShell shell)
     {
-        this(DEFAULT_PORT);
+        this(DEFAULT_PORT, shell);
     }
     
-    public Cluster(int p)
+    public Cluster(int p, NodeShell shell)
     {
         port = p;
-        nodeShellFactory = new JSchNodeShellFactory(new File("/home/larry/.ssh/id_dsa"));
+        readyTimeout = DEFAULT_READY_TIMEOUT;
+
+        nodeShell = shell;
         server = null;
-        
+        nodes = new HashMap<InetAddress, ClusterNode>();
+
         try
         {
-            nodes.put(InetAddress.getByName(("khlab-cortex")), new ClusterNode("khlab-cortex",
-                    "larry", nodeShellFactory));
+            ClusterNode node = new ClusterNode("khlab-cortex",
+                    "larry", nodeShell);
+            nodes.put(InetAddress.getByName(("khlab-cortex")), node);
         }
         catch (UnknownHostException uhe)
         {
-            //
+            System.err.println("Error while initting cluster");
         }
     }
     
-    public void startCluster()
+    public boolean startCluster()
     {
         server = new ArchipelagoServer(this);
-        server.start();
-        initNodes();
+        if (server.start())
+        {
+            initNodes();
+            return true;
+        }
+        else
+        {
+            return false;
+        }
     }
     
+    public void close()
+    {
+        for (ClusterNode node : nodes.values())
+        {
+            node.close();
+        }
+
+        server.close();
+    }
     
     public int getServerPort()
     {
@@ -68,7 +93,59 @@ public class Cluster
             }
             catch (IOException ioe)
             {
+                System.err.println("Error assigning socket to node");
+            }
+        }
+    }
 
+    public void waitUntilReady()
+    {
+        boolean go = true;
+        
+        System.out.println("Waiting until read");
+        
+        while (go)
+        {
+            try
+            {
+                System.out.println("Sleeping");
+                Thread.sleep(1000); //sleep for a second
+
+                System.out.println("Done sleeping");
+                
+                if ((System.currentTimeMillis() - startTime) > readyTimeout)
+                {
+                    System.out.println("Timed out while waiting");
+                    go = false;
+                }
+                else
+                {
+                    System.out.println("Checking all nodes for readiness");
+                    go = false;
+
+                    for (ClusterNode node : nodes.values())
+                    {
+                        go |= !node.isready();
+                        if (node.isready())
+                        {
+                            System.out.println("Node " + node.getHost() + " is ready ");
+                        }
+                    }
+
+                    if (go)
+                    {
+                        System.out.println("Not ready");
+                    }
+                    else
+                    {
+                        System.out.println("All ready");
+                    }
+                        
+                }
+            }
+            catch (InterruptedException ie)
+            {
+                go = false;
             }
         }
     }
@@ -83,16 +160,28 @@ public class Cluster
         try
         {
             String host = InetAddress.getLocalHost().getCanonicalHostName();
+            startTime = System.currentTimeMillis();
             for (ClusterNode node: nodes.values())
             {
-                node.exec(clientExecRoot + "/fiji --jar-path " + clientExecRoot + "/plugins/ --main-class archipelago.Fiji_Archipelago " + InetAddress.getLocalHost());
+                node.exec(clientExecRoot + "/fiji --jar-path " + clientExecRoot + "/plugins/ --main-class archipelago.Fiji_Archipelago " + host + "> ~/arch.log",
+                        new ShellExecListener()
+                        {
+                            public void execFinished(ClusterNode node, Exception e) {
+                                System.out.println("Finished executing on " + node.getHost());
+                            }
+                        });
             }
         }
         catch (UnknownHostException uhe)
         {
-
+            System.err.println("Error getting my own host name");
+            startTime = 0;
         }
     }
 
 
+    public ArrayList<ClusterNode> getNodes()
+    {
+        return new ArrayList<ClusterNode>(nodes.values());
+    }
 }

@@ -2,9 +2,12 @@ package archipelago;
 
 import archipelago.network.Cluster;
 import archipelago.network.client.ArchipelagoClient;
+import archipelago.network.shell.JSchNodeShell;
+import archipelago.network.shell.NodeShell;
 import ij.ImageJ;
 import ij.plugin.PlugIn;
 
+import java.io.File;
 import java.io.IOException;
 
 public class Fiji_Archipelago implements PlugIn 
@@ -15,13 +18,16 @@ public class Fiji_Archipelago implements PlugIn
     {
         if (arg.equals("gui"))
         {
-            Cluster cluster = new Cluster();
+            JSchNodeShell.JSchShellParams params = new JSchNodeShell.JSchShellParams(new File("/home/larry/.ssh/id_dsa"));
+            NodeShell shell = new JSchNodeShell(params, new SysoutLogger());
+            
+            Cluster cluster = new Cluster(shell);
             cluster.startCluster();
             cluster.join();
         }        
     }
     
-    public static void main(String[] args) throws IOException
+    public static void main(String[] args) throws IOException, InterruptedException
     {
         String host = "";
         ArchipelagoClient client = null;
@@ -46,6 +52,9 @@ public class Fiji_Archipelago implements PlugIn
             client = new ArchipelagoClient(host);
         }
 
-        client.join();
+        while (client.isActive())
+        {
+            Thread.sleep(1000);
+        }
     }
 }

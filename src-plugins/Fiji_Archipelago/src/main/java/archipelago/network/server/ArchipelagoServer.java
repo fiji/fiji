@@ -70,6 +70,7 @@ public class ArchipelagoServer
         }
         catch(IOException ioe)
         {
+            System.err.println("Got IOExecption: " + ioe);
             return false;
         }
         
@@ -77,13 +78,16 @@ public class ArchipelagoServer
         return true;
     }
     
-    public void stop()
+    public void close()
     {
         isRunning.set(false);
         try
         {
+            System.out.println("interrupting thread");
             listenThread.interrupt();
+            System.out.println("Closing server socket");
             socket.close();
+            System.out.println("Closed socket");
         }
         catch (IOException ioe)
         {

@@ -49,7 +49,7 @@ public class MessageTX
                     } 
                     catch (InterruptedException ie)
                     {
-                        //
+                        active.set(false);
                     }
                     
                     if (nextMessage != null)
@@ -60,7 +60,7 @@ public class MessageTX
                         }
                         catch (IOException ioe)
                         {
-                            //
+                            active.set(false);
                         }
                     }
                 }
@@ -78,14 +78,21 @@ public class MessageTX
 
     public boolean join()
     {
-        try
+        if (t.isAlive())
         {
-            t.join();
-            return true;
+            try
+            {
+                t.join();
+                return true;
+            }
+            catch (InterruptedException ie)
+            {
+                return false;
+            }
         }
-        catch (InterruptedException ie)
+        else
         {
-            return false;
+            return true;
         }
     }
     

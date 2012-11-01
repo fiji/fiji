@@ -1,15 +1,16 @@
 package archipelago.network;
 
+import archipelago.ShellExecListener;
 import archipelago.compute.ProcessManager;
 import archipelago.data.ClusterMessage;
-import archipelago.network.factory.NodeShellFactory;
+import archipelago.network.shell.NodeShell;
 
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
-import java.util.ArrayList;
 import java.util.Hashtable;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 
 public class ClusterNode implements MessageListener
@@ -18,34 +19,23 @@ public class ClusterNode implements MessageListener
     private Socket nodeSocket;
     private String hostname;
     private String username;
-    private NodeShell shell;
-    private boolean shellVerified;
+    private final NodeShell shell;
     private final InetAddress address;
     private MessageTX tx;
     private MessageRX rx;
     private final Hashtable<Long, ProcessListener> processHandlers;
+    private final AtomicBoolean ready;
 
-    public ClusterNode(String host, String user, NodeShellFactory factory) throws UnknownHostException
+    public ClusterNode(String host, String user, NodeShell s) throws UnknownHostException
     {
         hostname = host;
         username = user;
-        shell = factory.getShell(this);
-        shellVerified = shell != null && shell.verify();
+        shell = s;
+
         nodeSocket = null;
         address = InetAddress.getByName(hostname);
         processHandlers = new Hashtable<Long, ProcessListener>();
-    }
-
-    public boolean shellReady()
-    {
-        return shellVerified;
-    }
-
-    public boolean setShell(NodeShellFactory factory)
-    {
-        shell = factory.getShell(this);
-        shellVerified = shell != null && shell.verify();
-        return shellReady();
+        ready = new AtomicBoolean(false);
     }
 
     public boolean setClientSocket(final Socket s) throws IOException
@@ -57,6 +47,10 @@ public class ClusterNode implements MessageListener
             tx = new MessageTX(nodeSocket);
             rx = new MessageRX(nodeSocket, this);
             
+            System.out.println("Got Socket");
+
+            ready.set(true);
+
             return true;
         }
         else
@@ -80,14 +74,19 @@ public class ClusterNode implements MessageListener
         return username;
     }
 
-    public boolean shellActive()
+    public boolean isready()
     {
-        return shell.isActive();
+        return ready.get();
     }
     
-    public boolean exec(String command)
+    public boolean exec(String command, ShellExecListener listener)
     {
-        return shellReady() && shell.exec(command);
+        return shell.exec(this, command, listener);
+    }
+    
+    public NodeShell getShell()
+    {
+        return shell;
     }
 
     public <S, T> boolean runProcessManager(ProcessManager<S, T> process, ProcessListener listener)
@@ -105,6 +104,13 @@ public class ClusterNode implements MessageListener
             return false;
         }
     }
+    
+    public void ping()
+    {
+        ClusterMessage message = new ClusterMessage();
+        message.message = "ping";
+        tx.queueMessage(message);
+    }
 
     public void handleMessage(ClusterMessage message) {
         if (message.message.equals("process"))
@@ -113,8 +119,20 @@ public class ClusterNode implements MessageListener
             ProcessListener listener = processHandlers.remove(pm.getID());
             listener.processFinished(pm);
         }
+        else
+        {
+            System.out.println("Got Message " + message.message);
+        }
     }
-    
+
+    public void close()
+    {
+        sendShutdown();
+        tx.close();
+        rx.close();
+    }
+
+
     public boolean sendShutdown()
     {
         ClusterMessage message = new ClusterMessage();

@@ -41,7 +41,7 @@ public class MessageRX
                     }
                     catch (IOException ioe)
                     {
-                        //
+                        active.set(false);
                     }
                     catch (ClassNotFoundException cfne)
                     {
@@ -62,14 +62,21 @@ public class MessageRX
     
     public boolean join()
     {
-        try
+        if (t.isAlive())
         {
-            t.join();
-            return true;
+            try
+            {
+                t.join();
+                return true;
+            }
+            catch (InterruptedException ie)
+            {
+                return false;
+            }
         }
-        catch (InterruptedException ie)
+        else
         {
-            return false;
+            return true;
         }
     }
     
