@@ -362,6 +362,26 @@ public class HandleExtraFileTypes extends ImagePlus implements PlugIn {
 				return tryPlugIn("org.janelia.vaa3d.reader.Vaa3d_Reader", path);
 			}
 		} catch (Exception exc) {}
+
+		//Michael Doube: read Scanco ISQ files
+		//File name is ADDDDDDD.ISQ;D where D is a decimal and A is a letter
+		if (name.matches("[a-z]\\d{7}.isq;\\d+") || (
+				buf[0] == 0x43 && //C
+				buf[1] == 0x54 && //T
+				buf[2] == 0x44 && //D
+				buf[3] == 0x41 && //A
+				buf[4] == 0x54 && //T
+				buf[5] == 0x41 && //A
+				buf[6] == 0x2D && //-
+				buf[7] == 0x48 && //H
+				buf[8] == 0x45 && //E
+				buf[9] == 0x41 && //A
+				buf[10] == 0x44 && //D
+				buf[11] == 0x45 && //E
+				buf[12] == 0x52 //R
+				)) {
+			return tryPlugIn("org.bonej.io.ISQReader", path);
+		}
 		
 		// ****************** MODIFY HERE ******************
 		// do what ever you have to do to recognise your own file type
