@@ -3,9 +3,9 @@ all <- loci_tools.jar
 
 ABOUT=components/loci-plugins/build/src/loci/plugins/About.java
 
-MAINCLASS(loci_tools.jar)=loci.ome.notes.Notes
+MAINCLASS(loci_tools.jar)=loci.formats.gui.ImageViewer
 loci_tools.jar <- artifacts/loci_tools.jar
 
-artifacts/loci_tools.jar[../../ImageJ --ant tools] <- $ABOUT
+artifacts/loci_tools.jar[../../bin/ImageJ.sh --ant tools] <- $ABOUT
 
-$ABOUT[../../ImageJ --ant clean] <- .git/HEAD
+$ABOUT[../../bin/ImageJ.sh --ant clean] <- .git/HEAD
