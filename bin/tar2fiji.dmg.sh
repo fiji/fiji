@@ -47,6 +47,7 @@ echo "folder: $folder"
 rm -r "$tmp"
 
 # arrange icons and copy background image
+(cd "$(dirname "$0")"/..
 test -f resources/install-fiji.jpg ||
 ./fiji bin/generate-finder-background.py
 cp resources/install-fiji.jpg "$folder"/.background.jpg
@@ -57,6 +58,7 @@ test -f "$folder"/Fiji.app/Contents/Resources/Fiji.icns || {
 ln -s /Applications "$folder"/Applications
 VERSIONER_PERL_PREFER_32_BIT=yes \
 perl bin/generate-finder-dsstore.perl "$folder"
+)
 
 # pack the .dmg
 eject "$dmg"
