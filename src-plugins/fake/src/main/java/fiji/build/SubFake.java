@@ -251,8 +251,12 @@ public class SubFake extends Rule {
 
 	protected void buildPOM(final POM pom) throws CompileError, FakeException, IOException, ParserConfigurationException, SAXException {
 		if ("pom".equals(pom.getPackaging())) {
-			for (POM child : pom.getChildren())
+			for (POM child : pom.getChildren()) try {
 				buildPOM(child);
+			} catch (IOException e) {
+				parser.fake.err.println("Could not build " + child.getArtifactId() + ", target is " + target);
+				throw e;
+			}
 			return;
 		}
 
