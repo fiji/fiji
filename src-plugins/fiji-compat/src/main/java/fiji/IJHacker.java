@@ -281,15 +281,8 @@ public class IJHacker extends JavassistHelper {
 			}
 		});
 		// open text in the Fiji Editor
-		if (hasClass("fiji.scripting.TextEditor")) {
-			method = clazz.getMethod("open", "(Ljava/lang/String;)V");
-			method.insertBefore("if ($1.indexOf(\"://\") < 0 && isText($1) &&"
-				+ "    !fiji.FijiTools.getFileExtension($1).equals(\"\") &&"
-				+ "    !fiji.scripting.TextEditor.isBinary($1) &&"
-				+ "    !fiji.FijiTools.stackTraceContains(\"fiji.scripting.TextEditor.open(\") &&"
-				+ "    ij.IJ.runPlugIn(\"fiji.scripting.Script_Editor\", $1) != null)"
-				+ "  return;");
-		}
+		method = clazz.getMethod("open", "(Ljava/lang/String;)V");
+		method.insertBefore("if (isText($1) && fiji.FijiTools.maybeOpenEditor($1)) return;");
 
 		// Class ij.macro.Interpreter
 		clazz = get("ij.macro.Interpreter");

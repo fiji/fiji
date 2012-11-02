@@ -99,6 +99,31 @@ public class FijiTools {
 		return false;
 	}
 
+	/**
+	 * Calls the Fiji Script Editor for text files.
+	 * 
+	 * A couple of sanity checks are needed, e.g. that the script editor is in the class path
+	 * and that it agrees that the file is binary, that there is no infinite loop ponging back
+	 * and forth between the TextEditor's and the Opener's open() methods.
+	 * 
+	 * @param path the path to the candidate file
+	 * @return whether we opened it in the script editor
+	 */
+	public static boolean maybeOpenEditor(String path) {
+		try {
+			Class<?> textEditor = ij.IJ.getClassLoader().loadClass("fiji.scripting.TextEditor");
+			if (path.indexOf("://") < 0 &&
+					!getFileExtension(path).equals("") &&
+					!((Boolean)textEditor.getMethod("isBinary", new Class[] { String.class }).invoke(null, path)).booleanValue() &&
+					!stackTraceContains("fiji.scripting.TextEditor.open(") &&
+					IJ.runPlugIn("fiji.scripting.Script_Editor", path) != null)
+				return true;
+		} catch (Throwable t) {
+			t.printStackTrace();
+		}
+		return false;
+	}
+
 	public static String getFileExtension(String path) {
 		int dot = path.lastIndexOf('.');
 		if (dot < 0)
