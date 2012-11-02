@@ -548,26 +548,22 @@ public class IJHacker extends JavassistHelper {
 		}
 
 		// If there is a macros/StartupMacros.fiji.ijm, but no macros/StartupMacros.txt, execute that
-		try {
-			clazz = get("ij.Menus");
-			File macrosDirectory = new File(FijiTools.getFijiDir(), "macros");
-			File startupMacrosFile = new File(macrosDirectory, "StartupMacros.fiji.ijm");
-			if (startupMacrosFile.exists() &&
-					!new File(macrosDirectory, "StartupMacros.txt").exists() &&
-					!new File(macrosDirectory, "StartupMacros.ijm").exists()) {
-				method = clazz.getMethod("installStartupMacroSet", "()V");
-				final String startupMacrosPath = startupMacrosFile.getPath().replace("\\", "\\\\").replace("\"", "\\\"");
-				method.instrument(new ExprEditor() {
-					@Override
-					public void edit(MethodCall call) throws CannotCompileException {
-						if (call.getMethodName().equals("installFromIJJar"))
-							call.replace("$0.installFile(\"" + startupMacrosPath + "\");"
-								+ "nMacros += $0.getMacroCount();");
-					}
-				});
-			}
-		} catch (ClassNotFoundException e) {
-			e.printStackTrace();
+		clazz = get("ij.Menus");
+		File macrosDirectory = new File(FijiTools.getFijiDir(), "macros");
+		File startupMacrosFile = new File(macrosDirectory, "StartupMacros.fiji.ijm");
+		if (startupMacrosFile.exists() &&
+				!new File(macrosDirectory, "StartupMacros.txt").exists() &&
+				!new File(macrosDirectory, "StartupMacros.ijm").exists()) {
+			method = clazz.getMethod("installStartupMacroSet", "()V");
+			final String startupMacrosPath = startupMacrosFile.getPath().replace("\\", "\\\\").replace("\"", "\\\"");
+			method.instrument(new ExprEditor() {
+				@Override
+				public void edit(MethodCall call) throws CannotCompileException {
+					if (call.getMethodName().equals("installFromIJJar"))
+						call.replace("$0.installFile(\"" + startupMacrosPath + "\");"
+							+ "nMacros += $0.getMacroCount();");
+				}
+			});
 		}
 	}
 
