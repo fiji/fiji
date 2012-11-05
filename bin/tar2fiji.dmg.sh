@@ -51,10 +51,6 @@ rm -r "$tmp"
 test -f resources/install-fiji.jpg ||
 ./fiji bin/generate-finder-background.py
 cp resources/install-fiji.jpg "$folder"/.background.jpg
-test -f "$folder"/Fiji.app/Contents/Resources/Fiji.icns || {
-	mkdir -p "$folder"/Fiji.app/Contents/Resources &&
-	cp images/Fiji.icns "$folder"/Fiji.app/Contents/Resources/
-}
 ln -s /Applications "$folder"/Applications
 VERSIONER_PERL_PREFER_32_BIT=yes \
 perl bin/generate-finder-dsstore.perl "$folder"
