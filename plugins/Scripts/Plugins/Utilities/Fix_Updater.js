@@ -25,4 +25,9 @@ loader = new URLClassLoader(urls, parent);
 IJ.showStatus("loading remote updater");
 guiClass = loader.loadClass("imagej.updater.gui.ImageJUpdater");
 IJ.showStatus("running remote updater");
-guiClass.newInstance().run();
+try {
+	i = guiClass.newInstance();
+	i.run();
+} catch (e) {
+	IJ.handleException(e.javaException);
+}
