@@ -16,6 +16,7 @@ foreach my $full_package (
 		'M/MS/MSCHWERN/Test-Simple-0.98',
 		'F/FD/FDALY/Test-Tester-0.108',
 		'A/AD/ADAMK/Test-NoWarnings-1.04',
+		'C/CN/CNANDOR/Mac-Carbon-0.82',
 		'W/WI/WIML/Mac-Finder-DSStore-0.96'
 	) {
 	$package = $full_package;
@@ -32,8 +33,10 @@ foreach my $full_package (
 
 	print "use lib ('$pwd/$package/blib/lib');\n";
 	eval "use lib ('$pwd/$package/blib/lib');";
+	print("use lib ('$pwd/$package/blib/arch');");
+	eval "use lib ('$pwd/$package/blib/arch');";
 	$perl5lib .= ':' unless ($perl5lib eq '');
-	$perl5lib .= "$pwd/$package/blib/lib";
+	$perl5lib .= "$pwd/$package/blib/lib:$pwd/$package/blib/arch";
 }
 
 eval "use Mac::Finder::DSStore qw(writeDSDBEntries makeEntries);";
