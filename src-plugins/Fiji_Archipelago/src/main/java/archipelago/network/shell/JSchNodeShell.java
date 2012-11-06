@@ -1,8 +1,10 @@
 package archipelago.network.shell;
 
 import archipelago.EasyLogger;
+import archipelago.NodeManager;
 import archipelago.ShellExecListener;
-import archipelago.StreamLogger;
+import archipelago.InputStreamLogger;
+import archipelago.network.Cluster;
 import archipelago.network.ClusterNode;
 import com.jcraft.jsch.*;
 import ij.IJ;
@@ -130,15 +132,15 @@ public class JSchNodeShell implements NodeShell
 
     private class JSchShellExecThread extends Thread
     {
-        private final ClusterNode node;
+        private final long node;
         private final Channel channel;
         private final ShellExecListener listener;
         private final Session session;
 
 
-        public JSchShellExecThread(ClusterNode n, Channel c, Session s, ShellExecListener l)
+        public JSchShellExecThread(long id, Channel c, Session s, ShellExecListener l)
         {
-            node = n;
+            node = id;
             channel = c;
             listener = l;
             session = s;
@@ -173,19 +175,21 @@ public class JSchNodeShell implements NodeShell
     }
     
     private final JSchShellParams params;
-    private final StreamLogger logger;
-    
+    private final InputStreamLogger logger;
+
     public JSchNodeShell(JSchShellParams p, EasyLogger l)
     {
         params = p;
-        logger = new StreamLogger(l);
+        logger = new InputStreamLogger(l);
     }
     
-    public boolean exec(ClusterNode node, String command, ShellExecListener listener)
+    public boolean exec(final NodeManager.NodeParameters param, final String command, final ShellExecListener listener)
     {
+        String user = param.getUser();
+        String host = param.getHost();
         try
         {
-            Session session = params.getJsch().getSession(node.getUser(), node.getHost());
+            Session session = params.getJsch().getSession(user, host);
             Channel channel;
             
             session.setUserInfo(params.getUserInfo());
@@ -206,7 +210,7 @@ public class JSchNodeShell implements NodeShell
                 logger.setStream(null);
             }
             
-            new JSchShellExecThread(node, channel, session, listener).start();
+            new JSchShellExecThread(param.getID(), channel, session, listener).start();
             
             return true;
         }

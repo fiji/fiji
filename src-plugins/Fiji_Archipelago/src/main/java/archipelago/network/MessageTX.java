@@ -1,10 +1,13 @@
 package archipelago.network;
 
 
+import archipelago.FijiArchipelago;
+import archipelago.StreamCloseListener;
 import archipelago.data.ClusterMessage;
 
 import java.io.IOException;
 import java.io.ObjectOutputStream;
+import java.io.Serializable;
 import java.net.Socket;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -23,13 +26,14 @@ public class MessageTX
     private final long waitTime;
     private final TimeUnit tUnit;
     
-    public MessageTX(Socket s) throws IOException
+    public MessageTX(Socket s, final StreamCloseListener listener) throws IOException
     {
-        this(s, DEFAULT_WAIT, DEFAULT_UNIT);
+        this(s, DEFAULT_WAIT, DEFAULT_UNIT, listener);
     }
     
-    public MessageTX(Socket socket, long wait, TimeUnit unit) throws IOException
+    public MessageTX(Socket socket, long wait, TimeUnit unit, final StreamCloseListener listener) throws IOException
     {
+        final String remoteHost = socket.getInetAddress().getCanonicalHostName();
         messageQ = new ArrayBlockingQueue<ClusterMessage>(16, true);
         objectStream = new ObjectOutputStream(socket.getOutputStream());
         active = new AtomicBoolean(true);
@@ -56,11 +60,15 @@ public class MessageTX
                     {
                         try
                         {
+                            FijiArchipelago.debug("TX: " + remoteHost + " Writing message " + nextMessage.message + " ... ");
                             objectStream.writeObject(nextMessage);
+                            FijiArchipelago.debug("TX: " + remoteHost + " success.");
                         }
                         catch (IOException ioe)
                         {
+                            FijiArchipelago.err("TX " + remoteHost + " failed: " + ioe);
                             active.set(false);
+                            listener.streamClosed();
                         }
                     }
                 }
@@ -108,7 +116,24 @@ public class MessageTX
             return false;
         }
     }
+
+    public boolean queueMessage(String message)
+    {
+        ClusterMessage cm = new ClusterMessage();
+        cm.message = message;
+        return queueMessage(cm);                
+    }
     
-    
+    public boolean queueMessage(String message, Serializable o)
+    {
+        ClusterMessage cm = new ClusterMessage();
+        cm.message = message;
+        cm.o = o;
+        return queueMessage(cm);
+    }
     
 }
+    
+    
+    
+

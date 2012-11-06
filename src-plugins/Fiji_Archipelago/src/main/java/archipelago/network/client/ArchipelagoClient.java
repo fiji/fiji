@@ -1,5 +1,6 @@
 package archipelago.network.client;
 
+import archipelago.StreamCloseListener;
 import archipelago.compute.ProcessManager;
 import archipelago.data.ClusterMessage;
 import archipelago.network.Cluster;
@@ -12,15 +13,59 @@ import java.io.IOException;
 import java.net.Socket;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class ArchipelagoClient implements MessageListener
+public class ArchipelagoClient implements MessageListener, StreamCloseListener
 {
     
     private final Socket socket;
     private final MessageTX tx;
     private final MessageRX rx;
+    private long clientId = 0;
     
     private final AtomicBoolean active;
+    
+    private class ProcessThread extends Thread
+    {
+        private final ProcessManager process;
+        
+        public ProcessThread(ProcessManager pm)
+        {
+            process = pm;
+        }
+        
+        public void run()
+        {
+            process.run();
+            tx.queueMessage("process", process);
+        }
+    }
+    
 
+    public ArchipelagoClient(long id, String host) throws IOException
+    {
+        this(id, host, Cluster.DEFAULT_PORT);
+    }
+
+    public ArchipelagoClient(long id, String host, int port) throws IOException
+    {
+        System.out.println("Client with id " + id + " attempting connection to " + host + ":" + port);
+        try
+        {
+            clientId = id;
+            
+            socket = new Socket(host, port);
+
+            tx = new MessageTX(socket, this);
+            rx = new MessageRX(socket, this, this);
+
+            active = new AtomicBoolean(true);
+        }
+        catch (IOException ioe)
+        {
+            System.out.println("Caught an IOE: " + ioe);
+            throw ioe;
+        }
+    }
+    
     public ArchipelagoClient(String host) throws IOException
     {
         this(host, Cluster.DEFAULT_PORT);
@@ -28,33 +73,49 @@ public class ArchipelagoClient implements MessageListener
     
     public ArchipelagoClient(String host, int port) throws IOException
     {
-        socket = new Socket(host, port);
-        tx = new MessageTX(socket);
-        rx = new MessageRX(socket, this);
-        active = new AtomicBoolean(true);
+        this(-1, host, port);
     }
     
 
-    public void handleMessage(ClusterMessage message) {
-        System.out.println("Got message " + message.message);
-        
-        if (message.message.equals("process"))
-        {
-            ProcessManager<?, ?> pm = (ProcessManager<?, ?>)message.o;
-            pm.run();
-            tx.queueMessage(message);
-        } 
-        else if (message.message.equals("halt"))
-        {
-            close();
-        }
-        else if (message.message.equals("ping"))
-        {
-            tx.queueMessage(message);
-        }
+    public void handleMessage(final ClusterMessage cm) {
 
+        final String message = cm.message;
+
+        try
+        {
+            if (message.equals("process"))
+            {
+                final ProcessManager<?, ?> pm = (ProcessManager<?, ?>)cm.o;
+                new ProcessThread(pm).start();
+            }
+            else if (message.equals("halt"))
+            {
+                close();
+            }
+            else if (message.equals("ping"))
+            {
+                tx.queueMessage(cm);
+            }
+            else if (message.equals("user"))
+            {
+                cm.o = System.getProperty("user.name");
+                tx.queueMessage(cm);
+            }
+            else if (message.equals("setid"))
+            {
+                clientId = (Long)cm.o;
+            }
+            else if (message.equals("getid"))
+            {
+                tx.queueMessage("id", clientId);
+            }
+        }
+        catch (ClassCastException cce)
+        {
+            System.err.println("Caught CCE: " + cce);
+        }
     }
-    
+
     public boolean join()
     {
         return tx.join() && rx.join();
@@ -65,20 +126,28 @@ public class ArchipelagoClient implements MessageListener
         return active.get();
     }
     
-    public void close()
+    public synchronized void close()
     {
-        tx.close();
-        rx.close();
-        try
+        if (active.get())
         {
-            socket.close();
+            active.set(false);
+            
+            tx.close();
+            rx.close();
+            try
+            {
+                socket.close();
+            }
+            catch (IOException ioe)
+            {
+                //
+            }
         }
-        catch (IOException ioe)
-        {
-            //
-        }
-        active.set(false);
         
     }
-    
+
+    public synchronized void streamClosed()
+    {
+        close();
+    }
 }

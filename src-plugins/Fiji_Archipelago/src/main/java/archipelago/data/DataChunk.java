@@ -8,23 +8,23 @@ import java.net.InetAddress;
 public abstract class DataChunk<T> implements Serializable, Iterable<DataChunk<T>>
 {
     
-    private InetAddress lastOn;
+    private long lastOn;
     private long lastTime = -1;
     
     public DataChunk()
     {
-        lastOn = null;
+        lastOn = -1;
     }
     
     public abstract long getID();
     
     public void setProcessingOn(ClusterNode node)
     {
-        lastOn = node.getAddress();
+        lastOn = node.getID();
         lastTime = System.currentTimeMillis();
     }
     
-    public InetAddress lastProcessedOn()
+    public long lastProcessedOn()
     {
         return lastOn;
     }

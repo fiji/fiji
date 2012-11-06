@@ -1,6 +1,8 @@
 package archipelago.network;
 
 
+import archipelago.FijiArchipelago;
+import archipelago.StreamCloseListener;
 import archipelago.data.ClusterMessage;
 
 
@@ -17,11 +19,11 @@ public class MessageRX
     private final AtomicBoolean active;
     private final Thread t;
     
-    public MessageRX(Socket socket, MessageListener ml) throws IOException
+    public MessageRX(Socket socket, MessageListener ml, final StreamCloseListener closeListener) throws IOException
     {
-        listener = ml;        
+        final String remoteHost = socket.getInetAddress().getCanonicalHostName();
+        listener = ml;
         active = new AtomicBoolean(true);
-        
         objectStream = new ObjectInputStream(socket.getInputStream());
         
         t = new Thread()
@@ -33,23 +35,27 @@ public class MessageRX
                     try
                     {
                         ClusterMessage message = (ClusterMessage)objectStream.readObject();
+                        FijiArchipelago.debug("RX: " + remoteHost + " Recieved message " + message.message);
                         listener.handleMessage(message);
                     }
                     catch (ClassCastException cce)
                     {
-                        //
+                        FijiArchipelago.err("RX: " + remoteHost + " Got ClassCastException: " + cce);
                     }
                     catch (IOException ioe)
                     {
                         active.set(false);
+                        closeListener.streamClosed();
                     }
                     catch (ClassNotFoundException cfne)
                     {
-                        //
+                        FijiArchipelago.err("RX: " + remoteHost + " Got ClassNotFoundException: " + cfne);
                     }
                 }
             }
         };
+
+        FijiArchipelago.debug("RX: Listening on socket for address " + socket.getInetAddress());
         
         t.start();
     }

@@ -1,4 +1,4 @@
-package archipelago.network;
+package archipelago.compute;
 
 import archipelago.compute.ProcessManager;
 

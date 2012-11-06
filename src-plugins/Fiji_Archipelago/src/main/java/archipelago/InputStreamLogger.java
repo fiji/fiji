@@ -7,14 +7,14 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class StreamLogger extends Thread
+public class InputStreamLogger extends Thread
 {
     
     public InputStream inputStream;
     public final AtomicBoolean running;
     public EasyLogger logger;
     
-    public StreamLogger(final EasyLogger el)
+    public InputStreamLogger(final EasyLogger el)
     {
         inputStream = null;
         logger = el;

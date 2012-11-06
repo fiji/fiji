@@ -26,11 +26,14 @@ public class ArchipelagoServer
             {
                 try
                 {
+                    System.out.println("Server waiting to accept a socket");
                     Socket clientSocket = socket.accept();
-                    cluster.assignSocketToNode(clientSocket);
+                    System.out.println("Got one! Assigning to node for " + socket.getInetAddress());
+                    cluster.nodeFromSocket(clientSocket);
                 }
                 catch (IOException ioe)
                 {
+                    System.out.println("Got an error while waiting for a socket: " + ioe);
                     //Ignore
                 }
             }
