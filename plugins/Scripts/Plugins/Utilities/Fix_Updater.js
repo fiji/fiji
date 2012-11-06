@@ -10,7 +10,7 @@ baseURL = "http://update.imagej.net/jars/";
 jars = [
 	"ij-ui-swing-updater-2.0.0-SNAPSHOT.jar-20121106224844",
 	"ij-updater-core-2.0.0-SNAPSHOT.jar-20121106224844",
-	"ij-core-2.0.0-SNAPSHOT.jar-20121106224844",
+	"ij-core-2.0.0-SNAPSHOT.jar-20121106231641",
 	"eventbus-1.4.jar-20120404210913",
 	"sezpoz-1.9.jar-20120404210913"
 ];
