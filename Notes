@@ -6,19 +6,22 @@ WISH LIST
 
 RELEASE NOTES
 =============
-
 Version 3 (final)
-    - Allows thresholded grayscale images as input
-    - 3D Sholl is now ~25% faster
-    - Arbor size is calculated as the area/volume of the smallest bounding circle/sphere
-      that contains the segmented arbor
-    - Better handling of anisotropic voxels
-    - Precision in Sholl table is set by Analyze>Set Measurements...
-    - When End radius is empty (or NaN), the largest (hemi)circle/sphere is used. This
-      allows macros to easily process images without line selections
-    - Sholl mask is coded with Matlab's "jet" color map
-    - Fixed rounding errors with digitization of spheres
-    - Major code clean up, which solved several issues
+    - 3D Sholl improvements:
+      - ~25% faster
+      - A minimum size of clustered voxels intersecting the sampling sphere can now be
+        specified. This allows more accurate profiles with noisy stacks
+      - Better handling of anisotropic voxels
+      - Fixed rounding errors related to digitization of spheres
+    - Analysis improvements:
+      - Allows thresholded grayscale images as input
+      - Arbor size is calculated as the area/volume of the smallest bounding circle/sphere
+        containing the segmented arbor
+      - Precision in Sholl table is set by Analyze>Set Measurements...
+      - When "End radius" is empty (or NaN), the largest (hemi)circle/sphere is used. This
+        allows macros to easily process images without line selections
+      - Sholl mask is coded with Matlab's "jet" color map
+      - Major code clean up, which solved several issues
 
 Version 3d
     - Analysis is now restricted to the volume of the largest Sholl shell, rather than
@@ -39,7 +42,6 @@ Version 3a-b
 
 Version 2.5
     - Fixed duplicated points in Bresenham's algorithm
-    - Foreground is now any value greater than 0
     - Option to save Sholl profiles
     - Long analyses can be aborted by holding Esc
 

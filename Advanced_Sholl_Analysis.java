@@ -23,6 +23,7 @@ import ij.gui.*;
 import ij.measure.Calibration;
 import ij.measure.CurveFitter;
 import ij.measure.ResultsTable;
+import ij.plugin.ContrastEnhancer;
 import ij.plugin.PlugIn;
 import ij.plugin.ZProjector;
 import ij.plugin.filter.Analyzer;
@@ -56,11 +57,6 @@ public class Advanced_Sholl_Analysis implements PlugIn {
     private static final String VERSION = "3";
     private static final String URL = "http://imagejdocu.tudor.lu/doku.php?id=plugin:analysis:asa:start";
 
-    /* Bin Function Type Definitions */
-    private static final String[] BIN_TYPES = { "Mean", "Median" };
-    private static final int BIN_AVERAGE = 0;
-    private static final int BIN_MEDIAN  = 1;
-
     /* Sholl Type Definitions */
     private static final String[] SHOLL_TYPES = { "Intersections", "Norm. Intersections", "Semi-Log", "Log-Log" };
     private static final int SHOLL_N    = 0;
@@ -78,8 +74,6 @@ public class Advanced_Sholl_Analysis implements PlugIn {
     private static double endRadius   = 100.0;
     private static double stepRadius  = 1;
     private static double incStep     = 0;
-    private static int nSpans         = 1;
-    private static int binChoice      = BIN_AVERAGE;
     private static int shollChoice    = SHOLL_N;
     private static int polyChoice     = 1;
     private static boolean fitCurve;
@@ -88,6 +82,22 @@ public class Advanced_Sholl_Analysis implements PlugIn {
     private static int maskBackground = 228;
     private static boolean save;
 
+    /* Common variables */
+    private static String unit = "pixels";
+    private static double vxSize = 1;
+    private static double vxWH = 1;
+    private static double vxD  = 1;
+    private static boolean is3D;
+    private static int lowerT;
+    private static int upperT;
+
+    /* Default parameters for 2D analysis */
+    private static final String[] BIN_TYPES = { "Mean", "Median" };
+    private static final int BIN_AVERAGE = 0;
+    private static final int BIN_MEDIAN  = 1;
+    private static int binChoice = BIN_AVERAGE;
+    private static int nSpans = 1;
+
     // If the edge of a group of pixels lies tangent to the sampling circle, multiple
     // intersections with that circle will be counted. With this flag on, we will try to
     // find these "false positives" and throw them out. A way to attempt this (we will be
@@ -95,13 +105,9 @@ public class Advanced_Sholl_Analysis implements PlugIn {
     // of a "stair" of target pixels
     private static boolean doSpikeSupression = true;
 
-    /* Common variables */
-    private static String unit = "pixels";
-    private static double vxWH = 1;
-    private static double vxD  = 1;
-    private static boolean is3D;
-    private static int lowerT;
-    private static int upperT;
+    /* Default parameters for 3D analysis */
+    private static double minCluster;
+    private static boolean clusterUsePixels = true;
 
     /* Boundaries of analysis */
     private static boolean trimBounds;
@@ -137,8 +143,10 @@ public class Advanced_Sholl_Analysis implements PlugIn {
             vxWH = Math.sqrt(cal.pixelWidth * cal.pixelHeight);
             vxD  = cal.pixelDepth;
             unit = cal.getUnits();
+        } else {
+            vxWH = vxD = 1; unit = "pixels";
         }
-        final double vxSize = (is3D) ? Math.cbrt(vxWH*vxWH*vxD) : vxWH;
+        vxSize = (is3D) ? Math.cbrt(vxWH*vxWH*vxD) : vxWH;
 
         // Initialize center coordinates (in pixel units)
         int x, y;
@@ -198,15 +206,19 @@ public class Advanced_Sholl_Analysis implements PlugIn {
         // Impose valid parameters
         final int wdth = ip.getWidth();
         final int hght = ip.getHeight();
+        final double dx, dy, dz, maxEndRadius;
 
-        final int dx = ((trimBounds && trim.equalsIgnoreCase("right")) || x<=wdth/2)
-                       ? x-wdth : x;
-        final int dy = ((trimBounds && trim.equalsIgnoreCase("below")) || y<=hght/2)
-                       ? y-hght : y;
-        final int dz = (z<=depth/2) ? z-depth : z;
-        final double bndRadius = vxWH * Math.sqrt(dx*dx + dy*dy + dz*dz);
 
-        endRadius = Double.isNaN(endRadius) ? bndRadius : Math.min(endRadius, bndRadius);
+        dx = ((trimBounds && trim.equalsIgnoreCase("right")) || x<=wdth/2)
+             ? (x-wdth)*vxWH : x*vxWH;
+
+        dy = ((trimBounds && trim.equalsIgnoreCase("below")) || y<=hght/2)
+             ? (y-hght)*vxWH : y*vxWH;
+
+        dz = (z<=depth/2) ? (z-depth)*vxD : z*vxD;
+
+        maxEndRadius = Math.sqrt(dx*dx + dy*dy + dz*dz);
+        endRadius = Double.isNaN(endRadius) ? maxEndRadius : Math.min(endRadius, maxEndRadius);
         stepRadius = Math.max(vxSize, Double.isNaN(incStep) ? 0 : incStep);
 
         // Calculate how many samples will be taken
@@ -214,8 +226,8 @@ public class Advanced_Sholl_Analysis implements PlugIn {
 
         // Exit if there are no samples
         if (size<=1) {
-            error(" Invalid Parameters: Ending radius cannot be larger than\n"
-                + "Starting radius and Radius step size must be within range!");
+            error(" Invalid Parameters: Starting radius must be smaller than\n"
+                + "Ending radius and Radius step size must be within range!");
             return;
         }
 
@@ -231,19 +243,21 @@ public class Advanced_Sholl_Analysis implements PlugIn {
         }
 
         // Define boundaries of analysis according to orthogonal chords (if any)
-        final int maxradius = (int) Math.round(radii[size-1]/vxSize);
-        minX = Math.max(x-maxradius, 0);
-        maxX = Math.min(maxradius+x, wdth);
-        minY = Math.max(y-maxradius, 0);
-        maxY = Math.min(maxradius+y, hght);
-        minZ = Math.max(z-maxradius, 1);
-        maxZ = Math.min(maxradius+z, depth);
+        final int xymaxradius = (int) Math.round(radii[size-1]/vxWH);
+        final int zmaxradius  = (int) Math.round(radii[size-1]/vxD);
+
+        minX = Math.max(x-xymaxradius, 0);
+        maxX = Math.min(x+xymaxradius, wdth);
+        minY = Math.max(y-xymaxradius, 0);
+        maxY = Math.min(y+xymaxradius, hght);
+        minZ = Math.max(z-zmaxradius, 1);
+        maxZ = Math.min(z+zmaxradius, depth);
 
         if (trimBounds) {
             if (trim.equalsIgnoreCase("above"))
-                maxY = (int) Math.min(y + maxradius, y);
+                maxY = (int) Math.min(y + xymaxradius, y);
             else if (trim.equalsIgnoreCase("below"))
-                minY = (int) Math.max(y - maxradius, y);
+                minY = (int) Math.max(y - xymaxradius, y);
             else if (trim.equalsIgnoreCase("right"))
                 minX = x;
             else if (trim.equalsIgnoreCase("left"))
@@ -253,25 +267,15 @@ public class Advanced_Sholl_Analysis implements PlugIn {
         // 2D: Analyze the data and return intersection counts with nSpans
         // per radius. 3D: Analysis without nSpans
         if (is3D) {
-
-            // Retrieve raw distances using the interpolated isotropic voxel
-            final int[] rawradii = new int[size];
-            for (int i = 0; i < size; i++)
-                rawradii[i] = (int) Math.round(radii[i] / vxSize);
-
-            counts = analyze3D(x, y, z, rawradii, img);
-
+            counts = analyze3D(x, y, z, radii, img, (int)Math.round(minCluster));
         } else {
-
             counts = analyze2D(x, y, radii, vxSize, nSpans, binChoice, ip);
-
         }
 
         final String title = img.getTitle();
 
         // Display the plot and return transformed data
-        final double[] grays = plotValues(title, shollChoice, radii, counts, x,
-                                          y, z, save, imgPath);
+        final double[] grays = plotValues(title, shollChoice, radii, counts, x, y, z);
 
         String exitmsg = "Done. ";
 
@@ -283,7 +287,7 @@ public class Advanced_Sholl_Analysis implements PlugIn {
 
         } else if (mask) {
 
-            final ImagePlus maskimg = makeMask(img, title, grays, maxradius, x, y, cal);
+            final ImagePlus maskimg = makeMask(img, title, grays, xymaxradius, x, y, cal);
 
             if (maskimg == null) {
 
@@ -291,7 +295,8 @@ public class Advanced_Sholl_Analysis implements PlugIn {
                 exitmsg = "Error: Mask could not be created! ";
 
             } else
-                maskimg.show();
+                { maskimg.show(); maskimg.updateAndDraw(); }
+
         }
 
         IJ.showProgress(0, 0);
@@ -313,8 +318,15 @@ public class Advanced_Sholl_Analysis implements PlugIn {
         gd.addNumericField("Ending radius:", endRadius, 2, 9, unit);
         gd.addNumericField("Radius_step size:", incStep, 2, 9, unit);
 
-        // If 2D, allow multiple samples per radius
-        if (!is3D) {
+        // 3D analysis: prompt for cutoff value for cluster size. 2D Analysis:
+        // allow multiple samples per radius,
+        if (is3D) {
+            gd.setInsets(12, 0, 0);
+            //gd.addNumericField("Min. cluster size:", minCluster, 2, 9, unit +"\u00B2");
+            gd.addNumericField("Smallest cluster:", minCluster, 2, 9, unit +"\u00B2");
+            gd.setInsets(0, 86, 4);
+            gd.addCheckbox("Pixel units", clusterUsePixels);
+        } else {
             gd.addSlider("Samples per radius:", 1, 10, nSpans);
             gd.setInsets(0, 0, 0);
             gd.addChoice("Samples_integration:", BIN_TYPES, BIN_TYPES[binChoice]);
@@ -363,7 +375,7 @@ public class Advanced_Sholl_Analysis implements PlugIn {
         // Offer to save results if local image
         if (validPath) {
             gd.setInsets(5, 6, 0);
-            gd.addCheckbox("Save plot values on image folder", save);
+            gd.addCheckbox("Save profile on image directory", save);
         }
 
         gd.setHelpLabel("Online Help");
@@ -379,7 +391,12 @@ public class Advanced_Sholl_Analysis implements PlugIn {
         endRadius = gd.getNextNumber();
         incStep = Math.max(0, gd.getNextNumber());
 
-        if (!is3D) {
+        if (is3D) {
+           minCluster = Math.max(0, gd.getNextNumber());
+           clusterUsePixels = gd.getNextBoolean();
+           if (!clusterUsePixels)
+               minCluster = minCluster/(vxSize*vxSize);
+        } else {
             nSpans = Math.min(Math.max((int)gd.getNextNumber(), 1), 10);
             binChoice = gd.getNextChoiceIndex();
         }
@@ -408,19 +425,19 @@ public class Advanced_Sholl_Analysis implements PlugIn {
         return trim;
     }
 
-    /** Measures intersections for each sphere surface (pixel coordinates) */
+    /** Measures intersections for each sphere surface */
     static public double[] analyze3D(final int xc, final int yc, final int zc,
-            final int[] rawradii, final ImagePlus img) {
+            final double[] radii, final ImagePlus img, final int groupsize) {
 
         int nspheres, xmin, ymin, zmin, xmax, ymax, zmax, count;
         double dx, value;
 
         // Create an array to hold the results
-        final double[] data = new double[nspheres = rawradii.length];
+        final double[] data = new double[nspheres = radii.length];
 
-        // Initialize the array holding surface points. It will be as large as
-        // the largest sphere surface (last radius in the radii array)
-        final int voxels = (int) Math.round(4*Math.PI*(rawradii[nspheres-1]+1)*(rawradii[nspheres-1]+1));
+        // Initialize the array holding surface points. It will be as large as the
+        // largest sphere surface enclosed by the analysis volume
+        final int voxels = (maxX-minX+1)*(maxY-minY+1)*(maxZ-minZ+1);
         final int[][] points = new int[voxels][3];
 
         // Get Image Stack
@@ -432,20 +449,22 @@ public class Advanced_Sholl_Analysis implements PlugIn {
             if (IJ.escapePressed())
                 { IJ.beep(); mask = false; return data; }
 
-            xmin = Math.max(xc-rawradii[s], minX);
-            ymin = Math.max(yc-rawradii[s], minY);
-            zmin = Math.max(zc-rawradii[s], minZ);
-            xmax = Math.min(xc+rawradii[s], maxX);
-            ymax = Math.min(yc+rawradii[s], maxY);
-            zmax = Math.min(zc+rawradii[s], maxZ);
+            xmin = Math.max(xc - (int)Math.round(radii[s]/vxWH), minX);
+            ymin = Math.max(yc - (int)Math.round(radii[s]/vxWH), minY);
+            zmin = Math.max(zc - (int)Math.round(radii[s]/vxD), minZ);
+            xmax = Math.min(xc + (int)Math.round(radii[s]/vxWH), maxX);
+            ymax = Math.min(yc + (int)Math.round(radii[s]/vxWH), maxY);
+            zmax = Math.min(zc + (int)Math.round(radii[s]/vxD), maxZ);
             count = 0;
 
             for (int z=zmin; z<=zmax; z++) {
                 IJ.showProgress(z, zmax+1);
                 for (int y=ymin; y<ymax; y++) {
                     for (int x=xmin; x<xmax; x++) {
-                        dx = Math.sqrt((x-xc)*(x-xc)+(y-yc)*(y-yc)+(z-zc)*(z-zc));
-                        if (Math.abs(dx-rawradii[s])<0.5) {
+                        dx = Math.sqrt((x-xc) * vxWH * (x-xc) * vxWH
+                                     + (y-yc) * vxWH * (y-yc) * vxWH
+                                     + (z-zc) * vxD  * (z-zc) * vxD);
+                        if (Math.abs(dx-radii[s])<0.5) {
                             value = stack.getVoxel(x,y,z);
                             if (value >= lowerT && value <= upperT) {
                                 points[count][0]   = x;
@@ -457,13 +476,17 @@ public class Advanced_Sholl_Analysis implements PlugIn {
                 }
             }
 
+            // Ignore small clusters
+            if (count<groupsize)
+                continue;
+
             // We now have the the points intercepting the surface of this Sholl
             // sphere. Lets check if their respective pixels are clustered
             data[s] = count3Dgroups(points, count, 1.5);
 
             // Since this all this is very computing intensive, exit as soon
             // as a spheres has no interceptions
-                //if (count==0) return data;
+                //if (count==0) break;
         }
         return data;
     }
@@ -519,8 +542,7 @@ public class Advanced_Sholl_Analysis implements PlugIn {
         // Create an array to hold the results
         data = new double[size = radii.length];
 
-        // Create an array for the bin samples. Passed binsize value must be
-        // at least 1
+        // Create array for bin samples. Passed value of binsize must be at least 1
         binsamples = new int[binsize];
 
         IJ.showStatus("Sampling "+ size +" radii, "+ binsize
@@ -728,8 +750,7 @@ public class Advanced_Sholl_Analysis implements PlugIn {
         // Put the pixel value for each circumference point in the pixel array
         for (int i = 0; i < pixels.length; i++) {
 
-            // We already filtered out of bounds coordinates in
-            // getCircumferencePoints
+            // We already filtered out of bounds coordinates in getCircumferencePoints
             value = ip.getPixel(points[i][0], points[i][1]);
             if (value >= lowerT && value <= upperT)
                 pixels[i] = 1;
@@ -829,8 +850,7 @@ public class Advanced_Sholl_Analysis implements PlugIn {
 
     /** Creates Results table and Sholl plot, performing curve fitting */
     static public double[] plotValues(final String title, final int mthd, final double[] xpoints,
-            final double[] ypoints, final int xc, final int yc, final int zc, final boolean saveplot,
-            final String savepath) {
+            final double[] ypoints, final int xc, final int yc, final int zc) {
 
         final int size = ypoints.length;
         int i, j, nsize = 0;
@@ -897,6 +917,7 @@ public class Advanced_Sholl_Analysis implements PlugIn {
         rt.addLabel("Image", title + " (" + unit + ")");
         rt.addValue("Lower Thold", lowerT);
         rt.addValue("Upper Thold", upperT);
+        rt.addValue("Smallest cluster", is3D ? minCluster : Double.NaN);
         rt.addValue("Method #", mthd + 1);
         rt.addValue("X center (px)", xc);
         rt.addValue("Y center (px)", yc);
@@ -914,7 +935,6 @@ public class Advanced_Sholl_Analysis implements PlugIn {
         rt.addValue("Enclosing radius", lastR);
         rt.addValue("Enclosed field", field);
         rt.addValue("Ramification index", ri);
-        rt.show(shollTable); // addResults();
 
         // Calculate Sholl decay: the slope of fitted regression on Semi-log Sholl
         CurveFitter cf = new CurveFitter(x, logY);
@@ -924,6 +944,7 @@ public class Advanced_Sholl_Analysis implements PlugIn {
         plotLabel.append("\nk= " + IJ.d2s(parameters[0], -3));
         rt.addValue("Sholl decay", parameters[0]);
         rt.addValue("R^2 (decay regression)", cf.getRSquared());
+        rt.show(shollTable); // addResults();
 
         // Define a global analysis title
         final String longtitle = "Sholl ["+ SHOLL_TYPES[mthd] +"] :: "+ title;
@@ -988,7 +1009,7 @@ public class Advanced_Sholl_Analysis implements PlugIn {
         if (!fitCurve) {
             plot.setColor(Color.BLACK);
             plot.addLabel(0.8, 0.085, plotLabel.toString());
-            plot.show();
+            savePlot(plot, title, x, y, empty);
             return y;
         }
 
@@ -1102,20 +1123,7 @@ public class Advanced_Sholl_Analysis implements PlugIn {
 
         // Show the plot window, save plot values (if requested), update
         // results and return fitted data
-        final PlotWindow pw = plot.show();
-
-        if (saveplot) {
-
-            final ResultsTable rtp = pw.getResultsTable();
-            try {
-                rtp.saveAs(savepath + File.separator
-                        + title.replaceFirst("[.][^.]+$", "") + "_Sholl-M"
-                        + (mthd + 1) + Prefs.get("options.ext", ".csv"));
-            } catch (final IOException e) {
-                IJ.log(">>>> "+ longtitle +":\n"+ e);
-            }
-        }
-
+        savePlot(plot, title, x, y, fy);
         rt.show(shollTable);
         return fy;
     }
@@ -1172,9 +1180,13 @@ public class Advanced_Sholl_Analysis implements PlugIn {
         }
 
         // Apply LUT
-        mp.setColorModel(matlabJetColorMap(maskBackground));
-        final double[] range = Tools.getMinMax(values);
-        mp.setMinAndMax( 0, range[1] );
+        mp.setColorModel(matlabJetColorMap(maskBackground, shollChoice==SHOLL_SLOG || shollChoice==SHOLL_LOG ? 255 : 0));
+
+        if ( shollChoice==SHOLL_N ) {
+                final double[] range = Tools.getMinMax(values);
+                mp.setMinAndMax(0, range[1]);
+        } else
+                (new ContrastEnhancer()).stretchHistogram(mp, 0.35);
 
         final ImagePlus img2 = new ImagePlus("Sholl mask ["+ SHOLL_TYPES[shollChoice] +"] :: "+ ttl, mp);
 
@@ -1182,9 +1194,9 @@ public class Advanced_Sholl_Analysis implements PlugIn {
         img2.setCalibration(cal);
         img2.setProperty("Label", fitCurve ? "Fitted data" : "Raw data");
         img2.setRoi(new PointRoi(xc, yc));
+
         return img2;
     }
-
 
     /** Checks if image is valid (segmented grayscale) and sets validPath */
     boolean validImage(final ImagePlus img, final ImageProcessor ip) {
@@ -1234,44 +1246,76 @@ public class Advanced_Sholl_Analysis implements PlugIn {
     }
 
     /**
-     * Returns an IndexColorModel where 0 (background) has the gray value (0-255) imposed
-     * by zerograyvalue and 1 to 255 are colored according to Matlab's jet color map
+     * Returns an IndexColorModel similar to Matlab's jet color map. An 8-bit gray color
+     * level specified by grayvalue is mapped to index idx.
      */
-    public static IndexColorModel matlabJetColorMap(final int zerograyvalue) {
+    public static IndexColorModel matlabJetColorMap(final int grayvalue, final int idx) {
 
         // Initialize colors arrays, initialized with zero values
         final byte[] reds   = new byte[256];
         final byte[] greens = new byte[256];
         final byte[] blues  = new byte[256];
 
-        // Set greens, index 0-32: 0
+        // Set greens, index 0-32; 224-255: 0
         for( int i = 0; i < 256/4; i++ )         // index 32-96
             greens[i+256/8] = (byte)(i*255*4/256);
         for( int i = 256*3/8; i < 256*5/8; ++i ) // index 96-160
             greens[i] = (byte)255;
         for( int i = 0; i < 256/4; i++ )         // index 160-224
             greens[i+256*5/8] = (byte)(255-(i*255*4/256));
-        for( int i = 256*7/8; i < 256; i++ )     // index 224-255
-            greens[i] = (byte)0;
 
-        // Set blues
+        // Set blues, index 224-255: 0
         for(int i = 0; i < 256*7/8; i++)         // index 0-224
             blues[i] = greens[(i+256/4) % 256];
-        for(int i = 256*7/8; i < 256; i++)       // index 224-255
-            blues[i] = (byte)0;
 
         // Set reds, index 0-32: 0
         for(int i = 256/8; i < 256; i++)         // index 32-255
             reds[i] = greens[(i+256*6/8) % 256];
 
         // Set background color
-        reds[0] = greens[0] = blues[0] = (byte)zerograyvalue;
+        reds[idx] = greens[idx] = blues[idx] = (byte)grayvalue;
 
         return new IndexColorModel(8, 256, reds, greens, blues);
     }
 
+    /** Shows the plot window and saves the plot table on the image directory */
+    private static void savePlot(final Plot plot, final String title, final double[] x0,
+            final double[] y0, final double[] y1) {
+        plot.show();
+        if (save) {
+            final String path = imgPath + File.separator
+                        + title.replaceFirst("[.][^.]+$", "")
+                        + "_Sholl-M" + (shollChoice + 1);
+            final ResultsTable rt = getProfileTable(x0, y0, y1);
+            try {
+                rt.saveAs(path + Prefs.get("options.ext", ".csv"));
+                IJ.saveAs(plot.getImagePlus(), "png", path + ".png");
+            } catch (final IOException e) {
+                IJ.log(">>>> An error occured when saving "+ title +"'s profile:\n"+ e);
+            }
+        }
+    }
+
+    /**
+     * Returns a three-column Results Table, or two-column if y1 is null. All arrays must
+     * have the same length.
+     */
+    private static ResultsTable getProfileTable(final double[] x0, final double[] y0,
+            final double[] y1) {
+        final ResultsTable rt = new ResultsTable();
+        final boolean thirdcol = y1!=null;
+        for (int i=0; i<x0.length; i++) {
+            rt.incrementCounter();
+            rt.addValue("Radius", x0[i]);
+            rt.addValue("Crossings", y0[i]);
+            if (thirdcol)
+                rt.addValue("Fitted crossings", y1[i]);
+        }
+        return rt;
+    }
+
     /** Creates improved error messages with help button */
-    void error(final String msg) {
+    private void error(final String msg) {
         if (IJ.macroRunning())
             IJ.error("Advanced Sholl Analysis Error", msg);
         else {

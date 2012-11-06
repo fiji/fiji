@@ -1,5 +1,0 @@
-To be fixed:    
-    - 3D Sholl remains extremely slow
-    - Improve accuracy of 3D connectivity checks
-    - With IJ2, it only works when the center is defined by a point selection,
-      and is extremely slow
