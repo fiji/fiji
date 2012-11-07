@@ -26,7 +26,7 @@ public class ProcessScheduler extends Thread
         jobQueue = new ArrayBlockingQueue<ProcessManager>(jobCapacity);
         running = new AtomicBoolean(true);
         pollTime = new AtomicInteger(t);
-        start();
+
     }
     
     public void setPollTimeMillis(int t)

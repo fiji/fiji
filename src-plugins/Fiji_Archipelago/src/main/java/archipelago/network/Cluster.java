@@ -88,13 +88,14 @@ public class Cluster
     }
 
     public void setLocalHostName(String host)
-    {
+    {        
         localHostName = host;
     }
 
     
     public boolean startServer()
     {
+        scheduler.start();
         server = new ArchipelagoServer(this);
         return server.start();
     }
