@@ -106,7 +106,8 @@ public class Advanced_Sholl_Analysis implements PlugIn {
     private static boolean doSpikeSupression = true;
 
     /* Default parameters for 3D analysis */
-    private static double minCluster;
+    private static double minCluster = 50;
+    private static double minRadius = 0;
     private static boolean clusterUsePixels = true;
 
     /* Boundaries of analysis */
@@ -267,7 +268,7 @@ public class Advanced_Sholl_Analysis implements PlugIn {
         // 2D: Analyze the data and return intersection counts with nSpans
         // per radius. 3D: Analysis without nSpans
         if (is3D) {
-            counts = analyze3D(x, y, z, radii, img, (int)Math.round(minCluster));
+            counts = analyze3D(x, y, z, radii, minRadius, (int)Math.round(minCluster), img);
         } else {
             counts = analyze2D(x, y, radii, vxSize, nSpans, binChoice, ip);
         }
@@ -322,7 +323,6 @@ public class Advanced_Sholl_Analysis implements PlugIn {
         // allow multiple samples per radius,
         if (is3D) {
             gd.setInsets(12, 0, 0);
-            //gd.addNumericField("Min. cluster size:", minCluster, 2, 9, unit +"\u00B2");
             gd.addNumericField("Smallest cluster:", minCluster, 2, 9, unit +"\u00B2");
             gd.setInsets(0, 86, 4);
             gd.addCheckbox("Pixel units", clusterUsePixels);
@@ -394,8 +394,12 @@ public class Advanced_Sholl_Analysis implements PlugIn {
         if (is3D) {
            minCluster = Math.max(0, gd.getNextNumber());
            clusterUsePixels = gd.getNextBoolean();
-           if (!clusterUsePixels)
-               minCluster = minCluster/(vxSize*vxSize);
+           if (!clusterUsePixels) {
+               minRadius = Math.sqrt( minCluster / (Math.PI*4) );
+               minCluster = minCluster / (vxSize*vxSize);
+           } else {
+              minRadius = Math.sqrt( (minCluster * vxSize*vxSize) / (Math.PI*4) );
+           }
         } else {
             nSpans = Math.min(Math.max((int)gd.getNextNumber(), 1), 10);
             binChoice = gd.getNextChoiceIndex();
@@ -427,7 +431,8 @@ public class Advanced_Sholl_Analysis implements PlugIn {
 
     /** Measures intersections for each sphere surface */
     static public double[] analyze3D(final int xc, final int yc, final int zc,
-            final double[] radii, final ImagePlus img, final int groupsize) {
+            final double[] radii, final double minradius, final int groupsize,
+            final ImagePlus img) {
 
         int nspheres, xmin, ymin, zmin, xmax, ymax, zmax, count;
         double dx, value;
@@ -445,7 +450,12 @@ public class Advanced_Sholl_Analysis implements PlugIn {
 
         for (int s = 0; s < nspheres; s++) {
 
+            // Ignore radii that do not allow counts larger than minCluster
+            if (radii[s] < minradius)
+               continue;
+
             IJ.showStatus("Sampling sphere "+ (s+1) +"/"+ nspheres +". Press 'Esc' to abort...");
+            IJ.showProgress(s, nspheres);
             if (IJ.escapePressed())
                 { IJ.beep(); mask = false; return data; }
 
@@ -458,7 +468,6 @@ public class Advanced_Sholl_Analysis implements PlugIn {
             count = 0;
 
             for (int z=zmin; z<=zmax; z++) {
-                IJ.showProgress(z, zmax+1);
                 for (int y=ymin; y<ymax; y++) {
                     for (int x=xmin; x<xmax; x++) {
                         dx = Math.sqrt((x-xc) * vxWH * (x-xc) * vxWH
@@ -943,6 +952,7 @@ public class Advanced_Sholl_Analysis implements PlugIn {
         double[] parameters = cf.getParams();
         plotLabel.append("\nk= " + IJ.d2s(parameters[0], -3));
         rt.addValue("Sholl decay", parameters[0]);
+        rt.addValue("Intercept (decay regression)", parameters[1]);
         rt.addValue("R^2 (decay regression)", cf.getRSquared());
         rt.show(shollTable); // addResults();
 
