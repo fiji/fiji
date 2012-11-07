@@ -272,7 +272,7 @@ public class Advanced_Sholl_Analysis implements PlugIn {
             counts = analyze2D(x, y, radii, vxSize, nSpans, binChoice, ip);
         }
 
-        final String title = img.getTitle();
+        final String title = img.getShortTitle();
 
         // Display the plot and return transformed data
         final double[] grays = plotValues(title, shollChoice, radii, counts, x, y, z);
@@ -947,7 +947,7 @@ public class Advanced_Sholl_Analysis implements PlugIn {
         rt.show(shollTable); // addResults();
 
         // Define a global analysis title
-        final String longtitle = "Sholl ["+ SHOLL_TYPES[mthd] +"] :: "+ title;
+        final String longtitle = "Sholl Profile ("+ SHOLL_TYPES[mthd] +") for "+ title;
 
         // Abort curve fitting when dealing with small datasets that are prone to
         // inflated coefficients of determination
@@ -993,7 +993,7 @@ public class Advanced_Sholl_Analysis implements PlugIn {
         final double[] empty = null;
         final int flags = Plot.X_FORCE2GRID + Plot.X_TICKS + Plot.X_NUMBERS
                         + Plot.Y_FORCE2GRID + Plot.Y_TICKS + Plot.Y_NUMBERS;
-        final Plot plot = new Plot("Plot "+ longtitle, xTitle, yTitle, empty, empty, flags);
+        final Plot plot = new Plot(longtitle, xTitle, yTitle, empty, empty, flags);
 
         // Set plot limits and font
         final double[] xScale = Tools.getMinMax(x);
@@ -1009,7 +1009,7 @@ public class Advanced_Sholl_Analysis implements PlugIn {
         if (!fitCurve) {
             plot.setColor(Color.BLACK);
             plot.addLabel(0.8, 0.085, plotLabel.toString());
-            savePlot(plot, title, x, y, empty);
+            savePlot(plot, title, xpoints, ypoints, logY, empty, empty);
             return y;
         }
 
@@ -1121,9 +1121,8 @@ public class Advanced_Sholl_Analysis implements PlugIn {
             IJ.log("\n*** "+ longtitle +", fitting details:"+ cf.getResultString());
         }
 
-        // Show the plot window, save plot values (if requested), update
-        // results and return fitted data
-        savePlot(plot, title, x, y, fy);
+        // Show the plot window, save profile, update results and return fitted data
+        savePlot(plot, title, xpoints, ypoints, logY, x, fy);
         rt.show(shollTable);
         return fy;
     }
@@ -1188,12 +1187,16 @@ public class Advanced_Sholl_Analysis implements PlugIn {
         } else
                 (new ContrastEnhancer()).stretchHistogram(mp, 0.35);
 
-        final ImagePlus img2 = new ImagePlus("Sholl mask ["+ SHOLL_TYPES[shollChoice] +"] :: "+ ttl, mp);
+        final String title = ttl + "_ShollMask-M"+ (shollChoice+1) + ".tif";
+        final ImagePlus img2 = new ImagePlus(title, mp);
 
         // Apply calibration, set mask label and mark center of analysis
         img2.setCalibration(cal);
         img2.setProperty("Label", fitCurve ? "Fitted data" : "Raw data");
         img2.setRoi(new PointRoi(xc, yc));
+
+        if (save)
+            IJ.save(img2, imgPath + File.separator + title);
 
         return img2;
     }
@@ -1280,13 +1283,11 @@ public class Advanced_Sholl_Analysis implements PlugIn {
 
     /** Shows the plot window and saves the plot table on the image directory */
     private static void savePlot(final Plot plot, final String title, final double[] x0,
-            final double[] y0, final double[] y1) {
+            final double[] y0, final double[] logy0, final double[] x1, final double[] y1) {
         plot.show();
         if (save) {
-            final String path = imgPath + File.separator
-                        + title.replaceFirst("[.][^.]+$", "")
-                        + "_Sholl-M" + (shollChoice + 1);
-            final ResultsTable rt = getProfileTable(x0, y0, y1);
+            final String path = imgPath + File.separator + title + "_Sholl-M" + (shollChoice+1);
+            final ResultsTable rt = getProfileTable(x0, y0, logy0, x1, y1);
             try {
                 rt.saveAs(path + Prefs.get("options.ext", ".csv"));
                 IJ.saveAs(plot.getImagePlus(), "png", path + ".png");
@@ -1296,20 +1297,19 @@ public class Advanced_Sholl_Analysis implements PlugIn {
         }
     }
 
-    /**
-     * Returns a three-column Results Table, or two-column if y1 is null. All arrays must
-     * have the same length.
-     */
-    private static ResultsTable getProfileTable(final double[] x0, final double[] y0,
-            final double[] y1) {
+    /** Returns a Results Table with profile data */
+    private static ResultsTable getProfileTable(final double[] rawX, final double[] rawY,
+            final double[] lograwY, final double[] fitX, final double[] fitY) {
         final ResultsTable rt = new ResultsTable();
-        final boolean thirdcol = y1!=null;
-        for (int i=0; i<x0.length; i++) {
-            rt.incrementCounter();
-            rt.addValue("Radius", x0[i]);
-            rt.addValue("Crossings", y0[i]);
-            if (thirdcol)
-                rt.addValue("Fitted crossings", y1[i]);
+        rt.setPrecision(Analyzer.precision);
+        for (int i=0, j=0; i<rawX.length; i++) {
+            rt.setValue("Radius", i, rawX[i]);
+            rt.setValue("Crossings", i, rawY[i]);
+            rt.setValue("log(Norm crossings)", i, rawY[i]!=0 ? lograwY[j++] : Double.NaN);
+            if (fitCurve && i<fitX.length) {
+                rt.setValue("Fitted X", i, fitX[i]);
+                rt.setValue("Fitted Y", i, fitY[i]);
+            }
         }
         return rt;
     }
