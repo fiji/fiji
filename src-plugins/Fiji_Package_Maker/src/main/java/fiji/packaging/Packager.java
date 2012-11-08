@@ -264,6 +264,7 @@ public abstract class Packager {
 		catch (Exception e) {
 			e.printStackTrace();
 			System.err.println("Error writing " + path);
+			System.exit(1);
 		}
 	}
 }
