@@ -31,13 +31,16 @@ import ij.process.*;
 import ij.text.*;
 import ij.util.Tools;
 
+import java.awt.*;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.Frame;
 import java.awt.Rectangle;
+import java.awt.event.*;
 import java.awt.image.IndexColorModel;
 import java.io.*;
 import java.util.Arrays;
+import java.util.Vector;
 
 /**
  * Performs Sholl Analysis on segmented arbors. Several analysis methods are
@@ -51,7 +54,7 @@ import java.util.Arrays;
  * @author Tiago Ferreira v2.0, Feb 2012, v3.0 Oct, 2012
  * @author Tom Maddock v1.0, Oct 2005
  */
-public class Advanced_Sholl_Analysis implements PlugIn {
+public class Advanced_Sholl_Analysis implements PlugIn, ItemListener {
 
     /* Plugin Information */
     private static final String VERSION = "3";
@@ -90,6 +93,11 @@ public class Advanced_Sholl_Analysis implements PlugIn {
     private static boolean is3D;
     private static int lowerT;
     private static int upperT;
+
+    Choice ieshollChoice;
+    Choice iepolyChoice;
+    Checkbox iefitCurve;
+    Checkbox ieverbose;
 
     /* Default parameters for 2D analysis */
     private static final String[] BIN_TYPES = { "Mean", "Median" };
@@ -310,7 +318,7 @@ public class Advanced_Sholl_Analysis implements PlugIn {
      * to be trimmed from the analysis "None", "Above","Below", "Right" or "Left".
      * Returns null if dialog was canceled
      */
-    private static String showDialog(final double chordAngle, final boolean is3D) {
+    private String showDialog(final double chordAngle, final boolean is3D) {
 
         String trim = "None";
 
@@ -361,11 +369,9 @@ public class Advanced_Sholl_Analysis implements PlugIn {
             gd.setInsets(12, 6, 0);
 
         gd.addCheckbox("Fit profile and compute descriptors", fitCurve);
-        if (is3D)
-            gd.setInsets(3, 33, 3);
-        else
-            gd.setInsets(3, 56, 3);
+        gd.setInsets(3, is3D ? 33 : 56, 3);
         gd.addCheckbox("Show parameters", verbose);
+
         gd.addChoice("Polynomial:", DEGREES, DEGREES[polyChoice]);
 
         gd.setInsets(6, 6, 0);
@@ -380,6 +386,26 @@ public class Advanced_Sholl_Analysis implements PlugIn {
 
         gd.setHelpLabel("Online Help");
         gd.addHelp(URL);
+
+        // Add listeners
+		final Vector<?> choices = gd.getChoices();
+		ieshollChoice = (Choice)choices.elementAt(is3D ? 0 : 1);
+		ieshollChoice.addItemListener(this);
+		iepolyChoice = (Choice)choices.elementAt(is3D ? 1 : 2);
+		iepolyChoice.addItemListener(this);
+
+		final Vector<?> checkboxes = gd.getCheckboxes();
+		iefitCurve = (Checkbox)checkboxes.elementAt(is3D ? 1 : 0);
+		iefitCurve.addItemListener(this);
+		ieverbose = (Checkbox)checkboxes.elementAt(is3D ? 2 : 1);
+		ieverbose.addItemListener(this);
+		ieverbose = (Checkbox)checkboxes.elementAt(is3D ? 2 : 1);
+		ieverbose.addItemListener(this);
+
+		// Set initial states
+		ieverbose.setEnabled(fitCurve);
+		iepolyChoice.setEnabled(shollChoice==SHOLL_N && fitCurve);
+
         gd.showDialog();
 
         // Exit if user pressed cancel
@@ -501,7 +527,7 @@ public class Advanced_Sholl_Analysis implements PlugIn {
     }
 
     /**
-     * Analogous to countGroups(), counts clusters of pixels from an array of 3D
+     * Analogous to countGroups(), counts clusters of voxels from an array of 3D
      * coordinates, but without SpikeSupression
      */
     static public int count3Dgroups(final int[][] points, final int lastIdx,
@@ -1338,4 +1364,13 @@ public class Advanced_Sholl_Analysis implements PlugIn {
             gd.showDialog();
         }
     }
+
+    /**  Disables invalid options every time the dialog changes */
+    public void itemStateChanged(final ItemEvent ie) {
+        final boolean fState = iefitCurve.getState();
+        final boolean pState = ieshollChoice.getSelectedItem().equals(SHOLL_TYPES[SHOLL_N]) && fState;
+        ieverbose.setEnabled(fState);
+        iepolyChoice.setEnabled(pState);
+	}
+
 }
