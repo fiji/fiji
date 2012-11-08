@@ -54,7 +54,7 @@ import java.util.Vector;
  * @author Tiago Ferreira v2.0, Feb 2012, v3.0 Oct, 2012
  * @author Tom Maddock v1.0, Oct 2005
  */
-public class Advanced_Sholl_Analysis implements PlugIn, ItemListener {
+public class Advanced_Sholl_Analysis implements PlugIn, TextListener, ItemListener {
 
     /* Plugin Information */
     private static final String VERSION = "3";
@@ -94,10 +94,17 @@ public class Advanced_Sholl_Analysis implements PlugIn, ItemListener {
     private static int lowerT;
     private static int upperT;
 
-    Choice ieshollChoice;
-    Choice iepolyChoice;
-    Checkbox iefitCurve;
-    Checkbox ieverbose;
+    /* Dialog listeners*/
+    private static Choice iebinChoice;
+    private static Choice ieshollChoice;
+    private static Choice iepolyChoice;
+    private static Choice iequads;
+    private static Checkbox ierestrict;
+    private static Checkbox iefitCurve;
+    private static Checkbox ieverbose;
+    private static Checkbox iemask;
+    private static TextField ienSpans;
+    private static TextField iemaskBackground;
 
     /* Default parameters for 2D analysis */
     private static final String[] BIN_TYPES = { "Mean", "Median" };
@@ -120,6 +127,7 @@ public class Advanced_Sholl_Analysis implements PlugIn, ItemListener {
 
     /* Boundaries of analysis */
     private static boolean trimBounds;
+    private static boolean restrict;
     private static int minX;
     private static int maxX;
     private static int minY;
@@ -359,9 +367,8 @@ public class Advanced_Sholl_Analysis implements PlugIn, ItemListener {
                 quads[0] = "Above line";
                 quads[1] = "Below line";
             }
-            final String hemi = is3D ? "hemisphere" : "hemicircle";
             gd.setInsets(12, 6, 3);
-            gd.addCheckbox("Restrict analysis to "+ hemi, false);
+            gd.addCheckbox("Restrict analysis to hemi"+ (is3D ? "sphere" : "circle"), restrict);
             gd.addChoice("_", quads, quads[0]);
             gd.setInsets(6, 6, 0);
 
@@ -387,24 +394,48 @@ public class Advanced_Sholl_Analysis implements PlugIn, ItemListener {
         gd.setHelpLabel("Online Help");
         gd.addHelp(URL);
 
-        // Add listeners
-		final Vector<?> choices = gd.getChoices();
-		ieshollChoice = (Choice)choices.elementAt(is3D ? 0 : 1);
-		ieshollChoice.addItemListener(this);
-		iepolyChoice = (Choice)choices.elementAt(is3D ? 1 : 2);
-		iepolyChoice.addItemListener(this);
+        // Add listeners and set initial states
+        final Vector<?> numericfields = gd.getNumericFields();
+        final Vector<?> choices = gd.getChoices();
+        final Vector<?> checkboxes = gd.getCheckboxes();
+        int currentCheckbox = is3D ? 1 : 0;
+        int currentChoice = 0;
 
-		final Vector<?> checkboxes = gd.getCheckboxes();
-		iefitCurve = (Checkbox)checkboxes.elementAt(is3D ? 1 : 0);
-		iefitCurve.addItemListener(this);
-		ieverbose = (Checkbox)checkboxes.elementAt(is3D ? 2 : 1);
-		ieverbose.addItemListener(this);
-		ieverbose = (Checkbox)checkboxes.elementAt(is3D ? 2 : 1);
-		ieverbose.addItemListener(this);
+        if (!is3D) {
+            ienSpans = (TextField)numericfields.elementAt(3);
+            ienSpans.addTextListener(this);
+            iebinChoice = (Choice)choices.elementAt(currentChoice++);
+            iebinChoice.addItemListener(this);
+            iebinChoice.setEnabled(nSpans>1);
+        }
 
-		// Set initial states
-		ieverbose.setEnabled(fitCurve);
-		iepolyChoice.setEnabled(shollChoice==SHOLL_N && fitCurve);
+        ieshollChoice = (Choice)choices.elementAt(currentChoice++);
+        ieshollChoice.addItemListener(this);
+
+        if (trimBounds) {
+            ierestrict = (Checkbox)checkboxes.elementAt(currentCheckbox++);
+            ierestrict.addItemListener(this);
+            iequads = (Choice)choices.elementAt(currentChoice++);
+            iequads.addItemListener(this);
+            iequads.setEnabled(restrict);
+        }
+
+        iefitCurve = (Checkbox)checkboxes.elementAt(currentCheckbox++);
+        iefitCurve.addItemListener(this);
+
+        ieverbose = (Checkbox)checkboxes.elementAt(currentCheckbox++);
+        ieverbose.addItemListener(this);
+        ieverbose.setEnabled(fitCurve);
+
+        iepolyChoice = (Choice)choices.elementAt(currentChoice++);
+        iepolyChoice.addItemListener(this);
+        iepolyChoice.setEnabled(shollChoice==SHOLL_N && fitCurve);
+
+        iemask = (Checkbox)checkboxes.elementAt(currentCheckbox++);
+        iemask.addItemListener(this);
+
+        iemaskBackground = (TextField)numericfields.elementAt(4);
+        iemaskBackground.setEnabled(mask);
 
         gd.showDialog();
 
@@ -433,9 +464,9 @@ public class Advanced_Sholl_Analysis implements PlugIn, ItemListener {
 
         shollChoice = gd.getNextChoiceIndex();
 
-        // Update trimBounds flag
+        // Update restrict flag
         if (trimBounds)
-            trimBounds = gd.getNextBoolean();
+            restrict = gd.getNextBoolean();
 
         // Extract trim choice
         if (trimBounds) {
@@ -1239,30 +1270,29 @@ public class Advanced_Sholl_Analysis implements PlugIn, ItemListener {
 
     /** Checks if image is valid (segmented grayscale) and sets validPath */
     boolean validImage(final ImagePlus img, final ImageProcessor ip) {
-
         String exitmsg = "";
-
         final int type = ip.getBitDepth();
 
         if (type==24)
             exitmsg = "RGB color images are not supported.";
         else if (type==32)
             exitmsg = "32-bit grayscale images are not supported.";
-        else if (ip.isBinary()) {
-            lowerT = upperT = 255;
-            if (ip.isInvertedLut()) {
-                ip.setThreshold(lowerT, upperT, ImageProcessor.RED_LUT);
-                img.updateAndDraw();
-            }
-        } else {  // 8/16-bit grayscale image
+        else {  // 8/16-bit grayscale image
 
             final double lower = ip.getMinThreshold();
-            if (lower==ImageProcessor.NO_THRESHOLD)
+            if (ip.isBinary() && lower==ImageProcessor.NO_THRESHOLD) {
+                lowerT = upperT = 255;
+                if (ip.isInvertedLut()) {
+                    ip.setThreshold(lowerT, upperT, ImageProcessor.RED_LUT);
+                    img.updateAndDraw();
+                }
+            } else if (lower==ImageProcessor.NO_THRESHOLD)
                 exitmsg = "Image is not thresholded.";
             else {
                 lowerT = (int) lower;
                 upperT = (int) ip.getMaxThreshold();
             }
+
         }
 
         if (!"".equals(exitmsg)) {
@@ -1367,10 +1397,20 @@ public class Advanced_Sholl_Analysis implements PlugIn, ItemListener {
 
     /**  Disables invalid options every time the dialog changes */
     public void itemStateChanged(final ItemEvent ie) {
-        final boolean fState = iefitCurve.getState();
-        final boolean pState = ieshollChoice.getSelectedItem().equals(SHOLL_TYPES[SHOLL_N]) && fState;
-        ieverbose.setEnabled(fState);
-        iepolyChoice.setEnabled(pState);
-	}
+        if (ie.getSource() == iemask)
+            iemaskBackground.setEnabled(iemask.getState());
+        else if (ie.getSource() == ierestrict)
+            iequads.setEnabled(ierestrict.getState());
+        else {
+            final boolean fState = iefitCurve.getState();
+            final boolean pState = ieshollChoice.getSelectedItem().equals(SHOLL_TYPES[SHOLL_N]) && fState;
+            ieverbose.setEnabled(fState);
+            iepolyChoice.setEnabled(pState);
+        }
+    }
 
+    /**  Disables BIN_TYPES choice when not required */
+    public void textValueChanged(final TextEvent e) {
+        iebinChoice.setEnabled( (int)Tools.parseDouble(ienSpans.getText(), 0.0)>1 );
+    }
 }
