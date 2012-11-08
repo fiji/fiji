@@ -1069,7 +1069,7 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 	void setFontParams() {
 
 		// the default font size
-		int size = 12;
+		int size = TextRoi.getSize();
 
 		if (isCustomROI()){
 			Roi roi = imp.getRoi();
