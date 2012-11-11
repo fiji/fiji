@@ -12,11 +12,20 @@
 	</parent>
 
 	<groupId>sc.fiji</groupId>
-	<artifactId>Process_Pixels</artifactId>
+	<artifactId>Scala_Interpreter</artifactId>
 	<version>1.0.0</version>
 
-	<name>plugins/Process_Pixels.jar</name>
+	<name>plugins/Scala_Interpreter.jar</name>
 	<description>A Maven project implementing an ImageJ 1.x plugin</description>
+
+	<!--> repos: ImageJ release + scala tools <-->	
+	<repositories>
+		<repository>
+			<id>imagej.releases</id>
+			<url>http://maven.imagej.net/content/repositories/releases</url>
+		</repository>    
+	</repositories>
+
 
 	<dependencies>
 		<dependency>
@@ -24,6 +33,16 @@
 			<artifactId>ij</artifactId>
 			<version>${imagej1.version}</version>
 		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>fiji-scripting</artifactId>
+			<version>2.0.0-SNAPSHOT</version>
+		</dependency>
+		<dependency>
+			<groupId>org.scala-lang</groupId>
+			<artifactId>scala-library</artifactId>
+			<version>2.9.2</version>
+		</dependency>			
 	</dependencies>
 
 </project>
