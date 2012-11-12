@@ -57,15 +57,15 @@ import java.util.Vector;
 public class Advanced_Sholl_Analysis implements PlugIn, TextListener, ItemListener {
 
     /* Plugin Information */
-    private static final String VERSION = "3";
+    public static final String VERSION = "3.0";
     private static final String URL = "http://imagejdocu.tudor.lu/doku.php?id=plugin:analysis:asa:start";
 
     /* Sholl Type Definitions */
-    private static final String[] SHOLL_TYPES = { "Intersections", "Norm. Intersections", "Semi-Log", "Log-Log" };
-    private static final int SHOLL_N    = 0;
-    private static final int SHOLL_NS   = 1;
-    private static final int SHOLL_SLOG = 2;
-    private static final int SHOLL_LOG  = 3;
+    public static final String[] SHOLL_TYPES = { "Intersections", "Norm. Intersections", "Semi-Log", "Log-Log" };
+    public static final int SHOLL_N    = 0;
+    public static final int SHOLL_NS   = 1;
+    public static final int SHOLL_SLOG = 2;
+    public static final int SHOLL_LOG  = 3;
     private static final String[] DEGREES = { "4th degree", "5th degree", "6th degree", "7th degree", "8th degree" };
 
     /* Will image directory be accessible? */
@@ -82,7 +82,7 @@ public class Advanced_Sholl_Analysis implements PlugIn, TextListener, ItemListen
     private static boolean fitCurve;
     private static boolean verbose;
     private static boolean mask;
-    private static int maskBackground = 228;
+    public static int maskBackground = 228;
     private static boolean save;
 
     /* Common variables */
@@ -94,12 +94,23 @@ public class Advanced_Sholl_Analysis implements PlugIn, TextListener, ItemListen
     private static int lowerT;
     private static int upperT;
 
+    /* Boundaries of analysis */
+    private static boolean orthoChord = false;
+    private static boolean trimBounds;
+    private static int quadChoice;
+    private static int minX;
+    private static int maxX;
+    private static int minY;
+    private static int maxY;
+    private static int minZ;
+    private static int maxZ;
+
     /* Dialog listeners*/
     private static Choice iebinChoice;
     private static Choice ieshollChoice;
     private static Choice iepolyChoice;
-    private static Choice iequads;
-    private static Checkbox ierestrict;
+    private static Choice iequadChoice;
+    private static Checkbox ietrimBounds;
     private static Checkbox iefitCurve;
     private static Checkbox ieverbose;
     private static Checkbox iemask;
@@ -125,33 +136,23 @@ public class Advanced_Sholl_Analysis implements PlugIn, TextListener, ItemListen
     private static double minRadius = 0;
     private static boolean clusterUsePixels = true;
 
-    /* Boundaries of analysis */
-    private static boolean trimBounds;
-    private static boolean restrict;
-    private static int minX;
-    private static int maxX;
-    private static int minY;
-    private static int maxY;
-    private static int minZ;
-    private static int maxZ;
-
-    public void run(final String arg) {
+    public void run( String arg) {
 
         if (IJ.versionLessThan("1.46h"))
             return;
 
-        // Get current image and its ImageProcessor
-        final ImagePlus img = IJ.getImage();
-        final ImageProcessor ip = img.getProcessor();
-
-        // Make sure image is the right type. We want to remind the user that
-        // the analysis is performed on segmented cells
-        if ( !validImage(img, ip) )
+        // Get current image and its ImageProcessor. Make sure image is the right
+        // type, reminding the user that the analysis is performed on segmented cells
+        final ImagePlus img = WindowManager.getCurrentImage();
+        final ImageProcessor ip = getValidProcessor(img);
+        if (ip==null)
             return;
 
         // Set the 2D/3D Sholl flag
         final int depth = img.getNSlices();
         is3D = depth > 1;
+
+        final String title = img.getShortTitle();
 
         // Get image calibration. Stacks are likely to have anisotropic voxels
         // with large z-steps. It is unlikely that lateral dimensions will differ
@@ -178,7 +179,8 @@ public class Advanced_Sholl_Analysis implements PlugIn, TextListener, ItemListen
             Toolbar.getInstance().setTool("line");
             final WaitForUserDialog wd = new WaitForUserDialog(
                               "Please define the largest Sholl radius by creating\n"
-                            + "a straight line starting at the center of analysis.\n \n"
+                            + "a straight line starting at the center of analysis.\n"
+                            + "(Hold down \"Shift\" to obtain orthogonal chords)\n \n"
                             + "Alternatively, define the focus of the arbor using\n"
                             + "the Point Selection Tool.");
             wd.show();
@@ -210,7 +212,7 @@ public class Advanced_Sholl_Analysis implements PlugIn, TextListener, ItemListen
 
         // Not a proper ROI type
         } else {
-            error("Straight Line or Point selection required.");
+            sError("Straight Line or Point selection required.");
             return;
         }
 
@@ -225,11 +227,10 @@ public class Advanced_Sholl_Analysis implements PlugIn, TextListener, ItemListen
         final int hght = ip.getHeight();
         final double dx, dy, dz, maxEndRadius;
 
-
-        dx = ((trimBounds && trim.equalsIgnoreCase("right")) || x<=wdth/2)
+        dx = ((orthoChord && trimBounds && trim.equalsIgnoreCase("right")) || x<=wdth/2)
              ? (x-wdth)*vxWH : x*vxWH;
 
-        dy = ((trimBounds && trim.equalsIgnoreCase("below")) || y<=hght/2)
+        dy = ((orthoChord && trimBounds && trim.equalsIgnoreCase("below")) || y<=hght/2)
              ? (y-hght)*vxWH : y*vxWH;
 
         dz = (z<=depth/2) ? (z-depth)*vxD : z*vxD;
@@ -243,7 +244,7 @@ public class Advanced_Sholl_Analysis implements PlugIn, TextListener, ItemListen
 
         // Exit if there are no samples
         if (size<=1) {
-            error(" Invalid Parameters: Starting radius must be smaller than\n"
+            sError(" Invalid Parameters: Starting radius must be smaller than\n"
                 + "Ending radius and Radius step size must be within range!");
             return;
         }
@@ -270,7 +271,7 @@ public class Advanced_Sholl_Analysis implements PlugIn, TextListener, ItemListen
         minZ = Math.max(z-zmaxradius, 1);
         maxZ = Math.min(z+zmaxradius, depth);
 
-        if (trimBounds) {
+        if (orthoChord && trimBounds) {
             if (trim.equalsIgnoreCase("above"))
                 maxY = (int) Math.min(y + xymaxradius, y);
             else if (trim.equalsIgnoreCase("below"))
@@ -289,8 +290,6 @@ public class Advanced_Sholl_Analysis implements PlugIn, TextListener, ItemListen
             counts = analyze2D(x, y, radii, vxSize, nSpans, binChoice, ip);
         }
 
-        final String title = img.getShortTitle();
-
         // Display the plot and return transformed data
         final double[] grays = plotValues(title, shollChoice, radii, counts, x, y, z);
 
@@ -305,13 +304,9 @@ public class Advanced_Sholl_Analysis implements PlugIn, TextListener, ItemListen
         } else if (mask) {
 
             final ImagePlus maskimg = makeMask(img, title, grays, xymaxradius, x, y, cal);
-
-            if (maskimg == null) {
-
-                IJ.beep();
-                exitmsg = "Error: Mask could not be created! ";
-
-            } else
+            if (maskimg == null)
+                { IJ.beep(); exitmsg = "Error: Mask could not be created! "; }
+            else
                 { maskimg.show(); maskimg.updateAndDraw(); }
 
         }
@@ -351,15 +346,10 @@ public class Advanced_Sholl_Analysis implements PlugIn, TextListener, ItemListen
         gd.setInsets(12, 0, 0);
         gd.addChoice("Sholl method:", SHOLL_TYPES, SHOLL_TYPES[shollChoice]);
 
-        // Prepare choices for hemicircle/hemisphere analysis, an option triggered by the
-        // presence of orthogonal lines (chords)
-        trimBounds = (chordAngle > -1 && chordAngle % 90 == 0);
-
-        // If an orthogonal chord exists, prompt for quadrants choice
+        // If an orthogonal chord exists, prompt for hemicircle/hemisphere analysis
+        orthoChord = (chordAngle > -1 && chordAngle % 90 == 0);
         final String[] quads = new String[2];
-
-        if (trimBounds) {
-
+        if (orthoChord) {
             if (chordAngle == 90.0) {
                 quads[0] = "Right of line";
                 quads[1] = "Left of line";
@@ -368,19 +358,19 @@ public class Advanced_Sholl_Analysis implements PlugIn, TextListener, ItemListen
                 quads[1] = "Below line";
             }
             gd.setInsets(12, 6, 3);
-            gd.addCheckbox("Restrict analysis to hemi"+ (is3D ? "sphere" : "circle"), restrict);
-            gd.addChoice("_", quads, quads[0]);
+            gd.addCheckbox("Restrict analysis to hemi"+ (is3D ? "sphere" : "circle"), trimBounds);
+            gd.addChoice("_", quads, quads[quadChoice]);
             gd.setInsets(6, 6, 0);
-
         } else
             gd.setInsets(12, 6, 0);
 
+        // Prompt for curve fitting related options
         gd.addCheckbox("Fit profile and compute descriptors", fitCurve);
         gd.setInsets(3, is3D ? 33 : 56, 3);
         gd.addCheckbox("Show parameters", verbose);
-
         gd.addChoice("Polynomial:", DEGREES, DEGREES[polyChoice]);
 
+        // Prompt for mask related options
         gd.setInsets(6, 6, 0);
         gd.addCheckbox("Create intersections mask", mask);
         gd.addSlider("Background:", 0, 255, maskBackground);
@@ -388,7 +378,7 @@ public class Advanced_Sholl_Analysis implements PlugIn, TextListener, ItemListen
         // Offer to save results if local image
         if (validPath) {
             gd.setInsets(5, 6, 0);
-            gd.addCheckbox("Save profile on image directory", save);
+            gd.addCheckbox("Save results on image directory", save);
         }
 
         gd.setHelpLabel("Online Help");
@@ -412,12 +402,12 @@ public class Advanced_Sholl_Analysis implements PlugIn, TextListener, ItemListen
         ieshollChoice = (Choice)choices.elementAt(currentChoice++);
         ieshollChoice.addItemListener(this);
 
-        if (trimBounds) {
-            ierestrict = (Checkbox)checkboxes.elementAt(currentCheckbox++);
-            ierestrict.addItemListener(this);
-            iequads = (Choice)choices.elementAt(currentChoice++);
-            iequads.addItemListener(this);
-            iequads.setEnabled(restrict);
+        if (orthoChord) {
+            ietrimBounds = (Checkbox)checkboxes.elementAt(currentCheckbox++);
+            ietrimBounds.addItemListener(this);
+            iequadChoice = (Choice)choices.elementAt(currentChoice++);
+            iequadChoice.addItemListener(this);
+            iequadChoice.setEnabled(trimBounds);
         }
 
         iefitCurve = (Checkbox)checkboxes.elementAt(currentCheckbox++);
@@ -464,13 +454,10 @@ public class Advanced_Sholl_Analysis implements PlugIn, TextListener, ItemListen
 
         shollChoice = gd.getNextChoiceIndex();
 
-        // Update restrict flag
-        if (trimBounds)
-            restrict = gd.getNextBoolean();
-
-        // Extract trim choice
-        if (trimBounds) {
-            final String choice = quads[gd.getNextChoiceIndex()];
+        // Get trim choice
+        if (orthoChord) {
+            trimBounds = gd.getNextBoolean();
+            final String choice = quads[quadChoice = gd.getNextChoiceIndex()];
             trim = choice.substring(0, choice.indexOf(" "));
         }
 
@@ -507,14 +494,14 @@ public class Advanced_Sholl_Analysis implements PlugIn, TextListener, ItemListen
 
         for (int s = 0; s < nspheres; s++) {
 
-            // Ignore radii that do not allow counts larger than minCluster
-            if (radii[s] < minradius)
-               continue;
-
             IJ.showStatus("Sampling sphere "+ (s+1) +"/"+ nspheres +". Press 'Esc' to abort...");
             IJ.showProgress(s, nspheres);
             if (IJ.escapePressed())
                 { IJ.beep(); mask = false; return data; }
+
+            // Ignore radii that do not allow counts larger than minCluster
+            if (radii[s] < minradius)
+               continue;
 
             xmin = Math.max(xc - (int)Math.round(radii[s]/vxWH), minX);
             ymin = Math.max(yc - (int)Math.round(radii[s]/vxWH), minY);
@@ -1007,11 +994,11 @@ public class Advanced_Sholl_Analysis implements PlugIn, TextListener, ItemListen
         cf.doFit(CurveFitter.STRAIGHT_LINE, false);
 
         double[] parameters = cf.getParams();
-        plotLabel.append("\nk= " + IJ.d2s(parameters[0], -3));
-        rt.addValue("Sholl decay", parameters[0]);
-        rt.addValue("Intercept (decay regression)", parameters[1]);
+        plotLabel.append("\nk= " + IJ.d2s(parameters[1], -2));
+        rt.addValue("Sholl decay", parameters[1]); // Slope of regression
+        rt.addValue("Intercept (decay regression)", parameters[0]);
         rt.addValue("R^2 (decay regression)", cf.getRSquared());
-        rt.show(shollTable); // addResults();
+        rt.show(shollTable);
 
         // Define a global analysis title
         final String longtitle = "Sholl Profile ("+ SHOLL_TYPES[mthd] +") for "+ title;
@@ -1183,6 +1170,7 @@ public class Advanced_Sholl_Analysis implements PlugIn, TextListener, ItemListen
         plot.setColor(Color.BLUE);
         plot.setLineWidth(2);
         plot.addPoints(x, fy, PlotWindow.LINE);
+        plot.setLineWidth(1);
 
         if (verbose) {
             IJ.log("\n*** "+ longtitle +", fitting details:"+ cf.getResultString());
@@ -1249,57 +1237,68 @@ public class Advanced_Sholl_Analysis implements PlugIn, TextListener, ItemListen
         mp.setColorModel(matlabJetColorMap(maskBackground, shollChoice==SHOLL_SLOG || shollChoice==SHOLL_LOG ? 255 : 0));
 
         if ( shollChoice==SHOLL_N ) {
-                final double[] range = Tools.getMinMax(values);
-                mp.setMinAndMax(0, range[1]);
+            final double[] range = Tools.getMinMax(values);
+            mp.setMinAndMax(0, range[1]);
         } else
-                (new ContrastEnhancer()).stretchHistogram(mp, 0.35);
+            (new ContrastEnhancer()).stretchHistogram(mp, 0.35);
 
         final String title = ttl + "_ShollMask-M"+ (shollChoice+1) + ".tif";
-        final ImagePlus img2 = new ImagePlus(title, mp);
+        ImagePlus img2 = new ImagePlus(title, mp);
 
         // Apply calibration, set mask label and mark center of analysis
         img2.setCalibration(cal);
         img2.setProperty("Label", fitCurve ? "Fitted data" : "Raw data");
         img2.setRoi(new PointRoi(xc, yc));
 
-        if (save)
+        if (validPath && save) {
             IJ.save(img2, imgPath + File.separator + title);
-
+        }
         return img2;
     }
 
-    /** Checks if image is valid (segmented grayscale) and sets validPath */
-    boolean validImage(final ImagePlus img, final ImageProcessor ip) {
+    /**
+      * Checks if image is valid (segmented grayscale), sets validPath and returns its
+      * ImageProcessor
+      */
+    private ImageProcessor getValidProcessor(final ImagePlus img) {
+        ImageProcessor ip = null;
         String exitmsg = "";
-        final int type = ip.getBitDepth();
 
-        if (type==24)
-            exitmsg = "RGB color images are not supported.";
-        else if (type==32)
-            exitmsg = "32-bit grayscale images are not supported.";
-        else {  // 8/16-bit grayscale image
+        if (img==null) {
+            exitmsg = "There are no images open.";
+        } else if (img.isComposite()) {
+            exitmsg = "Composite images are not supported.";
+        } else {
+            ip = img.getProcessor();
+            final int type = ip.getBitDepth();
+            if (type==24)
+                exitmsg = "RGB color images are not supported.";
+            else if (type==32)
+                exitmsg = "32-bit grayscale images are not supported.";
+            else {  // 8/16-bit grayscale image
 
-            final double lower = ip.getMinThreshold();
-            if (ip.isBinary() && lower==ImageProcessor.NO_THRESHOLD) {
-                lowerT = upperT = 255;
-                if (ip.isInvertedLut()) {
-                    ip.setThreshold(lowerT, upperT, ImageProcessor.RED_LUT);
-                    img.updateAndDraw();
+                final double lower = ip.getMinThreshold();
+                if (ip.isBinary() && lower==ImageProcessor.NO_THRESHOLD) {
+                    lowerT = upperT = 255;
+                    if (ip.isInvertedLut()) {
+                        ip.setThreshold(lowerT, upperT, ImageProcessor.RED_LUT);
+                        img.updateAndDraw();
+                    }
+                } else if (lower==ImageProcessor.NO_THRESHOLD)
+                    exitmsg = "Image is not thresholded.";
+                else {
+                    lowerT = (int) lower;
+                    upperT = (int) ip.getMaxThreshold();
                 }
-            } else if (lower==ImageProcessor.NO_THRESHOLD)
-                exitmsg = "Image is not thresholded.";
-            else {
-                lowerT = (int) lower;
-                upperT = (int) ip.getMaxThreshold();
-            }
 
+            }
         }
 
         if (!"".equals(exitmsg)) {
-            error(exitmsg + "\n \nThis plugin requires a segmented arbor. Either:\n"
+            lError(exitmsg + "\n \nThis plugin requires a segmented arbor. Either:\n"
                   + "    - A binary image (Arbor: non-zero value)\n"
                   + "    - A thresholded grayscale image (8/16-bit)");
-            return false;
+            return null;
         }
 
         // Retrieve image path and check if it is valid
@@ -1311,7 +1310,7 @@ public class Advanced_Sholl_Analysis implements PlugIn, TextListener, ItemListen
             validPath = dir.exists() && dir.isDirectory();
         }
 
-        return true;
+        return ip;
     }
 
     /**
@@ -1351,7 +1350,7 @@ public class Advanced_Sholl_Analysis implements PlugIn, TextListener, ItemListen
     private static void savePlot(final Plot plot, final String title, final double[] x0,
             final double[] y0, final double[] logy0, final double[] x1, final double[] y1) {
         plot.show();
-        if (save) {
+        if (validPath && save) {
             final String path = imgPath + File.separator + title + "_Sholl-M" + (shollChoice+1);
             final ResultsTable rt = getProfileTable(x0, y0, logy0, x1, y1);
             try {
@@ -1381,26 +1380,38 @@ public class Advanced_Sholl_Analysis implements PlugIn, TextListener, ItemListen
     }
 
     /** Creates improved error messages with help button */
-    private void error(final String msg) {
+    private void error(final String msg, final boolean extended) {
         if (IJ.macroRunning())
             IJ.error("Advanced Sholl Analysis Error", msg);
         else {
             final GenericDialog gd = new GenericDialog("Advanced Sholl Analysis Error");
             gd.setInsets(0,0,0);
             gd.addMessage(msg);
+            if (extended) {
+                gd.setInsets(6,0,0);
+                gd.addCheckbox("Open sample arbor (2D) of Drosophila neuron", false);
+            }
             gd.addHelp(URL);
             gd.setHelpLabel("Online Help");
             gd.hideCancelButton();
             gd.showDialog();
+            if (gd.getNextBoolean())
+                IJ.runPlugIn("Sholl_Utils", "sample");
         }
+    }
+    private void sError(final String msg) {
+        error(msg, false);
+    }
+    private void lError(final String msg) {
+        error(msg, true);
     }
 
     /**  Disables invalid options every time the dialog changes */
     public void itemStateChanged(final ItemEvent ie) {
         if (ie.getSource() == iemask)
             iemaskBackground.setEnabled(iemask.getState());
-        else if (ie.getSource() == ierestrict)
-            iequads.setEnabled(ierestrict.getState());
+        else if (ie.getSource() == ietrimBounds)
+            iequadChoice.setEnabled(ietrimBounds.getState());
         else {
             final boolean fState = iefitCurve.getState();
             final boolean pState = ieshollChoice.getSelectedItem().equals(SHOLL_TYPES[SHOLL_N]) && fState;
@@ -1411,6 +1422,7 @@ public class Advanced_Sholl_Analysis implements PlugIn, TextListener, ItemListen
 
     /**  Disables BIN_TYPES choice when not required */
     public void textValueChanged(final TextEvent e) {
-        iebinChoice.setEnabled( (int)Tools.parseDouble(ienSpans.getText(), 0.0)>1 );
+        iebinChoice.setEnabled( (int)Tools.parseDouble(ienSpans.getText(), 0.0) > 1 );
     }
+
 }
