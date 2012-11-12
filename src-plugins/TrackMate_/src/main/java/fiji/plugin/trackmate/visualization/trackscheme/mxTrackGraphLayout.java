@@ -186,7 +186,7 @@ public class mxTrackGraphLayout <T extends RealType<T> & NativeType<T>> extends 
 				Spot first = sortedTrack.first();
 
 				// First loop: Loop over spots in good order
-				DepthFirstIterator<Spot, DefaultWeightedEdge> iterator = model.getDepthFirstIterator(first);
+				DepthFirstIterator<Spot, DefaultWeightedEdge> iterator = model.getUndirectedDepthFirstIterator(first);
 				while(iterator.hasNext()) {
 
 					Spot spot = iterator.next();
@@ -208,7 +208,7 @@ public class mxTrackGraphLayout <T extends RealType<T> & NativeType<T>> extends 
 					int freeColumn = columns[frame] + 1;
 
 					// If we have no direct edge with the previous spot, we add 1 to the current column
-					if (previousSpot != null && !model.containsEdge(previousSpot, spot)) {
+					if (previousSpot != null && ! (model.containsEdge(previousSpot, spot) || model.containsEdge(spot, previousSpot) ) ) { // direction does not matter
 						currentColumn = currentColumn + 1;
 					}
 					previousSpot = spot;

@@ -16,6 +16,7 @@ import org.jgrapht.alg.DijkstraShortestPath;
 import org.jgrapht.event.GraphEdgeChangeEvent;
 import org.jgrapht.event.GraphListener;
 import org.jgrapht.event.GraphVertexChangeEvent;
+import org.jgrapht.graph.AsUndirectedGraph;
 import org.jgrapht.graph.AsUnweightedGraph;
 import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.graph.ListenableDirectedGraph;
@@ -443,10 +444,29 @@ public class TrackMateModel <T extends RealType<T> & NativeType<T>> {
 		return graph.edgeSet();
 	}
 
+	/**
+	 * @return a new undirected depth first iterator over the spots connected by links in this model.
+	 * The returned iterator does not take into account edge direction, and will be able to iterate 
+	 * backward in time if such links are met.
+	 * @param start  the spot to start iteration with. Can be <code>null</code>, then the start will be taken
+	 * randomly and will traverse all the links.
+	 */
+	public DepthFirstIterator<Spot, DefaultWeightedEdge> getUndirectedDepthFirstIterator(Spot start) {
+		return new DepthFirstIterator<Spot, DefaultWeightedEdge>(new AsUndirectedGraph<Spot, DefaultWeightedEdge>(graph), start);
+	}
+
+	/**
+	 * @return a new depth first iterator over the spots connected by links in this model.
+	 * The returned iterator does take into account the edge direction, and will not be able 
+	 * to iterate backward in time.
+	 * @param start  the spot to start iteration with. Can be <code>null</code>, then the start will be taken
+	 * randomly and will traverse all the links.
+	 */
 	public DepthFirstIterator<Spot, DefaultWeightedEdge> getDepthFirstIterator(Spot start) {
 		return new DepthFirstIterator<Spot, DefaultWeightedEdge>(graph, start);
 	}
 
+	
 	public String trackToString(int i) {
 		String str = "Track " + i + ": ";
 		for (String feature : featureModel.getTrackFeatures())
