@@ -54,7 +54,7 @@ public class TrackScheme <T extends RealType<T> & NativeType<T>> implements Trac
 	/*
 	 * CONSTANTS
 	 */
-	private static final boolean DEBUG = false;
+	private static final boolean DEBUG = true;
 	private static final boolean DEBUG_SELECTION = false;
 	static final int Y_COLUMN_SIZE = 96;
 	static final int X_COLUMN_SIZE = 160;
@@ -358,7 +358,12 @@ public class TrackScheme <T extends RealType<T> & NativeType<T>> implements Trac
 
 					// Put them right in order: since we use a oriented graph,
 					// we want the source spot to precede in time.
-					if (Spot.frameComparator.compare(source, target) < 0) {
+					if (Spot.frameComparator.compare(source, target) > 0) {
+						
+						if (DEBUG) {
+							System.out.println("[TrackScheme] souce " + source + " succeed target " + target + ". Inverting edge direction.");
+						}
+						
 						Spot tmp = source;
 						source = target;
 						target = tmp;
