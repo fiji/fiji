@@ -1,3 +1,13 @@
+/** Scala_Interpreter.java
+ * 
+ * ImageJ/Fiji plugin for scala REPL,
+ * extending AbstractInterpreter abstract class.
+ *  
+ * Kota Miura (miura@embl)
+ * http://cmci.embl.de
+ * Nov 12, 2012 -
+ */
+
 package emblcmci.scalainterp;
  
 import java.io.PrintWriter;
