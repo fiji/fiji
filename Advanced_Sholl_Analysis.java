@@ -39,6 +39,7 @@ import java.awt.Rectangle;
 import java.awt.event.*;
 import java.awt.image.IndexColorModel;
 import java.io.*;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Vector;
 
@@ -136,7 +137,7 @@ public class Advanced_Sholl_Analysis implements PlugIn, TextListener, ItemListen
     private static double minRadius = 0;
     private static boolean clusterUsePixels = true;
 
-    public void run( String arg) {
+    public void run( final String arg) {
 
         if (IJ.versionLessThan("1.46h"))
             return;
@@ -478,16 +479,11 @@ public class Advanced_Sholl_Analysis implements PlugIn, TextListener, ItemListen
             final double[] radii, final double minradius, final int groupsize,
             final ImagePlus img) {
 
-        int nspheres, xmin, ymin, zmin, xmax, ymax, zmax, count;
+        int nspheres, xmin, ymin, zmin, xmax, ymax, zmax;
         double dx, value;
 
         // Create an array to hold the results
         final double[] data = new double[nspheres = radii.length];
-
-        // Initialize the array holding surface points. It will be as large as the
-        // largest sphere surface enclosed by the analysis volume
-        final int voxels = (maxX-minX+1)*(maxY-minY+1)*(maxZ-minZ+1);
-        final int[][] points = new int[voxels][3];
 
         // Get Image Stack
         final ImageStack stack = img.getStack();
@@ -495,7 +491,6 @@ public class Advanced_Sholl_Analysis implements PlugIn, TextListener, ItemListen
         for (int s = 0; s < nspheres; s++) {
 
             IJ.showStatus("Sampling sphere "+ (s+1) +"/"+ nspheres +". Press 'Esc' to abort...");
-            IJ.showProgress(s, nspheres);
             if (IJ.escapePressed())
                 { IJ.beep(); mask = false; return data; }
 
@@ -503,15 +498,21 @@ public class Advanced_Sholl_Analysis implements PlugIn, TextListener, ItemListen
             if (radii[s] < minradius)
                continue;
 
+            // Initialize ArrayLists to hold surface points
+            final ArrayList<Integer> xList = new ArrayList<Integer>();
+            final ArrayList<Integer> yList = new ArrayList<Integer>();
+            final ArrayList<Integer> zList = new ArrayList<Integer>();
+
+            // Restrain analysis to the smallest volume for this sphere
             xmin = Math.max(xc - (int)Math.round(radii[s]/vxWH), minX);
             ymin = Math.max(yc - (int)Math.round(radii[s]/vxWH), minY);
             zmin = Math.max(zc - (int)Math.round(radii[s]/vxD), minZ);
             xmax = Math.min(xc + (int)Math.round(radii[s]/vxWH), maxX);
             ymax = Math.min(yc + (int)Math.round(radii[s]/vxWH), maxY);
             zmax = Math.min(zc + (int)Math.round(radii[s]/vxD), maxZ);
-            count = 0;
 
             for (int z=zmin; z<=zmax; z++) {
+                IJ.showProgress(z, zmax);
                 for (int y=ymin; y<ymax; y++) {
                     for (int x=xmin; x<xmax; x++) {
                         dx = Math.sqrt((x-xc) * vxWH * (x-xc) * vxWH
@@ -520,9 +521,7 @@ public class Advanced_Sholl_Analysis implements PlugIn, TextListener, ItemListen
                         if (Math.abs(dx-radii[s])<0.5) {
                             value = stack.getVoxel(x,y,z);
                             if (value >= lowerT && value <= upperT) {
-                                points[count][0]   = x;
-                                points[count][1]   = y;
-                                points[count++][2] = z;
+                                xList.add(x); yList.add(y); zList.add(z);
                             }
                         }
                     }
@@ -530,12 +529,12 @@ public class Advanced_Sholl_Analysis implements PlugIn, TextListener, ItemListen
             }
 
             // Ignore small clusters
-            if (count<groupsize)
+            if (xList.size()<groupsize)
                 continue;
 
             // We now have the the points intercepting the surface of this Sholl
             // sphere. Lets check if their respective pixels are clustered
-            data[s] = count3Dgroups(points, count, 1.5);
+            data[s] = count3Dgroups(xList, yList, zList, 1.5);
 
             // Since this all this is very computing intensive, exit as soon
             // as a spheres has no interceptions
@@ -548,13 +547,13 @@ public class Advanced_Sholl_Analysis implements PlugIn, TextListener, ItemListen
      * Analogous to countGroups(), counts clusters of voxels from an array of 3D
      * coordinates, but without SpikeSupression
      */
-    static public int count3Dgroups(final int[][] points, final int lastIdx,
-            final double threshold) {
+    static public int count3Dgroups(final ArrayList<Integer> x, final ArrayList<Integer> y,
+            final ArrayList<Integer> z, final double threshold) {
 
         double distance;
         int i, j, k, target, source, dx, dy, dz, groups, len;
 
-        final int[] grouping = new int[len = lastIdx];
+        final int[] grouping = new int[len = x.size()];
 
         for (i = 0, groups = len; i < groups; i++)
             grouping[i] = i + 1;
@@ -563,9 +562,9 @@ public class Advanced_Sholl_Analysis implements PlugIn, TextListener, ItemListen
             for (j = 0; j < len; j++) {
                 if (i == j)
                     continue;
-                dx = points[i][0] - points[j][0];
-                dy = points[i][1] - points[j][1];
-                dz = points[i][2] - points[j][2];
+                dx = x.get(i) - x.get(j);
+                dy = y.get(i) - y.get(j);
+                dz = z.get(i) - z.get(j);
                 distance = Math.sqrt(dx*dx + dy*dy + dz*dz);
                 if ((distance <= threshold) && (grouping[i] != grouping[j])) {
                     source = grouping[i];
@@ -979,7 +978,6 @@ public class Advanced_Sholl_Analysis implements PlugIn, TextListener, ItemListen
         rt.addValue("Ending radius", endRadius);
         rt.addValue("Radius step", stepRadius);
         rt.addValue("Samples per radius", is3D ? 1 : nSpans);
-        rt.addValue("Sampled radii", size);
         rt.addValue("Intersecting radii", nsize);
         rt.addValue("Sum Inters.", sumY);
         rt.addValue("Avg Inters.", sumY/nsize);
@@ -1243,7 +1241,7 @@ public class Advanced_Sholl_Analysis implements PlugIn, TextListener, ItemListen
             (new ContrastEnhancer()).stretchHistogram(mp, 0.35);
 
         final String title = ttl + "_ShollMask-M"+ (shollChoice+1) + ".tif";
-        ImagePlus img2 = new ImagePlus(title, mp);
+        final ImagePlus img2 = new ImagePlus(title, mp);
 
         // Apply calibration, set mask label and mark center of analysis
         img2.setCalibration(cal);
