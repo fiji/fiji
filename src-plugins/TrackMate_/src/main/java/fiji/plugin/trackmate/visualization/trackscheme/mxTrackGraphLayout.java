@@ -315,6 +315,13 @@ public class mxTrackGraphLayout <T extends RealType<T> & NativeType<T>> extends 
 			for (mxCell branchCell : branchCells )
 				graph.getModel().remove(branchCell);
 			branchCells = newBranchCells;
+
+			// Ensure we do not start at 0 for the first column of lonely cells
+			for (int i = 0; i < columns.length; i++) {
+				if (columns[i] < 1) {
+					columns[i] = 1;
+				}
+			}
 			
 			// Deal with lonely cells
 			for (mxCell cell : lonelyCells) {
