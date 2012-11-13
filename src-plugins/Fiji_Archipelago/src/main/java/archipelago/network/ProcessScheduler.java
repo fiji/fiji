@@ -61,7 +61,6 @@ public class ProcessScheduler extends Thread
             return false;
         }
     }
-    
 
     private synchronized ClusterNode getFreeNode()
     {
@@ -75,8 +74,16 @@ public class ProcessScheduler extends Thread
         return null;
     }
 
+    public void start()
+    {
+        running.set(true);
+        super.start();
+    }
+    
     public void run()
     {
+        FijiArchipelago.log("Scheduler: Started. Running flag: " + running.get());
+
         while (running.get())
         {
             ProcessManager<?, ?> pm;
@@ -139,6 +146,8 @@ public class ProcessScheduler extends Thread
     {
         running.set(false);
         interrupt();
+        jobQueue.clear();
+        nodes.clear();
     }
     
 }

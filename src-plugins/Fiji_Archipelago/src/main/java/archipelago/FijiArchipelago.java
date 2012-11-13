@@ -8,6 +8,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 public final class FijiArchipelago
 {
+    public static final String PREF_ROOT = "FijiArchipelago";
     private static EasyLogger logger = new NullLogger();
     private static EasyLogger errorLogger = new NullLogger();
     private static EasyLogger debugLogger = new NullLogger();

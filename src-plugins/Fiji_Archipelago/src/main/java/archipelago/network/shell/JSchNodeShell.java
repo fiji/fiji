@@ -187,9 +187,10 @@ public class JSchNodeShell implements NodeShell
     {
         String user = param.getUser();
         String host = param.getHost();
+        int port = param.getPort();
         try
         {
-            Session session = params.getJsch().getSession(user, host);
+            Session session = params.getJsch().getSession(user, host, port);
             Channel channel;
             
             session.setUserInfo(params.getUserInfo());

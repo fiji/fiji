@@ -29,7 +29,7 @@ public class ClusterNode implements MessageListener, StreamCloseListener
 
 
     private Socket nodeSocket;
-    private final NodeShell shell;
+//    private final NodeShell shell;
     private MessageTX tx;
     private MessageRX rx;
     private final Hashtable<Long, ProcessListener> processHandlers;
@@ -39,11 +39,10 @@ public class ClusterNode implements MessageListener, StreamCloseListener
     private AtomicBoolean idSet;
 
    
-    public ClusterNode(NodeShell shell, Socket socket) throws IOException, InterruptedException,
+    public ClusterNode(Socket socket) throws IOException, InterruptedException,
             TimeOutException
     {
         int waitCnt = 0;
-        this.shell = shell;
         ready = new AtomicBoolean(false);
         idSet = new AtomicBoolean(false);
         processHandlers = new Hashtable<Long, ProcessListener>();
@@ -54,8 +53,6 @@ public class ClusterNode implements MessageListener, StreamCloseListener
         
         tx.queueMessage("getid");
         
-//        FijiArchipelago.debug("Waiting for ID");
-        
         while (!idSet.get())
         {
             Thread.sleep(100);
@@ -65,8 +62,6 @@ public class ClusterNode implements MessageListener, StreamCloseListener
             }
         }
         
-        //FijiArchipelago.debug("Got ID. Queueing other messages");
-       
         tx.queueMessage("getuser");
         tx.queueMessage("getexecroot");
         tx.queueMessage("getfileroot");
@@ -139,7 +134,7 @@ public class ClusterNode implements MessageListener, StreamCloseListener
     
     public boolean exec(String command, ShellExecListener listener)
     {
-        return shell.exec(nodeParam, command, listener);
+        return getShell().exec(nodeParam, command, listener);
     }
 
     public long getID()
@@ -149,7 +144,12 @@ public class ClusterNode implements MessageListener, StreamCloseListener
     
     public NodeShell getShell()
     {
-        return shell;
+        return nodeParam.getShell();
+    }
+    
+    public void setShell(NodeShell shell)
+    {
+        nodeParam.setShell(shell);
     }
     
     public int numAvailableThreads()

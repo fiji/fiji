@@ -1,6 +1,8 @@
 package archipelago;
 
 import archipelago.network.ClusterNode;
+import archipelago.network.shell.JSchNodeShell;
+import archipelago.network.shell.NodeShell;
 
 import java.util.Hashtable;
 
@@ -13,10 +15,12 @@ public class NodeManager
         private String host;
         private String user;
         private int port;
+
         private String fileRoot;
         private String execRoot;
         private final long id;
         private int numThreads;
+        private NodeShell shell;
         
         /*public NodeParameters()
         {
@@ -28,11 +32,12 @@ public class NodeManager
             this(stdUser, hostIn, stdExecRoot, stdFileRoot, stdPort);
         }*/
         
-        public NodeParameters(String userIn, String hostIn, String execPath, String filePath, int portIn)
+        public NodeParameters(String userIn, String hostIn, NodeShell shellIn, String execPath, String filePath, int portIn)
         {
             user = userIn;
             host = hostIn;
             port = portIn;
+            shell = shellIn;
             execRoot = execPath;
             fileRoot = filePath;
             id = FijiArchipelago.getUniqueID();
@@ -52,6 +57,11 @@ public class NodeManager
         public synchronized void setHost(final String host)
         {
             this.host = host;
+        }
+        
+        public synchronized void setShell(final NodeShell shell)
+        {
+            this.shell = shell;
         }
 
         public synchronized void setPort(final int port)
@@ -82,6 +92,11 @@ public class NodeManager
         public String getHost()
         {
             return host;
+        }
+        
+        public NodeShell getShell()
+        {
+            return shell;
         }
 
         public int getPort()
@@ -116,7 +131,7 @@ public class NodeManager
         
         public String toString()
         {
-            return user + ":" + host + ":" + port + " id: " + id;
+            return user + "@" + host + ":" + port + " id: " + id;
         }
     }
     
@@ -125,6 +140,7 @@ public class NodeManager
     private String stdExecRoot = "";
     private String stdFileRoot = "";
     private String stdUser = "";
+    private NodeShell stdShell = null;
     private int stdPort = 22;
     
     public NodeManager()
@@ -142,14 +158,24 @@ public class NodeManager
         nodeTable.remove(id);
     }
 
-    public synchronized void setStandardUser(String user)
+    public synchronized void setStdUser(String user)
     {
         stdUser = user;
     }
 
-    public synchronized void setStandartPort(int port)
+    public String getStdUser()
+    {
+        return stdUser;
+    }
+    
+    public synchronized void setStdPort(int port)
     {
         stdPort = port;
+    }
+    
+    public int getStdPort()
+    {
+        return stdPort;
     }
     
     public synchronized void setStdExecRoot(String execRoot)
@@ -157,9 +183,29 @@ public class NodeManager
         stdExecRoot = execRoot;
     }
     
+    public String getStdExecRoot()
+    {
+        return stdExecRoot;
+    }
+    
     public synchronized void setStdFileRoot(String fileRoot)
     {
         stdFileRoot = fileRoot;
+    }
+    
+    public String getStdFileRoot()
+    {
+        return stdFileRoot;
+    }
+    
+    public synchronized void setStdShell(NodeShell shell)
+    {
+        stdShell = shell;
+    }
+
+    public void clear()
+    {
+        nodeTable.clear();
     }
 
     public NodeParameters newParam()
@@ -169,12 +215,12 @@ public class NodeManager
 
     public NodeParameters newParam(String hostIn)
     {
-        return newParam(stdUser, hostIn, stdExecRoot, stdFileRoot, stdPort);
+        return newParam(stdUser, hostIn, stdShell, stdExecRoot, stdFileRoot, stdPort);
     }
 
-    public NodeParameters newParam(String userIn, String hostIn, String execPath, String filePath, int portIn)
+    public NodeParameters newParam(String userIn, String hostIn, NodeShell shell, String execPath, String filePath, int portIn)
     {
-        NodeParameters param = new NodeParameters(userIn, hostIn, execPath, filePath, portIn);
+        NodeParameters param = new NodeParameters(userIn, hostIn, shell, execPath, filePath, portIn);
         FijiArchipelago.debug("Created new Param with id  " + param.id);
         
         nodeTable.put(param.id, param);

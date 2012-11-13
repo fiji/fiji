@@ -5,7 +5,6 @@ import archipelago.FijiArchipelago;
 import archipelago.NodeManager;
 import archipelago.ShellExecListener;
 import archipelago.compute.ProcessManager;
-import archipelago.network.shell.NodeShell;
 import archipelago.network.server.ArchipelagoServer;
 
 import java.io.IOException;
@@ -14,7 +13,6 @@ import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Hashtable;
 import java.util.Vector;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -22,26 +20,19 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class Cluster
 {
     public static final int DEFAULT_PORT = 3501;
-    public static final long DEFAULT_READY_TIMEOUT = 60000;
-    public static final int QUEUE_SIZE = 1024;
     private static Cluster cluster = null;
 
-    public static boolean initCluster(NodeShell shell, int port)
+    public static boolean initCluster(int port)
     {
         if (cluster == null)
         {
-            cluster = new Cluster(shell, port);
+            cluster = new Cluster(port);
             return true;
         }
         else
         {
-            return false;
+            return cluster.init(port);
         }
-    }
-    
-    public static boolean initCluster(NodeShell shell)
-    {
-        return initCluster(shell, DEFAULT_PORT);
     }
     
     public static Cluster getCluster()
@@ -49,32 +40,33 @@ public class Cluster
         return cluster;
     }
     
-    private final int port;
-    private NodeShell nodeShell;    
+    public static boolean activeCluster()
+    {
+        return cluster != null && cluster.isActive();
+    }
+    
+    private int port;
     private final Vector<ClusterNode> nodes;
-    private ArchipelagoServer server;
-    private final long readyTimeout;
-    private long startTime = 0;
     private final ProcessScheduler scheduler;
     private final AtomicBoolean running;
+    private final AtomicBoolean active;
     private final NodeManager nodeManager;
+    private ArchipelagoServer server;
     private String localHostName;
 
 
-    private Cluster(NodeShell shell, int p)
-    {
-        port = p;
-        readyTimeout = DEFAULT_READY_TIMEOUT;
-
-        nodeShell = shell;
-        server = null;
+    private Cluster(int p)
+    {        
         nodes = new Vector<ClusterNode>();
                  
         running = new AtomicBoolean(false);
+        active = new AtomicBoolean(true);
 
         scheduler = new ProcessScheduler(1024, 1000);
         
         nodeManager = new NodeManager();
+
+        init(p);
         
         try
         {
@@ -86,6 +78,24 @@ public class Cluster
             FijiArchipelago.err("Could not get canonical host name for local machine. Using localhost instead");
         }
     }
+    
+    public boolean init(int p)
+    {
+        if (!running.get())
+        {
+            port = p;
+            server = null;
+            nodes.clear();
+            scheduler.close();
+            nodeManager.clear();
+            active.set(true);
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
 
     public void setLocalHostName(String host)
     {        
@@ -93,12 +103,7 @@ public class Cluster
     }
 
     
-    public boolean startServer()
-    {
-        scheduler.start();
-        server = new ArchipelagoServer(this);
-        return server.start();
-    }
+    
     
     public void close()
     {
@@ -107,10 +112,14 @@ public class Cluster
         for (ClusterNode node : nodes)
         {
             node.close();
+            nodeManager.removeParam(node.getID());
         }
+
+        nodes.clear();
 
         server.close();
         running.set(false);
+        active.set(false);
     }
     
     public int getServerPort()
@@ -127,7 +136,7 @@ public class Cluster
                 + "/plugins/ --allow-multiple --main-class archipelago.Fiji_Archipelago "
                 + localHostName + " " + port + " " + id + " 2>&1 > ~/" + host + "_" + id + ".log";
         
-        return nodeShell.exec(params, execCommandString,  listener);
+        return params.getShell().exec(params, execCommandString, listener);
     }
 
 
@@ -148,7 +157,7 @@ public class Cluster
     {
         try
         {
-            ClusterNode node = new ClusterNode(nodeShell, socket);
+            ClusterNode node = new ClusterNode(socket);
             addNode(node);
         }
         catch (IOException ioe)
@@ -170,32 +179,37 @@ public class Cluster
     
     public void waitUntilReady()
     {
-        boolean go = true;
+        waitUntilReady(Long.MAX_VALUE);
+    }
+    
+    public void waitUntilReady(long timeout)
+    {
+        boolean wait = true;
 
         final long sTime = System.currentTimeMillis();
         
         FijiArchipelago.log("Waiting for ready nodes");
         
-        while (go)
+        while (wait)
         {
 
             try
             {
                 Thread.sleep(1000); //sleep for a second
 
-                if ((System.currentTimeMillis() - sTime) > readyTimeout)
+                if ((System.currentTimeMillis() - sTime) > timeout)
                 {
                     FijiArchipelago.err("Cluster timed out while waiting for nodes to be ready");
-                    go = false;
+                    wait = false;
                 }
                 else
                 {                    
-                    go = countReadyNodes() <= 0;
+                    wait = countReadyNodes() <= 0;
                 }
             }
             catch (InterruptedException ie)
             {
-                go = false;
+                wait = false;
             }
         }
         
@@ -219,9 +233,7 @@ public class Cluster
     {
         return server.join();
     }
-    
-    
-    
+
     public boolean isReady()
     {
         for (ClusterNode node : nodes)
@@ -244,23 +256,26 @@ public class Cluster
         return scheduler.queueJobs(processes);
     }
     
-    public boolean start()
+    public void start()
     {
         running.set(true);
-        return true;
+    }
+
+    public boolean startServer()
+    {
+        scheduler.start();
+        server = new ArchipelagoServer(this);
+        return server.start();
     }
 
     public NodeManager getNodeManager()
     {
         return nodeManager;
     }
-
-    private void setTimeoutStart()
+    
+    public boolean isActive()
     {
-        if (startTime == 0)
-        {
-            startTime = System.currentTimeMillis();
-        }
+        return active.get();
     }
 
 }
