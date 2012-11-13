@@ -837,6 +837,7 @@ public class TrackScheme <T extends RealType<T> & NativeType<T>> implements Trac
 		// We need to pass the column size to the graph component, so that it can paint the borders
 		gui.graphComponent.setColumnColor(graphLayout.getTrackColors());
 		gui.graphComponent.setColumnWidths(graphLayout.getTrackColumnWidths());
+		gui.graphComponent.repaint();
 		// 
 		rowLengths = graphLayout.getRowLengths();
 		int maxLength = 2;
