@@ -165,6 +165,7 @@ hs_err*.log
 /plugins/SPIM_Opener-[0-9]*.jar
 /plugins/SPIM_Registration-[0-9]*.jar
 /plugins/Samples_-[0-9]*.jar
+/plugins/Scala_Interpreter-[0-9]*.jar
 /plugins/Script_Editor-[0-9]*.jar
 /plugins/Series_Labeler-[0-9]*.jar
 /plugins/SheppLogan_-[0-9]*.jar

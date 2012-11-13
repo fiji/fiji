@@ -94,6 +94,7 @@
 		<module>SPIM_Opener</module>
 		<module>SPIM_Registration</module>
 		<module>Samples_</module>
+		<module>Scala_Interpreter</module>
 		<module>Script_Editor</module>
 		<module>Series_Labeler</module>
 		<module>SheppLogan_</module>
