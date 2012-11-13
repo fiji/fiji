@@ -1,15 +1,15 @@
 /** Scala_Interpreter.java
- * 
+ *
  * ImageJ/Fiji plugin for scala REPL,
  * extending AbstractInterpreter abstract class.
- *  
+ *
  * Kota Miura (miura@embl)
  * http://cmci.embl.de
  * Nov 12, 2012 -
  */
 
 package emblcmci.scalainterp;
- 
+
 import java.io.PrintWriter;
 import ij.IJ;
 import common.AbstractInterpreter;
@@ -23,7 +23,7 @@ public class Scala_Interpreter extends AbstractInterpreter{
 	IMain imain = null;
 	String varname, vartype, varval, aline;
 	Option<Object> varobj;
-	
+
 	public void run(String args){
 		Thread.currentThread().setContextClassLoader(IJ.getClassLoader());
 		super.run(args);
@@ -36,7 +36,7 @@ public class Scala_Interpreter extends AbstractInterpreter{
 		settings.usejavacp().tryToSet(param);
 		PrintWriter stream = new PrintWriter(this.out);
 		imain = new IMain(settings, stream);
-		//import all ImageJ classes, maybe upgrade this later. 
+		//import all ImageJ classes, maybe upgrade this later.
 		//using IMain.quiteImport() should be faster
 		//instead of importAll();
 		preimport();
@@ -44,8 +44,8 @@ public class Scala_Interpreter extends AbstractInterpreter{
 		println("Ready.");
 	}
 	/**
-	 * evaluates Scala commands. 
-	 * value to be returned could probably be be simpler. 
+	 * evaluates Scala commands.
+	 * value to be returned could probably be be simpler.
 	 */
 	@Override
 	protected Object eval(String arg0) throws Throwable {
@@ -105,7 +105,7 @@ public class Scala_Interpreter extends AbstractInterpreter{
 		return "//";
 	}
 	/**
-	 * For debugging. 
+	 * For debugging.
 	 * @param args
 	 */
 	static public void main(String[] args){
