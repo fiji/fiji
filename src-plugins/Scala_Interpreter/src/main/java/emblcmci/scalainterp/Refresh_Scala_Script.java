@@ -1,13 +1,13 @@
 /** Refresh-Scala_Script.java
- *
+ * 
  * ImageJ plugin for loading scala scripts in defined folder (Scripts)
- * under Fiji root.
+ * under Fiji root. 
  * Loads scala script file (.scala file) and executes.
- *
+ *  
  * Kota Miura (miura@embl)
  * http://cmci.embl.de
  * Nov 13, 2012 -
- *
+ * 
  * Sample Scala script
  * ----
 	import ij._
@@ -18,7 +18,7 @@
 	imp.show()
 	IJ.wait(2000)
 	imp.close()
- *
+ * 
  */
 package emblcmci.scalainterp;
 
@@ -46,14 +46,14 @@ import common.RefreshScripts;
 public class Refresh_Scala_Script extends RefreshScripts {
 
 	IMain imain = null;
-
+	
     public void run(String arg) {
         setLanguageProperties(".scala", "Scala");
         setVerbose(false);
         super.run(arg);
     }
 
-	/*
+	/* 
 	 * Runs .scala script in file system
 	 */
 	@Override
@@ -62,16 +62,16 @@ public class Refresh_Scala_Script extends RefreshScripts {
             if (!path.endsWith(".scala") || !new File(path).exists()) {
                 IJ.log("Not a scala script or not found: " + path);
                 return;
-            }
+            }        	
             runScript(new BufferedInputStream(new FileInputStream(new File(path))));
         } catch (Throwable t) {
-		IJ.log("Refresh_Scala_Script: Failed loading" + path);
+        	IJ.log("Refresh_Scala_Script: Failed loading" + path);
             printError(t);
         }
 	}
-
+	
 	@Override
-	public void runScript(InputStream arg0) {
+	public void runScript(InputStream arg0) {		
 		String line;
 		BufferedReader br= new BufferedReader(new InputStreamReader(arg0));
 		StringBuilder sb = new StringBuilder();
@@ -87,10 +87,10 @@ public class Refresh_Scala_Script extends RefreshScripts {
 			e.printStackTrace();
 		}
 		runScriptString(sb.toString());
-
+		
 	}
-	/** Takes Scala script as a String argument and then interprets it.
-	 *
+	/** Takes Scala script as a String argument and then interprets it. 
+	 * 
 	 * @param script
 	 */
 	public void runScriptString(String script){
@@ -105,7 +105,7 @@ public class Refresh_Scala_Script extends RefreshScripts {
 
 
 	/**
-	 * Debugging main.
+	 * Debugging main. 
 	 * @param args
 	 */
 	public static void main(String[] args) {

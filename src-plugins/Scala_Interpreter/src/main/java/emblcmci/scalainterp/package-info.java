@@ -1,5 +1,5 @@
-/**Scala Interpreter Plugin for ImageJ
- *
+/**Scala Interpreter Plugin for ImageJ  
+ * 
  */
 /**
  * @author Kota Miura
