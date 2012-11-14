@@ -1,65 +1,66 @@
 /** Scala_Interpreter.java
- *
+ * 
  * ImageJ/Fiji plugin for scala REPL,
  * extending AbstractInterpreter abstract class.
- *
+ *  
  * Kota Miura (miura@embl)
  * http://cmci.embl.de
- * Nov 12, 2012 -
+ * Nov 12, 2012
  */
 
 package emblcmci.scalainterp;
+ 
+import java.io.PrintStream;
+import java.util.ArrayList;
+import java.util.Arrays;
 
-import java.io.PrintWriter;
 import ij.IJ;
 import common.AbstractInterpreter;
 import scala.Option;
 import scala.collection.immutable.List;
 import scala.tools.nsc.Settings;
 import scala.tools.nsc.interpreter.IMain;
+import scala.collection.JavaConversions;
 
 public class Scala_Interpreter extends AbstractInterpreter{
 
 	IMain imain = null;
 	String varname, vartype, varval, aline;
 	Option<Object> varobj;
-
+	final ArrayList<String> preimport_list =  
+			new ArrayList<String>(Arrays.asList
+					("ij._", "java.lang.String"));
+	
 	public void run(String args){
 		Thread.currentThread().setContextClassLoader(IJ.getClassLoader());
 		super.run(args);
-		setTitle("Scala Interpreter");
+		super.setTitle("Scala Interpreter");
 		println("Starting Scala...");
 		prompt.setEnabled(false);
+		PrintStream out = new PrintStream(this.out);
+		System.setOut(out);
+		System.setErr(out);
 		Settings settings = new Settings();
 		//val settings = new Settings; settings.usejavacp.value = true
 		List<String> param = List.make(1, "true");
 		settings.usejavacp().tryToSet(param);
-		PrintWriter stream = new PrintWriter(this.out);
-		imain = new IMain(settings, stream);
-		//import all ImageJ classes, maybe upgrade this later.
-		//using IMain.quiteImport() should be faster
+		imain = new IMain(settings, print_out);
 		//instead of importAll();
 		preimport();
 		prompt.setEnabled(true);
-		println("Ready.");
+		println("ij package is imported. Ready.");
 	}
 	/**
-	 * evaluates Scala commands.
-	 * value to be returned could probably be be simpler.
+	 * evaluates Scala commands. 
+	 * value to be returned could probably be be simpler. 
 	 */
 	@Override
 	protected Object eval(String arg0) throws Throwable {
 		imain.interpret(arg0);
-		varname = imain.mostRecentVar();
-		varobj = imain.valueOfTerm(varname);
-		if (varobj.toList().size()>0){
-			varval = imain.valueOfTerm(varname).productElement(0).toString();
-			vartype = imain.valueOfTerm(varname).productElement(0).getClass().getSimpleName();
-			aline = varname + ": " + vartype + " = " + varval;
-		} else{
-			aline = varname + ": None";
-		}
-		return aline;
+		//List<Name> lines = imain.visibleTermNames();
+		//varname = imain.mostRecentVar();
+		//varobj = imain.valueOfTerm(varname);
+		return null;
 	}
 
 	/**
@@ -83,21 +84,22 @@ public class Scala_Interpreter extends AbstractInterpreter{
 	}
 
 
-    /** pre-imports ImageJ and Java classes.
+    /** 
      * Work around of AbstractInterpreter.importAll()
      */
 	public void preimport() {
-		final String[] importstatements = {
-	            "ij._", "java.lang.String", "script.imglib.math.Compute"
-	        };
-		for (String statement : importstatements){
-			try {
-				eval("import " + statement);
-			} catch (Throwable e) {
-				IJ.log("Failed importing " + statement);
-				e.printStackTrace();
-			}
-		}
+		imain.quietImport(JavaConversions.asScalaBuffer(preimport_list).toList());
+//		final String[] importstatements = {
+//	            "ij._", "java.lang.String", "script.imglib.math.Compute"
+//	        };
+//		for (String statement : importstatements){
+//			try {
+//				eval("import " + statement);
+//			} catch (Throwable e) {
+//				IJ.log("Failed importing " + statement);
+//				e.printStackTrace();
+//			}
+//		}
 	}
 
 	@Override
@@ -105,7 +107,7 @@ public class Scala_Interpreter extends AbstractInterpreter{
 		return "//";
 	}
 	/**
-	 * For debugging.
+	 * For debugging. 
 	 * @param args
 	 */
 	static public void main(String[] args){

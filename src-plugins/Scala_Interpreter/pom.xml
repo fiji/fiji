@@ -13,12 +13,12 @@
 
 	<groupId>sc.fiji</groupId>
 	<artifactId>Scala_Interpreter</artifactId>
-	<version>1.0.0</version>
+	<version>1.0.1</version>
 
 	<name>plugins/Scala_Interpreter.jar</name>
 	<description>A Maven project implementing an ImageJ 1.x plugin</description>
 
-	<!--> repos: ImageJ release + scala tools <-->
+	<!--> repos: ImageJ release + scala tools <-->	
 	<repositories>
 		<repository>
 			<id>imagej.releases</id>
@@ -27,14 +27,14 @@
 		<repository>
 			<id>oss.snapshots</id>
 			<url>https://oss.sonatype.org/content/repositories/snapshots/</url>
-		</repository>
+		</repository>    
 	</repositories>
 
 	<dependencies>
 		<dependency>
 			<groupId>net.imagej</groupId>
 			<artifactId>ij</artifactId>
-			<version>${imagej1.version}</version>
+			<version>${imagej1.version}</version>		
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
@@ -46,7 +46,7 @@
 			<artifactId>scala-library</artifactId>
 			<!-- <version>2.9.2-RC3</version>  -->
 			<version>2.10.0-SNAPSHOT</version>
-		</dependency>
+		</dependency>	
 		<dependency>
 			<groupId>org.scala-lang</groupId>
 			<artifactId>scala-compiler</artifactId>
