@@ -233,8 +233,8 @@ public class ClusterNodeConfigUI implements ActionListener
             final String prefRoot = FijiArchipelago.PREF_ROOT;
             final GenericDialog gd = new GenericDialog("Start Cluster");
             int port, dPort;
-            String dKeyfile, dExecRoot, dFileRoot, dUserName;
-            String keyfile, execRoot, fileRoot, userName;
+            String dKeyfile, dExecRoot, dFileRoot, dUserName, dExecRootRemote, dFileRootRemote;
+            String keyfile, execRoot, fileRoot, userName, execRootRemote, fileRootRemote;
             NodeShell shell;
 
             //Set default variables
@@ -243,6 +243,8 @@ public class ClusterNodeConfigUI implements ActionListener
                     : System.getenv("HOME") + "/.ssh/id_dsa");
             dExecRoot = Prefs.get(prefRoot + ".execRoot", "");
             dFileRoot = Prefs.get(prefRoot + ".fileRoot", "");
+            dExecRootRemote = Prefs.get(prefRoot + ".execRootRemote", "");
+            dFileRootRemote = Prefs.get(prefRoot + ".fileRootRemote", "");
             dUserName = Prefs.get(prefRoot + ".username", System.getenv("USER"));
 
             //Setup the dialog
@@ -250,8 +252,10 @@ public class ClusterNodeConfigUI implements ActionListener
             gd.addNumericField("Server Port Number", dPort, 0);
             gd.addStringField("Remote Machine User Name", dUserName);
             gd.addStringField("SSH Private Key File", dKeyfile, 64);
-            gd.addStringField("Default Exec Root for Remote Nodes", dExecRoot, 64);
-            gd.addStringField("Default File Root for Remote Nodes", dFileRoot, 64);
+            gd.addStringField("Local Exec Root", dExecRoot, 64);
+            gd.addStringField("Local File Root", dFileRoot, 64);
+            gd.addStringField("Default Exec Root for Remote Nodes", dExecRootRemote, 64);
+            gd.addStringField("Default File Root for Remote Nodes", dFileRootRemote, 64);
 
 
             gd.showDialog();
@@ -266,6 +270,8 @@ public class ClusterNodeConfigUI implements ActionListener
             keyfile = gd.getNextString();
             execRoot = gd.getNextString();
             fileRoot = gd.getNextString();
+            execRootRemote = gd.getNextString();
+            fileRootRemote = gd.getNextString();
 
 
             //Do initialization
@@ -274,8 +280,8 @@ public class ClusterNodeConfigUI implements ActionListener
 
             Cluster.initCluster(port);
             Cluster.getCluster().getNodeManager().setStdUser(userName);
-            Cluster.getCluster().getNodeManager().setStdExecRoot(execRoot);
-            Cluster.getCluster().getNodeManager().setStdFileRoot(fileRoot);
+            Cluster.getCluster().getNodeManager().setStdExecRoot(execRootRemote);
+            Cluster.getCluster().getNodeManager().setStdFileRoot(fileRootRemote);
             Cluster.getCluster().getNodeManager().setStdShell(shell);
             
             FijiArchipelago.setExecRoot(execRoot);
@@ -287,6 +293,8 @@ public class ClusterNodeConfigUI implements ActionListener
             Prefs.set(prefRoot + ".username", userName);
             Prefs.set(prefRoot + ".execRoot", execRoot);
             Prefs.set(prefRoot + ".fileRoot", fileRoot);
+            Prefs.set(prefRoot + ".execRootRemote", execRootRemote);
+            Prefs.set(prefRoot + ".fileRootRemote", fileRootRemote);
             Prefs.savePreferences();
             return true;
         }

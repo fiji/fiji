@@ -143,7 +143,7 @@ public class Cluster_SIFT implements PlugIn
 
             try
             {
-                // Sleep until we're kissed by Prince Charming
+                // Sleep until we're kissed by Prince(ss) Charming
                 Thread.sleep(Long.MAX_VALUE);
             }
             catch (InterruptedException ie)
@@ -224,7 +224,59 @@ public class Cluster_SIFT implements PlugIn
     
     public long runLocally()
     {
-        return 0;
+        ImagePlus ip = IJ.getImage();
+
+        if (ip == null)
+        {
+            IJ.showMessage("First, open an image");
+            return 0;
+        }
+        else if(!(ip.getStack().isVirtual()))
+        {
+            IJ.showMessage("Stack must be virtual");
+            return 0;
+        }
+
+        long sTime = System.currentTimeMillis();
+        ImageStack stack = ip.getStack();
+        ArrayList<Thread> threads = new ArrayList<Thread>();
+        final VirtualStack vstack = (VirtualStack)stack;
+        final int numCore = Runtime.getRuntime().availableProcessors(); 
+
+        for (int p = 0; p < numCore; ++p)
+        {
+            final int pnum = p;
+            Thread t = new Thread(){
+                public void run()
+                {
+                    for (int i = pnum + 1; i <= vstack.getSize(); i+=numCore)
+                    {
+                        ImagePlus im = IJ.openImage(vstack.getDirectory() + vstack.getFileName(i));
+                        ImageProcessor ip1 = im.getProcessor();
+                        ArrayList<Feature> feat = new ArrayList<Feature>();
+                        SIFT sift = new SIFT(new FloatArray2DSIFT(new FloatArray2DSIFT.Param()));
+                        sift.extractFeatures(ip1, feat);
+                    }
+                }
+            };
+            threads.add(t);
+            t.start();
+        }
+        
+        try
+        {
+            for (Thread t : threads)
+            {
+                t.join();
+            }
+        }
+        catch (InterruptedException ie)
+        {
+            IJ.showMessage("Interrupted while join()ing");
+            return 0;
+        }
+
+        return System.currentTimeMillis() - sTime;
     }
     
     public void run(String arg)

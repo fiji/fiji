@@ -109,7 +109,7 @@ public class ProcessScheduler extends Thread
 
             if (node != null)
             {
-                FijiArchipelago.log("There are " + jobQueue.size() + " jobs in queue");
+
                 try
                 {
                     pm = jobQueue.poll(pollTime.get(), TimeUnit.MILLISECONDS);
@@ -125,6 +125,7 @@ public class ProcessScheduler extends Thread
                 {
                     ProcessListener listener = pm.getListener();
                     FijiArchipelago.log("Scheduling job on " + node.getHost());
+                    FijiArchipelago.log("There are now " + jobQueue.size() + " jobs in queue");
                     //TODO: handle failed jobs, requeue jobs from nodes that halt unexpectedly
                     node.runProcessManager(pm,
                             listener == null ? NullListener.getNullListener() : listener);
