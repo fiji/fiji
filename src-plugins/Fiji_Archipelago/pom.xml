@@ -32,7 +32,10 @@
                         <artifactId>jsch</artifactId>
                         <version>0.1.42</version>
                 </dependency>
+                <dependency>
+                        <groupId>mpicbg</groupId>
+                        <artifactId>mpicbg</artifactId>
+                        <version>20120621</version>
+		</dependency>
 	</dependencies>
-
-
 </project>

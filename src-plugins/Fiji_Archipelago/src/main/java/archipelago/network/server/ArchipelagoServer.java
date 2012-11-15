@@ -1,5 +1,6 @@
 package archipelago.network.server;
 
+import archipelago.FijiArchipelago;
 import archipelago.network.Cluster;
 import archipelago.network.client.ArchipelagoClient;
 
@@ -26,14 +27,12 @@ public class ArchipelagoServer
             {
                 try
                 {
-                    System.out.println("Server waiting to accept a socket");
                     Socket clientSocket = socket.accept();
-                    System.out.println("Got one! Assigning to node for " + socket.getInetAddress());
+                    FijiArchipelago.log("Received connection from " + socket.getInetAddress());
                     cluster.nodeFromSocket(clientSocket);
                 }
                 catch (IOException ioe)
                 {
-                    System.out.println("Got an error while waiting for a socket: " + ioe);
                     //Ignore
                 }
             }
@@ -51,9 +50,7 @@ public class ArchipelagoServer
         socket = null;
         isRunning = new AtomicBoolean(false);
     }
-    
-    
-    
+
     public boolean start()
     {
         if (isRunning.get())

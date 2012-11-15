@@ -13,9 +13,10 @@ public class SimpleChunk<T> extends DataChunk<T> implements Serializable
         t = inT;
     }
     
-    @Override
-    public long getID() {
-        return 0;
+    public SimpleChunk(final T inT, DataChunk oldChunk)
+    {
+        super(oldChunk);
+        t = inT;
     }
 
     @Override
@@ -25,5 +26,10 @@ public class SimpleChunk<T> extends DataChunk<T> implements Serializable
 
     public Iterator<DataChunk<T>> iterator() {
         return new ArrayList<DataChunk<T>>().iterator();
+    }
+    
+    public String toString()
+    {
+        return t.toString();
     }
 }

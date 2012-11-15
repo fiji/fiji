@@ -62,10 +62,33 @@ public class ClusterNode implements MessageListener, StreamCloseListener
             }
         }
         
-        tx.queueMessage("getuser");
-        tx.queueMessage("getexecroot");
-        tx.queueMessage("getfileroot");
+        doSyncEnvironment();
+    }
+    
+    private void doSyncEnvironment()
+    {
+        if (getUser() == null || getUser().equals(""))
+        {
+            tx.queueMessage("getuser");
+        }
 
+        if (getExecPath() == null || getExecPath().equals(""))
+        {
+            tx.queueMessage("getexecroot");
+        }
+        else
+        {
+            tx.queueMessage("setexecroot", getExecPath());
+        }
+
+        if (getFilePath() == null || getFilePath().equals(""))
+        {
+            tx.queueMessage("getfileroot");
+        }
+        else
+        {
+            tx.queueMessage("setfileroot", getFilePath());
+        }
     }
     
     public boolean setExecPath(String path)
@@ -126,6 +149,11 @@ public class ClusterNode implements MessageListener, StreamCloseListener
     {
         return nodeParam.getExecRoot();
     }
+    
+    public String getFilePath()
+    {
+        return nodeParam.getFileRoot();
+    }
 
     public boolean isReady()
     {
@@ -155,7 +183,6 @@ public class ClusterNode implements MessageListener, StreamCloseListener
     public int numAvailableThreads()
     {
         int n = nodeParam.getNumThreads() - processHandlers.size();
-        FijiArchipelago.debug("" + getHost() + " with " + n + " available threads");
         return n > 0 ? n : 0;
     }
 
@@ -163,16 +190,16 @@ public class ClusterNode implements MessageListener, StreamCloseListener
     {
         if (ready.get())
         {
-            ClusterMessage message = new ClusterMessage();
-            message.message = "process";
-            message.o = process;
             if (processHandlers.get(process.getID()) == null)
             {
+                FijiArchipelago.debug(getHost() + " scheduling process");
                 processHandlers.put(process.getID(), listener);
-                return tx.queueMessage(message);
+                return tx.queueMessage("process", process);
             }
             else
             {
+                FijiArchipelago.debug("There is already a process " + process.getID() + " on "
+                        + getHost());
                 return false;
             }
         }
@@ -189,53 +216,81 @@ public class ClusterNode implements MessageListener, StreamCloseListener
         tx.queueMessage(message);
     }
 
-    public void handleMessage(ClusterMessage message)
+    public void handleMessage(ClusterMessage cm)
     {
+        String message = cm.message;
+        Object object = cm.o;
+
         try
         {
-            if (message.message.equals("process"))
+            if (message.equals("id"))
             {
-                ProcessManager<?,?> pm = (ProcessManager<?,?>)message.o;
-                ProcessListener listener = processHandlers.remove(pm.getID());
-
-                FijiArchipelago.log("Got process results from " + getHost());
-
-                listener.processFinished(pm);
-            }
-            else if (message.message.equals("ping"))
-            {
-                FijiArchipelago.log("Received ping from " + getHost());
-            }
-            else if (message.message.equals("user"))
-            {
-                if (nodeParam == null)
-                {
-                    FijiArchipelago.err("Tried to set user but params are null");
-                }
-                if (message.o != null)
-                {
-                    String username = (String)message.o;
-                    nodeParam.setUser(username);
-                }
-                else
-                {
-                    FijiArchipelago.err("Got username message with null user");
-                }
-            }
-            else if (message.message.equals("id"))
-            {
-                Long id = (Long)message.o;
+                Long id = (Long)object;
                 nodeParam = Cluster.getCluster().getNodeManager().getParam(id);
                 FijiArchipelago.debug("Got id message. Setting ID to " + id + ". Param: " + nodeParam);
                 nodeID = id;
                 nodeParam.setNode(this);
                 idSet.set(true);
             }
+            else if (message.equals("process"))
+            {
+                ProcessManager<?,?> pm = (ProcessManager<?,?>)object;
+                ProcessListener listener = processHandlers.remove(pm.getID());
+
+                FijiArchipelago.log("Got process results from " + getHost());
+
+                listener.processFinished(pm);
+            }
+            else if (message.equals("ping"))
+            {
+                FijiArchipelago.log("Received ping from " + getHost());
+            }
+            else if (message.equals("user"))
+            {
+                if (nodeParam == null)
+                {
+                    FijiArchipelago.err("Tried to set user but params are null");
+                }
+                if (object != null)
+                {
+                    String username = (String)object;
+                    nodeParam.setUser(username);
+                }
+                else
+                {
+                    FijiArchipelago.err("Got username message with null user");
+                }
+            } 
+            else if (message.equals("setfileroot"))
+            {
+                setFilePath((String)object);
+            }
+            else if (message.equals("setexecroot"))
+            {
+                setExecPath((String)object);
+            }
+            else if (message.equals("error"))
+            {
+                Exception e = (Exception)object;
+                FijiArchipelago.err("Remote client on " + getHost() + " experienced an error: "
+                        + e);
+            }
+            else
+            {
+                FijiArchipelago.log("Got unexpected message " + message);
+            }
+            
+            
         }
         catch (ClassCastException cce)
         {
             FijiArchipelago.err("Caught ClassCastException while handling message " 
-                    + message.message + ": "+ cce);
+                    + message + " on " + getHost() + " : "+ cce);
+        }
+        catch (NullPointerException npe)
+        {
+            FijiArchipelago.err("Expected a message object but got null for " + message + " on "
+                    + getHost());
         }
     }
 
@@ -261,7 +316,6 @@ public class ClusterNode implements MessageListener, StreamCloseListener
 
     public boolean sendShutdown()
     {
-        boolean ok;
         ClusterMessage message = new ClusterMessage();
         message.message = "halt";
         return tx.queueMessage(message);

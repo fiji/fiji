@@ -13,6 +13,7 @@ import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Vector;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -133,7 +134,7 @@ public class Cluster
         String exec = params.getExecRoot();
         long id = params.getID();
         String execCommandString = exec + "/fiji --jar-path " + exec
-                + "/plugins/ --allow-multiple --main-class archipelago.Fiji_Archipelago "
+                + "/plugins/ --jar-path " + exec +"/jars/" + " --allow-multiple --main-class archipelago.Fiji_Archipelago "
                 + localHostName + " " + port + " " + id + " 2>&1 > ~/" + host + "_" + id + ".log";
         
         return params.getShell().exec(params, execCommandString, listener);
@@ -251,6 +252,11 @@ public class Cluster
         return new ArrayList<ClusterNode>(nodes);
     }
     
+    public boolean queueProcess(ProcessManager process)
+    {
+        return scheduler.queueJobs(Collections.singleton(process));
+    }
+    
     public boolean queueProcesses(Collection<ProcessManager> processes)
     {
         return scheduler.queueJobs(processes);
@@ -263,6 +269,7 @@ public class Cluster
 
     public boolean startServer()
     {
+        FijiArchipelago.debug("Scheduler alive? :" + scheduler.isAlive());
         scheduler.start();
         server = new ArchipelagoServer(this);
         return server.start();

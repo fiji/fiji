@@ -26,7 +26,6 @@ public class ProcessScheduler extends Thread
         jobQueue = new ArrayBlockingQueue<ProcessManager>(jobCapacity);
         running = new AtomicBoolean(true);
         pollTime = new AtomicInteger(t);
-
     }
     
     public void setPollTimeMillis(int t)
@@ -76,8 +75,11 @@ public class ProcessScheduler extends Thread
 
     public void start()
     {
-        running.set(true);
-        super.start();
+        if (!running.get())
+        {
+            running.set(true);
+            super.start();
+        }
     }
     
     public void run()
@@ -88,37 +90,33 @@ public class ProcessScheduler extends Thread
         {
             ProcessManager<?, ?> pm;
             ClusterNode node;
-            
-            FijiArchipelago.debug("Scheduler: Currently " + jobQueue.size() + " jobs in queue");
-            FijiArchipelago.debug("Scheduler: Currently " + Cluster.getCluster().countReadyNodes() + " nodes ready");
-            
+
             try
             {
                 node = getFreeNode();
                 if (node == null)
                 {
-                    FijiArchipelago.debug("Scheduler: No free nodes found. Sleeping.");
                     Thread.sleep(pollTime.get());
                 }
                 
             }
             catch (InterruptedException ie)
             {
-                FijiArchipelago.err("Scheduler interrupted while sleeping");
+                FijiArchipelago.log("Scheduler interrupted while sleeping, stopping.");
                 running.set(false);
                 node = null;
             }
 
             if (node != null)
-            {                
+            {
+                FijiArchipelago.log("There are " + jobQueue.size() + " jobs in queue");
                 try
                 {
-                    FijiArchipelago.debug("Scheduler waiting for job from queue");
                     pm = jobQueue.poll(pollTime.get(), TimeUnit.MILLISECONDS);
                 }
                 catch (InterruptedException ie)
                 {
-                    FijiArchipelago.err("Scheduler interrupted while waiting for jobs");
+                    FijiArchipelago.log("Scheduler interrupted while waiting for jobs, stopping.");
                     running.set(false);
                     pm = null;
                 }
@@ -127,16 +125,10 @@ public class ProcessScheduler extends Thread
                 {
                     ProcessListener listener = pm.getListener();
                     FijiArchipelago.log("Scheduling job on " + node.getHost());
-                    node.runProcessManager(pm, listener == null ? NullListener.getNullListener() : listener);
+                    //TODO: handle failed jobs, requeue jobs from nodes that halt unexpectedly
+                    node.runProcessManager(pm,
+                            listener == null ? NullListener.getNullListener() : listener);
                 }
-                else
-                {
-                    FijiArchipelago.debug("No job in queue for " + node.getHost());
-                }
-            }
-            else
-            {
-                FijiArchipelago.debug("No available nodes found");
             }
         }
         FijiArchipelago.log("Scheduler exited");
@@ -144,10 +136,13 @@ public class ProcessScheduler extends Thread
     
     public void close()
     {
-        running.set(false);
-        interrupt();
-        jobQueue.clear();
-        nodes.clear();
+        if (running.get())
+        {
+            running.set(false);
+            interrupt();
+            jobQueue.clear();
+            nodes.clear();
+        }
     }
     
 }

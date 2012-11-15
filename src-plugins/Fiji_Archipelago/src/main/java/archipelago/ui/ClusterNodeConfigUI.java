@@ -1,8 +1,11 @@
 package archipelago.ui;
 
 import archipelago.FijiArchipelago;
+import archipelago.IJLogger;
 import archipelago.NodeManager;
 import archipelago.network.Cluster;
+import archipelago.network.shell.JSchNodeShell;
+import archipelago.network.shell.NodeShell;
 import ij.IJ;
 import ij.Prefs;
 import ij.gui.GenericDialog;
@@ -19,8 +22,6 @@ import java.util.Vector;
 public class ClusterNodeConfigUI implements ActionListener
 {
     
-    private static String SixtyFour = "                                                ";
-
     private class NodePanel extends Panel implements ActionListener
     {
         private final Label label;
@@ -40,7 +41,7 @@ public class ClusterNodeConfigUI implements ActionListener
             Button rmButton = new Button("Remove");
             String[] split = new String[0];
 
-            label = new Label(SixtyFour);
+            label = new Label();
 
             add(label);
             add(editButton);
@@ -159,14 +160,17 @@ public class ClusterNodeConfigUI implements ActionListener
     private final Panel centerPanel;
     private final Panel mainPanel;
     private final GenericDialog gd;
+    private final ScrollPane pane;
+    private boolean ok;
+
 
 
     public ClusterNodeConfigUI()
     {
         Button addButton = new Button("Add Node...");
-        ScrollPane pane = new ScrollPane();
+        pane = new ScrollPane();
         Dimension panelSize = new Dimension(512, 256);
-        
+
         mainPanel = new Panel();
         centerPanel = new Panel();
         nodePanels = new Vector<NodePanel>();
@@ -191,7 +195,98 @@ public class ClusterNodeConfigUI implements ActionListener
 
         gd = new GenericDialog("Configure Nodes");
         gd.addPanel(getPanel());
-        gd.showDialog();
+        if (ok = clusterOptionUI())
+        {
+            gd.showDialog();
+            ok = gd.wasOKed();
+        }
+    }
+
+    public boolean clusterOptionUI()
+    {
+        FijiArchipelago.debug("Cluster Option UI Starting");
+
+        if (Cluster.activeCluster())
+        {
+            GenericDialog gd = new GenericDialog("Active Cluster");
+            gd.addMessage("There is an active cluster already, shut it down?");
+            gd.showDialog();
+            if (gd.wasCanceled())
+            {
+                return false;
+            }
+            else
+            {
+                Cluster.getCluster().close();
+            }
+        }
+
+        if (!Cluster.activeCluster())
+        {
+            final String prefRoot = FijiArchipelago.PREF_ROOT;
+            final GenericDialog gd = new GenericDialog("Start Cluster");
+            int port, dPort;
+            String dKeyfile, dExecRoot, dFileRoot, dUserName;
+            String keyfile, execRoot, fileRoot, userName;
+            NodeShell shell;
+
+            //Set default variables
+            dPort = Integer.parseInt(Prefs.get(prefRoot + ".port", "" + Cluster.DEFAULT_PORT));
+            dKeyfile = Prefs.get(prefRoot + ".keyfile", IJ.isWindows() ? ""
+                    : System.getenv("HOME") + "/.ssh/id_dsa");
+            dExecRoot = Prefs.get(prefRoot + ".execRoot", "");
+            dFileRoot = Prefs.get(prefRoot + ".fileRoot", "");
+            dUserName = Prefs.get(prefRoot + ".username", System.getenv("USER"));
+
+            //Setup the dialog
+            gd.addMessage("Cluster Configuration");
+            gd.addNumericField("Server Port Number", dPort, 0);
+            gd.addStringField("Remote Machine User Name", dUserName);
+            gd.addStringField("SSH Private Key File", dKeyfile, 64);
+            gd.addStringField("Default Exec Root for Remote Nodes", dExecRoot, 64);
+            gd.addStringField("Default File Root for Remote Nodes", dFileRoot, 64);
+
+
+            gd.showDialog();
+            if (gd.wasCanceled())
+            {
+                return false;
+            }
+
+            //Get results
+            port = (int)gd.getNextNumber();
+            userName = gd.getNextString();
+            keyfile = gd.getNextString();
+            execRoot = gd.getNextString();
+            fileRoot = gd.getNextString();
+
+
+            //Do initialization
+            shell = new JSchNodeShell(new JSchNodeShell.JSchShellParams(new File(keyfile)),
+                    new IJLogger());
+
+            Cluster.initCluster(port);
+            Cluster.getCluster().getNodeManager().setStdUser(userName);
+            Cluster.getCluster().getNodeManager().setStdExecRoot(execRoot);
+            Cluster.getCluster().getNodeManager().setStdFileRoot(fileRoot);
+            Cluster.getCluster().getNodeManager().setStdShell(shell);
+            
+            FijiArchipelago.setExecRoot(execRoot);
+            FijiArchipelago.setFileRoot(fileRoot);
+
+            //Set prefs
+            Prefs.set(prefRoot + ".port", port);
+            Prefs.set(prefRoot + ".keyfile", keyfile);
+            Prefs.set(prefRoot + ".username", userName);
+            Prefs.set(prefRoot + ".execRoot", execRoot);
+            Prefs.set(prefRoot + ".fileRoot", fileRoot);
+            Prefs.savePreferences();
+            return true;
+        }
+        else
+        {
+            return false;
+        }
     }
 
     public boolean wasOKed()
@@ -230,11 +325,11 @@ public class ClusterNodeConfigUI implements ActionListener
     private Panel loadSaveNodesPanel()
     {
         //Controls
-        final Panel p = new Panel();
-        fileName = new TextField(Prefs.get(prefRoot + ".nodeFile", SixtyFour),64);
+        final Panel p = new Panel();        
         final Button load = new Button("Load from file");
         final Button save = new Button("Save to file");
         final Button select = new Button("Select file...");
+        fileName = new TextField(Prefs.get(prefRoot + ".nodeFile", "fiji.cluster"),64);
         GridBagConstraints gbc = new GridBagConstraints();
 
         //Init controls
@@ -296,9 +391,10 @@ public class ClusterNodeConfigUI implements ActionListener
         PrintStream out;
 
         if (f.exists())
-        {
+        {            
             GenericDialog gd = new GenericDialog("File Exists");
             gd.addMessage("" + fileName.getText() + " exists, overwrite?");
+            gd.showDialog();
             if (gd.wasCanceled())
             {
                 return;
@@ -320,8 +416,11 @@ public class ClusterNodeConfigUI implements ActionListener
         {
             out.println(np.toFileText());            
         }
-        
         out.close();
+        
+        FijiArchipelago.log("Saved configuration to " + fileName.getText());
+        
+        Prefs.set(prefRoot + ".nodeFile", fileName.getText());
     }
 
     private void loadConfiguration()
@@ -335,7 +434,7 @@ public class ClusterNodeConfigUI implements ActionListener
         }
         catch (FileNotFoundException fnfe)
         {
-            FijiArchipelago.err("File not found: " + fnfe);
+            FijiArchipelago.err(fileName.getText() + " not found");
             return;
         }
         
@@ -348,12 +447,12 @@ public class ClusterNodeConfigUI implements ActionListener
                 new NodePanel(line);
                 line = in.readLine();
             }
+            Prefs.set(prefRoot + ".nodeFile", fileName.getText());
         }
         catch (IOException ioe)
         {
             FijiArchipelago.err("IO Exception while reading from " + fileName.getText()
                     + ": " + ioe);
-
         }
     }
 
@@ -365,8 +464,8 @@ public class ClusterNodeConfigUI implements ActionListener
 
     private void addNodeConfig()
     {
-        FijiArchipelago.debug("Got add config click");
         new NodePanel().doEdit();
+        pane.setScrollPosition(0, Integer.MAX_VALUE);
     }
             
     public ArrayList<NodeManager.NodeParameters> parameterList(NodeManager manager)

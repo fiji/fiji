@@ -1,5 +1,6 @@
 package archipelago.data;
 
+import archipelago.FijiArchipelago;
 import archipelago.network.ClusterNode;
 
 import java.io.Serializable;
@@ -10,13 +11,32 @@ public abstract class DataChunk<T> implements Serializable, Iterable<DataChunk<T
     
     private long lastOn;
     private long lastTime = -1;
-    
+    private long id;
+    private final int mark;
+
     public DataChunk()
     {
         lastOn = -1;
+        id = FijiArchipelago.getUniqueID();
+        mark = 0;
     }
     
-    public abstract long getID();
+    public DataChunk(DataChunk chunk)
+    {
+        lastOn = -1;
+        id = chunk.id;
+        mark = chunk.mark + 1;
+    }
+    
+    public int getMark()
+    {
+        return mark;
+    }
+    
+    public long getID()
+    {
+        return id;
+    }
     
     public void setProcessingOn(ClusterNode node)
     {

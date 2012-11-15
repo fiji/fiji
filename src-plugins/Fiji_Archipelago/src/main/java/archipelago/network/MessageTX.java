@@ -6,6 +6,7 @@ import archipelago.StreamCloseListener;
 import archipelago.data.ClusterMessage;
 
 import java.io.IOException;
+import java.io.NotSerializableException;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.net.Socket;
@@ -25,6 +26,7 @@ public class MessageTX
     private final AtomicBoolean active;
     private final long waitTime;
     private final TimeUnit tUnit;
+    private final String remoteHost;
     
     public MessageTX(Socket s, final StreamCloseListener listener) throws IOException
     {
@@ -33,7 +35,7 @@ public class MessageTX
     
     public MessageTX(Socket socket, long wait, TimeUnit unit, final StreamCloseListener listener) throws IOException
     {
-        final String remoteHost = socket.getInetAddress().getCanonicalHostName();
+        remoteHost = socket.getInetAddress().getCanonicalHostName();
         messageQ = new ArrayBlockingQueue<ClusterMessage>(16, true);
         objectStream = new ObjectOutputStream(socket.getOutputStream());
         active = new AtomicBoolean(true);
@@ -64,9 +66,14 @@ public class MessageTX
                             objectStream.writeObject(nextMessage);
                             FijiArchipelago.debug("TX: " + remoteHost + " success.");
                         }
+                        catch (NotSerializableException nse)
+                        {
+                            FijiArchipelago.err("TX " + remoteHost + " tried to send a non serializable object: " + nse);
+                        }
                         catch (IOException ioe)
                         {
                             FijiArchipelago.err("TX " + remoteHost + " failed: " + ioe);
+
                             active.set(false);
                             listener.streamClosed();
                         }
@@ -108,7 +115,9 @@ public class MessageTX
     {
         try
         {
+            FijiArchipelago.debug("Queuing message to " + remoteHost);
             messageQ.put(message);
+            FijiArchipelago.debug("Message to " + remoteHost + " queued successfully");
             return true;
         }
         catch (InterruptedException ie)

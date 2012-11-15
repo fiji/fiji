@@ -1,5 +1,6 @@
 package archipelago.network.client;
 
+import archipelago.FijiArchipelago;
 import archipelago.StreamCloseListener;
 import archipelago.compute.ProcessManager;
 import archipelago.data.ClusterMessage;
@@ -7,7 +8,6 @@ import archipelago.network.Cluster;
 import archipelago.network.MessageListener;
 import archipelago.network.MessageRX;
 import archipelago.network.MessageTX;
-import archipelago.network.server.ArchipelagoServer;
 
 import java.io.IOException;
 import java.net.Socket;
@@ -80,12 +80,13 @@ public class ArchipelagoClient implements MessageListener, StreamCloseListener
     public void handleMessage(final ClusterMessage cm) {
 
         final String message = cm.message;
+        final Object object = cm.o;
 
         try
         {
             if (message.equals("process"))
             {
-                final ProcessManager<?, ?> pm = (ProcessManager<?, ?>)cm.o;
+                final ProcessManager<?, ?> pm = (ProcessManager<?, ?>)object;
                 new ProcessThread(pm).start();
             }
             else if (message.equals("halt"))
@@ -103,16 +104,33 @@ public class ArchipelagoClient implements MessageListener, StreamCloseListener
             }
             else if (message.equals("setid"))
             {
-                clientId = (Long)cm.o;
+                clientId = (Long)object;
             }
             else if (message.equals("getid"))
             {
                 tx.queueMessage("id", clientId);
             }
+            else if (message.equals("setfileroot"))
+            {
+                FijiArchipelago.setFileRoot((String) object);
+            }
+            else if (message.equals("setexecroot"))
+            {
+                FijiArchipelago.setExecRoot((String) object);
+            }
+            else if (message.equals("getfileroot"))
+            {
+                tx.queueMessage("setfileroot", FijiArchipelago.getFileRoot());
+            }
+            else if (message.equals("getexecroot"))
+            {
+                tx.queueMessage("setexecroot", FijiArchipelago.getExecRoot());
+            }
         }
         catch (ClassCastException cce)
         {
             System.err.println("Caught CCE: " + cce);
+            tx.queueMessage("error", cce);
         }
     }
 
@@ -148,6 +166,7 @@ public class ArchipelagoClient implements MessageListener, StreamCloseListener
 
     public synchronized void streamClosed()
     {
+        FijiArchipelago.log("Lost socket connection");
         close();
     }
 }
