@@ -18,9 +18,12 @@ import mpicbg.ij.SIFT;
 import mpicbg.imagefeatures.Feature;
 import mpicbg.imagefeatures.FloatArray2DSIFT;
 
-import java.io.File;
-import java.io.Serializable;
 import java.util.*;
+
+/**
+ *
+ * @author Larry Lindsey
+ */
 
 public class Cluster_SIFT implements PlugIn
 {

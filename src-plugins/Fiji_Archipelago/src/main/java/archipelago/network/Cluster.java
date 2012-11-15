@@ -17,7 +17,10 @@ import java.util.Collections;
 import java.util.Vector;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-
+/**
+ *
+ * @author Larry Lindsey
+ */
 public class Cluster
 {
     public static final int DEFAULT_PORT = 3501;

@@ -11,7 +11,10 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-
+/**
+ *
+ * @author Larry Lindsey
+ */
 public class ProcessScheduler extends Thread
 {
     

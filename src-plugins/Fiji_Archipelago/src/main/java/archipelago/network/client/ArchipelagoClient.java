@@ -12,7 +12,10 @@ import archipelago.network.MessageTX;
 import java.io.IOException;
 import java.net.Socket;
 import java.util.concurrent.atomic.AtomicBoolean;
-
+/**
+ *
+ * @author Larry Lindsey
+ */
 public class ArchipelagoClient implements MessageListener, StreamCloseListener
 {
     

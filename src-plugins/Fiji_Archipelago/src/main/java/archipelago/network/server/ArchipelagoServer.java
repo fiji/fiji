@@ -2,13 +2,15 @@ package archipelago.network.server;
 
 import archipelago.FijiArchipelago;
 import archipelago.network.Cluster;
-import archipelago.network.client.ArchipelagoClient;
 
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.concurrent.atomic.AtomicBoolean;
-
+/**
+ *
+ * @author Larry Lindsey
+ */
 public class ArchipelagoServer
 {
 

@@ -6,7 +6,10 @@ import archipelago.FijiArchipelago;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Iterator;
-
+/**
+ *
+ * @author Larry Lindsey
+ */
 public class FileChunk extends DataChunk<String>
 {
     private final String fileName;

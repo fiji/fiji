@@ -1,7 +1,9 @@
 package archipelago.network;
 
-import archipelago.network.ClusterNode;
-
+/**
+ *
+ * @author Larry Lindsey
+ */
 public interface QueueListener
 {
     

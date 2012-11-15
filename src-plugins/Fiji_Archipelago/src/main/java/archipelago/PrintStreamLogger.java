@@ -1,7 +1,10 @@
 package archipelago;
 
 import java.io.PrintStream;
-
+/**
+ *
+ * @author Larry Lindsey
+ */
 public class PrintStreamLogger implements EasyLogger
 {
     

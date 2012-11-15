@@ -1,5 +1,10 @@
 package archipelago.compute;
 
+/**
+ * A ProcessListener that does nothing
+ *
+ * @author Larry Lindsey
+ */
 public class NullListener implements ProcessListener
 {
 

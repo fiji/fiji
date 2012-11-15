@@ -4,7 +4,10 @@ import archipelago.FijiArchipelago;
 import archipelago.network.ClusterNode;
 
 import java.io.Serializable;
-import java.net.InetAddress;
+/**
+ *
+ * @author Larry Lindsey
+ */
 
 public abstract class DataChunk<T> implements Serializable, Iterable<DataChunk<T>>
 {

@@ -14,7 +14,10 @@ import java.net.Socket;
 import java.util.Hashtable;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-
+/**
+ *
+ * @author Larry Lindsey
+ */
 public class ClusterNode implements MessageListener, StreamCloseListener
 {
     

@@ -3,7 +3,10 @@ package archipelago.data;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Iterator;
-
+/**
+ *
+ * @author Larry Lindsey
+ */
 public class SimpleChunk<T> extends DataChunk<T> implements Serializable 
 {
     private final T t;

@@ -6,7 +6,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.concurrent.atomic.AtomicBoolean;
-
+/**
+ *
+ * @author Larry Lindsey
+ */
 public class InputStreamLogger extends Thread
 {
     

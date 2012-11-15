@@ -18,7 +18,10 @@ import java.awt.event.ActionListener;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.Vector;
-
+/**
+ *
+ * @author Larry Lindsey
+ */
 public class ClusterNodeConfigUI implements ActionListener
 {
     

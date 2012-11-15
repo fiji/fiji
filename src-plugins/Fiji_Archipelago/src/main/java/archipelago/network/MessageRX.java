@@ -10,7 +10,10 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.net.Socket;
 import java.util.concurrent.atomic.AtomicBoolean;
-
+/**
+ *
+ * @author Larry Lindsey
+ */
 public class MessageRX
 {
 

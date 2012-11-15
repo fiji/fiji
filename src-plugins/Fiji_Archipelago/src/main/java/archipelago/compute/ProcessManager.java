@@ -3,7 +3,10 @@ package archipelago.compute;
 import archipelago.data.DataChunk;
 
 import java.io.Serializable;
-
+/**
+ *
+ * @author Larry Lindsey
+ */
 public class ProcessManager<S, T> implements Runnable, Serializable
 {
     

@@ -13,7 +13,10 @@ import java.net.Socket;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-
+/**
+ *
+ * @author Larry Lindsey
+ */
 public class MessageTX
 {
 

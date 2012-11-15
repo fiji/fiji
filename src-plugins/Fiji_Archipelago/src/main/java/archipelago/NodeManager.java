@@ -5,7 +5,10 @@ import archipelago.network.shell.JSchNodeShell;
 import archipelago.network.shell.NodeShell;
 
 import java.util.Hashtable;
-
+/**
+ *
+ * @author Larry Lindsey
+ */
 public class NodeManager
 {
 

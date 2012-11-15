@@ -3,7 +3,10 @@ package archipelago;
 import archipelago.network.client.ArchipelagoClient;
 import ij.plugin.PlugIn;
 import java.io.IOException;
-
+/**
+ *
+ * @author Larry Lindsey
+ */
 public class Fiji_Archipelago implements PlugIn 
 {
 

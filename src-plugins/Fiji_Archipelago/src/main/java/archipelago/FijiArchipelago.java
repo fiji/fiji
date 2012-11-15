@@ -9,7 +9,10 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.util.concurrent.atomic.AtomicLong;
-
+/**
+ *
+ * @author Larry Lindsey
+ */
 public final class FijiArchipelago
 {
     public static final String PREF_ROOT = "FijiArchipelago";

@@ -1,7 +1,10 @@
 package archipelago;
 
 import ij.IJ;
-
+/**
+ *
+ * @author Larry Lindsey
+ */
 public class IJLogger implements EasyLogger
 {
 
