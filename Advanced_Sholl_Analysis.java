@@ -512,7 +512,7 @@ public class Advanced_Sholl_Analysis implements PlugIn, TextListener, ItemListen
             zmax = Math.min(zc + (int)Math.round(radii[s]/vxD), maxZ);
 
             for (int z=zmin; z<=zmax; z++) {
-                IJ.showProgress(z, zmax);
+                IJ.showProgress(z, zmax+1);
                 for (int y=ymin; y<ymax; y++) {
                     for (int x=xmin; x<xmax; x++) {
                         dx = Math.sqrt((x-xc) * vxWH * (x-xc) * vxWH
@@ -528,17 +528,14 @@ public class Advanced_Sholl_Analysis implements PlugIn, TextListener, ItemListen
                 }
             }
 
-            // Ignore small clusters
-            if (xList.size()<groupsize)
-                continue;
-
-            // We now have the the points intercepting the surface of this Sholl
-            // sphere. Lets check if their respective pixels are clustered
-            data[s] = count3Dgroups(xList, yList, zList, 1.5);
-
-            // Since this all this is very computing intensive, exit as soon
-            // as a spheres has no interceptions
-                //if (count==0) break;
+            // We now have the the points intercepting the surface of this Sholl sphere.
+            // Lets check if their respective pixels are clustered, if the group is not
+            // too small
+            if (xList.size()>groupsize) {
+                data[s] = count3Dgroups(xList, yList, zList, 2.5);
+            }
+            // Exit as soon as a sphere has no interceptions
+                //if (xList.size()==0) break;
         }
         return data;
     }
@@ -551,15 +548,16 @@ public class Advanced_Sholl_Analysis implements PlugIn, TextListener, ItemListen
             final ArrayList<Integer> z, final double threshold) {
 
         double distance;
-        int i, j, k, target, source, dx, dy, dz, groups, len;
+        int target, source, dx, dy, dz, groups, len;
 
-        final int[] grouping = new int[len = x.size()];
+        final int[] grouping = new int[len = groups = x.size()];
 
-        for (i = 0, groups = len; i < groups; i++)
+        for (int i = 0; i < groups; i++)
             grouping[i] = i + 1;
 
-        for (i = 0; i < len; i++)
-            for (j = 0; j < len; j++) {
+        for (int i = 0; i < len; i++) {
+            IJ.showProgress(i, len);
+            for (int j = 0; j < len; j++) {
                 if (i == j)
                     continue;
                 dx = x.get(i) - x.get(j);
@@ -569,12 +567,13 @@ public class Advanced_Sholl_Analysis implements PlugIn, TextListener, ItemListen
                 if ((distance <= threshold) && (grouping[i] != grouping[j])) {
                     source = grouping[i];
                     target = grouping[j];
-                    for (k = 0; k < len; k++)
+                    for (int k = 0; k < len; k++)
                         if (grouping[k] == target)
                             grouping[k] = source;
                     groups--;
                 }
             }
+        }
         return groups;
     }
 
