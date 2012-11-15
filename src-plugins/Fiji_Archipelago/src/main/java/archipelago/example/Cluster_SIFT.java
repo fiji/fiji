@@ -20,139 +20,148 @@ import mpicbg.imagefeatures.FloatArray2DSIFT;
 
 import java.io.File;
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Vector;
+import java.util.*;
 
 public class Cluster_SIFT implements PlugIn
 {
 
-    /*public class ClusterSIFTProcessListener implements ProcessListener
-    {
-        final Vector<Long> ids;
-        final HashMap<Integer, ArrayList<Feature>> map;
-        Thread waitThread = null;
-        
-        public ClusterSIFTProcessListener()
-        {
-            ids = new Vector<Long>();
-            map = new HashMap<Integer, ArrayList<Feature>>();
-        }
 
-        public void addProcessManagers(final List<ProcessManager> pms)
-        {
-            for (ProcessManager pm : pms)
-            {
-                ids.add(pm.getID());
-            }
-        }
-
-        public boolean processFinished(final ProcessManager<?, ?> process) {
-            try
-            {
-                int index = ids.indexOf(process.getID());                
-                ArrayList<Feature> result = (ArrayList<Feature>)process.getOutput().getData();
-                ids.remove(process.getID());
-                map.put(index, result);
-
-                if (ids.isEmpty() && waitThread != null)
-                {
-                    waitThread.interrupt();
-                }
-                return true;
-            }
-            catch (ClassCastException cce)
-            {
-                FijiArchipelago.log("Got ClassCastException " + cce);
-                return false;
-            }
-        }
-        
-        public ArrayList<ArrayList<Feature>> getFeatureListList()
-        {
-            ArrayList<ArrayList<Feature>> featureListList = new ArrayList<ArrayList<Feature>>();
-            for (int i = 0; i < map.size(); ++i)
-            {
-                featureListList.add(map.get(i));
-            }
-            return featureListList;
-        }
-        
-        public synchronized void waitUntilDone()
-        {
-            waitThread = Thread.currentThread();
-            if (!ids.isEmpty())
-            {
-                try
-                {
-                    Thread.sleep(Long.MAX_VALUE);
-                }
-                catch (InterruptedException ie)
-                {
-                    //nothing to do
-                }
-            }
-        }
-        
-    }
-
+    
     public static class SIFTProcessor implements ChunkProcessor<ArrayList<Feature>, String>
     {
-
-        final FloatArray2DSIFT.Param param;
+        private final FloatArray2DSIFT.Param param;
         
-        public SIFTProcessor(final FloatArray2DSIFT.Param p)
+        public SIFTProcessor(FloatArray2DSIFT.Param p)
         {
             param = p;
         }
         
-        public DataChunk<ArrayList<Feature>> process(DataChunk<String> dataChunk)
+        public DataChunk<ArrayList<Feature>> process(DataChunk<String> chunk)
         {
-            System.out.println("Woo");
-            File file = new File(dataChunk.getData());
-            System.out.println("Extracting Sift points from " + file.getAbsolutePath());
-            ImagePlus im = IJ.openImage(file.getAbsolutePath());
-//            ImageProcessor ip = im.getProcessor();
-            ArrayList<Feature> feat = new ArrayList<Feature>();
-//            SIFT sift = new SIFT(new FloatArray2DSIFT(param));
-//
-//            sift.extractFeatures(ip, feat);
-//
-//            System.out.println("done");
-            
-            return new SimpleChunk<ArrayList<Feature>>(feat, dataChunk);
-        }
-
-        
-    }*/
-    
-    public static class SIFTProcessor implements ChunkProcessor<String, String>
-    {
-        public DataChunk<String> process(DataChunk<String> chunk)
-        {
-            System.out.println("Got chunk " + chunk.toString());
-        
             try
             {
-                System.out.println("Opening image");
                 ImagePlus im = IJ.openImage(chunk.getData());
-                System.out.println("Getting IP");
                 ImageProcessor ip = im.getProcessor();
-                System.out.println("Making features");
                 ArrayList<Feature> feat = new ArrayList<Feature>();
-                System.out.println("Making SIFT");
-                SIFT sift = new SIFT(new FloatArray2DSIFT(new FloatArray2DSIFT.Param()));
-                System.out.println("Doing SIFT");
+                SIFT sift = new SIFT(new FloatArray2DSIFT(param));
                 sift.extractFeatures(ip, feat);
-                System.out.println("Done SIFT");
-                return new SimpleChunk<String>("Successfully read " + chunk.toString() + " and got " + feat.size() + " features");
+                return new SimpleChunk<ArrayList<Feature>>(feat);
             }
             catch (Exception e)
             {
-                System.out.println("Caught exception: " + e);
-                return new SimpleChunk<String>("Had problems reading " + chunk.toString() + ": " + e.toString());
+                return new SimpleChunk<ArrayList<Feature>>(new ArrayList<Feature>());
             }
+        }
+    }
+
+
+    /**
+     * Extracts SIFT features from images using a FijiArchipelago Cluster
+     * @param fileNames a Collection of file names
+     *                  This method makes no check of the validity of the filenames. For this
+     *                  to work properly, they must exist within the Cluster file root, which
+     *                  is indicated by FijiArchipelago.getFileRoot().
+     * @param param The SIFT parameters
+     * @return An ArrayList of ArrayLists of Features, such that the ArrayList<Feature>
+     *     corresponding to the ith file in fileNames is returned in the ith position here.
+     */
+    public static ArrayList<ArrayList<Feature>> clusterSIFTExtraction(Collection<String> fileNames,
+                                                                      FloatArray2DSIFT.Param param)
+    {
+        if (Cluster.activeCluster())
+        {
+            int index = 0;
+            // A map of index to ID. This will be used later to keep the order of features correct
+            final long[] idMap = new long[fileNames.size()];
+            // Used to map ProcessManager ID to features
+            final Hashtable<Long, ArrayList<Feature>> idFeatureMap
+                    = new Hashtable<Long, ArrayList<Feature>>();
+            // Before queueing, this will be filled with the IDs of the PMs. The ProcessListener
+            // will remove those IDs as the results come in. When it's empty, we know we're done.
+            // Use a Vector because they're synchronized.
+            final Vector<Long> remainingIDS = new Vector<Long>();
+            // The current thread will be told to sleep forever (well, 2^63 -1 ms). When
+            // remainingIDs is empty, we'll interrupt the current thread.
+            final Thread currentThread = Thread.currentThread();
+            // The return list
+            ArrayList<ArrayList<Feature>> featuresList;
+            // A list of PMs where we collect them before submitting to the cluster.
+            ArrayList<ProcessManager> pms = new ArrayList<ProcessManager>();
+            
+            /*
+            For each filename passed in, create the appropriate FileChunk, a ProcessListener,
+            and SIFTProcessor.
+            
+            The FileChunk and SIFTProcessor get sent to the client over an ObjectStream through
+            a Socket, so they must be Serializable. For internal classes, they must also be
+            static.
+             */
+            for (String fileName : fileNames)
+            {                
+                FileChunk imFileChunk = new FileChunk(fileName);
+                ProcessListener listener = new ProcessListener() {
+                    public boolean processFinished(ProcessManager<?, ?> process)
+                    {
+                        // Try to cast. This should *always* work, but if it fails, its important
+                        // to let someone know.
+                        try
+                        {
+                            ArrayList<Feature> feat = 
+                                    (ArrayList<Feature>)process.getOutput().getData();
+                            idFeatureMap.put(process.getID(), feat);
+                        }
+                        catch (ClassCastException cce)
+                        {
+                            FijiArchipelago.log("Cluster SIFT: Couldn't cast features correctly");
+                            idFeatureMap.put(process.getID(), new ArrayList<Feature>());
+                        }
+                        // Remove the id from remaining IDs after we populate the map.
+                        // It's possible that multiple listeners are running concurrently, so
+                        // even if we remove the last ID, the interrupt might be called from a
+                        // different thread.
+                        remainingIDS.remove(process.getID());
+                        if (remainingIDS.isEmpty())
+                        {
+                            currentThread.interrupt();
+                        }
+                        
+                        return true;
+                    }
+                };
+                ProcessManager<ArrayList<Feature>, String> pm =
+                        new ProcessManager<ArrayList<Feature>, String>(
+                                imFileChunk, new SIFTProcessor(param.clone()), listener);
+
+                idMap[index] = pm.getID();
+                remainingIDS.add(pm.getID());
+                pms.add(pm);
+                
+                
+            }
+
+            Cluster.getCluster().queueProcesses(pms);
+
+            try
+            {
+                // Sleep until we're kissed by Prince Charming
+                Thread.sleep(Long.MAX_VALUE);
+            }
+            catch (InterruptedException ie)
+            {
+                // We got a kiss!
+            }
+            
+            featuresList = new ArrayList<ArrayList<Feature>>();
+            for (long id : idMap)
+            {
+                featuresList.add(idFeatureMap.get(id));
+            }
+            return featuresList;
+        }
+        else
+        {
+            FijiArchipelago.err("Cluster SIFT Extraction: Cluster is not active.");
+            return new ArrayList<ArrayList<Feature>>();
         }
     }
     
@@ -166,75 +175,47 @@ public class Cluster_SIFT implements PlugIn
             IJ.showMessage("First, open an image");
             return 0;
         }
+        else if(!(ip.getStack().isVirtual() 
+                && FijiArchipelago.fileIsInRoot(((VirtualStack)ip.getStack()).getFileName(1))))
+        {
+            IJ.showMessage("Stack must be virtual and within the cluster file root "
+                    + FijiArchipelago.getFileRoot());
+            return 0;
+        }
 
         if (!Cluster.activeCluster())
         {
             FijiArchipelago.runClusterGUI();
+            if (Cluster.activeCluster())
+            {
+                Cluster.getCluster().waitUntilReady();
+            }
         }
 
         if (Cluster.activeCluster())
         {
             long sTime = System.currentTimeMillis();
-            Cluster cluster = Cluster.getCluster();
             ImageStack stack = ip.getStack();
-            cluster.waitUntilReady();
 
             if (stack.isVirtual() 
                     && FijiArchipelago.fileIsInRoot(((VirtualStack) stack).getFileName(1)))
             {
-//                System.out.println("Starting cluster job");
-//                
-//                FloatArray2DSIFT.Param param = new FloatArray2DSIFT.Param();
-//                VirtualStack vstack = (VirtualStack)stack;
-//                ArrayList<ProcessManager> pms
-//                        = new ArrayList<ProcessManager>();
-//                SIFTProcessor siftProcessor;
-//                ClusterSIFTProcessListener processListener = new ClusterSIFTProcessListener();
-//
-//                param.maxOctaveSize = 2048;
-//
-//                siftProcessor = new SIFTProcessor(param);
-//                
-//                for (int i = 1; i <= vstack.getSize(); ++i)
-//                {
-//                    FileChunk imFileChunk = new FileChunk(vstack.getFileName(i));
-//                    ProcessManager<ArrayList<Feature>, String> pm =
-//                            new ProcessManager<ArrayList<Feature>, String>(
-//                                    imFileChunk, siftProcessor, processListener);
-//                    pms.add(pm);
-//                }
-//
-//                processListener.addProcessManagers(pms);
-//                
-//                cluster.queueProcesses(pms);
-//                
-//                processListener.waitUntilDone();
-
+                // In theory, this check shouldn't be necessary, but I included it anyway
+                ArrayList<String> fileNames = new ArrayList<String>();
                 VirtualStack vstack = (VirtualStack)stack;
+
                 for (int i = 1; i <= vstack.getSize(); ++i)
-                {
-                    FileChunk imFileChunk = new FileChunk(vstack.getDirectory() + vstack.getFileName(i));
-                    FijiArchipelago.log("Got file " + imFileChunk);
-                    ProcessListener listener = new ProcessListener() {
-                        public boolean processFinished(ProcessManager<?, ?> process) {
-                            FijiArchipelago.log("Got job back: " + process.getOutput());
-                            return true;
-                        }
-                    };
-                    ProcessManager<String, String> pm =
-                            new ProcessManager<String, String>(imFileChunk, new SIFTProcessor(), listener);
-//                    pm.run();
-                    cluster.queueProcess(pm);
-//                    pms.add(pm);
+                {                    
+                    fileNames.add(vstack.getDirectory() + vstack.getFileName(i));                    
                 }
                 
-                
+                clusterSIFTExtraction(fileNames, new FloatArray2DSIFT.Param());
+
                 return System.currentTimeMillis() - sTime;
             }
             else
             {
-                IJ.showMessage("Front image must be a Virtual Stack within the file root "
-                        + FijiArchipelago.getFileRoot());
+                IJ.showMessage("Stack wasn't virtual and in file root");
                 return 0;
             }
         }

@@ -30,6 +30,7 @@ public class ClusterNodeConfigUI implements ActionListener
         public String execRoot;
         public String fileRoot;
         public int port;
+        public int nCpu;
         public String user;
         
         private final String sep = "\t";
@@ -58,13 +59,14 @@ public class ClusterNodeConfigUI implements ActionListener
                 split = fromFile.split(sep);
             }
 
-            if (fromFile == null || split.length < 5)
+            if (fromFile == null || split.length < 6)
             {
                 hostName = "";
                 execRoot = Cluster.getCluster().getNodeManager().getStdExecRoot();
                 fileRoot = Cluster.getCluster().getNodeManager().getStdFileRoot();
                 user = Cluster.getCluster().getNodeManager().getStdUser();
                 port = Cluster.getCluster().getNodeManager().getStdPort();
+                nCpu = 1;
                 if (fromFile != null)
                 {
                     FijiArchipelago.log("Node Configuration: Could not parse line: " + fromFile);
@@ -72,15 +74,17 @@ public class ClusterNodeConfigUI implements ActionListener
             }
             else
             {
-                //Order: host, user, port, execRoot, fileRoot
+                //Order: host, user, port, nCpu, execRoot, fileRoot
                 
                 hostName = split[0];
                 user = split[1];
                 port = Integer.parseInt(split[2]);
-                execRoot = split[3];
-                fileRoot = split[4];
+                nCpu = Integer.parseInt(split[3]);
+                execRoot = split[4];
+                fileRoot = split[5];
 
-                label.setText(user + "@" + hostName + ":" + port);
+
+                label.setText(user + "@" + hostName + ":" + port + " x" + nCpu);
                 mainPanel.validate();
                 centerPanel.validate();
             }
@@ -95,10 +99,10 @@ public class ClusterNodeConfigUI implements ActionListener
         
         public String toFileText()
         {
-            //Order: host, user, port, execRoot, fileRoot
+            //Order: host, user, port, nCpu, execRoot, fileRoot
             StringBuilder sb = new StringBuilder(256);
             sb.append(hostName).append(sep).append(user).append(sep).append(port).append(sep)
-                    .append(execRoot).append(sep).append(fileRoot);
+                    .append(nCpu).append(sep).append(execRoot).append(sep).append(fileRoot);
             return sb.toString();
         }
 
@@ -126,6 +130,7 @@ public class ClusterNodeConfigUI implements ActionListener
             gd.addStringField("Hostname", hostName, Math.max(hostName.length(), 128));
             gd.addStringField("User name", user);
             gd.addNumericField("Port", port, 0);
+            gd.addNumericField("Number of Threads", nCpu, 0);
             gd.addStringField("Remote Fiji Root", execRoot, 64);
             gd.addStringField("Remote File Root", fileRoot, 64);
             gd.showDialog();
@@ -135,6 +140,7 @@ public class ClusterNodeConfigUI implements ActionListener
                 hostName = gd.getNextString();
                 user = gd.getNextString();
                 port = (int)gd.getNextNumber();
+                nCpu = (int)gd.getNextNumber();
                 execRoot = gd.getNextString();
                 fileRoot = gd.getNextString();
                 label.setText(user + "@" + hostName + ":" + port);
@@ -150,6 +156,7 @@ public class ClusterNodeConfigUI implements ActionListener
             param.setFileRoot(fileRoot);
             param.setPort(port);
             param.setUser(user);
+            param.setNumThreads(nCpu);
             return param;
         }
     }
