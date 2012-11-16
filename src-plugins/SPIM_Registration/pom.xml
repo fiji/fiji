@@ -110,7 +110,7 @@
 		<dependency>
 			<groupId>loci</groupId>
 			<artifactId>scifio</artifactId>
-			<version>4.4-SNAPSHOT</version>
+			<version>${scifio.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>net.java.dev.jna</groupId>

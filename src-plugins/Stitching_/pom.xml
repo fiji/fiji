@@ -59,23 +59,23 @@
 		</dependency>
 		<dependency>
 			<groupId>loci</groupId>
-			<artifactId>loci-common</artifactId>
-			<version>4.4-SNAPSHOT</version>
+			<artifactId>loci-legacy</artifactId>
+			<version>${scifio.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>loci</groupId>
 			<artifactId>loci_plugins</artifactId>
-			<version>4.4-SNAPSHOT</version>
+			<version>${scifio.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>loci</groupId>
 			<artifactId>ome-xml</artifactId>
-			<version>4.4-SNAPSHOT</version>
+			<version>${scifio.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>loci</groupId>
 			<artifactId>scifio</artifactId>
-			<version>4.4-SNAPSHOT</version>
+			<version>${scifio.version}</version>
 		</dependency>
 	</dependencies>
 
