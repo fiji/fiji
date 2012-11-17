@@ -67,7 +67,7 @@ public class JRuby_Interpreter extends AbstractInterpreter {
 		if (!"".equals(packageName))
 			packageName += ".";
 		for (String className : classNames)
-			sb.append("java_import '").append(packageName)
+			sb.append("include_class '").append(packageName)
 				.append(className).append("'\n");
 		return sb.toString();
 	}
