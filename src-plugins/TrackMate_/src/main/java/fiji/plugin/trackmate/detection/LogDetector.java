@@ -88,8 +88,15 @@ public class LogDetector <T extends RealType<T>  & NativeType<T>> implements Spo
 		}
 
 		double sigma = radius / Math.sqrt(img.numDimensions()); // optimal sigma for LoG approach and dimensionality
+		// Turn it in pixel coordinates
+		final double[] calibration = TMUtils.getSpatialCalibration(img);
+		double[] sigmas = new double[img.numDimensions()];
+		for (int i = 0; i < sigmas.length; i++) {
+			sigmas[i] = sigma / calibration[i];
+		}
+		
 		ImgFactory<FloatType> factory = new ArrayImgFactory<FloatType>();
-		Img<FloatType> gaussianKernel = FourierConvolution.createGaussianKernel(factory, sigma, img.numDimensions());
+		Img<FloatType> gaussianKernel = FourierConvolution.createGaussianKernel(factory, sigmas);
 		FourierConvolution<T, FloatType> fConvGauss;
 		try {
 			fConvGauss = new FourierConvolution<T, FloatType>(intermediateImage, gaussianKernel);
@@ -119,7 +126,6 @@ public class LogDetector <T extends RealType<T>  & NativeType<T>> implements Spo
 
 		PickImagePeaks<T> peakPicker = new PickImagePeaks<T>(intermediateImage);
 		double[] suppressionRadiuses = new double[img.numDimensions()];
-		final double[] calibration = TMUtils.getSpatialCalibration(img);
 		for (int i = 0; i < img.numDimensions(); i++) 
 			suppressionRadiuses[i] = radius / calibration [i];
 		peakPicker.setSuppression(suppressionRadiuses); // in pixels
