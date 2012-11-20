@@ -32,10 +32,6 @@ import ij.text.*;
 import ij.util.Tools;
 
 import java.awt.*;
-import java.awt.Color;
-import java.awt.Font;
-import java.awt.Frame;
-import java.awt.Rectangle;
 import java.awt.event.*;
 import java.awt.image.IndexColorModel;
 import java.io.*;
@@ -118,6 +114,9 @@ public class Advanced_Sholl_Analysis implements PlugIn, TextListener, ItemListen
     private static TextField ienSpans;
     private static TextField iemaskBackground;
 
+    /* Default parameters for 3D analysis */
+    private static boolean secludeSingleVoxels = false;
+
     /* Default parameters for 2D analysis */
     private static final String[] BIN_TYPES = { "Mean", "Median" };
     private static final int BIN_AVERAGE = 0;
@@ -129,13 +128,8 @@ public class Advanced_Sholl_Analysis implements PlugIn, TextListener, ItemListen
     // intersections with that circle will be counted. With this flag on, we will try to
     // find these "false positives" and throw them out. A way to attempt this (we will be
     // missing some of them) is to throw out 1-pixel groups that exist solely on the edge
-    // of a "stair" of target pixels
+    // of a "stair" of target pixels (see countSinglePixels)
     private static boolean doSpikeSupression = true;
-
-    /* Default parameters for 3D analysis */
-    private static double minCluster = 50;
-    private static double minRadius = 0;
-    private static boolean clusterUsePixels = true;
 
     public void run( final String arg) {
 
@@ -286,7 +280,7 @@ public class Advanced_Sholl_Analysis implements PlugIn, TextListener, ItemListen
         // 2D: Analyze the data and return intersection counts with nSpans
         // per radius. 3D: Analysis without nSpans
         if (is3D) {
-            counts = analyze3D(x, y, z, radii, minRadius, (int)Math.round(minCluster), img);
+            counts = analyze3D(x, y, z, radii, img);
         } else {
             counts = analyze2D(x, y, radii, vxSize, nSpans, binChoice, ip);
         }
@@ -324,27 +318,21 @@ public class Advanced_Sholl_Analysis implements PlugIn, TextListener, ItemListen
      */
     private String showDialog(final double chordAngle, final boolean is3D) {
 
-        String trim = "None";
+        String trim = "None"; // Default return value
 
         final GenericDialog gd = new GenericDialog("Advanced Sholl Analysis v"+ VERSION);
         gd.addNumericField("Starting radius:", startRadius, 2, 9, unit);
         gd.addNumericField("Ending radius:", endRadius, 2, 9, unit);
         gd.addNumericField("Radius_step size:", incStep, 2, 9, unit);
 
-        // 3D analysis: prompt for cutoff value for cluster size. 2D Analysis:
-        // allow multiple samples per radius,
-        if (is3D) {
-            gd.setInsets(12, 0, 0);
-            gd.addNumericField("Smallest cluster:", minCluster, 2, 9, unit +"\u00B2");
-            gd.setInsets(0, 86, 4);
-            gd.addCheckbox("Pixel units", clusterUsePixels);
-        } else {
+        // 2D Analysis: allow multiple samples per radius,
+        if (!is3D) {
             gd.addSlider("Samples per radius:", 1, 10, nSpans);
             gd.setInsets(0, 0, 0);
             gd.addChoice("Samples_integration:", BIN_TYPES, BIN_TYPES[binChoice]);
         }
 
-        gd.setInsets(12, 0, 0);
+        gd.setInsets(12, 0, 12);
         gd.addChoice("Sholl method:", SHOLL_TYPES, SHOLL_TYPES[shollChoice]);
 
         // If an orthogonal chord exists, prompt for hemicircle/hemisphere analysis
@@ -358,27 +346,31 @@ public class Advanced_Sholl_Analysis implements PlugIn, TextListener, ItemListen
                 quads[0] = "Above line";
                 quads[1] = "Below line";
             }
-            gd.setInsets(12, 6, 3);
-            gd.addCheckbox("Restrict analysis to hemi"+ (is3D ? "sphere" : "circle"), trimBounds);
+            gd.setInsets(0, 6, 3);
+            gd.addCheckbox("Restrict analysis to hemi"+ (is3D ? "sphere:" : "circle:"), trimBounds);
             gd.addChoice("_", quads, quads[quadChoice]);
-            gd.setInsets(6, 6, 0);
-        } else
-            gd.setInsets(12, 6, 0);
+        }
+
+        if (is3D) {
+            gd.setInsets( orthoChord ? 6 : 0, 6, 6);
+            gd.addCheckbox("Ignore isolated (6-connected) voxels", secludeSingleVoxels);
+        }
 
         // Prompt for curve fitting related options
-        gd.addCheckbox("Fit profile and compute descriptors", fitCurve);
+        gd.setInsets(6, 6, 0);
+        gd.addCheckbox("Fit profile and compute descriptors:", fitCurve);
         gd.setInsets(3, is3D ? 33 : 56, 3);
         gd.addCheckbox("Show parameters", verbose);
         gd.addChoice("Polynomial:", DEGREES, DEGREES[polyChoice]);
 
         // Prompt for mask related options
         gd.setInsets(6, 6, 0);
-        gd.addCheckbox("Create intersections mask", mask);
+        gd.addCheckbox("Create intersections mask:", mask);
         gd.addSlider("Background:", 0, 255, maskBackground);
 
         // Offer to save results if local image
         if (validPath) {
-            gd.setInsets(5, 6, 0);
+            gd.setInsets(6, 6, 0);
             gd.addCheckbox("Save results on image directory", save);
         }
 
@@ -389,11 +381,12 @@ public class Advanced_Sholl_Analysis implements PlugIn, TextListener, ItemListen
         final Vector<?> numericfields = gd.getNumericFields();
         final Vector<?> choices = gd.getChoices();
         final Vector<?> checkboxes = gd.getCheckboxes();
-        int currentCheckbox = is3D ? 1 : 0;
+        int currentCheckbox = 0;
         int currentChoice = 0;
+        int currentField = 3;
 
         if (!is3D) {
-            ienSpans = (TextField)numericfields.elementAt(3);
+            ienSpans = (TextField)numericfields.elementAt(currentField++);
             ienSpans.addTextListener(this);
             iebinChoice = (Choice)choices.elementAt(currentChoice++);
             iebinChoice.addItemListener(this);
@@ -411,6 +404,7 @@ public class Advanced_Sholl_Analysis implements PlugIn, TextListener, ItemListen
             iequadChoice.setEnabled(trimBounds);
         }
 
+        if (is3D) currentCheckbox++;
         iefitCurve = (Checkbox)checkboxes.elementAt(currentCheckbox++);
         iefitCurve.addItemListener(this);
 
@@ -425,7 +419,7 @@ public class Advanced_Sholl_Analysis implements PlugIn, TextListener, ItemListen
         iemask = (Checkbox)checkboxes.elementAt(currentCheckbox++);
         iemask.addItemListener(this);
 
-        iemaskBackground = (TextField)numericfields.elementAt(4);
+        iemaskBackground = (TextField)numericfields.elementAt(currentField++);
         iemaskBackground.setEnabled(mask);
 
         gd.showDialog();
@@ -439,16 +433,7 @@ public class Advanced_Sholl_Analysis implements PlugIn, TextListener, ItemListen
         endRadius = gd.getNextNumber();
         incStep = Math.max(0, gd.getNextNumber());
 
-        if (is3D) {
-           minCluster = Math.max(0, gd.getNextNumber());
-           clusterUsePixels = gd.getNextBoolean();
-           if (!clusterUsePixels) {
-               minRadius = Math.sqrt( minCluster / (Math.PI*4) );
-               minCluster = minCluster / (vxSize*vxSize);
-           } else {
-              minRadius = Math.sqrt( (minCluster * vxSize*vxSize) / (Math.PI*4) );
-           }
-        } else {
+        if (!is3D) {
             nSpans = Math.min(Math.max((int)gd.getNextNumber(), 1), 10);
             binChoice = gd.getNextChoiceIndex();
         }
@@ -461,6 +446,9 @@ public class Advanced_Sholl_Analysis implements PlugIn, TextListener, ItemListen
             final String choice = quads[quadChoice = gd.getNextChoiceIndex()];
             trim = choice.substring(0, choice.indexOf(" "));
         }
+
+        if (is3D)
+            secludeSingleVoxels = gd.getNextBoolean();
 
         fitCurve = gd.getNextBoolean();
         verbose = gd.getNextBoolean();
@@ -476,8 +464,7 @@ public class Advanced_Sholl_Analysis implements PlugIn, TextListener, ItemListen
 
     /** Measures intersections for each sphere surface */
     static public double[] analyze3D(final int xc, final int yc, final int zc,
-            final double[] radii, final double minradius, final int groupsize,
-            final ImagePlus img) {
+            final double[] radii, final ImagePlus img) {
 
         int nspheres, xmin, ymin, zmin, xmax, ymax, zmax;
         double dx, value;
@@ -494,14 +481,8 @@ public class Advanced_Sholl_Analysis implements PlugIn, TextListener, ItemListen
             if (IJ.escapePressed())
                 { IJ.beep(); mask = false; return data; }
 
-            // Ignore radii that do not allow counts larger than minCluster
-            if (radii[s] < minradius)
-               continue;
-
             // Initialize ArrayLists to hold surface points
-            final ArrayList<Integer> xList = new ArrayList<Integer>();
-            final ArrayList<Integer> yList = new ArrayList<Integer>();
-            final ArrayList<Integer> zList = new ArrayList<Integer>();
+            final ArrayList<int[]> points = new ArrayList<int[]>();
 
             // Restrain analysis to the smallest volume for this sphere
             xmin = Math.max(xc - (int)Math.round(radii[s]/vxWH), minX);
@@ -521,7 +502,8 @@ public class Advanced_Sholl_Analysis implements PlugIn, TextListener, ItemListen
                         if (Math.abs(dx-radii[s])<0.5) {
                             value = stack.getVoxel(x,y,z);
                             if (value >= lowerT && value <= upperT) {
-                                xList.add(x); yList.add(y); zList.add(z);
+                                if (hasNeighbors(x,y,z,stack))
+                                    points.add( new int[]{x,y,z} );
                             }
                         }
                     }
@@ -529,28 +511,53 @@ public class Advanced_Sholl_Analysis implements PlugIn, TextListener, ItemListen
             }
 
             // We now have the the points intercepting the surface of this Sholl sphere.
-            // Lets check if their respective pixels are clustered, if the group is not
-            // too small
-            if (xList.size()>groupsize) {
-                data[s] = count3Dgroups(xList, yList, zList, 2.5);
-            }
+            // Lets check if their respective pixels are clustered
+            data[s] = count3Dgroups(points);
+
             // Exit as soon as a sphere has no interceptions
-                //if (xList.size()==0) break;
+                //if (points.size()==0) break;
         }
         return data;
     }
 
+    /** Returns true if at least one of the 6-neighboring voxels of this position is thresholded */
+    static private boolean hasNeighbors(final int x, final int y, final int z, final ImageStack stack) {
+
+        if (!secludeSingleVoxels)
+            return true;  // Do not proceed if secludeSingleVoxels is not set
+
+        final int[][] neighboors = new int[6][3];
+
+        // Out of bounds positions will have a value of zero
+        neighboors[0] = new int[]{x-1, y, z};
+        neighboors[1] = new int[]{x+1, y, z};
+        neighboors[2] = new int[]{x, y-1, z};
+        neighboors[3] = new int[]{x, y+1, z};
+        neighboors[4] = new int[]{x, y, z+1};
+        neighboors[5] = new int[]{x, y, z-1};
+
+        boolean clustered = false;
+
+        for (int i=0; i<neighboors.length; i++) {
+            final double value = stack.getVoxel(neighboors[i][0], neighboors[i][1], neighboors[i][2] );
+            if (value >= lowerT && value <= upperT) {
+                clustered = true;
+                break;
+            }
+        }
+
+        return clustered;
+    }
+
     /**
-     * Analogous to countGroups(), counts clusters of voxels from an array of 3D
-     * coordinates, but without SpikeSupression
+     * Analogous to countGroups(), counts clusters of 26-connected voxels from an ArrayList
+     * of 3D coordinates. SpikeSupression is not performed
      */
-    static public int count3Dgroups(final ArrayList<Integer> x, final ArrayList<Integer> y,
-            final ArrayList<Integer> z, final double threshold) {
+    static public int count3Dgroups(final ArrayList<int[]> points) {
 
-        double distance;
-        int target, source, dx, dy, dz, groups, len;
+        int target, source, groups, len;
 
-        final int[] grouping = new int[len = groups = x.size()];
+        final int[] grouping = new int[len = groups = points.size()];
 
         for (int i = 0; i < groups; i++)
             grouping[i] = i + 1;
@@ -560,11 +567,14 @@ public class Advanced_Sholl_Analysis implements PlugIn, TextListener, ItemListen
             for (int j = 0; j < len; j++) {
                 if (i == j)
                     continue;
-                dx = x.get(i) - x.get(j);
-                dy = y.get(i) - y.get(j);
-                dz = z.get(i) - z.get(j);
-                distance = Math.sqrt(dx*dx + dy*dy + dz*dz);
-                if ((distance <= threshold) && (grouping[i] != grouping[j])) {
+
+                // Compute the chessboard (Chebyshev) distance for this point. A chessboard
+                // distance of 1 in xy (lateral) underlies 8-connectivity within the plane.
+                // A distance of 1 in z (axial) underlies 26-connectivity in 3D
+                final int lDist = Math.max(Math.abs(points.get(i)[0] - points.get(j)[0]),
+                                           Math.abs(points.get(i)[1] - points.get(j)[1]));
+                final int aDist = Math.max(Math.abs(points.get(i)[2] - points.get(j)[2]),lDist);
+                if ( (lDist*aDist<=1) && (grouping[i] != grouping[j]) ) {
                     source = grouping[i];
                     target = grouping[j];
                     for (int k = 0; k < len; k++)
@@ -679,23 +689,17 @@ public class Advanced_Sholl_Analysis implements PlugIn, TextListener, ItemListen
             if (pixels[i] != 0.0)
                 points[j++] = rawpoints[i];
 
-        return countGroups(points, 1.5, ip);
+        return countGroups(points, ip);
 
     }
 
     /**
-     * For a set of points in 2D space, counts how many groups of value v there
-     * are such that for every point in each group, there exists another point
-     * in the same group that is less than threshold units of distance away. If
-     * a point is greater than threshold units away from all other points, it is
-     * in its own group. For threshold=1.5, this is equivalent to 8-connected
-     * clusters
+     * For a set of points in 2D space, counts how many groups (clusters) of 8-connected
+     * pixels exist.
      */
-    static public int countGroups(final int[][] points, final double threshold,
-            final ImageProcessor ip) {
+    static public int countGroups(final int[][] points, final ImageProcessor ip) {
 
-        double distance;
-        int i, j, k, target, source, dx, dy, groups, len;
+        int i, j, k, target, source, groups, len, dx;
 
         // Create an array to hold the point grouping data
         final int[] grouping = new int[len = points.length];
@@ -711,13 +715,13 @@ public class Advanced_Sholl_Analysis implements PlugIn, TextListener, ItemListen
                 if (i == j)
                     continue;
 
-                // Compute the distance between the two points
-                dx = points[i][0] - points[j][0];
-                dy = points[i][1] - points[j][1];
-                distance = Math.sqrt(dx * dx + dy * dy);
+                // Compute the chessboard (Chebyshev) distance. A distance of 1
+                // underlies 8-connectivity
+                dx = Math.max( Math.abs(points[i][0] - points[j][0]),
+                               Math.abs(points[i][1] - points[j][1]));
 
                 // Should these two points be in the same group?
-                if ((distance <= threshold) && (grouping[i] != grouping[j])) {
+                if ((dx==1) && (grouping[i] != grouping[j])) {
 
                     // Record which numbers we're changing
                     source = grouping[i];
@@ -734,56 +738,64 @@ public class Advanced_Sholl_Analysis implements PlugIn, TextListener, ItemListen
                 }
             }
 
-        if (doSpikeSupression) {
-            boolean multigroup;
-            int[] px;
-            final int[][] testpoints = new int[8][2];
-
-            for (i = 0; i < len; i++) {
-
-                // Check for other members of this group
-                for (multigroup = false, j = 0; j < len; j++) {
-                    if (i == j)
-                        continue;
-                    if (grouping[i] == grouping[j]) {
-                        multigroup = true;
-                        break;
-                    }
-                }
-
-                // If not a single-pixel group, try again
-                if (multigroup)
-                    continue;
-
-                // Save the coordinates of this point
-                dx = points[i][0];
-                dy = points[i][1];
-
-                // Calculate the 8 neighbors surrounding this point
-                testpoints[0][0] = dx-1;   testpoints[0][1] = dy+1;
-                testpoints[1][0] = dx  ;   testpoints[1][1] = dy+1;
-                testpoints[2][0] = dx+1;   testpoints[2][1] = dy+1;
-                testpoints[3][0] = dx-1;   testpoints[3][1] = dy  ;
-                testpoints[4][0] = dx+1;   testpoints[4][1] = dy  ;
-                testpoints[5][0] = dx-1;   testpoints[5][1] = dy-1;
-                testpoints[6][0] = dx  ;   testpoints[6][1] = dy-1;
-                testpoints[7][0] = dx+1;   testpoints[7][1] = dy-1;
-
-                // Pull out the pixel values for these points
-                px = getPixels(ip, testpoints);
-
-                // Now perform the stair checks
-                if ((px[0]!=0 && px[1]!=0 && px[3]!=0 && px[4]==0 && px[6]==0 && px[7]==0) ||
-                    (px[1]!=0 && px[2]!=0 && px[4]!=0 && px[3]==0 && px[5]==0 && px[6]==0) ||
-                    (px[4]!=0 && px[6]!=0 && px[7]!=0 && px[0]==0 && px[1]==0 && px[3]==0) ||
-                    (px[3]!=0 && px[5]!=0 && px[6]!=0 && px[1]==0 && px[2]==0 && px[4]==0))
-
-                    groups--;
-
-            }
-        }
+        if (doSpikeSupression)
+            groups -= countSinglePixels(points, len, grouping, ip);
 
         return groups;
+    }
+
+    /** Counts 1-pixel groups that exist solely on the edge of a "stair" of target pixels */
+    static public int countSinglePixels(final int[][] points, final int pointsLength,
+            final int[] grouping, final ImageProcessor ip) {
+
+        int counts = 0;
+
+        for (int i = 0; i < pointsLength; i++) {
+
+            // Check for other members of this group
+            boolean multigroup = false;
+            for (int j=0; j<pointsLength; j++) {
+                if (i == j)
+                    continue;
+                if (grouping[i] == grouping[j]) {
+                    multigroup = true;
+                    break;
+                }
+            }
+
+            // If not a single-pixel group, try again
+            if (multigroup)
+                continue;
+
+            // Store the coordinates of this point
+            final int dx = points[i][0];
+            final int dy = points[i][1];
+
+            // Calculate the 8 neighbors surrounding this point
+            final int[][] testpoints = new int[8][2];
+            testpoints[0][0] = dx-1;   testpoints[0][1] = dy+1;
+            testpoints[1][0] = dx  ;   testpoints[1][1] = dy+1;
+            testpoints[2][0] = dx+1;   testpoints[2][1] = dy+1;
+            testpoints[3][0] = dx-1;   testpoints[3][1] = dy  ;
+            testpoints[4][0] = dx+1;   testpoints[4][1] = dy  ;
+            testpoints[5][0] = dx-1;   testpoints[5][1] = dy-1;
+            testpoints[6][0] = dx  ;   testpoints[6][1] = dy-1;
+            testpoints[7][0] = dx+1;   testpoints[7][1] = dy-1;
+
+            // Pull out the pixel values for these points
+            final int[] px = getPixels(ip, testpoints);
+
+            // Now perform the stair checks
+            if ((px[0]!=0 && px[1]!=0 && px[3]!=0 && px[4]==0 && px[6]==0 && px[7]==0) ||
+                (px[1]!=0 && px[2]!=0 && px[4]!=0 && px[3]==0 && px[5]==0 && px[6]==0) ||
+                (px[4]!=0 && px[6]!=0 && px[7]!=0 && px[0]==0 && px[1]==0 && px[3]==0) ||
+                (px[3]!=0 && px[5]!=0 && px[6]!=0 && px[1]==0 && px[2]==0 && px[4]==0))
+
+                counts++;
+
+        }
+
+        return counts;
     }
 
     /**
@@ -968,7 +980,6 @@ public class Advanced_Sholl_Analysis implements PlugIn, TextListener, ItemListen
         rt.addLabel("Image", title + " (" + unit + ")");
         rt.addValue("Lower Thold", lowerT);
         rt.addValue("Upper Thold", upperT);
-        rt.addValue("Smallest cluster", is3D ? minCluster : Double.NaN);
         rt.addValue("Method #", mthd + 1);
         rt.addValue("X center (px)", xc);
         rt.addValue("Y center (px)", yc);
