@@ -2,14 +2,18 @@ package fiji.plugin.trackmate.visualization.trackscheme;
 
 import static fiji.plugin.trackmate.gui.TrackMateWizard.FONT;
 import static fiji.plugin.trackmate.gui.TrackMateWizard.SMALL_FONT;
+import ij.measure.ResultsTable;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FontMetrics;
+import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -18,11 +22,14 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 
 import javax.swing.AbstractListModel;
 import javax.swing.JLabel;
 import javax.swing.JList;
+import javax.swing.JMenuItem;
 import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.ListCellRenderer;
@@ -33,12 +40,14 @@ import javax.swing.event.AncestorListener;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.JTableHeader;
+import javax.swing.table.TableModel;
+
+import net.imglib2.type.NativeType;
+import net.imglib2.type.numeric.RealType;
 
 import com.mxgraph.model.mxCell;
 import com.mxgraph.model.mxICell;
 
-import net.imglib2.type.NativeType;
-import net.imglib2.type.numeric.RealType;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMateSelectionChangeEvent;
@@ -120,13 +129,17 @@ public class InfoPane <T extends RealType<T> & NativeType<T>> extends JPanel imp
 	 * Show the given spot selection as a table displaying their individual features. 
 	 */
 	@SuppressWarnings("serial")
-	private void highlightSpots(Collection<Spot> spots) {
+	private void highlightSpots(final Collection<Spot> spots) {
 		if (!doHighlightSelection)
 			return;
 		if (spots.size() == 0) {
 			scrollTable.setVisible(false);
 			return;
 		}
+		
+		// Copy and sort selection by frame 
+		final TreeSet<Spot> sortedSpot = new TreeSet<Spot>(Spot.frameComparator);
+		sortedSpot.addAll(spots);
 
 		// Fill feature table
 		try { // Dummy protection for ultra fast selection / de-selection events. Ugly.
@@ -136,7 +149,7 @@ public class InfoPane <T extends RealType<T> & NativeType<T>> extends JPanel imp
 				public boolean isCellEditable(int row, int column) { return false; }
 			};
 
-			for (Spot spot : spots) {
+			for (Spot spot : sortedSpot) {
 				if (null == spot)
 					continue;
 				Object[] columnData = new Object[features.size()];
@@ -186,6 +199,40 @@ public class InfoPane <T extends RealType<T> & NativeType<T>> extends JPanel imp
 	 * PRIVATE METHODS
 	 */
 
+	private void displayPopupMenu(Point point) {
+		// Prepare menu
+		JPopupMenu menu = new JPopupMenu("Selection table");
+		JMenuItem exportItem = menu.add("Export to ImageJ table");
+		exportItem.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent arg0) {	exportTableToImageJ(); 	}
+		});
+		// Display it
+		menu.show(table, (int) point.getX(), (int) point.getY());
+	}
+
+	private void exportTableToImageJ() {
+		TableModel tm = table.getModel();
+		ResultsTable table = new ResultsTable();
+		
+		int ncols = tm.getColumnCount();
+		int nrows = tm.getRowCount();
+		JList rowList = (JList) scrollTable.getRowHeader().getView();
+		
+		
+		
+		for (int j = 0; j < nrows; j++) {
+			table.incrementCounter();
+			table.setLabel( (String) rowList.getModel().getElementAt(j), j);
+			for (int i = 0; i < ncols; i++) {
+				String headings = tm.getColumnName(i);
+				table.addValue(headings, Double.parseDouble((String) tm.getValueAt(j, i)) );
+			}
+		}
+
+		table.show("TrackMate Selection");
+	}
+	
 	private void init() {
 
 		@SuppressWarnings("serial")
@@ -206,9 +253,22 @@ public class InfoPane <T extends RealType<T> & NativeType<T>> extends JPanel imp
 		table.setFont(SMALL_FONT);
 		table.setPreferredScrollableViewportSize(new Dimension(120, 400));
 		table.getTableHeader().setOpaque(false);
-		table.setSelectionForeground(Color.YELLOW.darker());
+		table.setSelectionForeground(Color.YELLOW.darker().darker());
 		table.setGridColor(TrackScheme.GRID_COLOR);
-
+		table.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mousePressed(MouseEvent e) {
+				if (e.isPopupTrigger()) 
+					displayPopupMenu(e.getPoint());
+			}
+			@Override
+			public void mouseReleased(MouseEvent e) {
+				if (e.isPopupTrigger()) 
+					displayPopupMenu(e.getPoint());
+			}
+		});
+		
+		
 		JList rowHeader = new JList(lm);
 		rowHeader.setFixedCellHeight(table.getRowHeight());
 		rowHeader.setCellRenderer(new RowHeaderRenderer(table));
