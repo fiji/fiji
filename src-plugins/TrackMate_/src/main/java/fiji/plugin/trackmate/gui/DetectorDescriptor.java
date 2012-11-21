@@ -65,7 +65,6 @@ public class DetectorDescriptor <T extends RealType<T> & NativeType<T>> implemen
 		final Settings<T> settings = plugin.getModel().getSettings();
 		logger.log("Starting detection using "+settings.detectorFactory.toString()+"\n", Logger.BLUE_COLOR);
 		logger.log("with settings:\n");
-		logger.log(settings.toString());
 		logger.log(TMUtils.echoMap(settings.detectorSettings, 2));
 		new Thread("TrackMate detection mother thread") {					
 			public void run() {
