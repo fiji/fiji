@@ -1,14 +1,11 @@
 package fiji.plugin.trackmate.features.spot;
 
-import static fiji.plugin.trackmate.features.spot.SpotIntensityAnalyzerFactory.KURTOSIS;
 import static fiji.plugin.trackmate.features.spot.SpotIntensityAnalyzerFactory.MAX_INTENSITY;
 import static fiji.plugin.trackmate.features.spot.SpotIntensityAnalyzerFactory.MEAN_INTENSITY;
 import static fiji.plugin.trackmate.features.spot.SpotIntensityAnalyzerFactory.MEDIAN_INTENSITY;
 import static fiji.plugin.trackmate.features.spot.SpotIntensityAnalyzerFactory.MIN_INTENSITY;
-import static fiji.plugin.trackmate.features.spot.SpotIntensityAnalyzerFactory.SKEWNESS;
 import static fiji.plugin.trackmate.features.spot.SpotIntensityAnalyzerFactory.STANDARD_DEVIATION;
 import static fiji.plugin.trackmate.features.spot.SpotIntensityAnalyzerFactory.TOTAL_INTENSITY;
-import static fiji.plugin.trackmate.features.spot.SpotIntensityAnalyzerFactory.VARIANCE;
 
 import java.util.Collection;
 
@@ -83,17 +80,17 @@ public class SpotIntensityAnalyzer<T extends RealType<T>> extends IndependentSpo
 		double max = pixel_values[npixels-1];
 		mean = sum / npixels;
 		double variance = M2 / (npixels-1);
-		double kurtosis = (n*M4) / (M2*M2) - 3;
-		double skewness = Math.sqrt(n) * M3 / Math.pow(M2, 3/2.0);
+//		double kurtosis = (n*M4) / (M2*M2) - 3;
+//		double skewness = Math.sqrt(n) * M3 / Math.pow(M2, 3/2.0);
 		
 		spot.putFeature(MEDIAN_INTENSITY, median);
 		spot.putFeature(MIN_INTENSITY, min);
 		spot.putFeature(MAX_INTENSITY, max);
 		spot.putFeature(MEAN_INTENSITY, mean);
-		spot.putFeature(VARIANCE, variance);
+//		spot.putFeature(VARIANCE, variance);
 		spot.putFeature(STANDARD_DEVIATION, Math.sqrt(variance));
 		spot.putFeature(TOTAL_INTENSITY, sum);
-		spot.putFeature(KURTOSIS, kurtosis);
-		spot.putFeature(SKEWNESS, skewness);
+//		spot.putFeature(KURTOSIS, kurtosis);
+//		spot.putFeature(SKEWNESS, skewness);
 	}
 }
