@@ -10,7 +10,6 @@ import net.imglib2.type.numeric.RealType;
 import fiji.plugin.trackmate.features.spot.SpotContrastAndSNRAnalyzerFactory;
 import fiji.plugin.trackmate.features.spot.SpotFeatureAnalyzerFactory;
 import fiji.plugin.trackmate.features.spot.SpotIntensityAnalyzerFactory;
-import fiji.plugin.trackmate.features.spot.SpotMorphologyAnalyzerFactory;
 import fiji.plugin.trackmate.features.spot.SpotRadiusEstimatorFactory;
 
 /**
@@ -68,31 +67,31 @@ public class SpotFeatureAnalyzerProvider <T extends RealType<T> & NativeType<T>>
 		names.add(SpotIntensityAnalyzerFactory.KEY);
 		names.add(SpotContrastAndSNRAnalyzerFactory.KEY); // must be after the statistics one
 		names.add(SpotRadiusEstimatorFactory.KEY);
-		names.add(SpotMorphologyAnalyzerFactory.KEY);
+//		names.add(SpotMorphologyAnalyzerFactory.KEY);
 		// features
 		features = new HashMap<String, List<String>>();
 		features.put(SpotIntensityAnalyzerFactory.KEY, SpotIntensityAnalyzerFactory.FEATURES);
 		features.put(SpotContrastAndSNRAnalyzerFactory.KEY, SpotContrastAndSNRAnalyzerFactory.FEATURES);
 		features.put(SpotRadiusEstimatorFactory.KEY, SpotRadiusEstimatorFactory.FEATURES);
-		features.put(SpotMorphologyAnalyzerFactory.KEY, SpotMorphologyAnalyzerFactory.FEATURES);
+//		features.put(SpotMorphologyAnalyzerFactory.KEY, SpotMorphologyAnalyzerFactory.FEATURES);
 		// features names
 		featureNames = new HashMap<String, Map<String,String>>();
 		featureNames.put(SpotIntensityAnalyzerFactory.KEY, SpotIntensityAnalyzerFactory.FEATURE_NAMES);
 		featureNames.put(SpotContrastAndSNRAnalyzerFactory.KEY, SpotContrastAndSNRAnalyzerFactory.FEATURE_NAMES);
 		featureNames.put(SpotRadiusEstimatorFactory.KEY, SpotRadiusEstimatorFactory.FEATURE_NAMES);
-		featureNames.put(SpotMorphologyAnalyzerFactory.KEY, SpotMorphologyAnalyzerFactory.FEATURE_NAMES);
+//		featureNames.put(SpotMorphologyAnalyzerFactory.KEY, SpotMorphologyAnalyzerFactory.FEATURE_NAMES);
 		// features short names
 		featureShortNames = new HashMap<String, Map<String,String>>();
 		featureShortNames.put(SpotIntensityAnalyzerFactory.KEY, SpotIntensityAnalyzerFactory.FEATURE_SHORT_NAMES);
 		featureShortNames.put(SpotContrastAndSNRAnalyzerFactory.KEY, SpotContrastAndSNRAnalyzerFactory.FEATURE_SHORT_NAMES);
 		featureShortNames.put(SpotRadiusEstimatorFactory.KEY, SpotRadiusEstimatorFactory.FEATURE_SHORT_NAMES);
-		featureShortNames.put(SpotMorphologyAnalyzerFactory.KEY, SpotMorphologyAnalyzerFactory.FEATURE_SHORT_NAMES);
+//		featureShortNames.put(SpotMorphologyAnalyzerFactory.KEY, SpotMorphologyAnalyzerFactory.FEATURE_SHORT_NAMES);
 		// feature dimensions
 		featureDimensions = new HashMap<String, Map<String,Dimension>>();
 		featureDimensions.put(SpotIntensityAnalyzerFactory.KEY, SpotIntensityAnalyzerFactory.FEATURE_DIMENSIONS);
 		featureDimensions.put(SpotContrastAndSNRAnalyzerFactory.KEY, SpotContrastAndSNRAnalyzerFactory.FEATURE_DIMENSIONS);
 		featureDimensions.put(SpotRadiusEstimatorFactory.KEY, SpotRadiusEstimatorFactory.FEATURE_DIMENSIONS);
-		featureDimensions.put(SpotMorphologyAnalyzerFactory.KEY, SpotMorphologyAnalyzerFactory.FEATURE_DIMENSIONS);
+//		featureDimensions.put(SpotMorphologyAnalyzerFactory.KEY, SpotMorphologyAnalyzerFactory.FEATURE_DIMENSIONS);
 	}
 
 	/**
@@ -111,8 +110,8 @@ public class SpotFeatureAnalyzerProvider <T extends RealType<T> & NativeType<T>>
 			return new SpotContrastAndSNRAnalyzerFactory<T>(model);
 		case 2:
 			return new SpotRadiusEstimatorFactory<T>(model);
-		case 3:
-			return new SpotMorphologyAnalyzerFactory<T>(model);
+//		case 3:
+//			return new SpotMorphologyAnalyzerFactory<T>(model);
 		default:
 			return null;
 		}
