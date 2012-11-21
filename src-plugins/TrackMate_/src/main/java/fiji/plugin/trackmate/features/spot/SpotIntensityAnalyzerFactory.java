@@ -28,9 +28,9 @@ public class SpotIntensityAnalyzerFactory<T extends RealType<T> & NativeType<T>>
 	public static final String	MAX_INTENSITY = "MAX_INTENSITY";
 	public static final String	TOTAL_INTENSITY = "TOTAL_INTENSITY";
 	public static final String	STANDARD_DEVIATION = "STANDARD_DEVIATION";
-	public static final String	VARIANCE = "VARIANCE";
-	public static final String	KURTOSIS = "KURTOSIS";
-	public static final String	SKEWNESS = "SKEWNESS";
+//	public static final String	VARIANCE = "VARIANCE";
+//	public static final String	KURTOSIS = "KURTOSIS";
+//	public static final String	SKEWNESS = "SKEWNESS";
 	
 	public static final ArrayList<String> 			FEATURES = new ArrayList<String>(9);
 	public static final HashMap<String, String> 	FEATURE_NAMES = new HashMap<String, String>(9);
@@ -43,9 +43,9 @@ public class SpotIntensityAnalyzerFactory<T extends RealType<T> & NativeType<T>>
 		FEATURES.add(MAX_INTENSITY);
 		FEATURES.add(TOTAL_INTENSITY);
 		FEATURES.add(STANDARD_DEVIATION);
-		FEATURES.add(VARIANCE);
-		FEATURES.add(KURTOSIS);
-		FEATURES.add(SKEWNESS);
+//		FEATURES.add(VARIANCE);
+//		FEATURES.add(KURTOSIS);
+//		FEATURES.add(SKEWNESS);
 
 		FEATURE_NAMES.put(MEAN_INTENSITY, "Mean intensity");
 		FEATURE_NAMES.put(MEDIAN_INTENSITY, "Median intensity");
@@ -53,9 +53,9 @@ public class SpotIntensityAnalyzerFactory<T extends RealType<T> & NativeType<T>>
 		FEATURE_NAMES.put(MAX_INTENSITY, "Maximal intensity");
 		FEATURE_NAMES.put(TOTAL_INTENSITY, "Total intensity");
 		FEATURE_NAMES.put(STANDARD_DEVIATION, "Standard deviation");
-		FEATURE_NAMES.put(VARIANCE, "Variance");
-		FEATURE_NAMES.put(KURTOSIS, "Kurtosis");
-		FEATURE_NAMES.put(SKEWNESS, "Skewness");
+//		FEATURE_NAMES.put(VARIANCE, "Variance");
+//		FEATURE_NAMES.put(KURTOSIS, "Kurtosis");
+//		FEATURE_NAMES.put(SKEWNESS, "Skewness");
 		
 		FEATURE_SHORT_NAMES.put(MEAN_INTENSITY, "Mean");
 		FEATURE_SHORT_NAMES.put(MEDIAN_INTENSITY, "Median");
@@ -63,9 +63,9 @@ public class SpotIntensityAnalyzerFactory<T extends RealType<T> & NativeType<T>>
 		FEATURE_SHORT_NAMES.put(MAX_INTENSITY, "Max");
 		FEATURE_SHORT_NAMES.put(TOTAL_INTENSITY, "Total int.");
 		FEATURE_SHORT_NAMES.put(STANDARD_DEVIATION, "Stdev.");
-		FEATURE_SHORT_NAMES.put(VARIANCE, "Var.");
-		FEATURE_SHORT_NAMES.put(KURTOSIS, "Kurtosis");
-		FEATURE_SHORT_NAMES.put(SKEWNESS, "Skewness");
+//		FEATURE_SHORT_NAMES.put(VARIANCE, "Var.");
+//		FEATURE_SHORT_NAMES.put(KURTOSIS, "Kurtosis");
+//		FEATURE_SHORT_NAMES.put(SKEWNESS, "Skewness");
 		
 		FEATURE_DIMENSIONS.put(MEAN_INTENSITY, Dimension.INTENSITY);
 		FEATURE_DIMENSIONS.put(MEDIAN_INTENSITY, Dimension.INTENSITY);
@@ -73,9 +73,9 @@ public class SpotIntensityAnalyzerFactory<T extends RealType<T> & NativeType<T>>
 		FEATURE_DIMENSIONS.put(MAX_INTENSITY, Dimension.INTENSITY);
 		FEATURE_DIMENSIONS.put(TOTAL_INTENSITY, Dimension.INTENSITY);
 		FEATURE_DIMENSIONS.put(STANDARD_DEVIATION, Dimension.INTENSITY);
-		FEATURE_DIMENSIONS.put(VARIANCE, Dimension.INTENSITY_SQUARED);
-		FEATURE_DIMENSIONS.put(KURTOSIS, Dimension.NONE);
-		FEATURE_DIMENSIONS.put(SKEWNESS, Dimension.NONE);
+//		FEATURE_DIMENSIONS.put(VARIANCE, Dimension.INTENSITY_SQUARED);
+//		FEATURE_DIMENSIONS.put(KURTOSIS, Dimension.NONE);
+//		FEATURE_DIMENSIONS.put(SKEWNESS, Dimension.NONE);
 	}
 
 	private final TrackMateModel<T> model;

@@ -1,11 +1,14 @@
 package fiji.plugin.trackmate.features.spot;
 
+//import static fiji.plugin.trackmate.features.spot.SpotIntensityAnalyzerFactory.KURTOSIS;
 import static fiji.plugin.trackmate.features.spot.SpotIntensityAnalyzerFactory.MAX_INTENSITY;
 import static fiji.plugin.trackmate.features.spot.SpotIntensityAnalyzerFactory.MEAN_INTENSITY;
 import static fiji.plugin.trackmate.features.spot.SpotIntensityAnalyzerFactory.MEDIAN_INTENSITY;
 import static fiji.plugin.trackmate.features.spot.SpotIntensityAnalyzerFactory.MIN_INTENSITY;
+//import static fiji.plugin.trackmate.features.spot.SpotIntensityAnalyzerFactory.SKEWNESS;
 import static fiji.plugin.trackmate.features.spot.SpotIntensityAnalyzerFactory.STANDARD_DEVIATION;
 import static fiji.plugin.trackmate.features.spot.SpotIntensityAnalyzerFactory.TOTAL_INTENSITY;
+//import static fiji.plugin.trackmate.features.spot.SpotIntensityAnalyzerFactory.VARIANCE;
 
 import java.util.Collection;
 
