@@ -524,7 +524,36 @@ public class TrackScheme <T extends RealType<T> & NativeType<T>> implements Trac
 
 						mxICell edgeCell = graph.getCellFor(edge);
 						if (null == edgeCell) {
+							
+							// Make sure target & source cells exist
+							
+							Spot source = model.getEdgeSource(edge);
+							mxCell sourceCell = graph.getCellFor(source);
+							if (sourceCell == null) {
+								int frame = source.getFeature(Spot.FRAME).intValue();
+								// Put in the graph
+								int targetColumn = getUnlaidSpotColumn();
+								int column = Math.max(targetColumn, getNextFreeColumn(frame));
+								insertSpotInGraph(source, column); // move in right+1 free column
+								rowLengths.put(frame, column);
+							}
+							
+							Spot target = model.getEdgeTarget(edge);
+							mxCell targetCell = graph.getCellFor(target);
+							if (targetCell == null) {
+								int frame = target.getFeature(Spot.FRAME).intValue();
+								// Put in the graph
+								int targetColumn = getUnlaidSpotColumn();
+								int column = Math.max(targetColumn, getNextFreeColumn(frame));
+								insertSpotInGraph(target, column); // move in right+1 free column
+								rowLengths.put(frame, column);
+							}
+
+							
+							// And finally create the edge cell
 							edgeCell = graph.addJGraphTEdge(edge);
+
+							
 						}
 
 						graph.getModel().add(graph.getDefaultParent(), edgeCell, 0);

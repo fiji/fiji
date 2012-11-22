@@ -234,13 +234,14 @@ public class mxTrackGraphLayout <T extends RealType<T> & NativeType<T>> extends 
 
 					for(final DefaultWeightedEdge edge : model.edgesOf(spot)) {
 						mxICell edgeCell = graph.getCellFor(edge);
+						
 						if (null == edgeCell) {
 							if (DEBUG) {
 								System.out.println("[mxTrackGraphLayout] execute: creating cell for invisible edge "+edge);
 							}
 							edgeCell = graph.addJGraphTEdge(edge);
 						}
-
+						
 						graph.getModel().add(currentParent, edgeCell, 0);
 						String edgeStyle = edgeCell.getStyle();
 						edgeStyle = mxStyleUtils.setStyle(edgeStyle, mxConstants.STYLE_STROKECOLOR, trackColorStr);
