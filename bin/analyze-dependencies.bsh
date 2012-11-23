@@ -3,7 +3,7 @@
 
 import fiji.build.Fake;
 
-import fiji.updater.util.DependencyAnalyzer;
+import imagej.updater.util.DependencyAnalyzer;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -67,10 +67,11 @@ String editClasspath(String contents, String target, String match, String replac
 	return contents;
 }
 
-DependencyAnalyzer da = new DependencyAnalyzer();
+ijDir = System.getProperty("ij.dir");
+ijRoot = new File(ijDir);
+DependencyAnalyzer da = new DependencyAnalyzer(ijRoot);
 if (bsh.args.length > 0 && (bsh.args[0].equals("--check-fakefile") || bsh.args[0].equals("--fix-fakefile"))) {
 	fix = bsh.args[0].equals("--fix-fakefile");
-	ijDir = System.getProperty("ij.dir");
 	if (!ijDir.endsWith("/"))
 		ijDir += "/";
 	fake = new Fake();
@@ -99,7 +100,7 @@ if (bsh.args.length > 0 && (bsh.args[0].equals("--check-fakefile") || bsh.args[0
 			continue;
 		}
 		analyzed = new HashSet();
-		dependencies = da.getDependencies(target);
+		dependencies = da.getDependencies(ijRoot, target);
 		if (dependencies == null) {
 			print("No dependencies found for " + target);
 			continue;
@@ -163,7 +164,7 @@ if (bsh.args[0].equals("-v")) {
 
 for (String arg : bsh.args) {
 	print("[" + arg + "]");
-	dependencies = da.getDependencies(arg);
+	dependencies = da.getDependencies(ijRoot, arg);
 	if (dependencies == null) {
 		print("Not found: " + arg);
 		continue;

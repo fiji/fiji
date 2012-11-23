@@ -101,6 +101,9 @@ public class POM extends DefaultHandler implements Comparable<POM> {
 
 	protected void download(Coordinate dependency, boolean quiet) throws FileNotFoundException {
 		for (String url : getRoot().getRepositories()) try {
+			if (env.debug) {
+				env.err.println("Trying to download from " + url);
+			}
 			env.downloadAndVerify(url, dependency, quiet);
 			return;
 		} catch (Exception e) {
@@ -451,12 +454,21 @@ public class POM extends DefaultHandler implements Comparable<POM> {
 						dependency.setSnapshotVersion(SnapshotPOMHandler.parse(new File(pom.directory, "maven-metadata-snapshot.xml")));
 				}
 			}
-			if (pom == null && downloadAutomatically)
+			if (pom == null && downloadAutomatically) try {
 				pom = findPOM(expanded, !env.verbose, downloadAutomatically);
+			} catch (IOException e) {
+				env.err.println("Failed to download dependency " + expanded.artifactId + " of " + getArtifactId());
+				throw e;
+			}
 			if (pom == null || result.contains(pom))
 				continue;
 			result.add(pom);
-			pom.getDependencies(result, env.downloadAutomatically, excludeOptionals, excludeScopes);
+			try {
+				pom.getDependencies(result, env.downloadAutomatically, excludeOptionals, excludeScopes);
+			} catch (IOException e) {
+				env.err.println("Problems downloading the dependencies of " + getArtifactId());
+				throw e;
+			}
 		}
 	}
 

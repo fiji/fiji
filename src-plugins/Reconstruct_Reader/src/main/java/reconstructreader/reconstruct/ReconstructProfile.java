@@ -8,13 +8,15 @@ public class ReconstructProfile {
     private final int id, oid;
     private final ReconstructTranslator translator;
     private final double mag;
+    private final ReconstructSection section;
 
-    public ReconstructProfile(final Element e, final ReconstructTranslator t)
+    public ReconstructProfile(final Element e, final ReconstructTranslator t, ReconstructSection sec)
     {
         double m;
 
         translator = t;
         profile = e;
+        section = sec;
         id = translator.nextOID();
         oid = translator.nextOID();
 
@@ -35,7 +37,7 @@ public class ReconstructProfile {
     public void appendXML(final StringBuilder sb)
     {
         String colorHex = Utils.hexColor(profile.getAttribute("fill"));
-        double[] pts = Utils.getTransformedPoints(profile, translator.getStackHeight(), mag);
+        double[] pts = Utils.getTransformedPoints(profile, section.getHeight(), mag);
         double[] wh = Utils.getPathExtent(pts);
         double width = wh[0];
         double height = wh[1];

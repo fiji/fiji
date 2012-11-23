@@ -1,21 +1,19 @@
 package fiji.packaging;
 
 import fiji.util.gui.GenericDialogPlus;
-
 import ij.IJ;
-
 import ij.io.SaveDialog;
-
 import ij.plugin.PlugIn;
+import imagej.updater.util.Progress;
 
 import java.io.FileOutputStream;
-
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
 public class Package_Maker implements PlugIn {
+	@Override
 	public void run(String arg) {
 		List<Packager> packagers = new ArrayList<Packager>();
 		packagers.add(new ZipPackager());
@@ -43,15 +41,45 @@ public class Package_Maker implements PlugIn {
 		if (save.getFileName() == null)
 			return;
 
+		final Progress progress = IJ.getInstance() == null ? null : new Progress() {
+			@Override
+			public void setTitle(String title) {
+				IJ.showStatus(title);
+			}
+
+			@Override
+			public void setCount(int count, int total) {
+				IJ.showProgress(count, total);
+			}
+
+			@Override
+			public void addItem(Object item) {
+				IJ.showStatus("" + item);
+			}
+
+			@Override
+			public void setItemCount(int count, int total) {
+			}
+
+			@Override
+			public void itemDone(Object item) {
+			}
+
+			@Override
+			public void done() {
+				IJ.showStatus("Finished checksumming");
+			}
+
+		};
 		String path = save.getDirectory() + save.getFileName();
 		try {
-			packager.initialize();
+			packager.initialize(progress, false);
 			packager.open(new FileOutputStream(path));
 			packager.addDefaultFiles();
 			packager.close();
 			IJ.showMessage("Wrote " + path);
 		}
-		catch (Exception e) {
+		catch (Throwable e) {
 			e.printStackTrace();
 			IJ.error("Error writing " + path);
 		}

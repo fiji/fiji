@@ -1,8 +1,9 @@
 #!/bin/sh
 
 CWD="$(cd "$(dirname "$0")" && pwd)"
-BASEURL=http://www.apache.org/dyn/closer.cgi/maven/binaries/
-DIR=apache-maven-3.0.4
+VERSION=3.0.4
+BASEURL=http://www.apache.org/dyn/closer.cgi/maven/maven-3/$VERSION/binaries/
+DIR=apache-maven-$VERSION
 TAR=$DIR-bin.tar.gz
 MVN="$CWD/$DIR/bin/mvn"
 

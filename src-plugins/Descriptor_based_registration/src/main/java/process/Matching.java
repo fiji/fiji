@@ -659,7 +659,7 @@ public class Matching
 		return finalModel;
 	}
 
-	protected static ArrayList<DifferenceOfGaussianPeak<FloatType>> extractCandidates( final ImagePlus imp, final int channel, final int timepoint, final DescriptorParameters params )
+	public static ArrayList<DifferenceOfGaussianPeak<FloatType>> extractCandidates( final ImagePlus imp, final int channel, final int timepoint, final DescriptorParameters params )
 	{
 		// get the input images for registration
 		final Image<FloatType> img = InteractiveDoG.convertToFloat( imp, channel, timepoint );

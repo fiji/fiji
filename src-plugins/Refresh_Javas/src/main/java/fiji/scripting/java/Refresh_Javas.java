@@ -123,7 +123,7 @@ public class Refresh_Javas extends RefreshScripts {
 				return;
 			}
 			if (!compileOnly)
-				runPlugin(c.replace('/', '.'));
+				runPlugin(c.replace('/', '.'), true);
 		} catch (Exception e) {
 			e.printStackTrace(new PrintStream(err));
 		}
@@ -324,7 +324,7 @@ public class Refresh_Javas extends RefreshScripts {
 			throws ClassNotFoundException, NoSuchMethodException,
 			       IllegalAccessException,
 			       InvocationTargetException {
-		String[] arguments = { "-g", path };
+		String[] arguments = { "-g", "-Xlint", path };
 		if (showDeprecation)
 			arguments = unshift(arguments, new String[] {
 				"-deprecation", "-Xlint:unchecked"

@@ -16,6 +16,7 @@ import mpicbg.imglib.interpolation.InterpolatorFactory;
 import mpicbg.imglib.interpolation.linear.LinearInterpolatorFactory;
 import mpicbg.imglib.outofbounds.OutOfBoundsStrategyFactory;
 import mpicbg.imglib.outofbounds.OutOfBoundsStrategyMirrorFactory;
+import mpicbg.imglib.outofbounds.OutOfBoundsStrategyPeriodicFactory;
 import mpicbg.imglib.outofbounds.OutOfBoundsStrategyValueFactory;
 import mpicbg.imglib.type.numeric.real.FloatType;
 import mpicbg.imglib.util.Util;
@@ -161,12 +162,12 @@ public class ExtractPSF
 		final int[] size = Util.getArrayFromValue( this.size, numDimensions );
 		if ( !this.isotropic )
 		{
-			size[ numDimensions - 1 ] *= Math.max( 1, 4.0/views.get( 0 ).getZStretching() );
+			size[ numDimensions - 1 ] *= Math.max( 1, 5.0/views.get( 0 ).getZStretching() );
 			if ( size[ numDimensions - 1 ] % 2 == 0 )
 				size[ numDimensions - 1 ]++;
 		}
 		
-		//IJ.log ( Util.printCoordinates( size ) );
+		IJ.log ( "PSF size: " + Util.printCoordinates( size ) );
 		
 		final int[] maxSize = new int[ numDimensions ];
 		
@@ -305,7 +306,8 @@ public class ExtractPSF
 	{
 		final int numDimensions = size.length;
 		
-		final OutOfBoundsStrategyFactory<FloatType> outside = new OutOfBoundsStrategyMirrorFactory<FloatType>();
+		// Mirror produces some artifacts ...
+		final OutOfBoundsStrategyFactory<FloatType> outside = new OutOfBoundsStrategyPeriodicFactory<FloatType>();
 		final InterpolatorFactory<FloatType> interpolatorFactory = new LinearInterpolatorFactory<FloatType>( outside );
 		
 		final ImageFactory<FloatType> imageFactory = new ImageFactory<FloatType>( new FloatType(), new ArrayContainerFactory() );

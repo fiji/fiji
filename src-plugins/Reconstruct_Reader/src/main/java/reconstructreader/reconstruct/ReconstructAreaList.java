@@ -92,9 +92,7 @@ public class ReconstructAreaList implements ContourSet {
         {
             int index = sec.getIndex();
             int layerOID = sec.getOID();
-            NodeList imageList = sec.getDocument().getElementsByTagName("Image");
-            double wh[] = Utils.getReconstructImageWH(imageList.item(0));
-            double h = Double.isNaN(wh[1]) ? translator.getStackHeight() : wh[1];
+            double h = sec.getHeight();
 
             Utils.selectElementsByIndex(contourList, indexList, selectionList, index);
 

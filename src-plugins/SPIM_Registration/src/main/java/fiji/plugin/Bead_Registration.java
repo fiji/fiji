@@ -141,6 +141,7 @@ public class Bead_Registration implements PlugIn
 	public static String timepoints = "18";
 	public static String fileNamePattern = "spim_TL{t}_Angle{a}.lsm";
 	public static String angles = "0-270:45";
+	public static boolean processAnglesSimultaneously = false;
 	
 	public static boolean loadSegmentation = false;
 	public static String[] beadBrightness = { "Very weak", "Weak", "Comparable to Sample", "Strong", "Advanced ...", "Interactive ..." };	
@@ -171,7 +172,8 @@ public class Bead_Registration implements PlugIn
 		final TextField tfTimepoints = (TextField) gd.getStringFields().lastElement();
 		gd.addStringField( "Angles_to_process", angles );
 		final TextField tfAngles = (TextField) gd.getStringFields().lastElement();
-
+		//gd.addCheckbox( "Process_angles_simultaneously (needs lots of RAM)", processAnglesSimultaneously );
+		
 		gd.addMessage( "" );		
 		
 		gd.addCheckbox( "Re-use_segmented_beads", loadSegmentation );
@@ -208,7 +210,7 @@ public class Bead_Registration implements PlugIn
 				{
 					if ( !gd.wasCanceled() )
 					{
-						conf = getConfiguration( dialog );
+						conf = getConfigurationSingleChannel( dialog );
 					}
 					return true;
 				}
@@ -274,12 +276,13 @@ public class Bead_Registration implements PlugIn
 		return conf;
 	}
 
-	private static SPIMConfiguration getConfiguration( GenericDialog gd )
+	private static SPIMConfiguration getConfigurationSingleChannel( final GenericDialog gd )
 	{
 		spimDataDirectory = gd.getNextString();
 		fileNamePattern = gd.getNextString();
 		timepoints = gd.getNextString();
 		angles = gd.getNextString();
+		//processAnglesSimultaneously = gd.getNextBoolean();
 		
 		loadSegmentation = gd.getNextBoolean();
 		defaultBeadBrightness = gd.getNextChoiceIndex();
@@ -339,6 +342,7 @@ public class Bead_Registration implements PlugIn
 		conf.channelsToRegister = "";
 		conf.channelsToFuse = "";
 		conf.anglePattern = angles;
+		conf.multiThreadedOpening = processAnglesSimultaneously;
 		conf.inputFilePattern = fileNamePattern;
 
 		File f = new File( spimDataDirectory );
@@ -390,21 +394,31 @@ public class Bead_Registration implements PlugIn
 
 	public SPIMConfiguration multiChannel()
 	{
+		conf = null;
 		// The first main dialog
 		final GenericDialogPlus gd = new GenericDialogPlus( "Multi Channel Bead-based Registration" );
 
-		gd.addDirectoryField( "SPIM_data_directory", spimDataDirectory );
+		gd.addDirectoryOrFileField( "SPIM_data_directory", spimDataDirectory );
+		final TextField tfSpimDataDirectory = (TextField) gd.getStringFields().lastElement();
 		gd.addStringField( "Pattern_of_SPIM files", fileNamePatternMC, 25 );
+		final TextField tfFilePattern = (TextField) gd.getStringFields().lastElement();
 		gd.addStringField( "Timepoints_to_process", timepoints );
+		final TextField tfTimepoints = (TextField) gd.getStringFields().lastElement();
 		gd.addStringField( "Channels_containing_beads", channelsBeadsMC );
+		final TextField tfBeadChannels = (TextField) gd.getStringFields().lastElement();
 		gd.addStringField( "Angles to process", angles );
-
+		final TextField tfAngles = (TextField) gd.getStringFields().lastElement();
+		//gd.addCheckbox( "Process_angles_simultaneously (needs lots of RAM)", processAnglesSimultaneously );
+		
 		gd.addMessage( "" );
 
 		gd.addCheckbox( "Re-use_segmented_beads", loadSegmentation );
 		gd.addCheckbox( "Override_file_dimensions", overrideResolution );
+		final Checkbox dimensionsBox = (Checkbox)gd.getCheckboxes().lastElement();
 		gd.addNumericField( "xy_resolution (um/px)", xyRes, 3 );
+		final TextField tfXyRes = (TextField) gd.getNumericFields().lastElement();
 		gd.addNumericField( "z_resolution (um/px)", zRes, 3 );
+		final TextField tfZRes = (TextField) gd.getNumericFields().lastElement();
 
 		gd.addMessage( "" );
 
@@ -416,23 +430,107 @@ public class Bead_Registration implements PlugIn
 		gd.addCheckbox( "Timelapse_registration", timeLapseRegistration );
 		gd.addChoice( "Select_reference timepoint", timeLapseRegistrationTypes, timeLapseRegistrationTypes[ defaultTimeLapseRegistration ] );
 
-		gd.showDialog();
-		
 		gd.addMessage("");
 		gd.addMessage("This Plugin is developed by Stephan Preibisch\n" + myURL);
 
-		MultiLineLabel text = (MultiLineLabel) gd.getMessage();
+		final MultiLineLabel text = (MultiLineLabel) gd.getMessage();
 		addHyperLinkListener(text, myURL);
+
+		gd.addDialogListener( new DialogListener()
+		{
+			@Override
+			public boolean dialogItemChanged( final GenericDialog dialog, final AWTEvent e )
+			{
+				if ( e == null )
+				{
+					if ( !gd.wasCanceled() )
+					{
+						conf = getConfigurationMultiChannel( dialog );
+					}
+					return true;
+				}
+				if ( e instanceof TextEvent && e.getID() == TextEvent.TEXT_VALUE_CHANGED && e.getSource() == tfSpimDataDirectory )
+				{
+					final TextField tf = ( TextField ) e.getSource();
+					spimDataDirectory = tf.getText();
+					final File f = new File( spimDataDirectory );
+					if ( f.exists() && f.isFile() && f.getName().endsWith( ".xml" ) )
+					{
+						final SPIMExperiment exp = new SPIMExperiment( f.getAbsolutePath() );
+
+						// disable file pattern field
+						tfFilePattern.setEnabled( false );
+
+						// set timepoint string
+						String expTimepoints = "";
+						if ( exp.timepointStart == exp.timepointEnd )
+							expTimepoints = "" + exp.timepointStart;
+						else
+							expTimepoints = "" + exp.timepointStart + "-" + exp.timepointEnd;
+						tfTimepoints.setText( expTimepoints );
+
+						// set channels string
+						String expChannels = "";
+						for ( final String channel : exp.channels )
+						{
+							final int c = Integer.parseInt( channel.substring( 1, channel.length() ) );
+							if ( !expChannels.equals( "" ) )
+								expChannels += ",";
+							expChannels += c;
+						}
+						tfBeadChannels.setText( expChannels );
+
+						// set angles string
+						String expAngles = "";
+						for ( final String angle : exp.angles )
+						{
+							final int a = Integer.parseInt( angle.substring( 1, angle.length() ) );
+							if ( !expAngles.equals( "" ) )
+								expAngles += ",";
+							expAngles += a;
+						}
+						tfAngles.setText( expAngles );
+
+						// set dimension fields
+						if ( exp.pw != exp.ph )
+							IJ.log( "Warning: pixel width != pixel height in " + spimDataDirectory );
+						dimensionsBox.setState( true );
+						tfXyRes.setText( String.format( "%.3f", exp.pw ) );
+						tfZRes.setText( String.format( "%.3f", exp.pd ) );
+					}
+					else
+					{
+						// enable file pattern field
+						tfFilePattern.setEnabled( true );
+					}
+				}
+				return true;
+			}
+		} );
+		System.out.println( "init Bead_Registration dialog: tfSpimDataDirectory.getText() = " + tfSpimDataDirectory.getText() );
+		final File f = new File( tfSpimDataDirectory.getText() );
+		if ( f.exists() && f.isFile() && f.getName().endsWith( ".xml" ) )
+		{
+			// disable file pattern field
+			tfFilePattern.setEnabled( false );
+		}
+		gd.showDialog();
 
 		if ( gd.wasCanceled() )
 			return null;
-		
+
+		return conf;
+	}
+
+	private static SPIMConfiguration getConfigurationMultiChannel( final GenericDialog gd )
+	{
 		spimDataDirectory = gd.getNextString();
 		fileNamePatternMC = gd.getNextString();
 		timepoints = gd.getNextString();
 		channelsBeadsMC = gd.getNextString();
 		angles = gd.getNextString();
-
+		//processAnglesSimultaneously = gd.getNextBoolean();
+		
 		loadSegmentation = gd.getNextBoolean();
 		overrideResolution = gd.getNextBoolean();
 		xyRes = gd.getNextNumber();
@@ -573,11 +671,23 @@ public class Bead_Registration implements PlugIn
 
 		conf.timepointPattern = timepoints;
 		conf.anglePattern = angles;
+		conf.multiThreadedOpening = processAnglesSimultaneously;
 		conf.channelPattern = channelsBeadsMC;
 		conf.channelsToRegister = channelsBeadsMC;
 		conf.channelsToFuse = "";
-		conf.inputFilePattern = fileNamePattern;
-		conf.inputdirectory = spimDataDirectory;
+		conf.inputFilePattern = fileNamePatternMC;
+
+		final File f = new File( spimDataDirectory );
+		if ( f.exists() && f.isFile() && f.getName().endsWith( ".xml" ) )
+		{
+			conf.spimExperiment = new SPIMExperiment( f.getAbsolutePath() );
+			conf.inputdirectory = f.getAbsolutePath().substring( 0, f.getAbsolutePath().length() - 4 );
+			System.out.println( "inputdirectory : " + conf.inputdirectory );
+		}
+		else
+		{
+			conf.inputdirectory = spimDataDirectory;
+		}
 
 		conf.overrideImageZStretching = overrideResolution;
 

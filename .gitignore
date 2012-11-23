@@ -30,7 +30,6 @@
 
 # MacOSX #
 .DS_Store
-/Mac-Finder-DSStore-0.94
 
 # Windows #
 /bin/RCEDIT.exe
@@ -166,6 +165,7 @@ hs_err*.log
 /plugins/SPIM_Opener-[0-9]*.jar
 /plugins/SPIM_Registration-[0-9]*.jar
 /plugins/Samples_-[0-9]*.jar
+/plugins/Scala_Interpreter-[0-9]*.jar
 /plugins/Script_Editor-[0-9]*.jar
 /plugins/Series_Labeler-[0-9]*.jar
 /plugins/SheppLogan_-[0-9]*.jar
@@ -190,6 +190,7 @@ hs_err*.log
 /plugins/TurboReg_-[0-9]*.jar
 /plugins/UnwarpJ_-[0-9]*.jar
 /plugins/VIB_-[0-9]*.jar
+/plugins/Vaa3d_Reader-[0-9]*.jar
 /plugins/Video_Editing-[0-9]*.jar
 /plugins/View5D_-[0-9]*.jar
 /plugins/Volume_Viewer-[0-9]*.jar

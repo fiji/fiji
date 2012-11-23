@@ -86,6 +86,9 @@ public final class Utils {
 
         switch (dim)
         {
+            case 0:
+                matrix[0] = 1;
+                matrix[3] = 1;
             case 1:
                 matrix[0] = 1;
                 matrix[3] = 1;
@@ -249,8 +252,8 @@ public final class Utils {
         return new double[tokr.countTokens()];
     }
 
-    public static int nodeValueToVector(String val,
-                                        final double[] matrix)
+
+    public static int nodeValueToVector(String val, final double[] matrix)
     {
         StringTokenizer t;
         int rCount = 0, i = 0;
@@ -364,8 +367,9 @@ public final class Utils {
         }
     }
 
-    public static void appendOpenPathXML(final StringBuilder sb, final double[] pts)
+    public static void appendOpenPathXML(final StringBuilder sb, final double[] dpts)
     {
+        float[] pts = doubleToFloat(dpts);
         sb.append("M ").append(pts[0]).append(" ").append(pts[1]).append(" ");
 
         for (int i = 2; i < pts.length ; i+=2)
@@ -380,15 +384,19 @@ public final class Utils {
         sb.append("z");
     }
 
-    public static void appendBezierPathXML(final StringBuilder sb, final double[] pts)
+    public static void appendBezierPathXML(final StringBuilder sb, final double[] dpts)
     {
-        sb.append("M ").append(pts[0]).append(",").append(pts[1]).append(" ");
-
-        for (int i = 2; i < pts.length ; i+=2)
+        float[] pts = doubleToFloat(dpts);
+        if (pts.length > 0)
         {
-            sb.append("C ").append(pts[i-2]).append(",").append(pts[i - 1]).append(" ")
-                .append(pts[i]).append(",").append(pts[i + 1]).append(" ")
-                .append(pts[i]).append(",").append(pts[i + 1]);
+            sb.append("M ").append(pts[0]).append(",").append(pts[1]).append(" ");
+
+            for (int i = 2; i < pts.length ; i+=2)
+            {
+                sb.append("C ").append(pts[i-2]).append(",").append(pts[i - 1]).append(" ")
+                        .append(pts[i]).append(",").append(pts[i + 1]).append(" ")
+                        .append(pts[i]).append(",").append(pts[i + 1]);
+            }
         }
     }
 
@@ -442,29 +450,38 @@ public final class Utils {
                 (Element) contour.getParentNode(),
                 useMag, stackHeight, zoom, isDomainContour);
         //Now, we grab the points from the XML.
-        double[] pts = Utils.createNodeValueVector(contour.getAttribute("points"));
-        int nrows = Utils.nodeValueToVector(contour.getAttribute("points"), pts);
-
-        //If we got a different number of rows than expected, yell about it, but don't die.
-        if (nrows != 2)
+        final String contourValue = contour.getAttribute("points");
+        if (contourValue.trim().length() < 1)
         {
-            System.err.println("Nrows should have been 2, instead it was " + nrows
-                    + ", therefore, we're boned");
-            System.err.println("Points text: " + contour.getAttribute("points"));
+            return new double[0];
         }
-
-        //Apply the transform (I hope I hope I hope this worked out right).
-        trans.transform(pts, 0, pts, 0, pts.length / 2);
-
-        //Flip it vertically, as long as it isn't a domain contour.
-        if (!isDomainContour)
+        else
         {
-            for (int i = 1; i < pts.length; i+=2)
+            double[] pts = Utils.createNodeValueVector(contour.getAttribute("points"));
+            int nrows = Utils.nodeValueToVector(contour.getAttribute("points"), pts);
+
+            //If we got a different number of rows than expected, yell about it, but don't die.
+            if (nrows != 2)
             {
-                pts[i] = stackHeight - pts[i];
+                System.err.println("Nrows should have been 2, instead it was " + nrows
+                        + ", therefore, we're boned");
+                System.err.println("Points text: " + contour.getAttribute("points"));
+                System.err.println("Problem encountered while processing " + contour.getAttribute("name"));
             }
+
+            //Apply the transform (I hope I hope I hope this worked out right).
+            trans.transform(pts, 0, pts, 0, pts.length / 2);
+
+            //Flip it vertically, as long as it isn't a domain contour.
+            if (!isDomainContour)
+            {
+                for (int i = 1; i < pts.length; i+=2)
+                {
+                    pts[i] = stackHeight - pts[i];
+                }
+            }
+            return pts;
         }
-        return pts;
     }
 
     public static double[] getPathExtent(double[] pts)
@@ -513,6 +530,110 @@ public final class Utils {
         t.printStackTrace(printWriter);
         return result.toString();
 
+    }
+    
+    // Temporary kluge function
+    public static float[] doubleToFloat(final double[] doubles)
+    {
+        float[] floats = new float[doubles.length];
+        for (int i = 0; i < doubles.length; ++i)
+        {
+            floats[i] = (float)doubles[i];
+        }
+        return floats;
+    }
+    
+    public static ArrayList<String> getSeriesKeys()
+    {
+        ArrayList<String> keys = new ArrayList<String>(128);
+
+        keys.add("viewport");
+        keys.add("units");
+        keys.add("autoSaveSeries");
+        keys.add("autoSaveSection");
+        keys.add("warnSaveSection");
+        keys.add("beepDeleting");
+        keys.add("beepPaging");
+        keys.add("hideTraces");
+        keys.add("unhideTraces");
+        keys.add("hideDomains");
+        keys.add("unhideDomains");
+        keys.add("useAbsolutePaths");
+        keys.add("defaultThickness");
+        keys.add("zMidSection");
+        keys.add("thumbWidth");
+        keys.add("thumbHeight");
+        keys.add("fitThumbSections");
+        keys.add("firstThumbSection");
+        keys.add("lastThumbSection");
+        keys.add("skipSections");
+        keys.add("displayThumbContours");
+        keys.add("useFlipbookStyle");
+        keys.add("flipRate");
+        keys.add("useProxies");
+        keys.add("widthUseProxies");
+        keys.add("heightUseProxies");
+        keys.add("scaleProxies");
+        keys.add("significantDigits");
+        keys.add("defaultBorder");
+        keys.add("defaultFill");
+        keys.add("defaultMode");
+        keys.add("defaultName");
+        keys.add("defaultComment");
+        keys.add("listSectionThickness");
+        keys.add("listDomainSource");
+        keys.add("listDomainPixelsize");
+        keys.add("listDomainLength");
+        keys.add("listDomainArea");
+        keys.add("listDomainMidpoint");
+        keys.add("listTraceComment");
+        keys.add("listTraceLength");
+        keys.add("listTraceArea");
+        keys.add("listTraceCentroid");
+        keys.add("listTraceExtent");
+        keys.add("listTraceZ");
+        keys.add("listTraceThickness");
+        keys.add("listObjectRange");
+        keys.add("listObjectCount");
+        keys.add("listObjectSurfarea");
+        keys.add("listObjectFlatarea");
+        keys.add("listObjectVolume");
+        keys.add("listZTraceNote");
+        keys.add("listZTraceRange");
+        keys.add("listZTraceLength");
+        keys.add("borderColors");
+        keys.add("fillColors");
+        keys.add("offset3D");
+        keys.add("type3Dobject");
+        keys.add("first3Dsection");
+        keys.add("last3Dsection");
+        keys.add("max3Dconnection");
+        keys.add("upper3Dfaces");
+        keys.add("lower3Dfaces");
+        keys.add("faceNormals");
+        keys.add("vertexNormals");
+        keys.add("facets3D");
+        keys.add("dim3D");
+        keys.add("gridType");
+        keys.add("gridSize");
+        keys.add("gridDistance");
+        keys.add("gridNumber");
+        keys.add("hueStopWhen");
+        keys.add("hueStopValue");
+        keys.add("satStopWhen");
+        keys.add("satStopValue");
+        keys.add("brightStopWhen");
+        keys.add("brightStopValue");
+        keys.add("tracesStopWhen");
+        keys.add("areaStopPercent");
+        keys.add("areaStopSize");
+        keys.add("ContourMaskWidth");
+        keys.add("smoothingLength");
+        keys.add("mvmtIncrement");
+        keys.add("ctrlIncrement");
+        keys.add("shiftIncrement");
+
+        return keys;
     }
 }
 

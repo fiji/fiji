@@ -8,7 +8,7 @@
 	<parent>
 		<groupId>org.scijava</groupId>
 		<artifactId>pom-scijava</artifactId>
-		<version>1.19</version>
+		<version>1.24</version>
 	</parent>
 
 	<groupId>sc.fiji</groupId>
@@ -70,7 +70,6 @@
 		<module>Interactive_3D_Surface_Plot</module>
 		<module>IsoData_Classifier</module>
 		<module>JRuby_Interpreter</module>
-		<module>Jama</module>
 		<module>Javascript_</module>
 		<module>Jython_Interpreter</module>
 		<module>Kuwahara_Filter</module>
@@ -95,6 +94,7 @@
 		<module>SPIM_Opener</module>
 		<module>SPIM_Registration</module>
 		<module>Samples_</module>
+		<module>Scala_Interpreter</module>
 		<module>Script_Editor</module>
 		<module>Series_Labeler</module>
 		<module>SheppLogan_</module>
@@ -119,6 +119,7 @@
 		<module>TurboReg_</module>
 		<module>UnwarpJ_</module>
 		<module>Updater_Fix</module>
+		<module>Vaa3d_Reader</module>
 		<module>VIB-lib</module>
 		<module>VIB_</module>
 		<module>Video_Editing</module>
@@ -147,6 +148,9 @@
 	<build>
 		<plugins>
 			<plugin>
+				<artifactId>maven-source-plugin</artifactId>
+			</plugin>
+			<plugin>
 				<groupId>org.codehaus.mojo</groupId>
 				<artifactId>buildnumber-maven-plugin</artifactId>
 			</plugin>
@@ -159,6 +163,20 @@
 		<tag>HEAD</tag>
 		<url>https://github.com/fiji/fiji</url>
 	</scm>
+
+	<reporting>
+		<plugins>
+			<plugin>
+				<artifactId>maven-javadoc-plugin</artifactId>
+				<configuration>
+					<links combine.children="append">
+						<link>http://jenkins.imagej.net/job/ImageJ-daily/javadoc</link>
+						<link>http://jenkins.imagej.net/job/ImgLib-daily/javadoc</link>
+					</links>
+				</configuration>
+			</plugin>
+		</plugins>
+	</reporting>
 
 	<!-- NB: for project parent -->
 	<repositories>
