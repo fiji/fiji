@@ -15,6 +15,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.List;
 
 public abstract class Packager {
@@ -51,7 +52,7 @@ public abstract class Packager {
 		if (System.getProperty("ij.dir") == null)
 			throw new UnsupportedOperationException("Need an ij.dir property pointing to the ImageJ root!");
 		ijDir = new File(System.getProperty("ij.dir"));
-		files = new ArrayList<String>();
+		files = new LinkedHashSet<String>();
 		files.add("db.xml.gz");
 		// Maybe ImageJ or ImageJ.exe exist?
 		for (final String fileName : new String[] { "ImageJ", "ImageJ.exe" })
@@ -264,6 +265,7 @@ public abstract class Packager {
 		catch (Exception e) {
 			e.printStackTrace();
 			System.err.println("Error writing " + path);
+			System.exit(1);
 		}
 	}
 }

@@ -95,7 +95,7 @@ def copy_platform_specific_files(platform):
 		shutil.copy('Contents/Info.plist', 'Fiji.app/Contents/')
 		images='Fiji.app/Contents/Resources/'
 		os.makedirs(images)
-		shutil.copy('images/Fiji.icns', images)
+		shutil.copy('Contents/Resources/Fiji.icns', images)
 	else:
 		if platform.startswith('win'):
 			exe = ".exe"

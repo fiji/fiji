@@ -7,8 +7,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintStream;
+import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLConnection;
 import java.security.DigestInputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -52,6 +54,10 @@ public class BuildEnvironment {
 
 	public void setVerbose(boolean verbose) {
 		this.verbose = verbose;
+	}
+
+	public void setDebug(boolean debug) {
+		this.debug = debug;
 	}
 
 	public boolean getDownloadAutomatically() {
@@ -318,8 +324,12 @@ public class BuildEnvironment {
 			int value = (hexNybble(fileStream.read()) << 4) |
 				hexNybble(fileStream.read());
 			int d = digestBytes[i] & 0xff;
-			if (value != d)
-				throw new IOException("SHA1 mismatch: " + sha1 + ": " + Integer.toHexString(value) + " != " + Integer.toHexString(d));
+			if (value != d) {
+				String actual = "";
+				for (byte b : digestBytes)
+					actual += String.format("%02x", b & 0xff);
+				throw new IOException("SHA1 mismatch: " + sha1 + ": " + Integer.toHexString(value) + " != " + Integer.toHexString(d) + " (actual SHA-1: " + actual + ")");
+			}
 		}
 		fileStream.close();
 	}
@@ -405,11 +415,18 @@ public class BuildEnvironment {
 			fileName = url.getPath();
 			fileName = fileName.substring(fileName.lastIndexOf('/') + 1);
 		}
-		InputStream in = url.openStream();
+		URLConnection connection = url.openConnection();
+		if (connection instanceof HttpURLConnection) {
+			HttpURLConnection http = (HttpURLConnection)connection;
+			http.setRequestProperty("User-Agent", "MiniMaven/2.0.0-SNAPSHOT");
+		}
+		InputStream in = connection.getInputStream();
 		if (message != null)
 			err.println(message);
 		directory.mkdirs();
 		File result = new File(directory, fileName);
+		if (verbose)
+			err.println("Downloading " + url + " to " + result.getAbsolutePath());
 		copy(in, result);
 		return result;
 	}

@@ -30,7 +30,7 @@ from ij.io import FileSaver
 
 input = 'images/fiji-logo-1.0.svg'
 ico = 'images/fiji.ico'
-icns = 'images/Fiji.icns'
+icns = 'Contents/Resources/Fiji.icns'
 
 # load .svg
 
@@ -116,4 +116,4 @@ if len(sys.argv) > 1:
 			print 'Ignoring unknown file type:', file
 else:
 	make_ico('images/fiji.ico')
-	make_icns('images/Fiji.icns')
+	make_icns('Contents/Resources/Fiji.icns')
