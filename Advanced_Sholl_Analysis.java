@@ -175,7 +175,7 @@ public class Advanced_Sholl_Analysis implements PlugIn, TextListener, ItemListen
             final WaitForUserDialog wd = new WaitForUserDialog(
                               "Please define the largest Sholl radius by creating\n"
                             + "a straight line starting at the center of analysis.\n"
-                            + "(Hold down \"Shift\" to obtain orthogonal chords)\n \n"
+                            + "(Hold down \"Shift\" to draw an orthogonal radius)\n \n"
                             + "Alternatively, define the focus of the arbor using\n"
                             + "the Point Selection Tool.");
             wd.show();
@@ -240,7 +240,7 @@ public class Advanced_Sholl_Analysis implements PlugIn, TextListener, ItemListen
         // Exit if there are no samples
         if (size<=1) {
             sError(" Invalid Parameters: Starting radius must be smaller than\n"
-                + "Ending radius and Radius step size must be within range!");
+                 + "Ending radius and Radius step size must be within range!");
             return;
         }
 
@@ -477,6 +477,7 @@ public class Advanced_Sholl_Analysis implements PlugIn, TextListener, ItemListen
 
         for (int s = 0; s < nspheres; s++) {
 
+            IJ.showProgress(s, nspheres);
             IJ.showStatus("Sampling sphere "+ (s+1) +"/"+ nspheres +". Press 'Esc' to abort...");
             if (IJ.escapePressed())
                 { IJ.beep(); mask = false; return data; }
@@ -493,7 +494,6 @@ public class Advanced_Sholl_Analysis implements PlugIn, TextListener, ItemListen
             zmax = Math.min(zc + (int)Math.round(radii[s]/vxD), maxZ);
 
             for (int z=zmin; z<=zmax; z++) {
-                IJ.showProgress(z, zmax+1);
                 for (int y=ymin; y<ymax; y++) {
                     for (int x=xmin; x<xmax; x++) {
                         dx = Math.sqrt((x-xc) * vxWH * (x-xc) * vxWH
@@ -563,7 +563,7 @@ public class Advanced_Sholl_Analysis implements PlugIn, TextListener, ItemListen
             grouping[i] = i + 1;
 
         for (int i = 0; i < len; i++) {
-            IJ.showProgress(i, len);
+            //IJ.showProgress(i, len+1);
             for (int j = 0; j < len; j++) {
                 if (i == j)
                     continue;
@@ -964,7 +964,6 @@ public class Advanced_Sholl_Analysis implements PlugIn, TextListener, ItemListen
         // Calculate ramification index, the maximum of intersection divided by the n.
         // of primary branches, assumed to be the n. intersections at starting radius
         final double ri = maxIntersect / y[0];
-        plotLabel.append("RI= "+ IJ.d2s(ri, 2));
 
         // Place parameters on a dedicated table
         ResultsTable rt;
@@ -1002,10 +1001,10 @@ public class Advanced_Sholl_Analysis implements PlugIn, TextListener, ItemListen
         cf.doFit(CurveFitter.STRAIGHT_LINE, false);
 
         double[] parameters = cf.getParams();
-        plotLabel.append("\nk= " + IJ.d2s(parameters[1], -2));
-        rt.addValue("Sholl decay", parameters[1]); // Slope of regression
-        rt.addValue("Intercept (decay regression)", parameters[0]);
-        rt.addValue("R^2 (decay regression)", cf.getRSquared());
+        plotLabel.append("k= " + IJ.d2s(-parameters[1], -2));
+        rt.addValue("Sholl Regression Coefficient", -parameters[1]); // Slope of regression
+        rt.addValue("Regression Intercept", parameters[0]);
+        rt.addValue("Regression R^2", cf.getRSquared());
         rt.show(shollTable);
 
         // Define a global analysis title
@@ -1327,7 +1326,7 @@ public class Advanced_Sholl_Analysis implements PlugIn, TextListener, ItemListen
      */
     public static IndexColorModel matlabJetColorMap(final int grayvalue, final int idx) {
 
-        // Initialize colors arrays, initialized with zero values
+        // Initialize colors arrays (zero-filled by default)
         final byte[] reds   = new byte[256];
         final byte[] greens = new byte[256];
         final byte[] blues  = new byte[256];
