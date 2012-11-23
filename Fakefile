@@ -123,13 +123,13 @@ dev[./ImageJ $DEBUG_ARGS] <-
 
 # From submodules
 jars/ij.jar <- jars/javac.jar modules/ImageJA/
-CLASSPATH(plugins/mpicbg_.jar)=jars/ij.jar:jars/mpicbg.jar
+CLASSPATH(plugins/mpicbg_.jar)=jars/ij-1.47b.jar:jars/mpicbg.jar
 plugins/mpicbg_.jar <- modules/mpicbg/
-CLASSPATH(jars/mpicbg.jar)=jars/ij.jar:jars/Jama.jar
+CLASSPATH(jars/mpicbg.jar)=jars/ij-1.47b.jar:jars/Jama-1.0.2.jar
 jars/mpicbg.jar <- modules/mpicbg/
-CLASSPATH(jars/VectorString.jar)=jars/ij.jar:jars/Jama.jar:$JAVA3D_JARS
+CLASSPATH(jars/VectorString.jar)=jars/ij-1.47b.jar:jars/Jama-1.0.2.jar:$JAVA3D_JARS
 jars/VectorString.jar <- modules/TrakEM2/
-CLASSPATH(plugins/TrakEM2_.jar)=jars/ij.jar:jars/jai_core.jar:jars/jai_codec.jar:jars/VectorString.jar:jars/postgresql.jar:jars/jcommon.jar:jars/jfreechart.jar:jars/edu_mines_jtk.jar:jars/VIB-lib.jar:plugins/VIB_.jar:jars/mpicbg.jar:plugins/loci_tools.jar:plugins/bUnwarpJ_.jar:plugins/level_sets.jar:plugins/Fiji_Plugins.jar:jars/Jama.jar:jars/imglib.jar:jars/imglib-algorithms.jar:jars/imglib-ij.jar:plugins/Simple_Neurite_Tracer.jar:plugins/3D_Viewer.jar:plugins/Lasso_and_Blow_Tool.jar:plugins/mpicbg_.jar:$JAVA3D_JARS
+CLASSPATH(plugins/TrakEM2_.jar)=jars/ij-1.47b.jar:jars/jai_core.jar:jars/jai_codec.jar:jars/VectorString.jar:jars/postgresql-8.2-506.jdbc3.jar:jars/jcommon-1.0.17.jar:jars/jfreechart-1.0.14.jar:jars/edu_mines_jtk.jar:jars/VIB-lib-2.0.0-SNAPSHOT.jar:plugins/VIB_-2.0.0-SNAPSHOT.jar:jars/mpicbg.jar:jars/loci-common-4.4-SNAPSHOT.jar:jars/scifio-4.4-SNAPSHOT.jar:plugins/loci_plugins-4.4-SNAPSHOT.jar:plugins/bUnwarpJ_-2.6.jar:plugins/level_sets-1.0.jar:plugins/Fiji_Plugins-2.0.0-SNAPSHOT.jar:jars/Jama-1.0.2.jar:jars/imglib-2.0.0-SNAPSHOT.jar:jars/imglib-algorithms-2.0.0-SNAPSHOT.jar:jars/imglib-ij-2.0.0-SNAPSHOT.jar:plugins/Simple_Neurite_Tracer-2.0.0.jar:plugins/3D_Viewer-2.0.0-SNAPSHOT.jar:plugins/Lasso_and_Blow_Tool-2.0.0-SNAPSHOT.jar:plugins/mpicbg_.jar:$JAVA3D_JARS
 plugins/TrakEM2_.jar <- modules/TrakEM2/
 plugins/ij-ImageIO_.jar <- modules/ij-plugins/
 
