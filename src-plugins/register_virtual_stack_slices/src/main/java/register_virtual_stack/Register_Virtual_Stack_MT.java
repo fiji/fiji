@@ -205,6 +205,14 @@ public class Register_Virtual_Stack_MT implements PlugIn
 			IJ.error("Error: No source directory was provided.");
 			return;
 		}
+		
+		// Check if source directory exists
+		if( (new File( source_dir )).exists() == false )
+		{
+			IJ.error("Error: source directory " + source_dir + " does not exist.");
+			return;
+		}
+		
 		source_dir = source_dir.replace('\\', '/');
 		if (!source_dir.endsWith("/")) source_dir += "/";
 		
@@ -214,6 +222,14 @@ public class Register_Virtual_Stack_MT implements PlugIn
 			IJ.error("Error: No output directory was provided.");
 			return;
 		}
+		
+		// Check if output directory exists
+		if( (new File( target_dir )).exists() == false )
+		{
+			IJ.error("Error: output directory " + target_dir + " does not exist.");
+			return;
+		}
+		
 		target_dir = target_dir.replace('\\', '/');
 		if (!target_dir.endsWith("/")) target_dir += "/";
 		
@@ -320,6 +336,35 @@ public class Register_Virtual_Stack_MT implements PlugIn
 			final Param p, 
 			final boolean non_shrink) 
 	{
+		// Check if source directory exists
+		if( (new File( source_dir )).exists() == false )
+		{
+			IJ.error("Error: source directory " + source_dir + " does not exist.");
+			return;
+		}
+		
+		// Check if output directory exists
+		if( (new File( target_dir )).exists() == false )
+		{
+			IJ.error("Error: output directory " + target_dir + " does not exist.");
+			return;
+		}
+		
+		// Check if transforms directory exists
+		if( (new File( save_dir )).exists() == false )
+		{
+			IJ.error("Error: transforms directory " + save_dir + " does not exist.");
+			return;
+		}		
+		
+		// Check if reference file exists
+		if( (new File( source_dir + referenceName )).exists() == false )
+		{
+			IJ.error("Error: reference image " + source_dir + referenceName + " does not exist.");
+			return;
+		}
+		
+		
 		// get file listing
 		final String exts = ".tif.jpg.png.gif.tiff.jpeg.bmp.pgm.ima";
 		final String[] names = new File(source_dir).list(new FilenameFilter() 
