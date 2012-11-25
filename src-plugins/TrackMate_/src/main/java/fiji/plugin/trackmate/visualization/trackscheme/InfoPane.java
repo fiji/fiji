@@ -17,7 +17,6 @@ import java.awt.event.MouseEvent;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.ConcurrentModificationException;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -34,13 +33,13 @@ import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.ListCellRenderer;
 import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.event.AncestorEvent;
 import javax.swing.event.AncestorListener;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.JTableHeader;
-import javax.swing.table.TableModel;
 
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
@@ -52,6 +51,8 @@ import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMateSelectionChangeEvent;
 import fiji.plugin.trackmate.TrackMateSelectionChangeListener;
+import fiji.plugin.trackmate.util.OnRequestUpdater;
+import fiji.plugin.trackmate.util.OnRequestUpdater.Refreshable;
 import fiji.plugin.trackmate.util.TMUtils;
 
 public class InfoPane <T extends RealType<T> & NativeType<T>> extends JPanel implements TrackMateSelectionChangeListener {
@@ -86,6 +87,10 @@ public class InfoPane <T extends RealType<T> & NativeType<T>> extends JPanel imp
 	private Map<String, String> featureNames;
 	private final TrackMateModel<T> model;
 	private final JGraphXAdapter<T> graph;
+	/** A copy of the last spot collection highlighted in this infopane, sorted by frame order. */
+	private Collection<Spot> spotSelection;
+	private String[] headers;
+	private final OnRequestUpdater updater;
 
 	/*
 	 * CONSTRUCTOR
@@ -96,6 +101,16 @@ public class InfoPane <T extends RealType<T> & NativeType<T>> extends JPanel imp
 		this.graph = graph;
 		this.features = model.getFeatureModel().getSpotFeatures();
 		this.featureNames = model.getFeatureModel().getSpotFeatureShortNames();
+		this.headers = TMUtils.getArrayFromMaping(features, featureNames).toArray(new String[] {});
+		this.updater = new OnRequestUpdater(new Refreshable() {
+			@Override
+			public void refresh() {
+				SwingUtilities.invokeLater(new Runnable() {
+					@Override
+					public void run() { update(); }
+				});
+			}
+		});
 		// Add a listener to ensure we remove this panel from the listener list of the model
 		addAncestorListener(new AncestorListener() {			
 			@Override
@@ -128,7 +143,6 @@ public class InfoPane <T extends RealType<T> & NativeType<T>> extends JPanel imp
 	/**
 	 * Show the given spot selection as a table displaying their individual features. 
 	 */
-	@SuppressWarnings("serial")
 	private void highlightSpots(final Collection<Spot> spots) {
 		if (!doHighlightSelection)
 			return;
@@ -136,63 +150,62 @@ public class InfoPane <T extends RealType<T> & NativeType<T>> extends JPanel imp
 			scrollTable.setVisible(false);
 			return;
 		}
-		
+
 		// Copy and sort selection by frame 
-		final TreeSet<Spot> sortedSpot = new TreeSet<Spot>(Spot.frameComparator);
-		sortedSpot.addAll(spots);
+		spotSelection = spots;
+		updater.doUpdate();
+	}
 
-		// Fill feature table
-		try { // Dummy protection for ultra fast selection / de-selection events. Ugly.
+	private void update() {
 
-			DefaultTableModel dm = new DefaultTableModel() { // Un-editable model
-				@Override
-				public boolean isCellEditable(int row, int column) { return false; }
-			};
+		TreeSet<Spot> sortedSpots = new TreeSet<Spot>(Spot.frameComparator);
+		sortedSpots.addAll(spotSelection);
+		
+		@SuppressWarnings("serial")
+		DefaultTableModel dm = new DefaultTableModel() { // Un-editable model
+			@Override
+			public boolean isCellEditable(int row, int column) { return false; }
+		};
 
-			for (Spot spot : sortedSpot) {
-				if (null == spot)
-					continue;
-				Object[] columnData = new Object[features.size()];
-				for (int i = 0; i < columnData.length; i++) 
-					columnData[i] = String.format("%.1f", spot.getFeature(features.get(i)));
-				dm.addColumn(spot.toString(), columnData);
-			}
-			table.setModel(dm);
-
-			// Tune look
-			DefaultTableCellRenderer headerRenderer = new DefaultTableCellRenderer() {
-				public boolean isOpaque() { return false; };
-				@Override
-				public Color getBackground() {
-					return Color.BLUE;
-				}
-			};
-			headerRenderer.setBackground(Color.RED);
-			headerRenderer.setFont(FONT);
-
-			DefaultTableCellRenderer renderer = new DefaultTableCellRenderer();
-			renderer.setOpaque(false);
-			renderer.setHorizontalAlignment(SwingConstants.RIGHT);
-			renderer.setFont(SMALL_FONT);
-
-			FontMetrics fm = table.getGraphics().getFontMetrics(FONT);
-			for(int i=0; i<table.getColumnCount(); i++) {
-				table.setDefaultRenderer(table.getColumnClass(i), renderer);
-				// Set width auto
-				table.getColumnModel().getColumn(i).setWidth(fm.stringWidth( dm.getColumnName(i) ) );
-			}
-			for (Component c : scrollTable.getColumnHeader().getComponents()) {
-				c.setBackground(getBackground());
-			}
-			scrollTable.getColumnHeader().setOpaque(false);
-			scrollTable.setVisible(true);
-			validate();
-
-		} catch (ConcurrentModificationException cme) {
-			// do nothing
-		} catch (ArrayIndexOutOfBoundsException aobe) {
-			// do nothing
+		for (Spot spot : sortedSpots) {
+			if (null == spot)
+				continue;
+			Object[] columnData = new Object[features.size()];
+			for (int i = 0; i < columnData.length; i++) 
+				columnData[i] = String.format("%.1f", spot.getFeature(features.get(i)));
+			dm.addColumn(spot.toString(), columnData);
 		}
+		table.setModel(dm);
+
+		// Tune look
+		@SuppressWarnings("serial")
+		DefaultTableCellRenderer headerRenderer = new DefaultTableCellRenderer() {
+			public boolean isOpaque() { return false; };
+			@Override
+			public Color getBackground() {
+				return Color.BLUE;
+			}
+		};
+		headerRenderer.setBackground(Color.RED);
+		headerRenderer.setFont(FONT);
+
+		DefaultTableCellRenderer renderer = new DefaultTableCellRenderer();
+		renderer.setOpaque(false);
+		renderer.setHorizontalAlignment(SwingConstants.RIGHT);
+		renderer.setFont(SMALL_FONT);
+
+		FontMetrics fm = table.getGraphics().getFontMetrics(FONT);
+		for(int i=0; i<table.getColumnCount(); i++) {
+			table.setDefaultRenderer(table.getColumnClass(i), renderer);
+			// Set width auto
+			table.getColumnModel().getColumn(i).setWidth(fm.stringWidth( dm.getColumnName(i) ) );
+		}
+		for (Component c : scrollTable.getColumnHeader().getComponents()) {
+			c.setBackground(getBackground());
+		}
+		scrollTable.getColumnHeader().setOpaque(false);
+		scrollTable.setVisible(true);
+		validate();
 	}
 
 	/*
@@ -212,32 +225,33 @@ public class InfoPane <T extends RealType<T> & NativeType<T>> extends JPanel imp
 	}
 
 	private void exportTableToImageJ() {
-		TableModel tm = table.getModel();
 		ResultsTable table = new ResultsTable();
-		
-		int ncols = tm.getColumnCount();
-		int nrows = tm.getRowCount();
-		JList rowList = (JList) scrollTable.getRowHeader().getView();
-		
-		
-		
+
+		int ncols = spotSelection.size();
+		int nrows = headers.length;
+		Spot[] spotArray = spotSelection.toArray(new Spot[] {} );
+
 		for (int j = 0; j < nrows; j++) {
 			table.incrementCounter();
-			table.setLabel( (String) rowList.getModel().getElementAt(j), j);
+			String feature = features.get(j);
+			table.setLabel(feature, j);
 			for (int i = 0; i < ncols; i++) {
-				String headings = tm.getColumnName(i);
-				table.addValue(headings, Double.parseDouble((String) tm.getValueAt(j, i)) );
+				Spot spot =  spotArray[i]; 
+				Double val = spot.getFeature(feature);
+				if (val == null) {
+					val = Double.NaN;
+				}
+				table.addValue(spot.getName(),  val);
 			}
 		}
 
 		table.show("TrackMate Selection");
 	}
-	
+
 	private void init() {
 
 		@SuppressWarnings("serial")
 		AbstractListModel lm = new AbstractListModel() {
-			String headers[] = TMUtils.getArrayFromMaping(features, featureNames).toArray(new String[] {});
 			public int getSize() {
 				return headers.length;
 			}
@@ -267,8 +281,8 @@ public class InfoPane <T extends RealType<T> & NativeType<T>> extends JPanel imp
 					displayPopupMenu(e.getPoint());
 			}
 		});
-		
-		
+
+
 		JList rowHeader = new JList(lm);
 		rowHeader.setFixedCellHeight(table.getRowHeight());
 		rowHeader.setCellRenderer(new RowHeaderRenderer(table));
