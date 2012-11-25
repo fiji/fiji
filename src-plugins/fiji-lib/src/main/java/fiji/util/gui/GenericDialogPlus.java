@@ -67,6 +67,8 @@ public class GenericDialogPlus extends GenericDialog implements KeyListener {
 	public void addImageChoice(String label, String defaultImage) {
 		if (windowTitles == null) {
 			windowIDs = WindowManager.getIDList();
+			if (windowIDs == null)
+				windowIDs = new int[0];
 			windowTitles = new String[windowIDs.length];
 			for (int i = 0; i < windowIDs.length; i++) {
 				ImagePlus image = WindowManager.getImage(windowIDs[i]);

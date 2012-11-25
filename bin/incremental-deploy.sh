@@ -13,9 +13,12 @@ helper="$ij_dir/bin/precompiled.sh"
 for pom in $(git ls-files \*pom.xml)
 do
 	dir=${pom%pom.xml}
+	test -n "$dir" || dir=.
 	test -d "$dir"/target || continue
-	gav="$("$helper" gav-from-pom "$pom")"
-	commit="$("$helper" commit "$gav")"
+	gav="$("$helper" gav-from-pom "$pom")" &&
+	test -n "$gav" &&
+	commit="$("$helper" commit "$gav")" &&
+	test -n "$commit" &&
 	git diff --quiet "$commit".. -- "$dir" ||
 	(cd "$dir" &&
 	 echo "Deploying $dir" &&

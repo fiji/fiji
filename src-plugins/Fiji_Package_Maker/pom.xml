@@ -28,10 +28,25 @@
 			<version>${imagej1.version}</version>
 		</dependency>
 		<dependency>
-			<groupId>sc.fiji</groupId>
-			<artifactId>Fiji_Updater</artifactId>
+			<groupId>net.imagej</groupId>
+			<artifactId>ij-updater-core</artifactId>
 			<version>${imagej.version}</version>
 		</dependency>
 	</dependencies>
+
+	<build>
+		<plugins>
+			<plugin>
+				<artifactId>maven-jar-plugin</artifactId>
+				<configuration>
+					<archive>
+						<manifest>
+							<mainClass>fiji.packaging.Packager</mainClass>
+						</manifest>
+					</archive>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
 
 </project>

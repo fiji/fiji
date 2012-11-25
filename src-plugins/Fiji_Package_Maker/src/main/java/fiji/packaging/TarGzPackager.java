@@ -2,7 +2,6 @@ package fiji.packaging;
 
 import java.io.IOException;
 import java.io.OutputStream;
-
 import java.util.zip.GZIPOutputStream;
 
 public class TarGzPackager extends TarPackager {

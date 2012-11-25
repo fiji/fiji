@@ -5,6 +5,8 @@ import ij.IJ;
 import java.awt.Frame;
 
 import java.io.File;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
@@ -13,13 +15,13 @@ public class FijiTools {
 	/**
 	 * Get the path of the Fiji directory
 	 *
-	 * @deprecated
+	 * @Deprecated
 	 */
-	public static String getFijiDir() throws ClassNotFoundException {
+	public static String getFijiDir() {
 		return getImageJDir();
 	}
 
-	public static String getImageJDir() throws ClassNotFoundException {
+	public static String getImageJDir() {
 		String path = System.getProperty("ij.dir");
 		if (path != null)
 			return path;
@@ -37,36 +39,32 @@ public class FijiTools {
 
 	public static boolean isFijiDeveloper() {
 		try {
-			return new File(getFijiDir(), "ImageJ.c").exists();
+			return new File(getImageJDir(), "ImageJ.c").exists();
 		} catch (Exception e) {
 			return false;
 		}
 	}
 
 	public static boolean openStartupMacros() {
-		try {
-			File macros = new File(getFijiDir(), "macros");
-			File txt = new File(macros, "StartupMacros.txt");
-			File ijm = new File(macros, "StartupMacros.ijm");
-			File fiji = new File(macros, "StartupMacros.fiji.ijm");
-			if (txt.exists()) {
-				if (openEditor(txt, fiji))
-					return true;
-			}
-			else if (ijm.exists() || fiji.exists()) {
-				if (openEditor(ijm, fiji))
-					return true;
-			}
-		} catch (ClassNotFoundException e) {
-			e.printStackTrace();
+		File macros = new File(getFijiDir(), "macros");
+		File txt = new File(macros, "StartupMacros.txt");
+		File ijm = new File(macros, "StartupMacros.ijm");
+		File fiji = new File(macros, "StartupMacros.fiji.ijm");
+		if (txt.exists()) {
+			if (openEditor(txt, fiji))
+				return true;
+		}
+		else if (ijm.exists() || fiji.exists()) {
+			if (openEditor(ijm, fiji))
+				return true;
 		}
 		return false;
 	}
 
 	public static boolean openEditor(File file, File templateFile) {
 		try {
-			Class clazz = IJ.getClassLoader().loadClass("fiji.scripting.TextEditor");
-			Constructor ctor = clazz.getConstructor(new Class[] { File.class, File.class });
+			Class<?> clazz = IJ.getClassLoader().loadClass("fiji.scripting.TextEditor");
+			Constructor<?> ctor = clazz.getConstructor(new Class[] { File.class, File.class });
 			Frame frame = (Frame)ctor.newInstance(new Object[] { file, templateFile });
 			frame.setVisible(true);
 			return true;
@@ -78,8 +76,8 @@ public class FijiTools {
 
 	public static boolean openEditor(String title, String body) {
 		try {
-			Class clazz = IJ.getClassLoader().loadClass("fiji.scripting.TextEditor");
-			Constructor ctor = clazz.getConstructor(new Class[] { String.class, String.class });
+			Class<?> clazz = IJ.getClassLoader().loadClass("fiji.scripting.TextEditor");
+			Constructor<?> ctor = clazz.getConstructor(new Class[] { String.class, String.class });
 			Frame frame = (Frame)ctor.newInstance(new Object[] { title, body });
 			frame.setVisible(true);
 			return true;
@@ -88,8 +86,8 @@ public class FijiTools {
 		}
 
 		try {
-			Class clazz = IJ.getClassLoader().loadClass("ij.plugin.frame.Editor");
-			Constructor ctor = clazz.getConstructor(new Class[] { Integer.TYPE, Integer.TYPE, Integer.TYPE, Integer.TYPE });
+			Class<?> clazz = IJ.getClassLoader().loadClass("ij.plugin.frame.Editor");
+			Constructor<?> ctor = clazz.getConstructor(new Class[] { Integer.TYPE, Integer.TYPE, Integer.TYPE, Integer.TYPE });
 			Object ed = ctor.newInstance(new Object[] { 16, 60, 0, 3 });
 			Method method = clazz.getMethod(title.endsWith(".ijm") ? "createMacro" : "create", new Class[] { String.class, String.class });
 			method.invoke(ed, new Object[] { title, body });
@@ -98,6 +96,31 @@ public class FijiTools {
 			IJ.handleException(e);
 		}
 
+		return false;
+	}
+
+	/**
+	 * Calls the Fiji Script Editor for text files.
+	 * 
+	 * A couple of sanity checks are needed, e.g. that the script editor is in the class path
+	 * and that it agrees that the file is binary, that there is no infinite loop ponging back
+	 * and forth between the TextEditor's and the Opener's open() methods.
+	 * 
+	 * @param path the path to the candidate file
+	 * @return whether we opened it in the script editor
+	 */
+	public static boolean maybeOpenEditor(String path) {
+		try {
+			Class<?> textEditor = ij.IJ.getClassLoader().loadClass("fiji.scripting.TextEditor");
+			if (path.indexOf("://") < 0 &&
+					!getFileExtension(path).equals("") &&
+					!((Boolean)textEditor.getMethod("isBinary", new Class[] { String.class }).invoke(null, path)).booleanValue() &&
+					!stackTraceContains("fiji.scripting.TextEditor.open(") &&
+					IJ.runPlugIn("fiji.scripting.Script_Editor", path) != null)
+				return true;
+		} catch (Throwable t) {
+			t.printStackTrace();
+		}
 		return false;
 	}
 
@@ -110,5 +133,13 @@ public class FijiTools {
 		if (dot < slash || dot < backslash)
 			return "";
 		return path.substring(dot + 1);
+	}
+
+	public static boolean stackTraceContains(String needle) {
+		final StringWriter writer = new StringWriter();
+		final PrintWriter out = new PrintWriter(writer);
+		new Exception().printStackTrace(out);
+		out.close();
+		return writer.toString().indexOf(needle) >= 0;
 	}
 }

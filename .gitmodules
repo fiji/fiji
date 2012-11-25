@@ -28,9 +28,6 @@
 [submodule "clojure"]
 	path = modules/clojure
 	url = ssh://contrib@fiji.sc/srv/git/clojure/
-[submodule "bio-formats"]
-	path = modules/bio-formats
-	url = ssh://contrib@fiji.sc/srv/git/bio-formats
 [submodule "ij-plugins"]
 	path = modules/ij-plugins
 	url = ssh://contrib@fiji.sc/srv/git/ij-plugins

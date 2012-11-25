@@ -77,7 +77,7 @@ import ij.gui.Roi;
 public class SimpleNeuriteTracer extends ThreePanes
 	implements SearchProgressCallback, GaussianGenerationCallback, PathAndFillListener {
 
-	public static final String PLUGIN_VERSION = "2.0.0";
+	public static final String PLUGIN_VERSION = "2.0.2";
 	protected static final boolean verbose = false;
 
 	protected static final int DISPLAY_PATHS_SURFACE = 1;
