@@ -822,7 +822,7 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 					if( twoDimensional )
 						normalizedCrossings = crossings / (Math.PI * distanceSquared);
 					else
-						normalizedCrossings = ((4.0 * Math.PI * x * distanceSquared) / 3.0);
+						normalizedCrossings = crossings / ((4.0 * Math.PI * x * distanceSquared) / 3.0);
 					csvQuoteAndPrint(pw,x);
 					pw.print(",");
 					csvQuoteAndPrint(pw,crossings);
@@ -845,7 +845,7 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 					if( twoDimensional )
 						normalizedCrossings = crossings / (Math.PI * (midX * midX));
 					else
-						normalizedCrossings = ((4.0 * Math.PI * (midX * midX * midX)) / 3.0);
+						normalizedCrossings = crossings / ((4.0 * Math.PI * (midX * midX * midX)) / 3.0);
 					csvQuoteAndPrint(pw,startX);
 					pw.print(",");
 					csvQuoteAndPrint(pw,endX);
