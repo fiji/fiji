@@ -140,7 +140,7 @@ public class SpotFeatureGrapher<T extends RealType<T> & NativeType<T>> extends J
 					for (int j = i+1; j < nspots; j++) {
 						target = spots.get(j);
 
-						if (model.containsEdge(source, target)) {
+						if (model.containsEdge(source, target) || model.containsEdge(target, source)) { // careful for directed edge
 							edges.add(new Spot[] {source, target});
 						}
 
