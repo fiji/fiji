@@ -8,7 +8,6 @@ go in the separate configuration panel.
 
 
 Bugs:
-- Check if TrackScheme still reports edge deletion problems.
 - Unsolvable bug: in TrackScheme, when TrackMate is launched from Fiji, the cells
 are not movable???!
 - Sometimes, this appears:
@@ -50,7 +49,6 @@ Actions:
 Track scheme
 - Add the ability to name tracks.
 - Add a side table to display track features.
-- Allow to export side tables content to csv or xls.
 
 
 Export/Import
