@@ -52,7 +52,7 @@ import java.util.Vector;
  * @author Tiago Ferreira v2.0, Feb 2012, v3.0 Oct, 2012
  * @author Tom Maddock v1.0, Oct 2005
  */
-public class Advanced_Sholl_Analysis implements PlugIn, TextListener, ItemListener {
+public class Sholl_Analysis implements PlugIn, TextListener, ItemListener {
 
     /* Plugin Information */
     public static final String VERSION = "3.0";

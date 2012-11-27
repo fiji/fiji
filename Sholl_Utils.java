@@ -1,6 +1,6 @@
 /* Copyright 2012 Tiago Ferreira, 2005 Tom Maddock
  *
- * This file is part of the ImageJ plugin "Advanced Sholl Analysis".
+ * This file is part of the ImageJ plugin "Bitmap Sholl Analysis".
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -25,16 +25,16 @@ import java.io.*;
 import java.net.*;
 import java.awt.image.IndexColorModel;
 
-/** Simple commands related to Advanced_Sholl_Analysis */
+/** Simple auxiliary commands related to Sholl_Analysis */
 public class Sholl_Utils implements PlugIn {
 
-    private static final String BUILD = " 2012.11.16";
+    private static final String BUILD = " 2012.11.27";
     private static final String SRC_URL = "https://github.com/tferr/ASA";
     private static final String DOC_URL = "http://imagejdocu.tudor.lu/doku.php?id=plugin:analysis:asa:start";
 
-    private static final String[] METHODS = Advanced_Sholl_Analysis.SHOLL_TYPES;
-    private static int method = Advanced_Sholl_Analysis.SHOLL_N;
-    private static int background = Advanced_Sholl_Analysis.maskBackground;
+    private static final String[] METHODS = Sholl_Analysis.SHOLL_TYPES;
+    private static int method = Sholl_Analysis.SHOLL_N;
+    private static int background = Sholl_Analysis.maskBackground;
 
     public void run(String arg) {
         if (arg.equalsIgnoreCase("about"))
@@ -55,13 +55,13 @@ public class Sholl_Utils implements PlugIn {
         }
     }
 
-    /** Applies the "Matlab Jet" LUT with a black background*/
+    /** Applies the "Matlab Jet" to frontmost image */
     void applyJetLut() {
         ImagePlus imp = WindowManager.getCurrentImage();
         if (imp!=null && imp.getType()==ImagePlus.COLOR_RGB)
             IJ.error("LUTs cannot be assiged to RGB Images.");
         final int[] values = getLUTindex();
-        final IndexColorModel cm = Advanced_Sholl_Analysis.matlabJetColorMap(values[0], values[1]);
+        final IndexColorModel cm = Sholl_Analysis.matlabJetColorMap(values[0], values[1]);
         if (imp==null) {
             imp = new ImagePlus("Matlab Jet",ij.plugin.LutLoader.createImage(cm));
             imp.show();
@@ -85,8 +85,7 @@ public class Sholl_Utils implements PlugIn {
 
         int[] values = new int[2];
         values[0] = background;
-        values[1] = method==Advanced_Sholl_Analysis.SHOLL_SLOG ||
-                    method==Advanced_Sholl_Analysis.SHOLL_LOG
+        values[1] = method==Sholl_Analysis.SHOLL_SLOG || method==Sholl_Analysis.SHOLL_LOG
                     ? 255 : 0;
 
         return values;
@@ -94,16 +93,13 @@ public class Sholl_Utils implements PlugIn {
 
     /** Displays an "about" info box */
     void showAbout() {
-        final String msg1 = "Advanced Sholl Analysis " + Advanced_Sholl_Analysis.VERSION
-                          + BUILD;
-        final Font fmsg1 = new Font("SansSerif", Font.BOLD, 12);
+        final String msg1 = " Version " + Sholl_Analysis.VERSION + BUILD;
+        final String msg2 = "Quantitative Sholl of untraced neuronal arbors in 2D/3D\n"
+                           +"Tiago Ferreira, Tom Maddock";
 
-        final String msg2 = "2D and 3D Bitmap Sholl for ImageJ\nTiago Ferreira, Tom Maddock";
-        final Font fmsg2 = new Font("SansSerif", Font.PLAIN, 12);
-
-        final GenericDialog gd = new GenericDialog("Sholl Analysis");
-        gd.addMessage(msg1, fmsg1);
-        gd.addMessage(msg2, fmsg2);
+        final GenericDialog gd = new GenericDialog("Sholl Analysis Plugins");
+        gd.addMessage(msg1, new Font("SansSerif", Font.BOLD, 12));
+        gd.addMessage(msg2, new Font("SansSerif", Font.PLAIN, 12));
         gd.enableYesNoCancel("Browse Documentation", "Browse Repository");
         gd.hideCancelButton();
         gd.showDialog();
