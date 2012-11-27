@@ -22,6 +22,7 @@ import ij.WindowManager;
 import ij.gui.*;
 import ij.measure.Calibration;
 import ij.measure.CurveFitter;
+import ij.measure.Measurements;
 import ij.measure.ResultsTable;
 import ij.plugin.ContrastEnhancer;
 import ij.plugin.PlugIn;
@@ -320,7 +321,7 @@ public class Advanced_Sholl_Analysis implements PlugIn, TextListener, ItemListen
 
         String trim = "None"; // Default return value
 
-        final GenericDialog gd = new GenericDialog("Advanced Sholl Analysis v"+ VERSION);
+        final GenericDialog gd = new GenericDialog("Sholl Analysis v"+ VERSION);
         gd.addNumericField("Starting radius:", startRadius, 2, 9, unit);
         gd.addNumericField("Ending radius:", endRadius, 2, 9, unit);
         gd.addNumericField("Radius_step size:", incStep, 2, 9, unit);
@@ -469,7 +470,7 @@ public class Advanced_Sholl_Analysis implements PlugIn, TextListener, ItemListen
         int nspheres, xmin, ymin, zmin, xmax, ymax, zmax;
         double dx, value;
 
-        // Create an array to hold the results
+        // Create an array to hold results
         final double[] data = new double[nspheres = radii.length];
 
         // Get Image Stack
@@ -1049,18 +1050,13 @@ public class Advanced_Sholl_Analysis implements PlugIn, TextListener, ItemListen
             yTitle = "N. of Intersections";
         }
 
-        // Create an empty plot: The plot constructor only allows the usage of the 'flags'
-        // argument with initial arrays
-        final double[] empty = null;
-        final int flags = Plot.X_FORCE2GRID + Plot.X_TICKS + Plot.X_NUMBERS
-                        + Plot.Y_FORCE2GRID + Plot.Y_TICKS + Plot.Y_NUMBERS;
-        final Plot plot = new Plot(longtitle, xTitle, yTitle, empty, empty, flags);
+        // Create an empty plot
+        final Plot plot = createEmptyPlot(longtitle, xTitle, yTitle);
 
-        // Set plot limits and font
+        // Set limits
         final double[] xScale = Tools.getMinMax(x);
         final double[] yScale = Tools.getMinMax(y);
-        plot.setLimits(xScale[0], xScale[1], yScale[0], yScale[1]);
-        plot.changeFont(new Font("SansSerif", Font.PLAIN, 11));
+        setPlotLimits(plot, xScale, yScale);
 
         // Add original data (default color is black)
         plot.setColor(Color.GRAY);
@@ -1068,9 +1064,7 @@ public class Advanced_Sholl_Analysis implements PlugIn, TextListener, ItemListen
 
         // Exit and return raw data if no fitting is done
         if (!fitCurve) {
-            plot.setColor(Color.BLACK);
-            plot.addLabel(0.8, 0.085, plotLabel.toString());
-            savePlot(plot, title, xpoints, ypoints, logY, empty, empty);
+            savePlot(plot, title, plotLabel.toString(), xpoints, ypoints, logY, null, null);
             return y;
         }
 
@@ -1169,10 +1163,6 @@ public class Advanced_Sholl_Analysis implements PlugIn, TextListener, ItemListen
         plotLabel.append("\nR\u00B2= "+ IJ.d2s(cf.getRSquared(), 3));
         rt.addValue("R^2 (fit)", cf.getRSquared());
 
-        // Add label to plot
-        plot.setColor(Color.BLACK);
-        plot.addLabel(0.8, 0.085, plotLabel.toString());
-
         // Plot fitted curve
         plot.setColor(Color.BLUE);
         plot.setLineWidth(2);
@@ -1184,7 +1174,7 @@ public class Advanced_Sholl_Analysis implements PlugIn, TextListener, ItemListen
         }
 
         // Show the plot window, save profile, update results and return fitted data
-        savePlot(plot, title, xpoints, ypoints, logY, x, fy);
+        savePlot(plot, title, plotLabel.toString(), xpoints, ypoints, logY, x, fy);
         rt.show(shollTable);
         return fy;
     }
@@ -1353,9 +1343,29 @@ public class Advanced_Sholl_Analysis implements PlugIn, TextListener, ItemListen
         return new IndexColorModel(8, 256, reds, greens, blues);
     }
 
+    /** Creates an empty plot (the default constructor using "flags" requires data arrays) */
+    private static Plot createEmptyPlot(final String title, final String xTitle, final String yTitle) {
+        final double[] empty = null;
+        final int flags = Plot.X_FORCE2GRID + Plot.X_TICKS + Plot.X_NUMBERS
+                        + Plot.Y_FORCE2GRID + Plot.Y_TICKS + Plot.Y_NUMBERS;
+        final Plot plot = new Plot(title, xTitle, yTitle, empty, empty, flags);
+
+        return plot;
+    }
+
+    /** Sets plot limits imposing grid lines  */
+    private static void setPlotLimits(final Plot plot, final double[] xScale, final double[] yScale) {
+        final boolean gridState = PlotWindow.noGridLines;
+        PlotWindow.noGridLines = false;
+        plot.setLimits(xScale[0], xScale[1], yScale[0], yScale[1]);
+        PlotWindow.noGridLines = gridState;
+    }
+
     /** Shows the plot window and saves the plot table on the image directory */
-    private static void savePlot(final Plot plot, final String title, final double[] x0,
-            final double[] y0, final double[] logy0, final double[] x1, final double[] y1) {
+    private static void savePlot(final Plot plot, final String title, final String label,
+            final double[] x0, final double[] y0, final double[] logy0, final double[] x1,
+            final double[] y1) {
+        makePlotLabel(plot, label);
         plot.show();
         if (validPath && save) {
             final String path = imgPath + File.separator + title + "_Sholl-M" + (shollChoice+1);
@@ -1367,6 +1377,35 @@ public class Advanced_Sholl_Analysis implements PlugIn, TextListener, ItemListen
                 IJ.log(">>>> An error occured when saving "+ title +"'s profile:\n"+ e);
             }
         }
+    }
+
+    /** Draws a label at the less "crowded" upper corner of the plot canvas */
+    private static void makePlotLabel(final Plot plot, final String label) {
+        final int margin = 4; // Axes internal margin, 1+Plot.TICK_LENGTH
+        final ImageProcessor ip = plot.getProcessor();
+
+        int maxLength = 0; String maxLine = "";
+        final String[] lines = Tools.split(label, "\n");
+        for (int i = 0; i<lines.length; i++) {
+            final int length = lines[i].length();
+			if (length>maxLength)
+			    { maxLength = length; maxLine = lines[i]; }
+        }
+
+        final FontMetrics metrics = ip.getFontMetrics();
+        final int textWidth = metrics.stringWidth(maxLine+" ");
+        final int lineHeight = metrics.getHeight();
+        final int textHeight = lineHeight * lines.length;
+		final int yTop = Plot.TOP_MARGIN + margin + lineHeight;
+		final int xRight = Plot.LEFT_MARGIN + PlotWindow.plotWidth - margin - textWidth;
+		final int xLeft  = Plot.LEFT_MARGIN + margin;
+
+        ip.setRoi(xLeft, yTop, textWidth, textHeight);
+        final double meanLeft = ImageStatistics.getStatistics(ip, Measurements.MEAN, null).mean;
+        ip.setRoi(xRight, yTop, textWidth, textHeight);
+        final double meanRight = ImageStatistics.getStatistics(ip, Measurements.MEAN, null).mean;
+
+        ip.drawString(label, meanLeft>meanRight ? xLeft : xRight, yTop);
     }
 
     /** Returns a Results Table with profile data */
@@ -1389,9 +1428,9 @@ public class Advanced_Sholl_Analysis implements PlugIn, TextListener, ItemListen
     /** Creates improved error messages with help button */
     private void error(final String msg, final boolean extended) {
         if (IJ.macroRunning())
-            IJ.error("Advanced Sholl Analysis Error", msg);
+            IJ.error("Sholl Analysis Error", msg);
         else {
-            final GenericDialog gd = new GenericDialog("Advanced Sholl Analysis Error");
+            final GenericDialog gd = new GenericDialog("Sholl Analysis Error");
             gd.setInsets(0,0,0);
             gd.addMessage(msg);
             if (extended) {
