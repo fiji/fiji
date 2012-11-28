@@ -3384,12 +3384,8 @@ public class FeatureStack
 		
 		double[] values = new double[ getSize() + 1 + extra ];
 		int n = 0;
-		if( colorFeatures  == false )
-			for (int z=1; z<=getSize(); z++, n++)		
-				values[z-1] = getProcessor(z).getPixelValue(x, y);
-		else
-			for (int z=1; z<=getSize(); z++, n++)		
-				values[z-1] = getProcessor(z).getPixel(x, y);
+		for (int z=1; z<=getSize(); z++, n++)		
+			values[z-1] = getProcessor(z).getPixelValue(x, y);
 		
 		
 		// Test: add neighbors of original image
@@ -3428,10 +3424,7 @@ public class FeatureStack
 		if(y2 >= ip.getHeight())
 			y2 = 2 * (ip.getHeight() - 1) - y2;
 		
-		if( colorFeatures  == false )
-			return ip.getPixelValue(x2, y2);
-		else 
-			return ip.getPixel(x2, y2);
+		return ip.getPixelValue(x2, y2);
 	}
 
 	/**
