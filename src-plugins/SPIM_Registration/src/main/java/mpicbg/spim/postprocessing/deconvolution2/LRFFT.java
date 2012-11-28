@@ -51,7 +51,7 @@ public class LRFFT
 			this.blockSize = new int[ image.getNumDimensions() ];
 						
 			for ( int d = 0; d < this.blockSize.length; ++d )
-				this.blockSize[ d ] = image.getDimension( d ) + kernel.getDimension( d ) - 1;
+				this.blockSize[ d ] = blockSize[ d ];
 						
 			this.blocks = Block.divideIntoBlocks( image.getDimensions(), this.blockSize, kernel.getDimensions() );
 			
@@ -128,9 +128,7 @@ public class LRFFT
 		if ( useCUDA )
 		{
 			this.fftConvolution1 = null;
-			this.fftConvolution2 = null;
-			
-			
+			this.fftConvolution2 = null;		
 		}
 		else
 		{
