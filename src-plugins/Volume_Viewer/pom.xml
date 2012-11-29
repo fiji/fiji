@@ -12,7 +12,7 @@
 	</parent>
 
 	<artifactId>Volume_Viewer</artifactId>
-	<version>1.31</version>
+	<version>2.0</version>
 
 	<name>plugins/Volume_Viewer.jar</name>
 	<description></description>
