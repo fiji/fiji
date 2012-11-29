@@ -262,9 +262,8 @@ public class SubFake extends Rule {
 
 		boolean isIJ1Plugin = isImageJ1Plugin(pom.getDirectory());
 		final String subDirectory = isIJ1Plugin ? "plugins" : "jars";
-		final String unversionedPath = subDirectory + "/" + pom.getArtifactId() + ".jar";
-		boolean keepVersion = getVarBool("keepVersion", unversionedPath);
-		boolean copyDependencies = getVarBool("copyDependencies", unversionedPath);
+		boolean keepVersion = !pom.getArtifactId().equals("Fiji_Updater");
+		boolean copyDependencies = getVarBool("copyDependencies", subDirectory + "/" + pom.getArtifactId() + ".jar");
 		final File targetDirectory = new File(System.getProperty("ij.dir"), subDirectory);
 		final File unversioned = new File(targetDirectory, pom.getArtifactId() + ".jar");
 		final File targetFile = keepVersion ? new File(targetDirectory, pom.getJarName()) : unversioned;
