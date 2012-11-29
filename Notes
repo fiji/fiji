@@ -25,7 +25,8 @@ Version 3.0 (latest)
         containing the segmented arbor
       - When "End radius" is empty (or NaN), the largest (hemi)circle/sphere is used. This
         allows macros to easily process images without line selections
-      - Precision in Sholl table is set by "Analyze>Set Measurements..."
+      - Precision (Scientific notation and number of decimal places) in Sholl table is set
+        by "Analyze>Set Measurements..."
       - Sholl mask is coded with Matlab's "jet" color map
       - Major code clean up, which solved several issues
       - Plugin is now registered in the Analyze Menu: "Analyze>Sholl Analysis...".

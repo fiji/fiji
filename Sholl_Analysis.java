@@ -976,7 +976,7 @@ public class Sholl_Analysis implements PlugIn, TextListener, ItemListener {
             rt = ((TextWindow) window).getTextPanel().getResultsTable();
 
         rt.incrementCounter();
-        rt.setPrecision(Analyzer.precision);
+        rt.setPrecision(getPrecision());
         rt.addLabel("Image", title + " (" + unit + ")");
         rt.addValue("Lower Thold", lowerT);
         rt.addValue("Upper Thold", upperT);
@@ -1408,11 +1408,20 @@ public class Sholl_Analysis implements PlugIn, TextListener, ItemListener {
         ip.drawString(label, meanLeft>meanRight ? xLeft : xRight, yTop);
     }
 
+    /** Retrieves precision according to Analyze>Set Measurements...*/
+    private static int getPrecision() {
+		final boolean sNotation = (Analyzer.getMeasurements()&Measurements.SCIENTIFIC_NOTATION)!=0;
+        int precision = Analyzer.getPrecision();
+		if (sNotation)
+		    precision = -precision;
+		return precision;
+    }
+
     /** Returns a Results Table with profile data */
     private static ResultsTable getProfileTable(final double[] rawX, final double[] rawY,
             final double[] lograwY, final double[] fitX, final double[] fitY) {
         final ResultsTable rt = new ResultsTable();
-        rt.setPrecision(Analyzer.precision);
+        rt.setPrecision(getPrecision());
         for (int i=0, j=0; i<rawX.length; i++) {
             rt.setValue("Radius", i, rawX[i]);
             rt.setValue("Crossings", i, rawY[i]);
