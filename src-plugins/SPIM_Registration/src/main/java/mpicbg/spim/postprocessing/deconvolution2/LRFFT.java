@@ -3,6 +3,9 @@ package mpicbg.spim.postprocessing.deconvolution2;
 import ij.IJ;
 
 import java.util.ArrayList;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import mpicbg.imglib.algorithm.fft.FourierConvolution;
 import mpicbg.imglib.algorithm.mirror.MirrorImage;
@@ -13,9 +16,8 @@ import mpicbg.imglib.container.basictypecontainer.array.FloatArray;
 import mpicbg.imglib.container.constant.ConstantContainer;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.image.ImageFactory;
+import mpicbg.imglib.multithreading.SimpleMultiThreading;
 import mpicbg.imglib.type.numeric.real.FloatType;
-
-import com.sun.jna.Library;
 
 public class LRFFT 
 {
@@ -27,21 +29,39 @@ public class LRFFT
 	protected int numViews = 0;
 	boolean useExponentialKernel = false;
 	
-	final boolean useBlocks, useCUDA;
-	final int[] blockSize;
-	final ArrayList< Block > blocks;
+	final boolean useBlocks, useCUDA, useCPU;
+	final int[] blockSize, deviceList;
+	final int device0;
+	final Block[] blocks;
 	final ImageFactory< FloatType > factory;
 	/**
 	 * Used to determine if the Convolutions already have been computed for the current iteration
 	 */
 	int i = -1;
 	
-	public LRFFT( final Image<FloatType> image, final Image<FloatType> weight, final Image<FloatType> kernel, final boolean useCUDA, final boolean useBlocks, final int[] blockSize )
+	public LRFFT( final Image<FloatType> image, final Image<FloatType> weight, final Image<FloatType> kernel, final int[] deviceList, final boolean useBlocks, final int[] blockSize )
 	{
 		this.image = image;
 		this.kernel1 = kernel;
 		this.weight = weight;
-		this.useCUDA = useCUDA;
+		
+		this.deviceList = deviceList;
+		this.device0 = deviceList[ 0 ];
+
+		// figure out if we need GPU and/or CPU
+		boolean anyGPU = false;
+		boolean anyCPU = false;
+		
+		for ( final int i : deviceList )
+		{
+			if ( i >= 0 )
+				anyGPU = true;
+			else if ( i == -1 )
+				anyCPU = true;
+		}
+		
+		this.useCUDA = anyGPU;
+		this.useCPU = anyCPU;
 				
 		if ( useBlocks )
 		{
@@ -82,9 +102,9 @@ public class LRFFT
 		}		
 	}
 
-	public LRFFT( final Image<FloatType> image, final Image<FloatType> kernel, final boolean useCUDA, final boolean useBlocks, final int[] blockSize )
+	public LRFFT( final Image<FloatType> image, final Image<FloatType> kernel, final int[] deviceList, final boolean useBlocks, final int[] blockSize )
 	{
-		this( image, new Image< FloatType > ( new ConstantContainer< FloatType >( image.getDimensions(), new FloatType( 1 ) ), new FloatType() ), kernel, useCUDA, useBlocks, blockSize );
+		this( image, new Image< FloatType > ( new ConstantContainer< FloatType >( image.getDimensions(), new FloatType( 1 ) ), new FloatType() ), kernel, deviceList, useBlocks, blockSize );
 	}
 
 	/**
@@ -125,12 +145,7 @@ public class LRFFT
 			this.kernel2 = computeInvertedKernel( this.kernel1 );
 		}
 		
-		if ( useCUDA )
-		{
-			this.fftConvolution1 = null;
-			this.fftConvolution2 = null;		
-		}
-		else
+		if ( useCPU )
 		{
 			if ( useBlocks )
 			{
@@ -156,6 +171,11 @@ public class LRFFT
 				this.fftConvolution2.setNumThreads();
 				this.fftConvolution2.setKeepImgFFT( false );
 			}
+		}
+		else
+		{
+			this.fftConvolution1 = null;
+			this.fftConvolution2 = null;			
 		}
 	}
 	
@@ -223,47 +243,20 @@ public class LRFFT
 	 */
 	public Image< FloatType > convolve1( final Image< FloatType > image )
 	{
-		if ( useCUDA )
-		{
-			IJ.log( "Using CUDA ... " );
-			
-			final Image< FloatType > result = image.createNewImage();
-			final Image< FloatType > block = factory.createImage( blockSize );
-			
-			for ( int i = 0; i < blocks.size(); ++i )
-			{
-				long time = System.currentTimeMillis();
-				blocks.get( i ).copyBlock( image, block );
-				System.out.println( " block " + i + ": copy " + (System.currentTimeMillis() - time) );
-
-				// convolve block with kernel1 using CUDA
-				time = System.currentTimeMillis();				
-				cuda.convolution3DfftCUDAInPlace( ((FloatArray)((Array)block.getContainer()).update( null )).getCurrentStorageArray(), getCUDACoordinates( blockSize ), 
-						((FloatArray)((Array)kernel1.getContainer()).update( null )).getCurrentStorageArray(), getCUDACoordinates( kernel1.getDimensions() ), 0 );
-				System.out.println( " block " + i + ": compute " + (System.currentTimeMillis() - time) );
-
-				time = System.currentTimeMillis();
-				blocks.get( i ).pasteBlock( result, block );
-				System.out.println( " block " + i + ": paste " + (System.currentTimeMillis() - time) );
-			}
-			
-			block.close();
-			
-			return result;
-		}
-		else
+		if ( useCPU && !useCUDA )
 		{
 			if ( useBlocks )
 			{
-				IJ.log( "Using blocks ... " );
+				IJ.log( "Using CPU only on blocks ... " );
 				
 				final Image< FloatType > result = image.createNewImage();
 				final Image< FloatType > block = factory.createImage( blockSize );
 				
-				for ( int i = 0; i < blocks.size(); ++i )
+				for ( int i = 0; i < blocks.length; ++i )
 				{
+					/*
 					long time = System.currentTimeMillis();
-					blocks.get( i ).copyBlock( image, block );
+					blocks[ i ].copyBlock( image, block );
 					System.out.println( " block " + i + ": copy " + (System.currentTimeMillis() - time) );
 
 					time = System.currentTimeMillis();				
@@ -272,8 +265,10 @@ public class LRFFT
 					System.out.println( " block " + i + ": compute " + (System.currentTimeMillis() - time) );
 					
 					time = System.currentTimeMillis();				
-					blocks.get( i ).pasteBlock( result, fftConvolution1.getResult() );					
+					blocks[ i ].pasteBlock( result, fftConvolution1.getResult() );					
 					System.out.println( " block " + i + ": paste " + (System.currentTimeMillis() - time) );
+					*/
+					LRFFTThreads.convolve1BlockCPU( blocks[ i ], i, image, result, block, fftConvolution1 );
 				}
 				
 				block.close();
@@ -282,7 +277,7 @@ public class LRFFT
 			}
 			else
 			{
-				IJ.log( "Using standard way ... " );
+				IJ.log( "Using CPU only to compute as one block ... " );
 
 				long time = System.currentTimeMillis();
 				final FourierConvolution<FloatType, FloatType> fftConv = fftConvolution1;
@@ -293,9 +288,64 @@ public class LRFFT
 				return fftConv.getResult();				
 			}
 		}
-	}
+		else if ( useCUDA && !useCPU )
+		{
+			if ( blocks.length > 1 )
+				IJ.log( "Using CUDA only on blocks ... " );
+			else
+				IJ.log( "Using CUDA only to compute as one block ... " );
+			
+			final Image< FloatType > result = image.createNewImage();
+			final Image< FloatType > block = factory.createImage( blockSize );
+			
+			for ( int i = 0; i < blocks.length; ++i )
+			{
+				/*
+				long time = System.currentTimeMillis();
+				blocks[ i ].copyBlock( image, block );
+				System.out.println( " block " + i + ": copy " + (System.currentTimeMillis() - time) );
 
-	 final public static Image<FloatType> createImageFromArray( final float[] data, final int[] dim )
+				// convolve block with kernel1 using CUDA
+				time = System.currentTimeMillis();				
+				cuda.convolution3DfftCUDAInPlace( ((FloatArray)((Array)block.getContainer()).update( null )).getCurrentStorageArray(), getCUDACoordinates( blockSize ), 
+						((FloatArray)((Array)kernel1.getContainer()).update( null )).getCurrentStorageArray(), getCUDACoordinates( kernel1.getDimensions() ), device0 );
+				System.out.println( " block " + i + ": compute " + (System.currentTimeMillis() - time) );
+
+				time = System.currentTimeMillis();
+				blocks[ i ].pasteBlock( result, block );
+				System.out.println( " block " + i + ": paste " + (System.currentTimeMillis() - time) );
+				*/
+				LRFFTThreads.convolve1BlockCUDA( blocks[ i ], i, device0, image, result, block, kernel1, blockSize );
+			}
+			
+			block.close();
+			
+			return result;
+		}
+		else
+		{
+			// this implies useBlocks, otherwise we cannot combine several devices
+			IJ.log( "Using CUDA & CPU on blocks ... " );
+			
+			final Image< FloatType > result = image.createNewImage();
+			
+			final AtomicInteger ai = new AtomicInteger();
+			final Thread[] threads = SimpleMultiThreading.newThreads( deviceList.length );
+			
+			for ( int i = 0; i < deviceList.length; ++i )
+			{
+				if ( deviceList[ i ] == -1 )
+					threads[ i ] = LRFFTThreads.getCPUThread1( ai, blocks, blockSize, factory, image, result, fftConvolution1 );
+				else
+					threads[ i ] = LRFFTThreads.getCUDAThread1( ai, blocks, blockSize, factory, image, result, deviceList[ i ], kernel1 );
+			}
+			
+			SimpleMultiThreading.startAndJoin( threads );
+		}
+	}
+	
+
+	final public static Image<FloatType> createImageFromArray( final float[] data, final int[] dim )
     {
         final FloatAccess access = new FloatArray( data );
         final Array<FloatType, FloatAccess> array = 
@@ -309,16 +359,6 @@ public class LRFFT
         
         return new Image<FloatType>(array, new FloatType());
     }
-	 
-	private final static int[] getCUDACoordinates( final int[] c )
-	{
-		final int[] cuda = new int[ c.length ];
-		
-		for ( int d = 0; d < c.length; ++d )
-			cuda[ c.length - d - 1 ] = c[ d ];
-		
-		return cuda;
-	}
 	
 	/**
 	 * convolves the image with kernel2 (inverted kernel1)
@@ -328,41 +368,24 @@ public class LRFFT
 	 */
 	public Image< FloatType > convolve2( final Image< FloatType > image )
 	{
-		if ( useCUDA )
-		{
-			final Image< FloatType > result = image.createNewImage();
-			final Image< FloatType > block = factory.createImage( blockSize );
-			
-			for ( int i = 0; i < blocks.size(); ++i )
-			{
-				blocks.get( i ).copyBlock( image, block );
-
-				// convolve block with kernel2 using CUDA
-				cuda.convolution3DfftCUDAInPlace( ((FloatArray)((Array)block.getContainer()).update( null )).getCurrentStorageArray(), getCUDACoordinates( blockSize ), 
-						((FloatArray)((Array)kernel2.getContainer()).update( null )).getCurrentStorageArray(), getCUDACoordinates( kernel2.getDimensions() ), 0 );
-
-				blocks.get( i ).pasteBlock( result, block );
-			}
-			
-			block.close();
-			
-			return result;
-		}
-		else
+		if ( useCPU && !useCUDA )
 		{
 			if ( useBlocks )
 			{
 				final Image< FloatType > result = image.createNewImage();
 				final Image< FloatType > block = factory.createImage( blockSize );
 				
-				for ( int i = 0; i < blocks.size(); ++i )
+				for ( int i = 0; i < blocks.length; ++i )
 				{
-					blocks.get( i ).copyBlock( image, block );
+					/*
+					blocks[ i ].copyBlock( image, block );
 
 					fftConvolution2.replaceImage( block );
 					fftConvolution2.process();
 					
-					blocks.get( i ).pasteBlock( result, fftConvolution2.getResult() );
+					blocks[ i ].pasteBlock( result, fftConvolution2.getResult() );
+					*/
+					LRFFTThreads.convolve2BlockCPU( blocks[ i ], image, result, block, fftConvolution2 );
 				}
 				
 				block.close();
@@ -375,14 +398,54 @@ public class LRFFT
 				fftConv.replaceImage( image );
 				fftConv.process();			
 				return fftConv.getResult();				
+			}			
+		}
+		else if ( useCUDA && !useCPU )
+		{
+			final Image< FloatType > result = image.createNewImage();
+			final Image< FloatType > block = factory.createImage( blockSize );
+			
+			for ( int i = 0; i < blocks.length; ++i )
+			{
+				/*
+				blocks[ i ].copyBlock( image, block );
+
+				// convolve block with kernel2 using CUDA
+				cuda.convolution3DfftCUDAInPlace( ((FloatArray)((Array)block.getContainer()).update( null )).getCurrentStorageArray(), getCUDACoordinates( blockSize ), 
+						((FloatArray)((Array)kernel2.getContainer()).update( null )).getCurrentStorageArray(), getCUDACoordinates( kernel2.getDimensions() ), device0 );
+
+				blocks[ i ].pasteBlock( result, block );
+				*/
+				LRFFTThreads.convolve2BlockCUDA( blocks[ i ], device0, image, result, block, block, blockSize );
 			}
+			
+			block.close();
+			
+			return result;
+		}
+		else
+		{
+			final Image< FloatType > result = image.createNewImage();
+			
+			final AtomicInteger ai = new AtomicInteger();
+			final Thread[] threads = SimpleMultiThreading.newThreads( deviceList.length );
+			
+			for ( int i = 0; i < deviceList.length; ++i )
+			{
+				if ( deviceList[ i ] == -1 )
+					threads[ i ] = LRFFTThreads.getCPUThread2( ai, blocks, blockSize, factory, image, result, fftConvolution2 );
+				else
+					threads[ i ] = LRFFTThreads.getCUDAThread2( ai, blocks, blockSize, factory, image, result, deviceList[ i ], kernel2 );
+			}
+			
+			SimpleMultiThreading.startAndJoin( threads );			
 		}
 	}
 
 	@Override
 	public LRFFT clone()
 	{
-		final LRFFT viewClone = new LRFFT( this.image.clone(), this.weight.clone(), this.kernel1.clone(), useCUDA, useBlocks, blockSize );
+		final LRFFT viewClone = new LRFFT( this.image.clone(), this.weight.clone(), this.kernel1.clone(), deviceList, useBlocks, blockSize );
 	
 		viewClone.numViews = numViews;
 		viewClone.useExponentialKernel = useExponentialKernel;
