@@ -341,6 +341,8 @@ public class LRFFT
 			}
 			
 			SimpleMultiThreading.startAndJoin( threads );
+			
+			return result;
 		}
 	}
 	
@@ -438,7 +440,9 @@ public class LRFFT
 					threads[ i ] = LRFFTThreads.getCUDAThread2( ai, blocks, blockSize, factory, image, result, deviceList[ i ], kernel2 );
 			}
 			
-			SimpleMultiThreading.startAndJoin( threads );			
+			SimpleMultiThreading.startAndJoin( threads );
+			
+			return result;
 		}
 	}
 
