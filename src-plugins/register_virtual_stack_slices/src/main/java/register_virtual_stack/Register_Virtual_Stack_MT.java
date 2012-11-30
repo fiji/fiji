@@ -351,14 +351,14 @@ public class Register_Virtual_Stack_MT implements PlugIn
 		}
 		
 		// Check if transforms directory exists
-		if( (new File( save_dir )).exists() == false )
+		if( null != save_dir && (new File( save_dir )).exists() == false )
 		{
 			IJ.error("Error: transforms directory " + save_dir + " does not exist.");
 			return;
 		}		
 		
 		// Check if reference file exists
-		if( (new File( source_dir + referenceName )).exists() == false )
+		if( null != referenceName && (new File( source_dir + referenceName )).exists() == false )
 		{
 			IJ.error("Error: reference image " + source_dir + referenceName + " does not exist.");
 			return;
