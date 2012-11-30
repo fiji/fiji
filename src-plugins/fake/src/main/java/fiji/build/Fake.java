@@ -204,6 +204,24 @@ public class Fake {
 		return versionPattern.matcher(filename);
 	}
 
+	public static File[] getAllVersions(final File directory, final String filename) {
+		final Matcher matcher = matchVersionedFilename(filename);
+		if (!matcher.matches()) {
+			final File file = new File(directory, filename);
+			return file.exists() ? new File[] { file } : null;
+		}
+		final String baseName = matcher.group(1);
+		return directory.listFiles(new FilenameFilter() {
+			@Override
+			public boolean accept(final File dir, final String name) {
+				if (!name.startsWith(baseName))
+					return false;
+				final Matcher matcher2 = matchVersionedFilename(name);
+				return matcher2.matches() && baseName.equals(matcher2.group(1));
+			}
+		});
+	}
+
 	/* input defaults to reading the Fakefile, cwd to "." */
 	public Parser parse(InputStream input, File cwd) throws FakeException {
 		return new Parser(this, input, cwd);
