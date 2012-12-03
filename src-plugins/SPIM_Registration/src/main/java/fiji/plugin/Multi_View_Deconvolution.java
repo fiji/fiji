@@ -13,6 +13,7 @@ import java.util.Arrays;
 import java.util.Date;
 
 import com.sun.jna.Native;
+import com.sun.jna.NativeLibrary;
 
 import mpicbg.imglib.container.array.ArrayContainerFactory;
 import mpicbg.imglib.container.cell.CellContainerFactory;
@@ -128,7 +129,11 @@ public class Multi_View_Deconvolution implements PlugIn
 			//ImageJFunctions.copyToImagePlus( pointSpreadFunctions.get( view ) ).show();
 
 			//deconvolutionData.add( new LucyRichardsonFFT( fusion.getFusedImage( view ), fusion.getWeightImage( view ), pointSpreadFunctions.get( view ), cpusPerView ) );
-			deconvolutionData.add( new LRFFT( fusion.getFusedImage( view ), fusion.getWeightImage( view ), pointSpreadFunctions.get( view ), useCUDA, useBlocks, blockSize ) );
+			final int[] devList = new int[ deviceList.size() ];
+			for ( int i = 0; i < devList.length; ++i )
+				devList[ i ] = deviceList.get( i );
+			
+			deconvolutionData.add( new LRFFT( fusion.getFusedImage( view ), fusion.getWeightImage( view ), pointSpreadFunctions.get( view ), devList, useBlocks, blockSize ) );
 		}
 		
 		final Image<FloatType> deconvolved;
@@ -184,12 +189,26 @@ public class Multi_View_Deconvolution implements PlugIn
 	public static int defaultBlockSizeIndex = 0, defaultBlockSizeX = 256, defaultBlockSizeY = 256, defaultBlockSizeZ = 256;
 	
 	public static String[] imglibContainer = new String[]{ "Array container", "Planar container", "Cell container" };
-	public static String[] computationOn = new String[]{ "CPU (Java)", "GPU (Cuda via JNI)" };
+	public static String[] computationOn = new String[]{ "CPU (Java)", "GPU (Nvidia CUDA via JNA)" };
 	public static String[] blocks = new String[]{ "Entire image at once", "in 64x64x64 blocks", "in 128x128x128 blocks", "in 256x256x256 blocks", "in 512x512x512 blocks", "specify maximal blocksize manually" };
 	
 	int numIterations, container, computationType, blockSizeIndex;
 	int[] blockSize = null;
 	boolean useTikhonovRegularization = true, useBlocks = false, useCUDA = false, debugMode = false;
+	
+	/**
+	 * -1 == CPU
+	 * 0 ... n == CUDA device i
+	 */
+	ArrayList< Integer > deviceList = null;
+	
+	/**
+	 * 0 ... n == index for i'th CUDA device
+	 * n + 1 == CPU
+	 */
+	public static ArrayList< Boolean > deviceChoice = null;
+	public static int standardDevice = 10000;
+	
 	double lambda = 0.006;
 	
 	protected SPIMConfiguration getParameters() 
@@ -532,42 +551,149 @@ public class Multi_View_Deconvolution implements PlugIn
 			this.blockSize = new int[]{ defaultBlockSizeX, defaultBlockSizeY, defaultBlockSizeZ };
 		}
 		
+		// we need to popluate the deviceList in any case
+		deviceList = new ArrayList<Integer>();
+		
 		if ( computationType == 0 )
 		{
 			useCUDA = false;
+			deviceList.add( -1 );
 		}
 		else
 		{
 			// well, do some testing first
 			try
 			{
-				LRFFT.cuda = (CUDAConvolution) Native.loadLibrary( "Convolution3D_fftCUDAlib", CUDAConvolution.class );
+		        //String fijiDir = new File( "names.txt" ).getAbsoluteFile().getParentFile().getAbsolutePath();
+		        //IJ.log( "Fiji directory: " + fijiDir );
+				//LRFFT.cuda = (CUDAConvolution) Native.loadLibrary( fijiDir  + File.separator + "libConvolution3D_fftCUDAlib.so", CUDAConvolution.class );
+				
+				// under linux automatically checks lib/linux64
+		        LRFFT.cuda = (CUDAConvolution) Native.loadLibrary( "Convolution3D_fftCUDAlib", CUDAConvolution.class );
 			}
-			catch (Exception e )
+			catch (UnsatisfiedLinkError e )
 			{
 				IJ.log( "Cannot find CUDA JNA library: " + e );
+				return null;
 			}
 			
-			int numDevices = LRFFT.cuda.getNumDevicesCUDA();
-			IJ.log( "numdevices = " + numDevices );
+			final int numDevices = LRFFT.cuda.getNumDevicesCUDA();
+			
+			if ( numDevices == 0 )
+			{
+				IJ.log( "No CUDA devices detected, only CPU will be available." );
+			}
+			else
+			{
+				IJ.log( "numdevices = " + numDevices );
+				
+				// yes, CUDA is possible
+				useCUDA = true;
+			}
+			
+			//
+			// get the ID's and functionality of the CUDA GPU's
+			//
+			final String[] devices = new String[ numDevices ];
+			final byte[] name = new byte[ 256 ];
 			
 			for ( int i = 0; i < numDevices; ++i )
-			{
-				byte[] name = new byte[ 256 ];
+			{		
 				LRFFT.cuda.getNameDeviceCUDA( i, name );
 				
-				System.out.println( "name" );
+				devices[ i ] = "GPU " + (i+1) + "/" + numDevices  + ": ";
 				for ( final byte b : name )
-					System.out.print( b );
-				System.out.println( );
+					if ( b != 0 )
+						devices[ i ] = devices[ i ] + (char)b;
 				
-				IJ.log( "name = " + Arrays.toString( name ) );
-				IJ.log( "mem = " + LRFFT.cuda.getMemDeviceCUDA( i ) );
-				IJ.log( "version = " + LRFFT.cuda.getCUDAcomputeCapabilityMajorVersion( i)  + "." + LRFFT.cuda.getCUDAcomputeCapabilityMinorVersion( i ) );
+				devices[ i ].trim();
+				
+				final long mem = LRFFT.cuda.getMemDeviceCUDA( i );	
+				devices[ i ] = devices[ i ] + " (" + mem/(1024*1024) + " MB, CUDA capability " + LRFFT.cuda.getCUDAcomputeCapabilityMajorVersion( i )  + "." + LRFFT.cuda.getCUDAcomputeCapabilityMinorVersion( i ) + ")";
 			}
-			useCUDA = true;
 			
-			//SimpleMultiThreading.threadHaltUnClean();
+			// get the CPU specs
+			final String cpuSpecs = "CPU (" + Runtime.getRuntime().availableProcessors() + " cores, " + Runtime.getRuntime().maxMemory()/(1024*1024) + " MB RAM available)";
+			
+			// if we use blocks, it makes sense to run more than one device
+			if ( useBlocks )
+			{
+				// make a list where all are checked if there is no previous selection
+				if ( deviceChoice == null || deviceChoice.size() != devices.length + 1 )
+				{
+					deviceChoice = new ArrayList<Boolean>( devices.length + 1 );
+					for ( int i = 0; i < devices.length + 1; ++i )
+						deviceChoice.add( true );
+				}
+				
+				final GenericDialog gdCUDA = new GenericDialog( "Choose CUDA/CPUs devices to use" );
+				
+				for ( int i = 0; i < devices.length; ++i )
+					gdCUDA.addCheckbox( devices[ i ], deviceChoice.get( i ) );
+	
+				gdCUDA.addCheckbox( cpuSpecs, deviceChoice.get( devices.length ) );			
+				gdCUDA.showDialog();
+				
+				if ( gdCUDA.wasCanceled() )
+					return null;
+	
+				// check all CUDA devices
+				for ( int i = 0; i < devices.length; ++i )
+				{
+					if( gdCUDA.getNextBoolean() )
+					{
+						deviceList.add( i );
+						deviceChoice.set( i , true );
+					}
+					else
+					{
+						deviceChoice.set( i , false );
+					}
+				}
+				
+				// check the CPUs
+				if ( gdCUDA.getNextBoolean() )
+				{
+					deviceList.add( -1 );
+					deviceChoice.set( devices.length , true );
+				}
+				else
+				{
+					deviceChoice.set( devices.length , false );				
+				}
+				
+				for ( final int i : deviceList )
+				{
+					if ( i >= 0 )
+						IJ.log( "Using device " + devices[ i ] );
+					else if ( i == -1 )
+						IJ.log( "Using device " + cpuSpecs );
+				}
+				
+				if ( deviceList.size() == 0 )
+				{
+					IJ.log( "You selected no device, quitting." );
+					return null;
+				}
+			}
+			else
+			{
+				// only choose one device to run everything at once				
+				final GenericDialog gdCUDA = new GenericDialog( "Choose CUDA device" );
+
+				if ( standardDevice >= devices.length )
+					standardDevice = devices.length - 1;
+				
+				gdCUDA.addChoice( "Device", devices, devices[ standardDevice ] );
+				
+				gdCUDA.showDialog();
+			
+				if ( gdCUDA.wasCanceled() )
+					return null;
+				
+				deviceList.add( standardDevice = gdCUDA.getNextChoiceIndex() );
+				IJ.log( "Using device " + devices[ deviceList.get( 0 ) ] );
+			}
 		}
 		
 		conf.paralellFusion = false;
