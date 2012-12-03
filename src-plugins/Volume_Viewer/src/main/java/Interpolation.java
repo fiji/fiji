@@ -1,6 +1,6 @@
 /*
  * Volume Viewer 2.0
- * 27.11.2012
+ * 28.11.2012
  * 
  * (C) Kai Uwe Barthel
  */
@@ -33,6 +33,19 @@ public class Interpolation {
 //		return wx;
 //	}
 
+//	float [] getCubicPolynomialWeights(float dx) {
+//		float[] wx = new float[4];
+//		
+//		float dx2 = dx*dx;
+//		float dx3 = dx*dx2;
+//		
+//		wx[0] = (  -dx3 + 2*dx2 - dx)/2;
+//		wx[1] = ( 3*dx3 - 5*dx2 + 2 )/2;
+//		wx[2] = (-3*dx3 + 4*dx2 + dx)/2;
+//		wx[3] = (   dx3 -   dx2)/2;
+//		
+//		return wx;
+//	}
 
 	void initializeCubicPolynomialWeights() {
 		for (int i = 0; i < pw.length; i++) {
@@ -75,19 +88,6 @@ public class Interpolation {
 		}
 	}
 
-	float [] getCubicPolynomialWeights(float dx) {
-		float[] wx = new float[4];
-
-		float dx2 = dx*dx;
-		float dx3 = dx*dx2;
-
-		wx[0] = (  -dx3 + 2*dx2 - dx)/2;
-		wx[1] = ( 3*dx3 - 5*dx2 + 2 )/2;
-		wx[2] = (-3*dx3 + 4*dx2 + dx)/2;
-		wx[3] = (   dx3 -   dx2)/2;
-
-		return wx;
-	}
 
 	int get(byte[][][] data3D, float z, float y, float x) {
 
@@ -103,7 +103,6 @@ public class Interpolation {
 		float dx = x - x0;			
 
 		if (control.interpolationMode == Control.TRICUBIC_POLYNOMIAL) {
-
 			float[] wx = pw[(int) (dx*256)]; // getCubicPolynomialWeights(dx);
 			float[] wy = pw[(int) (dy*256)]; // getCubicPolynomialWeights(dy);
 			float[] wz = pw[(int) (dz*256)]; // getCubicPolynomialWeights(dz);
@@ -158,10 +157,10 @@ public class Interpolation {
 			byte[][] data3D_z0 = data3D[z0]; 
 			byte[][] data3D_z1 = data3D[z0+1]; 
 
-			float ab = (0xff & data3D_z0[y0][x0 ])*dx_ + dx*(0xff & data3D_z0[y0][x1]);
-			float ef = (0xff & data3D_z1[y0][x0 ])*dx_ + dx*(0xff & data3D_z1[y0][x1]);
-			float cd = (0xff & data3D_z0[y1][x0 ])*dx_ + dx*(0xff & data3D_z0[y1][x1]);
-			float gh = (0xff & data3D_z1[y1][x0 ])*dx_ + dx*(0xff & data3D_z1[y1][x1]);
+			float ab = (0xff & data3D_z0[y0][x0])*dx_ + dx*(0xff & data3D_z0[y0][x1]);
+			float ef = (0xff & data3D_z1[y0][x0])*dx_ + dx*(0xff & data3D_z1[y0][x1]);
+			float cd = (0xff & data3D_z0[y1][x0])*dx_ + dx*(0xff & data3D_z0[y1][x1]);
+			float gh = (0xff & data3D_z1[y1][x0])*dx_ + dx*(0xff & data3D_z1[y1][x1]);
 
 			float dy_ = 1-dy;
 			ab = ab*dy_ + dy*cd;
