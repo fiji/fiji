@@ -207,7 +207,7 @@ public class SpotImp implements Spot {
 
 	@Override
 	public Double squareDistanceTo(Spot s) {
-		Double sumSquared = 0d;
+		double sumSquared = 0d;
 		Double thisVal, otherVal;
 		
 		for (String f : POSITION_FEATURES) {
