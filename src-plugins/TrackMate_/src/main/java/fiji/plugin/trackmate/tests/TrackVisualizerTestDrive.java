@@ -7,6 +7,7 @@ import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMate_;
 import fiji.plugin.trackmate.action.GrabSpotImageAction;
 import fiji.plugin.trackmate.features.track.TrackBranchingAnalyzer;
+import fiji.plugin.trackmate.gui.DisplayerPanel;
 import fiji.plugin.trackmate.io.TmXmlReader;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
 import fiji.plugin.trackmate.visualization.hyperstack.HyperStackDisplayer;
@@ -16,6 +17,8 @@ import ij.ImagePlus;
 
 import java.io.File;
 import java.io.IOException;
+
+import javax.swing.JFrame;
 
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
@@ -82,5 +85,14 @@ public class TrackVisualizerTestDrive {
 		// Display Track scheme
 		final TrackScheme<T> trackScheme = new TrackScheme<T>(model);
 		trackScheme.render();
+		
+		// Show control panel
+		DisplayerPanel<T> panel = new DisplayerPanel<T>();
+		panel.setPlugin(plugin);
+		panel.register(trackScheme);
+		panel.register(displayer);
+		JFrame frame = new JFrame();
+		frame.getContentPane().add(panel);
+		frame.setVisible(true);
 	}
 }
