@@ -1,7 +1,9 @@
 package archipelago;
 
-import archipelago.network.Cluster;
+import archipelago.listen.ShellExecListener;
+import archipelago.network.node.NodeManager;
 import archipelago.ui.ClusterNodeConfigUI;
+import archipelago.util.*;
 import ij.gui.GenericDialog;
 
 import java.awt.*;
@@ -162,7 +164,7 @@ public final class FijiArchipelago
                     gd.showDialog();
                     if (gd.wasOKed())
                     {
-                        Cluster.getCluster().close();
+                        Cluster.getCluster().shutdown();
                         stopFrame.setVisible(false);
                         stopFrame.remove(stopButton);
                     }

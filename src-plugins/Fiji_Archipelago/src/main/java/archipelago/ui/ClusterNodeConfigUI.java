@@ -1,9 +1,9 @@
 package archipelago.ui;
 
+import archipelago.Cluster;
 import archipelago.FijiArchipelago;
-import archipelago.IJLogger;
-import archipelago.NodeManager;
-import archipelago.network.Cluster;
+import archipelago.network.node.NodeManager;
+import archipelago.util.IJLogger;
 import archipelago.network.shell.JSchNodeShell;
 import archipelago.network.shell.NodeShell;
 import ij.IJ;
@@ -227,7 +227,7 @@ public class ClusterNodeConfigUI implements ActionListener
             }
             else
             {
-                Cluster.getCluster().close();
+                Cluster.getCluster().shutdown();
             }
         }
 

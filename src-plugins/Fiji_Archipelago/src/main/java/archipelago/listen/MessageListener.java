@@ -1,4 +1,4 @@
-package archipelago.network;
+package archipelago.listen;
 
 
 import archipelago.data.ClusterMessage;

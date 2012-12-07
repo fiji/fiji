@@ -1,7 +1,7 @@
 package archipelago.data;
 
 import archipelago.FijiArchipelago;
-import archipelago.network.ClusterNode;
+import archipelago.network.node.ClusterNode;
 
 import java.io.Serializable;
 /**

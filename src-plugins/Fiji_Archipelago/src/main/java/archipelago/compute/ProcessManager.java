@@ -1,47 +1,79 @@
 package archipelago.compute;
 
-import archipelago.data.DataChunk;
+import archipelago.network.node.ClusterNode;
 
 import java.io.Serializable;
+import java.util.concurrent.Callable;
+
 /**
  *
  * @author Larry Lindsey
  */
-public class ProcessManager<S, T> implements Runnable, Serializable
+public class ProcessManager<T> implements Runnable, Serializable
 {
     
-    private DataChunk<T> inputChunk;
-    private DataChunk<S> outputChunk;
-    private final ChunkProcessor<S, T> processor;
-    private transient ProcessListener listener = null;
+    private Callable<T> callable;
+    private T output;
+    private final long id;
+    private Exception remoteException;
+    private long runningOn;
     
-    public ProcessManager(DataChunk<T> tIn, ChunkProcessor<S, T> processorIn, ProcessListener pl)
-    {
-        inputChunk = tIn;
-        processor = processorIn;
-        outputChunk = null;
-        listener = pl;
-    }
+    //public <S extends Callable<T> & Serializable> ProcessManager(final S c, final ProcessListener pl, long idArg)
     
-    public void run()
+    public ProcessManager(final Callable<T> c, final long idArg)
     {
-        outputChunk = processor.process(inputChunk);
+        callable = c;
+        output = null;
+        id = idArg;
+        remoteException = null;
+        runningOn = -1;
     }
 
-    public DataChunk<S> getOutput()
+    /**
+     * Runs this ProcessManager. This will typically be called on a remote node.
+     */
+    public void run()
     {
-        return outputChunk;
+        try
+        {
+            output = callable.call();
+        }
+        catch (Exception e)
+        {
+            remoteException = e;
+        }
+        // Nullify the callable so we don't have to transfer extra data back home.
+        callable = null;
+    }
+
+    public synchronized void setRunningOn(final ClusterNode node)
+    {
+        runningOn = node == null ? -1 : node.getID();
+    }
+
+    public long getRunningOn()
+    {
+        return runningOn;
+    }
+    
+    public T getOutput()
+    {
+        return output;
+    }
+    
+    public Callable<T> getCallable()
+    {
+        return callable;
     }
 
     public long getID()
     {
-        return inputChunk.getID();
+        return id;
     }
     
-    public ProcessListener getListener()
+    public Exception getRemoteException()
     {
-        return listener;
+        return remoteException;
     }
-
     
 }

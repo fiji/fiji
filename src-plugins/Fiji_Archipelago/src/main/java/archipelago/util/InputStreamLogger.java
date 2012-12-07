@@ -1,5 +1,7 @@
-package archipelago;
+package archipelago.util;
 
+
+import archipelago.util.EasyLogger;
 
 import java.io.BufferedReader;
 import java.io.IOException;
