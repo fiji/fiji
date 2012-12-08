@@ -95,6 +95,9 @@ hs_err*.log
 /jars/jep-[0-9]*.jar
 /jars/mij-[0-9]*.jar
 /jars/pal-optimization-[0-9]*.jar
+/jars/scala-compiler-[0-9]*.jar
+/jars/scala-library-[0-9]*.jar
+/jars/scala-reflect-[0-9]*.jar
 /jars/wavelets-[0-9]*.jar
 /jars/weave_jy2java-[0-9]*.jar
 /plugins/3D_Blob_Segmentation-[0-9]*.jar
