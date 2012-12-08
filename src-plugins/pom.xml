@@ -20,7 +20,7 @@
 	<description></description>
 
 	<properties>
-                <fiji.rootdir>${basedir}/..</fiji.rootdir>
+		<fiji.rootdir>${rootdir}/..</fiji.rootdir>
 		<imagescience.version>2.4.1</imagescience.version>
 		<jcommon.version>1.0.17</jcommon.version>
 		<jfreechart.version>1.0.14</jfreechart.version>
@@ -166,6 +166,13 @@
 						<phase>install</phase>
 						<goals>
 							<goal>copy-jars</goal>
+						</goals>
+					</execution>
+					<execution>
+						<id>set-rootdir</id>
+						<phase>validate</phase>
+						<goals>
+							<goal>set-rootdir</goal>
 						</goals>
 					</execution>
 				</executions>
