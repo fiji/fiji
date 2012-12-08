@@ -356,14 +356,17 @@ hs_err*.log
 /jars/forms-[0-9]*.jar
 /jars/jai_imageio-[0-9]*.jar
 /jars/loci-common-[0-9]*.jar
+/jars/loci-legacy-[0-9]*.jar
 /jars/log4j-[0-9]*.jar
 /jars/lwf-stubs-[0-9]*.jar
 /jars/mdbtools-java-[0-9]*.jar
 /jars/metakit-[0-9]*.jar
+/jars/netcdf-[0-9]*.jar
 /jars/netcdf-java-[0-9]*.jar
 /jars/ome-xml-[0-9]*.jar
 /jars/poi-loci-[0-9]*.jar
 /jars/scifio-[0-9]*.jar
+/jars/scifio-devel-[0-9]*.jar
 /jars/serializer-[0-9]*.jar
 /jars/slf4j-api-[0-9]*.jar
 /jars/slf4j-log4j12-[0-9]*.jar
