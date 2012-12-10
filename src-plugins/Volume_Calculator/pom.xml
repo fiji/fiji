@@ -26,17 +26,17 @@
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>AnalyzeSkeleton_</artifactId>
-			<version></version>
+			<version>${imagej.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>Skeletonize3D_</artifactId>
-			<version></version>
+			<version>1.0</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>3D_Viewer</artifactId>
-			<version></version>
+			<version>${imagej.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>net.imagej</groupId>
