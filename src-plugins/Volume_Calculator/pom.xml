@@ -39,6 +39,24 @@
 			<version>${imagej.version}</version>
 		</dependency>
 		<dependency>
+			<groupId>java3d</groupId>
+			<artifactId>j3d-core</artifactId>
+			<version>1.5.2</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>java3d</groupId>
+			<artifactId>j3d-core-utils</artifactId>
+			<version>1.5.2</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>java3d</groupId>
+			<artifactId>vecmath</artifactId>
+			<version>1.5.2</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
 			<groupId>net.imagej</groupId>
 			<artifactId>ij</artifactId>
 			<version>${imagej1.version}</version>
