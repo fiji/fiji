@@ -1,6 +1,6 @@
 /*
  * Volume Viewer 2.0
- * 27.11.2012
+ * 03.12.2012
  * 
  * (C) Kai Uwe Barthel
  */
@@ -35,7 +35,6 @@ import javax.swing.JTabbedPane;
 import javax.swing.JTextField;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingConstants;
-import javax.swing.Timer;
 import javax.swing.UIManager;
 import javax.swing.border.Border;
 import javax.swing.border.TitledBorder;
@@ -57,8 +56,6 @@ MouseListener, MouseMotionListener, ChangeListener, ActionListener, ItemListener
 	private JCheckBox checkSlices, checkAxes, checkClipLines;
 
 	private JComboBox renderChoice, interpolationChoice, lutChoice;
-	private final String [] lutName = { "Original", "Grayscale", "Spectrum LUT", "Fire LUT", "Thermal LUT"}; 
-
 	private JCheckBox checkPickColor2, checkPickColor3;
 
 	private JSlider scaleSlider, distSlider, positionXSlider, positionYSlider, positionZSlider; 
@@ -94,7 +91,7 @@ MouseListener, MouseMotionListener, ChangeListener, ActionListener, ItemListener
 	
 	Pic pic = null;
 	Pic picSlice = null;
-
+ 
 	private Control control;
 	private Volume_Viewer vv;
 
@@ -134,7 +131,8 @@ MouseListener, MouseMotionListener, ChangeListener, ActionListener, ItemListener
 			vv.tf_a3 = new TFalpha3(control, vv.vol, vv.lookupTable.lut, vv.lookupTable.lut2D_3);
 		if (vv.tf_a4 == null) 
 			vv.tf_a4 = new TFalpha4(control, vv.vol, vv.vol.aPaint_3D, vv.vol.aPaint_3D2);
-		vv.vol.calculateGradients();
+		//vv.vol.calculateGradients();
+		
 		
 		control.pickColor = false;
 		if (checkPickColor2 != null) checkPickColor2.setSelected(control.pickColor);
@@ -146,6 +144,8 @@ MouseListener, MouseMotionListener, ChangeListener, ActionListener, ItemListener
 		imageRegion.addMouseMotionListener(this);
 		imageRegion.addMouseListener(this);
 		imageRegion.setPic(pic);
+		
+
 
 		picSlice = new Pic(control, vv, control.windowWidthSlices, control.windowHeight-130);
 		sliceImageRegion = new ImageRegion(control);
@@ -163,6 +163,8 @@ MouseListener, MouseMotionListener, ChangeListener, ActionListener, ItemListener
 		slicePanel = new JPanel();
 		slicePanel.setLayout(new BorderLayout());
 		slicePanel.add(sliceImageRegion, BorderLayout.NORTH);
+		
+
 
 		JPanel sliderBox = new JPanel();
 		sliderBox.setLayout(new GridLayout(3,1));
@@ -197,6 +199,8 @@ MouseListener, MouseMotionListener, ChangeListener, ActionListener, ItemListener
 		sliderBox.add(positionYSlider);	
 
 		slicePanel.add(sliderBox,BorderLayout.CENTER);
+		
+
 
 		JPanel labelBox = new JPanel();
 		labelBox.setLayout(new GridLayout(2,1));
@@ -217,25 +221,33 @@ MouseListener, MouseMotionListener, ChangeListener, ActionListener, ItemListener
 		centerPanel.add(imageRegion,BorderLayout.CENTER);
 		centerPanel.add(slicePanel,BorderLayout.WEST);
 
-
+		
 		// upper button panel
 		upperButtonPanel = new JPanel();
-		upperButtonPanel.setLayout(new GridLayout(1,7));
+		//upperButtonPanel.setLayout(new GridLayout(1,0));
 
+		String renderString = "Mode:";
+		JLabel renderLabel = new JLabel(renderString);
+		upperButtonPanel.add(renderLabel);
 		renderChoice = new JComboBox(Control.renderName);
 		renderChoice.setSelectedIndex(control.renderMode);
 		renderChoice.setAlignmentX(Component.LEFT_ALIGNMENT);
-		renderChoice.addActionListener(this);			
+		renderChoice.addActionListener(this);		
+		renderChoice.setPreferredSize(new Dimension(160,24)); 
 		upperButtonPanel.add(renderChoice);
 
+		String interpolationString = "Interpolation:";
+		JLabel interpolationLabel = new JLabel(interpolationString);
+		upperButtonPanel.add(interpolationLabel);
 		interpolationChoice = new JComboBox(Control.interpolationName);
 		interpolationChoice.setSelectedIndex(control.interpolationMode);
 		interpolationChoice.setAlignmentX(Component.LEFT_ALIGNMENT);
-		interpolationChoice.addActionListener(this);			
+		interpolationChoice.addActionListener(this);	
+		interpolationChoice.setPreferredSize(new Dimension(160,24)); 
 		upperButtonPanel.add(interpolationChoice);
 
 		JPanel miniPanelZ = new JPanel();
-		miniPanelZ.setLayout(new GridLayout(1,2));
+		//miniPanelZ.setLayout(new GridLayout(1,2));
 		zAspectLabel = new JLabel(zAspectString);
 		zAspectLabel.setHorizontalAlignment(SwingConstants.RIGHT);
 		miniPanelZ.add(zAspectLabel);
@@ -254,7 +266,7 @@ MouseListener, MouseMotionListener, ChangeListener, ActionListener, ItemListener
 		upperButtonPanel.add(miniPanelZ);
 
 		JPanel miniPanelSampling = new JPanel();
-		miniPanelSampling.setLayout(new GridLayout(1,2));
+		//miniPanelSampling.setLayout(new GridLayout(1,2));
 
 		samplingLabel = new JLabel(samplingString);
 		samplingLabel.setHorizontalAlignment(SwingConstants.RIGHT);
@@ -277,7 +289,7 @@ MouseListener, MouseMotionListener, ChangeListener, ActionListener, ItemListener
 		miniPanelSampling.add(tfSampling);
 		upperButtonPanel.add(miniPanelSampling);
 
-		JButton buttonBackgroundColor = new JButton("Background Color");
+		JButton buttonBackgroundColor = new JButton("Background");
 		buttonBackgroundColor.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				Color bgColor = JColorChooser.showDialog(null, "Choose background color", null);
@@ -290,7 +302,7 @@ MouseListener, MouseMotionListener, ChangeListener, ActionListener, ItemListener
 		});
 		upperButtonPanel.add(buttonBackgroundColor); 
 
-		JButton buttonSaveView = new JButton("Save View");
+		JButton buttonSaveView = new JButton("Snapshot");
 		buttonSaveView.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				imageRegion.saveToImage();
@@ -311,6 +323,7 @@ MouseListener, MouseMotionListener, ChangeListener, ActionListener, ItemListener
 		// slider panel (dist & scale) ===========================================
 		JPanel sliderPanel = new JPanel();
 		sliderPanel.setPreferredSize(new Dimension(control.windowWidthSliderRegion, control.windowHeight));
+		sliderPanel.setMaximumSize(new Dimension(control.windowWidthSliderRegion, control.windowHeight));
 		sliderPanel.setLayout(new GridLayout(0,1));
 				
 		control.maxDist = (int)(Math.sqrt(vv.vol.zOffa*vv.vol.zOffa*control.zAspect*control.zAspect + vv.vol.yOffa*vv.vol.yOffa +vv.vol.xOffa*vv.vol.xOffa));
@@ -351,7 +364,8 @@ MouseListener, MouseMotionListener, ChangeListener, ActionListener, ItemListener
 		distLabel1 = new JLabel(""+ control.dist);
 		distLabel1.setHorizontalAlignment(SwingConstants.CENTER);
 		distLabel1.setPreferredSize(new Dimension(control.windowWidthSliderRegion, 15));
-		distLabel2 = new JLabel("Dist.");
+		distLabel2 = new JLabel("Distance");
+		distLabel2.setFont(new Font("Sans", Font.PLAIN, 11));
 		distLabel2.setHorizontalAlignment(SwingConstants.CENTER);
 		distLabel2.setPreferredSize(new Dimension(control.windowWidthSliderRegion, 15));
 
@@ -383,13 +397,13 @@ MouseListener, MouseMotionListener, ChangeListener, ActionListener, ItemListener
 		panelScale.add(scaleLabel2);		
 		sliderPanel.add(panelScale); 
 
-
+		
 		// lower button panel (south) ===========================================
 		lowerButtonPanel = new JPanel();
 		lowerButtonPanel.setPreferredSize(new Dimension(900, 40));
 
 		JPanel panelCheck = new JPanel();
-		panelCheck.setLayout(new GridLayout(1,3));
+		//panelCheck.setLayout(new GridLayout(1,3));
 
 		checkAxes = new JCheckBox("Show:  Axes");
 		checkAxes.setSelected(control.showAxes);
@@ -411,23 +425,23 @@ MouseListener, MouseMotionListener, ChangeListener, ActionListener, ItemListener
 		checkSlices.setHorizontalTextPosition(SwingConstants.LEADING);
 		checkSlices.addItemListener (this);
 		panelCheck.add(checkSlices);
-
+		
 		JPanel panelSpinners = new JPanel();
-		JLabel labelX = new JLabel("Rotation:  x=");
+		JLabel labelX = new JLabel("Rotation: x:");
 		panelSpinners.add(labelX);
 		spinnerX = makeSpinner(Math.round(control.degreeX));
 		panelSpinners.add(spinnerX);
 
-		JLabel labelY = new JLabel(" y=");
+		JLabel labelY = new JLabel(" y:");
 		panelSpinners.add(labelY);
 		spinnerY = makeSpinner(Math.round(control.degreeY));
 		panelSpinners.add(spinnerY);
 
-		JLabel labelZ = new JLabel(" z=");
+		JLabel labelZ = new JLabel(" z:");
 		panelSpinners.add(labelZ);
 		spinnerZ = makeSpinner(Math.round(control.degreeZ));
 		panelSpinners.add(spinnerZ);
-
+		
 		JPanel panelOrientationButtons = new JPanel();
 		panelOrientationButtons.setLayout(new GridLayout(1,3));
 
@@ -476,6 +490,8 @@ MouseListener, MouseMotionListener, ChangeListener, ActionListener, ItemListener
 		lowerButtonPanel.add(panelCheck);
 
 
+
+		
 		// transferfunction panel ===========================================
 		transferFunctionPanel = new JPanel();
 		
@@ -483,7 +499,7 @@ MouseListener, MouseMotionListener, ChangeListener, ActionListener, ItemListener
 		JLabel tfLabel = new JLabel(" Transfer Function (TF): Color & Alpha");
 		transferFunctionPanel.add(tfLabel);
 		
-		lutChoice = new JComboBox(lutName);
+		lutChoice = new JComboBox(Control.lutName);
 		lutChoice.setSelectedIndex(control.lutNr);
 		lutChoice.setPreferredSize(new Dimension(240, 30));
 		lutChoice.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -1435,19 +1451,27 @@ MouseListener, MouseMotionListener, ChangeListener, ActionListener, ItemListener
 	}
 	
 	void signalReady() {
+		if (control.LOG) {
+			long end = System.currentTimeMillis();
+			System.out.println("Render time " + (end-startR)+" ms.");
+		}
 		control.isReady = true;
 		picLED.render_LED(true);
 		imageLEDRegion.setImage(picLED.image);
 		imageLEDRegion.paintImmediately(0, 0, imageLEDRegion.getWidth(), imageLEDRegion.getHeight());
-		//imageLEDRegion.repaint();
 	}
 	
+	long startR=0;
+
+	
 	void signalBusy() {
+		if (control.LOG) {
+			if (control.LOG) startR = System.currentTimeMillis();
+		}
 		control.isReady = false;
 		picLED.render_LED(false);
 		imageLEDRegion.setImage(picLED.image);
 		imageLEDRegion.paintImmediately(0, 0, imageLEDRegion.getWidth(), imageLEDRegion.getHeight());
-		//imageLEDRegion.repaint();
 	}
 	
 
@@ -1462,40 +1486,24 @@ MouseListener, MouseMotionListener, ChangeListener, ActionListener, ItemListener
 	}
 	
 	
-	class SpinnerListener implements ChangeListener, ActionListener {
+	class SpinnerListener implements ChangeListener /*, ActionListener */{
 
 		static final int MIN_TIME = 200;	// minimum time in ms between update requests
-		long lastChange = System.currentTimeMillis();
-		boolean valueChanged=false;
-		Timer repeatTimer;
-
-		public SpinnerListener(){
-			repeatTimer = new Timer(50, this); // timer polling every 50ms
-			repeatTimer.start();
-		}
-
+		
 		public void stateChanged(ChangeEvent evt) {
 			if (enableSpinnerChangeListener) {
-				valueChanged=true;
-				//control.drag = true;
-				lastChange = System.currentTimeMillis();
-
+				control.spinnersAreChanging = true;
+		
 				control.degreeX = (Float) spinnerX.getValue();
 				control.degreeY = (Float) spinnerY.getValue();
 				control.degreeZ = (Float) spinnerZ.getValue();
 
 				vv.setRotation(control.degreeX, control.degreeY, control.degreeZ);
-				control.newDisplayMode();       
+				control.spinnersAreChanging = false;
+				newDisplayMode();       
 			}
 		}
 
-		public void actionPerformed(ActionEvent e) { // action called by timer
-			if (valueChanged && (System.currentTimeMillis()-lastChange)>MIN_TIME){
-				//control.drag = false;
-				control.newDisplayMode(); 
-				valueChanged=false;
-			}
-		}
 	}
 
 }

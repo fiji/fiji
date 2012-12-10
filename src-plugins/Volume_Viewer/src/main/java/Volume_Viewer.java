@@ -1,6 +1,6 @@
 /*
- * Volume Viewer 2.0
- * 27.11.2012
+ * Volume Viewer 2.01
+ * 01.12.2012
  * 
  * (C) Kai Uwe Barthel
  */
@@ -44,7 +44,7 @@ public final class Volume_Viewer implements PlugIn {
 	//private static String volumePath = "/Users/barthel/Applications/ImageJ/_images/_stacks/flybrain.tif";
 	//private static String volumePath = "/Users/barthel/Applications/ImageJ/_images/_stacks/RGB_Stack_2.tif";
 	
-	private final static String version = "2.0"; 
+	private final static String version = "2.01"; 
 	private Control control;
 	private JFrame frame;	
 	
@@ -82,8 +82,6 @@ public final class Volume_Viewer implements PlugIn {
 
 		control = new Control(this);
 		
-		readPrefs();
-		
 		String str = Macro.getOptions();
 		//str = "display_mode=4 axes=0 markers=0 z-aspect=4 sampling=1 lut=0 scale=0.75 dist=-300 angle_x=115 angle_z=41";
 		//str = "display_mode=4 scale=1 width=700 height=700 shineValue=100 specularValue=0.1 useLight=1 snapshot=1";
@@ -91,8 +89,11 @@ public final class Volume_Viewer implements PlugIn {
 		if (str != null) {
 			if (!getMacroParameters(str))
 				return;
+		} 
+		else {
+			readPrefs();
 		}
-
+		
 		imp = WindowManager.getCurrentImage();
 		if (imp == null  || !(imp.getStackSize() > 1)) {
 			IJ.showMessage("Stack required");
@@ -191,9 +192,9 @@ public final class Volume_Viewer implements PlugIn {
 		int wl = dim.width;
 		int transferPanelWidth = (control.showTF) ? gui.transferFunctionPanel.getPreferredSize().width : 0;
 		int wr = ww - (wl + control.windowWidthSliderRegion + transferPanelWidth);
-		if (wr < 500)  {
-			int diff = 500 - wr;
-			wr = 500;
+		if (wr < 480)  {
+			int diff = 480 - wr;
+			wr = 480;
 			wl -= diff;
 			if (wl < 200) wl = 200;
 		}
@@ -246,6 +247,22 @@ public final class Volume_Viewer implements PlugIn {
 		gui.pic = null;
 		gui.picSlice = null;
 		gui = null;
+		
+		cube = null;
+		lookupTable = null;
+		tr = null;
+		trLight = null;
+		
+		imp = null;
+		gradientLUT = gradient2 = gradient3 = gradient4 = null;
+		tf_rgb = null;
+		tf_a1 = null;
+		tf_a2 = null;
+		tf_a3 = null;
+		tf_a4 = null;
+		
+		control = null;
+		
 		System.gc();
 	}
 	
@@ -259,7 +276,7 @@ public final class Volume_Viewer implements PlugIn {
 		control.interpolationMode = (int) Prefs.get("VolumeViewer.interpolationMode", control.interpolationMode);
 		control.backgroundColor =  new Color((int)Prefs.get("VolumeViewer.backgroundColor", control.backgroundColor.getRGB()));
 		control.lutNr = (int) Prefs.get("VolumeViewer.lutNr", control.lutNr);
-		control.zAspect = (float) Prefs.get("VolumeViewer.zAspect", control.zAspect);
+		//control.zAspect = (float) Prefs.get("VolumeViewer.zAspect", control.zAspect);
 		control.sampling = (float) Prefs.get("VolumeViewer.sampling", control.sampling);
 		control.dist = (float) Prefs.get("VolumeViewer.dist", control.dist);
 		control.showAxes = Prefs.get("VolumeViewer.showAxes", control.showAxes);
@@ -293,7 +310,7 @@ public final class Volume_Viewer implements PlugIn {
 			Prefs.set("VolumeViewer.interpolationMode", control.interpolationMode);
 			Prefs.set("VolumeViewer.backgroundColor", control.backgroundColor.getRGB());
 			Prefs.set("VolumeViewer.lutNr", control.lutNr);
-			Prefs.set("VolumeViewer.zAspect", control.zAspect);
+			//Prefs.set("VolumeViewer.zAspect", control.zAspect);
 			Prefs.set("VolumeViewer.sampling", control.sampling);
 			Prefs.set("VolumeViewer.dist", control.dist);
 			Prefs.set("VolumeViewer.showAxes", control.showAxes);
@@ -358,10 +375,13 @@ public final class Volume_Viewer implements PlugIn {
 	}
 	
 	void updateGuiSpinners() {
+		
 		control.degreeX = tr.getDegreeX();
 		control.degreeY = tr.getDegreeY();
 		control.degreeZ = tr.getDegreeZ();	
-		if (gui != null) gui.setSpinners();	
+		
+		if (!control.spinnersAreChanging && gui != null) 
+			gui.setSpinners();	
 		
 		cube.transformCorners(tr);
 	}

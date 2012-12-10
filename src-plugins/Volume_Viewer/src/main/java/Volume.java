@@ -1,6 +1,6 @@
 /*
- * Volume Viewer 2.0
- * 27.11.2012
+ * Volume Viewer 2.01
+ * 01.12.2012
  * 
  * (C) Kai Uwe Barthel
  */
@@ -306,14 +306,14 @@ public class Volume {
 
 		long start = 0;
 		if (control.LOG) { 
-			System.out.print("Calculate Gradients ");
+			IJ.log("Calculate Gradients ");
 			start = System.currentTimeMillis();
 		}
 
 		if (control.alphaMode == Control.ALPHA1) {
-			for(int z = 0; z < depthV+4; z++) {
-				for (int y = 0; y < heightV+4; y++) {
-					for (int x = 0; x < widthV+4; x++) {
+			for(int z = 2; z < depthV+2; z++) {
+				for (int y = 2; y < heightV+2; y++) {
+					for (int x = 2; x < widthV+2; x++) {
 						int val = data3D[0][z][y][x] & 0xFF;
 						alpha_3D[z][y][x] = (byte) (vv.a1_R[val]*255);
 					}
@@ -321,9 +321,9 @@ public class Volume {
 			}			
 		}
 		else if (control.alphaMode == Control.ALPHA2) {
-			for(int z = 0; z < depthV+4; z++) {
-				for (int y = 0; y < heightV+4; y++) {
-					for (int x = 0; x < widthV+4; x++) {
+			for(int z = 2; z < depthV+2; z++) {
+				for (int y = 2; y < heightV+2; y++) {
+					for (int x = 2; x < widthV+2; x++) {
 						int val = data3D[0][z][y][x] & 0xFF;
 						int grad = grad3D[z][y][x] & 0xFF;
 						alpha_3D[z][y][x] = (byte) (vv.a2_R[val][grad]*255);
@@ -332,9 +332,9 @@ public class Volume {
 			}
 		}
 		else if (control.alphaMode == Control.ALPHA3) {
-			for(int z = 0; z < depthV+4; z++) {
-				for (int y = 0; y < heightV+4; y++) {
-					for (int x = 0; x < widthV+4; x++) {
+			for(int z = 2; z < depthV+2; z++) {
+				for (int y = 2; y < heightV+2; y++) {
+					for (int x = 2; x < widthV+2; x++) {
 						int val = mean3D[z][y][x] & 0xFF;
 						int diff = diff3D[z][y][x] & 0xFF;
 						alpha_3D[z][y][x] = (byte) (vv.a3_R[val][diff]*255);
@@ -343,15 +343,14 @@ public class Volume {
 			}
 		}
 		else if (control.alphaMode == Control.ALPHA4) {
-			for(int z = 0; z < depthV+4; z++) {
-				for (int y = 0; y < heightV+4; y++) {
-					for (int x = 0; x < widthV+4; x++) {
+			for(int z = 2; z < depthV+2; z++) {
+				for (int y = 2; y < heightV+2; y++) {
+					for (int x = 2; x < widthV+2; x++) {
 						alpha_3D[z][y][x] = aPaint_3D[z][y][x];
 					}
 				}
 			}
 		}
-
 
 		// filter alpha
 		for(int z=1; z < depthV+3; z++) {
@@ -406,6 +405,8 @@ public class Volume {
 			}
 		}
 
+		//alpha_3D_smooth = alpha_3D;
+		
 		// gradient
 		for(int z=1; z < depthV+3; z++) {
 			for (int y = 1; y < heightV+3; y++) {			
@@ -450,15 +451,19 @@ public class Volume {
 					a212 = 0xff & alpha_3D_smooth[z+1][y  ][x+1];
 					a222 = 0xff & alpha_3D_smooth[z+1][y+1][x+1];
 
-					int dx = ((a000 + a010 + a020 + a100 + a110 + a120 + a200 + a102 + a220) >> 3) - 
-						 	 ((a002 + a012 + a022 + a102 + a112 + a122 + a202 + a122 + a222) >> 3);
+					int dx = ((a002 + a012 + a022 + a102 + a112 + a122 + a202 + a212 + a222) >> 2) - 
+							 ((a000 + a010 + a020 + a100 + a110 + a120 + a200 + a210 + a220) >> 2);
 
-					int dy = ((a000 + a001 + a002 + a100 + a101 + a102 + a200 + a201 + a202) >> 3) - 
-							 ((a020 + a021 + a022 + a120 + a121 + a122 + a220 + a221 + a222) >> 3);
+					int dy = ((a020 + a021 + a022 + a120 + a121 + a122 + a220 + a221 + a222) >> 2) -
+							 ((a000 + a001 + a002 + a100 + a101 + a102 + a200 + a201 + a202) >> 2);
+					
+					int dz = ((a200 + a201 + a202 + a210 + a211 + a212 + a220 + a221 + a222) >> 2) -
+							 ((a000 + a001 + a002 + a010 + a011 + a012 + a020 + a021 + a022) >> 2);
 
-					int dz = ((a000 + a001 + a002 + a010 + a011 + a012 + a020 + a021 + a022) >> 3) - 
-							 ((a200 + a201 + a202 + a210 + a211 + a212 + a220 + a221 + a222) >> 3);
-
+//					int dx = (a102 + 2*a112 + a122 - a100 - 2*a110 - a120) / 4;
+//					int dy = (a021 + 2*a121 + a221 - a001 - 2*a101 - a201) / 4;
+//					int dz = (a210 + 2*a211 + a212 - a010 - 2*a011 - a012) / 4;
+					
 					nx_3D[z][y][x] = (byte)(Math.max(-127, Math.min(127,dx))+128);
 					ny_3D[z][y][x] = (byte)(Math.max(-127, Math.min(127,dy))+128);
 					nz_3D[z][y][x] = (byte)(Math.max(-127, Math.min(127,dz))+128);

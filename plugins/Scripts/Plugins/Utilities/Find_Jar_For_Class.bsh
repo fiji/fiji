@@ -46,4 +46,10 @@ void printJarName() {
 }
 
 // Try it with org.apache.commons.logging.Log
-printJarName();
+if (bsh.args.length == 0)
+	printJarName();
+else {
+	import ij.IJ;
+	for (String arg : bsh.args)
+		print(getJarName(arg));
+}
