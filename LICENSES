@@ -102,6 +102,7 @@ Name					File					Author(s)						Contact								License
 * Vaa3D Reader			Vaa3D_Reader.jar				Christopher M. Bruns					christopher.bruns@gmail.com					BSD
 * Video Editing			Video_Editing.jar				Benjamin Schmid						bene.schmid@gmail.com						GPL
 * View5D 				View5D_.jar 				Rainer Heintzmann					heintzmannd@gmail.com						GPL 2
+* Volume Calculator	 		Volume_Calculator.jar 			Peter C. Marks						peter.c.marks@gmail.com 					BSD
 * Volume Viewer / 3D Reslicer 		Volume_Viewer.jar 			Kai Uwe Barthel 					k.barthel@fhtw-berlin.de 					PD
 * wavelets.jar				wavelets.jar				Daniel Sage et al					http://bigwww.epfl.ch/						BIG (see below)
 
