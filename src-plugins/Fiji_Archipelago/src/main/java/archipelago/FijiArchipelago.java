@@ -110,7 +110,7 @@ public final class FijiArchipelago
         return nextID.incrementAndGet();
     }
 
-    public static void runClusterGUI()
+    public static boolean runClusterGUI()
     {
         //Start Cluster... called through the plugin menu.
         FijiArchipelago.setDebugLogger(new PrintStreamLogger());
@@ -175,6 +175,11 @@ public final class FijiArchipelago
             stopButton.setPreferredSize(new Dimension(512, 512));
             stopFrame.validate();
             stopFrame.setVisible(true);
+            return true;
+        }
+        else
+        {
+            return false;
         }
     }
 }

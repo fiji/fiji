@@ -66,12 +66,16 @@ public class Cluster_SIFT implements PlugIn
     {
         if (Cluster.activeCluster())
         {
+            FijiArchipelago.debug("SIFT Extraction: Cluster is Active, with "
+                    + Cluster.getCluster().countReadyNodes() + " nodes");
 
             // The return list
             ArrayList<ArrayList<Feature>> featuresList = new ArrayList<ArrayList<Feature>>();
             // A List of Futures, used a little later.
             ArrayList<Future<ArrayList<Feature>>> futures =
                     new ArrayList<Future<ArrayList<Feature>>>();
+            
+            FijiArchipelago.debug("Submitting futures");
             
             // For each file name, create a SIFTCall, submit it, and collect the Future returned by
             // the Cluster
@@ -80,6 +84,8 @@ public class Cluster_SIFT implements PlugIn
                 futures.add(Cluster.getCluster().submit(new SIFTCall(param.clone(), fileName)));
             }
 
+
+            FijiArchipelago.debug("Waiting on futures");
             // Get the result from each Future. this will block until the results return from the
             // ClusterNode that the computation is actually running on.
             for (Future<ArrayList<Feature>> future: futures)
@@ -114,7 +120,7 @@ public class Cluster_SIFT implements PlugIn
     }
     
     
-    public long runOnCluster()
+    public float runOnCluster()
     {
         ImagePlus ip = IJ.getImage();
 
@@ -132,9 +138,8 @@ public class Cluster_SIFT implements PlugIn
         }
 
         if (!Cluster.activeCluster())
-        {
-            FijiArchipelago.runClusterGUI();
-            if (Cluster.activeCluster())
+        {            
+            if (FijiArchipelago.runClusterGUI())
             {
                 Cluster.getCluster().waitUntilReady();
             }
@@ -145,6 +150,8 @@ public class Cluster_SIFT implements PlugIn
             long sTime = System.currentTimeMillis();
             ImageStack stack = ip.getStack();
 
+            FijiArchipelago.log("Cluster is active.");
+            
             if (stack.isVirtual() 
                     && FijiArchipelago.fileIsInRoot(((VirtualStack) stack).getFileName(1)))
             {
@@ -157,6 +164,8 @@ public class Cluster_SIFT implements PlugIn
                     fileNames.add(vstack.getDirectory() + vstack.getFileName(i));                    
                 }
                 
+                FijiArchipelago.debug("Running clusterSIFTExtraction on " + fileNames.size() + " files");
+                
                 clusterSIFTExtraction(fileNames, new FloatArray2DSIFT.Param());
 
                 return System.currentTimeMillis() - sTime;
@@ -167,10 +176,14 @@ public class Cluster_SIFT implements PlugIn
                 return 0;
             }
         }
+        else
+        {
+            FijiArchipelago.debug("Cluster was not ready");
+        }
         return 0;
     }
     
-    public long runLocally()
+    public float runLocally()
     {
         ImagePlus ip = IJ.getImage();
 

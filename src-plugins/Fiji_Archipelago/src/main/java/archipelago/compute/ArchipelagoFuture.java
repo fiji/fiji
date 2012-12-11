@@ -9,6 +9,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.ReentrantLock;
 
 
 public class ArchipelagoFuture<T> implements Future<T>
@@ -18,6 +19,7 @@ public class ArchipelagoFuture<T> implements Future<T>
     private final Cluster.ProcessScheduler scheduler;
     private final AtomicBoolean wasCancelled, done;    
     private final Vector<Thread> waitingThreads;
+    private final ReentrantLock threadLock;
     private Exception e;
    
     
@@ -33,7 +35,8 @@ public class ArchipelagoFuture<T> implements Future<T>
         scheduler = s;
         waitingThreads = new Vector<Thread>();
         wasCancelled = new AtomicBoolean(false);
-        done = new AtomicBoolean(false); 
+        done = new AtomicBoolean(false);
+        threadLock = new ReentrantLock();
     }
 
     // FijiArchipelago-specific methods
@@ -68,10 +71,12 @@ public class ArchipelagoFuture<T> implements Future<T>
 
     private synchronized void smoochThreads()
     {
-        for (Thread t: waitingThreads)   //TODO use a lock.
+        threadLock.lock();
+        for (Thread t: waitingThreads)
         {
             t.interrupt();
         }
+        threadLock.unlock();
     }
 
     // Future-only methods.
@@ -129,22 +134,32 @@ public class ArchipelagoFuture<T> implements Future<T>
             throw new ExecutionException(te);
         }
     }
+    
+    private void removeWaitingThread(final Thread t)
+    {
+        threadLock.lock();
+        waitingThreads.remove(t);
+        threadLock.unlock();
+    }
 
-    public T get(long l, TimeUnit timeUnit) throws InterruptedException, ExecutionException, TimeoutException
+    public T get(final long l, final TimeUnit timeUnit) throws InterruptedException,
+            ExecutionException, TimeoutException
     {
         if (!done.get())
         {
-            final Thread currThread = Thread.currentThread();
+            final Thread currThread = Thread.currentThread();            
+            threadLock.lock();
             waitingThreads.add(currThread);
+            threadLock.unlock();
             try
             {
                 Thread.sleep(timeUnit.convert(l, TimeUnit.MILLISECONDS));
-                waitingThreads.remove(currThread);
+                removeWaitingThread(currThread);                
                 throw new TimeoutException();
             }
             catch (InterruptedException ie)
             {
-                waitingThreads.remove(currThread);
+                removeWaitingThread(currThread);
                 if (!done.get())
                 {
                     throw ie;
