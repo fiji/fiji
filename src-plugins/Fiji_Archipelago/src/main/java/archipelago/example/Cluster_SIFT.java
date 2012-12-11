@@ -41,6 +41,7 @@ public class Cluster_SIFT implements PlugIn
         
         public ArrayList<Feature> call() throws Exception {
             ImagePlus im = IJ.openImage(fileChunk.getData());
+            System.out.println("attempting to open file " + fileChunk.getData());
             ImageProcessor ip = im.getProcessor();
             ArrayList<Feature> feat = new ArrayList<Feature>();
             SIFT sift = new SIFT(new FloatArray2DSIFT(param));
@@ -97,8 +98,9 @@ public class Cluster_SIFT implements PlugIn
                 {
                     // If the Callable throws an error on the remote node, it will propagate back
                     // over the network and end up here.
-                    FijiArchipelago.err(
-                            "Cluster SIFT Extraction: Caught a remote execution exception: " + ee);
+//                    FijiArchipelago.err(
+//                            "Cluster SIFT Extraction: Caught a remote execution exception: " + ee);
+                    FijiArchipelago.log("Remote exception: " + ee);
                 }
             }
             
@@ -238,10 +240,11 @@ public class Cluster_SIFT implements PlugIn
         }
         else if (arg.equals("test"))
         {
-            long clusterTime = runOnCluster();
-            long aloneTime = runLocally();
-            IJ.showMessage("Cluster: " + (clusterTime / 1000 )+ "s\nStand Alone: "
-                    + (aloneTime / 1000)+ "s\nSpeedup: " + (aloneTime / clusterTime));
+            float clusterTime = runOnCluster();
+            FijiArchipelago.debug("Cluster run finished");
+            float aloneTime = runLocally();
+            IJ.showMessage("Cluster: " + (clusterTime / 1000f )+ "s\nStand Alone: "
+                    + (aloneTime / 1000f)+ "s\nSpeedup: " + (aloneTime / clusterTime));
         }            
         else
         {

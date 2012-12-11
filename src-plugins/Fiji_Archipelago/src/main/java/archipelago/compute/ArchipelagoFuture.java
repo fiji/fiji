@@ -66,9 +66,9 @@ public class ArchipelagoFuture<T> implements Future<T>
         }
     }
 
-    private void smoochThreads()
+    private synchronized void smoochThreads()
     {
-        for (Thread t: waitingThreads)
+        for (Thread t: waitingThreads)   //TODO use a lock.
         {
             t.interrupt();
         }
@@ -88,16 +88,25 @@ public class ArchipelagoFuture<T> implements Future<T>
     {
         if (done.get())
         {
+            FijiArchipelago.debug("Job " + getID() + ": Cancel called, but job is already done");
             return false;
         }
         else
         {
-            wasCancelled.set(scheduler.cancelJob(id, b));
-            if (b)
+            FijiArchipelago.debug("Job " + getID() + ": Cancel called.");
+            boolean cancelled = scheduler.cancelJob(id, b);
+            done.set(cancelled);
+            if (cancelled)
             {
+                FijiArchipelago.debug("Job " + getID() + " cancel SUCCESS");
                 smoochThreads();
             }
-            return wasCancelled.get();
+            else
+            {
+                FijiArchipelago.debug("Job " + getID() + " was NOT CANCELLED");
+            }
+            wasCancelled.set(cancelled);
+            return cancelled;
         }
     }
 
