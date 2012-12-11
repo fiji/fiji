@@ -66,8 +66,7 @@ public class Cluster_SIFT implements PlugIn
     {
         if (Cluster.activeCluster())
         {
-            FijiArchipelago.debug("SIFT Extraction: Cluster is Active, with "
-                    + Cluster.getCluster().countReadyNodes() + " nodes");
+            boolean executionErrorOccurred = false;
 
             // The return list
             ArrayList<ArrayList<Feature>> featuresList = new ArrayList<ArrayList<Feature>>();
@@ -99,15 +98,21 @@ public class Cluster_SIFT implements PlugIn
                     // This happens if we're interrupted while blocking in Future.get
                     FijiArchipelago.err(
                             "Cluster SIFT Extraction: Interrupted while waiting for results.");
+                    return featuresList;
                 }
                 catch (ExecutionException ee)
                 {
                     // If the Callable throws an error on the remote node, it will propagate back
                     // over the network and end up here.
-//                    FijiArchipelago.err(
-//                            "Cluster SIFT Extraction: Caught a remote execution exception: " + ee);
+                    // This would be called as a .err, but it when it rains, it pours.
                     FijiArchipelago.log("Remote exception: " + ee);
+                    executionErrorOccurred = true;
                 }
+            }
+            
+            if (executionErrorOccurred)
+            {
+                FijiArchipelago.err("Caught at least one ExecutionError. See the log");
             }
             
             return featuresList;
@@ -189,7 +194,7 @@ public class Cluster_SIFT implements PlugIn
 
         if (ip == null)
         {
-            IJ.showMessage("First, open an image");
+            IJ.showMessage("First, open a virtual stack");
             return 0;
         }
         else if(!(ip.getStack().isVirtual()))
@@ -202,7 +207,7 @@ public class Cluster_SIFT implements PlugIn
         ImageStack stack = ip.getStack();
         ArrayList<Thread> threads = new ArrayList<Thread>();
         final VirtualStack vstack = (VirtualStack)stack;
-        final int numCore = Runtime.getRuntime().availableProcessors(); 
+        final int numCore = Runtime.getRuntime().availableProcessors();
 
         for (int p = 0; p < numCore; ++p)
         {

@@ -2,6 +2,7 @@ package archipelago;
 
 
 import archipelago.compute.*;
+import archipelago.listen.ClusterStateListener;
 import archipelago.listen.NodeStateListener;
 import archipelago.listen.ProcessListener;
 import archipelago.listen.ShellExecListener;
@@ -9,7 +10,6 @@ import archipelago.network.node.ClusterNode;
 import archipelago.network.node.ClusterNodeState;
 import archipelago.network.node.NodeManager;
 import archipelago.network.server.ArchipelagoServer;
-import ij.IJ;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -362,11 +362,16 @@ public class Cluster implements ExecutorService, NodeStateListener
             jobQueue.clear();
             //nodes.clear();
         }
+        
+        public int queuedJobCount()
+        {
+            return priorityJobQueue.size() + jobQueue.size();
+        }
 
     }
 
     public static final int DEFAULT_PORT = 3501;
-    private static Cluster cluster = null;
+    private static Cluster cluster = null;    
 
     public static boolean initCluster(int port)
     {
@@ -391,10 +396,7 @@ public class Cluster implements ExecutorService, NodeStateListener
         return cluster != null && cluster.isActive();
     }
     
-    private int port;
-    private final Vector<ClusterNode> nodes;
-    private final Vector<Thread> waitThreads;
-    private final ProcessScheduler scheduler;
+   
 
 
     /*
@@ -419,12 +421,19 @@ public class Cluster implements ExecutorService, NodeStateListener
     private final AtomicBoolean halted, ready, terminated;
     
     private final AtomicInteger jobCount, runningNodes;
+
+    private int port;
+    private final Vector<ClusterNode> nodes;
+    private final Vector<Thread> waitThreads;
+    private final ProcessScheduler scheduler;
     
     private final Hashtable<Long, ArchipelagoFuture<?>> futures;
     
     private final NodeManager nodeManager;
     private ArchipelagoServer server;
     private String localHostName;
+    
+    private final Vector<ClusterStateListener> listeners;
 
     private Cluster(int p)
     {        
@@ -441,6 +450,8 @@ public class Cluster implements ExecutorService, NodeStateListener
         
         nodeManager = new NodeManager();
         futures = new Hashtable<Long, ArchipelagoFuture<?>>();
+        
+        listeners = new Vector<ClusterStateListener>();
 
         init(p);
         
@@ -524,6 +535,25 @@ public class Cluster implements ExecutorService, NodeStateListener
         nodeManager.removeParam(node.getID());
     }
 
+    public void addStateListener(ClusterStateListener listener)
+    {
+        listeners.add(listener);
+    }
+    
+    public void removeStateListener(ClusterStateListener listener)
+    {
+        listeners.remove(listener);
+    }
+    
+    protected void triggerListeners()
+    {
+        Vector<ClusterStateListener> listenersLocal = new Vector<ClusterStateListener>(listeners);
+        for (ClusterStateListener listener : listenersLocal)
+        {
+            listener.stateChanged(this);
+        }
+    }
+    
     public synchronized void stateChanged(ClusterNode node, ClusterNodeState stateNow,
                              ClusterNodeState lastState) {
         switch (stateNow)
@@ -537,6 +567,7 @@ public class Cluster implements ExecutorService, NodeStateListener
                     FijiArchipelago.debug("Not shut down. Currently " + runningNodes.get()
                             + " running nodes");
                 }
+                triggerListeners();
                 break;
             
             case STOPPED:
@@ -574,6 +605,9 @@ public class Cluster implements ExecutorService, NodeStateListener
                 }
                 
                 FijiArchipelago.debug("There are now " + runningNodes.get() + " running nodes");
+
+                triggerListeners();
+
                 break;
         }
     }
@@ -672,11 +706,14 @@ public class Cluster implements ExecutorService, NodeStateListener
     private void incrementJobCount()
     {
         jobCount.incrementAndGet();
+        triggerListeners();
     }
     
     private synchronized void decrementJobCount()
     {
         int nJobs = jobCount.decrementAndGet();
+
+        triggerListeners();
 
         if (nJobs < 0)
         {
@@ -717,6 +754,20 @@ public class Cluster implements ExecutorService, NodeStateListener
         return ready.get();
     }
 
+    public int getRunningJobCount()
+    {
+        return jobCount.get();
+    }
+    
+    public int getRunningNodeCount()
+    {
+        return runningNodes.get();
+    }
+    
+    public int getQueuedJobCount()
+    {
+        return scheduler.queuedJobCount();
+    }
     
     public synchronized void shutdown()
     {
@@ -732,10 +783,17 @@ public class Cluster implements ExecutorService, NodeStateListener
         ready.set(false);
         scheduler.setActive(false);
         halted.set(true);
-        
+
+        triggerListeners();
+
         for (ClusterNode node : nodes)
         {
             node.setActive(false);
+        }
+        
+        if (jobCount.get() <= 0)
+        {
+            haltFinished();
         }
     }
 
@@ -747,8 +805,8 @@ public class Cluster implements ExecutorService, NodeStateListener
         {
             FijiArchipelago.debug("Cluster: Closing node " + node.getHost());
             node.close();
-            FijiArchipelago.debug("Cluster: Done closing node");
         }
+        triggerListeners();
         FijiArchipelago.debug("Cluster: Halt has finished");
     }
     
@@ -759,7 +817,9 @@ public class Cluster implements ExecutorService, NodeStateListener
         terminated.set(true);
         scheduler.close();
         nodeManager.clear();
-        
+
+        triggerListeners();
+
         for (Thread t : waitThreadsCP)
         {
             t.interrupt();
@@ -780,7 +840,9 @@ public class Cluster implements ExecutorService, NodeStateListener
         
         ready.set(false);
         halted.set(true);
-        
+
+        triggerListeners();
+
         for (ClusterNode node : nodes)
         {
             node.close();

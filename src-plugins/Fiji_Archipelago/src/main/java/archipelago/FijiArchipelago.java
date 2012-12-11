@@ -1,5 +1,6 @@
 package archipelago;
 
+import archipelago.listen.ClusterStateListener;
 import archipelago.listen.ShellExecListener;
 import archipelago.network.node.NodeManager;
 import archipelago.ui.ClusterNodeConfigUI;
@@ -17,6 +18,73 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public final class FijiArchipelago
 {
+
+    private static class ClusterStateUpdater implements ClusterStateListener
+    {
+        private final Frame stopFrame;
+        private final Label nodeCount, jobCount, queuedCount, state;
+        
+        public ClusterStateUpdater()
+        {
+            final Button stopButton = new Button("Stop Cluster");
+
+            stopFrame = new Frame("Cluster is Running");            
+            stopFrame.setLayout(new GridLayout(5,1));
+            nodeCount = new Label();
+            jobCount = new Label();
+            queuedCount = new Label();
+            state = new Label();
+            
+            stopButton.addActionListener(new ActionListener() {
+                public void actionPerformed(ActionEvent actionEvent) {
+                    GenericDialog gd = new GenericDialog("Really?");
+                    gd.addMessage("Really stop server?");
+                    gd.showDialog();
+                    if (gd.wasOKed())
+                    {
+                        Cluster.getCluster().shutdown();
+                    }
+                }
+            });
+
+            stopFrame.add(state);
+            stopFrame.add(nodeCount);
+            stopFrame.add(queuedCount);
+            stopFrame.add(jobCount);
+            stopFrame.add(stopButton);
+
+            stopFrame.setSize(new Dimension(256, 256));
+
+            stopFrame.validate();
+            stopFrame.setVisible(true);
+        }
+
+        public synchronized void stateChanged(Cluster cluster)
+        {
+            if (cluster.isActive())
+            {
+                state.setText("Cluster is Active");                
+            }
+            else if (cluster.isShutdown() && !cluster.isTerminated())
+            {
+                state.setText("Cluster is Stopping...");
+            }
+            else if (cluster.isTerminated())
+            {
+                stopFrame.setVisible(false);
+                stopFrame.removeAll();
+            }
+            
+            jobCount.setText("Running jobs: " + cluster.getRunningJobCount());
+            queuedCount.setText("Queued jobs: " + cluster.getQueuedJobCount());
+            nodeCount.setText("Running Nodes: " + cluster.getRunningNodeCount());
+
+            stopFrame.repaint();
+        }
+    }
+    
+    
+    
     public static final String PREF_ROOT = "FijiArchipelago";
     private static EasyLogger logger = new NullLogger();
     private static EasyLogger errorLogger = new NullLogger();
@@ -109,6 +177,8 @@ public final class FijiArchipelago
     {
         return nextID.incrementAndGet();
     }
+    
+
 
     public static boolean runClusterGUI()
     {
@@ -124,9 +194,6 @@ public final class FijiArchipelago
 
         if (ui.wasOKed())
         {
-            final Frame stopFrame = new Frame("Cluster is Running");
-            final Button stopButton = new Button("Stop Cluster");
-
             //Dumb ShellExecListener
             ShellExecListener meh = new ShellExecListener() {
                 public void execFinished(long nodeID, Exception e)
@@ -155,26 +222,8 @@ public final class FijiArchipelago
             // Setup a dialog to stop the server when we're done.
             // TODO: Make a window that gives better information, ie, number of nodes currently
             // running, jobs in queue, etc.
-            stopFrame.add(stopButton);
 
-            stopButton.addActionListener(new ActionListener() {
-                public void actionPerformed(ActionEvent actionEvent) {
-                    GenericDialog gd = new GenericDialog("Really?");
-                    gd.addMessage("Really stop server?");
-                    gd.showDialog();
-                    if (gd.wasOKed())
-                    {
-                        Cluster.getCluster().shutdown();
-                        stopFrame.setVisible(false);
-                        stopFrame.remove(stopButton);
-                    }
-                }
-            });
-
-            stopFrame.setPreferredSize(new Dimension(512, 512));
-            stopButton.setPreferredSize(new Dimension(512, 512));
-            stopFrame.validate();
-            stopFrame.setVisible(true);
+            Cluster.getCluster().addStateListener(new ClusterStateUpdater());
             return true;
         }
         else

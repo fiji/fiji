@@ -35,9 +35,9 @@ public class MessageXC
                 {
                     close();
                 }
-                catch (ClassNotFoundException cfne)
+                catch (ClassNotFoundException cnfe)
                 {
-                    FijiArchipelago.err("RX: " + hostName + " Got ClassNotFoundException: " + cfne);
+                    FijiArchipelago.err("RX: " + hostName + " Got ClassNotFoundException: " + cnfe);
                 }
             }
         }
