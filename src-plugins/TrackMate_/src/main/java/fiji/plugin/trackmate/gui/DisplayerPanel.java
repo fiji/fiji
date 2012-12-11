@@ -25,6 +25,8 @@ import java.util.Set;
 
 import javax.swing.ComboBoxModel;
 import javax.swing.DefaultComboBoxModel;
+import javax.swing.Icon;
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
@@ -44,6 +46,8 @@ import fiji.plugin.trackmate.TrackMate_;
 import fiji.plugin.trackmate.visualization.AbstractTrackMateModelView;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
 
+import java.awt.Dimension;
+
 /**
  * A configuration panel used to tune the aspect of spots and tracks in multiple {@link AbstractTrackMateModelView}.
  * This GUI takes the role of a controller.
@@ -54,9 +58,13 @@ public class DisplayerPanel<T extends RealType<T> & NativeType<T>> extends Actio
 	private static final long serialVersionUID = 1L;
 
 	public static final String DESCRIPTOR = "DisplayerPanel";
+
+	private static final Icon DO_ANALYSIS_ICON = new ImageIcon(DisplayerPanel.class.getResource("images/calculator.png"));
 	public ActionEvent TRACK_SCHEME_BUTTON_PRESSED 	= new ActionEvent(this, 0, "TrackSchemeButtonPushed");
+	public ActionEvent DO_ANALYSIS_BUTTON_PRESSED 	= new ActionEvent(this, 1, "DoAnalysisButtonPushed");
 
 	JButton jButtonShowTrackScheme;
+	JButton jButtonDoAnalysis;
 	private JLabel jLabelTrackDisplayMode;
 	private JComboBox jComboBoxDisplayMode;
 	private JLabel jLabelDisplayOptions;
@@ -77,6 +85,7 @@ public class DisplayerPanel<T extends RealType<T> & NativeType<T>> extends Actio
 	private Set<TrackMateModelView<T>> views = new HashSet<TrackMateModelView<T>>();
 	private TrackMate_<T> plugin;
 	private TrackMateWizard<T> wizard;
+
 
 	/*
 	 * CONSTRUCTOR 
@@ -214,7 +223,7 @@ public class DisplayerPanel<T extends RealType<T> & NativeType<T>> extends Actio
 
 	private void initGUI() {
 		try {
-			this.setPreferredSize(new java.awt.Dimension(268, 469));
+			this.setPreferredSize(new Dimension(300, 469));
 			this.setSize(300, 500);
 			this.setLayout(null);
 			{
@@ -428,6 +437,19 @@ public class DisplayerPanel<T extends RealType<T> & NativeType<T>> extends Actio
 				});
 				this.add(jButtonShowTrackScheme);
 			}
+			{
+				jButtonDoAnalysis = new JButton("Analysis");
+				jButtonDoAnalysis.setFont(FONT);
+				jButtonDoAnalysis.setIcon(DO_ANALYSIS_ICON);
+				jButtonDoAnalysis.setBounds(145, 345, 120, 30);
+				jButtonDoAnalysis.addActionListener(new ActionListener() {
+					@Override
+					public void actionPerformed(ActionEvent arg0) {
+						fireAction(DO_ANALYSIS_BUTTON_PRESSED);
+					}
+				});
+				this.add(jButtonDoAnalysis);
+			}
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -446,7 +468,4 @@ public class DisplayerPanel<T extends RealType<T> & NativeType<T>> extends Actio
 		frame.getContentPane().add(displayerPanel_IL);
 		displayerPanel_IL.setPreferredSize(new java.awt.Dimension(300, 469));
 	}
-
-
-
 }

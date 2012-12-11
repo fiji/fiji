@@ -53,6 +53,7 @@ public class TrackMate_<T extends RealType<T> & NativeType<T>>  implements PlugI
 	protected TrackMateModel<T> model;
 
 	protected SpotFeatureAnalyzerProvider<T> spotFeatureFactory;
+	protected EdgeFeatureAnalyzerProvider<T> edgeFeatureAnalyzerProvider;
 	protected TrackFeatureAnalyzerFactory<T> trackFeatureFactory;
 	/** The factory that provides this plugin with available {@link TrackMateModelView}s. */
 	protected ViewFactory<T> viewFactory;
@@ -128,12 +129,14 @@ public class TrackMate_<T extends RealType<T> & NativeType<T>>  implements PlugI
 	public void initModules() {
 		this.spotFeatureFactory 	= createSpotFeatureAnalyzerFactory();
 		this.trackFeatureFactory 	= createTrackFeatureAnalyzerFactory();
+		this.edgeFeatureAnalyzerProvider = createEdgeFeatureAnalyzerProvider();
 		this.detectorProvider		= createDetectorFactory();
 		this.trackerFactory 		= createTrackerFactory();
 		this.viewFactory 			= createViewFactory();
 		this.actionFactory 			= createActionFactory();
 		model.getFeatureModel().setSpotFeatureFactory(spotFeatureFactory);
 		model.getFeatureModel().setTrackFeatureFactory(trackFeatureFactory);
+		model.getFeatureModel().setEdgeFeatureProvider(edgeFeatureAnalyzerProvider);
 	}
 
 	/*
@@ -216,6 +219,15 @@ public class TrackMate_<T extends RealType<T> & NativeType<T>>  implements PlugI
 	 */
 	protected SpotFeatureAnalyzerProvider<T> createSpotFeatureAnalyzerFactory() {
 		return new SpotFeatureAnalyzerProvider<T>(model);
+	}
+	
+	/**
+	 * Hook for subclassers.
+	 * <p>
+	 * Create the edge feature analyzer provider.
+	 */
+	protected EdgeFeatureAnalyzerProvider<T> createEdgeFeatureAnalyzerProvider() {
+		return new EdgeFeatureAnalyzerProvider<T>(model);
 	}
 
 	/**
@@ -310,6 +322,12 @@ public class TrackMate_<T extends RealType<T> & NativeType<T>>  implements PlugI
 		model.getFeatureModel().computeSpotFeatures(model.getSpots());
 	}
 
+	public void computeEdgeFeatures() {
+		final Logger logger = model.getLogger();
+		logger.log("Computing edge features.\n");
+		model.getFeatureModel().computeEdgeFeatures();
+	}
+	
 	/**
 	 * Calculate all features for all tracks.
 	 */

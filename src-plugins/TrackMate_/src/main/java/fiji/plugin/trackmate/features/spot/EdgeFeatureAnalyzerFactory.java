@@ -22,7 +22,7 @@ import fiji.plugin.trackmate.TrackMateModel;
  * 
  * @author Jean-Yves Tinevez - 2012
  */
-public interface SpotFeatureAnalyzerFactory<T extends RealType<T> & NativeType<T>> {
+public interface EdgeFeatureAnalyzerFactory<T extends RealType<T> & NativeType<T>> {
 	
 	/**
 	 * @return  a configured {@link SpotFeatureAnalyzer} ready to operate on the given frame

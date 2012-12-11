@@ -242,7 +242,6 @@ public class WizardController<T extends RealType<T> & NativeType<T>> implements 
 
 			// Display Track scheme
 			displayerPanel.jButtonShowTrackScheme.setEnabled(false);
-
 			try {
 				TrackScheme<T> trackScheme = new TrackScheme<T>(plugin.getModel());
 				trackScheme.render();
@@ -250,6 +249,17 @@ public class WizardController<T extends RealType<T> & NativeType<T>> implements 
 				displayerPanel.jButtonShowTrackScheme.setEnabled(true);
 			}
 
+		} else if (event == displayerPanel.DO_ANALYSIS_BUTTON_PRESSED) {
+			
+			displayerPanel.jButtonDoAnalysis.setEnabled(false);
+			try {
+				
+				System.out.println("Analysis computation and export should take place here!"); // TODO
+				
+			} finally {
+				displayerPanel.jButtonDoAnalysis.setEnabled(true);
+			}
+			
 		}
 	}
 

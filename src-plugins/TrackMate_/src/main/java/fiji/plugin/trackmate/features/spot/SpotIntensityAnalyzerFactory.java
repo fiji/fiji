@@ -14,7 +14,7 @@ import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.view.HyperSliceImgPlus;
 
-public class SpotIntensityAnalyzerFactory<T extends RealType<T> & NativeType<T>> implements SpotFeatureAnalyzerFactory<T> {
+public class SpotIntensityAnalyzerFactory<T extends RealType<T> & NativeType<T>> implements EdgeFeatureAnalyzerFactory<T> {
 
 	/*
 	 * CONSTANTS

@@ -8,7 +8,7 @@ import java.util.Map;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
 import fiji.plugin.trackmate.features.spot.SpotContrastAndSNRAnalyzerFactory;
-import fiji.plugin.trackmate.features.spot.SpotFeatureAnalyzerFactory;
+import fiji.plugin.trackmate.features.spot.EdgeFeatureAnalyzerFactory;
 import fiji.plugin.trackmate.features.spot.SpotIntensityAnalyzerFactory;
 import fiji.plugin.trackmate.features.spot.SpotRadiusEstimatorFactory;
 
@@ -98,7 +98,7 @@ public class SpotFeatureAnalyzerProvider <T extends RealType<T> & NativeType<T>>
 	 * @return a new instance of the target spotFeatureAnalyzer identified by the key parameter. 
 	 * If the key is unknown to this factory, <code>null</code> is returned. 
 	 */
-	public SpotFeatureAnalyzerFactory<T> getSpotFeatureAnalyzer(String key) {
+	public EdgeFeatureAnalyzerFactory<T> getSpotFeatureAnalyzer(String key) {
 		int index = names.indexOf(key);
 		if (index < 0) {
 			return null;
