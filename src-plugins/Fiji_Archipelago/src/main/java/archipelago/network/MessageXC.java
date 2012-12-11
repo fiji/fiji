@@ -119,10 +119,11 @@ public class MessageXC
         txThread.start();
     }
 
-    public synchronized void close()
+    public void close()
     {
         if (active.get())
         {
+            FijiArchipelago.debug("XC: Got close.");
             active.set(false);
             xcListener.streamClosed();
             txThread.interrupt();

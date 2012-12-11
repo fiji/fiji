@@ -125,10 +125,13 @@ public class ClusterNode implements TransceiverListener
         }
     }
 
-    public synchronized void streamClosed()
+    public void streamClosed()
     {
         FijiArchipelago.log("Stream closed on " + getHost());
-        close();
+        if (state != ClusterNodeState.STOPPED)
+        {
+            close();
+        }
     }
     
     private void setClientSocket(final Socket s) throws IOException
@@ -196,7 +199,7 @@ public class ClusterNode implements TransceiverListener
     }
     
     public void setActive(boolean active)
-    {
+    {        
         setState(active ? ClusterNodeState.ACTIVE : ClusterNodeState.INACTIVE);
     }
 
@@ -312,21 +315,36 @@ public class ClusterNode implements TransceiverListener
     }
 
     public synchronized void close()
-    {
-        if (isReady())
+    {        
+        if (state != ClusterNodeState.STOPPED)
         {
-            sendShutdown();
-            xc.close();
+            FijiArchipelago.debug("Setting state");
+
             setState(ClusterNodeState.STOPPED);
 
-            try
-            {
-                nodeSocket.close();
-            }
-            catch (IOException ioe)
-            {
-                //meh
-            }
+            FijiArchipelago.debug("Sending shutdown");
+
+            sendShutdown();
+
+            FijiArchipelago.debug("Closing XC");
+
+            xc.close();
+
+//            FijiArchipelago.debug("Closing Socket");
+
+//            try
+//            {
+//                nodeSocket.close();
+//            }
+//            catch (IOException ioe)
+//            {
+//                //meh
+//            }
+            FijiArchipelago.debug("Node: Close finished");
+        }
+        else
+        {
+            FijiArchipelago.debug("Node: Close() called, but I'm already stopped");
         }
     }
 
@@ -337,6 +355,21 @@ public class ClusterNode implements TransceiverListener
         return xc.queueMessage(message);
     }
     
+    public static String stateString(final ClusterNodeState state)
+    {
+        switch(state)
+        {
+            case ACTIVE:
+                return "active";
+            case INACTIVE:
+                return "inactive";
+            case STOPPED:
+                return "stopped";
+            default:
+                return "unknown";
+        }
+    }
+    
     protected synchronized void setState(final ClusterNodeState nextState)
     {
         if (state != nextState)
@@ -344,6 +377,8 @@ public class ClusterNode implements TransceiverListener
             // Order is very important
             ClusterNodeState lastState = state;
             state = nextState;
+            FijiArchipelago.log("Node state changed from "
+                    + stateString(lastState) + " to " + stateString(nextState));
             for (NodeStateListener listener : stateListeners)
             {
                 listener.stateChanged(this, state, lastState);

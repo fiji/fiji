@@ -218,16 +218,27 @@ public class Cluster implements ExecutorService, NodeStateListener
         {
             running.set(active);
         }
-        
+
+        /**
+         * Attempts to cancel a running job with the given id, optionally canclling jobs that have
+         * already been submitted to a node.
+         * @param id the id of the job to cancel
+         * @param force set true to cancel a job that is currently executing, false otherwise.
+         * @return true if the job was cancelled, false if not. If false, either the job has
+         * already finished, or it is already executing and force is set false.
+         */
         public synchronized boolean cancelJob(long id, boolean force)
         {
             final ArrayList<ProcessManager> pmInQ = new ArrayList<ProcessManager>();
             boolean cont = true;
 
             // These for loops look funny because we're running concurrently
+
+            for (ProcessManager pm : priorityJobQueue)
+            {
+                pmInQ.add(pm);
+            }
             
-            pmInQ.addAll(priorityJobQueue);
-           
             for (int i = 0; cont && i < pmInQ.size(); ++i)
             {
                 final ProcessManager pm = pmInQ.get(i);
@@ -252,7 +263,10 @@ public class Cluster implements ExecutorService, NodeStateListener
             }
             
             pmInQ.clear();
-            pmInQ.addAll(jobQueue);
+            for (ProcessManager pm : jobQueue)
+            {
+                pmInQ.add(pm);
+            }
 
             for (int i = 0; cont && i < pmInQ.size(); ++i)
             {
@@ -331,12 +345,22 @@ public class Cluster implements ExecutorService, NodeStateListener
             interrupt();
             
             remainingJobList.clear();
-            remainingJobList.addAll(priorityJobQueue);
-            remainingJobList.addAll(jobQueue);
+
+            for (ProcessManager pm : priorityJobQueue)
+            {
+                remainingJobList.add(pm);
+                futures.get(pm.getID()).cancel(false);
+            }
+            
+            for (ProcessManager pm : jobQueue)
+            {
+                remainingJobList.add(pm);
+                futures.get(pm.getID()).cancel(false);
+            }
 
             priorityJobQueue.clear();
             jobQueue.clear();
-            nodes.clear();
+            //nodes.clear();
         }
 
     }
@@ -500,27 +524,41 @@ public class Cluster implements ExecutorService, NodeStateListener
         nodeManager.removeParam(node.getID());
     }
 
-    public void stateChanged(ClusterNode node, ClusterNodeState stateNow, ClusterNodeState lastState) {
+    public synchronized void stateChanged(ClusterNode node, ClusterNodeState stateNow,
+                             ClusterNodeState lastState) {
         switch (stateNow)
         {
             case ACTIVE:
+                FijiArchipelago.debug("Got state change to active for " + node.getHost());
                 if (!isShutdown())
-                {
+                {                    
                     runningNodes.incrementAndGet();
                     ready.set(true);
+                    FijiArchipelago.debug("Not shut down. Currently " + runningNodes.get()
+                            + " running nodes");
                 }
                 break;
             
             case STOPPED:
+
+                FijiArchipelago.debug("Got state change to stopped for " + node.getHost());
+
                 for (ProcessManager<?> pm : node.getRunningProcesses())
                 {
+                    FijiArchipelago.debug("Rescheduling job " + pm.getID());
                     scheduler.queueJob(pm, true);
+                    if (isShutdown())
+                    {
+                        FijiArchipelago.debug("Cancelling running job " + pm.getID());
+                        futures.get(pm.getID()).cancel(true);
+                    }
                 }
                 
-                removeNode(node);
+                removeNode(node);                
                 
                 if (runningNodes.decrementAndGet() <= 0)
                 {
+                    FijiArchipelago.debug("Node more running nodes");
                     if (runningNodes.get() < 0)
                     {
                         FijiArchipelago.log("Number of running nodes is negative. " +
@@ -534,6 +572,8 @@ public class Cluster implements ExecutorService, NodeStateListener
                         terminateFinished();
                     }
                 }
+                
+                FijiArchipelago.debug("There are now " + runningNodes.get() + " running nodes");
                 break;
         }
     }
@@ -643,8 +683,12 @@ public class Cluster implements ExecutorService, NodeStateListener
             FijiArchipelago.log("Job Count is negative. That shouldn't happen.");
         }
 
+        FijiArchipelago.debug("Cluster: Job finished. Running job count is now " + nJobs
+                + "state: " + isShutdown() + " " + isTerminated());
+        
         if (nJobs <= 0 && isShutdown() && !isTerminated())
         {
+            FijiArchipelago.debug("Cluster: Calling haltFinished");
             haltFinished();
         }
     }
@@ -697,10 +741,15 @@ public class Cluster implements ExecutorService, NodeStateListener
 
     protected synchronized void haltFinished()
     {
-        for (ClusterNode node : nodes)
+        ArrayList<ClusterNode> nodesToClose = new ArrayList<ClusterNode>(nodes);
+        FijiArchipelago.debug("Cluster: closing " + nodesToClose.size() + " nodes");
+        for (ClusterNode node : nodesToClose)
         {
+            FijiArchipelago.debug("Cluster: Closing node " + node.getHost());
             node.close();
+            FijiArchipelago.debug("Cluster: Done closing node");
         }
+        FijiArchipelago.debug("Cluster: Halt has finished");
     }
     
     protected synchronized void terminateFinished()

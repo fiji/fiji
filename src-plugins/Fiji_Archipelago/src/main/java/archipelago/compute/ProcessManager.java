@@ -40,6 +40,7 @@ public class ProcessManager<T> implements Runnable, Serializable
         }
         catch (Exception e)
         {
+            e.printStackTrace();
             remoteException = e;
         }
         // Nullify the callable so we don't have to transfer extra data back home.
