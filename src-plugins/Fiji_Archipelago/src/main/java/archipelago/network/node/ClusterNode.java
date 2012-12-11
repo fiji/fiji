@@ -32,7 +32,7 @@ public class ClusterNode implements TransceiverListener
     }
 
 
-    private Socket nodeSocket;
+    //private Socket nodeSocket;
     private MessageXC xc;
     
     private final Hashtable<Long, ProcessListener> processHandlers;
@@ -48,6 +48,7 @@ public class ClusterNode implements TransceiverListener
     public ClusterNode(Socket socket) throws IOException, InterruptedException,
             TimeOutException
     {
+        xc = null;
         state = ClusterNodeState.INACTIVE;
         int waitCnt = 0;
         ready = new AtomicBoolean(false);
@@ -136,7 +137,6 @@ public class ClusterNode implements TransceiverListener
     
     private void setClientSocket(final Socket s) throws IOException
     {
-        nodeSocket = s;
 
         xc = new MessageXC(s.getInputStream(), s.getOutputStream(), this,
                 s.getInetAddress().getHostName());
