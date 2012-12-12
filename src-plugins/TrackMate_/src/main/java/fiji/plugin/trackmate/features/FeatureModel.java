@@ -70,6 +70,11 @@ public class FeatureModel <T extends RealType<T> & NativeType<T>> implements Mul
 	protected ConcurrentHashMap<DefaultWeightedEdge, ConcurrentHashMap<String, Object>> edgeFeatureValues 
 		= new ConcurrentHashMap<DefaultWeightedEdge, ConcurrentHashMap<String, Object>>();
 
+	private ArrayList<String> edgeFeatures = new ArrayList<String>();
+	private HashMap<String, String> edgeFeatureNames = new HashMap<String, String>();
+	private HashMap<String, String> edgeFeatureShortNames = new HashMap<String, String>();
+	private HashMap<String, Dimension> edgeFeatureDimensions = new HashMap<String, Dimension>();
+	
 	private TrackMateModel<T> model;
 	protected SpotFeatureAnalyzerProvider<T> spotAnalyzerProvider;
 	protected TrackFeatureAnalyzerFactory<T> trackAnalyzerFactory;
@@ -260,6 +265,18 @@ public class FeatureModel <T extends RealType<T> & NativeType<T>> implements Mul
 
 	public void setEdgeFeatureProvider(EdgeFeatureAnalyzerProvider<T> edgeFeatureAnalyzerProvider) {
 		this.edgeFeatureAnalyzerProvider = edgeFeatureAnalyzerProvider;
+		
+		edgeFeatures = new ArrayList<String>();
+		edgeFeatureNames = new HashMap<String, String>();
+		edgeFeatureShortNames = new HashMap<String, String>();
+		edgeFeatureDimensions = new HashMap<String, Dimension>();
+
+		for (String analyzer : edgeFeatureAnalyzerProvider.getAvailableEdgeFeatureAnalyzers()) {
+			edgeFeatures.addAll(edgeFeatureAnalyzerProvider.getFeatures(analyzer));
+			edgeFeatureNames.putAll(edgeFeatureAnalyzerProvider.getFeatureNames(analyzer));
+			edgeFeatureShortNames.putAll(edgeFeatureAnalyzerProvider.getFeatureShortNames(analyzer));
+			edgeFeatureDimensions.putAll(edgeFeatureAnalyzerProvider.getFeatureDimensions(analyzer));
+		}
 	}
 
 

@@ -16,6 +16,7 @@ import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.TrackMate_;
+import fiji.plugin.trackmate.action.ExportStatsToIJAction;
 import fiji.plugin.trackmate.visualization.trackscheme.TrackScheme;
 
 public class WizardController<T extends RealType<T> & NativeType<T>> implements ActionListener {
@@ -253,10 +254,12 @@ public class WizardController<T extends RealType<T> & NativeType<T>> implements 
 			
 			displayerPanel.jButtonDoAnalysis.setEnabled(false);
 			try {
-				
-				System.out.println("Analysis computation and export should take place here!"); // TODO
+				wizard.showDescriptorPanelFor(LoadDescriptor.DESCRIPTOR);
+				ExportStatsToIJAction<T> action = new ExportStatsToIJAction<T>();
+				action.execute(plugin);
 				
 			} finally {
+				wizard.showDescriptorPanelFor(DisplayerPanel.DESCRIPTOR);
 				displayerPanel.jButtonDoAnalysis.setEnabled(true);
 			}
 			

@@ -1,6 +1,9 @@
 package fiji.plugin.trackmate.features.edges;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import net.imglib2.type.NativeType;
@@ -8,6 +11,7 @@ import net.imglib2.type.numeric.RealType;
 
 import org.jgrapht.graph.DefaultWeightedEdge;
 
+import fiji.plugin.trackmate.Dimension;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.features.FeatureModel;
@@ -24,9 +28,44 @@ public class EdgeTargetAnalyzer <T extends RealType<T> & NativeType<T>>  impleme
 	private static final String SPOT2_ID = "SPOT2_ID";
 	private static final String EDGE_COST = "COST";
 	private static final String TRACK_ID = "TRACK";
-
+	
 	private final TrackMateModel<T> model;
 	private final FeatureModel<T> featureModel;
+	
+	public static final List<String> FEATURES = new ArrayList<String>(6);
+	public static final Map<String, String> FEATURE_NAMES = new HashMap<String, String>(6);
+	public static final Map<String, String> FEATURE_SHORT_NAMES = new HashMap<String, String>(6);
+	public static final Map<String, Dimension> FEATURE_DIMENSIONS = new HashMap<String, Dimension>(6);
+	
+	static {
+		FEATURES.add(SPOT1_NAME);
+		FEATURES.add(SPOT2_NAME);
+		FEATURES.add(SPOT1_ID);
+		FEATURES.add(SPOT2_ID);
+		FEATURES.add(EDGE_COST);
+		FEATURES.add(TRACK_ID);
+		
+		FEATURE_NAMES.put(SPOT1_NAME, "Source spot name");
+		FEATURE_NAMES.put(SPOT2_NAME, "Target spot name");
+		FEATURE_NAMES.put(SPOT1_ID, "Source spot ID");
+		FEATURE_NAMES.put(SPOT2_ID, "Target spot ID");
+		FEATURE_NAMES.put(EDGE_COST, "Link cost");
+		FEATURE_NAMES.put(TRACK_ID, "Track ID");
+		
+		FEATURE_SHORT_NAMES.put(SPOT1_NAME, "Source");
+		FEATURE_SHORT_NAMES.put(SPOT2_NAME, "Target");
+		FEATURE_SHORT_NAMES.put(SPOT1_ID, "Source ID");
+		FEATURE_SHORT_NAMES.put(SPOT2_ID, "Target ID");
+		FEATURE_SHORT_NAMES.put(EDGE_COST, "Cost");
+		FEATURE_SHORT_NAMES.put(TRACK_ID, "Track");
+		
+		FEATURE_DIMENSIONS.put(SPOT1_NAME, Dimension.STRING);
+		FEATURE_DIMENSIONS.put(SPOT2_NAME, Dimension.STRING);
+		FEATURE_DIMENSIONS.put(SPOT1_ID, Dimension.NONE);
+		FEATURE_DIMENSIONS.put(SPOT2_ID, Dimension.NONE);
+		FEATURE_DIMENSIONS.put(EDGE_COST, Dimension.NONE);
+		FEATURE_DIMENSIONS.put(TRACK_ID, Dimension.NONE);
+	}
 
 	/*
 	 * CONSTRUCTOR

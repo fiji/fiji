@@ -2,6 +2,7 @@ package fiji.plugin.trackmate;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
@@ -66,6 +67,51 @@ public class EdgeFeatureAnalyzerProvider <T extends RealType<T> & NativeType<T>>
 	 */
 	public List<String> getAvailableEdgeFeatureAnalyzers() {
 		return names;
+	}
+
+
+	public List<String> getFeatures(String analyzer) {
+		if (analyzer == EdgeTargetAnalyzer.KEY) {
+			return EdgeTargetAnalyzer.FEATURES;
+		} else {
+			return null;
+		}
+	}
+	
+	/**
+	 * @return the map of short names for any feature, for the target analyzer, 
+	 * or <code>null</code> if the analyzer is unknown to this factory.
+	 */
+	public Map<String, String> getFeatureShortNames(String key) {
+		if (key == EdgeTargetAnalyzer.KEY) {
+			return EdgeTargetAnalyzer.FEATURE_SHORT_NAMES;
+		} else {
+			return null;
+		}
+	}
+
+	/**
+	 * @return the map of names for any feature, for the target analyzer, 
+	 * or <code>null</code> if the analyzer is unknown to this factory.
+	 */
+	public Map<String, String> getFeatureNames(String key) {
+		if (key == EdgeTargetAnalyzer.KEY) {
+			return EdgeTargetAnalyzer.FEATURE_NAMES;
+		} else {
+			return null;
+		}
+	}
+
+	/**
+	 * @return the map of feature dimension, for the target analyzer, 
+	 * or <code>null</code> if the analyzer is unknown to this factory.
+	 */
+	public Map<String, Dimension> getFeatureDimensions(String key) {
+		if (key == EdgeTargetAnalyzer.KEY) {
+			return EdgeTargetAnalyzer.FEATURE_DIMENSIONS;
+		} else {
+			return null;
+		}
 	}
 
 
