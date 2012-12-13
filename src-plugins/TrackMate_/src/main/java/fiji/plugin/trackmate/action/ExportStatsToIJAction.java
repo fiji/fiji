@@ -74,7 +74,11 @@ public class ExportStatsToIJAction<T extends RealType<T> & NativeType<T>> extend
 				spotTable.addValue("ID", spot.ID());
 				spotTable.addValue("TRACK", trackIndex);
 				for (String feature : spotFeatures) {
-					spotTable.addValue(feature, spot.getFeature(feature));
+					Double val = spot.getFeature(feature);
+					if (null == val) {
+						continue;
+					}
+					spotTable.addValue(feature, val.doubleValue());
 				}
 			}
 		}
