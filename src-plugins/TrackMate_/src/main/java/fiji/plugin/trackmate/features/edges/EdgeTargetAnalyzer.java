@@ -91,13 +91,12 @@ public class EdgeTargetAnalyzer <T extends RealType<T> & NativeType<T>>  impleme
 		int trackId = -1;
 		final List<Set<DefaultWeightedEdge>> tracks = model.getTrackEdges();
 		for (int i = 0; i < tracks.size(); i++) {
-			if (tracks.contains(edge)) {
+			if (tracks.get(i).contains(edge)) {
 				trackId = i;
 				break;
 			}
 		}
 		featureModel.putEdgeFeature(edge, TRACK_ID, trackId);
-
 	}
 
 }

@@ -1,19 +1,19 @@
 package fiji.plugin.trackmate.action;
 
+
 import ij.measure.ResultsTable;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import javax.swing.ImageIcon;
 
-import org.jgrapht.graph.DefaultWeightedEdge;
-
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
+
+import org.jgrapht.graph.DefaultWeightedEdge;
+
 import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMate_;
 import fiji.plugin.trackmate.features.FeatureModel;
@@ -59,48 +59,79 @@ public class ExportStatsToIJAction<T extends RealType<T> & NativeType<T>> extend
 		
 		// Export spots
 		logger.log("  - Exporting spot statistics...");
-		// Sort them by track first
-		ResultsTable spotTable = new ResultsTable();
-
 		Set<Integer> trackIndices = model.getVisibleTrackIndices();
+		List<String> spotFeatures = fm.getSpotFeatures();
+
+		// Create table
+		ResultsTable spotTable = new ResultsTable();
+		
+		// Parse spots to insert values as objects
 		for (Integer trackIndex : trackIndices) {
-			
 			Set<Spot> track = model.getTrackSpots(trackIndex);
 			for (Spot spot : track) {
 				spotTable.incrementCounter();
 				spotTable.addLabel(spot.getName());
 				spotTable.addValue("ID", spot.ID());
 				spotTable.addValue("TRACK", trackIndex);
-				Map<String, Double> features = spot.getFeatures();
-				for (String feature : features.keySet()) {
-					spotTable.addValue(feature, features.get(feature));
+				for (String feature : spotFeatures) {
+					spotTable.addValue(feature, spot.getFeature(feature));
 				}
 			}
 		}
 		logger.log(" Done.\n");
 		
+		
 		// Export edges
 		logger.log("  - Exporting links statistics...");
 		// Yield available edge feature
+		List<String> edgeFeatures = fm.getEdgeFeatures();
 		
-		
-		// Sort them by track first
+		// Create table
 		ResultsTable edgeTable = new ResultsTable();
-
+		
+		// Sort by track
 		for (Integer trackIndex : trackIndices) {
 			
 			Set<DefaultWeightedEdge> track = model.getTrackEdges(trackIndex);
 			for (DefaultWeightedEdge edge : track) {
-				spotTable.incrementCounter();
-				spotTable.addValue("TRACK", trackIndex);
-//				Map<String, Double> features = fm.getEdgeFeature(edge, featureName); // TODO TODO FIXME
+				edgeTable.incrementCounter();
+				edgeTable.addLabel(edge.toString());
+				for(String feature : edgeFeatures) {
+					Object o = fm.getEdgeFeature(edge, feature);
+					if (o instanceof String) {
+						continue;
+					}
+					Number d = (Number) o;
+					edgeTable.addValue(feature, d.doubleValue());
+				}
+				
 			}
 		}
 		logger.log(" Done.\n");
 		
+		// Export tracks
+		logger.log("  - Exporting tracks statistics...");
+		// Yield available edge feature
+		List<String> trackFeatures = fm.getTrackFeatures();
+
+		// Create table
+		ResultsTable trackTable = new ResultsTable();
+
+		// Sort by track
+		for (Integer trackIndex : trackIndices) {
+			trackTable.incrementCounter();
+			trackTable.addLabel("TRACK_" + trackIndex);
+			for (String feature : trackFeatures) {
+				Double val = fm.getTrackFeature(trackIndex, feature);
+				trackTable.addValue(feature, val);
+			}
+		}
+		logger.log(" Done.\n");
+
 		// Show tables
-		spotTable.show("Spots in tracks");
-		
+		spotTable.show("Spots in tracks statistics");
+		edgeTable.show("Links in tracks statistics");
+		trackTable.show("Track statistics");
 	}
 
 	@Override

@@ -359,6 +359,7 @@ public class FeatureModel <T extends RealType<T> & NativeType<T>> implements Mul
 		ConcurrentHashMap<String, Object> map = edgeFeatureValues.get(edge);
 		if (null == map) {
 			map = new ConcurrentHashMap<String, Object>();
+			edgeFeatureValues.put(edge, map);
 		}
 		map.put(featureName, featureValue);
 	}
@@ -371,7 +372,33 @@ public class FeatureModel <T extends RealType<T> & NativeType<T>> implements Mul
 		return map.get(featureName);
 	}
 
+	public List<String> getEdgeFeatures() {
+		return edgeFeatures;
+	}
 
+	/**
+	 * Return the name mapping of the edge features that are dealt with in this model.
+	 * @return
+	 */
+	public Map<String, String> getEdgeFeatureNames() {
+		return edgeFeatureNames;
+	}
+
+	/**
+	 * Return the short name mapping of the edge features that are dealt with in this model.
+	 * @return
+	 */
+	public Map<String, String> getEdgeFeatureShortNames() {
+		return edgeFeatureShortNames;
+	}
+
+	/**
+	 * Return the dimension mapping of the edge features that are dealt with in this model.
+	 * @return
+	 */
+	public Map<String, Dimension> getEdgeFeatureDimensions() {
+		return edgeFeatureDimensions;
+	}
 	
 
 	/*
