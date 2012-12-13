@@ -27,6 +27,7 @@ import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMate_;
+import fiji.plugin.trackmate.detection.SpotDetectorFactory;
 import fiji.plugin.trackmate.io.TmXmlReader;
 import fiji.plugin.trackmate.io.TmXmlReader_v12;
 import fiji.plugin.trackmate.util.Version;
@@ -150,7 +151,8 @@ public class GuiReader <T extends RealType<T> & NativeType<T>> {
 			// We display it only if we have a GUI
 
 			// Update start panel
-			WizardPanelDescriptor<T> panel = wizard.getPanelDescriptorFor(StartDialogPanel.DESCRIPTOR);
+			StartDialogPanel<T> panel = (StartDialogPanel<T>) wizard.getPanelDescriptorFor(StartDialogPanel.DESCRIPTOR);
+			panel.setPlugin(plugin);
 			panel.aboutToDisplayPanel();
 		}
 
@@ -158,8 +160,8 @@ public class GuiReader <T extends RealType<T> & NativeType<T>> {
 		{ // Try to read detector settings
 			logger.log("  Reading detector settings...");
 			reader.getDetectorSettings(settings);
-			Map<String, Object> detectorSettings = settings.detectorSettings;
-			if (null == detectorSettings) {
+			SpotDetectorFactory<T> detectorFactory = settings.detectorFactory;
+			if (null == detectorFactory) {
 				echoNotFound();
 				// Stop at start panel
 				targetDescriptor = StartDialogPanel.DESCRIPTOR;
