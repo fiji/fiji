@@ -271,6 +271,7 @@ public class GuiReader <T extends RealType<T> & NativeType<T>> {
 				if (!imp.isVisible())
 					imp.show();
 				echoLoadingFinished();
+				spotFilterDescriptor.displayingPanel();
 				return;
 			}
 

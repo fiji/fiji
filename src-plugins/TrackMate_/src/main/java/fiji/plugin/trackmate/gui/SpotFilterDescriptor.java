@@ -70,7 +70,11 @@ public class SpotFilterDescriptor <T extends RealType<T> & NativeType<T>> implem
 	}
 
 	@Override
-	public void displayingPanel() {}
+	public void displayingPanel() {
+		plugin.getModel().getSettings().setSpotFilters(component.getFeatureFilters());
+		plugin.execSpotFiltering(false);
+		wizard.getDisplayer().refresh();
+	}
 	
 	public void linkGuiToView() {
 		
