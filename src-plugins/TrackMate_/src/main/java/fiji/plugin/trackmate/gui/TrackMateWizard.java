@@ -187,16 +187,23 @@ public class TrackMateWizard <T extends RealType<T> & NativeType<T>> extends jav
 	 * Sets the current panel to that identified by the String passed in.
 	 * @param id String-based panel identifier
 	 */    
-	public void showDescriptorPanelFor(String id) {
-		currentDescriptor = descriptorHashmap.get(id);
+	public void showDescriptorPanelFor(final String id) {
 		
-		// Register component instance with the layout on the fly
-		String componentID = currentDescriptor.getComponentID();
-		cardLayout.addLayoutComponent(currentDescriptor.getComponent(), componentID);
-		jPanelMain.add(currentDescriptor.getComponent(), componentID);
+		SwingUtilities.invokeLater(new Runnable() {
+			
+			@Override
+			public void run() {
+				currentDescriptor = descriptorHashmap.get(id);
 
-		// Display it
-		cardLayout.show(jPanelMain, componentID);
+				// Register component instance with the layout on the fly
+				String componentID = currentDescriptor.getComponentID();
+				cardLayout.addLayoutComponent(currentDescriptor.getComponent(), componentID);
+				jPanelMain.add(currentDescriptor.getComponent(), componentID);
+
+				// Display it
+				cardLayout.show(jPanelMain, componentID);
+			}
+		});
 	}
 	
 	/**
