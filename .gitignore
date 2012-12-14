@@ -130,6 +130,7 @@ hs_err*.log
 /plugins/FS_Align_TrakEM2-[0-9]*.jar
 /plugins/FeatureJ_-[0-9]*.jar
 /plugins/Feature_Detection-[0-9]*.jar
+/plugins/Fiji_Archipelago-[0-9]*.jar
 /plugins/Fiji_Developer-[0-9]*.jar
 /plugins/Fiji_Package_Maker-[0-9]*.jar
 /plugins/Fiji_Plugins-[0-9]*.jar
@@ -196,6 +197,7 @@ hs_err*.log
 /plugins/Vaa3d_Reader-[0-9]*.jar
 /plugins/Video_Editing-[0-9]*.jar
 /plugins/View5D_-[0-9]*.jar
+/plugins/Volume_Calculator-[0-9]*.jar
 /plugins/Volume_Viewer-[0-9]*.jar
 /plugins/bUnwarpJ_-[0-9]*.jar
 /plugins/blockmatching_-[0-9]*.jar
