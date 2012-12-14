@@ -249,6 +249,7 @@ hs_err*.log
 /jars/jzlib-[0-9]*.jar
 /jars/mines-jtk-[0-9]*.jar
 /jars/pentaho-package-manager-[0-9]*.jar
+/jars/postgresql-[0-9]*.jar
 /jars/tools-[0-9]*.jar
 /jars/vecmath-[0-9]*.jar
 /jars/weka-dev-[0-9]*.jar
@@ -354,6 +355,8 @@ hs_err*.log
 /jars/commons-lang-[0-9]*.jar
 /jars/commons-logging-[0-9]*.jar
 /jars/forms-[0-9]*.jar
+/jars/jai-codec-[0-9]*.jar
+/jars/jai-core-[0-9]*.jar
 /jars/jai_imageio-[0-9]*.jar
 /jars/loci-common-[0-9]*.jar
 /jars/loci-legacy-[0-9]*.jar
