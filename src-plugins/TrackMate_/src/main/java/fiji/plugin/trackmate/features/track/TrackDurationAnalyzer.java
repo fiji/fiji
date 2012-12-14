@@ -15,7 +15,7 @@ import fiji.plugin.trackmate.TrackMateModel;
 
 public class TrackDurationAnalyzer<T extends RealType<T> & NativeType<T>> implements TrackFeatureAnalyzer<T> {
 	
-	public static final String NAME = "Track duration";
+	public static final String KEY = "Track duration";
 	public static final String 		TRACK_DURATION = "TRACK_DURATION";
 	public static final String 		TRACK_START = "TRACK_START";
 	public static final String 		TRACK_STOP = "TRACK_STOP";

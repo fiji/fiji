@@ -124,7 +124,7 @@ public class EdgeFeatureAnalyzerProvider <T extends RealType<T> & NativeType<T>>
 	}
 	
 	/**
-	 * @return the short name for the given feature, 
+	 * @return the short name of the given feature, 
 	 * or <code>null</code> if the feature is unknown to this provider.
 	 */
 	public String getFeatureShortName(String key) {
@@ -132,7 +132,7 @@ public class EdgeFeatureAnalyzerProvider <T extends RealType<T> & NativeType<T>>
 	}
 
 	/**
-	 * @return the name for the given feature, 
+	 * @return the name of the given feature, 
 	 * or <code>null</code> if the feature is unknown to this provider.
 	 */
 	public String getFeatureName(String key) {
@@ -140,7 +140,7 @@ public class EdgeFeatureAnalyzerProvider <T extends RealType<T> & NativeType<T>>
 	}
 
 	/**
-	 * @return the dimension for the target feature, 
+	 * @return the dimension of the target feature, 
 	 * or <code>null</code> if the feature is unknown to this provider.
 	 */
 	public Dimension getFeatureDimension(String key) {

@@ -54,7 +54,7 @@ public class TrackMate_<T extends RealType<T> & NativeType<T>>  implements PlugI
 
 	protected SpotFeatureAnalyzerProvider<T> spotFeatureFactory;
 	protected EdgeFeatureAnalyzerProvider<T> edgeFeatureAnalyzerProvider;
-	protected TrackFeatureAnalyzerFactory<T> trackFeatureFactory;
+	protected TrackFeatureAnalyzerProvider<T> trackFeatureFactory;
 	/** The factory that provides this plugin with available {@link TrackMateModelView}s. */
 	protected ViewFactory<T> viewFactory;
 	/** The factory that provides this plugin with available {@link TrackMateAction}s. */
@@ -244,8 +244,8 @@ public class TrackMate_<T extends RealType<T> & NativeType<T>>  implements PlugI
 	 * <p>
 	 * Create detector factory containing available spot {@link TrackFeatureAnalyzer}s.
 	 */
-	protected TrackFeatureAnalyzerFactory<T> createTrackFeatureAnalyzerFactory() {
-		return new TrackFeatureAnalyzerFactory<T>();
+	protected TrackFeatureAnalyzerProvider<T> createTrackFeatureAnalyzerFactory() {
+		return new TrackFeatureAnalyzerProvider<T>();
 	}
 
 	/**

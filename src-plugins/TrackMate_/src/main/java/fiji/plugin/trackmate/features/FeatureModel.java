@@ -24,7 +24,7 @@ import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.SpotFeatureAnalyzerProvider;
-import fiji.plugin.trackmate.TrackFeatureAnalyzerFactory;
+import fiji.plugin.trackmate.TrackFeatureAnalyzerProvider;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.features.edges.EdgeFeatureAnalyzer;
 import fiji.plugin.trackmate.features.spot.SpotFeatureAnalyzer;
@@ -77,7 +77,7 @@ public class FeatureModel <T extends RealType<T> & NativeType<T>> implements Mul
 	
 	private TrackMateModel<T> model;
 	protected SpotFeatureAnalyzerProvider<T> spotAnalyzerProvider;
-	protected TrackFeatureAnalyzerFactory<T> trackAnalyzerFactory;
+	protected TrackFeatureAnalyzerProvider<T> trackAnalyzerFactory;
 	protected int numThreads;
 	private EdgeFeatureAnalyzerProvider<T> edgeFeatureAnalyzerProvider;
 
@@ -247,19 +247,21 @@ public class FeatureModel <T extends RealType<T> & NativeType<T>> implements Mul
 	 * 
 	 * @see #computeTrackFeatures()
 	 */
-	public void setTrackFeatureFactory(TrackFeatureAnalyzerFactory<T> trackAnalyzerFactory) {
+	public void setTrackFeatureFactory(TrackFeatureAnalyzerProvider<T> trackAnalyzerFactory) {
 		this.trackAnalyzerFactory = trackAnalyzerFactory;
 
 		trackFeatures = new ArrayList<String>();
+		for (String analyzer : trackAnalyzerFactory.getAvailableTrackFeatureAnalyzers()) {
+			trackFeatures.addAll(trackAnalyzerFactory.getFeatures(analyzer));
+		}
+		
 		trackFeatureNames = new HashMap<String, String>();
 		trackFeatureShortNames = new HashMap<String, String>();
 		trackFeatureDimensions = new HashMap<String, Dimension>();
-
-		for (String analyzer : trackAnalyzerFactory.getAvailableTrackFeatureAnalyzers()) {
-			trackFeatures.addAll(trackAnalyzerFactory.getFeatures(analyzer));
-			trackFeatureNames.putAll(trackAnalyzerFactory.getFeatureNames(analyzer));
-			trackFeatureShortNames.putAll(trackAnalyzerFactory.getFeatureShortNames(analyzer));
-			trackFeatureDimensions.putAll(trackAnalyzerFactory.getFeatureDimensions(analyzer));
+		for (String trackFeature : trackFeatures) {
+			trackFeatureNames.put(trackFeature, trackAnalyzerFactory.getFeatureName(trackFeature));
+			trackFeatureShortNames.put(trackFeature, trackAnalyzerFactory.getFeatureShortName(trackFeature));
+			trackFeatureDimensions.put(trackFeature, trackAnalyzerFactory.getFeatureDimension(trackFeature));
 		}
 	}
 
