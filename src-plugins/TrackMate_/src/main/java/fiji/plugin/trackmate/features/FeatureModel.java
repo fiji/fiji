@@ -28,7 +28,7 @@ import fiji.plugin.trackmate.TrackFeatureAnalyzerProvider;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.features.edges.EdgeFeatureAnalyzer;
 import fiji.plugin.trackmate.features.spot.SpotFeatureAnalyzer;
-import fiji.plugin.trackmate.features.spot.EdgeFeatureAnalyzerFactory;
+import fiji.plugin.trackmate.features.spot.SpotFeatureAnalyzerFactory;
 import fiji.plugin.trackmate.features.track.TrackFeatureAnalyzer;
 import fiji.plugin.trackmate.util.TMUtils;
 
@@ -142,7 +142,7 @@ public class FeatureModel <T extends RealType<T> & NativeType<T>> implements Mul
 				}
 			}
 		}
-		List<EdgeFeatureAnalyzerFactory<T>> selectedAnalyzers = new ArrayList<EdgeFeatureAnalyzerFactory<T>>();
+		List<SpotFeatureAnalyzerFactory<T>> selectedAnalyzers = new ArrayList<SpotFeatureAnalyzerFactory<T>>();
 		for(String key : selectedKeys) {
 			selectedAnalyzers.add(spotAnalyzerProvider.getSpotFeatureAnalyzer(key));
 		}
@@ -161,7 +161,7 @@ public class FeatureModel <T extends RealType<T> & NativeType<T>> implements Mul
 		if (null == spotAnalyzerProvider)
 			return;
 		List<String> analyzerNames = spotAnalyzerProvider.getAvailableSpotFeatureAnalyzers();
-		List<EdgeFeatureAnalyzerFactory<T>> spotFeatureAnalyzers = new ArrayList<EdgeFeatureAnalyzerFactory<T>>(analyzerNames.size());
+		List<SpotFeatureAnalyzerFactory<T>> spotFeatureAnalyzers = new ArrayList<SpotFeatureAnalyzerFactory<T>>(analyzerNames.size());
 		for (String analyzerName : analyzerNames) {
 			spotFeatureAnalyzers.add(spotAnalyzerProvider.getSpotFeatureAnalyzer(analyzerName));
 		}
@@ -180,28 +180,35 @@ public class FeatureModel <T extends RealType<T> & NativeType<T>> implements Mul
 	 * @see #updateFeatures(List) 
 	 * @see #updateFeatures(Spot)
 	 */
-	public void setSpotFeatureFactory(final SpotFeatureAnalyzerProvider<T> spotAnalyzerFactory) {
-		this.spotAnalyzerProvider = spotAnalyzerFactory;
+	public void setSpotFeatureFactory(final SpotFeatureAnalyzerProvider<T> spotAnalyzerProvider) {
+		this.spotAnalyzerProvider = spotAnalyzerProvider;
 
 		spotFeatures = new ArrayList<String>();
+		ArrayList<String> fromAnalyzersFeatures = new ArrayList<String>();
+		// Add the basic features
+		spotFeatures.addAll(Spot.FEATURES);
+		// Features from analyzers
+		if (null != spotAnalyzerProvider) {
+			List<String> analyzers = spotAnalyzerProvider.getAvailableSpotFeatureAnalyzers();
+			for(String analyzer : analyzers) {
+				spotFeatures.addAll(spotAnalyzerProvider.getFeatures(analyzer));
+				fromAnalyzersFeatures.addAll(spotAnalyzerProvider.getFeatures(analyzer));
+			}
+		}
+
 		spotFeatureNames = new HashMap<String, String>();
 		spotFeatureShortNames = new HashMap<String, String>();
 		spotFeatureDimensions = new HashMap<String, Dimension>();
-
 		// Add the basic features
-		spotFeatures.addAll(Spot.FEATURES);
 		spotFeatureNames.putAll(Spot.FEATURE_NAMES);
 		spotFeatureShortNames.putAll(Spot.FEATURE_SHORT_NAMES);
 		spotFeatureDimensions.putAll(Spot.FEATURE_DIMENSIONS);
-
 		// Features from analyzers
-		if (null != spotAnalyzerFactory) {
-			List<String> analyzers = spotAnalyzerFactory.getAvailableSpotFeatureAnalyzers();
-			for(String analyzer : analyzers) {
-				spotFeatures.addAll(spotAnalyzerFactory.getFeatures(analyzer));
-				spotFeatureNames.putAll(spotAnalyzerFactory.getFeatureNames(analyzer));
-				spotFeatureShortNames.putAll(spotAnalyzerFactory.getFeatureShortNames(analyzer));
-				spotFeatureDimensions.putAll(spotAnalyzerFactory.getFeatureDimensions(analyzer));
+		if (null != spotAnalyzerProvider) {
+			for(String feature : fromAnalyzersFeatures) {
+				spotFeatureNames.put(feature, spotAnalyzerProvider.getFeatureName(feature));
+				spotFeatureShortNames.put(feature, spotAnalyzerProvider.getFeatureShortName(feature));
+				spotFeatureDimensions.put(feature, spotAnalyzerProvider.getFeatureDimension(feature));
 			}
 		}
 	}
@@ -299,7 +306,7 @@ public class FeatureModel <T extends RealType<T> & NativeType<T>> implements Mul
 	 * @param toCompute
 	 * @param analyzers
 	 */
-	private void computeSpotFeaturesAgent(final SpotCollection toCompute, final List<EdgeFeatureAnalyzerFactory<T>> analyzerFactories) {
+	private void computeSpotFeaturesAgent(final SpotCollection toCompute, final List<SpotFeatureAnalyzerFactory<T>> analyzerFactories) {
 
 		final Settings<T> settings = model.getSettings();
 		final Logger logger = model.getLogger();
@@ -336,7 +343,7 @@ public class FeatureModel <T extends RealType<T> & NativeType<T>> implements Mul
 					for (int index = ai.getAndIncrement(); index < numFrames; index = ai.getAndIncrement()) {
 
 						int frame = frameSet.get(index);
-						for (EdgeFeatureAnalyzerFactory<T> factory : analyzerFactories) {
+						for (SpotFeatureAnalyzerFactory<T> factory : analyzerFactories) {
 							factory.getAnalyzer(frame, targetChannel).process();
 						}
 
