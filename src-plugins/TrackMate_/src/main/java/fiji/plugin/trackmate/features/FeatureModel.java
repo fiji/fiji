@@ -263,19 +263,21 @@ public class FeatureModel <T extends RealType<T> & NativeType<T>> implements Mul
 		}
 	}
 
-	public void setEdgeFeatureProvider(EdgeFeatureAnalyzerProvider<T> edgeFeatureAnalyzerProvider) {
+	public void setEdgeFeatureProvider(final EdgeFeatureAnalyzerProvider<T> edgeFeatureAnalyzerProvider) {
 		this.edgeFeatureAnalyzerProvider = edgeFeatureAnalyzerProvider;
 		
 		edgeFeatures = new ArrayList<String>();
+		for (String analyzer : edgeFeatureAnalyzerProvider.getAvailableEdgeFeatureAnalyzers()) {
+			edgeFeatures.addAll(edgeFeatureAnalyzerProvider.getFeatures(analyzer));
+		}
+		
 		edgeFeatureNames = new HashMap<String, String>();
 		edgeFeatureShortNames = new HashMap<String, String>();
 		edgeFeatureDimensions = new HashMap<String, Dimension>();
-
-		for (String analyzer : edgeFeatureAnalyzerProvider.getAvailableEdgeFeatureAnalyzers()) {
-			edgeFeatures.addAll(edgeFeatureAnalyzerProvider.getFeatures(analyzer));
-			edgeFeatureNames.putAll(edgeFeatureAnalyzerProvider.getFeatureNames(analyzer));
-			edgeFeatureShortNames.putAll(edgeFeatureAnalyzerProvider.getFeatureShortNames(analyzer));
-			edgeFeatureDimensions.putAll(edgeFeatureAnalyzerProvider.getFeatureDimensions(analyzer));
+		for (String edgeFeature : edgeFeatures) {
+			edgeFeatureNames.put(edgeFeature, edgeFeatureAnalyzerProvider.getFeatureName(edgeFeature));
+			edgeFeatureShortNames.put(edgeFeature, edgeFeatureAnalyzerProvider.getFeatureShortName(edgeFeature));
+			edgeFeatureDimensions.put(edgeFeature, edgeFeatureAnalyzerProvider.getFeatureDimension(edgeFeature));
 		}
 	}
 

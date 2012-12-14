@@ -1,6 +1,7 @@
 package fiji.plugin.trackmate;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -8,6 +9,8 @@ import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
 import fiji.plugin.trackmate.features.edges.EdgeFeatureAnalyzer;
 import fiji.plugin.trackmate.features.edges.EdgeTargetAnalyzer;
+import fiji.plugin.trackmate.features.edges.EdgeTimeLocationAnalyzer;
+import fiji.plugin.trackmate.features.edges.EdgeVelocityAnalyzer;
 
 /**
  * A provider for the edge analyzers provided in the GUI.
@@ -16,7 +19,15 @@ public class EdgeFeatureAnalyzerProvider <T extends RealType<T> & NativeType<T>>
 
 
 	protected final TrackMateModel<T> model;
-	private ArrayList<String> names;
+	protected List<String> names;
+	/** Map of the features per analyzer. */
+	protected Map<String, List<String>> features;
+	/** Map a feature to its name. */
+	protected Map<String,String> featureNames;
+	/** Map a feature to its short name. */
+	protected Map<String, String> featureShortNames;
+	/** Map a feature to its dimension. */
+	protected Map<String, Dimension> featureDimensions;
 
 	/*
 	 * CONSTRUCTOR
@@ -46,8 +57,30 @@ public class EdgeFeatureAnalyzerProvider <T extends RealType<T> & NativeType<T>>
 	 */
 	protected void registerEdgeFeatureAnalyzers() {
 		// Names
-		names = new ArrayList<String>(1);
+		names = new ArrayList<String>(3);
+		names.add(EdgeTimeLocationAnalyzer.KEY);
+		names.add(EdgeVelocityAnalyzer.KEY);
 		names.add(EdgeTargetAnalyzer.KEY);
+		// features
+		features = new HashMap<String, List<String>>();
+		features.put(EdgeTimeLocationAnalyzer.KEY, EdgeTimeLocationAnalyzer.FEATURES);
+		features.put(EdgeVelocityAnalyzer.KEY, EdgeVelocityAnalyzer.FEATURES);
+		features.put(EdgeTargetAnalyzer.KEY, EdgeTargetAnalyzer.FEATURES);
+		// features names
+		featureNames = new HashMap<String, String>();
+		featureNames.putAll(EdgeTimeLocationAnalyzer.FEATURE_NAMES);
+		featureNames.putAll(EdgeVelocityAnalyzer.FEATURE_NAMES);
+		featureNames.putAll(EdgeTargetAnalyzer.FEATURE_NAMES);
+		// features short names
+		featureShortNames = new HashMap<String, String>();
+		featureShortNames.putAll(EdgeTimeLocationAnalyzer.FEATURE_SHORT_NAMES);
+		featureShortNames.putAll(EdgeVelocityAnalyzer.FEATURE_SHORT_NAMES);
+		featureShortNames.putAll(EdgeTargetAnalyzer.FEATURE_SHORT_NAMES);
+		// feature dimensions
+		featureDimensions = new HashMap<String, Dimension>();
+		featureDimensions.putAll(EdgeTimeLocationAnalyzer.FEATURE_DIMENSIONS);
+		featureDimensions.putAll(EdgeVelocityAnalyzer.FEATURE_DIMENSIONS);
+		featureDimensions.putAll(EdgeTargetAnalyzer.FEATURE_DIMENSIONS);
 	}
 
 	/**
@@ -57,62 +90,60 @@ public class EdgeFeatureAnalyzerProvider <T extends RealType<T> & NativeType<T>>
 	public EdgeFeatureAnalyzer getEdgeFeatureAnalyzer(String key) {
 		if (key == EdgeTargetAnalyzer.KEY) {
 			return new EdgeTargetAnalyzer<T>(model);
+		} else if (key == EdgeVelocityAnalyzer.KEY) {
+			return new EdgeVelocityAnalyzer<T>(model);
+		} else if (key == EdgeTimeLocationAnalyzer.KEY) {
+			return new EdgeTimeLocationAnalyzer<T>(model);
 		} else {
 			return null;
 		}
 	}
 
 	/**
-	 * @return a list of the edgeFeatureAnalyzer names available through this factory.
+	 * @return a list of the edgeFeatureAnalyzer names available through this provider.
 	 */
 	public List<String> getAvailableEdgeFeatureAnalyzers() {
 		return names;
 	}
 
-
+	/** 
+	 * @return  the list of features an analyzer can compute, or <code>null</code> if the 
+	 * analyzer is unknown to this provider
+	 * @param analyzer  the analyzer key String
+	 */
 	public List<String> getFeatures(String analyzer) {
 		if (analyzer == EdgeTargetAnalyzer.KEY) {
 			return EdgeTargetAnalyzer.FEATURES;
+		} else if (analyzer == EdgeVelocityAnalyzer.KEY) {
+			return EdgeVelocityAnalyzer.FEATURES;
+		} else if (analyzer == EdgeTimeLocationAnalyzer.KEY) {
+			return EdgeTimeLocationAnalyzer.FEATURES;
 		} else {
 			return null;
 		}
 	}
 	
 	/**
-	 * @return the map of short names for any feature, for the target analyzer, 
-	 * or <code>null</code> if the analyzer is unknown to this factory.
+	 * @return the short name for the given feature, 
+	 * or <code>null</code> if the feature is unknown to this provider.
 	 */
-	public Map<String, String> getFeatureShortNames(String key) {
-		if (key == EdgeTargetAnalyzer.KEY) {
-			return EdgeTargetAnalyzer.FEATURE_SHORT_NAMES;
-		} else {
-			return null;
-		}
+	public String getFeatureShortName(String key) {
+		return featureShortNames.get(key);
 	}
 
 	/**
-	 * @return the map of names for any feature, for the target analyzer, 
-	 * or <code>null</code> if the analyzer is unknown to this factory.
+	 * @return the name for the given feature, 
+	 * or <code>null</code> if the feature is unknown to this provider.
 	 */
-	public Map<String, String> getFeatureNames(String key) {
-		if (key == EdgeTargetAnalyzer.KEY) {
-			return EdgeTargetAnalyzer.FEATURE_NAMES;
-		} else {
-			return null;
-		}
+	public String getFeatureName(String key) {
+		return featureNames.get(key);
 	}
 
 	/**
-	 * @return the map of feature dimension, for the target analyzer, 
-	 * or <code>null</code> if the analyzer is unknown to this factory.
+	 * @return the dimension for the target feature, 
+	 * or <code>null</code> if the feature is unknown to this provider.
 	 */
-	public Map<String, Dimension> getFeatureDimensions(String key) {
-		if (key == EdgeTargetAnalyzer.KEY) {
-			return EdgeTargetAnalyzer.FEATURE_DIMENSIONS;
-		} else {
-			return null;
-		}
+	public Dimension getFeatureDimension(String key) {
+		return featureDimensions.get(key);
 	}
-
-
 }
