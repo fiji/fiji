@@ -37,6 +37,8 @@ public class EdgeTimeLocationAnalyzer<T extends RealType<T> & NativeType<T>> imp
 	static {
 		FEATURES.add(TIME);
 		FEATURES.add(X_LOCATION);
+		FEATURES.add(Y_LOCATION);
+		FEATURES.add(Z_LOCATION);
 
 		FEATURE_NAMES.put(TIME, "Time (mean)");
 		FEATURE_NAMES.put(X_LOCATION, "X Location (mean)");
