@@ -452,6 +452,7 @@ public class POM extends DefaultHandler implements Comparable<POM> {
 						pom.coordinate.setSnapshotVersion(VersionPOMHandler.parse(new File(pom.directory.getParentFile(), "maven-metadata-version.xml")));
 					else
 						pom.coordinate.setSnapshotVersion(SnapshotPOMHandler.parse(new File(pom.directory, "maven-metadata-snapshot.xml")));
+					dependency.setSnapshotVersion(pom.coordinate.getVersion());
 				}
 			}
 			if (pom == null && downloadAutomatically) try {
