@@ -19,8 +19,8 @@ import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.SpotImp;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMate_;
+import fiji.plugin.trackmate.features.SpotFeatureGrapher;
 import fiji.plugin.trackmate.io.TmXmlReader;
-import fiji.plugin.trackmate.visualization.trackscheme.SpotFeatureGrapher;
 import fiji.plugin.trackmate.visualization.trackscheme.TrackScheme;
 
 public class SpotFeatureGrapher_TestDrive {
@@ -39,7 +39,7 @@ public class SpotFeatureGrapher_TestDrive {
 		HashSet<String> Y = new HashSet<String>(1);
 		Y.add(Spot.POSITION_T);
 		SpotFeatureGrapher<T> grapher = new SpotFeatureGrapher<T>(Spot.POSITION_X, Y, spots, model);
-		grapher.setVisible(true);
+		grapher.render();
 		
 		TrackScheme<T> trackScheme = new TrackScheme<T>(model);
 		trackScheme.render();

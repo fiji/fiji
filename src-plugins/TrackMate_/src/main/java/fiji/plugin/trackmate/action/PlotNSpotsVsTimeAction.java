@@ -10,7 +10,6 @@ import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
 
 import org.jfree.chart.ChartFactory;
-import org.jfree.chart.ExportableChartPanel;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.chart.plot.XYPlot;
@@ -19,6 +18,7 @@ import org.jfree.data.xy.DefaultXYDataset;
 import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMate_;
+import fiji.plugin.trackmate.util.ExportableChartPanel;
 import fiji.plugin.trackmate.visualization.trackscheme.TrackSchemeFrame;
 
 public class PlotNSpotsVsTimeAction<T extends RealType<T> & NativeType<T>> extends AbstractTMAction<T> {

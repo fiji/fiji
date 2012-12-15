@@ -1,6 +1,5 @@
-package org.jfree.chart;
+package fiji.plugin.trackmate.util;
 
-import fiji.plugin.trackmate.visualization.trackscheme.XYEdgeSeriesCollection;
 import ij.IJ;
 import ij.measure.ResultsTable;
 
@@ -17,8 +16,10 @@ import javax.swing.JFileChooser;
 import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
 
+import org.jfree.chart.ChartPanel;
+import org.jfree.chart.ChartUtilities;
+import org.jfree.chart.JFreeChart;
 import org.jfree.chart.plot.XYPlot;
-import org.jfree.chart.util.ChartExporter;
 import org.jfree.data.xy.XYDataset;
 import org.jfree.ui.ExtensionFileFilter;
 

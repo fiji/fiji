@@ -1,4 +1,4 @@
-package fiji.plugin.trackmate.visualization.trackscheme;
+package fiji.plugin.trackmate.util;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -21,6 +21,21 @@ public class XYEdgeSeriesCollection extends AbstractSeriesDataset implements XYD
 	/*
 	 * PUBLIC METHODS
 	 */
+	
+	/**
+	 * Print out the content of this dataset
+	 */
+	@Override
+	public String toString() {
+		StringBuilder sb = new StringBuilder();
+		for(XYEdgeSeries series : seriesList) {
+			sb.append(series.getKey() + ":\n");
+			for (int i = 0; i < series.getItemCount(); i++) {
+				sb.append("  x = " + series.getEdgeXStart(i) + " -> " + series.getEdgeXEnd(i) + ", y = " + series.getEdgeYStart(i) + " -> " + series.getEdgeYEnd(i) + '\n');
+			}
+		}
+		return sb.toString();
+	}
 
 	@Override
 	public int getSeriesCount() {

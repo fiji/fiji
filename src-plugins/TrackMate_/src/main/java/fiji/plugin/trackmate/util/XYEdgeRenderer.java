@@ -1,4 +1,4 @@
-package fiji.plugin.trackmate.visualization.trackscheme;
+package fiji.plugin.trackmate.util;
 
 import java.awt.Graphics2D;
 import java.awt.geom.Rectangle2D;

@@ -21,10 +21,10 @@ public class EdgeTimeLocationAnalyzer<T extends RealType<T> & NativeType<T>> imp
 	/*
 	 * FEATURE NAMES 
 	 */
-	private static final String TIME = "TIME";
-	private static final String X_LOCATION = "X_LOCATION";
-	private static final String Y_LOCATION = "Y_LOCATION";
-	private static final String Z_LOCATION = "Z_LOCATION";
+	public static final String TIME = "TIME";
+	public static final String X_LOCATION = "X_LOCATION";
+	public static final String Y_LOCATION = "Y_LOCATION";
+	public static final String Z_LOCATION = "Z_LOCATION";
 
 	private final TrackMateModel<T> model;
 	private final FeatureModel<T> featureModel;
