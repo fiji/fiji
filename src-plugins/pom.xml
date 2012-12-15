@@ -25,6 +25,7 @@
 		<jcommon.version>1.0.17</jcommon.version>
 		<jfreechart.version>1.0.14</jfreechart.version>
 		<mpicbg.version>20120621</mpicbg.version>
+		<trakem2.version>1.0b-SNAPSHOT</trakem2.version>
 	</properties>
 
 	<modules>
