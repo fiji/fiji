@@ -8,6 +8,7 @@ import fiji.plugin.trackmate.TrackMate_;
 import fiji.plugin.trackmate.action.GrabSpotImageAction;
 import fiji.plugin.trackmate.features.track.TrackBranchingAnalyzer;
 import fiji.plugin.trackmate.gui.DisplayerPanel;
+import fiji.plugin.trackmate.gui.GrapherPanel;
 import fiji.plugin.trackmate.io.TmXmlReader;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
 import fiji.plugin.trackmate.visualization.hyperstack.HyperStackDisplayer;
@@ -93,6 +94,15 @@ public class TrackVisualizerTestDrive {
 		panel.register(displayer);
 		JFrame frame = new JFrame();
 		frame.getContentPane().add(panel);
+		frame.setSize(300, 500);
 		frame.setVisible(true);
+		
+		// Show plot panel
+		GrapherPanel<T> plotPanel = new GrapherPanel<T>();
+		plotPanel.setPlugin(plugin);
+		JFrame graphFrame = new JFrame();
+		graphFrame.getContentPane().add(plotPanel);
+		graphFrame.setSize(300, 500);
+		graphFrame.setVisible(true);
 	}
 }

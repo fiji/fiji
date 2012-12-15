@@ -428,6 +428,17 @@ public class TrackMateModel <T extends RealType<T> & NativeType<T>> {
 		return graph.containsEdge(source, target);
 	}
 
+	 /**
+     * @return an link connecting source spot to target spot if such
+     * spots and such link exist in the model. Otherwise returns <code>
+     * null</code>. If any of the specified spots is <code>null</code>
+     * returns <code>null</code>. This method takes into account the direction
+     * of the link, and will return <code>null</code> even if there is an
+     * existing link, but in the opposite direction.
+     *
+     * @param source source spot of the link.
+     * @param target target spot of the link.
+     */
 	public DefaultWeightedEdge getEdge(final Spot source, final Spot target) {
 		return graph.getEdge(source, target);
 	}

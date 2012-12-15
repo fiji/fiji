@@ -42,7 +42,7 @@ public class FeaturePlotSelectionPanel extends ActionListenablePanel {
 	private static final ImageIcon ADD_ICON 		= new ImageIcon(TrackScheme.class.getResource("resources/add.png"));
 	private static final ImageIcon REMOVE_ICON 		= new ImageIcon(TrackScheme.class.getResource("resources/delete.png"));
 	private static final Dimension BUTTON_SIZE 		= new Dimension(24, 24);
-	private static final Dimension COMBO_BOX_SIZE 	= new java.awt.Dimension(220, 22);
+	private static final Dimension COMBO_BOX_MAX_SIZE 	= new java.awt.Dimension(220, 22);
 	private static final int MAX_FEATURE_ALLOWED = 10;
 
 	private JLabel jLabelXFeature;
@@ -110,8 +110,7 @@ public class FeaturePlotSelectionPanel extends ActionListenablePanel {
 				TMUtils.getArrayFromMaping(features, featureNames).toArray(new String[] {}));
 		JComboBox jComboBoxYFeature = new JComboBox();
 		jComboBoxYFeature.setModel(jComboBoxYFeatureModel);
-		jComboBoxYFeature.setPreferredSize(COMBO_BOX_SIZE);
-		jComboBoxYFeature.setMaximumSize(COMBO_BOX_SIZE);
+		jComboBoxYFeature.setMaximumSize(COMBO_BOX_MAX_SIZE);
 		jComboBoxYFeature.setFont(FONT);
 
 		if (!comboBoxes.isEmpty()) {
@@ -121,7 +120,7 @@ public class FeaturePlotSelectionPanel extends ActionListenablePanel {
 			jComboBoxYFeature.setSelectedIndex(newIndex);
 		}
 
-		Component strut = Box.createVerticalStrut(5);
+		Component strut = Box.createVerticalStrut(10);
 		jPanelYFeatures.add(strut);
 		jPanelYFeatures.add(jComboBoxYFeature);
 		jPanelYFeatures.revalidate();
@@ -130,7 +129,7 @@ public class FeaturePlotSelectionPanel extends ActionListenablePanel {
 	}
 
 	private void removeFeature() {
-		if (comboBoxes.isEmpty())
+		if (comboBoxes.size() <= 1)
 			return;		
 		jPanelYFeatures.remove(comboBoxes.pop());
 		jPanelYFeatures.remove(struts.pop());
@@ -191,7 +190,7 @@ public class FeaturePlotSelectionPanel extends ActionListenablePanel {
 				ComboBoxModel jComboBoxXFeatureModel = new DefaultComboBoxModel(
 						TMUtils.getArrayFromMaping(features, featureNames).toArray(new String[] {}));
 				jComboBoxXFeature = new JComboBox();
-				jComboBoxXFeature.setBounds(30, 117, COMBO_BOX_SIZE.width, COMBO_BOX_SIZE.height);
+				jComboBoxXFeature.setBounds(30, 117, COMBO_BOX_MAX_SIZE.width, COMBO_BOX_MAX_SIZE.height);
 				topPanel.add(jComboBoxXFeature);
 				jComboBoxXFeature.setModel(jComboBoxXFeatureModel);
 				jComboBoxXFeature.setFont(FONT);
@@ -205,10 +204,12 @@ public class FeaturePlotSelectionPanel extends ActionListenablePanel {
 				jLabelYFeatures.setText("Features for Y axis:");
 				jLabelYFeatures.setFont(FONT.deriveFont(12));
 			}
-			centerPanel = new JPanel();
-			centerPanel.setBorder(null);
-			add(centerPanel, BorderLayout.CENTER);
-			centerPanel.setLayout(new BorderLayout(0, 0));
+			{
+				centerPanel = new JPanel();
+				centerPanel.setBorder(null);
+				add(centerPanel, BorderLayout.CENTER);
+				centerPanel.setLayout(new BorderLayout(0, 0));
+			}
 			{
 				jScrollPaneYFeatures = new JScrollPane();
 				jScrollPaneYFeatures.setBorder(null);
@@ -258,13 +259,9 @@ public class FeaturePlotSelectionPanel extends ActionListenablePanel {
 						TMUtils.getArrayFromMaping(features, featureNames).toArray(new String[] {}));
 				jComboBoxYFeature = new JComboBox();
 				jComboBoxYFeature.setModel(jComboBoxYFeatureModel);
-				jComboBoxYFeature.setPreferredSize(COMBO_BOX_SIZE);
-				jComboBoxYFeature.setMaximumSize(COMBO_BOX_SIZE);
+				jComboBoxYFeature.setPreferredSize(COMBO_BOX_MAX_SIZE);
+				jComboBoxYFeature.setMaximumSize(COMBO_BOX_MAX_SIZE);
 				jComboBoxYFeature.setFont(FONT);
-
-				Component strut = Box.createVerticalStrut(5);
-				comboBoxes.push(jComboBoxYFeature);
-				struts.push(strut);
 			}
 		} catch (Exception e) {
 			e.printStackTrace();

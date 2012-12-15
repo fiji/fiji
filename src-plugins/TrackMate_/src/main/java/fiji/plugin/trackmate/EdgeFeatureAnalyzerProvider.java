@@ -58,8 +58,8 @@ public class EdgeFeatureAnalyzerProvider <T extends RealType<T> & NativeType<T>>
 	protected void registerEdgeFeatureAnalyzers() {
 		// Names
 		names = new ArrayList<String>(3);
-		names.add(EdgeTimeLocationAnalyzer.KEY);
 		names.add(EdgeVelocityAnalyzer.KEY);
+		names.add(EdgeTimeLocationAnalyzer.KEY);
 		names.add(EdgeTargetAnalyzer.KEY);
 		// features
 		features = new HashMap<String, List<String>>();
