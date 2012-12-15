@@ -555,8 +555,11 @@ public class POM extends DefaultHandler implements Comparable<POM> {
 
 	protected void getRepositories(Set<String> result) {
 		// add a default to the root
-		if (parent == null)
+		if (parent == null) {
 			result.add("http://repo1.maven.org/maven2/");
+			result.add("http://maven.imagej.net/content/repositories/releases/");
+			result.add("http://maven.imagej.net/content/repositories/snapshots/");
+		}
 		result.addAll(repositories);
 		for (POM child : getChildren())
 			if (child != null)
