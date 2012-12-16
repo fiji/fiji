@@ -28,6 +28,7 @@ import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMate_;
 import fiji.plugin.trackmate.features.EdgeFeatureGrapher;
 import fiji.plugin.trackmate.features.SpotFeatureGrapher;
+import fiji.plugin.trackmate.features.TrackFeatureGrapher;
 import fiji.plugin.trackmate.features.edges.EdgeTimeLocationAnalyzer;
 import fiji.plugin.trackmate.features.track.TrackDurationAnalyzer;
 
@@ -137,8 +138,13 @@ public class GrapherPanel<T extends RealType<T> & NativeType<T>> extends ActionL
 	}
 	
 	private void plotTrackFeatures() {
-		// TODO Auto-generated method stub
-
+		// Recompute track features
+		model.getFeatureModel().computeTrackFeatures();
+		// Prepare grapher
+		String xFeature = trackFeatureSelectionPanel.getXKey();
+		Set<String> yFeatures = trackFeatureSelectionPanel.getYKeys();
+		TrackFeatureGrapher<T> grapher = new TrackFeatureGrapher<T>(xFeature, yFeatures, model);
+		grapher.render();
 	}
 
 	/*
