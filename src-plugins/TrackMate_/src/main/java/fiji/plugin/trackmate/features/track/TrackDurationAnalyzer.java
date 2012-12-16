@@ -83,6 +83,11 @@ public class TrackDurationAnalyzer<T extends RealType<T> & NativeType<T>> implem
 				model.getFeatureModel().putTrackFeature(index, TRACK_START, minT);
 				model.getFeatureModel().putTrackFeature(index, TRACK_STOP, maxT);
 				model.getFeatureModel().putTrackFeature(index, TRACK_DISPLACEMENT, (double) Math.sqrt(startSpot.squareDistanceTo(endSpot)));
+			} else {
+				model.getFeatureModel().putTrackFeature(index, TRACK_DURATION, Double.NaN);
+				model.getFeatureModel().putTrackFeature(index, TRACK_START, Double.NaN);
+				model.getFeatureModel().putTrackFeature(index, TRACK_STOP, Double.NaN);
+				model.getFeatureModel().putTrackFeature(index, TRACK_DISPLACEMENT, Double.NaN);
 			}
 		}
 	}

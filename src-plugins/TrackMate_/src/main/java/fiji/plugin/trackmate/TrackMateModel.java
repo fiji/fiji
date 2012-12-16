@@ -2,6 +2,7 @@ package fiji.plugin.trackmate;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -130,7 +131,7 @@ public class TrackMateModel <T extends RealType<T> & NativeType<T>> {
 	 * CONSTANTS
 	 */
 
-	private static final boolean DEBUG = false;
+	private static final boolean DEBUG = true;
 	private static final boolean DEBUG_SELECTION = false;
 
 	/*
@@ -163,7 +164,7 @@ public class TrackMateModel <T extends RealType<T> & NativeType<T>> {
 	/** The edges contained in the list of tracks. */
 	protected List<Set<DefaultWeightedEdge>> trackEdges = new ArrayList<Set<DefaultWeightedEdge>>();
 	/** The spots contained in the list of spots. */
-	protected List<Set<Spot>> trackSpots = new ArrayList<Set<Spot>>();
+	protected List<Set<Spot>> trackSpots = Collections.unmodifiableList(new ArrayList<Set<Spot>>());
 
 	/**
 	 * The visible track indices. Is a set made of the indices of tracks (in
@@ -536,6 +537,9 @@ public class TrackMateModel <T extends RealType<T> & NativeType<T>> {
 	 */
 
 	public Set<Spot> getTrackSpots(int index) {
+		if (DEBUG) {
+			System.out.println("[TrackMateModel] #getTrackSpots(int): returning track " + index + " of size " + trackSpots.get(index).size() + ".");
+		}
 		return trackSpots.get(index);
 	}
 
@@ -561,7 +565,7 @@ public class TrackMateModel <T extends RealType<T> & NativeType<T>> {
 	 * track indices.
 	 */
 	public void setTrackSpots(List<Set<Spot>> trackSpots) {
-		this.trackSpots = trackSpots;
+		this.trackSpots = Collections.unmodifiableList(trackSpots);
 	}
 
 	/**
@@ -714,8 +718,8 @@ public class TrackMateModel <T extends RealType<T> & NativeType<T>> {
 		this.graph = new ListenableDirectedGraph<Spot, DefaultWeightedEdge>(
 				new SimpleDirectedWeightedGraph<Spot, DefaultWeightedEdge>(DefaultWeightedEdge.class));
 		this.graph.addGraphListener(new MyGraphListener());
-		this.trackEdges = null;
-		this.trackSpots = null;
+		this.trackEdges = Collections.unmodifiableList(new ArrayList<Set<DefaultWeightedEdge>>());;
+		this.trackSpots = Collections.unmodifiableList(new ArrayList<Set<Spot>>());
 	}
 
 
@@ -1199,12 +1203,25 @@ public class TrackMateModel <T extends RealType<T> & NativeType<T>> {
 	 * or split.
 	 */
 	private void computeTracksFromGraph() {
+		
+		if (DEBUG) {
+			System.out.println("[TrackMateModel] #computeTracksFromGraph()");
+		}
+		
 		// Retain old values
 		List<Set<Spot>> oldTrackSpots = trackSpots;
+		
+		if (DEBUG) {
+			System.out.println("[TrackMateModel] #computeTracksFromGraph(): storing " + oldTrackSpots.size() + " old spot tracks.");
+		}
 
 		// Build new track lists
-		this.trackSpots = new ConnectivityInspector<Spot, DefaultWeightedEdge>(graph).connectedSets();
+		this.trackSpots = Collections.unmodifiableList( new ConnectivityInspector<Spot, DefaultWeightedEdge>(graph).connectedSets() );
 		this.trackEdges = new ArrayList<Set<DefaultWeightedEdge>>(trackSpots.size());
+		
+		if (DEBUG) {
+			System.out.println("[TrackMateModel] #computeTracksFromGraph(): found " + trackSpots.size() + " new spot tracks.");
+		}
 
 		for (Set<Spot> spotTrack : trackSpots) {
 			Set<DefaultWeightedEdge> spotEdge = new HashSet<DefaultWeightedEdge>();
@@ -1289,6 +1306,9 @@ public class TrackMateModel <T extends RealType<T> & NativeType<T>> {
 			if (shouldBeVisible) {
 				visibleTrackIndices.add(trackIndex);
 			}
+		}
+		if (DEBUG) {
+			System.out.println("[TrackMateModel] #computeTracksFromGraph(): the end; found " + trackSpots.size() + " new spot tracks.");
 		}
 	}
 

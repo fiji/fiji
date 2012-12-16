@@ -81,8 +81,14 @@ public class TrackSpeedStatisticsAnalyzer<T extends RealType<T> & NativeType<T>>
 			
 			Set<DefaultWeightedEdge> track = model.getTrackEdges(index);
 			
-			if (track.size() == 0)
+			if (track.size() == 0) {
+				model.getFeatureModel().putTrackFeature(index, TRACK_MEDIAN_SPEED, Double.NaN);
+				model.getFeatureModel().putTrackFeature(index, TRACK_MIN_SPEED, Double.NaN);
+				model.getFeatureModel().putTrackFeature(index, TRACK_MAX_SPEED, Double.NaN);
+				model.getFeatureModel().putTrackFeature(index, TRACK_MEAN_SPEED, Double.NaN);
+				model.getFeatureModel().putTrackFeature(index, TRACK_SPEED_STANDARD_DEVIATION,  Double.NaN);				
 				continue;
+			}
 			
 			double sum = 0;
 			double mean = 0;
