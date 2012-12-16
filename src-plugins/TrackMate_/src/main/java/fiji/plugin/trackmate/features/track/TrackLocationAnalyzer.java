@@ -14,10 +14,10 @@ import fiji.plugin.trackmate.features.FeatureModel;
 
 public class TrackLocationAnalyzer<T extends RealType<T> & NativeType<T>> implements TrackFeatureAnalyzer<T> {
 
-	public static final String KEY = "LOCATION";
 	/*
 	 * FEATURE NAMES 
 	 */
+	public static final String KEY = "LOCATION";
 	public static final String TRACK_ID = "TRACK_ID";
 	public static final String X_LOCATION = "X_LOCATION";
 	public static final String Y_LOCATION = "Y_LOCATION";
