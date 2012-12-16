@@ -127,7 +127,7 @@ public class DisplayerPanel<T extends RealType<T> & NativeType<T>> extends Actio
 
 	@Override
 	public String getNextDescriptorID() {
-		return ActionChooserPanel.DESCRIPTOR;
+		return GrapherPanel.DESCRIPTOR;
 	}
 
 	@Override

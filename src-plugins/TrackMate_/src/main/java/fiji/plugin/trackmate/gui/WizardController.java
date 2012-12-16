@@ -156,6 +156,7 @@ public class WizardController<T extends RealType<T> & NativeType<T>> implements 
 		descriptors.add(new TrackingDescriptor<T>());
 		descriptors.add(new TrackFilterDescriptor<T>());
 		descriptors.add(new DisplayerPanel<T>());
+		descriptors.add(new GrapherPanel<T>());
 		descriptors.add(ActionChooserPanel.instantiateForPlugin(plugin));
 
 		descriptors.add(new LoadDescriptor<T>());

@@ -48,6 +48,7 @@ public class GrapherPanel<T extends RealType<T> & NativeType<T>> extends ActionL
 	private FeaturePlotSelectionPanel spotFeatureSelectionPanel;
 	private FeaturePlotSelectionPanel edgeFeatureSelectionPanel;
 	private FeaturePlotSelectionPanel trackFeatureSelectionPanel;
+	private TrackMateWizard<T> wizard;
 
 	/*
 	 * CONSTRUCTOR
@@ -152,7 +153,9 @@ public class GrapherPanel<T extends RealType<T> & NativeType<T>> extends ActionL
 	 */
 
 	@Override
-	public void setWizard(TrackMateWizard<T> wizard) { }
+	public void setWizard(TrackMateWizard<T> wizard) {
+		this.wizard = wizard;
+	}
 
 	@Override
 	public void setPlugin(TrackMate_<T> plugin) {
@@ -167,7 +170,7 @@ public class GrapherPanel<T extends RealType<T> & NativeType<T>> extends ActionL
 
 	@Override
 	public String getComponentID() {
-		return null;
+		return DESCRIPTOR;
 	}
 
 	@Override
@@ -177,19 +180,21 @@ public class GrapherPanel<T extends RealType<T> & NativeType<T>> extends ActionL
 
 	@Override
 	public String getNextDescriptorID() {
-		return null;
+		return ActionChooserPanel.DESCRIPTOR;
 	}
 
 	@Override
 	public String getPreviousDescriptorID() {
-		return ActionChooserPanel.DESCRIPTOR;
+		return DisplayerPanel.DESCRIPTOR;
 	}
 
 	@Override
 	public void aboutToDisplayPanel() { }
 
 	@Override
-	public void displayingPanel() { }
+	public void displayingPanel() {
+		wizard.setNextButtonEnabled(true);
+	}
 
 	@Override
 	public void aboutToHidePanel() { }
