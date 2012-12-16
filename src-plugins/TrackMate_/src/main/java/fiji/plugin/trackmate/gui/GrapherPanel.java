@@ -19,10 +19,11 @@ import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 import javax.swing.WindowConstants;
 
-import org.jgrapht.graph.DefaultWeightedEdge;
-
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
+
+import org.jgrapht.graph.DefaultWeightedEdge;
+
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMate_;
@@ -30,7 +31,7 @@ import fiji.plugin.trackmate.features.EdgeFeatureGrapher;
 import fiji.plugin.trackmate.features.SpotFeatureGrapher;
 import fiji.plugin.trackmate.features.TrackFeatureGrapher;
 import fiji.plugin.trackmate.features.edges.EdgeTimeLocationAnalyzer;
-import fiji.plugin.trackmate.features.track.TrackDurationAnalyzer;
+import fiji.plugin.trackmate.features.track.TrackLocationAnalyzer;
 
 public class GrapherPanel<T extends RealType<T> & NativeType<T>> extends ActionListenablePanel implements WizardPanelDescriptor<T> {
 
@@ -105,7 +106,7 @@ public class GrapherPanel<T extends RealType<T> & NativeType<T>> extends ActionL
 		panelTracks.removeAll();
 		List<String> trackFeatures = model.getFeatureModel().getTrackFeatures();
 		Map<String, String> trackFeatureNames = model.getFeatureModel().getTrackFeatureNames();
-		trackFeatureSelectionPanel = new FeaturePlotSelectionPanel(TrackDurationAnalyzer.TRACK_DURATION, trackFeatures, trackFeatureNames);
+		trackFeatureSelectionPanel = new FeaturePlotSelectionPanel(TrackLocationAnalyzer.TRACK_ID, trackFeatures, trackFeatureNames);
 		panelTracks.add(trackFeatureSelectionPanel);
 		trackFeatureSelectionPanel.addActionListener(new ActionListener() {
 			@Override

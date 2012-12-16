@@ -7,8 +7,11 @@ import java.util.Map;
 
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
+import fiji.plugin.trackmate.features.track.TrackBranchingAnalyzer;
 import fiji.plugin.trackmate.features.track.TrackDurationAnalyzer;
 import fiji.plugin.trackmate.features.track.TrackFeatureAnalyzer;
+import fiji.plugin.trackmate.features.track.TrackLocationAnalyzer;
+import fiji.plugin.trackmate.features.track.TrackSpeedStatisticsAnalyzer;
 
 /**
  * A provider for the track analyzers provided in the GUI.
@@ -63,20 +66,35 @@ public class TrackFeatureAnalyzerProvider <T extends RealType<T> & NativeType<T>
 	 */
 	protected void registerTrackFeatureAnalyzers() {
 		// Names
-		names = new ArrayList<String>(1);
+		names = new ArrayList<String>(4);
+		names.add(TrackSpeedStatisticsAnalyzer.KEY);
 		names.add(TrackDurationAnalyzer.KEY);
+		names.add(TrackBranchingAnalyzer.KEY);
+		names.add(TrackLocationAnalyzer.KEY);
 		// features
 		features = new HashMap<String, List<String>>();
+		features.put(TrackSpeedStatisticsAnalyzer.KEY, TrackSpeedStatisticsAnalyzer.FEATURES);
 		features.put(TrackDurationAnalyzer.KEY, TrackDurationAnalyzer.FEATURES);
+		features.put(TrackBranchingAnalyzer.KEY, TrackBranchingAnalyzer.FEATURES);
+		features.put(TrackLocationAnalyzer.KEY, TrackLocationAnalyzer.FEATURES);
 		// features names
 		featureNames = new HashMap<String, String>();
+		featureNames.putAll(TrackSpeedStatisticsAnalyzer.FEATURE_NAMES);
 		featureNames.putAll(TrackDurationAnalyzer.FEATURE_NAMES);
+		featureNames.putAll(TrackBranchingAnalyzer.FEATURE_NAMES);
+		featureNames.putAll(TrackLocationAnalyzer.FEATURE_NAMES);
 		// features short names
 		featureShortNames = new HashMap<String, String>();
+		featureShortNames.putAll(TrackSpeedStatisticsAnalyzer.FEATURE_SHORT_NAMES);
 		featureShortNames.putAll(TrackDurationAnalyzer.FEATURE_SHORT_NAMES);
+		featureShortNames.putAll(TrackBranchingAnalyzer.FEATURE_SHORT_NAMES);
+		featureShortNames.putAll(TrackLocationAnalyzer.FEATURE_SHORT_NAMES);
 		// feature dimensions
 		featureDimensions = new HashMap<String, Dimension>();
+		featureDimensions.putAll(TrackSpeedStatisticsAnalyzer.FEATURE_DIMENSIONS);
 		featureDimensions.putAll(TrackDurationAnalyzer.FEATURE_DIMENSIONS);
+		featureDimensions.putAll(TrackBranchingAnalyzer.FEATURE_DIMENSIONS);
+		featureDimensions.putAll(TrackLocationAnalyzer.FEATURE_DIMENSIONS);
 	}
 
 	/**
@@ -86,6 +104,12 @@ public class TrackFeatureAnalyzerProvider <T extends RealType<T> & NativeType<T>
 	public TrackFeatureAnalyzer<T> getTrackFeatureAnalyzer(String key) {
 		if (key == TrackDurationAnalyzer.KEY) {
 			return new TrackDurationAnalyzer<T>();
+		} else if (key == TrackBranchingAnalyzer.KEY) {
+			return new TrackBranchingAnalyzer<T>();
+		} else if (key == TrackSpeedStatisticsAnalyzer.KEY) {
+			return new TrackSpeedStatisticsAnalyzer<T>();
+		} else if (key == TrackLocationAnalyzer.KEY) {
+			return new TrackLocationAnalyzer<T>();
 		} else {
 			return null;
 		}
