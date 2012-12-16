@@ -6,6 +6,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.jgrapht.graph.DefaultWeightedEdge;
+
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
 
@@ -19,34 +21,39 @@ public class TrackBranchingAnalyzer<T extends RealType<T> & NativeType<T>> imple
 	/*
 	 * CONSTANTS
 	 */
-	
+	public static final String KEY = "BRANCHING";
+	public static final String 		NUMBER_GAPS = "NUMBER_GAPS";
 	public static final String 		NUMBER_SPLITS = "NUMBER_SPLITS";
 	public static final String 		NUMBER_MERGES = "NUMBER_MERGES";
 	public static final String 		NUMBER_COMPLEX = "NUMBER_COMPLEX";
 	public static final String 		NUMBER_SPOTS = "NUMBER_SPOTS";
 	
-	private static final List<String> FEATURES = new ArrayList<String>(4);
-	private static final Map<String, String> FEATURE_NAMES = new HashMap<String, String>(4);
-	private static final Map<String, String> FEATURE_SHORT_NAMES = new HashMap<String, String>(4);
-	private static final Map<String, Dimension> FEATURE_DIMENSIONS = new HashMap<String, Dimension>(4);
+	public static final List<String> FEATURES = new ArrayList<String>(5);
+	public static final Map<String, String> FEATURE_NAMES = new HashMap<String, String>(5);
+	public static final Map<String, String> FEATURE_SHORT_NAMES = new HashMap<String, String>(5);
+	public static final Map<String, Dimension> FEATURE_DIMENSIONS = new HashMap<String, Dimension>(5);
 	
 	static {
 		FEATURES.add(NUMBER_SPOTS);
+		FEATURES.add(NUMBER_GAPS);
 		FEATURES.add(NUMBER_SPLITS);
 		FEATURES.add(NUMBER_MERGES);
 		FEATURES.add(NUMBER_COMPLEX);
 		
 		FEATURE_NAMES.put(NUMBER_SPOTS, "Number of spots in track");
+		FEATURE_NAMES.put(NUMBER_GAPS, "Number of gaps");
 		FEATURE_NAMES.put(NUMBER_SPLITS, "Number of split events");
 		FEATURE_NAMES.put(NUMBER_MERGES, "Number of merge events");
 		FEATURE_NAMES.put(NUMBER_COMPLEX, "Complex points");
 
 		FEATURE_SHORT_NAMES.put(NUMBER_SPOTS, "N spots");
+		FEATURE_SHORT_NAMES.put(NUMBER_GAPS, "Gaps");
 		FEATURE_SHORT_NAMES.put(NUMBER_SPLITS, "Splits");
 		FEATURE_SHORT_NAMES.put(NUMBER_MERGES, "Merges");
 		FEATURE_SHORT_NAMES.put(NUMBER_COMPLEX, "Complex");
 		
 		FEATURE_DIMENSIONS.put(NUMBER_SPOTS, Dimension.NONE);
+		FEATURE_DIMENSIONS.put(NUMBER_GAPS, Dimension.NONE);
 		FEATURE_DIMENSIONS.put(NUMBER_SPLITS, Dimension.NONE);
 		FEATURE_DIMENSIONS.put(NUMBER_MERGES, Dimension.NONE);
 		FEATURE_DIMENSIONS.put(NUMBER_COMPLEX, Dimension.NONE);
@@ -60,8 +67,8 @@ public class TrackBranchingAnalyzer<T extends RealType<T> & NativeType<T>> imple
 	@Override
 	public void process(final TrackMateModel<T> model) {
 		final List<Set<Spot>> allTracks = model.getTrackSpots();
-		for (int i = 0; i < model.getNTracks(); i++) {
-			final Set<Spot> track = allTracks.get(i);
+		for (int trackIndex = 0; trackIndex < model.getNTracks(); trackIndex++) {
+			final Set<Spot> track = allTracks.get(trackIndex);
 			int nmerges = 0;
 			int nsplits = 0;
 			int ncomplex = 0;
@@ -81,11 +88,22 @@ public class TrackBranchingAnalyzer<T extends RealType<T> & NativeType<T>> imple
 					break;
 				}
 			}
+			
+			int ngaps = 0;
+			for(DefaultWeightedEdge edge : model.getTrackEdges(trackIndex)) {
+				Spot source = model.getEdgeSource(edge);
+				Spot target = model.getEdgeTarget(edge);
+				if (Math.abs( target.diffTo(source, Spot.FRAME)) > 1) {
+					ngaps++;
+				}
+			}
+			
 			// Put feature data
-			model.getFeatureModel().putTrackFeature(i, NUMBER_SPLITS, (double) nsplits);
-			model.getFeatureModel().putTrackFeature(i, NUMBER_MERGES, (double) nmerges);
-			model.getFeatureModel().putTrackFeature(i, NUMBER_COMPLEX, (double) ncomplex);
-			model.getFeatureModel().putTrackFeature(i, NUMBER_SPOTS, (double) track.size());
+			model.getFeatureModel().putTrackFeature(trackIndex, NUMBER_GAPS, Double.valueOf(ngaps));
+			model.getFeatureModel().putTrackFeature(trackIndex, NUMBER_SPLITS, Double.valueOf(nsplits));
+			model.getFeatureModel().putTrackFeature(trackIndex, NUMBER_MERGES, Double.valueOf(nmerges));
+			model.getFeatureModel().putTrackFeature(trackIndex, NUMBER_COMPLEX, Double.valueOf(ncomplex));
+			model.getFeatureModel().putTrackFeature(trackIndex, NUMBER_SPOTS, Double.valueOf(track.size()));
 		}
 
 	}
