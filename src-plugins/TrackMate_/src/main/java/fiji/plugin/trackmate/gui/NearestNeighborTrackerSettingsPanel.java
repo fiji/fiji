@@ -3,6 +3,7 @@ package fiji.plugin.trackmate.gui;
 import static fiji.plugin.trackmate.gui.TrackMateWizard.BIG_FONT;
 import static fiji.plugin.trackmate.gui.TrackMateWizard.FONT;
 import static fiji.plugin.trackmate.gui.TrackMateWizard.TEXTFIELD_DIMENSION;
+import static fiji.plugin.trackmate.tracking.TrackerKeys.KEY_LINKING_MAX_DISTANCE;
 
 import java.awt.Font;
 import java.util.HashMap;
@@ -11,9 +12,7 @@ import java.util.Map;
 import javax.swing.JLabel;
 import javax.swing.SwingConstants;
 
-import fiji.plugin.trackmate.tracking.TrackerKeys;
-
-public class NearestNeighborTrackerSettingsPanel extends ConfigurationPanel implements TrackerKeys {
+public class NearestNeighborTrackerSettingsPanel extends ConfigurationPanel {
 
 	private static final long serialVersionUID = 1L;
 	private JNumericTextField maxDistField;

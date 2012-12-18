@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
@@ -59,26 +60,29 @@ public class TrackLocationAnalyzer<T extends RealType<T> & NativeType<T>> implem
 	@Override
 	public void process(final TrackMateModel<T> model) {
 		final FeatureModel<T> fm = model.getFeatureModel();
-		for (int trackIndex = 0; trackIndex < model.getNTracks(); trackIndex++) {
+		
+		Map<Integer, Set<Spot>> trackSpots = model.getTrackSpots();
+		
+		for (Integer trackID : trackSpots.keySet()) {
 			
 			double x = 0;
 			double y = 0;
 			double z = 0;
 			
-			for(Spot spot : model.getTrackSpots(trackIndex)) {
+			for(Spot spot : trackSpots.get(trackID)) {
 				x += spot.getFeature(Spot.POSITION_X);
 				y += spot.getFeature(Spot.POSITION_Y);
 				z += spot.getFeature(Spot.POSITION_Z);
 			}
-			int nspots = model.getTrackSpots(trackIndex).size();
+			int nspots = trackSpots.get(trackID).size();
 			x /= nspots;
 			y /= nspots;
 			z /= nspots;
 
-			fm.putTrackFeature(trackIndex, TRACK_ID, Double.valueOf(trackIndex));
-			fm.putTrackFeature(trackIndex, X_LOCATION, x);
-			fm.putTrackFeature(trackIndex, Y_LOCATION, y);
-			fm.putTrackFeature(trackIndex, Z_LOCATION, z);
+			fm.putTrackFeature(trackID, TRACK_ID, Double.valueOf(trackID));
+			fm.putTrackFeature(trackID, X_LOCATION, x);
+			fm.putTrackFeature(trackID, Y_LOCATION, y);
+			fm.putTrackFeature(trackID, Z_LOCATION, z);
 		}
 	}
 

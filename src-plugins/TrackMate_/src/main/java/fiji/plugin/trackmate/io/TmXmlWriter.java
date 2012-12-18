@@ -1,5 +1,7 @@
 package fiji.plugin.trackmate.io;
 
+import static fiji.plugin.trackmate.io.TmXmlKeys.*;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -8,8 +10,11 @@ import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
+import net.imglib2.algorithm.Algorithm;
+import net.imglib2.algorithm.Benchmark;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
 
@@ -30,115 +35,70 @@ import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMate_;
 import fiji.plugin.trackmate.TrackerProvider;
 
-public class TmXmlWriter <T extends RealType<T> & NativeType<T>> implements TmXmlKeys {
+public class TmXmlWriter <T extends RealType<T> & NativeType<T>> implements Algorithm, Benchmark  {
 
 	/*
 	 * FIELD
 	 */
 
-	private TrackMateModel<T> model;
-	private Element root;
-	private Logger logger;
-	private TrackMate_<T> plugin;
+	private final Element root;
+	private final Logger logger;
+	private final TrackMate_<T> plugin;
+	private final TrackMateModel<T> model;
+	private long processingTime;
 
 	/*
 	 * CONSTRUCTORS
 	 */
 
-	public TmXmlWriter(TrackMateModel<T> model, Logger logger, TrackMate_<T> plugin) {
-		this.model = model;
+	public TmXmlWriter(final TrackMate_<T> plugin) {
 		this.root = new Element(ROOT_ELEMENT_KEY);
 		root.setAttribute(PLUGIN_VERSION_ATTRIBUTE_NAME, fiji.plugin.trackmate.TrackMate_.PLUGIN_NAME_VERSION);
-		if (null == logger) 
-			logger = Logger.VOID_LOGGER;
-		this.logger = logger;
+		this.logger = new Logger.StringBuilderLogger();
 		this.plugin = plugin;
+		this.model = plugin.getModel();
 	}
-	
-	public TmXmlWriter(TrackMateModel<T> model, Logger logger) {
-		this(model,logger, new TrackMate_<T>());
-	}
-	
-	public TmXmlWriter(TrackMate_<T> plugin) {
-		this(plugin.getModel(), plugin.getModel().getLogger(), plugin);
-	}
-	
+
 	/*
 	 * PUBLIC METHODS
 	 */
 
+	@Override
+	public long getProcessingTime() {
+		return processingTime;
+	}
 
-	/**
-	 * Append the image info to the root {@link Document}.
-	 */
-	public void appendBasicSettings() {
+	@Override
+	public boolean checkInput() {
+		return true;
+	}
+
+	@Override
+	public boolean process() {
+		long start = System.currentTimeMillis(); 
+
+		echoImageInfo();
 		echoBaseSettings();
-		echoImageInfo();		
-	}
-
-	/**
-	 * Append the {@link DetectorSettings} to the {@link Document}.
-	 */
-	public void appendDetectorSettings() {
 		echoDetectorSettings();
-	}
-
-	/**
-	 * Append the {@link TrackerSettings} to the {@link Document}.
-	 */
-	public void appendTrackerSettings() {
-		echoTrackerSettings();
-	}
-
-	/**
-	 * Append the initial threshold on quality to the {@link Document}.
-	 */
-	public void appendInitialSpotFilter() {
-		echoInitialSpotFilter(model.getSettings().initialSpotFilterValue);
-	}
-
-	/**
-	 * Append the list of spot {@link FeatureFilter} to the {@link Document}.
-	 */
-	public void appendSpotFilters() {
-		echoSpotFilters();
-	}
-
-	/**
-	 * Append the list of track {@link FeatureFilter} to the {@link Document}.
-	 */
-	public void appendTrackFilters() {
-		echoTrackFilters();
-	}
-
-	/**
-	 * Append the spot collection to the  {@link Document}.
-	 */
-	public void appendSpots() {
 		echoAllSpots();
-	}
-
-	/**
-	 * Append the filtered spot collection to the  {@link Document}.	
-	 */
-	public void appendFilteredSpots() {
-		echoSpotSelection();
-	}
-
-	/**
-	 * Append the tracks to the  {@link Document}.
-	 */
-	public void appendTracks() {
+		echoInitialSpotFilter();
+		echoSpotFilters();
+		echoFilteredSpots();
+		echoTrackerSettings();
 		echoTracks();
-	}
-
-	/**
-	 * Append the filtered tracks to the  {@link Document}.
-	 */
-	public void appendFilteredTracks() {
+		echoTrackFilters();
 		echoFilteredTracks();
+
+		long end = System.currentTimeMillis();
+		processingTime = end - start;
+
+		return true;
 	}
 
+	@Override
+	public String getErrorMessage() {
+		return logger.toString();
+	}
 
 	/**
 	 * Write the document to the given file.
@@ -187,30 +147,35 @@ public class TmXmlWriter <T extends RealType<T> & NativeType<T>> implements TmXm
 
 	private void echoDetectorSettings() {
 		Element el = new Element(DETECTOR_SETTINGS_ELEMENT_KEY);
-		if (null != model.getSettings().detectorFactory  && null != model.getSettings().detectorSettings) {
-			DetectorProvider<T> provider = plugin.getDetectorProvider();
-			boolean ok = provider.select(model.getSettings().detectorFactory.getKey());
-			if (!ok) {
-				logger.error(provider.getErrorMessage());
-			} else {
-				provider.marshall(model.getSettings().detectorSettings, el);
-			}
+		if (null == model.getSettings().detectorFactory) {
+			return; // and write nothing
 		}
+		DetectorProvider<T> provider = plugin.getDetectorProvider();
+		boolean ok = provider.select(model.getSettings().detectorFactory.getKey());
+		if (!ok) {
+			logger.error(provider.getErrorMessage());
+		} else {
+			provider.marshall(model.getSettings().detectorSettings, el);
+		}
+
 		root.addContent(el);
 		logger.log("  Appending detector settings.\n");
 	}
 
 	private void echoTrackerSettings() {
 		Element el = new Element(TRACKER_SETTINGS_ELEMENT_KEY);
-		if (null != model.getSettings().tracker  && null != model.getSettings().trackerSettings) {
-			TrackerProvider<T> provider = plugin.getTrackerProvider();
-			boolean ok = provider.select(model.getSettings().tracker.getKey());
-			if (!ok) {
-				logger.error(provider.getErrorMessage());
-			} else {
-				provider.marshall(model.getSettings().trackerSettings, el);
-			}
+		if (null != model.getSettings().tracker) {
+			return; // and write nothing
 		}
+		
+		TrackerProvider<T> provider = plugin.getTrackerProvider();
+		boolean ok = provider.select(model.getSettings().tracker.getKey());
+		if (!ok) {
+			logger.error(provider.getErrorMessage());
+		} else {
+			provider.marshall(model.getSettings().trackerSettings, el);
+		}
+
 		root.addContent(el);
 		logger.log("  Appending tracker settings.\n");
 	}
@@ -221,16 +186,16 @@ public class TmXmlWriter <T extends RealType<T> & NativeType<T>> implements TmXm
 
 		Element allTracksElement = new Element(TRACK_COLLECTION_ELEMENT_KEY);
 
-		List<Set<DefaultWeightedEdge>> trackEdges = model.getTrackEdges();
+		Map<Integer, Set<DefaultWeightedEdge>> trackEdges = model.getTrackEdges();
 
-		for (int trackIndex = 0; trackIndex < trackEdges.size(); trackIndex++) {
-			Set<DefaultWeightedEdge> track = trackEdges.get(trackIndex);
+		for (int trackID : trackEdges.keySet()) {
+			Set<DefaultWeightedEdge> track = trackEdges.get(trackID);
 
 			Element trackElement = new Element(TRACK_ELEMENT_KEY);
 			// Echo attributes and features
-			trackElement.setAttribute(TRACK_ID_ATTRIBUTE_NAME, ""+trackIndex);
+			trackElement.setAttribute(TRACK_ID_ATTRIBUTE_NAME, ""+trackID);
 			for(String feature : model.getFeatureModel().getTrackFeatureValues().keySet()) {
-				Double val = model.getFeatureModel().getTrackFeature(trackIndex, feature);
+				Double val = model.getFeatureModel().getTrackFeature(trackID, feature);
 				if (null == val) {
 					continue;
 				}
@@ -238,18 +203,34 @@ public class TmXmlWriter <T extends RealType<T> & NativeType<T>> implements TmXm
 			}
 
 			// Echo edges
-			for (DefaultWeightedEdge edge : track) {
+			if (track.size() == 0) {
+				/* Special case: the track has only one spot in it, therefore no edge. 
+				 * We live on the edge of nonsense here, but at least, let's write the 
+				 * file correctly. */
 
-				Spot source = model.getEdgeSource(edge);
-				Spot target = model.getEdgeTarget(edge);
-				double weight = model.getEdgeWeight(edge);
-
+				Set<Spot> spots = model.getTrackSpots(trackID);
+				Spot spot = spots.iterator().next();
 				Element edgeElement = new Element(TRACK_EDGE_ELEMENT_KEY);
-				edgeElement.setAttribute(TRACK_EDGE_SOURCE_ATTRIBUTE_NAME, ""+source.ID());
-				edgeElement.setAttribute(TRACK_EDGE_TARGET_ATTRIBUTE_NAME, ""+target.ID());
-				edgeElement.setAttribute(TRACK_EDGE_WEIGHT_ATTRIBUTE_NAME, ""+weight);
-
+				edgeElement.setAttribute(TRACK_EDGE_SOURCE_ATTRIBUTE_NAME, ""+spot.ID());
+				edgeElement.setAttribute(TRACK_EDGE_TARGET_ATTRIBUTE_NAME, ""+spot.ID());
+				edgeElement.setAttribute(TRACK_EDGE_WEIGHT_ATTRIBUTE_NAME, ""+Double.NaN);
 				trackElement.addContent(edgeElement);
+
+			} else {
+
+				for (DefaultWeightedEdge edge : track) {
+
+					Spot source = model.getEdgeSource(edge);
+					Spot target = model.getEdgeTarget(edge);
+					double weight = model.getEdgeWeight(edge);
+
+					Element edgeElement = new Element(TRACK_EDGE_ELEMENT_KEY);
+					edgeElement.setAttribute(TRACK_EDGE_SOURCE_ATTRIBUTE_NAME, ""+source.ID());
+					edgeElement.setAttribute(TRACK_EDGE_TARGET_ATTRIBUTE_NAME, ""+target.ID());
+					edgeElement.setAttribute(TRACK_EDGE_WEIGHT_ATTRIBUTE_NAME, ""+weight);
+
+					trackElement.addContent(edgeElement);
+				}
 			}
 			allTracksElement.addContent(trackElement);
 		}
@@ -259,15 +240,15 @@ public class TmXmlWriter <T extends RealType<T> & NativeType<T>> implements TmXm
 	}
 
 	private void echoFilteredTracks() {
-		if (model.getVisibleTrackIndices() == null) {
+		if (model.getFilteredTrackIDs() == null) {
 			return;
 		}
 
 		Element filteredTracksElement = new Element(FILTERED_TRACK_ELEMENT_KEY);
-		Set<Integer> indices = model.getVisibleTrackIndices();
-		for(int trackIndex : indices) {
+		Set<Integer> filteredTrackKeys = model.getFilteredTrackIDs();
+		for (int trackID : filteredTrackKeys) {
 			Element trackIDElement = new Element(TRACK_ID_ELEMENT_KEY);
-			trackIDElement.setAttribute(TRACK_ID_ATTRIBUTE_NAME, ""+trackIndex);
+			trackIDElement.setAttribute(TRACK_ID_ATTRIBUTE_NAME, ""+trackID);
 			filteredTracksElement.addContent(trackIDElement);
 		}
 		root.addContent(filteredTracksElement);
@@ -298,8 +279,8 @@ public class TmXmlWriter <T extends RealType<T> & NativeType<T>> implements TmXm
 
 	private void echoAllSpots() {		
 		SpotCollection allSpots = model.getSpots();
-		if (null == allSpots)
-			return;
+		if (null == allSpots || allSpots.isEmpty())
+			return; // and write nothing
 		List<Spot> spots;
 
 		Element spotElement;
@@ -325,11 +306,15 @@ public class TmXmlWriter <T extends RealType<T> & NativeType<T>> implements TmXm
 		return;
 	}
 
-	private void echoInitialSpotFilter(final Double qualityThreshold) {
+	private void echoInitialSpotFilter() {
+		Double filterVal = model.getSettings().initialSpotFilterValue;
+		if (null == filterVal) {
+			return; // and write nothing
+		}
 		Element itElement = new Element(INITIAL_SPOT_FILTER_ELEMENT_KEY);
 		itElement.setAttribute(FILTER_FEATURE_ATTRIBUTE_NAME, Spot.QUALITY);
-		itElement.setAttribute(FILTER_VALUE_ATTRIBUTE_NAME, ""+qualityThreshold);
-		itElement.setAttribute(FILTER_ABOVE_ATTRIBUTE_NAME, ""+true);
+		itElement.setAttribute(FILTER_VALUE_ATTRIBUTE_NAME, "" + filterVal);
+		itElement.setAttribute(FILTER_ABOVE_ATTRIBUTE_NAME, "" + true);
 		root.addContent(itElement);
 		logger.log("  Appending initial spot filter.\n");
 		return;
@@ -367,20 +352,20 @@ public class TmXmlWriter <T extends RealType<T> & NativeType<T>> implements TmXm
 		return;
 	}
 
-	private void echoSpotSelection() {
-		SpotCollection selectedSpots =  model.getFilteredSpots();
-		if (null == selectedSpots)
+	private void echoFilteredSpots() {
+		SpotCollection filteredSpots =  model.getFilteredSpots();
+		if (null == filteredSpots || filteredSpots.isEmpty())
 			return;
 		List<Spot> spots;
 
 		Element spotIDElement, frameSpotsElement;
 		Element spotCollection = new Element(FILTERED_SPOT_ELEMENT_KEY);
 
-		for(int frame : selectedSpots.keySet()) {
+		for(int frame : filteredSpots.keySet()) {
 
 			frameSpotsElement = new Element(FILTERED_SPOT_COLLECTION_ELEMENT_KEY);
 			frameSpotsElement.setAttribute(FRAME_ATTRIBUTE_NAME, ""+frame);
-			spots = selectedSpots.get(frame);
+			spots = filteredSpots.get(frame);
 
 			for(Spot spot : spots) {
 				spotIDElement = new Element(SPOT_ID_ELEMENT_KEY);
@@ -415,5 +400,6 @@ public class TmXmlWriter <T extends RealType<T> & NativeType<T>> implements TmXm
 		spotElement.setAttributes(attributes);
 		return spotElement;
 	}
+
 
 }

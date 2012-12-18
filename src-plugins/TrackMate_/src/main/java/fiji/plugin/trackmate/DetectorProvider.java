@@ -1,5 +1,18 @@
 package fiji.plugin.trackmate;
 
+import static fiji.plugin.trackmate.detection.DetectorKeys.DEFAULT_DOWNSAMPLE_FACTOR;
+import static fiji.plugin.trackmate.detection.DetectorKeys.DEFAULT_DO_MEDIAN_FILTERING;
+import static fiji.plugin.trackmate.detection.DetectorKeys.DEFAULT_DO_SUBPIXEL_LOCALIZATION;
+import static fiji.plugin.trackmate.detection.DetectorKeys.DEFAULT_RADIUS;
+import static fiji.plugin.trackmate.detection.DetectorKeys.DEFAULT_TARGET_CHANNEL;
+import static fiji.plugin.trackmate.detection.DetectorKeys.DEFAULT_THRESHOLD;
+import static fiji.plugin.trackmate.detection.DetectorKeys.KEY_DOWNSAMPLE_FACTOR;
+import static fiji.plugin.trackmate.detection.DetectorKeys.KEY_DO_MEDIAN_FILTERING;
+import static fiji.plugin.trackmate.detection.DetectorKeys.KEY_DO_SUBPIXEL_LOCALIZATION;
+import static fiji.plugin.trackmate.detection.DetectorKeys.KEY_RADIUS;
+import static fiji.plugin.trackmate.detection.DetectorKeys.KEY_TARGET_CHANNEL;
+import static fiji.plugin.trackmate.detection.DetectorKeys.KEY_THRESHOLD;
+import static fiji.plugin.trackmate.detection.DetectorKeys.XML_ATTRIBUTE_DETECTOR_NAME;
 import ij.ImagePlus;
 
 import java.util.ArrayList;
@@ -24,7 +37,7 @@ import fiji.plugin.trackmate.gui.DownSampleLogDetectorConfigurationPanel;
 import fiji.plugin.trackmate.gui.LogDetectorConfigurationPanel;
 import fiji.plugin.trackmate.gui.WizardController;
 
-public class DetectorProvider <T extends RealType<T> & NativeType<T>> extends AbstractProvider implements DetectorKeys {
+public class DetectorProvider <T extends RealType<T> & NativeType<T>> extends AbstractProvider {
 
 	/*
 	 * BLANK CONSTRUCTOR

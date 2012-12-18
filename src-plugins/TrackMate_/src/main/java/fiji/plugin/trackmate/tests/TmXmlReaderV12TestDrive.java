@@ -4,7 +4,6 @@ import java.io.File;
 
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
-import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMate_;
 import fiji.plugin.trackmate.io.TmXmlReader;
@@ -21,10 +20,13 @@ public class TmXmlReaderV12TestDrive {
 		System.out.println("Opening file: "+file.getAbsolutePath());		
 		TrackMate_<T> plugin = new TrackMate_<T>();
 		plugin.initModules();
-		TmXmlReader<T> reader = new TmXmlReader_v12<T>(file, plugin , Logger.DEFAULT_LOGGER);
-		// Parse
-		reader.parse();
-		TrackMateModel<T> model = reader.getModel();
+		TmXmlReader<T> reader = new TmXmlReader_v12<T>(file, plugin);
+		if (!reader.checkInput() && !reader.process()) {
+			System.err.println("Problem loading the file:");
+			System.err.println(reader.getErrorMessage());
+		}
+		TrackMateModel<T> model = plugin.getModel();
+
 		System.out.println(model);
 
 	}

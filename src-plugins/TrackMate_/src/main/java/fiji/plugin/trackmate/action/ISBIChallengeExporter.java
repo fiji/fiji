@@ -136,7 +136,7 @@ public class ISBIChallengeExporter<T extends RealType<T> & NativeType<T>> extend
 		content.setAttribute(DATE_ATT, new Date().toString());
 
 		logger.setStatus("Marshalling...");
-		Integer[] visibleTracks = model.getVisibleTrackIndices().toArray(new Integer[] {});
+		Integer[] visibleTracks = model.getFilteredTrackIDs().toArray(new Integer[] {});
 		for (int i = 0 ; i < model.getNFilteredTracks() ; i++) {
 
 			Element trackElement = new Element(TRACK_KEY);

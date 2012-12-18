@@ -97,7 +97,7 @@ public class LogDetectorTestDrive {
 		Spot best_spot = null;
 		double[] coords = new double[3];
 
-		while (!spot_list.isEmpty()) {
+		while (!spot_list.isEmpty() && !centers.isEmpty()) {
 			
 			min_dist = Float.POSITIVE_INFINITY;
 			for (Spot s : spot_list) {

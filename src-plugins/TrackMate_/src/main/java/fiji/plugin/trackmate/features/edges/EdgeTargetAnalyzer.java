@@ -27,7 +27,7 @@ public class EdgeTargetAnalyzer <T extends RealType<T> & NativeType<T>>  impleme
 	private static final String SPOT1_ID = "SPOT1_ID";
 	private static final String SPOT2_ID = "SPOT2_ID";
 	private static final String EDGE_COST = "COST";
-	private static final String TRACK_ID = "TRACK";
+	private static final String TRACK_ID = "TRACK_ID";
 	
 	private final TrackMateModel<T> model;
 	private final FeatureModel<T> featureModel;
@@ -89,14 +89,13 @@ public class EdgeTargetAnalyzer <T extends RealType<T> & NativeType<T>>  impleme
 		featureModel.putEdgeFeature(edge, SPOT2_ID, target.ID());
 		// Track it belong to
 		int trackId = -1;
-		final List<Set<DefaultWeightedEdge>> tracks = model.getTrackEdges();
-		for (int i = 0; i < tracks.size(); i++) {
-			if (tracks.get(i).contains(edge)) {
-				trackId = i;
+		final Map<Integer,Set<DefaultWeightedEdge>> tracks = model.getTrackEdges();
+		for (int trackID : tracks.keySet()) {
+			if (tracks.get(trackID).contains(edge)) {
+				featureModel.putEdgeFeature(edge, TRACK_ID, trackId);
 				break;
 			}
 		}
-		featureModel.putEdgeFeature(edge, TRACK_ID, trackId);
 	}
 
 }

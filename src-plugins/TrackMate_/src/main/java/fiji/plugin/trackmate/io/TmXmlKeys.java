@@ -5,7 +5,7 @@ package fiji.plugin.trackmate.io;
  * Contains the key string used for xml marshaling.
  * @author Jean-Yves Tinevez <jeanyves.tinevez@gmail.com>  2010-2011
   */
-public interface TmXmlKeys {
+class TmXmlKeys {
 	
 	/*
 	 * GENERIC ATTRIBUTES

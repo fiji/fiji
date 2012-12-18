@@ -14,7 +14,6 @@ import java.awt.geom.AffineTransform;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -37,6 +36,7 @@ import fiji.util.gui.OverlayedImageCanvas.Overlay;
 public class TrackOverlay <T extends RealType<T> & NativeType<T>> implements Overlay {
 	protected final double[] calibration;
 	protected final ImagePlus imp;
+	/** Map of color vs track key. */
 	protected Map<Integer, Color> edgeColors;
 	protected Collection<DefaultWeightedEdge> highlight = new HashSet<DefaultWeightedEdge>();
 	protected Map<String, Object> displaySettings;
@@ -80,19 +80,19 @@ public class TrackOverlay <T extends RealType<T> & NativeType<T>> implements Ove
 				if (val < min) min = val;
 			}
 
-			for(int i : model.getVisibleTrackIndices()) {
-				Double val = model.getFeatureModel().getTrackFeature(i, feature);
+			for(int key : model.getFilteredTrackIDs()) {
+				Double val = model.getFeatureModel().getTrackFeature(key, feature);
 				if (null == val) {
-					edgeColors.put(i, defaultColor); // if feature is not calculated
+					edgeColors.put(key, defaultColor); // if feature is not calculated
 				} else {
-					edgeColors.put(i, colorMap.getPaint((double) (val-min) / (max-min)));
+					edgeColors.put(key, colorMap.getPaint((double) (val-min) / (max-min)));
 				}
 			}
 
 		} else {
 			int index = 0;
-			for(int i : model.getVisibleTrackIndices()) {
-				edgeColors.put(i, colorMap.getPaint((double) index / (ntracks-1)));
+			for(int key : model.getFilteredTrackIDs()) {
+				edgeColors.put(key, colorMap.getPaint((double) index / (ntracks-1)));
 				index ++;
 			}
 		}
@@ -131,8 +131,8 @@ public class TrackOverlay <T extends RealType<T> & NativeType<T>> implements Ove
 		final int currentFrame = imp.getFrame() - 1;
 		final int trackDisplayMode = (Integer) displaySettings.get(TrackMateModelView.KEY_TRACK_DISPLAY_MODE);
 		final int trackDisplayDepth = (Integer) displaySettings.get(TrackMateModelView.KEY_TRACK_DISPLAY_DEPTH);
-		final List<Set<DefaultWeightedEdge>> trackEdges = model.getTrackEdges(); 
-		final Set<Integer> filteredTrackIndices = model.getVisibleTrackIndices();
+		final Map<Integer,Set<DefaultWeightedEdge>> trackEdges = model.getTrackEdges(); 
+		final Set<Integer> filteredTrackKeys = model.getFilteredTrackIDs();
 
 		g2d.setStroke(new BasicStroke(2.0f,  BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
 		if (trackDisplayMode == TrackMateModelView.TRACK_DISPLAY_MODE_LOCAL || trackDisplayMode == TrackMateModelView.TRACK_DISPLAY_MODE_LOCAL_QUICK) 
@@ -164,9 +164,9 @@ public class TrackOverlay <T extends RealType<T> & NativeType<T>> implements Ove
 		switch (trackDisplayMode) {
 
 		case TrackMateModelView.TRACK_DISPLAY_MODE_WHOLE: {
-			for (int i : filteredTrackIndices) {
-				g2d.setColor(edgeColors.get(i));
-				final Set<DefaultWeightedEdge> track = trackEdges.get(i);
+			for (Integer trackID : filteredTrackKeys) {
+				g2d.setColor(edgeColors.get(trackID));
+				final Set<DefaultWeightedEdge> track = trackEdges.get(trackID);
 
 				for (DefaultWeightedEdge edge : track) {
 					if (highlight.contains(edge))
@@ -186,9 +186,9 @@ public class TrackOverlay <T extends RealType<T> & NativeType<T>> implements Ove
 
 			g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
 
-			for (int i : filteredTrackIndices) {
-				g2d.setColor(edgeColors.get(i));
-				final Set<DefaultWeightedEdge> track= trackEdges.get(i);
+			for (int key : filteredTrackKeys) {
+				g2d.setColor(edgeColors.get(key));
+				final Set<DefaultWeightedEdge> track= trackEdges.get(key);
 
 				for (DefaultWeightedEdge edge : track) {
 					if (highlight.contains(edge))
@@ -212,9 +212,9 @@ public class TrackOverlay <T extends RealType<T> & NativeType<T>> implements Ove
 
 			g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-			for (int i : filteredTrackIndices) {
-				g2d.setColor(edgeColors.get(i));
-				final Set<DefaultWeightedEdge> track= trackEdges.get(i);
+			for (int key : filteredTrackKeys) {
+				g2d.setColor(edgeColors.get(key));
+				final Set<DefaultWeightedEdge> track= trackEdges.get(key);
 
 				for (DefaultWeightedEdge edge : track) {
 					if (highlight.contains(edge))

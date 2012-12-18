@@ -66,9 +66,9 @@ public class TrackBranchingAnalyzer<T extends RealType<T> & NativeType<T>> imple
 	
 	@Override
 	public void process(final TrackMateModel<T> model) {
-		final List<Set<Spot>> allTracks = model.getTrackSpots();
-		for (int trackIndex = 0; trackIndex < model.getNTracks(); trackIndex++) {
-			final Set<Spot> track = allTracks.get(trackIndex);
+		final Map<Integer, Set<Spot>> allTracks = model.getTrackSpots();
+		for (int trackID : allTracks.keySet()) {
+			final Set<Spot> track = allTracks.get(trackID);
 			int nmerges = 0;
 			int nsplits = 0;
 			int ncomplex = 0;
@@ -90,7 +90,7 @@ public class TrackBranchingAnalyzer<T extends RealType<T> & NativeType<T>> imple
 			}
 			
 			int ngaps = 0;
-			for(DefaultWeightedEdge edge : model.getTrackEdges(trackIndex)) {
+			for(DefaultWeightedEdge edge : model.getTrackEdges(trackID)) {
 				Spot source = model.getEdgeSource(edge);
 				Spot target = model.getEdgeTarget(edge);
 				if (Math.abs( target.diffTo(source, Spot.FRAME)) > 1) {
@@ -99,11 +99,11 @@ public class TrackBranchingAnalyzer<T extends RealType<T> & NativeType<T>> imple
 			}
 			
 			// Put feature data
-			model.getFeatureModel().putTrackFeature(trackIndex, NUMBER_GAPS, Double.valueOf(ngaps));
-			model.getFeatureModel().putTrackFeature(trackIndex, NUMBER_SPLITS, Double.valueOf(nsplits));
-			model.getFeatureModel().putTrackFeature(trackIndex, NUMBER_MERGES, Double.valueOf(nmerges));
-			model.getFeatureModel().putTrackFeature(trackIndex, NUMBER_COMPLEX, Double.valueOf(ncomplex));
-			model.getFeatureModel().putTrackFeature(trackIndex, NUMBER_SPOTS, Double.valueOf(track.size()));
+			model.getFeatureModel().putTrackFeature(trackID, NUMBER_GAPS, Double.valueOf(ngaps));
+			model.getFeatureModel().putTrackFeature(trackID, NUMBER_SPLITS, Double.valueOf(nsplits));
+			model.getFeatureModel().putTrackFeature(trackID, NUMBER_MERGES, Double.valueOf(nmerges));
+			model.getFeatureModel().putTrackFeature(trackID, NUMBER_COMPLEX, Double.valueOf(ncomplex));
+			model.getFeatureModel().putTrackFeature(trackID, NUMBER_SPOTS, Double.valueOf(track.size()));
 		}
 
 	}

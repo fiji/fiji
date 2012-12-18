@@ -2,7 +2,6 @@ package fiji.plugin.trackmate;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -92,7 +91,7 @@ import fiji.plugin.trackmate.visualization.TrackMateModelView;
  * using edge direction, but simply refer to the per-frame organization of the
  * {@link SpotCollection}.
  * 
- * <h3>{@link #visibleTrackIndices}</h3>
+ * <h3>{@link #filteredTrackKeys}</h3>
  * 
  * This Set contains the index of the tracks that are set to be visible. We use this 
  * to flag the tracks that should be retained after filtering the tracks by their
@@ -159,20 +158,20 @@ public class TrackMateModel <T extends RealType<T> & NativeType<T>> {
 	 * {@link #removeEdge(DefaultWeightedEdge)}, {@link #removeEdge(Spot, Spot)}
 	 * .
 	 */
-	protected ListenableDirectedGraph<Spot,DefaultWeightedEdge> graph 
-	= new ListenableDirectedGraph<Spot, DefaultWeightedEdge>(new SimpleDirectedWeightedGraph<Spot, DefaultWeightedEdge>(DefaultWeightedEdge.class));
-	/** The edges contained in the list of tracks. */
-	protected List<Set<DefaultWeightedEdge>> trackEdges = new ArrayList<Set<DefaultWeightedEdge>>();
-	/** The spots contained in the list of spots. */
-	protected List<Set<Spot>> trackSpots = Collections.unmodifiableList(new ArrayList<Set<Spot>>());
+	protected ListenableDirectedGraph<Spot,DefaultWeightedEdge> graph =
+			new ListenableDirectedGraph<Spot, DefaultWeightedEdge>(new SimpleDirectedWeightedGraph<Spot, DefaultWeightedEdge>(DefaultWeightedEdge.class));
+	/** The tracks stored as a set of their edges. They are indexed by the hash of the matching spot set. 
+	 * @see #trackSpots */
+	protected Map<Integer, Set<DefaultWeightedEdge>> trackEdges = new HashMap<Integer, Set<DefaultWeightedEdge>>();
+	/** The tracks stored as a set of their spots. They are indexed by the hash of the target spot set. */
+	protected Map<Integer, Set<Spot>> trackSpots = new HashMap<Integer, Set<Spot>>();
 
 	/**
-	 * The visible track indices. Is a set made of the indices of tracks (in
-	 * {@link #trackEdges} and {@link #trackSpots}) that are retained after
+	 * The filtered track keys. Is a set made of the keys in the two maps
+	 * {@link #trackEdges} and {@link #trackSpots} for the tracks that are retained after
 	 * filtering, and set visible. The user can manually add to or remove from
-	 * this list.
-	 */
-	protected Set<Integer> visibleTrackIndices = new HashSet<Integer>();
+	 * this list.	 */
+	protected Set<Integer> filteredTrackKeys = new HashSet<Integer>();
 
 
 
@@ -333,10 +332,10 @@ public class TrackMateModel <T extends RealType<T> & NativeType<T>> {
 	 * Return the number of filtered tracks in the model.
 	 */
 	public int getNFilteredTracks() {
-		if (visibleTrackIndices == null)
+		if (filteredTrackKeys == null)
 			return 0;
 		else
-			return visibleTrackIndices.size();
+			return filteredTrackKeys.size();
 	}
 
 	/**
@@ -382,7 +381,7 @@ public class TrackMateModel <T extends RealType<T> & NativeType<T>> {
 	 * filtered tracks.
 	 */
 	public boolean isTrackVisible(final int index) {
-		if (visibleTrackIndices.contains(index)) { // work because based on hash
+		if (filteredTrackKeys.contains(index)) { // work because based on hash
 			return true;
 		} else {
 			return false;
@@ -391,7 +390,7 @@ public class TrackMateModel <T extends RealType<T> & NativeType<T>> {
 	}
 
 	/**
-	 * @return the indices of the tracks that are marked as visible.
+	 * @return the keys of the tracks that are filtered.
 	 * <p>
 	 * <b>Note:</b> the actual {@link Set} object return by this method is 
 	 * re-instantiated every time a change is made to the model that affects
@@ -400,9 +399,27 @@ public class TrackMateModel <T extends RealType<T> & NativeType<T>> {
 	 * 
 	 * @see #execTrackFiltering()
 	 */
-	public Set<Integer> getVisibleTrackIndices() {
-		return visibleTrackIndices;
+	public Set<Integer> getFilteredTrackIDs() {
+		return filteredTrackKeys;
 	}
+	
+	/**
+	 * @return the set of integer keys for all the tracks contained in this model.
+	 * These keys can then be used to iterate or retrieve individual tracks using
+	 * {@link #getTrackEdges(int)}, {@link #getTrackSpots(int)}, etc...
+	 * <p>
+	 * <b>Note:</b> a track ID is just the {@link Object#hashCode()} of the track 
+	 * as a {@link Set<Spot>}.
+	 * <p>
+	 * <b>Note:</b> the actual {@link Set} object return by this method is 
+	 * re-instantiated every time a change is made to the model that affects
+	 * tracks. So this method needs to be called again after each change for
+	 * the indices to be accurate.
+	 */
+	public Set<Integer> getTrackIDs() {
+		return trackSpots.keySet();
+	}
+
 
 	public Spot getEdgeSource(final DefaultWeightedEdge edge) {
 		return graph.getEdgeSource(edge);
@@ -479,10 +496,10 @@ public class TrackMateModel <T extends RealType<T> & NativeType<T>> {
 	}
 
 	
-	public String trackToString(int i) {
-		String str = "Track " + i + ": ";
+	public String trackToString(Integer trackID) {
+		String str = "Track " + trackID + ": ";
 		for (String feature : featureModel.getTrackFeatures())
-			str += feature + " = "	+ featureModel.getTrackFeature(i, feature)+ ", ";
+			str += feature + " = "	+ featureModel.getTrackFeature(trackID, feature)+ ", ";
 		return str;
 	}
 
@@ -536,61 +553,54 @@ public class TrackMateModel <T extends RealType<T> & NativeType<T>> {
 	 * GETTERS / SETTERS
 	 */
 
-	public Set<Spot> getTrackSpots(int index) {
-		if (DEBUG) {
-			System.out.println("[TrackMateModel] #getTrackSpots(int): returning track " + index + " of size " + trackSpots.get(index).size() + ".");
-		}
-		return trackSpots.get(index);
-	}
-
-	public Set<DefaultWeightedEdge> getTrackEdges(int index) {
-		return trackEdges.get(index);
+	/**
+	 * @return  the track indexed by the given key as a set of spot.
+	 * The tracks returned here are guaranteed to have at least 2 spots in it. 
+	 * There is no empty track, nor a track made of a single spot. 
+	 */
+	public Set<Spot> getTrackSpots(int trackKey) {
+		return trackSpots.get(trackKey);
 	}
 
 	/**
-	 * Return the <b>un-filtered</b> list of tracks as a list of spots.
+	 * @return  the track indexed by the given key as a set of spot.
+	 * The track returned here are guaranteed to have at least 1 edge in it. 
+	 * There is no empty track. 
 	 */
-	public List<Set<Spot>> getTrackSpots() {
+	public Set<DefaultWeightedEdge> getTrackEdges(int trackKey) {
+		return trackEdges.get(trackKey);
+	}
+
+	/**
+	 * @return the <b>un-filtered</b> map of tracks as a set of spots.
+	 * The tracks returned here are guaranteed to have at least 2 spots in it. 
+	 * There is no empty track, nor a track made of a single spot. 
+	 * <p>
+	 * <b>Note:</b> the actual map object return by this method is 
+	 * re-instantiated every time a change is made to the model that affects
+	 * tracks. So this method needs to be called again after each change for
+	 * the map to be accurate.
+	 */
+	public Map<Integer,Set<Spot>> getTrackSpots() {
 		return trackSpots;
 	}
 
 	/**
-	 * Overwrite the list of tracks as a set of spots. 
+	 * return the <b>un-filtered</b> map of tracks as a set of edges.
+	 * The tracks returned here are guaranteed to have at least 1 edge in it. 
+	 * There is no empty track. 
 	 * <p>
-	 * <b>Warning:</b> This list is normally maintained internally, and must not be mingled with,
-	 * unless you know what you are doing. This is particularly true if you try to pass a list of 
-	 * spots which are not the same objects that the ones stored in the track graph.
-	 * <p>
-	 * This method exists so that a model can be fully restored from a file, with the exact same
-	 * track indices.
+	 * <b>Note:</b> the actual map object return by this method is 
+	 * re-instantiated every time a change is made to the model that affects
+	 * tracks. So this method needs to be called again after each change for
+	 * the map to be accurate.
 	 */
-	public void setTrackSpots(List<Set<Spot>> trackSpots) {
-		this.trackSpots = Collections.unmodifiableList(trackSpots);
-	}
-
-	/**
-	 * Overwrite the list of tracks as a set of edges. 
-	 * <p>
-	 * <b>Warning:</b> This list is normally maintained internally, and must not be mingled with,
-	 * unless you know what you are doing. This is particularly true if you try to pass a list of 
-	 * edges which are not the same objects that the ones stored in the track graph.
-	 * <p>
-	 * This method exists so that a model can be fully restored from a file, with the exact same
-	 * track indices.
-	 */
-	public void setTrackEdges(List<Set<DefaultWeightedEdge>> trackEdges) {
-		this.trackEdges = trackEdges;
-	}
-
-	/**
-	 * Return the <b>un-filtered</b> list of tracks as a list of edges.
-	 */
-	public List<Set<DefaultWeightedEdge>> getTrackEdges() {
+	public Map<Integer,Set<DefaultWeightedEdge>> getTrackEdges() {
 		return trackEdges;
 	}
 
 	/**
-	 * Return the spots generated by the detection part of this plugin. The
+	 * @return the spots generated by the detection part of this plugin. The
 	 * collection are un-filtered and contain all spots. They are returned as a
 	 * {@link SpotCollection}.
 	 */
@@ -644,14 +654,14 @@ public class TrackMateModel <T extends RealType<T> & NativeType<T>> {
 	}
 
 	/**
-	 * Overwrite the {@link #visibleTrackIndices} field, resulting normally from the 
+	 * Overwrite the {@link #filteredTrackKeys} field, resulting normally from the 
 	 * {@link #execTrackFiltering()} process.
 	 * 
 	 * @param doNotify if true, will fire a {@link TrackMateModelChangeEvent#TRACKS_VISIBILITY_CHANGED} 
 	 * event.
 	 */
 	public void setVisibleTrackIndices(Set<Integer> visibleTrackIndices, boolean doNotify) {
-		this.visibleTrackIndices = visibleTrackIndices;
+		this.filteredTrackKeys = visibleTrackIndices;
 		if (doNotify) {
 			final TrackMateModelChangeEvent event = new TrackMateModelChangeEvent(this, TrackMateModelChangeEvent.TRACKS_VISIBILITY_CHANGED);
 			for (TrackMateModelChangeListener listener : modelChangeListeners)
@@ -677,9 +687,9 @@ public class TrackMateModel <T extends RealType<T> & NativeType<T>> {
 
 		boolean modified = false;
 		if (visible) {
-			modified = visibleTrackIndices.add(trackIndex);
+			modified = filteredTrackKeys.add(trackIndex);
 		} else {
-			modified = visibleTrackIndices.remove(trackIndex);
+			modified = filteredTrackKeys.remove(trackIndex);
 		}
 
 		if (doNotify && modified) {
@@ -693,21 +703,21 @@ public class TrackMateModel <T extends RealType<T> & NativeType<T>> {
 
 	/**
 	 * Set the graph resulting from the tracking process, and fire a
-	 * {@link TrackMateModelChangeEvent#TRACKS_COMPUTED} event. The {@link #visibleTrackIndices}
+	 * {@link TrackMateModelChangeEvent#TRACKS_COMPUTED} event. The {@link #filteredTrackKeys}
 	 * field is set to make all new tracks visible by default.
 	 * <p>
-	 * Calling this method <b>overwrites<b> the current graph.
+	 * Calling this method <b>overwrites<b> the current graph. Calling this method does <b>not</b>
+	 * trigger the calculation of the track features. 
 	 */
 	public void setGraph(final SimpleDirectedWeightedGraph<Spot, DefaultWeightedEdge> graph) {
 		this.graph = new ListenableDirectedGraph<Spot, DefaultWeightedEdge>(graph);
 		this.graph.addGraphListener(new MyGraphListener());
 		//
 		computeTracksFromGraph();
-		computeTrackFeatures();
 		//
-		visibleTrackIndices = new HashSet<Integer>(getNTracks());
-		for (int i = 0; i < getNTracks(); i++)
-			visibleTrackIndices.add(i);
+		filteredTrackKeys = new HashSet<Integer>(getNTracks());
+		for (Integer trackID : trackSpots.keySet())
+			filteredTrackKeys.add(trackID);
 		//
 		final TrackMateModelChangeEvent event = new TrackMateModelChangeEvent(this, TrackMateModelChangeEvent.TRACKS_COMPUTED);
 		for (TrackMateModelChangeListener listener : modelChangeListeners)
@@ -718,8 +728,8 @@ public class TrackMateModel <T extends RealType<T> & NativeType<T>> {
 		this.graph = new ListenableDirectedGraph<Spot, DefaultWeightedEdge>(
 				new SimpleDirectedWeightedGraph<Spot, DefaultWeightedEdge>(DefaultWeightedEdge.class));
 		this.graph.addGraphListener(new MyGraphListener());
-		this.trackEdges = Collections.unmodifiableList(new ArrayList<Set<DefaultWeightedEdge>>());;
-		this.trackSpots = Collections.unmodifiableList(new ArrayList<Set<Spot>>());
+		this.trackEdges = new HashMap<Integer, Set<DefaultWeightedEdge>>();
+		this.trackSpots = new HashMap<Integer, Set<Spot>>();
 	}
 
 
@@ -1044,7 +1054,7 @@ public class TrackMateModel <T extends RealType<T> & NativeType<T>> {
 	 * transaction.
 	 */
 	public void addTrackToVisibleList(int trackIndex) {
-		boolean added = visibleTrackIndices.add(trackIndex);
+		boolean added = filteredTrackKeys.add(trackIndex);
 		if (added) {
 			if (DEBUG) {
 				System.out.println("[TrackMateModel] addTrackToVisibleList: added track number "
@@ -1209,33 +1219,44 @@ public class TrackMateModel <T extends RealType<T> & NativeType<T>> {
 		}
 		
 		// Retain old values
-		List<Set<Spot>> oldTrackSpots = trackSpots;
+		Map<Integer, Set<Spot>> oldTrackSpots = trackSpots;
 		
 		if (DEBUG) {
 			System.out.println("[TrackMateModel] #computeTracksFromGraph(): storing " + oldTrackSpots.size() + " old spot tracks.");
 		}
 
 		// Build new track lists
-		this.trackSpots = Collections.unmodifiableList( new ConnectivityInspector<Spot, DefaultWeightedEdge>(graph).connectedSets() );
-		this.trackEdges = new ArrayList<Set<DefaultWeightedEdge>>(trackSpots.size());
+		List<Set<Spot>> connectedSets = new ConnectivityInspector<Spot, DefaultWeightedEdge>(graph).connectedSets();
+		this.trackSpots = new HashMap<Integer, Set<Spot>>(connectedSets.size());
+		this.trackEdges = new HashMap<Integer, Set<DefaultWeightedEdge>>(connectedSets.size());
+		
+		for(Set<Spot> track : connectedSets) {
+			
+			// We DO NOT WANT tracks made of a single spot. They will reside on the side, 
+			// as lonely spots
+			if (track.size() < 2) {
+				continue;
+			}
+			
+			Integer uniqueKey = track.hashCode();
+			// Add to spot set collection
+			trackSpots.put(uniqueKey, track);
+			// Add to edge set collection, using the same hash as a key
+			Set<DefaultWeightedEdge> spotEdge = new HashSet<DefaultWeightedEdge>();
+			for (Spot spot : track) {
+				spotEdge.addAll(graph.edgesOf(spot));
+			}
+			trackEdges.put(uniqueKey, spotEdge);
+		}
 		
 		if (DEBUG) {
 			System.out.println("[TrackMateModel] #computeTracksFromGraph(): found " + trackSpots.size() + " new spot tracks.");
 		}
 
-		for (Set<Spot> spotTrack : trackSpots) {
-			Set<DefaultWeightedEdge> spotEdge = new HashSet<DefaultWeightedEdge>();
-			for (Spot spot : spotTrack) {
-				spotEdge.addAll(graph.edgesOf(spot));
-			}
-			trackEdges.add(spotEdge);
-		}
-
 		// Try to infer correct visibility
-		final int ntracks = trackSpots.size();
 		final int noldtracks = oldTrackSpots.size();
-		final Set<Integer> oldTrackVisibility = visibleTrackIndices;
-		visibleTrackIndices = new HashSet<Integer>(noldtracks); // Approx
+		final Set<Integer> oldTrackVisibility = filteredTrackKeys;
+		filteredTrackKeys = new HashSet<Integer>(noldtracks); // Approx
 
 		/* Deal with a special case: of there were no tracks at all before this call,
 		 * then oldTrackSpots is empty. To avoid that, we set it to the new value. Also,
@@ -1244,29 +1265,27 @@ public class TrackMateModel <T extends RealType<T> & NativeType<T>> {
 		 * So that manually added track will have a visibility to on. */
 		if (oldTrackSpots.isEmpty()) {
 			oldTrackSpots = trackSpots;
-			for (int i = 0; i < trackSpots.size(); i++) {
-				visibleTrackIndices.add(i);
+			for (int trackKey : trackSpots.keySet()) {
+				filteredTrackKeys.add(trackKey);
 			}
 		}
 
 		/* Another special case: if there is some completely new track appearing, it 
 		 * should be visible by default. How do we know that some tracks are "de novo"?
-		 * For de movo tracks, there is no spot in the Set<Spot> that can be found in 
+		 * For de novo tracks, there is no spot in the Set<Spot> that can be found in 
 		 * oldTrackSpots. Also, we want to avoid having visible tracks of 1 spot, so
 		 * to be visible, de novo tracks must have more than 2 spots. 	 */
 
 		// Pool all old spots together
 		List<Spot> allSpotsInOldTrackSpots = new ArrayList<Spot>();
-		for(Set<Spot> olTrack : oldTrackSpots) {
+		for(Set<Spot> olTrack : oldTrackSpots.values()) {
 			allSpotsInOldTrackSpots.addAll(olTrack);
 		}
 
 		// Interrogate each new track one by one
-		for (int trackIndex = 0; trackIndex < ntracks; trackIndex++) {
+		for (Integer trackKey : trackSpots.keySet()) {
 
-			Set<Spot> track = trackSpots.get(trackIndex);
-			if (track.size() < 2) 
-				continue;
+			Set<Spot> track = trackSpots.get(trackKey);
 
 			boolean shouldBeVisible = true;
 			for (final Spot spot : track) {
@@ -1279,7 +1298,7 @@ public class TrackMateModel <T extends RealType<T> & NativeType<T>> {
 			}
 
 			if (shouldBeVisible) {
-				visibleTrackIndices.add(trackIndex);
+				filteredTrackKeys.add(trackKey);
 			}
 
 		}
@@ -1287,12 +1306,12 @@ public class TrackMateModel <T extends RealType<T> & NativeType<T>> {
 		// How to know if a new track should be visible or not?
 		// We can say this: the new track should be visible if it has at least
 		// one spot that can be found in a visible old track.
-		for (int trackIndex = 0; trackIndex < ntracks; trackIndex++) {
+		for (int trackKey : trackSpots.keySet()) {
 
 			boolean shouldBeVisible = false;
-			for (final Spot spot : trackSpots.get(trackIndex)) {
+			for (final Spot spot : trackSpots.get(trackKey)) {
 
-				for (int oldTrackIndex : oldTrackVisibility) { // we iterate over only old VISIBLE tracks
+				for (Integer oldTrackIndex : oldTrackVisibility) { // we iterate over only old VISIBLE tracks
 					if (oldTrackSpots.get(oldTrackIndex).contains(spot)) {
 						shouldBeVisible = true;
 						break;
@@ -1304,7 +1323,7 @@ public class TrackMateModel <T extends RealType<T> & NativeType<T>> {
 			}
 
 			if (shouldBeVisible) {
-				visibleTrackIndices.add(trackIndex);
+				filteredTrackKeys.add(trackKey);
 			}
 		}
 		if (DEBUG) {
@@ -1364,5 +1383,4 @@ public class TrackMateModel <T extends RealType<T> & NativeType<T>> {
 		}
 
 	}
-
 }

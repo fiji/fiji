@@ -1,6 +1,10 @@
 package fiji.plugin.trackmate.tracking.costmatrix;
 
-
+import static fiji.plugin.trackmate.tracking.TrackerKeys.KEY_ALTERNATIVE_LINKING_COST_FACTOR;
+import static fiji.plugin.trackmate.tracking.TrackerKeys.KEY_BLOCKING_VALUE;
+import static fiji.plugin.trackmate.tracking.TrackerKeys.KEY_CUTOFF_PERCENTILE;
+import static fiji.plugin.trackmate.tracking.TrackerKeys.KEY_LINKING_FEATURE_PENALTIES;
+import static fiji.plugin.trackmate.tracking.TrackerKeys.KEY_LINKING_MAX_DISTANCE;
 import static fiji.plugin.trackmate.util.TMUtils.checkParameter;
 
 import java.util.List;
@@ -8,7 +12,6 @@ import java.util.Map;
 
 import Jama.Matrix;
 import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.tracking.TrackerKeys;
 import fiji.plugin.trackmate.tracking.costfunction.LinkingCostFunction;
 
 /**
@@ -25,7 +28,7 @@ import fiji.plugin.trackmate.tracking.costfunction.LinkingCostFunction;
  * @author Nicholas Perry
  *
  */
-public class LinkingCostMatrixCreator extends LAPTrackerCostMatrixCreator implements TrackerKeys {
+public class LinkingCostMatrixCreator extends LAPTrackerCostMatrixCreator {
 
 	/** The Spots belonging to time frame t. */
 	protected final List<Spot> t0;

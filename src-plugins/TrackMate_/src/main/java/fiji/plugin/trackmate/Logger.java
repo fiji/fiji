@@ -137,4 +137,49 @@ public abstract class Logger extends PrintWriter {
 		
 	};
 	
+	/**
+	 * This {@link Logger} outputs to a StringBuilder given at construction.
+	 * Report progress and colors are ignored.
+	 */
+	public static class StringBuilderLogger extends Logger {
+		
+		private final StringBuilder sb;
+
+		public StringBuilderLogger(final StringBuilder sb) {
+			this.sb = sb;
+		}
+
+		public StringBuilderLogger() {
+			this(new StringBuilder());
+		}
+		
+		/*
+		 * METHODS
+		 */
+		
+		@Override
+		public void log(String message, Color color) {
+			sb.append(message);
+		}
+
+		@Override
+		public void error(String message) {
+			sb.append(message);
+		}
+
+		@Override
+		public void setProgress(double val) { }
+
+		@Override
+		public void setStatus(String status) {
+			sb.append(status);
+		}
+		
+		@Override
+		public String toString() {
+			return sb.toString();
+		}
+		
+	};
+	
 }

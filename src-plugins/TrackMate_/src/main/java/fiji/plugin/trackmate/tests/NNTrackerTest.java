@@ -1,5 +1,7 @@
 package fiji.plugin.trackmate.tests;
 
+import static fiji.plugin.trackmate.tracking.TrackerKeys.KEY_LINKING_MAX_DISTANCE;
+
 import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
@@ -10,16 +12,15 @@ import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMate_;
 import fiji.plugin.trackmate.io.TmXmlReader;
-import fiji.plugin.trackmate.tracking.TrackerKeys;
 import fiji.plugin.trackmate.tracking.kdtree.NearestNeighborTracker;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
 import fiji.plugin.trackmate.visualization.hyperstack.HyperStackDisplayer;
 
-public class NNTrackerTest implements TrackerKeys {
+public class NNTrackerTest {
 
 	
-//	private static final File SPLITTING_CASE_3 = new File("/Users/tinevez/Desktop/Data/FakeTracks.xml");
-	private static final File SPLITTING_CASE_3 = new File("E:/Users/JeanYves/Desktop/Data/FakeTracks.xml");
+	private static final File SPLITTING_CASE_3 = new File("/Users/tinevez/Desktop/Data/FakeTracks.xml");
+//	private static final File SPLITTING_CASE_3 = new File("E:/Users/JeanYves/Desktop/Data/FakeTracks.xml");
 
 	/*
 	 * MAIN METHOD
@@ -33,17 +34,21 @@ public class NNTrackerTest implements TrackerKeys {
 		System.out.println("Opening file: "+file.getAbsolutePath());		
 		TrackMate_<T> plugin = new TrackMate_<T>();
 		plugin.initModules();
-		TmXmlReader<T> reader = new TmXmlReader<T>(file, plugin, Logger.DEFAULT_LOGGER);
-		TrackMateModel<T> model = null;
-		// Parse
-		reader.parse();
-		model = reader.getModel();
+		TmXmlReader<T> reader = new TmXmlReader<T>(file, plugin);
+		if (!reader.checkInput() && !reader.process()) {
+			System.err.println("Problem loading the file:");
+			System.err.println(reader.getErrorMessage());
+		}
+		TrackMateModel<T> model = plugin.getModel();
 		
 		System.out.println("All spots: "+ model.getSpots());
 		System.out.println("Filtered spots: "+ model.getFilteredSpots());
 		System.out.println("Found "+model.getNTracks()+" tracks in the file:");
-		for(int i=0; i<model.getNTracks(); i++)
-			System.out.println('\t'+model.trackToString(i));
+		System.out.println("Track features: ");
+		plugin.computeTrackFeatures();
+		for (Integer trackID : model.getTrackIDs()) {
+			System.out.println(model.trackToString(trackID));
+		}
 		System.out.println();
 		
 		// 2 - Track the test spots
@@ -74,8 +79,9 @@ public class NNTrackerTest implements TrackerKeys {
 //		LAPUtils.echoMatrix(lap.getSegmentCosts());
 		
 		System.out.println("Track features: ");
-		for (int i = 0; i < model.getNTracks(); i++) {
-			System.out.println(model.trackToString(i));
+		plugin.computeTrackFeatures();
+		for (Integer trackID : model.getTrackIDs()) {
+			System.out.println(model.trackToString(trackID));
 		}
 		
 		

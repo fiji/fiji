@@ -10,7 +10,6 @@ import java.awt.Color;
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -94,7 +93,7 @@ public class TrackDisplayNode <T extends RealType<T> & NativeType<T>> extends Co
 
 		computeTrackColors();
 		makeMeshes();
-		setTrackVisible(model.getVisibleTrackIndices());
+		setTrackVisible(model.getFilteredTrackIDs());
 	}
 
 	/*
@@ -133,7 +132,7 @@ public class TrackDisplayNode <T extends RealType<T> & NativeType<T>> extends Co
 				colors.put(i, defaultColor);
 			}
 			int index = 0;
-			for(int i : model.getVisibleTrackIndices()) {
+			for(int i : model.getFilteredTrackIDs()) {
 				colors.put(i, colorMap.getPaint((float) index / (ntracks-1)));
 				index ++;
 			}	
@@ -426,7 +425,7 @@ public class TrackDisplayNode <T extends RealType<T> & NativeType<T>> extends Co
 	private void makeMeshes() {
 
 		// All edges of ALL tracks
-		List<Set<DefaultWeightedEdge>> trackEdges = model.getTrackEdges();
+		Map<Integer,Set<DefaultWeightedEdge>> trackEdges = model.getTrackEdges();
 		final int ntracks = trackEdges.size();
 
 		// Instantiate refs fields

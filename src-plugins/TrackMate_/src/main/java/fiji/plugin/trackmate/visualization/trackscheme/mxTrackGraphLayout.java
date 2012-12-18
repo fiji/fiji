@@ -30,6 +30,7 @@ import com.mxgraph.util.mxRectangle;
 import com.mxgraph.util.mxStyleUtils;
 
 import fiji.plugin.trackmate.Spot;
+import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.SpotImp;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.util.TrackSplitter;
@@ -51,7 +52,7 @@ public class mxTrackGraphLayout <T extends RealType<T> & NativeType<T>> extends 
 	protected InterpolatePaintScale colorMap = InterpolatePaintScale.Jet;
 	/** The style to use to apply to cells, can be changed by the user. */
 	private String layoutStyle = TrackScheme.DEFAULT_STYLE_NAME;
-	
+
 	private Color[] trackColorArray;
 	/**  Do we group branches and display branch cells.
 	 * False by default. */
@@ -71,7 +72,7 @@ public class mxTrackGraphLayout <T extends RealType<T> & NativeType<T>> extends 
 	 * This field is regenerated after each call to {@link #execute(Object)}.
 	 */
 	private Map<Integer, Integer> rowLengths;
-	
+
 	/*
 	 * CONSTRUCTOR
 	 */
@@ -106,7 +107,7 @@ public class mxTrackGraphLayout <T extends RealType<T> & NativeType<T>> extends 
 		for (Object obj : objs) {
 			lonelyCells.add((mxCell) obj);
 		}
-		
+
 		graph.getModel().beginUpdate();
 		try {
 
@@ -114,7 +115,7 @@ public class mxTrackGraphLayout <T extends RealType<T> & NativeType<T>> extends 
 			int ntracks = model.getNFilteredTracks();
 			HashMap<Integer, Color> trackColors = new HashMap<Integer, Color>(ntracks, 1);
 			int colorIndex = 0;
-			for (int i : model.getVisibleTrackIndices()) { 				
+			for (int i : model.getFilteredTrackIDs()) { 				
 				trackColors.put(i, colorMap.getPaint( (double) colorIndex / (ntracks-1)));
 				colorIndex++;
 			}
@@ -128,9 +129,13 @@ public class mxTrackGraphLayout <T extends RealType<T> & NativeType<T>> extends 
 			 */
 			int maxFrame = 0;
 			for(Spot spot : model.getFilteredSpots()) {
-				int frame = spot.getFeature(Spot.FRAME).intValue();
-				if (maxFrame < frame) {
-					maxFrame = frame;
+				Integer frame = safeFindFrame(spot, model.getFilteredSpots(), model.getSettings().dt);
+				if (null == frame) {
+					continue;
+				}
+				int intframe = frame.intValue();
+				if (maxFrame < intframe) {
+					maxFrame = intframe;
 				}
 			}
 			int[] columns = new int[maxFrame+1];
@@ -155,9 +160,9 @@ public class mxTrackGraphLayout <T extends RealType<T> & NativeType<T>> extends 
 
 			int spotIndex = 0; // Index with which the cells will be added to the root.
 
-			for (int i : model.getVisibleTrackIndices()) {
+			for (int i : model.getFilteredTrackIDs()) {
 				trackIndex++;
-				
+
 				// Init track variables
 				Spot previousSpot = null;
 
@@ -190,7 +195,7 @@ public class mxTrackGraphLayout <T extends RealType<T> & NativeType<T>> extends 
 				while(iterator.hasNext()) {
 
 					Spot spot = iterator.next();
-					
+
 					// Get corresponding JGraphX cell, add it if it does not exist in the JGraphX yet
 					mxICell cell = graph.getCellFor(spot);
 					if (null == cell) {
@@ -199,12 +204,16 @@ public class mxTrackGraphLayout <T extends RealType<T> & NativeType<T>> extends 
 						}
 						cell = graph.addJGraphTVertex(spot);
 					}
-					
+
 					// This is cell is in a track, remove it from the list of lonely cells
 					lonelyCells.remove(cell);
 
 					// Determine in what column to put the spot
-					int frame = spot.getFeature(Spot.FRAME).intValue();
+					Integer frame = safeFindFrame(spot, model.getFilteredSpots(), model.getSettings().dt);
+					if (null == frame) {
+						continue;
+					}
+
 					int freeColumn = columns[frame] + 1;
 
 					// If we have no direct edge with the previous spot, we add 1 to the current column
@@ -234,14 +243,14 @@ public class mxTrackGraphLayout <T extends RealType<T> & NativeType<T>> extends 
 
 					for(final DefaultWeightedEdge edge : model.edgesOf(spot)) {
 						mxICell edgeCell = graph.getCellFor(edge);
-						
+
 						if (null == edgeCell) {
 							if (DEBUG) {
 								System.out.println("[mxTrackGraphLayout] execute: creating cell for invisible edge "+edge);
 							}
 							edgeCell = graph.addJGraphTEdge(edge);
 						}
-						
+
 						graph.getModel().add(currentParent, edgeCell, 0);
 						String edgeStyle = edgeCell.getStyle();
 						edgeStyle = mxStyleUtils.setStyle(edgeStyle, mxConstants.STYLE_STROKECOLOR, trackColorStr);
@@ -323,14 +332,14 @@ public class mxTrackGraphLayout <T extends RealType<T> & NativeType<T>> extends 
 					columns[i] = 1;
 				}
 			}
-			
+
 			// Deal with lonely cells
 			for (mxCell cell : lonelyCells) {
 				Spot spot = graph.getSpotFor(cell);
 				int frame = spot.getFeature(Spot.FRAME).intValue();
 				setCellGeometryAndStyle(cell, spot, ++columns[frame], dx, DEFAULT_COLOR);
 			}
-			
+
 			// Before we leave, we regenerate the row length, for our brothers
 			rowLengths = new HashMap<Integer, Integer>(columns.length);
 			for (int i = 0; i < columns.length; i++) {
@@ -340,8 +349,8 @@ public class mxTrackGraphLayout <T extends RealType<T> & NativeType<T>> extends 
 		} finally {
 			graph.getModel().endUpdate();
 		}
-		
-		
+
+
 	}
 
 
@@ -351,7 +360,7 @@ public class mxTrackGraphLayout <T extends RealType<T> & NativeType<T>> extends 
 		String style = cell.getStyle(); 
 		style = mxStyleUtils.removeAllStylenames(style);
 		style = layoutStyle + ";" + style;
-		
+
 		double height 	= DEFAULT_CELL_HEIGHT; 
 		double width 	= DEFAULT_CELL_WIDTH;
 
@@ -367,18 +376,23 @@ public class mxTrackGraphLayout <T extends RealType<T> & NativeType<T>> extends 
 		}
 		style = mxStyleUtils.setStyle(style, mxConstants.STYLE_STROKECOLOR, colorStr);
 		style = graph.getModel().setStyle(cell, style);
-		
+
 		mxGeometry geometry = cell.getGeometry();
 		geometry.setHeight(height);
 		geometry.setWidth(width);
-		int frame = spot.getFeature(Spot.FRAME).intValue();
+		
+		Integer frame = safeFindFrame(spot, model.getFilteredSpots(), model.getSettings().dt);
+		if (null == frame) {
+			return;
+		}
+
 		double x = (targetColumn) * X_COLUMN_SIZE - DEFAULT_CELL_WIDTH/2;
 		double y = (0.5 + frame  + 1) * Y_COLUMN_SIZE - DEFAULT_CELL_HEIGHT/2;
 		geometry.setX(x);
 		geometry.setY(y);	
-	
+
 	}
-	
+
 	/**
 	 * @return  the current row length for each frame.
 	 * That is, for frame <code>i</code>, the number of cells on the row
@@ -443,4 +457,24 @@ public class mxTrackGraphLayout <T extends RealType<T> & NativeType<T>> extends 
 		return layoutStyle;
 	}
 
+	/**
+	 * Retrieve the frame a spot belong to, with failsafe. We return <code>null</code> when every possibility 
+	 * is exhausted.
+	 */
+	private static final Integer safeFindFrame(final Spot spot, final SpotCollection spots, double dt) {
+		Number frame = spot.getFeature(Spot.FRAME);
+		if (null == frame) {
+			// Damn, no info on the frame I belong to
+			frame = spots.getFrame(spot);
+			if (null == frame) {
+				// Still no info?!? Ok then try with the POSITION_T feature
+				Double post = spot.getFeature(Spot.POSITION_T);
+				if (null == post || dt <= 0) {
+					return null; // I give up
+				}
+				frame = Math.round(post / dt);
+			}
+		}
+		return frame.intValue();
+	}
 }

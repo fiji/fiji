@@ -59,20 +59,20 @@ public class ExportStatsToIJAction<T extends RealType<T> & NativeType<T>> extend
 		
 		// Export spots
 		logger.log("  - Exporting spot statistics...");
-		Set<Integer> trackIndices = model.getVisibleTrackIndices();
+		Set<Integer> trackIDs = model.getFilteredTrackIDs();
 		List<String> spotFeatures = fm.getSpotFeatures();
 
 		// Create table
 		ResultsTable spotTable = new ResultsTable();
 		
 		// Parse spots to insert values as objects
-		for (Integer trackIndex : trackIndices) {
-			Set<Spot> track = model.getTrackSpots(trackIndex);
+		for (Integer trackID : trackIDs) {
+			Set<Spot> track = model.getTrackSpots(trackID);
 			for (Spot spot : track) {
 				spotTable.incrementCounter();
 				spotTable.addLabel(spot.getName());
 				spotTable.addValue("ID", spot.ID());
-				spotTable.addValue("TRACK", trackIndex);
+				spotTable.addValue("TRACK_ID", trackID);
 				for (String feature : spotFeatures) {
 					Double val = spot.getFeature(feature);
 					if (null == val) {
@@ -94,9 +94,9 @@ public class ExportStatsToIJAction<T extends RealType<T> & NativeType<T>> extend
 		ResultsTable edgeTable = new ResultsTable();
 		
 		// Sort by track
-		for (Integer trackIndex : trackIndices) {
+		for (Integer trackID : trackIDs) {
 			
-			Set<DefaultWeightedEdge> track = model.getTrackEdges(trackIndex);
+			Set<DefaultWeightedEdge> track = model.getTrackEdges(trackID);
 			for (DefaultWeightedEdge edge : track) {
 				edgeTable.incrementCounter();
 				edgeTable.addLabel(edge.toString());
@@ -122,12 +122,16 @@ public class ExportStatsToIJAction<T extends RealType<T> & NativeType<T>> extend
 		ResultsTable trackTable = new ResultsTable();
 
 		// Sort by track
-		for (Integer trackIndex : trackIndices) {
+		for (Integer trackID : trackIDs) {
 			trackTable.incrementCounter();
-			trackTable.addLabel("TRACK_" + trackIndex);
+			trackTable.addLabel("TRACK_" + trackID);
 			for (String feature : trackFeatures) {
-				Double val = fm.getTrackFeature(trackIndex, feature);
-				trackTable.addValue(feature, val);
+				Double val = fm.getTrackFeature(trackID, feature);
+				if (null == val) {
+					System.out.println("Got a null feature value for feature " + feature + " on trackID " + trackID);
+				} else {
+					trackTable.addValue(feature, val);
+				}
 			}
 		}
 		logger.log(" Done.\n");

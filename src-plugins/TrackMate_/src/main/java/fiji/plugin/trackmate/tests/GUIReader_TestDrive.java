@@ -39,14 +39,13 @@ public class GUIReader_TestDrive {
 		
 		wizard.showDescriptorPanelFor(LoadDescriptor.DESCRIPTOR);
 		
-		
 		GuiReader<T> greader = new GuiReader<T>(wizard);
 		file = greader.askForFile(file);
 
 		System.out.println("Opening file: "+file.getAbsolutePath());		
 		
-		plugin = greader.getPlugin();
 		greader.loadFile(file);
+		plugin = greader.getPlugin();
 		
 		wizard.showDescriptorPanelFor(DisplayerPanel.DESCRIPTOR);
 		

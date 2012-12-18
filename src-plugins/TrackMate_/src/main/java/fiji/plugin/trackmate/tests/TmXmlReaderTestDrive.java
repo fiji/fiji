@@ -4,8 +4,6 @@ import java.io.File;
 
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
-
-import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMate_;
 import fiji.plugin.trackmate.io.TmXmlReader;
@@ -23,19 +21,21 @@ public class TmXmlReaderTestDrive {
 		System.out.println("Opening file: "+file.getAbsolutePath());		
 		TrackMate_<T> plugin = new TrackMate_<T>();
 		plugin.initModules();
-		TmXmlReader<T> reader = new TmXmlReader<T>(file, plugin , Logger.DEFAULT_LOGGER);
-		TrackMateModel<T> model = null;
-		// Parse
-		reader.parse();
-		model = reader.getModel();
+		TmXmlReader<T> reader = new TmXmlReader<T>(file, plugin);
+		if (!reader.checkInput() && !reader.process()) {
+			System.err.println("Problem loading the file:");
+			System.err.println(reader.getErrorMessage());
+		}
+		TrackMateModel<T> model = plugin.getModel();
+
 		System.out.println(model);
 		
-		// Instantiate displayer
-//		fiji.plugin.trackmate.visualization.AbstractTrackMateModelView displayer 
-//			= new fiji.plugin.trackmate.visualization.hyperstack.HyperStackDisplayer();
-//		displayer.setModel(model);
-//		displayer.render();
-//		displayer.refresh();
+//		 Instantiate displayer
+		fiji.plugin.trackmate.visualization.AbstractTrackMateModelView<T> displayer 
+			= new fiji.plugin.trackmate.visualization.hyperstack.HyperStackDisplayer<T>();
+		displayer.setModel(model);
+		displayer.render();
+		displayer.refresh();
 
 	}
 

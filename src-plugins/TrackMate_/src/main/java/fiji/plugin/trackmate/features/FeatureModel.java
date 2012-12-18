@@ -58,12 +58,11 @@ public class FeatureModel <T extends RealType<T> & NativeType<T>> implements Mul
 	private HashMap<String, String> trackFeatureShortNames = new HashMap<String, String>();
 	private HashMap<String, Dimension> trackFeatureDimensions = new HashMap<String, Dimension>();
 	/**
-	 * Feature storage. We use a List of Map as a 2D Map. The list maps each
-	 * track to its feature map. We use the same index that for
-	 * {@link #trackEdges} and {@link #trackSpots}. The feature map maps each
-	 * track feature to its float value for the selected track.
+	 * Feature storage. We use a Map of Map as a 2D Map. The list maps each
+	 * track to its feature map. The feature map maps each
+	 * track feature to its double value for the selected track.
 	 */
-	protected List<Map<String, Double>> trackFeatureValues;
+	protected Map<Integer, Map<String, Double>> trackFeatureValues;
 	/**
 	 * Feature storage for edges.
 	 */
@@ -449,8 +448,8 @@ public class FeatureModel <T extends RealType<T> & NativeType<T>> implements Mul
 		return trackFeatureDimensions;
 	}
 
-	public void putTrackFeature(final int trackIndex, final String feature, final Double value) {
-		trackFeatureValues.get(trackIndex).put(feature, value);
+	public void putTrackFeature(final Integer trackID, final String feature, final Double value) {
+		trackFeatureValues.get(trackID).put(feature, value);
 
 		// FIXME We store the found feature name if it is not already in the feature name list 
 		// This happens when we load a model from a file: the feature name list is empty, 
@@ -461,10 +460,7 @@ public class FeatureModel <T extends RealType<T> & NativeType<T>> implements Mul
 
 	}
 
-	public Double getTrackFeature(final int trackIndex, final String feature) {
-		if (trackIndex >= trackFeatureValues.size()) {
-			return null; // Unknown track 
-		}
+	public Double getTrackFeature(final Integer trackIndex, final String feature) {
 		Map<String, Double> features = trackFeatureValues.get(trackIndex);
 		if (null == features) {
 			return null;
@@ -500,10 +496,11 @@ public class FeatureModel <T extends RealType<T> & NativeType<T>> implements Mul
 	 * Instantiate an empty feature 2D map.
 	 */
 	public void initFeatureMap() {
-		this.trackFeatureValues = new ArrayList<Map<String, Double>>(model.getNTracks());
-		for (int i = 0; i < model.getNTracks(); i++) {
+		this.trackFeatureValues = new HashMap<Integer, Map<String, Double>>(model.getNTracks());
+		Set<Integer> keySet = model.getTrackSpots().keySet();
+		for (Integer trackID : keySet) {
 			Map<String, Double> featureMap = new HashMap<String, Double>(trackFeatures.size());
-			trackFeatureValues.add(featureMap);
+			trackFeatureValues.put(trackID, featureMap);
 		}
 	}
 
@@ -519,7 +516,7 @@ public class FeatureModel <T extends RealType<T> & NativeType<T>> implements Mul
 	public void computeEdgeFeatures() {
 		for(String key : edgeFeatureAnalyzerProvider.getAvailableEdgeFeatureAnalyzers()) {
 			final EdgeFeatureAnalyzer analyzer = edgeFeatureAnalyzerProvider.getEdgeFeatureAnalyzer(key);
-			for (Set<DefaultWeightedEdge> track : model.getTrackEdges()) {
+			for (Set<DefaultWeightedEdge> track : model.getTrackEdges().values()) {
 				for (DefaultWeightedEdge edge : track) {
 					analyzer.process(edge);
 				}

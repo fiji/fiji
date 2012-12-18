@@ -1,7 +1,6 @@
 package fiji.plugin.trackmate.tests;
 
 import fiji.plugin.trackmate.FeatureFilter;
-import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMate_;
@@ -41,17 +40,19 @@ public class TrackVisualizerTestDrive {
 		
 		TrackMate_<T> plugin = new TrackMate_<T>();
 		plugin.initModules();
-		TmXmlReader<T> reader = new TmXmlReader<T>(file, plugin , Logger.DEFAULT_LOGGER);
-		reader.parse();
-		
-		// Load objects 
-		final TrackMateModel<T> model = reader.getModel();
+		TmXmlReader<T> reader = new TmXmlReader<T>(file, plugin);
+		if (!reader.checkInput() && !reader.process()) {
+			System.err.println("Problem loading the file:");
+			System.err.println(reader.getErrorMessage());
+		}
+		TrackMateModel<T> model = plugin.getModel();
 		
 		System.out.println("From the XML file:");
 		System.out.println("Found "+model.getNTracks()+" tracks in total.");
 		System.out.println("There were "+model.getSettings().getTrackFilters().size() + " track filter(s) applied on this list,");
 		System.out.println("resulting in having only "+model.getNFilteredTracks()+" visible tracks after filtering.");
-		for(int i : model.getVisibleTrackIndices()) {
+		plugin.computeTrackFeatures();
+		for(int i : model.getFilteredTrackIDs()) {
 			System.out.println(" - "+model.trackToString(i));
 		}
 		
@@ -62,10 +63,8 @@ public class TrackVisualizerTestDrive {
 		System.out.println("We add an extra track filter: "+filter);
 		System.out.println("After filtering, retaining "+model.getNFilteredTracks()+" tracks.");
 			
-		ImagePlus imp = reader.getImage();
-		Settings<T> settings = reader.getSettings();
-		reader.getDetectorSettings(settings);
-		settings.imp = imp;
+		Settings<T> settings = model.getSettings();
+		ImagePlus imp = settings.imp;
 		
 		// Launch ImageJ and display
 		if (null != imp) {
@@ -84,13 +83,13 @@ public class TrackVisualizerTestDrive {
 		displayer.refresh();
 		
 		// Display Track scheme
-		final TrackScheme<T> trackScheme = new TrackScheme<T>(model);
-		trackScheme.render();
+//		final TrackScheme<T> trackScheme = new TrackScheme<T>(model);
+//		trackScheme.render();
 		
 		// Show control panel
 		DisplayerPanel<T> panel = new DisplayerPanel<T>();
 		panel.setPlugin(plugin);
-		panel.register(trackScheme);
+//		panel.register(trackScheme);
 		panel.register(displayer);
 		JFrame frame = new JFrame();
 		frame.getContentPane().add(panel);

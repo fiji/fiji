@@ -187,7 +187,7 @@ public class JGraphXAdapter  <T extends RealType<T> & NativeType<T>> extends mxG
 	private void insertTrackCollection(final TrackMateModel<T> tmm) {		
 		model.beginUpdate();
 		try {
-			for (int i : tmm.getVisibleTrackIndices()) {
+			for (int i : tmm.getFilteredTrackIDs()) {
 				
 				for (Spot vertex : tmm.getTrackSpots(i)) {
 					addJGraphTVertex(vertex);

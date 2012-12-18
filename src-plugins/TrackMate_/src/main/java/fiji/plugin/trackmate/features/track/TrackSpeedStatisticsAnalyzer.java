@@ -75,18 +75,20 @@ public class TrackSpeedStatisticsAnalyzer<T extends RealType<T> & NativeType<T>>
 	 */
 	
 	@Override
-	public void process(TrackMateModel<T> model) {
+	public void process(final TrackMateModel<T> model) {
 		
-		for(int index=0; index<model.getNTracks(); index++) {
+		Map<Integer, Set<DefaultWeightedEdge>> tracks = model.getTrackEdges();
+		
+		for(Integer trackID : tracks.keySet()) {
 			
-			Set<DefaultWeightedEdge> track = model.getTrackEdges(index);
+			Set<DefaultWeightedEdge> track = model.getTrackEdges(trackID);
 			
 			if (track.size() == 0) {
-				model.getFeatureModel().putTrackFeature(index, TRACK_MEDIAN_SPEED, Double.NaN);
-				model.getFeatureModel().putTrackFeature(index, TRACK_MIN_SPEED, Double.NaN);
-				model.getFeatureModel().putTrackFeature(index, TRACK_MAX_SPEED, Double.NaN);
-				model.getFeatureModel().putTrackFeature(index, TRACK_MEAN_SPEED, Double.NaN);
-				model.getFeatureModel().putTrackFeature(index, TRACK_SPEED_STANDARD_DEVIATION,  Double.NaN);				
+				model.getFeatureModel().putTrackFeature(trackID, TRACK_MEDIAN_SPEED, Double.NaN);
+				model.getFeatureModel().putTrackFeature(trackID, TRACK_MIN_SPEED, Double.NaN);
+				model.getFeatureModel().putTrackFeature(trackID, TRACK_MAX_SPEED, Double.NaN);
+				model.getFeatureModel().putTrackFeature(trackID, TRACK_MEAN_SPEED, Double.NaN);
+				model.getFeatureModel().putTrackFeature(trackID, TRACK_SPEED_STANDARD_DEVIATION,  Double.NaN);				
 				continue;
 			}
 			
@@ -143,11 +145,11 @@ public class TrackSpeedStatisticsAnalyzer<T extends RealType<T> & NativeType<T>>
 //			double kurtosis = (n*M4) / (M2*M2) - 3;
 //			double skewness =  Math.sqrt(n) * M3 / Math.pow(M2, 3/2.0) ;
 			
-			model.getFeatureModel().putTrackFeature(index, TRACK_MEDIAN_SPEED, median);
-			model.getFeatureModel().putTrackFeature(index, TRACK_MIN_SPEED, min);
-			model.getFeatureModel().putTrackFeature(index, TRACK_MAX_SPEED, max);
-			model.getFeatureModel().putTrackFeature(index, TRACK_MEAN_SPEED, mean);
-			model.getFeatureModel().putTrackFeature(index, TRACK_SPEED_STANDARD_DEVIATION,  Math.sqrt(variance));
+			model.getFeatureModel().putTrackFeature(trackID, TRACK_MEDIAN_SPEED, median);
+			model.getFeatureModel().putTrackFeature(trackID, TRACK_MIN_SPEED, min);
+			model.getFeatureModel().putTrackFeature(trackID, TRACK_MAX_SPEED, max);
+			model.getFeatureModel().putTrackFeature(trackID, TRACK_MEAN_SPEED, mean);
+			model.getFeatureModel().putTrackFeature(trackID, TRACK_SPEED_STANDARD_DEVIATION,  Math.sqrt(variance));
 //			model.getFeatureModel().putTrackFeature(index, TRACK_SPEED_KURTOSIS, kurtosis);
 //			model.getFeatureModel().putTrackFeature(index, TRACK_SPEED_SKEWNESS, skewness);
 			

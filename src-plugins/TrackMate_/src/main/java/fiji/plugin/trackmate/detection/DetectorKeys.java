@@ -1,9 +1,9 @@
 package fiji.plugin.trackmate.detection;
 
 /**
- * An interface to store key names for parameters of the current {@link SpotDetector}s.
+ * A class to store key names for parameters of the current {@link SpotDetector}s.
  */
-public interface DetectorKeys {
+public class DetectorKeys {
 
 	/**
 	 * The attribute name for the {@link SpotDetectorFactory} key when

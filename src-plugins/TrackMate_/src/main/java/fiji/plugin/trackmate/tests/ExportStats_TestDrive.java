@@ -1,6 +1,5 @@
 package fiji.plugin.trackmate.tests;
 
-import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.TrackMate_;
 import fiji.plugin.trackmate.action.ExportStatsToIJAction;
 import fiji.plugin.trackmate.io.TmXmlReader;
@@ -14,9 +13,6 @@ import net.imglib2.type.numeric.RealType;
 
 public class ExportStats_TestDrive {
 
-	/**
-	 * @param args
-	 */
 	public static <T extends RealType<T> & NativeType<T>> void main(String[] args) {
 		
 		ImageJ.main(args);
@@ -31,11 +27,11 @@ public class ExportStats_TestDrive {
 		
 		TrackMate_<T> plugin = new TrackMate_<T>();
 		plugin.initModules();
-		TmXmlReader<T> reader = new TmXmlReader<T>(file, plugin , Logger.DEFAULT_LOGGER);
-		reader.parse();
-		
-		// Load objects 
-		reader.getModel();
+		TmXmlReader<T> reader = new TmXmlReader<T>(file, plugin);
+		if (!reader.checkInput() && !reader.process()) {
+			System.err.println("Problem loading the file:");
+			System.err.println(reader.getErrorMessage());
+		}
 		
 		// Export
 		ExportStatsToIJAction<T> exporter = new ExportStatsToIJAction<T>();

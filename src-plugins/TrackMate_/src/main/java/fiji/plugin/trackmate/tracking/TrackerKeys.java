@@ -5,7 +5,7 @@ import java.util.Map;
 
 import fiji.plugin.trackmate.Spot;
 
-public interface TrackerKeys {
+public class TrackerKeys {
 
 	/*
 	 * MARSHALLING CONSTANTS

@@ -55,9 +55,9 @@ public class TrackDurationAnalyzer<T extends RealType<T> & NativeType<T>> implem
 	@Override
 	public void process(final TrackMateModel<T> model) {
 		// I love brute force.
-		final List<Set<Spot>> allTracks = model.getTrackSpots();
-		for(int index=0; index<model.getNTracks(); index++) {
-			Set<Spot> track = allTracks.get(index);
+		final Map<Integer,Set<Spot>> allTracks = model.getTrackSpots();
+		for(int trackID : allTracks.keySet()) {
+			Set<Spot> track = allTracks.get(trackID);
 			double minT = Double.POSITIVE_INFINITY;
 			double maxT = Double.NEGATIVE_INFINITY;
 			Double t;
@@ -78,16 +78,16 @@ public class TrackDurationAnalyzer<T extends RealType<T> & NativeType<T>> implem
 					endSpot = spot;
 				}
 			}
-			if (!allNull) {
-				model.getFeatureModel().putTrackFeature(index, TRACK_DURATION, (maxT-minT));
-				model.getFeatureModel().putTrackFeature(index, TRACK_START, minT);
-				model.getFeatureModel().putTrackFeature(index, TRACK_STOP, maxT);
-				model.getFeatureModel().putTrackFeature(index, TRACK_DISPLACEMENT, (double) Math.sqrt(startSpot.squareDistanceTo(endSpot)));
+			if (track.size() == 0 || allNull) {
+				model.getFeatureModel().putTrackFeature(trackID, TRACK_DURATION, Double.NaN);
+				model.getFeatureModel().putTrackFeature(trackID, TRACK_START, Double.NaN);
+				model.getFeatureModel().putTrackFeature(trackID, TRACK_STOP, Double.NaN);
+				model.getFeatureModel().putTrackFeature(trackID, TRACK_DISPLACEMENT, Double.NaN);
 			} else {
-				model.getFeatureModel().putTrackFeature(index, TRACK_DURATION, Double.NaN);
-				model.getFeatureModel().putTrackFeature(index, TRACK_START, Double.NaN);
-				model.getFeatureModel().putTrackFeature(index, TRACK_STOP, Double.NaN);
-				model.getFeatureModel().putTrackFeature(index, TRACK_DISPLACEMENT, Double.NaN);
+				model.getFeatureModel().putTrackFeature(trackID, TRACK_DURATION, (maxT-minT));
+				model.getFeatureModel().putTrackFeature(trackID, TRACK_START, minT);
+				model.getFeatureModel().putTrackFeature(trackID, TRACK_STOP, maxT);
+				model.getFeatureModel().putTrackFeature(trackID, TRACK_DISPLACEMENT, (double) Math.sqrt(startSpot.squareDistanceTo(endSpot)));
 			}
 		}
 	}

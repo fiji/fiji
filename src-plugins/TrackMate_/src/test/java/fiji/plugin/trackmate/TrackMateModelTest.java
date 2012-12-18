@@ -63,7 +63,7 @@ public class TrackMateModelTest <T extends RealType<T> & NativeType<T>>   {
 			model.endUpdate();
 		}
 
-		Set<Integer> visibleTracks = model.getFilteredTrackKeys();
+		Set<Integer> visibleTracks = model.getFilteredTrackIDs();
 
 		// These must be 3 tracks visible
 		assertEquals(3, visibleTracks.size());
@@ -81,7 +81,7 @@ public class TrackMateModelTest <T extends RealType<T> & NativeType<T>>   {
 		}
 		
 		// These must be 4 tracks visible
-		visibleTracks = model.getFilteredTrackKeys();
+		visibleTracks = model.getFilteredTrackIDs();
 		assertEquals(4, visibleTracks.size());
 		// with indices 0, 1, 2 & 3
 		assertTrue(visibleTracks.contains(0));
@@ -100,7 +100,7 @@ public class TrackMateModelTest <T extends RealType<T> & NativeType<T>>   {
 		assertTrue(modified);
 		
 		// These must be now 3 tracks visible
-		visibleTracks = model.getFilteredTrackKeys();
+		visibleTracks = model.getFilteredTrackIDs();
 		assertEquals(3, visibleTracks.size());
 		// out of 4
 		assertEquals(4, model.getNTracks());
@@ -119,7 +119,7 @@ public class TrackMateModelTest <T extends RealType<T> & NativeType<T>>   {
 		
 		// These must be now 3 tracks visible: connecting a visible track with an invisible makes
 		// it all visible
-		visibleTracks = model.getFilteredTrackKeys();
+		visibleTracks = model.getFilteredTrackIDs();
 		assertEquals(3, visibleTracks.size());
 		// out of 3
 		assertEquals(3, model.getNTracks());
@@ -414,7 +414,7 @@ public class TrackMateModelTest <T extends RealType<T> & NativeType<T>>   {
 			System.out.println("\t\t"+model.getTrackEdges().get(i));
 		}
 		System.out.println("Track visibility is:");
-		System.out.println(model.getFilteredTrackKeys());
+		System.out.println(model.getFilteredTrackIDs());
 
 
 
@@ -426,7 +426,7 @@ public class TrackMateModelTest <T extends RealType<T> & NativeType<T>>   {
 		model.setTrackVisible(1, false, true);
 
 		System.out.println("Track visibility is:");
-		System.out.println(model.getFilteredTrackKeys());
+		System.out.println(model.getFilteredTrackIDs());
 
 
 
@@ -453,7 +453,7 @@ public class TrackMateModelTest <T extends RealType<T> & NativeType<T>>   {
 			System.out.println("\t\t"+model.getTrackEdges().get(i));
 		}
 		System.out.println("Track visibility is:");
-		System.out.println(model.getFilteredTrackKeys());
+		System.out.println(model.getFilteredTrackIDs());
 
 	}
 

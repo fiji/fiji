@@ -8,7 +8,6 @@ import net.imglib2.type.numeric.RealType;
 
 import org.jdom.JDOMException;
 
-import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMate_;
 import fiji.plugin.trackmate.action.GrabSpotImageAction;
@@ -27,12 +26,15 @@ public class HyperStackDisplayerTestDrive {
 		
 		TrackMate_<T> plugin = new TrackMate_<T>();
 		plugin.initModules();
-		TmXmlReader<T> reader = new TmXmlReader<T>(file, plugin , Logger.DEFAULT_LOGGER);
-		reader.parse();
+		TmXmlReader<T> reader = new TmXmlReader<T>(file, plugin);
+		if (!reader.checkInput() && !reader.process()) {
+			System.err.println("Problem loading the file:");
+			System.err.println(reader.getErrorMessage());
+		}
+		TrackMateModel<T> model = plugin.getModel();
 		
 		ij.ImageJ.main(args);
 		
-		final TrackMateModel<T> model = reader.getModel();
 		GrabSpotImageAction<T> action = new GrabSpotImageAction<T>();
 		action.execute(new TrackMate_<T>(model));
 

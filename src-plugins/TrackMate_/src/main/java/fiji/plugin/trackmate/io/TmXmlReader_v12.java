@@ -1,7 +1,87 @@
 package fiji.plugin.trackmate.io;
 
 
+import static fiji.plugin.trackmate.detection.DetectorKeys.KEY_DOWNSAMPLE_FACTOR;
+import static fiji.plugin.trackmate.detection.DetectorKeys.KEY_DO_MEDIAN_FILTERING;
+import static fiji.plugin.trackmate.detection.DetectorKeys.KEY_DO_SUBPIXEL_LOCALIZATION;
+import static fiji.plugin.trackmate.detection.DetectorKeys.KEY_RADIUS;
+import static fiji.plugin.trackmate.detection.DetectorKeys.KEY_TARGET_CHANNEL;
+import static fiji.plugin.trackmate.detection.DetectorKeys.KEY_THRESHOLD;
+import static fiji.plugin.trackmate.io.TmXmlKeys.FILTER_ABOVE_ATTRIBUTE_NAME;
+import static fiji.plugin.trackmate.io.TmXmlKeys.FILTER_ELEMENT_KEY;
+import static fiji.plugin.trackmate.io.TmXmlKeys.FILTER_FEATURE_ATTRIBUTE_NAME;
+import static fiji.plugin.trackmate.io.TmXmlKeys.FILTER_VALUE_ATTRIBUTE_NAME;
+import static fiji.plugin.trackmate.io.TmXmlKeys.TRACK_FILTER_COLLECTION_ELEMENT_KEY;
+import static fiji.plugin.trackmate.io.TmXmlKeys_v12.FILTERED_SPOT_COLLECTION_ELEMENT_KEY_v12;
+import static fiji.plugin.trackmate.io.TmXmlKeys_v12.FILTERED_SPOT_ELEMENT_KEY_v12;
+import static fiji.plugin.trackmate.io.TmXmlKeys_v12.FILTERED_TRACK_ELEMENT_KEY_v12;
+import static fiji.plugin.trackmate.io.TmXmlKeys_v12.FILTER_ABOVE_ATTRIBUTE_NAME_v12;
+import static fiji.plugin.trackmate.io.TmXmlKeys_v12.FILTER_ELEMENT_KEY_v12;
+import static fiji.plugin.trackmate.io.TmXmlKeys_v12.FILTER_FEATURE_ATTRIBUTE_NAME_v12;
+import static fiji.plugin.trackmate.io.TmXmlKeys_v12.FILTER_VALUE_ATTRIBUTE_NAME_v12;
+import static fiji.plugin.trackmate.io.TmXmlKeys_v12.FRAME_ATTRIBUTE_NAME_v12;
+import static fiji.plugin.trackmate.io.TmXmlKeys_v12.IMAGE_ELEMENT_KEY_v12;
+import static fiji.plugin.trackmate.io.TmXmlKeys_v12.IMAGE_FILENAME_v12_ATTRIBUTE_NAME_v12;
+import static fiji.plugin.trackmate.io.TmXmlKeys_v12.IMAGE_FOLDER_ATTRIBUTE_NAME_v12;
+import static fiji.plugin.trackmate.io.TmXmlKeys_v12.IMAGE_HEIGHT_ATTRIBUTE_NAME_v12;
+import static fiji.plugin.trackmate.io.TmXmlKeys_v12.IMAGE_NFRAMES_ATTRIBUTE_NAME_v12;
+import static fiji.plugin.trackmate.io.TmXmlKeys_v12.IMAGE_NSLICES_ATTRIBUTE_NAME_v12;
+import static fiji.plugin.trackmate.io.TmXmlKeys_v12.IMAGE_PIXEL_HEIGHT_ATTRIBUTE_NAME_v12;
+import static fiji.plugin.trackmate.io.TmXmlKeys_v12.IMAGE_PIXEL_WIDTH_ATTRIBUTE_NAME_v12;
+import static fiji.plugin.trackmate.io.TmXmlKeys_v12.IMAGE_SPATIAL_UNITS_ATTRIBUTE_NAME_v12;
+import static fiji.plugin.trackmate.io.TmXmlKeys_v12.IMAGE_TIME_INTERVAL_ATTRIBUTE_NAME_v12;
+import static fiji.plugin.trackmate.io.TmXmlKeys_v12.IMAGE_TIME_UNITS_ATTRIBUTE_NAME_v12;
+import static fiji.plugin.trackmate.io.TmXmlKeys_v12.IMAGE_VOXEL_DEPTH_ATTRIBUTE_NAME_v12;
+import static fiji.plugin.trackmate.io.TmXmlKeys_v12.IMAGE_WIDTH_ATTRIBUTE_NAME_v12;
+import static fiji.plugin.trackmate.io.TmXmlKeys_v12.INITIAL_SPOT_FILTER_ELEMENT_KEY_v12;
+import static fiji.plugin.trackmate.io.TmXmlKeys_v12.SEGMENTER_CLASS_ATTRIBUTE_NAME_v12;
+import static fiji.plugin.trackmate.io.TmXmlKeys_v12.SEGMENTER_SETTINGS_CLASS_ATTRIBUTE_NAME_v12;
+import static fiji.plugin.trackmate.io.TmXmlKeys_v12.SEGMENTER_SETTINGS_ELEMENT_KEY_v12;
+import static fiji.plugin.trackmate.io.TmXmlKeys_v12.SETTINGS_ELEMENT_KEY_v12;
+import static fiji.plugin.trackmate.io.TmXmlKeys_v12.SETTINGS_SEGMENTATION_CHANNEL_ATTRIBUTE_NAME_v12;
+import static fiji.plugin.trackmate.io.TmXmlKeys_v12.SETTINGS_TEND_ATTRIBUTE_NAME_v12;
+import static fiji.plugin.trackmate.io.TmXmlKeys_v12.SETTINGS_TSTART_ATTRIBUTE_NAME_v12;
+import static fiji.plugin.trackmate.io.TmXmlKeys_v12.SETTINGS_XEND_ATTRIBUTE_NAME_v12;
+import static fiji.plugin.trackmate.io.TmXmlKeys_v12.SETTINGS_XSTART_ATTRIBUTE_NAME_v12;
+import static fiji.plugin.trackmate.io.TmXmlKeys_v12.SETTINGS_YEND_ATTRIBUTE_NAME_v12;
+import static fiji.plugin.trackmate.io.TmXmlKeys_v12.SETTINGS_YSTART_ATTRIBUTE_NAME_v12;
+import static fiji.plugin.trackmate.io.TmXmlKeys_v12.SETTINGS_ZEND_ATTRIBUTE_NAME_v12;
+import static fiji.plugin.trackmate.io.TmXmlKeys_v12.SETTINGS_ZSTART_ATTRIBUTE_NAME_v12;
+import static fiji.plugin.trackmate.io.TmXmlKeys_v12.SPOT_COLLECTION_ELEMENT_KEY_v12;
+import static fiji.plugin.trackmate.io.TmXmlKeys_v12.SPOT_ELEMENT_KEY_v12;
+import static fiji.plugin.trackmate.io.TmXmlKeys_v12.SPOT_FILTER_COLLECTION_ELEMENT_KEY_v12;
+import static fiji.plugin.trackmate.io.TmXmlKeys_v12.SPOT_FRAME_COLLECTION_ELEMENT_KEY_v12;
+import static fiji.plugin.trackmate.io.TmXmlKeys_v12.SPOT_ID_ATTRIBUTE_NAME_v12;
+import static fiji.plugin.trackmate.io.TmXmlKeys_v12.SPOT_ID_ELEMENT_KEY_v12;
+import static fiji.plugin.trackmate.io.TmXmlKeys_v12.SPOT_NAME_v12_ATTRIBUTE_NAME_v12;
+import static fiji.plugin.trackmate.io.TmXmlKeys_v12.TRACKER_CLASS_ATTRIBUTE_NAME_v12;
+import static fiji.plugin.trackmate.io.TmXmlKeys_v12.TRACKER_SETTINGS_CLASS_ATTRIBUTE_NAME_v12;
+import static fiji.plugin.trackmate.io.TmXmlKeys_v12.TRACKER_SETTINGS_ELEMENT_KEY_v12;
+import static fiji.plugin.trackmate.io.TmXmlKeys_v12.TRACK_COLLECTION_ELEMENT_KEY_v12;
+import static fiji.plugin.trackmate.io.TmXmlKeys_v12.TRACK_EDGE_ELEMENT_KEY_v12;
+import static fiji.plugin.trackmate.io.TmXmlKeys_v12.TRACK_EDGE_SOURCE_ATTRIBUTE_NAME_v12;
+import static fiji.plugin.trackmate.io.TmXmlKeys_v12.TRACK_EDGE_TARGET_ATTRIBUTE_NAME_v12;
+import static fiji.plugin.trackmate.io.TmXmlKeys_v12.TRACK_EDGE_WEIGHT_ATTRIBUTE_NAME_v12;
+import static fiji.plugin.trackmate.io.TmXmlKeys_v12.TRACK_ELEMENT_KEY_v12;
+import static fiji.plugin.trackmate.io.TmXmlKeys_v12.TRACK_ID_ATTRIBUTE_NAME_v12;
+import static fiji.plugin.trackmate.io.TmXmlKeys_v12.TRACK_ID_ELEMENT_KEY_v12;
+import static fiji.plugin.trackmate.tracking.TrackerKeys.KEY_ALLOW_GAP_CLOSING;
+import static fiji.plugin.trackmate.tracking.TrackerKeys.KEY_ALLOW_TRACK_MERGING;
+import static fiji.plugin.trackmate.tracking.TrackerKeys.KEY_ALLOW_TRACK_SPLITTING;
+import static fiji.plugin.trackmate.tracking.TrackerKeys.KEY_ALTERNATIVE_LINKING_COST_FACTOR;
+import static fiji.plugin.trackmate.tracking.TrackerKeys.KEY_BLOCKING_VALUE;
+import static fiji.plugin.trackmate.tracking.TrackerKeys.KEY_CUTOFF_PERCENTILE;
+import static fiji.plugin.trackmate.tracking.TrackerKeys.KEY_GAP_CLOSING_FEATURE_PENALTIES;
+import static fiji.plugin.trackmate.tracking.TrackerKeys.KEY_GAP_CLOSING_MAX_DISTANCE;
+import static fiji.plugin.trackmate.tracking.TrackerKeys.KEY_GAP_CLOSING_MAX_FRAME_GAP;
+import static fiji.plugin.trackmate.tracking.TrackerKeys.KEY_LINKING_FEATURE_PENALTIES;
+import static fiji.plugin.trackmate.tracking.TrackerKeys.KEY_LINKING_MAX_DISTANCE;
+import static fiji.plugin.trackmate.tracking.TrackerKeys.KEY_MERGING_FEATURE_PENALTIES;
+import static fiji.plugin.trackmate.tracking.TrackerKeys.KEY_MERGING_MAX_DISTANCE;
+import static fiji.plugin.trackmate.tracking.TrackerKeys.KEY_SPLITTING_FEATURE_PENALTIES;
+import static fiji.plugin.trackmate.tracking.TrackerKeys.KEY_SPLITTING_MAX_DISTANCE;
 import static fiji.plugin.trackmate.util.TMUtils.readBooleanAttribute;
+import static fiji.plugin.trackmate.util.TMUtils.readDoubleAttribute;
 import static fiji.plugin.trackmate.util.TMUtils.readFloatAttribute;
 import static fiji.plugin.trackmate.util.TMUtils.readIntAttribute;
 import ij.IJ;
@@ -35,15 +115,14 @@ import fiji.plugin.trackmate.SpotImp;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMate_;
 import fiji.plugin.trackmate.TrackerProvider;
-import fiji.plugin.trackmate.detection.DetectorKeys;
 import fiji.plugin.trackmate.detection.DogDetectorFactory;
 import fiji.plugin.trackmate.detection.DownsampleLogDetectorFactory;
 import fiji.plugin.trackmate.detection.LogDetectorFactory;
 import fiji.plugin.trackmate.detection.ManualDetectorFactory;
+import fiji.plugin.trackmate.features.FeatureModel;
 import fiji.plugin.trackmate.tracking.FastLAPTracker;
 import fiji.plugin.trackmate.tracking.SimpleFastLAPTracker;
 import fiji.plugin.trackmate.tracking.SpotTracker;
-import fiji.plugin.trackmate.tracking.TrackerKeys;
 import fiji.plugin.trackmate.tracking.kdtree.NearestNeighborTracker;
 import fiji.plugin.trackmate.util.TMUtils;
 
@@ -54,7 +133,7 @@ import fiji.plugin.trackmate.util.TMUtils;
  * explicitly, and convert on the fly to v1.3 classes. 
  * @author Jean-Yves Tinevez - 2012
  */
-public class TmXmlReader_v12<T extends RealType<T> & NativeType<T>> extends TmXmlReader<T> implements TrackerKeys, DetectorKeys, TmXmlKeys_v12 {
+public class TmXmlReader_v12<T extends RealType<T> & NativeType<T>> extends TmXmlReader<T> {
 
 	/*
 	 * XML KEY_v12S FOR V 1.2
@@ -86,12 +165,8 @@ public class TmXmlReader_v12<T extends RealType<T> & NativeType<T>> extends TmXm
 	 */
 
 
-	public TmXmlReader_v12(File file, TrackMate_<T> plugin, Logger logger) {
-		super(file, plugin, logger);
-	}
-
 	public TmXmlReader_v12(File file, TrackMate_<T> plugin) {
-		super(file, plugin, Logger.VOID_LOGGER);
+		super(file, plugin);
 	}
 
 	/*
@@ -103,7 +178,10 @@ public class TmXmlReader_v12<T extends RealType<T> & NativeType<T>> extends TmXm
 	 * Fields not set in the field will be <code>null</code> in the model.
 	 * @throws DataConversionException
 	 */
-	public TrackMateModel<T> getModel() {
+	public boolean process() {
+		
+		long start = System.currentTimeMillis();
+		
 		TrackMateModel<T> model = plugin.getModel();
 		// Settings
 		Settings<T> settings = getSettings();
@@ -125,37 +203,203 @@ public class TmXmlReader_v12<T extends RealType<T> & NativeType<T>> extends TmXm
 		model.setFilteredSpots(filteredSpots, false);
 
 		// Tracks
-		SimpleDirectedWeightedGraph<Spot, DefaultWeightedEdge> graph = readTrackGraph();
-		if (null != graph) {
-			model.setGraph(graph);
-		}
+		readTracks();
 
 		// Track Filters
 		List<FeatureFilter> trackFilters = getTrackFeatureFilters();
 		model.getSettings().setTrackFilters(trackFilters);
-		// Filtered tracks
-		Set<Integer> filteredTrackIndices = getFilteredTracks();
-		if (null != filteredTrackIndices) {
-			model.setVisibleTrackIndices(filteredTrackIndices, false);
-			model.setTrackSpots(readTrackSpots(graph));
-			model.setTrackEdges(readTrackEdges(graph));
-		}
-		// Track features
-		readTrackFeatures(model.getFeatureModel());
 
-		// Return
-		return model;
+		long end = System.currentTimeMillis();
+		processingTime = end - start;
+		
+		return true;
 	}
+	
+	/*
+	 * PRIVATE METHODS
+	 */
+	
+	/**
+	 * Load the tracks, the track features and the ID of the visible tracks into the model
+	 * modified by this reader. 
+	 * @return true if the tracks were found in the file, false otherwise.
+	 */
+	@SuppressWarnings("unchecked")
+	private void readTracks() {
+
+		Element allTracksElement = root.getChild(TRACK_COLLECTION_ELEMENT_KEY_v12);
+		if (null == allTracksElement)
+			return;
+
+		if (null == cache) 
+			getAllSpots(); // build the cache if it's not there
+
+		final SimpleDirectedWeightedGraph<Spot, DefaultWeightedEdge> graph = new SimpleDirectedWeightedGraph<Spot, DefaultWeightedEdge>(DefaultWeightedEdge.class);
+
+		// Load tracks
+		List<Element> trackElements = allTracksElement.getChildren(TRACK_ELEMENT_KEY_v12);
+		List<Element> edgeElements;
+
+		// A temporary map that maps stored track key to one of its spot
+		HashMap<Integer, Spot> savedTrackMap = new HashMap<Integer, Spot>();
 
 
+		for (Element trackElement : trackElements) {
+
+			// Get track ID as it is saved on disk
+			int trackID = readIntAttribute(trackElement, TRACK_ID_ATTRIBUTE_NAME_v12, logger);
+			// Keep a reference of one of the spot for outside the loop.
+			Spot sourceSpot = null; 
+
+			// Iterate over edges
+			edgeElements = trackElement.getChildren(TRACK_EDGE_ELEMENT_KEY_v12);
+
+			for (Element edgeElement : edgeElements) {
+
+				// Get source and target ID for this edge
+				int sourceID = readIntAttribute(edgeElement, TRACK_EDGE_SOURCE_ATTRIBUTE_NAME_v12, logger);
+				int targetID = readIntAttribute(edgeElement, TRACK_EDGE_TARGET_ATTRIBUTE_NAME_v12, logger);
+
+				// Get matching spots from the cache
+				sourceSpot = cache.get(sourceID);
+				Spot targetSpot = cache.get(targetID);
+
+				// Get weight
+				double weight = 0;
+				if (null != edgeElement.getAttribute(TRACK_EDGE_WEIGHT_ATTRIBUTE_NAME_v12)) {
+					weight   	= readDoubleAttribute(edgeElement, TRACK_EDGE_WEIGHT_ATTRIBUTE_NAME_v12, logger);
+				}
+
+				// Error check
+				if (null == sourceSpot) {
+					logger.error("Unknown spot ID: "+sourceID);
+					continue;
+				}
+				if (null == targetSpot) {
+					logger.error("Unknown spot ID: "+targetID);
+					continue;
+				}
+
+				if (sourceSpot.equals(targetSpot)) {
+					logger.error("Bad link for track " + trackID + ". Source = Target with ID: " + sourceID);
+					continue;
+				}
+
+				// Add spots to graph and build edge
+				graph.addVertex(sourceSpot);
+				graph.addVertex(targetSpot);
+				DefaultWeightedEdge edge = graph.addEdge(sourceSpot, targetSpot);
+
+				if (edge == null) {
+					logger.error("Bad edge found for track "+trackID);
+					continue;
+				} else {
+					graph.setEdgeWeight(edge, weight);
+				}
+			} // Finished parsing over the edges of the track
+
+			// Store one of the spot in the saved trackID key map
+			savedTrackMap.put(trackID, sourceSpot);
+
+		}
+
+		/* Pass the loaded graph to the model. The model will in turn regenerate a new 
+		 * map of tracks vs trackID, using the hash as new keys. Because there is a 
+		 * good chance that they saved keys and the new keys differ, we must retrieve
+		 * the mapping between the two using the retrieve spots.	 */
+		final TrackMateModel<T> model = plugin.getModel();
+		model.setGraph(graph);
+
+		// Retrieve the new track map
+		Map<Integer, Set<Spot>> newTrackMap = model.getTrackSpots();
+
+		// Build a map of old key vs new key
+		HashMap<Integer, Integer> newKeyMap = new HashMap<Integer, Integer>();
+		HashSet<Integer> newKeysToMatch = new HashSet<Integer>(newTrackMap.keySet());
+		for (Integer savedKey : savedTrackMap.keySet()) {
+			Spot spotToFind = savedTrackMap.get(savedKey);
+			for (Integer newKey : newTrackMap.keySet()) {
+				Set<Spot> track = newTrackMap.get(newKey);
+				if (track.contains(spotToFind)) {
+					newKeyMap.put(savedKey, newKey);
+					newKeysToMatch.remove(newKey);
+					break;
+				}
+			}
+			if (null == newKeyMap.get(savedKey)) {
+				logger.error("The track saved with ID = " + savedKey + " and containing the spot " + spotToFind + " has no matching track in the computed model.");
+			}
+		}
+
+		// Check that we matched all the new keys
+		if (!newKeysToMatch.isEmpty()) {
+			StringBuilder sb = new StringBuilder("Some of the computed tracks could not be matched to saved tracks:\n");
+			for (Integer unmatchedKey : newKeysToMatch) {
+				sb.append(" - track with ID " + unmatchedKey + " with spots " + newTrackMap.get(unmatchedKey) + "\n");
+			}
+			logger.error(sb.toString());
+		}
+
+		/* 
+		 * Now we know who's who. We can therefore retrieve the saved filtered track index, and 
+		 * match it to the proper new track IDs. 
+		 */
+		Set<Integer> savedFilteredTrackIDs = readFilteredTrackIDs();
+		
+		// Build a new set with the new trackIDs;
+		Set<Integer> newFilteredTrackIDs = new HashSet<Integer>(savedFilteredTrackIDs.size());
+		for (Integer savedKey : savedFilteredTrackIDs) {
+			Integer newKey = newKeyMap.get(savedKey);
+			newFilteredTrackIDs.add(newKey);
+		}
+		model.setVisibleTrackIndices(newFilteredTrackIDs, false);
+
+		/* 
+		 * We do the same thing for the track features.
+		 */
+		final FeatureModel<T> fm = model.getFeatureModel();
+		fm.initFeatureMap();
+		Map<Integer, Map<String, Double>> savedFeatureMap = readTrackFeatures();
+		for (Integer savedKey : savedFeatureMap.keySet()) {
+
+			Map<String, Double> savedFeatures = savedFeatureMap.get(savedKey);
+			Integer newKey = newKeyMap.get(savedKey);
+			if (null == newKey) {
+				continue;
+			}
+			for (String feature : savedFeatures.keySet()) {
+				fm.putTrackFeature(newKey, feature, savedFeatures.get(feature));
+			}
+
+		}
+	}
+	
+	/**
+	 * @return the list of {@link FeatureFilter} for tracks stored in this file.
+	 * Return <code>null</code> if the track feature filters data cannot be found in the file.
+	 */
+	private List<FeatureFilter> getTrackFeatureFilters() {
+		List<FeatureFilter> featureThresholds = new ArrayList<FeatureFilter>();
+		Element ftCollectionEl = root.getChild(TRACK_FILTER_COLLECTION_ELEMENT_KEY);
+		if (null == ftCollectionEl)
+			return null;
+		@SuppressWarnings("unchecked")
+		List<Element> ftEls = ftCollectionEl.getChildren(FILTER_ELEMENT_KEY);
+		for (Element ftEl : ftEls) {
+			String feature 	= ftEl.getAttributeValue(FILTER_FEATURE_ATTRIBUTE_NAME);
+			Double value 	= readDoubleAttribute(ftEl, FILTER_VALUE_ATTRIBUTE_NAME, logger);
+			boolean isAbove	= readBooleanAttribute(ftEl, FILTER_ABOVE_ATTRIBUTE_NAME, logger);
+			FeatureFilter ft = new FeatureFilter(feature, value, isAbove);
+			featureThresholds.add(ft);
+		}
+		return featureThresholds;
+	}
+	
 	/**
 	 * Return the initial threshold on quality stored in this file.
 	 * Return <code>null</code> if the initial threshold data cannot be found in the file.
 	 */
-	@Override
-	public FeatureFilter getInitialFilter()  {
-		if (!parsed)
-			parse();
+	private FeatureFilter getInitialFilter()  {
 		Element itEl = root.getChild(INITIAL_SPOT_FILTER_ELEMENT_KEY_v12);
 		if (null == itEl)
 			return null;
@@ -171,10 +415,7 @@ public class TmXmlReader_v12<T extends RealType<T> & NativeType<T>> extends TmXm
 	 * Return the list of {@link FeatureFilter} for spots stored in this file.
 	 * Return <code>null</code> if the spot feature filters data cannot be found in the file.
 	 */
-	@Override
-	public List<FeatureFilter> getSpotFeatureFilters() {
-		if (!parsed)
-			parse();
+	private List<FeatureFilter> getSpotFeatureFilters() {
 		List<FeatureFilter> featureThresholds = new ArrayList<FeatureFilter>();
 		Element ftCollectionEl = root.getChild(SPOT_FILTER_COLLECTION_ELEMENT_KEY_v12);
 		if (null == ftCollectionEl)
@@ -190,6 +431,61 @@ public class TmXmlReader_v12<T extends RealType<T> & NativeType<T>> extends TmXm
 		}
 		return featureThresholds;
 	}
+	
+	/**
+	 * @return a map of the saved track features, as they appear in the file
+	 */
+	private Map<Integer,Map<String,Double>> readTrackFeatures() {
+
+		HashMap<Integer, Map<String, Double>> featureMap = new HashMap<Integer, Map<String, Double>>();
+
+		Element allTracksElement = root.getChild(TRACK_COLLECTION_ELEMENT_KEY_v12);
+		if (null == allTracksElement)
+			return null;
+
+		// Load tracks
+		@SuppressWarnings("unchecked")
+		List<Element> trackElements = allTracksElement.getChildren(TRACK_ELEMENT_KEY_v12);
+		for (Element trackElement : trackElements) {
+
+			int trackID = -1;
+			try {
+				trackID = trackElement.getAttribute(TRACK_ID_ATTRIBUTE_NAME_v12).getIntValue();
+			} catch (DataConversionException e1) {
+				logger.error("Found a track with invalid trackID for " + trackElement + ". Skipping.\n");
+				continue;
+			}
+
+			HashMap<String, Double> trackMap = new HashMap<String, Double>();
+
+			@SuppressWarnings("unchecked")
+			List<Attribute> attributes = trackElement.getAttributes();
+			for(Attribute attribute : attributes) {
+
+				String attName = attribute.getName();
+				if (attName.equals(TRACK_ID_ATTRIBUTE_NAME_v12)) { // Skip trackID attribute
+					continue;
+				}
+
+				Double attVal = Double.NaN;
+				try {
+					attVal = attribute.getDoubleValue();
+				} catch (DataConversionException e) {
+					logger.error("Track "+trackID+": Cannot read the feature "+attName+" value. Skipping.\n");
+					continue;
+				}
+
+				trackMap.put(attName, attVal);
+
+			}
+
+			featureMap.put(trackID, trackMap);
+		}
+
+		return featureMap;
+
+	}
+
 
 	/**
 	 * Return the settings for the TrackMate session saved in this file.
@@ -200,10 +496,7 @@ public class TmXmlReader_v12<T extends RealType<T> & NativeType<T>> extends TmXm
 	 * @return  a full Settings object
 	 * @throws DataConversionException
 	 */
-	@Override
-	public Settings<T> getSettings() {
-		if (!parsed)
-			parse();
+	private Settings<T> getSettings() {
 		Settings<T> settings = new Settings<T>();
 		// Basic settings
 		Element settingsEl = root.getChild(SETTINGS_ELEMENT_KEY_v12);
@@ -236,10 +529,7 @@ public class TmXmlReader_v12<T extends RealType<T> & NativeType<T>> extends TmXm
 		return settings;
 	}
 
-	@Override
-	public void getDetectorSettings(Settings<T> settings) {
-		if (!parsed)
-			parse();
+	private void getDetectorSettings(Settings<T> settings) {
 
 		// We have to parse the settings element to fetch the target channel
 		int targetChannel = 1;
@@ -399,10 +689,7 @@ public class TmXmlReader_v12<T extends RealType<T> & NativeType<T>> extends TmXm
 	 *
 	 * @param settings  the base {@link Settings} object to update.
 	 */
-	@Override
-	public void getTrackerSettings(Settings<T> settings) {
-		if (!parsed)
-			parse();
+	private void getTrackerSettings(Settings<T> settings) {
 		Element element = root.getChild(TRACKER_SETTINGS_ELEMENT_KEY_v12);
 		if (null == element) {
 			return;
@@ -566,12 +853,7 @@ public class TmXmlReader_v12<T extends RealType<T> & NativeType<T>> extends TmXm
 	 * @throws DataConversionException  if the attribute values are not formatted properly in the file.
 	 * @return  a {@link SpotCollection}. Return <code>null</code> if the spot section is not present in the file.
 	 */
-	@Override
-	public SpotCollection getAllSpots() {
-		if (!parsed) {
-			parse();
-		}
-
+	private SpotCollection getAllSpots() {
 		Element spotCollection = root.getChild(SPOT_COLLECTION_ELEMENT_KEY_v12);
 		if (null == spotCollection)
 			return null;
@@ -622,12 +904,7 @@ public class TmXmlReader_v12<T extends RealType<T> & NativeType<T>> extends TmXm
 	 * Return <code>null</code> if the spot selection section does is not present in the file.
 	 */
 	@SuppressWarnings("unchecked")
-	@Override
-	public SpotCollection getFilteredSpots()  {
-		if (!parsed) {
-			parse();
-		}
-
+	private SpotCollection getFilteredSpots()  {
 		Element selectedSpotCollection = root.getChild(FILTERED_SPOT_ELEMENT_KEY_v12);
 		if (null == selectedSpotCollection)
 			return null;
@@ -858,7 +1135,7 @@ public class TmXmlReader_v12<T extends RealType<T> & NativeType<T>> extends TmXm
 	 * Read and return the list of track indices that define the filtered track collection.
 	 * @throws DataConversionException
 	 */
-	public Set<Integer> getFilteredTracks() {
+	private Set<Integer> readFilteredTrackIDs() {
 		Element filteredTracksElement = root.getChild(FILTERED_TRACK_ELEMENT_KEY_v12);
 		if (null == filteredTracksElement)
 			return null;
@@ -876,10 +1153,7 @@ public class TmXmlReader_v12<T extends RealType<T> & NativeType<T>> extends TmXm
 		return filteredTrackIndices;
 	}
 
-	@Override
-	public ImagePlus getImage()  {
-		if (!parsed)
-			parse();
+	private ImagePlus getImage()  {
 		Element imageInfoElement = root.getChild(IMAGE_ELEMENT_KEY_v12);
 		if (null == imageInfoElement)
 			return null;
@@ -901,11 +1175,6 @@ public class TmXmlReader_v12<T extends RealType<T> & NativeType<T>> extends TmXm
 		}
 		return IJ.openImage(imageFile.getAbsolutePath());
 	}
-
-
-	/*
-	 * PRIVATE METHODS
-	 */
 
 	private Spot createSpotFrom(Element spotEl) {
 		int ID = readIntAttribute(spotEl, SPOT_ID_ATTRIBUTE_NAME_v12, logger);

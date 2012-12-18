@@ -6,7 +6,7 @@ package fiji.plugin.trackmate.io;
  * version prior to 1.3
  * @author Jean-Yves Tinevez <jeanyves.tinevez@gmail.com>  2010-2012
   */
-public interface TmXmlKeys_v12 {
+class TmXmlKeys_v12 {
 	
 	/*
 	 * GENERIC ATTRIBUTES

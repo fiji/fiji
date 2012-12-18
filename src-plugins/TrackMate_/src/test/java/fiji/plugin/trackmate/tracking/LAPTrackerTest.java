@@ -1,5 +1,8 @@
 package fiji.plugin.trackmate.tracking;
 
+import static fiji.plugin.trackmate.tracking.TrackerKeys.KEY_ALLOW_GAP_CLOSING;
+import static fiji.plugin.trackmate.tracking.TrackerKeys.KEY_LINKING_FEATURE_PENALTIES;
+import static fiji.plugin.trackmate.tracking.TrackerKeys.KEY_LINKING_MAX_DISTANCE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -21,7 +24,7 @@ import fiji.plugin.trackmate.SpotImp;
 import fiji.plugin.trackmate.features.spot.SpotIntensityAnalyzerFactory;
 
 
-public class LAPTrackerTest implements TrackerKeys {
+public class LAPTrackerTest {
 
 	/**
 	 * Standard tracking

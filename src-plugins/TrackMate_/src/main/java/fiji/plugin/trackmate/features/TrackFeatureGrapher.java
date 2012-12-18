@@ -123,7 +123,7 @@ public class TrackFeatureGrapher<T extends RealType<T> & NativeType<T>>  extends
 		final FeatureModel<T> fm = model.getFeatureModel();
 		for(String feature : targetYFeatures) {
 			XYSeries series = new XYSeries(featureNames.get(feature));
-			for(int trackIndex : model.getVisibleTrackIndices()) {
+			for(int trackIndex : model.getFilteredTrackIDs()) {
 				Double x = fm.getTrackFeature(trackIndex, xFeature);
 				Double y = fm.getTrackFeature(trackIndex, feature);
 				if (null == x || null == y) {

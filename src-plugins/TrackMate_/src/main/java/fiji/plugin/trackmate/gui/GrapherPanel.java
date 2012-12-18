@@ -129,7 +129,7 @@ public class GrapherPanel<T extends RealType<T> & NativeType<T>> extends ActionL
 		model.getFeatureModel().computeEdgeFeatures();
 		// Collect edges
 		List<DefaultWeightedEdge> edges = new ArrayList<DefaultWeightedEdge>();
-		for (int trackIndex : model.getVisibleTrackIndices()) {
+		for (int trackIndex : model.getFilteredTrackIDs()) {
 			edges.addAll(model.getTrackEdges(trackIndex));
 		}
 		// Prepare grapher

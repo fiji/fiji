@@ -3,6 +3,9 @@ package fiji.plugin.trackmate.io;
 import static fiji.plugin.trackmate.util.TMUtils.readBooleanAttribute;
 import static fiji.plugin.trackmate.util.TMUtils.readDoubleAttribute;
 import static fiji.plugin.trackmate.util.TMUtils.readIntAttribute;
+
+import static fiji.plugin.trackmate.io.TmXmlKeys.*;
+
 import ij.IJ;
 import ij.ImagePlus;
 
@@ -17,6 +20,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
+import net.imglib2.algorithm.Algorithm;
+import net.imglib2.algorithm.Benchmark;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
 
@@ -32,6 +37,7 @@ import org.jgrapht.graph.SimpleDirectedWeightedGraph;
 import fiji.plugin.trackmate.DetectorProvider;
 import fiji.plugin.trackmate.FeatureFilter;
 import fiji.plugin.trackmate.Logger;
+import fiji.plugin.trackmate.Logger.StringBuilderLogger;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
@@ -44,15 +50,13 @@ import fiji.plugin.trackmate.features.FeatureModel;
 import fiji.plugin.trackmate.tracking.SpotTracker;
 
 
-public class TmXmlReader <T extends RealType<T> & NativeType<T>> implements TmXmlKeys {
+public class TmXmlReader <T extends RealType<T> & NativeType<T>> implements Algorithm, Benchmark {
 
 	protected static final boolean DEBUG = false;
-	//	private static final boolean useMultithreading = TrackMate_.DEFAULT_USE_MULTITHREADING; // Not yet
 
 	protected Document document = null;
 	protected File file;
 	protected Element root;
-	protected Logger logger;
 	/** The plugin instance to operate on. This must be provided, in the case we want to load 
 	 * a file created with a subclass of {@link TrackMate_} (e.g. with new factories) so that 
 	 * correct detectors, etc... can be instantiated from the extended plugin.
@@ -66,74 +70,40 @@ public class TmXmlReader <T extends RealType<T> & NativeType<T>> implements TmXm
 	 * multi-threaded way.
 	 */
 	protected ConcurrentHashMap<Integer, Spot> cache;
-	/** A flag to indicate whether we already parsed the file. */
-	protected boolean parsed = false;
+
+	protected long processingTime;
+	protected StringBuilderLogger logger = new StringBuilderLogger();
 
 	/*
 	 * CONSTRUCTORS
 	 */
 
 	/**
-	 * Initialize this reader to read the file given in argument. No actual parsing is made at construction.
+	 * Initialize this reader to read the file given in argument. 
 	 * <p>
 	 * A plugin instance must be provided, and this instance must be initialized with providers
 	 * (as in when calling {@link TrackMate_#initModules()}. This in the case we want to load 
 	 * a file created with a subclass of {@link TrackMate_} (e.g. with new factories) so that 
-	 * correct detectors, etc... can be instantiated from the extended plugin. 
+	 * correct detectors, etc... can be instantiated from the extended plugin.
+	 * <p>
+	 * The given plugin instance will be modified by this class, upon calling the {@link #process()}
+	 * method 
 	 */
-	public TmXmlReader(File file, TrackMate_<T> plugin, Logger logger) {
-		this.file = file;
-		this.logger = logger;
-		this.plugin = plugin;
-	}
-	
 	public TmXmlReader(File file, TrackMate_<T> plugin) {
-		this(file, plugin, Logger.VOID_LOGGER);
+		this.file = file;
+		this.plugin = plugin;
+		parse();
 	}
 
 	/*
 	 * PUBLIC METHODS
 	 */
 
-	/**
-	 * Parse the file to create a JDom {@link Document}. This method must be called before using any of
-	 * the other getter methods.
-	 */
-	public void parse() {
-		SAXBuilder sb = new SAXBuilder();
-		try {
-			document = sb.build(file);
-		} catch (JDOMException e) {
-			logger.error("Problem parsing "+file.getName()+", it is not a valid TrackMate XML file.\nError message is:\n"
-					+e.getLocalizedMessage()+'\n');
-		} catch (IOException e) {
-			logger.error("Problem reading "+file.getName()
-					+".\nError message is:\n"+e.getLocalizedMessage()+'\n');
-		}
-		root = document.getRootElement();
-		parsed = true;
-	}
-	
-	/**
-	 * @return the version string stored in the file.
-	 */
-	public String getVersion() {
-		return root.getAttribute(PLUGIN_VERSION_ATTRIBUTE_NAME).getValue();
-	}
-
-	/**
-	 * Return a {@link TrackMateModel} from all the information stored in this file.
-	 * Fields not set in the field will be <code>null</code> in the model. 
-	 * <p>
-	 * Calling this method will modify the {@link #plugin} field given at construction:
-	 * the {@link TrackMateModel} loaded from the file will be the one stored in the 
-	 * {@link #plugin} field.
-	 * @throws DataConversionException 
-	 */
-	public TrackMateModel<T> getModel() {
-		if (!parsed)
-			parse();
-
+	@Override
+	public boolean process() {
+		
+		long start = System.currentTimeMillis();
+		
 		TrackMateModel<T> model = plugin.getModel();
 		// Settings
 		Settings<T> settings = getSettings();
@@ -152,40 +122,98 @@ public class TmXmlReader <T extends RealType<T> & NativeType<T>> implements TmXm
 		SpotCollection filteredSpots = getFilteredSpots();
 		model.setSpots(allSpots, false);
 		model.setFilteredSpots(filteredSpots, false);
-		// Tracks
-		SimpleDirectedWeightedGraph<Spot, DefaultWeightedEdge> graph = readTrackGraph();
-		if (null != graph) {
-			model.setGraph(graph);
-		}
-		
+		// Tracks, filtered tracks and track features all at once
+		readTracks();
+
 		// Track Filters
 		List<FeatureFilter> trackFilters = getTrackFeatureFilters();
 		model.getSettings().setTrackFilters(trackFilters);
-		// Filtered tracks
-		Set<Integer> filteredTrackIndices = getFilteredTracks();
-		if (null != filteredTrackIndices) {
-			model.setVisibleTrackIndices(filteredTrackIndices, false);
-			model.setTrackSpots(readTrackSpots(graph));
-			model.setTrackEdges(readTrackEdges(graph));
-		}
-		// Track features
-		readTrackFeatures(model.getFeatureModel());
 
-		// Return
-		return model;
+		long end = System.currentTimeMillis();
+		processingTime = end - start;
+		
+		return true;
+	}
+
+	/**
+	 * @return the version string stored in the file.
+	 */
+	public String getVersion() {
+		return root.getAttribute(PLUGIN_VERSION_ATTRIBUTE_NAME).getValue();
+	}
+
+	@Override
+	public long getProcessingTime() {
+		return processingTime;
+	}
+
+	@Override
+	public boolean checkInput() {
+		if (null == document) {
+			return true;
+		}
+		return false;
+	}
+
+	@Override
+	public String getErrorMessage() {
+		return logger.toString();
+	}
+	
+	/*
+	 * PRIVATE METHODS
+	 */
+
+	private ImagePlus getImage()  {
+		Element imageInfoElement = root.getChild(IMAGE_ELEMENT_KEY);
+		if (null == imageInfoElement)
+			return null; // va;ue will still be null
+		String filename = imageInfoElement.getAttributeValue(IMAGE_FILENAME_ATTRIBUTE_NAME);
+		String folder 	= imageInfoElement.getAttributeValue(IMAGE_FOLDER_ATTRIBUTE_NAME);
+		if (null == filename || filename.isEmpty())
+			return null;
+		if (null == folder || folder.isEmpty())
+			folder = file.getParent(); // it is a relative path, then
+		File imageFile = new File(folder, filename);
+		if (!imageFile.exists() || !imageFile.canRead()) {
+			// Could not find it to the absolute path. Then we look for the same path of the xml file
+			folder = file.getParent();
+			imageFile = new File(folder, filename);
+			if (!imageFile.exists() || !imageFile.canRead()) {
+				return null;
+			}
+		}
+		return IJ.openImage(imageFile.getAbsolutePath());
 	}
 
 
+	/**
+	 * Parse the file to create a JDom {@link Document}. This method is called at construction.
+	 */
+	private void parse() {
+		SAXBuilder sb = new SAXBuilder();
+		try {
+			document = sb.build(file);
+			root = document.getRootElement();
+		} catch (JDOMException e) {
+			logger.error("Problem parsing "+file.getName()+", it is not a valid TrackMate XML file.\nError message is:\n"
+					+e.getLocalizedMessage()+'\n');
+		} catch (IOException e) {
+			logger.error("Problem reading "+file.getName()
+					+".\nError message is:\n"+e.getLocalizedMessage()+'\n');
+		}
+	}
 
-	public void readTrackFeatures(FeatureModel<T> featureModel) {
-		if (!parsed)
-			parse();
+	/**
+	 * @return a map of the saved track features, as they appear in the file
+	 */
+	private Map<Integer,Map<String,Double>> readTrackFeatures() {
+
+		HashMap<Integer, Map<String, Double>> featureMap = new HashMap<Integer, Map<String, Double>>();
 
 		Element allTracksElement = root.getChild(TRACK_COLLECTION_ELEMENT_KEY);
 		if (null == allTracksElement)
-			return;
-
-		featureModel.initFeatureMap();
+			return null;
 
 		// Load tracks
 		@SuppressWarnings("unchecked")
@@ -196,9 +224,11 @@ public class TmXmlReader <T extends RealType<T> & NativeType<T>> implements TmXm
 			try {
 				trackID = trackElement.getAttribute(TRACK_ID_ATTRIBUTE_NAME).getIntValue();
 			} catch (DataConversionException e1) {
-				logger.error("Found a track with invalid trackID. Skipping.\n");
+				logger.error("Found a track with invalid trackID for " + trackElement + ". Skipping.\n");
 				continue;
 			}
+
+			HashMap<String, Double> trackMap = new HashMap<String, Double>();
 
 			@SuppressWarnings("unchecked")
 			List<Attribute> attributes = trackElement.getAttributes();
@@ -217,12 +247,14 @@ public class TmXmlReader <T extends RealType<T> & NativeType<T>> implements TmXm
 					continue;
 				}
 
-				featureModel.putTrackFeature(trackID, attName, attVal); 
+				trackMap.put(attName, attVal);
 
 			}
 
-
+			featureMap.put(trackID, trackMap);
 		}
+
+		return featureMap;
 
 	}
 
@@ -231,9 +263,7 @@ public class TmXmlReader <T extends RealType<T> & NativeType<T>> implements TmXm
 	 * Return the initial threshold on quality stored in this file.
 	 * Return <code>null</code> if the initial threshold data cannot be found in the file.
 	 */
-	public FeatureFilter getInitialFilter()  {
-		if (!parsed)
-			parse();
+	private FeatureFilter getInitialFilter()  {
 
 		Element itEl = root.getChild(INITIAL_SPOT_FILTER_ELEMENT_KEY);
 		if (null == itEl)
@@ -250,9 +280,7 @@ public class TmXmlReader <T extends RealType<T> & NativeType<T>> implements TmXm
 	 * Return the list of {@link FeatureFilter} for spots stored in this file.
 	 * Return <code>null</code> if the spot feature filters data cannot be found in the file.
 	 */
-	public List<FeatureFilter> getSpotFeatureFilters() {
-		if (!parsed)
-			parse();
+	private List<FeatureFilter> getSpotFeatureFilters() {
 
 		List<FeatureFilter> featureThresholds = new ArrayList<FeatureFilter>();
 		Element ftCollectionEl = root.getChild(SPOT_FILTER_COLLECTION_ELEMENT_KEY);
@@ -271,13 +299,10 @@ public class TmXmlReader <T extends RealType<T> & NativeType<T>> implements TmXm
 	}
 
 	/**
-	 * Return the list of {@link FeatureFilter} for tracks stored in this file.
+	 * @return the list of {@link FeatureFilter} for tracks stored in this file.
 	 * Return <code>null</code> if the track feature filters data cannot be found in the file.
 	 */
-	public List<FeatureFilter> getTrackFeatureFilters() {
-		if (!parsed)
-			parse();
-
+	private List<FeatureFilter> getTrackFeatureFilters() {
 		List<FeatureFilter> featureThresholds = new ArrayList<FeatureFilter>();
 		Element ftCollectionEl = root.getChild(TRACK_FILTER_COLLECTION_ELEMENT_KEY);
 		if (null == ftCollectionEl)
@@ -303,10 +328,7 @@ public class TmXmlReader <T extends RealType<T> & NativeType<T>> implements TmXm
 	 * @return  a full Settings object
 	 * @throws DataConversionException 
 	 */
-	public Settings<T> getSettings() {
-		if (!parsed)
-			parse();
-
+	private Settings<T> getSettings() {
 		Settings<T> settings = new Settings<T>();
 		// Basic settings
 		Element settingsEl = root.getChild(SETTINGS_ELEMENT_KEY);
@@ -319,7 +341,7 @@ public class TmXmlReader <T extends RealType<T> & NativeType<T>> implements TmXm
 			settings.zend 	= readIntAttribute(settingsEl, SETTINGS_ZEND_ATTRIBUTE_NAME, logger, 10);
 			settings.tstart = readIntAttribute(settingsEl, SETTINGS_TSTART_ATTRIBUTE_NAME, logger, 1);
 			settings.tend 	= readIntAttribute(settingsEl, SETTINGS_TEND_ATTRIBUTE_NAME, logger, 10);
-//			settings.detectionChannel = readIntAttribute(settingsEl, SETTINGS_DETECTION_CHANNEL_ATTRIBUTE_NAME, logger, 1);
+			//			settings.detectionChannel = readIntAttribute(settingsEl, SETTINGS_DETECTION_CHANNEL_ATTRIBUTE_NAME, logger, 1);
 		}
 		// Image info settings
 		Element infoEl 	= root.getChild(IMAGE_ELEMENT_KEY);
@@ -353,20 +375,17 @@ public class TmXmlReader <T extends RealType<T> & NativeType<T>> implements TmXm
 
 	 * @param settings  the base {@link Settings} object to update.
 	 */
-	public void getDetectorSettings(Settings<T> settings) {
-		if (!parsed)
-			parse();
-
+	private void getDetectorSettings(Settings<T> settings) {
 		Element element = root.getChild(DETECTOR_SETTINGS_ELEMENT_KEY);
 		if (null == element) {
 			return;
 		}
-		
+
 		DetectorProvider<T> provider = plugin.getDetectorProvider();
 		Map<String, Object> ds = new HashMap<String, Object>(); 
 		// All the hard work is delegated to the provider. 
 		boolean ok = provider.unmarshall(element, ds);
-		
+
 		if (!ok) {
 			logger.error(provider.getErrorMessage());
 			return;
@@ -388,20 +407,17 @@ public class TmXmlReader <T extends RealType<T> & NativeType<T>> implements TmXm
 	 *   
 	 * @param settings  the base {@link Settings} object to update.
 	 */
-	public void getTrackerSettings(Settings<T> settings) {
-		if (!parsed)
-			parse();
-
+	private void getTrackerSettings(Settings<T> settings) {
 		Element element = root.getChild(TRACKER_SETTINGS_ELEMENT_KEY);
 		if (null == element) {
 			return;
 		}
-		
+
 		TrackerProvider<T> provider = plugin.getTrackerProvider();
 		Map<String, Object> ds = new HashMap<String, Object>(); 
 		// All the hard work is delegated to the provider. 
 		boolean ok = provider.unmarshall(element, ds);
-		
+
 		if (!ok) {
 			logger.error(provider.getErrorMessage());
 			return;
@@ -412,13 +428,13 @@ public class TmXmlReader <T extends RealType<T> & NativeType<T>> implements TmXm
 	}
 
 	/**
-	 * Return the list of all spots stored in this file.
+	 * Read the list of all spots stored in this file.
 	 * <p>
 	 * Internally, this methods also builds the cache field, which will be required by the
 	 * following methods:
 	 * <ul>
 	 * 	<li> {@link #getFilteredSpots()}
-	 * 	<li> {@link #readTrackGraph()}
+	 * 	<li> {@link #readTracks()}
 	 * 	<li> {@link #readTrackEdges(SimpleDirectedWeightedGraph)}
 	 * 	<li> {@link #readTrackSpots(SimpleDirectedWeightedGraph)}
 	 * </ul>
@@ -428,10 +444,7 @@ public class TmXmlReader <T extends RealType<T> & NativeType<T>> implements TmXm
 	 * @return  a {@link SpotCollection}. Return <code>null</code> if the spot section is not present in the file.
 	 */
 	@SuppressWarnings("unchecked")
-	public SpotCollection getAllSpots() {
-		if (!parsed)
-			parse();
-
+	private SpotCollection getAllSpots() {
 		// Root element for collection
 		Element spotCollection = root.getChild(SPOT_COLLECTION_ELEMENT_KEY);
 		if (null == spotCollection)
@@ -474,7 +487,7 @@ public class TmXmlReader <T extends RealType<T> & NativeType<T>> implements TmXm
 	}
 
 	/**
-	 * Return the filtered spots stored in this file, taken from the list of all spots, given in argument.
+	 * Read the filtered spots stored in this file, taken from the list of all spots, given in argument.
 	 * <p>
 	 * The {@link Spot} objects in this list will be the same that of the main list given in argument. 
 	 * If a spot ID referenced in the file is in the selection but not in the list given in argument,
@@ -485,10 +498,7 @@ public class TmXmlReader <T extends RealType<T> & NativeType<T>> implements TmXm
 	 * Return <code>null</code> if the spot selection section does is not present in the file.
 	 */
 	@SuppressWarnings("unchecked")
-	public SpotCollection getFilteredSpots()  {
-		if (!parsed)
-			parse();
-
+	private SpotCollection getFilteredSpots()  {
 		Element selectedSpotCollection = root.getChild(FILTERED_SPOT_ELEMENT_KEY);
 		if (null == selectedSpotCollection)
 			return null;
@@ -521,21 +531,16 @@ public class TmXmlReader <T extends RealType<T> & NativeType<T>> implements TmXm
 	}
 
 	/**
-	 * Load and build a new graph mapping spot linking as tracks. The graph vertices are made of the selected spot
-	 * list given in argument. Edges are formed from the file data.
-	 * <p>
-	 * The track features are not retrieved by this method. They must be recalculated from the model.
-	 * 
-	 * @param selectedSpots  the spot selection from which tracks area made 
+	 * Load the tracks, the track features and the ID of the filtered tracks into the model
+	 * modified by this reader. 
+	 * @return true if the tracks were found in the file, false otherwise.
 	 */
 	@SuppressWarnings("unchecked")
-	public SimpleDirectedWeightedGraph<Spot, DefaultWeightedEdge> readTrackGraph() {
-		if (!parsed)
-			parse();
+	private void readTracks() {
 
 		Element allTracksElement = root.getChild(TRACK_COLLECTION_ELEMENT_KEY);
 		if (null == allTracksElement)
-			return null;
+			return;
 
 		if (null == cache) 
 			getAllSpots(); // build the cache if it's not there
@@ -545,31 +550,36 @@ public class TmXmlReader <T extends RealType<T> & NativeType<T>> implements TmXm
 		// Load tracks
 		List<Element> trackElements = allTracksElement.getChildren(TRACK_ELEMENT_KEY);
 		List<Element> edgeElements;
-		int sourceID, targetID;
-		Spot sourceSpot, targetSpot;
-		double weight = 0;
+
+		// A temporary map that maps stored track key to one of its spot
+		HashMap<Integer, Spot> savedTrackMap = new HashMap<Integer, Spot>();
+
 
 		for (Element trackElement : trackElements) {
 
 			// Get track ID as it is saved on disk
 			int trackID = readIntAttribute(trackElement, TRACK_ID_ATTRIBUTE_NAME, logger);
+			// Keep a reference of one of the spot for outside the loop.
+			Spot sourceSpot = null; 
 
+			// Iterate over edges
 			edgeElements = trackElement.getChildren(TRACK_EDGE_ELEMENT_KEY);
+
 			for (Element edgeElement : edgeElements) {
 
 				// Get source and target ID for this edge
-				sourceID = readIntAttribute(edgeElement, TRACK_EDGE_SOURCE_ATTRIBUTE_NAME, logger);
-				targetID = readIntAttribute(edgeElement, TRACK_EDGE_TARGET_ATTRIBUTE_NAME, logger);
+				int sourceID = readIntAttribute(edgeElement, TRACK_EDGE_SOURCE_ATTRIBUTE_NAME, logger);
+				int targetID = readIntAttribute(edgeElement, TRACK_EDGE_TARGET_ATTRIBUTE_NAME, logger);
 
 				// Get matching spots from the cache
 				sourceSpot = cache.get(sourceID);
-				targetSpot = cache.get(targetID);
+				Spot targetSpot = cache.get(targetID);
 
 				// Get weight
-				if (null != edgeElement.getAttribute(TRACK_EDGE_WEIGHT_ATTRIBUTE_NAME))
+				double weight = 0;
+				if (null != edgeElement.getAttribute(TRACK_EDGE_WEIGHT_ATTRIBUTE_NAME)) {
 					weight   	= readDoubleAttribute(edgeElement, TRACK_EDGE_WEIGHT_ATTRIBUTE_NAME, logger);
-				else 
-					weight  	= 0;
+				}
 
 				// Error check
 				if (null == sourceSpot) {
@@ -580,8 +590,9 @@ public class TmXmlReader <T extends RealType<T> & NativeType<T>> implements TmXm
 					logger.error("Unknown spot ID: "+targetID);
 					continue;
 				}
+
 				if (sourceSpot.equals(targetSpot)) {
-					logger.error("Bad edge found for track "+trackID);
+					logger.error("Bad link for track " + trackID + ". Source = Target with ID: " + sourceID);
 					continue;
 				}
 
@@ -596,181 +607,85 @@ public class TmXmlReader <T extends RealType<T> & NativeType<T>> implements TmXm
 				} else {
 					graph.setEdgeWeight(edge, weight);
 				}
-			}
-		}
-		return graph;
-	}
+			} // Finished parsing over the edges of the track
 
+			// Store one of the spot in the saved trackID key map
+			savedTrackMap.put(trackID, sourceSpot);
 
-	/**
-	 * Read the tracks stored in the file as a list of set of spots.
-	 * <p>
-	 * This methods ensures that the indices of the track in the returned list match the indices 
-	 * stored in the file. Because we want this list to be made of the same objects used everywhere,
-	 * we build it from the track graph that can be built calling {@link #readTrackGraph(SpotCollection)}.  
-	 * <p>
-	 * Each track is returned as a set of spot. The set itself is sorted by increasing time.
-	 * 
-	 * @param graph  the graph to retrieve spot objects from 
-	 * @return  a list of tracks as a set of spots
-	 */
-	@SuppressWarnings("unchecked")
-	public List<Set<Spot>> readTrackSpots(final SimpleDirectedWeightedGraph<Spot, DefaultWeightedEdge> graph) {
-		if (!parsed)
-			parse();
-
-		Element allTracksElement = root.getChild(TRACK_COLLECTION_ELEMENT_KEY);
-		if (null == allTracksElement)
-			return null;
-
-		if (null == cache)
-			getAllSpots(); // build the cache if it's not there
-
-		// Load tracks
-		List<Element> trackElements = allTracksElement.getChildren(TRACK_ELEMENT_KEY);
-		final int nTracks = trackElements.size();
-
-		// Prepare holder for results
-		final ArrayList<Set<Spot>> trackSpots = new ArrayList<Set<Spot>>(nTracks);
-		// Fill it with null value so that it is of size nTracks, and we can later put the real tracks
-		for (int i = 0; i < nTracks; i++) {
-			trackSpots.add(null);
 		}
 
-		List<Element> edgeElements;
-		int sourceID, targetID;
-		Spot sourceSpot, targetSpot;
+		/* Pass the loaded graph to the model. The model will in turn regenerate a new 
+		 * map of tracks vs trackID, using the hash as new keys. Because there is a 
+		 * good chance that they saved keys and the new keys differ, we must retrieve
+		 * the mapping between the two using the retrieve spots.	 */
+		final TrackMateModel<T> model = plugin.getModel();
+		model.setGraph(graph);
 
-		for (Element trackElement : trackElements) {
+		// Retrieve the new track map
+		Map<Integer, Set<Spot>> newTrackMap = model.getTrackSpots();
 
-			// Get track ID as it is saved on disk
-			int trackID = readIntAttribute(trackElement, TRACK_ID_ATTRIBUTE_NAME, logger);
-
-			// Instantiate current track
-			HashSet<Spot> track = new HashSet<Spot>(2*trackElements.size()); // approx
-
-			edgeElements = trackElement.getChildren(TRACK_EDGE_ELEMENT_KEY);
-			for (Element edgeElement : edgeElements) {
-
-				// Get source and target ID for this edge
-				sourceID = readIntAttribute(edgeElement, TRACK_EDGE_SOURCE_ATTRIBUTE_NAME, logger);
-				targetID = readIntAttribute(edgeElement, TRACK_EDGE_TARGET_ATTRIBUTE_NAME, logger);
-
-				// Get spots from the cache
-				sourceSpot = cache.get(sourceID);
-				targetSpot = cache.get(targetID);
-
-				// Add them to current track
-				track.add(sourceSpot);
-				track.add(targetSpot);
-
-			} // looping over all edges
-
-			trackSpots.set(trackID, track);
-
-			if (DEBUG) {
-				System.out.println("[TmXmlReader] readTrackSpots: the track "+trackID+" has the following spots: "+track);
-			}
-
-
-		} // looping over all track elements
-
-		return trackSpots;
-	}
-
-	/**
-	 * Read the tracks stored in the file as a list of set of edges.
-	 * <p>
-	 * This methods ensures that the indices of the track in the returned list match the indices 
-	 * stored in the file. Because we want this list to be made of the same objects used everywhere,
-	 * we build it from the track graph that can be built calling {@link #readTrackGraph(SpotCollection)}.  
-	 * <p>
-	 * Each track is returned as a set of edges.
-	 * 
-	 * @param graph  the graph to retrieve spot objects from 
-	 * @return  a list of tracks as a set of edges
-	 */
-	@SuppressWarnings("unchecked")
-	public List<Set<DefaultWeightedEdge>> readTrackEdges(final SimpleDirectedWeightedGraph<Spot, DefaultWeightedEdge> graph) {
-		if (!parsed)
-			parse();
-
-		Element allTracksElement = root.getChild(TRACK_COLLECTION_ELEMENT_KEY);
-		if (null == allTracksElement)
-			return null;
-
-		if (null == cache)
-			getAllSpots(); // build cache if it's not there
-
-		// Load tracks
-		List<Element> trackElements = allTracksElement.getChildren(TRACK_ELEMENT_KEY);
-		final int nTracks = trackElements.size();
-
-		// Prepare holder for results
-		final ArrayList<Set<DefaultWeightedEdge>> trackEdges = new ArrayList<Set<DefaultWeightedEdge>>(nTracks);
-		// Fill it with null value so that it is of size nTracks, and we can later put the real tracks
-		for (int i = 0; i < nTracks; i++) {
-			trackEdges.add(null);
-		}
-
-		List<Element> edgeElements;
-		int sourceID, targetID;
-		Spot sourceSpot, targetSpot;
-
-		for (Element trackElement : trackElements) {
-
-			// Get all edge elements
-			edgeElements = trackElement.getChildren(TRACK_EDGE_ELEMENT_KEY);
-
-			// Get track ID as it is saved on disk
-			int trackID = readIntAttribute(trackElement, TRACK_ID_ATTRIBUTE_NAME, logger);
-
-			// Instantiate current track
-			HashSet<DefaultWeightedEdge> track = new HashSet<DefaultWeightedEdge>(edgeElements.size());
-
-			for (Element edgeElement : edgeElements) {
-
-				// Get source and target ID for this edge
-				sourceID = readIntAttribute(edgeElement, TRACK_EDGE_SOURCE_ATTRIBUTE_NAME, logger);
-				targetID = readIntAttribute(edgeElement, TRACK_EDGE_TARGET_ATTRIBUTE_NAME, logger);
-
-				// Get spots from cache
-				sourceSpot = cache.get(sourceID);
-				targetSpot = cache.get(targetID);
-
-				// Retrieve possible edges from graph
-				Set<DefaultWeightedEdge> edges = graph.getAllEdges(sourceSpot, targetSpot);
-
-				// Add edges to track
-				if (edges.size() != 1) {
-					logger.error("Bad edge found for track "+trackID+": found "+edges.size()+" edges.\n");
-					continue;
-				} else {
-					DefaultWeightedEdge edge = edges.iterator().next();
-					track.add(edge);
-					if (DEBUG) {
-						System.out.println("[TmXmlReader] readTrackEdges: in track "+trackID+", found edge "+edge);
-					}
-
+		// Build a map of old key vs new key
+		HashMap<Integer, Integer> newKeyMap = new HashMap<Integer, Integer>();
+		HashSet<Integer> newKeysToMatch = new HashSet<Integer>(newTrackMap.keySet());
+		for (Integer savedKey : savedTrackMap.keySet()) {
+			Spot spotToFind = savedTrackMap.get(savedKey);
+			for (Integer newKey : newTrackMap.keySet()) {
+				Set<Spot> track = newTrackMap.get(newKey);
+				if (track.contains(spotToFind)) {
+					newKeyMap.put(savedKey, newKey);
+					newKeysToMatch.remove(newKey);
+					break;
 				}
+			}
+			if (null == newKeyMap.get(savedKey)) {
+				logger.error("The track saved with ID = " + savedKey + " and containing the spot " + spotToFind + " has no matching track in the computed model.");
+			}
+		}
 
-			} // looping over all edges
+		// Check that we matched all the new keys
+		if (!newKeysToMatch.isEmpty()) {
+			StringBuilder sb = new StringBuilder("Some of the computed tracks could not be matched to saved tracks:\n");
+			for (Integer unmatchedKey : newKeysToMatch) {
+				sb.append(" - track with ID " + unmatchedKey + " with spots " + newTrackMap.get(unmatchedKey) + "\n");
+			}
+			logger.error(sb.toString());
+		}
 
-			trackEdges.set(trackID, track);
+		/* 
+		 * Now we know who's who. We can therefore retrieve the saved filtered track index, and 
+		 * match it to the proper new track IDs. 
+		 */
+		Set<Integer> savedFilteredTrackIDs = readFilteredTrackIDs();
+		// Build a new set with the new trackIDs;
+		Set<Integer> newFilteredTrackIDs = new HashSet<Integer>(savedFilteredTrackIDs.size());
+		for (Integer savedKey : savedFilteredTrackIDs) {
+			Integer newKey = newKeyMap.get(savedKey);
+			newFilteredTrackIDs.add(newKey);
+		}
+		model.setVisibleTrackIndices(newFilteredTrackIDs, false);
 
-		} // looping over all track elements
+		/* 
+		 * We do the same thing for the track features.
+		 */
+		final FeatureModel<T> fm = model.getFeatureModel();
+		fm.initFeatureMap();
+		Map<Integer, Map<String, Double>> savedFeatureMap = readTrackFeatures();
+		for (Integer savedKey : savedFeatureMap.keySet()) {
 
-		return trackEdges;
+			Map<String, Double> savedFeatures = savedFeatureMap.get(savedKey);
+			for (String feature : savedFeatures.keySet()) {
+				Integer newKey = newKeyMap.get(savedKey);
+				fm.putTrackFeature(newKey, feature, savedFeatures.get(feature));
+			}
+
+		}
 	}
 
 	/**
 	 * Read and return the list of track indices that define the filtered track collection.
 	 * @throws DataConversionException 
 	 */
-	public Set<Integer> getFilteredTracks() {
-		if (!parsed)
-			parse();
-
+	private Set<Integer> readFilteredTrackIDs() {
 		Element filteredTracksElement = root.getChild(FILTERED_TRACK_ELEMENT_KEY);
 		if (null == filteredTracksElement)
 			return null;
@@ -808,38 +723,7 @@ public class TmXmlReader <T extends RealType<T> & NativeType<T>> implements TmXm
 		return filteredTrackIndices;
 	}
 
-	public ImagePlus getImage()  {
-		if (!parsed)
-			parse();
-
-		Element imageInfoElement = root.getChild(IMAGE_ELEMENT_KEY);
-		if (null == imageInfoElement)
-			return null;
-		String filename = imageInfoElement.getAttributeValue(IMAGE_FILENAME_ATTRIBUTE_NAME);
-		String folder 	= imageInfoElement.getAttributeValue(IMAGE_FOLDER_ATTRIBUTE_NAME);
-		if (null == filename || filename.isEmpty())
-			return null;
-		if (null == folder || folder.isEmpty())
-			folder = file.getParent(); // it is a relative path, then
-		File imageFile = new File(folder, filename);
-		if (!imageFile.exists() || !imageFile.canRead()) {
-			// Could not find it to the absolute path. Then we look for the same path of the xml file
-			logger.log("Could not find the image in "+folder+". Looking in xml file location...\n");
-			folder = file.getParent();
-			imageFile = new File(folder, filename);
-			if (!imageFile.exists() || !imageFile.canRead()) {
-				return null;
-			}
-		}
-		return IJ.openImage(imageFile.getAbsolutePath());
-	}
-
-
-	/*
-	 * PRIVATE METHODS
-	 */
-
-	private Spot createSpotFrom(Element spotEl) {
+	private Spot createSpotFrom(final Element spotEl) {
 		int ID = readIntAttribute(spotEl, SPOT_ID_ATTRIBUTE_NAME, logger);
 		Spot spot = new SpotImp(ID);
 
@@ -865,4 +749,6 @@ public class TmXmlReader <T extends RealType<T> & NativeType<T>> implements TmXm
 		}
 		return spot;
 	}
+
+	
 }

@@ -44,85 +44,19 @@ public class GuiSaver <T extends RealType<T> & NativeType<T>> {
 	public void writeFile(final File file, final TrackMateModel<T> model, final String targetID) {
 
 		TmXmlWriter<T> writer = new TmXmlWriter<T>(wizard.getController().getPlugin());
-
-		if (targetID.equals(StartDialogPanel.DESCRIPTOR) || targetID.equals(DetectorChoiceDescriptor.DESCRIPTOR) ) {
-
-			model.setSettings( ((StartDialogPanel<T>) wizard.getPanelDescriptorFor(StartDialogPanel.DESCRIPTOR)).getSettings());
-			writer.appendBasicSettings(); 
-			
-		} else if ( targetID.equals(DetectorConfigurationPanelDescriptor.DESCRIPTOR) ) {
-
-				writer.appendBasicSettings();
-				writer.appendDetectorSettings();
-
-		} else if (targetID.equals(DetectorDescriptor.DESCRIPTOR) || targetID.equals(InitFilterDescriptor.DESCRIPTOR) ) {
-
-			writer.appendBasicSettings();
-			writer.appendDetectorSettings();
-			writer.appendSpots();
-
-		} else if  (targetID.equals(LaunchDisplayerDescriptor.DESCRIPTOR) || targetID.equals(DisplayerChoiceDescriptor.DESCRIPTOR) ) {
-
-			writer.appendBasicSettings();
-			writer.appendDetectorSettings();
-			writer.appendInitialSpotFilter();
-			writer.appendSpots();
-			
-		} else if  (targetID.equals(SpotFilterDescriptor.DESCRIPTOR) || targetID.equals(TrackerChoiceDescriptor.DESCRIPTOR) ) {
-			
-			writer.appendBasicSettings();
-			writer.appendDetectorSettings();
-			writer.appendInitialSpotFilter();
-			writer.appendSpotFilters();
-			writer.appendSpots();
-			
-		} else if  (targetID.equals(TrackerConfigurationPanelDescriptor.DESCRIPTOR) ) {
-
-			writer.appendBasicSettings();
-			writer.appendDetectorSettings();
-			writer.appendTrackerSettings();
-			writer.appendInitialSpotFilter();
-			writer.appendSpotFilters();
-			writer.appendFilteredSpots();
-			writer.appendSpots();
-
-		} else if  (targetID.equals(TrackingDescriptor.DESCRIPTOR)) {
-
-			writer.appendBasicSettings();
-			writer.appendDetectorSettings();
-			writer.appendTrackerSettings();
-			writer.appendInitialSpotFilter();
-			writer.appendSpotFilters();
-			writer.appendFilteredSpots();
-			writer.appendTracks();
-			writer.appendSpots();
-			
-		} else if  (targetID.equals(TrackFilterDescriptor.DESCRIPTOR) ) {
-
-			writer.appendBasicSettings();
-			writer.appendDetectorSettings();
-			writer.appendTrackerSettings();
-			writer.appendInitialSpotFilter();
-			writer.appendSpotFilters();
-			writer.appendFilteredSpots();
-			writer.appendTracks();
-			writer.appendTrackFilters();
-			writer.appendSpots();
-
-		} else {
-			
-			writer.appendBasicSettings();
-			writer.appendDetectorSettings();
-			writer.appendTrackerSettings();
-			writer.appendInitialSpotFilter();
-			writer.appendSpotFilters();
-			writer.appendFilteredSpots();
-			writer.appendTracks();
-			writer.appendTrackFilters();
-			writer.appendFilteredTracks();
-			writer.appendSpots();
-
+		
+		if (!writer.checkInput()) {
+			logger.error("There was some errors preparing to write:\n" + writer.getErrorMessage());
+			logger.error("Aborting.\n");
+			return;
 		}
+
+		if (!writer.process()) {
+			logger.error("There was some errors when preparing the file:\n" + writer.getErrorMessage());
+			logger.error("Aborting.\n");
+			return;
+		}
+		
 		try {
 			writer.writeToFile(file);
 			logger.log("Data saved to: "+file.toString()+'\n');

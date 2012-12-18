@@ -13,7 +13,6 @@ import org.jdom.JDOMException;
 import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.graph.SimpleDirectedWeightedGraph;
 
-import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.SpotImp;
@@ -31,9 +30,13 @@ public class SpotFeatureGrapher_TestDrive {
 		File file = new File("/Users/tinevez/Desktop/Data/Tree.xml");
 		TrackMate_<T> plugin = new TrackMate_<T>();
 		plugin.initModules();
-		TmXmlReader<T> reader = new TmXmlReader<T>(file, plugin, Logger.DEFAULT_LOGGER);
-		reader.parse();
-		final TrackMateModel<T> model = reader.getModel();
+		TmXmlReader<T> reader = new TmXmlReader<T>(file, plugin);
+		if (!reader.checkInput() && !reader.process()) {
+			System.err.println("Problem loading the file:");
+			System.err.println(reader.getErrorMessage());
+		}
+		TrackMateModel<T> model = plugin.getModel();
+
 		List<Spot> spots = model.getFilteredSpots().getAllSpots();
 		
 		HashSet<String> Y = new HashSet<String>(1);
