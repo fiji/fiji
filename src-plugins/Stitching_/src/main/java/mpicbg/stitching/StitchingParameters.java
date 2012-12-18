@@ -39,4 +39,8 @@ public class StitchingParameters
 	public double regThreshold = -2;
 	public double relativeThreshold = 2.5;
 	public double absoluteThreshold = 3.5;
+	
+	//added by John Lapage: allows storage of a sequential comparison range
+	public boolean sequential = false;
+	public int seqRange = 1;
 }
