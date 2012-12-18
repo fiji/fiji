@@ -39,7 +39,7 @@ discoverVLC() {
 
 getOutputFile() {
 	if (IJ.getInstance() != null) {
-		SaveDialog od = new SaveDialog("Open Text File", null, ".ogv");
+		SaveDialog od = new SaveDialog("Save screencast as...", null, ".ogv");
 		directory = od.getDirectory();
 		fileName = od.getFileName();
 		if (directory == null || fileName == null)
