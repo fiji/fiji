@@ -82,7 +82,7 @@ public class Stitching_Grid implements PlugIn
 	public static int defaultMemorySpeedChoice = 0;
 	
 	//Added by John Lapage: user sets this parameter to define how many adjacent files each image will be compared to
-	public static double seqRange = 1;	
+	public static double defaultSeqRange = 1;	
 	
 	public static boolean defaultQuickFusion = true;
 	
@@ -157,7 +157,8 @@ public class Stitching_Grid implements PlugIn
 		gd.addNumericField( "Max/avg_displacement_threshold", defaultDisplacementThresholdRelative, 2 );		
 		gd.addNumericField( "Absolute_displacement_threshold", defaultDisplacementThresholdAbsolute, 2 );
 		// added by John Lapage: creates text box in which the user can set which range to compare within. Would be nicer as an Integer.
-		if (gridType == 7) gd.addNumericField( "Frame range to compare", seqRange, 1 );
+		if (gridType == 7) 
+			gd.addNumericField( "Frame range to compare", defaultSeqRange, 0 );
 		
 		if ( gridType < 5 )
 			gd.addCheckbox( "Compute_overlap (otherwise use approximate grid coordinates)", defaultComputeOverlap );
@@ -268,7 +269,8 @@ public class Stitching_Grid implements PlugIn
 		params.relativeThreshold = defaultDisplacementThresholdRelative = gd.getNextNumber();		
 		params.absoluteThreshold = defaultDisplacementThresholdAbsolute = gd.getNextNumber();
 		// Added by John Lapage: sends user specified range to the parameters object
-		if ( gridType == 7) params.seqRange = (int)(seqRange = gd.getNextNumber());
+		if ( gridType == 7) 
+			params.seqRange = (int)(defaultSeqRange = Math.round( gd.getNextNumber() ) );
 		
 		// Modified by John Lapage (rearranged). Copies the setup for Unknown Positions. User specifies this with all other options.
 		if ( gridType == 5 || gridType == 7)
