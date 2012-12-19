@@ -592,11 +592,11 @@ public class TrackMate_<T extends RealType<T> & NativeType<T>>  implements PlugI
 		logger.log("Starting track filtering process.\n");
 		HashSet<Integer> filteredTrackIndices = new HashSet<Integer>(); // will work, for the hash of Integer is its int
 
-		for (int trackIndex = 0; trackIndex < model.getNTracks(); trackIndex++) {
+		for (Integer trackID : model.getTrackIDs()) {
 			boolean trackIsOk = true;
 			for(FeatureFilter filter : model.getSettings().getTrackFilters()) {
 				Double tval = filter.value;
-				Double val = model.getFeatureModel().getTrackFeature(trackIndex, filter.feature);
+				Double val = model.getFeatureModel().getTrackFeature(trackID, filter.feature);
 				if (null == val)
 					continue;
 
@@ -613,7 +613,7 @@ public class TrackMate_<T extends RealType<T> & NativeType<T>>  implements PlugI
 				}
 			}
 			if (trackIsOk)
-				filteredTrackIndices.add(trackIndex);
+				filteredTrackIndices.add(trackID);
 		}
 		model.setVisibleTrackIndices(filteredTrackIndices, true);
 		return true;

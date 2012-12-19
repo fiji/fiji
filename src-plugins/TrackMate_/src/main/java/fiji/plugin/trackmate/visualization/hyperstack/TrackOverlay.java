@@ -133,7 +133,7 @@ public class TrackOverlay <T extends RealType<T> & NativeType<T>> implements Ove
 		final int trackDisplayDepth = (Integer) displaySettings.get(TrackMateModelView.KEY_TRACK_DISPLAY_DEPTH);
 		final Map<Integer,Set<DefaultWeightedEdge>> trackEdges = model.getTrackEdges(); 
 		final Set<Integer> filteredTrackKeys = model.getFilteredTrackIDs();
-
+		
 		g2d.setStroke(new BasicStroke(2.0f,  BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
 		if (trackDisplayMode == TrackMateModelView.TRACK_DISPLAY_MODE_LOCAL || trackDisplayMode == TrackMateModelView.TRACK_DISPLAY_MODE_LOCAL_QUICK) 
 			g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER));
@@ -167,7 +167,7 @@ public class TrackOverlay <T extends RealType<T> & NativeType<T>> implements Ove
 			for (Integer trackID : filteredTrackKeys) {
 				g2d.setColor(edgeColors.get(trackID));
 				final Set<DefaultWeightedEdge> track = trackEdges.get(trackID);
-
+				
 				for (DefaultWeightedEdge edge : track) {
 					if (highlight.contains(edge))
 						continue;
