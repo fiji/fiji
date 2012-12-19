@@ -164,7 +164,7 @@ public class TmXmlWriter <T extends RealType<T> & NativeType<T>> implements Algo
 
 	private void echoTrackerSettings() {
 		Element el = new Element(TRACKER_SETTINGS_ELEMENT_KEY);
-		if (null != model.getSettings().tracker) {
+		if (null == model.getSettings().tracker) {
 			return; // and write nothing
 		}
 		

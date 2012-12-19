@@ -476,11 +476,12 @@ public class FeatureModel <T extends RealType<T> & NativeType<T>> implements Mul
 			// Make a double array to comply to JFreeChart histograms
 			boolean noDataFlag = true;
 			final double[] values = new double[nTracks];
-			for (int i = 0; i < nTracks; i++) {
-				val = getTrackFeature(i, feature);
+			int index = 0;
+			for (Integer trackID : model.getTrackIDs()) {
+				val = getTrackFeature(trackID, feature);
 				if (null == val)
 					continue;
-				values[i] = val;
+				values[index++] = val;
 				noDataFlag = false;
 			}
 

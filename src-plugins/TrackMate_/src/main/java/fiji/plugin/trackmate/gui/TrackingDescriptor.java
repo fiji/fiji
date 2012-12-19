@@ -97,5 +97,19 @@ public class TrackingDescriptor <T extends RealType<T> & NativeType<T>> implemen
 	}
 
 	@Override
-	public void aboutToHidePanel() { }
+	public void aboutToHidePanel() { 
+		Thread trackFeatureCalculationThread = new Thread("TrackMate track feature calculation thread") {
+			@Override
+			public void run() {
+				plugin.computeTrackFeatures();
+			}
+		};
+		trackFeatureCalculationThread.start();
+		try {
+			trackFeatureCalculationThread.join();
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+		
+	}
 }

@@ -254,6 +254,7 @@ public class FilterGuiPanel extends ActionListenablePanel implements ChangeListe
 	private void updateInfoText() {
 		String info = "";
 		int nobjects = 0;
+		
 		for (double[] values : featureValues.values()) { // bulletproof against unspecified features, which are signaled by empty arrays
 			if (values.length > 0) {
 				nobjects = values.length;
