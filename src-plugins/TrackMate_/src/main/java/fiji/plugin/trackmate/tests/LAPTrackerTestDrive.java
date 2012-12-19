@@ -48,7 +48,7 @@ public class LAPTrackerTestDrive {
 		
 		System.out.println("All spots: "+ model.getSpots());
 		System.out.println("Filtered spots: "+ model.getFilteredSpots());
-		plugin.computeTrackFeatures();
+		plugin.computeTrackFeatures(true);
 		System.out.println("Found "+model.getNTracks()+" tracks in the file:");
 		for (Integer trackID : model.getTrackEdges().keySet())
 			System.out.println('\t'+model.trackToString(trackID));
@@ -115,7 +115,7 @@ public class LAPTrackerTestDrive {
 //		LAPUtils.echoMatrix(lap.getSegmentCosts());
 		
 		System.out.println("Track features: ");
-		plugin.computeTrackFeatures();
+		plugin.computeTrackFeatures(true);
 		for (Integer trackID : model.getTrackEdges().keySet()) {
 			System.out.println(model.trackToString(trackID));
 		}

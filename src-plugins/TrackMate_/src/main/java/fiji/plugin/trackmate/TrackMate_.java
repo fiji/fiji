@@ -245,7 +245,7 @@ public class TrackMate_<T extends RealType<T> & NativeType<T>>  implements PlugI
 	 * Create detector factory containing available spot {@link TrackFeatureAnalyzer}s.
 	 */
 	protected TrackFeatureAnalyzerProvider<T> createTrackFeatureAnalyzerFactory() {
-		return new TrackFeatureAnalyzerProvider<T>();
+		return new TrackFeatureAnalyzerProvider<T>(model);
 	}
 
 	/**
@@ -331,10 +331,8 @@ public class TrackMate_<T extends RealType<T> & NativeType<T>>  implements PlugI
 	/**
 	 * Calculate all features for all tracks.
 	 */
-	public void computeTrackFeatures() {
-		final Logger logger = model.getLogger();
-		logger.log("Computing track features.\n");
-		model.getFeatureModel().computeTrackFeatures();
+	public void computeTrackFeatures(boolean doLogIt) {
+		model.getFeatureModel().computeTrackFeatures(model.getTrackIDs(), doLogIt);
 	}
 
 	/**
@@ -668,7 +666,7 @@ public class TrackMate_<T extends RealType<T> & NativeType<T>>  implements PlugI
 		if (!execTracking()) {
 			return false;
 		}
-		computeTrackFeatures();
+		computeTrackFeatures(true);
 		if (!execTrackFiltering(true)) {
 			return false;
 		}

@@ -3,6 +3,7 @@ package fiji.plugin.trackmate.features;
 import static fiji.plugin.trackmate.detection.DetectorKeys.KEY_TARGET_CHANNEL;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -74,11 +75,12 @@ public class FeatureModel <T extends RealType<T> & NativeType<T>> implements Mul
 	private HashMap<String, String> edgeFeatureShortNames = new HashMap<String, String>();
 	private HashMap<String, Dimension> edgeFeatureDimensions = new HashMap<String, Dimension>();
 	
-	private TrackMateModel<T> model;
 	protected SpotFeatureAnalyzerProvider<T> spotAnalyzerProvider;
 	protected TrackFeatureAnalyzerProvider<T> trackAnalyzerFactory;
-	protected int numThreads;
 	private EdgeFeatureAnalyzerProvider<T> edgeFeatureAnalyzerProvider;
+
+	private TrackMateModel<T> model;
+	protected int numThreads;
 
 
 	/*
@@ -449,15 +451,10 @@ public class FeatureModel <T extends RealType<T> & NativeType<T>> implements Mul
 	}
 
 	public void putTrackFeature(final Integer trackID, final String feature, final Double value) {
-		trackFeatureValues.get(trackID).put(feature, value);
-
-		// FIXME We store the found feature name if it is not already in the feature name list 
-		// This happens when we load a model from a file: the feature name list is empty, 
-		// because it is normally initiated from the plugin.
-		if (!trackFeatures.contains(feature)) {
-			trackFeatures.add(feature);
+		if (null == trackFeatureValues || null == trackFeatureValues.get(trackID)) {
+			initFeatureMap();
 		}
-
+		trackFeatureValues.get(trackID).put(feature, value);
 	}
 
 	public Double getTrackFeature(final Integer trackIndex, final String feature) {
@@ -496,22 +493,29 @@ public class FeatureModel <T extends RealType<T> & NativeType<T>> implements Mul
 	/**
 	 * Instantiate an empty feature 2D map.
 	 */
-	public void initFeatureMap() {
-		this.trackFeatureValues = new HashMap<Integer, Map<String, Double>>(model.getNTracks());
+	private void initFeatureMap() {
+		this.trackFeatureValues = new ConcurrentHashMap<Integer, Map<String, Double>>(model.getNTracks());
 		Set<Integer> keySet = model.getTrackSpots().keySet();
 		for (Integer trackID : keySet) {
-			Map<String, Double> featureMap = new HashMap<String, Double>(trackFeatures.size());
+			Map<String, Double> featureMap = new ConcurrentHashMap<String, Double>(trackFeatures.size());
 			trackFeatureValues.put(trackID, featureMap);
 		}
 	}
 
 	/**
-	 * Calculate all features for the tracks in this model.
+	 * Calculate all features for the tracks with the given IDs.
 	 */
-	public void computeTrackFeatures() {
+	public void computeTrackFeatures(final Collection<Integer> trackIDs, boolean doLogIt) {
+		final Logger logger = model.getLogger();
+		if (doLogIt) {
+			logger.log("Computing track features:\n");		
+		}
 		initFeatureMap();
-		for (String analyzer : trackAnalyzerFactory.getAvailableTrackFeatureAnalyzers())
-			trackAnalyzerFactory.getTrackFeatureAnalyzer(analyzer).process(model);
+		for (String analyzerKey : trackAnalyzerFactory.getAvailableTrackFeatureAnalyzers()) {
+			TrackFeatureAnalyzer<T> analyzer = trackAnalyzerFactory.getTrackFeatureAnalyzer(analyzerKey);
+			analyzer.process(trackIDs);
+			logger.log("  - " + analyzer.toString() + " in " + analyzer.getProcessingTime() + " ms.\n");
+		}
 	}
 
 	public void computeEdgeFeatures() {

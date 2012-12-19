@@ -31,7 +31,7 @@ public class SaveDescriptor <T extends RealType<T> & NativeType<T>> extends Some
 				}
 			}
 
-			plugin.computeTrackFeatures();
+			plugin.computeTrackFeatures(true);
 			GuiSaver<T> saver = new GuiSaver<T>(wizard);
 			File tmpFile = TMUtils.askForFile(file, wizard, logger);
 			if (null == tmpFile) {

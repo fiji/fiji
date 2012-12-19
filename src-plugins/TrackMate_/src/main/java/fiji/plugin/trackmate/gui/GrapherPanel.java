@@ -31,7 +31,7 @@ import fiji.plugin.trackmate.features.EdgeFeatureGrapher;
 import fiji.plugin.trackmate.features.SpotFeatureGrapher;
 import fiji.plugin.trackmate.features.TrackFeatureGrapher;
 import fiji.plugin.trackmate.features.edges.EdgeTimeLocationAnalyzer;
-import fiji.plugin.trackmate.features.track.TrackLocationAnalyzer;
+import fiji.plugin.trackmate.features.track.TrackIndexAnalyzer;
 
 public class GrapherPanel<T extends RealType<T> & NativeType<T>> extends ActionListenablePanel implements WizardPanelDescriptor<T> {
 
@@ -106,7 +106,7 @@ public class GrapherPanel<T extends RealType<T> & NativeType<T>> extends ActionL
 		panelTracks.removeAll();
 		List<String> trackFeatures = model.getFeatureModel().getTrackFeatures();
 		Map<String, String> trackFeatureNames = model.getFeatureModel().getTrackFeatureNames();
-		trackFeatureSelectionPanel = new FeaturePlotSelectionPanel(TrackLocationAnalyzer.TRACK_INDEX, trackFeatures, trackFeatureNames);
+		trackFeatureSelectionPanel = new FeaturePlotSelectionPanel(TrackIndexAnalyzer.TRACK_INDEX, trackFeatures, trackFeatureNames);
 		panelTracks.add(trackFeatureSelectionPanel);
 		trackFeatureSelectionPanel.addActionListener(new ActionListener() {
 			@Override
@@ -147,7 +147,7 @@ public class GrapherPanel<T extends RealType<T> & NativeType<T>> extends ActionL
 	
 	private void plotTrackFeatures() {
 		// Recompute track features
-		model.getFeatureModel().computeTrackFeatures();
+		model.getFeatureModel().computeTrackFeatures(model.getFilteredTrackIDs(), true);
 		// Prepare grapher
 		String xFeature = trackFeatureSelectionPanel.getXKey();
 		Set<String> yFeatures = trackFeatureSelectionPanel.getYKeys();

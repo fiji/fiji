@@ -19,7 +19,8 @@ public class ExportStats_TestDrive {
 		
 		File file;
 		if (!IJ.isWindows()) {
-			file = new File("/Users/tinevez/Desktop/Data/FakeTracks.xml");
+//			file = new File("/Users/tinevez/Desktop/Data/FakeTracks.xml");
+			file = new File("/Users/tinevez/Desktop/Data/RECEPTOR.xml");
 		} else {
 			file = new File("E:/Users/JeanYves/Desktop/Data/FakeTracks.xml");
 		}
@@ -28,10 +29,11 @@ public class ExportStats_TestDrive {
 		TrackMate_<T> plugin = new TrackMate_<T>();
 		plugin.initModules();
 		TmXmlReader<T> reader = new TmXmlReader<T>(file, plugin);
-		if (!reader.checkInput() && !reader.process()) {
+		if (!reader.checkInput() || !reader.process()) {
 			System.err.println("Problem loading the file:");
 			System.err.println(reader.getErrorMessage());
 		}
+		System.out.println(plugin.getModel());
 		
 		// Export
 		ExportStatsToIJAction<T> exporter = new ExportStatsToIJAction<T>();

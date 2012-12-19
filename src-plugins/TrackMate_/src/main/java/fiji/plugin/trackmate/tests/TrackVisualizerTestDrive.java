@@ -51,7 +51,7 @@ public class TrackVisualizerTestDrive {
 		System.out.println("Found "+model.getNTracks()+" tracks in total.");
 		System.out.println("There were "+model.getSettings().getTrackFilters().size() + " track filter(s) applied on this list,");
 		System.out.println("resulting in having only "+model.getNFilteredTracks()+" visible tracks after filtering.");
-		plugin.computeTrackFeatures();
+		plugin.computeTrackFeatures(true);
 		for(int i : model.getFilteredTrackIDs()) {
 			System.out.println(" - "+model.trackToString(i));
 		}

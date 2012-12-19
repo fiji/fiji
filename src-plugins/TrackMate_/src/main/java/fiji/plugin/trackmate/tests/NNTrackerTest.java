@@ -45,7 +45,7 @@ public class NNTrackerTest {
 		System.out.println("Filtered spots: "+ model.getFilteredSpots());
 		System.out.println("Found "+model.getNTracks()+" tracks in the file:");
 		System.out.println("Track features: ");
-		plugin.computeTrackFeatures();
+		plugin.computeTrackFeatures(true);
 		for (Integer trackID : model.getTrackIDs()) {
 			System.out.println(model.trackToString(trackID));
 		}
@@ -79,7 +79,7 @@ public class NNTrackerTest {
 //		LAPUtils.echoMatrix(lap.getSegmentCosts());
 		
 		System.out.println("Track features: ");
-		plugin.computeTrackFeatures();
+		plugin.computeTrackFeatures(true);
 		for (Integer trackID : model.getTrackIDs()) {
 			System.out.println(model.trackToString(trackID));
 		}

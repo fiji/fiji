@@ -101,7 +101,7 @@ public class TrackingDescriptor <T extends RealType<T> & NativeType<T>> implemen
 		Thread trackFeatureCalculationThread = new Thread("TrackMate track feature calculation thread") {
 			@Override
 			public void run() {
-				plugin.computeTrackFeatures();
+				plugin.computeTrackFeatures(true);
 			}
 		};
 		trackFeatureCalculationThread.start();

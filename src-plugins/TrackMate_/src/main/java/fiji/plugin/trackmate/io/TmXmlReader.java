@@ -668,7 +668,6 @@ public class TmXmlReader <T extends RealType<T> & NativeType<T>> implements Algo
 		 * We do the same thing for the track features.
 		 */
 		final FeatureModel<T> fm = model.getFeatureModel();
-		fm.initFeatureMap();
 		Map<Integer, Map<String, Double>> savedFeatureMap = readTrackFeatures();
 		for (Integer savedKey : savedFeatureMap.keySet()) {
 

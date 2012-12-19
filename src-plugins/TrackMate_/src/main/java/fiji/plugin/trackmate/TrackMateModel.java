@@ -558,8 +558,8 @@ public class TrackMateModel <T extends RealType<T> & NativeType<T>> {
 	 * The tracks returned here are guaranteed to have at least 2 spots in it. 
 	 * There is no empty track, nor a track made of a single spot. 
 	 */
-	public Set<Spot> getTrackSpots(int trackKey) {
-		return trackSpots.get(trackKey);
+	public Set<Spot> getTrackSpots(Integer trackID) {
+		return trackSpots.get(trackID);
 	}
 
 	/**
@@ -567,8 +567,8 @@ public class TrackMateModel <T extends RealType<T> & NativeType<T>> {
 	 * The track returned here are guaranteed to have at least 1 edge in it. 
 	 * There is no empty track. 
 	 */
-	public Set<DefaultWeightedEdge> getTrackEdges(int trackKey) {
-		return trackEdges.get(trackKey);
+	public Set<DefaultWeightedEdge> getTrackEdges(Integer trackID) {
+		return trackEdges.get(trackID);
 	}
 
 	/**
