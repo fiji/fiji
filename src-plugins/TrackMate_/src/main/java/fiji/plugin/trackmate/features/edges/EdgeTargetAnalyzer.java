@@ -88,11 +88,10 @@ public class EdgeTargetAnalyzer <T extends RealType<T> & NativeType<T>>  impleme
 		featureModel.putEdgeFeature(edge, SPOT2_NAME, target.getName());
 		featureModel.putEdgeFeature(edge, SPOT2_ID, target.ID());
 		// Track it belong to
-		int trackId = -1;
 		final Map<Integer,Set<DefaultWeightedEdge>> tracks = model.getTrackEdges();
 		for (int trackID : tracks.keySet()) {
 			if (tracks.get(trackID).contains(edge)) {
-				featureModel.putEdgeFeature(edge, TRACK_ID, trackId);
+				featureModel.putEdgeFeature(edge, TRACK_ID, trackID);
 				break;
 			}
 		}
