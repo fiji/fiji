@@ -334,7 +334,7 @@ public class TrackMate_<T extends RealType<T> & NativeType<T>>  implements PlugI
 	public void computeTrackFeatures() {
 		final Logger logger = model.getLogger();
 		logger.log("Computing track features.\n");
-		model.computeTrackFeatures();
+		model.getFeatureModel().computeTrackFeatures();
 	}
 
 	/**
@@ -587,9 +587,11 @@ public class TrackMate_<T extends RealType<T> & NativeType<T>>  implements PlugI
 		return true;
 	}
 
-	public boolean execTrackFiltering() {
-		final Logger logger = model.getLogger();
-		logger.log("Starting track filtering process.\n");
+	public boolean execTrackFiltering(boolean doLogIt) {
+		if (doLogIt) {
+			Logger logger = model.getLogger();
+			logger.log("Starting track filtering process.\n");
+		}
 		HashSet<Integer> filteredTrackIndices = new HashSet<Integer>(); // will work, for the hash of Integer is its int
 
 		for (Integer trackID : model.getTrackIDs()) {
@@ -667,7 +669,7 @@ public class TrackMate_<T extends RealType<T> & NativeType<T>>  implements PlugI
 			return false;
 		}
 		computeTrackFeatures();
-		if (!execTrackFiltering()) {
+		if (!execTrackFiltering(true)) {
 			return false;
 		}
 		return true;

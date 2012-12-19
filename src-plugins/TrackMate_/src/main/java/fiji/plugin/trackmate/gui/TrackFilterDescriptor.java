@@ -91,7 +91,7 @@ public class TrackFilterDescriptor <T extends RealType<T> & NativeType<T>> imple
 					public void stateChanged(ChangeEvent event) {
 						// We set the thresholds field of the model but do not touch its selected spot field yet.
 						plugin.getModel().getSettings().setTrackFilters(component.getFeatureFilters());
-						plugin.execTrackFiltering();
+						plugin.execTrackFiltering(false);
 					}
 				});
 				
@@ -107,7 +107,7 @@ public class TrackFilterDescriptor <T extends RealType<T> & NativeType<T>> imple
 		List<FeatureFilter> featureFilters = component.getFeatureFilters();
 		final TrackMateModel<T> model = plugin.getModel();
 		model.getSettings().setTrackFilters(featureFilters);
-		plugin.execTrackFiltering();
+		plugin.execTrackFiltering(true);
 
 		if (featureFilters == null || featureFilters.isEmpty()) {
 			logger.log("No feature threshold set, kept the " + model.getNTracks() + " tracks.\n");

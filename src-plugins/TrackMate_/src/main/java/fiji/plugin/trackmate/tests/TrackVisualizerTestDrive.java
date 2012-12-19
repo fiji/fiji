@@ -62,7 +62,7 @@ public class TrackVisualizerTestDrive {
 		FeatureFilter filter = new FeatureFilter(TrackBranchingAnalyzer.NUMBER_SPOTS, 50d, true);
 		System.out.println("We add an extra track filter: "+filter);
 		model.getSettings().addTrackFilter(filter);
-		plugin.execTrackFiltering();
+		plugin.execTrackFiltering(true);
 		System.out.println("After filtering, retaining "+model.getNFilteredTracks()+" tracks, which are:");
 		System.out.println(model.getFilteredTrackIDs());
 		System.out.println();

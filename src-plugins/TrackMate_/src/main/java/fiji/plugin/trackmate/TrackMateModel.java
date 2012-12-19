@@ -1085,15 +1085,6 @@ public class TrackMateModel <T extends RealType<T> & NativeType<T>> {
 	}
 
 
-	/**
-	 * Calculate all features for the tracks in this model.
-	 */
-	public void computeTrackFeatures() {
-		featureModel.computeTrackFeatures();
-	}
-
-
-
 	/*
 	 * PRIVATE METHODS
 	 */
