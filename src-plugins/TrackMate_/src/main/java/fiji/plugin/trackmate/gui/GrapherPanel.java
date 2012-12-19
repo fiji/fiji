@@ -120,7 +120,13 @@ public class GrapherPanel<T extends RealType<T> & NativeType<T>> extends ActionL
 		String xFeature = spotFeatureSelectionPanel.getXKey();
 		Set<String> yFeatures = spotFeatureSelectionPanel.getYKeys();
 		
-		SpotFeatureGrapher<T> grapher = new SpotFeatureGrapher<T>(xFeature, yFeatures, model.getFilteredSpots().getAllSpots(), model);
+		// Collect only the spots that are in tracks
+		List<Spot> spots = new ArrayList<Spot>();
+		for(Integer trackID : model.getTrackIDs()) {
+			spots.addAll(model.getTrackSpots(trackID));
+		}
+		
+		SpotFeatureGrapher<T> grapher = new SpotFeatureGrapher<T>(xFeature, yFeatures, spots, model);
 		grapher.render();
 	}
 	
@@ -129,8 +135,8 @@ public class GrapherPanel<T extends RealType<T> & NativeType<T>> extends ActionL
 		model.getFeatureModel().computeEdgeFeatures();
 		// Collect edges
 		List<DefaultWeightedEdge> edges = new ArrayList<DefaultWeightedEdge>();
-		for (int trackIndex : model.getFilteredTrackIDs()) {
-			edges.addAll(model.getTrackEdges(trackIndex));
+		for (Integer trackID : model.getFilteredTrackIDs()) {
+			edges.addAll(model.getTrackEdges(trackID));
 		}
 		// Prepare grapher
 		String xFeature = edgeFeatureSelectionPanel.getXKey();
