@@ -89,6 +89,8 @@ public class TrackMateWizard <T extends RealType<T> & NativeType<T>> extends jav
 	private TrackMateModelView<T> displayer;
 	private Component component;
 	private final WizardController<T> controller;
+	/** The stored 4 button states. It has default isibility so that states can be tewaked by the controller. */ 
+	boolean[] storedButtonState;
 
 
 	/*
@@ -216,6 +218,36 @@ public class TrackMateWizard <T extends RealType<T> & NativeType<T>> extends jav
 
 	public WizardPanelDescriptor<T> getPanelDescriptorFor(Object id) {
 		return descriptorHashmap.get(id);
+	}
+	
+	/**
+	 * Disable the 4 bottom buttons and memorize their state to that they
+	 * can be restored when calling {@link #restoreButtonsState()}. 
+	 */
+	public void disableButtonsAndStoreState() {
+		storedButtonState = new boolean[4];
+		storedButtonState[0] = jButtonLoad.isEnabled();
+		storedButtonState[1] = jButtonSave.isEnabled();
+		storedButtonState[2] = jButtonPrevious.isEnabled();
+		storedButtonState[3] = jButtonNext.isEnabled();
+		setLoadButtonEnabled(false);
+		setSaveButtonEnabled(false);
+		setPreviousButtonEnabled(false);
+		setNextButtonEnabled(false);
+	}
+	
+	/**
+	 * Restore the button state saved when calling {@link #disableButtonsAndStoreState()}.
+	 * Do nothing if {@link #disableButtonsAndStoreState()} was not called before. 
+	 */
+	public void restoreButtonsState() {
+		if (storedButtonState == null) {
+			return;
+		}
+		setLoadButtonEnabled(storedButtonState[0]);
+		setSaveButtonEnabled(storedButtonState[1]);
+		setPreviousButtonEnabled(storedButtonState[2]);
+		setNextButtonEnabled(storedButtonState[3]);
 	}
 
 	public void setNextButtonEnabled(final boolean b) {

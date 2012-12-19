@@ -39,8 +39,6 @@ public class WizardController<T extends RealType<T> & NativeType<T>> implements 
 	 * re-generate the data.
 	 */
 	boolean actionFlag = true;
-	private boolean oldNextButtonState;
-	private boolean oldPreviousButtonState;
 
 	/*
 	 * CONSTRUCTOR
@@ -97,7 +95,7 @@ public class WizardController<T extends RealType<T> & NativeType<T>> implements 
 	public TrackMateWizard<T> getWizard() {
 		return wizard;
 	}
-	
+
 	/**
 	 * Expose the {@link TrackMate_} plugin piloted by the wizard.
 	 */
@@ -105,8 +103,8 @@ public class WizardController<T extends RealType<T> & NativeType<T>> implements 
 		return plugin;
 	}
 
-	
-	
+
+
 	/*
 	 * PROTECTED METHODS
 	 */
@@ -195,10 +193,7 @@ public class WizardController<T extends RealType<T> & NativeType<T>> implements 
 
 			actionFlag = false;
 			wizard.jButtonNext.setText("Resume");
-			wizard.setSaveButtonEnabled(false);
-			wizard.setLoadButtonEnabled(false);
-			wizard.setPreviousButtonEnabled(false);
-			wizard.setNextButtonEnabled(false);
+			wizard.disableButtonsAndStoreState();
 
 			new Thread("TrackMate moving to load state thread.") {
 				public void run() {
@@ -209,13 +204,8 @@ public class WizardController<T extends RealType<T> & NativeType<T>> implements 
 		} else if (event == wizard.SAVE_BUTTON_PRESSED && actionFlag) {
 
 			actionFlag = false;
-			oldNextButtonState = wizard.jButtonNext.isEnabled();
-			oldPreviousButtonState = wizard.jButtonPrevious.isEnabled();
 			wizard.jButtonNext.setText("Resume");
-			wizard.setSaveButtonEnabled(false);
-			wizard.setLoadButtonEnabled(false);
-			wizard.setPreviousButtonEnabled(false);
-			wizard.setNextButtonEnabled(false);
+			wizard.disableButtonsAndStoreState();
 
 			new Thread("TrackMate moving to save state thread.") {
 				public void run() {
@@ -235,10 +225,7 @@ public class WizardController<T extends RealType<T> & NativeType<T>> implements 
 
 			// Put back buttons
 			wizard.jButtonNext.setText("Next");
-			wizard.setLoadButtonEnabled(true);
-			wizard.setSaveButtonEnabled(true);
-			wizard.setNextButtonEnabled(oldNextButtonState);
-			wizard.setPreviousButtonEnabled(oldPreviousButtonState);
+			wizard.restoreButtonsState();
 
 		} else if (event == displayerPanel.TRACK_SCHEME_BUTTON_PRESSED) {
 
@@ -252,18 +239,24 @@ public class WizardController<T extends RealType<T> & NativeType<T>> implements 
 			}
 
 		} else if (event == displayerPanel.DO_ANALYSIS_BUTTON_PRESSED) {
-			
+
 			displayerPanel.jButtonDoAnalysis.setEnabled(false);
-			try {
-				wizard.showDescriptorPanelFor(LoadDescriptor.DESCRIPTOR);
-				ExportStatsToIJAction<T> action = new ExportStatsToIJAction<T>();
-				action.execute(plugin);
-				
-			} finally {
-				wizard.showDescriptorPanelFor(DisplayerPanel.DESCRIPTOR);
-				displayerPanel.jButtonDoAnalysis.setEnabled(true);
-			}
-			
+			wizard.disableButtonsAndStoreState();
+			wizard.showDescriptorPanelFor(LoadDescriptor.DESCRIPTOR);
+
+			new Thread("TrackMate export analysis to IJ thread.") {
+				public void run() {
+					try {
+						ExportStatsToIJAction<T> action = new ExportStatsToIJAction<T>();
+						action.execute(plugin);
+					} finally {
+						wizard.showDescriptorPanelFor(DisplayerPanel.DESCRIPTOR);
+						wizard.restoreButtonsState();
+						displayerPanel.jButtonDoAnalysis.setEnabled(true);
+					}
+				};
+			}.start();
+
 		}
 	}
 
@@ -300,8 +293,8 @@ public class WizardController<T extends RealType<T> & NativeType<T>> implements 
 			panelDescriptor.displayingPanel();
 
 		} finally {
-			
-			
+
+
 		}
 
 	}
@@ -341,14 +334,14 @@ public class WizardController<T extends RealType<T> & NativeType<T>> implements 
 		// Enable or disable next and previous button depending on the target descriptor.
 		WizardPanelDescriptor<T> nextPanel = wizard.getPanelDescriptorFor(loadDescriptor.getNextDescriptorID());
 		if (nextPanel.getNextDescriptorID() == null) {
-			oldNextButtonState = false;
+			wizard.storedButtonState[3] = false;
 		} else {
-			oldNextButtonState = true;
+			wizard.storedButtonState[3] = true;
 		}
 		if (nextPanel.getPreviousDescriptorID() == null) {
-			oldPreviousButtonState = false;
+			wizard.storedButtonState[2] = false;
 		} else {
-			oldPreviousButtonState = true;
+			wizard.storedButtonState[2] = true;
 		}
 
 	}
