@@ -150,9 +150,9 @@ public class TmXmlReader <T extends RealType<T> & NativeType<T>> implements Algo
 	@Override
 	public boolean checkInput() {
 		if (null == document) {
-			return true;
+			return false;
 		}
-		return false;
+		return true;
 	}
 
 	@Override
