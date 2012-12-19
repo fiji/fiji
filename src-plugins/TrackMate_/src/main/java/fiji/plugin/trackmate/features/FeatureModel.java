@@ -68,13 +68,13 @@ public class FeatureModel <T extends RealType<T> & NativeType<T>> implements Mul
 	 * Feature storage for edges.
 	 */
 	protected ConcurrentHashMap<DefaultWeightedEdge, ConcurrentHashMap<String, Object>> edgeFeatureValues 
-		= new ConcurrentHashMap<DefaultWeightedEdge, ConcurrentHashMap<String, Object>>();
+	= new ConcurrentHashMap<DefaultWeightedEdge, ConcurrentHashMap<String, Object>>();
 
 	private ArrayList<String> edgeFeatures = new ArrayList<String>();
 	private HashMap<String, String> edgeFeatureNames = new HashMap<String, String>();
 	private HashMap<String, String> edgeFeatureShortNames = new HashMap<String, String>();
 	private HashMap<String, Dimension> edgeFeatureDimensions = new HashMap<String, Dimension>();
-	
+
 	protected SpotFeatureAnalyzerProvider<T> spotAnalyzerProvider;
 	protected TrackFeatureAnalyzerProvider<T> trackAnalyzerFactory;
 	private EdgeFeatureAnalyzerProvider<T> edgeFeatureAnalyzerProvider;
@@ -262,7 +262,7 @@ public class FeatureModel <T extends RealType<T> & NativeType<T>> implements Mul
 		for (String analyzer : trackAnalyzerFactory.getAvailableTrackFeatureAnalyzers()) {
 			trackFeatures.addAll(trackAnalyzerFactory.getFeatures(analyzer));
 		}
-		
+
 		trackFeatureNames = new HashMap<String, String>();
 		trackFeatureShortNames = new HashMap<String, String>();
 		trackFeatureDimensions = new HashMap<String, Dimension>();
@@ -275,12 +275,12 @@ public class FeatureModel <T extends RealType<T> & NativeType<T>> implements Mul
 
 	public void setEdgeFeatureProvider(final EdgeFeatureAnalyzerProvider<T> edgeFeatureAnalyzerProvider) {
 		this.edgeFeatureAnalyzerProvider = edgeFeatureAnalyzerProvider;
-		
+
 		edgeFeatures = new ArrayList<String>();
 		for (String analyzer : edgeFeatureAnalyzerProvider.getAvailableEdgeFeatureAnalyzers()) {
 			edgeFeatures.addAll(edgeFeatureAnalyzerProvider.getFeatures(analyzer));
 		}
-		
+
 		edgeFeatureNames = new HashMap<String, String>();
 		edgeFeatureShortNames = new HashMap<String, String>();
 		edgeFeatureDimensions = new HashMap<String, Dimension>();
@@ -362,12 +362,12 @@ public class FeatureModel <T extends RealType<T> & NativeType<T>> implements Mul
 		logger.setStatus("");
 	}
 
-	
+
 	/*
 	 * EDGE FEATURES
 	 */
-	
-	public void putEdgeFeature(DefaultWeightedEdge edge, final String featureName, final Object featureValue) {
+
+	public void putEdgeFeature(DefaultWeightedEdge edge, final String featureName, final Double featureValue) {
 		ConcurrentHashMap<String, Object> map = edgeFeatureValues.get(edge);
 		if (null == map) {
 			map = new ConcurrentHashMap<String, Object>();
@@ -375,7 +375,7 @@ public class FeatureModel <T extends RealType<T> & NativeType<T>> implements Mul
 		}
 		map.put(featureName, featureValue);
 	}
-	
+
 	public Object getEdgeFeature(DefaultWeightedEdge edge, final String featureName) {
 		ConcurrentHashMap<String, Object> map = edgeFeatureValues.get(edge);
 		if (null == map) {
@@ -411,7 +411,7 @@ public class FeatureModel <T extends RealType<T> & NativeType<T>> implements Mul
 	public Map<String, Dimension> getEdgeFeatureDimensions() {
 		return edgeFeatureDimensions;
 	}
-	
+
 
 	/*
 	 * TRACK FEATURES
@@ -514,18 +514,21 @@ public class FeatureModel <T extends RealType<T> & NativeType<T>> implements Mul
 		for (String analyzerKey : trackAnalyzerFactory.getAvailableTrackFeatureAnalyzers()) {
 			TrackFeatureAnalyzer<T> analyzer = trackAnalyzerFactory.getTrackFeatureAnalyzer(analyzerKey);
 			analyzer.process(trackIDs);
-			logger.log("  - " + analyzer.toString() + " in " + analyzer.getProcessingTime() + " ms.\n");
+			if (doLogIt)
+				logger.log("  - " + analyzer.toString() + " in " + analyzer.getProcessingTime() + " ms.\n");
 		}
 	}
 
-	public void computeEdgeFeatures() {
+	public void computeEdgeFeatures(final Collection<DefaultWeightedEdge> edges, boolean doLogIt) {
+		final Logger logger = model.getLogger();
+		if (doLogIt) {
+			logger.log("Computing edge features:\n");		
+		}
 		for(String key : edgeFeatureAnalyzerProvider.getAvailableEdgeFeatureAnalyzers()) {
-			final EdgeFeatureAnalyzer analyzer = edgeFeatureAnalyzerProvider.getEdgeFeatureAnalyzer(key);
-			for (Set<DefaultWeightedEdge> track : model.getTrackEdges().values()) {
-				for (DefaultWeightedEdge edge : track) {
-					analyzer.process(edge);
-				}
-			}
+			EdgeFeatureAnalyzer analyzer = edgeFeatureAnalyzerProvider.getEdgeFeatureAnalyzer(key);
+			analyzer.process(edges);
+			if (doLogIt)
+				logger.log("  - " + analyzer.toString() + " in " + analyzer.getProcessingTime() + " ms.\n");
 		}
 	}
 

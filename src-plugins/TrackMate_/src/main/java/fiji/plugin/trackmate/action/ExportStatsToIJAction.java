@@ -46,13 +46,14 @@ public class ExportStatsToIJAction<T extends RealType<T> & NativeType<T>> extend
 		
 		// Compute links features Links
 		logger.log("  - Calculating statistics on links...");
-		plugin.computeEdgeFeatures();
+		plugin.computeEdgeFeatures(true);
 		logger.log(" Done.\n");
 		
 		// Compute track features
 		logger.log("  - Calculating statistics on tracks...");
 		plugin.computeTrackFeatures(true);
-
+		logger.log(" Done.\n");
+		
 		// Model
 		final TrackMateModel<T> model = plugin.getModel();
 		final FeatureModel<T> fm = model.getFeatureModel();

@@ -322,10 +322,8 @@ public class TrackMate_<T extends RealType<T> & NativeType<T>>  implements PlugI
 		model.getFeatureModel().computeSpotFeatures(model.getSpots());
 	}
 
-	public void computeEdgeFeatures() {
-		final Logger logger = model.getLogger();
-		logger.log("Computing edge features.\n");
-		model.getFeatureModel().computeEdgeFeatures();
+	public void computeEdgeFeatures(boolean doLogIt) {
+		model.getFeatureModel().computeEdgeFeatures(model.edgeSet(), doLogIt);
 	}
 	
 	/**

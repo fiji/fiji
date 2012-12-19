@@ -469,6 +469,12 @@ public class TrackMateModel <T extends RealType<T> & NativeType<T>> {
 		return graph.edgesOf(spot);
 	}
 
+	/**
+     * @return a set of the edges contained in this graph. The set is backed by
+     * the graph, so changes to the graph are reflected in the set. If the graph
+     * is modified while an iteration over the set is in progress, the results
+     * of the iteration are undefined.
+     */
 	public Set<DefaultWeightedEdge> edgeSet() {
 		return graph.edgeSet();
 	}

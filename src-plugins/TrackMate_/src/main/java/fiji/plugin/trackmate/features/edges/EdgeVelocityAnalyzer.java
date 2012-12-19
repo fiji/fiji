@@ -1,10 +1,14 @@
 package fiji.plugin.trackmate.features.edges;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ArrayBlockingQueue;
 
+import net.imglib2.algorithm.MultiThreaded;
+import net.imglib2.multithreading.SimpleMultiThreading;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
 
@@ -15,17 +19,14 @@ import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.features.FeatureModel;
 
-public class EdgeVelocityAnalyzer<T extends RealType<T> & NativeType<T>> implements EdgeFeatureAnalyzer {
+public class EdgeVelocityAnalyzer<T extends RealType<T> & NativeType<T>> implements EdgeFeatureAnalyzer, MultiThreaded {
 
-	public static final String KEY = "VELOCITY";
+	public static final String KEY = "Edge velocity";
 	/*
 	 * FEATURE NAMES 
 	 */
 	private static final String VELOCITY = "VELOCITY";
 	private static final String DISPLACEMENT = "DISPLACEMENT";
-
-	private final TrackMateModel<T> model;
-	private final FeatureModel<T> featureModel;
 
 	public static final List<String> FEATURES = new ArrayList<String>(2);
 	public static final Map<String, String> FEATURE_NAMES = new HashMap<String, String>(2);
@@ -46,6 +47,12 @@ public class EdgeVelocityAnalyzer<T extends RealType<T> & NativeType<T>> impleme
 		FEATURE_DIMENSIONS.put(DISPLACEMENT, Dimension.LENGTH);
 	}
 
+
+	private int numThreads;
+	private long processingTime;
+	private final FeatureModel<T> featureModel;
+	private final TrackMateModel<T> model;
+
 	/*
 	 * CONSTRUCTOR
 	 */
@@ -53,23 +60,72 @@ public class EdgeVelocityAnalyzer<T extends RealType<T> & NativeType<T>> impleme
 	public EdgeVelocityAnalyzer(final TrackMateModel<T> model) {
 		this.model = model;
 		this.featureModel = model.getFeatureModel();
+		setNumThreads();
 	}
 
 
 
 	@Override
-	public void process(DefaultWeightedEdge edge) {
-		Spot source = model.getEdgeSource(edge);
-		Spot target = model.getEdgeTarget(edge);
-		
-		double dx = target.diffTo(source, Spot.POSITION_X);
-		double dy = target.diffTo(source, Spot.POSITION_Y);
-		double dz = target.diffTo(source, Spot.POSITION_Z);
-		double dt = target.diffTo(source, Spot.POSITION_T);
-		double D = Math.sqrt(dx*dx + dy*dy + dz*dz);
-		double V = D / Math.abs(dt);
-		
-		featureModel.putEdgeFeature(edge, VELOCITY, V);
-		featureModel.putEdgeFeature(edge, DISPLACEMENT, D);
+	public void process(final Collection<DefaultWeightedEdge> edges) {
+
+		final ArrayBlockingQueue<DefaultWeightedEdge> queue = new ArrayBlockingQueue<DefaultWeightedEdge>(edges.size(), false, edges);
+
+		Thread[] threads = SimpleMultiThreading.newThreads(numThreads);
+		for (int i = 0; i < threads.length; i++) {
+			threads[i] = new Thread("EdgeVelocityAnalyzer thread " + i) {
+				@Override
+				public void run() {
+					DefaultWeightedEdge edge;
+					while ((edge = queue.poll()) != null) {
+						Spot source = model.getEdgeSource(edge);
+						Spot target = model.getEdgeTarget(edge);
+
+						double dx = target.diffTo(source, Spot.POSITION_X);
+						double dy = target.diffTo(source, Spot.POSITION_Y);
+						double dz = target.diffTo(source, Spot.POSITION_Z);
+						double dt = target.diffTo(source, Spot.POSITION_T);
+						double D = Math.sqrt(dx*dx + dy*dy + dz*dz);
+						double V = D / Math.abs(dt);
+
+						featureModel.putEdgeFeature(edge, VELOCITY, V);
+						featureModel.putEdgeFeature(edge, DISPLACEMENT, D);
+					}
+
+				}
+			};
+		}
+
+		long start = System.currentTimeMillis();
+		SimpleMultiThreading.startAndJoin(threads);
+		long end = System.currentTimeMillis();
+		processingTime = end - start;
 	}
+
+
+	@Override
+	public String toString() {
+		return KEY;
+	}
+
+	@Override
+	public int getNumThreads() {
+		return numThreads;
+	}
+
+	@Override
+	public void setNumThreads() {
+		this.numThreads = Runtime.getRuntime().availableProcessors();  
+	}
+
+	@Override
+	public void setNumThreads(int numThreads) {
+		this.numThreads = numThreads;
+
+	}
+
+	@Override
+	public long getProcessingTime() {
+		return processingTime;
+	};
 }
+

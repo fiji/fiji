@@ -131,13 +131,13 @@ public class GrapherPanel<T extends RealType<T> & NativeType<T>> extends ActionL
 	}
 	
 	private void plotEdgeFeatures() {
-		// Recompute edge features
-		model.getFeatureModel().computeEdgeFeatures();
-		// Collect edges
+		// Collect edges in filtered tracks
 		List<DefaultWeightedEdge> edges = new ArrayList<DefaultWeightedEdge>();
 		for (Integer trackID : model.getFilteredTrackIDs()) {
 			edges.addAll(model.getTrackEdges(trackID));
 		}
+		// Recompute edge features
+		model.getFeatureModel().computeEdgeFeatures(edges, true);
 		// Prepare grapher
 		String xFeature = edgeFeatureSelectionPanel.getXKey();
 		Set<String> yFeatures = edgeFeatureSelectionPanel.getYKeys();
