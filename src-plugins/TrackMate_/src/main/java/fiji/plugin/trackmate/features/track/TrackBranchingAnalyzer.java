@@ -3,6 +3,7 @@ package fiji.plugin.trackmate.features.track;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -18,7 +19,6 @@ import org.jgrapht.graph.DefaultWeightedEdge;
 import fiji.plugin.trackmate.Dimension;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.TrackMateModel;
-import fiji.plugin.trackmate.util.TrackSplitter;
 
 public class TrackBranchingAnalyzer<T extends RealType<T> & NativeType<T>> implements TrackFeatureAnalyzer<T>, MultiThreaded {
 
@@ -91,19 +91,38 @@ public class TrackBranchingAnalyzer<T extends RealType<T> & NativeType<T>> imple
 						int nsplits = 0;
 						int ncomplex = 0;
 						for (Spot spot : track) {
-							int type = TrackSplitter.getVertexType(model, spot);
-							switch(type) {
-							case TrackSplitter.MERGING_POINT:
-							case TrackSplitter.MERGING_END:
-								nmerges++;
-								break;
-							case TrackSplitter.SPLITTING_START:
-							case TrackSplitter.SPLITTING_POINT:
+							Set<DefaultWeightedEdge> edges = model.edgesOf(spot);
+							if (edges.size() <= 2) {
+								continue; // nothing special
+							}
+							
+							// get neighbors
+							Set<Spot> neighbors = new HashSet<Spot>();
+							for(DefaultWeightedEdge edge : edges) {
+								neighbors.add(model.getEdgeSource(edge));
+								neighbors.add(model.getEdgeTarget(edge));
+							}
+							neighbors.remove(spot);
+							
+							
+							// inspect neighbors relative time position
+							int earlier = 0;
+							int later = 0;
+							for (Spot neighbor : neighbors) {
+								if (spot.diffTo(neighbor, Spot.FRAME) > 0) {
+									earlier++; // neighbor is before in time
+								} else {
+									later++;
+								}
+							}
+							
+							// classify spot
+							if (earlier <= 1) {
 								nsplits++;
-								break;
-							case TrackSplitter.COMPLEX_POINT:
+							} else if (later <=1) {
+								nmerges++;
+							} else {
 								ncomplex++;
-								break;
 							}
 						}
 
