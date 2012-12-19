@@ -106,7 +106,7 @@ public class GrapherPanel<T extends RealType<T> & NativeType<T>> extends ActionL
 		panelTracks.removeAll();
 		List<String> trackFeatures = model.getFeatureModel().getTrackFeatures();
 		Map<String, String> trackFeatureNames = model.getFeatureModel().getTrackFeatureNames();
-		trackFeatureSelectionPanel = new FeaturePlotSelectionPanel(TrackLocationAnalyzer.TRACK_ID, trackFeatures, trackFeatureNames);
+		trackFeatureSelectionPanel = new FeaturePlotSelectionPanel(TrackLocationAnalyzer.TRACK_INDEX, trackFeatures, trackFeatureNames);
 		panelTracks.add(trackFeatureSelectionPanel);
 		trackFeatureSelectionPanel.addActionListener(new ActionListener() {
 			@Override

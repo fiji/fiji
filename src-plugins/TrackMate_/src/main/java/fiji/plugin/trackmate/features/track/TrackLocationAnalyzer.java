@@ -20,6 +20,7 @@ public class TrackLocationAnalyzer<T extends RealType<T> & NativeType<T>> implem
 	 */
 	public static final String KEY = "LOCATION";
 	public static final String TRACK_ID = "TRACK_ID";
+	public static final String TRACK_INDEX = "TRACK_INDEX";
 	public static final String X_LOCATION = "X_LOCATION";
 	public static final String Y_LOCATION = "Y_LOCATION";
 	public static final String Z_LOCATION = "Z_LOCATION";
@@ -30,22 +31,26 @@ public class TrackLocationAnalyzer<T extends RealType<T> & NativeType<T>> implem
 	public static final Map<String, Dimension> FEATURE_DIMENSIONS = new HashMap<String, Dimension>(2);
 
 	static {
-		FEATURES.add(TRACK_ID);
 		FEATURES.add(X_LOCATION);
 		FEATURES.add(Y_LOCATION);
 		FEATURES.add(Z_LOCATION);
+		FEATURES.add(TRACK_INDEX);
+		FEATURES.add(TRACK_ID);
 
 		FEATURE_NAMES.put(TRACK_ID, "Track ID");
+		FEATURE_NAMES.put(TRACK_INDEX, "Track index");
 		FEATURE_NAMES.put(X_LOCATION, "X Location (mean)");
 		FEATURE_NAMES.put(Y_LOCATION, "Y Location (mean)");
 		FEATURE_NAMES.put(Z_LOCATION, "Z Location (mean)");
 
 		FEATURE_SHORT_NAMES.put(TRACK_ID, "ID");
+		FEATURE_SHORT_NAMES.put(TRACK_INDEX, "Index");
 		FEATURE_SHORT_NAMES.put(X_LOCATION, "X");
 		FEATURE_SHORT_NAMES.put(Y_LOCATION, "Y");
 		FEATURE_SHORT_NAMES.put(Z_LOCATION, "Z");
 
 		FEATURE_DIMENSIONS.put(TRACK_ID, Dimension.NONE);
+		FEATURE_DIMENSIONS.put(TRACK_INDEX, Dimension.NONE);
 		FEATURE_DIMENSIONS.put(X_LOCATION, Dimension.POSITION);
 		FEATURE_DIMENSIONS.put(Y_LOCATION, Dimension.POSITION);
 		FEATURE_DIMENSIONS.put(Z_LOCATION, Dimension.POSITION);
@@ -62,6 +67,7 @@ public class TrackLocationAnalyzer<T extends RealType<T> & NativeType<T>> implem
 		final FeatureModel<T> fm = model.getFeatureModel();
 		
 		Map<Integer, Set<Spot>> trackSpots = model.getTrackSpots();
+		int index = 1;
 		
 		for (Integer trackID : trackSpots.keySet()) {
 			
@@ -80,9 +86,11 @@ public class TrackLocationAnalyzer<T extends RealType<T> & NativeType<T>> implem
 			z /= nspots;
 
 			fm.putTrackFeature(trackID, TRACK_ID, Double.valueOf(trackID));
+			fm.putTrackFeature(trackID, TRACK_INDEX, Double.valueOf(index++));
 			fm.putTrackFeature(trackID, X_LOCATION, x);
 			fm.putTrackFeature(trackID, Y_LOCATION, y);
 			fm.putTrackFeature(trackID, Z_LOCATION, z);
+			
 		}
 	}
 
