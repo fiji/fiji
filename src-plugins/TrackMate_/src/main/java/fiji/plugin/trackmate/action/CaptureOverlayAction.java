@@ -15,13 +15,11 @@ import java.awt.Robot;
 
 import javax.swing.ImageIcon;
 
-import net.imglib2.type.NativeType;
-import net.imglib2.type.numeric.RealType;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMate_;
 import fiji.plugin.trackmate.visualization.trackscheme.TrackSchemeFrame;
 
-public class CaptureOverlayAction<T extends RealType<T> & NativeType<T>> extends AbstractTMAction<T> {
+public class CaptureOverlayAction extends AbstractTMAction {
 
 	public static final ImageIcon ICON = new ImageIcon(TrackSchemeFrame.class.getResource("resources/camera_go.png"));
 	public static final String NAME = "Capture overlay";
@@ -41,11 +39,11 @@ public class CaptureOverlayAction<T extends RealType<T> & NativeType<T>> extends
 	}
 
 	@Override
-	public void execute(TrackMate_<T> plugin) {
+	public void execute(TrackMate_ plugin) {
 		logger.log("Capturing TrackMate overlay.\n");
 		logger.log("  Preparing and allocating memory...");
 		try {
-			final TrackMateModel<T> model = plugin.getModel();
+			final TrackMateModel model = plugin.getModel();
 			final ImagePlus imp =  model.getSettings().imp;
 			final ImageWindow win = imp.getWindow();
 			win.toFront();

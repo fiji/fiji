@@ -10,9 +10,6 @@ import java.util.TreeSet;
 
 import javax.swing.ImageIcon;
 
-import net.imglib2.type.NativeType;
-import net.imglib2.type.numeric.RealType;
-
 import org.jdom2.Document;
 import org.jdom2.Element;
 import org.jdom2.output.Format;
@@ -24,7 +21,7 @@ import fiji.plugin.trackmate.TrackMate_;
 import fiji.plugin.trackmate.gui.TrackMateWizard;
 import fiji.plugin.trackmate.util.TMUtils;
 
-public class ExportTracksToXML<T extends RealType<T> & NativeType<T>> extends AbstractTMAction<T> {
+public class ExportTracksToXML extends AbstractTMAction {
 
 	public static final ImageIcon ICON = new ImageIcon(TrackMateWizard.class.getResource("images/page_save.png"));
 	public static final String NAME = "Export tracks to XML file";
@@ -55,10 +52,10 @@ public class ExportTracksToXML<T extends RealType<T> & NativeType<T>> extends Ab
 	 */
 
 	@Override
-	public void execute(TrackMate_<T> plugin) {
+	public void execute(TrackMate_ plugin) {
 
 		logger.log("Exporting tracks to simple XML format.\n");
-		final TrackMateModel<T> model = plugin.getModel();
+		final TrackMateModel model = plugin.getModel();
 		int ntracks = model.getNFilteredTracks();
 		if (ntracks == 0) {
 			logger.log("No visible track found. Aborting.\n");
@@ -102,7 +99,7 @@ public class ExportTracksToXML<T extends RealType<T> & NativeType<T>> extends Ab
 		return NAME;
 	}
 
-	private Element marshall(TrackMateModel<T> model) {
+	private Element marshall(TrackMateModel model) {
 		Element root = new Element("root");
 		Element content = new Element(CONTENT_KEY);
 		

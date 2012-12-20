@@ -3,13 +3,11 @@ package fiji.plugin.trackmate;
 import java.util.ArrayList;
 import java.util.List;
 
-import net.imglib2.type.NativeType;
-import net.imglib2.type.numeric.RealType;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
 import fiji.plugin.trackmate.visualization.hyperstack.HyperStackDisplayer;
 import fiji.plugin.trackmate.visualization.threedviewer.SpotDisplayer3D;
 
-public class ViewFactory <T extends RealType<T> & NativeType<T>> {
+public class ViewFactory {
 
 	/** The detector names, in the order they will appear in the GUI.
 	 * These names will be used as keys to access relevant detecrtor classes.  */
@@ -51,16 +49,16 @@ public class ViewFactory <T extends RealType<T> & NativeType<T>> {
 	 * @return a new instance of the target view identified by the key parameter. 
 	 * If the key is unknown to this factory, <code>null</code> is returned. 
 	 */
-	public TrackMateModelView<T> getView(String key) {
+	public TrackMateModelView getView(String key) {
 		int index = names.indexOf(key);
 		if (index < 0) {
 			return null;
 		}
 		switch (index) {
 		case 0:
-			return new HyperStackDisplayer<T>();
+			return new HyperStackDisplayer();
 		case 1:
-			return new SpotDisplayer3D<T>();
+			return new SpotDisplayer3D();
 		default:
 			return null;
 		}

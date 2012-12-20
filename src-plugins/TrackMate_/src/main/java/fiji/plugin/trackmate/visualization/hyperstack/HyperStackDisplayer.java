@@ -7,9 +7,6 @@ import ij.gui.StackWindow;
 import java.awt.Point;
 import java.util.List;
 
-import net.imglib2.type.NativeType;
-import net.imglib2.type.numeric.RealType;
-
 import org.jgrapht.graph.DefaultWeightedEdge;
 
 import fiji.plugin.trackmate.Settings;
@@ -23,7 +20,7 @@ import fiji.plugin.trackmate.visualization.AbstractTrackMateModelView;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
 import fiji.util.gui.OverlayedImageCanvas;
 
-public class HyperStackDisplayer <T extends RealType<T> & NativeType<T>> extends AbstractTrackMateModelView<T>  {
+public class HyperStackDisplayer extends AbstractTrackMateModelView  {
 
 	private static final boolean DEBUG = false;
 	public static final String NAME = "HyperStack Displayer";
@@ -53,12 +50,12 @@ public class HyperStackDisplayer <T extends RealType<T> & NativeType<T>> extends
 	protected ImagePlus imp;
 	OverlayedImageCanvas canvas;
 	double[] calibration;
-	Settings<T> settings;
+	Settings settings;
 	private StackWindow window;
-	SpotOverlay<T> spotOverlay;
-	private TrackOverlay<T> trackOverlay;
+	SpotOverlay spotOverlay;
+	private TrackOverlay trackOverlay;
 
-	private SpotEditTool<T> editTool;
+	private SpotEditTool editTool;
 
 	/*
 	 * CONSTRUCTORS
@@ -87,20 +84,20 @@ public class HyperStackDisplayer <T extends RealType<T> & NativeType<T>> extends
 	 * Hook for subclassers. Instantiate here the overlay you want to use for the spots. 
 	 * @return
 	 */
-	protected SpotOverlay<T> createSpotOverlay() {
-		return new SpotOverlay<T>(model, imp, displaySettings);
+	protected SpotOverlay createSpotOverlay() {
+		return new SpotOverlay(model, imp, displaySettings);
 	}
 
 	/**
 	 * Hook for subclassers. Instantiate here the overlay you want to use for the spots. 
 	 * @return
 	 */
-	protected TrackOverlay<T> createTrackOverlay() {
-		return new TrackOverlay<T>(model, imp, displaySettings);
+	protected TrackOverlay createTrackOverlay() {
+		return new TrackOverlay(model, imp, displaySettings);
 	}
 
 	@Override
-	public void setModel(TrackMateModel<T> model) {
+	public void setModel(TrackMateModel model) {
 		super.setModel(model);
 		this.settings = model.getSettings();
 		this.imp = settings.imp;

@@ -6,8 +6,6 @@ import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
-import net.imglib2.type.NativeType;
-import net.imglib2.type.numeric.RealType;
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMate_;
@@ -26,20 +24,20 @@ public class NNTrackerTest {
 	 * MAIN METHOD
 	 */
 	
-	public static <T extends RealType<T> & NativeType<T>> void main(String args[]) {
+	public static void main(String args[]) {
 		
 		File file = SPLITTING_CASE_3;
 		
 		// 1 - Load test spots
 		System.out.println("Opening file: "+file.getAbsolutePath());		
-		TrackMate_<T> plugin = new TrackMate_<T>();
+		TrackMate_ plugin = new TrackMate_();
 		plugin.initModules();
-		TmXmlReader<T> reader = new TmXmlReader<T>(file, plugin);
+		TmXmlReader reader = new TmXmlReader(file, plugin);
 		if (!reader.checkInput() && !reader.process()) {
 			System.err.println("Problem loading the file:");
 			System.err.println(reader.getErrorMessage());
 		}
-		TrackMateModel<T> model = plugin.getModel();
+		TrackMateModel model = plugin.getModel();
 		
 		System.out.println("All spots: "+ model.getSpots());
 		System.out.println("Filtered spots: "+ model.getFilteredSpots());
@@ -89,7 +87,7 @@ public class NNTrackerTest {
 		// Load Image
 		ij.ImageJ.main(args);
 		
-		TrackMateModelView<T> sd2d = new HyperStackDisplayer<T>();
+		TrackMateModelView sd2d = new HyperStackDisplayer();
 		sd2d.setModel(model);
 		sd2d.render();
 		sd2d.setDisplaySettings(TrackMateModelView.KEY_TRACK_DISPLAY_MODE, TrackMateModelView.TRACK_DISPLAY_MODE_WHOLE);

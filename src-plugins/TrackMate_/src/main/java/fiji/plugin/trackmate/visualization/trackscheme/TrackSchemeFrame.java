@@ -9,16 +9,13 @@ import javax.swing.JFrame;
 import javax.swing.JSplitPane;
 import javax.swing.JToolBar;
 
-import net.imglib2.type.NativeType;
-import net.imglib2.type.numeric.RealType;
-
 import com.mxgraph.model.mxICell;
 import com.mxgraph.swing.handler.mxKeyboardHandler;
 import com.mxgraph.swing.handler.mxRubberband;
 
 import fiji.plugin.trackmate.TrackMateModel;
 
-public class TrackSchemeFrame  <T extends RealType<T> & NativeType<T>> extends JFrame  {
+public class TrackSchemeFrame extends JFrame  {
 
 	/*
 	 * CONSTANTS
@@ -31,18 +28,18 @@ public class TrackSchemeFrame  <T extends RealType<T> & NativeType<T>> extends J
 	 */
 
 	/** The side pane in which spot selection info will be displayed.	 */
-	protected InfoPane<T> infoPane;
+	protected InfoPane infoPane;
 	/** The graph component in charge of painting the graph. */
-	protected mxTrackGraphComponent<T> graphComponent;
-	private final TrackMateModel<T> model;
-	private final JGraphXAdapter<T> graph;
-	private final TrackScheme<T> trackScheme;
+	protected mxTrackGraphComponent graphComponent;
+	private final TrackMateModel model;
+	private final JGraphXAdapter graph;
+	private final TrackScheme trackScheme;
 
 	/*
 	 * CONSTRUCTORS
 	 */
 
-	public TrackSchemeFrame(final JGraphXAdapter<T> graph, final TrackMateModel<T> model, final TrackScheme<T> trackScheme)  {
+	public TrackSchemeFrame(final JGraphXAdapter graph, final TrackMateModel model, final TrackScheme trackScheme)  {
 		this.model = model;
 		this.graph = graph;
 		this.trackScheme = trackScheme;
@@ -66,8 +63,8 @@ public class TrackSchemeFrame  <T extends RealType<T> & NativeType<T>> extends J
 	 * Instantiate the graph component in charge of painting the graph.
 	 * Hook for sub-classers.
 	 */
-	protected mxTrackGraphComponent<T> createGraphComponent() {
-		final mxTrackGraphComponent<T> gc = new mxTrackGraphComponent<T>(graph, model, trackScheme);
+	protected mxTrackGraphComponent createGraphComponent() {
+		final mxTrackGraphComponent gc = new mxTrackGraphComponent(graph, model, trackScheme);
 		gc.getVerticalScrollBar().setUnitIncrement(16);
 		gc.getHorizontalScrollBar().setUnitIncrement(16);
 		gc.setExportEnabled(true); // Seems to be required to have a preview when we move cells. Also give the ability to export a cell as an image clipping 
@@ -97,14 +94,14 @@ public class TrackSchemeFrame  <T extends RealType<T> & NativeType<T>> extends J
 	 * Instantiate the toolbar of the track scheme. Hook for sub-classers.
 	 */
 	protected JToolBar createToolBar() {
-		return new TrackSchemeToolbar<T>(trackScheme);
+		return new TrackSchemeToolbar(trackScheme);
 	}
 
 	/**
 	 *  PopupMenu
 	 */
 	protected void displayPopupMenu(final Object cell, final Point point) {
-		TrackSchemePopupMenu<T> menu = new TrackSchemePopupMenu<T>(trackScheme, cell, point);
+		TrackSchemePopupMenu menu = new TrackSchemePopupMenu(trackScheme, cell, point);
 		menu.show(graphComponent.getViewport().getView(), (int) point.getX(), (int) point.getY());
 	}
 
@@ -122,7 +119,7 @@ public class TrackSchemeFrame  <T extends RealType<T> & NativeType<T>> extends J
 		graphComponent = createGraphComponent();
 
 		// Add the info pane
-		infoPane = new InfoPane<T>(model, graph);
+		infoPane = new InfoPane(model, graph);
 		JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, infoPane, graphComponent);
 		splitPane.setDividerLocation(170);
 		getContentPane().add(splitPane, BorderLayout.CENTER);

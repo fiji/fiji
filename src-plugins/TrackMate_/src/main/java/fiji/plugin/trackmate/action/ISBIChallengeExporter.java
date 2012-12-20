@@ -1,6 +1,5 @@
 package fiji.plugin.trackmate.action;
 
-
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -12,9 +11,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import javax.swing.ImageIcon;
-
-import net.imglib2.type.NativeType;
-import net.imglib2.type.numeric.RealType;
 
 import org.jdom2.Document;
 import org.jdom2.Element;
@@ -28,7 +24,7 @@ import fiji.plugin.trackmate.TrackMate_;
 import fiji.plugin.trackmate.gui.TrackMateWizard;
 import fiji.plugin.trackmate.util.TMUtils;
 
-public class ISBIChallengeExporter<T extends RealType<T> & NativeType<T>> extends AbstractTMAction<T> {
+public class ISBIChallengeExporter extends AbstractTMAction {
 
 	public static final ImageIcon ICON = new ImageIcon(TrackMateWizard.class.getResource("images/ISBIlogo.png"));
 	public static final String NAME = "Export to ISBI challenge format";
@@ -55,8 +51,8 @@ public class ISBIChallengeExporter<T extends RealType<T> & NativeType<T>> extend
 	 */
 
 	@Override
-	public void execute(TrackMate_<T> plugin) {
-		final TrackMateModel<T> model = plugin.getModel();
+	public void execute(TrackMate_ plugin) {
+		final TrackMateModel model = plugin.getModel();
 		File file;
 		File folder = new File(System.getProperty("user.dir")).getParentFile().getParentFile();
 		try {
@@ -71,7 +67,7 @@ public class ISBIChallengeExporter<T extends RealType<T> & NativeType<T>> extend
 		exportToFile(model, file);
 	}
 	
-	public static <T extends RealType<T> & NativeType<T>> void exportToFile(final TrackMateModel<T> model, final File file) {
+	public static void exportToFile(final TrackMateModel model, final File file) {
 		final Logger logger = model.getLogger();
 		logger.log("Exporting to ISBI 2012 particle tracking challenge format.\n");
 		int ntracks = model.getNFilteredTracks();
@@ -107,7 +103,7 @@ public class ISBIChallengeExporter<T extends RealType<T> & NativeType<T>> extend
 		return NAME;
 	}
 
-	private static final <T extends RealType<T> & NativeType<T>> Element marshall(TrackMateModel<T> model) {
+	private static final Element marshall(TrackMateModel model) {
 		final Logger logger = model.getLogger();
 		
 		Element root = new Element("root");

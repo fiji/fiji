@@ -17,8 +17,6 @@ import javax.vecmath.Color3f;
 import javax.vecmath.Point4d;
 
 import net.imglib2.exception.ImgLibException;
-import net.imglib2.type.NativeType;
-import net.imglib2.type.numeric.RealType;
 
 import org.jfree.chart.renderer.InterpolatePaintScale;
 import org.jgrapht.graph.DefaultWeightedEdge;
@@ -33,7 +31,7 @@ import fiji.plugin.trackmate.util.TMUtils;
 import fiji.plugin.trackmate.visualization.AbstractTrackMateModelView;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
 
-public class SpotDisplayer3D <T extends RealType<T> & NativeType<T>> extends AbstractTrackMateModelView<T> {
+public class SpotDisplayer3D extends AbstractTrackMateModelView {
 
 	public static final String NAME = "3D Viewer";
 	public static final String INFO_TEXT = "<html>" +
@@ -56,7 +54,7 @@ public class SpotDisplayer3D <T extends RealType<T> & NativeType<T>> extends Abs
 	private static final String SPOT_CONTENT_NAME = "Spots";
 
 	private TreeMap<Integer, SpotGroupNode<Spot>> blobs;	
-	private TrackDisplayNode<T> trackNode;
+	private TrackDisplayNode trackNode;
 	private Content spotContent;
 	private Content trackContent;
 	private final Image3DUniverse universe;
@@ -65,7 +63,7 @@ public class SpotDisplayer3D <T extends RealType<T> & NativeType<T>> extends Abs
 	private HashMap<Spot, Color3f> previousColorHighlight;
 	private HashMap<Spot, Integer> previousFrameHighlight;
 	private HashMap<DefaultWeightedEdge, Color> previousEdgeHighlight;
-	private Settings<T> settings;
+	private Settings settings;
 	/**  the flag specifying whether to render image data or not. By default, it is true. */
 	private boolean doRenderImage = true;
 
@@ -79,7 +77,7 @@ public class SpotDisplayer3D <T extends RealType<T> & NativeType<T>> extends Abs
 
 
 	@Override
-	public void setModel(TrackMateModel<T> model) {
+	public void setModel(TrackMateModel model) {
 		this.settings = model.getSettings();
 		super.setModel(model);
 		if (model.getSpots() != null) {
@@ -258,7 +256,7 @@ public class SpotDisplayer3D <T extends RealType<T> & NativeType<T>> extends Abs
 
 	private Content makeTrackContent() {
 		// Prepare tracks instant
-		trackNode = new TrackDisplayNode<T>(model, displaySettings);
+		trackNode = new TrackDisplayNode(model, displaySettings);
 		universe.addTimelapseListener(trackNode);
 
 		// Pass tracks instant to all instants

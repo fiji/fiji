@@ -16,8 +16,6 @@ import net.imglib2.img.ImagePlusAdapter;
 import net.imglib2.img.Img;
 import net.imglib2.img.ImgPlus;
 import net.imglib2.img.display.imagej.ImageJFunctions;
-import net.imglib2.type.NativeType;
-import net.imglib2.type.numeric.RealType;
 import net.imglib2.view.HyperSliceImgPlus;
 
 import org.jgrapht.graph.DefaultWeightedEdge;
@@ -30,7 +28,7 @@ import fiji.plugin.trackmate.features.spot.SpotIconGrabber;
 import fiji.plugin.trackmate.gui.TrackMateWizard;
 import fiji.plugin.trackmate.util.TMUtils;
 
-public class ExtractTrackStackAction<T extends RealType<T> & NativeType<T>> extends AbstractTMAction<T> {
+public class ExtractTrackStackAction extends AbstractTMAction {
 
 	public static final String NAME = "Extract track stack";
 	public static final String INFO_TEXT =  "<html> " +
@@ -65,11 +63,12 @@ public class ExtractTrackStackAction<T extends RealType<T> & NativeType<T>> exte
 	 * METHODS
 	 */
 	
+	@SuppressWarnings({ "unchecked", "rawtypes" })
 	@Override
-	public void execute(TrackMate_<T> plugin) {
+	public void execute(TrackMate_ plugin) {
 		logger.log("Capturing track stack.\n");
 		
-		TrackMateModel<T> model = plugin.getModel();
+		TrackMateModel model = plugin.getModel();
 		Set<Spot> selection = model.getSpotSelection();
 		int nspots = selection.size();
 		if (nspots != 2) {
@@ -125,15 +124,15 @@ public class ExtractTrackStackAction<T extends RealType<T> & NativeType<T>> exte
 		nspots = sortedSpots.size();
 
 		// Common coordinates
-		Settings<T> settings = model.getSettings();
+		Settings settings = model.getSettings();
 		double[] calibration = TMUtils.getSpatialCalibration(settings.imp);
 		int targetChannel = settings.imp.getC() - 1; // From current selection
 		final int width 	= (int) Math.ceil(2 * radius * RESIZE_FACTOR / calibration[0]);
 		final int height 	= (int) Math.ceil(2 * radius * RESIZE_FACTOR / calibration[1]);
 		
 		// Extract target channel
-		ImgPlus<T> img = ImagePlusAdapter.wrapImgPlus(settings.imp);
-		final ImgPlus<T> imgC = HyperSliceImgPlus.fixChannelAxis(img, targetChannel);
+		ImgPlus<?> img = ImagePlusAdapter.wrapImgPlus(settings.imp);
+		final ImgPlus<?> imgC = HyperSliceImgPlus.fixChannelAxis(img, targetChannel);
 		
 		// Prepare new image holder:
 		ImageStack stack = new ImageStack(width, height);
@@ -146,7 +145,7 @@ public class ExtractTrackStackAction<T extends RealType<T> & NativeType<T>> exte
 			int frame = model.getSpots().getFrame(spot);
 			
 			
-			ImgPlus<T> imgCT = HyperSliceImgPlus.fixTimeAxis(imgC, frame);
+			ImgPlus<?> imgCT = HyperSliceImgPlus.fixTimeAxis(imgC, frame);
 			
 			// Compute target coordinates for current spot
 			int x = (int) (Math.round((spot.getFeature(Spot.POSITION_X)) / calibration[0]) - width/2); 
@@ -162,8 +161,8 @@ public class ExtractTrackStackAction<T extends RealType<T> & NativeType<T>> exte
 				}
 			}
 			
-			SpotIconGrabber<T> grabber = new SpotIconGrabber<T>(imgCT, null);
-			Img<T> crop = grabber.grabImage(x, y, slice, width, height);
+			SpotIconGrabber<?> grabber = new SpotIconGrabber(imgCT, null);
+			Img crop = grabber.grabImage(x, y, slice, width, height);
 			
 			// Copy to central holder
 			stack.addSlice(spot.toString(), ImageJFunctions.wrap(crop, crop.toString()).getProcessor());

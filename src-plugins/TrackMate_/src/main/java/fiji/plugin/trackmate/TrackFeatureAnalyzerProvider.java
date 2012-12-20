@@ -5,8 +5,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import net.imglib2.type.NativeType;
-import net.imglib2.type.numeric.RealType;
 import fiji.plugin.trackmate.features.track.TrackBranchingAnalyzer;
 import fiji.plugin.trackmate.features.track.TrackDurationAnalyzer;
 import fiji.plugin.trackmate.features.track.TrackFeatureAnalyzer;
@@ -25,7 +23,7 @@ import fiji.plugin.trackmate.features.track.TrackSpeedStatisticsAnalyzer;
  * Feature key names are for historical reason all capitalized in an enum manner. For instance: POSITION_X,
  * MAX_INTENSITY, etc... They must be suitable to be used as a attribute key in an xml file.
  */
-public class TrackFeatureAnalyzerProvider <T extends RealType<T> & NativeType<T>> {
+public class TrackFeatureAnalyzerProvider {
 
 
 	/** The detector names, in the order they will appear in the GUI.
@@ -40,7 +38,7 @@ public class TrackFeatureAnalyzerProvider <T extends RealType<T> & NativeType<T>
 	/** Map a feature to its dimension. */
 	protected Map<String, Dimension> featureDimensions;
 	/** The target model to operate on. */
-	protected final TrackMateModel<T> model;
+	protected final TrackMateModel model;
 
 	/*
 	 * BLANK CONSTRUCTOR
@@ -55,7 +53,7 @@ public class TrackFeatureAnalyzerProvider <T extends RealType<T> & NativeType<T>
 	 * factory so that it is registered with the custom trackFeatureAnalyzers and provide this 
 	 * extended factory to the {@link TrackMate_} plugin.
 	 */
-	public TrackFeatureAnalyzerProvider(TrackMateModel<T> model) {
+	public TrackFeatureAnalyzerProvider(TrackMateModel model) {
 		this.model = model;
 		registerTrackFeatureAnalyzers();
 	}
@@ -110,17 +108,17 @@ public class TrackFeatureAnalyzerProvider <T extends RealType<T> & NativeType<T>
 	 * @return a new instance of the target trackFeatureAnalyzer identified by the key parameter. 
 	 * If the key is unknown to this factory, <code>null</code> is returned. 
 	 */
-	public TrackFeatureAnalyzer<T> getTrackFeatureAnalyzer(String key) {
+	public TrackFeatureAnalyzer getTrackFeatureAnalyzer(String key) {
 		if (key == TrackDurationAnalyzer.KEY) {
-			return new TrackDurationAnalyzer<T>(model);
+			return new TrackDurationAnalyzer(model);
 		} else if (key == TrackBranchingAnalyzer.KEY) {
-			return new TrackBranchingAnalyzer<T>(model);
+			return new TrackBranchingAnalyzer(model);
 		} else if (key == TrackSpeedStatisticsAnalyzer.KEY) {
-			return new TrackSpeedStatisticsAnalyzer<T>(model);
+			return new TrackSpeedStatisticsAnalyzer(model);
 		} else if (key == TrackLocationAnalyzer.KEY) {
-			return new TrackLocationAnalyzer<T>(model);
+			return new TrackLocationAnalyzer(model);
 		} else if (key == TrackIndexAnalyzer.KEY) {
-			return new TrackIndexAnalyzer<T>(model);
+			return new TrackIndexAnalyzer(model);
 		} else {
 			return null;
 		}

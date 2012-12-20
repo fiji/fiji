@@ -4,17 +4,15 @@ import java.awt.Component;
 import java.util.List;
 import java.util.Map;
 
-import net.imglib2.type.NativeType;
-import net.imglib2.type.numeric.RealType;
 import fiji.plugin.trackmate.DetectorProvider;
 import fiji.plugin.trackmate.TrackMate_;
 
-public class DetectorChoiceDescriptor <T extends RealType<T> & NativeType<T>> implements WizardPanelDescriptor<T> {
+public class DetectorChoiceDescriptor implements WizardPanelDescriptor {
 
 	public static final String DESCRIPTOR = "DetectorChoice";
 	private ListChooserPanel component;
-	private TrackMate_<T> plugin;
-	private TrackMateWizard<T> wizard;
+	private TrackMate_ plugin;
+	private TrackMateWizard wizard;
 
 	/*
 	 * METHODS
@@ -73,7 +71,7 @@ public class DetectorChoiceDescriptor <T extends RealType<T> & NativeType<T>> im
 	public void aboutToHidePanel() {
 		
 		// Configure the detector provider with choice made in panel
-		DetectorProvider<T> provider = plugin.getDetectorProvider();
+		DetectorProvider provider = plugin.getDetectorProvider();
 		int index = component.jComboBoxChoice.getSelectedIndex();
 		String key = provider.getKeys().get(index);
 		provider.select(key);
@@ -88,16 +86,16 @@ public class DetectorChoiceDescriptor <T extends RealType<T> & NativeType<T>> im
 			plugin.getModel().getSettings().detectorSettings = defaultSettings;
 		}
 		// Instantiate next descriptor for the wizard
-		DetectorConfigurationPanelDescriptor<T> descriptor = new DetectorConfigurationPanelDescriptor<T>();
+		DetectorConfigurationPanelDescriptor descriptor = new DetectorConfigurationPanelDescriptor();
 		descriptor.setWizard(wizard);
 		descriptor.setPlugin(plugin);
 		wizard.registerWizardDescriptor(DetectorConfigurationPanelDescriptor.DESCRIPTOR, descriptor);
 	}
 
 	@Override
-	public void setPlugin(TrackMate_<T> plugin) {
+	public void setPlugin(TrackMate_ plugin) {
 		this.plugin = plugin;
-		DetectorProvider<T> provider = plugin.getDetectorProvider();
+		DetectorProvider provider = plugin.getDetectorProvider();
 		List<String> detectorNames =  provider.getNames();
 		List<String> infoTexts = provider.getInfoTexts();
 		this.component = new ListChooserPanel(detectorNames, infoTexts, "detector");
@@ -105,7 +103,7 @@ public class DetectorChoiceDescriptor <T extends RealType<T> & NativeType<T>> im
 	}
 
 	@Override
-	public void setWizard(TrackMateWizard<T> wizard) {
+	public void setWizard(TrackMateWizard wizard) {
 		this.wizard = wizard;
 	}
 

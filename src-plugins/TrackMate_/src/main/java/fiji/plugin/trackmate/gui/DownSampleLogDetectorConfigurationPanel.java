@@ -14,10 +14,7 @@ import java.util.Map;
 import javax.swing.JLabel;
 import javax.swing.SwingConstants;
 
-import net.imglib2.type.NativeType;
-import net.imglib2.type.numeric.RealType;
-
-public class DownSampleLogDetectorConfigurationPanel <T extends RealType<T>  & NativeType<T>> extends LogDetectorConfigurationPanel<T> {
+public class DownSampleLogDetectorConfigurationPanel extends LogDetectorConfigurationPanel {
 
 	private static final long serialVersionUID = 1L;
 	private JLabel jLabelDownSample;

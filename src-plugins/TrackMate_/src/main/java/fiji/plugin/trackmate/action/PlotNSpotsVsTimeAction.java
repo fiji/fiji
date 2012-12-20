@@ -6,9 +6,6 @@ import static fiji.plugin.trackmate.gui.TrackMateWizard.SMALL_FONT;
 import javax.swing.ImageIcon;
 import javax.swing.JFrame;
 
-import net.imglib2.type.NativeType;
-import net.imglib2.type.numeric.RealType;
-
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.plot.PlotOrientation;
@@ -21,7 +18,7 @@ import fiji.plugin.trackmate.TrackMate_;
 import fiji.plugin.trackmate.util.ExportableChartPanel;
 import fiji.plugin.trackmate.visualization.trackscheme.TrackSchemeFrame;
 
-public class PlotNSpotsVsTimeAction<T extends RealType<T> & NativeType<T>> extends AbstractTMAction<T> {
+public class PlotNSpotsVsTimeAction extends AbstractTMAction {
 
 	public static final ImageIcon ICON = new ImageIcon(TrackSchemeFrame.class.getResource("resources/plots.png"));
 	public static final String NAME = "Plot N spots vs time";
@@ -35,9 +32,9 @@ public class PlotNSpotsVsTimeAction<T extends RealType<T> & NativeType<T>> exten
 	}
 	
 	@Override
-	public void execute(TrackMate_<T> plugin) {
+	public void execute(TrackMate_ plugin) {
 		// Collect data
-		final TrackMateModel<T> model = plugin.getModel();
+		final TrackMateModel model = plugin.getModel();
 		final double dt = model.getSettings().dt;
 		final SpotCollection spots = model.getFilteredSpots();
 		final int nFrames = spots.keySet().size();

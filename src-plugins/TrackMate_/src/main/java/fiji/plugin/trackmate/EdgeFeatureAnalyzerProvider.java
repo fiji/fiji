@@ -5,8 +5,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import net.imglib2.type.NativeType;
-import net.imglib2.type.numeric.RealType;
 import fiji.plugin.trackmate.features.edges.EdgeFeatureAnalyzer;
 import fiji.plugin.trackmate.features.edges.EdgeTargetAnalyzer;
 import fiji.plugin.trackmate.features.edges.EdgeTimeLocationAnalyzer;
@@ -15,10 +13,10 @@ import fiji.plugin.trackmate.features.edges.EdgeVelocityAnalyzer;
 /**
  * A provider for the edge analyzers provided in the GUI.
  */
-public class EdgeFeatureAnalyzerProvider <T extends RealType<T> & NativeType<T>> {
+public class EdgeFeatureAnalyzerProvider {
 
 
-	protected final TrackMateModel<T> model;
+	protected final TrackMateModel model;
 	protected List<String> names;
 	/** Map of the features per analyzer. */
 	protected Map<String, List<String>> features;
@@ -42,7 +40,7 @@ public class EdgeFeatureAnalyzerProvider <T extends RealType<T> & NativeType<T>>
 	 * factory so that it is registered with the custom spotFeatureAnalyzers and provide this 
 	 * extended factory to the {@link TrackMate_} plugin.
 	 */
-	public EdgeFeatureAnalyzerProvider(TrackMateModel<T> model) {
+	public EdgeFeatureAnalyzerProvider(TrackMateModel model) {
 		this.model = model;
 		registerEdgeFeatureAnalyzers();
 	}
@@ -89,11 +87,11 @@ public class EdgeFeatureAnalyzerProvider <T extends RealType<T> & NativeType<T>>
 	 */
 	public EdgeFeatureAnalyzer getEdgeFeatureAnalyzer(String key) {
 		if (key == EdgeTargetAnalyzer.KEY) {
-			return new EdgeTargetAnalyzer<T>(model);
+			return new EdgeTargetAnalyzer(model);
 		} else if (key == EdgeVelocityAnalyzer.KEY) {
-			return new EdgeVelocityAnalyzer<T>(model);
+			return new EdgeVelocityAnalyzer(model);
 		} else if (key == EdgeTimeLocationAnalyzer.KEY) {
-			return new EdgeTimeLocationAnalyzer<T>(model);
+			return new EdgeTimeLocationAnalyzer(model);
 		} else {
 			return null;
 		}

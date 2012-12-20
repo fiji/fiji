@@ -17,9 +17,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import net.imglib2.type.NativeType;
-import net.imglib2.type.numeric.RealType;
-
 import org.jfree.chart.renderer.InterpolatePaintScale;
 import org.jgrapht.graph.DefaultWeightedEdge;
 
@@ -33,20 +30,20 @@ import fiji.util.gui.OverlayedImageCanvas.Overlay;
  * The overlay class in charge of drawing the tracks on the hyperstack window.
  * @author Jean-Yves Tinevez <jeanyves.tinevez@gmail.com> 2010 - 2011
  */
-public class TrackOverlay <T extends RealType<T> & NativeType<T>> implements Overlay {
+public class TrackOverlay implements Overlay {
 	protected final double[] calibration;
 	protected final ImagePlus imp;
 	/** Map of color vs track key. */
 	protected Map<Integer, Color> edgeColors;
 	protected Collection<DefaultWeightedEdge> highlight = new HashSet<DefaultWeightedEdge>();
 	protected Map<String, Object> displaySettings;
-	protected final TrackMateModel<T> model;
+	protected final TrackMateModel model;
 
 	/*
 	 * CONSTRUCTOR
 	 */
 
-	public TrackOverlay(final TrackMateModel<T> model, final ImagePlus imp, final Map<String, Object> displaySettings) {
+	public TrackOverlay(final TrackMateModel model, final ImagePlus imp, final Map<String, Object> displaySettings) {
 		this.model = model;
 		this.calibration = TMUtils.getSpatialCalibration(model.getSettings().imp);
 		this.imp = imp;

@@ -41,9 +41,6 @@ import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.JTableHeader;
 
-import net.imglib2.type.NativeType;
-import net.imglib2.type.numeric.RealType;
-
 import com.mxgraph.model.mxCell;
 import com.mxgraph.model.mxICell;
 
@@ -56,7 +53,7 @@ import fiji.plugin.trackmate.util.OnRequestUpdater;
 import fiji.plugin.trackmate.util.OnRequestUpdater.Refreshable;
 import fiji.plugin.trackmate.util.TMUtils;
 
-public class InfoPane <T extends RealType<T> & NativeType<T>> extends JPanel implements TrackMateSelectionChangeListener {
+public class InfoPane extends JPanel implements TrackMateSelectionChangeListener {
 
 	private static final long serialVersionUID = -1L;
 
@@ -86,8 +83,8 @@ public class InfoPane <T extends RealType<T> & NativeType<T>> extends JPanel imp
 	private boolean doHighlightSelection = true;
 	private List<String> features;
 	private Map<String, String> featureNames;
-	private final TrackMateModel<T> model;
-	private final JGraphXAdapter<T> graph;
+	private final TrackMateModel model;
+	private final JGraphXAdapter graph;
 	/** A copy of the last spot collection highlighted in this infopane, sorted by frame order. */
 	private Collection<Spot> spotSelection;
 	private String[] headers;
@@ -97,7 +94,7 @@ public class InfoPane <T extends RealType<T> & NativeType<T>> extends JPanel imp
 	 * CONSTRUCTOR
 	 */
 
-	public InfoPane(final TrackMateModel<T> model, final JGraphXAdapter<T> graph) {
+	public InfoPane(final TrackMateModel model, final JGraphXAdapter graph) {
 		this.model = model;
 		this.graph = graph;
 		this.features = model.getFeatureModel().getSpotFeatures();
@@ -348,7 +345,7 @@ public class InfoPane <T extends RealType<T> & NativeType<T>> extends JPanel imp
 		if (spots.isEmpty())
 			return;
 
-		SpotFeatureGrapher<T> grapher = new SpotFeatureGrapher<T>(xFeature, yFeatures, new ArrayList<Spot>(spots), model);
+		SpotFeatureGrapher grapher = new SpotFeatureGrapher(xFeature, yFeatures, new ArrayList<Spot>(spots), model);
 		grapher.render();
 
 	}

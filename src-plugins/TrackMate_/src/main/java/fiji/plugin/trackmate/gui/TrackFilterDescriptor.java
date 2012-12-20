@@ -9,29 +9,26 @@ import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
-import net.imglib2.type.NativeType;
-import net.imglib2.type.numeric.RealType;
-
 import fiji.plugin.trackmate.FeatureFilter;
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMate_;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
 
-public class TrackFilterDescriptor <T extends RealType<T> & NativeType<T>> implements WizardPanelDescriptor<T> {
+public class TrackFilterDescriptor implements WizardPanelDescriptor {
 	
 	public static final String DESCRIPTOR = "TrackFilter";
-	private TrackMateWizard<T> wizard;
+	private TrackMateWizard wizard;
 	private FilterGuiPanel component = new FilterGuiPanel();
-	private TrackMate_<T> plugin;
+	private TrackMate_ plugin;
 
 	@Override
-	public void setWizard(TrackMateWizard<T> wizard) {
+	public void setWizard(TrackMateWizard wizard) {
 		this.wizard = wizard;
 	}
 
 	@Override
-	public void setPlugin(TrackMate_<T> plugin) {
+	public void setPlugin(TrackMate_ plugin) {
 		this.plugin = plugin;
 	}
 
@@ -62,7 +59,7 @@ public class TrackFilterDescriptor <T extends RealType<T> & NativeType<T>> imple
 
 	@Override
 	public void aboutToDisplayPanel() {
-		TrackMateModel<T> model = plugin.getModel();
+		TrackMateModel model = plugin.getModel();
 		component.setTarget(model.getFeatureModel().getTrackFeatures(), model.getSettings().getTrackFilters(),  
 				model.getFeatureModel().getTrackFeatureNames(), model.getFeatureModel().getTrackFeatureValues(), "tracks");
 		linkGuiToView();
@@ -105,7 +102,7 @@ public class TrackFilterDescriptor <T extends RealType<T> & NativeType<T>> imple
 		final Logger logger = wizard.getLogger();
 		logger.log("Performing track filtering on the following features:\n", Logger.BLUE_COLOR);
 		List<FeatureFilter> featureFilters = component.getFeatureFilters();
-		final TrackMateModel<T> model = plugin.getModel();
+		final TrackMateModel model = plugin.getModel();
 		model.getSettings().setTrackFilters(featureFilters);
 		plugin.execTrackFiltering(true);
 

@@ -9,9 +9,6 @@ import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.JPopupMenu;
 
-import net.imglib2.type.NativeType;
-import net.imglib2.type.numeric.RealType;
-
 import com.mxgraph.model.mxCell;
 import com.mxgraph.swing.mxGraphComponent;
 import com.mxgraph.util.mxEvent;
@@ -20,18 +17,18 @@ import com.mxgraph.util.mxEventSource.mxIEventListener;
 
 import fiji.plugin.trackmate.TrackMateModel;
 
-public class TrackSchemePopupMenu<T extends RealType<T> & NativeType<T>> extends JPopupMenu {
+public class TrackSchemePopupMenu extends JPopupMenu {
 
 	private static final long serialVersionUID = -1L;
 
 	/**  The cell where the right-click was made, <code>null</code> if the right-click is made out of a cell. */
 	private final Object cell;
 	/**  The TrackScheme instance. */
-	private final TrackScheme<T> trackScheme;
+	private final TrackScheme trackScheme;
 	/**  The right-click location. */
 	private final Point point;
 
-	public TrackSchemePopupMenu(final TrackScheme<T> trackScheme, final Object cell, final Point point) {
+	public TrackSchemePopupMenu(final TrackScheme trackScheme, final Object cell, final Point point) {
 		this.trackScheme = trackScheme;
 		this.cell = cell;
 		this.point = point;
@@ -129,7 +126,7 @@ public class TrackSchemePopupMenu<T extends RealType<T> & NativeType<T>> extends
 	@SuppressWarnings("serial")
 	private void init() {
 
-		final TrackMateModel<T> model = trackScheme.getModel();
+		final TrackMateModel model = trackScheme.getModel();
 
 		// Build selection categories
 		final Object[] selection = trackScheme.getGraph().getSelectionCells();

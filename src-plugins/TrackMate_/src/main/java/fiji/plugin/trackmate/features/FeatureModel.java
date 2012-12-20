@@ -12,12 +12,11 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.jgrapht.graph.DefaultWeightedEdge;
-
 import net.imglib2.algorithm.MultiThreaded;
 import net.imglib2.multithreading.SimpleMultiThreading;
-import net.imglib2.type.NativeType;
-import net.imglib2.type.numeric.RealType;
+
+import org.jgrapht.graph.DefaultWeightedEdge;
+
 import fiji.plugin.trackmate.Dimension;
 import fiji.plugin.trackmate.EdgeFeatureAnalyzerProvider;
 import fiji.plugin.trackmate.Logger;
@@ -39,7 +38,7 @@ import fiji.plugin.trackmate.util.TMUtils;
  * @author Jean-Yves Tinevez, 2011, 2012
  *
  */
-public class FeatureModel <T extends RealType<T> & NativeType<T>> implements MultiThreaded {
+public class FeatureModel implements MultiThreaded {
 
 	/*
 	 * FIELDS
@@ -75,11 +74,11 @@ public class FeatureModel <T extends RealType<T> & NativeType<T>> implements Mul
 	private HashMap<String, String> edgeFeatureShortNames = new HashMap<String, String>();
 	private HashMap<String, Dimension> edgeFeatureDimensions = new HashMap<String, Dimension>();
 
-	protected SpotFeatureAnalyzerProvider<T> spotAnalyzerProvider;
-	protected TrackFeatureAnalyzerProvider<T> trackAnalyzerFactory;
-	private EdgeFeatureAnalyzerProvider<T> edgeFeatureAnalyzerProvider;
+	protected SpotFeatureAnalyzerProvider spotAnalyzerProvider;
+	protected TrackFeatureAnalyzerProvider trackAnalyzerFactory;
+	private EdgeFeatureAnalyzerProvider edgeFeatureAnalyzerProvider;
 
-	private TrackMateModel<T> model;
+	private TrackMateModel model;
 	protected int numThreads;
 
 
@@ -87,7 +86,7 @@ public class FeatureModel <T extends RealType<T> & NativeType<T>> implements Mul
 	 * CONSTRUCTOR
 	 */
 
-	public FeatureModel(TrackMateModel<T> model) {
+	public FeatureModel(TrackMateModel model) {
 		this.model = model;
 		setNumThreads();
 		// To initialize the spot features with the basic features:
@@ -143,7 +142,7 @@ public class FeatureModel <T extends RealType<T> & NativeType<T>> implements Mul
 				}
 			}
 		}
-		List<SpotFeatureAnalyzerFactory<T>> selectedAnalyzers = new ArrayList<SpotFeatureAnalyzerFactory<T>>();
+		List<SpotFeatureAnalyzerFactory<?>> selectedAnalyzers = new ArrayList<SpotFeatureAnalyzerFactory<?>>();
 		for(String key : selectedKeys) {
 			selectedAnalyzers.add(spotAnalyzerProvider.getSpotFeatureAnalyzer(key));
 		}
@@ -162,7 +161,7 @@ public class FeatureModel <T extends RealType<T> & NativeType<T>> implements Mul
 		if (null == spotAnalyzerProvider)
 			return;
 		List<String> analyzerNames = spotAnalyzerProvider.getAvailableSpotFeatureAnalyzers();
-		List<SpotFeatureAnalyzerFactory<T>> spotFeatureAnalyzers = new ArrayList<SpotFeatureAnalyzerFactory<T>>(analyzerNames.size());
+		List<SpotFeatureAnalyzerFactory<?>> spotFeatureAnalyzers = new ArrayList<SpotFeatureAnalyzerFactory<?>>(analyzerNames.size());
 		for (String analyzerName : analyzerNames) {
 			spotFeatureAnalyzers.add(spotAnalyzerProvider.getSpotFeatureAnalyzer(analyzerName));
 		}
@@ -181,7 +180,7 @@ public class FeatureModel <T extends RealType<T> & NativeType<T>> implements Mul
 	 * @see #updateFeatures(List) 
 	 * @see #updateFeatures(Spot)
 	 */
-	public void setSpotFeatureFactory(final SpotFeatureAnalyzerProvider<T> spotAnalyzerProvider) {
+	public void setSpotFeatureFactory(final SpotFeatureAnalyzerProvider spotAnalyzerProvider) {
 		this.spotAnalyzerProvider = spotAnalyzerProvider;
 
 		spotFeatures = new ArrayList<String>();
@@ -255,7 +254,7 @@ public class FeatureModel <T extends RealType<T> & NativeType<T>> implements Mul
 	 * 
 	 * @see #computeTrackFeatures()
 	 */
-	public void setTrackFeatureFactory(TrackFeatureAnalyzerProvider<T> trackAnalyzerFactory) {
+	public void setTrackFeatureFactory(TrackFeatureAnalyzerProvider trackAnalyzerFactory) {
 		this.trackAnalyzerFactory = trackAnalyzerFactory;
 
 		trackFeatures = new ArrayList<String>();
@@ -273,7 +272,7 @@ public class FeatureModel <T extends RealType<T> & NativeType<T>> implements Mul
 		}
 	}
 
-	public void setEdgeFeatureProvider(final EdgeFeatureAnalyzerProvider<T> edgeFeatureAnalyzerProvider) {
+	public void setEdgeFeatureProvider(final EdgeFeatureAnalyzerProvider edgeFeatureAnalyzerProvider) {
 		this.edgeFeatureAnalyzerProvider = edgeFeatureAnalyzerProvider;
 
 		edgeFeatures = new ArrayList<String>();
@@ -307,9 +306,9 @@ public class FeatureModel <T extends RealType<T> & NativeType<T>> implements Mul
 	 * @param toCompute
 	 * @param analyzers
 	 */
-	private void computeSpotFeaturesAgent(final SpotCollection toCompute, final List<SpotFeatureAnalyzerFactory<T>> analyzerFactories) {
+	private void computeSpotFeaturesAgent(final SpotCollection toCompute, final List<SpotFeatureAnalyzerFactory<?>> analyzerFactories) {
 
-		final Settings<T> settings = model.getSettings();
+		final Settings settings = model.getSettings();
 		final Logger logger = model.getLogger();
 
 		// Can't compute any spot feature without an image to compute on.
@@ -344,7 +343,7 @@ public class FeatureModel <T extends RealType<T> & NativeType<T>> implements Mul
 					for (int index = ai.getAndIncrement(); index < numFrames; index = ai.getAndIncrement()) {
 
 						int frame = frameSet.get(index);
-						for (SpotFeatureAnalyzerFactory<T> factory : analyzerFactories) {
+						for (SpotFeatureAnalyzerFactory<?> factory : analyzerFactories) {
 							factory.getAnalyzer(frame, targetChannel).process();
 						}
 
@@ -512,7 +511,7 @@ public class FeatureModel <T extends RealType<T> & NativeType<T>> implements Mul
 		}
 		initFeatureMap();
 		for (String analyzerKey : trackAnalyzerFactory.getAvailableTrackFeatureAnalyzers()) {
-			TrackFeatureAnalyzer<T> analyzer = trackAnalyzerFactory.getTrackFeatureAnalyzer(analyzerKey);
+			TrackFeatureAnalyzer analyzer = trackAnalyzerFactory.getTrackFeatureAnalyzer(analyzerKey);
 			analyzer.process(trackIDs);
 			if (doLogIt)
 				logger.log("  - " + analyzer.toString() + " in " + analyzer.getProcessingTime() + " ms.\n");

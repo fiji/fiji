@@ -3,31 +3,29 @@ package fiji.plugin.trackmate.gui;
 import java.awt.Component;
 import java.util.Map;
 
-import net.imglib2.type.NativeType;
-import net.imglib2.type.numeric.RealType;
 import fiji.plugin.trackmate.DetectorProvider;
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.TrackMate_;
 import fiji.plugin.trackmate.detection.ManualDetectorFactory;
 
-public class DetectorConfigurationPanelDescriptor <T extends RealType<T> & NativeType<T>> implements WizardPanelDescriptor<T> {
+public class DetectorConfigurationPanelDescriptor implements WizardPanelDescriptor {
 
 	public static final String DESCRIPTOR = "DetectorConfigurationPanel";
-	private TrackMate_<T> plugin;
+	private TrackMate_ plugin;
 	private ConfigurationPanel configPanel;
-	private TrackMateWizard<T> wizard;
+	private TrackMateWizard wizard;
 
 	/*
 	 * METHODS
 	 */
 
 	@Override
-	public void setWizard(TrackMateWizard<T> wizard) { 
+	public void setWizard(TrackMateWizard wizard) { 
 		this.wizard = wizard;
 	}
 
 	@Override
-	public void setPlugin(TrackMate_<T> plugin) {
+	public void setPlugin(TrackMate_ plugin) {
 		this.plugin = plugin;
 	}
 
@@ -67,7 +65,7 @@ public class DetectorConfigurationPanelDescriptor <T extends RealType<T> & Nativ
 		// Regenerate panel
 		configPanel = plugin.getDetectorProvider().getDetectorConfigurationPanel(wizard.getController());
 		// We assume the provider is already configured with the right target detector factory
-		DetectorProvider<T> provider = plugin.getDetectorProvider(); 
+		DetectorProvider provider = plugin.getDetectorProvider(); 
 		Map<String, Object> settings = plugin.getModel().getSettings().detectorSettings;
 		// Bulletproof null
 		if (null == settings || !provider.checkSettingsValidity(settings)) {
@@ -88,7 +86,7 @@ public class DetectorConfigurationPanelDescriptor <T extends RealType<T> & Nativ
 	@Override
 	public void aboutToHidePanel() {
 		Map<String, Object> settings = configPanel.getSettings();
-		DetectorProvider<T> detectorProvider = plugin.getDetectorProvider();
+		DetectorProvider detectorProvider = plugin.getDetectorProvider();
 		boolean settingsOk = detectorProvider.checkSettingsValidity(settings);
 		if (!settingsOk) {
 			Logger logger = wizard.getLogger();

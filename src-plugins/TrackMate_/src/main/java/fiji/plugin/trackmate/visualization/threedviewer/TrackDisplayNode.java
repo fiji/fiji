@@ -26,16 +26,13 @@ import javax.vecmath.Color4f;
 import javax.vecmath.Point3d;
 import javax.vecmath.Tuple3d;
 
-import net.imglib2.type.NativeType;
-import net.imglib2.type.numeric.RealType;
-
 import org.jfree.chart.renderer.InterpolatePaintScale;
 import org.jgrapht.graph.DefaultWeightedEdge;
 
-public class TrackDisplayNode <T extends RealType<T> & NativeType<T>> extends ContentNode implements TimelapseListener {
+public class TrackDisplayNode extends ContentNode implements TimelapseListener {
 
 	/** The model, needed to retrieve connectivity. */
-	protected TrackMateModel<T> model;
+	protected TrackMateModel model;
 
 	protected Map<String, Object> displaySettings;
 
@@ -81,7 +78,7 @@ public class TrackDisplayNode <T extends RealType<T> & NativeType<T>> extends Co
 	 * CONSTRUCTOR
 	 */
 
-	public TrackDisplayNode(TrackMateModel<T> model, final Map<String, Object> displaySettings) {
+	public TrackDisplayNode(TrackMateModel model, final Map<String, Object> displaySettings) {
 		this.model = model;
 		this.displaySettings = displaySettings;
 

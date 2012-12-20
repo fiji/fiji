@@ -6,9 +6,6 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 
-import net.imglib2.type.NativeType;
-import net.imglib2.type.numeric.RealType;
-
 import org.jdom2.JDOMException;
 import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.graph.SimpleDirectedWeightedGraph;
@@ -24,27 +21,27 @@ import fiji.plugin.trackmate.visualization.trackscheme.TrackScheme;
 
 public class SpotFeatureGrapher_TestDrive {
 
-	public static <T extends RealType<T> & NativeType<T>> void main(String[] args) throws JDOMException, IOException {
+	public static void main(String[] args) throws JDOMException, IOException {
 
 		// Load objects 
 		File file = new File("/Users/tinevez/Desktop/Data/Tree.xml");
-		TrackMate_<T> plugin = new TrackMate_<T>();
+		TrackMate_ plugin = new TrackMate_();
 		plugin.initModules();
-		TmXmlReader<T> reader = new TmXmlReader<T>(file, plugin);
+		TmXmlReader reader = new TmXmlReader(file, plugin);
 		if (!reader.checkInput() && !reader.process()) {
 			System.err.println("Problem loading the file:");
 			System.err.println(reader.getErrorMessage());
 		}
-		TrackMateModel<T> model = plugin.getModel();
+		TrackMateModel model = plugin.getModel();
 
 		List<Spot> spots = model.getFilteredSpots().getAllSpots();
 		
 		HashSet<String> Y = new HashSet<String>(1);
 		Y.add(Spot.POSITION_T);
-		SpotFeatureGrapher<T> grapher = new SpotFeatureGrapher<T>(Spot.POSITION_X, Y, spots, model);
+		SpotFeatureGrapher grapher = new SpotFeatureGrapher(Spot.POSITION_X, Y, spots, model);
 		grapher.render();
 		
-		TrackScheme<T> trackScheme = new TrackScheme<T>(model);
+		TrackScheme trackScheme = new TrackScheme(model);
 		trackScheme.render();
 		
 	}
@@ -53,7 +50,7 @@ public class SpotFeatureGrapher_TestDrive {
 	 *  Another example: spots that go in spiral
 	 */
 	@SuppressWarnings("unused")
-	private static <T extends RealType<T> & NativeType<T>> TrackMateModel<T> getSpiralModel() {
+	private static TrackMateModel getSpiralModel() {
 		
 		final int N_SPOTS = 50;
 		List<Spot> spots = new ArrayList<Spot>(N_SPOTS);
@@ -74,7 +71,7 @@ public class SpotFeatureGrapher_TestDrive {
 			sc.put(i, ts);
 		}
 		
-		TrackMateModel<T> model = new TrackMateModel<T>();
+		TrackMateModel model = new TrackMateModel();
 		model.setSpots(sc, false);
 		model.setFilteredSpots(sc, false);
 		

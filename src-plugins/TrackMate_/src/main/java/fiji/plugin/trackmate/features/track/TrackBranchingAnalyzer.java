@@ -11,8 +11,6 @@ import java.util.concurrent.ArrayBlockingQueue;
 
 import net.imglib2.algorithm.MultiThreaded;
 import net.imglib2.multithreading.SimpleMultiThreading;
-import net.imglib2.type.NativeType;
-import net.imglib2.type.numeric.RealType;
 
 import org.jgrapht.graph.DefaultWeightedEdge;
 
@@ -20,7 +18,7 @@ import fiji.plugin.trackmate.Dimension;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.TrackMateModel;
 
-public class TrackBranchingAnalyzer<T extends RealType<T> & NativeType<T>> implements TrackFeatureAnalyzer<T>, MultiThreaded {
+public class TrackBranchingAnalyzer implements TrackFeatureAnalyzer, MultiThreaded {
 
 	/*
 	 * CONSTANTS
@@ -65,9 +63,9 @@ public class TrackBranchingAnalyzer<T extends RealType<T> & NativeType<T>> imple
 
 	private int numThreads;
 	private long processingTime;
-	private final TrackMateModel<T> model;
+	private final TrackMateModel model;
 
-	public TrackBranchingAnalyzer(final TrackMateModel<T> model) {
+	public TrackBranchingAnalyzer(final TrackMateModel model) {
 		this.model = model;
 		setNumThreads();
 	}

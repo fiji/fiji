@@ -40,13 +40,13 @@ public class SpotContrastAndSNRAnalyzerFactory<T extends RealType<T> & NativeTyp
 	}
 	public static final String KEY = "Spot contrast and SNR"; 
 
-	private final TrackMateModel<T> model;
+	private final TrackMateModel model;
 
 	/*
 	 * CONSTRUCTOR
 	 */
 	
-	public SpotContrastAndSNRAnalyzerFactory(final TrackMateModel<T> model) {
+	public SpotContrastAndSNRAnalyzerFactory(final TrackMateModel model) {
 		this.model = model;
 	}
 	

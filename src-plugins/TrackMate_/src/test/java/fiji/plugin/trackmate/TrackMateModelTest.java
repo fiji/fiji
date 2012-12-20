@@ -1,22 +1,15 @@
 package fiji.plugin.trackmate;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+
 import java.util.Set;
 
 import org.jgrapht.graph.DefaultWeightedEdge;
 import org.junit.Test;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.assertNull;
 
-import net.imglib2.type.NativeType;
-import net.imglib2.type.numeric.RealType;
-import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.SpotImp;
-import fiji.plugin.trackmate.TrackMateModel;
-import fiji.plugin.trackmate.TrackMateModelChangeEvent;
-import fiji.plugin.trackmate.TrackMateModelChangeListener;
-
-public class TrackMateModelTest <T extends RealType<T> & NativeType<T>>   {
+public class TrackMateModelTest {
 
 
 	/**
@@ -24,7 +17,7 @@ public class TrackMateModelTest <T extends RealType<T> & NativeType<T>>   {
 	 */
 //	@Test // DISABLED FOR THE TRACK ID IS NOT 0 1 2 3 ANYMORE
 	public void testTrackVisibility() {
-		TrackMateModel<T> model = new TrackMateModel<T>();
+		TrackMateModel model = new TrackMateModel();
 		// Build track 1 with 5 spots
 		final Spot s1 = new SpotImp(new double[3], "S1");
 		final Spot s2 = new SpotImp(new double[3], "S2");
@@ -131,7 +124,7 @@ public class TrackMateModelTest <T extends RealType<T> & NativeType<T>>   {
 	 */
 	@Test
 	public void testTrackNumber() {
-		TrackMateModel<T> model = new TrackMateModel<T>();
+		TrackMateModel model = new TrackMateModel();
 
 		// Empty model, should get 0 tracks
 		assertEquals(0, model.getNTracks());
@@ -194,7 +187,7 @@ public class TrackMateModelTest <T extends RealType<T> & NativeType<T>>   {
 	public void testTrackModelChangeEvent() {
 
 		// Create a model with 5 spots, that forms a single branch track
-		final TrackMateModel<T> model = new TrackMateModel<T>();
+		final TrackMateModel model = new TrackMateModel();
 
 		// Add an event listener for that checks for adding spots and edges
 		TrackMateModelChangeListener eventLogger = new TrackMateModelChangeListener() {
@@ -357,7 +350,7 @@ public class TrackMateModelTest <T extends RealType<T> & NativeType<T>>   {
 	public void exampleManipulation() {
 
 		// Create a model with 5 spots, that forms a single branch track
-		TrackMateModel<T> model = new TrackMateModel<T>();
+		TrackMateModel model = new TrackMateModel();
 
 		// Add an event listener now
 		model.addTrackMateModelChangeListener(new EventLogger());
@@ -459,8 +452,8 @@ public class TrackMateModelTest <T extends RealType<T> & NativeType<T>>   {
 
 
 
-	public static <T extends RealType<T> & NativeType<T>>  void main(String[] args) {
-		new TrackMateModelTest<T>().exampleManipulation();
+	public static void main(String[] args) {
+		new TrackMateModelTest().exampleManipulation();
 	}
 
 	private static class EventLogger implements TrackMateModelChangeListener {

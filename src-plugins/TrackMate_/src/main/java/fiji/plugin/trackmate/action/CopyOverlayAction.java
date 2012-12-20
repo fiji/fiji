@@ -8,9 +8,6 @@ import java.awt.event.ActionListener;
 import javax.swing.ImageIcon;
 import javax.swing.JFrame;
 
-import net.imglib2.type.NativeType;
-import net.imglib2.type.numeric.RealType;
-
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMate_;
 import fiji.plugin.trackmate.gui.DisplayerPanel;
@@ -19,7 +16,7 @@ import fiji.plugin.trackmate.visualization.TrackMateModelView;
 import fiji.plugin.trackmate.visualization.hyperstack.HyperStackDisplayer;
 import fiji.plugin.trackmate.visualization.threedviewer.SpotDisplayer3D;
 
-public class CopyOverlayAction<T extends RealType<T> & NativeType<T>> extends AbstractTMAction<T> {
+public class CopyOverlayAction extends AbstractTMAction {
 
 	public static final ImageIcon ICON = new ImageIcon(DisplayerPanel.class.getResource("images/page_copy.png"));
 	public static final String NAME = "Copy overlay to...";
@@ -34,7 +31,7 @@ public class CopyOverlayAction<T extends RealType<T> & NativeType<T>> extends Ab
 	}	
 	
 	@Override
-	public void execute(final TrackMate_<T> plugin) {
+	public void execute(final TrackMate_ plugin) {
 		final ImagePlusChooser impChooser = new ImagePlusChooser();
 		impChooser.setLocationRelativeTo(null);
 		impChooser.setVisible(true);
@@ -44,26 +41,26 @@ public class CopyOverlayAction<T extends RealType<T> & NativeType<T>> extends Ab
 				if (e == impChooser.OK_BUTTON_PUSHED) {
 					new Thread("TrackMate copying thread") {
 						public void run() {
-							TrackMateModel<T> model = plugin.getModel();
+							TrackMateModel model = plugin.getModel();
 							// Instantiate displayer
 							ImagePlus dest = impChooser.getSelectedImagePlus();
 							impChooser.setVisible(false);
-							TrackMateModelView<T> newDisplayer;
+							TrackMateModelView newDisplayer;
 							String title;
 							if (null == dest) {
 								logger.log("Copying data and overlay to new 3D viewer\n");
-								newDisplayer = new SpotDisplayer3D<T>();
+								newDisplayer = new SpotDisplayer3D();
 								title = "3D viewer overlay";
 							} else {
 								logger.log("Copying overlay to "+dest.getShortTitle()+"\n");
 								model.getSettings().imp = dest; // TODO TODO DANGER DANGER
-								newDisplayer = new HyperStackDisplayer<T>();
+								newDisplayer = new HyperStackDisplayer();
 								title = dest.getShortTitle() + " ctrl";
 							}
 							newDisplayer.setModel(model);
 							newDisplayer.render();
 							
-							final DisplayerPanel<T> newDisplayerPanel = new DisplayerPanel<T>();
+							final DisplayerPanel newDisplayerPanel = new DisplayerPanel();
 							newDisplayerPanel.setPlugin(plugin);
 							newDisplayerPanel.register(newDisplayer);
 							JFrame newFrame = new JFrame(); 

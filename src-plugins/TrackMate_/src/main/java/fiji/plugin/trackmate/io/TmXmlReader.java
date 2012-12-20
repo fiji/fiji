@@ -1,11 +1,59 @@
 package fiji.plugin.trackmate.io;
 
+import static fiji.plugin.trackmate.io.TmXmlKeys.DETECTOR_SETTINGS_ELEMENT_KEY;
+import static fiji.plugin.trackmate.io.TmXmlKeys.FILTERED_SPOT_COLLECTION_ELEMENT_KEY;
+import static fiji.plugin.trackmate.io.TmXmlKeys.FILTERED_SPOT_ELEMENT_KEY;
+import static fiji.plugin.trackmate.io.TmXmlKeys.FILTERED_TRACK_ELEMENT_KEY;
+import static fiji.plugin.trackmate.io.TmXmlKeys.FILTER_ABOVE_ATTRIBUTE_NAME;
+import static fiji.plugin.trackmate.io.TmXmlKeys.FILTER_ELEMENT_KEY;
+import static fiji.plugin.trackmate.io.TmXmlKeys.FILTER_FEATURE_ATTRIBUTE_NAME;
+import static fiji.plugin.trackmate.io.TmXmlKeys.FILTER_VALUE_ATTRIBUTE_NAME;
+import static fiji.plugin.trackmate.io.TmXmlKeys.FRAME_ATTRIBUTE_NAME;
+import static fiji.plugin.trackmate.io.TmXmlKeys.IMAGE_ELEMENT_KEY;
+import static fiji.plugin.trackmate.io.TmXmlKeys.IMAGE_FILENAME_ATTRIBUTE_NAME;
+import static fiji.plugin.trackmate.io.TmXmlKeys.IMAGE_FOLDER_ATTRIBUTE_NAME;
+import static fiji.plugin.trackmate.io.TmXmlKeys.IMAGE_HEIGHT_ATTRIBUTE_NAME;
+import static fiji.plugin.trackmate.io.TmXmlKeys.IMAGE_NFRAMES_ATTRIBUTE_NAME;
+import static fiji.plugin.trackmate.io.TmXmlKeys.IMAGE_NSLICES_ATTRIBUTE_NAME;
+import static fiji.plugin.trackmate.io.TmXmlKeys.IMAGE_PIXEL_HEIGHT_ATTRIBUTE_NAME;
+import static fiji.plugin.trackmate.io.TmXmlKeys.IMAGE_PIXEL_WIDTH_ATTRIBUTE_NAME;
+import static fiji.plugin.trackmate.io.TmXmlKeys.IMAGE_SPATIAL_UNITS_ATTRIBUTE_NAME;
+import static fiji.plugin.trackmate.io.TmXmlKeys.IMAGE_TIME_INTERVAL_ATTRIBUTE_NAME;
+import static fiji.plugin.trackmate.io.TmXmlKeys.IMAGE_TIME_UNITS_ATTRIBUTE_NAME;
+import static fiji.plugin.trackmate.io.TmXmlKeys.IMAGE_VOXEL_DEPTH_ATTRIBUTE_NAME;
+import static fiji.plugin.trackmate.io.TmXmlKeys.IMAGE_WIDTH_ATTRIBUTE_NAME;
+import static fiji.plugin.trackmate.io.TmXmlKeys.INITIAL_SPOT_FILTER_ELEMENT_KEY;
+import static fiji.plugin.trackmate.io.TmXmlKeys.PLUGIN_VERSION_ATTRIBUTE_NAME;
+import static fiji.plugin.trackmate.io.TmXmlKeys.SETTINGS_ELEMENT_KEY;
+import static fiji.plugin.trackmate.io.TmXmlKeys.SETTINGS_TEND_ATTRIBUTE_NAME;
+import static fiji.plugin.trackmate.io.TmXmlKeys.SETTINGS_TSTART_ATTRIBUTE_NAME;
+import static fiji.plugin.trackmate.io.TmXmlKeys.SETTINGS_XEND_ATTRIBUTE_NAME;
+import static fiji.plugin.trackmate.io.TmXmlKeys.SETTINGS_XSTART_ATTRIBUTE_NAME;
+import static fiji.plugin.trackmate.io.TmXmlKeys.SETTINGS_YEND_ATTRIBUTE_NAME;
+import static fiji.plugin.trackmate.io.TmXmlKeys.SETTINGS_YSTART_ATTRIBUTE_NAME;
+import static fiji.plugin.trackmate.io.TmXmlKeys.SETTINGS_ZEND_ATTRIBUTE_NAME;
+import static fiji.plugin.trackmate.io.TmXmlKeys.SETTINGS_ZSTART_ATTRIBUTE_NAME;
+import static fiji.plugin.trackmate.io.TmXmlKeys.SPOT_COLLECTION_ELEMENT_KEY;
+import static fiji.plugin.trackmate.io.TmXmlKeys.SPOT_COLLECTION_NSPOTS_ATTRIBUTE_NAME;
+import static fiji.plugin.trackmate.io.TmXmlKeys.SPOT_ELEMENT_KEY;
+import static fiji.plugin.trackmate.io.TmXmlKeys.SPOT_FILTER_COLLECTION_ELEMENT_KEY;
+import static fiji.plugin.trackmate.io.TmXmlKeys.SPOT_FRAME_COLLECTION_ELEMENT_KEY;
+import static fiji.plugin.trackmate.io.TmXmlKeys.SPOT_ID_ATTRIBUTE_NAME;
+import static fiji.plugin.trackmate.io.TmXmlKeys.SPOT_ID_ELEMENT_KEY;
+import static fiji.plugin.trackmate.io.TmXmlKeys.SPOT_NAME_ATTRIBUTE_NAME;
+import static fiji.plugin.trackmate.io.TmXmlKeys.TRACKER_SETTINGS_ELEMENT_KEY;
+import static fiji.plugin.trackmate.io.TmXmlKeys.TRACK_COLLECTION_ELEMENT_KEY;
+import static fiji.plugin.trackmate.io.TmXmlKeys.TRACK_EDGE_ELEMENT_KEY;
+import static fiji.plugin.trackmate.io.TmXmlKeys.TRACK_EDGE_SOURCE_ATTRIBUTE_NAME;
+import static fiji.plugin.trackmate.io.TmXmlKeys.TRACK_EDGE_TARGET_ATTRIBUTE_NAME;
+import static fiji.plugin.trackmate.io.TmXmlKeys.TRACK_EDGE_WEIGHT_ATTRIBUTE_NAME;
+import static fiji.plugin.trackmate.io.TmXmlKeys.TRACK_ELEMENT_KEY;
+import static fiji.plugin.trackmate.io.TmXmlKeys.TRACK_FILTER_COLLECTION_ELEMENT_KEY;
+import static fiji.plugin.trackmate.io.TmXmlKeys.TRACK_ID_ATTRIBUTE_NAME;
+import static fiji.plugin.trackmate.io.TmXmlKeys.TRACK_ID_ELEMENT_KEY;
 import static fiji.plugin.trackmate.util.TMUtils.readBooleanAttribute;
 import static fiji.plugin.trackmate.util.TMUtils.readDoubleAttribute;
 import static fiji.plugin.trackmate.util.TMUtils.readIntAttribute;
-
-import static fiji.plugin.trackmate.io.TmXmlKeys.*;
-
 import ij.IJ;
 import ij.ImagePlus;
 
@@ -22,8 +70,6 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import net.imglib2.algorithm.Algorithm;
 import net.imglib2.algorithm.Benchmark;
-import net.imglib2.type.NativeType;
-import net.imglib2.type.numeric.RealType;
 
 import org.jdom2.Attribute;
 import org.jdom2.DataConversionException;
@@ -50,7 +96,7 @@ import fiji.plugin.trackmate.features.FeatureModel;
 import fiji.plugin.trackmate.tracking.SpotTracker;
 
 
-public class TmXmlReader <T extends RealType<T> & NativeType<T>> implements Algorithm, Benchmark {
+public class TmXmlReader implements Algorithm, Benchmark {
 
 	protected static final boolean DEBUG = false;
 
@@ -61,7 +107,7 @@ public class TmXmlReader <T extends RealType<T> & NativeType<T>> implements Algo
 	 * a file created with a subclass of {@link TrackMate_} (e.g. with new factories) so that 
 	 * correct detectors, etc... can be instantiated from the extended plugin.
 	 */
-	protected final TrackMate_<T> plugin;
+	protected final TrackMate_ plugin;
 	/** A map of all spots loaded. We need this for performance, since we need to recreate 
 	 * both the filtered spot collection and the tracks graph from the same spot objects 
 	 * that the main spot collection.. In the file, they are referenced by their {@link Spot#ID()},
@@ -89,7 +135,7 @@ public class TmXmlReader <T extends RealType<T> & NativeType<T>> implements Algo
 	 * The given plugin instance will be modified by this class, upon calling the {@link #process()}
 	 * method 
 	 */
-	public TmXmlReader(File file, TrackMate_<T> plugin) {
+	public TmXmlReader(File file, TrackMate_ plugin) {
 		this.file = file;
 		this.plugin = plugin;
 		parse();
@@ -104,9 +150,9 @@ public class TmXmlReader <T extends RealType<T> & NativeType<T>> implements Algo
 		
 		long start = System.currentTimeMillis();
 		
-		TrackMateModel<T> model = plugin.getModel();
+		TrackMateModel model = plugin.getModel();
 		// Settings
-		Settings<T> settings = getSettings();
+		Settings settings = getSettings();
 		getDetectorSettings(settings);
 		getTrackerSettings(settings);
 		settings.imp = getImage();
@@ -324,8 +370,8 @@ public class TmXmlReader <T extends RealType<T> & NativeType<T>> implements Algo
 	 * @return  a full Settings object
 	 * @throws DataConversionException 
 	 */
-	private Settings<T> getSettings() {
-		Settings<T> settings = new Settings<T>();
+	private Settings getSettings() {
+		Settings settings = new Settings();
 		// Basic settings
 		Element settingsEl = root.getChild(SETTINGS_ELEMENT_KEY);
 		if (null != settingsEl) {
@@ -371,13 +417,13 @@ public class TmXmlReader <T extends RealType<T> & NativeType<T>> implements Algo
 
 	 * @param settings  the base {@link Settings} object to update.
 	 */
-	private void getDetectorSettings(Settings<T> settings) {
+	private void getDetectorSettings(Settings settings) {
 		Element element = root.getChild(DETECTOR_SETTINGS_ELEMENT_KEY);
 		if (null == element) {
 			return;
 		}
 
-		DetectorProvider<T> provider = plugin.getDetectorProvider();
+		DetectorProvider provider = plugin.getDetectorProvider();
 		Map<String, Object> ds = new HashMap<String, Object>(); 
 		// All the hard work is delegated to the provider. 
 		boolean ok = provider.unmarshall(element, ds);
@@ -403,13 +449,13 @@ public class TmXmlReader <T extends RealType<T> & NativeType<T>> implements Algo
 	 *   
 	 * @param settings  the base {@link Settings} object to update.
 	 */
-	private void getTrackerSettings(Settings<T> settings) {
+	private void getTrackerSettings(Settings settings) {
 		Element element = root.getChild(TRACKER_SETTINGS_ELEMENT_KEY);
 		if (null == element) {
 			return;
 		}
 
-		TrackerProvider<T> provider = plugin.getTrackerProvider();
+		TrackerProvider provider = plugin.getTrackerProvider();
 		Map<String, Object> ds = new HashMap<String, Object>(); 
 		// All the hard work is delegated to the provider. 
 		boolean ok = provider.unmarshall(element, ds);
@@ -611,7 +657,7 @@ public class TmXmlReader <T extends RealType<T> & NativeType<T>> implements Algo
 		 * map of tracks vs trackID, using the hash as new keys. Because there is a 
 		 * good chance that they saved keys and the new keys differ, we must retrieve
 		 * the mapping between the two using the retrieve spots.	 */
-		final TrackMateModel<T> model = plugin.getModel();
+		final TrackMateModel model = plugin.getModel();
 		model.setGraph(graph);
 
 		// Retrieve the new track map
@@ -660,7 +706,7 @@ public class TmXmlReader <T extends RealType<T> & NativeType<T>> implements Algo
 		/* 
 		 * We do the same thing for the track features.
 		 */
-		final FeatureModel<T> fm = model.getFeatureModel();
+		final FeatureModel fm = model.getFeatureModel();
 		Map<Integer, Map<String, Double>> savedFeatureMap = readTrackFeatures();
 		for (Integer savedKey : savedFeatureMap.keySet()) {
 

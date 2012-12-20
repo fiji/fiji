@@ -33,13 +33,13 @@ public class SpotRadiusEstimatorFactory<T extends RealType<T> & NativeType<T>>  
 		FEATURE_DIMENSIONS.put(ESTIMATED_DIAMETER, Dimension.LENGTH);
 	}
 	public static final String KEY = "Spot radius estimator";
-	private final TrackMateModel<T> model;
+	private final TrackMateModel model;
 	
 	/*
 	 * CONSTRUCTOR
 	 */
 	
-	public SpotRadiusEstimatorFactory(final TrackMateModel<T> model) {
+	public SpotRadiusEstimatorFactory(final TrackMateModel model) {
 		this.model = model;
 	}
 	

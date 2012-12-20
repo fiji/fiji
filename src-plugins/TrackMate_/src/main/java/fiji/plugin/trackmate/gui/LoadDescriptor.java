@@ -2,10 +2,7 @@ package fiji.plugin.trackmate.gui;
 
 import java.io.File;
 
-import net.imglib2.type.NativeType;
-import net.imglib2.type.numeric.RealType;
-
-public class LoadDescriptor <T extends RealType<T> & NativeType<T>> extends SomeDialogDescriptor<T> {
+public class LoadDescriptor extends SomeDialogDescriptor {
 
 
 	public static final String DESCRIPTOR = "LoadingPanel";
@@ -29,7 +26,7 @@ public class LoadDescriptor <T extends RealType<T> & NativeType<T>> extends Some
 				}
 			}
 
-			GuiReader<T> reader = new GuiReader<T>(wizard);
+			GuiReader reader = new GuiReader(wizard);
 			File tmpFile = reader.askForFile(file);
 			if (null == tmpFile) {
 				wizard.setNextButtonEnabled(true);

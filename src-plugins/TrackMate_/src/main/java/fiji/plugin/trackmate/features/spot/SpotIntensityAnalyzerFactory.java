@@ -78,13 +78,13 @@ public class SpotIntensityAnalyzerFactory<T extends RealType<T> & NativeType<T>>
 //		FEATURE_DIMENSIONS.put(SKEWNESS, Dimension.NONE);
 	}
 
-	private final TrackMateModel<T> model;
+	private final TrackMateModel model;
 
 	/*
 	 * CONSTRUCTOR
 	 */
 	
-	public SpotIntensityAnalyzerFactory(final TrackMateModel<T> model) {
+	public SpotIntensityAnalyzerFactory(final TrackMateModel model) {
 		this.model = model;
 	}
 	

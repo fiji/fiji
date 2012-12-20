@@ -7,9 +7,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import net.imglib2.type.NativeType;
-import net.imglib2.type.numeric.RealType;
-
 import org.jgrapht.alg.ConnectivityInspector;
 import org.jgrapht.alg.DijkstraShortestPath;
 import org.jgrapht.event.GraphEdgeChangeEvent;
@@ -26,14 +23,14 @@ import org.jgrapht.traverse.DepthFirstIterator;
  * A component of {@link TrackMateModel} specialized for tracks
  * @author Jean-Yves Tinevez
  */
-class TrackGraphModel <T extends RealType<T> & NativeType<T>> {
+class TrackGraphModel {
 
 	private static final boolean DEBUG = false;
 
 	/**
 	 * The model this component belongs to. This reference is used to pull listeners.
 	 */
-	private final TrackMateModel<T> model;
+	private final TrackMateModel model;
 
 	
 	/**
@@ -68,7 +65,7 @@ class TrackGraphModel <T extends RealType<T> & NativeType<T>> {
 	 * CONSTRUCTOR
 	 */
 
-	TrackGraphModel(final TrackMateModel<T> parentModel) {
+	TrackGraphModel(final TrackMateModel parentModel) {
 		this.model = parentModel;
 		graph.addGraphListener(new MyGraphListener());
 	}

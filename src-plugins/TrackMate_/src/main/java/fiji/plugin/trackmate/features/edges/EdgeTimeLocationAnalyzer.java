@@ -9,8 +9,6 @@ import java.util.concurrent.ArrayBlockingQueue;
 
 import net.imglib2.algorithm.MultiThreaded;
 import net.imglib2.multithreading.SimpleMultiThreading;
-import net.imglib2.type.NativeType;
-import net.imglib2.type.numeric.RealType;
 
 import org.jgrapht.graph.DefaultWeightedEdge;
 
@@ -19,7 +17,7 @@ import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.features.FeatureModel;
 
-public class EdgeTimeLocationAnalyzer<T extends RealType<T> & NativeType<T>> implements EdgeFeatureAnalyzer, MultiThreaded {
+public class EdgeTimeLocationAnalyzer implements EdgeFeatureAnalyzer, MultiThreaded {
 
 	public static final String KEY = "Edge mean location";
 	/*
@@ -59,14 +57,14 @@ public class EdgeTimeLocationAnalyzer<T extends RealType<T> & NativeType<T>> imp
 
 	private int numThreads;
 	private long processingTime;
-	private final FeatureModel<T> featureModel;
-	private final TrackMateModel<T> model;
+	private final FeatureModel featureModel;
+	private final TrackMateModel model;
 
 	/*
 	 * CONSTRUCTOR
 	 */
 
-	public EdgeTimeLocationAnalyzer(final TrackMateModel<T> model) {
+	public EdgeTimeLocationAnalyzer(final TrackMateModel model) {
 		this.model = model;
 		this.featureModel = model.getFeatureModel();
 		setNumThreads();

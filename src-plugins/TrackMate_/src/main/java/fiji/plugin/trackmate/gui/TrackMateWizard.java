@@ -22,9 +22,6 @@ import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 import javax.swing.WindowConstants;
 
-import net.imglib2.type.NativeType;
-import net.imglib2.type.numeric.RealType;
-
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
 
@@ -34,7 +31,7 @@ import fiji.plugin.trackmate.visualization.TrackMateModelView;
  * 
  * @author Jean-Yves Tinevez <tinevez@pasteur.fr> - September 2010 - 2011
  */
-public class TrackMateWizard <T extends RealType<T> & NativeType<T>> extends javax.swing.JFrame implements ActionListener {
+public class TrackMateWizard extends javax.swing.JFrame implements ActionListener {
 
 	JButton jButtonSave;
 	JButton jButtonLoad;
@@ -78,17 +75,17 @@ public class TrackMateWizard <T extends RealType<T> & NativeType<T>> extends jav
 	 * FIELDS
 	 */
 
-	private WizardPanelDescriptor<T> currentDescriptor;
-	private HashMap<String, WizardPanelDescriptor<T>> descriptorHashmap = new HashMap<String, WizardPanelDescriptor<T>>();
+	private WizardPanelDescriptor currentDescriptor;
+	private HashMap<String, WizardPanelDescriptor> descriptorHashmap = new HashMap<String, WizardPanelDescriptor>();
 	private ArrayList<ActionListener> listeners = new ArrayList<ActionListener>();
 
 	private JPanel jPanelButtons;
 	private JPanel jPanelMain;
 	private LogPanel logPanel;
 	private CardLayout cardLayout;
-	private TrackMateModelView<T> displayer;
+	private TrackMateModelView displayer;
 	private Component component;
-	private final WizardController<T> controller;
+	private final WizardController controller;
 	/** The stored 4 button states. It has default isibility so that states can be tewaked by the controller. */ 
 	boolean[] storedButtonState;
 
@@ -97,7 +94,7 @@ public class TrackMateWizard <T extends RealType<T> & NativeType<T>> extends jav
 	 * CONSTRUCTOR
 	 */
 
-	public TrackMateWizard(Component component, WizardController<T> controller) {
+	public TrackMateWizard(Component component, WizardController controller) {
 		this.component = component;
 		this.controller = controller;
 		initGUI();
@@ -109,7 +106,7 @@ public class TrackMateWizard <T extends RealType<T> & NativeType<T>> extends jav
 	 */
 	
 	/** Expose the controller managing this GUI. */
-	public WizardController<T> getController() {
+	public WizardController getController() {
 		return controller;
 	}
 
@@ -144,14 +141,14 @@ public class TrackMateWizard <T extends RealType<T> & NativeType<T>> extends jav
 	/**
 	 * @return a reference to the {@link TrackMateModelView} linked to this wizard.
 	 */
-	public TrackMateModelView<T> getDisplayer() {
+	public TrackMateModelView getDisplayer() {
 		return displayer;
 	}
 
 	/**
 	 * Set the {@link TrackMateModelView} to be linked to this wizard.
 	 */
-	public void setDisplayer(TrackMateModelView<T> displayer) {
+	public void setDisplayer(TrackMateModelView displayer) {
 		this.displayer = displayer;
 	}
 	
@@ -172,7 +169,7 @@ public class TrackMateWizard <T extends RealType<T> & NativeType<T>> extends jav
 	 * @return the collection of {@link WizardPanelDescriptor} currently
 	 * registered in this wizard.
 	 */
-	public Collection<WizardPanelDescriptor<T>> getWizardPanelDescriptors() {
+	public Collection<WizardPanelDescriptor> getWizardPanelDescriptors() {
 		return descriptorHashmap.values();
 	}
 
@@ -181,7 +178,7 @@ public class TrackMateWizard <T extends RealType<T> & NativeType<T>> extends jav
 	 * @param id String-based identifier
 	 * @param descriptor WizardPanelDescriptor that describes the panel
 	 */    
-	public void registerWizardDescriptor(String id, WizardPanelDescriptor<T> descriptor) {
+	public void registerWizardDescriptor(String id, WizardPanelDescriptor descriptor) {
 		descriptorHashmap.put(id, descriptor);
 	}
 	
@@ -212,11 +209,11 @@ public class TrackMateWizard <T extends RealType<T> & NativeType<T>> extends jav
 	 * Returns the currently displayed WizardPanelDescriptor.
 	 * @return The currently displayed WizardPanelDescriptor
 	 */    
-	public WizardPanelDescriptor<T> getCurrentPanelDescriptor() {
+	public WizardPanelDescriptor getCurrentPanelDescriptor() {
 		return currentDescriptor;
 	}
 
-	public WizardPanelDescriptor<T> getPanelDescriptorFor(Object id) {
+	public WizardPanelDescriptor getPanelDescriptorFor(Object id) {
 		return descriptorHashmap.get(id);
 	}
 	

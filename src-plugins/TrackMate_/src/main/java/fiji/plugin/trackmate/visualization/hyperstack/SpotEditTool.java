@@ -21,9 +21,6 @@ import java.util.Map;
 
 import javax.swing.SwingUtilities;
 
-import net.imglib2.type.NativeType;
-import net.imglib2.type.numeric.RealType;
-
 import org.jgrapht.graph.DefaultWeightedEdge;
 
 import fiji.plugin.trackmate.Spot;
@@ -33,7 +30,7 @@ import fiji.plugin.trackmate.detection.DetectorKeys;
 import fiji.plugin.trackmate.visualization.trackscheme.SpotImageUpdater;
 import fiji.tool.AbstractTool;
 
-public class SpotEditTool<T extends RealType<T> & NativeType<T>> extends AbstractTool implements MouseMotionListener, MouseListener, MouseWheelListener, KeyListener {
+public class SpotEditTool extends AbstractTool implements MouseMotionListener, MouseListener, MouseWheelListener, KeyListener {
 
 	private static final boolean DEBUG = false;
 
@@ -60,10 +57,9 @@ public class SpotEditTool<T extends RealType<T> & NativeType<T>> extends Abstrac
 	private static final double FALL_BACK_RADIUS = 5;
 
 
-	@SuppressWarnings("rawtypes")
 	private static SpotEditTool instance;
 	private HashMap<ImagePlus, Spot> editedSpots = new HashMap<ImagePlus, Spot>();
-	private HashMap<ImagePlus, HyperStackDisplayer<T>> displayers = new HashMap<ImagePlus, HyperStackDisplayer<T>>();
+	private HashMap<ImagePlus, HyperStackDisplayer> displayers = new HashMap<ImagePlus, HyperStackDisplayer>();
 	/** The radius of the previously edited spot. */
 	private Double previousRadius = null;
 	private Spot quickEditedSpot;
@@ -82,10 +78,9 @@ public class SpotEditTool<T extends RealType<T> & NativeType<T>> extends Abstrac
 	 * Return the singleton instance for this tool. If it was not previously instantiated, this calls
 	 * instantiates it. 
 	 */
-	@SuppressWarnings("unchecked")
-	public static <T extends RealType<T> & NativeType<T>> SpotEditTool<T> getInstance() {
+	public static SpotEditTool getInstance() {
 		if (null == instance) {
-			instance = new SpotEditTool<T>();
+			instance = new SpotEditTool();
 			if (DEBUG)
 				System.out.println("[SpotEditTool] Instantiating: "+instance);
 		}
@@ -122,7 +117,7 @@ public class SpotEditTool<T extends RealType<T> & NativeType<T>> extends Abstrac
 	 * Register the given {@link HyperStackDisplayer}. If this method id not called, the tool will not
 	 * respond.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      
 	 */
-	public void register(final ImagePlus imp, final HyperStackDisplayer<T> displayer) {
+	public void register(final ImagePlus imp, final HyperStackDisplayer displayer) {
 		if (DEBUG)
 			System.out.println("[SpotEditTool] Registering "+imp+" and "+displayer);
 		displayers.put(imp, displayer);
@@ -136,7 +131,7 @@ public class SpotEditTool<T extends RealType<T> & NativeType<T>> extends Abstrac
 	public void mouseClicked(MouseEvent e) {
 		
 		final ImagePlus imp = getImagePlus(e);
-		final HyperStackDisplayer<T> displayer = displayers.get(imp);
+		final HyperStackDisplayer displayer = displayers.get(imp);
 		if (DEBUG) {
 			System.out.println("[SpotEditTool] @mouseClicked");
 			System.out.println("[SpotEditTool] Got "+imp+ " as ImagePlus");
@@ -153,7 +148,7 @@ public class SpotEditTool<T extends RealType<T> & NativeType<T>> extends Abstrac
 
 		final Spot clickLocation = displayer.getCLickLocation(e.getPoint());
 		final int frame = displayer.imp.getFrame() - 1;
-		final TrackMateModel<T> model = displayer.getModel();
+		final TrackMateModel model = displayer.getModel();
 		Spot target = model.getFilteredSpots().getSpotAt(clickLocation, frame);
 		Spot editedSpot = editedSpots.get(imp);
 
@@ -235,7 +230,7 @@ public class SpotEditTool<T extends RealType<T> & NativeType<T>> extends Abstrac
 				editedSpot.putFeature(Spot.POSITION_T, frame * displayer.settings.dt);
 				editedSpot.putFeature(Spot.FRAME, frame);
 				// Update spot image
-				SpotImageUpdater<T> spotImageUpdater = new SpotImageUpdater<T>(model);
+				SpotImageUpdater spotImageUpdater = new SpotImageUpdater(model);
 				spotImageUpdater.update(editedSpot);
 
 				model.beginUpdate();
@@ -285,7 +280,7 @@ public class SpotEditTool<T extends RealType<T> & NativeType<T>> extends Abstrac
 	@Override
 	public void mouseDragged(MouseEvent e) {
 		final ImagePlus imp = getImagePlus(e);
-		final HyperStackDisplayer<T> displayer = displayers.get(imp);
+		final HyperStackDisplayer displayer = displayers.get(imp);
 		if (null == displayer)
 			return;
 		Spot editedSpot = editedSpots.get(imp);
@@ -308,7 +303,7 @@ public class SpotEditTool<T extends RealType<T> & NativeType<T>> extends Abstrac
 		if (quickEditedSpot == null)
 			return;
 		final ImagePlus imp = getImagePlus(e);
-		final HyperStackDisplayer<T> displayer = displayers.get(imp);
+		final HyperStackDisplayer displayer = displayers.get(imp);
 		if (null == displayer)
 			return;
 		Spot editedSpot = editedSpots.get(imp);
@@ -335,7 +330,7 @@ public class SpotEditTool<T extends RealType<T> & NativeType<T>> extends Abstrac
 	@Override
 	public void mouseWheelMoved(MouseWheelEvent e) {
 		final ImagePlus imp = getImagePlus(e);
-		final HyperStackDisplayer<T> displayer = displayers.get(imp);
+		final HyperStackDisplayer displayer = displayers.get(imp);
 		if (null == displayer)
 			return;
 		Spot editedSpot = editedSpots.get(imp);
@@ -368,11 +363,11 @@ public class SpotEditTool<T extends RealType<T> & NativeType<T>> extends Abstrac
 		final ImagePlus imp = getImagePlus(e);
 		if (imp == null)
 			return;
-		final HyperStackDisplayer<T> displayer = displayers.get(imp);
+		final HyperStackDisplayer displayer = displayers.get(imp);
 		if (null == displayer)
 			return;
 
-		TrackMateModel<T> model = displayer.getModel();
+		TrackMateModel model = displayer.getModel();
 		Spot editedSpot = editedSpots.get(imp);
 
 		int keycode = e.getKeyCode(); 
@@ -446,7 +441,7 @@ public class SpotEditTool<T extends RealType<T> & NativeType<T>> extends Abstrac
 				newSpot.putFeature(Spot.POSITION_Z, zpos);
 				newSpot.putFeature(Spot.RADIUS, radius);
 				// Update spot image
-				SpotImageUpdater<T> spotImageUpdater = new SpotImageUpdater<T>(model);
+				SpotImageUpdater spotImageUpdater = new SpotImageUpdater(model);
 				spotImageUpdater.update(newSpot);
 				
 				model.beginUpdate();
@@ -637,10 +632,10 @@ public class SpotEditTool<T extends RealType<T> & NativeType<T>> extends Abstrac
 			final ImagePlus imp = getImagePlus(e);
 			if (imp == null)
 				return;
-			final HyperStackDisplayer<T> displayer = displayers.get(imp);
+			final HyperStackDisplayer displayer = displayers.get(imp);
 			if (null == displayer)
 				return;
-			TrackMateModel<T> model = displayer.getModel();
+			TrackMateModel model = displayer.getModel();
 			model.beginUpdate();
 			try {
 				model.updateFeatures(quickEditedSpot);

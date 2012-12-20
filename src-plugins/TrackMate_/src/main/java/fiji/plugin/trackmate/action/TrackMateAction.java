@@ -2,9 +2,6 @@ package fiji.plugin.trackmate.action;
 
 import javax.swing.ImageIcon;
 
-import net.imglib2.type.NativeType;
-import net.imglib2.type.numeric.RealType;
-
 import fiji.plugin.trackmate.InfoTextable;
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.TrackMateModel;
@@ -18,12 +15,12 @@ import fiji.plugin.trackmate.gui.TrackMateWizard;
  * @author Jean-Yves Tinevez <jeanyves.tinevez@gmail.com> 2011
  *
  */
-public interface TrackMateAction<T extends RealType<T> & NativeType<T>>  extends InfoTextable {
+public interface TrackMateAction extends InfoTextable {
 	
 	/**
 	 * Execute this action using the given plugin
 	 */
-	public void execute(final TrackMate_<T> plugin);
+	public void execute(final TrackMate_ plugin);
 
 	/**
 	 * Set the logger that will receive logs when this action is executed.
@@ -38,6 +35,6 @@ public interface TrackMateAction<T extends RealType<T> & NativeType<T>>  extends
 	/**
 	 * Set the GUI that launched this action, in case the action needs accessing it or updating it.
 	 */
-	public void setWizard(TrackMateWizard<T> wizard);
+	public void setWizard(TrackMateWizard wizard);
 		
 }

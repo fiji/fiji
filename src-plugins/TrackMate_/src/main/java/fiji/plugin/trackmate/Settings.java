@@ -10,8 +10,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import net.imglib2.type.NativeType;
-import net.imglib2.type.numeric.RealType;
 import fiji.plugin.trackmate.detection.SpotDetector;
 import fiji.plugin.trackmate.detection.SpotDetectorFactory;
 import fiji.plugin.trackmate.tracking.SpotTracker;
@@ -21,7 +19,7 @@ import fiji.plugin.trackmate.visualization.TrackMateModelView;
  * This class is used to store user settings for the {@link TrackMate_} plugin.
  * It is simply made of public fields 
  */
-public class Settings <T extends RealType<T> & NativeType<T>> {
+public class Settings {
 	
 	/** The ImagePlus to operate on. Will also be used by some {@link TrackMateModelView} 
 	 * as a GUI target. */
@@ -65,7 +63,7 @@ public class Settings <T extends RealType<T> & NativeType<T>> {
 	
 	/** The name of the detector factory to use. It will be used to generate {@link SpotDetector}
 	 * for each target frame. */
-	public SpotDetectorFactory<T> detectorFactory;
+	public SpotDetectorFactory<?> detectorFactory;
 	/** The the tracker to use. */
 	public SpotTracker tracker;
 	

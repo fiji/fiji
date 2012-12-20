@@ -9,9 +9,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import net.imglib2.type.NativeType;
-import net.imglib2.type.numeric.RealType;
-
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.plot.PlotOrientation;
@@ -31,7 +28,7 @@ import fiji.plugin.trackmate.util.XYEdgeRenderer;
 import fiji.plugin.trackmate.util.XYEdgeSeries;
 import fiji.plugin.trackmate.util.XYEdgeSeriesCollection;
 
-public class SpotFeatureGrapher<T extends RealType<T> & NativeType<T>> extends AbstractFeatureGrapher<T>  {
+public class SpotFeatureGrapher extends AbstractFeatureGrapher  {
 
 	private final List<Spot> spots;
 	private final Dimension xDimension;
@@ -42,7 +39,7 @@ public class SpotFeatureGrapher<T extends RealType<T> & NativeType<T>> extends A
 	 * CONSTRUCTOR
 	 */
 
-	public SpotFeatureGrapher(final String xFeature, final Set<String> yFeatures, final List<Spot> spots, final TrackMateModel<T> model) {
+	public SpotFeatureGrapher(final String xFeature, final Set<String> yFeatures, final List<Spot> spots, final TrackMateModel model) {
 		super(xFeature, yFeatures, model);
 		this.spots = spots;
 		this.xDimension = model.getFeatureModel().getSpotFeatureDimensions().get(xFeature);
@@ -59,7 +56,7 @@ public class SpotFeatureGrapher<T extends RealType<T> & NativeType<T>> extends A
 	@Override
 	public void render() {
 				
-		final Settings<T> settings = model.getSettings();
+		final Settings settings = model.getSettings();
 		
 		// X label
 		String xAxisLabel = xFeature + " (" + TMUtils.getUnitsFor(xDimension, settings)+")";

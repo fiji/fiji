@@ -13,6 +13,7 @@ import static fiji.plugin.trackmate.visualization.TrackMateModelView.KEY_TRACK_D
 import static fiji.plugin.trackmate.visualization.trackscheme.TrackScheme.TRACK_SCHEME_ICON;
 
 import java.awt.Component;
+import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -30,30 +31,23 @@ import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
-import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
-import javax.swing.WindowConstants;
 import javax.swing.border.LineBorder;
-
-import net.imglib2.type.NativeType;
-import net.imglib2.type.numeric.RealType;
 
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMate_;
 import fiji.plugin.trackmate.visualization.AbstractTrackMateModelView;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
 
-import java.awt.Dimension;
-
 /**
  * A configuration panel used to tune the aspect of spots and tracks in multiple {@link AbstractTrackMateModelView}.
  * This GUI takes the role of a controller.
  * @author Jean-Yves Tinevez <tinevez@pasteur.fr>   -  2010 - 2011
  */
-public class DisplayerPanel<T extends RealType<T> & NativeType<T>> extends ActionListenablePanel implements WizardPanelDescriptor<T> {
+public class DisplayerPanel extends ActionListenablePanel implements WizardPanelDescriptor {
 
 	private static final long serialVersionUID = 1L;
 
@@ -82,9 +76,9 @@ public class DisplayerPanel<T extends RealType<T> & NativeType<T>> extends Actio
 	/**
 	 * The set of {@link TrackMateModelView} views controlled by this controller.
 	 */
-	private Set<TrackMateModelView<T>> views = new HashSet<TrackMateModelView<T>>();
-	private TrackMate_<T> plugin;
-	private TrackMateWizard<T> wizard;
+	private Set<TrackMateModelView> views = new HashSet<TrackMateModelView>();
+	private TrackMate_ plugin;
+	private TrackMateWizard wizard;
 
 
 	/*
@@ -100,12 +94,12 @@ public class DisplayerPanel<T extends RealType<T> & NativeType<T>> extends Actio
 	 */
 
 	@Override
-	public void setWizard(TrackMateWizard<T> wizard) {
+	public void setWizard(TrackMateWizard wizard) {
 		this.wizard = wizard;
 	}
 
 	@Override
-	public void setPlugin(TrackMate_<T> plugin) {
+	public void setPlugin(TrackMate_ plugin) {
 		this.plugin = plugin;
 		setModel(plugin.getModel());
 	}
@@ -154,7 +148,7 @@ public class DisplayerPanel<T extends RealType<T> & NativeType<T>> extends Actio
 	/**
 	 * Add the given {@link TrackMateModelView} to the list managed by this controller.
 	 */
-	public void register(final TrackMateModelView<T> view) {
+	public void register(final TrackMateModelView view) {
 		if (!views.contains(view)) {
 			views.add(view);
 		}
@@ -167,7 +161,7 @@ public class DisplayerPanel<T extends RealType<T> & NativeType<T>> extends Actio
 			public void run() {
 				// Intercept event coming from the JPanelSpotColorGUI, and translate it for views
 				if (event == jPanelSpotColor.COLOR_FEATURE_CHANGED) {
-					for (TrackMateModelView<T> view : views) {
+					for (TrackMateModelView view : views) {
 						view.setDisplaySettings(KEY_SPOT_COLOR_FEATURE, jPanelSpotColor.setColorByFeature);
 						view.refresh();
 					}
@@ -200,7 +194,7 @@ public class DisplayerPanel<T extends RealType<T> & NativeType<T>> extends Actio
 	 * PRIVATE METHODS
 	 */
 
-	private void setModel(TrackMateModel<T> model) {
+	private void setModel(TrackMateModel model) {
 		Map<String, double[]> featureValues = model.getFeatureModel().getSpotFeatureValues();
 		List<String> features = model.getFeatureModel().getSpotFeatures();
 		Map<String, String> featureNames = model.getFeatureModel().getSpotFeatureNames();
@@ -211,7 +205,7 @@ public class DisplayerPanel<T extends RealType<T> & NativeType<T>> extends Actio
 			jPanelSpotColor.addActionListener(new ActionListener() {
 				@Override
 				public void actionPerformed(ActionEvent e) {
-					for(TrackMateModelView<T> view : views) {
+					for(TrackMateModelView view : views) {
 						view.setDisplaySettings(KEY_SPOT_COLOR_FEATURE, jPanelSpotColor.setColorByFeature);
 						view.refresh();
 					}							
@@ -260,7 +254,7 @@ public class DisplayerPanel<T extends RealType<T> & NativeType<T>> extends Actio
 					jComboBoxDisplayMode.addActionListener(new ActionListener() {
 						@Override
 						public void actionPerformed(ActionEvent e) {
-							for(TrackMateModelView<T> view : views) {
+							for(TrackMateModelView view : views) {
 								view.setDisplaySettings(KEY_TRACK_DISPLAY_MODE, jComboBoxDisplayMode.getSelectedIndex());
 								view.refresh();
 							}
@@ -283,7 +277,7 @@ public class DisplayerPanel<T extends RealType<T> & NativeType<T>> extends Actio
 								depth = Integer.parseInt(jTextFieldFrameDepth.getText());
 							else
 								depth = (int) 1e9;
-							for(TrackMateModelView<T> view : views) {
+							for(TrackMateModelView view : views) {
 								view.setDisplaySettings(KEY_TRACK_DISPLAY_DEPTH, depth);
 								view.refresh();
 							}
@@ -307,7 +301,7 @@ public class DisplayerPanel<T extends RealType<T> & NativeType<T>> extends Actio
 						@Override
 						public void actionPerformed(ActionEvent e) {
 							int depth = Integer.parseInt(jTextFieldFrameDepth.getText());
-							for(TrackMateModelView<T> view : views) {
+							for(TrackMateModelView view : views) {
 								view.setDisplaySettings(KEY_TRACK_DISPLAY_DEPTH, depth);
 								view.refresh();
 							}
@@ -327,7 +321,7 @@ public class DisplayerPanel<T extends RealType<T> & NativeType<T>> extends Actio
 					public void actionPerformed(ActionEvent e) {
 						boolean isSelected = jCheckBoxDisplayTracks.isSelected();
 						jPanelTrackOptions.setEnabled(isSelected);
-						for(TrackMateModelView<T> view : views) {
+						for(TrackMateModelView view : views) {
 							view.setDisplaySettings(KEY_TRACKS_VISIBLE, isSelected);
 							view.refresh();
 						}
@@ -346,7 +340,7 @@ public class DisplayerPanel<T extends RealType<T> & NativeType<T>> extends Actio
 					public void actionPerformed(ActionEvent e) {
 						boolean isSelected = jCheckBoxDisplaySpots.isSelected();
 						jPanelSpotOptions.setEnabled(isSelected);
-						for(TrackMateModelView<T> view : views) {
+						for(TrackMateModelView view : views) {
 							view.setDisplaySettings(KEY_SPOTS_VISIBLE, isSelected);
 							view.refresh();
 						}
@@ -380,7 +374,7 @@ public class DisplayerPanel<T extends RealType<T> & NativeType<T>> extends Actio
 					jTextFieldSpotRadius.addActionListener(new ActionListener() {
 						@Override
 						public void actionPerformed(ActionEvent e) {
-							for(TrackMateModelView<T> view : views) {
+							for(TrackMateModelView view : views) {
 								view.setDisplaySettings(KEY_SPOT_RADIUS_RATIO, (float) jTextFieldSpotRadius.getValue());
 								view.refresh();
 							}
@@ -389,7 +383,7 @@ public class DisplayerPanel<T extends RealType<T> & NativeType<T>> extends Actio
 					jTextFieldSpotRadius.addFocusListener(new FocusListener() {
 						@Override
 						public void focusLost(FocusEvent e) {
-							for(TrackMateModelView<T> view : views) {
+							for(TrackMateModelView view : views) {
 								view.setDisplaySettings(KEY_SPOT_RADIUS_RATIO, (float) jTextFieldSpotRadius.getValue());
 								view.refresh();
 							}							
@@ -407,7 +401,7 @@ public class DisplayerPanel<T extends RealType<T> & NativeType<T>> extends Actio
 					jCheckBoxDisplayNames.addActionListener(new ActionListener() {
 						@Override
 						public void actionPerformed(ActionEvent e) {
-							for(TrackMateModelView<T> view : views) {
+							for(TrackMateModelView view : views) {
 								view.setDisplaySettings(KEY_DISPLAY_SPOT_NAMES, jCheckBoxDisplayNames.isSelected());
 								view.refresh();
 							}
@@ -453,19 +447,5 @@ public class DisplayerPanel<T extends RealType<T> & NativeType<T>> extends Actio
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-	}
-
-	/*
-	 * MAIN METHOD
-	 */
-
-	public static <T extends RealType<T> & NativeType<T>> void main(String[] args) {
-		JFrame frame = new JFrame();
-		frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-		frame.pack();
-		frame.setVisible(true);
-		DisplayerPanel<T> displayerPanel_IL = new DisplayerPanel<T>();
-		frame.getContentPane().add(displayerPanel_IL);
-		displayerPanel_IL.setPreferredSize(new java.awt.Dimension(300, 469));
 	}
 }

@@ -6,9 +6,6 @@ import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
-import net.imglib2.type.NativeType;
-import net.imglib2.type.numeric.RealType;
-
 import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.traverse.DepthFirstIterator;
 
@@ -16,7 +13,7 @@ import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotImp;
 import fiji.plugin.trackmate.TrackMateModel;
 
-public class TrackSplitter <T extends RealType<T> & NativeType<T>> {
+public class TrackSplitter {
 
 	public static final int LONE_VERTEX			= 0;
 	public static final int BRANCH_START		= 1;
@@ -29,9 +26,9 @@ public class TrackSplitter <T extends RealType<T> & NativeType<T>> {
 	public static final int COMPLEX_POINT		= 128;
 	public static final int NOT_IN_GRAPH		= 256;
 	
-	private TrackMateModel<T> model; 
+	private TrackMateModel model; 
 	
-	public TrackSplitter(final TrackMateModel<T> model) {
+	public TrackSplitter(final TrackMateModel model) {
 		this.model = model;
 	}
 	
@@ -113,7 +110,7 @@ public class TrackSplitter <T extends RealType<T> & NativeType<T>> {
 		return prunedBranches;
 	}
 	
-	public static final <T extends RealType<T> & NativeType<T>> int getVertexType(final TrackMateModel<T> model, final Spot spot) {
+	public static final int getVertexType(final TrackMateModel model, final Spot spot) {
 		if (!model.getFilteredSpots().getAllSpots().contains(spot))
 			return NOT_IN_GRAPH;
 		

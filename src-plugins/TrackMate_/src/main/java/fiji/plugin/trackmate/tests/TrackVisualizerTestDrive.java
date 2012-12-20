@@ -20,15 +20,11 @@ import java.io.IOException;
 
 import javax.swing.JFrame;
 
-import net.imglib2.type.NativeType;
-import net.imglib2.type.numeric.RealType;
-
 import org.jdom2.JDOMException;
 
 public class TrackVisualizerTestDrive {
-
 	
-	public static <T extends RealType<T> & NativeType<T>>  void main(String[] args) throws JDOMException, IOException {
+	public static void main(String[] args) throws JDOMException, IOException {
 	
 		File file;
 		if (!IJ.isWindows()) {
@@ -38,14 +34,14 @@ public class TrackVisualizerTestDrive {
 		}
 		ij.ImageJ.main(args);
 		
-		TrackMate_<T> plugin = new TrackMate_<T>();
+		TrackMate_ plugin = new TrackMate_();
 		plugin.initModules();
-		TmXmlReader<T> reader = new TmXmlReader<T>(file, plugin);
+		TmXmlReader reader = new TmXmlReader(file, plugin);
 		if (!reader.checkInput() && !reader.process()) {
 			System.err.println("Problem loading the file:");
 			System.err.println(reader.getErrorMessage());
 		}
-		TrackMateModel<T> model = plugin.getModel();
+		TrackMateModel model = plugin.getModel();
 		
 		System.out.println("From the XML file:");
 		System.out.println("Found "+model.getNTracks()+" tracks in total.");
@@ -67,7 +63,7 @@ public class TrackVisualizerTestDrive {
 		System.out.println(model.getFilteredTrackIDs());
 		System.out.println();
 			
-		Settings<T> settings = model.getSettings();
+		Settings settings = model.getSettings();
 		ImagePlus imp = settings.imp;
 		
 		// Launch ImageJ and display
@@ -76,22 +72,22 @@ public class TrackVisualizerTestDrive {
 			imp.show();
 		}
 		
-		GrabSpotImageAction<T> grabber = new GrabSpotImageAction<T>();
+		GrabSpotImageAction grabber = new GrabSpotImageAction();
 		grabber.execute(plugin);
 		
 		
 		// Instantiate displayer
-		final TrackMateModelView<T> displayer = new HyperStackDisplayer<T>();
+		final TrackMateModelView displayer = new HyperStackDisplayer();
 		displayer.setModel(model);
 		displayer.render();
 		displayer.refresh();
 		
 		// Display Track scheme
-		final TrackScheme<T> trackScheme = new TrackScheme<T>(model);
+		final TrackScheme trackScheme = new TrackScheme(model);
 		trackScheme.render();
 		
 		// Show control panel
-		DisplayerPanel<T> panel = new DisplayerPanel<T>();
+		DisplayerPanel panel = new DisplayerPanel();
 		panel.setPlugin(plugin);
 		panel.register(trackScheme);
 		panel.register(displayer);
@@ -101,7 +97,7 @@ public class TrackVisualizerTestDrive {
 		frame.setVisible(true);
 		
 		// Show plot panel
-		GrapherPanel<T> plotPanel = new GrapherPanel<T>();
+		GrapherPanel plotPanel = new GrapherPanel();
 		plotPanel.setPlugin(plugin);
 		JFrame graphFrame = new JFrame();
 		graphFrame.getContentPane().add(plotPanel);

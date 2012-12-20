@@ -3,18 +3,16 @@ package fiji.plugin.trackmate.gui;
 import java.awt.Component;
 import java.util.List;
 
-import net.imglib2.type.NativeType;
-import net.imglib2.type.numeric.RealType;
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.TrackMate_;
 import fiji.plugin.trackmate.TrackerProvider;
 
-public class TrackerChoiceDescriptor <T extends RealType<T> & NativeType<T>> implements WizardPanelDescriptor<T> {
+public class TrackerChoiceDescriptor implements WizardPanelDescriptor {
 
 	public static final String DESCRIPTOR = "TrackerChoice";
 	private ListChooserPanel component;
-	private TrackMate_<T> plugin;
-	private TrackMateWizard<T> wizard;
+	private TrackMate_ plugin;
+	private TrackMateWizard wizard;
 	
 	/*
 	 * METHODS
@@ -59,7 +57,7 @@ public class TrackerChoiceDescriptor <T extends RealType<T> & NativeType<T>> imp
 	public void aboutToHidePanel() {
 		
 		// Configure the detector provider with choice made in panel
-		TrackerProvider<T> provider = plugin.getTrackerProvider();
+		TrackerProvider provider = plugin.getTrackerProvider();
 		int index = component.jComboBoxChoice.getSelectedIndex();
 		String key = provider.getKeys().get(index);
 		
@@ -79,16 +77,16 @@ public class TrackerChoiceDescriptor <T extends RealType<T> & NativeType<T>> imp
 		}
 		
 		// Instantiate next descriptor for the wizard
-		TrackerConfigurationPanelDescriptor<T> descriptor = new TrackerConfigurationPanelDescriptor<T>();
+		TrackerConfigurationPanelDescriptor descriptor = new TrackerConfigurationPanelDescriptor();
 		descriptor.setPlugin(plugin);
 		descriptor.setWizard(wizard);
 		wizard.registerWizardDescriptor(TrackerConfigurationPanelDescriptor.DESCRIPTOR, descriptor);
 	}
 
 	@Override
-	public void setPlugin(TrackMate_<T> plugin) {
+	public void setPlugin(TrackMate_ plugin) {
 		this.plugin = plugin;
-		TrackerProvider<T> provider = plugin.getTrackerProvider();
+		TrackerProvider provider = plugin.getTrackerProvider();
 		List<String> trackerNames = provider.getNames();
 		List<String> infoTexts = provider.getInfoTexts();
 		this.component = new ListChooserPanel(trackerNames, infoTexts, "tracker");
@@ -96,7 +94,7 @@ public class TrackerChoiceDescriptor <T extends RealType<T> & NativeType<T>> imp
 	}
 
 	@Override
-	public void setWizard(TrackMateWizard<T> wizard) {	
+	public void setWizard(TrackMateWizard wizard) {	
 		this.wizard = wizard;
 	}
 

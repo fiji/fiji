@@ -2,15 +2,13 @@ package fiji.plugin.trackmate.action;
 
 import javax.swing.ImageIcon;
 
-import net.imglib2.type.NativeType;
-import net.imglib2.type.numeric.RealType;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.TrackMate_;
 import fiji.plugin.trackmate.features.spot.SpotRadiusEstimatorFactory;
 import fiji.plugin.trackmate.gui.DisplayerPanel;
 
-public class RadiusToEstimatedAction<T extends RealType<T> & NativeType<T>> extends AbstractTMAction<T> {
+public class RadiusToEstimatedAction extends AbstractTMAction {
 
 	public static final ImageIcon ICON = new ImageIcon(DisplayerPanel.class.getResource("images/lightbulb.png"));
 	public static final String NAME = "Set radius to estimated value";
@@ -34,7 +32,7 @@ public class RadiusToEstimatedAction<T extends RealType<T> & NativeType<T>> exte
 	}
 
 	@Override
-	public void execute(final TrackMate_<T> plugin) {
+	public void execute(final TrackMate_ plugin) {
 		logger.log("Setting all spot radiuses to their estimated value.\n");
 		SpotCollection spots = plugin.getModel().getFilteredSpots();
 		int valid = 0;

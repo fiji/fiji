@@ -34,8 +34,6 @@ import net.imglib2.meta.Axes;
 import net.imglib2.meta.AxisType;
 import net.imglib2.meta.Metadata;
 import net.imglib2.multithreading.SimpleMultiThreading;
-import net.imglib2.type.NativeType;
-import net.imglib2.type.numeric.RealType;
 import net.imglib2.util.Util;
 
 import org.jdom2.Attribute;
@@ -961,7 +959,7 @@ public class TMUtils {
 	 * Ensure an 8-bit gray image is sent to the 3D viewer.
 	 * @throws ImgLibException 
 	 */
-	public static final <T extends RealType<T> & NativeType<T>> ImagePlus[] makeImageForViewer(final Settings<T> settings) throws ImgLibException {
+	public static final ImagePlus[] makeImageForViewer(final Settings settings) throws ImgLibException {
 
 		final ImagePlus origImp = settings.imp;
 		origImp.killRoi();
@@ -1008,7 +1006,7 @@ public class TMUtils {
 	 * Return a String unit for the given dimension. When suitable, the unit is taken from the settings
 	 * field, which contains the spatial and time units. Otherwise, default units are used.
 	 */
-	public static final <T extends RealType<T> & NativeType<T>> String getUnitsFor(final Dimension dimension, final Settings<T> settings) {
+	public static final String getUnitsFor(final Dimension dimension, final Settings settings) {
 		String units = "no unit";
 		switch (dimension) {
 		case ANGLE:

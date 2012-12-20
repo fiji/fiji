@@ -12,14 +12,12 @@ import java.util.List;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 
-import net.imglib2.type.NativeType;
-import net.imglib2.type.numeric.RealType;
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.TrackMate_;
 import fiji.plugin.trackmate.action.ExportStatsToIJAction;
 import fiji.plugin.trackmate.visualization.trackscheme.TrackScheme;
 
-public class WizardController<T extends RealType<T> & NativeType<T>> implements ActionListener {
+public class WizardController implements ActionListener {
 
 	/*
 	 * FIELDS
@@ -28,9 +26,9 @@ public class WizardController<T extends RealType<T> & NativeType<T>> implements 
 	private static final boolean DEBUG = false;
 	protected Logger logger;
 	/** The plugin piloted here. */
-	protected TrackMate_<T> plugin;
+	protected TrackMate_ plugin;
 	/** The GUI controlled by this controller.  */
-	protected TrackMateWizard<T> wizard;
+	protected TrackMateWizard wizard;
 
 	/**
 	 * Is used to determine how to react to a 'next' button push. If it is set to true, then we are
@@ -44,7 +42,7 @@ public class WizardController<T extends RealType<T> & NativeType<T>> implements 
 	 * CONSTRUCTOR
 	 */
 
-	public WizardController(final TrackMate_<T> plugin) {
+	public WizardController(final TrackMate_ plugin) {
 
 		// I can't stand the metal look. If this is a problem, contact me (jeanyves.tinevez@gmail.com)
 		if (IJ.isMacOSX() || IJ.isWindows()) {
@@ -67,7 +65,7 @@ public class WizardController<T extends RealType<T> & NativeType<T>> implements 
 		if (imp != null && imp.getWindow() != null ) {
 			window = imp.getWindow();
 		}
-		this.wizard = new TrackMateWizard<T>(window, this);
+		this.wizard = new TrackMateWizard(window, this);
 		this.logger = wizard.getLogger();
 
 		plugin.setLogger(logger);
@@ -75,8 +73,8 @@ public class WizardController<T extends RealType<T> & NativeType<T>> implements 
 		wizard.addActionListener(this);
 
 		// Instantiate and pass panel descriptors to the wizard
-		List<WizardPanelDescriptor<T>> descriptors = createWizardPanelDescriptorList();
-		for(WizardPanelDescriptor<T> descriptor : descriptors) {
+		List<WizardPanelDescriptor> descriptors = createWizardPanelDescriptorList();
+		for(WizardPanelDescriptor descriptor : descriptors) {
 			descriptor.setPlugin(plugin);
 			descriptor.setWizard(wizard);
 			wizard.registerWizardDescriptor(descriptor.getDescriptorID(), descriptor);
@@ -92,14 +90,14 @@ public class WizardController<T extends RealType<T> & NativeType<T>> implements 
 	/**
 	 * Expose the {@link TrackMateWizard} instance controlled here.
 	 */
-	public TrackMateWizard<T> getWizard() {
+	public TrackMateWizard getWizard() {
 		return wizard;
 	}
 
 	/**
 	 * Expose the {@link TrackMate_} plugin piloted by the wizard.
 	 */
-	public TrackMate_<T> getPlugin() {
+	public TrackMate_ getPlugin() {
 		return plugin;
 	}
 
@@ -114,13 +112,13 @@ public class WizardController<T extends RealType<T> & NativeType<T>> implements 
 	 */
 	protected void init() {
 		// We need to listen to events happening on the DisplayerPanel
-		DisplayerPanel<T> displayerPanel = (DisplayerPanel<T>) wizard.getPanelDescriptorFor(DisplayerPanel.DESCRIPTOR);
+		DisplayerPanel displayerPanel = (DisplayerPanel) wizard.getPanelDescriptorFor(DisplayerPanel.DESCRIPTOR);
 		displayerPanel.addActionListener(this);
 
 		// Get start panel id
 		wizard.setPreviousButtonEnabled(false);
 		String id = StartDialogPanel.DESCRIPTOR;
-		WizardPanelDescriptor<T> panelDescriptor  = wizard.getPanelDescriptorFor(id);
+		WizardPanelDescriptor panelDescriptor  = wizard.getPanelDescriptorFor(id);
 
 		// Execute about to be displayed action of the new one
 		panelDescriptor.aboutToDisplayPanel();
@@ -139,26 +137,26 @@ public class WizardController<T extends RealType<T> & NativeType<T>> implements 
 	 * By extending this method to return another list, you can add, remove or change 
 	 * some panels. 
 	 */
-	protected List<WizardPanelDescriptor<T>> createWizardPanelDescriptorList() {
-		List<WizardPanelDescriptor<T>> descriptors = new ArrayList<WizardPanelDescriptor<T>>(14);
-		descriptors.add(new StartDialogPanel<T>());
-		descriptors.add(new DetectorChoiceDescriptor<T>());
+	protected List<WizardPanelDescriptor> createWizardPanelDescriptorList() {
+		List<WizardPanelDescriptor> descriptors = new ArrayList<WizardPanelDescriptor>(14);
+		descriptors.add(new StartDialogPanel());
+		descriptors.add(new DetectorChoiceDescriptor());
 		//		descriptors.add(new DetectorConfigurationPanelDescriptor()); // will be instantiated on the fly, see DetectorChoiceDescriptor
-		descriptors.add(new DetectorDescriptor<T>());
-		descriptors.add(new InitFilterDescriptor<T>());
-		descriptors.add(new DisplayerChoiceDescriptor<T>());
-		descriptors.add(new LaunchDisplayerDescriptor<T>());
-		descriptors.add(new SpotFilterDescriptor<T>());
-		descriptors.add(new TrackerChoiceDescriptor<T>());
+		descriptors.add(new DetectorDescriptor());
+		descriptors.add(new InitFilterDescriptor());
+		descriptors.add(new DisplayerChoiceDescriptor());
+		descriptors.add(new LaunchDisplayerDescriptor());
+		descriptors.add(new SpotFilterDescriptor());
+		descriptors.add(new TrackerChoiceDescriptor());
 		//		descriptors.add(new TrackerConfigurationPanelDescriptor());  // will be instantiated on the fly, see TrackerChoiceDescriptor
-		descriptors.add(new TrackingDescriptor<T>());
-		descriptors.add(new TrackFilterDescriptor<T>());
-		descriptors.add(new DisplayerPanel<T>());
-		descriptors.add(new GrapherPanel<T>());
+		descriptors.add(new TrackingDescriptor());
+		descriptors.add(new TrackFilterDescriptor());
+		descriptors.add(new DisplayerPanel());
+		descriptors.add(new GrapherPanel());
 		descriptors.add(ActionChooserPanel.instantiateForPlugin(plugin));
 
-		descriptors.add(new LoadDescriptor<T>());
-		descriptors.add(new SaveDescriptor<T>());
+		descriptors.add(new LoadDescriptor());
+		descriptors.add(new SaveDescriptor());
 		return descriptors;
 	}
 
@@ -170,7 +168,7 @@ public class WizardController<T extends RealType<T> & NativeType<T>> implements 
 	public void actionPerformed(ActionEvent event) {
 		if (DEBUG)
 			System.out.println("[TrackMateFrameController] Caught event "+event);
-		final DisplayerPanel<T> displayerPanel = (DisplayerPanel<T>) wizard.getPanelDescriptorFor(DisplayerPanel.DESCRIPTOR);
+		final DisplayerPanel displayerPanel = (DisplayerPanel) wizard.getPanelDescriptorFor(DisplayerPanel.DESCRIPTOR);
 
 		if (event == wizard.NEXT_BUTTON_PRESSED && actionFlag) {
 
@@ -232,7 +230,7 @@ public class WizardController<T extends RealType<T> & NativeType<T>> implements 
 			// Display Track scheme
 			displayerPanel.jButtonShowTrackScheme.setEnabled(false);
 			try {
-				TrackScheme<T> trackScheme = new TrackScheme<T>(plugin.getModel());
+				TrackScheme trackScheme = new TrackScheme(plugin.getModel());
 				trackScheme.render();
 			} finally {
 				displayerPanel.jButtonShowTrackScheme.setEnabled(true);
@@ -247,7 +245,7 @@ public class WizardController<T extends RealType<T> & NativeType<T>> implements 
 			new Thread("TrackMate export analysis to IJ thread.") {
 				public void run() {
 					try {
-						ExportStatsToIJAction<T> action = new ExportStatsToIJAction<T>();
+						ExportStatsToIJAction action = new ExportStatsToIJAction();
 						action.execute(plugin);
 					} finally {
 						wizard.showDescriptorPanelFor(DisplayerPanel.DESCRIPTOR);
@@ -267,13 +265,13 @@ public class WizardController<T extends RealType<T> & NativeType<T>> implements 
 		try {
 
 			// Execute leave action of the old panel
-			WizardPanelDescriptor<T> oldDescriptor = wizard.getCurrentPanelDescriptor();
+			WizardPanelDescriptor oldDescriptor = wizard.getCurrentPanelDescriptor();
 			if (oldDescriptor != null) {
 				oldDescriptor.aboutToHidePanel();
 			}
 
 			String id = oldDescriptor.getNextDescriptorID();
-			WizardPanelDescriptor<T> panelDescriptor  = wizard.getPanelDescriptorFor(id);
+			WizardPanelDescriptor panelDescriptor  = wizard.getPanelDescriptorFor(id);
 
 			// Check if the new panel has a next panel. If not, disable the next button
 			if (null == panelDescriptor.getNextDescriptorID()) {
@@ -301,12 +299,12 @@ public class WizardController<T extends RealType<T> & NativeType<T>> implements 
 
 	private void previous() {
 		// Move to previous panel, but do not execute its actions
-		WizardPanelDescriptor<T> descriptor = wizard.getCurrentPanelDescriptor();
+		WizardPanelDescriptor descriptor = wizard.getCurrentPanelDescriptor();
 		String backPanelDescriptor = descriptor.getPreviousDescriptorID();        
 		wizard.showDescriptorPanelFor(backPanelDescriptor);
 
 		// Check if the new panel has a next panel. If not, disable the next button
-		WizardPanelDescriptor<T> previousPanel = wizard.getPanelDescriptorFor(backPanelDescriptor);
+		WizardPanelDescriptor previousPanel = wizard.getPanelDescriptorFor(backPanelDescriptor);
 		if (null == previousPanel.getPreviousDescriptorID()) {
 			wizard.setPreviousButtonEnabled(false);
 		}
@@ -317,10 +315,10 @@ public class WizardController<T extends RealType<T> & NativeType<T>> implements 
 
 	private void load() {
 		// Store current state
-		WizardPanelDescriptor<T> oldDescriptor = wizard.getCurrentPanelDescriptor();
+		WizardPanelDescriptor oldDescriptor = wizard.getCurrentPanelDescriptor();
 
 		// Move to load state and show log panel
-		final LoadDescriptor<T> loadDescriptor = (LoadDescriptor<T>) wizard.getPanelDescriptorFor(LoadDescriptor.DESCRIPTOR);
+		final LoadDescriptor loadDescriptor = (LoadDescriptor) wizard.getPanelDescriptorFor(LoadDescriptor.DESCRIPTOR);
 		loadDescriptor.setTargetNextID(oldDescriptor.getDescriptorID());
 		loadDescriptor.aboutToDisplayPanel();
 		wizard.showDescriptorPanelFor(LoadDescriptor.DESCRIPTOR);
@@ -332,7 +330,7 @@ public class WizardController<T extends RealType<T> & NativeType<T>> implements 
 		plugin = loadDescriptor.plugin;
 
 		// Enable or disable next and previous button depending on the target descriptor.
-		WizardPanelDescriptor<T> nextPanel = wizard.getPanelDescriptorFor(loadDescriptor.getNextDescriptorID());
+		WizardPanelDescriptor nextPanel = wizard.getPanelDescriptorFor(loadDescriptor.getNextDescriptorID());
 		if (nextPanel.getNextDescriptorID() == null) {
 			wizard.storedButtonState[3] = false;
 		} else {
@@ -348,10 +346,10 @@ public class WizardController<T extends RealType<T> & NativeType<T>> implements 
 
 	private void save() {
 		// Store current state
-		WizardPanelDescriptor<T> oldDescriptor = wizard.getCurrentPanelDescriptor();
+		WizardPanelDescriptor oldDescriptor = wizard.getCurrentPanelDescriptor();
 
 		// Move to save state and execute
-		SaveDescriptor<T> saveDescriptor = (SaveDescriptor<T>) wizard.getPanelDescriptorFor(SaveDescriptor.DESCRIPTOR);
+		SaveDescriptor saveDescriptor = (SaveDescriptor) wizard.getPanelDescriptorFor(SaveDescriptor.DESCRIPTOR);
 		saveDescriptor.setTargetNextID(oldDescriptor.getDescriptorID());
 		saveDescriptor.aboutToDisplayPanel();
 		wizard.showDescriptorPanelFor(SaveDescriptor.DESCRIPTOR);

@@ -25,9 +25,6 @@ import java.util.Map;
 
 import org.jdom2.Element;
 
-import net.imglib2.type.NativeType;
-import net.imglib2.type.numeric.RealType;
-
 import fiji.plugin.trackmate.detection.SpotDetector;
 import fiji.plugin.trackmate.gui.ConfigurationPanel;
 import fiji.plugin.trackmate.gui.LAPTrackerSettingsPanel;
@@ -40,7 +37,7 @@ import fiji.plugin.trackmate.tracking.SpotTracker;
 import fiji.plugin.trackmate.tracking.TrackerKeys;
 import fiji.plugin.trackmate.tracking.kdtree.NearestNeighborTracker;
 
-public class TrackerProvider <T extends RealType<T> & NativeType<T>> extends AbstractProvider  {
+public class TrackerProvider extends AbstractProvider  {
 
 
 	protected static final String XML_ELEMENT_NAME_LINKING = "Linking";
@@ -49,7 +46,7 @@ public class TrackerProvider <T extends RealType<T> & NativeType<T>> extends Abs
 	protected static final String XML_ELEMENT_NAME_SPLITTING = "TrackSplitting";
 	protected static final String XML_ELEMENT_NAME_FEATURE_PENALTIES = "FeaturePenalties";
 
-	protected final TrackMateModel<T> model;
+	protected final TrackMateModel model;
 
 	/*
 	 * CONSTRUCTOR
@@ -69,7 +66,7 @@ public class TrackerProvider <T extends RealType<T> & NativeType<T>> extends Abs
 	 * factory so that it is registered with the custom trackers and pass this 
 	 * extended provider to the {@link TrackMate_} plugin.
 	 */
-	public TrackerProvider(TrackMateModel<T> model) {
+	public TrackerProvider(TrackMateModel model) {
 		this.model = model;
 		this.currentKey = SimpleFastLAPTracker.TRACKER_KEY;
 		registerTrackers();

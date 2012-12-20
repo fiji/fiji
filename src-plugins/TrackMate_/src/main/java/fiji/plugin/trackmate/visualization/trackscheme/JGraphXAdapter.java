@@ -3,9 +3,6 @@ package fiji.plugin.trackmate.visualization.trackscheme;
 import java.util.HashMap;
 import java.util.Set;
 
-import net.imglib2.type.NativeType;
-import net.imglib2.type.numeric.RealType;
-
 import org.jgrapht.event.GraphEdgeChangeEvent;
 import org.jgrapht.event.GraphListener;
 import org.jgrapht.event.GraphVertexChangeEvent;
@@ -19,19 +16,19 @@ import com.mxgraph.view.mxGraph;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.TrackMateModel;
 
-public class JGraphXAdapter  <T extends RealType<T> & NativeType<T>> extends mxGraph implements GraphListener<Spot, DefaultWeightedEdge> {
+public class JGraphXAdapter extends mxGraph implements GraphListener<Spot, DefaultWeightedEdge> {
 
 	private HashMap<Spot, mxCell> 					vertexToCellMap 	= new HashMap<Spot, mxCell>();
 	private HashMap<DefaultWeightedEdge, mxCell> 	edgeToCellMap 		= new HashMap<DefaultWeightedEdge, mxCell>();
 	private HashMap<mxCell, Spot>					cellToVertexMap		= new HashMap<mxCell, Spot>();
 	private HashMap<mxCell, DefaultWeightedEdge>	cellToEdgeMap		= new HashMap<mxCell, DefaultWeightedEdge>();
-	private TrackMateModel<T> tmm;
+	private TrackMateModel tmm;
 
 	/*
 	 * CONSTRUCTOR
 	 */
 
-	public JGraphXAdapter(final TrackMateModel<T> tmm) {
+	public JGraphXAdapter(final TrackMateModel tmm) {
 		super();
 		this.tmm = tmm;
 		insertTrackCollection(tmm);
@@ -184,7 +181,7 @@ public class JGraphXAdapter  <T extends RealType<T> & NativeType<T>> extends mxG
 	 * Any other spot or edges will be ignored by the whole trackscheme
 	 * framework, and if they are needed, they will have to be imported "by hand".
 	 */
-	private void insertTrackCollection(final TrackMateModel<T> tmm) {		
+	private void insertTrackCollection(final TrackMateModel tmm) {		
 		model.beginUpdate();
 		try {
 			for (int i : tmm.getFilteredTrackIDs()) {

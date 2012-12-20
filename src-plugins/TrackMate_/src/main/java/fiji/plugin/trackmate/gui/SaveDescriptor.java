@@ -2,13 +2,10 @@ package fiji.plugin.trackmate.gui;
 
 import java.io.File;
 
-import net.imglib2.type.NativeType;
-import net.imglib2.type.numeric.RealType;
-
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.util.TMUtils;
 
-public class SaveDescriptor <T extends RealType<T> & NativeType<T>> extends SomeDialogDescriptor<T> {
+public class SaveDescriptor extends SomeDialogDescriptor {
 
 	public static final String DESCRIPTOR = "SavingPanel";
 	
@@ -32,7 +29,7 @@ public class SaveDescriptor <T extends RealType<T> & NativeType<T>> extends Some
 			}
 
 			plugin.computeTrackFeatures(true);
-			GuiSaver<T> saver = new GuiSaver<T>(wizard);
+			GuiSaver saver = new GuiSaver(wizard);
 			File tmpFile = TMUtils.askForFile(file, wizard, logger);
 			if (null == tmpFile) {
 				wizard.setNextButtonEnabled(true);

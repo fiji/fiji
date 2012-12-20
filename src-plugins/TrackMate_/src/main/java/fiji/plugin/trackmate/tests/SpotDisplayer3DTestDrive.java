@@ -115,10 +115,10 @@ public class SpotDisplayer3DTestDrive {
 		// Launch renderer
 		final SpotCollection allSpots = new SpotCollection();
 		allSpots.put(0, spots);
-		final TrackMate_<UnsignedByteType> plugin = new TrackMate_<UnsignedByteType>();
+		final TrackMate_ plugin = new TrackMate_();
 		plugin.getModel().setSpots(allSpots, false);
 		plugin.getModel().getSettings().imp = imp;
-		final SpotDisplayer3D<UnsignedByteType> displayer = new SpotDisplayer3D<UnsignedByteType>();
+		final SpotDisplayer3D displayer = new SpotDisplayer3D();
 		displayer.setModel(plugin.getModel());
 		displayer.render();
 		

@@ -33,13 +33,13 @@ public class SpotContrastAnalyzerFactory<T extends RealType<T> & NativeType<T>> 
 		FEATURE_DIMENSIONS.put(KEY, Dimension.NONE);
 	}
 	
-	private final TrackMateModel<T> model;
+	private final TrackMateModel model;
 	
 	/*
 	 * CONSTRUCTOR
 	 */
 	
-	public SpotContrastAnalyzerFactory(final TrackMateModel<T> model) {
+	public SpotContrastAnalyzerFactory(final TrackMateModel model) {
 		this.model = model;
 	}
 	

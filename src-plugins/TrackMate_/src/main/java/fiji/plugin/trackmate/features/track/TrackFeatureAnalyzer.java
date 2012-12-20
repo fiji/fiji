@@ -3,8 +3,6 @@ package fiji.plugin.trackmate.features.track;
 import java.util.Collection;
 
 import net.imglib2.algorithm.Benchmark;
-import net.imglib2.type.NativeType;
-import net.imglib2.type.numeric.RealType;
 
 /**
  * Mother interface for the classes that can compute the feature of tracks.
@@ -16,7 +14,7 @@ import net.imglib2.type.numeric.RealType;
  * 
  * @author Jean-Yves Tinevez
  */
-public interface TrackFeatureAnalyzer<T extends RealType<T> & NativeType<T>> extends Benchmark {
+public interface TrackFeatureAnalyzer extends Benchmark {
 	
 	/**
 	 * Score the track whose ID is given.

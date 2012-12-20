@@ -8,9 +8,6 @@ import java.util.Set;
 
 import javax.swing.ImageIcon;
 
-import net.imglib2.type.NativeType;
-import net.imglib2.type.numeric.RealType;
-
 import org.jgrapht.graph.DefaultWeightedEdge;
 
 import fiji.plugin.trackmate.Spot;
@@ -19,7 +16,7 @@ import fiji.plugin.trackmate.TrackMate_;
 import fiji.plugin.trackmate.features.FeatureModel;
 import fiji.plugin.trackmate.gui.TrackMateWizard;
 
-public class ExportStatsToIJAction<T extends RealType<T> & NativeType<T>> extends AbstractTMAction<T> {
+public class ExportStatsToIJAction extends AbstractTMAction {
 
 	public static final ImageIcon ICON = new ImageIcon(TrackMateWizard.class.getResource("images/calculator.png"));
 	public static final String NAME = "Export statistics to tables";
@@ -41,7 +38,7 @@ public class ExportStatsToIJAction<T extends RealType<T> & NativeType<T>> extend
 	}
 	
 	@Override
-	public void execute(final TrackMate_<T> plugin) {
+	public void execute(final TrackMate_ plugin) {
 		logger.log("Exporting statistics.\n");
 		
 		// Compute links features Links
@@ -55,8 +52,8 @@ public class ExportStatsToIJAction<T extends RealType<T> & NativeType<T>> extend
 		logger.log(" Done.\n");
 		
 		// Model
-		final TrackMateModel<T> model = plugin.getModel();
-		final FeatureModel<T> fm = model.getFeatureModel();
+		final TrackMateModel model = plugin.getModel();
+		final FeatureModel fm = model.getFeatureModel();
 		
 		// Export spots
 		logger.log("  - Exporting spot statistics...");

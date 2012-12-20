@@ -83,13 +83,13 @@ public class SpotMorphologyAnalyzerFactory<T extends RealType<T> & NativeType<T>
 	public static final int SCALENE = 3;
 	
 
-	private final TrackMateModel<T> model;
+	private final TrackMateModel model;
 
 	/*
 	 * CONSTRUCTOR
 	 */
 	
-	public SpotMorphologyAnalyzerFactory(final TrackMateModel<T> model) {
+	public SpotMorphologyAnalyzerFactory(final TrackMateModel model) {
 		this.model = model;
 	}
 	

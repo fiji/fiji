@@ -5,8 +5,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import net.imglib2.type.NativeType;
-import net.imglib2.type.numeric.RealType;
 import fiji.plugin.trackmate.features.spot.SpotContrastAndSNRAnalyzerFactory;
 import fiji.plugin.trackmate.features.spot.SpotFeatureAnalyzerFactory;
 import fiji.plugin.trackmate.features.spot.SpotIntensityAnalyzerFactory;
@@ -23,7 +21,7 @@ import fiji.plugin.trackmate.features.spot.SpotRadiusEstimatorFactory;
  * Feature key names are for historical reason all capitalized in an enum manner. For instance: POSITION_X,
  * MAX_INTENSITY, etc... They must be suitable to be used as a attribute key in an xml file.
  */
-public class SpotFeatureAnalyzerProvider <T extends RealType<T> & NativeType<T>> {
+public class SpotFeatureAnalyzerProvider {
 
 
 	/** The detector names, in the order they will appear in the GUI.
@@ -33,7 +31,7 @@ public class SpotFeatureAnalyzerProvider <T extends RealType<T> & NativeType<T>>
 	protected Map<String, String> featureNames;
 	protected Map<String,String> featureShortNames;
 	protected Map<String, Dimension> featureDimensions;
-	protected final TrackMateModel<T> model;
+	protected final TrackMateModel model;
 
 	/*
 	 * CONSTRUCTOR
@@ -48,7 +46,7 @@ public class SpotFeatureAnalyzerProvider <T extends RealType<T> & NativeType<T>>
 	 * factory so that it is registered with the custom spotFeatureAnalyzers and provide this 
 	 * extended factory to the {@link TrackMate_} plugin.
 	 */
-	public SpotFeatureAnalyzerProvider(TrackMateModel<T> model) {
+	public SpotFeatureAnalyzerProvider(TrackMateModel model) {
 		this.model = model;
 		registerSpotFeatureAnalyzers();
 	}
@@ -93,13 +91,14 @@ public class SpotFeatureAnalyzerProvider <T extends RealType<T> & NativeType<T>>
 	 * @return a new instance of the target spotFeatureAnalyzer identified by the key parameter. 
 	 * If the key is unknown to this factory, <code>null</code> is returned. 
 	 */
-	public SpotFeatureAnalyzerFactory<T> getSpotFeatureAnalyzer(String key) {
+	@SuppressWarnings("rawtypes")
+	public SpotFeatureAnalyzerFactory getSpotFeatureAnalyzer(String key) {
 		if (key == SpotIntensityAnalyzerFactory.KEY) {
-			return new SpotIntensityAnalyzerFactory<T>(model);
+			return new SpotIntensityAnalyzerFactory(model);
 		} else if (key == SpotContrastAndSNRAnalyzerFactory.KEY) {
-			return new SpotContrastAndSNRAnalyzerFactory<T>(model);
+			return new SpotContrastAndSNRAnalyzerFactory(model);
 		} else if (key == SpotRadiusEstimatorFactory.KEY) {
-			return new SpotRadiusEstimatorFactory<T>(model);
+			return new SpotRadiusEstimatorFactory(model);
 		} else {
 			return null;
 		}

@@ -12,7 +12,6 @@ import ij.gui.NewImage;
 
 public class ConcurrentSpotTestDrive {
 
-	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public static void main(String[] args) {
 		
 		int nFrames = 20;

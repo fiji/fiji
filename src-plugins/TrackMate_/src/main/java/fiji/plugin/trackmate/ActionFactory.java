@@ -5,8 +5,6 @@ import java.util.List;
 
 import javax.swing.ImageIcon;
 
-import net.imglib2.type.NativeType;
-import net.imglib2.type.numeric.RealType;
 import fiji.plugin.trackmate.action.CaptureOverlayAction;
 import fiji.plugin.trackmate.action.CopyOverlayAction;
 import fiji.plugin.trackmate.action.ExportTracksToXML;
@@ -20,7 +18,7 @@ import fiji.plugin.trackmate.action.ResetRadiusAction;
 import fiji.plugin.trackmate.action.ResetSpotTimeFeatureAction;
 import fiji.plugin.trackmate.action.TrackMateAction;
 
-public class ActionFactory <T extends RealType<T> & NativeType<T>> {
+public class ActionFactory {
 
 	/** The detector names, in the order they will appear in the GUI.
 	 * These names will be used as keys to access relevant detecrtor classes.  */
@@ -72,34 +70,34 @@ public class ActionFactory <T extends RealType<T> & NativeType<T>> {
 	 * @return a new instance of the target action identified by the key parameter. 
 	 * If the key is unknown to this factory, <code>null</code> is returned. 
 	 */
-	public TrackMateAction<T> getAction(String key) {
+	public TrackMateAction getAction(String key) {
 		int index = names.indexOf(key);
 		if (index < 0) {
 			return null;
 		}
 		switch (index) {
 		case 0:
-			return new GrabSpotImageAction<T>();
+			return new GrabSpotImageAction();
 		case 1:
-			return new ExtractTrackStackAction<T>();
+			return new ExtractTrackStackAction();
 		case 2:
-			return new LinkNew3DViewerAction<T>();
+			return new LinkNew3DViewerAction();
 		case 3:
-			return new CopyOverlayAction<T>();
+			return new CopyOverlayAction();
 		case 4:
-			return new PlotNSpotsVsTimeAction<T>();
+			return new PlotNSpotsVsTimeAction();
 		case 5:
-			return new CaptureOverlayAction<T>();
+			return new CaptureOverlayAction();
 		case 6:
-			return new ResetSpotTimeFeatureAction<T>();
+			return new ResetSpotTimeFeatureAction();
 		case 7:
-			return new RecalculateFeatureAction<T>();
+			return new RecalculateFeatureAction();
 		case 8: 
-			return new RadiusToEstimatedAction<T>();
+			return new RadiusToEstimatedAction();
 		case 9:
-			return new ResetRadiusAction<T>();
+			return new ResetRadiusAction();
 		case 10:
-			return new ExportTracksToXML<T>();
+			return new ExportTracksToXML();
 		default:
 			return null;
 		}

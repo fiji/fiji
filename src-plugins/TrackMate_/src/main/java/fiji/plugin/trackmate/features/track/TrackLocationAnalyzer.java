@@ -11,14 +11,12 @@ import java.util.concurrent.ArrayBlockingQueue;
 import net.imglib2.algorithm.Benchmark;
 import net.imglib2.algorithm.MultiThreaded;
 import net.imglib2.multithreading.SimpleMultiThreading;
-import net.imglib2.type.NativeType;
-import net.imglib2.type.numeric.RealType;
 import fiji.plugin.trackmate.Dimension;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.features.FeatureModel;
 
-public class TrackLocationAnalyzer<T extends RealType<T> & NativeType<T>> implements TrackFeatureAnalyzer<T>, MultiThreaded, Benchmark {
+public class TrackLocationAnalyzer implements TrackFeatureAnalyzer, MultiThreaded, Benchmark {
 
 	/*
 	 * FEATURE NAMES 
@@ -58,13 +56,13 @@ public class TrackLocationAnalyzer<T extends RealType<T> & NativeType<T>> implem
 
 	private int numThreads;
 	private long processingTime;
-	private final TrackMateModel<T> model;
+	private final TrackMateModel model;
 
 	/*
 	 * CONSTRUCTOR
 	 */
 
-	public TrackLocationAnalyzer(final TrackMateModel<T> model) {
+	public TrackLocationAnalyzer(final TrackMateModel model) {
 		this.model = model;
 		setNumThreads();
 	}
@@ -74,7 +72,7 @@ public class TrackLocationAnalyzer<T extends RealType<T> & NativeType<T>> implem
 	public void process(final Collection<Integer> trackIDs) {
 
 		final ArrayBlockingQueue<Integer> queue = new ArrayBlockingQueue<Integer>(trackIDs.size(), false, trackIDs);
-		final FeatureModel<T> fm = model.getFeatureModel();
+		final FeatureModel fm = model.getFeatureModel();
 
 		Thread[] threads = SimpleMultiThreading.newThreads(numThreads);
 		for (int i = 0; i < threads.length; i++) {

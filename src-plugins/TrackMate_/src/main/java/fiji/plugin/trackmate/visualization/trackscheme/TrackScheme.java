@@ -20,9 +20,6 @@ import java.util.TreeMap;
 import javax.swing.ImageIcon;
 import javax.swing.JViewport;
 
-import net.imglib2.type.NativeType;
-import net.imglib2.type.numeric.RealType;
-
 import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.traverse.DepthFirstIterator;
 
@@ -49,7 +46,7 @@ import fiji.plugin.trackmate.TrackMateSelectionChangeListener;
 import fiji.plugin.trackmate.visualization.AbstractTrackMateModelView;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
 
-public class TrackScheme <T extends RealType<T> & NativeType<T>> implements TrackMateModelChangeListener, TrackMateSelectionChangeListener, TrackMateModelView<T>{
+public class TrackScheme implements TrackMateModelChangeListener, TrackMateSelectionChangeListener, TrackMateModelView {
 
 	/*
 	 * CONSTANTS
@@ -118,15 +115,15 @@ public class TrackScheme <T extends RealType<T> & NativeType<T>> implements Trac
 	 */
 
 	/** The model this instance is a view of (Yoda I speak like). */
-	private TrackMateModel<T> model;
+	private TrackMateModel model;
 	/** The frame in which we display the TrackScheme GUI. */
-	private TrackSchemeFrame<T> gui;
+	private TrackSchemeFrame gui;
 	/** The display settings map. */
 	private Map<String, Object> displaySettings = new HashMap<String, Object>();
 	/** The JGraphX object that displays the graph. */
-	private JGraphXAdapter<T> graph;
+	private JGraphXAdapter graph;
 	/** The graph layout in charge of re-aligning the cells. */
-	private mxTrackGraphLayout<T> graphLayout;
+	private mxTrackGraphLayout graphLayout;
 	/** A flag used to prevent double event firing when setting the selection programmatically. */
 	private boolean doFireSelectionChangeEvent = true;
 	/** A flag used to prevent double event firing when setting the selection programmatically. */
@@ -148,7 +145,7 @@ public class TrackScheme <T extends RealType<T> & NativeType<T>> implements Trac
 	 * CONSTRUCTORS
 	 */
 
-	public TrackScheme(final TrackMateModel<T> model)  {
+	public TrackScheme(final TrackMateModel model)  {
 		setModel(model);
 		initDisplaySettings();
 	}
@@ -180,21 +177,21 @@ public class TrackScheme <T extends RealType<T> & NativeType<T>> implements Trac
 	/**
 	 * @return the GUI frame controlled by this class.
 	 */
-	public TrackSchemeFrame<T> getGUI() {
+	public TrackSchemeFrame getGUI() {
 		return gui;
 	}
 
 	/**
 	 * @return the {@link JGraphXAdapter} that serves as a model for the graph displayed in this frame.
 	 */
-	public JGraphXAdapter<T> getGraph() {
+	public JGraphXAdapter getGraph() {
 		return graph;
 	}
 
 	/**
 	 * @return the graph layout in charge of arranging the cells on the graph.
 	 */
-	public mxTrackGraphLayout<T> getGraphLayout() {
+	public mxTrackGraphLayout getGraphLayout() {
 		return graphLayout;	
 	}
 
@@ -202,8 +199,8 @@ public class TrackScheme <T extends RealType<T> & NativeType<T>> implements Trac
 	 * Used to instantiate and configure the {@link JGraphXAdapter} that will be used for display.
 	 * Hook for subclassers.
 	 */
-	private JGraphXAdapter<T> createGraph() {
-		final JGraphXAdapter<T> graph = new JGraphXAdapter<T>(model);
+	private JGraphXAdapter createGraph() {
+		final JGraphXAdapter graph = new JGraphXAdapter(model);
 		graph.setAllowLoops(false);
 		graph.setAllowDanglingEdges(false);
 		graph.setCellsCloneable(false);
@@ -570,7 +567,7 @@ public class TrackScheme <T extends RealType<T> & NativeType<T>> implements Trac
 	}
 
 	@Override
-	public void setModel(TrackMateModel<T> model) {
+	public void setModel(TrackMateModel model) {
 		// Model listeners
 		if (null != this.model) {
 			this.model.removeTrackMateModelChangeListener(this);
@@ -619,7 +616,7 @@ public class TrackScheme <T extends RealType<T> & NativeType<T>> implements Trac
 	}
 
 	@Override
-	public TrackMateModel<T> getModel() {
+	public TrackMateModel getModel() {
 		return model;
 	}
 
@@ -734,8 +731,8 @@ public class TrackScheme <T extends RealType<T> & NativeType<T>> implements Trac
 	private void initGUI() {
 		// Graph to mirror model
 		this.graph = createGraph();
-		this.gui = new TrackSchemeFrame<T>(graph, model, this);
-		this.graphLayout = new mxTrackGraphLayout<T>(graph, model);
+		this.gui = new TrackSchemeFrame(graph, model, this);
+		this.graphLayout = new mxTrackGraphLayout(graph, model);
 		String title = "TrackScheme";
 		if (null != model.getSettings().imp)
 			title += ": "+model.getSettings().imp.getTitle();

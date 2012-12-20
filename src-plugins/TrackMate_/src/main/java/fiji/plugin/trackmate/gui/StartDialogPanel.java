@@ -7,7 +7,6 @@ import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.TrackMate_;
 import ij.ImagePlus;
 import ij.WindowManager;
-import ij.gui.NewImage;
 import ij.gui.Roi;
 
 import java.awt.Component;
@@ -16,14 +15,9 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 import javax.swing.JButton;
-import javax.swing.JFrame;
 import javax.swing.JLabel;
-import javax.swing.WindowConstants;
 
-import net.imglib2.type.NativeType;
-import net.imglib2.type.numeric.RealType;
-
-public class StartDialogPanel <T extends RealType<T> & NativeType<T>> extends ActionListenablePanel implements WizardPanelDescriptor<T> {
+public class StartDialogPanel extends ActionListenablePanel implements WizardPanelDescriptor {
 
 	private static final long serialVersionUID = -1L;
 
@@ -63,10 +57,10 @@ public class StartDialogPanel <T extends RealType<T> & NativeType<T>> extends Ac
 	private JLabel jLabelUnits4;
 
 	private ImagePlus imp;
-	private Settings<T> settings;
+	private Settings settings;
 
-	private TrackMate_<T> plugin;
-	private TrackMateWizard<T> wizard;
+	private TrackMate_ plugin;
+	private TrackMateWizard wizard;
 
 	
 	public StartDialogPanel() {
@@ -79,18 +73,18 @@ public class StartDialogPanel <T extends RealType<T> & NativeType<T>> extends Ac
 	 */
 
 	@Override
-	public void setWizard(TrackMateWizard<T> wizard) {
+	public void setWizard(TrackMateWizard wizard) {
 		this.wizard = wizard;
 	}
 
 	@Override
-	public void setPlugin(TrackMate_<T> plugin) {
+	public void setPlugin(TrackMate_ plugin) {
 		this.plugin = plugin;
 		if (null == plugin) {
-			this.settings = new Settings<T>();
+			this.settings = new Settings();
 		} else {
 			if (null == settings) {
-				this.settings = new Settings<T>();
+				this.settings = new Settings();
 			} else {
 				this.settings = plugin.getModel().getSettings();
 			}
@@ -156,7 +150,7 @@ public class StartDialogPanel <T extends RealType<T> & NativeType<T>> extends Ac
 	 * is created.
 	 * @return  the updated Settings
 	 */
-	public Settings<T> getSettings() {
+	public Settings getSettings() {
 		settings.imp = imp;
 		// Crop cube
 		settings.tstart = Math.round(Float.parseFloat(jTextFieldTStart.getText()));
@@ -199,7 +193,7 @@ public class StartDialogPanel <T extends RealType<T> & NativeType<T>> extends Ac
 	/**
 	 * Fill the text fields with the parameters grabbed in the {@link Settings} argument.
 	 */
-	private void echoSettings(Settings<T> settings) {
+	private void echoSettings(Settings settings) {
 		jLabelImageName.setText(settings.imp.getTitle());
 		jTextFieldPixelWidth.setText(""+settings.dx);
 		jTextFieldPixelHeight.setText(""+settings.dy);
@@ -509,38 +503,4 @@ public class StartDialogPanel <T extends RealType<T> & NativeType<T>> extends Ac
 			e.printStackTrace();
 		}
 	}
-
-
-	/*
-	 * MAIN METHOD
-	 */
-
-	/**
-	 * Auto-generated main method to display this 
-	 * JPanel inside a new JFrame.
-	 */
-	public static <T extends RealType<T> & NativeType<T>> void main(String[] args) {
-		JFrame frame = new JFrame();
-		ij.ImageJ.main(args);
-		ImagePlus imp = NewImage.createByteImage("Test_image", 20, 100, 20, NewImage.FILL_BLACK);
-		imp.setDimensions(1, 5, 4);
-		imp.getCalibration().setUnit("um");
-		imp.getCalibration().pixelDepth = 2;
-		imp.getCalibration().pixelHeight = 0.4;
-		imp.getCalibration().pixelWidth = 0.4;
-		imp.setRoi(new Roi(10, 20, 5, 60));
-		imp.show();
-
-		StartDialogPanel<T> panel = new StartDialogPanel<T>();
-		panel.setPlugin(null);
-
-		frame.getContentPane().add(panel);
-		frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-		frame.pack();
-		frame.setVisible(true);
-		WindowManager.setCurrentWindow(imp.getWindow());
-	}
-
-
-
 }

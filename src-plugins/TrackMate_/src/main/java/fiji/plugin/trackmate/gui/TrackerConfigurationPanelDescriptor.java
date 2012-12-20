@@ -3,30 +3,28 @@ package fiji.plugin.trackmate.gui;
 import java.awt.Component;
 import java.util.Map;
 
-import net.imglib2.type.NativeType;
-import net.imglib2.type.numeric.RealType;
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.TrackMate_;
 import fiji.plugin.trackmate.TrackerProvider;
 
-public class TrackerConfigurationPanelDescriptor <T extends RealType<T> & NativeType<T>> implements WizardPanelDescriptor<T> {
+public class TrackerConfigurationPanelDescriptor implements WizardPanelDescriptor {
 
 	public static final String DESCRIPTOR = "TrackerConfigurationPanel";
-	private TrackMate_<T> plugin;
+	private TrackMate_ plugin;
 	private ConfigurationPanel configPanel;
-	private TrackMateWizard<T> wizard;
+	private TrackMateWizard wizard;
 	
 	/*
 	 * METHODS
 	 */
 
 	@Override
-	public void setWizard(TrackMateWizard<T> wizard) { 
+	public void setWizard(TrackMateWizard wizard) { 
 		this.wizard = wizard;
 	}
 
 	@Override
-	public void setPlugin(TrackMate_<T> plugin) {
+	public void setPlugin(TrackMate_ plugin) {
 		this.plugin = plugin;
 	}
 
@@ -35,7 +33,7 @@ public class TrackerConfigurationPanelDescriptor <T extends RealType<T> & Native
 	 */
 	public void updateComponent() {
 		// We assume the provider is already configured with the right target detector factory
-		TrackerProvider<T> provider = plugin.getTrackerProvider();
+		TrackerProvider provider = plugin.getTrackerProvider();
 		// Regenerate panel
 		configPanel = provider.getTrackerConfigurationPanel();
 		Map<String, Object> settings = plugin.getModel().getSettings().trackerSettings;
@@ -83,7 +81,7 @@ public class TrackerConfigurationPanelDescriptor <T extends RealType<T> & Native
 	@Override
 	public void aboutToHidePanel() {
 		Map<String, Object> settings = configPanel.getSettings();
-		TrackerProvider<T> trackerProvider = plugin.getTrackerProvider();
+		TrackerProvider trackerProvider = plugin.getTrackerProvider();
 		boolean settingsOk = trackerProvider.checkSettingsValidity(settings);
 		if (!settingsOk) {
 			Logger logger = wizard.getLogger();

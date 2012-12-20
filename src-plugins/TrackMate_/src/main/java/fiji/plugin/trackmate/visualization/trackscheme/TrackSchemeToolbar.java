@@ -19,10 +19,7 @@ import javax.swing.JLabel;
 import javax.swing.JToolBar;
 import javax.swing.SwingConstants;
 
-import net.imglib2.type.NativeType;
-import net.imglib2.type.numeric.RealType;
-
-public class TrackSchemeToolbar <T extends RealType<T> & NativeType<T>> extends JToolBar {
+public class TrackSchemeToolbar extends JToolBar {
 	
 	private static final long serialVersionUID = 3442140463984241266L;
 	private static final ImageIcon LINKING_ON_ICON 	= new ImageIcon(TrackSchemeFrame.class.getResource("resources/connect.png")); 
@@ -43,10 +40,10 @@ public class TrackSchemeToolbar <T extends RealType<T> & NativeType<T>> extends 
 	private static final ImageIcon DISPLAY_DECORATIONS_OFF_ICON	= new ImageIcon(TrackSchemeFrame.class.getResource("resources/application.png"));
 	private static final ImageIcon SELECT_STYLE_ICON = new ImageIcon(TrackSchemeFrame.class.getResource("resources/style.png"));
 
-	private final TrackScheme<T> trackScheme;
+	private final TrackScheme trackScheme;
 	
 
-	public TrackSchemeToolbar(final TrackScheme<T> trackScheme) {
+	public TrackSchemeToolbar(final TrackScheme trackScheme) {
 		super("Track Scheme toolbar", JToolBar.HORIZONTAL);
 		this.trackScheme = trackScheme;
 		init();
@@ -180,7 +177,7 @@ public class TrackSchemeToolbar <T extends RealType<T> & NativeType<T>> extends 
 				trackScheme.captureDecorated();
 			}
 		};
-		final Action saveAction = new SaveAction<T>(trackScheme);
+		final Action saveAction = new SaveAction(trackScheme);
 		final JButton captureUndecoratedButton = new JButton(captureUndecoratedAction);
 		final JButton captureDecoratedButton = new JButton(captureDecoratedAction);
 		final JButton saveButton = new JButton(saveAction);
@@ -259,7 +256,7 @@ public class TrackSchemeToolbar <T extends RealType<T> & NativeType<T>> extends 
 				@Override
 				public void actionPerformed(ActionEvent e) {
 					String selectedStyle = (String) selectStyleBox.getSelectedItem();
-					mxTrackGraphLayout<T> layout = trackScheme.getGraphLayout();
+					mxTrackGraphLayout layout = trackScheme.getGraphLayout();
 					if (!selectedStyle.equals(layout.getLayoutStyle())) {
 						layout.setLayoutStyle(selectedStyle);
 						trackScheme.doTrackLayout();

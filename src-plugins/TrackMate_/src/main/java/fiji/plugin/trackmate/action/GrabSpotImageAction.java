@@ -9,8 +9,6 @@ import javax.swing.ImageIcon;
 
 import net.imglib2.img.ImagePlusAdapter;
 import net.imglib2.img.ImgPlus;
-import net.imglib2.type.NativeType;
-import net.imglib2.type.numeric.RealType;
 import net.imglib2.view.HyperSliceImgPlus;
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.Settings;
@@ -21,7 +19,7 @@ import fiji.plugin.trackmate.TrackMate_;
 import fiji.plugin.trackmate.features.spot.SpotIconGrabber;
 import fiji.plugin.trackmate.gui.DisplayerPanel;
 
-public class GrabSpotImageAction<T extends RealType<T> & NativeType<T>> extends AbstractTMAction<T> {
+public class GrabSpotImageAction extends AbstractTMAction {
 
 	public static final ImageIcon ICON = new ImageIcon(DisplayerPanel.class.getResource("images/photo_add.png"));
 	public static final String NAME = "Grab spot images";
@@ -35,13 +33,14 @@ public class GrabSpotImageAction<T extends RealType<T> & NativeType<T>> extends 
 		this.icon = ICON;
 	}
 	
+	@SuppressWarnings({ "rawtypes", "unchecked" })
 	@Override
-	public void execute(TrackMate_<T> plugin) {
-		TrackMateModel<T> model = plugin.getModel();
+	public void execute(TrackMate_ plugin) {
+		TrackMateModel model = plugin.getModel();
 		logger.log("Grabbing spot images.\n");
 		Logger oldLogger = model.getLogger();
 		model.setLogger(logger);
-		Settings<T> settings = model.getSettings();
+		Settings settings = model.getSettings();
 		int targetChannel = 0;
 		if (settings != null && settings.detectorSettings != null) {
 			// Try to extract it from detector settings target channel
@@ -51,14 +50,14 @@ public class GrabSpotImageAction<T extends RealType<T> & NativeType<T>> extends 
 				targetChannel = ((Integer) obj) - 1;
 			}
 		} // TODO: maybe be more flexible about that
-		final ImgPlus<T> source = ImagePlusAdapter.wrapImgPlus(settings.imp);
-		final ImgPlus<T> imgC = HyperSliceImgPlus.fixChannelAxis(source, targetChannel);
+		final ImgPlus<?> source = ImagePlusAdapter.wrapImgPlus(settings.imp);
+		final ImgPlus<?> imgC = HyperSliceImgPlus.fixChannelAxis(source, targetChannel);
 		
 		SpotCollection allSpots = model.getFilteredSpots();
 		for (int frame : allSpots.keySet()) {
 			List<Spot> spots = allSpots.get(frame);
-			ImgPlus<T> img = HyperSliceImgPlus.fixTimeAxis( imgC , frame ); 
-			SpotIconGrabber<T> grabber = new SpotIconGrabber<T>(img, spots);
+			ImgPlus<?> img = HyperSliceImgPlus.fixTimeAxis( imgC , frame ); 
+			SpotIconGrabber grabber = new SpotIconGrabber(img, spots);
 			grabber.process();			
 			logger.setProgress((float) (frame + 1) / allSpots.keySet().size());
 		}

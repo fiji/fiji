@@ -4,24 +4,22 @@ import java.awt.Component;
 import java.util.ArrayList;
 import java.util.List;
 
-import net.imglib2.type.NativeType;
-import net.imglib2.type.numeric.RealType;
 import fiji.plugin.trackmate.TrackMate_;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
 
-public class DisplayerChoiceDescriptor<T extends RealType<T> & NativeType<T>> implements WizardPanelDescriptor<T> {
+public class DisplayerChoiceDescriptor implements WizardPanelDescriptor {
 
 	public static final String DESCRIPTOR = "DisplayerChoice";
-	private TrackMate_<T> plugin;
+	private TrackMate_ plugin;
 	private ListChooserPanel component;
-	private TrackMateWizard<T> wizard;
+	private TrackMateWizard wizard;
 	
 	/*
 	 * METHODS
 	 */
 	
 	@Override
-	public void setWizard(TrackMateWizard<T> wizard) {
+	public void setWizard(TrackMateWizard wizard) {
 		this.wizard = wizard;
 	}
 
@@ -61,12 +59,12 @@ public class DisplayerChoiceDescriptor<T extends RealType<T> & NativeType<T>> im
 	@Override
 	public void aboutToHidePanel() {
 		String displayerName = component.getChoice();
-		TrackMateModelView<T> displayer = plugin.getViewFactory().getView(displayerName);
+		TrackMateModelView displayer = plugin.getViewFactory().getView(displayerName);
 		wizard.setDisplayer(displayer);
 	}
 
 	@Override
-	public void setPlugin(TrackMate_<T> plugin) {
+	public void setPlugin(TrackMate_ plugin) {
 		this.plugin = plugin;
 		List<String> viewerNames = plugin.getViewFactory().getAvailableViews();
 		List<String> infoTexts = new ArrayList<String>(viewerNames.size());

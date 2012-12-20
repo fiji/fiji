@@ -9,24 +9,18 @@ import java.awt.Font;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Random;
 
-import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.WindowConstants;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
-import net.imglib2.type.NativeType;
-import net.imglib2.type.numeric.RealType;
 import fiji.plugin.trackmate.FeatureFilter;
 import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.SpotCollection;
-import fiji.plugin.trackmate.SpotImp;
-import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.util.OnRequestUpdater;
+import fiji.plugin.trackmate.util.OnRequestUpdater.Refreshable;
 
-public class InitFilterPanel <T extends RealType<T> & NativeType<T>> extends ActionListenablePanel  {
+public class InitFilterPanel extends ActionListenablePanel  {
 
 	private static final long serialVersionUID = 1L;
 	private static final String EXPLANATION_TEXT = "<html><p align=\"justify\">" +
@@ -47,7 +41,7 @@ public class InitFilterPanel <T extends RealType<T> & NativeType<T>> extends Act
 	private JLabel jLabelExplanation;
 	private JLabel jLabelSelectedSpots;
 	private JPanel jPanelText;
-	Updater updater;
+	OnRequestUpdater updater;
 	private Map<String, double[]> features;
 
 
@@ -56,7 +50,12 @@ public class InitFilterPanel <T extends RealType<T> & NativeType<T>> extends Act
 	 */
 	public InitFilterPanel(Map<String, double[]> features) {
 		this.features = features;
-		this.updater = new Updater();
+		this.updater = new OnRequestUpdater(new Refreshable() {
+			@Override
+			public void refresh() {
+				thresholdChanged();
+			}
+		});
 		initGUI();
 	}
 
@@ -168,102 +167,4 @@ public class InitFilterPanel <T extends RealType<T> & NativeType<T>> extends Act
 			e.printStackTrace();
 		}
 	}
-
-
-	/*
-	 * MAIN METHOD
-	 */
-
-
-	/**
-	 * Auto-generated main method to display this 
-	 * JPanel inside a new JFrame.
-	 */
-	public static <T extends RealType<T> & NativeType<T>>void main(String[] args) {
-		// Prepare fake data
-		final int N_ITEMS = 100;
-		final Random ran = new Random();
-		double mean;
-
-		SpotCollection spots = new SpotCollection();
-		mean = ran.nextDouble() * 10;
-		for (int j = 0; j < N_ITEMS; j++)  {
-			Spot spot = new SpotImp(1);
-			float val = (float) (ran.nextGaussian() + 5 + mean);
-			spot.putFeature(Spot.QUALITY, val);
-			spots.add(spot, 0);
-		}
-		TrackMateModel<T> model = new TrackMateModel<T>();
-		model.setSpots(spots, false);
-
-		InitFilterPanel<T> panel = new InitFilterPanel<T>(model.getFeatureModel().getSpotFeatureValues());
-
-		JFrame frame = new JFrame();
-		frame.getContentPane().add(panel);
-		frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-		frame.pack();
-		frame.setVisible(true);
-	}
-
-
-
-	/*
-	 * NESTED CLASSES
-	 */
-
-	/**
-	 * This is a helper class that delegates the
-	 * repainting of the destination window to another thread.
-	 * 
-	 * @author Albert Cardona
-	 */
-	class Updater extends Thread {
-		long request = 0;
-
-		// Constructor autostarts thread
-		Updater() {
-			super("TrackMate InitFilterPanel repaint thread");
-			setPriority(Thread.NORM_PRIORITY);
-			start();
-		}
-
-		void doUpdate() {
-			if (isInterrupted())
-				return;
-			synchronized (this) {
-				request++;
-				notify();
-			}
-		}
-
-		void quit() {
-			interrupt();
-			synchronized (this) {
-				notify();
-			}
-		}
-
-		public void run() {
-			while (!isInterrupted()) {
-				try {
-					final long r;
-					synchronized (this) {
-						r = request;
-					}
-					// Call update from this thread
-					if (r > 0)
-						thresholdChanged();
-					synchronized (this) {
-						if (r == request) {
-							request = 0; // reset
-							wait();
-						}
-						// else loop through to update again
-					}
-				} catch (Exception e) {
-				}
-			}
-		}
-	}
-
 }

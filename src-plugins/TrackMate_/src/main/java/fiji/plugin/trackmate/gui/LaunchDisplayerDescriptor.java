@@ -2,32 +2,29 @@ package fiji.plugin.trackmate.gui;
 
 import java.awt.Component;
 
-import net.imglib2.type.NativeType;
-import net.imglib2.type.numeric.RealType;
-
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.TrackMate_;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
 
-public class LaunchDisplayerDescriptor <T extends RealType<T> & NativeType<T>> implements WizardPanelDescriptor<T> {
+public class LaunchDisplayerDescriptor implements WizardPanelDescriptor {
 
 	public static final String DESCRIPTOR = "LaunchDisplayer";
-	private TrackMateWizard<T> wizard;
+	private TrackMateWizard wizard;
 	private LogPanel logPanel;
 	private Logger logger;
-	private TrackMate_<T> plugin;
+	private TrackMate_ plugin;
 	private boolean renderingDone;
 	private boolean calculateFeaturesDone;
 
 	@Override
-	public void setWizard(TrackMateWizard<T> wizard) { 
+	public void setWizard(TrackMateWizard wizard) { 
 		this.wizard = wizard;
 		this.logPanel = wizard.getLogPanel();
 		this.logger = wizard.getLogger();
 	}
 
 	@Override
-	public void setPlugin(TrackMate_<T> plugin) {
+	public void setPlugin(TrackMate_ plugin) {
 		this.plugin = plugin;
 	}
 
@@ -66,7 +63,7 @@ public class LaunchDisplayerDescriptor <T extends RealType<T> & NativeType<T>> i
 		renderingDone = false;
 		calculateFeaturesDone = false;
 		wizard.setNextButtonEnabled(false);
-		final TrackMateModelView<T> displayer = wizard.getDisplayer();
+		final TrackMateModelView displayer = wizard.getDisplayer();
 		
 		if (plugin.getModel().getSpots().getNSpots() > 0) {
 			logger.log("Calculating features...\n",Logger.BLUE_COLOR);

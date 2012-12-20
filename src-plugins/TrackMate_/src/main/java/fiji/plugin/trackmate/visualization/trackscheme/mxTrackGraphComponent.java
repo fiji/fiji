@@ -12,9 +12,6 @@ import java.awt.event.MouseEvent;
 import java.util.EventObject;
 import java.util.Map;
 
-import net.imglib2.type.NativeType;
-import net.imglib2.type.numeric.RealType;
-
 import com.mxgraph.canvas.mxGraphics2DCanvas;
 import com.mxgraph.model.mxCell;
 import com.mxgraph.swing.mxGraphComponent;
@@ -30,7 +27,7 @@ import com.mxgraph.view.mxGraph;
 
 import fiji.plugin.trackmate.TrackMateModel;
 
-public class mxTrackGraphComponent <T extends RealType<T> & NativeType<T>> extends mxGraphComponent implements mxIEventListener {
+public class mxTrackGraphComponent extends mxGraphComponent implements mxIEventListener {
 
 	private static final long serialVersionUID = -1L;
 	private static final Color BACKGROUND_COLOR_1 	= Color.GRAY;
@@ -39,8 +36,8 @@ public class mxTrackGraphComponent <T extends RealType<T> & NativeType<T>> exten
 
 	private int[] columnWidths = new int[0];
 	private Color[] columnColors = new Color[0];
-	private final TrackMateModel<T> model;
-	private final TrackScheme<T> trackScheme;
+	private final TrackMateModel model;
+	private final TrackScheme trackScheme;
 
 	/** If true, will paint background decorations. */
 	private boolean doPaintDecorations = TrackScheme.DEFAULT_DO_PAINT_DECORATIONS;
@@ -49,7 +46,7 @@ public class mxTrackGraphComponent <T extends RealType<T> & NativeType<T>> exten
 	 * CONSTRUCTOR
 	 */
 
-	public mxTrackGraphComponent(final JGraphXAdapter<T> graph, final TrackMateModel<T> model, final TrackScheme<T> trackScheme) {
+	public mxTrackGraphComponent(final JGraphXAdapter graph, final TrackMateModel model, final TrackScheme trackScheme) {
 		super(graph);
 		this.model = model;
 		this.trackScheme = trackScheme;

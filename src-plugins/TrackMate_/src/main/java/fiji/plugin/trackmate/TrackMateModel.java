@@ -8,9 +8,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import net.imglib2.type.NativeType;
-import net.imglib2.type.numeric.RealType;
-
 import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.graph.SimpleDirectedWeightedGraph;
 import org.jgrapht.traverse.DepthFirstIterator;
@@ -116,7 +113,7 @@ import fiji.plugin.trackmate.visualization.TrackMateModelView;
  * @author Jean-Yves Tinevez <tinevez@pasteur.fr> - 2010-2011
  * 
  */
-public class TrackMateModel <T extends RealType<T> & NativeType<T>> {
+public class TrackMateModel {
 
 	/*
 	 * CONSTANTS
@@ -131,11 +128,11 @@ public class TrackMateModel <T extends RealType<T> & NativeType<T>> {
 
 	// FEATURES
 
-	private final FeatureModel<T> featureModel;
+	private final FeatureModel featureModel;
 	
 	// TRACKS
 	
-	private final TrackGraphModel<T> trackGraphModel;
+	private final TrackGraphModel trackGraphModel;
 
 	// SPOTS
 
@@ -189,7 +186,7 @@ public class TrackMateModel <T extends RealType<T> & NativeType<T>> {
 	/** The logger to append processes messages */
 	private Logger logger = Logger.DEFAULT_LOGGER;
 	/** The settings that determine processes actions */
-	private Settings<T> settings = new Settings<T>();
+	private Settings settings = new Settings();
 
 	// LISTENERS
 
@@ -212,8 +209,8 @@ public class TrackMateModel <T extends RealType<T> & NativeType<T>> {
 	 */
 
 	public TrackMateModel() {
-		featureModel = new FeatureModel<T>(this);
-		trackGraphModel = new TrackGraphModel<T>(this);
+		featureModel = new FeatureModel(this);
+		trackGraphModel = new TrackGraphModel(this);
 	}
 
 
@@ -539,7 +536,7 @@ public class TrackMateModel <T extends RealType<T> & NativeType<T>> {
 	/**
 	 * Return the {@link Settings} object that determines the behavior of this plugin.
 	 */
-	public Settings<T> getSettings() {
+	public Settings getSettings() {
 		return settings;
 	}
 
@@ -551,7 +548,7 @@ public class TrackMateModel <T extends RealType<T> & NativeType<T>> {
 	 * @see #execTracking()
 	 */
 
-	public void setSettings(Settings<T> settings) {
+	public void setSettings(Settings settings) {
 		this.settings = settings;
 	}
 
@@ -559,7 +556,7 @@ public class TrackMateModel <T extends RealType<T> & NativeType<T>> {
 	 * FEATURES
 	 */
 
-	public FeatureModel<T> getFeatureModel() {
+	public FeatureModel getFeatureModel() {
 		return featureModel;
 	}
 

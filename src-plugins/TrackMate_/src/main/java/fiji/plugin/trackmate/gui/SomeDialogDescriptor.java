@@ -3,9 +3,6 @@ package fiji.plugin.trackmate.gui;
 import java.awt.Component;
 import java.io.File;
 
-import net.imglib2.type.NativeType;
-import net.imglib2.type.numeric.RealType;
-
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.TrackMate_;
 
@@ -15,11 +12,11 @@ import fiji.plugin.trackmate.TrackMate_;
  * @author JeanYves
  *
  */
-public abstract class SomeDialogDescriptor<T extends RealType<T> & NativeType<T>> implements WizardPanelDescriptor<T> {
+public abstract class SomeDialogDescriptor implements WizardPanelDescriptor {
 
 	protected LogPanel logPanel;
-	protected TrackMate_<T> plugin;
-	protected TrackMateWizard<T> wizard;
+	protected TrackMate_ plugin;
+	protected TrackMateWizard wizard;
 	protected Logger logger;
 	protected File file;
 	protected String targetID;
@@ -29,14 +26,14 @@ public abstract class SomeDialogDescriptor<T extends RealType<T> & NativeType<T>
 	}
 	
 	@Override
-	public void setWizard(TrackMateWizard<T> wizard) { 
+	public void setWizard(TrackMateWizard wizard) { 
 		this.wizard = wizard;
 		this.logPanel = wizard.getLogPanel();
 		this.logger = wizard.getLogger();
 	}
 
 	@Override
-	public void setPlugin(TrackMate_<T> plugin) {
+	public void setPlugin(TrackMate_ plugin) {
 		this.plugin = plugin;
 	}
 

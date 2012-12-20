@@ -17,9 +17,6 @@ import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 
-import net.imglib2.type.NativeType;
-import net.imglib2.type.numeric.RealType;
-
 import org.jfree.chart.renderer.InterpolatePaintScale;
 import org.jgrapht.graph.DefaultWeightedEdge;
 
@@ -27,16 +24,16 @@ import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.util.ExportableChartPanel;
 
-public abstract class AbstractFeatureGrapher<T extends RealType<T> & NativeType<T>> {
+public abstract class AbstractFeatureGrapher {
 	
 	protected static final Shape DEFAULT_SHAPE = new Ellipse2D.Double(-3, -3, 6, 6);
 
 	protected final InterpolatePaintScale paints = InterpolatePaintScale.Jet; 
 	protected final String xFeature;
 	protected final Set<String> yFeatures;
-	protected final TrackMateModel<T> model;
+	protected final TrackMateModel model;
 
-	public AbstractFeatureGrapher(final String xFeature, final Set<String> yFeatures,final TrackMateModel<T> model) {
+	public AbstractFeatureGrapher(final String xFeature, final Set<String> yFeatures,final TrackMateModel model) {
 		this.xFeature = xFeature;
 		this.yFeatures = yFeatures;
 		this.model = model;

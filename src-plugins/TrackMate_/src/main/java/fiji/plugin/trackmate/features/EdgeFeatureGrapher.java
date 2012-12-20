@@ -9,9 +9,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import net.imglib2.type.NativeType;
-import net.imglib2.type.numeric.RealType;
-
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.plot.PlotOrientation;
@@ -30,14 +27,14 @@ import fiji.plugin.trackmate.util.XYEdgeRenderer;
 import fiji.plugin.trackmate.util.XYEdgeSeries;
 import fiji.plugin.trackmate.util.XYEdgeSeriesCollection;
 
-public class EdgeFeatureGrapher<T extends RealType<T> & NativeType<T>>  extends AbstractFeatureGrapher<T> {
+public class EdgeFeatureGrapher extends AbstractFeatureGrapher {
 
 	private final List<DefaultWeightedEdge> edges;
 	private final Dimension xDimension;
 	private final Map<String, Dimension> yDimensions;
 	private final Map<String, String> featureNames;
 
-	public EdgeFeatureGrapher(String xFeature, Set<String> yFeatures, List<DefaultWeightedEdge> edges, TrackMateModel<T> model) {
+	public EdgeFeatureGrapher(String xFeature, Set<String> yFeatures, List<DefaultWeightedEdge> edges, TrackMateModel model) {
 		super(xFeature, yFeatures, model);
 		this.edges = edges;
 		this.xDimension = model.getFeatureModel().getEdgeFeatureDimensions().get(xFeature);
@@ -48,7 +45,7 @@ public class EdgeFeatureGrapher<T extends RealType<T> & NativeType<T>>  extends 
 	@Override
 	public void render() {
 
-		final Settings<T> settings = model.getSettings();
+		final Settings settings = model.getSettings();
 
 		// Check x units
 		String xdim= TMUtils.getUnitsFor(xDimension, settings);
@@ -138,7 +135,7 @@ public class EdgeFeatureGrapher<T extends RealType<T> & NativeType<T>>  extends 
 		}
 
 		// Build dataset. We look for edges that have a spot in common, one for the target one for the source
-		final FeatureModel<T> fm = model.getFeatureModel();
+		final FeatureModel fm = model.getFeatureModel();
 		for(DefaultWeightedEdge	edge0 : edges) {
 			for(DefaultWeightedEdge	edge1 : edges) {
 
@@ -163,7 +160,7 @@ public class EdgeFeatureGrapher<T extends RealType<T> & NativeType<T>>  extends 
 	 */
 	private XYSeriesCollection buildEdgeDataSet(final Iterable<String> targetYFeatures, final Iterable<DefaultWeightedEdge> edges) {
 		XYSeriesCollection dataset = new XYSeriesCollection();
-		final FeatureModel<T> fm = model.getFeatureModel();
+		final FeatureModel fm = model.getFeatureModel();
 		for(String feature : targetYFeatures) {
 			XYSeries series = new XYSeries(featureNames.get(feature));
 			for(DefaultWeightedEdge edge : edges) {

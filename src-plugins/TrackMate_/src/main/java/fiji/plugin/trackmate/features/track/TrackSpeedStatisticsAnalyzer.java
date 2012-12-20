@@ -12,8 +12,6 @@ import mpicbg.imglib.util.Util;
 import net.imglib2.algorithm.Benchmark;
 import net.imglib2.algorithm.MultiThreaded;
 import net.imglib2.multithreading.SimpleMultiThreading;
-import net.imglib2.type.NativeType;
-import net.imglib2.type.numeric.RealType;
 
 import org.jgrapht.graph.DefaultWeightedEdge;
 
@@ -22,7 +20,7 @@ import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.features.FeatureModel;
 
-public class TrackSpeedStatisticsAnalyzer<T extends RealType<T> & NativeType<T>> implements TrackFeatureAnalyzer<T>, MultiThreaded, Benchmark {
+public class TrackSpeedStatisticsAnalyzer implements TrackFeatureAnalyzer, MultiThreaded, Benchmark {
 
 
 	/*
@@ -78,9 +76,9 @@ public class TrackSpeedStatisticsAnalyzer<T extends RealType<T> & NativeType<T>>
 
 	private int numThreads;
 	private long processingTime;
-	private final TrackMateModel<T> model;
+	private final TrackMateModel model;
 
-	public TrackSpeedStatisticsAnalyzer(final TrackMateModel<T> model) {
+	public TrackSpeedStatisticsAnalyzer(final TrackMateModel model) {
 		this.model = model;
 		setNumThreads();
 	}
@@ -92,7 +90,7 @@ public class TrackSpeedStatisticsAnalyzer<T extends RealType<T> & NativeType<T>>
 	@Override
 	public void process(final Collection<Integer> trackIDs) {
 		final ArrayBlockingQueue<Integer> queue = new ArrayBlockingQueue<Integer>(trackIDs.size(), false, trackIDs);
-		final FeatureModel<T> fm = model.getFeatureModel();
+		final FeatureModel fm = model.getFeatureModel();
 
 		Thread[] threads = SimpleMultiThreading.newThreads(numThreads);
 		for (int i = 0; i < threads.length; i++) {

@@ -8,9 +8,6 @@ import java.util.Set;
 
 import javax.swing.ImageIcon;
 
-import net.imglib2.type.NativeType;
-import net.imglib2.type.numeric.RealType;
-
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.TrackMate_;
 import fiji.plugin.trackmate.gui.DisplayerPanel;
@@ -19,7 +16,7 @@ import fiji.plugin.trackmate.gui.DisplayerPanel;
  * @author Jean-Yves Tinevez <jeanyves.tinevez@gmail.com> Sep 23, 2011
  *
  */
-public class ResetSpotTimeFeatureAction<T extends RealType<T> & NativeType<T>> extends AbstractTMAction<T> {
+public class ResetSpotTimeFeatureAction extends AbstractTMAction {
 
 	public static final ImageIcon ICON = new ImageIcon(DisplayerPanel.class.getResource("images/time.png"));
 	public static final String NAME = "Reset spot time";
@@ -33,7 +30,7 @@ public class ResetSpotTimeFeatureAction<T extends RealType<T> & NativeType<T>> e
 	}
 	
 	@Override
-	public void execute(TrackMate_<T> plugin) {
+	public void execute(TrackMate_ plugin) {
 		logger.log("Reset spot time.\n");
 		double dt = plugin.getModel().getSettings().dt;
 		if (dt == 0) {

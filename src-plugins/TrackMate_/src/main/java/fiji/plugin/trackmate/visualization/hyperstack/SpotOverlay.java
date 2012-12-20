@@ -19,9 +19,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import net.imglib2.type.NativeType;
-import net.imglib2.type.numeric.RealType;
-
 import org.jfree.chart.renderer.InterpolatePaintScale;
 
 import fiji.plugin.trackmate.Spot;
@@ -36,7 +33,7 @@ import fiji.util.gui.OverlayedImageCanvas.Overlay;
  * The overlay class in charge of drawing the spot images on the hyperstack window.
  * @author Jean-Yves Tinevez <jeanyves.tinevez@gmail.com> 2010 - 2011
  */
-public class SpotOverlay<T extends RealType<T> & NativeType<T>> implements Overlay {
+public class SpotOverlay implements Overlay {
 
 	private static final Font LABEL_FONT = new Font("Arial", Font.BOLD, 12);
 	private static final boolean DEBUG = false;
@@ -50,13 +47,13 @@ public class SpotOverlay<T extends RealType<T> & NativeType<T>> implements Overl
 	protected FontMetrics fm;
 	protected Collection<Spot> spotSelection = new ArrayList<Spot>();
 	protected Map<String, Object> displaySettings;
-	protected final TrackMateModel<T> model;
+	protected final TrackMateModel model;
 
 	/*
 	 * CONSTRUCTOR
 	 */
 
-	public SpotOverlay(final TrackMateModel<T> model, final ImagePlus imp, final Map<String, Object> displaySettings) {
+	public SpotOverlay(final TrackMateModel model, final ImagePlus imp, final Map<String, Object> displaySettings) {
 		this.model = model;
 		this.imp = imp;
 		this.calibration = TMUtils.getSpatialCalibration(model.getSettings().imp);

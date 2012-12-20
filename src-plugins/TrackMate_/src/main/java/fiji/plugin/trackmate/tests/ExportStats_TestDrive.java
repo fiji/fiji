@@ -8,12 +8,9 @@ import ij.ImageJ;
 
 import java.io.File;
 
-import net.imglib2.type.NativeType;
-import net.imglib2.type.numeric.RealType;
-
 public class ExportStats_TestDrive {
 
-	public static <T extends RealType<T> & NativeType<T>> void main(String[] args) {
+	public static void main(String[] args) {
 		
 		ImageJ.main(args);
 		
@@ -26,9 +23,9 @@ public class ExportStats_TestDrive {
 		}
 		ij.ImageJ.main(args);
 		
-		TrackMate_<T> plugin = new TrackMate_<T>();
+		TrackMate_ plugin = new TrackMate_();
 		plugin.initModules();
-		TmXmlReader<T> reader = new TmXmlReader<T>(file, plugin);
+		TmXmlReader reader = new TmXmlReader(file, plugin);
 		if (!reader.checkInput() || !reader.process()) {
 			System.err.println("Problem loading the file:");
 			System.err.println(reader.getErrorMessage());
@@ -36,7 +33,7 @@ public class ExportStats_TestDrive {
 		System.out.println(plugin.getModel());
 		
 		// Export
-		ExportStatsToIJAction<T> exporter = new ExportStatsToIJAction<T>();
+		ExportStatsToIJAction exporter = new ExportStatsToIJAction();
 		exporter.execute(plugin);
 		
 	}

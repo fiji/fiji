@@ -96,9 +96,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-import net.imglib2.type.NativeType;
-import net.imglib2.type.numeric.RealType;
-
 import org.jdom2.Attribute;
 import org.jdom2.DataConversionException;
 import org.jdom2.Element;
@@ -133,7 +130,7 @@ import fiji.plugin.trackmate.util.TMUtils;
  * explicitly, and convert on the fly to v1.3 classes. 
  * @author Jean-Yves Tinevez - 2012
  */
-public class TmXmlReader_v12<T extends RealType<T> & NativeType<T>> extends TmXmlReader<T> {
+public class TmXmlReader_v12 extends TmXmlReader {
 
 	/*
 	 * XML KEY_v12S FOR V 1.2
@@ -165,7 +162,7 @@ public class TmXmlReader_v12<T extends RealType<T> & NativeType<T>> extends TmXm
 	 */
 
 
-	public TmXmlReader_v12(File file, TrackMate_<T> plugin) {
+	public TmXmlReader_v12(File file, TrackMate_ plugin) {
 		super(file, plugin);
 	}
 
@@ -182,9 +179,9 @@ public class TmXmlReader_v12<T extends RealType<T> & NativeType<T>> extends TmXm
 		
 		long start = System.currentTimeMillis();
 		
-		TrackMateModel<T> model = plugin.getModel();
+		TrackMateModel model = plugin.getModel();
 		// Settings
-		Settings<T> settings = getSettings();
+		Settings settings = getSettings();
 		getDetectorSettings(settings);
 		getTrackerSettings(settings);
 		settings.imp = getImage();
@@ -306,7 +303,7 @@ public class TmXmlReader_v12<T extends RealType<T> & NativeType<T>> extends TmXm
 		 * map of tracks vs trackID, using the hash as new keys. Because there is a 
 		 * good chance that they saved keys and the new keys differ, we must retrieve
 		 * the mapping between the two using the retrieve spots.	 */
-		final TrackMateModel<T> model = plugin.getModel();
+		final TrackMateModel model = plugin.getModel();
 		model.setGraph(graph);
 
 		// Retrieve the new track map
@@ -356,7 +353,7 @@ public class TmXmlReader_v12<T extends RealType<T> & NativeType<T>> extends TmXm
 		/* 
 		 * We do the same thing for the track features.
 		 */
-		final FeatureModel<T> fm = model.getFeatureModel();
+		final FeatureModel fm = model.getFeatureModel();
 		Map<Integer, Map<String, Double>> savedFeatureMap = readTrackFeatures();
 		for (Integer savedKey : savedFeatureMap.keySet()) {
 
@@ -490,8 +487,8 @@ public class TmXmlReader_v12<T extends RealType<T> & NativeType<T>> extends TmXm
 	 * @return  a full Settings object
 	 * @throws DataConversionException
 	 */
-	private Settings<T> getSettings() {
-		Settings<T> settings = new Settings<T>();
+	private Settings getSettings() {
+		Settings settings = new Settings();
 		// Basic settings
 		Element settingsEl = root.getChild(SETTINGS_ELEMENT_KEY_v12);
 		if (null != settingsEl) {
@@ -523,7 +520,7 @@ public class TmXmlReader_v12<T extends RealType<T> & NativeType<T>> extends TmXm
 		return settings;
 	}
 
-	private void getDetectorSettings(Settings<T> settings) {
+	private void getDetectorSettings(Settings settings) {
 
 		// We have to parse the settings element to fetch the target channel
 		int targetChannel = 1;
@@ -560,7 +557,7 @@ public class TmXmlReader_v12<T extends RealType<T> & NativeType<T>> extends TmXm
 				segmenterKey = LogDetectorFactory.DETECTOR_KEY;
 			}
 		}
-		DetectorProvider<T> provider = plugin.getDetectorProvider();
+		DetectorProvider provider = plugin.getDetectorProvider();
 		boolean ok = provider.select(segmenterKey);
 		if (!ok) {
 			logger.error(provider.getErrorMessage());
@@ -683,7 +680,7 @@ public class TmXmlReader_v12<T extends RealType<T> & NativeType<T>> extends TmXm
 	 *
 	 * @param settings  the base {@link Settings} object to update.
 	 */
-	private void getTrackerSettings(Settings<T> settings) {
+	private void getTrackerSettings(Settings settings) {
 		Element element = root.getChild(TRACKER_SETTINGS_ELEMENT_KEY_v12);
 		if (null == element) {
 			return;
@@ -717,7 +714,7 @@ public class TmXmlReader_v12<T extends RealType<T> & NativeType<T>> extends TmXm
 				trackerKey = SimpleFastLAPTracker.TRACKER_KEY;
 			}
 		}
-		TrackerProvider<T> provider = plugin.getTrackerProvider();
+		TrackerProvider provider = plugin.getTrackerProvider();
 		boolean ok = provider.select(trackerKey);
 		if (!ok) {
 			logger.error(provider.getErrorMessage());

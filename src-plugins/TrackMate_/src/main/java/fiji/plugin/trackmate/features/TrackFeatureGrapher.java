@@ -9,9 +9,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import net.imglib2.type.NativeType;
-import net.imglib2.type.numeric.RealType;
-
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.plot.PlotOrientation;
@@ -26,13 +23,13 @@ import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.util.ExportableChartPanel;
 import fiji.plugin.trackmate.util.TMUtils;
 
-public class TrackFeatureGrapher<T extends RealType<T> & NativeType<T>>  extends AbstractFeatureGrapher<T> {
+public class TrackFeatureGrapher extends AbstractFeatureGrapher {
 
 	private final Dimension xDimension;
 	private final Map<String, Dimension> yDimensions;
 	private final Map<String, String> featureNames;
 
-	public TrackFeatureGrapher(String xFeature, Set<String> yFeatures, TrackMateModel<T> model) {
+	public TrackFeatureGrapher(String xFeature, Set<String> yFeatures, TrackMateModel model) {
 		super(xFeature, yFeatures, model);
 		this.xDimension = model.getFeatureModel().getTrackFeatureDimensions().get(xFeature);
 		this.yDimensions = model.getFeatureModel().getTrackFeatureDimensions();
@@ -42,7 +39,7 @@ public class TrackFeatureGrapher<T extends RealType<T> & NativeType<T>>  extends
 	@Override
 	public void render() {
 
-		final Settings<T> settings = model.getSettings();
+		final Settings settings = model.getSettings();
 
 		// Check x units
 		String xdim= TMUtils.getUnitsFor(xDimension, settings);
@@ -120,7 +117,7 @@ public class TrackFeatureGrapher<T extends RealType<T> & NativeType<T>>  extends
 	 */
 	private XYSeriesCollection buildTrackDataSet(final Iterable<String> targetYFeatures) {
 		XYSeriesCollection dataset = new XYSeriesCollection();
-		final FeatureModel<T> fm = model.getFeatureModel();
+		final FeatureModel fm = model.getFeatureModel();
 		for(String feature : targetYFeatures) {
 			XYSeries series = new XYSeries(featureNames.get(feature));
 			for(Integer trackID : model.getFilteredTrackIDs()) {

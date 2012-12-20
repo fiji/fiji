@@ -14,9 +14,6 @@ import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
-import net.imglib2.type.NativeType;
-import net.imglib2.type.numeric.RealType;
-
 import org.jfree.chart.renderer.InterpolatePaintScale;
 import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.traverse.DepthFirstIterator;
@@ -43,7 +40,7 @@ import fiji.plugin.trackmate.util.TrackSplitter;
  * @author Jean-Yves Tinevez <jeanyves.tinevez@gmail.com> - Mar 2011 - 2012
  *
  */
-public class mxTrackGraphLayout <T extends RealType<T> & NativeType<T>> extends mxGraphLayout {
+public class mxTrackGraphLayout extends mxGraphLayout {
 
 	private static final int SWIMLANE_HEADER_SIZE = 30;
 	private static final boolean DEBUG = false;
@@ -63,8 +60,8 @@ public class mxTrackGraphLayout <T extends RealType<T> & NativeType<T>> extends 
 	 * We need this to be able to purge them from the graph when we redo a layout.	 */
 	private ArrayList<mxCell> branchCells = new ArrayList<mxCell>();
 	/** The target model to draw spot from. */
-	private final TrackMateModel<T> model;
-	private final JGraphXAdapter<T> graph;
+	private final TrackMateModel model;
+	private final JGraphXAdapter graph;
 	/**
 	 * Hold the current row length for each frame.
 	 * That is, for frame <code>i</code>, the number of cells on the row
@@ -77,7 +74,7 @@ public class mxTrackGraphLayout <T extends RealType<T> & NativeType<T>> extends 
 	 * CONSTRUCTOR
 	 */
 
-	public mxTrackGraphLayout(final JGraphXAdapter<T> graph, final TrackMateModel<T> model) {
+	public mxTrackGraphLayout(final JGraphXAdapter graph, final TrackMateModel model) {
 		super(graph);
 		this.graph = graph;
 		this.model = model;
@@ -273,7 +270,7 @@ public class mxTrackGraphLayout <T extends RealType<T> & NativeType<T>> extends 
 
 				if (doBranchGrouping ) {
 
-					ArrayList<ArrayList<Spot>> branches = new TrackSplitter<T>(model).splitTrackInBranches(track);
+					ArrayList<ArrayList<Spot>> branches = new TrackSplitter(model).splitTrackInBranches(track);
 
 					int partIndex = 1;
 

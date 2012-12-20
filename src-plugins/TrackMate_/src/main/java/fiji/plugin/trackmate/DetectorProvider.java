@@ -21,9 +21,6 @@ import java.util.Map;
 
 import org.jdom2.Element;
 
-import net.imglib2.type.NativeType;
-import net.imglib2.type.numeric.RealType;
-
 import fiji.plugin.trackmate.detection.DetectorKeys;
 import fiji.plugin.trackmate.detection.DogDetectorFactory;
 import fiji.plugin.trackmate.detection.DownsampleLogDetectorFactory;
@@ -37,7 +34,7 @@ import fiji.plugin.trackmate.gui.DownSampleLogDetectorConfigurationPanel;
 import fiji.plugin.trackmate.gui.LogDetectorConfigurationPanel;
 import fiji.plugin.trackmate.gui.WizardController;
 
-public class DetectorProvider <T extends RealType<T> & NativeType<T>> extends AbstractProvider {
+public class DetectorProvider extends AbstractProvider {
 
 	/*
 	 * BLANK CONSTRUCTOR
@@ -202,19 +199,20 @@ public class DetectorProvider <T extends RealType<T> & NativeType<T>> extends Ab
 	 * @return a new instance of the target detector identified by the key parameter. If 
 	 * the key is unknown to this provider, return <code>null</code>.
 	 */
-	public SpotDetectorFactory<T> getDetectorFactory() {
+	@SuppressWarnings("rawtypes")
+	public SpotDetectorFactory getDetectorFactory() {
 
 		if (currentKey.equals(LogDetectorFactory.DETECTOR_KEY)) {
-			return new LogDetectorFactory<T>();
+			return new LogDetectorFactory();
 
 		} else if (currentKey.equals(DogDetectorFactory.DETECTOR_KEY)){
-			return new DogDetectorFactory<T>();
+			return new DogDetectorFactory();
 
 		} else if (currentKey.equals(DownsampleLogDetectorFactory.DETECTOR_KEY)) {
-			return new DownsampleLogDetectorFactory<T>();
+			return new DownsampleLogDetectorFactory();
 
 		} else if (currentKey.equals(ManualDetectorFactory.DETECTOR_KEY)) {
-			return new ManualDetectorFactory<T>();
+			return new ManualDetectorFactory();
 
 		} else {
 			return null;
@@ -284,22 +282,22 @@ public class DetectorProvider <T extends RealType<T> & NativeType<T>> extends Ab
 	 * panels. 
 	 */
 
-	public ConfigurationPanel getDetectorConfigurationPanel(final WizardController<T> controller) 	{
+	public ConfigurationPanel getDetectorConfigurationPanel(final WizardController controller) 	{
 		
 		ImagePlus imp = controller.getPlugin().getModel().getSettings().imp;
 		String spaceUnits = controller.getPlugin().getModel().getSettings().spaceUnits;
 
 		if (currentKey.equals(LogDetectorFactory.DETECTOR_KEY)) {
-			return new LogDetectorConfigurationPanel<T>(imp, LogDetectorFactory.INFO_TEXT, LogDetectorFactory.NAME, spaceUnits);
+			return new LogDetectorConfigurationPanel(imp, LogDetectorFactory.INFO_TEXT, LogDetectorFactory.NAME, spaceUnits);
 
 		} else if (currentKey.equals(DogDetectorFactory.DETECTOR_KEY)){
-			return new LogDetectorConfigurationPanel<T>(imp, DogDetectorFactory.INFO_TEXT, DogDetectorFactory.NAME, spaceUnits);
+			return new LogDetectorConfigurationPanel(imp, DogDetectorFactory.INFO_TEXT, DogDetectorFactory.NAME, spaceUnits);
 
 		} else if (currentKey.equals(DownsampleLogDetectorFactory.DETECTOR_KEY)) {
-			return new DownSampleLogDetectorConfigurationPanel<T>(imp, spaceUnits);
+			return new DownSampleLogDetectorConfigurationPanel(imp, spaceUnits);
 
 		} else if (currentKey.equals(ManualDetectorFactory.DETECTOR_KEY)) {
-			return new BasicDetectorConfigurationPanel<T>(imp, ManualDetectorFactory.INFO_TEXT, ManualDetectorFactory.NAME, spaceUnits);
+			return new BasicDetectorConfigurationPanel(imp, ManualDetectorFactory.INFO_TEXT, ManualDetectorFactory.NAME, spaceUnits);
 
 		} else {
 			return null;

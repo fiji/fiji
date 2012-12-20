@@ -20,9 +20,6 @@ import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.filechooser.FileFilter;
 
-import net.imglib2.type.NativeType;
-import net.imglib2.type.numeric.RealType;
-
 import com.itextpdf.text.DocumentException;
 import com.itextpdf.text.pdf.PdfContentByte;
 import com.itextpdf.text.pdf.PdfWriter;
@@ -42,17 +39,17 @@ import com.mxgraph.view.mxGraph;
 
 import fiji.plugin.trackmate.util.DefaultFileFilter;
 
-public class SaveAction  <T extends RealType<T> & NativeType<T>> extends AbstractAction {
+public class SaveAction extends AbstractAction {
 
 	private static final long serialVersionUID = 7672151690754466760L;
 	private static final ImageIcon ICON = new ImageIcon(TrackSchemeFrame.class.getResource("resources/camera_export.png"));
 	protected String lastDir = null;
-	private final TrackScheme<T> trackScheme;
+	private final TrackScheme trackScheme;
 
 	/**
 	 * 
 	 */
-	public SaveAction(TrackScheme<T> trackScheme) {
+	public SaveAction(TrackScheme trackScheme) {
 		putValue(Action.SMALL_ICON, ICON);
 		this.trackScheme = trackScheme;
 
@@ -61,7 +58,7 @@ public class SaveAction  <T extends RealType<T> & NativeType<T>> extends Abstrac
 	/**
 	 * Saves XML+PNG format.
 	 */
-	protected void saveXmlPng(TrackSchemeFrame<T> frame, String filename, Color bg) throws IOException {
+	protected void saveXmlPng(TrackSchemeFrame frame, String filename, Color bg) throws IOException {
 		final mxGraphComponent graphComponent = trackScheme.getGUI().graphComponent;
 		final mxGraph graph = trackScheme.getGraph();
 
