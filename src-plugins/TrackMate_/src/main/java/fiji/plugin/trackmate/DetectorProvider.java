@@ -19,10 +19,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.jdom2.Element;
+
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
-
-import org.jdom.Element;
 
 import fiji.plugin.trackmate.detection.DetectorKeys;
 import fiji.plugin.trackmate.detection.DogDetectorFactory;

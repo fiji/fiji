@@ -23,10 +23,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.jdom2.Element;
+
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
-
-import org.jdom.Element;
 
 import fiji.plugin.trackmate.detection.SpotDetector;
 import fiji.plugin.trackmate.gui.ConfigurationPanel;

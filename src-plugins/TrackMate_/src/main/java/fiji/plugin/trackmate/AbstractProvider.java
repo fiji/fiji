@@ -4,9 +4,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import org.jdom.Attribute;
-import org.jdom.DataConversionException;
-import org.jdom.Element;
+import org.jdom2.Attribute;
+import org.jdom2.DataConversionException;
+import org.jdom2.Element;
 
 import fiji.plugin.trackmate.detection.SpotDetectorFactory;
 
@@ -109,7 +109,6 @@ public abstract class AbstractProvider {
 	 */
 	protected boolean unmarshallMap(final Element element, final Map<String, Double> map, StringBuilder errorHolder) {
 		boolean ok = true;
-		@SuppressWarnings("unchecked")
 		List<Attribute> attributes = element.getAttributes();
 		for(Attribute att : attributes) {
 			String key = att.getName();

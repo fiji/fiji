@@ -613,7 +613,7 @@ public class TrackMate_<T extends RealType<T> & NativeType<T>>  implements PlugI
 			if (trackIsOk)
 				filteredTrackIndices.add(trackID);
 		}
-		model.setVisibleTrackIndices(filteredTrackIndices, true);
+		model.setFilteredTrackIDs(filteredTrackIndices, true);
 		return true;
 	}
 

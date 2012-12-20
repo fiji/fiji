@@ -99,9 +99,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
 
-import org.jdom.Attribute;
-import org.jdom.DataConversionException;
-import org.jdom.Element;
+import org.jdom2.Attribute;
+import org.jdom2.DataConversionException;
+import org.jdom2.Element;
 import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.graph.SimpleDirectedWeightedGraph;
 
@@ -224,7 +224,6 @@ public class TmXmlReader_v12<T extends RealType<T> & NativeType<T>> extends TmXm
 	 * modified by this reader. 
 	 * @return true if the tracks were found in the file, false otherwise.
 	 */
-	@SuppressWarnings("unchecked")
 	private void readTracks() {
 
 		Element allTracksElement = root.getChild(TRACK_COLLECTION_ELEMENT_KEY_v12);
@@ -352,7 +351,7 @@ public class TmXmlReader_v12<T extends RealType<T> & NativeType<T>> extends TmXm
 			Integer newKey = newKeyMap.get(savedKey);
 			newFilteredTrackIDs.add(newKey);
 		}
-		model.setVisibleTrackIndices(newFilteredTrackIDs, false);
+		model.setFilteredTrackIDs(newFilteredTrackIDs, false);
 
 		/* 
 		 * We do the same thing for the track features.
@@ -382,7 +381,6 @@ public class TmXmlReader_v12<T extends RealType<T> & NativeType<T>> extends TmXm
 		Element ftCollectionEl = root.getChild(TRACK_FILTER_COLLECTION_ELEMENT_KEY);
 		if (null == ftCollectionEl)
 			return null;
-		@SuppressWarnings("unchecked")
 		List<Element> ftEls = ftCollectionEl.getChildren(FILTER_ELEMENT_KEY);
 		for (Element ftEl : ftEls) {
 			String feature 	= ftEl.getAttributeValue(FILTER_FEATURE_ATTRIBUTE_NAME);
@@ -419,7 +417,6 @@ public class TmXmlReader_v12<T extends RealType<T> & NativeType<T>> extends TmXm
 		Element ftCollectionEl = root.getChild(SPOT_FILTER_COLLECTION_ELEMENT_KEY_v12);
 		if (null == ftCollectionEl)
 			return null;
-		@SuppressWarnings("unchecked")
 		List<Element> ftEls = ftCollectionEl.getChildren(FILTER_ELEMENT_KEY_v12);
 		for (Element ftEl : ftEls) {
 			String feature  = ftEl.getAttributeValue(FILTER_FEATURE_ATTRIBUTE_NAME_v12);
@@ -443,7 +440,6 @@ public class TmXmlReader_v12<T extends RealType<T> & NativeType<T>> extends TmXm
 			return null;
 
 		// Load tracks
-		@SuppressWarnings("unchecked")
 		List<Element> trackElements = allTracksElement.getChildren(TRACK_ELEMENT_KEY_v12);
 		for (Element trackElement : trackElements) {
 
@@ -457,7 +453,6 @@ public class TmXmlReader_v12<T extends RealType<T> & NativeType<T>> extends TmXm
 
 			HashMap<String, Double> trackMap = new HashMap<String, Double>();
 
-			@SuppressWarnings("unchecked")
 			List<Attribute> attributes = trackElement.getAttributes();
 			for(Attribute attribute : attributes) {
 
@@ -858,7 +853,6 @@ public class TmXmlReader_v12<T extends RealType<T> & NativeType<T>> extends TmXm
 			return null;
 
 		// Retrieve children elements for each frame
-		@SuppressWarnings("unchecked")
 		List<Element> frameContent = spotCollection.getChildren(SPOT_FRAME_COLLECTION_ELEMENT_KEY_v12);
 
 		// Determine total number of spots
@@ -877,7 +871,6 @@ public class TmXmlReader_v12<T extends RealType<T> & NativeType<T>> extends TmXm
 		for (Element currentFrameContent : frameContent) {
 
 			currentFrame = readIntAttribute(currentFrameContent, FRAME_ATTRIBUTE_NAME_v12, logger);
-			@SuppressWarnings("unchecked")
 			List<Element> spotContent = currentFrameContent.getChildren(SPOT_ELEMENT_KEY_v12);
 			spotList = new ArrayList<Spot>(spotContent.size());
 			for (Element spotElement : spotContent) {
@@ -902,7 +895,6 @@ public class TmXmlReader_v12<T extends RealType<T> & NativeType<T>> extends TmXm
 	 * @return  a {@link SpotCollection}. Each spot of this collection belongs also to the  given collection.
 	 * Return <code>null</code> if the spot selection section does is not present in the file.
 	 */
-	@SuppressWarnings("unchecked")
 	private SpotCollection getFilteredSpots()  {
 		Element selectedSpotCollection = root.getChild(FILTERED_SPOT_ELEMENT_KEY_v12);
 		if (null == selectedSpotCollection)
@@ -946,7 +938,6 @@ public class TmXmlReader_v12<T extends RealType<T> & NativeType<T>> extends TmXm
 	 * @param graph  the graph to retrieve spot objects from
 	 * @return  a list of tracks as a set of spots
 	 */
-	@SuppressWarnings("unchecked")
 	public List<Set<Spot>> readTrackSpots(final SimpleDirectedWeightedGraph<Spot, DefaultWeightedEdge> graph) {
 
 		Element allTracksElement = root.getChild(TRACK_COLLECTION_ELEMENT_KEY_v12);
@@ -1039,7 +1030,6 @@ public class TmXmlReader_v12<T extends RealType<T> & NativeType<T>> extends TmXm
 	 * @param graph  the graph to retrieve spot objects from
 	 * @return  a list of tracks as a set of edges
 	 */
-	@SuppressWarnings("unchecked")
 	public List<Set<DefaultWeightedEdge>> readTrackEdges(final SimpleDirectedWeightedGraph<Spot, DefaultWeightedEdge> graph) {
 
 		Element allTracksElement = root.getChild(TRACK_COLLECTION_ELEMENT_KEY_v12);
@@ -1140,7 +1130,6 @@ public class TmXmlReader_v12<T extends RealType<T> & NativeType<T>> extends TmXm
 			return null;
 
 		// Work because the track splitting from the graph is deterministic
-		@SuppressWarnings("unchecked")
 		List<Element> elements = filteredTracksElement.getChildren(TRACK_ID_ELEMENT_KEY_v12);
 		HashSet<Integer> filteredTrackIndices = new HashSet<Integer>(elements.size());
 		for (Element indexElement : elements) {
@@ -1179,7 +1168,6 @@ public class TmXmlReader_v12<T extends RealType<T> & NativeType<T>> extends TmXm
 		int ID = readIntAttribute(spotEl, SPOT_ID_ATTRIBUTE_NAME_v12, logger);
 		Spot spot = new SpotImp(ID);
 
-		@SuppressWarnings("unchecked")
 		List<Attribute> atts = spotEl.getAttributes();
 		atts.remove(SPOT_ID_ATTRIBUTE_NAME_v12);
 
@@ -1273,7 +1261,6 @@ public class TmXmlReader_v12<T extends RealType<T> & NativeType<T>> extends TmXm
 	 * Look for all the sub-elements of <code>element</code> with the name TRACKER_SETTINGS_FEATURE_ELEMENT, 
 	 * fetch the feature attributes from them, and returns them in a map.
 	 */
-	@SuppressWarnings("unchecked")
 	private static final Map<String, Double> readTrackerFeatureMap(final Element element) {
 		Map<String, Double> map = new HashMap<String, Double>();
 		List<Element> featurelinkingElements = element.getChildren(TRACKER_SETTINGS_FEATURE_ELEMENT);

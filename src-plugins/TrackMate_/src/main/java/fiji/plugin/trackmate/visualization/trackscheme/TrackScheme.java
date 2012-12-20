@@ -307,7 +307,7 @@ public class TrackScheme <T extends RealType<T> & NativeType<T>> implements Trac
 		graph.getModel().beginUpdate();
 		try {
 			// Flag original track as visible
-			model.addTrackToVisibleList(trackIndex);
+			model.setFilteredTrackID(trackIndex, true, false);
 			// Find adequate column
 			int targetColumn = getUnlaidSpotColumn();
 			// Create cells for track
@@ -384,10 +384,10 @@ public class TrackScheme <T extends RealType<T> & NativeType<T>> implements Trac
 						cell.setValue(String.format("%.1f", model.getEdgeWeight(edge)));
 						// We also need now to check if the edge belonged to a visible track. If not,
 						// we make it visible.
-						int index = model.getTrackIndexOf(edge); 
+						int index = model.getTrackIDOf(edge); 
 						// This will work, because track indices will be reprocessed only after the graphModel.endUpdate() 
 						// reaches 0. So now, it's like we are dealing with the track indices priori to modification.
-						if (model.isTrackVisible(index)) {
+						if (model.isTrackFiltered(index)) {
 							if (DEBUG) {
 								System.out.println("[TrackScheme] addEdgeManually: track was visible. Do nothing.");
 							}
@@ -1038,8 +1038,8 @@ public class TrackScheme <T extends RealType<T> & NativeType<T>> implements Trac
 			Integer previousTime = it.next();
 			Spot previousSpot = spotsInTime.get(previousTime);
 			// If this spot belong to an invisible track, we make it visible
-			Integer index = model.getTrackIndexOf(previousSpot);
-			if (index != null && !model.isTrackVisible(index)) {
+			Integer index = model.getTrackIDOf(previousSpot);
+			if (index != null && !model.isTrackFiltered(index)) {
 				importTrack(index);
 			}
 
@@ -1047,8 +1047,8 @@ public class TrackScheme <T extends RealType<T> & NativeType<T>> implements Trac
 				Integer currentTime = it.next();
 				Spot currentSpot = spotsInTime.get(currentTime);
 				// If this spot belong to an invisible track, we make it visible
-				index = model.getTrackIndexOf(currentSpot);
-				if (index != null && !model.isTrackVisible(index)) {
+				index = model.getTrackIDOf(currentSpot);
+				if (index != null && !model.isTrackFiltered(index)) {
 					importTrack(index);
 				}
 				// Check that the cells matching the 2 spots exist in the graph
@@ -1083,8 +1083,8 @@ public class TrackScheme <T extends RealType<T> & NativeType<T>> implements Trac
 					mxCell cell = (mxCell) graph.addJGraphTEdge(edge);
 					cell.setValue(String.format("%.1f", model.getEdgeWeight(edge)));
 					// Also, if the existing edge belonged to an existing invisible track, we make it visible.
-					index = model.getTrackIndexOf(edge);
-					if (index != null && !model.isTrackVisible(index)) {
+					index = model.getTrackIDOf(edge);
+					if (index != null && !model.isTrackFiltered(index)) {
 						importTrack(index);
 					}
 				}

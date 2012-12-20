@@ -25,12 +25,12 @@ import net.imglib2.algorithm.Benchmark;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
 
-import org.jdom.Attribute;
-import org.jdom.DataConversionException;
-import org.jdom.Document;
-import org.jdom.Element;
-import org.jdom.JDOMException;
-import org.jdom.input.SAXBuilder;
+import org.jdom2.Attribute;
+import org.jdom2.DataConversionException;
+import org.jdom2.Document;
+import org.jdom2.Element;
+import org.jdom2.JDOMException;
+import org.jdom2.input.SAXBuilder;
 import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.graph.SimpleDirectedWeightedGraph;
 
@@ -216,7 +216,6 @@ public class TmXmlReader <T extends RealType<T> & NativeType<T>> implements Algo
 			return null;
 
 		// Load tracks
-		@SuppressWarnings("unchecked")
 		List<Element> trackElements = allTracksElement.getChildren(TRACK_ELEMENT_KEY);
 		for (Element trackElement : trackElements) {
 
@@ -230,7 +229,6 @@ public class TmXmlReader <T extends RealType<T> & NativeType<T>> implements Algo
 
 			HashMap<String, Double> trackMap = new HashMap<String, Double>();
 
-			@SuppressWarnings("unchecked")
 			List<Attribute> attributes = trackElement.getAttributes();
 			for(Attribute attribute : attributes) {
 
@@ -286,7 +284,6 @@ public class TmXmlReader <T extends RealType<T> & NativeType<T>> implements Algo
 		Element ftCollectionEl = root.getChild(SPOT_FILTER_COLLECTION_ELEMENT_KEY);
 		if (null == ftCollectionEl)
 			return null;
-		@SuppressWarnings("unchecked")
 		List<Element> ftEls = ftCollectionEl.getChildren(FILTER_ELEMENT_KEY);
 		for (Element ftEl : ftEls) {
 			String feature 	= ftEl.getAttributeValue(FILTER_FEATURE_ATTRIBUTE_NAME);
@@ -307,7 +304,6 @@ public class TmXmlReader <T extends RealType<T> & NativeType<T>> implements Algo
 		Element ftCollectionEl = root.getChild(TRACK_FILTER_COLLECTION_ELEMENT_KEY);
 		if (null == ftCollectionEl)
 			return null;
-		@SuppressWarnings("unchecked")
 		List<Element> ftEls = ftCollectionEl.getChildren(FILTER_ELEMENT_KEY);
 		for (Element ftEl : ftEls) {
 			String feature 	= ftEl.getAttributeValue(FILTER_FEATURE_ATTRIBUTE_NAME);
@@ -443,7 +439,6 @@ public class TmXmlReader <T extends RealType<T> & NativeType<T>> implements Algo
 	 * 
 	 * @return  a {@link SpotCollection}. Return <code>null</code> if the spot section is not present in the file.
 	 */
-	@SuppressWarnings("unchecked")
 	private SpotCollection getAllSpots() {
 		// Root element for collection
 		Element spotCollection = root.getChild(SPOT_COLLECTION_ELEMENT_KEY);
@@ -497,7 +492,6 @@ public class TmXmlReader <T extends RealType<T> & NativeType<T>> implements Algo
 	 * @return  a {@link SpotCollection}. Each spot of this collection belongs also to the  given collection.
 	 * Return <code>null</code> if the spot selection section does is not present in the file.
 	 */
-	@SuppressWarnings("unchecked")
 	private SpotCollection getFilteredSpots()  {
 		Element selectedSpotCollection = root.getChild(FILTERED_SPOT_ELEMENT_KEY);
 		if (null == selectedSpotCollection)
@@ -535,7 +529,6 @@ public class TmXmlReader <T extends RealType<T> & NativeType<T>> implements Algo
 	 * modified by this reader. 
 	 * @return true if the tracks were found in the file, false otherwise.
 	 */
-	@SuppressWarnings("unchecked")
 	private void readTracks() {
 
 		Element allTracksElement = root.getChild(TRACK_COLLECTION_ELEMENT_KEY);
@@ -662,7 +655,7 @@ public class TmXmlReader <T extends RealType<T> & NativeType<T>> implements Algo
 			Integer newKey = newKeyMap.get(savedKey);
 			newFilteredTrackIDs.add(newKey);
 		}
-		model.setVisibleTrackIndices(newFilteredTrackIDs, false);
+		model.setFilteredTrackIDs(newFilteredTrackIDs, false);
 
 		/* 
 		 * We do the same thing for the track features.
@@ -692,7 +685,6 @@ public class TmXmlReader <T extends RealType<T> & NativeType<T>> implements Algo
 		// We double-check that all trackID in the filtered list exist in the track list
 		// First, prepare a sorted array of all track IDs
 		Element allTracksElement = root.getChild(TRACK_COLLECTION_ELEMENT_KEY);
-		@SuppressWarnings("unchecked")
 		List<Element> trackElements = allTracksElement.getChildren(TRACK_ELEMENT_KEY);
 		int[] IDs = new int[trackElements.size()];
 		int index = 0;
@@ -703,7 +695,6 @@ public class TmXmlReader <T extends RealType<T> & NativeType<T>> implements Algo
 		}
 		Arrays.sort(IDs);
 
-		@SuppressWarnings("unchecked")
 		List<Element> elements = filteredTracksElement.getChildren(TRACK_ID_ELEMENT_KEY);
 		HashSet<Integer> filteredTrackIndices = new HashSet<Integer>(elements.size());
 		for (Element indexElement : elements) {
@@ -726,7 +717,6 @@ public class TmXmlReader <T extends RealType<T> & NativeType<T>> implements Algo
 		int ID = readIntAttribute(spotEl, SPOT_ID_ATTRIBUTE_NAME, logger);
 		Spot spot = new SpotImp(ID);
 
-		@SuppressWarnings("unchecked")
 		List<Attribute> atts = spotEl.getAttributes();
 		atts.remove(SPOT_ID_ATTRIBUTE_NAME);
 

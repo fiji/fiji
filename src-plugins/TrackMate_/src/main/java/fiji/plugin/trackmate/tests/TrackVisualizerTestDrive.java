@@ -23,7 +23,7 @@ import javax.swing.JFrame;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
 
-import org.jdom.JDOMException;
+import org.jdom2.JDOMException;
 
 public class TrackVisualizerTestDrive {
 
