@@ -56,7 +56,7 @@ public class ExportTracksToXML extends AbstractTMAction {
 
 		logger.log("Exporting tracks to simple XML format.\n");
 		final TrackMateModel model = plugin.getModel();
-		int ntracks = model.getNFilteredTracks();
+		int ntracks = model.getTrackModel().getNFilteredTracks();
 		if (ntracks == 0) {
 			logger.log("No visible track found. Aborting.\n");
 			return;
@@ -107,13 +107,13 @@ public class ExportTracksToXML extends AbstractTMAction {
 		content.setAttribute(DATE_ATT, new Date().toString());
 
 		logger.setStatus("Marshalling...");
-		Integer[] visibleTracks = model.getFilteredTrackIDs().toArray(new Integer[] {});
-		for (int i = 0 ; i < model.getNFilteredTracks() ; i++) {
+		Integer[] visibleTracks = model.getTrackModel().getFilteredTrackIDs().toArray(new Integer[] {});
+		for (int i = 0 ; i < model.getTrackModel().getNFilteredTracks() ; i++) {
 
 			Element trackElement = new Element(TRACK_KEY);
 			int trackindex = visibleTracks[i];
 			
-			Set<Spot> track = model.getTrackSpots(trackindex);
+			Set<Spot> track = model.getTrackModel().getTrackSpots(trackindex);
 			// Sort them by time 
 			TreeSet<Spot> sortedTrack = new TreeSet<Spot>(Spot.timeComparator);
 			sortedTrack.addAll(track);
@@ -132,7 +132,7 @@ public class ExportTracksToXML extends AbstractTMAction {
 				trackElement.addContent(spotElement);
 			}
 			content.addContent(trackElement);
-			logger.setProgress(i / (0f + model.getNFilteredTracks()));
+			logger.setProgress(i / (0d + model.getTrackModel().getNFilteredTracks()));
 		}
 
 		logger.setStatus("");

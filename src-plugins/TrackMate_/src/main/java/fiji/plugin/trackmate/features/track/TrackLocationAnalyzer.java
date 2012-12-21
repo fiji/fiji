@@ -82,7 +82,7 @@ public class TrackLocationAnalyzer implements TrackFeatureAnalyzer, MultiThreade
 					Integer trackID;
 					while ((trackID = queue.poll()) != null) {
 
-						Set<Spot> track = model.getTrackSpots(trackID);
+						Set<Spot> track = model.getTrackModel().getTrackSpots(trackID);
 
 						double x = 0;
 						double y = 0;

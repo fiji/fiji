@@ -43,7 +43,7 @@ public class TrackSplitter {
 		ArrayList<ArrayList<Spot>> branches = new ArrayList<ArrayList<Spot>>();
 		ArrayList<Spot> currentParent = null;
 		
-		DepthFirstIterator<Spot, DefaultWeightedEdge> iterator = model.getDepthFirstIterator(first);
+		DepthFirstIterator<Spot, DefaultWeightedEdge> iterator = model.getTrackModel().getDepthFirstIterator(first);
 		Spot previousSpot = null;
 		while (iterator.hasNext()) {
 			Spot spot = iterator.next();
@@ -55,7 +55,7 @@ public class TrackSplitter {
 				// Then this event should be a branch stop. We discriminate between the 2 using
 				//	the previous spot: if it is connected to this one, then we are moving backward
 				// and it is a branch stop.
-				if (model.containsEdge(spot, previousSpot)) {
+				if (model.getTrackModel().containsEdge(spot, previousSpot)) {
 					// branch stop
 					currentParent.add(spot);
 					branches.add(currentParent);
@@ -74,7 +74,7 @@ public class TrackSplitter {
 			
 			} else if (type == BRANCH_END) {
 				// See BRANCH_START comment
-				if (model.containsEdge(spot, previousSpot)) {
+				if (model.getTrackModel().containsEdge(spot, previousSpot)) {
 					currentParent.add(spot);
 					branches.add(currentParent); // Finish this one
 					currentParent = new ArrayList<Spot>(); // Create a new branch for the next spot
@@ -85,7 +85,7 @@ public class TrackSplitter {
 					currentParent.add(spot);
 				}
 				
-			} else if (!model.containsEdge(spot, previousSpot)) {
+			} else if (!model.getTrackModel().containsEdge(spot, previousSpot)) {
 				branches.add(currentParent);
 				currentParent = new ArrayList<Spot>(); // make a new branch
 				currentParent.add(spot);
@@ -114,7 +114,7 @@ public class TrackSplitter {
 		if (!model.getFilteredSpots().getAllSpots().contains(spot))
 			return NOT_IN_GRAPH;
 		
-		Set<DefaultWeightedEdge> edges = model.edgesOf(spot);
+		Set<DefaultWeightedEdge> edges = model.getTrackModel().edgesOf(spot);
 		int nConnections = edges.size();
 		
 		if (nConnections == 0) 
@@ -124,9 +124,9 @@ public class TrackSplitter {
 
 		if (nConnections == 1) {
 			DefaultWeightedEdge edge = edges.iterator().next();
-			Spot other = model.getEdgeSource(edge);
+			Spot other = model.getTrackModel().getEdgeSource(edge);
 			if (other == spot)
-				other = model.getEdgeTarget(edge);
+				other = model.getTrackModel().getEdgeTarget(edge);
 			int t1 = model.getSpots().getFrame(other);
 			if (t1 > t0)
 				return BRANCH_START;
@@ -137,15 +137,15 @@ public class TrackSplitter {
 		if (nConnections == 2) {
 			Iterator<DefaultWeightedEdge> it = edges.iterator();
 			DefaultWeightedEdge edge1 = it.next();
-			Spot other1 = model.getEdgeSource(edge1);
+			Spot other1 = model.getTrackModel().getEdgeSource(edge1);
 			if (other1 == spot)
-				other1 = model.getEdgeTarget(edge1);
+				other1 = model.getTrackModel().getEdgeTarget(edge1);
 //			double t1 = other1.getFeature(SpotFeature.POSITION_T);
 			int t1 = model.getSpots().getFrame(other1);
 			DefaultWeightedEdge edge2 = it.next();
-			Spot other2 = model.getEdgeSource(edge2);
+			Spot other2 = model.getTrackModel().getEdgeSource(edge2);
 			if (other2 == spot)
-				other2 = model.getEdgeTarget(edge2);
+				other2 = model.getTrackModel().getEdgeTarget(edge2);
 //			double t2 = other2.getFeature(SpotFeature.POSITION_T);
 			int t2 = model.getSpots().getFrame(other2);
 			if ( (t2>t0 && t0>t1) || (t2<t0 && t0<t1) )
@@ -159,9 +159,9 @@ public class TrackSplitter {
 		int before = 0;
 		int after = 0;
 		for(DefaultWeightedEdge edge : edges) {
-			Spot other = model.getEdgeSource(edge);
+			Spot other = model.getTrackModel().getEdgeSource(edge);
 			if (other == spot)
-				other = model.getEdgeTarget(edge);
+				other = model.getTrackModel().getEdgeTarget(edge);
 			double t = other.getFeature(Spot.POSITION_T);
 			if (t > t0)
 				after++;

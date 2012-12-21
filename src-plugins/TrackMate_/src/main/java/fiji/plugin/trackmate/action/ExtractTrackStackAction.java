@@ -89,7 +89,7 @@ public class ExtractTrackStackAction extends AbstractTMAction {
 		}
 		
 		// Find path
-		List<DefaultWeightedEdge> edges = model.dijkstraShortestPath(start, end);
+		List<DefaultWeightedEdge> edges = model.getTrackModel().dijkstraShortestPath(start, end);
 		if (null == edges) {
 			logger.error("The 2 spots are not connected.\nAborting\n");
 			return;
@@ -104,9 +104,9 @@ public class ExtractTrackStackAction extends AbstractTMAction {
 		double radius = Math.abs(start.getFeature(Spot.RADIUS));
 		for (DefaultWeightedEdge edge : edges) {
 			
-			current = model.getEdgeSource(edge);
+			current = model.getTrackModel().getEdgeSource(edge);
 			if (current == previous) {
-				current = model.getEdgeTarget(edge); // We have to check both in case of bad oriented edges
+				current = model.getTrackModel().getEdgeTarget(edge); // We have to check both in case of bad oriented edges
 			}
 			path.add(current);
 			double ct = Math.abs(current.getFeature(Spot.RADIUS));

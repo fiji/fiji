@@ -320,14 +320,14 @@ public class TrackMate_ implements PlugIn, Benchmark, MultiThreaded, Algorithm {
 	}
 
 	public void computeEdgeFeatures(boolean doLogIt) {
-		model.getFeatureModel().computeEdgeFeatures(model.edgeSet(), doLogIt);
+		model.getFeatureModel().computeEdgeFeatures(model.getTrackModel().edgeSet(), doLogIt);
 	}
 	
 	/**
 	 * Calculate all features for all tracks.
 	 */
 	public void computeTrackFeatures(boolean doLogIt) {
-		model.getFeatureModel().computeTrackFeatures(model.getTrackIDs(), doLogIt);
+		model.getFeatureModel().computeTrackFeatures(model.getTrackModel().getTrackIDs(), doLogIt);
 	}
 
 	/**
@@ -346,7 +346,7 @@ public class TrackMate_ implements PlugIn, Benchmark, MultiThreaded, Algorithm {
 		SpotTracker tracker =  model.getSettings().tracker;
 		tracker.setSettings(model.getSettings().trackerSettings);
 		if (tracker.checkInput() && tracker.process()) {
-			model.setGraph(tracker.getResult());
+			model.getTrackModel().setGraph(tracker.getResult());
 			return false;
 		} else {
 			errorMessage = "Tracking process failed:\n"+tracker.getErrorMessage();
@@ -588,7 +588,7 @@ public class TrackMate_ implements PlugIn, Benchmark, MultiThreaded, Algorithm {
 		}
 		HashSet<Integer> filteredTrackIndices = new HashSet<Integer>(); // will work, for the hash of Integer is its int
 
-		for (Integer trackID : model.getTrackIDs()) {
+		for (Integer trackID : model.getTrackModel().getTrackIDs()) {
 			boolean trackIsOk = true;
 			for(FeatureFilter filter : model.getSettings().getTrackFilters()) {
 				Double tval = filter.value;
@@ -611,7 +611,7 @@ public class TrackMate_ implements PlugIn, Benchmark, MultiThreaded, Algorithm {
 			if (trackIsOk)
 				filteredTrackIndices.add(trackID);
 		}
-		model.setFilteredTrackIDs(filteredTrackIndices, true);
+		model.getTrackModel().setFilteredTrackIDs(filteredTrackIndices, true);
 		return true;
 	}
 

@@ -59,7 +59,7 @@ public class TrackOverlay implements Overlay {
 	 * Provide default coloring.
 	 */
 	public void computeTrackColors() {
-		int ntracks = model.getNFilteredTracks();
+		int ntracks = model.getTrackModel().getNFilteredTracks();
 		if (ntracks == 0)
 			return;
 		InterpolatePaintScale colorMap = (InterpolatePaintScale) displaySettings.get(TrackMateModelView.KEY_COLORMAP);
@@ -77,7 +77,7 @@ public class TrackOverlay implements Overlay {
 				if (val < min) min = val;
 			}
 
-			for(int key : model.getFilteredTrackIDs()) {
+			for(int key : model.getTrackModel().getFilteredTrackIDs()) {
 				Double val = model.getFeatureModel().getTrackFeature(key, feature);
 				if (null == val) {
 					edgeColors.put(key, defaultColor); // if feature is not calculated
@@ -88,7 +88,7 @@ public class TrackOverlay implements Overlay {
 
 		} else {
 			int index = 0;
-			for(int key : model.getFilteredTrackIDs()) {
+			for(int key : model.getTrackModel().getFilteredTrackIDs()) {
 				edgeColors.put(key, colorMap.getPaint((double) index / (ntracks-1)));
 				index ++;
 			}
@@ -102,7 +102,7 @@ public class TrackOverlay implements Overlay {
 	@Override
 	public final void paint(final Graphics g, final int xcorner, final int ycorner, final double magnification) {
 		boolean tracksVisible = (Boolean) displaySettings.get(TrackMateModelView.KEY_TRACKS_VISIBLE);
-		if (!tracksVisible  || model.getNFilteredTracks() == 0)
+		if (!tracksVisible  || model.getTrackModel().getNFilteredTracks() == 0)
 			return;
 
 		final Graphics2D g2d = (Graphics2D)g;
@@ -119,8 +119,8 @@ public class TrackOverlay implements Overlay {
 		g2d.setStroke(new BasicStroke(4.0f,  BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
 		g2d.setColor(TrackMateModelView.DEFAULT_HIGHLIGHT_COLOR);
 		for (DefaultWeightedEdge edge : highlight) {
-			source = model.getEdgeSource(edge);
-			target = model.getEdgeTarget(edge);
+			source = model.getTrackModel().getEdgeSource(edge);
+			target = model.getTrackModel().getEdgeTarget(edge);
 			drawEdge(g2d, source, target, xcorner, ycorner, mag);
 		}
 
@@ -128,8 +128,8 @@ public class TrackOverlay implements Overlay {
 		final int currentFrame = imp.getFrame() - 1;
 		final int trackDisplayMode = (Integer) displaySettings.get(TrackMateModelView.KEY_TRACK_DISPLAY_MODE);
 		final int trackDisplayDepth = (Integer) displaySettings.get(TrackMateModelView.KEY_TRACK_DISPLAY_DEPTH);
-		final Map<Integer,Set<DefaultWeightedEdge>> trackEdges = model.getTrackEdges(); 
-		final Set<Integer> filteredTrackKeys = model.getFilteredTrackIDs();
+		final Map<Integer,Set<DefaultWeightedEdge>> trackEdges = model.getTrackModel().getTrackEdges(); 
+		final Set<Integer> filteredTrackKeys = model.getTrackModel().getFilteredTrackIDs();
 		
 		g2d.setStroke(new BasicStroke(2.0f,  BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
 		if (trackDisplayMode == TrackMateModelView.TRACK_DISPLAY_MODE_LOCAL || trackDisplayMode == TrackMateModelView.TRACK_DISPLAY_MODE_LOCAL_QUICK) 
@@ -169,8 +169,8 @@ public class TrackOverlay implements Overlay {
 					if (highlight.contains(edge))
 						continue;
 
-					source = model.getEdgeSource(edge);
-					target = model.getEdgeTarget(edge);
+					source = model.getTrackModel().getEdgeSource(edge);
+					target = model.getTrackModel().getEdgeTarget(edge);
 					drawEdge(g2d, source, target, xcorner, ycorner, mag);
 				}
 			}
@@ -191,12 +191,12 @@ public class TrackOverlay implements Overlay {
 					if (highlight.contains(edge))
 						continue;
 
-					source = model.getEdgeSource(edge);
+					source = model.getTrackModel().getEdgeSource(edge);
 					sourceFrame = source.getFeature(Spot.POSITION_T) / dt;
 					if (sourceFrame < minT || sourceFrame >= maxT)
 						continue;
 
-					target = model.getEdgeTarget(edge);
+					target = model.getTrackModel().getEdgeTarget(edge);
 					drawEdge(g2d, source, target, xcorner, ycorner, mag);
 				}
 			}
@@ -217,13 +217,13 @@ public class TrackOverlay implements Overlay {
 					if (highlight.contains(edge))
 						continue;
 
-					source = model.getEdgeSource(edge);
+					source = model.getTrackModel().getEdgeSource(edge);
 					sourceFrame = source.getFeature(Spot.POSITION_T) / dt;
 					if (sourceFrame < minT || sourceFrame >= maxT)
 						continue;
 
 					transparency = (float) (1 - Math.abs(sourceFrame-currentFrame) / trackDisplayDepth);
-					target = model.getEdgeTarget(edge);
+					target = model.getTrackModel().getEdgeTarget(edge);
 					drawEdge(g2d, source, target, xcorner, ycorner, mag, transparency);
 				}
 			}

@@ -467,13 +467,13 @@ public class FeatureModel implements MultiThreaded {
 	public Map<String, double[]> getTrackFeatureValues() {
 		final Map<String, double[]> featureValues = new HashMap<String, double[]>();
 		Double val;
-		int nTracks = model.getNTracks();
+		int nTracks = model.getTrackModel().getNTracks();
 		for (String feature : trackFeatures) {
 			// Make a double array to comply to JFreeChart histograms
 			boolean noDataFlag = true;
 			final double[] values = new double[nTracks];
 			int index = 0;
-			for (Integer trackID : model.getTrackIDs()) {
+			for (Integer trackID : model.getTrackModel().getTrackIDs()) {
 				val = getTrackFeature(trackID, feature);
 				if (null == val)
 					continue;
@@ -493,8 +493,8 @@ public class FeatureModel implements MultiThreaded {
 	 * Instantiate an empty feature 2D map.
 	 */
 	private void initFeatureMap() {
-		this.trackFeatureValues = new ConcurrentHashMap<Integer, Map<String, Double>>(model.getNTracks());
-		Set<Integer> keySet = model.getTrackSpots().keySet();
+		this.trackFeatureValues = new ConcurrentHashMap<Integer, Map<String, Double>>(model.getTrackModel().getNTracks());
+		Set<Integer> keySet = model.getTrackModel().getTrackSpots().keySet();
 		for (Integer trackID : keySet) {
 			Map<String, Double> featureMap = new ConcurrentHashMap<String, Double>(trackFeatures.size());
 			trackFeatureValues.put(trackID, featureMap);

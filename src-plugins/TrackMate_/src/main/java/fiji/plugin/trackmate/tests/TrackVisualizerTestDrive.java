@@ -37,30 +37,30 @@ public class TrackVisualizerTestDrive {
 		TrackMate_ plugin = new TrackMate_();
 		plugin.initModules();
 		TmXmlReader reader = new TmXmlReader(file, plugin);
-		if (!reader.checkInput() && !reader.process()) {
+		if (!reader.checkInput() || !reader.process()) {
 			System.err.println("Problem loading the file:");
 			System.err.println(reader.getErrorMessage());
 		}
 		TrackMateModel model = plugin.getModel();
 		
 		System.out.println("From the XML file:");
-		System.out.println("Found "+model.getNTracks()+" tracks in total.");
+		System.out.println("Found "+model.getTrackModel().getNTracks()+" tracks in total.");
 		System.out.println("There were "+model.getSettings().getTrackFilters().size() + " track filter(s) applied on this list,");
-		System.out.println("resulting in having only "+model.getNFilteredTracks()+" visible tracks after filtering.");
+		System.out.println("resulting in having only "+model.getTrackModel().getNFilteredTracks()+" visible tracks after filtering.");
 		plugin.computeTrackFeatures(true);
-		for(int i : model.getFilteredTrackIDs()) {
-			System.out.println(" - "+model.trackToString(i));
+		for(int i : model.getTrackModel().getFilteredTrackIDs()) {
+			System.out.println(" - "+model.getTrackModel().trackToString(i));
 		}
 		System.out.println("Filtered tracks at this stage:");
-		System.out.println(model.getFilteredTrackIDs());
+		System.out.println(model.getTrackModel().getFilteredTrackIDs());
 		System.out.println();
 		
 		FeatureFilter filter = new FeatureFilter(TrackBranchingAnalyzer.NUMBER_SPOTS, 50d, true);
 		System.out.println("We add an extra track filter: "+filter);
 		model.getSettings().addTrackFilter(filter);
 		plugin.execTrackFiltering(true);
-		System.out.println("After filtering, retaining "+model.getNFilteredTracks()+" tracks, which are:");
-		System.out.println(model.getFilteredTrackIDs());
+		System.out.println("After filtering, retaining "+model.getTrackModel().getNFilteredTracks()+" tracks, which are:");
+		System.out.println(model.getTrackModel().getFilteredTrackIDs());
 		System.out.println();
 			
 		Settings settings = model.getSettings();
@@ -74,7 +74,6 @@ public class TrackVisualizerTestDrive {
 		
 		GrabSpotImageAction grabber = new GrabSpotImageAction();
 		grabber.execute(plugin);
-		
 		
 		// Instantiate displayer
 		final TrackMateModelView displayer = new HyperStackDisplayer();

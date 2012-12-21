@@ -139,7 +139,7 @@ public class EdgeFeatureGrapher extends AbstractFeatureGrapher {
 		for(DefaultWeightedEdge	edge0 : edges) {
 			for(DefaultWeightedEdge	edge1 : edges) {
 
-				if (model.getEdgeSource(edge0).equals(model.getEdgeTarget(edge1))) {
+				if (model.getTrackModel().getEdgeSource(edge0).equals(model.getTrackModel().getEdgeTarget(edge1))) {
 					for(String yFeature : targetYFeatures) {
 						XYEdgeSeries edgeSeries = edgeDataset.getSeries(featureNames.get(yFeature));
 						Number x0 = (Number) fm.getEdgeFeature(edge0, xFeature);

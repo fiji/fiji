@@ -41,11 +41,11 @@ public class NNTrackerTest {
 		
 		System.out.println("All spots: "+ model.getSpots());
 		System.out.println("Filtered spots: "+ model.getFilteredSpots());
-		System.out.println("Found "+model.getNTracks()+" tracks in the file:");
+		System.out.println("Found "+model.getTrackModel().getNTracks()+" tracks in the file:");
 		System.out.println("Track features: ");
 		plugin.computeTrackFeatures(true);
-		for (Integer trackID : model.getTrackIDs()) {
-			System.out.println(model.trackToString(trackID));
+		for (Integer trackID : model.getTrackModel().getTrackIDs()) {
+			System.out.println(model.getTrackModel().trackToString(trackID));
 		}
 		System.out.println();
 		
@@ -61,13 +61,13 @@ public class NNTrackerTest {
 		if (!tracker.process())
 			System.err.println("Error in process: "+tracker.getErrorMessage());
 		long end = System.currentTimeMillis();
-		model.setGraph(tracker.getResult());
+		model.getTrackModel().setGraph(tracker.getResult());
 		
 		// 3 - Print out results for testing		
 		System.out.println();
 		System.out.println();
 		System.out.println();
-		System.out.println("Found " + model.getNTracks() + " final tracks.");
+		System.out.println("Found " + model.getTrackModel().getNTracks() + " final tracks.");
 		System.out.println("Whole tracking done in "+(end-start)+" ms.");
 		System.out.println();
 
@@ -78,8 +78,8 @@ public class NNTrackerTest {
 		
 		System.out.println("Track features: ");
 		plugin.computeTrackFeatures(true);
-		for (Integer trackID : model.getTrackIDs()) {
-			System.out.println(model.trackToString(trackID));
+		for (Integer trackID : model.getTrackModel().getTrackIDs()) {
+			System.out.println(model.getTrackModel().trackToString(trackID));
 		}
 		
 		

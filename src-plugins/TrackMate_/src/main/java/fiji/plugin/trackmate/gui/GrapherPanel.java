@@ -113,8 +113,8 @@ public class GrapherPanel extends ActionListenablePanel implements WizardPanelDe
 		
 		// Collect only the spots that are in tracks
 		List<Spot> spots = new ArrayList<Spot>();
-		for(Integer trackID : model.getTrackIDs()) {
-			spots.addAll(model.getTrackSpots(trackID));
+		for(Integer trackID : model.getTrackModel().getTrackIDs()) {
+			spots.addAll(model.getTrackModel().getTrackSpots(trackID));
 		}
 		
 		SpotFeatureGrapher grapher = new SpotFeatureGrapher(xFeature, yFeatures, spots, model);
@@ -124,8 +124,8 @@ public class GrapherPanel extends ActionListenablePanel implements WizardPanelDe
 	private void plotEdgeFeatures() {
 		// Collect edges in filtered tracks
 		List<DefaultWeightedEdge> edges = new ArrayList<DefaultWeightedEdge>();
-		for (Integer trackID : model.getFilteredTrackIDs()) {
-			edges.addAll(model.getTrackEdges(trackID));
+		for (Integer trackID : model.getTrackModel().getFilteredTrackIDs()) {
+			edges.addAll(model.getTrackModel().getTrackEdges(trackID));
 		}
 		// Recompute edge features
 		model.getFeatureModel().computeEdgeFeatures(edges, true);
@@ -138,7 +138,7 @@ public class GrapherPanel extends ActionListenablePanel implements WizardPanelDe
 	
 	private void plotTrackFeatures() {
 		// Recompute track features
-		model.getFeatureModel().computeTrackFeatures(model.getFilteredTrackIDs(), true);
+		model.getFeatureModel().computeTrackFeatures(model.getTrackModel().getFilteredTrackIDs(), true);
 		// Prepare grapher
 		String xFeature = trackFeatureSelectionPanel.getXKey();
 		Set<String> yFeatures = trackFeatureSelectionPanel.getYKeys();

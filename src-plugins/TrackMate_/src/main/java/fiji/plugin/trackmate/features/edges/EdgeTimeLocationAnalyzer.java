@@ -85,8 +85,8 @@ public class EdgeTimeLocationAnalyzer implements EdgeFeatureAnalyzer, MultiThrea
 					DefaultWeightedEdge edge;
 					while ((edge = queue.poll()) != null) {
 
-						Spot source = model.getEdgeSource(edge);
-						Spot target = model.getEdgeTarget(edge);
+						Spot source = model.getTrackModel().getEdgeSource(edge);
+						Spot target = model.getTrackModel().getEdgeTarget(edge);
 
 						double x = 0.5 * ( source.getFeature(Spot.POSITION_X) + target.getFeature(Spot.POSITION_X) ); 
 						double y = 0.5 * ( source.getFeature(Spot.POSITION_Y) + target.getFeature(Spot.POSITION_Y) ); 

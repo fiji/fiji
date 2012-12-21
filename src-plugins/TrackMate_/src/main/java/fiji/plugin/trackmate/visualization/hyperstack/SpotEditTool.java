@@ -384,7 +384,7 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 				try {
 					model.clearSelection();
 					for(DefaultWeightedEdge edge : edgeSelection) {
-						model.removeEdge(edge);
+						model.getTrackModel().removeEdge(edge);
 					}
 					for(Spot spot : spotSelection) {
 						model.removeSpotFrom(spot, null);

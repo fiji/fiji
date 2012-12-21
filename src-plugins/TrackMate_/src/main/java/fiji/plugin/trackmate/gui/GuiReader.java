@@ -272,7 +272,7 @@ public class GuiReader {
 
 
 		{ // Did we get tracks?
-			int nTracks = model.getNTracks();
+			int nTracks = model.getTrackModel().getNTracks();
 			if (nTracks < 1) {
 				logger.log("No tracks found in the file.\n");
 				targetDescriptor = TrackerConfigurationPanelDescriptor.DESCRIPTOR;

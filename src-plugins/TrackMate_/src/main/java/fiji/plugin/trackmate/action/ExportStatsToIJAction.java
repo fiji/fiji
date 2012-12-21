@@ -57,7 +57,7 @@ public class ExportStatsToIJAction extends AbstractTMAction {
 		
 		// Export spots
 		logger.log("  - Exporting spot statistics...");
-		Set<Integer> trackIDs = model.getFilteredTrackIDs();
+		Set<Integer> trackIDs = model.getTrackModel().getFilteredTrackIDs();
 		List<String> spotFeatures = fm.getSpotFeatures();
 
 		// Create table
@@ -65,7 +65,7 @@ public class ExportStatsToIJAction extends AbstractTMAction {
 		
 		// Parse spots to insert values as objects
 		for (Integer trackID : trackIDs) {
-			Set<Spot> track = model.getTrackSpots(trackID);
+			Set<Spot> track = model.getTrackModel().getTrackSpots(trackID);
 			for (Spot spot : track) {
 				spotTable.incrementCounter();
 				spotTable.addLabel(spot.getName());
@@ -94,7 +94,7 @@ public class ExportStatsToIJAction extends AbstractTMAction {
 		// Sort by track
 		for (Integer trackID : trackIDs) {
 			
-			Set<DefaultWeightedEdge> track = model.getTrackEdges(trackID);
+			Set<DefaultWeightedEdge> track = model.getTrackModel().getTrackEdges(trackID);
 			for (DefaultWeightedEdge edge : track) {
 				edgeTable.incrementCounter();
 				edgeTable.addLabel(edge.toString());

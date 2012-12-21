@@ -83,13 +83,13 @@ public class TrackBranchingAnalyzer implements TrackFeatureAnalyzer, MultiThread
 					Integer trackID;
 					while ((trackID = queue.poll()) != null) {
 
-						Set<Spot> track = model.getTrackSpots(trackID);
+						Set<Spot> track = model.getTrackModel().getTrackSpots(trackID);
 
 						int nmerges = 0;
 						int nsplits = 0;
 						int ncomplex = 0;
 						for (Spot spot : track) {
-							Set<DefaultWeightedEdge> edges = model.edgesOf(spot);
+							Set<DefaultWeightedEdge> edges = model.getTrackModel().edgesOf(spot);
 							if (edges.size() <= 2) {
 								continue; // nothing special
 							}
@@ -97,8 +97,8 @@ public class TrackBranchingAnalyzer implements TrackFeatureAnalyzer, MultiThread
 							// get neighbors
 							Set<Spot> neighbors = new HashSet<Spot>();
 							for(DefaultWeightedEdge edge : edges) {
-								neighbors.add(model.getEdgeSource(edge));
-								neighbors.add(model.getEdgeTarget(edge));
+								neighbors.add(model.getTrackModel().getEdgeSource(edge));
+								neighbors.add(model.getTrackModel().getEdgeTarget(edge));
 							}
 							neighbors.remove(spot);
 							
@@ -125,9 +125,9 @@ public class TrackBranchingAnalyzer implements TrackFeatureAnalyzer, MultiThread
 						}
 
 						int ngaps = 0;
-						for(DefaultWeightedEdge edge : model.getTrackEdges(trackID)) {
-							Spot source = model.getEdgeSource(edge);
-							Spot target = model.getEdgeTarget(edge);
+						for(DefaultWeightedEdge edge : model.getTrackModel().getTrackEdges(trackID)) {
+							Spot source = model.getTrackModel().getEdgeSource(edge);
+							Spot target = model.getTrackModel().getEdgeTarget(edge);
 							if (Math.abs( target.diffTo(source, Spot.FRAME)) > 1) {
 								ngaps++;
 							}

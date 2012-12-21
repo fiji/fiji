@@ -17,13 +17,16 @@ import org.jgrapht.graph.AsUnweightedGraph;
 import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.graph.ListenableDirectedGraph;
 import org.jgrapht.graph.SimpleDirectedWeightedGraph;
+import org.jgrapht.traverse.BreadthFirstIterator;
+import org.jgrapht.traverse.ClosestFirstIterator;
 import org.jgrapht.traverse.DepthFirstIterator;
+import org.jgrapht.traverse.TopologicalOrderIterator;
 
 /**
  * A component of {@link TrackMateModel} specialized for tracks
  * @author Jean-Yves Tinevez
  */
-class TrackGraphModel {
+public class TrackGraphModel {
 
 	private static final boolean DEBUG = false;
 
@@ -65,6 +68,9 @@ class TrackGraphModel {
 	 * CONSTRUCTOR
 	 */
 
+	/**
+	 * Default visibility constructor: can be instantiated only from {@link TrackMateModel}.
+	 */
 	TrackGraphModel(final TrackMateModel parentModel) {
 		this.model = parentModel;
 		graph.addGraphListener(new MyGraphListener());
@@ -88,7 +94,7 @@ class TrackGraphModel {
 	 * Calling this method <b>overwrites<b> the current graph. Calling this method does <b>not</b>
 	 * trigger the calculation of the track features. 
 	 */
-	void setGraph(final SimpleDirectedWeightedGraph<Spot, DefaultWeightedEdge> graph) {
+	public void setGraph(final SimpleDirectedWeightedGraph<Spot, DefaultWeightedEdge> graph) {
 		this.graph = new ListenableDirectedGraph<Spot, DefaultWeightedEdge>(graph);
 		this.graph.addGraphListener(new MyGraphListener());
 		//
@@ -118,16 +124,16 @@ class TrackGraphModel {
 	 */
 	
 
-	boolean addSpot(Spot spotToAdd) {
+	public boolean addSpot(Spot spotToAdd) {
 		return graph.addVertex(spotToAdd);
 	}
 
-	boolean removeSpot(Spot spotToRemove) {
+	public boolean removeSpot(Spot spotToRemove) {
 		return graph.removeVertex(spotToRemove);
 		
 	}
 	
-	DefaultWeightedEdge addEdge(final Spot source, final Spot target, final double weight) {
+	public DefaultWeightedEdge addEdge(final Spot source, final Spot target, final double weight) {
 		// Mother graph
 		DefaultWeightedEdge edge = graph.addEdge(source, target);
 		graph.setEdgeWeight(edge, weight);
@@ -136,7 +142,7 @@ class TrackGraphModel {
 		return edge;
 	}
 
-	DefaultWeightedEdge removeEdge(final Spot source, final Spot target) {
+	public DefaultWeightedEdge removeEdge(final Spot source, final Spot target) {
 		// Other graph
 		DefaultWeightedEdge edge = graph.removeEdge(source, target);
 		if (DEBUG)
@@ -144,7 +150,7 @@ class TrackGraphModel {
 		return edge;
 	}
 
-	boolean removeEdge(final DefaultWeightedEdge edge) {
+	public boolean removeEdge(final DefaultWeightedEdge edge) {
 		// Mother graph
 		boolean removed = graph.removeEdge(edge);
 		model.edgeSelection.remove(edge);
@@ -164,7 +170,7 @@ class TrackGraphModel {
 	 * @param doNotify if true, will fire a {@link TrackMateModelChangeEvent#TRACKS_VISIBILITY_CHANGED} 
 	 * event.
 	 */
-	void setFilteredTrackIDs(Set<Integer> visibleTrackIndices, boolean doNotify) {
+	public void setFilteredTrackIDs(Set<Integer> visibleTrackIndices, boolean doNotify) {
 		this.filteredTrackKeys = visibleTrackIndices;
 		if (doNotify) {
 			final TrackMateModelChangeEvent event = new TrackMateModelChangeEvent(this, TrackMateModelChangeEvent.TRACKS_VISIBILITY_CHANGED);
@@ -185,7 +191,7 @@ class TrackGraphModel {
 	 * @return  true if and only if the call to this method actually changed the current visible 
 	 * settings of tracks.
 	 */
-	boolean setFilteredTrackID(Integer trackID, boolean visible, boolean doNotify) {
+	public boolean setFilteredTrackID(Integer trackID, boolean visible, boolean doNotify) {
 		if (trackID == null)
 			return false;
 
@@ -215,7 +221,7 @@ class TrackGraphModel {
 	/**
 	 * Return the number of filtered tracks in the model.
 	 */
-	int getNFilteredTracks() {
+	public int getNFilteredTracks() {
 		if (filteredTrackKeys == null)
 			return 0;
 		else
@@ -225,7 +231,7 @@ class TrackGraphModel {
 	/**
 	 * Return the number of <b>un-filtered</b> tracks in the model.
 	 */
-	int getNTracks() {
+	public int getNTracks() {
 		if (trackSpots == null)
 			return 0;
 		else
@@ -236,7 +242,7 @@ class TrackGraphModel {
 	 * @return the track index of the given edge. Return <code>null</code> if the
 	 * edge is not in any track.
 	 */
-	Integer getTrackIDOf(final DefaultWeightedEdge edge) {
+	public Integer getTrackIDOf(final DefaultWeightedEdge edge) {
 		for (Integer trackID : trackSpots.keySet()) {
 			Set<DefaultWeightedEdge> edges = trackEdges.get(trackID);
 			if (edges.contains(edge)) {
@@ -250,7 +256,7 @@ class TrackGraphModel {
 	 * @return the track index of the given spot. Return <code>null</code> if the
 	 * spot is not in any track.
 	 */
-	Integer getTrackIDOf(final Spot spot) {
+	public Integer getTrackIDOf(final Spot spot) {
 		for (Integer trackID : trackSpots.keySet()) {
 			Set<Spot> spots = trackSpots.get(trackID);
 			if (spots.contains(spot)) {
@@ -266,7 +272,7 @@ class TrackGraphModel {
 	 * The tracks returned here are guaranteed to have at least 2 spots in it. 
 	 * There is no empty track, nor a track made of a single spot. 
 	 */
-	Set<Spot> getTrackSpots(Integer trackID) {
+	public Set<Spot> getTrackSpots(Integer trackID) {
 		return trackSpots.get(trackID);
 	}
 
@@ -275,7 +281,7 @@ class TrackGraphModel {
 	 * The track returned here are guaranteed to have at least 1 edge in it. 
 	 * There is no empty track. 
 	 */
-	Set<DefaultWeightedEdge> getTrackEdges(Integer trackID) {
+	public Set<DefaultWeightedEdge> getTrackEdges(Integer trackID) {
 		return trackEdges.get(trackID);
 	}
 
@@ -289,7 +295,7 @@ class TrackGraphModel {
 	 * tracks. So this method needs to be called again after each change for
 	 * the map to be accurate.
 	 */
-	Map<Integer,Set<Spot>> getTrackSpots() {
+	public Map<Integer,Set<Spot>> getTrackSpots() {
 		return trackSpots;
 	}
 
@@ -303,7 +309,7 @@ class TrackGraphModel {
 	 * tracks. So this method needs to be called again after each change for
 	 * the map to be accurate.
 	 */
-	Map<Integer,Set<DefaultWeightedEdge>> getTrackEdges() {
+	public Map<Integer,Set<DefaultWeightedEdge>> getTrackEdges() {
 		return trackEdges;
 	}
 
@@ -311,7 +317,7 @@ class TrackGraphModel {
 	 * Return the track index of the given edge. Return <code>null</code> if the
 	 * edge is not in any track.
 	 */
-	Integer getTrackIndexOf(final Spot spot) {
+	public Integer getTrackIndexOf(final Spot spot) {
 		for (int i = 0; i < trackSpots.size(); i++) {
 			Set<Spot> edges = trackSpots.get(i);
 			if (edges.contains(spot)) {
@@ -325,7 +331,7 @@ class TrackGraphModel {
 	 * @return true if the track with the given ID is within the set of
 	 * filtered tracks.
 	 */
-	boolean isTrackFiltered(final Integer trackID) {
+	public boolean isTrackFiltered(final Integer trackID) {
 		return filteredTrackKeys.contains(trackID);
 	}
 
@@ -339,7 +345,7 @@ class TrackGraphModel {
 	 * 
 	 * @see #execTrackFiltering()
 	 */
-	Set<Integer> getFilteredTrackIDs() {
+	public Set<Integer> getFilteredTrackIDs() {
 		return filteredTrackKeys;
 	}
 	
@@ -356,20 +362,20 @@ class TrackGraphModel {
 	 * tracks. So this method needs to be called again after each change for
 	 * the indices to be accurate.
 	 */
-	Set<Integer> getTrackIDs() {
+	public Set<Integer> getTrackIDs() {
 		return trackSpots.keySet();
 	}
 
 
-	Spot getEdgeSource(final DefaultWeightedEdge edge) {
+	public Spot getEdgeSource(final DefaultWeightedEdge edge) {
 		return graph.getEdgeSource(edge);
 	}
 
-	Spot getEdgeTarget(final DefaultWeightedEdge edge) {
+	public Spot getEdgeTarget(final DefaultWeightedEdge edge) {
 		return graph.getEdgeTarget(edge);
 	}
 
-	double getEdgeWeight(final DefaultWeightedEdge edge) {
+	public double getEdgeWeight(final DefaultWeightedEdge edge) {
 		return graph.getEdgeWeight(edge);
 	}
 
@@ -382,7 +388,7 @@ class TrackGraphModel {
 	 * @param source  the spot the edge to find starts from 
 	 * @param target  the spot the edge to find goes to
 	 */
-	boolean containsEdge(final Spot source, final Spot target) {
+	public boolean containsEdge(final Spot source, final Spot target) {
 		return graph.containsEdge(source, target);
 	}
 
@@ -397,7 +403,7 @@ class TrackGraphModel {
      * @param source source spot of the link.
      * @param target target spot of the link.
      */
-	DefaultWeightedEdge getEdge(final Spot source, final Spot target) {
+	public DefaultWeightedEdge getEdge(final Spot source, final Spot target) {
 		return graph.getEdge(source, target);
 	}
 
@@ -405,7 +411,7 @@ class TrackGraphModel {
 	 * @return a set of all links touching the specified spot. If no links are
 	 * touching the specified spot returns an empty set.
 	 */
-	Set<DefaultWeightedEdge> edgesOf(final Spot spot) {
+	public Set<DefaultWeightedEdge> edgesOf(final Spot spot) {
 		return graph.edgesOf(spot);
 	}
 
@@ -415,7 +421,7 @@ class TrackGraphModel {
      * is modified while an iteration over the set is in progress, the results
      * of the iteration are undefined.
      */
-	Set<DefaultWeightedEdge> edgeSet() {
+	public Set<DefaultWeightedEdge> edgeSet() {
 		return graph.edgeSet();
 	}
 
@@ -426,7 +432,7 @@ class TrackGraphModel {
 	 * @param start  the spot to start iteration with. Can be <code>null</code>, then the start will be taken
 	 * randomly and will traverse all the links.
 	 */
-	DepthFirstIterator<Spot, DefaultWeightedEdge> getUndirectedDepthFirstIterator(Spot start) {
+	public DepthFirstIterator<Spot, DefaultWeightedEdge> getUndirectedDepthFirstIterator(Spot start) {
 		return new DepthFirstIterator<Spot, DefaultWeightedEdge>(new AsUndirectedGraph<Spot, DefaultWeightedEdge>(graph), start);
 	}
 
@@ -437,12 +443,23 @@ class TrackGraphModel {
 	 * @param start  the spot to start iteration with. Can be <code>null</code>, then the start will be taken
 	 * randomly and will traverse all the links.
 	 */
-	DepthFirstIterator<Spot, DefaultWeightedEdge> getDepthFirstIterator(Spot start) {
+	public DepthFirstIterator<Spot, DefaultWeightedEdge> getDepthFirstIterator(Spot start) {
 		return new DepthFirstIterator<Spot, DefaultWeightedEdge>(graph, start);
 	}
-
 	
-	String trackToString(Integer trackID) {
+	public BreadthFirstIterator<Spot, DefaultWeightedEdge> getBreadthFirstIterator(Spot start) {
+		return new BreadthFirstIterator<Spot, DefaultWeightedEdge>(graph, start);
+	}
+	
+	public BreadthFirstIterator<Spot, DefaultWeightedEdge> getUndirectedBreadthFirstIterator(Spot start) {
+		return new BreadthFirstIterator<Spot, DefaultWeightedEdge>(new AsUndirectedGraph<Spot, DefaultWeightedEdge>(graph), start);
+	}
+	
+	public ClosestFirstIterator<Spot, DefaultWeightedEdge> getUndirectedClosestFirstIterator(Spot start) {
+		return new ClosestFirstIterator<Spot, DefaultWeightedEdge>(new AsUndirectedGraph<Spot, DefaultWeightedEdge>(graph), start);
+	}
+	
+	public String trackToString(Integer trackID) {
 		String str = "Track " + trackID + ": ";
 		for (String feature : model.getFeatureModel().getTrackFeatures())
 			str += feature + " = "	+ model.getFeatureModel().getTrackFeature(trackID, feature)+ ", ";
@@ -461,7 +478,7 @@ class TrackGraphModel {
 	 * @param source  the spot to start the path with
 	 * @param target  the spot to stop the path with
 	 */
-	List<DefaultWeightedEdge> dijkstraShortestPath(final Spot source, final Spot target) {
+	public List<DefaultWeightedEdge> dijkstraShortestPath(final Spot source, final Spot target) {
 		if (null == graph) {
 			return null;
 		}

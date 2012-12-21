@@ -47,9 +47,9 @@ public class LAPTrackerTestDrive {
 		System.out.println("All spots: "+ model.getSpots());
 		System.out.println("Filtered spots: "+ model.getFilteredSpots());
 		plugin.computeTrackFeatures(true);
-		System.out.println("Found "+model.getNTracks()+" tracks in the file:");
-		for (Integer trackID : model.getTrackEdges().keySet())
-			System.out.println('\t'+model.trackToString(trackID));
+		System.out.println("Found "+model.getTrackModel().getNTracks()+" tracks in the file:");
+		for (Integer trackID : model.getTrackModel().getTrackEdges().keySet())
+			System.out.println('\t'+model.getTrackModel().trackToString(trackID));
 		System.out.println();
 		
 		// 1.5 - Set the tracking settings
@@ -79,22 +79,22 @@ public class LAPTrackerTestDrive {
 		// 2.5 check the track visibility prior and after
 		System.out.println("Track visibility before new graph allocation:");
 		System.out.println("On the following tracks ID:");
-		for (Integer trackID : model.getTrackIDs()) 
+		for (Integer trackID : model.getTrackModel().getTrackIDs()) 
 			System.out.print(trackID + ", ");
 		System.out.println("\nthe following were filtered:");
-		for (Integer trackID : model.getFilteredTrackIDs()) 
+		for (Integer trackID : model.getTrackModel().getFilteredTrackIDs()) 
 			System.out.print(trackID + ", ");
 		System.out.println();
 		
 		// Pass the new graph
-		model.setGraph(lap.getResult());
+		model.getTrackModel().setGraph(lap.getResult());
 
 		System.out.println("Track visibility after new graph allocation:");
 		System.out.println("On the following tracks ID:");
-		for (Integer trackID : model.getTrackIDs()) 
+		for (Integer trackID : model.getTrackModel().getTrackIDs()) 
 			System.out.print(trackID + ", ");
 		System.out.println("\nthe following were filtered:");
-		for (Integer trackID : model.getFilteredTrackIDs()) 
+		for (Integer trackID : model.getTrackModel().getFilteredTrackIDs()) 
 			System.out.print(trackID + ", ");
 		System.out.println();
 
@@ -103,7 +103,7 @@ public class LAPTrackerTestDrive {
 		System.out.println();
 		System.out.println();
 		System.out.println();
-		System.out.println("Found " + model.getNTracks() + " final tracks.");
+		System.out.println("Found " + model.getTrackModel().getNTracks() + " final tracks.");
 		System.out.println("Whole tracking done in "+(end-start)+" ms.");
 		System.out.println();
 
@@ -114,8 +114,8 @@ public class LAPTrackerTestDrive {
 		
 		System.out.println("Track features: ");
 		plugin.computeTrackFeatures(true);
-		for (Integer trackID : model.getTrackEdges().keySet()) {
-			System.out.println(model.trackToString(trackID));
+		for (Integer trackID : model.getTrackModel().getTrackEdges().keySet()) {
+			System.out.println(model.getTrackModel().trackToString(trackID));
 		}
 		
 		

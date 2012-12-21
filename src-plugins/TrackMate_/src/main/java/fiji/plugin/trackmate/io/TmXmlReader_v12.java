@@ -304,10 +304,10 @@ public class TmXmlReader_v12 extends TmXmlReader {
 		 * good chance that they saved keys and the new keys differ, we must retrieve
 		 * the mapping between the two using the retrieve spots.	 */
 		final TrackMateModel model = plugin.getModel();
-		model.setGraph(graph);
+		model.getTrackModel().setGraph(graph);
 
 		// Retrieve the new track map
-		Map<Integer, Set<Spot>> newTrackMap = model.getTrackSpots();
+		Map<Integer, Set<Spot>> newTrackMap = model.getTrackModel().getTrackSpots();
 
 		// Build a map of old key vs new key
 		HashMap<Integer, Integer> newKeyMap = new HashMap<Integer, Integer>();
@@ -348,7 +348,7 @@ public class TmXmlReader_v12 extends TmXmlReader {
 			Integer newKey = newKeyMap.get(savedKey);
 			newFilteredTrackIDs.add(newKey);
 		}
-		model.setFilteredTrackIDs(newFilteredTrackIDs, false);
+		model.getTrackModel().setFilteredTrackIDs(newFilteredTrackIDs, false);
 
 		/* 
 		 * We do the same thing for the track features.

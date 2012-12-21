@@ -86,7 +86,7 @@ public class SpotFeatureGrapher_TestDrive {
 			graph.setEdgeWeight(edge, 1);
 			source = target;
 		}
-		model.setGraph(graph);
+		model.getTrackModel().setGraph(graph);
 		
 		return model;
 	}

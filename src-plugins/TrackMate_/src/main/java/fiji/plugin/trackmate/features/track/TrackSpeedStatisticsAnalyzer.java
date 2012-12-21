@@ -100,7 +100,7 @@ public class TrackSpeedStatisticsAnalyzer implements TrackFeatureAnalyzer, Multi
 					Integer trackID;
 					while ((trackID = queue.poll()) != null) {
 
-						Set<DefaultWeightedEdge> track = model.getTrackEdges(trackID);
+						Set<DefaultWeightedEdge> track = model.getTrackModel().getTrackEdges(trackID);
 
 						double sum = 0;
 						double mean = 0;
@@ -118,8 +118,8 @@ public class TrackSpeedStatisticsAnalyzer implements TrackFeatureAnalyzer, Multi
 						int n = 0;
 
 						for(DefaultWeightedEdge edge : track) {
-							Spot source = model.getEdgeSource(edge);
-							Spot target = model.getEdgeTarget(edge);
+							Spot source = model.getTrackModel().getEdgeSource(edge);
+							Spot target = model.getTrackModel().getEdgeTarget(edge);
 
 							// Edge velocity
 							Double d2 = source.squareDistanceTo(target);

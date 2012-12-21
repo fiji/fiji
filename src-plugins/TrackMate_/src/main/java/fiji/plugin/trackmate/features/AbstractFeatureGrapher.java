@@ -135,12 +135,12 @@ public abstract class AbstractFeatureGrapher {
 			for (int j = i+1; j < nspots; j++) {
 				target = spots.get(j);
 
-				if (model.containsEdge(source, target)) {
-					DefaultWeightedEdge edge = model.getEdge(source, target);
+				if (model.getTrackModel().containsEdge(source, target)) {
+					DefaultWeightedEdge edge = model.getTrackModel().getEdge(source, target);
 					edges.add(edge);
 				}
-				if(model.containsEdge(target, source)) { // careful for directed edge
-					DefaultWeightedEdge edge = model.getEdge(target, source);
+				if(model.getTrackModel().containsEdge(target, source)) { // careful for directed edge
+					DefaultWeightedEdge edge = model.getTrackModel().getEdge(target, source);
 					edges.add(edge);
 				}
 

@@ -74,7 +74,7 @@ public class TrackDurationAnalyzer implements TrackFeatureAnalyzer, MultiThreade
 					while ((trackID = queue.poll()) != null) {
 
 						// I love brute force.
-						Set<Spot> track = model.getTrackSpots(trackID);
+						Set<Spot> track = model.getTrackModel().getTrackSpots(trackID);
 						double minT = Double.POSITIVE_INFINITY;
 						double maxT = Double.NEGATIVE_INFINITY;
 						Double t;

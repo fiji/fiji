@@ -23,7 +23,7 @@ public class TrackBranchingAnalyzer_Test {
 		
 		// Analyze
 		TrackBranchingAnalyzer analyzer = new TrackBranchingAnalyzer(plugin.getModel());
-		analyzer.process(plugin.getModel().getTrackIDs());
+		analyzer.process(plugin.getModel().getTrackModel().getTrackIDs());
 		System.out.println("Analysis done in " + analyzer.getProcessingTime() + " ms.");
 		
 	}

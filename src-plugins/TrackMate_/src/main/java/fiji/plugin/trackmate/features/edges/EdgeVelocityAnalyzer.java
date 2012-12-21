@@ -75,8 +75,8 @@ public class EdgeVelocityAnalyzer implements EdgeFeatureAnalyzer, MultiThreaded 
 				public void run() {
 					DefaultWeightedEdge edge;
 					while ((edge = queue.poll()) != null) {
-						Spot source = model.getEdgeSource(edge);
-						Spot target = model.getEdgeTarget(edge);
+						Spot source = model.getTrackModel().getEdgeSource(edge);
+						Spot target = model.getTrackModel().getEdgeTarget(edge);
 
 						double dx = target.diffTo(source, Spot.POSITION_X);
 						double dy = target.diffTo(source, Spot.POSITION_Y);

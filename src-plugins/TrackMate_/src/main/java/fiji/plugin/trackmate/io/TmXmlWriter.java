@@ -230,12 +230,12 @@ public class TmXmlWriter implements Algorithm, Benchmark  {
 	}
 
 	private void echoTracks() {
-		if (model.getNTracks() == 0)
+		if (model.getTrackModel().getNTracks() == 0)
 			return;
 
 		Element allTracksElement = new Element(TRACK_COLLECTION_ELEMENT_KEY);
 
-		Map<Integer, Set<DefaultWeightedEdge>> trackEdges = model.getTrackEdges();
+		Map<Integer, Set<DefaultWeightedEdge>> trackEdges = model.getTrackModel().getTrackEdges();
 
 		for (int trackID : trackEdges.keySet()) {
 			Set<DefaultWeightedEdge> track = trackEdges.get(trackID);
@@ -257,7 +257,7 @@ public class TmXmlWriter implements Algorithm, Benchmark  {
 				 * We live on the edge of nonsense here, but at least, let's write the 
 				 * file correctly. */
 
-				Set<Spot> spots = model.getTrackSpots(trackID);
+				Set<Spot> spots = model.getTrackModel().getTrackSpots(trackID);
 				Spot spot = spots.iterator().next();
 				Element edgeElement = new Element(TRACK_EDGE_ELEMENT_KEY);
 				edgeElement.setAttribute(TRACK_EDGE_SOURCE_ATTRIBUTE_NAME, ""+spot.ID());
@@ -269,9 +269,9 @@ public class TmXmlWriter implements Algorithm, Benchmark  {
 
 				for (DefaultWeightedEdge edge : track) {
 
-					Spot source = model.getEdgeSource(edge);
-					Spot target = model.getEdgeTarget(edge);
-					double weight = model.getEdgeWeight(edge);
+					Spot source = model.getTrackModel().getEdgeSource(edge);
+					Spot target = model.getTrackModel().getEdgeTarget(edge);
+					double weight = model.getTrackModel().getEdgeWeight(edge);
 
 					Element edgeElement = new Element(TRACK_EDGE_ELEMENT_KEY);
 					edgeElement.setAttribute(TRACK_EDGE_SOURCE_ATTRIBUTE_NAME, ""+source.ID());
@@ -289,12 +289,12 @@ public class TmXmlWriter implements Algorithm, Benchmark  {
 	}
 
 	private void echoFilteredTracks() {
-		if (model.getFilteredTrackIDs() == null) {
+		if (model.getTrackModel().getFilteredTrackIDs() == null) {
 			return;
 		}
 
 		Element filteredTracksElement = new Element(FILTERED_TRACK_ELEMENT_KEY);
-		Set<Integer> filteredTrackKeys = model.getFilteredTrackIDs();
+		Set<Integer> filteredTrackKeys = model.getTrackModel().getFilteredTrackIDs();
 		for (int trackID : filteredTrackKeys) {
 			Element trackIDElement = new Element(TRACK_ID_ELEMENT_KEY);
 			trackIDElement.setAttribute(TRACK_ID_ATTRIBUTE_NAME, ""+trackID);

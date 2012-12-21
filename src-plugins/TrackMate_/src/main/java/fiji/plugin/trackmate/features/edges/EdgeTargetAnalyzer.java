@@ -95,12 +95,12 @@ public class EdgeTargetAnalyzer implements EdgeFeatureAnalyzer, MultiThreaded {
 					while ((edge = queue.poll()) != null) {
 
 						// Edge weight
-						featureModel.putEdgeFeature(edge, EDGE_COST, model.getEdgeWeight(edge));
+						featureModel.putEdgeFeature(edge, EDGE_COST, model.getTrackModel().getEdgeWeight(edge));
 						// Source & target name & ID
-						Spot source = model.getEdgeSource(edge);
+						Spot source = model.getTrackModel().getEdgeSource(edge);
 //						featureModel.putEdgeFeature(edge, SPOT1_NAME, source.getName());
 						featureModel.putEdgeFeature(edge, SPOT1_ID, Double.valueOf(source.ID()));
-						Spot target = model.getEdgeTarget(edge);
+						Spot target = model.getTrackModel().getEdgeTarget(edge);
 //						featureModel.putEdgeFeature(edge, SPOT2_NAME, target.getName());
 						featureModel.putEdgeFeature(edge, SPOT2_ID, Double.valueOf(target.ID()));
 						// Track it belong to TOO COSTY IN TIME

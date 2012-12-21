@@ -162,8 +162,8 @@ public class SpotFeatureGrapher extends AbstractFeatureGrapher  {
 		for(String yFeature : targetYFeatures) {
 			edgeSeries = new XYEdgeSeries(featureNames.get(yFeature));
 			for(DefaultWeightedEdge	edge : edges) {
-				source = model.getEdgeSource(edge);
-				target = model.getEdgeTarget(edge);
+				source = model.getTrackModel().getEdgeSource(edge);
+				target = model.getTrackModel().getEdgeTarget(edge);
 				x0 = source.getFeature(xFeature);
 				y0 = source.getFeature(yFeature);
 				x1 = target.getFeature(xFeature);

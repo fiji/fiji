@@ -85,7 +85,7 @@ public class SpotDisplayer3D extends AbstractTrackMateModelView {
 			universe.removeContent(SPOT_CONTENT_NAME);
 			universe.addContent(spotContent);
 		}
-		if (model.getNFilteredTracks() > 0) {
+		if (model.getTrackModel().getNFilteredTracks() > 0) {
 			trackContent = makeTrackContent();
 			universe.removeContent(TRACK_CONTENT_NAME);
 			universe.addContent(trackContent);
@@ -114,7 +114,7 @@ public class SpotDisplayer3D extends AbstractTrackMateModelView {
 			break;
 		case TrackMateModelChangeEvent.TRACKS_VISIBILITY_CHANGED:
 			trackNode.computeTrackColors();
-			trackNode.setTrackVisible(model.getFilteredTrackIDs());
+			trackNode.setTrackVisible(model.getTrackModel().getFilteredTrackIDs());
 			break;
 
 		}
@@ -380,10 +380,10 @@ public class SpotDisplayer3D extends AbstractTrackMateModelView {
 				if (val < min) min = val;
 			}
 
-			for(int i : model.getFilteredTrackIDs()) {
+			for(int i : model.getTrackModel().getFilteredTrackIDs()) {
 				double val = model.getFeatureModel().getTrackFeature(i, feature);
-				Color color =  colorMap.getPaint((float) (val-min) / (max-min));
-				trackNode.setColor(model.getTrackSpots(i), color);
+				Color color =  colorMap.getPaint( (val-min) / (max-min) );
+				trackNode.setColor(model.getTrackModel().getTrackSpots(i), color);
 			}
 
 		}

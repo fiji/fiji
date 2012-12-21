@@ -107,7 +107,7 @@ public class TrackFilterDescriptor implements WizardPanelDescriptor {
 		plugin.execTrackFiltering(true);
 
 		if (featureFilters == null || featureFilters.isEmpty()) {
-			logger.log("No feature threshold set, kept the " + model.getNTracks() + " tracks.\n");
+			logger.log("No feature threshold set, kept the " + model.getTrackModel().getNTracks() + " tracks.\n");
 		} else {
 			for (FeatureFilter ft : featureFilters) {
 				String str = "  - on "+model.getFeatureModel().getTrackFeatureNames().get(ft.feature);
@@ -119,7 +119,7 @@ public class TrackFilterDescriptor implements WizardPanelDescriptor {
 				str += '\n';
 				logger.log(str);
 			}
-			logger.log("Kept "+model.getNFilteredTracks()+" tracks out of "+model.getNTracks()+".\n");
+			logger.log("Kept "+model.getTrackModel().getNFilteredTracks()+" tracks out of "+model.getTrackModel().getNTracks()+".\n");
 		}		
 	}
 }

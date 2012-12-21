@@ -10,7 +10,6 @@ import java.util.Set;
 
 import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.graph.SimpleDirectedWeightedGraph;
-import org.jgrapht.traverse.DepthFirstIterator;
 
 import fiji.plugin.trackmate.features.FeatureModel;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
@@ -311,145 +310,12 @@ public class TrackMateModel {
 	 * TRACK METHODS: WE DELEGATE TO THE TRACK GRAPH MODEL
 	 */
 	
-
-	/** @see TrackGraphModel#trackToString(Integer) */
-	public String trackToString(Integer trackID) {
-		return trackGraphModel.trackToString(trackID);
+	/**
+	 * @return the {@link TrackGraphModel} that manages tracks for this model.
+	 */
+	public TrackGraphModel getTrackModel() {
+		return trackGraphModel;
 	}
-
-	/** @see TrackGraphModel#addEdge(Spot, Spot, double) */
-	public DefaultWeightedEdge addEdge(Spot source, Spot target, int weight) {
-		return trackGraphModel.addEdge(source, target, weight);
-	}
-
-	/** @see TrackGraphModel#removeEdge(DefaultWeightedEdge) */
-	public void removeEdge(DefaultWeightedEdge edge) {
-		trackGraphModel.removeEdge(edge);
-	}
-
-	/** @see TrackGraphModel#getEdge(Spot, Spot) */
-	public DefaultWeightedEdge getEdge(Spot source, Spot target) {
-		return trackGraphModel.getEdge(source, target);
-	}
-
-	/** @see TrackGraphModel#edgesOf(Spot) */
-	public Set<DefaultWeightedEdge> edgesOf(Spot spot) {
-		return trackGraphModel.edgesOf(spot);
-	}
-	
-	/** @see TrackGraphModel#getEdgeSource(DefaultWeightedEdge) */
-	public Spot getEdgeSource(DefaultWeightedEdge edge) {
-		return trackGraphModel.getEdgeSource(edge);
-	}
-
-	/** @see TrackGraphModel#getEdgeTarget(DefaultWeightedEdge) */
-	public Spot getEdgeTarget(DefaultWeightedEdge edge) {
-		return trackGraphModel.getEdgeTarget(edge);
-	}
-	
-	/** @see TrackGraphModel#getEdgeWeight(DefaultWeightedEdge) */
-	public double getEdgeWeight(DefaultWeightedEdge edge) {
-		return trackGraphModel.getEdgeWeight(edge);
-	}
-	
-	/** @see TrackGraphModel#containsEdge(Spot, Spot) */
-	public boolean containsEdge(Spot source, Spot target) {
-		return trackGraphModel.containsEdge(source, target);
-	}
-	
-	/** @see TrackGraphModel#dijkstraShortestPath(Spot, Spot) */
-	public List<DefaultWeightedEdge> dijkstraShortestPath(Spot start, Spot end) {
-		return trackGraphModel.dijkstraShortestPath(start, end);
-	}
-	
-	/** @see TrackGraphModel#getDepthFirstIterator(Spot) */
-	public DepthFirstIterator<Spot, DefaultWeightedEdge> getDepthFirstIterator(Spot start) {
-		return trackGraphModel.getDepthFirstIterator(start);
-	}
-	
-	/** @see TrackGraphModel#getUndirectedDepthFirstIterator(Spot) */
-	public DepthFirstIterator<Spot, DefaultWeightedEdge> getUndirectedDepthFirstIterator(Spot start) {
-		return trackGraphModel.getUndirectedDepthFirstIterator(start);
-	}
-	
-	/** @see TrackGraphModel#getTrackSpots() */
-	public Map<Integer, Set<Spot>> getTrackSpots() {
-		return trackGraphModel.getTrackSpots();
-	}
-		
-	/** @see TrackGraphModel#getTrackSpots(Integer) */
-	public Set<Spot> getTrackSpots(Integer trackID) {
-		return trackGraphModel.getTrackSpots(trackID);
-	}
-	
-	/** @see TrackGraphModel#getTrackEdges() */
-	public Map<Integer, Set<DefaultWeightedEdge>> getTrackEdges() {
-		return trackGraphModel.getTrackEdges();
-	}
-	
-	/** @see TrackGraphModel#getTrackEdges(Integer) */
-	public Set<DefaultWeightedEdge> getTrackEdges(Integer trackID) {
-		return trackGraphModel.getTrackEdges(trackID);
-	}
-
-
-	/** @see TrackGraphModel#setGraph(SimpleDirectedWeightedGraph) */
-	public void setGraph(SimpleDirectedWeightedGraph<Spot, DefaultWeightedEdge> graph) {
-		trackGraphModel.setGraph(graph);
-	}
-
-	/** @see TrackGraphModel#getTrackIDs()	 */
-	public Collection<Integer> getTrackIDs() {
-		return trackGraphModel.getTrackIDs();
-	}
-	
-	/** @see TrackGraphModel#getTrackIDOf(Spot) */
-	public Integer getTrackIDOf(Spot spot) {
-		return trackGraphModel.getTrackIDOf(spot);
-	}
-
-	/** @see TrackGraphModel#getTrackIDOf(DefaultWeightedEdge) */
-	public Integer getTrackIDOf(DefaultWeightedEdge edge) {
-		return trackGraphModel.getTrackIDOf(edge);
-	}
-	
-	/** @see TrackGraphModel#getFilteredTrackIDs() */
-	public Set<Integer> getFilteredTrackIDs() {
-		return trackGraphModel.getFilteredTrackIDs();
-	}
-	
-	/** @see TrackGraphModel#setFilteredTrackIDs(Set, boolean) */
-	public void setFilteredTrackIDs(Set<Integer> filteredTrackIndices, boolean doNotify) {
-		trackGraphModel.setFilteredTrackIDs(filteredTrackIndices, doNotify);
-	}
-	
-	/** @see TrackGraphModel#setFilteredTrackID(Integer, boolean, boolean) */
-	public boolean setFilteredTrackID(Integer trackID, boolean filtered, boolean doNotify) {
-		return trackGraphModel.setFilteredTrackID(trackID, filtered, doNotify);
-	}
-
-	/** @see TrackGraphModel#isTrackFiltered(int) */
-	public boolean isTrackFiltered(Integer trackID) {
-		return trackGraphModel.isTrackFiltered(trackID);
-	}
-
-	/** @see TrackGraphModel#getNTracks() */
-	public int getNTracks() {
-		return trackGraphModel.getNTracks();
-	}
-	
-	/** @see TrackGraphModel#getNFilteredTracks() */
-	public int getNFilteredTracks() {
-		return trackGraphModel.getNFilteredTracks();
-	}
-
-	/** @see TrackGraphModel#edgeSet()	 */
-	public Collection<DefaultWeightedEdge> edgeSet() {
-		return trackGraphModel.edgeSet();
-	}
-	
-	
-	
 	
 	/*
 	 * GETTERS / SETTERS FOR SPOTS
