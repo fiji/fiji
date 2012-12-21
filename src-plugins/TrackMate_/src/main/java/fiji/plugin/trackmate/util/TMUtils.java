@@ -30,10 +30,13 @@ import javax.swing.JFileChooser;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
 import net.imglib2.exception.ImgLibException;
+import net.imglib2.img.ImagePlusAdapter;
+import net.imglib2.img.ImgPlus;
 import net.imglib2.meta.Axes;
 import net.imglib2.meta.AxisType;
 import net.imglib2.meta.Metadata;
 import net.imglib2.multithreading.SimpleMultiThreading;
+import net.imglib2.type.numeric.real.DoubleType;
 import net.imglib2.util.Util;
 
 import org.jdom2.Attribute;
@@ -153,7 +156,17 @@ public class TMUtils {
 		return builder.toString();
 	}
 	
-	
+	/** 
+	 * Wraps an IJ {@link ImagePlus} in an imglib2 {@link ImgPlus}, without parameterized types.
+	 * The only way I have found to beat javac constraints on bounded multiple wildcard.
+	 */
+	@SuppressWarnings("rawtypes")
+	public static final ImgPlus rawWraps(final ImagePlus imp)	 {
+		ImgPlus<DoubleType> img = ImagePlusAdapter.wrapImgPlus(imp);
+		ImgPlus raw = img;
+		return raw;
+	}
+
 
 
 	/**

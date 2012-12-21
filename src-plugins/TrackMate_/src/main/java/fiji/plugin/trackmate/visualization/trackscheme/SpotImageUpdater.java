@@ -4,13 +4,13 @@ import static fiji.plugin.trackmate.detection.DetectorKeys.KEY_TARGET_CHANNEL;
 
 import java.util.Map;
 
-import net.imglib2.img.ImagePlusAdapter;
 import net.imglib2.img.ImgPlus;
 import net.imglib2.view.HyperSliceImgPlus;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.features.spot.SpotIconGrabber;
+import fiji.plugin.trackmate.util.TMUtils;
 
 public class SpotImageUpdater {
 	
@@ -36,7 +36,7 @@ public class SpotImageUpdater {
 			// Keep the same image than in memory
 		} else {
 			Settings settings = model.getSettings();
-			ImgPlus<?> img = ImagePlusAdapter.wrapImgPlus(settings.imp);
+			ImgPlus img = TMUtils.rawWraps(settings.imp);
 			int targetChannel = 0;
 			if (settings != null && settings.detectorSettings != null) {
 				// Try to extract it from detector settings target channel

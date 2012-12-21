@@ -7,7 +7,6 @@ import java.util.Map;
 
 import javax.swing.ImageIcon;
 
-import net.imglib2.img.ImagePlusAdapter;
 import net.imglib2.img.ImgPlus;
 import net.imglib2.view.HyperSliceImgPlus;
 import fiji.plugin.trackmate.Logger;
@@ -18,6 +17,7 @@ import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMate_;
 import fiji.plugin.trackmate.features.spot.SpotIconGrabber;
 import fiji.plugin.trackmate.gui.DisplayerPanel;
+import fiji.plugin.trackmate.util.TMUtils;
 
 public class GrabSpotImageAction extends AbstractTMAction {
 
@@ -50,8 +50,8 @@ public class GrabSpotImageAction extends AbstractTMAction {
 				targetChannel = ((Integer) obj) - 1;
 			}
 		} // TODO: maybe be more flexible about that
-		final ImgPlus<?> source = ImagePlusAdapter.wrapImgPlus(settings.imp);
-		final ImgPlus<?> imgC = HyperSliceImgPlus.fixChannelAxis(source, targetChannel);
+		final ImgPlus source = TMUtils.rawWraps(settings.imp);
+		final ImgPlus imgC = HyperSliceImgPlus.fixChannelAxis(source, targetChannel);
 		
 		SpotCollection allSpots = model.getFilteredSpots();
 		for (int frame : allSpots.keySet()) {

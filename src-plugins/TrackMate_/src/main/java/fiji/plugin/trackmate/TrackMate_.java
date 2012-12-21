@@ -23,7 +23,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import net.imglib2.algorithm.Algorithm;
 import net.imglib2.algorithm.Benchmark;
 import net.imglib2.algorithm.MultiThreaded;
-import net.imglib2.img.ImagePlusAdapter;
 import net.imglib2.img.ImgPlus;
 import net.imglib2.multithreading.SimpleMultiThreading;
 
@@ -382,7 +381,7 @@ public class TrackMate_ implements PlugIn, Benchmark, MultiThreaded, Algorithm {
 		/*
 		 *  Prepare cropped image
 		 */
-		ImgPlus rawImg = ImagePlusAdapter.wrapImgPlus(settings.imp);
+		ImgPlus rawImg = TMUtils.rawWraps(settings.imp);
 		ImgPlus img;
 
 		// Check if we indeed wish to crop the source image. To this, we check
@@ -690,4 +689,7 @@ public class TrackMate_ implements PlugIn, Benchmark, MultiThreaded, Algorithm {
 	public long getProcessingTime() {
 		return processingTime;
 	};
+	
 }
+
+

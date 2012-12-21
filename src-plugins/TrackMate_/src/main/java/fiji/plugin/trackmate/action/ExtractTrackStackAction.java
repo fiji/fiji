@@ -12,7 +12,6 @@ import java.util.TreeSet;
 
 import javax.swing.ImageIcon;
 
-import net.imglib2.img.ImagePlusAdapter;
 import net.imglib2.img.Img;
 import net.imglib2.img.ImgPlus;
 import net.imglib2.img.display.imagej.ImageJFunctions;
@@ -131,7 +130,7 @@ public class ExtractTrackStackAction extends AbstractTMAction {
 		final int height 	= (int) Math.ceil(2 * radius * RESIZE_FACTOR / calibration[1]);
 		
 		// Extract target channel
-		ImgPlus<?> img = ImagePlusAdapter.wrapImgPlus(settings.imp);
+		ImgPlus img = TMUtils.rawWraps(settings.imp);
 		final ImgPlus<?> imgC = HyperSliceImgPlus.fixChannelAxis(img, targetChannel);
 		
 		// Prepare new image holder:
