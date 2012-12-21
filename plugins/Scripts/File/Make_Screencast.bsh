@@ -127,7 +127,7 @@ run() {
 	vlc = discoverVLC();
 	if (vlc == null) {
 		IJ.error("Could not find VLC, please install");
-		IJ.runPlugin("ij.plugin.BrowserLauncher", "http://www.videolan.org/index.html");
+		IJ.runPlugIn("ij.plugin.BrowserLauncher", "http://www.videolan.org/index.html");
 		return;
 	}
 
