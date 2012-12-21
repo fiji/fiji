@@ -257,10 +257,10 @@ public class TrackSchemeToolbar extends JToolBar {
 				public void actionPerformed(ActionEvent e) {
 					String selectedStyle = (String) selectStyleBox.getSelectedItem();
 					mxTrackGraphLayout layout = trackScheme.getGraphLayout();
-					if (!selectedStyle.equals(layout.getLayoutStyle())) {
-						layout.setLayoutStyle(selectedStyle);
-						trackScheme.doTrackLayout();
-					}
+//					if (!selectedStyle.equals(layout.getLayoutStyle())) { //TODO FIXME
+//						layout.setLayoutStyle(selectedStyle);
+//						trackScheme.doTrackLayout();
+//					}
 				}
 			});
 

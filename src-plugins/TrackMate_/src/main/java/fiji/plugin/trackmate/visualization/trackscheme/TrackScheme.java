@@ -57,7 +57,7 @@ public class TrackScheme implements TrackMateModelChangeListener, TrackMateSelec
 	static final int X_COLUMN_SIZE = 160;
 
 	static final int DEFAULT_CELL_WIDTH = 128;
-	static final int DEFAULT_CELL_HEIGHT = 80;
+	static final int DEFAULT_CELL_HEIGHT = 40;
 
 	public static final ImageIcon 	TRACK_SCHEME_ICON = new ImageIcon(TrackSchemeFrame.class.getResource("resources/track_scheme.png"));
 	public static final String 		DEFAULT_COLOR = "#FF00FF";
@@ -304,18 +304,18 @@ public class TrackScheme implements TrackMateModelChangeListener, TrackMateSelec
 		graph.getModel().beginUpdate();
 		try {
 			// Flag original track as visible
-			model.setFilteredTrackID(trackIndex, true, false);
+			model.getTrackModel().setFilteredTrackID(trackIndex, true, false);
 			// Find adequate column
 			int targetColumn = getUnlaidSpotColumn();
 			// Create cells for track
-			Set<Spot> trackSpots = model.getTrackSpots(trackIndex);
+			Set<Spot> trackSpots = model.getTrackModel().getTrackSpots(trackIndex);
 			for (Spot trackSpot : trackSpots) {
 				int frame = trackSpot.getFeature(Spot.FRAME).intValue();
 				int column = Math.max(targetColumn, getNextFreeColumn(frame));
 				insertSpotInGraph(trackSpot, column);
 				rowLengths.put(frame , column);
 			}
-			Set<DefaultWeightedEdge> trackEdges = model.getTrackEdges(trackIndex);
+			Set<DefaultWeightedEdge> trackEdges = model.getTrackModel().getTrackEdges(trackIndex);
 			for (DefaultWeightedEdge trackEdge : trackEdges) {
 				graph.addJGraphTEdge(trackEdge);
 			}
@@ -366,9 +366,9 @@ public class TrackScheme implements TrackMateModelChangeListener, TrackMateSelec
 						target = tmp;
 					}
 					// We add a new jGraphT edge to the underlying model, if it does not exist yet.
-					DefaultWeightedEdge edge = model.getEdge(source, target); 
+					DefaultWeightedEdge edge = model.getTrackModel().getEdge(source, target); 
 					if (null == edge) {
-						edge = model.addEdge(source, target, -1);
+						edge = model.getTrackModel().addEdge(source, target, -1);
 					} else {
 						// Ah. There was an existing edge in the model we were trying to re-add there, from the graph.
 						// We remove the graph edge we have added,
@@ -378,13 +378,13 @@ public class TrackScheme implements TrackMateModelChangeListener, TrackMateSelec
 						graph.removeCells(new Object[] { cell } );
 						// And re-create a graph edge from the model edge.
 						cell = graph.addJGraphTEdge(edge);
-						cell.setValue(String.format("%.1f", model.getEdgeWeight(edge)));
+						cell.setValue(String.format("%.1f", model.getTrackModel().getEdgeWeight(edge)));
 						// We also need now to check if the edge belonged to a visible track. If not,
 						// we make it visible.
-						int index = model.getTrackIDOf(edge); 
+						int index = model.getTrackModel().getTrackIDOf(edge); 
 						// This will work, because track indices will be reprocessed only after the graphModel.endUpdate() 
 						// reaches 0. So now, it's like we are dealing with the track indices priori to modification.
-						if (model.isTrackFiltered(index)) {
+						if (model.getTrackModel().isTrackFiltered(index)) {
 							if (DEBUG) {
 								System.out.println("[TrackScheme] addEdgeManually: track was visible. Do nothing.");
 							}
@@ -524,7 +524,7 @@ public class TrackScheme implements TrackMateModelChangeListener, TrackMateSelec
 							
 							// Make sure target & source cells exist
 							
-							Spot source = model.getEdgeSource(edge);
+							Spot source = model.getTrackModel().getEdgeSource(edge);
 							mxCell sourceCell = graph.getCellFor(source);
 							if (sourceCell == null) {
 								int frame = source.getFeature(Spot.FRAME).intValue();
@@ -535,7 +535,7 @@ public class TrackScheme implements TrackMateModelChangeListener, TrackMateSelec
 								rowLengths.put(frame, column);
 							}
 							
-							Spot target = model.getEdgeTarget(edge);
+							Spot target = model.getTrackModel().getEdgeTarget(edge);
 							mxCell targetCell = graph.getCellFor(target);
 							if (targetCell == null) {
 								int frame = target.getFeature(Spot.FRAME).intValue();
@@ -800,7 +800,7 @@ public class TrackScheme implements TrackMateModelChangeListener, TrackMateSelec
 				// We remove edges first so that we ensure we do not end having orphan edges.
 				// Normally JGraphT handles that well, but we enforce things here. To be sure.
 				for (DefaultWeightedEdge edge : edgesToRemove) {
-					model.removeEdge(edge);
+					model.getTrackModel().removeEdge(edge);
 				}
 				for (Spot spot : spotsToRemove)  {
 					model.removeSpotFrom(spot, null); 
@@ -861,7 +861,7 @@ public class TrackScheme implements TrackMateModelChangeListener, TrackMateSelec
 		// Position cells
 		graphLayout.execute(graph.getDefaultParent());
 		// We need to pass the column size to the graph component, so that it can paint the borders
-		gui.graphComponent.setColumnColor(graphLayout.getTrackColors());
+//		gui.graphComponent.setColumnColor(graphLayout.getTrackColors()); // TODO FIXME
 		gui.graphComponent.setColumnWidths(graphLayout.getTrackColumnWidths());
 		gui.graphComponent.repaint();
 		// 
@@ -940,8 +940,8 @@ public class TrackScheme implements TrackMateModelChangeListener, TrackMateSelec
 				continue;
 			}
 			// We add connected spots to the list of spots to inspect
-			inspectionSpots.add(model.getEdgeSource(dwe));
-			inspectionSpots.add(model.getEdgeTarget(dwe));
+			inspectionSpots.add(model.getTrackModel().getEdgeSource(dwe));
+			inspectionSpots.add(model.getTrackModel().getEdgeTarget(dwe));
 		}
 
 		// Walk across tracks to build selection
@@ -951,12 +951,12 @@ public class TrackScheme implements TrackMateModelChangeListener, TrackMateSelec
 		if (direction == 0) { // Unconditionally
 			for (Spot spot : inspectionSpots) {
 				spotSelection.add(spot);
-				DepthFirstIterator<Spot, DefaultWeightedEdge> walker = model.getDepthFirstIterator(spot);
+				DepthFirstIterator<Spot, DefaultWeightedEdge> walker = model.getTrackModel().getDepthFirstIterator(spot);
 				while (walker.hasNext()) { 
 					Spot target = walker.next();
 					spotSelection.add(target); 
 					// Deal with edges
-					Set<DefaultWeightedEdge> targetEdges = model.edgesOf(target);
+					Set<DefaultWeightedEdge> targetEdges = model.getTrackModel().edgesOf(target);
 					for(DefaultWeightedEdge targetEdge : targetEdges) {
 						edgeSelection.add(targetEdge);
 					}
@@ -973,14 +973,14 @@ public class TrackScheme implements TrackMateModelChangeListener, TrackMateSelec
 				stack.add(spot);
 				while (!stack.isEmpty()) { 
 					Spot inspected = stack.pop();
-					Set<DefaultWeightedEdge> targetEdges = model.edgesOf(inspected);
+					Set<DefaultWeightedEdge> targetEdges = model.getTrackModel().edgesOf(inspected);
 					for(DefaultWeightedEdge targetEdge : targetEdges) {
 						Spot other;
 						if (direction > 0) {
 							// Upward in time: we just have to search through edges using their source spots
-							other = model.getEdgeSource(targetEdge);
+							other = model.getTrackModel().getEdgeSource(targetEdge);
 						} else {
-							other = model.getEdgeTarget(targetEdge);
+							other = model.getTrackModel().getEdgeTarget(targetEdge);
 						}
 
 						if (other != inspected) {
@@ -997,8 +997,8 @@ public class TrackScheme implements TrackMateModelChangeListener, TrackMateSelec
 		// edges in it.
 		ArrayList<DefaultWeightedEdge> edgesToRemove = new ArrayList<DefaultWeightedEdge>();
 		for(DefaultWeightedEdge edge : edgeSelection) {
-			Spot source = model.getEdgeSource(edge);
-			Spot target = model.getEdgeTarget(edge);
+			Spot source = model.getTrackModel().getEdgeSource(edge);
+			Spot target = model.getTrackModel().getEdgeTarget(edge);
 			if ( !(spotSelection.contains(source) && spotSelection.contains(target)) ) {
 				edgesToRemove.add(edge);
 			}
@@ -1035,8 +1035,8 @@ public class TrackScheme implements TrackMateModelChangeListener, TrackMateSelec
 			Integer previousTime = it.next();
 			Spot previousSpot = spotsInTime.get(previousTime);
 			// If this spot belong to an invisible track, we make it visible
-			Integer index = model.getTrackIDOf(previousSpot);
-			if (index != null && !model.isTrackFiltered(index)) {
+			Integer index = model.getTrackModel().getTrackIDOf(previousSpot);
+			if (index != null && !model.getTrackModel().isTrackFiltered(index)) {
 				importTrack(index);
 			}
 
@@ -1044,8 +1044,8 @@ public class TrackScheme implements TrackMateModelChangeListener, TrackMateSelec
 				Integer currentTime = it.next();
 				Spot currentSpot = spotsInTime.get(currentTime);
 				// If this spot belong to an invisible track, we make it visible
-				index = model.getTrackIDOf(currentSpot);
-				if (index != null && !model.isTrackFiltered(index)) {
+				index = model.getTrackModel().getTrackIDOf(currentSpot);
+				if (index != null && !model.getTrackModel().isTrackFiltered(index)) {
 					importTrack(index);
 				}
 				// Check that the cells matching the 2 spots exist in the graph
@@ -1069,19 +1069,19 @@ public class TrackScheme implements TrackMateModelChangeListener, TrackMateSelec
 				// Check if the model does not have already a edge for these 2 spots (that is 
 				// the case if the 2 spot are in an invisible track, which track scheme does not
 				// know of).
-				DefaultWeightedEdge edge = model.getEdge(previousSpot, currentSpot); 
+				DefaultWeightedEdge edge = model.getTrackModel().getEdge(previousSpot, currentSpot); 
 				if (null == edge) {
 					// We create a new edge between 2 spots, and pair it with a new cell edge.
-					edge = model.addEdge(previousSpot, currentSpot, -1);
+					edge = model.getTrackModel().addEdge(previousSpot, currentSpot, -1);
 					mxCell cell = (mxCell) graph.addJGraphTEdge(edge);
 					cell.setValue("New");
 				} else {
 					// We retrieve the edge, and pair it with a new cell edge.
 					mxCell cell = (mxCell) graph.addJGraphTEdge(edge);
-					cell.setValue(String.format("%.1f", model.getEdgeWeight(edge)));
+					cell.setValue(String.format("%.1f", model.getTrackModel().getEdgeWeight(edge)));
 					// Also, if the existing edge belonged to an existing invisible track, we make it visible.
-					index = model.getTrackIDOf(edge);
-					if (index != null && !model.isTrackFiltered(index)) {
+					index = model.getTrackModel().getTrackIDOf(edge);
+					if (index != null && !model.getTrackModel().isTrackFiltered(index)) {
 						importTrack(index);
 					}
 				}

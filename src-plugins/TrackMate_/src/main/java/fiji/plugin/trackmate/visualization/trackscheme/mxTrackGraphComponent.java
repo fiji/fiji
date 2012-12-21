@@ -312,8 +312,8 @@ public class mxTrackGraphComponent extends mxGraphComponent implements mxIEventL
 			x = xcs;
 			for (int i = 0; i < columnWidths.length; i++) {
 				int cw = columnWidths[i]-1;
-				g.setColor(columnColors[i]);
-				g.drawString(String.format("Track %d", i+1), x+20, ycs/2);
+//				g.setColor(columnColors[i]); // TODO FIXME
+				g.drawString(String.format("Track %d", i+1), x+20, ycs/2); // FIXME
 				g.setColor(LINE_COLOR);					
 				x += cw * xcs;
 				g.drawLine(x, 0, x, height);
