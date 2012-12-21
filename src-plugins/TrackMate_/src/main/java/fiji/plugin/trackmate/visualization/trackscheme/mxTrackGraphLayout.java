@@ -16,6 +16,7 @@ import java.util.TreeSet;
 
 import net.imglib2.algorithm.Benchmark;
 
+import org.jgrapht.alg.DirectedNeighborIndex;
 import org.jgrapht.event.ConnectedComponentTraversalEvent;
 import org.jgrapht.event.EdgeTraversalEvent;
 import org.jgrapht.event.TraversalListener;
@@ -103,6 +104,9 @@ public class mxTrackGraphLayout extends mxGraphLayout implements Benchmark {
 			lonelyCells.add((mxCell) obj);
 		}
 
+		// Get a neighborcache
+		final DirectedNeighborIndex<Spot, DefaultWeightedEdge> neighborCache = model.getTrackModel().getDirectedNeighborIndex();
+		
 		graph.getModel().beginUpdate();
 		try {
 

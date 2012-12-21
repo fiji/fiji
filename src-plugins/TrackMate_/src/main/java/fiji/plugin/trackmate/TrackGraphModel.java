@@ -9,6 +9,7 @@ import java.util.Set;
 
 import org.jgrapht.alg.ConnectivityInspector;
 import org.jgrapht.alg.DijkstraShortestPath;
+import org.jgrapht.alg.DirectedNeighborIndex;
 import org.jgrapht.event.GraphEdgeChangeEvent;
 import org.jgrapht.event.GraphListener;
 import org.jgrapht.event.GraphVertexChangeEvent;
@@ -20,7 +21,8 @@ import org.jgrapht.graph.SimpleDirectedWeightedGraph;
 import org.jgrapht.traverse.BreadthFirstIterator;
 import org.jgrapht.traverse.ClosestFirstIterator;
 import org.jgrapht.traverse.DepthFirstIterator;
-import org.jgrapht.traverse.TopologicalOrderIterator;
+
+import fiji.plugin.trackmate.graph.SpotFunction;
 
 /**
  * A component of {@link TrackMateModel} specialized for tracks
@@ -79,6 +81,34 @@ public class TrackGraphModel {
 	/*
 	 * METHODS
 	 */
+	
+	/**
+	 * @return a new graph with the same structure as the one wrapped here, and with vertices generated
+	 * by the given {@link SpotFunction}. Edges are copied in direction and weight.
+	 */
+	public <V> SimpleDirectedWeightedGraph<V, DefaultWeightedEdge> apply(final SpotFunction<V> function) {
+		SimpleDirectedWeightedGraph<V, DefaultWeightedEdge> copy = new SimpleDirectedWeightedGraph<V, DefaultWeightedEdge>(DefaultWeightedEdge.class);
+		Set<Spot> spots = graph.vertexSet();
+		// To store mapping of old graph vs new graph
+		HashMap<Spot, V> mapping = new HashMap<Spot, V>(spots.size());
+		
+		// Generate new vertices
+		for (Spot spot : spots) {
+			V vertex = function.apply(spot);
+			mapping.put(spot, vertex);
+			copy.addVertex(vertex);
+		}
+		
+		// Generate new edges
+		for(DefaultWeightedEdge edge : graph.edgeSet()) {
+			DefaultWeightedEdge newEdge = copy.addEdge(mapping.get(graph.getEdgeSource(edge)), mapping.get(graph.getEdgeTarget(edge)));
+			copy.setEdgeWeight(newEdge, graph.getEdgeWeight(edge));
+		}
+		
+		return copy;
+	}
+	
+	
 	
 	/*
 	 * BULK TRACKS MODIFICATION
@@ -457,6 +487,11 @@ public class TrackGraphModel {
 	
 	public ClosestFirstIterator<Spot, DefaultWeightedEdge> getUndirectedClosestFirstIterator(Spot start) {
 		return new ClosestFirstIterator<Spot, DefaultWeightedEdge>(new AsUndirectedGraph<Spot, DefaultWeightedEdge>(graph), start);
+	}
+	
+	/** @see DirectedNeighborIndex */
+	public DirectedNeighborIndex<Spot, DefaultWeightedEdge> getDirectedNeighborIndex() {
+		return new DirectedNeighborIndex<Spot, DefaultWeightedEdge>(graph);
 	}
 	
 	public String trackToString(Integer trackID) {
