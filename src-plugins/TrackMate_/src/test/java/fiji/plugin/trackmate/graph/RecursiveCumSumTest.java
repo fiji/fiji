@@ -1,8 +1,6 @@
 package fiji.plugin.trackmate.graph;
 
-import static org.junit.Assert.*;
-
-import net.imglib2.type.numeric.integer.IntType;
+import static org.junit.Assert.assertEquals;
 
 import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.graph.SimpleDirectedGraph;
@@ -11,20 +9,20 @@ import org.junit.Test;
 
 public class RecursiveCumSumTest {
 
-	private static SimpleDirectedGraph<IntType, DefaultEdge> tree;
-	private static IntType root;
+	private static SimpleDirectedGraph<int[], DefaultEdge> tree;
+	private static int[] root;
 
 	@BeforeClass
 	public static void setUpBeforeClass() throws Exception {
-		tree = new SimpleDirectedGraph<IntType, DefaultEdge>(DefaultEdge.class);
+		tree = new SimpleDirectedGraph<int[], DefaultEdge>(DefaultEdge.class);
 		
-		root = new IntType(1);
-		IntType c1 = new IntType(1);
-		IntType c11 = new IntType(1);
-		IntType c111 = new IntType(1);
-		IntType c112 = new IntType(1);
-		IntType c12 = new IntType(1);
-		IntType c2 = new IntType(1);
+		root = new int[] { 1};
+		int[] c1 = new int[] {1};
+		int[] c11 = new int[] {1};
+		int[] c111 = new int[] {1};
+		int[] c112 = new int[] {1};
+		int[] c12 = new int[] {1};
+		int[] c2 = new int[] {1};
 		
 		tree.addVertex(root);
 		tree.addVertex(c1);
@@ -44,15 +42,15 @@ public class RecursiveCumSumTest {
 
 	@Test
 	public final void testApply() {
-		OutputFunction<IntType> function = new OutputFunction<IntType>() {
+		OutputFunction<int[]> function = new OutputFunction<int[]>() {
 			@Override
-			public IntType compute(IntType input1, IntType input2) {
-				return new IntType(input1.get() + input2.get());
+			public int[] compute(int[] input1, int[] input2) {
+				return new int[] { input1[0] + input2[0] };
 			}
 		};
-		RecursiveCumSum<IntType, DefaultEdge> fun = new RecursiveCumSum<IntType, DefaultEdge>(tree, function);
-		IntType val = fun.apply(root);
-		assertEquals(7, val.get());
+		RecursiveCumSum<int[], DefaultEdge> fun = new RecursiveCumSum<int[], DefaultEdge>(tree, function);
+		int[] val = fun.apply(root);
+		assertEquals(7, val[0]);
 	}
 
 }

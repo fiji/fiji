@@ -19,7 +19,6 @@ import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.graph.ListenableDirectedGraph;
 import org.jgrapht.graph.SimpleDirectedWeightedGraph;
 import org.jgrapht.traverse.BreadthFirstIterator;
-import org.jgrapht.traverse.ClosestFirstIterator;
 import org.jgrapht.traverse.DepthFirstIterator;
 
 import fiji.plugin.trackmate.graph.SpotFunction;
@@ -241,8 +240,6 @@ public class TrackGraphModel {
 		return modified;
 	}
 	
-
-
 	/*
 	 * QUERYING TRACKS
 	 */
@@ -454,39 +451,46 @@ public class TrackGraphModel {
 	public Set<DefaultWeightedEdge> edgeSet() {
 		return graph.edgeSet();
 	}
-
-	/**
-	 * @return a new undirected depth first iterator over the spots connected by links in this model.
-	 * The returned iterator does not take into account edge direction, and will be able to iterate 
-	 * backward in time if such links are met.
-	 * @param start  the spot to start iteration with. Can be <code>null</code>, then the start will be taken
-	 * randomly and will traverse all the links.
-	 */
-	public DepthFirstIterator<Spot, DefaultWeightedEdge> getUndirectedDepthFirstIterator(Spot start) {
-		return new DepthFirstIterator<Spot, DefaultWeightedEdge>(new AsUndirectedGraph<Spot, DefaultWeightedEdge>(graph), start);
+	
+	 /**
+     * Returns a set of the spots contained in the tracks. The set is backed
+     * by the graph, so changes to the tracks are reflected in the set. If the
+     * tracks are modified while an iteration over the set is in progress, the
+     * results of the iteration are undefined.
+     *
+     * <p>The graph implementation may maintain a particular set ordering (e.g.
+     * via {@link java.util.LinkedHashSet}) for deterministic iteration, but
+     * this is not required. It is the responsibility of callers who rely on
+     * this behavior to only use graph implementations which support it.</p>
+     *
+     * @return a set view of the spots contained in this graph model.
+     */
+	public Set<Spot> vertexSet() {
+		return graph.vertexSet();
 	}
 
 	/**
 	 * @return a new depth first iterator over the spots connected by links in this model.
-	 * The returned iterator does take into account the edge direction, and will not be able 
-	 * to iterate backward in time.
+	 * A boolean flag allow to set whether the returned iterator does take into account 
+	 * the edge direction. If true, the iterator will not be able to iterate backward in time.
 	 * @param start  the spot to start iteration with. Can be <code>null</code>, then the start will be taken
 	 * randomly and will traverse all the links.
+	 * @param directed  if true returns a directed iterator, undirected if false
 	 */
-	public DepthFirstIterator<Spot, DefaultWeightedEdge> getDepthFirstIterator(Spot start) {
-		return new DepthFirstIterator<Spot, DefaultWeightedEdge>(graph, start);
+	public DepthFirstIterator<Spot, DefaultWeightedEdge> getDepthFirstIterator(Spot start, boolean directed) {
+		if (directed) {
+			return new DepthFirstIterator<Spot, DefaultWeightedEdge>(graph, start);			
+		} else {
+			return new DepthFirstIterator<Spot, DefaultWeightedEdge>(new AsUndirectedGraph<Spot, DefaultWeightedEdge>(graph), start);
+		}
 	}
 	
-	public BreadthFirstIterator<Spot, DefaultWeightedEdge> getBreadthFirstIterator(Spot start) {
-		return new BreadthFirstIterator<Spot, DefaultWeightedEdge>(graph, start);
-	}
-	
-	public BreadthFirstIterator<Spot, DefaultWeightedEdge> getUndirectedBreadthFirstIterator(Spot start) {
-		return new BreadthFirstIterator<Spot, DefaultWeightedEdge>(new AsUndirectedGraph<Spot, DefaultWeightedEdge>(graph), start);
-	}
-	
-	public ClosestFirstIterator<Spot, DefaultWeightedEdge> getUndirectedClosestFirstIterator(Spot start) {
-		return new ClosestFirstIterator<Spot, DefaultWeightedEdge>(new AsUndirectedGraph<Spot, DefaultWeightedEdge>(graph), start);
+	public BreadthFirstIterator<Spot, DefaultWeightedEdge> getBreadthFirstIterator(Spot start, boolean directed) {
+		if (directed) {
+			return new BreadthFirstIterator<Spot, DefaultWeightedEdge>(graph, start);
+		} else {
+			return new BreadthFirstIterator<Spot, DefaultWeightedEdge>(new AsUndirectedGraph<Spot, DefaultWeightedEdge>(graph), start);
+		}
 	}
 	
 	/** @see DirectedNeighborIndex */

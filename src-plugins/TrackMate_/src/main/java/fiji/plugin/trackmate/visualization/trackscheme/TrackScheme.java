@@ -951,7 +951,7 @@ public class TrackScheme implements TrackMateModelChangeListener, TrackMateSelec
 		if (direction == 0) { // Unconditionally
 			for (Spot spot : inspectionSpots) {
 				spotSelection.add(spot);
-				DepthFirstIterator<Spot, DefaultWeightedEdge> walker = model.getTrackModel().getDepthFirstIterator(spot);
+				DepthFirstIterator<Spot, DefaultWeightedEdge> walker = model.getTrackModel().getDepthFirstIterator(spot, false);
 				while (walker.hasNext()) { 
 					Spot target = walker.next();
 					spotSelection.add(target); 

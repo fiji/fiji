@@ -152,7 +152,7 @@ public class mxTrackGraphLayout extends mxGraphLayout implements Benchmark {
 				Spot first = sortedTrack.first();
 
 				// First loop: Loop over spots in good order
-				DepthFirstIterator<Spot, DefaultWeightedEdge> iterator = model.getTrackModel().getUndirectedDepthFirstIterator(first);
+				DepthFirstIterator<Spot, DefaultWeightedEdge> iterator = model.getTrackModel().getDepthFirstIterator(first, false);
 				
 				while(iterator.hasNext()) {
 

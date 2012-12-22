@@ -43,7 +43,7 @@ public class TrackSplitter {
 		ArrayList<ArrayList<Spot>> branches = new ArrayList<ArrayList<Spot>>();
 		ArrayList<Spot> currentParent = null;
 		
-		DepthFirstIterator<Spot, DefaultWeightedEdge> iterator = model.getTrackModel().getDepthFirstIterator(first);
+		DepthFirstIterator<Spot, DefaultWeightedEdge> iterator = model.getTrackModel().getDepthFirstIterator(first, false);
 		Spot previousSpot = null;
 		while (iterator.hasNext()) {
 			Spot spot = iterator.next();
