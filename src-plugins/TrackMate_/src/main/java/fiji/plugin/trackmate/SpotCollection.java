@@ -103,6 +103,8 @@ public class SpotCollection implements Iterable<Spot>, SortedMap<Integer, List<S
 	/**
 	 * Add the given spot to this collection, at the given frame. If the frame collection does not exist yet,
 	 * it is created. If <code>null</code> is passed for the frame, nothing is done and false is returned. 
+	 * Upon adding, the added spot has its feature {@link Spot#FRAME} updated with the passed frame value,
+	 * if it is not <code>null</code>.
 	 * @return true if adding was successful.
 	 */
 	public boolean add(Spot spot, Integer frame) {
@@ -113,6 +115,7 @@ public class SpotCollection implements Iterable<Spot>, SortedMap<Integer, List<S
 			spots = new ArrayList<Spot>(1);
 			content.put(frame, spots);
 		}
+		spot.putFeature(Spot.FRAME, frame);
 		return spots.add(spot);
 	}
 
@@ -422,6 +425,11 @@ public class SpotCollection implements Iterable<Spot>, SortedMap<Integer, List<S
 
 	@Override
 	public List<Spot> put(Integer key, List<Spot> value) {
+		if (key == null)
+			return null;
+		for (Spot spot : value) {
+			spot.putFeature(Spot.FRAME, key);
+		}
 		return content.put(key, value);
 	}
 
@@ -432,7 +440,7 @@ public class SpotCollection implements Iterable<Spot>, SortedMap<Integer, List<S
 
 	@Override
 	public void putAll(Map<? extends Integer, ? extends List<Spot>> map) {
-		content.putAll(map);
+		throw new UnsupportedOperationException("Adding a map to a SpotCollection is not supported."); // because it messes with the Spot#FRAME feature
 	}
 
 	@Override
