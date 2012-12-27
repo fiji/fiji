@@ -1,12 +1,15 @@
 package fiji.plugin.trackmate;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.jgrapht.VertexFactory;
 import org.jgrapht.alg.ConnectivityInspector;
 import org.jgrapht.alg.DijkstraShortestPath;
 import org.jgrapht.alg.DirectedNeighborIndex;
@@ -21,7 +24,9 @@ import org.jgrapht.graph.SimpleDirectedWeightedGraph;
 import org.jgrapht.traverse.BreadthFirstIterator;
 import org.jgrapht.traverse.DepthFirstIterator;
 
-import fiji.plugin.trackmate.graph.SpotFunction;
+import fiji.plugin.trackmate.graph.Function1;
+import fiji.plugin.trackmate.graph.SortedDepthFirstIterator;
+import fiji.plugin.trackmate.util.TMUtils;
 
 /**
  * A component of {@link TrackMateModel} specialized for tracks
@@ -31,12 +36,14 @@ public class TrackGraphModel {
 
 	private static final boolean DEBUG = false;
 
+	private static int currentNameIndex;
+
 	/**
 	 * The model this component belongs to. This reference is used to pull listeners.
 	 */
 	private final TrackMateModel model;
 
-	
+
 	/**
 	 * The mother graph, from which all subsequent fields are calculated. This
 	 * graph is not made accessible to the outside world. Editing it must be
@@ -51,6 +58,8 @@ public class TrackGraphModel {
 	private Map<Integer, Set<DefaultWeightedEdge>> trackEdges = new HashMap<Integer, Set<DefaultWeightedEdge>>();
 	/** The tracks stored as a set of their spots. They are indexed by the hash of the target spot set. */
 	private Map<Integer, Set<Spot>> trackSpots = new HashMap<Integer, Set<Spot>>();
+	/** The map of track names, indexed by track ID. */
+	private Map<Integer, String> trackNames = new HashMap<Integer, String>();
 
 	/**
 	 * The filtered track keys. Is a set made of the keys in the two maps
@@ -80,39 +89,49 @@ public class TrackGraphModel {
 	/*
 	 * METHODS
 	 */
-	
+
 	/**
 	 * @return a new graph with the same structure as the one wrapped here, and with vertices generated
-	 * by the given {@link SpotFunction}. Edges are copied in direction and weight.
+	 * by the given {@link Function1}. Edges are copied in direction and weight.
+	 * @param factory the vertex factory used to instantiate new vertices in the new graph
+	 * @param function the function used to set values of a new vertex in the new graph, from the matching spot
+	 * @param mappings a map that will receive mappings from {@link Spot} to the new vertices. Can be <code>null</code>
+	 * if you do not want to get the mappings
 	 */
-	public <V> SimpleDirectedWeightedGraph<V, DefaultWeightedEdge> apply(final SpotFunction<V> function) {
+	public <V> SimpleDirectedWeightedGraph<V, DefaultWeightedEdge> copy(final VertexFactory<V> factory, final Function1<Spot, V> function, Map<Spot, V> mappings) {
 		SimpleDirectedWeightedGraph<V, DefaultWeightedEdge> copy = new SimpleDirectedWeightedGraph<V, DefaultWeightedEdge>(DefaultWeightedEdge.class);
 		Set<Spot> spots = graph.vertexSet();
 		// To store mapping of old graph vs new graph
-		HashMap<Spot, V> mapping = new HashMap<Spot, V>(spots.size());
-		
+		Map<Spot, V> map;
+		if (null == mappings) {
+			map = new HashMap<Spot, V>(spots.size());
+		} else {
+			map = mappings;
+		}
+
 		// Generate new vertices
 		for (Spot spot : spots) {
-			V vertex = function.apply(spot);
-			mapping.put(spot, vertex);
+			V vertex = factory.createVertex();
+			function.compute(spot, vertex);
+			map.put(spot, vertex);
 			copy.addVertex(vertex);
 		}
-		
+
 		// Generate new edges
 		for(DefaultWeightedEdge edge : graph.edgeSet()) {
-			DefaultWeightedEdge newEdge = copy.addEdge(mapping.get(graph.getEdgeSource(edge)), mapping.get(graph.getEdgeTarget(edge)));
+			DefaultWeightedEdge newEdge = copy.addEdge(map.get(graph.getEdgeSource(edge)), map.get(graph.getEdgeTarget(edge)));
 			copy.setEdgeWeight(newEdge, graph.getEdgeWeight(edge));
 		}
-		
+
 		return copy;
 	}
-	
-	
-	
+
+
+
 	/*
 	 * BULK TRACKS MODIFICATION
 	 */
-	
+
 
 
 	/**
@@ -147,11 +166,11 @@ public class TrackGraphModel {
 	}
 
 
-	
+
 	/*
 	 * MANUAL TRACK MODIFICATION
 	 */
-	
+
 
 	public boolean addSpot(Spot spotToAdd) {
 		return graph.addVertex(spotToAdd);
@@ -159,9 +178,9 @@ public class TrackGraphModel {
 
 	public boolean removeSpot(Spot spotToRemove) {
 		return graph.removeVertex(spotToRemove);
-		
+
 	}
-	
+
 	public DefaultWeightedEdge addEdge(final Spot source, final Spot target, final double weight) {
 		// Mother graph
 		DefaultWeightedEdge edge = graph.addEdge(source, target);
@@ -239,7 +258,7 @@ public class TrackGraphModel {
 
 		return modified;
 	}
-	
+
 	/*
 	 * QUERYING TRACKS
 	 */
@@ -278,7 +297,7 @@ public class TrackGraphModel {
 		}
 		return null;
 	}
-	
+
 	/**
 	 * @return the track index of the given spot. Return <code>null</code> if the
 	 * spot is not in any track.
@@ -292,7 +311,22 @@ public class TrackGraphModel {
 		}
 		return null;
 	}
-	
+
+	/**
+	 * @return the name of the track with the given ID.
+	 */
+	public String getTrackName(Integer trackID) {
+		return trackNames.get(trackID);
+	}
+
+	/**
+	 * Set the name of the track with the given ID.
+	 * @return the given name
+	 */
+	public String setTrackName(Integer trackID, String name) {
+		return trackNames.put(trackID, name);
+	}
+
 
 	/**
 	 * @return  the track indexed by the given key as a set of spot.
@@ -364,6 +398,7 @@ public class TrackGraphModel {
 
 	/**
 	 * @return the keys of the tracks that are filtered.
+	 * <b>The set is ordered by the corresponding track names.</b>
 	 * <p>
 	 * <b>Note:</b> the actual {@link Set} object return by this method is 
 	 * re-instantiated every time a change is made to the model that affects
@@ -373,11 +408,17 @@ public class TrackGraphModel {
 	 * @see #execTrackFiltering()
 	 */
 	public Set<Integer> getFilteredTrackIDs() {
-		return filteredTrackKeys;
+		HashMap<Integer, String> names = new HashMap<Integer, String>(filteredTrackKeys.size());
+		for (Integer trackID : filteredTrackKeys) {
+			names.put(trackID, trackNames.get(trackID));
+		}
+		Map<Integer, String> sortedMap = TMUtils.sortByValue(names);
+		return sortedMap.keySet();
 	}
-	
+
 	/**
-	 * @return the set of integer keys for all the tracks contained in this model.
+	 * @return a set of integer keys for all the tracks contained in this model.
+	 * <b>The set is ordered by the corresponding track names.</b>
 	 * These keys can then be used to iterate or retrieve individual tracks using
 	 * {@link #getTrackEdges(int)}, {@link #getTrackSpots(int)}, etc...
 	 * <p>
@@ -385,12 +426,12 @@ public class TrackGraphModel {
 	 * as a {@link Set<Spot>}.
 	 * <p>
 	 * <b>Note:</b> the actual {@link Set} object return by this method is 
-	 * re-instantiated every time a change is made to the model that affects
-	 * tracks. So this method needs to be called again after each change for
-	 * the indices to be accurate.
+	 * re-instantiated at every method call, so that any change in names is
+	 * reflected at this call.
 	 */
-	public Set<Integer> getTrackIDs() {
-		return trackSpots.keySet();
+	public Set<Integer> getTrackIDs() { 
+		Map<Integer, String> sortedMap = TMUtils.sortByValue(trackNames);
+		return sortedMap.keySet();
 	}
 
 
@@ -419,17 +460,17 @@ public class TrackGraphModel {
 		return graph.containsEdge(source, target);
 	}
 
-	 /**
-     * @return an link connecting source spot to target spot if such
-     * spots and such link exist in the model. Otherwise returns <code>
-     * null</code>. If any of the specified spots is <code>null</code>
-     * returns <code>null</code>. This method takes into account the direction
-     * of the link, and will return <code>null</code> even if there is an
-     * existing link, but in the opposite direction.
-     *
-     * @param source source spot of the link.
-     * @param target target spot of the link.
-     */
+	/**
+	 * @return an link connecting source spot to target spot if such
+	 * spots and such link exist in the model. Otherwise returns <code>
+	 * null</code>. If any of the specified spots is <code>null</code>
+	 * returns <code>null</code>. This method takes into account the direction
+	 * of the link, and will return <code>null</code> even if there is an
+	 * existing link, but in the opposite direction.
+	 *
+	 * @param source source spot of the link.
+	 * @param target target spot of the link.
+	 */
 	public DefaultWeightedEdge getEdge(final Spot source, final Spot target) {
 		return graph.getEdge(source, target);
 	}
@@ -443,28 +484,28 @@ public class TrackGraphModel {
 	}
 
 	/**
-     * @return a set of the edges contained in this graph. The set is backed by
-     * the graph, so changes to the graph are reflected in the set. If the graph
-     * is modified while an iteration over the set is in progress, the results
-     * of the iteration are undefined.
-     */
+	 * @return a set of the edges contained in this graph. The set is backed by
+	 * the graph, so changes to the graph are reflected in the set. If the graph
+	 * is modified while an iteration over the set is in progress, the results
+	 * of the iteration are undefined.
+	 */
 	public Set<DefaultWeightedEdge> edgeSet() {
 		return graph.edgeSet();
 	}
-	
-	 /**
-     * Returns a set of the spots contained in the tracks. The set is backed
-     * by the graph, so changes to the tracks are reflected in the set. If the
-     * tracks are modified while an iteration over the set is in progress, the
-     * results of the iteration are undefined.
-     *
-     * <p>The graph implementation may maintain a particular set ordering (e.g.
-     * via {@link java.util.LinkedHashSet}) for deterministic iteration, but
-     * this is not required. It is the responsibility of callers who rely on
-     * this behavior to only use graph implementations which support it.</p>
-     *
-     * @return a set view of the spots contained in this graph model.
-     */
+
+	/**
+	 * Returns a set of the spots contained in the tracks. The set is backed
+	 * by the graph, so changes to the tracks are reflected in the set. If the
+	 * tracks are modified while an iteration over the set is in progress, the
+	 * results of the iteration are undefined.
+	 *
+	 * <p>The graph implementation may maintain a particular set ordering (e.g.
+	 * via {@link java.util.LinkedHashSet}) for deterministic iteration, but
+	 * this is not required. It is the responsibility of callers who rely on
+	 * this behavior to only use graph implementations which support it.</p>
+	 *
+	 * @return a set view of the spots contained in this graph model.
+	 */
 	public Set<Spot> vertexSet() {
 		return graph.vertexSet();
 	}
@@ -484,7 +525,18 @@ public class TrackGraphModel {
 			return new DepthFirstIterator<Spot, DefaultWeightedEdge>(new AsUndirectedGraph<Spot, DefaultWeightedEdge>(graph), start);
 		}
 	}
-	
+
+	public SortedDepthFirstIterator<Spot, DefaultWeightedEdge> getSortedDepthFirstIterator(Spot start, Comparator<Spot> comparator, boolean directed) {
+		if (directed) {
+			return new SortedDepthFirstIterator<Spot, DefaultWeightedEdge>(graph, start, comparator);			
+		} else {
+			return new SortedDepthFirstIterator<Spot, DefaultWeightedEdge>(new AsUndirectedGraph<Spot, DefaultWeightedEdge>(graph), start, comparator);
+		}
+	}
+
+
+
+
 	public BreadthFirstIterator<Spot, DefaultWeightedEdge> getBreadthFirstIterator(Spot start, boolean directed) {
 		if (directed) {
 			return new BreadthFirstIterator<Spot, DefaultWeightedEdge>(graph, start);
@@ -492,12 +544,12 @@ public class TrackGraphModel {
 			return new BreadthFirstIterator<Spot, DefaultWeightedEdge>(new AsUndirectedGraph<Spot, DefaultWeightedEdge>(graph), start);
 		}
 	}
-	
+
 	/** @see DirectedNeighborIndex */
 	public DirectedNeighborIndex<Spot, DefaultWeightedEdge> getDirectedNeighborIndex() {
 		return new DirectedNeighborIndex<Spot, DefaultWeightedEdge>(graph);
 	}
-	
+
 	public String trackToString(Integer trackID) {
 		String str = "Track " + trackID + ": ";
 		for (String feature : model.getFeatureModel().getTrackFeatures())
@@ -543,14 +595,15 @@ public class TrackGraphModel {
 	 * or split.
 	 */
 	void computeTracksFromGraph() {
-		
+
 		if (DEBUG) {
 			System.out.println("[TrackGraphModel] #computeTracksFromGraph()");
 		}
-		
+
 		// Retain old values
 		Map<Integer, Set<Spot>> oldTrackSpots = trackSpots;
-		
+		Map<Integer, String> oldNames = trackNames;
+
 		if (DEBUG) {
 			System.out.println("[TrackGraphModel] #computeTracksFromGraph(): storing " + oldTrackSpots.size() + " old spot tracks.");
 		}
@@ -559,15 +612,16 @@ public class TrackGraphModel {
 		List<Set<Spot>> connectedSets = new ConnectivityInspector<Spot, DefaultWeightedEdge>(graph).connectedSets();
 		this.trackSpots = new HashMap<Integer, Set<Spot>>(connectedSets.size());
 		this.trackEdges = new HashMap<Integer, Set<DefaultWeightedEdge>>(connectedSets.size());
-		
+		this.trackNames = new HashMap<Integer, String>(connectedSets.size());
+
 		for(Set<Spot> track : connectedSets) {
-			
+
 			// We DO NOT WANT tracks made of a single spot. They will reside on the side, 
 			// as lonely spots
 			if (track.size() < 2) {
 				continue;
 			}
-			
+
 			Integer uniqueKey = track.hashCode();
 			// Add to spot set collection
 			trackSpots.put(uniqueKey, track);
@@ -577,90 +631,138 @@ public class TrackGraphModel {
 				spotEdge.addAll(graph.edgesOf(spot));
 			}
 			trackEdges.put(uniqueKey, spotEdge);
+
 		}
-		
+
 		if (DEBUG) {
 			System.out.println("[TrackGraphModel] #computeTracksFromGraph(): found " + trackSpots.size() + " new spot tracks.");
 		}
 
 		// Try to infer correct visibility
 		final int noldtracks = oldTrackSpots.size();
-		final Set<Integer> oldTrackVisibility = filteredTrackKeys;
+		final Map<Integer, Boolean> oldTrackVisibility = new HashMap<Integer, Boolean>(noldtracks);
+		for (Integer oldKey : oldTrackSpots.keySet()) {
+			oldTrackVisibility.put(oldKey, filteredTrackKeys.contains(oldKey));
+		}
 		filteredTrackKeys = new HashSet<Integer>(noldtracks); // Approx
 
-		/* Deal with a special case: of there were no tracks at all before this call,
-		 * then oldTrackSpots is empty. To avoid that, we set it to the new value. Also,
-		 * since the the visibility set is empty, we will not get any new track visible.
-		 * So we seed it with all track indices, letting it propagate to new tracks. 
-		 * So that manually added track will have a visibility to on. */
-		if (oldTrackSpots.isEmpty()) {
-			oldTrackSpots = trackSpots;
-			for (int trackKey : trackSpots.keySet()) {
-				filteredTrackKeys.add(trackKey);
-			}
-		}
-
-		/* Another special case: if there is some completely new track appearing, it 
-		 * should be visible by default. How do we know that some tracks are "de novo"?
+		/* A special case: if there is some completely new track appearing, it 
+		 * should be visible by default. It also needs a default name.
+		 * How do we know that some tracks are "de novo"?
 		 * For de novo tracks, there is no spot in the Set<Spot> that can be found in 
-		 * oldTrackSpots. Also, we want to avoid having visible tracks of 1 spot, so
-		 * to be visible, de novo tracks must have more than 2 spots. 	 */
+		 * oldTrackSpots.	 */
 
-		// Pool all old spots together
-		List<Spot> allSpotsInOldTrackSpots = new ArrayList<Spot>();
-		for(Set<Spot> olTrack : oldTrackSpots.values()) {
-			allSpotsInOldTrackSpots.addAll(olTrack);
+		// Will contain the old IDs of the old tracks that can be found in a new track.
+		Map<Integer, Set<Integer>> trackParts = new HashMap<Integer, Set<Integer>>(trackSpots.size());
+		for (Integer trackID : trackSpots.keySet()) {
+			trackParts.put(trackID, new HashSet<Integer>());
 		}
 
-		// Interrogate each new track one by one
-		for (Integer trackKey : trackSpots.keySet()) {
-
-			Set<Spot> track = trackSpots.get(trackKey);
-
-			boolean shouldBeVisible = true;
-			for (final Spot spot : track) {
-				if (allSpotsInOldTrackSpots.contains(spot)) {
-					// At least one spot in the new track can be found in the old track list, so
-					// it cannot be a de novo track. 
-					shouldBeVisible = false;
-					break;
-				}
-			}
-
-			if (shouldBeVisible) {
-				filteredTrackKeys.add(trackKey);
-			}
-
+		// Loop over old tracks to get where they can be found in the new tracks
+		if (DEBUG) {
+			System.out.println("[TrackGraphModel] #computeTracksFromGraph(): inspecting old tracks.");
 		}
 
-		// How to know if a new track should be visible or not?
-		// We can say this: the new track should be visible if it has at least
-		// one spot that can be found in a visible old track.
-		for (int trackKey : trackSpots.keySet()) {
+		for (Integer oldKey : oldTrackSpots.keySet()) {
+			Set<Spot> oldTrack = oldTrackSpots.get(oldKey);
 
-			boolean shouldBeVisible = false;
-			for (final Spot spot : trackSpots.get(trackKey)) {
+			boolean shouldBreak = false;
+			for (Integer trackKey : trackSpots.keySet()) { // Iterate over new tracks
+				Set<Spot> track = trackSpots.get(trackKey);
 
-				for (Integer oldTrackIndex : oldTrackVisibility) { // we iterate over only old VISIBLE tracks
-					if (oldTrackSpots.get(oldTrackIndex).contains(spot)) {
-						shouldBeVisible = true;
+				boolean found = false;
+				for (Spot spot : track) {
+					if (oldTrack.contains(spot)) {
+						found = true;
 						break;
 					}
 				}
-				if (shouldBeVisible) {
+
+				if (found) {
+					// There were common elements. We store this old track ID as part of the new track, and skip the rest
+					if (DEBUG) {
+						System.out.println("[TrackGraphModel] #computeTracksFromGraph(): old track " + oldKey + " parts were found in new track " + trackKey);
+					}
+					trackParts.get(trackKey).add(oldKey);
+					shouldBreak = true;
 					break;
 				}
-			}
 
-			if (shouldBeVisible) {
+				if (shouldBreak) { // old track was found in a new track, we can skip the rest
+					break;
+				}
+
+			} // Finished iterating over new tracks
+
+		}
+
+		// Assemble visibility and name from old parts
+
+		if (DEBUG) {
+			System.out.println("[TrackGraphModel] #computeTracksFromGraph(): assembling new tracks visibility and name.");
+		}
+
+		for (Integer trackKey : trackSpots.keySet()) {
+
+			if (trackParts.get(trackKey).isEmpty()) {
+				// Is new, so we make it visible and give it a default name.
 				filteredTrackKeys.add(trackKey);
+				trackNames.put(trackKey, generateDefaultTrackName() );
+				if (DEBUG) {
+					System.out.println("[TrackGraphModel] #computeTracksFromGraph(): track " + trackKey + " is completely new. Making it visible with name " + trackNames.get(trackKey));
+				}
+
+			} else {
+				/* Is made of old tracks, so we can pick its name and visibility from there.
+				 * 
+				 * We copy the name from the largest old track that is part of this one now.
+				 * 
+				 * How to know if a new track should be visible or not?
+				 * We can say this: the new track should be visible if it has at least
+				 * one spot that can be found in a visible old track. */
+				Iterator<Integer> it = trackParts.get(trackKey).iterator();
+				Integer keyOfLargestOldTracks = it.next();
+				boolean shouldBeVisible = oldTrackVisibility.get(keyOfLargestOldTracks);
+				while (it.hasNext()) {
+					Integer oldKey = it.next();
+					if (oldTrackSpots.get(oldKey).size() > oldTrackSpots.get(keyOfLargestOldTracks).size()) {
+						keyOfLargestOldTracks = oldKey;	
+					}
+					shouldBeVisible = shouldBeVisible | oldTrackVisibility.get(oldKey);
+				}
+				trackNames.put(trackKey, oldNames.get(keyOfLargestOldTracks));
+				if (shouldBeVisible) {
+					filteredTrackKeys.add(trackKey);
+				}
+				if (DEBUG) {
+					System.out.println("[TrackGraphModel] #computeTracksFromGraph(): track " + trackKey + " is not new; it is made in parts of old tracks " +  trackParts.get(trackKey));
+					System.out.println("[TrackGraphModel] #computeTracksFromGraph():  - giving it the name: " + trackNames.get(trackKey));
+					System.out.println("[TrackGraphModel] #computeTracksFromGraph():  - making it visible? " + shouldBeVisible);
+
+				}
 			}
 		}
+
 		if (DEBUG) {
 			System.out.println("[TrackGraphModel] #computeTracksFromGraph(): the end; found " + trackSpots.size() + " new spot tracks.");
 		}
 	}
-	
+
+
+
+
+	private static final String generateDefaultTrackName() {
+		String columnString = "";
+		int number = ++currentNameIndex; 
+		while (number > 0) {
+			int currentLetterNumber = (number - 1) % 26;
+			char currentLetter = (char)(currentLetterNumber + 65);
+			columnString = currentLetter + columnString;
+			number = (number - (currentLetterNumber + 1)) / 26;
+		}
+		return "Track_" + columnString;
+	}
+
 
 	/**
 	 * This listener class is made to deal with complex changes in the track graph.

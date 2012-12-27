@@ -34,7 +34,11 @@ public class mxTrackGraphComponent extends mxGraphComponent implements mxIEventL
 	private static final Color BACKGROUND_COLOR_2 	= Color.LIGHT_GRAY;
 	private static final Color LINE_COLOR 			= Color.BLACK;
 
-	private int[] columnWidths = new int[0];
+	/** The width of the columns for each track, from left to right. */
+	int[] columnWidths = new int[0];
+	/** The name of each column. */
+	String[] columnNames = new String[0];
+	
 	private Color[] columnColors = new Color[0];
 	private final TrackMateModel model;
 	private final TrackScheme trackScheme;
@@ -61,9 +65,6 @@ public class mxTrackGraphComponent extends mxGraphComponent implements mxIEventL
 		mxGraphics2DCanvas.putShape(mxScaledLabelShape.SHAPE_NAME, new mxScaledLabelShape());
 		// Replace default painter for edge label so that we can draw labels parallel to edges.
 		mxGraphics2DCanvas.putTextShape(mxGraphics2DCanvas.TEXT_SHAPE_DEFAULT, new mxSideTextShape());
-
-		setSwimlaneSelectionEnabled(true);
-
 	}
 
 	/*
@@ -311,9 +312,9 @@ public class mxTrackGraphComponent extends mxGraphComponent implements mxIEventL
 		if (null != columnWidths) {
 			x = xcs;
 			for (int i = 0; i < columnWidths.length; i++) {
-				int cw = columnWidths[i]-1;
+				int cw = columnWidths[i];
 //				g.setColor(columnColors[i]); // TODO FIXME
-				g.drawString(String.format("Track %d", i+1), x+20, ycs/2); // FIXME
+				g.drawString(columnNames[i], x+20, ycs/2); // FIXME
 				g.setColor(LINE_COLOR);					
 				x += cw * xcs;
 				g.drawLine(x, 0, x, height);
@@ -331,6 +332,10 @@ public class mxTrackGraphComponent extends mxGraphComponent implements mxIEventL
 
 	public void setColumnColor(Color[] columnColors) {
 		this.columnColors = columnColors;
+	}
+	
+	public void setColumnNames(String[] names) {
+		this.columnNames = names;
 	}
 
 	public int[] getColumnWidths() {

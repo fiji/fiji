@@ -19,6 +19,7 @@ import java.util.TreeMap;
 
 import javax.swing.ImageIcon;
 import javax.swing.JViewport;
+import javax.swing.SwingUtilities;
 
 import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.traverse.DepthFirstIterator;
@@ -555,7 +556,7 @@ public class TrackScheme implements TrackMateModelChangeListener, TrackMateSelec
 
 						graph.getModel().add(graph.getDefaultParent(), edgeCell, 0);
 						String edgeStyle = edgeCell.getStyle();
-						edgeStyle = mxStyleUtils.setStyle(edgeStyle, mxSideTextShape.STYLE_DISPLAY_COST, ""+graphLayout.isDoDisplayCosts());
+//						edgeStyle = mxStyleUtils.setStyle(edgeStyle, mxSideTextShape.STYLE_DISPLAY_COST, ""+graphLayout.isDoDisplayCosts());
 						graph.getModel().setStyle(edgeCell, edgeStyle);
 
 					}
@@ -596,8 +597,12 @@ public class TrackScheme implements TrackMateModelChangeListener, TrackMateSelec
 
 	@Override
 	public void render() {
-		initGUI();
-		doTrackLayout();
+		SwingUtilities.invokeLater(new Runnable(){
+			public void run()	{
+				initGUI();
+				doTrackLayout();
+			}
+		});
 	}
 
 	@Override
@@ -732,7 +737,7 @@ public class TrackScheme implements TrackMateModelChangeListener, TrackMateSelec
 		// Graph to mirror model
 		this.graph = createGraph();
 		this.gui = new TrackSchemeFrame(graph, model, this);
-		this.graphLayout = new mxTrackGraphLayout(graph, model);
+		this.graphLayout = new mxTrackGraphLayout(graph, model, gui.graphComponent);
 		String title = "TrackScheme";
 		if (null != model.getSettings().imp)
 			title += ": "+model.getSettings().imp.getTitle();
@@ -859,11 +864,14 @@ public class TrackScheme implements TrackMateModelChangeListener, TrackMateSelec
 
 	public void doTrackLayout() {
 		// Position cells
-		graphLayout.execute(graph.getDefaultParent());
-		// We need to pass the column size to the graph component, so that it can paint the borders
-//		gui.graphComponent.setColumnColor(graphLayout.getTrackColors()); // TODO FIXME
-		gui.graphComponent.setColumnWidths(graphLayout.getTrackColumnWidths());
-		gui.graphComponent.repaint();
+		graphLayout.execute(null);
+		
+		SwingUtilities.invokeLater(new Runnable(){
+			public void run() {
+				gui.graphComponent.refresh();
+				gui.graphComponent.repaint();
+			}
+		});
 		// 
 		rowLengths = graphLayout.getRowLengths();
 		int maxLength = 2;
@@ -872,7 +880,7 @@ public class TrackScheme implements TrackMateModelChangeListener, TrackMateSelec
 				maxLength = rowLength;
 			}
 		}
-		unlaidSpotColumn = maxLength + 1;
+		unlaidSpotColumn = maxLength;
 	}
 
 	public void captureUndecorated() {
@@ -893,12 +901,6 @@ public class TrackScheme implements TrackMateModelChangeListener, TrackMateSelec
 		view.setViewPosition(currentPos);
 		ImagePlus imp = new ImagePlus("TrackScheme capture", image);
 		imp.show();	
-	}
-
-	public boolean toggleDisplayCosts() {
-		boolean enabled = graphLayout.isDoDisplayCosts();
-		graphLayout.setDoDisplayCosts(!enabled);
-		return !enabled;
 	}
 
 	public boolean toggleDisplayDecoration() {

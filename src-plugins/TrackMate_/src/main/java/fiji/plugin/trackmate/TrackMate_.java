@@ -492,8 +492,7 @@ public class TrackMate_ implements PlugIn, Benchmark, MultiThreaded, Algorithm {
 							}
 							// Add detection feature other than position
 							for (Spot spot : prunedSpots) {
-								spot.putFeature(Spot.POSITION_T, frame * settings.dt);
-								spot.putFeature(Spot.FRAME, frame);
+								spot.putFeature(Spot.POSITION_T, frame * settings.dt); // FRAME will be set upon adding to SpotCollection
 							}
 							// Store final results for this frame
 							spots.put(frame, prunedSpots);

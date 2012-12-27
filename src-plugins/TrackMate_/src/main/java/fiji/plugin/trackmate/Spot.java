@@ -49,7 +49,14 @@ public interface Spot extends RealLocalizable, RealPositionable {
 			else 
 				return -1;
 		}
-		
+	};
+	
+	/** A comparator used to sort spots by name. */ 
+	public final static Comparator<Spot> nameComparator = new Comparator<Spot>() {
+		@Override
+		public int compare(Spot o1, Spot o2) {
+			return o1.getName().compareTo(o2.getName());
+		}
 	};
 
 	/** The name of the spot quality feature. */

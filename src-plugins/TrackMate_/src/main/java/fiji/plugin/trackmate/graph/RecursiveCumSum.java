@@ -8,9 +8,9 @@ import org.jgrapht.graph.SimpleDirectedGraph;
 public class RecursiveCumSum<V, E> {
 
 	private final DirectedNeighborIndex<V, E> cache;
-	private final OutputFunction<V> function;
+	private final Function2<V, V> function;
 
-	public RecursiveCumSum(final SimpleDirectedGraph<V, E> graph, final OutputFunction<V> function) {
+	public RecursiveCumSum(final SimpleDirectedGraph<V, E> graph, final Function2<V, V> function) {
 		this.cache = new DirectedNeighborIndex<V, E>(graph);
 		this.function = function;
 	}
@@ -26,7 +26,7 @@ public class RecursiveCumSum<V, E> {
 			
 			V val = current;
 			for (V child : children) {
-				val = function.compute(val, apply(child));
+				function.compute(val, apply(child), val);
 			}
 			return val;
 			

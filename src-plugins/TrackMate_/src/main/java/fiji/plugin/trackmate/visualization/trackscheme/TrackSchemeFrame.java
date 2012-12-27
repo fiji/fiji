@@ -67,7 +67,7 @@ public class TrackSchemeFrame extends JFrame  {
 		final mxTrackGraphComponent gc = new mxTrackGraphComponent(graph, model, trackScheme);
 		gc.getVerticalScrollBar().setUnitIncrement(16);
 		gc.getHorizontalScrollBar().setUnitIncrement(16);
-		gc.setExportEnabled(true); // Seems to be required to have a preview when we move cells. Also give the ability to export a cell as an image clipping 
+//		gc.setExportEnabled(true); // Seems to be required to have a preview when we move cells. Also give the ability to export a cell as an image clipping 
 		gc.getConnectionHandler().setEnabled(TrackScheme.DEFAULT_LINKING_ENABLED); // By default, can be changed in the track scheme toolbar
 
 		new mxRubberband(gc);

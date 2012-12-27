@@ -209,7 +209,7 @@ public class TrackMateModelChangeEvent extends EventObject {
 	@Override
 	public String toString() {
 		String str = "[TrackModelChangeEvent]:\n";
-		str += " - source: "+source+"\n";
+		str += " - source: "+source.getClass() + "_" + source.hashCode()+"\n";
 		str += " - event type: ";
 		switch (eventID) {
 		case SPOTS_COMPUTED:

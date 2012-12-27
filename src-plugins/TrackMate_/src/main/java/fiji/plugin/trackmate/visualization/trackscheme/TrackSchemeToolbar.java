@@ -190,24 +190,24 @@ public class TrackSchemeToolbar extends JToolBar {
 		 * display labels on edges
 		 */
 
-		JButton toggleDisplayCostsButton;
-		{
-			boolean defaultDisplayCosts= TrackScheme.DEFAULT_DO_DISPLAY_COSTS_ON_EDGES;
-			final Action toggleDisplayCostsAction = new AbstractAction(null, defaultDisplayCosts ? DISPLAY_COST_ON_ICON : DISPLAY_COST_OFF_ICON) {
-				public void actionPerformed(ActionEvent e) {
-					boolean enabled = trackScheme.toggleDisplayCosts();
-					ImageIcon displayIcon;
-					if (enabled)
-						displayIcon = DISPLAY_COST_OFF_ICON;
-					else
-						displayIcon = DISPLAY_COST_ON_ICON;
-					putValue(SMALL_ICON, displayIcon);
-
-				}
-			};
-			toggleDisplayCostsButton = new JButton(toggleDisplayCostsAction);
-			toggleDisplayCostsButton.setToolTipText("Toggle costs display (redo layout)");
-		}
+//		JButton toggleDisplayCostsButton;
+//		{
+//			boolean defaultDisplayCosts= TrackScheme.DEFAULT_DO_DISPLAY_COSTS_ON_EDGES;
+//			final Action toggleDisplayCostsAction = new AbstractAction(null, defaultDisplayCosts ? DISPLAY_COST_ON_ICON : DISPLAY_COST_OFF_ICON) {
+//				public void actionPerformed(ActionEvent e) {
+//					boolean enabled = trackScheme.toggleDisplayCosts();
+//					ImageIcon displayIcon;
+//					if (enabled)
+//						displayIcon = DISPLAY_COST_OFF_ICON;
+//					else
+//						displayIcon = DISPLAY_COST_ON_ICON;
+//					putValue(SMALL_ICON, displayIcon);
+//
+//				}
+//			};
+//			toggleDisplayCostsButton = new JButton(toggleDisplayCostsAction);
+//			toggleDisplayCostsButton.setToolTipText("Toggle costs display (redo layout)");
+//		}
 		
 		/*
 		 * display background decorations
@@ -297,7 +297,7 @@ public class TrackSchemeToolbar extends JToolBar {
 		// Separator
 		addSeparator();
 		// Display costs along edges
-		add(toggleDisplayCostsButton);
+//		add(toggleDisplayCostsButton);
 		// Display background decorations
 		add(toggleDisplayDecorationsButton);
 		// Separator

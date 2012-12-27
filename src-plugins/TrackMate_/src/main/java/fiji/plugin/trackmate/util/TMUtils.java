@@ -17,6 +17,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -128,7 +130,27 @@ public class TMUtils {
 	/*
 	 * STATIC METHODS
 	 */
-	
+
+	/**
+	 * @return a new map sorted by its values.
+	 * Taken from http://stackoverflow.com/questions/109383/how-to-sort-a-mapkey-value-on-the-values-in-java
+	 */
+	public static <K, V extends Comparable<? super V>> Map<K, V> sortByValue( Map<K, V> map) {
+		List<Map.Entry<K, V>> list = new LinkedList<Map.Entry<K, V>>( map.entrySet() );
+		Collections.sort( list, new Comparator<Map.Entry<K, V>>() {
+			public int compare( Map.Entry<K, V> o1, Map.Entry<K, V> o2 )			{
+				return (o1.getValue()).compareTo( o2.getValue() );
+			}
+		} );
+
+		LinkedHashMap<K, V> result = new LinkedHashMap<K, V>();
+		for (Map.Entry<K, V> entry : list) {
+			result.put( entry.getKey(), entry.getValue() );
+		}
+		return result;
+	}
+
+
 	/**
 	 * Generate a string representation of a map, typically a settings map.
 	 */
@@ -155,7 +177,7 @@ public class TMUtils {
 		}
 		return builder.toString();
 	}
-	
+
 	/** 
 	 * Wraps an IJ {@link ImagePlus} in an imglib2 {@link ImgPlus}, without parameterized types.
 	 * The only way I have found to beat javac constraints on bounded multiple wildcard.
@@ -193,7 +215,7 @@ public class TMUtils {
 				errorHolder.append("Map contains unexpected key: "+key+".\n");
 			}
 		}
-		
+
 		for(T key : mandatoryKeys) {
 			if (!keySet.contains(key)) {
 				ok = false;
@@ -201,10 +223,10 @@ public class TMUtils {
 			}
 		}
 		return ok;
-		
+
 	}
-	
-	
+
+
 	/**
 	 * Check the presence and the validity of a key in a map, and test it is of the desired class.
 	 * @param map the map to inspect.
@@ -225,9 +247,9 @@ public class TMUtils {
 		}
 		return true;
 	}
-	
-	
-	
+
+
+
 	/**
 	 * Prompt the user for a target xml file.
 	 *  
@@ -625,11 +647,11 @@ public class TMUtils {
 		return selectedSpots;
 	}
 
-	
+
 	/*
 	 * ImgPlus & calibration & axes 
 	 */
-	
+
 	/**
 	 * @return the index of the target axisd in the given metadata. Return -1 if 
 	 * the azis was not found.
@@ -652,7 +674,7 @@ public class TMUtils {
 	public static final int findZAxisIndex(final Metadata img) {
 		return findAxisIndex(img, Axes.Z);
 	}
-	
+
 	public static final int findTAxisIndex(final Metadata img) {
 		return findAxisIndex(img, Axes.TIME);
 	}

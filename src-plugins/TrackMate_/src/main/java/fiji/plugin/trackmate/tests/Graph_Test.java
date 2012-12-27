@@ -11,14 +11,19 @@ import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotImp;
 import fiji.plugin.trackmate.TrackGraphModel;
 import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.graph.GraphUtils;
 
 public class Graph_Test {
 
 	public static void main(String[] args) {
 
 		TrackMateModel model = getExampleModel();
+//		TrackMateModel model = getComplicatedExample();
 		countOverallLeaves(model);
 		pickLeavesOfOneTrack(model);
+
+		System.out.println(GraphUtils.toString(model.getTrackModel()));
+
 
 	}
 
@@ -78,64 +83,87 @@ public class Graph_Test {
 		Spot C 		= new SpotImp(new double[] { 	3d,  	3d, 	0d }, 	"C");
 		Spot E 		= new SpotImp(new double[] { 	1d,  	3d, 	0d }, 	"E");
 		Spot MS		= new SpotImp(new double[] { 	2d,  	3d, 	0d }, 	"MS");
+		Spot AB3 	= new SpotImp(new double[] { 	0d,  	3d, 	0d }, 	"AB");
 
 		Spot D 		= new SpotImp(new double[] { 	4d,  	4d, 	0d }, 	"D");
 		Spot P4 	= new SpotImp(new double[] { 	5d,  	4d, 	0d }, 	"P4");
 
-		// Set their "frame" - required
-
-		root.putFeature(Spot.FRAME, 0);
-		AB.putFeature(Spot.FRAME, 1);
-		P1.putFeature(Spot.FRAME, 1);
-
-		P2.putFeature(Spot.FRAME, 2);
-		EMS.putFeature(Spot.FRAME, 2);
-
-		P3.putFeature(Spot.FRAME, 3);
-		C.putFeature(Spot.FRAME, 3);
-		E.putFeature(Spot.FRAME, 3);
-		MS.putFeature(Spot.FRAME, 3);
-
-		P4.putFeature(Spot.FRAME, 4);
-		D.putFeature(Spot.FRAME, 4);
-
-
 		// Add them to the graph
 
-		model.addSpotTo(root, 0);
+		model.beginUpdate();
+		try {
 
-		model.addSpotTo(AB, 1);
-		model.addSpotTo(P1, 1);
+			model.addSpotTo(root, 0);
 
-		model.addSpotTo(P2, 2);
-		model.addSpotTo(EMS, 2);
+			model.addSpotTo(AB, 1);
+			model.addSpotTo(P1, 1);
 
-		model.addSpotTo(P3, 3);
-		model.addSpotTo(C, 3);
-		model.addSpotTo(E, 3);
-		model.addSpotTo(MS, 3);
+			model.addSpotTo(P2, 2);
+			model.addSpotTo(EMS, 2);
 
-		model.addSpotTo(D, 4);
-		model.addSpotTo(P4, 4);
+			model.addSpotTo(P3, 3);
+			model.addSpotTo(C, 3);
+			model.addSpotTo(E, 3);
+			model.addSpotTo(MS, 3);
+			model.addSpotTo(AB3, 3);
 
-		// Create links
+			model.addSpotTo(D, 4);
+			model.addSpotTo(P4, 4);
 
-		graph.addEdge(root, AB, 1);
-		graph.addEdge(root, P1, 1);
+			// Create links
 
-		graph.addEdge(P1, P2, 1);
-		graph.addEdge(P1, EMS, 1);
+			graph.addEdge(root, AB, 1);
+			graph.addEdge(root, P1, 1);
 
-		graph.addEdge(EMS, E, 1);
-		graph.addEdge(EMS, MS, 1);
+			graph.addEdge(P1, P2, 1);
+			graph.addEdge(P1, EMS, 1);
 
-		graph.addEdge(P2, P3, 1);
-		graph.addEdge(P2, C, 1);
+			graph.addEdge(AB, AB3 , 1);
 
-		graph.addEdge(P3, P4, 1);
-		graph.addEdge(P3, D, 1);
+			graph.addEdge(EMS, E, 1);
+			graph.addEdge(EMS, MS, 1);
+
+			graph.addEdge(P2, P3, 1);
+			graph.addEdge(P2, C, 1);
+
+			graph.addEdge(P3, P4, 1);
+			graph.addEdge(P3, D, 1);
+
+		} finally {
+			model.endUpdate();
+		}
 
 		// Done!
+
+		return model;
+	}
+
+	public static final TrackMateModel getComplicatedExample() {
+		TrackMateModel model = getExampleModel();
+
+		// Retrieve target spot by name
+		Spot P3 = null;
+		for (Spot spot : model.getSpots().getAllSpots()) {
+			if (spot.getName().equals("P3")) {
+				P3 = spot;
+				break;
+			}
+		}
+		
+		// Update model
+		model.beginUpdate();
+		try {
+			// new spots
+			Spot Q1 = model.addSpotTo(new SpotImp(new double[3], "Q1"), 0);
+			Spot Q2 = model.addSpotTo(new SpotImp(new double[3], "Q2"), 1);
+			Spot Q3 = model.addSpotTo(new SpotImp(new double[3], "Q3"), 2);
+			// new links
+			model.getTrackModel().addEdge(Q1, Q2, -1);
+			model.getTrackModel().addEdge(Q2, Q3, -1);
+			model.getTrackModel().addEdge(Q3, P3, -1);
+		} finally {
+			model.endUpdate();
+		}
 
 		return model;
 	}

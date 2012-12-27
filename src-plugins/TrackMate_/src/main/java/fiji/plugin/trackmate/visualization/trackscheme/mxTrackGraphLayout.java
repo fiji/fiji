@@ -5,38 +5,26 @@ import static fiji.plugin.trackmate.visualization.trackscheme.TrackScheme.DEFAUL
 import static fiji.plugin.trackmate.visualization.trackscheme.TrackScheme.X_COLUMN_SIZE;
 import static fiji.plugin.trackmate.visualization.trackscheme.TrackScheme.Y_COLUMN_SIZE;
 
-import java.awt.Color;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
-import java.util.SortedSet;
-import java.util.TreeSet;
 
 import net.imglib2.algorithm.Benchmark;
 
 import org.jgrapht.alg.DirectedNeighborIndex;
-import org.jgrapht.event.ConnectedComponentTraversalEvent;
-import org.jgrapht.event.EdgeTraversalEvent;
-import org.jgrapht.event.TraversalListener;
-import org.jgrapht.event.VertexTraversalEvent;
 import org.jgrapht.graph.DefaultWeightedEdge;
-import org.jgrapht.traverse.AbstractGraphIterator;
-import org.jgrapht.traverse.BreadthFirstIterator;
-import org.jgrapht.traverse.DepthFirstIterator;
 
 import com.mxgraph.layout.mxGraphLayout;
 import com.mxgraph.model.mxCell;
 import com.mxgraph.model.mxGeometry;
 import com.mxgraph.model.mxICell;
-import com.mxgraph.util.mxConstants;
-import com.mxgraph.util.mxStyleUtils;
 
 import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.SpotCollection;
-import fiji.plugin.trackmate.SpotImp;
 import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.graph.GraphUtils;
+import fiji.plugin.trackmate.graph.SortedDepthFirstIterator;
 
 /**
  * This {@link mxGraphLayout} arranges cells on a graph in lanes corresponding to tracks. 
@@ -48,15 +36,12 @@ import fiji.plugin.trackmate.TrackMateModel;
  */
 public class mxTrackGraphLayout extends mxGraphLayout implements Benchmark {
 
-	private static final int SWIMLANE_HEADER_SIZE = 30;
-	private static final boolean DEBUG = false;
 	private static final int START_COLUMN = 2;
 
-
-	private boolean doDisplayCosts = TrackScheme.DEFAULT_DO_DISPLAY_COSTS_ON_EDGES;
 	/** The target model to draw spot from. */
 	private final TrackMateModel model;
 	private final JGraphXAdapter graph;
+	private final mxTrackGraphComponent component;
 	/**
 	 * Hold the current row length for each frame.
 	 * That is, for frame <code>i</code>, the number of cells on the row
@@ -64,30 +49,24 @@ public class mxTrackGraphLayout extends mxGraphLayout implements Benchmark {
 	 * This field is regenerated after each call to {@link #execute(Object)}.
 	 */
 	private Map<Integer, Integer> rowLengths;
-	private int[] columnWidths;
 	private long processingTime;
+
+
 
 	/*
 	 * CONSTRUCTOR
 	 */
 
-	public mxTrackGraphLayout(final JGraphXAdapter graph, final TrackMateModel model) {
+	public mxTrackGraphLayout(final JGraphXAdapter graph, final TrackMateModel model, final mxTrackGraphComponent component) {
 		super(graph);
 		this.graph = graph;
 		this.model = model;
+		this.component = component;
 	}
 
 	/*
 	 * PUBLIC METHODS
 	 */
-
-	public void setDoDisplayCosts(boolean doDisplayCosts) {
-		this.doDisplayCosts = doDisplayCosts;
-	}
-
-	public boolean isDoDisplayCosts() {
-		return doDisplayCosts;
-	}
 
 	@Override
 	public void execute(Object parent) {
@@ -104,28 +83,36 @@ public class mxTrackGraphLayout extends mxGraphLayout implements Benchmark {
 			lonelyCells.add((mxCell) obj);
 		}
 
-		// Get a neighborcache
-		final DirectedNeighborIndex<Spot, DefaultWeightedEdge> neighborCache = model.getTrackModel().getDirectedNeighborIndex();
+		/*
+		 *  Get a neighbor cache
+		 */
+		DirectedNeighborIndex<Spot, DefaultWeightedEdge> neighborCache = model.getTrackModel().getDirectedNeighborIndex();
 		
+		/*
+		 * Compute column width from recursive cumsum
+		 */
+		Map<Spot, Integer> cumulativeBranchWidth = GraphUtils.cumulativeBranchWidth(model.getTrackModel());
+		
+		/* 
+		 * How many rows do we have to parse?
+		 */
+		int maxFrame = 0;
+		for (Spot spot : model.getFilteredSpots()) {
+			int frame = spot.getFeature(Spot.FRAME).intValue();
+			if (maxFrame < frame) {
+				maxFrame = frame;
+			}
+		}
+
 		graph.getModel().beginUpdate();
 		try {
 
-			final int ntracks = model.getTrackModel().getNFilteredTracks();
-
-			/* 
-			 * The columns array hold the column count for a given frame number
+			/*
+			 * Pass n tracks info on component
 			 */
-			int maxFrame = 0;
-			for (Spot spot : model.getFilteredSpots()) {
-				Integer frame = safeFindFrame(spot, model.getFilteredSpots(), model.getSettings().dt);
-				if (null == frame) {
-					continue;
-				}
-				int intframe = frame.intValue();
-				if (maxFrame < intframe) {
-					maxFrame = intframe;
-				}
-			}
+			final int ntracks = model.getTrackModel().getNFilteredTracks();
+			component.columnWidths = new int[ntracks];
+			component.columnNames = new String[ntracks];
 
 			/*
 			 * Initialize the column occupancy array
@@ -134,25 +121,28 @@ public class mxTrackGraphLayout extends mxGraphLayout implements Benchmark {
 			for (int i = 0; i < columns.length; i++) {
 				columns[i] = START_COLUMN;
 			}
-
-			columnWidths = new int[ntracks];
-
-			Object currentParent = graph.getDefaultParent();
-
+			
 			int trackIndex = 0;
-
-			for (Integer trackID : model.getTrackModel().getFilteredTrackIDs()) {
+			for (Integer trackID : model.getTrackModel().getFilteredTrackIDs()) { // will be sorted by track name
 
 				// Get Tracks
 				final Set<Spot> track = model.getTrackModel().getTrackSpots(trackID);
+				
+				// Pass name to component
+				component.columnNames[trackIndex] = model.getTrackModel().getTrackName(trackID);
 
-				// Sort by ascending order
-				SortedSet<Spot> sortedTrack = new TreeSet<Spot>(SpotImp.timeComparator);
-				sortedTrack.addAll(track);
-				Spot first = sortedTrack.first();
-
+				// Get first spot
+				Iterator<Spot> it = track.iterator();
+				Spot first = it.next();
+				while (it.hasNext()) {
+					Spot spot = it.next();
+					if (spot.diffTo(first, Spot.FRAME) < 0) {
+						first = spot;
+					}
+				}
+				
 				// First loop: Loop over spots in good order
-				DepthFirstIterator<Spot, DefaultWeightedEdge> iterator = model.getTrackModel().getDepthFirstIterator(first, false);
+				SortedDepthFirstIterator<Spot,DefaultWeightedEdge> iterator = model.getTrackModel().getSortedDepthFirstIterator(first, Spot.nameComparator, false);
 				
 				while(iterator.hasNext()) {
 
@@ -160,45 +150,27 @@ public class mxTrackGraphLayout extends mxGraphLayout implements Benchmark {
 
 					// Get corresponding JGraphX cell, add it if it does not exist in the JGraphX yet
 					mxICell cell = graph.getCellFor(spot);
-					if (null == cell) {
-						if (DEBUG) {
-							System.out.println("[mxTrackGraphLayout] execute: creating cell for invisible spot "+spot);
-						}
-						cell = graph.addJGraphTVertex(spot);
-					}
 
 					// This is cell is in a track, remove it from the list of lonely cells
 					lonelyCells.remove(cell);
 
 					// Determine in what row to put the spot
-					Integer frame = safeFindFrame(spot, model.getFilteredSpots(), model.getSettings().dt);
-					if (null == frame) {
-						continue;
-					}
+					int frame = spot.getFeature(Spot.FRAME).intValue();
 
 					// Cell size, position and style
-					setCellGeometry(cell, frame, columns[frame]++);
-
-				}
-
-				// Second pass: we now iterate over each spot's edges
-				for(final DefaultWeightedEdge edge : model.getTrackModel().getTrackEdges(trackID)) {
-
-					mxICell edgeCell = graph.getCellFor(edge);
-
-					if (null == edgeCell) {
-						if (DEBUG) {
-							System.out.println("[mxTrackGraphLayout] execute: creating cell for invisible edge "+edge);
+					int cellPos = columns[frame] + cumulativeBranchWidth.get(spot)/2;
+					setCellGeometry(cell, frame, cellPos);
+					columns[frame] += cumulativeBranchWidth.get(spot);
+					
+					// If it is a leaf, we fill the remaining row below and above
+					if (neighborCache.successorsOf(spot).size() == 0) {
+						int target = columns[frame];
+						for (int i = 0; i <= maxFrame; i++) {
+							columns[i] = target;
 						}
-						edgeCell = graph.addJGraphTEdge(edge);
 					}
 
-					graph.getModel().add(currentParent, edgeCell, 0);
-					String edgeStyle = edgeCell.getStyle();
-					edgeStyle = mxStyleUtils.setStyle(edgeStyle, mxSideTextShape.STYLE_DISPLAY_COST, ""+doDisplayCosts);
-					graph.getModel().setStyle(edgeCell, edgeStyle);
 				}
-
 
 				// When done with a track, move all columns to the next free column
 				int maxCol = 0;
@@ -210,15 +182,17 @@ public class mxTrackGraphLayout extends mxGraphLayout implements Benchmark {
 				for (int i = 0; i < columns.length; i++) {
 					columns[i] = maxCol + 1;
 				}
-
-				int sumWidth = 0;
+				
+				// Store column widths for the pan background
+				int sumWidth = START_COLUMN - 1;
 				for (int i = 0; i < trackIndex; i++) {
-					sumWidth += columnWidths[i];
+					sumWidth += component.columnWidths[i];
 				}
-				columnWidths[trackIndex] = maxCol - sumWidth + 1;
-				trackIndex++;
+				component.columnWidths[trackIndex] = maxCol - sumWidth;
 
+				trackIndex++;
 			}  // loop over tracks
+			
 
 			// Ensure we do not start at 0 for the first column of lonely cells
 			for (int i = 0; i < columns.length; i++) {
@@ -230,7 +204,7 @@ public class mxTrackGraphLayout extends mxGraphLayout implements Benchmark {
 			// Deal with lonely cells
 			for (mxCell cell : lonelyCells) {
 				Spot spot = graph.getSpotFor(cell);
-				int frame = safeFindFrame(spot, model.getFilteredSpots(), model.getSettings().dt);
+				int frame = spot.getFeature(Spot.FRAME).intValue();
 				setCellGeometry(cell, frame, ++columns[frame]);
 			}
 
@@ -246,9 +220,6 @@ public class mxTrackGraphLayout extends mxGraphLayout implements Benchmark {
 
 		long end = System.currentTimeMillis();
 		processingTime = end - start;
-
-		System.out.println("Layout done in " + processingTime + " ms."); // DEBUG
-
 	}
 
 
@@ -277,54 +248,6 @@ public class mxTrackGraphLayout extends mxGraphLayout implements Benchmark {
 		return rowLengths;
 	}
 
-	/**
-	 * Return the width in column units of each track after they are arranged by this GraphLayout.
-	 */
-	public int[] getTrackColumnWidths() {
-		return columnWidths;
-	}
-
-	private mxCell makeParentCell(String trackColorStr, int trackIndex, int partIndex) {
-		// Set this as parent for the coming track in JGraphX
-		mxCell rootCell = (mxCell) graph.insertVertex(graph.getDefaultParent(), null, "Track "+trackIndex+"\nBranch "+partIndex, 100, 100, 100, 100);
-		rootCell.setConnectable(false);
-
-		// Set the root style
-		String rootStyle = rootCell.getStyle();
-		rootStyle = mxStyleUtils.setStyle(rootStyle, mxConstants.STYLE_STROKECOLOR, "black");
-		rootStyle = mxStyleUtils.setStyle(rootStyle, mxConstants.STYLE_ROUNDED, "false");
-		rootStyle = mxStyleUtils.setStyle(rootStyle, mxConstants.STYLE_FILLCOLOR, Integer.toHexString(Color.DARK_GRAY.brighter().getRGB()).substring(2));
-		rootStyle = mxStyleUtils.setStyle(rootStyle, mxConstants.STYLE_DASHED, "true");
-		rootStyle = mxStyleUtils.setStyle(rootStyle, mxConstants.STYLE_VERTICAL_ALIGN, mxConstants.ALIGN_TOP);
-		rootStyle = mxStyleUtils.setStyle(rootStyle, mxConstants.STYLE_FONTCOLOR, trackColorStr);
-		rootStyle = mxStyleUtils.setStyle(rootStyle, mxConstants.STYLE_FONTSTYLE, ""+mxConstants.FONT_BOLD);
-		rootStyle = mxStyleUtils.setStyle(rootStyle, mxConstants.STYLE_SHAPE, ""+mxConstants.SHAPE_SWIMLANE);
-		rootStyle = mxStyleUtils.setStyle(rootStyle, mxConstants.STYLE_STARTSIZE, ""+SWIMLANE_HEADER_SIZE);
-		graph.getModel().setStyle(rootCell, rootStyle);
-
-		return rootCell;
-	}
-
-	/**
-	 * Retrieve the frame a spot belong to, with failsafe. We return <code>null</code> when every possibility 
-	 * is exhausted.
-	 */
-	private static final Integer safeFindFrame(final Spot spot, final SpotCollection spots, double dt) {
-		Number frame = spot.getFeature(Spot.FRAME);
-		if (null == frame) {
-			// Damn, no info on the frame I belong to
-			frame = spots.getFrame(spot);
-			if (null == frame) {
-				// Still no info?!? Ok then try with the POSITION_T feature
-				Double post = spot.getFeature(Spot.POSITION_T);
-				if (null == post || dt <= 0) {
-					return null; // I give up
-				}
-				frame = Math.round(post / dt);
-			}
-		}
-		return frame.intValue();
-	}
 
 	@Override
 	public long getProcessingTime() {

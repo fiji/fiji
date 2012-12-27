@@ -4,6 +4,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+import java.util.Iterator;
 import java.util.Set;
 
 import org.jgrapht.graph.DefaultWeightedEdge;
@@ -15,7 +16,7 @@ public class TrackMateModelTest {
 	/**
 	 * Test if the track visibility is followed correctly.
 	 */
-//	@Test // DISABLED FOR THE TRACK ID IS NOT 0 1 2 3 ANYMORE
+	@Test 
 	public void testTrackVisibility() {
 		TrackMateModel model = new TrackMateModel();
 		// Build track 1 with 5 spots
@@ -60,10 +61,11 @@ public class TrackMateModelTest {
 
 		// These must be 3 tracks visible
 		assertEquals(3, visibleTracks.size());
-		// with indices 0, 1, 2
-		assertTrue(visibleTracks.contains(0));
-		assertTrue(visibleTracks.contains(1));
-		assertTrue(visibleTracks.contains(2));
+		// all of the tracks must be visible
+		Iterator<Integer> it = model.getTrackModel().getTrackIDs().iterator();
+		assertTrue(visibleTracks.contains(it.next()));
+		assertTrue(visibleTracks.contains(it.next()));
+		assertTrue(visibleTracks.contains(it.next()));
 
 		// Delete spot s3, make 2 tracks of the first one
 		model.beginUpdate();
@@ -76,11 +78,12 @@ public class TrackMateModelTest {
 		// These must be 4 tracks visible
 		visibleTracks = model.getTrackModel().getFilteredTrackIDs();
 		assertEquals(4, visibleTracks.size());
-		// with indices 0, 1, 2 & 3
-		assertTrue(visibleTracks.contains(0));
-		assertTrue(visibleTracks.contains(1));
-		assertTrue(visibleTracks.contains(2));
-		assertTrue(visibleTracks.contains(3));
+		// all of the tracks must be visible
+		it = model.getTrackModel().getTrackIDs().iterator();
+		assertTrue(visibleTracks.contains(it.next()));
+		assertTrue(visibleTracks.contains(it.next()));
+		assertTrue(visibleTracks.contains(it.next()));
+		assertTrue(visibleTracks.contains(it.next()));
 
 		// Check in what track is the spot s4
 		int track2 = model.getTrackModel().getTrackIDOf(s4);
@@ -381,10 +384,10 @@ public class TrackMateModelTest {
 
 		System.out.println();
 		System.out.println("Tracks are:");
-		for (int i = 0; i < model.getTrackModel().getNTracks(); i++) {
-			System.out.println("\tTrack "+i+":");
-			System.out.println("\t\t"+model.getTrackModel().getTrackSpots().get(i));
-			System.out.println("\t\t"+model.getTrackModel().getTrackEdges().get(i));
+		for (Integer trackID : model.getTrackModel().getTrackIDs()) {
+			System.out.println("\tTrack "+trackID+" with name: " + model.getTrackModel().getTrackName(trackID));
+			System.out.println("\t\t"+model.getTrackModel().getTrackSpots().get(trackID));
+			System.out.println("\t\t"+model.getTrackModel().getTrackEdges().get(trackID));
 		}
 		System.out.println();
 		System.out.println();
@@ -401,10 +404,10 @@ public class TrackMateModelTest {
 		}
 		System.out.println();
 		System.out.println("Tracks are:");
-		for (int i = 0; i < model.getTrackModel().getNTracks(); i++) {
-			System.out.println("\tTrack "+i+":");
-			System.out.println("\t\t"+model.getTrackModel().getTrackSpots().get(i));
-			System.out.println("\t\t"+model.getTrackModel().getTrackEdges().get(i));
+		for (Integer trackID : model.getTrackModel().getTrackIDs()) {
+			System.out.println("\tTrack "+trackID+" with name: " + model.getTrackModel().getTrackName(trackID));
+			System.out.println("\t\t"+model.getTrackModel().getTrackSpots().get(trackID));
+			System.out.println("\t\t"+model.getTrackModel().getTrackEdges().get(trackID));
 		}
 		System.out.println("Track visibility is:");
 		System.out.println(model.getTrackModel().getFilteredTrackIDs());
@@ -415,8 +418,8 @@ public class TrackMateModelTest {
 		System.out.println();
 
 
-		System.out.println("Making the second track invisible:");
-		model.getTrackModel().setFilteredTrackID(1, false, true);
+		System.out.println("Making the first track invisible:");
+		model.getTrackModel().setFilteredTrackID(model.getTrackModel().getTrackIDs().iterator().next(), false, true);
 
 		System.out.println("Track visibility is:");
 		System.out.println(model.getTrackModel().getFilteredTrackIDs());
@@ -440,10 +443,10 @@ public class TrackMateModelTest {
 		System.out.println();
 		System.out.println();
 		System.out.println("Tracks are:");
-		for (int i = 0; i < model.getTrackModel().getNTracks(); i++) {
-			System.out.println("\tTrack "+i+":");
-			System.out.println("\t\t"+model.getTrackModel().getTrackSpots().get(i));
-			System.out.println("\t\t"+model.getTrackModel().getTrackEdges().get(i));
+		for (Integer trackID : model.getTrackModel().getTrackIDs()) {
+			System.out.println("\tTrack "+trackID+" with name: " + model.getTrackModel().getTrackName(trackID));
+			System.out.println("\t\t"+model.getTrackModel().getTrackSpots().get(trackID));
+			System.out.println("\t\t"+model.getTrackModel().getTrackEdges().get(trackID));
 		}
 		System.out.println("Track visibility is:");
 		System.out.println(model.getTrackModel().getFilteredTrackIDs());
