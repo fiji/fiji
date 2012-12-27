@@ -42,10 +42,10 @@ public class RecursiveCumSumTest {
 
 	@Test
 	public final void testApply() {
-		OutputFunction<int[]> function = new OutputFunction<int[]>() {
+		Function2<int[], int[]> function = new Function2<int[], int[]>() {
 			@Override
-			public int[] compute(int[] input1, int[] input2) {
-				return new int[] { input1[0] + input2[0] };
+			public void compute(int[] input1, int[] input2, int[] output) {
+				output[0] =  input1[0] + input2[0];
 			}
 		};
 		RecursiveCumSum<int[], DefaultEdge> fun = new RecursiveCumSum<int[], DefaultEdge>(tree, function);
