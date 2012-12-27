@@ -609,8 +609,9 @@ public class TrackMateModel {
 	 * @param toFrame  the destination frame
 	 * @param doNotify   if false, {@link TrackMateModelChangeListener}s will not be
 	 * notified of this change
+	 * @return the spot that was moved
 	 */
-	public void moveSpotFrom(Spot spotToMove, Integer fromFrame, Integer toFrame) {
+	public Spot moveSpotFrom(Spot spotToMove, Integer fromFrame, Integer toFrame) {
 		spots.add(spotToMove, toFrame);
 		spots.remove(spotToMove, fromFrame);
 		if (DEBUG)
@@ -618,16 +619,17 @@ public class TrackMateModel {
 
 		filteredSpots.add(spotToMove, toFrame);
 		filteredSpots.remove(spotToMove, fromFrame);
-
 		spotsMoved.add(spotToMove); // TRANSACTION
+		return spotToMove;
 
 	}
 
 	/**
 	 * Add a single spot to the collections managed by this model, then update
 	 * its features.
+	 * @return the spot just added
 	 */
-	public void addSpotTo(Spot spotToAdd, Integer toFrame) {
+	public Spot addSpotTo(Spot spotToAdd, Integer toFrame) {
 		if (spots.add(spotToAdd, toFrame)) {
 			spotsAdded.add(spotToAdd); // TRANSACTION
 			if (DEBUG)
@@ -635,7 +637,7 @@ public class TrackMateModel {
 		}
 		filteredSpots.add(spotToAdd, toFrame);
 		trackGraphModel.addSpot(spotToAdd);
-
+		return spotToAdd;
 	}
 
 	/**
@@ -645,8 +647,9 @@ public class TrackMateModel {
 	 *            the frame the spot is in, if it is known. If <code>null</code>
 	 *            is given, then the adequate frame is retrieved from this
 	 *            model's collections.
+	 * @return the spot removed
 	 */
-	public void removeSpotFrom(final Spot spotToRemove, Integer fromFrame) {
+	public Spot removeSpotFrom(final Spot spotToRemove, Integer fromFrame) {
 		if (fromFrame == null)
 			fromFrame = spots.getFrame(spotToRemove);
 		if (spots.remove(spotToRemove, fromFrame)) {
@@ -657,6 +660,7 @@ public class TrackMateModel {
 		filteredSpots.remove(spotToRemove, fromFrame);
 		spotSelection.remove(spotToRemove);
 		trackGraphModel.removeSpot(spotToRemove);
+		return spotToRemove;
 	}
 
 	/*
