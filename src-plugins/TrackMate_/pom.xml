@@ -58,9 +58,9 @@
 			<version>${jfreechart.version}</version>
 		</dependency>
 		<dependency>
-			<groupId>jgrapht</groupId>
-			<artifactId>jgrapht-jdk1.6</artifactId>
-			<version>0.8.1</version>
+			<groupId>net.sf.jgrapht</groupId>
+			<artifactId>jgrapht</artifactId>
+			<version>0.8.3</version>
 		</dependency>
 		<dependency>
 			<groupId>jgraph</groupId>
