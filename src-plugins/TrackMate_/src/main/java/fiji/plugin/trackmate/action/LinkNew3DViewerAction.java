@@ -26,9 +26,8 @@ public class LinkNew3DViewerAction extends AbstractTMAction {
 		new Thread("TrackMate new 3D viewer thread") {
 			public void run() {
 				logger.log("Rendering 3D overlay...\n");
-				SpotDisplayer3D newDisplayer = new SpotDisplayer3D();
+				SpotDisplayer3D newDisplayer = new SpotDisplayer3D(plugin.getModel());
 				newDisplayer.setRenderImageData(false);
-				newDisplayer.setModel(plugin.getModel());
 				DisplayerPanel displayerPanel = (DisplayerPanel) wizard.getPanelDescriptorFor(DisplayerPanel.DESCRIPTOR);
 				if (null != displayerPanel) {
 					displayerPanel.register(newDisplayer);

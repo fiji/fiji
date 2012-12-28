@@ -118,8 +118,7 @@ public class SpotDisplayer3DTestDrive {
 		final TrackMate_ plugin = new TrackMate_();
 		plugin.getModel().setSpots(allSpots, false);
 		plugin.getModel().getSettings().imp = imp;
-		final SpotDisplayer3D displayer = new SpotDisplayer3D();
-		displayer.setModel(plugin.getModel());
+		final SpotDisplayer3D displayer = new SpotDisplayer3D(plugin.getModel());
 		displayer.render();
 		
 		// Launch threshold GUI

@@ -108,9 +108,9 @@ public class TrackDisplayNode extends ContentNode implements TimelapseListener {
 		}
 		trackSwitch.setChildMask(switchMask);
 		// Set color to tracks
-		for (int i : colors.keySet()) {
-			setColor(model.getTrackModel().getTrackSpots(i), colors.get(i));
-		}
+//		for (int i : colors.keySet()) {
+//			setColor(model.getTrackModel().getTrackSpots(i), colors.get(i));
+//		}
 	}
 
 	public void computeTrackColors() {
@@ -335,17 +335,17 @@ public class TrackDisplayNode extends ContentNode implements TimelapseListener {
 	}
 
 
-	/**
-	 * Set the color of the whole specified track.
-	 */
-	public void setColor(final Set<Spot> track, final Color color) {
-		Set<DefaultWeightedEdge> edges;
-		for(Spot spot : track) {
-			edges = model.getTrackModel().edgesOf(spot);
-			for(DefaultWeightedEdge edge : edges)
-				setColor(edge, color);
-		}
-	}
+//	/**
+//	 * Set the color of the whole specified track.
+//	 */
+//	public void setColor(final Set<Spot> track, final Color color) {
+//		Set<DefaultWeightedEdge> edges;
+//		for(Spot spot : track) {
+//			edges = model.getTrackModel().edgesOf(spot);
+//			for(DefaultWeightedEdge edge : edges)
+//				setColor(edge, color);
+//		}
+//	}
 
 	/**
 	 * Set the color of the given edge mesh.

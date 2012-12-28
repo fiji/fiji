@@ -24,13 +24,15 @@ public class SpotFeatureGrapher_TestDrive {
 	public static void main(String[] args) throws JDOMException, IOException {
 
 		// Load objects 
-		File file = new File("/Users/tinevez/Desktop/Data/Tree.xml");
+//		File file = new File("/Users/tinevez/Desktop/Data/Tree.xml");
+		File file = new File("E:/Users/JeanYves/Desktop/Data/FakeTracks.xml");
 		TrackMate_ plugin = new TrackMate_();
 		plugin.initModules();
 		TmXmlReader reader = new TmXmlReader(file, plugin);
-		if (!reader.checkInput() && !reader.process()) {
+		if (!reader.checkInput() || !reader.process()) {
 			System.err.println("Problem loading the file:");
 			System.err.println(reader.getErrorMessage());
+			return;
 		}
 		TrackMateModel model = plugin.getModel();
 

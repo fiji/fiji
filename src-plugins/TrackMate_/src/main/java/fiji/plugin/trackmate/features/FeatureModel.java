@@ -8,7 +8,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -26,6 +25,8 @@ import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.SpotFeatureAnalyzerProvider;
 import fiji.plugin.trackmate.TrackFeatureAnalyzerProvider;
 import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.TrackMateModelChangeEvent;
+import fiji.plugin.trackmate.TrackMateModelChangeListener;
 import fiji.plugin.trackmate.features.edges.EdgeFeatureAnalyzer;
 import fiji.plugin.trackmate.features.spot.SpotFeatureAnalyzer;
 import fiji.plugin.trackmate.features.spot.SpotFeatureAnalyzerFactory;
@@ -38,8 +39,10 @@ import fiji.plugin.trackmate.util.TMUtils;
  * @author Jean-Yves Tinevez, 2011, 2012
  *
  */
-public class FeatureModel implements MultiThreaded {
+public class FeatureModel implements MultiThreaded, TrackMateModelChangeListener {
 
+	private static final boolean DEBUG = true;
+	
 	/*
 	 * FIELDS
 	 */
@@ -59,10 +62,19 @@ public class FeatureModel implements MultiThreaded {
 	private HashMap<String, Dimension> trackFeatureDimensions = new HashMap<String, Dimension>();
 	/**
 	 * Feature storage. We use a Map of Map as a 2D Map. The list maps each
-	 * track to its feature map. The feature map maps each
-	 * track feature to its double value for the selected track.
+	 * feature to its track map. The track map maps each
+	 * track ID to the double value for the specified feature.
 	 */
-	protected Map<Integer, Map<String, Double>> trackFeatureValues;
+	protected Map<String, Map<Integer, Double>> trackFeatureValues;
+	/**
+	 * Caching mechanism: flags that state whether a track feature is up to date or not.
+	 * Altered when the model changes, restored when the track features are recalculated.
+	 * We start with a simple mechanism: a feature is validated or invalidated for <b>all</b>
+	 * tracks at once. We will do fine-grained invalidatation later.
+	 */
+	protected Map<String, Boolean> trackFeatureValidity;
+
+
 	/**
 	 * Feature storage for edges.
 	 */
@@ -75,7 +87,7 @@ public class FeatureModel implements MultiThreaded {
 	private HashMap<String, Dimension> edgeFeatureDimensions = new HashMap<String, Dimension>();
 
 	protected SpotFeatureAnalyzerProvider spotAnalyzerProvider;
-	protected TrackFeatureAnalyzerProvider trackAnalyzerFactory;
+	protected TrackFeatureAnalyzerProvider trackAnalyzerProvider;
 	private EdgeFeatureAnalyzerProvider edgeFeatureAnalyzerProvider;
 
 	private TrackMateModel model;
@@ -91,6 +103,8 @@ public class FeatureModel implements MultiThreaded {
 		setNumThreads();
 		// To initialize the spot features with the basic features:
 		setSpotFeatureFactory(null);
+		// Listen to model changes
+		model.addTrackMateModelChangeListener(this);
 	}
 
 
@@ -254,22 +268,30 @@ public class FeatureModel implements MultiThreaded {
 	 * 
 	 * @see #computeTrackFeatures()
 	 */
-	public void setTrackFeatureFactory(TrackFeatureAnalyzerProvider trackAnalyzerFactory) {
-		this.trackAnalyzerFactory = trackAnalyzerFactory;
-
+	public void setTrackFeatureProvider(TrackFeatureAnalyzerProvider trackAnalyzerProvider) {
+		this.trackAnalyzerProvider = trackAnalyzerProvider;
+		// Collect all the track feature we will have to deal with
 		trackFeatures = new ArrayList<String>();
-		for (String analyzer : trackAnalyzerFactory.getAvailableTrackFeatureAnalyzers()) {
-			trackFeatures.addAll(trackAnalyzerFactory.getFeatures(analyzer));
+		for (String analyzer : trackAnalyzerProvider.getAvailableTrackFeatureAnalyzers()) {
+			trackFeatures.addAll(trackAnalyzerProvider.getFeaturesForKey(analyzer));
 		}
-
+		// Collect track feature metadata
 		trackFeatureNames = new HashMap<String, String>();
 		trackFeatureShortNames = new HashMap<String, String>();
 		trackFeatureDimensions = new HashMap<String, Dimension>();
 		for (String trackFeature : trackFeatures) {
-			trackFeatureNames.put(trackFeature, trackAnalyzerFactory.getFeatureName(trackFeature));
-			trackFeatureShortNames.put(trackFeature, trackAnalyzerFactory.getFeatureShortName(trackFeature));
-			trackFeatureDimensions.put(trackFeature, trackAnalyzerFactory.getFeatureDimension(trackFeature));
+			trackFeatureNames.put(trackFeature, trackAnalyzerProvider.getFeatureName(trackFeature));
+			trackFeatureShortNames.put(trackFeature, trackAnalyzerProvider.getFeatureShortName(trackFeature));
+			trackFeatureDimensions.put(trackFeature, trackAnalyzerProvider.getFeatureDimension(trackFeature));
 		}
+		// Instantiate track feature value map, once for all
+		this.trackFeatureValues = new ConcurrentHashMap<String, Map<Integer, Double>>(trackFeatures.size());
+		// Track feature validity
+		trackFeatureValidity = new ConcurrentHashMap<String, Boolean>(trackFeatures.size());
+		for (String feature : trackFeatures) {
+			trackFeatureValidity.put(feature, Boolean.FALSE);
+		}
+
 	}
 
 	public void setEdgeFeatureProvider(final EdgeFeatureAnalyzerProvider edgeFeatureAnalyzerProvider) {
@@ -450,18 +472,42 @@ public class FeatureModel implements MultiThreaded {
 	}
 
 	public void putTrackFeature(final Integer trackID, final String feature, final Double value) {
-		if (null == trackFeatureValues || null == trackFeatureValues.get(trackID)) {
-			initFeatureMap();
+		Map<Integer, Double> valueMap = trackFeatureValues.get(feature);
+		if (null == valueMap) {
+			valueMap = new HashMap<Integer, Double>(model.getTrackModel().getNFilteredTracks());
+			trackFeatureValues.put(feature, valueMap);
 		}
-		trackFeatureValues.get(trackID).put(feature, value);
+		valueMap.put(trackID, value);
 	}
 
-	public Double getTrackFeature(final Integer trackIndex, final String feature) {
-		Map<String, Double> features = trackFeatureValues.get(trackIndex);
-		if (null == features) {
-			return null;
+	/**
+	 * @return the numerical value of the specified track feature for the specified track.
+	 * If the feature has been marked as not up-to-date (e.g. after a model change
+	 * event), it will be recomputed for all the tracks on the fly.
+	 * 
+	 * @param trackID the track ID to quest.
+	 * @param feature the desired feature.
+	 */
+	public Double getTrackFeature(final Integer trackID, final String feature) {
+
+		// Check validity
+		if (trackFeatureValidity.get(feature) == null || !trackFeatureValidity.get(feature)) {
+			// Invalid, we have to recompute the feature values for this feature
+			if (DEBUG) {
+				System.out.println("[FeatureModel] getTrackFeature: requested an invalid feature, recalculating it.");
+			}
+			String analyzerKey = trackAnalyzerProvider.getKeyForAnalyzer(feature);
+			TrackFeatureAnalyzer analyzer = trackAnalyzerProvider.getTrackFeatureAnalyzer(analyzerKey);
+			analyzer.process(model.getTrackModel().getFilteredTrackIDs());
+			// Mark as valid again, for ALL the features this analyzer provides
+			if (DEBUG) {
+				System.out.println("[FeatureModel] getTrackFeature: marking the following features as valid again: " + trackAnalyzerProvider.getFeaturesForKey(analyzerKey));
+			}for (String analyzerFeature : trackAnalyzerProvider.getFeaturesForKey(analyzerKey)) {
+				trackFeatureValidity.put(analyzerFeature, Boolean.TRUE);
+			}
 		}
-		return features.get(feature);
+		Map<Integer, Double> valueMap = trackFeatureValues.get(feature);
+		return valueMap.get(trackID);
 	}
 
 	public Map<String, double[]> getTrackFeatureValues() {
@@ -490,18 +536,6 @@ public class FeatureModel implements MultiThreaded {
 	}
 
 	/**
-	 * Instantiate an empty feature 2D map.
-	 */
-	private void initFeatureMap() {
-		this.trackFeatureValues = new ConcurrentHashMap<Integer, Map<String, Double>>(model.getTrackModel().getNTracks());
-		Set<Integer> keySet = model.getTrackModel().getTrackSpots().keySet();
-		for (Integer trackID : keySet) {
-			Map<String, Double> featureMap = new ConcurrentHashMap<String, Double>(trackFeatures.size());
-			trackFeatureValues.put(trackID, featureMap);
-		}
-	}
-
-	/**
 	 * Calculate all features for the tracks with the given IDs.
 	 */
 	public void computeTrackFeatures(final Collection<Integer> trackIDs, boolean doLogIt) {
@@ -509,10 +543,20 @@ public class FeatureModel implements MultiThreaded {
 		if (doLogIt) {
 			logger.log("Computing track features:\n");		
 		}
-		initFeatureMap();
-		for (String analyzerKey : trackAnalyzerFactory.getAvailableTrackFeatureAnalyzers()) {
-			TrackFeatureAnalyzer analyzer = trackAnalyzerFactory.getTrackFeatureAnalyzer(analyzerKey);
+		// Reset track feature value map
+		trackFeatureValues.clear();
+		/*
+		 *  Compute new track feature. Analyzers will use the #putFeature method to store results,
+		 *  which will regenerate the value map.
+		 */
+		for (String analyzerKey : trackAnalyzerProvider.getAvailableTrackFeatureAnalyzers()) {
+			// Compute features
+			TrackFeatureAnalyzer analyzer = trackAnalyzerProvider.getTrackFeatureAnalyzer(analyzerKey);
 			analyzer.process(trackIDs);
+			// Set validity of target features to true
+			for (String feature : trackAnalyzerProvider.getFeaturesForKey(analyzerKey)) {
+				trackFeatureValidity.put(feature, Boolean.TRUE);
+			}
 			if (doLogIt)
 				logger.log("  - " + analyzer.toString() + " in " + analyzer.getProcessingTime() + " ms.\n");
 		}
@@ -546,6 +590,26 @@ public class FeatureModel implements MultiThreaded {
 	@Override
 	public int getNumThreads() {
 		return numThreads;
+	}
+
+
+	@Override
+	public void modelChanged(TrackMateModelChangeEvent event) {
+		if (event.getEventID() == TrackMateModelChangeEvent.MODEL_MODIFIED) {
+			
+			if (event.getEdges() == null) {
+				return;
+			}
+			
+			if (DEBUG) {
+				System.out.println("[FeatureModel] Caught model change event, invalidating all track features.");
+			}
+			// Invalidate all track features
+			for (String feature : trackFeatureValidity.keySet()) {
+				trackFeatureValidity.put(feature, Boolean.FALSE);
+			}
+		}
+
 	}
 
 

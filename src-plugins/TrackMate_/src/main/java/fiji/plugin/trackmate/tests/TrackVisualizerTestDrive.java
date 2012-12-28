@@ -76,8 +76,7 @@ public class TrackVisualizerTestDrive {
 		grabber.execute(plugin);
 		
 		// Instantiate displayer
-		final TrackMateModelView displayer = new HyperStackDisplayer();
-		displayer.setModel(model);
+		final TrackMateModelView displayer = new HyperStackDisplayer(model);
 		displayer.render();
 		displayer.refresh();
 		

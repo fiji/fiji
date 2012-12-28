@@ -91,9 +91,7 @@ public class GuiReader {
 		plugin = new TrackMate_();
 		plugin.initModules();
 		plugin.setLogger(logger);
-		if (displayer ==null ) {
-			displayer = new HyperStackDisplayer();
-		}
+		displayer = new HyperStackDisplayer(plugin.getModel());
 
 		// Open and parse file
 		logger.log("Opening file "+file.getName()+'\n');
@@ -151,7 +149,6 @@ public class GuiReader {
 			panel.aboutToDisplayPanel();
 		}		
 
-
 		{ // Did we get a detector
 			SpotDetectorFactory<?> detectorFactory = settings.detectorFactory;
 			if (null == detectorFactory) {
@@ -172,6 +169,7 @@ public class GuiReader {
 
 			// Instantiate descriptor for the detector configuration and update it
 			DetectorConfigurationPanelDescriptor detectConfDescriptor = new DetectorConfigurationPanelDescriptor();
+			
 			detectConfDescriptor.setPlugin(plugin);
 			detectConfDescriptor.setWizard(wizard);
 			detectConfDescriptor.updateComponent();
@@ -230,7 +228,6 @@ public class GuiReader {
 				// No spot selection, so we display the feature threshold GUI, with the loaded feature threshold
 				// already in place.
 				targetDescriptor = SpotFilterDescriptor.DESCRIPTOR;
-				displayer.setModel(model);
 				displayer.render();
 				wizard.setDisplayer(displayer);
 				if (!imp.isVisible())
@@ -247,7 +244,6 @@ public class GuiReader {
 			if (null == tracker) {
 				logger.log("Tracker not found in the file.\n");
 				targetDescriptor = SpotFilterDescriptor.DESCRIPTOR;
-				displayer.setModel(model);
 				displayer.render();
 				wizard.setDisplayer(displayer);
 				if (!imp.isVisible())
@@ -276,7 +272,6 @@ public class GuiReader {
 			if (nTracks < 1) {
 				logger.log("No tracks found in the file.\n");
 				targetDescriptor = TrackerConfigurationPanelDescriptor.DESCRIPTOR;
-				displayer.setModel(model);
 				displayer.render();
 				wizard.setDisplayer(displayer);
 				if (!imp.isVisible())
@@ -299,7 +294,6 @@ public class GuiReader {
 		 */
 		
 		targetDescriptor = DisplayerPanel.DESCRIPTOR;
-		displayer.setModel(model);
 		displayer.render();
 		wizard.setDisplayer(displayer);
 		if (!imp.isVisible())
@@ -376,9 +370,7 @@ public class GuiReader {
 	 *  Pass new plugin instance to all panels.
 	 */
 	private void passNewPluginToWizard() {
-		for (WizardPanelDescriptor descriptor : wizard.getWizardPanelDescriptors()) {
-			descriptor.setPlugin(plugin);
-		}
+		wizard.getController().setPlugin(plugin);
 	}
 
 	private void echoLoadingFinished() {

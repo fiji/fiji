@@ -84,6 +84,14 @@ public class JPanelColorByFeatureGUI extends ActionListenablePanel {
 	public String getSelectedFeature() {
 		return setColorByFeature;
 	}
+	
+	public void setColorByFeature(String feature) {
+		if (null == feature) {
+			jComboBoxSetColorBy.setSelectedIndex(0);
+		} else {
+			jComboBoxSetColorBy.setSelectedItem(featureNames.get(feature));
+		}
+	}
 
 	/*
 	 * PRIVATE METHODS
@@ -93,7 +101,7 @@ public class JPanelColorByFeatureGUI extends ActionListenablePanel {
 	/**
 	 * Forward the 'color by feature' action to the caller of this GUI.
 	 */
-	private void setColorByFeature() {
+	private void colorByFeatureChanged() {
 		int selection = jComboBoxSetColorBy.getSelectedIndex();
 		if (selection == 0) 
 			setColorByFeature = null;
@@ -175,7 +183,7 @@ public class JPanelColorByFeatureGUI extends ActionListenablePanel {
 				jComboBoxSetColorBy.setFont(SMALL_FONT);
 				jComboBoxSetColorBy.addActionListener(new ActionListener() {
 					public void actionPerformed(ActionEvent e) {
-						setColorByFeature();
+						colorByFeatureChanged();
 						canvasColor.repaint();
 					}
 				});

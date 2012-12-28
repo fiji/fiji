@@ -59,7 +59,6 @@ public class WizardController implements ActionListener {
 			}
 		}
 
-		this.plugin = plugin;
 		Component window = null;
 		ImagePlus imp = plugin.getModel().getSettings().imp;
 		if (imp != null && imp.getWindow() != null ) {
@@ -68,17 +67,10 @@ public class WizardController implements ActionListener {
 		this.wizard = new TrackMateWizard(window, this);
 		this.logger = wizard.getLogger();
 
-		plugin.setLogger(logger);
 		wizard.setVisible(true);
 		wizard.addActionListener(this);
 
-		// Instantiate and pass panel descriptors to the wizard
-		List<WizardPanelDescriptor> descriptors = createWizardPanelDescriptorList();
-		for(WizardPanelDescriptor descriptor : descriptors) {
-			descriptor.setPlugin(plugin);
-			descriptor.setWizard(wizard);
-			wizard.registerWizardDescriptor(descriptor.getDescriptorID(), descriptor);
-		}
+		setPlugin(plugin);
 
 		init();
 	}
@@ -354,6 +346,19 @@ public class WizardController implements ActionListener {
 		saveDescriptor.aboutToDisplayPanel();
 		wizard.showDescriptorPanelFor(SaveDescriptor.DESCRIPTOR);
 		saveDescriptor.displayingPanel();
+	}
+
+	void setPlugin(TrackMate_ plugin) {
+		this.plugin = plugin;
+		plugin.setLogger(logger);
+
+		// Instantiate and pass panel descriptors to the wizard
+		List<WizardPanelDescriptor> descriptors = createWizardPanelDescriptorList();
+		for(WizardPanelDescriptor descriptor : descriptors) {
+			descriptor.setWizard(wizard);
+			descriptor.setPlugin(plugin);
+			wizard.registerWizardDescriptor(descriptor.getDescriptorID(), descriptor);
+		}
 	}
 
 }

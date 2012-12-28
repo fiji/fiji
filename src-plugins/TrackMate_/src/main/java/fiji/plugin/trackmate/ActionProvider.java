@@ -18,10 +18,10 @@ import fiji.plugin.trackmate.action.ResetRadiusAction;
 import fiji.plugin.trackmate.action.ResetSpotTimeFeatureAction;
 import fiji.plugin.trackmate.action.TrackMateAction;
 
-public class ActionFactory {
+public class ActionProvider {
 
-	/** The detector names, in the order they will appear in the GUI.
-	 * These names will be used as keys to access relevant detecrtor classes.  */
+	/** The action names, in the order they will appear in the GUI.
+	 * These names will be used as keys to access relevant action classes.  */
 	protected List<String> names;
 	
 	/*
@@ -29,15 +29,15 @@ public class ActionFactory {
 	 */
 	
 	/**
-	 * This factory provides the GUI with the TrackMate actions currently available in the 
-	 * TrackMate plugin. Each detector is identified by a key String, which can be used 
+	 * This provider provides the GUI with the TrackMate actions currently available in the 
+	 * TrackMate plugin. Each action is identified by a key String, which can be used 
 	 * to retrieve new instance of the action.
 	 * <p>
 	 * If you want to add custom actions to TrackMate, a simple way is to extend this
 	 * factory so that it is registered with the custom actions and provide this 
 	 * extended factory to the {@link TrackMate_} plugin.
 	 */
-	public ActionFactory() {
+	public ActionProvider() {
 		registerActions();
 	}
 	

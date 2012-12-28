@@ -118,7 +118,7 @@ public class ActionChooserPanel extends ListChooserPanel implements WizardPanelD
 							executeButton.setEnabled(false);
 							fireAction(ACTION_STARTED);
 							String actionName = getChoice();
-							TrackMateAction action = plugin.getActionFactory().getAction(actionName);
+							TrackMateAction action = plugin.getActionProvider().getAction(actionName);
 							action.setLogger(logger);
 							action.setWizard(wizard);
 							action.execute(plugin);
@@ -151,12 +151,12 @@ public class ActionChooserPanel extends ListChooserPanel implements WizardPanelD
 	 * from the factory available in the passed {@link TrackMate_} instance.
 	 */
 	public static ActionChooserPanel instantiateForPlugin(TrackMate_ plugin) {
-		List<String> actions = plugin.getActionFactory().getAvailableActions();
+		List<String> actions = plugin.getActionProvider().getAvailableActions();
 		List<String> infoTexts = new ArrayList<String>(actions.size());
 		List<ImageIcon> icons = new ArrayList<ImageIcon>(actions.size());
 		for(String key : actions) {
-			infoTexts.add( plugin.getActionFactory().getInfoText(key) );
-			icons.add( plugin.getActionFactory().getIcon(key) );
+			infoTexts.add( plugin.getActionProvider().getInfoText(key) );
+			icons.add( plugin.getActionProvider().getIcon(key) );
 		}
 		
 		return new ActionChooserPanel(actions, infoTexts, icons, plugin);

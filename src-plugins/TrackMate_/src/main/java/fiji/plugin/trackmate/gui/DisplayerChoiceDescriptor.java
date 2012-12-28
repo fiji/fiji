@@ -59,17 +59,17 @@ public class DisplayerChoiceDescriptor implements WizardPanelDescriptor {
 	@Override
 	public void aboutToHidePanel() {
 		String displayerName = component.getChoice();
-		TrackMateModelView displayer = plugin.getViewFactory().getView(displayerName);
+		TrackMateModelView displayer = plugin.getViewProvider().getView(displayerName);
 		wizard.setDisplayer(displayer);
 	}
 
 	@Override
 	public void setPlugin(TrackMate_ plugin) {
 		this.plugin = plugin;
-		List<String> viewerNames = plugin.getViewFactory().getAvailableViews();
+		List<String> viewerNames = plugin.getViewProvider().getAvailableViews();
 		List<String> infoTexts = new ArrayList<String>(viewerNames.size());
 		for(String key : viewerNames) {
-			infoTexts.add(plugin.getViewFactory().getInfoText(key));
+			infoTexts.add(plugin.getViewProvider().getInfoText(key));
 		}
 		this.component = new ListChooserPanel(viewerNames, infoTexts, "view");
 	}

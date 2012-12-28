@@ -29,7 +29,7 @@ import fiji.plugin.trackmate.TrackMateModelChangeEvent;
 import fiji.plugin.trackmate.TrackMateSelectionChangeEvent;
 import fiji.plugin.trackmate.util.TMUtils;
 import fiji.plugin.trackmate.visualization.AbstractTrackMateModelView;
-import fiji.plugin.trackmate.visualization.TrackMateModelView;
+import fiji.plugin.trackmate.visualization.TrackPartsColorGenerator;
 
 public class SpotDisplayer3D extends AbstractTrackMateModelView {
 
@@ -67,7 +67,9 @@ public class SpotDisplayer3D extends AbstractTrackMateModelView {
 	/**  the flag specifying whether to render image data or not. By default, it is true. */
 	private boolean doRenderImage = true;
 
-	public SpotDisplayer3D() {
+	public SpotDisplayer3D(TrackMateModel model) {
+		super(model);
+		setModel(model);
 		universe = new Image3DUniverse();
 	}
 
@@ -75,22 +77,6 @@ public class SpotDisplayer3D extends AbstractTrackMateModelView {
 	 * OVERRIDDEN METHODS
 	 */
 
-
-	@Override
-	public void setModel(TrackMateModel model) {
-		this.settings = model.getSettings();
-		super.setModel(model);
-		if (model.getSpots() != null) {
-			spotContent = makeSpotContent();
-			universe.removeContent(SPOT_CONTENT_NAME);
-			universe.addContent(spotContent);
-		}
-		if (model.getTrackModel().getNFilteredTracks() > 0) {
-			trackContent = makeTrackContent();
-			universe.removeContent(TRACK_CONTENT_NAME);
-			universe.addContent(trackContent);
-		}
-	}
 
 	@Override
 	public void modelChanged(TrackMateModelChangeEvent event) {
@@ -203,8 +189,10 @@ public class SpotDisplayer3D extends AbstractTrackMateModelView {
 			updateRadiuses();
 		} else if (key == KEY_SPOT_COLOR_FEATURE) {
 			updateSpotColors();
-		} else if (key == KEY_TRACK_COLOR_FEATURE) {
+		} else if (key == KEY_TRACK_COLORING) {
 			updateTrackColors();
+			//		} else if (key == KEY_TRACK_COLOR_FEATURE) {
+			//			updateTrackColors();
 		} else if (key == KEY_DISPLAY_SPOT_NAMES) {
 			for(int frame : blobs.keySet()) {
 				blobs.get(frame).setShowLabels((Boolean) value);
@@ -253,6 +241,20 @@ public class SpotDisplayer3D extends AbstractTrackMateModelView {
 	/*
 	 * PRIVATE METHODS
 	 */
+	
+	private void setModel(TrackMateModel model) {
+		this.settings = model.getSettings();
+		if (model.getSpots() != null) {
+			spotContent = makeSpotContent();
+			universe.removeContent(SPOT_CONTENT_NAME);
+			universe.addContent(spotContent);
+		}
+		if (model.getTrackModel().getNFilteredTracks() > 0) {
+			trackContent = makeTrackContent();
+			universe.removeContent(TRACK_CONTENT_NAME);
+			universe.addContent(trackContent);
+		}
+	}
 
 	private Content makeTrackContent() {
 		// Prepare tracks instant
@@ -366,26 +368,13 @@ public class SpotDisplayer3D extends AbstractTrackMateModelView {
 	}
 
 	private void updateTrackColors() {
-		final String feature = (String) displaySettings.get(KEY_TRACK_COLOR_FEATURE);
-		if (null == feature) {
-			trackNode.computeTrackColors();
+		final TrackPartsColorGenerator colorGenerator = (TrackPartsColorGenerator) displaySettings.get(KEY_TRACK_COLORING);
 
-		} else {
-			InterpolatePaintScale colorMap = (InterpolatePaintScale) displaySettings.get(TrackMateModelView.KEY_COLORMAP);
-			// Get min & max
-			double min = Float.POSITIVE_INFINITY;
-			double max = Float.NEGATIVE_INFINITY;
-			for (double val : model.getFeatureModel().getTrackFeatureValues().get(feature)) {
-				if (val > max) max = val;
-				if (val < min) min = val;
+		for(Integer trackID : model.getTrackModel().getFilteredTrackIDs()) {
+			for (DefaultWeightedEdge edge : model.getTrackModel().getTrackEdges(trackID)) {
+				Color color =  colorGenerator.color(edge, trackID);
+				trackNode.setColor(edge, color);
 			}
-
-			for(int i : model.getTrackModel().getFilteredTrackIDs()) {
-				double val = model.getFeatureModel().getTrackFeature(i, feature);
-				Color color =  colorMap.getPaint( (val-min) / (max-min) );
-				trackNode.setColor(model.getTrackModel().getTrackSpots(i), color);
-			}
-
 		}
 	}
 

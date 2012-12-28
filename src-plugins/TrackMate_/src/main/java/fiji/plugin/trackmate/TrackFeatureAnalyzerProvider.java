@@ -16,7 +16,7 @@ import fiji.plugin.trackmate.features.track.TrackSpeedStatisticsAnalyzer;
  * A provider for the track analyzers provided in the GUI.
  * <p>
  * Concrete implementation must declare what features they can compute numerically, 
- * using the method {@link #getFeatures(String)}. The names and dimension of these 
+ * using the method {@link #getFeaturesForKey(String)}. The names and dimension of these 
  * features are also stored and provided: {@link #getFeatureName(String)}, {@link #getFeatureShortName(String)}
  * and {@link #getFeatureDimension(String)}.
  * <p>
@@ -133,12 +133,27 @@ public class TrackFeatureAnalyzerProvider {
 
 
 	/**
-	 * @return the list of features the target analyzer generates, or <code>null</code>
-	 * if the analyzer is unknown to this provider.
+	 * @return the list of features the analyzer with the specified key 
+	 * generates, or <code>null</code> if the analyzer is unknown to this provider.
 	 */
-	public List<String> getFeatures(String key) {
+	public List<String> getFeaturesForKey(String key) {
 		return features.get(key);
 	}
+	
+	/**
+	 * @return the key of the analyzer that can generate the specified feature,
+	 * or <code>null</code> if this feature is unknown to this provider.
+	 */
+	public String getKeyForAnalyzer(String feature) {
+		for (String key : features.keySet()) {
+			if (features.get(key).contains(feature)) {
+				return key;
+			}
+		}
+		return null;
+	}
+	
+	
 
 	/**
 	 * @return the short names of a feature, 

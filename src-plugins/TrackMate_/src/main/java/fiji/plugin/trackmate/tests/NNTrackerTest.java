@@ -17,8 +17,8 @@ import fiji.plugin.trackmate.visualization.hyperstack.HyperStackDisplayer;
 public class NNTrackerTest {
 
 	
-	private static final File SPLITTING_CASE_3 = new File("/Users/tinevez/Desktop/Data/FakeTracks.xml");
-//	private static final File SPLITTING_CASE_3 = new File("E:/Users/JeanYves/Desktop/Data/FakeTracks.xml");
+//	private static final File SPLITTING_CASE_3 = new File("/Users/tinevez/Desktop/Data/FakeTracks.xml");
+	private static final File SPLITTING_CASE_3 = new File("E:/Users/JeanYves/Desktop/Data/FakeTracks.xml");
 
 	/*
 	 * MAIN METHOD
@@ -33,7 +33,7 @@ public class NNTrackerTest {
 		TrackMate_ plugin = new TrackMate_();
 		plugin.initModules();
 		TmXmlReader reader = new TmXmlReader(file, plugin);
-		if (!reader.checkInput() && !reader.process()) {
+		if (!reader.checkInput() || !reader.process()) {
 			System.err.println("Problem loading the file:");
 			System.err.println(reader.getErrorMessage());
 		}
@@ -87,8 +87,7 @@ public class NNTrackerTest {
 		// Load Image
 		ij.ImageJ.main(args);
 		
-		TrackMateModelView sd2d = new HyperStackDisplayer();
-		sd2d.setModel(model);
+		TrackMateModelView sd2d = new HyperStackDisplayer(model);
 		sd2d.render();
 		sd2d.setDisplaySettings(TrackMateModelView.KEY_TRACK_DISPLAY_MODE, TrackMateModelView.TRACK_DISPLAY_MODE_WHOLE);
 	}

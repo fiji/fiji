@@ -15,9 +15,12 @@ import fiji.plugin.trackmate.SpotImp;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMateModelChangeEvent;
 import fiji.plugin.trackmate.TrackMateSelectionChangeEvent;
+import fiji.plugin.trackmate.features.track.TrackIndexAnalyzer;
 import fiji.plugin.trackmate.util.TMUtils;
 import fiji.plugin.trackmate.visualization.AbstractTrackMateModelView;
+import fiji.plugin.trackmate.visualization.TrackFeatureColorGenerator;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
+import fiji.plugin.trackmate.visualization.TrackPartsColorGenerator;
 import fiji.util.gui.OverlayedImageCanvas;
 
 public class HyperStackDisplayer extends AbstractTrackMateModelView  {
@@ -61,7 +64,10 @@ public class HyperStackDisplayer extends AbstractTrackMateModelView  {
 	 * CONSTRUCTORS
 	 */
 
-	public HyperStackDisplayer() {	}
+	public HyperStackDisplayer(TrackMateModel model) {	
+		super(model);
+		this.settings = model.getSettings();
+	}
 
 	/*
 	 * DEFAULT METHODS
@@ -93,16 +99,13 @@ public class HyperStackDisplayer extends AbstractTrackMateModelView  {
 	 * @return
 	 */
 	protected TrackOverlay createTrackOverlay() {
-		return new TrackOverlay(model, imp, displaySettings);
+		TrackOverlay to = new TrackOverlay(model, imp, displaySettings);
+		TrackFeatureColorGenerator colorGenerator = new TrackFeatureColorGenerator(model);
+		colorGenerator.selectFeature(TrackIndexAnalyzer.TRACK_INDEX);
+		to.setTrackColorGenerator(colorGenerator);
+		return to;
 	}
 
-	@Override
-	public void setModel(TrackMateModel model) {
-		super.setModel(model);
-		this.settings = model.getSettings();
-		this.imp = settings.imp;
-		this.calibration = TMUtils.getSpatialCalibration(settings.imp);
-	}
 
 	/*
 	 * PUBLIC METHODS
@@ -120,19 +123,7 @@ public class HyperStackDisplayer extends AbstractTrackMateModelView  {
 			// Rebuild track overlay only if edges were added or removed, or if at least one spot was removed. 
 			final List<DefaultWeightedEdge> edges = event.getEdges();
 			if (edges != null && edges.size() > 0) {
-				trackOverlay.computeTrackColors();
 				redoOverlay = true;				
-			} else {
-				final List<Spot> spots = event.getSpots();
-				if ( spots != null && spots.size() > 0) {
-					for (Spot spot : event.getSpots()) {
-						if (event.getSpotFlag(spot) == TrackMateModelChangeEvent.FLAG_SPOT_REMOVED) {
-							trackOverlay.computeTrackColors();
-							redoOverlay = true;
-							break;
-						}
-					}
-				}
 			}
 			break;
 
@@ -143,7 +134,6 @@ public class HyperStackDisplayer extends AbstractTrackMateModelView  {
 
 		case TrackMateModelChangeEvent.TRACKS_VISIBILITY_CHANGED:
 		case TrackMateModelChangeEvent.TRACKS_COMPUTED:
-			trackOverlay.computeTrackColors();
 			redoOverlay = true;
 			break;
 		}
@@ -181,10 +171,13 @@ public class HyperStackDisplayer extends AbstractTrackMateModelView  {
 
 	@Override
 	public void render() {
+		this.imp = settings.imp;
 		if (null == imp) {
 			this.imp = NewImage.createByteImage("Empty", settings.width, settings.height, settings.nframes*settings.nslices, NewImage.FILL_BLACK);
 			this.imp.setDimensions(1, settings.nslices, settings.nframes);
 		}
+		this.calibration = TMUtils.getSpatialCalibration(imp);
+
 		clear();
 		imp.setOpenAsHyperStack(true);
 		//
@@ -204,7 +197,9 @@ public class HyperStackDisplayer extends AbstractTrackMateModelView  {
 
 	@Override
 	public void refresh() { 
-		imp.updateAndDraw();
+		if (null != imp) {
+			imp.updateAndDraw();
+		}
 	}
 
 	@Override
@@ -245,8 +240,9 @@ public class HyperStackDisplayer extends AbstractTrackMateModelView  {
 		if (key == TrackMateModelView.KEY_SPOT_COLOR_FEATURE) {
 			spotOverlay.computeSpotColors();
 		}
-		if (key == TrackMateModelView.KEY_TRACK_COLOR_FEATURE) {
-			trackOverlay.computeTrackColors();
+		if (key == TrackMateModelView.KEY_TRACK_COLORING) {
+			TrackPartsColorGenerator colorGenerator = (TrackPartsColorGenerator) value;
+			trackOverlay.setTrackColorGenerator(colorGenerator);
 		}
 	}
 }

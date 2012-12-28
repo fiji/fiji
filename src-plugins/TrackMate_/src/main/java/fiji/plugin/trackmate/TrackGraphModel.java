@@ -742,7 +742,7 @@ public class TrackGraphModel {
 				}
 			}
 		}
-
+		
 		if (DEBUG) {
 			System.out.println("[TrackGraphModel] #computeTracksFromGraph(): the end; found " + trackSpots.size() + " new spot tracks.");
 		}

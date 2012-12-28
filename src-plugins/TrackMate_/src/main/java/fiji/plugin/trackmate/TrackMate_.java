@@ -49,13 +49,13 @@ public class TrackMate_ implements PlugIn, Benchmark, MultiThreaded, Algorithm {
 	 */
 	protected TrackMateModel model;
 
-	protected SpotFeatureAnalyzerProvider spotFeatureFactory;
+	protected SpotFeatureAnalyzerProvider spotFeatureAnalyzerProvider;
 	protected EdgeFeatureAnalyzerProvider edgeFeatureAnalyzerProvider;
-	protected TrackFeatureAnalyzerProvider trackFeatureFactory;
+	protected TrackFeatureAnalyzerProvider trackFeatureProvider;
 	/** The factory that provides this plugin with available {@link TrackMateModelView}s. */
-	protected ViewFactory viewFactory;
+	protected ViewProvider viewProvider;
 	/** The factory that provides this plugin with available {@link TrackMateAction}s. */
-	protected ActionFactory actionFactory;
+	protected ActionProvider actionProvider;
 	/** The list of {@link SpotTracker} that will be offered to choose amongst to the user. */
 	protected TrackerProvider trackerFactory;
 	/** The {@link DetectorProvider} that provides the GUI with the list of available detectors. */
@@ -109,30 +109,30 @@ public class TrackMate_ implements PlugIn, Benchmark, MultiThreaded, Algorithm {
 	 * <p>
 	 * More precisely, the modules and fields instantiated by this method are:
 	 * <ul>
-	 * 	<li> {@link #spotFeatureFactory}: the list of Spot feature analyzers that will
+	 * 	<li> {@link #spotFeatureAnalyzerProvider}: the list of Spot feature analyzers that will
 	 * be used when calling {@link #computeSpotFeatures()};
-	 * 	<li> {@link #trackFeatureFactory}: the list of track feature analyzers that will
+	 * 	<li> {@link #trackFeatureProvider}: the list of track feature analyzers that will
 	 * be used when calling {@link #computeTrackFeatures()};
 	 * 	<li> {@link #spotDetectors}: the list of {@link SpotDetector}s that will be offered 
 	 * to the user to choose from;
 	 * 	<li> {@link #trackerFactory}: the list of {@link SpotTracker}s that will be offered 
 	 * to the user to choose from;
-	 * 	<li> {@link #viewFactory}: the list of {@link TrackMateModelView}s (the "displayers")
+	 * 	<li> {@link #viewProvider}: the list of {@link TrackMateModelView}s (the "displayers")
 	 * that will be offered to the user to choose from;
-	 * 	<li> {@link #actionFactory}:  the list of {@link TrackMateAction}s that will be 
+	 * 	<li> {@link #actionProvider}:  the list of {@link TrackMateAction}s that will be 
 	 * offered to the user to choose from.
 	 * </ul>
 	 */
 	public void initModules() {
-		this.spotFeatureFactory 	= createSpotFeatureAnalyzerFactory();
-		this.trackFeatureFactory 	= createTrackFeatureAnalyzerFactory();
+		this.spotFeatureAnalyzerProvider 	= createSpotFeatureAnalyzerFactory();
+		this.trackFeatureProvider 	= createTrackFeatureAnalyzerFactory();
 		this.edgeFeatureAnalyzerProvider = createEdgeFeatureAnalyzerProvider();
 		this.detectorProvider		= createDetectorFactory();
 		this.trackerFactory 		= createTrackerFactory();
-		this.viewFactory 			= createViewFactory();
-		this.actionFactory 			= createActionFactory();
-		model.getFeatureModel().setSpotFeatureFactory(spotFeatureFactory);
-		model.getFeatureModel().setTrackFeatureFactory(trackFeatureFactory);
+		this.viewProvider 			= createViewFactory();
+		this.actionProvider 			= createActionFactory();
+		model.getFeatureModel().setSpotFeatureFactory(spotFeatureAnalyzerProvider);
+		model.getFeatureModel().setTrackFeatureProvider(trackFeatureProvider);
 		model.getFeatureModel().setEdgeFeatureProvider(edgeFeatureAnalyzerProvider);
 	}
 
@@ -195,8 +195,8 @@ public class TrackMate_ implements PlugIn, Benchmark, MultiThreaded, Algorithm {
 	 * <p>
 	 *  Create view factory containing available spot {@link TrackMateSelectionView}s.
 	 */
-	protected ViewFactory createViewFactory() {
-		return new ViewFactory();
+	protected ViewProvider createViewFactory() {
+		return new ViewProvider(model);
 	}
 
 
@@ -250,8 +250,8 @@ public class TrackMate_ implements PlugIn, Benchmark, MultiThreaded, Algorithm {
 	 * <p>
 	 * Create action factory containing available spot {@link TrackMateAction}s.
 	 */
-	protected ActionFactory createActionFactory() {
-		return new ActionFactory();
+	protected ActionProvider createActionFactory() {
+		return new ActionProvider();
 	}
 
 	/*
@@ -267,22 +267,36 @@ public class TrackMate_ implements PlugIn, Benchmark, MultiThreaded, Algorithm {
 	}
 
 	/**
-	 * @return the {@link SpotFeatureAnalyzerProvider} currently registered in this plugin.
+	 * @return the {@link SpotFeatureAnalyzerProvider} currently set.
 	 * @see #createSpotFeatureAnalyzerFactory()
 	 */
-	public SpotFeatureAnalyzerProvider getAvailableSpotFeatureAnalyzers() {
-		return spotFeatureFactory;
+	public SpotFeatureAnalyzerProvider getSpotFeatureAnalyzerProvider() {
+		return spotFeatureAnalyzerProvider;
 	}
 
 	/**
-	 * Return a list of the {@link SpotDetector} that are currently registered in this plugin.
+	 * @return the {@link TrackFeatureAnalyzerProvider} currently set.
+	 */
+	public TrackFeatureAnalyzerProvider getTrackFeatureProvider() {
+		return trackFeatureProvider;
+	}
+	
+	/**
+	 * @return the {@link EdgeFeatureAnalyzerProvider} currently set.
+	 */
+	public EdgeFeatureAnalyzerProvider getEdgeFeatureAnalyzerProvider() {
+		return edgeFeatureAnalyzerProvider;
+	}
+	
+	/**
+	 * @return the {@link DetectorProvider} currently set.
 	 */
 	public DetectorProvider getDetectorProvider() {
 		return detectorProvider;
 	}
 
 	/**
-	 * Return a list of the {@link SpotTracker} that are currently registered in this plugin.
+	 * @return the {@link TrackerProvider} currently set.
 	 */
 	public TrackerProvider getTrackerProvider() {
 		return trackerFactory;
@@ -290,17 +304,17 @@ public class TrackMate_ implements PlugIn, Benchmark, MultiThreaded, Algorithm {
 
 
 	/**
-	 * Return a list of the {@link TrackMateModelView} that are currently registered in this plugin.
+	 * @return the {@link ViewProvider} currently set.
 	 */
-	public ViewFactory getViewFactory() {
-		return viewFactory;
+	public ViewProvider getViewProvider() {
+		return viewProvider;
 	}
 
 	/**
-	 * Return a list of the {@link TrackMateAction} that are currently registered in this plugin.
+	 * @return a list of the {@link TrackMateAction} that are currently registered in this plugin.
 	 */
-	public ActionFactory getActionFactory() {
-		return actionFactory;
+	public ActionProvider getActionProvider() {
+		return actionProvider;
 	}
 
 

@@ -97,7 +97,6 @@ public class LaunchDisplayerDescriptor implements WizardPanelDescriptor {
 					displayer.clear();
 				}
 				try {
-					displayer.setModel(plugin.getModel());
 					displayer.render();
 				} finally {
 					// Re-enable the GUI

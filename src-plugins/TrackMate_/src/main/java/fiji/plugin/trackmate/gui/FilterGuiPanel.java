@@ -39,7 +39,7 @@ public class FilterGuiPanel extends ActionListenablePanel implements ChangeListe
 	public ActionEvent COLOR_FEATURE_CHANGED = null;
 
 	private JPanel jPanelBottom;
-	private JPanelColorByFeatureGUI jPanelColorByFeatureGUI;
+	JPanelColorByFeatureGUI jPanelColorByFeatureGUI;
 	private JScrollPane jScrollPaneThresholds;
 	private JPanel jPanelAllThresholds;
 	private JPanel jPanelButtons;
@@ -137,7 +137,7 @@ public class FilterGuiPanel extends ActionListenablePanel implements ChangeListe
 	}
 
 	/**
-	 * Return the thresholds currently set by this GUI.
+	 * @eeturn the thresholds currently set by this GUI.
 	 */
 	public List<FeatureFilter> getFeatureFilters() {
 		return featureFilters;

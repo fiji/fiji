@@ -7,18 +7,19 @@ import fiji.plugin.trackmate.visualization.TrackMateModelView;
 import fiji.plugin.trackmate.visualization.hyperstack.HyperStackDisplayer;
 import fiji.plugin.trackmate.visualization.threedviewer.SpotDisplayer3D;
 
-public class ViewFactory {
+public class ViewProvider {
 
-	/** The detector names, in the order they will appear in the GUI.
-	 * These names will be used as keys to access relevant detecrtor classes.  */
+	/** The view names, in the order they will appear in the GUI.
+	 * These names will be used as keys to access relevant view classes.  */
 	protected List<String> names;
+	protected final TrackMateModel model;
 
 	/*
 	 * BLANK CONSTRUCTOR
 	 */
 
 	/**
-	 * This factory provides the GUI with the model views currently available in the 
+	 * This provider provides the GUI with the model views currently available in the 
 	 * TrackMate plugin. Each view is identified by a key String, which can be used 
 	 * to retrieve new instance of the view.
 	 * <p>
@@ -26,7 +27,8 @@ public class ViewFactory {
 	 * factory so that it is registered with the custom views and provide this 
 	 * extended factory to the {@link TrackMate_} plugin.
 	 */
-	public ViewFactory() {
+	public ViewProvider(TrackMateModel model) {
+		this.model = model;
 		registerViews();
 	}
 
@@ -56,9 +58,9 @@ public class ViewFactory {
 		}
 		switch (index) {
 		case 0:
-			return new HyperStackDisplayer();
+			return new HyperStackDisplayer(model);
 		case 1:
-			return new SpotDisplayer3D();
+			return new SpotDisplayer3D(model);
 		default:
 			return null;
 		}

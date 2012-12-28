@@ -568,19 +568,6 @@ public class TrackScheme implements TrackMateModelChangeListener, TrackMateSelec
 	}
 
 	@Override
-	public void setModel(TrackMateModel model) {
-		// Model listeners
-		if (null != this.model) {
-			this.model.removeTrackMateModelChangeListener(this);
-			this.model.removeTrackMateSelectionChangeListener(this);
-		}
-		this.model = model;
-		this.model.addTrackMateModelChangeListener(this);
-		this.model.addTrackMateSelectionChangeListener(this);
-	}
-
-
-	@Override
 	public Map<String, Object> getDisplaySettings() {
 		return displaySettings;
 	}
@@ -1108,4 +1095,15 @@ public class TrackScheme implements TrackMateModelChangeListener, TrackMateSelec
 		}
 	}
 
+	
+	private void setModel(TrackMateModel model) {
+		// Model listeners
+		if (null != this.model) {
+			this.model.removeTrackMateModelChangeListener(this);
+			this.model.removeTrackMateSelectionChangeListener(this);
+		}
+		this.model = model;
+		this.model.addTrackMateModelChangeListener(this);
+		this.model.addTrackMateSelectionChangeListener(this);
+	}
 }

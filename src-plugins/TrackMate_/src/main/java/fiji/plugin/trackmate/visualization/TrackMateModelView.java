@@ -51,6 +51,12 @@ public interface TrackMateModelView extends InfoTextable {
 	 * tracks are not visible.
 	 */
 	public static final String KEY_TRACKS_VISIBLE = "TracksVisible";
+	
+	/**
+	 * Defines the key for the track coloring method. Values are concrete implementations
+	 * of {@link TrackPartsColorGenerator}.
+	 */
+	public static final String KEY_TRACK_COLORING = "TrackColoring";
 
 	/**
 	 * Defines the key for the spot visibility. Values are boolean. If <code>false</code>,
@@ -85,7 +91,7 @@ public interface TrackMateModelView extends InfoTextable {
 	 * color #DEFAULT_COLOR is used for all spots. Otherwise, each track color 
 	 * is set according to the selected feature value.
 	 */
-	public static final String KEY_TRACK_COLOR_FEATURE = "TrackColorFeature";
+//	public static final String KEY_TRACK_COLOR_FEATURE = "TrackColorFeature";
 
 	/**
 	 * Defines the key for the color map to use for painting overlay. Acceptable
@@ -220,16 +226,6 @@ public interface TrackMateModelView extends InfoTextable {
 	public void centerViewOn(final Spot spot);
 
 	/**
-	 * @return the {@link TrackMateModel} currently displayed in this view.
-	 */
-	public TrackMateModel getModel();
-
-	/**
-	 * Set the target {@link TrackMateModel} that should be displayed in this view.
-	 */
-	public void setModel(TrackMateModel model);
-
-	/**
 	 * @return the current display settings map.
 	 */
 	public Map<String, Object> getDisplaySettings();
@@ -245,4 +241,9 @@ public interface TrackMateModelView extends InfoTextable {
 	 * @return the value of a specific display parameter. 
 	 */
 	public Object getDisplaySettings(final String key);
+	
+	/**
+	 * @return the model displayed in this view.
+	 */
+	public TrackMateModel getModel();
 }
