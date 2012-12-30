@@ -17,6 +17,7 @@ import org.jgrapht.graph.DefaultWeightedEdge;
 import fiji.plugin.trackmate.Dimension;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.TrackMateModelChangeEvent;
 
 public class TrackBranchingAnalyzer implements TrackFeatureAnalyzer, MultiThreaded {
 
@@ -151,6 +152,28 @@ public class TrackBranchingAnalyzer implements TrackFeatureAnalyzer, MultiThread
 		long end = System.currentTimeMillis();
 		processingTime = end - start;
 	}
+
+	@Override
+	public void modelChanged(TrackMateModelChangeEvent event) {
+		
+		// We are affected only by edge changes
+		if (event.getEventID() == TrackMateModelChangeEvent.MODEL_MODIFIED) {
+			
+			List<DefaultWeightedEdge> edges = event.getEdges();
+			if (edges == null || edges.size() == 0) {
+				return;
+			}
+			
+			// Collect track IDs
+			Set<Integer> targetIDs = new HashSet<Integer>(edges.size());
+			for (DefaultWeightedEdge edge : edges) {
+				targetIDs.add( model.getTrackModel().getTrackIDOf(edge) );
+			}
+			
+			// Recompute
+			process(targetIDs);
+		}
+	}
 	
 	@Override
 	public String toString() {
@@ -176,5 +199,6 @@ public class TrackBranchingAnalyzer implements TrackFeatureAnalyzer, MultiThread
 	@Override
 	public long getProcessingTime() {
 		return processingTime;
-	};
+	}
+
 }

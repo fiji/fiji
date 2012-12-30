@@ -13,9 +13,9 @@ import net.imglib2.multithreading.SimpleMultiThreading;
 import org.jgrapht.graph.DefaultWeightedEdge;
 
 import fiji.plugin.trackmate.Dimension;
+import fiji.plugin.trackmate.FeatureModel;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.TrackMateModel;
-import fiji.plugin.trackmate.features.FeatureModel;
 
 public class EdgeTimeLocationAnalyzer implements EdgeFeatureAnalyzer, MultiThreaded {
 

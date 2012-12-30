@@ -1,4 +1,4 @@
-package fiji.plugin.trackmate.features;
+package fiji.plugin.trackmate;
 
 import static fiji.plugin.trackmate.detection.DetectorKeys.KEY_TARGET_CHANNEL;
 
@@ -16,17 +16,6 @@ import net.imglib2.multithreading.SimpleMultiThreading;
 
 import org.jgrapht.graph.DefaultWeightedEdge;
 
-import fiji.plugin.trackmate.Dimension;
-import fiji.plugin.trackmate.EdgeFeatureAnalyzerProvider;
-import fiji.plugin.trackmate.Logger;
-import fiji.plugin.trackmate.Settings;
-import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.SpotCollection;
-import fiji.plugin.trackmate.SpotFeatureAnalyzerProvider;
-import fiji.plugin.trackmate.TrackFeatureAnalyzerProvider;
-import fiji.plugin.trackmate.TrackMateModel;
-import fiji.plugin.trackmate.TrackMateModelChangeEvent;
-import fiji.plugin.trackmate.TrackMateModelChangeListener;
 import fiji.plugin.trackmate.features.edges.EdgeFeatureAnalyzer;
 import fiji.plugin.trackmate.features.spot.SpotFeatureAnalyzer;
 import fiji.plugin.trackmate.features.spot.SpotFeatureAnalyzerFactory;
@@ -39,9 +28,9 @@ import fiji.plugin.trackmate.util.TMUtils;
  * @author Jean-Yves Tinevez, 2011, 2012
  *
  */
-public class FeatureModel implements MultiThreaded, TrackMateModelChangeListener {
+public class FeatureModel implements MultiThreaded {
 
-	private static final boolean DEBUG = true;
+//	private static final boolean DEBUG = true;
 	
 	/*
 	 * FIELDS
@@ -65,15 +54,7 @@ public class FeatureModel implements MultiThreaded, TrackMateModelChangeListener
 	 * feature to its track map. The track map maps each
 	 * track ID to the double value for the specified feature.
 	 */
-	protected Map<String, Map<Integer, Double>> trackFeatureValues;
-	/**
-	 * Caching mechanism: flags that state whether a track feature is up to date or not.
-	 * Altered when the model changes, restored when the track features are recalculated.
-	 * We start with a simple mechanism: a feature is validated or invalidated for <b>all</b>
-	 * tracks at once. We will do fine-grained invalidatation later.
-	 */
-	protected Map<String, Boolean> trackFeatureValidity;
-
+	protected Map<String, Map<Integer, Double>> trackFeatureValues =  new ConcurrentHashMap<String, Map<Integer, Double>>();
 
 	/**
 	 * Feature storage for edges.
@@ -103,8 +84,6 @@ public class FeatureModel implements MultiThreaded, TrackMateModelChangeListener
 		setNumThreads();
 		// To initialize the spot features with the basic features:
 		setSpotFeatureFactory(null);
-		// Listen to model changes
-		model.addTrackMateModelChangeListener(this);
 	}
 
 
@@ -286,12 +265,6 @@ public class FeatureModel implements MultiThreaded, TrackMateModelChangeListener
 		}
 		// Instantiate track feature value map, once for all
 		this.trackFeatureValues = new ConcurrentHashMap<String, Map<Integer, Double>>(trackFeatures.size());
-		// Track feature validity
-		trackFeatureValidity = new ConcurrentHashMap<String, Boolean>(trackFeatures.size());
-		for (String feature : trackFeatures) {
-			trackFeatureValidity.put(feature, Boolean.FALSE);
-		}
-
 	}
 
 	public void setEdgeFeatureProvider(final EdgeFeatureAnalyzerProvider edgeFeatureAnalyzerProvider) {
@@ -471,7 +444,7 @@ public class FeatureModel implements MultiThreaded, TrackMateModelChangeListener
 		return trackFeatureDimensions;
 	}
 
-	public void putTrackFeature(final Integer trackID, final String feature, final Double value) {
+	public synchronized void putTrackFeature(final Integer trackID, final String feature, final Double value) {
 		Map<Integer, Double> valueMap = trackFeatureValues.get(feature);
 		if (null == valueMap) {
 			valueMap = new HashMap<Integer, Double>(model.getTrackModel().getNFilteredTracks());
@@ -482,30 +455,10 @@ public class FeatureModel implements MultiThreaded, TrackMateModelChangeListener
 
 	/**
 	 * @return the numerical value of the specified track feature for the specified track.
-	 * If the feature has been marked as not up-to-date (e.g. after a model change
-	 * event), it will be recomputed for all the tracks on the fly.
-	 * 
 	 * @param trackID the track ID to quest.
 	 * @param feature the desired feature.
 	 */
 	public Double getTrackFeature(final Integer trackID, final String feature) {
-
-		// Check validity
-		if (trackFeatureValidity.get(feature) == null || !trackFeatureValidity.get(feature)) {
-			// Invalid, we have to recompute the feature values for this feature
-			if (DEBUG) {
-				System.out.println("[FeatureModel] getTrackFeature: requested an invalid feature, recalculating it.");
-			}
-			String analyzerKey = trackAnalyzerProvider.getKeyForAnalyzer(feature);
-			TrackFeatureAnalyzer analyzer = trackAnalyzerProvider.getTrackFeatureAnalyzer(analyzerKey);
-			analyzer.process(model.getTrackModel().getFilteredTrackIDs());
-			// Mark as valid again, for ALL the features this analyzer provides
-			if (DEBUG) {
-				System.out.println("[FeatureModel] getTrackFeature: marking the following features as valid again: " + trackAnalyzerProvider.getFeaturesForKey(analyzerKey));
-			}for (String analyzerFeature : trackAnalyzerProvider.getFeaturesForKey(analyzerKey)) {
-				trackFeatureValidity.put(analyzerFeature, Boolean.TRUE);
-			}
-		}
 		Map<Integer, Double> valueMap = trackFeatureValues.get(feature);
 		return valueMap.get(trackID);
 	}
@@ -553,10 +506,6 @@ public class FeatureModel implements MultiThreaded, TrackMateModelChangeListener
 			// Compute features
 			TrackFeatureAnalyzer analyzer = trackAnalyzerProvider.getTrackFeatureAnalyzer(analyzerKey);
 			analyzer.process(trackIDs);
-			// Set validity of target features to true
-			for (String feature : trackAnalyzerProvider.getFeaturesForKey(analyzerKey)) {
-				trackFeatureValidity.put(feature, Boolean.TRUE);
-			}
 			if (doLogIt)
 				logger.log("  - " + analyzer.toString() + " in " + analyzer.getProcessingTime() + " ms.\n");
 		}
@@ -591,27 +540,4 @@ public class FeatureModel implements MultiThreaded, TrackMateModelChangeListener
 	public int getNumThreads() {
 		return numThreads;
 	}
-
-
-	@Override
-	public void modelChanged(TrackMateModelChangeEvent event) {
-		if (event.getEventID() == TrackMateModelChangeEvent.MODEL_MODIFIED) {
-			
-			if (event.getEdges() == null) {
-				return;
-			}
-			
-			if (DEBUG) {
-				System.out.println("[FeatureModel] Caught model change event, invalidating all track features.");
-			}
-			// Invalidate all track features
-			for (String feature : trackFeatureValidity.keySet()) {
-				trackFeatureValidity.put(feature, Boolean.FALSE);
-			}
-		}
-
-	}
-
-
-
 }

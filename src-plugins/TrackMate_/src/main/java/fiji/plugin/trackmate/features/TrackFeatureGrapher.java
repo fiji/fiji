@@ -18,6 +18,7 @@ import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
 
 import fiji.plugin.trackmate.Dimension;
+import fiji.plugin.trackmate.FeatureModel;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.util.ExportableChartPanel;

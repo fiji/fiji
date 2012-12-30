@@ -10,10 +10,10 @@ import javax.swing.ImageIcon;
 
 import org.jgrapht.graph.DefaultWeightedEdge;
 
+import fiji.plugin.trackmate.FeatureModel;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMate_;
-import fiji.plugin.trackmate.features.FeatureModel;
 import fiji.plugin.trackmate.gui.TrackMateWizard;
 
 public class ExportStatsToIJAction extends AbstractTMAction {

@@ -84,6 +84,7 @@ import fiji.plugin.trackmate.DetectorProvider;
 import fiji.plugin.trackmate.FeatureFilter;
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.Logger.StringBuilderLogger;
+import fiji.plugin.trackmate.FeatureModel;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
@@ -92,7 +93,6 @@ import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMate_;
 import fiji.plugin.trackmate.TrackerProvider;
 import fiji.plugin.trackmate.detection.SpotDetectorFactory;
-import fiji.plugin.trackmate.features.FeatureModel;
 import fiji.plugin.trackmate.tracking.SpotTracker;
 
 

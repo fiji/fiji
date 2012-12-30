@@ -39,6 +39,10 @@ public class TrackFeatureAnalyzerProvider {
 	protected Map<String, Dimension> featureDimensions;
 	/** The target model to operate on. */
 	protected final TrackMateModel model;
+	/** The {@link TrackIndexAnalyzer} is the only analyzer we do not re-instantiate 
+	 * at every {@link #getTrackFeatureAnalyzer(String)} call, for it has an internal state 
+	 * useful for lazy computation of track features. */
+	protected final TrackIndexAnalyzer trackIndexAnalyzer;
 
 	/*
 	 * BLANK CONSTRUCTOR
@@ -56,6 +60,7 @@ public class TrackFeatureAnalyzerProvider {
 	public TrackFeatureAnalyzerProvider(TrackMateModel model) {
 		this.model = model;
 		registerTrackFeatureAnalyzers();
+		this.trackIndexAnalyzer = new TrackIndexAnalyzer(model);
 	}
 
 
@@ -118,7 +123,7 @@ public class TrackFeatureAnalyzerProvider {
 		} else if (key == TrackLocationAnalyzer.KEY) {
 			return new TrackLocationAnalyzer(model);
 		} else if (key == TrackIndexAnalyzer.KEY) {
-			return new TrackIndexAnalyzer(model);
+			return trackIndexAnalyzer;
 		} else {
 			return null;
 		}

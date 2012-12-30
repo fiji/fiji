@@ -11,12 +11,12 @@ import java.util.Set;
 import org.jfree.chart.renderer.InterpolatePaintScale;
 import org.jgrapht.graph.DefaultWeightedEdge;
 
+import fiji.plugin.trackmate.FeatureModel;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.TrackGraphModel;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMateModelChangeEvent;
 import fiji.plugin.trackmate.TrackMateModelChangeListener;
-import fiji.plugin.trackmate.features.FeatureModel;
 
 /**
  * A {@link TrackPartsColorGenerator} that generate colors based on the whole

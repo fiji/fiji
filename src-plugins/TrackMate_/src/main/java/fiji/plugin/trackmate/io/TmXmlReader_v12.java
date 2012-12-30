@@ -104,6 +104,7 @@ import org.jgrapht.graph.SimpleDirectedWeightedGraph;
 
 import fiji.plugin.trackmate.DetectorProvider;
 import fiji.plugin.trackmate.FeatureFilter;
+import fiji.plugin.trackmate.FeatureModel;
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
@@ -116,7 +117,6 @@ import fiji.plugin.trackmate.detection.DogDetectorFactory;
 import fiji.plugin.trackmate.detection.DownsampleLogDetectorFactory;
 import fiji.plugin.trackmate.detection.LogDetectorFactory;
 import fiji.plugin.trackmate.detection.ManualDetectorFactory;
-import fiji.plugin.trackmate.features.FeatureModel;
 import fiji.plugin.trackmate.tracking.FastLAPTracker;
 import fiji.plugin.trackmate.tracking.SimpleFastLAPTracker;
 import fiji.plugin.trackmate.tracking.SpotTracker;

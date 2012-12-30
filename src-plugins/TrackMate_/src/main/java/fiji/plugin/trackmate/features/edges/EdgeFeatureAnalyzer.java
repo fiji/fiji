@@ -6,7 +6,7 @@ import net.imglib2.algorithm.Benchmark;
 
 import org.jgrapht.graph.DefaultWeightedEdge;
 
-import fiji.plugin.trackmate.features.FeatureModel;
+import fiji.plugin.trackmate.FeatureModel;
 
 public interface EdgeFeatureAnalyzer extends Benchmark {
 

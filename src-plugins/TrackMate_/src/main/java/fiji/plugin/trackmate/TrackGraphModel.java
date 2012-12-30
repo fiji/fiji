@@ -181,6 +181,30 @@ public class TrackGraphModel {
 
 	}
 
+	 /**
+     * Creates a new edge in this graph, going from the source spot to the
+     * target spot, and returns the created edge. This model does not allow
+     * edge-multiplicity. If the graph already contains an edge
+     * from the specified source to the specified target, than this method does
+     * not change the graph and returns <code>null</code>.
+     *
+     * <p>The source and target spots must already be contained in this
+     * model. If they are not found in graph IllegalArgumentException is
+     * thrown.</p>
+     *
+     * @param source source spot of the edge.
+     * @param target target spot of the edge.
+     *
+     * @return The newly created edge if added to the graph, otherwise <code>
+     * null</code>.
+     *
+     * @throws IllegalArgumentException if source or target spots are not
+     * found in the graph.
+     * @throws NullPointerException if any of the specified spots is <code>
+     * null</code>.
+     *
+     * @see #getEdgeFactory()
+     */
 	public DefaultWeightedEdge addEdge(final Spot source, final Spot target, final double weight) {
 		// Mother graph
 		DefaultWeightedEdge edge = graph.addEdge(source, target);

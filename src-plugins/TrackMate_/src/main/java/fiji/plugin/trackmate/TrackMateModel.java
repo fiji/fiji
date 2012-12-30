@@ -11,7 +11,7 @@ import java.util.Set;
 import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.graph.SimpleDirectedWeightedGraph;
 
-import fiji.plugin.trackmate.features.FeatureModel;
+import fiji.plugin.trackmate.features.track.TrackFeatureAnalyzer;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
 
 /**
@@ -128,9 +128,9 @@ public class TrackMateModel {
 	// FEATURES
 
 	private final FeatureModel featureModel;
-	
+
 	// TRACKS
-	
+
 	private final TrackGraphModel trackGraphModel;
 
 	// SPOTS
@@ -196,9 +196,9 @@ public class TrackMateModel {
 	List<TrackMateModelChangeListener> modelChangeListeners = new ArrayList<TrackMateModelChangeListener>();
 	/** The list of listener listening to change in selection. */
 	List<TrackMateSelectionChangeListener> selectionChangeListeners = new ArrayList<TrackMateSelectionChangeListener>();
-	
 
-	
+
+
 
 
 
@@ -234,7 +234,7 @@ public class TrackMateModel {
 		} else {
 			str.append("Contains " + filteredSpots.getNSpots() + " filtered spots.\n");
 		}
-		
+
 		str.append('\n');
 		if (trackGraphModel.getNTracks() == 0) {
 			str.append("No tracks.\n");
@@ -246,7 +246,7 @@ public class TrackMateModel {
 		} else {
 			str.append("Contains " + trackGraphModel.getNFilteredTracks() + " filtered tracks.\n");
 		}
-		
+
 		return str.toString();
 	}
 
@@ -309,14 +309,14 @@ public class TrackMateModel {
 	/*
 	 * TRACK METHODS: WE DELEGATE TO THE TRACK GRAPH MODEL
 	 */
-	
+
 	/**
 	 * @return the {@link TrackGraphModel} that manages tracks for this model.
 	 */
 	public TrackGraphModel getTrackModel() {
 		return trackGraphModel;
 	}
-	
+
 	/*
 	 * GETTERS / SETTERS FOR SPOTS
 	 */
@@ -705,7 +705,9 @@ public class TrackMateModel {
 		 * new tracks made of single spots.	 */
 		int nEdgesToSignal = trackGraphModel.edgesAdded.size() + trackGraphModel.edgesRemoved.size();
 		if (nEdgesToSignal + spotsRemoved.size() > 0) {
+			// First, regenerate the tracks
 			trackGraphModel.computeTracksFromGraph();
+			// See below to recompute tracks
 		}
 
 		// Deal with new or moved spots: we need to update their features.
@@ -757,6 +759,17 @@ public class TrackMateModel {
 
 			event.setEdges(edgesToSignal);
 			event.setEdgeFlags(edgesFlag);
+		}
+
+
+		// If required, privately pass the event to track feature analyzer so that they can recalculate the track features
+		if (nEdgesToSignal + spotsRemoved.size() > 0) {
+			if (null != featureModel.trackAnalyzerProvider) {
+				for (String analyzerKey : featureModel.trackAnalyzerProvider.getAvailableTrackFeatureAnalyzers()) {
+					TrackFeatureAnalyzer analyzer = featureModel.trackAnalyzerProvider.getTrackFeatureAnalyzer(analyzerKey);
+					analyzer.modelChanged(event);
+				}
+			}
 		}
 
 		try {
