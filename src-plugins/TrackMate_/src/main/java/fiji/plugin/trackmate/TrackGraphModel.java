@@ -249,7 +249,7 @@ public class TrackGraphModel {
 	boolean removeEdge(final DefaultWeightedEdge edge) {
 		// Mother graph
 		boolean removed = graph.removeEdge(edge);
-		model.edgeSelection.remove(edge);
+		model.getSelectionModel().removeEdgeFromSelection(edge);
 		if (DEBUG)
 			System.out.println("[TrackGraphModel] Removing edge " + edge + " between " + graph.getEdgeSource(edge) + " and " + graph.getEdgeTarget(edge));
 		return removed;

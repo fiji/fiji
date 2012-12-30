@@ -163,14 +163,14 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 			updateStatusBar(target, imp.getCalibration().getUnits());
 			final int addToSelectionMask = MouseEvent.SHIFT_DOWN_MASK;
 			if ((e.getModifiersEx() & addToSelectionMask) == addToSelectionMask) { 
-				if (model.getSpotSelection().contains(target)) {
-					model.removeSpotFromSelection(target);
+				if (model.getSelectionModel().getSpotSelection().contains(target)) {
+					model.getSelectionModel().removeSpotFromSelection(target);
 				} else {
-					model.addSpotToSelection(target);
+					model.getSelectionModel().addSpotToSelection(target);
 				}
 			} else {
-				model.clearSpotSelection();
-				model.addSpotToSelection(target);
+				model.getSelectionModel().clearSpotSelection();
+				model.getSelectionModel().addSpotToSelection(target);
 			}
 			break;
 		}
@@ -179,7 +179,7 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 			// Edit spot
 
 			// Empty current selection
-			model.clearSelection();
+			model.getSelectionModel().clearSelection();
 
 			if (null == editedSpot) {
 				// No spot is currently edited, we pick one to edit
@@ -378,11 +378,11 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 		case KeyEvent.VK_DELETE: {
 
 			if (null == editedSpot) {
-				ArrayList<Spot> spotSelection = new ArrayList<Spot>(model.getSpotSelection());
-				ArrayList<DefaultWeightedEdge> edgeSelection = new ArrayList<DefaultWeightedEdge>(model.getEdgeSelection());
+				ArrayList<Spot> spotSelection = new ArrayList<Spot>(model.getSelectionModel().getSpotSelection());
+				ArrayList<DefaultWeightedEdge> edgeSelection = new ArrayList<DefaultWeightedEdge>(model.getSelectionModel().getEdgeSelection());
 				model.beginUpdate();
 				try {
-					model.clearSelection();
+					model.getSelectionModel().clearSelection();
 					for(DefaultWeightedEdge edge : edgeSelection) {
 						model.removeEdge(edge);
 					}

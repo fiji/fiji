@@ -1,11 +1,8 @@
 package fiji.plugin.trackmate;
 
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import org.jgrapht.graph.DefaultWeightedEdge;
@@ -119,7 +116,6 @@ public class TrackMateModel {
 	 */
 
 	private static final boolean DEBUG = false;
-	private static final boolean DEBUG_SELECTION = false;
 
 	/*
 	 * FIELDS
@@ -174,11 +170,8 @@ public class TrackMateModel {
 	private HashSet<Integer> eventCache = new HashSet<Integer>();
 
 	// SELECTION
-
-	/** The spot current selection. */
-	private Set<Spot> spotSelection = new HashSet<Spot>();
-	/** The edge current selection. */
-	Set<DefaultWeightedEdge> edgeSelection = new HashSet<DefaultWeightedEdge>();
+	
+	private final SelectionModel selectionModel;
 
 	// OTHERS
 
@@ -194,10 +187,6 @@ public class TrackMateModel {
 	 * in {@link #spots}, {@link #filteredSpots} and {@link #trackGraph}.
 	 */
 	List<TrackMateModelChangeListener> modelChangeListeners = new ArrayList<TrackMateModelChangeListener>();
-	/** The list of listener listening to change in selection. */
-	List<TrackMateSelectionChangeListener> selectionChangeListeners = new ArrayList<TrackMateSelectionChangeListener>();
-
-
 
 
 
@@ -210,6 +199,7 @@ public class TrackMateModel {
 	public TrackMateModel() {
 		featureModel = new FeatureModel(this);
 		trackGraphModel = new TrackGraphModel(this);
+		selectionModel = new SelectionModel(this);
 	}
 
 
@@ -272,19 +262,18 @@ public class TrackMateModel {
 	 * DEAL WITH SELECTION CHANGE LISTENER
 	 */
 
-	public void addTrackMateSelectionChangeListener(TrackMateSelectionChangeListener listener) {
-		selectionChangeListeners.add(listener);
+	public boolean addTrackMateSelectionChangeListener(TrackMateSelectionChangeListener listener) {
+		return selectionModel.addTrackMateSelectionChangeListener(listener);
 	}
 
 	public boolean removeTrackMateSelectionChangeListener(TrackMateSelectionChangeListener listener) {
-		return selectionChangeListeners.remove(listener);
+		return selectionModel.removeTrackMateSelectionChangeListener(listener);
 	}
 
 	public List<TrackMateSelectionChangeListener> getTrackMateSelectionChangeListener() {
-		return selectionChangeListeners;
+		return selectionModel.getTrackMateSelectionChangeListener();
 	}
-
-
+	
 	/*
 	 * GRAPH MODIFICATION
 	 */
@@ -427,174 +416,11 @@ public class TrackMateModel {
 	}
 
 	/*
-	 * SELECTION METHODSs
+	 * SELECTION METHODS we delegate to the SelectionModel component
 	 */
-
-	public void clearSelection() {
-		if (DEBUG_SELECTION)
-			System.out.println("[TrackMateModel] Clearing selection");
-		// Prepare event
-		Map<Spot, Boolean> spotMap = new HashMap<Spot, Boolean>(spotSelection.size());
-		for (Spot spot : spotSelection)
-			spotMap.put(spot, false);
-		Map<DefaultWeightedEdge, Boolean> edgeMap = new HashMap<DefaultWeightedEdge, Boolean>(edgeSelection.size());
-		for (DefaultWeightedEdge edge : edgeSelection)
-			edgeMap.put(edge, false);
-		TrackMateSelectionChangeEvent event = new TrackMateSelectionChangeEvent(this, spotMap, edgeMap);
-		// Clear fields
-		clearSpotSelection();
-		clearEdgeSelection();
-		// Fire event
-		for (TrackMateSelectionChangeListener listener : selectionChangeListeners)
-			listener.selectionChanged(event);
-	}
-
-	public void clearSpotSelection() {
-		if (DEBUG_SELECTION)
-			System.out.println("[TrackMateModel] Clearing spot selection");
-		// Prepare event
-		Map<Spot, Boolean> spotMap = new HashMap<Spot, Boolean>(spotSelection.size());
-		for (Spot spot : spotSelection)
-			spotMap.put(spot, false);
-		TrackMateSelectionChangeEvent event = new TrackMateSelectionChangeEvent(this, spotMap, null);
-		// Clear field
-		spotSelection.clear();
-		// Fire event
-		for (TrackMateSelectionChangeListener listener : selectionChangeListeners)
-			listener.selectionChanged(event);
-	}
-
-	public void clearEdgeSelection() {
-		if (DEBUG_SELECTION)
-			System.out.println("[TrackMateModel] Clearing edge selection");
-		// Prepare event
-		Map<DefaultWeightedEdge, Boolean> edgeMap = new HashMap<DefaultWeightedEdge, Boolean>(edgeSelection.size());
-		for (DefaultWeightedEdge edge : edgeSelection)
-			edgeMap.put(edge, false);
-		TrackMateSelectionChangeEvent event = new TrackMateSelectionChangeEvent(this, null, edgeMap);
-		// Clear field
-		edgeSelection.clear();
-		// Fire event
-		for (TrackMateSelectionChangeListener listener : selectionChangeListeners)
-			listener.selectionChanged(event);
-	}
-
-	public void addSpotToSelection(final Spot spot) {
-		if (!spotSelection.add(spot))
-			return; // Do nothing if already present in selection
-		if (DEBUG_SELECTION)
-			System.out.println("[TrackMateModel] Adding spot " + spot + " to selection");
-		Map<Spot, Boolean> spotMap = new HashMap<Spot, Boolean>(1);
-		spotMap.put(spot, true);
-		if (DEBUG_SELECTION)
-			System.out.println("[TrackMateModel] Seding event to listeners: "+selectionChangeListeners);
-		TrackMateSelectionChangeEvent event = new TrackMateSelectionChangeEvent(this, spotMap, null);
-		for (TrackMateSelectionChangeListener listener : selectionChangeListeners)
-			listener.selectionChanged(event);
-	}
-
-	public void removeSpotFromSelection(final Spot spot) {
-		if (!spotSelection.remove(spot))
-			return; // Do nothing was not already present in selection
-		if (DEBUG_SELECTION)
-			System.out.println("[TrackMateModel] Removing spot " + spot + " from selection");
-		Map<Spot, Boolean> spotMap = new HashMap<Spot, Boolean>(1);
-		spotMap.put(spot, false);
-		TrackMateSelectionChangeEvent event = new TrackMateSelectionChangeEvent(this, spotMap, null);
-		for (TrackMateSelectionChangeListener listener : selectionChangeListeners)
-			listener.selectionChanged(event);
-	}
-
-	public void addSpotToSelection(final Collection<Spot> spots) {
-		Map<Spot, Boolean> spotMap = new HashMap<Spot, Boolean>(spots.size());
-		for (Spot spot : spots) {
-			if (spotSelection.add(spot)) {
-				spotMap.put(spot, true);
-				if (DEBUG_SELECTION)
-					System.out.println("[TrackMateModel] Adding spot " + spot + " to selection");
-			}
-		}
-		TrackMateSelectionChangeEvent event = new TrackMateSelectionChangeEvent(this, spotMap, null);
-		if (DEBUG_SELECTION) 
-			System.out.println("[TrackMateModel] Seding event "+event.hashCode()+" to "+selectionChangeListeners.size()+" listeners: "+selectionChangeListeners);
-		for (TrackMateSelectionChangeListener listener : selectionChangeListeners)
-			listener.selectionChanged(event);
-	}
-
-	public void removeSpotFromSelection(final Collection<Spot> spots) {
-		Map<Spot, Boolean> spotMap = new HashMap<Spot, Boolean>(spots.size());
-		for (Spot spot : spots) {
-			if (spotSelection.remove(spot)) {
-				spotMap.put(spot, false);
-				if (DEBUG_SELECTION)
-					System.out.println("[TrackMateModel] Removing spot " + spot + " from selection");
-			}
-		}
-		TrackMateSelectionChangeEvent event = new TrackMateSelectionChangeEvent(this, spotMap, null);
-		for (TrackMateSelectionChangeListener listener : selectionChangeListeners)
-			listener.selectionChanged(event);
-	}
-
-	public void addEdgeToSelection(final DefaultWeightedEdge edge) {
-		if (!edgeSelection.add(edge))
-			return; // Do nothing if already present in selection
-		if (DEBUG_SELECTION)
-			System.out.println("[TrackMateModel] Adding edge " + edge + " to selection");
-		Map<DefaultWeightedEdge, Boolean> edgeMap = new HashMap<DefaultWeightedEdge, Boolean>(1);
-		edgeMap.put(edge, true);
-		TrackMateSelectionChangeEvent event = new TrackMateSelectionChangeEvent(this, null, edgeMap);
-		for (TrackMateSelectionChangeListener listener : selectionChangeListeners)
-			listener.selectionChanged(event);
-
-	}
-
-	public void removeEdgeFromSelection(final DefaultWeightedEdge edge) {
-		if (!edgeSelection.remove(edge))
-			return; // Do nothing if already present in selection
-		if (DEBUG_SELECTION)
-			System.out.println("[TrackMateModel] Removing edge " + edge + " from selection");
-		Map<DefaultWeightedEdge, Boolean> edgeMap = new HashMap<DefaultWeightedEdge, Boolean>(1);
-		edgeMap.put(edge, false);
-		TrackMateSelectionChangeEvent event = new TrackMateSelectionChangeEvent(this, null, edgeMap);
-		for (TrackMateSelectionChangeListener listener : selectionChangeListeners)
-			listener.selectionChanged(event);
-
-	}
-
-	public void addEdgeToSelection(final Collection<DefaultWeightedEdge> edges) {
-		Map<DefaultWeightedEdge, Boolean> edgeMap = new HashMap<DefaultWeightedEdge, Boolean>(edges.size());
-		for (DefaultWeightedEdge edge : edges) {
-			if (edgeSelection.add(edge)) {
-				edgeMap.put(edge, true);
-				if (DEBUG_SELECTION)
-					System.out.println("[TrackMateModel] Adding edge " + edge + " to selection");
-			}
-		}
-		TrackMateSelectionChangeEvent event = new TrackMateSelectionChangeEvent(this, null, edgeMap);
-		for (TrackMateSelectionChangeListener listener : selectionChangeListeners)
-			listener.selectionChanged(event);
-	}
-
-	public void removeEdgeFromSelection(final Collection<DefaultWeightedEdge> edges) {
-		Map<DefaultWeightedEdge, Boolean> edgeMap = new HashMap<DefaultWeightedEdge, Boolean>(edges.size());
-		for (DefaultWeightedEdge edge : edges) {
-			if (edgeSelection.remove(edge)) {
-				edgeMap.put(edge, false);
-				if (DEBUG_SELECTION)
-					System.out.println("[TrackMateModel] Removing edge " + edge + " from selection");
-			}
-		}
-		TrackMateSelectionChangeEvent event = new TrackMateSelectionChangeEvent(this, null, edgeMap);
-		for (TrackMateSelectionChangeListener listener : selectionChangeListeners)
-			listener.selectionChanged(event);
-	}
-
-	public Set<Spot> getSpotSelection() {
-		return spotSelection;
-	}
-
-	public Set<DefaultWeightedEdge> getEdgeSelection() {
-		return edgeSelection;
+	
+	public SelectionModel getSelectionModel() {
+		return selectionModel;
 	}
 
 	/*
@@ -660,7 +486,7 @@ public class TrackMateModel {
 				System.out.println("[TrackMateModel] Removing spot " + spotToRemove + " from frame " + fromFrame);
 		}
 		filteredSpots.remove(spotToRemove, fromFrame);
-		spotSelection.remove(spotToRemove);
+		selectionModel.removeSpotFromSelection(spotToRemove);
 		trackGraphModel.removeSpot(spotToRemove); // changes to edges will be caught automatically by the TrackGraphModel
 		return spotToRemove;
 	}

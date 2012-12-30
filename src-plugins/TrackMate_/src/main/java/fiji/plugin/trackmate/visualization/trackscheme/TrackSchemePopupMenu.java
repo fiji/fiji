@@ -182,12 +182,12 @@ public class TrackSchemePopupMenu extends JPopupMenu {
 			}
 
 			// Link
-			Action linkAction = new AbstractAction("Link " + model.getSpotSelection().size() +" spots") {
+			Action linkAction = new AbstractAction("Link " + model.getSelectionModel().getSpotSelection().size() +" spots") {
 				public void actionPerformed(ActionEvent e) { 
 					linkSpots(); 
 				}
 			};
-			if (model.getSpotSelection().size() > 1) {
+			if (model.getSelectionModel().getSpotSelection().size() > 1) {
 				add(linkAction);
 			}
 		}

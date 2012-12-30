@@ -14,7 +14,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
-import java.util.Stack;
 import java.util.TreeMap;
 
 import javax.swing.ImageIcon;
@@ -22,7 +21,6 @@ import javax.swing.JViewport;
 import javax.swing.SwingUtilities;
 
 import org.jgrapht.graph.DefaultWeightedEdge;
-import org.jgrapht.traverse.DepthFirstIterator;
 
 import com.mxgraph.model.mxCell;
 import com.mxgraph.model.mxGeometry;
@@ -38,6 +36,7 @@ import com.mxgraph.view.mxGraphSelectionModel;
 import com.mxgraph.view.mxPerimeter;
 import com.mxgraph.view.mxStylesheet;
 
+import fiji.plugin.trackmate.SelectionModel;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMateModelChangeEvent;
@@ -357,11 +356,11 @@ public class TrackScheme implements TrackMateModelChangeListener, TrackMateSelec
 					// Put them right in order: since we use a oriented graph,
 					// we want the source spot to precede in time.
 					if (Spot.frameComparator.compare(source, target) > 0) {
-						
+
 						if (DEBUG) {
 							System.out.println("[TrackScheme] souce " + source + " succeed target " + target + ". Inverting edge direction.");
 						}
-						
+
 						Spot tmp = source;
 						source = target;
 						target = tmp;
@@ -401,7 +400,7 @@ public class TrackScheme implements TrackMateModelChangeListener, TrackMateSelec
 
 			} finally {
 				model.endUpdate();
-				model.clearEdgeSelection();
+				model.getSelectionModel().clearEdgeSelection();
 				graphModel.endUpdate();
 			}
 		}
@@ -424,15 +423,16 @@ public class TrackScheme implements TrackMateModelChangeListener, TrackMateSelec
 
 		/* Performance issue: we do our highlighting here, in batch, bypassing highlight* methods		 */
 		{
-			ArrayList<Object> newSelection = new ArrayList<Object>(model.getSpotSelection().size() + model.getEdgeSelection().size());
-			Iterator<DefaultWeightedEdge> edgeIt = model.getEdgeSelection().iterator();
+			SelectionModel selectionModel = model.getSelectionModel();
+			ArrayList<Object> newSelection = new ArrayList<Object>(selectionModel.getSpotSelection().size() + selectionModel.getEdgeSelection().size());
+			Iterator<DefaultWeightedEdge> edgeIt = selectionModel.getEdgeSelection().iterator();
 			while(edgeIt.hasNext()) {
 				mxICell cell = graph.getCellFor(edgeIt.next());
 				if (null != cell) {
 					newSelection.add(cell);
 				}
 			}
-			Iterator<Spot> spotIt = model.getSpotSelection().iterator();
+			Iterator<Spot> spotIt = selectionModel.getSpotSelection().iterator();
 			while(spotIt.hasNext()) {
 				mxICell cell = graph.getCellFor(spotIt.next());
 				if (null != cell) {
@@ -522,9 +522,9 @@ public class TrackScheme implements TrackMateModelChangeListener, TrackMateSelec
 
 						mxICell edgeCell = graph.getCellFor(edge);
 						if (null == edgeCell) {
-							
+
 							// Make sure target & source cells exist
-							
+
 							Spot source = model.getTrackModel().getEdgeSource(edge);
 							mxCell sourceCell = graph.getCellFor(source);
 							if (sourceCell == null) {
@@ -535,7 +535,7 @@ public class TrackScheme implements TrackMateModelChangeListener, TrackMateSelec
 								insertSpotInGraph(source, column); // move in right+1 free column
 								rowLengths.put(frame, column);
 							}
-							
+
 							Spot target = model.getTrackModel().getEdgeTarget(edge);
 							mxCell targetCell = graph.getCellFor(target);
 							if (targetCell == null) {
@@ -547,16 +547,16 @@ public class TrackScheme implements TrackMateModelChangeListener, TrackMateSelec
 								rowLengths.put(frame, column);
 							}
 
-							
+
 							// And finally create the edge cell
 							edgeCell = graph.addJGraphTEdge(edge);
 
-							
+
 						}
 
 						graph.getModel().add(graph.getDefaultParent(), edgeCell, 0);
 						String edgeStyle = edgeCell.getStyle();
-//						edgeStyle = mxStyleUtils.setStyle(edgeStyle, mxSideTextShape.STYLE_DISPLAY_COST, ""+graphLayout.isDoDisplayCosts());
+						//						edgeStyle = mxStyleUtils.setStyle(edgeStyle, mxSideTextShape.STYLE_DISPLAY_COST, ""+graphLayout.isDoDisplayCosts());
 						graph.getModel().setStyle(edgeCell, edgeStyle);
 
 					}
@@ -709,14 +709,15 @@ public class TrackScheme implements TrackMateModelChangeListener, TrackMateSelec
 		if (DEBUG_SELECTION)
 			System.out.println("[TrackScheme] userChangeSelection: sending selection change to model.");
 		doFireSelectionChangeEvent = false;
+		SelectionModel selectionModel = model.getSelectionModel();
 		if (!edgesToAdd.isEmpty())
-			model.addEdgeToSelection(edgesToAdd);
+			selectionModel.addEdgeToSelection(edgesToAdd);
 		if (!spotsToAdd.isEmpty())
-			model.addSpotToSelection(spotsToAdd);
+			selectionModel.addSpotToSelection(spotsToAdd);
 		if (!edgesToRemove.isEmpty())
-			model.removeEdgeFromSelection(edgesToRemove);
+			selectionModel.removeEdgeFromSelection(edgesToRemove);
 		if (!spotsToRemove.isEmpty())
-			model.removeSpotFromSelection(spotsToRemove);
+			selectionModel.removeSpotFromSelection(spotsToRemove);
 		doFireSelectionChangeEvent = true;
 	}
 
@@ -788,7 +789,7 @@ public class TrackScheme implements TrackMateModelChangeListener, TrackMateSelec
 			doFireModelChangeEvent = false;
 			model.beginUpdate();
 			try {
-				model.clearSelection();
+				model.getSelectionModel().clearSelection();
 				// We remove edges first so that we ensure we do not end having orphan edges.
 				// Normally JGraphT handles that well, but we enforce things here. To be sure.
 				for (DefaultWeightedEdge edge : edgesToRemove) {
@@ -852,7 +853,7 @@ public class TrackScheme implements TrackMateModelChangeListener, TrackMateSelec
 	public void doTrackLayout() {
 		// Position cells
 		graphLayout.execute(null);
-		
+
 		SwingUtilities.invokeLater(new Runnable(){
 			public void run() {
 				gui.graphComponent.refresh();
@@ -897,107 +898,6 @@ public class TrackScheme implements TrackMateModelChangeListener, TrackMateSelec
 		return !enabled;
 	}
 
-	/**
-	 * Search and add all spots and links belonging to the same track(s) that of given <code>vertices</code> and 
-	 * <code>edges</code> to current selection. A <code>direction</code> parameter allow specifying
-	 * whether we should include only parts upwards in time, downwards in time or all the way through. 
-	 * @param vertices  the spots to include in search
-	 * @param edges  the edges to include in search
-	 * @param direction  the direction to go when searching. Positive integers will result in searching
-	 * upwards in time, negative integers downwards in time and 0 all the way through.
-	 */
-	public void selectTrack(final ArrayList<mxCell> vertices, final ArrayList<mxCell> edges, final int direction) {
-
-		// Look for spot and edges matching given mxCells
-		HashSet<Spot> inspectionSpots = new HashSet<Spot>();
-		for(mxCell cell : vertices) {
-			Spot spot = graph .getSpotFor(cell);
-			if (null == spot) {
-				if (DEBUG) {
-					System.out.println("[TrackScheme] selectWholeTrack: tried to retrieve cell "+cell+", unknown to spot map.");
-				}
-				continue;
-			}
-			inspectionSpots.add(spot);
-		}
-		for(mxCell cell : edges) {
-			DefaultWeightedEdge dwe = graph.getEdgeFor(cell);
-			if (null == dwe) {
-				if (DEBUG) {
-					System.out.println("[TrackScheme] select whole track: tried to retrieve cell "+cell+", unknown to edge map.");
-				}
-				continue;
-			}
-			// We add connected spots to the list of spots to inspect
-			inspectionSpots.add(model.getTrackModel().getEdgeSource(dwe));
-			inspectionSpots.add(model.getTrackModel().getEdgeTarget(dwe));
-		}
-
-		// Walk across tracks to build selection
-		final HashSet<Spot> spotSelection 				= new HashSet<Spot>();
-		final HashSet<DefaultWeightedEdge> edgeSelection 	= new HashSet<DefaultWeightedEdge>();
-
-		if (direction == 0) { // Unconditionally
-			for (Spot spot : inspectionSpots) {
-				spotSelection.add(spot);
-				DepthFirstIterator<Spot, DefaultWeightedEdge> walker = model.getTrackModel().getDepthFirstIterator(spot, false);
-				while (walker.hasNext()) { 
-					Spot target = walker.next();
-					spotSelection.add(target); 
-					// Deal with edges
-					Set<DefaultWeightedEdge> targetEdges = model.getTrackModel().edgesOf(target);
-					for(DefaultWeightedEdge targetEdge : targetEdges) {
-						edgeSelection.add(targetEdge);
-					}
-				}
-			}
-
-		} else { // Only upward or backward in time 
-			for (Spot spot : inspectionSpots) {
-				spotSelection.add(spot);
-
-				// A bit more complicated: we want to walk in only one direction,
-				// when branching is occurring, we do not want to get back in time.
-				Stack<Spot> stack = new Stack<Spot>();
-				stack.add(spot);
-				while (!stack.isEmpty()) { 
-					Spot inspected = stack.pop();
-					Set<DefaultWeightedEdge> targetEdges = model.getTrackModel().edgesOf(inspected);
-					for(DefaultWeightedEdge targetEdge : targetEdges) {
-						Spot other;
-						if (direction > 0) {
-							// Upward in time: we just have to search through edges using their source spots
-							other = model.getTrackModel().getEdgeSource(targetEdge);
-						} else {
-							other = model.getTrackModel().getEdgeTarget(targetEdge);
-						}
-
-						if (other != inspected) {
-							spotSelection.add(other);
-							edgeSelection.add(targetEdge);
-							stack.add(other);
-						}
-					}
-				}
-			}
-		}
-
-		// Cut "tail": remove the first an last edges in time, so that the selection only has conencted 
-		// edges in it.
-		ArrayList<DefaultWeightedEdge> edgesToRemove = new ArrayList<DefaultWeightedEdge>();
-		for(DefaultWeightedEdge edge : edgeSelection) {
-			Spot source = model.getTrackModel().getEdgeSource(edge);
-			Spot target = model.getTrackModel().getEdgeTarget(edge);
-			if ( !(spotSelection.contains(source) && spotSelection.contains(target)) ) {
-				edgesToRemove.add(edge);
-			}
-		}
-		edgeSelection.removeAll(edgesToRemove);
-
-		// Set selection
-		model.addSpotToSelection(spotSelection);
-		model.addEdgeToSelection(edgeSelection);
-	}
 
 
 	/**
@@ -1009,7 +909,7 @@ public class TrackScheme implements TrackMateModelChangeListener, TrackMateSelec
 
 		// Sort spots by time
 		TreeMap<Integer, Spot> spotsInTime = new TreeMap<Integer, Spot>();
-		for (Spot spot : model.getSpotSelection()) {
+		for (Spot spot : model.getSelectionModel().getSpotSelection()) {
 			spotsInTime.put(spot.getFeature(Spot.FRAME).intValue(), spot);
 		}
 
@@ -1095,7 +995,7 @@ public class TrackScheme implements TrackMateModelChangeListener, TrackMateSelec
 		}
 	}
 
-	
+
 	private void setModel(TrackMateModel model) {
 		// Model listeners
 		if (null != this.model) {
@@ -1106,4 +1006,34 @@ public class TrackScheme implements TrackMateModelChangeListener, TrackMateSelec
 		this.model.addTrackMateModelChangeListener(this);
 		this.model.addTrackMateSelectionChangeListener(this);
 	}
+
+	public void selectTrack(final Collection<mxCell> vertices, final Collection<mxCell> edges, final int direction) {
+
+		// Look for spot and edges matching given mxCells
+		HashSet<Spot> inspectionSpots = new HashSet<Spot>(vertices.size());
+		for(mxCell cell : vertices) {
+			Spot spot = graph.getSpotFor(cell);
+			if (null == spot) {
+				if (DEBUG) {
+					System.out.println("[TrackScheme] selectWholeTrack: tried to retrieve cell "+cell+", unknown to spot map.");
+				}
+				continue;
+			}
+			inspectionSpots.add(spot);
+		}
+		HashSet<DefaultWeightedEdge> inspectionEdges = new HashSet<DefaultWeightedEdge>(edges.size());
+		for(mxCell cell : edges) {
+			DefaultWeightedEdge dwe = graph.getEdgeFor(cell);
+			if (null == dwe) {
+				if (DEBUG) {
+					System.out.println("[TrackScheme] select whole track: tried to retrieve cell "+cell+", unknown to edge map.");
+				}
+				continue;
+			}
+			inspectionEdges.add(dwe);
+		}
+		// Forward to selection model
+		model.getSelectionModel().selectTrack(inspectionSpots, inspectionEdges, direction);
+	}
+
 }

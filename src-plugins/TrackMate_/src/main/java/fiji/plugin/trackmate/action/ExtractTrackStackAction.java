@@ -68,7 +68,7 @@ public class ExtractTrackStackAction extends AbstractTMAction {
 		logger.log("Capturing track stack.\n");
 		
 		TrackMateModel model = plugin.getModel();
-		Set<Spot> selection = model.getSpotSelection();
+		Set<Spot> selection = model.getSelectionModel().getSpotSelection();
 		int nspots = selection.size();
 		if (nspots != 2) {
 			logger.error("Expected 2 spots in the selection, got "+nspots+".\nAborting.\n");

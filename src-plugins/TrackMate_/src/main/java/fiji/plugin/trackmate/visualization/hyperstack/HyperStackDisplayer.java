@@ -145,8 +145,8 @@ public class HyperStackDisplayer extends AbstractTrackMateModelView  {
 	@Override
 	public void selectionChanged(TrackMateSelectionChangeEvent event) {
 		// Highlight selection
-		trackOverlay.setHighlight(model.getEdgeSelection());
-		spotOverlay.setSpotSelection(model.getSpotSelection());
+		trackOverlay.setHighlight(model.getSelectionModel().getEdgeSelection());
+		spotOverlay.setSpotSelection(model.getSelectionModel().getSpotSelection());
 		// Center on last spot
 		super.selectionChanged(event);
 		// Redraw

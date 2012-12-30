@@ -133,7 +133,7 @@ public class InfoPane extends JPanel implements TrackMateSelectionChangeListener
 		// Echo changed in a different thread for performance 
 		new Thread("TrackScheme info pane thread") {
 			public void run() {
-				highlightSpots(model.getSpotSelection());
+				highlightSpots(model.getSelectionModel().getSpotSelection());
 			}
 		}.start();
 	}

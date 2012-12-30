@@ -109,8 +109,8 @@ public class SpotDisplayer3D extends AbstractTrackMateModelView {
 	@Override
 	public void selectionChanged(TrackMateSelectionChangeEvent event) {
 		// Highlight
-		highlightEdges(model.getEdgeSelection());
-		highlightSpots(model.getSpotSelection());
+		highlightEdges(model.getSelectionModel().getEdgeSelection());
+		highlightSpots(model.getSelectionModel().getSpotSelection());
 		// Center on last spot
 		super.selectionChanged(event);
 	}
