@@ -175,7 +175,60 @@ public class TrackDurationAnalyzerTest {
 		
 	}
 	
+	@Test
+	public final void testModelChanged2() {
+		// Copy old keys
+		HashSet<Integer> oldKeys = new HashSet<Integer>(model.getTrackModel().getFilteredTrackIDs());
+		
+		// First analysis
+		final TestTrackDurationAnalyzer analyzer = new TestTrackDurationAnalyzer(model);
+		analyzer.process(oldKeys);
+		
+		// Reset analyzer
+		analyzer.hasBeenCalled = false;
+		analyzer.keys = null;
+		
+		// Prepare listener for model change
+		TrackMateModelChangeListener listener = new TrackMateModelChangeListener() {
+			@Override
+			public void modelChanged(TrackMateModelChangeEvent event) {
+				analyzer.modelChanged(event);
+			}
+		};
+		model.addTrackMateModelChangeListener(listener);
 
+		// Get a track
+		Integer aKey = model.getTrackModel().getFilteredTrackIDs().iterator().next();
+		
+		// Store feature for later
+		double oldVal = model.getFeatureModel().getTrackFeature(aKey, TrackDurationAnalyzer.TRACK_DURATION);
+		double increment = 10d;
+		
+		// Move the last spot of a track further in time to change duration and stop feature
+		TreeSet<Spot> sortedTrack = new TreeSet<Spot>(Spot.frameComparator);
+		sortedTrack.addAll(model.getTrackModel().getTrackSpots(aKey));
+		Spot aspot = sortedTrack.last();
+		
+		// Add a new track to the model - the old tracks should not be affected
+		model.beginUpdate();
+		try {
+			aspot.putFeature(Spot.POSITION_T, aspot.getFeature(Spot.POSITION_T) + increment);
+			model.updateFeatures(aspot);
+		} finally {
+			model.endUpdate();
+		}
+		
+		// The analyzer must have done something:
+		assertTrue(analyzer.hasBeenCalled);
+
+		// Check the track IDs: must be of size 1, be the one of the track we modified
+		assertEquals(1, analyzer.keys.size());
+		assertEquals(aKey.longValue(), analyzer.keys.iterator().next().longValue());
+		
+		// Check that the feature has been updated properly
+		assertEquals(oldVal+increment, model.getFeatureModel().getTrackFeature(aKey, TrackDurationAnalyzer.TRACK_DURATION).doubleValue(), Double.MIN_VALUE);
+	}
+		
 	
 	/**
 	 *  Subclass of {@link TrackIndexAnalyzer} to monitor method calls.
