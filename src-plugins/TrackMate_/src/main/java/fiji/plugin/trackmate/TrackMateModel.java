@@ -593,6 +593,7 @@ public class TrackMateModel {
 			ArrayList<DefaultWeightedEdge> edgesToSignal = new ArrayList<DefaultWeightedEdge>(nEdgesToSignal);
 			edgesToSignal.addAll(trackGraphModel.edgesAdded);
 			edgesToSignal.addAll(trackGraphModel.edgesRemoved);
+			edgesToSignal.addAll(trackGraphModel.edgesModified);
 			ArrayList<Integer> edgesFlag = new ArrayList<Integer>(nEdgesToSignal);
 			for (int i = 0; i < trackGraphModel.edgesAdded.size(); i++)
 				edgesFlag.add(TrackMateModelChangeEvent.FLAG_EDGE_ADDED);

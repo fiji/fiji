@@ -6,6 +6,7 @@ import static org.junit.Assert.fail;
 
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.TreeSet;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -143,15 +144,15 @@ public class TrackBranchingAnalyzerTest {
 	public final void testModelChanged() {
 		// Copy old keys
 		HashSet<Integer> oldKeys = new HashSet<Integer>(model.getTrackModel().getFilteredTrackIDs());
-		
+
 		// First analysis
 		final TestTrackBranchingAnalyzer analyzer = new TestTrackBranchingAnalyzer(model);
 		analyzer.process(oldKeys);
-		
+
 		// Reset analyzer
 		analyzer.hasBeenCalled = false;
 		analyzer.keys = null;
-		
+
 		// Prepare listener for model change
 		TrackMateModelChangeListener listener = new TrackMateModelChangeListener() {
 			@Override
@@ -160,32 +161,32 @@ public class TrackBranchingAnalyzerTest {
 			}
 		};
 		model.addTrackMateModelChangeListener(listener);
-		
+
 		// Add a new track to the model - the old tracks should not be affected
 		model.beginUpdate();
 		try {
 			Spot spot1 = model.addSpotTo(new SpotImp(new double[3]), 0);
 			Spot spot2 = model.addSpotTo(new SpotImp(new double[3]), 1);
 			model.addEdge(spot1, spot2, 1);
-			
+
 		} finally {
 			model.endUpdate();
 		}
-		
+
 		// The analyzer must have done something:
 		assertTrue(analyzer.hasBeenCalled);
-		
+
 		// Check the track IDs the analyzer received - none of the old keys must be in it
 		for (Integer calledKey : analyzer.keys) {
 			if (oldKeys.contains(calledKey)) {
 				fail("Track with ID " + calledKey + " should not have been re-analyzed.");
 			}
 		}
-		
+
 		// Reset analyzer
 		analyzer.hasBeenCalled = false;
 		analyzer.keys = null;
-		
+
 		// New change: graft a new spot on the first track - it should be re-analyzed
 		Integer firstKey = oldKeys.iterator().next();
 		Spot firstSpot = model.getTrackModel().getTrackSpots(firstKey).iterator().next();
@@ -198,39 +199,110 @@ public class TrackBranchingAnalyzerTest {
 		} finally {
 			model.endUpdate();
 		}
-		
+
 		// The analyzer must have done something:
 		assertTrue(analyzer.hasBeenCalled);
-		
-		// Check the track IDs: must be of size 1, and tkey to the track with firstSpot and newSpot in it
+
+		// Check the track IDs: must be of size 1, and key to the track with firstSpot and newSpot in it
 		assertEquals(1, analyzer.keys.size());
 		assertTrue(model.getTrackModel().getTrackSpots(analyzer.keys.iterator().next()).contains(firstSpot));
 		assertTrue(model.getTrackModel().getTrackSpots(analyzer.keys.iterator().next()).contains(newSpot));
-		
-		
-	}
-	
 
-	
+
+	}
+
+	@Test
+	public final void testModelChanged2() { 
+
+		// Copy old keys
+		HashSet<Integer> oldKeys = new HashSet<Integer>(model.getTrackModel().getFilteredTrackIDs());
+
+		// First analysis
+		final TestTrackBranchingAnalyzer analyzer = new TestTrackBranchingAnalyzer(model);
+		analyzer.process(oldKeys);
+
+		// Reset analyzer
+		analyzer.hasBeenCalled = false;
+		analyzer.keys = null;
+
+		// Prepare listener for model change
+		TrackMateModelChangeListener listener = new TrackMateModelChangeListener() {
+			@Override
+			public void modelChanged(TrackMateModelChangeEvent event) {
+				analyzer.modelChanged(event);
+			}
+		};
+		model.addTrackMateModelChangeListener(listener);
+		// Reset analyzer
+		analyzer.hasBeenCalled = false;
+		analyzer.keys = null;
+
+		/*
+		 * A nasty change: we mode a spot from its frame to the first frame, for a track with a split:
+		 * it should turn it in a track with a merge. 
+		 */
+
+		// Find a track with a split
+		Integer splittingTrackID = null;
+		for (Integer trackID : model.getTrackModel().getFilteredTrackIDs()) {
+			if (model.getFeatureModel().getTrackFeature(trackID, TrackBranchingAnalyzer.NUMBER_SPLITS) > 0) {
+				splittingTrackID = trackID;
+				break;
+			}
+		}
+
+		// Get the last spot in time
+		TreeSet<Spot> track = new TreeSet<Spot>(Spot.frameComparator);
+		track.addAll(model.getTrackModel().getTrackSpots(splittingTrackID));
+		Spot lastSpot = track.last();
+
+		// Move the spot to the first frame. We do it with beginUpdate() / endUpdate() 
+		model.beginUpdate();
+		try {
+			model.moveSpotFrom(lastSpot, lastSpot.getFeature(Spot.FRAME).intValue(), 0);
+		} finally {
+			model.endUpdate();
+		}
+
+		// The analyzer must have done something:
+		assertTrue(analyzer.hasBeenCalled);
+
+		// Check the track IDs: must be of size 1, and must be the track split
+		assertEquals(1, analyzer.keys.size());
+		assertEquals(splittingTrackID.longValue(), analyzer.keys.iterator().next().longValue());
+
+		// Check that the features have been well calculated: it must now be a merging track
+		assertEquals(1, model.getFeatureModel().getTrackFeature(splittingTrackID, TrackBranchingAnalyzer.NUMBER_SPLITS).intValue());
+		assertEquals(1, model.getFeatureModel().getTrackFeature(splittingTrackID, TrackBranchingAnalyzer.NUMBER_MERGES).intValue());
+	}
+
+
+
 	/**
 	 *  Subclass of {@link TrackIndexAnalyzer} to monitor method calls.
 	 */
 	private static final class TestTrackBranchingAnalyzer extends TrackBranchingAnalyzer {
-		
+
 		private boolean hasBeenCalled = false;
 		private Collection<Integer> keys;
-		
+
 		public TestTrackBranchingAnalyzer(TrackMateModel model) {
 			super(model);
 		}
-		
+
 		@Override
 		public void process(Collection<Integer> trackIDs) {
 			hasBeenCalled = true;
 			keys = trackIDs;
 			super.process(trackIDs);
 		}
+
+		@Override
+		public void modelChanged(TrackMateModelChangeEvent event) {
+			//			System.out.println(event);
+			super.modelChanged(event);
+		}
 	}
-	
+
 
 }

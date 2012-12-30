@@ -91,9 +91,6 @@ public class TrackBranchingAnalyzer implements TrackFeatureAnalyzer, MultiThread
 						int ncomplex = 0;
 						for (Spot spot : track) {
 							Set<DefaultWeightedEdge> edges = model.getTrackModel().edgesOf(spot);
-							if (edges.size() <= 2) {
-								continue; // nothing special
-							}
 							
 							// get neighbors
 							Set<Spot> neighbors = new HashSet<Spot>();
@@ -102,7 +99,6 @@ public class TrackBranchingAnalyzer implements TrackFeatureAnalyzer, MultiThread
 								neighbors.add(model.getTrackModel().getEdgeTarget(edge));
 							}
 							neighbors.remove(spot);
-							
 							
 							// inspect neighbors relative time position
 							int earlier = 0;
@@ -115,12 +111,17 @@ public class TrackBranchingAnalyzer implements TrackFeatureAnalyzer, MultiThread
 								}
 							}
 							
+							// Test for classical spot
+							if (earlier == 1 && later == 1) {
+								continue;
+							}
+							
 							// classify spot
-							if (earlier <= 1) {
+							if (earlier <= 1 && later > 1) {
 								nsplits++;
-							} else if (later <=1) {
+							} else if (later <=1 && earlier > 1) {
 								nmerges++;
-							} else {
+							} else if (later > 1 && earlier > 1) {
 								ncomplex++;
 							}
 						}
@@ -155,8 +156,6 @@ public class TrackBranchingAnalyzer implements TrackFeatureAnalyzer, MultiThread
 
 	@Override
 	public void modelChanged(TrackMateModelChangeEvent event) {
-		
-		// FIXME TrackBranchingAnalyzer: check spot feature changes events
 		
 		// We are affected only by edge changes
 		if (event.getEventID() == TrackMateModelChangeEvent.MODEL_MODIFIED) {
