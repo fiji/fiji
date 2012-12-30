@@ -116,6 +116,8 @@ public class TrackDurationAnalyzer implements TrackFeatureAnalyzer, MultiThreade
 	@Override
 	public void modelChanged(TrackMateModelChangeEvent event) {
 		
+		// FIXME check spot feature FRAME changes events
+		
 		// We are affected only by edge changes
 		if (event.getEventID() == TrackMateModelChangeEvent.MODEL_MODIFIED) {
 			

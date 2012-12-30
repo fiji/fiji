@@ -156,6 +156,8 @@ public class TrackBranchingAnalyzer implements TrackFeatureAnalyzer, MultiThread
 	@Override
 	public void modelChanged(TrackMateModelChangeEvent event) {
 		
+		// FIXME TrackBranchingAnalyzer: check spot feature changes events
+		
 		// We are affected only by edge changes
 		if (event.getEventID() == TrackMateModelChangeEvent.MODEL_MODIFIED) {
 			

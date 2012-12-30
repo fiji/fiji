@@ -73,6 +73,7 @@ public class TrackGraphModel {
 	 */
 	List<DefaultWeightedEdge> edgesAdded = new ArrayList<DefaultWeightedEdge>();
 	List<DefaultWeightedEdge> edgesRemoved = new ArrayList<DefaultWeightedEdge>();
+	List<DefaultWeightedEdge> edgesModified = new ArrayList<DefaultWeightedEdge>();
 
 	/*
 	 * CONSTRUCTOR

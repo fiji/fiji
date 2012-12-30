@@ -79,7 +79,7 @@ public class FeatureModel implements MultiThreaded {
 	 * CONSTRUCTOR
 	 */
 
-	public FeatureModel(TrackMateModel model) {
+	FeatureModel(TrackMateModel model) {
 		this.model = model;
 		setNumThreads();
 		// To initialize the spot features with the basic features:

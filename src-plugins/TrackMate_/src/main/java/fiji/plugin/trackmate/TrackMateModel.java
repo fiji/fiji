@@ -602,7 +602,7 @@ public class TrackMateModel {
 	 */
 
 	/**
-	 * Move a single spot from a frame to another, then update its features.
+	 * Move a single spot from a frame to another, then mark it for feature update.
 	 * 
 	 * @param spotToMove  the spot to move
 	 * @param fromFrame  the frame the spot originated from
@@ -619,7 +619,9 @@ public class TrackMateModel {
 
 		filteredSpots.add(spotToMove, toFrame);
 		filteredSpots.remove(spotToMove, fromFrame);
-		spotsMoved.add(spotToMove); // TRANSACTION
+		// Mark for update spot and edges
+		trackGraphModel.edgesModified.addAll(trackGraphModel.edgesOf(spotToMove));
+		spotsMoved.add(spotToMove); 
 		return spotToMove;
 
 	}
@@ -659,28 +661,20 @@ public class TrackMateModel {
 		}
 		filteredSpots.remove(spotToRemove, fromFrame);
 		spotSelection.remove(spotToRemove);
-		trackGraphModel.removeSpot(spotToRemove);
+		trackGraphModel.removeSpot(spotToRemove); // changes to edges will be caught automatically by the TrackGraphModel
 		return spotToRemove;
 	}
 
-	/*
-	 * MODIFY SPOT FEATURES
-	 */
-
 	/**
-	 * Do the actual feature update for given spots.
+	 * Mark the specified spot. At the end of the model transaction, its features 
+	 * will be recomputed, and other edge and track features that depends on it will 
+	 * be as well.
+	 * @param spotToUpdate  the spot to mark for update
 	 */
-	private void updateFeatures(final List<Spot> spotsToUpdate) {
-		if (DEBUG)
-			System.out.println("[TrackMateModel] Updating the features of " + spotsToUpdate.size() + " spots.");
-
-		// Find common frames
-		SpotCollection toCompute = filteredSpots.subset(spotsToUpdate);
-		featureModel.computeSpotFeatures(toCompute);
-	}
-
 	public void updateFeatures(final Spot spotToUpdate) {
 		spotsUpdated.add(spotToUpdate); // Enlist for feature update when transaction is marked as finished
+		trackGraphModel.edgesModified.addAll(trackGraphModel.edgesOf(spotToUpdate));
+
 	}
 
 
@@ -700,11 +694,11 @@ public class TrackMateModel {
 		}
 
 		/* We recompute tracks only if some edges have been added or removed,
-		 * and if some spots have been removed (equivalent to remove edges). We do
-		 * NOT recompute tracks if spots have been added: they will not result in
+		 * (if some spots have been removed that causes edges to be removes, we already know about it).
+		 * We do NOT recompute tracks if spots have been added: they will not result in
 		 * new tracks made of single spots.	 */
-		int nEdgesToSignal = trackGraphModel.edgesAdded.size() + trackGraphModel.edgesRemoved.size();
-		if (nEdgesToSignal + spotsRemoved.size() > 0) {
+		int nEdgesToSignal = trackGraphModel.edgesAdded.size() + trackGraphModel.edgesRemoved.size() + trackGraphModel.edgesModified.size();
+		if (nEdgesToSignal > 0) {
 			// First, regenerate the tracks
 			trackGraphModel.computeTracksFromGraph();
 			// See below to recompute tracks
@@ -717,7 +711,9 @@ public class TrackMateModel {
 			spotsToUpdate.addAll(spotsAdded);
 			spotsToUpdate.addAll(spotsMoved);
 			spotsToUpdate.addAll(spotsUpdated);
-			updateFeatures(spotsToUpdate);
+			// Update these spots feaures
+			SpotCollection toCompute = filteredSpots.subset(spotsToUpdate);
+			featureModel.computeSpotFeatures(toCompute);
 		}
 
 		// Initialize event
@@ -756,14 +752,20 @@ public class TrackMateModel {
 				edgesFlag.add(TrackMateModelChangeEvent.FLAG_EDGE_ADDED);
 			for (int i = 0; i < trackGraphModel.edgesRemoved.size(); i++)
 				edgesFlag.add(TrackMateModelChangeEvent.FLAG_EDGE_REMOVED);
+			for (int i = 0; i < trackGraphModel.edgesModified.size(); i++)
+				edgesFlag.add(TrackMateModelChangeEvent.FLAG_EDGE_MODIFIED);
 
 			event.setEdges(edgesToSignal);
 			event.setEdgeFlags(edgesFlag);
 		}
 
-
-		// If required, privately pass the event to track feature analyzer so that they can recalculate the track features
-		if (nEdgesToSignal + spotsRemoved.size() > 0) {
+		/*
+		 *  If required, privately pass the event to track feature analyzers 
+		 *  so that they can recalculate the track features BEFORE any other
+		 *  listeners to model changes, and that night need to exploit new
+		 *  feature values (e.g. model views).
+		 */
+		if (nEdgesToSignal > 0) {
 			if (null != featureModel.trackAnalyzerProvider) {
 				for (String analyzerKey : featureModel.trackAnalyzerProvider.getAvailableTrackFeatureAnalyzers()) {
 					TrackFeatureAnalyzer analyzer = featureModel.trackAnalyzerProvider.getTrackFeatureAnalyzer(analyzerKey);
@@ -800,6 +802,7 @@ public class TrackMateModel {
 			spotsUpdated.clear();
 			trackGraphModel.edgesAdded.clear();
 			trackGraphModel.edgesRemoved.clear();
+			trackGraphModel.edgesModified.clear();
 			eventCache.clear();
 		}
 

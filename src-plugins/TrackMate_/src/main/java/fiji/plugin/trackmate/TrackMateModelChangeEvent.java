@@ -13,15 +13,21 @@ public class TrackMateModelChangeEvent extends EventObject {
 	public static final int 	FLAG_SPOT_ADDED = 0;
 	/** Indicate that a spot was removed from the model. */
 	public static final int 	FLAG_SPOT_REMOVED = 1;
-	/** Indicate a modification of the features of a spot. */
+	/** Indicate a modification of the features of a spot. It may have changed 
+	 * of position and feature, but not of frame. */
 	public static final int 	FLAG_SPOT_MODIFIED = 2;
-	/** Indicate that a spot has changed of frame. */
+	/** Indicate that a spot has changed of frame, and possible of position,
+	 * feaures, etc.. . */
 	public static final int 	FLAG_SPOT_FRAME_CHANGED = 3;
 	/** Indicate that an edge was added to the model. */
 	public static final int 	FLAG_EDGE_ADDED = 4;
 	/** Indicate that an edge was removed from the model. */
 	public static final int 	FLAG_EDGE_REMOVED = 5;
-
+	/** Indicate that an edge has been modified. Edge modifications occur when the 
+	 * target or source spots are modified, or when the weight of the edge has
+	 * been modified. */
+	public static final int 	FLAG_EDGE_MODIFIED = 6;
+	
 	/** 
 	 * Event type indicating that the spots of the model were computed, and 
 	 * are now accessible through {@link TrackMateModel#getSpots()}. 
@@ -135,7 +141,6 @@ public class TrackMateModelChangeEvent extends EventObject {
 	/**
 	 * @return  the modification flag for each spot affected by this event.
 	 * @see #FLAG_SPOT_ADDED
-	 * @see #FLAG_SPOT_FRAME_CHANGED
 	 * @see #FLAG_SPOT_MODIFIED
 	 * @see #FLAG_SPOT_REMOVED
 	 */
@@ -146,7 +151,6 @@ public class TrackMateModelChangeEvent extends EventObject {
 	/**
 	 * @return  the modification flag for each link affected by this event.
 	 * @see #FLAG_EDGE_ADDED
-	 * @see #FLAG_EDGE_FRAME_CHANGED
 	 * @see #FLAG_EDGE_MODIFIED
 	 * @see #FLAG_EDGE_REMOVED
 	 */
@@ -157,7 +161,6 @@ public class TrackMateModelChangeEvent extends EventObject {
 	/**
 	 * @return  the modification flag for the given spot affected by this event.
 	 * @see #FLAG_SPOT_ADDED
-	 * @see #FLAG_SPOT_FRAME_CHANGED
 	 * @see #FLAG_SPOT_MODIFIED
 	 * @see #FLAG_SPOT_REMOVED
 	 */
