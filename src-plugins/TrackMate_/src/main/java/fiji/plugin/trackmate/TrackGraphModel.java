@@ -599,7 +599,7 @@ public class TrackGraphModel {
 	}
 
 	public String trackToString(Integer trackID) {
-		String str = "Track " + trackID + ": ";
+		String str = trackNames.get(trackID) + ": ";
 		for (String feature : model.getFeatureModel().getTrackFeatures())
 			str += feature + " = "	+ model.getFeatureModel().getTrackFeature(trackID, feature)+ ", ";
 		return str;

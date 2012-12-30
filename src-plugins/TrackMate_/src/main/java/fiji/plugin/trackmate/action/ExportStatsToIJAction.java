@@ -122,7 +122,7 @@ public class ExportStatsToIJAction extends AbstractTMAction {
 		// Sort by track
 		for (Integer trackID : trackIDs) {
 			trackTable.incrementCounter();
-			trackTable.addLabel("TRACK_" + trackID);
+			trackTable.addLabel(model.getTrackModel().getTrackName(trackID));
 			for (String feature : trackFeatures) {
 				Double val = fm.getTrackFeature(trackID, feature);
 				if (null == val) {
