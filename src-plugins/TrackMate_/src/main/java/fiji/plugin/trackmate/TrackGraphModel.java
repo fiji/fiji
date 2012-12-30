@@ -173,40 +173,38 @@ public class TrackGraphModel {
 	 */
 
 
-	public boolean addSpot(Spot spotToAdd) {
+	boolean addSpot(Spot spotToAdd) {
 		return graph.addVertex(spotToAdd);
 	}
 
-	public boolean removeSpot(Spot spotToRemove) {
+	boolean removeSpot(Spot spotToRemove) {
 		return graph.removeVertex(spotToRemove);
 
 	}
 
-	 /**
-     * Creates a new edge in this graph, going from the source spot to the
-     * target spot, and returns the created edge. This model does not allow
-     * edge-multiplicity. If the graph already contains an edge
-     * from the specified source to the specified target, than this method does
-     * not change the graph and returns <code>null</code>.
-     *
-     * <p>The source and target spots must already be contained in this
-     * model. If they are not found in graph IllegalArgumentException is
-     * thrown.</p>
-     *
-     * @param source source spot of the edge.
-     * @param target target spot of the edge.
-     *
-     * @return The newly created edge if added to the graph, otherwise <code>
-     * null</code>.
-     *
-     * @throws IllegalArgumentException if source or target spots are not
-     * found in the graph.
-     * @throws NullPointerException if any of the specified spots is <code>
-     * null</code>.
-     *
-     * @see #getEdgeFactory()
-     */
-	public DefaultWeightedEdge addEdge(final Spot source, final Spot target, final double weight) {
+	/**
+	 * Creates a new edge in this graph, going from the source spot to the
+	 * target spot, and returns the created edge. This model does not allow
+	 * edge-multiplicity. If the graph already contains an edge
+	 * from the specified source to the specified target, than this method does
+	 * not change the graph and returns <code>null</code>.
+	 *
+	 * <p>The source and target spots must already be contained in this
+	 * model. If they are not found in graph IllegalArgumentException is
+	 * thrown.</p>
+	 *
+	 * @param source source spot of the edge.
+	 * @param target target spot of the edge.
+	 *
+	 * @return The newly created edge if added to the graph, otherwise <code>
+	 * null</code>.
+	 *
+	 * @throws IllegalArgumentException if source or target spots are not
+	 * found in the graph.
+	 * @throws NullPointerException if any of the specified spots is <code>
+	 * null</code>.
+	 */
+	DefaultWeightedEdge addEdge(final Spot source, final Spot target, final double weight) {
 		// Mother graph
 		DefaultWeightedEdge edge = graph.addEdge(source, target);
 		graph.setEdgeWeight(edge, weight);
@@ -215,7 +213,17 @@ public class TrackGraphModel {
 		return edge;
 	}
 
-	public DefaultWeightedEdge removeEdge(final Spot source, final Spot target) {
+	/**
+	 * Removes an edge going from source spot to target spot, if such
+	 * spots and such edge exist in this graph. Returns the edge if removed
+	 * or <code>null</code> otherwise.
+	 *
+	 * @param sourceVertex source spot of the edge.
+	 * @param targetVertex target spot of the edge.
+	 *
+	 * @return The removed edge, or <code>null</code> if no edge removed.
+	 */
+	DefaultWeightedEdge removeEdge(final Spot source, final Spot target) {
 		// Other graph
 		DefaultWeightedEdge edge = graph.removeEdge(source, target);
 		if (DEBUG)
@@ -223,7 +231,22 @@ public class TrackGraphModel {
 		return edge;
 	}
 
-	public boolean removeEdge(final DefaultWeightedEdge edge) {
+	/**
+	 * Removes the specified edge from the graph. Removes the specified edge
+	 * from this graph if it is present. More formally, removes an edge <code>
+	 * e2</code> such that <code>e2.equals(e)</code>, if the graph contains such
+	 * edge. Returns <tt>true</tt> if the graph contained the specified edge.
+	 * (The graph will not contain the specified edge once the call returns).
+	 *
+	 * <p>If the specified edge is <code>null</code> returns <code>
+	 * false</code>.</p>
+	 *
+	 * @param edge edge to be removed from this graph, if present.
+	 *
+	 * @return <code>true</code> if and only if the graph contained the
+	 * specified edge.
+	 */
+	boolean removeEdge(final DefaultWeightedEdge edge) {
 		// Mother graph
 		boolean removed = graph.removeEdge(edge);
 		model.edgeSelection.remove(edge);
@@ -767,7 +790,7 @@ public class TrackGraphModel {
 				}
 			}
 		}
-		
+
 		if (DEBUG) {
 			System.out.println("[TrackGraphModel] #computeTracksFromGraph(): the end; found " + trackSpots.size() + " new spot tracks.");
 		}

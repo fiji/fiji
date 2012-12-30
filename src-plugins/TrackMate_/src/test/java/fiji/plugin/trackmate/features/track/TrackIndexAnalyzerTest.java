@@ -40,7 +40,7 @@ public class TrackIndexAnalyzerTest {
 					Spot spot = new SpotImp(new double[3]);
 					model.addSpotTo(spot, j);
 					if (null != previous) {
-						model.getTrackModel().addEdge(previous, spot, 1);
+						model.addEdge(previous, spot, 1);
 					}
 					previous = spot;
 				}
@@ -112,7 +112,7 @@ public class TrackIndexAnalyzerTest {
 		try {
 			Spot targetSpot = model.getFilteredSpots().get(0).iterator().next();
 			Spot newSpot = model.addSpotTo(new SpotImp(new double[3]), 1);
-			model.getTrackModel().addEdge(targetSpot, newSpot, 1);
+			model.addEdge(targetSpot, newSpot, 1);
 		} finally {
 			model.endUpdate();
 		}

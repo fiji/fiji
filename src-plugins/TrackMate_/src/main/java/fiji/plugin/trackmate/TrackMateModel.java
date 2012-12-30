@@ -666,7 +666,7 @@ public class TrackMateModel {
 	}
 
 	/**
-	 * Mark the specified spot. At the end of the model transaction, its features 
+	 * Mark the specified spot for update. At the end of the model transaction, its features 
 	 * will be recomputed, and other edge and track features that depends on it will 
 	 * be as well.
 	 * @param spotToUpdate  the spot to mark for update
@@ -674,7 +674,27 @@ public class TrackMateModel {
 	public void updateFeatures(final Spot spotToUpdate) {
 		spotsUpdated.add(spotToUpdate); // Enlist for feature update when transaction is marked as finished
 		trackGraphModel.edgesModified.addAll(trackGraphModel.edgesOf(spotToUpdate));
+	}
+	
+	/**
+	 * @see TrackGraphModel#addEdge(Spot, Spot, double)
+	 */
+	public DefaultWeightedEdge addEdge(final Spot source, final Spot target, final double weight) {
+		return trackGraphModel.addEdge(source, target, weight);
+	}
 
+	/**
+	 * @see TrackGraphModel#removeEdge(Spot, Spot)
+	 */
+	public DefaultWeightedEdge removeEdge(final Spot source, final Spot target) {
+		return trackGraphModel.removeEdge(source, target);
+	}
+
+	/**
+	 * @see TrackGraphModel#removeEdge(DefaultWeightedEdge)
+	 */
+	public boolean removeEdge(final DefaultWeightedEdge edge) {
+		return trackGraphModel.removeEdge(edge);
 	}
 
 

@@ -61,7 +61,7 @@ public class SortedDepthFirstIteratorTest {
 				names[i] = randomString(5);
 				Spot spotChild = new SpotImp(new double[3], names[i]);
 				model.addSpotTo(spotChild, 1);
-				model.getTrackModel().addEdge(root, spotChild, -1);
+				model.addEdge(root, spotChild, -1);
 				spots[0][i] = spotChild;
 				
 				spots[0][i] = spotChild;
@@ -69,7 +69,7 @@ public class SortedDepthFirstIteratorTest {
 					Spot spot = new SpotImp(new double[3], "  "+j+"_"+randomString(3));
 					spots[j][i] = spot;
 					model.addSpotTo(spot, j+1);
-					model.getTrackModel().addEdge(spots[j-1][i], spots[j][i], -1);
+					model.addEdge(spots[j-1][i], spots[j][i], -1);
 				}
 			}
 		} finally {

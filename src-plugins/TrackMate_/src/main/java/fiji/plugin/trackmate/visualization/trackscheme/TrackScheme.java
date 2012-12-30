@@ -369,7 +369,7 @@ public class TrackScheme implements TrackMateModelChangeListener, TrackMateSelec
 					// We add a new jGraphT edge to the underlying model, if it does not exist yet.
 					DefaultWeightedEdge edge = model.getTrackModel().getEdge(source, target); 
 					if (null == edge) {
-						edge = model.getTrackModel().addEdge(source, target, -1);
+						edge = model.addEdge(source, target, -1);
 					} else {
 						// Ah. There was an existing edge in the model we were trying to re-add there, from the graph.
 						// We remove the graph edge we have added,
@@ -792,7 +792,7 @@ public class TrackScheme implements TrackMateModelChangeListener, TrackMateSelec
 				// We remove edges first so that we ensure we do not end having orphan edges.
 				// Normally JGraphT handles that well, but we enforce things here. To be sure.
 				for (DefaultWeightedEdge edge : edgesToRemove) {
-					model.getTrackModel().removeEdge(edge);
+					model.removeEdge(edge);
 				}
 				for (Spot spot : spotsToRemove)  {
 					model.removeSpotFrom(spot, null); 
@@ -1061,7 +1061,7 @@ public class TrackScheme implements TrackMateModelChangeListener, TrackMateSelec
 				DefaultWeightedEdge edge = model.getTrackModel().getEdge(previousSpot, currentSpot); 
 				if (null == edge) {
 					// We create a new edge between 2 spots, and pair it with a new cell edge.
-					edge = model.getTrackModel().addEdge(previousSpot, currentSpot, -1);
+					edge = model.addEdge(previousSpot, currentSpot, -1);
 					mxCell cell = (mxCell) graph.addJGraphTEdge(edge);
 					cell.setValue("New");
 				} else {

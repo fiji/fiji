@@ -9,7 +9,6 @@ import org.jgrapht.traverse.DepthFirstIterator;
 
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotImp;
-import fiji.plugin.trackmate.TrackGraphModel;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.graph.GraphUtils;
 
@@ -67,7 +66,6 @@ public class Graph_Test {
 	public static final TrackMateModel getExampleModel() {
 
 		TrackMateModel model = new TrackMateModel();
-		TrackGraphModel graph = model.getTrackModel();
 
 		// Create spots
 
@@ -112,22 +110,22 @@ public class Graph_Test {
 
 			// Create links
 
-			graph.addEdge(root, AB, 1);
-			graph.addEdge(root, P1, 1);
+			model.addEdge(root, AB, 1);
+			model.addEdge(root, P1, 1);
 
-			graph.addEdge(P1, P2, 1);
-			graph.addEdge(P1, EMS, 1);
+			model.addEdge(P1, P2, 1);
+			model.addEdge(P1, EMS, 1);
 
-			graph.addEdge(AB, AB3 , 1);
+			model.addEdge(AB, AB3 , 1);
 
-			graph.addEdge(EMS, E, 1);
-			graph.addEdge(EMS, MS, 1);
+			model.addEdge(EMS, E, 1);
+			model.addEdge(EMS, MS, 1);
 
-			graph.addEdge(P2, P3, 1);
-			graph.addEdge(P2, C, 1);
+			model.addEdge(P2, P3, 1);
+			model.addEdge(P2, C, 1);
 
-			graph.addEdge(P3, P4, 1);
-			graph.addEdge(P3, D, 1);
+			model.addEdge(P3, P4, 1);
+			model.addEdge(P3, D, 1);
 
 		} finally {
 			model.endUpdate();
@@ -158,9 +156,9 @@ public class Graph_Test {
 			Spot Q2 = model.addSpotTo(new SpotImp(new double[3], "Q2"), 1);
 			Spot Q3 = model.addSpotTo(new SpotImp(new double[3], "Q3"), 2);
 			// new links
-			model.getTrackModel().addEdge(Q1, Q2, -1);
-			model.getTrackModel().addEdge(Q2, Q3, -1);
-			model.getTrackModel().addEdge(Q3, P3, -1);
+			model.addEdge(Q1, Q2, -1);
+			model.addEdge(Q2, Q3, -1);
+			model.addEdge(Q3, P3, -1);
 		} finally {
 			model.endUpdate();
 		}

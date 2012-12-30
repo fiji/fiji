@@ -37,7 +37,7 @@ public class TrackBranchingAnalyzerTest {
 					Spot spot = new SpotImp(new double[3]);
 					model.addSpotTo(spot, j);
 					if (null != previous) {
-						model.getTrackModel().addEdge(previous, spot, 1);
+						model.addEdge(previous, spot, 1);
 					}
 					previous = spot;
 				}
@@ -52,7 +52,7 @@ public class TrackBranchingAnalyzerTest {
 					Spot spot = new SpotImp(new double[3]);
 					model.addSpotTo(spot, j);
 					if (null != previous) {
-						model.getTrackModel().addEdge(previous, spot, 1);
+						model.addEdge(previous, spot, 1);
 					}
 					previous = spot;
 				}
@@ -68,7 +68,7 @@ public class TrackBranchingAnalyzerTest {
 					}
 					model.addSpotTo(spot, j);
 					if (null != previous) {
-						model.getTrackModel().addEdge(previous, spot, 1);
+						model.addEdge(previous, spot, 1);
 					}
 					previous = spot;
 				}
@@ -76,7 +76,7 @@ public class TrackBranchingAnalyzerTest {
 				for (int j = DEPTH/2+1; j < DEPTH; j++) {
 					Spot spot = new SpotImp(new double[3]);
 					model.addSpotTo(spot, j);
-					model.getTrackModel().addEdge(previous, spot, 1);
+					model.addEdge(previous, spot, 1);
 					previous = spot;
 				}
 			}
@@ -91,7 +91,7 @@ public class TrackBranchingAnalyzerTest {
 					}
 					model.addSpotTo(spot, j);
 					if (null != previous) {
-						model.getTrackModel().addEdge(previous, spot, 1);
+						model.addEdge(previous, spot, 1);
 					}
 					previous = spot;
 				}
@@ -100,11 +100,11 @@ public class TrackBranchingAnalyzerTest {
 					Spot spot = new SpotImp(new double[3]);
 					model.addSpotTo(spot, j);
 					if (null != previous) {
-						model.getTrackModel().addEdge(previous, spot, 1);
+						model.addEdge(previous, spot, 1);
 					}
 					previous = spot;
 				}
-				model.getTrackModel().addEdge(previous, merge, 1);
+				model.addEdge(previous, merge, 1);
 			}
 
 		} finally {
@@ -166,7 +166,7 @@ public class TrackBranchingAnalyzerTest {
 		try {
 			Spot spot1 = model.addSpotTo(new SpotImp(new double[3]), 0);
 			Spot spot2 = model.addSpotTo(new SpotImp(new double[3]), 1);
-			model.getTrackModel().addEdge(spot1, spot2, 1);
+			model.addEdge(spot1, spot2, 1);
 			
 		} finally {
 			model.endUpdate();
@@ -194,7 +194,7 @@ public class TrackBranchingAnalyzerTest {
 		model.beginUpdate();
 		try {
 			newSpot = model.addSpotTo(new SpotImp(new double[3]), firstFrame + 1);
-			model.getTrackModel().addEdge(firstSpot, newSpot, 1);
+			model.addEdge(firstSpot, newSpot, 1);
 		} finally {
 			model.endUpdate();
 		}
