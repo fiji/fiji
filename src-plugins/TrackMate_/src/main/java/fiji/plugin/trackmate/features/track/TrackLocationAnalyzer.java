@@ -136,14 +136,11 @@ public class TrackLocationAnalyzer implements TrackFeatureAnalyzer, MultiThreade
 			// Collect track IDs
 			Set<Integer> targetIDs = new HashSet<Integer>(edges.size());
 			for (DefaultWeightedEdge edge : edges) {
-				
-				if (event.getEdgeFlag(edge) != TrackMateModelChangeEvent.FLAG_EDGE_REMOVED) {
-					// Finding the trackID it belong to is easy.
-					targetIDs.add( model.getTrackModel().getTrackIDOf(edge) );
+				if (event.getEdgeFlag(edge).equals(TrackMateModelChangeEvent.FLAG_EDGE_REMOVED)) {
+					targetIDs.addAll(event.getNewTracksFor(edge));
 				} else {
-					// It got removed; this is complicated.
+					targetIDs.add( model.getTrackModel().getTrackIDOf(edge) );
 				}
-				
 			}
 			
 			System.out.println(targetIDs);

@@ -7,6 +7,7 @@ import static org.junit.Assert.fail;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.TreeSet;
 
 import org.junit.Before;
@@ -135,7 +136,10 @@ public class TrackLocationAnalyzerTest {
 		Integer firstKey = oldKeys.iterator().next();
 		TreeSet<Spot> sortedTrack = new TreeSet<Spot>(Spot.frameComparator);
 		sortedTrack.addAll( model.getTrackModel().getTrackSpots(firstKey));
-		Spot firstSpot = sortedTrack.first();
+		Iterator<Spot> it = sortedTrack.iterator();
+		Spot firstSpot = it.next();
+		Spot secondSpot = it.next();
+		
 		model.beginUpdate();
 		try {
 			model.removeSpotFrom(firstSpot, firstSpot.getFeature(Spot.FRAME).intValue());
@@ -146,70 +150,16 @@ public class TrackLocationAnalyzerTest {
 		// The analyzer must have done something:
 		assertTrue(analyzer.hasBeenCalled);
 		
-		// Check the track IDs: must be of size 1, and they to the track with firstSpot and newSpot in it
+		// Check the track IDs: must be of size 1 since we removed the first spot of a track
 		assertEquals(1, analyzer.keys.size());
-		assertEquals(firstKey.longValue(), analyzer.keys.iterator().next().longValue());
+		Integer newKey = analyzer.keys.iterator().next();
+		assertEquals(model.getTrackModel().getTrackIDOf(secondSpot).longValue(), newKey.longValue());
 		
-		// The location k features for this track must have changed by 0.5
-		assertEquals(expectedX.get(firstKey)+0.5d, model.getFeatureModel().getTrackFeature(firstKey, TrackLocationAnalyzer.X_LOCATION).doubleValue(), Double.MIN_VALUE);
-		assertEquals(expectedY.get(firstKey)+0.5d, model.getFeatureModel().getTrackFeature(firstKey, TrackLocationAnalyzer.Y_LOCATION).doubleValue(), Double.MIN_VALUE);
-		assertEquals(expectedZ.get(firstKey)+0.5d, model.getFeatureModel().getTrackFeature(firstKey, TrackLocationAnalyzer.Z_LOCATION).doubleValue(), Double.MIN_VALUE);
+		// The location k features for this track must have changed by 0.5 with respect to previous calculation
+		assertEquals(expectedX.get(firstKey)+0.5d, model.getFeatureModel().getTrackFeature(newKey, TrackLocationAnalyzer.X_LOCATION).doubleValue(), Double.MIN_VALUE);
+		assertEquals(expectedY.get(firstKey)+0.5d, model.getFeatureModel().getTrackFeature(newKey, TrackLocationAnalyzer.Y_LOCATION).doubleValue(), Double.MIN_VALUE);
+		assertEquals(expectedZ.get(firstKey)+0.5d, model.getFeatureModel().getTrackFeature(newKey, TrackLocationAnalyzer.Z_LOCATION).doubleValue(), Double.MIN_VALUE);
 	}
-	
-//	@Test
-	public final void testModelChanged2() {
-		// Copy old keys
-		HashSet<Integer> oldKeys = new HashSet<Integer>(model.getTrackModel().getFilteredTrackIDs());
-		
-		// First analysis
-		final TestTrackLocationAnalyzer analyzer = new TestTrackLocationAnalyzer(model);
-		analyzer.process(oldKeys);
-		
-		// Reset analyzer
-		analyzer.hasBeenCalled = false;
-		analyzer.keys = null;
-		
-		// Prepare listener for model change
-		TrackMateModelChangeListener listener = new TrackMateModelChangeListener() {
-			@Override
-			public void modelChanged(TrackMateModelChangeEvent event) {
-				analyzer.modelChanged(event);
-			}
-		};
-		model.addTrackMateModelChangeListener(listener);
-
-		// Get a track
-		Integer aKey = model.getTrackModel().getFilteredTrackIDs().iterator().next();
-		
-		// Store feature for later
-		double oldVal = model.getFeatureModel().getTrackFeature(aKey, TrackDurationAnalyzer.TRACK_DURATION);
-		double increment = 10d;
-		
-		// Move the last spot of a track further in time to change duration and stop feature
-		TreeSet<Spot> sortedTrack = new TreeSet<Spot>(Spot.frameComparator);
-		sortedTrack.addAll(model.getTrackModel().getTrackSpots(aKey));
-		Spot aspot = sortedTrack.last();
-		
-		// Add a new track to the model - the old tracks should not be affected
-		model.beginUpdate();
-		try {
-			aspot.putFeature(Spot.POSITION_T, aspot.getFeature(Spot.POSITION_T) + increment);
-			model.updateFeatures(aspot);
-		} finally {
-			model.endUpdate();
-		}
-		
-		// The analyzer must have done something:
-		assertTrue(analyzer.hasBeenCalled);
-
-		// Check the track IDs: must be of size 1, be the one of the track we modified
-		assertEquals(1, analyzer.keys.size());
-		assertEquals(aKey.longValue(), analyzer.keys.iterator().next().longValue());
-		
-		// Check that the feature has been updated properly
-		assertEquals(oldVal+increment, model.getFeatureModel().getTrackFeature(aKey, TrackDurationAnalyzer.TRACK_DURATION).doubleValue(), Double.MIN_VALUE);
-	}
-		
 	
 	/**
 	 *  Subclass of {@link TrackIndexAnalyzer} to monitor method calls.

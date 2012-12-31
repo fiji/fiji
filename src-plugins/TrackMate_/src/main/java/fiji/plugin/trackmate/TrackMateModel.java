@@ -633,7 +633,7 @@ public class TrackMateModel {
 				for (String analyzerKey : featureModel.trackAnalyzerProvider.getAvailableTrackFeatureAnalyzers()) {
 					TrackFeatureAnalyzer analyzer = featureModel.trackAnalyzerProvider.getTrackFeatureAnalyzer(analyzerKey);
 					analyzer.modelChanged(event);
-				}
+				} // FIXME this is all good and well, but we need to remove the feature value for the track IDs that disappeared...
 			}
 		}
 
