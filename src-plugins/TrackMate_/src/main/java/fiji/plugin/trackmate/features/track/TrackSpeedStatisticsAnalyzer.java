@@ -33,7 +33,7 @@ public class TrackSpeedStatisticsAnalyzer implements TrackFeatureAnalyzer, Multi
 	public static final String 		TRACK_MAX_SPEED = "TRACK_MAX_SPEED";
 	public static final String 		TRACK_MIN_SPEED = "TRACK_MIN_SPEED";
 	public static final String 		TRACK_MEDIAN_SPEED = "TRACK_MEDIAN_SPEED";
-	public static final String 		TRACK_SPEED_STANDARD_DEVIATION = "TRACK_SPEED_STD";
+	public static final String 		TRACK_STD_SPEED = "TRACK_STD_SPEED";
 	//	public static final String 		TRACK_SPEED_KURTOSIS = "TRACK_SPEED_KURTOSIS";
 	//	public static final String 		TRACK_SPEED_SKEWNESS = "TRACK_SPEED_SKEWNESS";
 
@@ -47,7 +47,7 @@ public class TrackSpeedStatisticsAnalyzer implements TrackFeatureAnalyzer, Multi
 		FEATURES.add(TRACK_MAX_SPEED);
 		FEATURES.add(TRACK_MIN_SPEED);
 		FEATURES.add(TRACK_MEDIAN_SPEED);
-		FEATURES.add(TRACK_SPEED_STANDARD_DEVIATION);
+		FEATURES.add(TRACK_STD_SPEED);
 		//		FEATURES.add(TRACK_SPEED_KURTOSIS);
 		//		FEATURES.add(TRACK_SPEED_SKEWNESS);
 
@@ -55,7 +55,7 @@ public class TrackSpeedStatisticsAnalyzer implements TrackFeatureAnalyzer, Multi
 		FEATURE_NAMES.put(TRACK_MAX_SPEED, "Maximal velocity");
 		FEATURE_NAMES.put(TRACK_MIN_SPEED, "Minimal velocity");
 		FEATURE_NAMES.put(TRACK_MEDIAN_SPEED, "Median velocity");
-		FEATURE_NAMES.put(TRACK_SPEED_STANDARD_DEVIATION, "Velocity standard deviation");
+		FEATURE_NAMES.put(TRACK_STD_SPEED, "Velocity standard deviation");
 		//		FEATURE_NAMES.put(TRACK_SPEED_KURTOSIS, "Velocity kurtosis");
 		//		FEATURE_NAMES.put(TRACK_SPEED_SKEWNESS, "Velocity skewness");
 
@@ -63,7 +63,7 @@ public class TrackSpeedStatisticsAnalyzer implements TrackFeatureAnalyzer, Multi
 		FEATURE_SHORT_NAMES.put(TRACK_MAX_SPEED, "Max V");
 		FEATURE_SHORT_NAMES.put(TRACK_MIN_SPEED, "Min V");
 		FEATURE_SHORT_NAMES.put(TRACK_MEDIAN_SPEED, "Median V");
-		FEATURE_SHORT_NAMES.put(TRACK_SPEED_STANDARD_DEVIATION, "V std");
+		FEATURE_SHORT_NAMES.put(TRACK_STD_SPEED, "V std");
 		//		FEATURE_SHORT_NAMES.put(TRACK_SPEED_KURTOSIS, "V kurtosis");
 		//		FEATURE_SHORT_NAMES.put(TRACK_SPEED_SKEWNESS, "V skewness");
 
@@ -71,7 +71,7 @@ public class TrackSpeedStatisticsAnalyzer implements TrackFeatureAnalyzer, Multi
 		FEATURE_DIMENSIONS.put(TRACK_MAX_SPEED, Dimension.VELOCITY);
 		FEATURE_DIMENSIONS.put(TRACK_MIN_SPEED, Dimension.VELOCITY);
 		FEATURE_DIMENSIONS.put(TRACK_MEDIAN_SPEED, Dimension.VELOCITY);
-		FEATURE_DIMENSIONS.put(TRACK_SPEED_STANDARD_DEVIATION, Dimension.VELOCITY);
+		FEATURE_DIMENSIONS.put(TRACK_STD_SPEED, Dimension.VELOCITY);
 		//		FEATURE_DIMENSIONS.put(TRACK_SPEED_KURTOSIS, Dimension.NONE);
 		//		FEATURE_DIMENSIONS.put(TRACK_SPEED_SKEWNESS, Dimension.NONE);
 	}
@@ -161,7 +161,7 @@ public class TrackSpeedStatisticsAnalyzer implements TrackFeatureAnalyzer, Multi
 						fm.putTrackFeature(trackID, TRACK_MIN_SPEED, min);
 						fm.putTrackFeature(trackID, TRACK_MAX_SPEED, max);
 						fm.putTrackFeature(trackID, TRACK_MEAN_SPEED, mean);
-						fm.putTrackFeature(trackID, TRACK_SPEED_STANDARD_DEVIATION,  Math.sqrt(variance));
+						fm.putTrackFeature(trackID, TRACK_STD_SPEED,  Math.sqrt(variance));
 						//			fm.putTrackFeature(index, TRACK_SPEED_KURTOSIS, kurtosis);
 						//			fm.putTrackFeature(index, TRACK_SPEED_SKEWNESS, skewness);
 
@@ -192,7 +192,11 @@ public class TrackSpeedStatisticsAnalyzer implements TrackFeatureAnalyzer, Multi
 			// Collect track IDs
 			Set<Integer> targetIDs = new HashSet<Integer>(edges.size());
 			for (DefaultWeightedEdge edge : edges) {
-				targetIDs.add( model.getTrackModel().getTrackIDOf(edge) );
+				if (event.getEdgeFlag(edge).equals(TrackMateModelChangeEvent.FLAG_EDGE_REMOVED)) {
+					targetIDs.addAll(event.getNewTracksFor(edge));
+				} else {
+					targetIDs.add( model.getTrackModel().getTrackIDOf(edge) );
+				}
 			}
 			
 			// Recompute
