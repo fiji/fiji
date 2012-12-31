@@ -3,7 +3,7 @@ package fiji.plugin.trackmate;
 import fiji.plugin.trackmate.action.TrackMateAction;
 import fiji.plugin.trackmate.detection.SpotDetector;
 import fiji.plugin.trackmate.detection.SpotDetectorFactory;
-import fiji.plugin.trackmate.features.track.TrackFeatureAnalyzer;
+import fiji.plugin.trackmate.features.track.TrackAnalyzer;
 import fiji.plugin.trackmate.gui.TrackMateWizard;
 import fiji.plugin.trackmate.gui.WizardController;
 import fiji.plugin.trackmate.tracking.SpotTracker;
@@ -49,15 +49,15 @@ public class TrackMate_ implements PlugIn, Benchmark, MultiThreaded, Algorithm {
 	 */
 	protected TrackMateModel model;
 
-	protected SpotFeatureAnalyzerProvider spotFeatureAnalyzerProvider;
-	protected EdgeFeatureAnalyzerProvider edgeFeatureAnalyzerProvider;
-	protected TrackFeatureAnalyzerProvider trackFeatureProvider;
+	protected SpotAnalyzerProvider spotFeatureAnalyzerProvider;
+	protected EdgeAnalyzerProvider edgeFeatureAnalyzerProvider;
+	protected TrackAnalyzerProvider trackFeatureProvider;
 	/** The factory that provides this plugin with available {@link TrackMateModelView}s. */
 	protected ViewProvider viewProvider;
 	/** The factory that provides this plugin with available {@link TrackMateAction}s. */
 	protected ActionProvider actionProvider;
 	/** The list of {@link SpotTracker} that will be offered to choose amongst to the user. */
-	protected TrackerProvider trackerFactory;
+	protected TrackerProvider trackerProvider;
 	/** The {@link DetectorProvider} that provides the GUI with the list of available detectors. */
 	protected DetectorProvider detectorProvider;
 	protected long processingTime;
@@ -115,7 +115,7 @@ public class TrackMate_ implements PlugIn, Benchmark, MultiThreaded, Algorithm {
 	 * be used when calling {@link #computeTrackFeatures()};
 	 * 	<li> {@link #spotDetectors}: the list of {@link SpotDetector}s that will be offered 
 	 * to the user to choose from;
-	 * 	<li> {@link #trackerFactory}: the list of {@link SpotTracker}s that will be offered 
+	 * 	<li> {@link #trackerProvider}: the list of {@link SpotTracker}s that will be offered 
 	 * to the user to choose from;
 	 * 	<li> {@link #viewProvider}: the list of {@link TrackMateModelView}s (the "displayers")
 	 * that will be offered to the user to choose from;
@@ -124,13 +124,13 @@ public class TrackMate_ implements PlugIn, Benchmark, MultiThreaded, Algorithm {
 	 * </ul>
 	 */
 	public void initModules() {
-		this.spotFeatureAnalyzerProvider 	= createSpotFeatureAnalyzerFactory();
-		this.trackFeatureProvider 	= createTrackFeatureAnalyzerFactory();
-		this.edgeFeatureAnalyzerProvider = createEdgeFeatureAnalyzerProvider();
-		this.detectorProvider		= createDetectorFactory();
-		this.trackerFactory 		= createTrackerFactory();
-		this.viewProvider 			= createViewFactory();
-		this.actionProvider 			= createActionFactory();
+		this.spotFeatureAnalyzerProvider 	= createSpotAnalyzerProvider();
+		this.trackFeatureProvider 	= createTrackAnalyzerProvider();
+		this.edgeFeatureAnalyzerProvider = createEdgeAnalyzerProvider();
+		this.detectorProvider		= createDetectorProvider();
+		this.trackerProvider 		= createTrackerProvider();
+		this.viewProvider 			= createViewProvider();
+		this.actionProvider 			= createActionProvider();
 		model.getFeatureModel().setSpotFeatureFactory(spotFeatureAnalyzerProvider);
 		model.getFeatureModel().setTrackFeatureProvider(trackFeatureProvider);
 		model.getFeatureModel().setEdgeFeatureProvider(edgeFeatureAnalyzerProvider);
@@ -190,22 +190,25 @@ public class TrackMate_ implements PlugIn, Benchmark, MultiThreaded, Algorithm {
 		new WizardController(this);
 	}
 
+	/*
+	 * PROVIDERS
+	 */
+	
 	/**
 	 * Hook for subclassers.
 	 * <p>
 	 *  Create view factory containing available spot {@link TrackMateSelectionView}s.
 	 */
-	protected ViewProvider createViewFactory() {
+	protected ViewProvider createViewProvider() {
 		return new ViewProvider(model);
 	}
-
 
 	/**
 	 * Hook for subclassers.
 	 * <p>
 	 * Create detector provider that manages available {@link SpotDetectorFactory}.
 	 */
-	protected DetectorProvider createDetectorFactory() {
+	protected DetectorProvider createDetectorProvider() {
 		return new DetectorProvider();
 	}
 
@@ -214,8 +217,8 @@ public class TrackMate_ implements PlugIn, Benchmark, MultiThreaded, Algorithm {
 	 * <p>
 	 * Create the spot feature analyzer provider.
 	 */
-	protected SpotFeatureAnalyzerProvider createSpotFeatureAnalyzerFactory() {
-		return new SpotFeatureAnalyzerProvider(model);
+	protected SpotAnalyzerProvider createSpotAnalyzerProvider() {
+		return new SpotAnalyzerProvider(model);
 	}
 	
 	/**
@@ -223,8 +226,17 @@ public class TrackMate_ implements PlugIn, Benchmark, MultiThreaded, Algorithm {
 	 * <p>
 	 * Create the edge feature analyzer provider.
 	 */
-	protected EdgeFeatureAnalyzerProvider createEdgeFeatureAnalyzerProvider() {
-		return new EdgeFeatureAnalyzerProvider(model);
+	protected EdgeAnalyzerProvider createEdgeAnalyzerProvider() {
+		return new EdgeAnalyzerProvider(model);
+	}
+
+	/**
+	 * Hook for subclassers.
+	 * <p>
+	 * Create detector factory containing available spot {@link TrackAnalyzer}s.
+	 */
+	protected TrackAnalyzerProvider createTrackAnalyzerProvider() {
+		return new TrackAnalyzerProvider(model);
 	}
 
 	/**
@@ -232,17 +244,8 @@ public class TrackMate_ implements PlugIn, Benchmark, MultiThreaded, Algorithm {
 	 * <p>
 	 * Create detector factory containing available spot {@link SpotTracker}s.
 	 */
-	protected TrackerProvider createTrackerFactory() {
+	protected TrackerProvider createTrackerProvider() {
 		return new TrackerProvider(model);
-	}
-
-	/**
-	 * Hook for subclassers.
-	 * <p>
-	 * Create detector factory containing available spot {@link TrackFeatureAnalyzer}s.
-	 */
-	protected TrackFeatureAnalyzerProvider createTrackFeatureAnalyzerFactory() {
-		return new TrackFeatureAnalyzerProvider(model);
 	}
 
 	/**
@@ -250,7 +253,7 @@ public class TrackMate_ implements PlugIn, Benchmark, MultiThreaded, Algorithm {
 	 * <p>
 	 * Create action factory containing available spot {@link TrackMateAction}s.
 	 */
-	protected ActionProvider createActionFactory() {
+	protected ActionProvider createActionProvider() {
 		return new ActionProvider();
 	}
 
@@ -267,24 +270,24 @@ public class TrackMate_ implements PlugIn, Benchmark, MultiThreaded, Algorithm {
 	}
 
 	/**
-	 * @return the {@link SpotFeatureAnalyzerProvider} currently set.
-	 * @see #createSpotFeatureAnalyzerFactory()
+	 * @return the {@link SpotAnalyzerProvider} currently set.
+	 * @see #createSpotAnalyzerProvider()
 	 */
-	public SpotFeatureAnalyzerProvider getSpotFeatureAnalyzerProvider() {
+	public SpotAnalyzerProvider getSpotFeatureAnalyzerProvider() {
 		return spotFeatureAnalyzerProvider;
 	}
 
 	/**
-	 * @return the {@link TrackFeatureAnalyzerProvider} currently set.
+	 * @return the {@link TrackAnalyzerProvider} currently set.
 	 */
-	public TrackFeatureAnalyzerProvider getTrackFeatureProvider() {
+	public TrackAnalyzerProvider getTrackFeatureProvider() {
 		return trackFeatureProvider;
 	}
 	
 	/**
-	 * @return the {@link EdgeFeatureAnalyzerProvider} currently set.
+	 * @return the {@link EdgeAnalyzerProvider} currently set.
 	 */
-	public EdgeFeatureAnalyzerProvider getEdgeFeatureAnalyzerProvider() {
+	public EdgeAnalyzerProvider getEdgeFeatureAnalyzerProvider() {
 		return edgeFeatureAnalyzerProvider;
 	}
 	
@@ -299,7 +302,7 @@ public class TrackMate_ implements PlugIn, Benchmark, MultiThreaded, Algorithm {
 	 * @return the {@link TrackerProvider} currently set.
 	 */
 	public TrackerProvider getTrackerProvider() {
-		return trackerFactory;
+		return trackerProvider;
 	}
 
 

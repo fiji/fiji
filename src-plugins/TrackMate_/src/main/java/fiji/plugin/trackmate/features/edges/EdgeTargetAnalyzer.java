@@ -17,7 +17,7 @@ import fiji.plugin.trackmate.FeatureModel;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.TrackMateModel;
 
-public class EdgeTargetAnalyzer implements EdgeFeatureAnalyzer, MultiThreaded {
+public class EdgeTargetAnalyzer implements EdgeAnalyzer, MultiThreaded {
 
 	public static final String KEY = "Edge target";
 	/*

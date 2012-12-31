@@ -21,7 +21,7 @@ import fiji.plugin.trackmate.features.spot.SpotRadiusEstimatorFactory;
  * Feature key names are for historical reason all capitalized in an enum manner. For instance: POSITION_X,
  * MAX_INTENSITY, etc... They must be suitable to be used as a attribute key in an xml file.
  */
-public class SpotFeatureAnalyzerProvider {
+public class SpotAnalyzerProvider {
 
 
 	/** The detector names, in the order they will appear in the GUI.
@@ -46,7 +46,7 @@ public class SpotFeatureAnalyzerProvider {
 	 * factory so that it is registered with the custom spotFeatureAnalyzers and provide this 
 	 * extended factory to the {@link TrackMate_} plugin.
 	 */
-	public SpotFeatureAnalyzerProvider(TrackMateModel model) {
+	public SpotAnalyzerProvider(TrackMateModel model) {
 		this.model = model;
 		registerSpotFeatureAnalyzers();
 	}

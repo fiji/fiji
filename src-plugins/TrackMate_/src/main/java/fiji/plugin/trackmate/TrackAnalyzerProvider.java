@@ -7,7 +7,7 @@ import java.util.Map;
 
 import fiji.plugin.trackmate.features.track.TrackBranchingAnalyzer;
 import fiji.plugin.trackmate.features.track.TrackDurationAnalyzer;
-import fiji.plugin.trackmate.features.track.TrackFeatureAnalyzer;
+import fiji.plugin.trackmate.features.track.TrackAnalyzer;
 import fiji.plugin.trackmate.features.track.TrackIndexAnalyzer;
 import fiji.plugin.trackmate.features.track.TrackLocationAnalyzer;
 import fiji.plugin.trackmate.features.track.TrackSpeedStatisticsAnalyzer;
@@ -23,7 +23,7 @@ import fiji.plugin.trackmate.features.track.TrackSpeedStatisticsAnalyzer;
  * Feature key names are for historical reason all capitalized in an enum manner. For instance: POSITION_X,
  * MAX_INTENSITY, etc... They must be suitable to be used as a attribute key in an xml file.
  */
-public class TrackFeatureAnalyzerProvider {
+public class TrackAnalyzerProvider {
 
 
 	/** The detector names, in the order they will appear in the GUI.
@@ -57,7 +57,7 @@ public class TrackFeatureAnalyzerProvider {
 	 * factory so that it is registered with the custom trackFeatureAnalyzers and provide this 
 	 * extended factory to the {@link TrackMate_} plugin.
 	 */
-	public TrackFeatureAnalyzerProvider(TrackMateModel model) {
+	public TrackAnalyzerProvider(TrackMateModel model) {
 		this.model = model;
 		registerTrackFeatureAnalyzers();
 		this.trackIndexAnalyzer = new TrackIndexAnalyzer(model);
@@ -113,7 +113,7 @@ public class TrackFeatureAnalyzerProvider {
 	 * @return a new instance of the target trackFeatureAnalyzer identified by the key parameter. 
 	 * If the key is unknown to this factory, <code>null</code> is returned. 
 	 */
-	public TrackFeatureAnalyzer getTrackFeatureAnalyzer(String key) {
+	public TrackAnalyzer getTrackFeatureAnalyzer(String key) {
 		if (key == TrackDurationAnalyzer.KEY) {
 			return new TrackDurationAnalyzer(model);
 		} else if (key == TrackBranchingAnalyzer.KEY) {

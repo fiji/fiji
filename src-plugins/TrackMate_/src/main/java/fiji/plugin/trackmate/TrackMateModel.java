@@ -10,7 +10,7 @@ import java.util.Set;
 import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.graph.SimpleDirectedWeightedGraph;
 
-import fiji.plugin.trackmate.features.track.TrackFeatureAnalyzer;
+import fiji.plugin.trackmate.features.track.TrackAnalyzer;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
 
 /**
@@ -631,7 +631,7 @@ public class TrackMateModel {
 		if (nEdgesToSignal > 0) {
 			if (null != featureModel.trackAnalyzerProvider) {
 				for (String analyzerKey : featureModel.trackAnalyzerProvider.getAvailableTrackFeatureAnalyzers()) {
-					TrackFeatureAnalyzer analyzer = featureModel.trackAnalyzerProvider.getTrackFeatureAnalyzer(analyzerKey);
+					TrackAnalyzer analyzer = featureModel.trackAnalyzerProvider.getTrackFeatureAnalyzer(analyzerKey);
 					analyzer.modelChanged(event);
 				} // FIXME this is all good and well, but we need to remove the feature value for the track IDs that disappeared...
 			}

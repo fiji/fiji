@@ -19,7 +19,7 @@ import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMateModelChangeEvent;
 
-public class TrackBranchingAnalyzer implements TrackFeatureAnalyzer, MultiThreaded {
+public class TrackBranchingAnalyzer implements TrackAnalyzer, MultiThreaded {
 
 	/*
 	 * CONSTANTS

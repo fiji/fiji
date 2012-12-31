@@ -19,7 +19,7 @@ import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMateModelChangeEvent;
 
-public class TrackDurationAnalyzer implements TrackFeatureAnalyzer, MultiThreaded {
+public class TrackDurationAnalyzer implements TrackAnalyzer, MultiThreaded {
 
 	public static final String KEY = "Track duration";
 	public static final String 		TRACK_DURATION = "TRACK_DURATION";

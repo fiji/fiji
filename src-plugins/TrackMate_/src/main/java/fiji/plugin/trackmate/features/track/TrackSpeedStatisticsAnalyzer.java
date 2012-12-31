@@ -22,7 +22,7 @@ import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMateModelChangeEvent;
 
-public class TrackSpeedStatisticsAnalyzer implements TrackFeatureAnalyzer, MultiThreaded, Benchmark {
+public class TrackSpeedStatisticsAnalyzer implements TrackAnalyzer, MultiThreaded, Benchmark {
 
 
 	/*

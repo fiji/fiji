@@ -8,7 +8,7 @@ import org.jgrapht.graph.DefaultWeightedEdge;
 
 import fiji.plugin.trackmate.FeatureModel;
 
-public interface EdgeFeatureAnalyzer extends Benchmark {
+public interface EdgeAnalyzer extends Benchmark {
 
 	/**
 	 * Score a collection of link between two spots. 

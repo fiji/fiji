@@ -16,10 +16,10 @@ import net.imglib2.multithreading.SimpleMultiThreading;
 
 import org.jgrapht.graph.DefaultWeightedEdge;
 
-import fiji.plugin.trackmate.features.edges.EdgeFeatureAnalyzer;
-import fiji.plugin.trackmate.features.spot.SpotFeatureAnalyzer;
+import fiji.plugin.trackmate.features.edges.EdgeAnalyzer;
+import fiji.plugin.trackmate.features.spot.SpotAnalyzer;
 import fiji.plugin.trackmate.features.spot.SpotFeatureAnalyzerFactory;
-import fiji.plugin.trackmate.features.track.TrackFeatureAnalyzer;
+import fiji.plugin.trackmate.features.track.TrackAnalyzer;
 import fiji.plugin.trackmate.util.TMUtils;
 
 /**
@@ -67,9 +67,9 @@ public class FeatureModel implements MultiThreaded {
 	private HashMap<String, String> edgeFeatureShortNames = new HashMap<String, String>();
 	private HashMap<String, Dimension> edgeFeatureDimensions = new HashMap<String, Dimension>();
 
-	protected SpotFeatureAnalyzerProvider spotAnalyzerProvider;
-	protected TrackFeatureAnalyzerProvider trackAnalyzerProvider;
-	private EdgeFeatureAnalyzerProvider edgeFeatureAnalyzerProvider;
+	protected SpotAnalyzerProvider spotAnalyzerProvider;
+	protected TrackAnalyzerProvider trackAnalyzerProvider;
+	private EdgeAnalyzerProvider edgeFeatureAnalyzerProvider;
 
 	private TrackMateModel model;
 	protected int numThreads;
@@ -101,7 +101,7 @@ public class FeatureModel implements MultiThreaded {
 	 * according to the {@link Settings} set in the model.
 	 * <p>
 	 * Features are calculated for each spot, using their location, and the raw
-	 * image. Since a {@link SpotFeatureAnalyzer} can compute more than a feature
+	 * image. Since a {@link SpotAnalyzer} can compute more than a feature
 	 * at once, spots might received more data than required.
 	 */
 	public void computeSpotFeatures(final List<String> features) {
@@ -123,7 +123,7 @@ public class FeatureModel implements MultiThreaded {
 	 * {@link Settings} set in this model.
 	 * <p>
 	 * Features are calculated for each spot, using their location, and the raw
-	 * images. Since a {@link SpotFeatureAnalyzer} can compute more than a feature
+	 * images. Since a {@link SpotAnalyzer} can compute more than a feature
 	 * at once, spots might received more data than required.
 	 */
 	public void computeSpotFeatures(final SpotCollection toCompute, final List<String> features) {
@@ -166,14 +166,14 @@ public class FeatureModel implements MultiThreaded {
 	 * Set the list of spot feature analyzers that will be used to compute spot features.
 	 * Setting this field will automatically sets the derived fields: {@link #spotFeatures},
 	 * {@link #spotFeatureNames}, {@link #spotFeatureShortNames} and {@link #spotFeatureDimensions}.
-	 * These fields will be generated from the {@link SpotFeatureAnalyzer} content, returned 
-	 * by its methods {@link SpotFeatureAnalyzer#getFeatures()}, etc... and will be added
+	 * These fields will be generated from the {@link SpotAnalyzer} content, returned 
+	 * by its methods {@link SpotAnalyzer#getFeatures()}, etc... and will be added
 	 * in the order given by the list.
 	 * 
 	 * @see #updateFeatures(List) 
 	 * @see #updateFeatures(Spot)
 	 */
-	public void setSpotFeatureFactory(final SpotFeatureAnalyzerProvider spotAnalyzerProvider) {
+	public void setSpotFeatureFactory(final SpotAnalyzerProvider spotAnalyzerProvider) {
 		this.spotAnalyzerProvider = spotAnalyzerProvider;
 
 		spotFeatures = new ArrayList<String>();
@@ -241,13 +241,13 @@ public class FeatureModel implements MultiThreaded {
 	 * Set the list of track feature analyzers that will be used to compute track features.
 	 * Setting this field will automatically sets the derived fields: {@link #trackFeatures},
 	 * {@link #trackFeatureNames}, {@link #trackFeatureShortNames} and {@link #trackFeatureDimensions}.
-	 * These fields will be generated from the {@link TrackFeatureAnalyzer} content, returned 
-	 * by its methods {@link TrackFeatureAnalyzer#getFeatures()}, etc... and will be added
+	 * These fields will be generated from the {@link TrackAnalyzer} content, returned 
+	 * by its methods {@link TrackAnalyzer#getFeatures()}, etc... and will be added
 	 * in the order given by the list.
 	 * 
 	 * @see #computeTrackFeatures()
 	 */
-	public void setTrackFeatureProvider(TrackFeatureAnalyzerProvider trackAnalyzerProvider) {
+	public void setTrackFeatureProvider(TrackAnalyzerProvider trackAnalyzerProvider) {
 		this.trackAnalyzerProvider = trackAnalyzerProvider;
 		// Collect all the track feature we will have to deal with
 		trackFeatures = new ArrayList<String>();
@@ -267,7 +267,7 @@ public class FeatureModel implements MultiThreaded {
 		this.trackFeatureValues = new ConcurrentHashMap<String, Map<Integer, Double>>(trackFeatures.size());
 	}
 
-	public void setEdgeFeatureProvider(final EdgeFeatureAnalyzerProvider edgeFeatureAnalyzerProvider) {
+	public void setEdgeFeatureProvider(final EdgeAnalyzerProvider edgeFeatureAnalyzerProvider) {
 		this.edgeFeatureAnalyzerProvider = edgeFeatureAnalyzerProvider;
 
 		edgeFeatures = new ArrayList<String>();
@@ -296,7 +296,7 @@ public class FeatureModel implements MultiThreaded {
 	}
 
 	/**
-	 * The method in charge of computing spot features with the given {@link SpotFeatureAnalyzer}s, for the
+	 * The method in charge of computing spot features with the given {@link SpotAnalyzer}s, for the
 	 * given {@link SpotCollection}.
 	 * @param toCompute
 	 * @param analyzers
@@ -504,7 +504,7 @@ public class FeatureModel implements MultiThreaded {
 		 */
 		for (String analyzerKey : trackAnalyzerProvider.getAvailableTrackFeatureAnalyzers()) {
 			// Compute features
-			TrackFeatureAnalyzer analyzer = trackAnalyzerProvider.getTrackFeatureAnalyzer(analyzerKey);
+			TrackAnalyzer analyzer = trackAnalyzerProvider.getTrackFeatureAnalyzer(analyzerKey);
 			analyzer.process(trackIDs);
 			if (doLogIt)
 				logger.log("  - " + analyzer.toString() + " in " + analyzer.getProcessingTime() + " ms.\n");
@@ -517,7 +517,7 @@ public class FeatureModel implements MultiThreaded {
 			logger.log("Computing edge features:\n");		
 		}
 		for(String key : edgeFeatureAnalyzerProvider.getAvailableEdgeFeatureAnalyzers()) {
-			EdgeFeatureAnalyzer analyzer = edgeFeatureAnalyzerProvider.getEdgeFeatureAnalyzer(key);
+			EdgeAnalyzer analyzer = edgeFeatureAnalyzerProvider.getEdgeFeatureAnalyzer(key);
 			analyzer.process(edges);
 			if (doLogIt)
 				logger.log("  - " + analyzer.toString() + " in " + analyzer.getProcessingTime() + " ms.\n");

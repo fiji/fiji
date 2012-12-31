@@ -12,7 +12,7 @@ import fiji.plugin.trackmate.FeatureModel;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMateModelChangeEvent;
 
-public class TrackIndexAnalyzer implements TrackFeatureAnalyzer {
+public class TrackIndexAnalyzer implements TrackAnalyzer {
 
 	/** The key for this analyzer. */
 	public static final String 		KEY = "Track index";

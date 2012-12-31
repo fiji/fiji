@@ -5,7 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import fiji.plugin.trackmate.features.edges.EdgeFeatureAnalyzer;
+import fiji.plugin.trackmate.features.edges.EdgeAnalyzer;
 import fiji.plugin.trackmate.features.edges.EdgeTargetAnalyzer;
 import fiji.plugin.trackmate.features.edges.EdgeTimeLocationAnalyzer;
 import fiji.plugin.trackmate.features.edges.EdgeVelocityAnalyzer;
@@ -13,7 +13,7 @@ import fiji.plugin.trackmate.features.edges.EdgeVelocityAnalyzer;
 /**
  * A provider for the edge analyzers provided in the GUI.
  */
-public class EdgeFeatureAnalyzerProvider {
+public class EdgeAnalyzerProvider {
 
 
 	protected final TrackMateModel model;
@@ -40,7 +40,7 @@ public class EdgeFeatureAnalyzerProvider {
 	 * factory so that it is registered with the custom spotFeatureAnalyzers and provide this 
 	 * extended factory to the {@link TrackMate_} plugin.
 	 */
-	public EdgeFeatureAnalyzerProvider(TrackMateModel model) {
+	public EdgeAnalyzerProvider(TrackMateModel model) {
 		this.model = model;
 		registerEdgeFeatureAnalyzers();
 	}
@@ -85,7 +85,7 @@ public class EdgeFeatureAnalyzerProvider {
 	 * @return a new instance of the target edgeFeatureAnalyzer identified by the key parameter. 
 	 * If the key is unknown to this factory, <code>null</code> is returned. 
 	 */
-	public EdgeFeatureAnalyzer getEdgeFeatureAnalyzer(String key) {
+	public EdgeAnalyzer getEdgeFeatureAnalyzer(String key) {
 		if (key == EdgeTargetAnalyzer.KEY) {
 			return new EdgeTargetAnalyzer(model);
 		} else if (key == EdgeVelocityAnalyzer.KEY) {

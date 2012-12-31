@@ -28,7 +28,7 @@ import fiji.plugin.trackmate.util.SpotNeighborhood;
 import fiji.plugin.trackmate.util.SpotNeighborhoodCursor;
 
 /**
- * This {@link SpotFeatureAnalyzer} computes morphology features for the given spots. 
+ * This {@link SpotAnalyzer} computes morphology features for the given spots. 
  * <p>
  * It estimates shape parameters by computing the most resembling ellipsoid from the pixels
  * contained within the spot radius. From this ellipsoid, it determines what are its semi-axes lengths,

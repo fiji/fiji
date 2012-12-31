@@ -15,7 +15,7 @@ import net.imglib2.algorithm.Benchmark;
  * Note: ideally concrete implementation should work in a multi-threaded fashion
  * for performance reason, when possible.
  * <p>
- * For {@link TrackFeatureAnalyzer}s, there is a mechanism intended to maintain
+ * For {@link TrackAnalyzer}s, there is a mechanism intended to maintain
  * the model integrity against manual, small changes: the {@link #modelChanged(TrackMateModelChangeEvent)}
  * method. Something as simple as removing
  * a spot in the middle of a track will generate two new tracks, which will invalidate 
@@ -35,7 +35,7 @@ import net.imglib2.algorithm.Benchmark;
  * 
  * @author Jean-Yves Tinevez
  */
-public interface TrackFeatureAnalyzer extends Benchmark, TrackMateModelChangeListener {
+public interface TrackAnalyzer extends Benchmark, TrackMateModelChangeListener {
 
 	/**
 	 * Score the track whose ID is given.
@@ -45,7 +45,7 @@ public interface TrackFeatureAnalyzer extends Benchmark, TrackMateModelChangeLis
 	/**
 	 * Notified when a model change event happens.
 	 * <p>
-	 * For {@link TrackFeatureAnalyzer}s, this is a mechanism intended to maintain
+	 * For {@link TrackAnalyzer}s, this is a mechanism intended to maintain
 	 * the model integrity against manual, small changes. Something as simple as removing
 	 * a spot in the middle of a track will generate two new tracks, which will invalidate 
 	 * all feature values for the old track. Analyzers are notified of such events, so

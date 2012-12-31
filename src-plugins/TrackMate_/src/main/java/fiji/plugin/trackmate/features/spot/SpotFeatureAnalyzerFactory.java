@@ -6,15 +6,15 @@ import java.util.Map;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
 import fiji.plugin.trackmate.Dimension;
-import fiji.plugin.trackmate.SpotFeatureAnalyzerProvider;
+import fiji.plugin.trackmate.SpotAnalyzerProvider;
 import fiji.plugin.trackmate.TrackMateModel;
 
 /** 
- * Interface for factories that can generate a {@link SpotFeatureAnalyzer} configured
+ * Interface for factories that can generate a {@link SpotAnalyzer} configured
  * to operate on a specific frame of a model.
  * <p> 
  * Concrete implementation should declare what features they can compute numerically,
- * and make this info available in the {@link SpotFeatureAnalyzerProvider} that returns 
+ * and make this info available in the {@link SpotAnalyzerProvider} that returns 
  * them.
  * <p>
  * Feature key names are for historical reason all capitalized in an enum manner. For instance: POSITION_X,
@@ -25,7 +25,7 @@ import fiji.plugin.trackmate.TrackMateModel;
 public interface SpotFeatureAnalyzerFactory<T extends RealType<T> & NativeType<T>> {
 	
 	/**
-	 * @return  a configured {@link SpotFeatureAnalyzer} ready to operate on the given frame
+	 * @return  a configured {@link SpotAnalyzer} ready to operate on the given frame
 	 * (0-based) and given channel (0-based). 
 	 * The target frame image and the target spots are retrieved from the {@link TrackMateModel}
 	 * thanks to the given frame and channel index.
@@ -33,7 +33,7 @@ public interface SpotFeatureAnalyzerFactory<T extends RealType<T> & NativeType<T
 	 * @param frame  the target frame to operate on.
 	 * @param channel the target channel to operate on.
 	 */
-	public SpotFeatureAnalyzer<T> getAnalyzer(int frame, int channel);
+	public SpotAnalyzer<T> getAnalyzer(int frame, int channel);
 	
 	/** @return a unique String identifier for this factory. */
 	public String getKey();
