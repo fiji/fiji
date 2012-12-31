@@ -6,6 +6,7 @@ import ij.gui.StackWindow;
 
 import java.awt.Point;
 import java.util.List;
+import java.util.Set;
 
 import org.jgrapht.graph.DefaultWeightedEdge;
 
@@ -121,7 +122,7 @@ public class HyperStackDisplayer extends AbstractTrackMateModelView  {
 
 		case TrackMateModelChangeEvent.MODEL_MODIFIED:
 			// Rebuild track overlay only if edges were added or removed, or if at least one spot was removed. 
-			final List<DefaultWeightedEdge> edges = event.getEdges();
+			final Set<DefaultWeightedEdge> edges = event.getEdges();
 			if (edges != null && edges.size() > 0) {
 				redoOverlay = true;				
 			}

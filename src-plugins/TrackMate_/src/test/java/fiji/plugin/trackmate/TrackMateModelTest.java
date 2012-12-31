@@ -1,7 +1,6 @@
 package fiji.plugin.trackmate;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.util.Iterator;
@@ -196,6 +195,7 @@ public class TrackMateModelTest {
 		TrackMateModelChangeListener eventLogger = new TrackMateModelChangeListener() {
 			@Override
 			public void modelChanged(TrackMateModelChangeEvent event) {
+				
 				// Event must be of the right type
 				assertEquals(TrackMateModelChangeEvent.MODEL_MODIFIED, event.getEventID());
 				// I expect 5 new spots from this event
@@ -203,12 +203,12 @@ public class TrackMateModelTest {
 				// I expect 4 new links from this event
 				assertEquals(4, event.getEdges().size());
 				// Check the correct flag type for spots
-				for(int eventFlag : event.getSpotFlags()) {
-					assertEquals(TrackMateModelChangeEvent.FLAG_SPOT_ADDED, eventFlag);
+				for(Spot spot : event.getSpots()) {
+					assertEquals(TrackMateModelChangeEvent.FLAG_SPOT_ADDED, event.getSpotFlag(spot));
 				}
 				// Check the correct flag type for edges
-				for(int eventFlag : event.getEdgeFlags()) {
-					assertEquals(TrackMateModelChangeEvent.FLAG_EDGE_ADDED, eventFlag);
+				for(DefaultWeightedEdge edge : event.getEdges()) {
+					assertEquals(TrackMateModelChangeEvent.FLAG_EDGE_ADDED, event.getEdgeFlag(edge));
 				}
 			}
 		};
@@ -225,15 +225,15 @@ public class TrackMateModelTest {
 		model.beginUpdate();
 		try {
 			model.addSpotTo(s1, 0);
-			model.addSpotTo(s2, 0);
-			model.addSpotTo(s3, 0);
-			model.addSpotTo(s4, 0);
-			model.addSpotTo(s5, 0);
+			model.addSpotTo(s2, 1);
+			model.addSpotTo(s3, 2);
+			model.addSpotTo(s4, 3);
+			model.addSpotTo(s5, 4);
 
-			model.getTrackModel().addEdge(s1, s2, 0);
-			model.getTrackModel().addEdge(s2, s3, 0);
-			model.getTrackModel().addEdge(s3, s4, 0);
-			model.getTrackModel().addEdge(s4, s5, 0);
+			model.addEdge(s1, s2, 0);
+			model.addEdge(s2, s3, 0);
+			model.addEdge(s3, s4, 0);
+			model.addEdge(s4, s5, 0);
 		} finally {
 			model.endUpdate();
 		}
@@ -259,15 +259,15 @@ public class TrackMateModelTest {
 				// I expect 1 modified spot from this event
 				assertEquals(1, event.getSpots().size());
 				// It must be s3
-				assertEquals(s3, event.getSpots().get(0));
+				assertEquals(s3, event.getSpots().iterator().next());
 				// It must be the removed flag
-				assertEquals(TrackMateModelChangeEvent.FLAG_SPOT_REMOVED, event.getSpotFlag(s3).intValue());
+				assertEquals(TrackMateModelChangeEvent.FLAG_SPOT_REMOVED, event.getSpotFlag(s3));
 
 				// I expect 2 links to be affected by this event
 				assertEquals(2, event.getEdges().size());
 				// Check the correct flag type for edges: they must be removed
-				for(int eventFlag : event.getEdgeFlags()) {
-					assertEquals(TrackMateModelChangeEvent.FLAG_EDGE_REMOVED, eventFlag);
+				for(DefaultWeightedEdge edge : event.getEdges()) {
+					assertEquals(TrackMateModelChangeEvent.FLAG_EDGE_REMOVED, event.getEdgeFlag(edge));
 				}
 				// Check the removed edges identity
 				for (DefaultWeightedEdge edge : event.getEdges()) {
@@ -282,6 +282,16 @@ public class TrackMateModelTest {
 						);
 
 
+					// Check the removed edge origin: it must be found in the 2 new tracks that contain s1 or s5 
+					for (Integer trackID : event.getNewTracksFor(edge)) {
+						
+						assertTrue(
+								trackID == model.getTrackModel().getTrackIDOf(s1)
+								|| trackID == model.getTrackModel().getTrackIDOf(s5)
+								);
+						
+						
+					}
 				}
 			}
 		};
@@ -308,15 +318,15 @@ public class TrackMateModelTest {
 			public void modelChanged(TrackMateModelChangeEvent event) {
 				// Event must be of the right type
 				assertEquals(TrackMateModelChangeEvent.MODEL_MODIFIED, event.getEventID());
-				// I expect 0 modified spot from this event, so spot fiel must be null
-				assertNull(event.getSpots());
+				// I expect 0 modified spot from this event, so spot field must be empty
+				assertTrue(event.getSpots().isEmpty());
 				// It must be s3
 
 				// I expect 1 new link in this event
 				assertEquals(1, event.getEdges().size());
 				// Check the correct flag type for edges: they must be removed
-				for(int eventFlag : event.getEdgeFlags()) {
-					assertEquals(TrackMateModelChangeEvent.FLAG_EDGE_ADDED, eventFlag);
+				for(DefaultWeightedEdge edge : event.getEdges()) {
+					assertEquals(TrackMateModelChangeEvent.FLAG_EDGE_ADDED, event.getEdgeFlag(edge));
 				}
 				// Check the added edges identity
 				for (DefaultWeightedEdge edge : event.getEdges()) {

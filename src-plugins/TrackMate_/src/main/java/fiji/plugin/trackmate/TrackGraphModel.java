@@ -641,8 +641,12 @@ public class TrackGraphModel {
 	 * tracks that were visible previous to the changes that called for this
 	 * method are still visible after, event if some tracks are merge, deleted
 	 * or split.
+	 * 
+	 * @return  the map of the old track parts ID vs new ID: That is, all spots and edges 
+	 * in the old track with ID oldID are now parts of the new tracks with new 
+	 * IDs contained in the matching value set.
 	 */
-	void computeTracksFromGraph() {
+	Map<Integer, Set<Integer>> computeTracksFromGraph() {
 
 		if (DEBUG) {
 			System.out.println("[TrackGraphModel] #computeTracksFromGraph()");
@@ -700,10 +704,22 @@ public class TrackGraphModel {
 		 * For de novo tracks, there is no spot in the Set<Spot> that can be found in 
 		 * oldTrackSpots.	 */
 
-		// Will contain the old IDs of the old tracks that can be found in a new track.
-		Map<Integer, Set<Integer>> trackParts = new HashMap<Integer, Set<Integer>>(trackSpots.size());
+		/*
+		 * Map the new track IDs to the old ones. That is, the new track with ID newID
+		 * is built from parts of the old tracks with old IDs contained in the matching value set.
+		 */
+		Map<Integer, Set<Integer>> newToOldKeyMap = new HashMap<Integer, Set<Integer>>(trackSpots.size());
 		for (Integer trackID : trackSpots.keySet()) {
-			trackParts.put(trackID, new HashSet<Integer>());
+			newToOldKeyMap.put(trackID, new HashSet<Integer>());
+		}
+		/*
+		 * The inverse of the previous map: 
+		 * Map the old track IDs to the new ones. That is, all spots and edges in the old track with ID oldID
+		 * are now parts of the new tracks with new IDs contained in the matching value set.
+		 */
+		Map<Integer, Set<Integer>> oldToNewKeyMap = new HashMap<Integer, Set<Integer>>(oldTrackSpots.size());
+		for (Integer oldID : oldTrackSpots.keySet()	) {
+			oldToNewKeyMap.put(oldID,  new HashSet<Integer>());
 		}
 
 		// Loop over old tracks to get where they can be found in the new tracks
@@ -714,7 +730,6 @@ public class TrackGraphModel {
 		for (Integer oldKey : oldTrackSpots.keySet()) {
 			Set<Spot> oldTrack = oldTrackSpots.get(oldKey);
 
-			boolean shouldBreak = false;
 			for (Integer trackKey : trackSpots.keySet()) { // Iterate over new tracks
 				Set<Spot> track = trackSpots.get(trackKey);
 
@@ -731,12 +746,8 @@ public class TrackGraphModel {
 					if (DEBUG) {
 						System.out.println("[TrackGraphModel] #computeTracksFromGraph(): old track " + oldKey + " parts were found in new track " + trackKey);
 					}
-					trackParts.get(trackKey).add(oldKey);
-					shouldBreak = true;
-					break;
-				}
-
-				if (shouldBreak) { // old track was found in a new track, we can skip the rest
+					newToOldKeyMap.get(trackKey).add(oldKey);
+					oldToNewKeyMap.get(oldKey).add(trackKey);
 					break;
 				}
 
@@ -744,15 +755,20 @@ public class TrackGraphModel {
 
 		}
 
+		
+
+		
 		// Assemble visibility and name from old parts
 
 		if (DEBUG) {
 			System.out.println("[TrackGraphModel] #computeTracksFromGraph(): assembling new tracks visibility and name.");
 		}
 
+
+		// Build this map
 		for (Integer trackKey : trackSpots.keySet()) {
 
-			if (trackParts.get(trackKey).isEmpty()) {
+			if (newToOldKeyMap.get(trackKey).isEmpty()) {
 				// Is new, so we make it visible and give it a default name.
 				filteredTrackKeys.add(trackKey);
 				trackNames.put(trackKey, generateDefaultTrackName() );
@@ -768,7 +784,7 @@ public class TrackGraphModel {
 				 * How to know if a new track should be visible or not?
 				 * We can say this: the new track should be visible if it has at least
 				 * one spot that can be found in a visible old track. */
-				Iterator<Integer> it = trackParts.get(trackKey).iterator();
+				Iterator<Integer> it = newToOldKeyMap.get(trackKey).iterator();
 				Integer keyOfLargestOldTracks = it.next();
 				boolean shouldBeVisible = oldTrackVisibility.get(keyOfLargestOldTracks);
 				while (it.hasNext()) {
@@ -783,7 +799,7 @@ public class TrackGraphModel {
 					filteredTrackKeys.add(trackKey);
 				}
 				if (DEBUG) {
-					System.out.println("[TrackGraphModel] #computeTracksFromGraph(): track " + trackKey + " is not new; it is made in parts of old tracks " +  trackParts.get(trackKey));
+					System.out.println("[TrackGraphModel] #computeTracksFromGraph(): track " + trackKey + " is not new; it is made in parts of old tracks " +  newToOldKeyMap.get(trackKey));
 					System.out.println("[TrackGraphModel] #computeTracksFromGraph():  - giving it the name: " + trackNames.get(trackKey));
 					System.out.println("[TrackGraphModel] #computeTracksFromGraph():  - making it visible? " + shouldBeVisible);
 
@@ -794,6 +810,8 @@ public class TrackGraphModel {
 		if (DEBUG) {
 			System.out.println("[TrackGraphModel] #computeTracksFromGraph(): the end; found " + trackSpots.size() + " new spot tracks.");
 		}
+		
+		return oldToNewKeyMap;
 	}
 
 

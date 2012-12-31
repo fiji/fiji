@@ -1,32 +1,35 @@
 package fiji.plugin.trackmate;
 
+import java.util.Collection;
 import java.util.EventObject;
-import java.util.List;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Set;
 
 import org.jgrapht.graph.DefaultWeightedEdge;
 
 
 public class TrackMateModelChangeEvent extends EventObject {
 
-	private static final long serialVersionUID = -355025496111237715L;
+	private static final long serialVersionUID = -1L;
 	/** Indicate that a spot was added to the model. */
-	public static final int 	FLAG_SPOT_ADDED = 0;
+	public static final Integer 	FLAG_SPOT_ADDED = 0;
 	/** Indicate that a spot was removed from the model. */
-	public static final int 	FLAG_SPOT_REMOVED = 1;
+	public static final Integer 	FLAG_SPOT_REMOVED = 1;
 	/** Indicate a modification of the features of a spot. It may have changed 
 	 * of position and feature, but not of frame. */
-	public static final int 	FLAG_SPOT_MODIFIED = 2;
+	public static final Integer 	FLAG_SPOT_MODIFIED = 2;
 	/** Indicate that a spot has changed of frame, and possible of position,
 	 * feaures, etc.. . */
-	public static final int 	FLAG_SPOT_FRAME_CHANGED = 3;
+	public static final Integer 	FLAG_SPOT_FRAME_CHANGED = 3;
 	/** Indicate that an edge was added to the model. */
-	public static final int 	FLAG_EDGE_ADDED = 4;
+	public static final Integer 	FLAG_EDGE_ADDED = 4;
 	/** Indicate that an edge was removed from the model. */
-	public static final int 	FLAG_EDGE_REMOVED = 5;
+	public static final Integer 	FLAG_EDGE_REMOVED = 5;
 	/** Indicate that an edge has been modified. Edge modifications occur when the 
 	 * target or source spots are modified, or when the weight of the edge has
 	 * been modified. */
-	public static final int 	FLAG_EDGE_MODIFIED = 6;
+	public static final Integer 	FLAG_EDGE_MODIFIED = 6;
 	
 	/** 
 	 * Event type indicating that the spots of the model were computed, and 
@@ -57,13 +60,22 @@ public class TrackMateModelChangeEvent extends EventObject {
 	 */
 	public static final int 	MODEL_MODIFIED = 8;
 
-	private List<Spot> spots;
-	private List<DefaultWeightedEdge> edges;
-	private List<Integer> fromFrame;
-	private List<Integer> toFrame;
-	private List<Integer> spotFlags;
-	private List<Integer> edgeFlags;
-	private int eventID;
+	/** Spots affected by this event. */
+	private final HashSet<Spot> spots = new HashSet<Spot>();
+	/** Edges affected by this event. */
+	private final HashSet<DefaultWeightedEdge> edges = new HashSet<DefaultWeightedEdge>();
+	/** For spots removed or moved: frame from which they were removed or moved. */
+	private final HashMap<Spot, Integer> fromFrame = new HashMap<Spot, Integer>();
+	/** For spots removed or added: frame to which they were added or moved. */
+	private final HashMap<Spot, Integer> toFrame = new HashMap<Spot, Integer>();
+	/** Modification flag for spots affected by this event. */
+	private final HashMap<Spot, Integer> spotFlags = new HashMap<Spot, Integer>();
+	/** Modification flag for edges affected by this event. */
+	private final HashMap<DefaultWeightedEdge, Integer> edgeFlags = new HashMap<DefaultWeightedEdge, Integer>();
+	/** For edge that were removed, this list gives the new track IDs the removed edge belonged to. */
+	private final HashMap<DefaultWeightedEdge, Set<Integer>> fromTrackIDs = new HashMap<DefaultWeightedEdge, Set<Integer>>();
+	/** The event type for this instance. */
+	private final int eventID;
 
 	/**
 	 * Create a new event, reflecting a change in a {@link TrackMateModel}.
@@ -79,83 +91,51 @@ public class TrackMateModelChangeEvent extends EventObject {
 		return this.eventID;
 	}
 
-	public void setSpots(List<Spot> spots) { 
-		this.spots = spots;
+	public boolean addAllSpots(Collection<Spot> spots) { 
+		return this.spots.addAll(spots);
+	}
+	
+	public boolean addSpot(Spot spot) {
+		return this.spots.add(spot);
 	}
 
-	public void setEdges(List<DefaultWeightedEdge> edges) { 
-		this.edges = edges;
+	public boolean addAllEdges(Collection<DefaultWeightedEdge> edges) { 
+		return this.edges.addAll(edges);
+	}
+	public boolean addEdge(DefaultWeightedEdge edge) {
+		return edges.add(edge);
 	}
 
-	/** 
-	 * @param edgeFlags  a list of integers stating what happened to the edge of the
-	 * same index in the {@link #getEdges()} list. See {@link #FLAG_EDGE_ADDED}, {@link #FLAG_EDGE_REMOVED}.
-	 */
-	public void setEdgeFlags(List<Integer> edgeFlags) {
-		this.edgeFlags = edgeFlags;
+	public Integer putEdgeFlag(DefaultWeightedEdge edge, Integer flag) {
+		return edgeFlags.put(edge, flag);
 	}
 
-	/** 
-	 * @param spotFlags  a list of integers stating what happened to the spot of the
-	 * same index in the {@link #getSpots()} list. See {@link #FLAG_SPOT_ADDED}, {@link #FLAG_SPOT_REMOVED},
-	 * {@link #FLAG_SPOT_MODIFIED} and {@link #FLAG_SPOT_FRAME_CHANGED}.
-	 */
-	public void setSpotFlags(List<Integer> spotFlags) {
-		this.spotFlags = spotFlags;
+	public Integer putSpotFlag(Spot spot, Integer flag) {
+		return spotFlags.put(spot, flag);
 	}
 
-	/**
-	 * @param fromFrame  a list of integers specifying the frame the corresponding spot 
-	 * belonged to before this event. If the corresponding flag is {@link #FLAG_SPOT_ADDED} or
-	 * {@link #FLAG_SPOT_MODIFIED}, then this integer is <code>null</code>.
-	 */
-	public void setFromFrame(List<Integer> fromFrame) {
-		this.fromFrame = fromFrame;
+	public Integer putFromFrame(Spot spot, Integer fromFrame) {
+		return this.fromFrame.put(spot, fromFrame);
+	}
+
+	public Integer putToFrame(Spot spot, Integer toFrame) {
+		return this.toFrame.put(spot, toFrame);
 	}
 
 	/**
-	 * @param toFrame  a list of integers specifying the destination frame of the 
-	 * corresponding spot. If the corresponding flag is {@link #FLAG_SPOT_REMOVED} or
-	 * {@link #FLAG_SPOT_MODIFIED}, then this integer is <code>null</code>.
-	 */
-	public void setToFrame(List<Integer> toFrame) {
-		this.toFrame = toFrame;
-	}
-
-	/**
-	 * @return  the list of spot that are affected by this event. Is <code>null</code>
+	 * @return  the set of spot that are affected by this event. Is empty
 	 * if no spot is affected by this event.
 	 */
-	public List<Spot> getSpots() {
+	public Set<Spot> getSpots() {
 		return spots;
 	}
 
 	/**
-	 * @return  the list of edges that are affected by this event. Is <code>null</code>
+	 * @return  the set of edges that are affected by this event. Is empty
 	 * if no edge is affected by this event.
 	 */
-	public List<DefaultWeightedEdge> getEdges() {
+	public Set<DefaultWeightedEdge> getEdges() {
 		return edges;
-	}
-
-	/**
-	 * @return  the modification flag for each spot affected by this event.
-	 * @see #FLAG_SPOT_ADDED
-	 * @see #FLAG_SPOT_MODIFIED
-	 * @see #FLAG_SPOT_REMOVED
-	 */
-	public List<Integer> getSpotFlags() {
-		return spotFlags;
-	}
-
-	/**
-	 * @return  the modification flag for each link affected by this event.
-	 * @see #FLAG_EDGE_ADDED
-	 * @see #FLAG_EDGE_MODIFIED
-	 * @see #FLAG_EDGE_REMOVED
-	 */
-	public List<Integer> getEdgeFlags() {
-		return edgeFlags;
 	}
 
 	/**
@@ -165,10 +145,7 @@ public class TrackMateModelChangeEvent extends EventObject {
 	 * @see #FLAG_SPOT_REMOVED
 	 */
 	public Integer getSpotFlag(Spot spot) {
-		int index =  spots.indexOf(spot);
-		if (-1 == index)
-			return null;
-		return spotFlags.get(index);
+		return spotFlags.get(spot);
 	}
 	
 	/**
@@ -177,32 +154,27 @@ public class TrackMateModelChangeEvent extends EventObject {
 	 * @see #FLAG_EDGE_REMOVED
 	 */
 	public Integer getEdgeFlag(DefaultWeightedEdge edge) {
-		int index =  edges.indexOf(edge);
-		if (-1 == index)
-			return null;
-		return edgeFlags.get(index);
-	}
-
-	public List<Integer> getToFrame() {
-		return toFrame;
+		return edgeFlags.get(edge);
 	}
 
 	public Integer getToFrame(Spot spot) {
-		int index =  spots.indexOf(spot);
-		if (-1 == index)
-			return null;
-		return toFrame.get(index);
-	}
-
-	public List<Integer> getFromFrame() {
-		return fromFrame;
+		return toFrame.get(spot);
 	}
 
 	public Integer getFromFrame(Spot spot) {
-		int index =  spots.indexOf(spot);
-		if (-1 == index)
-			return null;
-		return fromFrame.get(index);
+		return fromFrame.get(spot);
+	}
+	
+	/**
+	 * For edge that were removed ({@link #FLAG_EDGE_REMOVED}, return the set of new 
+	 * track IDs that are made of the old track this edge belonged to.
+	 */
+	public Set<Integer> getNewTracksFor(DefaultWeightedEdge edge) {
+		return fromTrackIDs.get(edge);
+	}
+	
+	public Set<Integer> putNewTracksFor(DefaultWeightedEdge edge, Set<Integer> trackIDs) {
+		return fromTrackIDs.put(edge, trackIDs);
 	}
 
 	public void setSource(Object source) {

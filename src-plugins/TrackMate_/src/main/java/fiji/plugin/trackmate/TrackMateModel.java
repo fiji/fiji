@@ -1,8 +1,10 @@
 package fiji.plugin.trackmate;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.jgrapht.graph.DefaultWeightedEdge;
@@ -146,10 +148,10 @@ public class TrackMateModel {
 	 * events are fired. Initial value is 0.
 	 */
 	private int updateLevel = 0;
-	private List<Spot> spotsAdded = new ArrayList<Spot>();
-	private List<Spot> spotsRemoved = new ArrayList<Spot>();
-	private List<Spot> spotsMoved = new ArrayList<Spot>();
-	private List<Spot> spotsUpdated = new ArrayList<Spot>();
+	private HashSet<Spot> spotsAdded = new HashSet<Spot>();
+	private HashSet<Spot> spotsRemoved = new HashSet<Spot>();
+	private HashSet<Spot> spotsMoved = new HashSet<Spot>();
+	private HashSet<Spot> spotsUpdated = new HashSet<Spot>();
 	/**
 	 * The event cache. During a transaction, some modifications might trigger
 	 * the need to fire a model change event. We want to fire these events only
@@ -538,16 +540,25 @@ public class TrackMateModel {
 			System.out.println("[TrackMateModel] #flushUpdate().");
 			System.out.println("[TrackMateModel] #flushUpdate(): Event cache is :" + eventCache);
 		}
+		
+		/* Before they enter void, we grab the trackID of removed edges. We will need to 
+		 * know from where they were removed to recompute trackIDs intelligently. Or so */
+		HashMap<DefaultWeightedEdge, Integer> edgeRemovedOrigins = new HashMap<DefaultWeightedEdge, Integer>(trackGraphModel.edgesRemoved.size());
+		if (trackGraphModel.edgesRemoved.size() > 0) {
+			for (DefaultWeightedEdge edge : trackGraphModel.edgesRemoved) {
+				edgeRemovedOrigins.put(edge, getTrackModel().getTrackIDOf(edge)); // we store old track IDs
+			}
+		}
 
 		/* We recompute tracks only if some edges have been added or removed,
 		 * (if some spots have been removed that causes edges to be removes, we already know about it).
 		 * We do NOT recompute tracks if spots have been added: they will not result in
 		 * new tracks made of single spots.	 */
 		int nEdgesToSignal = trackGraphModel.edgesAdded.size() + trackGraphModel.edgesRemoved.size() + trackGraphModel.edgesModified.size();
+		Map<Integer, Set<Integer>> oldIDMap = null;
 		if (nEdgesToSignal > 0) {
 			// First, regenerate the tracks
-			trackGraphModel.computeTracksFromGraph();
-			// See below to recompute tracks
+			oldIDMap = trackGraphModel.computeTracksFromGraph();
 		}
 
 		// Deal with new or moved spots: we need to update their features.
@@ -568,43 +579,48 @@ public class TrackMateModel {
 		// Configure it with spots to signal.
 		int nSpotsToSignal = nSpotsToUpdate + spotsRemoved.size();
 		if (nSpotsToSignal > 0) {
-			ArrayList<Spot> spotsToSignal = new ArrayList<Spot>(nSpotsToSignal);
-			spotsToSignal.addAll(spotsAdded);
-			spotsToSignal.addAll(spotsRemoved);
-			spotsToSignal.addAll(spotsMoved);
-			spotsToSignal.addAll(spotsUpdated);
-			ArrayList<Integer> spotsFlag = new ArrayList<Integer>(nSpotsToSignal);
-			for (int i = 0; i < spotsAdded.size(); i++)
-				spotsFlag.add(TrackMateModelChangeEvent.FLAG_SPOT_ADDED);
-			for (int i = 0; i < spotsRemoved.size(); i++)
-				spotsFlag.add(TrackMateModelChangeEvent.FLAG_SPOT_REMOVED);
-			for (int i = 0; i < spotsMoved.size(); i++)
-				spotsFlag.add(TrackMateModelChangeEvent.FLAG_SPOT_FRAME_CHANGED);
-			for (int i = 0; i < spotsUpdated.size(); i++)
-				spotsFlag.add(TrackMateModelChangeEvent.FLAG_SPOT_MODIFIED);
+			event.addAllSpots(spotsAdded);
+			event.addAllSpots(spotsRemoved);
+			event.addAllSpots(spotsMoved);
+			event.addAllSpots(spotsUpdated);
 
-			event.setSpots(spotsToSignal);
-			event.setSpotFlags(spotsFlag);
+			for (Spot spot : spotsAdded) {
+				event.putSpotFlag(spot, TrackMateModelChangeEvent.FLAG_SPOT_ADDED);
+			}
+			for (Spot spot : spotsRemoved) {
+				event.putSpotFlag(spot, TrackMateModelChangeEvent.FLAG_SPOT_REMOVED);
+			}
+			for (Spot spot : spotsMoved) {
+				event.putSpotFlag(spot, TrackMateModelChangeEvent.FLAG_SPOT_FRAME_CHANGED);
+			}
+			for (Spot spot : spotsUpdated) {
+				event.putSpotFlag(spot, TrackMateModelChangeEvent.FLAG_SPOT_MODIFIED);
+			}
 		}
 
 
 		// Configure it with edges to signal.
 		if (nEdgesToSignal > 0) {
-			ArrayList<DefaultWeightedEdge> edgesToSignal = new ArrayList<DefaultWeightedEdge>(nEdgesToSignal);
-			edgesToSignal.addAll(trackGraphModel.edgesAdded);
-			edgesToSignal.addAll(trackGraphModel.edgesRemoved);
-			edgesToSignal.addAll(trackGraphModel.edgesModified);
-			ArrayList<Integer> edgesFlag = new ArrayList<Integer>(nEdgesToSignal);
-			for (int i = 0; i < trackGraphModel.edgesAdded.size(); i++)
-				edgesFlag.add(TrackMateModelChangeEvent.FLAG_EDGE_ADDED);
-			for (int i = 0; i < trackGraphModel.edgesRemoved.size(); i++)
-				edgesFlag.add(TrackMateModelChangeEvent.FLAG_EDGE_REMOVED);
-			for (int i = 0; i < trackGraphModel.edgesModified.size(); i++)
-				edgesFlag.add(TrackMateModelChangeEvent.FLAG_EDGE_MODIFIED);
+			event.addAllEdges(trackGraphModel.edgesAdded);
+			event.addAllEdges(trackGraphModel.edgesRemoved);
+			event.addAllEdges(trackGraphModel.edgesModified);
 
-			event.setEdges(edgesToSignal);
-			event.setEdgeFlags(edgesFlag);
+			for (DefaultWeightedEdge edge : trackGraphModel.edgesAdded) {
+				event.putEdgeFlag(edge, TrackMateModelChangeEvent.FLAG_EDGE_ADDED);
+			}
+			for (DefaultWeightedEdge edge : trackGraphModel.edgesRemoved) {
+				event.putEdgeFlag(edge, TrackMateModelChangeEvent.FLAG_EDGE_REMOVED);
+				// Get old track ID of the edge
+				Integer oldID = edgeRemovedOrigins.get(edge);
+				// Store new track ID location for for the edge
+				event.putNewTracksFor(edge, oldIDMap.get(oldID));
+			}
+			for (DefaultWeightedEdge edge : trackGraphModel.edgesModified) {
+				event.putEdgeFlag(edge, TrackMateModelChangeEvent.FLAG_EDGE_MODIFIED);
+			}
 		}
+		
+		
 
 		/*
 		 *  If required, privately pass the event to track feature analyzers 

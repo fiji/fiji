@@ -5,7 +5,6 @@ package fiji.plugin.trackmate.visualization;
 
 import java.awt.Color;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Set;
 
 import org.jfree.chart.renderer.InterpolatePaintScale;
@@ -105,8 +104,8 @@ public class TrackFeatureColorGenerator implements TrackPartsColorGenerator, Tra
 	@Override
 	public void modelChanged(TrackMateModelChangeEvent event) {
 		if (event.getEventID() ==  TrackMateModelChangeEvent.MODEL_MODIFIED) {
-			List<DefaultWeightedEdge> edges = event.getEdges();
-			if (edges  != null && edges.size() > 0) {
+			Set<DefaultWeightedEdge> edges = event.getEdges();
+			if (edges.size() > 0) {
 				refresh();
 			} 
 		}		
