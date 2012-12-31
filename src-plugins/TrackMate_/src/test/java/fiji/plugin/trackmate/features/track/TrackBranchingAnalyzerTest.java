@@ -6,6 +6,7 @@ import static org.junit.Assert.fail;
 
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.TreeSet;
 
 import org.junit.Before;
@@ -238,7 +239,7 @@ public class TrackBranchingAnalyzerTest {
 		analyzer.keys = null;
 
 		/*
-		 * A nasty change: we mode a spot from its frame to the first frame, for a track with a split:
+		 * A nasty change: we move a spot from its frame to the first frame, for a track with a split:
 		 * it should turn it in a track with a merge. 
 		 */
 
@@ -276,6 +277,93 @@ public class TrackBranchingAnalyzerTest {
 		assertEquals(1, model.getFeatureModel().getTrackFeature(splittingTrackID, TrackBranchingAnalyzer.NUMBER_MERGES).intValue());
 	}
 
+	@Test
+	public final void testModelChanged3() { 
+
+		// Copy old keys
+		HashSet<Integer> oldKeys = new HashSet<Integer>(model.getTrackModel().getFilteredTrackIDs());
+
+		// First analysis
+		final TestTrackBranchingAnalyzer analyzer = new TestTrackBranchingAnalyzer(model);
+		analyzer.process(oldKeys);
+
+		// Reset analyzer
+		analyzer.hasBeenCalled = false;
+		analyzer.keys = null;
+
+		// Prepare listener for model change
+		TrackMateModelChangeListener listener = new TrackMateModelChangeListener() {
+			@Override
+			public void modelChanged(TrackMateModelChangeEvent event) {
+				analyzer.modelChanged(event);
+			}
+		};
+		model.addTrackMateModelChangeListener(listener);
+		// Reset analyzer
+		analyzer.hasBeenCalled = false;
+		analyzer.keys = null;
+
+		/*
+		 * A nasty change: we remove a spot from the frame where there is a split.
+		 * Only the three generated tracks should get analyzed. 
+		 */
+
+		// Find a track with a split
+		Integer splittingTrackID = null;
+		for (Integer trackID : model.getTrackModel().getFilteredTrackIDs()) {
+			if (model.getFeatureModel().getTrackFeature(trackID, TrackBranchingAnalyzer.NUMBER_SPLITS) > 0) {
+				splittingTrackID = trackID;
+				break;
+			}
+		}
+
+		// Get the last spot in time
+		TreeSet<Spot> track = new TreeSet<Spot>(Spot.frameComparator);
+		track.addAll(model.getTrackModel().getTrackSpots(splittingTrackID));
+		Iterator<Spot> it = track.descendingIterator();
+		Spot lastSpot1 = it.next();
+		Spot lastSpot2 = it.next();
+		Spot firstSpot = track.first();
+
+		// Find the branching spot
+		Spot branchingSpot = null;
+		for (Spot spot : track) {
+			if (model.getTrackModel().edgesOf(spot).size() > 2) {
+				branchingSpot = spot;
+				break;
+			}
+		}
+
+		// Remove the branching spot 
+		model.beginUpdate();
+		try {
+			model.removeSpotFrom(branchingSpot, branchingSpot.getFeature(Spot.FRAME).intValue());
+		} finally {
+			model.endUpdate();
+		}
+
+		// The analyzer must have done something:
+		assertTrue(analyzer.hasBeenCalled);
+
+		// Check the track IDs: must be of size 3: the 3 tracks split
+		assertEquals(3, analyzer.keys.size());
+		for (Integer targetKey : analyzer.keys) {
+			assertTrue(
+					targetKey.equals(model.getTrackModel().getTrackIDOf(firstSpot))
+					|| targetKey.equals(model.getTrackModel().getTrackIDOf(lastSpot1))
+					|| targetKey.equals(model.getTrackModel().getTrackIDOf(lastSpot2))
+					);
+		}
+
+		// Check that the features have been well calculated: we must have 3 linear tracks
+		for (Integer targetKey : analyzer.keys) {
+			assertEquals(0, model.getFeatureModel().getTrackFeature(targetKey, TrackBranchingAnalyzer.NUMBER_SPLITS).intValue());
+			assertEquals(0, model.getFeatureModel().getTrackFeature(targetKey, TrackBranchingAnalyzer.NUMBER_MERGES).intValue());
+			assertEquals(0, model.getFeatureModel().getTrackFeature(targetKey, TrackBranchingAnalyzer.NUMBER_COMPLEX).intValue());
+		}
+	}
+
+
 
 
 	/**
@@ -294,12 +382,12 @@ public class TrackBranchingAnalyzerTest {
 		public void process(Collection<Integer> trackIDs) {
 			hasBeenCalled = true;
 			keys = trackIDs;
+			System.out.println(trackIDs);
 			super.process(trackIDs);
 		}
 
 		@Override
 		public void modelChanged(TrackMateModelChangeEvent event) {
-			//			System.out.println(event);
 			super.modelChanged(event);
 		}
 	}

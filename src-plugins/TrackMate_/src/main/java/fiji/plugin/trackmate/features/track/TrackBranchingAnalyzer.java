@@ -168,7 +168,11 @@ public class TrackBranchingAnalyzer implements TrackFeatureAnalyzer, MultiThread
 			// Collect track IDs
 			Set<Integer> targetIDs = new HashSet<Integer>(edges.size());
 			for (DefaultWeightedEdge edge : edges) {
-				targetIDs.add( model.getTrackModel().getTrackIDOf(edge) );
+				if (event.getEdgeFlag(edge).equals(TrackMateModelChangeEvent.FLAG_EDGE_REMOVED)) {
+					targetIDs.addAll(event.getNewTracksFor(edge));
+				} else {
+					targetIDs.add( model.getTrackModel().getTrackIDOf(edge) );
+				}
 			}
 			
 			// Recompute
