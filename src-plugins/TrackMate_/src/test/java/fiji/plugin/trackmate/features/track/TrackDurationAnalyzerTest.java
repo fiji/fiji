@@ -7,6 +7,7 @@ import static org.junit.Assert.fail;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Random;
 import java.util.TreeSet;
 
@@ -209,7 +210,7 @@ public class TrackDurationAnalyzerTest {
 		sortedTrack.addAll(model.getTrackModel().getTrackSpots(aKey));
 		Spot aspot = sortedTrack.last();
 		
-		// Add a new track to the model - the old tracks should not be affected
+		//Move a spot in time
 		model.beginUpdate();
 		try {
 			aspot.putFeature(Spot.POSITION_T, aspot.getFeature(Spot.POSITION_T) + increment);
@@ -227,6 +228,65 @@ public class TrackDurationAnalyzerTest {
 		
 		// Check that the feature has been updated properly
 		assertEquals(oldVal+increment, model.getFeatureModel().getTrackFeature(aKey, TrackDurationAnalyzer.TRACK_DURATION).doubleValue(), Double.MIN_VALUE);
+	}
+	
+	@Test
+	public final void testModelChanged3() {
+		// Copy old keys
+		HashSet<Integer> oldKeys = new HashSet<Integer>(model.getTrackModel().getFilteredTrackIDs());
+		
+		// First analysis
+		final TestTrackDurationAnalyzer analyzer = new TestTrackDurationAnalyzer(model);
+		analyzer.process(oldKeys);
+		
+		// Reset analyzer
+		analyzer.hasBeenCalled = false;
+		analyzer.keys = null;
+		
+		// Prepare listener for model change
+		TrackMateModelChangeListener listener = new TrackMateModelChangeListener() {
+			@Override
+			public void modelChanged(TrackMateModelChangeEvent event) {
+				analyzer.modelChanged(event);
+			}
+		};
+		model.addTrackMateModelChangeListener(listener);
+
+		// Get a track
+		Integer aKey = model.getTrackModel().getFilteredTrackIDs().iterator().next();
+		
+		// Get its middle spot
+		TreeSet<Spot> sortedTrack = new TreeSet<Spot>(Spot.frameComparator);
+		sortedTrack.addAll(model.getTrackModel().getTrackSpots(aKey));
+		Spot aspot = null;
+		Iterator<Spot> it = sortedTrack.iterator();
+		for (int i = 0; i < DEPTH/2; i++) {
+			aspot = it.next();
+		}
+		// Store first and last spot for later
+		Spot firstSpot = sortedTrack.first();
+		Spot lastSpot = sortedTrack.last();
+		
+		// Remove it
+		model.beginUpdate();
+		try {
+			model.removeSpotFrom(aspot, aspot.getFeature(Spot.FRAME).intValue());
+		} finally {
+			model.endUpdate();
+		}
+		
+		// The analyzer must have done something:
+		assertTrue(analyzer.hasBeenCalled);
+
+		// Check the track IDs: must be of size 2: the two track that were created from the removal
+		assertEquals(2, analyzer.keys.size());
+		for (Integer targetKey : analyzer.keys) {
+			assertTrue(
+					targetKey.equals(model.getTrackModel().getTrackIDOf(firstSpot))
+					|| targetKey.equals(model.getTrackModel().getTrackIDOf(lastSpot))
+					);
+		}
+		
 	}
 		
 	
