@@ -748,7 +748,6 @@ public class TrackGraphModel {
 					}
 					newToOldKeyMap.get(trackKey).add(oldKey);
 					oldToNewKeyMap.get(oldKey).add(trackKey);
-					break;
 				}
 
 			} // Finished iterating over new tracks
