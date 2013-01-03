@@ -20,7 +20,7 @@ import fiji.plugin.trackmate.Spot;
  *  
  * @author Jean-Yves Tinevez
  */
-public interface TrackPartsColorGenerator {
+public interface TrackColorGenerator {
 
 	/** @return a color for the given spot, that must belong to the 
 	 * track with the specified ID.
@@ -28,7 +28,7 @@ public interface TrackPartsColorGenerator {
 	 * Specifying the track ID allows save computations, but the
 	 * ID must be accurate or inadequate rendering will happen.
 	 */
-	public Color color(final Spot spot, final Integer trakID);
+	public Color color(final Spot spot);
 
 	/** @return a color for the given edge, that must belong to the 
 	 * track with the specified ID.
@@ -36,6 +36,27 @@ public interface TrackPartsColorGenerator {
 	 * Specifying the track ID allows save computations, but the
 	 * ID must be accurate or inadequate rendering will happen.
 	 */
-	public Color color(final DefaultWeightedEdge edge, final Integer trakID);
+	public Color color(final DefaultWeightedEdge edge);
+	
+	/**
+	 * This is a hack for performance:
+	 * <p>
+	 * For color generators that depends only on the track edges and spots are in, 
+	 * we can skip some computations by specifying first the trackID, and returning
+	 * always the same color - ignoring the spot and edge argument of the {@link #color(DefaultWeightedEdge)}
+	 * and {@link #color(Spot)} methods - while we iterate through the track.
+	 * <p>
+	 * Color generators that return a color per object can otherwise ignore this method.
+	 * 
+	 * @param trackID
+	 */
+	public void setCurrentTrackID(Integer trackID);
+	
+	/**
+	 * When this color generator is replaced by another one, calling this method ensures
+	 * that it gets correctly unregistered and cleaned, should it be a model listener
+	 * or have a heavy memory footprint. 
+	 */
+	public void terminate();
 
 }

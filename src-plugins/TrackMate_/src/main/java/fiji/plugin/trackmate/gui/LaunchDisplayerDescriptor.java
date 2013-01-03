@@ -66,13 +66,13 @@ public class LaunchDisplayerDescriptor implements WizardPanelDescriptor {
 		final TrackMateModelView displayer = wizard.getDisplayer();
 		
 		if (plugin.getModel().getSpots().getNSpots() > 0) {
-			logger.log("Calculating features...\n",Logger.BLUE_COLOR);
+			logger.log("Calculating spot features...\n",Logger.BLUE_COLOR);
 			// Calculate features
 			new Thread("TrackMate spot feature calculating mother thread") {
 				public void run() {
 					try {
 						long start = System.currentTimeMillis();
-						plugin.computeSpotFeatures();		
+						plugin.computeSpotFeatures(true);		
 						long end  = System.currentTimeMillis();
 						logger.log(String.format("Calculating features done in %.1f s.\n", (end-start)/1e3f), Logger.BLUE_COLOR);
 					} finally {

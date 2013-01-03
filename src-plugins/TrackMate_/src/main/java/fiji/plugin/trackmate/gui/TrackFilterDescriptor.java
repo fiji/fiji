@@ -14,7 +14,7 @@ import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMate_;
 import fiji.plugin.trackmate.features.track.TrackIndexAnalyzer;
-import fiji.plugin.trackmate.visualization.TrackFeatureColorGenerator;
+import fiji.plugin.trackmate.visualization.PerTrackFeatureColorGenerator;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
 
 public class TrackFilterDescriptor implements WizardPanelDescriptor {
@@ -81,8 +81,8 @@ public class TrackFilterDescriptor implements WizardPanelDescriptor {
 				component.addActionListener(new ActionListener() {
 					@Override
 					public void actionPerformed(ActionEvent event) {
-						TrackFeatureColorGenerator generator = new TrackFeatureColorGenerator(plugin.getModel());
-						generator.selectFeature(component.getColorByFeature());
+						PerTrackFeatureColorGenerator generator = new PerTrackFeatureColorGenerator(plugin.getModel(), TrackIndexAnalyzer.TRACK_INDEX);
+						generator.setFeature(component.getColorByFeature());
 						wizard.getDisplayer().setDisplaySettings(TrackMateModelView.KEY_TRACK_COLORING, generator);
 						wizard.getDisplayer().refresh();
 					}
@@ -125,6 +125,8 @@ public class TrackFilterDescriptor implements WizardPanelDescriptor {
 				logger.log(str);
 			}
 			logger.log("Kept "+model.getTrackModel().getNFilteredTracks()+" tracks out of "+model.getTrackModel().getNTracks()+".\n");
-		}		
+		}
+
+		plugin.computeEdgeFeatures(true);
 	}
 }

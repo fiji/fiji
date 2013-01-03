@@ -131,6 +131,10 @@ public class JGraphXAdapter extends mxGraph implements GraphListener<Spot, Defau
 		return cellToVertexMap.keySet();
 	}
 	
+	public Set<mxCell> getEdgeCells() {
+		return cellToEdgeMap.keySet();
+	}
+	
 	public void removeMapping(Spot spot) {
 		mxICell cell = vertexToCellMap.remove(spot);
 		cellToVertexMap.remove(cell);

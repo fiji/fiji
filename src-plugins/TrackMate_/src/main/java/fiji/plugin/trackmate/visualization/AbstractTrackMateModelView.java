@@ -9,6 +9,7 @@ import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMateModelChangeListener;
 import fiji.plugin.trackmate.TrackMateSelectionChangeEvent;
 import fiji.plugin.trackmate.TrackMateSelectionChangeListener;
+import fiji.plugin.trackmate.features.track.TrackIndexAnalyzer;
 
 /**
  * An abstract class for spot displayers, that can overlay detected spots and tracks on top
@@ -81,6 +82,7 @@ public abstract class AbstractTrackMateModelView implements TrackMateSelectionCh
 		displaySettings.put(KEY_TRACKS_VISIBLE, true);
 		displaySettings.put(KEY_TRACK_DISPLAY_MODE, DEFAULT_TRACK_DISPLAY_MODE);
 		displaySettings.put(KEY_TRACK_DISPLAY_DEPTH, DEFAULT_TRACK_DISPLAY_DEPTH);
+		displaySettings.put(KEY_TRACK_COLORING, new PerTrackFeatureColorGenerator(model, TrackIndexAnalyzer.TRACK_INDEX));
 		displaySettings.put(KEY_COLORMAP, DEFAULT_COLOR_MAP);
 	}
 	

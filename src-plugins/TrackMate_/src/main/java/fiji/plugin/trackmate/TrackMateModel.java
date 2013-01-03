@@ -588,7 +588,7 @@ public class TrackMateModel {
 			spotsToUpdate.addAll(spotsUpdated);
 			// Update these spots feaures
 			SpotCollection toCompute = filteredSpots.subset(spotsToUpdate);
-			featureModel.computeSpotFeatures(toCompute);
+			featureModel.computeSpotFeatures(toCompute, false);
 		}
 
 		// Initialize event

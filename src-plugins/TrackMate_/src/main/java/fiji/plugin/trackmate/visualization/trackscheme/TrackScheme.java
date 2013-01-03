@@ -7,6 +7,7 @@ import java.awt.Dimension;
 import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.image.BufferedImage;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -43,7 +44,10 @@ import fiji.plugin.trackmate.TrackMateModelChangeEvent;
 import fiji.plugin.trackmate.TrackMateModelChangeListener;
 import fiji.plugin.trackmate.TrackMateSelectionChangeEvent;
 import fiji.plugin.trackmate.TrackMateSelectionChangeListener;
+import fiji.plugin.trackmate.features.edges.EdgeVelocityAnalyzer;
 import fiji.plugin.trackmate.visualization.AbstractTrackMateModelView;
+import fiji.plugin.trackmate.visualization.PerEdgeFeatureColorGenerator;
+import fiji.plugin.trackmate.visualization.TrackColorGenerator;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
 
 public class TrackScheme implements TrackMateModelChangeListener, TrackMateSelectionChangeListener, TrackMateModelView {
@@ -140,6 +144,7 @@ public class TrackScheme implements TrackMateModelChangeListener, TrackMateSelec
 	 * This field is regenerated after each call to {@link #execute(Object)}.
 	 */
 	private int unlaidSpotColumn = 3;
+	private TrackSchemeStylist stylist;
 
 	/*
 	 * CONSTRUCTORS
@@ -517,49 +522,81 @@ public class TrackScheme implements TrackMateModelChangeListener, TrackMateSelec
 
 			graph.getModel().beginUpdate();
 			try {
-				for (DefaultWeightedEdge edge : event.getEdges()) {
-					if (event.getEdgeFlag(edge) == TrackMateModelChangeEvent.FLAG_EDGE_ADDED) {
 
-						mxICell edgeCell = graph.getCellFor(edge);
-						if (null == edgeCell) {
+				if (event.getEdges().size() > 0) {
 
-							// Make sure target & source cells exist
+					Map<Integer, Set<mxCell>> edgesToUpdate = new HashMap<Integer, Set<mxCell>>();
+					
+					for (DefaultWeightedEdge edge : event.getEdges()) {
+						
+						if (event.getEdgeFlag(edge) == TrackMateModelChangeEvent.FLAG_EDGE_ADDED) {
 
-							Spot source = model.getTrackModel().getEdgeSource(edge);
-							mxCell sourceCell = graph.getCellFor(source);
-							if (sourceCell == null) {
-								int frame = source.getFeature(Spot.FRAME).intValue();
-								// Put in the graph
-								int targetColumn = getUnlaidSpotColumn();
-								int column = Math.max(targetColumn, getNextFreeColumn(frame));
-								insertSpotInGraph(source, column); // move in right+1 free column
-								rowLengths.put(frame, column);
+							mxCell edgeCell = graph.getCellFor(edge);
+							if (null == edgeCell) {
+
+								// Make sure target & source cells exist
+
+								Spot source = model.getTrackModel().getEdgeSource(edge);
+								mxCell sourceCell = graph.getCellFor(source);
+								if (sourceCell == null) {
+									int frame = source.getFeature(Spot.FRAME).intValue();
+									// Put in the graph
+									int targetColumn = getUnlaidSpotColumn();
+									int column = Math.max(targetColumn, getNextFreeColumn(frame));
+									insertSpotInGraph(source, column); // move in right+1 free column
+									rowLengths.put(frame, column);
+								}
+
+								Spot target = model.getTrackModel().getEdgeTarget(edge);
+								mxCell targetCell = graph.getCellFor(target);
+								if (targetCell == null) {
+									int frame = target.getFeature(Spot.FRAME).intValue();
+									// Put in the graph
+									int targetColumn = getUnlaidSpotColumn();
+									int column = Math.max(targetColumn, getNextFreeColumn(frame));
+									insertSpotInGraph(target, column); // move in right+1 free column
+									rowLengths.put(frame, column);
+								}
+
+
+								// And finally create the edge cell
+								edgeCell = graph.addJGraphTEdge(edge);
+
+
 							}
 
-							Spot target = model.getTrackModel().getEdgeTarget(edge);
-							mxCell targetCell = graph.getCellFor(target);
-							if (targetCell == null) {
-								int frame = target.getFeature(Spot.FRAME).intValue();
-								// Put in the graph
-								int targetColumn = getUnlaidSpotColumn();
-								int column = Math.max(targetColumn, getNextFreeColumn(frame));
-								insertSpotInGraph(target, column); // move in right+1 free column
-								rowLengths.put(frame, column);
+							graph.getModel().add(graph.getDefaultParent(), edgeCell, 0);
+							
+							// Add it to the map of cells to recolor
+							Integer trackID = model.getTrackModel().getTrackIDOf(edge);
+							Set<mxCell> edgeSet = edgesToUpdate.get(trackID);
+							if (edgesToUpdate.get(trackID) == null) {
+								edgeSet = new HashSet<mxCell>();
+								edgesToUpdate.put(trackID, edgeSet);
 							}
+							edgeSet.add(edgeCell);
 
-
-							// And finally create the edge cell
-							edgeCell = graph.addJGraphTEdge(edge);
-
-
+						} else if (event.getEdgeFlag(edge) == TrackMateModelChangeEvent.FLAG_EDGE_MODIFIED) {
+							// Add it to the map of cells to recolor
+							Integer trackID = model.getTrackModel().getTrackIDOf(edge);
+							Set<mxCell> edgeSet = edgesToUpdate.get(trackID);
+							if (edgesToUpdate.get(trackID) == null) {
+								edgeSet = new HashSet<mxCell>();
+								edgesToUpdate.put(trackID, edgeSet);
+							}
+							edgeSet.add(graph.getCellFor(edge));
 						}
-
-						graph.getModel().add(graph.getDefaultParent(), edgeCell, 0);
-						String edgeStyle = edgeCell.getStyle();
-						//						edgeStyle = mxStyleUtils.setStyle(edgeStyle, mxSideTextShape.STYLE_DISPLAY_COST, ""+graphLayout.isDoDisplayCosts());
-						graph.getModel().setStyle(edgeCell, edgeStyle);
-
 					}
+					
+					stylist.execute(edgesToUpdate);
+					SwingUtilities.invokeLater(new Runnable(){
+						public void run() {
+							gui.graphComponent.refresh();
+							gui.graphComponent.repaint();
+						}
+					});
+					
+					
 				}
 			} finally {
 				graph.getModel().endUpdate();
@@ -574,6 +611,17 @@ public class TrackScheme implements TrackMateModelChangeListener, TrackMateSelec
 
 	@Override
 	public void setDisplaySettings(String key, Object value) {
+		
+		if (key == TrackMateModelView.KEY_TRACK_COLORING) {
+			// de-register the old one
+			TrackColorGenerator oldColorGenerator = (TrackColorGenerator) displaySettings.get(KEY_TRACK_COLORING);
+			oldColorGenerator.terminate();
+			// pass the new one to the track overlay - we ignore its spot coloring and keep the spot coloring
+			TrackColorGenerator colorGenerator = (TrackColorGenerator) value;
+			stylist.setColorGenerator(colorGenerator);
+			doTrackStyle();
+		}
+		
 		displaySettings.put(key, value);
 	}
 
@@ -584,12 +632,20 @@ public class TrackScheme implements TrackMateModelChangeListener, TrackMateSelec
 
 	@Override
 	public void render() {
-		SwingUtilities.invokeLater(new Runnable(){
-			public void run()	{
-				initGUI();
-				doTrackLayout();
-			}
-		});
+		try {
+			SwingUtilities.invokeAndWait(new Runnable(){
+				public void run()	{
+					initGUI();
+					TrackColorGenerator colorGenerator = (TrackColorGenerator) displaySettings.get(KEY_TRACK_COLORING);
+					stylist = new TrackSchemeStylist(TrackScheme.this, colorGenerator);
+					doTrackLayout();
+				}
+			});
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		} catch (InvocationTargetException e) {
+			e.printStackTrace();
+		}
 	}
 
 	@Override
@@ -625,6 +681,7 @@ public class TrackScheme implements TrackMateModelChangeListener, TrackMateSelec
 		displaySettings.put(KEY_TRACK_DISPLAY_MODE, DEFAULT_TRACK_DISPLAY_MODE);
 		displaySettings.put(KEY_TRACK_DISPLAY_DEPTH, DEFAULT_TRACK_DISPLAY_DEPTH);
 		displaySettings.put(KEY_COLORMAP, DEFAULT_COLOR_MAP);
+		displaySettings.put(KEY_TRACK_COLORING, new PerEdgeFeatureColorGenerator(model, EdgeVelocityAnalyzer.VELOCITY));
 	}
 
 
@@ -849,11 +906,29 @@ public class TrackScheme implements TrackMateModelChangeListener, TrackMateSelec
 	public void resetZoom() {
 		gui.graphComponent.zoomTo(1.0, false);
 	}
+	
+	private void doTrackStyle() {
+		// Collect edges
+		Set<Integer> trackIDs = model.getTrackModel().getFilteredTrackIDs();
+		HashMap<Integer, Set<mxCell>> edgeMap = new HashMap<Integer, Set<mxCell>>(trackIDs.size());
+		for (Integer trackID : trackIDs) {
+			Set<DefaultWeightedEdge> edges = model.getTrackModel().getTrackEdges(trackID);
+			HashSet<mxCell> set = new HashSet<mxCell>(edges.size());
+			for (DefaultWeightedEdge edge : edges) {
+				set.add(graph.getCellFor(edge));
+			}
+			edgeMap.put(trackID, set);
+		}
+		// Give them style
+		stylist.execute(edgeMap);
+	}
 
 	public void doTrackLayout() {
 		// Position cells
 		graphLayout.execute(null);
-
+		// Redo their style
+		doTrackStyle();
+		// Update
 		SwingUtilities.invokeLater(new Runnable(){
 			public void run() {
 				gui.graphComponent.refresh();
@@ -869,6 +944,7 @@ public class TrackScheme implements TrackMateModelChangeListener, TrackMateSelec
 			}
 		}
 		unlaidSpotColumn = maxLength;
+
 	}
 
 	public void captureUndecorated() {

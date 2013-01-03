@@ -21,7 +21,7 @@ import org.jgrapht.graph.DefaultWeightedEdge;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.util.TMUtils;
-import fiji.plugin.trackmate.visualization.TrackPartsColorGenerator;
+import fiji.plugin.trackmate.visualization.TrackColorGenerator;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
 import fiji.util.gui.OverlayedImageCanvas.Overlay;
 
@@ -37,7 +37,7 @@ public class TrackOverlay implements Overlay {
 	protected Collection<DefaultWeightedEdge> highlight = new HashSet<DefaultWeightedEdge>();
 	protected Map<String, Object> displaySettings;
 	protected final TrackMateModel model;
-	private TrackPartsColorGenerator colorGenerator;
+	private TrackColorGenerator colorGenerator;
 
 	/*
 	 * CONSTRUCTOR
@@ -123,14 +123,14 @@ public class TrackOverlay implements Overlay {
 			for (Integer trackID : filteredTrackKeys) {
 //				g2d.setColor(e3dgeColors.get(trackID));
 				final Set<DefaultWeightedEdge> track = trackEdges.get(trackID);
-				
+				colorGenerator.setCurrentTrackID(trackID);
 				for (DefaultWeightedEdge edge : track) {
 					if (highlight.contains(edge))
 						continue;
 
 					source = model.getTrackModel().getEdgeSource(edge);
 					target = model.getTrackModel().getEdgeTarget(edge);
-					g2d.setColor(colorGenerator.color(edge, trackID));
+					g2d.setColor(colorGenerator.color(edge));
 					drawEdge(g2d, source, target, xcorner, ycorner, mag);
 				}
 			}
@@ -143,9 +143,9 @@ public class TrackOverlay implements Overlay {
 
 			g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
 
-			for (Integer key : filteredTrackKeys) {
-//				g2d.setColor(edgeColors.get(key));
-				final Set<DefaultWeightedEdge> track= trackEdges.get(key);
+			for (Integer trackID : filteredTrackKeys) {
+				colorGenerator.setCurrentTrackID(trackID);
+				final Set<DefaultWeightedEdge> track= trackEdges.get(trackID);
 
 				for (DefaultWeightedEdge edge : track) {
 					if (highlight.contains(edge))
@@ -157,7 +157,7 @@ public class TrackOverlay implements Overlay {
 						continue;
 
 					target = model.getTrackModel().getEdgeTarget(edge);
-					g2d.setColor(colorGenerator.color(edge, key));
+					g2d.setColor(colorGenerator.color(edge));
 					drawEdge(g2d, source, target, xcorner, ycorner, mag);
 				}
 			}
@@ -170,9 +170,9 @@ public class TrackOverlay implements Overlay {
 
 			g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-			for (Integer key : filteredTrackKeys) {
-//				g2d.setColor(edgeColors.get(key));
-				final Set<DefaultWeightedEdge> track= trackEdges.get(key);
+			for (Integer trackID : filteredTrackKeys) {
+				colorGenerator.setCurrentTrackID(trackID);
+				final Set<DefaultWeightedEdge> track= trackEdges.get(trackID);
 
 				for (DefaultWeightedEdge edge : track) {
 					if (highlight.contains(edge))
@@ -185,7 +185,7 @@ public class TrackOverlay implements Overlay {
 
 					transparency = (float) (1 - Math.abs(sourceFrame-currentFrame) / trackDisplayDepth);
 					target = model.getTrackModel().getEdgeTarget(edge);
-					g2d.setColor(colorGenerator.color(edge, key));
+					g2d.setColor(colorGenerator.color(edge));
 					drawEdge(g2d, source, target, xcorner, ycorner, mag, transparency);
 				}
 			}
@@ -270,7 +270,7 @@ public class TrackOverlay implements Overlay {
 	@Override
 	public void setComposite(Composite composite) {	}
 
-	public void setTrackColorGenerator(TrackPartsColorGenerator colorGenerator) {
+	public void setTrackColorGenerator(TrackColorGenerator colorGenerator) {
 		this.colorGenerator = colorGenerator;
 	}
 

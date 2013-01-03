@@ -193,7 +193,7 @@ public class SaveAction extends AbstractAction {
 				mxUtils.writeFile(xml, filename);
 
 			} else if (ext.equalsIgnoreCase("txt")) {
-				String content = mxGdCodec.encode(graph).getDocumentString();
+				String content = mxGdCodec.encode(graph); // .getDocumentString();
 				mxUtils.writeFile(content, filename);
 
 			} else if (ext.equalsIgnoreCase("pdf")) {

@@ -37,7 +37,7 @@ public class HyperStackDisplayerTestDrive {
 
 		// Grab spot icons
 		if (null != model.getSettings().imp)
-			model.getFeatureModel().computeSpotFeatures(model.getSpots());
+			model.getFeatureModel().computeSpotFeatures(model.getSpots(), true);
 				
 		final TrackMateModelView displayer = new HyperStackDisplayer(model);
 		displayer.render();

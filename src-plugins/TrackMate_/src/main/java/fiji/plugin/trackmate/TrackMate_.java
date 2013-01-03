@@ -330,10 +330,10 @@ public class TrackMate_ implements PlugIn, Benchmark, MultiThreaded, Algorithm {
 	 * <p>
 	 * Features are calculated for each spot, using their location, and the raw image. 
 	 */
-	public void computeSpotFeatures() {
+	public void computeSpotFeatures(boolean doLogIt) {
 		final Logger logger = model.getLogger();
 		logger.log("Computing spot features.\n");
-		model.getFeatureModel().computeSpotFeatures(model.getSpots());
+		model.getFeatureModel().computeSpotFeatures(model.getSpots(), doLogIt);
 	}
 
 	public void computeEdgeFeatures(boolean doLogIt) {
@@ -671,7 +671,7 @@ public class TrackMate_ implements PlugIn, Benchmark, MultiThreaded, Algorithm {
 		if (!execInitialSpotFiltering()) {
 			return false;
 		}
-		computeSpotFeatures();
+		computeSpotFeatures(true);
 		if (!execSpotFiltering(true)) {
 			return false;
 		}

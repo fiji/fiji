@@ -16,12 +16,10 @@ import fiji.plugin.trackmate.SpotImp;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMateModelChangeEvent;
 import fiji.plugin.trackmate.TrackMateSelectionChangeEvent;
-import fiji.plugin.trackmate.features.track.TrackIndexAnalyzer;
 import fiji.plugin.trackmate.util.TMUtils;
 import fiji.plugin.trackmate.visualization.AbstractTrackMateModelView;
-import fiji.plugin.trackmate.visualization.TrackFeatureColorGenerator;
+import fiji.plugin.trackmate.visualization.TrackColorGenerator;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
-import fiji.plugin.trackmate.visualization.TrackPartsColorGenerator;
 import fiji.util.gui.OverlayedImageCanvas;
 
 public class HyperStackDisplayer extends AbstractTrackMateModelView  {
@@ -101,8 +99,7 @@ public class HyperStackDisplayer extends AbstractTrackMateModelView  {
 	 */
 	protected TrackOverlay createTrackOverlay() {
 		TrackOverlay to = new TrackOverlay(model, imp, displaySettings);
-		TrackFeatureColorGenerator colorGenerator = new TrackFeatureColorGenerator(model);
-		colorGenerator.selectFeature(TrackIndexAnalyzer.TRACK_INDEX);
+		TrackColorGenerator colorGenerator = (TrackColorGenerator) displaySettings.get(KEY_TRACK_COLORING);
 		to.setTrackColorGenerator(colorGenerator);
 		return to;
 	}
@@ -242,7 +239,11 @@ public class HyperStackDisplayer extends AbstractTrackMateModelView  {
 			spotOverlay.computeSpotColors();
 		}
 		if (key == TrackMateModelView.KEY_TRACK_COLORING) {
-			TrackPartsColorGenerator colorGenerator = (TrackPartsColorGenerator) value;
+			// de-register the old one
+			TrackColorGenerator oldColorGenerator = (TrackColorGenerator) displaySettings.get(KEY_TRACK_COLORING);
+			oldColorGenerator.terminate();
+			// pass the new one to the track overlay - we ignore its spot coloring and keep the spot coloring
+			TrackColorGenerator colorGenerator = (TrackColorGenerator) value;
 			trackOverlay.setTrackColorGenerator(colorGenerator);
 		}
 	}

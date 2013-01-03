@@ -18,21 +18,24 @@ import fiji.plugin.trackmate.TrackMateModelChangeEvent;
 import fiji.plugin.trackmate.TrackMateModelChangeListener;
 
 /**
- * A {@link TrackPartsColorGenerator} that generate colors based on the whole
+ * A {@link TrackColorGenerator} that generate colors based on the whole
  * track feature.
  * @author Jean-Yves Tinevez
  *
  */
-public class TrackFeatureColorGenerator implements TrackPartsColorGenerator, TrackMateModelChangeListener {
+public class PerTrackFeatureColorGenerator implements TrackColorGenerator, TrackMateModelChangeListener {
 
 	/** Default color used when a feature value is missing. */
 	private static final Color DEFAULT_COLOR = Color.WHITE;
+	private static final InterpolatePaintScale generator = InterpolatePaintScale.Jet;
 	private HashMap<Integer,Color> colorMap;
 	private final TrackMateModel model;
 	private String feature;
+	private Integer trackID;
 
-	public TrackFeatureColorGenerator(TrackMateModel model) {
+	public PerTrackFeatureColorGenerator(TrackMateModel model, String feature) {
 		this.model = model;
+		setFeature(feature);
 		model.addTrackMateModelChangeListener(this);
 	}
 
@@ -46,7 +49,10 @@ public class TrackFeatureColorGenerator implements TrackPartsColorGenerator, Tra
 	 * @param feature  the track feature that will control coloring.
 	 * @throws IllegalArgumentException if the specified feature is unknown to the feature model.
 	 */
-	public void selectFeature(String feature) {
+	public void setFeature(String feature) {
+		if (feature.equals(this.feature)) {
+			return;
+		}
 		this.feature = feature;
 		refresh();
 	}
@@ -55,7 +61,6 @@ public class TrackFeatureColorGenerator implements TrackPartsColorGenerator, Tra
 
 		TrackGraphModel trackModel = model.getTrackModel();
 		Set<Integer> trackIDs = trackModel.getFilteredTrackIDs();
-
 
 		// Get min & max & all values
 		FeatureModel fm = model .getFeatureModel();
@@ -73,9 +78,6 @@ public class TrackFeatureColorGenerator implements TrackPartsColorGenerator, Tra
 			}
 		}
 
-		// Get color scale
-		InterpolatePaintScale generator = InterpolatePaintScale.Jet;
-
 		// Create value->color map
 		colorMap = new HashMap<Integer, Color>(trackIDs.size());
 		for (Integer trackID : values.keySet()) {
@@ -92,16 +94,6 @@ public class TrackFeatureColorGenerator implements TrackPartsColorGenerator, Tra
 
 
 	@Override
-	public Color color(Spot spot, Integer trackID) {
-		return colorMap.get(trackID);
-	}
-
-	@Override
-	public Color color(DefaultWeightedEdge edge, Integer trackID) {
-		return colorMap.get(trackID);
-	}
-
-	@Override
 	public void modelChanged(TrackMateModelChangeEvent event) {
 		if (event.getEventID() ==  TrackMateModelChangeEvent.MODEL_MODIFIED) {
 			Set<DefaultWeightedEdge> edges = event.getEdges();
@@ -111,4 +103,24 @@ public class TrackFeatureColorGenerator implements TrackPartsColorGenerator, Tra
 		}		
 	}
 
+	@Override
+	public Color color(Spot spot) {
+		return colorMap.get(trackID);
+	}
+
+	@Override
+	public Color color(DefaultWeightedEdge edge) {
+		return colorMap.get(trackID);
+	}
+
+	@Override
+	public void setCurrentTrackID(Integer trackID) {
+		this.trackID = trackID;
+	}
+
+	@Override
+	public void terminate() {
+		model.removeTrackMateModelChangeListener(this);
+	}
+	
 }

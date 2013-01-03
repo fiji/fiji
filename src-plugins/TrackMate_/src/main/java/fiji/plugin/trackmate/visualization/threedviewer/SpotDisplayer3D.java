@@ -29,7 +29,7 @@ import fiji.plugin.trackmate.TrackMateModelChangeEvent;
 import fiji.plugin.trackmate.TrackMateSelectionChangeEvent;
 import fiji.plugin.trackmate.util.TMUtils;
 import fiji.plugin.trackmate.visualization.AbstractTrackMateModelView;
-import fiji.plugin.trackmate.visualization.TrackPartsColorGenerator;
+import fiji.plugin.trackmate.visualization.TrackColorGenerator;
 
 public class SpotDisplayer3D extends AbstractTrackMateModelView {
 
@@ -368,11 +368,12 @@ public class SpotDisplayer3D extends AbstractTrackMateModelView {
 	}
 
 	private void updateTrackColors() {
-		final TrackPartsColorGenerator colorGenerator = (TrackPartsColorGenerator) displaySettings.get(KEY_TRACK_COLORING);
+		final TrackColorGenerator colorGenerator = (TrackColorGenerator) displaySettings.get(KEY_TRACK_COLORING);
 
 		for(Integer trackID : model.getTrackModel().getFilteredTrackIDs()) {
+			colorGenerator.setCurrentTrackID(trackID);
 			for (DefaultWeightedEdge edge : model.getTrackModel().getTrackEdges(trackID)) {
-				Color color =  colorGenerator.color(edge, trackID);
+				Color color =  colorGenerator.color(edge);
 				trackNode.setColor(edge, color);
 			}
 		}

@@ -54,7 +54,7 @@ public interface TrackMateModelView extends InfoTextable {
 	
 	/**
 	 * Defines the key for the track coloring method. Values are concrete implementations
-	 * of {@link TrackPartsColorGenerator}.
+	 * of {@link TrackColorGenerator}.
 	 */
 	public static final String KEY_TRACK_COLORING = "TrackColoring";
 
