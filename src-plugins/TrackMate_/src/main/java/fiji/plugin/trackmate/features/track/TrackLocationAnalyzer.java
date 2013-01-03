@@ -22,7 +22,6 @@ public class TrackLocationAnalyzer implements TrackAnalyzer, MultiThreaded, Benc
 	 * FEATURE NAMES 
 	 */
 	public static final String KEY = "Track location";
-	public static final String TRACK_ID = "TRACK_ID";
 	public static final String X_LOCATION = "X_LOCATION";
 	public static final String Y_LOCATION = "Y_LOCATION";
 	public static final String Z_LOCATION = "Z_LOCATION";
@@ -36,19 +35,15 @@ public class TrackLocationAnalyzer implements TrackAnalyzer, MultiThreaded, Benc
 		FEATURES.add(X_LOCATION);
 		FEATURES.add(Y_LOCATION);
 		FEATURES.add(Z_LOCATION);
-		FEATURES.add(TRACK_ID);
 
-		FEATURE_NAMES.put(TRACK_ID, "Track ID");
 		FEATURE_NAMES.put(X_LOCATION, "X Location (mean)");
 		FEATURE_NAMES.put(Y_LOCATION, "Y Location (mean)");
 		FEATURE_NAMES.put(Z_LOCATION, "Z Location (mean)");
 
-		FEATURE_SHORT_NAMES.put(TRACK_ID, "ID");
 		FEATURE_SHORT_NAMES.put(X_LOCATION, "X");
 		FEATURE_SHORT_NAMES.put(Y_LOCATION, "Y");
 		FEATURE_SHORT_NAMES.put(Z_LOCATION, "Z");
 
-		FEATURE_DIMENSIONS.put(TRACK_ID, Dimension.NONE);
 		FEATURE_DIMENSIONS.put(X_LOCATION, Dimension.POSITION);
 		FEATURE_DIMENSIONS.put(Y_LOCATION, Dimension.POSITION);
 		FEATURE_DIMENSIONS.put(Z_LOCATION, Dimension.POSITION);
@@ -102,7 +97,6 @@ public class TrackLocationAnalyzer implements TrackAnalyzer, MultiThreaded, Benc
 						y /= nspots;
 						z /= nspots;
 
-						fm.putTrackFeature(trackID, TRACK_ID, Double.valueOf(trackID));
 						fm.putTrackFeature(trackID, X_LOCATION, x);
 						fm.putTrackFeature(trackID, Y_LOCATION, y);
 						fm.putTrackFeature(trackID, Z_LOCATION, z);
