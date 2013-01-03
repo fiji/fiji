@@ -35,7 +35,6 @@ Exception in thread "AWT-EventQueue-0" java.lang.NullPointerException
 No idea what to do with that. Google was not helpful. 
 
 Features:
-- Implement edge features. Maybe not.
 
 
 Detection:
