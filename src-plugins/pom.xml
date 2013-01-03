@@ -8,7 +8,7 @@
 	<parent>
 		<groupId>org.scijava</groupId>
 		<artifactId>pom-scijava</artifactId>
-		<version>1.24</version>
+		<version>1.27</version>
 	</parent>
 
 	<groupId>sc.fiji</groupId>
@@ -20,7 +20,7 @@
 	<description></description>
 
 	<properties>
-		<fiji.rootdir>${rootdir}/..</fiji.rootdir>
+		<imagej.app.directory>${rootdir}/..</imagej.app.directory>
 		<imagescience.version>2.4.1</imagescience.version>
 		<jcommon.version>1.0.17</jcommon.version>
 		<jfreechart.version>1.0.14</jfreechart.version>
@@ -161,26 +161,7 @@
 			<plugin>
 				<groupId>net.imagej</groupId>
 				<artifactId>imagej-maven-plugin</artifactId>
-				<version>0.1.0-SNAPSHOT</version>
-				<executions>
-					<execution>
-						<id>copy-jars</id>
-						<phase>install</phase>
-						<goals>
-							<goal>copy-jars</goal>
-						</goals>
-					</execution>
-					<execution>
-						<id>set-rootdir</id>
-						<phase>validate</phase>
-						<goals>
-							<goal>set-rootdir</goal>
-						</goals>
-					</execution>
-				</executions>
-				<configuration>
-					<imagejDirectory>${fiji.rootdir}</imagejDirectory>
-				</configuration>
+				<version>0.1.1-SNAPSHOT</version>
 			</plugin>
 		</plugins>
 	</build>
