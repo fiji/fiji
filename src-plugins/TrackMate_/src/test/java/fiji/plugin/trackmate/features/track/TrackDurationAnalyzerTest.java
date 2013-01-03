@@ -23,12 +23,13 @@ import fiji.plugin.trackmate.TrackMateModelChangeListener;
 public class TrackDurationAnalyzerTest {
 
 	private static final int N_TRACKS = 10;
-	private static final int DEPTH = 9;
+	private static final int DEPTH = 9; // must be at least 6 to avoid tracks too shorts - may make this test fail sometimes
 	private TrackMateModel model;
 	private HashMap<Integer, Double> expectedDuration;
 	private HashMap<Integer, Double> expectedStart;
 	private HashMap<Integer, Double> expectedStop;
 	private HashMap<Integer, Double> expectedDisplacement;
+	private int key;
 
 	@Before
 	public void setUp() {
@@ -47,7 +48,7 @@ public class TrackDurationAnalyzerTest {
 				Spot previous = null;
 				
 				int start = ran.nextInt(DEPTH);
-				int stop = DEPTH + ran.nextInt(DEPTH);
+				int stop = start + DEPTH + ran.nextInt(DEPTH);
 				int duration = stop - start;
 				double displacement = ran.nextDouble();
 				
@@ -64,7 +65,7 @@ public class TrackDurationAnalyzerTest {
 				}
 				previous.putFeature(Spot.POSITION_X, displacement);
 				
-				int key = track.hashCode(); // a hack: the track ID will be the hash of the spot set 
+				key = track.hashCode(); // a hack: the track ID will be the hash of the spot set 
 				expectedDuration.put(key, Double.valueOf(duration));
 				expectedStart.put(key, Double.valueOf(start));
 				expectedStop.put(key, Double.valueOf(stop));
@@ -110,7 +111,7 @@ public class TrackDurationAnalyzerTest {
 		TrackMateModelChangeListener listener = new TrackMateModelChangeListener() {
 			@Override
 			public void modelChanged(TrackMateModelChangeEvent event) {
-				analyzer.modelChanged(event);
+				analyzer.process(event.getTrackUpdated());
 			}
 		};
 		model.addTrackMateModelChangeListener(listener);
@@ -163,15 +164,17 @@ public class TrackDurationAnalyzerTest {
 		
 		// Check the track IDs: must be of size 1, and they to the track with firstSpot and newSpot in it
 		assertEquals(1, analyzer.keys.size());
-		assertTrue(model.getTrackModel().getTrackSpots(analyzer.keys.iterator().next()).contains(firstSpot));
-		assertTrue(model.getTrackModel().getTrackSpots(analyzer.keys.iterator().next()).contains(newSpot));
+		// The ID of the modified track has changed
+		Integer newKey = analyzer.keys.iterator().next();
+		assertTrue(model.getTrackModel().getTrackSpots(newKey).contains(firstSpot));
+		assertTrue(model.getTrackModel().getTrackSpots(newKey).contains(newSpot));
 		
 		// But the track features for this track should not have changed: the grafting did not affect
 		// start nor stop nor displacement
-		assertEquals(expectedDisplacement.get(firstKey), model.getFeatureModel().getTrackFeature(firstKey, TrackDurationAnalyzer.TRACK_DISPLACEMENT));
-		assertEquals(expectedStart.get(firstKey), model.getFeatureModel().getTrackFeature(firstKey, TrackDurationAnalyzer.TRACK_START));
-		assertEquals(expectedStop.get(firstKey), model.getFeatureModel().getTrackFeature(firstKey, TrackDurationAnalyzer.TRACK_STOP));
-		assertEquals(expectedDuration.get(firstKey), model.getFeatureModel().getTrackFeature(firstKey, TrackDurationAnalyzer.TRACK_DURATION));
+		assertEquals(expectedDisplacement.get(firstKey), model.getFeatureModel().getTrackFeature(newKey, TrackDurationAnalyzer.TRACK_DISPLACEMENT));
+		assertEquals(expectedStart.get(firstKey), model.getFeatureModel().getTrackFeature(newKey, TrackDurationAnalyzer.TRACK_START));
+		assertEquals(expectedStop.get(firstKey), model.getFeatureModel().getTrackFeature(newKey, TrackDurationAnalyzer.TRACK_STOP));
+		assertEquals(expectedDuration.get(firstKey), model.getFeatureModel().getTrackFeature(newKey, TrackDurationAnalyzer.TRACK_DURATION));
 		
 		
 	}
@@ -193,7 +196,7 @@ public class TrackDurationAnalyzerTest {
 		TrackMateModelChangeListener listener = new TrackMateModelChangeListener() {
 			@Override
 			public void modelChanged(TrackMateModelChangeEvent event) {
-				analyzer.modelChanged(event);
+				analyzer.process(event.getTrackUpdated());
 			}
 		};
 		model.addTrackMateModelChangeListener(listener);
@@ -247,20 +250,17 @@ public class TrackDurationAnalyzerTest {
 		TrackMateModelChangeListener listener = new TrackMateModelChangeListener() {
 			@Override
 			public void modelChanged(TrackMateModelChangeEvent event) {
-				analyzer.modelChanged(event);
+				analyzer.process(event.getTrackUpdated());
 			}
 		};
 		model.addTrackMateModelChangeListener(listener);
 
-		// Get a track
-		Integer aKey = model.getTrackModel().getFilteredTrackIDs().iterator().next();
-		
 		// Get its middle spot
 		TreeSet<Spot> sortedTrack = new TreeSet<Spot>(Spot.frameComparator);
-		sortedTrack.addAll(model.getTrackModel().getTrackSpots(aKey));
+		sortedTrack.addAll(model.getTrackModel().getTrackSpots(key));
 		Spot aspot = null;
 		Iterator<Spot> it = sortedTrack.iterator();
-		for (int i = 0; i < DEPTH/2; i++) {
+		for (int i = 0; i < sortedTrack.size()/2; i++) {
 			aspot = it.next();
 		}
 		// Store first and last spot for later
@@ -277,7 +277,7 @@ public class TrackDurationAnalyzerTest {
 		
 		// The analyzer must have done something:
 		assertTrue(analyzer.hasBeenCalled);
-
+		
 		// Check the track IDs: must be of size 2: the two track that were created from the removal
 		assertEquals(2, analyzer.keys.size());
 		for (Integer targetKey : analyzer.keys) {

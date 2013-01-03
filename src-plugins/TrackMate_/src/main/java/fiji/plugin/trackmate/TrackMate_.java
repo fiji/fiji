@@ -132,8 +132,8 @@ public class TrackMate_ implements PlugIn, Benchmark, MultiThreaded, Algorithm {
 		this.viewProvider 			= createViewProvider();
 		this.actionProvider 			= createActionProvider();
 		model.getFeatureModel().setSpotFeatureFactory(spotFeatureAnalyzerProvider);
-		model.getFeatureModel().setTrackFeatureProvider(trackFeatureProvider);
-		model.getFeatureModel().setEdgeFeatureProvider(edgeFeatureAnalyzerProvider);
+		model.getFeatureModel().setTrackAnalyzerProvider(trackFeatureProvider);
+		model.getFeatureModel().setEdgeAnalyzerProvider(edgeFeatureAnalyzerProvider);
 	}
 
 	/*

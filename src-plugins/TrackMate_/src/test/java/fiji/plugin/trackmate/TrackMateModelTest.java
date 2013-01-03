@@ -73,7 +73,7 @@ public class TrackMateModelTest {
 		} finally {
 			model.endUpdate();
 		}
-		
+
 		// These must be 4 tracks visible
 		visibleTracks = model.getTrackModel().getFilteredTrackIDs();
 		assertEquals(4, visibleTracks.size());
@@ -86,14 +86,14 @@ public class TrackMateModelTest {
 
 		// Check in what track is the spot s4
 		int track2 = model.getTrackModel().getTrackIDOf(s4);
-//		System.out.println("The spot "+s4+" is in track "+track2);
-		
+		//		System.out.println("The spot "+s4+" is in track "+track2);
+
 		// Make it invisible
 		boolean modified = model.getTrackModel().setFilteredTrackID(track2, false, false);
-		
+
 		// We must have modified something: it was visible, now it is invisible
 		assertTrue(modified);
-		
+
 		// These must be now 3 tracks visible
 		visibleTracks = model.getTrackModel().getFilteredTrackIDs();
 		assertEquals(3, visibleTracks.size());
@@ -103,7 +103,7 @@ public class TrackMateModelTest {
 		for(int index : visibleTracks) {
 			assertTrue( track2 != index ); 
 		}
-		
+
 		// Reconnect s2 and s4
 		model.beginUpdate();
 		try {
@@ -111,7 +111,7 @@ public class TrackMateModelTest {
 		} finally {
 			model.endUpdate();
 		}
-		
+
 		// These must be now 3 tracks visible: connecting a visible track with an invisible makes
 		// it all visible
 		visibleTracks = model.getTrackModel().getFilteredTrackIDs();
@@ -195,7 +195,7 @@ public class TrackMateModelTest {
 		TrackMateModelChangeListener eventLogger = new TrackMateModelChangeListener() {
 			@Override
 			public void modelChanged(TrackMateModelChangeEvent event) {
-				
+
 				// Event must be of the right type
 				assertEquals(TrackMateModelChangeEvent.MODEL_MODIFIED, event.getEventID());
 				// I expect 5 new spots from this event
@@ -275,23 +275,12 @@ public class TrackMateModelTest {
 					assertTrue( 
 							( model.getTrackModel().getEdgeSource(edge).equals(s3) && model.getTrackModel().getEdgeTarget(edge).equals(s2) || 
 									model.getTrackModel().getEdgeSource(edge).equals(s2) && model.getTrackModel().getEdgeTarget(edge).equals(s3)
-							) || (
-							model.getTrackModel().getEdgeSource(edge).equals(s3) && model.getTrackModel().getEdgeTarget(edge).equals(s4) 
-							|| model.getTrackModel().getEdgeSource(edge).equals(s4) && model.getTrackModel().getEdgeTarget(edge).equals(s3)
-							)
-						);
+									) || (
+											model.getTrackModel().getEdgeSource(edge).equals(s3) && model.getTrackModel().getEdgeTarget(edge).equals(s4) 
+											|| model.getTrackModel().getEdgeSource(edge).equals(s4) && model.getTrackModel().getEdgeTarget(edge).equals(s3)
+											)
+							);
 
-
-					// Check the removed edge origin: it must be found in the 2 new tracks that contain s1 or s5 
-					for (Integer trackID : event.getNewTracksFor(edge)) {
-						
-						assertTrue(
-								trackID == model.getTrackModel().getTrackIDOf(s1)
-								|| trackID == model.getTrackModel().getTrackIDOf(s5)
-								);
-						
-						
-					}
 				}
 			}
 		};
@@ -333,7 +322,7 @@ public class TrackMateModelTest {
 
 					assertTrue( 
 							( model.getTrackModel().getEdgeSource(edge).equals(s2) && model.getTrackModel().getEdgeTarget(edge).equals(s4) || 
-							model.getTrackModel().getEdgeSource(edge).equals(s4) && model.getTrackModel().getEdgeTarget(edge).equals(s2)	) 
+									model.getTrackModel().getEdgeSource(edge).equals(s4) && model.getTrackModel().getEdgeTarget(edge).equals(s2)	) 
 							);
 				}
 			}

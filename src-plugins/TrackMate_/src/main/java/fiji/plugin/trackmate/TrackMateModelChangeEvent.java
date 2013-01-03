@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.EventObject;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import org.jgrapht.graph.DefaultWeightedEdge;
@@ -30,6 +31,18 @@ public class TrackMateModelChangeEvent extends EventObject {
 	 * target or source spots are modified, or when the weight of the edge has
 	 * been modified. */
 	public static final Integer 	FLAG_EDGE_MODIFIED = 6;
+	
+	public static final Map<Integer, String> flagsToString = new HashMap<Integer, String>(7);
+	static {
+		flagsToString.put(FLAG_SPOT_ADDED, "Spot added");
+		flagsToString.put(FLAG_SPOT_FRAME_CHANGED, "Spot frame changed");
+		flagsToString.put(FLAG_SPOT_MODIFIED, "Spot modified");
+		flagsToString.put(FLAG_SPOT_REMOVED, "Spot removed");
+		flagsToString.put(FLAG_EDGE_ADDED, "Edge added");
+		flagsToString.put(FLAG_EDGE_MODIFIED, "Edge modified");
+		flagsToString.put(FLAG_EDGE_REMOVED, "Edge removed");
+	}
+	
 	
 	/** 
 	 * Event type indicating that the spots of the model were computed, and 
@@ -72,10 +85,9 @@ public class TrackMateModelChangeEvent extends EventObject {
 	private final HashMap<Spot, Integer> spotFlags = new HashMap<Spot, Integer>();
 	/** Modification flag for edges affected by this event. */
 	private final HashMap<DefaultWeightedEdge, Integer> edgeFlags = new HashMap<DefaultWeightedEdge, Integer>();
-	/** For edge that were removed, this list gives the new track IDs the removed edge belonged to. */
-	private final HashMap<DefaultWeightedEdge, Set<Integer>> fromTrackIDs = new HashMap<DefaultWeightedEdge, Set<Integer>>();
 	/** The event type for this instance. */
 	private final int eventID;
+	private Set<Integer> trackUpdated;
 
 	/**
 	 * Create a new event, reflecting a change in a {@link TrackMateModel}.
@@ -165,46 +177,51 @@ public class TrackMateModelChangeEvent extends EventObject {
 		return fromFrame.get(spot);
 	}
 	
-	/**
-	 * For edge that were removed ({@link #FLAG_EDGE_REMOVED}, return the set of new 
-	 * track IDs that are made of the old track this edge belonged to.
-	 */
-	public Set<Integer> getNewTracksFor(DefaultWeightedEdge edge) {
-		return fromTrackIDs.get(edge);
-	}
-	
-	public Set<Integer> putNewTracksFor(DefaultWeightedEdge edge, Set<Integer> trackIDs) {
-		return fromTrackIDs.put(edge, trackIDs);
-	}
-
 	public void setSource(Object source) {
 		this.source = source;
 	}
 	
 	@Override
 	public String toString() {
-		String str = "[TrackModelChangeEvent]:\n";
-		str += " - source: "+source.getClass() + "_" + source.hashCode()+"\n";
-		str += " - event type: ";
+		StringBuilder str = new StringBuilder("[TrackModelChangeEvent]:\n");
+		str.append(" - source: "+source.getClass() + "_" + source.hashCode()+"\n");
+		str.append(" - event type: ");
 		switch (eventID) {
 		case SPOTS_COMPUTED:
-			str += "Spots computed\n";
+			str.append("Spots computed\n");
 			break;
 		case SPOTS_FILTERED:
-			str += "Spots filtered\n";
+			str.append("Spots filtered\n");
 			break;
 		case TRACKS_COMPUTED:
-			str += "Tracks computed\n";
+			str.append("Tracks computed\n");
 			break;
 		case TRACKS_VISIBILITY_CHANGED:
-			str += "Track visibility changed\n";
+			str.append("Track visibility changed\n");
 			break;
 		case MODEL_MODIFIED:
-			str += "Model modified, with:\n";
-			str += "\t- spots modified: "+ (spots != null ? spots.size() : 0) +"\n"; 
-			str += "\t- edges modified: "+ (edges != null ? edges.size() : 0) +"\n"; 
+			str.append("Model modified, with:\n");
+			str.append("\t- spots modified: "+ (spots != null ? spots.size() : 0) +"\n");
+			for (Spot spot : spots) {
+				str.append("\t\t" + spot + ": " + flagsToString.get(spotFlags.get(spot)) + "\n");
+			}
+			str.append("\t- edges modified: "+ (edges != null ? edges.size() : 0) +"\n");
+			for (DefaultWeightedEdge edge : edges) {
+				str.append("\t\t" + edge + ": " + flagsToString.get(edgeFlags.get(edge)) + "\n");
+			}
+			str.append("\t- tracks to update: " + trackUpdated + "\n");
 		}
-		return str;
+		return str.toString();
 	}
 
+	public void setTracksUpdated(Set<Integer> tracksToUpdate) {
+		this.trackUpdated = tracksToUpdate;
+	}
+
+	/**
+	 * @return the IDs of track that were modified or created by this event. 
+	 */
+	public Set<Integer> getTrackUpdated() {
+		return trackUpdated;
+	}
 }

@@ -148,7 +148,7 @@ public class TrackSpeedStatisticsAnalyzerTest {
 		TrackMateModelChangeListener listener = new TrackMateModelChangeListener() {
 			@Override
 			public void modelChanged(TrackMateModelChangeEvent event) {
-				analyzer.modelChanged(event);
+				analyzer.process(event.getTrackUpdated());
 			}
 		};
 		model.addTrackMateModelChangeListener(listener);
@@ -194,7 +194,7 @@ public class TrackSpeedStatisticsAnalyzerTest {
 		TrackMateModelChangeListener listener = new TrackMateModelChangeListener() {
 			@Override
 			public void modelChanged(TrackMateModelChangeEvent event) {
-				analyzer.modelChanged(event);
+				analyzer.process(event.getTrackUpdated());
 			}
 		};
 		model.addTrackMateModelChangeListener(listener);
@@ -244,7 +244,7 @@ public class TrackSpeedStatisticsAnalyzerTest {
 		TrackMateModelChangeListener listener = new TrackMateModelChangeListener() {
 			@Override
 			public void modelChanged(TrackMateModelChangeEvent event) {
-				analyzer.modelChanged(event);
+				analyzer.process(event.getTrackUpdated());
 			}
 		};
 		model.addTrackMateModelChangeListener(listener);

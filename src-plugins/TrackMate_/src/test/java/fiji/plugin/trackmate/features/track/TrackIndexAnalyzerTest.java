@@ -77,8 +77,8 @@ public class TrackIndexAnalyzerTest {
 	 */
 	@Test
 	public final void testModelChanged() {
-	
-		
+
+
 		// Compute track index
 		Set<Integer> trackIDs = model.getTrackModel().getFilteredTrackIDs();
 		final TestTrackIndexAnalyzer analyzer = new TestTrackIndexAnalyzer(model);
@@ -90,18 +90,22 @@ public class TrackIndexAnalyzerTest {
 		for (Integer trackID : trackIDs) {
 			trackIndices.add(model.getFeatureModel().getTrackFeature(trackID, TrackIndexAnalyzer.TRACK_INDEX).intValue());
 		}
-		
+
 		// Reset analyzer
 		analyzer.hasBeenCalled = false;
-		
+
 		// Prepare listener -> forward to analyzer
 		TrackMateModelChangeListener listener = new TrackMateModelChangeListener() {
 			@Override
 			public void modelChanged(TrackMateModelChangeEvent event) {
-				analyzer.modelChanged(event);
+				if (analyzer.isLocal()) {
+					analyzer.process(event.getTrackUpdated());
+				} else {
+					analyzer.process(model.getTrackModel().getFilteredTrackIDs());
+				}
 			}
 		};
-		
+
 		/*
 		 *  Modify the model a first time:
 		 *  We attach a new spot to an existing track. It must not modify the 
@@ -116,10 +120,10 @@ public class TrackIndexAnalyzerTest {
 		} finally {
 			model.endUpdate();
 		}
-		
+
 		// Reset analyzer
 		analyzer.hasBeenCalled = false;
-		
+
 		/*
 		 * Second modification: we create a new track by cutting one track in the middle
 		 */
@@ -131,39 +135,42 @@ public class TrackIndexAnalyzerTest {
 		} finally {
 			model.endUpdate();
 		}
-		
+
 		// Process method must have been called
 		assertTrue(analyzer.hasBeenCalled);
-		
+
 		// There must N_TRACKS+1 indices now
 		trackIDs = model.getTrackModel().getFilteredTrackIDs();
 		assertEquals((long) N_TRACKS+1,	(long) trackIDs.size());
-		
+
 		// With correct indices
 		Iterator<Integer> it = trackIDs.iterator();
 		for (int i = 0; i < trackIDs.size(); i++) {
 			assertEquals((long) i, model.getFeatureModel().getTrackFeature(it.next(), TrackIndexAnalyzer.TRACK_INDEX).longValue());
 		}
+		// FIXME
+		// FAILS BECAUSE TRANCK INDEX IS A GLOBAL TRACK ANALYZER AND NEEDS TO RECOMPUTE FOR THE WHOLE MODEL
+		// C:EST LA VIE
 
 	}
-	
+
 	/**
 	 *  Subclass of {@link TrackIndexAnalyzer} to monitor method calls.
 	 */
 	private static final class TestTrackIndexAnalyzer extends TrackIndexAnalyzer {
-		
+
 		private boolean hasBeenCalled = false;
-		
+
 		public TestTrackIndexAnalyzer(TrackMateModel model) {
 			super(model);
 		}
-		
+
 		@Override
 		public void process(Collection<Integer> trackIDs) {
 			hasBeenCalled = true;
 			super.process(trackIDs);
 		}
 	}
-	
+
 
 }

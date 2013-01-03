@@ -6,7 +6,6 @@ import static org.junit.Assert.fail;
 
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.TreeSet;
 
 import org.junit.Before;
@@ -26,6 +25,10 @@ public class TrackBranchingAnalyzerTest {
 	private static final int N_TRACKS_WITH_MERGES = 11;
 	private static final int DEPTH = 9;
 	private TrackMateModel model;
+	private Spot split;
+	private Spot lastSpot1;
+	private Spot lastSpot2;
+	private Spot firstSpot;
 
 	@Before
 	public void setUp() {
@@ -62,7 +65,7 @@ public class TrackBranchingAnalyzerTest {
 			// tracks with splits
 			for (int i = 0; i < N_TRACKS_WITH_SPLITS; i++) {
 				Spot previous = null;
-				Spot split = null;
+				split = null; // Store the spot at the branch split 
 				for (int j = 0; j < DEPTH; j++) {
 					Spot spot = new SpotImp(new double[3]);
 					if (j == DEPTH/2) {
@@ -71,9 +74,12 @@ public class TrackBranchingAnalyzerTest {
 					model.addSpotTo(spot, j);
 					if (null != previous) {
 						model.addEdge(previous, spot, 1);
+					} else {
+						firstSpot = spot; // Store first spot of track
 					}
 					previous = spot;
 				}
+				lastSpot1 = previous; // Store last spot of 1st branch
 				previous = split;
 				for (int j = DEPTH/2+1; j < DEPTH; j++) {
 					Spot spot = new SpotImp(new double[3]);
@@ -81,6 +87,7 @@ public class TrackBranchingAnalyzerTest {
 					model.addEdge(previous, spot, 1);
 					previous = spot;
 				}
+				lastSpot2 = previous; // Store last spot of 2nd branch
 			}
 			// tracks with merges
 			for (int i = 0; i < N_TRACKS_WITH_MERGES; i++) {
@@ -158,7 +165,7 @@ public class TrackBranchingAnalyzerTest {
 		TrackMateModelChangeListener listener = new TrackMateModelChangeListener() {
 			@Override
 			public void modelChanged(TrackMateModelChangeEvent event) {
-				analyzer.modelChanged(event);
+				analyzer.process(event.getTrackUpdated());
 			}
 		};
 		model.addTrackMateModelChangeListener(listener);
@@ -230,7 +237,7 @@ public class TrackBranchingAnalyzerTest {
 		TrackMateModelChangeListener listener = new TrackMateModelChangeListener() {
 			@Override
 			public void modelChanged(TrackMateModelChangeEvent event) {
-				analyzer.modelChanged(event);
+				analyzer.process(event.getTrackUpdated());
 			}
 		};
 		model.addTrackMateModelChangeListener(listener);
@@ -295,7 +302,7 @@ public class TrackBranchingAnalyzerTest {
 		TrackMateModelChangeListener listener = new TrackMateModelChangeListener() {
 			@Override
 			public void modelChanged(TrackMateModelChangeEvent event) {
-				analyzer.modelChanged(event);
+				analyzer.process(event.getTrackUpdated());
 			}
 		};
 		model.addTrackMateModelChangeListener(listener);
@@ -308,36 +315,10 @@ public class TrackBranchingAnalyzerTest {
 		 * Only the three generated tracks should get analyzed. 
 		 */
 
-		// Find a track with a split
-		Integer splittingTrackID = null;
-		for (Integer trackID : model.getTrackModel().getFilteredTrackIDs()) {
-			if (model.getFeatureModel().getTrackFeature(trackID, TrackBranchingAnalyzer.NUMBER_SPLITS) > 0) {
-				splittingTrackID = trackID;
-				break;
-			}
-		}
-
-		// Get the last spot in time
-		TreeSet<Spot> track = new TreeSet<Spot>(Spot.frameComparator);
-		track.addAll(model.getTrackModel().getTrackSpots(splittingTrackID));
-		Iterator<Spot> it = track.descendingIterator();
-		Spot lastSpot1 = it.next();
-		Spot lastSpot2 = it.next();
-		Spot firstSpot = track.first();
-
-		// Find the branching spot
-		Spot branchingSpot = null;
-		for (Spot spot : track) {
-			if (model.getTrackModel().edgesOf(spot).size() > 2) {
-				branchingSpot = spot;
-				break;
-			}
-		}
-
 		// Remove the branching spot 
 		model.beginUpdate();
 		try {
-			model.removeSpotFrom(branchingSpot, branchingSpot.getFeature(Spot.FRAME).intValue());
+			model.removeSpotFrom(split, split.getFeature(Spot.FRAME).intValue());
 		} finally {
 			model.endUpdate();
 		}
@@ -382,14 +363,9 @@ public class TrackBranchingAnalyzerTest {
 		public void process(Collection<Integer> trackIDs) {
 			hasBeenCalled = true;
 			keys = trackIDs;
-			System.out.println(trackIDs);
 			super.process(trackIDs);
 		}
 
-		@Override
-		public void modelChanged(TrackMateModelChangeEvent event) {
-			super.modelChanged(event);
-		}
 	}
 
 

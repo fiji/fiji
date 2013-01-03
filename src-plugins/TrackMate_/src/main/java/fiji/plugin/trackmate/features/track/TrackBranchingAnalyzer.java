@@ -17,7 +17,6 @@ import org.jgrapht.graph.DefaultWeightedEdge;
 import fiji.plugin.trackmate.Dimension;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.TrackMateModel;
-import fiji.plugin.trackmate.TrackMateModelChangeEvent;
 
 public class TrackBranchingAnalyzer implements TrackAnalyzer, MultiThreaded {
 
@@ -69,6 +68,11 @@ public class TrackBranchingAnalyzer implements TrackAnalyzer, MultiThreaded {
 	public TrackBranchingAnalyzer(final TrackMateModel model) {
 		this.model = model;
 		setNumThreads();
+	}
+	
+	@Override
+	public boolean isLocal() {
+		return true;
 	}
 
 	@Override
@@ -152,32 +156,6 @@ public class TrackBranchingAnalyzer implements TrackAnalyzer, MultiThreaded {
 		SimpleMultiThreading.startAndJoin(threads);
 		long end = System.currentTimeMillis();
 		processingTime = end - start;
-	}
-
-	@Override
-	public void modelChanged(TrackMateModelChangeEvent event) {
-		
-		// We are affected only by edge changes
-		if (event.getEventID() == TrackMateModelChangeEvent.MODEL_MODIFIED) {
-			
-			Set<DefaultWeightedEdge> edges = event.getEdges();
-			if (edges.size() == 0) {
-				return;
-			}
-			
-			// Collect track IDs
-			Set<Integer> targetIDs = new HashSet<Integer>(edges.size());
-			for (DefaultWeightedEdge edge : edges) {
-				if (event.getEdgeFlag(edge).equals(TrackMateModelChangeEvent.FLAG_EDGE_REMOVED)) {
-					targetIDs.addAll(event.getNewTracksFor(edge));
-				} else {
-					targetIDs.add( model.getTrackModel().getTrackIDOf(edge) );
-				}
-			}
-			
-			// Recompute
-			process(targetIDs);
-		}
 	}
 	
 	@Override

@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import org.jgrapht.graph.DefaultWeightedEdge;
@@ -550,15 +549,26 @@ public class TrackMateModel {
 			}
 		}
 
+		// Store old track IDs to monitor what tracks are new
+		HashSet<Integer> oldTrackIDs = new HashSet<Integer>(trackGraphModel.getTrackIDs());
+
 		/* We recompute tracks only if some edges have been added or removed,
 		 * (if some spots have been removed that causes edges to be removes, we already know about it).
 		 * We do NOT recompute tracks if spots have been added: they will not result in
 		 * new tracks made of single spots.	 */
 		int nEdgesToSignal = trackGraphModel.edgesAdded.size() + trackGraphModel.edgesRemoved.size() + trackGraphModel.edgesModified.size();
-		Map<Integer, Set<Integer>> oldIDMap = null;
 		if (nEdgesToSignal > 0) {
 			// First, regenerate the tracks
-			oldIDMap = trackGraphModel.computeTracksFromGraph();
+			trackGraphModel.computeTracksFromGraph();
+		}
+		
+		// Do we have new track appearing?
+		HashSet<Integer> tracksToUpdate = new HashSet<Integer>(trackGraphModel.getTrackIDs());
+		tracksToUpdate.removeAll(oldTrackIDs);
+		
+		// We also want to update the tracks that have edges that were modified
+		for (DefaultWeightedEdge modifiedEdge : trackGraphModel.edgesModified) {
+			tracksToUpdate.add(trackGraphModel.getTrackIDOf(modifiedEdge));
 		}
 
 		// Deal with new or moved spots: we need to update their features.
@@ -610,30 +620,30 @@ public class TrackMateModel {
 			}
 			for (DefaultWeightedEdge edge : trackGraphModel.edgesRemoved) {
 				event.putEdgeFlag(edge, TrackMateModelChangeEvent.FLAG_EDGE_REMOVED);
-				// Get old track ID of the edge
-				Integer oldID = edgeRemovedOrigins.get(edge);
-				// Store new track ID location for for the edge
-				event.putNewTracksFor(edge, oldIDMap.get(oldID));
 			}
 			for (DefaultWeightedEdge edge : trackGraphModel.edgesModified) {
 				event.putEdgeFlag(edge, TrackMateModelChangeEvent.FLAG_EDGE_MODIFIED);
 			}
 		}
 		
-		
+		// Configure it with the tracks we found need updating
+		event.setTracksUpdated(tracksToUpdate);
 
 		/*
-		 *  If required, privately pass the event to track feature analyzers 
-		 *  so that they can recalculate the track features BEFORE any other
-		 *  listeners to model changes, and that night need to exploit new
-		 *  feature values (e.g. model views).
+		 *  If required, recompute features for new tracks or tracks that 
+		 *  have been modified, BEFORE any other listeners to model changes, 
+		 *  and that night need to exploit new feature values (e.g. model views).
 		 */
 		if (nEdgesToSignal > 0) {
 			if (null != featureModel.trackAnalyzerProvider) {
 				for (String analyzerKey : featureModel.trackAnalyzerProvider.getAvailableTrackFeatureAnalyzers()) {
 					TrackAnalyzer analyzer = featureModel.trackAnalyzerProvider.getTrackFeatureAnalyzer(analyzerKey);
-					analyzer.modelChanged(event);
-				} // FIXME this is all good and well, but we need to remove the feature value for the track IDs that disappeared...
+					if (analyzer.isLocal()) {
+						analyzer.process(tracksToUpdate);
+					} else {
+						analyzer.process(trackGraphModel.getFilteredTrackIDs());
+					}
+				}
 			}
 		}
 

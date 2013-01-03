@@ -3,13 +3,10 @@ package fiji.plugin.trackmate.features.track;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
-
-import org.jgrapht.graph.DefaultWeightedEdge;
 
 import net.imglib2.algorithm.MultiThreaded;
 import net.imglib2.multithreading.SimpleMultiThreading;
@@ -17,7 +14,6 @@ import fiji.plugin.trackmate.Dimension;
 import fiji.plugin.trackmate.FeatureModel;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.TrackMateModel;
-import fiji.plugin.trackmate.TrackMateModelChangeEvent;
 
 public class TrackDurationAnalyzer implements TrackAnalyzer, MultiThreaded {
 
@@ -61,6 +57,11 @@ public class TrackDurationAnalyzer implements TrackAnalyzer, MultiThreaded {
 	public TrackDurationAnalyzer(TrackMateModel model) {
 		this.model = model;
 		setNumThreads();
+	}
+	
+	@Override
+	public boolean isLocal() {
+		return true;
 	}
 
 	@Override
@@ -110,32 +111,6 @@ public class TrackDurationAnalyzer implements TrackAnalyzer, MultiThreaded {
 		SimpleMultiThreading.startAndJoin(threads);
 		long end = System.currentTimeMillis();
 		processingTime = end - start;
-	}
-
-
-	@Override
-	public void modelChanged(TrackMateModelChangeEvent event) {
-		// We are affected only by edge changes
-		if (event.getEventID() == TrackMateModelChangeEvent.MODEL_MODIFIED) {
-			
-			Set<DefaultWeightedEdge> edges = event.getEdges();
-			if (edges.size() == 0) {
-				return;
-			}
-			
-			// Collect track IDs
-			Set<Integer> targetIDs = new HashSet<Integer>(edges.size());
-			for (DefaultWeightedEdge edge : edges) {
-				if (event.getEdgeFlag(edge).equals(TrackMateModelChangeEvent.FLAG_EDGE_REMOVED)) {
-					targetIDs.addAll(event.getNewTracksFor(edge));
-				} else {
-					targetIDs.add( model.getTrackModel().getTrackIDOf(edge) );
-				}
-			}
-			
-			// Recompute
-			process(targetIDs);
-		}
 	}
 
 	@Override

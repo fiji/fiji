@@ -646,7 +646,7 @@ public class TrackGraphModel {
 	 * in the old track with ID oldID are now parts of the new tracks with new 
 	 * IDs contained in the matching value set.
 	 */
-	Map<Integer, Set<Integer>> computeTracksFromGraph() {
+	void computeTracksFromGraph() {
 
 		if (DEBUG) {
 			System.out.println("[TrackGraphModel] #computeTracksFromGraph()");
@@ -712,15 +712,6 @@ public class TrackGraphModel {
 		for (Integer trackID : trackSpots.keySet()) {
 			newToOldKeyMap.put(trackID, new HashSet<Integer>());
 		}
-		/*
-		 * The inverse of the previous map: 
-		 * Map the old track IDs to the new ones. That is, all spots and edges in the old track with ID oldID
-		 * are now parts of the new tracks with new IDs contained in the matching value set.
-		 */
-		Map<Integer, Set<Integer>> oldToNewKeyMap = new HashMap<Integer, Set<Integer>>(oldTrackSpots.size());
-		for (Integer oldID : oldTrackSpots.keySet()	) {
-			oldToNewKeyMap.put(oldID,  new HashSet<Integer>());
-		}
 
 		// Loop over old tracks to get where they can be found in the new tracks
 		if (DEBUG) {
@@ -747,7 +738,7 @@ public class TrackGraphModel {
 						System.out.println("[TrackGraphModel] #computeTracksFromGraph(): old track " + oldKey + " parts were found in new track " + trackKey);
 					}
 					newToOldKeyMap.get(trackKey).add(oldKey);
-					oldToNewKeyMap.get(oldKey).add(trackKey);
+					// FIXME can we skip once we have found one?
 				}
 
 			} // Finished iterating over new tracks
@@ -806,11 +797,18 @@ public class TrackGraphModel {
 			}
 		}
 
+		
+		// Clean track feature value map
+		HashSet<Integer> trackIDsToRemove = new HashSet<Integer>(oldTrackSpots.keySet());
+		trackIDsToRemove.removeAll(trackSpots.keySet());
+		for (Integer toRemove : trackIDsToRemove) {
+			model.getFeatureModel().trackFeatureValues.remove(toRemove);
+		}
+		
+		
 		if (DEBUG) {
 			System.out.println("[TrackGraphModel] #computeTracksFromGraph(): the end; found " + trackSpots.size() + " new spot tracks.");
 		}
-		
-		return oldToNewKeyMap;
 	}
 
 

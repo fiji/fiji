@@ -51,10 +51,10 @@ public class FeatureModel implements MultiThreaded {
 	private HashMap<String, Dimension> trackFeatureDimensions = new HashMap<String, Dimension>();
 	/**
 	 * Feature storage. We use a Map of Map as a 2D Map. The list maps each
-	 * feature to its track map. The track map maps each
-	 * track ID to the double value for the specified feature.
+	 * track to its feature map. The feature map maps each
+	 * feature to the double value for the specified feature.
 	 */
-	protected Map<String, Map<Integer, Double>> trackFeatureValues =  new ConcurrentHashMap<String, Map<Integer, Double>>();
+	protected Map<Integer, Map<String, Double>> trackFeatureValues =  new ConcurrentHashMap<Integer, Map<String, Double>>();
 
 	/**
 	 * Feature storage for edges.
@@ -247,7 +247,7 @@ public class FeatureModel implements MultiThreaded {
 	 * 
 	 * @see #computeTrackFeatures()
 	 */
-	public void setTrackFeatureProvider(TrackAnalyzerProvider trackAnalyzerProvider) {
+	public void setTrackAnalyzerProvider(TrackAnalyzerProvider trackAnalyzerProvider) {
 		this.trackAnalyzerProvider = trackAnalyzerProvider;
 		// Collect all the track feature we will have to deal with
 		trackFeatures = new ArrayList<String>();
@@ -263,11 +263,10 @@ public class FeatureModel implements MultiThreaded {
 			trackFeatureShortNames.put(trackFeature, trackAnalyzerProvider.getFeatureShortName(trackFeature));
 			trackFeatureDimensions.put(trackFeature, trackAnalyzerProvider.getFeatureDimension(trackFeature));
 		}
-		// Instantiate track feature value map, once for all
-		this.trackFeatureValues = new ConcurrentHashMap<String, Map<Integer, Double>>(trackFeatures.size());
+		this.trackFeatureValues = new ConcurrentHashMap<Integer, Map<String, Double>>();
 	}
 
-	public void setEdgeFeatureProvider(final EdgeAnalyzerProvider edgeFeatureAnalyzerProvider) {
+	public void setEdgeAnalyzerProvider(final EdgeAnalyzerProvider edgeFeatureAnalyzerProvider) {
 		this.edgeFeatureAnalyzerProvider = edgeFeatureAnalyzerProvider;
 
 		edgeFeatures = new ArrayList<String>();
@@ -445,12 +444,12 @@ public class FeatureModel implements MultiThreaded {
 	}
 
 	public synchronized void putTrackFeature(final Integer trackID, final String feature, final Double value) {
-		Map<Integer, Double> valueMap = trackFeatureValues.get(feature);
-		if (null == valueMap) {
-			valueMap = new HashMap<Integer, Double>(model.getTrackModel().getNFilteredTracks());
-			trackFeatureValues.put(feature, valueMap);
+		Map<String, Double> trackFeatureMap = trackFeatureValues.get(trackID);
+		if (null == trackFeatureMap) {
+			trackFeatureMap = new HashMap<String, Double>(trackFeatures.size());
+			trackFeatureValues.put(trackID, trackFeatureMap);
 		}
-		valueMap.put(trackID, value);
+		trackFeatureMap.put(feature, value);
 	}
 
 	/**
@@ -459,8 +458,8 @@ public class FeatureModel implements MultiThreaded {
 	 * @param feature the desired feature.
 	 */
 	public Double getTrackFeature(final Integer trackID, final String feature) {
-		Map<Integer, Double> valueMap = trackFeatureValues.get(feature);
-		return valueMap.get(trackID);
+		Map<String, Double> valueMap = trackFeatureValues.get(trackID);
+		return valueMap.get(feature);
 	}
 
 	public Map<String, double[]> getTrackFeatureValues() {

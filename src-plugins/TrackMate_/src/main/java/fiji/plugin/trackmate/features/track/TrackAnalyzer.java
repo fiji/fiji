@@ -2,10 +2,8 @@ package fiji.plugin.trackmate.features.track;
 
 import java.util.Collection;
 
-import fiji.plugin.trackmate.TrackMateModelChangeEvent;
-import fiji.plugin.trackmate.TrackMateModelChangeListener;
-
 import net.imglib2.algorithm.Benchmark;
+import fiji.plugin.trackmate.TrackMateModel;
 
 /**
  * Mother interface for the classes that can compute the feature of tracks.
@@ -16,53 +14,34 @@ import net.imglib2.algorithm.Benchmark;
  * for performance reason, when possible.
  * <p>
  * For {@link TrackAnalyzer}s, there is a mechanism intended to maintain
- * the model integrity against manual, small changes: the {@link #modelChanged(TrackMateModelChangeEvent)}
- * method. Something as simple as removing
+ * the model integrity against manual, small changes. Something as simple as removing
  * a spot in the middle of a track will generate two new tracks, which will invalidate 
  * all feature values for the old track. Analyzers are notified of such events, so
  * that they can recompute track features after the change.
  * <p>
  * A simple way would be to recompute all track features at once, but this might be too
  * long and overkill for changes that do not affect all tracks (<i>e.g.</i> adding 
- * a lonely spot, or a new track is likely not to affect all tracks in some case). 
- * So with this method, concrete implementation are free to have convoluted techniques
- * to optimize computation time.
+ * a lonely spot, or a new track is likely not to affect all tracks in some case).
  * <p>
- * Though this method comes from the {@link TrackMateModelChangeListener} interface,
- * it will be called <b>before</b> the event is dispatched to other listeners 
- * (such as views, etc...), so that they can reflect the change in track feature 
- * value should they need it. 
+ * So the {@link #process(Collection)} will be called selectively on new or modified
+ * tracks every time a change happens. It will be called from the {@link TrackMateModel}
+ * after a {@link TrackMateModel#endUpdate()}, before any listener gets notified.
  * 
  * @author Jean-Yves Tinevez
  */
-public interface TrackAnalyzer extends Benchmark, TrackMateModelChangeListener {
+public interface TrackAnalyzer extends Benchmark {
 
 	/**
 	 * Score the track whose ID is given.
 	 */
 	public void process(final Collection<Integer> trackIDs);
-
+	
 	/**
-	 * Notified when a model change event happens.
-	 * <p>
-	 * For {@link TrackAnalyzer}s, this is a mechanism intended to maintain
-	 * the model integrity against manual, small changes. Something as simple as removing
-	 * a spot in the middle of a track will generate two new tracks, which will invalidate 
-	 * all feature values for the old track. Analyzers are notified of such events, so
-	 * that they can recompute track features after the change.
-	 * <p>
-	 * A simple way would be to recompute all track features at once, but this might be too
-	 * long and overkill for changes that do not affect all tracks (<i>e.g.</i> adding 
-	 * a lonely spot, or a new track is likely not to affect all tracks in some case). 
-	 * So with this method, concrete implementation are free to have convoluted techniques
-	 * to optimize computation time.
-	 * <p>
-	 * Though this method comes from the {@link TrackMateModelChangeListener} interface,
-	 * it will be called <b>before</b> the event is dispatched to other listeners 
-	 * (such as views, etc...), so that they can reflect the change in track feature 
-	 * value should they need it. 
+	 * @return <code>true</code> if this analyzer is a local analyzer. That is: a modification that
+	 * affects only one track requires the track features to be re-calculated only for
+	 * this track. If <code>false</code>, any model modification involving edges will trigger
+	 * a recalculation over all the visible tracks of the model.
 	 */
-	@Override
-	public void modelChanged(TrackMateModelChangeEvent event);
+	public boolean isLocal();
 
 }
