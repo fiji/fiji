@@ -63,9 +63,9 @@
 			<version>0.8.3</version>
 		</dependency>
 		<dependency>
-			<groupId>jgraph</groupId>
+			<groupId>org.tinyjee.jgraphx</groupId>
 			<artifactId>jgraphx</artifactId>
-			<version>1.10.0.3</version>
+			<version>1.10.4.1</version>
 		</dependency>
 		<dependency>
 			<groupId>java3d</groupId>
