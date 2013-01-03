@@ -23,8 +23,8 @@ public class EdgeVelocityAnalyzer implements EdgeAnalyzer, MultiThreaded {
 	/*
 	 * FEATURE NAMES 
 	 */
-	private static final String VELOCITY = "VELOCITY";
-	private static final String DISPLACEMENT = "DISPLACEMENT";
+	public static final String VELOCITY = "VELOCITY";
+	public static final String DISPLACEMENT = "DISPLACEMENT";
 
 	public static final List<String> FEATURES = new ArrayList<String>(2);
 	public static final Map<String, String> FEATURE_NAMES = new HashMap<String, String>(2);
@@ -61,7 +61,10 @@ public class EdgeVelocityAnalyzer implements EdgeAnalyzer, MultiThreaded {
 		setNumThreads();
 	}
 
-
+	@Override
+	public boolean isLocal() {
+		return true;
+	}
 
 	@Override
 	public void process(final Collection<DefaultWeightedEdge> edges) {

@@ -9,6 +9,7 @@ import java.util.Set;
 import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.graph.SimpleDirectedWeightedGraph;
 
+import fiji.plugin.trackmate.features.edges.EdgeAnalyzer;
 import fiji.plugin.trackmate.features.track.TrackAnalyzer;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
 
@@ -171,7 +172,7 @@ public class TrackMateModel {
 	private HashSet<Integer> eventCache = new HashSet<Integer>();
 
 	// SELECTION
-	
+
 	private final SelectionModel selectionModel;
 
 	// OTHERS
@@ -274,7 +275,7 @@ public class TrackMateModel {
 	public List<TrackMateSelectionChangeListener> getTrackMateSelectionChangeListener() {
 		return selectionModel.getTrackMateSelectionChangeListener();
 	}
-	
+
 	/*
 	 * GRAPH MODIFICATION
 	 */
@@ -419,7 +420,7 @@ public class TrackMateModel {
 	/*
 	 * SELECTION METHODS we delegate to the SelectionModel component
 	 */
-	
+
 	public SelectionModel getSelectionModel() {
 		return selectionModel;
 	}
@@ -502,7 +503,7 @@ public class TrackMateModel {
 		spotsUpdated.add(spotToUpdate); // Enlist for feature update when transaction is marked as finished
 		trackGraphModel.edgesModified.addAll(trackGraphModel.edgesOf(spotToUpdate));
 	}
-	
+
 	/**
 	 * @see TrackGraphModel#addEdge(Spot, Spot, double)
 	 */
@@ -523,6 +524,13 @@ public class TrackMateModel {
 	public boolean removeEdge(final DefaultWeightedEdge edge) {
 		return trackGraphModel.removeEdge(edge);
 	}
+	
+	/**
+	 * @see TrackGraphModel#setEdgeWeight(DefaultWeightedEdge, double)
+	 */
+	public void setEdgeWeight(final DefaultWeightedEdge edge, double weight) {
+		trackGraphModel.setEdgeWeight(edge, weight);
+	}
 
 
 	/*
@@ -539,7 +547,7 @@ public class TrackMateModel {
 			System.out.println("[TrackMateModel] #flushUpdate().");
 			System.out.println("[TrackMateModel] #flushUpdate(): Event cache is :" + eventCache);
 		}
-		
+
 		/* Before they enter void, we grab the trackID of removed edges. We will need to 
 		 * know from where they were removed to recompute trackIDs intelligently. Or so */
 		HashMap<DefaultWeightedEdge, Integer> edgeRemovedOrigins = new HashMap<DefaultWeightedEdge, Integer>(trackGraphModel.edgesRemoved.size());
@@ -561,11 +569,11 @@ public class TrackMateModel {
 			// First, regenerate the tracks
 			trackGraphModel.computeTracksFromGraph();
 		}
-		
+
 		// Do we have new track appearing?
 		HashSet<Integer> tracksToUpdate = new HashSet<Integer>(trackGraphModel.getTrackIDs());
 		tracksToUpdate.removeAll(oldTrackIDs);
-		
+
 		// We also want to update the tracks that have edges that were modified
 		for (DefaultWeightedEdge modifiedEdge : trackGraphModel.edgesModified) {
 			tracksToUpdate.add(trackGraphModel.getTrackIDOf(modifiedEdge));
@@ -625,9 +633,44 @@ public class TrackMateModel {
 				event.putEdgeFlag(edge, TrackMateModelChangeEvent.FLAG_EDGE_MODIFIED);
 			}
 		}
-		
+
 		// Configure it with the tracks we found need updating
 		event.setTracksUpdated(tracksToUpdate);
+
+		/*
+		 * Update features if needed
+		 * In this order: edges then tracks (in case track features depend on edge features) 
+		 */
+
+		int nEdgesToUpdate = trackGraphModel.edgesAdded.size() + trackGraphModel.edgesModified.size();
+		if (nEdgesToUpdate > 0) {
+			if (null != featureModel.trackAnalyzerProvider) {
+				HashSet<DefaultWeightedEdge> edgesToUpdate = new HashSet<DefaultWeightedEdge>(trackGraphModel.edgesAdded.size());
+				edgesToUpdate.addAll(trackGraphModel.edgesModified);
+				HashSet<DefaultWeightedEdge> globalEdgesToUpdate = null; // for now - compute it only if we need
+				
+				for (String analyzerKey : featureModel.edgeAnalyzerProvider.getAvailableEdgeFeatureAnalyzers()) {
+					EdgeAnalyzer analyzer = featureModel.edgeAnalyzerProvider.getEdgeFeatureAnalyzer(analyzerKey);
+					if (analyzer.isLocal()) {
+						
+						analyzer.process(edgesToUpdate);
+						
+					} else {
+						
+						// Get the all the edges of the track they belong to
+						if (null == globalEdgesToUpdate) {
+							globalEdgesToUpdate = new HashSet<DefaultWeightedEdge>();
+							for (DefaultWeightedEdge edge : edgesToUpdate) {
+								Integer motherTrackID = trackGraphModel.getTrackIDOf(edge);
+								globalEdgesToUpdate.addAll(trackGraphModel.getTrackEdges(motherTrackID));
+							}
+						}
+						analyzer.process(globalEdgesToUpdate);
+					}
+				}
+			}
+
+		}
 
 		/*
 		 *  If required, recompute features for new tracks or tracks that 

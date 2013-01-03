@@ -70,6 +70,10 @@ public class EdgeTimeLocationAnalyzer implements EdgeAnalyzer, MultiThreaded {
 		setNumThreads();
 	}
 
+	@Override
+	public boolean isLocal() {
+		return true;
+	}
 
 
 	@Override

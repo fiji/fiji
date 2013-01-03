@@ -254,6 +254,18 @@ public class TrackGraphModel {
 			System.out.println("[TrackGraphModel] Removing edge " + edge + " between " + graph.getEdgeSource(edge) + " and " + graph.getEdgeTarget(edge));
 		return removed;
 	}
+	
+	/**
+     * Assigns a weight to an edge.
+     *
+     * @param e edge on which to set weight
+     * @param weight new weight for edge
+     */
+	void setEdgeWeight(final DefaultWeightedEdge edge, double weight) {
+		graph.setEdgeWeight(edge, weight);
+		// mark for update
+		edgesModified.add(edge);
+	}
 
 	/*
 	 * TRACK FILTERING

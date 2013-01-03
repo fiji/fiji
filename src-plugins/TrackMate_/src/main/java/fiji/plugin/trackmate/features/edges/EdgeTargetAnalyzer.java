@@ -25,9 +25,9 @@ public class EdgeTargetAnalyzer implements EdgeAnalyzer, MultiThreaded {
 	 */
 //	private static final String SPOT1_NAME = "SPOT1_NAME";
 //	private static final String SPOT2_NAME = "SPOT1_NAME";
-	private static final String SPOT1_ID = "SPOT1_ID";
-	private static final String SPOT2_ID = "SPOT2_ID";
-	private static final String EDGE_COST = "COST";
+	public static final String SPOT1_ID = "SPOT1_ID";
+	public static final String SPOT2_ID = "SPOT2_ID";
+	public static final String EDGE_COST = "COST";
 //	private static final String TRACK_ID = "TRACK_ID";
 
 
@@ -79,6 +79,11 @@ public class EdgeTargetAnalyzer implements EdgeAnalyzer, MultiThreaded {
 		this.model = model;
 		this.featureModel = model.getFeatureModel();
 		setNumThreads();
+	}
+	
+	@Override
+	public boolean isLocal() {
+		return true;
 	}
 
 	@Override

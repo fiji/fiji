@@ -59,8 +59,8 @@ public class FeatureModel implements MultiThreaded {
 	/**
 	 * Feature storage for edges.
 	 */
-	protected ConcurrentHashMap<DefaultWeightedEdge, ConcurrentHashMap<String, Object>> edgeFeatureValues 
-	= new ConcurrentHashMap<DefaultWeightedEdge, ConcurrentHashMap<String, Object>>();
+	protected ConcurrentHashMap<DefaultWeightedEdge, ConcurrentHashMap<String, Double>> edgeFeatureValues 
+	= new ConcurrentHashMap<DefaultWeightedEdge, ConcurrentHashMap<String, Double>>();
 
 	private ArrayList<String> edgeFeatures = new ArrayList<String>();
 	private HashMap<String, String> edgeFeatureNames = new HashMap<String, String>();
@@ -69,7 +69,7 @@ public class FeatureModel implements MultiThreaded {
 
 	protected SpotAnalyzerProvider spotAnalyzerProvider;
 	protected TrackAnalyzerProvider trackAnalyzerProvider;
-	private EdgeAnalyzerProvider edgeFeatureAnalyzerProvider;
+	protected EdgeAnalyzerProvider edgeAnalyzerProvider;
 
 	private TrackMateModel model;
 	protected int numThreads;
@@ -267,7 +267,7 @@ public class FeatureModel implements MultiThreaded {
 	}
 
 	public void setEdgeAnalyzerProvider(final EdgeAnalyzerProvider edgeFeatureAnalyzerProvider) {
-		this.edgeFeatureAnalyzerProvider = edgeFeatureAnalyzerProvider;
+		this.edgeAnalyzerProvider = edgeFeatureAnalyzerProvider;
 
 		edgeFeatures = new ArrayList<String>();
 		for (String analyzer : edgeFeatureAnalyzerProvider.getAvailableEdgeFeatureAnalyzers()) {
@@ -360,17 +360,17 @@ public class FeatureModel implements MultiThreaded {
 	 * EDGE FEATURES
 	 */
 
-	public void putEdgeFeature(DefaultWeightedEdge edge, final String featureName, final Double featureValue) {
-		ConcurrentHashMap<String, Object> map = edgeFeatureValues.get(edge);
+	public synchronized void putEdgeFeature(DefaultWeightedEdge edge, final String featureName, final Double featureValue) {
+		ConcurrentHashMap<String, Double> map = edgeFeatureValues.get(edge);
 		if (null == map) {
-			map = new ConcurrentHashMap<String, Object>();
+			map = new ConcurrentHashMap<String, Double>();
 			edgeFeatureValues.put(edge, map);
 		}
 		map.put(featureName, featureValue);
 	}
 
-	public Object getEdgeFeature(DefaultWeightedEdge edge, final String featureName) {
-		ConcurrentHashMap<String, Object> map = edgeFeatureValues.get(edge);
+	public Double getEdgeFeature(DefaultWeightedEdge edge, final String featureName) {
+		ConcurrentHashMap<String, Double> map = edgeFeatureValues.get(edge);
 		if (null == map) {
 			return null;
 		}
@@ -515,8 +515,8 @@ public class FeatureModel implements MultiThreaded {
 		if (doLogIt) {
 			logger.log("Computing edge features:\n");		
 		}
-		for(String key : edgeFeatureAnalyzerProvider.getAvailableEdgeFeatureAnalyzers()) {
-			EdgeAnalyzer analyzer = edgeFeatureAnalyzerProvider.getEdgeFeatureAnalyzer(key);
+		for(String key : edgeAnalyzerProvider.getAvailableEdgeFeatureAnalyzers()) {
+			EdgeAnalyzer analyzer = edgeAnalyzerProvider.getEdgeFeatureAnalyzer(key);
 			analyzer.process(edges);
 			if (doLogIt)
 				logger.log("  - " + analyzer.toString() + " in " + analyzer.getProcessingTime() + " ms.\n");

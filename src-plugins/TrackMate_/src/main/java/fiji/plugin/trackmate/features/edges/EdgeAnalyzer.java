@@ -20,5 +20,13 @@ public interface EdgeAnalyzer extends Benchmark {
 	 * @author Jean-Yves Tinevez
 	 */
 	public void process(final Collection<DefaultWeightedEdge> edges);
+	
+	/**
+	 * @return <code>true</code> if this analyzer is a local analyzer. That is: a modification that
+	 * affects only one edge requires the edge features to be re-calculated only for
+	 * this edge. If <code>false</code>, any model modification involving an edge will trigger
+	 * a recalculation over the whole track this edge belong to.
+	 */
+	public boolean isLocal();
 
 }
