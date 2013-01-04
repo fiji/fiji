@@ -79,6 +79,10 @@ public class EdgeTimeLocationAnalyzer implements EdgeAnalyzer, MultiThreaded {
 	@Override
 	public void process(final Collection<DefaultWeightedEdge> edges) {
 
+		if (edges.isEmpty()) {
+			return;
+		}
+		
 		final ArrayBlockingQueue<DefaultWeightedEdge> queue = new ArrayBlockingQueue<DefaultWeightedEdge>(edges.size(), false, edges);
 
 		Thread[] threads = SimpleMultiThreading.newThreads(numThreads);

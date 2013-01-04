@@ -5,12 +5,12 @@ import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMate_;
 import fiji.plugin.trackmate.action.GrabSpotImageAction;
+import fiji.plugin.trackmate.features.edges.EdgeVelocityAnalyzer;
 import fiji.plugin.trackmate.features.track.TrackBranchingAnalyzer;
-import fiji.plugin.trackmate.features.track.TrackSpeedStatisticsAnalyzer;
 import fiji.plugin.trackmate.gui.DisplayerPanel;
 import fiji.plugin.trackmate.gui.GrapherPanel;
 import fiji.plugin.trackmate.io.TmXmlReader;
-import fiji.plugin.trackmate.visualization.PerTrackFeatureColorGenerator;
+import fiji.plugin.trackmate.visualization.PerEdgeFeatureColorGenerator;
 import fiji.plugin.trackmate.visualization.TrackColorGenerator;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
 import fiji.plugin.trackmate.visualization.hyperstack.HyperStackDisplayer;
@@ -81,8 +81,8 @@ public class TrackVisualizerTestDrive {
 		grabber.execute(plugin);
 		
 		// Use a velocity coloring scheme for all
-		TrackColorGenerator colorGenerator = new PerTrackFeatureColorGenerator(model, TrackSpeedStatisticsAnalyzer.TRACK_MEAN_SPEED);
-//		TrackColorGenerator colorGenerator = new PerEdgeFeatureColorGenerator(model, EdgeVelocityAnalyzer.VELOCITY);
+//		TrackColorGenerator colorGenerator = new PerTrackFeatureColorGenerator(model, TrackSpeedStatisticsAnalyzer.TRACK_MEAN_SPEED);
+		TrackColorGenerator colorGenerator = new PerEdgeFeatureColorGenerator(model, EdgeVelocityAnalyzer.VELOCITY);
 //		TrackColorGenerator colorGenerator = new PerEdgeFeatureColorGenerator(model, EdgeTimeLocationAnalyzer.Y_LOCATION);
 
 		// Instantiate displayer

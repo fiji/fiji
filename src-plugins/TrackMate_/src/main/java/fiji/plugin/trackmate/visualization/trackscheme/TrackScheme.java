@@ -346,6 +346,13 @@ public class TrackScheme implements TrackMateModelChangeListener, TrackMateSelec
 
 				Spot source = graph.getSpotFor(cell.getSource());
 				Spot target = graph.getSpotFor(cell.getTarget());
+				
+				if (DEBUG) {
+					System.out.println("[TrackScheme] #addEdgeManually: edge is between 2 spots belonging to the same frame. Removing it.");
+					System.out.println("[TrackScheme] #addEdgeManually: adding edge between source " + source + 
+							" at frame " + source.getFeature(Spot.FRAME).intValue() + 
+							" and target " + target + " at frame " + target.getFeature(Spot.FRAME).intValue());
+				}
 
 				if (Spot.frameComparator.compare(source, target) == 0) {
 					// Prevent adding edges between spots that belong to the same frame
@@ -363,7 +370,7 @@ public class TrackScheme implements TrackMateModelChangeListener, TrackMateSelec
 					if (Spot.frameComparator.compare(source, target) > 0) {
 
 						if (DEBUG) {
-							System.out.println("[TrackScheme] souce " + source + " succeed target " + target + ". Inverting edge direction.");
+							System.out.println("[TrackScheme] #addEdgeManually: Source " + source + " succeed target " + target + ". Inverting edge direction.");
 						}
 
 						Spot tmp = source;
@@ -374,11 +381,14 @@ public class TrackScheme implements TrackMateModelChangeListener, TrackMateSelec
 					DefaultWeightedEdge edge = model.getTrackModel().getEdge(source, target); 
 					if (null == edge) {
 						edge = model.addEdge(source, target, -1);
+						if (DEBUG) {
+							System.out.println("[TrackScheme] #addEdgeManually: Creating new edge: " + edge + ".");
+						}
 					} else {
 						// Ah. There was an existing edge in the model we were trying to re-add there, from the graph.
 						// We remove the graph edge we have added,
 						if (DEBUG) {
-							System.out.println("[TrackScheme] addEdgeManually: edge pre-existed. Retrieve it.");
+							System.out.println("[TrackScheme] #addEdgeManually: Edge pre-existed. Retrieve it.");
 						}
 						graph.removeCells(new Object[] { cell } );
 						// And re-create a graph edge from the model edge.
@@ -391,11 +401,11 @@ public class TrackScheme implements TrackMateModelChangeListener, TrackMateSelec
 						// reaches 0. So now, it's like we are dealing with the track indices priori to modification.
 						if (model.getTrackModel().isTrackFiltered(index)) {
 							if (DEBUG) {
-								System.out.println("[TrackScheme] addEdgeManually: track was visible. Do nothing.");
+								System.out.println("[TrackScheme] #addEdgeManually: Track was visible. Do nothing.");
 							}
 						} else {
 							if (DEBUG) {
-								System.out.println("[TrackScheme] addEdgeManually: track was invisible. Make it visible.");
+								System.out.println("[TrackScheme] #addEdgeManually: Track was invisible. Make it visible.");
 							}
 							importTrack(index);
 						}
@@ -404,9 +414,9 @@ public class TrackScheme implements TrackMateModelChangeListener, TrackMateSelec
 				}
 
 			} finally {
+				graphModel.endUpdate();
 				model.endUpdate();
 				model.getSelectionModel().clearEdgeSelection();
-				graphModel.endUpdate();
 			}
 		}
 	}

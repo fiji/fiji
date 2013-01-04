@@ -23,13 +23,9 @@ public class EdgeTargetAnalyzer implements EdgeAnalyzer, MultiThreaded {
 	/*
 	 * FEATURE NAMES 
 	 */
-//	private static final String SPOT1_NAME = "SPOT1_NAME";
-//	private static final String SPOT2_NAME = "SPOT1_NAME";
 	public static final String SPOT1_ID = "SPOT1_ID";
 	public static final String SPOT2_ID = "SPOT2_ID";
 	public static final String EDGE_COST = "COST";
-//	private static final String TRACK_ID = "TRACK_ID";
-
 
 	public static final List<String> FEATURES = new ArrayList<String>(4);
 	public static final Map<String, String> FEATURE_NAMES = new HashMap<String, String>(4);
@@ -37,33 +33,21 @@ public class EdgeTargetAnalyzer implements EdgeAnalyzer, MultiThreaded {
 	public static final Map<String, Dimension> FEATURE_DIMENSIONS = new HashMap<String, Dimension>(4);
 
 	static {
-//		FEATURES.add(SPOT1_NAME);
-//		FEATURES.add(SPOT2_NAME);
 		FEATURES.add(SPOT1_ID);
 		FEATURES.add(SPOT2_ID);
 		FEATURES.add(EDGE_COST);
-//		FEATURES.add(TRACK_ID);
 
-//		FEATURE_NAMES.put(SPOT1_NAME, "Source spot name");
-//		FEATURE_NAMES.put(SPOT2_NAME, "Target spot name");
 		FEATURE_NAMES.put(SPOT1_ID, "Source spot ID");
 		FEATURE_NAMES.put(SPOT2_ID, "Target spot ID");
 		FEATURE_NAMES.put(EDGE_COST, "Link cost");
-//		FEATURE_NAMES.put(TRACK_ID, "Track ID");
 
-//		FEATURE_SHORT_NAMES.put(SPOT1_NAME, "Source");
-//		FEATURE_SHORT_NAMES.put(SPOT2_NAME, "Target");
 		FEATURE_SHORT_NAMES.put(SPOT1_ID, "Source ID");
 		FEATURE_SHORT_NAMES.put(SPOT2_ID, "Target ID");
 		FEATURE_SHORT_NAMES.put(EDGE_COST, "Cost");
-//		FEATURE_SHORT_NAMES.put(TRACK_ID, "Track");
 
-//		FEATURE_DIMENSIONS.put(SPOT1_NAME, Dimension.STRING);
-//		FEATURE_DIMENSIONS.put(SPOT2_NAME, Dimension.STRING);
 		FEATURE_DIMENSIONS.put(SPOT1_ID, Dimension.NONE);
 		FEATURE_DIMENSIONS.put(SPOT2_ID, Dimension.NONE);
 		FEATURE_DIMENSIONS.put(EDGE_COST, Dimension.NONE);
-//		FEATURE_DIMENSIONS.put(TRACK_ID, Dimension.NONE);
 	}
 
 	private int numThreads;
@@ -80,7 +64,7 @@ public class EdgeTargetAnalyzer implements EdgeAnalyzer, MultiThreaded {
 		this.featureModel = model.getFeatureModel();
 		setNumThreads();
 	}
-	
+
 	@Override
 	public boolean isLocal() {
 		return true;
@@ -88,6 +72,10 @@ public class EdgeTargetAnalyzer implements EdgeAnalyzer, MultiThreaded {
 
 	@Override
 	public void process(final Collection<DefaultWeightedEdge> edges) {
+
+		if (edges.isEmpty()) {
+			return;
+		}
 
 		final ArrayBlockingQueue<DefaultWeightedEdge> queue = new ArrayBlockingQueue<DefaultWeightedEdge>(edges.size(), false, edges);
 
@@ -98,27 +86,13 @@ public class EdgeTargetAnalyzer implements EdgeAnalyzer, MultiThreaded {
 				public void run() {
 					DefaultWeightedEdge edge;
 					while ((edge = queue.poll()) != null) {
-
 						// Edge weight
 						featureModel.putEdgeFeature(edge, EDGE_COST, model.getTrackModel().getEdgeWeight(edge));
 						// Source & target name & ID
 						Spot source = model.getTrackModel().getEdgeSource(edge);
-//						featureModel.putEdgeFeature(edge, SPOT1_NAME, source.getName());
 						featureModel.putEdgeFeature(edge, SPOT1_ID, Double.valueOf(source.ID()));
 						Spot target = model.getTrackModel().getEdgeTarget(edge);
-//						featureModel.putEdgeFeature(edge, SPOT2_NAME, target.getName());
 						featureModel.putEdgeFeature(edge, SPOT2_ID, Double.valueOf(target.ID()));
-						// Track it belong to TOO COSTY IN TIME
-//						final Map<Integer,Set<DefaultWeightedEdge>> tracks = model.getTrackEdges();
-//						int trackID = -1;
-//						for (int id : tracks.keySet()) {
-//							if (tracks.get(id).contains(edge)) {
-//								trackID = id;
-//								break;
-//							}
-//						}
-//						featureModel.putEdgeFeature(edge, TRACK_ID, Double.valueOf(trackID));
-
 					}
 
 				}

@@ -645,7 +645,9 @@ public class TrackMateModel {
 		int nEdgesToUpdate = trackGraphModel.edgesAdded.size() + trackGraphModel.edgesModified.size();
 		if (nEdgesToUpdate > 0) {
 			if (null != featureModel.trackAnalyzerProvider) {
-				HashSet<DefaultWeightedEdge> edgesToUpdate = new HashSet<DefaultWeightedEdge>(trackGraphModel.edgesAdded.size());
+				HashSet<DefaultWeightedEdge> edgesToUpdate =  
+						new HashSet<DefaultWeightedEdge>(trackGraphModel.edgesAdded.size() + trackGraphModel.edgesModified.size());
+				edgesToUpdate.addAll(trackGraphModel.edgesAdded);
 				edgesToUpdate.addAll(trackGraphModel.edgesModified);
 				HashSet<DefaultWeightedEdge> globalEdgesToUpdate = null; // for now - compute it only if we need
 				

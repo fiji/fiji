@@ -207,9 +207,12 @@ public class TrackGraphModel {
 	DefaultWeightedEdge addEdge(final Spot source, final Spot target, final double weight) {
 		// Mother graph
 		DefaultWeightedEdge edge = graph.addEdge(source, target);
-		graph.setEdgeWeight(edge, weight);
-		if (DEBUG)
-			System.out.println("[TrackGraphModel] Adding edge between " + source + " and " + target + " with weight " + weight);
+		if (null != edge) {
+			edgesAdded.add(edge);
+			graph.setEdgeWeight(edge, weight);
+			if (DEBUG)
+				System.out.println("[TrackGraphModel] Adding edge between " + source + " and " + target + " with weight " + weight);
+		}
 		return edge;
 	}
 
@@ -226,8 +229,11 @@ public class TrackGraphModel {
 	DefaultWeightedEdge removeEdge(final Spot source, final Spot target) {
 		// Other graph
 		DefaultWeightedEdge edge = graph.removeEdge(source, target);
-		if (DEBUG)
-			System.out.println("[TrackGraphModel] Removing edge between " + source + " and " + target);
+		if (null != edge) {
+			edgesRemoved.add(edge);
+			if (DEBUG)
+				System.out.println("[TrackGraphModel] Removing edge between " + source + " and " + target);
+		}
 		return edge;
 	}
 
@@ -249,18 +255,21 @@ public class TrackGraphModel {
 	boolean removeEdge(final DefaultWeightedEdge edge) {
 		// Mother graph
 		boolean removed = graph.removeEdge(edge);
-		model.getSelectionModel().removeEdgeFromSelection(edge);
-		if (DEBUG)
-			System.out.println("[TrackGraphModel] Removing edge " + edge + " between " + graph.getEdgeSource(edge) + " and " + graph.getEdgeTarget(edge));
+		if (removed) {
+			edgesRemoved.add(edge);
+			model.getSelectionModel().removeEdgeFromSelection(edge);
+			if (DEBUG)
+				System.out.println("[TrackGraphModel] Removing edge " + edge + " between " + graph.getEdgeSource(edge) + " and " + graph.getEdgeTarget(edge));
+		}
 		return removed;
 	}
-	
+
 	/**
-     * Assigns a weight to an edge.
-     *
-     * @param e edge on which to set weight
-     * @param weight new weight for edge
-     */
+	 * Assigns a weight to an edge.
+	 *
+	 * @param e edge on which to set weight
+	 * @param weight new weight for edge
+	 */
 	void setEdgeWeight(final DefaultWeightedEdge edge, double weight) {
 		graph.setEdgeWeight(edge, weight);
 		// mark for update
@@ -757,9 +766,9 @@ public class TrackGraphModel {
 
 		}
 
-		
 
-		
+
+
 		// Assemble visibility and name from old parts
 
 		if (DEBUG) {
@@ -809,15 +818,15 @@ public class TrackGraphModel {
 			}
 		}
 
-		
+
 		// Clean track feature value map
 		HashSet<Integer> trackIDsToRemove = new HashSet<Integer>(oldTrackSpots.keySet());
 		trackIDsToRemove.removeAll(trackSpots.keySet());
 		for (Integer toRemove : trackIDsToRemove) {
 			model.getFeatureModel().trackFeatureValues.remove(toRemove);
 		}
-		
-		
+
+
 		if (DEBUG) {
 			System.out.println("[TrackGraphModel] #computeTracksFromGraph(): the end; found " + trackSpots.size() + " new spot tracks.");
 		}
