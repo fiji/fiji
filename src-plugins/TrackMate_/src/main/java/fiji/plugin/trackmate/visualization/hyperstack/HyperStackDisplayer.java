@@ -239,7 +239,7 @@ public class HyperStackDisplayer extends AbstractTrackMateModelView  {
 			spotOverlay.computeSpotColors();
 		}
 		if (key == TrackMateModelView.KEY_TRACK_COLORING) {
-			// de-register the old one
+			// unregister the old one
 			TrackColorGenerator oldColorGenerator = (TrackColorGenerator) displaySettings.get(KEY_TRACK_COLORING);
 			oldColorGenerator.terminate();
 			// pass the new one to the track overlay - we ignore its spot coloring and keep the spot coloring

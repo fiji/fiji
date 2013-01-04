@@ -41,7 +41,6 @@ import fiji.plugin.trackmate.SelectionModel;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMateModelChangeEvent;
-import fiji.plugin.trackmate.TrackMateModelChangeListener;
 import fiji.plugin.trackmate.TrackMateSelectionChangeEvent;
 import fiji.plugin.trackmate.TrackMateSelectionChangeListener;
 import fiji.plugin.trackmate.features.edges.EdgeVelocityAnalyzer;
@@ -50,7 +49,7 @@ import fiji.plugin.trackmate.visualization.PerEdgeFeatureColorGenerator;
 import fiji.plugin.trackmate.visualization.TrackColorGenerator;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
 
-public class TrackScheme implements TrackMateModelChangeListener, TrackMateSelectionChangeListener, TrackMateModelView {
+public class TrackScheme extends AbstractTrackMateModelView {
 
 	/*
 	 * CONSTANTS
@@ -118,12 +117,8 @@ public class TrackScheme implements TrackMateModelChangeListener, TrackMateSelec
 	 * FIELDS
 	 */
 
-	/** The model this instance is a view of (Yoda I speak like). */
-	private TrackMateModel model;
 	/** The frame in which we display the TrackScheme GUI. */
 	private TrackSchemeFrame gui;
-	/** The display settings map. */
-	private Map<String, Object> displaySettings = new HashMap<String, Object>();
 	/** The JGraphX object that displays the graph. */
 	private JGraphXAdapter graph;
 	/** The graph layout in charge of re-aligning the cells. */
@@ -151,7 +146,7 @@ public class TrackScheme implements TrackMateModelChangeListener, TrackMateSelec
 	 */
 
 	public TrackScheme(final TrackMateModel model)  {
-		setModel(model);
+		super(model);
 		initDisplaySettings();
 	}
 
@@ -623,7 +618,7 @@ public class TrackScheme implements TrackMateModelChangeListener, TrackMateSelec
 	public void setDisplaySettings(String key, Object value) {
 		
 		if (key == TrackMateModelView.KEY_TRACK_COLORING) {
-			// de-register the old one
+			// unregister the old one
 			TrackColorGenerator oldColorGenerator = (TrackColorGenerator) displaySettings.get(KEY_TRACK_COLORING);
 			oldColorGenerator.terminate();
 			// pass the new one to the track overlay - we ignore its spot coloring and keep the spot coloring
@@ -1079,18 +1074,6 @@ public class TrackScheme implements TrackMateModelChangeListener, TrackMateSelec
 		} finally {
 			graph.getModel().endUpdate();
 		}
-	}
-
-
-	private void setModel(TrackMateModel model) {
-		// Model listeners
-		if (null != this.model) {
-			this.model.removeTrackMateModelChangeListener(this);
-			this.model.removeTrackMateSelectionChangeListener(this);
-		}
-		this.model = model;
-		this.model.addTrackMateModelChangeListener(this);
-		this.model.addTrackMateSelectionChangeListener(this);
 	}
 
 	public void selectTrack(final Collection<mxCell> vertices, final Collection<mxCell> edges, final int direction) {

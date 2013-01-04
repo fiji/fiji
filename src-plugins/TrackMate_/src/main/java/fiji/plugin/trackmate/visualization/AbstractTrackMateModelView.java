@@ -51,8 +51,6 @@ public abstract class AbstractTrackMateModelView implements TrackMateSelectionCh
 	 */
 
 	
-
-	
 	@Override
 	public void setDisplaySettings(final String key, final Object value) {
 		displaySettings.put(key, value);
