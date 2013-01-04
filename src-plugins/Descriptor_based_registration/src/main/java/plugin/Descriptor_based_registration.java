@@ -167,15 +167,15 @@ public class Descriptor_based_registration implements PlugIn
 	public static boolean defaultRegularize = false;
 	
 	public static String[] detectionBrightness = { "Very low", "Low", "Medium", "Strong", "Advanced ...", "Interactive ..." };
-	public static int defaultDetectionBrightness = 2;
+	public static int defaultDetectionBrightness = detectionBrightness.length - 1;
 	public static double defaultSigma = 2;
 	public static double defaultThreshold = 0.03;
 	
 	public static String[] detectionSize = { "2 px", "3 px", "4 px", "5 px", "6 px", "7 px", "8 px", "9 px", "10 px", "Advanced ...", "Interactive ..." };
-	public static int defaultDetectionSize = 1;
+	public static int defaultDetectionSize = detectionSize.length - 1;
 	
 	public static String[] detectionTypes = { "Maxima only", "Minima only", "Minima & Maxima", "Interactive ..." };
-	public static int defaultDetectionType = 0;
+	public static int defaultDetectionType = detectionTypes.length - 1;
 	public static boolean defaultInteractiveMaxima = true;
 	public static boolean defaultInteractiveMinima = false;
 	
