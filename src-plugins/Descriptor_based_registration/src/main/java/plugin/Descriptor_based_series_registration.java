@@ -161,6 +161,7 @@ public class Descriptor_based_series_registration implements PlugIn
 	public static int defaultRegularizationTransformationModel = 1;
 	public static double defaultLambda = 0.1;
 	public static boolean defaultFixFirstTile = false;
+	public static boolean defaultRegularize = false;
 	
 	public static String[] detectionBrightness = { "Very low", "Low", "Medium", "Strong", "Advanced ...", "Interactive ..." };
 	public static int defaultDetectionBrightness = 2;
@@ -174,7 +175,6 @@ public class Descriptor_based_series_registration implements PlugIn
 	public static int defaultDetectionType = 0;
 	
 	public static boolean defaultSimilarOrientation = false;
-	public static boolean defaultRegularize = false;
 	public static int defaultNumNeighbors = 3;
 	public static int defaultRedundancy = 1;
 	public static double defaultSignificance = 3;
@@ -203,6 +203,9 @@ public class Descriptor_based_series_registration implements PlugIn
 		// check if default selection of transformation model holds
 		if ( defaultTransformationModel >= transformationModel.length )
 			defaultTransformationModel = 1;
+		
+		if ( defaultRegularizationTransformationModel >= transformationModel.length  )
+			defaultRegularizationTransformationModel = 1;
 		
 		// one of them is by default interactive, then all are interactive
 		if ( defaultDetectionBrightness == detectionBrightness.length - 1 || 

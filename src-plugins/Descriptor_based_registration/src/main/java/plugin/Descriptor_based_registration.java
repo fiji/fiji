@@ -217,6 +217,9 @@ public class Descriptor_based_registration implements PlugIn
 		if ( defaultTransformationModel >= transformationModel.length )
 			defaultTransformationModel = 1;
 		
+		if ( defaultRegularizationTransformationModel >= transformationModel.length  )
+			defaultRegularizationTransformationModel = 1;
+
 		// one of them is by default interactive, then all are interactive
 		if ( defaultDetectionBrightness == detectionBrightness.length - 1 || 
 			 defaultDetectionSize == detectionSize.length - 1 ||
