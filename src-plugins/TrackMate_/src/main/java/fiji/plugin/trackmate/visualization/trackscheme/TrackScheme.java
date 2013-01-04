@@ -37,14 +37,12 @@ import com.mxgraph.view.mxGraphSelectionModel;
 import com.mxgraph.view.mxPerimeter;
 import com.mxgraph.view.mxStylesheet;
 
+import fiji.plugin.trackmate.ModelChangeEvent;
+import fiji.plugin.trackmate.SelectionChangeEvent;
 import fiji.plugin.trackmate.SelectionModel;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.TrackMateModel;
-import fiji.plugin.trackmate.ModelChangeEvent;
-import fiji.plugin.trackmate.SelectionChangeEvent;
-import fiji.plugin.trackmate.features.edges.EdgeVelocityAnalyzer;
 import fiji.plugin.trackmate.visualization.AbstractTrackMateModelView;
-import fiji.plugin.trackmate.visualization.PerEdgeFeatureColorGenerator;
 import fiji.plugin.trackmate.visualization.TrackColorGenerator;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
 
@@ -340,7 +338,7 @@ public class TrackScheme extends AbstractTrackMateModelView {
 
 				Spot source = graph.getSpotFor(cell.getSource());
 				Spot target = graph.getSpotFor(cell.getTarget());
-				
+
 				if (DEBUG) {
 					System.out.println("[TrackScheme] #addEdgeManually: edge is between 2 spots belonging to the same frame. Removing it.");
 					System.out.println("[TrackScheme] #addEdgeManually: adding edge between source " + source + 
@@ -530,9 +528,9 @@ public class TrackScheme extends AbstractTrackMateModelView {
 				if (event.getEdges().size() > 0) {
 
 					Map<Integer, Set<mxCell>> edgesToUpdate = new HashMap<Integer, Set<mxCell>>();
-					
+
 					for (DefaultWeightedEdge edge : event.getEdges()) {
-						
+
 						if (event.getEdgeFlag(edge) == ModelChangeEvent.FLAG_EDGE_ADDED) {
 
 							mxCell edgeCell = graph.getCellFor(edge);
@@ -570,7 +568,7 @@ public class TrackScheme extends AbstractTrackMateModelView {
 							}
 
 							graph.getModel().add(graph.getDefaultParent(), edgeCell, 0);
-							
+
 							// Add it to the map of cells to recolor
 							Integer trackID = model.getTrackModel().getTrackIDOf(edge);
 							Set<mxCell> edgeSet = edgesToUpdate.get(trackID);
@@ -591,7 +589,7 @@ public class TrackScheme extends AbstractTrackMateModelView {
 							edgeSet.add(graph.getCellFor(edge));
 						}
 					}
-					
+
 					stylist.execute(edgesToUpdate);
 					SwingUtilities.invokeLater(new Runnable(){
 						public void run() {
@@ -599,8 +597,8 @@ public class TrackScheme extends AbstractTrackMateModelView {
 							gui.graphComponent.repaint();
 						}
 					});
-					
-					
+
+
 				}
 			} finally {
 				graph.getModel().endUpdate();
@@ -615,17 +613,18 @@ public class TrackScheme extends AbstractTrackMateModelView {
 
 	@Override
 	public void setDisplaySettings(String key, Object value) {
-		
+
 		if (key == TrackMateModelView.KEY_TRACK_COLORING) {
-			// unregister the old one
-			TrackColorGenerator oldColorGenerator = (TrackColorGenerator) displaySettings.get(KEY_TRACK_COLORING);
-			oldColorGenerator.terminate();
-			// pass the new one to the track overlay - we ignore its spot coloring and keep the spot coloring
-			TrackColorGenerator colorGenerator = (TrackColorGenerator) value;
-			stylist.setColorGenerator(colorGenerator);
-			doTrackStyle();
+			if (null != stylist) {
+				// unregister the old one
+				TrackColorGenerator oldColorGenerator = (TrackColorGenerator) displaySettings.get(KEY_TRACK_COLORING);
+				oldColorGenerator.terminate();
+				// pass the new one to the track overlay - we ignore its spot coloring and keep the spot coloring
+				TrackColorGenerator colorGenerator = (TrackColorGenerator) value;
+				stylist.setColorGenerator(colorGenerator);
+			}
 		}
-		
+
 		displaySettings.put(key, value);
 	}
 
@@ -640,8 +639,7 @@ public class TrackScheme extends AbstractTrackMateModelView {
 			SwingUtilities.invokeAndWait(new Runnable(){
 				public void run()	{
 					initGUI();
-					TrackColorGenerator colorGenerator = (TrackColorGenerator) displaySettings.get(KEY_TRACK_COLORING);
-					stylist = new TrackSchemeStylist(TrackScheme.this, colorGenerator);
+					stylist = new TrackSchemeStylist(TrackScheme.this, (TrackColorGenerator) displaySettings.get(KEY_TRACK_COLORING));
 					doTrackLayout();
 				}
 			});
@@ -654,7 +652,18 @@ public class TrackScheme extends AbstractTrackMateModelView {
 
 	@Override
 	public void refresh() {
-		System.out.println("[TrackScheme] refresh() called");
+		new Thread("TrackScheme refreshing style thread") {
+			@Override
+			public void run() {
+				doTrackStyle();
+				SwingUtilities.invokeLater(new Runnable(){
+					public void run() {
+						gui.graphComponent.refresh();
+						gui.graphComponent.repaint();
+					}
+				});
+			}
+		}.start();
 	}
 
 	@Override
@@ -685,7 +694,6 @@ public class TrackScheme extends AbstractTrackMateModelView {
 		displaySettings.put(KEY_TRACK_DISPLAY_MODE, DEFAULT_TRACK_DISPLAY_MODE);
 		displaySettings.put(KEY_TRACK_DISPLAY_DEPTH, DEFAULT_TRACK_DISPLAY_DEPTH);
 		displaySettings.put(KEY_COLORMAP, DEFAULT_COLOR_MAP);
-		displaySettings.put(KEY_TRACK_COLORING, new PerEdgeFeatureColorGenerator(model, EdgeVelocityAnalyzer.VELOCITY));
 	}
 
 
@@ -910,8 +918,11 @@ public class TrackScheme extends AbstractTrackMateModelView {
 	public void resetZoom() {
 		gui.graphComponent.zoomTo(1.0, false);
 	}
-	
+
 	private void doTrackStyle() {
+		if (null == stylist) {
+			return;
+		}
 		// Collect edges
 		Set<Integer> trackIDs = model.getTrackModel().getFilteredTrackIDs();
 		HashMap<Integer, Set<mxCell>> edgeMap = new HashMap<Integer, Set<mxCell>>(trackIDs.size());

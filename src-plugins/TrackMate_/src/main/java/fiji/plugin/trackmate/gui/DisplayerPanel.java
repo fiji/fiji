@@ -6,7 +6,7 @@ import static fiji.plugin.trackmate.gui.TrackMateWizard.SMALL_FONT;
 import static fiji.plugin.trackmate.visualization.TrackMateModelView.KEY_DISPLAY_SPOT_NAMES;
 import static fiji.plugin.trackmate.visualization.TrackMateModelView.KEY_SPOTS_VISIBLE;
 import static fiji.plugin.trackmate.visualization.TrackMateModelView.KEY_SPOT_COLOR_FEATURE;
-import static fiji.plugin.trackmate.visualization.TrackMateModelView.KEY_SPOT_RADIUS_RATIO;
+import static fiji.plugin.trackmate.visualization.TrackMateModelView.*;
 import static fiji.plugin.trackmate.visualization.TrackMateModelView.KEY_TRACKS_VISIBLE;
 import static fiji.plugin.trackmate.visualization.TrackMateModelView.KEY_TRACK_DISPLAY_DEPTH;
 import static fiji.plugin.trackmate.visualization.TrackMateModelView.KEY_TRACK_DISPLAY_MODE;
@@ -79,6 +79,8 @@ public class DisplayerPanel extends ActionListenablePanel implements WizardPanel
 	private Set<TrackMateModelView> views = new HashSet<TrackMateModelView>();
 	private TrackMate_ plugin;
 	private TrackMateWizard wizard;
+
+	private TrackColorByFeatureGUI trackColorGUI;
 
 
 	/*
@@ -165,6 +167,13 @@ public class DisplayerPanel extends ActionListenablePanel implements WizardPanel
 						view.setDisplaySettings(KEY_SPOT_COLOR_FEATURE, jPanelSpotColor.setColorByFeature);
 						view.refresh();
 					}
+				} if (event == trackColorGUI.TRACK_COLOR_FEATURE_CHANGED) {
+					
+					for (TrackMateModelView view : views) {
+						view.setDisplaySettings(KEY_TRACK_COLORING, trackColorGUI.getColorGenerator());
+						view.refresh();
+					}
+					
 				} else {
 					DisplayerPanel.super.fireAction(event);
 				}
@@ -182,6 +191,7 @@ public class DisplayerPanel extends ActionListenablePanel implements WizardPanel
 		displaySettings.put(KEY_SPOT_COLOR_FEATURE, jPanelSpotColor.setColorByFeature);
 		displaySettings.put(KEY_SPOT_RADIUS_RATIO, (float) jTextFieldSpotRadius.getValue());
 		displaySettings.put(KEY_SPOTS_VISIBLE, jCheckBoxDisplaySpots.isSelected());
+		displaySettings.put(KEY_TRACK_COLORING, trackColorGUI.getColorGenerator());
 		int depth;
 		if (jCheckBoxLimitDepth.isSelected())
 			depth = Integer.parseInt(jTextFieldFrameDepth.getText());
@@ -213,6 +223,13 @@ public class DisplayerPanel extends ActionListenablePanel implements WizardPanel
 			});
 		}
 		jPanelSpotColor.setFeatureValues(featureValues);
+
+		if (trackColorGUI != null) {
+			jPanelTrackOptions.remove(trackColorGUI);
+		}
+		trackColorGUI = new TrackColorByFeatureGUI(plugin.getModel(), this);
+		trackColorGUI.setPreferredSize(new java.awt.Dimension(265, 45));
+		jPanelTrackOptions.add(trackColorGUI);
 	}
 
 	private void initGUI() {
@@ -232,7 +249,7 @@ public class DisplayerPanel extends ActionListenablePanel implements WizardPanel
 				jPanelTrackOptionsLayout.setAlignment(FlowLayout.LEFT);
 				jPanelTrackOptions.setLayout(jPanelTrackOptionsLayout);
 				this.add(jPanelTrackOptions);
-				jPanelTrackOptions.setBounds(10, 212, 280, 117);
+				jPanelTrackOptions.setBounds(10, 212, 280, 188);
 				jPanelTrackOptions.setBorder(new LineBorder(new java.awt.Color(192,192,192), 1, true));
 				{
 					jLabelTrackDisplayMode = new JLabel();
@@ -307,6 +324,11 @@ public class DisplayerPanel extends ActionListenablePanel implements WizardPanel
 							}
 						}
 					});
+				}
+				{
+					
+					// Color GUI will be added later, when we receive the plugin object. It's like that.
+
 				}
 			}
 			{
@@ -422,7 +444,7 @@ public class DisplayerPanel extends ActionListenablePanel implements WizardPanel
 				jButtonShowTrackScheme.setText("Track scheme");
 				jButtonShowTrackScheme.setIcon(TRACK_SCHEME_ICON);
 				jButtonShowTrackScheme.setFont(FONT);
-				jButtonShowTrackScheme.setBounds(10, 345, 120, 30);
+				jButtonShowTrackScheme.setBounds(10, 411, 120, 30);
 				jButtonShowTrackScheme.addActionListener(new ActionListener() {
 					@Override
 					public void actionPerformed(ActionEvent e) {
@@ -435,7 +457,7 @@ public class DisplayerPanel extends ActionListenablePanel implements WizardPanel
 				jButtonDoAnalysis = new JButton("Analysis");
 				jButtonDoAnalysis.setFont(FONT);
 				jButtonDoAnalysis.setIcon(DO_ANALYSIS_ICON);
-				jButtonDoAnalysis.setBounds(145, 345, 120, 30);
+				jButtonDoAnalysis.setBounds(145, 411, 120, 30);
 				jButtonDoAnalysis.addActionListener(new ActionListener() {
 					@Override
 					public void actionPerformed(ActionEvent arg0) {

@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -286,12 +287,69 @@ public class FeatureModel implements MultiThreaded {
 
 
 	/**
-	 * Return a map of feature values for the spot collection held
+	 * @return a map of feature values for the spot collection held
 	 * by this instance. Each feature maps a double array, with 1 element per
 	 * {@link Spot}, all pooled together.
 	 */
 	public Map<String, double[]> getSpotFeatureValues() {
-		return TMUtils.getSpotFeatureValues(model.getSpots(), spotFeatures, model.getLogger());
+		return TMUtils.getSpotFeatureValues(model.getSpots(), spotFeatures, model.getLogger()); // FIXME Yerk!
+	}
+
+	/**
+	 * @return a new double array with all the values for the specified track feature.
+	 * @param trackFeature the track feature to parse. Throw an {@link IllegalArgumentException}
+	 * if the feature is unknown.
+	 * @param filteredOnly if <code>true</code>, will only include filtered tracks, 
+	 * all the tracks otherwise.
+	 */
+	public double[] getTrackFeatureValues(String trackFeature, boolean filteredOnly) {
+		if (!trackFeatures.contains(trackFeature)) {
+			throw new IllegalArgumentException("Unknown track feature: " + trackFeature);
+		}
+		final Set<Integer> keys;
+		if (filteredOnly) {
+			keys = model.getTrackModel().getFilteredTrackIDs();
+		} else {
+			keys = model.getTrackModel().getTrackIDs();
+		}
+		double[] val = new double[keys.size()];
+		int index = 0;
+		for (Integer trackID : keys) {
+			val[index++] = getTrackFeature(trackID, trackFeature).doubleValue(); 
+		}
+		return val;
+	}
+	
+	/**
+	 * @return a new double array with all the values for the specified edge feature.
+	 * @param edgeFeature the track feature to parse. Throw an {@link IllegalArgumentException}
+	 * if the feature is unknown.
+	 * @param filteredOnly if <code>true</code>, will only include edges in filtered tracks, 
+	 * in all the tracks otherwise.
+	 */
+	public double[] getEdgeFeatureValues(String edgeFeature, boolean filteredOnly) {
+		if (!edgeFeatures.contains(edgeFeature)) {
+			throw new IllegalArgumentException("Unknown edge feature: " + edgeFeature);
+		}
+		final Set<Integer> keys;
+		if (filteredOnly) {
+			keys = model.getTrackModel().getFilteredTrackIDs();
+		} else {
+			keys = model.getTrackModel().getTrackIDs();
+		}
+		int nvals = 0;
+		for (Integer trackID : keys) {
+			nvals += model.getTrackModel().getTrackEdges(trackID).size();
+		}
+		
+		double[] val = new double[nvals];
+		int index = 0;
+		for (Integer trackID : keys) {
+			for (DefaultWeightedEdge edge : model.getTrackModel().getTrackEdges(trackID)) {
+				val[index++] = getEdgeFeature(edge, edgeFeature).doubleValue(); 
+			}
+		}
+		return val;
 	}
 
 	/**

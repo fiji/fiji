@@ -10,33 +10,39 @@ import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 import javax.swing.Box;
 import javax.swing.BoxLayout;
-import javax.swing.ComboBoxModel;
-import javax.swing.DefaultComboBoxModel;
-import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
 import org.jfree.chart.renderer.InterpolatePaintScale;
 
-public class JPanelColorByFeatureGUI extends ActionListenablePanel {
+import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.features.edges.EdgeVelocityAnalyzer;
+import fiji.plugin.trackmate.features.track.TrackIndexAnalyzer;
+import fiji.plugin.trackmate.visualization.PerEdgeFeatureColorGenerator;
+import fiji.plugin.trackmate.visualization.PerTrackFeatureColorGenerator;
+import fiji.plugin.trackmate.visualization.TrackColorGenerator;
+
+public class TrackColorByFeatureGUI extends ActionListenablePanel {
 
 	/*
 	 * FIELDS
 	 */
 
-	private static final long serialVersionUID = 498572562002300656L;
+	private static final long serialVersionUID = 1L;
 	/**
 	 * This action is fired when the feature to color in the "Set color by feature"
 	 * JComboBox is changed.
 	 */
-	public final ActionEvent COLOR_FEATURE_CHANGED = new ActionEvent(this, 1, "ColorFeatureChanged");
+	public final ActionEvent TRACK_COLOR_FEATURE_CHANGED = new ActionEvent(this, 1, "TrackColorFeatureChanged");
 	private JLabel jLabelSetColorBy;
-	private JComboBox jComboBoxSetColorBy;
+	private CategoryJComboBox<TrackColorGenerator, String> jComboBoxSetColorBy;
 	private JPanel jPanelByFeature;
 	private Canvas canvasColor;
 	private JPanel jPanelColor;
@@ -47,22 +53,39 @@ public class JPanelColorByFeatureGUI extends ActionListenablePanel {
 	 * DEFAULT VISIBILITY
 	 */
 
-	String setColorByFeature;
-	
-	private Map<String, double[]> featureValues;
-	private Map<String, String> featureNames;
-	private List<String> features;
+	private final Map<TrackColorGenerator, List<String>> features;
+	private final Map<String, String> featureNames;
+	private final Map<TrackColorGenerator, String> categoryNames;
 
 	private ActionListenablePanel caller;
+	private final PerTrackFeatureColorGenerator trackColorGenerator;
+	private final PerEdgeFeatureColorGenerator edgeColorGenerator;
+	private final TrackMateModel model;
 
 	/*
 	 * CONSTRUCTOR
 	 */
 
-	public JPanelColorByFeatureGUI(final List<String> features, final Map<String, String> featureNames, final ActionListenablePanel caller) {
+	public TrackColorByFeatureGUI(TrackMateModel model, ActionListenablePanel caller) {
 		super();
-		this.features = features;
-		this.featureNames = featureNames;
+		// Build features map
+		features = new LinkedHashMap<TrackColorGenerator, List<String>>(2);
+		trackColorGenerator = new PerTrackFeatureColorGenerator(model, TrackIndexAnalyzer.TRACK_INDEX);
+		List<String> trackFeatures = model.getFeatureModel().getTrackFeatures();
+		features.put(trackColorGenerator, trackFeatures);
+		edgeColorGenerator = new PerEdgeFeatureColorGenerator(model, EdgeVelocityAnalyzer.VELOCITY);
+		List<String> edgeFeatures = model.getFeatureModel().getEdgeFeatures();
+		features.put(edgeColorGenerator, edgeFeatures);
+		// Build feature names
+		featureNames = new HashMap<String, String>(trackFeatures.size() + edgeFeatures.size());
+		featureNames.putAll(model.getFeatureModel().getTrackFeatureNames());
+		featureNames.putAll(model.getFeatureModel().getEdgeFeatureNames());
+		// Build category names
+		categoryNames = new HashMap<TrackColorGenerator, String>(2);
+		categoryNames.put(trackColorGenerator, "Track features:");
+		categoryNames.put(edgeColorGenerator, "Edge features:");
+		// The rest
+		this.model = model;
 		this.caller = caller;
 		initGUI();
 	}
@@ -81,18 +104,13 @@ public class JPanelColorByFeatureGUI extends ActionListenablePanel {
 		canvasColor.setEnabled(enabled);
 	}
 
-	public String getSelectedFeature() {
-		return setColorByFeature;
+	/**
+	 * @return a configured {@link TrackColorGenerator} matching the user choice on this GUI component.
+	 */
+	public TrackColorGenerator getColorGenerator() {
+		return jComboBoxSetColorBy.getSelectedCategory();
 	}
 	
-	public void setColorByFeature(String feature) {
-		if (null == feature) {
-			jComboBoxSetColorBy.setSelectedIndex(0);
-		} else {
-			jComboBoxSetColorBy.setSelectedItem(featureNames.get(feature));
-		}
-	}
-
 	/*
 	 * PRIVATE METHODS
 	 */
@@ -102,23 +120,29 @@ public class JPanelColorByFeatureGUI extends ActionListenablePanel {
 	 * Forward the 'color by feature' action to the caller of this GUI.
 	 */
 	private void colorByFeatureChanged() {
-		int selection = jComboBoxSetColorBy.getSelectedIndex();
-		if (selection == 0) 
-			setColorByFeature = null;
-		else
-			setColorByFeature = features.get(selection-1);
-		caller.fireAction(COLOR_FEATURE_CHANGED);
-		
-		
+		// Configure color generator
+		if (jComboBoxSetColorBy.getSelectedCategory() == trackColorGenerator) {
+			trackColorGenerator.setFeature(jComboBoxSetColorBy.getSelectedItem());
+		} else {
+			edgeColorGenerator.setFeature(jComboBoxSetColorBy.getSelectedItem());
+		}
+		// pass event
+		caller.fireAction(TRACK_COLOR_FEATURE_CHANGED);
 	}
 
 	private void repaintColorCanvas(Graphics g) {
-		if (null == setColorByFeature) {
+		if (null == jComboBoxSetColorBy.getSelectedItem()) {
 			g.clearRect(0, 0, canvasColor.getWidth(), canvasColor.getHeight());
 			return;
 		}
 
-		final double[] values = featureValues.get(setColorByFeature);
+		final double[] values;
+		if (jComboBoxSetColorBy.getSelectedCategory() == trackColorGenerator) {
+			values = model.getFeatureModel().getTrackFeatureValues(jComboBoxSetColorBy.getSelectedItem(), true);
+		} else {
+			values = model.getFeatureModel().getEdgeFeatureValues(jComboBoxSetColorBy.getSelectedItem(), true);
+		}
+		
 		if (null == values) {
 			g.clearRect(0, 0, canvasColor.getWidth(), canvasColor.getHeight());
 			return;
@@ -172,17 +196,10 @@ public class JPanelColorByFeatureGUI extends ActionListenablePanel {
 				jLabelSetColorBy.setFont(SMALL_FONT);
 			}
 			{
-				String[] featureStringList = new String[features.size()+1];
-				featureStringList[0] = "Default";
-				for (int i = 0; i < features.size(); i++) 
-					featureStringList[i+1] = featureNames.get(features.get(i));
-				ComboBoxModel jComboBoxSetColorByModel = new DefaultComboBoxModel(featureStringList);
-				jComboBoxSetColorBy = new JComboBox();
+				jComboBoxSetColorBy = new CategoryJComboBox<TrackColorGenerator, String>(features, featureNames, categoryNames);
 				jPanelByFeature.add(Box.createHorizontalStrut(5));
 				jPanelByFeature.add(Box.createHorizontalStrut(5));
 				jPanelByFeature.add(jComboBoxSetColorBy);
-				jComboBoxSetColorBy.setModel(jComboBoxSetColorByModel);
-				jComboBoxSetColorBy.setFont(SMALL_FONT);
 				jComboBoxSetColorBy.addActionListener(new ActionListener() {
 					public void actionPerformed(ActionEvent e) {
 						colorByFeatureChanged();
@@ -209,13 +226,5 @@ public class JPanelColorByFeatureGUI extends ActionListenablePanel {
 				canvasColor.setPreferredSize(new java.awt.Dimension(270, 20));
 			}
 		}
-	}
-
-	public Map<String, double[]> getFeatureValues() {
-		return featureValues;
-	}
-
-	public void setFeatureValues(Map<String, double[]> featureValues) {
-		this.featureValues = featureValues;
 	}
 }

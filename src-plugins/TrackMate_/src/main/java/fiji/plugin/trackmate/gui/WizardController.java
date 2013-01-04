@@ -7,7 +7,9 @@ import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
@@ -223,7 +225,13 @@ public class WizardController implements ActionListener {
 			displayerPanel.jButtonShowTrackScheme.setEnabled(false);
 			try {
 				TrackScheme trackScheme = new TrackScheme(plugin.getModel());
+				Map<String, Object> displaySettings = new HashMap<String, Object>();
+				displayerPanel.updateDisplaySettings(displaySettings);
+				for (String settingKey : displaySettings.keySet()) {
+					trackScheme.setDisplaySettings(settingKey, displaySettings.get(settingKey));
+				}
 				trackScheme.render();
+				displayerPanel.register(trackScheme);
 			} finally {
 				displayerPanel.jButtonShowTrackScheme.setEnabled(true);
 			}
