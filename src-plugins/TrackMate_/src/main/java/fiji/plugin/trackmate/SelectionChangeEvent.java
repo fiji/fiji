@@ -11,7 +11,7 @@ import org.jgrapht.graph.DefaultWeightedEdge;
  * {@link Spot} selection and {@link DefaultWeightedEdge} selection are dealt with separately, 
  * to keep the use of this class general.
  */
-public class TrackMateSelectionChangeEvent extends EventObject {
+public class SelectionChangeEvent extends EventObject {
 
 	private static final long serialVersionUID = -8920831578922412606L;
 
@@ -34,7 +34,7 @@ public class TrackMateSelectionChangeEvent extends EventObject {
 	 * <code>null</code>s are accepted for the two maps, to specify that no changes happened for the 
 	 * corresponding type.
 	 */
-	public TrackMateSelectionChangeEvent(Object source, Map<Spot, Boolean> spots, Map<DefaultWeightedEdge, Boolean> edges) {
+	public SelectionChangeEvent(Object source, Map<Spot, Boolean> spots, Map<DefaultWeightedEdge, Boolean> edges) {
 		super(source);
 		this.spots = spots;
 		this.edges = edges;

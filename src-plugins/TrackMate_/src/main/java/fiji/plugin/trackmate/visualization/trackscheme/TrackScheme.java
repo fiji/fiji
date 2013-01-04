@@ -40,9 +40,8 @@ import com.mxgraph.view.mxStylesheet;
 import fiji.plugin.trackmate.SelectionModel;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.TrackMateModel;
-import fiji.plugin.trackmate.TrackMateModelChangeEvent;
-import fiji.plugin.trackmate.TrackMateSelectionChangeEvent;
-import fiji.plugin.trackmate.TrackMateSelectionChangeListener;
+import fiji.plugin.trackmate.ModelChangeEvent;
+import fiji.plugin.trackmate.SelectionChangeEvent;
 import fiji.plugin.trackmate.features.edges.EdgeVelocityAnalyzer;
 import fiji.plugin.trackmate.visualization.AbstractTrackMateModelView;
 import fiji.plugin.trackmate.visualization.PerEdgeFeatureColorGenerator;
@@ -424,7 +423,7 @@ public class TrackScheme extends AbstractTrackMateModelView {
 	 */
 
 	@Override
-	public void selectionChanged(TrackMateSelectionChangeEvent event) {
+	public void selectionChanged(SelectionChangeEvent event) {
 		if (DEBUG_SELECTION) 
 			System.out.println("[TrackSchemeFrame] selectionChanged: received event "+event.hashCode()+" from "+event.getSource()+". Fire flag is "+doFireSelectionChangeEvent);
 		if (!doFireSelectionChangeEvent)
@@ -479,10 +478,10 @@ public class TrackScheme extends AbstractTrackMateModelView {
 	 * on the graph here.
 	 */
 	@Override
-	public void modelChanged(final TrackMateModelChangeEvent event) {
+	public void modelChanged(final ModelChangeEvent event) {
 
 		// Only catch model changes
-		if (event.getEventID() != TrackMateModelChangeEvent.MODEL_MODIFIED)
+		if (event.getEventID() != ModelChangeEvent.MODEL_MODIFIED)
 			return;
 
 		graph.getModel().beginUpdate();
@@ -495,7 +494,7 @@ public class TrackScheme extends AbstractTrackMateModelView {
 			if (event.getSpots() != null) {
 				for (Spot spot : event.getSpots() ) {
 
-					if (event.getSpotFlag(spot) == TrackMateModelChangeEvent.FLAG_SPOT_ADDED) {
+					if (event.getSpotFlag(spot) == ModelChangeEvent.FLAG_SPOT_ADDED) {
 
 						int frame = spot.getFeature(Spot.FRAME).intValue();
 						// Put in the graph
@@ -503,12 +502,12 @@ public class TrackScheme extends AbstractTrackMateModelView {
 						insertSpotInGraph(spot, column); // move in right+1 free column
 						rowLengths.put(frame, column);
 
-					} else if (event.getSpotFlag(spot) == TrackMateModelChangeEvent.FLAG_SPOT_MODIFIED) {
+					} else if (event.getSpotFlag(spot) == ModelChangeEvent.FLAG_SPOT_MODIFIED) {
 
 						// Change the look of the cell
 						updateCellOf(spot);
 
-					}  else if (event.getSpotFlag(spot) == TrackMateModelChangeEvent.FLAG_SPOT_REMOVED) {
+					}  else if (event.getSpotFlag(spot) == ModelChangeEvent.FLAG_SPOT_REMOVED) {
 
 						mxICell cell = graph.getCellFor(spot);
 						cellsToRemove.add(cell);
@@ -534,7 +533,7 @@ public class TrackScheme extends AbstractTrackMateModelView {
 					
 					for (DefaultWeightedEdge edge : event.getEdges()) {
 						
-						if (event.getEdgeFlag(edge) == TrackMateModelChangeEvent.FLAG_EDGE_ADDED) {
+						if (event.getEdgeFlag(edge) == ModelChangeEvent.FLAG_EDGE_ADDED) {
 
 							mxCell edgeCell = graph.getCellFor(edge);
 							if (null == edgeCell) {
@@ -581,7 +580,7 @@ public class TrackScheme extends AbstractTrackMateModelView {
 							}
 							edgeSet.add(edgeCell);
 
-						} else if (event.getEdgeFlag(edge) == TrackMateModelChangeEvent.FLAG_EDGE_MODIFIED) {
+						} else if (event.getEdgeFlag(edge) == ModelChangeEvent.FLAG_EDGE_MODIFIED) {
 							// Add it to the map of cells to recolor
 							Integer trackID = model.getTrackModel().getTrackIDOf(edge);
 							Set<mxCell> edgeSet = edgesToUpdate.get(trackID);
@@ -696,7 +695,7 @@ public class TrackScheme extends AbstractTrackMateModelView {
 
 	/**
 	 * Called when the user makes a selection change in the graph. Used to forward this event 
-	 * to the {@link InfoPane} and to other {@link TrackMateSelectionChangeListener}s.
+	 * to the {@link InfoPane} and to other {@link SelectionChangeListener}s.
 	 * @param model the selection model 
 	 * @param added  the cells  <b>removed</b> from selection (careful, inverted)
 	 * @param removed  the cells <b>added</b> to selection (careful, inverted)

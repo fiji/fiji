@@ -25,8 +25,8 @@ import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.TrackMateModel;
-import fiji.plugin.trackmate.TrackMateModelChangeEvent;
-import fiji.plugin.trackmate.TrackMateSelectionChangeEvent;
+import fiji.plugin.trackmate.ModelChangeEvent;
+import fiji.plugin.trackmate.SelectionChangeEvent;
 import fiji.plugin.trackmate.util.TMUtils;
 import fiji.plugin.trackmate.visualization.AbstractTrackMateModelView;
 import fiji.plugin.trackmate.visualization.TrackColorGenerator;
@@ -79,26 +79,26 @@ public class SpotDisplayer3D extends AbstractTrackMateModelView {
 
 
 	@Override
-	public void modelChanged(TrackMateModelChangeEvent event) {
+	public void modelChanged(ModelChangeEvent event) {
 		if (DEBUG) {
 			System.out.println("[SpotDisplayer3D: modelChanged() called with event ID: "+event.getEventID());
 		}
 		switch (event.getEventID()) {
-		case TrackMateModelChangeEvent.SPOTS_COMPUTED: 
+		case ModelChangeEvent.SPOTS_COMPUTED: 
 			spotContent = makeSpotContent();
 			universe.removeContent(SPOT_CONTENT_NAME);
 			universe.addContent(spotContent);
 			break;
-		case TrackMateModelChangeEvent.SPOTS_FILTERED:
+		case ModelChangeEvent.SPOTS_FILTERED:
 			for(int key : model.getFilteredSpots().keySet())
 				blobs.get(key).setVisible(model.getFilteredSpots().get(key));
 			break;
-		case TrackMateModelChangeEvent.TRACKS_COMPUTED: 
+		case ModelChangeEvent.TRACKS_COMPUTED: 
 			trackContent = makeTrackContent();
 			universe.removeContent(TRACK_CONTENT_NAME);
 			universe.addContent(trackContent);
 			break;
-		case TrackMateModelChangeEvent.TRACKS_VISIBILITY_CHANGED:
+		case ModelChangeEvent.TRACKS_VISIBILITY_CHANGED:
 			trackNode.computeTrackColors();
 			trackNode.setTrackVisible(model.getTrackModel().getFilteredTrackIDs());
 			break;
@@ -107,7 +107,7 @@ public class SpotDisplayer3D extends AbstractTrackMateModelView {
 	}
 
 	@Override
-	public void selectionChanged(TrackMateSelectionChangeEvent event) {
+	public void selectionChanged(SelectionChangeEvent event) {
 		// Highlight
 		highlightEdges(model.getSelectionModel().getEdgeSelection());
 		highlightSpots(model.getSelectionModel().getSpotSelection());

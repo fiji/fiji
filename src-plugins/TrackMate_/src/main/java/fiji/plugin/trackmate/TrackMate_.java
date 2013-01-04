@@ -354,7 +354,7 @@ public class TrackMate_ implements PlugIn, Benchmark, MultiThreaded, Algorithm {
 	 * This tracking process will generate a graph (more precisely a {@link SimpleWeightedGraph}) made of the spot 
 	 * election for its vertices, and edges representing the links.
 	 * <p>
-	 * The {@link TrackMateModelChangeListener}s of this model will be notified when the successful process is over.
+	 * The {@link ModelChangeListener}s of this model will be notified when the successful process is over.
 	 * @see #getTrackGraph()
 	 */ 
 	public boolean execTracking() {
@@ -558,7 +558,7 @@ public class TrackMate_ implements PlugIn, Benchmark, MultiThreaded, Algorithm {
 	 * This method simply takes all the detected spots, and discard those whose quality value is below the threshold set 
 	 * by {@link #setInitialSpotFilter(Float)}. The spot field is overwritten, and discarded spots can't be recalled.
 	 * <p>
-	 * The {@link TrackMateModelChangeListener}s of this model will be notified with a {@link TrackMateModelChangeEvent#SPOTS_COMPUTED}
+	 * The {@link ModelChangeListener}s of this model will be notified with a {@link ModelChangeEvent#SPOTS_COMPUTED}
 	 * event.
 	 * 
 	 * @see #getSpots()
@@ -583,7 +583,7 @@ public class TrackMate_ implements PlugIn, Benchmark, MultiThreaded, Algorithm {
 	 * This method simply takes all the detected spots, and store in the field {@link #filteredSpots}
 	 * the spots whose features satisfy all of the filters entered with the method {@link #addFilter(SpotFilter)}.
 	 * <p>
-	 * The {@link TrackMateModelChangeListener}s of this model will be notified with a {@link TrackMateModelChangeEvent#SPOTS_FILTERED}
+	 * The {@link ModelChangeListener}s of this model will be notified with a {@link ModelChangeEvent#SPOTS_FILTERED}
 	 * event.
 	 * @param doLogIt  if true, will send a message to the {@link TrackMateModel#logger}.
 	 * @see #getFilteredSpots()

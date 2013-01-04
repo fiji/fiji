@@ -14,8 +14,8 @@ import fiji.plugin.trackmate.FeatureModel;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.TrackGraphModel;
 import fiji.plugin.trackmate.TrackMateModel;
-import fiji.plugin.trackmate.TrackMateModelChangeEvent;
-import fiji.plugin.trackmate.TrackMateModelChangeListener;
+import fiji.plugin.trackmate.ModelChangeEvent;
+import fiji.plugin.trackmate.ModelChangeListener;
 
 /**
  * A {@link TrackColorGenerator} that generate colors based on the whole
@@ -23,7 +23,7 @@ import fiji.plugin.trackmate.TrackMateModelChangeListener;
  * @author Jean-Yves Tinevez
  *
  */
-public class PerTrackFeatureColorGenerator implements TrackColorGenerator, TrackMateModelChangeListener {
+public class PerTrackFeatureColorGenerator implements TrackColorGenerator, ModelChangeListener {
 
 	/** Default color used when a feature value is missing. */
 	private static final Color DEFAULT_COLOR = Color.WHITE;
@@ -94,8 +94,8 @@ public class PerTrackFeatureColorGenerator implements TrackColorGenerator, Track
 
 
 	@Override
-	public void modelChanged(TrackMateModelChangeEvent event) {
-		if (event.getEventID() ==  TrackMateModelChangeEvent.MODEL_MODIFIED) {
+	public void modelChanged(ModelChangeEvent event) {
+		if (event.getEventID() ==  ModelChangeEvent.MODEL_MODIFIED) {
 			Set<DefaultWeightedEdge> edges = event.getEdges();
 			if (edges.size() > 0) {
 				refresh();

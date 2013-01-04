@@ -14,8 +14,8 @@ import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotImp;
 import fiji.plugin.trackmate.TrackMateModel;
-import fiji.plugin.trackmate.TrackMateModelChangeEvent;
-import fiji.plugin.trackmate.TrackMateSelectionChangeEvent;
+import fiji.plugin.trackmate.ModelChangeEvent;
+import fiji.plugin.trackmate.SelectionChangeEvent;
 import fiji.plugin.trackmate.util.TMUtils;
 import fiji.plugin.trackmate.visualization.AbstractTrackMateModelView;
 import fiji.plugin.trackmate.visualization.TrackColorGenerator;
@@ -110,14 +110,14 @@ public class HyperStackDisplayer extends AbstractTrackMateModelView  {
 	 */
 
 	@Override
-	public void modelChanged(TrackMateModelChangeEvent event) {
+	public void modelChanged(ModelChangeEvent event) {
 		if (DEBUG)
 			System.out.println("[HyperStackDisplayer] Received model changed event ID: "+event.getEventID()+" from "+event.getSource());
 		boolean redoOverlay = false;
 
 		switch (event.getEventID()) {
 
-		case TrackMateModelChangeEvent.MODEL_MODIFIED:
+		case ModelChangeEvent.MODEL_MODIFIED:
 			// Rebuild track overlay only if edges were added or removed, or if at least one spot was removed. 
 			final Set<DefaultWeightedEdge> edges = event.getEdges();
 			if (edges != null && edges.size() > 0) {
@@ -125,13 +125,13 @@ public class HyperStackDisplayer extends AbstractTrackMateModelView  {
 			}
 			break;
 
-		case TrackMateModelChangeEvent.SPOTS_COMPUTED:
+		case ModelChangeEvent.SPOTS_COMPUTED:
 			spotOverlay.computeSpotColors();
 			redoOverlay = true;
 			break;
 
-		case TrackMateModelChangeEvent.TRACKS_VISIBILITY_CHANGED:
-		case TrackMateModelChangeEvent.TRACKS_COMPUTED:
+		case ModelChangeEvent.TRACKS_VISIBILITY_CHANGED:
+		case ModelChangeEvent.TRACKS_COMPUTED:
 			redoOverlay = true;
 			break;
 		}
@@ -141,7 +141,7 @@ public class HyperStackDisplayer extends AbstractTrackMateModelView  {
 	}
 
 	@Override
-	public void selectionChanged(TrackMateSelectionChangeEvent event) {
+	public void selectionChanged(SelectionChangeEvent event) {
 		// Highlight selection
 		trackOverlay.setHighlight(model.getSelectionModel().getEdgeSelection());
 		spotOverlay.setSpotSelection(model.getSelectionModel().getSpotSelection());

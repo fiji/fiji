@@ -8,10 +8,10 @@ import org.jgrapht.graph.DefaultWeightedEdge;
 
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.TrackMateModel;
-import fiji.plugin.trackmate.TrackMateModelChangeEvent;
-import fiji.plugin.trackmate.TrackMateModelChangeListener;
+import fiji.plugin.trackmate.ModelChangeEvent;
+import fiji.plugin.trackmate.ModelChangeListener;
 
-public class PerEdgeFeatureColorGenerator implements TrackMateModelChangeListener, TrackColorGenerator {
+public class PerEdgeFeatureColorGenerator implements ModelChangeListener, TrackColorGenerator {
 
 	private static final InterpolatePaintScale colorMap = InterpolatePaintScale.Jet;
 	private static final Color DEFAULT_COLOR = Color.WHITE;
@@ -59,15 +59,15 @@ public class PerEdgeFeatureColorGenerator implements TrackMateModelChangeListene
 	 *  Monitor if the change induces some change in the colormap. Rescale it if so.
 	 */
 	@Override
-	public void modelChanged(TrackMateModelChangeEvent event) {
-		if (event.getEventID() != TrackMateModelChangeEvent.MODEL_MODIFIED || event.getEdges().size() == 0) {
+	public void modelChanged(ModelChangeEvent event) {
+		if (event.getEventID() != ModelChangeEvent.MODEL_MODIFIED || event.getEdges().size() == 0) {
 			return;
 		}
 
 		for (DefaultWeightedEdge edge : event.getEdges()) {
 			
-			if (event.getEdgeFlag(edge) == TrackMateModelChangeEvent.FLAG_EDGE_ADDED 
-					|| event.getEdgeFlag(edge) == TrackMateModelChangeEvent.FLAG_EDGE_MODIFIED) {
+			if (event.getEdgeFlag(edge) == ModelChangeEvent.FLAG_EDGE_ADDED 
+					|| event.getEdgeFlag(edge) == ModelChangeEvent.FLAG_EDGE_MODIFIED) {
 				
 				if (edge.equals(edgeMax) || edge.equals(edgeMin)) {
 					resetMinAndMax();
@@ -80,7 +80,7 @@ public class PerEdgeFeatureColorGenerator implements TrackMateModelChangeListene
 					return;
 				}
 				
-			} else if (event.getEdgeFlag(edge) == TrackMateModelChangeEvent.FLAG_EDGE_REMOVED) {
+			} else if (event.getEdgeFlag(edge) == ModelChangeEvent.FLAG_EDGE_REMOVED) {
 				
 				if (edge.equals(edgeMax) || edge.equals(edgeMin)) {
 					resetMinAndMax();

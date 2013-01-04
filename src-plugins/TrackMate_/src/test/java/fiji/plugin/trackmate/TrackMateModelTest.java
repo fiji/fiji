@@ -192,23 +192,23 @@ public class TrackMateModelTest {
 		final TrackMateModel model = new TrackMateModel();
 
 		// Add an event listener for that checks for adding spots and edges
-		TrackMateModelChangeListener eventLogger = new TrackMateModelChangeListener() {
+		ModelChangeListener eventLogger = new ModelChangeListener() {
 			@Override
-			public void modelChanged(TrackMateModelChangeEvent event) {
+			public void modelChanged(ModelChangeEvent event) {
 
 				// Event must be of the right type
-				assertEquals(TrackMateModelChangeEvent.MODEL_MODIFIED, event.getEventID());
+				assertEquals(ModelChangeEvent.MODEL_MODIFIED, event.getEventID());
 				// I expect 5 new spots from this event
 				assertEquals(5, event.getSpots().size());
 				// I expect 4 new links from this event
 				assertEquals(4, event.getEdges().size());
 				// Check the correct flag type for spots
 				for(Spot spot : event.getSpots()) {
-					assertEquals(TrackMateModelChangeEvent.FLAG_SPOT_ADDED, event.getSpotFlag(spot));
+					assertEquals(ModelChangeEvent.FLAG_SPOT_ADDED, event.getSpotFlag(spot));
 				}
 				// Check the correct flag type for edges
 				for(DefaultWeightedEdge edge : event.getEdges()) {
-					assertEquals(TrackMateModelChangeEvent.FLAG_EDGE_ADDED, event.getEdgeFlag(edge));
+					assertEquals(ModelChangeEvent.FLAG_EDGE_ADDED, event.getEdgeFlag(edge));
 				}
 			}
 		};
@@ -251,23 +251,23 @@ public class TrackMateModelTest {
 
 
 		// Add a new event logger that will monitor for a spot removal
-		eventLogger = new TrackMateModelChangeListener() {
+		eventLogger = new ModelChangeListener() {
 			@Override
-			public void modelChanged(TrackMateModelChangeEvent event) {
+			public void modelChanged(ModelChangeEvent event) {
 				// Event must be of the right type
-				assertEquals(TrackMateModelChangeEvent.MODEL_MODIFIED, event.getEventID());
+				assertEquals(ModelChangeEvent.MODEL_MODIFIED, event.getEventID());
 				// I expect 1 modified spot from this event
 				assertEquals(1, event.getSpots().size());
 				// It must be s3
 				assertEquals(s3, event.getSpots().iterator().next());
 				// It must be the removed flag
-				assertEquals(TrackMateModelChangeEvent.FLAG_SPOT_REMOVED, event.getSpotFlag(s3));
+				assertEquals(ModelChangeEvent.FLAG_SPOT_REMOVED, event.getSpotFlag(s3));
 
 				// I expect 2 links to be affected by this event
 				assertEquals(2, event.getEdges().size());
 				// Check the correct flag type for edges: they must be removed
 				for(DefaultWeightedEdge edge : event.getEdges()) {
-					assertEquals(TrackMateModelChangeEvent.FLAG_EDGE_REMOVED, event.getEdgeFlag(edge));
+					assertEquals(ModelChangeEvent.FLAG_EDGE_REMOVED, event.getEdgeFlag(edge));
 				}
 				// Check the removed edges identity
 				for (DefaultWeightedEdge edge : event.getEdges()) {
@@ -302,11 +302,11 @@ public class TrackMateModelTest {
 
 		model.removeTrackMateModelChangeListener(eventLogger);
 
-		eventLogger = new TrackMateModelChangeListener() {
+		eventLogger = new ModelChangeListener() {
 			@Override
-			public void modelChanged(TrackMateModelChangeEvent event) {
+			public void modelChanged(ModelChangeEvent event) {
 				// Event must be of the right type
-				assertEquals(TrackMateModelChangeEvent.MODEL_MODIFIED, event.getEventID());
+				assertEquals(ModelChangeEvent.MODEL_MODIFIED, event.getEventID());
 				// I expect 0 modified spot from this event, so spot field must be empty
 				assertTrue(event.getSpots().isEmpty());
 				// It must be s3
@@ -315,7 +315,7 @@ public class TrackMateModelTest {
 				assertEquals(1, event.getEdges().size());
 				// Check the correct flag type for edges: they must be removed
 				for(DefaultWeightedEdge edge : event.getEdges()) {
-					assertEquals(TrackMateModelChangeEvent.FLAG_EDGE_ADDED, event.getEdgeFlag(edge));
+					assertEquals(ModelChangeEvent.FLAG_EDGE_ADDED, event.getEdgeFlag(edge));
 				}
 				// Check the added edges identity
 				for (DefaultWeightedEdge edge : event.getEdges()) {
@@ -458,10 +458,10 @@ public class TrackMateModelTest {
 		new TrackMateModelTest().exampleManipulation();
 	}
 
-	private static class EventLogger implements TrackMateModelChangeListener {
+	private static class EventLogger implements ModelChangeListener {
 
 		@Override
-		public void modelChanged(TrackMateModelChangeEvent event) {
+		public void modelChanged(ModelChangeEvent event) {
 			// Simply append it to sysout
 			System.out.println(event);
 

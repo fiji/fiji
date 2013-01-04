@@ -157,15 +157,15 @@ public class TrackMateModel {
 	 * the need to fire a model change event. We want to fire these events only
 	 * when the transaction closes (when the updayeLevel reaches 0), so we store
 	 * the event ID in this cache in the meantime. The event cache contains only
-	 * the int IDs of the events listed in {@link TrackMateModelChangeEvent},
+	 * the int IDs of the events listed in {@link ModelChangeEvent},
 	 * namely
 	 * <ul>
-	 * <li> {@link TrackMateModelChangeEvent#SPOTS_COMPUTED}
-	 * <li> {@link TrackMateModelChangeEvent#SPOT_FILTERED}
-	 * <li> {@link TrackMateModelChangeEvent#TRACKS_COMPUTED}
-	 * <li> {@link TrackMateModelChangeEvent#TRACKS_VISIBILITY_CHANGED}
+	 * <li> {@link ModelChangeEvent#SPOTS_COMPUTED}
+	 * <li> {@link ModelChangeEvent#SPOT_FILTERED}
+	 * <li> {@link ModelChangeEvent#TRACKS_COMPUTED}
+	 * <li> {@link ModelChangeEvent#TRACKS_VISIBILITY_CHANGED}
 	 * </ul>
-	 * The {@link TrackMateModelChangeEvent#MODEL_MODIFIED} cannot be cached
+	 * The {@link ModelChangeEvent#MODEL_MODIFIED} cannot be cached
 	 * this way, for it needs to be configured with modification spot and edge
 	 * targets, so it uses a different system (see {@link #flushUpdate()}).
 	 */
@@ -188,7 +188,7 @@ public class TrackMateModel {
 	 * The list of listeners listening to model content change, that is, changes
 	 * in {@link #spots}, {@link #filteredSpots} and {@link #trackGraph}.
 	 */
-	List<TrackMateModelChangeListener> modelChangeListeners = new ArrayList<TrackMateModelChangeListener>();
+	List<ModelChangeListener> modelChangeListeners = new ArrayList<ModelChangeListener>();
 
 
 
@@ -248,15 +248,15 @@ public class TrackMateModel {
 	 * DEAL WITH MODEL CHANGE LISTENER
 	 */
 
-	public void addTrackMateModelChangeListener(TrackMateModelChangeListener listener) {
+	public void addTrackMateModelChangeListener(ModelChangeListener listener) {
 		modelChangeListeners.add(listener);
 	}
 
-	public boolean removeTrackMateModelChangeListener(TrackMateModelChangeListener listener) {
+	public boolean removeTrackMateModelChangeListener(ModelChangeListener listener) {
 		return modelChangeListeners.remove(listener);
 	}
 
-	public List<TrackMateModelChangeListener> getTrackMateModelChangeListener(TrackMateModelChangeListener listener) {
+	public List<ModelChangeListener> getTrackMateModelChangeListener(ModelChangeListener listener) {
 		return modelChangeListeners;
 	}
 
@@ -264,15 +264,15 @@ public class TrackMateModel {
 	 * DEAL WITH SELECTION CHANGE LISTENER
 	 */
 
-	public boolean addTrackMateSelectionChangeListener(TrackMateSelectionChangeListener listener) {
+	public boolean addTrackMateSelectionChangeListener(SelectionChangeListener listener) {
 		return selectionModel.addTrackMateSelectionChangeListener(listener);
 	}
 
-	public boolean removeTrackMateSelectionChangeListener(TrackMateSelectionChangeListener listener) {
+	public boolean removeTrackMateSelectionChangeListener(SelectionChangeListener listener) {
 		return selectionModel.removeTrackMateSelectionChangeListener(listener);
 	}
 
-	public List<TrackMateSelectionChangeListener> getTrackMateSelectionChangeListener() {
+	public List<SelectionChangeListener> getTrackMateSelectionChangeListener() {
 		return selectionModel.getTrackMateSelectionChangeListener();
 	}
 
@@ -341,13 +341,13 @@ public class TrackMateModel {
 	 * @param spots
 	 * @param doNotify
 	 *            if true, will file a
-	 *            {@link TrackMateModelChangeEvent#SPOTS_COMPUTED} event.
+	 *            {@link ModelChangeEvent#SPOTS_COMPUTED} event.
 	 */
 	public void setSpots(SpotCollection spots, boolean doNotify) {
 		this.spots = spots;
 		if (doNotify) {
-			final TrackMateModelChangeEvent event = new TrackMateModelChangeEvent(this, TrackMateModelChangeEvent.SPOTS_COMPUTED);
-			for (TrackMateModelChangeListener listener : modelChangeListeners)
+			final ModelChangeEvent event = new ModelChangeEvent(this, ModelChangeEvent.SPOTS_COMPUTED);
+			for (ModelChangeListener listener : modelChangeListeners)
 				listener.modelChanged(event);
 		}
 	}
@@ -356,13 +356,13 @@ public class TrackMateModel {
 	 * Overwrite the {@link #filteredSpots} field, resulting normally from the
 	 * {@link #execSpotFiltering()} process.
 	 * 
-	 * @param doNotify  if true, will fire a {@link TrackMateModelChangeEvent#SPOTS_FILTERED} event.
+	 * @param doNotify  if true, will fire a {@link ModelChangeEvent#SPOTS_FILTERED} event.
 	 */
 	public void setFilteredSpots(final SpotCollection filteredSpots, boolean doNotify) {
 		this.filteredSpots = filteredSpots;
 		if (doNotify) {
-			final TrackMateModelChangeEvent event = new TrackMateModelChangeEvent(this, TrackMateModelChangeEvent.SPOTS_FILTERED);
-			for (TrackMateModelChangeListener listener : modelChangeListeners)
+			final ModelChangeEvent event = new ModelChangeEvent(this, ModelChangeEvent.SPOTS_FILTERED);
+			for (ModelChangeListener listener : modelChangeListeners)
 				listener.modelChanged(event);
 		}
 	}
@@ -435,7 +435,7 @@ public class TrackMateModel {
 	 * @param spotToMove  the spot to move
 	 * @param fromFrame  the frame the spot originated from
 	 * @param toFrame  the destination frame
-	 * @param doNotify   if false, {@link TrackMateModelChangeListener}s will not be
+	 * @param doNotify   if false, {@link ModelChangeListener}s will not be
 	 * notified of this change
 	 * @return the spot that was moved
 	 */
@@ -592,7 +592,7 @@ public class TrackMateModel {
 		}
 
 		// Initialize event
-		TrackMateModelChangeEvent event = new TrackMateModelChangeEvent(this, TrackMateModelChangeEvent.MODEL_MODIFIED);
+		ModelChangeEvent event = new ModelChangeEvent(this, ModelChangeEvent.MODEL_MODIFIED);
 
 		// Configure it with spots to signal.
 		int nSpotsToSignal = nSpotsToUpdate + spotsRemoved.size();
@@ -603,16 +603,16 @@ public class TrackMateModel {
 			event.addAllSpots(spotsUpdated);
 
 			for (Spot spot : spotsAdded) {
-				event.putSpotFlag(spot, TrackMateModelChangeEvent.FLAG_SPOT_ADDED);
+				event.putSpotFlag(spot, ModelChangeEvent.FLAG_SPOT_ADDED);
 			}
 			for (Spot spot : spotsRemoved) {
-				event.putSpotFlag(spot, TrackMateModelChangeEvent.FLAG_SPOT_REMOVED);
+				event.putSpotFlag(spot, ModelChangeEvent.FLAG_SPOT_REMOVED);
 			}
 			for (Spot spot : spotsMoved) {
-				event.putSpotFlag(spot, TrackMateModelChangeEvent.FLAG_SPOT_FRAME_CHANGED);
+				event.putSpotFlag(spot, ModelChangeEvent.FLAG_SPOT_FRAME_CHANGED);
 			}
 			for (Spot spot : spotsUpdated) {
-				event.putSpotFlag(spot, TrackMateModelChangeEvent.FLAG_SPOT_MODIFIED);
+				event.putSpotFlag(spot, ModelChangeEvent.FLAG_SPOT_MODIFIED);
 			}
 		}
 
@@ -624,13 +624,13 @@ public class TrackMateModel {
 			event.addAllEdges(trackGraphModel.edgesModified);
 
 			for (DefaultWeightedEdge edge : trackGraphModel.edgesAdded) {
-				event.putEdgeFlag(edge, TrackMateModelChangeEvent.FLAG_EDGE_ADDED);
+				event.putEdgeFlag(edge, ModelChangeEvent.FLAG_EDGE_ADDED);
 			}
 			for (DefaultWeightedEdge edge : trackGraphModel.edgesRemoved) {
-				event.putEdgeFlag(edge, TrackMateModelChangeEvent.FLAG_EDGE_REMOVED);
+				event.putEdgeFlag(edge, ModelChangeEvent.FLAG_EDGE_REMOVED);
 			}
 			for (DefaultWeightedEdge edge : trackGraphModel.edgesModified) {
-				event.putEdgeFlag(edge, TrackMateModelChangeEvent.FLAG_EDGE_MODIFIED);
+				event.putEdgeFlag(edge, ModelChangeEvent.FLAG_EDGE_MODIFIED);
 			}
 		}
 
@@ -697,7 +697,7 @@ public class TrackMateModel {
 				if (DEBUG) {
 					System.out.println("[TrackMateModel] #flushUpdate(): firing model modified event.");
 				}
-				for (final TrackMateModelChangeListener listener : modelChangeListeners) {
+				for (final ModelChangeListener listener : modelChangeListeners) {
 					listener.modelChanged(event);
 				}
 			}
@@ -707,8 +707,8 @@ public class TrackMateModel {
 				if (DEBUG) {
 					System.out.println("[TrackMateModel] #flushUpdate(): firing event with ID "	+ eventID);
 				}
-				TrackMateModelChangeEvent cachedEvent = new TrackMateModelChangeEvent(this, eventID);
-				for (final TrackMateModelChangeListener listener : modelChangeListeners) {
+				ModelChangeEvent cachedEvent = new ModelChangeEvent(this, eventID);
+				for (final ModelChangeListener listener : modelChangeListeners) {
 					listener.modelChanged(cachedEvent);
 				}
 			}

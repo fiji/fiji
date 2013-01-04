@@ -46,14 +46,14 @@ import com.mxgraph.model.mxICell;
 
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.TrackMateModel;
-import fiji.plugin.trackmate.TrackMateSelectionChangeEvent;
-import fiji.plugin.trackmate.TrackMateSelectionChangeListener;
+import fiji.plugin.trackmate.SelectionChangeEvent;
+import fiji.plugin.trackmate.SelectionChangeListener;
 import fiji.plugin.trackmate.features.SpotFeatureGrapher;
 import fiji.plugin.trackmate.util.OnRequestUpdater;
 import fiji.plugin.trackmate.util.OnRequestUpdater.Refreshable;
 import fiji.plugin.trackmate.util.TMUtils;
 
-public class InfoPane extends JPanel implements TrackMateSelectionChangeListener {
+public class InfoPane extends JPanel implements SelectionChangeListener {
 
 	private static final long serialVersionUID = -1L;
 
@@ -129,7 +129,7 @@ public class InfoPane extends JPanel implements TrackMateSelectionChangeListener
 	 */
 
 	@Override
-	public void selectionChanged(TrackMateSelectionChangeEvent event) {
+	public void selectionChanged(SelectionChangeEvent event) {
 		// Echo changed in a different thread for performance 
 		new Thread("TrackScheme info pane thread") {
 			public void run() {

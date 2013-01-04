@@ -25,7 +25,7 @@ public class SelectionModel {
 	/** The edge current selection. */
 	private Set<DefaultWeightedEdge> edgeSelection = new HashSet<DefaultWeightedEdge>();
 	/** The list of listener listening to change in selection. */
-	private List<TrackMateSelectionChangeListener> selectionChangeListeners = new ArrayList<TrackMateSelectionChangeListener>();
+	private List<SelectionChangeListener> selectionChangeListeners = new ArrayList<SelectionChangeListener>();
 
 	private final TrackMateModel model;
 
@@ -41,15 +41,15 @@ public class SelectionModel {
 	 * DEAL WITH SELECTION CHANGE LISTENER
 	 */
 
-	public boolean addTrackMateSelectionChangeListener(TrackMateSelectionChangeListener listener) {
+	public boolean addTrackMateSelectionChangeListener(SelectionChangeListener listener) {
 		return selectionChangeListeners.add(listener);
 	}
 
-	public boolean removeTrackMateSelectionChangeListener(TrackMateSelectionChangeListener listener) {
+	public boolean removeTrackMateSelectionChangeListener(SelectionChangeListener listener) {
 		return selectionChangeListeners.remove(listener);
 	}
 
-	public List<TrackMateSelectionChangeListener> getTrackMateSelectionChangeListener() {
+	public List<SelectionChangeListener> getTrackMateSelectionChangeListener() {
 		return selectionChangeListeners;
 	}
 
@@ -67,12 +67,12 @@ public class SelectionModel {
 		Map<DefaultWeightedEdge, Boolean> edgeMap = new HashMap<DefaultWeightedEdge, Boolean>(edgeSelection.size());
 		for (DefaultWeightedEdge edge : edgeSelection)
 			edgeMap.put(edge, false);
-		TrackMateSelectionChangeEvent event = new TrackMateSelectionChangeEvent(this, spotMap, edgeMap);
+		SelectionChangeEvent event = new SelectionChangeEvent(this, spotMap, edgeMap);
 		// Clear fields
 		clearSpotSelection();
 		clearEdgeSelection();
 		// Fire event
-		for (TrackMateSelectionChangeListener listener : selectionChangeListeners)
+		for (SelectionChangeListener listener : selectionChangeListeners)
 			listener.selectionChanged(event);
 	}
 
@@ -83,11 +83,11 @@ public class SelectionModel {
 		Map<Spot, Boolean> spotMap = new HashMap<Spot, Boolean>(spotSelection.size());
 		for (Spot spot : spotSelection)
 			spotMap.put(spot, false);
-		TrackMateSelectionChangeEvent event = new TrackMateSelectionChangeEvent(this, spotMap, null);
+		SelectionChangeEvent event = new SelectionChangeEvent(this, spotMap, null);
 		// Clear field
 		spotSelection.clear();
 		// Fire event
-		for (TrackMateSelectionChangeListener listener : selectionChangeListeners)
+		for (SelectionChangeListener listener : selectionChangeListeners)
 			listener.selectionChanged(event);
 	}
 
@@ -98,11 +98,11 @@ public class SelectionModel {
 		Map<DefaultWeightedEdge, Boolean> edgeMap = new HashMap<DefaultWeightedEdge, Boolean>(edgeSelection.size());
 		for (DefaultWeightedEdge edge : edgeSelection)
 			edgeMap.put(edge, false);
-		TrackMateSelectionChangeEvent event = new TrackMateSelectionChangeEvent(this, null, edgeMap);
+		SelectionChangeEvent event = new SelectionChangeEvent(this, null, edgeMap);
 		// Clear field
 		edgeSelection.clear();
 		// Fire event
-		for (TrackMateSelectionChangeListener listener : selectionChangeListeners)
+		for (SelectionChangeListener listener : selectionChangeListeners)
 			listener.selectionChanged(event);
 	}
 
@@ -115,8 +115,8 @@ public class SelectionModel {
 		spotMap.put(spot, true);
 		if (DEBUG)
 			System.out.println("[SelectionModel] Seding event to listeners: "+selectionChangeListeners);
-		TrackMateSelectionChangeEvent event = new TrackMateSelectionChangeEvent(this, spotMap, null);
-		for (TrackMateSelectionChangeListener listener : selectionChangeListeners)
+		SelectionChangeEvent event = new SelectionChangeEvent(this, spotMap, null);
+		for (SelectionChangeListener listener : selectionChangeListeners)
 			listener.selectionChanged(event);
 	}
 
@@ -127,8 +127,8 @@ public class SelectionModel {
 			System.out.println("[SelectionModel] Removing spot " + spot + " from selection");
 		Map<Spot, Boolean> spotMap = new HashMap<Spot, Boolean>(1);
 		spotMap.put(spot, false);
-		TrackMateSelectionChangeEvent event = new TrackMateSelectionChangeEvent(this, spotMap, null);
-		for (TrackMateSelectionChangeListener listener : selectionChangeListeners)
+		SelectionChangeEvent event = new SelectionChangeEvent(this, spotMap, null);
+		for (SelectionChangeListener listener : selectionChangeListeners)
 			listener.selectionChanged(event);
 	}
 
@@ -141,10 +141,10 @@ public class SelectionModel {
 					System.out.println("[SelectionModel] Adding spot " + spot + " to selection");
 			}
 		}
-		TrackMateSelectionChangeEvent event = new TrackMateSelectionChangeEvent(this, spotMap, null);
+		SelectionChangeEvent event = new SelectionChangeEvent(this, spotMap, null);
 		if (DEBUG) 
 			System.out.println("[SelectionModel] Seding event "+event.hashCode()+" to "+selectionChangeListeners.size()+" listeners: "+selectionChangeListeners);
-		for (TrackMateSelectionChangeListener listener : selectionChangeListeners)
+		for (SelectionChangeListener listener : selectionChangeListeners)
 			listener.selectionChanged(event);
 	}
 
@@ -157,8 +157,8 @@ public class SelectionModel {
 					System.out.println("[SelectionModel] Removing spot " + spot + " from selection");
 			}
 		}
-		TrackMateSelectionChangeEvent event = new TrackMateSelectionChangeEvent(this, spotMap, null);
-		for (TrackMateSelectionChangeListener listener : selectionChangeListeners)
+		SelectionChangeEvent event = new SelectionChangeEvent(this, spotMap, null);
+		for (SelectionChangeListener listener : selectionChangeListeners)
 			listener.selectionChanged(event);
 	}
 
@@ -169,8 +169,8 @@ public class SelectionModel {
 			System.out.println("[SelectionModel] Adding edge " + edge + " to selection");
 		Map<DefaultWeightedEdge, Boolean> edgeMap = new HashMap<DefaultWeightedEdge, Boolean>(1);
 		edgeMap.put(edge, true);
-		TrackMateSelectionChangeEvent event = new TrackMateSelectionChangeEvent(this, null, edgeMap);
-		for (TrackMateSelectionChangeListener listener : selectionChangeListeners)
+		SelectionChangeEvent event = new SelectionChangeEvent(this, null, edgeMap);
+		for (SelectionChangeListener listener : selectionChangeListeners)
 			listener.selectionChanged(event);
 
 	}
@@ -182,8 +182,8 @@ public class SelectionModel {
 			System.out.println("[SelectionModel] Removing edge " + edge + " from selection");
 		Map<DefaultWeightedEdge, Boolean> edgeMap = new HashMap<DefaultWeightedEdge, Boolean>(1);
 		edgeMap.put(edge, false);
-		TrackMateSelectionChangeEvent event = new TrackMateSelectionChangeEvent(this, null, edgeMap);
-		for (TrackMateSelectionChangeListener listener : selectionChangeListeners)
+		SelectionChangeEvent event = new SelectionChangeEvent(this, null, edgeMap);
+		for (SelectionChangeListener listener : selectionChangeListeners)
 			listener.selectionChanged(event);
 
 	}
@@ -197,8 +197,8 @@ public class SelectionModel {
 					System.out.println("[SelectionModel] Adding edge " + edge + " to selection");
 			}
 		}
-		TrackMateSelectionChangeEvent event = new TrackMateSelectionChangeEvent(this, null, edgeMap);
-		for (TrackMateSelectionChangeListener listener : selectionChangeListeners)
+		SelectionChangeEvent event = new SelectionChangeEvent(this, null, edgeMap);
+		for (SelectionChangeListener listener : selectionChangeListeners)
 			listener.selectionChanged(event);
 	}
 
@@ -211,8 +211,8 @@ public class SelectionModel {
 					System.out.println("[SelectionModel] Removing edge " + edge + " from selection");
 			}
 		}
-		TrackMateSelectionChangeEvent event = new TrackMateSelectionChangeEvent(this, null, edgeMap);
-		for (TrackMateSelectionChangeListener listener : selectionChangeListeners)
+		SelectionChangeEvent event = new SelectionChangeEvent(this, null, edgeMap);
+		for (SelectionChangeListener listener : selectionChangeListeners)
 			listener.selectionChanged(event);
 	}
 

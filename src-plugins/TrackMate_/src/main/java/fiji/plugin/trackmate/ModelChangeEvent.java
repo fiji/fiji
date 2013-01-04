@@ -10,7 +10,7 @@ import java.util.Set;
 import org.jgrapht.graph.DefaultWeightedEdge;
 
 
-public class TrackMateModelChangeEvent extends EventObject {
+public class ModelChangeEvent extends EventObject {
 
 	private static final long serialVersionUID = -1L;
 	/** Indicate that a spot was added to the model. */
@@ -94,7 +94,7 @@ public class TrackMateModelChangeEvent extends EventObject {
 	 * 
 	 * @param source  the object source of this event
 	 */
-	public TrackMateModelChangeEvent(Object source, int eventID) {
+	public ModelChangeEvent(Object source, int eventID) {
 		super(source);
 		this.eventID = eventID;
 	}

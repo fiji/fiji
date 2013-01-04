@@ -16,8 +16,8 @@ import org.junit.Test;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotImp;
 import fiji.plugin.trackmate.TrackMateModel;
-import fiji.plugin.trackmate.TrackMateModelChangeEvent;
-import fiji.plugin.trackmate.TrackMateModelChangeListener;
+import fiji.plugin.trackmate.ModelChangeEvent;
+import fiji.plugin.trackmate.ModelChangeListener;
 
 public class TrackSpeedStatisticsAnalyzerTest {
 
@@ -145,9 +145,9 @@ public class TrackSpeedStatisticsAnalyzerTest {
 		analyzer.keys = null;
 
 		// Prepare listener for model change
-		TrackMateModelChangeListener listener = new TrackMateModelChangeListener() {
+		ModelChangeListener listener = new ModelChangeListener() {
 			@Override
-			public void modelChanged(TrackMateModelChangeEvent event) {
+			public void modelChanged(ModelChangeEvent event) {
 				analyzer.process(event.getTrackUpdated());
 			}
 		};
@@ -191,9 +191,9 @@ public class TrackSpeedStatisticsAnalyzerTest {
 		analyzer.keys = null;
 
 		// Prepare listener for model change
-		TrackMateModelChangeListener listener = new TrackMateModelChangeListener() {
+		ModelChangeListener listener = new ModelChangeListener() {
 			@Override
-			public void modelChanged(TrackMateModelChangeEvent event) {
+			public void modelChanged(ModelChangeEvent event) {
 				analyzer.process(event.getTrackUpdated());
 			}
 		};
@@ -241,9 +241,9 @@ public class TrackSpeedStatisticsAnalyzerTest {
 		analyzer.keys = null;
 
 		// Prepare listener for model change
-		TrackMateModelChangeListener listener = new TrackMateModelChangeListener() {
+		ModelChangeListener listener = new ModelChangeListener() {
 			@Override
-			public void modelChanged(TrackMateModelChangeEvent event) {
+			public void modelChanged(ModelChangeEvent event) {
 				analyzer.process(event.getTrackUpdated());
 			}
 		};

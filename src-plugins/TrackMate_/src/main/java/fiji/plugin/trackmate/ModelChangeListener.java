@@ -8,11 +8,11 @@ import java.util.EventListener;
  * @author Jean-Yves Tinevez <jeanyves.tinevez@gmail.com> May 30, 2011
  *
  */
-public interface TrackMateModelChangeListener extends EventListener {
+public interface ModelChangeListener extends EventListener {
 
 	/**
 	 * This notification is fired when a {@link TrackMateModel} has been changed.
 	 */
-	public void modelChanged(final TrackMateModelChangeEvent event);
+	public void modelChanged(final ModelChangeEvent event);
 	
 }

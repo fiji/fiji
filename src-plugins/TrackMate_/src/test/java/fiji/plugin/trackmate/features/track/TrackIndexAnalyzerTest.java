@@ -16,8 +16,8 @@ import org.junit.Test;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotImp;
 import fiji.plugin.trackmate.TrackMateModel;
-import fiji.plugin.trackmate.TrackMateModelChangeEvent;
-import fiji.plugin.trackmate.TrackMateModelChangeListener;
+import fiji.plugin.trackmate.ModelChangeEvent;
+import fiji.plugin.trackmate.ModelChangeListener;
 
 /**
  * @author Jean-Yves Tinevez
@@ -73,7 +73,7 @@ public class TrackIndexAnalyzerTest {
 	}
 
 	/**
-	 * Test method for {@link fiji.plugin.trackmate.features.track.TrackIndexAnalyzer#modelChanged(fiji.plugin.trackmate.TrackMateModelChangeEvent)}.
+	 * Test method for {@link fiji.plugin.trackmate.features.track.TrackIndexAnalyzer#modelChanged(fiji.plugin.trackmate.ModelChangeEvent)}.
 	 */
 	@Test
 	public final void testModelChanged() {
@@ -95,9 +95,9 @@ public class TrackIndexAnalyzerTest {
 		analyzer.hasBeenCalled = false;
 
 		// Prepare listener -> forward to analyzer
-		TrackMateModelChangeListener listener = new TrackMateModelChangeListener() {
+		ModelChangeListener listener = new ModelChangeListener() {
 			@Override
-			public void modelChanged(TrackMateModelChangeEvent event) {
+			public void modelChanged(ModelChangeEvent event) {
 				if (analyzer.isLocal()) {
 					analyzer.process(event.getTrackUpdated());
 				} else {

@@ -137,7 +137,7 @@ public class TrackGraphModel {
 
 	/**
 	 * Set the graph resulting from the tracking process, and fire a
-	 * {@link TrackMateModelChangeEvent#TRACKS_COMPUTED} event. The {@link #filteredTrackKeys}
+	 * {@link ModelChangeEvent#TRACKS_COMPUTED} event. The {@link #filteredTrackKeys}
 	 * field is set to make all new tracks visible by default.
 	 * <p>
 	 * Calling this method <b>overwrites<b> the current graph. Calling this method does <b>not</b>
@@ -153,8 +153,8 @@ public class TrackGraphModel {
 		for (Integer trackID : trackSpots.keySet())
 			filteredTrackKeys.add(trackID);
 		//
-		final TrackMateModelChangeEvent event = new TrackMateModelChangeEvent(this, TrackMateModelChangeEvent.TRACKS_COMPUTED);
-		for (TrackMateModelChangeListener listener : model.modelChangeListeners)
+		final ModelChangeEvent event = new ModelChangeEvent(this, ModelChangeEvent.TRACKS_COMPUTED);
+		for (ModelChangeListener listener : model.modelChangeListeners)
 			listener.modelChanged(event);
 	}
 
@@ -284,14 +284,14 @@ public class TrackGraphModel {
 	 * Overwrite the {@link #filteredTrackKeys} field, resulting normally from the 
 	 * {@link #execTrackFiltering()} process.
 	 * 
-	 * @param doNotify if true, will fire a {@link TrackMateModelChangeEvent#TRACKS_VISIBILITY_CHANGED} 
+	 * @param doNotify if true, will fire a {@link ModelChangeEvent#TRACKS_VISIBILITY_CHANGED} 
 	 * event.
 	 */
 	public void setFilteredTrackIDs(Set<Integer> visibleTrackIndices, boolean doNotify) {
 		this.filteredTrackKeys = visibleTrackIndices;
 		if (doNotify) {
-			final TrackMateModelChangeEvent event = new TrackMateModelChangeEvent(this, TrackMateModelChangeEvent.TRACKS_VISIBILITY_CHANGED);
-			for (TrackMateModelChangeListener listener : model.modelChangeListeners)
+			final ModelChangeEvent event = new ModelChangeEvent(this, ModelChangeEvent.TRACKS_VISIBILITY_CHANGED);
+			for (ModelChangeListener listener : model.modelChangeListeners)
 				listener.modelChanged(event);
 		}
 	}
@@ -304,7 +304,7 @@ public class TrackGraphModel {
 	 * @param visible  if true, the track will be made visible, and invisible otherwise. If the track
 	 * was already visible, or respectively invisible, nothing is done.
 	 * @param doNotify  if true, and if some changes occurred, an event with the ID 
-	 * {@link TrackMateModelChangeEvent#TRACKS_VISIBILITY_CHANGED} will be fired.
+	 * {@link ModelChangeEvent#TRACKS_VISIBILITY_CHANGED} will be fired.
 	 * @return  true if and only if the call to this method actually changed the current visible 
 	 * settings of tracks.
 	 */
@@ -320,8 +320,8 @@ public class TrackGraphModel {
 		}
 
 		if (doNotify && modified) {
-			TrackMateModelChangeEvent event = new TrackMateModelChangeEvent(this, TrackMateModelChangeEvent.TRACKS_VISIBILITY_CHANGED);
-			for (TrackMateModelChangeListener listener : model.modelChangeListeners) 
+			ModelChangeEvent event = new ModelChangeEvent(this, ModelChangeEvent.TRACKS_VISIBILITY_CHANGED);
+			for (ModelChangeListener listener : model.modelChangeListeners) 
 				listener.modelChanged(event);
 		}
 

@@ -6,9 +6,9 @@ import java.util.Map;
 
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.TrackMateModel;
-import fiji.plugin.trackmate.TrackMateModelChangeListener;
-import fiji.plugin.trackmate.TrackMateSelectionChangeEvent;
-import fiji.plugin.trackmate.TrackMateSelectionChangeListener;
+import fiji.plugin.trackmate.ModelChangeListener;
+import fiji.plugin.trackmate.SelectionChangeEvent;
+import fiji.plugin.trackmate.SelectionChangeListener;
 import fiji.plugin.trackmate.features.track.TrackIndexAnalyzer;
 
 /**
@@ -17,7 +17,7 @@ import fiji.plugin.trackmate.features.track.TrackIndexAnalyzer;
  * <p>
  * @author Jean-Yves Tinevez <jeanyves.tinevez@gmail.com> Jan 2011
  */
-public abstract class AbstractTrackMateModelView implements TrackMateSelectionChangeListener, TrackMateModelView, TrackMateModelChangeListener {
+public abstract class AbstractTrackMateModelView implements SelectionChangeListener, TrackMateModelView, ModelChangeListener {
 
 	/*
 	 * FIELDS
@@ -34,7 +34,7 @@ public abstract class AbstractTrackMateModelView implements TrackMateSelectionCh
 	protected TrackMateModel model;
 	
 	/** The list of listener to warn for spot selection change. */
-	protected ArrayList<TrackMateSelectionChangeListener> selectionChangeListeners = new ArrayList<TrackMateSelectionChangeListener>();
+	protected ArrayList<SelectionChangeListener> selectionChangeListeners = new ArrayList<SelectionChangeListener>();
 
 
 	/*
@@ -89,7 +89,7 @@ public abstract class AbstractTrackMateModelView implements TrackMateSelectionCh
 	 * This needs to be overriden for concrete implementation to display selection.
 	 */
 	@Override
-	public void selectionChanged(TrackMateSelectionChangeEvent event) {
+	public void selectionChanged(SelectionChangeEvent event) {
 		// Center on selection if we added one spot exactly
 		Map<Spot, Boolean> spotsAdded = event.getSpots();
 		if (spotsAdded != null && spotsAdded.size() == 1) {
