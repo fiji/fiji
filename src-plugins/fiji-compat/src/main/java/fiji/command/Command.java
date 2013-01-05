@@ -1,5 +1,6 @@
 package fiji.command;
 
+import fiji.FijiTools;
 import fiji.User_Plugins;
 
 import ij.CommandListener;
@@ -17,6 +18,7 @@ import java.awt.event.ActionEvent;
 
 import java.io.File;
 
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 import java.util.Hashtable;
@@ -145,6 +147,13 @@ public class Command {
 		try {
 			return runPlugInMethod.invoke(null, new Object[] { command, className, arg });
 		} catch (Exception e) {
+			if (e instanceof InvocationTargetException) {
+				Throwable cause = e.getCause();
+				if (cause != null &&
+						cause instanceof NoSuchMethodError &&
+						FijiTools.handleNoSuchMethodError((NoSuchMethodError)cause))
+					return null;
+			}
 			e.printStackTrace();
 			IJ.handleException(e);
 			return null;
