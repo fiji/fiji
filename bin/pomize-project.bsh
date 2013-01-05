@@ -281,6 +281,18 @@ void writePOM(String target, Rule rule) {
 			+ "\t\t\t</dependencies>\n"
 			+ "\t\t</profile>\n"
 			+ "\t</profiles>\n")
+		+ "\n"
+		+ "\t<!-- NB: for project parent -->\n"
+		+ "\t<repositories>\n"
+		+ "\t\t<repository>\n"
+		+ "\t\t\t<id>imagej.releases</id>\n"
+		+ "\t\t\t<url>http://maven.imagej.net/content/repositories/releases</url>\n"
+		+ "\t\t</repository>\n"
+		+ "\t\t<repository>\n"
+		+ "\t\t\t<id>imagej.snapshots</id>\n"
+		+ "\t\t\t<url>http://maven.imagej.net/content/repositories/snapshots</url>\n"
+		+ "\t\t</repository>\n"
+		+ "\t</repositories>\n"
 		+ "</project>";
 	writeAndAddFile(pom, new File(fijiDir, rule.getStripPath() + "pom.xml"));
 }
