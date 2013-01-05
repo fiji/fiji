@@ -59,7 +59,7 @@ public class TrackOverlay implements Overlay {
 	}
 
 	@Override
-	public final void paint(final Graphics g, final int xcorner, final int ycorner, final double magnification) {
+	public final synchronized void paint(final Graphics g, final int xcorner, final int ycorner, final double magnification) {
 		boolean tracksVisible = (Boolean) displaySettings.get(TrackMateModelView.KEY_TRACKS_VISIBLE);
 		if (!tracksVisible  || model.getTrackModel().getNFilteredTracks() == 0)
 			return;
@@ -121,7 +121,6 @@ public class TrackOverlay implements Overlay {
 
 		case TrackMateModelView.TRACK_DISPLAY_MODE_WHOLE: {
 			for (Integer trackID : filteredTrackKeys) {
-//				g2d.setColor(e3dgeColors.get(trackID));
 				final Set<DefaultWeightedEdge> track = trackEdges.get(trackID);
 				colorGenerator.setCurrentTrackID(trackID);
 				for (DefaultWeightedEdge edge : track) {

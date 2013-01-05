@@ -34,8 +34,6 @@ import com.mxgraph.util.mxEventObject;
 import com.mxgraph.util.mxEventSource.mxIEventListener;
 import com.mxgraph.util.mxStyleUtils;
 import com.mxgraph.view.mxGraphSelectionModel;
-import com.mxgraph.view.mxPerimeter;
-import com.mxgraph.view.mxStylesheet;
 
 import fiji.plugin.trackmate.ModelChangeEvent;
 import fiji.plugin.trackmate.SelectionChangeEvent;
@@ -62,7 +60,6 @@ public class TrackScheme extends AbstractTrackMateModelView {
 	public static final ImageIcon 	TRACK_SCHEME_ICON = new ImageIcon(TrackSchemeFrame.class.getResource("resources/track_scheme.png"));
 	public static final String 		DEFAULT_COLOR = "#FF00FF";
 	private static final Dimension 	DEFAULT_SIZE = new Dimension(800, 600);
-	static final String 			DEFAULT_STYLE_NAME = "Full"; 
 	static final int 				TABLE_CELL_WIDTH 		= 40;
 	static final Color 				GRID_COLOR = Color.GRAY;
 	/** Are linking costs displayed by default? Can be changed in the toolbar. */
@@ -70,45 +67,7 @@ public class TrackScheme extends AbstractTrackMateModelView {
 	/** Do we display the background decorations by default? */
 	static final boolean 			DEFAULT_DO_PAINT_DECORATIONS = true;
 	/** Do we toggle linking mode by default? */
-	static final boolean DEFAULT_LINKING_ENABLED = false;
-
-	private static final Map<String, Map<String, Object>> VERTEX_STYLES;
-	private static final HashMap<String, Object> BASIC_VERTEX_STYLE = new HashMap<String, Object>();
-	private static final HashMap<String, Object> SIMPLE_VERTEX_STYLE = new HashMap<String, Object>();
-	private static final HashMap<String, Object> BASIC_EDGE_STYLE = new HashMap<String, Object>();
-	static {
-		BASIC_VERTEX_STYLE.put(mxConstants.STYLE_FILLCOLOR, "white");
-		BASIC_VERTEX_STYLE.put(mxConstants.STYLE_FONTCOLOR, "black");
-		BASIC_VERTEX_STYLE.put(mxConstants.STYLE_ALIGN, mxConstants.ALIGN_RIGHT);
-		BASIC_VERTEX_STYLE.put(mxConstants.STYLE_SHAPE, mxScaledLabelShape.SHAPE_NAME);
-		BASIC_VERTEX_STYLE.put(mxConstants.STYLE_IMAGE_ALIGN, mxConstants.ALIGN_LEFT);
-		BASIC_VERTEX_STYLE.put(mxConstants.STYLE_ROUNDED, true);
-		BASIC_VERTEX_STYLE.put(mxConstants.STYLE_PERIMETER, mxPerimeter.RectanglePerimeter);
-		BASIC_VERTEX_STYLE.put(mxConstants.STYLE_STROKECOLOR, DEFAULT_COLOR);
-
-		SIMPLE_VERTEX_STYLE.put(mxConstants.STYLE_FILLCOLOR, "white");
-		SIMPLE_VERTEX_STYLE.put(mxConstants.STYLE_FONTCOLOR, "black");
-		SIMPLE_VERTEX_STYLE.put(mxConstants.STYLE_ALIGN, mxConstants.ALIGN_RIGHT);
-		SIMPLE_VERTEX_STYLE.put(mxConstants.STYLE_SHAPE, mxConstants.SHAPE_ELLIPSE);
-		SIMPLE_VERTEX_STYLE.put(mxConstants.STYLE_IMAGE_ALIGN, mxConstants.ALIGN_LEFT);
-		SIMPLE_VERTEX_STYLE.put(mxConstants.STYLE_ROUNDED, true);
-		SIMPLE_VERTEX_STYLE.put(mxConstants.STYLE_PERIMETER, mxPerimeter.EllipsePerimeter);
-		SIMPLE_VERTEX_STYLE.put(mxConstants.STYLE_STROKECOLOR, DEFAULT_COLOR);
-		SIMPLE_VERTEX_STYLE.put(mxConstants.STYLE_NOLABEL, true);
-
-		BASIC_EDGE_STYLE.put(mxConstants.STYLE_SHAPE, mxConstants.SHAPE_CONNECTOR);
-		BASIC_EDGE_STYLE.put(mxConstants.STYLE_ALIGN, mxConstants.ALIGN_CENTER);
-		BASIC_EDGE_STYLE.put(mxConstants.STYLE_VERTICAL_ALIGN, mxConstants.ALIGN_MIDDLE);
-		BASIC_EDGE_STYLE.put(mxConstants.STYLE_STARTARROW, mxConstants.NONE);
-		BASIC_EDGE_STYLE.put(mxConstants.STYLE_ENDARROW, mxConstants.NONE);
-		BASIC_EDGE_STYLE.put(mxConstants.STYLE_STROKEWIDTH, 2.0f);
-		BASIC_EDGE_STYLE.put(mxConstants.STYLE_STROKECOLOR, DEFAULT_COLOR);
-
-		VERTEX_STYLES = new HashMap<String, Map<String, Object> >(2);
-		VERTEX_STYLES.put(DEFAULT_STYLE_NAME, BASIC_VERTEX_STYLE);
-		VERTEX_STYLES.put("Simple", SIMPLE_VERTEX_STYLE);
-
-	}
+	static final boolean 			DEFAULT_LINKING_ENABLED = false;
 
 	/*
 	 * FIELDS
@@ -136,7 +95,7 @@ public class TrackScheme extends AbstractTrackMateModelView {
 	 * This field is regenerated after each call to {@link #execute(Object)}.
 	 */
 	private int unlaidSpotColumn = 3;
-	private TrackSchemeStylist stylist;
+	TrackSchemeStylist stylist;
 
 	/*
 	 * CONSTRUCTORS
@@ -207,12 +166,6 @@ public class TrackScheme extends AbstractTrackMateModelView {
 		graph.setGridEnabled(false);
 		graph.setLabelsVisible(true);
 		graph.setDropEnabled(false);
-
-		mxStylesheet styleSheet = graph.getStylesheet();
-		styleSheet.setDefaultEdgeStyle(BASIC_EDGE_STYLE);
-		styleSheet.setDefaultVertexStyle(BASIC_VERTEX_STYLE);
-		styleSheet.putCellStyle(DEFAULT_STYLE_NAME, BASIC_VERTEX_STYLE);
-		styleSheet.putCellStyle("Simple", SIMPLE_VERTEX_STYLE);
 
 		// Set spot image to cell style
 		try {
@@ -622,6 +575,8 @@ public class TrackScheme extends AbstractTrackMateModelView {
 				// pass the new one to the track overlay - we ignore its spot coloring and keep the spot coloring
 				TrackColorGenerator colorGenerator = (TrackColorGenerator) value;
 				stylist.setColorGenerator(colorGenerator);
+				doTrackStyle();
+				refresh();
 			}
 		}
 
@@ -639,8 +594,10 @@ public class TrackScheme extends AbstractTrackMateModelView {
 			SwingUtilities.invokeAndWait(new Runnable(){
 				public void run()	{
 					initGUI();
-					stylist = new TrackSchemeStylist(TrackScheme.this, (TrackColorGenerator) displaySettings.get(KEY_TRACK_COLORING));
+					stylist = new TrackSchemeStylist(graph, (TrackColorGenerator) displaySettings.get(KEY_TRACK_COLORING));
+					doTrackStyle();
 					doTrackLayout();
+					refresh();
 				}
 			});
 		} catch (InterruptedException e) {
@@ -655,7 +612,6 @@ public class TrackScheme extends AbstractTrackMateModelView {
 		new Thread("TrackScheme refreshing style thread") {
 			@Override
 			public void run() {
-				doTrackStyle();
 				SwingUtilities.invokeLater(new Runnable(){
 					public void run() {
 						gui.graphComponent.refresh();
@@ -919,11 +875,11 @@ public class TrackScheme extends AbstractTrackMateModelView {
 		gui.graphComponent.zoomTo(1.0, false);
 	}
 
-	private void doTrackStyle() {
+	public void doTrackStyle() {
 		if (null == stylist) {
 			return;
 		}
-		// Collect edges
+		// Collect edges 
 		Set<Integer> trackIDs = model.getTrackModel().getFilteredTrackIDs();
 		HashMap<Integer, Set<mxCell>> edgeMap = new HashMap<Integer, Set<mxCell>>(trackIDs.size());
 		for (Integer trackID : trackIDs) {
@@ -934,23 +890,19 @@ public class TrackScheme extends AbstractTrackMateModelView {
 			}
 			edgeMap.put(trackID, set);
 		}
+		
 		// Give them style
-		stylist.execute(edgeMap);
+		Set<mxICell> verticesUpdated = stylist.execute(edgeMap);
+		
+		// Take care of vertices
+		HashSet<mxCell> missedVertices = new HashSet<mxCell>(graph.getVertexCells());
+		missedVertices.removeAll(verticesUpdated);
+		stylist.updateVertexStyle(missedVertices);
 	}
 
 	public void doTrackLayout() {
 		// Position cells
 		graphLayout.execute(null);
-		// Redo their style
-		doTrackStyle();
-		// Update
-		SwingUtilities.invokeLater(new Runnable(){
-			public void run() {
-				gui.graphComponent.refresh();
-				gui.graphComponent.repaint();
-			}
-		});
-		// 
 		rowLengths = graphLayout.getRowLengths();
 		int maxLength = 2;
 		for (int rowLength : rowLengths.values()) {
@@ -959,7 +911,6 @@ public class TrackScheme extends AbstractTrackMateModelView {
 			}
 		}
 		unlaidSpotColumn = maxLength;
-
 	}
 
 	public void captureUndecorated() {

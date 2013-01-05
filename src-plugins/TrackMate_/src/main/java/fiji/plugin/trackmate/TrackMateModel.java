@@ -524,7 +524,7 @@ public class TrackMateModel {
 	public boolean removeEdge(final DefaultWeightedEdge edge) {
 		return trackGraphModel.removeEdge(edge);
 	}
-	
+
 	/**
 	 * @see TrackGraphModel#setEdgeWeight(DefaultWeightedEdge, double)
 	 */
@@ -650,15 +650,15 @@ public class TrackMateModel {
 				edgesToUpdate.addAll(trackGraphModel.edgesAdded);
 				edgesToUpdate.addAll(trackGraphModel.edgesModified);
 				HashSet<DefaultWeightedEdge> globalEdgesToUpdate = null; // for now - compute it only if we need
-				
+
 				for (String analyzerKey : featureModel.edgeAnalyzerProvider.getAvailableEdgeFeatureAnalyzers()) {
 					EdgeAnalyzer analyzer = featureModel.edgeAnalyzerProvider.getEdgeFeatureAnalyzer(analyzerKey);
 					if (analyzer.isLocal()) {
-						
+
 						analyzer.process(edgesToUpdate);
-						
+
 					} else {
-						
+
 						// Get the all the edges of the track they belong to
 						if (null == globalEdgesToUpdate) {
 							globalEdgesToUpdate = new HashSet<DefaultWeightedEdge>();
@@ -684,7 +684,9 @@ public class TrackMateModel {
 				for (String analyzerKey : featureModel.trackAnalyzerProvider.getAvailableTrackFeatureAnalyzers()) {
 					TrackAnalyzer analyzer = featureModel.trackAnalyzerProvider.getTrackFeatureAnalyzer(analyzerKey);
 					if (analyzer.isLocal()) {
-						analyzer.process(tracksToUpdate);
+						if (!tracksToUpdate.isEmpty()) {
+							analyzer.process(tracksToUpdate);
+						}
 					} else {
 						analyzer.process(trackGraphModel.getFilteredTrackIDs());
 					}

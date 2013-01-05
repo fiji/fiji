@@ -49,7 +49,7 @@ public class PerTrackFeatureColorGenerator implements TrackColorGenerator, Model
 	 * @param feature  the track feature that will control coloring.
 	 * @throws IllegalArgumentException if the specified feature is unknown to the feature model.
 	 */
-	public void setFeature(String feature) {
+	public synchronized void setFeature(String feature) {
 		if (feature.equals(this.feature)) {
 			return;
 		}
@@ -57,7 +57,7 @@ public class PerTrackFeatureColorGenerator implements TrackColorGenerator, Model
 		refresh();
 	}
 
-	private void refresh() {
+	private synchronized void refresh() {
 
 		TrackGraphModel trackModel = model.getTrackModel();
 		Set<Integer> trackIDs = trackModel.getFilteredTrackIDs();

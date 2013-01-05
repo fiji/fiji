@@ -225,13 +225,7 @@ public class mxTrackGraphLayout extends mxGraphLayout implements Benchmark {
 
 	private final void setCellGeometry(final mxICell cell, final int row, final int targetColumn) {
 
-		double height = DEFAULT_CELL_HEIGHT;  // TODO FIXME we should read the size from the style and center x y accordingly
-		double width  = DEFAULT_CELL_WIDTH;
-
 		mxGeometry geometry = cell.getGeometry();
-		geometry.setHeight(height);
-		geometry.setWidth(width);
-
 		double x = (targetColumn) * X_COLUMN_SIZE - DEFAULT_CELL_WIDTH/2;
 		double y = (0.5 + row  + 1) * Y_COLUMN_SIZE - DEFAULT_CELL_HEIGHT/2;
 		geometry.setX(x);

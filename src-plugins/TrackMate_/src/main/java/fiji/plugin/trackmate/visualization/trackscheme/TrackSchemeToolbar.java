@@ -6,7 +6,6 @@ import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 
 import javax.swing.AbstractAction;
@@ -34,8 +33,8 @@ public class TrackSchemeToolbar extends JToolBar {
 //	private static final ImageIcon BRANCH_FOLDING_OFF_ICON 	= new ImageIcon(TrackSchemeFrame.class.getResource("resources/shape_square-forbid.png"));
 //	private static final ImageIcon FOLD_ALL_BRANCHES_ICON	= new ImageIcon(TrackSchemeFrame.class.getResource("resources/shape_group.png"));
 //	private static final ImageIcon UNFOLD_ALL_BRANCHES_ICON	= new ImageIcon(TrackSchemeFrame.class.getResource("resources/shape_ungroup.png"));
-	private static final ImageIcon DISPLAY_COST_ON_ICON		= new ImageIcon(TrackSchemeFrame.class.getResource("resources/Label-icons.png"));
-	private static final ImageIcon DISPLAY_COST_OFF_ICON	= new ImageIcon(TrackSchemeFrame.class.getResource("resources/Label-icons-disabled.png"));
+//	private static final ImageIcon DISPLAY_COST_ON_ICON		= new ImageIcon(TrackSchemeFrame.class.getResource("resources/Label-icons.png"));
+//	private static final ImageIcon DISPLAY_COST_OFF_ICON	= new ImageIcon(TrackSchemeFrame.class.getResource("resources/Label-icons-disabled.png"));
 	private static final ImageIcon DISPLAY_DECORATIONS_ON_ICON	= new ImageIcon(TrackSchemeFrame.class.getResource("resources/application_view_columns.png"));
 	private static final ImageIcon DISPLAY_DECORATIONS_OFF_ICON	= new ImageIcon(TrackSchemeFrame.class.getResource("resources/application.png"));
 	private static final ImageIcon SELECT_STYLE_ICON = new ImageIcon(TrackSchemeFrame.class.getResource("resources/style.png"));
@@ -111,6 +110,7 @@ public class TrackSchemeToolbar extends JToolBar {
 		final Action redoLayoutAction = new AbstractAction(null, REFRESH_ICON) {
 			public void actionPerformed(ActionEvent e) {
 				trackScheme.doTrackLayout();
+				trackScheme.refresh();
 			}
 		};
 		final JButton redoLayoutButton = new JButton(redoLayoutAction);
@@ -243,12 +243,9 @@ public class TrackSchemeToolbar extends JToolBar {
 		
 		final JComboBox selectStyleBox;
 		{
-			Map<String, Map<String, Object>> styles = trackScheme.getGraph().getStylesheet().getStyles();
-			Set<String> styleNames = new HashSet<String>(styles.keySet());
-			styleNames.remove("defaultEdge");
-			styleNames.remove("defaultVertex");
+			Set<String> styleNames = new HashSet<String>(TrackSchemeStylist.VERTEX_STYLES.keySet());
 			selectStyleBox = new JComboBox(styleNames.toArray());
-			selectStyleBox.setSelectedItem(TrackScheme.DEFAULT_STYLE_NAME);
+			selectStyleBox.setSelectedItem(TrackSchemeStylist.DEFAULT_STYLE_NAME);
 			selectStyleBox.setMaximumSize(new Dimension(100, 20));
 			selectStyleBox.setFont(FONT);
 			selectStyleBox.addActionListener(new ActionListener() {
@@ -256,11 +253,9 @@ public class TrackSchemeToolbar extends JToolBar {
 				@Override
 				public void actionPerformed(ActionEvent e) {
 					String selectedStyle = (String) selectStyleBox.getSelectedItem();
-					mxTrackGraphLayout layout = trackScheme.getGraphLayout();
-//					if (!selectedStyle.equals(layout.getLayoutStyle())) { //TODO FIXME
-//						layout.setLayoutStyle(selectedStyle);
-//						trackScheme.doTrackLayout();
-//					}
+					trackScheme.stylist.setStyle(selectedStyle);
+					trackScheme.doTrackStyle();
+					trackScheme.refresh();
 				}
 			});
 
