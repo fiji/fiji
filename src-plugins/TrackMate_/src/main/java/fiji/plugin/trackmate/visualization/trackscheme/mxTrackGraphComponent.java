@@ -8,9 +8,15 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
 import java.awt.RenderingHints;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.util.EventObject;
 import java.util.Map;
+
+import javax.swing.BorderFactory;
+import javax.swing.JScrollPane;
+import javax.swing.JTextField;
 
 import com.mxgraph.canvas.mxGraphics2DCanvas;
 import com.mxgraph.model.mxCell;
@@ -37,9 +43,10 @@ public class mxTrackGraphComponent extends mxGraphComponent implements mxIEventL
 	/** The width of the columns for each track, from left to right. */
 	int[] columnWidths = new int[0];
 	/** The name of each column. */
-	String[] columnNames = new String[0];
+//	String[] columnNames = new String[0];
+	/** The trackID for each column. */
+	Integer[] columnTrackIDs;
 	
-	private Color[] columnColors = new Color[0];
 	private final TrackMateModel model;
 	private final TrackScheme trackScheme;
 
@@ -65,6 +72,8 @@ public class mxTrackGraphComponent extends mxGraphComponent implements mxIEventL
 		mxGraphics2DCanvas.putShape(mxScaledLabelShape.SHAPE_NAME, new mxScaledLabelShape());
 		// Replace default painter for edge label so that we can draw labels parallel to edges.
 		mxGraphics2DCanvas.putTextShape(mxGraphics2DCanvas.TEXT_SHAPE_DEFAULT, new mxSideTextShape());
+		
+		
 	}
 
 	/*
@@ -94,6 +103,7 @@ public class mxTrackGraphComponent extends mxGraphComponent implements mxIEventL
 			@Override
 			public void startEditing(Object cell, EventObject evt) {
 				textArea.setOpaque(true);
+				textArea.setBorder(BorderFactory.createLineBorder(Color.ORANGE, 1));
 				super.startEditing(cell, evt);
 			}
 		};
@@ -109,28 +119,6 @@ public class mxTrackGraphComponent extends mxGraphComponent implements mxIEventL
 	@Override
 	protected mxGraphHandler createGraphHandler() {
 		return new mxGraphHandler(this) {
-
-			public void mousePressed(MouseEvent e)	{
-				if (graphComponent.isEnabled() && isEnabled() && !e.isConsumed() && !graphComponent.isForceMarqueeEvent(e)) {
-					cell = graphComponent.getCellAt(e.getX(), e.getY(), false);
-					initialCell = cell;
-
-					if (cell != null) {
-						if (isSelectEnabled() && !graphComponent.getGraph().isCellSelected(cell)) {
-							graphComponent.selectCellForEvent(cell, e);
-							cell = null;
-						}
-
-						// Starts move if the cell under the mouse is movable and/or any
-						// cells of the selection are movable
-						if (isMoveEnabled() && !e.isPopupTrigger())	{
-							start(e);
-							e.consume();
-						}
-					}
-				}
-			}
-
 
 			public void mouseReleased(MouseEvent e) {
 				if (graphComponent.isEnabled() && isEnabled() && !e.isConsumed()) {
@@ -218,29 +206,20 @@ public class mxTrackGraphComponent extends mxGraphComponent implements mxIEventL
 						e.consume();
 					}
 					else if (isVisible()) {
-						if (constrainedEvent)
-						{
-							if (Math.abs(dx) > Math.abs(dy))
-							{
+						if (constrainedEvent) {
+							if (Math.abs(dx) > Math.abs(dy)){
 								dy = 0;
-							}
-							else
-							{
+							} else {
 								dx = 0;
 							}
 						}
 
 						mxCellState targetState = marker.getValidState();
-						Object target = (targetState != null) ? targetState.getCell()
-								: null;
+						Object target = (targetState != null) ? targetState.getCell() : null;
 
-						if (graph.isSplitEnabled()
-								&& graph.isSplitTarget(target, cells))
-						{
+						if (graph.isSplitEnabled() && graph.isSplitTarget(target, cells)) {
 							graph.splitEdge(target, cells, dx, dy);
-						}
-						else
-						{
+						} else {
 							moveCells(cells, dx, dy, target, e);
 						}
 
@@ -250,6 +229,89 @@ public class mxTrackGraphComponent extends mxGraphComponent implements mxIEventL
 
 				reset();
 			}
+			
+			
+
+			@Override
+			public void mouseClicked(MouseEvent event) {
+				if (!(event.getClickCount() == 2)) {
+					return;
+				}
+				
+				int x = event.getPoint().x;
+				int y = event.getPoint().y;
+				float scale = (float) graph.getView().getScale();
+
+				// Scaled sizes
+				int xcs 			= Math.round(TrackScheme.X_COLUMN_SIZE * scale);
+				int ycs 			= Math.round(TrackScheme.Y_COLUMN_SIZE * scale);
+				
+				if (y > ycs || x < xcs) {
+					return;
+				}
+				
+				// Look for target column
+				if (null != columnWidths) {
+					int column;
+					int xc = xcs;
+					for (column = 0; column < columnWidths.length; column++) {
+						int cw = columnWidths[column];
+						xc += cw * xcs;
+						if (x > xcs && x < xc) {
+							break;
+						}
+					}
+					
+					if (column >= columnWidths.length) {
+						return;
+					}
+					
+					String oldName = trackScheme.getModel().getTrackModel().getTrackName(columnTrackIDs[column]);
+					final Integer trackID = columnTrackIDs[column];
+
+					final JScrollPane scrollPane = new JScrollPane();
+					scrollPane.getViewport().setOpaque(false);
+					scrollPane.setVisible(false);
+					scrollPane.setOpaque(false);
+					scrollPane.setBounds(
+							(xc - (columnWidths[column] ) * xcs) , 
+							0, 
+							columnWidths[column] * xcs , 
+							ycs);
+					scrollPane.setVisible(true);
+
+					
+					// Creates the plain text editor
+					final JTextField textArea = new JTextField(oldName);
+					textArea.setBorder(BorderFactory.createLineBorder(Color.ORANGE, 2));
+					textArea.setOpaque(true);
+					textArea.setBackground(BACKGROUND_COLOR_1);
+					textArea.setHorizontalAlignment(JTextField.CENTER);
+					textArea.setFont(FONT.deriveFont(12*scale).deriveFont(Font.BOLD));
+					textArea.addActionListener(new ActionListener() {
+						// Get track name and pass it tp model
+						@Override
+						public void actionPerformed(ActionEvent arg0) {
+							String newname = textArea.getText();
+							trackScheme.getModel().getTrackModel().setTrackName(trackID, newname);
+							scrollPane.remove(textArea);
+							getGraphControl().remove(scrollPane);
+							mxTrackGraphComponent.this.repaint();
+						}
+					});
+
+					scrollPane.setViewportView(textArea);
+					getGraphControl().add(scrollPane, 0);
+
+					textArea.revalidate();
+					textArea.requestFocusInWindow();
+					textArea.selectAll();
+					
+				}
+				
+			}
+			
+			
 		};
 	}
 
@@ -313,8 +375,8 @@ public class mxTrackGraphComponent extends mxGraphComponent implements mxIEventL
 			x = xcs;
 			for (int i = 0; i < columnWidths.length; i++) {
 				int cw = columnWidths[i];
-//				g.setColor(columnColors[i]); // TODO FIXME
-				g.drawString(columnNames[i], x+20, ycs/2); // FIXME
+				String columnName = trackScheme.getModel().getTrackModel().getTrackName(columnTrackIDs[i]);
+				g.drawString(columnName, x+20, ycs/2);
 				g.setColor(LINE_COLOR);					
 				x += cw * xcs;
 				g.drawLine(x, 0, x, height);
@@ -325,23 +387,7 @@ public class mxTrackGraphComponent extends mxGraphComponent implements mxIEventL
 		g.setColor(Color.decode(TrackScheme.DEFAULT_COLOR));
 		g.drawString("Unlaid spots", x+20, ycs/2);
 	}
-
-	public void setColumnWidths(int[] columnWidths) {
-		this.columnWidths  = columnWidths;
-	}
-
-	public void setColumnColor(Color[] columnColors) {
-		this.columnColors = columnColors;
-	}
 	
-	public void setColumnNames(String[] names) {
-		this.columnNames = names;
-	}
-
-	public int[] getColumnWidths() {
-		return columnWidths;
-	}
-
 	/** 
 	 * This listener method will be invoked when a new edge has been created interactively
 	 * in the graph component. It is used then to update the underlying {@link TrackMateModel}.

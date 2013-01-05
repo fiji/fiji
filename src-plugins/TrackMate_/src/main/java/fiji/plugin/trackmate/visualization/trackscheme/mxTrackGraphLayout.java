@@ -112,7 +112,7 @@ public class mxTrackGraphLayout extends mxGraphLayout implements Benchmark {
 			 */
 			final int ntracks = model.getTrackModel().getNFilteredTracks();
 			component.columnWidths = new int[ntracks];
-			component.columnNames = new String[ntracks];
+			component.columnTrackIDs = new Integer[ntracks];
 
 			/*
 			 * Initialize the column occupancy array
@@ -128,9 +128,9 @@ public class mxTrackGraphLayout extends mxGraphLayout implements Benchmark {
 				// Get Tracks
 				final Set<Spot> track = model.getTrackModel().getTrackSpots(trackID);
 				
-				// Pass name to component
-				component.columnNames[trackIndex] = model.getTrackModel().getTrackName(trackID);
-
+				// Pass name & trackID to component
+				component.columnTrackIDs[trackIndex] = trackID;
+				
 				// Get first spot
 				Iterator<Spot> it = track.iterator();
 				Spot first = it.next();
