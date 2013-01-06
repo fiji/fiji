@@ -114,7 +114,7 @@ public class PerTrackFeatureColorGenerator implements TrackColorGenerator, Model
 	}
 
 	@Override
-	public void setCurrentTrackID(Integer trackID) {
+	public synchronized void setCurrentTrackID(Integer trackID) {
 		this.trackID = trackID;
 	}
 

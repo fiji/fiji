@@ -376,6 +376,9 @@ public class mxTrackGraphComponent extends mxGraphComponent implements mxIEventL
 			for (int i = 0; i < columnWidths.length; i++) {
 				int cw = columnWidths[i];
 				String columnName = trackScheme.getModel().getTrackModel().getTrackName(columnTrackIDs[i]);
+				if (null == columnName) {
+					columnName = "Name not set";
+				}
 				g.drawString(columnName, x+20, ycs/2);
 				g.setColor(LINE_COLOR);					
 				x += cw * xcs;

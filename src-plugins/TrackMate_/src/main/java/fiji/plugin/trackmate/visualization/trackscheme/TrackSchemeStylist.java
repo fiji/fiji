@@ -97,7 +97,7 @@ public class TrackSchemeStylist {
 	 * Change the style of the edge cells to reflect the currently set color generator.
 	 * @param edgeMap the {@link mxCell} ordered by the track IDs they belong to.
 	 */
-	public Set<mxICell> execute(Map<Integer, Set<mxCell>> edgeMap) {
+	public synchronized Set<mxICell> execute(Map<Integer, Set<mxCell>> edgeMap) {
 
 		HashSet<mxICell> verticesChanged = new HashSet<mxICell>(edgeMap.size());
 		graphx.getModel().beginUpdate();
@@ -112,7 +112,12 @@ public class TrackSchemeStylist {
 					// The edge itself
 					DefaultWeightedEdge edge = graphx.getEdgeFor(cell);
 					Color color = colorGenerator.color(edge);
-					String colorstr = Integer.toHexString(color.getRGB()).substring(2);
+					String colorstr;
+					if (null == color) {
+						colorstr = DEFAULT_COLOR;
+					} else {
+						colorstr = Integer.toHexString(color.getRGB()).substring(2);
+					}
 					String style = cell.getStyle();
 					style = mxStyleUtils.setStyle(style , mxConstants.STYLE_STROKECOLOR, colorstr);
 					graphx.getModel().setStyle(cell, style);
