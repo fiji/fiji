@@ -13,7 +13,7 @@
 
 	<groupId>sc.fiji</groupId>
 	<artifactId>Scala_Interpreter</artifactId>
-	<version>1.0.1</version>
+	<version>1.0.2-SNAPSHOT</version>
 
 	<name>plugins/Scala_Interpreter.jar</name>
 	<description>A Maven project implementing an ImageJ 1.x plugin</description>

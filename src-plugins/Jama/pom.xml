@@ -7,7 +7,7 @@
 
 	<groupId>jama</groupId>
 	<artifactId>Jama</artifactId>
-	<version>1.0.2</version>
+	<version>1.0.3-SNAPSHOT</version>
 
 	<name>jars/Jama.jar</name>
 	<description></description>

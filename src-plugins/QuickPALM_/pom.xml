@@ -12,7 +12,7 @@
 	</parent>
 
 	<artifactId>QuickPALM_</artifactId>
-	<version>1.1</version>
+	<version>1.1.1-SNAPSHOT</version>
 
 	<name>plugins/QuickPALM_.jar</name>
 	<description></description>

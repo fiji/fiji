@@ -12,7 +12,7 @@
 	</parent>
 
 	<artifactId>LocalThickness_</artifactId>
-	<version>3.1</version>
+	<version>3.1.1-SNAPSHOT</version>
 
 	<name>plugins/LocalThickness_.jar</name>
 	<description></description>

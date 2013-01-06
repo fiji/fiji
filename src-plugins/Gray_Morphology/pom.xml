@@ -12,7 +12,7 @@
 	</parent>
 
 	<artifactId>Gray_Morphology</artifactId>
-	<version>2.3.1</version>
+	<version>2.3.2-SNAPSHOT</version>
 
 	<name>plugins/Gray_Morphology.jar</name>
 	<description></description>

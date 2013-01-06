@@ -12,7 +12,7 @@
 	</parent>
 
 	<artifactId>LSM_Reader</artifactId>
-	<version>4.0g</version>
+	<version>4.0h-SNAPSHOT</version>
 
 	<name>plugins/LSM_Reader.jar</name>
 	<description></description>
