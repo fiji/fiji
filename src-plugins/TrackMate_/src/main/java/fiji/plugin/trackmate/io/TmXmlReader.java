@@ -51,6 +51,7 @@ import static fiji.plugin.trackmate.io.TmXmlKeys.TRACK_ELEMENT_KEY;
 import static fiji.plugin.trackmate.io.TmXmlKeys.TRACK_FILTER_COLLECTION_ELEMENT_KEY;
 import static fiji.plugin.trackmate.io.TmXmlKeys.TRACK_ID_ATTRIBUTE_NAME;
 import static fiji.plugin.trackmate.io.TmXmlKeys.TRACK_ID_ELEMENT_KEY;
+import static fiji.plugin.trackmate.io.TmXmlKeys.TRACK_NAME_ATTRIBUTE_NAME;
 import static fiji.plugin.trackmate.util.TMUtils.readBooleanAttribute;
 import static fiji.plugin.trackmate.util.TMUtils.readDoubleAttribute;
 import static fiji.plugin.trackmate.util.TMUtils.readIntAttribute;
@@ -98,7 +99,7 @@ import fiji.plugin.trackmate.tracking.SpotTracker;
 
 public class TmXmlReader implements Algorithm, Benchmark {
 
-	protected static final boolean DEBUG = false;
+	protected static final boolean DEBUG = true;
 
 	protected Document document = null;
 	protected File file;
@@ -591,13 +592,14 @@ public class TmXmlReader implements Algorithm, Benchmark {
 		List<Element> edgeElements;
 
 		// A temporary map that maps stored track key to one of its spot
-		HashMap<Integer, Spot> savedTrackMap = new HashMap<Integer, Spot>();
-
+		HashMap<Integer, Spot> savedTrackMap = new HashMap<Integer, Spot>(trackElements.size());
+		HashMap<Integer, String> savedTrackNames = new HashMap<Integer, String>(trackElements.size());
 
 		for (Element trackElement : trackElements) {
 
 			// Get track ID as it is saved on disk
 			int trackID = readIntAttribute(trackElement, TRACK_ID_ATTRIBUTE_NAME, logger);
+			String trackName = trackElement.getAttributeValue(TRACK_NAME_ATTRIBUTE_NAME);
 			// Keep a reference of one of the spot for outside the loop.
 			Spot sourceSpot = null; 
 
@@ -650,6 +652,7 @@ public class TmXmlReader implements Algorithm, Benchmark {
 
 			// Store one of the spot in the saved trackID key map
 			savedTrackMap.put(trackID, sourceSpot);
+			savedTrackNames.put(trackID, trackName);
 
 		}
 
@@ -663,7 +666,7 @@ public class TmXmlReader implements Algorithm, Benchmark {
 		// Retrieve the new track map
 		Map<Integer, Set<Spot>> newTrackMap = model.getTrackModel().getTrackSpots();
 
-		// Build a map of old key vs new key
+		// Build a map of saved key vs new key
 		HashMap<Integer, Integer> newKeyMap = new HashMap<Integer, Integer>();
 		HashSet<Integer> newKeysToMatch = new HashSet<Integer>(newTrackMap.keySet());
 		for (Integer savedKey : savedTrackMap.keySet()) {
@@ -702,6 +705,7 @@ public class TmXmlReader implements Algorithm, Benchmark {
 			newFilteredTrackIDs.add(newKey);
 		}
 		model.getTrackModel().setFilteredTrackIDs(newFilteredTrackIDs, false);
+		
 
 		/* 
 		 * We do the same thing for the track features.
@@ -715,7 +719,15 @@ public class TmXmlReader implements Algorithm, Benchmark {
 				Integer newKey = newKeyMap.get(savedKey);
 				fm.putTrackFeature(newKey, feature, savedFeatures.get(feature));
 			}
+		}
 
+		/*
+		 * We can name correctly the tracks
+		 */
+		
+		for (Integer savedTrackID : savedTrackNames.keySet()) {
+			Integer newKey = newKeyMap.get(savedTrackID);
+			model.getTrackModel().setTrackName(newKey, savedTrackNames.get(savedTrackID));
 		}
 	}
 

@@ -219,43 +219,7 @@ public class WizardController implements ActionListener {
 			wizard.jButtonNext.setText("Next");
 			wizard.restoreButtonsState();
 
-		} else if (event == displayerPanel.TRACK_SCHEME_BUTTON_PRESSED) {
-
-			// Display Track scheme
-			displayerPanel.jButtonShowTrackScheme.setEnabled(false);
-			try {
-				TrackScheme trackScheme = new TrackScheme(plugin.getModel());
-				Map<String, Object> displaySettings = new HashMap<String, Object>();
-				displayerPanel.updateDisplaySettings(displaySettings);
-				for (String settingKey : displaySettings.keySet()) {
-					trackScheme.setDisplaySettings(settingKey, displaySettings.get(settingKey));
-				}
-				trackScheme.render();
-				displayerPanel.register(trackScheme);
-			} finally {
-				displayerPanel.jButtonShowTrackScheme.setEnabled(true);
-			}
-
-		} else if (event == displayerPanel.DO_ANALYSIS_BUTTON_PRESSED) {
-
-			displayerPanel.jButtonDoAnalysis.setEnabled(false);
-			wizard.disableButtonsAndStoreState();
-			wizard.showDescriptorPanelFor(LoadDescriptor.DESCRIPTOR);
-
-			new Thread("TrackMate export analysis to IJ thread.") {
-				public void run() {
-					try {
-						ExportStatsToIJAction action = new ExportStatsToIJAction();
-						action.execute(plugin);
-					} finally {
-						wizard.showDescriptorPanelFor(DisplayerPanel.DESCRIPTOR);
-						wizard.restoreButtonsState();
-						displayerPanel.jButtonDoAnalysis.setEnabled(true);
-					}
-				};
-			}.start();
-
-		}
+		} 
 	}
 
 

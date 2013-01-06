@@ -51,6 +51,7 @@ import static fiji.plugin.trackmate.io.TmXmlKeys.TRACK_EDGE_WEIGHT_ATTRIBUTE_NAM
 import static fiji.plugin.trackmate.io.TmXmlKeys.TRACK_ELEMENT_KEY;
 import static fiji.plugin.trackmate.io.TmXmlKeys.TRACK_FILTER_COLLECTION_ELEMENT_KEY;
 import static fiji.plugin.trackmate.io.TmXmlKeys.TRACK_ID_ATTRIBUTE_NAME;
+import static fiji.plugin.trackmate.io.TmXmlKeys.TRACK_NAME_ATTRIBUTE_NAME;
 import static fiji.plugin.trackmate.io.TmXmlKeys.TRACK_ID_ELEMENT_KEY;
 
 import java.io.File;
@@ -243,6 +244,7 @@ public class TmXmlWriter implements Algorithm, Benchmark  {
 			Element trackElement = new Element(TRACK_ELEMENT_KEY);
 			// Echo attributes and features
 			trackElement.setAttribute(TRACK_ID_ATTRIBUTE_NAME, ""+trackID);
+			trackElement.setAttribute(TRACK_NAME_ATTRIBUTE_NAME, model.getTrackModel().getTrackName(trackID));
 			for(String feature : model.getFeatureModel().getTrackFeatureValues().keySet()) {
 				Double val = model.getFeatureModel().getTrackFeature(trackID, feature);
 				if (null == val) {

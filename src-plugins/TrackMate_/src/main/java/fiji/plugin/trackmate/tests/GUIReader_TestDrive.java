@@ -30,12 +30,26 @@ public class GUIReader_TestDrive {
 
 		plugin.initModules();
 		
-		WizardController controller = new WizardController(plugin);
+		WizardController controller = new WizardController(plugin) {
+			@Override
+			public TrackMateWizard getWizard() {
+				logger = Logger.DEFAULT_LOGGER;
+				return super.getWizard();
+			}
+		};
 		TrackMateWizard wizard = controller.getWizard();
 		
 		wizard.showDescriptorPanelFor(LoadDescriptor.DESCRIPTOR);
 		
-		GuiReader greader = new GuiReader(wizard);
+		plugin.setLogger(Logger.DEFAULT_LOGGER);
+		
+		GuiReader greader = new GuiReader(wizard) {
+			@Override
+			public void loadFile(File file) {
+				logger = Logger.DEFAULT_LOGGER;
+				super.loadFile(file);
+			}
+		};
 		file = greader.askForFile(file);
 
 		System.out.println("Opening file: "+file.getAbsolutePath());		

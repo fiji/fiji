@@ -24,7 +24,7 @@ import fiji.util.gui.OverlayedImageCanvas;
 
 public class HyperStackDisplayer extends AbstractTrackMateModelView  {
 
-	private static final boolean DEBUG = false;
+	private static final boolean DEBUG = true;
 	public static final String NAME = "HyperStack Displayer";
 	public static final String INFO_TEXT = "<html>" +
 			"This displayer overlays the spots and tracks on the current <br>" +
@@ -112,7 +112,8 @@ public class HyperStackDisplayer extends AbstractTrackMateModelView  {
 	@Override
 	public void modelChanged(ModelChangeEvent event) {
 		if (DEBUG)
-			System.out.println("[HyperStackDisplayer] Received model changed event ID: "+event.getEventID()+" from "+event.getSource());
+			System.out.println("[HyperStackDisplayer] Received model changed event ID: " 
+					 + ModelChangeEvent.flagsToString.get(event.getEventID()) +" from "+event.getSource());
 		boolean redoOverlay = false;
 
 		switch (event.getEventID()) {

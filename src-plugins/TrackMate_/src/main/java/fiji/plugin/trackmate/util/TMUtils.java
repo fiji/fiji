@@ -832,7 +832,7 @@ public class TMUtils {
 
 		}
 
-		logger.setStatus("Collecting feature values");
+		logger.setStatus("Collecting spot feature values");
 		SimpleMultiThreading.startAndJoin(threads);
 		logger.setProgress(0);
 		logger.setStatus("");

@@ -286,7 +286,7 @@ public class DetectorProvider extends AbstractProvider {
 		
 		ImagePlus imp = controller.getPlugin().getModel().getSettings().imp;
 		String spaceUnits = controller.getPlugin().getModel().getSettings().spaceUnits;
-
+		
 		if (currentKey.equals(LogDetectorFactory.DETECTOR_KEY)) {
 			return new LogDetectorConfigurationPanel(imp, LogDetectorFactory.INFO_TEXT, LogDetectorFactory.NAME, spaceUnits);
 

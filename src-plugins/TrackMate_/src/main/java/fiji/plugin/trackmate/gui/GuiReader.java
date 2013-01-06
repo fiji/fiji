@@ -34,7 +34,7 @@ import fiji.plugin.trackmate.visualization.hyperstack.HyperStackDisplayer;
  */
 public class GuiReader {
 
-	private Logger logger = Logger.VOID_LOGGER;
+	protected Logger logger = Logger.VOID_LOGGER;
 	private TrackMateWizard wizard;
 	private String targetDescriptor;
 	private TrackMate_ plugin;
@@ -91,7 +91,6 @@ public class GuiReader {
 		plugin = new TrackMate_();
 		plugin.initModules();
 		plugin.setLogger(logger);
-		displayer = new HyperStackDisplayer(plugin.getModel());
 
 		// Open and parse file
 		logger.log("Opening file "+file.getName()+'\n');
@@ -118,7 +117,13 @@ public class GuiReader {
 
 		// Retrieve data and update GUI
 		boolean readWasOk = reader.process();
+		
+		// We need to recompute edge features here
+		plugin.computeEdgeFeatures(true);
 
+		// Make a new displayer
+		displayer = new HyperStackDisplayer(plugin.getModel());
+		
 		// Send the new instance of plugin to all panel a first
 		// time, required by some for proper instantiation.
 		passNewPluginToWizard();
@@ -138,7 +143,7 @@ public class GuiReader {
 			} else {
 				logger.log("Found a proper image.\n");
 			}
-
+			
 			settings.imp = imp;
 			model.setSettings(settings);
 			// We display it only if we have a GUI
@@ -266,7 +271,6 @@ public class GuiReader {
 
 		wizard.registerWizardDescriptor(TrackerConfigurationPanelDescriptor.DESCRIPTOR, trackerDescriptor);
 
-
 		{ // Did we get tracks?
 			int nTracks = model.getTrackModel().getNTracks();
 			if (nTracks < 1) {
@@ -283,21 +287,20 @@ public class GuiReader {
 			logger.log("Found tracks.\n");
 			trackerDescriptor.updateComponent();
 		}
-
-		// Track filter descriptor
-		TrackFilterDescriptor trackFilterDescriptor = (TrackFilterDescriptor) wizard.getPanelDescriptorFor(TrackFilterDescriptor.DESCRIPTOR);
-		trackFilterDescriptor.aboutToDisplayPanel();
 		
 		/*
 		 * At this level, we will find track filters and filtered tracks anyway.
 		 * We we can call it a day and exit the loading GUI
 		 */
-		
 		targetDescriptor = DisplayerPanel.DESCRIPTOR;
 		displayer.render();
 		wizard.setDisplayer(displayer);
 		if (!imp.isVisible())
 			imp.show();
+		
+		// Track filter descriptor
+		TrackFilterDescriptor trackFilterDescriptor = (TrackFilterDescriptor) wizard.getPanelDescriptorFor(TrackFilterDescriptor.DESCRIPTOR);
+		trackFilterDescriptor.aboutToDisplayPanel();
 
 		// Displayer descriptor
 		DisplayerPanel displayerPanel = (DisplayerPanel) wizard.getPanelDescriptorFor(DisplayerPanel.DESCRIPTOR);

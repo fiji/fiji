@@ -19,6 +19,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -39,8 +40,10 @@ import javax.swing.border.LineBorder;
 
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMate_;
+import fiji.plugin.trackmate.action.ExportStatsToIJAction;
 import fiji.plugin.trackmate.visualization.AbstractTrackMateModelView;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
+import fiji.plugin.trackmate.visualization.trackscheme.TrackScheme;
 
 /**
  * A configuration panel used to tune the aspect of spots and tracks in multiple {@link AbstractTrackMateModelView}.
@@ -174,9 +177,45 @@ public class DisplayerPanel extends ActionListenablePanel implements WizardPanel
 						view.refresh();
 					}
 					
+				} else if (event == TRACK_SCHEME_BUTTON_PRESSED) {
+
+					// Display Track scheme
+					jButtonShowTrackScheme.setEnabled(false);
+					try {
+						TrackScheme trackScheme = new TrackScheme(plugin.getModel());
+						Map<String, Object> displaySettings = new HashMap<String, Object>();
+						updateDisplaySettings(displaySettings);
+						for (String settingKey : displaySettings.keySet()) {
+							trackScheme.setDisplaySettings(settingKey, displaySettings.get(settingKey));
+						}
+						trackScheme.render();
+						register(trackScheme);
+					} finally {
+						jButtonShowTrackScheme.setEnabled(true);
+					}
+
+				} else if (event == DO_ANALYSIS_BUTTON_PRESSED) {
+
+					jButtonDoAnalysis.setEnabled(false);
+					wizard.disableButtonsAndStoreState();
+					wizard.showDescriptorPanelFor(LoadDescriptor.DESCRIPTOR);
+
+					new Thread("TrackMate export analysis to IJ thread.") {
+						public void run() {
+							try {
+								ExportStatsToIJAction action = new ExportStatsToIJAction();
+								action.execute(plugin);
+							} finally {
+								wizard.showDescriptorPanelFor(DisplayerPanel.DESCRIPTOR);
+								wizard.restoreButtonsState();
+								jButtonDoAnalysis.setEnabled(true);
+							}
+						};
+					}.start();
+
 				} else {
 					DisplayerPanel.super.fireAction(event);
-				}
+				} 
 			}
 		}.start();
 	}
