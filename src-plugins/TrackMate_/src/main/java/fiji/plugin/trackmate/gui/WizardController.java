@@ -7,17 +7,13 @@ import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.TrackMate_;
-import fiji.plugin.trackmate.action.ExportStatsToIJAction;
-import fiji.plugin.trackmate.visualization.trackscheme.TrackScheme;
 
 public class WizardController implements ActionListener {
 
@@ -162,7 +158,6 @@ public class WizardController implements ActionListener {
 	public void actionPerformed(ActionEvent event) {
 		if (DEBUG)
 			System.out.println("[TrackMateFrameController] Caught event "+event);
-		final DisplayerPanel displayerPanel = (DisplayerPanel) wizard.getPanelDescriptorFor(DisplayerPanel.DESCRIPTOR);
 
 		if (event == wizard.NEXT_BUTTON_PRESSED && actionFlag) {
 

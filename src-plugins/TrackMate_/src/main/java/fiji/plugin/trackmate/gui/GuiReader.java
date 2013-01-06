@@ -117,6 +117,17 @@ public class GuiReader {
 
 		// Retrieve data and update GUI
 		boolean readWasOk = reader.process();
+		if (!readWasOk) {
+			logger.error("There was some errors when loading the file:\n");
+			logger.error(reader.getErrorMessage());
+			return;
+		}
+
+		if (fileVersion.compareTo(currentVersion ) < 0) {
+			// We need to re-compute track features in this case
+			plugin.computeTrackFeatures(true);
+		}
+
 		
 		// We need to recompute edge features here
 		plugin.computeEdgeFeatures(true);
@@ -306,11 +317,6 @@ public class GuiReader {
 		DisplayerPanel displayerPanel = (DisplayerPanel) wizard.getPanelDescriptorFor(DisplayerPanel.DESCRIPTOR);
 		displayerPanel.aboutToDisplayPanel();
 
-		if (!readWasOk) {
-			logger.error("There was some errors when loading the file:\n");
-			logger.error(reader.getErrorMessage());
-		}
-		
 		echoLoadingFinished();
 	}
 
