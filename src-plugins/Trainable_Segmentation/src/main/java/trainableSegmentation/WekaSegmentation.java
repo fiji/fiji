@@ -3424,12 +3424,9 @@ public class WekaSegmentation {
 							for (int i=0; i<n; i++)
 							{
 								double[] values = new double[featureStackArray.getNumOfFeatures()+1];
-								if(colorFeatures)
-									for (int z=1; z<=featureStackArray.getNumOfFeatures(); z++)
-										values[z-1] = featureStackArray.get(sliceNum-1).getProcessor(z).getPixel(x[i], y[i]);
-								else
-									for (int z=1; z<=featureStackArray.getNumOfFeatures(); z++)
-										values[z-1] = featureStackArray.get(sliceNum-1).getProcessor(z).getPixelValue(x[i], y[i]);
+
+								for (int z=1; z<=featureStackArray.getNumOfFeatures(); z++)
+									values[z-1] = featureStackArray.get(sliceNum-1).getProcessor(z).getPixelValue(x[i], y[i]);
 								
 								values[featureStackArray.getNumOfFeatures()] = (double) l;
 								trainingData.add(new DenseInstance(1.0, values));
@@ -3469,7 +3466,7 @@ public class WekaSegmentation {
 										double[] values = new double[featureStackArray.getNumOfFeatures()+1];
 										if(colorFeatures)
 											for (int z=1; z<=featureStackArray.getNumOfFeatures(); z++)
-												values[z-1] = featureStackArray.get(sliceNum-1).getProcessor(z).getPixelInterpolated(x, y);
+												values[z-1] = featureStackArray.get(sliceNum-1).getProcessor(z).getInterpolatedPixel(x, y);
 										else
 											for (int z=1; z<=featureStackArray.getNumOfFeatures(); z++)
 												values[z-1] = featureStackArray.get(sliceNum-1).getProcessor(z).getInterpolatedValue(x, y);
@@ -3498,12 +3495,8 @@ public class WekaSegmentation {
 								if(shapeRoi.contains(x, y))
 								{
 									double[] values = new double[featureStackArray.getNumOfFeatures()+1];
-									if(colorFeatures)
-										for (int z=1; z<=featureStackArray.getNumOfFeatures(); z++)
-											values[z-1] = featureStackArray.get(sliceNum-1).getProcessor(z).getPixel(x, y);
-									else
-										for (int z=1; z<=featureStackArray.getNumOfFeatures(); z++)
-											values[z-1] = featureStackArray.get(sliceNum-1).getProcessor(z).getPixelValue(x, y);
+									for (int z=1; z<=featureStackArray.getNumOfFeatures(); z++)
+										values[z-1] = featureStackArray.get(sliceNum-1).getProcessor(z).getPixelValue(x, y);
 									values[featureStackArray.getNumOfFeatures()] = (double) l;
 									trainingData.add(new DenseInstance(1.0, values));
 									// increase number of instances for this class

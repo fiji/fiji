@@ -307,7 +307,7 @@ public class Block
 	 * @param kernelSize - the size of the kernel (has to be odd!)
 	 * @return
 	 */
-	public static ArrayList< Block > divideIntoBlocks( final int[] imgSize, final int[] blockSize, final int[] kernelSize )
+	public static Block[] divideIntoBlocks( final int[] imgSize, final int[] blockSize, final int[] kernelSize )
 	{
 		final int numDimensions = imgSize.length;
 		
@@ -383,8 +383,12 @@ public class Block
 			blockList.add( new Block( blockSize, offset, effectiveSize, effectiveOffset, effectiveLocalOffset, inside ) );
 			//System.out.println( "block " + Util.printCoordinates( currentBlock ) + " effectiveOffset: " + Util.printCoordinates( effectiveOffset ) + " effectiveSize: " + Util.printCoordinates( effectiveSize )  + " offset: " + Util.printCoordinates( offset ) + " inside: " + inside );
 		}
+		
+		final Block[] blocks = new Block[ blockList.size() ];
+		for ( int i = 0; i < blockList.size(); ++i )
+			blocks[ i ] = blockList.get( i );
 			
-		return blockList;
+		return blocks;
 	}
 	
 	public static void main( String[] args )
@@ -407,14 +411,14 @@ public class Block
 		
 		final int[] kernelSize = kernel.getDimensions();//new int[]{ 51, 25 };
 		
-		final ArrayList< Block > blocks = Block.divideIntoBlocks( imgSize, blockSize, kernelSize );
+		final Block[] blocks = Block.divideIntoBlocks( imgSize, blockSize, kernelSize );
 		
 		final ArrayList< Image< FloatType > > blockImgs = new ArrayList< Image< FloatType > >();
 		final ImageFactory< FloatType > factory = new ImageFactory< FloatType >( new FloatType(), new ArrayContainerFactory() );
 		
 		ImageJFunctions.show( img );	
 		
-		for ( int i = 0; i < blocks.size(); ++i )
+		for ( int i = 0; i < blocks.length; ++i )
 			blockImgs.add( factory.createImage( blockSize ) );
 		
 		long time = 0;
@@ -422,9 +426,9 @@ public class Block
 		//while ( time >= 0 )
 		{
 			time = System.currentTimeMillis();
-			for ( int i = 0; i < blocks.size(); ++i )
+			for ( int i = 0; i < blocks.length; ++i )
 			{
-				blocks.get( i ).copyBlock( img, blockImgs.get( i ) );
+				blocks[ i ].copyBlock( img, blockImgs.get( i ) );
 				//ImageJFunctions.show( block );
 			}
 
@@ -448,12 +452,12 @@ public class Block
 		{
 			time = System.currentTimeMillis();
 	
-			for ( int i = 0; i < blocks.size(); ++i )
+			for ( int i = 0; i < blocks.length; ++i )
 			{
 				//t2.replaceImage( blockImgs.get( i ) );
 				//t2.process();
 				
-				blocks.get( i ).pasteBlock( img2,  blockImgs.get( i ) );
+				blocks[ i ].pasteBlock( img2,  blockImgs.get( i ) );
 				//ImageJFunctions.show( t.getResult() );
 			}
 			

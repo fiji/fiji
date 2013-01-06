@@ -35,12 +35,12 @@
 		<dependency>
 			<groupId>mpicbg</groupId>
 			<artifactId>mpicbg</artifactId>
-			<version>20120621</version>
+			<version>${mpicbg.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>TrakEM2_</artifactId>
-			<version>${imagej.version}</version>
+			<version>${trakem2.version}</version>
 		</dependency>
 	</dependencies>
 

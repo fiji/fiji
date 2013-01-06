@@ -11,15 +11,14 @@
 	</parent>
 
 	<artifactId>TrackMate_</artifactId>
-	<version>1.3.0</version>
-
+	<version>1.3.0-SNAPSHOT</version>
 	<name>plugins/TrackMate_.jar</name>
 	<description></description>
 
 	<dependencies>
 		<dependency>
 			<groupId>jama</groupId>
-			<artifactId>Jama</artifactId>
+			<artifactId>jama</artifactId>
 			<version>1.0.2</version>
 		</dependency>
 		<dependency>
@@ -71,16 +70,19 @@
 			<groupId>java3d</groupId>
 			<artifactId>j3d-core</artifactId>
 			<version>1.5.2</version>
+			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>java3d</groupId>
 			<artifactId>j3d-core-utils</artifactId>
 			<version>1.5.2</version>
+			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>java3d</groupId>
 			<artifactId>vecmath</artifactId>
 			<version>1.5.2</version>
+			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>

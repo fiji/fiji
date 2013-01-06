@@ -87,9 +87,9 @@ public class FeatureStack3D
 			true,	/* Structure */
 			true,	/* Edges */
 			true,	/* Difference of Gaussian */
-			true,	/* Minimum */
-			true,	/* Maximum */
-			true,	/* Mean */
+			false,	/* Minimum */
+			false,	/* Maximum */
+			false,	/* Mean */
 	};
 	
 	
@@ -132,7 +132,7 @@ public class FeatureStack3D
 	 * Get derivatives features (to be submitted in an ExecutorService)
 	 *
 	 * @param originalImage input image
-	 * @param sigma smoothing scale
+	 * @param sigma isotropic smoothing scale
 	 * @param xOrder x-order of differentiation
 	 * @param yOrder y-order of differentiation
 	 * @param zOrder z-order of differentiation
@@ -172,7 +172,7 @@ public class FeatureStack3D
 
 					imagescience.image.Image newimg = new FloatImage(img);
 					Differentiator diff = new Differentiator();
-
+					
 					diff.run(newimg, sigma , xOrder, yOrder, zOrder);
 					newimg.aspects(aspects);
 
@@ -270,7 +270,7 @@ public class FeatureStack3D
 	 * Get Hessian features (to be submitted in an ExecutorService)
 	 *
 	 * @param originalImage input image
-	 * @param sigma smoothing scale	
+	 * @param sigma isotropic smoothing scale	
 	 * @return filter Hessian filter images
 	 */
 	public Callable< ArrayList<ImagePlus> >getHessian(
@@ -339,7 +339,7 @@ public class FeatureStack3D
 	 * Get Laplacian features (to be submitted in an ExecutorService)
 	 *
 	 * @param originalImage input image
-	 * @param sigma smoothing scale	
+	 * @param sigma isotropic smoothing scale	
 	 * @return filter Laplacian filter image
 	 */
 	public Callable<ArrayList< ImagePlus >> getLaplacian(
@@ -400,7 +400,7 @@ public class FeatureStack3D
 	 * Get Edges features (to be submitted in an ExecutorService)
 	 *
 	 * @param originalImage input image
-	 * @param sigma smoothing scale	
+	 * @param sigma isotropic isotropic smoothing scale	
 	 * @return filter Edges filter image
 	 */
 	public Callable<ArrayList< ImagePlus >> getEdges(
@@ -708,7 +708,7 @@ public class FeatureStack3D
 	 * It computes, for all pixels in the input image, the eigenvalues of the so-called structure tensor.
 	 *
 	 * @param originalImage input image
-	 * @param sigma smoothing scale	
+	 * @param sigma isotropic smoothing scale	
 	 * @param integrationScale integration scale (standard deviation of the Gaussian 
 	 * 		kernel used for smoothing the elements of the structure tensor, must be larger than zero)
 	 * @return filter structure tensor filter image
@@ -873,6 +873,10 @@ public class FeatureStack3D
 				is.addSlice("original-slice-" + i, originalImage.getImageStack().getProcessor(i).convertToFloat() );
 			channels[0] = new ImagePlus(originalImage.getTitle(), is );
 		}
+		
+		for(int i=0; i<channels.length; i++)
+			channels[i].setCalibration(originalImage.getCalibration());
+		
 		return channels;
 	}
 
@@ -889,6 +893,8 @@ public class FeatureStack3D
 		ExecutorService exe = Executors.newFixedThreadPool( Prefs.getThreads() );
 		
 		wholeStack = new ArrayList<ImagePlus>();
+		
+		final double pixelWidth = originalImage.getCalibration().pixelWidth;
 		
 		ImageStack is = new ImageStack ( width, height );
 		
@@ -919,12 +925,13 @@ public class FeatureStack3D
 		int currentIndex = 0;
 		IJ.showStatus("Updating features...");
 		try{
-			
-			
-		
+								
 			
 			for (float i=minimumSigma; i<= maximumSigma; i *=2)
 			{		
+				
+				double scaledSigma = i * pixelWidth;
+				
 				if (Thread.currentThread().isInterrupted()) 
 					return false;
 				
@@ -932,7 +939,7 @@ public class FeatureStack3D
 				if(enableFeatures[GAUSSIAN])
 				{
 					//IJ.log( n++ +": Calculating Gaussian filter ("+ i + ")");
-					futures.add(exe.submit( getDerivatives(originalImage, i, 0, 0, 0)) );
+					futures.add(exe.submit( getDerivatives(originalImage, scaledSigma, 0, 0, 0)) );
 				}
 				
 				// Difference of Gaussian
@@ -941,7 +948,7 @@ public class FeatureStack3D
 					for (float j=minimumSigma; j<i; j*=2)
 					{
 						//IJ.log( n++ +": Calculating DoG filter ("+ i + ", " + j + ")");
-						futures.add(exe.submit( getDoG( originalImage, i, j ) ) );
+						futures.add(exe.submit( getDoG( originalImage, scaledSigma, j * pixelWidth) ) );
 					}
 				}
 			
@@ -949,33 +956,33 @@ public class FeatureStack3D
 				if(enableFeatures[HESSIAN])
 				{
 					//IJ.log("Calculating Hessian filter ("+ i + ")");
-					futures.add(exe.submit( getHessian(originalImage, i, true)) );
+					futures.add(exe.submit( getHessian(originalImage, scaledSigma, true)) );
 				}
 							
 				// Derivatives
 				if(enableFeatures[DERIVATIVES])
 				{					
 					for(int order = minDerivativeOrder; order<=maxDerivativeOrder; order++)
-						futures.add(exe.submit( getDerivatives(originalImage, i, order, order, order)) );
+						futures.add(exe.submit( getDerivatives(originalImage, scaledSigma, order, order, order)) );
 				}
 				
 				// Laplacian
 				if(enableFeatures[LAPLACIAN])
 				{
-					futures.add(exe.submit( getLaplacian(originalImage, i)) );
+					futures.add(exe.submit( getLaplacian(originalImage, scaledSigma)) );
 				}
 				
 				// Edges
 				if(enableFeatures[ EDGES ])
 				{
-					futures.add(exe.submit( getEdges(originalImage, i)) );
+					futures.add(exe.submit( getEdges(originalImage, scaledSigma)) );
 				}
 				
 				// Structure tensor
 				if(enableFeatures[ STRUCTURE ])
 				{					
 					for(int integrationScale = 1; integrationScale <= 3; integrationScale+=2)
-						futures.add(exe.submit( getStructure(originalImage, i, integrationScale )) );
+						futures.add(exe.submit( getStructure(originalImage, scaledSigma, integrationScale )) );
 				}
 				
 				// Maximum

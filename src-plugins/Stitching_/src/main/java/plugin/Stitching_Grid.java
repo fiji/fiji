@@ -81,6 +81,9 @@ public class Stitching_Grid implements PlugIn
 	public static boolean defaultOnlyPreview = false;
 	public static int defaultMemorySpeedChoice = 0;
 	
+	//Added by John Lapage: user sets this parameter to define how many adjacent files each image will be compared to
+	public static double defaultSeqRange = 1;	
+	
 	public static boolean defaultQuickFusion = true;
 	
 	public static String[] resultChoices = { "Fuse and display", "Write to disk" };
@@ -136,7 +139,8 @@ public class Stitching_Grid implements PlugIn
 		{
 			gd.addDirectoryField( "Directory", defaultDirectory, 50 );
 		
-			if ( gridType == 5 )
+			// Modified by John Lapage: copying the general setup for Unknown Positions option 
+			if ( gridType == 5 || gridType == 7)
 				gd.addCheckbox( "Confirm_files", defaultConfirmFiles );
 			
 			if ( gridType < 5 )			
@@ -152,6 +156,9 @@ public class Stitching_Grid implements PlugIn
 		gd.addNumericField( "Regression_threshold", defaultRegressionThreshold, 2 );
 		gd.addNumericField( "Max/avg_displacement_threshold", defaultDisplacementThresholdRelative, 2 );		
 		gd.addNumericField( "Absolute_displacement_threshold", defaultDisplacementThresholdAbsolute, 2 );
+		// added by John Lapage: creates text box in which the user can set which range to compare within. Would be nicer as an Integer.
+		if (gridType == 7) 
+			gd.addNumericField( "Frame range to compare", defaultSeqRange, 0 );
 		
 		if ( gridType < 5 )
 			gd.addCheckbox( "Compute_overlap (otherwise use approximate grid coordinates)", defaultComputeOverlap );
@@ -243,7 +250,8 @@ public class Stitching_Grid implements PlugIn
 			directory = defaultDirectory = gd.getNextString();
 			seriesFile = null;
 				
-			if ( gridType == 5 )
+			// Modified by John Lapage: copying the general setup for Unknown Positions option 
+			if ( gridType == 5 || gridType == 7)
 				confirmFiles = defaultConfirmFiles = gd.getNextBoolean();
 			else
 				confirmFiles = false;
@@ -260,11 +268,15 @@ public class Stitching_Grid implements PlugIn
 		params.regThreshold = defaultRegressionThreshold = gd.getNextNumber();
 		params.relativeThreshold = defaultDisplacementThresholdRelative = gd.getNextNumber();		
 		params.absoluteThreshold = defaultDisplacementThresholdAbsolute = gd.getNextNumber();
+		// Added by John Lapage: sends user specified range to the parameters object
+		if ( gridType == 7) 
+			params.seqRange = (int)(defaultSeqRange = Math.round( gd.getNextNumber() ) );
 		
-		if ( gridType != 5 )
-			params.computeOverlap = defaultComputeOverlap = gd.getNextBoolean();
-		else if ( gridType == 5 )
+		// Modified by John Lapage (rearranged). Copies the setup for Unknown Positions. User specifies this with all other options.
+		if ( gridType == 5 || gridType == 7)
 			params.computeOverlap = true;
+		else 
+			params.computeOverlap = defaultComputeOverlap = gd.getNextBoolean();
 
 		final double increaseOverlap;
 		final boolean ignoreCalibration;
@@ -324,6 +336,9 @@ public class Stitching_Grid implements PlugIn
 		params.timeSelect = 0;
 		params.checkPeaks = 5;
 				
+		//added by John Lapage: sets the parameters object to recognise that Sequential File pairing should be performed
+		if ( gridType == 7) params.sequential=true;
+				
 		// for reading in writing the tileconfiguration file
 		if ( ! (gridType == 6 && gridOrder == 1 ) )
 		{		
@@ -338,7 +353,8 @@ public class Stitching_Grid implements PlugIn
 		
 		if ( gridType < 5 )
 			elements = getGridLayout( grid, gridSizeX, gridSizeY, overlapX, overlapY, directory, filenames, startI, startX, startY, params.virtual );
-		else if ( gridType == 5 )
+		//John Lapage modified this: copying setup for Unknown Positions
+		else if ( gridType == 5 || gridType == 7)
 			elements = getAllFilesInDirectory( directory, confirmFiles );
 		else if ( gridType == 6 && gridOrder == 1 )
 			elements = getLayoutFromMultiSeriesFile( seriesFile, increaseOverlap, ignoreCalibration, invertX, invertY );
@@ -416,7 +432,8 @@ public class Stitching_Grid implements PlugIn
 				return;					
 			}
 			
-			if ( gridType == 5 )
+		// John Lapage changed this: copying setup for Unknown Positions
+		if ( gridType == 5 || gridType == 7)
 			{
 				if ( is2d )
 				{

@@ -25,12 +25,12 @@
 		<dependency>
 			<groupId>mpicbg</groupId>
 			<artifactId>mpicbg</artifactId>
-			<version>20120621</version>
+			<version>${mpicbg.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>mpicbg</groupId>
 			<artifactId>mpicbg_</artifactId>
-			<version>${imagej.version}</version>
+			<version>${mpicbg.version}</version>
 		</dependency>
 	</dependencies>
 

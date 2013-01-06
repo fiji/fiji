@@ -20,9 +20,12 @@
 	<description></description>
 
 	<properties>
+		<fiji.rootdir>${rootdir}/..</fiji.rootdir>
 		<imagescience.version>2.4.1</imagescience.version>
 		<jcommon.version>1.0.17</jcommon.version>
 		<jfreechart.version>1.0.14</jfreechart.version>
+		<mpicbg.version>20120621</mpicbg.version>
+		<trakem2.version>1.0b-SNAPSHOT</trakem2.version>
 	</properties>
 
 	<modules>
@@ -124,6 +127,7 @@
 		<module>VIB_</module>
 		<module>Video_Editing</module>
 		<module>View5D_</module>
+		<module>Volume_Calculator</module>
 		<module>Volume_Viewer</module>
 		<module>bUnwarpJ_</module>
 		<module>blockmatching_</module>
@@ -153,6 +157,30 @@
 			<plugin>
 				<groupId>org.codehaus.mojo</groupId>
 				<artifactId>buildnumber-maven-plugin</artifactId>
+			</plugin>
+			<plugin>
+				<groupId>net.imagej</groupId>
+				<artifactId>imagej-maven-plugin</artifactId>
+				<version>0.1.0-SNAPSHOT</version>
+				<executions>
+					<execution>
+						<id>copy-jars</id>
+						<phase>install</phase>
+						<goals>
+							<goal>copy-jars</goal>
+						</goals>
+					</execution>
+					<execution>
+						<id>set-rootdir</id>
+						<phase>validate</phase>
+						<goals>
+							<goal>set-rootdir</goal>
+						</goals>
+					</execution>
+				</executions>
+				<configuration>
+					<imagejDirectory>${fiji.rootdir}</imagejDirectory>
+				</configuration>
 			</plugin>
 		</plugins>
 	</build>
