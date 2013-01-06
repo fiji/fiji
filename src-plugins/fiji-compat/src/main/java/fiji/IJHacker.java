@@ -78,6 +78,7 @@ public class IJHacker extends JavassistHelper {
 		// tell runUserPlugIn() to catch NoSuchMethodErrors
 		method = clazz.getMethod("runUserPlugIn",
 			"(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Z)Ljava/lang/Object;");
+		method.insertBefore("Thread.currentThread().setContextClassLoader(ij.IJ.getClassLoader());");
 		method.addCatch("if (fiji.FijiTools.handleNoSuchMethodError($e)) throw new RuntimeException(ij.Macro.MACRO_CANCELED);"
 			+ "throw $e;", pool.get("java.lang.NoSuchMethodError"), "$e");
 
