@@ -106,8 +106,16 @@ public class GuiReader {
 
 		// Check file version & deal with older save format
 		String fileVersionStr = reader.getVersion();
-		Version fileVersion = new Version(fileVersionStr);
-		Version currentVersion = new Version("1.3.0");
+		Version fileVersion;
+		try {
+			fileVersion = new Version(fileVersionStr);
+		} catch (IllegalArgumentException iae) {
+			logger.error("Cannot deal with file version: " + fileVersionStr + '\n');
+			logger.error("Aborting.\n");
+			return;
+		}
+		
+		Version currentVersion = new Version(TrackMate_.PLUGIN_NAME_VERSION);
 		if (fileVersion.compareTo(currentVersion ) < 0) {
 			logger.log("  Detected an older file format: v"+fileVersionStr);
 			logger.log(" Converting on the fly.\n");
