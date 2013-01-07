@@ -33,7 +33,7 @@ import com.mxgraph.view.mxGraph;
 
 import fiji.plugin.trackmate.TrackMateModel;
 
-public class mxTrackGraphComponent extends mxGraphComponent implements mxIEventListener {
+public class TrackSchemeGraphComponent extends mxGraphComponent implements mxIEventListener {
 
 	private static final long serialVersionUID = -1L;
 	private static final Color BACKGROUND_COLOR_1 	= Color.GRAY;
@@ -57,7 +57,7 @@ public class mxTrackGraphComponent extends mxGraphComponent implements mxIEventL
 	 * CONSTRUCTOR
 	 */
 
-	public mxTrackGraphComponent(final JGraphXAdapter graph, final TrackMateModel model, final TrackScheme trackScheme) {
+	public TrackSchemeGraphComponent(final JGraphXAdapter graph, final TrackMateModel model, final TrackScheme trackScheme) {
 		super(graph);
 		this.model = model;
 		this.trackScheme = trackScheme;
@@ -296,7 +296,7 @@ public class mxTrackGraphComponent extends mxGraphComponent implements mxIEventL
 							trackScheme.getModel().getTrackModel().setTrackName(trackID, newname);
 							scrollPane.remove(textArea);
 							getGraphControl().remove(scrollPane);
-							mxTrackGraphComponent.this.repaint();
+							TrackSchemeGraphComponent.this.repaint();
 						}
 					});
 

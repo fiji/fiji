@@ -171,28 +171,32 @@ public class DisplayerPanel extends ActionListenablePanel implements WizardPanel
 						view.refresh();
 					}
 				} if (event == trackColorGUI.TRACK_COLOR_FEATURE_CHANGED) {
-					
+
 					for (TrackMateModelView view : views) {
 						view.setDisplaySettings(KEY_TRACK_COLORING, trackColorGUI.getColorGenerator());
 						view.refresh();
 					}
-					
+
 				} else if (event == TRACK_SCHEME_BUTTON_PRESSED) {
 
 					// Display Track scheme
 					jButtonShowTrackScheme.setEnabled(false);
-					try {
-						TrackScheme trackScheme = new TrackScheme(plugin.getModel());
-						Map<String, Object> displaySettings = new HashMap<String, Object>();
-						updateDisplaySettings(displaySettings);
-						for (String settingKey : displaySettings.keySet()) {
-							trackScheme.setDisplaySettings(settingKey, displaySettings.get(settingKey));
+					new Thread("TrackMate_ laucnhing TrackScheme thread") {
+						public void run() {	
+							try {
+								TrackScheme trackScheme = new TrackScheme(plugin.getModel());
+								Map<String, Object> displaySettings = new HashMap<String, Object>();
+								updateDisplaySettings(displaySettings);
+								for (String settingKey : displaySettings.keySet()) {
+									trackScheme.setDisplaySettings(settingKey, displaySettings.get(settingKey));
+								}
+								trackScheme.render();
+								register(trackScheme);
+							} finally {
+								jButtonShowTrackScheme.setEnabled(true);
+							}
 						}
-						trackScheme.render();
-						register(trackScheme);
-					} finally {
-						jButtonShowTrackScheme.setEnabled(true);
-					}
+					}.start();
 
 				} else if (event == DO_ANALYSIS_BUTTON_PRESSED) {
 
@@ -365,7 +369,7 @@ public class DisplayerPanel extends ActionListenablePanel implements WizardPanel
 					});
 				}
 				{
-					
+
 					// Color GUI will be added later, when we receive the plugin object. It's like that.
 
 				}

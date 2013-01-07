@@ -30,7 +30,7 @@ public class TrackSchemeFrame extends JFrame  {
 	/** The side pane in which spot selection info will be displayed.	 */
 	protected InfoPane infoPane;
 	/** The graph component in charge of painting the graph. */
-	protected mxTrackGraphComponent graphComponent;
+	protected TrackSchemeGraphComponent graphComponent;
 	private final TrackMateModel model;
 	private final JGraphXAdapter graph;
 	private final TrackScheme trackScheme;
@@ -63,8 +63,8 @@ public class TrackSchemeFrame extends JFrame  {
 	 * Instantiate the graph component in charge of painting the graph.
 	 * Hook for sub-classers.
 	 */
-	protected mxTrackGraphComponent createGraphComponent() {
-		final mxTrackGraphComponent gc = new mxTrackGraphComponent(graph, model, trackScheme);
+	protected TrackSchemeGraphComponent createGraphComponent() {
+		final TrackSchemeGraphComponent gc = new TrackSchemeGraphComponent(graph, model, trackScheme);
 		gc.getVerticalScrollBar().setUnitIncrement(16);
 		gc.getHorizontalScrollBar().setUnitIncrement(16);
 //		gc.setExportEnabled(true); // Seems to be required to have a preview when we move cells. Also give the ability to export a cell as an image clipping 

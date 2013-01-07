@@ -34,14 +34,14 @@ import fiji.plugin.trackmate.graph.SortedDepthFirstIterator;
  * @author Jean-Yves Tinevez <jeanyves.tinevez@gmail.com> - Mar 2011 - 2012
  *
  */
-public class mxTrackGraphLayout extends mxGraphLayout implements Benchmark {
+public class TrackSchemeGraphLayout extends mxGraphLayout implements Benchmark {
 
 	private static final int START_COLUMN = 2;
 
 	/** The target model to draw spot from. */
 	private final TrackMateModel model;
 	private final JGraphXAdapter graph;
-	private final mxTrackGraphComponent component;
+	private final TrackSchemeGraphComponent component;
 	/**
 	 * Hold the current row length for each frame.
 	 * That is, for frame <code>i</code>, the number of cells on the row
@@ -57,7 +57,7 @@ public class mxTrackGraphLayout extends mxGraphLayout implements Benchmark {
 	 * CONSTRUCTOR
 	 */
 
-	public mxTrackGraphLayout(final JGraphXAdapter graph, final TrackMateModel model, final mxTrackGraphComponent component) {
+	public TrackSchemeGraphLayout(final JGraphXAdapter graph, final TrackMateModel model, final TrackSchemeGraphComponent component) {
 		super(graph);
 		this.graph = graph;
 		this.model = model;

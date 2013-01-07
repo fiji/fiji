@@ -10,9 +10,9 @@ import com.mxgraph.util.mxConstants;
 import com.mxgraph.util.mxRectangle;
 import com.mxgraph.util.mxUtils;
 
-public class mxTrackSchemeSvgCanvas extends mxSvgCanvas {
+public class TrackSchemeSvgCanvas extends mxSvgCanvas {
 
-	public mxTrackSchemeSvgCanvas(Document document) {
+	public TrackSchemeSvgCanvas(Document document) {
 		super(document);
 	}
 

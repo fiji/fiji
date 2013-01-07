@@ -78,7 +78,7 @@ public class TrackScheme extends AbstractTrackMateModelView {
 	/** The JGraphX object that displays the graph. */
 	private JGraphXAdapter graph;
 	/** The graph layout in charge of re-aligning the cells. */
-	private mxTrackGraphLayout graphLayout;
+	private TrackSchemeGraphLayout graphLayout;
 	/** A flag used to prevent double event firing when setting the selection programmatically. */
 	private boolean doFireSelectionChangeEvent = true;
 	/** A flag used to prevent double event firing when setting the selection programmatically. */
@@ -147,7 +147,7 @@ public class TrackScheme extends AbstractTrackMateModelView {
 	/**
 	 * @return the graph layout in charge of arranging the cells on the graph.
 	 */
-	public mxTrackGraphLayout getGraphLayout() {
+	public TrackSchemeGraphLayout getGraphLayout() {
 		return graphLayout;	
 	}
 
@@ -590,14 +590,15 @@ public class TrackScheme extends AbstractTrackMateModelView {
 
 	@Override
 	public void render() {
+		// Graph to mirror model
+		this.graph = createGraph();
+		stylist = new TrackSchemeStylist(graph, (TrackColorGenerator) displaySettings.get(KEY_TRACK_COLORING));
 		try {
 			SwingUtilities.invokeAndWait(new Runnable(){
 				public void run()	{
 					initGUI();
-					stylist = new TrackSchemeStylist(graph, (TrackColorGenerator) displaySettings.get(KEY_TRACK_COLORING));
 					doTrackStyle();
 					doTrackLayout();
-					refresh();
 				}
 			});
 		} catch (InterruptedException e) {
@@ -605,21 +606,17 @@ public class TrackScheme extends AbstractTrackMateModelView {
 		} catch (InvocationTargetException e) {
 			e.printStackTrace();
 		}
+		refresh();
 	}
 
 	@Override
 	public void refresh() {
-		new Thread("TrackScheme refreshing style thread") {
-			@Override
+		SwingUtilities.invokeLater(new Runnable(){
 			public void run() {
-				SwingUtilities.invokeLater(new Runnable(){
-					public void run() {
-						gui.graphComponent.refresh();
-						gui.graphComponent.repaint();
-					}
-				});
+				gui.graphComponent.refresh();
+				gui.graphComponent.repaint();
 			}
-		}.start();
+		});
 	}
 
 	@Override
@@ -747,10 +744,8 @@ public class TrackScheme extends AbstractTrackMateModelView {
 	}
 
 	private void initGUI() {
-		// Graph to mirror model
-		this.graph = createGraph();
 		this.gui = new TrackSchemeFrame(graph, model, this);
-		this.graphLayout = new mxTrackGraphLayout(graph, model, gui.graphComponent);
+		this.graphLayout = new TrackSchemeGraphLayout(graph, model, gui.graphComponent);
 		String title = "TrackScheme";
 		if (null != model.getSettings().imp)
 			title += ": "+model.getSettings().imp.getTitle();
@@ -890,10 +885,10 @@ public class TrackScheme extends AbstractTrackMateModelView {
 			}
 			edgeMap.put(trackID, set);
 		}
-		
+
 		// Give them style
 		Set<mxICell> verticesUpdated = stylist.execute(edgeMap);
-		
+
 		// Take care of vertices
 		HashSet<mxCell> missedVertices = new HashSet<mxCell>(graph.getVertexCells());
 		missedVertices.removeAll(verticesUpdated);

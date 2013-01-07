@@ -173,7 +173,7 @@ public class SaveAction extends AbstractAction {
 			if (ext.equalsIgnoreCase("svg")) {
 				mxSvgCanvas canvas = (mxSvgCanvas) mxCellRenderer.drawCells(graph, null, 1, null, new CanvasFactory() {
 					public mxICanvas createCanvas(int width, int height) {
-						mxTrackSchemeSvgCanvas canvas = new mxTrackSchemeSvgCanvas(mxDomUtils.createSvgDocument(width, height));
+						TrackSchemeSvgCanvas canvas = new TrackSchemeSvgCanvas(mxDomUtils.createSvgDocument(width, height));
 						canvas.setEmbedded(true);
 						return canvas;
 					}
