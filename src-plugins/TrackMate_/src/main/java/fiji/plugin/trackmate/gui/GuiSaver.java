@@ -38,7 +38,11 @@ public class GuiSaver {
 	 */
 
 
-	public void writeFile(final File file, final TrackMateModel model, final String targetID) {
+	/**
+	 * Write the model in the plugin managed by this GUI in the file specified.
+	 * @param file  the file to write in.
+	 */
+	public void writeFile(final File file) {
 
 		TmXmlWriter writer = new TmXmlWriter(wizard.getController().getPlugin());
 		

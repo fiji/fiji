@@ -36,7 +36,7 @@ public class SaveDescriptor extends SomeDialogDescriptor {
 				return;
 			}
 			file = tmpFile;
-			saver.writeFile(file, plugin.getModel(), targetID);
+			saver.writeFile(file);
 
 		}	finally {
 			wizard.setNextButtonEnabled(true);

@@ -192,7 +192,7 @@ public class TmXmlWriter implements Algorithm, Benchmark  {
 		settingsElement.setAttribute(SETTINGS_TSTART_ATTRIBUTE_NAME, ""+settings.tstart);
 		settingsElement.setAttribute(SETTINGS_TEND_ATTRIBUTE_NAME, ""+settings.tend);
 		root.addContent(settingsElement);
-		logger.log("  Appending base settings.\n");
+		logger.log("  Added base settings.\n");
 	}
 
 	private void echoDetectorSettings() {
@@ -209,7 +209,7 @@ public class TmXmlWriter implements Algorithm, Benchmark  {
 		}
 
 		root.addContent(el);
-		logger.log("  Appending detector settings.\n");
+		logger.log("  Added detector settings.\n");
 	}
 
 	private void echoTrackerSettings() {
@@ -227,7 +227,7 @@ public class TmXmlWriter implements Algorithm, Benchmark  {
 		}
 
 		root.addContent(el);
-		logger.log("  Appending tracker settings.\n");
+		logger.log("  Added tracker settings.\n");
 	}
 
 	private void echoTracks() {
@@ -245,7 +245,7 @@ public class TmXmlWriter implements Algorithm, Benchmark  {
 			// Echo attributes and features
 			trackElement.setAttribute(TRACK_ID_ATTRIBUTE_NAME, ""+trackID);
 			trackElement.setAttribute(TRACK_NAME_ATTRIBUTE_NAME, model.getTrackModel().getTrackName(trackID));
-			for(String feature : model.getFeatureModel().getTrackFeatureValues().keySet()) {
+			for(String feature : model.getFeatureModel().getTrackFeatures()) {
 				Double val = model.getFeatureModel().getTrackFeature(trackID, feature);
 				if (null == val) {
 					continue;
@@ -256,16 +256,9 @@ public class TmXmlWriter implements Algorithm, Benchmark  {
 			// Echo edges
 			if (track.size() == 0) {
 				/* Special case: the track has only one spot in it, therefore no edge. 
-				 * We live on the edge of nonsense here, but at least, let's write the 
-				 * file correctly. */
-
-				Set<Spot> spots = model.getTrackModel().getTrackSpots(trackID);
-				Spot spot = spots.iterator().next();
-				Element edgeElement = new Element(TRACK_EDGE_ELEMENT_KEY);
-				edgeElement.setAttribute(TRACK_EDGE_SOURCE_ATTRIBUTE_NAME, ""+spot.ID());
-				edgeElement.setAttribute(TRACK_EDGE_TARGET_ATTRIBUTE_NAME, ""+spot.ID());
-				edgeElement.setAttribute(TRACK_EDGE_WEIGHT_ATTRIBUTE_NAME, ""+Double.NaN);
-				trackElement.addContent(edgeElement);
+				 * It just should not be, since the model never returns a track with less
+				 * than one edge. So we skip writing it. */
+				continue;
 
 			} else {
 
@@ -286,7 +279,7 @@ public class TmXmlWriter implements Algorithm, Benchmark  {
 			allTracksElement.addContent(trackElement);
 		}
 		root.addContent(allTracksElement);
-		logger.log("  Appending tracks.\n");
+		logger.log("  Added tracks.\n");
 		return;
 	}
 
@@ -303,7 +296,7 @@ public class TmXmlWriter implements Algorithm, Benchmark  {
 			filteredTracksElement.addContent(trackIDElement);
 		}
 		root.addContent(filteredTracksElement);
-		logger.log("  Appending filtered tracks.\n");
+		logger.log("  Added filtered tracks.\n");
 	}
 
 	private void echoImageInfo() {
@@ -324,7 +317,7 @@ public class TmXmlWriter implements Algorithm, Benchmark  {
 		imEl.setAttribute(IMAGE_SPATIAL_UNITS_ATTRIBUTE_NAME,	settings.spaceUnits);
 		imEl.setAttribute(IMAGE_TIME_UNITS_ATTRIBUTE_NAME,		settings.timeUnits);
 		root.addContent(imEl);
-		logger.log("  Appending image information.\n");
+		logger.log("  Added image information.\n");
 		return;
 	}
 
@@ -353,7 +346,7 @@ public class TmXmlWriter implements Algorithm, Benchmark  {
 			spotCollection.addContent(frameSpotsElement);
 		}
 		root.addContent(spotCollection);
-		logger.log("  Appending spots.\n");
+		logger.log("  Added spots.\n");
 		return;
 	}
 
@@ -367,7 +360,7 @@ public class TmXmlWriter implements Algorithm, Benchmark  {
 		itElement.setAttribute(FILTER_VALUE_ATTRIBUTE_NAME, "" + filterVal);
 		itElement.setAttribute(FILTER_ABOVE_ATTRIBUTE_NAME, "" + true);
 		root.addContent(itElement);
-		logger.log("  Appending initial spot filter.\n");
+		logger.log("  Added initial spot filter.\n");
 		return;
 	}
 
@@ -383,7 +376,7 @@ public class TmXmlWriter implements Algorithm, Benchmark  {
 			allTresholdElement.addContent(thresholdElement);
 		}
 		root.addContent(allTresholdElement);
-		logger.log("  Appending spot feature filters.\n");
+		logger.log("  Added spot feature filters.\n");
 		return;
 	}
 
@@ -399,7 +392,7 @@ public class TmXmlWriter implements Algorithm, Benchmark  {
 			allTresholdElement.addContent(thresholdElement);
 		}
 		root.addContent(allTresholdElement);
-		logger.log("  Appending track feature filters.\n");
+		logger.log("  Added track feature filters.\n");
 		return;
 	}
 
@@ -427,7 +420,7 @@ public class TmXmlWriter implements Algorithm, Benchmark  {
 		}
 
 		root.addContent(spotCollection);
-		logger.log("  Appending spot selection.\n");
+		logger.log("  Added spot selection.\n");
 		return;
 	}
 
