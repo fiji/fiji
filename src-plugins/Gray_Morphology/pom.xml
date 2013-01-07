@@ -12,7 +12,7 @@
 	</parent>
 
 	<artifactId>Gray_Morphology</artifactId>
-	<version>2.3.1</version>
+	<version>2.3.2-SNAPSHOT</version>
 
 	<name>plugins/Gray_Morphology.jar</name>
 	<description></description>
@@ -24,5 +24,17 @@
 			<version>${imagej1.version}</version>
 		</dependency>
 	</dependencies>
+
+	<!-- NB: for project parent -->
+	<repositories>
+		<repository>
+			<id>imagej.releases</id>
+			<url>http://maven.imagej.net/content/repositories/releases</url>
+		</repository>
+		<repository>
+			<id>imagej.snapshots</id>
+			<url>http://maven.imagej.net/content/repositories/snapshots</url>
+		</repository>
+	</repositories>
 
 </project>

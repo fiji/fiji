@@ -1,6 +1,7 @@
 package fiji.scripting.java;
 
 import fiji.FijiClassLoader;
+import fiji.FijiTools;
 import fiji.User_Plugins;
 
 import ij.IJ;
@@ -140,7 +141,11 @@ public class PlugInExecutor {
 		try {
 			if (PlugIn.class.isAssignableFrom(clazz)) {
 				Object object = clazz.newInstance();
-				((PlugIn)object).run(arg);
+				try {
+					((PlugIn)object).run(arg);
+				} catch (NoSuchMethodError e) {
+					FijiTools.handleNoSuchMethodError(e);
+				}
 				return;
 			}
 			if (PlugInFilter.class.isAssignableFrom(clazz)) {
