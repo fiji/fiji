@@ -600,6 +600,9 @@ public class TmXmlReader implements Algorithm, Benchmark {
 			// Get track ID as it is saved on disk
 			int trackID = readIntAttribute(trackElement, TRACK_ID_ATTRIBUTE_NAME, logger);
 			String trackName = trackElement.getAttributeValue(TRACK_NAME_ATTRIBUTE_NAME);
+			if (null == trackName) {
+				trackName = "Unnamed";
+			}
 			// Keep a reference of one of the spot for outside the loop.
 			Spot sourceSpot = null; 
 

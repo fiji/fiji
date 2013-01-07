@@ -104,6 +104,7 @@ public class TrackScheme extends AbstractTrackMateModelView {
 	public TrackScheme(final TrackMateModel model)  {
 		super(model);
 		initDisplaySettings();
+		initGUI();
 	}
 
 
@@ -156,6 +157,9 @@ public class TrackScheme extends AbstractTrackMateModelView {
 	 * Hook for subclassers.
 	 */
 	private JGraphXAdapter createGraph() {
+		
+		gui.logger.setStatus("Creating graph adapter.");
+		
 		final JGraphXAdapter graph = new JGraphXAdapter(model);
 		graph.setAllowLoops(false);
 		graph.setAllowDanglingEdges(false);
@@ -168,14 +172,20 @@ public class TrackScheme extends AbstractTrackMateModelView {
 		graph.setDropEnabled(false);
 
 		// Set spot image to cell style
+		gui.logger.setStatus("Collect spot images.");
+		double max = graph.getVertexCells().size();
+		int index = 0;
 		try {
 			graph.getModel().beginUpdate();
 			for(mxICell cell : graph.getVertexCells()) {
 				Spot spot = graph.getSpotFor(cell);
 				graph.getModel().setStyle(cell, mxConstants.STYLE_IMAGE+"="+"data:image/base64,"+spot.getImageString());
+				gui.logger.setProgress( index++ / max );
 			}
 		} finally {
 			graph.getModel().endUpdate();
+			gui.logger.setProgress(0d);
+			gui.logger.setStatus("");
 		}
 
 		// Cells removed from JGraphX
@@ -592,12 +602,18 @@ public class TrackScheme extends AbstractTrackMateModelView {
 	public void render() {
 		// Graph to mirror model
 		this.graph = createGraph();
-		stylist = new TrackSchemeStylist(graph, (TrackColorGenerator) displaySettings.get(KEY_TRACK_COLORING));
+		// Pass it to GUI
+		gui.init(graph);
+		// Init functions that set look and position
+		this.stylist = new TrackSchemeStylist(graph, (TrackColorGenerator) displaySettings.get(KEY_TRACK_COLORING));
+		this.graphLayout = new TrackSchemeGraphLayout(graph, model, gui.graphComponent);
+		// Execute style and layout
 		try {
 			SwingUtilities.invokeAndWait(new Runnable(){
 				public void run()	{
-					initGUI();
+					gui.logger.setStatus("Setting style.");
 					doTrackStyle();
+					gui.logger.setStatus("Executing layout.");
 					doTrackLayout();
 				}
 			});
@@ -606,7 +622,9 @@ public class TrackScheme extends AbstractTrackMateModelView {
 		} catch (InvocationTargetException e) {
 			e.printStackTrace();
 		}
+		gui.logger.setStatus("Refreshing display.");
 		refresh();
+		gui.logger.setStatus("");
 	}
 
 	@Override
@@ -744,8 +762,7 @@ public class TrackScheme extends AbstractTrackMateModelView {
 	}
 
 	private void initGUI() {
-		this.gui = new TrackSchemeFrame(graph, model, this);
-		this.graphLayout = new TrackSchemeGraphLayout(graph, model, gui.graphComponent);
+		this.gui = new TrackSchemeFrame(this);
 		String title = "TrackScheme";
 		if (null != model.getSettings().imp)
 			title += ": "+model.getSettings().imp.getTitle();
