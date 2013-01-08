@@ -119,6 +119,27 @@ public class TrackSchemeGraphComponent extends mxGraphComponent implements mxIEv
 	@Override
 	protected mxGraphHandler createGraphHandler() {
 		return new mxGraphHandler(this) {
+			
+			public void mousePressed(MouseEvent e)  {
+                if (graphComponent.isEnabled() && isEnabled() && !e.isConsumed() && !graphComponent.isForceMarqueeEvent(e)) {
+                    cell = graphComponent.getCellAt(e.getX(), e.getY(), false);
+                    initialCell = cell;
+ 
+                    if (cell != null) {
+                        if (isSelectEnabled() && !graphComponent.getGraph().isCellSelected(cell)) {
+                            graphComponent.selectCellForEvent(cell, e);
+                            cell = null;
+                        }
+ 
+                        // Starts move if the cell under the mouse is movable and/or any
+                        // cells of the selection are movable
+                        if (isMoveEnabled() && !e.isPopupTrigger()) {
+                            start(e);
+                            e.consume();
+                        }
+                    }
+                }
+            }
 
 			public void mouseReleased(MouseEvent e) {
 				if (graphComponent.isEnabled() && isEnabled() && !e.isConsumed()) {
