@@ -225,9 +225,9 @@ public class TrackSchemeGraphLayout extends mxGraphLayout implements Benchmark {
 
 	private final void setCellGeometry(final mxICell cell, final int row, final int targetColumn) {
 
-		mxGeometry geometry = cell.getGeometry();
 		double x = (targetColumn) * X_COLUMN_SIZE - DEFAULT_CELL_WIDTH/2;
 		double y = (0.5 + row  + 1) * Y_COLUMN_SIZE - DEFAULT_CELL_HEIGHT/2;
+		mxGeometry geometry = cell.getGeometry();
 		geometry.setX(x);
 		geometry.setY(y);	
 	}

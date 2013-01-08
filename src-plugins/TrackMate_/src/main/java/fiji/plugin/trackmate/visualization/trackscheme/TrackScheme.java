@@ -7,7 +7,6 @@ import java.awt.Dimension;
 import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.image.BufferedImage;
-import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -31,6 +30,7 @@ import com.mxgraph.util.mxCellRenderer;
 import com.mxgraph.util.mxConstants;
 import com.mxgraph.util.mxEvent;
 import com.mxgraph.util.mxEventObject;
+import com.mxgraph.util.mxRectangle;
 import com.mxgraph.util.mxEventSource.mxIEventListener;
 import com.mxgraph.util.mxStyleUtils;
 import com.mxgraph.view.mxGraphSelectionModel;
@@ -157,9 +157,9 @@ public class TrackScheme extends AbstractTrackMateModelView {
 	 * Hook for subclassers.
 	 */
 	private JGraphXAdapter createGraph() {
-		
+
 		gui.logger.setStatus("Creating graph adapter.");
-		
+
 		final JGraphXAdapter graph = new JGraphXAdapter(model);
 		graph.setAllowLoops(false);
 		graph.setAllowDanglingEdges(false);
@@ -600,39 +600,44 @@ public class TrackScheme extends AbstractTrackMateModelView {
 
 	@Override
 	public void render() {
+		final long start = System.currentTimeMillis();
 		// Graph to mirror model
 		this.graph = createGraph();
-		// Pass it to GUI
-		gui.init(graph);
-		// Init functions that set look and position
-		this.stylist = new TrackSchemeStylist(graph, (TrackColorGenerator) displaySettings.get(KEY_TRACK_COLORING));
-		this.graphLayout = new TrackSchemeGraphLayout(graph, model, gui.graphComponent);
-		// Execute style and layout
-		try {
-			SwingUtilities.invokeAndWait(new Runnable(){
-				public void run()	{
-					gui.logger.setStatus("Setting style.");
-					doTrackStyle();
-					gui.logger.setStatus("Executing layout.");
-					doTrackLayout();
-				}
-			});
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		} catch (InvocationTargetException e) {
-			e.printStackTrace();
-		}
-		gui.logger.setStatus("Refreshing display.");
-		refresh();
-		gui.logger.setStatus("");
+		gui.logger.setStatus("Generating GUI components.");
+		SwingUtilities.invokeLater(new Runnable(){
+			public void run()	{
+				// Pass graph to GUI
+				gui.init(graph);
+				// Init functions that set look and position
+				gui.logger.setStatus("Creating style manager.");
+				TrackScheme.this.stylist = new TrackSchemeStylist(graph, (TrackColorGenerator) displaySettings.get(KEY_TRACK_COLORING));
+				gui.logger.setStatus("Creating layout manager.");
+				TrackScheme.this.graphLayout = new TrackSchemeGraphLayout(graph, model, gui.graphComponent);
+				// Execute style and layout
+				gui.logger.setStatus("Setting style.");
+				doTrackStyle();
+				gui.logger.setStatus("Executing layout.");
+				doTrackLayout();
+				refresh();
+				long end = System.currentTimeMillis();
+				gui.logger.log(String.format("Rendering done in %.1f s.", (end-start)/1000d));
+			}
+		});
 	}
 
 	@Override
 	public void refresh() {
 		SwingUtilities.invokeLater(new Runnable(){
 			public void run() {
+				gui.logger.setStatus("Refreshing display.");
 				gui.graphComponent.refresh();
-				gui.graphComponent.repaint();
+				mxRectangle bounds = graph.getView().validatePoints(null, graph.getDefaultParent());
+				Dimension dim = new Dimension();
+				dim.setSize(
+						bounds.getRectangle().width + bounds.getRectangle().x, 
+						bounds.getRectangle().height + bounds.getRectangle().y );
+				gui.graphComponent.getGraphControl().setPreferredSize(dim);
+				gui.logger.setStatus("");
 			}
 		});
 	}

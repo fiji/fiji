@@ -145,7 +145,6 @@ public class TrackSchemeFrame extends JFrame  {
 					displayPopupMenu(gc.getCellAt(e.getX(), e.getY(), false), e.getPoint());
 			}
 		});
-
 		return gc;
 	}
 

@@ -185,7 +185,7 @@ public class JGraphXAdapter extends mxGraph implements GraphListener<Spot, Defau
 	 * Any other spot or edges will be ignored by the whole trackscheme
 	 * framework, and if they are needed, they will have to be imported "by hand".
 	 */
-	private void insertTrackCollection(final TrackMateModel tmm) {		
+	private void insertTrackCollection(final TrackMateModel tmm) {
 		model.beginUpdate();
 		try {
 			for (int i : tmm.getTrackModel().getFilteredTrackIDs()) {
@@ -202,6 +202,7 @@ public class JGraphXAdapter extends mxGraph implements GraphListener<Spot, Defau
 		} finally {
 			model.endUpdate();
 		}
+		
 	}
 
 
