@@ -503,7 +503,7 @@ public class Cluster implements ExecutorService, NodeStateListener
         String exec = params.getExecRoot();
         long id = params.getID();
         String execCommandString = exec + "/fiji --jar-path " + exec
-                + "/plugins/ --jar-path " + exec +"/jars/" + " --allow-multiple --main-class archipelago.Fiji_Archipelago "
+                + "/plugins/ --jar-path " + exec +"/jars/ --classpath " + exec + " --allow-multiple --main-class archipelago.Fiji_Archipelago "
                 + localHostName + " " + port + " " + id + " 2>&1 > ~/" + host + "_" + id + ".log";
         
         return params.getShell().exec(params, execCommandString, listener);
