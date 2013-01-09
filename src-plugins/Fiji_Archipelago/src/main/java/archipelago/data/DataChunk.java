@@ -9,7 +9,7 @@ import java.io.Serializable;
  * @author Larry Lindsey
  */
 
-public abstract class DataChunk<T> implements Serializable, Iterable<DataChunk<T>>
+public abstract class DataChunk<T> implements Serializable
 {
     
     private long lastOn;
@@ -31,11 +31,7 @@ public abstract class DataChunk<T> implements Serializable, Iterable<DataChunk<T
         mark = chunk.mark + 1;
     }
     
-    public int getMark()
-    {
-        return mark;
-    }
-    
+
     public long getID()
     {
         return id;
@@ -52,32 +48,6 @@ public abstract class DataChunk<T> implements Serializable, Iterable<DataChunk<T
         return lastOn;
     }
     
-    public boolean isWhole()
-    {
-        return true;
-    }
-    
-    public boolean placeSubChunk(DataChunk<T> chunk)
-    {
-        return false;
-    }
-    
-    public boolean canPlaceChunk(DataChunk<T> chunk)
-    {
-        return false;
-    }
-
-
-    /**
-     * Returns the number of sub-chunks this DataChunk may contain,
-     * returns 0 if this DataChunk is indivisible.
-     * @return the number of sub-chunks this DataChunk may contain.
-     */
-    public int getSize()
-    {
-        return 0;
-    }
-
     /**
      * Returns the data contained in this DataChunk, or null if that is
      * infeasible
