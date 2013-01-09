@@ -222,6 +222,7 @@ public class Cluster_SIFT implements PlugIn
                         ArrayList<Feature> feat = new ArrayList<Feature>();
                         SIFT sift = new SIFT(new FloatArray2DSIFT(new FloatArray2DSIFT.Param()));
                         sift.extractFeatures(ip1, feat);
+                        System.gc();
                     }
                 }
             };
