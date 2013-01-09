@@ -26,6 +26,7 @@ public class MessageXC
                     ClusterMessage message = (ClusterMessage)objectInputStream.readObject();
                     FijiArchipelago.debug("RX: " + hostName + " Recieved message " + message.message);
                     xcListener.handleMessage(message);
+                    objectInputStream = new ObjectInputStream(inStream);
                 }
                 catch (ClassCastException cce)
                 {
@@ -65,7 +66,9 @@ public class MessageXC
                     {
                         FijiArchipelago.debug("TX: " + hostName + " Writing message " + nextMessage.message + " ... ");
                         objectOutputStream.writeObject(nextMessage);
+                        objectOutputStream.flush();
                         FijiArchipelago.debug("TX: " + hostName + " success.");
+                        objectOutputStream = new ObjectOutputStream(outStream);
                     }
                     catch (NotSerializableException nse)
                     {
@@ -87,14 +90,16 @@ public class MessageXC
     public static final TimeUnit DEFAULT_UNIT = TimeUnit.MILLISECONDS;
 
     private final ArrayBlockingQueue<ClusterMessage> messageQ;
-    private final ObjectOutputStream objectOutputStream;
-    private final ObjectInputStream objectInputStream;
+    private ObjectOutputStream objectOutputStream;
+    private ObjectInputStream objectInputStream;
     private final Thread txThread, rxThread;
     private final AtomicBoolean active;
     private final long waitTime;
     private final TimeUnit tUnit;
     private final String hostName;
     private final TransceiverListener xcListener;
+    private final OutputStream outStream;
+    private final InputStream inStream;
 
     public MessageXC(InputStream inStream, OutputStream outStream, final TransceiverListener listener, String hostName) throws IOException
     {
@@ -107,6 +112,8 @@ public class MessageXC
         messageQ = new ArrayBlockingQueue<ClusterMessage>(16, true);
         objectOutputStream = new ObjectOutputStream(outStream);
         objectInputStream =  new ObjectInputStream(inStream);
+        this.inStream = inStream;
+        this.outStream = outStream;
         active = new AtomicBoolean(true);
         waitTime = wait;
         tUnit = unit;
