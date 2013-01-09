@@ -19,7 +19,7 @@ import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMate_;
 import fiji.plugin.trackmate.gui.TrackMateWizard;
-import fiji.plugin.trackmate.util.TMUtils;
+import fiji.plugin.trackmate.io.IOUtils;
 
 public class ExportTracksToXML extends AbstractTMAction {
 
@@ -74,7 +74,7 @@ public class ExportTracksToXML extends AbstractTMAction {
 		} catch (NullPointerException npe) {
 			file = new File(folder.getPath() + File.separator + "Tracks.xml");
 		}
-		file = TMUtils.askForFile(file, wizard, logger);
+		file = IOUtils.askForFile(file, wizard, logger);
 
 		logger.log("  Writing to file.\n");
 		Document document = new Document(root);

@@ -52,9 +52,9 @@ import static fiji.plugin.trackmate.io.TmXmlKeys.TRACK_FILTER_COLLECTION_ELEMENT
 import static fiji.plugin.trackmate.io.TmXmlKeys.TRACK_ID_ATTRIBUTE_NAME;
 import static fiji.plugin.trackmate.io.TmXmlKeys.TRACK_ID_ELEMENT_KEY;
 import static fiji.plugin.trackmate.io.TmXmlKeys.TRACK_NAME_ATTRIBUTE_NAME;
-import static fiji.plugin.trackmate.util.TMUtils.readBooleanAttribute;
-import static fiji.plugin.trackmate.util.TMUtils.readDoubleAttribute;
-import static fiji.plugin.trackmate.util.TMUtils.readIntAttribute;
+import static fiji.plugin.trackmate.io.IOUtils.readBooleanAttribute;
+import static fiji.plugin.trackmate.io.IOUtils.readDoubleAttribute;
+import static fiji.plugin.trackmate.io.IOUtils.readIntAttribute;
 import ij.IJ;
 import ij.ImagePlus;
 

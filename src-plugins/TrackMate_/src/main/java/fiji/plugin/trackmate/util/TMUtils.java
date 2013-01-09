@@ -1,16 +1,11 @@
 package fiji.plugin.trackmate.util;
 
-import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.plugin.Duplicator;
 import ij.process.ColorProcessor;
 import ij.process.StackConverter;
 
-import java.awt.FileDialog;
-import java.awt.Frame;
-import java.io.File;
-import java.io.FilenameFilter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -25,11 +20,6 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
-import javax.swing.JFileChooser;
-import javax.swing.filechooser.FileNameExtensionFilter;
 
 import net.imglib2.exception.ImgLibException;
 import net.imglib2.img.ImagePlusAdapter;
@@ -40,11 +30,6 @@ import net.imglib2.meta.Metadata;
 import net.imglib2.multithreading.SimpleMultiThreading;
 import net.imglib2.type.numeric.real.DoubleType;
 import net.imglib2.util.Util;
-
-import org.jdom2.Attribute;
-import org.jdom2.DataConversionException;
-import org.jdom2.Element;
-
 import fiji.plugin.trackmate.Dimension;
 import fiji.plugin.trackmate.FeatureFilter;
 import fiji.plugin.trackmate.Logger;
@@ -251,127 +236,6 @@ public class TMUtils {
 
 
 	/**
-	 * Prompt the user for a target xml file.
-	 *  
-	 * @param file  a default file, will be used to display a default choice in the file chooser
-	 * @param parent  the {@link Frame} to lock on this dialog
-	 * @param logger  a {@link Logger} to report what is happening
-	 * @return  the selected file
-	 */
-	public static File askForFile(File file, Frame parent, Logger logger) {
-
-		if(IJ.isMacintosh()) {
-			// use the native file dialog on the mac
-			FileDialog dialog =	new FileDialog(parent, "Save to a XML file", FileDialog.SAVE);
-			dialog.setDirectory(file.getParent());
-			dialog.setFile(file.getName());
-			FilenameFilter filter = new FilenameFilter() {
-				@Override
-				public boolean accept(File dir, String name) {
-					return name.endsWith(".xml");
-				}
-			};
-			dialog.setFilenameFilter(filter);
-			dialog.setVisible(true);
-			String selectedFile = dialog.getFile();
-			if (null == selectedFile) {
-				logger.log("Save data aborted.\n");
-				return null;
-			}
-			if (!selectedFile.endsWith(".xml"))
-				selectedFile += ".xml";
-			file = new File(dialog.getDirectory(), selectedFile);
-		} else {
-			JFileChooser fileChooser = new JFileChooser(file.getParent());
-			fileChooser.setSelectedFile(file);
-			FileNameExtensionFilter filter = new FileNameExtensionFilter("XML files", "xml");
-			fileChooser.setFileFilter(filter);
-
-			int returnVal = fileChooser.showSaveDialog(parent);
-			if(returnVal == JFileChooser.APPROVE_OPTION) {
-				file = fileChooser.getSelectedFile();
-			} else {
-				logger.log("Save data aborted.\n");
-				return null;  	    		
-			}
-		}
-		return file;
-	}
-
-
-
-
-	/** 
-	 * Read and return an integer attribute from a JDom {@link Element}, and substitute a default value of 0
-	 * if the attribute is not found or of the wrong type.
-	 */
-	public static final int readIntAttribute(Element element, String name, Logger logger) {
-		return readIntAttribute(element, name, logger, 0);
-	}
-
-	public static final int readIntAttribute(Element element, String name, Logger logger, int defaultValue) {
-		int val = defaultValue;
-		Attribute att = element.getAttribute(name);
-		if (null == att) {
-			logger.error("Could not find attribute "+name+" for element "+element.getName()+", substituting default value: "+defaultValue+".\n");
-			return val;
-		}
-		try {
-			val = att.getIntValue();
-		} catch (DataConversionException e) {	
-			logger.error("Cannot read the attribute "+name+" of the element "+element.getName()+", substituting default value: "+defaultValue+".\n");
-		}
-		return val;
-	}
-
-	public static final double readFloatAttribute(Element element, String name, Logger logger) {
-		double val = 0;
-		Attribute att = element.getAttribute(name);
-		if (null == att) {
-			logger.error("Could not find attribute "+name+" for element "+element.getName()+", substituting default value.\n");
-			return val;
-		}
-		try {
-			val = att.getFloatValue();
-		} catch (DataConversionException e) {	
-			logger.error("Cannot read the attribute "+name+" of the element "+element.getName()+", substituting default value.\n"); 
-		}
-		return val;
-	}
-
-	public static final double readDoubleAttribute(Element element, String name, Logger logger) {
-		double val = 0;
-		Attribute att = element.getAttribute(name);
-		if (null == att) {
-			logger.error("Could not find attribute "+name+" for element "+element.getName()+", substituting default value.\n");
-			return val;
-		}
-		try {
-			val = att.getDoubleValue();
-		} catch (DataConversionException e) {	
-			logger.error("Cannot read the attribute "+name+" of the element "+element.getName()+", substituting default value.\n"); 
-		}
-		return val;
-	}
-
-	public static final boolean readBooleanAttribute(Element element, String name, Logger logger) {
-		boolean val = false;
-		Attribute att = element.getAttribute(name);
-		if (null == att) {
-			logger.error("Could not find attribute "+name+" for element "+element.getName()+", substituting default value.\n");
-			return val;
-		}
-		try {
-			val = att.getBooleanValue();
-		} catch (DataConversionException e) {	
-			logger.error("Cannot read the attribute "+name+" of the element "+element.getName()+", substituting default value.\n"); 
-		}
-		return val;
-	}
-
-
-
-	/**
 	 * Return the mapping in a map that is targeted by a list of keys, in the order given in the list.
 	 */
 	public static final <J,K> List<K> getArrayFromMaping(List<J> keys, Map<J, K> mapping) {
@@ -400,38 +264,6 @@ public class TMUtils {
 					spot.putFeature(features[i], val+dval[i]);
 			}
 		}
-	}
-
-
-
-
-	/**
-	 * http://www.rgagnon.com/javadetails/java-0541.html
-	 */
-	public static String renameFileExtension (String source, String newExtension) {
-		String target;
-		String currentExtension = getFileExtension(source);
-
-		if (currentExtension.equals("")) {
-			target = source + "." + newExtension;
-		}
-		else {
-			target = source.replaceFirst(Pattern.quote("." + currentExtension) 
-					+ "$", Matcher.quoteReplacement("." + newExtension));
-		}
-		return target;
-	}
-
-	/**
-	 * http://www.rgagnon.com/javadetails/java-0541.html
-	 */
-	public static String getFileExtension(String f) {
-		String ext = "";
-		int i = f.lastIndexOf('.');
-		if (i > 0 &&  i < f.length() - 1) {
-			ext = f.substring(i + 1);
-		}
-		return ext;
 	}
 
 	/**
@@ -483,71 +315,6 @@ public class TMUtils {
 			}
 		};
 	}
-
-	/**
-	 * Return a copy 3D stack or a 2D slice as an {@link Img} corresponding to the frame number <code>iFrame</code>
-	 * in the given 4D or 3D {@link ImagePlus}. The resulting image will be cropped according the cropping
-	 * cube set in the {@link Settings} object given.
-	 * @param imp  the 4D or 3D source ImagePlus
-	 * @param iFrame  the frame number to extract, 0-based
-	 * @param iChannel  the channel number to extract, careful: <b>1-based</b>
-	 * @param settings  the settings object that will be used to compute the crop rectangle
-	 * @return  a 3D or 2D {@link Img} with the single time-point required 
-	 */
-	//	@SuppressWarnings({ "rawtypes", "unchecked" })
-	//	public static Img<? extends RealType<?>> getCroppedSingleFrameAsImage(ImagePlus imp, int iFrame, int iChannel, Settings settings) {
-	//		ImageStack stack = imp.getImageStack();
-	//		ImageStack frame = new ImageStack(settings.xend-settings.xstart, settings.yend-settings.ystart, stack.getColorModel());
-	//		int numSlices = imp.getNSlices();
-	//
-	//		// ...create the slice by combining the ImageProcessors, one for each Z in the stack.
-	//		ImageProcessor ip, croppedIp;
-	//		Roi cropRoi = new Roi(settings.xstart, settings.ystart, settings.xend-settings.xstart, settings.yend-settings.ystart);
-	//		for (int j = settings.zstart; j <= settings.zend; j++) {
-	//			int stackIndex = imp.getStackIndex(iChannel, j, iFrame+1);
-	//			ip = stack.getProcessor(stackIndex);
-	//			ip .setRoi(cropRoi);
-	//			croppedIp = ip.crop();
-	//			frame.addSlice(Integer.toString(j + (iFrame * numSlices)), croppedIp);
-	//		}
-	//
-	//		ImagePlus ipSingleFrame = new ImagePlus(imp.getShortTitle()+"-Frame_" + Integer.toString(iFrame + 1), frame);
-	//		ipSingleFrame.setCalibration(imp.getCalibration());
-	//		Img<? extends RealType> obj =  ImagePlusAdapter.wrap(ipSingleFrame);
-	//		Img<? extends RealType<?>> img = (Img<? extends RealType<?>>) obj;
-	//		return img;
-	//	}
-
-	/**
-	 * Return a copy 3D stack or a 2D slice as an {@link Img} corresponding to the frame number <code>iFrame</code>
-	 * in the given 4D or 3D {@link ImagePlus}. The resulting image will <u>not</u> be cropped and will have the 
-	 * same size in X, Y and Z that of the source {@link ImagePlus}. 
-	 * @param imp  the 4D or 3D source ImagePlus
-	 * @param iFrame  the frame number to extract, 0-based
-	 * @param iChannel  the channel number to extract, careful: <b>1-based</b>
-	 * @return  a 3D or 2D {@link Img} with the single time-point required 
-	 */
-	//	@SuppressWarnings({ "rawtypes", "unchecked" })
-	//	public static Img<? extends RealType<?>> getUncroppedSingleFrameAsImage(ImagePlus imp, int iFrame, int iChannel) {
-	//		ImageStack stack = imp.getImageStack();
-	//		ImageStack frame = new ImageStack(imp.getWidth(), imp.getHeight(), stack.getColorModel());
-	//		int numSlices = imp.getNSlices();
-	//
-	//		// ...create the slice by combining the ImageProcessors, one for each Z in the stack.
-	//		ImageProcessor ip;
-	//		for (int j = 1; j <= numSlices; j++) {
-	//			int stackIndex = imp.getStackIndex(iChannel, j, iFrame+1);
-	//			ip = stack.getProcessor(stackIndex);
-	//			frame.addSlice(Integer.toString(j + (iFrame * numSlices)), ip.duplicate());
-	//		}
-	//
-	//		ImagePlus ipSingleFrame = new ImagePlus(imp.getShortTitle()+"-Frame_" + Integer.toString(iFrame + 1), frame);
-	//		ipSingleFrame.setCalibration(imp.getCalibration());
-	//		Img obj =  ImagePlusAdapter.wrap(ipSingleFrame);
-	//		Img img = (Img<? extends RealType<?>>) obj;
-	//		return img;
-	//	}
-
 
 	/**
 	 * Convenience static method that executes the thresholding part.

@@ -80,10 +80,10 @@ import static fiji.plugin.trackmate.tracking.TrackerKeys.KEY_MERGING_FEATURE_PEN
 import static fiji.plugin.trackmate.tracking.TrackerKeys.KEY_MERGING_MAX_DISTANCE;
 import static fiji.plugin.trackmate.tracking.TrackerKeys.KEY_SPLITTING_FEATURE_PENALTIES;
 import static fiji.plugin.trackmate.tracking.TrackerKeys.KEY_SPLITTING_MAX_DISTANCE;
-import static fiji.plugin.trackmate.util.TMUtils.readBooleanAttribute;
-import static fiji.plugin.trackmate.util.TMUtils.readDoubleAttribute;
-import static fiji.plugin.trackmate.util.TMUtils.readFloatAttribute;
-import static fiji.plugin.trackmate.util.TMUtils.readIntAttribute;
+import static fiji.plugin.trackmate.io.IOUtils.readBooleanAttribute;
+import static fiji.plugin.trackmate.io.IOUtils.readDoubleAttribute;
+import static fiji.plugin.trackmate.io.IOUtils.readFloatAttribute;
+import static fiji.plugin.trackmate.io.IOUtils.readIntAttribute;
 import ij.IJ;
 import ij.ImagePlus;
 
@@ -121,7 +121,6 @@ import fiji.plugin.trackmate.tracking.FastLAPTracker;
 import fiji.plugin.trackmate.tracking.SimpleFastLAPTracker;
 import fiji.plugin.trackmate.tracking.SpotTracker;
 import fiji.plugin.trackmate.tracking.kdtree.NearestNeighborTracker;
-import fiji.plugin.trackmate.util.TMUtils;
 
 /**
  * A compatibility xml loader than can load TrackMate xml file saved for version
@@ -746,9 +745,9 @@ public class TmXmlReader_v12 extends TmXmlReader {
 						 *  Read
 						 */
 						
-						double alternativeObjectLinkingCostFactor = TMUtils.readDoubleAttribute(element, TRACKER_SETTINGS_ALTERNATE_COST_FACTOR_ATTNAME_v12, Logger.VOID_LOGGER);
-						double cutoffPercentile 			= TMUtils.readDoubleAttribute(element, TRACKER_SETTINGS_CUTOFF_PERCENTILE_ATTNAME_v12, Logger.VOID_LOGGER);
-						double blockingValue				= TMUtils.readDoubleAttribute(element, TRACKER_SETTINGS_BLOCKING_VALUE_ATTNAME_v12, Logger.VOID_LOGGER);
+						double alternativeObjectLinkingCostFactor = readDoubleAttribute(element, TRACKER_SETTINGS_ALTERNATE_COST_FACTOR_ATTNAME_v12, Logger.VOID_LOGGER);
+						double cutoffPercentile 			= readDoubleAttribute(element, TRACKER_SETTINGS_CUTOFF_PERCENTILE_ATTNAME_v12, Logger.VOID_LOGGER);
+						double blockingValue				= readDoubleAttribute(element, TRACKER_SETTINGS_BLOCKING_VALUE_ATTNAME_v12, Logger.VOID_LOGGER);
 						// Linking
 						Element linkingElement = element.getChild(TRACKER_SETTINGS_LINKING_ELEMENT);
 						double linkingDistanceCutOff 		= readDistanceCutoffAttribute(linkingElement);
@@ -815,7 +814,7 @@ public class TmXmlReader_v12 extends TmXmlReader {
 					if (trackerKey.equals(NearestNeighborTracker.TRACKER_KEY)) {
 
 						// The saved class matched, we can updated the settings created above with the file content
-						double maxDist = TMUtils.readDoubleAttribute(element, MAX_LINKING_DISTANCE_ATTRIBUTE, Logger.VOID_LOGGER);
+						double maxDist = readDoubleAttribute(element, MAX_LINKING_DISTANCE_ATTRIBUTE, Logger.VOID_LOGGER);
 						ts.put(KEY_LINKING_MAX_DISTANCE, maxDist);
 
 					} else {

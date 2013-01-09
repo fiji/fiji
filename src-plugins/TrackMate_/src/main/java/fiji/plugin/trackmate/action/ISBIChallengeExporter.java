@@ -22,7 +22,7 @@ import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMate_;
 import fiji.plugin.trackmate.gui.TrackMateWizard;
-import fiji.plugin.trackmate.util.TMUtils;
+import fiji.plugin.trackmate.io.IOUtils;
 
 public class ISBIChallengeExporter extends AbstractTMAction {
 
@@ -62,7 +62,7 @@ public class ISBIChallengeExporter extends AbstractTMAction {
 		} catch (NullPointerException npe) {
 			file = new File(folder.getPath() + File.separator + "ISBIChallenge2012Result.xml");
 		}
-		file = TMUtils.askForFile(file, wizard, logger);
+		file = IOUtils.askForFile(file, wizard, logger);
 
 		exportToFile(model, file);
 	}
