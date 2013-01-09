@@ -14,7 +14,6 @@ for pom in $(git ls-files \*pom.xml)
 do
 	dir=${pom%pom.xml}
 	test -n "$dir" || dir=.
-	test -d "$dir"/target || continue
 	gav="$("$helper" gav-from-pom "$pom")" &&
 	test -n "$gav" &&
 	commit="$("$helper" commit "$gav")" &&
@@ -22,5 +21,5 @@ do
 	git diff --quiet "$commit".. -- "$dir" ||
 	(cd "$dir" &&
 	 echo "Deploying $dir" &&
-	 mvn deploy)
+	 mvn -N deploy)
 done
