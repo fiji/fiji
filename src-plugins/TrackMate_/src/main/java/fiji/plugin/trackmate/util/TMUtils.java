@@ -11,7 +11,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -36,81 +35,12 @@ import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
-import fiji.plugin.trackmate.SpotImp;
 import fiji.plugin.trackmate.TrackMate_;
 
 /**
  * List of static utilities for the {@link TrackMate_} plugin
  */
 public class TMUtils {
-
-
-
-	/*
-	 * STATIC CONSTANTS
-	 */
-
-	/** The name of the spot quality feature. */
-	public static final String QUALITY = "QUALITY";
-	/** The name of the radius spot feature. */
-	public static final String RADIUS = "RADIUS";
-	/** The name of the spot X position feature. */
-	public static final String POSITION_X = "POSITION_X";
-	/** The name of the spot Y position feature. */
-	public static final String POSITION_Y = "POSITION_Y";
-	/** The name of the spot Z position feature. */
-	public static final String POSITION_Z = "POSITION_Z";
-	/** The name of the spot T position feature. */
-	public static final String POSITION_T = "POSITION_T";
-	/** The name of the frame feature. */
-	public static final String FRAME = "FRAME";
-
-	/** The position features. */
-	public final static String[] POSITION_FEATURES = new String[] { POSITION_X, POSITION_Y, POSITION_Z };
-	/** The 6 privileged spot features that must be set by a spot detector. */
-	public final static Collection<String> FEATURES = new ArrayList<String>(6);
-	/** The 6 privileged spot feature names. */
-	public final static Map<String, String> FEATURE_NAMES = new HashMap<String, String>(6);
-	/** The 6 privileged spot feature short names. */
-	public final static Map<String, String> FEATURE_SHORT_NAMES = new HashMap<String, String>(6);
-	/** The 6 privileged spot feature dimensions. */
-	public final static Map<String, Dimension> FEATURE_DIMENSIONS = new HashMap<String, Dimension>(6);
-
-	static {
-		FEATURES.add(QUALITY);
-		FEATURES.add(POSITION_X);
-		FEATURES.add(POSITION_Y);
-		FEATURES.add(POSITION_Z);
-		FEATURES.add(POSITION_T);
-		FEATURES.add(FRAME);
-		FEATURES.add(RADIUS);
-
-		FEATURE_NAMES.put(POSITION_X, "X");
-		FEATURE_NAMES.put(POSITION_Y, "Y");
-		FEATURE_NAMES.put(POSITION_Z, "Z");
-		FEATURE_NAMES.put(POSITION_T, "T");
-		FEATURE_NAMES.put(FRAME, "Frame");
-		FEATURE_NAMES.put(RADIUS, "Radius");
-		FEATURE_NAMES.put(QUALITY, "Quality");
-
-		FEATURE_SHORT_NAMES.put(POSITION_X, "X");
-		FEATURE_SHORT_NAMES.put(POSITION_Y, "Y");
-		FEATURE_SHORT_NAMES.put(POSITION_Z, "Z");
-		FEATURE_SHORT_NAMES.put(POSITION_T, "T");
-		FEATURE_SHORT_NAMES.put(FRAME, "Frame");
-		FEATURE_SHORT_NAMES.put(RADIUS, "R");
-		FEATURE_SHORT_NAMES.put(QUALITY, "Quality");
-
-		FEATURE_DIMENSIONS.put(POSITION_X, Dimension.POSITION);
-		FEATURE_DIMENSIONS.put(POSITION_Y, Dimension.POSITION);
-		FEATURE_DIMENSIONS.put(POSITION_Z, Dimension.POSITION);
-		FEATURE_DIMENSIONS.put(POSITION_T, Dimension.TIME);
-		FEATURE_DIMENSIONS.put(FRAME, Dimension.NONE);
-		FEATURE_DIMENSIONS.put(RADIUS, Dimension.LENGTH);
-		FEATURE_DIMENSIONS.put(QUALITY, Dimension.QUALITY);
-	}
-
-
 
 	/*
 	 * STATIC METHODS
@@ -532,18 +462,29 @@ public class TMUtils {
 	}
 
 	/**
-	 * Return the feature values of this Spot collection as a new double array.
+	 * @return the feature values of this Spot collection as a new double array.
 	 */
-	public static final double[] getFeature(final Collection<SpotImp> spots, final String feature) {
+	public static final double[] getFeature(final Collection<Spot> spots, final String feature) {
 		final double[] values = new double[spots.size()];
 		int index = 0;
-		for(SpotImp spot : spots) {
+		for(Spot spot : spots) {
 			values[index] = spot.getFeature(feature);
 			index++;
 		}
 		return values;
 	}
 
+	
+	/**
+	 * Store the x, y, z coordinates of the specified spot 
+	 * in the first 3 elements of the specified double array.
+	 */
+	public static final void localize(final Spot spot, final double[] coords) {
+		coords[0] = spot.getFeature(Spot.POSITION_X).doubleValue();
+		coords[1] = spot.getFeature(Spot.POSITION_Y).doubleValue();
+		coords[2] = spot.getFeature(Spot.POSITION_Z).doubleValue();
+	}
+	
 	/**
 	 * Build and return a map of {@link SpotFeature} values for the spot collection given.
 	 * Each feature maps a double array, with 1 element per {@link Spot}, all pooled

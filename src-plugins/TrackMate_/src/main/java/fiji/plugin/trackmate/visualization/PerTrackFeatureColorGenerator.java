@@ -16,6 +16,7 @@ import fiji.plugin.trackmate.TrackGraphModel;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.ModelChangeEvent;
 import fiji.plugin.trackmate.ModelChangeListener;
+import fiji.plugin.trackmate.features.track.TrackIndexAnalyzer;
 
 /**
  * A {@link TrackColorGenerator} that generate colors based on the whole
@@ -49,12 +50,33 @@ public class PerTrackFeatureColorGenerator implements TrackColorGenerator, Model
 	 * @param feature  the track feature that will control coloring.
 	 * @throws IllegalArgumentException if the specified feature is unknown to the feature model.
 	 */
-	public synchronized void setFeature(String feature) {
+	public void setFeature(String feature) {
 		if (feature.equals(this.feature)) {
 			return;
 		}
 		this.feature = feature;
-		refresh();
+		// A hack if we are asked for track index, which is the default and should never get caught to be null
+		if (feature.equals(TrackIndexAnalyzer.TRACK_INDEX)) {
+			refreshIndex();
+		} else {
+			refresh();
+		}
+	}
+
+	/**
+	 * A shortcut for the track index feature
+	 */
+	private synchronized void refreshIndex() {
+		TrackGraphModel trackModel = model.getTrackModel();
+		Set<Integer> trackIDs = trackModel.getFilteredTrackIDs();
+
+		// Create value->color map
+		colorMap = new HashMap<Integer, Color>(trackIDs.size());
+		int index = 0;
+		for (Integer trackID : trackIDs) {
+			Color color = generator.getPaint( (double) index++ / trackIDs.size() );
+			colorMap.put(trackID, color);
+		}
 	}
 
 	private synchronized void refresh() {

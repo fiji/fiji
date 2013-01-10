@@ -8,8 +8,8 @@ import fiji.plugin.trackmate.io.TmXmlReader;
 
 public class TmXmlReaderTestDrive {
 
-//	private static final File file = new File("/Users/tinevez/Desktop/Data/FakeTracks.xml");
-	private static final File file = new File("E:/Users/JeanYves/Desktop/Data/FakeTracks.xml");
+	private static final File file = new File("/Users/tinevez/Desktop/Data/FakeTracks.xml");
+//	private static final File file = new File("E:/Users/JeanYves/Desktop/Data/FakeTracks.xml");
 	//	private static final File file = new File("/Users/tinevez/Projects/ELaplantine/2011-06-29/Dish4_avg-cell1.xml");
 	//	private static final File file = new File("/Users/tinevez/Projects/DMontaras/Mutant/20052011_16_20.xml");
 

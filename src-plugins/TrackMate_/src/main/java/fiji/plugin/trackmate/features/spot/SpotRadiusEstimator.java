@@ -7,9 +7,9 @@ import java.util.Collection;
 import net.imglib2.img.ImgPlus;
 import net.imglib2.type.numeric.RealType;
 import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.SpotImp;
 import fiji.plugin.trackmate.util.SpotNeighborhood;
 import fiji.plugin.trackmate.util.SpotNeighborhoodCursor;
+import fiji.plugin.trackmate.util.TMUtils;
 
 public class SpotRadiusEstimator<T extends RealType<T>> extends IndependentSpotFeatureAnalyzer<T> {
 
@@ -51,7 +51,9 @@ public class SpotRadiusEstimator<T extends RealType<T>> extends IndependentSpotF
 		final int[]    ring_volumes 	= new int[nDiameters];
 
 		// A tmp spot we will use to iterate around the real spot
-		Spot tmpSpot = new SpotImp(spot);
+		double[] coords = new double[3];
+		TMUtils.localize(spot, coords);
+		Spot tmpSpot = new Spot(coords);
 		tmpSpot.putFeature(Spot.RADIUS, diameters[nDiameters-1]/2);
 
 		SpotNeighborhood<T> neighborhood = new SpotNeighborhood<T>(tmpSpot , img);

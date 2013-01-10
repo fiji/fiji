@@ -19,17 +19,17 @@ public class TrackMateModelTest {
 	public void testTrackVisibility() {
 		TrackMateModel model = new TrackMateModel();
 		// Build track 1 with 5 spots
-		final Spot s1 = new SpotImp(new double[3], "S1");
-		final Spot s2 = new SpotImp(new double[3], "S2");
-		final Spot s3 = new SpotImp(new double[3], "S3");
-		final Spot s4 = new SpotImp(new double[3], "S4");
-		final Spot s5 = new SpotImp(new double[3], "S5");
+		final Spot s1 = new Spot(new double[3], "S1");
+		final Spot s2 = new Spot(new double[3], "S2");
+		final Spot s3 = new Spot(new double[3], "S3");
+		final Spot s4 = new Spot(new double[3], "S4");
+		final Spot s5 = new Spot(new double[3], "S5");
 		// Build track 2 with 2 spots
-		final Spot s6 = new SpotImp(new double[3], "S6");
-		final Spot s7 = new SpotImp(new double[3], "S7");
+		final Spot s6 = new Spot(new double[3], "S6");
+		final Spot s7 = new Spot(new double[3], "S7");
 		// Build track 3 with 2 spots
-		final Spot s8 = new SpotImp(new double[3], "S8");
-		final Spot s9 = new SpotImp(new double[3], "S9");
+		final Spot s8 = new Spot(new double[3], "S8");
+		final Spot s9 = new Spot(new double[3], "S9");
 
 		model.beginUpdate();
 		try {
@@ -132,11 +132,11 @@ public class TrackMateModelTest {
 		assertEquals(0, model.getTrackModel().getNTracks());
 
 		// Build track with 5 spots
-		final Spot s1 = new SpotImp(new double[3], "S1");
-		final Spot s2 = new SpotImp(new double[3], "S2");
-		final Spot s3 = new SpotImp(new double[3], "S3");
-		final Spot s4 = new SpotImp(new double[3], "S4");
-		final Spot s5 = new SpotImp(new double[3], "S5");
+		final Spot s1 = new Spot(new double[3], "S1");
+		final Spot s2 = new Spot(new double[3], "S2");
+		final Spot s3 = new Spot(new double[3], "S3");
+		final Spot s4 = new Spot(new double[3], "S4");
+		final Spot s5 = new Spot(new double[3], "S5");
 		model.beginUpdate();
 		try {
 			model.addSpotTo(s1, 0);
@@ -215,11 +215,11 @@ public class TrackMateModelTest {
 		model.addTrackMateModelChangeListener(eventLogger);
 
 
-		final Spot s1 = new SpotImp(new double[3], "S1");
-		final Spot s2 = new SpotImp(new double[3], "S2");
-		final Spot s3 = new SpotImp(new double[3], "S3");
-		final Spot s4 = new SpotImp(new double[3], "S4");
-		final Spot s5 = new SpotImp(new double[3], "S5");
+		final Spot s1 = new Spot(new double[3], "S1");
+		final Spot s2 = new Spot(new double[3], "S2");
+		final Spot s3 = new Spot(new double[3], "S3");
+		final Spot s4 = new Spot(new double[3], "S4");
+		final Spot s5 = new Spot(new double[3], "S5");
 
 		//		System.out.println("Create the graph in one update:");
 		model.beginUpdate();
@@ -357,11 +357,11 @@ public class TrackMateModelTest {
 		// Add an event listener now
 		model.addTrackMateModelChangeListener(new EventLogger());
 
-		Spot s1 = new SpotImp(new double[3], "S1");
-		Spot s2 = new SpotImp(new double[3], "S2");
-		Spot s3 = new SpotImp(new double[3], "S3");
-		Spot s4 = new SpotImp(new double[3], "S4");
-		Spot s5 = new SpotImp(new double[3], "S5");
+		Spot s1 = new Spot(new double[3], "S1");
+		Spot s2 = new Spot(new double[3], "S2");
+		Spot s3 = new Spot(new double[3], "S3");
+		Spot s4 = new Spot(new double[3], "S4");
+		Spot s5 = new Spot(new double[3], "S5");
 
 
 		System.out.println("Create the graph in one update:");

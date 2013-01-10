@@ -9,8 +9,8 @@ import fiji.plugin.trackmate.io.TmXmlReader_v12;
 
 public class TmXmlReaderV12TestDrive {
 
-//	private static final File file = new File("/Users/tinevez/Desktop/Data/FakeTracks_v12.xml");
-	private static final File file = new File("E:/Users/JeanYves/Desktop/Data/FakeTracks_v1.2.xml");
+	private static final File file = new File("/Users/tinevez/Desktop/Data/FakeTracks_v12.xml");
+//	private static final File file = new File("E:/Users/JeanYves/Desktop/Data/FakeTracks_v1.2.xml");
 
 	public static void main(String args[]) {
 

@@ -15,7 +15,6 @@ import net.imglib2.type.numeric.integer.UnsignedByteType;
 import org.junit.Test;
 
 import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.SpotImp;
 import fiji.plugin.trackmate.util.SpotNeighborhood;
 
 public class RadiusEstimatorTest  <T extends NativeType<T> & RealType<T>>  {
@@ -32,10 +31,10 @@ public class RadiusEstimatorTest  <T extends NativeType<T> & RealType<T>>  {
 	public void testEstimatorOnPerfectSpheres() {
 		
 		final byte on = (byte) 255;
-		SpotImp s1 = new SpotImp(new double[] {100, 100, 100});
-		SpotImp s2 = new SpotImp(new double[] {100, 100, 200});
-		SpotImp s3 = new SpotImp(new double[] {100, 100, 300});
-		SpotImp[] spots = new SpotImp[] {s1, s2, s3};
+		Spot s1 = new Spot(new double[] {100, 100, 100});
+		Spot s2 = new Spot(new double[] {100, 100, 200});
+		Spot s3 = new Spot(new double[] {100, 100, 300});
+		Spot[] spots = new Spot[] {s1, s2, s3};
 		double[] radiuses = new double[]  {12, 20, 32};
 		double[] calibration = new double[] {1, 1, 1};
 		AxisType[] axes = new AxisType[] { Axes.X, Axes.Y, Axes.Z };
@@ -45,7 +44,7 @@ public class RadiusEstimatorTest  <T extends NativeType<T> & RealType<T>>  {
 		ImgPlus<UnsignedByteType> testImage = new ImgPlus<UnsignedByteType>(img, "Test", axes, calibration); 
 		
 		int index = 0;
-		for (SpotImp s : spots) {
+		for (Spot s : spots) {
 			s.putFeature(Spot.RADIUS, radiuses[index]);
 			SpotNeighborhood<UnsignedByteType> sphere = new SpotNeighborhood<UnsignedByteType>(s, testImage);
 			for(UnsignedByteType pixel : sphere) {
@@ -57,7 +56,7 @@ public class RadiusEstimatorTest  <T extends NativeType<T> & RealType<T>>  {
 		// Apply the estimator
 		SpotRadiusEstimator<UnsignedByteType> es = new SpotRadiusEstimator<UnsignedByteType>(testImage, null);
 		
-		SpotImp s;
+		Spot s;
 		double r;
 		for (int i = 0; i < spots.length; i++) {
 			s = spots[i];
@@ -72,10 +71,10 @@ public class RadiusEstimatorTest  <T extends NativeType<T> & RealType<T>>  {
 	public void exampleEstimation() {
 		
 		final byte on = (byte) 255;
-		SpotImp s1 = new SpotImp(new double[] {100, 100, 100});
-		SpotImp s2 = new SpotImp(new double[] {100, 100, 200});
-		SpotImp s3 = new SpotImp(new double[] {100, 100, 300});
-		SpotImp[] spots = new SpotImp[] {s1, s2, s3};
+		Spot s1 = new Spot(new double[] {100, 100, 100});
+		Spot s2 = new Spot(new double[] {100, 100, 200});
+		Spot s3 = new Spot(new double[] {100, 100, 300});
+		Spot[] spots = new Spot[] {s1, s2, s3};
 		double[] radiuses = new double[]  {12, 20, 32};
 		double[] calibration = new double[] {1, 1, 1};
 		AxisType[] axes = new AxisType[] { Axes.X, Axes.Y, Axes.Z };
@@ -85,7 +84,7 @@ public class RadiusEstimatorTest  <T extends NativeType<T> & RealType<T>>  {
 		ImgPlus<UnsignedByteType> testImage = new ImgPlus<UnsignedByteType>(img, "Test", axes, calibration); 
 		
 		int index = 0;
-		for (SpotImp s : spots) {
+		for (Spot s : spots) {
 			s.putFeature(Spot.RADIUS, radiuses[index]);
 			SpotNeighborhood<UnsignedByteType> sphere = new SpotNeighborhood<UnsignedByteType>(s, testImage);
 			for(UnsignedByteType pixel : sphere) {
@@ -100,7 +99,7 @@ public class RadiusEstimatorTest  <T extends NativeType<T> & RealType<T>>  {
 		// Apply the estimator
 		SpotRadiusEstimator<UnsignedByteType> es = new SpotRadiusEstimator<UnsignedByteType>(testImage, null);
 		
-		SpotImp s;
+		Spot s;
 		double r;
 		long start, stop;
 		for (int i = 0; i < spots.length; i++) {

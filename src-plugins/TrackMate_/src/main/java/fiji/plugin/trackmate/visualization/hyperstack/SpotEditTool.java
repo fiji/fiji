@@ -24,9 +24,9 @@ import javax.swing.SwingUtilities;
 import org.jgrapht.graph.DefaultWeightedEdge;
 
 import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.SpotImp;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.detection.DetectorKeys;
+import fiji.plugin.trackmate.util.TMUtils;
 import fiji.plugin.trackmate.visualization.trackscheme.SpotImageUpdater;
 import fiji.tool.AbstractTool;
 
@@ -575,7 +575,9 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 						dt = 1;
 					
 					for(Spot spot : previousFrameSpots) {
-						Spot newSpot = new SpotImp(spot, spot.getName());
+						double[] coords = new double[3];
+						TMUtils.localize(spot, coords);
+						Spot newSpot = new Spot(coords, spot.getName());
 						// Deal with features
 						Double val;
 						for(String key : featuresKey) {

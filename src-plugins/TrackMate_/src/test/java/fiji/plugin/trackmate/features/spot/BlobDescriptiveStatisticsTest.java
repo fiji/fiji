@@ -13,7 +13,6 @@ import org.junit.Before;
 import org.junit.Test;
 
 import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.SpotImp;
 import fiji.plugin.trackmate.util.SpotNeighborhood;
 
 public class BlobDescriptiveStatisticsTest {
@@ -50,7 +49,7 @@ public class BlobDescriptiveStatisticsTest {
 			
 		}
 		
-		spot = new SpotImp(new double[] { CENTER[0], CENTER[1], CENTER[2] }, "1");
+		spot = new Spot(new double[] { CENTER[0], CENTER[1], CENTER[2] }, "1");
 		spot.putFeature(Spot.RADIUS, RADIUS);
 		
 	}
@@ -73,7 +72,7 @@ public class BlobDescriptiveStatisticsTest {
 		BlobDescriptiveStatisticsTest test = new BlobDescriptiveStatisticsTest();
 		test.setUp();
 		
-		Spot tmpSpot = new SpotImp(CENTER);
+		Spot tmpSpot = new Spot(CENTER);
 		tmpSpot.putFeature(Spot.RADIUS, RADIUS);
 		SpotNeighborhood<UnsignedShortType> disc = new SpotNeighborhood<UnsignedShortType>(tmpSpot, test.img2D);
 		for(UnsignedShortType pixel : disc) {

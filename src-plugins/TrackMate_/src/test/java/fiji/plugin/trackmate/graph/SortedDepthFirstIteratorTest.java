@@ -1,6 +1,6 @@
 package fiji.plugin.trackmate.graph;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertArrayEquals;
 
 import java.util.Arrays;
 import java.util.Comparator;
@@ -11,7 +11,6 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.SpotImp;
 import fiji.plugin.trackmate.TrackMateModel;
 
 public class SortedDepthFirstIteratorTest {
@@ -21,7 +20,7 @@ public class SortedDepthFirstIteratorTest {
 	private static int N_CHILDREN = 50;
 	private static int N_LEVELS = 5;
 	private static TrackMateModel model;
-	private static SpotImp root;
+	private static Spot root;
 	private static String[] names;
 	private static Comparator<Spot> spotNameComparator;
 
@@ -50,7 +49,7 @@ public class SortedDepthFirstIteratorTest {
 		try {
 
 			// Root
-			root = new SpotImp(new double[3], "Root");
+			root = new Spot(new double[3], "Root");
 			model.addSpotTo(root, 0);
 			
 			// First level
@@ -59,14 +58,14 @@ public class SortedDepthFirstIteratorTest {
 			for (int i = 0; i < names.length; i++) {
 				
 				names[i] = randomString(5);
-				Spot spotChild = new SpotImp(new double[3], names[i]);
+				Spot spotChild = new Spot(new double[3], names[i]);
 				model.addSpotTo(spotChild, 1);
 				model.addEdge(root, spotChild, -1);
 				spots[0][i] = spotChild;
 				
 				spots[0][i] = spotChild;
 				for (int j = 1; j < spots.length; j++) {
-					Spot spot = new SpotImp(new double[3], "  "+j+"_"+randomString(3));
+					Spot spot = new Spot(new double[3], "  "+j+"_"+randomString(3));
 					spots[j][i] = spot;
 					model.addSpotTo(spot, j+1);
 					model.addEdge(spots[j-1][i], spots[j][i], -1);

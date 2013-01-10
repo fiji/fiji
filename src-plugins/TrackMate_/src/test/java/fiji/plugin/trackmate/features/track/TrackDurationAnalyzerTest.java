@@ -14,11 +14,10 @@ import java.util.TreeSet;
 import org.junit.Before;
 import org.junit.Test;
 
-import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.SpotImp;
-import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.ModelChangeEvent;
 import fiji.plugin.trackmate.ModelChangeListener;
+import fiji.plugin.trackmate.Spot;
+import fiji.plugin.trackmate.TrackMateModel;
 
 public class TrackDurationAnalyzerTest {
 
@@ -54,7 +53,7 @@ public class TrackDurationAnalyzerTest {
 				
 				HashSet<Spot> track = new HashSet<Spot>();
 				for (int j = start; j <= stop ; j++) {
-					Spot spot = new SpotImp(new double[3]);
+					Spot spot = new Spot(new double[3]);
 					spot.putFeature(Spot.POSITION_T, Double.valueOf(j));
 					model.addSpotTo(spot, j);
 					track.add(spot);
@@ -119,9 +118,9 @@ public class TrackDurationAnalyzerTest {
 		// Add a new track to the model - the old tracks should not be affected
 		model.beginUpdate();
 		try {
-			Spot spot1 = model.addSpotTo(new SpotImp(new double[3]), 0);
+			Spot spot1 = model.addSpotTo(new Spot(new double[3]), 0);
 			spot1.putFeature(Spot.POSITION_T, 0);
-			Spot spot2 = model.addSpotTo(new SpotImp(new double[3]), 1);
+			Spot spot2 = model.addSpotTo(new Spot(new double[3]), 1);
 			spot2.putFeature(Spot.POSITION_T, 1);
 			model.addEdge(spot1, spot2, 1);
 			
@@ -152,7 +151,7 @@ public class TrackDurationAnalyzerTest {
 		int firstFrame = firstSpot.getFeature(Spot.FRAME).intValue();
 		model.beginUpdate();
 		try {
-			newSpot = model.addSpotTo(new SpotImp(new double[3]), firstFrame + 1);
+			newSpot = model.addSpotTo(new Spot(new double[3]), firstFrame + 1);
 			newSpot.putFeature(Spot.POSITION_T, firstFrame + 1);
 			model.addEdge(firstSpot, newSpot, 1);
 		} finally {

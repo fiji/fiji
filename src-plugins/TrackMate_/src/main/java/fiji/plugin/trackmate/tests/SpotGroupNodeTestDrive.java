@@ -1,6 +1,6 @@
 package fiji.plugin.trackmate.tests;
 
-import fiji.plugin.trackmate.SpotImp;
+import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.visualization.threedviewer.SpotGroupNode;
 import ij3d.Content;
 import ij3d.ContentInstant;
@@ -28,11 +28,11 @@ public class SpotGroupNodeTestDrive {
 		final int RADIUS = 10;
 		
 		Random ran = new Random();
-		HashMap<SpotImp, Point4d>  centers = new HashMap<SpotImp, Point4d>(N_BLOBS);
-		HashMap<SpotImp, Color4f> colors = new HashMap<SpotImp, Color4f>(N_BLOBS);
+		HashMap<Spot, Point4d>  centers = new HashMap<Spot, Point4d>(N_BLOBS);
+		HashMap<Spot, Color4f> colors = new HashMap<Spot, Color4f>(N_BLOBS);
 		Point4d center;
 		Color4f color;
-		SpotImp spot;
+		Spot spot;
 		double[] coords = new double[3];
 		for (int i = 0; i < N_BLOBS; i++) {
 			coords[0] = WIDTH * ran.nextDouble();
@@ -42,12 +42,12 @@ public class SpotGroupNodeTestDrive {
 			center = new Point4d(coords[0], coords[1], coords[2], RADIUS + ran.nextGaussian());
 			color = new Color4f(new Color(Color.HSBtoRGB(ran.nextFloat(), 1, 1)));
 			color.w = ran.nextFloat();
-			spot = new fiji.plugin.trackmate.SpotImp(coords);
+			spot = new fiji.plugin.trackmate.Spot(coords);
 			centers.put(spot, center);
 			colors.put(spot, color);
 		}
 		
-		SpotGroupNode<SpotImp> sg = new SpotGroupNode<SpotImp>(centers, colors);
+		SpotGroupNode<Spot> sg = new SpotGroupNode<Spot>(centers, colors);
 		//sg.setName("spots");
 		ContentInstant ci = new ContentInstant("t0");
 		ci.display(sg);
@@ -60,17 +60,17 @@ public class SpotGroupNodeTestDrive {
 		universe.show();
 		universe.addContentLater(c);
 		
-		for (SpotImp key : centers.keySet()) {
+		for (Spot key : centers.keySet()) {
 			sg.setVisible(key, false);
 			Thread.sleep(2000/N_BLOBS);
 		}
 		
-		for (SpotImp key : centers.keySet()) {
+		for (Spot key : centers.keySet()) {
 			sg.setVisible(key, true);
 			Thread.sleep(2000/N_BLOBS);
 		}
 		
-		SpotImp thisSpot = centers.keySet().iterator().next();
+		Spot thisSpot = centers.keySet().iterator().next();
 		
 		for (int i = 1; i < WIDTH; i++) {
 			sg.setRadius(thisSpot, i);

@@ -23,7 +23,6 @@ import net.imglib2.type.numeric.integer.UnsignedByteType;
 import Jama.EigenvalueDecomposition;
 import Jama.Matrix;
 import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.SpotImp;
 import fiji.plugin.trackmate.util.SpotNeighborhood;
 import fiji.plugin.trackmate.util.SpotNeighborhoodCursor;
 
@@ -350,7 +349,7 @@ public class SpotMorphologyAnalyzer<T extends RealType<T>> extends IndependentSp
 		ImageJFunctions.show(imgplus);
 		
 		start = System.currentTimeMillis();
-		SpotImp spot = new SpotImp(new double[] { center[0], center[1] } );
+		Spot spot = new Spot(new double[] { center[0], center[1], 0 } );
 		spot.putFeature(Spot.RADIUS, max_radius);
 
 		SpotMorphologyAnalyzer<UnsignedByteType> bm = new SpotMorphologyAnalyzer<UnsignedByteType>(imgplus, null);

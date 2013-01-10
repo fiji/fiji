@@ -4,7 +4,6 @@ import fiji.plugin.trackmate.FeatureFilter;
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
-import fiji.plugin.trackmate.SpotImp;
 import fiji.plugin.trackmate.TrackMate_;
 import fiji.plugin.trackmate.features.spot.SpotIntensityAnalyzer;
 import fiji.plugin.trackmate.features.spot.SpotIntensityAnalyzerFactory;
@@ -74,7 +73,7 @@ public class SpotDisplayer3DTestDrive {
 		
 		// Put the blobs in the image
 		for (int i = 0; i < N_BLOBS; i++) {
-			Spot tmpSpot = new SpotImp(centers.get(i));
+			Spot tmpSpot = new Spot(centers.get(i));
 			tmpSpot.putFeature(Spot.RADIUS, radiuses[i]);
 			final SpotNeighborhood<UnsignedByteType> sphere = new SpotNeighborhood<UnsignedByteType>(tmpSpot, img);
 			for (UnsignedByteType pixel : sphere) {
@@ -97,9 +96,9 @@ public class SpotDisplayer3DTestDrive {
 
 		// Create a Spot arrays
 		List<Spot> spots = new ArrayList<Spot>(N_BLOBS);
-		SpotImp spot;
+		Spot spot;
 		for (int i = 0; i < N_BLOBS; i++)  {
-			spot = new SpotImp(centers.get(i), "Spot "+i);
+			spot = new Spot(centers.get(i), "Spot "+i);
 			spot.putFeature(Spot.POSITION_T, 0);
 			spot.putFeature(Spot.RADIUS, RADIUS);
 			spot.putFeature(Spot.QUALITY, RADIUS);

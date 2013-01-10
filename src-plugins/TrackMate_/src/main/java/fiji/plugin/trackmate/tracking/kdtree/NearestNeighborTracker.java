@@ -22,6 +22,7 @@ import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.tracking.SpotTracker;
+import fiji.plugin.trackmate.util.TMUtils;
 
 public class NearestNeighborTracker extends MultiThreadedBenchmarkAlgorithm	implements SpotTracker {
 
@@ -117,7 +118,9 @@ public class NearestNeighborTracker extends MultiThreadedBenchmarkAlgorithm	impl
 						List<RealPoint> targetCoords = new ArrayList<RealPoint>(targetSpots.size());
 						List<FlagNode<Spot>> targetNodes = new ArrayList<FlagNode<Spot>>(targetSpots.size());
 						for(Spot spot : targetSpots) {
-							targetCoords.add(new RealPoint(spot));
+							double[] coords = new double[3];
+							TMUtils.localize(spot, coords);
+							targetCoords.add(new RealPoint(coords));
 							targetNodes.add(new FlagNode<Spot>(spot));
 						}
 						
@@ -128,7 +131,9 @@ public class NearestNeighborTracker extends MultiThreadedBenchmarkAlgorithm	impl
 						// For each spot in the source frame, find its nearest neighbor in the target frame
 						for (Spot source : sourceSpots) {
 
-							RealPoint sourceCoords = new RealPoint(source);
+							double[] coords = new double[3];
+							TMUtils.localize(source, coords);
+							RealPoint sourceCoords = new RealPoint(coords);
 							search.search(sourceCoords);
 							
 							double squareDist = search.getSquareDistance();

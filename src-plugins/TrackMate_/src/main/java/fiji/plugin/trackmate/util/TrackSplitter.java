@@ -10,7 +10,6 @@ import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.traverse.DepthFirstIterator;
 
 import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.SpotImp;
 import fiji.plugin.trackmate.TrackMateModel;
 
 public class TrackSplitter {
@@ -36,7 +35,7 @@ public class TrackSplitter {
 	
 	public ArrayList<ArrayList<Spot>> splitTrackInBranches(Set<Spot> track) {
 		
-		SortedSet<Spot> sortedTrack = new TreeSet<Spot>(SpotImp.timeComparator);
+		SortedSet<Spot> sortedTrack = new TreeSet<Spot>(Spot.timeComparator);
 		sortedTrack.addAll(track);
 		Spot first = sortedTrack.first();
 
