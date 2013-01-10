@@ -36,7 +36,7 @@ public class TrackSpeedStatisticsAnalyzerTest {
 			expectedVmax 		= new HashMap<Integer, Double>(N_TRACKS); 
 
 			// Linear movement
-			for (int i = 0; i < N_TRACKS; i++) {
+			for (int i = 1; i < N_TRACKS+1; i++) {
 
 				Spot previous = null;
 

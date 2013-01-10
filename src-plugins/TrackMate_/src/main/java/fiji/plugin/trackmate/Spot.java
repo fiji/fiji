@@ -10,6 +10,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import com.mxgraph.util.mxBase64;
 
+import fiji.plugin.trackmate.util.AlphanumComparator;
+
 import net.imglib2.util.Util;
 
 /**
@@ -265,11 +267,13 @@ public class Spot {
 		}
 	};
 
-	/** A comparator used to sort spots by name. */ 
+	/** A comparator used to sort spots by name. The comparison uses numerical natural sorting,
+	 * So that "Spot_4" comes before "Spot_122". */ 
 	public final static Comparator<Spot> nameComparator = new Comparator<Spot>() {
+		private final AlphanumComparator comparator = new AlphanumComparator();
 		@Override
 		public int compare(Spot o1, Spot o2) {
-			return o1.getName().compareTo(o2.getName());
+			return comparator.compare(o1.getName(), o2.getName());
 		}
 	};
 	
