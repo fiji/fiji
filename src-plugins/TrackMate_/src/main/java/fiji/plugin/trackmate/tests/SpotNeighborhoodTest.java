@@ -1,7 +1,6 @@
 package fiji.plugin.trackmate.tests;
 
 import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.SpotImp;
 import fiji.plugin.trackmate.util.SpotNeighborhood;
 import fiji.plugin.trackmate.util.SpotNeighborhoodCursor;
 import ij.ImageJ;
@@ -20,7 +19,7 @@ public class SpotNeighborhoodTest {
 		// 3D
 		ArrayImg<UnsignedShortType, ShortArray> image = ArrayImgs.unsignedShorts(100, 100, 100);
 		ImgPlus<UnsignedShortType> img = new ImgPlus<UnsignedShortType>(image);
-		Spot spot = new SpotImp(new double[] { 50, 50, 50 } );
+		Spot spot = new Spot(new double[] { 50, 50, 50 } );
 		spot.putFeature(Spot.RADIUS, 30);
 		SpotNeighborhood<UnsignedShortType> neighborhood = new SpotNeighborhood<UnsignedShortType>(spot, img);
 		SpotNeighborhoodCursor<UnsignedShortType> cursor = neighborhood.cursor();
@@ -33,7 +32,7 @@ public class SpotNeighborhoodTest {
 		// 2D
 		ArrayImg<UnsignedShortType, ShortArray> image2 = ArrayImgs.unsignedShorts(100, 100);
 		ImgPlus<UnsignedShortType> img2 = new ImgPlus<UnsignedShortType>(image2);
-		Spot spot2 = new SpotImp(new double[] { 50, 50, 0} );
+		Spot spot2 = new Spot(new double[] { 50, 50, 0} );
 		spot2.putFeature(Spot.RADIUS, 30);
 		SpotNeighborhood<UnsignedShortType> neighborhood2 = new SpotNeighborhood<UnsignedShortType>(spot2, img2);
 		SpotNeighborhoodCursor<UnsignedShortType> cursor2 = neighborhood2.cursor();

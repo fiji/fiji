@@ -20,7 +20,6 @@ import org.junit.Test;
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
-import fiji.plugin.trackmate.SpotImp;
 import fiji.plugin.trackmate.features.spot.SpotIntensityAnalyzerFactory;
 
 
@@ -42,8 +41,8 @@ public class LAPTrackerTest {
 			double[] coords1 = new double[] { 1d, 1d * i, 0 } ;
 			double[] coords2 = new double[] { 2d, 1d * i, 0 } ;
 
-			Spot spot1 = new SpotImp(coords1);
-			Spot spot2 = new SpotImp(coords2);
+			Spot spot1 = new Spot(coords1);
+			Spot spot2 = new Spot(coords2);
 			spot1.putFeature(Spot.POSITION_T, i);
 			spot2.putFeature(Spot.POSITION_T, i);
 			spot1.setName("G1T"+i);
@@ -98,8 +97,8 @@ public class LAPTrackerTest {
 			double[] coords1 = new double[] {  (i % 2), 1d * i, 0 } ;
 			double[] coords2 = new double[] { ( (i+1) % 2), 1d * i, 0 } ;
 
-			Spot spot1 = new SpotImp(coords1);
-			Spot spot2 = new SpotImp(coords2);
+			Spot spot1 = new Spot(coords1);
+			Spot spot2 = new Spot(coords2);
 			spot1.putFeature(Spot.POSITION_T, i);
 			spot2.putFeature(Spot.POSITION_T, i);
 			spot1.setName("G1T"+i);

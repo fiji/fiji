@@ -15,7 +15,6 @@ import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.real.FloatType;
 import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.SpotImp;
 import fiji.plugin.trackmate.detection.subpixel.QuadraticSubpixelLocalization;
 import fiji.plugin.trackmate.detection.subpixel.SubPixelLocalization;
 import fiji.plugin.trackmate.detection.subpixel.SubPixelLocalization.LocationType;
@@ -176,7 +175,7 @@ public class LogDetector <T extends RealType<T>  & NativeType<T>> implements Spo
 			for (int i = 0; i < img.numDimensions(); i++) {
 				coords[i] = peak.getDoublePosition(i) * calibration[i];
 			}
-			Spot spot = new SpotImp(coords);
+			Spot spot = new Spot(coords);
 			spot.putFeature(Spot.QUALITY, peak.getValue().getRealDouble());
 			spot.putFeature(Spot.RADIUS, radius);
 			spots.add(spot);

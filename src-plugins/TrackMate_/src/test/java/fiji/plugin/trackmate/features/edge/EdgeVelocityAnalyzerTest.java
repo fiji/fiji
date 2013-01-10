@@ -11,11 +11,10 @@ import org.jgrapht.graph.DefaultWeightedEdge;
 import org.junit.Before;
 import org.junit.Test;
 
-import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.SpotImp;
-import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.ModelChangeEvent;
 import fiji.plugin.trackmate.ModelChangeListener;
+import fiji.plugin.trackmate.Spot;
+import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.features.edges.EdgeVelocityAnalyzer;
 
 public class EdgeVelocityAnalyzerTest {
@@ -34,6 +33,9 @@ public class EdgeVelocityAnalyzerTest {
 
 		model = new TrackMateModel();
 		model.beginUpdate();
+		
+		final String[] posFeats = Spot.POSITION_FEATURES;
+		
 		try {
 
 			for (int i = 0; i < N_TRACKS; i++) {
@@ -41,13 +43,13 @@ public class EdgeVelocityAnalyzerTest {
 				Spot previous = null;
 
 				for (int j = 0; j <= DEPTH; j++) {
-					Spot spot = new SpotImp(new double[3]); // All along X
-					spot.setPosition(i+j, i % 3); // rotate displacement dimension 
+					Spot spot = new Spot(new double[3]); 
+					spot.putFeature(posFeats[i%3], i+j); // rotate displacement dimension
 					spot.putFeature(Spot.POSITION_T, 2*j);
 					model.addSpotTo(spot, j);
 					if (null != previous) {
 						DefaultWeightedEdge edge = model.addEdge(previous, spot, j);
-						double d = spot.getDoublePosition(i % 3) - previous.getDoublePosition(i % 3);
+						double d = spot.getFeature(posFeats[i%3]).doubleValue() - previous.getFeature(posFeats[i%3]).doubleValue();
 						edgeD.put(edge, d);
 						edgeV.put(edge, d/2);
 

@@ -17,7 +17,6 @@ import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.real.FloatType;
 import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.SpotImp;
 import fiji.plugin.trackmate.util.TMUtils;
 
 public class DogDetector <T extends RealType<T>  & NativeType<T>> extends LogDetector<T> {
@@ -131,7 +130,7 @@ public class DogDetector <T extends RealType<T>  & NativeType<T>> extends LogDet
 				for (int i = 0; i < img.numDimensions(); i++) 
 					coords[i] = dogpeak.getDoublePosition(i) * calibration[i];
 			}
-			Spot spot = new SpotImp(coords);
+			Spot spot = new Spot(coords);
 			spot.putFeature(Spot.QUALITY, -dogpeak.getValue().get());
 			spot.putFeature(Spot.RADIUS, radius);
 			spots.add(spot);

@@ -10,12 +10,11 @@ import java.util.Set;
 
 import org.jgrapht.graph.DefaultWeightedEdge;
 
-import fiji.plugin.trackmate.Settings;
-import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.SpotImp;
-import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.ModelChangeEvent;
 import fiji.plugin.trackmate.SelectionChangeEvent;
+import fiji.plugin.trackmate.Settings;
+import fiji.plugin.trackmate.Spot;
+import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.util.TMUtils;
 import fiji.plugin.trackmate.visualization.AbstractTrackMateModelView;
 import fiji.plugin.trackmate.visualization.TrackColorGenerator;
@@ -78,7 +77,7 @@ public class HyperStackDisplayer extends AbstractTrackMateModelView  {
 		final double x = ix * calibration[0];
 		final double y = iy * calibration[1];
 		final double z = (imp.getSlice()-1) * calibration[2];
-		return new SpotImp(new double[] {x, y, z});
+		return new Spot(new double[] {x, y, z});
 	}
 
 	/*

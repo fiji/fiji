@@ -16,8 +16,8 @@ import fiji.plugin.trackmate.visualization.trackscheme.TrackScheme;
 
 public class HyperStackDisplayerTestDrive {
 
-	private static final File file = new File("E:/Users/JeanYves/Desktop/Data/FakeTracks.xml");
-//	private static final File file = new File("/Users/tinevez/Desktop/Data/FakeTracks.xml");
+//	private static final File file = new File("E:/Users/JeanYves/Desktop/Data/FakeTracks.xml");
+	private static final File file = new File("/Users/tinevez/Desktop/Data/FakeTracks.xml");
 
 	public static void main(String[] args) throws JDOMException, IOException {
 		

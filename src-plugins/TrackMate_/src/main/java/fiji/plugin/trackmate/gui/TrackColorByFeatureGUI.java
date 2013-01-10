@@ -197,6 +197,7 @@ public class TrackColorByFeatureGUI extends ActionListenablePanel {
 			}
 			{
 				jComboBoxSetColorBy = new CategoryJComboBox<TrackColorGenerator, String>(features, featureNames, categoryNames);
+				jComboBoxSetColorBy.setSelectedItem(TrackIndexAnalyzer.TRACK_INDEX);
 				jPanelByFeature.add(Box.createHorizontalStrut(5));
 				jPanelByFeature.add(Box.createHorizontalStrut(5));
 				jPanelByFeature.add(jComboBoxSetColorBy);

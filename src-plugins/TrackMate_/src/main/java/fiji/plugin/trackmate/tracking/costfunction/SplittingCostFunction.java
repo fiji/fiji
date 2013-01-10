@@ -97,9 +97,6 @@ public class SplittingCostFunction {
 					for (int i = ai.getAndIncrement(); i < middlePoints.size(); i = ai.getAndIncrement()) {
 
 						Spot middle = middlePoints.get(i);
-						if (DEBUG)
-							System.out.println(String.format("Current middle spot: x=%.1f, y=%.1f, t=%.1f", 
-									middle.getDoublePosition(0), middle.getDoublePosition(1), middle.getFeature(Spot.POSITION_T)));
 
 						for (int j = 0; j < trackSegments.size(); j++) {
 

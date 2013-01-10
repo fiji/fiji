@@ -8,7 +8,6 @@ import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.traverse.DepthFirstIterator;
 
 import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.SpotImp;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.graph.GraphUtils;
 
@@ -69,22 +68,22 @@ public class Graph_Test {
 
 		// Create spots
 
-		Spot root 	= new SpotImp(new double[] { 	3d,  	0d, 	0d }, 	"Zygote");
+		Spot root 	= new Spot(new double[] { 	3d,  	0d, 	0d }, 	"Zygote");
 
-		Spot AB 	= new SpotImp(new double[] { 	0d,  	1d, 	0d }, 	"AB");
-		Spot P1 	= new SpotImp(new double[] { 	3d,  	1d, 	0d }, 	"P1");
+		Spot AB 	= new Spot(new double[] { 	0d,  	1d, 	0d }, 	"AB");
+		Spot P1 	= new Spot(new double[] { 	3d,  	1d, 	0d }, 	"P1");
 
-		Spot P2 	= new SpotImp(new double[] { 	4d,  	2d, 	0d }, 	"P2");
-		Spot EMS 	= new SpotImp(new double[] { 	2d,  	2d, 	0d }, 	"EMS");
+		Spot P2 	= new Spot(new double[] { 	4d,  	2d, 	0d }, 	"P2");
+		Spot EMS 	= new Spot(new double[] { 	2d,  	2d, 	0d }, 	"EMS");
 
-		Spot P3 	= new SpotImp(new double[] { 	5d,  	3d, 	0d }, 	"P3");
-		Spot C 		= new SpotImp(new double[] { 	3d,  	3d, 	0d }, 	"C");
-		Spot E 		= new SpotImp(new double[] { 	1d,  	3d, 	0d }, 	"E");
-		Spot MS		= new SpotImp(new double[] { 	2d,  	3d, 	0d }, 	"MS");
-		Spot AB3 	= new SpotImp(new double[] { 	0d,  	3d, 	0d }, 	"AB");
+		Spot P3 	= new Spot(new double[] { 	5d,  	3d, 	0d }, 	"P3");
+		Spot C 		= new Spot(new double[] { 	3d,  	3d, 	0d }, 	"C");
+		Spot E 		= new Spot(new double[] { 	1d,  	3d, 	0d }, 	"E");
+		Spot MS		= new Spot(new double[] { 	2d,  	3d, 	0d }, 	"MS");
+		Spot AB3 	= new Spot(new double[] { 	0d,  	3d, 	0d }, 	"AB");
 
-		Spot D 		= new SpotImp(new double[] { 	4d,  	4d, 	0d }, 	"D");
-		Spot P4 	= new SpotImp(new double[] { 	5d,  	4d, 	0d }, 	"P4");
+		Spot D 		= new Spot(new double[] { 	4d,  	4d, 	0d }, 	"D");
+		Spot P4 	= new Spot(new double[] { 	5d,  	4d, 	0d }, 	"P4");
 
 		// Add them to the graph
 
@@ -152,9 +151,9 @@ public class Graph_Test {
 		model.beginUpdate();
 		try {
 			// new spots
-			Spot Q1 = model.addSpotTo(new SpotImp(new double[3], "Q1"), 0);
-			Spot Q2 = model.addSpotTo(new SpotImp(new double[3], "Q2"), 1);
-			Spot Q3 = model.addSpotTo(new SpotImp(new double[3], "Q3"), 2);
+			Spot Q1 = model.addSpotTo(new Spot(new double[3], "Q1"), 0);
+			Spot Q2 = model.addSpotTo(new Spot(new double[3], "Q2"), 1);
+			Spot Q3 = model.addSpotTo(new Spot(new double[3], "Q3"), 2);
 			// new links
 			model.addEdge(Q1, Q2, -1);
 			model.addEdge(Q2, Q3, -1);

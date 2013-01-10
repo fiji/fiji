@@ -69,8 +69,8 @@ public class SpotDisplayer3D extends AbstractTrackMateModelView {
 
 	public SpotDisplayer3D(TrackMateModel model) {
 		super(model);
-		setModel(model);
 		universe = new Image3DUniverse();
+		setModel(model);
 	}
 
 	/*
@@ -290,7 +290,7 @@ public class SpotDisplayer3D extends AbstractTrackMateModelView {
 			double radius;
 			double[] coords = new double[3];
 			for(Spot spot : spotsThisFrame) {
-				spot.localize(coords);
+				TMUtils.localize(spot, coords);
 				radius = spot.getFeature(Spot.RADIUS);
 				pos = new double[] {coords[0], coords[1], coords[2], radius*radiusRatio};
 				centers.put(spot, new Point4d(pos));

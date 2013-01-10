@@ -12,7 +12,6 @@ import org.junit.Before;
 import org.junit.Test;
 
 import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.SpotImp;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.ModelChangeEvent;
 import fiji.plugin.trackmate.ModelChangeListener;
@@ -42,13 +41,14 @@ public class EdgeTimeAndLocationAnalyzerTest {
 				Spot previous = null;
 
 				for (int j = 0; j <= DEPTH; j++) {
-					Spot spot = new SpotImp(new double[] { i+j, i+j, i+j }); // Same x,y,z coords
+					Spot spot = new Spot(new double[] { i+j, i+j, i+j }); // Same x,y,z coords
 					spot.putFeature(Spot.POSITION_T, j);
 					model.addSpotTo(spot, j);
 					if (null != previous) {
 						DefaultWeightedEdge edge = model.addEdge(previous, spot, j);
-						
-						edgePos.put(edge, 0.5 * ( spot.getDoublePosition(0) + previous.getDoublePosition(0) ) );
+						double xcurrent = spot.getFeature(Spot.POSITION_X).doubleValue();
+						double xprevious = previous.getFeature(Spot.POSITION_X).doubleValue();
+						edgePos.put(edge, 0.5 * ( xcurrent + xprevious ) );
 						edgeTime.put(edge, 0.5 * ( spot.getFeature(Spot.POSITION_T) + previous.getFeature(Spot.POSITION_T) ) );
 
 					}

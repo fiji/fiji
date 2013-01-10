@@ -3,7 +3,8 @@
  */
 package fiji.plugin.trackmate.features.track;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -13,11 +14,10 @@ import java.util.Set;
 import org.junit.Before;
 import org.junit.Test;
 
-import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.SpotImp;
-import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.ModelChangeEvent;
 import fiji.plugin.trackmate.ModelChangeListener;
+import fiji.plugin.trackmate.Spot;
+import fiji.plugin.trackmate.TrackMateModel;
 
 /**
  * @author Jean-Yves Tinevez
@@ -37,7 +37,7 @@ public class TrackIndexAnalyzerTest {
 			for (int i = 0; i < N_TRACKS; i++) {
 				Spot previous = null;
 				for (int j = 0; j < DEPTH; j++) {
-					Spot spot = new SpotImp(new double[3]);
+					Spot spot = new Spot(new double[3]);
 					model.addSpotTo(spot, j);
 					if (null != previous) {
 						model.addEdge(previous, spot, 1);
@@ -115,7 +115,7 @@ public class TrackIndexAnalyzerTest {
 		model.beginUpdate();
 		try {
 			Spot targetSpot = model.getFilteredSpots().get(0).iterator().next();
-			Spot newSpot = model.addSpotTo(new SpotImp(new double[3]), 1);
+			Spot newSpot = model.addSpotTo(new Spot(new double[3]), 1);
 			model.addEdge(targetSpot, newSpot, 1);
 		} finally {
 			model.endUpdate();

@@ -13,11 +13,10 @@ import java.util.TreeSet;
 import org.junit.Before;
 import org.junit.Test;
 
-import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.SpotImp;
-import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.ModelChangeEvent;
 import fiji.plugin.trackmate.ModelChangeListener;
+import fiji.plugin.trackmate.Spot;
+import fiji.plugin.trackmate.TrackMateModel;
 
 public class TrackSpeedStatisticsAnalyzerTest {
 
@@ -45,7 +44,7 @@ public class TrackSpeedStatisticsAnalyzerTest {
 				for (int j = 0; j <= DEPTH; j++) {
 					// We use deterministic locations
 					double[] location = new double[] { j * i, i, i }; 
-					Spot spot = new SpotImp(location);
+					Spot spot = new Spot(location);
 					spot.putFeature(Spot.POSITION_T, j);
 					model.addSpotTo(spot, j);
 					track.add(spot);
@@ -94,7 +93,7 @@ public class TrackSpeedStatisticsAnalyzerTest {
 			for (int j = 0; j <= DEPTH; j++) {
 				// We use deterministic locations
 				double[] location = new double[] { j * j, 0, 0 }; 
-				Spot spot = new SpotImp(location);
+				Spot spot = new Spot(location);
 				spot.putFeature(Spot.POSITION_T, j);
 				model2.addSpotTo(spot, j);
 				track.add(spot);
@@ -156,9 +155,9 @@ public class TrackSpeedStatisticsAnalyzerTest {
 		// Add a new track to the model - the old tracks should not be affected
 		model.beginUpdate();
 		try {
-			Spot spot1 = model.addSpotTo(new SpotImp(new double[3]), 0);
+			Spot spot1 = model.addSpotTo(new Spot(new double[3]), 0);
 			spot1.putFeature(Spot.POSITION_T, 0);
-			Spot spot2 = model.addSpotTo(new SpotImp(new double[3]), 1);
+			Spot spot2 = model.addSpotTo(new Spot(new double[3]), 1);
 			spot2.putFeature(Spot.POSITION_T, 1);
 			model.addEdge(spot1, spot2, 1);
 
@@ -276,7 +275,7 @@ public class TrackSpeedStatisticsAnalyzerTest {
 		// Track must be faster now
 		assertTrue(expectedVmean.get(firstKey).doubleValue() < model.getFeatureModel().getTrackFeature(newKey, TrackSpeedStatisticsAnalyzer.TRACK_MEAN_SPEED).doubleValue());
 		// max speed is the one on this edge
-		double maxSpeed = lastSpot.getDoublePosition(0) - penultimateSpot.getDoublePosition(0); 
+		double maxSpeed = lastSpot.getFeature(Spot.POSITION_X).doubleValue() - penultimateSpot.getFeature(Spot.POSITION_X).doubleValue(); 
 		assertEquals(maxSpeed, model.getFeatureModel().getTrackFeature(newKey, TrackSpeedStatisticsAnalyzer.TRACK_MAX_SPEED).doubleValue(), Double.MIN_VALUE);
 	}
 

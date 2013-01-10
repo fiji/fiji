@@ -13,11 +13,10 @@ import java.util.TreeSet;
 import org.junit.Before;
 import org.junit.Test;
 
-import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.SpotImp;
-import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.ModelChangeEvent;
 import fiji.plugin.trackmate.ModelChangeListener;
+import fiji.plugin.trackmate.Spot;
+import fiji.plugin.trackmate.TrackMateModel;
 
 public class TrackLocationAnalyzerTest {
 
@@ -46,7 +45,7 @@ public class TrackLocationAnalyzerTest {
 				for (int j = 0; j <= DEPTH; j++) {
 					// We use deterministic locations
 					double[] location = new double[] { j + i, j + i, j + i }; 
-					Spot spot = new SpotImp(location);
+					Spot spot = new Spot(location);
 					model.addSpotTo(spot, j);
 					track.add(spot);
 					if (null != previous) {
@@ -108,9 +107,9 @@ public class TrackLocationAnalyzerTest {
 		// Add a new track to the model - the old tracks should not be affected
 		model.beginUpdate();
 		try {
-			Spot spot1 = model.addSpotTo(new SpotImp(new double[3]), 0);
+			Spot spot1 = model.addSpotTo(new Spot(new double[3]), 0);
 			spot1.putFeature(Spot.POSITION_T, 0);
-			Spot spot2 = model.addSpotTo(new SpotImp(new double[3]), 1);
+			Spot spot2 = model.addSpotTo(new Spot(new double[3]), 1);
 			spot2.putFeature(Spot.POSITION_T, 1);
 			model.addEdge(spot1, spot2, 1);
 			

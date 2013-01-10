@@ -15,7 +15,6 @@ import net.imglib2.meta.AxisType;
 import net.imglib2.type.numeric.integer.UnsignedByteType;
 import net.imglib2.util.Util;
 import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.SpotImp;
 import fiji.plugin.trackmate.detection.DownsampleLogDetector;
 import fiji.plugin.trackmate.detection.LogDetector;
 import fiji.plugin.trackmate.util.SpotNeighborhood;
@@ -61,7 +60,7 @@ public class LogDetectorTestDrive {
 		
 		// Put the blobs in the image
 		for (int i = 0; i < N_BLOBS; i++) {
-			Spot tmpSpot = new SpotImp(centers.get(i));
+			Spot tmpSpot = new Spot(centers.get(i));
 			tmpSpot.putFeature(Spot.RADIUS, radiuses[i]);
 			SpotNeighborhood<UnsignedByteType> sphere = new SpotNeighborhood<UnsignedByteType>(tmpSpot , img);
 			for(UnsignedByteType pixel : sphere) {
@@ -96,13 +95,17 @@ public class LogDetectorTestDrive {
 		ArrayList<Spot> spot_list = new ArrayList<Spot>(spots);
 		Spot best_spot = null;
 		double[] coords = new double[3];
+		final String[] posFeats = Spot.POSITION_FEATURES;
 
 		while (!spot_list.isEmpty() && !centers.isEmpty()) {
 			
 			min_dist = Float.POSITIVE_INFINITY;
 			for (Spot s : spot_list) {
-				
-				s.localize(coords);
+
+				int index = 0;
+				for (String pf : posFeats) {
+					coords[index++] = s.getFeature(pf).doubleValue();
+				}
 				p1 = new Point3d(coords);
 
 				for (int j = 0; j < centers.size(); j++) {
@@ -118,7 +121,10 @@ public class LogDetectorTestDrive {
 			
 			spot_list.remove(best_spot);
 			best_match = centers.remove(best_index);
-			best_spot.localize(coords);
+			int index = 0;
+			for (String pf : posFeats) {
+				coords[index++] = best_spot.getFeature(pf).doubleValue();
+			}
 			System.out.println("Blob coordinates: " + Util.printCoordinates(coords));
 			System.out.println(String.format("  Best matching center at distance %.1f with coords: " + Util.printCoordinates(best_match), min_dist));			
 		}

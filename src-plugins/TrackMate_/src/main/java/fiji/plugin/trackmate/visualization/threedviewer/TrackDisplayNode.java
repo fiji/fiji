@@ -2,6 +2,7 @@ package fiji.plugin.trackmate.visualization.threedviewer;
 
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.util.TMUtils;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
 import ij3d.ContentNode;
 import ij3d.TimelapseListener;
@@ -484,12 +485,12 @@ public class TrackDisplayNode extends ContentNode implements TimelapseListener {
 
 				// Add coords and colors of each vertex
 				coordinates = new double[3];
-				source.localize(coordinates);
+				TMUtils.localize(source, coordinates);
 				line.setCoordinate(edgeIndex, coordinates);
 				line.setColor(edgeIndex, color);
 				edgeIndex++;
 				coordinates = new double[3];
-				target.localize(coordinates);
+				TMUtils.localize(target, coordinates);
 				line.setCoordinate(edgeIndex, coordinates);
 				line.setColor(edgeIndex, color);
 				edgeIndex++;
