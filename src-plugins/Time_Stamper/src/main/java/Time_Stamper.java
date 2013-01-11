@@ -4,7 +4,7 @@ import ij.gui.*;
 import java.awt.*;
 import ij.plugin.filter.*;
 
-public class Time_Stamper implements PlugInFilter {
+public class Time_Stamper implements ExtendedPlugInFilter {
     ImagePlus imp;
     double time;
     static int x = 2;
@@ -17,21 +17,22 @@ public class Time_Stamper implements PlugInFilter {
     static String suffix = "sec";
     static int decimalPlaces = 0;
     int idx = 1;
-    boolean canceled = false;
     static boolean digital = false;
     boolean AAtext=true;
+
+    final int flags = DOES_ALL + DOES_STACKS + STACK_REQUIRED;
 
     public int setup(String arg, ImagePlus imp) {
         this.imp = imp;
         IJ.register(Time_Stamper.class);
-        return DOES_ALL+DOES_STACKS+STACK_REQUIRED;
+        return flags;
+    }
+
+    public void setNPasses(int nPasses) {
+        // nothing to do here
     }
 
     public void run(ImageProcessor ip) {
-        if (idx == 1)
-            showDialog(ip);
-        if (canceled)
-            return;
         ip.setFont(font);
         ip.setColor(Toolbar.getForegroundColor());
         ip.setAntialiasedText(AAtext);
@@ -79,7 +80,8 @@ public class Time_Stamper implements PlugInFilter {
             return IJ.d2s(time,decimalPlaces);
     }
 
-    void showDialog(ImageProcessor ip) {
+    public int showDialog(ImagePlus imp, String command, PlugInFilterRunner pfr) {
+        ImageProcessor ip = imp.getProcessor();
         Rectangle roi = ip.getRoi();
         if (roi.width<ip.getWidth() || roi.height<ip.getHeight()) {
             x = roi.x;
@@ -105,10 +107,8 @@ public class Time_Stamper implements PlugInFilter {
         gd.addCheckbox("Anti-Aliased text?", true);
 
         gd.showDialog();
-        if (gd.wasCanceled()) {
-            canceled = true;
-            return;
-        }
+        if (gd.wasCanceled())
+            return DONE;
 
         start = gd.getNextNumber();
         interval = gd.getNextNumber();
@@ -131,5 +131,7 @@ public class Time_Stamper implements PlugInFilter {
             y = size;
         maxWidth = ip.getStringWidth(getString(start+interval*imp.getStackSize()));
         imp.startTiming();
+
+        return flags;
     }
 }
