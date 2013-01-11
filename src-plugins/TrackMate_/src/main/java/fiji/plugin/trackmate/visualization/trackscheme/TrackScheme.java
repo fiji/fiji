@@ -642,7 +642,6 @@ public class TrackScheme extends AbstractTrackMateModelView {
 				gui.logger.setStatus("Creating layout manager.");
 				TrackScheme.this.graphLayout = new TrackSchemeGraphLayout(graph, model, gui.graphComponent);
 				// Execute style and layout
-				gui.logger.setStatus("Setting style.");
 				doTrackStyle();
 				gui.logger.setStatus("Executing layout.");
 				doTrackLayout();
@@ -924,6 +923,8 @@ public class TrackScheme extends AbstractTrackMateModelView {
 		if (null == stylist) {
 			return;
 		}
+		gui.logger.setStatus("Setting style.");
+
 		// Collect edges 
 		Set<Integer> trackIDs = model.getTrackModel().getFilteredTrackIDs();
 		HashMap<Integer, Set<mxCell>> edgeMap = new HashMap<Integer, Set<mxCell>>(trackIDs.size());

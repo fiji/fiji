@@ -167,7 +167,7 @@ public class TrackSchemeStylist {
 		int width, height;
 		if (globalStyle.equals(SIMPLE_STYLE_NAME)) {
 			targetStyle = mxStyleUtils.setStyle(targetStyle, mxConstants.STYLE_FILLCOLOR, colorstr);
-			width = DEFAULT_CELL_HEIGHT/2;
+			width = DEFAULT_CELL_HEIGHT;
 			height = width;
 		} else {
 			targetStyle = mxStyleUtils.setStyle(targetStyle, mxConstants.STYLE_FILLCOLOR, "white");
