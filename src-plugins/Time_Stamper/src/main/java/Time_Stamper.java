@@ -36,10 +36,14 @@ public class Time_Stamper implements ExtendedPlugInFilter {
         ip.setColor(Toolbar.getForegroundColor());
         ip.setAntialiasedText(AAtext);
 
-        String s = "";
+        // use frames, if possible
+        boolean useFrames = imp.isHyperStack() || imp.getNFrames() > 1;
+        // get current time
         int[] pos = imp.convertIndexToPosition(idx);
-        double time = start + (pos[2] - 1) * interval;
-
+        int frame = useFrames ? pos[2] : pos[1];
+        double time = start + (frame - 1) * interval;
+        // create output string
+        String s = "";
         if (digital)
             s = getString2(time);
         else
