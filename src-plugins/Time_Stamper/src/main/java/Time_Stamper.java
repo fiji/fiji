@@ -52,7 +52,7 @@ public class Time_Stamper implements PlugInFilter {
     }
 
     String getString(double time) {
-        if (interval == 0.0)
+        if (Math.abs(interval) < 0.00001)
             return suffix;
         // cut decimal places if they are not wanted
         if (decimalPlaces == 0)
