@@ -99,7 +99,7 @@ public class SpotDisplayer3D extends AbstractTrackMateModelView {
 			universe.addContent(trackContent);
 			break;
 		case ModelChangeEvent.TRACKS_VISIBILITY_CHANGED:
-			trackNode.computeTrackColors();
+			updateTrackColors();
 			trackNode.setTrackVisible(model.getTrackModel().getFilteredTrackIDs());
 			break;
 
@@ -153,6 +153,7 @@ public class SpotDisplayer3D extends AbstractTrackMateModelView {
 			trackContent.setVisible((Boolean) displaySettings.get(KEY_TRACKS_VISIBLE));
 			trackNode.setTrackDisplayMode((Integer) displaySettings.get(KEY_TRACK_DISPLAY_MODE));
 			trackNode.setTrackDisplayDepth((Integer) displaySettings.get(KEY_TRACK_DISPLAY_DEPTH));
+			updateTrackColors();
 			trackNode.refresh();
 		}
 
@@ -191,8 +192,6 @@ public class SpotDisplayer3D extends AbstractTrackMateModelView {
 			updateSpotColors();
 		} else if (key == KEY_TRACK_COLORING) {
 			updateTrackColors();
-			//		} else if (key == KEY_TRACK_COLOR_FEATURE) {
-			//			updateTrackColors();
 		} else if (key == KEY_DISPLAY_SPOT_NAMES) {
 			for(int frame : blobs.keySet()) {
 				blobs.get(frame).setShowLabels((Boolean) value);
@@ -258,7 +257,7 @@ public class SpotDisplayer3D extends AbstractTrackMateModelView {
 
 	private Content makeTrackContent() {
 		// Prepare tracks instant
-		trackNode = new TrackDisplayNode(model, displaySettings);
+		trackNode = new TrackDisplayNode(model);
 		universe.addTimelapseListener(trackNode);
 
 		// Pass tracks instant to all instants
