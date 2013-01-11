@@ -335,7 +335,7 @@ public class SpotCollection implements Iterable<Spot>, SortedMap<Integer, List<S
 	}
 
 	/**
-	 * Return the total number of spots in this collection, over all frames.
+	 * @return the total number of spots in this collection, over all frames.
 	 */
 	public final int getNSpots() {
 		int nspots = 0;
@@ -346,7 +346,7 @@ public class SpotCollection implements Iterable<Spot>, SortedMap<Integer, List<S
 
 
 	/**
-	 * Return the number of spots at the given frame.
+	 * @return the number of spots at the given frame.
 	 */
 	public int getNSpots(int key) {
 		List<Spot> spots = content.get(key);
@@ -357,7 +357,7 @@ public class SpotCollection implements Iterable<Spot>, SortedMap<Integer, List<S
 	}
 
 	/**
-	 * Return a new list made of all the spot in this collection.
+	 * @return a new list made of all the spot in this collection.
 	 * <p>
 	 * Spots are listed according to the comparator given to the content
 	 * treemap (if none was given, the it is the natural order for the frame 

@@ -30,8 +30,8 @@ import com.mxgraph.util.mxCellRenderer;
 import com.mxgraph.util.mxConstants;
 import com.mxgraph.util.mxEvent;
 import com.mxgraph.util.mxEventObject;
-import com.mxgraph.util.mxRectangle;
 import com.mxgraph.util.mxEventSource.mxIEventListener;
+import com.mxgraph.util.mxRectangle;
 import com.mxgraph.util.mxStyleUtils;
 import com.mxgraph.view.mxGraphSelectionModel;
 
@@ -95,6 +95,12 @@ public class TrackScheme extends AbstractTrackMateModelView {
 	 * This field is regenerated after each call to {@link #execute(Object)}.
 	 */
 	private int unlaidSpotColumn = 3;
+	/**
+	 * The instance in charge of generating the string image representation 
+	 * of spots imported in this view.
+	 */
+	private final SpotImageUpdater spotImageUpdater;
+
 	TrackSchemeStylist stylist;
 
 	/*
@@ -103,6 +109,7 @@ public class TrackScheme extends AbstractTrackMateModelView {
 
 	public TrackScheme(final TrackMateModel model)  {
 		super(model);
+		spotImageUpdater = new SpotImageUpdater(model);
 		initDisplaySettings();
 		initGUI();
 	}
@@ -171,16 +178,35 @@ public class TrackScheme extends AbstractTrackMateModelView {
 		graph.setLabelsVisible(true);
 		graph.setDropEnabled(false);
 
+		// Group spots per frame
+		Set<Integer> frames = model.getFilteredSpots().keySet();
+		final HashMap<Integer, HashSet<Spot>> spotPerFrame = new HashMap<Integer, HashSet<Spot>>(frames.size());
+		for (Integer frame : frames) {
+			spotPerFrame.put(frame, new HashSet<Spot>(model.getFilteredSpots().getNSpots(frame))); // max size
+		}
+		for (Integer trackID : model.getTrackModel().getFilteredTrackIDs()) {
+			for (Spot spot : model.getTrackModel().getTrackSpots(trackID)) {
+				int frame = spot.getFeature(Spot.FRAME).intValue();
+				spotPerFrame.get(frame).add(spot);
+			}
+		}
+		
 		// Set spot image to cell style
-		gui.logger.setStatus("Collect spot images.");
-		double max = graph.getVertexCells().size();
+		gui.logger.setStatus("Collecting spot thumbnails.");
 		int index = 0;
 		try {
 			graph.getModel().beginUpdate();
-			for(mxICell cell : graph.getVertexCells()) {
-				Spot spot = graph.getSpotFor(cell);
-				graph.getModel().setStyle(cell, mxConstants.STYLE_IMAGE+"="+"data:image/base64,"+spot.getImageString());
-				gui.logger.setProgress( index++ / max );
+			
+			// Iterate per frame
+			for (Integer frame : frames) {
+				for (Spot spot : spotPerFrame.get(frame)) {
+
+					mxICell cell = graph.getCellFor(spot);
+					String imageStr = spotImageUpdater.getImageString(spot);
+					graph.getModel().setStyle(cell, mxConstants.STYLE_IMAGE+"="+"data:image/base64," + imageStr);
+					
+				}
+				gui.logger.setProgress( (double) index++ / frames.size() );
 			}
 		} finally {
 			graph.getModel().endUpdate();
@@ -219,8 +245,9 @@ public class TrackScheme extends AbstractTrackMateModelView {
 		}
 
 		// Update cell look
+		String imageStr = spotImageUpdater.getImageString(spot);
 		String style = cell.getStyle();
-		style = mxStyleUtils.setStyle(style, mxConstants.STYLE_IMAGE, "data:image/base64,"+spot.getImageString());
+		style = mxStyleUtils.setStyle(style, mxConstants.STYLE_IMAGE, "data:image/base64," + imageStr);
 		graph.getModel().setStyle(cell, style);
 		final double dx = model.getSettings().dx;
 		long height = Math.min(DEFAULT_CELL_WIDTH, Math.round(2 * spot.getFeature(Spot.RADIUS) / dx ));
@@ -250,7 +277,8 @@ public class TrackScheme extends AbstractTrackMateModelView {
 		mxGeometry geometry = new mxGeometry(x, y, DEFAULT_CELL_WIDTH, height);
 		cellAdded.setGeometry(geometry);
 		// Set its style
-		graph.getModel().setStyle(cellAdded, mxConstants.STYLE_IMAGE+"="+"data:image/base64,"+spot.getImageString());
+		String imageStr = spotImageUpdater.getImageString(spot);
+		graph.getModel().setStyle(cellAdded, mxConstants.STYLE_IMAGE+"="+"data:image/base64," + imageStr);
 		return cellAdded;
 	}
 

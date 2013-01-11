@@ -9,7 +9,6 @@ import fiji.plugin.trackmate.action.CaptureOverlayAction;
 import fiji.plugin.trackmate.action.CopyOverlayAction;
 import fiji.plugin.trackmate.action.ExportTracksToXML;
 import fiji.plugin.trackmate.action.ExtractTrackStackAction;
-import fiji.plugin.trackmate.action.GrabSpotImageAction;
 import fiji.plugin.trackmate.action.LinkNew3DViewerAction;
 import fiji.plugin.trackmate.action.PlotNSpotsVsTimeAction;
 import fiji.plugin.trackmate.action.RadiusToEstimatedAction;
@@ -52,7 +51,6 @@ public class ActionProvider {
 	protected void registerActions() {
 		// Names
 		names = new ArrayList<String>(10);
-		names.add(GrabSpotImageAction.NAME);
 		names.add(ExtractTrackStackAction.NAME);
 		names.add(LinkNew3DViewerAction.NAME);
 		names.add(CopyOverlayAction.NAME);
@@ -71,36 +69,39 @@ public class ActionProvider {
 	 * If the key is unknown to this factory, <code>null</code> is returned. 
 	 */
 	public TrackMateAction getAction(String key) {
-		int index = names.indexOf(key);
-		if (index < 0) {
-			return null;
-		}
-		switch (index) {
-		case 0:
-			return new GrabSpotImageAction();
-		case 1:
+		
+		if (ExtractTrackStackAction.NAME.equals(key)) {
 			return new ExtractTrackStackAction();
-		case 2:
+			
+		} else if (LinkNew3DViewerAction.NAME.equals(key)) {
 			return new LinkNew3DViewerAction();
-		case 3:
+			
+		} else if (CopyOverlayAction.NAME.equals(key)) {
 			return new CopyOverlayAction();
-		case 4:
+			
+		} else if (PlotNSpotsVsTimeAction.NAME.equals(key))	{
 			return new PlotNSpotsVsTimeAction();
-		case 5:
+			
+		} else if (CaptureOverlayAction.NAME.equals(key)) {
 			return new CaptureOverlayAction();
-		case 6:
+			
+		} else if (ResetSpotTimeFeatureAction.NAME.equals(key)) {
 			return new ResetSpotTimeFeatureAction();
-		case 7:
+			
+		} else if (RecalculateFeatureAction.NAME.equals(key)) {
 			return new RecalculateFeatureAction();
-		case 8: 
+			
+		} else if (RadiusToEstimatedAction.NAME.equals(key)) {
 			return new RadiusToEstimatedAction();
-		case 9:
+			
+		} else if (ResetRadiusAction.NAME.equals(key)) { 
 			return new ResetRadiusAction();
-		case 10:
+			
+		} else if (ExportTracksToXML.NAME.equals(key)) {
 			return new ExportTracksToXML();
-		default:
-			return null;
 		}
+		
+		return null;
 	}
 	
 	
@@ -109,36 +110,38 @@ public class ActionProvider {
 	 * or <code>null</code> if it is unknown to this factory.
 	 */
 	public String getInfoText(String key) {
-		int index = names.indexOf(key);
-		if (index < 0) {
-			return null;
-		}
-		switch (index) {
-		case 0:
-			return GrabSpotImageAction.INFO_TEXT;
-		case 1:
+		if (ExtractTrackStackAction.NAME.equals(key)) {
 			return ExtractTrackStackAction.INFO_TEXT;
-		case 2:
+			
+		} else if (LinkNew3DViewerAction.NAME.equals(key)) {
 			return LinkNew3DViewerAction.INFO_TEXT;
-		case 3:
+			
+		} else if (CopyOverlayAction.NAME.equals(key)) {
 			return CopyOverlayAction.INFO_TEXT;
-		case 4:
+			
+		} else if (PlotNSpotsVsTimeAction.NAME.equals(key))	{
 			return PlotNSpotsVsTimeAction.INFO_TEXT;
-		case 5:
+			
+		} else if (CaptureOverlayAction.NAME.equals(key)) {
 			return CaptureOverlayAction.INFO_TEXT;
-		case 6:
+			
+		} else if (ResetSpotTimeFeatureAction.NAME.equals(key)) {
 			return ResetSpotTimeFeatureAction.INFO_TEXT;
-		case 7:
+			
+		} else if (RecalculateFeatureAction.NAME.equals(key)) {
 			return RecalculateFeatureAction.INFO_TEXT;
-		case 8: 
+			
+		} else if (RadiusToEstimatedAction.NAME.equals(key)) {
 			return RadiusToEstimatedAction.INFO_TEXT;
-		case 9:
+			
+		} else if (ResetRadiusAction.NAME.equals(key)) { 
 			return ResetRadiusAction.INFO_TEXT;
-		case 10:
+			
+		} else if (ExportTracksToXML.NAME.equals(key)) {
 			return ExportTracksToXML.INFO_TEXT;
-		default:
-			return null;
 		}
+		
+		return null;
 	}
 	
 	/**
@@ -146,36 +149,38 @@ public class ActionProvider {
 	 * or <code>null</code> if it is unknown to this factory.
 	 */
 	public ImageIcon getIcon(String key) {
-		int index = names.indexOf(key);
-		if (index < 0) {
-			return null;
-		}
-		switch (index) {
-		case 0:
-			return GrabSpotImageAction.ICON;
-		case 1:
+		if (ExtractTrackStackAction.NAME.equals(key)) {
 			return ExtractTrackStackAction.ICON;
-		case 2:
+			
+		} else if (LinkNew3DViewerAction.NAME.equals(key)) {
 			return LinkNew3DViewerAction.ICON;
-		case 3:
+			
+		} else if (CopyOverlayAction.NAME.equals(key)) {
 			return CopyOverlayAction.ICON;
-		case 4:
+			
+		} else if (PlotNSpotsVsTimeAction.NAME.equals(key))	{
 			return PlotNSpotsVsTimeAction.ICON;
-		case 5:
+			
+		} else if (CaptureOverlayAction.NAME.equals(key)) {
 			return CaptureOverlayAction.ICON;
-		case 6:
+			
+		} else if (ResetSpotTimeFeatureAction.NAME.equals(key)) {
 			return ResetSpotTimeFeatureAction.ICON;
-		case 7:
+			
+		} else if (RecalculateFeatureAction.NAME.equals(key)) {
 			return RecalculateFeatureAction.ICON;
-		case 8: 
+			
+		} else if (RadiusToEstimatedAction.NAME.equals(key)) {
 			return RadiusToEstimatedAction.ICON;
-		case 9:
+			
+		} else if (ResetRadiusAction.NAME.equals(key)) { 
 			return ResetRadiusAction.ICON;
-		case 10:
+			
+		} else if (ExportTracksToXML.NAME.equals(key)) {
 			return ExportTracksToXML.ICON;
-		default:
-			return null;
 		}
+		
+		return null;
 	}
 
 	/**

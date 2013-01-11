@@ -188,13 +188,13 @@ public class JGraphXAdapter extends mxGraph implements GraphListener<Spot, Defau
 	private void insertTrackCollection(final TrackMateModel tmm) {
 		model.beginUpdate();
 		try {
-			for (int i : tmm.getTrackModel().getFilteredTrackIDs()) {
+			for (Integer trackID : tmm.getTrackModel().getFilteredTrackIDs()) {
 				
-				for (Spot vertex : tmm.getTrackModel().getTrackSpots(i)) {
+				for (Spot vertex : tmm.getTrackModel().getTrackSpots(trackID)) {
 					addJGraphTVertex(vertex);
 				}
 
-				for (DefaultWeightedEdge edge : tmm.getTrackModel().getTrackEdges(i)) {
+				for (DefaultWeightedEdge edge : tmm.getTrackModel().getTrackEdges(trackID)) {
 					addJGraphTEdge(edge);
 				}
 			

@@ -8,11 +8,8 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import com.mxgraph.util.mxBase64;
-
-import fiji.plugin.trackmate.util.AlphanumComparator;
-
 import net.imglib2.util.Util;
+import fiji.plugin.trackmate.util.AlphanumComparator;
 
 /**
  * Plain implementation of the {@link Spot} interface.
@@ -25,8 +22,6 @@ public class Spot {
 	 * FIELDS
 	 */
 
-	private static String DEFAULT_IMAGE_STRING = "";
-
 	public static AtomicInteger IDcounter = new AtomicInteger(0); 
 
 	/** Store the individual features, and their values. */
@@ -35,8 +30,6 @@ public class Spot {
 	private String name;
 	/** This spot ID */
 	private int ID;
-	/** This spot's image. */
-	private String imageString = DEFAULT_IMAGE_STRING;
 
 	/*
 	 * CONSTRUCTORS
@@ -216,23 +209,6 @@ public class Spot {
 		}
 		return sumSquared;
 	}
-
-	 /**
-     * Set the image, encoded as a Base64 string, that is used to represent this spot. 
-     * @see mxBase64
-     */
-	public void setImageString(String str) {
-		this.imageString = str;
-	}
-
-	/**
-     * Get the image, encoded as a Base64 string, that is used to represent this spot. 
-     * @see mxBase64 
-     */
-	public String getImageString() {
-		return imageString;
-	}
-
 
 	/*
 	 * PUBLIC UTILITY CONSTANTS

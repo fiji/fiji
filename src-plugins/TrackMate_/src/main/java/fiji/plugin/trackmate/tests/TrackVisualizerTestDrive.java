@@ -4,7 +4,6 @@ import fiji.plugin.trackmate.FeatureFilter;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMate_;
-import fiji.plugin.trackmate.action.GrabSpotImageAction;
 import fiji.plugin.trackmate.features.track.TrackBranchingAnalyzer;
 import fiji.plugin.trackmate.gui.DisplayerPanel;
 import fiji.plugin.trackmate.gui.GrapherPanel;
@@ -72,9 +71,6 @@ public class TrackVisualizerTestDrive {
 		}
 		
 		plugin.computeEdgeFeatures(true);
-		
-		GrabSpotImageAction grabber = new GrabSpotImageAction();
-		grabber.execute(plugin);
 		
 		// Instantiate displayer
 		final HyperStackDisplayer displayer = new HyperStackDisplayer(model);

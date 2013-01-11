@@ -1,4 +1,4 @@
-package fiji.plugin.trackmate.features.spot;
+package fiji.plugin.trackmate.visualization.trackscheme;
 
 import ij.ImagePlus;
 import ij.process.ImageProcessor;
@@ -6,7 +6,6 @@ import ij.process.ImageProcessor;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.util.Collection;
 
 import javax.imageio.ImageIO;
 
@@ -28,14 +27,20 @@ import fiji.plugin.trackmate.util.TMUtils;
  * its coordinates and an {@link ImagePlus} that contain the pixel data.
  * @author Jean-Yves Tinevez <jeanyves.tinevez@gmail.com> - Dec 2010 - 2012
  */
-public class SpotIconGrabber<T extends RealType<T>> extends IndependentSpotFeatureAnalyzer<T> {
+public class SpotIconGrabber<T extends RealType<T>> {
 
-	public SpotIconGrabber(ImgPlus<T> img, Collection<Spot> spots) {
-		super(img, spots);
+	private final ImgPlus<T> img;
+
+	public SpotIconGrabber(ImgPlus<T> img) {
+		this.img = img;
 	}
 
-	@Override
-	public void  process(Spot spot) {
+	/**
+	 * @return the image string for the specified spot. The spot x,y,z and radius coordinates
+	 * are used to get a location on the image given at construction. Physical coordinates
+	 * are transformed in pixel coordinates thanks to the calibration stored in the {@link ImgPlus}.
+	 */
+	public String getImageString(Spot spot) {
 		// Get crop coordinates
 		final double[] calibration = TMUtils.getSpatialCalibration(img);
 		final double radius = spot.getFeature(Spot.RADIUS); // physical units, REQUIRED!
@@ -68,9 +73,10 @@ public class SpotIconGrabber<T extends RealType<T>> extends IndependentSpotFeatu
 		BufferedImage img = ip.getBufferedImage();
 		try {
 			ImageIO.write(img, "png", bos);
-			spot.setImageString(mxBase64.encodeToString(bos.toByteArray(), false));
+			return mxBase64.encodeToString(bos.toByteArray(), false);
 		} catch (IOException e) {
 			e.printStackTrace();
+			return "";
 		}
 	}
 

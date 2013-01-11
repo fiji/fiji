@@ -23,9 +23,9 @@ import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMate_;
-import fiji.plugin.trackmate.features.spot.SpotIconGrabber;
 import fiji.plugin.trackmate.gui.TrackMateWizard;
 import fiji.plugin.trackmate.util.TMUtils;
+import fiji.plugin.trackmate.visualization.trackscheme.SpotIconGrabber;
 
 public class ExtractTrackStackAction extends AbstractTMAction {
 
@@ -160,7 +160,7 @@ public class ExtractTrackStackAction extends AbstractTMAction {
 				}
 			}
 			
-			SpotIconGrabber<?> grabber = new SpotIconGrabber(imgCT, null);
+			SpotIconGrabber<?> grabber = new SpotIconGrabber(imgCT);
 			Img crop = grabber.grabImage(x, y, slice, width, height);
 			
 			// Copy to central holder

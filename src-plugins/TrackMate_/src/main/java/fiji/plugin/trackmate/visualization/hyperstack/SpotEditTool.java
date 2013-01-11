@@ -27,7 +27,6 @@ import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.detection.DetectorKeys;
 import fiji.plugin.trackmate.util.TMUtils;
-import fiji.plugin.trackmate.visualization.trackscheme.SpotImageUpdater;
 import fiji.tool.AbstractTool;
 
 public class SpotEditTool extends AbstractTool implements MouseMotionListener, MouseListener, MouseWheelListener, KeyListener {
@@ -229,10 +228,7 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 				editedSpot.putFeature(Spot.POSITION_Z, z);
 				editedSpot.putFeature(Spot.POSITION_T, frame * displayer.settings.dt);
 				editedSpot.putFeature(Spot.FRAME, frame);
-				// Update spot image
-				SpotImageUpdater spotImageUpdater = new SpotImageUpdater(model);
-				spotImageUpdater.update(editedSpot);
-
+				
 				model.beginUpdate();
 				try {
 					if (initFrame == null) {
@@ -440,9 +436,6 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 				newSpot.putFeature(Spot.FRAME, frame);
 				newSpot.putFeature(Spot.POSITION_Z, zpos);
 				newSpot.putFeature(Spot.RADIUS, radius);
-				// Update spot image
-				SpotImageUpdater spotImageUpdater = new SpotImageUpdater(model);
-				spotImageUpdater.update(newSpot);
 				
 				model.beginUpdate();
 				try {
