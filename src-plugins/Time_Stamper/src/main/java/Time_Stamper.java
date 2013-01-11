@@ -6,7 +6,6 @@ import ij.plugin.filter.*;
 
 public class Time_Stamper implements ExtendedPlugInFilter {
     ImagePlus imp;
-    double time;
     static int x = 2;
     static int y = 15;
     static int size = 12;
@@ -126,7 +125,6 @@ public class Time_Stamper implements ExtendedPlugInFilter {
         suffix = gd.getNextString();
         font = new Font("SansSerif", Font.PLAIN, size);
         ip.setFont(font);
-        time = start;
         if (y<size)
             y = size;
         maxWidth = ip.getStringWidth(getString(start+interval*imp.getStackSize()));
