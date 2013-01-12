@@ -444,14 +444,15 @@ public class POM extends DefaultHandler implements Comparable<POM> {
 				}
 			}
 			// make sure that snapshot .pom files are updated once a day
-			if (!env.offlineMode && downloadAutomatically && pom != null && dependency.version != null &&
-					(dependency.version.startsWith("[") || dependency.version.endsWith("-SNAPSHOT")) &&
+			if (!env.offlineMode && downloadAutomatically && pom != null && pom.coordinate.version != null &&
+					(pom.coordinate.version.startsWith("[") || pom.coordinate.version.endsWith("-SNAPSHOT")) &&
 					pom.directory.getPath().startsWith(BuildEnvironment.mavenRepository.getPath())) {
-				if (maybeDownloadAutomatically(dependency, !env.verbose, downloadAutomatically)) {
-					if (dependency.version.startsWith("["))
-						dependency.setSnapshotVersion(VersionPOMHandler.parse(new File(pom.directory.getParentFile(), "maven-metadata-version.xml")));
+				if (maybeDownloadAutomatically(pom.coordinate, !env.verbose, downloadAutomatically)) {
+					if (pom.coordinate.version.startsWith("["))
+						pom.coordinate.setSnapshotVersion(VersionPOMHandler.parse(new File(pom.directory.getParentFile(), "maven-metadata-version.xml")));
 					else
-						dependency.setSnapshotVersion(SnapshotPOMHandler.parse(new File(pom.directory, "maven-metadata-snapshot.xml")));
+						pom.coordinate.setSnapshotVersion(SnapshotPOMHandler.parse(new File(pom.directory, "maven-metadata-snapshot.xml")));
+					dependency.setSnapshotVersion(pom.coordinate.getVersion());
 				}
 			}
 			if (pom == null && downloadAutomatically) try {
@@ -554,8 +555,11 @@ public class POM extends DefaultHandler implements Comparable<POM> {
 
 	protected void getRepositories(Set<String> result) {
 		// add a default to the root
-		if (parent == null)
+		if (parent == null) {
 			result.add("http://repo1.maven.org/maven2/");
+			result.add("http://maven.imagej.net/content/repositories/releases/");
+			result.add("http://maven.imagej.net/content/repositories/snapshots/");
+		}
 		result.addAll(repositories);
 		for (POM child : getChildren())
 			if (child != null)

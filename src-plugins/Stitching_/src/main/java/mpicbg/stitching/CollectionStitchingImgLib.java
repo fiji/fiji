@@ -163,6 +163,24 @@ public class CollectionStitchingImgLib
 	
 		// get the connecting tiles
 		final Vector< ComparePair > overlappingTiles = new Vector< ComparePair >();
+		
+		// Added by John Lapage: if the sequential option has been chosen, pair up each image 
+		// with the images within the specified range, and return.
+		if ( params.sequential )
+		{
+			for ( int i = 0; i < elements.size(); i++ )
+			{
+				for ( int j = 1 ; j <= params.seqRange ; j++ )
+				{
+					if ( ( i + j ) >= elements.size() ) 
+						break;
+					
+					overlappingTiles.add( new ComparePair( listImp.get( i ), listImp.get( i+j ) ) );
+				}
+			}
+			return overlappingTiles;
+		}
+		// end of addition
 
 		for ( int i = 0; i < elements.size() - 1; i++ )
 			for ( int j = i + 1; j < elements.size(); j++ )

@@ -1,6 +1,6 @@
 /*
- * Volume Viewer 2.0
- * 27.11.2012
+ * Volume Viewer 2.01
+ * 01.12.2012
  * 
  * (C) Kai Uwe Barthel
  */
@@ -37,6 +37,8 @@ public  class Pic {
 		this.subMax = Math.max(width, height) / 100;
 		if (subMax % 2 != 1)
 			subMax++;
+		if (control.sampling > 1 || control.interpolationMode > 1)
+			subMax += 2;
 		if (control.LOG) System.out.println("subMax = " + subMax);
 
 		pixels  = new int[width*height];
@@ -176,6 +178,12 @@ public  class Pic {
 
 					int val = 0xFF & vv.vol.data3D[0][z_+2][y_+2][x_+2];
 					pixels[pos] = 0xFF000000 | (val<<16) | (val<<8) | (val); 
+					
+//					// Gradient
+//					int valR = 0xFF & vv.vol.nx_3D[z_+2][y_+2][x_+2];
+//					int valG = 0xFF & vv.vol.ny_3D[z_+2][y_+2][x_+2];
+//					int valB = 0xFF & vv.vol.nx_3D[z_+2][y_+2][x_+2];
+//					pixels[pos] = 0xFF000000 | (valR<<16) | (valG<<8) | (valB);
 				}	
 			}
 
@@ -191,6 +199,11 @@ public  class Pic {
 
 					int val = 0xFF & vv.vol.data3D[0][vv.vol.depthV+1 - z_][y_+2][x_+2];
 					pixels[pos] = 0xFF000000 | (val<<16) | (val<<8) | (val); 
+					
+//					int valR = 0xFF & vv.vol.nx_3D[vv.vol.depthV+1-z_][y_+2][x_+2];
+//					int valG = 0xFF & vv.vol.ny_3D[vv.vol.depthV+1-z_][y_+2][x_+2];
+//					int valB = 0xFF & vv.vol.nx_3D[vv.vol.depthV+1-z_][y_+2][x_+2];												
+//					pixels[pos] = 0xFF000000 | (valR<<16) | (valG<<8) | (valB);
 				}	
 			}
 
@@ -206,6 +219,11 @@ public  class Pic {
 
 					int val = 0xFF & vv.vol.data3D[0][vv.vol.depthV+1-z_][y_+2][x_+2];
 					pixels[pos] = 0xFF000000 | (val<<16) | (val<<8) | (val); 
+					
+//					int valR = 0xFF & vv.vol.nx_3D[vv.vol.depthV+1-z_][y_+2][x_+2];
+//					int valG = 0xFF & vv.vol.ny_3D[vv.vol.depthV+1-z_][y_+2][x_+2];
+//					int valB = 0xFF & vv.vol.nz_3D[vv.vol.depthV+1-z_][y_+2][x_+2];
+//					pixels[pos] = 0xFF000000 | (valR<<16) | (valG<<8) | (valB);
 				}
 			}
 		}
@@ -304,9 +322,6 @@ public  class Pic {
 	void render_Slice(){
 
 		// TODO multi threaded		
-		long start=0;
-		if (control.LOG) start = System.currentTimeMillis();
-
 		setPixelsToZero();
 
 		int[] boundsXY = getXYRenderingBoundsSlice();
@@ -375,10 +390,6 @@ public  class Pic {
 			}
 		}
 		updateImage();
-		if (control.LOG) {
-			long end = System.currentTimeMillis();
-			System.out.println("render Slice: Execution time "+(end-start)+" ms.");
-		}
 	}
 
 	public void render_SliceAndBorders(){
@@ -556,9 +567,9 @@ public  class Pic {
 	private boolean isRendering = false;
 	private int sub;
 	private boolean isWaitingForRendering;
-	private boolean firstTime = true;
 	private float[] light;
 	private boolean lastReady;
+	private boolean isRGB;
 
 
 	public void render_volume(int sub){
@@ -576,7 +587,7 @@ public  class Pic {
 		getXYRenderingBoundsSlice(); 
 		
 		// light 
-		light = vv.trLightVolume2Screen(-1, 0, 0);
+		light = vv.trLightVolume2Screen(1, 0, 0);
 		
 		lightRed =   control.lightRed; 
 		lightGreen = control.lightGreen; 
@@ -596,9 +607,13 @@ public  class Pic {
 		float dyV = xyzV2[1] - xyzV1[1];
 		float dzV = xyzV2[2] - xyzV1[2];
 
-		float minSampling = (vv.vol.widthV*vv.vol.heightV*vv.vol.depthV*Math.abs(control.zAspect) > 200*200*200) ? 0.5f : 1;
-		float sample = (control.drag) ? Math.min(minSampling, control.sampling) : control.sampling;
-
+		float sample = control.sampling;
+		if (sub == 3)
+			sample = 1;
+		if (sub > 3)
+			sample = 0.5f;
+		
+		if (control.LOG) System.out.println("sample " + sample);
 		int nd = (int) (sample*(zSmax - zSmin)/control.scale);
 		dxV  /= sample;
 		dyV  /= sample;
@@ -633,10 +648,8 @@ public  class Pic {
 			}
 		}
 		// calculate gradient from alpha
-		if (firstTime || (!control.drag && control.alphaWasChanged)) {
+		if ((!control.drag && control.alphaWasChanged)) 
 			vv.vol.calculateGradients();
-			firstTime = false;
-		}
 
 		volData3D = vv.vol.data3D[0];
 		
@@ -645,11 +658,11 @@ public  class Pic {
 		stripHeight = (stripHeight/sub) *sub;
 		int stripStart = ySmin;
 
-		boolean isRGB = control.isRGB && control.lutNr == 0;
+		isRGB = control.isRGB && control.lutNr == 0;
 		
 		for(int i = 0; i < numThreads-1; i++, stripStart += stripHeight) 
-			new RenderCalculations(sub, nd, dxV, dyV, dzV, xSmin, xSmax, stripStart, stripStart+stripHeight, zSmin, isRGB).execute();
-		new RenderCalculations(sub, nd, dxV, dyV, dzV, xSmin, xSmax, stripStart, stripStart+stripHeight, zSmin, isRGB).execute();
+			new RenderCalculations(sub, nd, dxV, dyV, dzV, xSmin, xSmax, stripStart, stripStart+stripHeight, zSmin).execute();
+		new RenderCalculations(sub, nd, dxV, dyV, dzV, xSmin, xSmax, stripStart, stripStart+stripHeight, zSmin).execute();
 			
 		control.interpolationMode = actualInterpolationMode;			
 	}
@@ -659,10 +672,9 @@ public  class Pic {
 
 		private int sub, nd, xSMin, xSMax, ySMin, ySMax;
 		private float dxV, dyV, dzV, zSMin;
-		private boolean isRGB;
 		
 		public RenderCalculations(int sub, int nd, float dxV, float dyV, float dzV, 
-				int xSMin, int xSMax, int ySMin, int ySMax, float zSMin, boolean isRGB) {
+				int xSMin, int xSMax, int ySMin, int ySMax, float zSMin) {
 			this.sub = sub;
 			this.nd = nd;
 			this.dxV = dxV;
@@ -673,7 +685,6 @@ public  class Pic {
 			this.ySMin = ySMin;
 			this.ySMax = ySMax;
 			this.zSMin = zSMin;
-			this.isRGB = isRGB;
 		}
 
 		@Override
@@ -703,7 +714,13 @@ public  class Pic {
 					startVolumeRendering(sub);
 				}
 				else if (sub >= 3) {
-					sub -= 2;
+					if (sub <= 5)
+						sub -= 2;
+					else {
+						sub = sub/2;
+						if (sub %2 == 0)
+							sub++;
+					}
 					startVolumeRendering(sub);
 				}
 			}
@@ -723,22 +740,20 @@ public  class Pic {
 			xyzV = vv.trScreen2Vol(xSMin+s_2, ySMin+s_2+1, zSMin);
 			float dxVy = xyzV[0] - x0V, dyVy = xyzV[1] - y0V, dzVy = xyzV[2] - z0V; 
 
-			for (int yS = ySMin; yS < ySMax; yS++) {
-				if (doStopRendering) 
-					return null;
-				
+
+			for (int yS = ySMin; yS < ySMax; yS++) {				
 				for (int j=0, xS = xSMin; xS < xSMax; xS++, j++) {
+					if (doStopRendering) return null;
 					if (vv.cube.isInside(xS, yS)) {
 						if (yS%sub == 0 && xS%sub == 0) {
 							boolean hasBeenInTheVolume = false;
 
-							float rand = (float) (Math.random()-0.5);
+							float rand = (float) (-Math.random());
 							float xV = x0V + j*dxVx + rand*dxV; 
 							float yV = y0V + j*dyVx + rand*dyV; 
 							float zV = z0V + j*dzVx + rand*dzV; 
 
-							// check where to start rendering
-							int ns = 0;
+							int ns = 0;		// check where to start rendering
 							if(xV < 0) 
 								if  (dxV > 0) ns = (int) (-xV / dxV);
 								else continue;
@@ -762,17 +777,14 @@ public  class Pic {
 							yV += ns*dyV;
 							zV += ns*dzV;		
 
-							float valR = 0, valG=0, valB=0;
-							float nx = 0, ny= 0, nz= 0;
-							float a, aNext = 1, sumA = 1;
-							int valProj = 0, mean=0, diff=0, rMax=0, gMax=0, bMax=0;
+							float valR = 0, valG=0, valB=0, nx = 0, ny= 0, nz= 0, a, aNext = 1, sumA = 1;
+							int valProj = 0, mean=0, diff=0, rMax=0, gMax=0, bMax=0, val;
 							int[] actLut = null;
 
 							boolean didStartInVolume = false;
 							for (int n = ns; n < nd; n++, xV += dxV, yV += dyV, zV += dzV) {
 								if (xV >= 0 && xV <= vv.vol.widthV && yV >= 0 && yV <= vv.vol.heightV && zV >= 0 && zV <= vv.vol.depthV) { 
 									hasBeenInTheVolume = true;
-									int val;
 									
 									if (control.alphaMode == Control.ALPHA1) {
 										val = interpolation.get(volData3D, zV, yV, xV);
@@ -827,12 +839,11 @@ public  class Pic {
 											int dx = interpolation.get(vv.vol.nx_3D, zV, yV, xV) - 128;
 											int dy = interpolation.get(vv.vol.ny_3D, zV, yV, xV) - 128;
 											int dz = interpolation.get(vv.vol.nz_3D, zV, yV, xV) - 128;
-
 											nx += an * dx;
 											ny += an * dy;
 											nz += an * dz;
-										}
 
+										}
 										aNext *= (1-a);
 										if (aNext < 0.02) {
 											aNext = 0; break;
@@ -853,10 +864,8 @@ public  class Pic {
 												bMax = b;
 											}
 										}
-										else {
-											if (val > valProj) 
-												valProj = val;
-										}
+										else if (val > valProj) 
+											valProj = val;
 									}
 								}
 								else if (hasBeenInTheVolume) // has left the volume
@@ -865,21 +874,20 @@ public  class Pic {
 
 							if (control.renderMode == Control.VOLUME) {
 								if (didStartInVolume) {
-									nx -= dxV*20; ny -= dyV*20; nz -= dzV*20;
+									nx += 20*dxV; ny += 20*dyV; nz += 20*dzV;
 								}
 								int alpha = (int) ((1-aNext)*255); 
 								if (alpha > 0) {
 									if (control.useLight) {
 										// Oberflächen Normalen-Vektor 
 										float[] xyz0 = vv.trVolume2Screen(0, 0, 0);
-										//float[] xyz = vv.trVolume2Screen(nx/control.scale, ny/control.scale, nz/(control.zAspect*control.scale));
-										
-										float[] xyz = vv.trVolume2Screen(nx, ny, nz/control.zAspect);
+										float[] xyz = vv.trVolume2Screen(nx/control.scale, ny/control.scale, nz/(control.zAspect*control.scale));
 
 										float[] n = new float[3]; 
 										n[0] = xyz[0]-xyz0[0];
 										n[1] = xyz[1]-xyz0[1];
 										n[2] = xyz[2]-xyz0[2];
+											
 										float lenN = (n[0]*n[0] + n[1]*n[1] + n[2]*n[2]);
 										if (lenN > 0) {
 											lenN = (float) (1/Math.sqrt(lenN));
@@ -887,8 +895,8 @@ public  class Pic {
 											n[1] *= lenN;
 											n[2] *= lenN;
 										}
-
-										float diffuse = n[0]*light[0] + n[1]*light[1] + n[2]*light[2];
+										
+										float diffuse = (n[0]*light[0] + n[1]*light[1] + n[2]*light[2]);
 
 										// specular // Reflexion 2*(N*L)*N - L
 										float sp = 2*(n[0]*light[0] + n[1]*light[1] + n[2]*light[2]);  // scalar product sp = 2*N*L
@@ -896,16 +904,26 @@ public  class Pic {
 										//r[0] = sp*n[0] - light[0];
 										//r[1] = sp*n[1] - light[1];
 										//r[2] = sp*n[2] - light[2];
+
 										//float[] v = new float[3]; // view
-										//v[2] = -1;
+										//v[2] = 1;
 										//float spec = Math.max(0, r[0]*v[0] + r[1]*v[1] + r[2]*v[2]);
-										float spec = Math.max(0, -(sp*n[2] - light[2]));
+										float spec = Math.max(0, (sp*n[2] - light[2]));
 										spec = (float) (Math.pow(spec,control.shineValue)*((control.shineValue+2)/(2*Math.PI)));
 
 										float lightFactor = control.ambientValue  + diffuse*control.diffuseValue  + spec*control.specularValue;
 										valR = (int) Math.min(255, Math.max(0, control.objectLightValue*valR + lightRed * lightFactor));
 										valG = (int) Math.min(255, Math.max(0, control.objectLightValue*valG + lightGreen*lightFactor));
 										valB = (int) Math.min(255, Math.max(0, control.objectLightValue*valB + lightBlue* lightFactor));										
+
+//										valR = (int) Math.min(255, Math.max(0, 128 + 127*n[0]));
+//										valG = (int) Math.min(255, Math.max(0, 128 + 127*n[1]));
+//										valB = (int) Math.min(255, Math.max(0, 128 + 127*n[2]));		
+										
+//										valR = (int) (lenN*255);
+//										valG = (int) (lenN*255);
+//										valB = (int) (lenN*255);											
+
 									}
 
 									pixels[yS*width + xS] = (alpha << 24) | ((int) valR << 16) | ((int) valG << 8) | ((int) valB);

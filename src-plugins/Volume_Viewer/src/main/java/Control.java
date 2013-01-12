@@ -24,33 +24,52 @@ public class Control {
 	final static int PROJECTION = 3;
 	final static int VOLUME = 4;
 	
+//	final static String [] renderName = { 
+//		"Slice", 
+//		"Slice & Borders", 
+//		"Max Projection", 
+//		"Projection", 
+//		"Volume" 
+//	};
 	final static String [] renderName = { 
-			"Slice ", 
-			"Slice & Borders", 
-			"Max Projection", 
-			"Projection", 
-			"Volume" 
+		"Slice (0)", 
+		"Slice & Borders (1)", 
+		"Max Projection (2)", 
+		"Projection (3)", 
+		"Volume (4)" 
 	};
-	
 	
 	static final int NN = 0;
 	static final int TRILINEAR = 1;
 	static final int TRICUBIC_SPLINE = 2;
 	static final int TRICUBIC_POLYNOMIAL = 3;
 
+//	static final String [] interpolationName = { 
+//		"Nearest Neighbor", 
+//		"Trilinear",
+//		"Tricubic smooth",
+//		"Tricubic sharp"
+//	};
 	static final String [] interpolationName = { 
-			"Nearest Neighbor", 
-			"Trilinear",
-			"Tricubic smooth",
-			"Tricubic sharp"
-	} ;
-
+		"Nearest Neighbor (0)", 
+		"Trilinear (1)",
+		"Tricubic smooth (2)",
+		"Tricubic sharp (3)"
+	};
 	
 	// transfer function modes 
 	static final int ALPHA1 = 0;
 	static final int ALPHA2 = 1;
 	static final int ALPHA3 = 2;
 	static final int ALPHA4 = 3;
+
+	
+	static final String [] lutName = { 
+		"Original (0)", 
+		"Grayscale (1)", 
+		"Spectrum LUT (2)", 
+		"Fire LUT (3)", 
+		"Thermal LUT (4)"}; 
 
 	
 	// stored vaiables (in prefs) //////////////////
@@ -72,7 +91,7 @@ public class Control {
 	int windowMinHeight = 660;
 	int windowHeight = windowMinHeight;
 	
-	int windowWidthImageRegion = 550; 
+	int windowWidthImageRegion = 480; 
 	
 	// illumination
 	boolean useLight = false;
@@ -91,6 +110,7 @@ public class Control {
 	/////////////////////////////////////
 		
 	boolean drag;
+	boolean spinnersAreChanging;
 
 	int maxDist;
 	float scaledDist;
@@ -106,7 +126,7 @@ public class Control {
 	int alphaPaint2 = 64, alphaPaint3 = 64, alphaPaint4 = 64;
 	
 	int windowWidthSliderRegion = 55; 
-	int windowWidthSlices = 255; 
+	int windowWidthSlices = 200; 
 
 	float positionFactorX = 0.5f; // indicates the shown position of the xslice
 	float positionFactorY = 0.5f; // indicates the shown position of the yslice

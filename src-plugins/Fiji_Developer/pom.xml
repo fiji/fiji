@@ -31,16 +31,19 @@
 			<groupId>java3d</groupId>
 			<artifactId>j3d-core</artifactId>
 			<version>1.5.2</version>
+			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>java3d</groupId>
 			<artifactId>j3d-core-utils</artifactId>
 			<version>1.5.2</version>
+			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>java3d</groupId>
 			<artifactId>vecmath</artifactId>
 			<version>1.5.2</version>
+			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
@@ -58,5 +61,17 @@
 			<version>${imagej.version}</version>
 		</dependency>
 	</dependencies>
+
+	<!-- NB: for project parent -->
+	<repositories>
+		<repository>
+			<id>imagej.releases</id>
+			<url>http://maven.imagej.net/content/repositories/releases</url>
+		</repository>
+		<repository>
+			<id>imagej.snapshots</id>
+			<url>http://maven.imagej.net/content/repositories/snapshots</url>
+		</repository>
+	</repositories>
 
 </project>

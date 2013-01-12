@@ -16,6 +16,9 @@ import java.util.ArrayList;
 import mpicbg.models.AffineModel2D;
 import mpicbg.models.AffineModel3D;
 import mpicbg.models.HomographyModel2D;
+import mpicbg.models.InterpolatedAffineModel2D;
+import mpicbg.models.InterpolatedAffineModel3D;
+import mpicbg.models.InterpolatedModel;
 import mpicbg.models.InvertibleBoundable;
 import mpicbg.models.RigidModel2D;
 import mpicbg.models.RigidModel3D;
@@ -155,17 +158,21 @@ public class Descriptor_based_series_registration implements PlugIn
 	public String[] transformationModels2d = new String[] { "Translation (2d)", "Rigid (2d)", "Similarity (2d)", "Affine (2d)", "Homography (2d)" };
 	public String[] transformationModels3d = new String[] { "Translation (3d)", "Rigid (3d)", "Affine (3d)" };
 	public static int defaultTransformationModel = 1;
+	public static int defaultRegularizationTransformationModel = 1;
+	public static double defaultLambda = 0.1;
+	public static boolean defaultFixFirstTile = false;
+	public static boolean defaultRegularize = false;
 	
 	public static String[] detectionBrightness = { "Very low", "Low", "Medium", "Strong", "Advanced ...", "Interactive ..." };
-	public static int defaultDetectionBrightness = 2;
+	public static int defaultDetectionBrightness = detectionBrightness.length - 1;
 	public static double defaultSigma = 2;
 	public static double defaultThreshold = 0.03;
 	
 	public static String[] detectionSize = { "2 px", "3 px", "4 px", "5 px", "6 px", "7 px", "8 px", "9 px", "10 px", "Advanced ...", "Interactive ..." };
-	public static int defaultDetectionSize = 1;
+	public static int defaultDetectionSize = detectionSize.length - 1;
 	
 	public static String[] detectionTypes = { "Maxima only", "Minima only", "Minima & Maxima", "Interactive ..." };
-	public static int defaultDetectionType = 0;
+	public static int defaultDetectionType = detectionTypes.length - 1;
 	
 	public static boolean defaultSimilarOrientation = false;
 	public static int defaultNumNeighbors = 3;
@@ -197,6 +204,9 @@ public class Descriptor_based_series_registration implements PlugIn
 		if ( defaultTransformationModel >= transformationModel.length )
 			defaultTransformationModel = 1;
 		
+		if ( defaultRegularizationTransformationModel >= transformationModel.length  )
+			defaultRegularizationTransformationModel = 1;
+		
 		// one of them is by default interactive, then all are interactive
 		if ( defaultDetectionBrightness == detectionBrightness.length - 1 || 
 			 defaultDetectionSize == detectionSize.length - 1 ||
@@ -214,6 +224,7 @@ public class Descriptor_based_series_registration implements PlugIn
 		gd.addChoice( "Type_of_detections", detectionTypes, detectionTypes[ defaultDetectionType ] );
 		
 		gd.addChoice( "Transformation_model", transformationModel, transformationModel[ defaultTransformationModel ] );
+		gd.addCheckbox( "Regularize_model", defaultRegularize );
 		gd.addCheckbox( "Images_are_roughly_aligned", defaultSimilarOrientation );
 		
 		if ( dimensionality == 2 )
@@ -262,6 +273,7 @@ public class Descriptor_based_series_registration implements PlugIn
 		final int detectionSizeIndex = gd.getNextChoiceIndex();
 		final int detectionTypeIndex = gd.getNextChoiceIndex();
 		final int transformationModelIndex = gd.getNextChoiceIndex();
+		final boolean regularize = gd.getNextBoolean();
 		final boolean similarOrientation = gd.getNextBoolean();
 		final int numNeighbors = (int)Math.round( gd.getNextNumber() );
 		final int redundancy = (int)Math.round( gd.getNextNumber() );
@@ -278,6 +290,7 @@ public class Descriptor_based_series_registration implements PlugIn
 		defaultDetectionSize = detectionSizeIndex;
 		defaultDetectionType = detectionTypeIndex;
 		defaultTransformationModel = transformationModelIndex;
+		defaultRegularize = regularize;
 		defaultSimilarOrientation = similarOrientation;
 		defaultNumNeighbors = numNeighbors;
 		defaultRedundancy = redundancy;
@@ -287,7 +300,124 @@ public class Descriptor_based_series_registration implements PlugIn
 		defaultRange = range;
 		defaultChannel = channel + 1;
 		defaultResult = result;
+
+		// instantiate model
+		if ( dimensionality == 2 )
+		{
+			switch ( transformationModelIndex ) 
+			{
+				case 0:
+					params.model = new TranslationModel2D();
+					break;
+				case 1:
+					params.model = new RigidModel2D();
+					break;
+				case 2:
+					params.model = new SimilarityModel2D();
+					break;
+				case 3:
+					params.model = new AffineModel2D();
+					break;
+				case 4:
+					if ( regularize )
+					{
+						IJ.log( "HomographyModel2D cannot be regularized yet" );
+						return null;
+					}
+					params.model = new HomographyModel2D();
+					break;
+				default:
+					params.model = new RigidModel2D();
+					break;
+			}
+		}
+		else
+		{
+			switch ( transformationModelIndex ) 
+			{
+				case 0:
+					params.model = new TranslationModel3D();
+					break;
+				case 1:
+					params.model = new RigidModel3D();
+					break;
+				case 2:
+					params.model = new AffineModel3D();
+					break;
+				default:
+					params.model = new RigidModel3D();
+					break;
+			}			
+		}
 		
+		// regularization
+		if ( regularize )
+		{
+			final GenericDialog gdRegularize = new GenericDialog( "Choose Regularization Model" );
+			gdRegularize.addChoice( "Transformation_model", transformationModel, transformationModel[ defaultRegularizationTransformationModel ] );
+			gdRegularize.addCheckbox( "Fix_first_tile", defaultFixFirstTile );
+			gdRegularize.addNumericField( "Lambda", defaultLambda, 2 );
+			
+			gdRegularize.showDialog();
+			
+			if ( gdRegularize.wasCanceled() )
+				return null;
+			
+			params.regularize = true;
+			final int modelIndex = defaultRegularizationTransformationModel = gdRegularize.getNextChoiceIndex();
+			params.fixFirstTile = defaultFixFirstTile = gdRegularize.getNextBoolean();
+			params.lambda = defaultLambda = gdRegularize.getNextNumber();
+
+			// update model to a regularized one using the previous model
+			if ( dimensionality == 2 )
+			{
+				switch ( modelIndex ) 
+				{
+					case 0:
+						params.model = new InterpolatedAffineModel2D( params.model, new TranslationModel2D(), (float)params.lambda );
+						break;
+					case 1:
+						params.model = new InterpolatedAffineModel2D( params.model, new RigidModel2D(), (float)params.lambda );
+						break;
+					case 2:
+						params.model = new InterpolatedAffineModel2D( params.model, new SimilarityModel2D(), (float)params.lambda );
+						break;
+					case 3:
+						params.model = new InterpolatedAffineModel2D( params.model, new AffineModel2D(), (float)params.lambda );
+						break;
+					case 4:
+						IJ.log( "HomographyModel2D cannot be used for regularization yet" );
+						return null;
+					default:
+						params.model = new InterpolatedAffineModel2D( params.model, new RigidModel2D(), (float)params.lambda );
+						break;
+				}
+			}
+			else
+			{
+				switch ( modelIndex ) 
+				{
+					case 0:
+						params.model = new InterpolatedAffineModel3D( params.model, new TranslationModel3D(), (float)params.lambda );
+						break;
+					case 1:
+						params.model = new InterpolatedAffineModel3D( params.model, new RigidModel3D(), (float)params.lambda );
+						break;
+					case 2:
+						params.model = new InterpolatedAffineModel3D( params.model, new AffineModel3D(), (float)params.lambda );
+						break;
+					default:
+						params.model = new InterpolatedAffineModel3D( params.model, new RigidModel3D(), (float)params.lambda );
+						break;
+				}			
+			}
+		}
+		else
+		{
+			params.regularize = false;
+			params.fixFirstTile = true;
+		}
+
 		if ( defaultResult == 1 )
 		{
 			final GenericDialogPlus gd2 = new GenericDialogPlus( "Select output directory" );
@@ -299,7 +429,7 @@ public class Descriptor_based_series_registration implements PlugIn
 			
 			defaultDirectory = gd2.getNextString();
 		}
-		
+			
 		// one of them is by default interactive, then all are interactive
 		if ( detectionBrightnessIndex == detectionBrightness.length - 1 || 
 			 detectionSizeIndex == detectionSize.length - 1 ||
@@ -380,50 +510,6 @@ public class Descriptor_based_series_registration implements PlugIn
 		else
 			defaultDetectionType = 0;
 	
-		// instantiate model
-		if ( dimensionality == 2 )
-		{
-			switch ( transformationModelIndex ) 
-			{
-				case 0:
-					params.model = new TranslationModel2D();
-					break;
-				case 1:
-					params.model = new RigidModel2D();
-					break;
-				case 2:
-					params.model = new SimilarityModel2D();
-					break;
-				case 3:
-					params.model = new AffineModel2D();
-					break;
-				case 4:
-					params.model = new HomographyModel2D();
-					break;
-				default:
-					params.model = new RigidModel2D();
-					break;
-			}
-		}
-		else
-		{
-			switch ( transformationModelIndex ) 
-			{
-				case 0:
-					params.model = new TranslationModel3D();
-					break;
-				case 1:
-					params.model = new RigidModel3D();
-					break;
-				case 2:
-					params.model = new AffineModel3D();
-					break;
-				default:
-					params.model = new RigidModel3D();
-					break;
-			}			
-		}
-		
 		// other parameters
 		params.sigma2 = InteractiveDoG.computeSigma2( (float)params.sigma1, InteractiveDoG.standardSenstivity );
 		params.similarOrientation = similarOrientation;

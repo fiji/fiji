@@ -50,6 +50,12 @@ public class TFalpha2 extends JPanel implements MouseListener, MouseMotionListen
 		this.lut = lut;
 		this.lut2D_2 = lut2D_2;
 		
+		for (int i = 0; i < alpha2.length; i++) {
+			for (int j = 0; j < alpha2[0].length; j++) {
+				alpha2[i][j] = - 1000;
+			}	
+		}
+		
 		setPreferredSize(new Dimension(256, height));
 		addMouseListener(this);
 		addMouseMotionListener(this);
@@ -65,7 +71,8 @@ public class TFalpha2 extends JPanel implements MouseListener, MouseMotionListen
 	public void clearAlpha() {
 		for (int y = 0; y < height; y++) { 
 			for (int x = 0; x < 256; x++) {
-				alpha2[x][y] = a2[x][y] = 0;	
+				alpha2[x][y] = -1000; 
+				a2[x][y] = 0;	
 			}
 		}
 		control.alphaWasChanged = true;
@@ -75,11 +82,13 @@ public class TFalpha2 extends JPanel implements MouseListener, MouseMotionListen
 		for (int x = 0; x < 256; x++) {
 			for (int y = 0; y < 128; y++) {
 
-				int alpha = (int) (alpha2[x][y]);
-				if (alpha > 0)
+				int alpha = (int)alpha2[x][y];
+				if (alpha != -1000)
 					alpha += scaleAlpha;
+				else 
+					alpha = 0;
 				if (alpha > 255) alpha = 255;
-				if (alpha < 0)   alpha = 0;
+				else if (alpha < 0) alpha = 0;
 				a2[x][y] = alpha;
 			}
 		}
@@ -87,8 +96,6 @@ public class TFalpha2 extends JPanel implements MouseListener, MouseMotionListen
 	}
 
 	public void setAlphaAuto() {
-
-		//lookupTable.setLut();
 
 		// 2D find maximum
 		float max1 = 0; 
@@ -124,7 +131,7 @@ public class TFalpha2 extends JPanel implements MouseListener, MouseMotionListen
 			int xp2 = x<254 ? x+2 : 255;	
 			float val = (alpha1D[xm2] + alpha1D[xm1] + alpha1D[x] + alpha1D[xp1] + alpha1D[xp2]) * 0.2f;
 			val += 0.5f - sum;
-			alpha1Dauto[x] = Math.max(0, val);; 
+			alpha1Dauto[x] = Math.max(0, val);
 		}
 		// in alpha1Dauto stehen die 1D alpha-Werte  
 
@@ -212,7 +219,7 @@ public class TFalpha2 extends JPanel implements MouseListener, MouseMotionListen
 				if (v > 0)
 					alpha2[x_][y_] = v - scaleAlpha;
 				else 
-					alpha2[x_][y_] = 0;
+					alpha2[x_][y_] = -1000;
 
 				if (control.pickColor) {
 					lut2D_2[x_][y_][0] = control.rPaint;

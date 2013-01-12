@@ -26,7 +26,7 @@ public class TFalpha3 extends JPanel implements MouseListener, MouseMotionListen
 	private int[][] lut;
 	
 	private final int[][] alpha3back = new int[256][128];
-	private final float[][] alpha3 = new float[256][128];
+	private final int[][] alpha3 = new int[256][128];
 	final int[][] a3 = new int[256][128];
 	
 	private int scaleAlpha = 0;
@@ -40,6 +40,12 @@ public class TFalpha3 extends JPanel implements MouseListener, MouseMotionListen
 		this.vol = vol;
 		this.lut = lut;
 		this.lut2D_3 = lut2D_3;
+		
+		for (int i = 0; i < alpha3.length; i++) {
+			for (int j = 0; j < alpha3[0].length; j++) {
+				alpha3[i][j] = - 1000;
+			}	
+		}
 		
 		setPreferredSize(new Dimension(256, height));
 		addMouseListener(this);
@@ -56,7 +62,8 @@ public class TFalpha3 extends JPanel implements MouseListener, MouseMotionListen
 	public void clearAlpha() {
 		for (int y = 0; y < height; y++) { 
 			for (int x = 0; x < 256; x++) {
-				alpha3[x][y] = a3[x][y] = 0;	
+				alpha3[x][y] = -1000;
+				a3[x][y] = 0;
 			}
 		}
 		control.alphaWasChanged = true;
@@ -66,11 +73,13 @@ public class TFalpha3 extends JPanel implements MouseListener, MouseMotionListen
 		for (int x = 0; x < 256; x++) {
 			for (int y = 0; y < 128; y++) {
 
-				int alpha = (int) (alpha3[x][y]);
-				if (alpha > 0)
+				int alpha = alpha3[x][y];
+				if (alpha != -1000)
 					alpha += scaleAlpha;
+				else 
+					alpha = 0;
 				if (alpha > 255) alpha = 255;
-				if (alpha < 0)   alpha = 0;
+				else if (alpha < 0)   alpha = 0;
 				a3[x][y] = alpha;
 			}
 		}
@@ -105,7 +114,7 @@ public class TFalpha3 extends JPanel implements MouseListener, MouseMotionListen
 				if (y > 5)
 					alpha3[x][y] = 128 - val;
 				else 
-					alpha3[x][y] = 0;
+					alpha3[x][y] = -1000;
 				if (val > 255)
 					val = 255;
 				alpha3back[x][y] = 255-val;  
@@ -114,11 +123,14 @@ public class TFalpha3 extends JPanel implements MouseListener, MouseMotionListen
 
 		for (int x = 0; x < 256; x++) {
 			for (int y = 0; y < 128; y++) {
-				a3[x][y] = (int) Math.min(Math.max(0,alpha3[x][y]), 255);
-				//TODO
-				if (y < 0) {
-					alpha3[x][y] = a3[x][y] = 0;
-				}
+				if (alpha3[x][y] != -1000)
+					a3[x][y] = (int) Math.min(Math.max(0,alpha3[x][y]+scaleAlpha), 255);
+				else
+					a3[x][y] = 0;
+//				//TODO
+//				if (y < 0) {
+//					alpha3[x][y] = a3[x][y] = 0;
+//				}
 				lut2D_3[x][y][0] = lut[x][0];
 				lut2D_3[x][y][1] = lut[x][1];
 				lut2D_3[x][y][2] = lut[x][2];
@@ -161,10 +173,11 @@ public class TFalpha3 extends JPanel implements MouseListener, MouseMotionListen
 		for (int y_ = Math.max(0, y-6); y_ <= Math.min(y+6,height-1); y_++) {
 			for (int x_ = Math.max(0, x-6); x_ <= Math.min(x+6,255); x_++) {
 				a3[x_][y_] = v; 
-				if (v > 0)
+				if (v > 0) {
 					alpha3[x_][y_] = v - scaleAlpha;
+				}
 				else 
-					alpha3[x_][y_] = 0;
+					alpha3[x_][y_] = -1000;
 
 				if (control.pickColor) {
 					lut2D_3[x_][y_][0] = control.rPaint;
