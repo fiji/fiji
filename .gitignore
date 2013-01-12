@@ -257,6 +257,9 @@ hs_err*.log
 /jars/weka-dev-[0-9]*.jar
 /plugins/loci_plugins-[0-9]*.jar
 
+# For maven-download.sh
+/modules/scijava-common/
+
 # For use by bin/gitignore-in-submodules #
 /modules/AutoComplete/ant-classes/
 /modules/AutoComplete/autocomplete.jar

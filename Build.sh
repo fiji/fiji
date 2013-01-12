@@ -25,19 +25,6 @@ dirname () {
 	esac
 }
 
-look_for_tools_jar () {
-	for d in "$@"
-	do
-		test -d "$d" || continue
-		for j in java default-java
-		do
-			test -f "$d/$j/lib/tools.jar" || continue
-			export TOOLS_JAR="$d/$j/lib/tools.jar"
-			return
-		done
-	done
-}
-
 get_java_home () {
 	if test -d "$JAVA_HOME"
 	then
@@ -48,41 +35,6 @@ get_java_home () {
 			echo "$CWD/java/$java_submodule/$(ls -t "$CWD/java/$java_submodule" | head -n 1)/jre"
 		fi
 	fi
-}
-
-VERSION=$(sed -n 's/^.<version>\(.*\)<\/version>.*/\1/p' < src-plugins/pom.xml)
-FAKE_JAR=jars/fake-$VERSION.jar
-need_to_build_fake () {
-	(cd "$CWD" &&
-	 test -f $FAKE_JAR || {
-		echo YesPlease
-		return
-	 }
-	 for source in $(find src-plugins/fake/ -name \*.java)
-	 do
-		test "$source" -nt $FAKE_JAR && {
-			echo YesPlease
-			return
-		}
-	 done)
-	return
-}
-
-ensure_fake_is_built () {
-	# test whether we need to build it
-	test -z "$(need_to_build_fake)" && return
-
-	(cd "$CWD" &&
-	 : blow previous builds away
-	 rm -f jars/fake.jar &&
-	 rm -rf src-plugins/fake/target/classes &&
-	 mkdir -p src-plugins/fake/target/classes &&
-	 : compile classes
-	 java -jar precompiled/javac.jar -source 1.5 -target 1.5 -classpath precompiled/javac.jar -d src-plugins/fake/target/classes $(find src-plugins/fake/ -name \*.java) &&
-	 : compile .jar using MiniMaven
-	 (cd src-plugins &&
-	  java -Dij.dir=.. -classpath fake/target/classes"$PATHSEP"../precompiled/javac.jar -DartifactId=fake fiji.build.MiniMaven jar &&
-	  cp fake/target/${FAKE_JAR#*/} ../jars/))
 }
 
 PATHSEP=:
@@ -100,11 +52,9 @@ Linux)
 	x86_64)
 		platform=linux64
 		java_submodule=linux-amd64
-		look_for_tools_jar /usr/lib64/jvm /usr/lib/jvm
 		;;
 	*)	platform=linux32
 		java_submodule=linux
-		look_for_tools_jar /usr/lib/jvm
 		;;
 	esac; exe=;;
 MINGW*|CYGWIN*)
@@ -200,12 +150,9 @@ then
 	export PATH="$JAVA_HOME/bin:$PATH"
 fi
 
-: build fake.jar, making sure javac is in the PATH
-PATH="$PATH:$(get_java_home)/bin:$(get_java_home)/../bin" \
-ensure_fake_is_built || {
-	echo "Could not build Fiji Build" >&2
-	exit 1
-}
+# make sure java is in the PATH
+PATH="$PATH:$(get_java_home)/bin:$(get_java_home)/../bin"
+export PATH
 
 # JAVA_HOME needs to be a DOS path for Windows from here on
 case "$UNAME_S" in
@@ -217,4 +164,75 @@ CYGWIN*)
 	;;
 esac
 
-sh "$CWD/bin/ImageJ.sh" --build "$@"
+uptodate () {
+	test -f "$2" &&
+	test "$2" -nt "$1"
+}
+
+# we need an absolute CWD from now on
+case "$CWD" in
+[A-Z]:*|/*)
+	# is already absolute
+	;;
+*)
+	CWD="$(cd "$CWD" && pwd)"
+	;;
+esac
+
+ARGV0="$CWD/$0"
+SCIJAVA_COMMON="$CWD/modules/scijava-common"
+MAVEN_DOWNLOAD="$SCIJAVA_COMMON/bin/maven-helper.sh"
+maven_download () {
+	uptodate "$ARGV0" "$MAVEN_DOWNLOAD" || {
+		if test -d "$SCIJAVA_COMMON/.git"
+		then
+			(cd "$SCIJAVA_COMMON" &&
+			 git pull -k)
+		else
+			git clone git://github.com/scijava/scijava-common \
+				"$SCIJAVA_COMMON"
+		fi
+		if test ! -f "$MAVEN_DOWNLOAD"
+		then
+			echo "Could not find $MAVEN_DOWNLOAD!" >&2
+			exit 1
+		fi
+		touch "$MAVEN_DOWNLOAD"
+	}
+	for gav in "$@"
+	do
+		echo "Downloading $gav" >&2
+		(cd jars/ && sh "$MAVEN_DOWNLOAD" install "$gav")
+		artifactId="${gav#*:}"
+		version="${artifactId#*:}"
+		artifactId="${artifactId%%:*}"
+		path="jars/$artifactId-$version.jar"
+		if test ! -f "$path"
+		then
+			echo "Failure to download $path" >&2
+			exit 1
+		fi
+		touch "$path"
+	done
+}
+
+# make sure that javac and ij-minimaven are up-to-date
+VERSION=2.0.0-SNAPSHOT
+uptodate "$ARGV0" jars/javac-$VERSION.jar ||
+maven_download sc.fiji:javac:$VERSION
+uptodate "$ARGV0" jars/ij-minimaven-$VERSION.jar ||
+maven_download net.imagej:ij-minimaven:$VERSION
+
+if test $# = 0
+then
+	sh "$CWD/bin/ImageJ.sh" --mini-maven -Dimagej.app.directory="$CWD" jar
+else
+	for name in "$@"
+	do
+		artifactId="${name##*/}"
+		artifactId="${artifactId%%-[0-9]*}"
+		sh "$CWD/bin/ImageJ.sh" --mini-maven \
+			-Dimagej.app.directory="$CWD" \
+			-DartifactId="$artifactId" jar
+	done
+fi
