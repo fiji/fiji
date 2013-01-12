@@ -220,6 +220,8 @@ maven_download () {
 VERSION=2.0.0-SNAPSHOT
 uptodate "$ARGV0" jars/javac-$VERSION.jar ||
 maven_download sc.fiji:javac:$VERSION
+uptodate "$ARGV0" jars/ij-core-$VERSION.jar ||
+maven_download net.imagej:ij-core:$VERSION
 uptodate "$ARGV0" jars/ij-minimaven-$VERSION.jar ||
 maven_download net.imagej:ij-minimaven:$VERSION
 
