@@ -223,16 +223,41 @@ maven_download sc.fiji:javac:$VERSION
 uptodate "$ARGV0" jars/ij-minimaven-$VERSION.jar ||
 maven_download net.imagej:ij-minimaven:$VERSION
 
+OPTIONS="-Dimagej.app.directory=\"$CWD\""
+while test $# -gt 0
+do
+	case "$1" in
+	verbose=*)
+		OPTIONS="$OPTIONS -Dminimaven.verbose=true"
+		;;
+	-D*)
+		OPTIONS="$OPTIONS $1"
+		;;
+	*=*)
+		OPTIONS="$OPTIONS -D$1"
+		;;
+	*)
+		break
+		;;
+	esac
+	shift
+done
+
 if test $# = 0
 then
-	sh "$CWD/bin/ImageJ.sh" --mini-maven -Dimagej.app.directory="$CWD" jar
+	eval sh "$CWD/bin/ImageJ.sh" --mini-maven "$OPTIONS" install
 else
 	for name in "$@"
 	do
 		artifactId="${name##*/}"
 		artifactId="${artifactId%%-[0-9]*}"
-		sh "$CWD/bin/ImageJ.sh" --mini-maven \
-			-Dimagej.app.directory="$CWD" \
-			-DartifactId="$artifactId" jar
+		case "$name" in
+		*-rebuild)
+			eval sh "$CWD/bin/ImageJ.sh" --mini-maven \
+				"$OPTIONS" -DartifactId="$artifactId" clean
+			;;
+		esac
+		eval sh "$CWD/bin/ImageJ.sh" --mini-maven \
+			"$OPTIONS" -DartifactId="$artifactId" install
 	done
 fi
