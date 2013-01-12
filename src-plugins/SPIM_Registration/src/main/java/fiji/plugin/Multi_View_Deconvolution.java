@@ -33,6 +33,7 @@ import mpicbg.spim.postprocessing.deconvolution.ExtractPSF;
 import mpicbg.spim.postprocessing.deconvolution2.BayesMVDeconvolution;
 import mpicbg.spim.postprocessing.deconvolution2.CUDAConvolution;
 import mpicbg.spim.postprocessing.deconvolution2.LRFFT;
+import mpicbg.spim.postprocessing.deconvolution2.LRFFT.PSFTYPE;
 import mpicbg.spim.postprocessing.deconvolution2.LRInput;
 import mpicbg.spim.registration.ViewDataBeads;
 import mpicbg.spim.registration.ViewStructure;
@@ -105,6 +106,7 @@ public class Multi_View_Deconvolution implements PlugIn
 		//final ArrayList<LucyRichardsonFFT> deconvolutionData = new ArrayList<LucyRichardsonFFT>();
 		final LRInput deconvolutionData = new LRInput();
 		
+		IJ.log( "Type of iteration: " + iterationType );
 		IJ.log( "Number iterations: " + numIterations );
 		IJ.log( "Using blocks: " + useBlocks );
 		if ( useBlocks )
@@ -147,9 +149,9 @@ public class Multi_View_Deconvolution implements PlugIn
 		*/
 		
 		if ( useTikhonovRegularization )
-			deconvolved = new BayesMVDeconvolution( deconvolutionData, numIterations, lambda, "deconvolved" ).getPsi();
+			deconvolved = new BayesMVDeconvolution( deconvolutionData, iterationType, numIterations, lambda, "deconvolved" ).getPsi();
 		else
-			deconvolved = new BayesMVDeconvolution( deconvolutionData, numIterations, 0, "deconvolved" ).getPsi();
+			deconvolved = new BayesMVDeconvolution( deconvolutionData, iterationType, numIterations, 0, "deconvolved" ).getPsi();
 		
 		if ( conf.writeOutputImage || conf.showOutputImage )
 		{
@@ -184,14 +186,17 @@ public class Multi_View_Deconvolution implements PlugIn
 	public static double defaultLambda = 0.006;
 	public static boolean showAveragePSF = true;
 	public static boolean defaultDebugMode = false;
+	public static int defaultIterationType = 1;
 	public static int defaultContainer = 0;
 	public static int defaultComputationIndex = 0;
 	public static int defaultBlockSizeIndex = 0, defaultBlockSizeX = 256, defaultBlockSizeY = 256, defaultBlockSizeZ = 256;
 	
+	public static String[] iterationTypeString = new String[]{ "Ad-hoc (very fast, imprecise)", "Conditional Probabilty (fast, precise)", "Independent (slow, precise)" };
 	public static String[] imglibContainer = new String[]{ "Array container", "Planar container", "Cell container" };
 	public static String[] computationOn = new String[]{ "CPU (Java)", "GPU (Nvidia CUDA via JNA)" };
 	public static String[] blocks = new String[]{ "Entire image at once", "in 64x64x64 blocks", "in 128x128x128 blocks", "in 256x256x256 blocks", "in 512x512x512 blocks", "specify maximal blocksize manually" };
 	
+	PSFTYPE iterationType;
 	int numIterations, container, computationType, blockSizeIndex;
 	int[] blockSize = null;
 	boolean useTikhonovRegularization = true, useBlocks = false, useCUDA = false, debugMode = false;
@@ -412,6 +417,7 @@ public class Multi_View_Deconvolution implements PlugIn
 		gd2.addNumericField( "Crop_output_image_size_y", Multi_View_Fusion.cropSizeYStatic, 0 );
 		gd2.addNumericField( "Crop_output_image_size_z", Multi_View_Fusion.cropSizeZStatic, 0 );
 		gd2.addMessage( "" );	
+		gd2.addChoice( "Type_of_iteration", iterationTypeString, iterationTypeString[ defaultIterationType ] );
 		gd2.addNumericField( "Number_of_iterations", defaultNumIterations, 0 );
 		gd2.addCheckbox( "Use_Tikhonov_regularization", defaultUseTikhonovRegularization );
 		gd2.addNumericField( "Tikhonov_parameter", defaultLambda, 4 );
@@ -493,6 +499,15 @@ public class Multi_View_Deconvolution implements PlugIn
 		Multi_View_Fusion.cropSizeXStatic  = (int)Math.round( gd2.getNextNumber() );
 		Multi_View_Fusion.cropSizeYStatic = (int)Math.round( gd2.getNextNumber() );
 		Multi_View_Fusion.cropSizeZStatic = (int)Math.round( gd2.getNextNumber() );
+		
+		defaultIterationType = gd2.getNextChoiceIndex();
+		
+		if ( defaultIterationType == 0 )
+			iterationType = PSFTYPE.EXPONENT;
+		else if ( defaultIterationType == 1 )
+			iterationType = PSFTYPE.CONDITIONAL;
+		else
+			iterationType = PSFTYPE.INDEPENDENT;
 		
 		numIterations = defaultNumIterations = (int)Math.round( gd2.getNextNumber() );
 		useTikhonovRegularization = defaultUseTikhonovRegularization = gd2.getNextBoolean();
