@@ -241,7 +241,7 @@ public class Directionality_ implements PlugIn {
 	/** How many sigmas away from the gaussian center we sum to get the amount value. */ 
 	private static final double SIGMA_NUMBER = 2;
 	private static final String PLUGIN_NAME = "Directionality analysis";
-	private static final String VERSION_STR = "2.0";
+	private static final String VERSION_STR = "2.0.1";
 	
 	
 	/* USER SETTING FIELDS, memorized between runs*/
@@ -526,12 +526,13 @@ public class Directionality_ implements PlugIn {
 		}
 		
 		ResultsTable table = new ResultsTable();
+		table.setPrecision(9);
 		String[] names = makeNames();
 		double[] dir;
 		int index = 0;
 		for (int i = wrap_index; i < bins.length; i++) {
 			table.incrementCounter();
-			table.addValue("Direction (º)", wrapped_bins[index]);
+			table.addValue("Direction (°)", wrapped_bins[index]);
 			for (int j = 0; j < names.length; j++) {
 				dir = histograms.get(j);
 				table.addValue(names[j], dir[i]);
@@ -542,7 +543,7 @@ public class Directionality_ implements PlugIn {
 		}
 		for (int i = 0; i < wrap_index; i++) {
 			table.incrementCounter();
-			table.addValue("Direction (º)", wrapped_bins[index]);
+			table.addValue("Direction (°)", wrapped_bins[index]);
 			for (int j = 0; j < names.length; j++) {
 				dir = histograms.get(j);
 				table.addValue(names[j], dir[i]);
@@ -668,7 +669,7 @@ public class Directionality_ implements PlugIn {
 		// Create chart with histograms
 		final JFreeChart chart = ChartFactory.createHistogram(
 				"Directionality histograms",
-				"Direction (º)",
+				"Direction (°)",
 				"Amount", 
 				histogram_plots, 
 				PlotOrientation.VERTICAL,
@@ -828,8 +829,8 @@ public class Directionality_ implements PlugIn {
 		// Display result
 		String[] column_names = {
 				"Slice",
-				"Direction (º)",
-				"Dispersion (º)",
+				"Direction (°)",
+				"Dispersion (°)",
 				"Amount",
 				"Goodness" };
 		Object[][]  table_data = new Object[params_from_fit.size()][column_names.length];
@@ -1059,7 +1060,7 @@ public class Directionality_ implements PlugIn {
 		gd.addMessage(current);
 		gd.addChoice("Method:", method_names, setting_method.toString());
 		gd.addNumericField("Nbins: ", setting_nbins, 0);
-		gd.addNumericField("Histogram start", setting_bin_start , 0, 4, "º");
+		gd.addNumericField("Histogram start", setting_bin_start , 0, 4, "°");
 		gd.addCheckbox("Build orientation map", setting_build_orientation_map);
 		gd.addCheckbox("Display_color_wheel", setting_display_color_wheel);
 		gd.addCheckbox("Display_table", setting_display_table);
@@ -1578,7 +1579,7 @@ public class Directionality_ implements PlugIn {
 					final float[] hsb = Color.RGBtoHSB(r, g, b, null);
 					final float angle = hsb[0] * 180 - 90;
 					final float amount = hsb[1];
-					IJ.showStatus( String.format("Orientation: %5.1f º - Amont: %5.1f %%", angle, 100*amount));
+					IJ.showStatus( String.format("Orientation: %5.1f ° - Amont: %5.1f %%", angle, 100*amount));
 				} catch (ClassCastException cce) {
 					return;
 				}
@@ -1792,7 +1793,7 @@ public class Directionality_ implements PlugIn {
 		fit_results = da.getFitParameters();
 		center = fit_results.get(0)[2];
 		System.out.println("With method: "+method);
-		System.out.println(String.format("Found maxima at %.1f, expected it at 30º.\n", center, 30));
+		System.out.println(String.format("Found maxima at %.1f, expected it at 30°.\n", center, 30));
 //		new ImagePlus("Orientation map for "+imp.getShortTitle(),da.getOrientationMap()).show();
 		
 		/*

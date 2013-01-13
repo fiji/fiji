@@ -76,7 +76,9 @@ Options to run programs other than ImageJ:
 --main-class <class name>
 	start the given class instead of ImageJ
 --build
-	start Fiji's build instead of ImageJ
+	start Fiji's build instead of ImageJ (deprecated)
+--mini-maven
+	start MiniMaven instead of ImageJ
 --update
 	start Fiji's command-line Updater instead of ImageJ
 EOF
@@ -112,7 +114,12 @@ EOF
 		main_class="`expr "$1" : '--main-class=\(.*\)'`"
 		;;
 	?,--build)
+		echo 'WARNING: The Fiji Build system is DEPRECATED' >&2
+		echo 'Please use (Mini-)Maven instead!' >&2
 		main_class=fiji.build.Fake
+		;;
+	?,--mini-maven)
+		main_class=imagej.build.MiniMaven
 		;;
 	?,--update)
 		main_class=fiji.updater.Main
