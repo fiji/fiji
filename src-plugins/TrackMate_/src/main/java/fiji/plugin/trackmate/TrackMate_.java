@@ -35,13 +35,13 @@ import org.jgrapht.graph.SimpleWeightedGraph;
  * 
  * <p><b>Required input:</b> A 2D or 3D time-lapse image with bright blobs.</p>
  *
- * @author Nicholas Perry, Jean-Yves Tinevez - Institut Pasteur - July 2010 - 2011 - 2012
+ * @author Nicholas Perry, Jean-Yves Tinevez - Institut Pasteur - July 2010 - 2011 - 2012 - 2013
  *
  */
 public class TrackMate_ implements PlugIn, Benchmark, MultiThreaded, Algorithm {
 
 	public static final String PLUGIN_NAME_STR = "TrackMate";
-	public static final String PLUGIN_NAME_VERSION = "1.3.0";
+	public static final String PLUGIN_NAME_VERSION = "2.0.0-rc1";
 	public static final boolean DEFAULT_USE_MULTITHREADING = true;
 
 	/** 
