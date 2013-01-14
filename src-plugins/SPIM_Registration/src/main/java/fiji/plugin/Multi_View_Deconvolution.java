@@ -113,6 +113,9 @@ public class Multi_View_Deconvolution implements PlugIn
 			IJ.log( "Block size: " + Util.printCoordinates( blockSize ) );
 		IJ.log( "Using CUDA: " + useCUDA );
 		
+		if ( debugMode )
+			IJ.log( "Debugging every " + debugInterval + " iterations." );
+		
 		IJ.log( "ImgLib container (input): " + conf.outputImageFactory.getClass().getSimpleName() );
 		IJ.log( "ImgLib container (output): " + conf.imageFactory.getClass().getSimpleName() );
 		
@@ -123,6 +126,7 @@ public class Multi_View_Deconvolution implements PlugIn
 
 		// set debug mode
 		BayesMVDeconvolution.debug = debugMode;
+		BayesMVDeconvolution.debugInterval = debugInterval;
 		
 		for ( int view = 0; view < numViews; ++view )
 		{
@@ -186,6 +190,7 @@ public class Multi_View_Deconvolution implements PlugIn
 	public static double defaultLambda = 0.006;
 	public static boolean showAveragePSF = true;
 	public static boolean defaultDebugMode = false;
+	public static int defaultDebugInterval = 1;
 	public static int defaultIterationType = 1;
 	public static int defaultContainer = 0;
 	public static int defaultComputationIndex = 0;
@@ -197,7 +202,7 @@ public class Multi_View_Deconvolution implements PlugIn
 	public static String[] blocks = new String[]{ "Entire image at once", "in 64x64x64 blocks", "in 128x128x128 blocks", "in 256x256x256 blocks", "in 512x512x512 blocks", "specify maximal blocksize manually" };
 	
 	PSFTYPE iterationType;
-	int numIterations, container, computationType, blockSizeIndex;
+	int numIterations, container, computationType, blockSizeIndex, debugInterval = 1;
 	int[] blockSize = null;
 	boolean useTikhonovRegularization = true, useBlocks = false, useCUDA = false, debugMode = false;
 	
@@ -637,8 +642,11 @@ public class Multi_View_Deconvolution implements PlugIn
 				if ( deviceChoice == null || deviceChoice.size() != devices.length + 1 )
 				{
 					deviceChoice = new ArrayList<Boolean>( devices.length + 1 );
-					for ( int i = 0; i < devices.length + 1; ++i )
+					for ( int i = 0; i < devices.length; ++i )
 						deviceChoice.add( true );
+					
+					// CPU is by default not checked
+					deviceChoice.add( false );
 				}
 				
 				final GenericDialog gdCUDA = new GenericDialog( "Choose CUDA/CPUs devices to use" );
@@ -709,6 +717,18 @@ public class Multi_View_Deconvolution implements PlugIn
 				deviceList.add( standardDevice = gdCUDA.getNextChoiceIndex() );
 				IJ.log( "Using device " + devices[ deviceList.get( 0 ) ] );
 			}
+		}
+		
+		if ( debugMode )
+		{
+			GenericDialog gdDebug = new GenericDialog( "Debug options" );
+			gdDebug.addNumericField( "Show debug output every n'th frame, n = ", defaultDebugInterval, 0 );
+			gdDebug.showDialog();
+			
+			if ( gdDebug.wasCanceled() )
+				return null;
+			
+			defaultDebugInterval = debugInterval = (int)Math.round( gd.getNextNumber() );
 		}
 		
 		conf.paralellFusion = false;
