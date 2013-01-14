@@ -728,7 +728,7 @@ public class Multi_View_Deconvolution implements PlugIn
 			if ( gdDebug.wasCanceled() )
 				return null;
 			
-			defaultDebugInterval = debugInterval = (int)Math.round( gd.getNextNumber() );
+			defaultDebugInterval = debugInterval = (int)Math.round( gdDebug.getNextNumber() );
 		}
 		
 		conf.paralellFusion = false;
