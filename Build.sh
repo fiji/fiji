@@ -252,6 +252,7 @@ else
 	for name in "$@"
 	do
 		artifactId="${name##*/}"
+		artifactId="${artifactId%.jar}"
 		artifactId="${artifactId%%-[0-9]*}"
 		case "$name" in
 		*-rebuild)
