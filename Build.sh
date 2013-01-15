@@ -205,6 +205,15 @@ maven_update () {
 		version="${artifactId#*:}"
 		artifactId="${artifactId%%:*}"
 		path="jars/$artifactId-$version.jar"
+
+		test -f jars/"$artifactId".jar && rm jars/"$artifactId".jar
+		for file in jars/"$artifactId"-[0-9]*.jar
+		do
+			test "a$file" = a"$path" && continue
+			test -f "$file" || continue
+			rm "$file"
+		done
+
 		uptodate "$ARGV0" "$path" && continue
 		echo "Downloading $gav" >&2
 		(cd jars/ && sh "$MAVEN_DOWNLOAD" install "$gav")
