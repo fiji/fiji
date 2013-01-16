@@ -182,7 +182,7 @@ esac
 ARGV0="$CWD/$0"
 SCIJAVA_COMMON="$CWD/modules/scijava-common"
 MAVEN_DOWNLOAD="$SCIJAVA_COMMON/bin/maven-helper.sh"
-maven_download () {
+maven_update () {
 	uptodate "$ARGV0" "$MAVEN_DOWNLOAD" || {
 		if test -d "$SCIJAVA_COMMON/.git"
 		then
@@ -201,12 +201,22 @@ maven_download () {
 	}
 	for gav in "$@"
 	do
-		echo "Downloading $gav" >&2
-		(cd jars/ && sh "$MAVEN_DOWNLOAD" install "$gav")
 		artifactId="${gav#*:}"
 		version="${artifactId#*:}"
 		artifactId="${artifactId%%:*}"
 		path="jars/$artifactId-$version.jar"
+
+		test -f jars/"$artifactId".jar && rm jars/"$artifactId".jar
+		for file in jars/"$artifactId"-[0-9]*.jar
+		do
+			test "a$file" = a"$path" && continue
+			test -f "$file" || continue
+			rm "$file"
+		done
+
+		uptodate "$ARGV0" "$path" && continue
+		echo "Downloading $gav" >&2
+		(cd jars/ && sh "$MAVEN_DOWNLOAD" install "$gav")
 		if test ! -f "$path"
 		then
 			echo "Failure to download $path" >&2
@@ -218,12 +228,9 @@ maven_download () {
 
 # make sure that javac and ij-minimaven are up-to-date
 VERSION=2.0.0-SNAPSHOT
-uptodate "$ARGV0" jars/javac-$VERSION.jar ||
-maven_download sc.fiji:javac:$VERSION
-uptodate "$ARGV0" jars/ij-core-$VERSION.jar ||
-maven_download net.imagej:ij-core:$VERSION
-uptodate "$ARGV0" jars/ij-minimaven-$VERSION.jar ||
-maven_download net.imagej:ij-minimaven:$VERSION
+maven_update sc.fiji:javac:$VERSION
+maven_update net.imagej:ij-core:$VERSION
+maven_update net.imagej:ij-minimaven:$VERSION
 
 OPTIONS="-Dimagej.app.directory=\"$CWD\""
 while test $# -gt 0
@@ -252,6 +259,7 @@ else
 	for name in "$@"
 	do
 		artifactId="${name##*/}"
+		artifactId="${artifactId%.jar}"
 		artifactId="${artifactId%%-[0-9]*}"
 		case "$name" in
 		*-rebuild)
