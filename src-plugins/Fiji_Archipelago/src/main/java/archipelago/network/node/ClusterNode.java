@@ -209,7 +209,7 @@ public class ClusterNode implements TransceiverListener
         {
             if (processHandlers.get(process.getID()) == null)
             {
-                FijiArchipelago.debug(getHost() + " scheduling process");
+                //FijiArchipelago.debug(getHost() + " scheduling process");
                 processHandlers.put(process.getID(), listener);
                 runningProcesses.put(process.getID(), process);
                 process.setRunningOn(this);
@@ -257,7 +257,7 @@ public class ClusterNode implements TransceiverListener
                 ProcessListener listener = processHandlers.remove(pm.getID());
                 runningProcesses.remove(pm.getID());
 
-                FijiArchipelago.log("Got process results from " + getHost());
+//                FijiArchipelago.log("Got process results from " + getHost());
 
                 listener.processFinished(pm);
             }
