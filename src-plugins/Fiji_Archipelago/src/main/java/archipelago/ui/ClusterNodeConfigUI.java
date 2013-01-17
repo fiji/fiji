@@ -146,7 +146,7 @@ public class ClusterNodeConfigUI implements ActionListener
                 nCpu = (int)gd.getNextNumber();
                 execRoot = gd.getNextString();
                 fileRoot = gd.getNextString();
-                label.setText(user + "@" + hostName + ":" + port);
+                label.setText(user + "@" + hostName + ":" + port + " x" + nCpu);
                 mainPanel.validate();
                 centerPanel.validate();
             }
@@ -477,7 +477,7 @@ public class ClusterNodeConfigUI implements ActionListener
     private void selectConfigFile()
     {
         OpenDialog od = new OpenDialog("Select Config File", null);
-        fileName.setText(od.getFileName());
+        fileName.setText(od.getDirectory() + "/" + od.getFileName());
     }
 
     private void addNodeConfig()
