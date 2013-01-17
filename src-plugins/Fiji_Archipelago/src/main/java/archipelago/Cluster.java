@@ -39,7 +39,7 @@ public class Cluster implements ExecutorService, NodeStateListener
      */
     public class ProcessScheduler extends Thread
     {
-        private final ArrayBlockingQueue<ProcessManager> jobQueue, priorityJobQueue;
+        private final LinkedBlockingQueue<ProcessManager> jobQueue, priorityJobQueue;
         private final AtomicInteger pollTime;
         private final AtomicBoolean running;
         private final Hashtable<Long, ProcessManager> runningProcesses;
@@ -48,8 +48,8 @@ public class Cluster implements ExecutorService, NodeStateListener
 
         private ProcessScheduler(int jobCapacity, int t)
         {
-            jobQueue = new ArrayBlockingQueue<ProcessManager>(jobCapacity);
-            priorityJobQueue = new ArrayBlockingQueue<ProcessManager>(jobCapacity);
+            jobQueue = new LinkedBlockingQueue<ProcessManager>();
+            priorityJobQueue = new LinkedBlockingQueue<ProcessManager>();
             running = new AtomicBoolean(true);
             pollTime = new AtomicInteger(t);
             runningProcesses = new Hashtable<Long, ProcessManager>();
@@ -62,8 +62,6 @@ public class Cluster implements ExecutorService, NodeStateListener
         {
             pollTime.set(t);
         }
-
-        //public synchronized boolean submit()
 
         public synchronized <T> boolean queueJob(Callable<T> c, long id)
         {
@@ -79,32 +77,22 @@ public class Cluster implements ExecutorService, NodeStateListener
         public synchronized boolean queueJob(ProcessManager pm, boolean priority)
         {
 
-            ArrayBlockingQueue<ProcessManager> queue = priority ? priorityJobQueue : jobQueue;
+            BlockingQueue<ProcessManager> queue = priority ? priorityJobQueue : jobQueue;
 
-            // This test guarantees that we will always have at least a certain capacity in the queue
-            // We have two queues that have a total capacity of guaranteeCapacity each.
-            // This means that if remainingCapacity() returns exactly guaranteeCapacity, then we
-            // have guaranteeCapacity's worth of jobs already in queue.
-            if (priority || remainingCapacity() >= guaranteeCapacity)
+            // This is done in the event that the ProcessManager in question is being
+            // re-queued.
+            pm.setRunningOn(null);
+
+            try
             {
-                // This is done in the event that the ProcessManager in question is being
-                // re-queued.
-                pm.setRunningOn(null);
-                queue.add(pm);
+                queue.put(pm);
                 return true;
-            }
-            else
+            } catch (InterruptedException ie)
             {
                 return false;
             }
         }
         
-        private int remainingCapacity()
-        {
-            return priorityJobQueue.remainingCapacity() + jobQueue.remainingCapacity();
-        }
-
-
         private synchronized ClusterNode getFreeNode()
         {
             for (ClusterNode node : nodes)
@@ -177,6 +165,7 @@ public class Cluster implements ExecutorService, NodeStateListener
                                 
                                 try
                                 {
+                                    FijiArchipelago.debug("Scheduler: Finishing Future " + future.getID());
                                     future.finish(process);
                                     return true;
                                 }
@@ -186,9 +175,6 @@ public class Cluster implements ExecutorService, NodeStateListener
                                 }
                             }
                         };
-                                
-                        FijiArchipelago.log("Scheduling job on " + node.getHost());
-                        FijiArchipelago.log("There are now " + jobQueue.size() + " jobs in queue");
 
                         /*
                         Here, we have a ProcessManager, a ProcessListener, and a ClusterNode.
@@ -360,7 +346,6 @@ public class Cluster implements ExecutorService, NodeStateListener
 
             priorityJobQueue.clear();
             jobQueue.clear();
-            //nodes.clear();
         }
         
         public int queuedJobCount()
@@ -526,7 +511,6 @@ public class Cluster implements ExecutorService, NodeStateListener
     {
         nodes.add(node);
         node.addListener(this);
-        //ready.set(true);
     }
 
     public void removeNode(ClusterNode node)
@@ -717,12 +701,9 @@ public class Cluster implements ExecutorService, NodeStateListener
 
         if (nJobs < 0)
         {
-            FijiArchipelago.log("Job Count is negative. That shouldn't happen.");
+            FijiArchipelago.log("Cluster: Job Count is negative. That shouldn't happen.");
         }
 
-        FijiArchipelago.debug("Cluster: Job finished. Running job count is now " + nJobs
-                + "state: " + isShutdown() + " " + isTerminated());
-        
         if (nJobs <= 0 && isShutdown() && !isTerminated())
         {
             FijiArchipelago.debug("Cluster: Calling haltFinished");
