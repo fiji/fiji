@@ -145,20 +145,28 @@ public class ArchipelagoFuture<T> implements Future<T>
     public T get(final long l, final TimeUnit timeUnit) throws InterruptedException,
             ExecutionException, TimeoutException
     {
+        FijiArchipelago.debug("Future: " + getID() + " get() called");
         if (!done.get())
         {
-            final Thread currThread = Thread.currentThread();            
+            FijiArchipelago.debug("Future: " + getID() + " not done");
+            final Thread currThread = Thread.currentThread();
+
+            FijiArchipelago.debug("Future: " + getID() + " acquiring lock...");
             threadLock.lock();
+            FijiArchipelago.debug("Future: " + getID() + " lock acquired. Adding Thread to queue");
             waitingThreads.add(currThread);
             threadLock.unlock();
             try
             {
+                FijiArchipelago.debug("Future: " + getID() + " sleeping...");
                 Thread.sleep(timeUnit.convert(l, TimeUnit.MILLISECONDS));
+                FijiArchipelago.debug("Future: " + getID() + " timed out");
                 removeWaitingThread(currThread);                
                 throw new TimeoutException();
             }
             catch (InterruptedException ie)
             {
+                FijiArchipelago.debug("Future: " + getID() + " woken up");
                 removeWaitingThread(currThread);
                 if (!done.get())
                 {
