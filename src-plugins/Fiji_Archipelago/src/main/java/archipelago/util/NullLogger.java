@@ -1,4 +1,4 @@
-package archipelago;
+package archipelago.util;
 /**
  *
  * @author Larry Lindsey

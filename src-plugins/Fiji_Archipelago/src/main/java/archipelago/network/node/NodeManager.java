@@ -1,7 +1,7 @@
-package archipelago;
+package archipelago.network.node;
 
-import archipelago.network.ClusterNode;
-import archipelago.network.shell.JSchNodeShell;
+import archipelago.FijiArchipelago;
+import archipelago.network.node.ClusterNode;
 import archipelago.network.shell.NodeShell;
 
 import java.util.Hashtable;
