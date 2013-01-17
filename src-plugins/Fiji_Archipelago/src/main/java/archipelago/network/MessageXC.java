@@ -5,6 +5,7 @@ import archipelago.data.ClusterMessage;
 import archipelago.listen.TransceiverListener;
 
 import java.io.*;
+import java.util.ConcurrentModificationException;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -64,15 +65,16 @@ public class MessageXC
                 {
                     try
                     {
-                        FijiArchipelago.debug("TX: " + hostName + " Writing message " + nextMessage.message + " ... ");
                         objectOutputStream.writeObject(nextMessage);
                         objectOutputStream.flush();
-                        FijiArchipelago.debug("TX: " + hostName + " success.");
+                        FijiArchipelago.debug("TX: Successfully wrote message "
+                                + nextMessage.message + " to " + hostName);
                         objectOutputStream = new ObjectOutputStream(outStream);
                     }
                     catch (NotSerializableException nse)
                     {
-                        FijiArchipelago.err("TX " + hostName + " tried to send a non serializable object: " + nse);
+                        FijiArchipelago.err("TX " + hostName
+                                + " tried to send a non serializable object: " + nse);
                     }
                     catch (IOException ioe)
                     {
@@ -80,6 +82,14 @@ public class MessageXC
 
                         active.set(false);
                         close();
+                    }
+                    catch (ConcurrentModificationException ccme)
+                    {
+                        FijiArchipelago.err("TX: Concurrent modification exception: " + ccme);
+                    }
+                    catch (Exception e)
+                    {
+                        FijiArchipelago.err("TX: Caught unexpected exception: " + e);
                     }
                 }
             }
