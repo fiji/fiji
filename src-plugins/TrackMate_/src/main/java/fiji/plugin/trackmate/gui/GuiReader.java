@@ -256,10 +256,14 @@ public class GuiReader {
 				if (!imp.isVisible())
 					imp.show();
 				echoLoadingFinished();
+				spotFilterDescriptor.aboutToDisplayPanel();
 				spotFilterDescriptor.displayingPanel();
 				return;
 			}
 			logger.log("Found the filtered spot collection.\n");
+			wizard.setDisplayer(displayer);
+			spotFilterDescriptor.aboutToDisplayPanel();
+			spotFilterDescriptor.displayingPanel();
 		}
 
 		{ // Did we get tracker settings
