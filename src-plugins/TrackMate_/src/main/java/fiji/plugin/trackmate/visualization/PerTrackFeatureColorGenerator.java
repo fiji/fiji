@@ -27,7 +27,7 @@ import fiji.plugin.trackmate.features.track.TrackIndexAnalyzer;
 public class PerTrackFeatureColorGenerator implements TrackColorGenerator, ModelChangeListener {
 
 	/** Default color used when a feature value is missing. */
-	private static final Color DEFAULT_COLOR = Color.WHITE;
+	private static final Color DEFAULT_COLOR = Color.GREEN;
 	private static final InterpolatePaintScale generator = InterpolatePaintScale.Jet;
 	private HashMap<Integer,Color> colorMap;
 	private final TrackMateModel model;
@@ -51,6 +51,13 @@ public class PerTrackFeatureColorGenerator implements TrackColorGenerator, Model
 	 * @throws IllegalArgumentException if the specified feature is unknown to the feature model.
 	 */
 	public void setFeature(String feature) {
+		// Special case: if null, then all tracks should be green
+		if (null == feature) {
+			this.feature = null;
+			refreshNull();
+			return;
+		}
+		
 		if (feature.equals(this.feature)) {
 			return;
 		}
@@ -60,6 +67,17 @@ public class PerTrackFeatureColorGenerator implements TrackColorGenerator, Model
 			refreshIndex();
 		} else {
 			refresh();
+		}
+	}
+
+	private synchronized void refreshNull() {
+		TrackGraphModel trackModel = model.getTrackModel();
+		Set<Integer> trackIDs = trackModel.getFilteredTrackIDs();
+
+		// Create value->color map
+		colorMap = new HashMap<Integer, Color>(trackIDs.size());
+		for (Integer trackID : trackIDs) {
+			colorMap.put(trackID, DEFAULT_COLOR);
 		}
 	}
 
