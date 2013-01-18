@@ -240,14 +240,14 @@ public class TmXmlWriter implements Algorithm, Benchmark  {
 		List<String> trackIntFeatures = new ArrayList<String>();
 		trackIntFeatures.add(TrackIndexAnalyzer.TRACK_ID);
 		trackIntFeatures.add(TrackIndexAnalyzer.TRACK_INDEX); // TODO is there a better way?
-		List<String> trackDoubleFeatures = model.getFeatureModel().getTrackFeatures();
+		List<String> trackDoubleFeatures = new ArrayList<String>(model.getFeatureModel().getTrackFeatures());
 		trackDoubleFeatures.removeAll(trackIntFeatures);
 		
 		// Same thing for edge features
 		List<String> edgeIntFeatures = new ArrayList<String>();// TODO is there a better way?
 		edgeIntFeatures.add(EdgeTargetAnalyzer.SPOT_SOURCE_ID);
 		edgeIntFeatures.add(EdgeTargetAnalyzer.SPOT_TARGET_ID);
-		List<String> edgeDoubleFeatures = model.getFeatureModel().getEdgeFeatures();
+		List<String> edgeDoubleFeatures = new ArrayList<String>(model.getFeatureModel().getEdgeFeatures());
 		edgeDoubleFeatures.removeAll(edgeIntFeatures);
 		
 		for (int trackID : trackEdges.keySet()) {
