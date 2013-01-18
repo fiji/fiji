@@ -5,9 +5,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import fiji.plugin.trackmate.features.track.TrackAnalyzer;
 import fiji.plugin.trackmate.features.track.TrackBranchingAnalyzer;
 import fiji.plugin.trackmate.features.track.TrackDurationAnalyzer;
-import fiji.plugin.trackmate.features.track.TrackAnalyzer;
 import fiji.plugin.trackmate.features.track.TrackIndexAnalyzer;
 import fiji.plugin.trackmate.features.track.TrackLocationAnalyzer;
 import fiji.plugin.trackmate.features.track.TrackSpeedStatisticsAnalyzer;
@@ -74,16 +74,16 @@ public class TrackAnalyzerProvider {
 	protected void registerTrackFeatureAnalyzers() {
 		// Names
 		names = new ArrayList<String>(4);
-		names.add(TrackSpeedStatisticsAnalyzer.KEY);
-		names.add(TrackDurationAnalyzer.KEY);
 		names.add(TrackBranchingAnalyzer.KEY);
+		names.add(TrackDurationAnalyzer.KEY);
+		names.add(TrackSpeedStatisticsAnalyzer.KEY);
 		names.add(TrackLocationAnalyzer.KEY);
 		names.add(TrackIndexAnalyzer.KEY);
 		// features
 		features = new HashMap<String, List<String>>();
-		features.put(TrackSpeedStatisticsAnalyzer.KEY, TrackSpeedStatisticsAnalyzer.FEATURES);
-		features.put(TrackDurationAnalyzer.KEY, TrackDurationAnalyzer.FEATURES);
 		features.put(TrackBranchingAnalyzer.KEY, TrackBranchingAnalyzer.FEATURES);
+		features.put(TrackDurationAnalyzer.KEY, TrackDurationAnalyzer.FEATURES);
+		features.put(TrackSpeedStatisticsAnalyzer.KEY, TrackSpeedStatisticsAnalyzer.FEATURES);
 		features.put(TrackLocationAnalyzer.KEY, TrackLocationAnalyzer.FEATURES);
 		features.put(TrackIndexAnalyzer.KEY, TrackIndexAnalyzer.FEATURES);
 		// features names

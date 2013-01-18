@@ -66,6 +66,11 @@ public class TrackFilterDescriptor implements WizardPanelDescriptor {
 				model.getFeatureModel().getTrackFeatureNames(), model.getFeatureModel().getTrackFeatureValues(), "tracks");
 		linkGuiToView();
 		component.jPanelColorByFeatureGUI.setColorByFeature(TrackIndexAnalyzer.TRACK_INDEX);
+		
+		PerTrackFeatureColorGenerator generator = new PerTrackFeatureColorGenerator(plugin.getModel(), TrackIndexAnalyzer.TRACK_INDEX);
+		generator.setFeature(component.getColorByFeature());
+		wizard.getDisplayer().setDisplaySettings(TrackMateModelView.KEY_TRACK_COLORING, generator);
+		wizard.getDisplayer().refresh();
 	}
 
 	@Override
