@@ -45,12 +45,8 @@ import static fiji.plugin.trackmate.io.TmXmlKeys.SPOT_NAME_ATTRIBUTE_NAME;
 import static fiji.plugin.trackmate.io.TmXmlKeys.TRACKER_SETTINGS_ELEMENT_KEY;
 import static fiji.plugin.trackmate.io.TmXmlKeys.TRACK_COLLECTION_ELEMENT_KEY;
 import static fiji.plugin.trackmate.io.TmXmlKeys.TRACK_EDGE_ELEMENT_KEY;
-import static fiji.plugin.trackmate.io.TmXmlKeys.TRACK_EDGE_SOURCE_ATTRIBUTE_NAME;
-import static fiji.plugin.trackmate.io.TmXmlKeys.TRACK_EDGE_TARGET_ATTRIBUTE_NAME;
-import static fiji.plugin.trackmate.io.TmXmlKeys.TRACK_EDGE_WEIGHT_ATTRIBUTE_NAME;
 import static fiji.plugin.trackmate.io.TmXmlKeys.TRACK_ELEMENT_KEY;
 import static fiji.plugin.trackmate.io.TmXmlKeys.TRACK_FILTER_COLLECTION_ELEMENT_KEY;
-import static fiji.plugin.trackmate.io.TmXmlKeys.TRACK_ID_ATTRIBUTE_NAME;
 import static fiji.plugin.trackmate.io.TmXmlKeys.TRACK_NAME_ATTRIBUTE_NAME;
 import static fiji.plugin.trackmate.io.TmXmlKeys.TRACK_ID_ELEMENT_KEY;
 
@@ -84,6 +80,8 @@ import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMate_;
 import fiji.plugin.trackmate.TrackerProvider;
+import fiji.plugin.trackmate.features.edges.EdgeTargetAnalyzer;
+import fiji.plugin.trackmate.features.track.TrackIndexAnalyzer;
 
 public class TmXmlWriter implements Algorithm, Benchmark  {
 
@@ -130,14 +128,14 @@ public class TmXmlWriter implements Algorithm, Benchmark  {
 		echoImageInfo();
 		echoBaseSettings();
 		echoDetectorSettings();
-		echoAllSpots();
 		echoInitialSpotFilter();
 		echoSpotFilters();
-		echoFilteredSpots();
 		echoTrackerSettings();
-		echoTracks();
 		echoTrackFilters();
+		echoTracks(); // dense stuff is put at the end of file
 		echoFilteredTracks();
+		echoAllSpots();
+		echoFilteredSpots();
 
 		long end = System.currentTimeMillis();
 		processingTime = end - start;
@@ -237,20 +235,35 @@ public class TmXmlWriter implements Algorithm, Benchmark  {
 		Element allTracksElement = new Element(TRACK_COLLECTION_ELEMENT_KEY);
 
 		Map<Integer, Set<DefaultWeightedEdge>> trackEdges = model.getTrackModel().getTrackEdges();
-
+		
+		// Prepare track features for writing: we separate ints from doubles 
+		List<String> trackIntFeatures = new ArrayList<String>();
+		trackIntFeatures.add(TrackIndexAnalyzer.TRACK_ID);
+		trackIntFeatures.add(TrackIndexAnalyzer.TRACK_INDEX); // TODO is there a better way?
+		List<String> trackDoubleFeatures = model.getFeatureModel().getTrackFeatures();
+		trackDoubleFeatures.removeAll(trackIntFeatures);
+		
+		// Same thing for edge features
+		List<String> edgeIntFeatures = new ArrayList<String>();// TODO is there a better way?
+		edgeIntFeatures.add(EdgeTargetAnalyzer.SPOT_SOURCE_ID);
+		edgeIntFeatures.add(EdgeTargetAnalyzer.SPOT_TARGET_ID);
+		List<String> edgeDoubleFeatures = model.getFeatureModel().getEdgeFeatures();
+		edgeDoubleFeatures.removeAll(edgeIntFeatures);
+		
 		for (int trackID : trackEdges.keySet()) {
 			Set<DefaultWeightedEdge> track = trackEdges.get(trackID);
 
 			Element trackElement = new Element(TRACK_ELEMENT_KEY);
-			// Echo attributes and features
-			trackElement.setAttribute(TRACK_ID_ATTRIBUTE_NAME, ""+trackID);
 			trackElement.setAttribute(TRACK_NAME_ATTRIBUTE_NAME, model.getTrackModel().getTrackName(trackID));
-			for(String feature : model.getFeatureModel().getTrackFeatures()) {
+			
+			for(String feature : trackDoubleFeatures) {
 				Double val = model.getFeatureModel().getTrackFeature(trackID, feature);
-				if (null == val) {
-					continue;
-				}
 				trackElement.setAttribute(feature, val.toString());
+			}
+			
+			for(String feature : trackIntFeatures) {
+				int val = model.getFeatureModel().getTrackFeature(trackID, feature).intValue();
+				trackElement.setAttribute(feature, ""+val);
 			}
 
 			// Echo edges
@@ -261,17 +274,19 @@ public class TmXmlWriter implements Algorithm, Benchmark  {
 				continue;
 
 			} else {
+				
 
 				for (DefaultWeightedEdge edge : track) {
 
-					Spot source = model.getTrackModel().getEdgeSource(edge);
-					Spot target = model.getTrackModel().getEdgeTarget(edge);
-					double weight = model.getTrackModel().getEdgeWeight(edge);
-
 					Element edgeElement = new Element(TRACK_EDGE_ELEMENT_KEY);
-					edgeElement.setAttribute(TRACK_EDGE_SOURCE_ATTRIBUTE_NAME, ""+source.ID());
-					edgeElement.setAttribute(TRACK_EDGE_TARGET_ATTRIBUTE_NAME, ""+target.ID());
-					edgeElement.setAttribute(TRACK_EDGE_WEIGHT_ATTRIBUTE_NAME, ""+weight);
+					for(String feature : edgeDoubleFeatures) {
+						Double val = model.getFeatureModel().getEdgeFeature(edge, feature);
+						edgeElement.setAttribute(feature, val.toString());
+					}
+					for(String feature : edgeIntFeatures) {
+						int val = model.getFeatureModel().getEdgeFeature(edge, feature).intValue();
+						edgeElement.setAttribute(feature, ""+val);
+					}
 
 					trackElement.addContent(edgeElement);
 				}
@@ -292,7 +307,7 @@ public class TmXmlWriter implements Algorithm, Benchmark  {
 		Set<Integer> filteredTrackKeys = model.getTrackModel().getFilteredTrackIDs();
 		for (int trackID : filteredTrackKeys) {
 			Element trackIDElement = new Element(TRACK_ID_ELEMENT_KEY);
-			trackIDElement.setAttribute(TRACK_ID_ATTRIBUTE_NAME, ""+trackID);
+			trackIDElement.setAttribute(TrackIndexAnalyzer.TRACK_ID, ""+trackID);
 			filteredTracksElement.addContent(trackIDElement);
 		}
 		root.addContent(filteredTracksElement);

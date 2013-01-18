@@ -68,8 +68,8 @@ public class EdgeTargetAnalyzerTest {
 
 		// Collect features
 		for (DefaultWeightedEdge edge :model.getTrackModel().edgeSet()) {
-			assertEquals(edgeSource.get(edge).ID(), model.getFeatureModel().getEdgeFeature(edge, EdgeTargetAnalyzer.SPOT1_ID).intValue());
-			assertEquals(edgeTarget.get(edge).ID(), model.getFeatureModel().getEdgeFeature(edge, EdgeTargetAnalyzer.SPOT2_ID).intValue());
+			assertEquals(edgeSource.get(edge).ID(), model.getFeatureModel().getEdgeFeature(edge, EdgeTargetAnalyzer.SPOT_SOURCE_ID).intValue());
+			assertEquals(edgeTarget.get(edge).ID(), model.getFeatureModel().getEdgeFeature(edge, EdgeTargetAnalyzer.SPOT_TARGET_ID).intValue());
 			assertEquals(edgeCost.get(edge).doubleValue(), model.getFeatureModel().getEdgeFeature(edge, EdgeTargetAnalyzer.EDGE_COST).doubleValue(), Double.MIN_VALUE);
 		}
 	}
