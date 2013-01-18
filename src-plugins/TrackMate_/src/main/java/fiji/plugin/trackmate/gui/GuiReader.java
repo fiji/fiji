@@ -132,13 +132,12 @@ public class GuiReader {
 		}
 
 		if (fileVersion.compareTo(currentVersion ) < 0) {
-			// We need to re-compute track features in this case
-			plugin.computeTrackFeatures(true);
+			// We need to re-compute track & edge features in this case
+			if (plugin.getModel().getTrackModel().getNTracks() > 0) {
+				plugin.computeTrackFeatures(true);
+				plugin.computeEdgeFeatures(true);
+			}
 		}
-
-		
-		// We need to recompute edge features here
-		plugin.computeEdgeFeatures(true);
 
 		// Make a new displayer
 		displayer = new HyperStackDisplayer(plugin.getModel());

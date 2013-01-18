@@ -27,8 +27,13 @@ public class SaveDescriptor extends SomeDialogDescriptor {
 					file = new File(folder.getPath() + File.separator + "TrackMateData.xml");
 				}
 			}
+			
+			// If we are to sabe tracks, we better ensures that track and edge features are there, even if we have to enforce it
+			if (plugin.getModel().getTrackModel().getNTracks() > 0) {
+				plugin.computeEdgeFeatures(true);
+				plugin.computeTrackFeatures(true);
+			}
 
-			plugin.computeTrackFeatures(true);
 			GuiSaver saver = new GuiSaver(wizard);
 			File tmpFile = IOUtils.askForFile(file, wizard, logger);
 			if (null == tmpFile) {

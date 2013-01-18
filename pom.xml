@@ -65,6 +65,7 @@
 					<links combine.children="append">
 						<link>http://jenkins.imagej.net/job/ImageJ-daily/javadoc</link>
 						<link>http://jenkins.imagej.net/job/ImgLib-daily/javadoc</link>
+						<link>http://jenkins.imagej.net/job/ImageJ1-javadoc/javadoc</link>
 					</links>
 				</configuration>
 			</plugin>

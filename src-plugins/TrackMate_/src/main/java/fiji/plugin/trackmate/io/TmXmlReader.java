@@ -47,12 +47,8 @@ import static fiji.plugin.trackmate.io.TmXmlKeys.SPOT_NAME_ATTRIBUTE_NAME;
 import static fiji.plugin.trackmate.io.TmXmlKeys.TRACKER_SETTINGS_ELEMENT_KEY;
 import static fiji.plugin.trackmate.io.TmXmlKeys.TRACK_COLLECTION_ELEMENT_KEY;
 import static fiji.plugin.trackmate.io.TmXmlKeys.TRACK_EDGE_ELEMENT_KEY;
-import static fiji.plugin.trackmate.io.TmXmlKeys.TRACK_EDGE_SOURCE_ATTRIBUTE_NAME;
-import static fiji.plugin.trackmate.io.TmXmlKeys.TRACK_EDGE_TARGET_ATTRIBUTE_NAME;
-import static fiji.plugin.trackmate.io.TmXmlKeys.TRACK_EDGE_WEIGHT_ATTRIBUTE_NAME;
 import static fiji.plugin.trackmate.io.TmXmlKeys.TRACK_ELEMENT_KEY;
 import static fiji.plugin.trackmate.io.TmXmlKeys.TRACK_FILTER_COLLECTION_ELEMENT_KEY;
-import static fiji.plugin.trackmate.io.TmXmlKeys.TRACK_ID_ATTRIBUTE_NAME;
 import static fiji.plugin.trackmate.io.TmXmlKeys.TRACK_ID_ELEMENT_KEY;
 import static fiji.plugin.trackmate.io.TmXmlKeys.TRACK_NAME_ATTRIBUTE_NAME;
 import ij.IJ;
@@ -93,6 +89,8 @@ import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMate_;
 import fiji.plugin.trackmate.TrackerProvider;
 import fiji.plugin.trackmate.detection.SpotDetectorFactory;
+import fiji.plugin.trackmate.features.edges.EdgeTargetAnalyzer;
+import fiji.plugin.trackmate.features.track.TrackIndexAnalyzer;
 import fiji.plugin.trackmate.tracking.SpotTracker;
 
 
@@ -147,9 +145,9 @@ public class TmXmlReader implements Algorithm, Benchmark {
 
 	@Override
 	public boolean process() {
-		
+
 		long start = System.currentTimeMillis();
-		
+
 		TrackMateModel model = plugin.getModel();
 		// Settings
 		Settings settings = getSettings();
@@ -169,7 +167,9 @@ public class TmXmlReader implements Algorithm, Benchmark {
 		model.setSpots(allSpots, false);
 		model.setFilteredSpots(filteredSpots, false);
 		// Tracks, filtered tracks and track features all at once
-		readTracks();
+		if (!readTracks()) {
+			return false;
+		}
 
 		// Track Filters
 		List<FeatureFilter> trackFilters = getTrackFeatureFilters();
@@ -177,7 +177,7 @@ public class TmXmlReader implements Algorithm, Benchmark {
 
 		long end = System.currentTimeMillis();
 		processingTime = end - start;
-		
+
 		return true;
 	}
 
@@ -205,7 +205,7 @@ public class TmXmlReader implements Algorithm, Benchmark {
 	public String getErrorMessage() {
 		return logger.toString();
 	}
-	
+
 	/*
 	 * PRIVATE METHODS
 	 */
@@ -267,7 +267,7 @@ public class TmXmlReader implements Algorithm, Benchmark {
 
 			int trackID = -1;
 			try {
-				trackID = trackElement.getAttribute(TRACK_ID_ATTRIBUTE_NAME).getIntValue();
+				trackID = trackElement.getAttribute(TrackIndexAnalyzer.TRACK_ID).getIntValue();
 			} catch (DataConversionException e1) {
 				logger.error("Found a track with invalid trackID for " + trackElement + ". Skipping.\n");
 				continue;
@@ -279,10 +279,6 @@ public class TmXmlReader implements Algorithm, Benchmark {
 			for(Attribute attribute : attributes) {
 
 				String attName = attribute.getName();
-				if (attName.equals(TRACK_ID_ATTRIBUTE_NAME)) { // Skip trackID attribute
-					continue;
-				}
-
 				Double attVal = Double.NaN;
 				try {
 					attVal = attribute.getDoubleValue();
@@ -573,13 +569,14 @@ public class TmXmlReader implements Algorithm, Benchmark {
 	/**
 	 * Load the tracks, the track features and the ID of the filtered tracks into the model
 	 * modified by this reader. 
-	 * @return true if the tracks were found in the file, false otherwise.
+	 * @return 
+	 * @return true if reading tracks was successsful, false otherwise.
 	 */
-	private void readTracks() {
+	private boolean readTracks() {
 
 		Element allTracksElement = root.getChild(TRACK_COLLECTION_ELEMENT_KEY);
 		if (null == allTracksElement)
-			return;
+			return true;
 
 		if (null == cache) 
 			getAllSpots(); // build the cache if it's not there
@@ -593,11 +590,19 @@ public class TmXmlReader implements Algorithm, Benchmark {
 		// A temporary map that maps stored track key to one of its spot
 		HashMap<Integer, Spot> savedTrackMap = new HashMap<Integer, Spot>(trackElements.size());
 		HashMap<Integer, String> savedTrackNames = new HashMap<Integer, String>(trackElements.size());
+		
+		// The list of edge features. that we will set.
+		final FeatureModel fm = plugin.getModel().getFeatureModel();
+		List<String> edgeIntFeatures = new ArrayList<String>();// TODO is there a better way?
+		edgeIntFeatures.add(EdgeTargetAnalyzer.SPOT_SOURCE_ID);
+		edgeIntFeatures.add(EdgeTargetAnalyzer.SPOT_TARGET_ID);
+		List<String> edgeDoubleFeatures = fm.getEdgeFeatures();
+		edgeDoubleFeatures.removeAll(edgeIntFeatures);
 
 		for (Element trackElement : trackElements) {
 
 			// Get track ID as it is saved on disk
-			int trackID = readIntAttribute(trackElement, TRACK_ID_ATTRIBUTE_NAME, logger);
+			int trackID = readIntAttribute(trackElement, TrackIndexAnalyzer.TRACK_ID, logger);
 			String trackName = trackElement.getAttributeValue(TRACK_NAME_ATTRIBUTE_NAME);
 			if (null == trackName) {
 				trackName = "Unnamed";
@@ -611,8 +616,8 @@ public class TmXmlReader implements Algorithm, Benchmark {
 			for (Element edgeElement : edgeElements) {
 
 				// Get source and target ID for this edge
-				int sourceID = readIntAttribute(edgeElement, TRACK_EDGE_SOURCE_ATTRIBUTE_NAME, logger);
-				int targetID = readIntAttribute(edgeElement, TRACK_EDGE_TARGET_ATTRIBUTE_NAME, logger);
+				int sourceID = readIntAttribute(edgeElement, EdgeTargetAnalyzer.SPOT_SOURCE_ID, logger);
+				int targetID = readIntAttribute(edgeElement, EdgeTargetAnalyzer.SPOT_TARGET_ID, logger);
 
 				// Get matching spots from the cache
 				sourceSpot = cache.get(sourceID);
@@ -620,23 +625,23 @@ public class TmXmlReader implements Algorithm, Benchmark {
 
 				// Get weight
 				double weight = 0;
-				if (null != edgeElement.getAttribute(TRACK_EDGE_WEIGHT_ATTRIBUTE_NAME)) {
-					weight   	= readDoubleAttribute(edgeElement, TRACK_EDGE_WEIGHT_ATTRIBUTE_NAME, logger);
+				if (null != edgeElement.getAttribute(EdgeTargetAnalyzer.EDGE_COST)) {
+					weight = readDoubleAttribute(edgeElement, EdgeTargetAnalyzer.EDGE_COST, logger);
 				}
 
 				// Error check
 				if (null == sourceSpot) {
-					logger.error("Unknown spot ID: "+sourceID);
-					continue;
+					logger.error("Unknown spot ID: "+sourceID + "\n");
+					return false;
 				}
 				if (null == targetSpot) {
-					logger.error("Unknown spot ID: "+targetID);
-					continue;
+					logger.error("Unknown spot ID: "+targetID + "\n");
+					return false;
 				}
 
 				if (sourceSpot.equals(targetSpot)) {
-					logger.error("Bad link for track " + trackID + ". Source = Target with ID: " + sourceID);
-					continue;
+					logger.error("Bad link for track " + trackID + ". Source = Target with ID: " + sourceID + "\n");
+					return false;
 				}
 
 				// Add spots to graph and build edge
@@ -645,10 +650,21 @@ public class TmXmlReader implements Algorithm, Benchmark {
 				DefaultWeightedEdge edge = graph.addEdge(sourceSpot, targetSpot);
 
 				if (edge == null) {
-					logger.error("Bad edge found for track "+trackID);
-					continue;
+					logger.error("Bad edge found for track " + trackID + "\n");
+					return false;
 				} else {
 					graph.setEdgeWeight(edge, weight);
+					
+					// Put edge features
+					for (String feature : edgeDoubleFeatures) {
+						double val = readDoubleAttribute(edgeElement, feature, logger);
+						fm.putEdgeFeature(edge, feature, val);
+					}
+					for (String feature : edgeIntFeatures) {
+						double val = (double) readIntAttribute(edgeElement, feature, logger);
+						fm.putEdgeFeature(edge, feature, val);
+					}
+					
 				}
 			} // Finished parsing over the edges of the track
 
@@ -682,7 +698,8 @@ public class TmXmlReader implements Algorithm, Benchmark {
 				}
 			}
 			if (null == newKeyMap.get(savedKey)) {
-				logger.error("The track saved with ID = " + savedKey + " and containing the spot " + spotToFind + " has no matching track in the computed model.");
+				logger.error("The track saved with ID = " + savedKey + " and containing the spot " + spotToFind + " has no matching track in the computed model.\n");
+				return false;
 			}
 		}
 
@@ -693,6 +710,7 @@ public class TmXmlReader implements Algorithm, Benchmark {
 				sb.append(" - track with ID " + unmatchedKey + " with spots " + newTrackMap.get(unmatchedKey) + "\n");
 			}
 			logger.error(sb.toString());
+			return false;
 		}
 
 		/* 
@@ -707,30 +725,43 @@ public class TmXmlReader implements Algorithm, Benchmark {
 			newFilteredTrackIDs.add(newKey);
 		}
 		model.getTrackModel().setFilteredTrackIDs(newFilteredTrackIDs, false);
-		
+
 
 		/* 
 		 * We do the same thing for the track features.
 		 */
-		final FeatureModel fm = model.getFeatureModel();
-		Map<Integer, Map<String, Double>> savedFeatureMap = readTrackFeatures();
-		for (Integer savedKey : savedFeatureMap.keySet()) {
+		try {
+			Map<Integer, Map<String, Double>> savedFeatureMap = readTrackFeatures();
+			for (Integer savedKey : savedFeatureMap.keySet()) {
 
-			Map<String, Double> savedFeatures = savedFeatureMap.get(savedKey);
-			for (String feature : savedFeatures.keySet()) {
-				Integer newKey = newKeyMap.get(savedKey);
-				fm.putTrackFeature(newKey, feature, savedFeatures.get(feature));
+				Map<String, Double> savedFeatures = savedFeatureMap.get(savedKey);
+				for (String feature : savedFeatures.keySet()) {
+					Integer newKey = newKeyMap.get(savedKey);
+					fm.putTrackFeature(newKey, feature, savedFeatures.get(feature));
+				}
 			}
+		} catch (RuntimeException re) {
+			logger.error("Problem populating track features:\n");
+			logger.error(re.getMessage());
+			return false;
 		}
 
 		/*
 		 * We can name correctly the tracks
 		 */
-		
-		for (Integer savedTrackID : savedTrackNames.keySet()) {
-			Integer newKey = newKeyMap.get(savedTrackID);
-			model.getTrackModel().setTrackName(newKey, savedTrackNames.get(savedTrackID));
+
+		try {
+			for (Integer savedTrackID : savedTrackNames.keySet()) {
+				Integer newKey = newKeyMap.get(savedTrackID);
+				model.getTrackModel().setTrackName(newKey, savedTrackNames.get(savedTrackID));
+			}
+		} catch (RuntimeException rte) {
+			logger.error("Problem setting track names:\n");
+			logger.error(rte.getMessage());
+			return false;
 		}
+
+		return true;
 	}
 
 	/**
@@ -749,7 +780,7 @@ public class TmXmlReader implements Algorithm, Benchmark {
 		int[] IDs = new int[trackElements.size()];
 		int index = 0;
 		for (Element trackElement : trackElements) {
-			int trackID = readIntAttribute(trackElement, TRACK_ID_ATTRIBUTE_NAME, logger);
+			int trackID = readIntAttribute(trackElement, TrackIndexAnalyzer.TRACK_ID, logger);
 			IDs[index] = trackID;
 			index++;
 		}
@@ -758,7 +789,7 @@ public class TmXmlReader implements Algorithm, Benchmark {
 		List<Element> elements = filteredTracksElement.getChildren(TRACK_ID_ELEMENT_KEY);
 		HashSet<Integer> filteredTrackIndices = new HashSet<Integer>(elements.size());
 		for (Element indexElement : elements) {
-			Integer trackID = readIntAttribute(indexElement, TRACK_ID_ATTRIBUTE_NAME, logger);
+			Integer trackID = readIntAttribute(indexElement, TrackIndexAnalyzer.TRACK_ID, logger);
 			if (null != trackID) {
 
 				// Check if this one exist in the list
@@ -799,5 +830,5 @@ public class TmXmlReader implements Algorithm, Benchmark {
 		return spot;
 	}
 
-	
+
 }

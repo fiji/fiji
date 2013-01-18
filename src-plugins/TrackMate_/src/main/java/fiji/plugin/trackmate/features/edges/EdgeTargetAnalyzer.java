@@ -23,9 +23,9 @@ public class EdgeTargetAnalyzer implements EdgeAnalyzer, MultiThreaded {
 	/*
 	 * FEATURE NAMES 
 	 */
-	public static final String SPOT1_ID = "SPOT1_ID";
-	public static final String SPOT2_ID = "SPOT2_ID";
-	public static final String EDGE_COST = "COST";
+	public static final String SPOT_SOURCE_ID = "SPOT_SOURCE_ID";
+	public static final String SPOT_TARGET_ID = "SPOT_TARGET_ID";
+	public static final String EDGE_COST = "LINK_COST";
 
 	public static final List<String> FEATURES = new ArrayList<String>(4);
 	public static final Map<String, String> FEATURE_NAMES = new HashMap<String, String>(4);
@@ -33,20 +33,20 @@ public class EdgeTargetAnalyzer implements EdgeAnalyzer, MultiThreaded {
 	public static final Map<String, Dimension> FEATURE_DIMENSIONS = new HashMap<String, Dimension>(4);
 
 	static {
-		FEATURES.add(SPOT1_ID);
-		FEATURES.add(SPOT2_ID);
+		FEATURES.add(SPOT_SOURCE_ID);
+		FEATURES.add(SPOT_TARGET_ID);
 		FEATURES.add(EDGE_COST);
 
-		FEATURE_NAMES.put(SPOT1_ID, "Source spot ID");
-		FEATURE_NAMES.put(SPOT2_ID, "Target spot ID");
+		FEATURE_NAMES.put(SPOT_SOURCE_ID, "Source spot ID");
+		FEATURE_NAMES.put(SPOT_TARGET_ID, "Target spot ID");
 		FEATURE_NAMES.put(EDGE_COST, "Link cost");
 
-		FEATURE_SHORT_NAMES.put(SPOT1_ID, "Source ID");
-		FEATURE_SHORT_NAMES.put(SPOT2_ID, "Target ID");
+		FEATURE_SHORT_NAMES.put(SPOT_SOURCE_ID, "Source ID");
+		FEATURE_SHORT_NAMES.put(SPOT_TARGET_ID, "Target ID");
 		FEATURE_SHORT_NAMES.put(EDGE_COST, "Cost");
 
-		FEATURE_DIMENSIONS.put(SPOT1_ID, Dimension.NONE);
-		FEATURE_DIMENSIONS.put(SPOT2_ID, Dimension.NONE);
+		FEATURE_DIMENSIONS.put(SPOT_SOURCE_ID, Dimension.NONE);
+		FEATURE_DIMENSIONS.put(SPOT_TARGET_ID, Dimension.NONE);
 		FEATURE_DIMENSIONS.put(EDGE_COST, Dimension.NONE);
 	}
 
@@ -90,9 +90,9 @@ public class EdgeTargetAnalyzer implements EdgeAnalyzer, MultiThreaded {
 						featureModel.putEdgeFeature(edge, EDGE_COST, model.getTrackModel().getEdgeWeight(edge));
 						// Source & target name & ID
 						Spot source = model.getTrackModel().getEdgeSource(edge);
-						featureModel.putEdgeFeature(edge, SPOT1_ID, Double.valueOf(source.ID()));
+						featureModel.putEdgeFeature(edge, SPOT_SOURCE_ID, Double.valueOf(source.ID()));
 						Spot target = model.getTrackModel().getEdgeTarget(edge);
-						featureModel.putEdgeFeature(edge, SPOT2_ID, Double.valueOf(target.ID()));
+						featureModel.putEdgeFeature(edge, SPOT_TARGET_ID, Double.valueOf(target.ID()));
 					}
 
 				}

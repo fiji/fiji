@@ -110,13 +110,13 @@ class TmXmlKeys {
 	
 	public static final String TRACK_COLLECTION_ELEMENT_KEY			= "AllTracks";
 	public static final String TRACK_ELEMENT_KEY 					= "Track";
-	public static final String TRACK_ID_ATTRIBUTE_NAME 				= "trackID";
+//	public static final String TRACK_ID_ATTRIBUTE_NAME 				= "trackID";
 	public static final String TRACK_NAME_ATTRIBUTE_NAME 			= "name";
 
 	public static final String TRACK_EDGE_ELEMENT_KEY				= "Edge";
-	public static final String TRACK_EDGE_SOURCE_ATTRIBUTE_NAME	 	= "sourceID";
-	public static final String TRACK_EDGE_TARGET_ATTRIBUTE_NAME	 	= "targetID";
-	public static final String TRACK_EDGE_WEIGHT_ATTRIBUTE_NAME	 	= "weight";
+//	public static final String TRACK_EDGE_SOURCE_ATTRIBUTE_NAME	 	= "sourceID";
+//	public static final String TRACK_EDGE_TARGET_ATTRIBUTE_NAME	 	= "targetID";
+//	public static final String TRACK_EDGE_WEIGHT_ATTRIBUTE_NAME	 	= "weight";
 
 	
 	/*
