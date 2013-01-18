@@ -381,7 +381,7 @@ public class MediaWikiClient {
 
 	String sessionKey = "wikidb_session";
 	Pattern cookiePattern =
-		Pattern.compile("^(wikidb[^_]*_[^=]*session)=([^;]*);.*$");
+		Pattern.compile("^([a-z]+[^_]*_[^=]*session)=([^;]*);.*$");
 	void getCookies(List<String> headers) {
 		if (headers == null)
 			return;
