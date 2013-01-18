@@ -164,8 +164,8 @@ public class TmXmlReader implements Algorithm, Benchmark {
 		// Spots
 		SpotCollection allSpots = getAllSpots();
 		SpotCollection filteredSpots = getFilteredSpots();
-		model.setSpots(allSpots, false);
-		model.setFilteredSpots(filteredSpots, false);
+		model.setSpots(allSpots, true);
+		model.setFilteredSpots(filteredSpots, true);
 		// Tracks, filtered tracks and track features all at once
 		if (!readTracks()) {
 			return false;
