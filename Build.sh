@@ -304,6 +304,11 @@ else
 			update_launcher
 			continue
 			;;
+		clean)
+			eval sh \"$CWD/bin/ImageJ.sh\" --mini-maven \
+                                "$OPTIONS" clean
+			continue
+			;;
 		esac
 		artifactId="${name##*/}"
 		artifactId="${artifactId%.jar}"
