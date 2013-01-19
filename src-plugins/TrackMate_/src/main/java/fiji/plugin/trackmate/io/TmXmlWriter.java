@@ -47,8 +47,8 @@ import static fiji.plugin.trackmate.io.TmXmlKeys.TRACK_COLLECTION_ELEMENT_KEY;
 import static fiji.plugin.trackmate.io.TmXmlKeys.TRACK_EDGE_ELEMENT_KEY;
 import static fiji.plugin.trackmate.io.TmXmlKeys.TRACK_ELEMENT_KEY;
 import static fiji.plugin.trackmate.io.TmXmlKeys.TRACK_FILTER_COLLECTION_ELEMENT_KEY;
-import static fiji.plugin.trackmate.io.TmXmlKeys.TRACK_NAME_ATTRIBUTE_NAME;
 import static fiji.plugin.trackmate.io.TmXmlKeys.TRACK_ID_ELEMENT_KEY;
+import static fiji.plugin.trackmate.io.TmXmlKeys.TRACK_NAME_ATTRIBUTE_NAME;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -93,17 +93,37 @@ public class TmXmlWriter implements Algorithm, Benchmark  {
 	private final Logger logger;
 	private final TrackMate_ plugin;
 	private final TrackMateModel model;
+	private final String log;
 	private long processingTime;
 
 	/*
 	 * CONSTRUCTORS
 	 */
 
+	/**
+	 * Create a new XML file write for the specified TrackMate plugin.
+	 * No log is added to the file.
+	 *  
+	 * @param plugin the plugin to write to XML. 
+	 */
 	public TmXmlWriter(final TrackMate_ plugin) {
+		this(plugin, null);
+	}
+
+	/**
+	 * Create a new XML file write for the specified TrackMate plugin.
+	 * This constructor will cause the specified log string to be appended to the file
+	 * as plain text content.
+	 *  
+	 * @param plugin the plugin to write to XML. 
+	 * @param log  the log text to add to the file.
+	 */
+	public TmXmlWriter(TrackMate_ plugin, String log) {
 		this.root = new Element(ROOT_ELEMENT_KEY);
 		root.setAttribute(PLUGIN_VERSION_ATTRIBUTE_NAME, fiji.plugin.trackmate.TrackMate_.PLUGIN_NAME_VERSION);
 		this.logger = new Logger.StringBuilderLogger();
 		this.plugin = plugin;
+		this.log = log;
 		this.model = plugin.getModel();
 	}
 
@@ -123,7 +143,11 @@ public class TmXmlWriter implements Algorithm, Benchmark  {
 
 	@Override
 	public boolean process() {
-		long start = System.currentTimeMillis(); 
+		long start = System.currentTimeMillis();
+		
+		if (null != log) {
+			root.addContent(log);
+		}
 
 		echoImageInfo();
 		echoBaseSettings();

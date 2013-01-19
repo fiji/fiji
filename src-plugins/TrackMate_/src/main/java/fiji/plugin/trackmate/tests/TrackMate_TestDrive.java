@@ -1,6 +1,5 @@
 package fiji.plugin.trackmate.tests;
 
-import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.TrackMate_;
 import ij.IJ;
 
@@ -23,16 +22,16 @@ public class TrackMate_TestDrive {
 		
 		final TrackMate_ st = new TrackMate_();
 		System.out.println("Running the plugin...");
-		new Thread() {
-			public void run() {
-				try {
-					Thread.sleep(1000);
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-				}
-				st.getModel().setLogger(Logger.DEFAULT_LOGGER);
-			};
-		}.start();
+//		new Thread() {
+//			public void run() {
+//				try {
+//					Thread.sleep(1000);
+//				} catch (InterruptedException e) {
+//					e.printStackTrace();
+//				}
+//				st.getModel().setLogger(fiji.plugin.trackmate.Logger.DEFAULT_LOGGER);
+//			};
+//		}.start();
 		st.run(null); // launch the GUI;
 		
 	}

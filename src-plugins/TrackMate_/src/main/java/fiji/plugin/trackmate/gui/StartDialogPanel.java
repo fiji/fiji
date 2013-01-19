@@ -135,6 +135,7 @@ public class StartDialogPanel extends ActionListenablePanel implements WizardPan
 	public void aboutToHidePanel() {
 		// Get settings and pass them to the plugin managed by the wizard
 		plugin.getModel().setSettings(getSettings());
+		plugin.getModel().getLogger().log(plugin.getModel().getSettings().toStringImageInfo());
 	}
 
 

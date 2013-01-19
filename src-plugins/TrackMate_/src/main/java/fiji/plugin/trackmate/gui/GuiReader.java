@@ -91,9 +91,15 @@ public class GuiReader {
 		plugin = new TrackMate_();
 		plugin.initModules();
 		plugin.setLogger(logger);
+		
+		// Initialize a string holder so that we can cat messages when relaoding log content
+		StringBuilder str = new StringBuilder("Loading XML file on:\n" + WizardController.getCurrentTimeString()+'\n');
+		String msg;
 
 		// Open and parse file
-		logger.log("Opening file "+file.getName()+'\n');
+		msg = "Opening file "+file.getName()+'\n';
+		logger.log(msg);
+		str.append(msg);
 		TmXmlReader reader = new TmXmlReader(file, plugin);
 
 		if (!reader.checkInput()) {
@@ -101,7 +107,9 @@ public class GuiReader {
 			logger.error("Aborting.\n");
 			return;
  		} else {
- 			logger.log("  Parsing file done.\n");
+ 			msg = "  Parsing file done.\n";
+ 			logger.log(msg);
+ 			str.append(msg);
  		}
 
 		// Check file version & deal with older save format
@@ -129,6 +137,12 @@ public class GuiReader {
 			logger.error("There was some errors when loading the file:\n");
 			logger.error(reader.getErrorMessage());
 			return;
+		}
+		
+		// Retrieve log text if any
+		String log = reader.getLogText();
+		if (log != null) {
+			wizard.getLogPanel().setTextContent(log + "\n\n" + str.toString());
 		}
 
 		if (fileVersion.compareTo(currentVersion ) < 0) {

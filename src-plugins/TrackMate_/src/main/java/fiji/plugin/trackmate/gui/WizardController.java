@@ -6,7 +6,9 @@ import ij.ImagePlus;
 import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import javax.swing.UIManager;
@@ -17,6 +19,8 @@ import fiji.plugin.trackmate.TrackMate_;
 
 public class WizardController implements ActionListener {
 
+	private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("EEE, d MMM yyyy HH:mm:ss");
+	
 	/*
 	 * FIELDS
 	 */
@@ -109,6 +113,11 @@ public class WizardController implements ActionListener {
 		wizard.setPreviousButtonEnabled(false);
 		String id = StartDialogPanel.DESCRIPTOR;
 		WizardPanelDescriptor panelDescriptor  = wizard.getPanelDescriptorFor(id);
+		
+		String welcomeMessage = TrackMate_.PLUGIN_NAME_STR + "v" + TrackMate_.PLUGIN_NAME_VERSION + " started on:\n" + 
+				getCurrentTimeString() + '\n';
+		// Log GUI processing start
+		wizard.getLogger().log(welcomeMessage, Logger.BLUE_COLOR);
 
 		// Execute about to be displayed action of the new one
 		panelDescriptor.aboutToDisplayPanel();
@@ -312,6 +321,7 @@ public class WizardController implements ActionListener {
 		saveDescriptor.setTargetNextID(oldDescriptor.getDescriptorID());
 		saveDescriptor.aboutToDisplayPanel();
 		wizard.showDescriptorPanelFor(SaveDescriptor.DESCRIPTOR);
+		wizard.getLogger().log(getCurrentTimeString() + '\n', Logger.BLUE_COLOR);
 		saveDescriptor.displayingPanel();
 	}
 
@@ -327,5 +337,15 @@ public class WizardController implements ActionListener {
 			wizard.registerWizardDescriptor(descriptor.getDescriptorID(), descriptor);
 		}
 	}
+	
+	
+	/*
+	 * STATIC UTIL
+	 */
+	
+	public static final String getCurrentTimeString() {
+		return DATE_FORMAT.format(new Date());
+	}
+	
 
 }

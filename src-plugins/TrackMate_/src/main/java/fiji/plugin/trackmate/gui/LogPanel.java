@@ -52,11 +52,9 @@ public class LogPanel extends ActionListenablePanel {
 						StyleContext sc = StyleContext.getDefaultStyleContext();
 						AttributeSet aset = sc.addAttribute(SimpleAttributeSet.EMPTY, StyleConstants.Foreground, color);
 						int len = jTextPaneLog.getDocument().getLength();
-						jTextPaneLog.setEditable(true); // Ugly ugly but otherwise does not display anything
 						jTextPaneLog.setCaretPosition(len);
 						jTextPaneLog.setCharacterAttributes(aset, false);
 						jTextPaneLog.replaceSelection(message);
-						jTextPaneLog.setEditable(false); // Ugly ugly
 					}
 				});
 			}
@@ -97,6 +95,21 @@ public class LogPanel extends ActionListenablePanel {
 		return logger;
 	}
 	
+	/**
+	 * @return the text content currently displayed in the log panel.
+	 */
+	public String getTextContent() {
+		return jTextPaneLog.getText();
+	}
+	
+	/**
+	 * Set the text content currently displayed in the log panel.
+	 * @param log  the text to display.
+	 */
+	public void setTextContent(String log) {
+		jTextPaneLog.setText(log);
+	}
+	
 	
 	/*
 	 * PRIVATE METHODS
@@ -127,8 +140,7 @@ public class LogPanel extends ActionListenablePanel {
 				jScrollPaneLog.setPreferredSize(new java.awt.Dimension(262, 136));
 				{
 					jTextPaneLog = new JTextPane();
-					jTextPaneLog.setEditable(false);
-//					jTextPaneLog.setFocusable(false);
+					jTextPaneLog.setEditable(true);
 					jTextPaneLog.setFont(SMALL_FONT);
 					jScrollPaneLog.setViewportView(jTextPaneLog);
 					jTextPaneLog.setBackground(this.getBackground());

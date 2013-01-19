@@ -44,7 +44,9 @@ public class GuiSaver {
 	 */
 	public void writeFile(final File file) {
 
-		TmXmlWriter writer = new TmXmlWriter(wizard.getController().getPlugin());
+		String log = wizard.getLogPanel().getTextContent();
+
+		TmXmlWriter writer = new TmXmlWriter(wizard.getController().getPlugin(), log);
 		
 		if (!writer.checkInput()) {
 			logger.error("There was some errors preparing to write:\n" + writer.getErrorMessage());

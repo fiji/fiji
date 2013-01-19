@@ -118,6 +118,8 @@ public class TmXmlReader implements Algorithm, Benchmark {
 	protected long processingTime;
 	protected StringBuilderLogger logger = new StringBuilderLogger();
 
+	private String log;
+
 	/*
 	 * CONSTRUCTORS
 	 */
@@ -142,6 +144,14 @@ public class TmXmlReader implements Algorithm, Benchmark {
 	/*
 	 * PUBLIC METHODS
 	 */
+	
+	/**
+	 * @return  the log text saved in the specified file, or <code>null</code> if log
+	 * text was not saved. Must be called after {@link #process()}.
+	 */
+	public String getLogText() {
+		return log;
+	}
 
 	@Override
 	public boolean process() {
@@ -149,6 +159,10 @@ public class TmXmlReader implements Algorithm, Benchmark {
 		long start = System.currentTimeMillis();
 
 		TrackMateModel model = plugin.getModel();
+		
+		// Text log?
+		log = root.getTextTrim();
+		
 		// Settings
 		Settings settings = getSettings();
 		getDetectorSettings(settings);

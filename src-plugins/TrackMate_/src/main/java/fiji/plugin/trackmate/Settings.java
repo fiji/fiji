@@ -156,8 +156,10 @@ public class Settings {
 	 * METHODS
 	 */
 	
-	@Override
-	public String toString() {
+	/**
+	 * @return a string description of the target image.
+	 */
+	public String toStringImageInfo() {
 		StringBuilder str = new StringBuilder(); 
 		
 		str.append("Image data:\n");
@@ -177,12 +179,21 @@ public class Settings {
 			}
 		}
 		
-		str.append('\n');
 		str.append("Geometry:\n");
 		str.append(String.format("  X = %4d - %4d, dx = %g %s\n", xstart, xend, dx, spaceUnits));
 		str.append(String.format("  Y = %4d - %4d, dy = %g %s\n", ystart, yend, dy, spaceUnits));
 		str.append(String.format("  Z = %4d - %4d, dz = %g %s\n", zstart, zend, dz, spaceUnits));
 		str.append(String.format("  T = %4d - %4d, dt = %g %s\n", tstart, tend, dt, timeUnits));
+
+		return str.toString();
+	}
+	
+	
+	@Override
+	public String toString() {
+		StringBuilder str = new StringBuilder(); 
+		
+		str.append(toStringImageInfo());
 		
 		str.append('\n');
 		str.append("Spot detection:\n");
