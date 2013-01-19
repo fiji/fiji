@@ -55,7 +55,7 @@ public class Sholl_Utils implements PlugIn {
         }
     }
 
-    /** Applies the "Matlab Jet" to frontmost image */
+    /** Applies the "MATLAB Jet" to frontmost image */
     void applyJetLut() {
         ImagePlus imp = WindowManager.getCurrentImage();
         if (imp!=null && imp.getType()==ImagePlus.COLOR_RGB)
@@ -63,7 +63,7 @@ public class Sholl_Utils implements PlugIn {
         final int[] values = getLUTindex();
         final IndexColorModel cm = Sholl_Analysis.matlabJetColorMap(values[0], values[1]);
         if (imp==null) {
-            imp = new ImagePlus("Matlab Jet",ij.plugin.LutLoader.createImage(cm));
+            imp = new ImagePlus("MATLAB Jet",ij.plugin.LutLoader.createImage(cm));
             imp.show();
         } else {
             if (imp.isComposite())

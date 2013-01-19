@@ -1311,7 +1311,7 @@ public class Sholl_Analysis implements PlugIn, TextListener, ItemListener {
     }
 
     /**
-     * Returns an IndexColorModel similar to Matlab's jet color map. An 8-bit gray color
+     * Returns an IndexColorModel similar to MATLAB's jet color map. An 8-bit gray color
      * level specified by grayvalue is mapped to index idx.
      */
     public static IndexColorModel matlabJetColorMap(final int grayvalue, final int idx) {
