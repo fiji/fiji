@@ -1,6 +1,3 @@
-*.class
-*.jar
-*.zip
 .DS_Store
 .DS_Store?
 ._*
@@ -9,3 +6,4 @@
 Icon?
 ehthumbs.db
 Thumbs.db
+/target/
