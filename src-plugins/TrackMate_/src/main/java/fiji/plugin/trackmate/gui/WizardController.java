@@ -39,6 +39,15 @@ public class WizardController implements ActionListener {
 	 * re-generate the data.
 	 */
 	boolean actionFlag = true;
+	/**
+	 * Is used to determine whether we are currently displaying the log panel after the
+	 * user has pressed the log button. 
+	 */
+	private boolean displayingLog = false;
+	/** 
+	 * Used to store the ID of the previous descriptor before the user pressed the log button.
+	 */
+	private String previousPanelID;
 
 	/*
 	 * CONSTRUCTOR
@@ -138,6 +147,8 @@ public class WizardController implements ActionListener {
 	 */
 	protected List<WizardPanelDescriptor> createWizardPanelDescriptorList() {
 		List<WizardPanelDescriptor> descriptors = new ArrayList<WizardPanelDescriptor>(14);
+		
+		
 		descriptors.add(new StartDialogPanel());
 		descriptors.add(new DetectorChoiceDescriptor());
 		//		descriptors.add(new DetectorConfigurationPanelDescriptor()); // will be instantiated on the fly, see DetectorChoiceDescriptor
@@ -156,6 +167,10 @@ public class WizardController implements ActionListener {
 
 		descriptors.add(new LoadDescriptor());
 		descriptors.add(new SaveDescriptor());
+		
+		WizardPanelDescriptor logPanelDescriptor = new LogPanelDescriptor();
+		logPanelDescriptor.setWizard(wizard);
+		descriptors.add(logPanelDescriptor);
 		return descriptors;
 	}
 
@@ -223,7 +238,23 @@ public class WizardController implements ActionListener {
 			wizard.jButtonNext.setText("Next");
 			wizard.restoreButtonsState();
 
-		} 
+		} else if (event == wizard.LOG_BUTTON_PRESSED) {
+			
+			if (displayingLog) {
+				
+				wizard.restoreButtonsState();
+				wizard.showDescriptorPanelFor(previousPanelID);
+				
+			} else {
+				
+				wizard.disableButtonsAndStoreState();
+				previousPanelID = wizard.getCurrentPanelDescriptor().getComponentID();
+				wizard.showDescriptorPanelFor(LogPanelDescriptor.DESCRIPTOR);
+				
+			}
+			displayingLog = !displayingLog;
+			
+		}
 	}
 
 

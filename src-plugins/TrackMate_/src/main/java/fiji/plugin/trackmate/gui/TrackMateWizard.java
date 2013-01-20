@@ -57,6 +57,7 @@ public class TrackMateWizard extends javax.swing.JFrame implements ActionListene
 	private static final Icon LOAD_ICON = new ImageIcon(TrackMateWizard.class.getResource("images/page_go.png"));
 	private static final Icon SAVE_ICON = new ImageIcon(TrackMateWizard.class.getResource("images/page_save.png"));
 	private static final ImageIcon TRACKMATE_ICON = new ImageIcon(TrackMateWizard.class.getResource("images/trackmate-icon.png"));
+	private static final Icon LOG_ICON = new ImageIcon(TrackMateWizard.class.getResource("images/information.png"));;
 
 	/*
 	 * DEFAULT VISIBILITY FIELDS
@@ -70,6 +71,8 @@ public class TrackMateWizard extends javax.swing.JFrame implements ActionListene
 	final ActionEvent LOAD_BUTTON_PRESSED = new ActionEvent(this, 2, "LoadButtonPressed");
 	/** This {@link ActionEvent} is fired when the 'save' button is pressed. */
 	final ActionEvent SAVE_BUTTON_PRESSED = new ActionEvent(this, 3, "SaveButtonPressed");
+	/** This {@link ActionEvent} is fired when the 'log' button is pressed. */
+	final ActionEvent LOG_BUTTON_PRESSED = new ActionEvent(this, 4, "LogButtonPressed");
 
 	/*
 	 * FIELDS
@@ -86,8 +89,9 @@ public class TrackMateWizard extends javax.swing.JFrame implements ActionListene
 	private TrackMateModelView displayer;
 	private Component component;
 	private final WizardController controller;
-	/** The stored 4 button states. It has default isibility so that states can be tewaked by the controller. */ 
+	/** The stored 4 button states. It has default visibility so that states can be tweaked by the controller. */ 
 	boolean[] storedButtonState;
+	private JButton jButtonLog;
 
 
 	/*
@@ -104,7 +108,7 @@ public class TrackMateWizard extends javax.swing.JFrame implements ActionListene
 	/*
 	 * PUBLIC METHODS
 	 */
-	
+
 	/** Expose the controller managing this GUI. */
 	public WizardController getController() {
 		return controller;
@@ -132,7 +136,7 @@ public class TrackMateWizard extends javax.swing.JFrame implements ActionListene
 	public Logger getLogger() {
 		return logPanel.getLogger();
 	}
-	
+
 
 	public LogPanel getLogPanel() {
 		return logPanel;
@@ -151,7 +155,7 @@ public class TrackMateWizard extends javax.swing.JFrame implements ActionListene
 	public void setDisplayer(TrackMateModelView displayer) {
 		this.displayer = displayer;
 	}
-	
+
 	/** 
 	 * Simply forward the caught event to listeners of this main frame.
 	 */
@@ -164,7 +168,7 @@ public class TrackMateWizard extends javax.swing.JFrame implements ActionListene
 	 * 
 	 * WIZARD MODEL METHODS
 	 */
-	
+
 	/**
 	 * @return the collection of {@link WizardPanelDescriptor} currently
 	 * registered in this wizard.
@@ -181,18 +185,19 @@ public class TrackMateWizard extends javax.swing.JFrame implements ActionListene
 	public void registerWizardDescriptor(String id, WizardPanelDescriptor descriptor) {
 		descriptorHashmap.put(id, descriptor);
 	}
-	
+
 	/**
 	 * Sets the current panel to that identified by the String passed in.
-	 * @param id String-based panel identifier
+	 * It must be the {@link WizardPanelDescriptor} string ID, not the component string ID.
+	 * @param descriptorID String-based panel identifier
 	 */    
-	public void showDescriptorPanelFor(final String id) {
-		
+	public void showDescriptorPanelFor(final String descriptorID) {
+
 		SwingUtilities.invokeLater(new Runnable() {
-			
+
 			@Override
 			public void run() {
-				currentDescriptor = descriptorHashmap.get(id);
+				currentDescriptor = descriptorHashmap.get(descriptorID);
 
 				// Register component instance with the layout on the fly
 				String componentID = currentDescriptor.getComponentID();
@@ -204,9 +209,8 @@ public class TrackMateWizard extends javax.swing.JFrame implements ActionListene
 			}
 		});
 	}
-	
+
 	/**
-	 * Returns the currently displayed WizardPanelDescriptor.
 	 * @return The currently displayed WizardPanelDescriptor
 	 */    
 	public WizardPanelDescriptor getCurrentPanelDescriptor() {
@@ -216,7 +220,7 @@ public class TrackMateWizard extends javax.swing.JFrame implements ActionListene
 	public WizardPanelDescriptor getPanelDescriptorFor(Object id) {
 		return descriptorHashmap.get(id);
 	}
-	
+
 	/**
 	 * Disable the 4 bottom buttons and memorize their state to that they
 	 * can be restored when calling {@link #restoreButtonsState()}. 
@@ -232,7 +236,7 @@ public class TrackMateWizard extends javax.swing.JFrame implements ActionListene
 		setPreviousButtonEnabled(false);
 		setNextButtonEnabled(false);
 	}
-	
+
 	/**
 	 * Restore the button state saved when calling {@link #disableButtonsAndStoreState()}.
 	 * Do nothing if {@link #disableButtonsAndStoreState()} was not called before. 
@@ -280,8 +284,8 @@ public class TrackMateWizard extends javax.swing.JFrame implements ActionListene
 	 * try to position the GUI cleverly with respect to it.
 	 */
 	private void positionWindow() {
-		
-		
+
+
 		if (null != component) {
 
 			// Get total size of all screens
@@ -349,7 +353,7 @@ public class TrackMateWizard extends javax.swing.JFrame implements ActionListene
 					jButtonNext.setText("Next");
 					jButtonNext.setIcon(NEXT_ICON);
 					jButtonNext.setFont(FONT);
-					jButtonNext.setBounds(216, 2, 76, 25);
+					jButtonNext.setBounds(220, 2, 73, 25);
 					jButtonNext.addActionListener(new ActionListener() {
 						public void actionPerformed(ActionEvent e) {
 							fireAction(NEXT_BUTTON_PRESSED);
@@ -361,10 +365,22 @@ public class TrackMateWizard extends javax.swing.JFrame implements ActionListene
 					jPanelButtons.add(jButtonPrevious);
 					jButtonPrevious.setIcon(PREVIOUS_ICON);
 					jButtonPrevious.setFont(FONT);
-					jButtonPrevious.setBounds(177, 2, 40, 25);
+					jButtonPrevious.setBounds(190, 2, 30, 25);
 					jButtonPrevious.addActionListener(new ActionListener() {
 						public void actionPerformed(ActionEvent e) {
 							fireAction(PREVIOUS_BUTTON_PRESSED);
+						}
+					});
+				}
+				{
+					jButtonLog = new JButton();
+					jPanelButtons.add(jButtonLog);
+					jButtonLog.setIcon(LOG_ICON);
+					jButtonLog.setFont(FONT);
+					jButtonLog.setBounds(157, 2, 30, 25);
+					jButtonLog.addActionListener(new ActionListener() {
+						public void actionPerformed(ActionEvent e) {
+							fireAction(LOG_BUTTON_PRESSED);
 						}
 					});
 				}
@@ -374,7 +390,7 @@ public class TrackMateWizard extends javax.swing.JFrame implements ActionListene
 					jButtonLoad.setText("Load");
 					jButtonLoad.setIcon(LOAD_ICON);
 					jButtonLoad.setFont(FONT);
-					jButtonLoad.setBounds(7, 2, 78, 25);
+					jButtonLoad.setBounds(2, 2, 76, 25);
 					jButtonLoad.addActionListener(new ActionListener() {
 						public void actionPerformed(ActionEvent e) {
 							fireAction(LOAD_BUTTON_PRESSED);
@@ -387,7 +403,7 @@ public class TrackMateWizard extends javax.swing.JFrame implements ActionListene
 					jButtonSave.setText("Save");
 					jButtonSave.setIcon(SAVE_ICON);
 					jButtonSave.setFont(FONT);
-					jButtonSave.setBounds(86, 2, 78, 25);
+					jButtonSave.setBounds(78, 2, 76, 25);
 					jButtonSave.addActionListener(new ActionListener() {
 						public void actionPerformed(ActionEvent e) {
 							fireAction(SAVE_BUTTON_PRESSED);
