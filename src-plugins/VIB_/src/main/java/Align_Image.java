@@ -14,10 +14,14 @@ import ij.process.ImageProcessor;
 import java.util.ArrayList;
 import java.util.Iterator;
 
-/** Select two images with a Line ROI in each, and rotate/translate/scale one
+/**
+ * Select two images with a Line ROI in each, and rotate/translate/scale one
  * to the other.
+ *
  * Stacks are not explicitly supported, but a macro can easily use this plugin
  * for the purpose by iterating over all slices.
+ *
+ * @author Johannes Schindelin
  */
 public class Align_Image implements PlugIn {
 
@@ -80,6 +84,12 @@ public class Align_Image implements PlugIn {
 
 	/**
 	 * Align an image to another image given line selections in each.
+	 *
+	 * @param source the image to align
+	 * @param line1 the line selection in the source image
+	 * @param target the image to align to
+	 * @param line2 the line selection in the target image
+	 * @return the aligned image
 	 */
 	public static ImageProcessor align(ImageProcessor source, Line line1, ImageProcessor target, Line line2) {
 		int w = target.getWidth(), h = target.getHeight();
