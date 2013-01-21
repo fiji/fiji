@@ -365,15 +365,15 @@ public class IJHacker extends JavassistHelper {
 				}
 			});
 			// create new plugin in the Script Editor
-			clazz.addField(new CtField(pool.get("java.lang.String"), "name", clazz));
+			clazz.addField(new CtField(pool.get("java.lang.String"), "nameForEditor", clazz));
 			method = clazz.getMethod("createPlugin", "(Ljava/lang/String;Ljava/lang/String;)V");
-			method.insertBefore("name = $2;");
+			method.insertBefore("this.nameForEditor = $2;");
 			method.instrument(new ExprEditor() {
 				@Override
 				public void edit(MethodCall call) throws CannotCompileException {
 					if (call.getMethodName().equals("runPlugIn"))
 						call.replace("$_ = null;"
-							+ "new ij.plugin.NewPlugin().createPlugin(this.name, ij.plugin.NewPlugin.PLUGIN, $2);"
+							+ "new ij.plugin.NewPlugin().createPlugin(this.nameForEditor, ij.plugin.NewPlugin.PLUGIN, $2);"
 							+ "return;");
 				}
 			});
