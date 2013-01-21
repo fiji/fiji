@@ -22,6 +22,7 @@ import java.util.Iterator;
  * for the purpose by iterating over all slices.
  *
  * @author Johannes Schindelin
+ * @author Michel Teussink
  */
 public class Align_Image implements PlugIn {
 
@@ -65,6 +66,8 @@ public class Align_Image implements PlugIn {
 		gd.addChoice("source", titles, current.equals(titles[0]) ?
 				titles[1] : titles[0]);
 		gd.addChoice("target", titles, current);
+		gd.addCheckbox("scale", true);
+		gd.addCheckbox("rotate", true);
 		gd.showDialog();
 		if (gd.wasCanceled())
 			return;
@@ -74,8 +77,10 @@ public class Align_Image implements PlugIn {
 
 		ImagePlus target = WindowManager.getImage(ids[gd.getNextChoiceIndex()]);
 		Line line2 = (Line)target.getRoi();
+		boolean withScaling = gd.getNextBoolean();
+		boolean withRotation = gd.getNextBoolean();
 
-		ImageProcessor result = align(source.getProcessor(), line1, target.getProcessor(), line2);
+		ImageProcessor result = align(source.getProcessor(), line1, target.getProcessor(), line2, withScaling, withRotation);
 		ImagePlus imp = new ImagePlus(source.getTitle() + " aligned to " + target.getTitle(), result);
 		imp.setCalibration(source.getCalibration());
 		imp.setRoi(line2);
@@ -92,6 +97,21 @@ public class Align_Image implements PlugIn {
 	 * @return the aligned image
 	 */
 	public static ImageProcessor align(ImageProcessor source, Line line1, ImageProcessor target, Line line2) {
+		return align(source, line1, target, line2, true, true);
+	}
+
+	/**
+	 * Align an image to another image given line selections in each.
+	 *
+	 * @param source the image to align
+	 * @param line1 the line selection in the source image
+	 * @param target the image to align to
+	 * @param line2 the line selection in the target image
+	 * @param withScaling scale the image if necessary
+	 * @param withRotation rotate the image if necessary
+	 * @return the aligned image
+	 */
+	public static ImageProcessor align(ImageProcessor source, Line line1, ImageProcessor target, Line line2, boolean withScaling, boolean withRotation) {
 		int w = target.getWidth(), h = target.getHeight();
 		ImageProcessor result = new FloatProcessor(w, h);
 		float[] pixels = (float[])result.getPixels();
@@ -100,17 +120,42 @@ public class Align_Image implements PlugIn {
 
 		/* the linear mapping to map line1 onto line2 */
 		float a00, a01, a02, a10, a11, a12;
+
 		float dx1 = line1.x2 - line1.x1;
 		float dy1 = line1.y2 - line1.y1;
 		float dx2 = line2.x2 - line2.x1;
 		float dy2 = line2.y2 - line2.y1;
-		float det = dx2 * dx2 + dy2 * dy2;
-		a00 = (dx2 * dx1 + dy2 * dy1) / det;
-		a10 = (dx2 * dy1 - dy2 * dx1) / det;
-		a01 = -a10;
-		a11 = a00;
-		a02 = line1.x1 - a00 * line2.x1 - a01 * line2.y1;
-		a12 = line1.y1 - a10 * line2.x1 - a11 * line2.y1;
+
+		if (!withRotation) {
+			a10 = a01 = 0;
+			if (withScaling && (dx2 != 0 || dy2 != 0)) {
+				float length1 = dx1 * dx1 + dy1 * dy1;
+				float length2 = dx2 * dx2 + dy2 * dy2;
+				a00 = a11 = (float)Math.sqrt(length1 / length2);
+			} else {
+				a00 = a11 = 1;
+			}
+		} else if (withScaling) {
+			float det = dx2 * dx2 + dy2 * dy2;
+			a00 = (dx2 * dx1 + dy2 * dy1) / det;
+			a10 = (dx2 * dy1 - dy2 * dx1) / det;
+			a01 = -a10;
+			a11 = a00;
+		} else {
+			double aTan = Math.atan2(dy2, dx2) - Math.atan2(dy1, dx1);
+			a00 = (float) Math.cos(aTan);
+			a10 = (float) Math.sin(aTan);
+			a01 = (float) -Math.sin(aTan);
+			a11 = (float) Math.cos(aTan);
+		}
+
+		float sourceX = line1.x1 + dx1 / 2.0f;
+		float sourceY = line1.y1 + dy1 / 2.0f;
+		float targetX = line2.x1 + dx2 / 2.0f;
+		float targetY = line2.y1 + dy2 / 2.0f;
+
+		a02 = sourceX - a00 * targetX - a01 * targetY;
+		a12 = sourceY - a10 * targetX - a11 * targetY;
 
 		for (int j = 0; j < h; j++) {
 			for (int i = 0; i < w; i++) {
