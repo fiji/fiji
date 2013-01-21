@@ -8,6 +8,8 @@ import ij.gui.Roi;
 
 import ij.plugin.PlugIn;
 
+import ij.process.ByteProcessor;
+import ij.process.ColorProcessor;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 
@@ -31,6 +33,7 @@ public class Align_Image implements PlugIn {
 			case ImagePlus.GRAY8:
 			case ImagePlus.GRAY16:
 			case ImagePlus.GRAY32:
+			case ImagePlus.COLOR_RGB:
 				return true;
 		}
 		return false;
@@ -113,6 +116,21 @@ public class Align_Image implements PlugIn {
 	 */
 	public static ImageProcessor align(ImageProcessor source, Line line1, ImageProcessor target, Line line2, boolean withScaling, boolean withRotation) {
 		int w = target.getWidth(), h = target.getHeight();
+		if (source instanceof ColorProcessor) {
+			ColorProcessor cp = (ColorProcessor)source;
+			int sourceWidth = source.getWidth(), sourceHeight = source.getHeight();
+			byte[][] channels = new byte[3][sourceWidth * sourceHeight];
+			cp.getRGB(channels[0], channels[1], channels[2]);
+			for (int i = 0; i < 3; i++) {
+				ByteProcessor unaligned = new ByteProcessor(sourceWidth, sourceHeight, channels[i], null);
+				ImageProcessor aligned = align(unaligned, line1, target, line2, withScaling, withRotation);
+				aligned.setMinAndMax(0, 255);
+				channels[i] = (byte[])aligned.convertToByte(true).getPixels();
+			}
+			cp = new ColorProcessor(w, h);
+			cp.setRGB(channels[0], channels[1], channels[2]);
+			return cp;
+		}
 		ImageProcessor result = new FloatProcessor(w, h);
 		float[] pixels = (float[])result.getPixels();
 
