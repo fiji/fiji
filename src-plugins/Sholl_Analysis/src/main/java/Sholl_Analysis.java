@@ -171,7 +171,7 @@ public class Sholl_Analysis implements PlugIn, TextListener, ItemListener {
         final boolean validRoi = roi!=null && (roi.getType()==Roi.LINE || roi.getType()==Roi.POINT);
 
         if (!IJ.macroRunning() && !validRoi) {
-            img.deleteRoi();
+            img.killRoi();
             Toolbar.getInstance().setTool("line");
             final WaitForUserDialog wd = new WaitForUserDialog(
                               "Please define the largest Sholl radius by creating\n"
@@ -1267,7 +1267,7 @@ public class Sholl_Analysis implements PlugIn, TextListener, ItemListener {
             exitmsg = "Composite images are not supported.";
         } else {
             ip = img.getProcessor();
-            final int type = ip.getBitDepth();
+            final int type = img.getBitDepth();
             if (type==24)
                 exitmsg = "RGB color images are not supported.";
             else if (type==32)
