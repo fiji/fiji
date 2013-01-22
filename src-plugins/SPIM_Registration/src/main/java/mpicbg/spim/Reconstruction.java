@@ -183,6 +183,7 @@ public class Reconstruction
     		//System.out.println( "timePointIndex: " + timePointIndex );
     		//System.out.println( "conf.fuseReferenceTimepoint: " + conf.fuseReferenceTimepoint );
 
+        	// if the reference timepoint was just added to compute the correct bounding box do not fuse it
         	if ( conf.getTimePointIndex( conf.referenceTimePoint ) == timePointIndex && !conf.fuseReferenceTimepoint )
         	{
         		//System.out.println( "yes." );
