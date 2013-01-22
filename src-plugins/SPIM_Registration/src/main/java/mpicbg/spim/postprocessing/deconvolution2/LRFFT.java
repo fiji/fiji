@@ -149,7 +149,7 @@ public class LRFFT
 			// P(xi|x1) = P(x|psi) convolved with P(xi|psi)
 			
 			// we first get P(x1|psi)
-			final Image< FloatType > tmp = computeInvertedKernel( this.kernel1.clone() );
+			final Image< FloatType > tmp = ( this.kernel1.clone() );
 
 			//ImageJFunctions.copyToImagePlus( tmp ).show();
 			
@@ -158,7 +158,7 @@ public class LRFFT
 			{
 				if ( view != this )
 				{
-					final FourierConvolution<FloatType, FloatType> conv = new FourierConvolution<FloatType, FloatType>( this.kernel1, view.kernel1 );
+					final FourierConvolution<FloatType, FloatType> conv = new FourierConvolution<FloatType, FloatType>( this.kernel1, computeInvertedKernel( view.kernel1 ) );
 					conv.setNumThreads();
 					conv.setKeepImgFFT( false );
 					conv.setImageOutOfBoundsStrategy( new OutOfBoundsStrategyValueFactory<FloatType>() );
@@ -178,7 +178,7 @@ public class LRFFT
 			AdjustInput.normImage( tmp );
 						
 			// compute the inverted kernel
-			this.kernel2 = tmp;
+			this.kernel2 = computeInvertedKernel( tmp );
 			
 			// close the temp image
 			//tmp.close();			
