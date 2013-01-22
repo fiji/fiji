@@ -184,7 +184,6 @@ public class Multi_View_Deconvolution implements PlugIn
 		}		
 	}
 
-	public static boolean fusionUseContentBasedStatic = false;
 	public static boolean displayFusedImageStatic = true;
 	public static boolean saveFusedImageStatic = true;
 	public static int defaultNumIterations = 10;
@@ -415,8 +414,6 @@ public class Multi_View_Deconvolution implements PlugIn
 			gd2.addChoice( "Registration for channel " + channels.get( c ), choices, choices[ suggest[ c ] ]);
 
 		gd2.addMessage( "" );
-		gd2.addCheckbox( "Apply_content_based_weightening", fusionUseContentBasedStatic );
-		gd2.addMessage( "" );
 		gd2.addNumericField( "Crop_output_image_offset_x", Multi_View_Fusion.cropOffsetXStatic, 0 );
 		gd2.addNumericField( "Crop_output_image_offset_y", Multi_View_Fusion.cropOffsetYStatic, 0 );
 		gd2.addNumericField( "Crop_output_image_offset_z", Multi_View_Fusion.cropOffsetZStatic, 0 );
@@ -527,7 +524,6 @@ public class Multi_View_Deconvolution implements PlugIn
 		
 		//IOFunctions.println( "tp " + tp );
 		
-		fusionUseContentBasedStatic = gd2.getNextBoolean();
 		Multi_View_Fusion.cropOffsetXStatic = (int)Math.round( gd2.getNextNumber() );
 		Multi_View_Fusion.cropOffsetYStatic = (int)Math.round( gd2.getNextNumber() );
 		Multi_View_Fusion.cropOffsetZStatic = (int)Math.round( gd2.getNextNumber() );
@@ -779,7 +775,7 @@ public class Multi_View_Deconvolution implements PlugIn
 			conf.writeOutputImage = false;
 		
 		conf.useLinearBlening = true;
-		conf.useGauss = fusionUseContentBasedStatic;
+		conf.useGauss = false;
 		conf.scale = 1;
 		conf.cropOffsetX = Multi_View_Fusion.cropOffsetXStatic;
 		conf.cropOffsetY = Multi_View_Fusion.cropOffsetYStatic;
