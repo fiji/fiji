@@ -197,7 +197,7 @@ public class Multi_View_Deconvolution implements PlugIn
 	public static int defaultComputationIndex = 0;
 	public static int defaultBlockSizeIndex = 0, defaultBlockSizeX = 256, defaultBlockSizeY = 256, defaultBlockSizeZ = 256;
 	
-	public static String[] iterationTypeString = new String[]{ "Ad-hoc (very fast, imprecise)", "Conditional Probabilty (fast, precise)", "Independent (slow, precise)" };
+	public static String[] iterationTypeString = new String[]{ "Ad-hoc (very fast, imprecise)", "Conditional Probability (fast, precise)", "Independent (slow, precise)" };
 	public static String[] imglibContainer = new String[]{ "Array container", "Planar container", "Cell container" };
 	public static String[] computationOn = new String[]{ "CPU (Java)", "GPU (Nvidia CUDA via JNA)" };
 	public static String[] blocks = new String[]{ "Entire image at once", "in 64x64x64 blocks", "in 128x128x128 blocks", "in 256x256x256 blocks", "in 512x512x512 blocks", "specify maximal blocksize manually" };
