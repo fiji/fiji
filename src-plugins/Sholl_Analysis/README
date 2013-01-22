@@ -1,0 +1,11 @@
+Advanced Sholl Analysis PlugIn
+http://imagejdocu.tudor.lu/doku.php?id=plugin:analysis:asa:start
+
+A plugin for ImageJ, the standard in scientific image processing. Sholl analysis (Sholl,
+D.A., 1953) is an old technique used by neuroanatomists to describe neuronal arbors.
+
+Major advantages of this plugin over other implementations are:
+ - It does not require previous tracing of the arbor
+ - Retrieves quantitative descriptors from the Sholl profile, allowing
+   statistical comparisons between arbors
+ - Performs "Continuous Sholl" in 2D and 3D
