@@ -343,10 +343,10 @@ public class LRFFT
 		}
 		else if ( useCUDA && !useCPU && numDevices == 1 )
 		{
-			if ( blocks.length > 1 )
-				IJ.log( "Using CUDA only on blocks ... " );
-			else
-				IJ.log( "Using CUDA only to compute as one block ... " );
+			//if ( blocks.length > 1 )
+			//	IJ.log( "Using CUDA only on blocks ... " );
+			//else
+			//	IJ.log( "Using CUDA only to compute as one block ... " );
 			
 			final Image< FloatType > result = image.createNewImage();
 			final Image< FloatType > block = factory.createImage( blockSize );
@@ -378,7 +378,7 @@ public class LRFFT
 		else
 		{
 			// this implies useBlocks, otherwise we cannot combine several devices
-			IJ.log( "Using CUDA & CPU on blocks ... " );
+			//IJ.log( "Using CUDA & CPU on blocks ... " );
 			
 			final Image< FloatType > result = image.createNewImage();
 			

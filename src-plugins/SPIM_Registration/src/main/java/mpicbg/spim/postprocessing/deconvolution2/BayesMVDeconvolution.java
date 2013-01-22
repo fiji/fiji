@@ -76,7 +76,7 @@ public class BayesMVDeconvolution implements Deconvolver
 		{
 			runIteration();
 			
-			if ( debug && i % debugInterval == 0 )
+			if ( debug && (i-1) % debugInterval == 0 )
 			{
 				psi.getDisplay().setMinMax( 0, 1 );
 				final ImagePlus tmp = ImageJFunctions.copyToImagePlus( psi );
@@ -124,6 +124,8 @@ public class BayesMVDeconvolution implements Deconvolver
 				psiCopy = null;*/
 			}
 		}
+		
+		IJ.log( "DONE (" + new Date(System.currentTimeMillis()) + ")." );
 	}
 	
 	public LRInput getData() { return views; }
@@ -255,11 +257,7 @@ public class BayesMVDeconvolution implements Deconvolver
 				maxChange = Math.max( maxChange, sumMax[ i ][ 1 ] );
 			}
 			
-			IJ.log("------------------------------------------------");
-			IJ.log(" Iteration: " + iteration );
-			IJ.log(" Sum change: " + sumChange );
-			IJ.log(" Max Change per Pixel: " + maxChange );
-			IJ.log("------------------------------------------------");
+			IJ.log("iteration: " + iteration + " --- sum change: " + sumChange + " --- max change per pixel: " + maxChange );
 		}
 		
 		//System.out.println( "final: " + (time - System.currentTimeMillis()) + " ms." );
