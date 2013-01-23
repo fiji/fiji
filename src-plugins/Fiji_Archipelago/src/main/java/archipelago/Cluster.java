@@ -10,6 +10,9 @@ import archipelago.network.node.ClusterNode;
 import archipelago.network.node.ClusterNodeState;
 import archipelago.network.node.NodeManager;
 import archipelago.network.server.ArchipelagoServer;
+import mpicbg.trakem2.concurrent.DefaultExecutorProvider;
+import mpicbg.trakem2.concurrent.ExecutorProvider;
+import mpicbg.trakem2.concurrent.ThreadPool;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -381,7 +384,19 @@ public class Cluster implements ExecutorService, NodeStateListener
         return cluster != null && cluster.isActive();
     }
     
-   
+    private class ClusterProvider implements ExecutorProvider
+    {
+        private final Cluster c;
+        
+        public ClusterProvider(Cluster cluster)
+        {
+            c = cluster;
+        }
+
+        public ExecutorService getExecutor(int nThreads) {
+            return c; 
+        }
+    }
 
 
     /*
@@ -449,6 +464,8 @@ public class Cluster implements ExecutorService, NodeStateListener
             localHostName = "localhost";
             FijiArchipelago.err("Could not get canonical host name for local machine. Using localhost instead");
         }
+        
+        ThreadPool.setProvider(new ClusterProvider(this));
     }
     
     public boolean init(int p)
@@ -776,6 +793,8 @@ public class Cluster implements ExecutorService, NodeStateListener
         {
             haltFinished();
         }
+        
+        ThreadPool.setProvider(new DefaultExecutorProvider());
     }
 
     protected synchronized void haltFinished()
@@ -834,6 +853,8 @@ public class Cluster implements ExecutorService, NodeStateListener
         If everything went well, the last node.close() should have resulted in a call to
         terminateFinished()
         */
+
+        ThreadPool.setProvider(new DefaultExecutorProvider());
 
         return remainingRunnables();
     }
