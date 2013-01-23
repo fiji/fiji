@@ -1,65 +1,74 @@
 package archipelago.network.client;
 
 import archipelago.FijiArchipelago;
-import archipelago.StreamCloseListener;
+import archipelago.listen.MessageListener;
+import archipelago.listen.TransceiverListener;
 import archipelago.compute.ProcessManager;
 import archipelago.data.ClusterMessage;
-import archipelago.network.Cluster;
-import archipelago.network.MessageListener;
-import archipelago.network.MessageRX;
-import archipelago.network.MessageTX;
+import archipelago.network.MessageXC;
+
 
 import java.io.IOException;
-import java.net.Socket;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.Vector;
 import java.util.concurrent.atomic.AtomicBoolean;
 /**
  *
  * @author Larry Lindsey
  */
-public class ArchipelagoClient implements MessageListener, StreamCloseListener
+public class ArchipelagoClient implements MessageListener, TransceiverListener
 {
     
-    private final Socket socket;
-    private final MessageTX tx;
-    private final MessageRX rx;
+    private final MessageXC xc;
     private long clientId = 0;
-    
     private final AtomicBoolean active;
+    private final Vector<ProcessThread> runningThreads;
+    
     
     private class ProcessThread extends Thread
     {
         private final ProcessManager process;
+        private final AtomicBoolean running;
         
         public ProcessThread(ProcessManager pm)
         {
             process = pm;
+            running = new AtomicBoolean(true);
+        }
+        
+        public void cancel()
+        {
+            running.set(false);
+            this.interrupt();
+        }
+        
+        public long getID()
+        {
+            return process.getID(); 
         }
         
         public void run()
         {
             process.run();
-            tx.queueMessage("process", process);
+            runningThreads.remove(this);
+            if (running.get() && active.get())
+            {
+                xc.queueMessage("process", process);
+            }
         }
     }
     
 
-    public ArchipelagoClient(long id, String host) throws IOException
+    public ArchipelagoClient(long id, String host, InputStream inStream, OutputStream outStream) throws IOException
     {
-        this(id, host, Cluster.DEFAULT_PORT);
-    }
-
-    public ArchipelagoClient(long id, String host, int port) throws IOException
-    {
-        System.out.println("Client with id " + id + " attempting connection to " + host + ":" + port);
         try
         {
             clientId = id;
+            xc = new MessageXC(inStream, outStream, this, host);
+
+            runningThreads = new Vector<ProcessThread>();
             
-            socket = new Socket(host, port);
-
-            tx = new MessageTX(socket, this);
-            rx = new MessageRX(socket, this, this);
-
             active = new AtomicBoolean(true);
         }
         catch (IOException ioe)
@@ -69,15 +78,6 @@ public class ArchipelagoClient implements MessageListener, StreamCloseListener
         }
     }
     
-    public ArchipelagoClient(String host) throws IOException
-    {
-        this(host, Cluster.DEFAULT_PORT);
-    }
-    
-    public ArchipelagoClient(String host, int port) throws IOException
-    {
-        this(-1, host, port);
-    }
     
 
     public void handleMessage(final ClusterMessage cm) {
@@ -89,8 +89,10 @@ public class ArchipelagoClient implements MessageListener, StreamCloseListener
         {
             if (message.equals("process"))
             {
-                final ProcessManager<?, ?> pm = (ProcessManager<?, ?>)object;
-                new ProcessThread(pm).start();
+                final ProcessManager<?> pm = (ProcessManager<?>)object;
+                final ProcessThread pt = new ProcessThread(pm);
+                runningThreads.add(pt);
+                pt.start();
             }
             else if (message.equals("halt"))
             {
@@ -98,12 +100,12 @@ public class ArchipelagoClient implements MessageListener, StreamCloseListener
             }
             else if (message.equals("ping"))
             {
-                tx.queueMessage(cm);
+                xc.queueMessage(cm);
             }
             else if (message.equals("user"))
             {
                 cm.o = System.getProperty("user.name");
-                tx.queueMessage(cm);
+                xc.queueMessage(cm);
             }
             else if (message.equals("setid"))
             {
@@ -111,7 +113,7 @@ public class ArchipelagoClient implements MessageListener, StreamCloseListener
             }
             else if (message.equals("getid"))
             {
-                tx.queueMessage("id", clientId);
+                xc.queueMessage("id", clientId);
             }
             else if (message.equals("setfileroot"))
             {
@@ -123,23 +125,36 @@ public class ArchipelagoClient implements MessageListener, StreamCloseListener
             }
             else if (message.equals("getfileroot"))
             {
-                tx.queueMessage("setfileroot", FijiArchipelago.getFileRoot());
+                xc.queueMessage("setfileroot", FijiArchipelago.getFileRoot());
             }
             else if (message.equals("getexecroot"))
             {
-                tx.queueMessage("setexecroot", FijiArchipelago.getExecRoot());
+                xc.queueMessage("setexecroot", FijiArchipelago.getExecRoot());
+            }
+            else if (message.equals("cancel"))
+            {
+                long id = (Long)object;
+                for (ProcessThread pt : runningThreads)
+                {
+                    if (pt.getID() == id)
+                    {
+                        pt.cancel();
+                        runningThreads.remove(pt);
+                        return;
+                    }
+                }
             }
         }
         catch (ClassCastException cce)
         {
             System.err.println("Caught CCE: " + cce);
-            tx.queueMessage("error", cce);
+            xc.queueMessage("error", cce);
         }
     }
 
     public boolean join()
     {
-        return tx.join() && rx.join();
+        return xc.join();
     }
     
     public boolean isActive()
@@ -153,16 +168,12 @@ public class ArchipelagoClient implements MessageListener, StreamCloseListener
         {
             active.set(false);
             
-            tx.close();
-            rx.close();
-            try
+            for (ProcessThread t : runningThreads)
             {
-                socket.close();
+                t.cancel();
             }
-            catch (IOException ioe)
-            {
-                //
-            }
+            
+            xc.close();
         }
         
     }

@@ -1,11 +1,9 @@
 package archipelago.network.shell;
 
-import archipelago.EasyLogger;
-import archipelago.NodeManager;
-import archipelago.ShellExecListener;
-import archipelago.InputStreamLogger;
-import archipelago.network.Cluster;
-import archipelago.network.ClusterNode;
+import archipelago.listen.ShellExecListener;
+import archipelago.network.node.NodeManager;
+import archipelago.util.EasyLogger;
+import archipelago.util.InputStreamLogger;
 import com.jcraft.jsch.*;
 import ij.IJ;
 import ij.gui.GenericDialog;
