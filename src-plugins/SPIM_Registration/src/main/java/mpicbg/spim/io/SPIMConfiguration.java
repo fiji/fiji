@@ -54,6 +54,7 @@ public class SPIMConfiguration
 	public String transformationModel = "Affine";
 	// time lapse
 	public boolean timeLapseRegistration = false;
+	public boolean fuseReferenceTimepoint = true;
 	public int referenceTimePoint = 1;
 	public SPIMExperiment spimExperiment = null;
 

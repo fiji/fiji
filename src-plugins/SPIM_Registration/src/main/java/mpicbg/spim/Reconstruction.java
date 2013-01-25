@@ -177,6 +177,19 @@ public class Reconstruction
 	        addExternalTransformation( currentViewStructure );
         	addExternalTransformation( reference );
 			
+
+    		//System.out.println( "conf.referenceTimePoint: " + conf.referenceTimePoint );
+    		//System.out.println( "conf.getTimePointIndex( conf.referenceTimePoint ): " + conf.getTimePointIndex( conf.referenceTimePoint ) );
+    		//System.out.println( "timePointIndex: " + timePointIndex );
+    		//System.out.println( "conf.fuseReferenceTimepoint: " + conf.fuseReferenceTimepoint );
+
+        	// if the reference timepoint was just added to compute the correct bounding box do not fuse it
+        	if ( conf.getTimePointIndex( conf.referenceTimePoint ) == timePointIndex && !conf.fuseReferenceTimepoint )
+        	{
+        		//System.out.println( "yes." );
+				continue;
+        	}
+        	
 			if (!conf.registerOnly)
 			{
 				IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Starting Fusion for timepoint " + conf.timepoints[timePointIndex]);		
@@ -195,7 +208,7 @@ public class Reconstruction
 					view.closeImage();
 			}
 			else
-			{
+			{				
 				conf.instance.deconvolve( currentViewStructure, conf, currentViewStructure.getTimePoint() );
 			}
 		}		

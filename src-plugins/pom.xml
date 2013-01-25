@@ -93,6 +93,7 @@
 		<module>Script_Editor</module>
 		<module>Series_Labeler</module>
 		<module>SheppLogan_</module>
+		<module>Sholl_Analysis</module>
 		<module>Simple_Neurite_Tracer</module>
 		<module>Siox_Segmentation</module>
 		<module>Skeletonize3D_</module>

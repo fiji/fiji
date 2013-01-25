@@ -39,6 +39,8 @@ get_java_home () {
 
 PATHSEP=:
 UNAME_S="$(uname -s)"
+LAUNCHER=bin/ImageJ.sh
+FIJILAUNCHER=
 case "$UNAME_S" in
 Darwin)
 	JAVA_HOME=/System/Library/Frameworks/JavaVM.framework/Versions/1.6/Home
@@ -46,7 +48,11 @@ Darwin)
 	case "$(uname -r)" in
 	8.*) platform=tiger;;
 	*) platform=macosx;;
-	esac; exe=;;
+	esac
+	exe=
+	LAUNCHER=Contents/MacOS/ImageJ-$platform
+	FIJILAUNCHER=Contents/MacOS/fiji-$platform
+	;;
 Linux)
 	case "$(uname -m)" in
 	x86_64)
@@ -56,7 +62,12 @@ Linux)
 	*)	platform=linux32
 		java_submodule=linux
 		;;
-	esac; exe=;;
+	esac
+	exe=
+	LAUNCHER=ImageJ-$platform
+	FIJILAUNCHER=fiji-$platform
+	FIJILAUNCHER=${FIJILAUNCHER%32}
+	;;
 MINGW*|CYGWIN*)
 	CWD="$(cd "$CWD" && pwd)"
 	PATHSEP=\;
@@ -64,7 +75,10 @@ MINGW*|CYGWIN*)
 	'') platform=win32; java_submodule=$platform;;
 	*) platform=win64; java_submodule=$platform;;
 	esac
-	exe=.exe;;
+	exe=.exe
+	LAUNCHER=ImageJ-$platform.exe
+	FIJILAUNCHER=fiji-$platform.exe
+	;;
 FreeBSD)
 	platform=freebsd
 	if test -z "$JAVA_HOME"
@@ -81,14 +95,16 @@ FreeBSD)
 		echo ""
 		echo "(This requires some time)"
 		exit 1
-	fi;;
+	fi
+	;;
 *)
 	platform=
 	TOOLS_JAR="$(ls -t /usr/jdk*/lib/tools.jar \
 		/usr/local/jdk*/lib/tools.jar 2> /dev/null |
 		head -n 1)"
 	test -z "$TOOLS_JAR" ||
-	export TOOLS_JAR;;
+	export TOOLS_JAR
+	;;
 esac
 
 
@@ -226,6 +242,30 @@ maven_update () {
 	done
 }
 
+update_launcher () {
+	case "$LAUNCHER" in
+	bin/ImageJ.sh)
+		test -z "$exe" || rm -f "$CWD/fiji$exe"
+		uptodate "$ARGV0" "$CWD/fiji" || {
+			cat > "$CWD/fiji" << EOF
+#!/bin/sh
+
+exec "$CWD/$LAUNCHER" "$@"
+EOF
+			chmod a+x "$CWD/fiji"
+		}
+		;;
+	*)
+		uptodate "$ARGV0" "$CWD/$LAUNCHER" ||
+		(cd $CWD &&
+		 sh bin/download-launchers.sh snapshot $platform)
+		;;
+	esac
+	test -z "$FIJILAUNCHER" ||
+	test ! -f "$CWD/$FIJILAUNCHER" ||
+	rm "$CWD/$FIJILAUNCHER"
+}
+
 # make sure that javac and ij-minimaven are up-to-date
 VERSION=2.0.0-SNAPSHOT
 maven_update sc.fiji:javac:$VERSION
@@ -255,9 +295,21 @@ done
 if test $# = 0
 then
 	eval sh "$CWD/bin/ImageJ.sh" --mini-maven "$OPTIONS" install
+	update_launcher
 else
 	for name in "$@"
 	do
+		case "$name" in
+		fiji|ImageJ)
+			update_launcher
+			continue
+			;;
+		clean)
+			eval sh \"$CWD/bin/ImageJ.sh\" --mini-maven \
+                                "$OPTIONS" clean
+			continue
+			;;
+		esac
 		artifactId="${name##*/}"
 		artifactId="${artifactId%.jar}"
 		artifactId="${artifactId%%-[0-9]*}"

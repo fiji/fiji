@@ -16,6 +16,7 @@ import mpicbg.imglib.image.display.imagej.ImageJFunctions;
 import mpicbg.imglib.multithreading.Chunk;
 import mpicbg.imglib.multithreading.SimpleMultiThreading;
 import mpicbg.imglib.type.numeric.real.FloatType;
+import mpicbg.spim.postprocessing.deconvolution2.LRFFT.PSFTYPE;
 
 public class BayesMVDeconvolution implements Deconvolver
 {
@@ -44,7 +45,7 @@ public class BayesMVDeconvolution implements Deconvolver
 	ArrayList<LRFFT> data;
 	String name;
 	
-	public BayesMVDeconvolution( final LRInput views, final int numIterations, final double lambda, final String name )
+	public BayesMVDeconvolution( final LRInput views, final PSFTYPE iterationType, final int numIterations, final double lambda, final String name )
 	{
 		this.name = name;
 		this.data = views.getViews();
@@ -60,7 +61,7 @@ public class BayesMVDeconvolution implements Deconvolver
 		IJ.log( "Average intensity in overlapping area: " + avg );        
 		
 		// init all views
-		views.init( true );
+		views.init( iterationType );
 		
 		//
 		// the real data image psi is initialized with the average 
@@ -75,7 +76,7 @@ public class BayesMVDeconvolution implements Deconvolver
 		{
 			runIteration();
 			
-			if ( debug && i % debugInterval == 0 )
+			if ( debug && (i-1) % debugInterval == 0 )
 			{
 				psi.getDisplay().setMinMax( 0, 1 );
 				final ImagePlus tmp = ImageJFunctions.copyToImagePlus( psi );
@@ -123,6 +124,8 @@ public class BayesMVDeconvolution implements Deconvolver
 				psiCopy = null;*/
 			}
 		}
+		
+		IJ.log( "DONE (" + new Date(System.currentTimeMillis()) + ")." );
 	}
 	
 	public LRInput getData() { return views; }
@@ -254,11 +257,7 @@ public class BayesMVDeconvolution implements Deconvolver
 				maxChange = Math.max( maxChange, sumMax[ i ][ 1 ] );
 			}
 			
-			IJ.log("------------------------------------------------");
-			IJ.log(" Iteration: " + iteration );
-			IJ.log(" Sum change: " + sumChange );
-			IJ.log(" Max Change per Pixel: " + maxChange );
-			IJ.log("------------------------------------------------");
+			IJ.log("iteration: " + iteration + " --- sum change: " + sumChange + " --- max change per pixel: " + maxChange );
 		}
 		
 		//System.out.println( "final: " + (time - System.currentTimeMillis()) + " ms." );
