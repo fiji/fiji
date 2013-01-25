@@ -75,6 +75,12 @@ public class IJHacker extends JavassistHelper {
 			isImageJA = true;
 		} catch (Exception e) { /* ignore */ }
 
+		// use the FijiClassLoader
+		if (!isImageJA) {
+			method = clazz.getMethod("getClassLoader", "()Ljava/lang/ClassLoader;");
+			method.insertBefore("if (classLoader == null) classLoader = new fiji.FijiClassLoader(true);");
+		}
+
 		// tell runUserPlugIn() to catch NoSuchMethodErrors
 		method = clazz.getMethod("runUserPlugIn",
 			"(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Z)Ljava/lang/Object;");
