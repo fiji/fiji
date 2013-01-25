@@ -59,13 +59,13 @@ public class RedirectErrAndOut implements PlugIn {
 	 */
 	private boolean checkIJLog() {
 		if (ijLog != null) {
-			return true;
+			return IJ.debugMode;
 		}
 		if (IJ.getInstance() == null) {
 			return false;
 		}
 		ijLog = new IJLogOutputStream();
-		return true;
+		return IJ.debugMode;
 	}
 
 	/**
