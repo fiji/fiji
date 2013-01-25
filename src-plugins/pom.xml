@@ -50,6 +50,7 @@
 		<module>FS_Align_TrakEM2</module>
 		<module>FeatureJ_</module>
 		<module>Feature_Detection</module>
+		<module>Fiji_Archipelago</module>
 		<module>Fiji_Developer</module>
 		<module>Fiji_Package_Maker</module>
 		<module>Fiji_Plugins</module>
