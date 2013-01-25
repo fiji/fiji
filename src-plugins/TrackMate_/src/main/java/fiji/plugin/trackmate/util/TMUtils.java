@@ -6,11 +6,14 @@ import ij.plugin.Duplicator;
 import ij.process.ColorProcessor;
 import ij.process.StackConverter;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Date;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -42,6 +45,9 @@ import fiji.plugin.trackmate.TrackMate_;
  */
 public class TMUtils {
 
+
+	private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("EEE, d MMM yyyy HH:mm:ss");
+	
 	/*
 	 * STATIC METHODS
 	 */
@@ -786,6 +792,8 @@ public class TMUtils {
 	}
 
 
-
-
+	public static final String getCurrentTimeString() {
+		return DATE_FORMAT.format(new Date());
+	}
+	
 }

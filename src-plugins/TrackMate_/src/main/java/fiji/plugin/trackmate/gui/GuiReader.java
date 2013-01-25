@@ -21,6 +21,7 @@ import fiji.plugin.trackmate.detection.SpotDetectorFactory;
 import fiji.plugin.trackmate.io.TmXmlReader;
 import fiji.plugin.trackmate.io.TmXmlReader_v12;
 import fiji.plugin.trackmate.tracking.SpotTracker;
+import fiji.plugin.trackmate.util.TMUtils;
 import fiji.plugin.trackmate.util.Version;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
 import fiji.plugin.trackmate.visualization.hyperstack.HyperStackDisplayer;
@@ -93,7 +94,7 @@ public class GuiReader {
 		plugin.setLogger(logger);
 		
 		// Initialize a string holder so that we can cat messages when relaoding log content
-		StringBuilder str = new StringBuilder("Loading XML file on:\n" + WizardController.getCurrentTimeString()+'\n');
+		StringBuilder str = new StringBuilder("Loading XML file on:\n" + TMUtils.getCurrentTimeString()+'\n');
 		String msg;
 
 		// Open and parse file
