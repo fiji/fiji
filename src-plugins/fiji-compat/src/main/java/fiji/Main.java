@@ -71,6 +71,7 @@ public class Main {
 	 * command line arguments are parsed.
 	 */
 	public static void setup() {
+		gentlyRunPlugIn("fiji.util.RedirectErrAndOut", null);
 		new User_Plugins().run(null);
 		if (IJ.getInstance() != null) {
 			new Thread() {
