@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.Date;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -20,6 +19,7 @@ import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMate_;
 import fiji.plugin.trackmate.gui.TrackMateWizard;
 import fiji.plugin.trackmate.io.IOUtils;
+import fiji.plugin.trackmate.util.TMUtils;
 
 public class ExportTracksToXML extends AbstractTMAction {
 
@@ -100,20 +100,25 @@ public class ExportTracksToXML extends AbstractTMAction {
 	}
 
 	private Element marshall(TrackMateModel model) {
-		Element root = new Element("root");
+		logger.setStatus("Marshalling...");
 		Element content = new Element(CONTENT_KEY);
 		
+		content.setAttribute(NTRACKS_ATT, ""+model.getTrackModel().getNFilteredTracks());
 		content.setAttribute(PHYSUNIT_ATT, model.getSettings().spaceUnits);
-		content.setAttribute(DATE_ATT, new Date().toString());
+		content.setAttribute(FRAMEINTERVAL_ATT, ""+model.getSettings().dt);
+		content.setAttribute(FRAMEINTERVALUNIT_ATT, ""+model.getSettings().timeUnits);
+		content.setAttribute(DATE_ATT, TMUtils.getCurrentTimeString());
+		content.setAttribute(FROM_ATT, TrackMate_.PLUGIN_NAME_STR + " v" + TrackMate_.PLUGIN_NAME_VERSION);
 
-		logger.setStatus("Marshalling...");
-		Integer[] visibleTracks = model.getTrackModel().getFilteredTrackIDs().toArray(new Integer[] {});
-		for (int i = 0 ; i < model.getTrackModel().getNFilteredTracks() ; i++) {
+		Set<Integer> trackIDs = model.getTrackModel().getFilteredTrackIDs();
+		int i = 0;
+		for (Integer trackID : trackIDs) {
 
-			Element trackElement = new Element(TRACK_KEY);
-			int trackindex = visibleTracks[i];
+			Set<Spot> track = model.getTrackModel().getTrackSpots(trackID);
 			
-			Set<Spot> track = model.getTrackModel().getTrackSpots(trackindex);
+			Element trackElement = new Element(TRACK_KEY);
+			trackElement.setAttribute(NSPOTS_ATT, ""+track.size());
+
 			// Sort them by time 
 			TreeSet<Spot> sortedTrack = new TreeSet<Spot>(Spot.timeComparator);
 			sortedTrack.addAll(track);
@@ -132,13 +137,12 @@ public class ExportTracksToXML extends AbstractTMAction {
 				trackElement.addContent(spotElement);
 			}
 			content.addContent(trackElement);
-			logger.setProgress(i / (0d + model.getTrackModel().getNFilteredTracks()));
+			logger.setProgress(i++ / (0d + model.getTrackModel().getNFilteredTracks()));
 		}
 
 		logger.setStatus("");
 		logger.setProgress(1);
-		root.addContent(content);
-		return root;
+		return content;
 	}
 
 
@@ -149,7 +153,13 @@ public class ExportTracksToXML extends AbstractTMAction {
 	private static final String CONTENT_KEY 	= "Tracks";
 	private static final String DATE_ATT 		= "generationDateTime";
 	private static final String PHYSUNIT_ATT 	= "spaceUnits";
-
+	private static final String FRAMEINTERVAL_ATT 	= "frameInterval";
+	private static final String FRAMEINTERVALUNIT_ATT 	= "timeUnits";
+	private static final String FROM_ATT 		= "from";
+	private static final String NTRACKS_ATT		= "nTracks";
+	private static final String NSPOTS_ATT		= "nSpots";
+	
+	
 	private static final String TRACK_KEY = "particle";
 	private static final String SPOT_KEY = "detection";
 	private static final String X_ATT = "x";
