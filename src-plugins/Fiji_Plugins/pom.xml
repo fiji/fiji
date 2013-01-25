@@ -33,6 +33,11 @@
 			<version>${imagej1.version}</version>
 		</dependency>
 		<dependency>
+			<groupId>net.imagej</groupId>
+			<artifactId>ij-core</artifactId>
+			<version>${imagej.version}</version>
+		</dependency>
+		<dependency>
 			<groupId>com.jcraft</groupId>
 			<artifactId>jsch</artifactId>
 			<version>0.1.42</version>
