@@ -82,20 +82,6 @@ public class User_Plugins implements PlugIn {
 			if (loader != null && (loader instanceof FijiClassLoader))
 				return;
 		}
-		FijiClassLoader classLoader = new FijiClassLoader(true);
-		try {
-			classLoader.addPath(path);
-		} catch (IOException e) {}
-
-		try {
-			// IJ.setClassLoader(classLoader);
-			Class ij = Class.forName("ij.IJ");
-			java.lang.reflect.Method method =
-				ij.getDeclaredMethod("setClassLoader",
-					new Class[] { ClassLoader.class });
-			method.setAccessible(true);
-			method.invoke(null, new Object[] { classLoader });
-		} catch (Exception e) { e.printStackTrace(); }
 
 		installScripts();
 		installPlugins(path, ".", menuPath);
