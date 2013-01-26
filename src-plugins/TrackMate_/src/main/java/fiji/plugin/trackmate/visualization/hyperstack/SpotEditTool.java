@@ -36,21 +36,23 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 	private static final double COARSE_STEP = 2;
 	private static final double FINE_STEP = 0.2f;
 	private static final String TOOL_NAME = "Spot edit tool";
-	private static final String TOOL_ICON = "C444D01C777D11C999D21C000D31C777L4151C222D61"
-			+ "CcccD71C222D81C331D91Ceb5Da1Cd95Lb1c1Cda3Dd1Ca82De1C000Df1"
-			+ "CbbbD02C000D32CdddD42CcccD62C777D82C100D92Ca85Da2CfedLb2c2Cd94Dd2C641De2C111Df2"
-			+ "C000D33CdddD43C761D83C664D93C544Da3CfedLb3c3CdcaDd3C863De3C111Df3"
-			+ "C000D34CdddD44Cec3D74C776D84Cdc9D94C000Da4Cdb9Db4CfdaDc4C776Dd4Cc95De4C111Df4"
-			+ "C000D35CdddD45Cec3D65CffcD75C875D85Cfe7D95C542La5b5Cda7Dc5C653Dd5C111Df5"
-			+ "C000D36CdddD46Cec3D56CffcD66CffbD76C773D86Cfd4D96Ccb7Da6C000Db6C642Dc6CeeeDd6C111Df6"
-			+ "C000D37Cb92D47CffcD57CffbD67Cfe6D77C541D87Cff9D97Ceb6Da7C321Db7C555Dc7C111Df7"
-			+ "C999D28C000D38C665D48CeeaD58Cfe6D68Ca93D78C110D88C974D98Ce94Da8CaaaDb8CcccDc8CaaaDe8C000Df8"
-			+ "Cc92D29CfecD39CffbD49Cfe6D59Cfd4D69Cff9D79Ceb6D89Ce94D99"
-			+ "Ca62D0aCc92D1aCedbD2aCdb6D3aCfe6D4aCfd4D5aCff9D6aCeb6D7aCe94D8a"
-			+ "C972D0bCfedL1b2bCb83D3bCca3D4bCec7D5bCda5D6bCc83D7b"
-			+ "C972D0cCfedD1cCfb6D2cCfa4D3cCc61D4cCb61D5cCb73D6c"
-			+ "C641D0dCda6D1dCfdaD2dCfdbD3dCc95D4dCb73D5d"
-			+ "C641L0e1eCa72D2eCb73D3eCc94D4e";
+	private static final String TOOL_ICON ="CfefD00CfdfD10"
+			+ "Cd8dD01Ca3bD11CfefD21CeeeL8191"
+			+ "CfdfD02Cb8eD12CaafD22CaaaD72C666D82C888D92CbbbDa2C666Db2CcccDc2C888De2CaaaDf2"
+			+ "CccfD23Ca9fD33CeceD43C999D83CdddD93C555Db3C999Dc3CeeeDd3C666De3CaaaDf3"
+			+ "Ca5cD34C94bD44C999D84CdddD94C777Db4C999Dc4CbbbDd4C888De4CaaaDf4"
+			+ "CfdfD35C98fD45CfefD55C999D85CdddD95C888Db5CaaaDc5C666Dd5CbbbDe5CaaaDf5"
+			+ "CddfD46CbbfD56CcccD86CbbbDb6CeeeDc6CbbbDd6CeeeDe6CcccDf6"
+			+ "Ca9fD57CdbfD67"
+			+ "Cb6cD58C73bD68CfefD78"
+			+ "CbafD59Ca9eD69CaafD79CeefD89"
+			+ "CaafD5aCeefD7aC96dD8aCa6cD9aCdcfLaabaCc8dDcaCfdfDda"
+			+ "CdbfD4bCbafD5bCd9dD8bCa6cD9bCccfDabCb9eDbbC72bDcbCcaeDdb"
+			+ "CecfD3cC82bD4cCc9dD5cCedfDccCaafDdcCeefDec"
+			+ "CfefD1dCddfD2dCa9fD3dCc9eD4dCfdfD5dCeefDddCa8fDedCecfDfd"
+			+ "CeaeD0eC93bD1eCa9fD2eCb5cLeefe"
+			+ "CfcfD0fCc7dD1fCfefD2fCfcfDefCfdfDff";
+
 
 	/** Fall back default radius when the settings does not give a default radius to use. */
 	private static final double FALL_BACK_RADIUS = 5;
