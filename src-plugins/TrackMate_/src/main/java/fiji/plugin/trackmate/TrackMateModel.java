@@ -501,7 +501,10 @@ public class TrackMateModel {
 	 */
 	public void updateFeatures(final Spot spotToUpdate) {
 		spotsUpdated.add(spotToUpdate); // Enlist for feature update when transaction is marked as finished
-		trackGraphModel.edgesModified.addAll(trackGraphModel.edgesOf(spotToUpdate));
+		Set<DefaultWeightedEdge> touchingEdges = trackGraphModel.edgesOf(spotToUpdate);
+		if (null != touchingEdges) {
+			trackGraphModel.edgesModified.addAll(touchingEdges);
+		}
 	}
 
 	/**
