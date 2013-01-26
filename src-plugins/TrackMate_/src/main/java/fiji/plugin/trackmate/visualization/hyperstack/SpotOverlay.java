@@ -134,8 +134,8 @@ public class SpotOverlay implements Overlay {
 			final double y = editingSpot.getFeature(Spot.POSITION_Y);
 			final double radius = editingSpot.getFeature(Spot.RADIUS) / calibration[0] * mag;
 			// In pixel units
-			final double xp = x / calibration[0] - 0.5f;
-			final double yp = y / calibration[1] - 0.5f;
+			final double xp = x / calibration[0] + 0.5d;
+			final double yp = y / calibration[1] + 0.5d;
 			// Scale to image zoom
 			final double xs = (xp - xcorner) * mag ;
 			final double ys = (yp - ycorner) * mag;

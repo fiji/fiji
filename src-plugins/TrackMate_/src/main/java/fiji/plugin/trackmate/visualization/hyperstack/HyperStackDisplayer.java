@@ -72,8 +72,8 @@ public class HyperStackDisplayer extends AbstractTrackMateModelView  {
 	 */
 
 	final Spot getCLickLocation(final Point point) {
-		final double ix = canvas.offScreenXD(point.x) + 0.5f;
-		final double iy =  canvas.offScreenYD(point.y) + 0.5f;
+		final double ix = canvas.offScreenXD(point.x) - 0.5d;
+		final double iy =  canvas.offScreenYD(point.y) - 0.5d;
 		final double x = ix * calibration[0];
 		final double y = iy * calibration[1];
 		final double z = (imp.getSlice()-1) * calibration[2];

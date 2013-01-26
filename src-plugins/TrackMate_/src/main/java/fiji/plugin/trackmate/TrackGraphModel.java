@@ -546,9 +546,13 @@ public class TrackGraphModel {
 
 	/**
 	 * @return a set of all links touching the specified spot. If no links are
-	 * touching the specified spot returns an empty set.
+	 * touching the specified spot, return an empty set. If the spot does not belong
+	 * in the graph model, return <code>null</code>.
 	 */
 	public Set<DefaultWeightedEdge> edgesOf(final Spot spot) {
+		if (!graph.containsVertex(spot)) {
+			return null;
+		}
 		return graph.edgesOf(spot);
 	}
 
