@@ -171,9 +171,13 @@ public class TmXmlReader implements Algorithm, Benchmark {
 		model.setSettings(settings);
 
 		// Spot Filters
-		List<FeatureFilter> spotFilters = getSpotFeatureFilters();
 		FeatureFilter initialFilter = getInitialFilter();
-		model.getSettings().initialSpotFilterValue = initialFilter.value;
+		if (null != initialFilter) {
+			model.getSettings().initialSpotFilterValue = initialFilter.value;
+		} else {
+			model.getSettings().initialSpotFilterValue = null; // So that everyone knows we did NOT find it in the file
+		}
+		List<FeatureFilter> spotFilters = getSpotFeatureFilters();
 		model.getSettings().setSpotFilters(spotFilters);
 		// Spots
 		SpotCollection allSpots = getAllSpots();
