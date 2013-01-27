@@ -75,6 +75,12 @@ public class IJHacker extends JavassistHelper {
 			isImageJA = true;
 		} catch (Exception e) { /* ignore */ }
 
+		// use the FijiClassLoader
+		if (!isImageJA) {
+			method = clazz.getMethod("getClassLoader", "()Ljava/lang/ClassLoader;");
+			method.insertBefore("if (classLoader == null) classLoader = new fiji.FijiClassLoader(true);");
+		}
+
 		// tell runUserPlugIn() to catch NoSuchMethodErrors
 		method = clazz.getMethod("runUserPlugIn",
 			"(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Z)Ljava/lang/Object;");
@@ -365,15 +371,15 @@ public class IJHacker extends JavassistHelper {
 				}
 			});
 			// create new plugin in the Script Editor
-			clazz.addField(new CtField(pool.get("java.lang.String"), "name", clazz));
+			clazz.addField(new CtField(pool.get("java.lang.String"), "nameForEditor", clazz));
 			method = clazz.getMethod("createPlugin", "(Ljava/lang/String;Ljava/lang/String;)V");
-			method.insertBefore("name = $2;");
+			method.insertBefore("this.nameForEditor = $2;");
 			method.instrument(new ExprEditor() {
 				@Override
 				public void edit(MethodCall call) throws CannotCompileException {
 					if (call.getMethodName().equals("runPlugIn"))
 						call.replace("$_ = null;"
-							+ "new ij.plugin.NewPlugin().createPlugin(this.name, ij.plugin.NewPlugin.PLUGIN, $2);"
+							+ "new ij.plugin.NewPlugin().createPlugin(this.nameForEditor, ij.plugin.NewPlugin.PLUGIN, $2);"
 							+ "return;");
 				}
 			});

@@ -1,4 +1,6 @@
-package archipelago.network;
+package archipelago.listen;
+
+import archipelago.network.node.ClusterNode;
 
 /**
  *

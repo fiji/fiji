@@ -261,8 +261,8 @@ EOF
 		 sh bin/download-launchers.sh snapshot $platform)
 		;;
 	esac
-	test -n "$FIJILAUNCHER" &&
-	test -f "$CWD/$FIJILAUNCHER" &&
+	test -z "$FIJILAUNCHER" ||
+	test ! -f "$CWD/$FIJILAUNCHER" ||
 	rm "$CWD/$FIJILAUNCHER"
 }
 
@@ -302,6 +302,11 @@ else
 		case "$name" in
 		fiji|ImageJ)
 			update_launcher
+			continue
+			;;
+		clean)
+			eval sh \"$CWD/bin/ImageJ.sh\" --mini-maven \
+                                "$OPTIONS" clean
 			continue
 			;;
 		esac

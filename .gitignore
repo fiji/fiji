@@ -16,6 +16,9 @@
 .classpath
 .settings/
 
+# IntelliJ #
+*.iml
+
 # ImageJ 1.x #
 /IJ_Prefs.txt
 
@@ -258,6 +261,7 @@ hs_err*.log
 /plugins/loci_plugins-[0-9]*.jar
 
 # For maven-download.sh
+/jars/ij-minimaven-[0-9]*.jar
 /modules/scijava-common/
 
 # For use by bin/gitignore-in-submodules #

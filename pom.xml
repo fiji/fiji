@@ -24,7 +24,7 @@
 		<imagescience.version>2.4.1</imagescience.version>
 		<jcommon.version>1.0.17</jcommon.version>
 		<jfreechart.version>1.0.14</jfreechart.version>
-		<mpicbg.version>20120621</mpicbg.version>
+		<mpicbg.version>0.6.0-SNAPSHOT</mpicbg.version>
 		<trakem2.version>1.0b-SNAPSHOT</trakem2.version>
 	</properties>
 
