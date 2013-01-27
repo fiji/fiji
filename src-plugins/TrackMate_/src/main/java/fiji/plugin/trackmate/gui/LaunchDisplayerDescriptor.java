@@ -87,15 +87,13 @@ public class LaunchDisplayerDescriptor implements WizardPanelDescriptor {
 		} else {
 			calculateFeaturesDone = true;
 		}
+		
 
 		// Thread for rendering
 		new Thread("TrackMate rendering thread") {
 			
 			public void run() {
 				// Instantiate displayer
-				if (null != displayer) {
-					displayer.clear();
-				}
 				try {
 					displayer.render();
 				} finally {

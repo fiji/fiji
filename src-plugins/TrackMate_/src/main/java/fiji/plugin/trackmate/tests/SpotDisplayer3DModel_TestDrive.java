@@ -21,9 +21,9 @@ public class SpotDisplayer3DModel_TestDrive {
 
 		File file;
 		if (!IJ.isWindows()) {
-			file = new File("/Users/tinevez/Desktop/Data/FakeTracks.xml");
+			file = new File("/Users/tinevez/Desktop/Data/FakeTracks2.xml");
 		} else {
-			file = new File("E:/Users/JeanYves/Desktop/Data/FakeTracks.xml");
+			file = new File("E:/Users/JeanYves/Desktop/Data/FakeTracks2.xml");
 		}
 		ij.ImageJ.main(args);
 		
