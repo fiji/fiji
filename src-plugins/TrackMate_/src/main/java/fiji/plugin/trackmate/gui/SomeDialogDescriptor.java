@@ -14,11 +14,16 @@ import fiji.plugin.trackmate.TrackMate_;
  */
 public abstract class SomeDialogDescriptor implements WizardPanelDescriptor {
 
+	/**
+	 * File that governs saving and loading. We make it a static field so that 
+	 * loading and sharing events always point to a single file location by default.
+	 */
+	protected static File file;
+
 	protected LogPanel logPanel;
 	protected TrackMate_ plugin;
 	protected TrackMateWizard wizard;
 	protected Logger logger;
-	protected File file;
 	protected String targetID;
 
 	public void setTargetNextID(String ID) {

@@ -28,7 +28,7 @@ public class SaveDescriptor extends SomeDialogDescriptor {
 				}
 			}
 			
-			// If we are to sabe tracks, we better ensures that track and edge features are there, even if we have to enforce it
+			// If we are to save tracks, we better ensures that track and edge features are there, even if we have to enforce it
 			if (plugin.getModel().getTrackModel().getNTracks() > 0) {
 				plugin.computeEdgeFeatures(true);
 				plugin.computeTrackFeatures(true);
