@@ -103,8 +103,13 @@ public class Delaunay_Voronoi implements PlugIn {
 
 		CustomCanvas cc = new CustomCanvas(imp);
 
-		if (exportResults)
+		if (exportResults) {
+			if (results == null) {
+				results = new ResultsTable();
+				Analyzer.setResultsTable(results);
+			}
 			exportResults(cc.delaunay, cc.inf, results);
+		}
 
 		if (makeROI) {
 			imp.setRoi(getRoi(cc.delaunay, cc.inf));
