@@ -243,8 +243,10 @@ public class IJHacker extends JavassistHelper {
 		clazz = get("ij.plugin.CommandFinder");
 
 		// use Fiji in the window title
-		method = clazz.getMethod("export", "()V");
-		replaceAppNameInNew(method, "ij.text.TextWindow", 1, 5);
+		if (hasMethod(clazz, "export", "()V")) {
+			method = clazz.getMethod("export", "()V");
+			replaceAppNameInNew(method, "ij.text.TextWindow", 1, 5);
+		}
 
 		// Class ij.plugin.Hotkeys
 		clazz = get("ij.plugin.Hotkeys");
