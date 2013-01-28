@@ -1,7 +1,7 @@
 package archipelago.network.server;
 
+import archipelago.Cluster;
 import archipelago.FijiArchipelago;
-import archipelago.network.Cluster;
 
 import java.io.IOException;
 import java.net.ServerSocket;

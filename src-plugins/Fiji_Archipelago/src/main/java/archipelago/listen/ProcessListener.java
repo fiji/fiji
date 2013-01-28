@@ -1,4 +1,6 @@
-package archipelago.compute;
+package archipelago.listen;
+
+import archipelago.compute.ProcessManager;
 
 /**
  * ProcessListener interface, used to notify when a ProcessManager has been returned from
@@ -13,6 +15,6 @@ public interface ProcessListener
      * @param process a ProcessManager that just returned from the cluster
      * @return true or not. This method may be a void return in the future.
      */
-    public boolean processFinished(ProcessManager<?, ?> process);
+    public boolean processFinished(ProcessManager<?> process);
     
 }

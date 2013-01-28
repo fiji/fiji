@@ -1,24 +1,25 @@
-package archipelago.network;
+package archipelago.network.node;
 
-import archipelago.FijiArchipelago;
-import archipelago.NodeManager;
-import archipelago.ShellExecListener;
-import archipelago.StreamCloseListener;
-import archipelago.compute.ProcessListener;
+import archipelago.*;
+import archipelago.listen.*;
 import archipelago.compute.ProcessManager;
 import archipelago.data.ClusterMessage;
+import archipelago.network.MessageXC;
 import archipelago.network.shell.NodeShell;
 
 import java.io.IOException;
 import java.net.Socket;
+import java.util.ArrayList;
 import java.util.Hashtable;
+import java.util.List;
+import java.util.Vector;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  *
  * @author Larry Lindsey
  */
-public class ClusterNode implements MessageListener, StreamCloseListener
+public class ClusterNode implements TransceiverListener
 {
     
 
@@ -31,30 +32,36 @@ public class ClusterNode implements MessageListener, StreamCloseListener
     }
 
 
-    private Socket nodeSocket;
-//    private final NodeShell shell;
-    private MessageTX tx;
-    private MessageRX rx;
+    //private Socket nodeSocket;
+    private MessageXC xc;
+    
     private final Hashtable<Long, ProcessListener> processHandlers;
+    private final Hashtable<Long, ProcessManager> runningProcesses;
     private final AtomicBoolean ready;
     private long nodeID;
     private NodeManager.NodeParameters nodeParam;
     private AtomicBoolean idSet;
+    private ClusterNodeState state;
+    private final Vector<NodeStateListener> stateListeners;
 
    
     public ClusterNode(Socket socket) throws IOException, InterruptedException,
             TimeOutException
     {
+        xc = null;
+        state = ClusterNodeState.INACTIVE;
         int waitCnt = 0;
         ready = new AtomicBoolean(false);
         idSet = new AtomicBoolean(false);
         processHandlers = new Hashtable<Long, ProcessListener>();
+        runningProcesses = new Hashtable<Long, ProcessManager>();
         nodeID = -1;
         nodeParam = null;
+        stateListeners = new Vector<NodeStateListener>();
 
         setClientSocket(socket);
         
-        tx.queueMessage("getid");
+        xc.queueMessage("getid");
         
         while (!idSet.get())
         {
@@ -64,7 +71,6 @@ public class ClusterNode implements MessageListener, StreamCloseListener
                 throw new TimeOutException();
             }
         }
-        
         doSyncEnvironment();
     }
     
@@ -72,25 +78,25 @@ public class ClusterNode implements MessageListener, StreamCloseListener
     {
         if (getUser() == null || getUser().equals(""))
         {
-            tx.queueMessage("getuser");
+            xc.queueMessage("getuser");
         }
 
         if (getExecPath() == null || getExecPath().equals(""))
         {
-            tx.queueMessage("getexecroot");
+            xc.queueMessage("getexecroot");
         }
         else
         {
-            tx.queueMessage("setexecroot", getExecPath());
+            xc.queueMessage("setexecroot", getExecPath());
         }
 
         if (getFilePath() == null || getFilePath().equals(""))
         {
-            tx.queueMessage("getfileroot");
+            xc.queueMessage("getfileroot");
         }
         else
         {
-            tx.queueMessage("setfileroot", getFilePath());
+            xc.queueMessage("setfileroot", getFilePath());
         }
     }
     
@@ -116,26 +122,29 @@ public class ClusterNode implements MessageListener, StreamCloseListener
         else
         {
             nodeParam.setFileRoot(path);
-            return tx.queueMessage("setfileroot", path);
+            return xc.queueMessage("setfileroot", path);
         }
     }
 
-    public synchronized void streamClosed()
+    public void streamClosed()
     {
         FijiArchipelago.log("Stream closed on " + getHost());
-        close();
+        if (state != ClusterNodeState.STOPPED)
+        {
+            close();
+        }
     }
     
     private void setClientSocket(final Socket s) throws IOException
     {
-        nodeSocket = s;
 
-        tx = new MessageTX(nodeSocket, this);
-        rx = new MessageRX(nodeSocket, this, this);
+        xc = new MessageXC(s.getInputStream(), s.getOutputStream(), this,
+                s.getInetAddress().getHostName());
 
         FijiArchipelago.log("Got Socket from " + s.getInetAddress());
 
         ready.set(true);
+        setState(ClusterNodeState.ACTIVE);
     }
 
     public String getHost()
@@ -160,10 +169,10 @@ public class ClusterNode implements MessageListener, StreamCloseListener
 
     public boolean isReady()
     {
-        return ready.get();
+        return state == ClusterNodeState.ACTIVE;
     }
     
-    public boolean exec(String command, ShellExecListener listener)
+    public boolean exec(final String command, final ShellExecListener listener)
     {
         return getShell().exec(nodeParam, command, listener);
     }
@@ -178,7 +187,7 @@ public class ClusterNode implements MessageListener, StreamCloseListener
         return nodeParam.getShell();
     }
     
-    public void setShell(NodeShell shell)
+    public void setShell(final NodeShell shell)
     {
         nodeParam.setShell(shell);
     }
@@ -188,16 +197,23 @@ public class ClusterNode implements MessageListener, StreamCloseListener
         int n = nodeParam.getNumThreads() - processHandlers.size();
         return n > 0 ? n : 0;
     }
+    
+    public void setActive(boolean active)
+    {        
+        setState(active ? ClusterNodeState.ACTIVE : ClusterNodeState.INACTIVE);
+    }
 
-    public <S, T> boolean runProcessManager(ProcessManager<S, T> process, ProcessListener listener)
+    public boolean submit(final ProcessManager<?> process, final ProcessListener listener)
     {
-        if (ready.get())
+        if (isReady())
         {
             if (processHandlers.get(process.getID()) == null)
             {
-                FijiArchipelago.debug(getHost() + " scheduling process");
+                //FijiArchipelago.debug(getHost() + " scheduling process");
                 processHandlers.put(process.getID(), listener);
-                return tx.queueMessage("process", process);
+                runningProcesses.put(process.getID(), process);
+                process.setRunningOn(this);
+                return xc.queueMessage("process", process);
             }
             else
             {
@@ -216,10 +232,10 @@ public class ClusterNode implements MessageListener, StreamCloseListener
     {
         ClusterMessage message = new ClusterMessage();
         message.message = "ping";
-        tx.queueMessage(message);
+        xc.queueMessage(message);
     }
 
-    public void handleMessage(ClusterMessage cm)
+    public void handleMessage(final ClusterMessage cm)
     {
         String message = cm.message;
         Object object = cm.o;
@@ -237,10 +253,11 @@ public class ClusterNode implements MessageListener, StreamCloseListener
             }
             else if (message.equals("process"))
             {
-                ProcessManager<?,?> pm = (ProcessManager<?,?>)object;
+                ProcessManager<?> pm = (ProcessManager<?>)object;
                 ProcessListener listener = processHandlers.remove(pm.getID());
+                runningProcesses.remove(pm.getID());
 
-                FijiArchipelago.log("Got process results from " + getHost());
+//                FijiArchipelago.log("Got process results from " + getHost());
 
                 listener.processFinished(pm);
             }
@@ -298,29 +315,113 @@ public class ClusterNode implements MessageListener, StreamCloseListener
     }
 
     public synchronized void close()
-    {
-        if (ready.get())
+    {        
+        if (state != ClusterNodeState.STOPPED)
         {
-            ready.set(false);
-            Cluster.getCluster().removeNode(this);
+            FijiArchipelago.debug("Setting state");
+
+            setState(ClusterNodeState.STOPPED);
+
+            FijiArchipelago.debug("Sending shutdown");
+
             sendShutdown();
-            tx.close();
-            rx.close();
-            try
-            {
-                nodeSocket.close();
-            }
-            catch (IOException ioe)
-            {
-                //meh
-            }
+
+            FijiArchipelago.debug("Closing XC");
+
+            xc.close();
+
+//            FijiArchipelago.debug("Closing Socket");
+
+//            try
+//            {
+//                nodeSocket.close();
+//            }
+//            catch (IOException ioe)
+//            {
+//                //meh
+//            }
+            FijiArchipelago.debug("Node: Close finished");
+        }
+        else
+        {
+            FijiArchipelago.debug("Node: Close() called, but I'm already stopped");
         }
     }
 
-    public boolean sendShutdown()
+    private boolean sendShutdown()
     {
         ClusterMessage message = new ClusterMessage();
         message.message = "halt";
-        return tx.queueMessage(message);
+        return xc.queueMessage(message);
+    }
+    
+    public static String stateString(final ClusterNodeState state)
+    {
+        switch(state)
+        {
+            case ACTIVE:
+                return "active";
+            case INACTIVE:
+                return "inactive";
+            case STOPPED:
+                return "stopped";
+            default:
+                return "unknown";
+        }
+    }
+    
+    protected synchronized void setState(final ClusterNodeState nextState)
+    {
+        if (state != nextState)
+        {
+            // Order is very important
+            ClusterNodeState lastState = state;
+            state = nextState;
+            FijiArchipelago.log("Node state changed from "
+                    + stateString(lastState) + " to " + stateString(nextState));
+            for (NodeStateListener listener : stateListeners)
+            {
+                listener.stateChanged(this, state, lastState);
+            }
+        }
+    }
+    
+    public boolean cancelJob(long id)
+    {
+        ProcessManager<?> pm = runningProcesses.get(id);
+        if (pm == null)
+        {
+            return false;
+        }
+        else if (xc.queueMessage("cancel", id))
+        {
+            processHandlers.remove(id);
+            runningProcesses.remove(id);
+            return true;
+        }
+        return false;
+    }
+
+    public List<ProcessManager> getRunningProcesses()
+    {
+        return new ArrayList<ProcessManager> (runningProcesses.values());
+    }
+    
+    /**
+     * Adds a NodeStateListener to the list of listeners that are notified when the state of this
+     * ClusterNode changes. Immediately upon addition, the listener is called with the current
+     * state, and given that the last state was ClusterNodeState.INACTIVE to indicate that this is
+     * the initial call.
+     * @param listener a NodeStateListener to register with the ClusterNode
+     */
+    public void addListener(final NodeStateListener listener)
+    {
+        stateListeners.add(listener);
+        listener.stateChanged(this, state, ClusterNodeState.INACTIVE);
+    }
+    
+    public void removeListener(final NodeStateListener listener)
+    {
+        stateListeners.remove(listener);
     }
 }

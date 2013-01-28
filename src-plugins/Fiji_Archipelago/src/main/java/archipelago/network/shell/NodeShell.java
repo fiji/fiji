@@ -1,8 +1,7 @@
 package archipelago.network.shell;
 
-import archipelago.NodeManager;
-import archipelago.ShellExecListener;
-import archipelago.network.ClusterNode;
+import archipelago.network.node.NodeManager;
+import archipelago.listen.ShellExecListener;
 
 public interface NodeShell
 {

@@ -1,13 +1,9 @@
 package archipelago.example;
 
+import archipelago.Cluster;
 import archipelago.FijiArchipelago;
-import archipelago.compute.ChunkProcessor;
-import archipelago.compute.ProcessListener;
-import archipelago.compute.ProcessManager;
-import archipelago.data.DataChunk;
+import archipelago.compute.SerializableCallable;
 import archipelago.data.FileChunk;
-import archipelago.data.SimpleChunk;
-import archipelago.network.Cluster;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
@@ -19,6 +15,8 @@ import mpicbg.imagefeatures.Feature;
 import mpicbg.imagefeatures.FloatArray2DSIFT;
 
 import java.util.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 
 /**
  *
@@ -30,30 +28,25 @@ public class Cluster_SIFT implements PlugIn
 
 
     
-    public static class SIFTProcessor implements ChunkProcessor<ArrayList<Feature>, String>
+    public static class SIFTCall implements SerializableCallable<ArrayList<Feature>>
     {
         private final FloatArray2DSIFT.Param param;
+        private final FileChunk fileChunk;
         
-        public SIFTProcessor(FloatArray2DSIFT.Param p)
+        public SIFTCall(FloatArray2DSIFT.Param p, String filename)
         {
             param = p;
+            fileChunk = new FileChunk(filename);
         }
         
-        public DataChunk<ArrayList<Feature>> process(DataChunk<String> chunk)
-        {
-            try
-            {
-                ImagePlus im = IJ.openImage(chunk.getData());
-                ImageProcessor ip = im.getProcessor();
-                ArrayList<Feature> feat = new ArrayList<Feature>();
-                SIFT sift = new SIFT(new FloatArray2DSIFT(param));
-                sift.extractFeatures(ip, feat);
-                return new SimpleChunk<ArrayList<Feature>>(feat);
-            }
-            catch (Exception e)
-            {
-                return new SimpleChunk<ArrayList<Feature>>(new ArrayList<Feature>());
-            }
+        public ArrayList<Feature> call() throws Exception {
+            ImagePlus im = IJ.openImage(fileChunk.getData());
+            System.out.println("attempting to open file " + fileChunk.getData());
+            ImageProcessor ip = im.getProcessor();
+            ArrayList<Feature> feat = new ArrayList<Feature>();
+            SIFT sift = new SIFT(new FloatArray2DSIFT(param));
+            sift.extractFeatures(ip, feat);
+            return feat;
         }
     }
 
@@ -73,92 +66,55 @@ public class Cluster_SIFT implements PlugIn
     {
         if (Cluster.activeCluster())
         {
-            int index = 0;
-            // A map of index to ID. This will be used later to keep the order of features correct
-            final long[] idMap = new long[fileNames.size()];
-            // Used to map ProcessManager ID to features
-            final Hashtable<Long, ArrayList<Feature>> idFeatureMap
-                    = new Hashtable<Long, ArrayList<Feature>>();
-            // Before queueing, this will be filled with the IDs of the PMs. The ProcessListener
-            // will remove those IDs as the results come in. When it's empty, we know we're done.
-            // Use a Vector because they're synchronized.
-            final Vector<Long> remainingIDS = new Vector<Long>();
-            // The current thread will be told to sleep forever (well, 2^63 -1 ms). When
-            // remainingIDs is empty, we'll interrupt the current thread.
-            final Thread currentThread = Thread.currentThread();
+            boolean executionErrorOccurred = false;
+
             // The return list
-            ArrayList<ArrayList<Feature>> featuresList;
-            // A list of PMs where we collect them before submitting to the cluster.
-            ArrayList<ProcessManager> pms = new ArrayList<ProcessManager>();
+            ArrayList<ArrayList<Feature>> featuresList = new ArrayList<ArrayList<Feature>>();
+            // A List of Futures, used a little later.
+            ArrayList<Future<ArrayList<Feature>>> futures =
+                    new ArrayList<Future<ArrayList<Feature>>>();
             
-            /*
-            For each filename passed in, create the appropriate FileChunk, a ProcessListener,
-            and SIFTProcessor.
+            FijiArchipelago.debug("Submitting futures");
             
-            The FileChunk and SIFTProcessor get sent to the client over an ObjectStream through
-            a Socket, so they must be Serializable. For internal classes, they must also be
-            static.
-             */
+            // For each file name, create a SIFTCall, submit it, and collect the Future returned by
+            // the Cluster
             for (String fileName : fileNames)
             {                
-                FileChunk imFileChunk = new FileChunk(fileName);
-                ProcessListener listener = new ProcessListener() {
-                    public boolean processFinished(ProcessManager<?, ?> process)
-                    {
-                        // Try to cast. This should *always* work, but if it fails, its important
-                        // to let someone know.
-                        try
-                        {
-                            ArrayList<Feature> feat = 
-                                    (ArrayList<Feature>)process.getOutput().getData();
-                            idFeatureMap.put(process.getID(), feat);
-                        }
-                        catch (ClassCastException cce)
-                        {
-                            FijiArchipelago.log("Cluster SIFT: Couldn't cast features correctly");
-                            idFeatureMap.put(process.getID(), new ArrayList<Feature>());
-                        }
-                        // Remove the id from remaining IDs after we populate the map.
-                        // It's possible that multiple listeners are running concurrently, so
-                        // even if we remove the last ID, the interrupt might be called from a
-                        // different thread.
-                        remainingIDS.remove(process.getID());
-                        if (remainingIDS.isEmpty())
-                        {
-                            currentThread.interrupt();
-                        }
-                        
-                        return true;
-                    }
-                };
-                ProcessManager<ArrayList<Feature>, String> pm =
-                        new ProcessManager<ArrayList<Feature>, String>(
-                                imFileChunk, new SIFTProcessor(param.clone()), listener);
-
-                idMap[index] = pm.getID();
-                remainingIDS.add(pm.getID());
-                pms.add(pm);
-                
-                
+                futures.add(Cluster.getCluster().submit(new SIFTCall(param.clone(), fileName)));
             }
 
-            Cluster.getCluster().queueProcesses(pms);
 
-            try
+            FijiArchipelago.debug("Waiting on futures");
+            // Get the result from each Future. this will block until the results return from the
+            // ClusterNode that the computation is actually running on.
+            for (Future<ArrayList<Feature>> future: futures)
             {
-                // Sleep until we're kissed by Prince(ss) Charming
-                Thread.sleep(Long.MAX_VALUE);
-            }
-            catch (InterruptedException ie)
-            {
-                // We got a kiss!
+                try
+                {
+                    featuresList.add(future.get());
+                }
+                catch (InterruptedException ie)
+                {
+                    // This happens if we're interrupted while blocking in Future.get
+                    FijiArchipelago.err(
+                            "Cluster SIFT Extraction: Interrupted while waiting for results.");
+                    return featuresList;
+                }
+                catch (ExecutionException ee)
+                {
+                    // If the Callable throws an error on the remote node, it will propagate back
+                    // over the network and end up here.
+                    // This would be called as a .err, but it when it rains, it pours.
+                    FijiArchipelago.log("Remote exception: " + ee);
+                    executionErrorOccurred = true;
+                }
             }
             
-            featuresList = new ArrayList<ArrayList<Feature>>();
-            for (long id : idMap)
+            if (executionErrorOccurred)
             {
-                featuresList.add(idFeatureMap.get(id));
+                FijiArchipelago.err("Caught at least one ExecutionError. See the log");
             }
+            
             return featuresList;
         }
         else
@@ -169,7 +125,7 @@ public class Cluster_SIFT implements PlugIn
     }
     
     
-    public long runOnCluster()
+    public float runOnCluster()
     {
         ImagePlus ip = IJ.getImage();
 
@@ -187,9 +143,8 @@ public class Cluster_SIFT implements PlugIn
         }
 
         if (!Cluster.activeCluster())
-        {
-            FijiArchipelago.runClusterGUI();
-            if (Cluster.activeCluster())
+        {            
+            if (FijiArchipelago.runClusterGUI())
             {
                 Cluster.getCluster().waitUntilReady();
             }
@@ -200,6 +155,8 @@ public class Cluster_SIFT implements PlugIn
             long sTime = System.currentTimeMillis();
             ImageStack stack = ip.getStack();
 
+            FijiArchipelago.log("Cluster is active.");
+            
             if (stack.isVirtual() 
                     && FijiArchipelago.fileIsInRoot(((VirtualStack) stack).getFileName(1)))
             {
@@ -212,6 +169,8 @@ public class Cluster_SIFT implements PlugIn
                     fileNames.add(vstack.getDirectory() + vstack.getFileName(i));                    
                 }
                 
+                FijiArchipelago.debug("Running clusterSIFTExtraction on " + fileNames.size() + " files");
+                
                 clusterSIFTExtraction(fileNames, new FloatArray2DSIFT.Param());
 
                 return System.currentTimeMillis() - sTime;
@@ -222,16 +181,20 @@ public class Cluster_SIFT implements PlugIn
                 return 0;
             }
         }
+        else
+        {
+            FijiArchipelago.debug("Cluster was not ready");
+        }
         return 0;
     }
     
-    public long runLocally()
+    public float runLocally()
     {
         ImagePlus ip = IJ.getImage();
 
         if (ip == null)
         {
-            IJ.showMessage("First, open an image");
+            IJ.showMessage("First, open a virtual stack");
             return 0;
         }
         else if(!(ip.getStack().isVirtual()))
@@ -244,7 +207,7 @@ public class Cluster_SIFT implements PlugIn
         ImageStack stack = ip.getStack();
         ArrayList<Thread> threads = new ArrayList<Thread>();
         final VirtualStack vstack = (VirtualStack)stack;
-        final int numCore = Runtime.getRuntime().availableProcessors(); 
+        final int numCore = Runtime.getRuntime().availableProcessors();
 
         for (int p = 0; p < numCore; ++p)
         {
@@ -259,6 +222,7 @@ public class Cluster_SIFT implements PlugIn
                         ArrayList<Feature> feat = new ArrayList<Feature>();
                         SIFT sift = new SIFT(new FloatArray2DSIFT(new FloatArray2DSIFT.Param()));
                         sift.extractFeatures(ip1, feat);
+                        System.gc();
                     }
                 }
             };
@@ -295,10 +259,11 @@ public class Cluster_SIFT implements PlugIn
         }
         else if (arg.equals("test"))
         {
-            long clusterTime = runOnCluster();
-            long aloneTime = runLocally();
-            IJ.showMessage("Cluster: " + (clusterTime / 1000 )+ "s\nStand Alone: "
-                    + (aloneTime / 1000)+ "s\nSpeedup: " + (aloneTime / clusterTime));
+            float clusterTime = runOnCluster();
+            FijiArchipelago.debug("Cluster run finished");
+            float aloneTime = runLocally();
+            IJ.showMessage("Cluster: " + (clusterTime / 1000f )+ "s\nStand Alone: "
+                    + (aloneTime / 1000f)+ "s\nSpeedup: " + (aloneTime / clusterTime));
         }            
         else
         {
