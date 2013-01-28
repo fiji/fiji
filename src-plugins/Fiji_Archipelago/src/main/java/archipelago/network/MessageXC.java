@@ -2,6 +2,7 @@ package archipelago.network;
 
 import archipelago.FijiArchipelago;
 import archipelago.data.ClusterMessage;
+import archipelago.listen.MessageType;
 import archipelago.listen.TransceiverListener;
 
 import java.io.*;
@@ -25,13 +26,14 @@ public class MessageXC
                 try
                 {
                     ClusterMessage message = (ClusterMessage)objectInputStream.readObject();
-                    FijiArchipelago.debug("RX: " + hostName + " Recieved message " + message.message);
+                    FijiArchipelago.debug("RX: " + hostName + " Recieved message " + message);
                     xcListener.handleMessage(message);
                     objectInputStream = new ObjectInputStream(inStream);
                 }
                 catch (ClassCastException cce)
                 {
                     FijiArchipelago.err("RX: " + hostName + " Got ClassCastException: " + cce);
+                    queueMessage(MessageType.ERROR, cce);
                 }
                 catch (IOException ioe)
                 {
@@ -40,6 +42,7 @@ public class MessageXC
                 catch (ClassNotFoundException cnfe)
                 {
                     FijiArchipelago.err("RX: " + hostName + " Got ClassNotFoundException: " + cnfe);
+                    queueMessage(MessageType.ERROR, cnfe);
                 }
             }
         }
@@ -68,7 +71,7 @@ public class MessageXC
                         objectOutputStream.writeObject(nextMessage);
                         objectOutputStream.flush();
                         FijiArchipelago.debug("TX: Successfully wrote message "
-                                + nextMessage.message + " to " + hostName);
+                                + nextMessage + " to " + hostName);
                         objectOutputStream = new ObjectOutputStream(outStream);
                     }
                     catch (NotSerializableException nse)
@@ -184,17 +187,15 @@ public class MessageXC
         }
     }
 
-    public boolean queueMessage(String message)
+    public boolean queueMessage(final MessageType type)
     {
-        ClusterMessage cm = new ClusterMessage();
-        cm.message = message;
+        ClusterMessage cm = new ClusterMessage(type);
         return queueMessage(cm);
     }
 
-    public boolean queueMessage(String message, Serializable o)
+    public boolean queueMessage(final MessageType type, final Serializable o)
     {
-        ClusterMessage cm = new ClusterMessage();
-        cm.message = message;
+        ClusterMessage cm = new ClusterMessage(type);
         cm.o = o;
         return queueMessage(cm);
     }

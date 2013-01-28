@@ -1,5 +1,7 @@
 package archipelago.data;
 
+import archipelago.listen.MessageType;
+
 import java.io.Serializable;
 /**
  *
@@ -7,8 +9,55 @@ import java.io.Serializable;
  */
 public class ClusterMessage implements Serializable
 {
-    
-    public String message = "";
+
+    public MessageType type;
     public Serializable o = null;
+
+    public ClusterMessage(final MessageType type)
+    {
+        this.type = type;
+    }
+    
+    public String toString()
+    {
+        return typeToString(type);
+    }
+    
+    public static String typeToString(final MessageType type)
+    {
+        switch (type)
+        {
+            case SETID:
+                return "set id";
+            case GETID:
+                return "get id";
+            case PING:
+                return "ping";
+            case HALT:
+                return "halt";
+            case PROCESS:
+                return "process";
+            case USER:
+                return "user";
+            case SETFILEROOT:
+                return "set file root";
+            case GETFILEROOT:
+                return "get file root";
+            case SETEXECROOT:
+                return "set exec root";
+            case GETEXECROOT:
+                return "get exec root";
+            case CANCELJOB:
+                return "cancel job";
+            case ERROR:
+                return "error";
+            case NUMTHREADS:
+                return "num threads";
+            case MBRAM:
+                return "MB ram";
+            default:
+                return "unknown";
+        }
+    }
 
 }

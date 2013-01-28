@@ -61,7 +61,7 @@ public class ClusterNode implements TransceiverListener
 
         setClientSocket(socket);
         
-        xc.queueMessage("getid");
+        xc.queueMessage(MessageType.GETID);
         
         while (!idSet.get())
         {
@@ -78,25 +78,25 @@ public class ClusterNode implements TransceiverListener
     {
         if (getUser() == null || getUser().equals(""))
         {
-            xc.queueMessage("getuser");
+            xc.queueMessage(MessageType.USER);
         }
 
         if (getExecPath() == null || getExecPath().equals(""))
         {
-            xc.queueMessage("getexecroot");
+            xc.queueMessage(MessageType.GETEXECROOT);
         }
         else
         {
-            xc.queueMessage("setexecroot", getExecPath());
+            xc.queueMessage(MessageType.SETEXECROOT, getExecPath());
         }
 
         if (getFilePath() == null || getFilePath().equals(""))
         {
-            xc.queueMessage("getfileroot");
+            xc.queueMessage(MessageType.GETEXECROOT);
         }
         else
         {
-            xc.queueMessage("setfileroot", getFilePath());
+            xc.queueMessage(MessageType.SETFILEROOT, getFilePath());
         }
     }
     
@@ -122,7 +122,7 @@ public class ClusterNode implements TransceiverListener
         else
         {
             nodeParam.setFileRoot(path);
-            return xc.queueMessage("setfileroot", path);
+            return xc.queueMessage(MessageType.SETFILEROOT, path);
         }
     }
 
@@ -213,7 +213,7 @@ public class ClusterNode implements TransceiverListener
                 processHandlers.put(process.getID(), listener);
                 runningProcesses.put(process.getID(), process);
                 process.setRunningOn(this);
-                return xc.queueMessage("process", process);
+                return xc.queueMessage(MessageType.PROCESS, process);
             }
             else
             {
@@ -230,87 +230,88 @@ public class ClusterNode implements TransceiverListener
 
     public void ping()
     {
-        ClusterMessage message = new ClusterMessage();
-        message.message = "ping";
-        xc.queueMessage(message);
+        xc.queueMessage(MessageType.PING);
     }
 
     public void handleMessage(final ClusterMessage cm)
     {
-        String message = cm.message;
+        MessageType type = cm.type;
         Object object = cm.o;
 
         try
         {
-            if (message.equals("id"))
+            switch (type)
             {
-                Long id = (Long)object;
-                nodeParam = Cluster.getCluster().getNodeManager().getParam(id);
-                FijiArchipelago.debug("Got id message. Setting ID to " + id + ". Param: " + nodeParam);
-                nodeID = id;
-                nodeParam.setNode(this);
-                idSet.set(true);
-            }
-            else if (message.equals("process"))
-            {
-                ProcessManager<?> pm = (ProcessManager<?>)object;
-                ProcessListener listener = processHandlers.remove(pm.getID());
-                runningProcesses.remove(pm.getID());
+                case GETID:
+                    Long id = (Long)object;
+                    nodeParam = Cluster.getCluster().getNodeManager().getParam(id);
+                    FijiArchipelago.debug("Got id message. Setting ID to " + id + ". Param: " + nodeParam);
+                    nodeID = id;
+                    nodeParam.setNode(this);
+                    idSet.set(true);
+                    break;
+                
+                case PROCESS:
+                    ProcessManager<?> pm = (ProcessManager<?>)object;
+                    ProcessListener listener = processHandlers.remove(pm.getID());
+                    runningProcesses.remove(pm.getID());
 
-//                FijiArchipelago.log("Got process results from " + getHost());
-
-                listener.processFinished(pm);
-            }
-            else if (message.equals("ping"))
-            {
-                FijiArchipelago.log("Received ping from " + getHost());
-            }
-            else if (message.equals("user"))
-            {
-                if (nodeParam == null)
-                {
-                    FijiArchipelago.err("Tried to set user but params are null");
-                }
-                if (object != null)
-                {
-                    String username = (String)object;
-                    nodeParam.setUser(username);
-                }
-                else
-                {
-                    FijiArchipelago.err("Got username message with null user");
-                }
-            } 
-            else if (message.equals("setfileroot"))
-            {
-                setFilePath((String)object);
-            }
-            else if (message.equals("setexecroot"))
-            {
-                setExecPath((String)object);
-            }
-            else if (message.equals("error"))
-            {
-                Exception e = (Exception)object;
-                FijiArchipelago.err("Remote client on " + getHost() + " experienced an error: "
-                        + e);
-            }
-            else
-            {
-                FijiArchipelago.log("Got unexpected message " + message);
-            }
+                    listener.processFinished(pm);
+                    break;
+                
+                case PING:                
+                    FijiArchipelago.log("Received ping from " + getHost());
+                    break;
             
+                case USER:
+                    if (nodeParam == null)
+                    {
+                        FijiArchipelago.err("Tried to set user but params are null");
+                    }
+                    if (object != null)
+                    {
+                        String username = (String)object;
+                        nodeParam.setUser(username);
+                    }
+                    else
+                    {
+                        FijiArchipelago.err("Got username message with null user");
+                    }
+                    break;
+
+                case GETFILEROOT:
+                    // Results of a GETFILEROOT request sent to the client.
+                    setFilePath((String)object);
+                    break;
+                
+                case GETEXECROOT:
+                    // Results of a GETEXECROOT request sent to the client.
+                    setExecPath((String)object);
+                    break;
+
+                case ERROR:
+
+                    Exception e = (Exception)object;
+                    FijiArchipelago.err("Remote client on " + getHost() + " experienced an error: "
+                            + e);
+                    break;
+                
+                default:
+                    FijiArchipelago.log("Got unexpected message type. The local version " +
+                            "of Fiji may not be up to date with the clients.");
+            
+            }
             
         }
         catch (ClassCastException cce)
         {
             FijiArchipelago.err("Caught ClassCastException while handling message " 
-                    + message + " on " + getHost() + " : "+ cce);
+                    + ClusterMessage.typeToString(type) + " on " + getHost() + " : "+ cce);
         }
         catch (NullPointerException npe)
         {
-            FijiArchipelago.err("Expected a message object but got null for " + message + " on "
-                    + getHost());
+            FijiArchipelago.err("Expected a message object but got null for " +
+                    ClusterMessage.typeToString(type) + " on "+ getHost());
         }
     }
 
@@ -350,9 +351,7 @@ public class ClusterNode implements TransceiverListener
 
     private boolean sendShutdown()
     {
-        ClusterMessage message = new ClusterMessage();
-        message.message = "halt";
-        return xc.queueMessage(message);
+        return xc.queueMessage(MessageType.HALT);
     }
     
     public static String stateString(final ClusterNodeState state)
@@ -393,7 +392,7 @@ public class ClusterNode implements TransceiverListener
         {
             return false;
         }
-        else if (xc.queueMessage("cancel", id))
+        else if (xc.queueMessage(MessageType.CANCELJOB, id))
         {
             processHandlers.remove(id);
             runningProcesses.remove(id);

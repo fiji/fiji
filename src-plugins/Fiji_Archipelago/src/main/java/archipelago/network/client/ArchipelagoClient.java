@@ -2,6 +2,7 @@ package archipelago.network.client;
 
 import archipelago.FijiArchipelago;
 import archipelago.listen.MessageListener;
+import archipelago.listen.MessageType;
 import archipelago.listen.TransceiverListener;
 import archipelago.compute.ProcessManager;
 import archipelago.data.ClusterMessage;
@@ -54,7 +55,7 @@ public class ArchipelagoClient implements MessageListener, TransceiverListener
             runningThreads.remove(this);
             if (running.get() && active.get())
             {
-                xc.queueMessage("process", process);
+                xc.queueMessage(MessageType.PROCESS, process);
             }
         }
     }
@@ -82,73 +83,76 @@ public class ArchipelagoClient implements MessageListener, TransceiverListener
 
     public void handleMessage(final ClusterMessage cm) {
 
-        final String message = cm.message;
+        final MessageType type = cm.type;
         final Object object = cm.o;
 
         try
         {
-            if (message.equals("process"))
+            switch (type)
             {
-                final ProcessManager<?> pm = (ProcessManager<?>)object;
-                final ProcessThread pt = new ProcessThread(pm);
-                runningThreads.add(pt);
-                pt.start();
-            }
-            else if (message.equals("halt"))
-            {
-                close();
-            }
-            else if (message.equals("ping"))
-            {
-                xc.queueMessage(cm);
-            }
-            else if (message.equals("user"))
-            {
-                cm.o = System.getProperty("user.name");
-                xc.queueMessage(cm);
-            }
-            else if (message.equals("setid"))
-            {
-                clientId = (Long)object;
-            }
-            else if (message.equals("getid"))
-            {
-                xc.queueMessage("id", clientId);
-            }
-            else if (message.equals("setfileroot"))
-            {
-                FijiArchipelago.setFileRoot((String) object);
-            }
-            else if (message.equals("setexecroot"))
-            {
-                FijiArchipelago.setExecRoot((String) object);
-            }
-            else if (message.equals("getfileroot"))
-            {
-                xc.queueMessage("setfileroot", FijiArchipelago.getFileRoot());
-            }
-            else if (message.equals("getexecroot"))
-            {
-                xc.queueMessage("setexecroot", FijiArchipelago.getExecRoot());
-            }
-            else if (message.equals("cancel"))
-            {
-                long id = (Long)object;
-                for (ProcessThread pt : runningThreads)
-                {
-                    if (pt.getID() == id)
+                case PROCESS:
+                    final ProcessManager<?> pm = (ProcessManager<?>)object;
+                    final ProcessThread pt = new ProcessThread(pm);
+                    runningThreads.add(pt);
+                    pt.start();
+                    break;
+
+                case HALT:
+                    close();
+                    break;
+
+                case PING:
+                    xc.queueMessage(MessageType.PING);
+                    break;
+
+                case USER:
+                    cm.o = System.getProperty("user.name");
+                    xc.queueMessage(cm);
+                    break;
+
+                case SETID:
+                    clientId = (Long)object;
+                    break;
+
+                case GETID:
+                    xc.queueMessage(MessageType.GETID, clientId);
+                    break;
+
+                case SETFILEROOT:
+                    FijiArchipelago.setFileRoot((String) object);
+                    break;
+
+                case SETEXECROOT:
+                    FijiArchipelago.setExecRoot((String) object);
+                    break;
+
+                case GETFILEROOT:
+                    xc.queueMessage(MessageType.SETFILEROOT, FijiArchipelago.getFileRoot());
+                    break;
+
+                case GETEXECROOT:
+                    xc.queueMessage(MessageType.GETEXECROOT, FijiArchipelago.getExecRoot());
+                    break;
+
+                case CANCELJOB:
+                    long id = (Long)object;
+
+                    for (ProcessThread processThread : runningThreads)
                     {
-                        pt.cancel();
-                        runningThreads.remove(pt);
-                        return;
+                        if (processThread.getID() == id)
+                        {
+                            processThread.cancel();
+                            runningThreads.remove(processThread);
+                            return;
+                        }
+                        break;
                     }
-                }
             }
         }
         catch (ClassCastException cce)
         {
             System.err.println("Caught CCE: " + cce);
-            xc.queueMessage("error", cce);
+            xc.queueMessage(MessageType.ERROR, cce);
         }
     }
 
