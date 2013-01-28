@@ -477,7 +477,10 @@ public class ClusterNodeConfigUI implements ActionListener
     private void selectConfigFile()
     {
         OpenDialog od = new OpenDialog("Select Config File", null);
-        fileName.setText(od.getDirectory() + "/" + od.getFileName());
+        if (od.getFileName() != null)
+        {
+            fileName.setText(od.getDirectory() + "/" + od.getFileName());
+        }
     }
 
     private void addNodeConfig()
