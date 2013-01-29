@@ -173,12 +173,13 @@ public class ArchipelagoFuture<T> implements Future<T>
                     throw ie;
                 }
             }
-
-            if (e != null)
-            {
-                throw new ExecutionException(e);
-            }
         }
+
+        if (e != null)
+        {
+            throw new ExecutionException(e);
+        }
+
         return t;
     }
 }
