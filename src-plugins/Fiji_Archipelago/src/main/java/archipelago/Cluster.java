@@ -381,7 +381,7 @@ public class Cluster implements ExecutorService, NodeStateListener
     
     public static boolean activeCluster()
     {
-        return cluster != null && cluster.isActive();
+        return cluster != null && cluster.isStarted();
     }
     
     private class ClusterProvider implements ExecutorProvider
@@ -418,7 +418,7 @@ public class Cluster implements ExecutorService, NodeStateListener
 
 
      */
-    private final AtomicBoolean halted, ready, terminated;
+    private final AtomicBoolean halted, ready, terminated, initted;
     
     private final AtomicInteger jobCount, runningNodes;
 
@@ -441,6 +441,7 @@ public class Cluster implements ExecutorService, NodeStateListener
         waitThreads = new Vector<Thread>();
         
         ready = new AtomicBoolean(false);
+        initted = new AtomicBoolean(false);
         halted = new AtomicBoolean(false);
         terminated = new AtomicBoolean(false);
         jobCount = new AtomicInteger(0);
@@ -470,7 +471,7 @@ public class Cluster implements ExecutorService, NodeStateListener
     
     public boolean init(int p)
     {
-        if (!isActive())
+        if (!isStarted())
         {
             port = p;
             server = null;
@@ -568,7 +569,6 @@ public class Cluster implements ExecutorService, NodeStateListener
                     FijiArchipelago.debug("Not shut down. Currently " + runningNodes.get()
                             + " running nodes");
                 }
-                triggerListeners();
                 break;
             
             case STOPPED:
@@ -606,11 +606,10 @@ public class Cluster implements ExecutorService, NodeStateListener
                 }
                 
                 FijiArchipelago.debug("There are now " + runningNodes.get() + " running nodes");
-
-                triggerListeners();
-
                 break;
         }
+
+        triggerListeners();
     }
 
     
@@ -733,13 +732,34 @@ public class Cluster implements ExecutorService, NodeStateListener
     {
         return new ArrayList<ClusterNode>(nodes);
     }
-    
-    public boolean startServer()
+
+    /**
+     * Starts the Cluster if it has not yet been started, otherwise simply returns true.
+     * @return true if the Cluster is already running or if it was started successfully,
+     * false if it was not started successfully. An unsuccessful start is typically caused
+     * by the inability to reserve the specified network port.
+     */
+    public boolean start()
     {
-        FijiArchipelago.debug("Scheduler alive? :" + scheduler.isAlive());
-        scheduler.start();
-        server = new ArchipelagoServer(this);
-        return server.start();
+        if (!initted.get())
+        {
+            FijiArchipelago.debug("Scheduler alive? :" + scheduler.isAlive());
+            scheduler.start();
+            server = new ArchipelagoServer(this);
+            if (server.start())
+            {
+                initted.set(true);
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+        else
+        {
+            return true;
+        }
     }
 
     public NodeManager getNodeManager()
@@ -750,6 +770,11 @@ public class Cluster implements ExecutorService, NodeStateListener
     public boolean isActive()
     {
         return ready.get();
+    }
+    
+    public boolean isStarted()
+    {
+        return initted.get();
     }
 
     public int getRunningJobCount()
@@ -817,6 +842,7 @@ public class Cluster implements ExecutorService, NodeStateListener
         terminated.set(true);
         scheduler.close();
         nodeManager.clear();
+        initted.set(false);
 
         triggerListeners();
 

@@ -211,7 +211,7 @@ public final class FijiArchipelago
             };
 
             // Start the cluster server, add node params
-            Cluster.getCluster().startServer();
+            Cluster.getCluster().start();
             for (NodeManager.NodeParameters np
                     : ui.parameterList(Cluster.getCluster().getNodeManager()))
             {
