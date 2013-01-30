@@ -29,10 +29,10 @@ public class IOUtils {
 	/**
 	 * Prompt the user for a target xml file.
 	 *  
-	 * @param file  a default file, will be used to display a default choice in the file chooser
-	 * @param parent  the {@link Frame} to lock on this dialog
-	 * @param logger  a {@link Logger} to report what is happening
-	 * @return  the selected file
+	 * @param file  a default file, will be used to display a default choice in the file chooser.
+	 * @param parent  the {@link Frame} to lock on this dialog.
+	 * @param logger  a {@link Logger} to report what is happening.
+	 * @return  the selected file, or <code>null</code> if the user pressed the "cancel" button.
 	 */
 	public static File askForFile(File file, Frame parent, Logger logger) {
 
