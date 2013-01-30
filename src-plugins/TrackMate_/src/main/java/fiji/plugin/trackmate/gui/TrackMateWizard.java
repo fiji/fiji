@@ -253,7 +253,10 @@ public class TrackMateWizard extends javax.swing.JFrame implements ActionListene
 
 	public void setNextButtonEnabled(final boolean b) {
 		SwingUtilities.invokeLater(new Runnable() {
-			public void run() { jButtonNext.setEnabled(b); }
+			public void run() { 
+				jButtonNext.setEnabled(b);
+				if (b) jButtonNext.requestFocusInWindow();
+			}
 		});
 	}
 
