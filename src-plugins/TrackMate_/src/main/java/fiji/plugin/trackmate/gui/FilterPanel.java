@@ -9,6 +9,10 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
@@ -20,6 +24,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
 import javax.swing.ButtonGroup;
 import javax.swing.ComboBoxModel;
@@ -49,9 +57,6 @@ import fiji.plugin.trackmate.features.spot.SpotIntensityAnalyzerFactory;
 import fiji.plugin.trackmate.features.spot.SpotMorphologyAnalyzerFactory;
 import fiji.plugin.trackmate.util.TMUtils;
 
-/**
- * 
- */
 public class FilterPanel extends javax.swing.JPanel {
 
 	static final Font FONT = new Font("Arial", Font.PLAIN, 11);
@@ -302,8 +307,6 @@ public class FilterPanel extends javax.swing.JPanel {
 		plot.setRangeCrosshairVisible(false);
 		plot.setRangeGridlinesVisible(false);
 
-
-
 		plot.getRangeAxis().setVisible(false);
 		plot.getDomainAxis().setVisible(false);
 
@@ -335,6 +338,20 @@ public class FilterPanel extends javax.swing.JPanel {
 				redrawThresholdMarker();
 			}
 		});
+		chartPanel.setFocusable(true);
+		chartPanel.addFocusListener(new FocusListener() {
+			
+			@Override
+			public void focusLost(FocusEvent arg0) {
+				annotation.setColor(annotationColor.darker());
+			}
+			
+			@Override
+			public void focusGained(FocusEvent arg0) {
+				annotation.setColor(Color.RED.darker());
+			}
+		});
+		chartPanel.addKeyListener(new MyKeyListener());
 
 		annotation = new XYTextSimpleAnnotation(chartPanel);
 		annotation.setFont(SMALL_FONT.deriveFont(Font.BOLD));
@@ -361,10 +378,12 @@ public class FilterPanel extends javax.swing.JPanel {
 			intervalMarker.setEndValue(threshold);
 		}
 		float x, y;
-		if (threshold > 0.85 * plot.getDomainAxis().getUpperBound()) 
+		if (threshold > 0.85 * plot.getDomainAxis().getUpperBound()) { 
 			x = (float) (threshold - 0.15 * plot.getDomainAxis().getRange().getLength());
-		else 
+		} else { 
 			x = (float) (threshold + 0.05 * plot.getDomainAxis().getRange().getLength());
+		}
+		
 		y = (float) (0.85 * plot.getRangeAxis().getUpperBound());
 		annotation.setText(String.format("%.1f", threshold));
 		annotation.setLocation(x, y);
@@ -423,4 +442,67 @@ public class FilterPanel extends javax.swing.JPanel {
 		frame.pack();
 		frame.setVisible(true);
 	}
+
+
+	/**
+	 * A class that listen to the user typing a number, building a string representation
+	 * as he types, then converting the string to a double after a wait time. 
+	 * The number typed is used to set the threshold in the chart panel.
+	 * @author Jean-Yves Tinevez
+	 */
+	private final class MyKeyListener implements KeyListener {
+
+		private static final long WAIT_DELAY = 1; // s
+		private String strNumber = "";
+		private ScheduledExecutorService ex;
+		private ScheduledFuture<?> future;
+		private boolean dotAdded = false;
+		
+		private final Runnable command = new Runnable() {
+			@Override
+			public void run() {
+				// Convert to double and pass it to threshold value
+				try { 
+					double typedThreshold = Double.parseDouble(strNumber);
+					threshold = typedThreshold;
+					redrawThresholdMarker();
+				} catch (NumberFormatException nfe) { }
+				// Reset
+				ex = null;
+				strNumber = "";
+				dotAdded = false;
+			}
+		};
+
+		@Override
+		public void keyPressed(KeyEvent e) {}
+
+		@Override
+		public void keyReleased(KeyEvent e) {}
+
+		@Override
+		public void keyTyped(KeyEvent e) {
+			if (e.getKeyChar() < '0' || e.getKeyChar() > '9') {
+				if (!dotAdded && e.getKeyChar() == '.') {
+					// User added a decimal dot for the first and only time
+					dotAdded  = true;
+				} else {
+					return;
+				}
+			} 
+
+			if (ex == null) {
+				// Create new waiting line
+				ex = Executors.newSingleThreadScheduledExecutor();
+				future = ex.schedule(command , WAIT_DELAY, TimeUnit.SECONDS);
+			} else {
+				// Reset waiting line
+				future.cancel(false);
+				future = ex.schedule(command , WAIT_DELAY, TimeUnit.SECONDS);
+			}
+			strNumber += e.getKeyChar();
+		}
+	}
+
+
 }
