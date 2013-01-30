@@ -65,6 +65,7 @@ import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Hashtable;
 import java.util.List;
 import java.util.Stack;
 import java.util.regex.Pattern;
@@ -813,23 +814,25 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 
 	protected static String originalRename, originalRenameArg;
 
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({ "unchecked", "rawtypes" })
 	protected void interceptRenames() {
 		if (originalRename != null)
 			return;
 
-		originalRename = (String)Menus.getCommands().get("Rename...");
-		if (originalRename.endsWith("\")")) {
-			int paren = originalRename.lastIndexOf("(\"");
-			originalRenameArg = originalRename.substring(paren + 2,
-				originalRename.length() - 2);
-			originalRename = originalRename.substring(0, paren);
-		}
-		else
-			originalRenameArg = "";
+		Hashtable commands = Menus.getCommands();
+		if (commands != null) {
+			originalRename = (String)commands.get("Rename...");
+			if (originalRename.endsWith("\")")) {
+				int paren = originalRename.lastIndexOf("(\"");
+				originalRenameArg = originalRename.substring(paren + 2,
+					originalRename.length() - 2);
+				originalRename = originalRename.substring(0, paren);
+			}
+			else
+				originalRenameArg = "";
 
-		Menus.getCommands().put("Rename...", getClass().getName()
-			+ "(\"rename\")");
+			commands.put("Rename...", getClass().getName() + "(\"rename\")");
+		}
 	}
 
 	protected void rename() {
@@ -1074,5 +1077,9 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 				editor.getTextArea().setCaretPosition(p);
 			}
 		} catch (AWTException e) { /* ignore */ }
+	}
+
+	public static void main(String[] args) {
+		new Wiki_Editor().run("");
 	}
 }
