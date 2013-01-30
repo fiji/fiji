@@ -235,7 +235,13 @@ public class GraphUtils {
 	
 	
 	public static final boolean isTree(TrackGraphModel model, DirectedNeighborIndex<Spot, DefaultWeightedEdge> cache) {
-		for (Spot spot : model.vertexSet()) {
+		return isTree(model.vertexSet(), cache);
+	}
+	
+
+	
+	public static final boolean isTree(Iterable<Spot> spots, DirectedNeighborIndex<Spot, DefaultWeightedEdge> cache) {
+		for (Spot spot : spots) {
 			if (cache.predecessorsOf(spot).size() > 1) {
 				return false;
 			}

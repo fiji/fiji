@@ -589,7 +589,7 @@ public class TrackGraphModel {
 	 * the edge direction. If true, the iterator will not be able to iterate backward in time.
 	 * @param start  the spot to start iteration with. Can be <code>null</code>, then the start will be taken
 	 * randomly and will traverse all the links.
-	 * @param directed  if true returns a directed iterator, undirected if false
+	 * @param directed  if true returns a directed iterator, undirected if false.
 	 */
 	public DepthFirstIterator<Spot, DefaultWeightedEdge> getDepthFirstIterator(Spot start, boolean directed) {
 		if (directed) {
@@ -599,6 +599,16 @@ public class TrackGraphModel {
 		}
 	}
 
+	/**
+	 * @return a new depth first iterator over the spots connected by links in this model.
+	 * This iterator is sorted: when branching, it chooses the next vertex according to a specified comparator. 
+	 * A boolean flag allow to set whether the returned iterator does take into account 
+	 * the edge direction. If true, the iterator will not be able to iterate backward in time.
+	 * @param start  the spot to start iteration with. Can be <code>null</code>, then the start will be taken
+	 * randomly and will traverse all the links.
+	 * @param directed  if true returns a directed iterator, undirected if false.
+	 * @param comparator the comparator to use to pick children in order when branching.
+	 */
 	public SortedDepthFirstIterator<Spot, DefaultWeightedEdge> getSortedDepthFirstIterator(Spot start, Comparator<Spot> comparator, boolean directed) {
 		if (directed) {
 			return new SortedDepthFirstIterator<Spot, DefaultWeightedEdge>(graph, start, comparator);			
