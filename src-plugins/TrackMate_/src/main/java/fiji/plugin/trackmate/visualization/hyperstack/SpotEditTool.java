@@ -36,22 +36,22 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 	private static final double COARSE_STEP = 2;
 	private static final double FINE_STEP = 0.2f;
 	private static final String TOOL_NAME = "Spot edit tool";
-	private static final String TOOL_ICON ="CfefD00CfdfD10"
-			+ "Cd8dD01Ca3bD11CfefD21CeeeL8191"
-			+ "CfdfD02Cb8eD12CaafD22CaaaD72C666D82C888D92CbbbDa2C666Db2CcccDc2C888De2CaaaDf2"
-			+ "CccfD23Ca9fD33CeceD43C999D83CdddD93C555Db3C999Dc3CeeeDd3C666De3CaaaDf3"
-			+ "Ca5cD34C94bD44C999D84CdddD94C777Db4C999Dc4CbbbDd4C888De4CaaaDf4"
-			+ "CfdfD35C98fD45CfefD55C999D85CdddD95C888Db5CaaaDc5C666Dd5CbbbDe5CaaaDf5"
-			+ "CddfD46CbbfD56CcccD86CbbbDb6CeeeDc6CbbbDd6CeeeDe6CcccDf6"
-			+ "Ca9fD57CdbfD67"
-			+ "Cb6cD58C73bD68CfefD78"
-			+ "CbafD59Ca9eD69CaafD79CeefD89"
-			+ "CaafD5aCeefD7aC96dD8aCa6cD9aCdcfLaabaCc8dDcaCfdfDda"
-			+ "CdbfD4bCbafD5bCd9dD8bCa6cD9bCccfDabCb9eDbbC72bDcbCcaeDdb"
-			+ "CecfD3cC82bD4cCc9dD5cCedfDccCaafDdcCeefDec"
-			+ "CfefD1dCddfD2dCa9fD3dCc9eD4dCfdfD5dCeefDddCa8fDedCecfDfd"
-			+ "CeaeD0eC93bD1eCa9fD2eCb5cLeefe"
-			+ "CfcfD0fCc7dD1fCfefD2fCfcfDefCfdfDff";
+	private static final String TOOL_ICON ="CdffL10e0"
+			+ "CafdD01C67aD11C6aaD21C6fbL31e1CbfeDf1"
+			+ "CaedD02C64aD12C35aD22C5fbD32C6fbL42e2CbfdDf2"
+			+ "CafdD03C5eaD13C4bbD23C38bD33C5daD43C6fbL53e3CbfdDf3"
+			+ "CafdD04C6fbL1424C48aD34C42aD44C5caD54C6fbL64e4CbfdDf4"
+			+ "CafdD05C6fbL1525C5caD35C35aD45C4bbD55C6fbL65e5CbfdDf5"
+			+ "CafdD06C6fbL1636C5dbD46C38bD56C6fbL66e6CbfdDf6"
+			+ "CafdD07C6fbL1747C38bD57C49aD67C6fbL77e7CbfdDf7"
+			+ "CafdD08C6fbL1848C58aD58C31aD68C5baD78C6fbL88e8CbfdDf8"
+			+ "CafdD09C6fbL1949C4abD59C37bD69C38bD79C4bbD89C5eaD99C6fbLa9e9CbfdDf9"
+			+ "CafdD0aC6fbL1a4aC39bD5aC5ebL6a7aC44aD8aC43aD9aC39bDaaC46aDbaC55aDcaC6fbLdaeaCbfdDfa"
+			+ "CafdD0bC6fbL1b3bC58aD4bC36aD5bC6fbL6b7bC5aaD8bC59aD9bC5dbDabC47aDbbC34aDcbC5cbDdbC6fbDebCbfdDfb"
+			+ "CafdD0cC6fbL1c2cC5cbD3cC33aD4cC55aD5cC6fbL6cbcC5dbDccC38bDdcC5ebDecCbfdDfc"
+			+ "CafdD0dC58aD1dC47aD2dC38bD3dC5cbD4dC6eaD5dC6fbL6dcdC49aDddC43aDedCbddDfd"
+			+ "CafdD0eC64aD1eC45aD2eC5fbD3eC6fbL4eceC5baDdeC65aDeeCbddDfe"
+			+ "CeffD0fCbedD1fCbeeD2fCcfeL3fdfCbfeDefCeffDff";
 
 
 	/** Fall back default radius when the settings does not give a default radius to use. */
