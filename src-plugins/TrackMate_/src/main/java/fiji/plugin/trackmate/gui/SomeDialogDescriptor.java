@@ -7,9 +7,9 @@ import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.TrackMate_;
 
 /**
- * An abstract class made for descripting panels that generate a dialog, 
+ * An abstract class made for describing panels that generate a dialog, 
  * like save and load panels.
- * @author JeanYves
+ * @author Jean-Yves Tinevez
  *
  */
 public abstract class SomeDialogDescriptor implements WizardPanelDescriptor {

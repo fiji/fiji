@@ -65,8 +65,14 @@ public class ExportTracksToXML extends AbstractTMAction {
 		logger.log("  Preparing XML data.\n");
 		Element root = marshall(model);
 
+		File folder; 
+		try {
+			folder = new File(plugin.getModel().getSettings().imp.getOriginalFileInfo().directory);
+		} catch (NullPointerException npe) {
+			folder = new File(System.getProperty("user.dir")).getParentFile().getParentFile();
+		}
+		
 		File file;
-		File folder = new File(System.getProperty("user.dir")).getParentFile().getParentFile();
 		try {
 			String filename = plugin.getModel().getSettings().imageFileName;
 			filename = filename.substring(0, filename.indexOf("."));
