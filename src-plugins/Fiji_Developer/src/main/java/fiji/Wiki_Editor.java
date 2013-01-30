@@ -457,6 +457,8 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 		int start = html.indexOf("<div class='previewnote'>");
 		start = html.indexOf("</div>", start) + 6;
 		int end = html.indexOf("<div id='toolbar'>");
+		if (end < 0)
+			end = html.indexOf("<div id=\"toolbar\">");
 		html = "<html>\n<head>\n<title>Preview of " + name + "</title>\n"
 			+ "<meta http-equiv='Content-Type' "
 			+ "content='text/html; charset=utf-8'/>\n</head>\n<body>\n"
