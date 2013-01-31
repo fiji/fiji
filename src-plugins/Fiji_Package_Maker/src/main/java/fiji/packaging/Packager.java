@@ -21,6 +21,7 @@ import java.util.List;
 public abstract class Packager {
 	protected File ijDir;
 	protected Collection<String> files;
+	protected String prefix = "Fiji.app/";
 
 	protected byte[] buffer = new byte[16384];
 	private Progress progress;
@@ -45,6 +46,10 @@ public abstract class Packager {
 
 	public void setRootDirectory(final File rootDirectory) {
 		ijDir = rootDirectory;
+	}
+
+	public void setPrefix(final String prefix) {
+		this.prefix = prefix;
 	}
 
 	public void initialize(final Progress progress, boolean includeJRE, String... platforms) throws Exception {
@@ -186,7 +191,7 @@ public abstract class Packager {
 		if (!file.exists())
 			return false;
 		try {
-			putNextEntry("Fiji.app/" + fileName, executable || file.canExecute(), (int)file.length());
+			putNextEntry(prefix + fileName, executable || file.canExecute(), (int)file.length());
 			write(new FileInputStream(file));
 			closeEntry();
 		} catch (IOException e) {
@@ -214,6 +219,7 @@ public abstract class Packager {
 	public static void main(String[] args) {
 		boolean includeJRE = false;
 		String[] platforms = {};
+		String prefix = null;
 		int i = 0;
 		while (i < args.length && args[i].startsWith("-")) {
 			if (args[i].equals("--jre"))
@@ -225,6 +231,11 @@ public abstract class Packager {
 			}
 			else if (args[i].startsWith("-Dij.dir="))
 				System.setProperty("ij.dir", args[i].substring("-Dij.dir=".length()));
+			else if (args[i].startsWith("--prefix=")) {
+				prefix = args[i].substring("--prefix=".length());
+				if (!prefix.endsWith("/"))
+					prefix += "/";
+			}
 			else {
 				System.err.println("Unknown option: " + args[i]);
 				System.exit(1);
@@ -251,10 +262,13 @@ public abstract class Packager {
 			}
 		}
 		else {
-			System.err.println("Usage: Package_Maker [--platform=<platform>[,<platform>]] [--jre] <filename>");
+			System.err.println("Usage: Package_Maker [--platform=<platform>[,<platform>]] [--jre] [--prefix=<directory>] <filename>");
 			System.exit(1);
 		}
 		String path = args[i];
+
+		if (prefix != null)
+			packager.setPrefix(prefix);
 
 		try {
 			packager.initialize(null, includeJRE, platforms);

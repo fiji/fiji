@@ -25,7 +25,7 @@ public class FloatProcessorChunk extends DataChunk<FloatProcessor>
     private void readObject(ObjectInputStream ois) throws IOException, ClassNotFoundException
     {
         ois.defaultReadObject();
-        processor = new FloatProcessor(width, height, pixels);
+        processor = new FloatProcessor(width, height, pixels, null);
     }
 
     @Override
