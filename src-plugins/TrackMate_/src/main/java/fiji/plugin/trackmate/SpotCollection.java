@@ -2,6 +2,7 @@ package fiji.plugin.trackmate;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
@@ -24,7 +25,7 @@ import mpicbg.imglib.multithreading.SimpleMultiThreading;
  * <p>
  * This class is {@link MultiThreaded}. There are a few processes that can benefit from multithreaded
  * computation ({@link #filter(Collection)}, {@link #filter(FeatureFilter)}
- * @author Jean-Yves Tinevez <jeanyves.tinevez@gmail.com> - Feb - June 2011
+ * @author Jean-Yves Tinevez <jeanyves.tinevez@gmail.com> - Feb 2011 - 2013
  *
  */
 public class SpotCollection implements Iterable<Spot>, SortedMap<Integer, List<Spot>>, MultiThreaded  {
@@ -418,9 +419,17 @@ public class SpotCollection implements Iterable<Spot>, SortedMap<Integer, List<S
 		return content.containsValue(value);
 	}
 
+	/**
+	 * Return the spots for the specified frame. An empty list is returned
+	 * if the specified frame contains no spots.
+	 */
 	@Override
 	public List<Spot> get(Object key) {
-		return content.get(key);
+		List<Spot> spots = content.get(key);
+		if (null == spots) {
+			return Collections.emptyList();
+		}
+		return spots;
 	}
 
 	@Override

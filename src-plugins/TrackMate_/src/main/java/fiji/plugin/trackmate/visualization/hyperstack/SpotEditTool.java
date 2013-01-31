@@ -130,18 +130,18 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 
 	@Override
 	public void mouseClicked(MouseEvent e) {
-		
+
 		final ImagePlus imp = getImagePlus(e);
 		final HyperStackDisplayer displayer = displayers.get(imp);
 		if (DEBUG) {
 			System.out.println("[SpotEditTool] @mouseClicked");
 			System.out.println("[SpotEditTool] Got "+imp+ " as ImagePlus");
 			System.out.println("[SpotEditTool] Matching displayer: "+displayer);
-			
+
 			for (MouseListener ml : imp.getCanvas().getMouseListeners()) {
 				System.out.println("[SpotEditTool] mouse listener: "+ml);
 			}
-			
+
 		}
 
 		if (null == displayer)
@@ -231,7 +231,7 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 				editedSpot.putFeature(Spot.POSITION_Z, z);
 				editedSpot.putFeature(Spot.POSITION_T, frame * displayer.settings.dt);
 				editedSpot.putFeature(Spot.FRAME, frame);
-				
+
 				model.beginUpdate();
 				try {
 					if (initFrame == null) {
@@ -355,10 +355,10 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 
 	@Override
 	public void keyPressed(KeyEvent e) { 
-		
+
 		if (DEBUG) 
 			System.out.println("[SpotEditTool] keyPressed: "+e.getKeyChar());
-		
+
 		final ImagePlus imp = getImagePlus(e);
 		if (imp == null)
 			return;
@@ -439,7 +439,7 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 				newSpot.putFeature(Spot.FRAME, frame);
 				newSpot.putFeature(Spot.POSITION_Z, zpos);
 				newSpot.putFeature(Spot.RADIUS, radius);
-				
+
 				model.beginUpdate();
 				try {
 					model.addSpotTo(newSpot, frame);
@@ -550,14 +550,14 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 
 			break;
 		}
-		
+
 		// Copy spots from previous frame
 		case KeyEvent.VK_V: {
 			if (e.isShiftDown()) {
-				
+
 				int currentFrame = imp.getFrame() - 1;
 				if (currentFrame > 0) {
-					
+
 					List<Spot> previousFrameSpots = model.getFilteredSpots().get(currentFrame-1);
 					if (previousFrameSpots.isEmpty()) {
 						e.consume();
@@ -569,7 +569,7 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 					double dt = model.getSettings().dt;
 					if (dt == 0)
 						dt = 1;
-					
+
 					for(Spot spot : previousFrameSpots) {
 						double[] coords = new double[3];
 						TMUtils.localize(spot, coords);
@@ -586,11 +586,12 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 						newSpot.putFeature(Spot.POSITION_T, spot.getFeature(Spot.POSITION_T) + dt);
 						copiedSpots.add(newSpot);
 					}
-					
+
 					model.beginUpdate();
 					try {
 						// Remove old ones
-						for(Spot spot : new ArrayList<Spot>(model.getFilteredSpots().get(currentFrame))) {
+						List<Spot> spotsToRemove = model.getFilteredSpots().get(currentFrame);
+						for(Spot spot : new ArrayList<Spot>(spotsToRemove)) {
 							model.removeSpotFrom(spot, currentFrame);
 						}
 						// Add new ones
@@ -602,8 +603,8 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 						imp.updateAndDraw();
 					}
 				}
-					
-				
+
+
 				e.consume();
 			}
 			break;
@@ -622,7 +623,7 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 	public void keyReleased(KeyEvent e) { 
 		if (DEBUG) 
 			System.out.println("[SpotEditTool] keyReleased: "+e.getKeyChar());
-		
+
 		switch(e.getKeyCode()) {
 		case KeyEvent.VK_SPACE: {
 			if (null == quickEditedSpot)
