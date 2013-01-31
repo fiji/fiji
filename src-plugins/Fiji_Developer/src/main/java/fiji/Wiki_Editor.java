@@ -791,8 +791,12 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 				System.err.println("has image: " + html);
 			return hasFile;
 		} catch (IOException e) {
-			IJ.error("Could not retrieve image " + image + ": "
-					+ e.getMessage());
+			String message = "Could not retrieve image " + image + ": "
+					+ e.getMessage();
+			if ("HTTP code: 404".equals(e.getMessage()))
+				System.err.println(message);
+			else
+				IJ.error(message);
 			return false;
 		}
 	}
