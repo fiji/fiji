@@ -327,6 +327,7 @@ public class FilterPanel extends javax.swing.JPanel {
 			public void mouseExited(MouseEvent e) {}
 			public void mouseEntered(MouseEvent e) {}
 			public void mouseClicked(MouseEvent e) {
+				chartPanel.requestFocusInWindow();
 				threshold = getXFromChartEvent(e);
 				redrawThresholdMarker();
 			}
@@ -340,12 +341,12 @@ public class FilterPanel extends javax.swing.JPanel {
 		});
 		chartPanel.setFocusable(true);
 		chartPanel.addFocusListener(new FocusListener() {
-			
+
 			@Override
 			public void focusLost(FocusEvent arg0) {
 				annotation.setColor(annotationColor.darker());
 			}
-			
+
 			@Override
 			public void focusGained(FocusEvent arg0) {
 				annotation.setColor(Color.RED.darker());
@@ -383,7 +384,7 @@ public class FilterPanel extends javax.swing.JPanel {
 		} else { 
 			x = (float) (threshold + 0.05 * plot.getDomainAxis().getRange().getLength());
 		}
-		
+
 		y = (float) (0.85 * plot.getRangeAxis().getUpperBound());
 		annotation.setText(String.format("%.1f", threshold));
 		annotation.setLocation(x, y);
@@ -453,11 +454,12 @@ public class FilterPanel extends javax.swing.JPanel {
 	private final class MyKeyListener implements KeyListener {
 
 		private static final long WAIT_DELAY = 1; // s
+		private static final double INCREASE_FACTOR = 0.1;
 		private String strNumber = "";
 		private ScheduledExecutorService ex;
 		private ScheduledFuture<?> future;
 		private boolean dotAdded = false;
-		
+
 		private final Runnable command = new Runnable() {
 			@Override
 			public void run() {
@@ -475,14 +477,36 @@ public class FilterPanel extends javax.swing.JPanel {
 		};
 
 		@Override
-		public void keyPressed(KeyEvent e) {}
+		public void keyPressed(KeyEvent e) {
+			// Is it arrow keys?
+			if (e.getKeyCode() == KeyEvent.VK_LEFT || e.getKeyCode() == KeyEvent.VK_KP_LEFT) {
+				threshold -= INCREASE_FACTOR * plot.getDomainAxis().getRange().getLength();
+				redrawThresholdMarker();
+				return;
+			} else if (e.getKeyCode() == KeyEvent.VK_RIGHT || e.getKeyCode() == KeyEvent.VK_KP_RIGHT) {
+				threshold += INCREASE_FACTOR * plot.getDomainAxis().getRange().getLength();
+				redrawThresholdMarker();
+				return;
+			} else if (e.getKeyCode() == KeyEvent.VK_UP || e.getKeyCode() == KeyEvent.VK_KP_UP) {
+				threshold = plot.getDomainAxis().getRange().getUpperBound();
+				redrawThresholdMarker();
+				return;
+			} else if (e.getKeyCode() == KeyEvent.VK_DOWN || e.getKeyCode() == KeyEvent.VK_KP_DOWN) {
+				threshold = plot.getDomainAxis().getRange().getLowerBound();
+				redrawThresholdMarker();
+				return;
+			}
+		}
 
 		@Override
 		public void keyReleased(KeyEvent e) {}
 
 		@Override
 		public void keyTyped(KeyEvent e) {
+
 			if (e.getKeyChar() < '0' || e.getKeyChar() > '9') {
+				// Ok then it's number
+
 				if (!dotAdded && e.getKeyChar() == '.') {
 					// User added a decimal dot for the first and only time
 					dotAdded  = true;
