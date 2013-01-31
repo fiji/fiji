@@ -185,7 +185,8 @@ public class MediaWikiClient {
 				"wpSummary", comment,
 				"wpEdittime", time,
 				"wpEditToken", token,
-				"wpAutoSummary", summary
+				"wpAutoSummary", summary,
+				"wpRecreate", "1"
 			};
 			if (previewOnly) {
 				postVars[0] = "wpPreview";
