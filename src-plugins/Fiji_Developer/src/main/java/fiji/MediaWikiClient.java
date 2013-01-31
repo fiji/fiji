@@ -149,8 +149,10 @@ public class MediaWikiClient {
 
 	public boolean uploadPage(String title,
 			String contents, String comment) {
-		return uploadOrPreviewPage(title, contents, comment, false)
-			!= null;
+		String result = uploadOrPreviewPage(title, contents, comment, false);
+		if (IJ.debugMode)
+			System.err.println("result: " + result);
+		return result != null;
 	}
 
 	public String uploadOrPreviewPage(String title, String contents,
