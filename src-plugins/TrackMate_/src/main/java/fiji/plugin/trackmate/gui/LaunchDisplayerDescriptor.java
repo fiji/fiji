@@ -63,10 +63,22 @@ public class LaunchDisplayerDescriptor implements WizardPanelDescriptor {
 		wizard.setNextButtonEnabled(false);
 		final TrackMateModelView displayer = wizard.getDisplayer();
 
+		// Thread for rendering
+		Thread renderingThread = new Thread("TrackMate rendering thread") {
+
+			public void run() {
+				// Instantiate displayer
+				displayer.render();
+				logger.log("Rendering done.\n", Logger.BLUE_COLOR);
+			}
+		};
+		
 		if (plugin.getModel().getSpots().getNSpots() > 0) {
+
+			/*
+			 * We have some spots so we need to compute spot features will we render them.
+			 */
 			logger.log("Calculating spot features...\n",Logger.BLUE_COLOR);
-
-
 			// Calculate features
 			Thread featureCalculationThread = new Thread("TrackMate spot feature calculating mother thread") {
 				public void run() {
@@ -76,26 +88,28 @@ public class LaunchDisplayerDescriptor implements WizardPanelDescriptor {
 					logger.log(String.format("Calculating features done in %.1f s.\n", (end-start)/1e3f), Logger.BLUE_COLOR);
 				}
 			};
-
-
-			// Thread for rendering
-			Thread renderingThread = new Thread("TrackMate rendering thread") {
-
-				public void run() {
-					// Instantiate displayer
-					displayer.render();
-					logger.log("Rendering done.\n", Logger.BLUE_COLOR);
-				}
-			};
-
 			// Launch threads
 			Thread[] threads = new Thread[] { featureCalculationThread, renderingThread };
 			SimpleMultiThreading.startAndJoin(threads);
 			
-			// Re-enable the GUI
-			wizard.setVisible(true);
-			wizard.setNextButtonEnabled(true);
+		} else {
+			
+			/*
+			 * We don't have any spot. Let's just render the view.
+			 */
+			renderingThread.start();
+			try {
+				renderingThread.join();
+			} catch (InterruptedException e) {
+				logger.error("Error rendering the view:\n" + e.getLocalizedMessage());
+				e.printStackTrace();
+			}
+			
 		}
+
+		// Re-enable the GUI
+		wizard.setVisible(true);
+		wizard.setNextButtonEnabled(true);
 
 	}
 
