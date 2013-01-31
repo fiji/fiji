@@ -400,7 +400,7 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 
 		getClient();
 
-		if (!client.login("Wiki Login"))
+		if (!client.login("Login for " + URL))
 			return;
 
 		if (!saveOrUploadImages(client, images))
