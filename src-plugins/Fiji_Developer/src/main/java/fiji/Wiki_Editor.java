@@ -777,6 +777,7 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 			JTextArea pane = editor.getEditorPane();
 			pane.insert(buffer.toString(), pane.getCaretPosition());
 		} catch (Exception e) {
+			e.printStackTrace();
 			IJ.error("Could not open " + urlString + ":\n \n" + e.getMessage());
 		}
 	}
