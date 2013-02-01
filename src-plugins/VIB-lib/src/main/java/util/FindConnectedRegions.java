@@ -706,6 +706,7 @@ public class FindConnectedRegions {
 					if (imagePerRegion) {
 						if( ! noUI )
 							newImagePlus.show();
+						results.perRegion.add(newImagePlus);
 					} else {
 						newImagePlus.changes = false;
 						newImagePlus.close();
