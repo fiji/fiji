@@ -16,6 +16,9 @@
 .classpath
 .settings/
 
+# IntelliJ #
+*.iml
+
 # ImageJ 1.x #
 /IJ_Prefs.txt
 
@@ -95,6 +98,9 @@ hs_err*.log
 /jars/jep-[0-9]*.jar
 /jars/mij-[0-9]*.jar
 /jars/pal-optimization-[0-9]*.jar
+/jars/scala-compiler-[0-9]*.jar
+/jars/scala-library-[0-9]*.jar
+/jars/scala-reflect-[0-9]*.jar
 /jars/wavelets-[0-9]*.jar
 /jars/weave_jy2java-[0-9]*.jar
 /plugins/3D_Blob_Segmentation-[0-9]*.jar
@@ -127,6 +133,7 @@ hs_err*.log
 /plugins/FS_Align_TrakEM2-[0-9]*.jar
 /plugins/FeatureJ_-[0-9]*.jar
 /plugins/Feature_Detection-[0-9]*.jar
+/plugins/Fiji_Archipelago-[0-9]*.jar
 /plugins/Fiji_Developer-[0-9]*.jar
 /plugins/Fiji_Package_Maker-[0-9]*.jar
 /plugins/Fiji_Plugins-[0-9]*.jar
@@ -193,6 +200,7 @@ hs_err*.log
 /plugins/Vaa3d_Reader-[0-9]*.jar
 /plugins/Video_Editing-[0-9]*.jar
 /plugins/View5D_-[0-9]*.jar
+/plugins/Volume_Calculator-[0-9]*.jar
 /plugins/Volume_Viewer-[0-9]*.jar
 /plugins/bUnwarpJ_-[0-9]*.jar
 /plugins/blockmatching_-[0-9]*.jar
@@ -246,10 +254,15 @@ hs_err*.log
 /jars/jzlib-[0-9]*.jar
 /jars/mines-jtk-[0-9]*.jar
 /jars/pentaho-package-manager-[0-9]*.jar
+/jars/postgresql-[0-9]*.jar
 /jars/tools-[0-9]*.jar
 /jars/vecmath-[0-9]*.jar
 /jars/weka-dev-[0-9]*.jar
 /plugins/loci_plugins-[0-9]*.jar
+
+# For maven-download.sh
+/jars/ij-minimaven-[0-9]*.jar
+/modules/scijava-common/
 
 # For use by bin/gitignore-in-submodules #
 /modules/AutoComplete/ant-classes/
@@ -351,16 +364,21 @@ hs_err*.log
 /jars/commons-lang-[0-9]*.jar
 /jars/commons-logging-[0-9]*.jar
 /jars/forms-[0-9]*.jar
+/jars/jai-codec-[0-9]*.jar
+/jars/jai-core-[0-9]*.jar
 /jars/jai_imageio-[0-9]*.jar
 /jars/loci-common-[0-9]*.jar
+/jars/loci-legacy-[0-9]*.jar
 /jars/log4j-[0-9]*.jar
 /jars/lwf-stubs-[0-9]*.jar
 /jars/mdbtools-java-[0-9]*.jar
 /jars/metakit-[0-9]*.jar
+/jars/netcdf-[0-9]*.jar
 /jars/netcdf-java-[0-9]*.jar
 /jars/ome-xml-[0-9]*.jar
 /jars/poi-loci-[0-9]*.jar
 /jars/scifio-[0-9]*.jar
+/jars/scifio-devel-[0-9]*.jar
 /jars/serializer-[0-9]*.jar
 /jars/slf4j-api-[0-9]*.jar
 /jars/slf4j-log4j12-[0-9]*.jar

@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+		http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<parent>
+		<groupId>sc.fiji</groupId>
+		<artifactId>pom-fiji</artifactId>
+		<version>2.0.0-SNAPSHOT</version>
+	</parent>
+
+	<groupId>sc.fiji</groupId>
+	<artifactId>pom-fiji-submodules</artifactId>
+	<version>2.0.0-SNAPSHOT</version>
+	<packaging>pom</packaging>
+
+	<name>Aggregator project for the Fiji submodules</name>
+	<description>This project is here just for developers' convenience: in general, we do not want to require submodules to be checked out. But developers can uncomment the modules when they need to build them along with the Fiji modules (MiniMaven knows about Fiji's requirements, of course, and automatically searches the subdirectories of modules/ for checked-out projects).</description>
+
+	<modules>
+		<!-- <module>AutoComplete</module> -->
+		<!-- <module>ImageJA</module> -->
+		<!-- <module>RSyntaxTextArea</module> -->
+		<!-- <module>Retrotranslator</module> -->
+		<!-- <module>TrakEM2</module> -->
+		<!-- <module>batik</module> -->
+		<!-- <module>clojure</module> -->
+		<!-- <module>commons-math</module> -->
+		<!-- <module>ij-plugins</module> -->
+		<!-- <module>image5d</module> -->
+		<!-- <module>imagej2</module> -->
+		<!-- <module>imglib</module> -->
+		<!-- <module>javassist</module> -->
+		<!-- <module>jsch</module> -->
+		<!-- <module>junit</module> -->
+		<!-- <module>jython</module> -->
+		<!-- <module>mpicbg</module> -->
+		<!-- <module>tcljava</module> -->
+		<!-- <module>weka</module> -->
+	</modules>
+
+	<!-- NB: for project parent -->
+	<repositories>
+		<repository>
+			<id>imagej.releases</id>
+			<url>http://maven.imagej.net/content/repositories/releases</url>
+		</repository>
+		<repository>
+			<id>imagej.snapshots</id>
+			<url>http://maven.imagej.net/content/repositories/snapshots</url>
+		</repository>
+	</repositories>
+
+</project>

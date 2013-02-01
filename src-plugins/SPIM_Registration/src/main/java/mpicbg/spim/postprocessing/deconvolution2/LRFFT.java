@@ -3,8 +3,6 @@ package mpicbg.spim.postprocessing.deconvolution2;
 import ij.IJ;
 
 import java.util.ArrayList;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import mpicbg.imglib.algorithm.fft.FourierConvolution;
@@ -14,24 +12,31 @@ import mpicbg.imglib.container.array.ArrayContainerFactory;
 import mpicbg.imglib.container.basictypecontainer.FloatAccess;
 import mpicbg.imglib.container.basictypecontainer.array.FloatArray;
 import mpicbg.imglib.container.constant.ConstantContainer;
+import mpicbg.imglib.cursor.Cursor;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.image.ImageFactory;
+import mpicbg.imglib.image.display.imagej.ImageJFunctions;
 import mpicbg.imglib.multithreading.SimpleMultiThreading;
+import mpicbg.imglib.outofbounds.OutOfBoundsStrategyValueFactory;
 import mpicbg.imglib.type.numeric.real.FloatType;
 
 public class LRFFT 
 {
+	public static enum PSFTYPE { EXPONENT, CONDITIONAL, INDEPENDENT };
+	
 	public static CUDAConvolution cuda = null;
 	
 	private Image<FloatType> image, weight, kernel1, kernel2;
 	Image<FloatType> viewContribution = null;
 	FourierConvolution<FloatType, FloatType> fftConvolution1, fftConvolution2;
 	protected int numViews = 0;
-	boolean useExponentialKernel = false;
+	
+	PSFTYPE iterationType;
+	ArrayList< LRFFT > views;
 	
 	final boolean useBlocks, useCUDA, useCPU;
 	final int[] blockSize, deviceList;
-	final int device0;
+	final int device0, numDevices;
 	final Block[] blocks;
 	final ImageFactory< FloatType > factory;
 	/**
@@ -47,6 +52,7 @@ public class LRFFT
 		
 		this.deviceList = deviceList;
 		this.device0 = deviceList[ 0 ];
+		this.numDevices = deviceList.length;
 
 		// figure out if we need GPU and/or CPU
 		boolean anyGPU = false;
@@ -115,21 +121,70 @@ public class LRFFT
 	/**
 	 * This method is called once all views are added to the {@link LRInput}
 	 */
-	protected void init( final boolean useExponentialKernel )
-	{
-		this.useExponentialKernel = useExponentialKernel;
-		
+	protected void init( final PSFTYPE iterationType, final ArrayList< LRFFT > views )
+	{		
 		// normalize kernel so that sum of all pixels == 1
 		AdjustInput.normImage( kernel1 );
 
-		if ( useExponentialKernel )
+		this.iterationType = iterationType;
+		this.views = views;
+
+		if ( numViews == 0 )
 		{
-			if ( numViews == 0 )
+			System.out.println( "Warning, numViews was not set." );
+			numViews = 1;
+		}
+		
+		if ( numViews == 1 || iterationType == PSFTYPE.INDEPENDENT )
+		{
+			// compute the inverted kernel (switch dimensions)
+			this.kernel2 = computeInvertedKernel( this.kernel1 );
+		}
+		else if ( iterationType == PSFTYPE.CONDITIONAL )
+		{
+			// compute the kernel using conditional probabilities
+			// if this is x1, then compute
+			// P(x1|psi) * P(x2|x1) * P(x3|x1) * ... * P(xn|x1)
+			// where
+			// P(xi|x1) = P(x|psi) convolved with P(xi|psi)
+			
+			// we first get P(x1|psi)
+			final Image< FloatType > tmp = ( this.kernel1.clone() );
+
+			//ImageJFunctions.copyToImagePlus( tmp ).show();
+			
+			// now convolve P(x1|psi) with all other kernels 
+			for ( final LRFFT view : views )
 			{
-				System.out.println( "Warning, numViews was not set." );
-				numViews = 1;
+				if ( view != this )
+				{
+					final FourierConvolution<FloatType, FloatType> conv = new FourierConvolution<FloatType, FloatType>( this.kernel1, computeInvertedKernel( view.kernel1 ) );
+					conv.setNumThreads();
+					conv.setKeepImgFFT( false );
+					conv.setImageOutOfBoundsStrategy( new OutOfBoundsStrategyValueFactory<FloatType>() );
+					conv.process();
+					
+					// multiply with the kernel
+					final Cursor<FloatType> cursor = tmp.createCursor();
+					for ( final FloatType t : ( conv.getResult() ) )
+					{
+						cursor.fwd();
+						cursor.getType().set( t.get() * cursor.getType().get() );
+					}
+				}
 			}
 			
+			// norm the compound kernel
+			AdjustInput.normImage( tmp );
+						
+			// compute the inverted kernel
+			this.kernel2 = computeInvertedKernel( tmp );
+			
+			// close the temp image
+			//tmp.close();			
+		}
+		else //if ( iterationType == PSFTYPE.EXPONENT )
+		{			
 			// compute the squared kernel and its inverse
 			final Image< FloatType > exponentialKernel = computeExponentialKernel( this.kernel1, numViews );
 			
@@ -139,11 +194,9 @@ public class LRFFT
 			// compute the inverted squared kernel
 			this.kernel2 = computeInvertedKernel( exponentialKernel );	
 		}
-		else
-		{
-			// compute the inverted kernel (switch dimensions)
-			this.kernel2 = computeInvertedKernel( this.kernel1 );
-		}
+		
+		//ImageJFunctions.show( this.kernel2 );
+		//SimpleMultiThreading.threadHaltUnClean();
 		
 		if ( useCPU )
 		{
@@ -151,7 +204,7 @@ public class LRFFT
 			{
 				final Image< FloatType > block = factory.createImage( blockSize );
 				
-				this.fftConvolution1 = new FourierConvolution<FloatType, FloatType>( block, this.kernel1 );	
+				this.fftConvolution1 = new FourierConvolution<FloatType, FloatType>( block, this.kernel1 );				
 				this.fftConvolution1.setNumThreads();
 				//this.fftConvolution1.setExtendImageByKernelSize( false );
 				this.fftConvolution1.setKeepImgFFT( false );
@@ -222,7 +275,7 @@ public class LRFFT
 	{
 		this.kernel1 = kernel;
 		
-		init( this.useExponentialKernel );
+		init( iterationType, views );
 
 		setCurrentIteration( -1 );
 	}
@@ -288,12 +341,12 @@ public class LRFFT
 				return fftConv.getResult();				
 			}
 		}
-		else if ( useCUDA && !useCPU )
+		else if ( useCUDA && !useCPU && numDevices == 1 )
 		{
-			if ( blocks.length > 1 )
-				IJ.log( "Using CUDA only on blocks ... " );
-			else
-				IJ.log( "Using CUDA only to compute as one block ... " );
+			//if ( blocks.length > 1 )
+			//	IJ.log( "Using CUDA only on blocks ... " );
+			//else
+			//	IJ.log( "Using CUDA only to compute as one block ... " );
 			
 			final Image< FloatType > result = image.createNewImage();
 			final Image< FloatType > block = factory.createImage( blockSize );
@@ -325,7 +378,7 @@ public class LRFFT
 		else
 		{
 			// this implies useBlocks, otherwise we cannot combine several devices
-			IJ.log( "Using CUDA & CPU on blocks ... " );
+			//IJ.log( "Using CUDA & CPU on blocks ... " );
 			
 			final Image< FloatType > result = image.createNewImage();
 			
@@ -402,7 +455,7 @@ public class LRFFT
 				return fftConv.getResult();				
 			}			
 		}
-		else if ( useCUDA && !useCPU )
+		else if ( useCUDA && !useCPU && numDevices == 1 )
 		{
 			final Image< FloatType > result = image.createNewImage();
 			final Image< FloatType > block = factory.createImage( blockSize );
@@ -452,7 +505,8 @@ public class LRFFT
 		final LRFFT viewClone = new LRFFT( this.image.clone(), this.weight.clone(), this.kernel1.clone(), deviceList, useBlocks, blockSize );
 	
 		viewClone.numViews = numViews;
-		viewClone.useExponentialKernel = useExponentialKernel;
+		viewClone.iterationType = iterationType;
+		viewClone.views = views;
 		viewClone.i = i;
 		
 		if ( this.kernel2 != null )

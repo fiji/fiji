@@ -483,6 +483,34 @@ public class Multi_View_Fusion implements PlugIn
 		{
 			conf.timeLapseRegistration = true;
 			conf.referenceTimePoint = tp;
+			
+			// if the reference is not part of the time series, add it but do not fuse it
+			ArrayList< Integer > tpList = null;
+			try 
+			{
+				tpList = SPIMConfiguration.parseIntegerString( conf.timepointPattern );
+			} 
+			catch (ConfigurationParserException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+				IJ.log( "Cannot parse time-point pattern: " + conf.timepointPattern );
+				return null;
+			}
+			
+			if ( !tpList.contains( tp ) )
+			{
+				conf.timepointPattern += ", " + tp;
+				conf.fuseReferenceTimepoint = false;
+				
+				//System.out.println( "new tp: '" + conf.timepointPattern + "'" );
+				
+				if ( !Bead_Registration.init( conf ) )
+					return null;
+			}
+			else
+			{
+				//System.out.println( "old tp: '" + conf.timepointPattern + "'" );
+			}
 		}
 		
 		IOFunctions.println( "tp " + tp );

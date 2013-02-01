@@ -75,9 +75,19 @@ public class IJHacker extends JavassistHelper {
 			isImageJA = true;
 		} catch (Exception e) { /* ignore */ }
 
-		// tell runUserPlugIn() to mention which class was not found if a dependency is missing
+		// use the FijiClassLoader
+		if (!isImageJA) {
+			method = clazz.getMethod("getClassLoader", "()Ljava/lang/ClassLoader;");
+			method.insertBefore("if (classLoader == null) classLoader = new fiji.FijiClassLoader(true);");
+		}
+
+		// tell runUserPlugIn() to catch NoSuchMethodErrors
 		method = clazz.getMethod("runUserPlugIn",
 			"(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Z)Ljava/lang/Object;");
+		method.insertBefore("if (classLoader != null) Thread.currentThread().setContextClassLoader(classLoader);");
+		method.addCatch("if (fiji.FijiTools.handleNoSuchMethodError($e)) throw new RuntimeException(ij.Macro.MACRO_CANCELED);"
+			+ "throw $e;", pool.get("java.lang.NoSuchMethodError"), "$e");
+
 		// tell the error() method to use "Fiji" as window title
 		method = clazz.getMethod("error",
 			"(Ljava/lang/String;Ljava/lang/String;)V");
@@ -85,6 +95,31 @@ public class IJHacker extends JavassistHelper {
 		// make sure that ImageJ has been initialized in batch mode
 		method = clazz.getMethod("runMacro", "(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;");
 		method.insertBefore("if (ij==null && ij.Menus.getCommands()==null) init();");
+		// if the ij.log.file property is set, log every message to the file pointed to
+		field = new CtField(pool.get("java.io.BufferedWriter"), "logFileWriter", clazz);
+		field.setModifiers(Modifier.STATIC | Modifier.PRIVATE);
+		clazz.addField(field);
+		method = clazz.getMethod("log", "(Ljava/lang/String;)V");
+		method.insertBefore("if ($1 != null) {\n"
+			+ "  String logFilePath = System.getProperty(\"ij.log.file\");\n"
+			+ "  if (logFilePath != null) {\n"
+			+ "    try {\n"
+			+ "      if (logFileWriter == null) {\n"
+			+ "        java.io.OutputStream out = new java.io.FileOutputStream(logFilePath, true);\n"
+			+ "        java.io.Writer writer = new java.io.OutputStreamWriter(out, \"UTF-8\");\n"
+			+ "        logFileWriter = new java.io.BufferedWriter(writer);\n"
+			+ "        logFileWriter.write(\"Started new log on \" + new java.util.Date() + \"\\n\");\n"
+			+ "      }\n"
+			+ "      logFileWriter.write($1);\n"
+			+ "      if (!$1.endsWith(\"\\n\")) logFileWriter.newLine();\n"
+			+ "      logFileWriter.flush();\n"
+			+ "    } catch (Throwable t) {\n"
+			+ "      t.printStackTrace();\n"
+			+ "      System.getProperties().remove(\"ij.log.file\");\n"
+			+ "      logFileWriter = null;\n"
+			+ "    }\n"
+			+ "  }\n"
+			+ "}\n");
 
 		// Class ij.gui.GenericDialog
 		clazz = get("ij.gui.GenericDialog");
@@ -208,8 +243,10 @@ public class IJHacker extends JavassistHelper {
 		clazz = get("ij.plugin.CommandFinder");
 
 		// use Fiji in the window title
-		method = clazz.getMethod("export", "()V");
-		replaceAppNameInNew(method, "ij.text.TextWindow", 1, 5);
+		if (hasMethod(clazz, "export", "()V")) {
+			method = clazz.getMethod("export", "()V");
+			replaceAppNameInNew(method, "ij.text.TextWindow", 1, 5);
+		}
 
 		// Class ij.plugin.Hotkeys
 		clazz = get("ij.plugin.Hotkeys");
@@ -336,15 +373,15 @@ public class IJHacker extends JavassistHelper {
 				}
 			});
 			// create new plugin in the Script Editor
-			clazz.addField(new CtField(pool.get("java.lang.String"), "name", clazz));
+			clazz.addField(new CtField(pool.get("java.lang.String"), "nameForEditor", clazz));
 			method = clazz.getMethod("createPlugin", "(Ljava/lang/String;Ljava/lang/String;)V");
-			method.insertBefore("name = $2;");
+			method.insertBefore("this.nameForEditor = $2;");
 			method.instrument(new ExprEditor() {
 				@Override
 				public void edit(MethodCall call) throws CannotCompileException {
 					if (call.getMethodName().equals("runPlugIn"))
 						call.replace("$_ = null;"
-							+ "new ij.plugin.NewPlugin().createPlugin(this.name, ij.plugin.NewPlugin.PLUGIN, $2);"
+							+ "new ij.plugin.NewPlugin().createPlugin(this.nameForEditor, ij.plugin.NewPlugin.PLUGIN, $2);"
 							+ "return;");
 				}
 			});

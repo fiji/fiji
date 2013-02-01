@@ -1,8 +1,11 @@
 package archipelago;
 
 import archipelago.network.client.ArchipelagoClient;
+import archipelago.util.PrintStreamLogger;
 import ij.plugin.PlugIn;
 import java.io.IOException;
+import java.net.Socket;
+
 /**
  *
  * @author Larry Lindsey
@@ -29,7 +32,8 @@ public class Fiji_Archipelago implements PlugIn
         
         if (args.length == 3)
         {
-            ArchipelagoClient client = null;
+            Socket s;
+            ArchipelagoClient client;
             String host = args[0];
             int port = Integer.parseInt(args[1]);
             long id = Long.parseLong(args[2]);
@@ -38,12 +42,16 @@ public class Fiji_Archipelago implements PlugIn
             FijiArchipelago.setErrorLogger(new PrintStreamLogger());
             FijiArchipelago.setInfoLogger(new PrintStreamLogger());
 
-            client = new ArchipelagoClient(id, host, port);
+            s = new Socket(host, port);
+            
+            client = new ArchipelagoClient(id, host, s.getInputStream(), s.getOutputStream());
             
             while (client.isActive())
             {
                 Thread.sleep(1000);
             }
+            
+            s.close();
         }
         else
         {

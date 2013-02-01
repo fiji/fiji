@@ -730,7 +730,7 @@ public class Utils {
 				}
 			
 			isMaxPoolInput.addSlice( new FloatProcessor( maxPoolWidth, maxPoolHeight, inputPix));
-			isMaxPoolLabel.addSlice( new ByteProcessor( maxPoolWidth, maxPoolHeight, labelPix));
+			isMaxPoolLabel.addSlice( new ByteProcessor( maxPoolWidth, maxPoolHeight, labelPix, null ));
 			
 		}
 		
@@ -793,7 +793,7 @@ public class Utils {
 				}
 			
 			isMaxPoolInput.addSlice( new FloatProcessor( width, height, inputPix));
-			isMaxPoolLabel.addSlice( new ByteProcessor( width, height, labelPix));
+			isMaxPoolLabel.addSlice( new ByteProcessor( width, height, labelPix, null ));
 			
 		}
 		

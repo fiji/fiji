@@ -12,6 +12,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 
+import spimopener.SPIMRegularStack;
+
 import com.sun.jna.Native;
 import com.sun.jna.NativeLibrary;
 
@@ -33,6 +35,7 @@ import mpicbg.spim.postprocessing.deconvolution.ExtractPSF;
 import mpicbg.spim.postprocessing.deconvolution2.BayesMVDeconvolution;
 import mpicbg.spim.postprocessing.deconvolution2.CUDAConvolution;
 import mpicbg.spim.postprocessing.deconvolution2.LRFFT;
+import mpicbg.spim.postprocessing.deconvolution2.LRFFT.PSFTYPE;
 import mpicbg.spim.postprocessing.deconvolution2.LRInput;
 import mpicbg.spim.registration.ViewDataBeads;
 import mpicbg.spim.registration.ViewStructure;
@@ -105,11 +108,15 @@ public class Multi_View_Deconvolution implements PlugIn
 		//final ArrayList<LucyRichardsonFFT> deconvolutionData = new ArrayList<LucyRichardsonFFT>();
 		final LRInput deconvolutionData = new LRInput();
 		
+		IJ.log( "Type of iteration: " + iterationType );
 		IJ.log( "Number iterations: " + numIterations );
 		IJ.log( "Using blocks: " + useBlocks );
 		if ( useBlocks )
 			IJ.log( "Block size: " + Util.printCoordinates( blockSize ) );
 		IJ.log( "Using CUDA: " + useCUDA );
+		
+		if ( debugMode )
+			IJ.log( "Debugging every " + debugInterval + " iterations." );
 		
 		IJ.log( "ImgLib container (input): " + conf.outputImageFactory.getClass().getSimpleName() );
 		IJ.log( "ImgLib container (output): " + conf.imageFactory.getClass().getSimpleName() );
@@ -121,6 +128,7 @@ public class Multi_View_Deconvolution implements PlugIn
 
 		// set debug mode
 		BayesMVDeconvolution.debug = debugMode;
+		BayesMVDeconvolution.debugInterval = debugInterval;
 		
 		for ( int view = 0; view < numViews; ++view )
 		{
@@ -147,9 +155,9 @@ public class Multi_View_Deconvolution implements PlugIn
 		*/
 		
 		if ( useTikhonovRegularization )
-			deconvolved = new BayesMVDeconvolution( deconvolutionData, numIterations, lambda, "deconvolved" ).getPsi();
+			deconvolved = new BayesMVDeconvolution( deconvolutionData, iterationType, numIterations, lambda, "deconvolved" ).getPsi();
 		else
-			deconvolved = new BayesMVDeconvolution( deconvolutionData, numIterations, 0, "deconvolved" ).getPsi();
+			deconvolved = new BayesMVDeconvolution( deconvolutionData, iterationType, numIterations, 0, "deconvolved" ).getPsi();
 		
 		if ( conf.writeOutputImage || conf.showOutputImage )
 		{
@@ -176,7 +184,6 @@ public class Multi_View_Deconvolution implements PlugIn
 		}		
 	}
 
-	public static boolean fusionUseContentBasedStatic = false;
 	public static boolean displayFusedImageStatic = true;
 	public static boolean saveFusedImageStatic = true;
 	public static int defaultNumIterations = 10;
@@ -184,15 +191,19 @@ public class Multi_View_Deconvolution implements PlugIn
 	public static double defaultLambda = 0.006;
 	public static boolean showAveragePSF = true;
 	public static boolean defaultDebugMode = false;
+	public static int defaultDebugInterval = 1;
+	public static int defaultIterationType = 1;
 	public static int defaultContainer = 0;
 	public static int defaultComputationIndex = 0;
 	public static int defaultBlockSizeIndex = 0, defaultBlockSizeX = 256, defaultBlockSizeY = 256, defaultBlockSizeZ = 256;
 	
+	public static String[] iterationTypeString = new String[]{ "Ad-hoc (very fast, imprecise)", "Conditional Probability (fast, precise)", "Independent (slow, precise)" };
 	public static String[] imglibContainer = new String[]{ "Array container", "Planar container", "Cell container" };
 	public static String[] computationOn = new String[]{ "CPU (Java)", "GPU (Nvidia CUDA via JNA)" };
 	public static String[] blocks = new String[]{ "Entire image at once", "in 64x64x64 blocks", "in 128x128x128 blocks", "in 256x256x256 blocks", "in 512x512x512 blocks", "specify maximal blocksize manually" };
 	
-	int numIterations, container, computationType, blockSizeIndex;
+	PSFTYPE iterationType;
+	int numIterations, container, computationType, blockSizeIndex, debugInterval = 1;
 	int[] blockSize = null;
 	boolean useTikhonovRegularization = true, useBlocks = false, useCUDA = false, debugMode = false;
 	
@@ -403,8 +414,6 @@ public class Multi_View_Deconvolution implements PlugIn
 			gd2.addChoice( "Registration for channel " + channels.get( c ), choices, choices[ suggest[ c ] ]);
 
 		gd2.addMessage( "" );
-		gd2.addCheckbox( "Apply_content_based_weightening", fusionUseContentBasedStatic );
-		gd2.addMessage( "" );
 		gd2.addNumericField( "Crop_output_image_offset_x", Multi_View_Fusion.cropOffsetXStatic, 0 );
 		gd2.addNumericField( "Crop_output_image_offset_y", Multi_View_Fusion.cropOffsetYStatic, 0 );
 		gd2.addNumericField( "Crop_output_image_offset_z", Multi_View_Fusion.cropOffsetZStatic, 0 );
@@ -412,6 +421,7 @@ public class Multi_View_Deconvolution implements PlugIn
 		gd2.addNumericField( "Crop_output_image_size_y", Multi_View_Fusion.cropSizeYStatic, 0 );
 		gd2.addNumericField( "Crop_output_image_size_z", Multi_View_Fusion.cropSizeZStatic, 0 );
 		gd2.addMessage( "" );	
+		gd2.addChoice( "Type_of_iteration", iterationTypeString, iterationTypeString[ defaultIterationType ] );
 		gd2.addNumericField( "Number_of_iterations", defaultNumIterations, 0 );
 		gd2.addCheckbox( "Use_Tikhonov_regularization", defaultUseTikhonovRegularization );
 		gd2.addNumericField( "Tikhonov_parameter", defaultLambda, 4 );
@@ -482,17 +492,53 @@ public class Multi_View_Deconvolution implements PlugIn
 		{
 			conf.timeLapseRegistration = true;
 			conf.referenceTimePoint = tp;
+			
+			// if the reference is not part of the time series, add it but do not fuse it
+			ArrayList< Integer > tpList = null;
+			try 
+			{
+				tpList = SPIMConfiguration.parseIntegerString( conf.timepointPattern );
+			} 
+			catch (ConfigurationParserException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+				IJ.log( "Cannot parse time-point pattern: " + conf.timepointPattern );
+				return null;
+			}
+			
+			if ( !tpList.contains( tp ) )
+			{
+				conf.timepointPattern += ", " + tp;
+				conf.fuseReferenceTimepoint = false;
+				
+				//System.out.println( "new tp: '" + conf.timepointPattern + "'" );
+				
+				if ( !Bead_Registration.init( conf ) )
+					return null;
+			}
+			else
+			{
+				//System.out.println( "old tp: '" + conf.timepointPattern + "'" );
+			}
 		}
 		
 		//IOFunctions.println( "tp " + tp );
 		
-		fusionUseContentBasedStatic = gd2.getNextBoolean();
 		Multi_View_Fusion.cropOffsetXStatic = (int)Math.round( gd2.getNextNumber() );
 		Multi_View_Fusion.cropOffsetYStatic = (int)Math.round( gd2.getNextNumber() );
 		Multi_View_Fusion.cropOffsetZStatic = (int)Math.round( gd2.getNextNumber() );
 		Multi_View_Fusion.cropSizeXStatic  = (int)Math.round( gd2.getNextNumber() );
 		Multi_View_Fusion.cropSizeYStatic = (int)Math.round( gd2.getNextNumber() );
 		Multi_View_Fusion.cropSizeZStatic = (int)Math.round( gd2.getNextNumber() );
+		
+		defaultIterationType = gd2.getNextChoiceIndex();
+		
+		if ( defaultIterationType == 0 )
+			iterationType = PSFTYPE.EXPONENT;
+		else if ( defaultIterationType == 1 )
+			iterationType = PSFTYPE.CONDITIONAL;
+		else
+			iterationType = PSFTYPE.INDEPENDENT;
 		
 		numIterations = defaultNumIterations = (int)Math.round( gd2.getNextNumber() );
 		useTikhonovRegularization = defaultUseTikhonovRegularization = gd2.getNextBoolean();
@@ -610,6 +656,7 @@ public class Multi_View_Deconvolution implements PlugIn
 				
 				final long mem = LRFFT.cuda.getMemDeviceCUDA( i );	
 				devices[ i ] = devices[ i ] + " (" + mem/(1024*1024) + " MB, CUDA capability " + LRFFT.cuda.getCUDAcomputeCapabilityMajorVersion( i )  + "." + LRFFT.cuda.getCUDAcomputeCapabilityMinorVersion( i ) + ")";
+				devices[ i ] = devices[ i ].replaceAll( " ", "_" );
 			}
 			
 			// get the CPU specs
@@ -622,8 +669,11 @@ public class Multi_View_Deconvolution implements PlugIn
 				if ( deviceChoice == null || deviceChoice.size() != devices.length + 1 )
 				{
 					deviceChoice = new ArrayList<Boolean>( devices.length + 1 );
-					for ( int i = 0; i < devices.length + 1; ++i )
+					for ( int i = 0; i < devices.length; ++i )
 						deviceChoice.add( true );
+					
+					// CPU is by default not checked
+					deviceChoice.add( false );
 				}
 				
 				final GenericDialog gdCUDA = new GenericDialog( "Choose CUDA/CPUs devices to use" );
@@ -696,6 +746,18 @@ public class Multi_View_Deconvolution implements PlugIn
 			}
 		}
 		
+		if ( debugMode )
+		{
+			GenericDialog gdDebug = new GenericDialog( "Debug options" );
+			gdDebug.addNumericField( "Show debug output every n'th frame, n = ", defaultDebugInterval, 0 );
+			gdDebug.showDialog();
+			
+			if ( gdDebug.wasCanceled() )
+				return null;
+			
+			defaultDebugInterval = debugInterval = (int)Math.round( gdDebug.getNextNumber() );
+		}
+		
 		conf.paralellFusion = false;
 		conf.sequentialFusion = false;
 
@@ -713,7 +775,7 @@ public class Multi_View_Deconvolution implements PlugIn
 			conf.writeOutputImage = false;
 		
 		conf.useLinearBlening = true;
-		conf.useGauss = fusionUseContentBasedStatic;
+		conf.useGauss = false;
 		conf.scale = 1;
 		conf.cropOffsetX = Multi_View_Fusion.cropOffsetXStatic;
 		conf.cropOffsetY = Multi_View_Fusion.cropOffsetYStatic;

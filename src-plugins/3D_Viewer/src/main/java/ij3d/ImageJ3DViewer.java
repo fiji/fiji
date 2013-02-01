@@ -284,6 +284,7 @@ public class ImageJ3DViewer implements PlugIn {
 				m[i] = Float.parseFloat(s[i]);
 			}
 			univ.getSelected().applyTransform(new Transform3D(m));
+			univ.fireTransformationUpdated();
 		}
 	}
 
@@ -291,6 +292,7 @@ public class ImageJ3DViewer implements PlugIn {
 		Image3DUniverse univ = getUniv();
 		if(univ != null && univ.getSelected() != null) {
 			univ.getSelected().setTransform(new Transform3D());
+			univ.fireTransformationUpdated();
 		}
 	}
 
@@ -312,6 +314,7 @@ public class ImageJ3DViewer implements PlugIn {
 				m[i] = Float.parseFloat(s[i]);
 			}
 			univ.getSelected().setTransform(new Transform3D(m));
+			univ.fireTransformationUpdated();
 		}
 	}
 

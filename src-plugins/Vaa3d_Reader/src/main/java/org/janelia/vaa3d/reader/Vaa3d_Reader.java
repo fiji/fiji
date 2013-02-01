@@ -34,6 +34,7 @@ import java.nio.ByteBuffer;
 import ij.IJ;
 import ij.CompositeImage;
 import ij.ImagePlus;
+import ij.gui.NewImage;
 import ij.io.OpenDialog;
 import ij.macro.Interpreter;
 import ij.measure.Calibration;
@@ -129,10 +130,10 @@ public class Vaa3d_Reader extends ImagePlus implements PlugIn {
         // actually parse image file
     	if (!Interpreter.isBatchMode())
     		IJ.showStatus("Allocating volume memory...");
-        ImagePlus hyperStack = IJ.createImage(
+        ImagePlus hyperStack = NewImage.createImage(
 			new File(url.getPath()).getName(),
 			width, height, n_channels * n_slices,
-        		8 * bytesPerPixel);
+			8 * bytesPerPixel, NewImage.FILL_BLACK);
 	if (n_channels > 1) {
 		hyperStack.setDimensions(n_channels, n_slices, 1);
 		hyperStack = new CompositeImage(hyperStack, CompositeImage.COMPOSITE);

@@ -478,7 +478,7 @@ public abstract class Rule implements Comparable<Rule> {
 		JarInputStream in = new JarInputStream(input);
 
 		Manifest manifest = in.getManifest();
-		file = new File(cwd, target);
+		file = new File(Util.makePath(cwd, target));
 		OutputStream output =
 			new FileOutputStream(file);
 		JarOutputStream out = manifest == null ?
