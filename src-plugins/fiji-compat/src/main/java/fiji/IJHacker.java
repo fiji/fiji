@@ -97,8 +97,12 @@ public class IJHacker extends JavassistHelper {
 			public void edit(Handler handler) throws CannotCompileException {
 				try {
 					if (handler.getType().getName().equals("java.lang.NoClassDefFoundError"))
-						handler.insertBefore("if (!originalClassName.replace('.', '/').equals($1.getMessage())) {"
-							+ " ij.IJ.handleException($1);"
+						handler.insertBefore("String realClassName = $1.getMessage();"
+							+ "if (!originalClassName.replace('.', '/').equals(realClassName)) {"
+							+ " if (realClassName.startsWith(\"javax/vecmath/\") || realClassName.startsWith(\"com/sun/j3d/\") || realClassName.startsWith(\"javax/media/j3d/\"))"
+							+ "  ij.IJ.error(\"The class \" + originalClassName + \" did not find Java3D (\" + realClassName + \")\\nPlease call Plugins>3D Viewer to install\");"
+							+ " else"
+							+ "  ij.IJ.handleException($1);"
 							+ " return null;"
 							+ "}");
 				} catch (Exception e) {
