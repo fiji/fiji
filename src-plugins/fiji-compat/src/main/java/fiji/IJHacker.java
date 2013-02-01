@@ -87,6 +87,25 @@ public class IJHacker extends JavassistHelper {
 		method.insertBefore("if (classLoader != null) Thread.currentThread().setContextClassLoader(classLoader);");
 		method.addCatch("if (fiji.FijiTools.handleNoSuchMethodError($e)) throw new RuntimeException(ij.Macro.MACRO_CANCELED);"
 			+ "throw $e;", pool.get("java.lang.NoSuchMethodError"), "$e");
+		// tell runUserPlugIn() to be more careful about catching NoClassDefFoundError
+		field = new CtField(pool.get("java.lang.String"), "originalClassName", clazz);
+		field.setModifiers(Modifier.STATIC | Modifier.PRIVATE);
+		clazz.addField(field);
+		method.insertBefore("originalClassName = $2;");
+		method.instrument(new ExprEditor() {
+			@Override
+			public void edit(Handler handler) throws CannotCompileException {
+				try {
+					if (handler.getType().getName().equals("java.lang.NoClassDefFoundError"))
+						handler.insertBefore("if (!originalClassName.replace('.', '/').equals($1.getMessage())) {"
+							+ " ij.IJ.handleException($1);"
+							+ " return null;"
+							+ "}");
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
+		});
 
 		// tell the error() method to use "Fiji" as window title
 		method = clazz.getMethod("error",
