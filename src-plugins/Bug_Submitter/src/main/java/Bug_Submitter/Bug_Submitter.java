@@ -91,6 +91,11 @@ import java.awt.Toolkit;
 
 import fiji.updater.Adapter;
 
+/**
+ * A plugin for reporting bugs to Fiji's BugZilla bug tracker.
+ * 
+ * @author Mark Longair
+ */
 public class Bug_Submitter implements PlugIn {
 
 	protected String bugzillaAssignee = "fiji-devel@googlegroups.com";
