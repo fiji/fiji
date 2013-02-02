@@ -359,16 +359,10 @@ public class Bug_Submitter implements PlugIn {
 	String usernamePreferenceKey = "Bug_Submitter.username";
 	String passwordPreferenceKey = "Bug_Submitter.password";
 
-	final String dummyBugTextSummary = "[Your summary of the problem or bug.]";
-	final String dummyBugTextDescription = "[Enter details of the problem or "+
-			"bug and how to reproduce it here.]";
-
 	@Override
 	public void run( String ignore ) {
 		Adapter updater = new Adapter(true);
 
-		String summary = dummyBugTextSummary;
-		String description = dummyBugTextDescription;
 		String systemInfo = "Information about your version of Java:\n\n"+
 			getUsefulSystemInformation()+
 			"\nThe up-to-date check says: "+updater.check()+"\n"+
@@ -386,8 +380,8 @@ public class Bug_Submitter implements PlugIn {
 			else
 				suggestedPassword = rot13( suggestedPassword );
 
-			NewBugDialog dialog = new NewBugDialog( this, suggestedUsername,
-				suggestedPassword, summary, description, systemInfo );
+			NewBugDialog dialog = new NewBugDialog( this,
+				suggestedUsername, suggestedPassword, systemInfo);
 			GUI.center(dialog);
 			dialog.show();
 
@@ -405,8 +399,8 @@ public class Bug_Submitter implements PlugIn {
 				Prefs.set( passwordPreferenceKey, "" );
 			Prefs.savePreferences();
 
-			summary = dialog.summary.getText().trim();
-			description = dialog.description.getText().trim() +
+			final String summary = dialog.summary.getText().trim();
+			final String description = dialog.description.getText().trim() +
 				"\n\n" + dialog.systemInfo.getText();
 
 			SubmissionResult result = submitBug( username, password, summary, description );

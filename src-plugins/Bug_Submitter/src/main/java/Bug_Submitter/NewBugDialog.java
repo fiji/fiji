@@ -57,7 +57,6 @@ import javax.swing.JTextField;
 import javax.swing.KeyStroke;
 import javax.swing.event.UndoableEditEvent;
 import javax.swing.event.UndoableEditListener;
-import javax.swing.text.JTextComponent;
 import javax.swing.undo.CannotRedoException;
 import javax.swing.undo.CannotUndoException;
 import javax.swing.undo.UndoManager;
@@ -79,34 +78,6 @@ class NewBugDialog extends JFrame implements ActionListener, WindowListener {
 	JTextArea description;
 	JTextArea systemInfo;
 	UndoManager undo;
-
-	private class HighlightingFocusListener implements FocusListener {
-		String stringToHighlight;
-		boolean notYetFocussed = true;
-		JTextComponent textComponent;
-		public HighlightingFocusListener( String stringToHighlight, JTextComponent textComponent ) {
-			this.stringToHighlight = stringToHighlight;
-			this.textComponent = textComponent;
-		}
-
-		@Override
-		public void focusGained(FocusEvent e) {
-			if( notYetFocussed ) {
-				String text = textComponent.getText();
-				int startIndex = text.indexOf( stringToHighlight );
-				if( startIndex >= 0 ) {
-					textComponent.setSelectionStart(startIndex);
-					textComponent.setSelectionEnd(startIndex+stringToHighlight.length());
-				}
-				notYetFocussed = false;
-			}
-		}
-
-		@Override
-		public void focusLost(FocusEvent e) {
-			// no action needed
-		}
-	}
 
 	private class JTextAreaTabFocus extends JTextArea {
 		public JTextAreaTabFocus( int rows, int columns ) {
@@ -205,8 +176,6 @@ class NewBugDialog extends JFrame implements ActionListener, WindowListener {
 
 	public NewBugDialog(Bug_Submitter bugSubmitter, String suggestedUsername,
 			     String suggestedPassword,
-			     String suggestedSummary,
-			     String suggestedDescription,
 			     String systemInfoText)
 	{
 
@@ -296,15 +265,10 @@ class NewBugDialog extends JFrame implements ActionListener, WindowListener {
 		}
 
 		summary = new JTextField(30);
-		summary.setText( suggestedSummary );
-		summary.addFocusListener(new HighlightingFocusListener(
-						      bugSubmitter.dummyBugTextSummary,
-						      summary) );
 
 		description = new JTextAreaTabFocus(8, 42);
 		description.setLineWrap(true);
 		description.setWrapStyleWord(true);
-		description.setText( suggestedDescription );
 		undo = new UndoManager();
 		description.getDocument().addUndoableEditListener(
 new SimpleEditListener());
@@ -314,10 +278,6 @@ new SimpleEditListener());
 		InputMap inputMap = description.getInputMap();
 		inputMap.put(KeyStroke.getKeyStroke("control Z"), "Undo");
 		inputMap.put(KeyStroke.getKeyStroke("control Y"), "Redo");
-
-		description.addFocusListener(new HighlightingFocusListener(
-						      bugSubmitter.dummyBugTextDescription,
-						      description) );
 
 		systemInfo = new JTextArea(6, 42);
 		systemInfo.setLineWrap(true);
