@@ -28,6 +28,8 @@ import ij.WindowManager;
 import ij.plugin.BrowserLauncher;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
 import java.awt.Container;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -35,8 +37,8 @@ import java.awt.Insets;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
-import java.awt.event.FocusListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
@@ -78,6 +80,25 @@ class NewBugDialog extends JFrame implements ActionListener, WindowListener {
 	JTextArea description;
 	JTextArea systemInfo;
 	UndoManager undo;
+
+	/**
+	 * Helper class for resetting a component's background color after a
+	 * validation error.
+	 */
+	private class FocusErrorReset extends FocusAdapter {
+
+		private Color background;
+
+		private FocusErrorReset(final Component c) {
+			background = c.getBackground();
+		}
+
+		@Override
+		public void focusGained(FocusEvent e) {
+			e.getComponent().setBackground(background);
+		}
+
+	}
 
 	private class JTextAreaTabFocus extends JTextArea {
 		public JTextAreaTabFocus( int rows, int columns ) {
@@ -232,10 +253,12 @@ class NewBugDialog extends JFrame implements ActionListener, WindowListener {
 
 		username = new JTextField(20);
 		username.setText( suggestedUsername );
+		username.addFocusListener(new FocusErrorReset(username));
 		password = new JPasswordField(20);
 		password.setEchoChar('*');
 		if( suggestedPassword != null )
 			password.setText( suggestedPassword );
+		password.addFocusListener(new FocusErrorReset(password));
 		rememberPassword = new JCheckBox("",suggestedPassword != null);
 
 		{
@@ -265,10 +288,12 @@ class NewBugDialog extends JFrame implements ActionListener, WindowListener {
 		}
 
 		summary = new JTextField(30);
+		summary.addFocusListener(new FocusErrorReset(summary));
 
 		description = new JTextAreaTabFocus(8, 42);
 		description.setLineWrap(true);
 		description.setWrapStyleWord(true);
+		description.addFocusListener(new FocusErrorReset(description));
 		undo = new UndoManager();
 		description.getDocument().addUndoableEditListener(
 new SimpleEditListener());
@@ -398,20 +423,26 @@ new SimpleEditListener());
 	}
 
 	private boolean validateForm() {
+		boolean error = false;
+		final Color errorColor = new Color(255, 128, 128);
 		if (username.getText().trim().length() == 0) {
-			IJ.error("You must supply a username");
-			return false;
+			username.setBackground(errorColor);
+			error = true;
 		}
 		if (password.getPassword().length == 0) {
-			IJ.error("You must supply a password");
-			return false;
+			password.setBackground(errorColor);
+			error = true;
 		}
 		if (summary.getText().trim().length() == 0) {
-			IJ.error("You must supply a summary of the bug");
-			return false;
+			summary.setBackground(errorColor);
+			error = true;
 		}
 		if (description.getText().trim().length() == 0) {
-			IJ.error("You must supply a description of the bug");
+			description.setBackground(errorColor);
+			error = true;
+		}
+		if (error) {
+			IJ.error("Please fill in all the fields.");
 			return false;
 		}
 		return true;
