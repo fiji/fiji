@@ -87,6 +87,8 @@ class NewBugDialog extends JFrame implements ActionListener, WindowListener {
 			this.stringToHighlight = stringToHighlight;
 			this.textComponent = textComponent;
 		}
+
+		@Override
 		public void focusGained(FocusEvent e) {
 			if( notYetFocussed ) {
 				String text = textComponent.getText();
@@ -98,7 +100,11 @@ class NewBugDialog extends JFrame implements ActionListener, WindowListener {
 				notYetFocussed = false;
 			}
 		}
-		public void focusLost(FocusEvent e) { }
+
+		@Override
+		public void focusLost(FocusEvent e) {
+			// no action needed
+		}
 	}
 
 	private class JTextAreaTabFocus extends JTextArea {
@@ -123,6 +129,8 @@ class NewBugDialog extends JFrame implements ActionListener, WindowListener {
 	// This example is derived from:
 	//   http://java.sun.com/docs/books/tutorial/uiswing/components/generaltext.html#undo
 	protected class SimpleEditListener implements UndoableEditListener {
+
+		@Override
 		public void undoableEditHappened(UndoableEditEvent e) {
 			undo.addEdit(e.getEdit());
 		}
@@ -135,11 +143,15 @@ class NewBugDialog extends JFrame implements ActionListener, WindowListener {
 		public UndoAction() {
 			super("Undo");
 		}
+
+		@Override
 		public void actionPerformed(ActionEvent evt) {
 			try {
 				if( undo.canUndo() )
 					undo.undo();
-			} catch (CannotUndoException e) { }
+			} catch (CannotUndoException e) {
+				// do nothing
+			}
 		}
 	}
 
@@ -147,11 +159,14 @@ class NewBugDialog extends JFrame implements ActionListener, WindowListener {
 		public RedoAction() {
 			super("Redo");
 		}
+		@Override
 		public void actionPerformed(ActionEvent evt) {
 			try {
 				if( undo.canRedo() )
 					undo.redo();
-			} catch (CannotRedoException e) { }
+			} catch (CannotRedoException e) {
+				// do nothing
+			}
 		}
 	}
 
@@ -167,13 +182,16 @@ class NewBugDialog extends JFrame implements ActionListener, WindowListener {
 		super.setVisible(visible);
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public synchronized void show() {
 		WindowManager.addWindow(this);
 		super.show();
 		try {
 			wait();
-		} catch (InterruptedException e) { }
+		} catch (InterruptedException e) {
+			// do nothing
+		}
 	}
 
 	@Override
@@ -348,6 +366,7 @@ new SimpleEditListener());
 		askedToSubmit = false;
 	}
 
+	@Override
 	public void actionPerformed( ActionEvent e ) {
 		Object source = e.getSource();
 		if( source == bugzillaAccountCreation ) {
@@ -364,16 +383,40 @@ new SimpleEditListener());
 		}
 	}
 
+	@Override
 	public void windowClosing( WindowEvent e ) {
 		dispose();
 	}
 
-	public void windowActivated( WindowEvent e ) { }
-	public void windowDeactivated( WindowEvent e ) { }
-	public void windowClosed( WindowEvent e ) { }
-	public void windowOpened( WindowEvent e ) { }
-	public void windowIconified( WindowEvent e ) { }
-	public void windowDeiconified( WindowEvent e ) { }
+	@Override
+	public void windowActivated(WindowEvent e) {
+		// no action needed
+	}
+
+	@Override
+	public void windowDeactivated(WindowEvent e) {
+		// no action needed
+	}
+
+	@Override
+	public void windowClosed(WindowEvent e) {
+		// no action needed
+	}
+
+	@Override
+	public void windowOpened(WindowEvent e) {
+		// no action needed
+	}
+
+	@Override
+	public void windowIconified(WindowEvent e) {
+		// no action needed
+	}
+
+	@Override
+	public void windowDeiconified(WindowEvent e) {
+		// no action needed
+	}
 
 	private boolean validateForm() {
 		if (username.getText().trim().length() == 0) {

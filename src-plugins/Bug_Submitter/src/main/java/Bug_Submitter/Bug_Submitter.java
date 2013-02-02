@@ -316,7 +316,6 @@ public class Bug_Submitter implements PlugIn {
 
 			is = connection.getInputStream();
 			br = new BufferedReader( new InputStreamReader(is) );
-			line = null;
 			while( (line = br.readLine()) != null ) {
 				submissionReply.append(line).append("\n");
 				Matcher submittedMatcher = successfullySubmitted.matcher(line);
@@ -341,13 +340,12 @@ public class Bug_Submitter implements PlugIn {
 				return new SubmissionResult( OTHER_FAILURE, -1, null,
 							     authenticationReply.toString(),
 							     submissionReply.toString() );
-			} else {
-				return new SubmissionResult( SUCCESS,
-							     bugNumber,
-							     bugzillaBaseURI + "show_bug.cgi?id="+bugNumber,
-							     authenticationReply.toString(),
-							     submissionReply.toString() );
 			}
+			return new SubmissionResult( SUCCESS,
+						     bugNumber,
+						     bugzillaBaseURI + "show_bug.cgi?id="+bugNumber,
+						     authenticationReply.toString(),
+						     submissionReply.toString() );
 
 		} catch( IOException e ) {
 			System.out.println("Got an IOException: "+e);
@@ -365,6 +363,7 @@ public class Bug_Submitter implements PlugIn {
 	final String dummyBugTextDescription = "[Enter details of the problem or "+
 			"bug and how to reproduce it here.]";
 
+	@Override
 	public void run( String ignore ) {
 		Adapter updater = new Adapter(true);
 
@@ -457,7 +456,8 @@ public class Bug_Submitter implements PlugIn {
                         return;
                 container.getActionMap().put(source,
                                 new AbstractAction() {
-                        public void actionPerformed(ActionEvent e) {
+                        @Override
+												public void actionPerformed(ActionEvent e) {
                                 if (!source.isEnabled())
                                         return;
                                 ActionEvent event = new ActionEvent(source,
