@@ -77,6 +77,7 @@ class NewBugDialog extends JFrame implements ActionListener, WindowListener {
 
 	JTextField summary;
 	JTextArea description;
+	JTextArea systemInfo;
 	UndoManager undo;
 
 	private class HighlightingFocusListener implements FocusListener {
@@ -205,7 +206,9 @@ class NewBugDialog extends JFrame implements ActionListener, WindowListener {
 	public NewBugDialog(Bug_Submitter bugSubmitter, String suggestedUsername,
 			     String suggestedPassword,
 			     String suggestedSummary,
-			     String suggestedDescription ) {
+			     String suggestedDescription,
+			     String systemInfoText)
+	{
 
 		super( "Bug Report Form" );
 		this.bugSubmitter = bugSubmitter;
@@ -297,7 +300,8 @@ class NewBugDialog extends JFrame implements ActionListener, WindowListener {
 		summary.addFocusListener(new HighlightingFocusListener(
 						      bugSubmitter.dummyBugTextSummary,
 						      summary) );
-		description = new JTextAreaTabFocus(16, 42);
+
+		description = new JTextAreaTabFocus(8, 42);
 		description.setLineWrap(true);
 		description.setWrapStyleWord(true);
 		description.setText( suggestedDescription );
@@ -315,6 +319,12 @@ new SimpleEditListener());
 						      bugSubmitter.dummyBugTextDescription,
 						      description) );
 
+		systemInfo = new JTextArea(6, 42);
+		systemInfo.setLineWrap(true);
+		systemInfo.setWrapStyleWord(true);
+		systemInfo.setText( systemInfoText );
+		systemInfo.setEditable(false);
+
 		{
 			JPanel summaryPanel = new JPanel();
 			summaryPanel.setLayout( new BorderLayout() );
@@ -328,14 +338,21 @@ new SimpleEditListener());
 		++ c.gridy;
 		contentPane.add( new JLabel("A full description of the bug:"), c );
 
-		JScrollPane scrollPane = new JScrollPane(description);
-
 		++ c.gridy;
 		c.fill = GridBagConstraints.BOTH;
 		c.weighty = 1;
-		contentPane.add( scrollPane, c );
+		contentPane.add( new JScrollPane(description), c );
+
+		++ c.gridy;
 		c.fill = GridBagConstraints.HORIZONTAL;
 		c.weighty = 0;
+		contentPane.add( new JLabel("Useful information about your system "+
+			"(will be sent as part of your bug report):"), c );
+
+		++ c.gridy;
+		c.fill = GridBagConstraints.BOTH;
+		c.weighty = 0.5;
+		contentPane.add( new JScrollPane(systemInfo), c );
 
 		{
 			JPanel p = new JPanel();
@@ -350,6 +367,8 @@ new SimpleEditListener());
 
 			c.anchor = GridBagConstraints.CENTER;
 			++ c.gridy;
+			c.fill = GridBagConstraints.HORIZONTAL;
+			c.weighty = 0;
 			contentPane.add( p, c );
 		}
 

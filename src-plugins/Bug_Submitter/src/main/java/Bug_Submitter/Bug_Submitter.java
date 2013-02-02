@@ -368,9 +368,8 @@ public class Bug_Submitter implements PlugIn {
 		Adapter updater = new Adapter(true);
 
 		String summary = dummyBugTextSummary;
-		String description = dummyBugTextDescription+"\n"+
-			"\nInformation about your version of Java - "+
-			"this information is useful for the Fiji developers:\n\n"+
+		String description = dummyBugTextDescription;
+		String systemInfo = "Information about your version of Java:\n\n"+
 			getUsefulSystemInformation()+
 			"\nThe up-to-date check says: "+updater.check()+"\n"+
 			"\nInformation relevant to JAVA_HOME related problems:\n\n"+
@@ -387,7 +386,8 @@ public class Bug_Submitter implements PlugIn {
 			else
 				suggestedPassword = rot13( suggestedPassword );
 
-			NewBugDialog dialog = new NewBugDialog( this, suggestedUsername, suggestedPassword, summary, description );
+			NewBugDialog dialog = new NewBugDialog( this, suggestedUsername,
+				suggestedPassword, summary, description, systemInfo );
 			GUI.center(dialog);
 			dialog.show();
 
@@ -406,7 +406,8 @@ public class Bug_Submitter implements PlugIn {
 			Prefs.savePreferences();
 
 			summary = dialog.summary.getText().trim();
-			description = dialog.description.getText().trim();
+			description = dialog.description.getText().trim() +
+				"\n\n" + dialog.systemInfo.getText();
 
 			SubmissionResult result = submitBug( username, password, summary, description );
 
