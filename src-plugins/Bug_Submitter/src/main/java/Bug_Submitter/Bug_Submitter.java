@@ -697,22 +697,8 @@ public class Bug_Submitter implements PlugIn {
 				alreadyDisposed = true;
 				dispose();
 			} else if( source == submitReport ) {
-				if( username.getText().trim().length() == 0 ) {
-					IJ.error("You must supply a username");
-					return;
-				}
-				if( password.getPassword().length == 0 ) {
-					IJ.error("You must supply a password");
-					return;
-				}
-				if( summary.getText().trim().length() == 0 ) {
-					IJ.error("You must supply a summary of the bug");
-					return;
-				}
-				if( description.getText().trim().length() == 0 ) {
-					IJ.error("You must supply a description of the bug");
-					return;
-				}
+				boolean success = validateForm();
+				if (!success) return;
 				askedToSubmit = true;
 				alreadyDisposed = true;
 				dispose();
@@ -729,6 +715,27 @@ public class Bug_Submitter implements PlugIn {
 		public void windowOpened( WindowEvent e ) { }
 		public void windowIconified( WindowEvent e ) { }
 		public void windowDeiconified( WindowEvent e ) { }
+
+		private boolean validateForm() {
+			if (username.getText().trim().length() == 0) {
+				IJ.error("You must supply a username");
+				return false;
+			}
+			if (password.getPassword().length == 0) {
+				IJ.error("You must supply a password");
+				return false;
+			}
+			if (summary.getText().trim().length() == 0) {
+				IJ.error("You must supply a summary of the bug");
+				return false;
+			}
+			if (description.getText().trim().length() == 0) {
+				IJ.error("You must supply a description of the bug");
+				return false;
+			}
+			return true;
+		}
+
 	}
 
 	String usernamePreferenceKey = "Bug_Submitter.username";
