@@ -1,6 +1,6 @@
 /* -*- mode: java; c-basic-offset: 8; indent-tabs-mode: t; tab-width: 8 -*- */
 
-/* Copyright 2006, 2007 Mark Longair */
+/* Copyright 2006 - 2013 Mark Longair */
 
 /*
   This file is part of the ImageJ plugin "Bug_Submitter".
