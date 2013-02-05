@@ -7,7 +7,6 @@ import static fiji.plugin.trackmate.tracking.TrackerKeys.KEY_BLOCKING_VALUE;
 import static fiji.plugin.trackmate.tracking.TrackerKeys.KEY_CUTOFF_PERCENTILE;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.SortedSet;
@@ -35,26 +34,27 @@ import fiji.plugin.trackmate.util.TMUtils;
  * as follows:
  * 
  * <p> The overall matrix can be divided into <u>four quadrants</u>, outlined below. Each 
- * quadrant has dimensions (number of track segments + number of middle points) x (number of track segments + number of middle points).
- * A middle point is defined as a Spot in a track segment that is neither the start nor end. So a 
- * track segment of length two has no middle points.
+ * quadrant has dimensions <code>(number of track segments + number of M/S candidate points) x 
+ * (number of track segments + number of M/S candidate points)</code>.
+ * A merging or splitting (M/S) candidate point is defined as a Spot in a track segment 
+ * with at least two spots.
  * 
  * <ul>
  * <li>
  * <p><b>Top left</b>: Contains scores for gap closing, merging, splitting, and "blank" region.
  * <br><br>
- * <p>This quadrant can also be further subdivided into four smaller submatrices:
+ * <p>This quadrant can also be further subdivided into four smaller sub-matrices:
  *
  * <ul>
- * <li><i>Gap closing (top left)</i>: has dimensions (number of track segments) x (number of track segments), 
+ * <li><i>Gap closing (top left)</i>: has dimensions <code>(number of track segments) x (number of track segments)</code>, 
  * and contains the scores for linking the ends of track segments to the starts of other track segments
  * as described in the paper.</li>
  * 
- * <li><i>Merging (top right)</i>: has (number of track segment) rows and (number of middle
- * points) columns. Contains scores for linking the end of a track segment into the
+ * <li><i>Merging (top right)</i>: has (number of track segment) rows and (number of M/S candidate points)
+ * columns. Contains scores for linking the end of a track segment into the
  * middle of another (a merge).</li>
  * 
- * <li><i>Splitting (bottom left)</i>: has (number of middle points) rows and (number of track
+ * <li><i>Splitting (bottom left)</i>: has (number of M/S candidate points) rows and (number of track
  * segments columns). Contains scores for linking the start of a track segment into the
  * middle of another (a split).</li>
  * 
@@ -226,29 +226,23 @@ public class TrackSegmentCostMatrixCreator extends LAPTrackerCostMatrixCreator {
 
 
 	/**
-	 * Create a List of middle points in all track segments. A middle point is a point
-	 * in a track segment that is neither a start nor an end point. So, track segments
-	 * of length 1 and 2 can have no middle points. Thus, we add middle points only for 
-	 * track segments of length 3 or larger. 
+	 * Create a List of candidate spots for splitting or merging events. 
+	 * A desirable candidate is a spot belonging to a track with at least 2 spots.
 	 * 
 	 * @param trackSegments A List of track segments, where each segment is its own List of Spots.
-	 * @return A List containing references to all the middle Spots in the track segments.
+	 * @return A List containing references to all suitable candidate Spots in the track segments.
 	 */
 	public List<Spot> getTrackSegmentMiddlePoints(List<SortedSet<Spot>> trackSegments) {
-		List<Spot> middlePoints = new ArrayList<Spot>();
-		Spot current = null;
+		int n_spots = 0;
 		for (SortedSet<Spot> trackSegment : trackSegments) {
-
-			if (trackSegment.size() >= 3) {
-				Iterator<Spot> it = trackSegment.iterator();
-				it.next(); // Skip first one
-				while (it.hasNext()) {
-					current = it.next();
-					middlePoints.add(current);
-				}
-				middlePoints.remove(current); // Remove last one
+			n_spots += trackSegment.size();
+		}
+		List<Spot> middlePoints = new ArrayList<Spot>(n_spots);
+		for (SortedSet<Spot> trackSegment : trackSegments) {
+			
+			if (trackSegment.size() > 1) {
+				middlePoints.addAll(trackSegment);
 			}
-
 		}
 		return middlePoints;
 	}

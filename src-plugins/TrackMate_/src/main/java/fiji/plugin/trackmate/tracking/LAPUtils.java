@@ -337,7 +337,7 @@ public class LAPUtils {
 				else if (i < nSegments + nSpots)
 					return "Sp "+(i-nSegments);
 				else 
-					return "Ã¸";
+					return "ø";
 			}
 		};
 		
@@ -412,7 +412,7 @@ public class LAPUtils {
 				for (int i = nSegments; i < nSegments + nSpots; i++)
 					headers[i] = "Sp "+(i-nSegments);
 				for (int i = nSegments + nSpots; i < headers.length; i++) 
-					headers[i] = "Ã¸";
+					headers[i] = "ø";
 			}
 			
 			public int getColumnCount() {return 1;	}
