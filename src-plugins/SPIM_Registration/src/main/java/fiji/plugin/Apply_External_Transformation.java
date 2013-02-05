@@ -70,7 +70,7 @@ public class Apply_External_Transformation implements PlugIn
 			return null;
 
 		Bead_Registration.spimDataDirectory = gd.getNextString();
-		Bead_Registration.fileNamePatternMC = gd.getNextString();
+		Bead_Registration.fileNamePattern = gd.getNextString();
 		Bead_Registration.timepoints = gd.getNextString();
 		Bead_Registration.angles = gd.getNextString();
 
