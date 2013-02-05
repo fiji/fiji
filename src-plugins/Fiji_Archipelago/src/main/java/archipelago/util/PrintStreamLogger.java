@@ -1,4 +1,4 @@
-package archipelago;
+package archipelago.util;
 
 import java.io.PrintStream;
 /**

@@ -24,16 +24,12 @@
 package fiji;
 
 import fiji.scripting.TextEditor;
-
 import ij.IJ;
 import ij.ImagePlus;
 import ij.Menus;
 import ij.WindowManager;
-
 import ij.gui.GenericDialog;
-
 import ij.io.FileInfo;
-
 import ij.plugin.BrowserLauncher;
 import ij.plugin.JpegWriter;
 import ij.plugin.PNG_Writer;
@@ -52,7 +48,6 @@ import java.awt.Rectangle;
 import java.awt.Robot;
 import java.awt.TextField;
 import java.awt.Toolkit;
-
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
@@ -63,20 +58,16 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-
 import java.net.URL;
-
 import java.text.SimpleDateFormat;
-
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Hashtable;
 import java.util.List;
 import java.util.Stack;
-
 import java.util.regex.Pattern;
 
 import javax.swing.JMenu;
@@ -84,23 +75,21 @@ import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JTextArea;
 import javax.swing.SwingUtilities;
-
 import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Element;
-
 import javax.swing.text.html.HTML.Attribute;
 import javax.swing.text.html.HTML.Tag;
-
 import javax.swing.text.html.HTMLDocument;
 import javax.swing.text.html.HTMLEditorKit;
 
 public class Wiki_Editor implements PlugIn, ActionListener {
-	protected String name;
+	protected String title;
 
 	protected static String URL = "http://fiji.sc/wiki/";
 
-	protected enum Mode { TUTORIAL_MAKER, NEWS, SCREENSHOT };
+	protected enum Mode { TUTORIAL_MAKER, NEWS, SCREENSHOT }
+
 	protected Mode mode;
 	protected ImagePlus screenshot;
 
@@ -134,16 +123,17 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 		}
 
 		public static Format byExtension(String extension) {
-			int dot = extension.lastIndexOf('.');
+			String ext = extension;
+			int dot = ext.lastIndexOf('.');
 			if (dot < 0)
 				return null;
-			extension = extension.substring(dot);
+			ext = ext.substring(dot);
 			for (Format format : Format.values())
-				if (extension.equals(format.extension))
+				if (ext.equals(format.extension))
 					return format;
 			return null;
 		}
-	};
+	}
 
 	protected Format imageFormat = Format.JPEG;
 	protected final static String[] imageFormatNames;
@@ -155,6 +145,7 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 			imageFormatNames[i] = values[i].name();
 	}
 
+	@Override
 	public void run(String arg) {
 		String dialogTitle = "Tutorial Maker";
 		String defaultTitle = "";
@@ -196,19 +187,19 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 		if (gd.wasCanceled())
 			return;
 
-		name = gd.getNextString();
+		title = gd.getNextString();
 		imageFormat = Format.valueOf(gd.getNextChoice());
-		if (name.length() == 0)
+		if (title.length() == 0)
 			return;
 		if (mode != Mode.SCREENSHOT)
-			name = capitalize(name).replace(' ', '_');
+			title = capitalize(title).replace(' ', '_');
 		else {
-			name = capitalize(name);
+			title = capitalize(title);
 			new Prettify_Wiki_Screenshot().run(screenshot.getProcessor());
 			screenshot = IJ.getImage();
-			String imageTitle = name + "-snapshot" + imageFormat.extension;
+			String imageTitle = title + "-snapshot" + imageFormat.extension;
 			for (int i = 2; wikiHasImage(imageTitle); i++)
-				imageTitle = name + "-snapshot-" + i + imageFormat.extension;
+				imageTitle = title + "-snapshot-" + i + imageFormat.extension;
 			screenshot.setTitle(imageTitle.replace(' ', '_'));
 		}
 
@@ -254,6 +245,7 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 		editors.add(editor);
 
 		editor.addWindowListener(new WindowAdapter() {
+			@Override
 			public void windowClosed(WindowEvent e) {
 				if (snapshotFrame != null)
 					snapshotFrame.dispose();
@@ -264,7 +256,7 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 		String text = "", category = "";
 		switch (mode) {
 			case TUTORIAL_MAKER:
-				text = "== " + name.replace('_', ' ') + " ==\n\n";
+				text = "== " + title.replace('_', ' ') + " ==\n\n";
 				category = "\n[[Category:Tutorials]]";
 				break;
 			case NEWS:
@@ -274,14 +266,14 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 				try {
 					text = getPageSource("Fiji:Featured_Projects");
 				} catch (IOException e) {
-					IJ.error("Could not get page source for '" + name + "'");
+					IJ.error("Could not get page source for '" + title + "'");
 					return;
 				}
 				if (!text.endsWith("\n"))
 					text += "\n";
-				text += "\n* " + name + "|"
+				text += "\n* " + title + "|"
 					+ screenshot.getTitle() + "\n"
-					+ "The [[" + name + "]] plugin <describe the project here>\n";
+					+ "The [[" + title + "]] plugin <describe the project here>\n";
 				break;
 		}
 		editor.getTextArea().setText(text + category);
@@ -289,7 +281,7 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 
 		JMenuBar menuBar = editor.getJMenuBar();
 		for (int i = menuBar.getMenuCount() - 1; i >= 0; i--) {
-			String label = menuBar.getMenu(i).getLabel();
+			String label = menuBar.getMenu(i).getText();
 			if (!label.equals("File") && !label.equals("Edit") &&
 					!label.equals("Wiki"))
 				menuBar.remove(i);
@@ -298,26 +290,32 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 		if (mode == Mode.TUTORIAL_MAKER)
 			showSnapshotFrame();
 
-		editor.setTitle("Edit Wiki - " + name);
-		SwingUtilities.invokeLater(new Runnable() { public void run() {
-			editor.setVisible(true);
-		}});
+		editor.setTitle("Edit Wiki - " + title);
+		SwingUtilities.invokeLater(new Runnable() {
+			@Override
+			public void run() {
+				editor.setVisible(true);
+			}
+		});
 	}
 
 	public String getText() {
 		return editor.getTextArea().getText();
 	}
 
+	@Override
 	public void actionPerformed(ActionEvent e) {
 		Object source = e.getSource();
 		if (source == upload)
 			new Thread() {
+				@Override
 				public void run() {
 					upload();
 				}
 			}.start();
 		else if (source == preview)
 			new Thread() {
+				@Override
 				public void run() {
 					preview();
 				}
@@ -358,7 +356,7 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 			JTextArea textArea = editor.getTextArea();
 			Calendar now = Calendar.getInstance();
 			String today = new SimpleDateFormat("dd/MM/yyyy")
-				.format(Calendar.getInstance().getTime());
+				.format(now.getTime());
 			textArea.insert("{{Infobox Plugin\n"
 				+ "| software               = ImageJ\n"
 				+ "| name                   = \n"
@@ -379,7 +377,7 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 	protected boolean putSnapshotsToBack = true;
 
 	protected void toBackToggleSetLabel() {
-		toBackToggle.setLabel(putSnapshotsToBack ?
+		toBackToggle.setText(putSnapshotsToBack ?
 			"Leave snapshots in the foreground" :
 			"Put snapshots into the background");
 	}
@@ -394,7 +392,7 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 	}
 
 	protected void upload() {
-		IJ.showStatus("Uploading " + name + "...");
+		IJ.showStatus("Uploading " + title + "...");
 		IJ.showProgress(0, 1);
 		List<String> images = getImages();
 		if (!saveOrUploadImages(null, images))
@@ -402,16 +400,16 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 
 		getClient();
 
-		if (!client.login("Wiki Login"))
+		if (!client.login("Login for " + URL))
 			return;
 
 		if (!saveOrUploadImages(client, images))
 			return;
 
 		String name = mode == Mode.SCREENSHOT ?
-			"Fiji:Featured_Projects" : this.name;
+			"Fiji:Featured_Projects" : this.title;
 		boolean result =
-			client.uploadPage(name, getText(), "Add " + this.name);
+			client.uploadPage(name, getText(), "Add " + this.title);
 
 		client.logOut();
 
@@ -428,7 +426,7 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 	}
 
 	protected void preview() {
-		IJ.showStatus("Previewing " + name + "...");
+		IJ.showStatus("Previewing " + title + "...");
 		IJ.showProgress(0, 2);
 
 		List<String> images = getImages();
@@ -440,9 +438,9 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 		if (!client.login("Wiki Login (Preview)"))
 			return;
 		String name = mode == Mode.SCREENSHOT ?
-			"Fiji:Featured_Projects" : this.name;
+			"Fiji:Featured_Projects" : this.title;
 		String html = client.uploadOrPreviewPage(name, getText(),
-				"Add " + this.name, true);
+				"Add " + this.title, true);
 		client.logOut();
 
 		if (html == null) {
@@ -459,6 +457,8 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 		int start = html.indexOf("<div class='previewnote'>");
 		start = html.indexOf("</div>", start) + 6;
 		int end = html.indexOf("<div id='toolbar'>");
+		if (end < 0)
+			end = html.indexOf("<div id=\"toolbar\">");
 		html = "<html>\n<head>\n<title>Preview of " + name + "</title>\n"
 			+ "<meta http-equiv='Content-Type' "
 			+ "content='text/html; charset=utf-8'/>\n</head>\n<body>\n"
@@ -489,7 +489,7 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 						info.fileName);
 				try {
 					html += "<img src=\""
-						+ file.toURL() + "\">";
+						+ file.toURI().toURL() + "\">";
 				} catch (Exception e) { e.printStackTrace(); }
 			}
 
@@ -502,7 +502,7 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 			out.write(html.getBytes());
 			out.close();
 
-			new BrowserLauncher().run(file.toURL().toString());
+			new BrowserLauncher().run(file.toURI().toURL().toString());
 
 			IJ.showStatus("Browsing " + name);
 			IJ.showProgress(2, 2);
@@ -512,8 +512,8 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 		}
 	}
 
-	public String getPageSource(String title) throws IOException {
-		String result = getPage(title, "edit");
+	public String getPageSource(String pageTitle) throws IOException {
+		String result = getPage(pageTitle, "edit");
 		client.logOut();
 		int offset = result.indexOf("id=\"wpTextbox1\"");
 		if (offset < 0)
@@ -528,18 +528,18 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 	}
 
 	/* This method must not log out */
-	public String getPage(String title) throws IOException {
-		return getPage(title, null);
+	public String getPage(String pageTitle) throws IOException {
+		return getPage(pageTitle, null);
 	}
 
-	public String getPage(String title, String action) throws IOException {
+	public String getPage(String pageTitle, String action) throws IOException {
 		getClient();
 		String[] getVars = {
-			"title", title
+			"title", pageTitle
 		};
 		if (action != null)
 			getVars = new String[] {
-				"title", title,
+				"title", pageTitle,
 				"action", action
 			};
 		String result = client.sendRequest(getVars, null);
@@ -547,7 +547,7 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 				result.indexOf("Login required") > 0) {
 			// Try after login
 			getClient();
-			if (!client.login("Login to view " + title))
+			if (!client.login("Login to view " + pageTitle))
 				return null;
 			result = client.sendRequest(getVars, null);
 		}
@@ -578,23 +578,23 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 		}
 	}
 
-	protected boolean error(String message) {
+	protected static boolean error(String message) {
 		IJ.showProgress(1, 1);
 		IJ.error(message);
 		return false;
 	}
 
-	protected String normalizeImageTitle(String title) {
-		title = title.replace(' ', '_');
-		if (title.length() > 0)
-			title = capitalize(title);
+	protected static String normalizeImageTitle(String page) {
+		String pageTitle = page.replace(' ', '_');
+		if (pageTitle.length() > 0)
+			pageTitle = capitalize(pageTitle);
 		for (;;) {
-			int colon = title.indexOf(':');
+			int colon = pageTitle.indexOf(':');
 			if (colon < 0)
 				break;
-			title = title.substring(0, colon) + title.substring(colon + 1);
+			pageTitle = pageTitle.substring(0, colon) + pageTitle.substring(colon + 1);
 		}
-		return title;
+		return pageTitle;
 	}
 
 	protected FileInfo setTmpFileInfo(ImagePlus imp, String fileName) {
@@ -608,7 +608,7 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 		return info;
 	}
 
-	protected boolean saveOrUploadImages(GraphicalMediaWikiClient client,
+	protected boolean saveOrUploadImages(GraphicalMediaWikiClient clientOrNull,
 			List<String> images) {
 		int i = 0, total = images.size() * 2 + 1;
 		for (String image : images) {
@@ -638,21 +638,21 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 			}
 			if (imp.changes) {
 				String fullFilename = info.directory + "/" + info.fileName;
-				Format imageFormat = Format.byExtension(fullFilename);
-				if (imageFormat == null)
-					imageFormat = this.imageFormat;
-				imageFormat.write(imp, fullFilename);
+				Format format = Format.byExtension(fullFilename);
+				if (format == null)
+					format = this.imageFormat;
+				format.write(imp, fullFilename);
 			}
-			if (client != null) {
+			if (clientOrNull != null) {
 				if (wikiHasImage(image))
 					switch (imageExistsDialog(image)) {
 					case 1: return error("Aborted");
 					case 2: continue;
 					}
-				if (!client.login("Login to upload " + image))
+				if (!clientOrNull.login("Login to upload " + image))
 					return false;
-				if (!client.uploadFile(image, "Upload " + image
-							+ " for " + name,
+				if (!clientOrNull.uploadFile(image, "Upload " + image
+							+ " for " + title,
 							new File(info.directory,
 								info.fileName))
 						&& !wikiHasImage(image))
@@ -751,7 +751,7 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 					if ((src = (String)getAttribute(e, Attribute.SRC)) != null) {
 						// TODO: just save it as-is, to avoid re-saving
 						// TODO: verify that the Wiki does not have the name yet (and modify otherwise)
-						ImagePlus image = new ImagePlus(new URL(url, (String)src).toString());
+						ImagePlus image = new ImagePlus(new URL(url, src).toString());
 						image.show();
 						// force saving to a temporary file
 						String baseName = src.substring(src.lastIndexOf('/') + 1);
@@ -777,6 +777,7 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 			JTextArea pane = editor.getEditorPane();
 			pane.insert(buffer.toString(), pane.getCaretPosition());
 		} catch (Exception e) {
+			e.printStackTrace();
 			IJ.error("Could not open " + urlString + ":\n \n" + e.getMessage());
 		}
 	}
@@ -790,8 +791,12 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 				System.err.println("has image: " + html);
 			return hasFile;
 		} catch (IOException e) {
-			IJ.error("Could not retrieve image " + image + ": "
-					+ e.getMessage());
+			String message = "Could not retrieve image " + image + ": "
+					+ e.getMessage();
+			if ("HTTP code: 404".equals(e.getMessage()))
+				System.err.println(message);
+			else
+				IJ.error(message);
 			return false;
 		}
 	}
@@ -816,22 +821,25 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 
 	protected static String originalRename, originalRenameArg;
 
+	@SuppressWarnings({ "unchecked", "rawtypes" })
 	protected void interceptRenames() {
 		if (originalRename != null)
 			return;
 
-		originalRename = (String)Menus.getCommands().get("Rename...");
-		if (originalRename.endsWith("\")")) {
-			int paren = originalRename.lastIndexOf("(\"");
-			originalRenameArg = originalRename.substring(paren + 2,
-				originalRename.length() - 2);
-			originalRename = originalRename.substring(0, paren);
-		}
-		else
-			originalRenameArg = "";
+		Hashtable commands = Menus.getCommands();
+		if (commands != null) {
+			originalRename = (String)commands.get("Rename...");
+			if (originalRename.endsWith("\")")) {
+				int paren = originalRename.lastIndexOf("(\"");
+				originalRenameArg = originalRename.substring(paren + 2,
+					originalRename.length() - 2);
+				originalRename = originalRename.substring(0, paren);
+			}
+			else
+				originalRenameArg = "";
 
-		Menus.getCommands().put("Rename...", getClass().getName()
-			+ "(\"rename\")");
+			commands.put("Rename...", getClass().getName() + "(\"rename\")");
+		}
 	}
 
 	protected void rename() {
@@ -844,20 +852,20 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 	protected void rename(String oldTitle, String newTitle) {
 		if (oldTitle.equals(newTitle))
 			return;
-		for (TextEditor editor : editors) {
-			if (editor == null || editor.getTextArea() == null)
+		for (TextEditor textEditor : editors) {
+			if (textEditor == null || textEditor.getTextArea() == null)
 				continue;
-			String text = editor.getTextArea().getText();
+			String text = textEditor.getTextArea().getText();
 			String transformed = text.replaceAll("\\[\\[Image:"
 					+ oldTitle.replaceAll("\\.", "\\\\.")
 					+ "(?=[]|])",
 				"[[Image:" + newTitle);
 			if (!text.equals(transformed)) {
-				int pos = editor.getTextArea()
+				int pos = textEditor.getTextArea()
 					.getCaretPosition();
-				editor.getTextArea().setText(transformed);
+				textEditor.getTextArea().setText(transformed);
 				try {
-					editor.getTextArea()
+					textEditor.getTextArea()
 						.setCaretPosition(pos);
 				} catch (Exception e) { /* ignore */ }
 			}
@@ -880,6 +888,7 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 			(TextField)gd.getStringFields().lastElement();
 		final Choice choice = (Choice)gd.getChoices().lastElement();
 		choice.addItemListener(new ItemListener() {
+			@Override
 			public void itemStateChanged(ItemEvent e) {
 				textField.setText(choice.getSelectedItem());
 			}
@@ -916,15 +925,16 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 		white.setExtendedState(Frame.MAXIMIZED_BOTH);
 		WindowManager.addWindow(white);
 		KeyAdapter listener = new KeyAdapter() {
+			@Override
 			public void keyPressed(KeyEvent e) {
 				int key = e.getKeyCode();
-				if (key == e.VK_ENTER)
+				if (key == KeyEvent.VK_ENTER)
 					IJ.getInstance().requestFocus();
-				else if (key == e.VK_ESCAPE || key == e.VK_W) {
+				else if (key == KeyEvent.VK_ESCAPE || key == KeyEvent.VK_W) {
 					WindowManager.removeWindow(white);
 					white.dispose();
 				}
-				else if (key == e.VK_SPACE)
+				else if (key == KeyEvent.VK_SPACE)
 					white.toBack();
 			}
 		};
@@ -944,16 +954,17 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 		snapshotFrame.pack();
 		snapshotFrame.setAlwaysOnTop(true);
 		snapshotFrame.addWindowListener(new WindowAdapter() {
+			@Override
 			public void windowClosing(WindowEvent e) {
 				// TODO: ask first
 				snapshotFrame.dispose();
 			}
 		});
-		snapshotFrame.show();
+		snapshotFrame.setVisible(true);
 	}
 
-	protected Button createButton(String title, long delay) {
-		Button button = new Button(title);
+	protected Button createButton(String text, long delay) {
+		Button button = new Button(text);
 		if (delay > 0) {
 			AutoSnap auto = new AutoSnap(button, delay);
 			button.addActionListener(auto);
@@ -962,6 +973,7 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 		}
 		else {
 			button.addActionListener(new ActionListener() {
+				@Override
 				public void actionPerformed(ActionEvent e) {
 					snapshot();
 				}
@@ -986,6 +998,7 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 		synchronized void startThread() {
 			stopThread();
 			thread = new Thread() {
+				@Override
 				public void run() {
 					delayedSnap();
 					button.setLabel(originalLabel);
@@ -1012,14 +1025,17 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 			thread = null;
 		}
 
+		@Override
 		public void mouseEntered(MouseEvent e) {
 			startThread();
 		}
 
+		@Override
 		public void mouseExited(MouseEvent e) {
 			stopThread();
 		}
 
+		@Override
 		public void actionPerformed(ActionEvent event) {
 			stopThread();
 			delayedSnap();
@@ -1030,10 +1046,10 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 
 	protected String getSnapshotName() {
 		for (;;) {
-			String title = name
+			String result = title
 				+ "-" + (++snapshotCounter) + imageFormat.extension;
-			if (WindowManager.getImage(title) == null)
-				return title;
+			if (WindowManager.getImage(result) == null)
+				return result;
 		}
 	}
 
@@ -1050,9 +1066,9 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 		try {
 			Robot robot = new Robot();
 			Rectangle rectangle = new Rectangle(IJ.getScreenSize());
-			snapshotFrame.hide();
+			snapshotFrame.setVisible(false);
 			Image image = robot.createScreenCapture(rectangle);
-			snapshotFrame.show();
+			snapshotFrame.setVisible(true);
 			if (image != null) {
 				String name = getSnapshotName();
 				ImagePlus imp = new ImagePlus(name, image);
@@ -1068,5 +1084,9 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 				editor.getTextArea().setCaretPosition(p);
 			}
 		} catch (AWTException e) { /* ignore */ }
+	}
+
+	public static void main(String[] args) {
+		new Wiki_Editor().run("");
 	}
 }

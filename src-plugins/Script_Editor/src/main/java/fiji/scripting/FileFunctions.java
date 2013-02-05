@@ -73,6 +73,10 @@ public class FileFunctions {
 
 	static {
 		String dir = System.getProperty("ij.dir");
+		if (dir == null)
+			dir = IJ.getDirectory("imagej");
+		if (dir == null)
+			dir = "/tmp/";
 		if (!dir.endsWith("/"))
 			dir += "/";
 		ijDir = dir;
