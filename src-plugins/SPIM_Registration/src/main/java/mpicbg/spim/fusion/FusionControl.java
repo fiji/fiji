@@ -44,7 +44,9 @@ public class FusionControl
 				combinedWeightenerFactories.add( new BlendingSimpleFactory( 0, 0.3f ) );
 		}
 		
-		if ( conf.isDeconvolution )
+		if ( conf.isDeconvolution && conf.deconvolutionLoadSequentially )
+			fusion = new PreDeconvolutionFusionSequential( viewStructure, referenceViewStructure, isolatedWeightenerFactories, combinedWeightenerFactories );
+		else if ( conf.isDeconvolution )
 			fusion = new PreDeconvolutionFusion( viewStructure, referenceViewStructure, isolatedWeightenerFactories, combinedWeightenerFactories );
 		else if (conf.multipleImageFusion)
 			fusion = new MappingFusionSequentialDifferentOutput( viewStructure, referenceViewStructure, isolatedWeightenerFactories, combinedWeightenerFactories );

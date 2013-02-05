@@ -17,14 +17,16 @@ import mpicbg.imglib.util.Util;
 import mpicbg.models.AbstractAffineModel3D;
 import mpicbg.models.NoninvertibleModelException;
 import mpicbg.spim.io.IOFunctions;
+import mpicbg.spim.postprocessing.deconvolution.ExtractPSF;
 import mpicbg.spim.registration.ViewDataBeads;
 import mpicbg.spim.registration.ViewStructure;
 
-public class PreDeconvolutionFusion extends SPIMImageFusion
+public class PreDeconvolutionFusion extends SPIMImageFusion implements PreDeconvolutionFusionInterface
 {
 	final Image<FloatType> images[], weights[];
 	final int numViews;
 	final boolean normalize;
+	final ExtractPSF extractPSF;
 	
 	public PreDeconvolutionFusion( final ViewStructure viewStructure, final ViewStructure referenceViewStructure, 
 								  final ArrayList<IsolatedPixelWeightenerFactory<?>> isolatedWeightenerFactories, 
@@ -40,6 +42,8 @@ public class PreDeconvolutionFusion extends SPIMImageFusion
 		
 		final ImageFactory<FloatType> imageFactory = new ImageFactory<FloatType>( new FloatType(), conf.outputImageFactory );
 		numViews = viewStructure.getNumViews();
+		
+		extractPSF = new ExtractPSF( viewStructure );
 		
 		images = new Image[ numViews ];
 		weights = new Image[ numViews ];
@@ -138,13 +142,13 @@ public class PreDeconvolutionFusion extends SPIMImageFusion
 						
 			if ( !successful )
 			{
-				IOFunctions.println( "Not enough memory for running the content-based fusion, running without it" );
+				IOFunctions.println( "Not enough memory for computing the weights for the multi-view deconvolution." );
 				isoWinit = new IsolatedPixelWeightener[ 0 ][ 0 ];
 			}
 		}
 		catch (Exception e)
 		{				
-			IOFunctions.println( "Not enough memory for running the content-based fusion, running without it" );
+			IOFunctions.println( "Not enough memory for computing the weights for the multi-view deconvolution." );
 			isoWinit = new IsolatedPixelWeightener[ 0 ][ 0 ];
 		}
 		
@@ -389,9 +393,15 @@ public class PreDeconvolutionFusion extends SPIMImageFusion
 		if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_MAIN )
 			IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Closing all input images (Channel " + channelIndex +  ").");
 
-		// do not unload images, we need them to extract the beads!
-		//for ( final ViewDataBeads view : views ) 
-		//	view.closeImage();
+		// extract all PSF's
+		if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_MAIN )
+			IOFunctions.println( "Extracting all PSF's" );
+		
+		extractPSF.extract( conf.deconvolutionShowAveragePSF );
+		
+		// unload images
+		for ( final ViewDataBeads view : views ) 
+			view.closeImage();
 			
 		// close weighteners		
 		// close isolated pixel weighteners
@@ -413,13 +423,22 @@ public class PreDeconvolutionFusion extends SPIMImageFusion
 	@Override
 	public Image<FloatType> getFusedImage() { return null; }
 	
+	@Override
 	public Image<FloatType> getFusedImage( final int index ) { return images[ index ]; }
+	@Override
 	public Image<FloatType> getWeightImage( final int index ) { return weights[ index ]; }
 
 	@Override
 	public void closeImages() 
 	{
-		// do nothing, we still need them!
+		for ( final ViewDataBeads view : viewStructure.getViews() ) 
+			view.closeImage();
 	}
+
+	@Override
+	public ArrayList<Image<FloatType>> getPointSpreadFunctions() { return extractPSF.getPSFs(); }
+
+	@Override
+	public ExtractPSF getExtractPSFInstance() { return this.extractPSF; }
 
 }

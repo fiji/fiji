@@ -28,6 +28,7 @@ import mpicbg.imglib.util.Util;
 import mpicbg.spim.Reconstruction;
 import mpicbg.spim.fusion.FusionControl;
 import mpicbg.spim.fusion.PreDeconvolutionFusion;
+import mpicbg.spim.fusion.PreDeconvolutionFusionInterface;
 import mpicbg.spim.io.ConfigurationParserException;
 import mpicbg.spim.io.IOFunctions;
 import mpicbg.spim.io.SPIMConfiguration;
@@ -48,7 +49,6 @@ import mpicbg.spim.registration.ViewStructure;
 public class Multi_View_Deconvolution implements PlugIn
 {
 	final private String myURL = "http://fly.mpi-cbg.de/preibisch";
-	public static int psfSize = 17;
 	
 	@Override
 	public void run(String arg0) 
@@ -68,9 +68,11 @@ public class Multi_View_Deconvolution implements PlugIn
 		// we need the individual images back by reference
 		conf.isDeconvolution = true;
 		
+		IJ.log( "Loading images sequentially: " + conf.deconvolutionLoadSequentially );
+
 		// set the instance to be called
 		conf.instance = this;
-		
+				
 		// run the first part of fusion
 		final Reconstruction reconstruction = new Reconstruction( conf );
 		
@@ -81,20 +83,19 @@ public class Multi_View_Deconvolution implements PlugIn
 	{
 		// get the input images for the deconvolution
 		final FusionControl fusionControl = viewStructure.getFusionControl();
-		final PreDeconvolutionFusion fusion = (PreDeconvolutionFusion)fusionControl.getFusion();
+		final PreDeconvolutionFusionInterface fusion = (PreDeconvolutionFusionInterface)fusionControl.getFusion();
 		
 		final int numViews = viewStructure.getNumViews();
 		
 		// extract the beads
-		IJ.log( new Date( System.currentTimeMillis() ) +": Extracting Point spread functions." );
-		final ExtractPSF extractPSF = new ExtractPSF( viewStructure, showAveragePSF );
-		extractPSF.setPSFSize( psfSize, false );
-		extractPSF.extract();
+		//IJ.log( new Date( System.currentTimeMillis() ) +": Extracting Point spread functions." );		
+		//final ExtractPSF extractPSF = new ExtractPSF( viewStructure, showAveragePSF );
+		//extractPSF.extract();
 		
-		final ArrayList< Image< FloatType > > pointSpreadFunctions = extractPSF.getPSFs();
+		final ArrayList< Image< FloatType > > pointSpreadFunctions = fusion.getPointSpreadFunctions();
 		
-		if ( showAveragePSF )
-			ImageJFunctions.show( extractPSF.getMaxProjectionAveragePSF() );
+		if ( conf.deconvolutionShowAveragePSF )
+			ImageJFunctions.show( fusion.getExtractPSFInstance().getMaxProjectionAveragePSF() );
 		
 		//for ( final Image<FloatType> k : pointSpreadFunctions )
 		//mageJFunctions.show( pointSpreadFunctions.get( 0 ) );
@@ -184,6 +185,7 @@ public class Multi_View_Deconvolution implements PlugIn
 		}		
 	}
 
+	public static boolean defaultLoadImagesSequentially = false;
 	public static boolean displayFusedImageStatic = true;
 	public static boolean saveFusedImageStatic = true;
 	public static int defaultNumIterations = 10;
@@ -205,7 +207,7 @@ public class Multi_View_Deconvolution implements PlugIn
 	PSFTYPE iterationType;
 	int numIterations, container, computationType, blockSizeIndex, debugInterval = 1;
 	int[] blockSize = null;
-	boolean useTikhonovRegularization = true, useBlocks = false, useCUDA = false, debugMode = false;
+	boolean useTikhonovRegularization = true, useBlocks = false, useCUDA = false, debugMode = false, loadImagesSequentially = false;
 	
 	/**
 	 * -1 == CPU
@@ -433,6 +435,7 @@ public class Multi_View_Deconvolution implements PlugIn
 		gd2.addMessage( "" );
 		gd2.addCheckbox( "Display_fused_image", displayFusedImageStatic );
 		gd2.addCheckbox( "Save_fused_image", saveFusedImageStatic );
+		gd2.addCheckbox( "Load_input_images_sequentially", defaultLoadImagesSequentially );
 
 		gd2.addMessage("");
 		gd2.addMessage("This Plugin is developed by Stephan Preibisch\n" + myURL);
@@ -550,6 +553,7 @@ public class Multi_View_Deconvolution implements PlugIn
 		defaultDebugMode = debugMode = gd2.getNextBoolean();
 		displayFusedImageStatic = gd2.getNextBoolean(); 
 		saveFusedImageStatic = gd2.getNextBoolean();
+		defaultLoadImagesSequentially = loadImagesSequentially = gd2.getNextBoolean();
 		
 		if ( blockSizeIndex == 0 )
 		{
@@ -763,6 +767,10 @@ public class Multi_View_Deconvolution implements PlugIn
 
 		// we need different output and weight images
 		conf.multipleImageFusion = false;
+		
+		conf.isDeconvolution = true;
+		conf.deconvolutionLoadSequentially = loadImagesSequentially;
+		conf.deconvolutionShowAveragePSF = showAveragePSF;
 		
 		if ( displayFusedImageStatic  )
 			conf.showOutputImage = true;
