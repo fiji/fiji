@@ -1952,21 +1952,21 @@ public class WekaSegmentation {
 	public void filterFeatureStackByList()
 	{
 		if (null == this.featureNames)
-			return;
-
+			return;		
 		
 		for(int i=1; i<=this.featureStackArray.getNumOfFeatures(); i++)
 		{
 			final String featureName = this.featureStackArray.getLabel(i);
 			if(false == this.featureNames.contains( featureName ) )
-			{
+			{			
 				// Remove feature
-				for(int j=0; j<=this.featureStackArray.getSize(); j++)
+				for(int j=0; j<this.featureStackArray.getSize(); j++)
 					this.featureStackArray.get(j).removeFeature( featureName );
 				// decrease i to avoid skipping any name
 				i--;
 			}
 		}
+		
 	}
 
 
@@ -3342,6 +3342,7 @@ public class WekaSegmentation {
 			{
 				if(a.name().startsWith(FeatureStack.availableFeatures[i]))
 				{
+					//IJ.log("Loaded feature: " + a.name());			
 					usedFeatures[i] = true;
 					if(i == FeatureStack.MEMBRANE)
 					{
@@ -3376,6 +3377,15 @@ public class WekaSegmentation {
 								if(sigma > maxSigma)
 									maxSigma = sigma;
 							}
+					}
+					else // anisotropic diffusion attribute
+					{
+						String[] tokens = a.name().split("_");
+						final float sigma = Float.parseFloat( tokens[ 3 ]);
+						if(sigma < minSigma)
+							minSigma = sigma;
+						if(sigma > maxSigma)
+							maxSigma = sigma;
 					}
 				}
 			}
