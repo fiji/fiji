@@ -1473,7 +1473,14 @@ public class Weka_Segmentation implements PlugIn
 		IJ.showStatus("Calculating probability maps...");
 		IJ.log("Calculating probability maps...");
 		win.setButtonsEnabled(false);
-		wekaSegmentation.applyClassifier(true);
+		try{		
+			wekaSegmentation.applyClassifier(true);
+		}catch(Exception ex){
+			IJ.log("Error while applying classifier! (please send bug report)");
+			ex.printStackTrace(); 
+			win.updateButtonsEnabling();
+			return;
+		}
 		final ImagePlus probImage = wekaSegmentation.getClassifiedImage();
 		if(null != probImage)
 		{
