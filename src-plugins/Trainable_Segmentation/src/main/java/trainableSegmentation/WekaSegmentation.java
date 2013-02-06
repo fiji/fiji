@@ -3342,51 +3342,70 @@ public class WekaSegmentation {
 			{
 				if(a.name().startsWith(FeatureStack.availableFeatures[i]))
 				{
-					//IJ.log("Loaded feature: " + a.name());			
 					usedFeatures[i] = true;
-					if(i == FeatureStack.MEMBRANE)
+					String[] tokens;
+					float sigma;
+					switch( i )
 					{
-						int index = a.name().indexOf("s_") + 4;
-						int index2 = a.name().indexOf("_", index+1 );
-						final int patchSize = Integer.parseInt(a.name().substring(index, index2));
-						if(patchSize != membranePatchSize)
-						{
-							membranePatchSize = patchSize;
-							this.featureStackArray.setMembranePatchSize(patchSize);
-							featuresChanged = true;
-						}
-						index = a.name().lastIndexOf("_");
-						final int thickness = Integer.parseInt(a.name().substring(index+1));
-						if(thickness != membraneThickness)
-						{
-							membraneThickness = thickness;
-							this.featureStackArray.setMembraneSize(thickness);
-							featuresChanged = true;
-						}
-
-					}
-					else if(i < FeatureStack.ANISOTROPIC_DIFFUSION)
-					{
-						String[] tokens = a.name().split("_");
-						for(int j=0; j<tokens.length; j++)
-							if(tokens[j].indexOf(".") != -1)
+						case FeatureStack.MEMBRANE:
+							int index = a.name().indexOf("s_") + 4;
+							int index2 = a.name().indexOf("_", index+1 );
+							final int patchSize = Integer.parseInt(a.name().substring(index, index2));
+							if(patchSize != membranePatchSize)
 							{
-								final float sigma = Float.parseFloat(tokens[j]);
-								if(sigma < minSigma)
-									minSigma = sigma;
-								if(sigma > maxSigma)
-									maxSigma = sigma;
+								membranePatchSize = patchSize;
+								this.featureStackArray.setMembranePatchSize(patchSize);
+								featuresChanged = true;
 							}
-					}
-					else // anisotropic diffusion attribute
-					{
-						String[] tokens = a.name().split("_");
-						final float sigma = Float.parseFloat( tokens[ 3 ]);
-						if(sigma < minSigma)
-							minSigma = sigma;
-						if(sigma > maxSigma)
-							maxSigma = sigma;
-					}
+							index = a.name().lastIndexOf("_");
+							final int thickness = Integer.parseInt(a.name().substring(index+1));
+							if(thickness != membraneThickness)
+							{
+								membraneThickness = thickness;
+								this.featureStackArray.setMembraneSize(thickness);
+								featuresChanged = true;
+							}
+							break;
+						case FeatureStack.NEIGHBORS:
+						case FeatureStack.ENTROPY:
+							tokens = a.name().split("_");
+							sigma = Float.parseFloat( tokens[ 1 ]);
+							if(sigma < minSigma)
+								minSigma = sigma;
+							if(sigma > maxSigma)
+								maxSigma = sigma;
+							break;
+						case FeatureStack.STRUCTURE:
+							tokens = a.name().split("_");
+							sigma = Float.parseFloat( tokens[ 2 ]);
+							if(sigma < minSigma)
+								minSigma = sigma;
+							if(sigma > maxSigma)
+								maxSigma = sigma;
+							break;
+						case FeatureStack.ANISOTROPIC_DIFFUSION:
+							tokens = a.name().split("_");
+							sigma = Float.parseFloat( tokens[ 3 ]);
+							if(sigma < minSigma)
+								minSigma = sigma;
+							if(sigma > maxSigma)
+								maxSigma = sigma;
+							break;
+							
+						default:
+							tokens = a.name().split("_");
+							for(int j=0; j<tokens.length; j++)
+								if(tokens[j].indexOf(".") != -1)
+								{
+									sigma = Float.parseFloat(tokens[j]);
+									if(sigma < minSigma)
+										minSigma = sigma;
+									if(sigma > maxSigma)
+										maxSigma = sigma;
+								}
+							
+							
+					}				
 				}
 			}
 		}
