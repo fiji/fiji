@@ -40,7 +40,10 @@ public class Descriptor_based_series_registration implements PlugIn
 	public static ArrayList<InvertibleBoundable> lastModels = null;
 	// define if it is was a 2d or 3d model
 	public static int lastDimensionality = Integer.MAX_VALUE;
-	
+
+	// one can define the location of the first pixel in another coordinate system if required
+	public static float[] offset = null;
+
 	@Override
 	public void run( final String arg0 ) 
 	{
