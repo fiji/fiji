@@ -337,6 +337,8 @@ public class HandleExtraFileTypes extends ImagePlus implements PlugIn {
 			return tryPlugIn("Clojure.Refresh_Clojure_Scripts", path);
 		if (name.endsWith(".bs") || name.endsWith(".bsh"))
 			return tryPlugIn("BSH.Refresh_BSH_Scripts", path);
+
+        // Larry Lindsey: Convert a Reconstruct .ser file into a TrakEM2 .xml file and open
 		if (name.endsWith(".ser"))
 			return tryPlugIn("reconstructreader.reconstruct.Reconstruct_Reader", path);
 
@@ -372,6 +374,13 @@ public class HandleExtraFileTypes extends ImagePlus implements PlugIn {
 				return tryPlugIn("org.bonej.io.ISQReader", path);
 		} catch (Exception e){}
 		
+        
+        //Larry Lindsey: open Archipelago cluster configuration file        
+        if (name.endsWith(".cluster"))
+        {
+            return tryPlugIn("archipelago.Fiji_Archipelago", path);
+        }
+        
 		// ****************** MODIFY HERE ******************
 		// do what ever you have to do to recognise your own file type
 		// and then call appropriate plugin using the above as models

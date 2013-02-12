@@ -4,6 +4,7 @@ import archipelago.listen.ClusterStateListener;
 import archipelago.listen.ShellExecListener;
 import archipelago.network.node.NodeManager;
 import archipelago.ui.ClusterNodeConfigUI;
+import archipelago.ui.ClusterUI;
 import archipelago.util.*;
 import ij.gui.GenericDialog;
 
@@ -18,73 +19,6 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public final class FijiArchipelago
 {
-
-    private static class ClusterStateUpdater implements ClusterStateListener
-    {
-        private final Frame stopFrame;
-        private final Label nodeCount, jobCount, queuedCount, state;
-        
-        public ClusterStateUpdater()
-        {
-            final Button stopButton = new Button("Stop Cluster");
-
-            stopFrame = new Frame("Cluster is Running");            
-            stopFrame.setLayout(new GridLayout(5,1));
-            nodeCount = new Label();
-            jobCount = new Label();
-            queuedCount = new Label();
-            state = new Label();
-            
-            stopButton.addActionListener(new ActionListener() {
-                public void actionPerformed(ActionEvent actionEvent) {
-                    GenericDialog gd = new GenericDialog("Really?");
-                    gd.addMessage("Really stop server?");
-                    gd.showDialog();
-                    if (gd.wasOKed())
-                    {
-                        Cluster.getCluster().shutdown();
-                    }
-                }
-            });
-
-            stopFrame.add(state);
-            stopFrame.add(nodeCount);
-            stopFrame.add(queuedCount);
-            stopFrame.add(jobCount);
-            stopFrame.add(stopButton);
-
-            stopFrame.setSize(new Dimension(256, 256));
-
-            stopFrame.validate();
-            stopFrame.setVisible(true);
-        }
-
-        public synchronized void stateChanged(Cluster cluster)
-        {
-            if (cluster.isActive())
-            {
-                state.setText("Cluster is Active");                
-            }
-            else if (cluster.isShutdown() && !cluster.isTerminated())
-            {
-                state.setText("Cluster is Stopping...");
-            }
-            else if (cluster.isTerminated())
-            {
-                stopFrame.setVisible(false);
-                stopFrame.removeAll();
-            }
-            
-            jobCount.setText("Running jobs: " + cluster.getRunningJobCount());
-            queuedCount.setText("Queued jobs: " + cluster.getQueuedJobCount());
-            nodeCount.setText("Running Nodes: " + cluster.getRunningNodeCount());
-
-            stopFrame.repaint();
-        }
-    }
-    
-    
-    
     public static final String PREF_ROOT = "FijiArchipelago";
     private static EasyLogger logger = new NullLogger();
     private static EasyLogger errorLogger = new NullLogger();
@@ -180,55 +114,27 @@ public final class FijiArchipelago
     
 
 
-    public static boolean runClusterGUI()
+    public static boolean runClusterGUI(final String file)
     {
+        ClusterUI ui;
+        boolean ok = true;
         //Start Cluster... called through the plugin menu.
         FijiArchipelago.setDebugLogger(new PrintStreamLogger());
         FijiArchipelago.setInfoLogger(new IJLogger());
         FijiArchipelago.setErrorLogger(new IJPopupLogger());
 
-        FijiArchipelago.log("Starting ");
+        ui = new ClusterUI();
 
-
-        ClusterNodeConfigUI ui = new ClusterNodeConfigUI();
-
-        if (ui.wasOKed())
+        if (file != null)
         {
-            //Dumb ShellExecListener
-            ShellExecListener meh = new ShellExecListener() {
-                public void execFinished(long nodeID, Exception e)
-                {
-                    if (e == null)
-                    {
-                        FijiArchipelago.log("Node " + nodeID + " has finished");
-                    }
-                    else
-                    {
-                        FijiArchipelago.log("Connection to nodeID " + nodeID
-                                + " disconnected with Exception: " + e);
-                    }
-                }
-            };
-
-            // Start the cluster server, add node params
-            Cluster.getCluster().start();
-            for (NodeManager.NodeParameters np
-                    : ui.parameterList(Cluster.getCluster().getNodeManager()))
-            {
-                FijiArchipelago.debug("" + np);
-                Cluster.getCluster().startNode(np, meh);
-            }
-
-            // Setup a dialog to stop the server when we're done.
-            // TODO: Make a window that gives better information, ie, number of nodes currently
-            // running, jobs in queue, etc.
-
-            Cluster.getCluster().addStateListener(new ClusterStateUpdater());
-            return true;
+            ok = ui.loadFromFile(file);
         }
-        else
-        {
-            return false;
-        }
+
+        return ok;
+    }
+    
+    public static boolean runClusterGUI()
+    {
+        return runClusterGUI(null);
     }
 }

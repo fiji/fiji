@@ -1,6 +1,7 @@
 package archipelago.network.node;
 
 import archipelago.*;
+import archipelago.data.HeartBeat;
 import archipelago.listen.*;
 import archipelago.compute.ProcessManager;
 import archipelago.data.ClusterMessage;
@@ -14,6 +15,7 @@ import java.util.Hashtable;
 import java.util.List;
 import java.util.Vector;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  *
@@ -38,7 +40,9 @@ public class ClusterNode implements TransceiverListener
     private final Hashtable<Long, ProcessListener> processHandlers;
     private final Hashtable<Long, ProcessManager> runningProcesses;
     private final AtomicBoolean ready;
+    private final AtomicInteger ramMBAvail, ramMBTot;
     private long nodeID;
+    private long lastBeatTime;
     private NodeManager.NodeParameters nodeParam;
     private AtomicBoolean idSet;
     private ClusterNodeState state;
@@ -49,10 +53,13 @@ public class ClusterNode implements TransceiverListener
             TimeOutException
     {
         xc = null;
+        lastBeatTime = 0;
         state = ClusterNodeState.INACTIVE;
         int waitCnt = 0;
         ready = new AtomicBoolean(false);
         idSet = new AtomicBoolean(false);
+        ramMBAvail = new AtomicInteger(0);
+        ramMBTot = new AtomicInteger(0);
         processHandlers = new Hashtable<Long, ProcessListener>();
         runningProcesses = new Hashtable<Long, ProcessManager>();
         nodeID = -1;
@@ -98,6 +105,7 @@ public class ClusterNode implements TransceiverListener
         {
             xc.queueMessage(MessageType.SETFILEROOT, getFilePath());
         }
+        xc.queueMessage(MessageType.BEAT);
     }
     
     public boolean setExecPath(String path)
@@ -149,7 +157,7 @@ public class ClusterNode implements TransceiverListener
 
     public String getHost()
     {
-        return nodeParam.getHost();
+        return nodeParam == null ? null : nodeParam.getHost();
     }
     
     public String getUser()
@@ -186,16 +194,31 @@ public class ClusterNode implements TransceiverListener
     {
         return nodeParam.getShell();
     }
-    
+
+    public NodeManager.NodeParameters getParam()
+    {
+        return nodeParam;
+    }
+
     public void setShell(final NodeShell shell)
     {
         nodeParam.setShell(shell);
     }
     
+    public int numRunningThreads()
+    {
+        return processHandlers.size();
+    }
+    
     public int numAvailableThreads()
     {
-        int n = nodeParam.getNumThreads() - processHandlers.size();
+        int n = nodeParam.getThreadLimit() - processHandlers.size();
         return n > 0 ? n : 0;
+    }
+    
+    public int getThreadLimit()
+    {
+        return nodeParam.getThreadLimit();
     }
     
     public void setActive(boolean active)
@@ -231,6 +254,11 @@ public class ClusterNode implements TransceiverListener
     public void ping()
     {
         xc.queueMessage(MessageType.PING);
+    }
+
+    public long lastBeat()
+    {
+        return lastBeatTime;
     }
 
     public void handleMessage(final ClusterMessage cm)
@@ -296,6 +324,13 @@ public class ClusterNode implements TransceiverListener
                             + e);
                     break;
                 
+                case BEAT:
+                    HeartBeat beat = (HeartBeat)object;
+                    lastBeatTime = System.currentTimeMillis();
+                    ramMBAvail.set(beat.ramMBAvailable);
+                    ramMBTot.set(beat.ramMBTotal);
+                    break;
+                
                 default:
                     FijiArchipelago.log("Got unexpected message type. The local version " +
                             "of Fiji may not be up to date with the clients.");
@@ -315,6 +350,16 @@ public class ClusterNode implements TransceiverListener
         }
     }
 
+    public int getAvailableRamMB()
+    {
+        return ramMBAvail.get();
+    }
+    
+    public int getTotalRamMB()
+    {
+        return ramMBTot.get();
+    }
+    
     public synchronized void close()
     {        
         if (state != ClusterNodeState.STOPPED)
@@ -331,16 +376,6 @@ public class ClusterNode implements TransceiverListener
 
             xc.close();
 
-//            FijiArchipelago.debug("Closing Socket");
-
-//            try
-//            {
-//                nodeSocket.close();
-//            }
-//            catch (IOException ioe)
-//            {
-//                //meh
-//            }
             FijiArchipelago.debug("Node: Close finished");
         }
         else
@@ -422,5 +457,10 @@ public class ClusterNode implements TransceiverListener
     public void removeListener(final NodeStateListener listener)
     {
         stateListeners.remove(listener);
+    }
+    
+    public ClusterNodeState getState()
+    {
+        return state;
     }
 }

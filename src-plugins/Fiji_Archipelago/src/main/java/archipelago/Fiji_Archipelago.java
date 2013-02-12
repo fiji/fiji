@@ -1,6 +1,9 @@
 package archipelago;
 
 import archipelago.network.client.ArchipelagoClient;
+import archipelago.ui.ClusterUI;
+import archipelago.util.IJLogger;
+import archipelago.util.IJPopupLogger;
 import archipelago.util.PrintStreamLogger;
 import ij.plugin.PlugIn;
 import java.io.IOException;
@@ -17,7 +20,14 @@ public class Fiji_Archipelago implements PlugIn
     {
         if (arg.equals("gui"))
         {
-            FijiArchipelago.runClusterGUI();
+            FijiArchipelago.setDebugLogger(new PrintStreamLogger());
+            FijiArchipelago.setInfoLogger(new IJLogger());
+            FijiArchipelago.setErrorLogger(new IJPopupLogger());
+            new ClusterUI();
+        }
+        else if (!arg.equals(""))
+        {
+            FijiArchipelago.runClusterGUI(arg);
         }
     }
 

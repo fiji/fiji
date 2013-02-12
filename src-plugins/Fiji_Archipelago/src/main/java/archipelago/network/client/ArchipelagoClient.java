@@ -1,6 +1,7 @@
 package archipelago.network.client;
 
 import archipelago.FijiArchipelago;
+import archipelago.data.HeartBeat;
 import archipelago.listen.MessageListener;
 import archipelago.listen.MessageType;
 import archipelago.listen.TransceiverListener;
@@ -21,11 +22,39 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class ArchipelagoClient implements MessageListener, TransceiverListener
 {
     
-    private final MessageXC xc;
-    private long clientId = 0;
-    private final AtomicBoolean active;
-    private final Vector<ProcessThread> runningThreads;
     
+    
+    private class HeartBeatThread extends Thread
+    {
+        private final long interval;
+        private final Runtime runtime;
+
+        public HeartBeatThread(long interval, Runtime runtime)
+        {
+            this.interval = interval;
+            this.runtime = runtime;
+        }
+        
+        public void run()
+        {
+            while (active.get())
+            {
+                try
+                {
+                    Thread.sleep(interval);
+                }
+                catch (InterruptedException ie)
+                {
+                    continue;
+                }
+
+                HeartBeat beat = new HeartBeat(runtime.freeMemory(),
+                        runtime.totalMemory());
+                
+                xc.queueMessage(MessageType.BEAT, beat);
+            }
+        }
+    }
     
     private class ProcessThread extends Thread
     {
@@ -59,7 +88,14 @@ public class ArchipelagoClient implements MessageListener, TransceiverListener
             }
         }
     }
-    
+
+
+    private final MessageXC xc;
+    private long clientId = 0;
+    private final AtomicBoolean active;
+    private final Vector<ProcessThread> runningThreads;
+    private final HeartBeatThread beatThread;
+
 
     public ArchipelagoClient(long id, String host, InputStream inStream, OutputStream outStream) throws IOException
     {
@@ -67,6 +103,7 @@ public class ArchipelagoClient implements MessageListener, TransceiverListener
         {
             clientId = id;
             xc = new MessageXC(inStream, outStream, this, host);
+            beatThread = new HeartBeatThread(1000, Runtime.getRuntime());
 
             runningThreads = new Vector<ProcessThread>();
             
@@ -145,8 +182,15 @@ public class ArchipelagoClient implements MessageListener, TransceiverListener
                             runningThreads.remove(processThread);
                             return;
                         }
-                        break;
                     }
+                    break;
+
+                case BEAT:
+                    if (!beatThread.isAlive())
+                    {
+                        beatThread.start();
+                    }
+                    break;
             }
         }
         catch (ClassCastException cce)
@@ -176,7 +220,9 @@ public class ArchipelagoClient implements MessageListener, TransceiverListener
             {
                 t.cancel();
             }
-            
+
+            beatThread.interrupt();
+
             xc.close();
         }
         

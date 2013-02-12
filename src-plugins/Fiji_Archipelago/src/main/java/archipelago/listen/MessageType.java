@@ -21,5 +21,6 @@ public enum MessageType
     CANCELJOB,
     ERROR,
     NUMTHREADS,
-    MBRAM
+    MBRAM,
+    BEAT
 }

@@ -35,7 +35,8 @@ public class NodeManager
             this(stdUser, hostIn, stdExecRoot, stdFileRoot, stdPort);
         }*/
         
-        public NodeParameters(String userIn, String hostIn, NodeShell shellIn, String execPath, String filePath, int portIn)
+        public NodeParameters(String userIn, String hostIn, NodeShell shellIn, String execPath,
+                              String filePath, int portIn)
         {
             user = userIn;
             host = hostIn;
@@ -47,7 +48,7 @@ public class NodeManager
             numThreads = 4;
         }
 
-        public synchronized void setNumThreads(final int n)
+        public synchronized void setThreadLimit(final int n)
         {
             numThreads = n;
         }
@@ -127,7 +128,7 @@ public class NodeManager
             return id;
         }
         
-        public int getNumThreads()
+        public int getThreadLimit()
         {
             return numThreads;
         }
@@ -204,6 +205,11 @@ public class NodeManager
     public synchronized void setStdShell(NodeShell shell)
     {
         stdShell = shell;
+    }
+    
+    public NodeShell getStdShell()
+    {
+        return stdShell;
     }
 
     public void clear()

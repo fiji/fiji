@@ -26,7 +26,11 @@ public class MessageXC
                 try
                 {
                     ClusterMessage message = (ClusterMessage)objectInputStream.readObject();
-                    FijiArchipelago.debug("RX: " + hostName + " Recieved message " + message);
+                    // Don't debug beats, or they'll fill your log
+                    if (message.type != MessageType.BEAT)
+                    {
+                        FijiArchipelago.debug("RX: Recieved message " + message + " from " + hostName);
+                    }
                     xcListener.handleMessage(message);
                     objectInputStream = new ObjectInputStream(inStream);
                 }
@@ -37,7 +41,9 @@ public class MessageXC
                 }
                 catch (IOException ioe)
                 {
-                    close();
+                    FijiArchipelago.err("RX: " + hostName + " Got IOException: " + ioe);
+                    queueMessage(MessageType.ERROR,  ioe);
+                    //close();
                 }
                 catch (ClassNotFoundException cnfe)
                 {

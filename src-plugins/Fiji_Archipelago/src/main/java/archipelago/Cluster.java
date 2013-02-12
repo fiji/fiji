@@ -360,22 +360,13 @@ public class Cluster implements ExecutorService, NodeStateListener
 
     public static final int DEFAULT_PORT = 3501;
     private static Cluster cluster = null;    
-
-    public static boolean initCluster(int port)
-    {
-        if (cluster == null)
-        {
-            cluster = new Cluster(port);
-            return true;
-        }
-        else
-        {
-            return cluster.init(port);
-        }
-    }
     
     public static Cluster getCluster()
     {
+        if (cluster == null)
+        {
+            cluster = new Cluster();
+        }
         return cluster;
     }
     
@@ -418,7 +409,7 @@ public class Cluster implements ExecutorService, NodeStateListener
 
 
      */
-    private final AtomicBoolean halted, ready, terminated, initted;
+    private final AtomicBoolean halted, ready, terminated, initted, started;
     
     private final AtomicInteger jobCount, runningNodes;
 
@@ -435,13 +426,14 @@ public class Cluster implements ExecutorService, NodeStateListener
     
     private final Vector<ClusterStateListener> listeners;
 
-    private Cluster(int p)
+    private Cluster()
     {        
         nodes = new Vector<ClusterNode>();
         waitThreads = new Vector<Thread>();
         
         ready = new AtomicBoolean(false);
         initted = new AtomicBoolean(false);
+        started = new AtomicBoolean(false);
         halted = new AtomicBoolean(false);
         terminated = new AtomicBoolean(false);
         jobCount = new AtomicInteger(0);
@@ -454,7 +446,7 @@ public class Cluster implements ExecutorService, NodeStateListener
         
         listeners = new Vector<ClusterStateListener>();
 
-        init(p);
+        
         
         try
         {
@@ -482,6 +474,7 @@ public class Cluster implements ExecutorService, NodeStateListener
             terminated.set(false);
             jobCount.set(0);
             runningNodes.set(0);
+            initted.set(true);
             return true;
         }
         else
@@ -505,11 +498,19 @@ public class Cluster implements ExecutorService, NodeStateListener
         String host = params.getHost();
         String exec = params.getExecRoot();
         long id = params.getID();
-        String execCommandString = exec + "/fiji --jar-path " + exec
-                + "/plugins/ --jar-path " + exec +"/jars/ --classpath " + exec + " --allow-multiple --main-class archipelago.Fiji_Archipelago "
-                + localHostName + " " + port + " " + id + " 2>&1 > ~/" + host + "_" + id + ".log";
-        
-        return params.getShell().exec(params, execCommandString, listener);
+        if (getNode(id) == null)
+        {
+            String execCommandString = exec + "/fiji --jar-path " + exec
+                    + "/plugins/ --jar-path " + exec +"/jars/ --classpath " + exec +
+                    " --allow-multiple --main-class archipelago.Fiji_Archipelago "
+                    + localHostName + " " + port + " " + id + " 2>&1 > ~/" + host + "_" + id + ".log";
+
+            return params.getShell().exec(params, execCommandString, listener);
+        }
+        else
+        {
+            return true;
+        }
     }
 
 
@@ -728,9 +729,26 @@ public class Cluster implements ExecutorService, NodeStateListener
     }
 
     
+    public int getPort()
+    {
+        return port;
+    }
+    
     public ArrayList<ClusterNode> getNodes()
     {
         return new ArrayList<ClusterNode>(nodes);
+    }
+    
+    public ArrayList<NodeManager.NodeParameters> getNodesParameters()
+    {
+        final ArrayList<NodeManager.NodeParameters> paramList =
+                new ArrayList<NodeManager.NodeParameters>();
+        for (ClusterNode node : getNodes())
+        {
+            paramList.add(node.getParam());
+        }
+        
+        return paramList;
     }
 
     /**
@@ -741,14 +759,15 @@ public class Cluster implements ExecutorService, NodeStateListener
      */
     public boolean start()
     {
-        if (!initted.get())
+        if (initted.get() && !isStarted())
         {
+
             FijiArchipelago.debug("Scheduler alive? :" + scheduler.isAlive());
             scheduler.start();
             server = new ArchipelagoServer(this);
             if (server.start())
             {
-                initted.set(true);
+                started.set(true);
                 return true;
             }
             else
@@ -774,7 +793,7 @@ public class Cluster implements ExecutorService, NodeStateListener
     
     public boolean isStarted()
     {
-        return initted.get();
+        return started.get();
     }
 
     public int getRunningJobCount()
@@ -842,7 +861,9 @@ public class Cluster implements ExecutorService, NodeStateListener
         terminated.set(true);
         scheduler.close();
         nodeManager.clear();
+        started.set(false);
         initted.set(false);
+        
 
         triggerListeners();
 
@@ -862,14 +883,15 @@ public class Cluster implements ExecutorService, NodeStateListener
          At this point, all queued but un-run jobs may be returned in a List, and any Threads
          that are waiting for us to terminate are unblocked.
          */
-
+        final ArrayList<ClusterNode> nodescp = new ArrayList<ClusterNode>(nodes);
+        
         
         ready.set(false);
         halted.set(true);
 
         triggerListeners();
 
-        for (ClusterNode node : nodes)
+        for (ClusterNode node : nodescp)
         {
             node.close();
         }

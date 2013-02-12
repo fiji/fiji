@@ -159,7 +159,7 @@ public class ClusterNodeConfigUI implements ActionListener
             param.setFileRoot(fileRoot);
             param.setPort(port);
             param.setUser(user);
-            param.setNumThreads(nCpu);
+            param.setThreadLimit(nCpu);
             return param;
         }
     }
@@ -281,7 +281,7 @@ public class ClusterNodeConfigUI implements ActionListener
             shell = new JSchNodeShell(new JSchNodeShell.JSchShellParams(new File(keyfile)),
                     new IJLogger());
 
-            Cluster.initCluster(port);
+            Cluster.getCluster().init(port);
             Cluster.getCluster().getNodeManager().setStdUser(userName);
             Cluster.getCluster().getNodeManager().setStdExecRoot(execRootRemote);
             Cluster.getCluster().getNodeManager().setStdFileRoot(fileRootRemote);

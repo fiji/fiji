@@ -27,6 +27,8 @@ public class ClusterMessage implements Serializable
     {
         switch (type)
         {
+            case BEAT:
+                return "beat";
             case SETID:
                 return "set id";
             case GETID:
