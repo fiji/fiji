@@ -135,7 +135,7 @@ public class Apply_External_Transformation implements PlugIn
 					numChoices++;
 				}
 			}
-			else
+			else if ( s.contains( ".registration.to_" ) )
 			{
 				final int timepoint = Integer.parseInt( s.substring( s.indexOf( ".registration.to_" ) + 17, s.length() ) );
 				
@@ -198,18 +198,18 @@ public class Apply_External_Transformation implements PlugIn
 		}
 		else
 		{
-			gd2.addNumericField( "m00: ", m00, 0 );
-			gd2.addNumericField( "m01: ", m01, 0 );
-			gd2.addNumericField( "m02: ", m02, 0 );
-			gd2.addNumericField( "m03: ", m03, 0 );
-			gd2.addNumericField( "m10: ", m10, 0 );
-			gd2.addNumericField( "m11: ", m11, 0 );
-			gd2.addNumericField( "m12: ", m12, 0 );
-			gd2.addNumericField( "m13: ", m13, 0 );
-			gd2.addNumericField( "m20: ", m20, 0 );
-			gd2.addNumericField( "m21: ", m21, 0 );
-			gd2.addNumericField( "m22: ", m22, 0 );
-			gd2.addNumericField( "m23: ", m23, 0 );
+			gd2.addNumericField( "m00: ", m00, 5 );
+			gd2.addNumericField( "m01: ", m01, 5 );
+			gd2.addNumericField( "m02: ", m02, 5 );
+			gd2.addNumericField( "m03: ", m03, 5 );
+			gd2.addNumericField( "m10: ", m10, 5 );
+			gd2.addNumericField( "m11: ", m11, 5 );
+			gd2.addNumericField( "m12: ", m12, 5 );
+			gd2.addNumericField( "m13: ", m13, 5 );
+			gd2.addNumericField( "m20: ", m20, 5 );
+			gd2.addNumericField( "m21: ", m21, 5 );
+			gd2.addNumericField( "m22: ", m22, 5 );
+			gd2.addNumericField( "m23: ", m23, 5 );
 		}
 		gd2.addMessage("");
 		gd2.addChoice( "Apply_to ", choices, choices[ defaultApplyTo ]);
