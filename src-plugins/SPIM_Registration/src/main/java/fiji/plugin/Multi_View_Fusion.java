@@ -331,7 +331,7 @@ public class Multi_View_Fusion implements PlugIn
 						numChoices++;
 					}
 				}
-				else
+				else if ( s.contains( ".registration.to_" ) )
 				{
 					final int timepoint = Integer.parseInt( s.substring( s.indexOf( ".registration.to_" ) + 17, s.length() ) );
 					

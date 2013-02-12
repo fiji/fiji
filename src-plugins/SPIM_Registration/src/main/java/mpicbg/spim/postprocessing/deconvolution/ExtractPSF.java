@@ -14,6 +14,7 @@ import mpicbg.imglib.image.display.imagej.ImageJFunctions;
 import mpicbg.imglib.interpolation.Interpolator;
 import mpicbg.imglib.interpolation.InterpolatorFactory;
 import mpicbg.imglib.interpolation.linear.LinearInterpolatorFactory;
+import mpicbg.imglib.io.LOCI;
 import mpicbg.imglib.outofbounds.OutOfBoundsStrategyFactory;
 import mpicbg.imglib.outofbounds.OutOfBoundsStrategyMirrorFactory;
 import mpicbg.imglib.outofbounds.OutOfBoundsStrategyPeriodicFactory;
@@ -352,7 +353,7 @@ public class ExtractPSF
 		final OutOfBoundsStrategyFactory<FloatType> outside = new OutOfBoundsStrategyPeriodicFactory<FloatType>();
 		final InterpolatorFactory<FloatType> interpolatorFactory = new LinearInterpolatorFactory<FloatType>( outside );
 		
-		final ImageFactory<FloatType> imageFactory = new ImageFactory<FloatType>( new FloatType(), new ArrayContainerFactory() );
+		final ImageFactory<FloatType> imageFactory = new ImageFactory<FloatType>( new FloatType(), view.getViewStructure().getSPIMConfiguration().imageFactory );
 		final Image<FloatType> img = view.getImage();
 		final Image<FloatType> psf = imageFactory.createImage( size );
 		
@@ -452,5 +453,45 @@ public class ExtractPSF
 		}
 		
 		return minMaxDim;
-	}		
+	}
+	
+	public static ExtractPSF loadAndTransformPSF( final String fileName, final boolean computeAveragePSF, final ViewStructure viewStructure )
+	{
+		ExtractPSF extractPSF = new ExtractPSF( viewStructure );
+		
+		final ArrayList<ViewDataBeads > views = viewStructure.getViews();
+		final int numDimensions = 3;
+		
+		final Image< FloatType > psfImage = LOCI.openLOCIFloatType( fileName, viewStructure.getSPIMConfiguration().imageFactory );
+		
+		if ( psfImage == null )
+		{
+			IJ.log( "Could not find PSF file '" + fileName + "' - quitting." );
+			return null;
+		}
+		
+		final int[] maxSize = new int[ numDimensions ];
+		
+		for ( int d = 0; d < numDimensions; ++d )
+			maxSize[ d ] = 0;
+		
+		for ( final ViewDataBeads view : views )		
+		{
+			final Image<FloatType> psf = transformPSF( psfImage, (AbstractAffineModel3D<?>)view.getTile().getModel() ); 
+			psf.setName( "PSF_" + view.getName() );
+			
+			for ( int d = 0; d < numDimensions; ++d )
+				if ( psf.getDimension( d ) > maxSize[ d ] )
+					maxSize[ d ] = psf.getDimension( d );
+			
+			extractPSF.pointSpreadFunctions.add( psf );
+			
+			psf.getDisplay().setMinMax();
+		}
+		
+		if ( computeAveragePSF )
+			extractPSF.computeAveragePSF( maxSize );
+		
+		return extractPSF;
+	}
 }

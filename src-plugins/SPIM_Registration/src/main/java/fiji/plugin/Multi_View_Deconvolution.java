@@ -185,6 +185,8 @@ public class Multi_View_Deconvolution implements PlugIn
 		}		
 	}
 
+	public static String defaultPSFFileField = "";
+	public static int defaultExtractPSF = 0;
 	public static boolean defaultLoadImagesSequentially = false;
 	public static boolean displayFusedImageStatic = true;
 	public static boolean saveFusedImageStatic = true;
@@ -202,12 +204,13 @@ public class Multi_View_Deconvolution implements PlugIn
 	public static String[] iterationTypeString = new String[]{ "Ad-hoc (very fast, imprecise)", "Conditional Probability (fast, precise)", "Independent (slow, precise)" };
 	public static String[] imglibContainer = new String[]{ "Array container", "Planar container", "Cell container" };
 	public static String[] computationOn = new String[]{ "CPU (Java)", "GPU (Nvidia CUDA via JNA)" };
+	public static String[] extractPSFs = new String[]{ "Extract from beads", "Provide file with PSF" };
 	public static String[] blocks = new String[]{ "Entire image at once", "in 64x64x64 blocks", "in 128x128x128 blocks", "in 256x256x256 blocks", "in 512x512x512 blocks", "specify maximal blocksize manually" };
 	
 	PSFTYPE iterationType;
 	int numIterations, container, computationType, blockSizeIndex, debugInterval = 1;
 	int[] blockSize = null;
-	boolean useTikhonovRegularization = true, useBlocks = false, useCUDA = false, debugMode = false, loadImagesSequentially = false;
+	boolean useTikhonovRegularization = true, useBlocks = false, useCUDA = false, debugMode = false, loadImagesSequentially = false, extractPSF = true;
 	
 	/**
 	 * -1 == CPU
@@ -340,7 +343,7 @@ public class Multi_View_Deconvolution implements PlugIn
 						numChoices++;
 					}
 				}
-				else
+				else if ( s.contains( ".registration.to_" ) )
 				{
 					final int timepoint = Integer.parseInt( s.substring( s.indexOf( ".registration.to_" ) + 17, s.length() ) );
 
@@ -430,6 +433,7 @@ public class Multi_View_Deconvolution implements PlugIn
 		gd2.addChoice( "ImgLib_container", imglibContainer, imglibContainer[ defaultContainer ] );
 		gd2.addChoice( "Compute", blocks, blocks[ defaultBlockSizeIndex ] );
 		gd2.addChoice( "Compute_on", computationOn, computationOn[ defaultComputationIndex ] );
+		gd2.addChoice( "PSF_estimation", extractPSFs, extractPSFs[ defaultExtractPSF ] );
 		gd2.addCheckbox( "Show_averaged_PSF", showAveragePSF );
 		gd2.addCheckbox( "Debug_mode", defaultDebugMode );
 		gd2.addMessage( "" );
@@ -549,11 +553,35 @@ public class Multi_View_Deconvolution implements PlugIn
 		container = defaultContainer = gd2.getNextChoiceIndex();
 		blockSizeIndex = defaultBlockSizeIndex = gd2.getNextChoiceIndex();
 		computationType = defaultComputationIndex = gd2.getNextChoiceIndex();
+		defaultExtractPSF = gd2.getNextChoiceIndex();
 		showAveragePSF = gd2.getNextBoolean();
 		defaultDebugMode = debugMode = gd2.getNextBoolean();
 		displayFusedImageStatic = gd2.getNextBoolean(); 
 		saveFusedImageStatic = gd2.getNextBoolean();
 		defaultLoadImagesSequentially = loadImagesSequentially = gd2.getNextBoolean();
+		
+		if ( defaultExtractPSF == 0 )
+		{
+			extractPSF = true;
+		}
+		else
+		{
+			extractPSF = false;
+			
+			final GenericDialogPlus gd3 = new GenericDialogPlus( "Select PSF File ..." );
+			
+			gd3.addMessage( "Note: the calibration of the PSF has to match" );
+			gd3.addMessage( "the calibration of the input views!" );
+			gd3.addMessage( "" );
+			gd3.addFileField( "PSF_file", defaultPSFFileField );
+			
+			gd3.showDialog();
+			
+			if ( gd3.wasCanceled() )
+				return null;
+			
+			conf.psfFile = defaultPSFFileField = gd3.getNextString();
+		}
 		
 		if ( blockSizeIndex == 0 )
 		{
@@ -771,6 +799,7 @@ public class Multi_View_Deconvolution implements PlugIn
 		conf.isDeconvolution = true;
 		conf.deconvolutionLoadSequentially = loadImagesSequentially;
 		conf.deconvolutionShowAveragePSF = showAveragePSF;
+		conf.extractPSF = extractPSF;
 		
 		if ( displayFusedImageStatic  )
 			conf.showOutputImage = true;

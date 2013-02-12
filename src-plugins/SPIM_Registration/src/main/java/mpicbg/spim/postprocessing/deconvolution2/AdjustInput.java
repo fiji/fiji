@@ -3,13 +3,18 @@ package mpicbg.spim.postprocessing.deconvolution2;
 import ij.IJ;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.Random;
+import java.util.Vector;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import mpicbg.imglib.cursor.Cursor;
 import mpicbg.imglib.cursor.LocalizableCursor;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.interpolation.Interpolator;
 import mpicbg.imglib.interpolation.linear.LinearInterpolatorFactory;
+import mpicbg.imglib.multithreading.Chunk;
+import mpicbg.imglib.multithreading.SimpleMultiThreading;
 import mpicbg.imglib.outofbounds.OutOfBoundsStrategyMirrorFactory;
 import mpicbg.imglib.type.numeric.real.FloatType;
 import mpicbg.util.RealSum;
@@ -45,11 +50,112 @@ public class AdjustInput
 		return sum.getSum();
 	}	
 
-	public static double normAllImages( final ArrayList<LRFFT> data, final int speedUp )
+	public static double normAllImages( final ArrayList<LRFFT> data )
 	{
-		// the individual sums of the overlapping area
-		//final double[] sums = new double[ data.size() ];
+		final Vector< Chunk > threadChunks = SimpleMultiThreading.divideIntoChunks( data.get( 0 ).getImage().getNumPixels(), Runtime.getRuntime().availableProcessors() );
+		final int numThreads = threadChunks.size();
+		
+		IJ.log( new Date( System.currentTimeMillis() ) + ": numThreads = " + numThreads );
+		
+		final int[] minNumOverlap = new int[ numThreads ];
+		final long[] avgNumOverlap = new long[ numThreads ];
+		final int[] countAvgNumOverlap = new int[ numThreads ];
+		
+		final RealSum[] sum = new RealSum[ numThreads ];
+		final long[] count = new long[ numThreads ];
+		
+		final AtomicInteger ai = new AtomicInteger(0);					
+        final Thread[] threads = SimpleMultiThreading.newThreads( numThreads );
+        for ( int ithread = 0; ithread < threads.length; ++ithread )
+            threads[ithread] = new Thread(new Runnable()
+            {
+                public void run()
+                {
+                	// Thread ID
+                	final int myNumber = ai.getAndIncrement();
+        
+                	// get chunk of pixels to process
+                	final Chunk myChunk = threadChunks.get( myNumber );
+
+                	final long start = myChunk.getStartPosition();
+                	final long loopSize = myChunk.getLoopSize();
+
+                	final RealSum mySum = new RealSum();
+                	int myCount = 0;
+                	int myMinNumOverlap = Integer.MAX_VALUE;
+            		long myAvgNumOverlap = 0;
+            		int myCountAvgNumOverlap = 0;
+            		
+            		final ArrayList<Cursor<FloatType>> cursorsImage = new ArrayList<Cursor<FloatType>>();
+            		final ArrayList<Cursor<FloatType>> cursorsWeight = new ArrayList<Cursor<FloatType>>();
+            		
+            		for ( final LRFFT fft : data )
+            		{
+            			cursorsImage.add( fft.getImage().createCursor() );
+            			if ( fft.getWeight() != null )
+            				cursorsWeight.add( fft.getWeight().createCursor() );
+            		}
+
+        			for ( final Cursor<FloatType> c : cursorsImage )
+        				c.fwd( start );
+        			
+        			for ( final Cursor<FloatType> c : cursorsWeight )
+        				c.fwd( start );
+            		
+        			
+            		for ( long l = 0; l < loopSize; ++l )
+            		{
+        				for ( final Cursor<FloatType> c : cursorsImage )
+        					c.fwd();
+        				
+        				for ( final Cursor<FloatType> c : cursorsWeight )
+        					c.fwd();
+        				
+        				// sum up individual intensities
+        				double sumLocal = 0;
+        				int countLocal = 0;
+        				
+        				for ( int i = 0; i < cursorsImage.size(); ++i )
+        				{
+        					if ( cursorsWeight.get( i ).getType().get() != 0 )
+        					{
+        						sumLocal += cursorsImage.get( i ).getType().get();
+        						countLocal++;
+        					}
+        				}
+        				
+        				// at least two overlap to compute the average intensity there
+        				if ( countLocal > 1 )
+        				{
+        					mySum.add( sumLocal );
+        					myCount += countLocal;
+        				}
+        				
+        				if ( countLocal > 0 )
+        				{
+        					myAvgNumOverlap += countLocal;
+        					myCountAvgNumOverlap++;
+        					
+        					myMinNumOverlap = Math.min( countLocal, myMinNumOverlap );
+        				}
+            		}
+            		
+            		sum[ myNumber ] = mySum;
+            		count[ myNumber ] = myCount;
+            		minNumOverlap[ myNumber ] = myMinNumOverlap;
+            		avgNumOverlap[ myNumber ] = myAvgNumOverlap;
+            		countAvgNumOverlap[ myNumber ] = myCountAvgNumOverlap;
+                }
+            });
+        
+        SimpleMultiThreading.startAndJoin( threads );
+
+        IJ.log( new Date( System.currentTimeMillis() ) + ": done normalizing." );
+		
+		/*
 		int minNumOverlap = data.size();
+		long avgNumOverlap = 0;
+		int countAvgNumOverlap = 0;
 		
 		final RealSum sum = new RealSum();
 		// the number of overlapping pixels
@@ -88,7 +194,7 @@ public class AdjustInput
 					countLocal++;
 				}
 			}
-
+			
 			// at least two overlap
 			if ( countLocal > 1 )
 			{
@@ -97,27 +203,41 @@ public class AdjustInput
 			}
 			
 			if ( countLocal > 0 )
+			{
+				avgNumOverlap += countLocal;
+				countAvgNumOverlap++;
+				
 				minNumOverlap = Math.min( countLocal, minNumOverlap );
+			}
 		}
 
-		
-		IJ.log( "Min number of overlapping views: " + minNumOverlap );
-		
-		minNumOverlap = Math.max( speedUp, minNumOverlap );
-		minNumOverlap = 1;
-		
-		IJ.log( "Speed-up: " + minNumOverlap );
-		/*
-		for ( final LRFFT view : data )
-			for ( final FloatType t : view.getWeight() )
-				t.mul( minNumOverlap );
 		*/
+        
+        int minNumOverlapResult = minNumOverlap[ 0 ];
+        long avgNumOverlapResult = avgNumOverlap[ 0 ];
+		int countAvgNumOverlapResult = countAvgNumOverlap[ 0 ];
+		
+		RealSum sumResult = new RealSum();
+		sumResult.add( sum[ 0 ].getSum() );
+		long countResult = count[ 0 ];
+		
+        for ( int i = 1; i < numThreads; ++i )
+        {
+        	minNumOverlapResult = Math.min( minNumOverlapResult, minNumOverlap[ i ] );
+        	avgNumOverlapResult += avgNumOverlap[ i ];
+        	countAvgNumOverlapResult += countAvgNumOverlap[ i ];
+        	countResult += count[ i ];
+        	sumResult.add( sum[ i ].getSum() );
+        }
+        
+		IJ.log( "Min number of overlapping views: " + minNumOverlapResult );
+		IJ.log( "Average number of overlapping views: " + (avgNumOverlapResult/(double)countAvgNumOverlapResult) );
 
-		if ( count == 0 )
+		if ( countResult == 0 )
 			return 1;
 		
 		// compute the average sum
-		final double avg = sum.getSum() / (double)count;
+		final double avg = sumResult.getSum() / (double)countResult;
 		
 		// return the average intensity in the overlapping area
 		return avg;

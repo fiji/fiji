@@ -43,11 +43,17 @@ public class PreDeconvolutionFusion extends SPIMImageFusion implements PreDeconv
 		final ImageFactory<FloatType> imageFactory = new ImageFactory<FloatType>( new FloatType(), conf.outputImageFactory );
 		numViews = viewStructure.getNumViews();
 		
-		extractPSF = new ExtractPSF( viewStructure );
+		if ( conf.extractPSF )
+			extractPSF = new ExtractPSF( viewStructure );
+		else
+			extractPSF = ExtractPSF.loadAndTransformPSF( conf.psfFile, conf.deconvolutionShowAveragePSF, viewStructure );			
 		
 		images = new Image[ numViews ];
 		weights = new Image[ numViews ];
-		
+
+		if ( extractPSF == null )
+			return;
+
 		for ( int view = 0; view < numViews; view++ )
 		{
 			weights[ view ] = imageFactory.createImage( new int[]{ imgW, imgH, imgD }, "weights_" + view );
@@ -397,7 +403,8 @@ public class PreDeconvolutionFusion extends SPIMImageFusion implements PreDeconv
 		if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_MAIN )
 			IOFunctions.println( "Extracting all PSF's" );
 		
-		extractPSF.extract( conf.deconvolutionShowAveragePSF );
+		if ( conf.extractPSF )
+			extractPSF.extract( conf.deconvolutionShowAveragePSF );
 		
 		// unload images
 		for ( final ViewDataBeads view : views ) 

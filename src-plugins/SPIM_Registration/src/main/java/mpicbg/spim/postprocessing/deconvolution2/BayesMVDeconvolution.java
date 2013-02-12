@@ -23,7 +23,6 @@ public class BayesMVDeconvolution implements Deconvolver
 	public static boolean debug = true;
 	public static int debugInterval = 1;
 	final static float minValue = 0.0001f;
-	public static int speedUp = 1;
 
 	final int numViews, numDimensions;
     final float avg;
@@ -56,7 +55,7 @@ public class BayesMVDeconvolution implements Deconvolver
 		
 		this.psi = data.get( 0 ).getImage().createNewImage( "psi (deconvolved image)" );
 		
-		this.avg = (float)AdjustInput.normAllImages( data, speedUp );
+		this.avg = (float)AdjustInput.normAllImages( data );
 		
 		IJ.log( "Average intensity in overlapping area: " + avg );        
 		
