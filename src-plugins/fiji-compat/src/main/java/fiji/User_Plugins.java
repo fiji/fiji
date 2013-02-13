@@ -405,7 +405,7 @@ public class User_Plugins implements PlugIn {
 	 */
 	public static String getDefaultPath() {
 		try {
-			return FijiTools.getFijiDir() + "/user-plugins";
+			return new File(System.getProperty("user.home"), ".plugins").getAbsolutePath();
 		} catch (Exception e) {
 			e.printStackTrace();
 			return "";
