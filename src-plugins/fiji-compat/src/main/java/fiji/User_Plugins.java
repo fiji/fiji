@@ -20,11 +20,14 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 
+import java.lang.reflect.Field;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
@@ -40,6 +43,23 @@ import java.util.jar.JarFile;
 public class User_Plugins implements PlugIn {
 	public String path, menuPath;
 	protected boolean stripPluginsPrefix;
+	private static Field menuInstance;
+	private static Field menuEntry2jarFile;
+
+	static {
+		try {
+			Field instanceField = Menus.class.getDeclaredField("instance");
+			instanceField.setAccessible(true);
+			Field field = Menus.class.getDeclaredField("menuEntry2jarFile");
+			field.setAccessible(true);
+			menuInstance = instanceField;
+			menuEntry2jarFile = field;
+		} catch (Throwable t) {
+			// be nice to ImageJ older than 1.43h
+//			if (IJ.debug)
+				t.printStackTrace();
+		}
+	}
 
 	/**
 	 * Default constructor
@@ -178,7 +198,7 @@ public class User_Plugins implements PlugIn {
 		}
 		else if (name.endsWith(".class")) {
 			name = name.substring(0, name.length() - 5);
-			installPlugin(menuPath, makeLabel(name), name);
+			installPlugin(menuPath, makeLabel(name), name, file);
 		}
 		else if (name.endsWith(".jar")) try {
 			List plugins = getJarPluginList(file, menuPath);
@@ -189,7 +209,7 @@ public class User_Plugins implements PlugIn {
 					getMenu(item[0]).addSeparator();
 				else
 					installPlugin(item[0], item[1],
-							item[2]);
+							item[2], file);
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -287,11 +307,26 @@ public class User_Plugins implements PlugIn {
 	 *
 	 * @param menuPath the menu into which to install it
 	 * @param name the label of the menu item
-	 * @param the command to run (as per the plugins.config)
+	 * @param command the command to run (as per the plugins.config)
+	 * @return the added menu item
+	 */
+	public static MenuItem installPlugin(String menuPath, String name,
+			String command) {
+		return installPlugin(menuPath, name, command, null);
+	}
+
+	/**
+	 * Install a single menu item
+	 *
+	 * @param menuPath the menu into which to install it
+	 * @param name the label of the menu item
+	 * @param command the command to run (as per the plugins.config)
+	 * @param file the source file
+	 * @return the added menu item
 	 */
 	/* TODO: sorted */
 	public static MenuItem installPlugin(String menuPath, String name,
-			String command) {
+			String command, File jarFile) {
 		if (Menus.getCommands().get(name) != null) {
 			IJ.log("The user plugin " + name
 				+ " would override an existing command!");
@@ -307,6 +342,14 @@ public class User_Plugins implements PlugIn {
 			item.addActionListener(IJ.getInstance());
 		}
 		Menus.getCommands().put(name, command);
+
+		if (menuEntry2jarFile != null && jarFile != null) try {
+			Map map = (Map)menuEntry2jarFile.get(menuInstance.get(null));
+			map.put(name, jarFile.getPath());
+		} catch (Throwable t) {
+			t.printStackTrace();
+		}
+
 		return item;
 	}
 
