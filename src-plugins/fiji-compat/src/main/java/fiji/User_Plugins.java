@@ -275,6 +275,8 @@ public class User_Plugins implements PlugIn {
 			return menuPath;
 		if (original.startsWith("Plugins>"))
 			original = original.substring(8);
+		if (menuPath.equals(""))
+			return original.equals("") ? "Plugins" : original;
 		if (original.equals(""))
 			return menuPath;
 		return menuPath + ">" + original;
@@ -416,6 +418,6 @@ public class User_Plugins implements PlugIn {
 	 * Get the default menu path where the user plugins will be installed
 	 */
 	public static String getDefaultMenuPath() {
-		return "Plugins>User";
+		return "";
 	}
 }
