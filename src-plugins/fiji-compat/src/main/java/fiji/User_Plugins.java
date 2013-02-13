@@ -104,7 +104,7 @@ public class User_Plugins implements PlugIn {
 		}
 
 		installScripts();
-		installPlugins(path, ".", menuPath);
+		installPlugins(path, "", menuPath);
 		/* make sure "Update Menus" runs _this_ plugin */
 		Menus.getCommands().put("Update Menus",
 			"fiji.User_Plugins(\"update\")");
@@ -188,8 +188,8 @@ public class User_Plugins implements PlugIn {
 	public void installPlugins(String dir, String name, String menuPath) {
 		File file = new File(dir, name);
 		if (file.isDirectory()) {
-			if (!name.equals("."))
-				menuPath = menuPath + ">" + name;
+			if (!name.equals(".") && !name.equals(""))
+				menuPath = ("".equals(menuPath) ? "" : menuPath + ">") + name;
 			dir = file.getPath();
 			String[] list = file.list();
 			Arrays.sort(list);
