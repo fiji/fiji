@@ -329,6 +329,7 @@ public class User_Plugins implements PlugIn {
 			String command, File jarFile) {
 		if (Menus.getCommands().get(name) != null) {
 			IJ.log("The user plugin " + name
+				+ (jarFile == null ? "" : " (in " + jarFile + ")")
 				+ " would override an existing command!");
 			return null;
 		}
