@@ -1298,6 +1298,100 @@ public class WekaSegmentation {
 	}
 	
 	/**
+	 * Add instances to two classes from lists of coordinates.
+	 * 
+	 * White pixels will be added to the corresponding class 1 and
+	 * black pixels will be added to class 2.
+	 *
+	 * @param classPoints list of 3D coordinates to be used (x, y, slice)
+	 * @param fsa feature stack array
+	 * @param whiteClassName name of the class which receives the white pixels
+	 * @param blackClassName name of the class which receives the black pixels
+	 * 
+	 * @return false if error
+	 */
+	public boolean addBinaryData(
+			List< Point3f >[] classPoints,
+			FeatureStackArray fsa,
+			String whiteClassName,
+			String blackClassName)
+	{		
+
+		// Detect class indexes
+		int whiteClassIndex = 0;
+		for(whiteClassIndex = 0 ; whiteClassIndex < this.getClassLabels().length; whiteClassIndex++)
+			if(whiteClassName.equalsIgnoreCase(this.getClassLabels()[whiteClassIndex]))
+				break;
+		if(whiteClassIndex == this.getClassLabels().length)
+		{
+			IJ.log("Error: class named '" + whiteClassName + "' not found.");
+			return false;
+		}
+		int blackClassIndex = 0;
+		for(blackClassIndex = 0 ; blackClassIndex < this.getClassLabels().length; blackClassIndex++)
+			if(blackClassName.equalsIgnoreCase(this.getClassLabels()[blackClassIndex]))
+				break;
+		if(blackClassIndex == this.getClassLabels().length)
+		{
+			IJ.log("Error: class named '" + blackClassName + "' not found.");
+			return false;
+		}
+
+		// Create loaded training data if it does not exist yet
+		if(null == loadedTrainingData)
+		{
+			IJ.log("Initializing loaded data...");
+			// Create instances
+			ArrayList<Attribute> attributes = new ArrayList<Attribute>();
+			for (int i=1; i<=fsa.getNumOfFeatures(); i++)
+			{
+				String attString = fsa.getLabel( i );
+				attributes.add(new Attribute(attString));
+			}
+
+			if(fsa.useNeighborhood())
+				for (int i=0; i<8; i++)
+				{
+					IJ.log("Adding extra attribute original_neighbor_" + (i+1) + "...");
+					attributes.add(new Attribute(new String("original_neighbor_" + (i+1))));
+				}
+
+			// Update list of names of loaded classes
+			// (we assume the first two default class names)
+			loadedClassNames = new ArrayList<String>();
+			for(int i = 0; i < numOfClasses ; i ++)
+				loadedClassNames.add(getClassLabels()[i]);
+			attributes.add(new Attribute("class", loadedClassNames));
+			loadedTrainingData = new Instances("segment", attributes, 1);
+
+			loadedTrainingData.setClassIndex(loadedTrainingData.numAttributes()-1);
+		}
+				
+		// Add samples to both classes
+		for(int i=0; i<classPoints[0].size(); i++)
+			// add black sample
+			loadedTrainingData.add( fsa.get( (int) (classPoints[ 0 ].get( i ).z) ) 
+													.createInstance( 	(int) (classPoints[ 0 ].get( i ).x), 
+																		(int) (classPoints[ 0 ].get( i ).y), 
+																		blackClassIndex) );
+		for(int i=0; i<classPoints[1].size(); i++)
+			// add white sample
+			loadedTrainingData.add(fsa.get( (int) (classPoints[ 1 ].get( i ).z) ) 
+													.createInstance((int) (classPoints[ 1 ].get( i ).x), 
+																	(int) (classPoints[ 1 ].get( i ).y), 
+																	whiteClassIndex));
+				
+		IJ.log("Added " + classPoints[1].size() + " instances of '" + whiteClassName +"'.");
+		IJ.log("Added " + classPoints[0].size() + " instances of '" + blackClassName +"'.");
+
+		IJ.log("Training dataset updated ("+ loadedTrainingData.numInstances() +
+				" instances, " + loadedTrainingData.numAttributes() +
+				" attributes, " + loadedTrainingData.numClasses() + " classes).");
+
+		return true;
+	}	
+	
+	/**
 	 * Add instances to two classes from lists of coordinates in a random
 	 * and balanced way.
 	 * White pixels will be added to the corresponding class 1 and
@@ -1858,21 +1952,21 @@ public class WekaSegmentation {
 	public void filterFeatureStackByList()
 	{
 		if (null == this.featureNames)
-			return;
-
+			return;		
 		
 		for(int i=1; i<=this.featureStackArray.getNumOfFeatures(); i++)
 		{
 			final String featureName = this.featureStackArray.getLabel(i);
 			if(false == this.featureNames.contains( featureName ) )
-			{
+			{			
 				// Remove feature
-				for(int j=0; j<=this.featureStackArray.getSize(); j++)
+				for(int j=0; j<this.featureStackArray.getSize(); j++)
 					this.featureStackArray.get(j).removeFeature( featureName );
 				// decrease i to avoid skipping any name
 				i--;
 			}
 		}
+		
 	}
 
 
@@ -3249,40 +3343,69 @@ public class WekaSegmentation {
 				if(a.name().startsWith(FeatureStack.availableFeatures[i]))
 				{
 					usedFeatures[i] = true;
-					if(i == FeatureStack.MEMBRANE)
+					String[] tokens;
+					float sigma;
+					switch( i )
 					{
-						int index = a.name().indexOf("s_") + 4;
-						int index2 = a.name().indexOf("_", index+1 );
-						final int patchSize = Integer.parseInt(a.name().substring(index, index2));
-						if(patchSize != membranePatchSize)
-						{
-							membranePatchSize = patchSize;
-							this.featureStackArray.setMembranePatchSize(patchSize);
-							featuresChanged = true;
-						}
-						index = a.name().lastIndexOf("_");
-						final int thickness = Integer.parseInt(a.name().substring(index+1));
-						if(thickness != membraneThickness)
-						{
-							membraneThickness = thickness;
-							this.featureStackArray.setMembraneSize(thickness);
-							featuresChanged = true;
-						}
-
-					}
-					else if(i < FeatureStack.ANISOTROPIC_DIFFUSION)
-					{
-						String[] tokens = a.name().split("_");
-						for(int j=0; j<tokens.length; j++)
-							if(tokens[j].indexOf(".") != -1)
+						case FeatureStack.MEMBRANE:
+							int index = a.name().indexOf("s_") + 4;
+							int index2 = a.name().indexOf("_", index+1 );
+							final int patchSize = Integer.parseInt(a.name().substring(index, index2));
+							if(patchSize != membranePatchSize)
 							{
-								final float sigma = Float.parseFloat(tokens[j]);
-								if(sigma < minSigma)
-									minSigma = sigma;
-								if(sigma > maxSigma)
-									maxSigma = sigma;
+								membranePatchSize = patchSize;
+								this.featureStackArray.setMembranePatchSize(patchSize);
+								featuresChanged = true;
 							}
-					}
+							index = a.name().lastIndexOf("_");
+							final int thickness = Integer.parseInt(a.name().substring(index+1));
+							if(thickness != membraneThickness)
+							{
+								membraneThickness = thickness;
+								this.featureStackArray.setMembraneSize(thickness);
+								featuresChanged = true;
+							}
+							break;
+						case FeatureStack.NEIGHBORS:
+						case FeatureStack.ENTROPY:
+							tokens = a.name().split("_");
+							sigma = Float.parseFloat( tokens[ 1 ]);
+							if(sigma < minSigma)
+								minSigma = sigma;
+							if(sigma > maxSigma)
+								maxSigma = sigma;
+							break;
+						case FeatureStack.STRUCTURE:
+							tokens = a.name().split("_");
+							sigma = Float.parseFloat( tokens[ 2 ]);
+							if(sigma < minSigma)
+								minSigma = sigma;
+							if(sigma > maxSigma)
+								maxSigma = sigma;
+							break;
+						case FeatureStack.ANISOTROPIC_DIFFUSION:
+							tokens = a.name().split("_");
+							sigma = Float.parseFloat( tokens[ 3 ]);
+							if(sigma < minSigma)
+								minSigma = sigma;
+							if(sigma > maxSigma)
+								maxSigma = sigma;
+							break;
+							
+						default:
+							tokens = a.name().split("_");
+							for(int j=0; j<tokens.length; j++)
+								if(tokens[j].indexOf(".") != -1)
+								{
+									sigma = Float.parseFloat(tokens[j]);
+									if(sigma < minSigma)
+										minSigma = sigma;
+									if(sigma > maxSigma)
+										maxSigma = sigma;
+								}
+							
+							
+					}				
 				}
 			}
 		}

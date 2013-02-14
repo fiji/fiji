@@ -138,7 +138,7 @@ public class FeatureStack
 	public static final int MEDIAN					=  9;
 	/** Anisotropic diffusion filter flag index */
 	public static final int ANISOTROPIC_DIFFUSION 	= 10;
-	/** Anisotropic diffusion filter flag index */
+	/** Bilateral flag index */
 	public static final int BILATERAL 				= 11;
 	/** Lipschitz filter flag index */
 	public static final int LIPSCHITZ 				= 12;
