@@ -26,6 +26,7 @@ import static fiji.plugin.trackmate.io.TmXmlKeys.IMAGE_TIME_UNITS_ATTRIBUTE_NAME
 import static fiji.plugin.trackmate.io.TmXmlKeys.IMAGE_VOXEL_DEPTH_ATTRIBUTE_NAME;
 import static fiji.plugin.trackmate.io.TmXmlKeys.IMAGE_WIDTH_ATTRIBUTE_NAME;
 import static fiji.plugin.trackmate.io.TmXmlKeys.INITIAL_SPOT_FILTER_ELEMENT_KEY;
+import static fiji.plugin.trackmate.io.TmXmlKeys.LOG_ELEMENT_KEY;
 import static fiji.plugin.trackmate.io.TmXmlKeys.PLUGIN_VERSION_ATTRIBUTE_NAME;
 import static fiji.plugin.trackmate.io.TmXmlKeys.SETTINGS_ELEMENT_KEY;
 import static fiji.plugin.trackmate.io.TmXmlKeys.SETTINGS_TEND_ATTRIBUTE_NAME;
@@ -160,8 +161,8 @@ public class TmXmlReader implements Algorithm, Benchmark {
 
 		TrackMateModel model = plugin.getModel();
 		
-		// Text log?
-		log = root.getTextTrim();
+		// Text log
+		log = getLog();
 		
 		// Settings
 		Settings settings = getSettings();
@@ -228,10 +229,20 @@ public class TmXmlReader implements Algorithm, Benchmark {
 	 * PRIVATE METHODS
 	 */
 
+	private String getLog() {
+		Element logElement = root.getChild(LOG_ELEMENT_KEY);
+		if (null != logElement) {
+			return logElement.getTextTrim();
+		} else {
+			return "";
+		}
+	}
+
+	
 	private ImagePlus getImage()  {
 		Element imageInfoElement = root.getChild(IMAGE_ELEMENT_KEY);
 		if (null == imageInfoElement)
-			return null; // va;ue will still be null
+			return null; // value will still be null
 		String filename = imageInfoElement.getAttributeValue(IMAGE_FILENAME_ATTRIBUTE_NAME);
 		String folder 	= imageInfoElement.getAttributeValue(IMAGE_FOLDER_ATTRIBUTE_NAME);
 		if (null == filename || filename.isEmpty())

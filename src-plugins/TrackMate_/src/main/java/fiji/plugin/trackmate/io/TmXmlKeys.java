@@ -22,6 +22,11 @@ class TmXmlKeys {
 	public static final String ROOT_ELEMENT_KEY 					= "TrackMate";
 	public static final String PLUGIN_VERSION_ATTRIBUTE_NAME		= "version";
 	
+	/*
+	 * LOG
+	 */
+	
+	public static final String LOG_ELEMENT_KEY 						= "Log";
 	
 	/*
 	 * SETTINGS elements

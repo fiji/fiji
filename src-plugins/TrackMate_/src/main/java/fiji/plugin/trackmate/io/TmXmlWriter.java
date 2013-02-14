@@ -23,6 +23,7 @@ import static fiji.plugin.trackmate.io.TmXmlKeys.IMAGE_TIME_UNITS_ATTRIBUTE_NAME
 import static fiji.plugin.trackmate.io.TmXmlKeys.IMAGE_VOXEL_DEPTH_ATTRIBUTE_NAME;
 import static fiji.plugin.trackmate.io.TmXmlKeys.IMAGE_WIDTH_ATTRIBUTE_NAME;
 import static fiji.plugin.trackmate.io.TmXmlKeys.INITIAL_SPOT_FILTER_ELEMENT_KEY;
+import static fiji.plugin.trackmate.io.TmXmlKeys.LOG_ELEMENT_KEY;
 import static fiji.plugin.trackmate.io.TmXmlKeys.PLUGIN_VERSION_ATTRIBUTE_NAME;
 import static fiji.plugin.trackmate.io.TmXmlKeys.ROOT_ELEMENT_KEY;
 import static fiji.plugin.trackmate.io.TmXmlKeys.SETTINGS_ELEMENT_KEY;
@@ -145,10 +146,7 @@ public class TmXmlWriter implements Algorithm, Benchmark  {
 	public boolean process() {
 		long start = System.currentTimeMillis();
 		
-		if (null != log) {
-			root.addContent(log);
-		}
-
+		echoLog();
 		echoImageInfo();
 		echoBaseSettings();
 		echoDetectorSettings();
@@ -201,6 +199,16 @@ public class TmXmlWriter implements Algorithm, Benchmark  {
 	/*
 	 * PRIVATE METHODS
 	 */
+	
+	private void echoLog() {
+		if (null != log) {
+			Element logElement = new Element(LOG_ELEMENT_KEY);
+			logElement.addContent(log);
+			root.addContent(logElement);
+			logger.log("  Added log.\n");
+		}
+	}
+
 
 	private void echoBaseSettings() {
 		Settings settings = model.getSettings();
