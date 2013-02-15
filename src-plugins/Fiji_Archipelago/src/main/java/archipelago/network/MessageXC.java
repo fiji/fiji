@@ -39,6 +39,17 @@ public class MessageXC
                     FijiArchipelago.err("RX: " + hostName + " Got ClassCastException: " + cce);
                     queueMessage(MessageType.ERROR, cce);
                 }
+                catch (EOFException eofe)
+                {
+                    // ignore
+                }
+                catch (StreamCorruptedException sce)
+                {
+                    // When this happens, nothing else to do but close
+                    FijiArchipelago.err("RX: " + hostName + " Got StreamCorruptedException: " + sce);
+                    sce.printStackTrace();
+                    close();
+                }
                 catch (IOException ioe)
                 {
                     FijiArchipelago.err("RX: " + hostName + " Got IOException: " + ioe);
@@ -76,8 +87,11 @@ public class MessageXC
                     {
                         objectOutputStream.writeObject(nextMessage);
                         objectOutputStream.flush();
-                        FijiArchipelago.debug("TX: Successfully wrote message "
-                                + nextMessage + " to " + hostName);
+                        if (nextMessage.type != MessageType.BEAT)
+                        {
+                            FijiArchipelago.debug("TX: Successfully wrote message "
+                                    + nextMessage + " to " + hostName);
+                        }
                         objectOutputStream = new ObjectOutputStream(outStream);
                     }
                     catch (NotSerializableException nse)
