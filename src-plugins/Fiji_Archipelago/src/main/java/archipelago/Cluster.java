@@ -29,6 +29,17 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class Cluster implements ExecutorService, NodeStateListener
 {
+
+    public static enum ClusterState
+    {
+        INSTANTIATED,
+        INITIALIZED,
+        STARTED,
+        RUNNING,
+        STOPPING,
+        STOPPED,
+        UNKNOWN
+    }
     
 
     /**
@@ -372,7 +383,7 @@ public class Cluster implements ExecutorService, NodeStateListener
     
     public static boolean activeCluster()
     {
-        return cluster != null && cluster.isStarted();
+        return cluster != null && cluster.getState() == ClusterState.RUNNING;
     }
     
     private class ClusterProvider implements ExecutorProvider
@@ -409,8 +420,9 @@ public class Cluster implements ExecutorService, NodeStateListener
 
 
      */
-    private final AtomicBoolean halted, ready, terminated, initted, started;
+    private AtomicInteger state;
     
+    //private final AtomicBoolean halted, ready, terminated, initted, started;    
     private final AtomicInteger jobCount, runningNodes;
 
     private int port;
@@ -427,15 +439,16 @@ public class Cluster implements ExecutorService, NodeStateListener
     private final Vector<ClusterStateListener> listeners;
 
     private Cluster()
-    {        
+    {
+        state = new AtomicInteger(0);
         nodes = new Vector<ClusterNode>();
         waitThreads = new Vector<Thread>();
         
-        ready = new AtomicBoolean(false);
+        /*ready = new AtomicBoolean(false);
         initted = new AtomicBoolean(false);
         started = new AtomicBoolean(false);
         halted = new AtomicBoolean(false);
-        terminated = new AtomicBoolean(false);
+        terminated = new AtomicBoolean(false);*/
         jobCount = new AtomicInteger(0);
         runningNodes = new AtomicInteger(0); 
 
@@ -461,20 +474,108 @@ public class Cluster implements ExecutorService, NodeStateListener
         ThreadPool.setProvider(new ClusterProvider(this));
     }
     
+    /*
+    Backing the ClusterState with an atomic integer reduces the chances for a race condition
+    or some other concurrent modification nightmare. This is much prefered to the alternative
+    of using a ReentrantLock
+     */
+    
+    private ClusterState stateIntToEnum(final int s)
+    {
+        switch (s)
+        {
+            case 0:
+                return ClusterState.INSTANTIATED;
+            case 1:
+                return ClusterState.INITIALIZED;
+            case 2:
+                return ClusterState.STARTED;
+            case 3:
+                return ClusterState.RUNNING;
+            case 4:
+                return ClusterState.STOPPING;
+            case 5:
+                return ClusterState.STOPPED;
+            default:
+                return ClusterState.UNKNOWN;
+        }
+    }
+
+    private int stateEnumToInt(final ClusterState s)
+    {
+        switch (s)
+        {
+            case INSTANTIATED:
+                return 0;
+            case INITIALIZED:
+                return 1;
+            case STARTED:
+                return 2;
+            case RUNNING:
+                return 3;
+            case STOPPING:
+                return 3;
+            case STOPPED:
+                return 5;
+            default:
+                return -1;
+        }
+    }
+    
+    public static String stateString(final ClusterState s)
+    {
+        switch (s)
+        {
+            case INSTANTIATED:
+                return "Instantiated";
+            case INITIALIZED:
+                return "Initialized";
+            case STARTED:
+                return "Started";
+            case RUNNING:
+                return "Running";
+            case STOPPING:
+                return "Stopping";
+            case STOPPED:
+                return "Stopped";
+            default:
+                return "Unknown";
+        }
+    }
+    
+    private void setState(final ClusterState state)
+    {
+        FijiArchipelago.debug("Cluster: State changed from " + stateString(getState()) +
+                " to " + stateString(state));
+        this.state.set(stateEnumToInt(state));
+        triggerListeners();
+    }
+
+    public ClusterState getState()
+    {        
+        return stateIntToEnum(state.get());
+    }
+    
     public boolean init(int p)
     {
-        if (!isStarted())
+        if (getState() == ClusterState.INSTANTIATED)
         {
             port = p;
             server = null;
             nodes.clear();
             scheduler.close();
             nodeManager.clear();
-            halted.set(false);
-            terminated.set(false);
             jobCount.set(0);
             runningNodes.set(0);
+            
+            setState(ClusterState.INITIALIZED);
+
+/*
+            halted.set(false);
+            terminated.set(false);
             initted.set(true);
+*/
+
             return true;
         }
         else
@@ -557,16 +658,23 @@ public class Cluster implements ExecutorService, NodeStateListener
         }
     }
     
+    public boolean acceptingNodes()
+    {
+        ClusterState state = getState();
+        return state == ClusterState.RUNNING || state == ClusterState.STARTED;
+    }
+    
     public synchronized void stateChanged(ClusterNode node, ClusterNodeState stateNow,
                              ClusterNodeState lastState) {
         switch (stateNow)
         {
             case ACTIVE:
                 FijiArchipelago.debug("Got state change to active for " + node.getHost());
-                if (!isShutdown())
+                if (acceptingNodes())
                 {                    
                     runningNodes.incrementAndGet();
-                    ready.set(true);
+                    setState(ClusterState.RUNNING);
+                    //ready.set(true);
                     FijiArchipelago.debug("Not shut down. Currently " + runningNodes.get()
                             + " running nodes");
                 }
@@ -598,11 +706,15 @@ public class Cluster implements ExecutorService, NodeStateListener
                                 "That shouldn't happen.");
                     }
                     
-                    ready.set(false);
+//                    ready.set(false);
                     
-                    if (isShutdown())
+                    if (getState() == ClusterState.STOPPING)
                     {
                         terminateFinished();
+                    }
+                    else
+                    {
+                        setState(ClusterState.STARTED);
                     }
                 }
                 
@@ -661,7 +773,7 @@ public class Cluster implements ExecutorService, NodeStateListener
 
                 if ((System.currentTimeMillis() - sTime) > timeout)
                 {
-                    if (!isReady())
+                    if (getState() != ClusterState.RUNNING)
                     {
                         FijiArchipelago.err("Cluster timed out while waiting for nodes to be ready");
                     }
@@ -669,7 +781,7 @@ public class Cluster implements ExecutorService, NodeStateListener
                 }
                 else
                 {                    
-                    wait = !isReady();
+                    wait = getState() != ClusterState.RUNNING; 
                 }
             }
             catch (InterruptedException ie)
@@ -701,7 +813,7 @@ public class Cluster implements ExecutorService, NodeStateListener
 
     public boolean isReady()
     {
-        return (!isShutdown() && !isTerminated() && ready.get());
+        return getState() == ClusterState.RUNNING;
     }
 
     private void incrementJobCount()
@@ -759,7 +871,7 @@ public class Cluster implements ExecutorService, NodeStateListener
      */
     public boolean start()
     {
-        if (initted.get() && !isStarted())
+        if (getState() == ClusterState.INITIALIZED)
         {
 
             FijiArchipelago.debug("Scheduler alive? :" + scheduler.isAlive());
@@ -767,7 +879,7 @@ public class Cluster implements ExecutorService, NodeStateListener
             server = new ArchipelagoServer(this);
             if (server.start())
             {
-                started.set(true);
+                setState(ClusterState.STARTED);
                 return true;
             }
             else
@@ -786,7 +898,7 @@ public class Cluster implements ExecutorService, NodeStateListener
         return nodeManager;
     }
     
-    public boolean isActive()
+    /*public boolean isActive()
     {
         return ready.get();
     }
@@ -794,7 +906,7 @@ public class Cluster implements ExecutorService, NodeStateListener
     public boolean isStarted()
     {
         return started.get();
-    }
+    }*/
 
     public int getRunningJobCount()
     {
@@ -822,12 +934,9 @@ public class Cluster implements ExecutorService, NodeStateListener
          that are waiting for us to terminate are unblocked.
          */
 
-        ready.set(false);
+        setState(ClusterState.STOPPING);
         scheduler.setActive(false);
-        halted.set(true);
-
-        triggerListeners();
-
+        
         for (ClusterNode node : nodes)
         {
             node.setActive(false);
@@ -858,15 +967,11 @@ public class Cluster implements ExecutorService, NodeStateListener
     {
         ArrayList<Thread> waitThreadsCP = new ArrayList<Thread>(waitThreads);
         
-        terminated.set(true);
+        setState(ClusterState.STOPPED);
+        
         scheduler.close();
         nodeManager.clear();
-        started.set(false);
-        initted.set(false);
         
-
-        triggerListeners();
-
         for (Thread t : waitThreadsCP)
         {
             t.interrupt();
@@ -885,11 +990,12 @@ public class Cluster implements ExecutorService, NodeStateListener
          */
         final ArrayList<ClusterNode> nodescp = new ArrayList<ClusterNode>(nodes);
         
+        setState(ClusterState.STOPPING);
         
+/*
         ready.set(false);
         halted.set(true);
-
-        triggerListeners();
+*/
 
         for (ClusterNode node : nodescp)
         {
@@ -931,11 +1037,12 @@ public class Cluster implements ExecutorService, NodeStateListener
     
     public boolean isShutdown()
     {
-        return halted.get();
+        ClusterState state = getState();
+        return state == ClusterState.STOPPING || state == ClusterState.STOPPED; 
     }
 
     public boolean isTerminated() {
-        return terminated.get();
+        return getState() == ClusterState.STOPPED;
     }
 
     public boolean awaitTermination(long l, TimeUnit timeUnit) throws InterruptedException

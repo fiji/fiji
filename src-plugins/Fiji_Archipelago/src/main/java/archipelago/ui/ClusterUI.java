@@ -64,11 +64,14 @@ public class ClusterUI implements ClusterStateListener
         final Button statButton, startStopButton;
         final StateLabel clusterLabel, queueLabel, runningLabel, nodesLabel;
         final ClusterConfigPanel configPanel;
+        final ReentrantLock updateLock;
         
         public CUIMainPanel()
         {
             super();
             GridBagConstraints gbc = new GridBagConstraints();
+
+            updateLock = new ReentrantLock();
 
             configPanel = new ClusterConfigPanel();
             // initialize controls
@@ -144,37 +147,38 @@ public class ClusterUI implements ClusterStateListener
 
         private String clusterStateString()
         {
-            if (cluster.isActive())
+            switch(cluster.getState())
             {
-                return "active.";                
-            }
-            else if (cluster.isStarted())
-            {
-                return "started.";                
-            }
-            else if (cluster.isShutdown())
-            {
-                return "waiting for termination.";
-            }
-            else if(cluster.isTerminated())
-            {
-                return "terminated.";
-            }
-            else if (!isConfigured)
-            {
-                return "in need of configuration.";
-            }
-            else
-            {
-                return "ready to start.";
+                case RUNNING:
+                    return "active.";
+                case STARTED:
+                    return "started.";
+                case STOPPING:
+                    return "waiting for termination.";
+                case STOPPED:
+                    return "terminated.";
+                case INSTANTIATED:
+                    return "waiting for initialization";
+                case INITIALIZED:
+                    if (isConfigured)
+                    {
+                        return "ready to start.";
+                    }
+                    else
+                    {
+                        return "in need of configuration.";
+                    }
+                default:
+                    return "partying like its 1999";
             }
         }
         
         
         public void update() {
-            if (isConfigured)
+
+            if (!updateLock.tryLock())
             {
-                startStopButton.setEnabled(true);
+                return;
             }
             
             if (nodeStatusUI !=null && nodeStatusUI.isVisible())
@@ -188,21 +192,57 @@ public class ClusterUI implements ClusterStateListener
             
             if (cluster != null)
             {
+                final Cluster.ClusterState state = cluster.getState();
+                if (isConfigured && state != Cluster.ClusterState.STOPPING && state !=
+                        Cluster.ClusterState.STOPPED)
+                {
+                    startStopButton.setEnabled(true);
+                }
+                else
+                {
+                    startStopButton.setEnabled(false);
+                }
+                
                 clusterLabel.update(clusterStateString());
                 queueLabel.update(cluster.getQueuedJobCount());
                 runningLabel.update(cluster.getRunningJobCount());
                 nodesLabel.update(cluster.getRunningNodeCount());
 
-                if (cluster.isStarted())
+                switch(state)
                 {
-                    startStopButton.setLabel("Stop Cluster");
-                    startStopButton.setActionCommand("stop");
+                    case INSTANTIATED:
+                        startStopButton.setEnabled(false);
+                        break;
+                    case INITIALIZED:
+                        startStopButton.setEnabled(true);
+                        startStopButton.setLabel("Start Cluster");
+                        startStopButton.setActionCommand("start");
+                        break;
+                    case STARTED:
+                    case RUNNING:
+                        startStopButton.setEnabled(true);
+                        startStopButton.setLabel("Stop Cluster");
+                        startStopButton.setActionCommand("stop");
+                        break;
+                    case STOPPING:
+                    case STOPPED:
+                        startStopButton.setEnabled(false);
+                        startStopButton.setLabel("Stop Cluster");
+                        startStopButton.setActionCommand("");
+                        break;
                 }
-                else
-                {
-                    startStopButton.setLabel("Start Cluster");
-                    startStopButton.setActionCommand("start");
-                }
+
+//                if (state == Cluster.ClusterState.STARTED ||
+//                        state == Cluster.ClusterState.RUNNING)
+//                {
+//                    startStopButton.setLabel("Stop Cluster");
+//                    startStopButton.setActionCommand("stop");
+//                }
+//                else
+//                {
+//                    startStopButton.setLabel("Start Cluster");
+//                    startStopButton.setActionCommand("start");
+//                }
             }            
             else
             {
@@ -210,8 +250,11 @@ public class ClusterUI implements ClusterStateListener
                 queueLabel.update(0);
                 runningLabel.update(0);
                 nodesLabel.update(0);
+                startStopButton.setEnabled(false);
             }
+            updateLock.unlock();
         }
+
     }
 
 
@@ -292,7 +335,9 @@ public class ClusterUI implements ClusterStateListener
             }
             else if (ae.getActionCommand().equals("rootconfig"))
             {
-                if (cluster.isStarted())
+                Cluster.ClusterState state = cluster.getState();
+                
+                if (started(cluster))
                 {
                     GenericDialog whoaDialog = new GenericDialog("Whoa");
                     whoaDialog.addMessage("Changing the root node configuration of a running" +
@@ -313,7 +358,12 @@ public class ClusterUI implements ClusterStateListener
         }
     }
 
-
+    public static boolean started(final Cluster c)
+    {
+        Cluster.ClusterState state = c.getState();
+        return state != Cluster.ClusterState.INSTANTIATED &&
+                state != Cluster.ClusterState.INITIALIZED;
+    }
 
     private final Cluster cluster;
     private final Frame frame;
@@ -324,12 +374,12 @@ public class ClusterUI implements ClusterStateListener
     private final ClusterNodeStatusUI nodeStatusUI;
     private final AtomicBoolean active;
     private final Thread pollThread;
-    
+
     public ClusterUI(Cluster c)
     {
         configLock = new ReentrantLock();
         this.cluster = c;
-        isConfigured = this.cluster.isStarted();
+        isConfigured = started(c);
         mainPanel = new CUIMainPanel();
         nodeParameters = new ArrayList<NodeManager.NodeParameters>();
         nodeStatusUI = new ClusterNodeStatusUI(cluster, this);
@@ -433,7 +483,7 @@ public class ClusterUI implements ClusterStateListener
         final NodeShell shell = new JSchNodeShell(new JSchNodeShell.JSchShellParams(new File(key)),
                 new IJLogger());
         final String prefRoot = FijiArchipelago.PREF_ROOT;
-        boolean isConfigured = cluster.isStarted() || cluster.init(port);
+        boolean isConfigured = cluster.getState() == Cluster.ClusterState.INITIALIZED || cluster.init(port);
 
         cluster.getNodeManager().setStdUser(userName);
         cluster.getNodeManager().setStdExecRoot(execRootRemote);
@@ -512,6 +562,11 @@ public class ClusterUI implements ClusterStateListener
         return ok;
     }
     
+    private void configError(String file, String erStr)
+    {
+        IJ.error("Error loading file " + file + ":" + erStr);
+    }
+    
     public synchronized boolean loadFromFile(final String file)
     {
         try
@@ -526,20 +581,20 @@ public class ClusterUI implements ClusterStateListener
 
             if (!isConfigured)
             {
-                configError("Could not configure Cluster on port " + cluster.getPort());
+                configError(file, "Could not configure Cluster on port " + cluster.getPort());
             }
         }
         catch (ParserConfigurationException pce)
         {
-            configError("" + pce);
+            configError(file, "" + pce);
         }
         catch (SAXException se)
         {
-            configError("" + se);
+            configError(file, "" + se);
         }
         catch (IOException ioe)
         {
-            configError("" + ioe);
+            configError(file, "" + ioe);
         }
         updateUI();
         return isConfigured;
@@ -554,17 +609,26 @@ public class ClusterUI implements ClusterStateListener
 
     private synchronized void startCluster()
     {
-        if (!cluster.isStarted())
+        System.out.println("Startcluster called");
+        if (cluster.getState() == Cluster.ClusterState.INITIALIZED)
         {
+            System.out.println("State was Initialized");
             FijiArchipelago.log("Starting Cluster");
             ShellExecListener meh = new ShellExecListener() {
                 public void execFinished(long nodeID, Exception e) {
-
+                    FijiArchipelago.debug("Node " + nodeID + " finished with Exception " + e);
                 }
             };
-            cluster.start();
+            System.out.println("Calling cluster.start()");
+            if (!cluster.start())
+            {
+                IJ.error("Could not start cluster");
+                return;
+            }
+            System.out.println("cluster.start() returned");
             for (NodeManager.NodeParameters param : nodeParameters)
             {
+                System.out.println("Starting Node " + param.getHost());
                 FijiArchipelago.log("Starting Node " + param.getHost());
                 cluster.startNode(param, meh);
             }
@@ -575,26 +639,19 @@ public class ClusterUI implements ClusterStateListener
     
     private void addNode(NodeManager.NodeParameters param)
     {
-        
-        
-        if (cluster.isStarted())
+        if (!started(cluster))
+        {
+            nodeParameters.add(param);
+        }
+        else
         {
             ShellExecListener meh = new ShellExecListener() {
                 public void execFinished(long nodeID, Exception e) {
-                    
+
                 }
             };
             cluster.startNode(param, meh);
         }
-        else
-        {
-            nodeParameters.add(param);
-        }
-    }
-    
-    private void configError(String reason)
-    {
-        IJ.error("Error loading configuration file: " + reason);
     }
     
     private synchronized void saveToFile(final String file)
@@ -729,12 +786,12 @@ public class ClusterUI implements ClusterStateListener
 
 
         //Do initialization
-        configureCluster(cluster, port, execRootRemote, fileRootRemote, execRoot, fileRoot, userName,
+        isConfigured = configureCluster(cluster, port, execRootRemote, fileRootRemote, execRoot, fileRoot, userName,
                 keyfile);
 
         if (!isConfigured)
         {
-            configError("Could not configure Cluster on port " + cluster.getPort());
+            IJ.error("Could not configure Cluster on port " + cluster.getPort());
         }
         
         configLock.unlock();
