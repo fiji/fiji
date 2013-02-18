@@ -659,6 +659,9 @@ public class TrackScheme extends AbstractTrackMateModelView {
 				gui.logger.setStatus("Refreshing display.");
 				gui.graphComponent.refresh();
 				mxRectangle bounds = graph.getView().validatePoints(null, graph.getDefaultParent());
+				if (null == bounds) { // This happens when there is not track to display
+					return;
+				}
 				Dimension dim = new Dimension();
 				dim.setSize(
 						bounds.getRectangle().width + bounds.getRectangle().x, 
