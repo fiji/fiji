@@ -545,7 +545,7 @@ public class FeatureModel implements MultiThreaded {
 			}
 
 			if (noDataFlag)
-				featureValues.put(feature, null);
+				featureValues.put(feature, new double[0]); // Empty array to signal no data
 			else
 				featureValues.put(feature, values);
 		}
