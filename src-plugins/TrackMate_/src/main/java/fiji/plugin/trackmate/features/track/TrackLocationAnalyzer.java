@@ -69,6 +69,10 @@ public class TrackLocationAnalyzer implements TrackAnalyzer, MultiThreaded, Benc
 
 	@Override
 	public void process(final Collection<Integer> trackIDs) {
+		
+		if (trackIDs.isEmpty()) {
+			return;
+		}
 
 		final ArrayBlockingQueue<Integer> queue = new ArrayBlockingQueue<Integer>(trackIDs.size(), false, trackIDs);
 		final FeatureModel fm = model.getFeatureModel();
