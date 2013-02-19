@@ -1,12 +1,18 @@
 package archipelago;
 
+import archipelago.listen.MessageType;
+import archipelago.network.MessageXC;
 import archipelago.network.client.ArchipelagoClient;
 import archipelago.ui.ClusterUI;
 import archipelago.util.IJLogger;
 import archipelago.util.IJPopupLogger;
 import archipelago.util.PrintStreamLogger;
+import archipelago.util.XCErrorAdapter;
 import ij.plugin.PlugIn;
+
+import java.io.EOFException;
 import java.io.IOException;
+import java.io.StreamCorruptedException;
 import java.net.Socket;
 
 /**
@@ -45,6 +51,51 @@ public class Fiji_Archipelago implements PlugIn
             Socket s;
             ArchipelagoClient client;
             String host = args[0];
+
+            XCErrorAdapter xcEListener = new XCErrorAdapter()
+            {
+                protected boolean handleCustomRX(final Throwable t, final MessageXC xc)
+                {
+                    if (t instanceof ClassCastException)
+                    {
+                        reportRX(t, t.toString(), xc);
+                        xc.queueMessage(MessageType.ERROR, t);
+                        return false;
+                    }
+                    else if (t instanceof EOFException)
+                    {
+                        reportRX(t, "Received EOF", xc);
+                        xc.close();
+                        return false;
+                    }
+                    else if (t instanceof StreamCorruptedException)
+                    {
+                        reportRX(t, "Stream corrupted: " + t, xc);
+                        xc.close();
+                        return false;
+                    }
+                    else
+                    {
+                        xc.queueMessage(MessageType.ERROR, t);
+                        return true;
+                    }
+                }
+                
+                protected boolean handleCustomTX(final Throwable t, final MessageXC xc)
+                {
+                    if (t instanceof IOException)
+                    {
+                        reportTX(t, t.toString(), xc);
+                        xc.close();                        
+                    }
+                    else
+                    {
+                        xc.queueMessage(MessageType.ERROR, t);
+                    }
+                    return true;
+                }
+            };
+
             int port = Integer.parseInt(args[1]);
             long id = Long.parseLong(args[2]);
 
@@ -54,7 +105,7 @@ public class Fiji_Archipelago implements PlugIn
 
             s = new Socket(host, port);
             
-            client = new ArchipelagoClient(id, host, s.getInputStream(), s.getOutputStream());
+            client = new ArchipelagoClient(id, host, s.getInputStream(), s.getOutputStream(), xcEListener);
             
             while (client.isActive())
             {

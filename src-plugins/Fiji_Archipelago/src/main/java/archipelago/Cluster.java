@@ -6,15 +6,20 @@ import archipelago.listen.ClusterStateListener;
 import archipelago.listen.NodeStateListener;
 import archipelago.listen.ProcessListener;
 import archipelago.listen.ShellExecListener;
+import archipelago.network.MessageXC;
 import archipelago.network.node.ClusterNode;
 import archipelago.network.node.ClusterNodeState;
 import archipelago.network.node.NodeManager;
 import archipelago.network.server.ArchipelagoServer;
+import archipelago.util.XCErrorAdapter;
 import mpicbg.trakem2.concurrent.DefaultExecutorProvider;
 import mpicbg.trakem2.concurrent.ExecutorProvider;
 import mpicbg.trakem2.concurrent.ThreadPool;
 
+import java.io.EOFException;
 import java.io.IOException;
+import java.io.NotSerializableException;
+import java.io.StreamCorruptedException;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
@@ -422,7 +427,7 @@ public class Cluster implements ExecutorService, NodeStateListener
      */
     private AtomicInteger state;
     
-    //private final AtomicBoolean halted, ready, terminated, initted, started;    
+    //private final AtomicBoolean halted, ready, terminated, initted, started;        
     private final AtomicInteger jobCount, runningNodes;
 
     private int port;
@@ -438,19 +443,73 @@ public class Cluster implements ExecutorService, NodeStateListener
     
     private final Vector<ClusterStateListener> listeners;
 
+    private final XCErrorAdapter xcEListener;
+
     private Cluster()
     {
         state = new AtomicInteger(0);
         nodes = new Vector<ClusterNode>();
         waitThreads = new Vector<Thread>();
         
-        /*ready = new AtomicBoolean(false);
-        initted = new AtomicBoolean(false);
-        started = new AtomicBoolean(false);
-        halted = new AtomicBoolean(false);
-        terminated = new AtomicBoolean(false);*/
         jobCount = new AtomicInteger(0);
-        runningNodes = new AtomicInteger(0); 
+        runningNodes = new AtomicInteger(0);
+
+        xcEListener = new XCErrorAdapter()
+        {
+            public boolean handleCustom(final Throwable t, final MessageXC mxc)
+            {
+                if (t instanceof StreamCorruptedException ||
+                        t instanceof EOFException)
+                {
+                    mxc.close();
+                    return false;
+                }
+                return true;
+            }
+            
+            public boolean handleCustomRX(final Throwable t, final MessageXC xc)
+            {
+                if (t instanceof ClassNotFoundException)
+                {
+                    reportRX(t, "Check that your jars are all correctly synchronized. " + t, xc);
+                    return false;
+                }
+                else if (t instanceof NotSerializableException)
+                {
+                    reportRX(t, "Your Callable returned a " +
+                            "value that was not Serializable. " + t, xc);
+                    return false;
+                }
+                return true;
+            }
+            
+            public boolean handleCustomTX(final Throwable t, MessageXC xc)
+            {
+                if (t instanceof NotSerializableException)
+                {
+                    reportTX(t, "Ensure that your class and all" +
+                            " member objects are Serializable.", xc);
+                    return false;
+                }
+                else if (t instanceof ConcurrentModificationException)
+                {
+                    reportTX(t, "Take care not to modify member objects" +
+                            " as your Callable is being Serialized.", xc);
+                    return false;
+                }
+                else if (t instanceof IOException)
+                {
+                    reportTX(t, "Stream closed, closing node. ", xc);
+                    xc.close();
+                    return false;
+                }
+                
+                return true;
+            }
+        };
+        
+        
+        
 
         scheduler = new ProcessScheduler(1024, 1000);
         
@@ -459,8 +518,6 @@ public class Cluster implements ExecutorService, NodeStateListener
         
         listeners = new Vector<ClusterStateListener>();
 
-        
-        
         try
         {
             localHostName = InetAddress.getLocalHost().getCanonicalHostName();
@@ -664,6 +721,12 @@ public class Cluster implements ExecutorService, NodeStateListener
         return state == ClusterState.RUNNING || state == ClusterState.STARTED;
     }
     
+    public void handleNodeThrowable(final Throwable t, final ClusterNode node)
+    {
+        
+    }
+        
+    
     public synchronized void stateChanged(ClusterNode node, ClusterNodeState stateNow,
                              ClusterNodeState lastState) {
         switch (stateNow)
@@ -730,7 +793,7 @@ public class Cluster implements ExecutorService, NodeStateListener
     {
         try
         {
-            ClusterNode node = new ClusterNode(socket);
+            ClusterNode node = new ClusterNode(socket, xcEListener);
             addNode(node);
         }
         catch (IOException ioe)

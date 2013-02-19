@@ -30,6 +30,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -335,8 +336,6 @@ public class ClusterUI implements ClusterStateListener
             }
             else if (ae.getActionCommand().equals("rootconfig"))
             {
-                Cluster.ClusterState state = cluster.getState();
-                
                 if (started(cluster))
                 {
                     GenericDialog whoaDialog = new GenericDialog("Whoa");
@@ -357,7 +356,36 @@ public class ClusterUI implements ClusterStateListener
             }
         }
     }
+    
+    private class NodeStartResult
+    {
+        public final boolean ok;
+        public final NodeManager.NodeParameters param;
+        
+        public NodeStartResult(boolean b, NodeManager.NodeParameters p)
+        {
+            ok = b;
+            param = p;
+        }
+    }
 
+    private class NodeStartCallable implements Callable<NodeStartResult>
+    {
+        final NodeManager.NodeParameters param;
+        final ShellExecListener listener;
+        
+        public NodeStartCallable(final NodeManager.NodeParameters p, final ShellExecListener sel)
+        {
+            param = p;
+            listener = sel;
+        }
+        
+        public NodeStartResult call()
+        {
+            return new NodeStartResult(cluster.startNode(param, listener), param);
+        }
+    }
+    
     public static boolean started(final Cluster c)
     {
         Cluster.ClusterState state = c.getState();
@@ -373,7 +401,7 @@ public class ClusterUI implements ClusterStateListener
     private List<NodeManager.NodeParameters> nodeParameters;
     private final ClusterNodeStatusUI nodeStatusUI;
     private final AtomicBoolean active;
-    private final Thread pollThread;
+    private final ExecutorService exec;
 
     public ClusterUI(Cluster c)
     {
@@ -406,7 +434,13 @@ public class ClusterUI implements ClusterStateListener
             }
         });
 
-        pollThread = new Thread()
+        exec = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+
+        //frame.pack();
+        frame.validate();
+
+        // Refresh the UI at least once a second
+        new Thread()
         {
             public void run()
             {
@@ -421,14 +455,10 @@ public class ClusterUI implements ClusterStateListener
                 catch (InterruptedException ie)
                 {/*Nope*/}
             }
-        };
+        }.start();
 
-        
-        //frame.pack();
-        frame.validate();
-        pollThread.start();
         cluster.addStateListener(this);
-        
+
         frame.setVisible(true);
     }
     
@@ -609,54 +639,98 @@ public class ClusterUI implements ClusterStateListener
 
     private synchronized void startCluster()
     {
-        System.out.println("Startcluster called");
+        FijiArchipelago.debug("Startcluster called");
         if (cluster.getState() == Cluster.ClusterState.INITIALIZED)
         {
-            System.out.println("State was Initialized");
+            final ArrayList<Future<NodeStartResult>> startNodeResults =
+                    new ArrayList<Future<NodeStartResult>>(nodeParameters.size());
+            
+            FijiArchipelago.debug("State was Initialized");
             FijiArchipelago.log("Starting Cluster");
+
             ShellExecListener meh = new ShellExecListener() {
                 public void execFinished(long nodeID, Exception e) {
                     FijiArchipelago.debug("Node " + nodeID + " finished with Exception " + e);
                 }
             };
-            System.out.println("Calling cluster.start()");
+
+
+
+            FijiArchipelago.debug("Calling cluster.start()");
             if (!cluster.start())
             {
                 IJ.error("Could not start cluster");
                 return;
             }
-            System.out.println("cluster.start() returned");
+            FijiArchipelago.debug("cluster.start() returned");
+            
             for (NodeManager.NodeParameters param : nodeParameters)
-            {
-                System.out.println("Starting Node " + param.getHost());
-                FijiArchipelago.log("Starting Node " + param.getHost());
-                cluster.startNode(param, meh);
+            {                
+                startNodeResults.add(exec.submit(new NodeStartCallable(param, meh)));
+                //cluster.startNode(param, meh);
             }
             
-            updateUI();
+            new Thread(){
+                public void run()
+                {                   
+                    try
+                    {
+                        for (Future<NodeStartResult> result : startNodeResults)
+                        {
+                            if (!result.get().ok)
+                            {
+                                FijiArchipelago.err("Could not start "
+                                        + result.get().param.getHost());
+                            }
+                        }
+                    }
+                    catch (InterruptedException ie)
+                    {
+                        FijiArchipelago.err("Interrupted while starting nodes!");
+                    }
+                    catch (ExecutionException ee)
+                    {
+                        FijiArchipelago.err("Execution Exception while starting nodes!");
+                    }
+                }
+            }.start();
         }
     }
     
-    private void addNode(NodeManager.NodeParameters param)
+    private void addNode(final NodeManager.NodeParameters param)
     {
         if (!started(cluster))
         {
+            FijiArchipelago.debug("Cluster not yet started, adding param to queue");
             nodeParameters.add(param);
         }
         else
         {
-            ShellExecListener meh = new ShellExecListener() {
+            FijiArchipelago.debug("Cluster has been started, starting node directly.");
+            final ShellExecListener meh = new ShellExecListener() {
                 public void execFinished(long nodeID, Exception e) {
-
+                    FijiArchipelago.log("Node " + nodeID + " finished with Exception " + e);
                 }
             };
-            cluster.startNode(param, meh);
+            
+            new Thread()
+            {
+                public void run()
+                {
+                    if (!cluster.startNode(param, meh))
+                    {
+                        FijiArchipelago.err("Could not start "
+                                + param.getHost());
+                    }
+                }
+            }.run();
+            
         }
     }
     
     private synchronized void saveToFile(final String file)
     {
-        System.out.println("Save called");
+        FijiArchipelago.debug("Save called");
         try
         {
             final File f = new File(file);
@@ -745,7 +819,6 @@ public class ClusterUI implements ClusterStateListener
         int port, dPort;
         String dKeyfile, dExecRoot, dFileRoot, dUserName, dExecRootRemote, dFileRootRemote;
         String keyfile, execRoot, fileRoot, userName, execRootRemote, fileRootRemote;
-        NodeShell shell;
 
         //Set default variables
         dPort = Integer.parseInt(Prefs.get(prefRoot + ".port", "" + Cluster.DEFAULT_PORT));

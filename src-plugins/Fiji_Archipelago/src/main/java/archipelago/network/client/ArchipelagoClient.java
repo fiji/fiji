@@ -2,12 +2,13 @@ package archipelago.network.client;
 
 import archipelago.FijiArchipelago;
 import archipelago.data.HeartBeat;
-import archipelago.listen.MessageListener;
 import archipelago.listen.MessageType;
+import archipelago.listen.TransceiverExceptionListener;
 import archipelago.listen.TransceiverListener;
 import archipelago.compute.ProcessManager;
 import archipelago.data.ClusterMessage;
 import archipelago.network.MessageXC;
+import archipelago.util.XCErrorAdapter;
 
 
 import java.io.IOException;
@@ -19,7 +20,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  *
  * @author Larry Lindsey
  */
-public class ArchipelagoClient implements MessageListener, TransceiverListener
+public class ArchipelagoClient implements TransceiverListener
 {
     
     
@@ -42,16 +43,15 @@ public class ArchipelagoClient implements MessageListener, TransceiverListener
                 try
                 {
                     Thread.sleep(interval);
+                    HeartBeat beat = new HeartBeat(runtime.freeMemory(),
+                            runtime.totalMemory());
+
+                    xc.queueMessage(MessageType.BEAT, beat);
                 }
                 catch (InterruptedException ie)
                 {
-                    continue;
+                    //
                 }
-
-                HeartBeat beat = new HeartBeat(runtime.freeMemory(),
-                        runtime.totalMemory());
-                
-                xc.queueMessage(MessageType.BEAT, beat);
             }
         }
     }
@@ -95,14 +95,18 @@ public class ArchipelagoClient implements MessageListener, TransceiverListener
     private final AtomicBoolean active;
     private final Vector<ProcessThread> runningThreads;
     private final HeartBeatThread beatThread;
+    private final TransceiverExceptionListener xcEListener;
 
 
-    public ArchipelagoClient(long id, String host, InputStream inStream, OutputStream outStream) throws IOException
+    public ArchipelagoClient(long id, String host, InputStream inStream, OutputStream outStream,
+                             TransceiverExceptionListener tel) throws IOException
     {
         try
         {
+            xcEListener = tel;
+
             clientId = id;
-            xc = new MessageXC(inStream, outStream, this, host);
+            xc = new MessageXC(inStream, outStream, this, xcEListener, host);
             beatThread = new HeartBeatThread(1000, Runtime.getRuntime());
 
             runningThreads = new Vector<ProcessThread>();
@@ -111,13 +115,11 @@ public class ArchipelagoClient implements MessageListener, TransceiverListener
         }
         catch (IOException ioe)
         {
-            System.out.println("Caught an IOE: " + ioe);
+            FijiArchipelago.log("Caught an IOE: " + ioe);
             throw ioe;
         }
     }
     
-    
-
     public void handleMessage(final ClusterMessage cm) {
 
         final MessageType type = cm.type;
@@ -195,8 +197,9 @@ public class ArchipelagoClient implements MessageListener, TransceiverListener
         }
         catch (ClassCastException cce)
         {
-            System.err.println("Caught CCE: " + cce);
-            xc.queueMessage(MessageType.ERROR, cce);
+            xcEListener.handleRXThrowable(cce, xc);
+//            FijiArchipelago.log("Caught CCE: " + cce);
+//            xc.queueMessage(MessageType.ERROR, cce);
         }
     }
 

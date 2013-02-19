@@ -3,6 +3,7 @@ package archipelago.network;
 import archipelago.FijiArchipelago;
 import archipelago.data.ClusterMessage;
 import archipelago.listen.MessageType;
+import archipelago.listen.TransceiverExceptionListener;
 import archipelago.listen.TransceiverListener;
 
 import java.io.*;
@@ -36,12 +37,13 @@ public class MessageXC
                 }
                 catch (ClassCastException cce)
                 {
-                    FijiArchipelago.err("RX: " + hostName + " Got ClassCastException: " + cce);
-                    queueMessage(MessageType.ERROR, cce);
+                    xcExceptionListener.handleRXThrowable(cce, xc);
+//                    FijiArchipelago.err("RX: " + hostName + " Got ClassCastException: " + cce);
+//                    queueMessage(MessageType.ERROR, cce);
                 }
-                catch (EOFException eofe)
+                /*catch (EOFException eofe)
                 {
-                    // ignore
+                    xcExceptionListener.handleRXThrowable(eofe);
                 }
                 catch (StreamCorruptedException sce)
                 {
@@ -49,17 +51,19 @@ public class MessageXC
                     FijiArchipelago.err("RX: " + hostName + " Got StreamCorruptedException: " + sce);
                     sce.printStackTrace();
                     close();
-                }
+                }*/
                 catch (IOException ioe)
                 {
-                    FijiArchipelago.err("RX: " + hostName + " Got IOException: " + ioe);
-                    queueMessage(MessageType.ERROR,  ioe);
+                    xcExceptionListener.handleRXThrowable(ioe, xc);
+//                    FijiArchipelago.err("RX: " + hostName + " Got IOException: " + ioe);
+//                    queueMessage(MessageType.ERROR,  ioe);
                     //close();
                 }
                 catch (ClassNotFoundException cnfe)
                 {
-                    FijiArchipelago.err("RX: " + hostName + " Got ClassNotFoundException: " + cnfe);
-                    queueMessage(MessageType.ERROR, cnfe);
+                    xcExceptionListener.handleRXThrowable(cnfe, xc);
+//                    FijiArchipelago.err("RX: " + hostName + " Got ClassNotFoundException: " + cnfe);
+//                    queueMessage(MessageType.ERROR, cnfe);
                 }
             }
         }
@@ -96,23 +100,27 @@ public class MessageXC
                     }
                     catch (NotSerializableException nse)
                     {
-                        FijiArchipelago.err("TX " + hostName
-                                + " tried to send a non serializable object: " + nse);
+                        xcExceptionListener.handleTXThrowable(nse, xc);
+//                        FijiArchipelago.err("TX " + hostName
+//                                + " tried to send a non serializable object: " + nse);
                     }
                     catch (IOException ioe)
                     {
-                        FijiArchipelago.err("TX " + hostName + " failed: " + ioe);
-
-                        active.set(false);
-                        close();
+                        xcExceptionListener.handleTXThrowable(ioe, xc);
+//                        FijiArchipelago.err("TX " + hostName + " failed: " + ioe);
+//
+//                        active.set(false);
+//                        close();
                     }
                     catch (ConcurrentModificationException ccme)
                     {
-                        FijiArchipelago.err("TX: Concurrent modification exception: " + ccme);
+                        xcExceptionListener.handleTXThrowable(ccme, xc);
+//                        FijiArchipelago.err("TX: Concurrent modification exception: " + ccme);
                     }
                     catch (Exception e)
                     {
-                        FijiArchipelago.err("TX: Caught unexpected exception: " + e);
+                        xcExceptionListener.handleTXThrowable(e, xc);
+//                        FijiArchipelago.err("TX: Caught unexpected exception: " + e);
                     }
                 }
             }
@@ -131,15 +139,28 @@ public class MessageXC
     private final TimeUnit tUnit;
     private final String hostName;
     private final TransceiverListener xcListener;
+    private final TransceiverExceptionListener xcExceptionListener;
     private final OutputStream outStream;
     private final InputStream inStream;
+    
+    private final MessageXC xc = this;
 
-    public MessageXC(InputStream inStream, OutputStream outStream, final TransceiverListener listener, String hostName) throws IOException
+    public MessageXC(final InputStream inStream,
+                     final OutputStream outStream,
+                     final TransceiverListener listener,
+                     final TransceiverExceptionListener listenerE,
+                     final String hostName) throws IOException
     {
-        this(inStream, outStream, listener, hostName, DEFAULT_WAIT, DEFAULT_UNIT);
+        this(inStream, outStream, listener, listenerE, hostName, DEFAULT_WAIT, DEFAULT_UNIT);
     }
 
-    public MessageXC(InputStream inStream, OutputStream outStream, final TransceiverListener listener, String name, long wait, TimeUnit unit) throws IOException
+    public MessageXC(InputStream inStream,
+                     OutputStream outStream,
+                     final TransceiverListener listener,
+                     final TransceiverExceptionListener listenerE,
+                     String name,
+                     long wait,
+                     TimeUnit unit) throws IOException
     {
         hostName = name;
         messageQ = new ArrayBlockingQueue<ClusterMessage>(16, true);
@@ -151,6 +172,7 @@ public class MessageXC
         waitTime = wait;
         tUnit = unit;
         xcListener = listener;
+        xcExceptionListener = listenerE;
 
         txThread = new TXThread();
         rxThread = new RXThread();
@@ -218,5 +240,10 @@ public class MessageXC
         ClusterMessage cm = new ClusterMessage(type);
         cm.o = o;
         return queueMessage(cm);
+    }
+    
+    public String getHostName()
+    {
+        return hostName;
     }
 }

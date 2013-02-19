@@ -47,10 +47,11 @@ public class ClusterNode implements TransceiverListener
     private AtomicBoolean idSet;
     private ClusterNodeState state;
     private final Vector<NodeStateListener> stateListeners;
+    private final TransceiverExceptionListener xcEListener;
 
    
-    public ClusterNode(Socket socket) throws IOException, InterruptedException,
-            TimeOutException
+    public ClusterNode(final Socket socket, final TransceiverExceptionListener tel)
+            throws IOException, InterruptedException, TimeOutException
     {
         xc = null;
         lastBeatTime = 0;
@@ -65,6 +66,7 @@ public class ClusterNode implements TransceiverListener
         nodeID = -1;
         nodeParam = null;
         stateListeners = new Vector<NodeStateListener>();
+        xcEListener = tel;
 
         setClientSocket(socket);
         
@@ -142,12 +144,12 @@ public class ClusterNode implements TransceiverListener
             close();
         }
     }
-    
+
     private void setClientSocket(final Socket s) throws IOException
     {
 
         xc = new MessageXC(s.getInputStream(), s.getOutputStream(), this,
-                s.getInetAddress().getHostName());
+                xcEListener, s.getInetAddress().getHostName());
 
         FijiArchipelago.log("Got Socket from " + s.getInetAddress());
 
@@ -318,10 +320,8 @@ public class ClusterNode implements TransceiverListener
                     break;
 
                 case ERROR:
-
                     Exception e = (Exception)object;
-                    FijiArchipelago.err("Remote client on " + getHost() + " experienced an error: "
-                            + e);
+                    xcEListener.handleRXThrowable(e, xc);
                     break;
                 
                 case BEAT:

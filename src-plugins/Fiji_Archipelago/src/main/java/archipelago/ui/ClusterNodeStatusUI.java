@@ -79,6 +79,8 @@ public class ClusterNodeStatusUI implements ActionListener
             }
         }
 
+        public void handleNodeThrowable(final Throwable t, final ClusterNode node){}
+
         public synchronized void stateChanged(ClusterNode node,
                                  ClusterNodeState stateNow,
                                  ClusterNodeState lastState)
@@ -256,10 +258,10 @@ public class ClusterNodeStatusUI implements ActionListener
         for (ClusterNode node : nodes)
         {
             final long id = node.getID();
-            System.out.println("Node UI: Checking id " + id);
+
             if (node.getState() != ClusterNodeState.STOPPED && !keySet.contains(id))                
             {
-                System.out.println("Node UI: Adding id " + id);
+                //System.out.println("Node UI: Adding id " + id);
                 final NodeStatusPanel panel = new NodeStatusPanel(node);
                 nodeTable.put(id, node);
                 statusPanels.put(id, panel);

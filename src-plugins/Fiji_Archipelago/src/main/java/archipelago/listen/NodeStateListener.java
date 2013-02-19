@@ -7,4 +7,6 @@ public interface NodeStateListener
 {
     
     public void stateChanged(ClusterNode node, ClusterNodeState stateNow, ClusterNodeState lastState);
+    
+    public void handleNodeThrowable(final Throwable t, final ClusterNode node);
 }
