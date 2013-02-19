@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+		http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<parent>
+		<groupId>org.scijava</groupId>
+		<artifactId>pom-scijava</artifactId>
+		<version>1.27</version>
+	</parent>
+
+	<groupId>sc.fiji</groupId>
+	<artifactId>pom-fiji</artifactId>
+	<version>2.0.0-SNAPSHOT</version>
+	<packaging>pom</packaging>
+
+	<name>Aggregator project for the Fiji project</name>
+	<description></description>
+
+	<properties>
+		<imagej.app.directory>${rootdir}</imagej.app.directory>
+		<imagescience.version>2.4.1</imagescience.version>
+		<jcommon.version>1.0.17</jcommon.version>
+		<jfreechart.version>1.0.14</jfreechart.version>
+		<mpicbg.version>0.6.0-SNAPSHOT</mpicbg.version>
+		<trakem2.version>1.0b-SNAPSHOT</trakem2.version>
+	</properties>
+
+	<modules>
+		<module>src-plugins</module>
+		<module>modules</module>
+	</modules>
+
+	<build>
+		<plugins>
+			<plugin>
+				<artifactId>maven-source-plugin</artifactId>
+			</plugin>
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>buildnumber-maven-plugin</artifactId>
+			</plugin>
+			<plugin>
+				<groupId>net.imagej</groupId>
+				<artifactId>imagej-maven-plugin</artifactId>
+				<version>0.1.1-SNAPSHOT</version>
+			</plugin>
+		</plugins>
+	</build>
+
+	<scm>
+		<connection>scm:git:git://github.com/fiji/fiji</connection>
+		<developerConnection>scm:git:git@github.com:fiji/fiji</developerConnection>
+		<tag>HEAD</tag>
+		<url>https://github.com/fiji/fiji</url>
+	</scm>
+
+	<reporting>
+		<plugins>
+			<plugin>
+				<artifactId>maven-javadoc-plugin</artifactId>
+				<configuration>
+					<links combine.children="append">
+						<link>http://jenkins.imagej.net/job/ImageJ-daily/javadoc</link>
+						<link>http://jenkins.imagej.net/job/ImgLib-daily/javadoc</link>
+						<link>http://jenkins.imagej.net/job/ImageJ1-javadoc/javadoc</link>
+					</links>
+				</configuration>
+			</plugin>
+		</plugins>
+	</reporting>
+
+	<!-- NB: for project parent -->
+	<repositories>
+		<repository>
+			<id>imagej.releases</id>
+			<url>http://maven.imagej.net/content/repositories/releases</url>
+		</repository>
+		<repository>
+			<id>imagej.snapshots</id>
+			<url>http://maven.imagej.net/content/repositories/snapshots</url>
+		</repository>
+	</repositories>
+
+	<profiles>
+		<!-- HACK: Eclipse in JDK 1.5 mode does not like @Override for methods implemention interfaces. -->
+		<profile>
+			<id>no-eclipse</id>
+			<activation>
+				<property>
+					<name>!m2e.version</name>
+				</property>
+			</activation>
+			<build>
+				<plugins>
+					<plugin>
+						<artifactId>maven-compiler-plugin</artifactId>
+						<version>2.3.2</version>
+						<configuration>
+							<source>1.5</source>
+							<target>1.5</target>
+						</configuration>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+		<!-- HACK: We want to enforce annotation processing with sezpoz in Eclipse, to prepare for ImageJ2. So we have that enables by default in .factorypath, referring to sezpoz in the local Maven repository. Let's make sure it is there -->
+		<profile>
+			<id>eclipse</id>
+			<activation>
+				<property>
+					<name>m2e.version</name>
+				</property>
+			</activation>
+			<dependencies>
+				<dependency>
+					<groupId>net.java.sezpoz</groupId>
+					<artifactId>sezpoz</artifactId>
+					<version>${sezpoz.version}</version>
+				</dependency>
+			</dependencies>
+		</profile>
+	</profiles>
+
+</project>

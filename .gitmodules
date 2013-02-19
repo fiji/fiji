@@ -28,9 +28,6 @@
 [submodule "clojure"]
 	path = modules/clojure
 	url = ssh://contrib@fiji.sc/srv/git/clojure/
-[submodule "bio-formats"]
-	path = modules/bio-formats
-	url = ssh://contrib@fiji.sc/srv/git/bio-formats
 [submodule "ij-plugins"]
 	path = modules/ij-plugins
 	url = ssh://contrib@fiji.sc/srv/git/ij-plugins
@@ -72,7 +69,7 @@
 	url = contrib@fiji.sc:/srv/git/jsch
 [submodule "modules/imagej2"]
 	path = modules/imagej2
-	url = git://dev.imagejdev.org/imagej.git
+	url = git://code.imagej.net/imagej.git
 [submodule "modules/imagej5d"]
 	path = modules/image5d
 	url = git://fiji.sc/image5d

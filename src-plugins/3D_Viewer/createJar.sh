@@ -8,10 +8,16 @@ JAVAC="/usr/bin/javac"
 JAR="/usr/bin/jar"
 J3DF="$FIJIF/java/macosx-java3d/Home/lib/ext/"
 
-CLASSPATH=".:$JARF/ij.jar:$JARF/imglib.jar:$JARF/Jama.jar:$J3DF/j3dcore.jar:$J3DF/j3dutils.jar:$J3DF/vecmath.jar"
+IJ=`find $JARF -name ij-?.???.jar`
+JAMA=`find $JARF -name Jama-*.jar`
+IMGLIB=`find $JARF -name imglib-2.0.0-SNAPSHOT.jar`
+
+CLASSPATH=".:$IJ:$JAMA:$IMGLIB:$J3DF/j3dcore.jar:$J3DF/j3dutils.jar:$J3DF/vecmath.jar"
 
 JAVACOPTS="-source 1.5 -target 1.5 -extdirs $J3DF -classpath $CLASSPATH"
-IJ3D_SRC="`find . -type f` `find . -name \*.png` plugins.config"
+IJ3D_SRC=`(cd src/main/java && find . -type f)`
+IJ3D_RSRC=`(cd src/main/resources && find . -type f)`
+
 VIB_SRC="
 	math3d/*.java \
 	nrrd/*.java \
@@ -30,7 +36,8 @@ VIB_SRC="
 
 test ! -d tempdir || rm -rf tempdir
 mkdir tempdir
-tar cvf - $IJ3D_SRC | (cd tempdir; tar xvf -)
+(cd src/main/resources && tar cvf - $IJ3D_RSRC) | (cd tempdir; tar xvf -)
+(cd src/main/java && tar cvf - $IJ3D_SRC) | (cd tempdir; tar xvf -)
 (cd $VIBF && tar cvf - $VIB_SRC) | (cd tempdir; tar xvf -)
 
 
