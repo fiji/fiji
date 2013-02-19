@@ -23,6 +23,7 @@ import ij.plugin.*;
 // 1.12 2011/Apr/09 Fixed: Minimum with 16bit images (search data range only), setting threshold without applying the mask, Yen and Isodata with 16 bits offset images, histogram bracketing to speed up
 // 1.13 2011/Apr/13 Revised the way 16bit thresholds are shown
 // 1.14 2011/Apr/14 IsoData issues a warning if threhsold not found
+// 1.15 2013/Feb/19 Added 'break' in the minimum method for cases where there is a constant histogram after the 2nd peaks
 
 
 public class Auto_Threshold implements PlugIn {
@@ -44,7 +45,7 @@ public class Auto_Threshold implements PlugIn {
 		 // 2 - Ask for parameters:
 		GenericDialog gd = new GenericDialog("Auto Threshold");
 //		String [] methods={"Bernsen", "Huang", "Intermodes", "IsoData",  "Li", "MaxEntropy", "MinError", "Minimum", "Moments", "Niblack", "Otsu", "Percentile", "RenyiEntropy", "Sauvola", "Shanbhag" , "Triangle", "Yen"};
-		gd.addMessage("Auto Threshold v1.14");
+		gd.addMessage("Auto Threshold v1.15");
 		String [] methods={"Try all", "Default", "Huang", "Intermodes", "IsoData",  "Li", "MaxEntropy","Mean", "MinError(I)", "Minimum", "Moments", "Otsu", "Percentile", "RenyiEntropy", "Shanbhag" , "Triangle", "Yen"};
 		gd.addChoice("Method", methods, methods[0]);
 		String[] labels = new String[2];
@@ -895,8 +896,10 @@ public class Auto_Threshold implements PlugIn {
 		// The threshold is the minimum between the two peaks. modified for 16 bits
 		for (int i=1; i<max; i++) {
 			//IJ.log(" "+i+"  "+iHisto[i]);
-			if (iHisto[i-1] > iHisto[i] && iHisto[i+1] >= iHisto[i])
+			if (iHisto[i-1] > iHisto[i] && iHisto[i+1] >= iHisto[i]){
 				threshold = i;
+				break;
+			}
 		}
 		return threshold;
 	}
