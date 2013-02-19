@@ -14,7 +14,7 @@ public class JNI_Example implements PlugInFilter {
 	public int setup(String arg, ImagePlus image) {
 		this.arg = arg;
 		this.image = image;
-		return DOES_ALL;
+		return DOES_ALL | NO_CHANGES;
 	}
 
 	public void run(ImageProcessor ip) {
