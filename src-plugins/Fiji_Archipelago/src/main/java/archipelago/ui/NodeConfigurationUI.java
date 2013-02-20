@@ -1,5 +1,6 @@
 package archipelago.ui;
 
+import archipelago.FijiArchipelago;
 import archipelago.network.node.NodeManager;
 import ij.gui.GenericDialog;
 
@@ -230,19 +231,15 @@ public class NodeConfigurationUI extends Panel implements ActionListener
         GenericDialog gd = new GenericDialog("Cluster Nodes");
         NodeConfigurationUI ui = new NodeConfigurationUI(nm, nodeParams);
         gd.addPanel(ui);
-        System.out.println("Showing dialog");
         gd.showDialog();
+
         if (gd.wasOKed())            
         {
-            System.out.println("Was ok'ed. Got " + ui.nodePanels.size() + " nodes");
+            FijiArchipelago.debug("Was ok'ed. Got " + ui.nodePanels.size() + " nodes");
 
             for (NodePanel np : ui.nodePanels)
             {
-                //if (!nodeParams.contains(np.getNodeParam()))
-                //{
-                    newParams.add(np.getNodeParam());
-                //}
-
+                newParams.add(np.getNodeParam());
             }
             return true;
         }

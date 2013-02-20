@@ -234,10 +234,6 @@ public class NodeManager
         
         nodeTable.put(param.id, param);
         
-        if (nodeTable.get(param.id) == null)
-        {
-            System.out.println("I put it in, but I get null back");
-        }
         return param;
     }
 

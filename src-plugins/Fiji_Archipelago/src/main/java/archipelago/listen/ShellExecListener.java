@@ -5,6 +5,5 @@ package archipelago.listen;
  */
 public interface ShellExecListener
 {
-
-    public void execFinished(final long nodeID, final Exception e);
+    public void execFinished(final long nodeID, final Exception e, final int status);
 }

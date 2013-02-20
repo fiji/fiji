@@ -2,6 +2,7 @@ package archipelago.ui;
 
 import archipelago.Cluster;
 import archipelago.FijiArchipelago;
+import archipelago.exception.ShellExecutionException;
 import archipelago.listen.ClusterStateListener;
 import archipelago.listen.ShellExecListener;
 import archipelago.network.node.NodeManager;
@@ -16,6 +17,7 @@ import javax.swing.*;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.OutputKeys;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
@@ -75,8 +77,8 @@ public class ClusterUI implements ClusterStateListener
             updateLock = new ReentrantLock();
 
             configPanel = new ClusterConfigPanel();
+
             // initialize controls
-            //cfgButton = new Button("Configure Root Node...");
             statButton = new Button("Show Node Statistics");
             startStopButton = new Button("Start Cluster");
 
@@ -179,6 +181,7 @@ public class ClusterUI implements ClusterStateListener
 
             if (!updateLock.tryLock())
             {
+                FijiArchipelago.debug("UI: Could not acquire main panel update lock");
                 return;
             }
             
@@ -233,18 +236,7 @@ public class ClusterUI implements ClusterStateListener
                         break;
                 }
 
-//                if (state == Cluster.ClusterState.STARTED ||
-//                        state == Cluster.ClusterState.RUNNING)
-//                {
-//                    startStopButton.setLabel("Stop Cluster");
-//                    startStopButton.setActionCommand("stop");
-//                }
-//                else
-//                {
-//                    startStopButton.setLabel("Start Cluster");
-//                    startStopButton.setActionCommand("start");
-//                }
-            }            
+            }
             else
             {
                 clusterLabel.update("is null");
@@ -369,20 +361,53 @@ public class ClusterUI implements ClusterStateListener
         }
     }
 
+    private class UIShellExecListener implements ShellExecListener
+    {
+
+        public void execFinished(long nodeID, Exception e, int status)
+        {
+            NodeManager.NodeParameters param = cluster.getNodeManager().getParam(nodeID); 
+            String hostname = param == null ? "" + nodeID : param.getHost();
+            if (e == null)
+            {
+                FijiArchipelago.log("Node " + hostname + " finished.");
+            }
+            else
+            {
+                FijiArchipelago.log("Node " + hostname + " finished with Exception: " + e);
+                FijiArchipelago.err("Node " + hostname + " finished with Exception: " + e);
+            }
+        }
+    }
+
+
     private class NodeStartCallable implements Callable<NodeStartResult>
     {
         final NodeManager.NodeParameters param;
         final ShellExecListener listener;
         
-        public NodeStartCallable(final NodeManager.NodeParameters p, final ShellExecListener sel)
+        public NodeStartCallable(final NodeManager.NodeParameters p)
         {
             param = p;
-            listener = sel;
+            listener = new UIShellExecListener();
         }
         
         public NodeStartResult call()
         {
-            return new NodeStartResult(cluster.startNode(param, listener), param);
+            try
+            {
+                return new NodeStartResult(cluster.startNode(param, listener), param);
+            }
+            catch (ShellExecutionException see)
+            {
+                FijiArchipelago.debug("Caught ShellExecution Exception: " + see);
+                FijiArchipelago.err(see.getMessage());
+                
+                // return true not because we were successful (we weren't), but in order
+                // not to show a second failure message.
+                return new NodeStartResult(true, param);
+            }
+            
         }
     }
     
@@ -419,10 +444,24 @@ public class ClusterUI implements ClusterStateListener
         
         frame.addWindowListener(new WindowAdapter() {
             public void windowClosing(WindowEvent windowEvent) {
-                GenericDialog gd = new GenericDialog("Shutdown?");
-                gd.addMessage("Really Close?");
-                gd.showDialog();
-                if (gd.wasOKed())
+                boolean ok;
+                final Cluster.ClusterState state = cluster.getState();
+                
+                if (state == Cluster.ClusterState.STOPPED ||
+                        state == Cluster.ClusterState.STOPPING)
+                {
+                    ok = true;
+                }
+                else
+                {
+                    final GenericDialog gd = new GenericDialog("Shutdown?");
+                    gd.addMessage("Really Close?");
+                    gd.showDialog();
+
+                    ok = gd.wasOKed();
+                }
+                
+                if (ok)
                 {
                     cluster.shutdownNow();
                     frame.setVisible(false);
@@ -436,7 +475,6 @@ public class ClusterUI implements ClusterStateListener
 
         exec = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
 
-        //frame.pack();
         frame.validate();
 
         // Refresh the UI at least once a second
@@ -480,8 +518,9 @@ public class ClusterUI implements ClusterStateListener
     {
         if (c == cluster)
         {
-            updateUI();
+            FijiArchipelago.debug("UI: Got changed state for cluster");            
             nodeStatusUI.stateChanged();
+            updateUI();
         }
     }
 
@@ -636,6 +675,12 @@ public class ClusterUI implements ClusterStateListener
         updateUI();
     }
 
+    private void handleUnstartedNode(NodeManager.NodeParameters param, Exception e)
+    {
+        FijiArchipelago.err("Could not start node " + param.getHost() + ": " + e);
+        FijiArchipelago.log("Could not start node " + param.getHost() + ": " + e);
+    }
+    
 
     private synchronized void startCluster()
     {
@@ -647,16 +692,8 @@ public class ClusterUI implements ClusterStateListener
             
             FijiArchipelago.debug("State was Initialized");
             FijiArchipelago.log("Starting Cluster");
-
-            ShellExecListener meh = new ShellExecListener() {
-                public void execFinished(long nodeID, Exception e) {
-                    FijiArchipelago.debug("Node " + nodeID + " finished with Exception " + e);
-                }
-            };
-
-
-
             FijiArchipelago.debug("Calling cluster.start()");
+
             if (!cluster.start())
             {
                 IJ.error("Could not start cluster");
@@ -666,8 +703,7 @@ public class ClusterUI implements ClusterStateListener
             
             for (NodeManager.NodeParameters param : nodeParameters)
             {                
-                startNodeResults.add(exec.submit(new NodeStartCallable(param, meh)));
-                //cluster.startNode(param, meh);
+                startNodeResults.add(exec.submit(new NodeStartCallable(param)));
             }
             
             new Thread(){
@@ -679,8 +715,7 @@ public class ClusterUI implements ClusterStateListener
                         {
                             if (!result.get().ok)
                             {
-                                FijiArchipelago.err("Could not start "
-                                        + result.get().param.getHost());
+                                handleUnstartedNode(result.get().param, null);
                             }
                         }
                     }
@@ -707,23 +742,33 @@ public class ClusterUI implements ClusterStateListener
         else
         {
             FijiArchipelago.debug("Cluster has been started, starting node directly.");
-            final ShellExecListener meh = new ShellExecListener() {
-                public void execFinished(long nodeID, Exception e) {
-                    FijiArchipelago.log("Node " + nodeID + " finished with Exception " + e);
-                }
-            };
             
             new Thread()
             {
                 public void run()
                 {
-                    if (!cluster.startNode(param, meh))
+                    try
                     {
-                        FijiArchipelago.err("Could not start "
-                                + param.getHost());
+                        Future<NodeStartResult> future = exec.submit(new NodeStartCallable(param));
+                        NodeStartResult result = future.get();
+
+                        if (!result.ok)
+                        {
+                            handleUnstartedNode(param, null);
+                        }
+                    }
+                    catch (InterruptedException ie)
+                    {
+                        FijiArchipelago.debug("UI.addNode: Interrupted!");
+                        handleUnstartedNode(param, ie);
+                    }
+                    catch (ExecutionException ee)
+                    {
+                        FijiArchipelago.debug("UI.addNode: Execution Error!");
+                        handleUnstartedNode(param, ee);
                     }
                 }
-            }.run();
+            }.start();
             
         }
     }
@@ -743,13 +788,16 @@ public class ClusterUI implements ClusterStateListener
             final Transformer transformer = TransformerFactory.newInstance().newTransformer();
             final StreamResult result = new StreamResult(f);
             DOMSource source;
-            
+
+            transformer.setOutputProperty(OutputKeys.ENCODING, "utf-8");
+            transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "no");
+            transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+            transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");
+
             params.addAll(nodeParameters);
             params.addAll(cluster.getNodesParameters());
             
             doc.appendChild(clusterXML);
-
-            System.out.println("Writing cluster params");
 
             addXMLField(doc, rootNode, "port", "" + cluster.getServerPort());
             addXMLField(doc, rootNode, "exec", FijiArchipelago.getExecRoot());
@@ -761,7 +809,7 @@ public class ClusterUI implements ClusterStateListener
                     ".keyfile", IJ.isWindows() ? "" : System.getenv("HOME") + "/.ssh/id_dsa"));
             clusterXML.appendChild(rootNode);
 
-            System.out.println("Writing " + params.size() + " nodes");
+            FijiArchipelago.debug("Writing " + params.size() + " nodes");
 
             for (NodeManager.NodeParameters np : params)
             {
@@ -779,7 +827,9 @@ public class ClusterUI implements ClusterStateListener
 
             source = new DOMSource(doc);
             transformer.transform(source, result);
-                    
+            
+            FijiArchipelago.log("Saved configuration to " + file);
+            
         }
         catch (ParserConfigurationException pce)
         {
@@ -797,13 +847,13 @@ public class ClusterUI implements ClusterStateListener
         ArrayList<NodeManager.NodeParameters> newParams = new ArrayList<NodeManager.NodeParameters>();
         if(NodeConfigurationUI.nodeConfigurationUI(cluster.getNodeManager(), nodeParameters, newParams))
         {
-            System.out.println("Got " + newParams.size() + " new params");
+            FijiArchipelago.debug("Got " + newParams.size() + " new params");
             nodeParameters.clear();
             for (NodeManager.NodeParameters param : newParams)
             {
                 addNode(param);
             }
-            System.out.println("Now we have " + nodeParameters.size() + " params");
+            FijiArchipelago.debug("Now we have " + nodeParameters.size() + " params");
         }
     }
 
@@ -872,6 +922,4 @@ public class ClusterUI implements ClusterStateListener
         updateUI();
         return isConfigured;
     }
-    
-
 }

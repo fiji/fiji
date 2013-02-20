@@ -218,9 +218,18 @@ public class MessageXC
     {
         try
         {
-            FijiArchipelago.debug("Queuing message to " + hostName);
+            boolean verbose = message.type != MessageType.BEAT;
+            if (verbose)
+            {
+                FijiArchipelago.debug("XC: Queuing message to " + hostName);
+            }
+
             messageQ.put(message);
-            FijiArchipelago.debug("Message to " + hostName + " queued successfully");
+
+            if (verbose)
+            {
+                FijiArchipelago.debug("XC: Message to " + hostName + " queued successfully");
+            }
             return true;
         }
         catch (InterruptedException ie)

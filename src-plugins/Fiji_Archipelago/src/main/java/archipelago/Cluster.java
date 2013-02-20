@@ -2,6 +2,7 @@ package archipelago;
 
 
 import archipelago.compute.*;
+import archipelago.exception.ShellExecutionException;
 import archipelago.listen.ClusterStateListener;
 import archipelago.listen.NodeStateListener;
 import archipelago.listen.ProcessListener;
@@ -16,10 +17,7 @@ import mpicbg.trakem2.concurrent.DefaultExecutorProvider;
 import mpicbg.trakem2.concurrent.ExecutorProvider;
 import mpicbg.trakem2.concurrent.ThreadPool;
 
-import java.io.EOFException;
-import java.io.IOException;
-import java.io.NotSerializableException;
-import java.io.StreamCorruptedException;
+import java.io.*;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
@@ -27,6 +25,7 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  *
@@ -379,7 +378,7 @@ public class Cluster implements ExecutorService, NodeStateListener
     
     public static Cluster getCluster()
     {
-        if (cluster == null)
+        if (cluster == null || cluster.getState() == ClusterState.STOPPED)
         {
             cluster = new Cluster();
         }
@@ -480,6 +479,14 @@ public class Cluster implements ExecutorService, NodeStateListener
                             "value that was not Serializable. " + t, xc);
                     return false;
                 }
+                else if (t instanceof InvalidClassException)
+                {
+                    reportRX(t, "Caught remote InvalidClassException.\n" +
+                            "This means you likely have multiple jars for the given class: " +
+                            t, xc);
+                    silence();
+                    return false;
+                }
                 return true;
             }
             
@@ -571,7 +578,7 @@ public class Cluster implements ExecutorService, NodeStateListener
             case RUNNING:
                 return 3;
             case STOPPING:
-                return 3;
+                return 4;
             case STOPPED:
                 return 5;
             default:
@@ -602,8 +609,15 @@ public class Cluster implements ExecutorService, NodeStateListener
     
     private void setState(final ClusterState state)
     {
+        if (stateIntToEnum(this.state.get()) == ClusterState.STOPPED)
+        {
+            FijiArchipelago.debug("Attempted to change state on a STOPPED cluster.");
+            new Exception().printStackTrace();
+            return;
+        }
+        
         FijiArchipelago.debug("Cluster: State changed from " + stateString(getState()) +
-                " to " + stateString(state));
+                " to " + stateString(state));        
         this.state.set(stateEnumToInt(state));
         triggerListeners();
     }
@@ -652,12 +666,66 @@ public class Cluster implements ExecutorService, NodeStateListener
     }
     
     public boolean startNode(final NodeManager.NodeParameters params, final ShellExecListener listener)
+            throws ShellExecutionException
     {
         String host = params.getHost();
         String exec = params.getExecRoot();
         long id = params.getID();
+
+        // getNode(id) == null indicates that this node has not yet been started
         if (getNode(id) == null)
         {
+            final Thread t = Thread.currentThread();
+            final AtomicInteger result = new AtomicInteger();
+            final ReentrantLock testLock = new ReentrantLock(true); 
+
+            // First, check that the fiji executable exists where we think it exists.
+
+            // Use a lock to prevent the ShellExecListener from triggering the result
+            // before we're ready.
+            testLock.lock();
+
+            final ShellExecListener fijiExistsListener = new ShellExecListener() {
+                public void execFinished(long nodeID, Exception e, int status) {
+                    // Wait for the lock to release
+                    testLock.lock();
+                    // Set the result status
+                    result.set(status);
+                    testLock.unlock();
+                    // Restart the startNode(...) thread.
+                    t.interrupt();
+                }
+            };
+
+            if (params.getShell().exec(params, "test -e " + exec + "/fiji", fijiExistsListener))
+            {
+                try
+                {
+                    // Unlock the lock to allow the SEL to run, then sleep
+                    testLock.unlock();
+                    Thread.sleep(Long.MAX_VALUE);
+                    throw new ShellExecutionException("Timed out " +
+                            "waiting to test for existence of executable");
+                }
+                catch (InterruptedException ie)
+                {
+                    // We expect to be interrupted
+                    if (result.get() != 0)
+                    {
+                        // If we get a nonzero return, then fiji does not exist.
+                        throw new ShellExecutionException(exec + "/fiji" +
+                                " does not exist on host " + host);
+                    }
+                }                
+            }
+            else
+            {
+                return false;
+            }
+
+            // Run fiji with jar path plugins, jars, and classpath containing
+            // the root fiji directory. Execute main(String[] args) in Fiji_Archipelago.
+            // Sys.out and Sys.err are piped to ~/${host}_${id}.log on the remote machine.
             String execCommandString = exec + "/fiji --jar-path " + exec
                     + "/plugins/ --jar-path " + exec +"/jars/ --classpath " + exec +
                     " --allow-multiple --main-class archipelago.Fiji_Archipelago "
@@ -720,12 +788,6 @@ public class Cluster implements ExecutorService, NodeStateListener
         ClusterState state = getState();
         return state == ClusterState.RUNNING || state == ClusterState.STARTED;
     }
-    
-    public void handleNodeThrowable(final Throwable t, final ClusterNode node)
-    {
-        
-    }
-        
     
     public synchronized void stateChanged(ClusterNode node, ClusterNodeState stateNow,
                              ClusterNodeState lastState) {
@@ -1030,11 +1092,13 @@ public class Cluster implements ExecutorService, NodeStateListener
     {
         ArrayList<Thread> waitThreadsCP = new ArrayList<Thread>(waitThreads);
         
-        setState(ClusterState.STOPPED);
-        
-        scheduler.close();
+        server.close();
+
         nodeManager.clear();
-        
+
+        setState(ClusterState.STOPPED);
+        scheduler.close();
+
         for (Thread t : waitThreadsCP)
         {
             t.interrupt();

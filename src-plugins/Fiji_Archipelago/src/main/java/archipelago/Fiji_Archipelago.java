@@ -24,6 +24,7 @@ public class Fiji_Archipelago implements PlugIn
 
     public void run(String arg)
     {
+
         if (arg.equals("gui"))
         {
             FijiArchipelago.setDebugLogger(new PrintStreamLogger());

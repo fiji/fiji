@@ -1,5 +1,7 @@
 package archipelago.network.shell;
 
+import archipelago.FijiArchipelago;
+import archipelago.exception.ShellExecutionException;
 import archipelago.listen.ShellExecListener;
 import archipelago.network.node.NodeManager;
 import archipelago.util.EasyLogger;
@@ -10,6 +12,7 @@ import ij.gui.GenericDialog;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.UnknownHostException;
 
 public class JSchNodeShell implements NodeShell
 {
@@ -146,24 +149,34 @@ public class JSchNodeShell implements NodeShell
 
         public void run()
         {
+            String host = "";
             try
             {
+                host = channel.getSession().getHost();
+
+                FijiArchipelago.debug(host + ": connecting channel");
                 channel.connect();
-                
+
+                FijiArchipelago.debug(host + ": connect() returned");
+
                 while (!channel.isClosed())
                 {
                     Thread.sleep(1000);
                 }
 
-                listener.execFinished(node, null);
+                FijiArchipelago.debug(host + ": channel closed");
+
+                listener.execFinished(node, null, channel.getExitStatus());
             }
             catch (JSchException jse)
             {
-                listener.execFinished(node, jse);
+                FijiArchipelago.debug(host + ": JSchException: " + jse);
+                listener.execFinished(node, jse, -1);
             }
             catch (InterruptedException ie)
             {
-                listener.execFinished(node, ie);
+                FijiArchipelago.debug(host + ": Interrupted");
+                listener.execFinished(node, ie, -1);
             }
 
             channel.disconnect();
@@ -182,6 +195,7 @@ public class JSchNodeShell implements NodeShell
     }
     
     public boolean exec(final NodeManager.NodeParameters param, final String command, final ShellExecListener listener)
+            throws ShellExecutionException
     {
         String user = param.getUser();
         String host = param.getHost();
@@ -215,7 +229,16 @@ public class JSchNodeShell implements NodeShell
         }
         catch (JSchException jse)
         {
-            return false;
+            if (jse.getMessage().equals("Auth cancel"))
+            {
+                throw new ShellExecutionException("Authentication failed on " + host, jse);
+            }
+            else if(jse.getCause() != null && jse.getCause() instanceof UnknownHostException)
+            {
+                throw new ShellExecutionException("Unknown host " + host, jse);
+            }
+
+            throw new ShellExecutionException(jse);
         }
         
     }

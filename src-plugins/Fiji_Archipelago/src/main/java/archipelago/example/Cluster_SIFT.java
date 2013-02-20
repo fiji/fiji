@@ -41,7 +41,7 @@ public class Cluster_SIFT implements PlugIn
         
         public ArrayList<Feature> call() throws Exception {
             ImagePlus im = IJ.openImage(fileChunk.getData());
-            System.out.println("attempting to open file " + fileChunk.getData());
+            FijiArchipelago.debug("attempting to open file " + fileChunk.getData());
             ImageProcessor ip = im.getProcessor();
             ArrayList<Feature> feat = new ArrayList<Feature>();
             SIFT sift = new SIFT(new FloatArray2DSIFT(param));

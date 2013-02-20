@@ -72,7 +72,7 @@ public class ArchipelagoServer
         }
         catch(IOException ioe)
         {
-            System.err.println("Got IOExecption: " + ioe);
+            FijiArchipelago.err("Archipelago Server: Got IOException: " + ioe);
             return false;
         }
         
@@ -85,11 +85,8 @@ public class ArchipelagoServer
         isRunning.set(false);
         try
         {
-            System.out.println("interrupting thread");
             listenThread.interrupt();
-            System.out.println("Closing server socket");
             socket.close();
-            System.out.println("Closed socket");
         }
         catch (IOException ioe)
         {

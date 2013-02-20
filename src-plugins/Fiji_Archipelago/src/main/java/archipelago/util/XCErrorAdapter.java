@@ -5,6 +5,7 @@ import archipelago.listen.TransceiverExceptionListener;
 import archipelago.network.MessageXC;
 
 import java.util.HashSet;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class XCErrorAdapter implements TransceiverExceptionListener
 {
@@ -12,11 +13,13 @@ public class XCErrorAdapter implements TransceiverExceptionListener
     private final HashSet<Class> throwablesSeenTX;
     private final HashSet<Class> throwablesSeenRX;
 
+    private final AtomicBoolean isQuiet;
 
     public XCErrorAdapter()
     {
         throwablesSeenRX = new HashSet<Class>();
         throwablesSeenTX = new HashSet<Class>();
+        isQuiet = new AtomicBoolean(false);
     }
     
     protected boolean handleCustomRX(final Throwable t, final MessageXC mxc)
@@ -40,7 +43,10 @@ public class XCErrorAdapter implements TransceiverExceptionListener
         FijiArchipelago.log(message);
         if (!throwablesSeen.contains(t.getClass()))
         {
-            FijiArchipelago.err(message + "\nThis error dialog will only be shown once.");
+            if (!isQuiet.get())
+            {
+                FijiArchipelago.err(message + "\nThis error dialog will only be shown once.");
+            }
             throwablesSeen.add(t.getClass());
         }
     }
@@ -69,5 +75,15 @@ public class XCErrorAdapter implements TransceiverExceptionListener
         {
             reportTX(t, t.toString(), mxc);
         }
+    }
+    
+    public void silence()
+    {
+        silence(true);
+    }
+    
+    public void silence(boolean s)
+    {
+        isQuiet.set(s);
     }
 }
