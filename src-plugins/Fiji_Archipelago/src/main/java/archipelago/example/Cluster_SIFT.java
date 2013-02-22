@@ -16,6 +16,7 @@ import mpicbg.imagefeatures.FloatArray2DSIFT;
 
 import java.util.*;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 
 /**
@@ -66,6 +67,7 @@ public class Cluster_SIFT implements PlugIn
     {
         if (Cluster.activeCluster())
         {
+            ExecutorService pool = Cluster.getCluster().getService(1);
             boolean executionErrorOccurred = false;
 
             // The return list
@@ -80,7 +82,7 @@ public class Cluster_SIFT implements PlugIn
             // the Cluster
             for (String fileName : fileNames)
             {                
-                futures.add(Cluster.getCluster().submit(new SIFTCall(param.clone(), fileName)));
+                futures.add(pool.submit(new SIFTCall(param.clone(), fileName)));
             }
 
 

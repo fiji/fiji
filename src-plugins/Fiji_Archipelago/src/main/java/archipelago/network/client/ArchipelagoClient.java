@@ -186,6 +186,11 @@ public class ArchipelagoClient implements TransceiverListener
                         }
                     }
                     break;
+                
+                case NUMTHREADS:
+                    xc.queueMessage(MessageType.NUMTHREADS,
+                            Runtime.getRuntime().availableProcessors());
+                    break;
 
                 case BEAT:
                     if (!beatThread.isAlive())

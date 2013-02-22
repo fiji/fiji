@@ -17,10 +17,11 @@ public class ArchipelagoFuture<T> implements Future<T>
     private T t;
     private final long id;
     private final Cluster.ProcessScheduler scheduler;
-    private final AtomicBoolean wasCancelled, done;    
+    private final AtomicBoolean wasCancelled, done, finished;    
     private final Vector<Thread> waitingThreads;
     private final ReentrantLock threadLock;
     private Exception e;
+   
    
     
     public ArchipelagoFuture(Cluster.ProcessScheduler scheduler)
@@ -36,6 +37,7 @@ public class ArchipelagoFuture<T> implements Future<T>
         waitingThreads = new Vector<Thread>();
         wasCancelled = new AtomicBoolean(false);
         done = new AtomicBoolean(false);
+        finished = new AtomicBoolean(false);
         threadLock = new ReentrantLock();
     }
 
@@ -46,26 +48,34 @@ public class ArchipelagoFuture<T> implements Future<T>
         return id;
     }
     
-    public void finish(ProcessManager<?> pm) throws ClassCastException
+    public boolean finish(ProcessManager<?> pm) throws ClassCastException
     {
-        if (pm != null)
+        if (!finished.getAndSet(true))
         {
-            final Object o = pm.getOutput();
-            T result = (T)o;
-
-            if (result != null)
+            if (pm != null)
             {
-                t = result;
+                final Object o = pm.getOutput();
+                T result = (T)o;
+
+                if (result != null)
+                {
+                    t = result;
+                }
+                e = pm.getRemoteException();
+                done.set(true);
+                // MUST set done to true before interrupting threads, or we'll get a bunch of
+                // InterruptedExceptions on get()
+                smoochThreads();
             }
-            e = pm.getRemoteException();
-            done.set(true);
-            // MUST set done to true before interrupting threads, or we'll get a bunch of
-            // InterruptedExceptions on get()
-            smoochThreads();
+            else
+            {
+                t = null;
+            }
+            return true;
         }
         else
         {
-            t = null;
+            return false;
         }
     }
 

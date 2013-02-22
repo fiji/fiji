@@ -45,7 +45,7 @@ public class NodeManager
             execRoot = execPath;
             fileRoot = filePath;
             id = FijiArchipelago.getUniqueID();
-            numThreads = 4;
+            numThreads = 0;
         }
 
         public synchronized void setThreadLimit(final int n)

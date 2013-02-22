@@ -427,6 +427,7 @@ public class ClusterUI implements ClusterStateListener
     private final ClusterNodeStatusUI nodeStatusUI;
     private final AtomicBoolean active;
     private final ExecutorService exec;
+    private final ClusterUI self = this;
 
     public ClusterUI(Cluster c)
     {
@@ -469,6 +470,7 @@ public class ClusterUI implements ClusterStateListener
                     nodeParameters.clear();
                     nodeStatusUI.stop();
                     active.set(false);
+                    cluster.removeStateListener(self);
                 }
             }
         });

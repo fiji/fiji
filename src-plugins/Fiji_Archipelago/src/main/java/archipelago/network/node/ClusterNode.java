@@ -2,6 +2,7 @@ package archipelago.network.node;
 
 import archipelago.*;
 import archipelago.data.HeartBeat;
+import archipelago.exception.ShellExecutionException;
 import archipelago.listen.*;
 import archipelago.compute.ProcessManager;
 import archipelago.data.ClusterMessage;
@@ -40,7 +41,7 @@ public class ClusterNode implements TransceiverListener
     private final Hashtable<Long, ProcessListener> processHandlers;
     private final Hashtable<Long, ProcessManager> runningProcesses;
     private final AtomicBoolean ready;
-    private final AtomicInteger ramMBAvail, ramMBTot;
+    private final AtomicInteger ramMBAvail, ramMBTot, runningCores;
     private long nodeID;
     private long lastBeatTime;
     private NodeManager.NodeParameters nodeParam;
@@ -61,6 +62,7 @@ public class ClusterNode implements TransceiverListener
         idSet = new AtomicBoolean(false);
         ramMBAvail = new AtomicInteger(0);
         ramMBTot = new AtomicInteger(0);
+        runningCores = new AtomicInteger(0);
         processHandlers = new Hashtable<Long, ProcessListener>();
         runningProcesses = new Hashtable<Long, ProcessManager>();
         nodeID = -1;
@@ -183,6 +185,7 @@ public class ClusterNode implements TransceiverListener
     }
     
     public boolean exec(final String command, final ShellExecListener listener)
+            throws ShellExecutionException
     {
         return getShell().exec(nodeParam, command, listener);
     }
@@ -209,12 +212,12 @@ public class ClusterNode implements TransceiverListener
     
     public int numRunningThreads()
     {
-        return processHandlers.size();
+        return runningCores.get();
     }
-    
+
     public int numAvailableThreads()
     {
-        int n = nodeParam.getThreadLimit() - processHandlers.size();
+        int n = nodeParam.getThreadLimit() - runningCores.get();
         return n > 0 ? n : 0;
     }
     
@@ -238,6 +241,7 @@ public class ClusterNode implements TransceiverListener
                 processHandlers.put(process.getID(), listener);
                 runningProcesses.put(process.getID(), process);
                 process.setRunningOn(this);
+                runningCores.addAndGet(process.requestedCores(this));
                 return xc.queueMessage(MessageType.PROCESS, process);
             }
             else
@@ -279,14 +283,24 @@ public class ClusterNode implements TransceiverListener
                     nodeID = id;
                     nodeParam.setNode(this);
                     idSet.set(true);
+                    if (nodeParam.getThreadLimit() <= 0)
+                    {
+                        xc.queueMessage(MessageType.NUMTHREADS);
+                    }
                     break;
-                
+
                 case PROCESS:
                     ProcessManager<?> pm = (ProcessManager<?>)object;
                     ProcessListener listener = processHandlers.remove(pm.getID());
-                    runningProcesses.remove(pm.getID());
+                    removeProcess(pm);
+                    //runningProcesses.remove(pm.getID());
 
                     listener.processFinished(pm);
+                    break;
+
+                case NUMTHREADS:
+                    int n = (Integer)object;
+                    nodeParam.setThreadLimit(n);
                     break;
                 
                 case PING:                
@@ -333,7 +347,7 @@ public class ClusterNode implements TransceiverListener
                 
                 default:
                     FijiArchipelago.log("Got unexpected message type. The local version " +
-                            "of Fiji may not be up to date with the clients.");
+                            "of Archipelago may not be up to date with the clients.");
             
             }
             
@@ -429,11 +443,19 @@ public class ClusterNode implements TransceiverListener
         }
         else if (xc.queueMessage(MessageType.CANCELJOB, id))
         {
-            processHandlers.remove(id);
-            runningProcesses.remove(id);
+            removeProcess(pm);
+            //processHandlers.remove(id);
+            //runningProcesses.remove(id);
             return true;
         }
         return false;
+    }
+    
+    private void removeProcess(ProcessManager pm)
+    {
+        runningProcesses.remove(pm.getID());
+        processHandlers.remove(pm.getID());
+        runningCores.addAndGet(-(pm.requestedCores(this)));
     }
 
     public List<ProcessManager> getRunningProcesses()

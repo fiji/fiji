@@ -62,7 +62,7 @@ public class Equality_Example implements PlugIn
     {
         final ExecutorService executorService =
                 Cluster.activeCluster() ?
-                        Cluster.getCluster() :
+                        Cluster.getCluster().getService(1) :
                         Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
         final ArrayList<Future<ArrayList<Float>>> futures = new ArrayList<Future<ArrayList<Float>>>();
 

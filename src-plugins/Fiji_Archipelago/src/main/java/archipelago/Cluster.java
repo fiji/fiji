@@ -31,7 +31,7 @@ import java.util.concurrent.locks.ReentrantLock;
  *
  * @author Larry Lindsey
  */
-public class Cluster implements ExecutorService, NodeStateListener
+public class Cluster implements NodeStateListener, ExecutorProvider
 {
 
     public static enum ClusterState
@@ -62,9 +62,10 @@ public class Cluster implements ExecutorService, NodeStateListener
         private final AtomicBoolean running;
         private final Hashtable<Long, ProcessManager> runningProcesses;
         private final Vector<ProcessManager<?>> remainingJobList;
-        private final int guaranteeCapacity;
+        private final LinkedList<ProcessManager> internalQueue;
+        private final ReentrantLock lock;
 
-        private ProcessScheduler(int jobCapacity, int t)
+        private ProcessScheduler(int t)
         {
             jobQueue = new LinkedBlockingQueue<ProcessManager>();
             priorityJobQueue = new LinkedBlockingQueue<ProcessManager>();
@@ -72,7 +73,8 @@ public class Cluster implements ExecutorService, NodeStateListener
             pollTime = new AtomicInteger(t);
             runningProcesses = new Hashtable<Long, ProcessManager>();
             remainingJobList = new Vector<ProcessManager<?>>();
-            guaranteeCapacity = jobCapacity;
+            internalQueue = new LinkedList<ProcessManager>();
+            lock = new ReentrantLock();
         }
         
 
@@ -81,14 +83,15 @@ public class Cluster implements ExecutorService, NodeStateListener
             pollTime.set(t);
         }
 
-        public synchronized <T> boolean queueJob(Callable<T> c, long id)
+        public synchronized <T> boolean queueJob(Callable<T> c, long id, float np, boolean f)
         {
-            return queueJob(c, id, false);
+            return queueJob(c, id, false, np, f);
         }
         
-        public synchronized <T> boolean queueJob(Callable<T> c, long id, boolean priority)
+        public synchronized <T> boolean queueJob(Callable<T> c, long id,
+                                                 boolean priority, float np, boolean f)
         {
-            ProcessManager<T> pm = new ProcessManager<T>(c, id);
+            ProcessManager<T> pm = new ProcessManager<T>(c, id, np, f);
             return queueJob(pm, priority);
         }
         
@@ -132,88 +135,170 @@ public class Cluster implements ExecutorService, NodeStateListener
             }
         }
 
+        private void rotate(LinkedList<ClusterNode> nodeList)
+        {
+            if (nodeList.size() > 1)
+            {
+                final ClusterNode front = nodeList.remove(0);
+                nodeList.addLast(front);
+            }
+        }
+
+        /**
+         * Attempts to submit the ProcessManager pm on each node in nodeList. This function
+         * runs on the same thread as run().
+         * @param pm a queued ProcessManager that is to be run to the Cluster
+         * @param nodeList a List of ClusterNodes with available Threads
+         * @return true if pm was scheduled, false otherwise.
+         */
+        private boolean trySubmit(final ProcessManager<?> pm,
+                                  final LinkedList<ClusterNode> nodeList)
+        {
+            if (nodeList.isEmpty())
+            {
+                return false;
+            }
+            else
+            {
+                ProcessListener listener = new ProcessListener() {
+                    /**
+                     * processFinished is called when the given ClusterNode recieves a message
+                     * from its remote counterpart indicating that the job has finished.
+                     * @param process a ProcessManager that just returned from the cluster
+                     * @return true if the Future was finished successfully, false otherwise.
+                     */
+                    public boolean processFinished(ProcessManager<?> process)
+                    {
+                        final long id = process.getID();
+                        final ArchipelagoFuture<?> future = futures.remove(id);
+
+                        if (future == null)
+                        {
+                            FijiArchipelago.log("Got results from a cancelled process");
+                            return false;
+                        }
+                        
+                        runningProcesses.remove(id);
+                        decrementJobCount();
+
+                        try
+                        {
+                            FijiArchipelago.debug("Scheduler: Finishing Future " + future.getID());
+                            future.finish(process);
+                            return true;
+                        }
+                        catch (ClassCastException cce)
+                        {
+                            return false;
+                        }
+                    }
+                };
+                
+                /*
+                 Run through the available ClusterNodes, attempting to submit the job to each one.
+                 When a node rejects the PM, rotate the list. Assuming that our job list is rather
+                 uniform, this should reduce our overhead.
+                 */
+                for (int i = 0; i < nodeList.size(); ++i)
+                {
+                    final ClusterNode node = nodeList.getFirst();
+                    if (node.numAvailableThreads() >= pm.requestedCores(node) &&
+                            node.submit(pm, listener))
+                    {
+                        runningProcesses.put(pm.getID(), pm);
+                        incrementJobCount();
+                        if (node.numAvailableThreads() <= 0)
+                        {
+                            nodeList.remove(node);
+                        }
+                        return true;
+                    }
+                    rotate(nodeList);
+                }
+                return false;
+            }
+        }
+        
         public void run()
         {
             FijiArchipelago.log("Scheduler: Started. Running flag: " + running.get());
 
+            final ArrayList<ProcessManager> tempQ = new ArrayList<ProcessManager>();
+            final ArrayList<ProcessManager> pmQ = new ArrayList<ProcessManager>();
+            final LinkedList<ClusterNode> nodeList = new LinkedList<ClusterNode>();           
+            
+            
             while (running.get())
             {
-                ProcessManager<?> pm;
-                ClusterNode node;
-
-                try
+                // Remove de-activated nodes, and those that are saturated with jobs
+                
+                lock.lock();
+                
+                for (ClusterNode node : nodeList)
                 {
-                    node = getFreeNode();
-                    if (node == null)
+                    if (node.getState() != ClusterNodeState.ACTIVE ||
+                            node.numAvailableThreads() <= 0)
                     {
-                        Thread.sleep(pollTime.get());
+                        nodeList.remove(node);
                     }
+                }
 
+                // Add any newly-available nodes we might have.
+                for (ClusterNode node : nodes)
+                {
+                    if (node.numAvailableThreads() > 0 && !nodeList.contains(node))
+                    {
+                        nodeList.addFirst(node);
+                    }
+                }
+                
+
+                //Put priority jobs in front of the internal queue, in the correct order
+
+                priorityJobQueue.drainTo(tempQ);
+                for (int i = priorityJobQueue.size(); i > 0; --i)
+                {
+                    internalQueue.addFirst(tempQ.get(i - 1));
+                }
+                tempQ.clear();
+
+                //Put non-priority jobs at the end of the internal queue.
+                jobQueue.drainTo(internalQueue);
+
+                //If we have both jobs and nodes to run them on...
+                if (!internalQueue.isEmpty() && !nodeList.isEmpty())
+                {
+                    // Temporary queue so we can remove jobs from the internalQueue
+                    // without suffering ConcurrentModificationExceptions
+                    pmQ.addAll(internalQueue);
+                    for (ProcessManager<?> pm : pmQ)
+                    {
+                        if (trySubmit(pm, nodeList))
+                        {
+                            internalQueue.remove(pm);
+                        }
+                        // Deal PM's to the nodes like we're playing poker.
+                        rotate(nodeList);
+                    }
+                    
+                    pmQ.clear();
+                }
+                
+                lock.unlock();
+                
+                // At this stage, all PM's that can be run should be running on a ClusterNode
+                // somewhere. Sleep for a bit. Perhaps a new node will become available, or we'll
+                // get a PM that can be slotted on an available node.
+                try
+                {                    
+                    Thread.sleep(pollTime.get());
                 }
                 catch (InterruptedException ie)
                 {
                     FijiArchipelago.log("Scheduler interrupted while sleeping, stopping.");
                     running.set(false);
-                    node = null;
                 }
-
-                if (node != null)
-                {
-
-                    try
-                    {
-                        pm = jobQueue.poll(pollTime.get(), TimeUnit.MILLISECONDS);
-                    }
-                    catch (InterruptedException ie)
-                    {
-                        FijiArchipelago.log("Scheduler interrupted while waiting for jobs, stopping.");
-                        running.set(false);
-                        pm = null;
-                    }
-
-                    if (pm != null)
-                    {
-                        ProcessListener listener = new ProcessListener() {
-                            public boolean processFinished(ProcessManager<?> process) {
-                                final long id = process.getID();
-                                final ArchipelagoFuture<?> future = futures.remove(id);
-
-                                runningProcesses.remove(id);
-                                decrementJobCount();
-                                
-                                try
-                                {
-                                    FijiArchipelago.debug("Scheduler: Finishing Future " + future.getID());
-                                    future.finish(process);
-                                    return true;
-                                }
-                                catch (ClassCastException cce)
-                                {
-                                    return false;
-                                }
-                            }
-                        };
-
-                        /*
-                        Here, we have a ProcessManager, a ProcessListener, and a ClusterNode.
-                        The PM has been removed from the queue already.
-                        If we successfully submit it on a ClusterNode, we're done. If that didn't
-                        work, we push it back onto the priority queue. Unless we're awash in
-                        closed ClusterNodes, scheduling should be re-attempted later.
-                         */
-
-                        if (node.submit(pm, listener))
-                        {
-                            runningProcesses.put(pm.getID(), pm);
-                            incrementJobCount();
-                        }
-                        else
-                        {
-                            queueJob(pm, true);
-                        }
-
-                    }
-                }
+                
             }
             FijiArchipelago.log("Scheduler exited");
         }
@@ -223,6 +308,21 @@ public class Cluster implements ExecutorService, NodeStateListener
             running.set(active);
         }
 
+        private boolean removeFromQueue(Collection<ProcessManager> pms, long id)
+        {
+            ProcessManager rmpm = null;
+            for (ProcessManager pm : pms)
+            {
+                if (pm.getID() == id)
+                {
+                    rmpm = pm;
+                    break;
+                }
+            }
+
+            return rmpm != null && pms.remove(rmpm);
+        }
+        
         /**
          * Attempts to cancel a running job with the given id, optionally canclling jobs that have
          * already been submitted to a node.
@@ -233,86 +333,51 @@ public class Cluster implements ExecutorService, NodeStateListener
          */
         public synchronized boolean cancelJob(long id, boolean force)
         {
-            final ArrayList<ProcessManager> pmInQ = new ArrayList<ProcessManager>();
-            boolean cont = true;
+            lock.lock();
 
-            // These for loops look funny because we're running concurrently
-
-            for (ProcessManager pm : priorityJobQueue)
+            if (removeFromQueue(priorityJobQueue, id) ||
+                    removeFromQueue(jobQueue, id) ||
+                    removeFromQueue(internalQueue, id))
             {
-                pmInQ.add(pm);
+                lock.unlock();
+                return true;
             }
-            
-            for (int i = 0; cont && i < pmInQ.size(); ++i)
-            {
-                final ProcessManager pm = pmInQ.get(i);
-                if (pm.getID() == id)
-                {
-                    /*
-                    It is very possible that we popped the ProcessManager in question off
-                    of the queue and submitted it to a node in between copying the job queue
-                    into pmInQ and finding the correct ProcessManager.
-
-                    This handles that potential case.
-                     */
-                    if(priorityJobQueue.remove(pm))
-                    {
-                        return true;
-                    }
-                    else
-                    {
-                        cont = false;
-                    }
-                }
-            }
-            
-            pmInQ.clear();
-            for (ProcessManager pm : jobQueue)
-            {
-                pmInQ.add(pm);
-            }
-
-            for (int i = 0; cont && i < pmInQ.size(); ++i)
-            {
-                final ProcessManager pm = pmInQ.get(i);
-                if (pm.getID() == id)
-                {
-                    if(jobQueue.remove(pm))
-                    {
-                        return true;
-                    }
-                    else
-                    {
-                        cont = false;
-                    }
-                }
-            }
-
-            /*
-            If we have gotten this far, and if the ProcessManager in question is running somewhere,
-            then we should be able to pull it out of the runningProcesses hash table.
-             */
+                
 
             ProcessManager<?> pm = runningProcesses.get(id);             
             if (force && pm != null)
             {
-                ClusterNode runningOn = getNode(pm.getRunningOn()); 
+                ArchipelagoFuture future = futures.remove(id);                                
+                ClusterNode runningOn = getNode(pm.getRunningOn());
+
+                if (future == null)
+                {
+                    FijiArchipelago.err("Scheduler.cancelJob: got null future. " +
+                            "This should not have happened");
+                }
+                else
+                {
+                    if(future.finish(null))
+                    {
+                        decrementJobCount();
+                    }
+                }
+
                 if (runningOn != null)
                 {
                     if (runningOn.cancelJob(id))
                     {
                         runningProcesses.remove(id);
-                        decrementJobCount();
+                        lock.unlock();
                         return true;
-
                     }
                     else
                     {
                         FijiArchipelago.err("Could not cancel job " + id + " running on node "
                                 + runningOn.getHost());
+                        lock.unlock();
                         return false;
                     }
-
                 }
                 else
                 {
@@ -329,11 +394,13 @@ public class Cluster implements ExecutorService, NodeStateListener
                     FijiArchipelago.err("Queue: ProcessManager " + pm.getID()
                             + " was running, but could not find its Node. Cannot cancel");
                     
+                    lock.unlock();
                     return false;
                 }
             }
             else
             {
+                lock.unlock();
                 return false;
             }
         }
@@ -350,6 +417,12 @@ public class Cluster implements ExecutorService, NodeStateListener
             
             remainingJobList.clear();
 
+            for (ProcessManager pm : internalQueue)
+            {
+                remainingJobList.add(pm);
+                futures.get(pm.getID()).cancel(false);
+            }
+            
             for (ProcessManager pm : priorityJobQueue)
             {
                 remainingJobList.add(pm);
@@ -364,11 +437,12 @@ public class Cluster implements ExecutorService, NodeStateListener
 
             priorityJobQueue.clear();
             jobQueue.clear();
+            internalQueue.clear();
         }
         
         public int queuedJobCount()
         {
-            return priorityJobQueue.size() + jobQueue.size();
+            return internalQueue.size() + priorityJobQueue.size() + jobQueue.size();
         }
 
     }
@@ -390,20 +464,128 @@ public class Cluster implements ExecutorService, NodeStateListener
         return cluster != null && cluster.getState() == ClusterState.RUNNING;
     }
     
-    private class ClusterProvider implements ExecutorProvider
+    private class ClusterExecutorService implements ExecutorService
     {
-        private final Cluster c;
+
+        private final boolean isFractional;
+        private final float numCores;
         
-        public ClusterProvider(Cluster cluster)
+        public ClusterExecutorService(final float ft)
         {
-            c = cluster;
+            isFractional = true;
+            numCores = ft;
+        }
+        
+        public ClusterExecutorService(final int nc)
+        {
+            isFractional = false;
+            numCores = nc;
+        }
+        
+        public synchronized void shutdown()
+        {
+            self.shutdown();
         }
 
-        public ExecutorService getExecutor(int nThreads) {
-            return c; 
+        public synchronized List<Runnable> shutdownNow() {
+            return self.shutdownNow();
+        }
+
+        public boolean isShutdown()
+        {
+            return self.isShutdown();
+        }
+
+        public boolean isTerminated() {
+            return self.isTerminated();
+        }
+
+        public boolean awaitTermination(long l, TimeUnit timeUnit) throws InterruptedException
+        {
+            final Thread t = Thread.currentThread();
+            waitThreads.add(t);
+            try
+            {
+                Thread.sleep(timeUnit.convert(l, TimeUnit.MILLISECONDS));
+                waitThreads.remove(t);
+                return isTerminated();
+            }
+            catch (InterruptedException ie)
+            {
+                waitThreads.remove(t);
+                if (isTerminated())
+                {
+                    return true;
+                }
+                else
+                {
+                    throw ie;
+                }
+            }
+        }
+
+        public <T> Future<T> submit(Callable<T> tCallable)
+        {
+            ArchipelagoFuture<T> future = new ArchipelagoFuture<T>(scheduler);
+            futures.put(future.getID(), future);
+            if (!scheduler.queueJob(tCallable, future.getID(), numCores, isFractional))
+            {
+                future.finish(null);
+                futures.remove(future.getID());
+            }
+            return future;
+        }
+
+        public <T> Future<T> submit(final Runnable runnable, T t) {
+            Callable<T> tCallable = new QuickCallable<T>(runnable);
+            ArchipelagoFuture<T> future = new ArchipelagoFuture<T>(scheduler, t);
+            futures.put(future.getID(), future);
+            scheduler.queueJob(tCallable, future.getID(), numCores, isFractional);
+            return future;
+        }
+
+        public Future<?> submit(Runnable runnable) {
+            return submit(runnable, null);
+        }
+
+        public <T> List<Future<T>> invokeAll(Collection<? extends Callable<T>> callables) throws InterruptedException
+        {
+            ArrayList<Future<T>> waitFutures = new ArrayList<Future<T>>(callables.size());
+            for (Callable<T> c : callables)
+            {
+                waitFutures.add(submit(c));
+            }
+
+            for (Future<T> f : waitFutures)
+            {
+                try
+                {
+                    f.get();
+                }
+                catch (ExecutionException e)
+                {/**/}
+            }
+
+            return waitFutures;
+        }
+
+        public <T> List<Future<T>> invokeAll(Collection<? extends Callable<T>> callables, long l, TimeUnit timeUnit) throws InterruptedException {
+            return null;  //To change body of implemented methods use File | Settings | File Templates.
+        }
+
+        public <T> T invokeAny(Collection<? extends Callable<T>> callables) throws InterruptedException, ExecutionException {
+            return null;  //To change body of implemented methods use File | Settings | File Templates.
+        }
+
+        public <T> T invokeAny(Collection<? extends Callable<T>> callables, long l, TimeUnit timeUnit) throws InterruptedException, ExecutionException, TimeoutException {
+            return null;  //To change body of implemented methods use File | Settings | File Templates.
+        }
+
+        public void execute(Runnable runnable) {
+            submit(runnable);
         }
     }
-
+    
 
     /*
      After construction, halted, ready and terminated are all false
@@ -443,6 +625,8 @@ public class Cluster implements ExecutorService, NodeStateListener
     private final Vector<ClusterStateListener> listeners;
 
     private final XCErrorAdapter xcEListener;
+    
+    private final Cluster self = this;
 
     private Cluster()
     {
@@ -514,11 +698,8 @@ public class Cluster implements ExecutorService, NodeStateListener
                 return true;
             }
         };
-        
-        
-        
 
-        scheduler = new ProcessScheduler(1024, 1000);
+        scheduler = new ProcessScheduler(1000);
         
         nodeManager = new NodeManager();
         futures = new Hashtable<Long, ArchipelagoFuture<?>>();
@@ -535,7 +716,7 @@ public class Cluster implements ExecutorService, NodeStateListener
             FijiArchipelago.err("Could not get canonical host name for local machine. Using localhost instead");
         }
         
-        ThreadPool.setProvider(new ClusterProvider(this));
+        ThreadPool.setProvider(this);
     }
     
     /*
@@ -544,7 +725,7 @@ public class Cluster implements ExecutorService, NodeStateListener
     of using a ReentrantLock
      */
     
-    private ClusterState stateIntToEnum(final int s)
+    private static ClusterState stateIntToEnum(final int s)
     {
         switch (s)
         {
@@ -565,7 +746,7 @@ public class Cluster implements ExecutorService, NodeStateListener
         }
     }
 
-    private int stateEnumToInt(final ClusterState s)
+    private static int stateEnumToInt(final ClusterState s)
     {
         switch (s)
         {
@@ -1023,16 +1204,6 @@ public class Cluster implements ExecutorService, NodeStateListener
         return nodeManager;
     }
     
-    /*public boolean isActive()
-    {
-        return ready.get();
-    }
-    
-    public boolean isStarted()
-    {
-        return started.get();
-    }*/
-
     public int getRunningJobCount()
     {
         return jobCount.get();
@@ -1048,33 +1219,6 @@ public class Cluster implements ExecutorService, NodeStateListener
         return scheduler.queuedJobCount();
     }
     
-    public synchronized void shutdown()
-    {
-        /*
-        Shutdown sets halted to true, then de-activates the scheduler and all cluster nodes
-        When the last ClusterNode finishes processing, the running job count goes to zero
-         When the count reaches zero, haltFinished() is called, closing all of the nodes
-         When the last node is finished closing down, the cluster's state changes to terminated
-         At this point, all queued but un-run jobs may be returned in a List, and any Threads
-         that are waiting for us to terminate are unblocked.
-         */
-
-        setState(ClusterState.STOPPING);
-        scheduler.setActive(false);
-        
-        for (ClusterNode node : nodes)
-        {
-            node.setActive(false);
-        }
-        
-        if (jobCount.get() <= 0)
-        {
-            haltFinished();
-        }
-        
-        ThreadPool.setProvider(new DefaultExecutorProvider());
-    }
-
     protected synchronized void haltFinished()
     {
         ArrayList<ClusterNode> nodesToClose = new ArrayList<ClusterNode>(nodes);
@@ -1105,41 +1249,6 @@ public class Cluster implements ExecutorService, NodeStateListener
         }
     }
             
-
-    public synchronized List<Runnable> shutdownNow() {
-        /*
-        shutdownNow sets halted to true, de-activates the scheduler, and closes all ClusterNodes
-        Any jobs running on the clusternodes are placed on the priority queue in the scheduler,
-        but since its no longer active, these jobs are never re-submitted to a new ClusterNode
-         When the last node is finished closing down, the cluster's state changes to terminated
-         At this point, all queued but un-run jobs may be returned in a List, and any Threads
-         that are waiting for us to terminate are unblocked.
-         */
-        final ArrayList<ClusterNode> nodescp = new ArrayList<ClusterNode>(nodes);
-        
-        setState(ClusterState.STOPPING);
-        
-/*
-        ready.set(false);
-        halted.set(true);
-*/
-
-        for (ClusterNode node : nodescp)
-        {
-            node.close();
-        }
-        
-        /*
-        Now, wait synchronously up to ten seconds for terminated to get to true.
-        If everything went well, the last node.close() should have resulted in a call to
-        terminateFinished()
-        */
-
-        ThreadPool.setProvider(new DefaultExecutorProvider());
-
-        return remainingRunnables();
-    }
-
     public ArrayList<Callable<?>> remainingCallables()
     {
         ArrayList<Callable<?>> callables = new ArrayList<Callable<?>>(
@@ -1161,99 +1270,82 @@ public class Cluster implements ExecutorService, NodeStateListener
         }
         return runnables;
     }
-    
+
     public boolean isShutdown()
     {
         ClusterState state = getState();
-        return state == ClusterState.STOPPING || state == ClusterState.STOPPED; 
+        return state == ClusterState.STOPPING || state == ClusterState.STOPPED;
     }
 
     public boolean isTerminated() {
         return getState() == ClusterState.STOPPED;
     }
 
-    public boolean awaitTermination(long l, TimeUnit timeUnit) throws InterruptedException
+    public synchronized List<Runnable> shutdownNow() {
+
+        /*
+       shutdownNow sets halted to true, de-activates the scheduler, and closes all ClusterNodes
+       Any jobs running on the clusternodes are placed on the priority queue in the scheduler,
+       but since its no longer active, these jobs are never re-submitted to a new ClusterNode
+        When the last node is finished closing down, the cluster's state changes to terminated
+        At this point, all queued but un-run jobs may be returned in a List, and any Threads
+        that are waiting for us to terminate are unblocked.
+        */
+        final ArrayList<ClusterNode> nodescp = new ArrayList<ClusterNode>(nodes);
+
+        setState(ClusterState.STOPPING);
+
+        for (ClusterNode node : nodescp)
+        {
+            node.close();
+        }
+
+        /*
+        Now, wait synchronously up to ten seconds for terminated to get to true.
+        If everything went well, the last node.close() should have resulted in a call to
+        terminateFinished()
+        */
+
+        ThreadPool.setProvider(new DefaultExecutorProvider());
+
+        return remainingRunnables();
+    }
+
+    public synchronized void shutdown()
     {
-        final Thread t = Thread.currentThread(); 
-        waitThreads.add(t);
-        try
+        /*
+       Shutdown sets halted to true, then de-activates the scheduler and all cluster nodes
+       When the last ClusterNode finishes processing, the running job count goes to zero
+        When the count reaches zero, haltFinished() is called, closing all of the nodes
+        When the last node is finished closing down, the cluster's state changes to terminated
+        At this point, all queued but un-run jobs may be returned in a List, and any Threads
+        that are waiting for us to terminate are unblocked.
+        */
+
+        setState(ClusterState.STOPPING);
+        scheduler.setActive(false);
+
+        for (ClusterNode node : nodes)
         {
-            Thread.sleep(timeUnit.convert(l, TimeUnit.MILLISECONDS));
-            waitThreads.remove(t);
-            return isTerminated();
+            node.setActive(false);
         }
-        catch (InterruptedException ie)
+
+        if (jobCount.get() <= 0)
         {
-            waitThreads.remove(t);
-            if (isTerminated())
-            {
-                return true;
-            }
-            else
-            {
-                throw ie;
-            }
+            haltFinished();
         }
+
+        ThreadPool.setProvider(new DefaultExecutorProvider());
     }
 
-    public <T> Future<T> submit(Callable<T> tCallable)
+    public ExecutorService getService(int nThreads)
     {
-        ArchipelagoFuture<T> future = new ArchipelagoFuture<T>(scheduler);
-        futures.put(future.getID(), future);
-        if (!scheduler.queueJob(tCallable, future.getID()))
-        {
-            future.finish(null);
-            futures.remove(future.getID());
-        }
-        return future;
+        return new ClusterExecutorService(nThreads);
     }
-
-    public <T> Future<T> submit(final Runnable runnable, T t) {
-        Callable<T> tCallable = new QuickCallable<T>(runnable);
-        ArchipelagoFuture<T> future = new ArchipelagoFuture<T>(scheduler, t);
-        futures.put(future.getID(), future);
-        scheduler.queueJob(tCallable, future.getID());
-        return future;
-    }
-
-    public Future<?> submit(Runnable runnable) {
-        return submit(runnable, null);
-    }
-
-    public <T> List<Future<T>> invokeAll(Collection<? extends Callable<T>> callables) throws InterruptedException
+    
+    public ExecutorService getService(float fractionThreads)
     {
-        ArrayList<Future<T>> waitFutures = new ArrayList<Future<T>>(callables.size());
-        for (Callable<T> c : callables)
-        {
-            waitFutures.add(submit(c));
-        }
-        
-        for (Future<T> f : waitFutures)
-        {
-            try
-            {
-                f.get();
-            }
-            catch (ExecutionException e)
-            {}
-        }
-
-        return waitFutures;
+        return new ClusterExecutorService(fractionThreads);
     }
 
-    public <T> List<Future<T>> invokeAll(Collection<? extends Callable<T>> callables, long l, TimeUnit timeUnit) throws InterruptedException {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
-    }
-
-    public <T> T invokeAny(Collection<? extends Callable<T>> callables) throws InterruptedException, ExecutionException {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
-    }
-
-    public <T> T invokeAny(Collection<? extends Callable<T>> callables, long l, TimeUnit timeUnit) throws InterruptedException, ExecutionException, TimeoutException {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
-    }
-
-    public void execute(Runnable runnable) {
-        submit(runnable);
-    }
 }

@@ -17,16 +17,21 @@ public class ProcessManager<T> implements Runnable, Serializable
     private final long id;
     private Exception remoteException;
     private long runningOn;
+    private final float numCores;
+    private final boolean isFractional;
+     
     
     //public <S extends Callable<T> & Serializable> ProcessManager(final S c, final ProcessListener pl, long idArg)
     
-    public ProcessManager(final Callable<T> c, final long idArg)
+    public ProcessManager(final Callable<T> c, final long idArg, final float nc, final boolean f)
     {
         callable = c;
         output = null;
         id = idArg;
         remoteException = null;
         runningOn = -1;
+        numCores = nc;
+        isFractional = f;
     }
 
     /**
@@ -75,6 +80,21 @@ public class ProcessManager<T> implements Runnable, Serializable
     public Exception getRemoteException()
     {
         return remoteException;
+    }
+    
+    public int requestedCores(ClusterNode node)
+    {
+        int c;
+        if (isFractional)
+        {
+            c = (int)(numCores * (float)node.getThreadLimit());
+        }
+        else
+        {
+            c = (int)numCores;
+        }
+        
+        return c > 0 ? c : 1;
     }
     
 }
