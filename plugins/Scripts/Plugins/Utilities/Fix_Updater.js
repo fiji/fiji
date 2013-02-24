@@ -8,6 +8,7 @@
 
 importClass(Packages.ij.IJ);
 
+importClass(Packages.java.io.File);
 importClass(Packages.java.net.URL);
 importClass(Packages.java.net.URLClassLoader);
 
@@ -41,6 +42,16 @@ if (System.getProperty("ij.dir") == null) {
 		ijDir = url.substring(9, bang);
 	}
 	System.setProperty("ij.dir", ijDir);
+}
+
+ijDir = new File(System.getProperty("ij.dir"));
+if (!new File(ijDir, "db.xml.gz").exists()) {
+	IJ.showStatus("adding the Fiji update site");
+	filesClass = loader.loadClass("imagej.updater.core.FilesCollection");
+	files = filesClass.getConstructor([ loader.loadClass("java.io.File") ]).newInstance([ ijDir ]);
+	files.getUpdateSite("ImageJ").timestamp = -1;
+	files.addUpdateSite("Fiji", "http://fiji.sc/update/", null, null, -1);
+	files.write();
 }
 
 IJ.showStatus("loading remote updater");
