@@ -180,9 +180,24 @@ CYGWIN*)
 	;;
 esac
 
+get_mtime () {
+        stat -c %Y "$1"
+}
+if test Darwin = "$(uname -s 2> /dev/null)"
+then
+        get_mtime () {
+                stat -f %m "$1"
+        }
+fi
+
 uptodate () {
 	test -f "$2" &&
-	test "$2" -nt "$1"
+	test "$2" -nt "$1" &&
+	case "$2" in
+	*-SNAPSHOT.jar)
+		test "$(($(get_mtime "$2")-$(date +%s)))" -gt -86400
+		;;
+	esac
 }
 
 # we need an absolute CWD from now on
