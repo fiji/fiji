@@ -1,6 +1,11 @@
 /*
- * Please run this Javascript via Macros>Evaluate Javascript
+ * Please run this Javascript via
+ *
+ *    Macros>Evaluate Javascript
+ *
+ * or by hitting Ctrl+J (on MacOSX, Apple+J).
  */
+
 importClass(Packages.ij.IJ);
 
 importClass(Packages.java.net.URL);
