@@ -27,6 +27,22 @@ for (i = 0; i < jars.length; i++)
 importClass(Packages.java.lang.ClassLoader);
 parent = ClassLoader.getSystemClassLoader().getParent();
 loader = new URLClassLoader(urls, parent);
+
+// make sure that the system property 'ij.dir' is set correctly
+if (System.getProperty("ij.dir") == null) {
+	ijDir = IJ.getDirectory("imagej");
+	if (ijDir == null) {
+		url = IJ.getClassLoader().loadClass("ij.IJ").getResource("/ij/IJ.class").toString();
+		bang = url.indexOf("ij.jar!/");
+		if (!url.startsWith("jar:file:") || bang < 0) {
+			IJ.error("Cannot set ij.dir for " + url);
+			throw new RuntimeExeption();
+		}
+		ijDir = url.substring(9, bang);
+	}
+	System.setProperty("ij.dir", ijDir);
+}
+
 IJ.showStatus("loading remote updater");
 guiClass = loader.loadClass("imagej.updater.gui.ImageJUpdater");
 IJ.showStatus("running remote updater");
