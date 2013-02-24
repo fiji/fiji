@@ -33,7 +33,7 @@ void writeLinuxDesktopFile(File file) {
 	out.println("Terminal=false");
 	out.println("StartupNotify=true");
 	out.println("Icon=" + icon);
-	out.println("StartupWMClass=sun-awt-X11-XFramePeer");
+	out.println("StartupWMClass=fiji-Main");
 	out.close();
 	file.setExecutable(true);
 }
