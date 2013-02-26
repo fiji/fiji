@@ -28,17 +28,18 @@ import javax.swing.event.ChangeListener;
 import fiji.plugin.trackmate.FeatureFilter;
 
 public class FilterGuiPanel extends ActionListenablePanel implements ChangeListener {
-
-	private static final long serialVersionUID = 1307749013344373051L;
+	
+	private static final boolean DEBUG = false;
+	private static final long serialVersionUID = -1L;
+	private static final String ADD_ICON = "images/add.png";
+	private static final String REMOVE_ICON = "images/delete.png";
+	
 	private final ChangeEvent CHANGE_EVENT = new ChangeEvent(this);
 	/** Will be set to the value of the {@link JPanelColorByFeatureGUI}. */
 	public ActionEvent COLOR_FEATURE_CHANGED = null;
 
-	private static final String ADD_ICON = "images/add.png";
-	private static final String REMOVE_ICON = "images/delete.png";
-
 	private JPanel jPanelBottom;
-	private JPanelColorByFeatureGUI jPanelColorByFeatureGUI;
+	JPanelColorByFeatureGUI jPanelColorByFeatureGUI;
 	private JScrollPane jScrollPaneThresholds;
 	private JPanel jPanelAllThresholds;
 	private JPanel jPanelButtons;
@@ -117,7 +118,7 @@ public class FilterGuiPanel extends ActionListenablePanel implements ChangeListe
 		}
 		jPanelColorByFeatureGUI = new JPanelColorByFeatureGUI(features, featureNames, this);
 		COLOR_FEATURE_CHANGED = jPanelColorByFeatureGUI.COLOR_FEATURE_CHANGED;
-		jPanelColorByFeatureGUI.featureValues = featureValues;
+		jPanelColorByFeatureGUI.setFeatureValues(featureValues);
 		jPanelBottom.add(jPanelColorByFeatureGUI, BorderLayout.CENTER);
 
 		// Title
@@ -132,12 +133,11 @@ public class FilterGuiPanel extends ActionListenablePanel implements ChangeListe
 	 */
 	@Override
 	public void stateChanged(ChangeEvent e) {
-		updater.setTargetEvent(e);
 		updater.doUpdate();
 	}
 
 	/**
-	 * Return the thresholds currently set by this GUI.
+	 * @eeturn the thresholds currently set by this GUI.
 	 */
 	public List<FeatureFilter> getFeatureFilters() {
 		return featureFilters;
@@ -179,8 +179,9 @@ public class FilterGuiPanel extends ActionListenablePanel implements ChangeListe
 	 */
 
 	private void fireThresholdChanged(ChangeEvent e) {
-		for (ChangeListener cl : changeListeners) 
+		for (ChangeListener cl : changeListeners)  {
 			cl.stateChanged(e);
+		}
 	}
 
 	public void addFilterPanel() {
@@ -238,10 +239,22 @@ public class FilterGuiPanel extends ActionListenablePanel implements ChangeListe
 		} catch (EmptyStackException ese) {	}
 	}
 
+	private void refresh() {
+		if (DEBUG) {
+			System.out.println("[FilterGuiPanel] #refresh()");
+		}
+		featureFilters = new ArrayList<FeatureFilter>(thresholdPanels.size());
+		for (FilterPanel tp : thresholdPanels) {
+			featureFilters.add(new FeatureFilter(tp.getKey(), new Double(tp.getThreshold()), tp.isAboveThreshold()));
+		}
+		fireThresholdChanged(null);
+		updateInfoText();
+	}
 
 	private void updateInfoText() {
 		String info = "";
 		int nobjects = 0;
+		
 		for (double[] values : featureValues.values()) { // bulletproof against unspecified features, which are signaled by empty arrays
 			if (values.length > 0) {
 				nobjects = values.length;
@@ -375,19 +388,13 @@ public class FilterGuiPanel extends ActionListenablePanel implements ChangeListe
 	 * @author Albert Cardona
 	 */
 	private class Updater extends Thread {
-		long request = 0;
-		private ChangeEvent event;
+		private long request = 0;
 
 		// Constructor autostarts thread
 		Updater() {
 			super("TrackMate FilterGuiPanel repaint thread");
 			setPriority(Thread.NORM_PRIORITY);
 			start();
-		}
-
-		public void setTargetEvent(ChangeEvent e) {
-			this.event = e;
-			
 		}
 
 		void doUpdate() {
@@ -416,14 +423,7 @@ public class FilterGuiPanel extends ActionListenablePanel implements ChangeListe
 					}
 					// Call update from this thread
 					if (r > 0) {
-						
-						featureFilters = new ArrayList<FeatureFilter>(thresholdPanels.size());
-						for (FilterPanel tp : thresholdPanels) {
-							featureFilters.add(new FeatureFilter(tp.getKey(), new Float(tp.getThreshold()), tp.isAboveThreshold()));
-						}
-						fireThresholdChanged(event);
-						updateInfoText();
-						
+						refresh();
 					}
 						
 					synchronized (this) {

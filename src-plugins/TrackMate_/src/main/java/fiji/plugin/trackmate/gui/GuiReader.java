@@ -7,25 +7,22 @@ import ij.gui.NewImage;
 import java.awt.FileDialog;
 import java.io.File;
 import java.io.FilenameFilter;
-import java.util.List;
 
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
-import org.jgrapht.graph.DefaultWeightedEdge;
-import org.jgrapht.graph.SimpleWeightedGraph;
-
-import fiji.plugin.trackmate.FeatureFilter;
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.Settings;
-import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMate_;
+import fiji.plugin.trackmate.detection.SpotDetectorFactory;
 import fiji.plugin.trackmate.io.TmXmlReader;
-import fiji.plugin.trackmate.segmentation.SegmenterSettings;
-import fiji.plugin.trackmate.tracking.TrackerSettings;
+import fiji.plugin.trackmate.io.TmXmlReader_v12;
+import fiji.plugin.trackmate.tracking.SpotTracker;
+import fiji.plugin.trackmate.util.TMUtils;
+import fiji.plugin.trackmate.util.Version;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
 import fiji.plugin.trackmate.visualization.hyperstack.HyperStackDisplayer;
 
@@ -38,7 +35,7 @@ import fiji.plugin.trackmate.visualization.hyperstack.HyperStackDisplayer;
  */
 public class GuiReader {
 
-	private Logger logger = Logger.VOID_LOGGER;
+	protected Logger logger = Logger.VOID_LOGGER;
 	private TrackMateWizard wizard;
 	private String targetDescriptor;
 	private TrackMate_ plugin;
@@ -90,62 +87,110 @@ public class GuiReader {
 	 * @param file  the file to load
 	 */
 	public void loadFile(File file) {
+
 		// Init target fields
-		TrackMateModel model = new TrackMateModel();
-		plugin = new TrackMate_(model);
+		plugin = new TrackMate_();
 		plugin.initModules();
 		plugin.setLogger(logger);
-		if (displayer ==null ) {
-			displayer = new HyperStackDisplayer();
-		}
+		
+		// Initialize a string holder so that we can cat messages when relaoding log content
+		StringBuilder str = new StringBuilder("Loading XML file on:\n" + TMUtils.getCurrentTimeString()+'\n');
+		String msg;
 
 		// Open and parse file
-		logger.log("Opening file "+file.getName()+'\n');
-		TmXmlReader reader = new TmXmlReader(file, logger);
-		reader.parse();
-		logger.log("  Parsing file done.\n");
+		msg = "Opening file "+file.getName()+'\n';
+		logger.log(msg);
+		str.append(msg);
+		TmXmlReader reader = new TmXmlReader(file, plugin);
 
+		if (!reader.checkInput()) {
+			logger.error("There was a problem opening the source file:\n" + reader.getErrorMessage() + '\n');
+			logger.error("Aborting.\n");
+			return;
+ 		} else {
+ 			msg = "  Parsing file done.\n";
+ 			logger.log(msg);
+ 			str.append(msg);
+ 		}
+
+		// Check file version & deal with older save format
+		String fileVersionStr = reader.getVersion();
+		Version fileVersion;
+		try {
+			fileVersion = new Version(fileVersionStr);
+		} catch (IllegalArgumentException iae) {
+			logger.error("Cannot deal with file version: " + fileVersionStr + '\n');
+			logger.error("Aborting.\n");
+			return;
+		}
 		
-		// Retrieve data and update GUI
-		Settings settings = null;
-		ImagePlus imp = null;
+		Version currentVersion = new Version(TrackMate_.PLUGIN_NAME_VERSION);
+		if (fileVersion.compareTo(currentVersion ) < 0) {
+			logger.log("  Detected an older file format: v"+fileVersionStr);
+			logger.log(" Converting on the fly.\n");
+			// We substitute an able reader
+			reader = new TmXmlReader_v12(file, plugin);
+		}
 
+		// Retrieve data and update GUI
+		boolean readWasOk = reader.process();
+		if (!readWasOk) {
+			logger.error("There was some errors when loading the file:\n");
+			logger.error(reader.getErrorMessage());
+			return;
+		}
+		
+		// Retrieve log text if any
+		String log = reader.getLogText();
+		if (log != null) {
+			wizard.getLogPanel().setTextContent(log + "\n\n" + str.toString());
+		}
+
+		if (fileVersion.compareTo(currentVersion ) < 0) {
+			// We need to re-compute track & edge features in this case
+			if (plugin.getModel().getTrackModel().getNTracks() > 0) {
+				plugin.computeTrackFeatures(true);
+				plugin.computeEdgeFeatures(true);
+			}
+		}
+
+		// Make a new displayer
+		displayer = new HyperStackDisplayer(plugin.getModel());
+		
 		// Send the new instance of plugin to all panel a first
 		// time, required by some for proper instantiation.
 		passNewPluginToWizard();
 
-		{ // Read settings
-			logger.log("  Loading settings...");
-			settings = reader.getSettings();
-			echoDone();
+		// We now check the content of the retrieved model
+		final TrackMateModel model = plugin.getModel();
+		Settings settings = model.getSettings();
+		ImagePlus imp = settings.imp;
 
-			// Try to read image
-			logger.log("  Loading image...");
-			imp = reader.getImage();		
+		{
+			// Did we get an image?
 			if (null == imp) {
 				// Provide a dummy empty image if linked image can't be found
-				logger.log("\nCould not find image "+settings.imageFileName+" in "+settings.imageFolder+". Substituting dummy image.\n");
+				logger.log("Could not find image "+settings.imageFileName+" in "+settings.imageFolder+". Substituting dummy image.\n");
 				imp = NewImage.createByteImage("Empty", settings.width, settings.height, settings.nframes * settings.nslices, NewImage.FILL_BLACK);
 				imp.setDimensions(1, settings.nslices, settings.nframes);
+			} else {
+				logger.log("Found a proper image.\n");
 			}
-
+			
 			settings.imp = imp;
 			model.setSettings(settings);
-			echoDone();
 			// We display it only if we have a GUI
 
 			// Update start panel
-			WizardPanelDescriptor panel = wizard.getPanelDescriptorFor(StartDialogPanel.DESCRIPTOR);
+			StartDialogPanel panel = (StartDialogPanel) wizard.getPanelDescriptorFor(StartDialogPanel.DESCRIPTOR);
+			panel.setPlugin(plugin);
 			panel.aboutToDisplayPanel();
-		}
+		}		
 
-
-		{ // Try to read segmenter settings
-			logger.log("  Reading segmenter settings...");
-			reader.getSegmenterSettings(settings);
-			SegmenterSettings segmenterSettings = settings.segmenterSettings;
-			if (null == segmenterSettings) {
-				echoNotFound();
+		{ // Did we get a detector
+			SpotDetectorFactory<?> detectorFactory = settings.detectorFactory;
+			if (null == detectorFactory) {
+				logger.log("Detector not found in the file.\n");
 				// Stop at start panel
 				targetDescriptor = StartDialogPanel.DESCRIPTOR;
 				if (!imp.isVisible())
@@ -153,123 +198,94 @@ public class GuiReader {
 				echoLoadingFinished();
 				return;
 			}
-			echoDone();
+			logger.log("Found a detector.\n");
 
-			// Update 2nd panel: segmenter choice
-			SegmenterChoiceDescriptor segmenterChoiceDescriptor = (SegmenterChoiceDescriptor) wizard.getPanelDescriptorFor(SegmenterChoiceDescriptor.DESCRIPTOR);
-			segmenterChoiceDescriptor.aboutToDisplayPanel();
+			// Update 2nd panel: detector choice
+			DetectorChoiceDescriptor detectorChoiceDescriptor = (DetectorChoiceDescriptor) wizard.getPanelDescriptorFor(DetectorChoiceDescriptor.DESCRIPTOR);
+			detectorChoiceDescriptor.setPlugin(plugin);
+			detectorChoiceDescriptor.aboutToDisplayPanel();
 
-			// Instantiate descriptor for the segmenter configuration and update it
-			SegmenterConfigurationPanelDescriptor segmConfDescriptor = new SegmenterConfigurationPanelDescriptor();
-			segmConfDescriptor.setPlugin(plugin);
-			segmConfDescriptor.setWizard(wizard);
-			wizard.registerWizardDescriptor(SegmenterConfigurationPanelDescriptor.DESCRIPTOR, segmConfDescriptor);
-			segmConfDescriptor.aboutToDisplayPanel();
+			// Instantiate descriptor for the detector configuration and update it
+			DetectorConfigurationPanelDescriptor detectConfDescriptor = new DetectorConfigurationPanelDescriptor();
+			
+			detectConfDescriptor.setPlugin(plugin);
+			detectConfDescriptor.setWizard(wizard);
+			detectConfDescriptor.updateComponent();
+			wizard.registerWizardDescriptor(DetectorConfigurationPanelDescriptor.DESCRIPTOR, detectConfDescriptor);
 		}
 
 
-		{ // Try to read spots
-			logger.log("  Loading spots...");
-			SpotCollection spots = reader.getAllSpots();
-			if (null == spots) {
-				echoNotFound();
-				// No spots, so we stop here, and switch to the segmenter panel
-				targetDescriptor = SegmenterConfigurationPanelDescriptor.DESCRIPTOR;
+		{ // Did we get spots?
+			SpotCollection spots = model.getSpots();
+			if (null == spots || spots.isEmpty()) {
+				logger.log("Detected spots not found in the file.\n");
+				// No spots, so we stop here, and switch to the detector panel
+				targetDescriptor = DetectorConfigurationPanelDescriptor.DESCRIPTOR;
 				if (!imp.isVisible())
 					imp.show();
 				echoLoadingFinished();
 				return;
 			}
-
-			// We have a spot field, update the model.
-			model.setSpots(spots, false);
-			echoDone();
+			logger.log("Found the detected spot collection.\n");
 
 			// Next panel that needs to know is the initial filter one
-			InitFilterPanel panel = (InitFilterPanel) wizard.getPanelDescriptorFor(InitFilterPanel.DESCRIPTOR);
+			InitFilterDescriptor panel = (InitFilterDescriptor) wizard.getPanelDescriptorFor(InitFilterDescriptor.DESCRIPTOR);
 			panel.aboutToDisplayPanel();
 		}
 
 
-		{ // Try to read the initial threshold
-			logger.log("  Loading initial spot filter...");
-			FeatureFilter initialThreshold = reader.getInitialFilter();
+		{ // Did we find a value for the initial spot filter?
+			Double initialThreshold = settings.initialSpotFilterValue;
 			if (initialThreshold == null) {
-				echoNotFound();
+				logger.log("Initial filter on spots not set in the file.\n");
 				// No initial threshold, so set it
-				targetDescriptor = InitFilterPanel.DESCRIPTOR;
+				targetDescriptor = InitFilterDescriptor.DESCRIPTOR;
 				if (!imp.isVisible())
 					imp.show();
 				echoLoadingFinished();
 				return;
 			}
-
-			// Store it in model
-			model.getSettings().initialSpotFilterValue = initialThreshold.value;
-			echoDone();
+			logger.log("Found the initial filter on spots.\n");
 
 		}		
 
-		// Prepare the next panel, which is the spot filter panel
+		/*
+		 * Prepare the next panel, which is the spot filter panel.
+		 * Spot filters from the file are always non-null. There are empty at worst, but we cannot say
+		 * whether it is because the user did not reach the panel that sets them yet, or because
+		 * he chose to have 0 filters. 
+		 * It does not matter much anyway.
+		 */
 		SpotFilterDescriptor spotFilterDescriptor = (SpotFilterDescriptor) wizard.getPanelDescriptorFor(SpotFilterDescriptor.DESCRIPTOR);
-		spotFilterDescriptor.setPlugin(plugin);
+		spotFilterDescriptor.setWizard(wizard);
 
-		{ // Try to read feature thresholds
-			logger.log("  Loading spot filters...");
-			List<FeatureFilter> featureThresholds = reader.getSpotFeatureFilters();
-			if (null == featureThresholds) {
-				echoNotFound();
-				// No feature thresholds, we assume we have the features calculated, and put ourselves
-				// in a state such that the threshold GUI will be displayed.
-				spotFilterDescriptor.aboutToDisplayPanel();
-				targetDescriptor = SpotFilterDescriptor.DESCRIPTOR;
-				displayer.setModel(model);
-				displayer.render();
-				wizard.setDisplayer(displayer);
-				if (!imp.isVisible())
-					imp.show();
-				echoLoadingFinished();
-				return;
-			}
-
-			// Store thresholds in model
-			model.getSettings().setSpotFilters(featureThresholds);
-			spotFilterDescriptor.aboutToDisplayPanel();
-			echoDone();
-		}
-
-
-		{ // Try to read spot selection
-			logger.log("  Loading spot selection...");
-			SpotCollection selectedSpots = reader.getFilteredSpots();
-			if (null == selectedSpots) {
-				echoNotFound();
+		{ // Did we get filtered spots?
+			SpotCollection selectedSpots = model.getFilteredSpots();
+			if (null == selectedSpots || selectedSpots.isEmpty()) {
+				logger.log("Filtered spots not found in the file.\n");
 				// No spot selection, so we display the feature threshold GUI, with the loaded feature threshold
 				// already in place.
 				targetDescriptor = SpotFilterDescriptor.DESCRIPTOR;
-				displayer.setModel(model);
 				displayer.render();
 				wizard.setDisplayer(displayer);
 				if (!imp.isVisible())
 					imp.show();
 				echoLoadingFinished();
+				spotFilterDescriptor.aboutToDisplayPanel();
+				spotFilterDescriptor.displayingPanel();
 				return;
 			}
-
-			model.setFilteredSpots(selectedSpots, false);
-			echoDone();
+			logger.log("Found the filtered spot collection.\n");
+			wizard.setDisplayer(displayer);
+			spotFilterDescriptor.aboutToDisplayPanel();
+			spotFilterDescriptor.displayingPanel();
 		}
 
-
-		{ // Try to read tracker settings
-			logger.log("  Loading tracker settings...");
-			reader.getTrackerSettings(settings);
-			TrackerSettings trackerSettings = settings.trackerSettings;
-			if (null == trackerSettings) {
-				echoNotFound();
-				model.setSettings(settings);
+		{ // Did we get tracker settings
+			SpotTracker tracker = settings.tracker;
+			if (null == tracker) {
+				logger.log("Tracker not found in the file.\n");
 				targetDescriptor = SpotFilterDescriptor.DESCRIPTOR;
-				displayer.setModel(model);
 				displayer.render();
 				wizard.setDisplayer(displayer);
 				if (!imp.isVisible())
@@ -277,9 +293,7 @@ public class GuiReader {
 				echoLoadingFinished();
 				return;
 			}
-
-			model.setSettings(settings);
-			echoDone();
+			logger.log("Found a tracker.\n");
 		}
 
 
@@ -290,80 +304,40 @@ public class GuiReader {
 		// Instantiate descriptor for the tracker configuration and update it
 		TrackerConfigurationPanelDescriptor trackerDescriptor = new TrackerConfigurationPanelDescriptor();
 		trackerDescriptor.setPlugin(plugin);
-		trackerDescriptor.aboutToDisplayPanel(); // This will feed the new panel with the current settings content
+		trackerDescriptor.updateComponent(); // This will feed the new panel with the current settings content
 
 		wizard.registerWizardDescriptor(TrackerConfigurationPanelDescriptor.DESCRIPTOR, trackerDescriptor);
 
-
-		{ // Try reading the tracks
-			logger.log("  Loading tracks...");
-			SimpleWeightedGraph<Spot, DefaultWeightedEdge> graph = reader.readTrackGraph();
-			if (graph == null) {
-				echoNotFound();
+		{ // Did we get tracks?
+			int nTracks = model.getTrackModel().getNTracks();
+			if (nTracks < 1) {
+				logger.log("No tracks found in the file.\n");
 				targetDescriptor = TrackerConfigurationPanelDescriptor.DESCRIPTOR;
-				displayer.setModel(model);
 				displayer.render();
 				wizard.setDisplayer(displayer);
 				if (!imp.isVisible())
 					imp.show();
-				trackerDescriptor.aboutToDisplayPanel();
+				trackerDescriptor.updateComponent();
 				echoLoadingFinished();
 				return;
 			}
-			model.setGraph(graph);
-			model.setTrackSpots(reader.readTrackSpots(graph));
-			model.setTrackEdges(reader.readTrackEdges(graph));
-			reader.readTrackFeatures(model.getFeatureModel());
-			trackerDescriptor.aboutToDisplayPanel();
-			echoDone();
+			logger.log("Found tracks.\n");
+			trackerDescriptor.updateComponent();
 		}
-
-		{ // Try reading track filters
-			logger.log("  Loading track filters...");
-			model.getSettings().setTrackFilters(reader.getTrackFeatureFilters());
-			if (model.getSettings().getTrackFilters() == null) {
-				echoNotFound();
-				targetDescriptor = TrackFilterDescriptor.DESCRIPTOR;
-				displayer.setModel(model);
-				displayer.render();
-				wizard.setDisplayer(displayer);
-				if (!imp.isVisible())
-					imp.show();
-				echoLoadingFinished();
-				return;
-			}
-			echoDone();
-		}
-
-
-		// Track filter descriptor
-		TrackFilterDescriptor trackFilterDescriptor = (TrackFilterDescriptor) wizard.getPanelDescriptorFor(TrackFilterDescriptor.DESCRIPTOR);
-
-		{ // Try reading track selection
-			logger.log("  Loading track selection...");
-			model.setVisibleTrackIndices(reader.getFilteredTracks(), false);
-			if (model.getVisibleTrackIndices() == null) {
-				echoNotFound();
-				targetDescriptor = TrackFilterDescriptor.DESCRIPTOR;
-				displayer.setModel(model);
-				displayer.render();
-				wizard.setDisplayer(displayer);
-				if (!imp.isVisible())
-					imp.show();
-				trackFilterDescriptor.aboutToDisplayPanel();
-				echoLoadingFinished();
-				return;
-			}
-			trackFilterDescriptor.aboutToDisplayPanel();
-			echoDone();
-		}
-
+		
+		/*
+		 * At this level, we will find track filters and filtered tracks anyway.
+		 * We we can call it a day and exit the loading GUI
+		 */
 		targetDescriptor = DisplayerPanel.DESCRIPTOR;
-		displayer.setModel(model);
 		displayer.render();
 		wizard.setDisplayer(displayer);
 		if (!imp.isVisible())
 			imp.show();
+		
+		// Track filter descriptor
+		TrackFilterDescriptor trackFilterDescriptor = (TrackFilterDescriptor) wizard.getPanelDescriptorFor(TrackFilterDescriptor.DESCRIPTOR);
+		trackFilterDescriptor.aboutToDisplayPanel();
 
 		// Displayer descriptor
 		DisplayerPanel displayerPanel = (DisplayerPanel) wizard.getPanelDescriptorFor(DisplayerPanel.DESCRIPTOR);
@@ -380,7 +354,7 @@ public class GuiReader {
 	public void setDisplayer(TrackMateModelView displayer) {
 		this.displayer = displayer;
 	}
-	
+
 
 	public File askForFile(File file) {
 		JFrame parent;
@@ -431,21 +405,11 @@ public class GuiReader {
 	 *  Pass new plugin instance to all panels.
 	 */
 	private void passNewPluginToWizard() {
-		for (WizardPanelDescriptor descriptor : wizard.getWizardPanelDescriptors()) {
-			descriptor.setPlugin(plugin);
-		}
+		wizard.getController().setPlugin(plugin);
 	}
-	
-	private void echoDone() {
-		logger.log("\b\b\b done.\n");
-	}
-	
-	private void echoNotFound() {
-		logger.log(" Not found.\n");
-	}
-	
+
 	private void echoLoadingFinished() {
 		logger.log("Loading data finished.\n");
 	}
-	
+
 }

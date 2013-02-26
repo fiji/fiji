@@ -152,6 +152,11 @@ public class PairWiseStitchingImgLib
 				IJ.log( "Unknown image type: " + imp1.getType() );			
 			}
 		}
+		if ( result == null )
+		{
+			IJ.log( "Pairwise stitching failed." );
+			return null;
+		}
 		
 		// add the offset to the shift
 		if ( roi2 != null )
@@ -201,7 +206,11 @@ public class PairWiseStitchingImgLib
 			phaseCorr.setKeepPhaseCorrelationMatrix( true );
 		
 		phaseCorr.setComputeFFTinParalell( true );
-		phaseCorr.process();
+		if ( !phaseCorr.process() )
+		{
+			IJ.log( "Could not compute phase correlation: " + phaseCorr.getErrorMessage() );
+			return null;
+		}
 
 		// result
 		final PhaseCorrelationPeak pcp = phaseCorr.getShift();

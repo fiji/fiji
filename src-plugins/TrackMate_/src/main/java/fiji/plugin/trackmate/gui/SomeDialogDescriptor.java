@@ -7,18 +7,23 @@ import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.TrackMate_;
 
 /**
- * An abstract class made for descripting panels that generate a dialog, 
+ * An abstract class made for describing panels that generate a dialog, 
  * like save and load panels.
- * @author JeanYves
+ * @author Jean-Yves Tinevez
  *
  */
 public abstract class SomeDialogDescriptor implements WizardPanelDescriptor {
+
+	/**
+	 * File that governs saving and loading. We make it a static field so that 
+	 * loading and sharing events always point to a single file location by default.
+	 */
+	protected static File file;
 
 	protected LogPanel logPanel;
 	protected TrackMate_ plugin;
 	protected TrackMateWizard wizard;
 	protected Logger logger;
-	protected File file;
 	protected String targetID;
 
 	public void setTargetNextID(String ID) {

@@ -65,6 +65,11 @@ public class CollectionStitchingImgLib
 	                			final Roi roi2 = getROI( pair.getTile2().getElement(), pair.getTile1().getElement() );
 	                			
 	            				final PairWiseStitchingResult result = PairWiseStitchingImgLib.stitchPairwise( pair.getImagePlus1(), pair.getImagePlus2(), roi1, roi2, pair.getTimePoint1(), pair.getTimePoint2(), params );			
+	            				if ( result == null )
+	            				{
+	            					IJ.log( "Collection stitching failed" );
+	            					return;
+	            				}
 	
 	            				if ( params.dimensionality == 2 )
 	            					pair.setRelativeShift( new float[]{ result.getOffset( 0 ), result.getOffset( 1 ) } );

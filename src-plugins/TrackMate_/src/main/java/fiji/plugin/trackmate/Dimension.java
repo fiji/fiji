@@ -9,7 +9,8 @@ public enum Dimension {
 	VELOCITY,
 	LENGTH,   // we separate length and position so that x,y,z are plotted on a different graph from spot sizes
 	TIME,
-	ANGLE;
+	ANGLE, 
+	STRING; // for non-numeric features
 
 
 }

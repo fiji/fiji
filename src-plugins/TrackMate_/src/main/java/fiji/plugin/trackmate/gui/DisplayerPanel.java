@@ -6,18 +6,20 @@ import static fiji.plugin.trackmate.gui.TrackMateWizard.SMALL_FONT;
 import static fiji.plugin.trackmate.visualization.TrackMateModelView.KEY_DISPLAY_SPOT_NAMES;
 import static fiji.plugin.trackmate.visualization.TrackMateModelView.KEY_SPOTS_VISIBLE;
 import static fiji.plugin.trackmate.visualization.TrackMateModelView.KEY_SPOT_COLOR_FEATURE;
-import static fiji.plugin.trackmate.visualization.TrackMateModelView.KEY_SPOT_RADIUS_RATIO;
+import static fiji.plugin.trackmate.visualization.TrackMateModelView.*;
 import static fiji.plugin.trackmate.visualization.TrackMateModelView.KEY_TRACKS_VISIBLE;
 import static fiji.plugin.trackmate.visualization.TrackMateModelView.KEY_TRACK_DISPLAY_DEPTH;
 import static fiji.plugin.trackmate.visualization.TrackMateModelView.KEY_TRACK_DISPLAY_MODE;
-import static fiji.plugin.trackmate.visualization.trackscheme.TrackSchemeFrame.TRACK_SCHEME_ICON;
+import static fiji.plugin.trackmate.visualization.trackscheme.TrackScheme.TRACK_SCHEME_ICON;
 
 import java.awt.Component;
+import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -25,21 +27,23 @@ import java.util.Set;
 
 import javax.swing.ComboBoxModel;
 import javax.swing.DefaultComboBoxModel;
+import javax.swing.Icon;
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
-import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
-import javax.swing.WindowConstants;
 import javax.swing.border.LineBorder;
 
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMate_;
+import fiji.plugin.trackmate.action.ExportStatsToIJAction;
 import fiji.plugin.trackmate.visualization.AbstractTrackMateModelView;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
+import fiji.plugin.trackmate.visualization.trackscheme.TrackScheme;
 
 /**
  * A configuration panel used to tune the aspect of spots and tracks in multiple {@link AbstractTrackMateModelView}.
@@ -51,9 +55,13 @@ public class DisplayerPanel extends ActionListenablePanel implements WizardPanel
 	private static final long serialVersionUID = 1L;
 
 	public static final String DESCRIPTOR = "DisplayerPanel";
+
+	private static final Icon DO_ANALYSIS_ICON = new ImageIcon(DisplayerPanel.class.getResource("images/calculator.png"));
 	public ActionEvent TRACK_SCHEME_BUTTON_PRESSED 	= new ActionEvent(this, 0, "TrackSchemeButtonPushed");
+	public ActionEvent DO_ANALYSIS_BUTTON_PRESSED 	= new ActionEvent(this, 1, "DoAnalysisButtonPushed");
 
 	JButton jButtonShowTrackScheme;
+	JButton jButtonDoAnalysis;
 	private JLabel jLabelTrackDisplayMode;
 	private JComboBox jComboBoxDisplayMode;
 	private JLabel jLabelDisplayOptions;
@@ -75,6 +83,9 @@ public class DisplayerPanel extends ActionListenablePanel implements WizardPanel
 	private TrackMate_ plugin;
 	private TrackMateWizard wizard;
 
+	private TrackColorByFeatureGUI trackColorGUI;
+
+
 	/*
 	 * CONSTRUCTOR 
 	 */
@@ -95,6 +106,7 @@ public class DisplayerPanel extends ActionListenablePanel implements WizardPanel
 	@Override
 	public void setPlugin(TrackMate_ plugin) {
 		this.plugin = plugin;
+		setModel(plugin.getModel());
 	}
 
 	@Override
@@ -114,7 +126,7 @@ public class DisplayerPanel extends ActionListenablePanel implements WizardPanel
 
 	@Override
 	public String getNextDescriptorID() {
-		return ActionChooserPanel.DESCRIPTOR;
+		return GrapherPanel.DESCRIPTOR;
 	}
 
 	@Override
@@ -158,9 +170,56 @@ public class DisplayerPanel extends ActionListenablePanel implements WizardPanel
 						view.setDisplaySettings(KEY_SPOT_COLOR_FEATURE, jPanelSpotColor.setColorByFeature);
 						view.refresh();
 					}
+				} if (event == trackColorGUI.TRACK_COLOR_FEATURE_CHANGED) {
+
+					for (TrackMateModelView view : views) {
+						view.setDisplaySettings(KEY_TRACK_COLORING, trackColorGUI.getColorGenerator());
+						view.refresh();
+					}
+
+				} else if (event == TRACK_SCHEME_BUTTON_PRESSED) {
+
+					// Display Track scheme
+					jButtonShowTrackScheme.setEnabled(false);
+					new Thread("TrackMate_ laucnhing TrackScheme thread") {
+						public void run() {	
+							try {
+								TrackScheme trackScheme = new TrackScheme(plugin.getModel());
+								Map<String, Object> displaySettings = new HashMap<String, Object>();
+								updateDisplaySettings(displaySettings);
+								for (String settingKey : displaySettings.keySet()) {
+									trackScheme.setDisplaySettings(settingKey, displaySettings.get(settingKey));
+								}
+								trackScheme.render();
+								register(trackScheme);
+							} finally {
+								jButtonShowTrackScheme.setEnabled(true);
+							}
+						}
+					}.start();
+
+				} else if (event == DO_ANALYSIS_BUTTON_PRESSED) {
+
+					jButtonDoAnalysis.setEnabled(false);
+					wizard.disableButtonsAndStoreState();
+					wizard.showDescriptorPanelFor(LoadDescriptor.DESCRIPTOR);
+
+					new Thread("TrackMate export analysis to IJ thread.") {
+						public void run() {
+							try {
+								ExportStatsToIJAction action = new ExportStatsToIJAction();
+								action.execute(plugin);
+							} finally {
+								wizard.showDescriptorPanelFor(DisplayerPanel.DESCRIPTOR);
+								wizard.restoreButtonsState();
+								jButtonDoAnalysis.setEnabled(true);
+							}
+						};
+					}.start();
+
 				} else {
 					DisplayerPanel.super.fireAction(event);
-				}
+				} 
 			}
 		}.start();
 	}
@@ -175,6 +234,7 @@ public class DisplayerPanel extends ActionListenablePanel implements WizardPanel
 		displaySettings.put(KEY_SPOT_COLOR_FEATURE, jPanelSpotColor.setColorByFeature);
 		displaySettings.put(KEY_SPOT_RADIUS_RATIO, (float) jTextFieldSpotRadius.getValue());
 		displaySettings.put(KEY_SPOTS_VISIBLE, jCheckBoxDisplaySpots.isSelected());
+		displaySettings.put(KEY_TRACK_COLORING, trackColorGUI.getColorGenerator());
 		int depth;
 		if (jCheckBoxLimitDepth.isSelected())
 			depth = Integer.parseInt(jTextFieldFrameDepth.getText());
@@ -205,12 +265,19 @@ public class DisplayerPanel extends ActionListenablePanel implements WizardPanel
 				}
 			});
 		}
-		jPanelSpotColor.featureValues = featureValues;
+		jPanelSpotColor.setFeatureValues(featureValues);
+
+		if (trackColorGUI != null) {
+			jPanelTrackOptions.remove(trackColorGUI);
+		}
+		trackColorGUI = new TrackColorByFeatureGUI(plugin.getModel(), this);
+		trackColorGUI.setPreferredSize(new java.awt.Dimension(265, 45));
+		jPanelTrackOptions.add(trackColorGUI);
 	}
 
 	private void initGUI() {
 		try {
-			this.setPreferredSize(new java.awt.Dimension(268, 469));
+			this.setPreferredSize(new Dimension(300, 469));
 			this.setSize(300, 500);
 			this.setLayout(null);
 			{
@@ -225,7 +292,7 @@ public class DisplayerPanel extends ActionListenablePanel implements WizardPanel
 				jPanelTrackOptionsLayout.setAlignment(FlowLayout.LEFT);
 				jPanelTrackOptions.setLayout(jPanelTrackOptionsLayout);
 				this.add(jPanelTrackOptions);
-				jPanelTrackOptions.setBounds(10, 212, 280, 117);
+				jPanelTrackOptions.setBounds(10, 212, 280, 188);
 				jPanelTrackOptions.setBorder(new LineBorder(new java.awt.Color(192,192,192), 1, true));
 				{
 					jLabelTrackDisplayMode = new JLabel();
@@ -300,6 +367,11 @@ public class DisplayerPanel extends ActionListenablePanel implements WizardPanel
 							}
 						}
 					});
+				}
+				{
+
+					// Color GUI will be added later, when we receive the plugin object. It's like that.
+
 				}
 			}
 			{
@@ -415,7 +487,7 @@ public class DisplayerPanel extends ActionListenablePanel implements WizardPanel
 				jButtonShowTrackScheme.setText("Track scheme");
 				jButtonShowTrackScheme.setIcon(TRACK_SCHEME_ICON);
 				jButtonShowTrackScheme.setFont(FONT);
-				jButtonShowTrackScheme.setBounds(10, 345, 120, 30);
+				jButtonShowTrackScheme.setBounds(10, 411, 120, 30);
 				jButtonShowTrackScheme.addActionListener(new ActionListener() {
 					@Override
 					public void actionPerformed(ActionEvent e) {
@@ -424,25 +496,21 @@ public class DisplayerPanel extends ActionListenablePanel implements WizardPanel
 				});
 				this.add(jButtonShowTrackScheme);
 			}
+			{
+				jButtonDoAnalysis = new JButton("Analysis");
+				jButtonDoAnalysis.setFont(FONT);
+				jButtonDoAnalysis.setIcon(DO_ANALYSIS_ICON);
+				jButtonDoAnalysis.setBounds(145, 411, 120, 30);
+				jButtonDoAnalysis.addActionListener(new ActionListener() {
+					@Override
+					public void actionPerformed(ActionEvent arg0) {
+						fireAction(DO_ANALYSIS_BUTTON_PRESSED);
+					}
+				});
+				this.add(jButtonDoAnalysis);
+			}
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
-
-	/*
-	 * MAIN METHOD
-	 */
-
-	public static void main(String[] args) {
-		JFrame frame = new JFrame();
-		frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-		frame.pack();
-		frame.setVisible(true);
-		DisplayerPanel displayerPanel_IL = new DisplayerPanel();
-		frame.getContentPane().add(displayerPanel_IL);
-		displayerPanel_IL.setPreferredSize(new java.awt.Dimension(300, 469));
-	}
-
-
-
 }

@@ -13,17 +13,16 @@ import javax.swing.DefaultComboBoxModel;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 
-import fiji.plugin.trackmate.InfoTextable;
-
 /**
  * A panel to let the user choose what displayer he wants to use.
  */
-public class ListChooserPanel <K extends InfoTextable> extends ActionListenablePanel {
+public class ListChooserPanel extends ActionListenablePanel {
 
 	private static final long serialVersionUID = -1837635847479649545L;
 	protected JLabel jLabelHeader;
 	protected JComboBox jComboBoxChoice;
-	protected List<K> list;
+	protected List<String> items;
+	protected List<String> infoTexts;
 	protected JLabel jLabelHelpText;
 	protected String typeName;
 
@@ -31,10 +30,11 @@ public class ListChooserPanel <K extends InfoTextable> extends ActionListenableP
 	 * CONSTRUCTOR
 	 */
 
-	public ListChooserPanel(List<K> list, String typeName) {
+	public ListChooserPanel(List<String> items, List<String> infoTexts, String typeName) {
 		super();
+		this.infoTexts = infoTexts;
 		this.typeName = typeName;
-		this.list = list;
+		this.items = items;
 		initGUI();
 	}
 
@@ -42,8 +42,8 @@ public class ListChooserPanel <K extends InfoTextable> extends ActionListenableP
 	 * PUBLIC METHODS
 	 */
 
-	public K getChoice() {
-		return list.get(jComboBoxChoice.getSelectedIndex());
+	public String getChoice() {
+		return items.get(jComboBoxChoice.getSelectedIndex());
 	}
 
 
@@ -63,9 +63,9 @@ public class ListChooserPanel <K extends InfoTextable> extends ActionListenableP
 				jLabelHeader.setBounds(20, 20, 270, 16);
 			}
 			{
-				String[] names = new String[list.size()];
-				for (int i = 0; i < list.size(); i++) 
-					names[i] = list.get(i).toString();
+				String[] names = new String[items.size()];
+				for (int i = 0; i < items.size(); i++) 
+					names[i] = items.get(i).toString();
 				ComboBoxModel jComboBoxDisplayerChoiceModel = new DefaultComboBoxModel(names);
 				jComboBoxChoice = new JComboBox();
 				jComboBoxChoice.setModel(jComboBoxDisplayerChoiceModel);
@@ -75,7 +75,7 @@ public class ListChooserPanel <K extends InfoTextable> extends ActionListenableP
 				jComboBoxChoice.addActionListener(new ActionListener() {
 					@Override
 					public void actionPerformed(ActionEvent e) {
-						echo(list.get(jComboBoxChoice.getSelectedIndex()));
+						echo(jComboBoxChoice.getSelectedIndex());
 					}
 				});
 			}
@@ -83,7 +83,7 @@ public class ListChooserPanel <K extends InfoTextable> extends ActionListenableP
 				jLabelHelpText = new JLabel();
 				jLabelHelpText.setFont(FONT.deriveFont(Font.ITALIC));
 				jLabelHelpText.setBounds(12, 80, 270, 366);
-				echo(list.get(jComboBoxChoice.getSelectedIndex()));
+				echo(jComboBoxChoice.getSelectedIndex());
 				this.add(jLabelHelpText);
 			}
 		} catch (Exception e) {
@@ -91,8 +91,8 @@ public class ListChooserPanel <K extends InfoTextable> extends ActionListenableP
 		}
 	}
 
-	private void echo(K choice) {
-		jLabelHelpText.setText(choice.getInfoText()
+	private void echo(int index) {
+		jLabelHelpText.setText(infoTexts.get(index)
 				.replace("<br>", "")
 				.replace("<p>", "<p align=\"justify\">")
 				.replace("<html>", "<html><p align=\"justify\">")

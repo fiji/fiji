@@ -495,6 +495,7 @@ public class Stitching_Grid implements PlugIn
 				IJ.log( "Fuse & Display ..." );
 			else
 				IJ.log( "Fuse & Write to disk (into directory '" + new File( params.outputDirectory, "" ).getAbsolutePath() + "') ..." );
+			IJ.showStatus("Fusing stitched image...");
 			
 			// first prepare the models and get the targettype
 			final ArrayList<InvertibleBoundable> models = new ArrayList< InvertibleBoundable >();

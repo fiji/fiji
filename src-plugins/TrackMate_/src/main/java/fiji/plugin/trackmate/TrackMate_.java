@@ -1,53 +1,30 @@
 package fiji.plugin.trackmate;
 
-import fiji.plugin.trackmate.action.CaptureOverlayAction;
-import fiji.plugin.trackmate.action.CopyOverlayAction;
-import fiji.plugin.trackmate.action.ExportTracksToXML;
-import fiji.plugin.trackmate.action.ExtractTrackStackAction;
-import fiji.plugin.trackmate.action.GrabSpotImageAction;
-import fiji.plugin.trackmate.action.LinkNew3DViewerAction;
-import fiji.plugin.trackmate.action.PlotNSpotsVsTimeAction;
-import fiji.plugin.trackmate.action.RadiusToEstimatedAction;
-import fiji.plugin.trackmate.action.RecalculateFeatureAction;
-import fiji.plugin.trackmate.action.ResetRadiusAction;
-import fiji.plugin.trackmate.action.ResetSpotTimeFeatureAction;
 import fiji.plugin.trackmate.action.TrackMateAction;
-import fiji.plugin.trackmate.features.spot.BlobContrastAndSNR;
-import fiji.plugin.trackmate.features.spot.BlobDescriptiveStatistics;
-import fiji.plugin.trackmate.features.spot.BlobMorphology;
-import fiji.plugin.trackmate.features.spot.RadiusEstimator;
-import fiji.plugin.trackmate.features.spot.SpotFeatureAnalyzer;
-import fiji.plugin.trackmate.features.track.TrackDurationAnalyzer;
-import fiji.plugin.trackmate.features.track.TrackFeatureAnalyzer;
+import fiji.plugin.trackmate.detection.SpotDetector;
+import fiji.plugin.trackmate.detection.SpotDetectorFactory;
+import fiji.plugin.trackmate.features.track.TrackAnalyzer;
 import fiji.plugin.trackmate.gui.TrackMateWizard;
 import fiji.plugin.trackmate.gui.WizardController;
-import fiji.plugin.trackmate.segmentation.DogSegmenter;
-import fiji.plugin.trackmate.segmentation.DownSampleLogSegmenter;
-import fiji.plugin.trackmate.segmentation.LogSegmenter;
-import fiji.plugin.trackmate.segmentation.ManualSegmenter;
-import fiji.plugin.trackmate.segmentation.SpotSegmenter;
-import fiji.plugin.trackmate.tracking.FastLAPTracker;
-import fiji.plugin.trackmate.tracking.SimpleFastLAPTracker;
 import fiji.plugin.trackmate.tracking.SpotTracker;
-import fiji.plugin.trackmate.tracking.kdtree.NearestNeighborTracker;
+import fiji.plugin.trackmate.util.CropImgView;
 import fiji.plugin.trackmate.util.TMUtils;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
-import fiji.plugin.trackmate.visualization.hyperstack.HyperStackDisplayer;
-import fiji.plugin.trackmate.visualization.threedviewer.SpotDisplayer3D;
-import ij.IJ;
 import ij.ImagePlus;
 import ij.WindowManager;
 import ij.plugin.PlugIn;
 
-import java.awt.Polygon;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import mpicbg.imglib.image.Image;
-import mpicbg.imglib.multithreading.SimpleMultiThreading;
-import mpicbg.imglib.type.numeric.RealType;
+import net.imglib2.algorithm.Algorithm;
+import net.imglib2.algorithm.Benchmark;
+import net.imglib2.algorithm.MultiThreaded;
+import net.imglib2.img.ImgPlus;
+import net.imglib2.multithreading.SimpleMultiThreading;
 
 import org.jgrapht.graph.SimpleWeightedGraph;
 
@@ -58,28 +35,34 @@ import org.jgrapht.graph.SimpleWeightedGraph;
  * 
  * <p><b>Required input:</b> A 2D or 3D time-lapse image with bright blobs.</p>
  *
- * @author Nicholas Perry, Jean-Yves Tinevez - Institut Pasteur - July 2010 - 2011 - 2012
+ * @author Nicholas Perry, Jean-Yves Tinevez - Institut Pasteur - July 2010 - 2011 - 2012 - 2013
  *
  */
-public class TrackMate_ implements PlugIn {
+public class TrackMate_ implements PlugIn, Benchmark, MultiThreaded, Algorithm {
 
-	public static final String PLUGIN_NAME_STR = "Track Mate";
-	public static final String PLUGIN_NAME_VERSION = "1.2";
+	public static final String PLUGIN_NAME_STR = "TrackMate";
+	public static final String PLUGIN_NAME_VERSION = "2.0.0";
 	public static final boolean DEFAULT_USE_MULTITHREADING = true;
 
+	/** 
+	 * The model this plugin will shape.
+	 */
 	protected TrackMateModel model;
-	protected boolean useMultithreading = DEFAULT_USE_MULTITHREADING;
 
-	protected List<SpotFeatureAnalyzer> spotFeatureAnalyzers;
-	protected List<TrackFeatureAnalyzer> trackFeatureAnalyzers;
-	/** The list of {@link SpotSegmenter} that will be offered to choose amongst to the user. */
-	protected List<SpotSegmenter<? extends RealType<?>>> spotSegmenters;
-	/** The list of {@link TrackMateModelView} that will be offered to choose amongst to the user. */
-	protected List<TrackMateModelView> trackMateModelViews;
-	/** The list of {@link TrackMateModelView} that will be offered to choose amongst to the user. */
-	protected List<TrackMateAction> trackMateActions;
+	protected SpotAnalyzerProvider spotFeatureAnalyzerProvider;
+	protected EdgeAnalyzerProvider edgeFeatureAnalyzerProvider;
+	protected TrackAnalyzerProvider trackFeatureProvider;
+	/** The factory that provides this plugin with available {@link TrackMateModelView}s. */
+	protected ViewProvider viewProvider;
+	/** The factory that provides this plugin with available {@link TrackMateAction}s. */
+	protected ActionProvider actionProvider;
 	/** The list of {@link SpotTracker} that will be offered to choose amongst to the user. */
-	protected List<SpotTracker> spotTrackers;
+	protected TrackerProvider trackerProvider;
+	/** The {@link DetectorProvider} that provides the GUI with the list of available detectors. */
+	protected DetectorProvider detectorProvider;
+	protected long processingTime;
+	protected String errorMessage;
+	protected int numThreads = Runtime.getRuntime().availableProcessors();
 
 	/*
 	 * CONSTRUCTORS
@@ -93,7 +76,7 @@ public class TrackMate_ implements PlugIn {
 	public TrackMate_() {
 		this(new TrackMateModel());
 	}
-	
+
 	public TrackMate_(TrackMateModel model) {
 		this.model = model;
 	}
@@ -107,7 +90,9 @@ public class TrackMate_ implements PlugIn {
 	 * Launch the GUI.
 	 */
 	public void run(String arg) {
-		model.getSettings().imp = WindowManager.getCurrentImage();
+		ImagePlus imp = WindowManager.getCurrentImage();
+		Settings settings = new Settings(imp);
+		model.setSettings(settings);
 		initModules();
 		launchGUI();
 	}
@@ -119,44 +104,46 @@ public class TrackMate_ implements PlugIn {
 	 * be used with the {@link TrackMateWizard} GUI. To use the plugin in batch mode
 	 * or in scripts, you do not need to call this method, which will save you the 
 	 * time needed to instantiate all the modules.
- 	 * This method to be called also if you are going to load a xml file and want the
+	 * This method to be called also if you are going to load a xml file and want the
 	 * GUI and {@link Settings} object properly reflecting the saved state.  
 	 * <p>
 	 * More precisely, the modules and fields instantiated by this method are:
 	 * <ul>
-	 * 	<li> {@link #spotFeatureAnalyzers}: the list of Spot feature analyzers that will
+	 * 	<li> {@link #spotFeatureAnalyzerProvider}: the list of Spot feature analyzers that will
 	 * be used when calling {@link #computeSpotFeatures()};
-	 * 	<li> {@link #trackFeatureAnalyzers}: the list of track feature analyzers that will
+	 * 	<li> {@link #trackFeatureProvider}: the list of track feature analyzers that will
 	 * be used when calling {@link #computeTrackFeatures()};
-	 * 	<li> {@link #spotSegmenters}: the list of {@link SpotSegmenter}s that will be offered 
+	 * 	<li> {@link #spotDetectors}: the list of {@link SpotDetector}s that will be offered 
 	 * to the user to choose from;
-	 * 	<li> {@link #spotTrackers}: the list of {@link SpotTracker}s that will be offered 
+	 * 	<li> {@link #trackerProvider}: the list of {@link SpotTracker}s that will be offered 
 	 * to the user to choose from;
-	 * 	<li> {@link #trackMateModelViews}: the list of {@link TrackMateModelView}s (the "displayers")
+	 * 	<li> {@link #viewProvider}: the list of {@link TrackMateModelView}s (the "displayers")
 	 * that will be offered to the user to choose from;
-	 * 	<li> {@link #trackMateActions}:  the list of {@link TrackMateAction}s that will be 
+	 * 	<li> {@link #actionProvider}:  the list of {@link TrackMateAction}s that will be 
 	 * offered to the user to choose from.
 	 * </ul>
 	 */
 	public void initModules() {
-		this.spotFeatureAnalyzers 	= createSpotFeatureAnalyzerList();
-		this.trackFeatureAnalyzers 	= createTrackFeatureAnalyzerList();
-		this.spotSegmenters 		= createSegmenterList();
-		this.spotTrackers 			= createSpotTrackerList();
-		this.trackMateModelViews 	= createTrackMateModelViewList();
-		this.trackMateActions 		= createTrackMateActionList();
-		model.getFeatureModel().setSpotFeatureAnalyzers(spotFeatureAnalyzers);
-		model.getFeatureModel().setTrackFeatureAnalyzers(trackFeatureAnalyzers);
+		this.spotFeatureAnalyzerProvider 	= createSpotAnalyzerProvider();
+		this.trackFeatureProvider 	= createTrackAnalyzerProvider();
+		this.edgeFeatureAnalyzerProvider = createEdgeAnalyzerProvider();
+		this.detectorProvider		= createDetectorProvider();
+		this.trackerProvider 		= createTrackerProvider();
+		this.viewProvider 			= createViewProvider();
+		this.actionProvider 			= createActionProvider();
+		model.getFeatureModel().setSpotFeatureFactory(spotFeatureAnalyzerProvider);
+		model.getFeatureModel().setTrackAnalyzerProvider(trackFeatureProvider);
+		model.getFeatureModel().setEdgeAnalyzerProvider(edgeFeatureAnalyzerProvider);
 	}
-	
+
 	/*
 	 * PROTECTED METHODS
 	 */
-	
+
 	/**
 	 * This method exists for the following reason:
 	 * <p>
-	 * The segmenter receives at each frame a cropped image to operate on, depending
+	 * The detector receives at each frame a cropped image to operate on, depending
 	 * on the user specifying a ROI. It therefore returns spots whose coordinates are 
 	 * with respect to the top-left corner of the ROI, not of the original image. 
 	 * <p>
@@ -170,26 +157,19 @@ public class TrackMate_ implements PlugIn {
 	 * pruned list. Or not.
 	 */
 	protected List<Spot> translateAndPruneSpots(final List<Spot> spotsThisFrame, final Settings settings) {
-		// Get Roi
-		final Polygon polygon;
-		if (null == settings.imp || null == settings.imp.getRoi()) {
-			polygon = null;
-		} else {
-			polygon = settings.imp.getRoi().getPolygon();
-		}		
-		
+
 		// Put them back in the right referential 
-		final float[] calibration = settings.getCalibration();
+		final double[] calibration = TMUtils.getSpatialCalibration(settings.imp);
 		TMUtils.translateSpots(spotsThisFrame, 
 				settings.xstart * calibration[0], 
 				settings.ystart * calibration[1], 
 				settings.zstart * calibration[2]);
 		List<Spot> prunedSpots;
 		// Prune if outside of ROI
-		if (null != polygon) {
+		if (null != settings.polygon) {
 			prunedSpots = new ArrayList<Spot>();
 			for (Spot spot : spotsThisFrame) {
-				if (polygon.contains(spot.getFeature(Spot.POSITION_X)/calibration[0], spot.getFeature(Spot.POSITION_Y)/calibration[1])) 
+				if (settings.polygon.contains(spot.getFeature(Spot.POSITION_X)/calibration[0], spot.getFeature(Spot.POSITION_Y)/calibration[1])) 
 					prunedSpots.add(spot);
 			}
 		} else {
@@ -197,27 +177,8 @@ public class TrackMate_ implements PlugIn {
 		}
 		return prunedSpots;
 	}
-	
-	
-	@SuppressWarnings({ "unchecked", "rawtypes" })
-	protected List<Spot> execSingleFrameSegmentation(final Image<?  extends RealType<?>> img, Settings settings, int frameIndex) {
-		
-		final float[] calibration = settings.getCalibration();
-		SpotSegmenter segmenter = settings.segmenter.createNewSegmenter();
-		segmenter.setTarget(img, calibration, settings.segmenterSettings);
 
-		if (segmenter.checkInput() && segmenter.process()) {
-			List<Spot> spotsThisFrame = segmenter.getResult();
-			return translateAndPruneSpots(spotsThisFrame, settings);
-			
-		} else {
-			model.getLogger().error(segmenter.getErrorMessage()+'\n');
-			return null;
-		}
 
-	}
-	
-	
 	/**
 	 * Hook for subclassers.
 	 * <p>
@@ -228,107 +189,74 @@ public class TrackMate_ implements PlugIn {
 	protected void launchGUI() {
 		new WizardController(this);
 	}
+
+	/*
+	 * PROVIDERS
+	 */
 	
 	/**
 	 * Hook for subclassers.
 	 * <p>
-	 * Create the list of available {@link TrackMateModelView} the will be offered to choose from.
+	 *  Create view factory containing available spot {@link TrackMateSelectionView}s.
 	 */
-	protected List<TrackMateModelView> createTrackMateModelViewList() {
-		List<TrackMateModelView> trackMateModelViews = new ArrayList<TrackMateModelView>(2);
-		trackMateModelViews.add(new HyperStackDisplayer());
-		trackMateModelViews.add(new SpotDisplayer3D());
-		return trackMateModelViews;
+	protected ViewProvider createViewProvider() {
+		return new ViewProvider(model);
 	}
-	
-	
+
 	/**
 	 * Hook for subclassers.
 	 * <p>
-	 * Create the list of {@link SpotSegmenter} that will be offered to choose from. 
-	 * Override it to add your own segmenter.
-	 * @return
+	 * Create detector provider that manages available {@link SpotDetectorFactory}.
 	 */
-	@SuppressWarnings({ "rawtypes", "unchecked" })
-	protected List<SpotSegmenter<? extends RealType<?>>> createSegmenterList() {
-		List<SpotSegmenter<? extends RealType<?>>> spotSegmenters = new ArrayList<SpotSegmenter<? extends RealType<?>>>(4);
-		spotSegmenters.add(new LogSegmenter());
-		spotSegmenters.add(new DogSegmenter());
-		spotSegmenters.add(new DownSampleLogSegmenter());
-		spotSegmenters.add(new ManualSegmenter());
-		return spotSegmenters;
+	protected DetectorProvider createDetectorProvider() {
+		return new DetectorProvider();
 	}
-	
+
 	/**
 	 * Hook for subclassers.
 	 * <p>
-	 * Create the list of {@link SpotFeatureAnalyzer} that will be used to compute spot features.
-	 * Overwrite this method if you want to add your {@link SpotFeatureAnalyzer}.
+	 * Create the spot feature analyzer provider.
 	 */
-	protected List<SpotFeatureAnalyzer> createSpotFeatureAnalyzerList() {
-		List<SpotFeatureAnalyzer> analyzers = new ArrayList<SpotFeatureAnalyzer>(5);
-		analyzers.add(new BlobDescriptiveStatistics());
-		analyzers.add(new BlobContrastAndSNR()); // must be after the statistics one
-		analyzers.add(new RadiusEstimator());
-		analyzers.add(new BlobMorphology());
-//		analyzers.add(new SpotIconGrabber()); // Takes too long. And we need it only at the end, and we can do it with an action.
-		return analyzers;
+	protected SpotAnalyzerProvider createSpotAnalyzerProvider() {
+		return new SpotAnalyzerProvider(model);
 	}
 	
 	/**
 	 * Hook for subclassers.
 	 * <p>
-	 * Create the list of {@link SpotTracker} that will be used to build tracks.
-	 * Overwrite this method if you want to add your {@link SpotTracker}.
+	 * Create the edge feature analyzer provider.
 	 */
-	protected List<SpotTracker> createSpotTrackerList() {
-		List<SpotTracker> trackers = new ArrayList<SpotTracker>(5);
-		trackers.add(new SimpleFastLAPTracker());
-		trackers.add(new FastLAPTracker());
-//		trackers.add(new fiji.plugin.trackmate.tracking.SimpleLAPTracker());
-//		trackers.add(new fiji.plugin.trackmate.tracking.LAPTracker());
-		trackers.add(new NearestNeighborTracker());
-		return trackers;
-		
+	protected EdgeAnalyzerProvider createEdgeAnalyzerProvider() {
+		return new EdgeAnalyzerProvider(model);
 	}
-	
+
 	/**
 	 * Hook for subclassers.
 	 * <p>
-	 * Create the list of {@link TrackFeatureAnalyzer} that will be used to compute track features.
-	 * Overwrite this method if you want to add your {@link TrackFeatureAnalyzer}.
+	 * Create detector factory containing available spot {@link TrackAnalyzer}s.
 	 */
-	protected List<TrackFeatureAnalyzer> createTrackFeatureAnalyzerList() {
-		List<TrackFeatureAnalyzer> analyzers = new ArrayList<TrackFeatureAnalyzer>(3);
-//		analyzers.add(new TrackBranchingAnalyzer());
-		analyzers.add(new TrackDurationAnalyzer());
-//		analyzers.add(new TrackSpeedStatisticsAnalyzer());
-		return analyzers;
+	protected TrackAnalyzerProvider createTrackAnalyzerProvider() {
+		return new TrackAnalyzerProvider(model);
 	}
-	
+
 	/**
 	 * Hook for subclassers.
 	 * <p>
-	 * Create the list of {@link TrackMateAction} that will be offered to use.
-	 * Overwrite this method if you want to add your {@link TrackMateAction}.
+	 * Create detector factory containing available spot {@link SpotTracker}s.
 	 */
-	protected List<TrackMateAction> createTrackMateActionList() {
-		List<TrackMateAction> actions = new ArrayList<TrackMateAction>(10);
-		actions.add(new GrabSpotImageAction());
-		actions.add(new ExtractTrackStackAction());
-		actions.add(new LinkNew3DViewerAction());
-		actions.add(new CopyOverlayAction());
-		actions.add(new PlotNSpotsVsTimeAction());
-		actions.add(new CaptureOverlayAction());
-		actions.add(new ResetSpotTimeFeatureAction());
-		actions.add(new RecalculateFeatureAction());
-		actions.add(new ResetRadiusAction());
-		actions.add(new RadiusToEstimatedAction());
-//		actions.add(new fiji.plugin.trackmate.action.ISBIChallengeExporter());
-		actions.add(new ExportTracksToXML());
-		return actions;
+	protected TrackerProvider createTrackerProvider() {
+		return new TrackerProvider(model);
 	}
-	
+
+	/**
+	 * Hook for subclassers.
+	 * <p>
+	 * Create action factory containing available spot {@link TrackMateAction}s.
+	 */
+	protected ActionProvider createActionProvider() {
+		return new ActionProvider();
+	}
+
 	/*
 	 * METHODS
 	 */
@@ -342,67 +270,82 @@ public class TrackMate_ implements PlugIn {
 	}
 
 	/**
-	 * Return a list of the {@link SpotFeatureAnalyzer} that are currently registered in this plugin.
-	 * <p>
-	 * Note: the features that will be actually computed are a subset of this list and can be specified 
-	 * to the model, using the {@link TrackMateModel#setSpotFeatureAnalyzers(List)} method. 
-	 * @see #createSpotFeatureAnalyzerList()
+	 * @return the {@link SpotAnalyzerProvider} currently set.
+	 * @see #createSpotAnalyzerProvider()
 	 */
-	public List<SpotFeatureAnalyzer> getAvailableSpotFeatureAnalyzers() {
-		return spotFeatureAnalyzers;
-	}
-	
-	/**
-	 * Return a list of the {@link SpotSegmenter} that are currently registered in this plugin.
-	 */
-	public List<SpotSegmenter<? extends RealType<?>>> getAvailableSpotSegmenters() {
-		return spotSegmenters;
-	}
-	
-	/**
-	 * Return a list of the {@link SpotTracker} that are currently registered in this plugin.
-	 */
-	public List<SpotTracker> getAvailableSpotTrackers() {
-		return spotTrackers;
+	public SpotAnalyzerProvider getSpotFeatureAnalyzerProvider() {
+		return spotFeatureAnalyzerProvider;
 	}
 
-	
 	/**
-	 * Return a list of the {@link TrackMateModelView} that are currently registered in this plugin.
+	 * @return the {@link TrackAnalyzerProvider} currently set.
 	 */
-	public List<TrackMateModelView> getAvailableTrackMateModelViews() {
-		return trackMateModelViews;
+	public TrackAnalyzerProvider getTrackFeatureProvider() {
+		return trackFeatureProvider;
 	}
 	
 	/**
-	 * Return a list of the {@link TrackMateAction} that are currently registered in this plugin.
+	 * @return the {@link EdgeAnalyzerProvider} currently set.
 	 */
-	public List<TrackMateAction> getAvailableActions() {
-		return trackMateActions;
+	public EdgeAnalyzerProvider getEdgeFeatureAnalyzerProvider() {
+		return edgeFeatureAnalyzerProvider;
+	}
+	
+	/**
+	 * @return the {@link DetectorProvider} currently set.
+	 */
+	public DetectorProvider getDetectorProvider() {
+		return detectorProvider;
 	}
 
-	
+	/**
+	 * @return the {@link TrackerProvider} currently set.
+	 */
+	public TrackerProvider getTrackerProvider() {
+		return trackerProvider;
+	}
+
+
+	/**
+	 * @return the {@link ViewProvider} currently set.
+	 */
+	public ViewProvider getViewProvider() {
+		return viewProvider;
+	}
+
+	/**
+	 * @return a list of the {@link TrackMateAction} that are currently registered in this plugin.
+	 */
+	public ActionProvider getActionProvider() {
+		return actionProvider;
+	}
+
+
 	/*
 	 * PROCESSES
 	 */
 
 	/**
-	 * Calculate all features for all segmented spots.
+	 * Calculate all features for all detected spots.
 	 * <p>
 	 * Features are calculated for each spot, using their location, and the raw image. 
 	 */
-	public void computeSpotFeatures() {
-		model.getFeatureModel().computeSpotFeatures(model.getSpots());
+	public void computeSpotFeatures(boolean doLogIt) {
+		final Logger logger = model.getLogger();
+		logger.log("Computing spot features.\n");
+		model.getFeatureModel().computeSpotFeatures(model.getSpots(), doLogIt);
 	}
 
+	public void computeEdgeFeatures(boolean doLogIt) {
+		model.getFeatureModel().computeEdgeFeatures(model.getTrackModel().edgeSet(), doLogIt);
+	}
+	
 	/**
 	 * Calculate all features for all tracks.
 	 */
-	public void computeTrackFeatures() {
-		model.computeTrackFeatures();
+	public void computeTrackFeatures(boolean doLogIt) {
+		model.getFeatureModel().computeTrackFeatures(model.getTrackModel().getTrackIDs(), doLogIt);
 	}
-
-
 
 	/**
 	 * Execute the tracking part.
@@ -411,68 +354,126 @@ public class TrackMate_ implements PlugIn {
 	 * This tracking process will generate a graph (more precisely a {@link SimpleWeightedGraph}) made of the spot 
 	 * election for its vertices, and edges representing the links.
 	 * <p>
-	 * The {@link TrackMateModelChangeListener}s of this model will be notified when the successful process is over.
+	 * The {@link ModelChangeListener}s of this model will be notified when the successful process is over.
 	 * @see #getTrackGraph()
 	 */ 
-	public void execTracking() {
-		SpotTracker tracker = model.getSettings().tracker;
-		tracker.setModel(model);
-		tracker.setLogger(model.getLogger());
+	public boolean execTracking() {
+		final Logger logger = model.getLogger();
+		logger.log("Starting tracking process.\n");
+		SpotTracker tracker =  model.getSettings().tracker;
+		tracker.setSettings(model.getSettings().trackerSettings);
 		if (tracker.checkInput() && tracker.process()) {
-			model.setGraph(tracker.getResult());
-		} else
-			model.getLogger().error("Problem occured in tracking:\n"+tracker.getErrorMessage()+'\n');
+			model.getTrackModel().setGraph(tracker.getResult());
+			return false;
+		} else {
+			errorMessage = "Tracking process failed:\n"+tracker.getErrorMessage();
+			return false;
+		}
 	}
 
 	/** 
-	 * Execute the segmentation part.
+	 * Execute the detection part.
 	 * <p>
-	 * This method looks for bright blobs: bright object of approximately spherical shape, whose expected 
-	 * diameter is given in argument. The method used for segmentation depends on the {@link SpotSegmenter} 
-	 * chosen, and set in {@link #settings};
-	 * <p>
-	 * This gives us a collection of spots, which at this stage simply wrap a physical center location.
-	 * These spots are stored in a {@link SpotCollection} field, {@link #spots}, but listeners of this model
-	 * are <b>not</b> notified when the process is over.  
-	 * 
-	 * @see #getSpots()
+	 * This method configure the chosen {@link Settings#detectorFactory} with the source image 
+	 * and the detectr settings and execute the detection process for all the frames set 
+	 * in the {@link Settings} object of the target model.
+	 * @return true if the whole detection step has exectued correctly.
 	 */
-	public void execSegmentation() {
-		final Settings settings = model.getSettings();
-		final int segmentationChannel = settings.segmentationChannel;
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	public boolean execDetection() {
 		final Logger logger = model.getLogger();
-		final ImagePlus imp = settings.imp;
+		logger.log("Starting detection process.\n");
 		
-		if (null == imp) {
-			logger.error("No image to operate on.\n");
-			return;
+		final Settings settings = model.getSettings();
+		final SpotDetectorFactory<?> factory = settings.detectorFactory;
+		if (null == factory) {
+			errorMessage = "Detector factory is null.\n";
+			return false;
 		}
-		if (null == settings.segmenter) {
-			logger.error("No segmenter selected.\n");
-			return;
+		if (null == settings.detectorSettings) {
+			errorMessage  = "Detector settings is null.\n";
+			return false;
 		}
-		if (null == settings.segmenterSettings) {
-			logger.error("No segmenter settings set.\n");
-			return;
+
+		/*
+		 *  Prepare cropped image
+		 */
+		ImgPlus rawImg = TMUtils.rawWraps(settings.imp);
+		ImgPlus img;
+
+		// Check if we indeed wish to crop the source image. To this, we check
+		// the crop cube settings
+
+		if (settings.xstart != 0 
+				|| settings.ystart != 0
+				|| settings.zstart != 0
+				|| settings.xend != settings.imp.getWidth()-1
+				|| settings.yend != settings.imp.getHeight()-1
+				|| settings.zend != settings.imp.getNSlices()-1) {
+			// Yes, we want to crop
+
+			long[] max = new long[rawImg.numDimensions()];
+			long[] min = new long[rawImg.numDimensions()];
+			// X, we must have it
+			int xindex = TMUtils.findXAxisIndex(rawImg);
+			if (xindex < 0) {
+				errorMessage = "Source image has no X axis.\n";
+				return false;
+			}
+			min[xindex] = settings.xstart;
+			max[xindex] = settings.xend;
+			// Y, we must have it
+			int yindex = TMUtils.findYAxisIndex(rawImg);
+			if (yindex < 0) {
+				errorMessage  = "Source image has no Y axis.\n";
+				return false;
+			}
+			min[yindex] = settings.ystart;
+			max[yindex] = settings.yend;
+			// Z, we MIGHT have it
+			int zindex = TMUtils.findZAxisIndex(rawImg);
+			if (zindex >= 0) {
+				min[zindex] = settings.zstart;
+				max[zindex] = settings.zend;
+			}
+			// CHANNEL, we might have it 
+			int cindex = TMUtils.findCAxisIndex(rawImg);
+			if (cindex >= 0) {
+				min[cindex] = 0;
+				max[cindex] = settings.imp.getNChannels();
+			}
+			// TIME, we might have it, but anyway we leave the start & end management to the threads below  
+			int tindex = TMUtils.findTAxisIndex(rawImg);
+			if (tindex >= 0) {
+				min[tindex] = 0;
+				max[tindex] = settings.imp.getNFrames();
+			}
+			// crop: we now have a cropped view of the source image
+			CropImgView cropView = new CropImgView(rawImg, min, max);
+			// Put back metadata in a new ImgPlus 
+			img = new ImgPlus(cropView, rawImg);
+			
+		} else {
+			img = rawImg;
 		}
-		if (!settings.segmenterSettings.getClass().equals(settings.segmenter.createDefaultSettings().getClass())) {
-			logger.error(String.format("Segmenter settings class does not match segmenter class: %s vs %s.\n", 
-					settings.segmenterSettings.getClass().getSimpleName(),
-					settings.segmenter.createDefaultSettings().getClass().getSimpleName()));
-			return;
-		}
-		
+
+		factory.setTarget(img, settings.detectorSettings);
+
 		final int numFrames = settings.tend - settings.tstart + 1;
+		// Final results holder, for all frames
 		final SpotCollection spots = new SpotCollection();
+		spots.setNumThreads(numThreads);
+		// To report progress
 		final AtomicInteger spotFound = new AtomicInteger(0);
 		final AtomicInteger progress = new AtomicInteger(0);
+		// To translate spots, later
+		final double[] calibration = TMUtils.getSpatialCalibration(settings.imp);
+		final double dx = settings.xstart * calibration[0];
+		final double dy = settings.ystart * calibration[1];
+		final double dz = settings.zstart * calibration[2];
 
-		final Thread[] threads;
-		if (useMultithreading) {
-			threads = SimpleMultiThreading.newThreads();
-		} else {
-			threads = SimpleMultiThreading.newThreads(1);
-		}
+		final Thread[] threads = SimpleMultiThreading.newThreads(numThreads);
+		final AtomicBoolean ok = new AtomicBoolean(true);
 
 		// Prepare the thread array
 		final AtomicInteger ai = new AtomicInteger(settings.tstart);
@@ -482,89 +483,132 @@ public class TrackMate_ implements PlugIn {
 
 				public void run() {
 
-					for (int i = ai.getAndIncrement(); i <= settings.tend; i = ai.getAndIncrement()) {
+					for (int frame = ai.getAndIncrement(); frame <= settings.tend; frame = ai.getAndIncrement()) {
 
-						Image<? extends RealType<?>> img = TMUtils.getCroppedSingleFrameAsImage(imp, i, segmentationChannel, settings); // will be cropped according to settings
-						List<Spot> s = execSingleFrameSegmentation(img, settings, i);
-						
-						// Add segmentation feature other than position
-						for (Spot spot : s) {
-							spot.putFeature(Spot.POSITION_T, i * settings.dt);
+						// Yield detector for target frame
+						SpotDetector<?> detector = factory.getDetector(frame);
+
+						// Execute detection
+						if (ok.get() && detector.checkInput() && detector.process()) {
+							// On success,
+							// Get results,
+							List<Spot> spotsThisFrame = detector.getResult();
+							// Translate individual spots back to top-left corner of the image, if
+							// the raw image was cropped.
+							TMUtils.translateSpots(spotsThisFrame, dx, dy, dz);
+							// Prune if outside of ROI
+							List<Spot> prunedSpots;
+							if (null != settings.polygon) {
+								prunedSpots = new ArrayList<Spot>();
+								for (Spot spot : spotsThisFrame) {
+									if (settings.polygon.contains(spot.getFeature(Spot.POSITION_X)/calibration[0], spot.getFeature(Spot.POSITION_Y)/calibration[1])) 
+										prunedSpots.add(spot);
+								}
+							} else {
+								prunedSpots = spotsThisFrame;
+							}
+							// Add detection feature other than position
+							for (Spot spot : prunedSpots) {
+								spot.putFeature(Spot.POSITION_T, frame * settings.dt); // FRAME will be set upon adding to SpotCollection
+							}
+							// Store final results for this frame
+							spots.put(frame, prunedSpots);
+							// Report 
+							spotFound.addAndGet(prunedSpots.size());
+							logger.setProgress(progress.incrementAndGet() / (double)numFrames );
+
+						} else {
+							// Fail: exit and report error.
+							ok.set(false);
+							errorMessage = detector.getErrorMessage();
+							return;
 						}
-						spots.put(i, s);
-
-						spotFound.addAndGet(s.size());
-						logger.setProgress(progress.incrementAndGet() / (float)numFrames );
 
 					} // Finished looping over frames
 				}
 			};
 		}
 
-		logger.setStatus("Segmenting...");
+		logger.setStatus("Detection...");
 		logger.setProgress(0);
 
 		SimpleMultiThreading.startAndJoin(threads);
 		model.setSpots(spots, true);
 
-		logger.log("Found "+spotFound.get()+" spots.\n");
+		if (ok.get()) {
+			logger.log("Found "+spotFound.get()+" spots.\n");
+		} else {
+			logger.error("Detection failed after "+progress.get()+" frame:\n"+errorMessage);
+		}
 		logger.setProgress(1);
 		logger.setStatus("");
-		return;
+		return ok.get();
 	}
 
 	/**
 	 * Execute the initial spot filtering part.
 	 *<p>
-	 * Because of the presence of noise, it is possible that some of the regional maxima found in the segmenting step have
+	 * Because of the presence of noise, it is possible that some of the regional maxima found in the detection step have
 	 * identified noise, rather than objects of interest. This can generates a very high number of spots, which is
 	 * inconvenient to deal with when it comes to  computing their features, or displaying them.
 	 * <p>
-	 * Any {@link SpotSegmenter} is expected to at least compute the {@link SpotFeature#QUALITY} value for each spot
+	 * Any {@link SpotDetector} is expected to at least compute the {@link SpotFeature#QUALITY} value for each spot
 	 * it creates, so it is possible to set up an initial filtering on this Feature, prior to any other operation. 
 	 * <p>
-	 * This method simply takes all the segmented spots, and discard those whose quality value is below the threshold set 
+	 * This method simply takes all the detected spots, and discard those whose quality value is below the threshold set 
 	 * by {@link #setInitialSpotFilter(Float)}. The spot field is overwritten, and discarded spots can't be recalled.
 	 * <p>
-	 * The {@link TrackMateModelChangeListener}s of this model will be notified with a {@link TrackMateModelChangeEvent#SPOTS_COMPUTED}
+	 * The {@link ModelChangeListener}s of this model will be notified with a {@link ModelChangeEvent#SPOTS_COMPUTED}
 	 * event.
 	 * 
 	 * @see #getSpots()
 	 * @see #setInitialFilter(Float)
 	 */
-	public void execInitialSpotFiltering() {
-		Float initialSpotFilterValue = model.getSettings().initialSpotFilterValue;
+	public boolean execInitialSpotFiltering() {
+		final Logger logger = model.getLogger();
+		logger.log("Starting initial filtering process.\n");
+		Double initialSpotFilterValue = model.getSettings().initialSpotFilterValue;
 		FeatureFilter featureFilter = new FeatureFilter(Spot.QUALITY, initialSpotFilterValue, true);
 		model.setSpots(model.getSpots().filter(featureFilter), true);
+		return true;
 	}
 
 	/**
 	 * Execute the spot feature filtering part.
 	 *<p>
-	 * Because of the presence of noise, it is possible that some of the regional maxima found in the segmenting step have
+	 * Because of the presence of noise, it is possible that some of the regional maxima found in the detection step have
 	 * identified noise, rather than objects of interest. A filtering operation based on the calculated features in this
 	 * step should allow to rule them out.
 	 * <p>
-	 * This method simply takes all the segmented spots, and store in the field {@link #filteredSpots}
+	 * This method simply takes all the detected spots, and store in the field {@link #filteredSpots}
 	 * the spots whose features satisfy all of the filters entered with the method {@link #addFilter(SpotFilter)}.
 	 * <p>
-	 * The {@link TrackMateModelChangeListener}s of this model will be notified with a {@link TrackMateModelChangeEvent#SPOTS_FILTERED}
+	 * The {@link ModelChangeListener}s of this model will be notified with a {@link ModelChangeEvent#SPOTS_FILTERED}
 	 * event.
-	 * 
+	 * @param doLogIt  if true, will send a message to the {@link TrackMateModel#logger}.
 	 * @see #getFilteredSpots()
 	 */
-	public void execSpotFiltering() {
+	public boolean execSpotFiltering(boolean doLogIt) {
+		if (doLogIt) {
+			final Logger logger = model.getLogger();
+			logger.log("Starting spot filtering process.\n");
+		}
 		model.setFilteredSpots(model.getSpots().filter(model.getSettings().getSpotFilters()), true);
+		return true;
 	}
 
-	public void execTrackFiltering() {
+	public boolean execTrackFiltering(boolean doLogIt) {
+		if (doLogIt) {
+			Logger logger = model.getLogger();
+			logger.log("Starting track filtering process.\n");
+		}
 		HashSet<Integer> filteredTrackIndices = new HashSet<Integer>(); // will work, for the hash of Integer is its int
 
-		for (int trackIndex = 0; trackIndex < model.getNTracks(); trackIndex++) {
+		for (Integer trackID : model.getTrackModel().getTrackIDs()) {
 			boolean trackIsOk = true;
 			for(FeatureFilter filter : model.getSettings().getTrackFilters()) {
-				Float tval = filter.value;
-				Float val = model.getFeatureModel().getTrackFeature(trackIndex, filter.feature);
+				Double tval = filter.value;
+				Double val = model.getFeatureModel().getTrackFeature(trackID, filter.feature);
 				if (null == val)
 					continue;
 
@@ -581,25 +625,87 @@ public class TrackMate_ implements PlugIn {
 				}
 			}
 			if (trackIsOk)
-				filteredTrackIndices.add(trackIndex);
+				filteredTrackIndices.add(trackID);
 		}
-		model.setVisibleTrackIndices(filteredTrackIndices, true);
+		model.getTrackModel().setFilteredTrackIDs(filteredTrackIndices, true);
+		return true;
 	}
 
 
+	public String toString() {
+		return PLUGIN_NAME_STR + "v" + PLUGIN_NAME_VERSION;
+	}
 
 	/*
-	 * MAIN METHOD
+	 * ALGORITHM METHODS
 	 */
-
-	public static void main(String[] args) {
-		ij.ImageJ.main(args);
-		IJ.open("/Users/tinevez/Desktop/Data/FakeTracks.tif");
-		TrackMate_ model = new TrackMate_();
-		model.run(null);
+	
+	@Override
+	public boolean checkInput() {
+		if (null == model) {
+			errorMessage = "The model is null.\n";
+			return false;
+		}
+		Settings settings = model.getSettings();
+		if (null == settings) {
+			errorMessage = "Settings in the model are null";
+			return false;
+		}
+		if (!settings.checkValidity()) {
+			errorMessage = settings.getErrorMessage();
+			return false;
+		}
+		return true;
 	}
 
+	@Override
+	public String getErrorMessage() {
+		return errorMessage;
+	}
 
+	@Override
+	public boolean process() {
+		if (!execDetection()) {
+			return false;
+		}
+		if (!execInitialSpotFiltering()) {
+			return false;
+		}
+		computeSpotFeatures(true);
+		if (!execSpotFiltering(true)) {
+			return false;
+		}
+		if (!execTracking()) {
+			return false;
+		}
+		computeTrackFeatures(true);
+		if (!execTrackFiltering(true)) {
+			return false;
+		}
+		return true;
+	}
 
+	@Override
+	public int getNumThreads() {
+		return numThreads;
+	}
 
+	@Override
+	public void setNumThreads() {
+		this.numThreads = Runtime.getRuntime().availableProcessors();  
+	}
+
+	@Override
+	public void setNumThreads(int numThreads) {
+		this.numThreads = numThreads;
+		
+	}
+
+	@Override
+	public long getProcessingTime() {
+		return processingTime;
+	};
+	
 }
+
+
