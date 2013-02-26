@@ -8,7 +8,14 @@ import fiji.plugin.trackmate.visualization.threedviewer.SpotDisplayer3D;
 
 public class LinkNew3DViewerAction extends AbstractTMAction {
 
-	private static final ImageIcon ICON = new ImageIcon(DisplayerPanel.class.getResource("images/page_white_link.png"));
+	public static final String NAME = "Link with new 3D viewer";
+	public static final String INFO_TEXT = "<html>" +
+			"This action opens a new 3D viewer, containing only the overlay (spot and tracks), <br> " +
+			"properly linked to the current controller." +
+			"<p>" +
+			"Useful to have synchronized 2D vs 3D views." +
+			"</html>" ;
+	public static final ImageIcon ICON = new ImageIcon(DisplayerPanel.class.getResource("images/page_white_link.png"));
 	
 	public LinkNew3DViewerAction() {
 		this.icon = ICON;
@@ -19,9 +26,8 @@ public class LinkNew3DViewerAction extends AbstractTMAction {
 		new Thread("TrackMate new 3D viewer thread") {
 			public void run() {
 				logger.log("Rendering 3D overlay...\n");
-				SpotDisplayer3D newDisplayer = new SpotDisplayer3D();
+				SpotDisplayer3D newDisplayer = new SpotDisplayer3D(plugin.getModel());
 				newDisplayer.setRenderImageData(false);
-				newDisplayer.setModel(plugin.getModel());
 				DisplayerPanel displayerPanel = (DisplayerPanel) wizard.getPanelDescriptorFor(DisplayerPanel.DESCRIPTOR);
 				if (null != displayerPanel) {
 					displayerPanel.register(newDisplayer);
@@ -35,17 +41,12 @@ public class LinkNew3DViewerAction extends AbstractTMAction {
 
 	@Override
 	public String getInfoText() {
-		return "<html>" +
-		"This action opens a new 3D viewer, containing only the overlay (spot and tracks), <br> " +
-		"properly linked to the current controller." +
-		"<p>" +
-		"Useful to have synchronized 2D vs 3D views." +
-		"</html>" ;
+		return INFO_TEXT;
 	}
 
 	@Override
 	public String toString() {
-		return "Link with new 3D viewer";
+		return NAME;
 	}
 
 }

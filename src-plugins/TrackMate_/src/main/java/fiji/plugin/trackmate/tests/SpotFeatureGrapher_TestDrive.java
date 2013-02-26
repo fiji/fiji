@@ -6,18 +6,18 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 
-import org.jdom.JDOMException;
+import org.jdom2.JDOMException;
 import org.jgrapht.graph.DefaultWeightedEdge;
-import org.jgrapht.graph.SimpleWeightedGraph;
+import org.jgrapht.graph.SimpleDirectedWeightedGraph;
 
-import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
-import fiji.plugin.trackmate.SpotImp;
 import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.TrackMate_;
+import fiji.plugin.trackmate.features.SpotFeatureGrapher;
+import fiji.plugin.trackmate.features.track.TrackIndexAnalyzer;
 import fiji.plugin.trackmate.io.TmXmlReader;
-import fiji.plugin.trackmate.visualization.trackscheme.SpotFeatureGrapher;
-import fiji.plugin.trackmate.visualization.trackscheme.TrackSchemeFrame;
+import fiji.plugin.trackmate.visualization.trackscheme.TrackScheme;
 
 public class SpotFeatureGrapher_TestDrive {
 
@@ -25,18 +25,29 @@ public class SpotFeatureGrapher_TestDrive {
 
 		// Load objects 
 		File file = new File("/Users/tinevez/Desktop/Data/Tree.xml");
-		TmXmlReader reader = new TmXmlReader(file, Logger.DEFAULT_LOGGER);
-		reader.parse();
-		final TrackMateModel model = reader.getModel();
+//		File file = new File("E:/Users/JeanYves/Desktop/Data/FakeTracks.xml");
+		TrackMate_ plugin = new TrackMate_();
+		plugin.initModules();
+		TmXmlReader reader = new TmXmlReader(file, plugin);
+		if (!reader.checkInput() || !reader.process()) {
+			System.err.println("Problem loading the file:");
+			System.err.println(reader.getErrorMessage());
+			return;
+		}
+		TrackMateModel model = plugin.getModel();
+
 		List<Spot> spots = model.getFilteredSpots().getAllSpots();
 		
 		HashSet<String> Y = new HashSet<String>(1);
 		Y.add(Spot.POSITION_T);
 		SpotFeatureGrapher grapher = new SpotFeatureGrapher(Spot.POSITION_X, Y, spots, model);
-		grapher.setVisible(true);
+		grapher.render();
 		
-		TrackSchemeFrame trackScheme = new TrackSchemeFrame(model);
-		trackScheme.setVisible(true);
+		TrackIndexAnalyzer analyzer = new TrackIndexAnalyzer(model);
+		analyzer.process(model.getTrackModel().getFilteredTrackIDs()); // need for trackScheme
+		
+		TrackScheme trackScheme = new TrackScheme(model);
+		trackScheme.render();
 		
 	}
 	
@@ -50,11 +61,11 @@ public class SpotFeatureGrapher_TestDrive {
 		List<Spot> spots = new ArrayList<Spot>(N_SPOTS);
 		SpotCollection sc = new SpotCollection();
 		for (int i = 0; i < N_SPOTS; i++) {
-			float[] coordinates = new float[3];
-			coordinates[0] = (float) (100 + 100 * i / 100. * Math.cos(i / 100. * 5 * 2*Math.PI)); 
-			coordinates[1] = (float) (100 + 100 * i / 100. * Math.sin(i / 100. * 5 * 2*Math.PI));
+			double[] coordinates = new double[3];
+			coordinates[0] = 100 + 100 * i / 100. * Math.cos(i / 100. * 5 * 2*Math.PI); 
+			coordinates[1] = 100 + 100 * i / 100. * Math.sin(i / 100. * 5 * 2*Math.PI);
 			coordinates[2] = 0;
-			Spot spot = new SpotImp(coordinates);
+			Spot spot = new Spot(coordinates);
 			spot.putFeature(Spot.POSITION_T, i);
 			spot.putFeature(Spot.RADIUS, 2);
 			
@@ -69,7 +80,7 @@ public class SpotFeatureGrapher_TestDrive {
 		model.setSpots(sc, false);
 		model.setFilteredSpots(sc, false);
 		
-		SimpleWeightedGraph<Spot, DefaultWeightedEdge> graph = new SimpleWeightedGraph<Spot, DefaultWeightedEdge>(DefaultWeightedEdge.class);
+		SimpleDirectedWeightedGraph<Spot, DefaultWeightedEdge> graph = new SimpleDirectedWeightedGraph<Spot, DefaultWeightedEdge>(DefaultWeightedEdge.class);
 		for (Spot spot : spots) {
 			graph.addVertex(spot);
 		}
@@ -80,7 +91,7 @@ public class SpotFeatureGrapher_TestDrive {
 			graph.setEdgeWeight(edge, 1);
 			source = target;
 		}
-		model.setGraph(graph);
+		model.getTrackModel().setGraph(graph);
 		
 		return model;
 	}

@@ -5,7 +5,7 @@ package fiji.plugin.trackmate.io;
  * Contains the key string used for xml marshaling.
  * @author Jean-Yves Tinevez <jeanyves.tinevez@gmail.com>  2010-2011
   */
-public class TmXmlKeys {
+class TmXmlKeys {
 	
 	/*
 	 * GENERIC ATTRIBUTES
@@ -22,6 +22,11 @@ public class TmXmlKeys {
 	public static final String ROOT_ELEMENT_KEY 					= "TrackMate";
 	public static final String PLUGIN_VERSION_ATTRIBUTE_NAME		= "version";
 	
+	/*
+	 * LOG
+	 */
+	
+	public static final String LOG_ELEMENT_KEY 						= "Log";
 	
 	/*
 	 * SETTINGS elements
@@ -36,15 +41,13 @@ public class TmXmlKeys {
 	public static final String SETTINGS_YEND_ATTRIBUTE_NAME 		= "yend";
 	public static final String SETTINGS_ZEND_ATTRIBUTE_NAME 		= "zend";
 	public static final String SETTINGS_TEND_ATTRIBUTE_NAME 		= "tend";
-	public static final String SETTINGS_SEGMENTATION_CHANNEL_ATTRIBUTE_NAME 		= "segmentationchannel";
+	public static final String SETTINGS_DETECTION_CHANNEL_ATTRIBUTE_NAME 		= "detectionchannel";
 
 	/*
-	 * SEGMENTER SETTINGS
+	 * DETECTOR SETTINGS
 	 */
 	
-	public static final String SEGMENTER_SETTINGS_ELEMENT_KEY 			= "SegmenterSettings";
-	public static final String SEGMENTER_SETTINGS_CLASS_ATTRIBUTE_NAME 	= "segmentersettingsclass";
-	public static final String SEGMENTER_CLASS_ATTRIBUTE_NAME 			= "segmenterclass";
+	public static final String DETECTOR_SETTINGS_ELEMENT_KEY 			= "DetectorSettings";
 
 	/*
 	 * TRACKER SETTINGS
@@ -52,7 +55,7 @@ public class TmXmlKeys {
 	
 	public static final String TRACKER_SETTINGS_ELEMENT_KEY				= "TrackerSettings";
 	public static final String TRACKER_SETTINGS_CLASS_ATTRIBUTE_NAME	= "trackersettingsclass";
-	public static final String TRACKER_CLASS_ATTRIBUTE_NAME				= "trackerclass";
+	public static final String TRACKER_ATTRIBUTE_NAME					= "trackername";
 	
 	/*
 	 * IMAGE element
@@ -112,12 +115,13 @@ public class TmXmlKeys {
 	
 	public static final String TRACK_COLLECTION_ELEMENT_KEY			= "AllTracks";
 	public static final String TRACK_ELEMENT_KEY 					= "Track";
-	public static final String TRACK_ID_ATTRIBUTE_NAME 				= "trackID";
+//	public static final String TRACK_ID_ATTRIBUTE_NAME 				= "trackID";
+	public static final String TRACK_NAME_ATTRIBUTE_NAME 			= "name";
 
 	public static final String TRACK_EDGE_ELEMENT_KEY				= "Edge";
-	public static final String TRACK_EDGE_SOURCE_ATTRIBUTE_NAME	 	= "sourceID";
-	public static final String TRACK_EDGE_TARGET_ATTRIBUTE_NAME	 	= "targetID";
-	public static final String TRACK_EDGE_WEIGHT_ATTRIBUTE_NAME	 	= "weight";
+//	public static final String TRACK_EDGE_SOURCE_ATTRIBUTE_NAME	 	= "sourceID";
+//	public static final String TRACK_EDGE_TARGET_ATTRIBUTE_NAME	 	= "targetID";
+//	public static final String TRACK_EDGE_WEIGHT_ATTRIBUTE_NAME	 	= "weight";
 
 	
 	/*

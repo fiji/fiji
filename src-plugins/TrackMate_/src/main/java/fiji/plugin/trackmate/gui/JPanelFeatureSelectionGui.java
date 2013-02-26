@@ -68,7 +68,7 @@ public class JPanelFeatureSelectionGui extends javax.swing.JPanel {
 		add(jPanelButtons);
 	}
 
-	public Map<String, Double>	getFeatureWeights() {
+	public Map<String, Double>	getFeaturePenalties() {
 		Map<String, Double> weights = new HashMap<String, Double>(featurePanels.size());
 		for (JPanelFeaturePenalty panel : featurePanels) 
 			weights.put(panel.getSelectedFeature(), panel.getPenaltyWeight());

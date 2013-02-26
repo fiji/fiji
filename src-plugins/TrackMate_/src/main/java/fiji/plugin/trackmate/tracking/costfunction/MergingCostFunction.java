@@ -1,5 +1,10 @@
 package fiji.plugin.trackmate.tracking.costfunction;
 
+import static fiji.plugin.trackmate.tracking.TrackerKeys.KEY_ALLOW_TRACK_MERGING;
+import static fiji.plugin.trackmate.tracking.TrackerKeys.KEY_BLOCKING_VALUE;
+import static fiji.plugin.trackmate.tracking.TrackerKeys.KEY_MERGING_FEATURE_PENALTIES;
+import static fiji.plugin.trackmate.tracking.TrackerKeys.KEY_MERGING_MAX_DISTANCE;
+
 import java.util.List;
 import java.util.Map;
 import java.util.SortedSet;
@@ -9,7 +14,6 @@ import mpicbg.imglib.multithreading.SimpleMultiThreading;
 import Jama.Matrix;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.tracking.LAPTracker;
-import fiji.plugin.trackmate.tracking.LAPTrackerSettings;
 import fiji.plugin.trackmate.tracking.LAPUtils;
 
 /**
@@ -34,24 +38,22 @@ import fiji.plugin.trackmate.tracking.LAPUtils;
 public class MergingCostFunction {
 
 	/** If false, gap closing will be prohibited. */
-	private boolean allowed;
-	/** The time cutoff */
-	protected double timeCutoff;
+	private final boolean allowed;
 	/** The distance threshold. */
-	protected double maxDist;
+	protected final double maxDist;
 	/** The value used to block an assignment in the cost matrix. */
-	protected double blockingValue;
+	protected final double blockingValue;
 	/** Thresholds for the feature ratios. */
-	protected Map<String, Double> featurePenalties;
+	protected final Map<String, Double> featurePenalties;
 	/** A flag stating if we should use multi--threading for some calculations. */
-	protected boolean useMultithreading = fiji.plugin.trackmate.TrackMate_.DEFAULT_USE_MULTITHREADING;
+	protected boolean useMultithreading = fiji.plugin.trackmate.TrackMate_.DEFAULT_USE_MULTITHREADING; // FIXME this is lame
 
-	public MergingCostFunction(LAPTrackerSettings settings) {
-		this.maxDist 			= settings.mergingDistanceCutoff;
-		this.timeCutoff 		= settings.mergingTimeCutoff;
-		this.blockingValue		= settings.blockingValue;
-		this.featurePenalties 	= settings.mergingFeaturePenalties;
-		this.allowed 			= settings.allowMerging;
+	@SuppressWarnings("unchecked")
+	public MergingCostFunction(Map<String, Object> settings) {
+		this.maxDist 			= (Double) settings.get(KEY_MERGING_MAX_DISTANCE);
+		this.blockingValue		= (Double) settings.get(KEY_BLOCKING_VALUE);
+		this.featurePenalties	= (Map<String, Double>) settings.get(KEY_MERGING_FEATURE_PENALTIES);
+		this.allowed 			= (Boolean) settings.get(KEY_ALLOW_TRACK_MERGING);
 	}
 
 	public Matrix getCostFunction(final List<SortedSet<Spot>> trackSegments, final List<Spot> middlePoints) {
@@ -85,9 +87,10 @@ public class MergingCostFunction {
 							Spot middle = middlePoints.get(j);
 
 							// Frame threshold - middle Spot must be one frame ahead of the end Spot
-							Float tend = end.getFeature(Spot.POSITION_T);
-							Float tmiddle = middle.getFeature(Spot.POSITION_T);
-							if (tmiddle - tend > timeCutoff || tmiddle - tend <= 0) {
+							int endFrame = end.getFeature(Spot.POSITION_T).intValue();
+							int middleFrame = middle.getFeature(Spot.POSITION_T).intValue();
+							// We only merge from one frame to the next one, no more
+							if (middleFrame - endFrame != 1) {
 								m.set(i, j, blockingValue);
 								continue;
 							}

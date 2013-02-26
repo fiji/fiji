@@ -1,6 +1,5 @@
 package fiji.plugin.trackmate.action;
 
-
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -13,21 +12,30 @@ import java.util.regex.Pattern;
 
 import javax.swing.ImageIcon;
 
-import org.jdom.Document;
-import org.jdom.Element;
-import org.jdom.output.Format;
-import org.jdom.output.XMLOutputter;
+import org.jdom2.Document;
+import org.jdom2.Element;
+import org.jdom2.output.Format;
+import org.jdom2.output.XMLOutputter;
 
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMate_;
 import fiji.plugin.trackmate.gui.TrackMateWizard;
-import fiji.plugin.trackmate.util.TMUtils;
+import fiji.plugin.trackmate.io.IOUtils;
 
 public class ISBIChallengeExporter extends AbstractTMAction {
 
-	private static final ImageIcon ICON = new ImageIcon(TrackMateWizard.class.getResource("images/ISBIlogo.png"));
+	public static final ImageIcon ICON = new ImageIcon(TrackMateWizard.class.getResource("images/ISBIlogo.png"));
+	public static final String NAME = "Export to ISBI challenge format";
+	public static final String INFO_TEXT = "<html>" +
+				"Export the current model content to a XML file following the " +
+				"ISBI 2012 particle tracking challenge format, as specified on " +
+				"<a href='http://bioimageanalysis.org/track/'></a>. " +
+				"<p> " +
+				"Only tracks are exported. If there is no track, this action " +
+				"does nothing. " +
+				"</html>";
 
 
 	/*
@@ -54,7 +62,7 @@ public class ISBIChallengeExporter extends AbstractTMAction {
 		} catch (NullPointerException npe) {
 			file = new File(folder.getPath() + File.separator + "ISBIChallenge2012Result.xml");
 		}
-		file = TMUtils.askForFile(file, wizard, logger);
+		file = IOUtils.askForFile(file, wizard, logger);
 
 		exportToFile(model, file);
 	}
@@ -62,7 +70,7 @@ public class ISBIChallengeExporter extends AbstractTMAction {
 	public static void exportToFile(final TrackMateModel model, final File file) {
 		final Logger logger = model.getLogger();
 		logger.log("Exporting to ISBI 2012 particle tracking challenge format.\n");
-		int ntracks = model.getNFilteredTracks();
+		int ntracks = model.getTrackModel().getNFilteredTracks();
 		if (ntracks == 0) {
 			logger.log("No visible track found. Aborting.\n");
 			return;
@@ -87,19 +95,12 @@ public class ISBIChallengeExporter extends AbstractTMAction {
 
 	@Override
 	public String getInfoText() {
-		return "<html>" +
-				"Export the current model content to a XML file following the " +
-				"ISBI 2012 particle tracking challenge format, as specified on " +
-				"<a href='http://bioimageanalysis.org/track/'></a>. " +
-				"<p> " +
-				"Only tracks are exported. If there is no track, this action " +
-				"does nothing. " +
-				"</html>";
+		return INFO_TEXT;
 	}
 
 	@Override
 	public String toString() {
-		return "Export to ISBI challenge format";
+		return NAME;
 	}
 
 	private static final Element marshall(TrackMateModel model) {
@@ -131,21 +132,21 @@ public class ISBIChallengeExporter extends AbstractTMAction {
 		content.setAttribute(DATE_ATT, new Date().toString());
 
 		logger.setStatus("Marshalling...");
-		Integer[] visibleTracks = model.getVisibleTrackIndices().toArray(new Integer[] {});
-		for (int i = 0 ; i < model.getNFilteredTracks() ; i++) {
+		Integer[] visibleTracks = model.getTrackModel().getFilteredTrackIDs().toArray(new Integer[] {});
+		for (int i = 0 ; i < model.getTrackModel().getNFilteredTracks() ; i++) {
 
 			Element trackElement = new Element(TRACK_KEY);
 			int trackindex = visibleTracks[i];
-			Set<Spot> track = model.getTrackSpots(trackindex);
+			Set<Spot> track = model.getTrackModel().getTrackSpots(trackindex);
 			// Sort them by time 
-			TreeSet<Spot> sortedTrack = new TreeSet<Spot>(Spot.frameComparator);
+			TreeSet<Spot> sortedTrack = new TreeSet<Spot>(Spot.timeComparator);
 			sortedTrack.addAll(track);
 			
 			for (Spot spot : sortedTrack) {
-				float t = spot.getFeature(Spot.POSITION_T);
-				float x = spot.getFeature(Spot.POSITION_X);
-				float y = spot.getFeature(Spot.POSITION_Y);
-				float z = spot.getFeature(Spot.POSITION_Z);
+				double t = spot.getFeature(Spot.POSITION_T);
+				double x = spot.getFeature(Spot.POSITION_X);
+				double y = spot.getFeature(Spot.POSITION_Y);
+				double z = spot.getFeature(Spot.POSITION_Z);
 
 				Element spotElement = new Element(SPOT_KEY);
 				spotElement.setAttribute(T_ATT, ""+ (int)t);
@@ -155,7 +156,7 @@ public class ISBIChallengeExporter extends AbstractTMAction {
 				trackElement.addContent(spotElement);
 			}
 			content.addContent(trackElement);
-			logger.setProgress(i / (0f + model.getNFilteredTracks()));
+			logger.setProgress(i / (0d + model.getTrackModel().getNFilteredTracks()));
 		}
 
 		logger.setStatus("");

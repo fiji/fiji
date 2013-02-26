@@ -3,28 +3,51 @@ package fiji.plugin.trackmate.gui;
 import static fiji.plugin.trackmate.gui.TrackMateWizard.BIG_FONT;
 import static fiji.plugin.trackmate.gui.TrackMateWizard.FONT;
 import static fiji.plugin.trackmate.gui.TrackMateWizard.TEXTFIELD_DIMENSION;
+import static fiji.plugin.trackmate.tracking.TrackerKeys.DEFAULT_ALTERNATIVE_LINKING_COST_FACTOR;
+import static fiji.plugin.trackmate.tracking.TrackerKeys.DEFAULT_BLOCKING_VALUE;
+import static fiji.plugin.trackmate.tracking.TrackerKeys.DEFAULT_CUTOFF_PERCENTILE;
+import static fiji.plugin.trackmate.tracking.TrackerKeys.DEFAULT_GAP_CLOSING_FEATURE_PENALTIES;
+import static fiji.plugin.trackmate.tracking.TrackerKeys.DEFAULT_LINKING_FEATURE_PENALTIES;
+import static fiji.plugin.trackmate.tracking.TrackerKeys.DEFAULT_MERGING_FEATURE_PENALTIES;
+import static fiji.plugin.trackmate.tracking.TrackerKeys.DEFAULT_MERGING_MAX_DISTANCE;
+import static fiji.plugin.trackmate.tracking.TrackerKeys.DEFAULT_SPLITTING_FEATURE_PENALTIES;
+import static fiji.plugin.trackmate.tracking.TrackerKeys.DEFAULT_SPLITTING_MAX_DISTANCE;
+import static fiji.plugin.trackmate.tracking.TrackerKeys.KEY_ALLOW_GAP_CLOSING;
+import static fiji.plugin.trackmate.tracking.TrackerKeys.KEY_ALLOW_TRACK_MERGING;
+import static fiji.plugin.trackmate.tracking.TrackerKeys.KEY_ALLOW_TRACK_SPLITTING;
+import static fiji.plugin.trackmate.tracking.TrackerKeys.KEY_ALTERNATIVE_LINKING_COST_FACTOR;
+import static fiji.plugin.trackmate.tracking.TrackerKeys.KEY_BLOCKING_VALUE;
+import static fiji.plugin.trackmate.tracking.TrackerKeys.KEY_CUTOFF_PERCENTILE;
+import static fiji.plugin.trackmate.tracking.TrackerKeys.KEY_GAP_CLOSING_FEATURE_PENALTIES;
+import static fiji.plugin.trackmate.tracking.TrackerKeys.KEY_GAP_CLOSING_MAX_DISTANCE;
+import static fiji.plugin.trackmate.tracking.TrackerKeys.KEY_GAP_CLOSING_MAX_FRAME_GAP;
+import static fiji.plugin.trackmate.tracking.TrackerKeys.KEY_LINKING_FEATURE_PENALTIES;
+import static fiji.plugin.trackmate.tracking.TrackerKeys.KEY_LINKING_MAX_DISTANCE;
+import static fiji.plugin.trackmate.tracking.TrackerKeys.KEY_MERGING_FEATURE_PENALTIES;
+import static fiji.plugin.trackmate.tracking.TrackerKeys.KEY_MERGING_MAX_DISTANCE;
+import static fiji.plugin.trackmate.tracking.TrackerKeys.KEY_SPLITTING_FEATURE_PENALTIES;
+import static fiji.plugin.trackmate.tracking.TrackerKeys.KEY_SPLITTING_MAX_DISTANCE;
 
 import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.util.HashMap;
+import java.util.Map;
 
 import javax.swing.JLabel;
 import javax.swing.SwingConstants;
 
-import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.tracking.LAPTracker;
-import fiji.plugin.trackmate.tracking.LAPTrackerSettings;
-import fiji.plugin.trackmate.tracking.TrackerSettings;
 
 /**
  * A simplified configuration panel for the {@link LAPTracker}.
  * 
  * @author Jean-Yves Tinevez <tinevez@pasteur.fr> - 2010-2011
  */
-public class SimpleLAPTrackerSettingsPanel extends TrackerConfigurationPanel {
+public class SimpleLAPTrackerSettingsPanel extends ConfigurationPanel {
 
-	private static final long serialVersionUID = 4099537392544048109L;
+	private static final long serialVersionUID = -1L;
 	private JLabel jLabelLinkingMaxDistanceUnit;
 	private JLabel jLabelTrackerName;
 	private JLabel jLabelGapClosingTimeCutoffUnit;
@@ -34,14 +57,19 @@ public class SimpleLAPTrackerSettingsPanel extends TrackerConfigurationPanel {
 	private JNumericTextField jTextFieldLinkingDistance;
 	private JLabel jLabelTrackerDescription;
 
-	private LAPTrackerSettings settings;
+	private String infoText;
+	private String trackerName;
+	private String spaceUnits;
 
 	/*
 	 * CONSTRUCTOR
 	 */
 
 
-	public SimpleLAPTrackerSettingsPanel() {
+	public SimpleLAPTrackerSettingsPanel(String trackerName, String infoText, String spaceUnits) {
+		this.trackerName = trackerName;
+		this.infoText = infoText;
+		this.spaceUnits = spaceUnits;
 		initGUI();
 	}
 
@@ -50,23 +78,34 @@ public class SimpleLAPTrackerSettingsPanel extends TrackerConfigurationPanel {
 	 */
 
 	@Override
-	public void setTrackerSettings(TrackMateModel model) {
-		this.settings = (LAPTrackerSettings) model.getSettings().trackerSettings;
-		echoSettings(model);
-
+	public void setSettings(final Map<String, Object> settings) {
+		echoSettings(settings);
 	};
 
 	@Override
-	public TrackerSettings getTrackerSettings() {
-		// Default ones
-		settings.allowMerging 		= false;
-		settings.allowSplitting 	= false;
-		settings.linkingFeaturePenalties.clear();
-		settings.gapClosingFeaturePenalties.clear();
+	public Map<String, Object> getSettings() {
+		Map<String, Object> settings = new HashMap<String, Object>();
+		// Linking
+		settings.put(KEY_LINKING_FEATURE_PENALTIES, DEFAULT_LINKING_FEATURE_PENALTIES);
+		// Gap closing
+		settings.put(KEY_ALLOW_GAP_CLOSING, true);
+		settings.put(KEY_GAP_CLOSING_FEATURE_PENALTIES, DEFAULT_GAP_CLOSING_FEATURE_PENALTIES);
+		// Track splitting
+		settings.put(KEY_ALLOW_TRACK_SPLITTING, false);
+		settings.put(KEY_SPLITTING_MAX_DISTANCE, DEFAULT_SPLITTING_MAX_DISTANCE);
+		settings.put(KEY_SPLITTING_FEATURE_PENALTIES, DEFAULT_SPLITTING_FEATURE_PENALTIES);
+		// Track merging
+		settings.put(KEY_ALLOW_TRACK_MERGING, false);
+		settings.put(KEY_MERGING_MAX_DISTANCE, DEFAULT_MERGING_MAX_DISTANCE);
+		settings.put(KEY_MERGING_FEATURE_PENALTIES, DEFAULT_MERGING_FEATURE_PENALTIES);
+		// Others
+		settings.put(KEY_BLOCKING_VALUE, DEFAULT_BLOCKING_VALUE);
+		settings.put(KEY_ALTERNATIVE_LINKING_COST_FACTOR, DEFAULT_ALTERNATIVE_LINKING_COST_FACTOR);
+		settings.put(KEY_CUTOFF_PERCENTILE, DEFAULT_CUTOFF_PERCENTILE);
 		// Panel ones
-		settings.linkingDistanceCutOff 		= Double.parseDouble(jTextFieldLinkingDistance.getText());
-		settings.gapClosingDistanceCutoff	= Double.parseDouble(jTextFieldGapClosingDistanceCutoff.getText());
-		settings.gapClosingTimeCutoff		= Double.parseDouble(jTextFieldGapClosingTimeCutoff.getText());
+		settings.put(KEY_LINKING_MAX_DISTANCE, Double.parseDouble(jTextFieldLinkingDistance.getText()));
+		settings.put(KEY_GAP_CLOSING_MAX_DISTANCE, Double.parseDouble(jTextFieldGapClosingDistanceCutoff.getText()));
+		settings.put(KEY_GAP_CLOSING_MAX_FRAME_GAP, Integer.parseInt(jTextFieldGapClosingTimeCutoff.getText()));
 		// Hop!
 		return settings;
 	}
@@ -75,18 +114,10 @@ public class SimpleLAPTrackerSettingsPanel extends TrackerConfigurationPanel {
 	 * PRIVATE METHODS
 	 */
 
-	private void echoSettings(TrackMateModel model) {
-		jLabelTrackerName.setText(model.getSettings().tracker.toString());
-		jLabelTrackerDescription.setText(model.getSettings().tracker.getInfoText()
-				.replace("<br>", "")
-				.replace("<p>", "<p align=\"justify\">")
-				.replace("<html>", "<html><p align=\"justify\">"));
-		jTextFieldLinkingDistance.setText(String.format("%.1f", settings.linkingDistanceCutOff));
-		jTextFieldGapClosingDistanceCutoff.setText(String.format("%.1f", settings.gapClosingDistanceCutoff));
-		jTextFieldGapClosingTimeCutoff.setText(String.format("%.1f", settings.gapClosingTimeCutoff));
-		jLabelGapClosingMaxDistanceUnit.setText(model.getSettings().spaceUnits);
-		jLabelGapClosingTimeCutoffUnit.setText(model.getSettings().timeUnits);
-		jLabelLinkingMaxDistanceUnit.setText(model.getSettings().spaceUnits);
+	private void echoSettings(final Map<String, Object> settings) {
+		jTextFieldLinkingDistance.setText(String.format("%.1f", (Double) settings.get(KEY_LINKING_MAX_DISTANCE)));
+		jTextFieldGapClosingDistanceCutoff.setText(String.format("%.1f", (Double) settings.get(KEY_GAP_CLOSING_MAX_DISTANCE)));
+		jTextFieldGapClosingTimeCutoff.setText(String.format("%d", (Integer) settings.get(KEY_GAP_CLOSING_MAX_FRAME_GAP)));
 	}
 
 	private void initGUI() {
@@ -110,29 +141,34 @@ public class SimpleLAPTrackerSettingsPanel extends TrackerConfigurationPanel {
 				jLabelTrackerName.setHorizontalTextPosition(SwingConstants.CENTER);
 				jLabelTrackerName.setHorizontalAlignment(SwingConstants.CENTER);
 				jLabelTrackerName.setFont(BIG_FONT);
+				jLabelTrackerName.setText(trackerName);
 			}
 			{
 				jLabelTrackerDescription = new JLabel();
 				this.add(jLabelTrackerDescription, new GridBagConstraints(0, 2, 3, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(10, 10, 10, 10), 0, 0));
 				jLabelTrackerDescription.setFont(FONT.deriveFont(Font.ITALIC));
+				jLabelTrackerDescription.setText(infoText
+						.replace("<br>", "")
+						.replace("<p>", "<p align=\"justify\">")
+						.replace("<html>", "<html><p align=\"justify\">"));
 			}
 			{
 				JLabel jLabel2 = new JLabel();
 				this.add(jLabel2, new GridBagConstraints(0, 4, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, new Insets(0, 10, 0, 0), 0, 0));
 				jLabel2.setFont(FONT);
-				jLabel2.setText("Linking distance cutoff:");
+				jLabel2.setText("Linking max distance:");
 			}
 			{
 				JLabel jLabel3 = new JLabel();
 				this.add(jLabel3, new GridBagConstraints(0, 5, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, new Insets(0, 10, 0, 0), 0, 0));
 				jLabel3.setFont(FONT);
-				jLabel3.setText("Gap-closing distance cutoff:");
+				jLabel3.setText("Gap-closing max distance:");
 			}
 			{
 				JLabel jLabel4 = new JLabel();
 				this.add(jLabel4, new GridBagConstraints(0, 6, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, new Insets(0, 10, 0, 0), 0, 0));
 				jLabel4.setFont(FONT);
-				jLabel4.setText("Gap-closing time cutoff:");
+				jLabel4.setText("Gap-closing max frame gap:");
 			}
 			{
 				jTextFieldLinkingDistance = new JNumericTextField();
@@ -156,11 +192,13 @@ public class SimpleLAPTrackerSettingsPanel extends TrackerConfigurationPanel {
 				jLabelLinkingMaxDistanceUnit = new JLabel();
 				this.add(jLabelLinkingMaxDistanceUnit, new GridBagConstraints(2, 4, 1, 1, 0.0, 0.0, GridBagConstraints.EAST, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 10), 0, 0));
 				jLabelLinkingMaxDistanceUnit.setFont(FONT);
+				jLabelLinkingMaxDistanceUnit.setText(spaceUnits);
 			}
 			{
 				jLabelGapClosingMaxDistanceUnit = new JLabel();
 				this.add(jLabelGapClosingMaxDistanceUnit, new GridBagConstraints(2, 5, 1, 1, 0.0, 0.0, GridBagConstraints.EAST, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 10), 0, 0));
 				jLabelGapClosingMaxDistanceUnit.setFont(FONT);
+				jLabelGapClosingMaxDistanceUnit.setText(spaceUnits);
 			}
 			{
 				jLabelGapClosingTimeCutoffUnit = new JLabel();
