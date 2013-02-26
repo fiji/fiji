@@ -40,6 +40,13 @@ if (System.getProperty("ij.dir") == null) {
 			if (ijDir.endsWith("/target") || ijDir.endsWith("\\target"))
 				ijDir = ijDir.substring(0, ijDir.length() - 7);
 		}
+		else if (url.startsWith("file:") && bang < 0 && url.endsWith("/ij/IJ.class")) {
+			ijDir = url.substring(5, url.length() - 12);
+			if (ijDir.endsWith("/classes"))
+				ijDir = ijDir.substring(0, ijDir.length() - 8);
+			if (ijDir.endsWith("/target"))
+				ijDir = ijDir.substring(0, ijDir.length() - 7);
+		}
 		else {
 			IJ.error("Cannot set ij.dir for " + url);
 		}
