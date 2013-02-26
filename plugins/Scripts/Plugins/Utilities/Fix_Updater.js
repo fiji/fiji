@@ -42,7 +42,6 @@ if (System.getProperty("ij.dir") == null) {
 		}
 		else {
 			IJ.error("Cannot set ij.dir for " + url);
-			throw new RuntimeExeption();
 		}
 	}
 	System.setProperty("ij.dir", ijDir);
