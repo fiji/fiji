@@ -82,19 +82,24 @@ public class ProcessManager<T> implements Runnable, Serializable
         return remoteException;
     }
     
-    public int requestedCores(ClusterNode node)
+    public int requestedCores(int totalCores)
     {
         int c;
         if (isFractional)
         {
-            c = (int)(numCores * (float)node.getThreadLimit());
+            c = (int)(numCores * (float)totalCores);
         }
         else
         {
             c = (int)numCores;
         }
-        
+
         return c > 0 ? c : 1;
+    }
+    
+    public int requestedCores(ClusterNode node)
+    {
+        return requestedCores(node.getThreadLimit());
     }
     
 }

@@ -45,7 +45,7 @@ public class ClusterNode implements TransceiverListener
     private long nodeID;
     private long lastBeatTime;
     private NodeManager.NodeParameters nodeParam;
-    private AtomicBoolean idSet;
+    private final AtomicBoolean idSet, cpuSet;
     private ClusterNodeState state;
     private final Vector<NodeStateListener> stateListeners;
     private final TransceiverExceptionListener xcEListener;
@@ -60,6 +60,7 @@ public class ClusterNode implements TransceiverListener
         int waitCnt = 0;
         ready = new AtomicBoolean(false);
         idSet = new AtomicBoolean(false);
+        cpuSet = new AtomicBoolean(false);
         ramMBAvail = new AtomicInteger(0);
         ramMBTot = new AtomicInteger(0);
         runningCores = new AtomicInteger(0);
@@ -74,10 +75,10 @@ public class ClusterNode implements TransceiverListener
         
         xc.queueMessage(MessageType.GETID);
         
-        while (!idSet.get())
+        while (!idSet.get() && !cpuSet.get())
         {
             Thread.sleep(100);
-            if (waitCnt++ > 1000)
+            if (waitCnt++ > 120)
             {
                 throw new TimeOutException();
             }
@@ -287,6 +288,10 @@ public class ClusterNode implements TransceiverListener
                     {
                         xc.queueMessage(MessageType.NUMTHREADS);
                     }
+                    else
+                    {
+                        cpuSet.set(true);
+                    }
                     break;
 
                 case PROCESS:
@@ -301,6 +306,7 @@ public class ClusterNode implements TransceiverListener
                 case NUMTHREADS:
                     int n = (Integer)object;
                     nodeParam.setThreadLimit(n);
+                    cpuSet.set(true);
                     break;
                 
                 case PING:                
@@ -385,6 +391,11 @@ public class ClusterNode implements TransceiverListener
             FijiArchipelago.debug("Sending shutdown");
 
             sendShutdown();
+            
+            for (ProcessManager pm : new ArrayList<ProcessManager>(runningProcesses.values()))
+            {
+                removeProcess(pm);
+            }
 
             FijiArchipelago.debug("Closing XC");
 
@@ -444,8 +455,6 @@ public class ClusterNode implements TransceiverListener
         else if (xc.queueMessage(MessageType.CANCELJOB, id))
         {
             removeProcess(pm);
-            //processHandlers.remove(id);
-            //runningProcesses.remove(id);
             return true;
         }
         return false;
@@ -484,5 +493,10 @@ public class ClusterNode implements TransceiverListener
     public ClusterNodeState getState()
     {
         return state;
+    }
+    
+    public String toString()
+    {
+        return getHost();
     }
 }

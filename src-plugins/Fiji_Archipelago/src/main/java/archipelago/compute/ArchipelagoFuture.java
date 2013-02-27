@@ -48,6 +48,11 @@ public class ArchipelagoFuture<T> implements Future<T>
         return id;
     }
     
+    public void setException(final Exception eIn)
+    {
+        e = eIn;
+    }
+    
     public boolean finish(ProcessManager<?> pm) throws ClassCastException
     {
         if (!finished.getAndSet(true))

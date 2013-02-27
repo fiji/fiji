@@ -12,6 +12,7 @@ import archipelago.network.node.ClusterNode;
 import archipelago.network.node.ClusterNodeState;
 import archipelago.network.node.NodeManager;
 import archipelago.network.server.ArchipelagoServer;
+import archipelago.util.ProcessManagerCoreComparator;
 import archipelago.util.XCErrorAdapter;
 import mpicbg.trakem2.concurrent.DefaultExecutorProvider;
 import mpicbg.trakem2.concurrent.ExecutorProvider;
@@ -106,6 +107,10 @@ public class Cluster implements NodeStateListener, ExecutorProvider
 
             try
             {
+                if (priority)
+                {
+                    FijiArchipelago.debug("Scheduler: Put job " + pm.getID() + " on the priority queue");
+                }
                 queue.put(pm);
                 return true;
             } catch (InterruptedException ie)
@@ -174,7 +179,6 @@ public class Cluster implements NodeStateListener, ExecutorProvider
 
                         if (future == null)
                         {
-                            FijiArchipelago.log("Got results from a cancelled process");
                             return false;
                         }
                         
@@ -183,7 +187,6 @@ public class Cluster implements NodeStateListener, ExecutorProvider
 
                         try
                         {
-                            FijiArchipelago.debug("Scheduler: Finishing Future " + future.getID());
                             future.finish(process);
                             return true;
                         }
@@ -202,6 +205,7 @@ public class Cluster implements NodeStateListener, ExecutorProvider
                 for (int i = 0; i < nodeList.size(); ++i)
                 {
                     final ClusterNode node = nodeList.getFirst();
+
                     if (node.numAvailableThreads() >= pm.requestedCores(node) &&
                             node.submit(pm, listener))
                     {
@@ -215,6 +219,7 @@ public class Cluster implements NodeStateListener, ExecutorProvider
                     }
                     rotate(nodeList);
                 }
+
                 return false;
             }
         }
@@ -226,15 +231,14 @@ public class Cluster implements NodeStateListener, ExecutorProvider
             final ArrayList<ProcessManager> tempQ = new ArrayList<ProcessManager>();
             final ArrayList<ProcessManager> pmQ = new ArrayList<ProcessManager>();
             final LinkedList<ClusterNode> nodeList = new LinkedList<ClusterNode>();           
-            
+            final ProcessManagerCoreComparator comparator = new ProcessManagerCoreComparator();
             
             while (running.get())
             {
-                // Remove de-activated nodes, and those that are saturated with jobs
-                
                 lock.lock();
-                
-                for (ClusterNode node : nodeList)
+
+                // Remove de-activated nodes, and those that are saturated with jobs
+                for (ClusterNode node : new ArrayList<ClusterNode>(nodeList))
                 {
                     if (node.getState() != ClusterNodeState.ACTIVE ||
                             node.numAvailableThreads() <= 0)
@@ -251,19 +255,32 @@ public class Cluster implements NodeStateListener, ExecutorProvider
                         nodeList.addFirst(node);
                     }
                 }
+
+                comparator.setThreadCount(getMaxThreads());
                 
-
                 //Put priority jobs in front of the internal queue, in the correct order
-
-                priorityJobQueue.drainTo(tempQ);
-                for (int i = priorityJobQueue.size(); i > 0; --i)
+                FijiArchipelago.debug("Scheduler: " + priorityJobQueue.size() +
+                        " jobs in priority queue");
+                
+                priorityJobQueue.drainTo(tempQ);                
+                Collections.sort(tempQ, comparator);
+                for (int i = tempQ.size(); i > 0; --i)
                 {
-                    internalQueue.addFirst(tempQ.get(i - 1));
+                    ProcessManager pm  = tempQ.get(i - 1);
+                    FijiArchipelago.debug("Scheduler: Adding job " + pm.getID() +
+                            " to internal queue");
+                    internalQueue.addFirst(pm);
                 }
                 tempQ.clear();
 
+
                 //Put non-priority jobs at the end of the internal queue.
-                jobQueue.drainTo(internalQueue);
+                jobQueue.drainTo(tempQ);
+                Collections.sort(tempQ, comparator);
+                internalQueue.addAll(tempQ);
+                tempQ.clear();
+                
+                FijiArchipelago.debug("Scheduler: " + internalQueue.size() + " jobs in queue");
 
                 //If we have both jobs and nodes to run them on...
                 if (!internalQueue.isEmpty() && !nodeList.isEmpty())
@@ -275,6 +292,8 @@ public class Cluster implements NodeStateListener, ExecutorProvider
                     {
                         if (trySubmit(pm, nodeList))
                         {
+                            FijiArchipelago.debug("Scheduler: Job " + pm.getID() +
+                                    " scheduled on host " + getNode(pm.getRunningOn()));
                             internalQueue.remove(pm);
                         }
                         // Deal PM's to the nodes like we're playing poker.
@@ -992,12 +1011,24 @@ public class Cluster implements NodeStateListener, ExecutorProvider
 
                 for (ProcessManager<?> pm : node.getRunningProcesses())
                 {
-                    FijiArchipelago.debug("Rescheduling job " + pm.getID());
-                    scheduler.queueJob(pm, true);
                     if (isShutdown())
                     {
                         FijiArchipelago.debug("Cancelling running job " + pm.getID());
+                        decrementJobCount();
                         futures.get(pm.getID()).cancel(true);
+                    }
+                    else
+                    {
+                        FijiArchipelago.debug("Rescheduling job " + pm.getID());
+                        decrementJobCount();
+                        
+                        if (!scheduler.queueJob(pm, true))
+                        {
+                            FijiArchipelago.err("Could not reschedule job " + pm.getID());
+                            futures.get(pm.getID()).setException(
+                                    new Exception("Could not reschedule job"));
+                            futures.get(pm.getID()).finish(null);
+                        }
                     }
                 }
                 
@@ -1056,23 +1087,64 @@ public class Cluster implements NodeStateListener, ExecutorProvider
         }
     }
     
+    private boolean nodesWaiting()
+    {
+        for (NodeManager.NodeParameters param : nodeManager.getParams())
+        {
+            if (param.getNode() == null)
+            {
+                return true;
+            }
+        }
+        
+        return false;
+    }
+    
+    public void waitForAllNodes(final long timeout) throws InterruptedException, TimeoutException
+    {
+        if (timeout <= 0)
+        {
+            return;
+        }
+
+        boolean wait = true;        
+        final long sTime = System.currentTimeMillis();
+        
+        while (wait)
+        {
+            long wTime = System.currentTimeMillis() - sTime;
+            if (nodesWaiting())
+            {
+                if (wTime > timeout)
+                {
+                    throw new TimeoutException();
+                }
+                Thread.sleep(1000);
+            }
+            else
+            {
+                wait = false;
+            }
+        }
+    }
+    
+    
     public void waitUntilReady()
     {
         waitUntilReady(Long.MAX_VALUE);
     }
     
-    public void waitUntilReady(long timeout)
+    public void waitUntilReady(final long timeout)
     {
         boolean wait = !isReady();
 
         final long sTime = System.currentTimeMillis();
         
-        FijiArchipelago.log("Waiting for ready nodes");
+        FijiArchipelago.log("Cluster: Waiting for ready nodes");
 
         // Wait synchronously
         while (wait)
         {
-
             try
             {
                 Thread.sleep(1000); //sleep for a second
@@ -1338,12 +1410,36 @@ public class Cluster implements NodeStateListener, ExecutorProvider
         ThreadPool.setProvider(new DefaultExecutorProvider());
     }
 
-    public ExecutorService getService(int nThreads)
+    public int getMaxThreads()
     {
-        return new ClusterExecutorService(nThreads);
+        int maxThreads = -1;
+        for (ClusterNode node : nodes)
+        {
+            int ncpu = node.getThreadLimit();
+            maxThreads = maxThreads < node.getThreadLimit() ? ncpu : maxThreads;
+        }
+        return maxThreads < 1 ? 1 : maxThreads;
     }
     
-    public ExecutorService getService(float fractionThreads)
+    public ExecutorService getService(final int nThreads)
+    {
+        int maxThreads = getMaxThreads(), nt;
+
+        if (nThreads > maxThreads)
+        {
+            FijiArchipelago.log("Requested " + nThreads + " but there are only " + maxThreads
+                    + " available. Using " + maxThreads + " threads");
+            nt = maxThreads;
+        }
+        else
+        {
+            nt = nThreads;
+        }
+
+        return new ClusterExecutorService(nt);
+    }
+    
+    public ExecutorService getService(final float fractionThreads)
     {
         return new ClusterExecutorService(fractionThreads);
     }

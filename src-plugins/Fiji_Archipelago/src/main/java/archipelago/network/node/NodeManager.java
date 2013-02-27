@@ -4,6 +4,7 @@ import archipelago.FijiArchipelago;
 import archipelago.network.node.ClusterNode;
 import archipelago.network.shell.NodeShell;
 
+import java.util.ArrayList;
 import java.util.Hashtable;
 /**
  *
@@ -24,16 +25,6 @@ public class NodeManager
         private final long id;
         private int numThreads;
         private NodeShell shell;
-        
-        /*public NodeParameters()
-        {
-            this("");
-        }
-        
-        public NodeParameters(String hostIn)
-        {
-            this(stdUser, hostIn, stdExecRoot, stdFileRoot, stdPort);
-        }*/
         
         public NodeParameters(String userIn, String hostIn, NodeShell shellIn, String execPath,
                               String filePath, int portIn)
@@ -155,6 +146,11 @@ public class NodeManager
     public synchronized NodeParameters getParam(final long id)
     {
         return nodeTable.get(id);
+    }
+    
+    public ArrayList<NodeParameters> getParams()
+    {
+        return new ArrayList<NodeParameters>(nodeTable.values());
     }
 
     public synchronized void removeParam(final long id)
