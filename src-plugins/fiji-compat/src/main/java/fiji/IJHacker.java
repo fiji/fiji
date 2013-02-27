@@ -555,7 +555,11 @@ public class IJHacker extends JavassistHelper {
 		}
 
 		// handle https:// in addition to http://
-		clazz = get("ij.io.PluginInstaller");
+		try {
+			clazz = get("ij.io.PluginInstaller");
+		} catch (NotFoundException e) {
+			clazz = get("ij.plugin.PluginInstaller");
+		}
 		handleHTTPS(clazz.getMethod("install", "(Ljava/lang/String;)Z"));
 
 		clazz = get("ij.plugin.ListVirtualStack");
