@@ -1932,8 +1932,12 @@ public class Weka_Segmentation implements PlugIn
 		String[] arg = new String[] { sd.getDirectory() + sd.getFileName() };
 		record(SAVE_DATA, arg);
 		
+		win.setButtonsEnabled(false);
+		
 		if(false == wekaSegmentation.saveData(sd.getDirectory() + sd.getFileName()))
 			IJ.showMessage("There is no data to save");
+		
+		win.updateButtonsEnabling();
 	}
 
 

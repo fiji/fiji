@@ -24,6 +24,7 @@ import org.jfree.chart.renderer.InterpolatePaintScale;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.util.TMUtils;
 import fiji.plugin.trackmate.visualization.AbstractTrackMateModelView;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
 import fiji.util.gui.OverlayedImageCanvas.Overlay;
@@ -40,13 +41,13 @@ public class SpotOverlay implements Overlay {
 	/** The color mapping of the target collection. */
 	protected Map<Spot, Color> targetColor;
 	protected Spot editingSpot;
-	protected ImagePlus imp;
-	protected float[] calibration;
+	protected final ImagePlus imp;
+	protected final double[] calibration;
 	protected Composite composite = AlphaComposite.getInstance(AlphaComposite.SRC_OVER);
 	protected FontMetrics fm;
 	protected Collection<Spot> spotSelection = new ArrayList<Spot>();
 	protected Map<String, Object> displaySettings;
-	protected TrackMateModel model;
+	protected final TrackMateModel model;
 
 	/*
 	 * CONSTRUCTOR
@@ -55,7 +56,7 @@ public class SpotOverlay implements Overlay {
 	public SpotOverlay(final TrackMateModel model, final ImagePlus imp, final Map<String, Object> displaySettings) {
 		this.model = model;
 		this.imp = imp;
-		this.calibration = model.getSettings().getCalibration();
+		this.calibration = TMUtils.getSpatialCalibration(model.getSettings().imp);
 		this.displaySettings = displaySettings; 
 		computeSpotColors();
 	}
@@ -86,8 +87,8 @@ public class SpotOverlay implements Overlay {
 		fm = g2d.getFontMetrics();
 		
 		final int frame = imp.getFrame()-1;
-		final float zslice = (imp.getSlice()-1) * calibration[2];
-		final float mag = (float) magnification;
+		final double zslice = (imp.getSlice()-1) * calibration[2];
+		final double mag = (double) magnification;
 
 		// Deal with normal spots.
 		g2d.setStroke(new BasicStroke(1.0f));
@@ -129,18 +130,18 @@ public class SpotOverlay implements Overlay {
 		if (null != editingSpot) {
 			g2d.setColor(TrackMateModelView.DEFAULT_HIGHLIGHT_COLOR);
 			g2d.setStroke(new BasicStroke(1.0f,	BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 1.0f, new float[] {5f, 5f} , 0));
-			final float x = editingSpot.getFeature(Spot.POSITION_X);
-			final float y = editingSpot.getFeature(Spot.POSITION_Y);
-			final float radius = editingSpot.getFeature(Spot.RADIUS) / calibration[0] * mag;
+			final double x = editingSpot.getFeature(Spot.POSITION_X);
+			final double y = editingSpot.getFeature(Spot.POSITION_Y);
+			final double radius = editingSpot.getFeature(Spot.RADIUS) / calibration[0] * mag;
 			// In pixel units
-			final float xp = x / calibration[0] - 0.5f;
-			final float yp = y / calibration[1] - 0.5f;
+			final double xp = x / calibration[0] + 0.5d;
+			final double yp = y / calibration[1] + 0.5d;
 			// Scale to image zoom
-			final float xs = (xp - xcorner) * mag ;
-			final float ys = (yp - ycorner) * mag;
-			float radiusRatio = (Float) displaySettings.get(TrackMateModelView.KEY_SPOT_RADIUS_RATIO);
-			g2d.drawOval(Math.round(xs-radius*radiusRatio ), Math.round(ys-radius*radiusRatio), 
-					Math.round(2*radius*radiusRatio), Math.round(2*radius*radiusRatio) );		
+			final double xs = (xp - xcorner) * mag ;
+			final double ys = (yp - ycorner) * mag;
+			double radiusRatio = (Float) displaySettings.get(TrackMateModelView.KEY_SPOT_RADIUS_RATIO);
+			g2d.drawOval( (int) Math.round(xs-radius*radiusRatio ), (int) Math.round(ys-radius*radiusRatio), 
+						  (int) Math.round(2*radius*radiusRatio), 	(int) Math.round(2*radius*radiusRatio) );		
 		}
 		
 		// Restore graphic device original settings
@@ -153,10 +154,19 @@ public class SpotOverlay implements Overlay {
 	
 	public void computeSpotColors() {
 		final String feature = (String) displaySettings.get(TrackMateModelView.KEY_SPOT_COLOR_FEATURE);
+		targetColor = new HashMap<Spot, Color>( model.getSpots().getNSpots());
+		// Check null
+		if (null == feature) {
+			for(Spot spot : model.getSpots()) {
+				targetColor.put(spot, TrackMateModelView.DEFAULT_COLOR);
+			}
+			return;
+		}
+		
 		// Get min & max
-		float min = Float.POSITIVE_INFINITY;
-		float max = Float.NEGATIVE_INFINITY;
-		Float val;
+		double min = Float.POSITIVE_INFINITY;
+		double max = Float.NEGATIVE_INFINITY;
+		Double val;
 		for (int ikey : model.getSpots().keySet()) {
 			for (Spot spot : model.getSpots().get(ikey)) {
 				val = spot.getFeature(feature);
@@ -166,7 +176,7 @@ public class SpotOverlay implements Overlay {
 				if (val < min) min = val;
 			}
 		}
-		targetColor = new HashMap<Spot, Color>( model.getSpots().getNSpots());
+		
 		for(Spot spot : model.getSpots()) {
 			val = spot.getFeature(feature);
 			InterpolatePaintScale  colorMap = (InterpolatePaintScale) displaySettings.get(TrackMateModelView.KEY_COLORMAP);
@@ -186,32 +196,33 @@ public class SpotOverlay implements Overlay {
 		this.spotSelection = spots;
 	}
 
-	protected void drawSpot(final Graphics2D g2d, final Spot spot, final float zslice, final int xcorner, final int ycorner, final float magnification) {
-		final float x = spot.getFeature(Spot.POSITION_X);
-		final float y = spot.getFeature(Spot.POSITION_Y);
-		final float z = spot.getFeature(Spot.POSITION_Z);
-		final float dz2 = (z - zslice) * (z - zslice);
-		float radiusRatio = (Float) displaySettings.get(TrackMateModelView.KEY_SPOT_RADIUS_RATIO);
-		final float radius = spot.getFeature(Spot.RADIUS)*radiusRatio;
+	protected void drawSpot(final Graphics2D g2d, final Spot spot, final double zslice, final int xcorner, final int ycorner, final double magnification) {
+		final double x = spot.getFeature(Spot.POSITION_X);
+		final double y = spot.getFeature(Spot.POSITION_Y);
+		final double z = spot.getFeature(Spot.POSITION_Z);
+		final double dz2 = (z - zslice) * (z - zslice);
+		double radiusRatio = (Float) displaySettings.get(TrackMateModelView.KEY_SPOT_RADIUS_RATIO);
+		final double radius = spot.getFeature(Spot.RADIUS)*radiusRatio;
 		// In pixel units
-		final float xp = x / calibration[0] + 0.5f;
-		final float yp = y / calibration[1] + 0.5f; // so that spot centers are displayed on the pixel centers
+		final double xp = x / calibration[0] + 0.5f;
+		final double yp = y / calibration[1] + 0.5f; // so that spot centers are displayed on the pixel centers
 		// Scale to image zoom
-		final float xs = (xp - xcorner) * magnification ;
-		final float ys = (yp - ycorner) * magnification ;
+		final double xs = (xp - xcorner) * magnification ;
+		final double ys = (yp - ycorner) * magnification ;
 
 		if (dz2 >= radius*radius)
-			g2d.fillOval(Math.round(xs - 2*magnification), Math.round(ys - 2*magnification), Math.round(4*magnification), Math.round(4*magnification));
+			g2d.fillOval((int) Math.round(xs - 2*magnification), (int) Math.round(ys - 2*magnification), 
+						 (int) Math.round(4*magnification), 	(int) Math.round(4*magnification));
 		else {
-			final float apparentRadius =  (float) (Math.sqrt(radius*radius - dz2) / calibration[0] * magnification); 
-			g2d.drawOval(Math.round(xs - apparentRadius), Math.round(ys - apparentRadius), 
-					Math.round(2 * apparentRadius), Math.round(2 * apparentRadius));		
+			final double apparentRadius =  (double) (Math.sqrt(radius*radius - dz2) / calibration[0] * magnification); 
+			g2d.drawOval((int) Math.round(xs - apparentRadius), (int) Math.round(ys - apparentRadius), 
+					(int) Math.round(2 * apparentRadius), (int) Math.round(2 * apparentRadius));		
 			boolean spotNameVisible = (Boolean) displaySettings.get(TrackMateModelView.KEY_DISPLAY_SPOT_NAMES);
 			if (spotNameVisible ) {
 				String str = spot.toString();
 				int xindent = fm.stringWidth(str) / 2;
 				int yindent = fm.getAscent() / 2;
-				g2d.drawString(spot.toString(), xs-xindent, ys+yindent);
+				g2d.drawString(spot.toString(), (int) xs-xindent, (int) ys+yindent);
 			}
 		}
 	}

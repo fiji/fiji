@@ -47,7 +47,7 @@ public class InterpolatePaintScale implements PaintScale, PublicCloneable, Seria
 	 */
 	
 	/**
-	 * Create a paint scale with given lower and upper bound, and a spcified default color.
+	 * Create a paint scale with given lower and upper bound, and a specified default color.
 	 */
 	public InterpolatePaintScale(double lowerBound, double upperBound, Color defaultColor) {
 		this.lowerBound = lowerBound;
