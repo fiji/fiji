@@ -730,21 +730,21 @@ public class RandError extends Metrics
 			double truePositives = 0;
 			for(int j=1; j<cont[0].length; j++)
 				for(int i=1; i<cont.length; i++)			
-					truePositives += cont[ i ][ j ] * ( cont[ i ][ j ] - 1 ) / 2;			
-							
-			// total number of pairs (after pruning background pixels
-			// of the ground truth)
-			double nPairsTotal = n * (n-1) / 2 ;
-			
-			// total number of positive samples in ground truth
-			double nPosTrue = 0;
-			for(int k=0; k<ni.length; k++)
-				nPosTrue += ni[ k ] * (ni[ k ]-1) /2;
-			
-			// number of pairs actually classified as positive (in the prediction)
-			double nPosActual = 0;
-			for(int k=0; k<nj.length; k++)
-				nPosActual += nj[ k ] * (nj[ k ]-1)/2;				
+					truePositives += cont[ i ][ j ] * ( cont[ i ][ j ] - 1.0 ) / 2.0;			
+				
+				// total number of pairs (after pruning background pixels
+				// of the ground truth)
+				double nPairsTotal = n * (n-1.0) / 2.0 ;
+				
+				// total number of positive samples in ground truth
+				double nPosTrue = 0;
+				for(int k=0; k<ni.length; k++)
+					nPosTrue += ni[ k ] * (ni[ k ]-1.0) /2.0;
+				
+				// number of pairs actually classified as positive (in the prediction)
+				double nPosActual = 0;
+				for(int k=0; k<nj.length; k++)
+					nPosActual += nj[ k ] * (nj[ k ]-1.0)/2.0;							
 					
 			// true negatives - type (ii): objects in the pair are placed in different 
 			// classes in cluster1 and in different classes in claster2
@@ -792,8 +792,7 @@ public class RandError extends Metrics
 				return null;
 		
 			IJ.log( "Calculating adapted Rand index stats...");
-			
-			
+						
 			int nSlices = originalLabels.getImageStackSize();
 			
 			int maxIDGroundTruth = 0;
@@ -821,7 +820,7 @@ public class RandError extends Metrics
 			
 			for( int slice = 1; slice <= nSlices; slice ++ )
 			{
-				IJ.log(" Processing slice " + slice +"...");
+				//IJ.log(" Processing slice " + slice +"...");
 				
 				ShortProcessor cluster1 = (ShortProcessor) originalLabels.getImageStack().getProcessor( slice );
 				ShortProcessor cluster2 = (ShortProcessor) proposedLabels.getImageStack().getProcessor( slice );
@@ -890,7 +889,7 @@ public class RandError extends Metrics
 				// trueNegatives = 	nNegTrue - falsePositives = (nPairsTotal - nPosTrue) - (nPosActual - truePositives)	
 				double trueNegatives = nPairsTotal + truePositives - nPosTrue - nPosActual;
 				
-				IJ.log("  agreements = " + (truePositives + trueNegatives) );
+				//IJ.log("  agreements = " + (truePositives + trueNegatives) );
 				
 				agreements += truePositives + trueNegatives;	// number of agreements
 				
