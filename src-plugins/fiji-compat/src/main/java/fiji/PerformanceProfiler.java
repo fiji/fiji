@@ -4,6 +4,7 @@ import java.io.PrintStream;
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
@@ -30,7 +31,8 @@ public class PerformanceProfiler implements Translator {
 	protected static final boolean debug = false;
 	private static Loader loader;
 	private static Field activeField;
-	private static Map<CtBehavior, Integer> counters = new TreeMap<CtBehavior, Integer>(new BehaviorComparator());
+	private static Map<CtBehavior, Integer> counters;
+	protected static Method realReport;
 	private static ThreadMXBean bean;
 
 	private static class BehaviorComparator implements Comparator<CtBehavior> {
@@ -44,17 +46,41 @@ public class PerformanceProfiler implements Translator {
 
 	public static void init() {
 		try {
+			counters = new TreeMap<CtBehavior, Integer>(new BehaviorComparator());
 			ClassPool pool = ClassPool.getDefault();
 			loader = new Loader();
+
+			// initialize a couple of things int the "other" PerformanceProfiler "instance"
 			CtClass that = pool.get(PerformanceProfiler.class.getName());
+
+			// add the "active" flag
 			CtField active = new CtField(CtClass.booleanType, "active", that);
 			active.setModifiers(Modifier.PUBLIC | Modifier.STATIC);
 			that.addField(active);
+
+			// make report() work in the other "instance"
+			realReport = PerformanceProfiler.class.getMethod("report", PrintStream.class);
+			CtMethod realReportMethod = that.getMethod("report", "(Ljava/io/PrintStream;)V");
+			realReportMethod.insertBefore("realReport.invoke(null, $args); return;");
+
 			Class<?> thatClass = that.toClass(loader, null);
+
+			// get a reference to the "active" flag for use in setActive() and isActive()
 			activeField = thatClass.getField("active");
-			Field beanField = thatClass.getDeclaredField("bean");
-			beanField.setAccessible(true);
-			beanField.set(null, ManagementFactory.getThreadMXBean());
+
+			// make getNanos() work
+			bean = ManagementFactory.getThreadMXBean();
+
+			// make setActive() and isActive() work in the other "instance", too
+			for (String fieldName : new String[] { "loader", "activeField", "counters", "realReport", "bean" }) {
+				Field thisField = PerformanceProfiler.class.getDeclaredField(fieldName);
+				thisField.setAccessible(true);
+				Field thatField = thatClass.getDeclaredField(fieldName);
+				thatField.setAccessible(true);
+				thatField.set(null, thisField.get(null));
+			}
+
+			// add the class definition translator
 			loader.addTranslator(pool, new PerformanceProfiler());
 		} catch (Exception e) {
 			e.printStackTrace();
