@@ -9,6 +9,8 @@ import archipelago.network.node.NodeManager;
 import archipelago.network.shell.JSchNodeShell;
 import archipelago.network.shell.NodeShell;
 import archipelago.util.IJLogger;
+import archipelago.util.NullLogger;
+import archipelago.util.PrintStreamLogger;
 import ij.IJ;
 import ij.Prefs;
 import ij.gui.GenericDialog;
@@ -24,10 +26,7 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
+import java.awt.event.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -65,14 +64,20 @@ public class ClusterUI implements ClusterStateListener
     private class CUIMainPanel extends Panel implements ActionListener
     {
         final Button statButton, startStopButton;
+        final Checkbox debugCheck;
         final StateLabel clusterLabel, queueLabel, runningLabel, nodesLabel;
         final ClusterConfigPanel configPanel;
         final ReentrantLock updateLock;
+        final NullLogger nullLogger;
+        final PrintStreamLogger sysoutLogger;
         
         public CUIMainPanel()
         {
             super();
             GridBagConstraints gbc = new GridBagConstraints();
+
+            nullLogger = new NullLogger();
+            sysoutLogger = new PrintStreamLogger(System.out);
 
             updateLock = new ReentrantLock();
 
@@ -86,6 +91,21 @@ public class ClusterUI implements ClusterStateListener
             queueLabel = new StateLabel("Jobs in queue:");
             runningLabel = new StateLabel("Running jobs: ");
             nodesLabel = new StateLabel("Active nodes: ");
+            
+            debugCheck = new Checkbox("Debug output", false);
+            
+            debugCheck.addItemListener(new ItemListener() {
+                public void itemStateChanged(ItemEvent itemEvent) {
+                    if (debugCheck.getState())
+                    {
+                        FijiArchipelago.setDebugLogger(sysoutLogger);
+                    }
+                    else
+                    {
+                        FijiArchipelago.setDebugLogger(nullLogger);
+                    }
+                }
+            });
             
             // layout
             super.setLayout(new GridBagLayout());
@@ -102,6 +122,7 @@ public class ClusterUI implements ClusterStateListener
 
             super.add(statButton, gbc);
             super.add(startStopButton, gbc);
+            super.add(debugCheck, gbc);
             
             // action commands
             //cfgButton.setActionCommand("configure");
@@ -216,23 +237,27 @@ public class ClusterUI implements ClusterStateListener
                 {
                     case INSTANTIATED:
                         startStopButton.setEnabled(false);
+                        configPanel.setActive(true);
                         break;
                     case INITIALIZED:
                         startStopButton.setEnabled(true);
                         startStopButton.setLabel("Start Cluster");
                         startStopButton.setActionCommand("start");
+                        configPanel.setActive(true);
                         break;
                     case STARTED:
                     case RUNNING:
                         startStopButton.setEnabled(true);
                         startStopButton.setLabel("Stop Cluster");
                         startStopButton.setActionCommand("stop");
+                        configPanel.setActive(true);
                         break;
                     case STOPPING:
                     case STOPPED:
                         startStopButton.setEnabled(false);
                         startStopButton.setLabel("Stop Cluster");
                         startStopButton.setActionCommand("");
+                        configPanel.setActive(false);
                         break;
                 }
 
@@ -291,6 +316,11 @@ public class ClusterUI implements ClusterStateListener
             nodeButton.addActionListener(this);
 
             super.setVisible(true);
+        }
+
+        public void setActive(boolean active)
+        {
+            loadButton.setEnabled(active);
         }
 
 
@@ -554,7 +584,7 @@ public class ClusterUI implements ClusterStateListener
         final NodeShell shell = new JSchNodeShell(new JSchNodeShell.JSchShellParams(new File(key)),
                 new IJLogger());
         final String prefRoot = FijiArchipelago.PREF_ROOT;
-        boolean isConfigured = cluster.getState() == Cluster.ClusterState.INITIALIZED || cluster.init(port);
+        boolean isConfigured = cluster.getState() != Cluster.ClusterState.INSTANTIATED || cluster.init(port);
 
         cluster.getNodeManager().setStdUser(userName);
         cluster.getNodeManager().setStdExecRoot(execRootRemote);

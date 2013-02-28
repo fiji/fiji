@@ -44,7 +44,7 @@ public class ArchipelagoClient implements TransceiverListener
                 {
                     Thread.sleep(interval);
                     HeartBeat beat = new HeartBeat(runtime.freeMemory(),
-                            runtime.totalMemory());
+                            runtime.totalMemory(), runtime.maxMemory());
 
                     xc.queueMessage(MessageType.BEAT, beat);
                 }

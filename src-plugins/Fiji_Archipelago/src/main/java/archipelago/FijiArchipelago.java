@@ -119,7 +119,7 @@ public final class FijiArchipelago
         ClusterUI ui;
         boolean ok = true;
         //Start Cluster... called through the plugin menu.
-        FijiArchipelago.setDebugLogger(new PrintStreamLogger());
+        FijiArchipelago.setDebugLogger(new NullLogger());
         FijiArchipelago.setInfoLogger(new IJLogger());
         FijiArchipelago.setErrorLogger(new IJPopupLogger());
 

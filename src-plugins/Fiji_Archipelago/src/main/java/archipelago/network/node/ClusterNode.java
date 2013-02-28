@@ -41,7 +41,7 @@ public class ClusterNode implements TransceiverListener
     private final Hashtable<Long, ProcessListener> processHandlers;
     private final Hashtable<Long, ProcessManager> runningProcesses;
     private final AtomicBoolean ready;
-    private final AtomicInteger ramMBAvail, ramMBTot, runningCores;
+    private final AtomicInteger ramMBAvail, ramMBTot, ramMBMax, runningCores;
     private long nodeID;
     private long lastBeatTime;
     private NodeManager.NodeParameters nodeParam;
@@ -63,6 +63,7 @@ public class ClusterNode implements TransceiverListener
         cpuSet = new AtomicBoolean(false);
         ramMBAvail = new AtomicInteger(0);
         ramMBTot = new AtomicInteger(0);
+        ramMBMax = new AtomicInteger(0);
         runningCores = new AtomicInteger(0);
         processHandlers = new Hashtable<Long, ProcessListener>();
         runningProcesses = new Hashtable<Long, ProcessManager>();
@@ -349,6 +350,7 @@ public class ClusterNode implements TransceiverListener
                     lastBeatTime = System.currentTimeMillis();
                     ramMBAvail.set(beat.ramMBAvailable);
                     ramMBTot.set(beat.ramMBTotal);
+                    ramMBMax.set(beat.ramMBMax);
                     break;
                 
                 default:
@@ -370,6 +372,11 @@ public class ClusterNode implements TransceiverListener
         }
     }
 
+    public int getMaxRamMB()
+    {
+        return ramMBMax.get();
+    }
+    
     public int getAvailableRamMB()
     {
         return ramMBAvail.get();
