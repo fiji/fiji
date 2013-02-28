@@ -567,9 +567,10 @@ public class Cluster implements NodeStateListener, ExecutorProvider
             return submit(runnable, null);
         }
 
-        public <T> List<Future<T>> invokeAll(Collection<? extends Callable<T>> callables) throws InterruptedException
+        public <T> List<Future<T>> invokeAll(Collection<? extends Callable<T>> callables)
+                throws InterruptedException
         {
-            ArrayList<Future<T>> waitFutures = new ArrayList<Future<T>>(callables.size());
+            /*ArrayList<Future<T>> waitFutures = new ArrayList<Future<T>>(callables.size());
             for (Callable<T> c : callables)
             {
                 waitFutures.add(submit(c));
@@ -582,22 +583,202 @@ public class Cluster implements NodeStateListener, ExecutorProvider
                     f.get();
                 }
                 catch (ExecutionException e)
-                {/**/}
+                {*//**//*}
             }
 
-            return waitFutures;
+            return waitFutures;*/
+            return invokeAll(callables, Long.MAX_VALUE, TimeUnit.MILLISECONDS);
         }
 
-        public <T> List<Future<T>> invokeAll(Collection<? extends Callable<T>> callables, long l, TimeUnit timeUnit) throws InterruptedException {
-            return null;  //To change body of implemented methods use File | Settings | File Templates.
+        public <T> List<Future<T>> invokeAll(final Collection<? extends Callable<T>> callables,
+                                             final long l,
+                                             final TimeUnit timeUnit)
+                throws InterruptedException
+        {
+            final ArrayList<Future<T>> waitFutures = new ArrayList<Future<T>>();
+            final ArrayList<Future<T>> remainingFutures = new ArrayList<Future<T>>();
+            final AtomicBoolean timeOut = new AtomicBoolean(false);
+            final AtomicBoolean done = new AtomicBoolean(false);            
+            final Thread t = Thread.currentThread();
+            final Thread timeOutThread = new Thread()
+            {
+                public void run()
+                {
+                    try
+                    {
+                        FijiArchipelago.debug("Invoke All: Waiting for at most " +
+                                timeUnit.convert(l, TimeUnit.MILLISECONDS) + "ms ");
+                                
+                        Thread.sleep(timeUnit.convert(l, TimeUnit.MILLISECONDS));
+                        FijiArchipelago.debug("Invoke All: Timed Out after " +
+                                timeUnit.convert(l, TimeUnit.MILLISECONDS) + "ms");
+                        timeOut.set(true);
+                        t.interrupt();
+                    }
+                    catch (InterruptedException ie)
+                    {
+                        if (!done.get())
+                        {
+                            t.interrupt();
+                        }
+                    }
+                }
+            };
+            
+            timeOutThread.start();
+
+            try
+            {
+                for (Callable<T> c : callables)
+                {
+                    waitFutures.add(submit(c));
+                }
+
+                remainingFutures.addAll(waitFutures);
+                
+                for (Future<T> f : waitFutures)
+                {
+                    try
+                    {
+                        f.get();
+                    }
+                    catch (ExecutionException e)
+                    {/**/}
+                    remainingFutures.remove(f);
+                }
+
+                done.set(true);
+                timeOutThread.interrupt();
+                
+                return waitFutures;
+            }
+            catch (InterruptedException ie)
+            {
+                if (timeOut.get())
+                {
+                    FijiArchipelago.debug("Invoke All: Cancelling remaining " +
+                            remainingFutures.size() + " futures");
+                    for (Future<T> future : remainingFutures)
+                    {
+                        future.cancel(true);
+                    }
+                    return waitFutures;
+                }
+                else
+                {
+                    done.set(true);
+                    timeOutThread.interrupt();
+                    throw ie;
+                }
+            }
         }
 
-        public <T> T invokeAny(Collection<? extends Callable<T>> callables) throws InterruptedException, ExecutionException {
-            return null;  //To change body of implemented methods use File | Settings | File Templates.
+        public <T> T invokeAny(Collection<? extends Callable<T>> callables)
+                throws InterruptedException, ExecutionException
+        {
+            try
+            {
+                return invokeAny(callables, Long.MAX_VALUE, TimeUnit.MILLISECONDS);
+            }
+            catch (TimeoutException te)
+            {
+                throw new ExecutionException(te);
+            }
         }
 
-        public <T> T invokeAny(Collection<? extends Callable<T>> callables, long l, TimeUnit timeUnit) throws InterruptedException, ExecutionException, TimeoutException {
-            return null;  //To change body of implemented methods use File | Settings | File Templates.
+        public <T> T invokeAny(final Collection<? extends Callable<T>> callables,
+                               final long l,
+                               final TimeUnit timeUnit)
+                throws InterruptedException, ExecutionException, TimeoutException
+        {
+            final ArrayList<Future<T>> waitFutures = new ArrayList<Future<T>>(callables.size());
+            final ArrayList<Future<T>> remainingFutures =
+                    new ArrayList<Future<T>>(callables.size());
+            final AtomicBoolean timeOut = new AtomicBoolean(false);
+            final AtomicBoolean done = new AtomicBoolean(false);            
+            final Thread t = Thread.currentThread();
+            final Thread timeOutThread = new Thread()
+            {
+                public void run()
+                {
+                    try
+                    {
+                        Thread.sleep(timeUnit.convert(l, TimeUnit.MILLISECONDS));
+                        timeOut.set(true);
+                        t.interrupt();
+                    }
+                    catch (InterruptedException ie)
+                    {
+                        if (!done.get())
+                        {                            
+                            t.interrupt();
+                        }
+                    }                        
+                }
+            };
+            ExecutionException lastException = null;
+            // Because java doesn't have pointer primitives
+            
+            timeOutThread.start();
+            
+            try
+            {
+                boolean stillGoing = true;
+                Future<T> okFuture = null;
+                
+                for (Callable<T> c : callables)
+                {
+                    waitFutures.add(submit(c));
+                }
+
+                remainingFutures.addAll(waitFutures);
+
+                
+                for (int i = 0; stillGoing && i < waitFutures.size(); ++i)                
+                {
+                    okFuture = waitFutures.get(i);
+                    try
+                    {
+                        okFuture.get();
+                        stillGoing = false;
+                    }
+                    catch (ExecutionException e)
+                    {
+                        lastException = e;
+                    }
+                    remainingFutures.remove(okFuture);
+                }
+                
+                for (Future<T> future : remainingFutures)
+                {
+                    future.cancel(true);
+                }
+                
+                if (stillGoing)
+                {
+                    throw lastException == null ?
+                            new ExecutionException(new Exception("No completed callables")) :
+                            lastException;
+                }
+                
+                done.set(true);                
+                timeOutThread.interrupt();
+                
+                return okFuture.get(); 
+            }
+            catch (InterruptedException ie)
+            {
+                if (timeOut.get())
+                {
+                    throw new TimeoutException();
+                }
+                else
+                {
+                    done.set(true);
+                    timeOutThread.interrupt();
+                    throw(ie);
+                }
+            }
         }
 
         public void execute(Runnable runnable) {

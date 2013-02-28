@@ -10,10 +10,7 @@ import ij.plugin.PlugIn;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeoutException;
+import java.util.concurrent.*;
 
 public class Test_Cluster implements PlugIn
 {
@@ -48,6 +45,11 @@ public class Test_Cluster implements PlugIn
             return this;
         }
     }
+
+    Cluster cluster;
+    ExecutorService[] executors;
+    final int[] coreCount= {4, 128};
+    int numCalls;
     
     private ArrayList<Future<NullCall>> submitJobs(final ExecutorService[] executors,
                                                    final int[] coreCount,
@@ -71,6 +73,18 @@ public class Test_Cluster implements PlugIn
         return futures;
     }
 
+    private ArrayList<NullCall> createCallables (final int coreCount,
+                                                 final int numCalls)
+    {
+        final ArrayList<NullCall> callables = new ArrayList<NullCall>(numCalls);
+
+        for (int i = 0; i < numCalls; ++i)
+        {
+            callables.add(new NullCall(5000, coreCount));
+        }
+
+        return callables;
+    }
 
     private void logResults(final List<Future<NullCall>> futures)
     {
@@ -103,19 +117,127 @@ public class Test_Cluster implements PlugIn
         }
     }
 
-    public void run(String arg)
+    private void basicTest()
+    {
+        FijiArchipelago.log("Basic Test");
+        logResults(submitJobs(executors, coreCount, numCalls));
+        FijiArchipelago.log("Basic Test Complete");
+    }
+    
+    private void midCancelTest()
+    {
+        FijiArchipelago.log("Mid Cancel Test");
+        List<Future<NullCall>> futures = submitJobs(executors, coreCount, numCalls);
+        boolean ok = true;
+        int clusterMaxThreads = cluster.getMaxThreads();
+
+        for (ClusterNode node : cluster.getNodes())
+        {
+            if (ok && node.getThreadLimit() != clusterMaxThreads)
+            {
+                FijiArchipelago.log("Waiting to close " + node);
+                while (node.numRunningThreads() == 0)
+                {
+                    try
+                    {
+                        Thread.sleep(500);
+                    }
+                    catch (InterruptedException ie)
+                    {
+                        //
+                    }
+                }
+                FijiArchipelago.log("Closing " + node);
+                node.close();
+                ok = false;
+            }
+        }
+
+        logResults(futures);
+        FijiArchipelago.log("Mid Cancel Test Complete");
+    }
+    
+    private void shutdownTest()
+    {
+        FijiArchipelago.log("Shutdown Test");
+        final List<Future<NullCall>> finalFutures =
+                submitJobs(executors, coreCount, numCalls);
+
+        Thread t = new Thread()
+        {
+            public void run()
+            {
+                logResults(finalFutures);
+            }
+        };
+
+        t.start();
+
+        FijiArchipelago.log("Shutting down cluster");
+        executors[0].shutdown();
+
+        try
+        {
+            t.join();
+        }
+        catch (InterruptedException ie)
+        {
+            FijiArchipelago.log("Test: Interrupted!");
+        }
+        FijiArchipelago.log("Shutdown Test Complete");
+    }
+    
+
+    private void invokeAllTest()
+    {
+        FijiArchipelago.log("Invoke All Test");
+        try
+        {
+            logResults(executors[0].invokeAll(createCallables(coreCount[0], numCalls)));
+        }
+        catch (InterruptedException ie)
+        {
+            FijiArchipelago.err(ie.toString());
+        }
+        FijiArchipelago.log("Invoke All Test Complete");
+    }
+
+    private void invokeAllTimeoutTest()
+    {
+        FijiArchipelago.log("Invoke All Timeout Test");
+        try
+        {
+            List<Future<NullCall>> results =
+                    executors[0].invokeAll(createCallables(coreCount[0], numCalls * 2), 7500, TimeUnit.MILLISECONDS);
+            logResults(results);
+        }
+        catch (InterruptedException ie)
+        {
+            FijiArchipelago.err(ie.toString());
+        }
+        FijiArchipelago.log("Invoke All Timeout Test Complete");
+    }
+
+    private void invokeAnyTest()
+    {
+
+    }
+
+    private void invokeAnyTimeoutTest()
+    {
+
+    }
+
+
+
+    public synchronized void run(String arg)
     {
         if (Cluster.activeCluster() || FijiArchipelago.runClusterGUI())
-        {
-            final int[] coreCount= {4, 128};
-            int numCalls;
-            final Cluster cluster = Cluster.getCluster();
-            int clusterMaxThreads;
-
-            boolean ok = true;
-            final ExecutorService[] executors = new ExecutorService[coreCount.length];
-            List<Future<NullCall>> futures;
-            Thread t;
+        {            
+            cluster = Cluster.getCluster();
+            
+            
+            executors = new ExecutorService[coreCount.length];                        
             
             cluster.waitUntilReady();
             try
@@ -131,8 +253,6 @@ public class Test_Cluster implements PlugIn
                 FijiArchipelago.log("Test: Interrupted while waiting, quitting.");
                 return;
             }
-            
-            clusterMaxThreads = cluster.getMaxThreads();
 
             for (int i = 0; i < coreCount.length; ++i)
             {
@@ -141,47 +261,15 @@ public class Test_Cluster implements PlugIn
 
             numCalls = cluster.getNodes().size() * 4;
 
-            logResults(submitJobs(executors, coreCount, numCalls));
-            
-            futures = submitJobs(executors, coreCount, numCalls);
+            basicTest();
 
-            for (ClusterNode node : cluster.getNodes())
-            {
-                if (ok && node.getThreadLimit() == clusterMaxThreads)
-                {
-                    ok = false;
-                }
-                else
-                {
-                    node.close();
-                }
-            }
+            invokeAllTest();
+            invokeAllTimeoutTest();
+            invokeAnyTimeoutTest();
             
-            logResults(futures);
-
-            final List<Future<NullCall>> finalFutures = 
-                    submitJobs(executors, coreCount, numCalls);
+            midCancelTest();
             
-            t = new Thread()
-            {
-                public void run()
-                {
-                    logResults(finalFutures);
-                }
-            };
-            
-            t.start();
-            
-            executors[0].shutdown();
-            
-            try
-            {
-                t.join();
-            }
-            catch (InterruptedException ie)
-            {
-                FijiArchipelago.log("Test: Interrupted!");
-            }
+            shutdownTest();
         }
         
         

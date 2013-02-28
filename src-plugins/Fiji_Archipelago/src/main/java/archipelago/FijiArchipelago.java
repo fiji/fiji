@@ -95,6 +95,7 @@ public final class FijiArchipelago
     public static synchronized void log(final String s)
     {
         logger.log(s);
+        debugLogger.log(s);
     }
     
     public static synchronized void err(final String s)
