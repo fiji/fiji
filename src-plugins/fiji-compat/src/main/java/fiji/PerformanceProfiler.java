@@ -26,7 +26,7 @@ import javassist.NotFoundException;
 import javassist.Translator;
 
 public class PerformanceProfiler implements Translator {
-	private Set<String> only;
+	private Set<String> only, skip;
 
 	protected static final boolean debug = false;
 	private static Loader loader;
@@ -104,6 +104,7 @@ public class PerformanceProfiler implements Translator {
 			this.only = new HashSet<String>();
 			this.only.addAll(only);
 		}
+		skip = new HashSet<String>();
 	}
 
 	@Override
@@ -123,8 +124,12 @@ public class PerformanceProfiler implements Translator {
 			return;
 		}
 
-		if (only != null && !only.contains(classname))
+		if (only != null && !only.contains(classname)) {
 			return;
+		}
+		if (skip != null && skip.contains(classname)) {
+			return;
+		}
 
 		if (debug)
 			System.err.println("instrumenting " + classname);
