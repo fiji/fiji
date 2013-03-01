@@ -237,23 +237,24 @@ maven_update () {
 		artifactId="${artifactId%%:*}"
 		path="jars/$artifactId-$version.jar"
 
-		test -f jars/"$artifactId".jar && rm jars/"$artifactId".jar
-		for file in jars/"$artifactId"-[0-9]*.jar
-		do
+		(cd "$CWD"
+		 test -f jars/"$artifactId".jar && rm jars/"$artifactId".jar
+		 for file in jars/"$artifactId"-[0-9]*.jar
+		 do
 			test "a$file" = a"$path" && continue
 			test -f "$file" || continue
 			rm "$file"
-		done
+		 done
 
-		uptodate "$ARGV0" "$path" && continue
-		echo "Downloading $gav" >&2
-		(cd jars/ && sh "$MAVEN_DOWNLOAD" install "$gav")
-		if test ! -f "$path"
-		then
+		 uptodate "$ARGV0" "$path" && continue
+		 echo "Downloading $gav" >&2
+		 cd jars/ && sh "$MAVEN_DOWNLOAD" install "$gav"
+		 if test ! -f "$path"
+		 then
 			echo "Failure to download $path" >&2
 			exit 1
-		fi
-		touch "$path"
+		 fi
+		 touch "$path")
 	done
 }
 
