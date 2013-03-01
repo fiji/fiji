@@ -259,7 +259,7 @@ public class Adapter {
 	}
 
 	/**
-	 * Utility method for the quick up-to-date check in {@link fiji.Main}
+	 * Utility method for the quick up-to-date check in fiji.Main
 	 *
 	 * @return a tag describing whether we should run the Updater
 	 */
@@ -272,7 +272,7 @@ public class Adapter {
 	}
 
 	/**
-	 * Utility method for the {@link fiji.packaging.Package_Maker}
+	 * Utility method for the fiji.packaging.Package_Maker
 	 *
 	 * @return the list of files the Updater cares about
 	 * @throws Exception
@@ -299,7 +299,7 @@ public class Adapter {
 	}
 
 	/**
-	 * Utility method for the {@link Bug_Submitter.Bug_Submitter}
+	 * Utility method for the Bug_Submitter.Bug_Submitter
 	 *
 	 * @return the list of files known to the Updater, with versions, as a String
 	 */
