@@ -27,6 +27,7 @@ import javassist.Translator;
 
 public class PerformanceProfiler implements Translator {
 	private Set<String> only, skip;
+	private boolean fastButInaccurateTiming = true;
 
 	protected static final boolean debug = false;
 	private static Loader loader;
@@ -87,8 +88,19 @@ public class PerformanceProfiler implements Translator {
 		}
 	}
 
-	public static long getNanos() {
+	public final static long getNanos() {
 		return bean.getCurrentThreadCpuTime();
+	}
+
+	/**
+	 * A much faster, but less accurate version of {@link #getNanos()}
+	 * 
+	 * The problem with this is that it does not measure the current Thread's CPU cycles.
+	 * 
+	 * @return nanoseconds for relative time measurements
+	 */
+	public final static long getNanosQnD() {
+		return System.nanoTime();
 	}
 
 	public PerformanceProfiler() {
@@ -186,11 +198,12 @@ public class PerformanceProfiler implements Translator {
 
 			final String thisName = getClass().getName();
 			final String that = clazz.getName() + ".";
+			final String getNanos = thisName + (fastButInaccurateTiming ? ".getNanosQnD()" : ".getNanos()");
 			behavior.addLocalVariable("__startTime__", CtClass.longType);
-			behavior.insertBefore("__startTime__ = " + thisName + ".getNanos();");
+			behavior.insertBefore("__startTime__ = " + getNanos + ";");
 			behavior.insertAfter("if (" + thisName + ".active) {"
 					+ that + counterFieldName + "++;"
-					+ that + nanosFieldName + " += " + thisName + ".getNanos() - __startTime__;"
+					+ that + nanosFieldName + " += " + getNanos + " - __startTime__;"
 					+ "}");
 			counters.put(behavior, i);
 		}
