@@ -256,8 +256,10 @@ public class PerformanceProfiler implements Translator {
 				if (count == 0) continue;
 				Field nanosField = clazz.getDeclaredField(toNanosName(i));
 				nanosField.setAccessible(true);
-				long nanos = nanosField.getLong(null);
-				writer.println(behavior.getLongName() + "; " + count + "x; " + formatNanos(nanos / count));
+				if (writer != null) {
+					long nanos = nanosField.getLong(null);
+					writer.println(behavior.getLongName() + "; " + count + "x; " + formatNanos(nanos / count));
+				}
 				counter.set(null, 0l);
 				nanosField.set(null, 0l);
 			} catch (Exception e) {
