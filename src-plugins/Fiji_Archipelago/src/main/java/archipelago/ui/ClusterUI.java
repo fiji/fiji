@@ -42,7 +42,7 @@ import org.xml.sax.SAXException;
 /**
  *
  */
-public class ClusterUI implements ClusterStateListener
+public class ClusterUI implements ClusterStateListener, ArchipelagoUI
 {
 
     private class StateLabel extends Label
@@ -527,6 +527,7 @@ public class ClusterUI implements ClusterStateListener
             }
         }.start();
 
+        cluster.registerUI(this);
         cluster.addStateListener(this);
 
         frame.setVisible(true);

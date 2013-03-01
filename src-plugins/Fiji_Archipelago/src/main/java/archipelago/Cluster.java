@@ -12,11 +12,9 @@ import archipelago.network.node.ClusterNode;
 import archipelago.network.node.ClusterNodeState;
 import archipelago.network.node.NodeManager;
 import archipelago.network.server.ArchipelagoServer;
+import archipelago.ui.ArchipelagoUI;
 import archipelago.util.ProcessManagerCoreComparator;
 import archipelago.util.XCErrorAdapter;
-import mpicbg.trakem2.concurrent.DefaultExecutorProvider;
-import mpicbg.trakem2.concurrent.ExecutorProvider;
-import mpicbg.trakem2.concurrent.ThreadPool;
 
 import java.io.*;
 import java.net.InetAddress;
@@ -32,7 +30,7 @@ import java.util.concurrent.locks.ReentrantLock;
  *
  * @author Larry Lindsey
  */
-public class Cluster implements NodeStateListener, ExecutorProvider
+public class Cluster implements NodeStateListener
 {
 
     public static enum ClusterState
@@ -471,7 +469,7 @@ public class Cluster implements NodeStateListener, ExecutorProvider
     
     public static Cluster getCluster()
     {
-        if (cluster == null || cluster.getState() == ClusterState.STOPPED)
+        if (!initializedCluster())
         {
             cluster = new Cluster();
         }
@@ -481,6 +479,14 @@ public class Cluster implements NodeStateListener, ExecutorProvider
     public static boolean activeCluster()
     {
         return cluster != null && cluster.getState() == ClusterState.RUNNING;
+    }
+
+    public static boolean initializedCluster()
+    {
+        ClusterState state = cluster == null ? null : cluster.getState();
+        return !(cluster == null ||
+                state == ClusterState.STOPPING ||
+                state == ClusterState.STOPPED);
     }
     
     private class ClusterExecutorService implements ExecutorService
@@ -814,6 +820,7 @@ public class Cluster implements NodeStateListener, ExecutorProvider
     private int port;
     private final Vector<ClusterNode> nodes;
     private final Vector<Thread> waitThreads;
+    private final Vector<ArchipelagoUI> registeredUIs;
     private final ProcessScheduler scheduler;
     
     private final Hashtable<Long, ArchipelagoFuture<?>> futures;
@@ -833,6 +840,7 @@ public class Cluster implements NodeStateListener, ExecutorProvider
         state = new AtomicInteger(0);
         nodes = new Vector<ClusterNode>();
         waitThreads = new Vector<Thread>();
+        registeredUIs = new Vector<ArchipelagoUI>();
         
         jobCount = new AtomicInteger(0);
         runningNodes = new AtomicInteger(0);
@@ -916,7 +924,7 @@ public class Cluster implements NodeStateListener, ExecutorProvider
             FijiArchipelago.err("Could not get canonical host name for local machine. Using localhost instead");
         }
         
-        ThreadPool.setProvider(this);
+
     }
     
     /*
@@ -1559,7 +1567,7 @@ public class Cluster implements NodeStateListener, ExecutorProvider
         terminateFinished()
         */
 
-        ThreadPool.setProvider(new DefaultExecutorProvider());
+        //ThreadPool.setProvider(new DefaultExecutorProvider());
 
         return remainingRunnables();
     }
@@ -1588,7 +1596,7 @@ public class Cluster implements NodeStateListener, ExecutorProvider
             haltFinished();
         }
 
-        ThreadPool.setProvider(new DefaultExecutorProvider());
+        //ThreadPool.setProvider(new DefaultExecutorProvider());
     }
 
     public int getMaxThreads()
@@ -1623,6 +1631,21 @@ public class Cluster implements NodeStateListener, ExecutorProvider
     public ExecutorService getService(final float fractionThreads)
     {
         return new ClusterExecutorService(fractionThreads);
+    }
+    
+    public synchronized void registerUI(ArchipelagoUI ui)
+    {
+        registeredUIs.add(ui);
+    }
+    
+    public synchronized void deRegisterUI(ArchipelagoUI ui)
+    {
+        registeredUIs.remove(ui);
+    }
+    
+    public int numRegisteredUIs()
+    {
+        return registeredUIs.size();
     }
 
 }
