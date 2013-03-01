@@ -303,6 +303,7 @@ public class Adapter {
 	 *
 	 * @return the list of files known to the Updater, with versions, as a String
 	 */
+	@Deprecated
 	public String getInstalledVersions() {
 		try {
 			Map<String, Object> collection = newInstance(COLLECTION_CLASS_NAME, new File(System.getProperty("ij.dir")));
