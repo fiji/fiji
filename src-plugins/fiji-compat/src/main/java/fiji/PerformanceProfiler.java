@@ -14,6 +14,7 @@ import java.util.Set;
 import java.util.TreeMap;
 
 import javassist.CannotCompileException;
+import javassist.ClassClassPath;
 import javassist.ClassPool;
 import javassist.CtBehavior;
 import javassist.CtClass;
@@ -49,7 +50,8 @@ public class PerformanceProfiler implements Translator {
 		try {
 			counters = new TreeMap<CtBehavior, Integer>(new BehaviorComparator());
 			ClassPool pool = ClassPool.getDefault();
-			loader = new Loader();
+			pool.appendClassPath(new ClassClassPath(PerformanceProfiler.class));
+			loader = new Loader(PerformanceProfiler.class.getClassLoader(), pool);
 
 			// initialize a couple of things int the "other" PerformanceProfiler "instance"
 			CtClass that = pool.get(PerformanceProfiler.class.getName());
