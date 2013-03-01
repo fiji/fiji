@@ -5,10 +5,13 @@ import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
@@ -241,12 +244,38 @@ public class PerformanceProfiler implements Translator {
 		return false;
 	}
 
+	private static class Row {
+		private final CtBehavior behavior;
+		private final long count, nanos;
+
+		public Row(CtBehavior behavior, long count, long nanos) {
+			this.behavior = behavior;
+			this.count = count;
+			this.nanos = nanos;
+		}
+
+		@Override
+		public String toString() {
+			return toString(behavior, count, nanos);
+		}
+
+		public static String toString(CtBehavior behavior, long count, long nanos) {
+			return behavior.getLongName() + "; " + count + "x; average: " + formatNanos(nanos / count) + "; total: " + formatNanos(nanos);
+		}
+	}
+
 	public static void report(PrintStream writer) {
+		report(writer, 3);
+	}
+
+	public static void report(PrintStream writer, final int column) {
 		synchronized(PerformanceProfiler.class) {
 			if (!isActive()) {
 				return;
 			}
 			setActive(false);
+			final List<Row> rows = writer == null || column < 1 || column > 3 ?
+					null : new ArrayList<Row>();
 			for (CtBehavior behavior : counters.keySet()) try {
 				int i = counters.get(behavior);
 				Class<?> clazz = loader.loadClass(behavior.getDeclaringClass().getName());
@@ -258,12 +287,45 @@ public class PerformanceProfiler implements Translator {
 				nanosField.setAccessible(true);
 				if (writer != null) {
 					long nanos = nanosField.getLong(null);
-					writer.println(behavior.getLongName() + "; " + count + "x; " + formatNanos(nanos / count));
+					if (rows != null) {
+						rows.add(new Row(behavior, count, nanos));
+					} else {
+						writer.println(Row.toString(behavior, count, nanos));
+					}
 				}
 				counter.set(null, 0l);
 				nanosField.set(null, 0l);
 			} catch (Exception e) {
 				e.printStackTrace();
+			}
+			if (rows != null && writer != null) {
+				final Comparator<Row> comparator;
+				if (column == 1) {
+					comparator = new Comparator<Row>() {
+						@Override
+						public int compare(Row a, Row b) {
+							return -Double.compare(a.count, b.count);
+						}
+					};
+				} else if (column == 2) {
+					comparator = new Comparator<Row>() {
+						@Override
+						public int compare(Row a, Row b) {
+							return -Double.compare(a.count, b.count);
+						}
+					};
+				} else {
+					comparator = new Comparator<Row>() {
+						@Override
+						public int compare(Row a, Row b) {
+							return -Double.compare(a.nanos, b.nanos);
+						}
+					};
+				}
+				Collections.sort(rows, comparator);
+				for (final Row row : rows) {
+					writer.println(row.toString());
+				}
 			}
 		}
 	}
