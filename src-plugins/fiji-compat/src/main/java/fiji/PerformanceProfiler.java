@@ -376,8 +376,12 @@ public class PerformanceProfiler implements Translator {
 		String[] mainArgs = new String[args.length - 1];
 		System.arraycopy(args, 1, mainArgs, 0, mainArgs.length);
 
+		doMain(mainClass, mainArgs);
+	}
+
+	private static void doMain(final String mainClass, final String... args) throws Throwable {
 		setActive(true);
-		loader.run(mainClass, mainArgs);
+		loader.run(mainClass, args);
 		report(System.err);
 	}
 }
