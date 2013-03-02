@@ -364,7 +364,7 @@ public class PerformanceProfiler implements Translator {
 		return (nanos / 1000000000.0) + "s";
 	}
 
-	public static void main(String[] args) throws Throwable {
+	public static void main(final String... args) throws Throwable {
 		Thread.currentThread().setContextClassLoader(PerformanceProfiler.class.getClassLoader());
 
 		if (args.length == 0) {
