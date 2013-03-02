@@ -69,7 +69,7 @@ public class PerformanceProfiler implements Translator {
 			CtMethod realReportMethod = that.getMethod("report", "(Ljava/io/PrintStream;I)V");
 			realReportMethod.insertBefore("realReport.invoke(null, $args); return;");
 
-			Class<?> thatClass = that.toClass(loader, null);
+			Class<?> thatClass = loader.loadClass(that.getName());
 
 			// get a reference to the "active" flag for use in setActive() and isActive()
 			activeField = thatClass.getField("active");
