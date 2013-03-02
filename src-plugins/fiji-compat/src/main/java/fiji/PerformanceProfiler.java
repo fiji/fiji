@@ -1,5 +1,8 @@
 package fiji;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.PrintStream;
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
@@ -264,6 +267,12 @@ public class PerformanceProfiler implements Translator {
 		public static String toString(CtBehavior behavior, long count, long nanos) {
 			return behavior.getLongName() + "; " + count + "x; average: " + formatNanos(nanos / count) + "; total: " + formatNanos(nanos);
 		}
+	}
+
+	public static void report(File file, final int column) throws FileNotFoundException {
+		final PrintStream stream = new PrintStream(new FileOutputStream(file));
+		report(stream, column);
+		stream.close();
 	}
 
 	public static void report(PrintStream writer) {
