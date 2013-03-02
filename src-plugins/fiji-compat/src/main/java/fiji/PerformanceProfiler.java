@@ -71,7 +71,7 @@ public class PerformanceProfiler implements Translator {
 			// make report() work in the other "instance"
 			realReport = PerformanceProfiler.class.getMethod("report", PrintStream.class, Integer.TYPE);
 			CtMethod realReportMethod = that.getMethod("report", "(Ljava/io/PrintStream;I)V");
-			realReportMethod.insertBefore("realReport.invoke(null, $args); return;");
+			realReportMethod.insertBefore("reportCaller($1, 3); realReport.invoke(null, $args); return;");
 
 			Class<?> thatClass = loader.loadClass(that.getName());
 
@@ -278,6 +278,20 @@ public class PerformanceProfiler implements Translator {
 	public static void report(PrintStream writer) {
 		report(writer, 3);
 	}
+
+	protected static void reportCaller(PrintStream writer, int level) {
+		if (writer == null) {
+			return;
+		}
+		final StackTraceElement[] stack = Thread.currentThread().getStackTrace();
+		if (stack == null || stack.length <= level || stack[level] == null) {
+			writer.println("Could not determine caller");
+		} else {
+			final StackTraceElement caller = stack[level];
+			writer.println("Report called by " + caller.toString());
+		}
+	}
+
 
 	public static void report(PrintStream writer, final int column) {
 		assert(CtBehavior.class.getClassLoader() != loader);
