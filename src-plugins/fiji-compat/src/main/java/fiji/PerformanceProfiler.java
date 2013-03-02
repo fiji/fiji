@@ -130,7 +130,7 @@ public class PerformanceProfiler implements Translator {
 	}
 
 	@Override
-	public void onLoad(ClassPool pool, String classname) throws NotFoundException {
+	public synchronized void onLoad(ClassPool pool, String classname) throws NotFoundException {
 		// do not instrument yourself
 		if (classname.equals(getClass().getName())) {
 			return;
@@ -172,7 +172,7 @@ public class PerformanceProfiler implements Translator {
 		return "__nanos" + i + "__";
 	}
 
-	private void handle(CtClass clazz, CtBehavior behavior) {
+	private synchronized void handle(CtClass clazz, CtBehavior behavior) {
 		try {
 			if (clazz != behavior.getDeclaringClass()) {
 				if (debug)
@@ -276,7 +276,8 @@ public class PerformanceProfiler implements Translator {
 			setActive(false);
 			final List<Row> rows = writer == null || column < 1 || column > 3 ?
 					null : new ArrayList<Row>();
-			for (CtBehavior behavior : counters.keySet()) try {
+			final List<CtBehavior> behaviors = new ArrayList<CtBehavior>(counters.keySet());
+			for (CtBehavior behavior : behaviors) try {
 				int i = counters.get(behavior);
 				Class<?> clazz = loader.loadClass(behavior.getDeclaringClass().getName());
 				Field counter = clazz.getDeclaredField(toCounterName(i));
