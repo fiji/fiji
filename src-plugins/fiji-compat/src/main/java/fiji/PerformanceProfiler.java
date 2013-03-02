@@ -50,6 +50,7 @@ public class PerformanceProfiler implements Translator {
 	}
 
 	public static void init() {
+		assert(loader == null);
 		try {
 			counters = new TreeMap<CtBehavior, Integer>(new BehaviorComparator());
 			ClassPool pool = ClassPool.getDefault();
@@ -210,6 +211,7 @@ public class PerformanceProfiler implements Translator {
 					+ that + counterFieldName + "++;"
 					+ that + nanosFieldName + " += " + getNanos + " - __startTime__;"
 					+ "}");
+			assert(behavior.getClass().getClassLoader() != loader);
 			counters.put(behavior, i);
 		}
 		catch (CannotCompileException e) {
@@ -269,6 +271,7 @@ public class PerformanceProfiler implements Translator {
 	}
 
 	public static void report(PrintStream writer, final int column) {
+		assert(CtBehavior.class.getClassLoader() != loader);
 		synchronized(PerformanceProfiler.class) {
 			if (!isActive()) {
 				return;
