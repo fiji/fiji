@@ -219,6 +219,7 @@ public class PerformanceProfiler implements Translator {
 				counter.set(null, 0l);
 				nanosField.set(null, 0l);
 			} catch (Exception e) {
+				System.err.println("Problem with " + behavior.getLongName() + ":");
 				e.printStackTrace();
 			}
 			if (rows != null && writer != null) {
@@ -446,8 +447,14 @@ public class PerformanceProfiler implements Translator {
 			counters.put(behavior, i);
 		}
 		catch (CannotCompileException e) {
-			if (!e.getMessage().equals("no method body"))
-				e.printStackTrace();
+			if (!e.getMessage().equals("no method body")) {
+				System.err.println("Problem with " + behavior.getLongName() + ":");
+				if (e.getCause() != null && e.getCause() instanceof NotFoundException) {
+					System.err.println("(could not find " + e.getCause().getMessage() + ")");
+				} else {
+					e.printStackTrace();
+				}
+			}
 		}
 	}
 
