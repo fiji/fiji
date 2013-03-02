@@ -7,7 +7,7 @@
 /src-plugins/*/target/
 
 # Fiji Build #
-/build/
+/.tmp.*/
 
 # Eclipse #
 .checksums
