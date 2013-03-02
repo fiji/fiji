@@ -65,8 +65,8 @@ public class PerformanceProfiler implements Translator {
 			that.addField(active);
 
 			// make report() work in the other "instance"
-			realReport = PerformanceProfiler.class.getMethod("report", PrintStream.class);
-			CtMethod realReportMethod = that.getMethod("report", "(Ljava/io/PrintStream;)V");
+			realReport = PerformanceProfiler.class.getMethod("report", PrintStream.class, Integer.TYPE);
+			CtMethod realReportMethod = that.getMethod("report", "(Ljava/io/PrintStream;I)V");
 			realReportMethod.insertBefore("realReport.invoke(null, $args); return;");
 
 			Class<?> thatClass = that.toClass(loader, null);
