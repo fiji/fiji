@@ -400,6 +400,7 @@ public class PerformanceProfiler implements Translator {
 		// instrument all methods and constructors
 		if (debug)
 			System.err.println("Handling class " + cc.getName());
+		handle(cc, cc.getClassInitializer());
 		for (CtMethod method : cc.getDeclaredMethods())
 			handle(cc, method);
 		for (CtConstructor constructor : cc.getDeclaredConstructors())
@@ -492,6 +493,7 @@ public class PerformanceProfiler implements Translator {
 	 */
 
 	private synchronized void handle(CtClass clazz, CtBehavior behavior) {
+		if (behavior == null) return;
 		try {
 			if (clazz != behavior.getDeclaringClass()) {
 				if (debug)
