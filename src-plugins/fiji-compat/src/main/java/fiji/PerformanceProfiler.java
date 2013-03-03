@@ -66,6 +66,55 @@ import javassist.Modifier;
 import javassist.NotFoundException;
 import javassist.Translator;
 
+/**
+ * A Javassist-backed performance profiler.
+ * 
+ * <p>
+ * This class implements an easy-to-use, relatively light-weight performance
+ * profiler that does not need operating system support or special start-up
+ * parameters to the Java Virtual Machine.
+ * </p>
+ * 
+ * Use it in one of the following ways:
+ * <ul>
+ * <li>
+ * <p>
+ * insert the following line at the start of the main() method calling the code
+ * to profile:<br />
+ * <code>if (PerformanceProfiler.startProfiling(args)) return;</code><br />
+ * Subsequently, you can start/stop profiling by calling
+ * {@link #setActive(boolean)}, print a report using
+ * {@link #report(PrintStream)}, or print a report to a file with
+ * {@link #report(File, int)}.
+ * </p>
+ * <p>
+ * Printing a report will reset the counters and stop profiling. If you want to
+ * make sure the counters are reset and profiling is stopped, but not to print
+ * anything, just call <code>PerformanceProfiler.report(null);</code>.
+ * </p>
+ * <li>Call PerformanceProfiler as main class, passing as parameter the name of
+ * the main class to profile and optionally any parameters you want to pass to
+ * that main class.
+ * </ul>
+ * 
+ * <p>
+ * The idea behind the profiler is that a Javassist-specific class
+ * {@link Loader} with a {@link Translator} is used to load the main class and
+ * all its dependent classes. The translator instruments every method such that
+ * a method-specific counter is incremented, and the total time spent in the
+ * method is recorded, too. A list of instrumented methods with their counters
+ * is maintained globally.
+ * </p>
+ * 
+ * <p>
+ * To record the time spent in a method, either the {@link #getNanos()} method
+ * (thread-specific, but unfortunately very, very slow) or the
+ * {@link #getNanosQnD()} (not thread-specific, but does not dominate even small
+ * methods' timing) is used. The latter is the default.
+ * </p>
+ * 
+ * @author Johannes Schindelin
+ */
 public class PerformanceProfiler implements Translator {
 	private Set<String> only, skip;
 	private boolean fastButInaccurateTiming = true;
