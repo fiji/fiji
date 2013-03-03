@@ -526,8 +526,8 @@ public class PerformanceProfiler implements Translator {
 					+ (fastButInaccurateTiming ?
 							".getNanosQnD()" : ".getNanos()");
 			behavior.addLocalVariable("__startTime__", CtClass.longType);
-			behavior.insertBefore("__startTime__ = " + getNanos + ";");
-			behavior.insertAfter("if (" + thisName + ".active) {"
+			behavior.insertBefore("__startTime__ = " + thisName + ".active ? " + getNanos + " : -1;");
+			behavior.insertAfter("if (__startTime__ != -1) {"
 					+ that + counterFieldName + "++;"
 					+ that + nanosFieldName + " += " + getNanos + " - __startTime__;"
 					+ "}");
