@@ -301,11 +301,15 @@ public class PerformanceProfiler implements Translator {
 				}
 				counter.set(null, 0l);
 				nanosField.set(null, 0l);
-			} catch (Exception e) {
+			} catch (Throwable e) {
 				System.err.println("Problem with " + behavior.getLongName() + ":");
 				if (e instanceof InvocationTargetException &&
 						e.getCause() != null && e.getCause() instanceof NoClassDefFoundError) {
 					System.err.println("Class not found: " + e.getCause().getMessage());
+					break;
+				}
+				if (e instanceof ClassFormatError) {
+					System.err.println("Class format error: " + behavior.getDeclaringClass().getName());
 					break;
 				}
 				e.printStackTrace();
