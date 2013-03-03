@@ -7,6 +7,7 @@ import java.io.PrintStream;
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -220,6 +221,11 @@ public class PerformanceProfiler implements Translator {
 				nanosField.set(null, 0l);
 			} catch (Exception e) {
 				System.err.println("Problem with " + behavior.getLongName() + ":");
+				if (e instanceof InvocationTargetException &&
+						e.getCause() != null && e.getCause() instanceof NoClassDefFoundError) {
+					System.err.println("Class not found: " + e.getCause().getMessage());
+					break;
+				}
 				e.printStackTrace();
 			}
 			if (rows != null && writer != null) {
