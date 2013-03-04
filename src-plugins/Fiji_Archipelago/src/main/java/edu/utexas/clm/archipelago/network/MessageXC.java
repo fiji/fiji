@@ -1,6 +1,25 @@
+/*
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation, either version 2 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public
+ * License along with this program.  If not, see
+ * <http://www.gnu.org/licenses/gpl-2.0.html>.
+ * 
+ * @author Larry Lindsey llindsey@clm.utexas.edu
+ */
+
 package edu.utexas.clm.archipelago.network;
 
 import edu.utexas.clm.archipelago.FijiArchipelago;
+import edu.utexas.clm.archipelago.compute.ProcessManager;
 import edu.utexas.clm.archipelago.data.ClusterMessage;
 import edu.utexas.clm.archipelago.listen.MessageType;
 import edu.utexas.clm.archipelago.listen.TransceiverExceptionListener;
@@ -31,6 +50,12 @@ public class MessageXC
                     if (message.type != MessageType.BEAT)
                     {
                         FijiArchipelago.debug("RX: Recieved message " + message + " from " + hostName);
+                        
+                        if (message.type == MessageType.PROCESS)
+                        {
+                            ProcessManager pm = (ProcessManager)message.o;
+                            FijiArchipelago.debug("RX: Got message for job " + pm.getID() + " from " + hostName);
+                        }
                     }
                     xcListener.handleMessage(message);
                     objectInputStream = new ObjectInputStream(inStream);
@@ -71,7 +96,8 @@ public class MessageXC
                 {
                     try
                     {
-                        objectOutputStream.writeObject(nextMessage);
+                        final long s = System.currentTimeMillis();
+                        objectOutputStream.writeObject(nextMessage);                        
                         objectOutputStream.flush();
                         if (nextMessage.type != MessageType.BEAT)
                         {
