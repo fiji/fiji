@@ -87,7 +87,7 @@ public class TrakEM2Archipelago implements TPlugIn
         cluster.addStateListener(new ProviderListener());
         ThreadPool.setProvider(new ClusterProvider(cluster));
 
-        FijiArchipelago.log("TrakEM2 now uses the Cluster");
+        FijiArchipelago.log("TrakEM2 now using the Cluster");
         
         return true;
     }
