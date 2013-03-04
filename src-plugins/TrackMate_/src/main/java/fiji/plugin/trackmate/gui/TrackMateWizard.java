@@ -18,6 +18,7 @@ import java.util.HashMap;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
+import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 import javax.swing.WindowConstants;
@@ -27,11 +28,11 @@ import fiji.plugin.trackmate.visualization.TrackMateModelView;
 
 /**
  * A view for the TrackMate_ plugin, strongly inspired from the spots detection GUI of the Imaris® software 
- * from Bitplane ({@link http://www.bitplane.com/}).
+ * from <a href="http://www.bitplane.com/">Bitplane</a>.
  * 
  * @author Jean-Yves Tinevez <tinevez@pasteur.fr> - September 2010 - 2011
  */
-public class TrackMateWizard extends javax.swing.JFrame implements ActionListener {
+public class TrackMateWizard extends JFrame implements ActionListener {
 
 	JButton jButtonSave;
 	JButton jButtonLoad;
@@ -253,6 +254,7 @@ public class TrackMateWizard extends javax.swing.JFrame implements ActionListene
 
 	public void setNextButtonEnabled(final boolean b) {
 		SwingUtilities.invokeLater(new Runnable() {
+			@Override
 			public void run() { 
 				jButtonNext.setEnabled(b);
 				if (b) jButtonNext.requestFocusInWindow();
@@ -262,18 +264,21 @@ public class TrackMateWizard extends javax.swing.JFrame implements ActionListene
 
 	public void setPreviousButtonEnabled(final boolean b) {
 		SwingUtilities.invokeLater(new Runnable() {
+			@Override
 			public void run() { jButtonPrevious.setEnabled(b); }
 		});
 	}
 
 	public void setSaveButtonEnabled(final boolean b) {
 		SwingUtilities.invokeLater(new Runnable() {
+			@Override
 			public void run() { jButtonSave.setEnabled(b); }
 		});
 	}
 
 	public void setLoadButtonEnabled(final boolean b) {
 		SwingUtilities.invokeLater(new Runnable() {
+			@Override
 			public void run() { jButtonLoad.setEnabled(b); }
 		});
 	}
@@ -302,7 +307,7 @@ public class TrackMateWizard extends javax.swing.JFrame implements ActionListene
 
 			Point windowLoc = component.getLocation();
 			Dimension windowSize = component.getSize();
-			Dimension guiSize = this.getSize();
+			Dimension guiSize = getSize();
 			if (guiSize.width > windowLoc.x) {
 				if (guiSize.width > screenWidth - (windowLoc.x + windowSize.width)) {
 					setLocationRelativeTo(null); // give up
@@ -335,8 +340,8 @@ public class TrackMateWizard extends javax.swing.JFrame implements ActionListene
 		try {
 			setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 			setIconImage(TRACKMATE_ICON.getImage());
-			this.setTitle(fiji.plugin.trackmate.TrackMate_.PLUGIN_NAME_STR + " v"+fiji.plugin.trackmate.TrackMate_.PLUGIN_NAME_VERSION);
 			this.setResizable(false);
+			setTitle(fiji.plugin.trackmate.TrackMate_.PLUGIN_NAME_STR + " v"+fiji.plugin.trackmate.TrackMate_.PLUGIN_NAME_VERSION);
 			{
 				jPanelMain = new JPanel();
 				cardLayout = new CardLayout();
@@ -358,6 +363,7 @@ public class TrackMateWizard extends javax.swing.JFrame implements ActionListene
 					jButtonNext.setFont(FONT);
 					jButtonNext.setBounds(220, 2, 73, 25);
 					jButtonNext.addActionListener(new ActionListener() {
+						@Override
 						public void actionPerformed(ActionEvent e) {
 							fireAction(NEXT_BUTTON_PRESSED);
 						}
@@ -370,6 +376,7 @@ public class TrackMateWizard extends javax.swing.JFrame implements ActionListene
 					jButtonPrevious.setFont(FONT);
 					jButtonPrevious.setBounds(190, 2, 30, 25);
 					jButtonPrevious.addActionListener(new ActionListener() {
+						@Override
 						public void actionPerformed(ActionEvent e) {
 							fireAction(PREVIOUS_BUTTON_PRESSED);
 						}
@@ -382,6 +389,7 @@ public class TrackMateWizard extends javax.swing.JFrame implements ActionListene
 					jButtonLog.setFont(FONT);
 					jButtonLog.setBounds(157, 2, 30, 25);
 					jButtonLog.addActionListener(new ActionListener() {
+						@Override
 						public void actionPerformed(ActionEvent e) {
 							fireAction(LOG_BUTTON_PRESSED);
 						}
@@ -395,6 +403,7 @@ public class TrackMateWizard extends javax.swing.JFrame implements ActionListene
 					jButtonLoad.setFont(FONT);
 					jButtonLoad.setBounds(2, 2, 76, 25);
 					jButtonLoad.addActionListener(new ActionListener() {
+						@Override
 						public void actionPerformed(ActionEvent e) {
 							fireAction(LOAD_BUTTON_PRESSED);
 						}
@@ -408,6 +417,7 @@ public class TrackMateWizard extends javax.swing.JFrame implements ActionListene
 					jButtonSave.setFont(FONT);
 					jButtonSave.setBounds(78, 2, 76, 25);
 					jButtonSave.addActionListener(new ActionListener() {
+						@Override
 						public void actionPerformed(ActionEvent e) {
 							fireAction(SAVE_BUTTON_PRESSED);
 						}
