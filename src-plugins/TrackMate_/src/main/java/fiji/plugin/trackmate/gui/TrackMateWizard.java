@@ -349,79 +349,14 @@ public class TrackMateWizard extends JFrame implements ActionListener {
 				jPanelMain.setLayout(cardLayout);
 				jPanelMain.setPreferredSize(new java.awt.Dimension(300, 461));
 			}
-			{
-				jPanelButtons = new JPanel();
-				getContentPane().add(jPanelButtons, BorderLayout.SOUTH);
-				jPanelButtons.setLayout(new BoxLayout(jPanelButtons, BoxLayout.LINE_AXIS));
-				{
-					jButtonLoad = new JButton();
-					jPanelButtons.add(jButtonLoad);
-					jButtonLoad.setText("Load");
-					jButtonLoad.setIcon(LOAD_ICON);
-					jButtonLoad.setFont(FONT);
-					jButtonLoad.setBounds(2, 2, 76, 25);
-					jButtonLoad.addActionListener(new ActionListener() {
-						@Override
-						public void actionPerformed(ActionEvent e) {
-							fireAction(LOAD_BUTTON_PRESSED);
-						}
-					});
-				}
-				{
-					jButtonSave = new JButton();
-					jPanelButtons.add(jButtonSave);
-					jButtonSave.setText("Save");
-					jButtonSave.setIcon(SAVE_ICON);
-					jButtonSave.setFont(FONT);
-					jButtonSave.setBounds(78, 2, 76, 25);
-					jButtonSave.addActionListener(new ActionListener() {
-						@Override
-						public void actionPerformed(ActionEvent e) {
-							fireAction(SAVE_BUTTON_PRESSED);
-						}
-					});
-				}
-				{
-					jButtonLog = new JButton();
-					jPanelButtons.add(jButtonLog);
-					jButtonLog.setIcon(LOG_ICON);
-					jButtonLog.setFont(FONT);
-					jButtonLog.setBounds(157, 2, 30, 25);
-					jButtonLog.addActionListener(new ActionListener() {
-						@Override
-						public void actionPerformed(ActionEvent e) {
-							fireAction(LOG_BUTTON_PRESSED);
-						}
-					});
-				}
-				{
-					jButtonPrevious = new JButton();
-					jPanelButtons.add(jButtonPrevious);
-					jButtonPrevious.setIcon(PREVIOUS_ICON);
-					jButtonPrevious.setFont(FONT);
-					jButtonPrevious.setBounds(190, 2, 30, 25);
-					jButtonPrevious.addActionListener(new ActionListener() {
-						@Override
-						public void actionPerformed(ActionEvent e) {
-							fireAction(PREVIOUS_BUTTON_PRESSED);
-						}
-					});
-				}
-				{
-					jButtonNext = new JButton();
-					jPanelButtons.add(jButtonNext);
-					jButtonNext.setText("Next");
-					jButtonNext.setIcon(NEXT_ICON);
-					jButtonNext.setFont(FONT);
-					jButtonNext.setBounds(220, 2, 73, 25);
-					jButtonNext.addActionListener(new ActionListener() {
-						@Override
-						public void actionPerformed(ActionEvent e) {
-							fireAction(NEXT_BUTTON_PRESSED);
-						}
-					});
-				}
-			}
+			jPanelButtons = new JPanel();
+			getContentPane().add(jPanelButtons, BorderLayout.SOUTH);
+			jPanelButtons.setLayout(new BoxLayout(jPanelButtons, BoxLayout.LINE_AXIS));
+			jButtonLoad = addButton("Load", LOAD_ICON, 2, 2, 76, 25, LOAD_BUTTON_PRESSED);
+			jButtonSave = addButton("Save", SAVE_ICON, 78, 2, 76, 25, SAVE_BUTTON_PRESSED);
+			jButtonLog = addButton(null, LOG_ICON, 157, 2, 30, 25, LOG_BUTTON_PRESSED);
+			jButtonPrevious = addButton(null, PREVIOUS_ICON, 190, 2, 30, 25, PREVIOUS_BUTTON_PRESSED);
+			jButtonNext = addButton("Next", NEXT_ICON, 220, 2, 73, 25, NEXT_BUTTON_PRESSED);
 			pack();
 			// Only instantiate the logger panel, the rest will be done by the controller
 			{
@@ -432,6 +367,22 @@ public class TrackMateWizard extends JFrame implements ActionListener {
 		}
 		repaint();
 		validate();
+	}
+
+	private JButton addButton(final String label, final Icon icon, int x, int y, int width, int height, final ActionEvent action) {
+		JButton button = new JButton();
+		jPanelButtons.add(button);
+		button.setText(label);
+		button.setIcon(icon);
+		button.setFont(FONT);
+		button.setBounds(x, y, width, height);
+		button.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				fireAction(action);
+			}
+		});
+		return button;
 	}
 
 }
