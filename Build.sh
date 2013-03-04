@@ -284,7 +284,9 @@ EOF
 
 # make sure that javac and ij-minimaven are up-to-date
 VERSION=2.0.0-SNAPSHOT
+SCIJAVA_COMMON_VERSION=1.0.0-SNAPSHOT
 maven_update sc.fiji:javac:$VERSION
+maven_update org.scijava:scijava-common:$SCIJAVA_COMMON_VERSION
 maven_update net.imagej:ij-core:$VERSION
 maven_update net.imagej:ij-minimaven:$VERSION
 
