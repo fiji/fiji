@@ -248,7 +248,7 @@ maven_update () {
 
 		 uptodate "$ARGV0" "$path" && continue
 		 echo "Downloading $gav" >&2
-		 cd jars/ && sh "$MAVEN_DOWNLOAD" install "$gav"
+		 (cd jars/ && sh "$MAVEN_DOWNLOAD" install "$gav")
 		 if test ! -f "$path"
 		 then
 			echo "Failure to download $path" >&2
