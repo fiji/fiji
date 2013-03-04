@@ -378,7 +378,7 @@ public class HandleExtraFileTypes extends ImagePlus implements PlugIn {
         //Larry Lindsey: open Archipelago cluster configuration file        
         if (name.endsWith(".cluster"))
         {
-            return tryPlugIn("archipelago.Fiji_Archipelago", path);
+            return tryPlugIn("edu.utexas.clm.archipelago.Fiji_Archipelago", path);
         }
         
 		// ****************** MODIFY HERE ******************
