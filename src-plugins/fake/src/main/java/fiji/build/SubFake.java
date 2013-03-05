@@ -1,9 +1,9 @@
 package fiji.build;
 
-import fiji.build.minimaven.BuildEnvironment;
-import fiji.build.minimaven.Coordinate;
-import fiji.build.minimaven.JavaCompiler.CompileError;
-import fiji.build.minimaven.POM;
+import imagej.build.minimaven.BuildEnvironment;
+import imagej.build.minimaven.Coordinate;
+import imagej.build.minimaven.JavaCompiler.CompileError;
+import imagej.build.minimaven.MavenProject;
 
 import java.io.File;
 import java.io.IOException;
@@ -23,7 +23,7 @@ public class SubFake extends Rule {
 	protected String baseName;
 	protected String source;
 	protected String configPath;
-	protected POM pom;
+	protected MavenProject pom;
 	protected boolean pomRead;
 
 	SubFake(Parser parser, String target, List<String> prerequisites) {
@@ -44,16 +44,16 @@ public class SubFake extends Rule {
 
 		// Special-case: if we're adding an aggregator pom, add implicit rules for all child poms
 		if (getFakefile() == null) {
-			POM pom = getPOM();
+			MavenProject pom = getPOM();
 			if (pom != null && "pom".equals(pom.getPackaging()))
 				addChildren(parser, pom);
 		}
 	}
 
-	protected void addChildren(Parser parser, POM pom) {
+	protected void addChildren(Parser parser, MavenProject pom) {
 		if (pom.getChildren() == null)
 			return;
-		for (POM child : pom.getChildren()) {
+		for (MavenProject child : pom.getChildren()) {
 			String packaging = child.getPackaging();
 			if (child.getBuildFromSource() && "jar".equals(packaging)) {
 				String target = (isImageJ1Plugin(child.getDirectory()) ? "plugins" : "jars") + "/" + child.getArtifactId() + ".jar";
@@ -101,7 +101,7 @@ public class SubFake extends Rule {
 				return rule.checkUpToDate();
 			}
 
-			POM pom = getPOM();
+			MavenProject pom = getPOM();
 			if (pom != null) {
 				if (!pom.upToDate(true)) {
 					verbose("MiniMaven says " + target + " is not up-to-date");
@@ -152,7 +152,7 @@ public class SubFake extends Rule {
 
 	protected static BuildEnvironment miniMaven;
 
-	public POM getPOM() {
+	public MavenProject getPOM() {
 		boolean verbose = getVarBool("VERBOSE");
 		if (miniMaven != null) {
 			miniMaven.setVerbose(verbose);
@@ -172,7 +172,6 @@ public class SubFake extends Rule {
 			boolean debug = getVarBool("DEBUG");
 			if (miniMaven == null) {
 				miniMaven = new BuildEnvironment(parser.fake.err, true, verbose, debug);
-				MiniMaven.ensureIJDirIsSet();
 				String ijDir = System.getProperty("ij.dir");
 				File submodules = new File(ijDir, "modules");
 				File srcPlugins = new File(ijDir, "src-plugins");
@@ -218,7 +217,7 @@ public class SubFake extends Rule {
 		if (getFakefile() != null || new File(directory, "Makefile").exists())
 			fakeOrMake(jarName);
 		else {
-			POM pom = getPOM();
+			MavenProject pom = getPOM();
 			if (pom != null) try {
 				buildPOM(pom);
 				return;
@@ -249,9 +248,9 @@ public class SubFake extends Rule {
 			copyJar(source, target, parser.cwd, configPath);
 	}
 
-	protected void buildPOM(final POM pom) throws CompileError, FakeException, IOException, ParserConfigurationException, SAXException {
+	protected void buildPOM(final MavenProject pom) throws CompileError, FakeException, IOException, ParserConfigurationException, SAXException {
 		if ("pom".equals(pom.getPackaging())) {
-			for (POM child : pom.getChildren()) try {
+			for (MavenProject child : pom.getChildren()) try {
 				buildPOM(child);
 			} catch (IOException e) {
 				parser.fake.err.println("Could not build " + child.getArtifactId() + ", target is " + target);
@@ -293,7 +292,7 @@ public class SubFake extends Rule {
 	}
 
 	// if targetDirectory is one of jars/ & plugins/ and the other exists also, be clever
-	protected void copyDependencies(POM pom, File targetDirectory) throws IOException, ParserConfigurationException, SAXException {
+	protected void copyDependencies(MavenProject pom, File targetDirectory) throws IOException, ParserConfigurationException, SAXException {
 		File plugins = null;
 		if (targetDirectory.getName().equals("plugins")) {
 			File jars = new File(targetDirectory.getParentFile(), "jars");
@@ -308,7 +307,7 @@ public class SubFake extends Rule {
 				plugins = null;
 		}
 
-		for (POM dependency : pom.getDependencies(true, false, "test", "provided", "system")) {
+		for (MavenProject dependency : pom.getDependencies(true, false, "test", "provided", "system")) {
 			File file = dependency.getTarget();
 			File directory = plugins != null && isImageJ1Plugin(file) ? plugins : targetDirectory;
 			String jarName;
@@ -385,7 +384,7 @@ public class SubFake extends Rule {
 			e.printStackTrace(parser.fake.err);
 		}
 		else {
-			POM pom = getPOM();
+			MavenProject pom = getPOM();
 			if (pom != null) {
 				boolean isIJ1Plugin = isImageJ1Plugin(pom.getDirectory());
 				final String subDirectory = isIJ1Plugin ? "plugins" : "jars";
