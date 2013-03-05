@@ -73,7 +73,7 @@ public class SubFake extends Rule {
 
 		// check the classpath
 		for (String path : Util.splitPaths(getVar("CLASSPATH"))) {
-			Rule rule = (Rule)parser.allRules.get(path);
+			Rule rule = parser.allRules.get(path);
 			if (rule != null && !rule.upToDate()) {
 				verbose(target + " is not up-to-date because of " + path);
 				return false;
@@ -81,13 +81,9 @@ public class SubFake extends Rule {
 		}
 
 		File target = new File(this.target);
-		for (String directory : prerequisites) try {
+		for (String directory : prerequisites)
 			if (!checkUpToDate(directory, target))
 				return false;
-		} catch (FakeException e) {
-			e.printStackTrace();
-			return false;
-		}
 
 		String directory = getLastPrerequisite();
 		if (!Util.isDirEmpty(Util.makePath(parser.cwd, directory))) try {
@@ -126,7 +122,7 @@ public class SubFake extends Rule {
 		return true;
 	}
 
-	boolean checkUpToDate(String directory, File target) throws FakeException {
+	boolean checkUpToDate(String directory, File target) {
 		if (!target.exists())
 			return false;
 
@@ -203,13 +199,14 @@ public class SubFake extends Rule {
 		return pom;
 	}
 
+	@Override
 	void action() throws FakeException {
 		String directory = getLastPrerequisite();
 		checkObsoleteLocation(directory);
 
 		// check the classpath
 		for (String path : Util.splitPaths(getVar("CLASSPATH"))) {
-			Rule rule = (Rule)parser.allRules.get(path);
+			Rule rule = parser.allRules.get(path);
 			if (rule != null && !rule.upToDate())
 				rule.action();
 		}
