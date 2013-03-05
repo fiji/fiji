@@ -107,6 +107,11 @@
 			<artifactId>Refresh_Javas</artifactId>
 			<version>${imagej.version}</version>
 		</dependency>
+		<dependency>
+			<groupId>net.imagej</groupId>
+			<artifactId>ij-minimaven</artifactId>
+			<version>${imagej.version}</version>
+		</dependency>
 	</dependencies>
 
 	<build>

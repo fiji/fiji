@@ -49,6 +49,11 @@
 			<id>imagej.snapshots</id>
 			<url>http://maven.imagej.net/content/repositories/snapshots</url>
 		</repository>
+		<!-- NB: for JAI -->
+		<repository>
+			<id>JBoss 3rdparty</id>
+			<url>https://repository.jboss.org/nexus/content/repositories/thirdparty-releases</url>
+		</repository>
 	</repositories>
 
 </project>
