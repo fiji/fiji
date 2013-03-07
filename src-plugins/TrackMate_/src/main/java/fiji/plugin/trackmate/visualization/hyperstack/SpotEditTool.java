@@ -6,6 +6,7 @@ import ij.gui.Toolbar;
 
 import java.awt.MouseInfo;
 import java.awt.Point;
+import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
@@ -163,7 +164,7 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 			if (null != editedSpot || target == null)
 				return;
 			updateStatusBar(target, imp.getCalibration().getUnits());
-			final int addToSelectionMask = MouseEvent.SHIFT_DOWN_MASK;
+			final int addToSelectionMask = InputEvent.SHIFT_DOWN_MASK;
 			if ((e.getModifiersEx() & addToSelectionMask) == addToSelectionMask) { 
 				if (model.getSelectionModel().getSpotSelection().contains(target)) {
 					model.getSelectionModel().removeSpotFromSelection(target);
@@ -287,8 +288,8 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 			return;
 		final double ix = displayer.canvas.offScreenXD(e.getX()) - 0.5d;  // relative to pixel center
 		final double iy =  displayer.canvas.offScreenYD(e.getY()) - 0.5d;
-		final double x = (double) (ix * displayer.calibration[0]);
-		final double y = (double) (iy * displayer.calibration[1]);
+		final double x = ix * displayer.calibration[0];
+		final double y = iy * displayer.calibration[1];
 		final double z = (displayer.imp.getSlice()-1) * displayer.calibration[2];
 		editedSpot.putFeature(Spot.POSITION_X, x);
 		editedSpot.putFeature(Spot.POSITION_Y, y);
@@ -311,8 +312,8 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 
 		final double ix = displayer.canvas.offScreenXD(e.getX()) - 0.5d;  // relative to pixel center
 		final double iy =  displayer.canvas.offScreenYD(e.getY()) - 0.5d;
-		final double x = (double) (ix * displayer.calibration[0]);
-		final double y = (double) (iy * displayer.calibration[1]);
+		final double x = ix * displayer.calibration[0];
+		final double y = iy * displayer.calibration[1];
 		final double z = (displayer.imp.getSlice()-1) * displayer.calibration[2];
 		quickEditedSpot.putFeature(Spot.POSITION_X, x);
 		quickEditedSpot.putFeature(Spot.POSITION_Y, y);
