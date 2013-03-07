@@ -177,7 +177,7 @@ public class Weka_Segmentation implements PlugIn
 	RoiListOverlay [] roiOverlay;
 	
 	/** available colors for available classes */
-	final Color[] colors = new Color[]{Color.red, Color.green, Color.blue,
+	Color[] colors = new Color[]{Color.red, Color.green, Color.blue,
 			Color.cyan, Color.magenta};
 
 	/** Lookup table for the result overlay image */
@@ -255,23 +255,31 @@ public class Weka_Segmentation implements PlugIn
 		final byte[] blue = new byte[256];
 		final int shift = 255 / WekaSegmentation.MAX_NUM_CLASSES;
 		
-		// assign random colors if # of classes > 5
-		Color[] colors = new Color[ WekaSegmentation.MAX_NUM_CLASSES ];
+		// assign random colors if # of classes > 5		
 		if( WekaSegmentation.MAX_NUM_CLASSES > 5 )
 		{
+			colors = new Color[ WekaSegmentation.MAX_NUM_CLASSES ];
 			Random random = new Random();
+			
+			// hue for assigning new color ([0.0-1.0])
+		    float hue = 0f;
+		    // saturation for assigning new color ([0.5-1.0]) 
+		    float saturation = 0.5f;
 			
 			for(int i=0; i<WekaSegmentation.MAX_NUM_CLASSES; i++)
 			{
-				final float hue = random.nextFloat();
-				// Saturation between 0.1 and 0.3
-				final float saturation = (random.nextInt(2000) + 1000) / 10000f;
-				final float luminance = 0.9f;
-				colors[ i ] = Color.getHSBColor(hue, saturation, luminance);
+				colors[ i ] = Color.getHSBColor(hue, saturation, 1);
+				
+				hue += 0.38197f; // golden angle
+		        if (hue > 1) 
+		            hue -= 1;
+		        saturation += 0.38197f; // golden angle
+		        if (saturation > 1)
+		            saturation -= 1;
+		        saturation = 0.5f * saturation + 0.5f;							
 			}
 		}
-		else
-			colors = this.colors;			
+			
 		
 		for(int i = 0 ; i < 256; i++)
 		{
@@ -608,8 +616,6 @@ public class Weka_Segmentation implements PlugIn
 
 			annotationsPanel.setBorder(BorderFactory.createTitledBorder("Labels"));
 			annotationsPanel.setLayout(boxAnnotation);
-
-
 
 			for(int i = 0; i < wekaSegmentation.getNumOfClasses(); i++)
 			{
