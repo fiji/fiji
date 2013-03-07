@@ -683,7 +683,7 @@ public class ClusterUI implements ClusterStateListener, ArchipelagoUI
                 OpenDialog od = new OpenDialog("Select Private Key File", null);
                 if (od.getFileName() != null)
                 {
-                    fieldMap.get("keyfile").setText(od.getDirectory() + "/" + od.getFileName());
+                    fieldMap.get("keyfile").setText(od.getDirectory() + od.getFileName());
                 }
             }
         }
