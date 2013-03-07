@@ -509,6 +509,7 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 		case KeyEvent.VK_Q:
 		case KeyEvent.VK_E: {
 
+			e.consume();
 			if (null == editedSpot) {
 
 				Point mouseLocation = MouseInfo.getPointerInfo().getLocation();
@@ -517,7 +518,7 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 				Spot clickLocation = displayer.getCLickLocation(mouseLocation);
 				Spot target = model.getFilteredSpots().getSpotAt(clickLocation, frame);
 				if (null == target) {
-					return; // un-consumed event
+					return;
 				}
 
 				int factor;
@@ -543,9 +544,6 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 				}
 
 				imp.updateAndDraw();
-				e.consume();
-			} else {
-
 			}
 
 			break;
