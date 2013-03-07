@@ -217,7 +217,7 @@ public class LogDetectorConfigurationPanel extends ConfigurationPanel {
 				jButtonRefresh = new JButton();
 				jButtonRefresh.setBounds(5, 370, 67, 21);
 				this.add(jButtonRefresh);
-				jButtonRefresh.setText("Refresh");
+				jButtonRefresh.setText("Refresh Treshold");
 				jButtonRefresh.setFont(SMALL_FONT);
 				jButtonRefresh.addActionListener(new ActionListener() {
 					public void actionPerformed(ActionEvent e) {
