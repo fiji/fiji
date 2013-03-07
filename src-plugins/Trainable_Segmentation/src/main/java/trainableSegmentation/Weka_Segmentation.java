@@ -36,6 +36,7 @@ import java.util.Properties;
 import java.util.Vector;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.Random;
 import java.util.zip.GZIPOutputStream;
 import java.awt.AlphaComposite;
 import java.awt.BorderLayout;
@@ -253,6 +254,25 @@ public class Weka_Segmentation implements PlugIn
 		final byte[] green = new byte[256];
 		final byte[] blue = new byte[256];
 		final int shift = 255 / WekaSegmentation.MAX_NUM_CLASSES;
+		
+		// assign random colors if # of classes > 5
+		Color[] colors = new Color[ WekaSegmentation.MAX_NUM_CLASSES ];
+		if( WekaSegmentation.MAX_NUM_CLASSES > 5 )
+		{
+			Random random = new Random();
+			
+			for(int i=0; i<WekaSegmentation.MAX_NUM_CLASSES; i++)
+			{
+				final float hue = random.nextFloat();
+				// Saturation between 0.1 and 0.3
+				final float saturation = (random.nextInt(2000) + 1000) / 10000f;
+				final float luminance = 0.9f;
+				colors[ i ] = Color.getHSBColor(hue, saturation, luminance);
+			}
+		}
+		else
+			colors = this.colors;			
+		
 		for(int i = 0 ; i < 256; i++)
 		{
 			final int colorIndex = i / (shift+1);
