@@ -10,6 +10,7 @@ import fiji.plugin.trackmate.tracking.SpotTracker;
 import fiji.plugin.trackmate.util.CropImgView;
 import fiji.plugin.trackmate.util.TMUtils;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
+import ij.IJ;
 import ij.ImagePlus;
 import ij.WindowManager;
 import ij.plugin.PlugIn;
@@ -19,6 +20,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import javax.swing.JOptionPane;
 
 import net.imglib2.algorithm.Algorithm;
 import net.imglib2.algorithm.Benchmark;
@@ -91,6 +94,19 @@ public class TrackMate_ implements PlugIn, Benchmark, MultiThreaded, Algorithm {
 	 */
 	public void run(String arg) {
 		ImagePlus imp = WindowManager.getCurrentImage();
+		int[] dims = imp.getDimensions();
+		if (dims[4] == 1 && dims[3] > 1) {
+			switch (JOptionPane.showConfirmDialog(null,
+					"It appears this image has 1 timepoint but " + dims[3] + " slices.\n" +
+					"Do you want to swap Z and T?",
+					"Z/T swapped?", JOptionPane.YES_NO_CANCEL_OPTION)) {
+			case JOptionPane.YES_OPTION:
+				imp.setDimensions(dims[2], dims[4], dims[3]);
+				break;
+			case JOptionPane.CANCEL_OPTION:
+				return;
+			}
+		}
 		Settings settings = new Settings(imp);
 		model.setSettings(settings);
 		initModules();
