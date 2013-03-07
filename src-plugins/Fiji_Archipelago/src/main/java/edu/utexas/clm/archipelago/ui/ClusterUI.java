@@ -48,11 +48,14 @@ import java.awt.event.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Hashtable;
 import java.util.List;
+import java.util.Vector;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantLock;
 
+import ij.io.DirectoryChooser;
 import ij.io.OpenDialog;
 import org.w3c.dom.*;
 import org.xml.sax.SAXException;
@@ -124,6 +127,7 @@ public class ClusterUI implements ClusterStateListener, ArchipelagoUI
                     }
                 }
             });
+            FijiArchipelago.setDebugLogger(nullLogger);
             
             // layout
             super.setLayout(new GridBagLayout());
@@ -202,7 +206,7 @@ public class ClusterUI implements ClusterStateListener, ArchipelagoUI
                 case INSTANTIATED:
                     return "waiting for initialization";
                 case INITIALIZED:
-                    if (isConfigured)
+                    if (isConfigured.get())
                     {
                         return "ready to start.";
                     }
@@ -236,7 +240,7 @@ public class ClusterUI implements ClusterStateListener, ArchipelagoUI
             if (cluster != null)
             {
                 final Cluster.ClusterState state = cluster.getState();
-                if (isConfigured && state != Cluster.ClusterState.STOPPING && state !=
+                if (isConfigured.get() && state != Cluster.ClusterState.STOPPING && state !=
                         Cluster.ClusterState.STOPPED)
                 {
                     startStopButton.setEnabled(true);
@@ -459,6 +463,232 @@ public class ClusterUI implements ClusterStateListener, ArchipelagoUI
         }
     }
     
+    private class RootNodeConfigDialog implements ActionListener
+    {
+        final Hashtable<String, String> paramMap;
+        final Hashtable<String, TextField> fieldMap;
+        final String prefRoot;
+        final Frame rootConfigFrame;
+        final Panel panel;
+        final AtomicBoolean ok;
+        final Vector<Thread> waitThreads;
+        
+        public RootNodeConfigDialog()
+        {
+            final GridBagConstraints gbc = new GridBagConstraints();
+            final Button keyButton = new Button("Select ssh key...");
+            final Button execRootButton = new Button("Select exec root...");
+            final Button fileRootButton = new Button("Select file root...");
+            final Button okButton = new Button("OK");
+            final Button cancelButton = new Button("Cancel");
+
+            panel = new Panel();
+            waitThreads = new Vector<Thread>();
+            ok = new AtomicBoolean(false);
+            paramMap = new Hashtable<String, String>();
+            fieldMap = new Hashtable<String, TextField>();
+            prefRoot = FijiArchipelago.PREF_ROOT;
+            rootConfigFrame = new Frame("Root Node Configuration");
+
+            setEntry("port", "" + Cluster.DEFAULT_PORT);
+            setEntry("keyfile", IJ.isWindows() ? "" : System.getenv("HOME") + "/.ssh/id_dsa");
+            setEntry("execRoot", "");
+            setEntry("fileRoot", "");
+            setEntry("execRootRemote", "");
+            setEntry("fileRootRemote", "");
+            setEntry("username", System.getenv("USER"));
+
+            gbc.fill = GridBagConstraints.BOTH;
+            gbc.weightx = 0.0;
+            gbc.gridwidth = GridBagConstraints.REMAINDER;
+
+            panel.setLayout(new GridBagLayout());
+            
+            panel.add(new Label("Root Node Configuration"), gbc);
+
+            addField("\tServer Port Number", "port", gbc, null);
+            addField("\tSSH Private Key File", "keyfile", gbc, keyButton);
+            addField("\tLocal Exec Root", "execRoot", gbc, execRootButton);
+            addField("\tLocal File Root", "fileRoot", gbc, fileRootButton);
+            addField("\tUser Name", "username", gbc, null);
+            addField("\tDefault Client Exec Root", "execRootRemote", gbc, null);
+            addField("\tDefault Client File Root", "fileRootRemote", gbc, null);
+            
+            gbc.gridwidth = GridBagConstraints.RELATIVE;
+            panel.add(okButton, gbc);
+            gbc.gridwidth = GridBagConstraints.REMAINDER;
+            panel.add(cancelButton, gbc);
+            
+            okButton.addActionListener(this);
+            cancelButton.addActionListener(this);
+            fileRootButton.addActionListener(this);
+            execRootButton.addActionListener(this);
+            keyButton.addActionListener(this);
+            
+            okButton.setActionCommand("ok");
+            cancelButton.setActionCommand("cancel");
+            fileRootButton.setActionCommand("fileRoot");
+            execRootButton.setActionCommand("execRoot");
+            keyButton.setActionCommand("key");
+
+            rootConfigFrame.add(panel);
+            panel.setVisible(true);
+            rootConfigFrame.setPreferredSize(new Dimension(768, 384));
+            rootConfigFrame.setMinimumSize(new Dimension(768, 384));
+            panel.validate();
+            rootConfigFrame.validate();
+
+            rootConfigFrame.addWindowListener(
+                    new WindowAdapter()
+            {
+                @Override
+                public void windowClosing(WindowEvent windowEvent)
+                {
+                    ok.set(false);
+                    rootConfigFrame.setVisible(false);
+                    rootConfigFrame.removeAll();
+                }
+            });
+        }
+        
+        public void show()
+        {
+            FijiArchipelago.debug("Showing config");
+            if (!rootConfigFrame.isVisible())
+            {
+
+                FijiArchipelago.debug("Setting frame visible");
+                rootConfigFrame.validate();
+                rootConfigFrame.setVisible(true);
+                ok.set(false);
+            }
+        }
+
+
+        
+        private void syncMap()
+        {
+            for (String key : paramMap.keySet())
+            {
+                String value = fieldMap.get(key).getText();
+                paramMap.put(key, value);
+                Prefs.set(prefRoot + "." + key, value);
+            }
+            Prefs.savePreferences();
+        }
+        
+        public String getStringValue(String key)
+        {
+            return paramMap.get(key); 
+        }
+        
+        public int getIntegerValue(String key)
+        {
+            String value = getStringValue(key);
+            if (value == null)
+            {
+                return Integer.MIN_VALUE;
+            }
+            else
+            {
+                return Integer.parseInt(value);
+            }
+        }
+        
+        private void addField(final String label, final String key, final GridBagConstraints gbc,
+                              final Button b)
+        {
+            final int buttonWidth = b == null ? 0 : 128;
+            final int h = 32, lw = 256, fw = 384;
+            final Label l = new Label(label);
+            final TextField tf = new TextField(paramMap.get(key));
+            fieldMap.put(key, tf);
+            
+            
+            l.setMinimumSize(new Dimension(lw, h));
+            l.setSize(new Dimension(lw, h));
+            
+            tf.setMinimumSize(new Dimension(fw - buttonWidth, h));
+            tf.setSize(new Dimension(fw - buttonWidth, h));
+            
+
+            gbc.gridwidth = GridBagConstraints.RELATIVE;
+
+            panel.add(l, gbc);
+
+            if (b == null)
+            {
+                gbc.gridwidth = GridBagConstraints.REMAINDER;
+            }
+            
+            panel.add(tf, gbc);
+            
+            if(b != null)
+            {
+                b.setMinimumSize(new Dimension(buttonWidth, h));
+                b.setSize(new Dimension(buttonWidth, h));
+                gbc.gridwidth = GridBagConstraints.REMAINDER;
+                panel.add(b, gbc);
+            }
+        }
+        
+        private void setEntry(final String key, final String dValue)
+        {
+            String value = Prefs.get(prefRoot + "." + key, dValue);
+            paramMap.put(key, value);
+        }
+
+        public void actionPerformed(ActionEvent actionEvent) {
+            final String command = actionEvent.getActionCommand();
+            if (command.equals("ok"))
+            {
+                ok.set(true);               
+                rootConfigFrame.setVisible(false);
+                rootConfigFrame.removeAll();
+                syncMap();
+                isConfigured.set(configureCluster(
+                        cluster,
+                        getIntegerValue("port"),
+                        getStringValue("execRootRemote"),
+                        getStringValue("fileRootRemote"),
+                        getStringValue("execRoot"),
+                        getStringValue("fileRoot"),
+                        getStringValue("username"),
+                        getStringValue("keyfile")));
+            }
+            else if (command.equals("cancel"))
+            {
+                ok.set(false);
+                rootConfigFrame.setVisible(false);
+                rootConfigFrame.removeAll();               
+            }
+            else if (command.equals("fileRoot"))
+            {
+                DirectoryChooser dc = new DirectoryChooser("Choose File Root");
+                if (dc.getDirectory() != null)
+                {
+                    fieldMap.get("fileRoot").setText(dc.getDirectory());
+                }
+            }
+            else if (command.equals("execRoot"))
+            {
+                DirectoryChooser dc = new DirectoryChooser("Choose Exec Root");
+                if (dc.getDirectory() != null)
+                {
+                    fieldMap.get("execRoot").setText(dc.getDirectory());
+                }
+            }
+            else if (command.equals("key"))
+            {
+                OpenDialog od = new OpenDialog("Select Private Key File", null);
+                if (od.getFileName() != null)
+                {
+                    fieldMap.get("keyfile").setText(od.getDirectory() + "/" + od.getFileName());
+                }
+            }
+        }
+    }
+    
     public static boolean started(final Cluster c)
     {
         Cluster.ClusterState state = c.getState();
@@ -469,7 +699,7 @@ public class ClusterUI implements ClusterStateListener, ArchipelagoUI
     private final Cluster cluster;
     private final Frame frame;
     private final ReentrantLock configLock;
-    private boolean isConfigured;
+    private final AtomicBoolean isConfigured;
     private final CUIMainPanel mainPanel;
     private List<NodeManager.NodeParameters> nodeParameters;
     private final ClusterNodeStatusUI nodeStatusUI;
@@ -481,7 +711,7 @@ public class ClusterUI implements ClusterStateListener, ArchipelagoUI
     {
         configLock = new ReentrantLock();
         this.cluster = c;
-        isConfigured = started(c);
+        isConfigured = new AtomicBoolean(started(c));
         mainPanel = new CUIMainPanel();
         nodeParameters = new ArrayList<NodeManager.NodeParameters>();
         nodeStatusUI = new ClusterNodeStatusUI(cluster, this);
@@ -692,14 +922,14 @@ public class ClusterUI implements ClusterStateListener, ArchipelagoUI
         try
         {
             ArrayList<NodeManager.NodeParameters> params = new ArrayList<NodeManager.NodeParameters>();
-            isConfigured = loadClusterFile(file, cluster, params);
+            isConfigured.set(loadClusterFile(file, cluster, params));
 
             for (NodeManager.NodeParameters p : params)
             {
                 addNode(p);
             }
 
-            if (!isConfigured)
+            if (!isConfigured.get())
             {
                 configError(file, "Could not configure Cluster on port " + cluster.getPort());
             }
@@ -717,7 +947,7 @@ public class ClusterUI implements ClusterStateListener, ArchipelagoUI
             configError(file, "" + ioe);
         }
         updateUI();
-        return isConfigured;
+        return isConfigured.get();
     }
 
     private void toggleStatsWindow()
@@ -908,69 +1138,17 @@ public class ClusterUI implements ClusterStateListener, ArchipelagoUI
         }
     }
 
-    private boolean configureRootNode()
+    private void configureRootNode()
     {
         if (!configLock.tryLock())
         {
-            return false;
+            return;
         }
 
-        final String prefRoot = FijiArchipelago.PREF_ROOT;
-        final GenericDialog gd = new GenericDialog("Start Cluster");
-        int port, dPort;
-        String dKeyfile, dExecRoot, dFileRoot, dUserName, dExecRootRemote, dFileRootRemote;
-        String keyfile, execRoot, fileRoot, userName, execRootRemote, fileRootRemote;
-
-        //Set default variables
-        dPort = Integer.parseInt(Prefs.get(prefRoot + ".port", "" + Cluster.DEFAULT_PORT));
-        dKeyfile = Prefs.get(prefRoot + ".keyfile", IJ.isWindows() ? ""
-                : System.getenv("HOME") + "/.ssh/id_dsa");
-        dExecRoot = Prefs.get(prefRoot + ".execRoot", "");
-        dFileRoot = Prefs.get(prefRoot + ".fileRoot", "");
-        dExecRootRemote = Prefs.get(prefRoot + ".execRootRemote", "");
-        dFileRootRemote = Prefs.get(prefRoot + ".fileRootRemote", "");
-        dUserName = Prefs.get(prefRoot + ".username", System.getenv("USER"));
-
-        //Setup the dialog
-        gd.addMessage("Root Node Configuration");
-        gd.addNumericField("\tServer Port Number", dPort, 0);
-        gd.addStringField("\tSSH Private Key File", dKeyfile, 64);
-        gd.addStringField("\tLocal Exec Root", dExecRoot, 64);
-        gd.addStringField("\tLocal File Root", dFileRoot, 64);
-        gd.addMessage("Remote Node Defaults");
-        gd.addStringField("\tUser Name", dUserName);
-        gd.addStringField("\tDefault Client Exec Root", dExecRootRemote, 64);
-        gd.addStringField("\tDefault Client File Root", dFileRootRemote, 64);
-
-
-        gd.showDialog();
-        if (gd.wasCanceled())
-        {
-            return false;
-        }
-
-        //Get results
-        port = (int)gd.getNextNumber();
-        keyfile = gd.getNextString();
-        execRoot = gd.getNextString();
-        fileRoot = gd.getNextString();
-        userName = gd.getNextString();
-        execRootRemote = gd.getNextString();
-        fileRootRemote = gd.getNextString();
-
-
-        //Do initialization
-        isConfigured = configureCluster(cluster, port, execRootRemote, fileRootRemote, execRoot, fileRoot, userName,
-                keyfile);
-
-        if (!isConfigured)
-        {
-            IJ.error("Could not configure Cluster on port " + cluster.getPort());
-        }
+        FijiArchipelago.debug("Creating and showing root node configuration");
         
-        configLock.unlock();
-        
-        updateUI();
-        return isConfigured;
+        RootNodeConfigDialog rncd = new RootNodeConfigDialog();
+        rncd.show();
+
     }
 }
