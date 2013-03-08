@@ -2,9 +2,9 @@ package fiji.plugin.trackmate.visualization.hyperstack;
 
 import ij.ImagePlus;
 import ij.gui.NewImage;
-import ij.gui.StackWindow;
+import ij.gui.Overlay;
+import ij.gui.Roi;
 
-import java.awt.Point;
 import java.util.List;
 import java.util.Set;
 
@@ -19,7 +19,6 @@ import fiji.plugin.trackmate.util.TMUtils;
 import fiji.plugin.trackmate.visualization.AbstractTrackMateModelView;
 import fiji.plugin.trackmate.visualization.TrackColorGenerator;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
-import fiji.util.gui.OverlayedImageCanvas;
 
 public class HyperStackDisplayer extends AbstractTrackMateModelView  {
 
@@ -49,14 +48,13 @@ public class HyperStackDisplayer extends AbstractTrackMateModelView  {
 			"</ul>" +
 			"</html>";
 	protected ImagePlus imp;
-	OverlayedImageCanvas canvas;
 	double[] calibration;
 	Settings settings;
-	private StackWindow window;
 	SpotOverlay spotOverlay;
 	private TrackOverlay trackOverlay;
 
 	private SpotEditTool editTool;
+	private Roi initialROI;
 
 	/*
 	 * CONSTRUCTORS
@@ -65,19 +63,6 @@ public class HyperStackDisplayer extends AbstractTrackMateModelView  {
 	public HyperStackDisplayer(TrackMateModel model) {	
 		super(model);
 		this.settings = model.getSettings();
-	}
-
-	/*
-	 * DEFAULT METHODS
-	 */
-
-	final Spot getCLickLocation(final Point point) {
-		final double ix = canvas.offScreenXD(point.x) - 0.5d;
-		final double iy =  canvas.offScreenYD(point.y) - 0.5d;
-		final double x = ix * calibration[0];
-		final double y = iy * calibration[1];
-		final double z = (imp.getSlice()-1) * calibration[2];
-		return new Spot(new double[] {x, y, z});
 	}
 
 	/*
@@ -169,12 +154,16 @@ public class HyperStackDisplayer extends AbstractTrackMateModelView  {
 
 	@Override
 	public void render() {
-		this.imp = settings.imp;
+		imp = settings.imp;
 		if (null == imp) {
-			this.imp = NewImage.createByteImage("Empty", settings.width, settings.height, settings.nframes*settings.nslices, NewImage.FILL_BLACK);
-			this.imp.setDimensions(1, settings.nslices, settings.nframes);
+			imp = NewImage.createByteImage("Empty", settings.width, settings.height, settings.nframes*settings.nslices, NewImage.FILL_BLACK);
+			imp.setDimensions(1, settings.nslices, settings.nframes);
 		}
-		this.calibration = TMUtils.getSpatialCalibration(imp);
+		calibration = TMUtils.getSpatialCalibration(imp);
+		initialROI = imp.getRoi();
+		if (initialROI != null) {
+			imp.killRoi();
+		}
 
 		clear();
 		imp.setOpenAsHyperStack(true);
@@ -183,11 +172,9 @@ public class HyperStackDisplayer extends AbstractTrackMateModelView  {
 		//
 		trackOverlay = createTrackOverlay(); 
 		//
-		canvas = new OverlayedImageCanvas(imp);
-		window = new StackWindow(imp, canvas);
-		window.setVisible(true);
-		canvas.addOverlay(spotOverlay);
-		canvas.addOverlay(trackOverlay);
+
+		addOverlay(spotOverlay);
+		addOverlay(trackOverlay);
 		imp.updateAndDraw();
 		registerEditTool();
 	}
@@ -202,9 +189,20 @@ public class HyperStackDisplayer extends AbstractTrackMateModelView  {
 
 	@Override
 	public void clear() {
-		if (canvas != null)
-			canvas.clearOverlay();
+		Overlay overlay = imp.getOverlay();
+		if (overlay == null) {
+			overlay = new Overlay();
+			imp.setOverlay(overlay);
+		}
+		overlay.clear();
+		if (initialROI != null) {
+			imp.getOverlay().add(initialROI);
+		}
 	}	
+
+	public void addOverlay(Roi overlay) {
+		imp.getOverlay().add(overlay);
+	}
 
 	@Override
 	public String getInfoText() {

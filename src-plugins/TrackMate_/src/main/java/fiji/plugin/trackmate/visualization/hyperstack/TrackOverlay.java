@@ -1,6 +1,7 @@
 package fiji.plugin.trackmate.visualization.hyperstack;
 
 import ij.ImagePlus;
+import ij.gui.Roi;
 
 import java.awt.AlphaComposite;
 import java.awt.BasicStroke;
@@ -23,15 +24,13 @@ import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.util.TMUtils;
 import fiji.plugin.trackmate.visualization.TrackColorGenerator;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
-import fiji.util.gui.OverlayedImageCanvas.Overlay;
 
 /**
  * The overlay class in charge of drawing the tracks on the hyperstack window.
  * @author Jean-Yves Tinevez <jeanyves.tinevez@gmail.com> 2010 - 2011
  */
-public class TrackOverlay implements Overlay {
+public class TrackOverlay extends Roi {
 	protected final double[] calibration;
-	protected final ImagePlus imp;
 	/** Map of color vs track key. */
 //	protected Map<Integer, Color> edgeColors;
 	protected Collection<DefaultWeightedEdge> highlight = new HashSet<DefaultWeightedEdge>();
@@ -44,6 +43,7 @@ public class TrackOverlay implements Overlay {
 	 */
 
 	public TrackOverlay(final TrackMateModel model, final ImagePlus imp, final Map<String, Object> displaySettings) {
+		super(0, 0, imp);
 		this.model = model;
 		this.calibration = TMUtils.getSpatialCalibration(model.getSettings().imp);
 		this.imp = imp;
@@ -59,7 +59,11 @@ public class TrackOverlay implements Overlay {
 	}
 
 	@Override
-	public final synchronized void paint(final Graphics g, final int xcorner, final int ycorner, final double magnification) {
+	public final synchronized void drawOverlay(final Graphics g) {
+		int xcorner = ic.offScreenX(0);
+		int ycorner = ic.offScreenY(0);
+		double magnification = getMagnification();
+
 		boolean tracksVisible = (Boolean) displaySettings.get(TrackMateModelView.KEY_TRACKS_VISIBLE);
 		if (!tracksVisible  || model.getTrackModel().getNFilteredTracks() == 0)
 			return;
@@ -262,12 +266,6 @@ public class TrackOverlay implements Overlay {
 		g2d.drawLine(x0, y0, x1, y1);
 
 	}
-
-	/**
-	 * Ignored.
-	 */
-	@Override
-	public void setComposite(Composite composite) {	}
 
 	public void setTrackColorGenerator(TrackColorGenerator colorGenerator) {
 		this.colorGenerator = colorGenerator;

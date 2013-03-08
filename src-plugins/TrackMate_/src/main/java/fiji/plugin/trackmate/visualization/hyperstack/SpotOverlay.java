@@ -1,6 +1,7 @@
 package fiji.plugin.trackmate.visualization.hyperstack;
 
 import ij.ImagePlus;
+import ij.gui.Roi;
 
 import java.awt.AlphaComposite;
 import java.awt.BasicStroke;
@@ -27,13 +28,12 @@ import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.util.TMUtils;
 import fiji.plugin.trackmate.visualization.AbstractTrackMateModelView;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
-import fiji.util.gui.OverlayedImageCanvas.Overlay;
 
 /**
  * The overlay class in charge of drawing the spot images on the hyperstack window.
  * @author Jean-Yves Tinevez <jeanyves.tinevez@gmail.com> 2010 - 2011
  */
-public class SpotOverlay implements Overlay {
+public class SpotOverlay extends Roi {
 
 	private static final Font LABEL_FONT = new Font("Arial", Font.BOLD, 12);
 	private static final boolean DEBUG = false;
@@ -41,7 +41,6 @@ public class SpotOverlay implements Overlay {
 	/** The color mapping of the target collection. */
 	protected Map<Spot, Color> targetColor;
 	protected Spot editingSpot;
-	protected final ImagePlus imp;
 	protected final double[] calibration;
 	protected Composite composite = AlphaComposite.getInstance(AlphaComposite.SRC_OVER);
 	protected FontMetrics fm;
@@ -54,6 +53,7 @@ public class SpotOverlay implements Overlay {
 	 */
 
 	public SpotOverlay(final TrackMateModel model, final ImagePlus imp, final Map<String, Object> displaySettings) {
+		super(0, 0, imp);
 		this.model = model;
 		this.imp = imp;
 		this.calibration = TMUtils.getSpatialCalibration(model.getSettings().imp);
@@ -67,7 +67,10 @@ public class SpotOverlay implements Overlay {
 
 	
 	@Override
-	public void paint(Graphics g, int xcorner, int ycorner, double magnification) {
+	public void drawOverlay(Graphics g) {
+		int xcorner = ic.offScreenX(0);
+		int ycorner = ic.offScreenY(0);
+		double magnification = getMagnification();
 
 		boolean spotVisible = (Boolean) displaySettings.get(TrackMateModelView.KEY_SPOTS_VISIBLE);
 		if (!spotVisible  || null == model.getFilteredSpots())
@@ -187,11 +190,6 @@ public class SpotOverlay implements Overlay {
 		}
 	}
 	
-	@Override
-	public void setComposite(Composite composite) {
-		this.composite = composite;
-	}
-
 	public void setSpotSelection(Collection<Spot> spots) {
 		this.spotSelection = spots;
 	}
