@@ -4,8 +4,11 @@ import java.awt.Component;
 
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.Settings;
+import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMate_;
 import fiji.plugin.trackmate.util.TMUtils;
+import fiji.plugin.trackmate.visualization.hyperstack.HyperStackDisplayer;
+import fiji.plugin.trackmate.visualization.hyperstack.SpotEditTool;
 
 public class DetectorDescriptor implements WizardPanelDescriptor {
 	
@@ -68,6 +71,12 @@ public class DetectorDescriptor implements WizardPanelDescriptor {
 				long start = System.currentTimeMillis();
 				try {
 					plugin.execDetection();
+					plugin.computeSpotFeatures(true);
+					TrackMateModel model = plugin.getModel();
+					model.setFilteredSpots(model.getSpots(), false);
+					HyperStackDisplayer displayer = new HyperStackDisplayer(model);
+					displayer.render();
+					displayer.refresh();
 				} catch (Exception e) {
 					logger.error("An error occured:\n"+e+'\n');
 					e.printStackTrace(logger);
