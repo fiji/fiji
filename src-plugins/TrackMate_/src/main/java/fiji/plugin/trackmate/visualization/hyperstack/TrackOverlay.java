@@ -75,7 +75,7 @@ public class TrackOverlay extends Roi {
 		final Stroke originalStroke = g2d.getStroke();
 		final Color originalColor = g2d.getColor();	
 		final double dt = model.getSettings().dt;
-		final double mag = (double) magnification;
+		final double mag = magnification;
 		Spot source, target;
 
 		// Deal with highlighted edges first: brute and thick display

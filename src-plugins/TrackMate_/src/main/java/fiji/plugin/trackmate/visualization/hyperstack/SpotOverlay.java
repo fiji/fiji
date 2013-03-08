@@ -26,7 +26,6 @@ import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.util.TMUtils;
-import fiji.plugin.trackmate.visualization.AbstractTrackMateModelView;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
 
 /**
@@ -91,7 +90,7 @@ public class SpotOverlay extends Roi {
 		
 		final int frame = imp.getFrame()-1;
 		final double zslice = (imp.getSlice()-1) * calibration[2];
-		final double mag = (double) magnification;
+		final double mag = magnification;
 
 		// Deal with normal spots.
 		g2d.setStroke(new BasicStroke(1.0f));
@@ -106,7 +105,7 @@ public class SpotOverlay extends Roi {
 
 				color = targetColor.get(spot);
 				if (null == color)
-					color = AbstractTrackMateModelView.DEFAULT_COLOR;
+					color = TrackMateModelView.DEFAULT_COLOR;
 				g2d.setColor(color);
 				drawSpot(g2d, spot, zslice, xcorner, ycorner, mag);
 
@@ -183,7 +182,7 @@ public class SpotOverlay extends Roi {
 		for(Spot spot : model.getSpots()) {
 			val = spot.getFeature(feature);
 			InterpolatePaintScale  colorMap = (InterpolatePaintScale) displaySettings.get(TrackMateModelView.KEY_COLORMAP);
-			if (null == feature || null == val)
+			if (null == val)
 				targetColor.put(spot, TrackMateModelView.DEFAULT_COLOR);
 			else
 				targetColor.put(spot, colorMap .getPaint((val-min)/(max-min)) );
@@ -212,7 +211,7 @@ public class SpotOverlay extends Roi {
 			g2d.fillOval((int) Math.round(xs - 2*magnification), (int) Math.round(ys - 2*magnification), 
 						 (int) Math.round(4*magnification), 	(int) Math.round(4*magnification));
 		else {
-			final double apparentRadius =  (double) (Math.sqrt(radius*radius - dz2) / calibration[0] * magnification); 
+			final double apparentRadius = Math.sqrt(radius*radius - dz2) / calibration[0] * magnification;
 			g2d.drawOval((int) Math.round(xs - apparentRadius), (int) Math.round(ys - apparentRadius), 
 					(int) Math.round(2 * apparentRadius), (int) Math.round(2 * apparentRadius));		
 			boolean spotNameVisible = (Boolean) displaySettings.get(TrackMateModelView.KEY_DISPLAY_SPOT_NAMES);

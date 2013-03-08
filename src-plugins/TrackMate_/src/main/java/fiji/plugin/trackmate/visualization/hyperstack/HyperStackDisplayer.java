@@ -71,7 +71,7 @@ public class HyperStackDisplayer extends AbstractTrackMateModelView  {
 
 	/**
 	 * Hook for subclassers. Instantiate here the overlay you want to use for the spots. 
-	 * @return
+	 * @return the spot overlay
 	 */
 	protected SpotOverlay createSpotOverlay() {
 		return new SpotOverlay(model, imp, displaySettings);
@@ -79,7 +79,7 @@ public class HyperStackDisplayer extends AbstractTrackMateModelView  {
 
 	/**
 	 * Hook for subclassers. Instantiate here the overlay you want to use for the spots. 
-	 * @return
+	 * @return the track overlay
 	 */
 	protected TrackOverlay createTrackOverlay() {
 		TrackOverlay to = new TrackOverlay(model, imp, displaySettings);
