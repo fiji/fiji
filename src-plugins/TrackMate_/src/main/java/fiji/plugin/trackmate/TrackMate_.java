@@ -495,14 +495,25 @@ public class TrackMate_ implements PlugIn, Benchmark, MultiThreaded, Algorithm {
 		final AtomicInteger ai = new AtomicInteger(settings.tstart);
 		for (int ithread = 0; ithread < threads.length; ithread++) {
 
-			threads[ithread] = new Thread("TrackMate spot detection thread "+(1+ithread)+"/"+threads.length) {  
+			threads[ithread] = new Thread("TrackMate spot detection thread "+(1+ithread)+"/"+threads.length) {
+				private boolean wasInterrupted() {
+					try {
+						if (isInterrupted()) return true;
+						sleep(0);
+						return false;
+					} catch (InterruptedException e) {
+						return true;
+					}
+				}
 
 				public void run() {
 
-					for (int frame = ai.getAndIncrement(); frame <= settings.tend; frame = ai.getAndIncrement()) {
+					for (int frame = ai.getAndIncrement(); frame <= settings.tend; frame = ai.getAndIncrement()) try {
 
 						// Yield detector for target frame
 						SpotDetector<?> detector = factory.getDetector(frame);
+
+						if (wasInterrupted()) return;
 
 						// Execute detection
 						if (ok.get() && detector.checkInput() && detector.process()) {
@@ -540,7 +551,13 @@ public class TrackMate_ implements PlugIn, Benchmark, MultiThreaded, Algorithm {
 							return;
 						}
 
-					} // Finished looping over frames
+					} catch (RuntimeException e) {
+						Throwable cause = e.getCause();
+						if (cause != null && cause instanceof InterruptedException) {
+							return;
+						}
+						throw e;
+					}
 				}
 			};
 		}
@@ -548,7 +565,23 @@ public class TrackMate_ implements PlugIn, Benchmark, MultiThreaded, Algorithm {
 		logger.setStatus("Detection...");
 		logger.setProgress(0);
 
-		SimpleMultiThreading.startAndJoin(threads);
+		try {
+			SimpleMultiThreading.startAndJoin(threads);
+		} catch (RuntimeException e) {
+			ok.set(false);
+			if (e.getCause() != null && e.getCause() instanceof InterruptedException) {
+				for (final Thread thread : threads) thread.interrupt();
+				for (final Thread thread : threads) {
+					if (thread.isAlive()) try {
+						thread.join();
+					} catch (InterruptedException e2) {
+						// ignore
+					}
+				}
+			} else {
+				throw e;
+			}
+		}
 		model.setSpots(spots, true);
 
 		if (ok.get()) {

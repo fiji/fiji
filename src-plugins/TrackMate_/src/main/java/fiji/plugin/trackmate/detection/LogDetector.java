@@ -135,6 +135,12 @@ public class LogDetector <T extends RealType<T>  & NativeType<T>> implements Spo
 			return false;
 		}
 
+		try {
+			Thread.sleep(0);
+		} catch (InterruptedException e) {
+			return false;
+		}
+
 		// Get peaks location and values
 		final ArrayList<long[]> centers = peakPicker.getPeakList();
 		final RandomAccess<T> cursor = intermediateImage.randomAccess();

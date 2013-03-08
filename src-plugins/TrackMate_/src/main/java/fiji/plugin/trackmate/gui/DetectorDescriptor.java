@@ -14,7 +14,7 @@ public class DetectorDescriptor implements WizardPanelDescriptor {
 	protected TrackMate_ plugin;
 	protected TrackMateWizard wizard;
 	protected Logger logger;
-	
+	protected Thread motherThread;
 
 	@Override
 	public void setWizard(TrackMateWizard wizard) { 
@@ -63,7 +63,7 @@ public class DetectorDescriptor implements WizardPanelDescriptor {
 		logger.log("Starting detection using "+settings.detectorFactory.toString()+"\n", Logger.BLUE_COLOR);
 		logger.log("with settings:\n");
 		logger.log(TMUtils.echoMap(settings.detectorSettings, 2));
-		new Thread("TrackMate detection mother thread") {					
+		motherThread = new Thread("TrackMate detection mother thread") {
 			public void run() {
 				long start = System.currentTimeMillis();
 				try {
@@ -76,10 +76,22 @@ public class DetectorDescriptor implements WizardPanelDescriptor {
 					long end = System.currentTimeMillis();
 					logger.log(String.format("Detection done in %.1f s.\n", (end-start)/1e3f), Logger.BLUE_COLOR);
 				}
+				motherThread = null;
 			}
-		}.start();
+		};
+		motherThread.start();
 	}
 
 	@Override
-	public void aboutToHidePanel() { }
+	public synchronized void aboutToHidePanel() {
+		final Thread thread = motherThread;
+		if (thread != null) {
+			thread.interrupt();
+			try {
+				thread.join();
+			} catch (InterruptedException exc) {
+				// ignore
+			}
+		}
+	}
 }

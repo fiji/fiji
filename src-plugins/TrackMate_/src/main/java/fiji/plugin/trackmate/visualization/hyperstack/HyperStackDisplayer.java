@@ -111,7 +111,7 @@ public class HyperStackDisplayer extends AbstractTrackMateModelView  {
 			break;
 
 		case ModelChangeEvent.SPOTS_COMPUTED:
-			spotOverlay.computeSpotColors();
+			if (spotOverlay != null) spotOverlay.computeSpotColors();
 			redoOverlay = true;
 			break;
 
