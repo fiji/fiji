@@ -9,8 +9,8 @@ import fiji.plugin.trackmate.SpotCollectionHashSet;
 
 public class SpotCollectionPerformance_TestDrive {
 
-	private static final int N_SPOTS = 1000; // 1e3 / frame
-	private static final int N_FRAMES = 100; // 1e5 spots total
+	private static final int N_SPOTS = 500; // 1e3 / frame
+	private static final int N_FRAMES = 1000; // 1e5 spots total
 	private static final Random ran = new Random();
 
 	public static void main(String[] args) {
@@ -24,6 +24,7 @@ public class SpotCollectionPerformance_TestDrive {
 
 		System.out.println("Adding " + (N_FRAMES*N_SPOTS) + " spots to collection.");
 		SpotCollection s0 = new SpotCollection();
+		s0.setNumThreads(1);
 		AddSpotsTask_S0 task0a = new AddSpotsTask_S0(s0, N_FRAMES, N_SPOTS);	
 		System.out.println("Task done in "+(timer.time(task0a))+" ms.");
 		System.out.println();
@@ -46,7 +47,7 @@ public class SpotCollectionPerformance_TestDrive {
 		
 		s0 = null;
 		
-		/*
+		
 		System.out.println("--------------------------------------.");
 		System.out.println("Assessing HashSet based SpotCollection.");
 		System.out.println("--------------------------------------.");
@@ -54,6 +55,7 @@ public class SpotCollectionPerformance_TestDrive {
 
 		System.out.println("Adding " + (N_FRAMES*N_SPOTS) + " spots to collection.");
 		SpotCollectionHashSet s1 = new SpotCollectionHashSet();
+		s1.setNumThreads(1);
 		AddSpotsTask_S1 task1a = new AddSpotsTask_S1(s1, N_FRAMES, N_SPOTS);	
 		System.out.println("Task done in "+(timer.time(task1a))+" ms.");
 		System.out.println();
@@ -74,7 +76,7 @@ public class SpotCollectionPerformance_TestDrive {
 		System.out.println("Task done in "+(timer.time(task1b))+" ms.");
 		System.out.println();
 
-		*/
+		
 	}
 
 	private static final Spot makeSpot(int frame) {
