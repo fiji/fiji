@@ -9,6 +9,7 @@ import static fiji.plugin.trackmate.gui.TrackMateWizard.BIG_FONT;
 import static fiji.plugin.trackmate.gui.TrackMateWizard.FONT;
 import static fiji.plugin.trackmate.gui.TrackMateWizard.SMALL_FONT;
 import ij.ImagePlus;
+import ij.measure.Calibration;
 
 import java.awt.Dimension;
 import java.awt.Font;
@@ -90,7 +91,15 @@ public class LogDetectorConfigurationPanel extends ConfigurationPanel {
 	@Override
 	public void setSettings(final Map<String, Object> settings) {
 		sliderChannel.setValue((Integer) settings.get(KEY_TARGET_CHANNEL));
-		jTextFieldBlobDiameter.setText(""+( 2 * (Double) settings.get(KEY_RADIUS)));
+		double diameter = (Double) settings.get(KEY_RADIUS);
+		if (imp != null) {
+			Calibration calibration = imp.getCalibration();
+			double maxWidth = imp.getWidth() * 0.5 * (calibration == null ? 1 : calibration.pixelWidth);
+			double maxHeight = imp.getHeight() * 0.5 * (calibration == null ? 1 : calibration.pixelHeight);
+			double max = maxWidth < maxHeight ? maxWidth : maxHeight;
+			if (diameter > max) diameter *= max * 4 / (imp.getWidth() + imp.getHeight());
+		}
+		jTextFieldBlobDiameter.setText(""+( 2 * diameter));
 		jCheckBoxMedianFilter.setSelected((Boolean) settings.get(KEY_DO_MEDIAN_FILTERING));
 		jTextFieldThreshold.setText("" + settings.get(KEY_THRESHOLD));
 		jCheckSubPixel.setSelected((Boolean) settings.get(KEY_DO_SUBPIXEL_LOCALIZATION));
@@ -217,7 +226,7 @@ public class LogDetectorConfigurationPanel extends ConfigurationPanel {
 				jButtonRefresh = new JButton();
 				jButtonRefresh.setBounds(5, 370, 67, 21);
 				this.add(jButtonRefresh);
-				jButtonRefresh.setText("Refresh");
+				jButtonRefresh.setText("Refresh Treshold");
 				jButtonRefresh.setFont(SMALL_FONT);
 				jButtonRefresh.addActionListener(new ActionListener() {
 					public void actionPerformed(ActionEvent e) {

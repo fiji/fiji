@@ -296,6 +296,7 @@ public class WizardController implements ActionListener {
 	private void previous() {
 		// Move to previous panel, but do not execute its actions
 		WizardPanelDescriptor descriptor = wizard.getCurrentPanelDescriptor();
+		descriptor.aboutToHidePanel();
 		String backPanelDescriptor = descriptor.getPreviousDescriptorID();        
 		wizard.showDescriptorPanelFor(backPanelDescriptor);
 

@@ -10,6 +10,7 @@ import fiji.plugin.trackmate.tracking.SpotTracker;
 import fiji.plugin.trackmate.util.CropImgView;
 import fiji.plugin.trackmate.util.TMUtils;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
+import ij.IJ;
 import ij.ImagePlus;
 import ij.WindowManager;
 import ij.plugin.PlugIn;
@@ -19,6 +20,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import javax.swing.JOptionPane;
 
 import net.imglib2.algorithm.Algorithm;
 import net.imglib2.algorithm.Benchmark;
@@ -91,6 +94,19 @@ public class TrackMate_ implements PlugIn, Benchmark, MultiThreaded, Algorithm {
 	 */
 	public void run(String arg) {
 		ImagePlus imp = WindowManager.getCurrentImage();
+		int[] dims = imp.getDimensions();
+		if (dims[4] == 1 && dims[3] > 1) {
+			switch (JOptionPane.showConfirmDialog(null,
+					"It appears this image has 1 timepoint but " + dims[3] + " slices.\n" +
+					"Do you want to swap Z and T?",
+					"Z/T swapped?", JOptionPane.YES_NO_CANCEL_OPTION)) {
+			case JOptionPane.YES_OPTION:
+				imp.setDimensions(dims[2], dims[4], dims[3]);
+				break;
+			case JOptionPane.CANCEL_OPTION:
+				return;
+			}
+		}
 		Settings settings = new Settings(imp);
 		model.setSettings(settings);
 		initModules();
@@ -479,14 +495,25 @@ public class TrackMate_ implements PlugIn, Benchmark, MultiThreaded, Algorithm {
 		final AtomicInteger ai = new AtomicInteger(settings.tstart);
 		for (int ithread = 0; ithread < threads.length; ithread++) {
 
-			threads[ithread] = new Thread("TrackMate spot detection thread "+(1+ithread)+"/"+threads.length) {  
+			threads[ithread] = new Thread("TrackMate spot detection thread "+(1+ithread)+"/"+threads.length) {
+				private boolean wasInterrupted() {
+					try {
+						if (isInterrupted()) return true;
+						sleep(0);
+						return false;
+					} catch (InterruptedException e) {
+						return true;
+					}
+				}
 
 				public void run() {
 
-					for (int frame = ai.getAndIncrement(); frame <= settings.tend; frame = ai.getAndIncrement()) {
+					for (int frame = ai.getAndIncrement(); frame <= settings.tend; frame = ai.getAndIncrement()) try {
 
 						// Yield detector for target frame
 						SpotDetector<?> detector = factory.getDetector(frame);
+
+						if (wasInterrupted()) return;
 
 						// Execute detection
 						if (ok.get() && detector.checkInput() && detector.process()) {
@@ -524,7 +551,13 @@ public class TrackMate_ implements PlugIn, Benchmark, MultiThreaded, Algorithm {
 							return;
 						}
 
-					} // Finished looping over frames
+					} catch (RuntimeException e) {
+						Throwable cause = e.getCause();
+						if (cause != null && cause instanceof InterruptedException) {
+							return;
+						}
+						throw e;
+					}
 				}
 			};
 		}
@@ -532,7 +565,23 @@ public class TrackMate_ implements PlugIn, Benchmark, MultiThreaded, Algorithm {
 		logger.setStatus("Detection...");
 		logger.setProgress(0);
 
-		SimpleMultiThreading.startAndJoin(threads);
+		try {
+			SimpleMultiThreading.startAndJoin(threads);
+		} catch (RuntimeException e) {
+			ok.set(false);
+			if (e.getCause() != null && e.getCause() instanceof InterruptedException) {
+				for (final Thread thread : threads) thread.interrupt();
+				for (final Thread thread : threads) {
+					if (thread.isAlive()) try {
+						thread.join();
+					} catch (InterruptedException e2) {
+						// ignore
+					}
+				}
+			} else {
+				throw e;
+			}
+		}
 		model.setSpots(spots, true);
 
 		if (ok.get()) {

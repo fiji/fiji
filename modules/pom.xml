@@ -37,6 +37,7 @@
 		<!-- <module>junit</module> -->
 		<!-- <module>jython</module> -->
 		<!-- <module>mpicbg</module> -->
+		<!-- <module>scijava-common</module> -->
 		<!-- <module>tcljava</module> -->
 		<!-- <module>weka</module> -->
 	</modules>

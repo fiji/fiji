@@ -1,6 +1,7 @@
 package fiji.plugin.trackmate.visualization.hyperstack;
 
 import ij.ImagePlus;
+import ij.gui.Roi;
 
 import java.awt.AlphaComposite;
 import java.awt.BasicStroke;
@@ -25,15 +26,13 @@ import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.util.TMUtils;
-import fiji.plugin.trackmate.visualization.AbstractTrackMateModelView;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
-import fiji.util.gui.OverlayedImageCanvas.Overlay;
 
 /**
  * The overlay class in charge of drawing the spot images on the hyperstack window.
  * @author Jean-Yves Tinevez <jeanyves.tinevez@gmail.com> 2010 - 2011
  */
-public class SpotOverlay implements Overlay {
+public class SpotOverlay extends Roi {
 
 	private static final Font LABEL_FONT = new Font("Arial", Font.BOLD, 12);
 	private static final boolean DEBUG = false;
@@ -41,7 +40,6 @@ public class SpotOverlay implements Overlay {
 	/** The color mapping of the target collection. */
 	protected Map<Spot, Color> targetColor;
 	protected Spot editingSpot;
-	protected final ImagePlus imp;
 	protected final double[] calibration;
 	protected Composite composite = AlphaComposite.getInstance(AlphaComposite.SRC_OVER);
 	protected FontMetrics fm;
@@ -54,6 +52,7 @@ public class SpotOverlay implements Overlay {
 	 */
 
 	public SpotOverlay(final TrackMateModel model, final ImagePlus imp, final Map<String, Object> displaySettings) {
+		super(0, 0, imp);
 		this.model = model;
 		this.imp = imp;
 		this.calibration = TMUtils.getSpatialCalibration(model.getSettings().imp);
@@ -67,7 +66,10 @@ public class SpotOverlay implements Overlay {
 
 	
 	@Override
-	public void paint(Graphics g, int xcorner, int ycorner, double magnification) {
+	public void drawOverlay(Graphics g) {
+		int xcorner = ic.offScreenX(0);
+		int ycorner = ic.offScreenY(0);
+		double magnification = getMagnification();
 
 		boolean spotVisible = (Boolean) displaySettings.get(TrackMateModelView.KEY_SPOTS_VISIBLE);
 		if (!spotVisible  || null == model.getFilteredSpots())
@@ -88,7 +90,7 @@ public class SpotOverlay implements Overlay {
 		
 		final int frame = imp.getFrame()-1;
 		final double zslice = (imp.getSlice()-1) * calibration[2];
-		final double mag = (double) magnification;
+		final double mag = magnification;
 
 		// Deal with normal spots.
 		g2d.setStroke(new BasicStroke(1.0f));
@@ -103,7 +105,7 @@ public class SpotOverlay implements Overlay {
 
 				color = targetColor.get(spot);
 				if (null == color)
-					color = AbstractTrackMateModelView.DEFAULT_COLOR;
+					color = TrackMateModelView.DEFAULT_COLOR;
 				g2d.setColor(color);
 				drawSpot(g2d, spot, zslice, xcorner, ycorner, mag);
 
@@ -180,18 +182,13 @@ public class SpotOverlay implements Overlay {
 		for(Spot spot : model.getSpots()) {
 			val = spot.getFeature(feature);
 			InterpolatePaintScale  colorMap = (InterpolatePaintScale) displaySettings.get(TrackMateModelView.KEY_COLORMAP);
-			if (null == feature || null == val)
+			if (null == val)
 				targetColor.put(spot, TrackMateModelView.DEFAULT_COLOR);
 			else
 				targetColor.put(spot, colorMap .getPaint((val-min)/(max-min)) );
 		}
 	}
 	
-	@Override
-	public void setComposite(Composite composite) {
-		this.composite = composite;
-	}
-
 	public void setSpotSelection(Collection<Spot> spots) {
 		this.spotSelection = spots;
 	}
@@ -214,7 +211,7 @@ public class SpotOverlay implements Overlay {
 			g2d.fillOval((int) Math.round(xs - 2*magnification), (int) Math.round(ys - 2*magnification), 
 						 (int) Math.round(4*magnification), 	(int) Math.round(4*magnification));
 		else {
-			final double apparentRadius =  (double) (Math.sqrt(radius*radius - dz2) / calibration[0] * magnification); 
+			final double apparentRadius = Math.sqrt(radius*radius - dz2) / calibration[0] * magnification;
 			g2d.drawOval((int) Math.round(xs - apparentRadius), (int) Math.round(ys - apparentRadius), 
 					(int) Math.round(2 * apparentRadius), (int) Math.round(2 * apparentRadius));		
 			boolean spotNameVisible = (Boolean) displaySettings.get(TrackMateModelView.KEY_DISPLAY_SPOT_NAMES);

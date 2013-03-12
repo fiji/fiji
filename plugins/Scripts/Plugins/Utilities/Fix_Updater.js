@@ -34,12 +34,22 @@ if (System.getProperty("ij.dir") == null) {
 	ijDir = IJ.getDirectory("imagej");
 	if (ijDir == null) {
 		url = IJ.getClassLoader().loadClass("ij.IJ").getResource("/ij/IJ.class").toString();
-		bang = url.indexOf("ij.jar!/");
-		if (!url.startsWith("jar:file:") || bang < 0) {
-			IJ.error("Cannot set ij.dir for " + url);
-			throw new RuntimeExeption();
+		bang = url.indexOf(".jar!/");
+		if (url.startsWith("jar:file:") && bang > 0) {
+			ijDir = new File(url.substring(9, bang)).getParent();
+			if (ijDir.endsWith("/target") || ijDir.endsWith("\\target"))
+				ijDir = ijDir.substring(0, ijDir.length() - 7);
 		}
-		ijDir = url.substring(9, bang);
+		else if (url.startsWith("file:") && bang < 0 && url.endsWith("/ij/IJ.class")) {
+			ijDir = url.substring(5, url.length() - 12);
+			if (ijDir.endsWith("/classes"))
+				ijDir = ijDir.substring(0, ijDir.length() - 8);
+			if (ijDir.endsWith("/target"))
+				ijDir = ijDir.substring(0, ijDir.length() - 7);
+		}
+		else {
+			IJ.error("Cannot set ij.dir for " + url);
+		}
 	}
 	System.setProperty("ij.dir", ijDir);
 }

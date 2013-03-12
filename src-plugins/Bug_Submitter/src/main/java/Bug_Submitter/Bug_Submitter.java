@@ -24,43 +24,38 @@
 package Bug_Submitter;
 
 import ij.IJ;
-
-import ij.gui.GUI;
-
-import ij.plugin.PlugIn;
-import ij.plugin.BrowserLauncher;
-
-import ij.text.TextWindow;
-
-import java.net.URL;
-import java.net.HttpURLConnection;
-import java.net.URLEncoder;
-
-import java.io.PrintStream;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.BufferedReader;
-import java.io.IOException;
-
-import java.util.Map;
-import java.util.List;
-import java.util.HashMap;
-
-import java.util.regex.Pattern;
-import java.util.regex.Matcher;
-
 import ij.Prefs;
-
-import javax.swing.JComponent;
-import javax.swing.AbstractAction;
-import javax.swing.KeyStroke;
-
-import java.awt.event.ActionListener;
-import java.awt.event.ActionEvent;
+import ij.gui.GUI;
+import ij.plugin.BrowserLauncher;
+import ij.plugin.PlugIn;
+import ij.text.TextWindow;
+import imagej.updater.core.FilesCollection;
+import imagej.updater.core.UpToDate;
+import imagej.updater.gui.ProgressDialog;
+import imagej.updater.util.Progress;
+import imagej.updater.util.StderrProgress;
 
 import java.awt.Component;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.PrintStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.net.URLEncoder;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
-import fiji.updater.Adapter;
+import javax.swing.AbstractAction;
+import javax.swing.JComponent;
+import javax.swing.KeyStroke;
 
 /**
  * A plugin for reporting bugs to Fiji's BugZilla bug tracker.
@@ -361,15 +356,22 @@ public class Bug_Submitter implements PlugIn {
 
 	@Override
 	public void run( String ignore ) {
-		Adapter updater = new Adapter(true);
 
+		String check;
+		try {
+			check = UpToDate.check().toString();
+		} catch (Exception e) {
+			check = e.getMessage();
+		}
+		final Progress progress = IJ.getInstance() == null ?
+				new ProgressDialog(null) : new StderrProgress();
 		String systemInfo = "Information about your version of Java:\n\n"+
 			getUsefulSystemInformation()+
-			"\nThe up-to-date check says: "+updater.check()+"\n"+
+			"\nThe up-to-date check says: " + check + "\n"+
 			"\nInformation relevant to JAVA_HOME related problems:\n\n"+
 			getPathInformation()+
 			"\n\nInformation about the version of each plugin:\n\n"+
-			updater.getInstalledVersions();
+			FilesCollection.getInstalledVersions(new File(System.getProperty("ij.dir")), progress);
 
 		while( true ) {
 

@@ -4,8 +4,11 @@ import java.awt.Component;
 
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.Settings;
+import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMate_;
 import fiji.plugin.trackmate.util.TMUtils;
+import fiji.plugin.trackmate.visualization.hyperstack.HyperStackDisplayer;
+import fiji.plugin.trackmate.visualization.hyperstack.SpotEditTool;
 
 public class DetectorDescriptor implements WizardPanelDescriptor {
 	
@@ -14,7 +17,7 @@ public class DetectorDescriptor implements WizardPanelDescriptor {
 	protected TrackMate_ plugin;
 	protected TrackMateWizard wizard;
 	protected Logger logger;
-	
+	protected Thread motherThread;
 
 	@Override
 	public void setWizard(TrackMateWizard wizard) { 
@@ -63,11 +66,17 @@ public class DetectorDescriptor implements WizardPanelDescriptor {
 		logger.log("Starting detection using "+settings.detectorFactory.toString()+"\n", Logger.BLUE_COLOR);
 		logger.log("with settings:\n");
 		logger.log(TMUtils.echoMap(settings.detectorSettings, 2));
-		new Thread("TrackMate detection mother thread") {					
+		motherThread = new Thread("TrackMate detection mother thread") {
 			public void run() {
 				long start = System.currentTimeMillis();
 				try {
 					plugin.execDetection();
+					plugin.computeSpotFeatures(true);
+					TrackMateModel model = plugin.getModel();
+					model.setFilteredSpots(model.getSpots(), false);
+					HyperStackDisplayer displayer = new HyperStackDisplayer(model);
+					displayer.render();
+					displayer.refresh();
 				} catch (Exception e) {
 					logger.error("An error occured:\n"+e+'\n');
 					e.printStackTrace(logger);
@@ -76,10 +85,22 @@ public class DetectorDescriptor implements WizardPanelDescriptor {
 					long end = System.currentTimeMillis();
 					logger.log(String.format("Detection done in %.1f s.\n", (end-start)/1e3f), Logger.BLUE_COLOR);
 				}
+				motherThread = null;
 			}
-		}.start();
+		};
+		motherThread.start();
 	}
 
 	@Override
-	public void aboutToHidePanel() { }
+	public synchronized void aboutToHidePanel() {
+		final Thread thread = motherThread;
+		if (thread != null) {
+			thread.interrupt();
+			try {
+				thread.join();
+			} catch (InterruptedException exc) {
+				// ignore
+			}
+		}
+	}
 }

@@ -1,21 +1,46 @@
 package trainableSegmentation;
 
+/** 
+ * This class is intended for the Trainable Segmentation library. It creates and holds
+ * different feature images for the classification. Possible 3D filters include:
+ * - Gaussian blur
+ * - Hessian
+ * - High order derivative 
+ * - Laplacian 
+ * - Structure tensor 
+ * - Edge detector 
+ * - Difference of Gaussian  
+ * - Minimum
+ * - Maximum
+ * - Mean
+ * - Median
+ * - Variance
+ * 
+ * License: GPL
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License 2
+ * as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ *
+ * Authors: Verena Kaynig (verena.kaynig@inf.ethz.ch), Ignacio Arganda-Carreras (iarganda@mit.edu)
+ *          Albert Cardona (acardona@ini.phys.ethz.ch)
+ */
+
 import java.util.ArrayList;
 import java.util.Vector;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-
-import net.imglib2.img.display.imagej.ImageJFunctions;
-import net.imglib2.Cursor;
-import net.imglib2.ExtendedRandomAccessibleInterval;
-import net.imglib2.algorithm.region.hypersphere.HyperSphere;
-import net.imglib2.algorithm.region.hypersphere.HyperSphereCursor;
-import net.imglib2.img.ImagePlusAdapter;
-import net.imglib2.img.Img;
-import net.imglib2.type.numeric.real.FloatType;
-import net.imglib2.view.Views;
 
 import ij.IJ;
 import ij.ImagePlus;
@@ -75,7 +100,7 @@ public class FeatureStack3D
 	/** Median flag index */
 	public static final int MEDIAN					=  10;
 	/** Variance flag index */
-	public static final int VARIANCE					=  11;
+	public static final int VARIANCE				=  11;
 	
 	/** names of available filters */
 	public static final String[] availableFeatures 
@@ -407,7 +432,7 @@ public class FeatureStack3D
 	 * Get Edges features (to be submitted in an ExecutorService)
 	 *
 	 * @param originalImage input image
-	 * @param sigma isotropic isotropic smoothing scale	
+	 * @param sigma isotropic smoothing scale	
 	 * @return filter Edges filter image
 	 */
 	public Callable<ArrayList< ImagePlus >> getEdges(
