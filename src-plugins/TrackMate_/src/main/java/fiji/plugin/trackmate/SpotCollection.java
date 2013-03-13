@@ -2,13 +2,13 @@ package fiji.plugin.trackmate;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
+import java.util.NavigableSet;
 import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -31,8 +31,8 @@ import net.imglib2.algorithm.MultiThreaded;
 public class SpotCollection implements MultiThreaded  {
 
 	/** The frame by frame list of spot this object wrap. */
-	private ConcurrentSkipListMap<Integer, ConcurrentHashMap<Spot, Boolean>> content = 	
-			new ConcurrentSkipListMap<Integer, ConcurrentHashMap<Spot, Boolean>>();
+	private ConcurrentSkipListMap<Integer, HashMap<Spot, Boolean>> content = 	
+			new ConcurrentSkipListMap<Integer, HashMap<Spot, Boolean>>();
 	private int numThreads;
 
 	/*
@@ -69,9 +69,9 @@ public class SpotCollection implements MultiThreaded  {
 	 * the passed frame value.
 	 */
 	public void add(Spot spot, Integer frame) {
-		ConcurrentHashMap<Spot,Boolean> spots = content.get(frame);
+		HashMap<Spot,Boolean> spots = content.get(frame);
 		if (null == spots) {
-			spots = new ConcurrentHashMap<Spot, Boolean>();
+			spots = new HashMap<Spot, Boolean>();
 			content.put(frame, spots);
 		}
 		spot.putFeature(Spot.FRAME, frame);
@@ -86,7 +86,7 @@ public class SpotCollection implements MultiThreaded  {
 	 * nothing is done and <code>false</code> is returned.
 	 */
 	public boolean remove(Spot spot, Integer frame) {
-		ConcurrentHashMap<Spot,Boolean> spots = content.get(frame);
+		HashMap<Spot,Boolean> spots = content.get(frame);
 		if (null == spots) {
 			return false;
 		}
@@ -135,7 +135,7 @@ public class SpotCollection implements MultiThreaded  {
 
 					double val, tval;	
 
-					ConcurrentHashMap<Spot,Boolean> visibility = content.get(frame);
+					HashMap<Spot,Boolean> visibility = content.get(frame);
 					int nspots = 0;
 					tval = featurefilter.value;
 
@@ -196,7 +196,7 @@ public class SpotCollection implements MultiThreaded  {
 			Callable<Integer> command = new Callable<Integer>() {
 				@Override
 				public Integer call() throws Exception {
-					ConcurrentHashMap<Spot,Boolean> visibility = content.get(frame);
+					HashMap<Spot,Boolean> visibility = content.get(frame);
 
 					double val, tval;
 					int nspots = 0;
@@ -258,7 +258,7 @@ public class SpotCollection implements MultiThreaded  {
 	 * @return  the closest spot to the specified location, member of this collection.
 	 */
 	public final Spot getClosestSpot(final Spot location, final int frame, boolean visibleSpotsOnly) {
-		final ConcurrentHashMap<Spot,Boolean> visibility = content.get(frame);
+		final HashMap<Spot,Boolean> visibility = content.get(frame);
 		if (null == visibility)	
 			return null;
 		double d2;
@@ -288,12 +288,16 @@ public class SpotCollection implements MultiThreaded  {
 	 * @param location  the location to search for.
 	 * @param frame  the frame to inspect.
 	 * @param visibleSpotsOnly if true, will only search though visible spots. If false, will search through all spots. 
-	 * @return  the closest spot to the specified location, member of this collection.
+	 * @return  the closest spot such that the specified location is within its radius, member of this collection,
+	 * or <code>null</code> is such a spots cannot be found.
 	 */
 	public final Spot getSpotAt(final Spot location, final int frame, boolean visibleSpotsOnly) {
-		final ConcurrentHashMap<Spot,Boolean> visibility = content.get(frame);
-		if (null == visibility)	
+		final HashMap<Spot,Boolean> visibility = content.get(frame);
+		if (null == visibility || visibility.isEmpty()) {
 			return null;
+		}
+		
+		final TreeMap<Double, Spot> distanceToSpot = new TreeMap<Double, Spot>();
 		double d2;
 		for (Spot s : visibility.keySet()) {
 
@@ -303,10 +307,14 @@ public class SpotCollection implements MultiThreaded  {
 
 			d2 = s.squareDistanceTo(location);
 			if (d2 < s.getFeature(Spot.RADIUS) * s.getFeature(Spot.RADIUS)) {
-				return s;
+				distanceToSpot.put(d2, s);
 			}
 		}
-		return null;
+		if (distanceToSpot.isEmpty()) {
+			return null;
+		} else {
+			return distanceToSpot.firstEntry().getValue();
+		}
 	}
 
 
@@ -324,7 +332,7 @@ public class SpotCollection implements MultiThreaded  {
 	 */
 	public final List<Spot> getNClosestSpots(final Spot location, final int frame, int n, boolean visibleSpotsOnly) {
 		// TODO Rewrite using kD tree.
-		final ConcurrentHashMap<Spot,Boolean> visibility = content.get(frame);
+		final HashMap<Spot,Boolean> visibility = content.get(frame);
 		final TreeMap<Double, Spot> distanceToSpot = new TreeMap<Double, Spot>();
 
 		double d2;
@@ -364,7 +372,7 @@ public class SpotCollection implements MultiThreaded  {
 			}
 
 		} else {
-			for(ConcurrentHashMap<Spot, Boolean> spots : content.values())
+			for(HashMap<Spot, Boolean> spots : content.values())
 				nspots += spots.size();
 		}
 		return nspots;
@@ -382,12 +390,13 @@ public class SpotCollection implements MultiThreaded  {
 			Iterator<Spot> it = iterator(frame, true);
 			int nspots = 0;
 			while (it.hasNext()) {
+				it.next();
 				nspots++;
 			}
 			return nspots;
 
 		} else {
-			ConcurrentHashMap<Spot,Boolean> spots = content.get(frame);
+			HashMap<Spot,Boolean> spots = content.get(frame);
 			if (null == spots)
 				return 0;
 			else
@@ -422,7 +431,7 @@ public class SpotCollection implements MultiThreaded  {
 	 * @return an iterator that iterates over the content of a frame of this collection.
 	 */
 	public Iterator<Spot> iterator(Integer frame, boolean visibleSpotsOnly) {
-		ConcurrentHashMap<Spot, Boolean> frameContent = content.get(frame);
+		HashMap<Spot, Boolean> frameContent = content.get(frame);
 		if (null == frameContent) {
 			return null;
 		}
@@ -446,7 +455,7 @@ public class SpotCollection implements MultiThreaded  {
 	 * @param spots  the spots to store.
 	 */
 	public void put(Integer frame, Collection<Spot> spots) {
-		ConcurrentHashMap<Spot, Boolean> value = new ConcurrentHashMap<Spot, Boolean>(spots.size());
+		HashMap<Spot, Boolean> value = new HashMap<Spot, Boolean>(spots.size());
 		for (Spot spot : spots) {
 			spot.putFeature(Spot.FRAME, frame);
 			value.put(spot, Boolean.FALSE);
@@ -454,15 +463,40 @@ public class SpotCollection implements MultiThreaded  {
 		content.put(frame, value);
 	}
 
+	/**
+	 * Returns the first (lowest) frame currently in this collection.
+	 * @return the first (lowest) frame currently in this collection.
+	 */
 	public Integer firstKey() {
 		return content.firstKey();
 	}
 
+	/**
+	 * Returns the last (highest) frame currently in this collection.
+	 * @return the last (highest) frame currently in this collection.
+	 */
 	public Integer lastKey() {
 		return content.lastKey();
 	}
 
-	public Set<Integer> keySet() {
+	/**
+	 * Returns a NavigableSet view of the frames contained in this collection.
+	 * The set's iterator returns the keys in ascending order. The set is backed
+	 * by the map, so changes to the map are reflected in the set, and
+	 * vice-versa. The set supports element removal, which removes the
+	 * corresponding mapping from the map, via the Iterator.remove, Set.remove,
+	 * removeAll, retainAll, and clear operations. It does not support the add
+	 * or addAll operations.
+	 * <p>
+	 * The view's iterator is a "weakly consistent" iterator that will never
+	 * throw ConcurrentModificationException, and guarantees to traverse
+	 * elements as they existed upon construction of the iterator, and may (but
+	 * is not guaranteed to) reflect any modifications subsequent to
+	 * construction.
+	 * 
+	 * @return a navigable set view of the frames in this collection.
+	 */
+	public NavigableSet<Integer> keySet() {
 		return content.keySet();
 	}
 
@@ -504,7 +538,7 @@ public class SpotCollection implements MultiThreaded  {
 				hasNext = false;
 				return;
 			}
-			ConcurrentHashMap<Spot, Boolean> currentFrameContent = content.get(frameIterator.next());
+			HashMap<Spot, Boolean> currentFrameContent = content.get(frameIterator.next());
 			contentIterator = currentFrameContent.keySet().iterator();
 			iterate();
 		}
@@ -558,7 +592,7 @@ public class SpotCollection implements MultiThreaded  {
 		private final Iterator<Integer> frameIterator;
 		private Iterator<Spot> contentIterator;
 		private Spot next = null;
-		private ConcurrentHashMap<Spot, Boolean> currentFrameContent;
+		private HashMap<Spot, Boolean> currentFrameContent;
 
 		public VisibleSpotsIterator() {
 			this.frameIterator = content.keySet().iterator();
@@ -624,9 +658,9 @@ public class SpotCollection implements MultiThreaded  {
 		private boolean hasNext = true;
 		private Spot next = null;
 		private final Iterator<Spot> contentIterator;
-		private final ConcurrentHashMap<Spot, Boolean> frameContent;
+		private final HashMap<Spot, Boolean> frameContent;
 
-		public VisibleSpotsFrameIterator(ConcurrentHashMap<Spot, Boolean> frameContent) {
+		public VisibleSpotsFrameIterator(HashMap<Spot, Boolean> frameContent) {
 			this.frameContent = frameContent;
 			this.contentIterator = frameContent.keySet().iterator();
 			iterate();
