@@ -106,7 +106,7 @@ public class SpotDisplayer3DTestDrive {
 		}
 		
 		System.out.println("Grabbing features...");
-		SpotIntensityAnalyzer<UnsignedByteType> analyzer = new SpotIntensityAnalyzer<UnsignedByteType>(img, spots);
+		SpotIntensityAnalyzer<UnsignedByteType> analyzer = new SpotIntensityAnalyzer<UnsignedByteType>(img, spots.iterator());
 		analyzer.process();
 		for (Spot s : spots) 
 			System.out.println(s);

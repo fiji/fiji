@@ -56,6 +56,10 @@ public class LAPTrackerTest {
 			spots.add(spot2);
 			spotCollection.put(i, spots);
 		}
+		
+		// Make them all visible
+		spotCollection.setVisible(true);
+		
 		List<List<Spot>> groups = new ArrayList<List<Spot>>(2);
 		groups.add(group1);
 		groups.add(group2);
@@ -115,6 +119,10 @@ public class LAPTrackerTest {
 			spots.add(spot2);
 			spotCollection.put(i, spots);
 		}
+		
+		// Make them all visible
+		spotCollection.setVisible(true);
+				
 		List<List<Spot>> groups = new ArrayList<List<Spot>>(2);
 		groups.add(group1);
 		groups.add(group2);

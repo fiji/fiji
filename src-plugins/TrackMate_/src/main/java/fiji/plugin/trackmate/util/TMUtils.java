@@ -13,6 +13,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -497,10 +498,10 @@ public class TMUtils {
 	 */
 	public static Map<String, double[]> getSpotFeatureValues(final SpotCollection spots, final List<String> features, final Logger logger) {
 		final Map<String, double[]> featureValues = new  ConcurrentHashMap<String, double[]>(features.size());
-		if (null == spots || spots.isEmpty())
+		if (null == spots || spots.keySet().isEmpty())
 			return featureValues;
 		// Get the total quantity of spot we have
-		final int spotNumber = spots.getNSpots();
+		final int spotNumber = spots.getNSpots(false);
 
 		final AtomicInteger ai = new AtomicInteger();
 		final AtomicInteger progress = new AtomicInteger();
@@ -523,8 +524,8 @@ public class TMUtils {
 						// Make a double array to comply to JFreeChart histograms
 						double[] values = new double[spotNumber];
 						index = 0;
-						for (Spot spot : spots) {
-							val = spot.getFeature(feature);
+						for (Iterator<Spot> iterator = spots.iterator(false); iterator.hasNext();) {
+							val = iterator.next().getFeature(feature);
 							if (null == val)
 								continue;
 							values[index] = val; 

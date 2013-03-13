@@ -6,10 +6,10 @@ import static fiji.plugin.trackmate.tracking.TrackerKeys.KEY_ALLOW_TRACK_SPLITTI
 import static fiji.plugin.trackmate.tracking.TrackerKeys.KEY_BLOCKING_VALUE;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -17,9 +17,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 import net.imglib2.algorithm.MultiThreadedBenchmarkAlgorithm;
 import net.imglib2.multithreading.SimpleMultiThreading;
 
+import org.jgrapht.alg.ConnectivityInspector;
 import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.graph.SimpleDirectedWeightedGraph;
-import org.jgrapht.traverse.DepthFirstIterator;
 
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.Spot;
@@ -214,8 +214,10 @@ public class LAPTracker extends MultiThreadedBenchmarkAlgorithm implements SpotT
 	 */
 	public void reset() {
 		graph = new SimpleDirectedWeightedGraph<Spot, DefaultWeightedEdge>(DefaultWeightedEdge.class);
-		for(Spot spot : spots) 
-			graph.addVertex(spot);
+		Iterator<Spot> it = spots.iterator(true);
+		while (it.hasNext()) {
+			graph.addVertex(it.next());
+		}
 	}
 
 	@Override
@@ -258,7 +260,7 @@ public class LAPTracker extends MultiThreadedBenchmarkAlgorithm implements SpotT
 		}
 
 		// Check that the objects list contains inner collections.
-		if (spots.isEmpty()) {
+		if (spots.keySet().isEmpty()) {
 			errorMessage = BASE_ERROR_MESSAGE + "The spot collection is empty.";
 			return false;
 		}
@@ -266,7 +268,7 @@ public class LAPTracker extends MultiThreadedBenchmarkAlgorithm implements SpotT
 		// Check that at least one inner collection contains an object.
 		boolean empty = true;
 		for (int frame : spots.keySet()) {
-			if (!spots.get(frame).isEmpty()) {
+			if (spots.getNSpots(frame, true) > 0) {
 				empty = false;
 				break;
 			}
@@ -474,9 +476,16 @@ public class LAPTracker extends MultiThreadedBenchmarkAlgorithm implements SpotT
 						final int frame0 = framePairs.get(i)[0];
 						final int frame1 = framePairs.get(i)[1];
 
-						// Get spots
-						final List<Spot> t0 = spots.get(frame0);
-						final List<Spot> t1 = spots.get(frame1);
+						// Get spots - we have to create a list from each content
+						final List<Spot> t0 = new ArrayList<Spot>(spots.getNSpots(frame0, true));
+						for (Iterator<Spot> iterator = spots.iterator(frame0, true); iterator.hasNext();) {
+							t0.add(iterator.next());
+							
+						}
+						final List<Spot> t1 = new ArrayList<Spot>(spots.getNSpots(frame1, true));
+						for (Iterator<Spot> iterator = spots.iterator(frame1, true); iterator.hasNext();) {
+							t1.add(iterator.next());
+						}
 
 						// Create cost matrix
 						double[][] costMatrix = createFrameToFrameLinkingCostMatrix(t0, t1, settings);
@@ -581,31 +590,16 @@ public class LAPTracker extends MultiThreadedBenchmarkAlgorithm implements SpotT
 	 * result of step 1
 	 * <p> 
 	 * We have recorded the tracks as edges in the track graph, we now turn them
-	 * into multiple explicit sets of Spots, sorted by their {@link SpotFeature#POSITION_T}.
+	 * into multiple explicit sets of Spots, sorted by their {@link SpotFeature#FRAME}.
 	 */
 	private void compileTrackSegments() {
-
-		trackSegments = new ArrayList<SortedSet<Spot>>();
-		Collection<Spot> spotPool = new ArrayList<Spot>();
-		for(int frame : spots.keySet()) {
-			spotPool.addAll(spots.get(frame)); // frame info lost
-		}
-		Spot source, current;
-		DepthFirstIterator<Spot, DefaultWeightedEdge> graphIterator;
-		SortedSet<Spot> trackSegment = null;
-
-		while (!spotPool.isEmpty()) {
-			source = spotPool.iterator().next();
-			graphIterator = new DepthFirstIterator<Spot, DefaultWeightedEdge>(graph, source);
-			trackSegment = new TreeSet<Spot>(Spot.timeComparator);
-
-			while(graphIterator.hasNext()) {
-				current = graphIterator.next();
-				trackSegment.add(current);
-				spotPool.remove(current);
-			}
-
-			trackSegments.add(trackSegment);
+		ConnectivityInspector<Spot, DefaultWeightedEdge> inspector = new ConnectivityInspector<Spot, DefaultWeightedEdge>(graph);
+		List<Set<Spot>> unsortedSegments = inspector.connectedSets();
+		trackSegments = new ArrayList<SortedSet<Spot>>(unsortedSegments.size());
+		for (Set<Spot> set : unsortedSegments) {
+			SortedSet<Spot> sortedSet = new TreeSet<Spot>(Spot.frameComparator);
+			sortedSet.addAll(set);
+			trackSegments.add(sortedSet);
 		}
 	}
 

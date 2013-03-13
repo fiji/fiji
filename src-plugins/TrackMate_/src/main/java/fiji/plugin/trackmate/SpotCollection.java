@@ -41,7 +41,7 @@ public class SpotCollection implements MultiThreaded  {
 
 
 	/**
-	 * Construct a new empty spot collection, with the natural order based comparator.
+	 * Construct a new empty spot collection.
 	 */
 	public SpotCollection() {
 		setNumThreads();
@@ -121,7 +121,47 @@ public class SpotCollection implements MultiThreaded  {
 		content.get(frame).put(spot, Boolean.valueOf(visible));
 	}
 
+	/**
+	 * Mark all the content of this collection as visible or invisible,
+	 * @param visible  if true, all spots will be marked as visible. 
+	 */
+	public void setVisible(boolean visible) {
+		final Boolean flag = Boolean.valueOf(visible);
+		Collection<Integer> frames = content.keySet();
+		List<Callable<Void>> tasks = new ArrayList<Callable<Void>>(content.size());
 
+		for (final Integer frame : frames) {
+			
+			Callable<Void> command = new Callable<Void>() {
+				@Override
+				public Void call() throws Exception {
+
+					HashMap<Spot,Boolean> visibility = content.get(frame);
+					for (Spot spot : visibility.keySet()) {
+						visibility.put(spot, flag);
+					}
+					return null;
+
+				}
+			};
+			tasks.add(command);
+		}
+
+		ExecutorService executors = Executors.newFixedThreadPool(numThreads);
+		try {
+			List<Future<Void>> results = executors.invokeAll(tasks);
+			for (Future<Void> future : results) {
+				future.get();
+			}
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		} catch (ExecutionException e) {
+			e.printStackTrace();
+		} finally {
+			executors.shutdown();
+		}
+	}
+	
 	public final long filter(final FeatureFilter featurefilter) {
 
 		Collection<Integer> frames = content.keySet();
@@ -331,7 +371,6 @@ public class SpotCollection implements MultiThreaded  {
 	 * @return  a new list, with of at most <code>n</code> spots, ordered by increasing distance from the specified location.
 	 */
 	public final List<Spot> getNClosestSpots(final Spot location, final int frame, int n, boolean visibleSpotsOnly) {
-		// TODO Rewrite using kD tree.
 		final HashMap<Spot,Boolean> visibility = content.get(frame);
 		final TreeMap<Double, Spot> distanceToSpot = new TreeMap<Double, Spot>();
 
@@ -454,7 +493,7 @@ public class SpotCollection implements MultiThreaded  {
 	 * the previous content of this frame, if any.
 	 * @param spots  the spots to store.
 	 */
-	public void put(Integer frame, Collection<Spot> spots) {
+	public void put(int frame, Collection<Spot> spots) {
 		HashMap<Spot, Boolean> value = new HashMap<Spot, Boolean>(spots.size());
 		for (Spot spot : spots) {
 			spot.putFeature(Spot.FRAME, frame);
@@ -701,4 +740,83 @@ public class SpotCollection implements MultiThreaded  {
 		}
 
 	}
+
+	/**
+	 * Returns a new {@link SpotCollection}, made of only the spots marked
+	 * as visible in this collection. The new {@link SpotCollection} will 
+	 * have all of its spots marked as not-visible.
+	 * 
+	 * @return a new spot collection, made of only the spots marked
+	 * as visible in this collection.
+	 */
+	public SpotCollection crop() {
+		SpotCollection ns = new SpotCollection();
+		ns.setNumThreads(numThreads);
+		
+		Collection<Integer> frames = content.keySet();
+		List<Callable<Void>> tasks = new ArrayList<Callable<Void>>(content.size());
+
+		for (final Integer frame : frames) {
+			
+			Callable<Void> command = new Callable<Void>() {
+				@Override
+				public Void call() throws Exception {
+					HashMap<Spot, Boolean> fc = content.get(frame);
+					HashMap<Spot, Boolean> nfc = new HashMap<Spot, Boolean>(getNSpots(frame, true));
+					
+					for (Spot spot : fc.keySet()) {
+						if (fc.get(spot)) {
+							nfc.put(spot, Boolean.FALSE);
+						}
+					}
+					return null;
+				}
+			};
+			tasks.add(command);
+		} // end preparing tasks
+		
+		// Execute
+		ExecutorService executors = Executors.newFixedThreadPool(numThreads);
+		try {
+			List<Future<Void>> results = executors.invokeAll(tasks);
+			for (Future<Void> future : results) {
+				future.get();
+			}
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		} catch (ExecutionException e) {
+			e.printStackTrace();
+		} finally {
+			executors.shutdown();
+		}
+		return ns;
+	}
+
+	
+	/*
+	 * STATIC METHODS
+	 */
+	
+	/**
+	 * Creates a new {@link SpotCollection} containing only the specified spots. 
+	 * Their frame origin is retrieved from their {@link Spot#FRAME} feature, so
+	 * it must be set properly for all spots. All the spots of the new collection
+	 * will be marked as not-visible.
+	 * @param spots  the spot collection to build from. 
+	 * @return  a new {@link SpotCollection} instance.
+	 */
+	public static SpotCollection fromCollection(Iterable<Spot> spots) {
+		SpotCollection sc = new SpotCollection();
+		for (Spot spot : spots) {
+			int frame = spot.getFeature(Spot.FRAME).intValue();
+			HashMap<Spot, Boolean> fc = sc.content.get(frame);
+			if (null == fc) {
+				fc = new HashMap<Spot, Boolean>();
+				sc.content.put(frame, fc);
+			}
+			fc.put(spot, Boolean.FALSE);
+		}
+		return sc;
+	}
+
 }

@@ -5,6 +5,7 @@ import static fiji.plugin.trackmate.util.TMUtils.checkMapKeys;
 import static fiji.plugin.trackmate.util.TMUtils.checkParameter;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeSet;
@@ -112,13 +113,14 @@ public class NearestNeighborTracker extends MultiThreadedBenchmarkAlgorithm	impl
 						// Build frame pair
 						int sourceFrame = i;
 						int targetFrame = frames.higher(i);
-						List<Spot> sourceSpots = spots.get(sourceFrame);
-						List<Spot> targetSpots = spots.get(targetFrame);
 						
-						List<RealPoint> targetCoords = new ArrayList<RealPoint>(targetSpots.size());
-						List<FlagNode<Spot>> targetNodes = new ArrayList<FlagNode<Spot>>(targetSpots.size());
-						for(Spot spot : targetSpots) {
+						int nTargetSpots = spots.getNSpots(targetFrame, true);
+						List<RealPoint> targetCoords = new ArrayList<RealPoint>(nTargetSpots);
+						List<FlagNode<Spot>> targetNodes = new ArrayList<FlagNode<Spot>>(nTargetSpots);
+						Iterator<Spot> targetIt = spots.iterator(targetFrame, true);
+						while (targetIt.hasNext()) {
 							double[] coords = new double[3];
+							Spot spot = targetIt.next();
 							TMUtils.localize(spot, coords);
 							targetCoords.add(new RealPoint(coords));
 							targetNodes.add(new FlagNode<Spot>(spot));
@@ -129,8 +131,9 @@ public class NearestNeighborTracker extends MultiThreadedBenchmarkAlgorithm	impl
 						NearestNeighborFlagSearchOnKDTree<Spot> search = new NearestNeighborFlagSearchOnKDTree<Spot>(tree);
 						
 						// For each spot in the source frame, find its nearest neighbor in the target frame
-						for (Spot source : sourceSpots) {
-
+						Iterator<Spot> sourceIt = spots.iterator(sourceFrame, true);
+						while (sourceIt.hasNext()) {
+							Spot source = sourceIt.next();
 							double[] coords = new double[3];
 							TMUtils.localize(source, coords);
 							RealPoint sourceCoords = new RealPoint(coords);
@@ -188,8 +191,10 @@ public class NearestNeighborTracker extends MultiThreadedBenchmarkAlgorithm	impl
 
 	public void reset() {
 		graph = new SimpleDirectedWeightedGraph<Spot, DefaultWeightedEdge>(DefaultWeightedEdge.class);
-		for(Spot spot : spots) 
-			graph.addVertex(spot);
+		Iterator<Spot> it = spots.iterator(true);
+		while (it.hasNext()) {
+			graph.addVertex(it.next());
+		}
 	}
 
 	@Override

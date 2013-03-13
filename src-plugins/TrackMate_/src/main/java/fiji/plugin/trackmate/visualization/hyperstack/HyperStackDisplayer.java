@@ -5,7 +5,6 @@ import ij.gui.NewImage;
 import ij.gui.Overlay;
 import ij.gui.Roi;
 
-import java.util.List;
 import java.util.Set;
 
 import org.jgrapht.graph.DefaultWeightedEdge;
@@ -138,16 +137,7 @@ public class HyperStackDisplayer extends AbstractTrackMateModelView  {
 
 	@Override
 	public void centerViewOn(Spot spot) {
-		int frame = - 1;
-		for(int i : model.getFilteredSpots().keySet()) {
-			List<Spot> spotThisFrame = model.getFilteredSpots().get(i);
-			if (spotThisFrame.contains(spot)) {
-				frame = i;
-				break;
-			}
-		}
-		if (frame == -1)
-			return;
+		int frame = spot.getFeature(Spot.FRAME).intValue();
 		long z = Math.round(spot.getFeature(Spot.POSITION_Z) / calibration[2] ) + 1;
 		imp.setPosition(1, (int) z, frame+1);
 	}

@@ -97,13 +97,7 @@ public class TrackSchemeGraphLayout extends mxGraphLayout implements Benchmark {
 		/* 
 		 * How many rows do we have to parse?
 		 */
-		int maxFrame = 0;
-		for (Spot spot : model.getFilteredSpots()) {
-			int frame = spot.getFeature(Spot.FRAME).intValue();
-			if (maxFrame < frame) {
-				maxFrame = frame;
-			}
-		}
+		int maxFrame = model.getSpots().lastKey();
 
 		graph.getModel().beginUpdate();
 		try {

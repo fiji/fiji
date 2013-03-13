@@ -208,7 +208,7 @@ public class TrackSpeedStatisticsAnalyzerTest {
 
 		model.beginUpdate();
 		try {
-			model.removeSpotFrom(firstSpot, firstSpot.getFeature(Spot.FRAME).intValue());
+			model.removeSpot(firstSpot);
 		} finally {
 			model.endUpdate();
 		}

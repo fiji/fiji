@@ -18,7 +18,7 @@ import java.awt.event.MouseWheelListener;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
+import java.util.Iterator;
 import java.util.Map;
 
 import javax.swing.SwingUtilities;
@@ -26,6 +26,7 @@ import javax.swing.SwingUtilities;
 import org.jgrapht.graph.DefaultWeightedEdge;
 
 import fiji.plugin.trackmate.Spot;
+import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.detection.DetectorKeys;
 import fiji.plugin.trackmate.util.TMUtils;
@@ -152,7 +153,7 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 		final Spot clickLocation = makeSpot(imp, displayer, getImageCanvas(e), e.getPoint());
 		final int frame = displayer.imp.getFrame() - 1;
 		final TrackMateModel model = displayer.getModel();
-		Spot target = model.getFilteredSpots().getSpotAt(clickLocation, frame);
+		Spot target = model.getSpots().getSpotAt(clickLocation, frame, true);
 		Spot editedSpot = editedSpots.get(imp);
 
 		// Check desired behavior
@@ -226,7 +227,7 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 				// because it is not updated otherwise: there is no way to listen to slice change
 				final double zslice = (displayer.imp.getSlice()-1) * displayer.calibration[2];
 				editedSpot.putFeature(Spot.POSITION_Z, zslice);
-				Integer initFrame = displayer.getModel().getFilteredSpots().getFrame(editedSpot);
+				Integer initFrame = editedSpot.getFeature(Spot.FRAME).intValue();
 				// Move it in Z
 				final double z = (displayer.imp.getSlice()-1) * displayer.calibration[2];
 				editedSpot.putFeature(Spot.POSITION_Z, z);
@@ -388,17 +389,16 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 						model.removeEdge(edge);
 					}
 					for(Spot spot : spotSelection) {
-						model.removeSpotFrom(spot, null);
+						model.removeSpot(spot);
 					}
 				} finally {
 					model.endUpdate();
 				}
 
 			} else {
-				Integer initFrame = displayer.getModel().getFilteredSpots().getFrame(editedSpot);
 				model.beginUpdate();
 				try {
-					model.removeSpotFrom(editedSpot, initFrame);
+					model.removeSpot(editedSpot);
 				} finally {
 					model.endUpdate();
 				}
@@ -463,7 +463,7 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 
 				int frame = displayer.imp.getFrame() - 1;
 				Spot clickLocation = makeSpot(imp, displayer, canvas, null);
-				Spot target = model.getFilteredSpots().getSpotAt(clickLocation, frame);
+				Spot target = model.getSpots().getSpotAt(clickLocation, frame, true);
 				if (null == target) {
 					e.consume(); // Consume it anyway, so that we are not bothered by IJ
 					return; 
@@ -471,7 +471,7 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 
 				model.beginUpdate();
 				try {
-					model.removeSpotFrom(target, frame);
+					model.removeSpot(target);
 				} finally {
 					model.endUpdate();
 				}
@@ -491,7 +491,7 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 			if (null == quickEditedSpot) {
 				int frame = displayer.imp.getFrame() - 1;
 				Spot clickLocation = makeSpot(imp, displayer, canvas, null);
-				quickEditedSpot = model.getFilteredSpots().getSpotAt(clickLocation, frame);
+				quickEditedSpot = model.getSpots().getSpotAt(clickLocation, frame, true);
 				if (null == quickEditedSpot) {
 					return; // un-consumed event
 				}
@@ -510,7 +510,7 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 
 				int frame = displayer.imp.getFrame() - 1;
 				Spot clickLocation = makeSpot(imp, displayer, canvas, null);
-				Spot target = model.getFilteredSpots().getSpotAt(clickLocation, frame);
+				Spot target = model.getSpots().getSpotAt(clickLocation, frame, true);
 				if (null == target) {
 					return;
 				}
@@ -550,19 +550,20 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 				int currentFrame = imp.getFrame() - 1;
 				if (currentFrame > 0) {
 
-					List<Spot> previousFrameSpots = model.getFilteredSpots().get(currentFrame-1);
-					if (previousFrameSpots.isEmpty()) {
+					SpotCollection spots = model.getSpots();
+					if (spots.getNSpots(currentFrame-1, true) == 0) {
 						e.consume();
 						break;
 					}
-					ArrayList<Spot> copiedSpots = new ArrayList<Spot>(previousFrameSpots.size());
-					HashSet<String> featuresKey = new HashSet<String>(previousFrameSpots.get(0).getFeatures().keySet());
+					HashSet<Spot> copiedSpots = new HashSet<Spot>(spots.getNSpots(currentFrame-1, true));
+					HashSet<String> featuresKey = new HashSet<String>(spots.iterator(currentFrame-1, true).next().getFeatures().keySet());
 					featuresKey.remove(Spot.POSITION_T); // Deal with time separately
 					double dt = model.getSettings().dt;
 					if (dt == 0)
 						dt = 1;
 
-					for(Spot spot : previousFrameSpots) {
+					for (Iterator<Spot> it =  spots.iterator(currentFrame-1, true); it.hasNext();) {
+						Spot spot = it.next();
 						double[] coords = new double[3];
 						TMUtils.localize(spot, coords);
 						Spot newSpot = new Spot(coords, spot.getName());
@@ -582,9 +583,8 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 					model.beginUpdate();
 					try {
 						// Remove old ones
-						List<Spot> spotsToRemove = model.getFilteredSpots().get(currentFrame);
-						for(Spot spot : new ArrayList<Spot>(spotsToRemove)) {
-							model.removeSpotFrom(spot, currentFrame);
+						for (Iterator<Spot> it =  spots.iterator(currentFrame, true); it.hasNext();) {
+							model.removeSpot(it.next());
 						}
 						// Add new ones
 						for(Spot spot : copiedSpots) {

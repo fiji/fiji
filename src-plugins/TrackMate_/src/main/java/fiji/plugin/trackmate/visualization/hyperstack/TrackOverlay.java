@@ -30,9 +30,8 @@ import fiji.plugin.trackmate.visualization.TrackMateModelView;
  * @author Jean-Yves Tinevez <jeanyves.tinevez@gmail.com> 2010 - 2011
  */
 public class TrackOverlay extends Roi {
+	private static final long serialVersionUID = 1L;
 	protected final double[] calibration;
-	/** Map of color vs track key. */
-//	protected Map<Integer, Color> edgeColors;
 	protected Collection<DefaultWeightedEdge> highlight = new HashSet<DefaultWeightedEdge>();
 	protected Map<String, Object> displaySettings;
 	protected final TrackMateModel model;

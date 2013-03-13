@@ -10,7 +10,6 @@ import fiji.plugin.trackmate.tracking.SpotTracker;
 import fiji.plugin.trackmate.util.CropImgView;
 import fiji.plugin.trackmate.util.TMUtils;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
-import ij.IJ;
 import ij.ImagePlus;
 import ij.WindowManager;
 import ij.plugin.PlugIn;
@@ -616,9 +615,16 @@ public class TrackMate_ implements PlugIn, Benchmark, MultiThreaded, Algorithm {
 	public boolean execInitialSpotFiltering() {
 		final Logger logger = model.getLogger();
 		logger.log("Starting initial filtering process.\n");
+		
 		Double initialSpotFilterValue = model.getSettings().initialSpotFilterValue;
 		FeatureFilter featureFilter = new FeatureFilter(Spot.QUALITY, initialSpotFilterValue, true);
-		model.setSpots(model.getSpots().filter(featureFilter), true);
+		
+		SpotCollection spots = model.getSpots();
+		spots.filter(featureFilter);
+		
+		spots = spots.crop();
+		
+		model.setSpots(spots, true); // Forget about the previous one
 		return true;
 	}
 
@@ -629,7 +635,7 @@ public class TrackMate_ implements PlugIn, Benchmark, MultiThreaded, Algorithm {
 	 * identified noise, rather than objects of interest. A filtering operation based on the calculated features in this
 	 * step should allow to rule them out.
 	 * <p>
-	 * This method simply takes all the detected spots, and store in the field {@link #filteredSpots}
+	 * This method simply takes all the detected spots, and mark as visible
 	 * the spots whose features satisfy all of the filters entered with the method {@link #addFilter(SpotFilter)}.
 	 * <p>
 	 * The {@link ModelChangeListener}s of this model will be notified with a {@link ModelChangeEvent#SPOTS_FILTERED}
@@ -642,7 +648,7 @@ public class TrackMate_ implements PlugIn, Benchmark, MultiThreaded, Algorithm {
 			final Logger logger = model.getLogger();
 			logger.log("Starting spot filtering process.\n");
 		}
-		model.setFilteredSpots(model.getSpots().filter(model.getSettings().getSpotFilters()), true);
+		model.filterSpots(model.getSettings().getSpotFilters(), true);
 		return true;
 	}
 

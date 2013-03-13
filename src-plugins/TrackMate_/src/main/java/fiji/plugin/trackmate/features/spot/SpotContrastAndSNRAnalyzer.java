@@ -3,7 +3,7 @@ package fiji.plugin.trackmate.features.spot;
 import static fiji.plugin.trackmate.features.spot.SpotContrastAndSNRAnalyzerFactory.CONTRAST;
 import static fiji.plugin.trackmate.features.spot.SpotContrastAndSNRAnalyzerFactory.SNR;
 
-import java.util.Collection;
+import java.util.Iterator;
 
 import net.imglib2.img.ImgPlus;
 import net.imglib2.type.numeric.RealType;
@@ -37,7 +37,7 @@ public class SpotContrastAndSNRAnalyzer<T extends RealType<T>> extends Independe
 	 * CONSTRUCTOR
 	 */
 	
-	public SpotContrastAndSNRAnalyzer(final ImgPlus<T> img, final Collection<Spot> spots) {
+	public SpotContrastAndSNRAnalyzer(final ImgPlus<T> img, final Iterator<Spot> spots) {
 		super(img, spots);
 	}
 	

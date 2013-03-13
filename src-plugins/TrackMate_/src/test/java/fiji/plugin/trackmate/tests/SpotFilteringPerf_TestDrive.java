@@ -1,20 +1,13 @@
 package fiji.plugin.trackmate.tests;
 
+import java.io.File;
+
 import fiji.plugin.trackmate.FeatureFilter;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMate_;
-import fiji.plugin.trackmate.gui.FilterGuiPanel;
 import fiji.plugin.trackmate.io.TmXmlReader;
-import fiji.plugin.trackmate.visualization.hyperstack.HyperStackDisplayer;
-import ij.ImageJ;
-
-import java.io.File;
-
-import javax.swing.JFrame;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 
 public class SpotFilteringPerf_TestDrive {
 
@@ -40,10 +33,10 @@ public class SpotFilteringPerf_TestDrive {
 				settings.getSpotFilters().clear();
 
 				long start = System.currentTimeMillis();
-				int nspots0 = model.getFilteredSpots().getNSpots();
+				int nspots0 = model.getSpots().getNSpots(true);
 				plugin.execSpotFiltering(true);
 				long end = System.currentTimeMillis();
-				int nspots1 = model.getFilteredSpots().getNSpots();
+				int nspots1 = model.getSpots().getNSpots(true);
 
 				System.out.println("Moved from " + nspots0 + " spots to " + nspots1 + " in " + (end-start) + " ms.");
 			}
@@ -53,10 +46,10 @@ public class SpotFilteringPerf_TestDrive {
 				settings.getSpotFilters().add(new FeatureFilter(Spot.QUALITY, 60d, true));
 
 				long start = System.currentTimeMillis();
-				int nspots0 = model.getFilteredSpots().getNSpots();
+				int nspots0 = model.getSpots().getNSpots(true);
 				plugin.execSpotFiltering(true);
 				long end = System.currentTimeMillis();
-				int nspots1 = model.getFilteredSpots().getNSpots();
+				int nspots1 = model.getSpots().getNSpots(true);
 
 				System.out.println("Moved from " + nspots0 + " spots to " + nspots1 + " in " + (end-start) + " ms.");
 			}

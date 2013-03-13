@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 
 import org.jdom2.JDOMException;
@@ -36,11 +37,14 @@ public class SpotFeatureGrapher_TestDrive {
 		}
 		TrackMateModel model = plugin.getModel();
 
-		List<Spot> spots = model.getFilteredSpots().getAllSpots();
-		
 		HashSet<String> Y = new HashSet<String>(1);
 		Y.add(Spot.POSITION_T);
-		SpotFeatureGrapher grapher = new SpotFeatureGrapher(Spot.POSITION_X, Y, spots, model);
+		List<Spot> spots = new ArrayList<Spot>(model.getSpots().getNSpots(true));
+		for (Iterator<Spot> it = model.getSpots().iterator(true); it.hasNext();) {
+			spots.add(it.next());
+		}
+		
+		SpotFeatureGrapher grapher = new SpotFeatureGrapher(Spot.POSITION_X, Y, spots , model);
 		grapher.render();
 		
 		TrackIndexAnalyzer analyzer = new TrackIndexAnalyzer(model);
@@ -74,11 +78,11 @@ public class SpotFeatureGrapher_TestDrive {
 			List<Spot> ts = new ArrayList<Spot>(1);
 			ts.add(spot);
 			sc.put(i, ts);
+			sc.setVisible(spot, i, true);
 		}
 		
 		TrackMateModel model = new TrackMateModel();
 		model.setSpots(sc, false);
-		model.setFilteredSpots(sc, false);
 		
 		SimpleDirectedWeightedGraph<Spot, DefaultWeightedEdge> graph = new SimpleDirectedWeightedGraph<Spot, DefaultWeightedEdge>(DefaultWeightedEdge.class);
 		for (Spot spot : spots) {

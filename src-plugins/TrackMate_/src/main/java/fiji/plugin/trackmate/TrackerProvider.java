@@ -104,7 +104,7 @@ public class TrackerProvider extends AbstractProvider  {
 	 */
 	public SpotTracker getTracker() {
 
-		final SpotCollection spots = model.getFilteredSpots();
+		final SpotCollection spots = model.getSpots();
 		final Logger logger = model.getLogger();
 		SpotTracker tracker;
 		if (currentKey.equals(SimpleFastLAPTracker.TRACKER_KEY)) {

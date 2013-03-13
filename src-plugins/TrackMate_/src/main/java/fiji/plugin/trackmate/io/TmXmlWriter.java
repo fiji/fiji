@@ -58,6 +58,7 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -369,31 +370,27 @@ public class TmXmlWriter implements Algorithm, Benchmark  {
 	}
 
 	private void echoAllSpots() {		
-		SpotCollection allSpots = model.getSpots();
-		if (null == allSpots || allSpots.isEmpty())
+		SpotCollection spots = model.getSpots();
+		if (null == spots || spots.keySet().isEmpty())
 			return; // and write nothing
-		List<Spot> spots;
 
-		Element spotElement;
-		Element frameSpotsElement;
 		Element spotCollection = new Element(SPOT_COLLECTION_ELEMENT_KEY);
 		// Store total number of spots
-		spotCollection.setAttribute(SPOT_COLLECTION_NSPOTS_ATTRIBUTE_NAME, ""+allSpots.getNSpots());
+		spotCollection.setAttribute(SPOT_COLLECTION_NSPOTS_ATTRIBUTE_NAME, ""+spots.getNSpots(false));
 
-		for(int frame : allSpots.keySet()) {
+		for (int frame : spots.keySet()) {
 
-			frameSpotsElement = new Element(SPOT_FRAME_COLLECTION_ELEMENT_KEY);
+			Element frameSpotsElement = new Element(SPOT_FRAME_COLLECTION_ELEMENT_KEY);
 			frameSpotsElement.setAttribute(FRAME_ATTRIBUTE_NAME, ""+frame);
-			spots = allSpots.get(frame);
 
-			for (Spot spot : spots) {
-				spotElement = marshalSpot(spot);
+			for (Iterator<Spot> it = spots.iterator(frame, false); it.hasNext();) {
+				Element spotElement = marshalSpot(it.next());
 				frameSpotsElement.addContent(spotElement);
 			}
 			spotCollection.addContent(frameSpotsElement);
 		}
 		root.addContent(spotCollection);
-		logger.log("  Added spots.\n");
+		logger.log("  Added " + spots.getNSpots(false) + " spots.\n");
 		return;
 	}
 
@@ -444,30 +441,27 @@ public class TmXmlWriter implements Algorithm, Benchmark  {
 	}
 
 	private void echoFilteredSpots() {
-		SpotCollection filteredSpots =  model.getFilteredSpots();
-		if (null == filteredSpots || filteredSpots.isEmpty())
+		SpotCollection spots =  model.getSpots();
+		if (null == spots || spots.getNSpots(true) == 0)
 			return;
-		List<Spot> spots;
 
-		Element spotIDElement, frameSpotsElement;
 		Element spotCollection = new Element(FILTERED_SPOT_ELEMENT_KEY);
 
-		for(int frame : filteredSpots.keySet()) {
+		for (int frame : spots.keySet()) {
 
-			frameSpotsElement = new Element(FILTERED_SPOT_COLLECTION_ELEMENT_KEY);
+			Element frameSpotsElement = new Element(FILTERED_SPOT_COLLECTION_ELEMENT_KEY);
 			frameSpotsElement.setAttribute(FRAME_ATTRIBUTE_NAME, ""+frame);
-			spots = filteredSpots.get(frame);
 
-			for(Spot spot : spots) {
-				spotIDElement = new Element(SPOT_ID_ELEMENT_KEY);
-				spotIDElement.setAttribute(SPOT_ID_ATTRIBUTE_NAME, ""+spot.ID());
+			for (Iterator<Spot> it = spots.iterator(frame, true); it.hasNext();) {
+				Element spotIDElement = new Element(SPOT_ID_ELEMENT_KEY);
+				spotIDElement.setAttribute(SPOT_ID_ATTRIBUTE_NAME, "" + it.next().ID());
 				frameSpotsElement.addContent(spotIDElement);
 			}
 			spotCollection.addContent(frameSpotsElement);
 		}
 
 		root.addContent(spotCollection);
-		logger.log("  Added spot selection.\n");
+		logger.log("  Added " + spots.getNSpots(true) + " filtered spots.\n");
 		return;
 	}
 

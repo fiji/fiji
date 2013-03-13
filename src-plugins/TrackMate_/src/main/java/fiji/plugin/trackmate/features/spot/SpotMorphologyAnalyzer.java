@@ -10,7 +10,7 @@ import static fiji.plugin.trackmate.features.spot.SpotMorphologyAnalyzerFactory.
 import static fiji.plugin.trackmate.features.spot.SpotMorphologyAnalyzerFactory.featurelist_theta;
 
 import java.util.Arrays;
-import java.util.List;
+import java.util.Iterator;
 
 import net.imglib2.algorithm.region.localneighborhood.EllipseCursor;
 import net.imglib2.algorithm.region.localneighborhood.EllipseNeighborhood;
@@ -73,7 +73,7 @@ public class SpotMorphologyAnalyzer<T extends RealType<T>> extends IndependentSp
 	
 
 	
-	public SpotMorphologyAnalyzer(ImgPlus<T> imgCT, List<Spot> spots) {
+	public SpotMorphologyAnalyzer(ImgPlus<T> imgCT, Iterator<Spot> spots) {
 		super(imgCT, spots);
 	}
 

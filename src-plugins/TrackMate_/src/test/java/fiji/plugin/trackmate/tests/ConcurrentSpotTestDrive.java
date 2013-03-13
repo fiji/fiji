@@ -1,5 +1,7 @@
 package fiji.plugin.trackmate.tests;
 
+import java.util.Iterator;
+
 import fiji.plugin.trackmate.DetectorProvider;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
@@ -47,8 +49,9 @@ public class ConcurrentSpotTestDrive {
 		
 		// Parse spots and detect duplicate IDs
 		int[] IDs = new int[Spot.IDcounter.get()];
-		for (Spot spot : spots) {
-			Spot si = spot;
+		Iterator<Spot> it = spots.iterator(false);
+		while(it.hasNext()) {
+			Spot si = it.next();
 			int id = si.ID();
 			IDs[id]++;
 		}

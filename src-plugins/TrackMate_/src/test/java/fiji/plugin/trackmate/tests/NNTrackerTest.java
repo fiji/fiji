@@ -39,8 +39,7 @@ public class NNTrackerTest {
 		}
 		TrackMateModel model = plugin.getModel();
 		
-		System.out.println("All spots: "+ model.getSpots());
-		System.out.println("Filtered spots: "+ model.getFilteredSpots());
+		System.out.println("Spots: "+ model.getSpots());
 		System.out.println("Found "+model.getTrackModel().getNTracks()+" tracks in the file:");
 		System.out.println("Track features: ");
 		plugin.computeTrackFeatures(true);
@@ -51,7 +50,7 @@ public class NNTrackerTest {
 		
 		// 2 - Track the test spots
 		long start = System.currentTimeMillis();
-		NearestNeighborTracker tracker = new NearestNeighborTracker(model.getFilteredSpots(), Logger.DEFAULT_LOGGER);
+		NearestNeighborTracker tracker = new NearestNeighborTracker(model.getSpots(), Logger.DEFAULT_LOGGER);
 		Map<String, Object> settings = new HashMap<String, Object>();
 		settings.put(KEY_LINKING_MAX_DISTANCE, 15d);
 		tracker.setSettings(settings );

@@ -120,7 +120,7 @@ public class SpotFilterDescriptor implements WizardPanelDescriptor {
 		model.getSettings().setSpotFilters(featureFilters);
 		plugin.execSpotFiltering(false);
 
-		int ntotal = model.getSpots().getNSpots();
+		int ntotal = model.getSpots().getNSpots(false);
 		if (featureFilters == null || featureFilters.isEmpty()) {
 			logger.log("No feature threshold set, kept the " + ntotal + " spots.\n");
 		} else {
@@ -134,7 +134,7 @@ public class SpotFilterDescriptor implements WizardPanelDescriptor {
 				str += '\n';
 				logger.log(str);
 			}
-			int nselected = model.getFilteredSpots().getNSpots();
+			int nselected = model.getSpots().getNSpots(true);
 			logger.log("Kept "+nselected+" spots out of " + ntotal + ".\n");
 		}		
 	}

@@ -182,9 +182,15 @@ public class TmXmlReader implements Algorithm, Benchmark {
 		model.getSettings().setSpotFilters(spotFilters);
 		// Spots
 		SpotCollection allSpots = getAllSpots();
-		SpotCollection filteredSpots = getFilteredSpots();
+		Map<Integer, Set<Integer>> filteredIDs = getFilteredSpotIDs();
+		if (null != filteredIDs) {
+			for (Integer frame : filteredIDs.keySet()) {
+				for (Integer ID : filteredIDs.get(frame)) {
+					allSpots.setVisible(cache.get(ID), frame, true);
+				}
+			}
+		}
 		model.setSpots(allSpots, true);
-		model.setFilteredSpots(filteredSpots, true);
 		// Tracks, filtered tracks and track features all at once
 		if (!readTracks()) {
 			return false;
@@ -500,7 +506,7 @@ public class TmXmlReader implements Algorithm, Benchmark {
 	 * Internally, this methods also builds the cache field, which will be required by the
 	 * following methods:
 	 * <ul>
-	 * 	<li> {@link #getFilteredSpots()}
+	 * 	<li> {@link #getFilteredSpotIDs()}
 	 * 	<li> {@link #readTracks()}
 	 * 	<li> {@link #readTrackEdges(SimpleDirectedWeightedGraph)}
 	 * 	<li> {@link #readTrackSpots(SimpleDirectedWeightedGraph)}
@@ -563,36 +569,29 @@ public class TmXmlReader implements Algorithm, Benchmark {
 	 * @return  a {@link SpotCollection}. Each spot of this collection belongs also to the  given collection.
 	 * Return <code>null</code> if the spot selection section does is not present in the file.
 	 */
-	private SpotCollection getFilteredSpots()  {
+	private Map<Integer, Set<Integer>> getFilteredSpotIDs()  {
 		Element selectedSpotCollection = root.getChild(FILTERED_SPOT_ELEMENT_KEY);
 		if (null == selectedSpotCollection)
 			return null;
 
-		if (null == cache)
-			getAllSpots(); // build it if it's not here
-
-		int currentFrame = 0;
-		int ID;
-		ArrayList<Spot> spotList;
-		List<Element> spotContent;
-		SpotCollection spotSelection = new SpotCollection();
 		List<Element> frameContent = selectedSpotCollection.getChildren(FILTERED_SPOT_COLLECTION_ELEMENT_KEY);
+		Map<Integer, Set<Integer>> visibleIDs = new HashMap<Integer, Set<Integer>>(frameContent.size());
 
 		for (Element currentFrameContent : frameContent) {
-			currentFrame = readIntAttribute(currentFrameContent, FRAME_ATTRIBUTE_NAME, logger);
+			int currentFrame = readIntAttribute(currentFrameContent, FRAME_ATTRIBUTE_NAME, logger);
 
-			spotContent = currentFrameContent.getChildren(SPOT_ID_ELEMENT_KEY);
-			spotList = new ArrayList<Spot>(spotContent.size());
+			List<Element> spotContent = currentFrameContent.getChildren(SPOT_ID_ELEMENT_KEY);
+			HashSet<Integer> IDList = new HashSet<Integer>(spotContent.size());
 			// Loop over all spot element
 			for (Element spotEl : spotContent) {
 				// Find corresponding spot in cache
-				ID = readIntAttribute(spotEl, SPOT_ID_ATTRIBUTE_NAME, logger);
-				spotList.add(cache.get(ID));
+				int ID = readIntAttribute(spotEl, SPOT_ID_ATTRIBUTE_NAME, logger);
+				IDList.add(ID);
 			}
 
-			spotSelection.put(currentFrame, spotList);
+			visibleIDs.put(currentFrame, IDList);
 		}
-		return spotSelection;
+		return visibleIDs;
 	}
 
 	/**

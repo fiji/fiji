@@ -73,7 +73,7 @@ public class LaunchDisplayerDescriptor implements WizardPanelDescriptor {
 			}
 		};
 		
-		if (plugin.getModel().getSpots().getNSpots() > 0) {
+		if (plugin.getModel().getSpots().getNSpots(false) > 0) {
 
 			/*
 			 * We have some spots so we need to compute spot features will we render them.

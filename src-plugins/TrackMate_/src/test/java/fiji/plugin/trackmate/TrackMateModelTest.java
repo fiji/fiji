@@ -69,7 +69,7 @@ public class TrackMateModelTest {
 		// Delete spot s3, make 2 tracks of the first one
 		model.beginUpdate();
 		try {
-			model.removeSpotFrom(s3, null);
+			model.removeSpot(s3);
 		} finally {
 			model.endUpdate();
 		}
@@ -159,7 +159,7 @@ public class TrackMateModelTest {
 		// Remove middle spot
 		model.beginUpdate();
 		try {
-			model.removeSpotFrom(s3, null);
+			model.removeSpot(s3);
 		} finally {
 			model.endUpdate();
 		}
@@ -289,7 +289,7 @@ public class TrackMateModelTest {
 
 		model.beginUpdate();
 		try {
-			model.removeSpotFrom(s3, null);
+			model.removeSpot(s3);
 		} finally {
 			model.endUpdate();
 		}
@@ -397,7 +397,7 @@ public class TrackMateModelTest {
 		System.out.println("Removing a single spot in the middle of the track:");
 		model.beginUpdate();
 		try {
-			model.removeSpotFrom(s3, null);
+			model.removeSpot(s3);
 		} finally {
 			model.endUpdate();
 		}

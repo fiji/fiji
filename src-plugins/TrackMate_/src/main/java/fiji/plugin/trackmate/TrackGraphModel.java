@@ -884,7 +884,7 @@ public class TrackGraphModel {
 	 * 	<li>It ignores events triggered by spots being added
 	 * or removed, because they can't be triggered automatically, and are dealt with 
 	 * in the {@link TrackGraphModel#addSpotTo(Spot, Integer)} and 
-	 * {@link TrackGraphModel#removeSpotFrom(Spot, Integer)} methods.
+	 * {@link TrackGraphModel#removeSpot(Spot, Integer)} methods.
 	 * 	<li> It catches all events triggered by a link being added or removed in the graph,
 	 * whether they are triggered manually through a call to a model method such as 
 	 * {@link TrackGraphModel#addEdge(Spot, Spot, double)}, or triggered by another call.

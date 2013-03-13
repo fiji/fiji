@@ -179,10 +179,10 @@ public class TrackScheme extends AbstractTrackMateModelView {
 		graph.setDropEnabled(false);
 
 		// Group spots per frame
-		Set<Integer> frames = model.getFilteredSpots().keySet();
+		Set<Integer> frames = model.getSpots().keySet();
 		final HashMap<Integer, HashSet<Spot>> spotPerFrame = new HashMap<Integer, HashSet<Spot>>(frames.size());
 		for (Integer frame : frames) {
-			spotPerFrame.put(frame, new HashSet<Spot>(model.getFilteredSpots().getNSpots(frame))); // max size
+			spotPerFrame.put(frame, new HashSet<Spot>(model.getSpots().getNSpots(frame, true))); // max size
 		}
 		for (Integer trackID : model.getTrackModel().getFilteredTrackIDs()) {
 			for (Spot spot : model.getTrackModel().getTrackSpots(trackID)) {
@@ -825,8 +825,7 @@ public class TrackScheme extends AbstractTrackMateModelView {
 
 			// Separate spots from edges
 			Object[] objects = (Object[]) evt.getProperty("cells");
-			ArrayList<Spot> spotsToRemove = new ArrayList<Spot>();
-			ArrayList<Integer> fromFrames = new ArrayList<Integer>();
+			HashSet<Spot> spotsToRemove = new HashSet<Spot>();
 			ArrayList<DefaultWeightedEdge> edgesToRemove = new ArrayList<DefaultWeightedEdge>();
 			for(Object obj : objects) {
 				mxCell cell = (mxCell) obj;
@@ -834,13 +833,7 @@ public class TrackScheme extends AbstractTrackMateModelView {
 					if (cell.isVertex()) {
 						// Build list of removed spots 
 						Spot spot = graph.getSpotFor(cell);
-						Integer frame = model.getSpots().getFrame(spot);
-						if (frame == null) {
-							// Already removed; second call to event, have to skip it
-							continue;
-						}
 						spotsToRemove.add(spot);
-						fromFrames.add(frame);
 						// Clean maps 
 						graph.removeMapping(spot);
 					} else if (cell.isEdge()) {
@@ -868,7 +861,7 @@ public class TrackScheme extends AbstractTrackMateModelView {
 					model.removeEdge(edge);
 				}
 				for (Spot spot : spotsToRemove)  {
-					model.removeSpotFrom(spot, null); 
+					model.removeSpot(spot); 
 				}
 
 			} finally {

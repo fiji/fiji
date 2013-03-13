@@ -1,12 +1,10 @@
 package fiji.plugin.trackmate.gui;
 
 import java.awt.Component;
-import java.util.Collection;
 import java.util.Map;
 
 import fiji.plugin.trackmate.FeatureFilter;
 import fiji.plugin.trackmate.Logger;
-import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMate_;
 
@@ -79,14 +77,10 @@ public class InitFilterDescriptor implements WizardPanelDescriptor {
 		String str = "Initial thresholding with a quality threshold above "+ String.format("%.1f", initialThreshold.value) + " ...\n";
 		Logger logger = wizard.getLogger();
 		logger.log(str,Logger.BLUE_COLOR);
-		int ntotal = 0;
-		for (Collection<Spot> spots : model.getSpots().values())
-			ntotal += spots.size();
+		int ntotal = model.getSpots().getNSpots(false);
 		model.getSettings().initialSpotFilterValue = initialThreshold.value;
 		plugin.execInitialSpotFiltering();
-		int nselected = 0;
-		for (Collection<Spot> spots : model.getSpots().values())
-			nselected += spots.size();
+		int nselected = model.getSpots().getNSpots(false);
 		logger.log(String.format("Retained %d spots out of %d.\n", nselected, ntotal));
 	}
 }

@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
@@ -364,9 +365,9 @@ public class TrackDisplayNode extends ContentNode implements TimelapseListener {
 		final int ntracks = trackEdges.size();
 
 		// Instantiate refs fields
-		final int nframes = model.getFilteredSpots().keySet().size();
+		final int nframes = model.getSpots().keySet().size();
 		frameIndices = new HashMap<Integer, HashMap<Integer, ArrayList<Integer>>>(nframes, 1); // optimum
-		for (int frameIndex : model.getFilteredSpots().keySet()) {
+		for (int frameIndex : model.getSpots().keySet()) {
 			frameIndices.put(frameIndex, new HashMap<Integer, ArrayList<Integer>>(ntracks));
 			for (Integer trackID : model.getTrackModel().getFilteredTrackIDs()) {
 				frameIndices.get(frameIndex).put(trackID, new ArrayList<Integer>());
@@ -441,7 +442,7 @@ public class TrackDisplayNode extends ContentNode implements TimelapseListener {
 
 				// Keep refs
 				edgeIndices.get(trackID).put(edge, edgeIndex-2);
-				int frame = model.getFilteredSpots().getFrame(source);
+				int frame = source.getFeature(Spot.FRAME).intValue();
 				frameIndices.get(frame).get(trackID).add(edgeIndex-2);
 
 			} // Finished building this track's line
@@ -479,12 +480,13 @@ public class TrackDisplayNode extends ContentNode implements TimelapseListener {
 	@Override
 	public void getCenter(Tuple3d center) {
 		double x = 0, y = 0, z = 0;
-		for (Spot spot : model.getFilteredSpots()) {
+		for (Iterator<Spot> it = model.getSpots().iterator(true); it.hasNext();) {
+			Spot spot = it.next();
 			x += spot.getFeature(Spot.POSITION_X);
 			y += spot.getFeature(Spot.POSITION_Y);
 			z += spot.getFeature(Spot.POSITION_Z);
 		}
-		int nspot = model.getFilteredSpots().getNSpots();
+		int nspot = model.getSpots().getNSpots(true);
 		x /= nspot;
 		y /= nspot;
 		z /= nspot;
@@ -499,7 +501,8 @@ public class TrackDisplayNode extends ContentNode implements TimelapseListener {
 		double ymax = Double.NEGATIVE_INFINITY;
 		double zmax = Double.NEGATIVE_INFINITY;
 		double radius;
-		for (Spot spot : model.getFilteredSpots()) {
+		for (Iterator<Spot> it = model.getSpots().iterator(true); it.hasNext();) {
+			Spot spot = it.next();
 			radius = spot.getFeature(Spot.RADIUS);
 			if (xmax < spot.getFeature(Spot.POSITION_X) + radius)
 				xmax = spot.getFeature(Spot.POSITION_X) + radius;
@@ -520,7 +523,8 @@ public class TrackDisplayNode extends ContentNode implements TimelapseListener {
 		double ymin = Double.POSITIVE_INFINITY;
 		double zmin = Double.POSITIVE_INFINITY;
 		double radius;
-		for (Spot spot : model.getFilteredSpots()) {
+		for (Iterator<Spot> it = model.getSpots().iterator(true); it.hasNext();) {
+			Spot spot = it.next();
 			radius = spot.getFeature(Spot.RADIUS);
 			if (xmin > spot.getFeature(Spot.POSITION_X) - radius)
 				xmin = spot.getFeature(Spot.POSITION_X) - radius;

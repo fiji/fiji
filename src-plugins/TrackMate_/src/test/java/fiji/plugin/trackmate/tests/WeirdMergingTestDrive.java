@@ -32,7 +32,7 @@ public class WeirdMergingTestDrive {
 		TrackMateModel model = plugin.getModel();
 		System.out.println(model);
 		
-		LAPTracker tracker = new LAPTracker(model.getFilteredSpots(), Logger.DEFAULT_LOGGER);
+		LAPTracker tracker = new LAPTracker(model.getSpots(), Logger.DEFAULT_LOGGER);
 		
 		Map<String, Object> settings = LAPUtils.getDefaultLAPSettingsMap();
 		settings.put(TrackerKeys.KEY_ALLOW_TRACK_MERGING, true);

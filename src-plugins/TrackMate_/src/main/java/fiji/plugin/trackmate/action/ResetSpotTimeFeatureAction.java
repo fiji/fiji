@@ -3,12 +3,13 @@
  */
 package fiji.plugin.trackmate.action;
 
-import java.util.List;
+import java.util.Iterator;
 import java.util.Set;
 
 import javax.swing.ImageIcon;
 
 import fiji.plugin.trackmate.Spot;
+import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.TrackMate_;
 import fiji.plugin.trackmate.gui.DisplayerPanel;
 
@@ -36,11 +37,11 @@ public class ResetSpotTimeFeatureAction extends AbstractTMAction {
 		if (dt == 0) {
 			dt = 1;
 		}
-		Set<Integer> frames = plugin.getModel().getSpots().keySet();
+		SpotCollection spots = plugin.getModel().getSpots(); 
+		Set<Integer> frames = spots.keySet();
 		for(int frame : frames) {
-			List<Spot> spots = plugin.getModel().getSpots().get(frame);
-			for(Spot spot : spots) {
-				spot.putFeature(Spot.POSITION_T, frame * dt); 
+			for (Iterator<Spot> iterator = spots.iterator(frame, true); iterator.hasNext();) {
+				iterator.next().putFeature(Spot.POSITION_T, frame * dt); 
 			}
 			logger.setProgress((double) (frame + 1) / frames.size());
 		}

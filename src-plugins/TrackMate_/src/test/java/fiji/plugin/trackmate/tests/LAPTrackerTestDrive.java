@@ -45,8 +45,7 @@ public class LAPTrackerTestDrive {
 		}
 		TrackMateModel model = plugin.getModel();
 		
-		System.out.println("All spots: "+ model.getSpots());
-		System.out.println("Filtered spots: "+ model.getFilteredSpots());
+		System.out.println("Spots: "+ model.getSpots());
 		plugin.computeTrackFeatures(true);
 		System.out.println("Found "+model.getTrackModel().getNTracks()+" tracks in the file:");
 		for (Integer trackID : model.getTrackModel().getTrackEdges().keySet())
@@ -67,7 +66,7 @@ public class LAPTrackerTestDrive {
 		
 		// 2 - Track the test spots
 		long start = System.currentTimeMillis();
-		LAPTracker lap = new LAPTracker(model.getFilteredSpots(), Logger.DEFAULT_LOGGER);
+		LAPTracker lap = new LAPTracker(model.getSpots(), Logger.DEFAULT_LOGGER);
 		lap.setSettings(settings);
 
 		if (!lap.checkInput())

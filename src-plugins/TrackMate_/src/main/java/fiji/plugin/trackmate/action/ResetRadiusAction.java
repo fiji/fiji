@@ -2,6 +2,8 @@ package fiji.plugin.trackmate.action;
 
 import static fiji.plugin.trackmate.detection.DetectorKeys.KEY_RADIUS;
 
+import java.util.Iterator;
+
 import javax.swing.ImageIcon;
 
 import fiji.plugin.trackmate.Spot;
@@ -33,9 +35,10 @@ public class ResetRadiusAction extends AbstractTMAction {
 		}
 		
 		logger.log(String.format("Setting all spot radiuses to %.1f "+plugin.getModel().getSettings().spaceUnits+"\n", radius));
-		SpotCollection spots = plugin.getModel().getFilteredSpots();
-		for(Spot spot : spots)
-			spot.putFeature(Spot.RADIUS, radius);
+		SpotCollection spots = plugin.getModel().getSpots();
+		for (Iterator<Spot> iterator = spots.iterator(true); iterator.hasNext();) {
+			iterator.next().putFeature(Spot.RADIUS, radius);
+		}
 		wizard.getDisplayer().refresh();
 		logger.log("Done.\n");
 	}

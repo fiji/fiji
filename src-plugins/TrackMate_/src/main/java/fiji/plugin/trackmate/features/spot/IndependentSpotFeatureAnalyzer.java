@@ -1,6 +1,6 @@
 package fiji.plugin.trackmate.features.spot;
 
-import java.util.Collection;
+import java.util.Iterator;
 
 import net.imglib2.img.ImgPlus;
 import net.imglib2.type.numeric.RealType;
@@ -9,11 +9,11 @@ import fiji.plugin.trackmate.Spot;
 public abstract class IndependentSpotFeatureAnalyzer<T extends RealType<T>> implements SpotAnalyzer<T> {
 
 	protected final ImgPlus<T> img;
-	protected final Collection<Spot> spots;
+	protected final Iterator<Spot> spots;
 	protected String errorMessage;
 	private long processingTime;
 
-	public IndependentSpotFeatureAnalyzer(final ImgPlus<T> img, final Collection<Spot> spots) {
+	public IndependentSpotFeatureAnalyzer(final ImgPlus<T> img, final Iterator<Spot> spots) {
 		this.img = img;
 		this.spots = spots;
 	}
@@ -29,8 +29,8 @@ public abstract class IndependentSpotFeatureAnalyzer<T extends RealType<T>> impl
 	@Override
 	public boolean process() {
 		final long start = System.currentTimeMillis();
-		for(Spot spot: spots) {
-			process(spot);
+		while (spots.hasNext()) {
+			process(spots.next());
 		}
 		processingTime = System.currentTimeMillis() - start;
 		return true;

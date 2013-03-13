@@ -317,7 +317,7 @@ public class TrackBranchingAnalyzerTest {
 		// Remove the branching spot 
 		model.beginUpdate();
 		try {
-			model.removeSpotFrom(split, split.getFeature(Spot.FRAME).intValue());
+			model.removeSpot(split);
 		} finally {
 			model.endUpdate();
 		}

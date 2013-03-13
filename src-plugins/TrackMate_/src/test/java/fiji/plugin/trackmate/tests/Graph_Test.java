@@ -1,5 +1,6 @@
 package fiji.plugin.trackmate.tests;
 
+import java.util.Iterator;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -140,7 +141,8 @@ public class Graph_Test {
 
 		// Retrieve target spot by name
 		Spot P3 = null;
-		for (Spot spot : model.getSpots().getAllSpots()) {
+		for (Iterator<Spot> it = model.getSpots().iterator(false); it.hasNext();) {
+			Spot spot = it.next();
 			if (spot.getName().equals("P3")) {
 				P3 = spot;
 				break;

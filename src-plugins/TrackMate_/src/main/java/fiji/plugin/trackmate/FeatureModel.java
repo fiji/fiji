@@ -98,7 +98,7 @@ public class FeatureModel implements MultiThreaded {
 
 
 	/**
-	 * Calculate given features for the all detected spots of this model,
+	 * Calculate given features for the all spots of this model,
 	 * according to the {@link Settings} set in the model.
 	 * <p>
 	 * Features are calculated for each spot, using their location, and the raw
@@ -110,7 +110,7 @@ public class FeatureModel implements MultiThreaded {
 	}
 
 	/**
-	 * Calculate given features for the all filtered spots of this model,
+	 * Calculate given features for the all spots of this model,
 	 * according to the {@link Settings} set in this model.
 	 */
 	public void computeSpotFeatures(final String feature, boolean doLogIt) {
@@ -411,7 +411,7 @@ public class FeatureModel implements MultiThreaded {
 				}
 			};
 		}
-		logger.setStatus("Calculating " + toCompute.getNSpots() + " spots features...");
+		logger.setStatus("Calculating " + toCompute.getNSpots(false) + " spots features...");
 		logger.setProgress(0);
 
 		SimpleMultiThreading.startAndJoin(threads);

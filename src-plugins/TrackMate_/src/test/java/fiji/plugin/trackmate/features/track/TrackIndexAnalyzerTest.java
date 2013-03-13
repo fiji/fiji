@@ -114,7 +114,7 @@ public class TrackIndexAnalyzerTest {
 		model.addTrackMateModelChangeListener(listener);
 		model.beginUpdate();
 		try {
-			Spot targetSpot = model.getFilteredSpots().get(0).iterator().next();
+			Spot targetSpot = model.getSpots().iterator(0, true).next();
 			Spot newSpot = model.addSpotTo(new Spot(new double[3]), 1);
 			model.addEdge(targetSpot, newSpot, 1);
 		} finally {
@@ -130,8 +130,8 @@ public class TrackIndexAnalyzerTest {
 		model.addTrackMateModelChangeListener(listener);
 		model.beginUpdate();
 		try {
-			Spot targetSpot = model.getFilteredSpots().get(DEPTH/2).iterator().next();
-			model.removeSpotFrom(targetSpot, DEPTH/2);
+			Spot targetSpot = model.getSpots().iterator(DEPTH/2, true).next();
+			model.removeSpot(targetSpot);
 		} finally {
 			model.endUpdate();
 		}

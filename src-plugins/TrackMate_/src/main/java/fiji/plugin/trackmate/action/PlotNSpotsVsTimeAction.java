@@ -36,13 +36,13 @@ public class PlotNSpotsVsTimeAction extends AbstractTMAction {
 		// Collect data
 		final TrackMateModel model = plugin.getModel();
 		final double dt = model.getSettings().dt;
-		final SpotCollection spots = model.getFilteredSpots();
+		final SpotCollection spots = model.getSpots();
 		final int nFrames = spots.keySet().size();
 		final double[][] data = new double[2][nFrames];
 		int index = 0;
 		for (int frame : spots.keySet()) {
-			data[0][index] = frame*dt;
-			data[1][index] = spots.get(frame).size();
+			data[0][index] = frame*dt; // NOT ready for un-evenly spaced frames
+			data[1][index] = spots.getNSpots(true);
 			index++;
 		}
 		

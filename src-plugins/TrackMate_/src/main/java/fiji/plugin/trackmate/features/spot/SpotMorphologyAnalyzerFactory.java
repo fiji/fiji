@@ -3,6 +3,7 @@ package fiji.plugin.trackmate.features.spot;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -102,7 +103,7 @@ public class SpotMorphologyAnalyzerFactory<T extends RealType<T> & NativeType<T>
 		final ImgPlus<T> img = ImagePlusAdapter.wrapImgPlus(model.getSettings().imp);
 		final ImgPlus<T> imgC = HyperSliceImgPlus.fixChannelAxis(img, channel);
 		final ImgPlus<T> imgCT = HyperSliceImgPlus.fixTimeAxis(imgC, frame);
-		final List<Spot> spots = model.getSpots().get(frame);
+		final Iterator<Spot> spots = model.getSpots().iterator(frame, false);
 		return new SpotMorphologyAnalyzer<T>(imgCT, spots);
 	}
 

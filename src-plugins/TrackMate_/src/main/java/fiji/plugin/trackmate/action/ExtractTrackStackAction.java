@@ -141,7 +141,7 @@ public class ExtractTrackStackAction extends AbstractTMAction {
 		for (Spot spot : sortedSpots) {
 			
 			// Extract image for current frame
-			int frame = model.getSpots().getFrame(spot);
+			int frame = spot.getFeature(Spot.FRAME).intValue();
 			
 			
 			ImgPlus<?> imgCT = HyperSliceImgPlus.fixTimeAxis(imgC, frame);

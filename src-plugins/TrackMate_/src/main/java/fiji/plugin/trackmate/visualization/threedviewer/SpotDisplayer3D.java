@@ -10,7 +10,7 @@ import java.awt.Color;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
+import java.util.Iterator;
 import java.util.TreeMap;
 
 import javax.vecmath.Color3f;
@@ -21,12 +21,12 @@ import net.imglib2.exception.ImgLibException;
 import org.jfree.chart.renderer.InterpolatePaintScale;
 import org.jgrapht.graph.DefaultWeightedEdge;
 
+import fiji.plugin.trackmate.ModelChangeEvent;
+import fiji.plugin.trackmate.SelectionChangeEvent;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.TrackMateModel;
-import fiji.plugin.trackmate.ModelChangeEvent;
-import fiji.plugin.trackmate.SelectionChangeEvent;
 import fiji.plugin.trackmate.util.TMUtils;
 import fiji.plugin.trackmate.visualization.AbstractTrackMateModelView;
 import fiji.plugin.trackmate.visualization.TrackColorGenerator;
@@ -90,8 +90,12 @@ public class SpotDisplayer3D extends AbstractTrackMateModelView {
 			universe.addContent(spotContent);
 			break;
 		case ModelChangeEvent.SPOTS_FILTERED:
-			for(int key : model.getFilteredSpots().keySet())
-				blobs.get(key).setVisible(model.getFilteredSpots().get(key));
+			for (int frame : blobs.keySet()) {
+				SpotGroupNode<Spot> frameBlobs = blobs.get(frame);
+				for (Iterator<Spot> it = model.getSpots().iterator(frame, true); it.hasNext();) {
+					frameBlobs.setVisible(it.next(), true);
+				}
+			}
 			break;
 		case ModelChangeEvent.TRACKS_COMPUTED: 
 			trackContent = makeTrackContent();
@@ -119,16 +123,7 @@ public class SpotDisplayer3D extends AbstractTrackMateModelView {
 
 	@Override
 	public void centerViewOn(Spot spot) {
-		int frame = - 1;
-		for(int i : model.getFilteredSpots().keySet()) {
-			List<Spot> spotThisFrame = model.getFilteredSpots().get(i);
-			if (spotThisFrame.contains(spot)) {
-				frame = i;
-				break;
-			}
-		}
-		if (frame == -1)
-			return;
+		int frame = spot.getFeature(Spot.FRAME).intValue();
 		universe.showTimepoint(frame);
 	}
 
@@ -240,7 +235,7 @@ public class SpotDisplayer3D extends AbstractTrackMateModelView {
 	/*
 	 * PRIVATE METHODS
 	 */
-	
+
 	private void setModel(TrackMateModel model) {
 		this.settings = model.getSettings();
 		if (model.getSpots() != null) {
@@ -275,38 +270,34 @@ public class SpotDisplayer3D extends AbstractTrackMateModelView {
 	private Content makeSpotContent() {
 
 		blobs = new TreeMap<Integer, SpotGroupNode<Spot>>();
-		List<Spot> spotsThisFrame; 
-		SpotGroupNode<Spot> blobGroup;
-		ContentInstant contentThisFrame;
+		SpotCollection spots = model.getSpots();
 		TreeMap<Integer, ContentInstant> contentAllFrames = new TreeMap<Integer, ContentInstant>();
 		final float radiusRatio = (Float) displaySettings.get(KEY_SPOT_RADIUS_RATIO);
 		final Color color = (Color) displaySettings.get(KEY_COLOR);
 
-		for(Integer i : model.getSpots().keySet()) {
-			spotsThisFrame = model.getSpots().get(i);
-			HashMap<Spot, Point4d> centers = new HashMap<Spot, Point4d>(spotsThisFrame.size());
-			double[] pos;
-			double radius;
-			double[] coords = new double[3];
-			for(Spot spot : spotsThisFrame) {
-				TMUtils.localize(spot, coords);
-				radius = spot.getFeature(Spot.RADIUS);
-				pos = new double[] {coords[0], coords[1], coords[2], radius*radiusRatio};
-				centers.put(spot, new Point4d(pos));
-			}
-			blobGroup = new SpotGroupNode<Spot>(centers, new Color3f(color));
-			contentThisFrame = new ContentInstant("Spots_frame_"+i);
+		for (Integer frame : model.getSpots().keySet()) {
+
+			HashMap<Spot, Point4d> centers = new HashMap<Spot, Point4d>(spots.getNSpots(frame, false));
+			SpotGroupNode<Spot> blobGroup = new SpotGroupNode<Spot>(centers, new Color3f(color));
+			ContentInstant contentThisFrame = new ContentInstant("Spots_frame_"+frame);
 			contentThisFrame.display(blobGroup);
+			double[] coords = new double[3];
 
-			// Set visibility:
-			List<Spot> visibleSpots = model.getFilteredSpots().get(i);
-			if (visibleSpots != null) {
-				blobGroup.setVisible(visibleSpots);
+			for (Iterator<Spot> iterator = spots.iterator(frame, false); iterator.hasNext();) {
+				Spot spot = iterator.next();
+				TMUtils.localize(spot, coords);
+				double radius = spot.getFeature(Spot.RADIUS);
+				double[] pos = new double[] {coords[0], coords[1], coords[2], radius*radiusRatio};
+				centers.put(spot, new Point4d(pos));
+
+				// Set visibility
+				if (spots.isVisible(spot, frame)) {
+					blobGroup.setVisible(spot, true);
+				}
 			}
 
-			contentAllFrames.put(i, contentThisFrame);
-			blobs.put(i, blobGroup);
-
+			contentAllFrames.put(frame, contentThisFrame);
+			blobs.put(frame, blobGroup);
 
 		}
 		Content blobContent = new Content(SPOT_CONTENT_NAME, contentAllFrames);
@@ -317,13 +308,14 @@ public class SpotDisplayer3D extends AbstractTrackMateModelView {
 
 	private void updateRadiuses() {
 		final float radiusRatio = (Float) displaySettings.get(KEY_SPOT_RADIUS_RATIO);
-		List<Spot> spotsThisFrame; 
-		SpotGroupNode<Spot> spotGroup;
-		for(int key : blobs.keySet()) {
-			spotsThisFrame = model.getSpots().get(key);
-			spotGroup = blobs.get(key);
-			for(Spot spot : spotsThisFrame)
+
+		for (int frame : blobs.keySet()) {
+			SpotGroupNode<Spot> spotGroup = blobs.get(frame);
+
+			for (Iterator<Spot> iterator = model.getSpots().iterator(frame, false); iterator.hasNext();) {
+				Spot spot = iterator.next();
 				spotGroup.setRadius(spot, radiusRatio*spot.getFeature(Spot.RADIUS));
+			}
 		}
 	}
 
@@ -339,23 +331,20 @@ public class SpotDisplayer3D extends AbstractTrackMateModelView {
 			double min = Float.POSITIVE_INFINITY;
 			double max = Float.NEGATIVE_INFINITY;
 			Double val;
-			for (int key : model.getSpots().keySet()) {
-				for (Spot spot : model.getSpots().get(key)) {
-					val = spot.getFeature(feature);
-					if (null == val)
-						continue;
-					if (val > max) max = val;
-					if (val < min) min = val;
-				}
+			for (Iterator<Spot> iterator = model.getSpots().iterator(false); iterator.hasNext();) {
+				Spot spot = iterator.next();
+				val = spot.getFeature(feature);
+				if (null == val)
+					continue;
+				if (val > max) max = val;
+				if (val < min) min = val;
 			}
 			// Color using LUT
-			List<Spot> spotThisFrame;
-			SpotGroupNode<Spot> spotGroup;
 			final InterpolatePaintScale colorMap = (InterpolatePaintScale) displaySettings.get(KEY_COLORMAP);
-			for (int key : blobs.keySet()) {
-				spotThisFrame = model.getSpots().get(key);
-				spotGroup = blobs.get(key);
-				for ( Spot spot : spotThisFrame) {
+			for (int frame : blobs.keySet()) {
+				SpotGroupNode<Spot> spotGroup = blobs.get(frame);
+				for (Iterator<Spot> iterator = model.getSpots().iterator(frame, false); iterator.hasNext();) {
+					Spot spot = iterator.next();
 					val = spot.getFeature(feature);
 					if (null == val) 
 						spotGroup.setColor(spot, new Color3f(color));
@@ -387,20 +376,16 @@ public class SpotDisplayer3D extends AbstractTrackMateModelView {
 		previousColorHighlight = new HashMap<Spot, Color3f>(spots.size());
 		previousFrameHighlight = new HashMap<Spot, Integer>(spots.size());
 
-		SpotCollection sc = model.getFilteredSpots().subset(spots);
 		Color3f highlightColor = new Color3f((Color) displaySettings.get(KEY_HIGHLIGHT_COLOR));
-		List<Spot> st;
-		for(int frame : sc.keySet()) {
-			st = sc.get(frame);
-			for(Spot spot : st) {
-				// Store current settings
-				previousSpotHighlight.add(spot);
-				previousColorHighlight.put(spot, blobs.get(frame).getColor3f(spot));
-				previousFrameHighlight.put(spot, frame);
+		for (Spot spot : spots) {
+			int frame = spot.getFeature(Spot.FRAME).intValue();
+			// Store current settings
+			previousSpotHighlight.add(spot);
+			previousColorHighlight.put(spot, blobs.get(frame).getColor3f(spot));
+			previousFrameHighlight.put(spot, frame);
 
-				// Update target spot display
-				blobs.get(frame).setColor(spot, highlightColor);
-			}
+			// Update target spot display
+			blobs.get(frame).setColor(spot, highlightColor);
 		}
 	}
 

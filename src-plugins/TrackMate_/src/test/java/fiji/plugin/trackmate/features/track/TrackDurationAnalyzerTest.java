@@ -269,7 +269,7 @@ public class TrackDurationAnalyzerTest {
 		// Remove it
 		model.beginUpdate();
 		try {
-			model.removeSpotFrom(aspot, aspot.getFeature(Spot.FRAME).intValue());
+			model.removeSpot(aspot);
 		} finally {
 			model.endUpdate();
 		}

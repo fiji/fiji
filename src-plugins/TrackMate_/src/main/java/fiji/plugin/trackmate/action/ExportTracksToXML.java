@@ -133,7 +133,7 @@ public class ExportTracksToXML extends AbstractTMAction {
 			sortedTrack.addAll(track);
 
 			for (Spot spot : sortedTrack) {
-				int frame = model.getFilteredSpots().getFrame(spot);
+				int frame = spot.getFeature(Spot.FRAME).intValue();
 				double x = spot.getFeature(Spot.POSITION_X);
 				double y = spot.getFeature(Spot.POSITION_Y);
 				double z = spot.getFeature(Spot.POSITION_Z);

@@ -217,7 +217,7 @@ public class GuiReader {
 
 		{ // Did we get spots?
 			SpotCollection spots = model.getSpots();
-			if (null == spots || spots.isEmpty()) {
+			if (null == spots || spots.getNSpots(false) == 0) {
 				logger.log("Detected spots not found in the file.\n");
 				// No spots, so we stop here, and switch to the detector panel
 				targetDescriptor = DetectorConfigurationPanelDescriptor.DESCRIPTOR;
@@ -260,8 +260,8 @@ public class GuiReader {
 		spotFilterDescriptor.setWizard(wizard);
 
 		{ // Did we get filtered spots?
-			SpotCollection selectedSpots = model.getFilteredSpots();
-			if (null == selectedSpots || selectedSpots.isEmpty()) {
+			SpotCollection spots = model.getSpots();
+			if (null == spots || spots.getNSpots(true) == 0) {
 				logger.log("Filtered spots not found in the file.\n");
 				// No spot selection, so we display the feature threshold GUI, with the loaded feature threshold
 				// already in place.
