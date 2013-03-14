@@ -306,7 +306,7 @@ public class IOFunctions
 		final HashMap<Integer, Nucleus> lookupTable = new HashMap<Integer, Nucleus>();
 
 		for ( final Nucleus nucleus : view.getNucleiStructure().getNucleiList() )
-			lookupTable.put( nucleus.getID(), nucleus );
+			lookupTable.put( (int)nucleus.getID(), nucleus );
 
 		int countLine = 0;
 		try
