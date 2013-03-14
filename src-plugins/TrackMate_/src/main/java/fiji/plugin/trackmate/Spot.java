@@ -29,7 +29,7 @@ public class Spot {
 	/** A user-supplied name for this spot. */
 	private String name;
 	/** This spot ID */
-	private int ID;
+	private final int ID;
 
 	/*
 	 * CONSTRUCTORS
@@ -73,6 +73,20 @@ public class Spot {
 	 * PUBLIC METHODS
 	 */
 
+	@Override
+	public int hashCode() {
+		return ID;
+	}
+	
+	@Override
+	public boolean equals(Object other){
+	    if (other == null) return false;
+	    if (other == this) return true;
+	    if (!(other instanceof Spot)) return false;
+	    Spot os = (Spot) other;
+	    return os.ID == this.ID;
+	}
+	
 	/**
      * @return the name for this Spot.
      */

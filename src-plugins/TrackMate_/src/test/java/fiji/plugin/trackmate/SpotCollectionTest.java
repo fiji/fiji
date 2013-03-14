@@ -50,6 +50,17 @@ public class SpotCollectionTest {
 		}
 
 	}
+	
+	@Test
+	public void testCrop() {
+		FeatureFilter filter = new FeatureFilter(Spot.QUALITY, 2d, false);
+		sc.filter(filter);
+		SpotCollection sc2 = sc.crop();
+		assertEquals(3 * N_FRAMES, sc2.getNSpots(false));
+		assertEquals(0, sc2.getNSpots(true));
+				
+		
+	}
 
 	@Test
 	public void testAdd() {

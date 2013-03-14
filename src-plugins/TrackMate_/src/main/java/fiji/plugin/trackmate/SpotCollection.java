@@ -14,6 +14,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 import net.imglib2.algorithm.MultiThreaded;
 
@@ -30,6 +31,11 @@ import net.imglib2.algorithm.MultiThreaded;
  */
 public class SpotCollection implements MultiThreaded  {
 
+	/** Time units for filtering and cropping operation timeouts. Filtering should not take more than 1 minute. */ 
+	private static final TimeUnit TIME_OUT_UNITS = TimeUnit.MINUTES;
+	/** Time for filtering and cropping operation timeouts. Filtering should not take more than 1 minute.  */ 
+	private static final long TIME_OUT_DELAY = 1;
+	
 	/** The frame by frame list of spot this object wrap. */
 	private ConcurrentSkipListMap<Integer, HashMap<Spot, Boolean>> content = 	
 			new ConcurrentSkipListMap<Integer, HashMap<Spot, Boolean>>();
@@ -162,21 +168,20 @@ public class SpotCollection implements MultiThreaded  {
 		}
 	}
 	
-	public final long filter(final FeatureFilter featurefilter) {
+	public final void filter(final FeatureFilter featurefilter) {
 
 		Collection<Integer> frames = content.keySet();
-		List<Callable<Integer>> tasks = new ArrayList<Callable<Integer>>(content.size());
-
+		ExecutorService executors = Executors.newFixedThreadPool(numThreads);
+		
 		for (final Integer frame : frames) {
 			
-			Callable<Integer> command = new Callable<Integer>() {
+			Runnable command = new Runnable() {
 				@Override
-				public Integer call() throws Exception {
+				public void run() {
 
 					double val, tval;	
 
 					HashMap<Spot,Boolean> visibility = content.get(frame);
-					int nspots = 0;
 					tval = featurefilter.value;
 
 					if (featurefilter.isAbove) {
@@ -187,7 +192,6 @@ public class SpotCollection implements MultiThreaded  {
 								visibility.put(spot, Boolean.FALSE);
 							} else {
 								visibility.put(spot, Boolean.TRUE);
-								nspots++;
 							}
 						}
 
@@ -199,47 +203,39 @@ public class SpotCollection implements MultiThreaded  {
 								visibility.put(spot, Boolean.FALSE);
 							} else {
 								visibility.put(spot, Boolean.TRUE);
-								nspots++;
 							}
 						}
 					}
-					return nspots;
 				}
 			};
-			tasks.add(command);
+			executors.execute(command);
 		}
 
-		ExecutorService executors = Executors.newFixedThreadPool(numThreads);
-		long nfiltered = 0;
+		executors.shutdown();
 		try {
-			List<Future<Integer>> results = executors.invokeAll(tasks);
-			for (Future<Integer> future : results) {
-				nfiltered += future.get();
+			boolean ok = executors.awaitTermination(TIME_OUT_DELAY, TIME_OUT_UNITS);
+			if (!ok) {
+				System.err.println("[SpotCollection.filter()] Timeout of " + TIME_OUT_DELAY + " " 
+						+ TIME_OUT_UNITS + " reached while filtering.");
 			}
 		} catch (InterruptedException e) {
 			e.printStackTrace();
-		} catch (ExecutionException e) {
-			e.printStackTrace();
-		} finally {
-			executors.shutdown();
 		}
-		return nfiltered;
 	}
 
 	
-	public final long filter(final Collection<FeatureFilter> filters) {
+	public final void filter(final Collection<FeatureFilter> filters) {
 
 		Collection<Integer> frames = content.keySet();
-		List<Callable<Integer>> tasks = new ArrayList<Callable<Integer>>(content.size());
-
+		ExecutorService executors = Executors.newFixedThreadPool(numThreads);
+		
 		for (final Integer frame : frames) {
-			Callable<Integer> command = new Callable<Integer>() {
+			Runnable command = new Runnable() {
 				@Override
-				public Integer call() throws Exception {
+				public void run() {
 					HashMap<Spot,Boolean> visibility = content.get(frame);
 
 					double val, tval;
-					int nspots = 0;
 					boolean isAbove, shouldNotBeVisible;
 					for (Spot spot : visibility.keySet()) {
 
@@ -260,32 +256,25 @@ public class SpotCollection implements MultiThreaded  {
 							visibility.put(spot, Boolean.FALSE);
 						} else {
 							visibility.put(spot, Boolean.TRUE);
-							nspots++;
 						}
 					} // loop over spots
 
-					return nspots;
 				} 
 
 			};
-			tasks.add(command);
+			executors.execute(command);
 		}
 
-		ExecutorService executors = Executors.newFixedThreadPool(numThreads);
-		long nfiltered = 0;
+		executors.shutdown();
 		try {
-			List<Future<Integer>> results = executors.invokeAll(tasks);
-			for (Future<Integer> future : results) {
-				nfiltered += future.get();
+			boolean ok = executors.awaitTermination(TIME_OUT_DELAY, TIME_OUT_UNITS);
+			if (!ok) {
+				System.err.println("[SpotCollection.filter()] Timeout of " + TIME_OUT_DELAY + " " 
+						+ TIME_OUT_UNITS + " reached while filtering.");
 			}
 		} catch (InterruptedException e) {
 			e.printStackTrace();
-		} catch (ExecutionException e) {
-			e.printStackTrace();
-		} finally {
-			executors.shutdown();
 		}
-		return nfiltered;
 	}
 
 	/**
@@ -750,17 +739,16 @@ public class SpotCollection implements MultiThreaded  {
 	 * as visible in this collection.
 	 */
 	public SpotCollection crop() {
-		SpotCollection ns = new SpotCollection();
+		final SpotCollection ns = new SpotCollection();
 		ns.setNumThreads(numThreads);
 		
 		Collection<Integer> frames = content.keySet();
-		List<Callable<Void>> tasks = new ArrayList<Callable<Void>>(content.size());
-
+		ExecutorService executors = Executors.newFixedThreadPool(numThreads);
 		for (final Integer frame : frames) {
 			
-			Callable<Void> command = new Callable<Void>() {
+			Runnable command = new Runnable() {
 				@Override
-				public Void call() throws Exception {
+				public void run() {
 					HashMap<Spot, Boolean> fc = content.get(frame);
 					HashMap<Spot, Boolean> nfc = new HashMap<Spot, Boolean>(getNSpots(frame, true));
 					
@@ -769,25 +757,21 @@ public class SpotCollection implements MultiThreaded  {
 							nfc.put(spot, Boolean.FALSE);
 						}
 					}
-					return null;
+					ns.content.put(frame, nfc);
 				}
 			};
-			tasks.add(command);
-		} // end preparing tasks
+			executors.execute(command);
+		} 
 		
-		// Execute
-		ExecutorService executors = Executors.newFixedThreadPool(numThreads);
+		executors.shutdown();
 		try {
-			List<Future<Void>> results = executors.invokeAll(tasks);
-			for (Future<Void> future : results) {
-				future.get();
+			boolean ok = executors.awaitTermination(TIME_OUT_DELAY, TIME_OUT_UNITS);
+			if (!ok) {
+				System.err.println("[SpotCollection.crop()] Timeout of " + TIME_OUT_DELAY + " " 
+						+ TIME_OUT_UNITS + " reached while cropping.");
 			}
 		} catch (InterruptedException e) {
 			e.printStackTrace();
-		} catch (ExecutionException e) {
-			e.printStackTrace();
-		} finally {
-			executors.shutdown();
 		}
 		return ns;
 	}
