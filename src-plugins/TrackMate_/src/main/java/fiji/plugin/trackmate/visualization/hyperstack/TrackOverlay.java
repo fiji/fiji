@@ -73,8 +73,6 @@ public class TrackOverlay extends Roi {
 		final Composite originalComposite = g2d.getComposite();
 		final Stroke originalStroke = g2d.getStroke();
 		final Color originalColor = g2d.getColor();	
-		final double dt = model.getSettings().dt;
-		final double mag = magnification;
 		Spot source, target;
 
 		// Deal with highlighted edges first: brute and thick display
@@ -83,7 +81,7 @@ public class TrackOverlay extends Roi {
 		for (DefaultWeightedEdge edge : highlight) {
 			source = model.getTrackModel().getEdgeSource(edge);
 			target = model.getTrackModel().getEdgeTarget(edge);
-			drawEdge(g2d, source, target, xcorner, ycorner, mag);
+			drawEdge(g2d, source, target, xcorner, ycorner, magnification);
 		}
 
 		// The rest
@@ -118,7 +116,6 @@ public class TrackOverlay extends Roi {
 			break;
 		}
 
-		double sourceFrame;
 		float transparency;
 		switch (trackDisplayMode) {
 
@@ -133,7 +130,7 @@ public class TrackOverlay extends Roi {
 					source = model.getTrackModel().getEdgeSource(edge);
 					target = model.getTrackModel().getEdgeTarget(edge);
 					g2d.setColor(colorGenerator.color(edge));
-					drawEdge(g2d, source, target, xcorner, ycorner, mag);
+					drawEdge(g2d, source, target, xcorner, ycorner, magnification);
 				}
 			}
 			break;
@@ -154,13 +151,13 @@ public class TrackOverlay extends Roi {
 						continue;
 
 					source = model.getTrackModel().getEdgeSource(edge);
-					sourceFrame = source.getFeature(Spot.POSITION_T) / dt;
+					int sourceFrame = source.getFeature(Spot.FRAME).intValue();
 					if (sourceFrame < minT || sourceFrame >= maxT)
 						continue;
 
 					target = model.getTrackModel().getEdgeTarget(edge);
 					g2d.setColor(colorGenerator.color(edge));
-					drawEdge(g2d, source, target, xcorner, ycorner, mag);
+					drawEdge(g2d, source, target, xcorner, ycorner, magnification);
 				}
 			}
 			break;
@@ -181,14 +178,14 @@ public class TrackOverlay extends Roi {
 						continue;
 
 					source = model.getTrackModel().getEdgeSource(edge);
-					sourceFrame = source.getFeature(Spot.POSITION_T) / dt;
+					int sourceFrame = source.getFeature(Spot.FRAME).intValue();
 					if (sourceFrame < minT || sourceFrame >= maxT)
 						continue;
 
 					transparency = (float) (1 - Math.abs(sourceFrame-currentFrame) / trackDisplayDepth);
 					target = model.getTrackModel().getEdgeTarget(edge);
 					g2d.setColor(colorGenerator.color(edge));
-					drawEdge(g2d, source, target, xcorner, ycorner, mag, transparency);
+					drawEdge(g2d, source, target, xcorner, ycorner, magnification, transparency);
 				}
 			}
 			break;

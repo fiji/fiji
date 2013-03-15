@@ -6,13 +6,13 @@ import fiji.build.Fake;
 import fiji.build.Parser;
 import fiji.build.Rule;
 import fiji.build.SubFake;
-import fiji.build.minimaven.POM;
 
 import ij.IJ;
 
 import ij.gui.GenericDialog;
 
 import ij.plugin.BrowserLauncher;
+import imagej.build.minimaven.MavenProject;
 
 import java.awt.Color;
 import java.awt.Cursor;
@@ -223,7 +223,7 @@ public class FileFunctions {
 							stripPath = rule.getStripPath();
 					}
 					else {
-						POM pom = subFake.getPOM();
+						MavenProject pom = subFake.getPOM();
 						if (pom != null) {
 							dir += rule.getLastPrerequisite();
 							stripPath = pom.getSourcePath();

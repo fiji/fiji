@@ -15,7 +15,7 @@ import mpicbg.spim.registration.bead.Bead;
  */
 public abstract class DetectionIdentification< S extends DetectionIdentification<S, T>, T extends DetectionView< S, T > > 
 {
-	final protected int detectionID;
+	final protected long detectionID;
 	final protected ViewDataBeads view;
 
 	/**
@@ -43,7 +43,7 @@ public abstract class DetectionIdentification< S extends DetectionIdentification
 	 * Return the ID of the {@link Bead} object it describes
 	 * @return the Bead ID
 	 */
-	public int getDetectionID() { return detectionID; }
+	public long getDetectionID() { return detectionID; }
 	
 	/**
 	 * Returns the {@link ViewDataBeads} object of the view it belongs to.

@@ -106,7 +106,6 @@ hs_err*.log
 /plugins/3D_Blob_Segmentation-[0-9]*.jar
 /plugins/3D_Objects_Counter-[0-9]*.jar
 /plugins/3D_Viewer-[0-9]*.jar
-/plugins/Action_Bar-[0-9]*.jar
 /plugins/Algorithm_Launcher-[0-9]*.jar
 /plugins/AnalyzeSkeleton_-[0-9]*.jar
 /plugins/Analyze_Reader_Writer-[0-9]*.jar

@@ -289,6 +289,8 @@ maven_update sc.fiji:javac:$VERSION
 maven_update org.scijava:scijava-common:$SCIJAVA_COMMON_VERSION
 maven_update net.imagej:ij-core:$VERSION
 maven_update net.imagej:ij-minimaven:$VERSION
+maven_update net.imagej:ij-updater-ssh:$VERSION
+maven_update net.imagej:ij-ui-swing-updater:$VERSION
 
 OPTIONS="-Dimagej.app.directory=\"$CWD\""
 while test $# -gt 0
