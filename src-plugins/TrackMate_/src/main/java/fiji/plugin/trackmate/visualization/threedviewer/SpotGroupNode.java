@@ -35,7 +35,14 @@ public class SpotGroupNode<K> extends ContentNode {
 
 	private static final int DEFAULT_MERIDIAN_NUMBER = 12;
 	private static final int DEFAULT_PARALLEL_NUMBER = 12;
-	
+	/**
+	 * Holder (cache) for the coordinates of the mesh of a globe of radius 1,
+	 * centered at (0, 0, 0), that will be used to generate all spheres in this
+	 * group. We put it in a static field so that it is shared amongst all
+	 * instances.
+	 */
+	private static final float[][][] globe = generateGlobe(DEFAULT_MERIDIAN_NUMBER, DEFAULT_PARALLEL_NUMBER);
+
 	/**
 	 * Hold the center and radius position of all spots.
 	 */
@@ -66,11 +73,6 @@ public class SpotGroupNode<K> extends ContentNode {
 	 * @see #spotSwitch
 	 */
 	protected HashMap<K, Integer> indices;
-	/**
-	 * Holder (cache) for the coordinates of the mesh of a globe of radius 1, centered at (0, 0, 0), that will be used to 
-	 * generate all spheres in this group.
-	 */
-	private float[][][] globe;
 	/**
 	 * If true, the text label will be displayed next to the balls.
 	 */
@@ -182,8 +184,6 @@ public class SpotGroupNode<K> extends ContentNode {
 	 * This resets the {@link #spotSwitch} and the {@link #switchMask} fields with new values.
 	 */
 	protected void makeMeshes() {
-		generateGlobe();
-		
 		List<Point3f> points;
 		CustomTriangleMesh node;
 		Color4f color;
@@ -245,18 +245,6 @@ public class SpotGroupNode<K> extends ContentNode {
 		removeAllChildren();
 		addChild(spotSwitch);
 		addChild(textSwitch);
-	}
-	
-	/**
-	 * Generate the globe that will be used as a template to build all the meshes
-	 * of each sphere. We put it here, so that we do not rebuild it every time we generate 
-	 * a sphere.
-	 * <p>
-	 * This method must be called before the meshes are created by {@link #makeMeshes()}, otherwise
-	 * a NPE will be thrown.
-	 */
-	private void generateGlobe() {
-		globe = generateGlobe(DEFAULT_MERIDIAN_NUMBER, DEFAULT_PARALLEL_NUMBER);
 	}
 	
 	/**
