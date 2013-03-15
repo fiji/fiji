@@ -141,6 +141,36 @@ public class SpotGroupNode<K> extends ContentNode {
 		this.switchMask = new BitSet();
 		makeMeshes();
 	}
+	
+	
+	@Override
+	public String toString() {
+		StringBuilder str = new StringBuilder();
+		str.append("SpotGroupNode with " + centers.size() + " spots.\n");
+		str.append("  - showLabels: " + showLabels + "\n");
+		str.append("  - fontSize: " + fontsize + "\n");
+		//
+		Tuple3d center = new Point3d();
+		getCenter(center);
+		str.append("  - center: " + center + "\n");
+		//
+		Tuple3d min = new Point3d();
+		getMin(min);
+		str.append("  - min: " + min + "\n");
+		//
+		Tuple3d max = new Point3d();
+		getMax(max);
+		str.append("  - max: " + max + "\n");
+		//
+		str.append("  - content:\n");
+		for (K spot : centers.keySet()) {
+			int index = indices.get(spot);
+			str.append("     - " + spot + ": color = " +colors.get(spot) + "; center = " 
+					+ centers.get(spot) + "; visible = " + switchMask.get(index)  + "\n"); 
+		}
+		return str.toString();
+	}
+	
 	/*
 	 * PRIVATE METHODS
 	 */
