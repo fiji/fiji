@@ -7,6 +7,8 @@ import ij.plugin.filter.PlugInFilter;
 
 import ij.process.ImageProcessor;
 
+import org.scijava.util.POM;
+
 public class JNI_Example implements PlugInFilter {
 	protected String arg;
 	protected ImagePlus image;
@@ -20,7 +22,8 @@ public class JNI_Example implements PlugInFilter {
 	public void run(ImageProcessor ip) {
 		int[] dimensions = image.getDimensions();
 
-		JNI.loadLibrary("JNI_Example");
+		final String version = POM.getPOM(getClass(), "sc.fiji", "JNI_Example").getVersion();
+		JNI.loadLibrary("JNI_Example-" + version);
 		run(arg, image.getTitle(),
 			dimensions[0], dimensions[1], dimensions[2], dimensions[3], dimensions[4],
 			getPixels(image));
