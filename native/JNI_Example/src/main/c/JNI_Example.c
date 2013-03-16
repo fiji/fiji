@@ -47,20 +47,20 @@ static void add(JNIEnv *env, int width, int height, jarray array)
 		/* For pinning, the 3rd arg needs to point to an int which equals JNI_TRUE */
 		jint *values = (*env)->GetIntArrayElements(env, (jintArray)array, NULL);
 		for (i = 0; i < width * height; i++) {
-			float value = values[i] & 0xff; /* blue */
+			float value = (float)(values[i] & 0xff); /* blue */
 			cumulative += value;
 			cumulative2 += value * value;
-			value = (values[i] >> 8) & 0xff; /* green */
+			value = (float)((values[i] >> 8) & 0xff); /* green */
 			cumulative += value;
 			cumulative2 += value * value;
-			value = (values[i] >> 16) & 0xff; /* red */
+			value = (float)((values[i] >> 16) & 0xff); /* red */
 			cumulative += value;
 			cumulative2 += value * value;
 		}
 		/* To reuse the values, use 0 instead of JNI_ABORT; that works only when the data are pinned. */
 		(*env)->ReleaseIntArrayElements(env, (jintArray)array, values, JNI_ABORT);
 		fprintf(stderr, "Added 3 * %d int-packed bytes\n", width * height);
-		count += 2 * width * height;
+		count += (float)(2 * width * height);
 	}
 	else if ((*env)->IsInstanceOf(env, array, floatArrayClass)) {
 		/* For pinning, the 3rd arg needs to point to an int which equals JNI_TRUE */
@@ -78,7 +78,7 @@ static void add(JNIEnv *env, int width, int height, jarray array)
 		fprintf(stderr, "Unknown array type\n");
 		return;
 	}
-	count += width * height;
+	count += (float)(width * height);
 }
 
 JNIEXPORT jobject JNICALL Java_JNI_1Example_run(JNIEnv *env, jclass clazz,
@@ -101,7 +101,7 @@ JNIEXPORT jobject JNICALL Java_JNI_1Example_run(JNIEnv *env, jclass clazz,
 
 	avg = cumulative / count;
 	stddev = cumulative2 / count;
-	stddev = sqrt(stddev - avg * avg); // sqrt(avg * avg - stddev * stddev);
+	stddev = (float)sqrt(stddev - avg * avg);
 	fprintf(stderr, "count %f, avg %f, stddev %f\n", count, avg, stddev);
 
 	(*env)->ReleaseStringUTFChars(env, title, title_str);
