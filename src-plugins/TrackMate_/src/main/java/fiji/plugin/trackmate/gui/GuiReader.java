@@ -35,6 +35,9 @@ import fiji.plugin.trackmate.visualization.hyperstack.HyperStackDisplayer;
  */
 public class GuiReader {
 
+	/** Version above which (inclusive) we can use the current {@link TmXmlReader}. 
+	 * Below this version, we use the {@link TmXmlReader_v12} reader. */ 
+	private static final Version DEAL_WITH_VERSION_ABOVE = new Version("2.0.0");
 	protected Logger logger = Logger.VOID_LOGGER;
 	private TrackMateWizard wizard;
 	private String targetDescriptor;
@@ -124,8 +127,7 @@ public class GuiReader {
 			return;
 		}
 		
-		Version currentVersion = new Version(TrackMate_.PLUGIN_NAME_VERSION);
-		if (fileVersion.compareTo(currentVersion ) < 0) {
+		if (fileVersion.compareTo( DEAL_WITH_VERSION_ABOVE ) < 0) {
 			logger.log("  Detected an older file format: v"+fileVersionStr);
 			logger.log(" Converting on the fly.\n");
 			// We substitute an able reader
@@ -146,7 +148,7 @@ public class GuiReader {
 			wizard.getLogPanel().setTextContent(log + "\n\n" + str.toString());
 		}
 
-		if (fileVersion.compareTo(currentVersion ) < 0) {
+		if (fileVersion.compareTo(DEAL_WITH_VERSION_ABOVE) < 0) {
 			// We need to re-compute track & edge features in this case
 			if (plugin.getModel().getTrackModel().getNTracks() > 0) {
 				plugin.computeTrackFeatures(true);

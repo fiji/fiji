@@ -13,6 +13,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.TreeMap;
 
+import javax.media.j3d.BadTransformException;
 import javax.vecmath.Color3f;
 import javax.vecmath.Point4d;
 
@@ -270,36 +271,49 @@ public class SpotDisplayer3D extends AbstractTrackMateModelView {
 	private Content makeSpotContent() {
 
 		blobs = new TreeMap<Integer, SpotGroupNode<Spot>>();
-		SpotCollection spots = model.getSpots();
 		TreeMap<Integer, ContentInstant> contentAllFrames = new TreeMap<Integer, ContentInstant>();
 		final float radiusRatio = (Float) displaySettings.get(KEY_SPOT_RADIUS_RATIO);
 		final Color color = (Color) displaySettings.get(KEY_COLOR);
+		SpotCollection spots = model.getSpots();
 
-		for (Integer frame : model.getSpots().keySet()) {
+		for (int frame : spots.keySet()) {
+
+			if (spots.getNSpots(frame, false) == 0) {
+				continue; // Do not create content for empty frames
+			}
+
 
 			HashMap<Spot, Point4d> centers = new HashMap<Spot, Point4d>(spots.getNSpots(frame, false));
-			SpotGroupNode<Spot> blobGroup = new SpotGroupNode<Spot>(centers, new Color3f(color));
-			ContentInstant contentThisFrame = new ContentInstant("Spots_frame_"+frame);
-			contentThisFrame.display(blobGroup);
 			double[] coords = new double[3];
-
-			for (Iterator<Spot> iterator = spots.iterator(frame, false); iterator.hasNext();) {
-				Spot spot = iterator.next();
+			
+			for (Iterator<Spot> it = spots.iterator(frame, false); it.hasNext();) {
+				Spot spot = it.next();
 				TMUtils.localize(spot, coords);
-				double radius = spot.getFeature(Spot.RADIUS);
+				Double radius = spot.getFeature(Spot.RADIUS);
 				double[] pos = new double[] {coords[0], coords[1], coords[2], radius*radiusRatio};
 				centers.put(spot, new Point4d(pos));
+			}
+			SpotGroupNode<Spot> blobGroup = new SpotGroupNode<Spot>(centers, new Color3f(color));
+			ContentInstant contentThisFrame = new ContentInstant("Spots_frame_"+frame);
 
-				// Set visibility
-				if (spots.isVisible(spot, frame)) {
-					blobGroup.setVisible(spot, true);
-				}
+			try {
+				contentThisFrame.display(blobGroup);
+			} catch (BadTransformException bte) {
+				System.err.println("Bad content for frame " + frame + ". Generated an exception:\n" 
+						+ bte.getLocalizedMessage() 
+						+ "\nContent was:\n" 
+						+ blobGroup.toString());
+			}
+
+			// Set visibility:
+			if (spots.getNSpots(frame, true) > 0) {
+				blobGroup.setVisible(spots.iterable(frame, true));
 			}
 
 			contentAllFrames.put(frame, contentThisFrame);
 			blobs.put(frame, blobGroup);
-
 		}
+
 		Content blobContent = new Content(SPOT_CONTENT_NAME, contentAllFrames);
 		blobContent.showCoordinateSystem(false);
 		return blobContent;
