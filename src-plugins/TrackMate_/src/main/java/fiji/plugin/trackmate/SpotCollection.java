@@ -31,6 +31,9 @@ import net.imglib2.algorithm.MultiThreaded;
  */
 public class SpotCollection implements MultiThreaded  {
 
+	
+
+
 	/** Time units for filtering and cropping operation timeouts. Filtering should not take more than 1 minute. */ 
 	private static final TimeUnit TIME_OUT_UNITS = TimeUnit.MINUTES;
 	/** Time for filtering and cropping operation timeouts. Filtering should not take more than 1 minute.  */ 
@@ -469,6 +472,30 @@ public class SpotCollection implements MultiThreaded  {
 			return frameContent.keySet().iterator();
 		}
 	}
+	
+	/**
+	 * A convenience methods that returns an {@link Iterable} wrapper for this collection
+	 * as a whole.
+	 * @param visibleSpotsOnly  if true, the iterable will contains only visible spots. 
+	 * Otherwise, it will contain all the spots. 
+	 * @return  an iterable view of this spot collection.
+	 */
+	public Iterable<Spot> iterable(boolean visibleSpotsOnly) {
+		return new WholeCollectionIterable(visibleSpotsOnly);
+	}
+	
+	/**
+	 * A convenience methods that returns an {@link Iterable} wrapper for a specific
+	 * frame of this spot collection.
+	 * @param visibleSpotsOnly  if true, the iterable will contains only visible spots
+	 * of the specified frame. Otherwise, it will contain all the spots of the specified frame.
+	 * @param frame  the frame of the content the returned iterable will wrap. 
+	 * @return  an iterable view of the content of a single frame of this spot collection.
+	 */
+	public Iterable<Spot> iterable(int frame, boolean visibleSpotsOnly) {
+		return new FrameIterable(frame, visibleSpotsOnly);
+	}
+
 
 	/*
 	 * SORTEDMAP
@@ -774,6 +801,51 @@ public class SpotCollection implements MultiThreaded  {
 			e.printStackTrace();
 		}
 		return ns;
+	}
+	
+	
+	/**
+	 * A convenience wrapper that implements {@link Iterable} for this spot collection.
+	 */
+	private final class WholeCollectionIterable implements Iterable<Spot> {
+
+		private final boolean visibleSpotsOnly;
+
+		public WholeCollectionIterable(boolean visibleSpotsOnly) {
+			this.visibleSpotsOnly = visibleSpotsOnly;
+		}
+
+		@Override
+		public Iterator<Spot> iterator() {
+			if (visibleSpotsOnly) {
+				return new VisibleSpotsIterator();
+			} else {
+				return new AllSpotsIterator();
+			}
+		}
+	}
+	
+	/**
+	 * A convenience wrapper that implements {@link Iterable} for this spot collection.
+	 */
+	private final class FrameIterable implements Iterable<Spot> {
+
+		private final boolean visibleSpotsOnly;
+		private final int frame;
+
+		public FrameIterable(int frame, boolean visibleSpotsOnly) {
+			this.visibleSpotsOnly = visibleSpotsOnly;
+			this.frame = frame;
+		}
+
+		@Override
+		public Iterator<Spot> iterator() {
+			if (visibleSpotsOnly) {
+				return new VisibleSpotsFrameIterator(content.get(frame));
+			} else {
+				return content.get(frame).keySet().iterator();
+			}
+		}
 	}
 
 	
