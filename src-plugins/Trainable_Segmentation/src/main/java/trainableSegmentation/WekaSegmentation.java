@@ -148,7 +148,7 @@ public class WekaSegmentation {
 	/** current number of classes */
 	private int numOfClasses = 0;
 	/** names of the current classes */
-	private String[] classLabels = new String[]{"class 1", "class 2", "class 3", "class 4", "class 5"};
+	private String[] classLabels = new String[MAX_NUM_CLASSES];
 
 	// Random Forest parameters
 	/** current number of trees in the fast random forest classifier */
@@ -215,6 +215,10 @@ public class WekaSegmentation {
 	 */
 	public WekaSegmentation(ImagePlus trainingImage)
 	{
+		// set class label names
+		for(int i=0; i<MAX_NUM_CLASSES; i++)
+			this.classLabels[ i ] = new String("class " + i);
+		
 		this.trainingImage = trainingImage;
 
 		// Initialization of Fast Random Forest classifier
@@ -263,6 +267,10 @@ public class WekaSegmentation {
 	 */
 	public WekaSegmentation()
 	{
+		// set class label names
+		for(int i=0; i<MAX_NUM_CLASSES; i++)
+			this.classLabels[ i ] = new String("class " + i);
+		
 		// Initialization of Fast Random Forest classifier
 		rf = new FastRandomForest();
 		rf.setNumTrees(numOfTrees);
