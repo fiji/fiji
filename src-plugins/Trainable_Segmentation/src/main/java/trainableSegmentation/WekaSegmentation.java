@@ -217,7 +217,7 @@ public class WekaSegmentation {
 	{
 		// set class label names
 		for(int i=0; i<MAX_NUM_CLASSES; i++)
-			this.classLabels[ i ] = new String("class " + i);
+			this.classLabels[ i ] = new String("class " + (i+1));
 		
 		this.trainingImage = trainingImage;
 
@@ -269,7 +269,7 @@ public class WekaSegmentation {
 	{
 		// set class label names
 		for(int i=0; i<MAX_NUM_CLASSES; i++)
-			this.classLabels[ i ] = new String("class " + i);
+			this.classLabels[ i ] = new String("class " + (i+1));
 		
 		// Initialization of Fast Random Forest classifier
 		rf = new FastRandomForest();
@@ -1028,8 +1028,9 @@ public class WekaSegmentation {
 			// Update list of names of loaded classes
 			// (we assume the first two default class names)
 			loadedClassNames = new ArrayList<String>();
-			for(int i = 0; i < numOfClasses ; i ++)
+			for(int i = 0; i < numOfClasses ; i ++)			
 				loadedClassNames.add(getClassLabels()[i]);
+						
 			attributes.add(new Attribute("class", loadedClassNames));
 			loadedTrainingData = new Instances("segment", attributes, 1);
 
@@ -2151,7 +2152,6 @@ public class WekaSegmentation {
 
 		for(int i=1; i <= inputSlices.getSize(); i++)
 		{
-
 			// Process label pixels
 			final ImagePlus labelIP = new ImagePlus ("labels", labelSlices.getProcessor(i).duplicate());
 			// Make sure it's binary
@@ -3776,7 +3776,7 @@ public class WekaSegmentation {
 			IJ.log("Classifier training was interrupted.");
 			return false;
 		}
-		
+
 		// Train the classifier on the current data
 		final long start = System.currentTimeMillis();
 		try{
