@@ -68,11 +68,16 @@ public final class Analyze_Writer implements PlugIn {
 		IJ.showStatus("Saving as Analyze: " + directory + name);
 
 		try {
-			String fileName = directory + name + ".hdr";			writeHeader( imp, fileName);			
-			fileName = directory + name + ".img";				if (imp.getStackSize() < 2)
+			String fileName = directory + name + ".hdr";
+			writeHeader( imp, fileName);			
+			fileName = directory + name + ".img";	
+			if (imp.getStackSize() < 2)
 				new FileSaver(imp).saveAsRaw(fileName); 
-			else
+			else {
+				if (imp.getStackSize()>1 && imp.getStack().isVirtual())
+					imp.setProperty("AnalyzeFormat", "true");
 				new FileSaver(imp).saveAsRawStack(fileName); 
+			}
 		}
 		catch (IOException e) {
 			IJ.log("Analyze_Writer: "+ e.getMessage());

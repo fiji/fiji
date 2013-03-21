@@ -16,7 +16,7 @@ public class BeadIdentification extends DetectionIdentification<BeadIdentificati
 		super( detectionID, view );
 	}
 
-	public int getBeadID() { return detectionID; }
+	public long getBeadID() { return detectionID; }
 
 	/**
 	 * Prints the nucleus properties

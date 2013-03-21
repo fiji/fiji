@@ -13,6 +13,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.TreeMap;
 
+import javax.media.j3d.BadTransformException;
 import javax.vecmath.Color3f;
 import javax.vecmath.Point4d;
 
@@ -275,15 +276,18 @@ public class SpotDisplayer3D extends AbstractTrackMateModelView {
 	private Content makeSpotContent() {
 
 		blobs = new TreeMap<Integer, SpotGroupNode<Spot>>();
-		List<Spot> spotsThisFrame; 
-		SpotGroupNode<Spot> blobGroup;
-		ContentInstant contentThisFrame;
 		TreeMap<Integer, ContentInstant> contentAllFrames = new TreeMap<Integer, ContentInstant>();
 		final float radiusRatio = (Float) displaySettings.get(KEY_SPOT_RADIUS_RATIO);
 		final Color color = (Color) displaySettings.get(KEY_COLOR);
 
-		for(Integer i : model.getSpots().keySet()) {
-			spotsThisFrame = model.getSpots().get(i);
+		for (Integer frame : model.getSpots().keySet()) {
+			
+			List<Spot> spotsThisFrame = model.getSpots().get(frame);
+			if (spotsThisFrame.isEmpty()) {
+				continue; // Do not create content for empty frames
+			}
+			
+			
 			HashMap<Spot, Point4d> centers = new HashMap<Spot, Point4d>(spotsThisFrame.size());
 			double[] pos;
 			double radius;
@@ -294,21 +298,28 @@ public class SpotDisplayer3D extends AbstractTrackMateModelView {
 				pos = new double[] {coords[0], coords[1], coords[2], radius*radiusRatio};
 				centers.put(spot, new Point4d(pos));
 			}
-			blobGroup = new SpotGroupNode<Spot>(centers, new Color3f(color));
-			contentThisFrame = new ContentInstant("Spots_frame_"+i);
-			contentThisFrame.display(blobGroup);
+			SpotGroupNode<Spot> blobGroup = new SpotGroupNode<Spot>(centers, new Color3f(color));
+			ContentInstant contentThisFrame = new ContentInstant("Spots_frame_"+frame);
+			
+			try {
+				contentThisFrame.display(blobGroup);
+			} catch (BadTransformException bte) {
+				System.err.println("Bad content for frame " + frame + ". Generated an exception:\n" 
+						+ bte.getLocalizedMessage() 
+						+ "\nContent was:\n" 
+						+ blobGroup.toString());
+			}
 
 			// Set visibility:
-			List<Spot> visibleSpots = model.getFilteredSpots().get(i);
+			List<Spot> visibleSpots = model.getFilteredSpots().get(frame);
 			if (visibleSpots != null) {
 				blobGroup.setVisible(visibleSpots);
 			}
 
-			contentAllFrames.put(i, contentThisFrame);
-			blobs.put(i, blobGroup);
-
-
+			contentAllFrames.put(frame, contentThisFrame);
+			blobs.put(frame, blobGroup);
 		}
+		
 		Content blobContent = new Content(SPOT_CONTENT_NAME, contentAllFrames);
 		blobContent.showCoordinateSystem(false);
 		return blobContent;

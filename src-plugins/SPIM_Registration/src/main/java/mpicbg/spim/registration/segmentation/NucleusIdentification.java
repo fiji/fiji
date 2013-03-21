@@ -24,7 +24,7 @@ public class NucleusIdentification extends DetectionIdentification<NucleusIdenti
 		super( detectionID, view );
 	}
 	
-	public int getNucleusID() { return detectionID; }
+	public long getNucleusID() { return detectionID; }
 	
 	/**
 	 * Prints the nucleus properties
@@ -48,7 +48,7 @@ public class NucleusIdentification extends DetectionIdentification<NucleusIdenti
 		
 		// this is just a good guess that might speed up a lot
 		if ( detectionID < view.getNucleiStructure().getDetectionList().size() )
-			nucleus = view.getNucleiStructure().getDetectionList().get( detectionID );
+			nucleus = view.getNucleiStructure().getDetectionList().get( (int) detectionID );
 
 		// check if it is the nucleus with the right ID
 		if ( nucleus == null || nucleus.getID() != detectionID )
