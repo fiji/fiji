@@ -75,9 +75,9 @@ public class TrackVisualizerTestDrive {
 		plugin.computeEdgeFeatures(true);
 		
 		// Instantiate displayer
-//		final HyperStackDisplayer displayer = new HyperStackDisplayer(model);
-		final SpotDisplayer3D displayer = new SpotDisplayer3D(model);
-		displayer.setRenderImageData(false);
+		final HyperStackDisplayer displayer = new HyperStackDisplayer(model);
+//		final SpotDisplayer3D displayer = new SpotDisplayer3D(model);
+//		displayer.setRenderImageData(false);
 		displayer.render();
 		displayer.refresh();
 		
