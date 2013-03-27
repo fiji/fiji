@@ -1,6 +1,6 @@
 [submodule "ImageJA"]
 	path = modules/ImageJA
-	url = ssh://mob@repo.or.cz/srv/git/imageja.git
+	url = git://github.com/fiji/ImageJA
 [submodule "java/linux"]
 	path = java/linux
 	url = git://fiji.sc/java/linux.git
@@ -54,7 +54,7 @@
 	url = git://fiji.sc/jython/.git
 [submodule "imglib"]
 	path = modules/imglib
-	url = git://fiji.sc/imglib.git
+	url = git://github.com/imagej/imglib
 [submodule "commons-math"]
 	path = modules/commons-math
 	url = git://fiji.sc/commons-math
@@ -66,7 +66,7 @@
 	url = git://fiji.sc/jsch
 [submodule "imagej2"]
 	path = modules/imagej2
-	url = git://code.imagej.net/imagej.git
+	url = git://github.com/imagej/imagej
 [submodule "imagej5d"]
 	path = modules/image5d
 	url = git://fiji.sc/image5d
