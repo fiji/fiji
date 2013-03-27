@@ -1,9 +1,6 @@
 [submodule "ImageJA"]
 	path = modules/ImageJA
 	url = ssh://mob@repo.or.cz/srv/git/imageja.git
-[submodule "TrakEM2"]
-	path = modules/TrakEM2
-	url = ssh://mob@repo.or.cz/srv/git/trakem2.git
 [submodule "java/linux"]
 	path = java/linux
 	url = git://fiji.sc/java/linux.git
@@ -19,12 +16,12 @@
 [submodule "java/win64"]
 	path = java/win64
 	url = git://fiji.sc/java/win64.git
-[submodule "micromanager1.1"]
-	path = modules/micromanager1.1
-	url = git://fiji.sc/micromanager1.1/.git
 [submodule "mpicbg"]
 	path = modules/mpicbg
 	url = git://fiji.sc/mpicbg.git
+[submodule "TrakEM2"]
+	path = modules/TrakEM2
+	url = ssh://mob@repo.or.cz/srv/git/trakem2.git
 [submodule "clojure"]
 	path = modules/clojure
 	url = git://fiji.sc/clojure/
@@ -61,15 +58,15 @@
 [submodule "commons-math"]
 	path = modules/commons-math
 	url = contrib@fiji.sc:/srv/git/commons-math
-[submodule "modules/javassist"]
+[submodule "javassist"]
 	path = modules/javassist
 	url = contrib@fiji.sc:/srv/git/javassist
 [submodule "jsch"]
 	path = modules/jsch
 	url = contrib@fiji.sc:/srv/git/jsch
-[submodule "modules/imagej2"]
+[submodule "imagej2"]
 	path = modules/imagej2
 	url = git://code.imagej.net/imagej.git
-[submodule "modules/imagej5d"]
+[submodule "imagej5d"]
 	path = modules/image5d
 	url = git://fiji.sc/image5d
