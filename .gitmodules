@@ -3,70 +3,70 @@
 	url = git://github.com/fiji/ImageJA
 [submodule "java/linux"]
 	path = java/linux
-	url = git://fiji.sc/java/linux.git
+	url = http://fiji.sc/java/linux.git
 [submodule "java/linux-amd64"]
 	path = java/linux-amd64
-	url = git://fiji.sc/java/linux-amd64.git
+	url = http://fiji.sc/java/linux-amd64.git
 [submodule "java/macosx-java3d"]
 	path = java/macosx-java3d
-	url = git://fiji.sc/java/macosx-java3d.git
+	url = http://fiji.sc/java/macosx-java3d.git
 [submodule "java/win32"]
 	path = java/win32
-	url = git://fiji.sc/java/win32.git
+	url = http://fiji.sc/java/win32.git
 [submodule "java/win64"]
 	path = java/win64
-	url = git://fiji.sc/java/win64.git
+	url = http://fiji.sc/java/win64.git
 [submodule "mpicbg"]
 	path = modules/mpicbg
-	url = git://fiji.sc/mpicbg.git
+	url = http://fiji.sc/mpicbg.git
 [submodule "TrakEM2"]
 	path = modules/TrakEM2
 	url = ssh://mob@repo.or.cz/srv/git/trakem2.git
 [submodule "clojure"]
 	path = modules/clojure
-	url = git://fiji.sc/clojure/
+	url = http://fiji.sc/clojure/.git
 [submodule "ij-plugins"]
 	path = modules/ij-plugins
-	url = git://fiji.sc/ij-plugins
+	url = http://fiji.sc/ij-plugins/.git
 [submodule "Retrotranslator"]
 	path = modules/Retrotranslator
-	url = git://fiji.sc/Retrotranslator
+	url = http://fiji.sc/Retrotranslator/.git
 [submodule "tcljava"]
 	path = modules/tcljava
-	url = git://fiji.sc/tcljava
+	url = http://fiji.sc/tcljava/.git
 [submodule "batik"]
 	path = modules/batik
-	url = git://fiji.sc/batik/.git
+	url = http://fiji.sc/batik/.git
 [submodule "junit"]
 	path = modules/junit
-	url = git://fiji.sc/junit
+	url = http://fiji.sc/junit/.git
 [submodule "RSyntaxTextArea"]
 	path = modules/RSyntaxTextArea
-	url = git://fiji.sc/RSyntaxTextArea
+	url = http://fiji.sc/RSyntaxTextArea/.git
 [submodule "AutoComplete"]
 	path = modules/AutoComplete
-	url = git://fiji.sc/AutoComplete
+	url = http://fiji.sc/AutoComplete/.git
 [submodule "weka"]
 	path = modules/weka
-	url = git://fiji.sc/weka/
+	url = http://fiji.sc/weka/.git
 [submodule "jython"]
 	path = modules/jython
-	url = git://fiji.sc/jython/.git
+	url = http://fiji.sc/jython/.git
 [submodule "imglib"]
 	path = modules/imglib
 	url = git://github.com/imagej/imglib
 [submodule "commons-math"]
 	path = modules/commons-math
-	url = git://fiji.sc/commons-math
+	url = http://fiji.sc/commons-math/.git
 [submodule "javassist"]
 	path = modules/javassist
-	url = git://fiji.sc/javassist
+	url = http://fiji.sc/javassist/.git
 [submodule "jsch"]
 	path = modules/jsch
-	url = git://fiji.sc/jsch
+	url = http://fiji.sc/jsch/.git
 [submodule "imagej2"]
 	path = modules/imagej2
 	url = git://github.com/imagej/imagej
 [submodule "imagej5d"]
 	path = modules/image5d
-	url = git://fiji.sc/image5d
+	url = http://fiji.sc/image5d.git
