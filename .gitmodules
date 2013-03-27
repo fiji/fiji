@@ -6,55 +6,55 @@
 	url = ssh://mob@repo.or.cz/srv/git/trakem2.git
 [submodule "java/linux"]
 	path = java/linux
-	url = ssh://contrib@fiji.sc/srv/git/java/linux.git
+	url = git://fiji.sc/java/linux.git
 [submodule "java/linux-amd64"]
 	path = java/linux-amd64
-	url = ssh://contrib@fiji.sc/srv/git/java/linux-amd64.git
+	url = git://fiji.sc/java/linux-amd64.git
 [submodule "java/macosx-java3d"]
 	path = java/macosx-java3d
-	url = ssh://contrib@fiji.sc/srv/git/java/macosx-java3d.git
+	url = git://fiji.sc/java/macosx-java3d.git
 [submodule "java/win32"]
 	path = java/win32
-	url = ssh://contrib@fiji.sc/srv/git/java/win32.git
+	url = git://fiji.sc/java/win32.git
 [submodule "java/win64"]
 	path = java/win64
-	url = ssh://contrib@fiji.sc/srv/git/java/win64.git
+	url = git://fiji.sc/java/win64.git
 [submodule "micromanager1.1"]
 	path = modules/micromanager1.1
-	url = ssh://contrib@fiji.sc/srv/git/micromanager1.1/.git
+	url = git://fiji.sc/micromanager1.1/.git
 [submodule "mpicbg"]
 	path = modules/mpicbg
-	url = ssh://contrib@fiji.sc/srv/git/mpicbg.git
+	url = git://fiji.sc/mpicbg.git
 [submodule "clojure"]
 	path = modules/clojure
-	url = ssh://contrib@fiji.sc/srv/git/clojure/
+	url = git://fiji.sc/clojure/
 [submodule "ij-plugins"]
 	path = modules/ij-plugins
-	url = ssh://contrib@fiji.sc/srv/git/ij-plugins
+	url = git://fiji.sc/ij-plugins
 [submodule "Retrotranslator"]
 	path = modules/Retrotranslator
-	url = ssh://contrib@fiji.sc/srv/git/Retrotranslator
+	url = git://fiji.sc/Retrotranslator
 [submodule "tcljava"]
 	path = modules/tcljava
-	url = ssh://contrib@fiji.sc/srv/git/tcljava
+	url = git://fiji.sc/tcljava
 [submodule "batik"]
 	path = modules/batik
-	url = ssh://contrib@fiji.sc/srv/git/batik/.git
+	url = git://fiji.sc/batik/.git
 [submodule "junit"]
 	path = modules/junit
-	url = ssh://contrib@fiji.sc/srv/git/junit
+	url = git://fiji.sc/junit
 [submodule "RSyntaxTextArea"]
 	path = modules/RSyntaxTextArea
-	url = ssh://contrib@fiji.sc/srv/git/RSyntaxTextArea
+	url = git://fiji.sc/RSyntaxTextArea
 [submodule "AutoComplete"]
 	path = modules/AutoComplete
-	url = ssh://contrib@fiji.sc/srv/git/AutoComplete
+	url = git://fiji.sc/AutoComplete
 [submodule "weka"]
 	path = modules/weka
-	url = ssh://contrib@fiji.sc/srv/git/weka/
+	url = git://fiji.sc/weka/
 [submodule "jython"]
 	path = modules/jython
-	url = ssh://contrib@fiji.sc/srv/git/jython/.git
+	url = git://fiji.sc/jython/.git
 [submodule "imglib"]
 	path = modules/imglib
 	url = contrib@fiji.sc:/srv/git/imglib.git
