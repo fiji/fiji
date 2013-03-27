@@ -220,7 +220,7 @@ maven_update () {
 			(cd "$SCIJAVA_COMMON" &&
 			 git pull -k)
 		else
-			git clone git://github.com/scijava/scijava-common \
+			git clone https://github.com/scijava/scijava-common \
 				"$SCIJAVA_COMMON"
 		fi
 		if test ! -f "$MAVEN_DOWNLOAD"
