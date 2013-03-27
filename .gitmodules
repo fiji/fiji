@@ -54,16 +54,16 @@
 	url = git://fiji.sc/jython/.git
 [submodule "imglib"]
 	path = modules/imglib
-	url = contrib@fiji.sc:/srv/git/imglib.git
+	url = git://fiji.sc/imglib.git
 [submodule "commons-math"]
 	path = modules/commons-math
-	url = contrib@fiji.sc:/srv/git/commons-math
+	url = git://fiji.sc/commons-math
 [submodule "javassist"]
 	path = modules/javassist
-	url = contrib@fiji.sc:/srv/git/javassist
+	url = git://fiji.sc/javassist
 [submodule "jsch"]
 	path = modules/jsch
-	url = contrib@fiji.sc:/srv/git/jsch
+	url = git://fiji.sc/jsch
 [submodule "imagej2"]
 	path = modules/imagej2
 	url = git://code.imagej.net/imagej.git
