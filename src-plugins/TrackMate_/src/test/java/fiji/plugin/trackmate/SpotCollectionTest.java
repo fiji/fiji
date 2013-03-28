@@ -41,9 +41,9 @@ public class SpotCollectionTest {
 			for (int j = 0; j < N_SPOTS; j++) {
 				double[] pos = new double[] { j, j, j };
 				Spot spot = new Spot(pos);
-				spot.putFeature(Spot.POSITION_T, i);
-				spot.putFeature(Spot.QUALITY, j);
-				spot.putFeature(Spot.RADIUS, j/2);
+				spot.putFeature(Spot.POSITION_T, Double.valueOf(i));
+				spot.putFeature(Spot.QUALITY, Double.valueOf(j));
+				spot.putFeature(Spot.RADIUS, Double.valueOf(j/2));
 				spots.add(spot);
 			}
 			sc.put(i, spots);
@@ -120,8 +120,7 @@ public class SpotCollectionTest {
 		Iterator<Spot> it = sc.iterator(false);
 		while (it.hasNext()) {
 			Spot spot = it.next();
-			int frame = spot.getFeature(Spot.FRAME).intValue();
-			assertFalse("Spot " + spot + " is visible, but should not.", sc.isVisible(spot, frame));
+			assertFalse("Spot " + spot + " is visible, but should not.", isVisible(spot));
 		}
 		// Mark a random spot as visible
 		int targetFrame = 1 + 2 * new Random().nextInt(N_FRAMES);
@@ -130,16 +129,15 @@ public class SpotCollectionTest {
 		for (int i = 0; i < new Random().nextInt(N_SPOTS); i++) {
 			targetSpot = it.next();
 		}
-		sc.setVisible(targetSpot, targetFrame, true);
+		targetSpot.putFeature(SpotCollection.VISIBLITY, SpotCollection.ONE);
 		// Test for visibility
 		it = sc.iterator(false);
 		while (it.hasNext()) {
 			Spot spot = it.next();
-			int frame = spot.getFeature(Spot.FRAME).intValue();
 			if (spot == targetSpot) {
-				assertTrue("Target spot " + spot + " should be visible, but is not.", sc.isVisible(spot, frame));
+				assertTrue("Target spot " + spot + " should be visible, but is not.", isVisible(spot));
 			} else {
-				assertFalse("Spot " + spot + " is visible, but should not.", sc.isVisible(spot, frame));
+				assertFalse("Spot " + spot + " is visible, but should not.", isVisible(spot));
 			}
 		}
 	}
@@ -301,7 +299,7 @@ public class SpotCollectionTest {
 			for (int i = 0; i < N_MARKED_PER_FRAME; i++) {
 				Spot spot = it.next();
 				markedSpots.add(spot);
-				sc.setVisible(spot, frame, true);
+				spot.putFeature(SpotCollection.VISIBLITY, SpotCollection.ONE);
 			}
 		}
 
@@ -343,7 +341,7 @@ public class SpotCollectionTest {
 		for (int i = 0; i < N_MARKED; i++) {
 			Spot spot = it.next();
 			markedSpots.add(spot);
-			sc.setVisible(spot, targetFrame, true);
+			spot.putFeature(SpotCollection.VISIBLITY, SpotCollection.ONE);
 		}
 		// See if we iterate over them.
 		it = sc.iterator(targetFrame, true);
@@ -436,6 +434,10 @@ public class SpotCollectionTest {
 	@Test
 	public void testKeySet() {
 		assertArrayEquals(frames.toArray(new Integer[] {}), sc.keySet().toArray(new Integer[] {}));
+	}
+	
+	private static final boolean isVisible(Spot spot) {
+		return spot.getFeature(SpotCollection.VISIBLITY).compareTo(SpotCollection.ZERO) > 0;
 	}
 
 }
