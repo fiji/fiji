@@ -75,13 +75,13 @@ public class SpotMorphologyAnalyzerFactory<T extends RealType<T> & NativeType<T>
 	}
 	public static final String KEY = "Spot morphology";
 	/** Spherical shape, that is roughly a = b = c. */
-	public static final int SPHERE = 0;
+	public static final Double SPHERE = Double.valueOf(0);
 	/** Oblate shape, disk shaped, that is roughly a = b > c. */
-	public static final int OBLATE = 1;
+	public static final Double OBLATE = Double.valueOf(1);
 	/** Prolate shape, rugby ball shape, that is roughly a = b < c. */
-	public static final int PROLATE = 2;
+	public static final Double PROLATE = Double.valueOf(2);
 	/** Scalene shape, nothing particular, a > b > c. */
-	public static final int SCALENE = 3;
+	public static final Double SCALENE = Double.valueOf(3);
 	
 
 	private final TrackMateModel model;

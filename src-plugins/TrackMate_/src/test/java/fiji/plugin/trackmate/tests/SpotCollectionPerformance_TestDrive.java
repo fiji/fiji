@@ -83,7 +83,7 @@ public class SpotCollectionPerformance_TestDrive {
 		double[] coords = new double[] { ran.nextDouble(), ran.nextDouble(), ran.nextDouble() };
 		Spot spot = new Spot(coords);
 		spot.putFeature(Spot.QUALITY, ran.nextDouble());
-		spot.putFeature(Spot.FRAME, frame);
+		spot.putFeature(Spot.FRAME, Double.valueOf(frame));
 		return spot;
 	}
 

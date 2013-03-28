@@ -44,8 +44,8 @@ public class EdgeVelocityAnalyzerTest {
 
 				for (int j = 0; j <= DEPTH; j++) {
 					Spot spot = new Spot(new double[3]); 
-					spot.putFeature(posFeats[i%3], i+j); // rotate displacement dimension
-					spot.putFeature(Spot.POSITION_T, 2*j);
+					spot.putFeature(posFeats[i%3], Double.valueOf(i+j)); // rotate displacement dimension
+					spot.putFeature(Spot.POSITION_T, Double.valueOf(2*j));
 					model.addSpotTo(spot, j);
 					if (null != previous) {
 						DefaultWeightedEdge edge = model.addEdge(previous, spot, j);

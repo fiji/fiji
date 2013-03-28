@@ -108,9 +108,9 @@ public class TrackLocationAnalyzerTest {
 		model.beginUpdate();
 		try {
 			Spot spot1 = model.addSpotTo(new Spot(new double[3]), 0);
-			spot1.putFeature(Spot.POSITION_T, 0);
+			spot1.putFeature(Spot.POSITION_T, 0d);
 			Spot spot2 = model.addSpotTo(new Spot(new double[3]), 1);
-			spot2.putFeature(Spot.POSITION_T, 1);
+			spot2.putFeature(Spot.POSITION_T, 1d);
 			model.addEdge(spot1, spot2, 1);
 			
 		} finally {

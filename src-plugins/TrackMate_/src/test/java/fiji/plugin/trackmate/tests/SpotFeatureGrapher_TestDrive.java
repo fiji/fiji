@@ -70,15 +70,15 @@ public class SpotFeatureGrapher_TestDrive {
 			coordinates[1] = 100 + 100 * i / 100. * Math.sin(i / 100. * 5 * 2*Math.PI);
 			coordinates[2] = 0;
 			Spot spot = new Spot(coordinates);
-			spot.putFeature(Spot.POSITION_T, i);
-			spot.putFeature(Spot.RADIUS, 2);
+			spot.putFeature(Spot.POSITION_T, Double.valueOf(i));
+			spot.putFeature(Spot.RADIUS, Double.valueOf(2));
 			
 			spots.add(spot);
 			
 			List<Spot> ts = new ArrayList<Spot>(1);
 			ts.add(spot);
 			sc.put(i, ts);
-			sc.setVisible(spot, i, true);
+			spot.putFeature(SpotCollection.VISIBLITY, SpotCollection.ONE);
 		}
 		
 		TrackMateModel model = new TrackMateModel();

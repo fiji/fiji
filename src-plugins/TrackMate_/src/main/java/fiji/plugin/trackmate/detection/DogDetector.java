@@ -131,7 +131,7 @@ public class DogDetector <T extends RealType<T>  & NativeType<T>> extends LogDet
 					coords[i] = dogpeak.getDoublePosition(i) * calibration[i];
 			}
 			Spot spot = new Spot(coords);
-			spot.putFeature(Spot.QUALITY, -dogpeak.getValue().get());
+			spot.putFeature(Spot.QUALITY, Double.valueOf(-dogpeak.getValue().get()));
 			spot.putFeature(Spot.RADIUS, radius);
 			spots.add(spot);
 		}

@@ -180,13 +180,13 @@ public class TmXmlReader implements Algorithm, Benchmark {
 		}
 		List<FeatureFilter> spotFilters = getSpotFeatureFilters();
 		model.getSettings().setSpotFilters(spotFilters);
-		// Spots
+		// Spots & their visibility
 		SpotCollection allSpots = getAllSpots();
 		Map<Integer, Set<Integer>> filteredIDs = getFilteredSpotIDs();
 		if (null != filteredIDs) {
 			for (Integer frame : filteredIDs.keySet()) {
 				for (Integer ID : filteredIDs.get(frame)) {
-					allSpots.setVisible(cache.get(ID), frame, true);
+					cache.get(ID).putFeature(SpotCollection.VISIBLITY, SpotCollection.ONE);
 				}
 			}
 		}
@@ -849,11 +849,7 @@ public class TmXmlReader implements Algorithm, Benchmark {
 			if (att.getName().equals(SPOT_NAME_ATTRIBUTE_NAME) || att.getName().equals(SPOT_ID_ATTRIBUTE_NAME)) {
 				continue;
 			}
-			try {
-				spot.putFeature(att.getName(), att.getFloatValue());
-			} catch (DataConversionException e) {
-				logger.error("Cannot read the feature "+att.getName()+" value. Skipping.\n");
-			}
+			spot.putFeature(att.getName(), Double.valueOf(att.getValue()));
 		}
 		return spot;
 	}

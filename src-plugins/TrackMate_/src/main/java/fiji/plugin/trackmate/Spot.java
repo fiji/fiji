@@ -177,7 +177,7 @@ public class Spot {
 	/**
      * Store the specified feature value for this spot.
      */
-	public final void putFeature(final String feature, final double value) {
+	public final void putFeature(final String feature, final Double value) {
 		features.put(feature, value);
 	}
 

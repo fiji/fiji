@@ -119,9 +119,9 @@ public class TrackDurationAnalyzerTest {
 		model.beginUpdate();
 		try {
 			Spot spot1 = model.addSpotTo(new Spot(new double[3]), 0);
-			spot1.putFeature(Spot.POSITION_T, 0);
+			spot1.putFeature(Spot.POSITION_T, 0d);
 			Spot spot2 = model.addSpotTo(new Spot(new double[3]), 1);
-			spot2.putFeature(Spot.POSITION_T, 1);
+			spot2.putFeature(Spot.POSITION_T, 1d);
 			model.addEdge(spot1, spot2, 1);
 			
 		} finally {
@@ -152,7 +152,7 @@ public class TrackDurationAnalyzerTest {
 		model.beginUpdate();
 		try {
 			newSpot = model.addSpotTo(new Spot(new double[3]), firstFrame + 1);
-			newSpot.putFeature(Spot.POSITION_T, firstFrame + 1);
+			newSpot.putFeature(Spot.POSITION_T, Double.valueOf(firstFrame + 1));
 			model.addEdge(firstSpot, newSpot, 1);
 		} finally {
 			model.endUpdate();

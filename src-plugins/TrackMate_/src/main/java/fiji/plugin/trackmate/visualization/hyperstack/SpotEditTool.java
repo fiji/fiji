@@ -232,7 +232,7 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 				final double z = (displayer.imp.getSlice()-1) * displayer.calibration[2];
 				editedSpot.putFeature(Spot.POSITION_Z, z);
 				editedSpot.putFeature(Spot.POSITION_T, frame * displayer.settings.dt);
-				editedSpot.putFeature(Spot.FRAME, frame);
+				editedSpot.putFeature(Spot.FRAME, Double.valueOf(frame));
 
 				model.beginUpdate();
 				try {
@@ -436,7 +436,7 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 				double zpos = (displayer.imp.getSlice()-1) * displayer.calibration[2];
 				int frame = displayer.imp.getFrame() - 1;
 				newSpot.putFeature(Spot.POSITION_T, frame * displayer.settings.dt);
-				newSpot.putFeature(Spot.FRAME, frame);
+				newSpot.putFeature(Spot.FRAME, Double.valueOf(frame));
 				newSpot.putFeature(Spot.POSITION_Z, zpos);
 				newSpot.putFeature(Spot.RADIUS, radius);
 

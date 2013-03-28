@@ -99,7 +99,7 @@ public class SpotDisplayer3DTestDrive {
 		Spot spot;
 		for (int i = 0; i < N_BLOBS; i++)  {
 			spot = new Spot(centers.get(i), "Spot "+i);
-			spot.putFeature(Spot.POSITION_T, 0);
+			spot.putFeature(Spot.POSITION_T, Double.valueOf(0));
 			spot.putFeature(Spot.RADIUS, RADIUS);
 			spot.putFeature(Spot.QUALITY, RADIUS);
 			spots.add(spot);

@@ -42,7 +42,7 @@ public class EdgeTimeAndLocationAnalyzerTest {
 
 				for (int j = 0; j <= DEPTH; j++) {
 					Spot spot = new Spot(new double[] { i+j, i+j, i+j }); // Same x,y,z coords
-					spot.putFeature(Spot.POSITION_T, j);
+					spot.putFeature(Spot.POSITION_T, Double.valueOf(j));
 					model.addSpotTo(spot, j);
 					if (null != previous) {
 						DefaultWeightedEdge edge = model.addEdge(previous, spot, j);

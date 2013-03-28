@@ -43,8 +43,8 @@ public class LAPTrackerTest {
 
 			Spot spot1 = new Spot(coords1);
 			Spot spot2 = new Spot(coords2);
-			spot1.putFeature(Spot.POSITION_T, i);
-			spot2.putFeature(Spot.POSITION_T, i);
+			spot1.putFeature(Spot.POSITION_T, Double.valueOf(i));
+			spot2.putFeature(Spot.POSITION_T, Double.valueOf(i));
 			spot1.setName("G1T"+i);
 			spot2.setName("G2T"+i);
 
@@ -103,13 +103,13 @@ public class LAPTrackerTest {
 
 			Spot spot1 = new Spot(coords1);
 			Spot spot2 = new Spot(coords2);
-			spot1.putFeature(Spot.POSITION_T, i);
-			spot2.putFeature(Spot.POSITION_T, i);
+			spot1.putFeature(Spot.POSITION_T, Double.valueOf(i));
+			spot2.putFeature(Spot.POSITION_T, Double.valueOf(i));
 			spot1.setName("G1T"+i);
 			spot2.setName("G2T"+i);
 			// For this test, we need to put a different feature for each track
-			spot1.putFeature(SpotIntensityAnalyzerFactory.MEAN_INTENSITY, 100);
-			spot2.putFeature(SpotIntensityAnalyzerFactory.MEAN_INTENSITY, 200);
+			spot1.putFeature(SpotIntensityAnalyzerFactory.MEAN_INTENSITY, Double.valueOf(100));
+			spot2.putFeature(SpotIntensityAnalyzerFactory.MEAN_INTENSITY, Double.valueOf(200));
 
 			group1.add(spot1);
 			group2.add(spot2);

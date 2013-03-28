@@ -197,7 +197,7 @@ public class TmXmlReader_v12 extends TmXmlReader {
 		if (null != filteredIDs) {
 			for (Integer frame : filteredIDs.keySet()) {
 				for (Integer ID : filteredIDs.get(frame)) {
-					allSpots.setVisible(cache.get(ID), frame, true);
+					cache.get(ID).putFeature(SpotCollection.VISIBLITY, SpotCollection.ONE);
 				}
 			}
 		}
@@ -1175,11 +1175,7 @@ public class TmXmlReader_v12 extends TmXmlReader {
 			if (att.getName().equals(SPOT_NAME_v12_ATTRIBUTE_NAME_v12) || att.getName().equals(SPOT_ID_ATTRIBUTE_NAME_v12)) {
 				continue;
 			}
-			try {
-				spot.putFeature(att.getName(), att.getFloatValue());
-			} catch (DataConversionException e) {
-				logger.error("Cannot read the feature "+att.getName()+" value. Skipping.\n");
-			}
+			spot.putFeature(att.getName(), Double.valueOf(att.getValue()));
 		}
 		return spot;
 	}

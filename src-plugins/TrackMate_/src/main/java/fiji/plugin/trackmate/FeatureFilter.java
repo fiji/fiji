@@ -6,9 +6,9 @@ package fiji.plugin.trackmate;
  *
  */
 public class FeatureFilter {
-	public String feature;
-	public Double value;
-	public boolean isAbove;
+	public final String feature;
+	public final Double value;
+	public final boolean isAbove;
 	
 	
 	public FeatureFilter(String feature, Double value, boolean isAbove) {
