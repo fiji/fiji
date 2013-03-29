@@ -239,8 +239,9 @@ abstract public class RefreshScripts implements PlugIn {
 	 * Test whether a command is handled by this class
 	 */
 	protected boolean isThisLanguage(String command) {
-		return command != null &&
-		    command.startsWith(getClass().getName() + "(\""
+		if (command == null) return false;
+		if (command.startsWith("ij.plugin.Macro_Runner(")) return true;
+		return command.startsWith(getClass().getName() + "(\""
 			+ Menus.getPlugInsPath()) &&
 		    command.endsWith(scriptExtension + "\")");
 	}

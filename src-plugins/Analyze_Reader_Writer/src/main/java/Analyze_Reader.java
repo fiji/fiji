@@ -16,50 +16,51 @@ import ij.measure.*;
 */
 
 
-public class Analyze_Reader implements PlugIn {
+public class Analyze_Reader extends ImagePlus implements PlugIn {
   
   public boolean littleEndian = false;
 
-  public void run(String arg) {
-    OpenDialog od = new OpenDialog("Open Analyze...", arg);
-    String directory = od.getDirectory();
-    String name = od.getFileName();
-    if (name==null)
-        return;
-    IJ.showStatus("Opening: " + directory + name);
-    ImagePlus imp = load(directory, name);
-    if (imp!=null) {
-	ImageStack stack = imp.getStack();
-	for (int i=1; i<=stack.getSize(); i++) {
-		ImageProcessor ip = stack.getProcessor(i);
-		ip.flipVertical();
+	public void run(String arg) {
+		OpenDialog od = new OpenDialog("Open Analyze...", arg);
+		String directory = od.getDirectory();
+		String name = od.getFileName();
+		if (name==null) return;
+		IJ.showStatus("Opening: " + directory + name);
+		FileInfo fi = load(directory, name);
+		FileOpener fo = new FileOpener(fi);  
+		ImagePlus imp = fo.open(false);
+		if (imp==null) return;
+		ImageStack stack = imp.getStack();
+		for (int i=1; i<=stack.getSize(); i++) {
+			ImageProcessor ip = stack.getProcessor(i);
+			ip.flipVertical();
+		}
+		if (imp.getStackSize()>1)
+			setStack(name, stack);
+		else
+			setProcessor(name, imp.getProcessor());
+		setCalibration(imp.getCalibration());
+		setFileInfo(fi); // needed for revert
+		if (arg.equals("")) show();
 	}
-        imp.show();
-    }
-  }
 
-  public ImagePlus load(String directory, String name) {
-    
-    FileInfo fi = new FileInfo(); 
-    if ((name == null) || (name == "")) return null;
-    if (name.endsWith(".img")||name.endsWith(".IMG"))
-        name = name.substring(0, name.length()-4 ); 
-    if (name.endsWith(".hdr")||name.endsWith(".HDR"))
-        name = name.substring(0, name.length()-4 ); 
-    IJ.showStatus("Loading Analyze File: " + directory + name);
-    
-    
-    try {
-      fi = readHeader( directory+name+".hdr" );
-      }
-      catch (IOException e) { IJ.log("Analyze Reader: "+ e.getMessage()); }
-      fi.fileName = name + ".img";
-      fi.directory = directory;
-      fi.fileFormat = fi.RAW;
-      FileOpener fo = new FileOpener(fi);  
-      ImagePlus imp = fo.open(false);
-      return imp; 
-    } 
+	FileInfo load(String directory, String name) {
+		FileInfo fi = new FileInfo(); 
+		if ((name == null) || (name == "")) return null;
+		if (name.endsWith(".img")||name.endsWith(".IMG"))
+			name = name.substring(0, name.length()-4 ); 
+		if (name.endsWith(".hdr")||name.endsWith(".HDR"))
+			name = name.substring(0, name.length()-4 ); 
+		IJ.showStatus("Loading Analyze File: " + directory + name);
+		try {
+			fi = readHeader( directory+name+".hdr" );
+		}
+		catch (IOException e) { IJ.log("Analyze Reader: "+ e.getMessage()); }
+		fi.fileName = name + ".img";
+		fi.directory = directory;
+		fi.fileFormat = fi.RAW;
+		return fi;
+	} 
  
   public FileInfo readHeader( String hdrfile ) throws IOException 
     {

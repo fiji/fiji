@@ -486,7 +486,7 @@ public class RandError extends Metrics
 		int[][]cont = new int[(int) cluster1.getMax() ] [ (int) cluster2.getMax() ];
 		
 		for(int i=0; i<n; i++)
-			cont[ pixels1[i] ] [ pixels2[i] ] ++;
+			cont[ pixels1[i] & 0xffff ] [ pixels2[i] & 0xffff ] ++;
 		
 		// sum over rows & columnns of nij^2
 		double t2 = 0;
@@ -571,7 +571,7 @@ public class RandError extends Metrics
 
 		for(int i=0; i<nPixels; i++)
 		{						
-			cont[ pixels1[i] ] [ pixels2[i] ] ++;
+			cont[ pixels1[i] & 0xffff ] [ pixels2[i] & 0xffff ] ++;
 			if( pixels1[ i ] > 0)
 				n++;
 		}
@@ -701,7 +701,7 @@ public class RandError extends Metrics
 
 			for(int i=0; i<nPixels; i++)
 			{						
-				cont[ pixels1[i] ] [ pixels2[i] ] ++;
+				cont[ pixels1[i] & 0xffff ] [ pixels2[i] & 0xffff ] ++;
 				if( pixels1[ i ] > 0)
 					n++;
 			}
@@ -838,7 +838,7 @@ public class RandError extends Metrics
 														
 				for(int i=0; i<nPixels; i++)
 				{						
-					cont[ pixels1[i] ] [ pixels2[i] ] ++;
+					cont[ pixels1[i] & 0xffff ] [ pixels2[i] & 0xffff ] ++;
 					if( pixels1[ i ] > 0)
 						n++;
 				}
@@ -983,7 +983,7 @@ public class RandError extends Metrics
 			double nPixels = pixels1.length;				
 
 			for(int i=0; i<nPixels; i++)									
-				pij[ pixels1[i] ] [ pixels2[i] ] ++;
+				pij[ pixels1[i] & 0xffff ] [ pixels2[i] & 0xffff ] ++;
 		}
 
 
@@ -1126,7 +1126,7 @@ public class RandError extends Metrics
 
 		for(int i=0; i<nPixels; i++)
 		{						
-			cont[ pixels1[i] ] [ pixels2[i] ] ++;
+			cont[ pixels1[i] & 0xffff ] [ pixels2[i] & 0xffff ] ++;
 			if( pixels1[ i ] > 0)
 				n++;
 		}

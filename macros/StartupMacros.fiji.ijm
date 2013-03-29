@@ -45,8 +45,20 @@ UseHEFT();
 
 // The macro named "AutoRun" runs when ImageJ starts.
 
-//macro "AutoRun" {}
-
+macro "AutoRun" {
+	// run all the .ijm scripts provided in macros/AutoRun/
+	autoRunDirectory = getDirectory("imagej") + "/macros/AutoRun/";
+	if (File.isDirectory(autoRunDirectory)) {
+		list = getFileList(autoRunDirectory);
+		// make sure startup order is consistent
+		Array.sort(list);
+		for (i = 0; i < list.length; i++) {
+			if (endsWith(list[i], ".ijm")) {
+				runMacro(autoRunDirectory + list[i]);
+			}
+		}
+	}
+}
 
 var pmCmds = newMenu("Popup Menu",
 	newArray("Help...", "Rename...", "Duplicate...", "Original Scale",

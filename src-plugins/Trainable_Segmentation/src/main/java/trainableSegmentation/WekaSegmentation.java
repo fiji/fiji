@@ -148,7 +148,7 @@ public class WekaSegmentation {
 	/** current number of classes */
 	private int numOfClasses = 0;
 	/** names of the current classes */
-	private String[] classLabels = new String[]{"class 1", "class 2", "class 3", "class 4", "class 5"};
+	private String[] classLabels = new String[MAX_NUM_CLASSES];
 
 	// Random Forest parameters
 	/** current number of trees in the fast random forest classifier */
@@ -215,6 +215,10 @@ public class WekaSegmentation {
 	 */
 	public WekaSegmentation(ImagePlus trainingImage)
 	{
+		// set class label names
+		for(int i=0; i<MAX_NUM_CLASSES; i++)
+			this.classLabels[ i ] = new String("class " + (i+1));
+		
 		this.trainingImage = trainingImage;
 
 		// Initialization of Fast Random Forest classifier
@@ -263,6 +267,10 @@ public class WekaSegmentation {
 	 */
 	public WekaSegmentation()
 	{
+		// set class label names
+		for(int i=0; i<MAX_NUM_CLASSES; i++)
+			this.classLabels[ i ] = new String("class " + (i+1));
+		
 		// Initialization of Fast Random Forest classifier
 		rf = new FastRandomForest();
 		rf.setNumTrees(numOfTrees);
@@ -1020,8 +1028,9 @@ public class WekaSegmentation {
 			// Update list of names of loaded classes
 			// (we assume the first two default class names)
 			loadedClassNames = new ArrayList<String>();
-			for(int i = 0; i < numOfClasses ; i ++)
+			for(int i = 0; i < numOfClasses ; i ++)			
 				loadedClassNames.add(getClassLabels()[i]);
+						
 			attributes.add(new Attribute("class", loadedClassNames));
 			loadedTrainingData = new Instances("segment", attributes, 1);
 
@@ -2143,7 +2152,6 @@ public class WekaSegmentation {
 
 		for(int i=1; i <= inputSlices.getSize(); i++)
 		{
-
 			// Process label pixels
 			final ImagePlus labelIP = new ImagePlus ("labels", labelSlices.getProcessor(i).duplicate());
 			// Make sure it's binary
@@ -3768,7 +3776,7 @@ public class WekaSegmentation {
 			IJ.log("Classifier training was interrupted.");
 			return false;
 		}
-		
+
 		// Train the classifier on the current data
 		final long start = System.currentTimeMillis();
 		try{

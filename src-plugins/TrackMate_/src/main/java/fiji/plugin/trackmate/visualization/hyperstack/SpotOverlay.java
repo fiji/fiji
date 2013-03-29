@@ -96,7 +96,7 @@ public class SpotOverlay extends Roi {
 		// Deal with normal spots.
 		g2d.setStroke(new BasicStroke(1.0f));
 		Color color;
-		for (Iterator<Spot> iterator = spots.iterator(true); iterator.hasNext();) {
+		for (Iterator<Spot> iterator = spots.iterator(frame, true); iterator.hasNext();) {
 			Spot spot = iterator.next();
 
 			if (editingSpot == spot || (spotSelection  != null && spotSelection.contains(spot)))
