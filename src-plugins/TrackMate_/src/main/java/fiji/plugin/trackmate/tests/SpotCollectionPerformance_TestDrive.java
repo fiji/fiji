@@ -10,16 +10,16 @@ import fiji.plugin.trackmate.SpotCollectionHashSet;
 public class SpotCollectionPerformance_TestDrive {
 
 	private static final int N_SPOTS = 500; // 1e3 / frame
-	private static final int N_FRAMES = 1000; // 1e5 spots total
+	private static final int N_FRAMES = 100; // 1e5 spots total
 	private static final Random ran = new Random();
 
 	public static void main(String[] args) {
 
 		RunnableTimer timer = new RunnableTimer();
 
-		System.out.println("----------------------------------------.");
-		System.out.println("Assessing ArrayList based SpotCollection.");
-		System.out.println("----------------------------------------.");
+		System.out.println("--------------------------------.");
+		System.out.println("Assessing current SpotCollection.");
+		System.out.println("--------------------------------.");
 		System.out.println();
 
 		System.out.println("Adding " + (N_FRAMES*N_SPOTS) + " spots to collection.");

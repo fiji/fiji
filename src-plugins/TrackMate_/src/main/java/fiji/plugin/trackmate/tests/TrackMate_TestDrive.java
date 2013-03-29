@@ -28,11 +28,11 @@ public class TrackMate_TestDrive {
 			return;
 		}
 		ImagePlus imp = IJ.openImage(file.getAbsolutePath());
-		IJ.run(imp, "Properties...", "channels=1 slices=1 frames=200 unit=um pixel_width=1.0000 pixel_height=1.0000 voxel_depth=1.0000 frame=[0 sec] origin=0,0");
+//		IJ.run(imp, "Properties...", "channels=1 slices=1 frames=200 unit=um pixel_width=1.0000 pixel_height=1.0000 voxel_depth=1.0000 frame=[0 sec] origin=0,0");
 		imp.show();
-		IJ.runMacro("makeRectangle(632, 323, 124, 98);");
-		IJ.run(imp, "Crop", "");
-		IJ.run(imp, "Subtract Background...", "rolling=50 stack");
+//		IJ.runMacro("makeRectangle(632, 323, 124, 98);");
+//		IJ.run(imp, "Crop", "");
+//		IJ.run(imp, "Subtract Background...", "rolling=50 stack");
 		
 		final TrackMate_ st = new TrackMate_();
 		System.out.println("Running the plugin...");
