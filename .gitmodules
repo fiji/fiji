@@ -18,7 +18,7 @@
 	url = http://fiji.sc/java/win64.git
 [submodule "mpicbg"]
 	path = modules/mpicbg
-	url = http://fiji.sc/mpicbg.git
+	url = https://github.com/axtimwalde/mpicbg
 [submodule "TrakEM2"]
 	path = modules/TrakEM2
 	url = ssh://mob@repo.or.cz/srv/git/trakem2.git
