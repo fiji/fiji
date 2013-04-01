@@ -31,9 +31,6 @@
 [submodule "imglib"]
 	path = modules/imglib
 	url = git://github.com/imagej/imglib
-[submodule "javassist"]
-	path = modules/javassist
-	url = http://fiji.sc/javassist/.git
 [submodule "imagej2"]
 	path = modules/imagej2
 	url = git://github.com/imagej/imagej
