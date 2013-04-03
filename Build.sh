@@ -214,7 +214,9 @@ ARGV0="$CWD/$0"
 SCIJAVA_COMMON="$CWD/modules/scijava-common"
 MAVEN_DOWNLOAD="$SCIJAVA_COMMON/bin/maven-helper.sh"
 maven_update () {
+	force_update=
 	uptodate "$ARGV0" "$MAVEN_DOWNLOAD" || {
+		force_update=t
 		if test -d "$SCIJAVA_COMMON/.git"
 		then
 			(cd "$SCIJAVA_COMMON" &&
@@ -236,6 +238,9 @@ maven_update () {
 		version="${artifactId#*:}"
 		artifactId="${artifactId%%:*}"
 		path="jars/$artifactId-$version.jar"
+
+		test -z "$force_update" ||
+		rm -f "$path"
 
 		(cd "$CWD"
 		 test -f jars/"$artifactId".jar && rm jars/"$artifactId".jar
@@ -284,9 +289,9 @@ EOF
 # make sure that javac and ij-minimaven are up-to-date
 VERSION=2.0.0-SNAPSHOT
 SCIJAVA_COMMON_VERSION=1.0.0-SNAPSHOT
-maven_update sc.fiji:javac:$VERSION
-maven_update net.imagej:ij-minimaven:$VERSION
-maven_update net.imagej:ij-updater-ssh:$VERSION
+maven_update sc.fiji:javac:$VERSION \
+	net.imagej:ij-minimaven:$VERSION \
+	net.imagej:ij-updater-ssh:$VERSION
 
 OPTIONS="-Dimagej.app.directory=\"$CWD\""
 while test $# -gt 0
