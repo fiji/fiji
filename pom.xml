@@ -26,6 +26,7 @@
 		<jfreechart.version>1.0.14</jfreechart.version>
 		<jsch.version>0.1.49</jsch.version>
 		<mpicbg.version>0.6.0-SNAPSHOT</mpicbg.version>
+		<rsyntaxtextarea.version>2.0.4.1</rsyntaxtextarea.version>
 		<trakem2.version>1.0b-SNAPSHOT</trakem2.version>
 	</properties>
 

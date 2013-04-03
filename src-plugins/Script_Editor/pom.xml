@@ -20,7 +20,7 @@
 		<dependency>
 			<groupId>com.fifesoft</groupId>
 			<artifactId>autocomplete</artifactId>
-			<version>0.4</version>
+			<version>${rsyntaxtextarea.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.commons</groupId>
@@ -70,7 +70,7 @@
 		<dependency>
 			<groupId>com.fifesoft</groupId>
 			<artifactId>rsyntaxtextarea</artifactId>
-			<version>1.4.1</version>
+			<version>${rsyntaxtextarea.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
