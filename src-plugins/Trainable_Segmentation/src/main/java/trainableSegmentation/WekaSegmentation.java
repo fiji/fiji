@@ -3532,19 +3532,19 @@ public class WekaSegmentation {
 		{
 			classes = new ArrayList<String>();
 			for(int i = 0; i < numOfClasses ; i ++)
-			{
-				// Do not add empty lists
+			{			
 				for(int n=0; n<trainingImage.getImageStackSize(); n++)
 				{
 					if(examples[n].get(i).size() > 0)
-					{
-						if(classes.contains(getClassLabels()[i]) == false)
-							classes.add(getClassLabels()[i]);
+					{						
 						numOfUsedClasses++;
-					}									
+					}											
 					numOfInstances += examples[n].get(i).size();
+					
+					if(classes.contains(getClassLabels()[i]) == false)
+						classes.add(getClassLabels()[i]);
 				}
-			}
+			}			
 		}
 		else
 		{
@@ -4979,11 +4979,9 @@ public class WekaSegmentation {
 		{
 			classNames = new ArrayList<String>();
 
-			for(int j=0; j<trainingImage.getImageStackSize(); j++)
-				for(int i = 0; i < numOfClasses; i++)					
-					if(examples[j].get(i).size() > 0)
-						if(false == classNames.contains(getClassLabels()[i]))
-							classNames.add(getClassLabels()[i]);
+			for(int i = 0; i < numOfClasses; i++)								
+				if(false == classNames.contains(getClassLabels()[i]))
+					classNames.add(getClassLabels()[i]);
 		}
 
 		// Create instances information (each instance needs a pointer to this)
