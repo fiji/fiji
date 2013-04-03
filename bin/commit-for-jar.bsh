@@ -1,0 +1,28 @@
+#!/bin/sh
+/*/. 2>/dev/null; exec "$(dirname "$0")"/ImageJ.sh "$0" "$@" # exec with fiji */
+
+if (bsh.args.length == 0) {
+	System.err.println("Usage: " + this.interpreter.getSourceFileInfo()
+		+ "<file.jar>...");
+	System.exit(1);
+}
+
+import java.util.jar.JarFile;
+
+for (String arg : bsh.args) try {
+	jar = new JarFile(arg);
+	manifest = jar.getManifest();
+	if (manifest == null) {
+		print("No manifest for " + arg);
+	} else {
+		attributes = manifest.getMainAttributes();
+		if (attributes == null) {
+			print("No main attributes for " + arg);
+		} else {
+			print("Commit for " + arg + ": " + attributes.getValue("Implementation-Build"));
+		}
+	}
+	jar.close();
+} catch (Throwable t) {
+	print("Could not read " + arg + ": " + t);
+}
