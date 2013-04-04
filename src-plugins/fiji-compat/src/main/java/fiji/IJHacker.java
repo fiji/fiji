@@ -30,7 +30,7 @@ import javassist.expr.MethodCall;
 import javassist.expr.NewExpr;
 
 public class IJHacker extends JavassistHelper {
-	public final static String appName = "Fiji";
+	public final static String appName = "(Fiji Is Just) ImageJ";
 
 	protected String replaceAppName = ".replace(\"ImageJ\", \"" + appName + "\")";
 
