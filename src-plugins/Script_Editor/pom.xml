@@ -20,7 +20,7 @@
 		<dependency>
 			<groupId>com.fifesoft</groupId>
 			<artifactId>autocomplete</artifactId>
-			<version>${rsyntaxtextarea.version}</version>
+			<version>${autocomplete.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.commons</groupId>
