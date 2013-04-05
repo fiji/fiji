@@ -36,12 +36,25 @@ sq_quote () {
 	echo "$1" | sed "s/[]\"\'\\\\(){}[\!\$ 	;]/\\\\&/g"
 }
 
+add_classpath () {
+	for arg
+	do
+		if test -z "$CLASSPATH"
+		then
+			CLASSPATH="$arg"
+		else
+			CLASSPATH="$CLASSPATH$PATHSEPARATOR$arg"
+		fi
+	done
+}
+
 first_java_options=
 java_options=
 ij_options=
 main_class=fiji.Main
 dashdash=f
 dry_run=
+CLASSPATH=
 
 while test $# -gt 0
 do
@@ -86,6 +99,12 @@ EOF
 		;;
 	?,--dry-run)
 		dry_run=t
+		;;
+	?,--cp=*)
+		add_classpath "${1#--cp=}"
+		;;
+	?,--classpath=*)
+		add_classpath "${1#--classpath=}"
 		;;
 	?,--headless)
 		first_java_options="$first_java_options -Djava.awt.headless=true"
@@ -185,23 +204,22 @@ case "$main_class" in
 fiji.Main|ij.ImageJ)
 	ij_options="$main_class -port7 $ij_options"
 	main_class="imagej.ClassLauncher -ijjarpath jars/ -ijjarpath plugins/"
-	CLASSPATH="$FIJI_ROOT/jars/ij-launcher.jar$PATHSEPARATOR$FIJI_ROOT/jars/ij.jar$PATHSEPARATOR$FIJI_ROOT/jars/javassist.jar"
+	add_classpath "$FIJI_ROOT/jars/ij-launcher.jar" "$FIJI_ROOT/jars/ij.jar" "$FIJI_ROOT/jars/javassist.jar"
 	;;
 fiji.build.Fake)
-	CLASSPATH="$(ls -t $(find $FIJI_ROOT/jars -name fake\*.jar) | head -n 1)"
+	add_classpath "$(ls -t $(find $FIJI_ROOT/jars -name fake\*.jar) | head -n 1)"
 	;;
 org.apache.tools.ant.Main)
-	CLASSPATH="$(discover_tools_jar)"
+	add_classpath "$(discover_tools_jar)"
 	for path in "$FIJI_ROOT"/jars/ant*.jar
 	do
-		CLASSPATH="$CLASSPATH${CLASSPATH:+$PATHSEPARATOR}$path"
+		add_classpath "$path"
 	done
 	;;
 *)
-	CLASSPATH=
 	for path in "$FIJI_ROOT"/jars/*.jar "$FIJI_ROOT"/plugins/*.jar
 	do
-		CLASSPATH="$CLASSPATH${CLASSPATH:+$PATHSEPARATOR}$path"
+		add_classpath "$path"
 	done
 esac
 
