@@ -54,6 +54,7 @@ ij_options=
 main_class=fiji.Main
 dashdash=f
 dry_run=
+needs_tools_jar=
 CLASSPATH=
 
 while test $# -gt 0
@@ -132,6 +133,22 @@ EOF
 	?,--main-class=*)
 		main_class="`expr "$1" : '--main-class=\(.*\)'`"
 		;;
+	?,--javac)
+		needs_tools_jar=t
+		main_class=com.sun.tools.javac.Main
+		;;
+	?,--javap)
+		needs_tools_jar=t
+		main_class=sun.tools.javap.Main
+		;;
+	?,--javah)
+		needs_tools_jar=t
+		main_class=com.sun.tools.javah.Main
+		;;
+	?,--javadoc)
+		needs_tools_jar=t
+		main_class=com.sun.tools.javadoc.Main
+		;;
 	?,--build)
 		echo 'WARNING: The Fiji Build system is DEPRECATED' >&2
 		echo 'Please use (Mini-)Maven instead!' >&2
@@ -144,6 +161,7 @@ EOF
 		main_class=fiji.updater.Main
 		;;
 	?,--ant)
+		needs_tools_jar=t
 		main_class=org.apache.tools.ant.Main
 		;;
 	f,*)
@@ -206,6 +224,17 @@ discover_jar () {
 	head -n 1
 }
 
+test -z "$needs_tools_jar" || {
+	add_classpath "$(discover_tools_jar)"
+	case "$main_class" in
+	*.ant.*)
+		;;
+	*)
+		ij_options="-classpath $CLASSPATH $ij_options"
+		;;
+	esac
+}
+
 case "$main_class" in
 fiji.Main|ij.ImageJ)
 	ij_options="$main_class -port7 $ij_options"
@@ -216,7 +245,6 @@ fiji.build.Fake)
 	add_classpath "$(discover_jar fake)"
 	;;
 org.apache.tools.ant.Main)
-	add_classpath "$(discover_tools_jar)"
 	for path in "$FIJI_ROOT"/jars/ant*.jar
 	do
 		add_classpath "$path"
