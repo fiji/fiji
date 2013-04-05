@@ -200,14 +200,20 @@ discover_tools_jar () {
 	fi
 }
 
+discover_jar () {
+	ls -t "$FIJI_ROOT/jars/${1%.jar}"*.jar |
+	grep "/${1%.jar}\(\|-[0-9].*\)\.jar$" |
+	head -n 1
+}
+
 case "$main_class" in
 fiji.Main|ij.ImageJ)
 	ij_options="$main_class -port7 $ij_options"
 	main_class="imagej.ClassLauncher -ijjarpath jars/ -ijjarpath plugins/"
-	add_classpath "$FIJI_ROOT/jars/ij-launcher.jar" "$FIJI_ROOT/jars/ij.jar" "$FIJI_ROOT/jars/javassist.jar"
+	add_classpath "$(discover_jar ij-launcher)" "$(discover_jar ij)" "$(discover_jar javassist)"
 	;;
 fiji.build.Fake)
-	add_classpath "$(ls -t $(find $FIJI_ROOT/jars -name fake\*.jar) | head -n 1)"
+	add_classpath "$(discover_jar fake)"
 	;;
 org.apache.tools.ant.Main)
 	add_classpath "$(discover_tools_jar)"
