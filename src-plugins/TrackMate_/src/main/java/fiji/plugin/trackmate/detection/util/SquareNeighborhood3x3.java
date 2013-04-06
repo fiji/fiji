@@ -17,7 +17,7 @@ public class SquareNeighborhood3x3 <T> implements Positionable, IterableInterval
 
 	private RandomAccessibleInterval<T> source;
 	private final long[] center;
-	private final SquareNeighborhoodCursor3x3<T> cursor;
+	private final ExtendedRandomAccessibleInterval<T, RandomAccessibleInterval<T>> extendedSource;
 	
 	/*
 	 * CONSTRUCTOR
@@ -27,8 +27,7 @@ public class SquareNeighborhood3x3 <T> implements Positionable, IterableInterval
 	public SquareNeighborhood3x3(RandomAccessibleInterval<T> source, OutOfBoundsFactory<T, RandomAccessibleInterval<T>> outOfBounds) {
 		this.source = source;
 		this.center = new long[source.numDimensions()];
-		ExtendedRandomAccessibleInterval<T, RandomAccessibleInterval<T>> extendedSource = Views.extend(source, outOfBounds);
-		this.cursor = new SquareNeighborhoodCursor3x3<T>(extendedSource, center);
+		this.extendedSource = Views.extend(source, outOfBounds);
 	}
 	
 	
@@ -44,7 +43,6 @@ public class SquareNeighborhood3x3 <T> implements Positionable, IterableInterval
 	@Override
 	public void fwd(int d) {
 		center[ d ]++;
-		cursor.reset();
 	}
 
 
@@ -52,19 +50,16 @@ public class SquareNeighborhood3x3 <T> implements Positionable, IterableInterval
 	@Override
 	public void bck(int d) {
 		center[ d ]--;
-		cursor.reset();
 	}
 
 	@Override
 	public void move(int distance, int d) {
 		center[ d ] = center [ d ] + distance;
-		cursor.reset();
 	}
 
 	@Override
 	public void move(long distance, int d) {
 		center[ d ] = center [ d ] + distance;
-		cursor.reset();
 	}
 
 	@Override
@@ -72,7 +67,6 @@ public class SquareNeighborhood3x3 <T> implements Positionable, IterableInterval
 		for (int i = 0; i < source.numDimensions(); i++) {
 			center [ i ] = center [ i ] + localizable.getLongPosition(i);
 		}		
-		cursor.reset();
 	}
 
 	@Override
@@ -80,7 +74,6 @@ public class SquareNeighborhood3x3 <T> implements Positionable, IterableInterval
 		for (int i = 0; i < distance.length; i++) {
 			center [ i ]  = center [ i ] + distance [ i ];
 		}
-		cursor.reset();
 	}
 
 	@Override
@@ -88,13 +81,11 @@ public class SquareNeighborhood3x3 <T> implements Positionable, IterableInterval
 		for (int i = 0; i < distance.length; i++) {
 			center [ i ]  = center [ i ] + distance [ i ];
 		}
-		cursor.reset();
 	}
 
 	@Override
 	public void setPosition(Localizable localizable) {
 		localizable.localize(center);
-		cursor.reset();
 	}
 
 	@Override
@@ -102,25 +93,21 @@ public class SquareNeighborhood3x3 <T> implements Positionable, IterableInterval
 		for (int i = 0; i < position.length; i++) {
 			center [ i ] = position[ i ];
 		}
-		cursor.reset();
 	}
 
 	@Override
 	public void setPosition(long[] position) {
 		System.arraycopy(position, 0, center, 0, center.length);
-		cursor.reset();
 	}
 
 	@Override
 	public void setPosition(int position, int d) {
 		center [ d ] = position;
-		cursor.reset();
 	}
 
 	@Override
 	public void setPosition(long position, int d) {
 		center [ d ] = position;
-		cursor.reset();
 	}
 
 	@Override
@@ -242,17 +229,17 @@ public class SquareNeighborhood3x3 <T> implements Positionable, IterableInterval
 
 	@Override
 	public SquareNeighborhoodCursor3x3<T> cursor() {
-		return cursor;
+		return  new SquareNeighborhoodCursor3x3<T>(extendedSource, center);
 	}
 
 	@Override
 	public SquareNeighborhoodCursor3x3<T> localizingCursor() {
-		return cursor;
+		return  new SquareNeighborhoodCursor3x3<T>(extendedSource, center);
 	}
 	
 	@Override
 	public Iterator<T> iterator() {
-		return cursor;
+		return  new SquareNeighborhoodCursor3x3<T>(extendedSource, center);
 	}
 
 }
