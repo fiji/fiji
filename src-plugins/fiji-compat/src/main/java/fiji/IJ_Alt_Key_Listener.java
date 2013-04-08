@@ -77,7 +77,7 @@ public class IJ_Alt_Key_Listener extends KeyAdapter implements FocusListener, Ru
 		if (e.getKeyCode() == KeyEvent.VK_ALT) {
 			altPressed = false;
 			if (pressedKeys == 1 && openMenu != null) {
-				new InvokeLater(25, openMenu).run();
+				new InvokeLater(25, openMenu).later(50);
 			}
 		}
 		pressedKeys = Math.max(0, pressedKeys - 1);

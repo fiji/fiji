@@ -15,6 +15,7 @@ import java.awt.EventQueue;
  * @author Johannes Schindelin
  */
 public class InvokeLater implements Runnable {
+	private long waitMillis;
 	private int count;
 	private final Runnable runnable;
 
@@ -30,8 +31,20 @@ public class InvokeLater implements Runnable {
 		this.runnable = runnable;
 	}
 
+	public void later(long millis) {
+		waitMillis = millis;
+		new Thread(this).start();
+	}
+
 	@Override
 	public void run() {
+		if (waitMillis > 0) try {
+			Thread.sleep(waitMillis);
+			waitMillis = 0;
+		} catch (InterruptedException e) {
+			// ignore and return
+			return;
+		}
 		if (--count <= 0) {
 			runnable.run();
 		} else {
