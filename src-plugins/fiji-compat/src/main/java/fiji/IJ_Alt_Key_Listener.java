@@ -19,11 +19,12 @@ import java.awt.event.MouseEvent;
 
 import java.lang.reflect.Method;
 
-public class IJ_Alt_Key_Listener extends KeyAdapter implements FocusListener {
-	boolean altPressed;
-	int pressedKeys;
-	Runnable openMenu = getOpener();
+public class IJ_Alt_Key_Listener extends KeyAdapter implements FocusListener, Runnable {
+	private boolean altPressed;
+	private int pressedKeys;
+	private final Runnable openMenu = getOpener();
 
+	@Override
 	public void run() {
 		if (removeRegisteredListeners()) {
 			if (IJ.debugMode)
@@ -62,12 +63,14 @@ public class IJ_Alt_Key_Listener extends KeyAdapter implements FocusListener {
 		return false;
 	}
 
+	@Override
 	public void keyPressed(KeyEvent e) {
 		if (pressedKeys == 0 && e.getKeyCode() == KeyEvent.VK_ALT)
 			altPressed = true;
 		pressedKeys++;
 	}
 
+	@Override
 	public void keyReleased(KeyEvent e) {
 		if (e.getKeyCode() == KeyEvent.VK_ALT) {
 			altPressed = false;
@@ -77,10 +80,12 @@ public class IJ_Alt_Key_Listener extends KeyAdapter implements FocusListener {
 		pressedKeys = Math.max(0, pressedKeys - 1);
 	}
 
+	@Override
 	public void focusGained(FocusEvent e) {
 		pressedKeys = 0;
 	}
 
+	@Override
 	public void focusLost(FocusEvent e) {
 		pressedKeys = 0;
 	}
@@ -102,6 +107,7 @@ public class IJ_Alt_Key_Listener extends KeyAdapter implements FocusListener {
 					new Class[] { KeyEvent.class });
 		method.setAccessible(true);
 		return new Runnable() {
+			@Override
 			public void run() {
 				KeyEvent event = new KeyEvent(IJ.getInstance(),
 					KeyEvent.VK_F10,
@@ -123,6 +129,7 @@ public class IJ_Alt_Key_Listener extends KeyAdapter implements FocusListener {
 		 * MacOSX to gain keyboard control to the menu bar.
 		 */
 		return new Runnable() {
+			@Override
 			public void run() {
 				try {
 					Robot robot = new Robot();
