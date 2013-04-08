@@ -3,6 +3,8 @@ package fiji;
 import ij.IJ;
 import ij.ImageJ;
 
+import fiji.gui.InvokeLater;
+
 import java.awt.AWTException;
 import java.awt.Menu;
 import java.awt.MenuBar;
@@ -74,8 +76,9 @@ public class IJ_Alt_Key_Listener extends KeyAdapter implements FocusListener, Ru
 	public void keyReleased(KeyEvent e) {
 		if (e.getKeyCode() == KeyEvent.VK_ALT) {
 			altPressed = false;
-			if (pressedKeys == 1 && openMenu != null)
-				openMenu.run();
+			if (pressedKeys == 1 && openMenu != null) {
+				new InvokeLater(25, openMenu).run();
+			}
 		}
 		pressedKeys = Math.max(0, pressedKeys - 1);
 	}
