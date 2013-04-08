@@ -30,7 +30,7 @@ import javassist.expr.MethodCall;
 import javassist.expr.NewExpr;
 
 public class IJHacker extends JavassistHelper {
-	public final static String appName = "Fiji";
+	public final static String appName = "(Fiji Is Just) ImageJ";
 
 	protected String replaceAppName = ".replace(\"ImageJ\", \"" + appName + "\")";
 
@@ -179,6 +179,9 @@ public class IJHacker extends JavassistHelper {
 		// tell the version() method to prefix the version with "Fiji/"
 		method = clazz.getMethod("version", "()Ljava/lang/String;");
 		method.insertAfter("$_ = \"" + appName + "/\" + $_;");
+		// tell the showStatus() method to show the version() instead of empty status
+		method = clazz.getMethod("showStatus", "(Ljava/lang/String;)V");
+		method.insertBefore("if ($1 == null || \"\".equals($1)) $1 = version();");
 		// tell the run() method to use "Fiji" instead of "ImageJ" in the Quit dialog
 		method = clazz.getMethod("run", "()V");
 		replaceAppNameInNew(method, "ij.gui.GenericDialog", 1, 2);

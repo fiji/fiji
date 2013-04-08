@@ -1,5 +1,7 @@
 package fiji.plugin.trackmate.detection.util;
 
+import java.util.NoSuchElementException;
+
 import net.imglib2.Bounded;
 import net.imglib2.Cursor;
 import net.imglib2.ExtendedRandomAccessibleInterval;
@@ -23,6 +25,7 @@ public class SquareNeighborhoodCursor3x3<T> implements Cursor<T>, Bounded {
 		this.source = extendedSource;
 		this.center = center;
 		this.ra = extendedSource.randomAccess();
+		reset();
 	}
 	
 	/*
@@ -110,12 +113,11 @@ public class SquareNeighborhoodCursor3x3<T> implements Cursor<T>, Bounded {
 			
 		case 8:
 			ra.bck(1);
+			hasNext = false;
 			break;
 
 		default:
-			index = 9;
-			hasNext = false;
-			break;
+			throw new NoSuchElementException("SquareNeighborhood3x3 exhausted");
 		}
 	}
 

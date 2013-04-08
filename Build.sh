@@ -11,6 +11,8 @@ CWD="$(dirname "$0")" || {
 	exit 1
 }
 
+# MinGW does not necessarily have dirname.exe
+
 dirname () {
 	case "$1" in
 	*/*)
@@ -36,6 +38,8 @@ get_java_home () {
 		fi
 	fi
 }
+
+# platform-specific stuff
 
 PATHSEP=:
 UNAME_S="$(uname -s)"
@@ -107,6 +111,7 @@ FreeBSD)
 	;;
 esac
 
+# Java
 
 test -n "$platform" &&
 test -z "$JAVA_HOME" &&
@@ -180,6 +185,8 @@ CYGWIN*)
 	;;
 esac
 
+# Thanks, MacOSX (or for that matter, BSD)
+
 get_mtime () {
         stat -c %Y "$1"
 }
@@ -189,6 +196,9 @@ then
                 stat -f %m "$1"
         }
 fi
+
+# figure out whether $1 is newer than $2, or if $2 is a SNAPSHOT .jar
+# whether it is older than a day
 
 uptodate () {
 	test -f "$2" &&
@@ -210,11 +220,15 @@ case "$CWD" in
 	;;
 esac
 
+# pseudo-Maven (thanks to SciJava's maven-helper)
+
 ARGV0="$CWD/$0"
 SCIJAVA_COMMON="$CWD/modules/scijava-common"
 MAVEN_DOWNLOAD="$SCIJAVA_COMMON/bin/maven-helper.sh"
 maven_update () {
+	force_update=
 	uptodate "$ARGV0" "$MAVEN_DOWNLOAD" || {
+		force_update=t
 		if test -d "$SCIJAVA_COMMON/.git"
 		then
 			(cd "$SCIJAVA_COMMON" &&
@@ -237,6 +251,9 @@ maven_update () {
 		artifactId="${artifactId%%:*}"
 		path="jars/$artifactId-$version.jar"
 
+		test -z "$force_update" ||
+		rm -f "$path"
+
 		(cd "$CWD"
 		 test -f jars/"$artifactId".jar && rm jars/"$artifactId".jar
 		 for file in jars/"$artifactId"-[0-9]*.jar
@@ -253,8 +270,7 @@ maven_update () {
 		 then
 			echo "Failure to download $path" >&2
 			exit 1
-		 fi
-		 touch "$path")
+		 fi)
 	done
 }
 
@@ -283,14 +299,13 @@ EOF
 }
 
 # make sure that javac and ij-minimaven are up-to-date
+
 VERSION=2.0.0-SNAPSHOT
-SCIJAVA_COMMON_VERSION=1.0.0-SNAPSHOT
-maven_update sc.fiji:javac:$VERSION
-maven_update org.scijava:scijava-common:$SCIJAVA_COMMON_VERSION
-maven_update net.imagej:ij-core:$VERSION
-maven_update net.imagej:ij-minimaven:$VERSION
-maven_update net.imagej:ij-updater-ssh:$VERSION
-maven_update net.imagej:ij-ui-swing-updater:$VERSION
+maven_update sc.fiji:javac:$VERSION \
+	net.imagej:ij-minimaven:$VERSION \
+	net.imagej:ij-updater-ssh:$VERSION
+
+# command-line options
 
 OPTIONS="-Dimagej.app.directory=\"$CWD\""
 while test $# -gt 0
@@ -311,6 +326,8 @@ do
 	esac
 	shift
 done
+
+# handle targets
 
 if test $# = 0
 then
