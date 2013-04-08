@@ -109,12 +109,14 @@ public class IJ_Alt_Key_Listener extends KeyAdapter implements FocusListener, Ru
 		return new Runnable() {
 			@Override
 			public void run() {
+				final ImageJ ij = IJ.getInstance();
+				if (ij == null ||!ij.isFocused()) return;
 				KeyEvent event = new KeyEvent(IJ.getInstance(),
 					KeyEvent.VK_F10,
 					System.currentTimeMillis(), 0,
 					KeyEvent.VK_F10);
 				try {
-					method.invoke(IJ.getInstance().getMenuBar().getPeer(),
+					method.invoke(ij.getMenuBar().getPeer(),
 						new Object[] { event });
 				} catch (Exception e) { /* ignore */ }
 			}
@@ -131,6 +133,8 @@ public class IJ_Alt_Key_Listener extends KeyAdapter implements FocusListener, Ru
 		return new Runnable() {
 			@Override
 			public void run() {
+				final ImageJ ij = IJ.getInstance();
+				if (ij == null ||!ij.isFocused()) return;
 				try {
 					Robot robot = new Robot();
 					robot.delay(10);
