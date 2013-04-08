@@ -955,11 +955,9 @@ public class InteractiveDoG implements PlugIn
 	
 	public static void main( String[] args )
 	{
-		//new InteractiveDoG().displaySliders();
-			
 		new ImageJ();
 		
-		ImagePlus imp = new Opener().openImage( "F:/Stephan/Drosophila/Live HisYFP/HIS-YFP-13.07.2008/crop_spim_TL18_Angle0.tif" );
+		ImagePlus imp = new Opener().openImage( "/Users/preibischs/Documents/Microscopy/SPIM/HisYFP-SPIM/spim_TL18_Angle0_cropped.tif" );
 		//ImagePlus imp = new Opener().openImage( "D:/Documents and Settings/Stephan/My Documents/Downloads/1-315--0.08-isotropic-subvolume/1-315--0.08-isotropic-subvolume.tif" );
 		imp.show();
 		

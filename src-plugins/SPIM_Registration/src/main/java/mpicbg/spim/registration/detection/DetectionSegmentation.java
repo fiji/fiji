@@ -191,6 +191,7 @@ public class DetectionSegmentation
 		
 	}
 
+	public static double computeK( final float stepsPerOctave ) { return Math.pow( 2f, 1f / stepsPerOctave ); }
 	public static double computeK( final int stepsPerOctave ) { return Math.pow( 2f, 1f / stepsPerOctave ); }
 	public static float computeKWeight( final float k ) { return 1.0f / (k - 1.0f); }
 	public static float[] computeSigma( final float k, final float initialSigma )
@@ -212,7 +213,7 @@ public class DetectionSegmentation
 
 		return sigmaDiff;
 	}
-	/*
+	
 	public static ArrayList< DifferenceOfGaussianPeak< FloatType > > extractBeadsIntegralImage( 
 			final ViewDataBeads view, final float minIntensity )
 	{
@@ -238,7 +239,7 @@ public class DetectionSegmentation
 		return null;
 	}
 	
-	final private static void computeDifferencOfMean( final Image< LongType> integralImg, final Image< FloatType > domImg, final int sx1, final int sy1, final int sz1, final int sx2, final int sy2, final int sz2, final float min, final float max  )
+	final public static void computeDifferencOfMean( final Image< LongType> integralImg, final Image< FloatType > domImg, final int sx1, final int sy1, final int sz1, final int sx2, final int sy2, final int sz2, final float min, final float max  )
 	{
 		final float sumPixels1 = sx1 * sy1 * sz1;
 		final float sumPixels2 = sx2 * sy2 * sz2;
@@ -310,7 +311,7 @@ public class DetectionSegmentation
         SimpleMultiThreading.startAndJoin( threads );
  	}
 	
-	**
+	/**
 	 * Compute the average in the area
 	 * 
 	 * @param fromX - start coordinate in x (exclusive in integral image coordinates, inclusive in image coordinates)
@@ -321,8 +322,8 @@ public class DetectionSegmentation
 	 * @param sZ - number of pixels in z
 	 * @param randomAccess - randomAccess on the integral image
 	 * @return
-	 *
-	final private static long computeSum( final int fromX, final int fromY, final int fromZ, final int vX, final int vY, final int vZ, final LocalizableByDimCursor< LongType > randomAccess )
+	 */
+	final public static long computeSum( final int fromX, final int fromY, final int fromZ, final int vX, final int vY, final int vZ, final LocalizableByDimCursor< LongType > randomAccess )
 	{
 		randomAccess.setPosition( fromX, 0 );
 		randomAccess.setPosition( fromY, 1 );
@@ -354,7 +355,7 @@ public class DetectionSegmentation
 		return sum;
 	}
 
-	final static void computeMinMax( final Image< FloatType > img, final FloatType min, final FloatType max )
+	final static public void computeMinMax( final Image< FloatType > img, final FloatType min, final FloatType max )
 	{
 		min.set( Float.MAX_VALUE );
 		max.set( Float.MIN_VALUE );
@@ -370,5 +371,4 @@ public class DetectionSegmentation
 				min.set( value );
 		}
 	}
-	*/
 }

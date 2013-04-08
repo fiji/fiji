@@ -35,6 +35,7 @@ import mpicbg.spim.io.ConfigurationParserException;
 import mpicbg.spim.io.IOFunctions;
 import mpicbg.spim.io.SPIMConfiguration;
 import mpicbg.spim.segmentation.InteractiveDoG;
+import mpicbg.spim.segmentation.InteractiveIntegral;
 import spimopener.SPIMExperiment;
 
 public class Bead_Registration implements PlugIn 
@@ -43,7 +44,9 @@ public class Bead_Registration implements PlugIn
 	final private String paperURL = "http://www.nature.com/nmeth/journal/v7/n6/full/nmeth0610-418.html";
 
 	final String beadRegistration[] = new String[] { "Single-channel", "Multi-channel (same beads visible in different channels)" };
-	static int defaultBeadRegistration = 0;
+	final String beadDetectionType[] = new String[] { "Difference-of-Gaussian", "Integral image" };
+	public static int defaultBeadRegistration = 0;
+	public static int defaultBeadDetectionType = 0;
 	
 	@Override
 	public void run(String arg0) 
@@ -54,6 +57,7 @@ public class Bead_Registration implements PlugIn
 		final GenericDialog gd = new GenericDialog( "Bead based registration" );
 		
 		gd.addChoice( "Select type of registration", beadRegistration, beadRegistration[ defaultBeadRegistration ] );		
+		gd.addChoice( "Select type of detection", beadDetectionType, beadDetectionType[ defaultBeadDetectionType ] );		
 		gd.addMessage( "Please note that the SPIM Registration is based on a publication.\n" +
 						"If you use it successfully for your research please be so kind to cite our work:\n" +
 						"Preibisch et al., Nature Methods (2010), 7(6):418-419\n" );
@@ -66,15 +70,15 @@ public class Bead_Registration implements PlugIn
 		if ( gd.wasCanceled() )
 			return;
 		
-		final int choice = gd.getNextChoiceIndex();
-		defaultBeadRegistration = choice;
-		
+		final int choice = defaultBeadRegistration = gd.getNextChoiceIndex();
+		final int choiceType = defaultBeadDetectionType = gd.getNextChoiceIndex();
+
 		final SPIMConfiguration conf;
 
 		if ( choice == 0 )
-			conf = singleChannel();
+			conf = singleChannel( choiceType );
 		else
-			conf = multiChannel();
+			conf = multiChannel( choiceType );
 		
 		// cancelled
 		if ( conf == null )
@@ -159,7 +163,7 @@ public class Bead_Registration implements PlugIn
 	
 	private SPIMConfiguration conf;
 
-	public SPIMConfiguration singleChannel()
+	public SPIMConfiguration singleChannel( final int choiceType ) // 0 == DoG, 1 = IntegralImage
 	{
 		conf = null;
 		final GenericDialogPlus gd = new GenericDialogPlus( "Single Channel Bead-based Registration" );
@@ -210,7 +214,7 @@ public class Bead_Registration implements PlugIn
 				{
 					if ( !gd.wasCanceled() )
 					{
-						conf = getConfigurationSingleChannel( dialog );
+						conf = getConfigurationSingleChannel( dialog, choiceType );
 					}
 					return true;
 				}
@@ -276,7 +280,7 @@ public class Bead_Registration implements PlugIn
 		return conf;
 	}
 
-	private static SPIMConfiguration getConfigurationSingleChannel( final GenericDialog gd )
+	private static SPIMConfiguration getConfigurationSingleChannel( final GenericDialog gd, final int choiceType ) // 0 == DoG, 1 = IntegralImage
 	{
 		spimDataDirectory = gd.getNextString();
 		fileNamePattern = gd.getNextString();
@@ -298,43 +302,90 @@ public class Bead_Registration implements PlugIn
 		
 		SPIMConfiguration conf = new SPIMConfiguration();
 		
-		if ( conf.initialSigma == null || conf.initialSigma.length != 1 )
-			conf.initialSigma = new float[]{ 1.8f };
-
-		if ( conf.minPeakValue == null || conf.minPeakValue.length != 1 )
-			conf.minPeakValue = new float[]{ 0.01f };
-
+		if ( conf.initialSigma == null || conf.initialSigma.length != 1 || conf.minPeakValue == null || conf.minPeakValue.length != 1 )
+		{
+				conf.initialSigma = new float[]{ 1.8f };
+				conf.minPeakValue = new float[]{ 0.01f };
+		}
+		
+		if ( conf.integralImgRadius1 == null || conf.integralImgRadius2 == null || conf.integralImgThreshold == null || 
+		     conf.integralImgRadius1.length != 1 || conf.integralImgRadius2.length != 1 || conf.integralImgThreshold.length != 1 )
+		{
+			conf.integralImgRadius1 = new int[]{ 3 };
+			conf.integralImgRadius2 = new int[]{ 5 };
+			conf.integralImgThreshold = new float[]{ 0.1f };
+		}
+			
 		if ( !loadSegmentation )
 		{
 			if ( defaultBeadBrightness == 0 )
+			{
 				conf.minPeakValue[ 0 ] = 0.001f;
+			}
 			else if ( defaultBeadBrightness == 1 )
+			{
 				conf.minPeakValue[ 0 ] = 0.008f;
+			}
 			else if ( defaultBeadBrightness == 2 )
+			{
 				conf.minPeakValue[ 0 ] = 0.03f;
+			}
 			else if ( defaultBeadBrightness == 3 )
+			{
 				conf.minPeakValue[ 0 ] = 0.1f;
+			}
 			else
 			{
 				// open advanced bead brightness detection
 				final double[] values;
 
 				if ( defaultBeadBrightness == 4 )
-					values = getAdvancedDoGParameters( new int[ 1 ] )[ 0 ];
+				{
+					if ( choiceType == 0 )
+						values = getAdvancedDoGParameters( new int[ 1 ] )[ 0 ];
+					else
+						values = getAdvancedIntegralImageParameters( new int[ 1 ] )[ 0 ];
+				}
 				else
 				{
-					values = new double[]{ conf.initialSigma[ 0 ], conf.minPeakValue[ 0 ] };
-					getInteractiveDoGParameters( "Select view to analyze", values );
+					if ( choiceType == 0 )
+					{
+						values = new double[]{ conf.initialSigma[ 0 ], conf.minPeakValue[ 0 ] };
+						getInteractiveDoGParameters( "Select view to analyze", values );
+						IJ.log( "sigma1 = " + values[ 0 ] );
+						IJ.log( "threshold = " + values[ 1 ] );
+					}
+					else
+					{
+						values = new double[]{ conf.integralImgRadius1[ 0 ], conf.integralImgRadius2[ 0 ], conf.integralImgThreshold[ 0 ] };
+						getInteractiveIntegralParameters( "Select view to analyze", values );
+						
+						IJ.log( "r1 = " + values[ 0 ] );
+						IJ.log( "r2 = " + values[ 1 ] );
+						IJ.log( "threshold = " + values[ 2 ] );
+					}
 				}
 
 				// cancelled
 				if ( values == null )
 					return null;
 
-				conf.initialSigma[ 0 ] = (float)values[ 0 ];
-				conf.minPeakValue[ 0 ] = (float)values[ 1 ];
+				if ( choiceType == 0 )
+				{
+					conf.initialSigma[ 0 ] = (float)values[ 0 ];
+					conf.minPeakValue[ 0 ] = (float)values[ 1 ];
+				}
+				else
+				{
+					conf.integralImgRadius1[ 0 ] = (int)Math.round( values[ 0 ] );
+					conf.integralImgRadius2[ 0 ] = (int)Math.round( values[ 1 ] );
+					conf.integralImgThreshold[ 0 ] = (float)values[ 2 ];
+					
+					conf.useIntegralImages = true;
+				}
 			}
 		}
+		
 		conf.minInitialPeakValue = new float[]{ conf.minPeakValue[ 0 ]/4 };
 
 		conf.timepointPattern = timepoints;
@@ -392,7 +443,7 @@ public class Bead_Registration implements PlugIn
 	public static String channelsBeadsMC = "0, 1";
 	public static int[] defaultBeadBrightnessMC = null;
 
-	public SPIMConfiguration multiChannel()
+	public SPIMConfiguration multiChannel( final int choiceType ) // 0 == DoG, 1 = IntegralImage
 	{
 		conf = null;
 		// The first main dialog
@@ -720,18 +771,18 @@ public class Bead_Registration implements PlugIn
 		return conf;
 	}
 	
-	static double[][] dogParameters = null;
+	static double[][] defaultDoGParameters = null; //[channel][sigma, threshold]
 	
 	public static double[][] getAdvancedDoGParameters( final int[] channelIndices )
 	{
 		if ( channelIndices == null || channelIndices.length == 0 )
 			return null;
 		
-		if ( dogParameters == null || dogParameters.length != channelIndices.length )
+		if ( defaultDoGParameters == null || defaultDoGParameters.length != channelIndices.length )
 		{
-			dogParameters = new double[ channelIndices.length ][ 2 ];
+			defaultDoGParameters = new double[ channelIndices.length ][ 2 ];
 			
-			for ( final double dog[] : dogParameters )
+			for ( final double dog[] : defaultDoGParameters )
 			{
 				dog[ 0 ] = 1.8;
 				dog[ 1 ] = 0.008;
@@ -744,8 +795,8 @@ public class Bead_Registration implements PlugIn
 		{
 			final int channel = channelIndices[ i ];
 
-			gd.addNumericField( "Channel_" + channel + "_Initial_sigma", dogParameters[ i ][ 0 ], 4 );
-			gd.addNumericField( "Channel_" + channel + "_Threshold", dogParameters[ i ][ 1 ], 4 );
+			gd.addNumericField( "Channel_" + channel + "_Initial_sigma", defaultDoGParameters[ i ][ 0 ], 4 );
+			gd.addNumericField( "Channel_" + channel + "_Threshold", defaultDoGParameters[ i ][ 1 ], 4 );
 		}
 		
 		gd.showDialog();
@@ -755,11 +806,73 @@ public class Bead_Registration implements PlugIn
 		
 		for ( int i = 0; i < channelIndices.length; ++i )
 		{
-			dogParameters[ i ][ 0 ] = gd.getNextNumber();
-			dogParameters[ i ][ 1 ] = gd.getNextNumber();
+			defaultDoGParameters[ i ][ 0 ] = gd.getNextNumber();
+			defaultDoGParameters[ i ][ 1 ] = gd.getNextNumber();
 		}
 		
-		return dogParameters.clone();
+		return defaultDoGParameters.clone();
+	}
+	
+	static double[] defaultintegralParameters = null;//channel[threshold]
+	static int[][] defaultIntegralRadius = null;//channel[r1, r2, threshold]
+	
+	public static double[][] getAdvancedIntegralImageParameters( final int[] channelIndices )
+	{
+		if ( channelIndices == null || channelIndices.length == 0 )
+			return null;
+		
+		if ( defaultintegralParameters == null || defaultintegralParameters.length != channelIndices.length || defaultIntegralRadius == null || defaultIntegralRadius.length != channelIndices.length )
+		{
+			defaultintegralParameters = new double[ channelIndices.length ];
+			defaultIntegralRadius = new int[ channelIndices.length ][ 2 ];
+			
+			for ( int i = 0; i < channelIndices.length; ++i )
+			{
+				defaultintegralParameters[ i ] = 0.1;
+				defaultIntegralRadius[ i ][ 0 ] = 2; // r=3
+				defaultIntegralRadius[ i ][ 1 ] = 4; // r=5
+			}
+		}
+
+		final GenericDialog gd = new GenericDialog( "Select Integral Image Parameters" );
+		
+		for ( int i = 0; i < channelIndices.length; ++i )
+		{
+			final int channel = channelIndices[ i ];
+
+			gd.addNumericField( "Channel_" + channel + "_radius_1", defaultIntegralRadius[ i ][ 0 ], 0 );
+			gd.addNumericField( "Channel_" + channel + "_radius_2", defaultIntegralRadius[ i ][ 1 ], 0 );
+			gd.addNumericField( "Channel_" + channel + "_Threshold", defaultintegralParameters[ i ], 4 );
+		}
+		
+		gd.showDialog();
+		
+		if ( gd.wasCanceled() )
+			return null;
+		
+		final double[][] integralParameters = new double[ channelIndices.length ][ 3 ];
+		
+		for ( int i = 0; i < channelIndices.length; ++i )
+		{
+			defaultIntegralRadius[ i ][ 0 ] = (int)Math.round( gd.getNextNumber() );
+			defaultIntegralRadius[ i ][ 1 ] = (int)Math.round( gd.getNextNumber() );
+			defaultintegralParameters[ i ] = gd.getNextNumber();
+						
+			if ( defaultIntegralRadius[ i ][ 0 ] < 1 )
+				defaultIntegralRadius[ i ][ 0 ] = 1;
+			
+			if ( defaultIntegralRadius[ i ][ 1 ] < defaultIntegralRadius[ i ][ 0 ] )
+				defaultIntegralRadius[ i ][ 1 ] = defaultIntegralRadius[ i ][ 0 ] + 1;
+			
+			if ( defaultintegralParameters[ i ] <= 0 )
+				defaultintegralParameters[ i ] = Float.MIN_VALUE;
+			
+			integralParameters[ i ][ 0 ] = defaultIntegralRadius[ i ][ 0 ];
+			integralParameters[ i ][ 1 ] = defaultIntegralRadius[ i ][ 1 ];
+			integralParameters[ i ][ 2 ] = defaultintegralParameters[ i ];
+		}
+		
+		return integralParameters;
 	}
 	
 	/**
@@ -832,6 +945,58 @@ public class Bead_Registration implements PlugIn
 			values[ 1 ] = idog.getSigma2();						
 			values[ 2 ] = idog.getThreshold();			
 		}
+	}
+
+	/**
+	 * Can be called with values[ 3 ], i.e. [r1, r2, threshold] (r2 is only written as result)
+	 * 
+	 * The results are stored in the same array.
+	 * 
+	 * @param text - the text which is shown when asking for the file
+	 * @param values - the intial values and also contains the result
+	 */
+	public static void getInteractiveIntegralParameters( final String text, final double values[] )
+	{
+		final GenericDialogPlus gd = new GenericDialogPlus( text );		
+		gd.addFileField( "", spimDataDirectory, 50 );		
+		gd.showDialog();
+		
+		if ( gd.wasCanceled() )
+			return;
+		
+		final String file = gd.getNextString();
+		
+		IOFunctions.println( "Loading " + file );
+		final Image<FloatType> img = LOCI.openLOCIFloatType( file, new ArrayContainerFactory() );
+		
+		if ( img == null )
+		{
+			IOFunctions.println( "File not found: " + file );
+			return;
+		}
+		
+		img.getDisplay().setMinMax();
+		final ImagePlus imp = ImageJFunctions.copyToImagePlus( img );
+		img.close();
+		
+		imp.show();		
+		imp.setSlice( imp.getStackSize() / 2 );	
+		
+		final InteractiveIntegral ii = new InteractiveIntegral();
+		
+		ii.setInitialRadius( Math.round( (float)values[ 0 ] ) );
+		ii.setThreshold( (float)values[ 2 ] );
+		
+		ii.run( null );
+		
+		while ( !ii.isFinished() )
+			SimpleMultiThreading.threadWait( 100 );
+		
+		imp.close();
+		
+		values[ 0 ] = ii.getRadius1();
+		values[ 1 ] = ii.getRadius2();
+		values[ 2 ] = ii.getThreshold();
 	}
 
 	protected static boolean init( final SPIMConfiguration conf )

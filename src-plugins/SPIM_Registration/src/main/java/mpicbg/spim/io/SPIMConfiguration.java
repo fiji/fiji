@@ -127,6 +127,12 @@ public class SPIMConfiguration
 	public boolean detectSmallestStructures = false;
 	public int scaleSpaceNumberOfThreads = 0;
 
+	// Integral image parameters
+	public boolean useIntegralImages = false;
+	public int[] integralImgRadius1 = new int[]{ 3 };
+	public int[] integralImgRadius2 = new int[]{ 5 };
+	public float[] integralImgThreshold = new float[]{ 0.1f };
+	
 	// PointDescriptor properties
 	public double differenceThreshold = 50;
 	public double ratioOfDistance = 10;
