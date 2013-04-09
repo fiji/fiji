@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+		http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<parent>
+		<groupId>sc.fiji</groupId>
+		<artifactId>pom-fiji-plugins</artifactId>
+		<version>0.1.0-SNAPSHOT</version>
+	</parent>
+
+	<artifactId>TrakEM2_Archipelago</artifactId>
+
+	<name>plugins/TrakEM2_Archipelago.jar</name>
+	<description>TrakEM2 Support for Fiji Archipelago</description>
+
+	<dependencies>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>TrakEM2_</artifactId>
+			<version>1.0b-SNAPSHOT</version>
+		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>Fiji_Archipelago</artifactId>
+			<version>2.0.0-SNAPSHOT</version>
+		</dependency>
+	</dependencies>
+
+	<!-- NB: for project parent -->
+	<repositories>
+		<repository>
+			<id>imagej.releases</id>
+			<url>http://maven.imagej.net/content/repositories/releases</url>
+		</repository>
+		<repository>
+			<id>imagej.snapshots</id>
+			<url>http://maven.imagej.net/content/repositories/snapshots</url>
+		</repository>
+		<!-- NB: for JAI -->
+		<repository>
+			<id>JBoss 3rdparty</id>
+			<url>https://repository.jboss.org/nexus/content/repositories/thirdparty-releases</url>
+		</repository>
+	</repositories>
+
+</project>
