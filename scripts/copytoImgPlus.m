@@ -41,7 +41,7 @@ function imgplus = copytoImgPlus(I, calibration, name, axes)
 %   imgplus = copytoImgPlus(X, [0.2 0.7], 'Dürer', { 'Y' , 'X' });
 %   net.imglib2.img.display.imagej.ImageJFunctions.show(imgplus);
 %
-% see also: copytoImg
+% see also: copytoImg, copytoMatlab
 % Jean-Yves Tinevez - 2013
 
 

@@ -21,7 +21,7 @@ function img = copytoImg(I)
 %   img = copytoImg(X);
 %   net.imglib2.img.display.imagej.ImageJFunctions.show(img);
 %
-% see also: copytoImgPlus
+% see also: copytoImgPlus, copytoMatlab
 % Jean-Yves Tinevez - 2013
 
 % Permute dim 0 and 1 (X & Y) so that we match MATLAB convention in ImgLib
