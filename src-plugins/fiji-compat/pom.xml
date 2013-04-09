@@ -27,6 +27,11 @@
 			<artifactId>javassist</artifactId>
 			<version>3.16.1-GA</version>
 		</dependency>
+		<dependency>
+			<groupId>${scijava-common.groupId}</groupId>
+			<artifactId>scijava-common</artifactId>
+			<version>${scijava-common.version}</version>
+		</dependency>
 	</dependencies>
 
 	<build>
