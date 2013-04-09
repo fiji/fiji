@@ -23,11 +23,6 @@
 			<version>${imagej1.version}</version>
 		</dependency>
 		<dependency>
-			<groupId>sc.fiji</groupId>
-			<artifactId>TrakEM2_</artifactId>
-			<version>1.0b-SNAPSHOT</version>
-		</dependency>
-		<dependency>
                         <groupId>com.jcraft</groupId>
                         <artifactId>jsch</artifactId>
                         <version>${jsch.version}</version>
