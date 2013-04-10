@@ -32,13 +32,17 @@ public class ZLibAnalyzer {
 		for (;;) {
 			input.mark(buffer.length + 1);
 			int len = input.read(buffer);
-			if (len < 0)
+			if (len < 0) {
+				input.close();
 				return -1;
+			}
 			if (len < 2) {
 				int len2 = input.read(buffer,
 						len, buffer.length - len);
-				if (len2 < 0)
+				if (len2 < 0) {
+					input.close();
 					return -1;
+				}
 				len += len2;
 			}
 			for (int i = 0; i < len - 1; i++)
@@ -51,9 +55,10 @@ public class ZLibAnalyzer {
 						+ (offset + i));
 					input.reset();
 					input.skip(offset + i);
-					return copy(
-						new InflaterInputStream(input),
-							out, buffer);
+					final InputStream inflater = new InflaterInputStream(input);
+					int result = copy(inflater, out, buffer);
+					inflater.close();
+					return result;
 				}
 			offset += len;
 		}
