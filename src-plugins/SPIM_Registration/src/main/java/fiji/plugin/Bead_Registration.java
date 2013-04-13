@@ -436,9 +436,9 @@ public class Bead_Registration implements PlugIn
 		{
 			GenericDialog gdGauss = new GenericDialog( "Gauss options" );
 
-			gdGauss.addMessage( "The re-localization using a Gaussian fit will be" );
-			gdGauss.addMessage( "performed after the registration on the true" );
-			gdGauss.addMessage( "correspondences only." );
+			gdGauss.addMessage( "The re-localization using a Gaussian fit will be\n" +
+								"performed after the registration for the true\n" +
+								"corresponding beads only." );
 			gdGauss.addCheckbox( "Keep_images_open", keepImagesOpen );
 			
 			gdGauss.showDialog();
