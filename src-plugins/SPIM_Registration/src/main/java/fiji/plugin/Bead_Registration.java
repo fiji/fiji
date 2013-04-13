@@ -148,6 +148,7 @@ public class Bead_Registration implements PlugIn
 	public static String angles = "0-270:45";
 	
 	public static boolean loadSegmentation = false;
+	public static boolean relocalize = false;
 	public static String[] beadBrightness = { "Very weak", "Weak", "Comparable to Sample", "Strong", "Advanced ...", "Interactive ..." };	
 	public static int defaultBeadBrightness = 1;
 	public static boolean overrideResolution = false;
@@ -179,7 +180,8 @@ public class Bead_Registration implements PlugIn
 		
 		gd.addMessage( "" );		
 		
-		gd.addCheckbox( "Re-use_segmented_beads", loadSegmentation );
+		gd.addCheckbox( "Load_segmented_beads", loadSegmentation );
+		gd.addCheckbox( "Localize_true_beads_with_gauss_fit", relocalize );
 		gd.addChoice( "Bead_brightness", beadBrightness, beadBrightness[ defaultBeadBrightness ] );
 		gd.addCheckbox( "Override_file_dimensions", overrideResolution );
 		final Checkbox dimensionsBox = (Checkbox)gd.getCheckboxes().lastElement();
@@ -287,6 +289,7 @@ public class Bead_Registration implements PlugIn
 		angles = gd.getNextString();
 		
 		loadSegmentation = gd.getNextBoolean();
+		relocalize = gd.getNextBoolean();
 		defaultBeadBrightness = gd.getNextChoiceIndex();
 		overrideResolution = gd.getNextBoolean();
 		xyRes = gd.getNextNumber();
@@ -302,8 +305,8 @@ public class Bead_Registration implements PlugIn
 		
 		if ( conf.initialSigma == null || conf.initialSigma.length != 1 || conf.minPeakValue == null || conf.minPeakValue.length != 1 )
 		{
-				conf.initialSigma = new float[]{ 1.8f };
-				conf.minPeakValue = new float[]{ 0.01f };
+			conf.initialSigma = new float[]{ 1.8f };
+			conf.minPeakValue = new float[]{ 0.01f };
 		}
 		
 		if ( conf.integralImgRadius1 == null || conf.integralImgRadius2 == null || conf.integralImgThreshold == null || 
@@ -319,18 +322,22 @@ public class Bead_Registration implements PlugIn
 			if ( defaultBeadBrightness == 0 )
 			{
 				conf.minPeakValue[ 0 ] = 0.001f;
+				conf.integralImgThreshold[ 0 ] = 0.025f;
 			}
 			else if ( defaultBeadBrightness == 1 )
 			{
 				conf.minPeakValue[ 0 ] = 0.008f;
+				conf.integralImgThreshold[ 0 ] = 0.02f;
 			}
 			else if ( defaultBeadBrightness == 2 )
 			{
 				conf.minPeakValue[ 0 ] = 0.03f;
+				conf.integralImgThreshold[ 0 ] = 0.075f;
 			}
 			else if ( defaultBeadBrightness == 3 )
 			{
 				conf.minPeakValue[ 0 ] = 0.1f;
+				conf.integralImgThreshold[ 0 ] = 0.25f;
 			}
 			else
 			{
@@ -417,6 +424,9 @@ public class Bead_Registration implements PlugIn
 		}
 
 		conf.overrideImageZStretching = overrideResolution;
+		
+		if ( relocalize )
+			conf.doGaussFit = true;
 
 		if ( overrideResolution )
 			conf.zStretching = zRes / xyRes;

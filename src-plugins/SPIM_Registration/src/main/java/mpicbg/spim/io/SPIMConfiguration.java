@@ -105,6 +105,9 @@ public class SPIMConfiguration
 	public double zStretching = 1;
 	public int background = 0;
 
+	// re-localize true correspondences with a gauss fit?
+	public boolean doGaussFit = false;
+	
 	// by default we do a DoG
 	public SegmentationTypes segmentation = SegmentationTypes.DOG;
 	
