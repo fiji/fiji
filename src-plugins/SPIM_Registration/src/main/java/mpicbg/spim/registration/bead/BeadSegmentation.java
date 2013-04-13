@@ -1,38 +1,40 @@
 package mpicbg.spim.registration.bead;
 
-import ij.IJ;
-
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.vecmath.Point3d;
 import javax.vecmath.Point3i;
 
+import mpicbg.imglib.algorithm.integral.IntegralImageLong;
 import mpicbg.imglib.algorithm.math.LocalizablePoint;
 import mpicbg.imglib.algorithm.scalespace.DifferenceOfGaussianPeak;
 import mpicbg.imglib.algorithm.scalespace.DifferenceOfGaussianReal1;
 import mpicbg.imglib.algorithm.scalespace.SubpixelLocalization;
 import mpicbg.imglib.cursor.LocalizableByDimCursor3D;
 import mpicbg.imglib.cursor.special.HyperSphereIterator;
+import mpicbg.imglib.function.Converter;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.image.ImageFactory;
 import mpicbg.imglib.image.display.imagej.ImageJFunctions;
 import mpicbg.imglib.multithreading.SimpleMultiThreading;
 import mpicbg.imglib.outofbounds.OutOfBoundsStrategyValueFactory;
 import mpicbg.imglib.type.numeric.integer.IntType;
+import mpicbg.imglib.type.numeric.integer.LongType;
 import mpicbg.imglib.type.numeric.real.FloatType;
 import mpicbg.imglib.util.Util;
-import mpicbg.models.IllDefinedDataPointsException;
-import mpicbg.models.NotEnoughDataPointsException;
 import mpicbg.spim.io.IOFunctions;
 import mpicbg.spim.io.SPIMConfiguration;
+import mpicbg.spim.io.SPIMConfiguration.SegmentationTypes;
 import mpicbg.spim.registration.ViewDataBeads;
 import mpicbg.spim.registration.ViewStructure;
 import mpicbg.spim.registration.bead.laplace.LaPlaceFunctions;
+import mpicbg.spim.registration.detection.DetectionSegmentation;
 import mpicbg.spim.registration.threshold.ComponentProperties;
 import mpicbg.spim.registration.threshold.ConnectedComponent;
+import mpicbg.spim.segmentation.InteractiveIntegral;
+import mpicbg.spim.segmentation.SimplePeak;
 
 public class BeadSegmentation
 {	
@@ -56,102 +58,55 @@ public class BeadSegmentation
 		//
 		// Extract the beads
 		// 		
-		if ( conf.multiThreadedOpening )
+		for ( final ViewDataBeads view : views )
 		{
-			final int numThreads = views.size();
-			
-			for ( final ViewDataBeads view : views )
-				if ( view.getUseForRegistration() )
-					view.getImage();
-
-			final AtomicInteger ai = new AtomicInteger(0);					
-	        Thread[] threads = SimpleMultiThreading.newThreads( numThreads );
-
-			for (int ithread = 0; ithread < threads.length; ++ithread)
-	            threads[ithread] = new Thread(new Runnable()
-	            {
-	                public void run()
-	                {
-	                    final int myNumber = ai.getAndIncrement();
-
-	                    final ViewDataBeads view = views.get( myNumber );
-	                    
-	                    if ( view.getUseForRegistration() )
-	                    {	                    
-		        			if (conf.useScaleSpace)					
-		        			{
-		        	    		if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_MAIN )
-		        	    			IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Starting Scale Space Bead Extraction for " + view.getName() );
-		        				
-		        	    		view.setBeadStructure( extractBeadsLaPlaceImgLib( view, conf ) );
-
-		        				view.closeImage();
-		        			}
-		        			else
-		        			{
-		        	    		if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_MAIN )
-		        	    			IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Starting Threshold Bead Extraction");					
-		        				
-		        				view.setBeadStructure( extractBeadsThresholdSegmentation( view, threshold, conf.minSize, conf.maxSize, conf.minBlackBorder) );
-		        				
-		        				view.closeImage();				
-		        			}
-		        				
-		        			if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_MAIN )
-		        				IOFunctions.println( "Found peaks (possible beads): " + view.getBeadStructure().getBeadList().size() );
-		        			
-		        			//
-		        			// Store segmentation in a file
-		        			//
-		        			if ( conf.writeSegmentation )
-		        				IOFunctions.writeSegmentation( view, conf.registrationFiledirectory );
-	                    }
-	                }
-	            });
-			
-			SimpleMultiThreading.startAndJoin( threads );
-		}
-		else
-		{		
-			for ( final ViewDataBeads view : views )
+			if ( conf.segmentation == SegmentationTypes.DOG )					
 			{
-				if (conf.useScaleSpace)					
-				{
-		    		if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_MAIN )
-		    			IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Starting Scale Space Bead Extraction for " + view.getName() );
-					
-		    		view.setBeadStructure( extractBeadsLaPlaceImgLib( view, conf ) );
-		    		
-		    		if ( debugBeads )
-		    		{
-						Image<FloatType> img = getFoundBeads( view );				
-						img.setName( "imglib" );
-						img.getDisplay().setMinMax();
-						ImageJFunctions.copyToImagePlus( img ).show();				
-						SimpleMultiThreading.threadHaltUnClean();		    			
-		    		}
-		    		
-					view.closeImage();
-				}
-				else
-				{
-		    		if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_MAIN )
-		    			IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Starting Threshold Bead Extraction");					
-					
-					view.setBeadStructure( extractBeadsThresholdSegmentation( view, threshold, conf.minSize, conf.maxSize, conf.minBlackBorder) );
-					
-					view.closeImage();				
-				}
-					
-				if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_MAIN )
-					IOFunctions.println( "Found peaks (possible beads): " + view.getBeadStructure().getBeadList().size() );
+	    		if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_MAIN )
+	    			IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Starting Scale Space Bead Extraction for " + view.getName() );
 				
-				//
-				// Store segmentation in a file
-				//
-				if ( conf.writeSegmentation )
-					IOFunctions.writeSegmentation( view, conf.registrationFiledirectory );										
+	    		view.setBeadStructure( extractBeadsLaPlaceImgLib( view, conf ) );
+	    		
+	    		if ( debugBeads )
+	    		{
+					Image<FloatType> img = getFoundBeads( view );				
+					img.setName( "imglib" );
+					img.getDisplay().setMinMax();
+					ImageJFunctions.copyToImagePlus( img ).show();				
+					SimpleMultiThreading.threadHaltUnClean();		    			
+	    		}
 			}
+			else if ( conf.segmentation == SegmentationTypes.THRESHOLD )
+			{
+	    		if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_MAIN )
+	    			IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Starting Threshold Bead Extraction");					
+				
+				view.setBeadStructure( extractBeadsThresholdSegmentation( view, threshold, conf.minSize, conf.maxSize, conf.minBlackBorder) );
+			}
+			else if ( conf.segmentation == SegmentationTypes.DOM )
+			{
+	    		if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_MAIN )
+	    			IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Starting Integral Image based DOM Bead Extraction");
+	    		
+				view.setBeadStructure( extractBeadsDOM( view ) );
+				//TODO: add integral difference of mean
+			}
+			else
+			{
+				throw new RuntimeException( "Unknown segmentation: " + conf.segmentation );
+			}
+			
+			// close the image
+			view.closeImage();
+
+			if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_MAIN )
+				IOFunctions.println( "Found peaks (possible beads): " + view.getBeadStructure().getBeadList().size() );
+			
+			//
+			// Store segmentation in a file
+			//
+			if ( conf.writeSegmentation )
+				IOFunctions.writeSegmentation( view, conf.registrationFiledirectory );										
 		}
 	}
 		
@@ -179,7 +134,86 @@ public class BeadSegmentation
 
 		return img;
 	}
-			
+
+	/**
+	 * Computes potential beads based on the difference-of-mean (DOM). The computation of the DOM is based on
+	 * integral images for high performance
+	 *  
+	 * @param view
+	 * @param conf
+	 * @return
+	 */
+	protected BeadStructure extractBeadsDOM( final ViewDataBeads view )
+	{
+		if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_MAIN )
+			IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Opening Image");					
+
+		final Image< FloatType > img = view.getImage( false ); 
+		
+		if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_MAIN )
+			IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Computing Integral Image");					
+
+		final IntegralImageLong< FloatType > intImg = new IntegralImageLong<FloatType>( img, new Converter< FloatType, LongType >()
+		{
+			@Override
+			public void convert( final FloatType input, final LongType output ) { output.set( Util.round( input.get() ) ); } 
+		} 
+		);
+		
+		intImg.process();
+		
+		final Image< LongType > integralImg = intImg.getResult();
+
+		final FloatType min = new FloatType();
+		final FloatType max = new FloatType();
+		
+		DetectionSegmentation.computeMinMax( img, min, max );
+				
+		// in-place
+		final int r1 = view.getIntegralRadius1();
+		final int r2 = view.getIntegralRadius2();
+		final float t = view.getIntegralThreshold();
+		
+		final int s1 = r1*2 + 1;
+		final int s2 = r2*2 + 1;
+
+		System.out.println( r1 + " " + r2 + " " + t );
+		System.out.println( min + " " + max );
+		
+		if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_MAIN )
+			IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Computing Difference-of-Mean");					
+
+		// in-place overwriting img
+		DetectionSegmentation.computeDifferencOfMean( integralImg, img, s1, s1, s1, s2, s2, s2, min.get(), max.get() );
+		
+		//ImageJFunctions.show( img );
+		
+		// close integral img
+		integralImg.close();
+		
+		if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_MAIN )
+			IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Extracting peaks");					
+
+		// compute the maxima/minima
+		final ArrayList< SimplePeak > peaks = InteractiveIntegral.findPeaks( img, t );
+		
+		final BeadStructure beads = new BeadStructure();
+		int id = 0;
+		
+        for ( final SimplePeak peak : peaks )
+        {
+        	if ( peak.isMax ) 
+        	{
+	        	final Bead bead = new Bead( id++, new Point3d( peak.location[ 0 ], peak.location[ 1 ], peak.location[ 2 ] ), view );
+	        	beads.addDetection( bead );
+        	}
+        }
+
+        view.setBeadStructure( beads );
+        
+		return beads;
+	}
+	
 	protected BeadStructure extractBeadsLaPlaceImgLib( final ViewDataBeads view, final SPIMConfiguration conf )
 	{
 		// load the image
@@ -195,8 +229,8 @@ public class BeadSegmentation
         // we stop doing that for now...
         if ( view.getMaxValueUnnormed() > 256 )
         {
-		minPeakValue = view.getMinPeakValue();///3;
-		minInitialPeakValue = view.getMinInitialPeakValue();///3;
+        	minPeakValue = view.getMinPeakValue();///3;
+        	minInitialPeakValue = view.getMinInitialPeakValue();///3;
         }
         else
         {

@@ -13,6 +13,7 @@ import mpicbg.imglib.cursor.LocalizableByDimCursor;
 import mpicbg.imglib.cursor.LocalizableCursor;
 import mpicbg.imglib.function.Converter;
 import mpicbg.imglib.image.Image;
+import mpicbg.imglib.image.display.imagej.ImageJFunctions;
 import mpicbg.imglib.multithreading.Chunk;
 import mpicbg.imglib.multithreading.SimpleMultiThreading;
 import mpicbg.imglib.outofbounds.OutOfBoundsStrategyFactory;
@@ -214,35 +215,19 @@ public class DetectionSegmentation
 		return sigmaDiff;
 	}
 	
-	public static ArrayList< DifferenceOfGaussianPeak< FloatType > > extractBeadsIntegralImage( 
-			final ViewDataBeads view, final float minIntensity )
-	{
-		final Image< FloatType > img = view.getImage( false ); 
-		IntegralImageLong< FloatType > intImg = new IntegralImageLong<FloatType>( img, new Converter< FloatType, LongType >()
-		{
-			@Override
-			public void convert( final FloatType input, final LongType output ) { output.set( Util.round( input.get() ) ); } 
-		} );
-		intImg.process();
-		final Image< LongType > integralImg = intImg.getResult();
-
-		final FloatType min = new FloatType();
-		final FloatType max = new FloatType();
-		
-		computeMinMax( img, min, max );
-		
-		//final Image< FloatType > dom = img.createNewImage();
-		
-		// in-place
-		computeDifferencOfMean( integralImg, img, 3, 3, 3, 5, 5, 5, min.get(), max.get() );
-		
-		return null;
-	}
-	
 	final public static void computeDifferencOfMean( final Image< LongType> integralImg, final Image< FloatType > domImg, final int sx1, final int sy1, final int sz1, final int sx2, final int sy2, final int sz2, final float min, final float max  )
 	{
+		//final Image< FloatType > tmp1 = domImg.clone();
+		//final Image< FloatType > tmp2 = domImg.clone();
+		//final Image< FloatType > tmp3 = domImg.clone();
+		
+		final float diff = max - min;
+		
 		final float sumPixels1 = sx1 * sy1 * sz1;
 		final float sumPixels2 = sx2 * sy2 * sz2;
+		
+		final float d1 = sumPixels1 * diff;
+		final float d2 = sumPixels2 * diff;
 		
 		final int sx1Half = sx1 / 2;
 		final int sy1Half = sy1 / 2;
@@ -272,9 +257,15 @@ public class DetectionSegmentation
             {
                 public void run()
                 {
+                	//final LocalizableByDimCursor< FloatType > c1 = tmp1.createLocalizableByDimCursor();
+                	//final LocalizableByDimCursor< FloatType > c2 = tmp2.createLocalizableByDimCursor();
+                	//final LocalizableByDimCursor< FloatType > c3 = tmp3.createLocalizableByDimCursor();                	
+
                 	// Thread ID
                 	final int myNumber = ai.getAndIncrement();
         
+                	final int[] position = new int[ 3 ];
+                	
                 	// get chunk of pixels to process
                 	final Chunk myChunk = threadChunks.get( myNumber );
                 	final long loopSize = myChunk.getLoopSize();
@@ -299,18 +290,87 @@ public class DetectionSegmentation
             			
             			if ( xt >= 0 && yt >= 0 && zt >= 0 && xt < w && yt < h && zt < d )
             			{
-            				final float s1 = computeSum( x - sx1Half, y - sy1Half, z - sz1Half, sx1, sy1, sz1, randomAccess ) / sumPixels1;
-            				final float s2 = computeSum( x - sx2Half, y - sy2Half, z - sz2Half, sx2, sy2, sz2, randomAccess ) / sumPixels2;
+            				position[ 0 ] = x - sx1Half;
+            				position[ 1 ] = y - sy1Half;
+            				position[ 2 ] = z - sz1Half;
+            				randomAccess.setPosition( position );
+            				final float s1 = computeSum2( sx1, sy1, sz1, randomAccess ) / d1; //sumPixels1;
+            				
+            				position[ 0 ] = x - sx2Half;
+            				position[ 1 ] = y - sy2Half;
+            				position[ 2 ] = z - sz2Half;
+            				randomAccess.setPosition( position );
+            				final float s2 = computeSum2( sx2, sy2, sz2, randomAccess ) / d2; //sumPixels2;
             			
-            				result.set( ( s2 - s1 ) / ( max - min ) );
+            				result.set( ( s2 - s1 ) );// / diff );
+            				
+            				
+            				/*
+            				c1.setPosition( cursor );
+            				c2.setPosition( cursor );
+            				c3.setPosition( cursor );
+            				
+            				c1.getType().set( s2 );
+            				c2.getType().set( s1 );
+            				c3.getType().set( 1 );
+            				*/
+            			}
+            			else
+            			{
+            				result.set( 0 );
             			}
                     }
                 }
             });
         
         SimpleMultiThreading.startAndJoin( threads );
+        
+        //ImageJFunctions.show( tmp1  ).setTitle( "s2" );
+        //ImageJFunctions.show( tmp2  ).setTitle( "s1" );
+        //ImageJFunctions.show( tmp3  ).setTitle( "1" );
  	}
-	
+
+	/**
+	 * Compute the average in the area, the RandomAccess needs to be positioned at the top left front corner:
+	 * 
+	 * fromX - start coordinate in x (exclusive in integral image coordinates, inclusive in image coordinates)
+	 * fromY - start coordinate in y (exclusive in integral image coordinates, inclusive in image coordinates)
+	 * fromZ - start coordinate in z (exclusive in integral image coordinates, inclusive in image coordinates)
+	 * 
+	 * @param sX - number of pixels in x
+	 * @param sY - number of pixels in y
+	 * @param sZ - number of pixels in z
+	 * @param randomAccess - randomAccess on the integral image
+	 * @return
+	 */
+	final public static long computeSum2( final int vX, final int vY, final int vZ, final LocalizableByDimCursor< LongType > randomAccess )
+	{
+		long sum = -randomAccess.getType().get();
+		
+		randomAccess.move( vX, 0 );
+		sum += randomAccess.getType().get();
+		
+		randomAccess.move( vY, 1 );
+		sum += -randomAccess.getType().get();
+		
+		randomAccess.move( -vX, 0 );
+		sum += randomAccess.getType().get();
+		
+		randomAccess.move( vZ, 2 );
+		sum += -randomAccess.getType().get();
+		
+		randomAccess.move( vX, 0 );
+		sum += randomAccess.getType().get();
+		
+		randomAccess.move( -vY, 1 );
+		sum += -randomAccess.getType().get();
+		
+		randomAccess.move( -vX, 0 );
+		sum += randomAccess.getType().get();
+		
+		return sum;
+	}
+
 	/**
 	 * Compute the average in the area
 	 * 

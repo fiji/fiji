@@ -34,6 +34,7 @@ import mpicbg.spim.Reconstruction;
 import mpicbg.spim.io.ConfigurationParserException;
 import mpicbg.spim.io.IOFunctions;
 import mpicbg.spim.io.SPIMConfiguration;
+import mpicbg.spim.io.SPIMConfiguration.SegmentationTypes;
 import mpicbg.spim.segmentation.InteractiveDoG;
 import mpicbg.spim.segmentation.InteractiveIntegral;
 import spimopener.SPIMExperiment;
@@ -145,7 +146,6 @@ public class Bead_Registration implements PlugIn
 	public static String timepoints = "18";
 	public static String fileNamePattern = "spim_TL{t}_Angle{a}.lsm";
 	public static String angles = "0-270:45";
-	public static boolean processAnglesSimultaneously = false;
 	
 	public static boolean loadSegmentation = false;
 	public static String[] beadBrightness = { "Very weak", "Weak", "Comparable to Sample", "Strong", "Advanced ...", "Interactive ..." };	
@@ -176,7 +176,6 @@ public class Bead_Registration implements PlugIn
 		final TextField tfTimepoints = (TextField) gd.getStringFields().lastElement();
 		gd.addStringField( "Angles_to_process", angles );
 		final TextField tfAngles = (TextField) gd.getStringFields().lastElement();
-		//gd.addCheckbox( "Process_angles_simultaneously (needs lots of RAM)", processAnglesSimultaneously );
 		
 		gd.addMessage( "" );		
 		
@@ -286,7 +285,6 @@ public class Bead_Registration implements PlugIn
 		fileNamePattern = gd.getNextString();
 		timepoints = gd.getNextString();
 		angles = gd.getNextString();
-		//processAnglesSimultaneously = gd.getNextBoolean();
 		
 		loadSegmentation = gd.getNextBoolean();
 		defaultBeadBrightness = gd.getNextChoiceIndex();
@@ -357,8 +355,18 @@ public class Bead_Registration implements PlugIn
 					}
 					else
 					{
-						values = new double[]{ conf.integralImgRadius1[ 0 ], conf.integralImgRadius2[ 0 ], conf.integralImgThreshold[ 0 ] };
+						if ( defaultintegralParameters != null && defaultIntegralRadius != null && defaultintegralParameters.length >= 1 )
+							values = new double[]{ defaultIntegralRadius[ 0 ][ 0 ], defaultIntegralRadius[ 0 ][ 1 ], defaultintegralParameters[ 0 ] };
+						else
+							values = new double[]{ conf.integralImgRadius1[ 0 ], conf.integralImgRadius2[ 0 ], conf.integralImgThreshold[ 0 ] };
+						
 						getInteractiveIntegralParameters( "Select view to analyze", values );
+						
+						defaultIntegralRadius = new int[ 1 ][ 2 ];
+						defaultintegralParameters = new double[ 1 ];
+						defaultIntegralRadius[ 0 ][ 0 ] = (int)Math.round( values[ 0 ] );
+						defaultIntegralRadius[ 0 ][ 1 ] = (int)Math.round( values[ 1 ] );
+						defaultintegralParameters[ 0 ] = values[ 2 ];
 						
 						IJ.log( "r1 = " + values[ 0 ] );
 						IJ.log( "r2 = " + values[ 1 ] );
@@ -380,11 +388,12 @@ public class Bead_Registration implements PlugIn
 					conf.integralImgRadius1[ 0 ] = (int)Math.round( values[ 0 ] );
 					conf.integralImgRadius2[ 0 ] = (int)Math.round( values[ 1 ] );
 					conf.integralImgThreshold[ 0 ] = (float)values[ 2 ];
-					
-					conf.useIntegralImages = true;
 				}
 			}
 		}
+		
+		if ( choiceType == 1 )
+			conf.segmentation = SegmentationTypes.DOM;
 		
 		conf.minInitialPeakValue = new float[]{ conf.minPeakValue[ 0 ]/4 };
 
@@ -393,7 +402,6 @@ public class Bead_Registration implements PlugIn
 		conf.channelsToRegister = "";
 		conf.channelsToFuse = "";
 		conf.anglePattern = angles;
-		conf.multiThreadedOpening = processAnglesSimultaneously;
 		conf.inputFilePattern = fileNamePattern;
 
 		File f = new File( spimDataDirectory );
@@ -722,7 +730,6 @@ public class Bead_Registration implements PlugIn
 
 		conf.timepointPattern = timepoints;
 		conf.anglePattern = angles;
-		conf.multiThreadedOpening = processAnglesSimultaneously;
 		conf.channelPattern = channelsBeadsMC;
 		conf.channelsToRegister = channelsBeadsMC;
 		conf.channelsToFuse = "";
@@ -828,9 +835,9 @@ public class Bead_Registration implements PlugIn
 			
 			for ( int i = 0; i < channelIndices.length; ++i )
 			{
-				defaultintegralParameters[ i ] = 0.1;
+				defaultintegralParameters[ i ] = 0.02;
 				defaultIntegralRadius[ i ][ 0 ] = 2; // r=3
-				defaultIntegralRadius[ i ][ 1 ] = 4; // r=5
+				defaultIntegralRadius[ i ][ 1 ] = 3; // r=5
 			}
 		}
 

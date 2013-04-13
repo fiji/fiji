@@ -62,21 +62,6 @@ import mpicbg.spim.registration.detection.DetectionSegmentation;
  */
 public class InteractiveIntegral implements PlugIn
 {
-	protected class SimplePeak
-	{
-		public SimplePeak( final int[] location, final float intensity, final boolean isMin, final boolean isMax )
-		{
-			this.location = location.clone();
-			this.isMin = isMin;
-			this.isMax = isMax;
-			this.intensity = intensity;
-		}
-		
-		int[] location;
-		boolean isMax, isMin;
-		float intensity;
-	}
-	
 	final int scrollbarSize = 1000;
 
 	int radius1 = 1;
@@ -363,7 +348,7 @@ public class InteractiveIntegral implements PlugIn
         return radius2;
 	}
 	
-	public ArrayList<SimplePeak> findPeaks( final Image<FloatType> laPlace, final float minValue )
+	public static ArrayList<SimplePeak> findPeaks( final Image<FloatType> laPlace, final float minValue )
 	{
 	    final AtomicInteger ai = new AtomicInteger( 0 );					
 	    final Thread[] threads = SimpleMultiThreading.newThreads( Runtime.getRuntime().availableProcessors() );
@@ -446,7 +431,7 @@ MainLoop:           while ( cursor.hasNext() )
 		return dogPeaks;
 	}
 
-	protected SpecialPoint isSpecialPoint( final LocalNeighborhoodCursor<FloatType> neighborhoodCursor, final float centerValue )
+	protected static SpecialPoint isSpecialPoint( final LocalNeighborhoodCursor<FloatType> neighborhoodCursor, final float centerValue )
 	{
 		boolean isMin = true;
 		boolean isMax = true;

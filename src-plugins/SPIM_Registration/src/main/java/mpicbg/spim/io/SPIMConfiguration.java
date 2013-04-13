@@ -24,6 +24,8 @@ import spimopener.SPIMExperiment;
 
 public class SPIMConfiguration
 {
+	public enum SegmentationTypes { THRESHOLD, DOG, DOM };
+	
 	// general
 	public String timepointPattern;
 	public int timepoints[];
@@ -49,7 +51,6 @@ public class SPIMConfiguration
 	public String debugLevel;
 	public int debugLevelInt = ViewStructure.DEBUG_MAIN;
 	public boolean showImageJWindow = false;
-	public boolean multiThreadedOpening = false;
 	public boolean collectRegistrationStatistics = false;
 	public String transformationModel = "Affine";
 	// time lapse
@@ -79,7 +80,6 @@ public class SPIMConfiguration
 	// segmentation
 	public boolean writeOutputImage = true;
 	public boolean showOutputImage = false;
-	public boolean useScaleSpace = true;
 
 	// which fusion weightening
     public boolean useEntropy = false;
@@ -105,6 +105,9 @@ public class SPIMConfiguration
 	public double zStretching = 1;
 	public int background = 0;
 
+	// by default we do a DoG
+	public SegmentationTypes segmentation = SegmentationTypes.DOG;
+	
 	// threshold segmentation
 	public float threshold = 0.9f;
 	public float fixedThreshold = 0.02f;
@@ -128,10 +131,9 @@ public class SPIMConfiguration
 	public int scaleSpaceNumberOfThreads = 0;
 
 	// Integral image parameters
-	public boolean useIntegralImages = false;
-	public int[] integralImgRadius1 = new int[]{ 3 };
-	public int[] integralImgRadius2 = new int[]{ 5 };
-	public float[] integralImgThreshold = new float[]{ 0.1f };
+	public int[] integralImgRadius1 = new int[]{ 2 };
+	public int[] integralImgRadius2 = new int[]{ 3 };
+	public float[] integralImgThreshold = new float[]{ 0.02f };
 	
 	// PointDescriptor properties
 	public double differenceThreshold = 50;
@@ -395,7 +397,7 @@ public class SPIMConfiguration
     		}
     	}
 
-	if ( useScaleSpace && !fuseOnly )
+	if ( segmentation == SegmentationTypes.DOG && !fuseOnly )
 	{
 		final int numChannelsRegister = channelsRegister.length;
 
@@ -781,7 +783,7 @@ public class SPIMConfiguration
 
     	IOFunctions.println("writeOutputImage: " + writeOutputImage);
     	IOFunctions.println("showOutputImage: " + showOutputImage);
-    	IOFunctions.println("useScaleSpace: " + useScaleSpace);
+    	IOFunctions.println("segmentation type: " + segmentation);
     	IOFunctions.println("useEntropy: " + useEntropy);
     	IOFunctions.println("useGauss: " + useGauss);
     	IOFunctions.println("useLinearBlening: " + useLinearBlening);
