@@ -106,7 +106,9 @@ public class SPIMConfiguration
 	public int background = 0;
 
 	// re-localize true correspondences with a gauss fit?
-	public boolean doGaussFit = false;
+	// 0 == no, 1 == only correspondences, 2 == all detections
+	public int doGaussFit = 0;
+	public boolean doGaussKeepImagesOpen = false;
 	
 	// by default we do a DoG
 	public SegmentationTypes segmentation = SegmentationTypes.DOG;

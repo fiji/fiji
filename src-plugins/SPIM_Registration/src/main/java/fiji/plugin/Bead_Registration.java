@@ -45,7 +45,7 @@ public class Bead_Registration implements PlugIn
 	final private String paperURL = "http://www.nature.com/nmeth/journal/v7/n6/full/nmeth0610-418.html";
 
 	final String beadRegistration[] = new String[] { "Single-channel", "Multi-channel (same beads visible in different channels)" };
-	final String beadDetectionType[] = new String[] { "Difference-of-Gaussian", "Integral image" };
+	final String beadDetectionType[] = new String[] { "Difference-of-Gaussian", "Difference-of-Mean (Integral image based)" };
 	public static int defaultBeadRegistration = 0;
 	public static int defaultBeadDetectionType = 0;
 	
@@ -148,7 +148,9 @@ public class Bead_Registration implements PlugIn
 	public static String angles = "0-270:45";
 	
 	public static boolean loadSegmentation = false;
-	public static boolean relocalize = false;
+	public static int relocalize = 0;
+	public static boolean keepImagesOpen = true;
+	public static String[] localization = { "None", "Gauss fit (true correspondences)", "Gauss fit (all detections)" };	
 	public static String[] beadBrightness = { "Very weak", "Weak", "Comparable to Sample", "Strong", "Advanced ...", "Interactive ..." };	
 	public static int defaultBeadBrightness = 1;
 	public static boolean overrideResolution = false;
@@ -181,7 +183,11 @@ public class Bead_Registration implements PlugIn
 		gd.addMessage( "" );		
 		
 		gd.addCheckbox( "Load_segmented_beads", loadSegmentation );
-		gd.addCheckbox( "Localize_true_beads_with_gauss_fit", relocalize );
+		if ( choiceType == 0 )
+			gd.addMessage( "Note: DoG detections are subpixel localized by a n-dimensional quadratic fit." );
+		else
+			gd.addMessage( "Note: DoM detetions are NOT subpixel localized." );
+		gd.addChoice( "Additional_localization", localization, localization[ relocalize ] );
 		gd.addChoice( "Bead_brightness", beadBrightness, beadBrightness[ defaultBeadBrightness ] );
 		gd.addCheckbox( "Override_file_dimensions", overrideResolution );
 		final Checkbox dimensionsBox = (Checkbox)gd.getCheckboxes().lastElement();
@@ -289,7 +295,7 @@ public class Bead_Registration implements PlugIn
 		angles = gd.getNextString();
 		
 		loadSegmentation = gd.getNextBoolean();
-		relocalize = gd.getNextBoolean();
+		relocalize = gd.getNextChoiceIndex();
 		defaultBeadBrightness = gd.getNextChoiceIndex();
 		overrideResolution = gd.getNextBoolean();
 		xyRes = gd.getNextNumber();
@@ -425,8 +431,23 @@ public class Bead_Registration implements PlugIn
 
 		conf.overrideImageZStretching = overrideResolution;
 		
-		if ( relocalize )
-			conf.doGaussFit = true;
+		conf.doGaussFit = relocalize;
+		if ( conf.doGaussFit == 1 )
+		{
+			GenericDialog gdGauss = new GenericDialog( "Gauss options" );
+
+			gdGauss.addMessage( "The re-localization using a Gaussian fit will be" );
+			gdGauss.addMessage( "performed after the registration on the true" );
+			gdGauss.addMessage( "correspondences only." );
+			gdGauss.addCheckbox( "Keep_images_open", keepImagesOpen );
+			
+			gdGauss.showDialog();
+			
+			conf.doGaussKeepImagesOpen = keepImagesOpen = gdGauss.getNextBoolean();
+			
+			if ( gdGauss.wasCanceled() )
+				return null;
+		}
 
 		if ( overrideResolution )
 			conf.zStretching = zRes / xyRes;
