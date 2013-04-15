@@ -162,7 +162,7 @@ public class InteractiveIntegral implements PlugIn
 		FloatType min = new FloatType();
 		FloatType max = new FloatType();
 		
-		DetectionSegmentation.computeMinMax( source, min, max );
+		DOM.computeMinMax( source, min, max );
 		
 		this.min = min.get();
 		this.max = max.get();
@@ -256,8 +256,8 @@ public class InteractiveIntegral implements PlugIn
             			
             			if ( xt >= 0 && yt >= 0 && zt >= 0 && xt < w && yt < h && zt < d )
             			{
-            				final float s1 = DetectionSegmentation.computeSum( x - sx1Half, y - sy1Half, z - sz1Half, sx1, sy1, sz1, randomAccess ) / sumPixels1;
-            				final float s2 = DetectionSegmentation.computeSum( x - sx2Half, y - sy2Half, z - sz2Half, sx2, sy2, sz2, randomAccess ) / sumPixels2;
+            				final float s1 = DOM.computeSum( x - sx1Half, y - sy1Half, z - sz1Half, sx1, sy1, sz1, randomAccess ) / sumPixels1;
+            				final float s2 = DOM.computeSum( x - sx2Half, y - sy2Half, z - sz2Half, sx2, sy2, sz2, randomAccess ) / sumPixels2;
             			
             				result.set( ( s2 - s1 ) / ( max - min ) );
             			}
@@ -431,7 +431,7 @@ MainLoop:           while ( cursor.hasNext() )
 		return dogPeaks;
 	}
 
-	protected static SpecialPoint isSpecialPoint( final LocalNeighborhoodCursor<FloatType> neighborhoodCursor, final float centerValue )
+	final protected static SpecialPoint isSpecialPoint( final LocalNeighborhoodCursor<FloatType> neighborhoodCursor, final float centerValue )
 	{
 		boolean isMin = true;
 		boolean isMax = true;
