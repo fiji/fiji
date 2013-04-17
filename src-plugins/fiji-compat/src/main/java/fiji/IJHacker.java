@@ -112,7 +112,7 @@ public class IJHacker extends JavassistHelper {
 			}
 		});
 
-		// tell the error() method to use "Fiji" as window title
+		// tell the error() method to use "(Fiji Is Just) ImageJ" as window title
 		method = clazz.getMethod("error",
 			"(Ljava/lang/String;Ljava/lang/String;)V");
 		method.insertBefore("if ($1 == null || $1.equals(\"ImageJ\")) $1 = \"" + appName + "\";");
@@ -168,7 +168,7 @@ public class IJHacker extends JavassistHelper {
 		// Class ij.ImageJ
 		clazz = get("ij.ImageJ");
 
-		// tell the superclass java.awt.Frame that the window title is "Fiji"
+		// tell the java.awt.Frame that the window title is "(Fiji Is Just) ImageJ"
 		for (CtConstructor ctor : clazz.getConstructors())
 			ctor.instrument(new ExprEditor() {
 				@Override
@@ -177,13 +177,13 @@ public class IJHacker extends JavassistHelper {
 						call.replace("super(\"" + appName + "\");");
 				}
 			});
-		// tell the version() method to prefix the version with "Fiji/"
+		// tell the version() method to prefix the version with "(Fiji Is Just)"
 		method = clazz.getMethod("version", "()Ljava/lang/String;");
 		method.insertAfter("$_ = \"" + appPrefix + "\" + $_;");
 		// tell the showStatus() method to show the version() instead of empty status
 		method = clazz.getMethod("showStatus", "(Ljava/lang/String;)V");
 		method.insertBefore("if ($1 == null || \"\".equals($1)) $1 = version();");
-		// tell the run() method to use "Fiji" instead of "ImageJ" in the Quit dialog
+		// tell the run() method to use "(Fiji Is Just) ImageJ" in the Quit dialog
 		method = clazz.getMethod("run", "()V");
 		replaceAppNameInNew(method, "ij.gui.GenericDialog", 1, 2);
 		replaceAppNameInCall(method, "addMessage", 1, 1);
@@ -231,7 +231,7 @@ public class IJHacker extends JavassistHelper {
 		// Class ij.gui.YesNoCancelDialog
 		clazz = get("ij.gui.YesNoCancelDialog");
 
-		// use Fiji as window title in the Yes/No dialog
+		// use "(Fiji Is Just) ImageJ" as window title in the Yes/No dialog
 		for (CtConstructor ctor : clazz.getConstructors())
 			ctor.instrument(new ExprEditor() {
 				@Override
@@ -245,7 +245,7 @@ public class IJHacker extends JavassistHelper {
 		// Class ij.gui.Toolbar
 		clazz = get("ij.gui.Toolbar");
 
-		// use Fiji/ImageJ in the status line
+		// use "(Fiji Is Just) ImageJ" in the status line
 		method = clazz.getMethod("showMessage", "(I)V");
 		method.instrument(new ExprEditor() {
 			@Override
@@ -269,7 +269,7 @@ public class IJHacker extends JavassistHelper {
 		// Class ij.plugin.CommandFinder
 		clazz = get("ij.plugin.CommandFinder");
 
-		// use Fiji in the window title
+		// Replace application name in the window title
 		if (hasMethod(clazz, "export", "()V")) {
 			method = clazz.getMethod("export", "()V");
 			replaceAppNameInNew(method, "ij.text.TextWindow", 1, 5);
