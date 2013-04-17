@@ -15,7 +15,7 @@
 	<version>1.0.1-SNAPSHOT</version>
 
 	<name>plugins/Volume_Calculator.jar</name>
-	<description></description>
+	<description>The Volume Calculator plugin is designed to let users measure the volumes of arbitrary segments of blood vessels by selecting them directly from a 3D image. Although Volume Calculator was developed for quantification in a mouse hindlimb ischemia experiment, it should be useful for the volume measurement of any network. This possibility is determined by the following requirement: the plugin is configured to work best with images that can be read and analyzed by the Skeleton 3D and Analyze 3D plugins. Hence, it is suggested that users first check their images with these two plugins.</description>
 
 	<dependencies>
 		<dependency>
