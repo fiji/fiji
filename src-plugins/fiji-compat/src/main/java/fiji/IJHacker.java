@@ -30,7 +30,8 @@ import javassist.expr.MethodCall;
 import javassist.expr.NewExpr;
 
 public class IJHacker extends JavassistHelper {
-	public final static String appName = "(Fiji Is Just) ImageJ";
+	public final static String appPrefix = "(Fiji Is Just) ";
+	public final static String appName = appPrefix + "ImageJ";
 
 	protected String replaceAppName = ".replace(\"ImageJ\", \"" + appName + "\")";
 
@@ -178,7 +179,7 @@ public class IJHacker extends JavassistHelper {
 			});
 		// tell the version() method to prefix the version with "Fiji/"
 		method = clazz.getMethod("version", "()Ljava/lang/String;");
-		method.insertAfter("$_ = \"" + appName + "/\" + $_;");
+		method.insertAfter("$_ = \"" + appPrefix + "\" + $_;");
 		// tell the showStatus() method to show the version() instead of empty status
 		method = clazz.getMethod("showStatus", "(Ljava/lang/String;)V");
 		method.insertBefore("if ($1 == null || \"\".equals($1)) $1 = version();");
@@ -250,7 +251,7 @@ public class IJHacker extends JavassistHelper {
 			@Override
 			public void edit(MethodCall call) throws CannotCompileException {
 				if (call.getMethodName().equals("showStatus"))
-					call.replace("if ($1.startsWith(\"ImageJ \")) $1 = \"" + appName + "/\" + $1;"
+					call.replace("if ($1.startsWith(\"ImageJ \")) $1 = \"" + appPrefix + "/\" + $1;"
 						+ "ij.IJ.showStatus($1);");
 			}
 		});
