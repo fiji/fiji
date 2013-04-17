@@ -63,6 +63,22 @@
 		</dependency>
 	</dependencies>
 
+	<developers>
+		<developer>
+			<id>pcmarks</id>
+			<name>Peter C Marks</name>
+			<email>marksp@mmc.org</email>
+			<url>https://github.com/pcmarks</url>
+			<organization>Maine Medical Center Research Institute</organization>
+			<organizationUrl>home/webHome_content.php/</organizationUrl>
+			<roles>
+				<role>architect</role>
+				<role>developer</role>
+			</roles>
+			<timezone>-5</timezone>
+		</developer>
+	</developers>
+
 	<!-- NB: for project parent -->
 	<repositories>
 		<repository>
