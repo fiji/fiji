@@ -69,6 +69,7 @@
 						<link>http://jenkins.imagej.net/job/ImageJ-daily/javadoc</link>
 						<link>http://jenkins.imagej.net/job/ImgLib-daily/javadoc</link>
 						<link>http://jenkins.imagej.net/job/ImageJ1-javadoc/javadoc</link>
+						<link>http://weka.sourceforge.net/doc.dev/</link>
 					</links>
 				</configuration>
 			</plugin>
