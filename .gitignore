@@ -340,6 +340,7 @@ hs_err*.log
 /jars/lwf-stubs-[0-9]*.jar
 /jars/mdbtools-java-[0-9]*.jar
 /jars/metakit-[0-9]*.jar
+/jars/native-lib-loader-[0-9]*.jar
 /jars/netcdf-[0-9]*.jar
 /jars/netcdf-java-[0-9]*.jar
 /jars/ome-xml-[0-9]*.jar
@@ -349,6 +350,7 @@ hs_err*.log
 /jars/serializer-[0-9]*.jar
 /jars/slf4j-api-[0-9]*.jar
 /jars/slf4j-log4j12-[0-9]*.jar
+/jars/turbojpeg-[0-9]*.jar
 /jars/xalan-[0-9]*.jar
 /jars/xml-apis-[0-9]*.jar
 
