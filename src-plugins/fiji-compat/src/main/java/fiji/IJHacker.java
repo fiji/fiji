@@ -18,7 +18,6 @@ import javassist.NotFoundException;
 
 import javassist.bytecode.BadBytecode;
 import javassist.bytecode.CodeIterator;
-import javassist.bytecode.ConstPool;
 import javassist.bytecode.MethodInfo;
 import javassist.bytecode.Opcode;
 
@@ -35,6 +34,7 @@ public class IJHacker extends JavassistHelper {
 
 	protected String replaceAppName = ".replace(\"ImageJ\", \"" + appName + "\")";
 
+	@Override
 	public void instrumentClasses() throws BadBytecode, CannotCompileException, NotFoundException {
 		CtClass clazz;
 		CtMethod method;
@@ -671,7 +671,6 @@ public class IJHacker extends JavassistHelper {
 	}
 
 	private void dontReturnWhenEditorIsNull(MethodInfo info) throws CannotCompileException {
-		ConstPool constPool = info.getConstPool();
 		CodeIterator iterator = info.getCodeAttribute().iterator();
 	        while (iterator.hasNext()) try {
 	                int pos = iterator.next();
