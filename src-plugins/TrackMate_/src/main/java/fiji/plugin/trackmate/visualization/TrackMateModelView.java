@@ -6,6 +6,7 @@ import java.util.Map;
 import org.jfree.chart.renderer.InterpolatePaintScale;
 
 import fiji.plugin.trackmate.InfoTextable;
+import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.TrackMateModel;
 
 public interface TrackMateModelView extends InfoTextable {
@@ -50,6 +51,12 @@ public interface TrackMateModelView extends InfoTextable {
 	 * tracks are not visible.
 	 */
 	public static final String KEY_TRACKS_VISIBLE = "TracksVisible";
+	
+	/**
+	 * Defines the key for the track coloring method. Values are concrete implementations
+	 * of {@link TrackColorGenerator}.
+	 */
+	public static final String KEY_TRACK_COLORING = "TrackColoring";
 
 	/**
 	 * Defines the key for the spot visibility. Values are boolean. If <code>false</code>,
@@ -84,7 +91,7 @@ public interface TrackMateModelView extends InfoTextable {
 	 * color #DEFAULT_COLOR is used for all spots. Otherwise, each track color 
 	 * is set according to the selected feature value.
 	 */
-	public static final String KEY_TRACK_COLOR_FEATURE = "TrackColorFeature";
+//	public static final String KEY_TRACK_COLOR_FEATURE = "TrackColorFeature";
 
 	/**
 	 * Defines the key for the color map to use for painting overlay. Acceptable
@@ -194,14 +201,17 @@ public interface TrackMateModelView extends InfoTextable {
 	 */
 
 	/**
-	 * Initialize this displayer and render it according to its concrete implementation and current
-	 * display settings. 
+	 * Initialize this displayer and render it according to its concrete implementation, 
+	 * target model.
+	 * @see #setModel(TrackMateModel)
 	 */
 	public void render();
 
 	/**
 	 * Refresh the displayer display with current model. If the underlying model was modified,
-	 * calling this method should be enough to update the display with changes.
+	 * or the display settings were changed, calling this method should be enough to update 
+	 * the display with changes.
+	 * @see #setDisplaySettings(String, Object)
 	 */
 	public void refresh();
 
@@ -209,15 +219,31 @@ public interface TrackMateModelView extends InfoTextable {
 	 * Remove any overlay (for spots or tracks) from this displayer.
 	 */
 	public void clear();
-
 	
-	public TrackMateModel getModel();
+	/**
+	 * Center the view on the given spot.
+	 */
+	public void centerViewOn(final Spot spot);
 
-	public void setModel(TrackMateModel model);
-
+	/**
+	 * @return the current display settings map.
+	 */
 	public Map<String, Object> getDisplaySettings();
 
+	/** 
+	 * Set a display parameter.
+	 * @param key  the key of the parameter to change.
+	 * @param value  the value for the display parameter
+	 */
 	public void setDisplaySettings(final String key, final Object value);
 	
+	/**
+	 * @return the value of a specific display parameter. 
+	 */
 	public Object getDisplaySettings(final String key);
+	
+	/**
+	 * @return the model displayed in this view.
+	 */
+	public TrackMateModel getModel();
 }

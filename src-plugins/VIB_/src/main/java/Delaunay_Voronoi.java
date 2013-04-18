@@ -103,8 +103,13 @@ public class Delaunay_Voronoi implements PlugIn {
 
 		CustomCanvas cc = new CustomCanvas(imp);
 
-		if (exportResults)
+		if (exportResults) {
+			if (results == null) {
+				results = new ResultsTable();
+				Analyzer.setResultsTable(results);
+			}
 			exportResults(cc.delaunay, cc.inf, results);
+		}
 
 		if (makeROI) {
 			imp.setRoi(getRoi(cc.delaunay, cc.inf));
@@ -444,8 +449,17 @@ public class Delaunay_Voronoi implements PlugIn {
 				mean /= total;
 				variance /= total;
 				variance -= mean * mean;
-				IJ.write("mean distance: " + mean +
-						", variance: " + variance);
+
+				ResultsTable rt = Analyzer.getResultsTable();
+				if (rt == null) {
+					rt = new ResultsTable();
+					Analyzer.setResultsTable(rt);
+				}
+
+				rt.incrementCounter();
+				rt.addValue("Mean Distance", mean);
+				rt.addValue("Variance", variance);
+				rt.show("Results");
 			}
 		}
 	}

@@ -12,8 +12,10 @@ import java.util.TreeSet;
 
 import javax.swing.ImageIcon;
 
-import mpicbg.imglib.image.Image;
-import mpicbg.imglib.image.display.imagej.ImageJFunctions;
+import net.imglib2.img.Img;
+import net.imglib2.img.ImgPlus;
+import net.imglib2.img.display.imagej.ImageJFunctions;
+import net.imglib2.view.HyperSliceImgPlus;
 
 import org.jgrapht.graph.DefaultWeightedEdge;
 
@@ -21,15 +23,30 @@ import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMate_;
-import fiji.plugin.trackmate.features.spot.SpotIconGrabber;
 import fiji.plugin.trackmate.gui.TrackMateWizard;
 import fiji.plugin.trackmate.util.TMUtils;
+import fiji.plugin.trackmate.visualization.trackscheme.SpotIconGrabber;
 
 public class ExtractTrackStackAction extends AbstractTMAction {
 
-	private static final ImageIcon ICON = new ImageIcon(TrackMateWizard.class.getResource("images/magnifier.png"));
+	public static final String NAME = "Extract track stack";
+	public static final String INFO_TEXT =  "<html> " +
+			"Generate a stack of images taken from the track " +
+			"that joins two selected spots. " +
+			"<p>" +
+			"There must be exactly 2 spots selected for this action " +
+			"to work, and they must belong to a track that connects " +
+			"them." +
+			"<p>" +
+			"A stack of images will be generated from the spots that join " +
+			"them, defining the image size with the largest spot encountered. " +
+			"The central spot slice is taken in case of 3D data. The currently " +
+			"selected channel is used. " +
+			"</html>";
+	public static final ImageIcon ICON = new ImageIcon(TrackMateWizard.class.getResource("images/magnifier.png"));
 	/** By how much we resize the capture window to get a nice border around the spot. */
 	private static final float RESIZE_FACTOR = 1.5f;
+	
 	
 	
 	
@@ -51,7 +68,7 @@ public class ExtractTrackStackAction extends AbstractTMAction {
 		logger.log("Capturing track stack.\n");
 		
 		TrackMateModel model = plugin.getModel();
-		Set<Spot> selection = model.getSpotSelection();
+		Set<Spot> selection = model.getSelectionModel().getSpotSelection();
 		int nspots = selection.size();
 		if (nspots != 2) {
 			logger.error("Expected 2 spots in the selection, got "+nspots+".\nAborting.\n");
@@ -72,7 +89,7 @@ public class ExtractTrackStackAction extends AbstractTMAction {
 		}
 		
 		// Find path
-		List<DefaultWeightedEdge> edges = model.dijkstraShortestPath(start, end);
+		List<DefaultWeightedEdge> edges = model.getTrackModel().dijkstraShortestPath(start, end);
 		if (null == edges) {
 			logger.error("The 2 spots are not connected.\nAborting\n");
 			return;
@@ -84,15 +101,15 @@ public class ExtractTrackStackAction extends AbstractTMAction {
 		path.add(start);
 		Spot previous = start;
 		Spot current;
-		float radius = Math.abs(start.getFeature(Spot.RADIUS));
+		double radius = Math.abs(start.getFeature(Spot.RADIUS));
 		for (DefaultWeightedEdge edge : edges) {
 			
-			current = model.getEdgeSource(edge);
+			current = model.getTrackModel().getEdgeSource(edge);
 			if (current == previous) {
-				current = model.getEdgeTarget(edge); // We have to check both in case of bad oriented edges
+				current = model.getTrackModel().getEdgeTarget(edge); // We have to check both in case of bad oriented edges
 			}
 			path.add(current);
-			float ct = Math.abs(current.getFeature(Spot.RADIUS));
+			double ct = Math.abs(current.getFeature(Spot.RADIUS));
 			if (ct > radius) {
 				radius = ct;
 			}
@@ -101,16 +118,20 @@ public class ExtractTrackStackAction extends AbstractTMAction {
 		path.add(end);
 		
 		// Sort spot by ascending frame number
-		TreeSet<Spot> sortedSpots = new TreeSet<Spot>(Spot.frameComparator);
+		TreeSet<Spot> sortedSpots = new TreeSet<Spot>(Spot.timeComparator);
 		sortedSpots.addAll(path);
 		nspots = sortedSpots.size();
 
 		// Common coordinates
 		Settings settings = model.getSettings();
-		float[] calibration = settings.getCalibration();
-		final int targetChannel = settings.imp.getChannel(); // We do this for current channel
+		double[] calibration = TMUtils.getSpatialCalibration(settings.imp);
+		int targetChannel = settings.imp.getC() - 1; // From current selection
 		final int width 	= (int) Math.ceil(2 * radius * RESIZE_FACTOR / calibration[0]);
-		final int height 	= (int) Math.ceil(2 * radius * RESIZE_FACTOR / calibration[0]);
+		final int height 	= (int) Math.ceil(2 * radius * RESIZE_FACTOR / calibration[1]);
+		
+		// Extract target channel
+		ImgPlus img = TMUtils.rawWraps(settings.imp);
+		final ImgPlus<?> imgC = HyperSliceImgPlus.fixChannelAxis(img, targetChannel);
 		
 		// Prepare new image holder:
 		ImageStack stack = new ImageStack(width, height);
@@ -121,28 +142,29 @@ public class ExtractTrackStackAction extends AbstractTMAction {
 			
 			// Extract image for current frame
 			int frame = model.getSpots().getFrame(spot);
-			Image img = TMUtils.getUncroppedSingleFrameAsImage(settings.imp, frame, targetChannel);
+			
+			
+			ImgPlus<?> imgCT = HyperSliceImgPlus.fixTimeAxis(imgC, frame);
 			
 			// Compute target coordinates for current spot
-			int x = Math.round((spot.getFeature(Spot.POSITION_X)) / calibration[0]) - width/2; 
-			int y = Math.round((spot.getFeature(Spot.POSITION_Y)) / calibration[1]) - height/2;
-			int slice = 0;
-			if (img.getNumDimensions() > 2) {
+			int x = (int) (Math.round((spot.getFeature(Spot.POSITION_X)) / calibration[0]) - width/2); 
+			int y = (int) (Math.round((spot.getFeature(Spot.POSITION_Y)) / calibration[1]) - height/2);
+			long slice = 0;
+			if (imgCT.numDimensions() > 2) {
 				slice = Math.round(spot.getFeature(Spot.POSITION_Z) / calibration[2]);
 				if (slice < 0) {
 					slice = 0;
 				}
-				if (slice >= img.getDimension(2)) {
-					slice = img.getDimension(2) -1;
+				if (slice >= imgCT.dimension(2)) {
+					slice = imgCT.dimension(2) -1;
 				}
 			}
 			
-			SpotIconGrabber grabber = new SpotIconGrabber();
-			grabber.setTarget(img, calibration);
-			Image crop = grabber.grabImage(x, y, slice, width, height);
+			SpotIconGrabber<?> grabber = new SpotIconGrabber(imgCT);
+			Img crop = grabber.grabImage(x, y, slice, width, height);
 			
 			// Copy to central holder
-			stack.addSlice(spot.toString(), ImageJFunctions.copyToImagePlus(crop).getProcessor());
+			stack.addSlice(spot.toString(), ImageJFunctions.wrap(crop, crop.toString()).getProcessor());
 			
 			logger.setProgress((float) (zpos + 1) / nspots);
 			zpos++;
@@ -155,9 +177,9 @@ public class ExtractTrackStackAction extends AbstractTMAction {
 		Calibration impCal = stackTrack.getCalibration();
 		impCal.setTimeUnit(settings.imp.getCalibration().getTimeUnit());
 		impCal.setUnit(settings.imp.getCalibration().getUnit());
-		impCal.pixelWidth 		= settings.imp.getCalibration().pixelWidth;
-		impCal.pixelHeight 		= settings.imp.getCalibration().pixelHeight;
-		impCal.frameInterval 	= settings.imp.getCalibration().frameInterval;
+		impCal.pixelWidth 		= calibration[0];
+		impCal.pixelHeight 		= calibration[1];
+		impCal.frameInterval 	= settings.dt;
 		stackTrack.setDimensions(1, 1, nspots);
 
 		//Display it
@@ -168,23 +190,12 @@ public class ExtractTrackStackAction extends AbstractTMAction {
 
 	@Override
 	public String getInfoText() {
-		return "<html> " +
-				"Generate a stack of images taken from the track " +
-				"that joins two selected spots. " +
-				"<p>" +
-				"There must be exactly 2 spots selected for this action " +
-				"to work, and they must belong to a track that connects " +
-				"them." +
-				"<p>" +
-				"A stack of images will be generated from the spots that join " +
-				"them, defining the image size with the largest spot encountered. " +
-				"The central spot slice is taken in case of 3D data." +
-				"</html>";
+		return INFO_TEXT;
 	}
 	
 	@Override
 	public String toString() {
-		return "Extract track stack";
+		return NAME;
 	}
 
 }

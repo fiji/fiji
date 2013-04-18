@@ -149,8 +149,10 @@ public class MediaWikiClient {
 
 	public boolean uploadPage(String title,
 			String contents, String comment) {
-		return uploadOrPreviewPage(title, contents, comment, false)
-			!= null;
+		String result = uploadOrPreviewPage(title, contents, comment, false);
+		if (IJ.debugMode)
+			System.err.println("result: " + result);
+		return result != null;
 	}
 
 	public String uploadOrPreviewPage(String title, String contents,
@@ -183,7 +185,8 @@ public class MediaWikiClient {
 				"wpSummary", comment,
 				"wpEdittime", time,
 				"wpEditToken", token,
-				"wpAutoSummary", summary
+				"wpAutoSummary", summary,
+				"wpRecreate", "1"
 			};
 			if (previewOnly) {
 				postVars[0] = "wpPreview";
@@ -381,7 +384,7 @@ public class MediaWikiClient {
 
 	String sessionKey = "wikidb_session";
 	Pattern cookiePattern =
-		Pattern.compile("^(wikidb[^_]*_[^=]*session)=([^;]*);.*$");
+		Pattern.compile("^([a-z]+[^_]*_[^=]*session)=([^;]*);.*$");
 	void getCookies(List<String> headers) {
 		if (headers == null)
 			return;

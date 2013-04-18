@@ -1,11 +1,57 @@
 package fiji.plugin.trackmate.io;
 
-import static fiji.plugin.trackmate.io.TmXmlKeys.*;
-import static fiji.plugin.trackmate.util.TMUtils.readBooleanAttribute;
-import static fiji.plugin.trackmate.util.TMUtils.readDoubleAttribute;
-import static fiji.plugin.trackmate.util.TMUtils.readFloatAttribute;
-import static fiji.plugin.trackmate.util.TMUtils.readIntAttribute;
-
+import static fiji.plugin.trackmate.io.IOUtils.readBooleanAttribute;
+import static fiji.plugin.trackmate.io.IOUtils.readDoubleAttribute;
+import static fiji.plugin.trackmate.io.IOUtils.readIntAttribute;
+import static fiji.plugin.trackmate.io.TmXmlKeys.DETECTOR_SETTINGS_ELEMENT_KEY;
+import static fiji.plugin.trackmate.io.TmXmlKeys.FILTERED_SPOT_COLLECTION_ELEMENT_KEY;
+import static fiji.plugin.trackmate.io.TmXmlKeys.FILTERED_SPOT_ELEMENT_KEY;
+import static fiji.plugin.trackmate.io.TmXmlKeys.FILTERED_TRACK_ELEMENT_KEY;
+import static fiji.plugin.trackmate.io.TmXmlKeys.FILTER_ABOVE_ATTRIBUTE_NAME;
+import static fiji.plugin.trackmate.io.TmXmlKeys.FILTER_ELEMENT_KEY;
+import static fiji.plugin.trackmate.io.TmXmlKeys.FILTER_FEATURE_ATTRIBUTE_NAME;
+import static fiji.plugin.trackmate.io.TmXmlKeys.FILTER_VALUE_ATTRIBUTE_NAME;
+import static fiji.plugin.trackmate.io.TmXmlKeys.FRAME_ATTRIBUTE_NAME;
+import static fiji.plugin.trackmate.io.TmXmlKeys.IMAGE_ELEMENT_KEY;
+import static fiji.plugin.trackmate.io.TmXmlKeys.IMAGE_FILENAME_ATTRIBUTE_NAME;
+import static fiji.plugin.trackmate.io.TmXmlKeys.IMAGE_FOLDER_ATTRIBUTE_NAME;
+import static fiji.plugin.trackmate.io.TmXmlKeys.IMAGE_HEIGHT_ATTRIBUTE_NAME;
+import static fiji.plugin.trackmate.io.TmXmlKeys.IMAGE_NFRAMES_ATTRIBUTE_NAME;
+import static fiji.plugin.trackmate.io.TmXmlKeys.IMAGE_NSLICES_ATTRIBUTE_NAME;
+import static fiji.plugin.trackmate.io.TmXmlKeys.IMAGE_PIXEL_HEIGHT_ATTRIBUTE_NAME;
+import static fiji.plugin.trackmate.io.TmXmlKeys.IMAGE_PIXEL_WIDTH_ATTRIBUTE_NAME;
+import static fiji.plugin.trackmate.io.TmXmlKeys.IMAGE_SPATIAL_UNITS_ATTRIBUTE_NAME;
+import static fiji.plugin.trackmate.io.TmXmlKeys.IMAGE_TIME_INTERVAL_ATTRIBUTE_NAME;
+import static fiji.plugin.trackmate.io.TmXmlKeys.IMAGE_TIME_UNITS_ATTRIBUTE_NAME;
+import static fiji.plugin.trackmate.io.TmXmlKeys.IMAGE_VOXEL_DEPTH_ATTRIBUTE_NAME;
+import static fiji.plugin.trackmate.io.TmXmlKeys.IMAGE_WIDTH_ATTRIBUTE_NAME;
+import static fiji.plugin.trackmate.io.TmXmlKeys.INITIAL_SPOT_FILTER_ELEMENT_KEY;
+import static fiji.plugin.trackmate.io.TmXmlKeys.LOG_ELEMENT_KEY;
+import static fiji.plugin.trackmate.io.TmXmlKeys.PLUGIN_VERSION_ATTRIBUTE_NAME;
+import static fiji.plugin.trackmate.io.TmXmlKeys.SETTINGS_ELEMENT_KEY;
+import static fiji.plugin.trackmate.io.TmXmlKeys.SETTINGS_TEND_ATTRIBUTE_NAME;
+import static fiji.plugin.trackmate.io.TmXmlKeys.SETTINGS_TSTART_ATTRIBUTE_NAME;
+import static fiji.plugin.trackmate.io.TmXmlKeys.SETTINGS_XEND_ATTRIBUTE_NAME;
+import static fiji.plugin.trackmate.io.TmXmlKeys.SETTINGS_XSTART_ATTRIBUTE_NAME;
+import static fiji.plugin.trackmate.io.TmXmlKeys.SETTINGS_YEND_ATTRIBUTE_NAME;
+import static fiji.plugin.trackmate.io.TmXmlKeys.SETTINGS_YSTART_ATTRIBUTE_NAME;
+import static fiji.plugin.trackmate.io.TmXmlKeys.SETTINGS_ZEND_ATTRIBUTE_NAME;
+import static fiji.plugin.trackmate.io.TmXmlKeys.SETTINGS_ZSTART_ATTRIBUTE_NAME;
+import static fiji.plugin.trackmate.io.TmXmlKeys.SPOT_COLLECTION_ELEMENT_KEY;
+import static fiji.plugin.trackmate.io.TmXmlKeys.SPOT_COLLECTION_NSPOTS_ATTRIBUTE_NAME;
+import static fiji.plugin.trackmate.io.TmXmlKeys.SPOT_ELEMENT_KEY;
+import static fiji.plugin.trackmate.io.TmXmlKeys.SPOT_FILTER_COLLECTION_ELEMENT_KEY;
+import static fiji.plugin.trackmate.io.TmXmlKeys.SPOT_FRAME_COLLECTION_ELEMENT_KEY;
+import static fiji.plugin.trackmate.io.TmXmlKeys.SPOT_ID_ATTRIBUTE_NAME;
+import static fiji.plugin.trackmate.io.TmXmlKeys.SPOT_ID_ELEMENT_KEY;
+import static fiji.plugin.trackmate.io.TmXmlKeys.SPOT_NAME_ATTRIBUTE_NAME;
+import static fiji.plugin.trackmate.io.TmXmlKeys.TRACKER_SETTINGS_ELEMENT_KEY;
+import static fiji.plugin.trackmate.io.TmXmlKeys.TRACK_COLLECTION_ELEMENT_KEY;
+import static fiji.plugin.trackmate.io.TmXmlKeys.TRACK_EDGE_ELEMENT_KEY;
+import static fiji.plugin.trackmate.io.TmXmlKeys.TRACK_ELEMENT_KEY;
+import static fiji.plugin.trackmate.io.TmXmlKeys.TRACK_FILTER_COLLECTION_ELEMENT_KEY;
+import static fiji.plugin.trackmate.io.TmXmlKeys.TRACK_ID_ELEMENT_KEY;
+import static fiji.plugin.trackmate.io.TmXmlKeys.TRACK_NAME_ATTRIBUTE_NAME;
 import ij.IJ;
 import ij.ImagePlus;
 
@@ -13,47 +59,54 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-import mpicbg.imglib.type.numeric.RealType;
+import net.imglib2.algorithm.Algorithm;
+import net.imglib2.algorithm.Benchmark;
 
-import org.jdom.Attribute;
-import org.jdom.DataConversionException;
-import org.jdom.Document;
-import org.jdom.Element;
-import org.jdom.JDOMException;
-import org.jdom.input.SAXBuilder;
+import org.jdom2.Attribute;
+import org.jdom2.DataConversionException;
+import org.jdom2.Document;
+import org.jdom2.Element;
+import org.jdom2.JDOMException;
+import org.jdom2.input.SAXBuilder;
 import org.jgrapht.graph.DefaultWeightedEdge;
-import org.jgrapht.graph.SimpleWeightedGraph;
+import org.jgrapht.graph.SimpleDirectedWeightedGraph;
 
+import fiji.plugin.trackmate.DetectorProvider;
 import fiji.plugin.trackmate.FeatureFilter;
+import fiji.plugin.trackmate.FeatureModel;
 import fiji.plugin.trackmate.Logger;
+import fiji.plugin.trackmate.Logger.StringBuilderLogger;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
-import fiji.plugin.trackmate.SpotImp;
 import fiji.plugin.trackmate.TrackMateModel;
-import fiji.plugin.trackmate.features.FeatureModel;
-import fiji.plugin.trackmate.segmentation.LogSegmenter;
-import fiji.plugin.trackmate.segmentation.SegmenterSettings;
-import fiji.plugin.trackmate.segmentation.SpotSegmenter;
-import fiji.plugin.trackmate.tracking.SimpleFastLAPTracker;
+import fiji.plugin.trackmate.TrackMate_;
+import fiji.plugin.trackmate.TrackerProvider;
+import fiji.plugin.trackmate.detection.SpotDetectorFactory;
+import fiji.plugin.trackmate.features.edges.EdgeTargetAnalyzer;
+import fiji.plugin.trackmate.features.track.TrackIndexAnalyzer;
 import fiji.plugin.trackmate.tracking.SpotTracker;
-import fiji.plugin.trackmate.tracking.TrackerSettings;
 
 
-public class TmXmlReader {
+public class TmXmlReader implements Algorithm, Benchmark {
 
-	private static final boolean DEBUG = false;
-//	private static final boolean useMultithreading = TrackMate_.DEFAULT_USE_MULTITHREADING; // Not yet
+	protected static final boolean DEBUG = true;
 
-	private Document document = null;
-	private File file;
-	private Element root;
-	private Logger logger;
+	protected Document document = null;
+	protected File file;
+	protected Element root;
+	/** The plugin instance to operate on. This must be provided, in the case we want to load 
+	 * a file created with a subclass of {@link TrackMate_} (e.g. with new factories) so that 
+	 * correct detectors, etc... can be instantiated from the extended plugin.
+	 */
+	protected final TrackMate_ plugin;
 	/** A map of all spots loaded. We need this for performance, since we need to recreate 
 	 * both the filtered spot collection and the tracks graph from the same spot objects 
 	 * that the main spot collection.. In the file, they are referenced by their {@link Spot#ID()},
@@ -61,34 +114,162 @@ public class TmXmlReader {
 	 * We made this cache a {@link ConcurrentHashMap} because we hope to load large data in a 
 	 * multi-threaded way.
 	 */
-	private ConcurrentHashMap<Integer, Spot> cache;
-	/** A flag to indicate whether we already parsed the file. */
-	private boolean parsed = false;
+	protected ConcurrentHashMap<Integer, Spot> cache;
+
+	protected long processingTime;
+	protected StringBuilderLogger logger = new StringBuilderLogger();
+
+	private String log;
 
 	/*
-	 * CONSTRUCTOR
+	 * CONSTRUCTORS
 	 */
 
 	/**
-	 * Initialize this reader to read the file given in argument. No actual parsing is made at construction.
+	 * Initialize this reader to read the file given in argument. 
+	 * <p>
+	 * A plugin instance must be provided, and this instance must be initialized with providers
+	 * (as in when calling {@link TrackMate_#initModules()}. This in the case we want to load 
+	 * a file created with a subclass of {@link TrackMate_} (e.g. with new factories) so that 
+	 * correct detectors, etc... can be instantiated from the extended plugin.
+	 * <p>
+	 * The given plugin instance will be modified by this class, upon calling the {@link #process()}
+	 * method 
 	 */
-	public TmXmlReader(File file, Logger logger) {
+	public TmXmlReader(File file, TrackMate_ plugin) {
 		this.file = file;
-		this.logger = logger;
+		this.plugin = plugin;
+		parse();
 	}
 
 	/*
 	 * PUBLIC METHODS
 	 */
+	
+	/**
+	 * @return  the log text saved in the specified file, or <code>null</code> if log
+	 * text was not saved. Must be called after {@link #process()}.
+	 */
+	public String getLogText() {
+		return log;
+	}
+
+	@Override
+	public boolean process() {
+
+		long start = System.currentTimeMillis();
+
+		TrackMateModel model = plugin.getModel();
+		
+		// Text log
+		log = getLog();
+		
+		// Settings
+		Settings settings = getSettings();
+		getDetectorSettings(settings);
+		getTrackerSettings(settings);
+		settings.imp = getImage();
+		model.setSettings(settings);
+
+		// Spot Filters
+		FeatureFilter initialFilter = getInitialFilter();
+		if (null != initialFilter) {
+			model.getSettings().initialSpotFilterValue = initialFilter.value;
+		} else {
+			model.getSettings().initialSpotFilterValue = null; // So that everyone knows we did NOT find it in the file
+		}
+		List<FeatureFilter> spotFilters = getSpotFeatureFilters();
+		model.getSettings().setSpotFilters(spotFilters);
+		// Spots
+		SpotCollection allSpots = getAllSpots();
+		SpotCollection filteredSpots = getFilteredSpots();
+		model.setSpots(allSpots, true);
+		model.setFilteredSpots(filteredSpots, true);
+		// Tracks, filtered tracks and track features all at once
+		if (!readTracks()) {
+			return false;
+		}
+
+		// Track Filters
+		List<FeatureFilter> trackFilters = getTrackFeatureFilters();
+		model.getSettings().setTrackFilters(trackFilters);
+
+		long end = System.currentTimeMillis();
+		processingTime = end - start;
+
+		return true;
+	}
 
 	/**
-	 * Parse the file to create a JDom {@link Document}. This method must be called before using any of
-	 * the other getter methods.
+	 * @return the version string stored in the file.
 	 */
-	public void parse() {
+	public String getVersion() {
+		return root.getAttribute(PLUGIN_VERSION_ATTRIBUTE_NAME).getValue();
+	}
+
+	@Override
+	public long getProcessingTime() {
+		return processingTime;
+	}
+
+	@Override
+	public boolean checkInput() {
+		if (null == document) {
+			return false;
+		}
+		return true;
+	}
+
+	@Override
+	public String getErrorMessage() {
+		return logger.toString();
+	}
+
+	/*
+	 * PRIVATE METHODS
+	 */
+
+	private String getLog() {
+		Element logElement = root.getChild(LOG_ELEMENT_KEY);
+		if (null != logElement) {
+			return logElement.getTextTrim();
+		} else {
+			return "";
+		}
+	}
+
+	
+	private ImagePlus getImage()  {
+		Element imageInfoElement = root.getChild(IMAGE_ELEMENT_KEY);
+		if (null == imageInfoElement)
+			return null; // value will still be null
+		String filename = imageInfoElement.getAttributeValue(IMAGE_FILENAME_ATTRIBUTE_NAME);
+		String folder 	= imageInfoElement.getAttributeValue(IMAGE_FOLDER_ATTRIBUTE_NAME);
+		if (null == filename || filename.isEmpty())
+			return null;
+		if (null == folder || folder.isEmpty())
+			folder = file.getParent(); // it is a relative path, then
+		File imageFile = new File(folder, filename);
+		if (!imageFile.exists() || !imageFile.canRead()) {
+			// Could not find it to the absolute path. Then we look for the same path of the xml file
+			folder = file.getParent();
+			imageFile = new File(folder, filename);
+			if (!imageFile.exists() || !imageFile.canRead()) {
+				return null;
+			}
+		}
+		return IJ.openImage(imageFile.getAbsolutePath());
+	}
+
+
+	/**
+	 * Parse the file to create a JDom {@link Document}. This method is called at construction.
+	 */
+	private void parse() {
 		SAXBuilder sb = new SAXBuilder();
 		try {
 			document = sb.build(file);
+			root = document.getRootElement();
 		} catch (JDOMException e) {
 			logger.error("Problem parsing "+file.getName()+", it is not a valid TrackMate XML file.\nError message is:\n"
 					+e.getLocalizedMessage()+'\n');
@@ -96,107 +277,53 @@ public class TmXmlReader {
 			logger.error("Problem reading "+file.getName()
 					+".\nError message is:\n"+e.getLocalizedMessage()+'\n');
 		}
-		root = document.getRootElement();
-		parsed = true;
 	}
 
 	/**
-	 * Return a {@link TrackMateModel} from all the information stored in this file.
-	 * Fields not set in the field will be <code>null</code> in the model. 
-	 * @throws DataConversionException 
+	 * @return a map of the saved track features, as they appear in the file
 	 */
-	public TrackMateModel getModel() {
-		if (!parsed)
-			parse();
+	private Map<Integer,Map<String,Double>> readTrackFeatures() {
 
-		TrackMateModel model = new TrackMateModel();
-		// Settings
-		Settings settings = getSettings();
-		getSegmenterSettings(settings);
-		getTrackerSettings(settings);
-		settings.imp = getImage();
-		model.setSettings(settings);
-
-		// Spot Filters
-		List<FeatureFilter> spotFilters = getSpotFeatureFilters();
-		FeatureFilter initialFilter = getInitialFilter();
-		model.getSettings().initialSpotFilterValue = initialFilter.value;
-		model.getSettings().setSpotFilters(spotFilters);
-		// Spots
-		SpotCollection allSpots = getAllSpots();
-		SpotCollection filteredSpots = getFilteredSpots();
-		model.setSpots(allSpots, false);
-		model.setFilteredSpots(filteredSpots, false);
-		// Tracks
-		SimpleWeightedGraph<Spot, DefaultWeightedEdge> graph = readTrackGraph();
-		if (null != graph) {
-			model.setGraph(graph);
-		}
-		// Track Filters
-		List<FeatureFilter> trackFilters = getTrackFeatureFilters();
-		model.getSettings().setTrackFilters(trackFilters);
-		// Filtered tracks
-		Set<Integer> filteredTrackIndices = getFilteredTracks();
-		if (null != filteredTrackIndices) {
-			model.setVisibleTrackIndices(filteredTrackIndices, false);
-			model.setTrackSpots(readTrackSpots(graph));
-			model.setTrackEdges(readTrackEdges(graph));
-		}
-		// Track features
-		readTrackFeatures(model.getFeatureModel());
-
-		// Return
-		return model;
-	}
-
-
-
-	public void readTrackFeatures(FeatureModel featureModel) {
-		if (!parsed)
-			parse();
+		HashMap<Integer, Map<String, Double>> featureMap = new HashMap<Integer, Map<String, Double>>();
 
 		Element allTracksElement = root.getChild(TRACK_COLLECTION_ELEMENT_KEY);
 		if (null == allTracksElement)
-			return;
-
-		featureModel.initFeatureMap();
+			return null;
 
 		// Load tracks
-		@SuppressWarnings("unchecked")
 		List<Element> trackElements = allTracksElement.getChildren(TRACK_ELEMENT_KEY);
 		for (Element trackElement : trackElements) {
 
 			int trackID = -1;
 			try {
-				trackID = trackElement.getAttribute(TRACK_ID_ATTRIBUTE_NAME).getIntValue();
+				trackID = trackElement.getAttribute(TrackIndexAnalyzer.TRACK_ID).getIntValue();
 			} catch (DataConversionException e1) {
-				logger.error("Found a track with invalid trackID. Skipping.\n");
+				logger.error("Found a track with invalid trackID for " + trackElement + ". Skipping.\n");
 				continue;
 			}
 
-			@SuppressWarnings("unchecked")
+			HashMap<String, Double> trackMap = new HashMap<String, Double>();
+
 			List<Attribute> attributes = trackElement.getAttributes();
 			for(Attribute attribute : attributes) {
 
 				String attName = attribute.getName();
-				if (attName.equals(TRACK_ID_ATTRIBUTE_NAME)) { // Skip trackID attribute
-					continue;
-				}
-
-				Float attVal = Float.NaN;
+				Double attVal = Double.NaN;
 				try {
-					attVal = attribute.getFloatValue();
+					attVal = attribute.getDoubleValue();
 				} catch (DataConversionException e) {
 					logger.error("Track "+trackID+": Cannot read the feature "+attName+" value. Skipping.\n");
 					continue;
 				}
 
-				featureModel.putTrackFeature(trackID, attName, attVal); 
+				trackMap.put(attName, attVal);
 
 			}
 
-
+			featureMap.put(trackID, trackMap);
 		}
+
+		return featureMap;
 
 	}
 
@@ -205,15 +332,13 @@ public class TmXmlReader {
 	 * Return the initial threshold on quality stored in this file.
 	 * Return <code>null</code> if the initial threshold data cannot be found in the file.
 	 */
-	public FeatureFilter getInitialFilter()  {
-		if (!parsed)
-			parse();
+	private FeatureFilter getInitialFilter()  {
 
 		Element itEl = root.getChild(INITIAL_SPOT_FILTER_ELEMENT_KEY);
 		if (null == itEl)
 			return null;
 		String feature 	= itEl.getAttributeValue(FILTER_FEATURE_ATTRIBUTE_NAME);
-		Float value 	= readFloatAttribute(itEl, FILTER_VALUE_ATTRIBUTE_NAME, logger);
+		Double value 	= readDoubleAttribute(itEl, FILTER_VALUE_ATTRIBUTE_NAME, logger);
 		boolean isAbove	= readBooleanAttribute(itEl, FILTER_ABOVE_ATTRIBUTE_NAME, logger);
 		FeatureFilter ft = new FeatureFilter(feature, value, isAbove);
 		return ft;
@@ -224,10 +349,7 @@ public class TmXmlReader {
 	 * Return the list of {@link FeatureFilter} for spots stored in this file.
 	 * Return <code>null</code> if the spot feature filters data cannot be found in the file.
 	 */
-	@SuppressWarnings("unchecked")
-	public List<FeatureFilter> getSpotFeatureFilters() {
-		if (!parsed)
-			parse();
+	private List<FeatureFilter> getSpotFeatureFilters() {
 
 		List<FeatureFilter> featureThresholds = new ArrayList<FeatureFilter>();
 		Element ftCollectionEl = root.getChild(SPOT_FILTER_COLLECTION_ELEMENT_KEY);
@@ -236,7 +358,7 @@ public class TmXmlReader {
 		List<Element> ftEls = ftCollectionEl.getChildren(FILTER_ELEMENT_KEY);
 		for (Element ftEl : ftEls) {
 			String feature 	= ftEl.getAttributeValue(FILTER_FEATURE_ATTRIBUTE_NAME);
-			Float value 	= readFloatAttribute(ftEl, FILTER_VALUE_ATTRIBUTE_NAME, logger);
+			Double value 	= readDoubleAttribute(ftEl, FILTER_VALUE_ATTRIBUTE_NAME, logger);
 			boolean isAbove	= readBooleanAttribute(ftEl, FILTER_ABOVE_ATTRIBUTE_NAME, logger);
 			FeatureFilter ft = new FeatureFilter(feature, value, isAbove);
 			featureThresholds.add(ft);
@@ -245,14 +367,10 @@ public class TmXmlReader {
 	}
 
 	/**
-	 * Return the list of {@link FeatureFilter} for tracks stored in this file.
+	 * @return the list of {@link FeatureFilter} for tracks stored in this file.
 	 * Return <code>null</code> if the track feature filters data cannot be found in the file.
 	 */
-	@SuppressWarnings("unchecked")
-	public List<FeatureFilter> getTrackFeatureFilters() {
-		if (!parsed)
-			parse();
-
+	private List<FeatureFilter> getTrackFeatureFilters() {
 		List<FeatureFilter> featureThresholds = new ArrayList<FeatureFilter>();
 		Element ftCollectionEl = root.getChild(TRACK_FILTER_COLLECTION_ELEMENT_KEY);
 		if (null == ftCollectionEl)
@@ -260,7 +378,7 @@ public class TmXmlReader {
 		List<Element> ftEls = ftCollectionEl.getChildren(FILTER_ELEMENT_KEY);
 		for (Element ftEl : ftEls) {
 			String feature 	= ftEl.getAttributeValue(FILTER_FEATURE_ATTRIBUTE_NAME);
-			Float value 	= readFloatAttribute(ftEl, FILTER_VALUE_ATTRIBUTE_NAME, logger);
+			Double value 	= readDoubleAttribute(ftEl, FILTER_VALUE_ATTRIBUTE_NAME, logger);
 			boolean isAbove	= readBooleanAttribute(ftEl, FILTER_ABOVE_ATTRIBUTE_NAME, logger);
 			FeatureFilter ft = new FeatureFilter(feature, value, isAbove);
 			featureThresholds.add(ft);
@@ -271,16 +389,13 @@ public class TmXmlReader {
 	/**
 	 * Return the settings for the TrackMate session saved in this file.
 	 * <p>
-	 * The settings object will have its {@link SegmenterSettings} and {@link TrackerSettings} set default values will be
+	 * The settings object will have its {@link DetectorSettings} and {@link TrackerSettings} set default values will be
 	 * used.
 	 * 
 	 * @return  a full Settings object
 	 * @throws DataConversionException 
 	 */
-	public Settings getSettings() {
-		if (!parsed)
-			parse();
-
+	private Settings getSettings() {
 		Settings settings = new Settings();
 		// Basic settings
 		Element settingsEl = root.getChild(SETTINGS_ELEMENT_KEY);
@@ -293,15 +408,15 @@ public class TmXmlReader {
 			settings.zend 	= readIntAttribute(settingsEl, SETTINGS_ZEND_ATTRIBUTE_NAME, logger, 10);
 			settings.tstart = readIntAttribute(settingsEl, SETTINGS_TSTART_ATTRIBUTE_NAME, logger, 1);
 			settings.tend 	= readIntAttribute(settingsEl, SETTINGS_TEND_ATTRIBUTE_NAME, logger, 10);
-			settings.segmentationChannel = readIntAttribute(settingsEl, SETTINGS_SEGMENTATION_CHANNEL_ATTRIBUTE_NAME, logger, 1);
+			//			settings.detectionChannel = readIntAttribute(settingsEl, SETTINGS_DETECTION_CHANNEL_ATTRIBUTE_NAME, logger, 1);
 		}
 		// Image info settings
 		Element infoEl 	= root.getChild(IMAGE_ELEMENT_KEY);
 		if (null != infoEl) {
-			settings.dx				= readFloatAttribute(infoEl, IMAGE_PIXEL_WIDTH_ATTRIBUTE_NAME, logger);
-			settings.dy				= readFloatAttribute(infoEl, IMAGE_PIXEL_HEIGHT_ATTRIBUTE_NAME, logger);
-			settings.dz				= readFloatAttribute(infoEl, IMAGE_VOXEL_DEPTH_ATTRIBUTE_NAME, logger);
-			settings.dt				= readFloatAttribute(infoEl, IMAGE_TIME_INTERVAL_ATTRIBUTE_NAME, logger);
+			settings.dx				= readDoubleAttribute(infoEl, IMAGE_PIXEL_WIDTH_ATTRIBUTE_NAME, logger);
+			settings.dy				= readDoubleAttribute(infoEl, IMAGE_PIXEL_HEIGHT_ATTRIBUTE_NAME, logger);
+			settings.dz				= readDoubleAttribute(infoEl, IMAGE_VOXEL_DEPTH_ATTRIBUTE_NAME, logger);
+			settings.dt				= readDoubleAttribute(infoEl, IMAGE_TIME_INTERVAL_ATTRIBUTE_NAME, logger);
 			settings.width			= readIntAttribute(infoEl, IMAGE_WIDTH_ATTRIBUTE_NAME, logger, 512);
 			settings.height			= readIntAttribute(infoEl, IMAGE_HEIGHT_ATTRIBUTE_NAME, logger, 512);
 			settings.nslices		= readIntAttribute(infoEl, IMAGE_NSLICES_ATTRIBUTE_NAME, logger, 1);
@@ -315,86 +430,40 @@ public class TmXmlReader {
 	}
 
 	/**
-	 * Update the given {@link Settings} object with the {@link SegmenterSettings} and {@link SpotSegmenter} fields
-	 * named {@link Settings#segmenterSettings} and {@link Settings#segmenter} read within the XML file
-	 * this reader is initialized with.
+	 * Update the given {@link Settings} object with the {@link SpotDetectorFactory} and settings map fields
+	 * named {@link Settings#detectorFactory}  and {@link Settings#detectorSettings} read within the XML file
+	 * this reader is initialized with. 
 	 * <p>
-	 * If the segmenter settings XML element is not present in the file, the {@link Settings} 
-	 * object is not updated. If the segmenter settings or the segmenter info can be read, 
-	 * but cannot be understood (most likely because the class the XML refers to is unknown) 
-	 * then a default object is substituted.  
-	 *   
+	 * As a side effect, this method also configure the {@link DetectorProvider} stored in 
+	 * the passed {@link TrackMate_} plugin for the found target detector factory. 
+	 * <p>
+	 * If the detector settings XML element is not present in the file, the {@link Settings} 
+	 * object is not updated. 
+
 	 * @param settings  the base {@link Settings} object to update.
 	 */
-	@SuppressWarnings({ "unchecked", "rawtypes" })
-	public void getSegmenterSettings(Settings settings) {
-		if (!parsed)
-			parse();
-
-		Element element = root.getChild(SEGMENTER_SETTINGS_ELEMENT_KEY);
+	private void getDetectorSettings(Settings settings) {
+		Element element = root.getChild(DETECTOR_SETTINGS_ELEMENT_KEY);
 		if (null == element) {
 			return;
 		}
 
-		// Deal with segmenter
-		SpotSegmenter<? extends RealType<?>> segmenter;
-		String segmenterClassName = element.getAttributeValue(SEGMENTER_CLASS_ATTRIBUTE_NAME);
-		if (null == segmenterClassName) {
-			logger.error("Segmenter class is not present.\n");
-			logger.error("Substituting default.\n");
-			segmenter = new LogSegmenter();
-		} else {
-			try {
-				segmenter = (SpotSegmenter) Class.forName(segmenterClassName).newInstance();
-			} catch (InstantiationException e) {
-				logger.error("Unable to instantiate segmenter class: "+e.getLocalizedMessage()+"\n");
-				logger.error("Substituting default.\n");
-				segmenter = new LogSegmenter();
-			} catch (IllegalAccessException e) {
-				logger.error("Unable to instantiate segmenter class: "+e.getLocalizedMessage()+"\n");
-				logger.error("Substituting default.\n");
-				segmenter = new LogSegmenter();
-			} catch (ClassNotFoundException e) {
-				logger.error("Unable to find segmenter class: "+e.getLocalizedMessage()+"\n");
-				logger.error("Substituting default.\n");
-				segmenter = new LogSegmenter();
-			}
+		DetectorProvider provider = plugin.getDetectorProvider();
+		Map<String, Object> ds = new HashMap<String, Object>(); 
+		// All the hard work is delegated to the provider. 
+		boolean ok = provider.unmarshall(element, ds);
+
+		if (!ok) {
+			logger.error(provider.getErrorMessage());
+			return;
 		}
-		settings.segmenter = segmenter;
 
-		// Deal with segmenter settings
-		SegmenterSettings ss = segmenter.createDefaultSettings();
-		String segmenterSettingsClassName = element.getAttributeValue(SEGMENTER_SETTINGS_CLASS_ATTRIBUTE_NAME);
-
-		if (null == segmenterSettingsClassName) {
-
-			logger.error("Segmenter settings class is not present,\n");
-			logger.error("substituting default one.\n");
-
-		} else {
-
-			if (segmenterSettingsClassName.equals(ss.getClass().getName())) {
-
-				// The saved class matched, we can updated the settings created above with the file content
-				ss.unmarshall(element);
-
-			} else {
-
-				// They do not match. We DO NOT give priority to what has been saved. That way we always
-				// have something that works (when invoking the process methods of the plugin).
-
-				logger.error("Tracker settings class ("+segmenterSettingsClassName+") does not match tracker requirements (" +
-						ss.getClass().getName()+"),\n");
-				logger.error("substituting default one.\n");
-
-			}
-		}
-		settings.segmenterSettings = ss;
-
+		settings.detectorSettings = ds;
+		settings.detectorFactory = provider.getDetectorFactory();
 	}
 
 	/**
-	 * Update the given {@link Settings} object with the {@link TrackerSettings} and {@link SpotTracker} fields
+	 * Update the given {@link Settings} object with {@link SpotTracker} proper settings map fields 
 	 * named {@link Settings#trackerSettings} and {@link Settings#tracker} read within the XML file
 	 * this reader is initialized with.
 	 * <p>
@@ -405,93 +474,43 @@ public class TmXmlReader {
 	 *   
 	 * @param settings  the base {@link Settings} object to update.
 	 */
-	public void getTrackerSettings(Settings settings) {
-		if (!parsed)
-			parse();
-
+	private void getTrackerSettings(Settings settings) {
 		Element element = root.getChild(TRACKER_SETTINGS_ELEMENT_KEY);
 		if (null == element) {
 			return;
 		}
 
-		// Deal with tracker
-		SpotTracker tracker;
-		String trackerClassName = element.getAttributeValue(TRACKER_CLASS_ATTRIBUTE_NAME);
-		if (null == trackerClassName) {
-			logger.error("Tracker class is not present.\n");
-			logger.error("Substituting default.\n");
-			tracker = new SimpleFastLAPTracker();
-		} else {
-			try {
-				tracker = (SpotTracker) Class.forName(trackerClassName).newInstance();
-			} catch (InstantiationException e) {
-				logger.error("Unable to instantiate tracker settings class: "+e.getLocalizedMessage()+"\n");
-				logger.error("Substituting default.\n");
-				tracker = new SimpleFastLAPTracker();
-			} catch (IllegalAccessException e) {
-				logger.error("Unable to instantiate tracker settings class: "+e.getLocalizedMessage()+"\n");
-				logger.error("Substituting default.\n");
-				tracker = new SimpleFastLAPTracker();
-			} catch (ClassNotFoundException e) {
-				logger.error("Unable to find segmenter settings class: "+e.getLocalizedMessage()+"\n");
-				logger.error("Substituting default.\n");
-				tracker = new SimpleFastLAPTracker();
-			}
+		TrackerProvider provider = plugin.getTrackerProvider();
+		Map<String, Object> ds = new HashMap<String, Object>(); 
+		// All the hard work is delegated to the provider. 
+		boolean ok = provider.unmarshall(element, ds);
+
+		if (!ok) {
+			logger.error(provider.getErrorMessage());
+			return;
 		}
-		settings.tracker = tracker;
 
-		// Deal with tracker settings
-		{
-			// To start with, we get a settings suitable for the tracker we have found 
-			TrackerSettings ts = tracker.createDefaultSettings();
-			String trackerSettingsClassName = element.getAttributeValue(TRACKER_SETTINGS_CLASS_ATTRIBUTE_NAME);
-			if (null == trackerSettingsClassName) {
-
-				logger.error("Tracker settings class is not present,\n");
-				logger.error("substituting default one.\n");
-
-			} else {
-
-				if (trackerSettingsClassName.equals(ts.getClass().getName())) {
-
-					// The saved class matched, we can updated the settings created above with the file content
-					ts.unmarshall(element);
-
-				} else {
-
-					// They do not match. We DO NOT give priority to what has been saved. That way we always
-					// have something that works (when invoking the process methods of the plugin).
-
-					logger.error("Tracker settings class ("+trackerSettingsClassName+") does not match tracker requirements (" +
-							ts.getClass().getName()+"),\n");
-					logger.error("substituting default one.\n");
-				}
-			}
-			settings.trackerSettings = ts;
-		}
+		settings.trackerSettings = ds;
+		settings.tracker = provider.getTracker();
 	}
 
 	/**
-	 * Return the list of all spots stored in this file.
+	 * Read the list of all spots stored in this file.
 	 * <p>
 	 * Internally, this methods also builds the cache field, which will be required by the
 	 * following methods:
 	 * <ul>
 	 * 	<li> {@link #getFilteredSpots()}
-	 * 	<li> {@link #readTrackGraph()}
-	 * 	<li> {@link #readTrackEdges(SimpleWeightedGraph)}
-	 * 	<li> {@link #readTrackSpots(SimpleWeightedGraph)}
+	 * 	<li> {@link #readTracks()}
+	 * 	<li> {@link #readTrackEdges(SimpleDirectedWeightedGraph)}
+	 * 	<li> {@link #readTrackSpots(SimpleDirectedWeightedGraph)}
 	 * </ul>
 	 * It is therefore sensible to call this method first, just afther {@link #parse()}ing the file.
 	 * If not called, this method will be called anyway by the other methods to build the cache.
 	 * 
 	 * @return  a {@link SpotCollection}. Return <code>null</code> if the spot section is not present in the file.
 	 */
-	@SuppressWarnings("unchecked")
-	public SpotCollection getAllSpots() {
-		if (!parsed)
-			parse();
-
+	private SpotCollection getAllSpots() {
 		// Root element for collection
 		Element spotCollection = root.getChild(SPOT_COLLECTION_ELEMENT_KEY);
 		if (null == spotCollection)
@@ -534,7 +553,7 @@ public class TmXmlReader {
 	}
 
 	/**
-	 * Return the filtered spots stored in this file, taken from the list of all spots, given in argument.
+	 * Read the filtered spots stored in this file, taken from the list of all spots, given in argument.
 	 * <p>
 	 * The {@link Spot} objects in this list will be the same that of the main list given in argument. 
 	 * If a spot ID referenced in the file is in the selection but not in the list given in argument,
@@ -544,11 +563,7 @@ public class TmXmlReader {
 	 * @return  a {@link SpotCollection}. Each spot of this collection belongs also to the  given collection.
 	 * Return <code>null</code> if the spot selection section does is not present in the file.
 	 */
-	@SuppressWarnings("unchecked")
-	public SpotCollection getFilteredSpots()  {
-		if (!parsed)
-			parse();
-
+	private SpotCollection getFilteredSpots()  {
 		Element selectedSpotCollection = root.getChild(FILTERED_SPOT_ELEMENT_KEY);
 		if (null == selectedSpotCollection)
 			return null;
@@ -581,68 +596,81 @@ public class TmXmlReader {
 	}
 
 	/**
-	 * Load and build a new graph mapping spot linking as tracks. The graph vertices are made of the selected spot
-	 * list given in argument. Edges are formed from the file data.
-	 * <p>
-	 * The track features are not retrieved by this method. They must be recalculated from the model.
-	 * 
-	 * @param selectedSpots  the spot selection from which tracks area made 
+	 * Load the tracks, the track features and the ID of the filtered tracks into the model
+	 * modified by this reader. 
+	 * @return 
+	 * @return true if reading tracks was successsful, false otherwise.
 	 */
-	@SuppressWarnings("unchecked")
-	public SimpleWeightedGraph<Spot, DefaultWeightedEdge> readTrackGraph() {
-		if (!parsed)
-			parse();
+	private boolean readTracks() {
 
 		Element allTracksElement = root.getChild(TRACK_COLLECTION_ELEMENT_KEY);
 		if (null == allTracksElement)
-			return null;
+			return true;
 
 		if (null == cache) 
 			getAllSpots(); // build the cache if it's not there
 
-		final SimpleWeightedGraph<Spot, DefaultWeightedEdge> graph = new SimpleWeightedGraph<Spot, DefaultWeightedEdge>(DefaultWeightedEdge.class);
+		final SimpleDirectedWeightedGraph<Spot, DefaultWeightedEdge> graph = new SimpleDirectedWeightedGraph<Spot, DefaultWeightedEdge>(DefaultWeightedEdge.class);
 
 		// Load tracks
 		List<Element> trackElements = allTracksElement.getChildren(TRACK_ELEMENT_KEY);
 		List<Element> edgeElements;
-		int sourceID, targetID;
-		Spot sourceSpot, targetSpot;
-		double weight = 0;
+
+		// A temporary map that maps stored track key to one of its spot
+		HashMap<Integer, Spot> savedTrackMap = new HashMap<Integer, Spot>(trackElements.size());
+		HashMap<Integer, String> savedTrackNames = new HashMap<Integer, String>(trackElements.size());
+		
+		// The list of edge features. that we will set.
+		final FeatureModel fm = plugin.getModel().getFeatureModel();
+		List<String> edgeIntFeatures = new ArrayList<String>();// TODO is there a better way?
+		edgeIntFeatures.add(EdgeTargetAnalyzer.SPOT_SOURCE_ID);
+		edgeIntFeatures.add(EdgeTargetAnalyzer.SPOT_TARGET_ID);
+		List<String> edgeDoubleFeatures = fm.getEdgeFeatures();
+		edgeDoubleFeatures.removeAll(edgeIntFeatures);
 
 		for (Element trackElement : trackElements) {
 
 			// Get track ID as it is saved on disk
-			int trackID = readIntAttribute(trackElement, TRACK_ID_ATTRIBUTE_NAME, logger);
+			int trackID = readIntAttribute(trackElement, TrackIndexAnalyzer.TRACK_ID, logger);
+			String trackName = trackElement.getAttributeValue(TRACK_NAME_ATTRIBUTE_NAME);
+			if (null == trackName) {
+				trackName = "Unnamed";
+			}
+			// Keep a reference of one of the spot for outside the loop.
+			Spot sourceSpot = null; 
 
+			// Iterate over edges
 			edgeElements = trackElement.getChildren(TRACK_EDGE_ELEMENT_KEY);
+
 			for (Element edgeElement : edgeElements) {
 
 				// Get source and target ID for this edge
-				sourceID = readIntAttribute(edgeElement, TRACK_EDGE_SOURCE_ATTRIBUTE_NAME, logger);
-				targetID = readIntAttribute(edgeElement, TRACK_EDGE_TARGET_ATTRIBUTE_NAME, logger);
+				int sourceID = readIntAttribute(edgeElement, EdgeTargetAnalyzer.SPOT_SOURCE_ID, logger);
+				int targetID = readIntAttribute(edgeElement, EdgeTargetAnalyzer.SPOT_TARGET_ID, logger);
 
 				// Get matching spots from the cache
 				sourceSpot = cache.get(sourceID);
-				targetSpot = cache.get(targetID);
+				Spot targetSpot = cache.get(targetID);
 
 				// Get weight
-				if (null != edgeElement.getAttribute(TRACK_EDGE_WEIGHT_ATTRIBUTE_NAME))
-					weight   	= readDoubleAttribute(edgeElement, TRACK_EDGE_WEIGHT_ATTRIBUTE_NAME, logger);
-				else 
-					weight  	= 0;
+				double weight = 0;
+				if (null != edgeElement.getAttribute(EdgeTargetAnalyzer.EDGE_COST)) {
+					weight = readDoubleAttribute(edgeElement, EdgeTargetAnalyzer.EDGE_COST, logger);
+				}
 
 				// Error check
 				if (null == sourceSpot) {
-					logger.error("Unknown spot ID: "+sourceID);
-					continue;
+					logger.error("Unknown spot ID: "+sourceID + "\n");
+					return false;
 				}
 				if (null == targetSpot) {
-					logger.error("Unknown spot ID: "+targetID);
-					continue;
+					logger.error("Unknown spot ID: "+targetID + "\n");
+					return false;
 				}
+
 				if (sourceSpot.equals(targetSpot)) {
-					logger.error("Bad edge found for track "+trackID);
-					continue;
+					logger.error("Bad link for track " + trackID + ". Source = Target with ID: " + sourceID + "\n");
+					return false;
 				}
 
 				// Add spots to graph and build edge
@@ -651,186 +679,125 @@ public class TmXmlReader {
 				DefaultWeightedEdge edge = graph.addEdge(sourceSpot, targetSpot);
 
 				if (edge == null) {
-					logger.error("Bad edge found for track "+trackID);
-					continue;
+					logger.error("Bad edge found for track " + trackID + "\n");
+					return false;
 				} else {
 					graph.setEdgeWeight(edge, weight);
-				}
-			}
-		}
-		return graph;
-	}
-
-
-	/**
-	 * Read the tracks stored in the file as a list of set of spots.
-	 * <p>
-	 * This methods ensures that the indices of the track in the returned list match the indices 
-	 * stored in the file. Because we want this list to be made of the same objects used everywhere,
-	 * we build it from the track graph that can be built calling {@link #readTrackGraph(SpotCollection)}.  
-	 * <p>
-	 * Each track is returned as a set of spot. The set itself is sorted by increasing time.
-	 * 
-	 * @param graph  the graph to retrieve spot objects from 
-	 * @return  a list of tracks as a set of spots
-	 */
-	@SuppressWarnings("unchecked")
-	public List<Set<Spot>> readTrackSpots(final SimpleWeightedGraph<Spot, DefaultWeightedEdge> graph) {
-		if (!parsed)
-			parse();
-
-		Element allTracksElement = root.getChild(TRACK_COLLECTION_ELEMENT_KEY);
-		if (null == allTracksElement)
-			return null;
-		
-		if (null == cache)
-			getAllSpots(); // build the cache if it's not there
-
-		// Load tracks
-		List<Element> trackElements = allTracksElement.getChildren(TRACK_ELEMENT_KEY);
-		final int nTracks = trackElements.size();
-
-		// Prepare holder for results
-		final ArrayList<Set<Spot>> trackSpots = new ArrayList<Set<Spot>>(nTracks);
-		// Fill it with null value so that it is of size nTracks, and we can later put the real tracks
-		for (int i = 0; i < nTracks; i++) {
-			trackSpots.add(null);
-		}
-
-		List<Element> edgeElements;
-		int sourceID, targetID;
-		Spot sourceSpot, targetSpot;
-
-		for (Element trackElement : trackElements) {
-
-			// Get track ID as it is saved on disk
-			int trackID = readIntAttribute(trackElement, TRACK_ID_ATTRIBUTE_NAME, logger);
-
-			// Instantiate current track
-			HashSet<Spot> track = new HashSet<Spot>(2*trackElements.size()); // approx
-
-			edgeElements = trackElement.getChildren(TRACK_EDGE_ELEMENT_KEY);
-			for (Element edgeElement : edgeElements) {
-
-				// Get source and target ID for this edge
-				sourceID = readIntAttribute(edgeElement, TRACK_EDGE_SOURCE_ATTRIBUTE_NAME, logger);
-				targetID = readIntAttribute(edgeElement, TRACK_EDGE_TARGET_ATTRIBUTE_NAME, logger);
-				
-				// Get spots from the cache
-				sourceSpot = cache.get(sourceID);
-				targetSpot = cache.get(targetID);
-				
-				// Add them to current track
-				track.add(sourceSpot);
-				track.add(targetSpot);
-
-			} // looping over all edges
-
-			trackSpots.set(trackID, track);
-
-			if (DEBUG) {
-				System.out.println("[TmXmlReader] readTrackSpots: the track "+trackID+" has the following spots: "+track);
-			}
-
-
-		} // looping over all track elements
-
-		return trackSpots;
-	}
-
-	/**
-	 * Read the tracks stored in the file as a list of set of edges.
-	 * <p>
-	 * This methods ensures that the indices of the track in the returned list match the indices 
-	 * stored in the file. Because we want this list to be made of the same objects used everywhere,
-	 * we build it from the track graph that can be built calling {@link #readTrackGraph(SpotCollection)}.  
-	 * <p>
-	 * Each track is returned as a set of edges.
-	 * 
-	 * @param graph  the graph to retrieve spot objects from 
-	 * @return  a list of tracks as a set of edges
-	 */
-	@SuppressWarnings("unchecked")
-	public List<Set<DefaultWeightedEdge>> readTrackEdges(final SimpleWeightedGraph<Spot, DefaultWeightedEdge> graph) {
-		if (!parsed)
-			parse();
-
-		Element allTracksElement = root.getChild(TRACK_COLLECTION_ELEMENT_KEY);
-		if (null == allTracksElement)
-			return null;
-		
-		if (null == cache)
-			getAllSpots(); // build cache if it's not there
-
-		// Load tracks
-		List<Element> trackElements = allTracksElement.getChildren(TRACK_ELEMENT_KEY);
-		final int nTracks = trackElements.size();
-
-		// Prepare holder for results
-		final ArrayList<Set<DefaultWeightedEdge>> trackEdges = new ArrayList<Set<DefaultWeightedEdge>>(nTracks);
-		// Fill it with null value so that it is of size nTracks, and we can later put the real tracks
-		for (int i = 0; i < nTracks; i++) {
-			trackEdges.add(null);
-		}
-
-		List<Element> edgeElements;
-		int sourceID, targetID;
-		Spot sourceSpot, targetSpot;
-
-		for (Element trackElement : trackElements) {
-
-			// Get all edge elements
-			edgeElements = trackElement.getChildren(TRACK_EDGE_ELEMENT_KEY);
-
-			// Get track ID as it is saved on disk
-			int trackID = readIntAttribute(trackElement, TRACK_ID_ATTRIBUTE_NAME, logger);
-
-			// Instantiate current track
-			HashSet<DefaultWeightedEdge> track = new HashSet<DefaultWeightedEdge>(edgeElements.size());
-
-			for (Element edgeElement : edgeElements) {
-
-				// Get source and target ID for this edge
-				sourceID = readIntAttribute(edgeElement, TRACK_EDGE_SOURCE_ATTRIBUTE_NAME, logger);
-				targetID = readIntAttribute(edgeElement, TRACK_EDGE_TARGET_ATTRIBUTE_NAME, logger);
-				
-				// Get spots from cache
-				sourceSpot = cache.get(sourceID);
-				targetSpot = cache.get(targetID);
-				
-				// Retrieve possible edges from graph
-				Set<DefaultWeightedEdge> edges = graph.getAllEdges(sourceSpot, targetSpot);
-
-				// Add edges to track
-				if (edges.size() != 1) {
-					logger.error("Bad edge found for track "+trackID+": found "+edges.size()+" edges.\n");
-					continue;
-				} else {
-					DefaultWeightedEdge edge = edges.iterator().next();
-					track.add(edge);
-					if (DEBUG) {
-						System.out.println("[TmXmlReader] readTrackEdges: in track "+trackID+", found edge "+edge);
+					
+					// Put edge features
+					for (String feature : edgeDoubleFeatures) {
+						double val = readDoubleAttribute(edgeElement, feature, logger);
+						fm.putEdgeFeature(edge, feature, val);
 					}
-
+					for (String feature : edgeIntFeatures) {
+						double val = (double) readIntAttribute(edgeElement, feature, logger);
+						fm.putEdgeFeature(edge, feature, val);
+					}
+					
 				}
-				
-			} // looping over all edges
+			} // Finished parsing over the edges of the track
 
-			trackEdges.set(trackID, track);
+			// Store one of the spot in the saved trackID key map
+			savedTrackMap.put(trackID, sourceSpot);
+			savedTrackNames.put(trackID, trackName);
 
-		} // looping over all track elements
+		}
 
-		return trackEdges;
+		/* Pass the loaded graph to the model. The model will in turn regenerate a new 
+		 * map of tracks vs trackID, using the hash as new keys. Because there is a 
+		 * good chance that they saved keys and the new keys differ, we must retrieve
+		 * the mapping between the two using the retrieve spots.	 */
+		final TrackMateModel model = plugin.getModel();
+		model.getTrackModel().setGraph(graph);
+
+		// Retrieve the new track map
+		Map<Integer, Set<Spot>> newTrackMap = model.getTrackModel().getTrackSpots();
+
+		// Build a map of saved key vs new key
+		HashMap<Integer, Integer> newKeyMap = new HashMap<Integer, Integer>();
+		HashSet<Integer> newKeysToMatch = new HashSet<Integer>(newTrackMap.keySet());
+		for (Integer savedKey : savedTrackMap.keySet()) {
+			Spot spotToFind = savedTrackMap.get(savedKey);
+			for (Integer newKey : newTrackMap.keySet()) {
+				Set<Spot> track = newTrackMap.get(newKey);
+				if (track.contains(spotToFind)) {
+					newKeyMap.put(savedKey, newKey);
+					newKeysToMatch.remove(newKey);
+					break;
+				}
+			}
+			if (null == newKeyMap.get(savedKey)) {
+				logger.error("The track saved with ID = " + savedKey + " and containing the spot " + spotToFind + " has no matching track in the computed model.\n");
+				return false;
+			}
+		}
+
+		// Check that we matched all the new keys
+		if (!newKeysToMatch.isEmpty()) {
+			StringBuilder sb = new StringBuilder("Some of the computed tracks could not be matched to saved tracks:\n");
+			for (Integer unmatchedKey : newKeysToMatch) {
+				sb.append(" - track with ID " + unmatchedKey + " with spots " + newTrackMap.get(unmatchedKey) + "\n");
+			}
+			logger.error(sb.toString());
+			return false;
+		}
+
+		/* 
+		 * Now we know who's who. We can therefore retrieve the saved filtered track index, and 
+		 * match it to the proper new track IDs. 
+		 */
+		Set<Integer> savedFilteredTrackIDs = readFilteredTrackIDs();
+		// Build a new set with the new trackIDs;
+		Set<Integer> newFilteredTrackIDs = new HashSet<Integer>(savedFilteredTrackIDs.size());
+		for (Integer savedKey : savedFilteredTrackIDs) {
+			Integer newKey = newKeyMap.get(savedKey);
+			newFilteredTrackIDs.add(newKey);
+		}
+		model.getTrackModel().setFilteredTrackIDs(newFilteredTrackIDs, false);
+
+
+		/* 
+		 * We do the same thing for the track features.
+		 */
+		try {
+			Map<Integer, Map<String, Double>> savedFeatureMap = readTrackFeatures();
+			for (Integer savedKey : savedFeatureMap.keySet()) {
+
+				Map<String, Double> savedFeatures = savedFeatureMap.get(savedKey);
+				for (String feature : savedFeatures.keySet()) {
+					Integer newKey = newKeyMap.get(savedKey);
+					fm.putTrackFeature(newKey, feature, savedFeatures.get(feature));
+				}
+			}
+		} catch (RuntimeException re) {
+			logger.error("Problem populating track features:\n");
+			logger.error(re.getMessage());
+			return false;
+		}
+
+		/*
+		 * We can name correctly the tracks
+		 */
+
+		try {
+			for (Integer savedTrackID : savedTrackNames.keySet()) {
+				Integer newKey = newKeyMap.get(savedTrackID);
+				model.getTrackModel().setTrackName(newKey, savedTrackNames.get(savedTrackID));
+			}
+		} catch (RuntimeException rte) {
+			logger.error("Problem setting track names:\n");
+			logger.error(rte.getMessage());
+			return false;
+		}
+
+		return true;
 	}
 
 	/**
 	 * Read and return the list of track indices that define the filtered track collection.
 	 * @throws DataConversionException 
 	 */
-	public Set<Integer> getFilteredTracks() {
-		if (!parsed)
-			parse();
-
+	private Set<Integer> readFilteredTrackIDs() {
 		Element filteredTracksElement = root.getChild(FILTERED_TRACK_ELEMENT_KEY);
 		if (null == filteredTracksElement)
 			return null;
@@ -838,24 +805,22 @@ public class TmXmlReader {
 		// We double-check that all trackID in the filtered list exist in the track list
 		// First, prepare a sorted array of all track IDs
 		Element allTracksElement = root.getChild(TRACK_COLLECTION_ELEMENT_KEY);
-		@SuppressWarnings("unchecked")
 		List<Element> trackElements = allTracksElement.getChildren(TRACK_ELEMENT_KEY);
 		int[] IDs = new int[trackElements.size()];
 		int index = 0;
 		for (Element trackElement : trackElements) {
-			int trackID = readIntAttribute(trackElement, TRACK_ID_ATTRIBUTE_NAME, logger);
+			int trackID = readIntAttribute(trackElement, TrackIndexAnalyzer.TRACK_ID, logger);
 			IDs[index] = trackID;
 			index++;
 		}
 		Arrays.sort(IDs);
-		
-		@SuppressWarnings("unchecked")
+
 		List<Element> elements = filteredTracksElement.getChildren(TRACK_ID_ELEMENT_KEY);
 		HashSet<Integer> filteredTrackIndices = new HashSet<Integer>(elements.size());
 		for (Element indexElement : elements) {
-			Integer trackID = readIntAttribute(indexElement, TRACK_ID_ATTRIBUTE_NAME, logger);
+			Integer trackID = readIntAttribute(indexElement, TrackIndexAnalyzer.TRACK_ID, logger);
 			if (null != trackID) {
-				
+
 				// Check if this one exist in the list
 				int search = Arrays.binarySearch(IDs, trackID);
 				if (search < 0) {
@@ -868,42 +833,10 @@ public class TmXmlReader {
 		return filteredTrackIndices;
 	}
 
-	public ImagePlus getImage()  {
-		if (!parsed)
-			parse();
-
-		Element imageInfoElement = root.getChild(IMAGE_ELEMENT_KEY);
-		if (null == imageInfoElement)
-			return null;
-		String filename = imageInfoElement.getAttributeValue(IMAGE_FILENAME_ATTRIBUTE_NAME);
-		String folder 	= imageInfoElement.getAttributeValue(IMAGE_FOLDER_ATTRIBUTE_NAME);
-		if (null == filename || filename.isEmpty())
-			return null;
-		if (null == folder || folder.isEmpty())
-			folder = file.getParent(); // it is a relative path, then
-		File imageFile = new File(folder, filename);
-		if (!imageFile.exists() || !imageFile.canRead()) {
-			// Could not find it to the absolute path. Then we look for the same path of the xml file
-			logger.log("Could not find the image in "+folder+". Looking in xml file location...\n");
-			folder = file.getParent();
-			imageFile = new File(folder, filename);
-			if (!imageFile.exists() || !imageFile.canRead()) {
-				return null;
-			}
-		}
-		return IJ.openImage(imageFile.getAbsolutePath());
-	}
-
-
-	/*
-	 * PRIVATE METHODS
-	 */
-
-	private Spot createSpotFrom(Element spotEl) {
+	private Spot createSpotFrom(final Element spotEl) {
 		int ID = readIntAttribute(spotEl, SPOT_ID_ATTRIBUTE_NAME, logger);
-		Spot spot = new SpotImp(ID);
+		Spot spot = new Spot(ID);
 
-		@SuppressWarnings("unchecked")
 		List<Attribute> atts = spotEl.getAttributes();
 		atts.remove(SPOT_ID_ATTRIBUTE_NAME);
 
@@ -925,4 +858,6 @@ public class TmXmlReader {
 		}
 		return spot;
 	}
+
+
 }

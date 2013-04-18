@@ -29,16 +29,19 @@ public class mxScaledLabelShape extends mxRectangleShape {
 		
 		super.paintShape(canvas, state);
 		
-		Image img = canvas.loadImage(mxUtils.getString(state.getStyle(), mxConstants.STYLE_IMAGE));
-		if (img != null)  {
-			Rectangle bounds = getImageBounds(canvas, state);
-			int x = bounds.x;
-			int y = bounds.y;
-			int w = bounds.width;
-			int h = bounds.height;
-			if (h > 0 && w > 0) {
-				Image scaledImage = img.getScaledInstance(w, h, Image.SCALE_FAST);
-				canvas.getGraphics().drawImage(scaledImage, x, y, null);
+		String imgStr = mxUtils.getString(state.getStyle(), mxConstants.STYLE_IMAGE);
+		if (imgStr != null)  {
+			Image img = canvas.loadImage(mxUtils.getString(state.getStyle(), mxConstants.STYLE_IMAGE));
+			if (img != null) {
+				Rectangle bounds = getImageBounds(canvas, state);
+				int x = bounds.x;
+				int y = bounds.y;
+				int w = bounds.width;
+				int h = bounds.height;
+				if (h > 0 && w > 0) {
+					Image scaledImage = img.getScaledInstance(w, h, Image.SCALE_FAST);
+					canvas.getGraphics().drawImage(scaledImage, x, y, null);
+				}
 			}
 		}
 	}

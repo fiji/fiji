@@ -29,6 +29,7 @@ Name					File					Author(s)						Contact								License
 * Bean Shell language 			bsh.jar 											http://www.beanshell.org/ 					SPL/LGPL
 * Bean Shell Interpreter 		BSH_Interpreter.jar			Johannes Schindelin					Johannes.Schindelin@gmx.de					GPL
 * Bleach Corrector	 		CorrectBleach_.jar			Kota Miura						miura@embl.de							GPL
+* Bug Submitter	 			Bug_Submitter.jar			Mark Longair, Johannes Schindelin, Curtis Rueden	http://fiji.sc/							BSD
 * bUnwarpJ				bUnwarpJ_.jar				Ignacio	Arganda et al.					ignacio.arganda@uam.es						GPL
 * Clojure				clojure.jar				Rich Hickey						http://clojure.sourceforge.net/					EPL
 * Clojure Interpreter			Clojure_Interpreter.jar 		Albert Cardona 						acardona@ini.phys.ethz.ch					GPL
@@ -89,6 +90,7 @@ Name					File					Author(s)						Contact								License
 * Register virtual stack slices 	register_virtual_stack_slices.jar 	Albert Cardona 						acardona@ini.phys.ethz.ch					GPL
 * Script Editor				Script_Editor.jar			Johannes Schindelin et al				fiji@googlegroups.com						BSD
 * Shepp-Logan Phantom			SheppLogan_.jar				Philippe Thevenaz					http://bigwww.epfl.ch/thevenaz/shepplogan/			BIG (see below)
+* Sholl Analysis			Sholl_Analysis.jar			Tiago Ferreira, Tom Maddock				http://fiji.sc/Sholl_Analysis					GPL 3 or later
 * Snakuscule				Snakuscule_.jar				Philippe Thevenaz					http://bigwww.epfl.ch/thevenaz/snakuscule/			BIG (see below)
 * Stack Reverser 			Stack_Reverser.class 			Anthony Padua, Daniel Barboriak 			http://rsb.info.nih.gov/ij/plugins/substack-maker.html		PD
 * StackReg				StackReg_.jar				Philippe Thevenaz					http://bigwww.epfl.ch/thevenaz/stackreg/			BIG (see below)

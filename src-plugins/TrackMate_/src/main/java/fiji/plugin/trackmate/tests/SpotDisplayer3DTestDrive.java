@@ -4,10 +4,11 @@ import fiji.plugin.trackmate.FeatureFilter;
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
-import fiji.plugin.trackmate.SpotImp;
 import fiji.plugin.trackmate.TrackMate_;
-import fiji.plugin.trackmate.features.spot.BlobDescriptiveStatistics;
+import fiji.plugin.trackmate.features.spot.SpotIntensityAnalyzer;
+import fiji.plugin.trackmate.features.spot.SpotIntensityAnalyzerFactory;
 import fiji.plugin.trackmate.gui.FilterGuiPanel;
+import fiji.plugin.trackmate.util.SpotNeighborhood;
 import fiji.plugin.trackmate.util.TMUtils;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
 import fiji.plugin.trackmate.visualization.threedviewer.SpotDisplayer3D;
@@ -26,12 +27,13 @@ import javax.swing.WindowConstants;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
-import mpicbg.imglib.container.array.ArrayContainerFactory;
-import mpicbg.imglib.cursor.special.SphereCursor;
-import mpicbg.imglib.image.Image;
-import mpicbg.imglib.image.ImageFactory;
-import mpicbg.imglib.image.display.imagej.ImageJFunctions;
-import mpicbg.imglib.type.numeric.integer.UnsignedByteType;
+import net.imglib2.img.Img;
+import net.imglib2.img.ImgPlus;
+import net.imglib2.img.array.ArrayImgFactory;
+import net.imglib2.img.display.imagej.ImageJFunctions;
+import net.imglib2.meta.Axes;
+import net.imglib2.meta.AxisType;
+import net.imglib2.type.numeric.integer.UnsignedByteType;
 
 public class SpotDisplayer3DTestDrive {
 
@@ -40,48 +42,50 @@ public class SpotDisplayer3DTestDrive {
 		System.out.println(Install_J3D.getJava3DVersion());
 				
 		final int N_BLOBS = 20;
-		final float RADIUS = 5; // µm
+		final double RADIUS = 5; // µm
 		final Random RAN = new Random();
-		final float WIDTH = 100; // µm
-		final float HEIGHT = 100; // µm
-		final float DEPTH = 50; // µm
-		final float[] CALIBRATION = new float[] {0.5f, 0.5f, 1}; 
+		final double WIDTH = 100; // µm
+		final double HEIGHT = 100; // µm
+		final double DEPTH = 50; // µm
+		final double[] CALIBRATION = new double[] {0.5, 0.5, 1}; 
+		final AxisType[] AXES = new AxisType[] { Axes.X, Axes.Y, Axes.Z };
 		
 		// Create 3D image
 		System.out.println("Creating image....");
-		Image<UnsignedByteType> img = new ImageFactory<UnsignedByteType>(
-				new UnsignedByteType(),
-				new ArrayContainerFactory()
-		).createImage(new int[] {(int) (WIDTH/CALIBRATION[0]), (int) (HEIGHT/CALIBRATION[1]), (int) (DEPTH/CALIBRATION[2])}); 
+		Img<UnsignedByteType> source = new ArrayImgFactory<UnsignedByteType>()
+				.create(new int[] {(int) (WIDTH/CALIBRATION[0]), (int) (HEIGHT/CALIBRATION[1]), (int) (DEPTH/CALIBRATION[2])},
+						new UnsignedByteType());
+		ImgPlus<UnsignedByteType> img = new ImgPlus<UnsignedByteType>(source, "test", AXES, CALIBRATION); 
+		
 
 		// Random blobs
-		float[] radiuses = new float[N_BLOBS];
-		ArrayList<float[]> centers = new ArrayList<float[]>(N_BLOBS);
+		double[] radiuses = new double[N_BLOBS];
+		ArrayList<double[]> centers = new ArrayList<double[]>(N_BLOBS);
 		int[] intensities = new int[N_BLOBS]; 
 		for (int i = 0; i < N_BLOBS; i++) {
-			radiuses[i] = (float) (RADIUS + RAN.nextGaussian());
-			float x = WIDTH * RAN.nextFloat();
-			float y = HEIGHT * RAN.nextFloat();
-			float z = DEPTH * RAN.nextFloat();
-			centers.add(i, new float[] {x, y, z});
+			radiuses[i] = RADIUS + RAN.nextGaussian();
+			double x = WIDTH * RAN.nextDouble();
+			double y = HEIGHT * RAN.nextDouble();
+			double z = DEPTH * RAN.nextDouble();
+			centers.add(i, new double[] {x, y, z});
 			intensities[i] = RAN.nextInt(200);
 		}
 		
 		// Put the blobs in the image
-		final SphereCursor<UnsignedByteType> cursor = new SphereCursor<UnsignedByteType>(img, centers.get(0), radiuses[0],	CALIBRATION);
 		for (int i = 0; i < N_BLOBS; i++) {
-			cursor.setSize(radiuses[i]);
-			cursor.moveCenterToCoordinates(centers.get(i));
-			while(cursor.hasNext()) 
-				cursor.next().set(intensities[i]);		
+			Spot tmpSpot = new Spot(centers.get(i));
+			tmpSpot.putFeature(Spot.RADIUS, radiuses[i]);
+			final SpotNeighborhood<UnsignedByteType> sphere = new SpotNeighborhood<UnsignedByteType>(tmpSpot, img);
+			for (UnsignedByteType pixel : sphere) {
+				pixel.set(intensities[i]);
+			}
 		}
-		cursor.close();
 		
 		// Start ImageJ
 		ij.ImageJ.main(args);
 		
-		// Cast the Image the ImagePlus and convert to 8-bit
-		ImagePlus imp = ImageJFunctions.copyToImagePlus(img);
+		// Cast the Img the ImagePlus and convert to 8-bit
+		ImagePlus imp = ImageJFunctions.wrap(img, img.toString());
 		if (imp.getType() != ImagePlus.GRAY8)
 			new StackConverter(imp).convertToGray8();
 
@@ -92,9 +96,9 @@ public class SpotDisplayer3DTestDrive {
 
 		// Create a Spot arrays
 		List<Spot> spots = new ArrayList<Spot>(N_BLOBS);
-		SpotImp spot;
+		Spot spot;
 		for (int i = 0; i < N_BLOBS; i++)  {
-			spot = new SpotImp(centers.get(i), "Spot "+i);
+			spot = new Spot(centers.get(i), "Spot "+i);
 			spot.putFeature(Spot.POSITION_T, 0);
 			spot.putFeature(Spot.RADIUS, RADIUS);
 			spot.putFeature(Spot.QUALITY, RADIUS);
@@ -102,9 +106,8 @@ public class SpotDisplayer3DTestDrive {
 		}
 		
 		System.out.println("Grabbing features...");
-		BlobDescriptiveStatistics analyzer = new BlobDescriptiveStatistics();
-		analyzer.setTarget(img, CALIBRATION);
-		analyzer.process(spots);
+		SpotIntensityAnalyzer<UnsignedByteType> analyzer = new SpotIntensityAnalyzer<UnsignedByteType>(img, spots);
+		analyzer.process();
 		for (Spot s : spots) 
 			System.out.println(s);
 
@@ -114,18 +117,17 @@ public class SpotDisplayer3DTestDrive {
 		final TrackMate_ plugin = new TrackMate_();
 		plugin.getModel().setSpots(allSpots, false);
 		plugin.getModel().getSettings().imp = imp;
-		final SpotDisplayer3D displayer = new SpotDisplayer3D();
-		displayer.setModel(plugin.getModel());
+		final SpotDisplayer3D displayer = new SpotDisplayer3D(plugin.getModel());
 		displayer.render();
 		
 		// Launch threshold GUI
 		List<FeatureFilter> ff = new ArrayList<FeatureFilter>();
 		final FilterGuiPanel gui = new FilterGuiPanel();
 		gui.setTarget(
-				BlobDescriptiveStatistics.FEATURES, 
+				SpotIntensityAnalyzerFactory.FEATURES, 
 				ff,
-				BlobDescriptiveStatistics.FEATURE_NAMES,
-				TMUtils.getSpotFeatureValues(allSpots, BlobDescriptiveStatistics.FEATURES, Logger.DEFAULT_LOGGER),
+				SpotIntensityAnalyzerFactory.FEATURE_NAMES,
+				TMUtils.getSpotFeatureValues(allSpots, SpotIntensityAnalyzerFactory.FEATURES, Logger.DEFAULT_LOGGER),
 				"spots");
 
 		// Set listeners
@@ -133,7 +135,7 @@ public class SpotDisplayer3DTestDrive {
 			@Override
 			public void stateChanged(ChangeEvent e) {
 				plugin.getModel().getSettings().setSpotFilters(gui.getFeatureFilters());
-				plugin.execSpotFiltering();
+				plugin.execSpotFiltering(false);
 			}
 		});
 		gui.addActionListener(new ActionListener() {
@@ -155,7 +157,7 @@ public class SpotDisplayer3DTestDrive {
 		frame.setVisible(true);
 
 		// Add a panel
-		gui.addFilterPanel(BlobDescriptiveStatistics.MEAN_INTENSITY);		
+		gui.addFilterPanel(SpotIntensityAnalyzerFactory.MEAN_INTENSITY);		
 		
 	}
 	

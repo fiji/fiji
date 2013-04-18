@@ -1,24 +1,23 @@
 package fiji.plugin.trackmate.visualization;
 
-import java.awt.Color;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.TrackMateModel;
-import fiji.plugin.trackmate.TrackMateModelChangeListener;
-import fiji.plugin.trackmate.TrackMateSelectionChangeEvent;
-import fiji.plugin.trackmate.TrackMateSelectionChangeListener;
+import fiji.plugin.trackmate.ModelChangeListener;
+import fiji.plugin.trackmate.SelectionChangeEvent;
+import fiji.plugin.trackmate.SelectionChangeListener;
+import fiji.plugin.trackmate.features.track.TrackIndexAnalyzer;
 
 /**
- * An abstract class for spot displayers, that can overlay segmented spots and tracks on top
+ * An abstract class for spot displayers, that can overlay detected spots and tracks on top
  * of the image data.
  * <p>
  * @author Jean-Yves Tinevez <jeanyves.tinevez@gmail.com> Jan 2011
  */
-public abstract class AbstractTrackMateModelView implements TrackMateSelectionChangeListener, TrackMateSelectionView, TrackMateModelView, TrackMateModelChangeListener {
+public abstract class AbstractTrackMateModelView implements SelectionChangeListener, TrackMateModelView, ModelChangeListener {
 
 	/*
 	 * FIELDS
@@ -34,43 +33,22 @@ public abstract class AbstractTrackMateModelView implements TrackMateSelectionCh
 	/** The model displayed by this class. */
 	protected TrackMateModel model;
 	
-	/** The track colors. */
-	protected Map<Set<Spot>, Color> trackColors;
-	
 	/** The list of listener to warn for spot selection change. */
-	protected ArrayList<TrackMateSelectionChangeListener> selectionChangeListeners = new ArrayList<TrackMateSelectionChangeListener>();
+	protected ArrayList<SelectionChangeListener> selectionChangeListeners = new ArrayList<SelectionChangeListener>();
 
 
 	/*
-	 * PRIVATE CONSTRUCTOR
+	 * PROTECTED CONSTRUCTOR
 	 */
 
-	protected AbstractTrackMateModelView() {
-		initDisplaySettings();
+	protected AbstractTrackMateModelView(TrackMateModel model) {
+		setModel(model);
+		initDisplaySettings(model);
 	}
 	
 	/*
 	 * PUBLIC METHODS
 	 */
-
-	@Override
-	public TrackMateModel getModel() {
-		return model;
-	}
-
-	@Override
-	public void setModel(TrackMateModel model) {
-		if (null != this.model) {
-			this.model.removeTrackMateModelChangeListener(this);
-			this.model.removeTrackMateSelectionChangeListener(this);
-		}
-		if (DEBUG) {
-			System.out.println("[AbstractTrackMateModelView] Registering "+this.hashCode()+" as listener of "+model);
-		}
-		this.model = model;
-		this.model.addTrackMateModelChangeListener(this);
-		this.model.addTrackMateSelectionChangeListener(this);
-	}
 
 	
 	@Override
@@ -92,7 +70,7 @@ public abstract class AbstractTrackMateModelView implements TrackMateSelectionCh
 	 * PROTECTED METHODS
 	 */
 
-	protected void initDisplaySettings() {
+	protected void initDisplaySettings(TrackMateModel model) {
 		displaySettings.put(KEY_COLOR, DEFAULT_COLOR);
 		displaySettings.put(KEY_HIGHLIGHT_COLOR, DEFAULT_HIGHLIGHT_COLOR);
 		displaySettings.put(KEY_SPOTS_VISIBLE, true);
@@ -102,17 +80,16 @@ public abstract class AbstractTrackMateModelView implements TrackMateSelectionCh
 		displaySettings.put(KEY_TRACKS_VISIBLE, true);
 		displaySettings.put(KEY_TRACK_DISPLAY_MODE, DEFAULT_TRACK_DISPLAY_MODE);
 		displaySettings.put(KEY_TRACK_DISPLAY_DEPTH, DEFAULT_TRACK_DISPLAY_DEPTH);
+		displaySettings.put(KEY_TRACK_COLORING, new PerTrackFeatureColorGenerator(model, TrackIndexAnalyzer.TRACK_INDEX));
 		displaySettings.put(KEY_COLORMAP, DEFAULT_COLOR_MAP);
 	}
 	
-	/*
-	 * TMSelectionChangeListener
-	 */
 
+	/**
+	 * This needs to be overriden for concrete implementation to display selection.
+	 */
 	@Override
-	public void selectionChanged(TrackMateSelectionChangeEvent event) {
-		highlightSpots(model.getSpotSelection());
-		highlightEdges(model.getEdgeSelection());
+	public void selectionChanged(SelectionChangeEvent event) {
 		// Center on selection if we added one spot exactly
 		Map<Spot, Boolean> spotsAdded = event.getSpots();
 		if (spotsAdded != null && spotsAdded.size() == 1) {
@@ -122,5 +99,23 @@ public abstract class AbstractTrackMateModelView implements TrackMateSelectionCh
 				centerViewOn(spot);
 			}
 		}
+	}
+	
+	@Override
+	public TrackMateModel getModel() {
+		return model;
+	}
+	
+	/*
+	 * PRIVATE METHOD
+	 */
+	
+	private void setModel(TrackMateModel model) {
+		if (DEBUG) {
+			System.out.println("[AbstractTrackMateModelView] Registering "+this.hashCode()+" as listener of "+model);
+		}
+		this.model = model;
+		this.model.addTrackMateModelChangeListener(this);
+		this.model.addTrackMateSelectionChangeListener(this);
 	}
 }

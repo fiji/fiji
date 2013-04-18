@@ -6,9 +6,9 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<parent>
-		<groupId>org.scijava</groupId>
-		<artifactId>pom-scijava</artifactId>
-		<version>1.24</version>
+		<groupId>sc.fiji</groupId>
+		<artifactId>pom-fiji</artifactId>
+		<version>2.0.0-SNAPSHOT</version>
 	</parent>
 
 	<groupId>sc.fiji</groupId>
@@ -19,20 +19,10 @@
 	<name>Aggregator project for the Fiji plugins</name>
 	<description></description>
 
-	<properties>
-		<fiji.rootdir>${rootdir}/..</fiji.rootdir>
-		<imagescience.version>2.4.1</imagescience.version>
-		<jcommon.version>1.0.17</jcommon.version>
-		<jfreechart.version>1.0.14</jfreechart.version>
-		<mpicbg.version>20120621</mpicbg.version>
-		<trakem2.version>1.0b-SNAPSHOT</trakem2.version>
-	</properties>
-
 	<modules>
 		<module>3D_Blob_Segmentation</module>
 		<module>3D_Objects_Counter</module>
 		<module>3D_Viewer</module>
-		<module>Action_Bar</module>
 		<module>Algorithm_Launcher</module>
 		<module>AnalyzeSkeleton_</module>
 		<module>Analyze_Reader_Writer</module>
@@ -59,6 +49,7 @@
 		<module>FS_Align_TrakEM2</module>
 		<module>FeatureJ_</module>
 		<module>Feature_Detection</module>
+		<module>Fiji_Archipelago</module>
 		<module>Fiji_Developer</module>
 		<module>Fiji_Package_Maker</module>
 		<module>Fiji_Plugins</module>
@@ -101,6 +92,7 @@
 		<module>Script_Editor</module>
 		<module>Series_Labeler</module>
 		<module>SheppLogan_</module>
+		<module>Sholl_Analysis</module>
 		<module>Simple_Neurite_Tracer</module>
 		<module>Siox_Segmentation</module>
 		<module>Skeletonize3D_</module>
@@ -137,7 +129,6 @@
 		<module>fiji-scripting</module>
 		<module>imagescience</module>
 		<module>imageware</module>
-		<module>javac</module>
 		<module>jep</module>
 		<module>level_sets</module>
 		<module>mij</module>
@@ -148,63 +139,6 @@
 		<module>wavelets</module>
 		<module>weave_jy2java</module>
 	</modules>
-
-	<build>
-		<plugins>
-			<plugin>
-				<artifactId>maven-source-plugin</artifactId>
-			</plugin>
-			<plugin>
-				<groupId>org.codehaus.mojo</groupId>
-				<artifactId>buildnumber-maven-plugin</artifactId>
-			</plugin>
-			<plugin>
-				<groupId>net.imagej</groupId>
-				<artifactId>imagej-maven-plugin</artifactId>
-				<version>0.1.0-SNAPSHOT</version>
-				<executions>
-					<execution>
-						<id>copy-jars</id>
-						<phase>install</phase>
-						<goals>
-							<goal>copy-jars</goal>
-						</goals>
-					</execution>
-					<execution>
-						<id>set-rootdir</id>
-						<phase>validate</phase>
-						<goals>
-							<goal>set-rootdir</goal>
-						</goals>
-					</execution>
-				</executions>
-				<configuration>
-					<imagejDirectory>${fiji.rootdir}</imagejDirectory>
-				</configuration>
-			</plugin>
-		</plugins>
-	</build>
-
-	<scm>
-		<connection>scm:git:git://github.com/fiji/fiji</connection>
-		<developerConnection>scm:git:git@github.com:fiji/fiji</developerConnection>
-		<tag>HEAD</tag>
-		<url>https://github.com/fiji/fiji</url>
-	</scm>
-
-	<reporting>
-		<plugins>
-			<plugin>
-				<artifactId>maven-javadoc-plugin</artifactId>
-				<configuration>
-					<links combine.children="append">
-						<link>http://jenkins.imagej.net/job/ImageJ-daily/javadoc</link>
-						<link>http://jenkins.imagej.net/job/ImgLib-daily/javadoc</link>
-					</links>
-				</configuration>
-			</plugin>
-		</plugins>
-	</reporting>
 
 	<!-- NB: for project parent -->
 	<repositories>
@@ -217,45 +151,5 @@
 			<url>http://maven.imagej.net/content/repositories/snapshots</url>
 		</repository>
 	</repositories>
-
-	<profiles>
-		<!-- HACK: Eclipse in JDK 1.5 mode does not like @Override for methods implemention interfaces. -->
-		<profile>
-			<id>no-eclipse</id>
-			<activation>
-				<property>
-					<name>!m2e.version</name>
-				</property>
-			</activation>
-			<build>
-				<plugins>
-					<plugin>
-						<artifactId>maven-compiler-plugin</artifactId>
-						<version>2.3.2</version>
-						<configuration>
-							<source>1.5</source>
-							<target>1.5</target>
-						</configuration>
-					</plugin>
-				</plugins>
-			</build>
-		</profile>
-		<!-- HACK: We want to enforce annotation processing with sezpoz in Eclipse, to prepare for ImageJ2. So we have that enables by default in .factorypath, referring to sezpoz in the local Maven repository. Let's make sure it is there -->
-		<profile>
-			<id>eclipse</id>
-			<activation>
-				<property>
-					<name>m2e.version</name>
-				</property>
-			</activation>
-			<dependencies>
-				<dependency>
-					<groupId>net.java.sezpoz</groupId>
-					<artifactId>sezpoz</artifactId>
-					<version>${sezpoz.version}</version>
-				</dependency>
-			</dependencies>
-		</profile>
-	</profiles>
 
 </project>

@@ -12,7 +12,7 @@
 	</parent>
 
 	<artifactId>Auto_Threshold</artifactId>
-	<version>1.14</version>
+	<version>1.16-SNAPSHOT</version>
 
 	<name>plugins/Auto_Threshold.jar</name>
 	<description></description>
@@ -24,5 +24,45 @@
 			<version>${imagej1.version}</version>
 		</dependency>
 	</dependencies>
+
+	<developers>
+		<developer>
+			<id>gl</id>
+			<name>Gabriel Landini</name>
+			<email>g.landini@bham.ac.uk</email>
+			<url>http://www.dentistry.bham.ac.uk/landinig/software/software.html</url>
+			<organization>University of Birmingham</organization>
+			<organizationUrl>http://www.dentistry.bham.ac.uk/home/</organizationUrl>
+			<roles>
+				<role>architect</role>
+				<role>developer</role>
+			</roles>
+			<timezone>+0</timezone>
+		</developer>
+		<developer>
+			<id>dscho</id>
+			<name>Johannes Schindelin</name>
+			<email>johannes.schindelin@gmx.de</email>
+			<url>http://loci.wisc.edu/people/johannes-schindelin</url>
+			<organization>UW-Madison LOCI</organization>
+			<organizationUrl>http://loci.wisc.edu/</organizationUrl>
+			<roles>
+				<role>developer</role>
+			</roles>
+			<timezone>-6</timezone>
+		</developer>
+	</developers>
+
+	<!-- NB: for project parent -->
+	<repositories>
+		<repository>
+			<id>imagej.releases</id>
+			<url>http://maven.imagej.net/content/repositories/releases</url>
+		</repository>
+		<repository>
+			<id>imagej.snapshots</id>
+			<url>http://maven.imagej.net/content/repositories/snapshots</url>
+		</repository>
+	</repositories>
 
 </project>

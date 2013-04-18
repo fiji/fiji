@@ -1,6 +1,10 @@
 /* -*- mode: java; c-basic-offset: 8; indent-tabs-mode: t; tab-width: 8 -*- */
 package fiji.build;
 
+import imagej.build.minimaven.JarClassLoader;
+import imagej.build.minimaven.JavaCompiler;
+import imagej.build.minimaven.JavaCompiler.CompileError;
+
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -42,10 +46,6 @@ import java.util.regex.Pattern;
 
 import java.util.zip.ZipException;
 
-import fiji.build.minimaven.JarClassLoader;
-import fiji.build.minimaven.JavaCompiler;
-import fiji.build.minimaven.JavaCompiler.CompileError;
-
 public class Fake {
 	protected static String fijiBuildJar;
 	protected static long mtimeFijiBuild;
@@ -53,7 +53,6 @@ public class Fake {
 	protected JavaCompiler javac;
 
 	public static void main(String[] args) {
-		MiniMaven.ensureIJDirIsSet();
 		if (runPrecompiledFakeIfNewer(args))
 			return;
 		try {

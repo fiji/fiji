@@ -1,10 +1,17 @@
 package fiji.plugin.trackmate.tracking.costmatrix;
 
+import static fiji.plugin.trackmate.tracking.TrackerKeys.KEY_ALTERNATIVE_LINKING_COST_FACTOR;
+import static fiji.plugin.trackmate.tracking.TrackerKeys.KEY_BLOCKING_VALUE;
+import static fiji.plugin.trackmate.tracking.TrackerKeys.KEY_CUTOFF_PERCENTILE;
+import static fiji.plugin.trackmate.tracking.TrackerKeys.KEY_LINKING_FEATURE_PENALTIES;
+import static fiji.plugin.trackmate.tracking.TrackerKeys.KEY_LINKING_MAX_DISTANCE;
+import static fiji.plugin.trackmate.util.TMUtils.checkParameter;
+
 import java.util.List;
+import java.util.Map;
 
 import Jama.Matrix;
 import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.tracking.LAPTrackerSettings;
 import fiji.plugin.trackmate.tracking.costfunction.LinkingCostFunction;
 
 /**
@@ -35,7 +42,7 @@ public class LinkingCostMatrixCreator extends LAPTrackerCostMatrixCreator {
 	 */
 
 
-	public LinkingCostMatrixCreator(final List<Spot> t0, final List<Spot> t1, final LAPTrackerSettings settings) {
+	public LinkingCostMatrixCreator(final List<Spot> t0, final List<Spot> t1, final Map<String, Object> settings) {
 		super(settings);
 		this.t0 = t0;
 		this.t1 = t1;
@@ -49,17 +56,22 @@ public class LinkingCostMatrixCreator extends LAPTrackerCostMatrixCreator {
 
 	@Override
 	public boolean checkInput() {
-		inputChecked = true;
-		return true;
+		boolean ok = true;
+		StringBuilder errorHolder = new StringBuilder();
+		ok = ok & checkParameter(settings, KEY_LINKING_MAX_DISTANCE, Double.class, errorHolder);
+		ok = ok & checkParameter(settings, KEY_LINKING_FEATURE_PENALTIES, Map.class, errorHolder);
+		ok = ok & checkParameter(settings, KEY_BLOCKING_VALUE, Double.class, errorHolder);
+		ok = ok & checkParameter(settings, KEY_ALTERNATIVE_LINKING_COST_FACTOR, Double.class, errorHolder);
+		ok = ok & checkParameter(settings, KEY_CUTOFF_PERCENTILE, Double.class, errorHolder);
+		if (!ok) {
+			errorMessage = errorHolder.toString();
+		}
+		return ok;
 	}
 
 
 	@Override
 	public boolean process() {
-		if (!inputChecked) {
-			errorMessage = "You must run checkInput() before running process().";
-			return false;
-		}
 
 		// Deal with special cases:
 
@@ -68,10 +80,12 @@ public class LinkingCostMatrixCreator extends LAPTrackerCostMatrixCreator {
 			costs = new Matrix(0, 0);
 			return true;
 		}
+		
+		final double blockingValue = (Double) settings.get(KEY_BLOCKING_VALUE);
 
 		if (t1.size() == 0) {
 			// 0.1 - No spots in late frame -> termination only.
-			costs = new Matrix(t0.size(), t0.size(), settings.blockingValue);
+			costs = new Matrix(t0.size(), t0.size(), blockingValue);
 			for (int i = 0; i < t0.size(); i++) {
 				costs.set(i, i, 0);
 			}
@@ -80,7 +94,7 @@ public class LinkingCostMatrixCreator extends LAPTrackerCostMatrixCreator {
 
 		if (t0.size() == 0) {
 			// 0.1 - No spots in early frame -> initiation only.
-			costs = new Matrix(t1.size(), t1.size(), settings.blockingValue);
+			costs = new Matrix(t1.size(), t1.size(), blockingValue);
 			for (int i = 0; i < t1.size(); i++) {
 				costs.set(i, i, 0);
 			}
@@ -90,7 +104,8 @@ public class LinkingCostMatrixCreator extends LAPTrackerCostMatrixCreator {
 
 		// 1 - Fill in quadrants
 		Matrix topLeft = getLinkingCostSubMatrix();
-		final double cutoff = settings.alternativeObjectLinkingCostFactor * getMaxScore(topLeft);
+		final double alternativeObjectLinkingCostFactor = (Double) settings.get(KEY_ALTERNATIVE_LINKING_COST_FACTOR);
+		final double cutoff = alternativeObjectLinkingCostFactor  * getMaxScore(topLeft);
 		Matrix topRight = getAlternativeScores(t0.size(), cutoff);
 		Matrix bottomLeft = getAlternativeScores(t1.size(), cutoff);
 		Matrix bottomRight = getLowerRight(topLeft, cutoff);
@@ -110,16 +125,16 @@ public class LinkingCostMatrixCreator extends LAPTrackerCostMatrixCreator {
 	 * Gets the max score in a matrix m.
 	 */
 	private double getMaxScore(Matrix m) {
+		final double blockingValue = (Double) settings.get(KEY_BLOCKING_VALUE);
 		double max = Double.NEGATIVE_INFINITY;
 
 		for (int i = 0; i < m.getRowDimension(); i++) {
 			for (int j = 0; j < m.getColumnDimension(); j++) {
-				if (m.get(i, j) > max && m.get(i, j) < settings.blockingValue) {
+				if (m.get(i, j) > max && m.get(i, j) < blockingValue) {
 					max = m.get(i, j);
 				}
 			}
 		}
-
 		return max;
 	}
 

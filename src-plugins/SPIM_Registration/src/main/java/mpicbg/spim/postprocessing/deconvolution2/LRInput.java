@@ -2,6 +2,9 @@ package mpicbg.spim.postprocessing.deconvolution2;
 
 import java.util.ArrayList;
 
+import mpicbg.imglib.multithreading.SimpleMultiThreading;
+import mpicbg.spim.postprocessing.deconvolution2.LRFFT.PSFTYPE;
+
 public class LRInput 
 {
 	public final static float minValue = 0.0001f;	
@@ -22,10 +25,10 @@ public class LRInput
 	 * 
 	 * @return the same instance again for convinience
 	 */
-	public LRInput init( final boolean useExponentialKernel )
+	public LRInput init( final PSFTYPE iterationType )
 	{
 		for ( final LRFFT view : views )
-			view.init( useExponentialKernel );
+			view.init( iterationType, views );
 		
 		return this;
 	}

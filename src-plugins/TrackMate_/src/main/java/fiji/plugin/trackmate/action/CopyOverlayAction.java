@@ -18,10 +18,16 @@ import fiji.plugin.trackmate.visualization.threedviewer.SpotDisplayer3D;
 
 public class CopyOverlayAction extends AbstractTMAction {
 
-	private static final ImageIcon COPY_OVERLAY_ICON = new ImageIcon(DisplayerPanel.class.getResource("images/page_copy.png"));
+	public static final ImageIcon ICON = new ImageIcon(DisplayerPanel.class.getResource("images/page_copy.png"));
+	public static final String NAME = "Copy overlay to...";
+	public static final String INFO_TEXT = "<html>" +
+			"This action copies the overlay (spots and tracks) to a new existing ImageJ window <br> " +
+			"or to a new 3D viewer window. This can be useful to have the tracks and spots <br> " +
+			"displayed on a modified image. <br> " +
+			"</html>" ;
 	
 	public CopyOverlayAction() {
-		icon = COPY_OVERLAY_ICON;
+		icon = ICON;
 	}	
 	
 	@Override
@@ -43,15 +49,14 @@ public class CopyOverlayAction extends AbstractTMAction {
 							String title;
 							if (null == dest) {
 								logger.log("Copying data and overlay to new 3D viewer\n");
-								newDisplayer = new SpotDisplayer3D();
+								newDisplayer = new SpotDisplayer3D(plugin.getModel());
 								title = "3D viewer overlay";
 							} else {
 								logger.log("Copying overlay to "+dest.getShortTitle()+"\n");
 								model.getSettings().imp = dest; // TODO TODO DANGER DANGER
-								newDisplayer = new HyperStackDisplayer();
+								newDisplayer = new HyperStackDisplayer(plugin.getModel());
 								title = dest.getShortTitle() + " ctrl";
 							}
-							newDisplayer.setModel(model);
 							newDisplayer.render();
 							
 							final DisplayerPanel newDisplayerPanel = new DisplayerPanel();
@@ -79,16 +84,12 @@ public class CopyOverlayAction extends AbstractTMAction {
 
 	@Override
 	public String getInfoText() {
-		return "<html>" +
-			"This action copies the overlay (spots and tracks) to a new existing ImageJ window <br> " +
-			"or to a new 3D viewer window. This can be useful to have the tracks and spots <br> " +
-			"displayed on a modified image. <br> " +
-			"</html>" ;
+		return INFO_TEXT;
 	}
 	
 	@Override
 	public String toString() {
-		return "Copy overlay to...";
+		return NAME;
 	}
 
 }

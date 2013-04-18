@@ -19,9 +19,9 @@ import fiji.plugin.trackmate.TrackMateModel;
 public class JGraphXAdapter extends mxGraph implements GraphListener<Spot, DefaultWeightedEdge> {
 
 	private HashMap<Spot, mxCell> 					vertexToCellMap 	= new HashMap<Spot, mxCell>();
-	private HashMap<DefaultWeightedEdge, mxICell> 	edgeToCellMap 		= new HashMap<DefaultWeightedEdge, mxICell>();
-	private HashMap<mxICell, Spot>					cellToVertexMap		= new HashMap<mxICell, Spot>();
-	private HashMap<mxICell, DefaultWeightedEdge>	cellToEdgeMap		= new HashMap<mxICell, DefaultWeightedEdge>();
+	private HashMap<DefaultWeightedEdge, mxCell> 	edgeToCellMap 		= new HashMap<DefaultWeightedEdge, mxCell>();
+	private HashMap<mxCell, Spot>					cellToVertexMap		= new HashMap<mxCell, Spot>();
+	private HashMap<mxCell, DefaultWeightedEdge>	cellToEdgeMap		= new HashMap<mxCell, DefaultWeightedEdge>();
 	private TrackMateModel tmm;
 
 	/*
@@ -81,7 +81,7 @@ public class JGraphXAdapter extends mxGraph implements GraphListener<Spot, Defau
 		return cell;
 	}
 
-	public mxICell addJGraphTEdge(DefaultWeightedEdge edge) {
+	public mxCell addJGraphTEdge(DefaultWeightedEdge edge) {
 		if (edgeToCellMap.containsKey(edge)) {
 			// cell for edge already existed, skip creation and return original cell.
 			return edgeToCellMap.get(edge);
@@ -89,12 +89,12 @@ public class JGraphXAdapter extends mxGraph implements GraphListener<Spot, Defau
 		mxCell cell = null;
 		getModel().beginUpdate();
 		try {
-			Spot source = tmm.getEdgeSource(edge);
-			Spot target = tmm.getEdgeTarget(edge);				
+			Spot source = tmm.getTrackModel().getEdgeSource(edge);
+			Spot target = tmm.getTrackModel().getEdgeTarget(edge);				
 			cell = new mxCell(edge);
 			cell.setEdge(true);
 			cell.setId(null);
-			cell.setValue(String.format("%.1f", tmm.getEdgeWeight(edge)));
+			cell.setValue(String.format("%.1f", tmm.getTrackModel().getEdgeWeight(edge)));
 			cell.setGeometry(new mxGeometry());
 			cell.getGeometry().setRelative(true);
 			addEdge(cell, defaultParent, vertexToCellMap.get(source),  vertexToCellMap.get(target), null);
@@ -106,7 +106,7 @@ public class JGraphXAdapter extends mxGraph implements GraphListener<Spot, Defau
 		return cell;
 	}
 	
-	public void mapEdgeToCell(DefaultWeightedEdge edge, mxICell cell) {
+	public void mapEdgeToCell(DefaultWeightedEdge edge, mxCell cell) {
 		cellToEdgeMap.put(cell, edge);
 		edgeToCellMap.put(edge, cell);
 	}
@@ -119,16 +119,20 @@ public class JGraphXAdapter extends mxGraph implements GraphListener<Spot, Defau
 		return cellToEdgeMap.get(cell);
 	}
 	
-	public mxICell getCellFor(Spot spot) {
+	public mxCell getCellFor(Spot spot) {
 		return vertexToCellMap.get(spot);
 	}
 	
-	public mxICell getCellFor(DefaultWeightedEdge edge) {
+	public mxCell getCellFor(DefaultWeightedEdge edge) {
 		return edgeToCellMap.get(edge);
 	}
 	
-	public Set<mxICell> getVertexCells() {
+	public Set<mxCell> getVertexCells() {
 		return cellToVertexMap.keySet();
+	}
+	
+	public Set<mxCell> getEdgeCells() {
+		return cellToEdgeMap.keySet();
 	}
 	
 	public void removeMapping(Spot spot) {
@@ -141,6 +145,9 @@ public class JGraphXAdapter extends mxGraph implements GraphListener<Spot, Defau
 		cellToEdgeMap.remove(cell);
 	}
 
+	
+
+	
 
 	/*
 	 * GRAPH LISTENER
@@ -178,16 +185,16 @@ public class JGraphXAdapter extends mxGraph implements GraphListener<Spot, Defau
 	 * Any other spot or edges will be ignored by the whole trackscheme
 	 * framework, and if they are needed, they will have to be imported "by hand".
 	 */
-	private void insertTrackCollection(final TrackMateModel tmm) {		
+	private void insertTrackCollection(final TrackMateModel tmm) {
 		model.beginUpdate();
 		try {
-			for (int i : tmm.getVisibleTrackIndices()) {
+			for (Integer trackID : tmm.getTrackModel().getFilteredTrackIDs()) {
 				
-				for (Spot vertex : tmm.getTrackSpots(i)) {
+				for (Spot vertex : tmm.getTrackModel().getTrackSpots(trackID)) {
 					addJGraphTVertex(vertex);
 				}
 
-				for (DefaultWeightedEdge edge : tmm.getTrackEdges(i)) {
+				for (DefaultWeightedEdge edge : tmm.getTrackModel().getTrackEdges(trackID)) {
 					addJGraphTEdge(edge);
 				}
 			
@@ -195,6 +202,7 @@ public class JGraphXAdapter extends mxGraph implements GraphListener<Spot, Defau
 		} finally {
 			model.endUpdate();
 		}
+		
 	}
 
 

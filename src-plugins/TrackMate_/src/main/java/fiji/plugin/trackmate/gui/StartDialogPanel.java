@@ -7,7 +7,6 @@ import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.TrackMate_;
 import ij.ImagePlus;
 import ij.WindowManager;
-import ij.gui.NewImage;
 import ij.gui.Roi;
 
 import java.awt.Component;
@@ -16,17 +15,11 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 import javax.swing.JButton;
-import javax.swing.JFrame;
 import javax.swing.JLabel;
-import javax.swing.JSlider;
-import javax.swing.SwingConstants;
-import javax.swing.WindowConstants;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 
 public class StartDialogPanel extends ActionListenablePanel implements WizardPanelDescriptor {
 
-	private static final long serialVersionUID = -5495612173611259921L;
+	private static final long serialVersionUID = -1L;
 
 	public static final String DESCRIPTOR = "StartDialog";
 
@@ -62,16 +55,19 @@ public class StartDialogPanel extends ActionListenablePanel implements WizardPan
 	private JNumericTextField jTextFieldTimeInterval;
 	private JLabel jLabelTimeInterval;
 	private JLabel jLabelUnits4;
-	private JSlider sliderChannel;
 
 	private ImagePlus imp;
 	private Settings settings;
-	private JLabel lblSegmentInChannel;
-	private JLabel labelChannel;
 
 	private TrackMate_ plugin;
 	private TrackMateWizard wizard;
 
+	
+	public StartDialogPanel() {
+		initGUI();
+	}
+	
+	
 	/*
 	 * WIZARDPANELDESCRIPTOR METHODS
 	 */
@@ -93,7 +89,6 @@ public class StartDialogPanel extends ActionListenablePanel implements WizardPan
 				this.settings = plugin.getModel().getSettings();
 			}
 		}
-		initGUI();
 	}
 
 	@Override
@@ -113,7 +108,7 @@ public class StartDialogPanel extends ActionListenablePanel implements WizardPan
 
 	@Override
 	public String getNextDescriptorID() {
-		return SegmenterChoiceDescriptor.DESCRIPTOR;
+		return DetectorChoiceDescriptor.DESCRIPTOR;
 	}
 
 	@Override
@@ -140,6 +135,7 @@ public class StartDialogPanel extends ActionListenablePanel implements WizardPan
 	public void aboutToHidePanel() {
 		// Get settings and pass them to the plugin managed by the wizard
 		plugin.getModel().setSettings(getSettings());
+		plugin.getModel().getLogger().log(plugin.getModel().getSettings().toStringImageInfo());
 	}
 
 
@@ -156,7 +152,7 @@ public class StartDialogPanel extends ActionListenablePanel implements WizardPan
 	 * @return  the updated Settings
 	 */
 	public Settings getSettings() {
-		settings.imp =  imp;
+		settings.imp = imp;
 		// Crop cube
 		settings.tstart = Math.round(Float.parseFloat(jTextFieldTStart.getText()));
 		settings.tend 	= Math.round(Float.parseFloat(jTextFieldTEnd.getText()));
@@ -166,8 +162,6 @@ public class StartDialogPanel extends ActionListenablePanel implements WizardPan
 		settings.yend 	= Math.round(Float.parseFloat(jTextFieldYEnd.getText()));
 		settings.zstart = Math.round(Float.parseFloat(jTextFieldZStart.getText()));
 		settings.zend 	= Math.round(Float.parseFloat(jTextFieldZEnd.getText()));
-		// Segmentation channel
-		settings.segmentationChannel = sliderChannel.getValue(); // 1-based
 		// Image info
 		settings.dx 	= Float.parseFloat(jTextFieldPixelWidth.getText());
 		settings.dy 	= Float.parseFloat(jTextFieldPixelHeight.getText());
@@ -179,7 +173,13 @@ public class StartDialogPanel extends ActionListenablePanel implements WizardPan
 		settings.height		= imp.getHeight();
 		settings.nslices	= imp.getNSlices();
 		settings.nframes	= imp.getNFrames();
-		if (null != settings.imp.getOriginalFileInfo()) {
+		// Roi
+		Roi roi = imp.getRoi();
+		if (null != roi) {
+			settings.polygon = roi.getPolygon();
+		}
+		// File info
+		if (null != imp.getOriginalFileInfo()) {
 			settings.imageFileName	= imp.getOriginalFileInfo().fileName;
 			settings.imageFolder 	= imp.getOriginalFileInfo().directory;
 		}
@@ -212,9 +212,6 @@ public class StartDialogPanel extends ActionListenablePanel implements WizardPan
 		jTextFieldZEnd.setText(""+settings.zend);
 		jTextFieldTStart.setText(""+settings.tstart); 
 		jTextFieldTEnd.setText(""+settings.tend);
-		// Target segmentation channel
-		sliderChannel.setValue(settings.segmentationChannel);
-		labelChannel.setText(""+(settings.segmentationChannel));
 	}
 
 
@@ -264,20 +261,6 @@ public class StartDialogPanel extends ActionListenablePanel implements WizardPan
 		jTextFieldTStart.setText(""+0); 
 		jTextFieldTEnd.setText(""+(imp.getNFrames()-1));
 
-		// Deal with channels: the slider and channel labels are only visible if we find more than one channel.
-		int n_channels = imp.getNChannels();
-		sliderChannel.setMaximum(n_channels);
-		sliderChannel.setMinimum(1);
-		sliderChannel.setValue(imp.getChannel());
-		if (n_channels <= 1) {
-			labelChannel.setVisible(false);
-			lblSegmentInChannel.setVisible(false);
-			sliderChannel.setVisible(false);
-		} else {
-			labelChannel.setVisible(true);
-			lblSegmentInChannel.setVisible(true);
-			sliderChannel.setVisible(true);			
-		}
 		// Re-enable target component, because we have a valid target image to operate on.
 		wizard.setNextButtonEnabled(true);
 	}
@@ -502,25 +485,7 @@ public class StartDialogPanel extends ActionListenablePanel implements WizardPan
 				jTextFieldTEnd.setPreferredSize(TEXTFIELD_DIMENSION);
 				jTextFieldTEnd.setFont(SMALL_FONT);
 			}
-			{
-				lblSegmentInChannel = new JLabel("Segment in channel:");
-				lblSegmentInChannel.setFont(SMALL_FONT);
-				lblSegmentInChannel.setBounds(10, 368, 245, 17);
-				add(lblSegmentInChannel);
-
-				sliderChannel = new JSlider();
-				sliderChannel.setBounds(10, 396, 200, 23);
-				sliderChannel.addChangeListener(new ChangeListener() {
-					public void stateChanged(ChangeEvent e) { labelChannel.setText(""+sliderChannel.getValue()); }
-				});
-				add(sliderChannel);
-
-				labelChannel = new JLabel("1");
-				labelChannel.setHorizontalAlignment(SwingConstants.CENTER);
-				labelChannel.setBounds(226, 396, 29, 23);
-				labelChannel.setFont(SMALL_FONT);
-				add(labelChannel);
-			}
+			
 			{
 				jButtonRefresh = new JButton();
 				jButtonRefresh.setBounds(10, 430, 78, 21);
@@ -539,38 +504,4 @@ public class StartDialogPanel extends ActionListenablePanel implements WizardPan
 			e.printStackTrace();
 		}
 	}
-
-
-	/*
-	 * MAIN METHOD
-	 */
-
-	/**
-	 * Auto-generated main method to display this 
-	 * JPanel inside a new JFrame.
-	 */
-	public static void main(String[] args) {
-		JFrame frame = new JFrame();
-		ij.ImageJ.main(args);
-		ImagePlus imp = NewImage.createByteImage("Test_image", 20, 100, 20, NewImage.FILL_BLACK);
-		imp.setDimensions(1, 5, 4);
-		imp.getCalibration().setUnit("um");
-		imp.getCalibration().pixelDepth = 2;
-		imp.getCalibration().pixelHeight = 0.4;
-		imp.getCalibration().pixelWidth = 0.4;
-		imp.setRoi(new Roi(10, 20, 5, 60));
-		imp.show();
-
-		StartDialogPanel panel = new StartDialogPanel();
-		panel.setPlugin(null);
-
-		frame.getContentPane().add(panel);
-		frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-		frame.pack();
-		frame.setVisible(true);
-		WindowManager.setCurrentWindow(imp.getWindow());
-	}
-
-
-
 }

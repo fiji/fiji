@@ -1,6 +1,6 @@
 package trainableSegmentation;
 /** 
- * This class is intended for the Trainable_Segmentation plugin. It creates and holds
+ * This class is intended for the Trainable Segmentation library. It creates and holds
  * different feature images for the classification. Possible filters include:
  * - Gaussian blur
  * - Gradient magnitude
@@ -11,6 +11,7 @@ package trainableSegmentation;
  * - Variance
  * - Minimum
  * - Maximum
+ * - Median
  * - Anisotropic diffusion
  * - Bilateral filter
  * - Lipschitz filter
@@ -138,7 +139,7 @@ public class FeatureStack
 	public static final int MEDIAN					=  9;
 	/** Anisotropic diffusion filter flag index */
 	public static final int ANISOTROPIC_DIFFUSION 	= 10;
-	/** Anisotropic diffusion filter flag index */
+	/** Bilateral flag index */
 	public static final int BILATERAL 				= 11;
 	/** Lipschitz filter flag index */
 	public static final int LIPSCHITZ 				= 12;

@@ -88,6 +88,6 @@ public class ClassificationStatistics
 			this.recall = truePositives / (truePositives + falseNegatives);
 		
 		if( (precision + recall) > 0)
-			this.fScore = 2 * precision * recall / ( precision + recall );				
+			this.fScore = 2.0 * precision * recall / ( precision + recall );				
 	}
 }

@@ -27,12 +27,13 @@ void writeLinuxDesktopFile(File file) {
 	out.println("X-GNOME-FullName=Fiji Is Just ImageJ");
 	out.println("Comment=Scientific Image Analysis");
 	out.println("Type=Application");
-	out.println("Categories=Application;Image Processing");
+	out.println("Categories=Education;Science;ImageProcessing;");
 	out.println("Exec=" + exec);
 	out.println("TryExec=" + exec);
 	out.println("Terminal=false");
 	out.println("StartupNotify=true");
 	out.println("Icon=" + icon);
+	out.println("StartupWMClass=fiji-Main");
 	out.close();
 	file.setExecutable(true);
 }

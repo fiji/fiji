@@ -199,10 +199,13 @@ public class NrrdInfo {
 					try{
 						;
 						for	(int i=0;i<numFiles;i++){
-							Formatter f = new Formatter().format(dataFNFormat, num);
+							final Formatter formatter = new Formatter();
+							Formatter f = formatter.format(dataFNFormat, num);
 							//System.out.println("looking for file: "+f.toString());
 							dataFiles[i]=makeCheckedFile(f.toString());
 							num+=dataFNStep;
+							f.close();
+							formatter.close();
 						}
 					} catch(IOException e) {
 						throw new IOException("Unable to find data files referred to by data file field");

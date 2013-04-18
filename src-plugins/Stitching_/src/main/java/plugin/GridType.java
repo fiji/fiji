@@ -147,8 +147,7 @@ public class GridType
 
 		// the interactive changing is not compatible with the macro language, 
 		// thats why we show all possible options and figure out what was meant
-		// John Lapage added an entry for the Sequential Images option.
-		allChoices = new String[ 13 ];
+		allChoices = new String[ 12 ];
 		allChoices[ 0 ] = choose2[ 0 ][ 0 ];
 		allChoices[ 1 ] = choose2[ 0 ][ 1 ];
 		allChoices[ 2 ] = choose2[ 0 ][ 2 ];
@@ -160,7 +159,7 @@ public class GridType
 		allChoices[ 8 ] = choose2[ 4 ][ 0 ];		
 		allChoices[ 9 ] = choose2[ 5 ][ 0 ];		
 		allChoices[ 10 ] = choose2[ 6 ][ 0 ];
-		allChoices[ 12 ] = choose2[ 7 ][ 0 ];
+		allChoices[ 11 ] = choose2[ 6 ][ 1 ];
 	}
 	
 	protected final void imageSwitch( final Choice choice1, final Choice choice2, final ImageIcon[][] images, final ImageIcon display, final JLabel label )

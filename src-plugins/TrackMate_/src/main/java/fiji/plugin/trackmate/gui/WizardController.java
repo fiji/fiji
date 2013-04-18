@@ -1,6 +1,7 @@
 package fiji.plugin.trackmate.gui;
 
 import ij.IJ;
+import ij.ImagePlus;
 
 import java.awt.Component;
 import java.awt.event.ActionEvent;
@@ -13,10 +14,10 @@ import javax.swing.UnsupportedLookAndFeelException;
 
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.TrackMate_;
-import fiji.plugin.trackmate.visualization.trackscheme.TrackSchemeFrame;
+import fiji.plugin.trackmate.util.TMUtils;
 
 public class WizardController implements ActionListener {
-
+	
 	/*
 	 * FIELDS
 	 */
@@ -35,8 +36,15 @@ public class WizardController implements ActionListener {
 	 * re-generate the data.
 	 */
 	boolean actionFlag = true;
-	private boolean oldNextButtonState;
-	private boolean oldPreviousButtonState;
+	/**
+	 * Is used to determine whether we are currently displaying the log panel after the
+	 * user has pressed the log button. 
+	 */
+	private boolean displayingLog = false;
+	/** 
+	 * Used to store the ID of the previous descriptor before the user pressed the log button.
+	 */
+	private String previousPanelID;
 
 	/*
 	 * CONSTRUCTOR
@@ -59,27 +67,18 @@ public class WizardController implements ActionListener {
 			}
 		}
 
-		this.plugin = plugin;
-		Component window;
-		if (plugin.getModel().getSettings().imp != null && plugin.getModel().getSettings().imp.getWindow() != null ) {
-			window = plugin.getModel().getSettings().imp.getWindow();
-		} else {
-			window = null;
+		Component window = null;
+		ImagePlus imp = plugin.getModel().getSettings().imp;
+		if (imp != null && imp.getWindow() != null ) {
+			window = imp.getWindow();
 		}
-		this.wizard = new TrackMateWizard(window);
+		this.wizard = new TrackMateWizard(window, this);
 		this.logger = wizard.getLogger();
 
-		plugin.setLogger(logger);
 		wizard.setVisible(true);
 		wizard.addActionListener(this);
 
-		// Instantiate and pass panel descriptors to the wizard
-		List<WizardPanelDescriptor> descriptors = createWizardPanelDescriptorList();
-		for(WizardPanelDescriptor descriptor : descriptors) {
-			descriptor.setPlugin(plugin);
-			descriptor.setWizard(wizard);
-			wizard.registerWizardDescriptor(descriptor.getDescriptorID(), descriptor);
-		}
+		setPlugin(plugin);
 
 		init();
 	}
@@ -94,6 +93,15 @@ public class WizardController implements ActionListener {
 	public TrackMateWizard getWizard() {
 		return wizard;
 	}
+
+	/**
+	 * Expose the {@link TrackMate_} plugin piloted by the wizard.
+	 */
+	public TrackMate_ getPlugin() {
+		return plugin;
+	}
+
+
 
 	/*
 	 * PROTECTED METHODS
@@ -111,6 +119,11 @@ public class WizardController implements ActionListener {
 		wizard.setPreviousButtonEnabled(false);
 		String id = StartDialogPanel.DESCRIPTOR;
 		WizardPanelDescriptor panelDescriptor  = wizard.getPanelDescriptorFor(id);
+		
+		String welcomeMessage = TrackMate_.PLUGIN_NAME_STR + "v" + TrackMate_.PLUGIN_NAME_VERSION + " started on:\n" + 
+				TMUtils.getCurrentTimeString() + '\n';
+		// Log GUI processing start
+		wizard.getLogger().log(welcomeMessage, Logger.BLUE_COLOR);
 
 		// Execute about to be displayed action of the new one
 		panelDescriptor.aboutToDisplayPanel();
@@ -131,11 +144,13 @@ public class WizardController implements ActionListener {
 	 */
 	protected List<WizardPanelDescriptor> createWizardPanelDescriptorList() {
 		List<WizardPanelDescriptor> descriptors = new ArrayList<WizardPanelDescriptor>(14);
+		
+		
 		descriptors.add(new StartDialogPanel());
-		descriptors.add(new SegmenterChoiceDescriptor());
-		//		descriptors.add(new SegmenterConfigurationPanelDescriptor()); // will be instantiated on the fly, see SegmenterChoiceDescriptor
-		descriptors.add(new SegmentationDescriptor());
-		descriptors.add(new InitFilterPanel());
+		descriptors.add(new DetectorChoiceDescriptor());
+		//		descriptors.add(new DetectorConfigurationPanelDescriptor()); // will be instantiated on the fly, see DetectorChoiceDescriptor
+		descriptors.add(new DetectorDescriptor());
+		descriptors.add(new InitFilterDescriptor());
 		descriptors.add(new DisplayerChoiceDescriptor());
 		descriptors.add(new LaunchDisplayerDescriptor());
 		descriptors.add(new SpotFilterDescriptor());
@@ -144,10 +159,15 @@ public class WizardController implements ActionListener {
 		descriptors.add(new TrackingDescriptor());
 		descriptors.add(new TrackFilterDescriptor());
 		descriptors.add(new DisplayerPanel());
-		descriptors.add(new ActionChooserPanel(plugin));
+		descriptors.add(new GrapherPanel());
+		descriptors.add(ActionChooserPanel.instantiateForPlugin(plugin));
 
 		descriptors.add(new LoadDescriptor());
 		descriptors.add(new SaveDescriptor());
+		
+		WizardPanelDescriptor logPanelDescriptor = new LogPanelDescriptor();
+		logPanelDescriptor.setWizard(wizard);
+		descriptors.add(logPanelDescriptor);
 		return descriptors;
 	}
 
@@ -159,7 +179,6 @@ public class WizardController implements ActionListener {
 	public void actionPerformed(ActionEvent event) {
 		if (DEBUG)
 			System.out.println("[TrackMateFrameController] Caught event "+event);
-		final DisplayerPanel displayerPanel = (DisplayerPanel) wizard.getPanelDescriptorFor(DisplayerPanel.DESCRIPTOR);
 
 		if (event == wizard.NEXT_BUTTON_PRESSED && actionFlag) {
 
@@ -182,10 +201,7 @@ public class WizardController implements ActionListener {
 
 			actionFlag = false;
 			wizard.jButtonNext.setText("Resume");
-			wizard.setSaveButtonEnabled(false);
-			wizard.setLoadButtonEnabled(false);
-			wizard.setPreviousButtonEnabled(false);
-			wizard.setNextButtonEnabled(false);
+			wizard.disableButtonsAndStoreState();
 
 			new Thread("TrackMate moving to load state thread.") {
 				public void run() {
@@ -196,13 +212,8 @@ public class WizardController implements ActionListener {
 		} else if (event == wizard.SAVE_BUTTON_PRESSED && actionFlag) {
 
 			actionFlag = false;
-			oldNextButtonState = wizard.jButtonNext.isEnabled();
-			oldPreviousButtonState = wizard.jButtonPrevious.isEnabled();
 			wizard.jButtonNext.setText("Resume");
-			wizard.setSaveButtonEnabled(false);
-			wizard.setLoadButtonEnabled(false);
-			wizard.setPreviousButtonEnabled(false);
-			wizard.setNextButtonEnabled(false);
+			wizard.disableButtonsAndStoreState();
 
 			new Thread("TrackMate moving to save state thread.") {
 				public void run() {
@@ -222,23 +233,24 @@ public class WizardController implements ActionListener {
 
 			// Put back buttons
 			wizard.jButtonNext.setText("Next");
-			wizard.setLoadButtonEnabled(true);
-			wizard.setSaveButtonEnabled(true);
-			wizard.setNextButtonEnabled(oldNextButtonState);
-			wizard.setPreviousButtonEnabled(oldPreviousButtonState);
+			wizard.restoreButtonsState();
 
-		} else if (event == displayerPanel.TRACK_SCHEME_BUTTON_PRESSED) {
-
-			// Display Track scheme
-			displayerPanel.jButtonShowTrackScheme.setEnabled(false);
-
-			try {
-				TrackSchemeFrame trackScheme = new TrackSchemeFrame(plugin.getModel());
-				trackScheme.setVisible(true);
-			} finally {
-				displayerPanel.jButtonShowTrackScheme.setEnabled(true);
+		} else if (event == wizard.LOG_BUTTON_PRESSED) {
+			
+			if (displayingLog) {
+				
+				wizard.restoreButtonsState();
+				wizard.showDescriptorPanelFor(previousPanelID);
+				
+			} else {
+				
+				wizard.disableButtonsAndStoreState();
+				previousPanelID = wizard.getCurrentPanelDescriptor().getComponentID();
+				wizard.showDescriptorPanelFor(LogPanelDescriptor.DESCRIPTOR);
+				
 			}
-
+			displayingLog = !displayingLog;
+			
 		}
 	}
 
@@ -275,8 +287,8 @@ public class WizardController implements ActionListener {
 			panelDescriptor.displayingPanel();
 
 		} finally {
-			
-			
+
+
 		}
 
 	}
@@ -316,14 +328,14 @@ public class WizardController implements ActionListener {
 		// Enable or disable next and previous button depending on the target descriptor.
 		WizardPanelDescriptor nextPanel = wizard.getPanelDescriptorFor(loadDescriptor.getNextDescriptorID());
 		if (nextPanel.getNextDescriptorID() == null) {
-			oldNextButtonState = false;
+			wizard.storedButtonState[3] = false;
 		} else {
-			oldNextButtonState = true;
+			wizard.storedButtonState[3] = true;
 		}
 		if (nextPanel.getPreviousDescriptorID() == null) {
-			oldPreviousButtonState = false;
+			wizard.storedButtonState[2] = false;
 		} else {
-			oldPreviousButtonState = true;
+			wizard.storedButtonState[2] = true;
 		}
 
 	}
@@ -337,7 +349,21 @@ public class WizardController implements ActionListener {
 		saveDescriptor.setTargetNextID(oldDescriptor.getDescriptorID());
 		saveDescriptor.aboutToDisplayPanel();
 		wizard.showDescriptorPanelFor(SaveDescriptor.DESCRIPTOR);
+		wizard.getLogger().log(TMUtils.getCurrentTimeString() + '\n', Logger.BLUE_COLOR);
 		saveDescriptor.displayingPanel();
 	}
 
+	void setPlugin(TrackMate_ plugin) {
+		this.plugin = plugin;
+		plugin.setLogger(logger);
+
+		// Instantiate and pass panel descriptors to the wizard
+		List<WizardPanelDescriptor> descriptors = createWizardPanelDescriptorList();
+		for(WizardPanelDescriptor descriptor : descriptors) {
+			descriptor.setWizard(wizard);
+			descriptor.setPlugin(plugin);
+			wizard.registerWizardDescriptor(descriptor.getDescriptorID(), descriptor);
+		}
+	}
+	
 }

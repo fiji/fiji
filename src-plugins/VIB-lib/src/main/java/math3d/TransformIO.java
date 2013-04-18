@@ -1,24 +1,20 @@
 package math3d;
 
-import java.io.BufferedReader;
+import ij.IJ;
+import ij.io.OpenDialog;
+import ij.io.SaveDialog;
+
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.FileReader;
-import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.LineNumberReader;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
-import java.util.Arrays;
 import java.util.Date;
-import java.util.LinkedHashMap;
 
 import nrrd.NrrdHeader;
-import ij.IJ;
-import ij.io.OpenDialog;
-import ij.io.SaveDialog;
 
 /**
  * 
@@ -63,13 +59,16 @@ public class TransformIO {
 				if(s.startsWith("#"))
 					continue;
 				String[] floatStrings = s.split("\\s+");
-            	if(floatStrings.length!=4) throw new 
-            		Exception("Could not read 4 floats from line "+in.getLineNumber()+" (" + s + ") of file "+path);
+		if(floatStrings.length!=4) {
+			in.close();
+			throw new Exception("Could not read 4 floats from line "+in.getLineNumber()+" (" + s + ") of file "+path);
+		}
 				for(int i=0;i<floatStrings.length;i++){
                     	mat[nLines*matCols+i]=s2f(floatStrings[i]);
 				}
 				nLines++;
 			}
+			in.close();
 		} catch (Exception e){
 			IJ.error("Unable to read affine transfomation from file: "+path+"\n"+e);
 		}
