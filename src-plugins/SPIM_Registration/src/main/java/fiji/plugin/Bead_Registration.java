@@ -150,6 +150,7 @@ public class Bead_Registration implements PlugIn
 	public static boolean loadSegmentation = false;
 	public static int relocalize = 0;
 	public static boolean keepImagesOpen = true;
+	public static boolean iterativeRelocalization = true;
 	public static String[] localization = { "None", "Gauss fit (true correspondences)", "Gauss fit (all detections)" };	
 	public static String[] beadBrightness = { "Very weak", "Weak", "Comparable to Sample", "Strong", "Advanced ...", "Interactive ..." };	
 	public static int defaultBeadBrightness = 1;
@@ -183,12 +184,12 @@ public class Bead_Registration implements PlugIn
 		gd.addMessage( "" );		
 		
 		gd.addCheckbox( "Load_segmented_beads", loadSegmentation );
+		gd.addChoice( "Bead_brightness", beadBrightness, beadBrightness[ defaultBeadBrightness ] );
 		if ( choiceType == 0 )
 			gd.addMessage( "Note: DoG detections are subpixel localized by a n-dimensional quadratic fit." );
 		else
 			gd.addMessage( "Note: DoM detetions are NOT subpixel localized." );
 		gd.addChoice( "Additional_localization", localization, localization[ relocalize ] );
-		gd.addChoice( "Bead_brightness", beadBrightness, beadBrightness[ defaultBeadBrightness ] );
 		gd.addCheckbox( "Override_file_dimensions", overrideResolution );
 		final Checkbox dimensionsBox = (Checkbox)gd.getCheckboxes().lastElement();
 		gd.addNumericField( "xy_resolution (um/px)", xyRes, 3 );
@@ -295,8 +296,8 @@ public class Bead_Registration implements PlugIn
 		angles = gd.getNextString();
 		
 		loadSegmentation = gd.getNextBoolean();
-		relocalize = gd.getNextChoiceIndex();
 		defaultBeadBrightness = gd.getNextChoiceIndex();
+		relocalize = gd.getNextChoiceIndex();
 		overrideResolution = gd.getNextBoolean();
 		xyRes = gd.getNextNumber();
 		zRes = gd.getNextNumber();
@@ -436,9 +437,8 @@ public class Bead_Registration implements PlugIn
 		{
 			GenericDialog gdGauss = new GenericDialog( "Gauss options" );
 
-			gdGauss.addMessage( "The re-localization using a Gaussian fit will be\n" +
-								"performed after the registration for the true\n" +
-								"corresponding beads only." );
+			gdGauss.addMessage( "The re-localization using a Gaussian fit will be done for the true corresponding " +
+								"beads only, performed after or iteratively with the registration." );
 			gdGauss.addCheckbox( "Keep_images_open", keepImagesOpen );
 			
 			gdGauss.showDialog();

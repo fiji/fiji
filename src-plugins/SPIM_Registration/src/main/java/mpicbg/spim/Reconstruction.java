@@ -277,9 +277,7 @@ public class Reconstruction
 
 			// relocalize true correspondences?
 			if ( conf.doGaussFit == 1 )
-			{			
-				int i = 0;
-				
+			{
 				do 
 				{
 					currentViewStructure.getBeadSegmentation().reLocalizeTrueCorrespondences( true );
@@ -295,7 +293,7 @@ public class Reconstruction
 					currentViewStructure.getBeadRegistration().registerViews();
 				}
 				while ( currentViewStructure.getBeadSegmentation().reLocalizeTrueCorrespondences( false ) > 0 );
-
+				
 				for ( final ViewDataBeads view : currentViewStructure.getViews() )
 					view.closeImage();
 			}
@@ -303,8 +301,7 @@ public class Reconstruction
 			BeadRegistration.concatenateAxialScaling( currentViewStructure.getViews(), currentViewStructure.getDebugLevel() );
 	        
 	        if ( currentViewStructure.getDebugLevel() <= ViewStructure.DEBUG_MAIN )
-	        	IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Finished Registration");
-					        
+	        	IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Finished Registration");					        
 
 	        //
 	        // remove the beads

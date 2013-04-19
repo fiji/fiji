@@ -17,9 +17,7 @@ import mpicbg.imglib.algorithm.peak.GaussianPeakFitterND;
 import mpicbg.imglib.algorithm.scalespace.DifferenceOfGaussianPeak;
 import mpicbg.imglib.algorithm.scalespace.DifferenceOfGaussianReal1;
 import mpicbg.imglib.algorithm.scalespace.SubpixelLocalization;
-import mpicbg.imglib.cursor.LocalizableByDimCursor;
 import mpicbg.imglib.cursor.LocalizableByDimCursor3D;
-import mpicbg.imglib.cursor.LocalizableCursor;
 import mpicbg.imglib.cursor.special.HyperSphereIterator;
 import mpicbg.imglib.function.Converter;
 import mpicbg.imglib.image.Image;
@@ -30,7 +28,6 @@ import mpicbg.imglib.multithreading.SimpleMultiThreading;
 import mpicbg.imglib.outofbounds.OutOfBoundsStrategyValueFactory;
 import mpicbg.imglib.type.numeric.integer.IntType;
 import mpicbg.imglib.type.numeric.integer.LongType;
-import mpicbg.imglib.type.numeric.integer.UnsignedByteType;
 import mpicbg.imglib.type.numeric.real.FloatType;
 import mpicbg.imglib.util.Util;
 import mpicbg.spim.io.IOFunctions;
@@ -39,18 +36,18 @@ import mpicbg.spim.io.SPIMConfiguration.SegmentationTypes;
 import mpicbg.spim.registration.ViewDataBeads;
 import mpicbg.spim.registration.ViewStructure;
 import mpicbg.spim.registration.bead.laplace.LaPlaceFunctions;
-import mpicbg.spim.registration.detection.DetectionSegmentation;
 import mpicbg.spim.registration.threshold.ComponentProperties;
 import mpicbg.spim.registration.threshold.ConnectedComponent;
 import mpicbg.spim.segmentation.DOM;
+import mpicbg.spim.segmentation.IntegralImage3d;
 import mpicbg.spim.segmentation.InteractiveIntegral;
 import mpicbg.spim.segmentation.SimplePeak;
-import mpicbg.util.RealSum;
 
 public class BeadSegmentation
 {	
 	public static final boolean debugBeads = false;
 	public ViewStructure viewStructure;
+	public SegmentationBenchmark benchmark = new SegmentationBenchmark();
 	
 	public BeadSegmentation( final ViewStructure viewStructure ) 
 	{
@@ -107,7 +104,7 @@ public class BeadSegmentation
 			}
 
 			if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_MAIN )
-				IOFunctions.println( "Found peaks (possible beads): " + view.getBeadStructure().getBeadList().size() );
+				IOFunctions.println( "Found peaks (possible beads): " + view.getBeadStructure().getBeadList().size() + " in view " + view.getName() );
 
 			//
 			// do we want to re-localize all detections?
@@ -136,6 +133,14 @@ public class BeadSegmentation
 			//
 			if ( conf.writeSegmentation )
 				IOFunctions.writeSegmentation( view, conf.registrationFiledirectory );										
+		}
+		
+		if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_MAIN )
+		{
+			int p1 = (int)Math.round( (double)benchmark.openFiles/((double)benchmark.computation+(double)benchmark.openFiles) * 100 );
+			int p2 = (int)Math.round( (double)benchmark.computation/((double)benchmark.computation+(double)benchmark.openFiles) * 100 );
+			IJ.log( "Opening files took: " + benchmark.openFiles/1000 + " sec (" + p1 + " %)" );
+			IJ.log( "Computation took: " + benchmark.computation/1000 + " sec (" + p2 + " %)" );
 		}
 	}
 	
@@ -278,14 +283,19 @@ public class BeadSegmentation
 	 */
 	protected BeadStructure extractBeadsDOM( final ViewDataBeads view, final SPIMConfiguration conf )
 	{
+		long time1 = System.currentTimeMillis();
+		
 		if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_MAIN )
 			IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Opening Image");					
 
 		final Image< FloatType > img = view.getImage( false ); 
-		
+
+		long time2 = System.currentTimeMillis();
+		benchmark.openFiles += time2 - time1;
+
 		if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_MAIN )
 			IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Computing Integral Image");					
-
+		/*
 		final IntegralImageLong< FloatType > intImg = new IntegralImageLong<FloatType>( img, new Converter< FloatType, LongType >()
 		{
 			@Override
@@ -296,12 +306,18 @@ public class BeadSegmentation
 		intImg.process();
 		
 		final Image< LongType > integralImg = intImg.getResult();
-
+		*/
+		
+		final Image< LongType > integralImg = IntegralImage3d.computeArray( img );
+		
 		final FloatType min = new FloatType();
 		final FloatType max = new FloatType();
 		
 		DOM.computeMinMax( img, min, max );
-				
+
+		if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_MAIN )
+			IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): min intensity = " + min.get() + ", max intensity = " + max.get() );
+		
 		// in-place
 		final int r1 = view.getIntegralRadius1();
 		final int r2 = view.getIntegralRadius2();
@@ -349,19 +365,26 @@ public class BeadSegmentation
 	        	beads.addDetection( bead );
         	}
         }
-        
+                
         // if we made a copy we close it now
         if ( domImg != img )
         	domImg.close();
+        
+        benchmark.computation += System.currentTimeMillis() - time2;
         
 		return beads;
 	}
 	
 	protected BeadStructure extractBeadsLaPlaceImgLib( final ViewDataBeads view, final SPIMConfiguration conf )
 	{
+		long time1 = System.currentTimeMillis();
+		
 		// load the image
 		final Image<FloatType> img = view.getImage();
 
+		long time2 = System.currentTimeMillis();
+		benchmark.openFiles += time2 - time1;
+		
         float imageSigma = conf.imageSigma;
         float initialSigma = view.getInitialSigma();
 
@@ -461,6 +484,8 @@ public class BeadSegmentation
 	        IOFunctions.println( "max: " + max );
 	        IOFunctions.println( "peak to low: " + peakTooLow );
 		}
+		
+		benchmark.computation += System.currentTimeMillis() - time2;
 		
 		return beads;
 		
