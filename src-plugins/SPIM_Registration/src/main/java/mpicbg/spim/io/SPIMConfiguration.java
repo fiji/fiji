@@ -83,7 +83,8 @@ public class SPIMConfiguration
 
 	// which fusion weightening
     public boolean useEntropy = false;
-    public boolean useGauss = false;
+    public boolean useIntegralContentBased = false;
+    public boolean useGaussContentBased = false;
     public boolean useLinearBlening = true;
 
     public boolean paralellFusion = true;
@@ -790,7 +791,8 @@ public class SPIMConfiguration
     	IOFunctions.println("showOutputImage: " + showOutputImage);
     	IOFunctions.println("segmentation type: " + segmentation);
     	IOFunctions.println("useEntropy: " + useEntropy);
-    	IOFunctions.println("useGauss: " + useGauss);
+    	IOFunctions.println("useGaussContentBased: " + useGaussContentBased);
+    	IOFunctions.println("useIntegralContentBased: " + useIntegralContentBased);
     	IOFunctions.println("useLinearBlening: " + useLinearBlening);
 
     	IOFunctions.println("paralellFusion: " + paralellFusion);

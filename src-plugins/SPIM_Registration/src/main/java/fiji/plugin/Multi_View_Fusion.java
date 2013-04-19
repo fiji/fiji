@@ -78,6 +78,7 @@ public class Multi_View_Fusion implements PlugIn
 	public static int defaultParalellViews = 0;
 	public static boolean fusionUseBlendingStatic = true;
 	public static boolean fusionUseContentBasedStatic = false;
+	public static boolean fusionUseContentBasedIntegralStatic = false;
 	public static boolean displayFusedImageStatic = true;
 	public static boolean saveFusedImageStatic = true;
 	public static int outputImageScalingStatic = 1;
@@ -411,8 +412,9 @@ public class Multi_View_Fusion implements PlugIn
 		gd2.addChoice( "Process_views_in_paralell", views, views[ defaultParalellViews ] );
 		
 		gd2.addMessage( "" );
-		gd2.addCheckbox( "Apply_blending", fusionUseBlendingStatic );
-		gd2.addCheckbox( "Apply_content_based_weightening", fusionUseContentBasedStatic );
+		gd2.addCheckbox( "Blending", fusionUseBlendingStatic );
+		gd2.addCheckbox( "Content_based_weights", fusionUseContentBasedStatic );
+		gd2.addCheckbox( "Content_based_weights (fast, approximate)", fusionUseContentBasedIntegralStatic );
 		gd2.addMessage( "" );
 		gd2.addNumericField( "Downsample_output image n-times", outputImageScalingStatic, 0 );
 		gd2.addNumericField( "Crop_output_image_offset_x", cropOffsetXStatic, 0 );
@@ -519,6 +521,7 @@ public class Multi_View_Fusion implements PlugIn
 		defaultParalellViews = gd2.getNextChoiceIndex(); // 0 = all
 		fusionUseBlendingStatic = gd2.getNextBoolean();
 		fusionUseContentBasedStatic = gd2.getNextBoolean();
+		fusionUseContentBasedIntegralStatic = gd2.getNextBoolean();
 		outputImageScalingStatic = (int)Math.round( gd2.getNextNumber() );
 		cropOffsetXStatic = (int)Math.round( gd2.getNextNumber() );
 		cropOffsetYStatic = (int)Math.round( gd2.getNextNumber() );
@@ -558,7 +561,8 @@ public class Multi_View_Fusion implements PlugIn
 			conf.writeOutputImage = false;
 		
 		conf.useLinearBlening = fusionUseBlendingStatic;
-		conf.useGauss = fusionUseContentBasedStatic;
+		conf.useGaussContentBased = fusionUseContentBasedStatic;
+		conf.useIntegralContentBased = fusionUseContentBasedIntegralStatic;
 		conf.scale = outputImageScalingStatic;
 		conf.cropOffsetX = cropOffsetXStatic;
 		conf.cropOffsetY = cropOffsetYStatic;

@@ -2,11 +2,14 @@ package mpicbg.spim.segmentation;
 
 import ij.ImageJ;
 
+import java.util.Date;
 import java.util.Vector;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import mpicbg.imglib.algorithm.fft.FourierConvolution;
 import mpicbg.imglib.algorithm.integral.IntegralImageLong;
 import mpicbg.imglib.container.array.ArrayContainerFactory;
+import mpicbg.imglib.cursor.Cursor;
 import mpicbg.imglib.cursor.LocalizableByDimCursor;
 import mpicbg.imglib.cursor.LocalizableCursor;
 import mpicbg.imglib.function.Converter;
@@ -19,6 +22,9 @@ import mpicbg.imglib.multithreading.SimpleMultiThreading;
 import mpicbg.imglib.type.numeric.integer.LongType;
 import mpicbg.imglib.type.numeric.real.FloatType;
 import mpicbg.imglib.util.Util;
+import mpicbg.spim.io.IOFunctions;
+import mpicbg.spim.registration.ViewDataBeads;
+import mpicbg.spim.registration.ViewStructure;
 
 public class DOM 
 {
@@ -163,11 +169,9 @@ public class DOM
         SimpleMultiThreading.startAndJoin( threads );
  	}
 
-	final public static void mean( final Image< LongType> integralImg, final Image< FloatType > domImg, final int sx, final int sy, final int sz, final float min, final float max  )
+	final public static void mean( final Image< LongType> integralImg, final Image< FloatType > domImg, final int sx, final int sy, final int sz )
 	{
-		final float diff = max - min;
 		final float sumPixels = sx * sy * sz;
-		final float div = sumPixels * diff;
 		
 		final int sxHalf = sx / 2;
 		final int syHalf = sy / 2;
@@ -242,7 +246,7 @@ public class DOM
 	            				{
 	            					final long s = -r1.getType().get() + r2.getType().get() - r3.getType().get() + r4.getType().get() - r5.getType().get() + r6.getType().get() - r7.getType().get() + r8.getType().get();
 	
-	            					result.getType().set( (float)s/div );
+	            					result.getType().set( (float)s/sumPixels );
 	            					
 	            					r1.fwd( 0 ); r2.fwd( 0 ); r3.fwd( 0 ); r4.fwd( 0 ); r5.fwd( 0 ); r6.fwd( 0 ); r7.fwd( 0 ); r8.fwd( 0 );
 	            					result.fwd( 0 );
@@ -256,13 +260,10 @@ public class DOM
         SimpleMultiThreading.startAndJoin( threads );
  	}
 
-	final public static void meanMirror( final Image< LongType> integralImg, final Image< FloatType > domImg, final int sx, final int sy, final int sz, final float min, final float max  )
+	final public static void meanMirror( final Image< LongType> integralImg, final Image< FloatType > domImg, final int sx, final int sy, final int sz )
 	{
-		//mean( integralImg, domImg, sx, sy, sz, min, max );
-		
-		final LocalizableByDimCursor< FloatType > c1 = domImg.createLocalizableByDimCursor();
-		final LocalizableByDimCursor< FloatType > c2 = domImg.createLocalizableByDimCursor();
-		
+		mean( integralImg, domImg, sx, sy, sz );
+				
 		final int sxHalf = sx / 2;
 		final int syHalf = sy / 2;
 		final int szHalf = sz / 2;
@@ -279,56 +280,83 @@ public class DOM
 		final int h1 = h - syHalf - 1;
 		final int d1 = d - szHalf - 1;
 		
-		final int[] p = new int[ 3 ];
+		final AtomicInteger ai = new AtomicInteger(0);					
+        final Thread[] threads = SimpleMultiThreading.newThreads();
+		final int numThreads = threads.length;
+        
+        for (int ithread = 0; ithread < threads.length; ++ithread)
+            threads[ithread] = new Thread(new Runnable()
+            {
+                public void run()
+                {
+                	// Thread ID
+                	final int myNumber = ai.getAndIncrement();
 
-		// fill the remaining pixels with a mirror strategy (they are mostly blended away anyways)
-		for ( int z = 0; z < d; ++z )
-		{
-			boolean zSmaller = z < szHalf;
-			boolean zBigger = z > d1;
+            		final LocalizableByDimCursor< FloatType > c1 = domImg.createLocalizableByDimCursor();
+            		final LocalizableByDimCursor< FloatType > c2 = domImg.createLocalizableByDimCursor();
+
+					final int[] p1 = new int[ 3 ];
+					final int[] p2 = new int[ 3 ];
 			
-			for ( int y = 0; y < h; ++y )
-			{
-				boolean ySmaller = y < syHalf;
-				boolean yBigger = y > h1;
-				
-				for ( int x = 0; x < w; ++x )
-				{
-					boolean xSmaller = x < sxHalf;
-					boolean xBigger = x > w1;
-					
-					if ( xSmaller || ySmaller || zSmaller || xBigger || yBigger || zBigger )
+					// fill the remaining pixels with a mirror strategy (they are mostly blended away anyways)
+					for ( int z = 0; z < d; ++z )
 					{
-						p[ 0 ] = x; p[ 1 ] = y; p[ 2 ] = z;
-						c1.setPosition( p );
-						
-						if ( xSmaller )
-							p[ 0 ] =  sxHalf2 - x;
-						else if ( xBigger )
-							p[ 0 ] = 2*w1 - x;
-						else
-							p[ 0 ] = x;
-
-						if ( ySmaller )
-							p[ 1 ] =  syHalf2 - y;
-						else if ( yBigger )
-							p[ 1 ] = 2*h1 - y;
-						else
-							p[ 1 ] = y;
-
-						if ( zSmaller )
-							p[ 2 ] =  szHalf2 - z;
-						else if ( zBigger )
-							p[ 2 ] = 2*d1 - z;
-						else
-							p[ 2 ] = z;
-						
-						c2.setPosition( p );
-						c1.getType().set( p[ 2 ] );//c2.getType().get() );
+						if ( z % numThreads == myNumber )
+            			{
+							boolean zSmaller = z < szHalf;
+							boolean zBigger = z > d1;
+				
+							if ( zSmaller )
+								p1[ 2 ] =  szHalf2 - z;
+							else if ( zBigger )
+								p1[ 2 ] = 2*d1 - z;
+							else
+								p1[ 2 ] = z;
+				
+							p2[ 2 ] = z;
+							
+							for ( int y = 0; y < h; ++y )
+							{
+								boolean ySmaller = y < syHalf;
+								boolean yBigger = y > h1;
+				
+								if ( ySmaller )
+									p1[ 1 ] =  syHalf2 - y;
+								else if ( yBigger )
+									p1[ 1 ] = 2*h1 - y;
+								else
+									p1[ 1 ] = y;
+								
+								p2[ 1 ] = y;
+								
+								for ( int x = 0; x < w; ++x )
+								{
+									boolean xSmaller = x < sxHalf;
+									boolean xBigger = x > w1;
+									
+									if ( xSmaller || ySmaller || zSmaller || xBigger || yBigger || zBigger )
+									{
+										p2[ 0 ] = x; 
+										c1.setPosition( p2 );
+										
+										if ( xSmaller )
+											p1[ 0 ] =  sxHalf2 - x;
+										else if ( xBigger )
+											p1[ 0 ] = 2*w1 - x;
+										else
+											p1[ 0 ] = x;
+										
+										c2.setPosition( p1 );
+										c1.getType().set( c2.getType().get() );
+									}
+								}
+							}
+            			}
 					}
-				}
-			}
-		}
+                }
+            });
+
+        SimpleMultiThreading.startAndJoin( threads );
  	}
 
 	final public static void computeDifferencOfMean( final Image< LongType> integralImg, final Image< FloatType > domImg, final int sx1, final int sy1, final int sz1, final int sx2, final int sy2, final int sz2, final float min, final float max  )
@@ -529,19 +557,129 @@ public class DOM
 		}
 	}
 	
+	public static Image<FloatType> computeContentBasedGauss( final Image< FloatType > img, final int fusionSigma1, final int fusionSigma2, final float zStretching )
+	{
+		// get the kernels			
+		final double[] k1 = new double[ img.getNumDimensions() ];
+		final double[] k2 = new double[ img.getNumDimensions() ];
+		
+		for ( int d = 0; d < img.getNumDimensions() - 1; ++d )
+		{
+			k1[ d ] = fusionSigma1;
+			k2[ d ] = fusionSigma2;
+		}
+		
+		k1[ img.getNumDimensions() - 1 ] = fusionSigma1 / zStretching;
+		k2[ img.getNumDimensions() - 1 ] = fusionSigma2 / zStretching;		
+		
+		final Image<FloatType> kernel1 = FourierConvolution.createGaussianKernel( new ArrayContainerFactory(), k1 );
+		final Image<FloatType> kernel2 = FourierConvolution.createGaussianKernel( new ArrayContainerFactory(), k2 );
+
+		System.out.println( new Date( System.currentTimeMillis() )  + " conv1" );
+		
+		// compute I*sigma1
+		FourierConvolution<FloatType, FloatType> fftConv1 = new FourierConvolution<FloatType, FloatType>( img, kernel1 );
+		
+		fftConv1.process();		
+		final Image<FloatType> conv1 = fftConv1.getResult();
+		
+		fftConv1.close();
+		fftConv1 = null;
+
+		System.out.println( new Date( System.currentTimeMillis() )  + " comp" );
+
+		// compute ( I - I*sigma1 )^2
+		final Cursor<FloatType> cursorImg = img.createCursor();
+		final Cursor<FloatType> cursorConv = conv1.createCursor();
+		
+		while ( cursorImg.hasNext() )
+		{
+			cursorImg.fwd();
+			cursorConv.fwd();
+			
+			final float diff = cursorImg.getType().get() - cursorConv.getType().get();
+			
+			cursorConv.getType().set( diff*diff );
+		}
+
+		System.out.println( new Date( System.currentTimeMillis() )  + " conv2" );
+
+		// compute ( ( I - I*sigma1 )^2 ) * sigma2
+		FourierConvolution<FloatType, FloatType> fftConv2 = new FourierConvolution<FloatType, FloatType>( conv1, kernel2 );
+		fftConv2.process();	
+		
+		Image<FloatType> gaussContent = fftConv2.getResult();
+
+		fftConv2.close();
+		fftConv2 = null;
+		
+		// close the unnecessary image
+		kernel1.close();
+		kernel2.close();
+		conv1.close();
+		
+		ViewDataBeads.normalizeImage( gaussContent );
+		
+		return gaussContent;
+	}
+	
+	public static Image< FloatType > computeContentBasedWeighting( final Image< FloatType > img, final int fusionSigma1, final int fusionSigma2, final float zStretching )
+	{
+		// compute the radii
+		final int rxy1 = Math.round( fusionSigma1 );
+		final int rxy2 = Math.round( fusionSigma2 );
+
+		final int rz1 = Math.round( fusionSigma1 / zStretching );
+		final int rz2 = Math.round( fusionSigma2 / zStretching );
+					
+		// compute I*sigma1, store in imgConv
+		final Image< LongType > integralImg = IntegralImage3d.computeArray( img );
+		final Image< FloatType > imgConv = img.createNewImage();			
+		DOM.meanMirror( integralImg, imgConv, rxy1*2 + 1, rxy1*2 + 1, rz1*2 + 1 );
+		
+		// compute ( I - I*sigma1 )^2, store in imgConv
+		final Cursor<FloatType> cursorImg = img.createCursor();
+		final Cursor<FloatType> cursorConv = imgConv.createCursor();
+		
+		while ( cursorImg.hasNext() )
+		{
+			cursorImg.fwd();
+			cursorConv.fwd();
+			
+			final float diff = cursorImg.getType().get() - cursorConv.getType().get();
+			
+			cursorConv.getType().set( diff*diff );
+		}
+		
+		// compute ( ( I - I*sigma1 )^2 ) * sigma2, store in imgConv
+		IntegralImage3d.computeArray( integralImg, imgConv );
+		
+		DOM.meanMirror( integralImg, imgConv, rxy2*2 + 1, rxy2*2 + 1, rz2*2 + 1 );
+		
+		integralImg.close();
+		
+		ViewDataBeads.normalizeImage( imgConv );
+		
+		return imgConv;
+	}
+	
 	public static void main( String args[] )
 	{
 		new ImageJ();
 		
-		Image< FloatType > img1 = new ImageFactory<FloatType>( new FloatType(), new ArrayContainerFactory() ).createImage( new int[]{ 13, 13, 13 } );
-		
-		meanMirror( null, img1, 7, 7, 7, 0, 0 );
-		
-		ImageJFunctions.show( img1 );
-		
-		SimpleMultiThreading.threadHaltUnClean();
+		//Image< FloatType > img1 = new ImageFactory<FloatType>( new FloatType(), new ArrayContainerFactory() ).createImage( new int[]{ 13, 13, 13 } );		
+		//meanMirror( null, img1, 7, 7, 7, 0, 0 );		
+		//ImageJFunctions.show( img1 );		
+		//SimpleMultiThreading.threadHaltUnClean();
 		
 		Image< FloatType > img = LOCI.openLOCIFloatType( "/Users/preibischs/Documents/Microscopy/SPIM/HisYFP-SPIM/spim_TL18_Angle0.tif", new ArrayContainerFactory() );
+		
+		long ti = System.currentTimeMillis();
+		Image<FloatType> cb = computeContentBasedWeighting( img, 20, 40, 2.73f );
+		System.out.println( "Content-based took: " + (System.currentTimeMillis() - ti) + " ms." );
+		ImageJFunctions.show( cb );		
+		SimpleMultiThreading.threadHaltUnClean();
+		
 		final IntegralImageLong< FloatType > intImg = new IntegralImageLong<FloatType>( img, new Converter< FloatType, LongType >()
 		{
 			@Override
@@ -551,6 +689,11 @@ public class DOM
 		intImg.process();
 		
 		final Image< LongType > integralImg = intImg.getResult();
+		
+		meanMirror( integralImg, img, 31, 31, 11 );
+		
+		ImageJFunctions.show( img );
+		SimpleMultiThreading.threadHaltUnClean();
 		
 		final FloatType min = new FloatType();
 		final FloatType max = new FloatType();

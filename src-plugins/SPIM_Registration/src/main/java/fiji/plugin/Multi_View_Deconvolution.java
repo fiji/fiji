@@ -775,7 +775,8 @@ public class Multi_View_Deconvolution implements PlugIn
 			conf.writeOutputImage = false;
 		
 		conf.useLinearBlening = true;
-		conf.useGauss = false;
+		conf.useGaussContentBased = false;
+		conf.useIntegralContentBased = false;
 		conf.scale = 1;
 		conf.cropOffsetX = Multi_View_Fusion.cropOffsetXStatic;
 		conf.cropOffsetY = Multi_View_Fusion.cropOffsetYStatic;

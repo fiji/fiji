@@ -27,12 +27,19 @@ public class IntegralImage3d
 	{
 		return (x + w * (y + z * h));
 	}
-
+	
 	final public static Image< LongType > computeArray( final Image< FloatType > img )
 	{
 		final ImageFactory< LongType > imgFactory = new ImageFactory< LongType >( new LongType(), new ArrayContainerFactory() );
 		final Image< LongType > integralTmp = imgFactory.createImage( new int[]{ img.getDimension( 0 ) + 1, img.getDimension( 1 ) + 1, img.getDimension( 2 ) + 1 } );
-				
+		
+		computeArray( integralTmp, img );
+		
+		return integralTmp;
+	}
+	
+	final public static void computeArray( final Image< LongType > integralTmp, final Image< FloatType > img )
+	{
 		final Array<LongType, LongAccess> array1 = (Array<LongType, LongAccess>)integralTmp.getContainer();
 		final LongArray longarray = (LongArray)array1.update( null );
 		final long[] data = longarray.getCurrentStorageArray();
@@ -181,8 +188,6 @@ public class IntegralImage3d
             });
         
         SimpleMultiThreading.startAndJoin( threads );
-		
-		return integralTmp;
 	}
 
 	public static void main( String[] args )

@@ -32,8 +32,11 @@ public class FusionControl
 		if (conf.useEntropy)
 			isolatedWeightenerFactories.add( new EntropyFastFactory( conf.entropyFactory ) );
 
-		if (conf.useGauss)
+		if (conf.useGaussContentBased)
 			isolatedWeightenerFactories.add( new GaussContentFactory( conf.entropyFactory ) );
+
+		if (conf.useIntegralContentBased)
+			isolatedWeightenerFactories.add( new AverageContentFactory( conf.entropyFactory ) );
 
 		if (conf.useLinearBlening)
 		{
