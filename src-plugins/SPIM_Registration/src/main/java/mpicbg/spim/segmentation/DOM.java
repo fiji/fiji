@@ -164,9 +164,7 @@ public class DOM
 	final public static void mean( final Image< LongType> integralImg, final Image< FloatType > domImg, final int sx, final int sy, final int sz, final float min, final float max  )
 	{
 		final float diff = max - min;
-		
 		final float sumPixels = sx * sy * sz;
-		
 		final float div = sumPixels * diff;
 		
 		final int sxHalf = sx / 2;
@@ -256,97 +254,62 @@ public class DOM
         SimpleMultiThreading.startAndJoin( threads );
  	}
 
-	final public static void meanReflect( final Image< LongType> integralImg, final Image< FloatType > domImg, final int sx, final int sy, final int sz, final float min, final float max  )
+	final public static void meanMirror( final Image< LongType> integralImg, final Image< FloatType > domImg, final int sx, final int sy, final int sz, final float min, final float max  )
 	{
-		final float diff = max - min;	
-		final float sumPixels = sx * sy * sz;
-		final float div = sumPixels * diff;
+		mean( integralImg, domImg, sx, sy, sz, min, max );
+		
+		final LocalizableByDimCursor< FloatType > c1 = domImg.createLocalizableByDimCursor();
+		final LocalizableByDimCursor< FloatType > c2 = domImg.createLocalizableByDimCursor();
 		
 		final int sxHalf = sx / 2;
 		final int syHalf = sy / 2;
 		final int szHalf = sz / 2;
+		
+		final int sxHalf2 = sxHalf * 2;
+		final int syHalf2 = syHalf * 2;
+		final int szHalf2 = szHalf * 2;
+		
+		final int w = domImg.getDimension( 0 );
+		final int h = domImg.getDimension( 1 );
+		final int d = domImg.getDimension( 2 );
+		
+		final int w1 = w - sxHalf;
+		final int h1 = h - syHalf;
+		final int d1 = d - szHalf;
+		
+		final int[] p = new int[ 3 ];
 
-		final int w = domImg.getDimension( 0 ) - ( sx / 2 ) * 2; // this makes sense as sx is odd
-		final int h = domImg.getDimension( 1 ) - ( sy / 2 ) * 2;
-		final int d = domImg.getDimension( 2 ) - ( sz / 2 ) * 2;
-
-		final AtomicInteger ai = new AtomicInteger(0);					
-        final Thread[] threads = SimpleMultiThreading.newThreads();
-		final int numThreads = threads.length;
-        
-        for (int ithread = 0; ithread < threads.length; ++ithread)
-            threads[ithread] = new Thread(new Runnable()
-            {
-                public void run()
-                {
-                	// Thread ID
-                	final int myNumber = ai.getAndIncrement();
-
-            		// for each computation we need 8 randomaccesses, so 16 all together
-            		final LocalizableByDimCursor< LongType > r1 = integralImg.createLocalizableByDimCursor();
-            		final LocalizableByDimCursor< LongType > r2 = integralImg.createLocalizableByDimCursor();
-            		final LocalizableByDimCursor< LongType > r3 = integralImg.createLocalizableByDimCursor();
-            		final LocalizableByDimCursor< LongType > r4 = integralImg.createLocalizableByDimCursor();
-            		final LocalizableByDimCursor< LongType > r5 = integralImg.createLocalizableByDimCursor();
-            		final LocalizableByDimCursor< LongType > r6 = integralImg.createLocalizableByDimCursor();
-            		final LocalizableByDimCursor< LongType > r7 = integralImg.createLocalizableByDimCursor();
-            		final LocalizableByDimCursor< LongType > r8 = integralImg.createLocalizableByDimCursor();
-            		
-            		final LocalizableByDimCursor< FloatType > result = domImg.createLocalizableByDimCursor();
-            		
-            		final int[] p = new int[ 3 ];
-
-            		for ( int z = 0; z < d; ++z )
-            		{
-            			if ( z % numThreads == myNumber )
-            			{
-	            			for ( int y = 0; y < h; ++y )
-	            			{
-	            				// set the result randomaccess
-	            				p[ 0 ] = sxHalf; p[ 1 ] = y + syHalf; p[ 2 ] = z + szHalf;
-	            				result.setPosition( p );
-	            				
-	            				// set all randomaccess for the first box accordingly
-	            				p[ 0 ] = 0; p[ 1 ] = y; p[ 2 ] = z;
-	            				r1.setPosition( p ); // negative
-	
-	            				p[ 0 ] += sx;
-	            				r2.setPosition( p ); // positive
-	            				
-	            				p[ 1 ] += sy;
-	            				r3.setPosition( p ); // negative
-	            				
-	            				p[ 0 ] -= sx;
-	            				r4.setPosition( p ); // positive
-	
-	            				p[ 2 ] += sz;
-	            				r5.setPosition( p ); // negative
-	
-	            				p[ 0 ] += sx;
-	            				r6.setPosition( p ); // positive
-	
-	            				p[ 1 ] -= sy;
-	            				r7.setPosition( p ); // negative
-	
-	            				p[ 0 ] -= sx;
-	            				r8.setPosition( p ); // positive
-	
-	            				for ( int x = 0; x < w; ++x )
-	            				{
-	            					final long s = -r1.getType().get() + r2.getType().get() - r3.getType().get() + r4.getType().get() - r5.getType().get() + r6.getType().get() - r7.getType().get() + r8.getType().get();
-	
-	            					result.getType().set( (float)s/div );
-	            					
-	            					r1.fwd( 0 ); r2.fwd( 0 ); r3.fwd( 0 ); r4.fwd( 0 ); r5.fwd( 0 ); r6.fwd( 0 ); r7.fwd( 0 ); r8.fwd( 0 );
-	            					result.fwd( 0 );
-	            				}
-	            			}
-            			}
-            		}            		
-                }
-            });
-
-        SimpleMultiThreading.startAndJoin( threads );
+		// fill the remaining pixels with a mirro strategy (they are mostly blended away anyways)
+		for ( int z = 0; z < d; ++z )
+		{
+			boolean zSmaller = z < szHalf;
+			boolean zBigger = z >= d1;
+			
+			for ( int y = 0; y < h; ++y )
+			{
+				boolean ySmaller = y < syHalf;
+				boolean yBigger = y >= h1;
+				
+				for ( int x = 0; x < w; ++x )
+				{
+					boolean xSmaller = x < sxHalf;
+					boolean xBigger = x >= w1;
+					
+					if ( xSmaller || ySmaller || zSmaller || xBigger || yBigger || zBigger )
+					{
+						p[ 0 ] = x; p[ 1 ] = y; p[ 2 ] = z;
+						c1.setPosition( p );
+						
+						if ( xSmaller )
+							p[ 0 ] =  sxHalf2 - x;
+						else
+							p[ 0 ] = -1;
+						
+						
+					}
+				}
+			}
+		}
  	}
 
 	final public static void computeDifferencOfMean( final Image< LongType> integralImg, final Image< FloatType > domImg, final int sx1, final int sy1, final int sz1, final int sx2, final int sy2, final int sz2, final float min, final float max  )

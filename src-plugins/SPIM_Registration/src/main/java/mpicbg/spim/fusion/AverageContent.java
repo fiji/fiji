@@ -22,6 +22,7 @@ import mpicbg.spim.io.SPIMConfiguration;
 import mpicbg.spim.registration.ViewDataBeads;
 import mpicbg.spim.registration.ViewStructure;
 import mpicbg.spim.segmentation.DOM;
+import mpicbg.spim.segmentation.IntegralImage3d;
 
 public class AverageContent extends IsolatedPixelWeightener<AverageContent> 
 {
@@ -49,7 +50,7 @@ public class AverageContent extends IsolatedPixelWeightener<AverageContent>
 			
 			if ( view.getViewStructure().getDebugLevel() <= ViewStructure.DEBUG_MAIN )
 				IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Computing Integral Image");					
-
+			/*
 			final IntegralImageLong< FloatType > intImg = new IntegralImageLong<FloatType>( img, new Converter< FloatType, LongType >()
 			{
 				@Override
@@ -60,7 +61,9 @@ public class AverageContent extends IsolatedPixelWeightener<AverageContent>
 			intImg.process();
 			
 			final Image< LongType > integralImg = intImg.getResult();
+			*/
 			
+			final Image< LongType > integralImg = IntegralImage3d.computeArray( img );
 			
 			// get the kernels
 			
