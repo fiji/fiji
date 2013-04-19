@@ -11,6 +11,8 @@ import mpicbg.imglib.cursor.LocalizableByDimCursor;
 import mpicbg.imglib.cursor.LocalizableCursor;
 import mpicbg.imglib.function.Converter;
 import mpicbg.imglib.image.Image;
+import mpicbg.imglib.image.ImageFactory;
+import mpicbg.imglib.image.display.imagej.ImageJFunctions;
 import mpicbg.imglib.io.LOCI;
 import mpicbg.imglib.multithreading.Chunk;
 import mpicbg.imglib.multithreading.SimpleMultiThreading;
@@ -256,7 +258,7 @@ public class DOM
 
 	final public static void meanMirror( final Image< LongType> integralImg, final Image< FloatType > domImg, final int sx, final int sy, final int sz, final float min, final float max  )
 	{
-		mean( integralImg, domImg, sx, sy, sz, min, max );
+		//mean( integralImg, domImg, sx, sy, sz, min, max );
 		
 		final LocalizableByDimCursor< FloatType > c1 = domImg.createLocalizableByDimCursor();
 		final LocalizableByDimCursor< FloatType > c2 = domImg.createLocalizableByDimCursor();
@@ -273,27 +275,27 @@ public class DOM
 		final int h = domImg.getDimension( 1 );
 		final int d = domImg.getDimension( 2 );
 		
-		final int w1 = w - sxHalf;
-		final int h1 = h - syHalf;
-		final int d1 = d - szHalf;
+		final int w1 = w - sxHalf - 1;
+		final int h1 = h - syHalf - 1;
+		final int d1 = d - szHalf - 1;
 		
 		final int[] p = new int[ 3 ];
 
-		// fill the remaining pixels with a mirro strategy (they are mostly blended away anyways)
+		// fill the remaining pixels with a mirror strategy (they are mostly blended away anyways)
 		for ( int z = 0; z < d; ++z )
 		{
 			boolean zSmaller = z < szHalf;
-			boolean zBigger = z >= d1;
+			boolean zBigger = z > d1;
 			
 			for ( int y = 0; y < h; ++y )
 			{
 				boolean ySmaller = y < syHalf;
-				boolean yBigger = y >= h1;
+				boolean yBigger = y > h1;
 				
 				for ( int x = 0; x < w; ++x )
 				{
 					boolean xSmaller = x < sxHalf;
-					boolean xBigger = x >= w1;
+					boolean xBigger = x > w1;
 					
 					if ( xSmaller || ySmaller || zSmaller || xBigger || yBigger || zBigger )
 					{
@@ -302,10 +304,27 @@ public class DOM
 						
 						if ( xSmaller )
 							p[ 0 ] =  sxHalf2 - x;
+						else if ( xBigger )
+							p[ 0 ] = 2*w1 - x;
 						else
-							p[ 0 ] = -1;
+							p[ 0 ] = x;
+
+						if ( ySmaller )
+							p[ 1 ] =  syHalf2 - y;
+						else if ( yBigger )
+							p[ 1 ] = 2*h1 - y;
+						else
+							p[ 1 ] = y;
+
+						if ( zSmaller )
+							p[ 2 ] =  szHalf2 - z;
+						else if ( zBigger )
+							p[ 2 ] = 2*d1 - z;
+						else
+							p[ 2 ] = z;
 						
-						
+						c2.setPosition( p );
+						c1.getType().set( p[ 2 ] );//c2.getType().get() );
 					}
 				}
 			}
@@ -513,6 +532,14 @@ public class DOM
 	public static void main( String args[] )
 	{
 		new ImageJ();
+		
+		Image< FloatType > img1 = new ImageFactory<FloatType>( new FloatType(), new ArrayContainerFactory() ).createImage( new int[]{ 13, 13, 13 } );
+		
+		meanMirror( null, img1, 7, 7, 7, 0, 0 );
+		
+		ImageJFunctions.show( img1 );
+		
+		SimpleMultiThreading.threadHaltUnClean();
 		
 		Image< FloatType > img = LOCI.openLOCIFloatType( "/Users/preibischs/Documents/Microscopy/SPIM/HisYFP-SPIM/spim_TL18_Angle0.tif", new ArrayContainerFactory() );
 		final IntegralImageLong< FloatType > intImg = new IntegralImageLong<FloatType>( img, new Converter< FloatType, LongType >()
