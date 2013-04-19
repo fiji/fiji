@@ -106,8 +106,8 @@ public class SPIMConfiguration
 	public int background = 0;
 
 	// re-localize true correspondences with a gauss fit?
-	// 0 == no, 1 == only correspondences, 2 == all detections
-	public int doGaussFit = 0;
+	// 0 == no, 1 == quadratic fit, 2 == only correspondences gauss, 3 == all detections gauss
+	public int doFit = 0;
 	public boolean doGaussKeepImagesOpen = false;
 	
 	// by default we do a DoG

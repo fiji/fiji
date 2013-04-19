@@ -276,7 +276,7 @@ public class Reconstruction
 				currentViewStructure.getBeadRegistration().registerViews();
 
 			// relocalize true correspondences?
-			if ( conf.doGaussFit == 1 )
+			if ( conf.doFit == 2 )
 			{
 				do 
 				{

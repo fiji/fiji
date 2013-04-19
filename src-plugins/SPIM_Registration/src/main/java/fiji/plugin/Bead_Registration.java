@@ -148,10 +148,10 @@ public class Bead_Registration implements PlugIn
 	public static String angles = "0-270:45";
 	
 	public static boolean loadSegmentation = false;
-	public static int relocalize = 0;
+	public static int relocalize = 1;
 	public static boolean keepImagesOpen = true;
 	public static boolean iterativeRelocalization = true;
-	public static String[] localization = { "None", "Gauss fit (true correspondences)", "Gauss fit (all detections)" };	
+	public static String[] localization = { "None", "3-dimensional quadratic fit (all detections)", "Gauss fit (true correspondences)", "Gauss fit (all detections)" };	
 	public static String[] beadBrightness = { "Very weak", "Weak", "Comparable to Sample", "Strong", "Advanced ...", "Interactive ..." };	
 	public static int defaultBeadBrightness = 1;
 	public static boolean overrideResolution = false;
@@ -185,11 +185,7 @@ public class Bead_Registration implements PlugIn
 		
 		gd.addCheckbox( "Load_segmented_beads", loadSegmentation );
 		gd.addChoice( "Bead_brightness", beadBrightness, beadBrightness[ defaultBeadBrightness ] );
-		if ( choiceType == 0 )
-			gd.addMessage( "Note: DoG detections are subpixel localized by a n-dimensional quadratic fit." );
-		else
-			gd.addMessage( "Note: DoM detetions are NOT subpixel localized." );
-		gd.addChoice( "Additional_localization", localization, localization[ relocalize ] );
+		gd.addChoice( "Subpixel_localization", localization, localization[ relocalize ] );
 		gd.addCheckbox( "Override_file_dimensions", overrideResolution );
 		final Checkbox dimensionsBox = (Checkbox)gd.getCheckboxes().lastElement();
 		gd.addNumericField( "xy_resolution (um/px)", xyRes, 3 );
@@ -432,8 +428,8 @@ public class Bead_Registration implements PlugIn
 
 		conf.overrideImageZStretching = overrideResolution;
 		
-		conf.doGaussFit = relocalize;
-		if ( conf.doGaussFit == 1 )
+		conf.doFit = relocalize;
+		if ( conf.doFit == 2 )
 		{
 			GenericDialog gdGauss = new GenericDialog( "Gauss options" );
 

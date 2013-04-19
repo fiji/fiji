@@ -14,6 +14,7 @@ import javax.vecmath.Point3i;
 import mpicbg.imglib.algorithm.integral.IntegralImageLong;
 import mpicbg.imglib.algorithm.math.LocalizablePoint;
 import mpicbg.imglib.algorithm.peak.GaussianPeakFitterND;
+import mpicbg.imglib.algorithm.scalespace.DifferenceOfGaussian.SpecialPoint;
 import mpicbg.imglib.algorithm.scalespace.DifferenceOfGaussianPeak;
 import mpicbg.imglib.algorithm.scalespace.DifferenceOfGaussianReal1;
 import mpicbg.imglib.algorithm.scalespace.SubpixelLocalization;
@@ -107,9 +108,9 @@ public class BeadSegmentation
 				IOFunctions.println( "Found peaks (possible beads): " + view.getBeadStructure().getBeadList().size() + " in view " + view.getName() );
 
 			//
-			// do we want to re-localize all detections?
+			// do we want to re-localize all detections with a gauss fit?
 			//
-			if ( conf.doGaussFit == 2 )
+			if ( conf.doFit == 3 )
 			{
 				if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_MAIN )
 	    			IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Starting Gaussian fit for all detections (this will take a little)");
@@ -125,7 +126,7 @@ public class BeadSegmentation
 			}
 				
 			// close the image if no re-localization is required and/or the memory is low
-			if ( !( conf.doGaussFit == 1 && conf.doGaussKeepImagesOpen ) )
+			if ( !( conf.doFit == 2 && conf.doGaussKeepImagesOpen ) )
 				view.closeImage();
 			
 			//
@@ -273,6 +274,8 @@ public class BeadSegmentation
 		return img;
 	}
 
+	public static boolean subpixel = true;
+	
 	/**
 	 * Computes potential beads based on the difference-of-mean (DOM). The computation of the DOM is based on
 	 * integral images for high performance
@@ -332,7 +335,7 @@ public class BeadSegmentation
 		// in-place overwriting img if no adjacent Gauss fit is required
 		final Image< FloatType > domImg;
 		
-		if ( conf.doGaussFit == 2 || ( conf.doGaussFit == 1 && conf.doGaussKeepImagesOpen ) )
+		if ( conf.doFit == 3 || ( conf.doFit == 2 && conf.doGaussKeepImagesOpen ) )
 		{
 			domImg = img.createNewImage();
 		}
@@ -353,20 +356,59 @@ public class BeadSegmentation
 
 		// compute the maxima/minima
 		final ArrayList< SimplePeak > peaks = InteractiveIntegral.findPeaks( domImg, t );
-		
+
 		final BeadStructure beads = new BeadStructure();
 		int id = 0;
-		
-        for ( final SimplePeak peak : peaks )
-        {
-        	if ( peak.isMax ) 
-        	{
-	        	final Bead bead = new Bead( id++, new Point3d( peak.location[ 0 ], peak.location[ 1 ], peak.location[ 2 ] ), view );
-	        	beads.addDetection( bead );
-        	}
-        }
-                
-        // if we made a copy we close it now
+
+		// do quadratic fit??
+		if ( conf.doFit == 1 )
+		{
+			if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_MAIN )
+				IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Subpixel localization using quadratic n-dimensional fit");					
+
+	        final ArrayList< DifferenceOfGaussianPeak<FloatType> > peakList = new ArrayList<DifferenceOfGaussianPeak<FloatType>>();
+
+	        for ( final SimplePeak peak : peaks )
+	        	if ( peak.isMax ) 
+	        		peakList.add( new DifferenceOfGaussianPeak<FloatType>( peak.location, new FloatType( peak.intensity ), SpecialPoint.MAX ) );
+
+			
+	        final SubpixelLocalization<FloatType> spl = new SubpixelLocalization<FloatType>( domImg, peakList );
+			spl.setAllowMaximaTolerance( true );
+			spl.setMaxNumMoves( 10 );
+			
+			if ( !spl.checkInput() || !spl.process() )
+			{
+	    		if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_ERRORONLY )
+	    			IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Warning! Failed to compute subpixel localization " + spl.getErrorMessage() );
+			}
+			
+			final float[] pos = new float[ img.getNumDimensions() ];
+	                
+	        for ( DifferenceOfGaussianPeak<FloatType> maximum : peakList )
+	        {
+	        	if ( maximum.isMax() ) 
+	        	{
+	        		maximum.getSubPixelPosition( pos );
+		        	final Bead bead = new Bead( id, new Point3d( pos[ 0 ], pos[ 1 ], pos[ 2 ] ), view );
+		        	beads.addDetection( bead );
+		        	id++;
+	        	}
+	        }
+		}
+		else
+		{
+	        for ( final SimplePeak peak : peaks )
+	        {
+	        	if ( peak.isMax ) 
+	        	{
+		        	final Bead bead = new Bead( id++, new Point3d( peak.location[ 0 ], peak.location[ 1 ], peak.location[ 2 ] ), view );
+		        	beads.addDetection( bead );
+	        	}
+	        }
+		}       
+
+		// if we made a copy we close it now
         if ( domImg != img )
         	domImg.close();
         
@@ -418,7 +460,12 @@ public class BeadSegmentation
          
 		// compute difference of gaussian
 		final DifferenceOfGaussianReal1<FloatType> dog = new DifferenceOfGaussianReal1<FloatType>( img, conf.strategyFactoryGauss, sigmaDiff[0], sigmaDiff[1], minInitialPeakValue, K_MIN1_INV );
-		dog.setKeepDoGImage( true );
+		
+		// do quadratic fit??
+		if ( conf.doFit == 1 )
+			dog.setKeepDoGImage( true );
+		else
+			dog.setKeepDoGImage( false );
 		
 		if ( !dog.checkInput() || !dog.process() )
 		{
@@ -434,18 +481,22 @@ public class BeadSegmentation
         	if ( peakList.get( i ).isMin() )
         		peakList.remove( i );
 		
-        final SubpixelLocalization<FloatType> spl = new SubpixelLocalization<FloatType>( dog.getDoGImage(), dog.getPeaks() );
-		spl.setAllowMaximaTolerance( true );
-		spl.setMaxNumMoves( 10 );
-		
-		if ( !spl.checkInput() || !spl.process() )
+		// do quadratic fit??
+		if ( conf.doFit == 1 )
 		{
-    		if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_ERRORONLY )
-    			IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Warning! Failed to compute subpixel localization " + spl.getErrorMessage() );
+	        final SubpixelLocalization<FloatType> spl = new SubpixelLocalization<FloatType>( dog.getDoGImage(), dog.getPeaks() );
+			spl.setAllowMaximaTolerance( true );
+			spl.setMaxNumMoves( 10 );
+			
+			if ( !spl.checkInput() || !spl.process() )
+			{
+	    		if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_ERRORONLY )
+	    			IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Warning! Failed to compute subpixel localization " + spl.getErrorMessage() );
+			}
+	
+			dog.getDoGImage().close();
 		}
-
-		dog.getDoGImage().close();
-    	
+		
         final BeadStructure beads = new BeadStructure();
         int id = 0;
         final float[] pos = new float[ img.getNumDimensions() ];
