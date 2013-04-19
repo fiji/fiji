@@ -26,7 +26,7 @@ import edu.utexas.clm.archipelago.listen.TransceiverListener;
 import edu.utexas.clm.archipelago.compute.ProcessManager;
 import edu.utexas.clm.archipelago.data.ClusterMessage;
 import edu.utexas.clm.archipelago.network.MessageXC;
-import edu.utexas.clm.archipelago.util.XCErrorAdapter;
+import edu.utexas.clm.archipelago.network.shell.NodeShell;
 
 
 import java.io.IOException;
@@ -120,7 +120,7 @@ public class ArchipelagoClient implements TransceiverListener
     private final TransceiverExceptionListener xcEListener;
 
 
-    public ArchipelagoClient(long id, String host, InputStream inStream, OutputStream outStream,
+    public ArchipelagoClient(long id, InputStream inStream, OutputStream outStream,
                              TransceiverExceptionListener tel) throws IOException
     {
         try
@@ -128,7 +128,7 @@ public class ArchipelagoClient implements TransceiverListener
             xcEListener = tel;
 
             clientId = id;
-            xc = new MessageXC(inStream, outStream, this, xcEListener, host);
+            xc = new MessageXC(inStream, outStream, this, xcEListener);
             beatThread = new HeartBeatThread(1000, Runtime.getRuntime());
 
             runningThreads = new Vector<ProcessThread>();
@@ -225,8 +225,6 @@ public class ArchipelagoClient implements TransceiverListener
         catch (ClassCastException cce)
         {
             xcEListener.handleRXThrowable(cce, xc);
-//            FijiArchipelago.log("Caught CCE: " + cce);
-//            xc.queueMessage(MessageType.ERROR, cce);
         }
     }
 

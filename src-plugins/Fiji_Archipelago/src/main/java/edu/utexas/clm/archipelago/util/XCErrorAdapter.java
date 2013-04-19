@@ -21,6 +21,7 @@ package edu.utexas.clm.archipelago.util;
 import edu.utexas.clm.archipelago.FijiArchipelago;
 import edu.utexas.clm.archipelago.listen.TransceiverExceptionListener;
 import edu.utexas.clm.archipelago.network.MessageXC;
+import edu.utexas.clm.archipelago.network.node.NodeManager;
 
 import java.util.HashSet;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -32,6 +33,8 @@ public class XCErrorAdapter implements TransceiverExceptionListener
     private final HashSet<Class> throwablesSeenRX;
 
     private final AtomicBoolean isQuiet;
+    
+    private NodeManager nodeManager = null;
 
     public XCErrorAdapter()
     {
@@ -40,6 +43,11 @@ public class XCErrorAdapter implements TransceiverExceptionListener
         isQuiet = new AtomicBoolean(false);
     }
     
+    public void setNodeManager(final NodeManager nm)
+    {
+        nodeManager = nm;
+    }
+
     protected boolean handleCustomRX(final Throwable t, final MessageXC mxc)
     {
         return true;
@@ -71,12 +79,18 @@ public class XCErrorAdapter implements TransceiverExceptionListener
     
     protected void reportRX(final Throwable t, final String message, final MessageXC mxc)
     {
-        report(t, "RX: " + mxc.getHostName() + ": " + message, throwablesSeenRX);
+        final NodeManager.NodeParameters np = nodeManager.getParam(mxc.getId());
+        final String hostString = np == null ? "" : np.getHost() + ": ";
+
+        report(t, "RX: " + hostString + message, throwablesSeenRX);
     }
 
     protected void reportTX(final Throwable t, final String message, final MessageXC mxc)
     {
-        report(t, "TX: " + mxc.getHostName() + ": " + message, throwablesSeenTX);
+        final NodeManager.NodeParameters np = nodeManager.getParam(mxc.getId());
+        final String hostString = np == null ? "" : np.getHost() + ": ";
+
+        report(t, "TX: " + hostString + message, throwablesSeenTX);
     }
 
     public void handleRXThrowable(final Throwable t, final MessageXC mxc) {

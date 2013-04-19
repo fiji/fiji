@@ -20,19 +20,19 @@ package edu.utexas.clm.archipelago.network.node;
 
 import edu.utexas.clm.archipelago.*;
 import edu.utexas.clm.archipelago.data.HeartBeat;
-import edu.utexas.clm.archipelago.exception.ShellExecutionException;
 import edu.utexas.clm.archipelago.listen.*;
 import edu.utexas.clm.archipelago.compute.ProcessManager;
 import edu.utexas.clm.archipelago.data.ClusterMessage;
 import edu.utexas.clm.archipelago.network.MessageXC;
-import edu.utexas.clm.archipelago.network.shell.NodeShell;
 
 import java.io.IOException;
-import java.net.Socket;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Vector;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -42,23 +42,10 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class ClusterNode implements TransceiverListener
 {
-    
-
-    public class TimeOutException extends Exception
-    {
-        public TimeOutException()
-        {
-            super("Timed out waiting for ID");
-        }
-    }
-
-
-    //private Socket nodeSocket;
     private MessageXC xc;
-    
+
     private final Hashtable<Long, ProcessListener> processHandlers;
     private final Hashtable<Long, ProcessManager> runningProcesses;
-    private final AtomicBoolean ready;
     private final AtomicInteger ramMBAvail, ramMBTot, ramMBMax, runningCores;
     private long nodeID;
     private long lastBeatTime;
@@ -69,16 +56,16 @@ public class ClusterNode implements TransceiverListener
     private final TransceiverExceptionListener xcEListener;
 
    
-    public ClusterNode(final Socket socket, final TransceiverExceptionListener tel)
-            throws IOException, InterruptedException, TimeOutException
+    public ClusterNode(final TransceiverExceptionListener tel)
     {
         xc = null;
         lastBeatTime = 0;
         state = ClusterNodeState.INACTIVE;
-        int waitCnt = 0;
-        ready = new AtomicBoolean(false);
+
+//        ready = new AtomicBoolean(false);
         idSet = new AtomicBoolean(false);
         cpuSet = new AtomicBoolean(false);
+
         ramMBAvail = new AtomicInteger(0);
         ramMBTot = new AtomicInteger(0);
         ramMBMax = new AtomicInteger(0);
@@ -89,20 +76,6 @@ public class ClusterNode implements TransceiverListener
         nodeParam = null;
         stateListeners = new Vector<NodeStateListener>();
         xcEListener = tel;
-
-        setClientSocket(socket);
-        
-        xc.queueMessage(MessageType.GETID);
-        
-        while (!idSet.get() && !cpuSet.get())
-        {
-            Thread.sleep(100);
-            if (waitCnt++ > 120)
-            {
-                throw new TimeOutException();
-            }
-        }
-        doSyncEnvironment();
     }
     
     private void doSyncEnvironment()
@@ -167,15 +140,38 @@ public class ClusterNode implements TransceiverListener
         }
     }
 
-    private void setClientSocket(final Socket s) throws IOException
+    /**
+     * Sets the InputStream and OutputStream used to communicate with the remote compute node.
+     * is and os are used to create a MessageXC. The remote node is then queried for its unique id
+     * as well as the number of available threads if that was not set explicitly. Once we've
+     * received that information, messages are passed to synchronize nonessential parameters and
+     * start BEAT messages, then the Cluster's state is set to ready.
+     * @param is InputStream to receive data from the remote machine
+     * @param os OutputStream to send data to the remote machine
+     * @throws IOException if a problem arises opening one of the streams
+     * @throws TimeoutException if we time out while waiting for the remote node
+     * @throws InterruptedException if we are interrupted while waiting for the remote node
+     */
+    public synchronized void setIOStreams(final InputStream is, final OutputStream os)
+            throws IOException, TimeoutException, InterruptedException
     {
+        int waitCnt = 0;
 
-        xc = new MessageXC(s.getInputStream(), s.getOutputStream(), this,
-                xcEListener, s.getInetAddress().getHostName());
+        xc = new MessageXC(is, os, this, xcEListener);
+        xc.queueMessage(MessageType.GETID);
+        
+        idSet.set(false);
+        cpuSet.set(false);
 
-        FijiArchipelago.log("Got Socket from " + s.getInetAddress());
-
-        ready.set(true);
+        while (!idSet.get() && !cpuSet.get())
+        {
+            Thread.sleep(100);
+            if (waitCnt++ > 120)
+            {
+                throw new TimeoutException("Timed out waiting for remote node");
+            }
+        }
+        doSyncEnvironment();
         setState(ClusterNodeState.ACTIVE);
     }
 
@@ -204,31 +200,27 @@ public class ClusterNode implements TransceiverListener
         return state == ClusterNodeState.ACTIVE;
     }
     
-    public boolean exec(final String command, final ShellExecListener listener)
-            throws ShellExecutionException
-    {
-        return getShell().exec(nodeParam, command, listener);
-    }
-
     public long getID()
     {
         return nodeID;
     }
     
+/*
     public NodeShell getShell()
     {
         return nodeParam.getShell();
     }
+*/
 
     public NodeManager.NodeParameters getParam()
     {
         return nodeParam;
     }
 
-    public void setShell(final NodeShell shell)
+    /*public void setShell(final NodeShell shell)
     {
         nodeParam.setShell(shell);
-    }
+    }*/
     
     public int numRunningThreads()
     {
@@ -277,10 +269,12 @@ public class ClusterNode implements TransceiverListener
         }
     }
 
+/*
     public void ping()
     {
         xc.queueMessage(MessageType.PING);
     }
+*/
 
     public long lastBeat()
     {
@@ -302,7 +296,7 @@ public class ClusterNode implements TransceiverListener
                     FijiArchipelago.debug("Got id message. Setting ID to " + id + ". Param: " + nodeParam);
                     nodeID = id;
                     nodeParam.setNode(this);
-                    idSet.set(true);
+
                     if (nodeParam.getThreadLimit() <= 0)
                     {
                         xc.queueMessage(MessageType.NUMTHREADS);
@@ -311,6 +305,8 @@ public class ClusterNode implements TransceiverListener
                     {
                         cpuSet.set(true);
                     }
+
+                    idSet.set(true);
                     break;
 
                 case PROCESS:

@@ -18,18 +18,12 @@
 
 package edu.utexas.clm.archipelago;
 
-import edu.utexas.clm.archipelago.listen.ClusterStateListener;
-import edu.utexas.clm.archipelago.listen.ShellExecListener;
-import edu.utexas.clm.archipelago.network.node.NodeManager;
-import edu.utexas.clm.archipelago.ui.ClusterNodeConfigUI;
 import edu.utexas.clm.archipelago.ui.ClusterUI;
 import edu.utexas.clm.archipelago.util.*;
-import ij.gui.GenericDialog;
 
-import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.File;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.concurrent.atomic.AtomicLong;
 /**
  *
@@ -124,6 +118,13 @@ public final class FijiArchipelago
     public static synchronized void debug(final String s)
     {
         debugLogger.log(s);
+    }
+    
+    public static synchronized void debug(final String s, final Exception e)
+    {        
+        final PrintWriter pw = new PrintWriter(new StringWriter());
+        e.printStackTrace(pw);
+        debugLogger.log(s + " " + pw.toString());
     }
 
     public static synchronized long getUniqueID()

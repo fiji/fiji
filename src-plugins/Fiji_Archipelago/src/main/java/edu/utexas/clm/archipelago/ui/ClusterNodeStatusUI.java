@@ -261,8 +261,12 @@ public class ClusterNodeStatusUI implements ActionListener
     {
         final Panel hp = new Panel();
         //final Button invisibleButton = new Button("Stop");
-        doNodeLayout(hp, new Label("Host"), new Label("state"), new Label("n Jobs"),
-                new Label("Beat"), new Label("MB used"), new Label("MB Total"), new Label(""));
+        ClusterUI.doRowPanelLayout(hp, 640, 24, new float[]{5, 1, 1, 2, 2, 2, 1},
+                new Label("Host"), new Label("state"), new Label("n Jobs"), new Label("Beat"),
+                new Label("MB used"), new Label("MB Total"), new Label(""));
+
+//        doNodeLayout(hp, new Label("Host"), new Label("state"), new Label("n Jobs"),
+//                new Label("Beat"), new Label("MB used"), new Label("MB Total"), new Label(""));
         //invisibleButton.setVisible(false);
         uiPanel.add(hp);
         uiPanel.validate();

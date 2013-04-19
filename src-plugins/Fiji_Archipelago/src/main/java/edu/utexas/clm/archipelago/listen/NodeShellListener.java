@@ -17,11 +17,17 @@
  */
 
 package edu.utexas.clm.archipelago.listen;
+
+import java.io.InputStream;
+import java.io.OutputStream;
+
 /**
  *
  * @author Larry Lindsey
  */
-public interface ShellExecListener
+public interface NodeShellListener
 {
     public void execFinished(final long nodeID, final Exception e, final int status);
+
+    public void ioStreamsReady(final InputStream is, final OutputStream os);
 }

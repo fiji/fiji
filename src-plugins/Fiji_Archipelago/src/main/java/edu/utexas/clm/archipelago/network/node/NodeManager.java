@@ -18,12 +18,17 @@
 
 package edu.utexas.clm.archipelago.network.node;
 
+import edu.utexas.clm.archipelago.Cluster;
 import edu.utexas.clm.archipelago.FijiArchipelago;
-import edu.utexas.clm.archipelago.network.node.ClusterNode;
+import edu.utexas.clm.archipelago.exception.ShellExecutionException;
+import edu.utexas.clm.archipelago.listen.NodeShellListener;
 import edu.utexas.clm.archipelago.network.shell.NodeShell;
+import edu.utexas.clm.archipelago.network.shell.NodeShellParameters;
+import edu.utexas.clm.archipelago.network.shell.SocketNodeShell;
 
 import java.util.ArrayList;
 import java.util.Hashtable;
+
 /**
  *
  * @author Larry Lindsey
@@ -36,27 +41,70 @@ public class NodeManager
         private ClusterNode node = null;
         private String host;
         private String user;
-        private int port;
 
         private String fileRoot;
         private String execRoot;
         private final long id;
         private int numThreads;
         private NodeShell shell;
+        private NodeShellParameters shellParams;
         
-        public NodeParameters(String userIn, String hostIn, NodeShell shellIn, String execPath,
-                              String filePath, int portIn)
+        private boolean editable;
+        
+        public NodeParameters(NodeParameters np)
+        {
+            id = FijiArchipelago.getUniqueID();
+            user = np.getUser();
+            host = np.getHost();
+            shell = np.getShell();
+            execRoot = np.getExecRoot();
+            fileRoot = np.getFileRoot();
+            numThreads = np.getThreadLimit();
+            shellParams = shell.defaultParameters();
+            editable = true;
+        }
+
+        public NodeParameters(String userIn,
+                              String hostIn,
+                              NodeShell shellIn,
+                              String execPath,
+                              String filePath)
         {
             user = userIn;
             host = hostIn;
-            port = portIn;
             shell = shellIn;
             execRoot = execPath;
             fileRoot = filePath;
             id = FijiArchipelago.getUniqueID();
+            shellParams = shellIn.defaultParameters();
             numThreads = 0;
         }
 
+        public synchronized boolean startNode(NodeShellListener listener)
+                throws ShellExecutionException
+        {
+
+            if (shell != null && shell.start(this, listener))
+            {
+                editable = false;
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+
+        /**
+         * Returns true if this NodeParameters is editable. This is a soft constraint. In other
+         * words, NodeParameters does not enforce editability; it is up to the UI to enforce it.
+         * @return true if this NodeParameters is editable.
+         */
+        public boolean isEditable()
+        {
+            return editable;
+        }
+        
         public synchronized void setThreadLimit(final int n)
         {
             numThreads = n;
@@ -72,14 +120,15 @@ public class NodeManager
             this.host = host;
         }
         
-        public synchronized void setShell(final NodeShell shell)
+        public synchronized void setShell(final NodeShell shell, final NodeShellParameters params)
         {
             this.shell = shell;
+            setShellParams(params);
         }
 
-        public synchronized void setPort(final int port)
+        public synchronized void setShell(final String className)
         {
-            this.port = port;
+            this.shell = Cluster.getNodeShell(className);
         }
 
         public synchronized void setNode(final ClusterNode node)
@@ -97,6 +146,11 @@ public class NodeManager
             this.fileRoot = fileRoot;
         }
 
+        public synchronized void setShellParams(final NodeShellParameters shellParams)
+        {
+            this.shellParams = shellParams;
+        }
+
         public String getUser()
         {
             return user;
@@ -111,10 +165,10 @@ public class NodeManager
         {
             return shell;
         }
-
-        public int getPort()
+        
+        public NodeShellParameters getShellParams()
         {
-            return port;
+            return shellParams;
         }
 
         public ClusterNode getNode()
@@ -144,20 +198,18 @@ public class NodeManager
         
         public String toString()
         {
-            return user + "@" + host + ":" + port + " id: " + id;
+            return user + "@" + host + " id: " + id + " " + shell.paramToString(shellParams);
         }
     }
     
     private final Hashtable<Long, NodeParameters> nodeTable;
     
-    private String stdExecRoot = "";
-    private String stdFileRoot = "";
-    private String stdUser = "";
-    private NodeShell stdShell = null;
-    private int stdPort = 22;
-    
+    private final NodeParameters defaultParameters;
+
     public NodeManager()
     {
+        NodeShell defaultShell = SocketNodeShell.getShell();
+        defaultParameters = new NodeParameters("", "", defaultShell , "", "");
         nodeTable = new Hashtable<Long, NodeParameters>();
     }
     
@@ -166,6 +218,11 @@ public class NodeManager
         return nodeTable.get(id);
     }
     
+    public NodeParameters getDefaultParameters()
+    {
+        return defaultParameters;
+    }
+
     public ArrayList<NodeParameters> getParams()
     {
         return new ArrayList<NodeParameters>(nodeTable.values());
@@ -174,56 +231,6 @@ public class NodeManager
     public synchronized void removeParam(final long id)
     {
         nodeTable.remove(id);
-    }
-
-    public synchronized void setStdUser(String user)
-    {
-        stdUser = user;
-    }
-
-    public String getStdUser()
-    {
-        return stdUser;
-    }
-    
-    public synchronized void setStdPort(int port)
-    {
-        stdPort = port;
-    }
-    
-    public int getStdPort()
-    {
-        return stdPort;
-    }
-    
-    public synchronized void setStdExecRoot(String execRoot)
-    {
-        stdExecRoot = execRoot;
-    }
-    
-    public String getStdExecRoot()
-    {
-        return stdExecRoot;
-    }
-    
-    public synchronized void setStdFileRoot(String fileRoot)
-    {
-        stdFileRoot = fileRoot;
-    }
-    
-    public String getStdFileRoot()
-    {
-        return stdFileRoot;
-    }
-    
-    public synchronized void setStdShell(NodeShell shell)
-    {
-        stdShell = shell;
-    }
-    
-    public NodeShell getStdShell()
-    {
-        return stdShell;
     }
 
     public void clear()
@@ -238,16 +245,24 @@ public class NodeManager
 
     public NodeParameters newParam(String hostIn)
     {
-        return newParam(stdUser, hostIn, stdShell, stdExecRoot, stdFileRoot, stdPort);
+        NodeParameters param = new NodeParameters(defaultParameters);
+        param.setHost(hostIn);
+
+        nodeTable.put(param.id, param);
+
+        FijiArchipelago.debug("Created new Param with id  " + param.id);
+
+        return param;
     }
 
-    public NodeParameters newParam(String userIn, String hostIn, NodeShell shell, String execPath, String filePath, int portIn)
-    {
-        NodeParameters param = new NodeParameters(userIn, hostIn, shell, execPath, filePath, portIn);
-        FijiArchipelago.debug("Created new Param with id  " + param.id);
-        
-        nodeTable.put(param.id, param);
-        
+    public NodeParameters newParam(String userIn, String hostIn, NodeShell shell, String execPath, String filePath)
+    {         
+        NodeParameters param = newParam(hostIn);
+
+        param.setUser(userIn);
+        param.setShell(shell, shell.defaultParameters());
+        param.setExecRoot(execPath);
+        param.setFileRoot(filePath);
         return param;
     }
 

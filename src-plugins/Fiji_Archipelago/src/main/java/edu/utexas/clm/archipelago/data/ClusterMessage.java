@@ -23,24 +23,27 @@ import edu.utexas.clm.archipelago.listen.MessageType;
 import java.io.Serializable;
 /**
  *
+ * A Serializable object that contains fields for type, a Serializable Object, and source.
+ *
+ *
  * @author Larry Lindsey
  */
 public class ClusterMessage implements Serializable
 {
 
-    public MessageType type;
+    public final MessageType type;
     public Serializable o = null;
+    public long source = 0;
 
     public ClusterMessage(final MessageType type)
     {
         this.type = type;
     }
     
-    public String toString()
+    public static String messageToString(final ClusterMessage cm)
     {
-        return typeToString(type);
+        return typeToString(cm.type);
     }
-    
     public static String typeToString(final MessageType type)
     {
         switch (type)

@@ -49,12 +49,10 @@ public class MessageXC
                     // Don't debug beats, or they'll fill your log
                     if (message.type != MessageType.BEAT)
                     {
-                        FijiArchipelago.debug("RX: Recieved message " + message + " from " + hostName);
-                        
                         if (message.type == MessageType.PROCESS)
                         {
                             ProcessManager pm = (ProcessManager)message.o;
-                            FijiArchipelago.debug("RX: Got message for job " + pm.getID() + " from " + hostName);
+                            FijiArchipelago.debug("RX: Got message for job " + pm.getID());
                         }
                     }
                     xcListener.handleMessage(message);
@@ -96,14 +94,8 @@ public class MessageXC
                 {
                     try
                     {
-                        final long s = System.currentTimeMillis();
-                        objectOutputStream.writeObject(nextMessage);                        
+                        objectOutputStream.writeObject(nextMessage);
                         objectOutputStream.flush();
-                        if (nextMessage.type != MessageType.BEAT)
-                        {
-                            FijiArchipelago.debug("TX: Successfully wrote message "
-                                    + nextMessage + " to " + hostName);
-                        }
                         objectOutputStream = new ObjectOutputStream(outStream);
                     }
                     catch (NotSerializableException nse)
@@ -137,32 +129,29 @@ public class MessageXC
     private final AtomicBoolean active;
     private final long waitTime;
     private final TimeUnit tUnit;
-    private final String hostName;
     private final TransceiverListener xcListener;
     private final TransceiverExceptionListener xcExceptionListener;
     private final OutputStream outStream;
     private final InputStream inStream;
+    private long id;
     
     private final MessageXC xc = this;
 
     public MessageXC(final InputStream inStream,
                      final OutputStream outStream,
                      final TransceiverListener listener,
-                     final TransceiverExceptionListener listenerE,
-                     final String hostName) throws IOException
+                     final TransceiverExceptionListener listenerE) throws IOException
     {
-        this(inStream, outStream, listener, listenerE, hostName, DEFAULT_WAIT, DEFAULT_UNIT);
+        this(inStream, outStream, listener, listenerE, DEFAULT_WAIT, DEFAULT_UNIT);
     }
 
     public MessageXC(InputStream inStream,
                      OutputStream outStream,
                      final TransceiverListener listener,
                      final TransceiverExceptionListener listenerE,
-                     String name,
-                     long wait,
+                     final long wait,
                      TimeUnit unit) throws IOException
     {
-        hostName = name;
         messageQ = new ArrayBlockingQueue<ClusterMessage>(16, true);
         objectOutputStream = new ObjectOutputStream(outStream);
         objectInputStream =  new ObjectInputStream(inStream);
@@ -176,6 +165,8 @@ public class MessageXC
 
         txThread = new TXThread();
         rxThread = new RXThread();
+
+        id = -1;
 
         rxThread.start();
         txThread.start();
@@ -218,18 +209,7 @@ public class MessageXC
     {
         try
         {
-            boolean verbose = message.type != MessageType.BEAT;
-            if (verbose)
-            {
-                FijiArchipelago.debug("XC: Queuing message to " + hostName);
-            }
-
             messageQ.put(message);
-
-            if (verbose)
-            {
-                FijiArchipelago.debug("XC: Message to " + hostName + " queued successfully");
-            }
             return true;
         }
         catch (InterruptedException ie)
@@ -250,9 +230,14 @@ public class MessageXC
         cm.o = o;
         return queueMessage(cm);
     }
-    
-    public String getHostName()
+
+    public long getId()
     {
-        return hostName;
+        return id;
+    }
+
+    public void setId(final long id)
+    {
+        this.id = id;
     }
 }

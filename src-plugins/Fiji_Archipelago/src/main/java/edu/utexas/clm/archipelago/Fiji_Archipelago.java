@@ -124,7 +124,7 @@ public class Fiji_Archipelago implements PlugIn
 
             s = new Socket(host, port);
             
-            client = new ArchipelagoClient(id, host, s.getInputStream(), s.getOutputStream(), xcEListener);
+            client = new ArchipelagoClient(id, s.getInputStream(), s.getOutputStream(), xcEListener);
             
             while (client.isActive())
             {

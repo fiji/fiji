@@ -18,21 +18,186 @@
 
 package edu.utexas.clm.archipelago.ui;
 
+import edu.utexas.clm.archipelago.Cluster;
 import edu.utexas.clm.archipelago.FijiArchipelago;
 import edu.utexas.clm.archipelago.network.node.NodeManager;
+import edu.utexas.clm.archipelago.network.shell.NodeShell;
+import edu.utexas.clm.archipelago.network.shell.NodeShellParameters;
 import ij.gui.GenericDialog;
+import ij.io.OpenDialog;
 
 import javax.swing.*;
 
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.ArrayList;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
+import java.util.*;
 import java.util.List;
-import java.util.Vector;
 
 public class NodeConfigurationUI extends Panel implements ActionListener
 {
+    private class NodeShellPanel extends Panel implements ItemListener
+    {
+
+        private final Hashtable<String, NodeShellParameters> parameterMap;
+        private final Hashtable<String, TextField> textMap;
+        private final Choice shellChoice;
+        private final Collection<NodeShell> shells;
+        private NodeShellParameters currentShellParam, lastShellParam;
+        private final NodeManager.NodeParameters nodeParam;
+        private final Panel shellChoicePanel;
+        
+        public NodeShellPanel(NodeManager.NodeParameters param)
+        {
+            nodeParam = param;
+            parameterMap = new Hashtable<String, NodeShellParameters>();
+            textMap = new Hashtable<String, TextField>();
+            parameterMap.put(param.getShell().name(), param.getShellParams());
+            currentShellParam = param.getShellParams();
+            lastShellParam = null;
+            shells = Cluster.registeredShells();
+            shellChoicePanel = new Panel();
+
+            setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
+
+            // Shell Selection Choice
+            shellChoice = new Choice();
+            shellChoice.addItemListener(this);
+            for (NodeShell shell : shells)
+            {
+                shellChoice.add(shell.name());
+            }
+
+            shellChoicePanel.add(shellChoice);
+
+            refresh();
+        }
+        
+        public synchronized void refresh()
+        {
+            FijiArchipelago.debug("Last Shell Param: " + lastShellParam);
+            FijiArchipelago.debug("Current Shell Param: " + currentShellParam);
+            if (lastShellParam != currentShellParam)
+            {
+                lastShellParam = currentShellParam;
+                super.removeAll();
+                super.add(shellChoicePanel);
+                
+                textMap.clear();
+
+                FijiArchipelago.debug("Refreshing...");
+                
+                for (final String key : currentShellParam.getKeys())
+                {
+                    final Panel p = new Panel();
+                    final TextField tf = new TextField(currentShellParam.getStringOrEmpty(key), 48);
+
+                    FijiArchipelago.debug("Adding key " + key);
+                    //p.add(new Label(key));
+                    //p.add(tf);
+                    textMap.put(key, tf);
+                    
+                    if (currentShellParam.isFile(key))
+                    {
+                        /*
+                        Create a file selection button, add it to the panel,
+                        and add a click listener. When the button is clicked,
+                        a file selection dialog will open. If the dialog is
+                        OK'ed, the path of the selected file will show up 
+                        in the text field.
+                         */
+                        Button fileSelect = new Button("Select file...");
+                        p.add(fileSelect);
+                        fileSelect.addActionListener(
+                                new ActionListener()
+                                {
+                                    public void actionPerformed(ActionEvent e)
+                                    {
+                                        final OpenDialog od = new OpenDialog("Select a file",
+                                                null);
+                                        final String dirName = od.getDirectory();
+                                        final String fileName = od.getFileName();
+                                        if (fileName != null)
+                                        {
+                                            tf.setText(dirName + fileName);
+                                        }
+
+                                    }
+                                }
+                        );
+
+                        ClusterUI.doRowPanelLayout(p, 640, 24, new float[]{1, 3, 1},
+                                new Label(key), tf, fileSelect);
+                    }
+                    else
+                    {
+                        ClusterUI.doRowPanelLayout(p, 640, 24, new float[]{1, 4},
+                                new Label(key), tf);
+                    }
+                    
+                    super.add(p);
+                    
+                }
+            }
+            validate();
+        }
+        
+        public void syncParams()
+        {
+            for (String key: currentShellParam.getKeys())
+            {                
+                try
+                {
+                    currentShellParam.putValue(key, textMap.get(key).getText());
+                }
+                catch (Exception e)
+                {
+                    handleKeyError(key, e);
+                }
+            }
+            
+            for (NodeShell shell : shells)
+            {
+                if (shell.description().equals(shellChoice.getSelectedItem()))
+                {
+                    nodeParam.setShell(shell, currentShellParam);
+                    //nodeParam.setShellParams(currentShellParam);
+                    break;
+                }
+            }
+        }
+        
+        private void handleKeyError(String key, Exception e)
+        {
+            FijiArchipelago.err("Could not save key " + key + ": " + e);
+        }
+        
+        public void itemStateChanged(ItemEvent e)
+        {
+            final String selection = shellChoice.getSelectedItem(); 
+            NodeShellParameters param = parameterMap.get(selection);
+            
+            if (param == null)
+            {
+                for (NodeShell shell : shells)
+                {
+                    if (shell.name().equals(selection))
+                    {
+                        param = shell.defaultParameters();
+                        parameterMap.put(selection, param);
+                        break;
+                    }
+                }
+            }
+            
+            currentShellParam = param;
+            
+            refresh();
+        }
+    }
+    
     private class NodePanel extends Panel implements ActionListener
     {
         private final Label label;
@@ -40,43 +205,16 @@ public class NodeConfigurationUI extends Panel implements ActionListener
         public String hostName;
         public String execRoot;
         public String fileRoot;
-        public int port;
         public int cpuLimit;
         public String user;
+        public NodeShellParameters shellParams;
         public final NodeManager.NodeParameters param;
-
-        public NodePanel(String hostName, String execRoot, String fileRoot, int port,
-                         int cpuLimit, String user)
-        {
-            super();
-            label = new Label();
-            param = manager.newParam(
-                    user,
-                    hostName,
-                    manager.getStdShell(),
-                    execRoot,
-                    fileRoot,
-                    port);
-            param.setThreadLimit(cpuLimit);
-            init();
-        }
-
+       
         public NodePanel(NodeManager.NodeParameters param)
         {
             this.param = param;
             label = new Label();
             init();
-        }
-
-        public NodePanel()
-        {
-            this(
-                    "",
-                    manager.getStdExecRoot(),
-                    manager.getStdFileRoot(),
-                    manager.getStdPort(),
-                    0,
-                    manager.getStdUser());
         }
 
         private void init()
@@ -87,9 +225,9 @@ public class NodeConfigurationUI extends Panel implements ActionListener
             this.hostName = param.getHost();
             this.execRoot = param.getExecRoot();
             this.fileRoot = param.getFileRoot();
-            this.port = param.getPort();
             this.cpuLimit = param.getThreadLimit();
             this.user = param.getUser();
+            this.shellParams = param.getShellParams();
 
             add(label);
             add(editButton);
@@ -106,14 +244,13 @@ public class NodeConfigurationUI extends Panel implements ActionListener
 
         private void updateLabel()
         {
-            label.setText(user + "@" + hostName + ":" + port);
+            label.setText(user + "@" + hostName);
         }
 
         private void updateParam()
         {
             param.setHost(hostName);
             param.setUser(user);
-            param.setPort(port);
             param.setThreadLimit(cpuLimit);
             param.setExecRoot(execRoot);
             param.setFileRoot(fileRoot);
@@ -142,22 +279,24 @@ public class NodeConfigurationUI extends Panel implements ActionListener
         public boolean doEdit()
         {
             GenericDialog gd = new GenericDialog("Edit Cluster Node");
-            gd.addStringField("Hostname", hostName, Math.max(hostName.length(), 128));
+            NodeShellPanel nsp = new NodeShellPanel(param);
+            gd.addStringField("Hostname", hostName, Math.max(hostName.length(), 64));
             gd.addStringField("User name", user);
-            gd.addNumericField("Port", port, 0);
             gd.addNumericField("Thread Limit", cpuLimit, 0);
             gd.addStringField("Remote Fiji Root", execRoot, 64);
             gd.addStringField("Remote File Root", fileRoot, 64);
+            gd.addPanel(nsp);
+            gd.validate();
             gd.showDialog();
 
             if (gd.wasOKed())
             {
                 hostName = gd.getNextString();
                 user = gd.getNextString();
-                port = (int)gd.getNextNumber();
                 cpuLimit = (int)gd.getNextNumber();
                 execRoot = gd.getNextString();
                 fileRoot = gd.getNextString();
+                nsp.syncParams();
                 updateLabel();
                 updateParam();
                 validate();
@@ -179,7 +318,7 @@ public class NodeConfigurationUI extends Panel implements ActionListener
     
     
     
-    private NodeConfigurationUI(NodeManager nm, List<NodeManager.NodeParameters> nodeParams)
+    private NodeConfigurationUI(NodeManager nm, Collection<NodeManager.NodeParameters> nodeParams)
     {
         super();
         centralPanel = new Panel();
@@ -242,12 +381,12 @@ public class NodeConfigurationUI extends Panel implements ActionListener
     }
     
 
-    public static boolean nodeConfigurationUI(
-            final NodeManager nm, final List<NodeManager.NodeParameters> nodeParams,
-            final List <NodeManager.NodeParameters> newParams)
+    public static void nodeConfigurationUI(final Cluster cluster)
     {
-        GenericDialog gd = new GenericDialog("Cluster Nodes");
-        NodeConfigurationUI ui = new NodeConfigurationUI(nm, nodeParams);
+        FijiArchipelago.debug("nodeConfigurationUI called");
+        final GenericDialog gd = new GenericDialog("Cluster Nodes");
+        final ArrayList<NodeManager.NodeParameters> existingParameters = cluster.getNodeParameters();
+        NodeConfigurationUI ui = new NodeConfigurationUI(cluster.getNodeManager(), existingParameters);
         gd.addPanel(ui);
         gd.showDialog();
 
@@ -257,18 +396,12 @@ public class NodeConfigurationUI extends Panel implements ActionListener
 
             for (NodePanel np : ui.nodePanels)
             {
-                newParams.add(np.getNodeParam());
+                final NodeManager.NodeParameters param = np.getNodeParam();
+                if (!existingParameters.contains(param))
+                {
+                    cluster.addNode(param);
+                }
             }
-            return true;
         }
-        else
-        {
-            return false;
-        }
-    }
-    
-    public static boolean nodeConfigurationUI(NodeManager nm, final List <NodeManager.NodeParameters> newParams)
-    {
-         return nodeConfigurationUI(nm, new ArrayList<NodeManager.NodeParameters>(), newParams);
     }
 }

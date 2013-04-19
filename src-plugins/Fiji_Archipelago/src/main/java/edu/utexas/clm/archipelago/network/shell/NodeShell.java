@@ -20,11 +20,42 @@ package edu.utexas.clm.archipelago.network.shell;
 
 import edu.utexas.clm.archipelago.exception.ShellExecutionException;
 import edu.utexas.clm.archipelago.network.node.NodeManager;
-import edu.utexas.clm.archipelago.listen.ShellExecListener;
+import edu.utexas.clm.archipelago.listen.NodeShellListener;
+
+/**
+ * Interface used to start remote nodes and potentially execute shell commands.
+ *
+ * NodeShell should be implemented as singleton classes - in other words, only
+ * one of each class that implements this interface should need to be created.
+ *
+ * To register a NodeShell with Cluster, add a call to registerNodeShell
+ * to the static block a the end of Cluster.java
+ *
+ * In the future, this may function similarly to Fiji's PlugIn or TrakEM2's TPlugIn.
+ *
+ */
 
 public interface NodeShell
 {
-    public boolean exec(NodeManager.NodeParameters param, final String command,
-                        final ShellExecListener listener)
+    /**
+     * Start the ClusterNode given by the NodeParameters, by starting an ArchipelagoClient in a
+     * Fiji or ImageJ instance on the remote node.
+     * This method should handle the passed-in NodeShellListener, by passing it an InputStream and
+     * OutputStream corresponding to the remote node when they become ready, and calling
+     * execFinished when the remote connection (ie ssh shell) is closed.
+     * @param param parameters used to connect to the machine in question
+     * @param listener used to handle open IO streams and closing of the shell connection
+     * @return true if started successfully.
+     * @throws ShellExecutionException if an error occurs while attempting to
+     */
+    public boolean start(final NodeManager.NodeParameters param, final NodeShellListener listener)
             throws ShellExecutionException;
+    
+    public NodeShellParameters defaultParameters();
+    
+    public String paramToString(final NodeShellParameters nsp);
+    
+    public String name();
+    
+    public String description();
 }

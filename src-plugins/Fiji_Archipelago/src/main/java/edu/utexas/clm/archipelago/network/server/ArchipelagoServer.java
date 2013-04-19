@@ -20,16 +20,21 @@ package edu.utexas.clm.archipelago.network.server;
 
 import edu.utexas.clm.archipelago.Cluster;
 import edu.utexas.clm.archipelago.FijiArchipelago;
+import edu.utexas.clm.archipelago.exception.ShellExecutionException;
+import edu.utexas.clm.archipelago.listen.ClusterStateListener;
+import edu.utexas.clm.archipelago.listen.NodeShellListener;
 
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.ReentrantLock;
+
 /**
  *
  * @author Larry Lindsey
  */
-public class ArchipelagoServer
+public class ArchipelagoServer implements ClusterStateListener
 {
 
     private class ListenThread extends Thread
@@ -48,69 +53,96 @@ public class ArchipelagoServer
                 try
                 {
                     Socket clientSocket = socket.accept();
-                    FijiArchipelago.log("Received connection from " + socket.getInetAddress());
-                    cluster.nodeFromSocket(clientSocket);
+                    FijiArchipelago.log("ArchipelagoServer: Received connection from " + socket.getInetAddress());
+                    lock.lock();
+                    nodeListener.ioStreamsReady(clientSocket.getInputStream(),
+                            clientSocket.getOutputStream());
+                    lock.unlock();
                 }
                 catch (IOException ioe)
                 {
+                    FijiArchipelago.log("ArchipelagoServer: IOException: " + ioe);
                     //Ignore
                 }
             }
         }
     }
-    
-    private final Cluster cluster;    
+
+    private static ArchipelagoServer server = null;
+
+    private NodeShellListener nodeListener;    
     private ServerSocket socket;
-    AtomicBoolean isRunning;
-    Thread listenThread;
+    private int port;
+    private AtomicBoolean isRunning;
+    private Thread listenThread;
+    private final ReentrantLock lock = new ReentrantLock();
     
-    public ArchipelagoServer(Cluster clusterIn)
+    private ArchipelagoServer(NodeShellListener listener, int p)
     {
-        cluster = clusterIn;
+        nodeListener = listener;
         socket = null;
         isRunning = new AtomicBoolean(false);
+        port = p;
     }
 
-    public boolean start()
+    public boolean start() throws ShellExecutionException
     {
         if (isRunning.get())
         {
             return true;
         }
-            
-        try
+        
+        final int origPort = port;
+        boolean success = false;
+        IOException ioe = null;
+        
+        while (!success && port - origPort < 10)
         {
-            socket = new ServerSocket(cluster.getServerPort());
-            
-            listenThread = new ListenThread(socket);
-            
-            listenThread.start();
-            
-            isRunning.set(true);
+            try
+            {
+                socket = new ServerSocket(port);
+                success = true;
+            }
+            catch(IOException e)
+            {
+                port++;
+                if (ioe == null)
+                {
+                    ioe = e;
+                }
+            }
         }
-        catch(IOException ioe)
+
+        if (!success)
         {
-            FijiArchipelago.err("Archipelago Server: Got IOException: " + ioe);
-            return false;
+            throw new ShellExecutionException("Could not start Archipelago Server: " + ioe);
         }
         
+        listenThread = new ListenThread(socket);
+
+        listenThread.start();
+
+        isRunning.set(true);
         
         return true;
     }
     
-    public void close()
+    public synchronized void close()
     {
-        isRunning.set(false);
-        try
+        if (isRunning.get())
         {
+            isRunning.set(false);
             listenThread.interrupt();
-            socket.close();
-        }
-        catch (IOException ioe)
-        {
-            //Nothing to do
-        }
 
+            try
+            {
+                socket.close();
+            }
+            catch (IOException ioe)
+            {
+                //Nothing to do
+            }
+        }
     }
     
     public boolean join()
@@ -126,5 +158,52 @@ public class ArchipelagoServer
         }
     }
 
+    public int getPort()
+    {
+        return port;
+    }
+    
+    public void stateChanged(Cluster cluster)
+    {
+        Cluster.ClusterState state = cluster.getState();
+        final ArchipelagoServer thisServer = this;
+        
+        if (state == Cluster.ClusterState.STOPPING || state == Cluster.ClusterState.STOPPED)
+        {
+            // Close in the background. Could be quick, might not be.
+            new Thread()
+            {
+                public void run()
+                {
+                    server = null;
+                    Cluster.getCluster().removeStateListener(thisServer);
+                    close();
+                }
+            }.start();
+        }
+    }
+    
+    public void setListener(NodeShellListener listener)
+    {
+        lock.lock();
+        nodeListener = listener;
+        lock.unlock();
+    }
 
+    public synchronized static ArchipelagoServer getServer(NodeShellListener listener)
+            throws ShellExecutionException
+    {
+        if (server == null)
+        {
+            server = new ArchipelagoServer(listener, 0xFAC);
+            server.start();
+            Cluster.getCluster().addStateListener(server);
+        }
+        else if (listener != server.nodeListener)
+        {
+            server.setListener(listener);
+        }
+
+        return server;
+    }
 }

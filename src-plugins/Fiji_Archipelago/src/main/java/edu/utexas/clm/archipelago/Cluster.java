@@ -24,16 +24,31 @@ import edu.utexas.clm.archipelago.exception.ShellExecutionException;
 import edu.utexas.clm.archipelago.listen.ClusterStateListener;
 import edu.utexas.clm.archipelago.listen.NodeStateListener;
 import edu.utexas.clm.archipelago.listen.ProcessListener;
-import edu.utexas.clm.archipelago.listen.ShellExecListener;
+import edu.utexas.clm.archipelago.listen.NodeShellListener;
 import edu.utexas.clm.archipelago.network.MessageXC;
 import edu.utexas.clm.archipelago.network.node.ClusterNode;
 import edu.utexas.clm.archipelago.network.node.ClusterNodeState;
 import edu.utexas.clm.archipelago.network.node.NodeManager;
-import edu.utexas.clm.archipelago.network.server.ArchipelagoServer;
+import edu.utexas.clm.archipelago.network.shell.NodeShell;
+import edu.utexas.clm.archipelago.network.shell.NodeShellParameters;
+import edu.utexas.clm.archipelago.network.shell.SocketNodeShell;
 import edu.utexas.clm.archipelago.ui.ArchipelagoUI;
 import edu.utexas.clm.archipelago.util.ProcessManagerCoreComparator;
 import edu.utexas.clm.archipelago.util.XCErrorAdapter;
+import ij.Prefs;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.NodeList;
+import org.xml.sax.SAXException;
 
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
 import java.io.*;
 import java.net.InetAddress;
 import java.net.Socket;
@@ -48,7 +63,7 @@ import java.util.concurrent.locks.ReentrantLock;
  *
  * @author Larry Lindsey
  */
-public class Cluster implements NodeStateListener
+public class Cluster implements NodeStateListener, NodeShellListener
 {
 
     public static enum ClusterState
@@ -127,9 +142,9 @@ public class Cluster implements NodeStateListener
                 {
                     FijiArchipelago.debug("Scheduler: Put job " + pm.getID() + " on the priority queue");
                 }
-                queue.put(pm);
+                queue.add(pm);
                 return true;
-            } catch (InterruptedException ie)
+            } catch (IllegalStateException ise)
             {
                 return false;
             }
@@ -275,9 +290,9 @@ public class Cluster implements NodeStateListener
                 comparator.setThreadCount(getMaxThreads());
                 
                 //Put priority jobs in front of the internal queue, in the correct order
-                FijiArchipelago.debug("Scheduler: " + priorityJobQueue.size() +
-                        " jobs in priority queue");
-                
+//                FijiArchipelago.debug("Scheduler: " + priorityJobQueue.size() +
+//                        " jobs in priority queue");
+//
                 priorityJobQueue.drainTo(tempQ);                
                 Collections.sort(tempQ, comparator);
                 for (int i = tempQ.size(); i > 0; --i)
@@ -296,7 +311,7 @@ public class Cluster implements NodeStateListener
                 internalQueue.addAll(tempQ);
                 tempQ.clear();
                 
-                FijiArchipelago.debug("Scheduler: " + internalQueue.size() + " jobs in queue");
+                //FijiArchipelago.debug("Scheduler: " + internalQueue.size() + " jobs in queue");
 
                 //If we have both jobs and nodes to run them on...
                 if (!internalQueue.isEmpty() && !nodeList.isEmpty())
@@ -482,49 +497,24 @@ public class Cluster implements NodeStateListener
 
     }
 
-    public static final int DEFAULT_PORT = 3501;
-    private static Cluster cluster = null;    
-    
-    public static Cluster getCluster()
-    {
-        if (!initializedCluster())
-        {
-            cluster = new Cluster();
-        }
-        return cluster;
-    }
-    
-    public static boolean activeCluster()
-    {
-        return cluster != null && cluster.getState() == ClusterState.RUNNING;
-    }
-
-    public static boolean initializedCluster()
-    {
-        ClusterState state = cluster == null ? null : cluster.getState();
-        return !(cluster == null ||
-                state == ClusterState.STOPPING ||
-                state == ClusterState.STOPPED);
-    }
-    
     private class ClusterExecutorService implements ExecutorService
     {
 
         private final boolean isFractional;
         private final float numCores;
-        
+
         public ClusterExecutorService(final float ft)
         {
             isFractional = true;
             numCores = ft;
         }
-        
+
         public ClusterExecutorService(final int nc)
         {
             isFractional = false;
             numCores = nc;
         }
-        
+
         public synchronized void shutdown()
         {
             self.shutdown();
@@ -622,7 +612,7 @@ public class Cluster implements NodeStateListener
             final ArrayList<Future<T>> waitFutures = new ArrayList<Future<T>>();
             final ArrayList<Future<T>> remainingFutures = new ArrayList<Future<T>>();
             final AtomicBoolean timeOut = new AtomicBoolean(false);
-            final AtomicBoolean done = new AtomicBoolean(false);            
+            final AtomicBoolean done = new AtomicBoolean(false);
             final Thread t = Thread.currentThread();
             final Thread timeOutThread = new Thread()
             {
@@ -632,7 +622,7 @@ public class Cluster implements NodeStateListener
                     {
                         FijiArchipelago.debug("Invoke All: Waiting for at most " +
                                 timeUnit.convert(l, TimeUnit.MILLISECONDS) + "ms ");
-                                
+
                         Thread.sleep(timeUnit.convert(l, TimeUnit.MILLISECONDS));
                         FijiArchipelago.debug("Invoke All: Timed Out after " +
                                 timeUnit.convert(l, TimeUnit.MILLISECONDS) + "ms");
@@ -648,7 +638,7 @@ public class Cluster implements NodeStateListener
                     }
                 }
             };
-            
+
             timeOutThread.start();
 
             try
@@ -659,7 +649,7 @@ public class Cluster implements NodeStateListener
                 }
 
                 remainingFutures.addAll(waitFutures);
-                
+
                 for (Future<T> f : waitFutures)
                 {
                     try
@@ -673,7 +663,7 @@ public class Cluster implements NodeStateListener
 
                 done.set(true);
                 timeOutThread.interrupt();
-                
+
                 return waitFutures;
             }
             catch (InterruptedException ie)
@@ -719,7 +709,7 @@ public class Cluster implements NodeStateListener
             final ArrayList<Future<T>> remainingFutures =
                     new ArrayList<Future<T>>(callables.size());
             final AtomicBoolean timeOut = new AtomicBoolean(false);
-            final AtomicBoolean done = new AtomicBoolean(false);            
+            final AtomicBoolean done = new AtomicBoolean(false);
             final Thread t = Thread.currentThread();
             final Thread timeOutThread = new Thread()
             {
@@ -734,22 +724,22 @@ public class Cluster implements NodeStateListener
                     catch (InterruptedException ie)
                     {
                         if (!done.get())
-                        {                            
+                        {
                             t.interrupt();
                         }
-                    }                        
+                    }
                 }
             };
             ExecutionException lastException = null;
             // Because java doesn't have pointer primitives
-            
+
             timeOutThread.start();
-            
+
             try
             {
                 boolean stillGoing = true;
                 Future<T> okFuture = null;
-                
+
                 for (Callable<T> c : callables)
                 {
                     waitFutures.add(submit(c));
@@ -757,8 +747,8 @@ public class Cluster implements NodeStateListener
 
                 remainingFutures.addAll(waitFutures);
 
-                
-                for (int i = 0; stillGoing && i < waitFutures.size(); ++i)                
+
+                for (int i = 0; stillGoing && i < waitFutures.size(); ++i)
                 {
                     okFuture = waitFutures.get(i);
                     try
@@ -772,23 +762,23 @@ public class Cluster implements NodeStateListener
                     }
                     remainingFutures.remove(okFuture);
                 }
-                
+
                 for (Future<T> future : remainingFutures)
                 {
                     future.cancel(true);
                 }
-                
+
                 if (stillGoing)
                 {
                     throw lastException == null ?
                             new ExecutionException(new Exception("No completed callables")) :
                             lastException;
                 }
-                
-                done.set(true);                
+
+                done.set(true);
                 timeOutThread.interrupt();
-                
-                return okFuture.get(); 
+
+                return okFuture.get();
             }
             catch (InterruptedException ie)
             {
@@ -810,147 +800,97 @@ public class Cluster implements NodeStateListener
         }
     }
     
-
-    /*
-     After construction, halted, ready and terminated are all false
-
-     Once the cluster has been initialized and has at least one node associated with it,
-     ready will transition to true.
-
-     If ready is true, a call to shutdown() will cause ready to become false and halted to
-     become true. The cluster will continue to process queued jobs until the queue empties, at
-     which point terminated also becomes true. A call to reset() at this point will place the
-     cluster into a state just after initialization, ie, ready will be true and the others state
-     variables will be false.
-
-     A call to shutdownNow() will halt all processing on all cluster nodes, and return a list of
-     Callables representing any job that was in queue or processing at the time of the call. At
-     this time, ready will become false, halted and terminated will become true.
-
-
-
-     */
-    private AtomicInteger state;
-    
-    //private final AtomicBoolean halted, ready, terminated, initted, started;        
-    private final AtomicInteger jobCount, runningNodes;
-
-    private int port;
-    private final Vector<ClusterNode> nodes;
-    private final Vector<Thread> waitThreads;
-    private final Vector<ArchipelagoUI> registeredUIs;
-    private final ProcessScheduler scheduler;
-    
-    private final Hashtable<Long, ArchipelagoFuture<?>> futures;
-    
-    private final NodeManager nodeManager;
-    private ArchipelagoServer server;
-    private String localHostName;
-    
-    private final Vector<ClusterStateListener> listeners;
-
-    private final XCErrorAdapter xcEListener;
-    
-    private final Cluster self = this;
-
-    private Cluster()
+    private class NodeStarter extends Thread
     {
-        state = new AtomicInteger(0);
-        nodes = new Vector<ClusterNode>();
-        waitThreads = new Vector<Thread>();
-        registeredUIs = new Vector<ArchipelagoUI>();
+        private final AtomicBoolean running = new AtomicBoolean(true);
         
-        jobCount = new AtomicInteger(0);
-        runningNodes = new AtomicInteger(0);
-
-        xcEListener = new XCErrorAdapter()
+        public void run()
         {
-            public boolean handleCustom(final Throwable t, final MessageXC mxc)
+            // While running...
+            while (running.get())
             {
-                if (t instanceof StreamCorruptedException ||
-                        t instanceof EOFException)
-                {
-                    mxc.close();
-                    return false;
-                }
-                return true;
-            }
-            
-            public boolean handleCustomRX(final Throwable t, final MessageXC xc)
-            {
-                if (t instanceof ClassNotFoundException)
-                {
-                    reportRX(t, "Check that your jars are all correctly synchronized. " + t, xc);
-                    return false;
-                }
-                else if (t instanceof NotSerializableException)
-                {
-                    reportRX(t, "Your Callable returned a " +
-                            "value that was not Serializable. " + t, xc);
-                    return false;
-                }
-                else if (t instanceof InvalidClassException)
-                {
-                    reportRX(t, "Caught remote InvalidClassException.\n" +
-                            "This means you likely have multiple jars for the given class: " +
-                            t, xc);
-                    silence();
-                    return false;
-                }
-                return true;
-            }
-            
-            public boolean handleCustomTX(final Throwable t, MessageXC xc)
-            {
-                if (t instanceof NotSerializableException)
-                {
-                    reportTX(t, "Ensure that your class and all" +
-                            " member objects are Serializable.", xc);
-                    return false;
-                }
-                else if (t instanceof ConcurrentModificationException)
-                {
-                    reportTX(t, "Take care not to modify member objects" +
-                            " as your Callable is being Serialized.", xc);
-                    return false;
-                }
-                else if (t instanceof IOException)
-                {
-                    reportTX(t, "Stream closed, closing node. ", xc);
-                    xc.close();
-                    return false;
-                }
-                
-                return true;
-            }
-        };
+                // Poll the startQueue queue.
 
-        scheduler = new ProcessScheduler(1000);
-        
-        nodeManager = new NodeManager();
-        futures = new Hashtable<Long, ArchipelagoFuture<?>>();
-        
-        listeners = new Vector<ClusterStateListener>();
+                try
+                {
+                    final NodeManager.NodeParameters params = startQueue.take();
+                    nodeLock.lock();
+                    waitNodes.add(params);
+                    nodeLock.unlock();
 
-        try
-        {
-            localHostName = InetAddress.getLocalHost().getCanonicalHostName();
-        }
-        catch (UnknownHostException uhe)
-        {
-            localHostName = "localhost";
-            FijiArchipelago.err("Could not get canonical host name for local machine. Using localhost instead");
+                    // Yes, check running again. We might have been close()d while polling.
+                    if (running.get() && (getNode(params.getID()) == null))
+                    {
+                        /*
+                         If we're running start a new thread (yes, meta) to start the node.
+                         This is done because sometimes, starting nodes takes a super long time,
+                         and we don't want to wait for slow nodes to get things going.
+                        */
+                        new Thread()
+                        {
+                            public void run()
+                            {
+                                try
+                                {
+                                    params.startNode(self);
+                                }
+                                catch (ShellExecutionException see)
+                                {
+                                    nodeLock.lock();
+                                    waitNodes.remove(params);
+                                    nodeLock.unlock();
+                                    FijiArchipelago.err("Could not start node " + params.getHost() +
+                                            ": " + see);
+                                }
+                            }
+                        }.start();
+                    }
+                }
+                catch (InterruptedException ie)
+                {/* If running has been set to false, we'll quit, otherwise, keep going*/}
+            }
         }
         
+        public void close()
+        {
+            running.set(false);
+        }
+    }
 
+    /* Static Members and Methods */
+
+    private static final HashMap<String, NodeShell> shellMap = new HashMap<String, NodeShell>();
+    private static Cluster cluster = null;
+    
+    public static Cluster getCluster()
+    {
+        if (!initializedCluster())
+        {
+            cluster = new Cluster();
+        }
+        return cluster;
     }
     
+    public static boolean activeCluster()
+    {
+        return cluster != null && cluster.getState() == ClusterState.RUNNING;
+    }
+
+    public static boolean initializedCluster()
+    {
+        ClusterState state = cluster == null ? null : cluster.getState();
+        return !(cluster == null ||
+                state == ClusterState.STOPPING ||
+                state == ClusterState.STOPPED);
+    }
+
+
     /*
-    Backing the ClusterState with an atomic integer reduces the chances for a race condition
-    or some other concurrent modification nightmare. This is much prefered to the alternative
-    of using a ReentrantLock
-     */
-    
+   Backing the ClusterState with an atomic integer reduces the chances for a race condition
+   or some other concurrent modification nightmare. This is much prefered to the alternative
+   of using a ReentrantLock
+    */
+
     private static ClusterState stateIntToEnum(final int s)
     {
         switch (s)
@@ -992,7 +932,7 @@ public class Cluster implements NodeStateListener
                 return -1;
         }
     }
-    
+
     public static String stateString(final ClusterState s)
     {
         switch (s)
@@ -1013,6 +953,302 @@ public class Cluster implements NodeStateListener
                 return "Unknown";
         }
     }
+
+    public static void registerNodeShell(NodeShell shell)
+    {
+        shellMap.put(shell.name(), shell);
+    }
+
+    public static NodeShell getNodeShell(String description)
+    {
+        return shellMap.get(description);
+    }
+    
+    public static Collection<NodeShell> registeredShells()
+    {
+        return shellMap.values();
+    }
+
+    /* XML file handling */
+
+    private static String getXMLField(Element e, String tag)
+    {
+        return e.getElementsByTagName(tag).item(0).getTextContent();
+    }
+
+    private static void addXMLField(Document doc, Element parent, String field, String value)
+    {
+        Element e = doc.createElement(field);
+        e.appendChild(doc.createTextNode(value));
+        parent.appendChild(e);
+    }
+
+    /**
+     * Configures a Cluster as determined by the given XML
+     * file. This method does not start the cluster or the nodes, this must be done manually by
+     * calling cluster.start().
+     * @param file an XML file containing a Cluster and ClusterNode configuration, as written
+     *              by saveClusterFile
+     * @param cluster a Cluster to configure
+     * @param nodeExceptions an Exception List, which will be populated with Exceptions for any
+     *                       NodeParameters that cannot be formed correctly, may be null;
+     * @return true if the Cluster was configured correctly
+     * @throws ParserConfigurationException 
+     * @throws SAXException
+     * @throws IOException
+     */
+    public static boolean loadClusterFile(final File file, final Cluster cluster,
+                                          List<Exception> nodeExceptions)
+            throws ParserConfigurationException, SAXException, IOException
+    {
+        final DocumentBuilder docBuilder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
+        final Document doc = docBuilder.parse(file);
+        Element rootNode;
+        NodeList clusterNodes;
+        String execRoot, fileRoot, dExecRoot, dFileRoot, user;
+        boolean ok;
+
+        if (nodeExceptions == null)
+        {
+            nodeExceptions = new ArrayList<Exception>();
+        }
+
+        doc.getDocumentElement().normalize();
+
+        // Should only have one node in this list             
+        rootNode = (Element)doc.getElementsByTagName("RootNode").item(0);
+
+        execRoot = getXMLField(rootNode, "exec");
+        fileRoot = getXMLField(rootNode, "file");
+        dExecRoot = getXMLField(rootNode, "default-exec");
+        dFileRoot = getXMLField(rootNode, "default-file");
+        user = getXMLField(rootNode, "default-user");
+
+        ok = configureCluster(cluster, dExecRoot, dFileRoot, execRoot, fileRoot, user);
+
+        clusterNodes = doc.getElementsByTagName("ClusterNode");
+        
+        for (int i = 0; i < clusterNodes.getLength(); ++i)
+        {
+            try
+            {
+                cluster.addNode(xmlToNodeParameter(cluster, (Element) clusterNodes.item(i)));
+            }
+            catch (Exception e)
+            {
+                FijiArchipelago.debug("loadClusterFile: could not add node: " + e);
+                e.printStackTrace();
+                nodeExceptions.add(e);
+            }
+        }
+
+        return ok;
+    }
+    
+    private static NodeManager.NodeParameters xmlToNodeParameter(
+            final Cluster cluster, final Element node) throws Exception
+    {
+        final NodeManager.NodeParameters nodeParam = cluster.getNodeManager().newParam();
+        NodeShellParameters shellParams;
+
+        nodeParam.setHost(getXMLField(node, "host"));
+        nodeParam.setUser(getXMLField(node, "user"));
+        nodeParam.setExecRoot(getXMLField(node, "exec"));
+        nodeParam.setFileRoot(getXMLField(node, "file"));
+        nodeParam.setThreadLimit(Integer.parseInt(getXMLField(node, "limit")));
+        nodeParam.setShell(getXMLField(node, "shell"));
+
+        if (nodeParam.getShell() == null)
+        {
+            throw new Exception("Could not load shell " + getXMLField(node, "shell"));
+        }
+
+        shellParams = nodeParam.getShell().defaultParameters();
+        shellParams.fromXML((Element)node.getElementsByTagName("ShellParameters").item(0));
+        nodeParam.setShellParams(shellParams);
+        return nodeParam;
+    }
+
+    public static boolean configureCluster(
+            Cluster cluster,
+            String execRootRemote,
+            String fileRootRemote,
+            String execRoot,
+            String fileRoot,
+            String userName)
+    {
+
+        final String prefRoot = FijiArchipelago.PREF_ROOT;
+        //boolean isConfigured = cluster.getState() != Cluster.ClusterState.INSTANTIATED;
+
+        cluster.getNodeManager().getDefaultParameters().setUser(userName);
+        cluster.getNodeManager().getDefaultParameters().setExecRoot(execRootRemote);
+        cluster.getNodeManager().getDefaultParameters().setFileRoot(fileRootRemote);
+        //cluster.getNodeManager().getDefaultParameters().setShell(SocketNodeShell.getShell());
+
+        FijiArchipelago.setExecRoot(execRoot);
+        FijiArchipelago.setFileRoot(fileRoot);
+
+        //Set prefs
+        Prefs.set(prefRoot + ".username", userName);
+        Prefs.set(prefRoot + ".execRoot", execRoot);
+        Prefs.set(prefRoot + ".fileRoot", fileRoot);
+        Prefs.set(prefRoot + ".execRootRemote", execRootRemote);
+        Prefs.set(prefRoot + ".fileRootRemote", fileRootRemote);
+        Prefs.savePreferences();
+
+        return cluster.init();
+    }
+
+    /*
+     After construction, halted, ready and terminated are all false
+
+     Once the cluster has been initialized and has at least one node associated with it,
+     ready will transition to true.
+
+     If ready is true, a call to shutdown() will cause ready to become false and halted to
+     become true. The cluster will continue to process queued jobs until the queue empties, at
+     which point terminated also becomes true. A call to reset() at this point will place the
+     cluster into a state just after initialization, ie, ready will be true and the others state
+     variables will be false.
+
+     A call to shutdownNow() will halt all processing on all cluster nodes, and return a list of
+     Callables representing any job that was in queue or processing at the time of the call. At
+     this time, ready will become false, halted and terminated will become true.
+
+
+
+     */
+    private AtomicInteger state;
+    
+    //private final AtomicBoolean halted, ready, terminated, initted, started;        
+    private final AtomicInteger jobCount, runningNodes;
+
+    private final Vector<ClusterNode> nodes;
+    private final Vector<Thread> waitThreads;
+    private final Vector<ArchipelagoUI> registeredUIs;
+    private final ProcessScheduler scheduler;
+    
+    private final Hashtable<Long, ArchipelagoFuture<?>> futures;
+    
+    private final NodeManager nodeManager;
+    private String localHostName;
+    
+    private final Vector<ClusterStateListener> listeners;
+
+    private final XCErrorAdapter xcEListener;
+    
+    private final Cluster self = this;
+    
+    private final LinkedBlockingQueue<NodeManager.NodeParameters> startQueue;
+    private final Vector<NodeManager.NodeParameters> waitNodes;
+    
+    private final ReentrantLock nodeLock;
+    
+    private final NodeStarter nodeStarter;
+
+    private Cluster()
+    {
+        state = new AtomicInteger(0);
+        nodes = new Vector<ClusterNode>();
+        waitThreads = new Vector<Thread>();
+        registeredUIs = new Vector<ArchipelagoUI>();
+        
+        jobCount = new AtomicInteger(0);
+        runningNodes = new AtomicInteger(0);
+        
+        startQueue = new LinkedBlockingQueue<NodeManager.NodeParameters>();
+        waitNodes = new Vector<NodeManager.NodeParameters>();
+        
+        nodeLock = new ReentrantLock();
+        
+        nodeStarter = new NodeStarter();
+
+        xcEListener = new XCErrorAdapter()
+        {
+            public boolean handleCustom(final Throwable t, final MessageXC mxc)
+            {
+                if (t instanceof StreamCorruptedException ||
+                        t instanceof EOFException)
+                {
+                    mxc.close();
+                    return false;
+                }
+                return true;
+            }
+            
+            public boolean handleCustomRX(final Throwable t, final MessageXC xc)
+            {
+                if (t instanceof ClassNotFoundException)
+                {
+                    reportRX(t, "Check that your jars are all correctly synchronized. " + t, xc);
+                    return false;
+                }
+                else if (t instanceof NotSerializableException)
+                {
+                    reportRX(t, "Your Callable returned a " +
+                            "value that was not Serializable. " + t, xc);
+                    return false;
+                }
+                else if (t instanceof InvalidClassException)
+                {
+                    reportRX(t, "Caught remote InvalidClassException.\n" +
+                            "This means you likely have multiple jars for the given class: " +
+                            t, xc);
+                    silence();
+                    return false;
+                }
+                return true;
+            }
+
+            public boolean handleCustomTX(final Throwable t, MessageXC xc)
+            {
+                if (t instanceof NotSerializableException)
+                {
+                    reportTX(t, "Ensure that your class and all" +
+                            " member objects are Serializable.", xc);
+                    return false;
+                }
+                else if (t instanceof ConcurrentModificationException)
+                {
+                    reportTX(t, "Take care not to modify member objects" +
+                            " as your Callable is being Serialized.", xc);
+                    return false;
+                }
+                else if (t instanceof IOException)
+                {
+                    reportTX(t, "Stream closed, closing node. ", xc);
+                    xc.close();
+                    return false;
+                }
+                
+                return true;
+            }
+        };
+
+        scheduler = new ProcessScheduler(1000);
+        
+        nodeManager = new NodeManager();
+
+        xcEListener.setNodeManager(nodeManager);
+
+        futures = new Hashtable<Long, ArchipelagoFuture<?>>();
+        
+        listeners = new Vector<ClusterStateListener>();
+
+        try
+        {
+            localHostName = InetAddress.getLocalHost().getCanonicalHostName();
+        }
+        catch (UnknownHostException uhe)
+        {
+            localHostName = "localhost";
+            FijiArchipelago.err("Could not get canonical host name for local machine. Using localhost instead");
+        }
+        
+
+    }
+
     
     private void setState(final ClusterState state)
     {
@@ -1034,12 +1270,10 @@ public class Cluster implements NodeStateListener
         return stateIntToEnum(state.get());
     }
     
-    public boolean init(int p)
+    public boolean init()
     {
         if (getState() == ClusterState.INSTANTIATED)
         {
-            port = p;
-            server = null;
             nodes.clear();
             scheduler.close();
             nodeManager.clear();
@@ -1047,13 +1281,7 @@ public class Cluster implements NodeStateListener
             runningNodes.set(0);
             
             setState(ClusterState.INITIALIZED);
-
-/*
-            halted.set(false);
-            terminated.set(false);
-            initted.set(true);
-*/
-
+            
             return true;
         }
         else
@@ -1067,86 +1295,6 @@ public class Cluster implements NodeStateListener
         localHostName = host;
     }
     
-    public int getServerPort()
-    {
-        return port;
-    }
-    
-    public boolean startNode(final NodeManager.NodeParameters params, final ShellExecListener listener)
-            throws ShellExecutionException
-    {
-        String host = params.getHost();
-        String exec = params.getExecRoot();
-        long id = params.getID();
-
-        // getNode(id) == null indicates that this node has not yet been started
-        if (getNode(id) == null)
-        {
-            final Thread t = Thread.currentThread();
-            final AtomicInteger result = new AtomicInteger();
-            final ReentrantLock testLock = new ReentrantLock(true); 
-
-            // First, check that the fiji executable exists where we think it exists.
-
-            // Use a lock to prevent the ShellExecListener from triggering the result
-            // before we're ready.
-            testLock.lock();
-
-            final ShellExecListener fijiExistsListener = new ShellExecListener() {
-                public void execFinished(long nodeID, Exception e, int status) {
-                    // Wait for the lock to release
-                    testLock.lock();
-                    // Set the result status
-                    result.set(status);
-                    testLock.unlock();
-                    // Restart the startNode(...) thread.
-                    t.interrupt();
-                }
-            };
-
-            if (params.getShell().exec(params, "test -e " + exec + "/fiji", fijiExistsListener))
-            {
-                try
-                {
-                    // Unlock the lock to allow the SEL to run, then sleep
-                    testLock.unlock();
-                    Thread.sleep(Long.MAX_VALUE);
-                    throw new ShellExecutionException("Timed out " +
-                            "waiting to test for existence of executable");
-                }
-                catch (InterruptedException ie)
-                {
-                    // We expect to be interrupted
-                    if (result.get() != 0)
-                    {
-                        // If we get a nonzero return, then fiji does not exist.
-                        throw new ShellExecutionException(exec + "/fiji" +
-                                " does not exist on host " + host);
-                    }
-                }                
-            }
-            else
-            {
-                return false;
-            }
-
-            // Run fiji with jar path plugins, jars, and classpath containing
-            // the root fiji directory. Execute main(String[] args) in Fiji_Archipelago.
-            // Sys.out and Sys.err are piped to ~/${host}_${id}.log on the remote machine.
-            String execCommandString = exec + "/fiji --jar-path " + exec
-                    + "/plugins/ --jar-path " + exec +"/jars/ --classpath " + exec +
-                    " --allow-multiple --main-class edu.utexas.clm.archipelago.Fiji_Archipelago "
-                    + localHostName + " " + port + " " + id + " 2>&1 > ~/" + host + "_" + id + ".log";
-
-            return params.getShell().exec(params, execCommandString, listener);
-        }
-        else
-        {
-            return true;
-        }
-    }
-
-
     public ClusterNode getNode(long id)
     {        
         for (ClusterNode node : nodes)
@@ -1158,25 +1306,93 @@ public class Cluster implements NodeStateListener
         }
         return null;
     }
+
+    public void addNode(NodeManager.NodeParameters param)
+    {
+        if (param == null)
+        {
+            System.out.println("Tried to add NULL param");
+            Thread.dumpStack();
+        }
+        if (!hasNode(param))
+        {
+            try
+            {
+                startQueue.add(param);
+            } catch (IllegalStateException ise)
+            {/**/}
+        }
+    }
     
     private void addNode(ClusterNode node)
     {
-        nodes.add(node);
+        nodeLock.lock();
+        waitNodes.remove(node.getParam());
+        nodes.add(node);        
+        nodeLock.unlock();
         node.addListener(this);
     }
 
     public void removeNode(ClusterNode node)
     {
+        nodeLock.lock();
         nodes.remove(node);
         nodeManager.removeParam(node.getID());
+        nodeLock.unlock();
+    }
+    
+    public boolean hasNode(long id)
+    {
+        nodeLock.lock();
+        if (getNode(id) != null)
+        {
+            nodeLock.unlock();
+            return true;
+        }
+        else
+        {
+            for (NodeManager.NodeParameters param : waitNodes)
+            {
+                if (param.getID() == id)
+                {
+                    nodeLock.unlock();
+                    return true;
+                }
+            }
+            
+            for (NodeManager.NodeParameters param : startQueue)
+            {
+                if (param.getID() == id)
+                {
+                    nodeLock.unlock();
+                    return true;
+                }
+            }
+        }
+
+        nodeLock.unlock();
+        return false;
+    }
+    
+    public boolean hasNode(final ClusterNode node)
+    {
+        return hasNode(node.getID());
+    }
+
+    public boolean hasNode(final NodeManager.NodeParameters param)
+    {
+        return hasNode(param.getID());
     }
 
     public void addStateListener(ClusterStateListener listener)
     {
-        listeners.add(listener);
+        if (!listeners.contains(listener))
+        {
+            listeners.add(listener);
+        }
     }
     
-    public void removeStateListener(ClusterStateListener listener)
+    public synchronized void removeStateListener(ClusterStateListener listener)
     {
         listeners.remove(listener);
     }
@@ -1203,7 +1419,7 @@ public class Cluster implements NodeStateListener
             case ACTIVE:
                 FijiArchipelago.debug("Got state change to active for " + node.getHost());
                 if (acceptingNodes())
-                {                    
+                {
                     runningNodes.incrementAndGet();
                     setState(ClusterState.RUNNING);
                     //ready.set(true);
@@ -1269,31 +1485,6 @@ public class Cluster implements NodeStateListener
         triggerListeners();
     }
 
-    
-    public void nodeFromSocket(Socket socket)
-    {
-        try
-        {
-            ClusterNode node = new ClusterNode(socket, xcEListener);
-            addNode(node);
-        }
-        catch (IOException ioe)
-        {
-            FijiArchipelago.err("Caught IOException while initializing node for "
-                    + socket.getInetAddress() + ": " + ioe);
-        }
-        catch (InterruptedException ie)
-        {
-            FijiArchipelago.err("Caught InteruptedException while initializing node for "
-                    + socket.getInetAddress() + ": " + ie);
-        }
-        catch (ClusterNode.TimeOutException toe)
-        {
-            FijiArchipelago.err("Caught TimeOutException while initializing node for "
-                    + socket.getInetAddress() + ": " + toe);
-        }
-    }
-    
     private boolean nodesWaiting()
     {
         for (NodeManager.NodeParameters param : nodeManager.getParams())
@@ -1391,11 +1582,6 @@ public class Cluster implements NodeStateListener
         return i;
     }
     
-    public boolean join()
-    {
-        return server.join();
-    }
-
     public boolean isReady()
     {
         return getState() == ClusterState.RUNNING;
@@ -1425,56 +1611,57 @@ public class Cluster implements NodeStateListener
         }
     }
 
-    
-    public int getPort()
-    {
-        return port;
-    }
-    
     public ArrayList<ClusterNode> getNodes()
     {
         return new ArrayList<ClusterNode>(nodes);
     }
-    
-    public ArrayList<NodeManager.NodeParameters> getNodesParameters()
+
+    /**
+     * Compiles a list of NodeManager.NodeParameters corresponding to the current state of this
+     * Cluster. This List will include parameters for all ClusterNodes that are currently running
+     * or that have been added, but not yet started. It will not included stopped or cancelled
+     * nodes.
+     * @return a list of NodeManager.NodeParameters corresponding to the current state of this
+     * Cluster.
+     */
+    public ArrayList<NodeManager.NodeParameters> getNodeParameters()
     {
         final ArrayList<NodeManager.NodeParameters> paramList =
                 new ArrayList<NodeManager.NodeParameters>();
+        
+        nodeLock.lock();
+        paramList.addAll(startQueue);
+        paramList.addAll(waitNodes);
+
         for (ClusterNode node : getNodes())
         {
             paramList.add(node.getParam());
         }
-        
+        nodeLock.unlock();
+
+        FijiArchipelago.debug("Cluster: I have " + paramList.size() + " parameters");
+
+        for (NodeManager.NodeParameters params : paramList)
+        {
+            FijiArchipelago.debug("\t" + params);
+        }
+
         return paramList;
     }
 
     /**
-     * Starts the Cluster if it has not yet been started, otherwise simply returns true.
-     * @return true if the Cluster is already running or if it was started successfully,
-     * false if it was not started successfully. An unsuccessful start is typically caused
-     * by the inability to reserve the specified network port.
+     * Starts the Cluster if it has not yet been started
      */
-    public boolean start()
+    public void start()
     {
+        FijiArchipelago.debug("Cluster: start called");
+        Thread.dumpStack();
         if (getState() == ClusterState.INITIALIZED)
         {
-
             FijiArchipelago.debug("Scheduler alive? :" + scheduler.isAlive());
+            nodeStarter.start();
             scheduler.start();
-            server = new ArchipelagoServer(this);
-            if (server.start())
-            {
-                setState(ClusterState.STARTED);
-                return true;
-            }
-            else
-            {
-                return false;
-            }
-        }
-        else
-        {
-            return true;
+            setState(ClusterState.STARTED);
         }
     }
 
@@ -1515,12 +1702,11 @@ public class Cluster implements NodeStateListener
     {
         ArrayList<Thread> waitThreadsCP = new ArrayList<Thread>(waitThreads);
         
-        server.close();
-
         nodeManager.clear();
 
         setState(ClusterState.STOPPED);
         scheduler.close();
+        nodeStarter.close();
 
         for (Thread t : waitThreadsCP)
         {
@@ -1572,6 +1758,7 @@ public class Cluster implements NodeStateListener
         */
         final ArrayList<ClusterNode> nodescp = new ArrayList<ClusterNode>(nodes);
 
+        nodeStarter.close();
         setState(ClusterState.STOPPING);
 
         for (ClusterNode node : nodescp)
@@ -1603,6 +1790,7 @@ public class Cluster implements NodeStateListener
 
         setState(ClusterState.STOPPING);
         scheduler.setActive(false);
+        nodeStarter.close();
 
         for (ClusterNode node : nodes)
         {
@@ -1651,6 +1839,11 @@ public class Cluster implements NodeStateListener
         return new ClusterExecutorService(fractionThreads);
     }
     
+    public String getLocalHostName()
+    {
+        return localHostName;
+    }
+    
     public synchronized void registerUI(ArchipelagoUI ui)
     {
         registeredUIs.add(ui);
@@ -1666,4 +1859,107 @@ public class Cluster implements NodeStateListener
         return registeredUIs.size();
     }
 
+    public void execFinished(final long nodeID, final Exception e, final int status)
+    {
+        final ClusterNode node = getNode(nodeID);
+        if (node.isReady())
+        {
+            node.close();
+        }
+    }
+
+    public void ioStreamsReady(final InputStream is, final OutputStream os)
+    {
+        ClusterNode node = new ClusterNode(xcEListener);
+        try
+        {
+            node.setIOStreams(is, os);
+            addNode(node);
+        }
+        catch (IOException ioe)
+        {
+
+        }
+        catch (TimeoutException te)
+        {
+
+        }
+        catch (InterruptedException ie)
+        {
+
+        }
+        
+    }
+
+    public boolean saveToFile(final File file)
+    {
+        try
+        {
+            FijiArchipelago.debug("Save called");
+            final DocumentBuilder docBuilder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
+            final NodeManager nm = getNodeManager();
+            final ArrayList<NodeManager.NodeParameters> params = getNodeParameters();
+            final Document doc = docBuilder.newDocument();
+            final Element clusterXML = doc.createElement("Cluster");
+            final Element rootNode = doc.createElement("RootNode");
+            final Transformer transformer = TransformerFactory.newInstance().newTransformer();
+            final StreamResult result = new StreamResult(file);
+            DOMSource source;
+
+            transformer.setOutputProperty(OutputKeys.ENCODING, "utf-8");
+            transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "no");
+            transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+            transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");
+
+            doc.appendChild(clusterXML);
+
+            addXMLField(doc, rootNode, "exec", FijiArchipelago.getExecRoot());
+            addXMLField(doc, rootNode, "file", FijiArchipelago.getFileRoot());
+            addXMLField(doc, rootNode, "default-exec", nm.getDefaultParameters().getExecRoot());
+            addXMLField(doc, rootNode, "default-file", nm.getDefaultParameters().getFileRoot());
+            addXMLField(doc, rootNode, "default-user", nm.getDefaultParameters().getUser());
+
+            clusterXML.appendChild(rootNode);
+
+            for (NodeManager.NodeParameters np : params)
+            {
+                final Element clusterNode = doc.createElement("ClusterNode");
+                final Element shellParams = doc.createElement("ShellParameters");
+
+                addXMLField(doc, clusterNode, "host", np.getHost());
+                addXMLField(doc, clusterNode, "user", np.getUser());
+                addXMLField(doc, clusterNode, "exec", np.getExecRoot());
+                addXMLField(doc, clusterNode, "file", np.getFileRoot());
+                addXMLField(doc, clusterNode, "limit", "" + np.getThreadLimit());
+                addXMLField(doc, clusterNode, "shell", np.getShell().name());
+
+                try
+                {
+                    np.getShellParams().toXML(shellParams);
+                    clusterNode.appendChild(shellParams);
+                    clusterXML.appendChild(clusterNode);
+                }
+                catch (Exception e)
+                {/**/}
+            }
+
+            source = new DOMSource(doc);
+            transformer.transform(source, result);
+
+            FijiArchipelago.log("Saved configuration to " + file);
+
+            return true;
+        }
+        catch (Exception e)
+        {
+            FijiArchipelago.err("Error saving file: " + e);
+            return false;
+        }
+    }
+
+
+    static
+    {
+        registerNodeShell(SocketNodeShell.getShell());
+    }
 }
