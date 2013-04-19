@@ -47,7 +47,7 @@ public class Bead_Registration implements PlugIn
 	final String beadRegistration[] = new String[] { "Single-channel", "Multi-channel (same beads visible in different channels)" };
 	final String beadDetectionType[] = new String[] { "Difference-of-Gaussian", "Difference-of-Mean (Integral image based)" };
 	public static int defaultBeadRegistration = 0;
-	public static int defaultBeadDetectionType = 0;
+	public static int defaultBeadDetectionType = 1;
 	
 	@Override
 	public void run(String arg0) 
