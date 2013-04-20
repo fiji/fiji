@@ -191,7 +191,7 @@ public class Bead_Registration implements PlugIn
 		gd.addCheckbox( "Load_segmented_beads", loadSegmentation );
 		gd.addChoice( "Bead_brightness", beadBrightness, beadBrightness[ defaultBeadBrightness ] );
 		gd.addChoice( "Subpixel_localization", localization, localization[ relocalize ] );
-		gd.addCheckbox( "Override_file_dimensions", overrideResolution );
+		gd.addCheckbox( "Specify_calibration_manually (Note: otherwise read from file - slow)", overrideResolution );
 		final Checkbox dimensionsBox = (Checkbox)gd.getCheckboxes().lastElement();
 		gd.addNumericField( "xy_resolution (um/px)", xyRes, 3 );
 		final TextField tfXyRes = (TextField) gd.getNumericFields().lastElement();
