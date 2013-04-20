@@ -29,6 +29,8 @@ assertTrue("Could not make " + ijRoot, ijRoot.mkdirs());
 plugins = new File(ijRoot, "plugins");
 sub = new File(plugins, "test");
 assertTrue("Could not make " + sub, sub.mkdirs());
+jars = new File(ijRoot, "jars");
+assertTrue("Could not make " + jars, jars.mkdirs());
 
 baseURL = "jar:" + new File(basedir, "target/bare-plugins-1.0.0.jar").toURI().toURL() + "!/";
 
@@ -68,6 +70,8 @@ copyClass("Bare_PlugIn", plugins);
 copyClass("test.Test_PlugIn", plugins);
 copyClass("Another_Bare_PlugIn", sub);
 copyClass("test.Missing_Dependency", plugins);
+copyClass("Changed_Method_Signature", plugins);
+copyClass("ij.ImageJ", plugins);
 
 print("Redirecting stdout");
 
@@ -106,5 +110,7 @@ assertPlugInOutput("Bare PlugIn", "Hello (bare) world!");
 assertPlugInOutput("Test PlugIn", "Hello (test) world!");
 assertPlugInOutput("Another Bare PlugIn", "Hello (another bare) world!");
 assertPlugInOutput("Missing Dependency", "java.lang.NoClassDefFoundError: test/Dependency");
+assertPlugInOutput("Changed Method Signature",
+	"There was a problem with the class ij.ImageJ which can be found here");
 
 teeBuffer.reset();
