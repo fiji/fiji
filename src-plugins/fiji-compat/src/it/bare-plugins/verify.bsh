@@ -1,0 +1,94 @@
+import fiji.IJ1Patcher;
+
+import java.io.ByteArrayOutputStream;
+import java.net.URL;
+
+import javassist.ClassPool;
+
+import org.scijava.util.FileUtils;
+
+Thread.currentThread().setContextClassLoader(IJ1Patcher.class.getClassLoader());
+new IJ1Patcher().run();
+
+assertTrue(message, condition) {
+	if (!condition) {
+		print(message);
+		System.exit(1);
+	}
+}
+
+ijRoot = new File(basedir, "target/ijRoot");
+
+assertTrue("Could not delete " + ijRoot,
+	!ijRoot.isDirectory() || FileUtils.deleteRecursively(ijRoot));
+assertTrue("Could not make " + ijRoot, ijRoot.mkdirs());
+
+plugins = new File(ijRoot, "plugins");
+sub = new File(plugins, "test");
+assertTrue("Could not make " + sub, sub.mkdirs());
+
+baseURL = "jar:" + new File(basedir, "target/bare-plugins-1.0.0.jar").toURI().toURL() + "!/";
+
+copyClass(className, targetDirectory) {
+	path = className.replace('.', '/') + ".class";
+	target = new File(targetDirectory, path);
+	url = new URL(baseURL + path);
+	print("Copying " + url + " to " + target);
+        parent = target.getParentFile();
+        if (!parent.isDirectory()) parent.mkdirs();
+
+        in = url.openStream();
+        out = new FileOutputStream(target);
+        buffer = new byte[65536];
+        for (;;) {
+                count = in.read(buffer);
+                if (count < 0) break;
+                out.write(buffer, 0, count);
+        }
+        in.close();
+        out.close();
+}
+
+copyClass("Bare_PlugIn", plugins);
+copyClass("test.Test_PlugIn", plugins);
+copyClass("Another_Bare_PlugIn", sub);
+
+print("Redirecting stdout");
+
+stdout = System.out;
+teeBuffer = new ByteArrayOutputStream() {
+	public void reset() {
+		stdout.write(toByteArray());
+		super.reset();
+	}
+};
+tee = new PrintStream(teeBuffer);
+System.setOut(tee);
+
+ijPath = ijRoot.getAbsolutePath();
+System.setProperty("ij.dir", ijPath);
+System.setProperty("plugins.dir", ijPath);
+assertPlugInOutput(plugin, expect) {
+	print("Running " + plugin);
+	tee.flush();
+	stdout.flush();
+	teeBuffer.reset();
+	fiji.Main.main(new String[] {
+		"-ijpath", ijPath,
+		"-eval", "run(\"" + plugin + "\");",
+		"-batch-no-exit"
+	});
+	output = teeBuffer.toString();
+	if (output.endsWith("\n")) {
+		output = output.substring(0, output.length() -1 );
+	}
+	assertTrue("Ran " + plugin + ", expected " + expect + ", got " + output,
+		expect.equals(output));
+	teeBuffer.reset();
+}
+
+assertPlugInOutput("Bare PlugIn", "Hello (bare) world!");
+assertPlugInOutput("Test PlugIn", "Hello (test) world!");
+assertPlugInOutput("Another Bare PlugIn", "Hello (another bare) world!");
+
+teeBuffer.reset();
