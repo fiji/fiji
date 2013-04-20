@@ -10,6 +10,7 @@ import javassist.ClassPool;
 
 import org.scijava.util.FileUtils;
 
+System.setProperty("java.awt.headless", "true");
 Thread.currentThread().setContextClassLoader(IJ1Patcher.class.getClassLoader());
 new IJ1Patcher().run();
 
