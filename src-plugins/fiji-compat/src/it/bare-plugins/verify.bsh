@@ -1,6 +1,9 @@
 import fiji.IJ1Patcher;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.net.URL;
 
 import javassist.ClassPool;
@@ -34,10 +37,22 @@ copyClass(className, targetDirectory) {
 	target = new File(targetDirectory, path);
 	url = new URL(baseURL + path);
 	print("Copying " + url + " to " + target);
+	copyStream(url.openStream(), target);
+}
+
+copyJar(clazz, targetDirectory) {
+	path = clazz.getName().replace('.', '/') + ".class";
+	url = clazz.getResource("/" + path).toString();
+	bang = url == null ? -1 : url.indexOf("!/");
+	assertTrue(clazz.getName() + " is not in a .jar: " + url,
+		url != null && url.startsWith("jar:file:") && bang > 0);
+	source = new File(url.substring(9, bang));
+	copyStream(new FileInputStream(source), new File(targetDirectory, source.getName()));
+}
+
+copyStream(in, target) {
         parent = target.getParentFile();
         if (!parent.isDirectory()) parent.mkdirs();
-
-        in = url.openStream();
         out = new FileOutputStream(target);
         buffer = new byte[65536];
         for (;;) {
