@@ -52,6 +52,7 @@ copyClass(className, targetDirectory) {
 copyClass("Bare_PlugIn", plugins);
 copyClass("test.Test_PlugIn", plugins);
 copyClass("Another_Bare_PlugIn", sub);
+copyClass("test.Missing_Dependency", plugins);
 
 print("Redirecting stdout");
 
@@ -68,7 +69,7 @@ System.setOut(tee);
 ijPath = ijRoot.getAbsolutePath();
 System.setProperty("ij.dir", ijPath);
 System.setProperty("plugins.dir", ijPath);
-assertPlugInOutput(plugin, expect) {
+assertPlugInOutput(plugin, expectedFirstLine) {
 	print("Running " + plugin);
 	tee.flush();
 	stdout.flush();
@@ -79,16 +80,16 @@ assertPlugInOutput(plugin, expect) {
 		"-batch-no-exit"
 	});
 	output = teeBuffer.toString();
-	if (output.endsWith("\n")) {
-		output = output.substring(0, output.length() -1 );
-	}
-	assertTrue("Ran " + plugin + ", expected " + expect + ", got " + output,
-		expect.equals(output));
+	eol = output.indexOf('\n');
+	firstLine = eol < 0 ? output : output.substring(0, eol);
+	assertTrue("Ran " + plugin + ", expected " + expectedFirstLine + ", got " + firstLine,
+		expectedFirstLine.equals(firstLine));
 	teeBuffer.reset();
 }
 
 assertPlugInOutput("Bare PlugIn", "Hello (bare) world!");
 assertPlugInOutput("Test PlugIn", "Hello (test) world!");
 assertPlugInOutput("Another Bare PlugIn", "Hello (another bare) world!");
+assertPlugInOutput("Missing Dependency", "java.lang.NoClassDefFoundError: test/Dependency");
 
 teeBuffer.reset();
