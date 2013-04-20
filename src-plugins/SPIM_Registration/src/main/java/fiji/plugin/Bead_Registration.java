@@ -57,8 +57,8 @@ public class Bead_Registration implements PlugIn
 		
 		final GenericDialog gd = new GenericDialog( "Bead based registration" );
 		
-		gd.addChoice( "Select type of registration", beadRegistration, beadRegistration[ defaultBeadRegistration ] );		
-		gd.addChoice( "Select type of detection", beadDetectionType, beadDetectionType[ defaultBeadDetectionType ] );		
+		gd.addChoice( "Select_type_of_registration", beadRegistration, beadRegistration[ defaultBeadRegistration ] );		
+		gd.addChoice( "Select_type_of_detection", beadDetectionType, beadDetectionType[ defaultBeadDetectionType ] );		
 		gd.addMessage( "Please note that the SPIM Registration is based on a publication.\n" +
 						"If you use it successfully for your research please be so kind to cite our work:\n" +
 						"Preibisch et al., Nature Methods (2010), 7(6):418-419\n" );
@@ -128,6 +128,10 @@ public class Bead_Registration implements PlugIn
 				
 				conf.referenceTimePoint =  gf.getReferenceTimePoint();
 			}
+			else if ( defaultTimeLapseRegistration == 1 )
+			{
+				conf.referenceTimePoint = defaultTimePoint;				
+			}
 			else
 			{
 				// automatically select, but still show the display
@@ -162,8 +166,9 @@ public class Bead_Registration implements PlugIn
 	public static int defaultModel = 2;
 	public static boolean loadRegistration = false;
 	public static boolean timeLapseRegistration = false;
-	final String timeLapseRegistrationTypes[] = new String[] { "Manually", "Automatically" };
-	static int defaultTimeLapseRegistration = 0;
+	final String timeLapseRegistrationTypes[] = new String[] { "Manually (interactive)", "Manually (specify)", "Automatically" };
+	public static int defaultTimeLapseRegistration = 0;
+	public static int defaultTimePoint = 1;
 	
 	private SPIMConfiguration conf;
 
@@ -438,11 +443,25 @@ public class Bead_Registration implements PlugIn
 			gdGauss.addCheckbox( "Keep_images_open", keepImagesOpen );
 			
 			gdGauss.showDialog();
-			
-			conf.doGaussKeepImagesOpen = keepImagesOpen = gdGauss.getNextBoolean();
-			
+
 			if ( gdGauss.wasCanceled() )
 				return null;
+			
+			conf.doGaussKeepImagesOpen = keepImagesOpen = gdGauss.getNextBoolean();
+		}
+		
+		if ( defaultTimeLapseRegistration == 1 )
+		{
+			GenericDialog gdTL = new GenericDialog( "Select reference timepoint" );
+
+			gdTL.addNumericField( "Reference_timepoint", defaultTimePoint, 0 );
+			
+			gdTL.showDialog();
+			
+			if ( gdTL.wasCanceled() )
+				return null;
+
+			defaultTimePoint = (int)Math.round( gdTL.getNextNumber() );			
 		}
 
 		if ( overrideResolution )
@@ -772,6 +791,20 @@ public class Bead_Registration implements PlugIn
 		else
 		{
 			conf.inputdirectory = spimDataDirectory;
+		}
+
+		if ( defaultTimeLapseRegistration == 1 )
+		{
+			GenericDialog gdTL = new GenericDialog( "Select reference timepoint" );
+
+			gdTL.addNumericField( "Reference_timepoint", defaultTimePoint, 0 );
+			
+			gdTL.showDialog();
+			
+			if ( gdTL.wasCanceled() )
+				return null;
+
+			defaultTimePoint = (int)Math.round( gdTL.getNextNumber() );			
 		}
 
 		conf.overrideImageZStretching = overrideResolution;
