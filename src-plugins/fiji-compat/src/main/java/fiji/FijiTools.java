@@ -173,10 +173,8 @@ public class FijiTools {
 
 		if (urls.size() == 0)
 			return false;
-		StringWriter writer = new StringWriter();
-		error.printStackTrace(new PrintWriter(writer));
-		StringBuffer buffer = writer.getBuffer();
-		buffer.append("\nThe class ").append(message.substring(0, dot)).append(" can be found here:\n");
+		StringBuilder buffer = new StringBuilder();
+		buffer.append("There was a problem with the class ").append(message.substring(0, dot)).append(" which can be found here:\n");
 		for (String url : urls) {
 			if (url.startsWith("jar:"))
 				url = url.substring(4);
@@ -191,6 +189,11 @@ public class FijiTools {
 		}
 		if (urls.size() > 1)
 			buffer.append("\nWARNING: multiple locations found!\n");
+
+		StringWriter writer = new StringWriter();
+		error.printStackTrace(new PrintWriter(writer));
+		buffer.append(writer.toString());
+
 		IJ.log(buffer.toString());
 		IJ.error("Could not find method " + message + "\n(See Log for details)\n");
 		return true;
