@@ -1,22 +1,16 @@
 package mpicbg.spim.fusion;
 
+import ij.IJ;
+
 import java.util.Date;
 
-import ij.IJ;
-import ij.ImagePlus;
-import mpicbg.imglib.algorithm.fft.FourierConvolution;
-import mpicbg.imglib.algorithm.integral.IntegralImageLong;
 import mpicbg.imglib.container.ContainerFactory;
-import mpicbg.imglib.container.array.ArrayContainerFactory;
 import mpicbg.imglib.cursor.Cursor;
 import mpicbg.imglib.cursor.LocalizableByDimCursor;
-import mpicbg.imglib.function.Converter;
 import mpicbg.imglib.image.Image;
-import mpicbg.imglib.image.display.imagej.ImageJFunctions;
 import mpicbg.imglib.outofbounds.OutOfBoundsStrategyFactory;
 import mpicbg.imglib.type.numeric.integer.LongType;
 import mpicbg.imglib.type.numeric.real.FloatType;
-import mpicbg.imglib.util.Util;
 import mpicbg.spim.io.IOFunctions;
 import mpicbg.spim.io.SPIMConfiguration;
 import mpicbg.spim.registration.ViewDataBeads;
@@ -34,8 +28,6 @@ public class AverageContent extends IsolatedPixelWeightener<AverageContent>
 		
 		try
 		{			
-			final int numThreads = Math.max( 1, Runtime.getRuntime().availableProcessors() / view.getNumViews() );
-			
 			final SPIMConfiguration conf = view.getViewStructure().getSPIMConfiguration();
 			
 			// compute the radii
@@ -62,39 +54,15 @@ public class AverageContent extends IsolatedPixelWeightener<AverageContent>
 			
 			final Image< LongType > integralImg = intImg.getResult();
 			*/
-			
+						
+			// compute I*sigma1, store in imgConv
 			final Image< LongType > integralImg = IntegralImage3d.computeArray( img );
+			final Image< FloatType > imgConv = img.createNewImage();			
+			DOM.meanMirror( integralImg, imgConv, rxy1*2 + 1, rxy1*2 + 1, rz1*2 + 1 );
 			
-			// get the kernels
-			
-			final double[] k1 = new double[ view.getNumDimensions() ];
-			final double[] k2 = new double[ view.getNumDimensions() ];
-			
-			for ( int d = 0; d < view.getNumDimensions() - 1; ++d )
-			{
-				k1[ d ] = conf.fusionSigma1;
-				k2[ d ] = conf.fusionSigma2;
-			}
-			
-			k1[ view.getNumDimensions() - 1 ] = conf.fusionSigma1 / view.getZStretching();
-			k2[ view.getNumDimensions() - 1 ] = conf.fusionSigma2 / view.getZStretching();		
-			
-			final Image<FloatType> kernel1 = FourierConvolution.createGaussianKernel( new ArrayContainerFactory(), k1 );
-			final Image<FloatType> kernel2 = FourierConvolution.createGaussianKernel( new ArrayContainerFactory(), k2 );
-	
-			// compute I*sigma1
-			FourierConvolution<FloatType, FloatType> fftConv1 = new FourierConvolution<FloatType, FloatType>( view.getImage(), kernel1 );
-			
-			fftConv1.setNumThreads( numThreads );
-			fftConv1.process();		
-			final Image<FloatType> conv1 = fftConv1.getResult();
-			
-			fftConv1.close();
-			fftConv1 = null;
-					
-			// compute ( I - I*sigma1 )^2
+			// compute ( I - I*sigma1 )^2, store in imgConv
 			final Cursor<FloatType> cursorImg = view.getImage().createCursor();
-			final Cursor<FloatType> cursorConv = conv1.createCursor();
+			final Cursor<FloatType> cursorConv = imgConv.createCursor();
 			
 			while ( cursorImg.hasNext() )
 			{
@@ -105,21 +73,15 @@ public class AverageContent extends IsolatedPixelWeightener<AverageContent>
 				
 				cursorConv.getType().set( diff*diff );
 			}
-	
-			// compute ( ( I - I*sigma1 )^2 ) * sigma2
-			FourierConvolution<FloatType, FloatType> fftConv2 = new FourierConvolution<FloatType, FloatType>( conv1, kernel2 );
-			fftConv2.setNumThreads( numThreads );
-			fftConv2.process();	
 			
-			gaussContent = fftConv2.getResult();
-
-			fftConv2.close();
-			fftConv2 = null;
+			// compute ( ( I - I*sigma1 )^2 ) * sigma2, store in imgConv
+			IntegralImage3d.computeArray( integralImg, imgConv );
 			
-			// close the unnecessary image
-			kernel1.close();
-			kernel2.close();
-			conv1.close();
+			DOM.meanMirror( integralImg, imgConv, rxy2*2 + 1, rxy2*2 + 1, rz2*2 + 1 );
+			
+			integralImg.close();
+			
+			gaussContent = imgConv;
 			
 			ViewDataBeads.normalizeImage( gaussContent );
 		}
