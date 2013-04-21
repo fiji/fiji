@@ -159,7 +159,7 @@ public class Multi_View_Deconvolution implements PlugIn
 		else
 			deconvolved = new BayesMVDeconvolution( deconvolutionData, iterationType, numIterations, 0, "deconvolved" ).getPsi();
 		
-		if ( conf.writeOutputImage || conf.showOutputImage )
+		if ( conf.writeOutputImage > 0 || conf.showOutputImage )
 		{
 			String name = viewStructure.getSPIMConfiguration().inputFilePattern;			
 			String replaceTP = SPIMConfiguration.getReplaceStringTimePoints( name );
@@ -179,13 +179,26 @@ public class Multi_View_Deconvolution implements PlugIn
 				ImageJFunctions.copyToImagePlus( deconvolved ).show();
 			}
 
-			if ( conf.writeOutputImage )
+			if ( conf.writeOutputImage == 1 )
+			{
 				ImageJFunctions.saveAsTiffs( deconvolved, conf.outputdirectory, "DC(l=" + lambda + ")_t" + timePoint + "_ch" + viewStructure.getChannelNum( 0 ), ImageJFunctions.GRAY32 );
+			}
+			else if ( conf.writeOutputImage == 2 )
+			{
+				final File dir = new File( conf.outputdirectory, "" + timePoint );
+				if ( !dir.exists() && !dir.mkdirs() )
+				{
+						IOFunctions.printErr("(" + new Date(System.currentTimeMillis()) + "): Cannot create directory '" + dir.getAbsolutePath() + "', quitting.");
+						return;
+				}
+				ImageJFunctions.saveAsTiffs( deconvolved, dir.getAbsolutePath(), "DC(l=" + lambda + ")_t" + timePoint + "_ch" + viewStructure.getChannelNum( 0 ), ImageJFunctions.GRAY32 );
+			}
 		}		
 	}
 
-	public static boolean displayFusedImageStatic = true;
-	public static boolean saveFusedImageStatic = true;
+	//public static boolean displayFusedImageStatic = true;
+	//public static boolean saveFusedImageStatic = true;
+	public static int defaultOutputType = 1;
 	public static int defaultNumIterations = 10;
 	public static boolean defaultUseTikhonovRegularization = true;
 	public static double defaultLambda = 0.006;
@@ -431,8 +444,9 @@ public class Multi_View_Deconvolution implements PlugIn
 		gd2.addCheckbox( "Show_averaged_PSF", showAveragePSF );
 		gd2.addCheckbox( "Debug_mode", defaultDebugMode );
 		gd2.addMessage( "" );
-		gd2.addCheckbox( "Display_fused_image", displayFusedImageStatic );
-		gd2.addCheckbox( "Save_fused_image", saveFusedImageStatic );
+		//gd2.addCheckbox( "Display_fused_image", displayFusedImageStatic );
+		//gd2.addCheckbox( "Save_fused_image", saveFusedImageStatic );
+		gd2.addChoice( "Fused_image_output", Multi_View_Fusion.outputType, Multi_View_Fusion.outputType[ defaultOutputType ] );
 
 		gd2.addMessage("");
 		gd2.addMessage("This Plugin is developed by Stephan Preibisch\n" + myURL);
@@ -548,8 +562,9 @@ public class Multi_View_Deconvolution implements PlugIn
 		computationType = defaultComputationIndex = gd2.getNextChoiceIndex();
 		showAveragePSF = gd2.getNextBoolean();
 		defaultDebugMode = debugMode = gd2.getNextBoolean();
-		displayFusedImageStatic = gd2.getNextBoolean(); 
-		saveFusedImageStatic = gd2.getNextBoolean();
+		//displayFusedImageStatic = gd2.getNextBoolean(); 
+		//saveFusedImageStatic = gd2.getNextBoolean();
+		defaultOutputType = gd2.getNextChoiceIndex();
 		
 		if ( blockSizeIndex == 0 )
 		{
@@ -764,15 +779,11 @@ public class Multi_View_Deconvolution implements PlugIn
 		// we need different output and weight images
 		conf.multipleImageFusion = false;
 		
-		if ( displayFusedImageStatic  )
+		if ( defaultOutputType == 0 )
 			conf.showOutputImage = true;
 		else
 			conf.showOutputImage = false;
-		
-		if ( saveFusedImageStatic )
-			conf.writeOutputImage = true;
-		else
-			conf.writeOutputImage = false;
+		conf.writeOutputImage = defaultOutputType;
 		
 		conf.useLinearBlening = true;
 		conf.useGaussContentBased = false;

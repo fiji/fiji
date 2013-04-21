@@ -78,7 +78,7 @@ public class SPIMConfiguration
 	public OutOfBoundsStrategyFactory<FloatType> strategyFactoryGauss = new OutOfBoundsStrategyMirrorFactory<FloatType>();
 
 	// segmentation
-	public boolean writeOutputImage = true;
+	public int writeOutputImage = 1;
 	public boolean showOutputImage = false;
 
 	// which fusion weightening

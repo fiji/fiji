@@ -1,5 +1,6 @@
 package mpicbg.spim.fusion;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Date;
 
@@ -140,13 +141,24 @@ public class FusionControl
 				}
 			}
 			
-			if ( conf.writeOutputImage )
+			if ( conf.writeOutputImage == 1)
 			{			
 				if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_MAIN )
 					IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Writing output file (Channel " + channelIndex +  ").");
 				
 				fusion.saveAsTiffs( conf.outputdirectory, "img_tl" + timePoint, channelIndex );
-			}					
+			}
+			else if ( conf.writeOutputImage == 2 )
+			{
+				final File dir = new File( conf.outputdirectory, "" + timePoint );
+				if ( !dir.exists() && !dir.mkdirs() )
+				{
+					IOFunctions.printErr("(" + new Date(System.currentTimeMillis()) + "): Cannot create directory '" + dir.getAbsolutePath() + "', quitting.");
+					return;
+				}
+				fusion.saveAsTiffs( dir.getAbsolutePath(), "img_tl" + timePoint, channelIndex );
+			}
+			
 		}
 		
 		if  ( !conf.isDeconvolution )
