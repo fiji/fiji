@@ -112,6 +112,6 @@ assertPlugInOutput("Test PlugIn", "Hello (test) world!");
 assertPlugInOutput("Another Bare PlugIn", "Hello (another bare) world!");
 assertPlugInOutput("Missing Dependency", "java.lang.NoClassDefFoundError: test/Dependency");
 assertPlugInOutput("Changed Method Signature",
-	"There was a problem with the class ij.ImageJ which can be found here");
+	"There was a problem with the class ij.ImageJ which can be found here:");
 
 teeBuffer.reset();
