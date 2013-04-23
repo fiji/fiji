@@ -99,7 +99,7 @@ IJ.showStatus("running remote updater");
 try {
 	i = updaterClass.newInstance();
 	if (isCommandLine) {
-		i.main([ arguments ]);
+		i.main(arguments);
 	} else {
 		i.run();
 	}
