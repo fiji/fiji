@@ -85,7 +85,7 @@ public class ArchipelagoServer implements ClusterStateListener
         port = p;
     }
 
-    public boolean start() throws ShellExecutionException
+    public boolean start()
     {
         if (isRunning.get())
         {
@@ -115,7 +115,8 @@ public class ArchipelagoServer implements ClusterStateListener
 
         if (!success)
         {
-            throw new ShellExecutionException("Could not start Archipelago Server: " + ioe);
+            port = -1;
+            return false;
         }
         
         listenThread = new ListenThread(socket);
@@ -191,7 +192,6 @@ public class ArchipelagoServer implements ClusterStateListener
     }
 
     public synchronized static ArchipelagoServer getServer(NodeShellListener listener)
-            throws ShellExecutionException
     {
         if (server == null)
         {

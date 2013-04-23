@@ -28,9 +28,7 @@ import edu.utexas.clm.archipelago.util.PrintStreamLogger;
 import edu.utexas.clm.archipelago.util.XCErrorAdapter;
 import ij.plugin.PlugIn;
 
-import java.io.EOFException;
-import java.io.IOException;
-import java.io.StreamCorruptedException;
+import java.io.*;
 import java.net.Socket;
 
 /**
@@ -65,11 +63,14 @@ public class Fiji_Archipelago implements PlugIn
         System.out.println("Fiji Archipelago main called");
         
         
-        if (args.length == 3)
+        if (args.length == 3 || args.length == 1)
         {
-            Socket s;
+            final boolean useSocket = args.length == 3;
+            InputStream is;
+            OutputStream os;
+            
+            Socket s = null;
             ArchipelagoClient client;
-            String host = args[0];
 
             XCErrorAdapter xcEListener = new XCErrorAdapter()
             {
@@ -115,27 +116,39 @@ public class Fiji_Archipelago implements PlugIn
                 }
             };
 
-            int port = Integer.parseInt(args[1]);
-            long id = Long.parseLong(args[2]);
+            long id = useSocket ? Long.parseLong(args[2]) : Long.parseLong(args[0]);
 
             FijiArchipelago.setDebugLogger(new PrintStreamLogger());
             FijiArchipelago.setErrorLogger(new PrintStreamLogger());
             FijiArchipelago.setInfoLogger(new PrintStreamLogger());
 
-            s = new Socket(host, port);
+            if (useSocket)
+            {
+                s = new Socket(args[0], Integer.parseInt(args[1]));
+                is = s.getInputStream();
+                os = s.getOutputStream();
+            }
+            else
+            {
+                is = System.in;
+                os = System.out;
+            }
             
-            client = new ArchipelagoClient(id, s.getInputStream(), s.getOutputStream(), xcEListener);
+            client = new ArchipelagoClient(id, is, os, xcEListener);
             
             while (client.isActive())
             {
                 Thread.sleep(1000);
             }
             
-            s.close();
+            if (s != null)
+            {
+                s.close();
+            }
         }
         else
         {
-            System.err.println("Usage: Fiji_Archipelago host port ID");
+            System.err.println("Usage: Fiji_Archipelago [host port] ID");
         }
 
 

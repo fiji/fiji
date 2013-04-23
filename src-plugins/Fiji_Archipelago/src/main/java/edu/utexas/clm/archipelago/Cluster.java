@@ -30,6 +30,7 @@ import edu.utexas.clm.archipelago.network.node.ClusterNode;
 import edu.utexas.clm.archipelago.network.node.ClusterNodeState;
 import edu.utexas.clm.archipelago.network.node.NodeManager;
 import edu.utexas.clm.archipelago.network.shell.NodeShell;
+import edu.utexas.clm.archipelago.network.shell.SSHNodeShell;
 import edu.utexas.clm.archipelago.network.shell.SocketNodeShell;
 import edu.utexas.clm.archipelago.ui.ArchipelagoUI;
 import edu.utexas.clm.archipelago.util.ProcessManagerCoreComparator;
@@ -1778,6 +1779,7 @@ public class Cluster implements NodeStateListener, NodeShellListener
 
     static
     {
+        registerNodeShell(SSHNodeShell.getShell());
         registerNodeShell(SocketNodeShell.getShell());
     }
 }
