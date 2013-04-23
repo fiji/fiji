@@ -97,12 +97,10 @@ IJ.showStatus("loading remote updater");
 updaterClass = loader.loadClass(updaterClassName);
 IJ.showStatus("running remote updater");
 try {
+	i = updaterClass.newInstance();
 	if (isCommandLine) {
-		importClass(Packages.java.lang.Class);
-		main = updaterClass.getMethod("main", [ Class.forName("[Ljava.lang.String;") ]);
-		main.invoke(null, [ arguments ]);
+		i.main([ arguments ]);
 	} else {
-		i = updaterClass.newInstance();
 		i.run();
 	}
 } catch (e) {
