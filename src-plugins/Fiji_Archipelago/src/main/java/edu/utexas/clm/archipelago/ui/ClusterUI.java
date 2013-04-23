@@ -354,7 +354,7 @@ public class ClusterUI implements ClusterStateListener, ArchipelagoUI
                             return;
                         }
                     }
-                    cluster.saveToFile(new File(dirName + fileName));
+                    ClusterXML.saveToFile(cluster, new File(dirName + fileName));
                 }
             }
             else if (ae.getActionCommand().equals("rootconfig"))
@@ -568,7 +568,7 @@ public class ClusterUI implements ClusterStateListener, ArchipelagoUI
         try
         {
             final ArrayList<Exception> nodeExceptions = new ArrayList<Exception>();
-            isConfigured.set(Cluster.loadClusterFile(new File(file), cluster, nodeExceptions));
+            isConfigured.set(ClusterXML.loadClusterFile(new File(file), cluster, nodeExceptions));
 
             if (nodeExceptions.size() > 0)
             {               
