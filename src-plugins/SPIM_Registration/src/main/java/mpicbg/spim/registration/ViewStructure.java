@@ -353,6 +353,9 @@ public class ViewStructure
 						view.setUseForRegistration( true );
 						view.setInitialSigma( conf.initialSigma[ channelRegister ] );
 						view.setMinPeakValue( conf.minPeakValue[ channelRegister ] );
+						view.setIntegralRadius1( conf.integralImgRadius1[ channelRegister ] );
+						view.setIntegralRadius2( conf.integralImgRadius2[ channelRegister ] );
+						view.setIntegralThreshold( conf.integralImgThreshold[ channelRegister ] );
 					}
 					else
 					{
@@ -366,6 +369,9 @@ public class ViewStructure
 						{
 							view.setInitialSigma( conf.initialSigma[ channelRegister ] );
 							view.setMinPeakValue( conf.minPeakValue[ channelRegister ] );
+							view.setIntegralRadius1( conf.integralImgRadius1[ channelRegister ] );
+							view.setIntegralRadius2( conf.integralImgRadius2[ channelRegister ] );
+							view.setIntegralThreshold( conf.integralImgThreshold[ channelRegister ] );
 							channelRegister++;
 						}
 

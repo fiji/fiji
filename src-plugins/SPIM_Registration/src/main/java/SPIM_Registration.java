@@ -213,7 +213,7 @@ public class SPIM_Registration extends SPIMRegistrationAbstract
 			conf.showOutputImage = true;
 		
 		conf.useLinearBlening = fusionUseBlendingStatic;
-		conf.useGauss = fusionUseContentBasedStatic;
+		conf.useGaussContentBased = fusionUseContentBasedStatic;
 		conf.scale = outputImageScalingStatic;
 		conf.cropOffsetX = cropOffsetXStatic;
 		conf.cropOffsetY = cropOffsetYStatic;

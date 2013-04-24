@@ -1,0 +1,117 @@
+import fiji.IJ1Patcher;
+
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.net.URL;
+
+import javassist.ClassPool;
+
+import org.scijava.util.FileUtils;
+
+System.setProperty("java.awt.headless", "true");
+Thread.currentThread().setContextClassLoader(IJ1Patcher.class.getClassLoader());
+new IJ1Patcher().run();
+
+assertTrue(message, condition) {
+	if (!condition) {
+		print(message);
+		System.exit(1);
+	}
+}
+
+ijRoot = new File(basedir, "target/ijRoot");
+
+assertTrue("Could not delete " + ijRoot,
+	!ijRoot.isDirectory() || FileUtils.deleteRecursively(ijRoot));
+assertTrue("Could not make " + ijRoot, ijRoot.mkdirs());
+
+plugins = new File(ijRoot, "plugins");
+sub = new File(plugins, "test");
+assertTrue("Could not make " + sub, sub.mkdirs());
+jars = new File(ijRoot, "jars");
+assertTrue("Could not make " + jars, jars.mkdirs());
+
+baseURL = "jar:" + new File(basedir, "target/bare-plugins-1.0.0.jar").toURI().toURL() + "!/";
+
+copyClass(className, targetDirectory) {
+	path = className.replace('.', '/') + ".class";
+	target = new File(targetDirectory, path);
+	url = new URL(baseURL + path);
+	print("Copying " + url + " to " + target);
+	copyStream(url.openStream(), target);
+}
+
+copyJar(clazz, targetDirectory) {
+	path = clazz.getName().replace('.', '/') + ".class";
+	url = clazz.getResource("/" + path).toString();
+	bang = url == null ? -1 : url.indexOf("!/");
+	assertTrue(clazz.getName() + " is not in a .jar: " + url,
+		url != null && url.startsWith("jar:file:") && bang > 0);
+	source = new File(url.substring(9, bang));
+	copyStream(new FileInputStream(source), new File(targetDirectory, source.getName()));
+}
+
+copyStream(in, target) {
+        parent = target.getParentFile();
+        if (!parent.isDirectory()) parent.mkdirs();
+        out = new FileOutputStream(target);
+        buffer = new byte[65536];
+        for (;;) {
+                count = in.read(buffer);
+                if (count < 0) break;
+                out.write(buffer, 0, count);
+        }
+        in.close();
+        out.close();
+}
+
+copyClass("Bare_PlugIn", plugins);
+copyClass("test.Test_PlugIn", plugins);
+copyClass("Another_Bare_PlugIn", sub);
+copyClass("test.Missing_Dependency", plugins);
+copyClass("Changed_Method_Signature", plugins);
+copyClass("ij.ImageJ", plugins);
+
+print("Redirecting stdout");
+
+stdout = System.out;
+teeBuffer = new ByteArrayOutputStream() {
+	public void reset() {
+		stdout.write(toByteArray());
+		super.reset();
+	}
+};
+tee = new PrintStream(teeBuffer);
+System.setOut(tee);
+
+ijPath = ijRoot.getAbsolutePath();
+System.setProperty("ij.dir", ijPath);
+System.setProperty("plugins.dir", ijPath);
+assertPlugInOutput(plugin, expectedFirstLine) {
+	print("Running " + plugin);
+	tee.flush();
+	stdout.flush();
+	teeBuffer.reset();
+	fiji.Main.main(new String[] {
+		"-ijpath", ijPath,
+		"-eval", "run(\"" + plugin + "\");",
+		"-batch-no-exit"
+	});
+	output = teeBuffer.toString();
+	eol = output.indexOf('\n');
+	firstLine = eol < 0 ? output : output.substring(0, eol);
+	assertTrue("Ran " + plugin + ", expected " + expectedFirstLine + ", got " + firstLine,
+		expectedFirstLine.equals(firstLine));
+	teeBuffer.reset();
+}
+
+assertPlugInOutput("Bare PlugIn", "Hello (bare) world!");
+assertPlugInOutput("Test PlugIn", "Hello (test) world!");
+assertPlugInOutput("Another Bare PlugIn", "Hello (another bare) world!");
+assertPlugInOutput("Missing Dependency", "java.lang.NoClassDefFoundError: test/Dependency");
+assertPlugInOutput("Changed Method Signature",
+	"There was a problem with the class ij.ImageJ which can be found here:");
+
+teeBuffer.reset();

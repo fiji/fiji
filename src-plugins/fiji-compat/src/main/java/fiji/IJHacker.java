@@ -18,7 +18,6 @@ import javassist.NotFoundException;
 
 import javassist.bytecode.BadBytecode;
 import javassist.bytecode.CodeIterator;
-import javassist.bytecode.ConstPool;
 import javassist.bytecode.MethodInfo;
 import javassist.bytecode.Opcode;
 
@@ -30,10 +29,12 @@ import javassist.expr.MethodCall;
 import javassist.expr.NewExpr;
 
 public class IJHacker extends JavassistHelper {
-	public final static String appName = "Fiji";
+	public final static String appPrefix = "(Fiji Is Just) ";
+	public final static String appName = appPrefix + "ImageJ";
 
 	protected String replaceAppName = ".replace(\"ImageJ\", \"" + appName + "\")";
 
+	@Override
 	public void instrumentClasses() throws BadBytecode, CannotCompileException, NotFoundException {
 		CtClass clazz;
 		CtMethod method;
@@ -98,6 +99,8 @@ public class IJHacker extends JavassistHelper {
 				try {
 					if (handler.getType().getName().equals("java.lang.NoClassDefFoundError"))
 						handler.insertBefore("String realClassName = $1.getMessage();"
+							+ "int spaceParen = realClassName.indexOf(\" (\");"
+							+ "if (spaceParen > 0) realClassName = realClassName.substring(0, spaceParen);"
 							+ "if (!originalClassName.replace('.', '/').equals(realClassName)) {"
 							+ " if (realClassName.startsWith(\"javax/vecmath/\") || realClassName.startsWith(\"com/sun/j3d/\") || realClassName.startsWith(\"javax/media/j3d/\"))"
 							+ "  ij.IJ.error(\"The class \" + originalClassName + \" did not find Java3D (\" + realClassName + \")\\nPlease call Plugins>3D Viewer to install\");"
@@ -111,7 +114,7 @@ public class IJHacker extends JavassistHelper {
 			}
 		});
 
-		// tell the error() method to use "Fiji" as window title
+		// tell the error() method to use "(Fiji Is Just) ImageJ" as window title
 		method = clazz.getMethod("error",
 			"(Ljava/lang/String;Ljava/lang/String;)V");
 		method.insertBefore("if ($1 == null || $1.equals(\"ImageJ\")) $1 = \"" + appName + "\";");
@@ -167,7 +170,7 @@ public class IJHacker extends JavassistHelper {
 		// Class ij.ImageJ
 		clazz = get("ij.ImageJ");
 
-		// tell the superclass java.awt.Frame that the window title is "Fiji"
+		// tell the java.awt.Frame that the window title is "(Fiji Is Just) ImageJ"
 		for (CtConstructor ctor : clazz.getConstructors())
 			ctor.instrument(new ExprEditor() {
 				@Override
@@ -176,10 +179,13 @@ public class IJHacker extends JavassistHelper {
 						call.replace("super(\"" + appName + "\");");
 				}
 			});
-		// tell the version() method to prefix the version with "Fiji/"
+		// tell the version() method to prefix the version with "(Fiji Is Just)"
 		method = clazz.getMethod("version", "()Ljava/lang/String;");
-		method.insertAfter("$_ = \"" + appName + "/\" + $_;");
-		// tell the run() method to use "Fiji" instead of "ImageJ" in the Quit dialog
+		method.insertAfter("$_ = \"" + appPrefix + "\" + $_;");
+		// tell the showStatus() method to show the version() instead of empty status
+		method = clazz.getMethod("showStatus", "(Ljava/lang/String;)V");
+		method.insertBefore("if ($1 == null || \"\".equals($1)) $1 = version();");
+		// tell the run() method to use "(Fiji Is Just) ImageJ" in the Quit dialog
 		method = clazz.getMethod("run", "()V");
 		replaceAppNameInNew(method, "ij.gui.GenericDialog", 1, 2);
 		replaceAppNameInCall(method, "addMessage", 1, 1);
@@ -199,6 +205,26 @@ public class IJHacker extends JavassistHelper {
 			method = clazz.getMethod("isRunning", "([Ljava/lang/String;)Z");
 			method.insertBefore("return fiji.OtherInstance.sendArguments($1);");
 		}
+		// optionally disallow batch mode from calling System.exit()
+		method = clazz.getMethod("main", "([Ljava/lang/String;)V");
+		method.addLocalVariable("batchModeMayExit", CtClass.booleanType);
+		method.insertBefore("batchModeMayExit = true;"
+			+ "for (int i = 0; i < $1.length; i++)"
+			+ "  if (\"-batch-no-exit\".equals($1[i])) {"
+			+ "    batchModeMayExit = false;"
+			+ "    $1[i] = \"-batch\";"
+			+ "  }");
+		method.instrument(new ExprEditor() {
+			@Override
+			public void edit(final MethodCall call) throws CannotCompileException {
+				if ("exit".equals(call.getMethodName()) &&
+						"java.lang.System".equals(call.getClassName())) {
+					call.replace("if (batchModeMayExit) System.exit($1);"
+						+ "if ($1 == 0) return;"
+						+ "throw new RuntimeException(\"Exit code: \" + $1);");
+				}
+			}
+		});
 
 		// Class ij.Prefs
 		clazz = get("ij.Prefs");
@@ -227,7 +253,7 @@ public class IJHacker extends JavassistHelper {
 		// Class ij.gui.YesNoCancelDialog
 		clazz = get("ij.gui.YesNoCancelDialog");
 
-		// use Fiji as window title in the Yes/No dialog
+		// use "(Fiji Is Just) ImageJ" as window title in the Yes/No dialog
 		for (CtConstructor ctor : clazz.getConstructors())
 			ctor.instrument(new ExprEditor() {
 				@Override
@@ -241,13 +267,13 @@ public class IJHacker extends JavassistHelper {
 		// Class ij.gui.Toolbar
 		clazz = get("ij.gui.Toolbar");
 
-		// use Fiji/ImageJ in the status line
+		// use "(Fiji Is Just) ImageJ" in the status line
 		method = clazz.getMethod("showMessage", "(I)V");
 		method.instrument(new ExprEditor() {
 			@Override
 			public void edit(MethodCall call) throws CannotCompileException {
 				if (call.getMethodName().equals("showStatus"))
-					call.replace("if ($1.startsWith(\"ImageJ \")) $1 = \"" + appName + "/\" + $1;"
+					call.replace("if ($1.startsWith(\"ImageJ \")) $1 = \"" + appPrefix + "/\" + $1;"
 						+ "ij.IJ.showStatus($1);");
 			}
 		});
@@ -265,7 +291,7 @@ public class IJHacker extends JavassistHelper {
 		// Class ij.plugin.CommandFinder
 		clazz = get("ij.plugin.CommandFinder");
 
-		// use Fiji in the window title
+		// Replace application name in the window title
 		if (hasMethod(clazz, "export", "()V")) {
 			method = clazz.getMethod("export", "()V");
 			replaceAppNameInNew(method, "ij.text.TextWindow", 1, 5);
@@ -667,7 +693,6 @@ public class IJHacker extends JavassistHelper {
 	}
 
 	private void dontReturnWhenEditorIsNull(MethodInfo info) throws CannotCompileException {
-		ConstPool constPool = info.getConstPool();
 		CodeIterator iterator = info.getCodeAttribute().iterator();
 	        while (iterator.hasNext()) try {
 	                int pos = iterator.next();

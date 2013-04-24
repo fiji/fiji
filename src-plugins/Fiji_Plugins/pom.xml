@@ -38,9 +38,14 @@
 			<version>${imagej.version}</version>
 		</dependency>
 		<dependency>
-			<groupId>com.jcraft</groupId>
-			<artifactId>jsch</artifactId>
-			<version>0.1.42</version>
+			<groupId>net.imagej</groupId>
+			<artifactId>ij-commands</artifactId>
+			<version>${imagej.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>sc.fiji</groupId>
+			<artifactId>fiji-compat</artifactId>
+			<version>${imagej.version}</version>
 		</dependency>
 	</dependencies>
 

@@ -98,6 +98,7 @@ public class User_Plugins implements PlugIn {
 	public void run(String arg) {
 		if ("update".equals(arg)) {
 			Menus.updateImageJMenus();
+			overrideCommands();
 			ClassLoader loader = IJ.getClassLoader();
 			if (loader != null && (loader instanceof FijiClassLoader))
 				return;
@@ -105,13 +106,6 @@ public class User_Plugins implements PlugIn {
 
 		installScripts();
 		installPlugins(path, "", menuPath);
-		/* make sure "Update Menus" runs _this_ plugin */
-		Menus.getCommands().put("Update Menus",
-			"fiji.User_Plugins(\"update\")");
-		Menus.getCommands().put("Refresh Menus",
-			"fiji.User_Plugins(\"update\")");
-		Menus.getCommands().put("Compile and Run...",
-			"fiji.Compile_and_Run");
 		if (IJ.getInstance() != null) {
 			Menu help = Menus.getMenuBar().getHelpMenu();
 			for (int i = help.getItemCount() - 1; i >= 0; i--) {
@@ -121,9 +115,7 @@ public class User_Plugins implements PlugIn {
 					item.setLabel("Refresh Menus");
 			}
 		}
-
-		// make sure "Edit>Options>Memory & Threads runs Fiji's plugin
-		Menus.getCommands().put("Memory & Threads...", "fiji.Memory");
+		overrideCommands();
 
 		SampleImageLoader.install();
 		Main.installRecentCommands();
@@ -131,7 +123,9 @@ public class User_Plugins implements PlugIn {
 		// install '{' as short cut for the Script Editor
 		Menus.getShortcuts().put(KeyEvent.VK_OPEN_BRACKET, "Script Editor");
 		Menus.getShortcuts().put(200 + KeyEvent.VK_OPEN_BRACKET, "Script Editor");
+	}
 
+	private static void overrideCommands() {
 		if (!Menus.getCommands().containsKey("Install PlugIn...")) {
 			Menus.getCommands().put("Install PlugIn...", "fiji.PlugInInstaller");
 			Menu plugins = getMenu("Plugins");
@@ -143,6 +137,16 @@ public class User_Plugins implements PlugIn {
 						break;
 					}
 		}
+		/* make sure "Update Menus" runs _this_ plugin */
+		Menus.getCommands().put("Update Menus",
+			"fiji.User_Plugins(\"update\")");
+		Menus.getCommands().put("Refresh Menus",
+			"fiji.User_Plugins(\"update\")");
+		Menus.getCommands().put("Compile and Run...",
+			"fiji.Compile_and_Run");
+		// make sure "Edit>Options>Memory & Threads runs Fiji's plugin
+		Menus.getCommands().put("Memory & Threads...", "fiji.Memory");
+
 	}
 
 	/**
