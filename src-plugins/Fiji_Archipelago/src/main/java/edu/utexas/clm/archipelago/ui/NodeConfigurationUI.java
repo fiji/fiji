@@ -34,7 +34,6 @@ import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.*;
-import java.util.List;
 
 public class NodeConfigurationUI extends Panel implements ActionListener
 {
@@ -69,6 +68,8 @@ public class NodeConfigurationUI extends Panel implements ActionListener
             {
                 shellChoice.add(shell.name());
             }
+            
+            shellChoice.select(param.getShell().name());
 
             shellChoicePanel.add(shellChoice);
 
@@ -160,7 +161,7 @@ public class NodeConfigurationUI extends Panel implements ActionListener
             
             for (NodeShell shell : shells)
             {
-                if (shell.description().equals(shellChoice.getSelectedItem()))
+                if (shell.name().equals(shellChoice.getSelectedItem()))
                 {
                     nodeParam.setShell(shell, currentShellParam);
                     //nodeParam.setShellParams(currentShellParam);
@@ -270,8 +271,9 @@ public class NodeConfigurationUI extends Panel implements ActionListener
                 gd.showDialog();
                 if (gd.wasOKed())
                 {
-                    manager.removeParam(param.getID());
+                    //manager.removeParam(param.getID());
                     removeNodePanel(this);
+                    
                 }
             }
         }
@@ -314,6 +316,7 @@ public class NodeConfigurationUI extends Panel implements ActionListener
     
     private final NodeManager manager;
     private final Vector<NodePanel> nodePanels;
+    private final Vector<Long> removedNodes;
     private final Panel centralPanel;
     
     
@@ -327,6 +330,7 @@ public class NodeConfigurationUI extends Panel implements ActionListener
         //final Dimension panelSize = new Dimension(512, 256);
         
         nodePanels = new Vector<NodePanel>();
+        removedNodes = new Vector<Long>();
         manager = nm;
         
         super.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
@@ -368,6 +372,7 @@ public class NodeConfigurationUI extends Panel implements ActionListener
     {
         nodePanels.remove(panel);
         centralPanel.remove(panel);
+        removedNodes.add(panel.getNodeParam().getID());
         super.validate();
     }
 
@@ -402,6 +407,13 @@ public class NodeConfigurationUI extends Panel implements ActionListener
                     cluster.addNode(param);
                 }
             }
+            
+            for (long id : ui.removedNodes)
+            {
+                cluster.removeNode(id);
+            }
+
+
         }
     }
 }

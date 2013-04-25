@@ -30,6 +30,7 @@ import ij.plugin.PlugIn;
 
 import java.io.*;
 import java.net.Socket;
+import java.util.Date;
 
 /**
  *
@@ -60,7 +61,7 @@ public class Fiji_Archipelago implements PlugIn
         main should only be called on client nodes. This sets up a socket connection with the
         cluster server, whose information is passed into args[] at the command line.
         */
-        System.out.println("Fiji Archipelago main called");
+        //System.out.println("Fiji Archipelago main called");
         
         
         if (args.length == 3 || args.length == 1)
@@ -117,21 +118,28 @@ public class Fiji_Archipelago implements PlugIn
             };
 
             long id = useSocket ? Long.parseLong(args[2]) : Long.parseLong(args[0]);
+            final File logFile = new File(System.getProperty("user.home") + "/cluster_" + id + ".log");
+            final PrintStream filePrinter = new PrintStream(new FileOutputStream(logFile));
 
-            FijiArchipelago.setDebugLogger(new PrintStreamLogger());
-            FijiArchipelago.setErrorLogger(new PrintStreamLogger());
-            FijiArchipelago.setInfoLogger(new PrintStreamLogger());
+            FijiArchipelago.setDebugLogger(new PrintStreamLogger(filePrinter));
+            FijiArchipelago.setErrorLogger(new PrintStreamLogger(filePrinter));
+            FijiArchipelago.setInfoLogger(new PrintStreamLogger(filePrinter));
 
+            FijiArchipelago.log("Main called at " + new Date());
+            
             if (useSocket)
             {
+                FijiArchipelago.log("Using socket");
                 s = new Socket(args[0], Integer.parseInt(args[1]));
                 is = s.getInputStream();
                 os = s.getOutputStream();
             }
             else
             {
+                FijiArchipelago.log("Using System.in/out");
                 is = System.in;
                 os = System.out;
+                System.setOut(filePrinter);
             }
             
             client = new ArchipelagoClient(id, is, os, xcEListener);
@@ -141,10 +149,14 @@ public class Fiji_Archipelago implements PlugIn
                 Thread.sleep(1000);
             }
             
+            FijiArchipelago.log("Client is inactive, closing...");
+            
             if (s != null)
             {
                 s.close();
             }
+            
+            filePrinter.close();
         }
         else
         {

@@ -825,8 +825,10 @@ public class Cluster implements NodeStateListener, NodeShellListener
                                     nodeLock.lock();
                                     waitNodes.remove(params);
                                     nodeLock.unlock();
-                                    FijiArchipelago.err("Could not start node " + params.getHost() +
-                                            ": " + see);
+                                    FijiArchipelago.err("Could not start node " +
+                                            params.getHost() + ": " + see);
+                                    FijiArchipelago.debug("Could not start node " +
+                                            params.getHost() + ": ", see);
                                 }
                             }
                         }.start();
@@ -1057,6 +1059,7 @@ public class Cluster implements NodeStateListener, NodeShellListener
                 if (t instanceof StreamCorruptedException ||
                         t instanceof EOFException)
                 {
+                    FijiArchipelago.debug("", t);
                     mxc.close();
                     return false;
                 }
@@ -1213,17 +1216,41 @@ public class Cluster implements NodeStateListener, NodeShellListener
     private void addNode(ClusterNode node)
     {
         nodeLock.lock();
-        waitNodes.remove(node.getParam());
-        nodes.add(node);        
+        if (waitNodes.contains(node.getParam()))
+        {
+            waitNodes.remove(node.getParam());            
+            nodes.add(node);
+        }
+        else
+        {
+            // If the param was not in waitNodes, this node was remove()'ed from the Cluster after
+            // it was started, but before it's Streams became ready.
+            node.close();
+        }
         nodeLock.unlock();
         node.addListener(this);
     }
 
-    public void removeNode(ClusterNode node)
+    public void removeNode(long id)
     {
         nodeLock.lock();
-        nodes.remove(node);
-        nodeManager.removeParam(node.getID());
+        NodeManager.NodeParameters param = nodeManager.getParam(id);
+        ClusterNode node = getNode(id);
+        if (node != null)
+        {
+            node.close();
+            nodes.remove(param.getNode());
+        }
+        else if (startQueue.contains(param))
+        {
+            startQueue.remove(param);
+        }
+        else if (waitNodes.contains(param))
+        {
+            waitNodes.remove(param);
+        }
+
+        nodeManager.removeParam(id);
         nodeLock.unlock();
     }
     
@@ -1341,7 +1368,7 @@ public class Cluster implements NodeStateListener, NodeShellListener
                     }
                 }
                 
-                removeNode(node);                
+                removeNode(node.getID());
                 
                 if (runningNodes.decrementAndGet() <= 0)
                 {
@@ -1373,6 +1400,7 @@ public class Cluster implements NodeStateListener, NodeShellListener
 
     private boolean nodesWaiting()
     {
+/*
         for (NodeManager.NodeParameters param : nodeManager.getParams())
         {
             if (param.getNode() == null)
@@ -1382,6 +1410,12 @@ public class Cluster implements NodeStateListener, NodeShellListener
         }
         
         return false;
+*/
+        boolean huh;
+        nodeLock.lock();
+        huh = !waitNodes.isEmpty() || !startQueue.isEmpty();
+        nodeLock.unlock();
+        return huh;
     }
     
     public void waitForAllNodes(final long timeout) throws InterruptedException, TimeoutException
@@ -1541,7 +1575,7 @@ public class Cluster implements NodeStateListener, NodeShellListener
     public void start()
     {
         FijiArchipelago.debug("Cluster: start called");
-        Thread.dumpStack();
+
         if (getState() == ClusterState.INITIALIZED)
         {
             FijiArchipelago.debug("Scheduler alive? :" + scheduler.isAlive());

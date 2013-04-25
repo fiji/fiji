@@ -20,6 +20,7 @@ package edu.utexas.clm.archipelago.network.shell;
 
 import com.jcraft.jsch.JSchException;
 import edu.utexas.clm.archipelago.Cluster;
+import edu.utexas.clm.archipelago.FijiArchipelago;
 import edu.utexas.clm.archipelago.exception.ShellExecutionException;
 import edu.utexas.clm.archipelago.listen.NodeShellListener;
 import edu.utexas.clm.archipelago.network.node.NodeManager;
@@ -42,17 +43,18 @@ public class SocketNodeShell extends SSHNodeShell
                 " 2>&1 > ~/" + param.getHost() + "_" + param.getID() + ".log";    
     }
 
-    public boolean start(final NodeManager.NodeParameters param, final NodeShellListener listener)
+    public boolean startShell(final NodeManager.NodeParameters param, final NodeShellListener listener)
             throws ShellExecutionException
     {
-
+        FijiArchipelago.debug("Starting Socket shell on " + param.getHost());
         try
         {
-            final JSchUtility util = new JSchUtility(param, listener, getArguments(param, listener));
-
-            if (util.fileExists())
+            final String execFile = param.getExecRoot() + "/" +
+                    param.getShellParams().getString("executable");
+            if (JSchUtility.fileExists(param, execFile))
             {
-                util.exec();
+                final String command = execFile + " " + getArguments(param, listener);
+                new JSchUtility(param, listener, command).start();
                 return true;
             }
             else
@@ -64,6 +66,10 @@ public class SocketNodeShell extends SSHNodeShell
         {
             handleJSE(jse, param);
             return false;
+        }
+        catch (Exception e)
+        {
+            throw new ShellExecutionException(e);
         }
     }
     

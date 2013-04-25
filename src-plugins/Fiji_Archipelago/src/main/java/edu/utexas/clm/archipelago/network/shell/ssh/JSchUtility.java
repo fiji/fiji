@@ -1,43 +1,41 @@
 package edu.utexas.clm.archipelago.network.shell.ssh;
 
 import com.jcraft.jsch.*;
+import edu.utexas.clm.archipelago.FijiArchipelago;
 import edu.utexas.clm.archipelago.exception.ShellExecutionException;
 import edu.utexas.clm.archipelago.listen.NodeShellListener;
 import edu.utexas.clm.archipelago.network.node.NodeManager;
-import edu.utexas.clm.archipelago.network.shell.NodeShellParameters;
 
 import java.io.File;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.ReentrantLock;
 
 
-public class JSchUtility
+public class JSchUtility extends Thread
 {
-
-    final JSch jsch;
-    final UserInfo ui;
-    final Session session;
-    final JSchExecThread jset;
-    final int port;
-    final String keyfile;
-    final String executablePath;
-    final String arguments;
-    final NodeShellListener listener;
+    private final NodeShellListener listener;
+    private final Session session;
+    private final Channel channel;
+    private final long node;
     
-    
-    public JSchUtility(NodeManager.NodeParameters param, NodeShellListener listener, String args)
+    public JSchUtility(final NodeManager.NodeParameters param,
+                       final NodeShellListener listener,
+                       final String command)
             throws ShellExecutionException
     {
+        FijiArchipelago.debug("Creating JSchUtility to run " + command + " on " + param.getHost());
         try
         {
-            final String eroot = param.getExecRoot();
+            final JSch jsch = new JSch();
+            final UserInfo ui = new NodeShellUserInfo();
+            final int port = param.getShellParams().getInteger("ssh-port");
+            final String keyfile = param.getShellParams().getString("keyfile");
+
             this.listener = listener;
-            arguments = args;
-            jsch = new JSch();
-            ui = new NodeShellUserInfo();
 
-            port = param.getShellParams().getInteger("ssh-port");
-            keyfile = param.getShellParams().getString("keyfile");
-            executablePath = eroot + "/" + param.getShellParams().getString("executable");
-
+            node = param.getID();
 
             jsch.addIdentity(new File(keyfile).getAbsolutePath());
 
@@ -45,8 +43,11 @@ public class JSchUtility
 
             session.setUserInfo(ui);
             session.connect();
+            
+            channel = session.openChannel("exec");
 
-            jset = new JSchExecThread(param.getID(), session);
+            ((ChannelExec)channel).setCommand(command);
+            ((ChannelExec)channel).setErrStream(System.err);
         }
         catch (Exception e)
         {
@@ -54,26 +55,86 @@ public class JSchUtility
         }
     }
     
-    public Session getSession()
+    public Channel getChannel()
     {
-        return session;
+        return channel;
+    }
+
+    public void run()
+    {
+        String host = "";
+        try
+        {
+            host = channel.getSession().getHost();
+
+            FijiArchipelago.debug(host + ": connecting channel");
+            channel.connect();
+
+            FijiArchipelago.debug(host + ": connect() returned");
+
+            while (channel.isConnected())
+            {
+                Thread.sleep(1000);
+            }
+
+            FijiArchipelago.debug(host + ": channel disconnected");
+
+            listener.execFinished(node, null, channel.getExitStatus());
+        }
+        catch (JSchException jse)
+        {
+            FijiArchipelago.debug(host + ": ", jse);
+            listener.execFinished(node, jse, -1);
+        }
+        catch (InterruptedException ie)
+        {
+            FijiArchipelago.debug(host + ": Interrupted");
+            listener.execFinished(node, ie, -1);
+        }
+
+        channel.disconnect();
+        session.disconnect();
     }
     
-    public JSch getJSch()
+    public static boolean fileExists(final NodeManager.NodeParameters param,
+                                     final String file)
+            throws ShellExecutionException
     {
-        return jsch;
+        final AtomicInteger result = new AtomicInteger(-1);
+        final ReentrantLock lock = new ReentrantLock();
+        final Thread t = Thread.currentThread();
+
+        FijiArchipelago.debug("JSchUtility: testing for existence of " + file + " on " +
+                param.getHost());
+
+        final NodeShellListener existListener = new NodeShellListener() {
+            public void execFinished(final long nodeID, final Exception e, final int status)
+            {
+                lock.lock();
+                result.set(status);
+                t.interrupt();
+                lock.unlock();
+            }
+
+            public void ioStreamsReady(InputStream is, OutputStream os) {}
+        };
+
+        try
+        {
+            lock.lock();
+            new JSchUtility(param, existListener, "test -e " + file).start();
+            lock.unlock();
+            Thread.sleep(Long.MAX_VALUE);
+            // The Universe ends, and we return false.
+            return false;
+        }
+        catch (InterruptedException ie)
+        {
+            FijiArchipelago.debug("Testing for file " + file + " on " + param.getHost() +
+                    " resulted in code " + result.get());
+            // We expect to be interrupted
+            return (result.get() == 0);
+        }
     }
-
-    public boolean fileExists() throws JSchException
-    {
-        return jset.fileExists(ui, executablePath);
-    }
-
-    public Channel exec() throws JSchException
-    {
-        return jset.exec(ui, executablePath + " " + arguments, listener);
-    }
-
-
-
+    
 }

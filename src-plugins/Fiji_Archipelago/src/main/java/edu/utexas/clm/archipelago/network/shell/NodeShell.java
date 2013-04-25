@@ -48,7 +48,7 @@ public interface NodeShell
      * @return true if started successfully.
      * @throws ShellExecutionException if an error occurs while attempting to
      */
-    public boolean start(final NodeManager.NodeParameters param, final NodeShellListener listener)
+    public boolean startShell(final NodeManager.NodeParameters param, final NodeShellListener listener)
             throws ShellExecutionException;
     
     public NodeShellParameters defaultParameters();

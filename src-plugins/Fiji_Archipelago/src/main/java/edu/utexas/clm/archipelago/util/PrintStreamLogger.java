@@ -41,5 +41,6 @@ public class PrintStreamLogger implements EasyLogger
     public synchronized void log(final String msg)
     {
         stream.println(msg);
+        stream.flush();
     }
 }

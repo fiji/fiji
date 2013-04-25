@@ -107,7 +107,7 @@ public final class FijiArchipelago
     public static synchronized void log(final String s)
     {
         logger.log(s);
-        debugLogger.log(s);
+        //debugLogger.log(s);
     }
     
     public static synchronized void err(final String s)
@@ -120,11 +120,12 @@ public final class FijiArchipelago
         debugLogger.log(s);
     }
     
-    public static synchronized void debug(final String s, final Exception e)
+    public static synchronized void debug(final String s, final Throwable e)
     {        
-        final PrintWriter pw = new PrintWriter(new StringWriter());
+        final StringWriter sw = new StringWriter();
+        final PrintWriter pw = new PrintWriter(sw);
         e.printStackTrace(pw);
-        debugLogger.log(s + " " + pw.toString());
+        debugLogger.log(s + " " + sw);
     }
 
     public static synchronized long getUniqueID()

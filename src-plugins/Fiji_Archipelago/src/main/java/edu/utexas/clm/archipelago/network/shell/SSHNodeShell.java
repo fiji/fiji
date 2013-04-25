@@ -2,6 +2,7 @@ package edu.utexas.clm.archipelago.network.shell;
 
 
 import com.jcraft.jsch.*;
+import edu.utexas.clm.archipelago.FijiArchipelago;
 import edu.utexas.clm.archipelago.exception.ShellExecutionException;
 import edu.utexas.clm.archipelago.listen.NodeShellListener;
 import edu.utexas.clm.archipelago.network.node.NodeManager;
@@ -25,7 +26,7 @@ public class SSHNodeShell implements NodeShell
         return "--jar-path " + eroot +
                 "/plugins/ --jar-path " + eroot +"/jars/ --classpath " + eroot +
                 " --allow-multiple --main-class edu.utexas.clm.archipelago.Fiji_Archipelago "
-                + param.getID() + " 2>&1 > ~/" + param.getHost() + "_" + param.getID() + ".log";
+                + param.getID();
     }
     
     protected void handleJSE(final JSchException jse, final NodeManager.NodeParameters param)
@@ -44,19 +45,42 @@ public class SSHNodeShell implements NodeShell
         throw new ShellExecutionException(jse);
     }
     
-    public boolean start(final NodeManager.NodeParameters param, final NodeShellListener listener)
+    public boolean startShell(final NodeManager.NodeParameters param, final NodeShellListener listener)
             throws ShellExecutionException
     {
-
+        FijiArchipelago.debug("Starting SSH shell on " + param.getHost());
         try
         {
-            final JSchUtility util = new JSchUtility(param, listener, getArguments(param, listener));
-
-            if (util.fileExists())
+            final String execFile = param.getExecRoot() + "/" +
+                    param.getShellParams().getString("executable");
+            if (JSchUtility.fileExists(param, execFile))
             {
-                Channel c = util.exec();
+                final String command = execFile + " " + getArguments(param, listener);
+                final JSchUtility util = new JSchUtility(param, listener, command);
+                int waitCount = 0;
+                Channel c = util.getChannel();
+                util.start();
+                
+                while (!c.isConnected())
+                {
+                    if (waitCount > 600)
+                    {
+                        throw new ShellExecutionException("Timed out waiting for ssh connection");
+                    }
+                    try
+                    {
+                        Thread.sleep(100);
+                    }
+                    catch (InterruptedException ie)
+                    {
+                        throw new ShellExecutionException(ie);
+                    }
+                    waitCount++;
+                }
+                
                 InputStream is = c.getInputStream();
                 OutputStream os = c.getOutputStream();
+                
                 listener.ioStreamsReady(is, os);
                 return true;
             }
@@ -73,6 +97,10 @@ public class SSHNodeShell implements NodeShell
         catch (IOException ioe)
         {
             throw new ShellExecutionException(ioe);
+        }
+        catch (Exception e)
+        {
+            throw new ShellExecutionException(e);
         }
     }
     

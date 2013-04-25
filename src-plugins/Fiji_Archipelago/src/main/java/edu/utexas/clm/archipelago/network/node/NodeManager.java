@@ -84,13 +84,16 @@ public class NodeManager
                 throws ShellExecutionException
         {
 
-            if (shell != null && shell.start(this, listener))
+            if (shell != null && shell.startShell(this, listener))
             {
+                FijiArchipelago.debug("Started shell " + shell.name() + " on " + host);
                 editable = false;
                 return true;
             }
             else
             {
+                String shellName = shell == null ? "null" : shell.name();
+                FijiArchipelago.debug("Could not start shell " + shellName + " on " + host);
                 return false;
             }
         }
@@ -217,7 +220,7 @@ public class NodeManager
     {
         return nodeTable.get(id);
     }
-    
+
     public NodeParameters getDefaultParameters()
     {
         return defaultParameters;

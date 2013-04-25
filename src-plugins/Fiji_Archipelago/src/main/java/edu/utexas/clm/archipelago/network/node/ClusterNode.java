@@ -157,20 +157,39 @@ public class ClusterNode implements TransceiverListener
     {
         int waitCnt = 0;
 
+        FijiArchipelago.debug("Setting IO Streams for a new Cluster Node");
+        
         xc = new MessageXC(is, os, this, xcEListener);
         xc.queueMessage(MessageType.GETID);
         
         idSet.set(false);
         cpuSet.set(false);
 
+        FijiArchipelago.debug("Waiting for id...");
         while (!idSet.get() && !cpuSet.get())
         {
-            Thread.sleep(100);
-            if (waitCnt++ > 120)
+            String message = "Waiting for ";
+            if (!idSet.get())
             {
+                message += "id ";
+            }
+            if (!cpuSet.get())
+            {
+                message += "ncpu";
+            }
+            
+            FijiArchipelago.debug(message);
+            
+            Thread.sleep(1000);
+            if (waitCnt++ > 15)
+            {
+                FijiArchipelago.debug("Waited too long, giving up.");
                 throw new TimeoutException("Timed out waiting for remote node");
             }
         }
+
+        FijiArchipelago.debug("Cluster Node " + getHost() + " ready to go");
+
         doSyncEnvironment();
         setState(ClusterNodeState.ACTIVE);
     }
@@ -295,18 +314,21 @@ public class ClusterNode implements TransceiverListener
                     nodeParam = Cluster.getCluster().getNodeManager().getParam(id);
                     FijiArchipelago.debug("Got id message. Setting ID to " + id + ". Param: " + nodeParam);
                     nodeID = id;
+                    idSet.set(true);
+                    xc.setId(nodeID);
                     nodeParam.setNode(this);
 
                     if (nodeParam.getThreadLimit() <= 0)
                     {
+                        FijiArchipelago.debug("Queueing ncpu request...");
                         xc.queueMessage(MessageType.NUMTHREADS);
+                        FijiArchipelago.debug("Done.");
                     }
                     else
                     {
                         cpuSet.set(true);
                     }
 
-                    idSet.set(true);
                     break;
 
                 case PROCESS:

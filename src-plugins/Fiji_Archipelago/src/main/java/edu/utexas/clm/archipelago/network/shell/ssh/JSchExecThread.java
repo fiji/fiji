@@ -74,8 +74,11 @@ public class JSchExecThread
                         String command,
                         NodeShellListener listener) throws JSchException
     {
-        session.setUserInfo(ui);
-        session.connect();
+        if (!session.isConnected())
+        {
+            session.setUserInfo(ui);
+            session.connect();
+        }
 
         ((ChannelExec)channel).setCommand(command);
 

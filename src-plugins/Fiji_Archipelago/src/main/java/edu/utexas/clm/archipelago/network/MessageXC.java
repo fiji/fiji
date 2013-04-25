@@ -49,6 +49,8 @@ public class MessageXC
                     // Don't debug beats, or they'll fill your log
                     if (message.type != MessageType.BEAT)
                     {
+                        FijiArchipelago.debug("RX: " + id + " got message " +
+                                ClusterMessage.messageToString(message));
                         if (message.type == MessageType.PROCESS)
                         {
                             ProcessManager pm = (ProcessManager)message.o;
@@ -94,6 +96,11 @@ public class MessageXC
                 {
                     try
                     {
+                        if (nextMessage.type != MessageType.BEAT)
+                        {
+                            FijiArchipelago.debug("TX: " + id + " writing message " +
+                                    ClusterMessage.messageToString(nextMessage));
+                        }
                         objectOutputStream.writeObject(nextMessage);
                         objectOutputStream.flush();
                         objectOutputStream = new ObjectOutputStream(outStream);
@@ -152,9 +159,11 @@ public class MessageXC
                      final long wait,
                      TimeUnit unit) throws IOException
     {
+        FijiArchipelago.debug("Creating Message Transciever");
         messageQ = new ArrayBlockingQueue<ClusterMessage>(16, true);
         objectOutputStream = new ObjectOutputStream(outStream);
         objectInputStream =  new ObjectInputStream(inStream);
+        FijiArchipelago.debug("XC: streams are set");
         this.inStream = inStream;
         this.outStream = outStream;
         active = new AtomicBoolean(true);

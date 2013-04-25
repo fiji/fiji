@@ -121,12 +121,14 @@ public class ArchipelagoClient implements TransceiverListener
     public ArchipelagoClient(long id, InputStream inStream, OutputStream outStream,
                              TransceiverExceptionListener tel) throws IOException
     {
+        FijiArchipelago.log("Starting Archipelago Client...");
         try
         {
             xcEListener = tel;
 
             clientId = id;
             xc = new MessageXC(inStream, outStream, this, xcEListener);
+            xc.setId(id);
             beatThread = new HeartBeatThread(1000, Runtime.getRuntime());
 
             runningThreads = new Vector<ProcessThread>();
@@ -138,6 +140,7 @@ public class ArchipelagoClient implements TransceiverListener
             FijiArchipelago.log("Caught an IOE: " + ioe);
             throw ioe;
         }
+        FijiArchipelago.log("Archipelago Client is Active");
     }
     
     public void handleMessage(final ClusterMessage cm) {
@@ -145,11 +148,17 @@ public class ArchipelagoClient implements TransceiverListener
         final MessageType type = cm.type;
         final Object object = cm.o;
 
+        FijiArchipelago.log("Got message " + ClusterMessage.messageToString(cm));
+        
         try
         {
             switch (type)
             {
                 case PROCESS:
+                    
+                    FijiArchipelago.log("Println'ing grossness now");
+                    System.out.println("grossness");
+                    
                     final ProcessManager<?> pm = (ProcessManager<?>)object;
                     final ProcessThread pt = new ProcessThread(pm);
                     runningThreads.add(pt);
@@ -240,6 +249,7 @@ public class ArchipelagoClient implements TransceiverListener
     {
         if (active.get())
         {
+            FijiArchipelago.log("Closing Client");
             active.set(false);
             
             for (ProcessThread t : runningThreads)
