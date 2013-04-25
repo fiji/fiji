@@ -262,15 +262,32 @@ public class CustomStackWindow extends StackWindow
 		int x2 = x1 + bounds.width <= w ? x1 + bounds.width : w;
 		int y2 = y1 + bounds.height <= h ? y1 + bounds.height : h;
 
-		for(int i = x1; i < x2; i++){
-			for(int j = y1; j < y2; j++) {
-				if(roi.contains(i,j)) {
-					int oldID = labP.get(i, j);
-					if(!sidebar.getMaterials().
-							isLocked(oldID))
-						labP.set(i,j,materialID);
+		boolean hasLockedMaterial = false;
+		for(int i = 0; i < sidebar.getMaterials().getItemCount(); ++i) {
+			if(sidebar.getMaterials().isLocked(i)) {
+				hasLockedMaterial = true;
+				break;
+			}
+		}
+		if(hasLockedMaterial) {
+			for(int i = x1; i < x2; i++){
+				for(int j = y1; j < y2; j++) {
+					if(roi.contains(i,j)) {
+						int oldID = labP.get(i, j);
+						if(!sidebar.getMaterials().isLocked(oldID))
+							labP.set(i,j,materialID);
+						// TODO: Probably much faster:
+						// 1) Fill with target color
+						// 2) Fill again with old color at
+						// intersection of locked (old) and new
+						// material.
+					}
 				}
 			}
+		}
+		else {
+			labP.setColor(materialID);
+			labP.fill(roi);
 		}
 		cc.updateSlice(slice);
 	}
