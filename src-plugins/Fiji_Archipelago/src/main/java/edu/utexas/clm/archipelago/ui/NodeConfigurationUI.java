@@ -404,7 +404,7 @@ public class NodeConfigurationUI extends Panel implements ActionListener
                 final NodeManager.NodeParameters param = np.getNodeParam();
                 if (!existingParameters.contains(param))
                 {
-                    cluster.addNode(param);
+                    cluster.addNodeToStart(param);
                 }
             }
             

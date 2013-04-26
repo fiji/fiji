@@ -153,7 +153,7 @@ public class ClusterXML
         {
             try
             {
-                cluster.addNode(xmlToNodeParameter(cluster, (Element) clusterNodes.item(i)));
+                cluster.addNodeToStart(xmlToNodeParameter(cluster, (Element) clusterNodes.item(i)));
             }
             catch (Exception e)
             {

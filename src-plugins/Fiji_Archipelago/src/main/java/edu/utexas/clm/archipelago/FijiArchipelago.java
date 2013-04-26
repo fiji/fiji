@@ -18,12 +18,22 @@
 
 package edu.utexas.clm.archipelago;
 
+import edu.utexas.clm.archipelago.network.client.ArchipelagoClient;
 import edu.utexas.clm.archipelago.ui.ClusterUI;
 import edu.utexas.clm.archipelago.util.*;
+import ij.gui.GenericDialog;
 
+import java.awt.Dimension;
+import java.awt.Frame;
+import java.awt.Label;
+import java.awt.Panel;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.io.File;
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.net.Socket;
 import java.util.concurrent.atomic.AtomicLong;
 /**
  *
@@ -133,7 +143,123 @@ public final class FijiArchipelago
         return nextID.incrementAndGet();
     }
     
+    public static boolean runClientGUI()
+    {
+        GenericDialog gd = new GenericDialog("Connect to Cluster as Client");
+        gd.addStringField("Host", "");
+        gd.addNumericField("Port", 0xFAC, 0);
+        gd.showDialog();
 
+        try
+        {
+            if (gd.wasOKed())
+            {
+                FijiArchipelago.setDebugLogger(new PrintStreamLogger());
+                FijiArchipelago.setInfoLogger(new IJLogger());
+                FijiArchipelago.setErrorLogger(new IJPopupLogger());
+                
+                startClient(gd.getNextString(), (int) gd.getNextNumber(), true);
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+        catch (IOException ioe)
+        {
+            FijiArchipelago.err("Could not start client: " + ioe);
+            FijiArchipelago.debug("Could not start client: ", ioe);
+            return false;
+        }
+    }
+    
+    public static ArchipelagoClient startClient(
+            final String host, final int port, final boolean ui)
+            throws IOException
+    {
+        return startClient(host, port, -1, ui);
+    }
+    
+    public static ArchipelagoClient startClient(
+            final String host, final int port, final long id, final boolean ui)
+            throws IOException
+    {
+        final Socket s = new Socket(host, port);
+        final ArchipelagoClient client = new ArchipelagoClient(id,
+                s.getInputStream(), s.getOutputStream());
+        if (ui)
+        {
+            final Dimension size = new Dimension(256, 48); 
+            final Frame frame = new Frame("Archipelago client");
+            final Panel panel = new Panel();
+            final Label label = new Label("Client is running");
+            
+            panel.add(label);
+            frame.add(panel);
+            frame.setMinimumSize(size);
+            frame.setSize(size);
+            frame.setPreferredSize(size);
+            panel.setMinimumSize(size);
+            panel.setSize(size);
+            panel.setPreferredSize(size);
+            
+            frame.validate();
+            frame.setVisible(true);
+            
+            frame.addWindowListener(new WindowAdapter() {
+                public void windowClosing(WindowEvent e)
+                {
+                    GenericDialog gd = new GenericDialog("Sure?");
+                    gd.addMessage("Close the client?");
+                    gd.showDialog();
+                    if (gd.wasOKed())
+                    {
+                        frame.setVisible(false);
+                        frame.removeAll();
+                        client.close();
+                        try
+                        {
+                            s.close();
+                        }
+                        catch (IOException ioe)
+                        {/**/}
+                    }
+                }
+            });
+            
+            new Thread()
+            {
+                public void run()
+                {
+                    try
+                    {
+                        while (client.isActive())
+                        {
+                            Thread.sleep(100);
+                        }
+                        label.setText("Client has stopped.");
+                        frame.validate();
+                    }
+                    catch (InterruptedException ie)
+                    {
+                        client.close();
+                        try
+                        {
+                            s.close();
+                        }
+                        catch (IOException ioe)
+                        {/**/}
+                        frame.removeAll();
+                        frame.setVisible(false);
+                    }
+                }
+            }.start();
+
+        }
+        
+        return client;
+    }
 
     public static boolean runClusterGUI(final String file)
     {

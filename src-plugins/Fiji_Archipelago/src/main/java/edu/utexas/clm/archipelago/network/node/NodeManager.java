@@ -24,7 +24,7 @@ import edu.utexas.clm.archipelago.exception.ShellExecutionException;
 import edu.utexas.clm.archipelago.listen.NodeShellListener;
 import edu.utexas.clm.archipelago.network.shell.NodeShell;
 import edu.utexas.clm.archipelago.network.shell.NodeShellParameters;
-import edu.utexas.clm.archipelago.network.shell.SocketNodeShell;
+import edu.utexas.clm.archipelago.network.shell.SSHNodeShell;
 
 import java.util.ArrayList;
 import java.util.Hashtable;
@@ -211,7 +211,7 @@ public class NodeManager
 
     public NodeManager()
     {
-        NodeShell defaultShell = SocketNodeShell.getShell();
+        NodeShell defaultShell = SSHNodeShell.getShell();
         defaultParameters = new NodeParameters("", "", defaultShell , "", "");
         nodeTable = new Hashtable<Long, NodeParameters>();
     }

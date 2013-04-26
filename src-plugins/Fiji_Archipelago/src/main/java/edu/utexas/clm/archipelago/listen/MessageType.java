@@ -40,5 +40,6 @@ public enum MessageType
     ERROR,
     NUMTHREADS,
     MBRAM,
-    BEAT
+    BEAT,
+    HOSTNAME
 }

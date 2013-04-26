@@ -18,14 +18,11 @@
 
 package edu.utexas.clm.archipelago;
 
-import edu.utexas.clm.archipelago.listen.MessageType;
-import edu.utexas.clm.archipelago.network.MessageXC;
 import edu.utexas.clm.archipelago.network.client.ArchipelagoClient;
 import edu.utexas.clm.archipelago.ui.ClusterUI;
 import edu.utexas.clm.archipelago.util.IJLogger;
 import edu.utexas.clm.archipelago.util.IJPopupLogger;
 import edu.utexas.clm.archipelago.util.PrintStreamLogger;
-import edu.utexas.clm.archipelago.util.XCErrorAdapter;
 import ij.plugin.PlugIn;
 
 import java.io.*;
@@ -49,6 +46,10 @@ public class Fiji_Archipelago implements PlugIn
             FijiArchipelago.setErrorLogger(new IJPopupLogger());
             new ClusterUI();
         }
+        else if (arg.equals("client"))
+        {
+            FijiArchipelago.runClientGUI();
+        }
         else if (!arg.equals(""))
         {
             FijiArchipelago.runClusterGUI(arg);
@@ -61,108 +62,66 @@ public class Fiji_Archipelago implements PlugIn
         main should only be called on client nodes. This sets up a socket connection with the
         cluster server, whose information is passed into args[] at the command line.
         */
-        //System.out.println("Fiji Archipelago main called");
-        
-        
-        if (args.length == 3 || args.length == 1)
+
+        InputStream is;
+        OutputStream os;
+
+        ArchipelagoClient client;
+        long id = -1;
+
+        File logFile;
+        PrintStream filePrinter;
+        Socket s = null;
+
+        FijiArchipelago.log("Main called at " + new Date());
+
+        switch (args.length)
         {
-            final boolean useSocket = args.length == 3;
-            InputStream is;
-            OutputStream os;
-            
-            Socket s = null;
-            ArchipelagoClient client;
-
-            XCErrorAdapter xcEListener = new XCErrorAdapter()
-            {
-                protected boolean handleCustomRX(final Throwable t, final MessageXC xc)
-                {
-                    if (t instanceof ClassCastException)
-                    {
-                        reportRX(t, t.toString(), xc);
-                        xc.queueMessage(MessageType.ERROR, t);
-                        return false;
-                    }
-                    else if (t instanceof EOFException)
-                    {
-                        reportRX(t, "Received EOF", xc);
-                        xc.close();
-                        return false;
-                    }
-                    else if (t instanceof StreamCorruptedException)
-                    {
-                        reportRX(t, "Stream corrupted: " + t, xc);
-                        xc.close();
-                        return false;
-                    }
-                    else
-                    {
-                        xc.queueMessage(MessageType.ERROR, t);
-                        return true;
-                    }
-                }
-                
-                protected boolean handleCustomTX(final Throwable t, final MessageXC xc)
-                {
-                    if (t instanceof IOException)
-                    {
-                        reportTX(t, t.toString(), xc);
-                        xc.close();                        
-                    }
-                    else
-                    {
-                        xc.queueMessage(MessageType.ERROR, t);
-                    }
-                    return true;
-                }
-            };
-
-            long id = useSocket ? Long.parseLong(args[2]) : Long.parseLong(args[0]);
-            final File logFile = new File(System.getProperty("user.home") + "/cluster_" + id + ".log");
-            final PrintStream filePrinter = new PrintStream(new FileOutputStream(logFile));
-
-            FijiArchipelago.setDebugLogger(new PrintStreamLogger(filePrinter));
-            FijiArchipelago.setErrorLogger(new PrintStreamLogger(filePrinter));
-            FijiArchipelago.setInfoLogger(new PrintStreamLogger(filePrinter));
-
-            FijiArchipelago.log("Main called at " + new Date());
-            
-            if (useSocket)
-            {
-                FijiArchipelago.log("Using socket");
+            case 3:
+                id = Long.parseLong(args[2]);
+            case 2:
                 s = new Socket(args[0], Integer.parseInt(args[1]));
                 is = s.getInputStream();
                 os = s.getOutputStream();
-            }
-            else
-            {
-                FijiArchipelago.log("Using System.in/out");
+
+                break;
+            case 1:
+                id = Long.parseLong(args[0]);
                 is = System.in;
                 os = System.out;
-                System.setOut(filePrinter);
-            }
-            
-            client = new ArchipelagoClient(id, is, os, xcEListener);
-            
-            while (client.isActive())
-            {
-                Thread.sleep(1000);
-            }
-            
-            FijiArchipelago.log("Client is inactive, closing...");
-            
-            if (s != null)
-            {
-                s.close();
-            }
-            
-            filePrinter.close();
+
+                break;
+            default:
+                System.err.println("Usage: Fiji_Archipelago [host port] [ID]");
+                return;
         }
-        else
+
+
+        logFile = new File(System.getProperty("user.home") + "/cluster_" + id + ".log");
+        filePrinter = new PrintStream(new FileOutputStream(logFile));
+
+        System.setOut(filePrinter);
+
+        FijiArchipelago.setDebugLogger(new PrintStreamLogger(filePrinter));
+        FijiArchipelago.setErrorLogger(new PrintStreamLogger(filePrinter));
+        FijiArchipelago.setInfoLogger(new PrintStreamLogger(filePrinter));
+        
+        FijiArchipelago.log(args.length == 1 ? "Using System.in/out" : "Using socket");
+        
+        client = new ArchipelagoClient(id, is, os);
+
+        while (client.isActive())
         {
-            System.err.println("Usage: Fiji_Archipelago [host port] ID");
+            Thread.sleep(1000);
         }
 
+        FijiArchipelago.log("Client is inactive, closing...");
 
+        if (s != null)
+        {
+            s.close();
+        }
+
+        filePrinter.close();
     }
 }

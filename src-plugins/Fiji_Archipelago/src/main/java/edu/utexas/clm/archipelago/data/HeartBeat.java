@@ -25,6 +25,8 @@ import java.io.Serializable;
  */
 public class HeartBeat implements Serializable
 {
+    private static final long serialVersionUID = -5771380117512667497L;
+
     public static final int MB = 1048576;
     
     public final int ramMBAvailable;

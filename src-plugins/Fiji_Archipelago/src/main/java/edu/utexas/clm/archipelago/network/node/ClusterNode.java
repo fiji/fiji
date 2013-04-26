@@ -54,9 +54,10 @@ public class ClusterNode implements TransceiverListener
     private ClusterNodeState state;
     private final Vector<NodeStateListener> stateListeners;
     private final TransceiverExceptionListener xcEListener;
+    private final NodeManager manager;
 
    
-    public ClusterNode(final TransceiverExceptionListener tel)
+    public ClusterNode(final TransceiverExceptionListener tel, final NodeManager nodeManager)
     {
         xc = null;
         lastBeatTime = 0;
@@ -76,6 +77,7 @@ public class ClusterNode implements TransceiverListener
         nodeParam = null;
         stateListeners = new Vector<NodeStateListener>();
         xcEListener = tel;
+        manager = nodeManager;
     }
     
     private void doSyncEnvironment()
@@ -311,9 +313,20 @@ public class ClusterNode implements TransceiverListener
             {
                 case GETID:
                     Long id = (Long)object;
-                    nodeParam = Cluster.getCluster().getNodeManager().getParam(id);
+                    
                     FijiArchipelago.debug("Got id message. Setting ID to " + id + ". Param: " + nodeParam);
-                    nodeID = id;
+                    if (id >=0)
+                    {
+                        nodeParam = manager.getParam(id);
+                        nodeID = id;
+                    }
+                    else
+                    {
+                        nodeParam = manager.newParam();                        
+                        nodeID = nodeParam.getID();                        
+                        xc.queueMessage(MessageType.SETID, nodeID);
+                        xc.queueMessage(MessageType.HOSTNAME);
+                    }
                     idSet.set(true);
                     xc.setId(nodeID);
                     nodeParam.setNode(this);
@@ -344,6 +357,12 @@ public class ClusterNode implements TransceiverListener
                     int n = (Integer)object;
                     nodeParam.setThreadLimit(n);
                     cpuSet.set(true);
+                    break;
+                
+                case HOSTNAME:
+                    String name = (String)object;
+                    nodeParam.setHost(name);
+
                     break;
                 
                 case PING:                
@@ -425,7 +444,7 @@ public class ClusterNode implements TransceiverListener
     
     public synchronized void close()
     {        
-        if (state != ClusterNodeState.STOPPED)
+        if (state != ClusterNodeState.STOPPED)            
         {
             FijiArchipelago.debug("Setting state");
 
@@ -477,6 +496,7 @@ public class ClusterNode implements TransceiverListener
         if (state != nextState)
         {
             // Order is very important
+            Thread.dumpStack();
             ClusterNodeState lastState = state;
             state = nextState;
             FijiArchipelago.log("Node state changed from "

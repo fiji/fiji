@@ -21,6 +21,7 @@ package edu.utexas.clm.archipelago.ui;
 import edu.utexas.clm.archipelago.Cluster;
 import edu.utexas.clm.archipelago.FijiArchipelago;
 import edu.utexas.clm.archipelago.listen.ClusterStateListener;
+import edu.utexas.clm.archipelago.network.server.ArchipelagoServer;
 import edu.utexas.clm.archipelago.util.NullLogger;
 import edu.utexas.clm.archipelago.util.PrintStreamLogger;
 import ij.IJ;
@@ -41,7 +42,7 @@ import ij.io.OpenDialog;
 import org.xml.sax.SAXException;
 
 /**
- *
+ * User interface for the Archipelago Cluster
  */
 public class ClusterUI implements ClusterStateListener, ArchipelagoUI
 {
@@ -64,13 +65,14 @@ public class ClusterUI implements ClusterStateListener, ArchipelagoUI
     
     private class CUIMainPanel extends Panel implements ActionListener
     {
-        final Button statButton, startStopButton;
+        final Button statButton, startStopButton, serverButton;
         final Checkbox debugCheck;
         final StateLabel clusterLabel, queueLabel, runningLabel, nodesLabel;
         final ClusterConfigPanel configPanel;
         final ReentrantLock updateLock;
         final NullLogger nullLogger;
         final PrintStreamLogger sysoutLogger;
+        ArchipelagoServer server = null;
         
         public CUIMainPanel()
         {
@@ -87,6 +89,7 @@ public class ClusterUI implements ClusterStateListener, ArchipelagoUI
             // initialize controls
             statButton = new Button("Show Node Statistics");
             startStopButton = new Button("Start Cluster");
+            serverButton = new Button("Start Insecure Server (At Your Own Risk)");
 
             clusterLabel = new StateLabel("Cluster is");
             queueLabel = new StateLabel("Jobs in queue:");
@@ -124,16 +127,17 @@ public class ClusterUI implements ClusterStateListener, ArchipelagoUI
 
             super.add(statButton, gbc);
             super.add(startStopButton, gbc);
+            super.add(serverButton, gbc);
             super.add(debugCheck, gbc);
             
             // action commands
-            //cfgButton.setActionCommand("configure");
             statButton.setActionCommand("stats");
             startStopButton.setActionCommand("");
+            serverButton.setActionCommand("server-start");
 
-            //cfgButton.addActionListener(this);
             statButton.addActionListener(this);
             startStopButton.addActionListener(this);
+            serverButton.addActionListener(this);
 
             startStopButton.setEnabled(false);
 
@@ -166,6 +170,31 @@ public class ClusterUI implements ClusterStateListener, ArchipelagoUI
                 if (gd.wasOKed())
                 {
                     cluster.shutdown();
+                }
+            }
+            else if (ae.getActionCommand().equals("server-start"))
+            {
+                server = ArchipelagoServer.getServer(cluster);
+                if (!server.active())
+                {
+                    server.start();
+                }
+                serverButton.setActionCommand("server-stop");
+                serverButton.setLabel("Stop Insecure Server");
+            }
+            else if (ae.getActionCommand().equals("server-stop"))
+            {                   
+                if (server != null)
+                {
+                    GenericDialog gd = new GenericDialog("Stop Server?");
+                    gd.addMessage("Really Stop Server?");
+                    gd.showDialog();
+                    if (gd.wasOKed())
+                    {
+                        server.close();
+                        serverButton.setActionCommand("server-start");
+                        serverButton.setLabel("Start Insecure Server (At Your Own Risk)");
+                    }
                 }
             }
         }
@@ -239,12 +268,14 @@ public class ClusterUI implements ClusterStateListener, ArchipelagoUI
                     case INSTANTIATED:
                         startStopButton.setEnabled(false);
                         configPanel.setActive(true);
+                        serverButton.setEnabled(false);
                         break;
                     case INITIALIZED:
                         startStopButton.setEnabled(true);
                         startStopButton.setLabel("Start Cluster");
                         startStopButton.setActionCommand("start");
                         configPanel.setActive(true);
+                        serverButton.setEnabled(false);
                         break;
                     case STARTED:
                     case RUNNING:
@@ -252,6 +283,7 @@ public class ClusterUI implements ClusterStateListener, ArchipelagoUI
                         startStopButton.setLabel("Stop Cluster");
                         startStopButton.setActionCommand("stop");
                         configPanel.setActive(true);
+                        serverButton.setEnabled(true);
                         break;
                     case STOPPING:
                     case STOPPED:
@@ -259,6 +291,7 @@ public class ClusterUI implements ClusterStateListener, ArchipelagoUI
                         startStopButton.setLabel("Stop Cluster");
                         startStopButton.setActionCommand("");
                         configPanel.setActive(false);
+                        serverButton.setEnabled(false);
                         break;
                 }
 
@@ -284,7 +317,7 @@ public class ClusterUI implements ClusterStateListener, ArchipelagoUI
     private class ClusterConfigPanel extends Panel implements ActionListener
     {
         private final Button loadButton, saveButton, rootButton, nodeButton;
-        
+
         public ClusterConfigPanel()
         {
             super();
@@ -303,7 +336,6 @@ public class ClusterUI implements ClusterStateListener, ArchipelagoUI
             super.add(saveButton);
             super.add(rootButton);
             super.add(nodeButton);
-            
 
             // action commands
             loadButton.setActionCommand("load");
@@ -322,8 +354,8 @@ public class ClusterUI implements ClusterStateListener, ArchipelagoUI
         public void setActive(boolean active)
         {
             loadButton.setEnabled(active);
-        }
 
+        }
 
         public void actionPerformed(ActionEvent ae) {
             if (ae.getActionCommand().equals("load"))

@@ -76,7 +76,8 @@ public class ClusterNodeStatusUI implements ActionListener
             final int ramAvail = node.getAvailableRamMB();
             final int ramMax = node.getMaxRamMB();
             String beatString = lastBeat == 0 ? "~" : beatSec > 0 ? "" + beatSec : "< 1";
-            
+
+            hostLabel.setText(node.getHost());
             jobsLabel.setText("" + node.numRunningThreads() + "/" + node.getThreadLimit());
             beatLabel.setText("" +  beatString + "s ago");
             ramUseLabel.setText("" + (ramTot - ramAvail) + "MB");

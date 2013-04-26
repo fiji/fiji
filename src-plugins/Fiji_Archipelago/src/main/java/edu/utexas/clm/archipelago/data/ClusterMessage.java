@@ -30,6 +30,7 @@ import java.io.Serializable;
  */
 public class ClusterMessage implements Serializable
 {
+    private static final long serialVersionUID = 650327564966436764L;
 
     public final MessageType type;
     public Serializable o = null;

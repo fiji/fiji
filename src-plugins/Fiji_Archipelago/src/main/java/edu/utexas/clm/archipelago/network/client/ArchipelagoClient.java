@@ -26,10 +26,11 @@ import edu.utexas.clm.archipelago.listen.TransceiverListener;
 import edu.utexas.clm.archipelago.compute.ProcessManager;
 import edu.utexas.clm.archipelago.data.ClusterMessage;
 import edu.utexas.clm.archipelago.network.MessageXC;
+import edu.utexas.clm.archipelago.util.XCErrorAdapter;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.Vector;
 import java.util.concurrent.atomic.AtomicBoolean;
 /**
@@ -117,6 +118,53 @@ public class ArchipelagoClient implements TransceiverListener
     private final HeartBeatThread beatThread;
     private final TransceiverExceptionListener xcEListener;
 
+    public ArchipelagoClient(final long id, final InputStream inStream,
+                             final OutputStream outStream) throws IOException
+    {
+        this(id, inStream, outStream, new XCErrorAdapter()
+        {
+            protected boolean handleCustomRX(final Throwable t, final MessageXC xc)
+            {
+                if (t instanceof ClassCastException)
+                {
+                    reportRX(t, t.toString(), xc);
+                    xc.queueMessage(MessageType.ERROR, t);
+                    return false;
+                }
+                else if (t instanceof EOFException)
+                {
+                    reportRX(t, "Received EOF", xc);
+                    xc.close();
+                    return false;
+                }
+                else if (t instanceof StreamCorruptedException)
+                {
+                    reportRX(t, "Stream corrupted: " + t, xc);
+                    xc.close();
+                    return false;
+                }
+                else
+                {
+                    xc.queueMessage(MessageType.ERROR, t);
+                    return true;
+                }
+            }
+
+            protected boolean handleCustomTX(final Throwable t, final MessageXC xc)
+            {
+                if (t instanceof IOException)
+                {
+                    reportTX(t, t.toString(), xc);
+                    xc.close();
+                }
+                else
+                {
+                    xc.queueMessage(MessageType.ERROR, t);
+                }
+                return true;
+            }
+        });
+    }
 
     public ArchipelagoClient(long id, InputStream inStream, OutputStream outStream,
                              TransceiverExceptionListener tel) throws IOException
@@ -155,10 +203,6 @@ public class ArchipelagoClient implements TransceiverListener
             switch (type)
             {
                 case PROCESS:
-                    
-                    FijiArchipelago.log("Println'ing grossness now");
-                    System.out.println("grossness");
-                    
                     final ProcessManager<?> pm = (ProcessManager<?>)object;
                     final ProcessThread pt = new ProcessThread(pm);
                     runningThreads.add(pt);
@@ -213,6 +257,18 @@ public class ArchipelagoClient implements TransceiverListener
                             runningThreads.remove(processThread);
                             return;
                         }
+                    }
+                    break;
+                
+                case HOSTNAME:
+                    try
+                    {
+                        xc.queueMessage(MessageType.HOSTNAME,
+                                InetAddress.getLocalHost().getHostName());
+                    }
+                    catch (UnknownHostException uhe)
+                    {
+                        FijiArchipelago.log("Could not resolve local name: " + uhe);
                     }
                     break;
                 

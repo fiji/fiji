@@ -29,7 +29,8 @@ import java.util.concurrent.Callable;
  */
 public class ProcessManager<T> implements Runnable, Serializable
 {
-    
+    private static final long serialVersionUID = -5729538939085054236L;
+
     private Callable<T> callable;
     private T output;
     private final long id;

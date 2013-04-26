@@ -20,6 +20,8 @@ package edu.utexas.clm.archipelago.compute;
 
 public class QuickCallable<T> implements SerializableCallable<T>
 {
+    private static final long serialVersionUID = 8311164115029763772L;
+
     private final Runnable r;
     
     public QuickCallable(Runnable r)

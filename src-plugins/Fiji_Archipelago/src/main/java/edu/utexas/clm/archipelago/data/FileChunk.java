@@ -30,6 +30,8 @@ import java.util.Iterator;
  */
 public class FileChunk extends DataChunk<String>
 {
+    private static final long serialVersionUID = -8641288090205214129L;
+
     private final String fileName;
 
     public FileChunk(String path)

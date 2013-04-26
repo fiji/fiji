@@ -23,13 +23,17 @@ import edu.utexas.clm.archipelago.network.node.ClusterNode;
 
 import java.io.Serializable;
 /**
+ * An abstract class to help support objects that might not otherwise be Serializable
+ *
+ * This class should be considered volatile and subject to change. Use at your own risk.
  *
  * @author Larry Lindsey
  */
 
 public abstract class DataChunk<T> implements Serializable
 {
-    
+    private static final long serialVersionUID = 3307652134796685516L;
+
     private long lastOn;
     private long lastTime = -1;
     private long id;

@@ -1034,6 +1034,8 @@ public class Cluster implements NodeStateListener, NodeShellListener
     private final ReentrantLock nodeLock;
     
     private final NodeStarter nodeStarter;
+    
+    private final long hash;
 
     private Cluster()
     {
@@ -1124,6 +1126,8 @@ public class Cluster implements NodeStateListener, NodeShellListener
         futures = new Hashtable<Long, ArchipelagoFuture<?>>();
         
         listeners = new Vector<ClusterStateListener>();
+        
+        hash = new Long(System.currentTimeMillis()).hashCode();
 
         try
         {
@@ -1138,6 +1142,10 @@ public class Cluster implements NodeStateListener, NodeShellListener
 
     }
 
+    public boolean equals(Object o)
+    {
+        return o instanceof Cluster && o == this;
+    }
     
     private void setState(final ClusterState state)
     {
@@ -1196,7 +1204,7 @@ public class Cluster implements NodeStateListener, NodeShellListener
         return null;
     }
 
-    public void addNode(NodeManager.NodeParameters param)
+    public void addNodeToStart(NodeManager.NodeParameters param)
     {
         if (param == null)
         {
@@ -1216,6 +1224,9 @@ public class Cluster implements NodeStateListener, NodeShellListener
     private void addNode(ClusterNode node)
     {
         nodeLock.lock();
+        waitNodes.remove(node.getParam());
+        nodes.add(node);
+/*
         if (waitNodes.contains(node.getParam()))
         {
             waitNodes.remove(node.getParam());            
@@ -1227,6 +1238,7 @@ public class Cluster implements NodeStateListener, NodeShellListener
             // it was started, but before it's Streams became ready.
             node.close();
         }
+*/
         nodeLock.unlock();
         node.addListener(this);
     }
@@ -1790,7 +1802,7 @@ public class Cluster implements NodeStateListener, NodeShellListener
 
     public void ioStreamsReady(final InputStream is, final OutputStream os)
     {
-        ClusterNode node = new ClusterNode(xcEListener);
+        ClusterNode node = new ClusterNode(xcEListener, nodeManager);
         try
         {
             node.setIOStreams(is, os);

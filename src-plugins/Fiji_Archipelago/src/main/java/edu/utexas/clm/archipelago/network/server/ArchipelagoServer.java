@@ -84,6 +84,11 @@ public class ArchipelagoServer implements ClusterStateListener
         isRunning = new AtomicBoolean(false);
         port = p;
     }
+    
+    public boolean active()
+    {
+        return isRunning.get();
+    }
 
     public boolean start()
     {
@@ -101,6 +106,7 @@ public class ArchipelagoServer implements ClusterStateListener
             try
             {
                 socket = new ServerSocket(port);
+                FijiArchipelago.debug("Started server on port " + port);
                 success = true;
             }
             catch(IOException e)
