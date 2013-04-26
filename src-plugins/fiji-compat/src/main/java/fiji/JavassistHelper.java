@@ -66,8 +66,14 @@ public abstract class JavassistHelper implements Runnable {
 			new Exception("Attempted to defined patched classes again").printStackTrace();
 			return;
 		}
-		for (String name : definedClasses.keySet())
-			definedClasses.get(name).toClass();
+		for (String name : definedClasses.keySet()) {
+			final CtClass clazz = definedClasses.get(name);
+			if (clazz.isFrozen() || !clazz.isModified()) {
+				// assume that ij-legacy did something about it
+				continue;
+			}
+			clazz.toClass();
+		}
 		frozen = true;
 	}
 
