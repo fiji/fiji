@@ -63,28 +63,28 @@ mkdir $tmpdir
 
 download () {
 	exe=; case "$2" in *.exe) exe=.exe;; esac
+
+	case $2 in */*) mkdir -p ${2%/*};; esac
+	curl $baseurl/$basename-$1-gcc-executable.nar > $tmpdir/$1.zip
+	unzip -p $tmpdir/$1.zip bin/$1-gcc/ij-launcher$exe > $2
+	chmod a+x $2
+
 	case $2,$mode in
 	*.exe,snapshots)
 		# Jenkins provided beautiful .exe files with icons for us
 		fiji=fiji-${2#ImageJ-}
 		curl -O http://jenkins.imagej.net/view/ImageJ/job/Windows-Fiji-launcher-with-icons/label=Windows/lastSuccessfulBuild/artifact/$fiji
-		cp $fiji $2
 		;;
 	*)
-		case $2 in */*) mkdir -p ${2%/*};; esac
-		curl $baseurl/$basename-$1-gcc-executable.nar > $tmpdir/$1.zip
-		unzip -p $tmpdir/$1.zip bin/$1-gcc/ij-launcher$exe > $2
-		chmod a+x $2
-		test -n "$exe" && add_win_logo "$2"
-		target=$(echo "$2" | sed 's/ImageJ-/fiji-/')
-		case "$target" in fiji-linux32) target=fiji-linux;; esac
-		cp $2 $target
+		fiji=$(echo "$2" | sed 's/ImageJ-/fiji-/')
+		case "$fiji" in fiji-linux32) fiji=fiji-linux;; esac
+		cp $2 $fiji
 		;;
 	esac
 	if test ! -z "$platform"
 	then
 		cp $2 ImageJ$exe
-		cp $2 fiji$exe
+		cp $fiji fiji$exe
 	fi
 }
 
