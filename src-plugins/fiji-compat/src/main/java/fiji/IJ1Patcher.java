@@ -1,9 +1,5 @@
 package fiji;
 
-import java.io.IOException;
-import java.net.URL;
-import java.net.URLClassLoader;
-
 import imagej.legacy.DefaultLegacyService;
 
 /**
