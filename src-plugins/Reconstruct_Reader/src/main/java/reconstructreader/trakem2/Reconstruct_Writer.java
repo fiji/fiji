@@ -4,10 +4,11 @@ import ij.IJ;
 import ij.io.DirectoryChooser;
 import ij.plugin.PlugIn;
 import ini.trakem2.display.Display;
+import ini.trakem2.plugin.TPlugIn;
 
 import java.io.File;
 
-public class Reconstruct_Writer implements PlugIn
+public class Reconstruct_Writer implements PlugIn, TPlugIn
 {
 
     public void run(final String arg) {
@@ -32,5 +33,18 @@ public class Reconstruct_Writer implements PlugIn
                 IJ.error("Reconstruct Exporter", "Encountered an error while exporting Reconstruct project.");
             }
         }
+    }
+
+    public boolean setup(Object... params) {
+        return false;
+    }
+
+    public Object invoke(Object... params) {
+        run("");
+        return null;
+    }
+
+    public boolean applies(Object ob) {
+        return true;
     }
 }
