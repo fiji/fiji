@@ -291,7 +291,7 @@ public class CustomStackWindow extends StackWindow
 		}
 		cc.updateSlice(slice);
 	}
-	
+
 	public void releaseSliceFrom(int slice, Roi roi, int materialID){
 		ImagePlus grey = cc.getImage();
 		ImagePlus labels = cc.getLabels();
