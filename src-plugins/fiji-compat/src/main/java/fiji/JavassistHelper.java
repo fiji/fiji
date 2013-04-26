@@ -11,13 +11,10 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.io.PrintWriter;
-
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Set;
-
 import java.util.jar.JarOutputStream;
-
 import java.util.zip.ZipEntry;
 
 import javassist.CannotCompileException;
@@ -27,13 +24,11 @@ import javassist.CtClass;
 import javassist.CtConstructor;
 import javassist.CtMethod;
 import javassist.NotFoundException;
-
 import javassist.bytecode.BadBytecode;
 import javassist.bytecode.CodeIterator;
 import javassist.bytecode.InstructionPrinter;
 import javassist.bytecode.MethodInfo;
 import javassist.bytecode.Opcode;
-
 import javassist.expr.MethodCall;
 
 public abstract class JavassistHelper implements Runnable {
@@ -72,7 +67,14 @@ public abstract class JavassistHelper implements Runnable {
 				// assume that ij-legacy did something about it
 				continue;
 			}
-			clazz.toClass();
+			try {
+				clazz.toClass();
+			} catch (CannotCompileException e) {
+				final Throwable cause = e.getCause();
+				if (cause != null && !(cause instanceof LinkageError)) {
+					throw e;
+				}
+			}
 		}
 		frozen = true;
 	}
