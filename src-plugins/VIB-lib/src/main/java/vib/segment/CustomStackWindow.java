@@ -256,38 +256,36 @@ public class CustomStackWindow extends StackWindow
 		int w = labels.getWidth(), h = labels.getHeight();
 		ImageProcessor labP = labels.getStack().getProcessor(slice);
 		labP.setRoi(roi);
-		Rectangle bounds = roi.getBoundingRect();
+		Rectangle bounds = roi.getBounds();
 		int x1 = bounds.x > 0 ? bounds.x : 0;
 		int y1 = bounds.y > 0 ? bounds.y : 0;
-		int x2 = x1 + bounds.width <= w ? x1 + bounds.width : w;
-		int y2 = y1 + bounds.height <= h ? y1 + bounds.height : h;
+		int x2 = bounds.x + bounds.width  <= w ? bounds.x + bounds.width  : w;
+		int y2 = bounds.y + bounds.height <= h ? bounds.y + bounds.height : h;
 
-		boolean hasLockedMaterial = false;
-		for(int i = 0; i < sidebar.getMaterials().getItemCount(); ++i) {
-			if(sidebar.getMaterials().isLocked(i)) {
-				hasLockedMaterial = true;
-				break;
-			}
-		}
-		if(hasLockedMaterial) {
+		ImageProcessor maskP = roi.getMask();
+		if(maskP == null) {
+			// This case is fast anyways
 			for(int i = x1; i < x2; i++){
 				for(int j = y1; j < y2; j++) {
 					if(roi.contains(i,j)) {
 						int oldID = labP.get(i, j);
 						if(!sidebar.getMaterials().isLocked(oldID))
 							labP.set(i,j,materialID);
-						// TODO: Probably much faster:
-						// 1) Fill with target color
-						// 2) Fill again with old color at
-						// intersection of locked (old) and new
-						// material.
 					}
 				}
 			}
-		}
-		else {
-			labP.setColor(materialID);
-			labP.fill(roi);
+		} else {
+			int maskX = (int)Math.round(roi.getBounds().getX());
+			int maskY = (int)Math.round(roi.getBounds().getY());
+			for(int i = x1; i < x2; i++){
+				for(int j = y1; j < y2; j++) {
+					if(maskP.get(i - maskX, j - maskY) == 255) {
+						int oldID = labP.get(i, j);
+						if(!sidebar.getMaterials().isLocked(oldID))
+							labP.set(i,j,materialID);
+					}
+				}
+			}
 		}
 		cc.updateSlice(slice);
 	}
@@ -304,17 +302,33 @@ public class CustomStackWindow extends StackWindow
 		int w = labels.getWidth(), h = labels.getHeight();
 		ImageProcessor labP = labels.getStack().getProcessor(slice);
 		labP.setRoi(roi);
-		Rectangle bounds = roi.getBoundingRect();
+		Rectangle bounds = roi.getBounds();
 
 		int x1 = bounds.x > 0 ? bounds.x : 0;
 		int y1 = bounds.y > 0 ? bounds.y : 0;
-		int x2 = x1 + bounds.width <= w ? x1 + bounds.width : w;
-		int y2 = y1 + bounds.height <= h ? y1 + bounds.height : h;
+		int x2 = bounds.x + bounds.width  <= w ? bounds.x + bounds.width  : w;
+		int y2 = bounds.y + bounds.height <= h ? bounds.y + bounds.height : h;
 
-		for(int i = x1; i < x2; i++){
-			for(int j = y1; j < y2; j++) {
-				if(roi.contains(i,j) && labP.get(i,j)==materialID){ 
-					labP.set(i,j,sidebar.getMaterials().getDefaultMaterialID());
+		int defaultMaterialID = sidebar.getMaterials().getDefaultMaterialID();
+		ImageProcessor maskP = roi.getMask();
+		if(maskP == null) {
+			// This case is fast anyways
+			for(int i = x1; i < x2; i++){
+				for(int j = y1; j < y2; j++) {
+					if(roi.contains(i, j) && labP.get(i, j)==materialID){
+						labP.set(i, j, defaultMaterialID);
+					}
+				}
+			}
+		} else {
+			int maskX = (int)Math.round(roi.getBounds().getX());
+			int maskY = (int)Math.round(roi.getBounds().getY());
+			for(int i = x1; i < x2; i++){
+				for(int j = y1; j < y2; j++) {
+					if(maskP.get(i - maskX, j - maskY) == 255 &&
+					   labP.get(i, j)==materialID){
+						labP.set(i, j, defaultMaterialID);
+					}
 				}
 			}
 		}
