@@ -15,12 +15,10 @@ import javassist.CtNewConstructor;
 import javassist.CtNewMethod;
 import javassist.Modifier;
 import javassist.NotFoundException;
-
 import javassist.bytecode.BadBytecode;
 import javassist.bytecode.CodeIterator;
 import javassist.bytecode.MethodInfo;
 import javassist.bytecode.Opcode;
-
 import javassist.expr.ConstructorCall;
 import javassist.expr.ExprEditor;
 import javassist.expr.FieldAccess;
@@ -737,8 +735,6 @@ public class IJHacker extends JavassistHelper {
 							"http://".equals(getLatestArg(call, 0)))
 						call.replace("$_ = $0.startsWith($1) || $0.startsWith(\"https://\");");
 				} catch (BadBytecode e) {
-					e.printStackTrace();
-				} catch (NotFoundException e) {
 					e.printStackTrace();
 				}
 			}

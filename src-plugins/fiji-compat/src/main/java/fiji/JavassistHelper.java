@@ -71,6 +71,7 @@ public abstract class JavassistHelper implements Runnable {
 		frozen = true;
 	}
 
+	@Override
 	final public void run() {
 		if (frozen) {
 			System.err.println("Attempted to patch classes again: " + getClass().getName());
@@ -95,7 +96,7 @@ public abstract class JavassistHelper implements Runnable {
 
 	public abstract void instrumentClasses() throws BadBytecode, CannotCompileException, NotFoundException;
 
-	protected String getLatestArg(MethodCall call, int skip) throws BadBytecode, NotFoundException {
+	protected String getLatestArg(MethodCall call, int skip) throws BadBytecode {
 		int[] indices = new int[skip + 1];
 		int counter = 0;
 
@@ -179,10 +180,10 @@ public abstract class JavassistHelper implements Runnable {
 	public static void verify(byte[] bytecode, PrintStream out) {
 		try {
 			ClassLoader loader = new FijiClassLoader(true);
-			Class readerClass = loader.loadClass("jruby.objectweb.asm.ClassReader");
-			java.lang.reflect.Constructor ctor = readerClass.getConstructor(new Class[] { bytecode.getClass() });
+			Class<?> readerClass = loader.loadClass("jruby.objectweb.asm.ClassReader");
+			java.lang.reflect.Constructor<?> ctor = readerClass.getConstructor(new Class[] { bytecode.getClass() });
 			Object reader = ctor.newInstance(bytecode);
-			Class checkerClass = loader.loadClass("jruby.objectweb.asm.util.CheckClassAdapter");
+			Class<?> checkerClass = loader.loadClass("jruby.objectweb.asm.util.CheckClassAdapter");
 			java.lang.reflect.Method verify = checkerClass.getMethod("verify", new Class[] { readerClass, Boolean.TYPE, PrintWriter.class });
 			verify.invoke(null, new Object[] { reader, false, new PrintWriter(out) });
 		} catch(Exception e) {
