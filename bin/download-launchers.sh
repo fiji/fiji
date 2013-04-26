@@ -46,27 +46,16 @@ esac
 
 add_win_logo () {
 	wine=
-	icon_option=/i
 	case "$(uname -s)" in
-	MINGW*)
-		# work around MINGW's POSIX file path mangling
-		icon_option=//i
+	MINGW*|CYGWIN*)
+		cp "$1" debug.exe
+		./debug.exe --set-icon "$1" images/fiji.ico
 		;;
-	CYGWIN*)
-		;;
-	Wine-crashes-on-Linux)
-		wine=wine
-		;;
-	*)
-		# Need Windows or at least Wine (on Linux) to run RCEDIT
-		return
+	Linux)
+		wine "$1" --set-icon "$1" images/fiji.ico
 		;;
 	esac
 
-	test -e bin/RCEDIT.exe ||
-	curl https://raw.github.com/poidasmith/winrun4j/master/org.boris.winrun4j.eclipse/launcher/RCEDIT.exe > bin/RCEDIT.exe
-
-	eval $wine bin/RCEDIT.exe $icon_option "$1" images/fiji.ico
 }
 
 tmpdir=.tmp.$$
