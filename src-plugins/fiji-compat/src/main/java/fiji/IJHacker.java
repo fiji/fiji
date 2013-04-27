@@ -89,34 +89,6 @@ public class IJHacker extends JavassistHelper {
 		method = clazz.getMethod("error",
 			"(Ljava/lang/String;Ljava/lang/String;)V");
 		method.insertBefore("if ($1 == null || $1.equals(\"ImageJ\")) $1 = \"" + appName + "\";");
-		// make sure that ImageJ has been initialized in batch mode
-		method = clazz.getMethod("runMacro", "(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;");
-		method.insertBefore("if (ij==null && ij.Menus.getCommands()==null) init();");
-		// if the ij.log.file property is set, log every message to the file pointed to
-		field = new CtField(pool.get("java.io.BufferedWriter"), "logFileWriter", clazz);
-		field.setModifiers(Modifier.STATIC | Modifier.PRIVATE);
-		clazz.addField(field);
-		method = clazz.getMethod("log", "(Ljava/lang/String;)V");
-		method.insertBefore("if ($1 != null) {\n"
-			+ "  String logFilePath = System.getProperty(\"ij.log.file\");\n"
-			+ "  if (logFilePath != null) {\n"
-			+ "    try {\n"
-			+ "      if (logFileWriter == null) {\n"
-			+ "        java.io.OutputStream out = new java.io.FileOutputStream(logFilePath, true);\n"
-			+ "        java.io.Writer writer = new java.io.OutputStreamWriter(out, \"UTF-8\");\n"
-			+ "        logFileWriter = new java.io.BufferedWriter(writer);\n"
-			+ "        logFileWriter.write(\"Started new log on \" + new java.util.Date() + \"\\n\");\n"
-			+ "      }\n"
-			+ "      logFileWriter.write($1);\n"
-			+ "      if (!$1.endsWith(\"\\n\")) logFileWriter.newLine();\n"
-			+ "      logFileWriter.flush();\n"
-			+ "    } catch (Throwable t) {\n"
-			+ "      t.printStackTrace();\n"
-			+ "      System.getProperties().remove(\"ij.log.file\");\n"
-			+ "      logFileWriter = null;\n"
-			+ "    }\n"
-			+ "  }\n"
-			+ "}\n");
 
 		// Class ij.gui.GenericDialog
 		clazz = get("ij.gui.GenericDialog");
