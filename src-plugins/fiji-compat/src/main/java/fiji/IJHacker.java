@@ -38,33 +38,6 @@ public class IJHacker extends JavassistHelper {
 		CtMethod method;
 		CtField field;
 
-		// Class ij.ImagePlus
-		clazz = get("ij.ImagePlus");
-
-		try {
-			// add back the (deprecated) killProcessor(), and overlay methods
-			method = CtNewMethod.make("public void killProcessor() {}", clazz);
-			clazz.addMethod(method);
-		} catch (Exception e) { /* ignore */ }
-		try {
-			method = CtNewMethod.make("public void setDisplayList(java.util.Vector list) {"
-				+ "  getCanvas().setDisplayList(list);"
-				+ "}", clazz);
-			clazz.addMethod(method);
-		} catch (Exception e) { /* ignore */ }
-		try {
-			method = CtNewMethod.make("public java.util.Vector getDisplayList() {"
-				+ "  return getCanvas().getDisplayList();"
-				+ "}", clazz);
-			clazz.addMethod(method);
-		} catch (Exception e) { /* ignore */ }
-		try {
-			method = CtNewMethod.make("public void setDisplayList(ij.gui.Roi roi, java.awt.Color strokeColor, int strokeWidth, java.awt.Color fillColor) {"
-				+ "  setOverlay(roi, strokeColor, strokeWidth, fillColor);"
-				+ "}", clazz);
-			clazz.addMethod(method);
-		} catch (Exception e) { /* ignore */ }
-
 		// Class ij.IJ
 		clazz = get("ij.IJ");
 
