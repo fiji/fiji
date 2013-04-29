@@ -415,8 +415,8 @@ public class Multi_View_Fusion implements PlugIn
 		
 		gd2.addMessage( "" );
 		gd2.addCheckbox( "Blending", fusionUseBlendingStatic );
-		gd2.addCheckbox( "Content_based_weights", fusionUseContentBasedStatic );
-		gd2.addCheckbox( "Content_based_weights (fast, approximate)", fusionUseContentBasedIntegralStatic );
+		gd2.addCheckbox( "Content_based weights", fusionUseContentBasedStatic );
+		gd2.addCheckbox( "Content_based_weights_(fast, approximate)", fusionUseContentBasedIntegralStatic );
 		gd2.addMessage( "" );
 		gd2.addNumericField( "Downsample_output image n-times", outputImageScalingStatic, 0 );
 		gd2.addNumericField( "Crop_output_image_offset_x", cropOffsetXStatic, 0 );
