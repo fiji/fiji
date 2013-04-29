@@ -39,12 +39,14 @@ public class Script_Editor implements PlugIn {
 			}
 		}
 		if (instance == null || !instance.isVisible()) {
+			IJ.showStatus("Starting Script Editor");
 			instance = new TextEditor(path);
 			if (!isToolsJarAvailable())
 				instance.installDebugSupportMenuItem();
 			SwingUtilities.invokeLater(new Runnable() { public void run() {
 				instance.setVisible(true);
 			}});
+			IJ.showStatus("");
 		}
 		else {
 			instance.open(path);
