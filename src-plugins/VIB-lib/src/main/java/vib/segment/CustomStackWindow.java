@@ -256,25 +256,40 @@ public class CustomStackWindow extends StackWindow
 		int w = labels.getWidth(), h = labels.getHeight();
 		ImageProcessor labP = labels.getStack().getProcessor(slice);
 		labP.setRoi(roi);
-		Rectangle bounds = roi.getBoundingRect();
+		Rectangle bounds = roi.getBounds();
 		int x1 = bounds.x > 0 ? bounds.x : 0;
 		int y1 = bounds.y > 0 ? bounds.y : 0;
-		int x2 = x1 + bounds.width <= w ? x1 + bounds.width : w;
-		int y2 = y1 + bounds.height <= h ? y1 + bounds.height : h;
+		int x2 = bounds.x + bounds.width  <= w ? bounds.x + bounds.width  : w;
+		int y2 = bounds.y + bounds.height <= h ? bounds.y + bounds.height : h;
 
-		for(int i = x1; i < x2; i++){
-			for(int j = y1; j < y2; j++) {
-				if(roi.contains(i,j)) {
-					int oldID = labP.get(i, j);
-					if(!sidebar.getMaterials().
-							isLocked(oldID))
-						labP.set(i,j,materialID);
+		ImageProcessor maskP = roi.getMask();
+		if(maskP == null) {
+			// This case is fast anyways
+			for(int i = x1; i < x2; i++){
+				for(int j = y1; j < y2; j++) {
+					if(roi.contains(i,j)) {
+						int oldID = labP.get(i, j);
+						if(!sidebar.getMaterials().isLocked(oldID))
+							labP.set(i,j,materialID);
+					}
+				}
+			}
+		} else {
+			int maskX = (int)Math.round(roi.getBounds().getX());
+			int maskY = (int)Math.round(roi.getBounds().getY());
+			for(int i = x1; i < x2; i++){
+				for(int j = y1; j < y2; j++) {
+					if(maskP.get(i - maskX, j - maskY) == 255) {
+						int oldID = labP.get(i, j);
+						if(!sidebar.getMaterials().isLocked(oldID))
+							labP.set(i,j,materialID);
+					}
 				}
 			}
 		}
 		cc.updateSlice(slice);
 	}
-	
+
 	public void releaseSliceFrom(int slice, Roi roi, int materialID){
 		ImagePlus grey = cc.getImage();
 		ImagePlus labels = cc.getLabels();
@@ -287,17 +302,33 @@ public class CustomStackWindow extends StackWindow
 		int w = labels.getWidth(), h = labels.getHeight();
 		ImageProcessor labP = labels.getStack().getProcessor(slice);
 		labP.setRoi(roi);
-		Rectangle bounds = roi.getBoundingRect();
+		Rectangle bounds = roi.getBounds();
 
 		int x1 = bounds.x > 0 ? bounds.x : 0;
 		int y1 = bounds.y > 0 ? bounds.y : 0;
-		int x2 = x1 + bounds.width <= w ? x1 + bounds.width : w;
-		int y2 = y1 + bounds.height <= h ? y1 + bounds.height : h;
+		int x2 = bounds.x + bounds.width  <= w ? bounds.x + bounds.width  : w;
+		int y2 = bounds.y + bounds.height <= h ? bounds.y + bounds.height : h;
 
-		for(int i = x1; i < x2; i++){
-			for(int j = y1; j < y2; j++) {
-				if(roi.contains(i,j) && labP.get(i,j)==materialID){ 
-					labP.set(i,j,sidebar.getMaterials().getDefaultMaterialID());
+		int defaultMaterialID = sidebar.getMaterials().getDefaultMaterialID();
+		ImageProcessor maskP = roi.getMask();
+		if(maskP == null) {
+			// This case is fast anyways
+			for(int i = x1; i < x2; i++){
+				for(int j = y1; j < y2; j++) {
+					if(roi.contains(i, j) && labP.get(i, j)==materialID){
+						labP.set(i, j, defaultMaterialID);
+					}
+				}
+			}
+		} else {
+			int maskX = (int)Math.round(roi.getBounds().getX());
+			int maskY = (int)Math.round(roi.getBounds().getY());
+			for(int i = x1; i < x2; i++){
+				for(int j = y1; j < y2; j++) {
+					if(maskP.get(i - maskX, j - maskY) == 255 &&
+					   labP.get(i, j)==materialID){
+						labP.set(i, j, defaultMaterialID);
+					}
 				}
 			}
 		}
