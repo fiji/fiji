@@ -31,12 +31,12 @@ import net.imglib2.type.numeric.real.FloatType;
 public class ImgLib2 
 {
 	/**
-	 * Wraps an ImgLib2 {@link Img} of FloatType (has to be array) into an ImgLib1 {@link Image}
+	 * wrapArrays an ImgLib2 {@link Img} of FloatType (has to be array) into an ImgLib1 {@link Image}
 	 * 
 	 * @param image - input image
 	 * @return 
 	 */	
-	public static Image< mpicbg.imglib.type.numeric.real.FloatType > wrapFloatToImgLib1 ( final Img< FloatType > img )
+	public static Image< mpicbg.imglib.type.numeric.real.FloatType > wrapArrayFloatToImgLib1 ( final Img< FloatType > img )
 	{
 		// extract float[] array
 		@SuppressWarnings( "unchecked" )
@@ -65,12 +65,12 @@ public class ImgLib2
 	}
 
 	/**
-	 * Wraps an ImgLib2 {@link Img} of DoubleType (has to be array) into an ImgLib1 {@link Image}
+	 * wrapArrays an ImgLib2 {@link Img} of DoubleType (has to be array) into an ImgLib1 {@link Image}
 	 * 
 	 * @param image - input image
 	 * @return 
 	 */	
-	public static Image< mpicbg.imglib.type.numeric.real.DoubleType > wrapDoubleToImgLib1 ( final Img< DoubleType > img )
+	public static Image< mpicbg.imglib.type.numeric.real.DoubleType > wrapArrayDoubleToImgLib1 ( final Img< DoubleType > img )
 	{
 		// extract Double[] array
 		@SuppressWarnings( "unchecked" )
@@ -99,12 +99,12 @@ public class ImgLib2
 	}
 
 	/**
-	 * Wraps an ImgLib2 {@link Img} of LongType (has to be array) into an ImgLib1 {@link Image}
+	 * wrapArrays an ImgLib2 {@link Img} of LongType (has to be array) into an ImgLib1 {@link Image}
 	 * 
 	 * @param image - input image
 	 * @return 
 	 */	
-	public static Image< mpicbg.imglib.type.numeric.integer.LongType > wrapLongToImgLib1 ( final Img< LongType > img )
+	public static Image< mpicbg.imglib.type.numeric.integer.LongType > wrapArrayLongToImgLib1 ( final Img< LongType > img )
 	{
 		// extract Long[] array
 		@SuppressWarnings( "unchecked" )
@@ -133,12 +133,12 @@ public class ImgLib2
 	}
 
 	/**
-	 * Wraps an ImgLib2 {@link Img} of IntType (has to be array) into an ImgLib1 {@link Image}
+	 * wrapArrays an ImgLib2 {@link Img} of IntType (has to be array) into an ImgLib1 {@link Image}
 	 * 
 	 * @param image - input image
 	 * @return 
 	 */	
-	public static Image< mpicbg.imglib.type.numeric.integer.IntType > wrapIntToImgLib1 ( final Img< IntType > img )
+	public static Image< mpicbg.imglib.type.numeric.integer.IntType > wrapArrayIntToImgLib1 ( final Img< IntType > img )
 	{
 		// extract Int[] array
 		@SuppressWarnings( "unchecked" )
@@ -167,12 +167,12 @@ public class ImgLib2
 	}
 
 	/**
-	 * Wraps an ImgLib2 {@link Img} of UnsignedIntType (has to be array) into an ImgLib1 {@link Image}
+	 * wrapArrays an ImgLib2 {@link Img} of UnsignedIntType (has to be array) into an ImgLib1 {@link Image}
 	 * 
 	 * @param image - input image
 	 * @return 
 	 */	
-	public static Image< mpicbg.imglib.type.numeric.integer.UnsignedIntType > wrapUnsignedIntToImgLib1 ( final Img< UnsignedIntType > img )
+	public static Image< mpicbg.imglib.type.numeric.integer.UnsignedIntType > wrapArrayUnsignedIntToImgLib1 ( final Img< UnsignedIntType > img )
 	{
 		// extract Int[] array
 		@SuppressWarnings( "unchecked" )
@@ -201,12 +201,12 @@ public class ImgLib2
 	}
 
 	/**
-	 * Wraps an ImgLib2 {@link Img} of ShortType (has to be array) into an ImgLib1 {@link Image}
+	 * wrapArrays an ImgLib2 {@link Img} of ShortType (has to be array) into an ImgLib1 {@link Image}
 	 * 
 	 * @param image - input image
 	 * @return 
 	 */	
-	public static Image< mpicbg.imglib.type.numeric.integer.ShortType > wrapShortToImgLib1 ( final Img< ShortType > img )
+	public static Image< mpicbg.imglib.type.numeric.integer.ShortType > wrapArrayShortToImgLib1 ( final Img< ShortType > img )
 	{
 		// extract Short[] array
 		@SuppressWarnings( "unchecked" )
@@ -235,12 +235,12 @@ public class ImgLib2
 	}
 
 	/**
-	 * Wraps an ImgLib2 {@link Img} of UnsignedShortType (has to be array) into an ImgLib1 {@link Image}
+	 * wrapArrays an ImgLib2 {@link Img} of UnsignedShortType (has to be array) into an ImgLib1 {@link Image}
 	 * 
 	 * @param image - input image
 	 * @return 
 	 */	
-	public static Image< mpicbg.imglib.type.numeric.integer.UnsignedShortType > wrapUnsignedShortToImgLib1 ( final Img< UnsignedShortType > img )
+	public static Image< mpicbg.imglib.type.numeric.integer.UnsignedShortType > wrapArrayUnsignedShortToImgLib1 ( final Img< UnsignedShortType > img )
 	{
 		// extract Short[] array
 		@SuppressWarnings( "unchecked" )
@@ -269,12 +269,12 @@ public class ImgLib2
 	}
 
 	/**
-	 * Wraps an ImgLib2 {@link Img} of ByteType (has to be array) into an ImgLib1 {@link Image}
+	 * wrapArrays an ImgLib2 {@link Img} of ByteType (has to be array) into an ImgLib1 {@link Image}
 	 * 
 	 * @param image - input image
 	 * @return 
 	 */	
-	public static Image< mpicbg.imglib.type.numeric.integer.ByteType > wrapByteToImgLib1 ( final Img< ByteType > img )
+	public static Image< mpicbg.imglib.type.numeric.integer.ByteType > wrapArrayByteToImgLib1 ( final Img< ByteType > img )
 	{
 		// extract Byte[] array
 		@SuppressWarnings( "unchecked" )
@@ -303,12 +303,12 @@ public class ImgLib2
 	}
 
 	/**
-	 * Wraps an ImgLib2 {@link Img} of UnsignedByteType (has to be array) into an ImgLib1 {@link Image}
+	 * wrapArrays an ImgLib2 {@link Img} of UnsignedByteType (has to be array) into an ImgLib1 {@link Image}
 	 * 
 	 * @param image - input image
 	 * @return 
 	 */	
-	public static Image< mpicbg.imglib.type.numeric.integer.UnsignedByteType > wrapUnsignedByteToImgLib1 ( final Img< UnsignedByteType > img )
+	public static Image< mpicbg.imglib.type.numeric.integer.UnsignedByteType > wrapArrayUnsignedByteToImgLib1 ( final Img< UnsignedByteType > img )
 	{
 		// extract Byte[] array
 		@SuppressWarnings( "unchecked" )

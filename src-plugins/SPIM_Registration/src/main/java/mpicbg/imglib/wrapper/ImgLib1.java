@@ -30,12 +30,12 @@ import net.imglib2.img.array.ArrayImg;
 public class ImgLib1
 {
 	/**
-	 * Wraps an ImgLib1 {@link Image} of FloatType (has to be array) into an ImgLib2 {@link Img} using an {@link ArrayImg}
+	 * wrapArrays an ImgLib1 {@link Image} of FloatType (has to be array) into an ImgLib2 {@link Img} using an {@link ArrayImg}
 	 * 
 	 * @param image - input image
 	 * @return 
 	 */	
-	public static Img< net.imglib2.type.numeric.real.FloatType > wrapFloatToImgLib2 ( final Image< FloatType > image )
+	public static Img< net.imglib2.type.numeric.real.FloatType > wrapArrayFloatToImgLib2 ( final Image< FloatType > image )
 	{
 		// extract float[] array
 		@SuppressWarnings( "unchecked" )
@@ -63,12 +63,12 @@ public class ImgLib1
 	}
 
 	/**
-	 * Wraps an ImgLib1 {@link Image} of DoubleType (has to be array) into an ImgLib2 {@link Img} using an {@link ArrayImg}
+	 * wrapArrays an ImgLib1 {@link Image} of DoubleType (has to be array) into an ImgLib2 {@link Img} using an {@link ArrayImg}
 	 * 
 	 * @param image - input image
 	 * @return 
 	 */	
-	public static Img< net.imglib2.type.numeric.real.DoubleType > wrapDoubleToImgLib2 ( final Image< DoubleType > image )
+	public static Img< net.imglib2.type.numeric.real.DoubleType > wrapArrayDoubleToImgLib2 ( final Image< DoubleType > image )
 	{
 		// extract float[] array
 		@SuppressWarnings( "unchecked" )
@@ -96,12 +96,12 @@ public class ImgLib1
 	}
 
 	/**
-	 * Wraps an ImgLib1 {@link Image} of LongType (has to be array) into an ImgLib2 {@link Img} using an {@link ArrayImg}
+	 * wrapArrays an ImgLib1 {@link Image} of LongType (has to be array) into an ImgLib2 {@link Img} using an {@link ArrayImg}
 	 * 
 	 * @param image - input image
 	 * @return 
 	 */	
-	public static Img< net.imglib2.type.numeric.integer.LongType > wrapLongToImgLib2 ( final Image< LongType > image )
+	public static Img< net.imglib2.type.numeric.integer.LongType > wrapArrayLongToImgLib2 ( final Image< LongType > image )
 	{
 		// extract Long[] array
 		@SuppressWarnings( "unchecked" )
@@ -129,12 +129,12 @@ public class ImgLib1
 	}
 
 	/**
-	 * Wraps an ImgLib1 {@link Image} of UnsignedIntType (has to be array) into an ImgLib2 {@link Img} using an {@link ArrayImg}
+	 * wrapArrays an ImgLib1 {@link Image} of UnsignedIntType (has to be array) into an ImgLib2 {@link Img} using an {@link ArrayImg}
 	 * 
 	 * @param image - input image
 	 * @return 
 	 */	
-	public static Img< net.imglib2.type.numeric.integer.UnsignedIntType > wrapUnsignedIntToImgLib2 ( final Image< UnsignedIntType > image )
+	public static Img< net.imglib2.type.numeric.integer.UnsignedIntType > wrapArrayUnsignedIntToImgLib2 ( final Image< UnsignedIntType > image )
 	{
 		// extract Int[] array
 		@SuppressWarnings( "unchecked" )
@@ -162,12 +162,12 @@ public class ImgLib1
 	}
 
 	/**
-	 * Wraps an ImgLib1 {@link Image} of IntType (has to be array) into an ImgLib2 {@link Img} using an {@link ArrayImg}
+	 * wrapArrays an ImgLib1 {@link Image} of IntType (has to be array) into an ImgLib2 {@link Img} using an {@link ArrayImg}
 	 * 
 	 * @param image - input image
 	 * @return 
 	 */	
-	public static Img< net.imglib2.type.numeric.integer.IntType > wrapIntToImgLib2 ( final Image< IntType > image )
+	public static Img< net.imglib2.type.numeric.integer.IntType > wrapArrayIntToImgLib2 ( final Image< IntType > image )
 	{
 		// extract Int[] array
 		@SuppressWarnings( "unchecked" )
@@ -195,12 +195,12 @@ public class ImgLib1
 	}
 
 	/**
-	 * Wraps an ImgLib1 {@link Image} of UnsignedShortType (has to be array) into an ImgLib2 {@link Img} using an {@link ArrayImg}
+	 * wrapArrays an ImgLib1 {@link Image} of UnsignedShortType (has to be array) into an ImgLib2 {@link Img} using an {@link ArrayImg}
 	 * 
 	 * @param image - input image
 	 * @return 
 	 */	
-	public static Img< net.imglib2.type.numeric.integer.UnsignedShortType > wrapUnsignedShortToImgLib2 ( final Image< UnsignedShortType > image )
+	public static Img< net.imglib2.type.numeric.integer.UnsignedShortType > wrapArrayUnsignedShortToImgLib2 ( final Image< UnsignedShortType > image )
 	{
 		// extract Short[] array
 		@SuppressWarnings( "unchecked" )
@@ -228,12 +228,12 @@ public class ImgLib1
 	}
 
 	/**
-	 * Wraps an ImgLib1 {@link Image} of ShortType (has to be array) into an ImgLib2 {@link Img} using an {@link ArrayImg}
+	 * wrapArrays an ImgLib1 {@link Image} of ShortType (has to be array) into an ImgLib2 {@link Img} using an {@link ArrayImg}
 	 * 
 	 * @param image - input image
 	 * @return 
 	 */	
-	public static Img< net.imglib2.type.numeric.integer.ShortType > wrapShortToImgLib2 ( final Image< ShortType > image )
+	public static Img< net.imglib2.type.numeric.integer.ShortType > wrapArrayShortToImgLib2 ( final Image< ShortType > image )
 	{
 		// extract Short[] array
 		@SuppressWarnings( "unchecked" )
@@ -261,12 +261,12 @@ public class ImgLib1
 	}
 
 	/**
-	 * Wraps an ImgLib1 {@link Image} of ByteType (has to be array) into an ImgLib2 {@link Img} using an {@link ArrayImg}
+	 * wrapArrays an ImgLib1 {@link Image} of ByteType (has to be array) into an ImgLib2 {@link Img} using an {@link ArrayImg}
 	 * 
 	 * @param image - input image
 	 * @return 
 	 */	
-	public static Img< net.imglib2.type.numeric.integer.ByteType > wrapByteToImgLib2 ( final Image< ByteType > image )
+	public static Img< net.imglib2.type.numeric.integer.ByteType > wrapArrayByteToImgLib2 ( final Image< ByteType > image )
 	{
 		// extract Byte[] array
 		@SuppressWarnings( "unchecked" )
@@ -294,12 +294,12 @@ public class ImgLib1
 	}
 
 	/**
-	 * Wraps an ImgLib1 {@link Image} of UnsignedByteType (has to be array) into an ImgLib2 {@link Img} using an {@link ArrayImg}
+	 * wrapArrays an ImgLib1 {@link Image} of UnsignedByteType (has to be array) into an ImgLib2 {@link Img} using an {@link ArrayImg}
 	 * 
 	 * @param image - input image
 	 * @return 
 	 */	
-	public static Img< net.imglib2.type.numeric.integer.UnsignedByteType > wrapUnsignedByteToImgLib2 ( final Image< UnsignedByteType > image )
+	public static Img< net.imglib2.type.numeric.integer.UnsignedByteType > wrapArrayUnsignedByteToImgLib2 ( final Image< UnsignedByteType > image )
 	{
 		// extract Byte[] array
 		@SuppressWarnings( "unchecked" )
