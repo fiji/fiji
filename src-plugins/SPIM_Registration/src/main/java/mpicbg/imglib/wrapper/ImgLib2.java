@@ -18,6 +18,8 @@ import net.imglib2.img.basictypeaccess.array.FloatArray;
 import net.imglib2.img.basictypeaccess.array.IntArray;
 import net.imglib2.img.basictypeaccess.array.LongArray;
 import net.imglib2.img.basictypeaccess.array.ShortArray;
+import net.imglib2.img.cell.CellImg;
+import net.imglib2.img.cell.DefaultCell;
 import net.imglib2.type.numeric.integer.ByteType;
 import net.imglib2.type.numeric.integer.IntType;
 import net.imglib2.type.numeric.integer.LongType;
@@ -30,6 +32,43 @@ import net.imglib2.type.numeric.real.FloatType;
 
 public class ImgLib2 
 {
+	/**
+	 * wrapArrays an ImgLib2 {@link Img} of FloatType (has to be cell) into an ImgLib1 {@link Image}
+	 * 
+	 * @param image - input image
+	 * @return 
+	 */	
+	public static Image< mpicbg.imglib.type.numeric.real.FloatType > wrapCellFloatToImgLib1 ( final Img< FloatType > img )
+	{
+		// extract float[] arrays from the CellImg consisting of default cells
+		@SuppressWarnings( "unchecked" )
+		final CellImg< FloatType, FloatArray, DefaultCell< FloatArray > > array = (CellImg< FloatType, FloatArray, DefaultCell< FloatArray > > )img;
+		
+		//array.cells;
+		
+		final FloatArray f = (FloatArray)array.update( null );
+		final float[] data = f.getCurrentStorageArray();
+		
+		// convert coordinates
+		final int dim[] = new int[ img.numDimensions() ];
+		for ( int d = 0; d < dim.length; ++d )
+			dim[ d ] = (int)img.dimension( d );		
+		
+		// create ImgLib1 Array		
+		final mpicbg.imglib.container.basictypecontainer.FloatAccess access = new mpicbg.imglib.container.basictypecontainer.array.FloatArray( data );
+		final Array<mpicbg.imglib.type.numeric.real.FloatType, mpicbg.imglib.container.basictypecontainer.FloatAccess> arrayImgLib1 = 
+			new Array<mpicbg.imglib.type.numeric.real.FloatType, mpicbg.imglib.container.basictypecontainer.FloatAccess>( 
+					new ArrayContainerFactory(), access, dim, 1 );
+			
+		// create a Type that is linked to the container
+		final mpicbg.imglib.type.numeric.real.FloatType linkedType = new mpicbg.imglib.type.numeric.real.FloatType( arrayImgLib1 );
+		
+		// pass it to the DirectAccessContainer
+		arrayImgLib1.setLinkedType( linkedType );		
+		
+		return  new Image<mpicbg.imglib.type.numeric.real.FloatType> (arrayImgLib1, new mpicbg.imglib.type.numeric.real.FloatType() );
+	}
+
 	/**
 	 * wrapArrays an ImgLib2 {@link Img} of FloatType (has to be array) into an ImgLib1 {@link Image}
 	 * 
