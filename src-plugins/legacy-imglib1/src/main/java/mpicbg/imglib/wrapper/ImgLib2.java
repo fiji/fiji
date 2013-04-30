@@ -1,9 +1,12 @@
 package mpicbg.imglib.wrapper;
 
+import java.util.ArrayList;
+
 import mpicbg.imglib.container.array.Array;
 import mpicbg.imglib.container.array.ArrayContainerFactory;
 import mpicbg.imglib.image.Image;
-
+import mpicbg.imglib.image.ImageFactory;
+import net.imglib2.Cursor;
 import net.imglib2.img.Img;
 import net.imglib2.img.array.ArrayImg;
 import net.imglib2.img.basictypeaccess.ByteAccess;
@@ -18,8 +21,9 @@ import net.imglib2.img.basictypeaccess.array.FloatArray;
 import net.imglib2.img.basictypeaccess.array.IntArray;
 import net.imglib2.img.basictypeaccess.array.LongArray;
 import net.imglib2.img.basictypeaccess.array.ShortArray;
+import net.imglib2.img.cell.AbstractCell;
 import net.imglib2.img.cell.CellImg;
-import net.imglib2.img.cell.DefaultCell;
+import net.imglib2.img.cell.Cells;
 import net.imglib2.type.numeric.integer.ByteType;
 import net.imglib2.type.numeric.integer.IntType;
 import net.imglib2.type.numeric.integer.LongType;
@@ -33,7 +37,7 @@ import net.imglib2.type.numeric.real.FloatType;
 public class ImgLib2 
 {
 	/**
-	 * wrapArrays an ImgLib2 {@link Img} of FloatType (has to be cell) into an ImgLib1 {@link Image}
+	 * wrapArrays an ImgLib2 {@link Img} of FloatType (has to be CellImg) into an ImgLib1 {@link Image}
 	 * 
 	 * @param image - input image
 	 * @return 
@@ -42,31 +46,318 @@ public class ImgLib2
 	{
 		// extract float[] arrays from the CellImg consisting of default cells
 		@SuppressWarnings( "unchecked" )
-		final CellImg< FloatType, FloatArray, DefaultCell< FloatArray > > array = (CellImg< FloatType, FloatArray, DefaultCell< FloatArray > > )img;
+		final CellImg< FloatType, FloatArray, AbstractCell< FloatArray > > cellImg = (CellImg< FloatType, FloatArray, AbstractCell< FloatArray > > )img;
+		final Cells< FloatArray, AbstractCell< FloatArray > > cells = cellImg.getCells();
 		
-		//array.cells;
+		final ArrayList< float[] > celldata = new ArrayList< float[] >( );
+		final Cursor< AbstractCell< FloatArray > > cursor = cells.cursor();
 		
-		final FloatArray f = (FloatArray)array.update( null );
-		final float[] data = f.getCurrentStorageArray();
+		while ( cursor.hasNext() )
+			celldata.add( cursor.next().getData().getCurrentStorageArray() );
 		
 		// convert coordinates
 		final int dim[] = new int[ img.numDimensions() ];
 		for ( int d = 0; d < dim.length; ++d )
-			dim[ d ] = (int)img.dimension( d );		
+			dim[ d ] = (int)img.dimension( d );
 		
-		// create ImgLib1 Array		
-		final mpicbg.imglib.container.basictypecontainer.FloatAccess access = new mpicbg.imglib.container.basictypecontainer.array.FloatArray( data );
-		final Array<mpicbg.imglib.type.numeric.real.FloatType, mpicbg.imglib.container.basictypecontainer.FloatAccess> arrayImgLib1 = 
-			new Array<mpicbg.imglib.type.numeric.real.FloatType, mpicbg.imglib.container.basictypecontainer.FloatAccess>( 
-					new ArrayContainerFactory(), access, dim, 1 );
-			
-		// create a Type that is linked to the container
-		final mpicbg.imglib.type.numeric.real.FloatType linkedType = new mpicbg.imglib.type.numeric.real.FloatType( arrayImgLib1 );
+		// get the cell size and image size
+		final int[] cellSize = new int[ img.numDimensions() ];
+		cells.cellDimensions( cellSize );
+
+		// instantiate the new cell container on imglib1
+		final PredefinedCellContainerFactory factory = new PredefinedCellContainerFactory( cellSize, new ExistingFloatArrays( celldata ) );
+		final ImageFactory< mpicbg.imglib.type.numeric.real.FloatType > imgFactory = 
+				new ImageFactory< mpicbg.imglib.type.numeric.real.FloatType >( new mpicbg.imglib.type.numeric.real.FloatType(), factory );
+	
+		return imgFactory.createImage( dim );
+	}
+
+	/**
+	 * wrapArrays an ImgLib2 {@link Img} of DoubleType (has to be CellImg) into an ImgLib1 {@link Image}
+	 * 
+	 * @param image - input image
+	 * @return 
+	 */	
+	public static Image< mpicbg.imglib.type.numeric.real.DoubleType > wrapCellDoubleToImgLib1 ( final Img< DoubleType > img )
+	{
+		// extract Double[] arrays from the CellImg consisting of default cells
+		@SuppressWarnings( "unchecked" )
+		final CellImg< DoubleType, DoubleArray, AbstractCell< DoubleArray > > cellImg = (CellImg< DoubleType, DoubleArray, AbstractCell< DoubleArray > > )img;
+		final Cells< DoubleArray, AbstractCell< DoubleArray > > cells = cellImg.getCells();
 		
-		// pass it to the DirectAccessContainer
-		arrayImgLib1.setLinkedType( linkedType );		
+		final ArrayList< double[] > celldata = new ArrayList< double[] >( );
+		final Cursor< AbstractCell< DoubleArray > > cursor = cells.cursor();
 		
-		return  new Image<mpicbg.imglib.type.numeric.real.FloatType> (arrayImgLib1, new mpicbg.imglib.type.numeric.real.FloatType() );
+		while ( cursor.hasNext() )
+			celldata.add( cursor.next().getData().getCurrentStorageArray() );
+		
+		// convert coordinates
+		final int dim[] = new int[ img.numDimensions() ];
+		for ( int d = 0; d < dim.length; ++d )
+			dim[ d ] = (int)img.dimension( d );
+		
+		// get the cell size and image size
+		final int[] cellSize = new int[ img.numDimensions() ];
+		cells.cellDimensions( cellSize );
+
+		// instantiate the new cell container on imglib1
+		final PredefinedCellContainerFactory factory = new PredefinedCellContainerFactory( cellSize, new ExistingDoubleArrays( celldata ) );
+		final ImageFactory< mpicbg.imglib.type.numeric.real.DoubleType > imgFactory = 
+				new ImageFactory< mpicbg.imglib.type.numeric.real.DoubleType >( new mpicbg.imglib.type.numeric.real.DoubleType(), factory );
+	
+		return imgFactory.createImage( dim );
+	}
+
+	/**
+	 * wrapArrays an ImgLib2 {@link Img} of LongType (has to be CellImg) into an ImgLib1 {@link Image}
+	 * 
+	 * @param image - input image
+	 * @return 
+	 */	
+	public static Image< mpicbg.imglib.type.numeric.integer.LongType > wrapCellLongToImgLib1 ( final Img< LongType > img )
+	{
+		// extract Long[] arrays from the CellImg consisting of default cells
+		@SuppressWarnings( "unchecked" )
+		final CellImg< LongType, LongArray, AbstractCell< LongArray > > cellImg = (CellImg< LongType, LongArray, AbstractCell< LongArray > > )img;
+		final Cells< LongArray, AbstractCell< LongArray > > cells = cellImg.getCells();
+		
+		final ArrayList< long[] > celldata = new ArrayList< long[] >( );
+		final Cursor< AbstractCell< LongArray > > cursor = cells.cursor();
+		
+		while ( cursor.hasNext() )
+			celldata.add( cursor.next().getData().getCurrentStorageArray() );
+		
+		// convert coordinates
+		final int dim[] = new int[ img.numDimensions() ];
+		for ( int d = 0; d < dim.length; ++d )
+			dim[ d ] = (int)img.dimension( d );
+		
+		// get the cell size and image size
+		final int[] cellSize = new int[ img.numDimensions() ];
+		cells.cellDimensions( cellSize );
+
+		// instantiate the new cell container on imglib1
+		final PredefinedCellContainerFactory factory = new PredefinedCellContainerFactory( cellSize, new ExistingLongArrays( celldata ) );
+		final ImageFactory< mpicbg.imglib.type.numeric.integer.LongType > imgFactory = 
+				new ImageFactory< mpicbg.imglib.type.numeric.integer.LongType >( new mpicbg.imglib.type.numeric.integer.LongType(), factory );
+	
+		return imgFactory.createImage( dim );
+	}
+
+	/**
+	 * wrapArrays an ImgLib2 {@link Img} of IntType (has to be CellImg) into an ImgLib1 {@link Image}
+	 * 
+	 * @param image - input image
+	 * @return 
+	 */	
+	public static Image< mpicbg.imglib.type.numeric.integer.IntType > wrapCellIntToImgLib1 ( final Img< IntType > img )
+	{
+		// extract Int[] arrays from the CellImg consisting of default cells
+		@SuppressWarnings( "unchecked" )
+		final CellImg< IntType, IntArray, AbstractCell< IntArray > > cellImg = (CellImg< IntType, IntArray, AbstractCell< IntArray > > )img;
+		final Cells< IntArray, AbstractCell< IntArray > > cells = cellImg.getCells();
+		
+		final ArrayList< int[] > celldata = new ArrayList< int[] >( );
+		final Cursor< AbstractCell< IntArray > > cursor = cells.cursor();
+		
+		while ( cursor.hasNext() )
+			celldata.add( cursor.next().getData().getCurrentStorageArray() );
+		
+		// convert coordinates
+		final int dim[] = new int[ img.numDimensions() ];
+		for ( int d = 0; d < dim.length; ++d )
+			dim[ d ] = (int)img.dimension( d );
+		
+		// get the cell size and image size
+		final int[] cellSize = new int[ img.numDimensions() ];
+		cells.cellDimensions( cellSize );
+
+		// instantiate the new cell container on imglib1
+		final PredefinedCellContainerFactory factory = new PredefinedCellContainerFactory( cellSize, new ExistingIntArrays( celldata ) );
+		final ImageFactory< mpicbg.imglib.type.numeric.integer.IntType > imgFactory = 
+				new ImageFactory< mpicbg.imglib.type.numeric.integer.IntType >( new mpicbg.imglib.type.numeric.integer.IntType(), factory );
+	
+		return imgFactory.createImage( dim );
+	}
+
+	/**
+	 * wrapArrays an ImgLib2 {@link Img} of UnsignedIntType (has to be CellImg) into an ImgLib1 {@link Image}
+	 * 
+	 * @param image - input image
+	 * @return 
+	 */	
+	public static Image< mpicbg.imglib.type.numeric.integer.UnsignedIntType > wrapCellUnsignedIntToImgLib1 ( final Img< UnsignedIntType > img )
+	{
+		// extract Int[] arrays from the CellImg consisting of default cells
+		@SuppressWarnings( "unchecked" )
+		final CellImg< UnsignedIntType, IntArray, AbstractCell< IntArray > > cellImg = (CellImg< UnsignedIntType, IntArray, AbstractCell< IntArray > > )img;
+		final Cells< IntArray, AbstractCell< IntArray > > cells = cellImg.getCells();
+		
+		final ArrayList< int[] > celldata = new ArrayList< int[] >( );
+		final Cursor< AbstractCell< IntArray > > cursor = cells.cursor();
+		
+		while ( cursor.hasNext() )
+			celldata.add( cursor.next().getData().getCurrentStorageArray() );
+		
+		// convert coordinates
+		final int dim[] = new int[ img.numDimensions() ];
+		for ( int d = 0; d < dim.length; ++d )
+			dim[ d ] = (int)img.dimension( d );
+		
+		// get the cell size and image size
+		final int[] cellSize = new int[ img.numDimensions() ];
+		cells.cellDimensions( cellSize );
+
+		// instantiate the new cell container on imglib1
+		final PredefinedCellContainerFactory factory = new PredefinedCellContainerFactory( cellSize, new ExistingIntArrays( celldata ) );
+		final ImageFactory< mpicbg.imglib.type.numeric.integer.UnsignedIntType > imgFactory = 
+				new ImageFactory< mpicbg.imglib.type.numeric.integer.UnsignedIntType >( new mpicbg.imglib.type.numeric.integer.UnsignedIntType(), factory );
+	
+		return imgFactory.createImage( dim );
+	}
+
+	/**
+	 * wrapArrays an ImgLib2 {@link Img} of ShortType (has to be CellImg) into an ImgLib1 {@link Image}
+	 * 
+	 * @param image - input image
+	 * @return 
+	 */	
+	public static Image< mpicbg.imglib.type.numeric.integer.ShortType > wrapCellShortToImgLib1 ( final Img< ShortType > img )
+	{
+		// extract Short[] arrays from the CellImg consisting of default cells
+		@SuppressWarnings( "unchecked" )
+		final CellImg< ShortType, ShortArray, AbstractCell< ShortArray > > cellImg = (CellImg< ShortType, ShortArray, AbstractCell< ShortArray > > )img;
+		final Cells< ShortArray, AbstractCell< ShortArray > > cells = cellImg.getCells();
+		
+		final ArrayList< short[] > celldata = new ArrayList< short[] >( );
+		final Cursor< AbstractCell< ShortArray > > cursor = cells.cursor();
+		
+		while ( cursor.hasNext() )
+			celldata.add( cursor.next().getData().getCurrentStorageArray() );
+		
+		// convert coordinates
+		final int dim[] = new int[ img.numDimensions() ];
+		for ( int d = 0; d < dim.length; ++d )
+			dim[ d ] = (int)img.dimension( d );
+		
+		// get the cell size and image size
+		final int[] cellSize = new int[ img.numDimensions() ];
+		cells.cellDimensions( cellSize );
+
+		// instantiate the new cell container on imglib1
+		final PredefinedCellContainerFactory factory = new PredefinedCellContainerFactory( cellSize, new ExistingShortArrays( celldata ) );
+		final ImageFactory< mpicbg.imglib.type.numeric.integer.ShortType > imgFactory = 
+				new ImageFactory< mpicbg.imglib.type.numeric.integer.ShortType >( new mpicbg.imglib.type.numeric.integer.ShortType(), factory );
+	
+		return imgFactory.createImage( dim );
+	}
+
+	/**
+	 * wrapArrays an ImgLib2 {@link Img} of UnsignedShortType (has to be CellImg) into an ImgLib1 {@link Image}
+	 * 
+	 * @param image - input image
+	 * @return 
+	 */	
+	public static Image< mpicbg.imglib.type.numeric.integer.UnsignedShortType > wrapCellUnsignedShortToImgLib1 ( final Img< UnsignedShortType > img )
+	{
+		// extract Short[] arrays from the CellImg consisting of default cells
+		@SuppressWarnings( "unchecked" )
+		final CellImg< UnsignedShortType, ShortArray, AbstractCell< ShortArray > > cellImg = (CellImg< UnsignedShortType, ShortArray, AbstractCell< ShortArray > > )img;
+		final Cells< ShortArray, AbstractCell< ShortArray > > cells = cellImg.getCells();
+		
+		final ArrayList< short[] > celldata = new ArrayList< short[] >( );
+		final Cursor< AbstractCell< ShortArray > > cursor = cells.cursor();
+		
+		while ( cursor.hasNext() )
+			celldata.add( cursor.next().getData().getCurrentStorageArray() );
+		
+		// convert coordinates
+		final int dim[] = new int[ img.numDimensions() ];
+		for ( int d = 0; d < dim.length; ++d )
+			dim[ d ] = (int)img.dimension( d );
+		
+		// get the cell size and image size
+		final int[] cellSize = new int[ img.numDimensions() ];
+		cells.cellDimensions( cellSize );
+
+		// instantiate the new cell container on imglib1
+		final PredefinedCellContainerFactory factory = new PredefinedCellContainerFactory( cellSize, new ExistingShortArrays( celldata ) );
+		final ImageFactory< mpicbg.imglib.type.numeric.integer.UnsignedShortType > imgFactory = 
+				new ImageFactory< mpicbg.imglib.type.numeric.integer.UnsignedShortType >( new mpicbg.imglib.type.numeric.integer.UnsignedShortType(), factory );
+	
+		return imgFactory.createImage( dim );
+	}
+
+	/**
+	 * wrapArrays an ImgLib2 {@link Img} of ByteType (has to be CellImg) into an ImgLib1 {@link Image}
+	 * 
+	 * @param image - input image
+	 * @return 
+	 */	
+	public static Image< mpicbg.imglib.type.numeric.integer.ByteType > wrapCellByteToImgLib1 ( final Img< ByteType > img )
+	{
+		// extract Byte[] arrays from the CellImg consisting of default cells
+		@SuppressWarnings( "unchecked" )
+		final CellImg< ByteType, ByteArray, AbstractCell< ByteArray > > cellImg = (CellImg< ByteType, ByteArray, AbstractCell< ByteArray > > )img;
+		final Cells< ByteArray, AbstractCell< ByteArray > > cells = cellImg.getCells();
+		
+		final ArrayList< byte[] > celldata = new ArrayList< byte[] >( );
+		final Cursor< AbstractCell< ByteArray > > cursor = cells.cursor();
+		
+		while ( cursor.hasNext() )
+			celldata.add( cursor.next().getData().getCurrentStorageArray() );
+		
+		// convert coordinates
+		final int dim[] = new int[ img.numDimensions() ];
+		for ( int d = 0; d < dim.length; ++d )
+			dim[ d ] = (int)img.dimension( d );
+		
+		// get the cell size and image size
+		final int[] cellSize = new int[ img.numDimensions() ];
+		cells.cellDimensions( cellSize );
+
+		// instantiate the new cell container on imglib1
+		final PredefinedCellContainerFactory factory = new PredefinedCellContainerFactory( cellSize, new ExistingByteArrays( celldata ) );
+		final ImageFactory< mpicbg.imglib.type.numeric.integer.ByteType > imgFactory = 
+				new ImageFactory< mpicbg.imglib.type.numeric.integer.ByteType >( new mpicbg.imglib.type.numeric.integer.ByteType(), factory );
+	
+		return imgFactory.createImage( dim );
+	}
+
+	/**
+	 * wrapArrays an ImgLib2 {@link Img} of UnsignedByteType (has to be CellImg) into an ImgLib1 {@link Image}
+	 * 
+	 * @param image - input image
+	 * @return 
+	 */	
+	public static Image< mpicbg.imglib.type.numeric.integer.UnsignedByteType > wrapCellUnsignedByteToImgLib1 ( final Img< UnsignedByteType > img )
+	{
+		// extract Byte[] arrays from the CellImg consisting of default cells
+		@SuppressWarnings( "unchecked" )
+		final CellImg< UnsignedByteType, ByteArray, AbstractCell< ByteArray > > cellImg = (CellImg< UnsignedByteType, ByteArray, AbstractCell< ByteArray > > )img;
+		final Cells< ByteArray, AbstractCell< ByteArray > > cells = cellImg.getCells();
+		
+		final ArrayList< byte[] > celldata = new ArrayList< byte[] >( );
+		final Cursor< AbstractCell< ByteArray > > cursor = cells.cursor();
+		
+		while ( cursor.hasNext() )
+			celldata.add( cursor.next().getData().getCurrentStorageArray() );
+		
+		// convert coordinates
+		final int dim[] = new int[ img.numDimensions() ];
+		for ( int d = 0; d < dim.length; ++d )
+			dim[ d ] = (int)img.dimension( d );
+		
+		// get the cell size and image size
+		final int[] cellSize = new int[ img.numDimensions() ];
+		cells.cellDimensions( cellSize );
+
+		// instantiate the new cell container on imglib1
+		final PredefinedCellContainerFactory factory = new PredefinedCellContainerFactory( cellSize, new ExistingByteArrays( celldata ) );
+		final ImageFactory< mpicbg.imglib.type.numeric.integer.UnsignedByteType > imgFactory = 
+				new ImageFactory< mpicbg.imglib.type.numeric.integer.UnsignedByteType >( new mpicbg.imglib.type.numeric.integer.UnsignedByteType(), factory );
+	
+		return imgFactory.createImage( dim );
 	}
 
 	/**
