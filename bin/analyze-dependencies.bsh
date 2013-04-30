@@ -27,7 +27,7 @@ if (bsh.args.length > 0 && bsh.args[0].equals("-debug")) {
 
 if (bsh.args.length == 0) {
 	System.err.println("Usage: " + this.interpreter.getSourceFileInfo()
-		+ "<file.jar>...");
+		+ " [-debug] <file.jar>...");
 	System.exit(1);
 }
 
