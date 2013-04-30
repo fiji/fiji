@@ -25,6 +25,7 @@ public class CustomStackWindow extends StackWindow
 	
 	private Roi[] savedRois;
 	private int oldSlice;
+	private boolean roisLocked;
 
 	/* Listener for the ok button, to get informed when 
 	 * labelling is finished */
@@ -44,7 +45,10 @@ public class CustomStackWindow extends StackWindow
 		if (sliceSelector == null)
 			sliceSelector = new Scrollbar(Scrollbar.HORIZONTAL,
 				1, 1, 1, 2);
+		else
+			sliceSelector.setValue(cc.getImage().getCurrentSlice());
 		oldSlice = sliceSelector.getValue();
+		roisLocked = false;
 		sliceSelector.addAdjustmentListener(this);
 		
 		// Remove ij from the key listeners to avoid zooming 
@@ -101,6 +105,7 @@ public class CustomStackWindow extends StackWindow
 	}
 
 	public void cleanUp() {
+		roisLocked = false;
 		savedRois = null;
 		al = null;
 		sidebar.getMaterials().labels = null;
@@ -139,6 +144,8 @@ public class CustomStackWindow extends StackWindow
 	}
 
 	public void processPlusButton(){
+		if(roisLocked)
+			return;
 		int currentSlice = cc.getImage().getCurrentSlice();
 		Roi roi = cc.getImage().getRoi();
 		assignSliceTo(currentSlice,roi,sidebar.currentMaterialID());	
@@ -160,6 +167,8 @@ public class CustomStackWindow extends StackWindow
 	}
 	
 	public void processMinusButton(){
+		if(roisLocked)
+			return;
 		int currentSlice = cc.getImage().getCurrentSlice();
 		Roi roi = cc.getImage().getRoi();
 		releaseSliceFrom(currentSlice, roi, sidebar.currentMaterialID());
@@ -181,11 +190,18 @@ public class CustomStackWindow extends StackWindow
 	}
 
 	public void processInterpolateButton() {
+		if(roisLocked)
+			return;
 		updateRois();
+		roisLocked = true;
 		new Thread(new Runnable() {
 			public void run() {
 				setCursor(Cursor.WAIT_CURSOR);
 				new BinaryInterpolator().run(cc.getImage(), savedRois);
+				// Also undo any unvoluntary changes which happened
+				// during the interpolation
+				transferRois(savedRois, true);
+				roisLocked = false;
 				setCursor(Cursor.DEFAULT_CURSOR);
 			}
 		}).start();
@@ -350,7 +366,23 @@ public class CustomStackWindow extends StackWindow
 		return savedRois[slice];
 	}
 
+	public void transferRois(Roi[] rois){
+		transferRois(rois, false);
+	}
+
+	public void transferRois(Roi[] rois, boolean overrideLocking){
+		for(int i = 0; i < rois.length; ++i) {
+			setRoi(i, rois[i], overrideLocking);
+		}
+	}
+
 	public void setRoi(int slice, Roi roi) {
+		setRoi(slice, roi, false);
+	}
+
+	public void setRoi(int slice, Roi roi, boolean overrideLocking) {
+		if(roisLocked && !overrideLocking)
+			return;
 		if (slice != oldSlice)
 			savedRois[slice] = roi;
 		else if (roi == null)
@@ -460,6 +492,8 @@ public class CustomStackWindow extends StackWindow
 	}
 
 	public synchronized void updateRois(int newSlice) {
+		if(roisLocked)
+			return;
 		savedRois[oldSlice] = imp.getRoi();
 		oldSlice = newSlice;
 		if (savedRois[oldSlice] == null)
