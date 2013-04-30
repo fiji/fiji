@@ -5,15 +5,21 @@ classLoader = ClassLoader.getSystemClassLoader();
 for (String c : bsh.args) {
 	slashed = c.replace(".", "/") + ".class";
 	try {
-		jar = classLoader.getResource(slashed).toString();
-		if (jar.startsWith("jar:file:")) {
-			jar = jar.substring(9);
+		jars = classLoader.getResources(slashed);
+		if (!jars.hasMoreElements()) {
+			throw new RuntimeException("Not found??? " + c);
 		}
-		exclamation = jar.indexOf("!/");
-		if (exclamation >= 0) {
-			jar = jar.substring(0, exclamation);
+		while (jars.hasMoreElements()) {
+			jar = jars.nextElement().toString();
+			if (jar.startsWith("jar:file:")) {
+				jar = jar.substring(9);
+			}
+			exclamation = jar.indexOf("!/");
+			if (exclamation >= 0) {
+				jar = jar.substring(0, exclamation);
+			}
+			print("Class " + c + " is in " + jar);
 		}
-		print("Class " + c + " is in " + jar);
 	} catch (Exception e) {
 		print("Class " + c + " was not found in the classpath");
 	}
