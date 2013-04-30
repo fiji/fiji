@@ -2,7 +2,7 @@ package mpicbg.imglib.wrapper;
 
 import java.util.List;
 
-import net.imglib2.img.basictypeaccess.array.FloatArray;
+import mpicbg.imglib.container.basictypecontainer.array.FloatArray;
 
 /**
  * Instead of creating new cell arrays, it return the corresponding array from a predefined list

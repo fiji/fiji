@@ -39,6 +39,7 @@ package mpicbg.imglib.wrapper;
 
 import mpicbg.imglib.container.DirectAccessContainer;
 import mpicbg.imglib.container.DirectAccessContainerFactory;
+import mpicbg.imglib.container.basictypecontainer.array.ArrayDataAccess;
 import mpicbg.imglib.container.basictypecontainer.array.BitArray;
 import mpicbg.imglib.container.basictypecontainer.array.ByteArray;
 import mpicbg.imglib.container.basictypecontainer.array.CharArray;
@@ -58,16 +59,21 @@ import mpicbg.imglib.type.Type;
  */
 public class PredefinedCellContainerFactory extends DirectAccessContainerFactory
 {
+	final ArrayDataAccess< ? > existingArrays;
+	
 	protected int[] cellSize;
 	protected int standardCellSize = 10;
 
-	public PredefinedCellContainerFactory( final int cellSize )
+	public PredefinedCellContainerFactory( final int cellSize, final ArrayDataAccess< ? > existingArrays )
 	{
 		this.standardCellSize = cellSize;
+		this.existingArrays = existingArrays;
 	}
 	
-	public PredefinedCellContainerFactory( final int[] cellSize )
+	public PredefinedCellContainerFactory( final int[] cellSize, final ArrayDataAccess< ? > existingArrays )
 	{
+		this.existingArrays = existingArrays;
+		
 		if ( cellSize == null || cellSize.length == 0 )
 		{
 			System.err.println("CellContainerFactory(): cellSize is null. Using equal cell size of 10.");
@@ -140,10 +146,7 @@ public class PredefinedCellContainerFactory extends DirectAccessContainerFactory
 	@Override
 	public <T extends Type<T>> DirectAccessContainer<T, BitArray> createBitInstance( int[] dimensions, int entitiesPerPixel )
 	{
-		dimensions = checkDimensions( dimensions );
-		int[] cellSize = checkCellSize( this.cellSize, dimensions );
-		
-		return new CellContainer<T, BitArray>( this, new BitArray( 1 ), dimensions, cellSize, entitiesPerPixel );
+		throw new RuntimeException( "Not supported for BitArrays" );
 	}
 	
 	@Override
@@ -152,7 +155,7 @@ public class PredefinedCellContainerFactory extends DirectAccessContainerFactory
 		dimensions = checkDimensions( dimensions );
 		int[] cellSize = checkCellSize( this.cellSize, dimensions );
 		
-		return new CellContainer<T, ByteArray>( this, new ByteArray( 1 ), dimensions, cellSize, entitiesPerPixel );
+		return new CellContainer<T, ByteArray>( this, (ExistingByteArrays)existingArrays, dimensions, cellSize, entitiesPerPixel );
 	}
 
 	@Override
@@ -161,7 +164,7 @@ public class PredefinedCellContainerFactory extends DirectAccessContainerFactory
 		dimensions = checkDimensions( dimensions );
 		int[] cellSize = checkCellSize( this.cellSize, dimensions );
 		
-		return new CellContainer<T, CharArray>( this, new CharArray( 1 ), dimensions, cellSize, entitiesPerPixel );
+		return new CellContainer<T, CharArray>( this, (ExistingCharArrays)existingArrays, dimensions, cellSize, entitiesPerPixel );
 	}
 
 	@Override
@@ -170,7 +173,7 @@ public class PredefinedCellContainerFactory extends DirectAccessContainerFactory
 		dimensions = checkDimensions( dimensions );
 		int[] cellSize = checkCellSize( this.cellSize, dimensions );
 		
-		return new CellContainer<T, DoubleArray>( this, new DoubleArray( 1 ), dimensions, cellSize, entitiesPerPixel );
+		return new CellContainer<T, DoubleArray>( this, (ExistingDoubleArrays)existingArrays, dimensions, cellSize, entitiesPerPixel );
 	}
 
 	@Override
@@ -179,7 +182,7 @@ public class PredefinedCellContainerFactory extends DirectAccessContainerFactory
 		dimensions = checkDimensions( dimensions );
 		int[] cellSize = checkCellSize( this.cellSize, dimensions );
 		
-		return new CellContainer<T, FloatArray>( this, new FloatArray( 1 ), dimensions, cellSize, entitiesPerPixel );
+		return new CellContainer<T, FloatArray>( this, (ExistingFloatArrays)existingArrays, dimensions, cellSize, entitiesPerPixel );
 	}
 
 	@Override
@@ -188,7 +191,7 @@ public class PredefinedCellContainerFactory extends DirectAccessContainerFactory
 		dimensions = checkDimensions( dimensions );
 		int[] cellSize = checkCellSize( this.cellSize, dimensions );
 		
-		return new CellContainer<T, IntArray>( this, new IntArray( 1 ), dimensions, cellSize, entitiesPerPixel );
+		return new CellContainer<T, IntArray>( this, (ExistingIntArrays)existingArrays, dimensions, cellSize, entitiesPerPixel );
 	}
 
 	@Override
@@ -197,7 +200,7 @@ public class PredefinedCellContainerFactory extends DirectAccessContainerFactory
 		dimensions = checkDimensions( dimensions );
 		int[] cellSize = checkCellSize( this.cellSize, dimensions );
 		
-		return new CellContainer<T, LongArray>( this, new LongArray( 1 ), dimensions, cellSize, entitiesPerPixel );
+		return new CellContainer<T, LongArray>( this, (ExistingLongArrays)existingArrays, dimensions, cellSize, entitiesPerPixel );
 	}
 
 	@Override
@@ -206,7 +209,7 @@ public class PredefinedCellContainerFactory extends DirectAccessContainerFactory
 		dimensions = checkDimensions( dimensions );
 		int[] cellSize = checkCellSize( this.cellSize, dimensions );
 		
-		return new CellContainer<T, ShortArray>( this, new ShortArray( 1 ), dimensions, cellSize, entitiesPerPixel );
+		return new CellContainer<T, ShortArray>( this, (ExistingShortArrays)existingArrays, dimensions, cellSize, entitiesPerPixel );
 	}
 
 	@Override
