@@ -38,11 +38,11 @@
 			<version>${imagej1.version}</version>
 		</dependency>
 		<dependency>
-		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>legacy-imglib1</artifactId>
 			<version>${imagej.version}</version>
 		</dependency>
+		<dependency>
 			<groupId>org.jfree</groupId>
 			<artifactId>jcommon</artifactId>
 			<version>${jcommon.version}</version>
