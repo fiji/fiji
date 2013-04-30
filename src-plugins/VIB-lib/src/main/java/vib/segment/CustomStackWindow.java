@@ -483,7 +483,10 @@ public class CustomStackWindow extends StackWindow
 	 * AdjustmentListener interface
 	 */
 	public synchronized void adjustmentValueChanged(AdjustmentEvent e) {
-		super.adjustmentValueChanged(e);
+		imp.setSlice(e.getValue());
+		sliceSelector.setValue(e.getValue());
+		// This seems to corrupt the scrollbar position.
+		//super.adjustmentValueChanged(e);
 		updateRois();
 	}
 
@@ -519,33 +522,33 @@ public class CustomStackWindow extends StackWindow
 		int c = e.getKeyCode();
         char ch = e.getKeyChar();
 		if(c == KeyEvent.VK_DOWN || c == KeyEvent.VK_RIGHT || ch == '>'){
-			imp.setSlice(oldSlice + 1);
+			int newSlice = clamp(oldSlice + 1);
+			adjustmentValueChanged(new AdjustmentEvent(
+						sliceSelector,
+						AdjustmentEvent.ADJUSTMENT_VALUE_CHANGED,
+						AdjustmentEvent.UNIT_INCREMENT,
+						newSlice));
+		} else if (c == KeyEvent.VK_UP || c == KeyEvent.VK_LEFT || ch == '<'){
+			int newSlice = clamp(oldSlice - 1);
+			adjustmentValueChanged(new AdjustmentEvent(
+						sliceSelector,
+						AdjustmentEvent.ADJUSTMENT_VALUE_CHANGED,
+						AdjustmentEvent.UNIT_DECREMENT,
+						newSlice));
+		} else if (c == KeyEvent.VK_PAGE_UP){
+			int newSlice = clamp(oldSlice -5);
+			adjustmentValueChanged(new AdjustmentEvent(
+						sliceSelector,
+						AdjustmentEvent.ADJUSTMENT_VALUE_CHANGED,
+						AdjustmentEvent.BLOCK_DECREMENT,
+						newSlice));
+		} else if (c == KeyEvent.VK_PAGE_DOWN){
+			int newSlice = clamp(oldSlice + 5);
 			adjustmentValueChanged(new AdjustmentEvent(
 						sliceSelector,
 						AdjustmentEvent.ADJUSTMENT_VALUE_CHANGED,
 						AdjustmentEvent.BLOCK_INCREMENT,
-						oldSlice+1));
-		} else if (c == KeyEvent.VK_UP || c == KeyEvent.VK_LEFT || ch == '<'){
-			imp.setSlice(oldSlice - 1);
-			adjustmentValueChanged(new AdjustmentEvent(
-						sliceSelector,
-						AdjustmentEvent.ADJUSTMENT_VALUE_CHANGED,
-						AdjustmentEvent.BLOCK_DECREMENT,
-						oldSlice-1));
-		} else if (c == KeyEvent.VK_PAGE_UP){
-			imp.setSlice(oldSlice - 5);
-			adjustmentValueChanged(new AdjustmentEvent(
-						sliceSelector,
-						AdjustmentEvent.ADJUSTMENT_VALUE_CHANGED,
-						AdjustmentEvent.BLOCK_DECREMENT,
-						oldSlice-5));
-		} else if (c == KeyEvent.VK_PAGE_DOWN){
-			imp.setSlice(oldSlice + 5);
-			adjustmentValueChanged(new AdjustmentEvent(
-						sliceSelector,
-						AdjustmentEvent.ADJUSTMENT_VALUE_CHANGED,
-						AdjustmentEvent.BLOCK_DECREMENT,
-						oldSlice+5));
+						newSlice));
 		} else if (ch == '+' || ch == '='){
 			processPlusButton();
 		} else if (ch == '-'){
@@ -559,5 +562,13 @@ public class CustomStackWindow extends StackWindow
 		} else if (ch == 'c') {
 			processCloseButton();
 		}
+	}
+
+	protected int clamp(int targetSlice) {
+		return targetSlice < 1 ?
+			1 :
+			(targetSlice > cc.getImage().getNSlices() ?
+			 cc.getImage().getNSlices() :
+			 targetSlice);
 	}
 }
