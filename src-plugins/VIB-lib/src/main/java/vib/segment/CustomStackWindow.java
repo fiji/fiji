@@ -45,6 +45,8 @@ public class CustomStackWindow extends StackWindow
 		if (sliceSelector == null)
 			sliceSelector = new Scrollbar(Scrollbar.HORIZONTAL,
 				1, 1, 1, 2);
+		else
+			sliceSelector.setValue(cc.getImage().getCurrentSlice());
 		oldSlice = sliceSelector.getValue();
 		roisLocked = false;
 		sliceSelector.addAdjustmentListener(this);
