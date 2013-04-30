@@ -1,0 +1,26 @@
+#!/bin/sh
+/*/. 2>/dev/null; exec "$(dirname "$0")"/ImageJ.sh --bsh "$0" "$@" # exec with fiji */
+
+classLoader = ClassLoader.getSystemClassLoader();
+for (String c : bsh.args) {
+	slashed = c.replace(".", "/") + ".class";
+	try {
+		jars = classLoader.getResources(slashed);
+		if (!jars.hasMoreElements()) {
+			throw new RuntimeException("Not found??? " + c);
+		}
+		while (jars.hasMoreElements()) {
+			jar = jars.nextElement().toString();
+			if (jar.startsWith("jar:file:")) {
+				jar = jar.substring(9);
+			}
+			exclamation = jar.indexOf("!/");
+			if (exclamation >= 0) {
+				jar = jar.substring(0, exclamation);
+			}
+			print("Class " + c + " is in " + jar);
+		}
+	} catch (Exception e) {
+		print("Class " + c + " was not found in the classpath");
+	}
+}
