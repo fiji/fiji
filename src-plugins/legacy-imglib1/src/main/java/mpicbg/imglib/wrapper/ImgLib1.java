@@ -1,5 +1,7 @@
 package mpicbg.imglib.wrapper;
 
+import ij.ImageJ;
+
 import java.util.ArrayList;
 
 import mpicbg.imglib.container.array.Array;
@@ -16,7 +18,10 @@ import mpicbg.imglib.container.basictypecontainer.array.IntArray;
 import mpicbg.imglib.container.basictypecontainer.array.LongArray;
 import mpicbg.imglib.container.basictypecontainer.array.ShortArray;
 import mpicbg.imglib.container.cell.CellContainer;
+import mpicbg.imglib.container.cell.CellContainerFactory;
 import mpicbg.imglib.image.Image;
+import mpicbg.imglib.image.ImageFactory;
+import mpicbg.imglib.image.display.imagej.ImageJFunctions;
 import mpicbg.imglib.type.numeric.integer.ByteType;
 import mpicbg.imglib.type.numeric.integer.IntType;
 import mpicbg.imglib.type.numeric.integer.LongType;
@@ -33,6 +38,25 @@ import net.imglib2.img.cell.CellImgFactory;
 
 public class ImgLib1
 {
+	public static void main( String[] args )
+	{
+		CellContainerFactory t = new CellContainerFactory( 5 );
+		ImageFactory< FloatType > f = new ImageFactory<FloatType>( new FloatType(), t );
+		
+		new ImageJ();
+		Image<FloatType> img = f.createImage( new int[]{ 19, 8, 3 } );
+		
+		int i = 0;
+		
+		for ( final FloatType ft : img )
+			ft.set( i++ );
+		
+		ImageJFunctions.show( img );
+		
+		net.imglib2.img.display.imagej.ImageJFunctions.show( wrapCellFloatToImgLib2( img ) );
+	}
+	
+	
 	/**
 	 * wrapArrays an ImgLib1 {@link Image} of FloatType (has to be cell) into an ImgLib2 {@link Img} using an {@link ArrayImg}
 	 * 
@@ -58,10 +82,19 @@ public class ImgLib1
 		
 		final CellImgFactory< net.imglib2.type.numeric.real.FloatType > factory = new CellImgFactory< net.imglib2.type.numeric.real.FloatType >( cellContainer.getCellSize() );
 		
-		// create ImgLib2 CellImg		
-		return new CellImg< net.imglib2.type.numeric.real.FloatType, net.imglib2.img.basictypeaccess.array.FloatArray, LoadCell< net.imglib2.img.basictypeaccess.array.FloatArray > >
-			( factory, new ListImgCellsLoad< net.imglib2.img.basictypeaccess.array.FloatArray >( 
-					celldata, 1, dim, cellContainer.getCellSize() ) );
+		// create ImgLib2 CellImg
+		final CellImg< net.imglib2.type.numeric.real.FloatType, net.imglib2.img.basictypeaccess.array.FloatArray, LoadCell< net.imglib2.img.basictypeaccess.array.FloatArray > > cellImg = 
+				new CellImg< net.imglib2.type.numeric.real.FloatType, net.imglib2.img.basictypeaccess.array.FloatArray, LoadCell< net.imglib2.img.basictypeaccess.array.FloatArray > >
+					( factory, new ListImgCellsLoad< net.imglib2.img.basictypeaccess.array.FloatArray >( 
+							celldata, 1, dim, cellContainer.getCellSize() ) );
+		
+		// create a Type that is linked to the container
+		final net.imglib2.type.numeric.real.FloatType linkedType = new net.imglib2.type.numeric.real.FloatType( cellImg );
+		
+		// pass it to the NativeContainer
+		cellImg.setLinkedType( linkedType );
+		
+		return cellImg;
 	}
 
 	/**
