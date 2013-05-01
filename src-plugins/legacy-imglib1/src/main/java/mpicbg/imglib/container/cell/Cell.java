@@ -74,7 +74,7 @@ public class Cell< T extends Type<T>, A extends ArrayDataAccess<A>> //extends Ar
 		Array.createAllocationSteps( dim, step );		
 	}
 	
-	protected A getData() { return data; }
+	public A getData() { return data; }
 	protected void close() { data.close(); }
 	
 	public int getNumPixels() { return numPixels; }
