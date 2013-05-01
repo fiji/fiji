@@ -1,5 +1,7 @@
 package mpicbg.imglib.wrapper;
 
+import java.util.ArrayList;
+
 import mpicbg.imglib.container.array.Array;
 import mpicbg.imglib.container.basictypecontainer.ByteAccess;
 import mpicbg.imglib.container.basictypecontainer.DoubleAccess;
@@ -13,6 +15,7 @@ import mpicbg.imglib.container.basictypecontainer.array.FloatArray;
 import mpicbg.imglib.container.basictypecontainer.array.IntArray;
 import mpicbg.imglib.container.basictypecontainer.array.LongArray;
 import mpicbg.imglib.container.basictypecontainer.array.ShortArray;
+import mpicbg.imglib.container.cell.CellContainer;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.type.numeric.integer.ByteType;
 import mpicbg.imglib.type.numeric.integer.IntType;
@@ -21,14 +24,46 @@ import mpicbg.imglib.type.numeric.integer.ShortType;
 import mpicbg.imglib.type.numeric.integer.UnsignedByteType;
 import mpicbg.imglib.type.numeric.integer.UnsignedIntType;
 import mpicbg.imglib.type.numeric.integer.UnsignedShortType;
-import mpicbg.imglib.type.numeric.real.FloatType;
 import mpicbg.imglib.type.numeric.real.DoubleType;
-
+import mpicbg.imglib.type.numeric.real.FloatType;
 import net.imglib2.img.Img;
 import net.imglib2.img.array.ArrayImg;
+import net.imglib2.img.cell.CellImg;
+import net.imglib2.img.cell.CellImgFactory;
 
 public class ImgLib1
 {
+	/**
+	 * wrapArrays an ImgLib1 {@link Image} of FloatType (has to be cell) into an ImgLib2 {@link Img} using an {@link ArrayImg}
+	 * 
+	 * @param image - input image
+	 * @return 
+	 */	
+	public static Img< net.imglib2.type.numeric.real.FloatType > wrapCellFloatToImgLib2 ( final Image< FloatType > image )
+	{
+		// extract float[] arrays
+		@SuppressWarnings( "unchecked" )
+		final CellContainer< FloatType, FloatArray > cellContainer = (CellContainer< FloatType, FloatArray >)image.getContainer();
+
+		final ArrayList< net.imglib2.img.basictypeaccess.array.FloatArray > celldata = new ArrayList< net.imglib2.img.basictypeaccess.array.FloatArray >( );
+
+		for ( int i = 0; i < cellContainer.getNumCells(); ++i )
+			celldata.add( new net.imglib2.img.basictypeaccess.array.FloatArray( 
+					cellContainer.getCell( i ).getData().getCurrentStorageArray() ) );
+		
+		// convert coordinates
+		final long dim[] = new long[ image.getNumDimensions() ];
+		for ( int d = 0; d < dim.length; ++d )
+			dim[ d ] = image.getDimension( d );		
+		
+		final CellImgFactory< net.imglib2.type.numeric.real.FloatType > factory = new CellImgFactory< net.imglib2.type.numeric.real.FloatType >( cellContainer.getCellSize() );
+		
+		// create ImgLib2 CellImg		
+		return new CellImg< net.imglib2.type.numeric.real.FloatType, net.imglib2.img.basictypeaccess.array.FloatArray, LoadCell< net.imglib2.img.basictypeaccess.array.FloatArray > >
+			( factory, new ListImgCellsLoad< net.imglib2.img.basictypeaccess.array.FloatArray >( 
+					celldata, 1, dim, cellContainer.getCellSize() ) );
+	}
+
 	/**
 	 * wrapArrays an ImgLib1 {@link Image} of FloatType (has to be array) into an ImgLib2 {@link Img} using an {@link ArrayImg}
 	 * 
