@@ -4,7 +4,9 @@ import ij.ImageJ;
 
 import java.util.ArrayList;
 
+import mpicbg.imglib.container.ContainerFactory;
 import mpicbg.imglib.container.array.Array;
+import mpicbg.imglib.container.array.ArrayContainerFactory;
 import mpicbg.imglib.container.basictypecontainer.ByteAccess;
 import mpicbg.imglib.container.basictypecontainer.DoubleAccess;
 import mpicbg.imglib.container.basictypecontainer.FloatAccess;
@@ -36,6 +38,11 @@ import net.imglib2.img.array.ArrayImg;
 import net.imglib2.img.cell.CellImg;
 import net.imglib2.img.cell.CellImgFactory;
 
+/**
+ * Provides non-copying wrapping from Imglib1 to Imglib2 (cell, array)
+ * 
+ * @author Stephan Preibisch (stephan.preibisch@gmx.de)
+ */
 public class ImgLib1
 {
 	/**
@@ -841,7 +848,11 @@ public class ImgLib1
 	
 	public static void main( String[] args )
 	{
-		CellContainerFactory t = new CellContainerFactory( 5 );
+		ContainerFactory t;
+		
+		t = new CellContainerFactory( 5 );
+		t = new ArrayContainerFactory();
+		
 		ImageFactory< FloatType > f = new ImageFactory<FloatType>( new FloatType(), t );
 		
 		new ImageJ();
