@@ -38,6 +38,16 @@
                         <version>20100113</version>
                 </dependency>
 		<dependency>
+			<groupId>org.jfree</groupId>
+			<artifactId>jcommon</artifactId>
+			<version>${jcommon.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.jfree</groupId>
+			<artifactId>jfreechart</artifactId>
+			<version>${jfreechart.version}</version>
+		</dependency>
+		<dependency>
 			<groupId>net.imglib2</groupId>
 			<artifactId>imglib2-algorithms</artifactId>
 			<version>${imagej.version}</version>
@@ -51,6 +61,11 @@
 			<groupId>net.imglib2</groupId>
 			<artifactId>imglib2</artifactId>
 			<version>${imagej.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<version>${junit.version}</version>
 		</dependency>
 	</dependencies>
 
