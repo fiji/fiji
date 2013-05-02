@@ -130,6 +130,7 @@
 		<module>imagescience</module>
 		<module>imageware</module>
 		<module>jep</module>
+		<module>legacy-imglib1</module>
 		<module>level_sets</module>
 		<module>mij</module>
 		<module>pal-optimization</module>

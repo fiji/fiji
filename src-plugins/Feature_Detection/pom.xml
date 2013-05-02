@@ -28,18 +28,8 @@
 			<version>${imagej1.version}</version>
 		</dependency>
 		<dependency>
-			<groupId>mpicbg</groupId>
-			<artifactId>imglib-algorithms</artifactId>
-			<version>${imagej.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>mpicbg</groupId>
-			<artifactId>imglib-ij</artifactId>
-			<version>${imagej.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>mpicbg</groupId>
-			<artifactId>imglib</artifactId>
+			<groupId>sc.fiji</groupId>
+			<artifactId>legacy-imglib1</artifactId>
 			<version>${imagej.version}</version>
 		</dependency>
 	</dependencies>
