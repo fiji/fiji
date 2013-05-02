@@ -48,6 +48,12 @@
 			<version>${jfreechart.version}</version>
 		</dependency>
 		<dependency>
+			<groupId>java3d</groupId>
+			<artifactId>vecmath</artifactId>
+			<version>1.5.2</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
 			<groupId>net.imglib2</groupId>
 			<artifactId>imglib2-algorithms</artifactId>
 			<version>${imagej.version}</version>
