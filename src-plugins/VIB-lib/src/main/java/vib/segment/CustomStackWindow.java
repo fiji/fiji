@@ -549,6 +549,20 @@ public class CustomStackWindow extends StackWindow
 						AdjustmentEvent.ADJUSTMENT_VALUE_CHANGED,
 						AdjustmentEvent.BLOCK_INCREMENT,
 						newSlice));
+		} else if (ch == '.'){
+			int newSlice = nextRoiSlice();
+			adjustmentValueChanged(new AdjustmentEvent(
+						sliceSelector,
+						AdjustmentEvent.ADJUSTMENT_VALUE_CHANGED,
+						AdjustmentEvent.BLOCK_INCREMENT,
+						newSlice));
+		} else if (ch == ','){
+			int newSlice = prevRoiSlice();
+			adjustmentValueChanged(new AdjustmentEvent(
+						sliceSelector,
+						AdjustmentEvent.ADJUSTMENT_VALUE_CHANGED,
+						AdjustmentEvent.BLOCK_INCREMENT,
+						newSlice));
 		} else if (ch == '+' || ch == '='){
 			processPlusButton();
 		} else if (ch == '-'){
@@ -571,4 +585,38 @@ public class CustomStackWindow extends StackWindow
 			 cc.getImage().getNSlices() :
 			 targetSlice);
 	}
+
+	protected int nextRoiSlice() {
+		return findRoiSlice(1);
+	}
+
+	protected int prevRoiSlice() {
+		return findRoiSlice(-1);
+	}
+
+	protected int findRoiSlice(int direction) {
+		boolean found = false;
+		int foundSlice = 0;
+		for (int i = 1; i < savedRois.length; i++) {
+			if (i == oldSlice) {
+				if (direction < 0)
+					break;
+				else
+					foundSlice = 0;
+			}
+			if (savedRois[i] == null)
+				continue;
+
+			foundSlice = i;
+
+			if (i > oldSlice)
+				break;
+		}
+
+		if (foundSlice == 0)
+			return oldSlice;
+		else
+			return foundSlice;
+	}
+
 }
