@@ -5,6 +5,8 @@
  * (C) Kai Uwe Barthel
  */
 
+package fiji.plugin.volumeviewer;
+
 import ij.IJ;
 //import ij.ImageJ;
 import ij.ImagePlus;
