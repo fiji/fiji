@@ -312,6 +312,7 @@ hs_err*.log
 /jars/scijava-common-[0-9]*.jar
 
 # ImgLib #
+/jars/legacy-imglib1-[0-9]*.jar
 /jars/imglib-algorithms-[0-9]*.jar
 /jars/imglib-ij-[0-9]*.jar
 /jars/imglib-io-[0-9]*.jar
@@ -334,6 +335,7 @@ hs_err*.log
 /jars/jai-codec-[0-9]*.jar
 /jars/jai-core-[0-9]*.jar
 /jars/jai_imageio-[0-9]*.jar
+/jars/kryo-[0-9]*.jar
 /jars/loci-common-[0-9]*.jar
 /jars/loci-legacy-[0-9]*.jar
 /jars/log4j-[0-9]*.jar
@@ -344,6 +346,7 @@ hs_err*.log
 /jars/netcdf-[0-9]*.jar
 /jars/netcdf-java-[0-9]*.jar
 /jars/ome-xml-[0-9]*.jar
+/jars/perf4j-[0-9]*.jar
 /jars/poi-loci-[0-9]*.jar
 /jars/scifio-[0-9]*.jar
 /jars/scifio-devel-[0-9]*.jar
@@ -395,3 +398,9 @@ hs_err*.log
 
 # Miscellaneous #
 /jars/Updater_Fix-[0-9]*.jar
+
+# Unknown
+/jars/asm-[0-9]*.jar
+/jars/minlog-[0-9]*.jar
+/jars/objenesis-[0-9]*.jar
+/jars/reflectasm-[0-9]*.jar
