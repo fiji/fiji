@@ -36,12 +36,26 @@ sq_quote () {
 	echo "$1" | sed "s/[]\"\'\\\\(){}[\!\$ 	;]/\\\\&/g"
 }
 
+add_classpath () {
+	for arg
+	do
+		if test -z "$CLASSPATH"
+		then
+			CLASSPATH="$arg"
+		else
+			CLASSPATH="$CLASSPATH$PATHSEPARATOR$arg"
+		fi
+	done
+}
+
 first_java_options=
 java_options=
 ij_options=
 main_class=fiji.Main
 dashdash=f
 dry_run=
+needs_tools_jar=
+CLASSPATH=
 
 while test $# -gt 0
 do
@@ -87,6 +101,12 @@ EOF
 	?,--dry-run)
 		dry_run=t
 		;;
+	?,--cp=*)
+		add_classpath "${1#--cp=}"
+		;;
+	?,--classpath=*)
+		add_classpath "${1#--classpath=}"
+		;;
 	?,--headless)
 		first_java_options="$first_java_options -Djava.awt.headless=true"
 		;;
@@ -113,6 +133,22 @@ EOF
 	?,--main-class=*)
 		main_class="`expr "$1" : '--main-class=\(.*\)'`"
 		;;
+	?,--javac)
+		needs_tools_jar=t
+		main_class=com.sun.tools.javac.Main
+		;;
+	?,--javap)
+		needs_tools_jar=t
+		main_class=sun.tools.javap.Main
+		;;
+	?,--javah)
+		needs_tools_jar=t
+		main_class=com.sun.tools.javah.Main
+		;;
+	?,--javadoc)
+		needs_tools_jar=t
+		main_class=com.sun.tools.javadoc.Main
+		;;
 	?,--build)
 		echo 'WARNING: The Fiji Build system is DEPRECATED' >&2
 		echo 'Please use (Mini-)Maven instead!' >&2
@@ -125,6 +161,7 @@ EOF
 		main_class=fiji.updater.Main
 		;;
 	?,--ant)
+		needs_tools_jar=t
 		main_class=org.apache.tools.ant.Main
 		;;
 	f,*)
@@ -181,27 +218,42 @@ discover_tools_jar () {
 	fi
 }
 
+discover_jar () {
+	ls -t "$FIJI_ROOT/jars/${1%.jar}"*.jar |
+	grep "/${1%.jar}\(\|-[0-9].*\)\.jar$" |
+	head -n 1
+}
+
+test -z "$needs_tools_jar" || {
+	add_classpath "$(discover_tools_jar)"
+	case "$main_class" in
+	*.ant.*)
+		;;
+	*)
+		ij_options="-classpath $CLASSPATH $ij_options"
+		;;
+	esac
+}
+
 case "$main_class" in
 fiji.Main|ij.ImageJ)
 	ij_options="$main_class -port7 $ij_options"
 	main_class="imagej.ClassLauncher -ijjarpath jars/ -ijjarpath plugins/"
-	CLASSPATH="$FIJI_ROOT/jars/ij-launcher.jar$PATHSEPARATOR$FIJI_ROOT/jars/ij.jar$PATHSEPARATOR$FIJI_ROOT/jars/javassist.jar"
+	add_classpath "$(discover_jar ij-launcher)" "$(discover_jar ij)" "$(discover_jar javassist)"
 	;;
 fiji.build.Fake)
-	CLASSPATH="$(ls -t $(find $FIJI_ROOT/jars -name fake\*.jar) | head -n 1)"
+	add_classpath "$(discover_jar fake)"
 	;;
 org.apache.tools.ant.Main)
-	CLASSPATH="$(discover_tools_jar)"
 	for path in "$FIJI_ROOT"/jars/ant*.jar
 	do
-		CLASSPATH="$CLASSPATH${CLASSPATH:+$PATHSEPARATOR}$path"
+		add_classpath "$path"
 	done
 	;;
 *)
-	CLASSPATH=
 	for path in "$FIJI_ROOT"/jars/*.jar "$FIJI_ROOT"/plugins/*.jar
 	do
-		CLASSPATH="$CLASSPATH${CLASSPATH:+$PATHSEPARATOR}$path"
+		add_classpath "$path"
 	done
 esac
 

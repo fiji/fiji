@@ -220,7 +220,7 @@ public class LogDetector <T extends RealType<T>  & NativeType<T>> implements Spo
 	 */
 	protected Img<T> applyMedianFilter(final Img<T> image) {
 		final MedianFilter3x3<T> medFilt = new MedianFilter3x3<T>(image); 
-		if (!medFilt.checkInput() && !medFilt.process()) {
+		if (!medFilt.checkInput() || !medFilt.process()) {
 			errorMessage = baseErrorMessage + "Failed in applying median filter";
 			return null;
 		}

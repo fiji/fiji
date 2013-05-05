@@ -18,55 +18,19 @@
 	url = http://fiji.sc/java/win64.git
 [submodule "mpicbg"]
 	path = modules/mpicbg
-	url = http://fiji.sc/mpicbg.git
+	url = https://github.com/axtimwalde/mpicbg
 [submodule "TrakEM2"]
 	path = modules/TrakEM2
 	url = ssh://mob@repo.or.cz/srv/git/trakem2.git
-[submodule "clojure"]
-	path = modules/clojure
-	url = http://fiji.sc/clojure/.git
 [submodule "ij-plugins"]
 	path = modules/ij-plugins
 	url = http://fiji.sc/ij-plugins/.git
-[submodule "Retrotranslator"]
-	path = modules/Retrotranslator
-	url = http://fiji.sc/Retrotranslator/.git
-[submodule "tcljava"]
-	path = modules/tcljava
-	url = http://fiji.sc/tcljava/.git
-[submodule "batik"]
-	path = modules/batik
-	url = http://fiji.sc/batik/.git
-[submodule "junit"]
-	path = modules/junit
-	url = http://fiji.sc/junit/.git
-[submodule "RSyntaxTextArea"]
-	path = modules/RSyntaxTextArea
-	url = http://fiji.sc/RSyntaxTextArea/.git
-[submodule "AutoComplete"]
-	path = modules/AutoComplete
-	url = http://fiji.sc/AutoComplete/.git
 [submodule "weka"]
 	path = modules/weka
 	url = http://fiji.sc/weka/.git
-[submodule "jython"]
-	path = modules/jython
-	url = http://fiji.sc/jython/.git
 [submodule "imglib"]
 	path = modules/imglib
 	url = git://github.com/imagej/imglib
-[submodule "commons-math"]
-	path = modules/commons-math
-	url = http://fiji.sc/commons-math/.git
-[submodule "javassist"]
-	path = modules/javassist
-	url = http://fiji.sc/javassist/.git
-[submodule "jsch"]
-	path = modules/jsch
-	url = http://fiji.sc/jsch/.git
 [submodule "imagej2"]
 	path = modules/imagej2
 	url = git://github.com/imagej/imagej
-[submodule "imagej5d"]
-	path = modules/image5d
-	url = http://fiji.sc/image5d.git

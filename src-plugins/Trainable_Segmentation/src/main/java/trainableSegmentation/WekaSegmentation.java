@@ -1080,7 +1080,7 @@ public class WekaSegmentation {
 	
 	/**
 	 * Add instances to two classes from a label (binary) image in a random
-	 * and balanced way.
+	 * and balanced way (with repetition).
 	 * White pixels will be added to the corresponding class 1 and
 	 * black pixels will be added to class 2.
 	 *
@@ -1167,19 +1167,36 @@ public class WekaSegmentation {
 		final int width = labelImage.getWidth();
 		final int height = labelImage.getHeight();
 
-		for(int y = 0 ; y < height; y++)
-			for(int x = 0 ; x < width ; x++)
-			{
-				// White pixels are added to the class 1
-				// and black to class 2
-				if(null != mask && mask.getPixelValue(x, y) > 0)
+		if( null != mask)
+		{
+			for(int y = 0 ; y < height; y++)
+				for(int x = 0 ; x < width ; x++)
 				{
+					// White pixels are added to the class 1
+					// and black to class 2
+					if( mask.getPixelValue(x, y) > 0 )
+					{
+						if(labelImage.getPixelValue(x, y) > 0)				
+							whiteCoordinates.add(new Point(x, y));					
+						else				
+							blackCoordinates.add(new Point(x, y));
+					}
+				}
+		}
+		else
+		{
+			for(int y = 0 ; y < height; y++)
+				for(int x = 0 ; x < width ; x++)
+				{
+					// White pixels are added to the class 1
+					// and black to class 2
 					if(labelImage.getPixelValue(x, y) > 0)				
 						whiteCoordinates.add(new Point(x, y));					
 					else				
 						blackCoordinates.add(new Point(x, y));
+					
 				}
-			}
+		}
 
 		// Select random samples from both classes
 		Random rand = new Random();
@@ -1187,8 +1204,7 @@ public class WekaSegmentation {
 		{
 			int randomBlack = rand.nextInt( blackCoordinates.size() );
 			int randomWhite = rand.nextInt( whiteCoordinates.size() );
-			
-						
+								
 			loadedTrainingData.add(featureStack.createInstance( blackCoordinates.get(randomBlack).x, 
 					blackCoordinates.get(randomBlack).y, blackClassIndex));
 			loadedTrainingData.add(featureStack.createInstance(whiteCoordinates.get(randomWhite).x, 
@@ -1527,7 +1543,7 @@ public class WekaSegmentation {
 	
 	/**
 	 * Add instances to two classes from a label (binary) image in a random
-	 * and balanced way.
+	 * and balanced way (with repetition).
 	 * White pixels will be added to the corresponding class 1 and
 	 * black pixels will be added to class 2.
 	 *
@@ -1616,20 +1632,35 @@ public class WekaSegmentation {
 		final int width = labelImage.getWidth();
 		final int height = labelImage.getHeight();
 
-		for(int y = 0 ; y < height; y++)
-			for(int x = 0 ; x < width ; x++)
-			{
-				// White pixels are added to the class 1
-				// and black to class 2
-				if(null != mask && mask.getPixelValue(x, y) > 0)
+		if( null != mask )
+		{
+			for(int y = 0 ; y < height; y++)
+				for(int x = 0 ; x < width ; x++)
 				{
+					// White pixels are added to the class 1
+					// and black to class 2
+					if(mask.getPixelValue(x, y) > 0)
+					{
+						if(labelImage.getPixelValue(x, y) > 0)				
+							whiteCoordinates.add(new Point(x, y));					
+						else				
+							blackCoordinates.add(new Point(x, y));
+					}
+				}
+		}
+		else
+		{
+			for(int y = 0 ; y < height; y++)
+				for(int x = 0 ; x < width ; x++)
+				{
+					// White pixels are added to the class 1
+					// and black to class 2
 					if(labelImage.getPixelValue(x, y) > 0)				
 						whiteCoordinates.add(new Point(x, y));					
 					else				
 						blackCoordinates.add(new Point(x, y));
 				}
-			}
-
+		}
 		// Select random samples from both classes
 		Random rand = new Random();
 		for(int i=0; i<numSamples; i++)
@@ -3501,19 +3532,19 @@ public class WekaSegmentation {
 		{
 			classes = new ArrayList<String>();
 			for(int i = 0; i < numOfClasses ; i ++)
-			{
-				// Do not add empty lists
+			{			
 				for(int n=0; n<trainingImage.getImageStackSize(); n++)
 				{
 					if(examples[n].get(i).size() > 0)
-					{
-						if(classes.contains(getClassLabels()[i]) == false)
-							classes.add(getClassLabels()[i]);
+					{						
 						numOfUsedClasses++;
-					}									
+					}											
 					numOfInstances += examples[n].get(i).size();
+					
+					if(classes.contains(getClassLabels()[i]) == false)
+						classes.add(getClassLabels()[i]);
 				}
-			}
+			}			
 		}
 		else
 		{
@@ -4948,11 +4979,9 @@ public class WekaSegmentation {
 		{
 			classNames = new ArrayList<String>();
 
-			for(int j=0; j<trainingImage.getImageStackSize(); j++)
-				for(int i = 0; i < numOfClasses; i++)					
-					if(examples[j].get(i).size() > 0)
-						if(false == classNames.contains(getClassLabels()[i]))
-							classNames.add(getClassLabels()[i]);
+			for(int i = 0; i < numOfClasses; i++)								
+				if(false == classNames.contains(getClassLabels()[i]))
+					classNames.add(getClassLabels()[i]);
 		}
 
 		// Create instances information (each instance needs a pointer to this)

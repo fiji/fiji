@@ -13,6 +13,14 @@ public class GlobalErrorStatisticsImpl implements GlobalErrorStatistics
 	protected int countAvgErrors = 0;
 	protected double avgLocalError = 0;
 
+	@Override
+	public void reset()
+	{
+		avgError = minError = maxError = -1;
+		numDetections = numCorrespondences = numCandidates = countAvgErrors = 0;
+		avgLocalError = 0;
+	}
+	
     //
 	// Statics methods
     //    

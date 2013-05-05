@@ -9,6 +9,9 @@ import mpicbg.spim.registration.detection.DetectionView;
 
 public class Bead extends DetectionView< BeadIdentification, Bead >
 {
+	// so the gauss fit knows if it relocalize it already
+	public boolean relocalized = false;
+	
 	private static final long serialVersionUID = -2875282502611466531L;
 	
 	public Bead( final int id, final Point3d location, final ViewDataBeads myView )

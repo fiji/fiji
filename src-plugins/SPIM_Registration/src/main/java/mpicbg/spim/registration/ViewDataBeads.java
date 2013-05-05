@@ -120,6 +120,9 @@ public class ViewDataBeads implements Comparable< ViewDataBeads >
 	protected float initialSigma = 1.8f;
 	protected float minPeakValue = 0.01f;
 	protected float minInitialPeakValue = 0.001f;
+	protected int integralRadius1 = 2;
+	protected int integralRadius2 = 4;
+	protected float integralThreshold = 0.03f;
 
 	/**
 	 * the timepoint of this view
@@ -137,12 +140,18 @@ public class ViewDataBeads implements Comparable< ViewDataBeads >
 	public boolean getUseForFusion() { return useForFusion; }
 	public void setUseForFusion( final boolean useForFusion ) { this.useForFusion = useForFusion; }
 
+	public void setIntegralRadius1( final int r1 ) { this.integralRadius1 = r1; }
+	public void setIntegralRadius2( final int r2 ) { this.integralRadius2 = r2; }
+	public void setIntegralThreshold( final float threshold ) { this.integralThreshold = threshold; }
 	public void setInitialSigma( final float s ) { this.initialSigma = s; }
 	public void setMinPeakValue( final float m ) { this.minPeakValue = m; this.minInitialPeakValue = m/10f;}
 	public void setMinInitialPeakValue( final float m ) { this.minInitialPeakValue = m;}
 	public float getInitialSigma() { return this.initialSigma; }
 	public float getMinPeakValue() { return this.minPeakValue;}
 	public float getMinInitialPeakValue() { return this.minInitialPeakValue;}
+	public int getIntegralRadius1() { return this.integralRadius1; }
+	public int getIntegralRadius2() { return this.integralRadius2; }
+	public float getIntegralThreshold() { return this.integralThreshold; }
 
 
 	/**

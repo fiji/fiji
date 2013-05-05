@@ -43,7 +43,7 @@ import org.jgrapht.graph.SimpleWeightedGraph;
 public class TrackMate_ implements PlugIn, Benchmark, MultiThreaded, Algorithm {
 
 	public static final String PLUGIN_NAME_STR = "TrackMate";
-	public static final String PLUGIN_NAME_VERSION = "2.0.2";
+	public static final String PLUGIN_NAME_VERSION = "2.0.3";
 	public static final boolean DEFAULT_USE_MULTITHREADING = true;
 
 	/** 

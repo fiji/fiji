@@ -225,6 +225,7 @@ hs_err*.log
 /plugins/mpicbg_-[0-9]*.jar
 
 # Dependencies copied by MiniMaven #
+/jars/base64-[0-9]*.jar
 /jars/bcmail-jdk14-[0-9]*.jar
 /jars/bcprov-jdk14-[0-9]*.jar
 /jars/bsh-[0-9]*.jar
@@ -243,6 +244,7 @@ hs_err*.log
 /jars/jdom-[0-9]*.jar
 /jars/jdom-contrib-[0-9]*.jar
 /jars/jfreechart-[0-9]*.jar
+/jars/jgrapht-[0-9]*.jar
 /jars/jgrapht-jdk1.6-[0-9]*.jar
 /jars/jgraphx-[0-9]*.jar
 /jars/jna-[0-9]*.jar
@@ -265,32 +267,7 @@ hs_err*.log
 /modules/scijava-common/
 
 # For use by bin/gitignore-in-submodules #
-/modules/AutoComplete/ant-classes/
-/modules/AutoComplete/autocomplete.jar
-/modules/AutoComplete/dist/
-/modules/RSyntaxTextArea/ant-classes/
-/modules/RSyntaxTextArea/dist/
-/modules/RSyntaxTextArea/rsyntaxtextarea.jar
-/modules/batik/batik-1.8pre/
-/modules/batik/batik.jar
-/modules/batik/classes/
-/modules/bio-formats/artifacts/
-/modules/bio-formats/components/bio-formats/build/
-/modules/bio-formats/components/common/build/
-/modules/bio-formats/components/flow-cytometry/build/
-/modules/bio-formats/components/forks/jai/build/
-/modules/bio-formats/components/forks/mdbtools/build/
-/modules/bio-formats/components/forks/poi/build/
-/modules/bio-formats/components/loci-plugins/build/
-/modules/bio-formats/components/ome-xml/build/
-/modules/bio-formats/components/stubs/lwf-stubs/build/
-/modules/bio-formats/loci_tools.jar
-/modules/clojure/classes/
-/modules/commons-math/commons-math.jar
-/modules/commons-math/lib/
-/modules/commons-math/target/
 /modules/ij-plugins/ij-ImageIO_.jar
-/modules/image5d/target/
 /modules/imagej2/jars/ij-awt-common.jar
 /modules/imagej2/jars/ij-core-plugins.jar
 /modules/imagej2/jars/ij-core-tools.jar
@@ -327,31 +304,22 @@ hs_err*.log
 /modules/javassist/javassist-src.jar
 /modules/javassist/javassist.jar
 /modules/javassist/target/
-/modules/jsch/build/
-/modules/jsch/dist/
-/modules/jsch/jsch.jar
-/modules/junit/junit-4.5.jar
-/modules/junit/junit.jar
-/modules/junit/junit4.5/
-/modules/junit/target/
-/modules/jython/jython.jar
-/modules/jython/jython/build/
-/modules/jython/jython/dist/
-/modules/jython/jython/tests/data/initializer/SyspathAppendingInitializer.class
-/modules/jython/python-*
-/modules/jython/unpacked
-/modules/tcljava/jacl.jar
 /modules/weka/weka.jar
 /modules/weka/weka/build/
 /modules/weka/weka/dist/
 
+# SciJava
+/jars/scijava-common-[0-9]*.jar
+
 # ImgLib #
+/jars/legacy-imglib1-[0-9]*.jar
 /jars/imglib-algorithms-[0-9]*.jar
 /jars/imglib-ij-[0-9]*.jar
 /jars/imglib-io-[0-9]*.jar
 /jars/imglib-scripting-[0-9]*.jar
 /jars/imglib-[0-9]*.jar
 /jars/imglib2-algorithms-gpl-[0-9]*.jar
+/jars/imglib2-algorithms-legacy-[0-9]*.jar
 /jars/imglib2-algorithms-[0-9]*.jar
 /jars/imglib2-ij-[0-9]*.jar
 /jars/imglib2-io-[0-9]*.jar
@@ -367,27 +335,32 @@ hs_err*.log
 /jars/jai-codec-[0-9]*.jar
 /jars/jai-core-[0-9]*.jar
 /jars/jai_imageio-[0-9]*.jar
+/jars/kryo-[0-9]*.jar
 /jars/loci-common-[0-9]*.jar
 /jars/loci-legacy-[0-9]*.jar
 /jars/log4j-[0-9]*.jar
 /jars/lwf-stubs-[0-9]*.jar
 /jars/mdbtools-java-[0-9]*.jar
 /jars/metakit-[0-9]*.jar
+/jars/native-lib-loader-[0-9]*.jar
 /jars/netcdf-[0-9]*.jar
 /jars/netcdf-java-[0-9]*.jar
 /jars/ome-xml-[0-9]*.jar
+/jars/perf4j-[0-9]*.jar
 /jars/poi-loci-[0-9]*.jar
 /jars/scifio-[0-9]*.jar
 /jars/scifio-devel-[0-9]*.jar
 /jars/serializer-[0-9]*.jar
 /jars/slf4j-api-[0-9]*.jar
 /jars/slf4j-log4j12-[0-9]*.jar
+/jars/turbojpeg-[0-9]*.jar
 /jars/xalan-[0-9]*.jar
 /jars/xml-apis-[0-9]*.jar
 
 # ImageJ2 #
 /jars/eventbus-[0-9]*.jar
 /jars/ij-app-[0-9]*.jar
+/jars/ij-commands-[0-9]*.jar
 /jars/ij-core-[0-9]*.jar
 /jars/ij-data-[0-9]*.jar
 /jars/ij-ext-swing-[0-9]*.jar
@@ -425,3 +398,9 @@ hs_err*.log
 
 # Miscellaneous #
 /jars/Updater_Fix-[0-9]*.jar
+
+# Unknown
+/jars/asm-[0-9]*.jar
+/jars/minlog-[0-9]*.jar
+/jars/objenesis-[0-9]*.jar
+/jars/reflectasm-[0-9]*.jar

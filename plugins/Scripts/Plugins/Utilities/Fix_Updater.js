@@ -6,8 +6,6 @@
  * or by hitting Ctrl+J (on MacOSX, Apple+J).
  */
 
-importClass(Packages.ij.IJ);
-
 importClass(Packages.java.io.File);
 importClass(Packages.java.net.URL);
 importClass(Packages.java.net.URLClassLoader);
@@ -28,6 +26,37 @@ for (i = 0; i < jars.length; i++)
 importClass(Packages.java.lang.ClassLoader);
 parent = ClassLoader.getSystemClassLoader().getParent();
 loader = new URLClassLoader(urls, parent);
+
+isCommandLine = typeof arguments != 'undefined';
+
+if (isCommandLine) {
+	importClass(Packages.java.lang.System);
+
+	var IJ = {
+		getDirectory: function(label) {
+			// command-line: default to current directory
+			return new File("").getAbsolutePath();
+		},
+
+		showStatus: function(message) {
+			print(message + "\n");
+		},
+
+		error: function(message) {
+			print(message + "\n");
+		},
+
+		handleException: function(exception) {
+			exception.printStackTrace();
+		}
+	}
+
+	var updaterClassName = "imagej.updater.ui.CommandLine";
+} else {
+	importClass(Packages.ij.IJ);
+
+	var updaterClassName = "imagej.updater.gui.ImageJUpdater";
+}
 
 // make sure that the system property 'ij.dir' is set correctly
 if (System.getProperty("ij.dir") == null) {
@@ -65,11 +94,15 @@ if (!new File(ijDir, "db.xml.gz").exists()) {
 }
 
 IJ.showStatus("loading remote updater");
-guiClass = loader.loadClass("imagej.updater.gui.ImageJUpdater");
+updaterClass = loader.loadClass(updaterClassName);
 IJ.showStatus("running remote updater");
 try {
-	i = guiClass.newInstance();
-	i.run();
+	i = updaterClass.newInstance();
+	if (isCommandLine) {
+		i.main(arguments);
+	} else {
+		i.run();
+	}
 } catch (e) {
 	IJ.handleException(e.javaException);
 }
