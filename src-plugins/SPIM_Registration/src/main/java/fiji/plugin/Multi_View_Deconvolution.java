@@ -49,6 +49,7 @@ public class Multi_View_Deconvolution implements PlugIn
 {
 	final private String myURL = "http://fly.mpi-cbg.de/preibisch";
 	public static int psfSize = 17;
+	public static boolean isotropic = false;
 	
 	@Override
 	public void run(String arg0) 
@@ -88,7 +89,7 @@ public class Multi_View_Deconvolution implements PlugIn
 		// extract the beads
 		IJ.log( new Date( System.currentTimeMillis() ) +": Extracting Point spread functions." );
 		final ExtractPSF extractPSF = new ExtractPSF( viewStructure, showAveragePSF );
-		extractPSF.setPSFSize( psfSize, false );
+		extractPSF.setPSFSize( psfSize, isotropic );
 		extractPSF.extract();
 		
 		final ArrayList< Image< FloatType > > pointSpreadFunctions = extractPSF.getPSFs();
