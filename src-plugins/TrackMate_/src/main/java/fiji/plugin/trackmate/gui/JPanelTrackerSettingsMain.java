@@ -26,7 +26,7 @@ import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseWheelListener;
-import java.util.List;
+import java.util.Collection;
 import java.util.Map;
 
 import javax.swing.JCheckBox;
@@ -70,12 +70,12 @@ public class JPanelTrackerSettingsMain extends javax.swing.JPanel {
 	private JLabel jLabel16;
 
 	private final String trackerName;
-	private final List<String> features;
+	private final Collection<String> features;
 	private final Map<String, String> featureNames;
 	private final String spaceUnits;
 
 
-	public JPanelTrackerSettingsMain(final String trackerName, final String spaceUnits, final List<String> features, final Map<String, String> featureNames) {
+	public JPanelTrackerSettingsMain(final String trackerName, final String spaceUnits, final Collection<String> features, final Map<String, String> featureNames) {
 		this.trackerName = trackerName;
 		this.spaceUnits = spaceUnits;
 		this.features = features;

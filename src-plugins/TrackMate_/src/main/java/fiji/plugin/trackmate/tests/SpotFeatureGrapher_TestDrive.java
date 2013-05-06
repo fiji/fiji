@@ -49,7 +49,7 @@ public class SpotFeatureGrapher_TestDrive {
 		TrackIndexAnalyzer analyzer = new TrackIndexAnalyzer(model);
 		analyzer.process(model.getTrackModel().getFilteredTrackIDs()); // need for trackScheme
 		
-		TrackScheme trackScheme = new TrackScheme(model);
+		TrackScheme trackScheme = new TrackScheme(model, plugin.getSettings());
 		trackScheme.render();
 		
 	}

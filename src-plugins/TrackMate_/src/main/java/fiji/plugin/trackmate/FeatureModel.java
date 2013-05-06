@@ -1,27 +1,17 @@
 package fiji.plugin.trackmate;
 
-import static fiji.plugin.trackmate.detection.DetectorKeys.KEY_TARGET_CHANNEL;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicInteger;
-
-import net.imglib2.algorithm.MultiThreaded;
-import net.imglib2.multithreading.SimpleMultiThreading;
 
 import org.jgrapht.graph.DefaultWeightedEdge;
 
 import fiji.plugin.trackmate.features.edges.EdgeAnalyzer;
-import fiji.plugin.trackmate.features.spot.SpotAnalyzer;
-import fiji.plugin.trackmate.features.spot.SpotFeatureAnalyzerFactory;
 import fiji.plugin.trackmate.features.track.TrackAnalyzer;
-import fiji.plugin.trackmate.util.TMUtils;
 
 /**
  * This class represents the part of the {@link TrackMateModel} that is in charge 
@@ -29,22 +19,13 @@ import fiji.plugin.trackmate.util.TMUtils;
  * @author Jean-Yves Tinevez, 2011, 2012
  *
  */
-public class FeatureModel implements MultiThreaded {
+public class FeatureModel {
 
 	//	private static final boolean DEBUG = true;
 
 	/*
 	 * FIELDS
 	 */
-
-	/** The list of spot features that are available for the spots of this model. */
-	private List<String> spotFeatures;
-	/** The map of the spot feature names. */
-	private Map<String, String> spotFeatureNames;
-	/** The map of the spot feature abbreviated names. */
-	private Map<String, String> spotFeatureShortNames;
-	/** The map of the spot feature dimension. */
-	private Map<String, Dimension> spotFeatureDimensions;
 
 	private ArrayList<String> trackFeatures = new ArrayList<String>();
 	private HashMap<String, String> trackFeatureNames = new HashMap<String, String>();
@@ -73,7 +54,6 @@ public class FeatureModel implements MultiThreaded {
 	protected EdgeAnalyzerProvider edgeAnalyzerProvider;
 
 	private TrackMateModel model;
-	protected int numThreads;
 
 
 	/*
@@ -82,162 +62,12 @@ public class FeatureModel implements MultiThreaded {
 
 	FeatureModel(TrackMateModel model) {
 		this.model = model;
-		setNumThreads();
-		// To initialize the spot features with the basic features:
-		setSpotFeatureFactory(null);
 	}
-
 
 	/*
 	 * METHODS
 	 */
-
-	/*
-	 * SPOT FEATURES
-	 */
-
-
-	/**
-	 * Calculate given features for the all spots of this model,
-	 * according to the {@link Settings} set in the model.
-	 * <p>
-	 * Features are calculated for each spot, using their location, and the raw
-	 * image. Since a {@link SpotAnalyzer} can compute more than a feature
-	 * at once, spots might received more data than required.
-	 */
-	public void computeSpotFeatures(final List<String> features, final Settings settings, boolean doLogIt) {
-		computeSpotFeatures(model.getSpots(), features, settings, doLogIt);
-	}
-
-	/**
-	 * Calculate given features for the all spots of this model,
-	 * according to the {@link Settings} set in this model.
-	 */
-	public void computeSpotFeatures(final String feature, final Settings settings, boolean doLogIt) {
-		ArrayList<String> features = new ArrayList<String>(1);
-		features.add(feature);
-		computeSpotFeatures(features, settings, doLogIt);
-	}
-
-	/**
-	 * Calculate given features for the given spots, according to the
-	 * {@link Settings} set in this model.
-	 * <p>
-	 * Features are calculated for each spot, using their location, and the raw
-	 * images. Since a {@link SpotAnalyzer} can compute more than a feature
-	 * at once, spots might received more data than required.
-	 */
-	public void computeSpotFeatures(final SpotCollection toCompute, final List<String> features, final Settings settings, boolean doLogIt) {
-		final HashSet<String> selectedKeys = new HashSet<String>(); // We want to keep ordering
-		for(String feature : features) {
-			for(String analyzer : spotAnalyzerProvider.getAvailableSpotFeatureAnalyzers()) {
-				if (spotAnalyzerProvider.getFeatures(analyzer).contains(feature)) {
-					selectedKeys.add(analyzer);
-				}
-			}
-		}
-		List<SpotFeatureAnalyzerFactory<?>> selectedAnalyzers = new ArrayList<SpotFeatureAnalyzerFactory<?>>();
-		for(String key : selectedKeys) {
-			selectedAnalyzers.add(spotAnalyzerProvider.getSpotFeatureAnalyzer(key));
-		}
-		computeSpotFeaturesAgent(toCompute, selectedAnalyzers, settings, doLogIt);
-	}
-
-	/**
-	 * Calculate all features for the given spot collection. Does nothing
-	 * if the {@link #spotAnalyzerProvider} was not set, which is typically the 
-	 * case when the iniModules() method of the plugin has not been called. 
-	 * <p>
-	 * Features are calculated for each spot, using their location, and the raw
-	 * image. 
-	 */
-	public void computeSpotFeatures(final SpotCollection toCompute, final Settings settings, boolean doLogIt) {
-		if (null == spotAnalyzerProvider)
-			return;
-		List<String> analyzerNames = spotAnalyzerProvider.getAvailableSpotFeatureAnalyzers();
-		List<SpotFeatureAnalyzerFactory<?>> spotFeatureAnalyzers = new ArrayList<SpotFeatureAnalyzerFactory<?>>(analyzerNames.size());
-		for (String analyzerName : analyzerNames) {
-			spotFeatureAnalyzers.add(spotAnalyzerProvider.getSpotFeatureAnalyzer(analyzerName));
-		}
-		computeSpotFeaturesAgent(toCompute, spotFeatureAnalyzers, settings, doLogIt);
-	}
-
-
-	/** 
-	 * Set the list of spot feature analyzers that will be used to compute spot features.
-	 * Setting this field will automatically sets the derived fields: {@link #spotFeatures},
-	 * {@link #spotFeatureNames}, {@link #spotFeatureShortNames} and {@link #spotFeatureDimensions}.
-	 * These fields will be generated from the {@link SpotAnalyzer} content, returned 
-	 * by its methods {@link SpotAnalyzer#getFeatures()}, etc... and will be added
-	 * in the order given by the list.
-	 * 
-	 * @see #updateFeatures(List) 
-	 * @see #updateFeatures(Spot)
-	 */
-	public void setSpotFeatureFactory(final SpotAnalyzerProvider spotAnalyzerProvider) {
-		this.spotAnalyzerProvider = spotAnalyzerProvider;
-
-		spotFeatures = new ArrayList<String>();
-		ArrayList<String> fromAnalyzersFeatures = new ArrayList<String>();
-		// Add the basic features
-		spotFeatures.addAll(Spot.FEATURES);
-		// Features from analyzers
-		if (null != spotAnalyzerProvider) {
-			List<String> analyzers = spotAnalyzerProvider.getAvailableSpotFeatureAnalyzers();
-			for(String analyzer : analyzers) {
-				spotFeatures.addAll(spotAnalyzerProvider.getFeatures(analyzer));
-				fromAnalyzersFeatures.addAll(spotAnalyzerProvider.getFeatures(analyzer));
-			}
-		}
-
-		spotFeatureNames = new HashMap<String, String>();
-		spotFeatureShortNames = new HashMap<String, String>();
-		spotFeatureDimensions = new HashMap<String, Dimension>();
-		// Add the basic features
-		spotFeatureNames.putAll(Spot.FEATURE_NAMES);
-		spotFeatureShortNames.putAll(Spot.FEATURE_SHORT_NAMES);
-		spotFeatureDimensions.putAll(Spot.FEATURE_DIMENSIONS);
-		// Features from analyzers
-		if (null != spotAnalyzerProvider) {
-			for(String feature : fromAnalyzersFeatures) {
-				spotFeatureNames.put(feature, spotAnalyzerProvider.getFeatureName(feature));
-				spotFeatureShortNames.put(feature, spotAnalyzerProvider.getFeatureShortName(feature));
-				spotFeatureDimensions.put(feature, spotAnalyzerProvider.getFeatureDimension(feature));
-			}
-		}
-	}
-
-	/**
-	 * Return the list of the spot features that are dealt with in this model.
-	 */
-	public List<String> getSpotFeatures() {
-		return spotFeatures;
-	}
-
-	/**
-	 * Return the name mapping of the spot features that are dealt with in this model.
-	 * @return
-	 */
-	public Map<String, String> getSpotFeatureNames() {
-		return spotFeatureNames;
-	}
-
-	/**
-	 * Return the short name mapping of the spot features that are dealt with in this model.
-	 * @return
-	 */
-	public Map<String, String> getSpotFeatureShortNames() {
-		return spotFeatureShortNames;
-	}
-
-	/**
-	 * Return the dimension mapping of the spot features that are dealt with in this model.
-	 * @return
-	 */
-	public Map<String, Dimension> getSpotFeatureDimensions() {
-		return spotFeatureDimensions;
-	}
-
+	
 	/** 
 	 * Set the list of track feature analyzers that will be used to compute track features.
 	 * Setting this field will automatically sets the derived fields: {@link #trackFeatures},
@@ -283,16 +113,6 @@ public class FeatureModel implements MultiThreaded {
 			edgeFeatureShortNames.put(edgeFeature, edgeFeatureAnalyzerProvider.getFeatureShortName(edgeFeature));
 			edgeFeatureDimensions.put(edgeFeature, edgeFeatureAnalyzerProvider.getFeatureDimension(edgeFeature));
 		}
-	}
-
-
-	/**
-	 * @return a map of feature values for the spot collection held
-	 * by this instance. Each feature maps a double array, with 1 element per
-	 * {@link Spot}, all pooled together.
-	 */
-	public Map<String, double[]> getSpotFeatureValues() {
-		return TMUtils.getSpotFeatureValues(model.getSpots(), spotFeatures, model.getLogger()); // FIXME Yerk!
 	}
 
 	/**
@@ -352,71 +172,6 @@ public class FeatureModel implements MultiThreaded {
 		return val;
 	}
 
-	/**
-	 * The method in charge of computing spot features with the given {@link SpotAnalyzer}s, for the
-	 * given {@link SpotCollection}.
-	 * @param toCompute
-	 * @param analyzers
-	 */
-	private void computeSpotFeaturesAgent(final SpotCollection toCompute, final List<SpotFeatureAnalyzerFactory<?>> analyzerFactories, final Settings settings, boolean doLogIt) {
-
-		final Logger logger;
-		if (doLogIt) {
-			logger = model.getLogger();
-		}
-		else {
-			logger = Logger.VOID_LOGGER;
-		}
-
-		// Can't compute any spot feature without an image to compute on.
-		if (settings.imp == null)
-			return;
-
-		final List<Integer> frameSet = new ArrayList<Integer>(toCompute.keySet());
-		final int numFrames = frameSet.size();
-
-		final AtomicInteger ai = new AtomicInteger(0);
-		final AtomicInteger progress = new AtomicInteger(0);
-		final Thread[] threads = SimpleMultiThreading.newThreads(numThreads);
-
-		int tc = 0;
-		if (settings != null && settings.detectorSettings != null) {
-			// Try to extract it from detector settings target channel
-			Map<String, Object> ds = settings.detectorSettings;
-			Object obj = ds.get(KEY_TARGET_CHANNEL);
-			if (null != obj && obj instanceof Integer) {
-				tc = ((Integer) obj) - 1;
-			}
-		}
-		final int targetChannel = tc;
-
-		// Prepare the thread array
-		for (int ithread = 0; ithread < threads.length; ithread++) {
-
-			threads[ithread] = new Thread("TrackMate spot feature calculating thread " + (1 + ithread) + "/" + threads.length) {
-
-				public void run() {
-
-					for (int index = ai.getAndIncrement(); index < numFrames; index = ai.getAndIncrement()) {
-
-						int frame = frameSet.get(index);
-						for (SpotFeatureAnalyzerFactory<?> factory : analyzerFactories) {
-							factory.getAnalyzer(frame, targetChannel).process();
-						}
-
-						logger.setProgress(progress.incrementAndGet() / (float) numFrames);
-					} // Finished looping over frames
-				}
-			};
-		}
-		logger.setStatus("Calculating " + toCompute.getNSpots(false) + " spots features...");
-		logger.setProgress(0);
-
-		SimpleMultiThreading.startAndJoin(threads);
-
-		logger.setProgress(1);
-		logger.setStatus("");
-	}
 
 
 	/*
@@ -586,20 +341,4 @@ public class FeatureModel implements MultiThreaded {
 		}
 	}
 
-	@Override
-	public void setNumThreads() {
-		this.numThreads = Runtime.getRuntime().availableProcessors();
-	}
-
-
-	@Override
-	public void setNumThreads(int numThreads) {
-		this.numThreads = numThreads;
-	}
-
-
-	@Override
-	public int getNumThreads() {
-		return numThreads;
-	}
 }

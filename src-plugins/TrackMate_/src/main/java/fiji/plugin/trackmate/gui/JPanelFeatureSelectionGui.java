@@ -5,6 +5,7 @@ import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -43,8 +44,8 @@ public class JPanelFeatureSelectionGui extends javax.swing.JPanel {
 	 * Set the features and their names that should be presented by this GUI.
 	 * The user will be allowed to choose amongst the given features. 
 	 */
-	public void setDisplayFeatures(List<String> features, Map<String, String> featureNames) {
-		this.features = features;
+	public void setDisplayFeatures(Collection<String> features, Map<String, String> featureNames) {
+		this.features = new ArrayList<String>(features);
 		this.featureNames = featureNames;
 	}
 

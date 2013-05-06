@@ -14,11 +14,9 @@ import net.imglib2.multithreading.SimpleMultiThreading;
 
 import org.jgrapht.graph.SimpleWeightedGraph;
 
-import fiji.plugin.trackmate.action.TrackMateAction;
 import fiji.plugin.trackmate.detection.SpotDetector;
 import fiji.plugin.trackmate.detection.SpotDetectorFactory;
-import fiji.plugin.trackmate.features.track.TrackAnalyzer;
-import fiji.plugin.trackmate.gui.WizardController;
+import fiji.plugin.trackmate.features.SpotFeatureCalculator;
 import fiji.plugin.trackmate.tracking.SpotTracker;
 import fiji.plugin.trackmate.util.CropImgView;
 import fiji.plugin.trackmate.util.TMUtils;
@@ -108,85 +106,6 @@ public class TrackMate_ implements Benchmark, MultiThreaded, Algorithm {
 		return prunedSpots;
 	}
 
-
-	/**
-	 * Hook for subclassers.
-	 * <p>
-	 * Create and launch the GUI that will control this plugin. You can override this method
-	 * if you want to use another GUI, or use a the {@link WizardController} extended
-	 * to suit your needs.
-	 */
-	protected void launchGUI() {
-		new WizardController(this);
-	}
-
-	/*
-	 * PROVIDERS
-	 */
-	
-	/**
-	 * Hook for subclassers.
-	 * <p>
-	 *  Create view factory containing available spot {@link TrackMateSelectionView}s.
-	 */
-	protected ViewProvider createViewProvider() {
-		return new ViewProvider(model);
-	}
-
-	/**
-	 * Hook for subclassers.
-	 * <p>
-	 * Create detector provider that manages available {@link SpotDetectorFactory}.
-	 */
-	protected DetectorProvider createDetectorProvider() {
-		return new DetectorProvider();
-	}
-
-	/**
-	 * Hook for subclassers.
-	 * <p>
-	 * Create the spot feature analyzer provider.
-	 */
-	protected SpotAnalyzerProvider createSpotAnalyzerProvider() {
-		return new SpotAnalyzerProvider(model);
-	}
-	
-	/**
-	 * Hook for subclassers.
-	 * <p>
-	 * Create the edge feature analyzer provider.
-	 */
-	protected EdgeAnalyzerProvider createEdgeAnalyzerProvider() {
-		return new EdgeAnalyzerProvider(model);
-	}
-
-	/**
-	 * Hook for subclassers.
-	 * <p>
-	 * Create detector factory containing available spot {@link TrackAnalyzer}s.
-	 */
-	protected TrackAnalyzerProvider createTrackAnalyzerProvider() {
-		return new TrackAnalyzerProvider(model);
-	}
-
-	/**
-	 * Hook for subclassers.
-	 * <p>
-	 * Create detector factory containing available spot {@link SpotTracker}s.
-	 */
-	protected TrackerProvider createTrackerProvider() {
-		return new TrackerProvider(model);
-	}
-
-	/**
-	 * Hook for subclassers.
-	 * <p>
-	 * Create action factory containing available spot {@link TrackMateAction}s.
-	 */
-	protected ActionProvider createActionProvider() {
-		return new ActionProvider();
-	}
-
 	/*
 	 * METHODS
 	 */
@@ -213,10 +132,19 @@ public class TrackMate_ implements Benchmark, MultiThreaded, Algorithm {
 	 * <p>
 	 * Features are calculated for each spot, using their location, and the raw image. 
 	 */
-	public void computeSpotFeatures(boolean doLogIt) {
+	public boolean computeSpotFeatures(boolean doLogIt) {
 		final Logger logger = model.getLogger();
 		logger.log("Computing spot features.\n");
-		model.getFeatureModel().computeSpotFeatures(model.getSpots(), settings, doLogIt);
+		SpotFeatureCalculator calculator = new SpotFeatureCalculator(model, settings);
+		if (calculator.checkInput() && calculator.process()) {
+			if (doLogIt) {
+				logger.log("Computation done in " + calculator.getProcessingTime() + " ms.\n");
+			}
+			return true;
+		} else {
+			errorMessage = "Spot features calculation failed:\n"+calculator.getErrorMessage();
+			return false;
+		}
 	}
 
 	public void computeEdgeFeatures(boolean doLogIt) {
@@ -247,7 +175,7 @@ public class TrackMate_ implements Benchmark, MultiThreaded, Algorithm {
 		tracker.setSettings(settings.trackerSettings);
 		if (tracker.checkInput() && tracker.process()) {
 			model.getTrackModel().setGraph(tracker.getResult());
-			return false;
+			return true;
 		} else {
 			errorMessage = "Tracking process failed:\n"+tracker.getErrorMessage();
 			return false;

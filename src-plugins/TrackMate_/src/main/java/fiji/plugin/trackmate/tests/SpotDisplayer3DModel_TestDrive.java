@@ -35,7 +35,7 @@ public class SpotDisplayer3DModel_TestDrive {
 		}
 		TrackMateModel model = plugin.getModel();
 		
-		SpotDisplayer3D displayer = new SpotDisplayer3D(model);
+		SpotDisplayer3D displayer = new SpotDisplayer3D(model, plugin.getSettings());
 		displayer.render();
 		
 		displayer.setDisplaySettings(TrackMateModelView.KEY_TRACK_DISPLAY_MODE, TrackMateModelView.TRACK_DISPLAY_MODE_LOCAL);

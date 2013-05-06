@@ -172,7 +172,7 @@ public class TMUtils {
 
 
 	/**
-	 * Return the mapping in a map that is targeted by a list of keys, in the order given in the list.
+	 * Returns the mapping in a map that is targeted by a list of keys, in the order given in the list.
 	 */
 	public static final <J,K> List<K> getArrayFromMaping(List<J> keys, Map<J, K> mapping) {
 		List<K> names = new ArrayList<K>(keys.size());
@@ -492,7 +492,7 @@ public class TMUtils {
 	}
 	
 	/**
-	 * Build and return a map of {@link SpotFeature} values for the spot collection given.
+	 * Builds and returns a map of {@link SpotFeature} values for the spot collection given.
 	 * Each feature maps a double array, with 1 element per {@link Spot}, all pooled
 	 * together.
 	 */

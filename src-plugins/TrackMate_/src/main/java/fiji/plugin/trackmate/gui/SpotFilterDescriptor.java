@@ -4,6 +4,7 @@ import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.List;
+import java.util.Map;
 
 import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
@@ -11,8 +12,10 @@ import javax.swing.event.ChangeListener;
 
 import fiji.plugin.trackmate.FeatureFilter;
 import fiji.plugin.trackmate.Logger;
+import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMate_;
+import fiji.plugin.trackmate.util.TMUtils;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
 
 public class SpotFilterDescriptor implements WizardPanelDescriptor {
@@ -61,8 +64,10 @@ public class SpotFilterDescriptor implements WizardPanelDescriptor {
 	@Override
 	public void aboutToDisplayPanel() {
 		TrackMateModel model = plugin.getModel();
-		component.setTarget(model.getFeatureModel().getSpotFeatures(), plugin.getSettings().getSpotFilters(),  
-				model.getFeatureModel().getSpotFeatureNames(), model.getFeatureModel().getSpotFeatureValues(), "spots");
+		Settings settings = plugin.getSettings();
+		Map<String, double[]> values = TMUtils.getSpotFeatureValues(model.getSpots(), settings.getSpotFeatures(), model.getLogger());
+		component.setTarget(settings.getSpotFeatures(), settings.getSpotFilters(),  
+				settings.getSpotFeatureNames(), values , "spots");
 		linkGuiToView();
 	}
 
@@ -125,7 +130,7 @@ public class SpotFilterDescriptor implements WizardPanelDescriptor {
 			logger.log("No feature threshold set, kept the " + ntotal + " spots.\n");
 		} else {
 			for (FeatureFilter ft : featureFilters) {
-				String str = "  - on "+model.getFeatureModel().getSpotFeatureNames().get(ft.feature);
+				String str = "  - on "+plugin.getSettings().getSpotFeatureNames().get(ft.feature);
 				if (ft.isAbove) 
 					str += " above ";
 				else

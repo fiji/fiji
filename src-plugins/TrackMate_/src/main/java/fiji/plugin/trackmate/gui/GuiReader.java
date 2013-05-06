@@ -156,7 +156,7 @@ public class GuiReader {
 		}
 
 		// Make a new displayer
-		displayer = new HyperStackDisplayer(plugin.getModel());
+		displayer = new HyperStackDisplayer(plugin.getModel(), plugin.getSettings());
 		
 		// Send the new instance of plugin to all panel a first
 		// time, required by some for proper instantiation.

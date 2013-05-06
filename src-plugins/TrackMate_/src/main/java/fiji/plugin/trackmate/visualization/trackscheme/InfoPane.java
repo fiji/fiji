@@ -100,8 +100,8 @@ public class InfoPane extends JPanel implements SelectionChangeListener {
 		this.model = model;
 		this.settings = settings;
 		this.graph = graph;
-		this.features = model.getFeatureModel().getSpotFeatures();
-		this.featureNames = model.getFeatureModel().getSpotFeatureShortNames();
+		this.features = settings.getSpotFeatures();
+		this.featureNames = settings.getSpotFeatureShortNames();
 		this.headers = TMUtils.getArrayFromMaping(features, featureNames).toArray(new String[] {});
 		this.updater = new OnRequestUpdater(new Refreshable() {
 			@Override

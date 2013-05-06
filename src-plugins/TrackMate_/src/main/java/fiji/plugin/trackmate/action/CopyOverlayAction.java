@@ -47,12 +47,12 @@ public class CopyOverlayAction extends AbstractTMAction {
 							String title;
 							if (null == dest) {
 								logger.log("Copying data and overlay to new 3D viewer\n");
-								newDisplayer = new SpotDisplayer3D(plugin.getModel());
+								newDisplayer = new SpotDisplayer3D(plugin.getModel(), plugin.getSettings());
 								title = "3D viewer overlay";
 							} else {
 								logger.log("Copying overlay to "+dest.getShortTitle()+"\n");
 								plugin.getSettings().imp = dest; // TODO TODO DANGER DANGER
-								newDisplayer = new HyperStackDisplayer(plugin.getModel());
+								newDisplayer = new HyperStackDisplayer(plugin.getModel(), plugin.getSettings());
 								title = dest.getShortTitle() + " ctrl";
 							}
 							newDisplayer.render();

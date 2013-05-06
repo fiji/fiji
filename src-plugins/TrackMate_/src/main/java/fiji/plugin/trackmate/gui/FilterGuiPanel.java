@@ -85,8 +85,8 @@ public class FilterGuiPanel extends ActionListenablePanel implements ChangeListe
 	 * @param featureValues  a mapping linking the features to their value array.
 	 * @param objectDescription  a single word description of the object to filter
 	 */
-	public void setTarget(List<String> features, List<FeatureFilter> filters,  Map<String, String> featureNames, Map<String, double[]> featureValues, String objectDescription) {
-		this.features = features;
+	public void setTarget(Collection<String> features, List<FeatureFilter> filters,  Map<String, String> featureNames, Map<String, double[]> featureValues, String objectDescription) {
+		this.features = new ArrayList<String>(features);
 		this.featureNames = featureNames;
 		this.featureValues = featureValues;
 		this.objectDescription = objectDescription;
@@ -107,7 +107,7 @@ public class FilterGuiPanel extends ActionListenablePanel implements ChangeListe
 				if (filters.isEmpty())
 					newFeatureIndex = 0;
 				else
-					newFeatureIndex = features.indexOf(filters.get(filters.size()-1).feature);
+					newFeatureIndex = this.features.indexOf(filters.get(filters.size()-1).feature);
 
 			}
 		}
@@ -116,7 +116,7 @@ public class FilterGuiPanel extends ActionListenablePanel implements ChangeListe
 		if (jPanelColorByFeatureGUI != null) {
 			jPanelBottom.remove(jPanelColorByFeatureGUI);
 		}
-		jPanelColorByFeatureGUI = new JPanelColorByFeatureGUI(features, featureNames, this);
+		jPanelColorByFeatureGUI = new JPanelColorByFeatureGUI(this.features, featureNames, this);
 		COLOR_FEATURE_CHANGED = jPanelColorByFeatureGUI.COLOR_FEATURE_CHANGED;
 		jPanelColorByFeatureGUI.setFeatureValues(featureValues);
 		jPanelBottom.add(jPanelColorByFeatureGUI, BorderLayout.CENTER);

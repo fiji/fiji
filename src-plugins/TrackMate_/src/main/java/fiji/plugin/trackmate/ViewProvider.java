@@ -13,6 +13,7 @@ public class ViewProvider {
 	 * These names will be used as keys to access relevant view classes.  */
 	protected List<String> names;
 	protected final TrackMateModel model;
+	protected final Settings settings;
 
 	/*
 	 * BLANK CONSTRUCTOR
@@ -27,8 +28,9 @@ public class ViewProvider {
 	 * factory so that it is registered with the custom views and provide this 
 	 * extended factory to the {@link TrackMate_} plugin.
 	 */
-	public ViewProvider(TrackMateModel model) {
+	public ViewProvider(TrackMateModel model, Settings settings) {
 		this.model = model;
+		this.settings = settings;
 		registerViews();
 	}
 
@@ -58,9 +60,9 @@ public class ViewProvider {
 		}
 		switch (index) {
 		case 0:
-			return new HyperStackDisplayer(model);
+			return new HyperStackDisplayer(model, settings);
 		case 1:
-			return new SpotDisplayer3D(model);
+			return new SpotDisplayer3D(model, settings);
 		default:
 			return null;
 		}

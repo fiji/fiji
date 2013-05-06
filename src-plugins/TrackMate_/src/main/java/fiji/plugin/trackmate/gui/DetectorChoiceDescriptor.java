@@ -52,7 +52,7 @@ public class DetectorChoiceDescriptor implements WizardPanelDescriptor {
 	private void setCurrentChoiceFromPlugin() {
 		String key;
 		if (null != plugin.getSettings().detectorFactory) {
-			key = plugin.getModel().getSettings().detectorFactory.getKey();
+			key = plugin.getSettings().detectorFactory.getKey();
 		} else {
 			key = plugin.getDetectorProvider().getCurrentKey(); // back to default 
 		}

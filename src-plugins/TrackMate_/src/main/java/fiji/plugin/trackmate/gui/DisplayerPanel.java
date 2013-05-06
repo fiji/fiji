@@ -38,9 +38,11 @@ import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 import javax.swing.border.LineBorder;
 
+import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMate_;
 import fiji.plugin.trackmate.action.ExportStatsToIJAction;
+import fiji.plugin.trackmate.util.TMUtils;
 import fiji.plugin.trackmate.visualization.AbstractTrackMateModelView;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
 import fiji.plugin.trackmate.visualization.trackscheme.TrackScheme;
@@ -184,7 +186,7 @@ public class DisplayerPanel extends ActionListenablePanel implements WizardPanel
 					new Thread("TrackMate_ laucnhing TrackScheme thread") {
 						public void run() {	
 							try {
-								TrackScheme trackScheme = new TrackScheme(plugin.getModel());
+								TrackScheme trackScheme = new TrackScheme(plugin.getModel(), plugin.getSettings());
 								Map<String, Object> displaySettings = new HashMap<String, Object>();
 								updateDisplaySettings(displaySettings);
 								for (String settingKey : displaySettings.keySet()) {
@@ -248,9 +250,10 @@ public class DisplayerPanel extends ActionListenablePanel implements WizardPanel
 	 */
 
 	private void setModel(TrackMateModel model) {
-		Map<String, double[]> featureValues = model.getFeatureModel().getSpotFeatureValues();
-		List<String> features = model.getFeatureModel().getSpotFeatures();
-		Map<String, String> featureNames = model.getFeatureModel().getSpotFeatureNames();
+		Settings settings = plugin.getSettings(); 
+		Map<String, double[]> featureValues = TMUtils.getSpotFeatureValues(model.getSpots(), settings.getSpotFeatures(), model.getLogger());
+		List<String> features = settings.getSpotFeatures();
+		Map<String, String> featureNames = settings.getSpotFeatureNames();
 
 		if (jPanelSpotColor == null) {
 			jPanelSpotColor = new JPanelColorByFeatureGUI(features, featureNames, this);

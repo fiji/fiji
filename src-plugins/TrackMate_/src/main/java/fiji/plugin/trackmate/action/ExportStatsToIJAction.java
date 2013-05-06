@@ -3,6 +3,7 @@ package fiji.plugin.trackmate.action;
 
 import ij.measure.ResultsTable;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
@@ -58,7 +59,7 @@ public class ExportStatsToIJAction extends AbstractTMAction {
 		// Export spots
 		logger.log("  - Exporting spot statistics...");
 		Set<Integer> trackIDs = model.getTrackModel().getFilteredTrackIDs();
-		List<String> spotFeatures = fm.getSpotFeatures();
+		Collection<String> spotFeatures = plugin.getSettings().getSpotFeatures();
 
 		// Create table
 		ResultsTable spotTable = new ResultsTable();

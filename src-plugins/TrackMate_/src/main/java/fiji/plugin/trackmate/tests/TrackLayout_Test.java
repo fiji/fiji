@@ -1,5 +1,6 @@
 package fiji.plugin.trackmate.tests;
 
+import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.visualization.trackscheme.TrackScheme;
 
@@ -9,7 +10,7 @@ public class TrackLayout_Test {
 		
 		TrackMateModel model = Graph_Test.getExampleModel();
 		
-		TrackScheme trackScheme = new TrackScheme(model);
+		TrackScheme trackScheme = new TrackScheme(model, new Settings());
 		trackScheme.render();
 		
 	}

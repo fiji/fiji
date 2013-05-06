@@ -35,7 +35,7 @@ public class TrackerConfigurationPanelDescriptor implements WizardPanelDescripto
 		// We assume the provider is already configured with the right target detector factory
 		TrackerProvider provider = plugin.getTrackerProvider();
 		// Regenerate panel
-		configPanel = provider.getTrackerConfigurationPanel();
+		configPanel = provider.getTrackerConfigurationPanel(plugin.getSettings());
 		Map<String, Object> settings = plugin.getSettings().trackerSettings;
 		// Bulletproof null
 		if (null == settings || !provider.checkSettingsValidity(settings)) {

@@ -12,6 +12,8 @@ import java.util.Map;
 
 import fiji.plugin.trackmate.detection.SpotDetector;
 import fiji.plugin.trackmate.detection.SpotDetectorFactory;
+import fiji.plugin.trackmate.features.spot.SpotAnalyzer;
+import fiji.plugin.trackmate.features.spot.SpotAnalyzerFactory;
 import fiji.plugin.trackmate.tracking.SpotTracker;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
 
@@ -85,6 +87,15 @@ public class Settings {
 	/** The track filter list that is used to prune track and spots. */
 	protected List<FeatureFilter> trackFilters = new ArrayList<FeatureFilter>();
 	protected String errorMessage;
+	
+	
+	// Spot features
+	
+	/** The {@link SpotAnalyzerFactory}s that will be used to compute spot features.
+	 * They are ordered in a {@link List} in case some analyzers requires the results
+	 * of another analyzer to proceed. */
+	protected List<SpotAnalyzerFactory<?>> spotAnalyzerFactories = new ArrayList<SpotAnalyzerFactory<?>>(); 
+	
 	
 	
 	/*
@@ -289,6 +300,98 @@ public class Settings {
 	public String getErrorMessage() {
 		return errorMessage;
 	}
+	
+	/*
+	 * SPOT FEATURES
+	 */
+	
+	/**
+	 * Returns a copy of the list of {@link SpotAnalyzerFactory}s configured in this settings object.
+	 * They are returned in an ordered list, to enforce processing order in case some
+	 * analyzers requires the results of another analyzers to proceed.
+	 * @return the list of {@link SpotAnalyzerFactory}s.
+	 */
+	public List<SpotAnalyzerFactory<?>> getSpotAnalyzerFactories() {
+		return new ArrayList<SpotAnalyzerFactory<?>>(spotAnalyzerFactories);
+	}
+	
+	/**
+	 * Adds a {@link SpotAnalyzerFactory} to the {@link List} of spot analyzers configured.
+	 * @param spotAnalyzer the {@link SpotAnalyzer} to add, at the end of the list.
+	 */
+	public void addSpotAnalyzerFactory(SpotAnalyzerFactory<?> spotAnalyzer) {
+		spotAnalyzerFactories.add(spotAnalyzer);
+	}	
+
+	/**
+	 * Adds a {@link SpotAnalyzerFactory} to the {@link List} of spot analyzers configured,
+	 * at the specified index. 
+	 * @param spotAnalyzer the {@link SpotAnalyzer} to add, at the specified index in the list.
+	 */
+	public void addSpotAnalyzerFactory(int index, SpotAnalyzerFactory<?> spotAnalyzer) {
+		spotAnalyzerFactories.add(index, spotAnalyzer);
+	}
+	
+	/**
+	 * Removes the specified {@link SpotAnalyzerFactory} from the analyzers configured.  
+	 * @param spotAnalyzer the {@link SpotAnalyzerFactory} to remove.
+	 * @return  true if the specified {@link SpotAnalyzerFactory} was in the list and was removed.
+	 */
+	public boolean removeSpotAnalyzerFactory(SpotAnalyzerFactory<?> spotAnalyzer) {
+		return spotAnalyzerFactories.remove(spotAnalyzer);
+	}
+
+	/**
+	 * Returns the collection of features calculated from the {@link SpotAnalyzerFactory}s configured.
+	 * @return the collection of spot features, as strings.
+	 */
+	public List<String> getSpotFeatures() {
+		ArrayList<String> features = new ArrayList<String>();
+		for (SpotAnalyzerFactory<?> spotAnalyzer: spotAnalyzerFactories) {
+			features.addAll(spotAnalyzer.getFeatures());
+		}
+		return features;
+	}
+	
+	/**
+	 * Returns the map that links each spot feature configured to be calculated 
+	 * to its name.
+	 * @return  a map of spot feature names.
+	 */
+	public Map<String, String> getSpotFeatureNames() {
+		HashMap<String, String> featureNames = new HashMap<String, String>();
+		for (SpotAnalyzerFactory<?> spotAnalyzer: spotAnalyzerFactories) {
+			featureNames.putAll(spotAnalyzer.getFeatureNames());
+		}
+		return featureNames;
+	}
+	
+	/**
+	 * Returns the map that links each spot feature configured to be calculated 
+	 * to its short name.
+	 * @return  a map of spot feature short names.
+	 */
+	public Map<String, String> getSpotFeatureShortNames() {
+		HashMap<String, String> featureNames = new HashMap<String, String>();
+		for (SpotAnalyzerFactory<?> spotAnalyzer: spotAnalyzerFactories) {
+			featureNames.putAll(spotAnalyzer.getFeatureShortNames());
+		}
+		return featureNames;
+	}
+	
+	/**
+	 * Returns the map that links each spot feature configured to be calculated 
+	 * to its dimension.
+	 * @return  a map of spot feature names.
+	 */
+	public Map<String, Dimension> getSpotFeatureDimensions() {
+		HashMap<String, Dimension> featureDimensions = new HashMap<String, Dimension>();
+		for (SpotAnalyzerFactory<?> spotAnalyzer: spotAnalyzerFactories) {
+			featureDimensions.putAll(spotAnalyzer.getFeatureDimensions());
+		}
+		return featureDimensions;
+	}
+	
 	
 	
 	/*

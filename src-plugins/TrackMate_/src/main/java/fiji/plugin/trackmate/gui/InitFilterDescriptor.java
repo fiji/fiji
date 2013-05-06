@@ -5,8 +5,10 @@ import java.util.Map;
 
 import fiji.plugin.trackmate.FeatureFilter;
 import fiji.plugin.trackmate.Logger;
+import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMate_;
+import fiji.plugin.trackmate.util.TMUtils;
 
 public class InitFilterDescriptor implements WizardPanelDescriptor {
 
@@ -55,7 +57,8 @@ public class InitFilterDescriptor implements WizardPanelDescriptor {
 	@Override
 	public void aboutToDisplayPanel() {
 		TrackMateModel model = plugin.getModel();
-		features = model.getFeatureModel().getSpotFeatureValues();
+		Settings settings = plugin.getSettings();
+		features = TMUtils.getSpotFeatureValues(model.getSpots(), settings.getSpotFeatures(), model.getLogger());
 		component = new InitFilterPanel(features);
 		Double initialFilterValue = plugin.getSettings().initialSpotFilterValue;
 		component.setInitialFilterValue(initialFilterValue);

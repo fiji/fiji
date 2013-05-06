@@ -74,7 +74,7 @@ public class TrackVisualizerTestDrive {
 		plugin.computeEdgeFeatures(true);
 		
 		// Instantiate displayer
-		final HyperStackDisplayer displayer = new HyperStackDisplayer(model);
+		final HyperStackDisplayer displayer = new HyperStackDisplayer(model, plugin.getSettings());
 //		final SpotDisplayer3D displayer = new SpotDisplayer3D(model);
 //		displayer.setRenderImageData(false);
 		displayer.render();
@@ -82,7 +82,7 @@ public class TrackVisualizerTestDrive {
 		
 		
 		// Display Track scheme
-		final TrackScheme trackScheme = new TrackScheme(model);
+		final TrackScheme trackScheme = new TrackScheme(model, plugin.getSettings());
 		trackScheme.render();
 		
 		// Show control panel

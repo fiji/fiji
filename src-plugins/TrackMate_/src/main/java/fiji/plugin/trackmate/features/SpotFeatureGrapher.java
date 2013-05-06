@@ -40,12 +40,12 @@ public class SpotFeatureGrapher extends AbstractFeatureGrapher  {
 	 * CONSTRUCTOR
 	 */
 
-	public SpotFeatureGrapher(final String xFeature, final Set<String> yFeatures, final List<Spot> spots, final TrackMateModel model, Settings settings) {
+	public SpotFeatureGrapher(final String xFeature, final Set<String> yFeatures, final List<Spot> spots, final TrackMateModel model, final Settings settings) {
 		super(xFeature, yFeatures, model);
 		this.spots = spots;
-		this.xDimension = model.getFeatureModel().getSpotFeatureDimensions().get(xFeature);
-		this.yDimensions = model.getFeatureModel().getSpotFeatureDimensions();
-		this.featureNames = model.getFeatureModel().getSpotFeatureNames();
+		this.xDimension = settings.getSpotFeatureDimensions().get(xFeature);
+		this.yDimensions = settings.getSpotFeatureDimensions();
+		this.featureNames = settings.getSpotFeatureNames();
 		this.settings = settings;
 	}
 	

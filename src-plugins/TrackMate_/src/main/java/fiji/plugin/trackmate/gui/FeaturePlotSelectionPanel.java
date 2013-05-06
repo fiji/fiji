@@ -7,6 +7,8 @@ import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -67,10 +69,10 @@ public class FeaturePlotSelectionPanel extends ActionListenablePanel {
 	 * CONSTRUCTOR
 	 */
 
-	public FeaturePlotSelectionPanel(String xKey, List<String> features, Map<String, String> featureNames) {
+	public FeaturePlotSelectionPanel(String xKey, Collection<String> features, Map<String, String> featureNames) {
 		super();
 		this.xKey = xKey;
-		this.features = features;
+		this.features = new ArrayList<String>(features);
 		this.featureNames = featureNames;
 		initGUI();
 		addFeature();

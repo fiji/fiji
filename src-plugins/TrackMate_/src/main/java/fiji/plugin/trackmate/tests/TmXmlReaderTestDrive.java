@@ -31,7 +31,7 @@ public class TmXmlReaderTestDrive {
 		
 //		 Instantiate displayer
 		fiji.plugin.trackmate.visualization.AbstractTrackMateModelView displayer 
-			= new fiji.plugin.trackmate.visualization.hyperstack.HyperStackDisplayer(model);
+			= new fiji.plugin.trackmate.visualization.hyperstack.HyperStackDisplayer(model, plugin.getSettings());
 		displayer.render();
 		displayer.refresh();
 

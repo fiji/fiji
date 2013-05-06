@@ -30,15 +30,16 @@ public class HyperStackDisplayerTestDrive {
 		
 		ij.ImageJ.main(args);
 		
-		if (null != plugin.getSettings().imp)
-			model.getFeatureModel().computeSpotFeatures(model.getSpots(), plugin.getSettings(), true);
+		if (null != plugin.getSettings().imp) {
+			plugin.computeSpotFeatures(false);
+		}
 				
-		final TrackMateModelView displayer = new HyperStackDisplayer(model);
+		final TrackMateModelView displayer = new HyperStackDisplayer(model, plugin.getSettings());
 		displayer.render();
 //		displayer.setDisplaySettings(TrackMateModelView.KEY_TRACK_DISPLAY_MODE, TrackMateModelView.TRACK_DISPLAY_MODE_LOCAL_FORWARD);
 		displayer.setDisplaySettings(TrackMateModelView.KEY_DISPLAY_SPOT_NAMES, true);
 		
-		final TrackScheme trackScheme = new TrackScheme(model);
+		final TrackScheme trackScheme = new TrackScheme(model, plugin.getSettings());
 		trackScheme.render();
 		
 	}

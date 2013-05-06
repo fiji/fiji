@@ -46,7 +46,7 @@ public class WeirdMergingTestDrive {
 		
 		model.getTrackModel().setGraph(tracker.getResult());
 		
-		TrackScheme view = new TrackScheme(model);
+		TrackScheme view = new TrackScheme(model, plugin.getSettings());
 		view.render();
 
 	}

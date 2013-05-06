@@ -2,7 +2,7 @@ package fiji.plugin.trackmate.gui;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
-import java.util.List;
+import java.util.Collection;
 import java.util.Map;
 
 import javax.swing.JScrollPane;
@@ -14,14 +14,14 @@ public class LAPTrackerSettingsPanel extends ConfigurationPanel {
 	private JPanelTrackerSettingsMain jPanelMain;
 	private final String trackerName;
 	private final String spaceUnits;
-	private final List<String> features;
+	private final Collection<String> features;
 	private final Map<String, String> featureNames;
 
 	/*
 	 * CONSTRUCTOR
 	 */
 
-	public LAPTrackerSettingsPanel(final String trackerName, final String spaceUnits, final List<String> features, final Map<String, String> featureNames) {
+	public LAPTrackerSettingsPanel(final String trackerName, final String spaceUnits, final Collection<String> features, final Map<String, String> featureNames) {
 		this.trackerName = trackerName;
 		this.spaceUnits = spaceUnits;
 		this.features = features;

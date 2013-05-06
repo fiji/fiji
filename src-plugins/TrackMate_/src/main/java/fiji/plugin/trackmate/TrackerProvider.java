@@ -19,6 +19,7 @@ import static fiji.plugin.trackmate.tracking.TrackerKeys.KEY_SPLITTING_MAX_DISTA
 import static fiji.plugin.trackmate.tracking.TrackerKeys.XML_ATTRIBUTE_TRACKER_NAME;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -47,6 +48,7 @@ public class TrackerProvider extends AbstractProvider  {
 	protected static final String XML_ELEMENT_NAME_FEATURE_PENALTIES = "FeaturePenalties";
 
 	protected final TrackMateModel model;
+	protected final Settings settings;
 
 	/*
 	 * CONSTRUCTOR
@@ -66,8 +68,9 @@ public class TrackerProvider extends AbstractProvider  {
 	 * factory so that it is registered with the custom trackers and pass this 
 	 * extended provider to the {@link TrackMate_} plugin.
 	 */
-	public TrackerProvider(TrackMateModel model) {
+	public TrackerProvider(TrackMateModel model, Settings settings) {
 		this.model = model;
+		this.settings = settings;
 		this.currentKey = SimpleFastLAPTracker.TRACKER_KEY;
 		registerTrackers();
 	}
@@ -170,8 +173,8 @@ public class TrackerProvider extends AbstractProvider  {
 
 		String trackerName = getName();
 		String spaceUnits = settings.spaceUnits;
-		List<String> features = model.getFeatureModel().getSpotFeatures();
-		Map<String, String> featureNames = model.getFeatureModel().getSpotFeatureNames();
+		Collection<String> features = settings.getSpotFeatures();
+		Map<String, String> featureNames = settings.getSpotFeatureNames();
 
 		if (currentKey.equals(SimpleFastLAPTracker.TRACKER_KEY)) {
 			return new SimpleLAPTrackerSettingsPanel(trackerName, SimpleFastLAPTracker.INFO_TEXT, spaceUnits);

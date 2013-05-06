@@ -5,6 +5,7 @@ import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -68,8 +69,8 @@ public class GrapherPanel extends ActionListenablePanel implements WizardPanelDe
 		
 		// regen spot features
 		panelSpot.removeAll();
-		List<String> spotFeatures = plugin.getModel().getFeatureModel().getSpotFeatures();
-		Map<String, String> spotFeatureNames = plugin.getModel().getFeatureModel().getSpotFeatureNames();
+		Collection<String> spotFeatures = plugin.getSettings().getSpotFeatures();
+		Map<String, String> spotFeatureNames = plugin.getSettings().getSpotFeatureNames();
 		spotFeatureSelectionPanel = new FeaturePlotSelectionPanel(Spot.POSITION_T, spotFeatures, spotFeatureNames);
 		panelSpot.add(spotFeatureSelectionPanel);
 		spotFeatureSelectionPanel.addActionListener(new ActionListener() {
