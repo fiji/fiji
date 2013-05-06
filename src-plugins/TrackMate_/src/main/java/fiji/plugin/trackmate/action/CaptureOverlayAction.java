@@ -15,7 +15,6 @@ import java.awt.Robot;
 
 import javax.swing.ImageIcon;
 
-import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMate_;
 import fiji.plugin.trackmate.visualization.trackscheme.TrackSchemeFrame;
 
@@ -43,8 +42,7 @@ public class CaptureOverlayAction extends AbstractTMAction {
 		logger.log("Capturing TrackMate overlay.\n");
 		logger.log("  Preparing and allocating memory...");
 		try {
-			final TrackMateModel model = plugin.getModel();
-			final ImagePlus imp =  model.getSettings().imp;
+			final ImagePlus imp =  plugin.getSettings().imp;
 			final ImageWindow win = imp.getWindow();
 			win.toFront();
 			final Point loc = win.getLocation();

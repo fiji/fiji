@@ -123,7 +123,7 @@ public class ExtractTrackStackAction extends AbstractTMAction {
 		nspots = sortedSpots.size();
 
 		// Common coordinates
-		Settings settings = model.getSettings();
+		Settings settings = plugin.getSettings();
 		double[] calibration = TMUtils.getSpatialCalibration(settings.imp);
 		int targetChannel = settings.imp.getC() - 1; // From current selection
 		final int width 	= (int) Math.ceil(2 * radius * RESIZE_FACTOR / calibration[0]);

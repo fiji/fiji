@@ -18,7 +18,6 @@ public class WeirdMergingTestDrive {
 	public static void main(String[] args) {
 		
 		TrackMate_ plugin = new TrackMate_();
-		plugin.initModules();
 		plugin.setLogger(Logger.DEFAULT_LOGGER);
 
 		File file = new File("/Users/tinevez/Desktop/Test2.xml");

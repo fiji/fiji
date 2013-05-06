@@ -212,7 +212,7 @@ public class TmXmlWriter implements Algorithm, Benchmark  {
 
 
 	private void echoBaseSettings() {
-		Settings settings = model.getSettings();
+		Settings settings = plugin.getSettings();
 		Element settingsElement = new Element(SETTINGS_ELEMENT_KEY);
 		settingsElement.setAttribute(SETTINGS_XSTART_ATTRIBUTE_NAME, ""+settings.xstart);
 		settingsElement.setAttribute(SETTINGS_XEND_ATTRIBUTE_NAME, ""+settings.xend);
@@ -228,15 +228,15 @@ public class TmXmlWriter implements Algorithm, Benchmark  {
 
 	private void echoDetectorSettings() {
 		Element el = new Element(DETECTOR_SETTINGS_ELEMENT_KEY);
-		if (null == model.getSettings().detectorFactory) {
+		if (null == plugin.getSettings().detectorFactory) {
 			return; // and write nothing
 		}
 		DetectorProvider provider = plugin.getDetectorProvider();
-		boolean ok = provider.select(model.getSettings().detectorFactory.getKey());
+		boolean ok = provider.select(plugin.getSettings().detectorFactory.getKey());
 		if (!ok) {
 			logger.error(provider.getErrorMessage());
 		} else {
-			provider.marshall(model.getSettings().detectorSettings, el);
+			provider.marshall(plugin.getSettings().detectorSettings, el);
 		}
 
 		root.addContent(el);
@@ -245,16 +245,16 @@ public class TmXmlWriter implements Algorithm, Benchmark  {
 
 	private void echoTrackerSettings() {
 		Element el = new Element(TRACKER_SETTINGS_ELEMENT_KEY);
-		if (null == model.getSettings().tracker) {
+		if (null == plugin.getSettings().tracker) {
 			return; // and write nothing
 		}
 		
 		TrackerProvider provider = plugin.getTrackerProvider();
-		boolean ok = provider.select(model.getSettings().tracker.getKey());
+		boolean ok = provider.select(plugin.getSettings().tracker.getKey());
 		if (!ok) {
 			logger.error(provider.getErrorMessage());
 		} else {
-			provider.marshall(model.getSettings().trackerSettings, el);
+			provider.marshall(plugin.getSettings().trackerSettings, el);
 		}
 
 		root.addContent(el);
@@ -348,7 +348,7 @@ public class TmXmlWriter implements Algorithm, Benchmark  {
 	}
 
 	private void echoImageInfo() {
-		Settings settings = model.getSettings();
+		Settings settings = plugin.getSettings();
 		if (null == settings || null == settings.imp)
 			return;
 		Element imEl = new Element(IMAGE_ELEMENT_KEY);
@@ -395,7 +395,7 @@ public class TmXmlWriter implements Algorithm, Benchmark  {
 	}
 
 	private void echoInitialSpotFilter() {
-		Double filterVal = model.getSettings().initialSpotFilterValue;
+		Double filterVal = plugin.getSettings().initialSpotFilterValue;
 		if (null == filterVal) {
 			return; // and write nothing
 		}
@@ -409,7 +409,7 @@ public class TmXmlWriter implements Algorithm, Benchmark  {
 	}
 
 	private void echoSpotFilters() {
-		List<FeatureFilter> featureThresholds = model.getSettings().getSpotFilters();
+		List<FeatureFilter> featureThresholds = plugin.getSettings().getSpotFilters();
 
 		Element allTresholdElement = new Element(SPOT_FILTER_COLLECTION_ELEMENT_KEY);
 		for (FeatureFilter threshold : featureThresholds) {
@@ -425,7 +425,7 @@ public class TmXmlWriter implements Algorithm, Benchmark  {
 	}
 
 	private void echoTrackFilters() {
-		List<FeatureFilter> featureThresholds = model.getSettings().getTrackFilters();
+		List<FeatureFilter> featureThresholds = plugin.getSettings().getTrackFilters();
 
 		Element allTresholdElement = new Element(TRACK_FILTER_COLLECTION_ELEMENT_KEY);
 		for (FeatureFilter threshold : featureThresholds) {

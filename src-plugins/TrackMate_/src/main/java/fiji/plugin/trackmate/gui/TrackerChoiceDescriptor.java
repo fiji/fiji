@@ -101,8 +101,8 @@ public class TrackerChoiceDescriptor implements WizardPanelDescriptor {
 	void setCurrentChoiceFromPlugin() {
 		
 		String key;
-		if (null != plugin.getModel().getSettings().tracker) {
-			key = plugin.getModel().getSettings().tracker.getKey();
+		if (null != plugin.getSettings().tracker) {
+			key = plugin.getSettings().tracker.getKey();
 		} else {
 			key = plugin.getTrackerProvider().getCurrentKey(); // back to default 
 		}

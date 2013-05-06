@@ -59,7 +59,7 @@ public class DetectorDescriptor implements WizardPanelDescriptor {
 	@Override
 	public void displayingPanel() {
 		wizard.setNextButtonEnabled(false);
-		final Settings settings = plugin.getModel().getSettings();
+		final Settings settings = plugin.getSettings();
 		logger.log("Starting detection using "+settings.detectorFactory.toString()+"\n", Logger.BLUE_COLOR);
 		logger.log("with settings:\n");
 		logger.log(TMUtils.echoMap(settings.detectorSettings, 2));

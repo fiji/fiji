@@ -21,9 +21,9 @@ public class SaveDescriptor extends SomeDialogDescriptor {
 			logger.log("Saving data...\n", Logger.BLUE_COLOR);
 			if (null == file ) {
 //				File folder = new File(System.getProperty("user.dir")).getParentFile().getParentFile();
-				File folder = new File(plugin.getModel().getSettings().imp.getOriginalFileInfo().directory);
+				File folder = new File(plugin.getSettings().imp.getOriginalFileInfo().directory);
 				try {
-					file = new File(folder.getPath() + File.separator + plugin.getModel().getSettings().imp.getShortTitle() +".xml");
+					file = new File(folder.getPath() + File.separator + plugin.getSettings().imp.getShortTitle() +".xml");
 				} catch (NullPointerException npe) {
 					file = new File(folder.getPath() + File.separator + "TrackMateData.xml");
 				}

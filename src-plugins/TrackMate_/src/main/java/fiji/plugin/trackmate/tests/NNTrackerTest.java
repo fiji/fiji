@@ -31,7 +31,6 @@ public class NNTrackerTest {
 		// 1 - Load test spots
 		System.out.println("Opening file: "+file.getAbsolutePath());		
 		TrackMate_ plugin = new TrackMate_();
-		plugin.initModules();
 		TmXmlReader reader = new TmXmlReader(file, plugin);
 		if (!reader.checkInput() || !reader.process()) {
 			System.err.println("Problem loading the file:");

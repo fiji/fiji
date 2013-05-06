@@ -8,17 +8,16 @@ import net.imglib2.img.ImgPlus;
 import net.imglib2.view.HyperSliceImgPlus;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.util.TMUtils;
 
 public class SpotImageUpdater {
 	
-	private final TrackMateModel model;
 	private Integer previousFrame;
 	private SpotIconGrabber<?> grabber;
+	private final Settings settings;
 
-	public SpotImageUpdater(final TrackMateModel model) {
-		this.model = model;
+	public SpotImageUpdater(final Settings settings) {
+		this.settings = settings;
 		this.previousFrame = -1;
 	}
 
@@ -37,7 +36,6 @@ public class SpotImageUpdater {
 		if (frame == previousFrame) {
 			// Keep the same image than in memory
 		} else {
-			Settings settings = model.getSettings();
 			ImgPlus img = TMUtils.rawWraps(settings.imp);
 			int targetChannel = 0;
 			if (settings != null && settings.detectorSettings != null) {
@@ -57,4 +55,12 @@ public class SpotImageUpdater {
 		return grabber.getImageString(spot);			
 	}
 
+	
+	/**
+	 * Returns the pixel size for the images created with this image creator.
+	 * @return a double, measuring the physical pixel size.
+	 */
+	public double getPixelSize() {
+		return settings.dx;
+	}
 }

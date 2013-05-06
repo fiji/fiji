@@ -34,19 +34,19 @@ public class EdgeFeatureGrapher extends AbstractFeatureGrapher {
 	private final Dimension xDimension;
 	private final Map<String, Dimension> yDimensions;
 	private final Map<String, String> featureNames;
+	private final Settings settings;
 
-	public EdgeFeatureGrapher(String xFeature, Set<String> yFeatures, List<DefaultWeightedEdge> edges, TrackMateModel model) {
+	public EdgeFeatureGrapher(String xFeature, Set<String> yFeatures, List<DefaultWeightedEdge> edges, TrackMateModel model, Settings settings) {
 		super(xFeature, yFeatures, model);
 		this.edges = edges;
 		this.xDimension = model.getFeatureModel().getEdgeFeatureDimensions().get(xFeature);
 		this.yDimensions = model.getFeatureModel().getEdgeFeatureDimensions();
 		this.featureNames = model.getFeatureModel().getEdgeFeatureNames();
+		this.settings = settings;
 	}
 
 	@Override
 	public void render() {
-
-		final Settings settings = model.getSettings();
 
 		// Check x units
 		String xdim= TMUtils.getUnitsFor(xDimension, settings);

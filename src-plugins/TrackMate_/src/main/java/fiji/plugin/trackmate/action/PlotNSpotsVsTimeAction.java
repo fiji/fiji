@@ -12,6 +12,7 @@ import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.chart.plot.XYPlot;
 import org.jfree.data.xy.DefaultXYDataset;
 
+import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMate_;
@@ -35,21 +36,20 @@ public class PlotNSpotsVsTimeAction extends AbstractTMAction {
 	public void execute(TrackMate_ plugin) {
 		// Collect data
 		final TrackMateModel model = plugin.getModel();
-		final double dt = model.getSettings().dt;
 		final SpotCollection spots = model.getSpots();
 		final int nFrames = spots.keySet().size();
 		final double[][] data = new double[2][nFrames];
 		int index = 0;
 		for (int frame : spots.keySet()) {
-			data[0][index] = frame*dt; // NOT ready for un-evenly spaced frames
+			data[0][index] = spots.iterator(frame, false).next().getFeature(Spot.POSITION_T);
 			data[1][index] = spots.getNSpots(true);
 			index++;
 		}
 		
 		// Plot data
-		String xAxisLabel = "Time ("+model.getSettings().timeUnits+")";
+		String xAxisLabel = "Time ("+plugin.getSettings().timeUnits+")";
 		String yAxisLabel = "N spots";
-		String title = "Nspots vs Time for "+model.getSettings().imp.getShortTitle();
+		String title = "Nspots vs Time for "+plugin.getSettings().imp.getShortTitle();
 		DefaultXYDataset dataset = new DefaultXYDataset();
 		dataset.addSeries("Nspots", data);
 		

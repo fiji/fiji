@@ -1,26 +1,10 @@
 package fiji.plugin.trackmate;
 
-import fiji.plugin.trackmate.action.TrackMateAction;
-import fiji.plugin.trackmate.detection.SpotDetector;
-import fiji.plugin.trackmate.detection.SpotDetectorFactory;
-import fiji.plugin.trackmate.features.track.TrackAnalyzer;
-import fiji.plugin.trackmate.gui.TrackMateWizard;
-import fiji.plugin.trackmate.gui.WizardController;
-import fiji.plugin.trackmate.tracking.SpotTracker;
-import fiji.plugin.trackmate.util.CropImgView;
-import fiji.plugin.trackmate.util.TMUtils;
-import fiji.plugin.trackmate.visualization.TrackMateModelView;
-import ij.ImagePlus;
-import ij.WindowManager;
-import ij.plugin.PlugIn;
-
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-
-import javax.swing.JOptionPane;
 
 import net.imglib2.algorithm.Algorithm;
 import net.imglib2.algorithm.Benchmark;
@@ -29,6 +13,15 @@ import net.imglib2.img.ImgPlus;
 import net.imglib2.multithreading.SimpleMultiThreading;
 
 import org.jgrapht.graph.SimpleWeightedGraph;
+
+import fiji.plugin.trackmate.action.TrackMateAction;
+import fiji.plugin.trackmate.detection.SpotDetector;
+import fiji.plugin.trackmate.detection.SpotDetectorFactory;
+import fiji.plugin.trackmate.features.track.TrackAnalyzer;
+import fiji.plugin.trackmate.gui.WizardController;
+import fiji.plugin.trackmate.tracking.SpotTracker;
+import fiji.plugin.trackmate.util.CropImgView;
+import fiji.plugin.trackmate.util.TMUtils;
 
 
 /**
@@ -40,28 +33,17 @@ import org.jgrapht.graph.SimpleWeightedGraph;
  * @author Nicholas Perry, Jean-Yves Tinevez - Institut Pasteur - July 2010 - 2011 - 2012 - 2013
  *
  */
-public class TrackMate_ implements PlugIn, Benchmark, MultiThreaded, Algorithm {
+public class TrackMate_ implements Benchmark, MultiThreaded, Algorithm {
 
 	public static final String PLUGIN_NAME_STR = "TrackMate";
-	public static final String PLUGIN_NAME_VERSION = "2.0.3";
+	public static final String PLUGIN_NAME_VERSION = "2.1.0";
 	public static final boolean DEFAULT_USE_MULTITHREADING = true;
 
 	/** 
 	 * The model this plugin will shape.
 	 */
-	protected TrackMateModel model;
-
-	protected SpotAnalyzerProvider spotFeatureAnalyzerProvider;
-	protected EdgeAnalyzerProvider edgeFeatureAnalyzerProvider;
-	protected TrackAnalyzerProvider trackFeatureProvider;
-	/** The factory that provides this plugin with available {@link TrackMateModelView}s. */
-	protected ViewProvider viewProvider;
-	/** The factory that provides this plugin with available {@link TrackMateAction}s. */
-	protected ActionProvider actionProvider;
-	/** The list of {@link SpotTracker} that will be offered to choose amongst to the user. */
-	protected TrackerProvider trackerProvider;
-	/** The {@link DetectorProvider} that provides the GUI with the list of available detectors. */
-	protected DetectorProvider detectorProvider;
+	protected final TrackMateModel model;
+	protected final Settings settings;
 	protected long processingTime;
 	protected String errorMessage;
 	protected int numThreads = Runtime.getRuntime().availableProcessors();
@@ -71,89 +53,22 @@ public class TrackMate_ implements PlugIn, Benchmark, MultiThreaded, Algorithm {
 	 */
 
 	public TrackMate_(Settings settings) {
-		this();
-		model.setSettings(settings);
+		this(new TrackMateModel(), settings);
+	}
+
+	public TrackMate_(TrackMateModel model, Settings settings) {
+		this.model = model;
+		this.settings = settings;
 	}
 
 	public TrackMate_() {
-		this(new TrackMateModel());
-	}
-
-	public TrackMate_(TrackMateModel model) {
-		this.model = model;
-	}
-
-
-	/*
-	 * RUN METHOD
-	 */
-
-	/** 
-	 * Launch the GUI.
-	 */
-	public void run(String arg) {
-		ImagePlus imp = WindowManager.getCurrentImage();
-		int[] dims = imp.getDimensions();
-		if (dims[4] == 1 && dims[3] > 1) {
-			switch (JOptionPane.showConfirmDialog(null,
-					"It appears this image has 1 timepoint but " + dims[3] + " slices.\n" +
-					"Do you want to swap Z and T?",
-					"Z/T swapped?", JOptionPane.YES_NO_CANCEL_OPTION)) {
-			case JOptionPane.YES_OPTION:
-				imp.setDimensions(dims[2], dims[4], dims[3]);
-				break;
-			case JOptionPane.CANCEL_OPTION:
-				return;
-			}
-		}
-		Settings settings = new Settings(imp);
-		model.setSettings(settings);
-		initModules();
-		launchGUI();
-	}
-
-	/**
-	 * This method instantiate the fields that contain all currently possible choices
-	 * offered to the user in the GUI of this plugin. It needs to be called solely in
-	 * the GUI context, when instantiating a new {@link TrackMate_} plugin that will
-	 * be used with the {@link TrackMateWizard} GUI. To use the plugin in batch mode
-	 * or in scripts, you do not need to call this method, which will save you the 
-	 * time needed to instantiate all the modules.
-	 * This method to be called also if you are going to load a xml file and want the
-	 * GUI and {@link Settings} object properly reflecting the saved state.  
-	 * <p>
-	 * More precisely, the modules and fields instantiated by this method are:
-	 * <ul>
-	 * 	<li> {@link #spotFeatureAnalyzerProvider}: the list of Spot feature analyzers that will
-	 * be used when calling {@link #computeSpotFeatures()};
-	 * 	<li> {@link #trackFeatureProvider}: the list of track feature analyzers that will
-	 * be used when calling {@link #computeTrackFeatures()};
-	 * 	<li> {@link #spotDetectors}: the list of {@link SpotDetector}s that will be offered 
-	 * to the user to choose from;
-	 * 	<li> {@link #trackerProvider}: the list of {@link SpotTracker}s that will be offered 
-	 * to the user to choose from;
-	 * 	<li> {@link #viewProvider}: the list of {@link TrackMateModelView}s (the "displayers")
-	 * that will be offered to the user to choose from;
-	 * 	<li> {@link #actionProvider}:  the list of {@link TrackMateAction}s that will be 
-	 * offered to the user to choose from.
-	 * </ul>
-	 */
-	public void initModules() {
-		this.spotFeatureAnalyzerProvider 	= createSpotAnalyzerProvider();
-		this.trackFeatureProvider 	= createTrackAnalyzerProvider();
-		this.edgeFeatureAnalyzerProvider = createEdgeAnalyzerProvider();
-		this.detectorProvider		= createDetectorProvider();
-		this.trackerProvider 		= createTrackerProvider();
-		this.viewProvider 			= createViewProvider();
-		this.actionProvider 			= createActionProvider();
-		model.getFeatureModel().setSpotFeatureFactory(spotFeatureAnalyzerProvider);
-		model.getFeatureModel().setTrackAnalyzerProvider(trackFeatureProvider);
-		model.getFeatureModel().setEdgeAnalyzerProvider(edgeFeatureAnalyzerProvider);
+		this(new TrackMateModel(), new Settings());
 	}
 
 	/*
 	 * PROTECTED METHODS
 	 */
+
 
 	/**
 	 * This method exists for the following reason:
@@ -283,56 +198,9 @@ public class TrackMate_ implements PlugIn, Benchmark, MultiThreaded, Algorithm {
 	public void setLogger(Logger logger) {
 		model.setLogger(logger);
 	}
-
-	/**
-	 * @return the {@link SpotAnalyzerProvider} currently set.
-	 * @see #createSpotAnalyzerProvider()
-	 */
-	public SpotAnalyzerProvider getSpotFeatureAnalyzerProvider() {
-		return spotFeatureAnalyzerProvider;
-	}
-
-	/**
-	 * @return the {@link TrackAnalyzerProvider} currently set.
-	 */
-	public TrackAnalyzerProvider getTrackFeatureProvider() {
-		return trackFeatureProvider;
-	}
 	
-	/**
-	 * @return the {@link EdgeAnalyzerProvider} currently set.
-	 */
-	public EdgeAnalyzerProvider getEdgeFeatureAnalyzerProvider() {
-		return edgeFeatureAnalyzerProvider;
-	}
-	
-	/**
-	 * @return the {@link DetectorProvider} currently set.
-	 */
-	public DetectorProvider getDetectorProvider() {
-		return detectorProvider;
-	}
-
-	/**
-	 * @return the {@link TrackerProvider} currently set.
-	 */
-	public TrackerProvider getTrackerProvider() {
-		return trackerProvider;
-	}
-
-
-	/**
-	 * @return the {@link ViewProvider} currently set.
-	 */
-	public ViewProvider getViewProvider() {
-		return viewProvider;
-	}
-
-	/**
-	 * @return a list of the {@link TrackMateAction} that are currently registered in this plugin.
-	 */
-	public ActionProvider getActionProvider() {
-		return actionProvider;
+	public Settings getSettings() {
+		return settings;
 	}
 
 
@@ -348,7 +216,7 @@ public class TrackMate_ implements PlugIn, Benchmark, MultiThreaded, Algorithm {
 	public void computeSpotFeatures(boolean doLogIt) {
 		final Logger logger = model.getLogger();
 		logger.log("Computing spot features.\n");
-		model.getFeatureModel().computeSpotFeatures(model.getSpots(), doLogIt);
+		model.getFeatureModel().computeSpotFeatures(model.getSpots(), settings, doLogIt);
 	}
 
 	public void computeEdgeFeatures(boolean doLogIt) {
@@ -375,8 +243,8 @@ public class TrackMate_ implements PlugIn, Benchmark, MultiThreaded, Algorithm {
 	public boolean execTracking() {
 		final Logger logger = model.getLogger();
 		logger.log("Starting tracking process.\n");
-		SpotTracker tracker =  model.getSettings().tracker;
-		tracker.setSettings(model.getSettings().trackerSettings);
+		SpotTracker tracker =  settings.tracker;
+		tracker.setSettings(settings.trackerSettings);
 		if (tracker.checkInput() && tracker.process()) {
 			model.getTrackModel().setGraph(tracker.getResult());
 			return false;
@@ -399,7 +267,6 @@ public class TrackMate_ implements PlugIn, Benchmark, MultiThreaded, Algorithm {
 		final Logger logger = model.getLogger();
 		logger.log("Starting detection process.\n");
 		
-		final Settings settings = model.getSettings();
 		final SpotDetectorFactory<?> factory = settings.detectorFactory;
 		if (null == factory) {
 			errorMessage = "Detector factory is null.\n";
@@ -616,7 +483,7 @@ public class TrackMate_ implements PlugIn, Benchmark, MultiThreaded, Algorithm {
 		final Logger logger = model.getLogger();
 		logger.log("Starting initial filtering process.\n");
 		
-		Double initialSpotFilterValue = model.getSettings().initialSpotFilterValue;
+		Double initialSpotFilterValue = settings.initialSpotFilterValue;
 		FeatureFilter featureFilter = new FeatureFilter(Spot.QUALITY, initialSpotFilterValue, true);
 		
 		SpotCollection spots = model.getSpots();
@@ -648,7 +515,7 @@ public class TrackMate_ implements PlugIn, Benchmark, MultiThreaded, Algorithm {
 			final Logger logger = model.getLogger();
 			logger.log("Starting spot filtering process.\n");
 		}
-		model.filterSpots(model.getSettings().getSpotFilters(), true);
+		model.filterSpots(settings.getSpotFilters(), true);
 		return true;
 	}
 
@@ -661,7 +528,7 @@ public class TrackMate_ implements PlugIn, Benchmark, MultiThreaded, Algorithm {
 
 		for (Integer trackID : model.getTrackModel().getTrackIDs()) {
 			boolean trackIsOk = true;
-			for(FeatureFilter filter : model.getSettings().getTrackFilters()) {
+			for(FeatureFilter filter : settings.getTrackFilters()) {
 				Double tval = filter.value;
 				Double val = model.getFeatureModel().getTrackFeature(trackID, filter.feature);
 				if (null == val)
@@ -701,9 +568,8 @@ public class TrackMate_ implements PlugIn, Benchmark, MultiThreaded, Algorithm {
 			errorMessage = "The model is null.\n";
 			return false;
 		}
-		Settings settings = model.getSettings();
 		if (null == settings) {
-			errorMessage = "Settings in the model are null";
+			errorMessage = "Settings are null";
 			return false;
 		}
 		if (!settings.checkValidity()) {

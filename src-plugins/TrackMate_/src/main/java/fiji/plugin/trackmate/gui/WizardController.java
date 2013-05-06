@@ -68,7 +68,7 @@ public class WizardController implements ActionListener {
 		}
 
 		Component window = null;
-		ImagePlus imp = plugin.getModel().getSettings().imp;
+		ImagePlus imp = plugin.getSettings().imp;
 		if (imp != null && imp.getWindow() != null ) {
 			window = imp.getWindow();
 		}

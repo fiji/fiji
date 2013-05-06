@@ -28,7 +28,6 @@ public class SpotFeatureGrapher_TestDrive {
 		File file = new File("/Users/tinevez/Desktop/Data/Tree.xml");
 //		File file = new File("E:/Users/JeanYves/Desktop/Data/FakeTracks.xml");
 		TrackMate_ plugin = new TrackMate_();
-		plugin.initModules();
 		TmXmlReader reader = new TmXmlReader(file, plugin);
 		if (!reader.checkInput() || !reader.process()) {
 			System.err.println("Problem loading the file:");
@@ -44,7 +43,7 @@ public class SpotFeatureGrapher_TestDrive {
 			spots.add(it.next());
 		}
 		
-		SpotFeatureGrapher grapher = new SpotFeatureGrapher(Spot.POSITION_X, Y, spots , model);
+		SpotFeatureGrapher grapher = new SpotFeatureGrapher(Spot.POSITION_X, Y, spots , plugin.getModel(), plugin.getSettings());
 		grapher.render();
 		
 		TrackIndexAnalyzer analyzer = new TrackIndexAnalyzer(model);

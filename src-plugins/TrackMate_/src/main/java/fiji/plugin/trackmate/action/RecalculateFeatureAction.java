@@ -26,7 +26,7 @@ public class RecalculateFeatureAction extends AbstractTMAction {
 		TrackMateModel model = plugin.getModel();
 		Logger oldLogger = model.getLogger();
 		model.setLogger(logger);
-		model.getFeatureModel().computeSpotFeatures(model.getSpots(), true);
+		model.getFeatureModel().computeSpotFeatures(model.getSpots(), plugin.getSettings(), true);
 		model.setLogger(oldLogger);
 		logger.log("Done.\n");
 	}

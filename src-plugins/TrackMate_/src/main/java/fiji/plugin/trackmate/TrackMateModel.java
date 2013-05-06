@@ -178,8 +178,6 @@ public class TrackMateModel {
 
 	/** The logger to append processes messages */
 	private Logger logger = Logger.DEFAULT_LOGGER;
-	/** The settings that determine processes actions */
-	private Settings settings = new Settings();
 
 	// LISTENERS
 
@@ -211,8 +209,6 @@ public class TrackMateModel {
 	@Override
 	public String toString() {
 		StringBuilder str = new StringBuilder();
-
-		str.append(settings);
 
 		str.append('\n');
 		if (null == spots || spots.keySet().size() == 0) {
@@ -369,29 +365,6 @@ public class TrackMateModel {
 	 */
 	public Logger getLogger() {
 		return logger;
-	}
-
-	/*
-	 * SETTINGS
-	 */
-
-	/**
-	 * Return the {@link Settings} object that determines the behavior of this plugin.
-	 */
-	public Settings getSettings() {
-		return settings;
-	}
-
-	/**
-	 * Set the {@link Settings} object that determines the behavior of this
-	 * model's processes.
-	 * 
-	 * @see #execDetection()
-	 * @see #execTracking()
-	 */
-
-	public void setSettings(Settings settings) {
-		this.settings = settings;
 	}
 
 	/*

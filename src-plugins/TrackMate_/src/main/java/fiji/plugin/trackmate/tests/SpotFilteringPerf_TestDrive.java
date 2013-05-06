@@ -17,13 +17,12 @@ public class SpotFilteringPerf_TestDrive {
 
 		File file = new File("/Users/tinevez/Desktop/RECEPTOR.xml");
 		final TrackMate_ plugin = new TrackMate_();
-		plugin.initModules();
 		TmXmlReader reader = new TmXmlReader(file, plugin );
 		if (!reader.checkInput() || !reader.process()) {
 			System.err.println("Problem loading file " + file + ":\n" + reader.getErrorMessage());
 		}
 		TrackMateModel model = plugin.getModel();
-		Settings settings = model.getSettings();
+		Settings settings = plugin.getSettings();
 
 		for (int i = 0; i < 5; i++) {
 

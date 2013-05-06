@@ -55,7 +55,7 @@ public class SpotOverlay extends Roi {
 		super(0, 0, imp);
 		this.model = model;
 		this.imp = imp;
-		this.calibration = TMUtils.getSpatialCalibration(model.getSettings().imp);
+		this.calibration = TMUtils.getSpatialCalibration(imp);
 		this.displaySettings = displaySettings; 
 		computeSpotColors();
 	}

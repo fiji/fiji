@@ -183,13 +183,12 @@ public class TmXmlReader_v12 extends TmXmlReader {
 		getDetectorSettings(settings);
 		getTrackerSettings(settings);
 		settings.imp = getImage();
-		model.setSettings(settings);
 
 		// Spot Filters
 		List<FeatureFilter> spotFilters = getSpotFeatureFilters();
 		FeatureFilter initialFilter = getInitialFilter();
-		model.getSettings().initialSpotFilterValue = initialFilter.value;
-		model.getSettings().setSpotFilters(spotFilters);
+		plugin.getSettings().initialSpotFilterValue = initialFilter.value;
+		plugin.getSettings().setSpotFilters(spotFilters);
 
 		// Spots
 		SpotCollection allSpots = getAllSpots();
@@ -208,7 +207,7 @@ public class TmXmlReader_v12 extends TmXmlReader {
 
 		// Track Filters
 		List<FeatureFilter> trackFilters = getTrackFeatureFilters();
-		model.getSettings().setTrackFilters(trackFilters);
+		plugin.getSettings().setTrackFilters(trackFilters);
 
 		long end = System.currentTimeMillis();
 		processingTime = end - start;

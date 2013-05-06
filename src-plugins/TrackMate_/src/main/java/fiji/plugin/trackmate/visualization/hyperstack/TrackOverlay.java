@@ -44,7 +44,7 @@ public class TrackOverlay extends Roi {
 	public TrackOverlay(final TrackMateModel model, final ImagePlus imp, final Map<String, Object> displaySettings) {
 		super(0, 0, imp);
 		this.model = model;
-		this.calibration = TMUtils.getSpatialCalibration(model.getSettings().imp);
+		this.calibration = TMUtils.getSpatialCalibration(imp);
 		this.imp = imp;
 		this.displaySettings = displaySettings;
 	}

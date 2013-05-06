@@ -93,7 +93,6 @@ public class GuiReader {
 
 		// Init target fields
 		plugin = new TrackMate_();
-		plugin.initModules();
 		plugin.setLogger(logger);
 		
 		// Initialize a string holder so that we can cat messages when relaoding log content
@@ -165,7 +164,7 @@ public class GuiReader {
 
 		// We now check the content of the retrieved model
 		final TrackMateModel model = plugin.getModel();
-		Settings settings = model.getSettings();
+		Settings settings = plugin.getSettings();
 		ImagePlus imp = settings.imp;
 
 		{
@@ -180,7 +179,6 @@ public class GuiReader {
 			}
 			
 			settings.imp = imp;
-			model.setSettings(settings);
 			// We display it only if we have a GUI
 
 			// Update start panel

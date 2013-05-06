@@ -48,7 +48,7 @@ public class HyperStackDisplayer extends AbstractTrackMateModelView  {
 			"</html>";
 	protected ImagePlus imp;
 	double[] calibration;
-	Settings settings;
+	final Settings settings;
 	SpotOverlay spotOverlay;
 	private TrackOverlay trackOverlay;
 
@@ -59,9 +59,9 @@ public class HyperStackDisplayer extends AbstractTrackMateModelView  {
 	 * CONSTRUCTORS
 	 */
 
-	public HyperStackDisplayer(TrackMateModel model) {	
+	public HyperStackDisplayer(final TrackMateModel model, final Settings settings) {	
 		super(model);
-		this.settings = model.getSettings();
+		this.settings = settings;
 	}
 
 	/*
@@ -202,6 +202,10 @@ public class HyperStackDisplayer extends AbstractTrackMateModelView  {
 	@Override
 	public String toString() {
 		return NAME;
+	}
+	
+	public Settings getSettings() {
+		return settings;
 	}
 
 

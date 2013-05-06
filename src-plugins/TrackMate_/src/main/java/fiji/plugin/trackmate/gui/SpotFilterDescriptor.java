@@ -61,14 +61,14 @@ public class SpotFilterDescriptor implements WizardPanelDescriptor {
 	@Override
 	public void aboutToDisplayPanel() {
 		TrackMateModel model = plugin.getModel();
-		component.setTarget(model.getFeatureModel().getSpotFeatures(), model.getSettings().getSpotFilters(),  
+		component.setTarget(model.getFeatureModel().getSpotFeatures(), plugin.getSettings().getSpotFilters(),  
 				model.getFeatureModel().getSpotFeatureNames(), model.getFeatureModel().getSpotFeatureValues(), "spots");
 		linkGuiToView();
 	}
 
 	@Override
 	public void displayingPanel() {
-		plugin.getModel().getSettings().setSpotFilters(component.getFeatureFilters());
+		plugin.getSettings().setSpotFilters(component.getFeatureFilters());
 		plugin.execSpotFiltering(false);
 		wizard.getDisplayer().refresh();
 	}
@@ -100,7 +100,7 @@ public class SpotFilterDescriptor implements WizardPanelDescriptor {
 							System.out.println("[SpotFilterDescriptor] stateChanged caught.");
 						}
 						// We set the thresholds field of the model but do not touch its selected spot field yet.
-						plugin.getModel().getSettings().setSpotFilters(component.getFeatureFilters());
+						plugin.getSettings().setSpotFilters(component.getFeatureFilters());
 						plugin.execSpotFiltering(false);
 						wizard.getDisplayer().refresh();
 					}
@@ -117,7 +117,7 @@ public class SpotFilterDescriptor implements WizardPanelDescriptor {
 		logger.log("Performing spot filtering on the following features:\n", Logger.BLUE_COLOR);
 		final TrackMateModel model = plugin.getModel();
 		List<FeatureFilter> featureFilters = component.getFeatureFilters();
-		model.getSettings().setSpotFilters(featureFilters);
+		plugin.getSettings().setSpotFilters(featureFilters);
 		plugin.execSpotFiltering(false);
 
 		int ntotal = model.getSpots().getNSpots(false);

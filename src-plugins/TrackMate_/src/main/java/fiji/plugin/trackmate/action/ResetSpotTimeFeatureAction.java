@@ -33,7 +33,7 @@ public class ResetSpotTimeFeatureAction extends AbstractTMAction {
 	@Override
 	public void execute(TrackMate_ plugin) {
 		logger.log("Reset spot time.\n");
-		double dt = plugin.getModel().getSettings().dt;
+		double dt = plugin.getSettings().dt;
 		if (dt == 0) {
 			dt = 1;
 		}

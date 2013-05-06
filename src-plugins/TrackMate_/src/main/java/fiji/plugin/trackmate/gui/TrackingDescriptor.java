@@ -59,14 +59,14 @@ public class TrackingDescriptor implements WizardPanelDescriptor {
 		TrackerProvider provider = plugin.getTrackerProvider();
 		// Set the settings field of the model. We instantiate the tracker only now
 		// that the model has a proper settings map.
-		plugin.getModel().getSettings().tracker = provider.getTracker();
+		plugin.getSettings().tracker = provider.getTracker();
 
 		// Compare current settings with default ones, and substitute default ones
 		// only if the old ones are absent or not compatible with it.
-		Map<String, Object> currentSettings = plugin.getModel().getSettings().trackerSettings;
+		Map<String, Object> currentSettings = plugin.getSettings().trackerSettings;
 		if (!provider.checkSettingsValidity(currentSettings)) {
 			Map<String, Object> defaultSettings = provider.getDefaultSettings();
-			plugin.getModel().getSettings().trackerSettings = defaultSettings;
+			plugin.getSettings().trackerSettings = defaultSettings;
 		}
 		
 	}
@@ -76,9 +76,9 @@ public class TrackingDescriptor implements WizardPanelDescriptor {
 		wizard.setNextButtonEnabled(false);
 		final TrackMateModel model = plugin.getModel();
 		final TrackerProvider provider = plugin.getTrackerProvider();
-		logger.log("Starting tracking using " + model.getSettings().tracker +"\n", Logger.BLUE_COLOR);
+		logger.log("Starting tracking using " + plugin.getSettings().tracker +"\n", Logger.BLUE_COLOR);
 		logger.log("with settings:\n");
-		logger.log(provider.toString(model.getSettings().trackerSettings));
+		logger.log(provider.toString(plugin.getSettings().trackerSettings));
 		new Thread("TrackMate tracking thread") {					
 			public void run() {
 				try {

@@ -8,7 +8,6 @@ import java.awt.event.ActionListener;
 import javax.swing.ImageIcon;
 import javax.swing.JFrame;
 
-import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMate_;
 import fiji.plugin.trackmate.gui.DisplayerPanel;
 import fiji.plugin.trackmate.gui.ImagePlusChooser;
@@ -41,7 +40,6 @@ public class CopyOverlayAction extends AbstractTMAction {
 				if (e == impChooser.OK_BUTTON_PUSHED) {
 					new Thread("TrackMate copying thread") {
 						public void run() {
-							TrackMateModel model = plugin.getModel();
 							// Instantiate displayer
 							ImagePlus dest = impChooser.getSelectedImagePlus();
 							impChooser.setVisible(false);
@@ -53,7 +51,7 @@ public class CopyOverlayAction extends AbstractTMAction {
 								title = "3D viewer overlay";
 							} else {
 								logger.log("Copying overlay to "+dest.getShortTitle()+"\n");
-								model.getSettings().imp = dest; // TODO TODO DANGER DANGER
+								plugin.getSettings().imp = dest; // TODO TODO DANGER DANGER
 								newDisplayer = new HyperStackDisplayer(plugin.getModel());
 								title = dest.getShortTitle() + " ctrl";
 							}

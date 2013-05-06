@@ -36,7 +36,7 @@ public class TrackerConfigurationPanelDescriptor implements WizardPanelDescripto
 		TrackerProvider provider = plugin.getTrackerProvider();
 		// Regenerate panel
 		configPanel = provider.getTrackerConfigurationPanel();
-		Map<String, Object> settings = plugin.getModel().getSettings().trackerSettings;
+		Map<String, Object> settings = plugin.getSettings().trackerSettings;
 		// Bulletproof null
 		if (null == settings || !provider.checkSettingsValidity(settings)) {
 			settings = provider.getDefaultSettings();
@@ -88,6 +88,6 @@ public class TrackerConfigurationPanelDescriptor implements WizardPanelDescripto
 			logger.error("Config panel returned bad settings map:\n"+trackerProvider.getErrorMessage()+"Using defaults settings.\n");
 			settings = trackerProvider.getDefaultSettings();
 		}
-		plugin.getModel().getSettings().trackerSettings = settings;
+		plugin.getSettings().trackerSettings = settings;
 	}
 }

@@ -62,12 +62,12 @@ public class TrackFilterDescriptor implements WizardPanelDescriptor {
 	@Override
 	public void aboutToDisplayPanel() {
 		TrackMateModel model = plugin.getModel();
-		component.setTarget(model.getFeatureModel().getTrackFeatures(), model.getSettings().getTrackFilters(),  
+		component.setTarget(model.getFeatureModel().getTrackFeatures(), plugin.getSettings().getTrackFilters(),  
 				model.getFeatureModel().getTrackFeatureNames(), model.getFeatureModel().getTrackFeatureValues(), "tracks");
 		linkGuiToView();
 		component.jPanelColorByFeatureGUI.setColorByFeature(TrackIndexAnalyzer.TRACK_INDEX);
 		
-		PerTrackFeatureColorGenerator generator = new PerTrackFeatureColorGenerator(plugin.getModel(), TrackIndexAnalyzer.TRACK_INDEX);
+		PerTrackFeatureColorGenerator generator = new PerTrackFeatureColorGenerator(model, TrackIndexAnalyzer.TRACK_INDEX);
 		generator.setFeature(component.getColorByFeature());
 		wizard.getDisplayer().setDisplaySettings(TrackMateModelView.KEY_TRACK_COLORING, generator);
 		wizard.getDisplayer().refresh();
@@ -97,7 +97,7 @@ public class TrackFilterDescriptor implements WizardPanelDescriptor {
 					@Override
 					public void stateChanged(ChangeEvent event) {
 						// We set the thresholds field of the model but do not touch its selected spot field yet.
-						plugin.getModel().getSettings().setTrackFilters(component.getFeatureFilters());
+						plugin.getSettings().setTrackFilters(component.getFeatureFilters());
 						plugin.execTrackFiltering(false);
 					}
 				});
@@ -113,7 +113,7 @@ public class TrackFilterDescriptor implements WizardPanelDescriptor {
 		logger.log("Performing track filtering on the following features:\n", Logger.BLUE_COLOR);
 		List<FeatureFilter> featureFilters = component.getFeatureFilters();
 		final TrackMateModel model = plugin.getModel();
-		model.getSettings().setTrackFilters(featureFilters);
+		plugin.getSettings().setTrackFilters(featureFilters);
 		plugin.execTrackFiltering(true);
 
 		if (featureFilters == null || featureFilters.isEmpty()) {

@@ -51,7 +51,7 @@ public class DetectorChoiceDescriptor implements WizardPanelDescriptor {
 	
 	private void setCurrentChoiceFromPlugin() {
 		String key;
-		if (null != plugin.getModel().getSettings().detectorFactory) {
+		if (null != plugin.getSettings().detectorFactory) {
 			key = plugin.getModel().getSettings().detectorFactory.getKey();
 		} else {
 			key = plugin.getDetectorProvider().getCurrentKey(); // back to default 
@@ -76,14 +76,14 @@ public class DetectorChoiceDescriptor implements WizardPanelDescriptor {
 		String key = provider.getKeys().get(index);
 		provider.select(key);
 		
-		plugin.getModel().getSettings().detectorFactory = provider.getDetectorFactory();
+		plugin.getSettings().detectorFactory = provider.getDetectorFactory();
 		
 		// Compare current settings with default ones, and substitute default ones
 		// only if the old ones are absent or not compatible with it.
-		Map<String, Object> currentSettings = plugin.getModel().getSettings().detectorSettings;
+		Map<String, Object> currentSettings = plugin.getSettings().detectorSettings;
 		if (!provider.checkSettingsValidity(currentSettings)) {
 			Map<String, Object> defaultSettings = provider.getDefaultSettings();
-			plugin.getModel().getSettings().detectorSettings = defaultSettings;
+			plugin.getSettings().detectorSettings = defaultSettings;
 		}
 		// Instantiate next descriptor for the wizard
 		DetectorConfigurationPanelDescriptor descriptor = new DetectorConfigurationPanelDescriptor();

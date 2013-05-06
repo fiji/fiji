@@ -59,18 +59,19 @@ public class SpotDisplayer3D extends AbstractTrackMateModelView {
 	private Content spotContent;
 	private Content trackContent;
 	private final Image3DUniverse universe;
+	private final Settings settings;
 	// For highlighting
 	private ArrayList<Spot> previousSpotHighlight;
 	private HashMap<Spot, Color3f> previousColorHighlight;
 	private HashMap<Spot, Integer> previousFrameHighlight;
 	private HashMap<DefaultWeightedEdge, Color> previousEdgeHighlight;
-	private Settings settings;
 	/**  the flag specifying whether to render image data or not. By default, it is true. */
 	private boolean doRenderImage = true;
 
-	public SpotDisplayer3D(TrackMateModel model) {
+	public SpotDisplayer3D(TrackMateModel model, final Settings settings) {
 		super(model);
-		universe = new Image3DUniverse();
+		this.settings = settings;
+		this.universe = new Image3DUniverse();
 		setModel(model);
 	}
 
@@ -238,7 +239,6 @@ public class SpotDisplayer3D extends AbstractTrackMateModelView {
 	 */
 
 	private void setModel(TrackMateModel model) {
-		this.settings = model.getSettings();
 		if (model.getSpots() != null) {
 			spotContent = makeSpotContent();
 			universe.removeContent(SPOT_CONTENT_NAME);

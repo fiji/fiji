@@ -36,7 +36,6 @@ public class LAPTrackerTestDrive {
 		// 1 - Load test spots
 		System.out.println("Opening file: "+file.getAbsolutePath());		
 		TrackMate_ plugin = new TrackMate_();
-		plugin.initModules();
 		TmXmlReader reader = new TmXmlReader(file, plugin);
 		if (!reader.checkInput() || !reader.process()) {
 			System.err.println("Problem loading the file:");
@@ -62,7 +61,7 @@ public class LAPTrackerTestDrive {
 		settings.put(KEY_ALLOW_TRACK_SPLITTING, false);
 		settings.put(KEY_SPLITTING_MAX_DISTANCE, 10d);
 		System.out.println("Tracker settings:");
-		model.getSettings().trackerSettings = settings;
+		plugin.getSettings().trackerSettings = settings;
 		
 		// 2 - Track the test spots
 		long start = System.currentTimeMillis();

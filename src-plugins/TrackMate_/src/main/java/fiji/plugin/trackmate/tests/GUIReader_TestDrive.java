@@ -28,8 +28,6 @@ public class GUIReader_TestDrive {
 		TrackMate_ plugin = new TrackMate_();
 		plugin.setLogger(Logger.DEFAULT_LOGGER);
 
-		plugin.initModules();
-		
 		WizardController controller = new WizardController(plugin) {
 			@Override
 			public TrackMateWizard getWizard() {

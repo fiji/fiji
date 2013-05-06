@@ -34,18 +34,19 @@ public class SpotFeatureGrapher extends AbstractFeatureGrapher  {
 	private final Dimension xDimension;
 	private final Map<String, Dimension> yDimensions;
 	private final Map<String, String> featureNames;
+	private final Settings settings;
 
 	/*
 	 * CONSTRUCTOR
 	 */
 
-	public SpotFeatureGrapher(final String xFeature, final Set<String> yFeatures, final List<Spot> spots, final TrackMateModel model) {
+	public SpotFeatureGrapher(final String xFeature, final Set<String> yFeatures, final List<Spot> spots, final TrackMateModel model, Settings settings) {
 		super(xFeature, yFeatures, model);
 		this.spots = spots;
 		this.xDimension = model.getFeatureModel().getSpotFeatureDimensions().get(xFeature);
 		this.yDimensions = model.getFeatureModel().getSpotFeatureDimensions();
 		this.featureNames = model.getFeatureModel().getSpotFeatureNames();
-
+		this.settings = settings;
 	}
 	
 	/*
@@ -56,8 +57,6 @@ public class SpotFeatureGrapher extends AbstractFeatureGrapher  {
 	@Override
 	public void render() {
 				
-		final Settings settings = model.getSettings();
-		
 		// X label
 		String xAxisLabel = xFeature + " (" + TMUtils.getUnitsFor(xDimension, settings)+")";
 		

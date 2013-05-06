@@ -101,6 +101,7 @@ public class TrackerProvider extends AbstractProvider  {
 	/**
 	 * @return a new instance of the target tracker identified by the key parameter. 
 	 * If the key is unknown to this factory, <code>null</code> is returned. 
+	 * The tracker returned is <b>not</b> configured.
 	 */
 	public SpotTracker getTracker() {
 
@@ -119,8 +120,6 @@ public class TrackerProvider extends AbstractProvider  {
 		} else {
 			return null;
 		}
-		final Map<String, Object> settings = model.getSettings().trackerSettings;
-		tracker.setSettings(settings);
 		return tracker;
 	}
 
@@ -167,11 +166,10 @@ public class TrackerProvider extends AbstractProvider  {
 	 * identified by the key parameter. 
 	 * If the key is unknown to this factory, <code>null</code> is returned. 
 	 */
-
-	public ConfigurationPanel getTrackerConfigurationPanel() 	{
+	public ConfigurationPanel getTrackerConfigurationPanel(Settings settings) 	{
 
 		String trackerName = getName();
-		String spaceUnits = model.getSettings().spaceUnits;
+		String spaceUnits = settings.spaceUnits;
 		List<String> features = model.getFeatureModel().getSpotFeatures();
 		Map<String, String> featureNames = model.getFeatureModel().getSpotFeatureNames();
 

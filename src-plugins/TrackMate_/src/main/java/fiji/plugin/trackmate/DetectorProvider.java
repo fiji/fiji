@@ -32,7 +32,6 @@ import fiji.plugin.trackmate.gui.BasicDetectorConfigurationPanel;
 import fiji.plugin.trackmate.gui.ConfigurationPanel;
 import fiji.plugin.trackmate.gui.DownSampleLogDetectorConfigurationPanel;
 import fiji.plugin.trackmate.gui.LogDetectorConfigurationPanel;
-import fiji.plugin.trackmate.gui.WizardController;
 
 public class DetectorProvider extends AbstractProvider {
 
@@ -278,14 +277,11 @@ public class DetectorProvider extends AbstractProvider {
 	/**
 	 * @return a new GUI panel able to configure the settings suitable for the target detector 
 	 * factory. If the key is unknown to this provider, <code>null</code> is returned.
-	 * The wizard controller parameter is used to retrieve GUI context when instantiating configuration
-	 * panels. 
 	 */
-
-	public ConfigurationPanel getDetectorConfigurationPanel(final WizardController controller) 	{
+	public ConfigurationPanel getDetectorConfigurationPanel(final Settings settings) 	{
 		
-		ImagePlus imp = controller.getPlugin().getModel().getSettings().imp;
-		String spaceUnits = controller.getPlugin().getModel().getSettings().spaceUnits;
+		ImagePlus imp = settings.imp;
+		String spaceUnits = settings.spaceUnits;
 		
 		if (currentKey.equals(LogDetectorFactory.DETECTOR_KEY)) {
 			return new LogDetectorConfigurationPanel(imp, LogDetectorFactory.INFO_TEXT, LogDetectorFactory.NAME, spaceUnits);

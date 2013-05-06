@@ -38,6 +38,7 @@ import com.mxgraph.view.mxGraphSelectionModel;
 import fiji.plugin.trackmate.ModelChangeEvent;
 import fiji.plugin.trackmate.SelectionChangeEvent;
 import fiji.plugin.trackmate.SelectionModel;
+import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.visualization.AbstractTrackMateModelView;
@@ -102,14 +103,16 @@ public class TrackScheme extends AbstractTrackMateModelView {
 	private final SpotImageUpdater spotImageUpdater;
 
 	TrackSchemeStylist stylist;
+	final Settings settings;
 
 	/*
 	 * CONSTRUCTORS
 	 */
 
-	public TrackScheme(final TrackMateModel model)  {
+	public TrackScheme(final TrackMateModel model, final Settings settings)  {
 		super(model);
-		spotImageUpdater = new SpotImageUpdater(model);
+		this.settings = settings;
+		spotImageUpdater = new SpotImageUpdater(settings);
 		initDisplaySettings();
 		initGUI();
 	}
@@ -249,7 +252,7 @@ public class TrackScheme extends AbstractTrackMateModelView {
 		String style = cell.getStyle();
 		style = mxStyleUtils.setStyle(style, mxConstants.STYLE_IMAGE, "data:image/base64," + imageStr);
 		graph.getModel().setStyle(cell, style);
-		final double dx = model.getSettings().dx;
+		final double dx = spotImageUpdater.getPixelSize();
 		long height = Math.min(DEFAULT_CELL_WIDTH, Math.round(2 * spot.getFeature(Spot.RADIUS) / dx ));
 		height = Math.max(height, DEFAULT_CELL_HEIGHT/3);
 		graph.getModel().getGeometry(cell).setHeight(height);
@@ -271,7 +274,7 @@ public class TrackScheme extends AbstractTrackMateModelView {
 		int row = spot.getFeature(Spot.FRAME).intValue() + 1;
 		double x = (targetColumn-1) * X_COLUMN_SIZE - DEFAULT_CELL_WIDTH/2;
 		double y = (0.5 + row) * Y_COLUMN_SIZE - DEFAULT_CELL_HEIGHT/2; 
-		double dx = model.getSettings().dx;
+		double dx = spotImageUpdater.getPixelSize();
 		long height = Math.min(DEFAULT_CELL_WIDTH, Math.round(2 * spot.getFeature(Spot.RADIUS) / dx ));
 		height = Math.max(height, 12);
 		mxGeometry geometry = new mxGeometry(x, y, DEFAULT_CELL_WIDTH, height);
@@ -797,10 +800,8 @@ public class TrackScheme extends AbstractTrackMateModelView {
 	}
 
 	private void initGUI() {
-		this.gui = new TrackSchemeFrame(this);
+		this.gui = new TrackSchemeFrame(this, settings);
 		String title = "TrackScheme";
-		if (null != model.getSettings().imp)
-			title += ": "+model.getSettings().imp.getTitle();
 		gui.setTitle(title);
 		gui.setSize(DEFAULT_SIZE);
 		gui.setVisible(true);

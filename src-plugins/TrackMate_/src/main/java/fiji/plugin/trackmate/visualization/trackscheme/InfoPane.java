@@ -46,6 +46,7 @@ import com.mxgraph.model.mxICell;
 
 import fiji.plugin.trackmate.SelectionChangeEvent;
 import fiji.plugin.trackmate.SelectionChangeListener;
+import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.features.SpotFeatureGrapher;
@@ -84,6 +85,7 @@ public class InfoPane extends JPanel implements SelectionChangeListener {
 	private List<String> features;
 	private Map<String, String> featureNames;
 	private final TrackMateModel model;
+	private final Settings settings;
 	private final JGraphXAdapter graph;
 	/** A copy of the last spot collection highlighted in this infopane, sorted by frame order. */
 	private Collection<Spot> spotSelection;
@@ -94,8 +96,9 @@ public class InfoPane extends JPanel implements SelectionChangeListener {
 	 * CONSTRUCTOR
 	 */
 
-	public InfoPane(final TrackMateModel model, final JGraphXAdapter graph) {
+	public InfoPane(final TrackMateModel model, final Settings settings, final JGraphXAdapter graph) {
 		this.model = model;
+		this.settings = settings;
 		this.graph = graph;
 		this.features = model.getFeatureModel().getSpotFeatures();
 		this.featureNames = model.getFeatureModel().getSpotFeatureShortNames();
@@ -346,7 +349,7 @@ public class InfoPane extends JPanel implements SelectionChangeListener {
 		if (spots.isEmpty())
 			return;
 
-		SpotFeatureGrapher grapher = new SpotFeatureGrapher(xFeature, yFeatures, new ArrayList<Spot>(spots), model);
+		SpotFeatureGrapher grapher = new SpotFeatureGrapher(xFeature, yFeatures, new ArrayList<Spot>(spots), model, settings);
 		grapher.render();
 
 	}

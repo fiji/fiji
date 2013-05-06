@@ -47,7 +47,6 @@ public class TrackSchemeGraphComponent extends mxGraphComponent implements mxIEv
 	/** The trackID for each column. */
 	Integer[] columnTrackIDs;
 	
-	private final TrackMateModel model;
 	private final TrackScheme trackScheme;
 
 	/** If true, will paint background decorations. */
@@ -57,9 +56,8 @@ public class TrackSchemeGraphComponent extends mxGraphComponent implements mxIEv
 	 * CONSTRUCTOR
 	 */
 
-	public TrackSchemeGraphComponent(final JGraphXAdapter graph, final TrackMateModel model, final TrackScheme trackScheme) {
+	public TrackSchemeGraphComponent(final JGraphXAdapter graph, final TrackScheme trackScheme) {
 		super(graph);
-		this.model = model;
 		this.trackScheme = trackScheme;
 		
 		getViewport().setOpaque(true);
@@ -376,8 +374,8 @@ public class TrackSchemeGraphComponent extends mxGraphComponent implements mxIEv
 		int x = xcs / 4;
 		y = 3 * ycs / 2;
 		g.setFont(FONT.deriveFont(12*scale).deriveFont(Font.BOLD));
-		final String timeUnits = model.getSettings().timeUnits;
-		final double dt = model.getSettings().dt;
+		final String timeUnits = trackScheme.settings.timeUnits;
+		final double dt = trackScheme.settings.dt;
 		g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
 		if (xcs > paintBounds.x) {

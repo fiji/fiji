@@ -18,7 +18,6 @@ public class TmXmlReaderV12TestDrive {
 
 		System.out.println("Opening file: "+file.getAbsolutePath());		
 		TrackMate_ plugin = new TrackMate_();
-		plugin.initModules();
 		TmXmlReader reader = new TmXmlReader_v12(file, plugin);
 		if (!reader.checkInput() || !reader.process()) {
 			System.err.println("Problem loading the file:");

@@ -116,7 +116,7 @@ public class SpotDisplayer3DTestDrive {
 		allSpots.put(0, spots);
 		final TrackMate_ plugin = new TrackMate_();
 		plugin.getModel().setSpots(allSpots, false);
-		plugin.getModel().getSettings().imp = imp;
+		plugin.getSettings().imp = imp;
 		final SpotDisplayer3D displayer = new SpotDisplayer3D(plugin.getModel());
 		displayer.render();
 		
@@ -134,7 +134,7 @@ public class SpotDisplayer3DTestDrive {
 		gui.addChangeListener(new ChangeListener() {
 			@Override
 			public void stateChanged(ChangeEvent e) {
-				plugin.getModel().getSettings().setSpotFilters(gui.getFeatureFilters());
+				plugin.getSettings().setSpotFilters(gui.getFeatureFilters());
 				plugin.execSpotFiltering(false);
 			}
 		});

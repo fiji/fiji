@@ -18,8 +18,8 @@ public class LoadDescriptor extends SomeDialogDescriptor {
 
 			if (null == file) {
 				try {
-					File folder = new File(plugin.getModel().getSettings().imp.getOriginalFileInfo().directory);
-					file = new File(folder.getPath() + File.separator + plugin.getModel().getSettings().imp.getShortTitle() +".xml");
+					File folder = new File(plugin.getSettings().imp.getOriginalFileInfo().directory);
+					file = new File(folder.getPath() + File.separator + plugin.getSettings().imp.getShortTitle() +".xml");
 				} catch (NullPointerException npe) {
 					File folder = new File(System.getProperty("user.dir")).getParentFile().getParentFile();
 					file = new File(folder.getPath() + File.separator + "TrackMateData.xml");

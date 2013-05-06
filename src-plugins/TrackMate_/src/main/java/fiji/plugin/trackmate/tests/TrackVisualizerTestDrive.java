@@ -35,7 +35,6 @@ public class TrackVisualizerTestDrive {
 		ij.ImageJ.main(args);
 		
 		TrackMate_ plugin = new TrackMate_();
-		plugin.initModules();
 		TmXmlReader reader = new TmXmlReader(file, plugin);
 		if (!reader.checkInput() || !reader.process()) {
 			System.err.println("Problem loading the file:");
@@ -45,7 +44,7 @@ public class TrackVisualizerTestDrive {
 		
 		System.out.println("From the XML file:");
 		System.out.println("Found "+model.getTrackModel().getNTracks()+" tracks in total.");
-		System.out.println("There were "+model.getSettings().getTrackFilters().size() + " track filter(s) applied on this list,");
+		System.out.println("There were "+plugin.getSettings().getTrackFilters().size() + " track filter(s) applied on this list,");
 		System.out.println("resulting in having only "+model.getTrackModel().getNFilteredTracks()+" visible tracks after filtering.");
 		plugin.computeTrackFeatures(true);
 		for(int i : model.getTrackModel().getFilteredTrackIDs()) {
@@ -57,13 +56,13 @@ public class TrackVisualizerTestDrive {
 		
 		FeatureFilter filter = new FeatureFilter(TrackBranchingAnalyzer.NUMBER_SPOTS, 5d, true);
 		System.out.println("We add an extra track filter: "+filter);
-		model.getSettings().addTrackFilter(filter);
+		plugin.getSettings().addTrackFilter(filter);
 		plugin.execTrackFiltering(true);
 		System.out.println("After filtering, retaining "+model.getTrackModel().getNFilteredTracks()+" tracks, which are:");
 		System.out.println(model.getTrackModel().getFilteredTrackIDs());
 		System.out.println();
 			
-		Settings settings = model.getSettings();
+		Settings settings = plugin.getSettings();
 		ImagePlus imp = settings.imp;
 		
 		// Launch ImageJ and display

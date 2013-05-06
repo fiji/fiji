@@ -18,6 +18,7 @@ import org.jdom2.output.Format;
 import org.jdom2.output.XMLOutputter;
 
 import fiji.plugin.trackmate.Logger;
+import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMate_;
@@ -56,7 +57,7 @@ public class ISBIChallengeExporter extends AbstractTMAction {
 		File file;
 		File folder = new File(System.getProperty("user.dir")).getParentFile().getParentFile();
 		try {
-			String filename = plugin.getModel().getSettings().imageFileName;
+			String filename = plugin.getSettings().imageFileName;
 			filename = filename.substring(0, filename.indexOf("."));
 			file = new File(folder.getPath() + File.separator + filename +"_ISBI.xml");
 		} catch (NullPointerException npe) {
@@ -64,10 +65,10 @@ public class ISBIChallengeExporter extends AbstractTMAction {
 		}
 		file = IOUtils.askForFile(file, wizard, logger);
 
-		exportToFile(model, file);
+		exportToFile(model, plugin.getSettings(), file);
 	}
 	
-	public static void exportToFile(final TrackMateModel model, final File file) {
+	public static void exportToFile(final TrackMateModel model, Settings settings, final File file) {
 		final Logger logger = model.getLogger();
 		logger.log("Exporting to ISBI 2012 particle tracking challenge format.\n");
 		int ntracks = model.getTrackModel().getNFilteredTracks();
@@ -77,7 +78,7 @@ public class ISBIChallengeExporter extends AbstractTMAction {
 		}
 
 		logger.log("  Preparing XML data.\n");
-		Element root = marshall(model);
+		Element root = marshall(model, settings);
 
 		logger.log("  Writing to file.\n");
 		Document document = new Document(root);
@@ -103,14 +104,14 @@ public class ISBIChallengeExporter extends AbstractTMAction {
 		return NAME;
 	}
 
-	private static final Element marshall(TrackMateModel model) {
+	private static final Element marshall(TrackMateModel model, Settings settings) {
 		final Logger logger = model.getLogger();
 		
 		Element root = new Element("root");
 		Element content = new Element(CONTENT_KEY);
 
 		// Extract from file name
-		String filename = model.getSettings().imageFileName; // VIRUS snr 7 density mid.tif
+		String filename = settings.imageFileName; // VIRUS snr 7 density mid.tif
 		String pattern = "^(\\w+) " + SNR_ATT +" (\\d+) " + DENSITY_ATT + " (\\w+)\\.";	
 		Pattern r = Pattern.compile(pattern);
 		Matcher m = r.matcher(filename);

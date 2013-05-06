@@ -29,18 +29,18 @@ public class TrackFeatureGrapher extends AbstractFeatureGrapher {
 	private final Dimension xDimension;
 	private final Map<String, Dimension> yDimensions;
 	private final Map<String, String> featureNames;
+	private final Settings settings;
 
-	public TrackFeatureGrapher(String xFeature, Set<String> yFeatures, TrackMateModel model) {
+	public TrackFeatureGrapher(String xFeature, Set<String> yFeatures, TrackMateModel model, Settings settings) {
 		super(xFeature, yFeatures, model);
 		this.xDimension = model.getFeatureModel().getTrackFeatureDimensions().get(xFeature);
 		this.yDimensions = model.getFeatureModel().getTrackFeatureDimensions();
 		this.featureNames = model.getFeatureModel().getTrackFeatureNames();
+		this.settings = settings;
 	}
 
 	@Override
 	public void render() {
-
-		final Settings settings = model.getSettings();
 
 		// Check x units
 		String xdim= TMUtils.getUnitsFor(xDimension, settings);

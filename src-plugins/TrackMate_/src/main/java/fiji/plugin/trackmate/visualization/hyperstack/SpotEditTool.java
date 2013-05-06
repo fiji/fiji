@@ -25,6 +25,7 @@ import javax.swing.SwingUtilities;
 
 import org.jgrapht.graph.DefaultWeightedEdge;
 
+import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.TrackMateModel;
@@ -369,6 +370,7 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 			return;
 
 		TrackMateModel model = displayer.getModel();
+		Settings settings = displayer.getSettings();
 		Spot editedSpot = editedSpots.get(imp);
 		final ImageCanvas canvas = getImageCanvas(e);
 
@@ -558,7 +560,7 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 					HashSet<Spot> copiedSpots = new HashSet<Spot>(spots.getNSpots(currentFrame-1, true));
 					HashSet<String> featuresKey = new HashSet<String>(spots.iterator(currentFrame-1, true).next().getFeatures().keySet());
 					featuresKey.remove(Spot.POSITION_T); // Deal with time separately
-					double dt = model.getSettings().dt;
+					double dt = settings.dt;
 					if (dt == 0)
 						dt = 1;
 

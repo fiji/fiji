@@ -105,18 +105,18 @@ public class FeatureModel implements MultiThreaded {
 	 * image. Since a {@link SpotAnalyzer} can compute more than a feature
 	 * at once, spots might received more data than required.
 	 */
-	public void computeSpotFeatures(final List<String> features, boolean doLogIt) {
-		computeSpotFeatures(model.getSpots(), features, doLogIt);
+	public void computeSpotFeatures(final List<String> features, final Settings settings, boolean doLogIt) {
+		computeSpotFeatures(model.getSpots(), features, settings, doLogIt);
 	}
 
 	/**
 	 * Calculate given features for the all spots of this model,
 	 * according to the {@link Settings} set in this model.
 	 */
-	public void computeSpotFeatures(final String feature, boolean doLogIt) {
+	public void computeSpotFeatures(final String feature, final Settings settings, boolean doLogIt) {
 		ArrayList<String> features = new ArrayList<String>(1);
 		features.add(feature);
-		computeSpotFeatures(features, doLogIt);
+		computeSpotFeatures(features, settings, doLogIt);
 	}
 
 	/**
@@ -127,7 +127,7 @@ public class FeatureModel implements MultiThreaded {
 	 * images. Since a {@link SpotAnalyzer} can compute more than a feature
 	 * at once, spots might received more data than required.
 	 */
-	public void computeSpotFeatures(final SpotCollection toCompute, final List<String> features, boolean doLogIt) {
+	public void computeSpotFeatures(final SpotCollection toCompute, final List<String> features, final Settings settings, boolean doLogIt) {
 		final HashSet<String> selectedKeys = new HashSet<String>(); // We want to keep ordering
 		for(String feature : features) {
 			for(String analyzer : spotAnalyzerProvider.getAvailableSpotFeatureAnalyzers()) {
@@ -140,7 +140,7 @@ public class FeatureModel implements MultiThreaded {
 		for(String key : selectedKeys) {
 			selectedAnalyzers.add(spotAnalyzerProvider.getSpotFeatureAnalyzer(key));
 		}
-		computeSpotFeaturesAgent(toCompute, selectedAnalyzers, doLogIt);
+		computeSpotFeaturesAgent(toCompute, selectedAnalyzers, settings, doLogIt);
 	}
 
 	/**
@@ -151,7 +151,7 @@ public class FeatureModel implements MultiThreaded {
 	 * Features are calculated for each spot, using their location, and the raw
 	 * image. 
 	 */
-	public void computeSpotFeatures(final SpotCollection toCompute, boolean doLogIt) {
+	public void computeSpotFeatures(final SpotCollection toCompute, final Settings settings, boolean doLogIt) {
 		if (null == spotAnalyzerProvider)
 			return;
 		List<String> analyzerNames = spotAnalyzerProvider.getAvailableSpotFeatureAnalyzers();
@@ -159,7 +159,7 @@ public class FeatureModel implements MultiThreaded {
 		for (String analyzerName : analyzerNames) {
 			spotFeatureAnalyzers.add(spotAnalyzerProvider.getSpotFeatureAnalyzer(analyzerName));
 		}
-		computeSpotFeaturesAgent(toCompute, spotFeatureAnalyzers, doLogIt);
+		computeSpotFeaturesAgent(toCompute, spotFeatureAnalyzers, settings, doLogIt);
 	}
 
 
@@ -358,9 +358,7 @@ public class FeatureModel implements MultiThreaded {
 	 * @param toCompute
 	 * @param analyzers
 	 */
-	private void computeSpotFeaturesAgent(final SpotCollection toCompute, final List<SpotFeatureAnalyzerFactory<?>> analyzerFactories, boolean doLogIt) {
-
-		final Settings settings = model.getSettings();
+	private void computeSpotFeaturesAgent(final SpotCollection toCompute, final List<SpotFeatureAnalyzerFactory<?>> analyzerFactories, final Settings settings, boolean doLogIt) {
 
 		final Logger logger;
 		if (doLogIt) {

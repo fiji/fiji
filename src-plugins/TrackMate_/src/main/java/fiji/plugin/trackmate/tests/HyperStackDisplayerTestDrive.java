@@ -21,7 +21,6 @@ public class HyperStackDisplayerTestDrive {
 	public static void main(String[] args) throws JDOMException, IOException {
 		
 		TrackMate_ plugin = new TrackMate_();
-		plugin.initModules();
 		TmXmlReader reader = new TmXmlReader(file, plugin);
 		if (!reader.checkInput() || !reader.process()) {
 			System.err.println("Problem loading the file:");
@@ -31,8 +30,8 @@ public class HyperStackDisplayerTestDrive {
 		
 		ij.ImageJ.main(args);
 		
-		if (null != model.getSettings().imp)
-			model.getFeatureModel().computeSpotFeatures(model.getSpots(), true);
+		if (null != plugin.getSettings().imp)
+			model.getFeatureModel().computeSpotFeatures(model.getSpots(), plugin.getSettings(), true);
 				
 		final TrackMateModelView displayer = new HyperStackDisplayer(model);
 		displayer.render();

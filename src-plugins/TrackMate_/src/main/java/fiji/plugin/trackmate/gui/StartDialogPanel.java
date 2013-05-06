@@ -57,7 +57,6 @@ public class StartDialogPanel extends ActionListenablePanel implements WizardPan
 	private JLabel jLabelUnits4;
 
 	private ImagePlus imp;
-	private Settings settings;
 
 	private TrackMate_ plugin;
 	private TrackMateWizard wizard;
@@ -79,16 +78,10 @@ public class StartDialogPanel extends ActionListenablePanel implements WizardPan
 
 	@Override
 	public void setPlugin(TrackMate_ plugin) {
-		this.plugin = plugin;
 		if (null == plugin) {
-			this.settings = new Settings();
-		} else {
-			if (null == settings) {
-				this.settings = new Settings();
-			} else {
-				this.settings = plugin.getModel().getSettings();
-			}
-		}
+			plugin = new TrackMate_();
+		} 
+		this.plugin = plugin;
 	}
 
 	@Override
@@ -118,12 +111,12 @@ public class StartDialogPanel extends ActionListenablePanel implements WizardPan
 
 	@Override
 	public void aboutToDisplayPanel() {
-		if (null == settings.imp) {
+		if (null == plugin.getSettings().imp) {
 			imp = WindowManager.getCurrentImage();
 			refresh();
 		} else {
-			echoSettings(settings);
-			imp = settings.imp;
+			echoSettings(plugin.getSettings());
+			imp = plugin.getSettings().imp;
 			refresh();
 		}
 	}
@@ -134,8 +127,8 @@ public class StartDialogPanel extends ActionListenablePanel implements WizardPan
 	@Override
 	public void aboutToHidePanel() {
 		// Get settings and pass them to the plugin managed by the wizard
-		plugin.getModel().setSettings(getSettings());
-		plugin.getModel().getLogger().log(plugin.getModel().getSettings().toStringImageInfo());
+		getSettings(plugin.getSettings());
+		plugin.getModel().getLogger().log(plugin.getSettings().toStringImageInfo());
 	}
 
 
@@ -145,13 +138,10 @@ public class StartDialogPanel extends ActionListenablePanel implements WizardPan
 	 */
 
 	/**
-	 * Update the settings object given with the parameters this panel allow to tune
-	 * this plugin.	
-	 * @param settings  the Settings to update. If <code>null</code>, a new default one
-	 * is created.
-	 * @return  the updated Settings
+	 * Update the specified settings object, with the parameters set in this panel.	
+	 * @param settings  the Settings to update. Cannot be <code>null</code>.
 	 */
-	public Settings getSettings() {
+	public void getSettings(Settings settings) {
 		settings.imp = imp;
 		// Crop cube
 		settings.tstart = Math.round(Float.parseFloat(jTextFieldTStart.getText()));
@@ -183,7 +173,6 @@ public class StartDialogPanel extends ActionListenablePanel implements WizardPan
 			settings.imageFileName	= imp.getOriginalFileInfo().fileName;
 			settings.imageFolder 	= imp.getOriginalFileInfo().directory;
 		}
-		return settings;
 	}
 
 

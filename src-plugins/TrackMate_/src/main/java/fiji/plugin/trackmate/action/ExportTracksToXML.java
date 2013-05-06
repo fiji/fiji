@@ -14,6 +14,7 @@ import org.jdom2.Element;
 import org.jdom2.output.Format;
 import org.jdom2.output.XMLOutputter;
 
+import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMate_;
@@ -63,18 +64,18 @@ public class ExportTracksToXML extends AbstractTMAction {
 		}
 
 		logger.log("  Preparing XML data.\n");
-		Element root = marshall(model);
+		Element root = marshall(model, plugin.getSettings());
 
 		File folder; 
 		try {
-			folder = new File(plugin.getModel().getSettings().imp.getOriginalFileInfo().directory);
+			folder = new File(plugin.getSettings().imp.getOriginalFileInfo().directory);
 		} catch (NullPointerException npe) {
 			folder = new File(System.getProperty("user.dir")).getParentFile().getParentFile();
 		}
 		
 		File file;
 		try {
-			String filename = plugin.getModel().getSettings().imageFileName;
+			String filename = plugin.getSettings().imageFileName;
 			filename = filename.substring(0, filename.indexOf("."));
 			file = new File(folder.getPath() + File.separator + filename +"_Tracks.xml");
 		} catch (NullPointerException npe) {
@@ -108,14 +109,14 @@ public class ExportTracksToXML extends AbstractTMAction {
 		return NAME;
 	}
 
-	private Element marshall(TrackMateModel model) {
+	private Element marshall(TrackMateModel model, Settings settings) {
 		logger.setStatus("Marshalling...");
 		Element content = new Element(CONTENT_KEY);
 		
 		content.setAttribute(NTRACKS_ATT, ""+model.getTrackModel().getNFilteredTracks());
-		content.setAttribute(PHYSUNIT_ATT, model.getSettings().spaceUnits);
-		content.setAttribute(FRAMEINTERVAL_ATT, ""+model.getSettings().dt);
-		content.setAttribute(FRAMEINTERVALUNIT_ATT, ""+model.getSettings().timeUnits);
+		content.setAttribute(PHYSUNIT_ATT, settings.spaceUnits);
+		content.setAttribute(FRAMEINTERVAL_ATT, ""+settings.dt);
+		content.setAttribute(FRAMEINTERVALUNIT_ATT, ""+settings.timeUnits);
 		content.setAttribute(DATE_ATT, TMUtils.getCurrentTimeString());
 		content.setAttribute(FROM_ATT, TrackMate_.PLUGIN_NAME_STR + " v" + TrackMate_.PLUGIN_NAME_VERSION);
 

@@ -57,7 +57,7 @@ public class InitFilterDescriptor implements WizardPanelDescriptor {
 		TrackMateModel model = plugin.getModel();
 		features = model.getFeatureModel().getSpotFeatureValues();
 		component = new InitFilterPanel(features);
-		Double initialFilterValue = model.getSettings().initialSpotFilterValue;
+		Double initialFilterValue = plugin.getSettings().initialSpotFilterValue;
 		component.setInitialFilterValue(initialFilterValue);
 		wizard.setNextButtonEnabled(true);
 	}
@@ -78,7 +78,7 @@ public class InitFilterDescriptor implements WizardPanelDescriptor {
 		Logger logger = wizard.getLogger();
 		logger.log(str,Logger.BLUE_COLOR);
 		int ntotal = model.getSpots().getNSpots(false);
-		model.getSettings().initialSpotFilterValue = initialThreshold.value;
+		plugin.getSettings().initialSpotFilterValue = initialThreshold.value;
 		plugin.execInitialSpotFiltering();
 		int nselected = model.getSpots().getNSpots(false);
 		logger.log(String.format("Retained %d spots out of %d.\n", nselected, ntotal));

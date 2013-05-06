@@ -46,7 +46,7 @@ public class DetectorConfigurationPanelDescriptor implements WizardPanelDescript
 
 	@Override
 	public String getNextDescriptorID() {
-		if (plugin.getModel().getSettings().detectorFactory.getKey().equals(ManualDetectorFactory.DETECTOR_KEY)) {
+		if (plugin.getSettings().detectorFactory.getKey().equals(ManualDetectorFactory.DETECTOR_KEY)) {
 			return DisplayerChoiceDescriptor.DESCRIPTOR;
 		} else {
 			return DetectorDescriptor.DESCRIPTOR;
@@ -66,7 +66,7 @@ public class DetectorConfigurationPanelDescriptor implements WizardPanelDescript
 		configPanel = plugin.getDetectorProvider().getDetectorConfigurationPanel(wizard.getController());
 		// We assume the provider is already configured with the right target detector factory
 		DetectorProvider provider = plugin.getDetectorProvider(); 
-		Map<String, Object> settings = plugin.getModel().getSettings().detectorSettings;
+		Map<String, Object> settings = plugin.getSettings().detectorSettings;
 		// Bulletproof null
 		if (null == settings || !provider.checkSettingsValidity(settings)) {
 			settings = provider.getDefaultSettings();
@@ -93,7 +93,7 @@ public class DetectorConfigurationPanelDescriptor implements WizardPanelDescript
 			logger.error("Config panel returned bad settings map:\n"+detectorProvider.getErrorMessage()+"Using defaults settings.\n");
 			settings = detectorProvider.getDefaultSettings();
 		}
-		plugin.getModel().getSettings().detectorSettings = settings;
+		plugin.getSettings().detectorSettings = settings;
 	}
 
 }

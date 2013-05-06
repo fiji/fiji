@@ -17,6 +17,7 @@ import com.mxgraph.swing.handler.mxKeyboardHandler;
 import com.mxgraph.swing.handler.mxRubberband;
 
 import fiji.plugin.trackmate.Logger;
+import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.TrackMateModel;
 import javax.swing.JPanel;
 import javax.swing.JLabel;
@@ -40,19 +41,22 @@ public class TrackSchemeFrame extends JFrame  {
 	private final TrackMateModel model;
 	private JGraphXAdapter graph;
 	private final TrackScheme trackScheme;
+	private final Settings settings;
 
 	/** The graph component in charge of painting the graph. */
 	TrackSchemeGraphComponent graphComponent;
 	/** The {@link Logger} that sends messages to the TrackScheme status bar. */
 	final Logger logger;
 
+
 	/*
 	 * CONSTRUCTORS
 	 */
 
-	public TrackSchemeFrame(final TrackScheme trackScheme)  {
+	public TrackSchemeFrame(final TrackScheme trackScheme, final Settings settings)  {
 		this.trackScheme = trackScheme;
 		this.model = trackScheme.getModel();
+		this.settings = settings;
 
 		// Frame look
 		setIconImage(TrackScheme.TRACK_SCHEME_ICON.getImage());
@@ -103,7 +107,7 @@ public class TrackSchemeFrame extends JFrame  {
 		graphComponent = createGraphComponent();
 
 		// Add the info pane
-		infoPane = new InfoPane(model, graph);
+		infoPane = new InfoPane(model, settings, graph);
 		JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, infoPane, graphComponent);
 		splitPane.setDividerLocation(170);
 		getContentPane().add(splitPane, BorderLayout.CENTER);
@@ -123,7 +127,7 @@ public class TrackSchemeFrame extends JFrame  {
 	 * Hook for sub-classers.
 	 */
 	private TrackSchemeGraphComponent createGraphComponent() {
-		final TrackSchemeGraphComponent gc = new TrackSchemeGraphComponent(graph, model, trackScheme);
+		final TrackSchemeGraphComponent gc = new TrackSchemeGraphComponent(graph, trackScheme);
 		gc.getVerticalScrollBar().setUnitIncrement(16);
 		gc.getHorizontalScrollBar().setUnitIncrement(16);
 		//		gc.setExportEnabled(true); // Seems to be required to have a preview when we move cells. Also give the ability to export a cell as an image clipping 

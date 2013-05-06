@@ -169,17 +169,16 @@ public class TmXmlReader implements Algorithm, Benchmark {
 		getDetectorSettings(settings);
 		getTrackerSettings(settings);
 		settings.imp = getImage();
-		model.setSettings(settings);
 
 		// Spot Filters
 		FeatureFilter initialFilter = getInitialFilter();
 		if (null != initialFilter) {
-			model.getSettings().initialSpotFilterValue = initialFilter.value;
+			plugin.getSettings().initialSpotFilterValue = initialFilter.value;
 		} else {
-			model.getSettings().initialSpotFilterValue = null; // So that everyone knows we did NOT find it in the file
+			plugin.getSettings().initialSpotFilterValue = null; // So that everyone knows we did NOT find it in the file
 		}
 		List<FeatureFilter> spotFilters = getSpotFeatureFilters();
-		model.getSettings().setSpotFilters(spotFilters);
+		plugin.getSettings().setSpotFilters(spotFilters);
 		// Spots & their visibility
 		SpotCollection allSpots = getAllSpots();
 		Map<Integer, Set<Integer>> filteredIDs = getFilteredSpotIDs();
@@ -198,7 +197,7 @@ public class TmXmlReader implements Algorithm, Benchmark {
 
 		// Track Filters
 		List<FeatureFilter> trackFilters = getTrackFeatureFilters();
-		model.getSettings().setTrackFilters(trackFilters);
+		plugin.getSettings().setTrackFilters(trackFilters);
 
 		long end = System.currentTimeMillis();
 		processingTime = end - start;

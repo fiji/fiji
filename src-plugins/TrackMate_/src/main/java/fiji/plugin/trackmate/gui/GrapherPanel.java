@@ -16,7 +16,6 @@ import javax.swing.JTabbedPane;
 import org.jgrapht.graph.DefaultWeightedEdge;
 
 import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMate_;
 import fiji.plugin.trackmate.features.EdgeFeatureGrapher;
 import fiji.plugin.trackmate.features.SpotFeatureGrapher;
@@ -33,7 +32,7 @@ public class GrapherPanel extends ActionListenablePanel implements WizardPanelDe
 	private static final long serialVersionUID = 1L;
 	public static final String DESCRIPTOR = "GrapherPanel";
 
-	private TrackMateModel model;
+	private TrackMate_ plugin;
 	private JPanel panelSpot;
 	private JPanel panelEdges;
 	private JPanel panelTracks;
@@ -69,8 +68,8 @@ public class GrapherPanel extends ActionListenablePanel implements WizardPanelDe
 		
 		// regen spot features
 		panelSpot.removeAll();
-		List<String> spotFeatures = model.getFeatureModel().getSpotFeatures();
-		Map<String, String> spotFeatureNames = model.getFeatureModel().getSpotFeatureNames();
+		List<String> spotFeatures = plugin.getModel().getFeatureModel().getSpotFeatures();
+		Map<String, String> spotFeatureNames = plugin.getModel().getFeatureModel().getSpotFeatureNames();
 		spotFeatureSelectionPanel = new FeaturePlotSelectionPanel(Spot.POSITION_T, spotFeatures, spotFeatureNames);
 		panelSpot.add(spotFeatureSelectionPanel);
 		spotFeatureSelectionPanel.addActionListener(new ActionListener() {
@@ -82,8 +81,8 @@ public class GrapherPanel extends ActionListenablePanel implements WizardPanelDe
 		
 		// regen edge features
 		panelEdges.removeAll();
-		List<String> edgeFeatures = model.getFeatureModel().getEdgeFeatures();
-		Map<String, String> edgeFeatureNames = model.getFeatureModel().getEdgeFeatureNames();
+		List<String> edgeFeatures = plugin.getModel().getFeatureModel().getEdgeFeatures();
+		Map<String, String> edgeFeatureNames = plugin.getModel().getFeatureModel().getEdgeFeatureNames();
 		edgeFeatureSelectionPanel = new FeaturePlotSelectionPanel(EdgeTimeLocationAnalyzer.TIME, edgeFeatures, edgeFeatureNames);
 		panelEdges.add(edgeFeatureSelectionPanel);
 		edgeFeatureSelectionPanel.addActionListener(new ActionListener() {
@@ -95,8 +94,8 @@ public class GrapherPanel extends ActionListenablePanel implements WizardPanelDe
 		
 		// regen trak features
 		panelTracks.removeAll();
-		List<String> trackFeatures = model.getFeatureModel().getTrackFeatures();
-		Map<String, String> trackFeatureNames = model.getFeatureModel().getTrackFeatureNames();
+		List<String> trackFeatures = plugin.getModel().getFeatureModel().getTrackFeatures();
+		Map<String, String> trackFeatureNames = plugin.getModel().getFeatureModel().getTrackFeatureNames();
 		trackFeatureSelectionPanel = new FeaturePlotSelectionPanel(TrackIndexAnalyzer.TRACK_INDEX, trackFeatures, trackFeatureNames);
 		panelTracks.add(trackFeatureSelectionPanel);
 		trackFeatureSelectionPanel.addActionListener(new ActionListener() {
@@ -113,36 +112,36 @@ public class GrapherPanel extends ActionListenablePanel implements WizardPanelDe
 		
 		// Collect only the spots that are in tracks
 		List<Spot> spots = new ArrayList<Spot>();
-		for(Integer trackID : model.getTrackModel().getTrackIDs()) {
-			spots.addAll(model.getTrackModel().getTrackSpots(trackID));
+		for(Integer trackID : plugin.getModel().getTrackModel().getTrackIDs()) {
+			spots.addAll(plugin.getModel().getTrackModel().getTrackSpots(trackID));
 		}
 		
-		SpotFeatureGrapher grapher = new SpotFeatureGrapher(xFeature, yFeatures, spots, model);
+		SpotFeatureGrapher grapher = new SpotFeatureGrapher(xFeature, yFeatures, spots, plugin.getModel(), plugin.getSettings());
 		grapher.render();
 	}
 	
 	private void plotEdgeFeatures() {
 		// Collect edges in filtered tracks
 		List<DefaultWeightedEdge> edges = new ArrayList<DefaultWeightedEdge>();
-		for (Integer trackID : model.getTrackModel().getFilteredTrackIDs()) {
-			edges.addAll(model.getTrackModel().getTrackEdges(trackID));
+		for (Integer trackID : plugin.getModel().getTrackModel().getFilteredTrackIDs()) {
+			edges.addAll(plugin.getModel().getTrackModel().getTrackEdges(trackID));
 		}
 		// Recompute edge features
-		model.getFeatureModel().computeEdgeFeatures(edges, true);
+		plugin.getModel().getFeatureModel().computeEdgeFeatures(edges, true);
 		// Prepare grapher
 		String xFeature = edgeFeatureSelectionPanel.getXKey();
 		Set<String> yFeatures = edgeFeatureSelectionPanel.getYKeys();
-		EdgeFeatureGrapher grapher = new EdgeFeatureGrapher(xFeature, yFeatures, edges , model);
+		EdgeFeatureGrapher grapher = new EdgeFeatureGrapher(xFeature, yFeatures, edges , plugin.getModel(), plugin.getSettings());
 		grapher.render();
 	}
 	
 	private void plotTrackFeatures() {
 		// Recompute track features
-		model.getFeatureModel().computeTrackFeatures(model.getTrackModel().getFilteredTrackIDs(), true);
+		plugin.getModel().getFeatureModel().computeTrackFeatures(plugin.getModel().getTrackModel().getFilteredTrackIDs(), true);
 		// Prepare grapher
 		String xFeature = trackFeatureSelectionPanel.getXKey();
 		Set<String> yFeatures = trackFeatureSelectionPanel.getYKeys();
-		TrackFeatureGrapher grapher = new TrackFeatureGrapher(xFeature, yFeatures, model);
+		TrackFeatureGrapher grapher = new TrackFeatureGrapher(xFeature, yFeatures, plugin.getModel(), plugin.getSettings());
 		grapher.render();
 	}
 
@@ -157,7 +156,7 @@ public class GrapherPanel extends ActionListenablePanel implements WizardPanelDe
 
 	@Override
 	public void setPlugin(TrackMate_ plugin) {
-		this.model = plugin.getModel(); 
+		this.plugin = plugin; 
 		refresh();
 	}
 
