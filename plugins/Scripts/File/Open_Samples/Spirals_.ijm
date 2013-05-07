@@ -12,7 +12,7 @@ cy = h / 2;
 count1 = 8;
 factor = 2 * PI / w;
 
-useOnlyRedAndGreen = true;
+useOnlyRedAndGreen = !isKeyDown("alt");
 if (useOnlyRedAndGreen) {
 	count2 = 8 * 16;
 
