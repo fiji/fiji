@@ -41,13 +41,13 @@ public class DetectorProvider extends AbstractProvider {
 
 	/**
 	 * This provider provides the GUI with the spot detectors currently available in the 
-	 * TrackMate plugin. Each detector is identified by a key String, which can be used 
+	 * TrackMate trackmate. Each detector is identified by a key String, which can be used 
 	 * to retrieve new instance of the detector, settings for the target detector and a 
 	 * GUI panel able to configure these settings.
 	 * <p>
 	 * If you want to add custom detectors to TrackMate, a simple way is to extend this
 	 * factory so that it is registered with the custom detectors and pass this 
-	 * extended provider to the {@link TrackMate_} plugin.
+	 * extended provider to the {@link TrackMate} trackmate.
 	 */
 	public DetectorProvider() {
 		registerDetectors();

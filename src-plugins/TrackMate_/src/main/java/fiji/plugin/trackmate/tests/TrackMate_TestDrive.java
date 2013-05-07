@@ -1,7 +1,7 @@
 package fiji.plugin.trackmate.tests;
 
 import fiji.SampleImageLoader;
-import fiji.plugin.trackmate.TrackMate_;
+import fiji.plugin.trackmate.TrackMate;
 import ij.IJ;
 import ij.ImageJ;
 import ij.ImagePlus;
@@ -16,7 +16,7 @@ public class TrackMate_TestDrive {
 	
 	public static void main(String[] args) {
 		
-		final File file = new File(AppUtils.getBaseDirectory(TrackMate_.class), "samples/FakeTracks.tif");
+		final File file = new File(AppUtils.getBaseDirectory(TrackMate.class), "samples/FakeTracks.tif");
 		
 		new ImageJ();
 		if (!file.exists()) try {
@@ -34,8 +34,8 @@ public class TrackMate_TestDrive {
 //		IJ.run(imp, "Crop", "");
 //		IJ.run(imp, "Subtract Background...", "rolling=50 stack");
 		
-		final TrackMate_ st = new TrackMate_();
-		System.out.println("Running the plugin...");
+		final TrackMate st = new TrackMate();
+		System.out.println("Running the trackmate...");
 //		new Thread() {
 //			public void run() {
 //				try {

@@ -13,7 +13,7 @@ import java.util.Map;
 
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.TrackMateModel;
-import fiji.plugin.trackmate.TrackMate_;
+import fiji.plugin.trackmate.TrackMate;
 import fiji.plugin.trackmate.io.TmXmlReader;
 import fiji.plugin.trackmate.tracking.LAPTracker;
 import fiji.plugin.trackmate.tracking.LAPUtils;
@@ -35,17 +35,17 @@ public class LAPTrackerTestDrive {
 		
 		// 1 - Load test spots
 		System.out.println("Opening file: "+file.getAbsolutePath());		
-		TrackMate_ plugin = new TrackMate_();
-		TmXmlReader reader = new TmXmlReader(file, plugin);
+		TrackMate trackmate = new TrackMate();
+		TmXmlReader reader = new TmXmlReader(file, trackmate);
 		if (!reader.checkInput() || !reader.process()) {
 			System.err.println("Problem loading the file:");
 			System.err.println(reader.getErrorMessage());
 			return;
 		}
-		TrackMateModel model = plugin.getModel();
+		TrackMateModel model = trackmate.getModel();
 		
 		System.out.println("Spots: "+ model.getSpots());
-		plugin.computeTrackFeatures(true);
+		trackmate.computeTrackFeatures(true);
 		System.out.println("Found "+model.getTrackModel().getNTracks()+" tracks in the file:");
 		for (Integer trackID : model.getTrackModel().getTrackEdges().keySet())
 			System.out.println('\t'+model.getTrackModel().trackToString(trackID));
@@ -61,7 +61,7 @@ public class LAPTrackerTestDrive {
 		settings.put(KEY_ALLOW_TRACK_SPLITTING, false);
 		settings.put(KEY_SPLITTING_MAX_DISTANCE, 10d);
 		System.out.println("Tracker settings:");
-		plugin.getSettings().trackerSettings = settings;
+		trackmate.getSettings().trackerSettings = settings;
 		
 		// 2 - Track the test spots
 		long start = System.currentTimeMillis();
@@ -112,7 +112,7 @@ public class LAPTrackerTestDrive {
 //		LAPUtils.echoMatrix(lap.getSegmentCosts());
 		
 		System.out.println("Track features: ");
-		plugin.computeTrackFeatures(true);
+		trackmate.computeTrackFeatures(true);
 		for (Integer trackID : model.getTrackModel().getTrackEdges().keySet()) {
 			System.out.println(model.getTrackModel().trackToString(trackID));
 		}
@@ -122,7 +122,7 @@ public class LAPTrackerTestDrive {
 		// Load Image
 		ij.ImageJ.main(args);
 		
-		TrackMateModelView sd2d = new HyperStackDisplayer(model, plugin.getSettings());
+		TrackMateModelView sd2d = new HyperStackDisplayer(model, trackmate.getSettings());
 		sd2d.render();
 		sd2d.setDisplaySettings(TrackMateModelView.KEY_TRACK_DISPLAY_MODE, TrackMateModelView.TRACK_DISPLAY_MODE_WHOLE);
 	}

@@ -9,7 +9,7 @@ public abstract class AbstractTMAction implements TrackMateAction {
 
 	protected Logger logger = Logger.VOID_LOGGER;
 	protected ImageIcon icon = null;
-	protected TrackMateWizard wizard;
+//	protected TrackMateWizard wizard;
 	
 	@Override
 	public void setLogger(Logger logger) {
@@ -23,6 +23,6 @@ public abstract class AbstractTMAction implements TrackMateAction {
 	
 	@Override
 	public void setWizard(TrackMateWizard wizard) {
-		this.wizard = wizard;
+//		this.wizard = wizard;
 	}
 }

@@ -5,13 +5,13 @@ import java.util.Map;
 
 import fiji.plugin.trackmate.DetectorProvider;
 import fiji.plugin.trackmate.Logger;
-import fiji.plugin.trackmate.TrackMate_;
+import fiji.plugin.trackmate.TrackMate;
 import fiji.plugin.trackmate.detection.ManualDetectorFactory;
 
 public class DetectorConfigurationPanelDescriptor implements WizardPanelDescriptor {
 
 	public static final String DESCRIPTOR = "DetectorConfigurationPanel";
-	private TrackMate_ plugin;
+	private TrackMate trackmate;
 	private ConfigurationPanel configPanel;
 	private TrackMateWizard wizard;
 
@@ -25,8 +25,8 @@ public class DetectorConfigurationPanelDescriptor implements WizardPanelDescript
 	}
 
 	@Override
-	public void setPlugin(TrackMate_ plugin) {
-		this.plugin = plugin;
+	public void setPlugin(TrackMate trackmate) {
+		this.trackmate = trackmate;
 	}
 
 	@Override
@@ -46,7 +46,7 @@ public class DetectorConfigurationPanelDescriptor implements WizardPanelDescript
 
 	@Override
 	public String getNextDescriptorID() {
-		if (plugin.getSettings().detectorFactory.getKey().equals(ManualDetectorFactory.DETECTOR_KEY)) {
+		if (trackmate.getSettings().detectorFactory.getKey().equals(ManualDetectorFactory.DETECTOR_KEY)) {
 			return DisplayerChoiceDescriptor.DESCRIPTOR;
 		} else {
 			return DetectorDescriptor.DESCRIPTOR;
@@ -59,14 +59,14 @@ public class DetectorConfigurationPanelDescriptor implements WizardPanelDescript
 	}
 
 	/**
-	 * Regenerate the config panel to reflect current settings stored in the plugin.
+	 * Regenerate the config panel to reflect current settings stored in the trackmate.
 	 */
 	public void updateComponent() {
 		// Regenerate panel
-		configPanel = plugin.getDetectorProvider().getDetectorConfigurationPanel(wizard.getController());
+		configPanel = trackmate.getDetectorProvider().getDetectorConfigurationPanel(wizard.getController());
 		// We assume the provider is already configured with the right target detector factory
-		DetectorProvider provider = plugin.getDetectorProvider(); 
-		Map<String, Object> settings = plugin.getSettings().detectorSettings;
+		DetectorProvider provider = trackmate.getDetectorProvider(); 
+		Map<String, Object> settings = trackmate.getSettings().detectorSettings;
 		// Bulletproof null
 		if (null == settings || !provider.checkSettingsValidity(settings)) {
 			settings = provider.getDefaultSettings();
@@ -86,14 +86,14 @@ public class DetectorConfigurationPanelDescriptor implements WizardPanelDescript
 	@Override
 	public void aboutToHidePanel() {
 		Map<String, Object> settings = configPanel.getSettings();
-		DetectorProvider detectorProvider = plugin.getDetectorProvider();
+		DetectorProvider detectorProvider = trackmate.getDetectorProvider();
 		boolean settingsOk = detectorProvider.checkSettingsValidity(settings);
 		if (!settingsOk) {
 			Logger logger = wizard.getLogger();
 			logger.error("Config panel returned bad settings map:\n"+detectorProvider.getErrorMessage()+"Using defaults settings.\n");
 			settings = detectorProvider.getDefaultSettings();
 		}
-		plugin.getSettings().detectorSettings = settings;
+		trackmate.getSettings().detectorSettings = settings;
 	}
 
 }

@@ -5,6 +5,7 @@ import static fiji.plugin.trackmate.visualization.trackscheme.TrackScheme.TRACK_
 import java.awt.Shape;
 import java.awt.geom.Ellipse2D;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -126,14 +127,16 @@ public abstract class AbstractFeatureGrapher {
 	/**
 	 * @return the list of links that have their source and target in the given spot list.
 	 */
-	protected final List<DefaultWeightedEdge> getInsideEdges(final List<Spot> spots) {
+	protected final List<DefaultWeightedEdge> getInsideEdges(final Collection<Spot> spots) {
 		ArrayList<DefaultWeightedEdge> edges = new ArrayList<DefaultWeightedEdge>();
 		int nspots = spots.size();
 		Spot source, target;
+		Spot[] sarr = spots.toArray(new Spot[] {});
+		
 		for (int i = 0; i < nspots; i++) {
-			source = spots.get(i);
+			source = sarr[i];
 			for (int j = i+1; j < nspots; j++) {
-				target = spots.get(j);
+				target = sarr[j];
 
 				if (model.getTrackModel().containsEdge(source, target)) {
 					DefaultWeightedEdge edge = model.getTrackModel().getEdge(source, target);

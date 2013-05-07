@@ -5,7 +5,7 @@ import java.util.Map;
 
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.TrackMateModel;
-import fiji.plugin.trackmate.TrackMate_;
+import fiji.plugin.trackmate.TrackMate;
 import fiji.plugin.trackmate.io.TmXmlReader;
 import fiji.plugin.trackmate.tracking.LAPTracker;
 import fiji.plugin.trackmate.tracking.LAPUtils;
@@ -17,18 +17,18 @@ public class WeirdMergingTestDrive {
 
 	public static void main(String[] args) {
 		
-		TrackMate_ plugin = new TrackMate_();
-		plugin.setLogger(Logger.DEFAULT_LOGGER);
+		TrackMate trackmate = new TrackMate();
+		trackmate.setLogger(Logger.DEFAULT_LOGGER);
 
 		File file = new File("/Users/tinevez/Desktop/Test2.xml");
-		TmXmlReader reader = new TmXmlReader(file, plugin);
+		TmXmlReader reader = new TmXmlReader(file, trackmate);
 		
 		if (!reader.checkInput() || !reader.process()) {
 			System.err.println("Could not read file: "+reader.getErrorMessage());
 			return;
 		}
 	
-		TrackMateModel model = plugin.getModel();
+		TrackMateModel model = trackmate.getModel();
 		System.out.println(model);
 		
 		LAPTracker tracker = new LAPTracker(model.getSpots(), Logger.DEFAULT_LOGGER);
@@ -46,7 +46,7 @@ public class WeirdMergingTestDrive {
 		
 		model.getTrackModel().setGraph(tracker.getResult());
 		
-		TrackScheme view = new TrackScheme(model, plugin.getSettings());
+		TrackScheme view = new TrackScheme(model, trackmate.getSettings());
 		view.render();
 
 	}

@@ -16,7 +16,7 @@ import fiji.plugin.trackmate.features.track.TrackAnalyzer;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
 
 /**
- * <h1>The model for the data managed by TrackMate plugin.</h1>
+ * <h1>The model for the data managed by TrackMate trackmate.</h1>
  * <p>
  * This is a relatively large class, with a lot of public methods. This
  * complexity arose because this class handles data storage and manipulation,
@@ -355,7 +355,7 @@ public class TrackMateModel {
 
 	/**
 	 * Set the logger that will receive the messages from the processes
-	 * occurring within this plugin.
+	 * occurring within this trackmate.
 	 */
 	public void setLogger(Logger logger) {
 		this.logger = logger;

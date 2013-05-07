@@ -4,7 +4,7 @@ import static fiji.plugin.trackmate.gui.TrackMateWizard.BIG_FONT;
 import static fiji.plugin.trackmate.gui.TrackMateWizard.SMALL_FONT;
 import static fiji.plugin.trackmate.gui.TrackMateWizard.TEXTFIELD_DIMENSION;
 import fiji.plugin.trackmate.Settings;
-import fiji.plugin.trackmate.TrackMate_;
+import fiji.plugin.trackmate.TrackMate;
 import ij.ImagePlus;
 import ij.WindowManager;
 import ij.gui.Roi;
@@ -58,7 +58,7 @@ public class StartDialogPanel extends ActionListenablePanel implements WizardPan
 
 	private ImagePlus imp;
 
-	private TrackMate_ plugin;
+	private TrackMate trackmate;
 	private TrackMateWizard wizard;
 
 	
@@ -77,11 +77,11 @@ public class StartDialogPanel extends ActionListenablePanel implements WizardPan
 	}
 
 	@Override
-	public void setPlugin(TrackMate_ plugin) {
-		if (null == plugin) {
-			plugin = new TrackMate_();
+	public void setPlugin(TrackMate trackmate) {
+		if (null == trackmate) {
+			trackmate = new TrackMate();
 		} 
-		this.plugin = plugin;
+		this.trackmate = trackmate;
 	}
 
 	@Override
@@ -111,12 +111,12 @@ public class StartDialogPanel extends ActionListenablePanel implements WizardPan
 
 	@Override
 	public void aboutToDisplayPanel() {
-		if (null == plugin.getSettings().imp) {
+		if (null == trackmate.getSettings().imp) {
 			imp = WindowManager.getCurrentImage();
 			refresh();
 		} else {
-			echoSettings(plugin.getSettings());
-			imp = plugin.getSettings().imp;
+			echoSettings(trackmate.getSettings());
+			imp = trackmate.getSettings().imp;
 			refresh();
 		}
 	}
@@ -126,9 +126,9 @@ public class StartDialogPanel extends ActionListenablePanel implements WizardPan
 
 	@Override
 	public void aboutToHidePanel() {
-		// Get settings and pass them to the plugin managed by the wizard
-		getSettings(plugin.getSettings());
-		plugin.getModel().getLogger().log(plugin.getSettings().toStringImageInfo());
+		// Get settings and pass them to the trackmate managed by the wizard
+		getSettings(trackmate.getSettings());
+		trackmate.getModel().getLogger().log(trackmate.getSettings().toStringImageInfo());
 	}
 
 

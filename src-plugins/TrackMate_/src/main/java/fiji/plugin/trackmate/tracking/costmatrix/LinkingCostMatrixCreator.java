@@ -72,6 +72,8 @@ public class LinkingCostMatrixCreator extends LAPTrackerCostMatrixCreator {
 
 	@Override
 	public boolean process() {
+		
+		long start = System.currentTimeMillis();
 
 		// Deal with special cases:
 
@@ -118,6 +120,8 @@ public class LinkingCostMatrixCreator extends LAPTrackerCostMatrixCreator {
 
 		//printMatrix(costs, "linking costs");
 
+		long end = System.currentTimeMillis();
+		processingTime = end - start;
 		return true;
 	}
 

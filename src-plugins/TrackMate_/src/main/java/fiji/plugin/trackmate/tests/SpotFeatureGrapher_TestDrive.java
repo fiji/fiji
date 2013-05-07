@@ -14,7 +14,7 @@ import org.jgrapht.graph.SimpleDirectedWeightedGraph;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.TrackMateModel;
-import fiji.plugin.trackmate.TrackMate_;
+import fiji.plugin.trackmate.TrackMate;
 import fiji.plugin.trackmate.features.SpotFeatureGrapher;
 import fiji.plugin.trackmate.features.track.TrackIndexAnalyzer;
 import fiji.plugin.trackmate.io.TmXmlReader;
@@ -27,14 +27,14 @@ public class SpotFeatureGrapher_TestDrive {
 		// Load objects 
 		File file = new File("/Users/tinevez/Desktop/Data/Tree.xml");
 //		File file = new File("E:/Users/JeanYves/Desktop/Data/FakeTracks.xml");
-		TrackMate_ plugin = new TrackMate_();
-		TmXmlReader reader = new TmXmlReader(file, plugin);
+		TrackMate trackmate = new TrackMate();
+		TmXmlReader reader = new TmXmlReader(file, trackmate);
 		if (!reader.checkInput() || !reader.process()) {
 			System.err.println("Problem loading the file:");
 			System.err.println(reader.getErrorMessage());
 			return;
 		}
-		TrackMateModel model = plugin.getModel();
+		TrackMateModel model = trackmate.getModel();
 
 		HashSet<String> Y = new HashSet<String>(1);
 		Y.add(Spot.POSITION_T);
@@ -43,13 +43,13 @@ public class SpotFeatureGrapher_TestDrive {
 			spots.add(it.next());
 		}
 		
-		SpotFeatureGrapher grapher = new SpotFeatureGrapher(Spot.POSITION_X, Y, spots , plugin.getModel(), plugin.getSettings());
+		SpotFeatureGrapher grapher = new SpotFeatureGrapher(Spot.POSITION_X, Y, spots , trackmate.getModel(), trackmate.getSettings());
 		grapher.render();
 		
 		TrackIndexAnalyzer analyzer = new TrackIndexAnalyzer(model);
 		analyzer.process(model.getTrackModel().getFilteredTrackIDs()); // need for trackScheme
 		
-		TrackScheme trackScheme = new TrackScheme(model, plugin.getSettings());
+		TrackScheme trackScheme = new TrackScheme(model, trackmate.getSettings());
 		trackScheme.render();
 		
 	}

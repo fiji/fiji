@@ -40,7 +40,7 @@ import javax.swing.border.LineBorder;
 
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.TrackMateModel;
-import fiji.plugin.trackmate.TrackMate_;
+import fiji.plugin.trackmate.TrackMate;
 import fiji.plugin.trackmate.action.ExportStatsToIJAction;
 import fiji.plugin.trackmate.util.TMUtils;
 import fiji.plugin.trackmate.visualization.AbstractTrackMateModelView;
@@ -82,7 +82,7 @@ public class DisplayerPanel extends ActionListenablePanel implements WizardPanel
 	 * The set of {@link TrackMateModelView} views controlled by this controller.
 	 */
 	private Set<TrackMateModelView> views = new HashSet<TrackMateModelView>();
-	private TrackMate_ plugin;
+	private TrackMate trackmate;
 	private TrackMateWizard wizard;
 
 	private TrackColorByFeatureGUI trackColorGUI;
@@ -106,9 +106,9 @@ public class DisplayerPanel extends ActionListenablePanel implements WizardPanel
 	}
 
 	@Override
-	public void setPlugin(TrackMate_ plugin) {
-		this.plugin = plugin;
-		setModel(plugin.getModel());
+	public void setPlugin(TrackMate trackmate) {
+		this.trackmate = trackmate;
+		setModel(trackmate.getModel());
 	}
 
 	@Override
@@ -139,7 +139,7 @@ public class DisplayerPanel extends ActionListenablePanel implements WizardPanel
 
 	@Override
 	public void aboutToDisplayPanel() {
-		setModel(plugin.getModel());
+		setModel(trackmate.getModel());
 		register(wizard.getDisplayer());
 	}
 
@@ -183,10 +183,10 @@ public class DisplayerPanel extends ActionListenablePanel implements WizardPanel
 
 					// Display Track scheme
 					jButtonShowTrackScheme.setEnabled(false);
-					new Thread("TrackMate_ laucnhing TrackScheme thread") {
+					new Thread("TrackMate_ launching TrackScheme thread") {
 						public void run() {	
 							try {
-								TrackScheme trackScheme = new TrackScheme(plugin.getModel(), plugin.getSettings());
+								TrackScheme trackScheme = new TrackScheme(trackmate.getModel(), trackmate.getSettings());
 								Map<String, Object> displaySettings = new HashMap<String, Object>();
 								updateDisplaySettings(displaySettings);
 								for (String settingKey : displaySettings.keySet()) {
@@ -210,7 +210,7 @@ public class DisplayerPanel extends ActionListenablePanel implements WizardPanel
 						public void run() {
 							try {
 								ExportStatsToIJAction action = new ExportStatsToIJAction();
-								action.execute(plugin);
+								action.execute(trackmate);
 							} finally {
 								wizard.showDescriptorPanelFor(DisplayerPanel.DESCRIPTOR);
 								wizard.restoreButtonsState();
@@ -250,7 +250,7 @@ public class DisplayerPanel extends ActionListenablePanel implements WizardPanel
 	 */
 
 	private void setModel(TrackMateModel model) {
-		Settings settings = plugin.getSettings(); 
+		Settings settings = trackmate.getSettings(); 
 		Map<String, double[]> featureValues = TMUtils.getSpotFeatureValues(model.getSpots(), settings.getSpotFeatures(), model.getLogger());
 		List<String> features = settings.getSpotFeatures();
 		Map<String, String> featureNames = settings.getSpotFeatureNames();
@@ -273,7 +273,7 @@ public class DisplayerPanel extends ActionListenablePanel implements WizardPanel
 		if (trackColorGUI != null) {
 			jPanelTrackOptions.remove(trackColorGUI);
 		}
-		trackColorGUI = new TrackColorByFeatureGUI(plugin.getModel(), this);
+		trackColorGUI = new TrackColorByFeatureGUI(trackmate.getModel(), this);
 		trackColorGUI.setPreferredSize(new java.awt.Dimension(265, 45));
 		jPanelTrackOptions.add(trackColorGUI);
 	}
@@ -373,7 +373,7 @@ public class DisplayerPanel extends ActionListenablePanel implements WizardPanel
 				}
 				{
 
-					// Color GUI will be added later, when we receive the plugin object. It's like that.
+					// Color GUI will be added later, when we receive the trackmate object. It's like that.
 
 				}
 			}

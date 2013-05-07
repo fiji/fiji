@@ -24,7 +24,7 @@ public class GuiSaver {
 	 */
 
 	/**
-	 * Construct a {@link GuiReader}. The {@link WizardController} will have its state
+	 * Construct a {@link GuiReader}. The {@link TrackMateGUIController} will have its state
 	 * set according to the data found in the file read.
 	 * @param wizard
 	 */
@@ -39,7 +39,7 @@ public class GuiSaver {
 
 
 	/**
-	 * Write the model in the plugin managed by this GUI in the file specified.
+	 * Write the model in the trackmate managed by this GUI in the file specified.
 	 * @param file  the file to write in.
 	 */
 	public void writeFile(final File file) {

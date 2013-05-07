@@ -3,7 +3,7 @@ package fiji.plugin.trackmate.tests;
 import java.io.File;
 
 import fiji.plugin.trackmate.TrackMateModel;
-import fiji.plugin.trackmate.TrackMate_;
+import fiji.plugin.trackmate.TrackMate;
 import fiji.plugin.trackmate.io.TmXmlReader;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
 import fiji.plugin.trackmate.visualization.threedviewer.SpotDisplayer3D;
@@ -27,15 +27,15 @@ public class SpotDisplayer3DModel_TestDrive {
 		}
 		ij.ImageJ.main(args);
 		
-		TrackMate_ plugin = new TrackMate_();
-		TmXmlReader reader = new TmXmlReader(file, plugin);
+		TrackMate trackmate = new TrackMate();
+		TmXmlReader reader = new TmXmlReader(file, trackmate);
 		if (!reader.checkInput() || !reader.process()) {
 			System.err.println("Problem loading the file:");
 			System.err.println(reader.getErrorMessage());
 		}
-		TrackMateModel model = plugin.getModel();
+		TrackMateModel model = trackmate.getModel();
 		
-		SpotDisplayer3D displayer = new SpotDisplayer3D(model, plugin.getSettings());
+		SpotDisplayer3D displayer = new SpotDisplayer3D(model, trackmate.getSettings());
 		displayer.render();
 		
 		displayer.setDisplaySettings(TrackMateModelView.KEY_TRACK_DISPLAY_MODE, TrackMateModelView.TRACK_DISPLAY_MODE_LOCAL);

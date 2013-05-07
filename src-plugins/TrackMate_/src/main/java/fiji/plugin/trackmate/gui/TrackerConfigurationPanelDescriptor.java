@@ -4,13 +4,13 @@ import java.awt.Component;
 import java.util.Map;
 
 import fiji.plugin.trackmate.Logger;
-import fiji.plugin.trackmate.TrackMate_;
+import fiji.plugin.trackmate.TrackMate;
 import fiji.plugin.trackmate.TrackerProvider;
 
 public class TrackerConfigurationPanelDescriptor implements WizardPanelDescriptor {
 
 	public static final String DESCRIPTOR = "TrackerConfigurationPanel";
-	private TrackMate_ plugin;
+	private TrackMate trackmate;
 	private ConfigurationPanel configPanel;
 	private TrackMateWizard wizard;
 	
@@ -24,19 +24,19 @@ public class TrackerConfigurationPanelDescriptor implements WizardPanelDescripto
 	}
 
 	@Override
-	public void setPlugin(TrackMate_ plugin) {
-		this.plugin = plugin;
+	public void setPlugin(TrackMate trackmate) {
+		this.trackmate = trackmate;
 	}
 
 	/**
-	 * Regenerate the config panel to reflect current settings stored in the plugin.
+	 * Regenerate the config panel to reflect current settings stored in the trackmate.
 	 */
 	public void updateComponent() {
 		// We assume the provider is already configured with the right target detector factory
-		TrackerProvider provider = plugin.getTrackerProvider();
+		TrackerProvider provider = trackmate.getTrackerProvider();
 		// Regenerate panel
-		configPanel = provider.getTrackerConfigurationPanel(plugin.getSettings());
-		Map<String, Object> settings = plugin.getSettings().trackerSettings;
+		configPanel = provider.getTrackerConfigurationPanel(trackmate.getSettings());
+		Map<String, Object> settings = trackmate.getSettings().trackerSettings;
 		// Bulletproof null
 		if (null == settings || !provider.checkSettingsValidity(settings)) {
 			settings = provider.getDefaultSettings();
@@ -81,13 +81,13 @@ public class TrackerConfigurationPanelDescriptor implements WizardPanelDescripto
 	@Override
 	public void aboutToHidePanel() {
 		Map<String, Object> settings = configPanel.getSettings();
-		TrackerProvider trackerProvider = plugin.getTrackerProvider();
+		TrackerProvider trackerProvider = trackmate.getTrackerProvider();
 		boolean settingsOk = trackerProvider.checkSettingsValidity(settings);
 		if (!settingsOk) {
 			Logger logger = wizard.getLogger();
 			logger.error("Config panel returned bad settings map:\n"+trackerProvider.getErrorMessage()+"Using defaults settings.\n");
 			settings = trackerProvider.getDefaultSettings();
 		}
-		plugin.getSettings().trackerSettings = settings;
+		trackmate.getSettings().trackerSettings = settings;
 	}
 }

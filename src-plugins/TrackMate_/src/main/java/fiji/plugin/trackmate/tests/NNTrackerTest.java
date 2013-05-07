@@ -8,7 +8,7 @@ import java.util.Map;
 
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.TrackMateModel;
-import fiji.plugin.trackmate.TrackMate_;
+import fiji.plugin.trackmate.TrackMate;
 import fiji.plugin.trackmate.io.TmXmlReader;
 import fiji.plugin.trackmate.tracking.kdtree.NearestNeighborTracker;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
@@ -30,18 +30,18 @@ public class NNTrackerTest {
 		
 		// 1 - Load test spots
 		System.out.println("Opening file: "+file.getAbsolutePath());		
-		TrackMate_ plugin = new TrackMate_();
-		TmXmlReader reader = new TmXmlReader(file, plugin);
+		TrackMate trackmate = new TrackMate();
+		TmXmlReader reader = new TmXmlReader(file, trackmate);
 		if (!reader.checkInput() || !reader.process()) {
 			System.err.println("Problem loading the file:");
 			System.err.println(reader.getErrorMessage());
 		}
-		TrackMateModel model = plugin.getModel();
+		TrackMateModel model = trackmate.getModel();
 		
 		System.out.println("Spots: "+ model.getSpots());
 		System.out.println("Found "+model.getTrackModel().getNTracks()+" tracks in the file:");
 		System.out.println("Track features: ");
-		plugin.computeTrackFeatures(true);
+		trackmate.computeTrackFeatures(true);
 		for (Integer trackID : model.getTrackModel().getTrackIDs()) {
 			System.out.println(model.getTrackModel().trackToString(trackID));
 		}
@@ -75,7 +75,7 @@ public class NNTrackerTest {
 //		LAPUtils.echoMatrix(lap.getSegmentCosts());
 		
 		System.out.println("Track features: ");
-		plugin.computeTrackFeatures(true);
+		trackmate.computeTrackFeatures(true);
 		for (Integer trackID : model.getTrackModel().getTrackIDs()) {
 			System.out.println(model.getTrackModel().trackToString(trackID));
 		}
@@ -85,7 +85,7 @@ public class NNTrackerTest {
 		// Load Image
 		ij.ImageJ.main(args);
 		
-		TrackMateModelView sd2d = new HyperStackDisplayer(model, plugin.getSettings());
+		TrackMateModelView sd2d = new HyperStackDisplayer(model, trackmate.getSettings());
 		sd2d.render();
 		sd2d.setDisplaySettings(TrackMateModelView.KEY_TRACK_DISPLAY_MODE, TrackMateModelView.TRACK_DISPLAY_MODE_WHOLE);
 	}

@@ -8,7 +8,7 @@ import javax.swing.ImageIcon;
 
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
-import fiji.plugin.trackmate.TrackMate_;
+import fiji.plugin.trackmate.TrackMate;
 import fiji.plugin.trackmate.gui.DisplayerPanel;
 
 public class ResetRadiusAction extends AbstractTMAction {
@@ -26,16 +26,16 @@ public class ResetRadiusAction extends AbstractTMAction {
 	}
 	
 	@Override
-	public void execute(final TrackMate_ plugin) {
-		Double radius = (Double) plugin.getSettings().detectorSettings.get(KEY_RADIUS);
+	public void execute(final TrackMate trackmate) {
+		Double radius = (Double) trackmate.getSettings().detectorSettings.get(KEY_RADIUS);
 		if (null == radius) {
 			radius = FALL_BACK_RADIUS;
 			logger.error("Could not determine expected radius from settings. Falling back to "+FALL_BACK_RADIUS+" "
-					 + plugin.getSettings().spaceUnits);
+					 + trackmate.getSettings().spaceUnits);
 		}
 		
-		logger.log(String.format("Setting all spot radiuses to %.1f "+plugin.getSettings().spaceUnits+"\n", radius));
-		SpotCollection spots = plugin.getModel().getSpots();
+		logger.log(String.format("Setting all spot radiuses to %.1f "+trackmate.getSettings().spaceUnits+"\n", radius));
+		SpotCollection spots = trackmate.getModel().getSpots();
 		for (Iterator<Spot> iterator = spots.iterator(true); iterator.hasNext();) {
 			iterator.next().putFeature(Spot.RADIUS, radius);
 		}

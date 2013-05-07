@@ -22,7 +22,7 @@ import org.jgrapht.graph.DefaultWeightedEdge;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.TrackMateModel;
-import fiji.plugin.trackmate.TrackMate_;
+import fiji.plugin.trackmate.TrackMate;
 import fiji.plugin.trackmate.gui.TrackMateWizard;
 import fiji.plugin.trackmate.util.TMUtils;
 import fiji.plugin.trackmate.visualization.trackscheme.SpotIconGrabber;
@@ -64,10 +64,10 @@ public class ExtractTrackStackAction extends AbstractTMAction {
 	
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	@Override
-	public void execute(TrackMate_ plugin) {
+	public void execute(TrackMate trackmate) {
 		logger.log("Capturing track stack.\n");
 		
-		TrackMateModel model = plugin.getModel();
+		TrackMateModel model = trackmate.getModel();
 		Set<Spot> selection = model.getSelectionModel().getSpotSelection();
 		int nspots = selection.size();
 		if (nspots != 2) {
@@ -123,7 +123,7 @@ public class ExtractTrackStackAction extends AbstractTMAction {
 		nspots = sortedSpots.size();
 
 		// Common coordinates
-		Settings settings = plugin.getSettings();
+		Settings settings = trackmate.getSettings();
 		double[] calibration = TMUtils.getSpatialCalibration(settings.imp);
 		int targetChannel = settings.imp.getC() - 1; // From current selection
 		final int width 	= (int) Math.ceil(2 * radius * RESIZE_FACTOR / calibration[0]);

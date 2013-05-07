@@ -10,7 +10,7 @@ import javax.swing.ImageIcon;
 
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
-import fiji.plugin.trackmate.TrackMate_;
+import fiji.plugin.trackmate.TrackMate;
 import fiji.plugin.trackmate.gui.DisplayerPanel;
 
 /**
@@ -31,13 +31,13 @@ public class ResetSpotTimeFeatureAction extends AbstractTMAction {
 	}
 	
 	@Override
-	public void execute(TrackMate_ plugin) {
+	public void execute(TrackMate trackmate) {
 		logger.log("Reset spot time.\n");
-		double dt = plugin.getSettings().dt;
+		double dt = trackmate.getSettings().dt;
 		if (dt == 0) {
 			dt = 1;
 		}
-		SpotCollection spots = plugin.getModel().getSpots(); 
+		SpotCollection spots = trackmate.getModel().getSpots(); 
 		Set<Integer> frames = spots.keySet();
 		for(int frame : frames) {
 			for (Iterator<Spot> iterator = spots.iterator(frame, true); iterator.hasNext();) {

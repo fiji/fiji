@@ -14,7 +14,7 @@ import fiji.plugin.trackmate.FeatureFilter;
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.TrackMateModel;
-import fiji.plugin.trackmate.TrackMate_;
+import fiji.plugin.trackmate.TrackMate;
 import fiji.plugin.trackmate.util.TMUtils;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
 
@@ -24,7 +24,7 @@ public class SpotFilterDescriptor implements WizardPanelDescriptor {
 	public static final String DESCRIPTOR = "SpotFilter";
 	private TrackMateWizard wizard;
 	private FilterGuiPanel component = new FilterGuiPanel();
-	private TrackMate_ plugin;
+	private TrackMate trackmate;
 	
 	@Override
 	public void setWizard(TrackMateWizard wizard) {
@@ -32,8 +32,8 @@ public class SpotFilterDescriptor implements WizardPanelDescriptor {
 	}
 
 	@Override
-	public void setPlugin(TrackMate_ plugin) {
-		this.plugin = plugin;
+	public void setPlugin(TrackMate trackmate) {
+		this.trackmate = trackmate;
 	}
 
 	@Override
@@ -63,8 +63,8 @@ public class SpotFilterDescriptor implements WizardPanelDescriptor {
 
 	@Override
 	public void aboutToDisplayPanel() {
-		TrackMateModel model = plugin.getModel();
-		Settings settings = plugin.getSettings();
+		TrackMateModel model = trackmate.getModel();
+		Settings settings = trackmate.getSettings();
 		Map<String, double[]> values = TMUtils.getSpotFeatureValues(model.getSpots(), settings.getSpotFeatures(), model.getLogger());
 		component.setTarget(settings.getSpotFeatures(), settings.getSpotFilters(),  
 				settings.getSpotFeatureNames(), values , "spots");
@@ -73,8 +73,8 @@ public class SpotFilterDescriptor implements WizardPanelDescriptor {
 
 	@Override
 	public void displayingPanel() {
-		plugin.getSettings().setSpotFilters(component.getFeatureFilters());
-		plugin.execSpotFiltering(false);
+		trackmate.getSettings().setSpotFilters(component.getFeatureFilters());
+		trackmate.execSpotFiltering(false);
 		wizard.getDisplayer().refresh();
 	}
 	
@@ -105,8 +105,8 @@ public class SpotFilterDescriptor implements WizardPanelDescriptor {
 							System.out.println("[SpotFilterDescriptor] stateChanged caught.");
 						}
 						// We set the thresholds field of the model but do not touch its selected spot field yet.
-						plugin.getSettings().setSpotFilters(component.getFeatureFilters());
-						plugin.execSpotFiltering(false);
+						trackmate.getSettings().setSpotFilters(component.getFeatureFilters());
+						trackmate.execSpotFiltering(false);
 						wizard.getDisplayer().refresh();
 					}
 				});
@@ -120,17 +120,17 @@ public class SpotFilterDescriptor implements WizardPanelDescriptor {
 	public void aboutToHidePanel() {
 		Logger logger = wizard.getLogger();
 		logger.log("Performing spot filtering on the following features:\n", Logger.BLUE_COLOR);
-		final TrackMateModel model = plugin.getModel();
+		final TrackMateModel model = trackmate.getModel();
 		List<FeatureFilter> featureFilters = component.getFeatureFilters();
-		plugin.getSettings().setSpotFilters(featureFilters);
-		plugin.execSpotFiltering(false);
+		trackmate.getSettings().setSpotFilters(featureFilters);
+		trackmate.execSpotFiltering(false);
 
 		int ntotal = model.getSpots().getNSpots(false);
 		if (featureFilters == null || featureFilters.isEmpty()) {
 			logger.log("No feature threshold set, kept the " + ntotal + " spots.\n");
 		} else {
 			for (FeatureFilter ft : featureFilters) {
-				String str = "  - on "+plugin.getSettings().getSpotFeatureNames().get(ft.feature);
+				String str = "  - on "+trackmate.getSettings().getSpotFeatureNames().get(ft.feature);
 				if (ft.isAbove) 
 					str += " above ";
 				else

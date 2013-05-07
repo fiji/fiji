@@ -31,14 +31,13 @@ import fiji.plugin.trackmate.util.TMUtils;
  * @author Nicholas Perry, Jean-Yves Tinevez - Institut Pasteur - July 2010 - 2011 - 2012 - 2013
  *
  */
-public class TrackMate_ implements Benchmark, MultiThreaded, Algorithm {
+public class TrackMate implements Benchmark, MultiThreaded, Algorithm {
 
 	public static final String PLUGIN_NAME_STR = "TrackMate";
 	public static final String PLUGIN_NAME_VERSION = "2.1.0";
-	public static final boolean DEFAULT_USE_MULTITHREADING = true;
 
 	/** 
-	 * The model this plugin will shape.
+	 * The model this trackmate will shape.
 	 */
 	protected final TrackMateModel model;
 	protected final Settings settings;
@@ -50,16 +49,16 @@ public class TrackMate_ implements Benchmark, MultiThreaded, Algorithm {
 	 * CONSTRUCTORS
 	 */
 
-	public TrackMate_(Settings settings) {
+	public TrackMate(Settings settings) {
 		this(new TrackMateModel(), settings);
 	}
 
-	public TrackMate_(TrackMateModel model, Settings settings) {
+	public TrackMate(TrackMateModel model, Settings settings) {
 		this.model = model;
 		this.settings = settings;
 	}
 
-	public TrackMate_() {
+	public TrackMate() {
 		this(new TrackMateModel(), new Settings());
 	}
 
@@ -112,10 +111,6 @@ public class TrackMate_ implements Benchmark, MultiThreaded, Algorithm {
 
 	public TrackMateModel getModel() {
 		return model;
-	}
-
-	public void setLogger(Logger logger) {
-		model.setLogger(logger);
 	}
 	
 	public Settings getSettings() {

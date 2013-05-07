@@ -87,7 +87,7 @@ import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.TrackMateModel;
-import fiji.plugin.trackmate.TrackMate_;
+import fiji.plugin.trackmate.TrackMate;
 import fiji.plugin.trackmate.TrackerProvider;
 import fiji.plugin.trackmate.detection.SpotDetectorFactory;
 import fiji.plugin.trackmate.features.edges.EdgeTargetAnalyzer;
@@ -102,11 +102,11 @@ public class TmXmlReader implements Algorithm, Benchmark {
 	protected Document document = null;
 	protected File file;
 	protected Element root;
-	/** The plugin instance to operate on. This must be provided, in the case we want to load 
-	 * a file created with a subclass of {@link TrackMate_} (e.g. with new factories) so that 
-	 * correct detectors, etc... can be instantiated from the extended plugin.
+	/** The trackmate instance to operate on. This must be provided, in the case we want to load 
+	 * a file created with a subclass of {@link TrackMate} (e.g. with new factories) so that 
+	 * correct detectors, etc... can be instantiated from the extended trackmate.
 	 */
-	protected final TrackMate_ plugin;
+	protected final TrackMate trackmate;
 	/** A map of all spots loaded. We need this for performance, since we need to recreate 
 	 * both the filtered spot collection and the tracks graph from the same spot objects 
 	 * that the main spot collection.. In the file, they are referenced by their {@link Spot#ID()},
@@ -128,17 +128,17 @@ public class TmXmlReader implements Algorithm, Benchmark {
 	/**
 	 * Initialize this reader to read the file given in argument. 
 	 * <p>
-	 * A plugin instance must be provided, and this instance must be initialized with providers
-	 * (as in when calling {@link TrackMate_#initModules()}. This in the case we want to load 
-	 * a file created with a subclass of {@link TrackMate_} (e.g. with new factories) so that 
-	 * correct detectors, etc... can be instantiated from the extended plugin.
+	 * A trackmate instance must be provided, and this instance must be initialized with providers
+	 * (as in when calling {@link TrackMate#initModules()}. This in the case we want to load 
+	 * a file created with a subclass of {@link TrackMate} (e.g. with new factories) so that 
+	 * correct detectors, etc... can be instantiated from the extended trackmate.
 	 * <p>
-	 * The given plugin instance will be modified by this class, upon calling the {@link #process()}
+	 * The given trackmate instance will be modified by this class, upon calling the {@link #process()}
 	 * method 
 	 */
-	public TmXmlReader(File file, TrackMate_ plugin) {
+	public TmXmlReader(File file, TrackMate trackmate) {
 		this.file = file;
-		this.plugin = plugin;
+		this.trackmate = trackmate;
 		parse();
 	}
 
@@ -159,7 +159,7 @@ public class TmXmlReader implements Algorithm, Benchmark {
 
 		long start = System.currentTimeMillis();
 
-		TrackMateModel model = plugin.getModel();
+		TrackMateModel model = trackmate.getModel();
 		
 		// Text log
 		log = getLog();
@@ -173,12 +173,12 @@ public class TmXmlReader implements Algorithm, Benchmark {
 		// Spot Filters
 		FeatureFilter initialFilter = getInitialFilter();
 		if (null != initialFilter) {
-			plugin.getSettings().initialSpotFilterValue = initialFilter.value;
+			trackmate.getSettings().initialSpotFilterValue = initialFilter.value;
 		} else {
-			plugin.getSettings().initialSpotFilterValue = null; // So that everyone knows we did NOT find it in the file
+			trackmate.getSettings().initialSpotFilterValue = null; // So that everyone knows we did NOT find it in the file
 		}
 		List<FeatureFilter> spotFilters = getSpotFeatureFilters();
-		plugin.getSettings().setSpotFilters(spotFilters);
+		trackmate.getSettings().setSpotFilters(spotFilters);
 		// Spots & their visibility
 		SpotCollection allSpots = getAllSpots();
 		Map<Integer, Set<Integer>> filteredIDs = getFilteredSpotIDs();
@@ -197,7 +197,7 @@ public class TmXmlReader implements Algorithm, Benchmark {
 
 		// Track Filters
 		List<FeatureFilter> trackFilters = getTrackFeatureFilters();
-		plugin.getSettings().setTrackFilters(trackFilters);
+		trackmate.getSettings().setTrackFilters(trackFilters);
 
 		long end = System.currentTimeMillis();
 		processingTime = end - start;
@@ -440,7 +440,7 @@ public class TmXmlReader implements Algorithm, Benchmark {
 	 * this reader is initialized with. 
 	 * <p>
 	 * As a side effect, this method also configure the {@link DetectorProvider} stored in 
-	 * the passed {@link TrackMate_} plugin for the found target detector factory. 
+	 * the passed {@link TrackMate} trackmate for the found target detector factory. 
 	 * <p>
 	 * If the detector settings XML element is not present in the file, the {@link Settings} 
 	 * object is not updated. 
@@ -453,7 +453,7 @@ public class TmXmlReader implements Algorithm, Benchmark {
 			return;
 		}
 
-		DetectorProvider provider = plugin.getDetectorProvider();
+		DetectorProvider provider = trackmate.getDetectorProvider();
 		Map<String, Object> ds = new HashMap<String, Object>(); 
 		// All the hard work is delegated to the provider. 
 		boolean ok = provider.unmarshall(element, ds);
@@ -485,7 +485,7 @@ public class TmXmlReader implements Algorithm, Benchmark {
 			return;
 		}
 
-		TrackerProvider provider = plugin.getTrackerProvider();
+		TrackerProvider provider = trackmate.getTrackerProvider();
 		Map<String, Object> ds = new HashMap<String, Object>(); 
 		// All the hard work is delegated to the provider. 
 		boolean ok = provider.unmarshall(element, ds);
@@ -619,7 +619,7 @@ public class TmXmlReader implements Algorithm, Benchmark {
 		HashMap<Integer, String> savedTrackNames = new HashMap<Integer, String>(trackElements.size());
 		
 		// The list of edge features. that we will set.
-		final FeatureModel fm = plugin.getModel().getFeatureModel();
+		final FeatureModel fm = trackmate.getModel().getFeatureModel();
 		List<String> edgeIntFeatures = new ArrayList<String>();// TODO is there a better way?
 		edgeIntFeatures.add(EdgeTargetAnalyzer.SPOT_SOURCE_ID);
 		edgeIntFeatures.add(EdgeTargetAnalyzer.SPOT_TARGET_ID);
@@ -705,7 +705,7 @@ public class TmXmlReader implements Algorithm, Benchmark {
 		 * map of tracks vs trackID, using the hash as new keys. Because there is a 
 		 * good chance that they saved keys and the new keys differ, we must retrieve
 		 * the mapping between the two using the retrieve spots.	 */
-		final TrackMateModel model = plugin.getModel();
+		final TrackMateModel model = trackmate.getModel();
 		model.getTrackModel().setGraph(graph);
 
 		// Retrieve the new track map

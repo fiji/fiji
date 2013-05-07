@@ -2,7 +2,7 @@ package fiji.plugin.trackmate.action;
 
 import javax.swing.ImageIcon;
 
-import fiji.plugin.trackmate.TrackMate_;
+import fiji.plugin.trackmate.TrackMate;
 import fiji.plugin.trackmate.gui.DisplayerPanel;
 import fiji.plugin.trackmate.visualization.threedviewer.SpotDisplayer3D;
 
@@ -22,11 +22,11 @@ public class LinkNew3DViewerAction extends AbstractTMAction {
 	}
 	
 	@Override
-	public void execute(final TrackMate_ plugin) {
+	public void execute(final TrackMate trackmate) {
 		new Thread("TrackMate new 3D viewer thread") {
 			public void run() {
 				logger.log("Rendering 3D overlay...\n");
-				SpotDisplayer3D newDisplayer = new SpotDisplayer3D(plugin.getModel(), plugin.getSettings());
+				SpotDisplayer3D newDisplayer = new SpotDisplayer3D(trackmate.getModel(), trackmate.getSettings());
 				newDisplayer.setRenderImageData(false);
 				DisplayerPanel displayerPanel = (DisplayerPanel) wizard.getPanelDescriptorFor(DisplayerPanel.DESCRIPTOR);
 				if (null != displayerPanel) {

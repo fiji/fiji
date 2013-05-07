@@ -21,18 +21,18 @@ public class SaveDescriptor extends SomeDialogDescriptor {
 			logger.log("Saving data...\n", Logger.BLUE_COLOR);
 			if (null == file ) {
 //				File folder = new File(System.getProperty("user.dir")).getParentFile().getParentFile();
-				File folder = new File(plugin.getSettings().imp.getOriginalFileInfo().directory);
+				File folder = new File(trackmate.getSettings().imp.getOriginalFileInfo().directory);
 				try {
-					file = new File(folder.getPath() + File.separator + plugin.getSettings().imp.getShortTitle() +".xml");
+					file = new File(folder.getPath() + File.separator + trackmate.getSettings().imp.getShortTitle() +".xml");
 				} catch (NullPointerException npe) {
 					file = new File(folder.getPath() + File.separator + "TrackMateData.xml");
 				}
 			}
 			
 			// If we are to save tracks, we better ensures that track and edge features are there, even if we have to enforce it
-			if (plugin.getModel().getTrackModel().getNTracks() > 0) {
-				plugin.computeEdgeFeatures(true);
-				plugin.computeTrackFeatures(true);
+			if (trackmate.getModel().getTrackModel().getNTracks() > 0) {
+				trackmate.computeEdgeFeatures(true);
+				trackmate.computeTrackFeatures(true);
 			}
 
 			GuiSaver saver = new GuiSaver(wizard);

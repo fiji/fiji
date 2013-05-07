@@ -1,6 +1,6 @@
 package fiji.plugin.trackmate.tests;
 
-import fiji.plugin.trackmate.TrackMate_;
+import fiji.plugin.trackmate.TrackMate;
 import fiji.plugin.trackmate.action.ExportStatsToIJAction;
 import fiji.plugin.trackmate.io.TmXmlReader;
 import ij.IJ;
@@ -23,17 +23,17 @@ public class ExportStats_TestDrive {
 		}
 		ij.ImageJ.main(args);
 		
-		TrackMate_ plugin = new TrackMate_();
-		TmXmlReader reader = new TmXmlReader(file, plugin);
+		TrackMate trackmate = new TrackMate();
+		TmXmlReader reader = new TmXmlReader(file, trackmate);
 		if (!reader.checkInput() || !reader.process()) {
 			System.err.println("Problem loading the file:");
 			System.err.println(reader.getErrorMessage());
 		}
-		System.out.println(plugin.getModel());
+		System.out.println(trackmate.getModel());
 		
 		// Export
 		ExportStatsToIJAction exporter = new ExportStatsToIJAction();
-		exporter.execute(plugin);
+		exporter.execute(trackmate);
 		
 	}
 

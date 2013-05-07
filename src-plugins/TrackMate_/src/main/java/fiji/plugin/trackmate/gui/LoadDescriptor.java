@@ -18,8 +18,8 @@ public class LoadDescriptor extends SomeDialogDescriptor {
 
 			if (null == file) {
 				try {
-					File folder = new File(plugin.getSettings().imp.getOriginalFileInfo().directory);
-					file = new File(folder.getPath() + File.separator + plugin.getSettings().imp.getShortTitle() +".xml");
+					File folder = new File(trackmate.getSettings().imp.getOriginalFileInfo().directory);
+					file = new File(folder.getPath() + File.separator + trackmate.getSettings().imp.getShortTitle() +".xml");
 				} catch (NullPointerException npe) {
 					File folder = new File(System.getProperty("user.dir")).getParentFile().getParentFile();
 					file = new File(folder.getPath() + File.separator + "TrackMateData.xml");
@@ -34,7 +34,7 @@ public class LoadDescriptor extends SomeDialogDescriptor {
 			}
 			file = tmpFile;
 			reader.loadFile(file);
-			plugin = reader.getPlugin();
+			trackmate = reader.getPlugin();
 			setTargetNextID(reader.getTargetDescriptor());
 
 		} finally {

@@ -80,7 +80,7 @@ import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.TrackMateModel;
-import fiji.plugin.trackmate.TrackMate_;
+import fiji.plugin.trackmate.TrackMate;
 import fiji.plugin.trackmate.TrackerProvider;
 import fiji.plugin.trackmate.features.edges.EdgeTargetAnalyzer;
 import fiji.plugin.trackmate.features.track.TrackIndexAnalyzer;
@@ -93,7 +93,7 @@ public class TmXmlWriter implements Algorithm, Benchmark  {
 
 	private final Element root;
 	private final Logger logger;
-	private final TrackMate_ plugin;
+	private final TrackMate trackmate;
 	private final TrackMateModel model;
 	private final String log;
 	private long processingTime;
@@ -103,30 +103,30 @@ public class TmXmlWriter implements Algorithm, Benchmark  {
 	 */
 
 	/**
-	 * Create a new XML file write for the specified TrackMate plugin.
+	 * Create a new XML file write for the specified TrackMate trackmate.
 	 * No log is added to the file.
 	 *  
-	 * @param plugin the plugin to write to XML. 
+	 * @param trackmate the trackmate to write to XML. 
 	 */
-	public TmXmlWriter(final TrackMate_ plugin) {
-		this(plugin, null);
+	public TmXmlWriter(final TrackMate trackmate) {
+		this(trackmate, null);
 	}
 
 	/**
-	 * Create a new XML file write for the specified TrackMate plugin.
+	 * Create a new XML file write for the specified TrackMate trackmate.
 	 * This constructor will cause the specified log string to be appended to the file
 	 * as plain text content.
 	 *  
-	 * @param plugin the plugin to write to XML. 
+	 * @param trackmate the trackmate to write to XML. 
 	 * @param log  the log text to add to the file.
 	 */
-	public TmXmlWriter(TrackMate_ plugin, String log) {
+	public TmXmlWriter(TrackMate trackmate, String log) {
 		this.root = new Element(ROOT_ELEMENT_KEY);
-		root.setAttribute(PLUGIN_VERSION_ATTRIBUTE_NAME, fiji.plugin.trackmate.TrackMate_.PLUGIN_NAME_VERSION);
+		root.setAttribute(PLUGIN_VERSION_ATTRIBUTE_NAME, fiji.plugin.trackmate.TrackMate.PLUGIN_NAME_VERSION);
 		this.logger = new Logger.StringBuilderLogger();
-		this.plugin = plugin;
+		this.trackmate = trackmate;
 		this.log = log;
-		this.model = plugin.getModel();
+		this.model = trackmate.getModel();
 	}
 
 	/*
@@ -212,7 +212,7 @@ public class TmXmlWriter implements Algorithm, Benchmark  {
 
 
 	private void echoBaseSettings() {
-		Settings settings = plugin.getSettings();
+		Settings settings = trackmate.getSettings();
 		Element settingsElement = new Element(SETTINGS_ELEMENT_KEY);
 		settingsElement.setAttribute(SETTINGS_XSTART_ATTRIBUTE_NAME, ""+settings.xstart);
 		settingsElement.setAttribute(SETTINGS_XEND_ATTRIBUTE_NAME, ""+settings.xend);
@@ -228,15 +228,15 @@ public class TmXmlWriter implements Algorithm, Benchmark  {
 
 	private void echoDetectorSettings() {
 		Element el = new Element(DETECTOR_SETTINGS_ELEMENT_KEY);
-		if (null == plugin.getSettings().detectorFactory) {
+		if (null == trackmate.getSettings().detectorFactory) {
 			return; // and write nothing
 		}
-		DetectorProvider provider = plugin.getDetectorProvider();
-		boolean ok = provider.select(plugin.getSettings().detectorFactory.getKey());
+		DetectorProvider provider = trackmate.getDetectorProvider();
+		boolean ok = provider.select(trackmate.getSettings().detectorFactory.getKey());
 		if (!ok) {
 			logger.error(provider.getErrorMessage());
 		} else {
-			provider.marshall(plugin.getSettings().detectorSettings, el);
+			provider.marshall(trackmate.getSettings().detectorSettings, el);
 		}
 
 		root.addContent(el);
@@ -245,16 +245,16 @@ public class TmXmlWriter implements Algorithm, Benchmark  {
 
 	private void echoTrackerSettings() {
 		Element el = new Element(TRACKER_SETTINGS_ELEMENT_KEY);
-		if (null == plugin.getSettings().tracker) {
+		if (null == trackmate.getSettings().tracker) {
 			return; // and write nothing
 		}
 		
-		TrackerProvider provider = plugin.getTrackerProvider();
-		boolean ok = provider.select(plugin.getSettings().tracker.getKey());
+		TrackerProvider provider = trackmate.getTrackerProvider();
+		boolean ok = provider.select(trackmate.getSettings().tracker.getKey());
 		if (!ok) {
 			logger.error(provider.getErrorMessage());
 		} else {
-			provider.marshall(plugin.getSettings().trackerSettings, el);
+			provider.marshall(trackmate.getSettings().trackerSettings, el);
 		}
 
 		root.addContent(el);
@@ -348,7 +348,7 @@ public class TmXmlWriter implements Algorithm, Benchmark  {
 	}
 
 	private void echoImageInfo() {
-		Settings settings = plugin.getSettings();
+		Settings settings = trackmate.getSettings();
 		if (null == settings || null == settings.imp)
 			return;
 		Element imEl = new Element(IMAGE_ELEMENT_KEY);
@@ -395,7 +395,7 @@ public class TmXmlWriter implements Algorithm, Benchmark  {
 	}
 
 	private void echoInitialSpotFilter() {
-		Double filterVal = plugin.getSettings().initialSpotFilterValue;
+		Double filterVal = trackmate.getSettings().initialSpotFilterValue;
 		if (null == filterVal) {
 			return; // and write nothing
 		}
@@ -409,7 +409,7 @@ public class TmXmlWriter implements Algorithm, Benchmark  {
 	}
 
 	private void echoSpotFilters() {
-		List<FeatureFilter> featureThresholds = plugin.getSettings().getSpotFilters();
+		List<FeatureFilter> featureThresholds = trackmate.getSettings().getSpotFilters();
 
 		Element allTresholdElement = new Element(SPOT_FILTER_COLLECTION_ELEMENT_KEY);
 		for (FeatureFilter threshold : featureThresholds) {
@@ -425,7 +425,7 @@ public class TmXmlWriter implements Algorithm, Benchmark  {
 	}
 
 	private void echoTrackFilters() {
-		List<FeatureFilter> featureThresholds = plugin.getSettings().getTrackFilters();
+		List<FeatureFilter> featureThresholds = trackmate.getSettings().getTrackFilters();
 
 		Element allTresholdElement = new Element(TRACK_FILTER_COLLECTION_ELEMENT_KEY);
 		for (FeatureFilter threshold : featureThresholds) {

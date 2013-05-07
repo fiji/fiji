@@ -5,6 +5,7 @@ import static fiji.plugin.trackmate.gui.TrackMateWizard.SMALL_FONT;
 
 import java.awt.Color;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -30,7 +31,7 @@ import fiji.plugin.trackmate.util.XYEdgeSeriesCollection;
 
 public class SpotFeatureGrapher extends AbstractFeatureGrapher  {
 
-	private final List<Spot> spots;
+	private final Collection<Spot> spots;
 	private final Dimension xDimension;
 	private final Map<String, Dimension> yDimensions;
 	private final Map<String, String> featureNames;
@@ -40,7 +41,7 @@ public class SpotFeatureGrapher extends AbstractFeatureGrapher  {
 	 * CONSTRUCTOR
 	 */
 
-	public SpotFeatureGrapher(final String xFeature, final Set<String> yFeatures, final List<Spot> spots, final TrackMateModel model, final Settings settings) {
+	public SpotFeatureGrapher(final String xFeature, final Set<String> yFeatures, final Collection<Spot> spots, final TrackMateModel model, final Settings settings) {
 		super(xFeature, yFeatures, model);
 		this.spots = spots;
 		this.xDimension = settings.getSpotFeatureDimensions().get(xFeature);
@@ -149,7 +150,7 @@ public class SpotFeatureGrapher extends AbstractFeatureGrapher  {
 	 * the given spots. The dataset returned is a {@link XYEdgeSeriesCollection}, made to plot the lines
 	 * between 2 points representing 2 spot. We therefore retrieve 
 	 */
-	private XYEdgeSeriesCollection buildEdgeDataSet(final Iterable<String> targetYFeatures, final List<Spot> spots) {
+	private XYEdgeSeriesCollection buildEdgeDataSet(final Iterable<String> targetYFeatures, final Collection<Spot> spots) {
 		// Collect edges
 		List<DefaultWeightedEdge> edges = getInsideEdges(spots);
 		

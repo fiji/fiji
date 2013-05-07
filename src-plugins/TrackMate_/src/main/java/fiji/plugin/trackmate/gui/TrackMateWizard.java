@@ -2,13 +2,8 @@ package fiji.plugin.trackmate.gui;
 
 import java.awt.BorderLayout;
 import java.awt.CardLayout;
-import java.awt.Component;
 import java.awt.Dimension;
-import java.awt.DisplayMode;
 import java.awt.Font;
-import java.awt.GraphicsDevice;
-import java.awt.GraphicsEnvironment;
-import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
@@ -28,7 +23,7 @@ import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
 
 /**
- * A view for the TrackMate_ plugin, strongly inspired from the spots detection GUI of the Imaris® software 
+ * A view for the TrackMate_ trackmate, strongly inspired from the spots detection GUI of the Imaris® software 
  * from <a href="http://www.bitplane.com/">Bitplane</a>.
  * 
  * @author Jean-Yves Tinevez <tinevez@pasteur.fr> - September 2010 - 2011
@@ -89,10 +84,7 @@ public class TrackMateWizard extends JFrame implements ActionListener {
 	private LogPanel logPanel;
 	private CardLayout cardLayout;
 	private TrackMateModelView displayer;
-	private Component component;
-	private final WizardController controller;
-	/** The stored 4 button states. It has default visibility so that states can be tweaked by the controller. */ 
-	boolean[] storedButtonState;
+	private final TrackMateGUIController controller;
 	private JButton jButtonLog;
 
 
@@ -100,11 +92,9 @@ public class TrackMateWizard extends JFrame implements ActionListener {
 	 * CONSTRUCTOR
 	 */
 
-	public TrackMateWizard(Component component, WizardController controller) {
-		this.component = component;
+	public TrackMateWizard(TrackMateGUIController controller) {
 		this.controller = controller;
 		initGUI();
-		positionWindow();
 	}
 
 	/*
@@ -112,7 +102,7 @@ public class TrackMateWizard extends JFrame implements ActionListener {
 	 */
 
 	/** Expose the controller managing this GUI. */
-	public WizardController getController() {
+	public TrackMateGUIController getController() {
 		return controller;
 	}
 
@@ -223,35 +213,6 @@ public class TrackMateWizard extends JFrame implements ActionListener {
 		return descriptorHashmap.get(id);
 	}
 
-	/**
-	 * Disable the 4 bottom buttons and memorize their state to that they
-	 * can be restored when calling {@link #restoreButtonsState()}. 
-	 */
-	public void disableButtonsAndStoreState() {
-		storedButtonState = new boolean[4];
-		storedButtonState[0] = jButtonLoad.isEnabled();
-		storedButtonState[1] = jButtonSave.isEnabled();
-		storedButtonState[2] = jButtonPrevious.isEnabled();
-		storedButtonState[3] = jButtonNext.isEnabled();
-		setLoadButtonEnabled(false);
-		setSaveButtonEnabled(false);
-		setPreviousButtonEnabled(false);
-		setNextButtonEnabled(false);
-	}
-
-	/**
-	 * Restore the button state saved when calling {@link #disableButtonsAndStoreState()}.
-	 * Do nothing if {@link #disableButtonsAndStoreState()} was not called before. 
-	 */
-	public void restoreButtonsState() {
-		if (storedButtonState == null) {
-			return;
-		}
-		setLoadButtonEnabled(storedButtonState[0]);
-		setSaveButtonEnabled(storedButtonState[1]);
-		setPreviousButtonEnabled(storedButtonState[2]);
-		setNextButtonEnabled(storedButtonState[3]);
-	}
 
 	public void setNextButtonEnabled(final boolean b) {
 		SwingUtilities.invokeLater(new Runnable() {
@@ -289,42 +250,6 @@ public class TrackMateWizard extends JFrame implements ActionListener {
 	 */
 
 	/**
-	 * If the {@link Component} object given at construction is not <code>null</code>,
-	 * try to position the GUI cleverly with respect to it.
-	 */
-	private void positionWindow() {
-
-
-		if (null != component) {
-
-			// Get total size of all screens
-			GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
-			GraphicsDevice[] gs = ge.getScreenDevices();
-			int screenWidth = 0;
-			for (int i=0; i<gs.length; i++) {
-				DisplayMode dm = gs[i].getDisplayMode();
-				screenWidth += dm.getWidth();
-			}
-
-			Point windowLoc = component.getLocation();
-			Dimension windowSize = component.getSize();
-			Dimension guiSize = getSize();
-			if (guiSize.width > windowLoc.x) {
-				if (guiSize.width > screenWidth - (windowLoc.x + windowSize.width)) {
-					setLocationRelativeTo(null); // give up
-				} else {
-					setLocation(windowLoc.x+windowSize.width, windowLoc.y); // put it to the right
-				}
-			} else {
-				setLocation(windowLoc.x-guiSize.width, windowLoc.y); // put it to the left
-			}
-
-		} else {
-			setLocationRelativeTo(null);
-		}
-	}
-
-	/**
 	 * Forward the given {@link ActionEvent} to the listeners of this GUI.
 	 */
 	private void fireAction(ActionEvent event) {
@@ -341,7 +266,7 @@ public class TrackMateWizard extends JFrame implements ActionListener {
 		try {
 			setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 			setIconImage(TRACKMATE_ICON.getImage());
-			setTitle(fiji.plugin.trackmate.TrackMate_.PLUGIN_NAME_STR + " v"+fiji.plugin.trackmate.TrackMate_.PLUGIN_NAME_VERSION);
+			setTitle(fiji.plugin.trackmate.TrackMate.PLUGIN_NAME_STR + " v"+fiji.plugin.trackmate.TrackMate.PLUGIN_NAME_VERSION);
 			{
 				jPanelMain = new JPanel();
 				cardLayout = new CardLayout();

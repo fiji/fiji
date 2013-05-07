@@ -17,7 +17,7 @@ import org.jdom2.output.XMLOutputter;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.TrackMateModel;
-import fiji.plugin.trackmate.TrackMate_;
+import fiji.plugin.trackmate.TrackMate;
 import fiji.plugin.trackmate.gui.TrackMateWizard;
 import fiji.plugin.trackmate.io.IOUtils;
 import fiji.plugin.trackmate.util.TMUtils;
@@ -53,10 +53,10 @@ public class ExportTracksToXML extends AbstractTMAction {
 	 */
 
 	@Override
-	public void execute(TrackMate_ plugin) {
+	public void execute(TrackMate trackmate) {
 
 		logger.log("Exporting tracks to simple XML format.\n");
-		final TrackMateModel model = plugin.getModel();
+		final TrackMateModel model = trackmate.getModel();
 		int ntracks = model.getTrackModel().getNFilteredTracks();
 		if (ntracks == 0) {
 			logger.log("No visible track found. Aborting.\n");
@@ -64,18 +64,18 @@ public class ExportTracksToXML extends AbstractTMAction {
 		}
 
 		logger.log("  Preparing XML data.\n");
-		Element root = marshall(model, plugin.getSettings());
+		Element root = marshall(model, trackmate.getSettings());
 
 		File folder; 
 		try {
-			folder = new File(plugin.getSettings().imp.getOriginalFileInfo().directory);
+			folder = new File(trackmate.getSettings().imp.getOriginalFileInfo().directory);
 		} catch (NullPointerException npe) {
 			folder = new File(System.getProperty("user.dir")).getParentFile().getParentFile();
 		}
 		
 		File file;
 		try {
-			String filename = plugin.getSettings().imageFileName;
+			String filename = trackmate.getSettings().imageFileName;
 			filename = filename.substring(0, filename.indexOf("."));
 			file = new File(folder.getPath() + File.separator + filename +"_Tracks.xml");
 		} catch (NullPointerException npe) {
@@ -118,7 +118,7 @@ public class ExportTracksToXML extends AbstractTMAction {
 		content.setAttribute(FRAMEINTERVAL_ATT, ""+settings.dt);
 		content.setAttribute(FRAMEINTERVALUNIT_ATT, ""+settings.timeUnits);
 		content.setAttribute(DATE_ATT, TMUtils.getCurrentTimeString());
-		content.setAttribute(FROM_ATT, TrackMate_.PLUGIN_NAME_STR + " v" + TrackMate_.PLUGIN_NAME_VERSION);
+		content.setAttribute(FROM_ATT, TrackMate.PLUGIN_NAME_STR + " v" + TrackMate.PLUGIN_NAME_VERSION);
 
 		Set<Integer> trackIDs = model.getTrackModel().getFilteredTrackIDs();
 		int i = 0;

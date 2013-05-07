@@ -6,7 +6,7 @@ import java.io.IOException;
 import org.jdom2.JDOMException;
 
 import fiji.plugin.trackmate.TrackMateModel;
-import fiji.plugin.trackmate.TrackMate_;
+import fiji.plugin.trackmate.TrackMate;
 import fiji.plugin.trackmate.io.TmXmlReader;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
 import fiji.plugin.trackmate.visualization.hyperstack.HyperStackDisplayer;
@@ -20,26 +20,26 @@ public class HyperStackDisplayerTestDrive {
 
 	public static void main(String[] args) throws JDOMException, IOException {
 		
-		TrackMate_ plugin = new TrackMate_();
-		TmXmlReader reader = new TmXmlReader(file, plugin);
+		TrackMate trackmate = new TrackMate();
+		TmXmlReader reader = new TmXmlReader(file, trackmate);
 		if (!reader.checkInput() || !reader.process()) {
 			System.err.println("Problem loading the file:");
 			System.err.println(reader.getErrorMessage());
 		}
-		TrackMateModel model = plugin.getModel();
+		TrackMateModel model = trackmate.getModel();
 		
 		ij.ImageJ.main(args);
 		
-		if (null != plugin.getSettings().imp) {
-			plugin.computeSpotFeatures(false);
+		if (null != trackmate.getSettings().imp) {
+			trackmate.computeSpotFeatures(false);
 		}
 				
-		final TrackMateModelView displayer = new HyperStackDisplayer(model, plugin.getSettings());
+		final TrackMateModelView displayer = new HyperStackDisplayer(model, trackmate.getSettings());
 		displayer.render();
 //		displayer.setDisplaySettings(TrackMateModelView.KEY_TRACK_DISPLAY_MODE, TrackMateModelView.TRACK_DISPLAY_MODE_LOCAL_FORWARD);
 		displayer.setDisplaySettings(TrackMateModelView.KEY_DISPLAY_SPOT_NAMES, true);
 		
-		final TrackScheme trackScheme = new TrackScheme(model, plugin.getSettings());
+		final TrackScheme trackScheme = new TrackScheme(model, trackmate.getSettings());
 		trackScheme.render();
 		
 	}

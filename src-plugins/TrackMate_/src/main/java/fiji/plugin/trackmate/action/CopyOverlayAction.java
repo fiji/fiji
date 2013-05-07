@@ -8,7 +8,7 @@ import java.awt.event.ActionListener;
 import javax.swing.ImageIcon;
 import javax.swing.JFrame;
 
-import fiji.plugin.trackmate.TrackMate_;
+import fiji.plugin.trackmate.TrackMate;
 import fiji.plugin.trackmate.gui.DisplayerPanel;
 import fiji.plugin.trackmate.gui.ImagePlusChooser;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
@@ -30,7 +30,7 @@ public class CopyOverlayAction extends AbstractTMAction {
 	}	
 	
 	@Override
-	public void execute(final TrackMate_ plugin) {
+	public void execute(final TrackMate trackmate) {
 		final ImagePlusChooser impChooser = new ImagePlusChooser();
 		impChooser.setLocationRelativeTo(null);
 		impChooser.setVisible(true);
@@ -47,18 +47,18 @@ public class CopyOverlayAction extends AbstractTMAction {
 							String title;
 							if (null == dest) {
 								logger.log("Copying data and overlay to new 3D viewer\n");
-								newDisplayer = new SpotDisplayer3D(plugin.getModel(), plugin.getSettings());
+								newDisplayer = new SpotDisplayer3D(trackmate.getModel(), trackmate.getSettings());
 								title = "3D viewer overlay";
 							} else {
 								logger.log("Copying overlay to "+dest.getShortTitle()+"\n");
-								plugin.getSettings().imp = dest; // TODO TODO DANGER DANGER
-								newDisplayer = new HyperStackDisplayer(plugin.getModel(), plugin.getSettings());
+								trackmate.getSettings().imp = dest; // TODO TODO DANGER DANGER
+								newDisplayer = new HyperStackDisplayer(trackmate.getModel(), trackmate.getSettings());
 								title = dest.getShortTitle() + " ctrl";
 							}
 							newDisplayer.render();
 							
 							final DisplayerPanel newDisplayerPanel = new DisplayerPanel();
-							newDisplayerPanel.setPlugin(plugin);
+							newDisplayerPanel.setPlugin(trackmate);
 							newDisplayerPanel.register(newDisplayer);
 							JFrame newFrame = new JFrame(); 
 							newFrame.getContentPane().add(newDisplayerPanel);

@@ -370,7 +370,7 @@ public class LAPTracker extends MultiThreadedBenchmarkAlgorithm implements SpotT
 			errorMessage = BASE_ERROR_MESSAGE + segCosts.getErrorMessage();
 			return false;
 		}
-		segmentCosts = segCosts.getCostMatrix();
+		segmentCosts = segCosts.getResult();
 		splittingMiddlePoints = segCosts.getSplittingMiddlePoints();
 		mergingMiddlePoints = segCosts.getMergingMiddlePoints();
 		return true;
@@ -564,7 +564,7 @@ public class LAPTracker extends MultiThreadedBenchmarkAlgorithm implements SpotT
 			errorMessage = BASE_ERROR_MESSAGE + objCosts.getErrorMessage();
 			return null;
 		}
-		return objCosts.getCostMatrix();
+		return objCosts.getResult();
 	}
 
 

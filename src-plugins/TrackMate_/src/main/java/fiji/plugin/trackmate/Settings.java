@@ -18,7 +18,7 @@ import fiji.plugin.trackmate.tracking.SpotTracker;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
 
 /**
- * This class is used to store user settings for the {@link TrackMate_} plugin.
+ * This class is used to store user settings for the {@link TrackMate} trackmate.
  * It is simply made of public fields 
  */
 public class Settings {

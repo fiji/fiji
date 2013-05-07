@@ -14,7 +14,7 @@ import org.jgrapht.graph.DefaultWeightedEdge;
 import fiji.plugin.trackmate.FeatureModel;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.TrackMateModel;
-import fiji.plugin.trackmate.TrackMate_;
+import fiji.plugin.trackmate.TrackMate;
 import fiji.plugin.trackmate.gui.TrackMateWizard;
 
 public class ExportStatsToIJAction extends AbstractTMAction {
@@ -39,27 +39,27 @@ public class ExportStatsToIJAction extends AbstractTMAction {
 	}
 	
 	@Override
-	public void execute(final TrackMate_ plugin) {
+	public void execute(final TrackMate trackmate) {
 		logger.log("Exporting statistics.\n");
 		
 		// Compute links features Links
 		logger.log("  - Calculating statistics on links...");
-		plugin.computeEdgeFeatures(true);
+		trackmate.computeEdgeFeatures(true);
 		logger.log(" Done.\n");
 		
 		// Compute track features
 		logger.log("  - Calculating statistics on tracks...");
-		plugin.computeTrackFeatures(true);
+		trackmate.computeTrackFeatures(true);
 		logger.log(" Done.\n");
 		
 		// Model
-		final TrackMateModel model = plugin.getModel();
+		final TrackMateModel model = trackmate.getModel();
 		final FeatureModel fm = model.getFeatureModel();
 		
 		// Export spots
 		logger.log("  - Exporting spot statistics...");
 		Set<Integer> trackIDs = model.getTrackModel().getFilteredTrackIDs();
-		Collection<String> spotFeatures = plugin.getSettings().getSpotFeatures();
+		Collection<String> spotFeatures = trackmate.getSettings().getSpotFeatures();
 
 		// Create table
 		ResultsTable spotTable = new ResultsTable();

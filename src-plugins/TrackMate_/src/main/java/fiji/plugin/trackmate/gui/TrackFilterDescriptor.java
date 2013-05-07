@@ -12,7 +12,7 @@ import javax.swing.event.ChangeListener;
 import fiji.plugin.trackmate.FeatureFilter;
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.TrackMateModel;
-import fiji.plugin.trackmate.TrackMate_;
+import fiji.plugin.trackmate.TrackMate;
 import fiji.plugin.trackmate.features.track.TrackIndexAnalyzer;
 import fiji.plugin.trackmate.visualization.PerTrackFeatureColorGenerator;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
@@ -22,7 +22,7 @@ public class TrackFilterDescriptor implements WizardPanelDescriptor {
 	public static final String DESCRIPTOR = "TrackFilter";
 	private TrackMateWizard wizard;
 	private FilterGuiPanel component = new FilterGuiPanel();
-	private TrackMate_ plugin;
+	private TrackMate trackmate;
 
 	@Override
 	public void setWizard(TrackMateWizard wizard) {
@@ -30,8 +30,8 @@ public class TrackFilterDescriptor implements WizardPanelDescriptor {
 	}
 
 	@Override
-	public void setPlugin(TrackMate_ plugin) {
-		this.plugin = plugin;
+	public void setPlugin(TrackMate trackmate) {
+		this.trackmate = trackmate;
 	}
 
 	@Override
@@ -61,8 +61,8 @@ public class TrackFilterDescriptor implements WizardPanelDescriptor {
 
 	@Override
 	public void aboutToDisplayPanel() {
-		TrackMateModel model = plugin.getModel();
-		component.setTarget(model.getFeatureModel().getTrackFeatures(), plugin.getSettings().getTrackFilters(),  
+		TrackMateModel model = trackmate.getModel();
+		component.setTarget(model.getFeatureModel().getTrackFeatures(), trackmate.getSettings().getTrackFilters(),  
 				model.getFeatureModel().getTrackFeatureNames(), model.getFeatureModel().getTrackFeatureValues(), "tracks");
 		linkGuiToView();
 		component.jPanelColorByFeatureGUI.setColorByFeature(TrackIndexAnalyzer.TRACK_INDEX);
@@ -86,7 +86,7 @@ public class TrackFilterDescriptor implements WizardPanelDescriptor {
 				component.addActionListener(new ActionListener() {
 					@Override
 					public void actionPerformed(ActionEvent event) {
-						PerTrackFeatureColorGenerator generator = new PerTrackFeatureColorGenerator(plugin.getModel(), TrackIndexAnalyzer.TRACK_INDEX);
+						PerTrackFeatureColorGenerator generator = new PerTrackFeatureColorGenerator(trackmate.getModel(), TrackIndexAnalyzer.TRACK_INDEX);
 						generator.setFeature(component.getColorByFeature());
 						wizard.getDisplayer().setDisplaySettings(TrackMateModelView.KEY_TRACK_COLORING, generator);
 						wizard.getDisplayer().refresh();
@@ -97,8 +97,8 @@ public class TrackFilterDescriptor implements WizardPanelDescriptor {
 					@Override
 					public void stateChanged(ChangeEvent event) {
 						// We set the thresholds field of the model but do not touch its selected spot field yet.
-						plugin.getSettings().setTrackFilters(component.getFeatureFilters());
-						plugin.execTrackFiltering(false);
+						trackmate.getSettings().setTrackFilters(component.getFeatureFilters());
+						trackmate.execTrackFiltering(false);
 					}
 				});
 				
@@ -112,9 +112,9 @@ public class TrackFilterDescriptor implements WizardPanelDescriptor {
 		final Logger logger = wizard.getLogger();
 		logger.log("Performing track filtering on the following features:\n", Logger.BLUE_COLOR);
 		List<FeatureFilter> featureFilters = component.getFeatureFilters();
-		final TrackMateModel model = plugin.getModel();
-		plugin.getSettings().setTrackFilters(featureFilters);
-		plugin.execTrackFiltering(true);
+		final TrackMateModel model = trackmate.getModel();
+		trackmate.getSettings().setTrackFilters(featureFilters);
+		trackmate.execTrackFiltering(true);
 
 		if (featureFilters == null || featureFilters.isEmpty()) {
 			logger.log("No feature threshold set, kept the " + model.getTrackModel().getNTracks() + " tracks.\n");
@@ -132,6 +132,6 @@ public class TrackFilterDescriptor implements WizardPanelDescriptor {
 			logger.log("Kept "+model.getTrackModel().getNFilteredTracks()+" tracks out of "+model.getTrackModel().getNTracks()+".\n");
 		}
 
-		plugin.computeEdgeFeatures(true);
+		trackmate.computeEdgeFeatures(true);
 	}
 }

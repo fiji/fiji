@@ -800,12 +800,11 @@ public class TrackScheme extends AbstractTrackMateModelView {
 	}
 
 	private void initGUI() {
-		this.gui = new TrackSchemeFrame(this, settings);
+		this.gui = new TrackSchemeFrame(this);
 		String title = "TrackScheme";
 		gui.setTitle(title);
 		gui.setSize(DEFAULT_SIZE);
 		gui.setVisible(true);
-
 	}
 
 

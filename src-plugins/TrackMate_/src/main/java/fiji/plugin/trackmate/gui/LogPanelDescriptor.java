@@ -2,22 +2,16 @@ package fiji.plugin.trackmate.gui;
 
 import java.awt.Component;
 
-import fiji.plugin.trackmate.TrackMate_;
-
 public class LogPanelDescriptor implements WizardPanelDescriptor {
 
 	
 	public static final String DESCRIPTOR = "LogPanel";
-	private LogPanel logPanel;
+	private final LogPanel logPanel;
 
-	@Override
-	public void setWizard(TrackMateWizard wizard) { 
-		this.logPanel = wizard.getLogPanel();
+	public LogPanelDescriptor(LogPanel logPanel) {
+		this.logPanel = logPanel;
 	}
-
-	@Override
-	public void setPlugin(TrackMate_ plugin) {}
-
+	
 	@Override
 	public Component getComponent() {
 		return logPanel;

@@ -110,7 +110,7 @@ import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.TrackMateModel;
-import fiji.plugin.trackmate.TrackMate_;
+import fiji.plugin.trackmate.TrackMate;
 import fiji.plugin.trackmate.TrackerProvider;
 import fiji.plugin.trackmate.detection.DogDetectorFactory;
 import fiji.plugin.trackmate.detection.DownsampleLogDetectorFactory;
@@ -160,8 +160,8 @@ public class TmXmlReader_v12 extends TmXmlReader {
 	 */
 
 
-	public TmXmlReader_v12(File file, TrackMate_ plugin) {
-		super(file, plugin);
+	public TmXmlReader_v12(File file, TrackMate trackmate) {
+		super(file, trackmate);
 	}
 
 	/*
@@ -177,7 +177,7 @@ public class TmXmlReader_v12 extends TmXmlReader {
 		
 		long start = System.currentTimeMillis();
 		
-		TrackMateModel model = plugin.getModel();
+		TrackMateModel model = trackmate.getModel();
 		// Settings
 		Settings settings = getSettings();
 		getDetectorSettings(settings);
@@ -187,8 +187,8 @@ public class TmXmlReader_v12 extends TmXmlReader {
 		// Spot Filters
 		List<FeatureFilter> spotFilters = getSpotFeatureFilters();
 		FeatureFilter initialFilter = getInitialFilter();
-		plugin.getSettings().initialSpotFilterValue = initialFilter.value;
-		plugin.getSettings().setSpotFilters(spotFilters);
+		trackmate.getSettings().initialSpotFilterValue = initialFilter.value;
+		trackmate.getSettings().setSpotFilters(spotFilters);
 
 		// Spots
 		SpotCollection allSpots = getAllSpots();
@@ -207,7 +207,7 @@ public class TmXmlReader_v12 extends TmXmlReader {
 
 		// Track Filters
 		List<FeatureFilter> trackFilters = getTrackFeatureFilters();
-		plugin.getSettings().setTrackFilters(trackFilters);
+		trackmate.getSettings().setTrackFilters(trackFilters);
 
 		long end = System.currentTimeMillis();
 		processingTime = end - start;
@@ -306,7 +306,7 @@ public class TmXmlReader_v12 extends TmXmlReader {
 		 * map of tracks vs trackID, using the hash as new keys. Because there is a 
 		 * good chance that they saved keys and the new keys differ, we must retrieve
 		 * the mapping between the two using the retrieve spots.	 */
-		final TrackMateModel model = plugin.getModel();
+		final TrackMateModel model = trackmate.getModel();
 		model.getTrackModel().setGraph(graph);
 
 		// Retrieve the new track map
@@ -560,7 +560,7 @@ public class TmXmlReader_v12 extends TmXmlReader {
 				segmenterKey = LogDetectorFactory.DETECTOR_KEY;
 			}
 		}
-		DetectorProvider provider = plugin.getDetectorProvider();
+		DetectorProvider provider = trackmate.getDetectorProvider();
 		boolean ok = provider.select(segmenterKey);
 		if (!ok) {
 			logger.error(provider.getErrorMessage());
@@ -600,7 +600,7 @@ public class TmXmlReader_v12 extends TmXmlReader {
 				} else {
 
 					// They do not match. We DO NOT give priority to what has been saved. That way we always
-					// have something that works (when invoking the process methods of the plugin).
+					// have something that works (when invoking the process methods of the trackmate).
 
 					logger.error("\nDetector settings class ("+segmenterSettingsClassName+") does not match detector requirements (" +
 							ds.getClass().getName()+"),\n");
@@ -627,7 +627,7 @@ public class TmXmlReader_v12 extends TmXmlReader {
 				} else {
 
 					// They do not match. We DO NOT give priority to what has been saved. That way we always
-					// have something that works (when invoking the process methods of the plugin).
+					// have something that works (when invoking the process methods of the trackmate).
 
 					logger.error("\nDetector settings class ("+segmenterSettingsClassName+") does not match detector requirements (" +
 							ds.getClass().getName()+"),\n");
@@ -651,7 +651,7 @@ public class TmXmlReader_v12 extends TmXmlReader {
 				} else {
 
 					// They do not match. We DO NOT give priority to what has been saved. That way we always
-					// have something that works (when invoking the process methods of the plugin).
+					// have something that works (when invoking the process methods of the trackmate).
 
 					logger.error("\nDetector settings class ("+segmenterSettingsClassName+") does not match tracker requirements (" +
 							ds.getClass().getName()+"),\n");
@@ -717,7 +717,7 @@ public class TmXmlReader_v12 extends TmXmlReader {
 				trackerKey = SimpleFastLAPTracker.TRACKER_KEY;
 			}
 		}
-		TrackerProvider provider = plugin.getTrackerProvider();
+		TrackerProvider provider = trackmate.getTrackerProvider();
 		boolean ok = provider.select(trackerKey);
 		if (!ok) {
 			logger.error(provider.getErrorMessage());
@@ -806,7 +806,7 @@ public class TmXmlReader_v12 extends TmXmlReader {
 					} else {
 
 						// They do not match. We DO NOT give priority to what has been saved. That way we always
-						// have something that works (when invoking the process methods of the plugin).
+						// have something that works (when invoking the process methods of the trackmate).
 
 						logger.error("\nTracker settings class ("+trackerSettingsClassName+") does not match tracker requirements (" +
 								ts.getClass().getName()+"),\n");
@@ -824,7 +824,7 @@ public class TmXmlReader_v12 extends TmXmlReader {
 					} else {
 
 						// They do not match. We DO NOT give priority to what has been saved. That way we always
-						// have something that works (when invoking the process methods of the plugin).
+						// have something that works (when invoking the process methods of the trackmate).
 
 						logger.error("\nTracker settings class ("+trackerSettingsClassName+") does not match tracker requirements (" +
 								ts.getClass().getName()+"),\n");

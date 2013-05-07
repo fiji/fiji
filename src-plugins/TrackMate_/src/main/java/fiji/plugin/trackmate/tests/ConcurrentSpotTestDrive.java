@@ -6,7 +6,7 @@ import fiji.plugin.trackmate.DetectorProvider;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
-import fiji.plugin.trackmate.TrackMate_;
+import fiji.plugin.trackmate.TrackMate;
 import fiji.plugin.trackmate.detection.LogDetectorFactory;
 import ij.ImagePlus;
 import ij.gui.NewImage;
@@ -38,14 +38,14 @@ public class ConcurrentSpotTestDrive {
 		settings.detectorFactory = provider.getDetectorFactory();
 		settings.detectorSettings = provider.getDefaultSettings();
 
-		// Instantiate plugin
-		TrackMate_ plugin = new TrackMate_(settings);
+		// Instantiate trackmate
+		TrackMate trackmate = new TrackMate(settings);
 		
 		// Execute detection
-		plugin.execDetection();
+		trackmate.execDetection();
 		
 		// Retrieve spots
-		SpotCollection spots = plugin.getModel().getSpots();
+		SpotCollection spots = trackmate.getModel().getSpots();
 		
 		// Parse spots and detect duplicate IDs
 		int[] IDs = new int[Spot.IDcounter.get()];

@@ -16,7 +16,7 @@ import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.TrackMateModel;
-import fiji.plugin.trackmate.TrackMate_;
+import fiji.plugin.trackmate.TrackMate;
 import fiji.plugin.trackmate.detection.SpotDetectorFactory;
 import fiji.plugin.trackmate.io.TmXmlReader;
 import fiji.plugin.trackmate.io.TmXmlReader_v12;
@@ -41,7 +41,7 @@ public class GuiReader {
 	protected Logger logger = Logger.VOID_LOGGER;
 	private TrackMateWizard wizard;
 	private String targetDescriptor;
-	private TrackMate_ plugin;
+	private TrackMate trackmate;
 	private TrackMateModelView displayer;
 
 	/*
@@ -49,7 +49,7 @@ public class GuiReader {
 	 */
 
 	/**
-	 * Construct a {@link GuiReader}. The {@link WizardController} will have its state
+	 * Construct a {@link GuiReader}. The {@link TrackMateGUIController} will have its state
 	 * set according to the data found in the file read.
 	 * @param controller
 	 */
@@ -64,11 +64,11 @@ public class GuiReader {
 	 */
 
 	/**
-	 * Return the new {@link TrackMate_} plugin that was instantiated and prepared when calling 
+	 * Return the new {@link TrackMate} trackmate that was instantiated and prepared when calling 
 	 * the {@link #loadFile(File)} method.
 	 */
-	public TrackMate_ getPlugin() {
-		return plugin;
+	public TrackMate getPlugin() {
+		return trackmate;
 	}
 
 	/**
@@ -81,19 +81,19 @@ public class GuiReader {
 	}
 
 	/**
-	 * Load the file and create a new {@link TrackMate_} plugin
+	 * Load the file and create a new {@link TrackMate} trackmate
 	 * with a new model reflecting the file content.
 	 * <p>
 	 * Also, calling this method re-initializes all the 
 	 * {@link WizardPanelDescriptor} so that they are updated with the
-	 * plugin new content.
+	 * trackmate new content.
 	 * @param file  the file to load
 	 */
 	public void loadFile(File file) {
 
 		// Init target fields
-		plugin = new TrackMate_();
-		plugin.setLogger(logger);
+		trackmate = new TrackMate();
+		trackmate.setLogger(logger);
 		
 		// Initialize a string holder so that we can cat messages when relaoding log content
 		StringBuilder str = new StringBuilder("Loading XML file on:\n" + TMUtils.getCurrentTimeString()+'\n');
@@ -103,7 +103,7 @@ public class GuiReader {
 		msg = "Opening file "+file.getName()+'\n';
 		logger.log(msg);
 		str.append(msg);
-		TmXmlReader reader = new TmXmlReader(file, plugin);
+		TmXmlReader reader = new TmXmlReader(file, trackmate);
 
 		if (!reader.checkInput()) {
 			logger.error("There was a problem opening the source file:\n" + reader.getErrorMessage() + '\n');
@@ -130,7 +130,7 @@ public class GuiReader {
 			logger.log("  Detected an older file format: v"+fileVersionStr);
 			logger.log(" Converting on the fly.\n");
 			// We substitute an able reader
-			reader = new TmXmlReader_v12(file, plugin);
+			reader = new TmXmlReader_v12(file, trackmate);
 		}
 
 		// Retrieve data and update GUI
@@ -149,22 +149,22 @@ public class GuiReader {
 
 		if (fileVersion.compareTo(DEAL_WITH_VERSION_ABOVE) < 0) {
 			// We need to re-compute track & edge features in this case
-			if (plugin.getModel().getTrackModel().getNTracks() > 0) {
-				plugin.computeTrackFeatures(true);
-				plugin.computeEdgeFeatures(true);
+			if (trackmate.getModel().getTrackModel().getNTracks() > 0) {
+				trackmate.computeTrackFeatures(true);
+				trackmate.computeEdgeFeatures(true);
 			}
 		}
 
 		// Make a new displayer
-		displayer = new HyperStackDisplayer(plugin.getModel(), plugin.getSettings());
+		displayer = new HyperStackDisplayer(trackmate.getModel(), trackmate.getSettings());
 		
-		// Send the new instance of plugin to all panel a first
+		// Send the new instance of trackmate to all panel a first
 		// time, required by some for proper instantiation.
 		passNewPluginToWizard();
 
 		// We now check the content of the retrieved model
-		final TrackMateModel model = plugin.getModel();
-		Settings settings = plugin.getSettings();
+		final TrackMateModel model = trackmate.getModel();
+		Settings settings = trackmate.getSettings();
 		ImagePlus imp = settings.imp;
 
 		{
@@ -183,7 +183,7 @@ public class GuiReader {
 
 			// Update start panel
 			StartDialogPanel panel = (StartDialogPanel) wizard.getPanelDescriptorFor(StartDialogPanel.DESCRIPTOR);
-			panel.setPlugin(plugin);
+			panel.setPlugin(trackmate);
 			panel.aboutToDisplayPanel();
 		}		
 
@@ -202,13 +202,13 @@ public class GuiReader {
 
 			// Update 2nd panel: detector choice
 			DetectorChoiceDescriptor detectorChoiceDescriptor = (DetectorChoiceDescriptor) wizard.getPanelDescriptorFor(DetectorChoiceDescriptor.DESCRIPTOR);
-			detectorChoiceDescriptor.setPlugin(plugin);
+			detectorChoiceDescriptor.setPlugin(trackmate);
 			detectorChoiceDescriptor.aboutToDisplayPanel();
 
 			// Instantiate descriptor for the detector configuration and update it
 			DetectorConfigurationPanelDescriptor detectConfDescriptor = new DetectorConfigurationPanelDescriptor();
 			
-			detectConfDescriptor.setPlugin(plugin);
+			detectConfDescriptor.setPlugin(trackmate);
 			detectConfDescriptor.setWizard(wizard);
 			detectConfDescriptor.updateComponent();
 			wizard.registerWizardDescriptor(DetectorConfigurationPanelDescriptor.DESCRIPTOR, detectConfDescriptor);
@@ -303,7 +303,7 @@ public class GuiReader {
 
 		// Instantiate descriptor for the tracker configuration and update it
 		TrackerConfigurationPanelDescriptor trackerDescriptor = new TrackerConfigurationPanelDescriptor();
-		trackerDescriptor.setPlugin(plugin);
+		trackerDescriptor.setPlugin(trackmate);
 		trackerDescriptor.updateComponent(); // This will feed the new panel with the current settings content
 
 		wizard.registerWizardDescriptor(TrackerConfigurationPanelDescriptor.DESCRIPTOR, trackerDescriptor);
@@ -402,10 +402,10 @@ public class GuiReader {
 
 
 	/**
-	 *  Pass new plugin instance to all panels.
+	 *  Pass new trackmate instance to all panels.
 	 */
 	private void passNewPluginToWizard() {
-		wizard.getController().setPlugin(plugin);
+		wizard.getController().setPlugin(trackmate);
 	}
 
 	private void echoLoadingFinished() {

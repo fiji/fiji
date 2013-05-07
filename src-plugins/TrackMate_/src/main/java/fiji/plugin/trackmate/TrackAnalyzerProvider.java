@@ -50,12 +50,12 @@ public class TrackAnalyzerProvider {
 
 	/**
 	 * This provider provides the GUI with the model trackFeatureAnalyzers currently available in the 
-	 * TrackMate plugin. Each trackFeatureAnalyzer is identified by a key String, which can be used 
+	 * TrackMate trackmate. Each trackFeatureAnalyzer is identified by a key String, which can be used 
 	 * to retrieve new instance of the trackFeatureAnalyzer.
 	 * <p>
 	 * If you want to add custom trackFeatureAnalyzers to TrackMate, a simple way is to extend this
 	 * factory so that it is registered with the custom trackFeatureAnalyzers and provide this 
-	 * extended factory to the {@link TrackMate_} plugin.
+	 * extended factory to the {@link TrackMate} trackmate.
 	 */
 	public TrackAnalyzerProvider(TrackMateModel model) {
 		this.model = model;

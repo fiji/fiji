@@ -33,12 +33,12 @@ public class EdgeAnalyzerProvider {
 
 	/**
 	 * This provider provides the GUI with the model spotFeatureAnalyzers currently available in the 
-	 * TrackMate plugin. Each spotFeatureAnalyzer is identified by a key String, which can be used 
+	 * TrackMate trackmate. Each spotFeatureAnalyzer is identified by a key String, which can be used 
 	 * to retrieve new instance of the spotFeatureAnalyzer.
 	 * <p>
 	 * If you want to add custom spotFeatureAnalyzers to TrackMate, a simple way is to extend this
 	 * factory so that it is registered with the custom spotFeatureAnalyzers and provide this 
-	 * extended factory to the {@link TrackMate_} plugin.
+	 * extended factory to the {@link TrackMate} trackmate.
 	 */
 	public EdgeAnalyzerProvider(TrackMateModel model) {
 		this.model = model;

@@ -4,6 +4,9 @@ import static fiji.plugin.trackmate.tracking.TrackerKeys.KEY_BLOCKING_VALUE;
 
 import java.util.Map;
 
+import net.imglib2.algorithm.MultiThreadedBenchmarkAlgorithm;
+import net.imglib2.algorithm.OutputAlgorithm;
+
 import Jama.Matrix;
 import fiji.plugin.trackmate.tracking.LAPTracker;
 
@@ -15,7 +18,7 @@ import fiji.plugin.trackmate.tracking.LAPTracker;
  * @author Nicholas Perry
  *
  */
-public abstract class LAPTrackerCostMatrixCreator implements CostMatrixCreator {
+public abstract class LAPTrackerCostMatrixCreator extends MultiThreadedBenchmarkAlgorithm implements OutputAlgorithm<double[][]> {
 
 	/** The cost matrix created by the class. */
 	protected Matrix costs;
@@ -32,10 +35,17 @@ public abstract class LAPTrackerCostMatrixCreator implements CostMatrixCreator {
 		this.settings = settings;
 	}
 	
+
+	/*
+	 * METHODS
+	 */
 	
-	
+	/**
+	 * Returns the cost matrix created by this class.
+	 * @return a <code>double[][]</code> matrix.
+	 */
 	@Override
-	public double[][] getCostMatrix() {
+	public double[][] getResult() {
 		return costs.getArray();
 	}
 

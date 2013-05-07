@@ -16,11 +16,12 @@ import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JList;
 
+import fiji.plugin.trackmate.ActionProvider;
 import fiji.plugin.trackmate.Logger;
-import fiji.plugin.trackmate.TrackMate_;
+import fiji.plugin.trackmate.TrackMate;
 import fiji.plugin.trackmate.action.TrackMateAction;
 
-public class ActionChooserPanel extends ListChooserPanel implements WizardPanelDescriptor {
+public class ActionChooserPanel implements WizardPanelDescriptor {
 
 	private static final long serialVersionUID = 1L;
 	private static final Icon EXECUTE_ICON = new ImageIcon(TrackMateWizard.class.getResource("images/control_play_blue.png"));
@@ -31,19 +32,30 @@ public class ActionChooserPanel extends ListChooserPanel implements WizardPanelD
 	private LogPanel logPanel;
 	private Logger logger;
 	private TrackMateWizard wizard;
-	private TrackMate_ plugin;
+	private TrackMate trackmate;
 	private List<ImageIcon> icons;
+	private final ListChooserPanel panel;
+	private final ActionProvider actionProvider;
 
 	/*
 	 * CONSTRUCTORS
 	 */
 	
 	
-	public ActionChooserPanel(final List<String> actions, final List<String> infoTexts, final List<ImageIcon> icons, TrackMate_ plugin) {
-		super(actions, infoTexts, "action");
-		this.icons = icons;
+	public ActionChooserPanel(final ActionProvider actionProvider, final TrackMate trackmate) {
+		
+		List<String> actions = actionProvider.getAvailableActions();
+		List<String> infoTexts = new ArrayList<String>(actions.size());
+		List<ImageIcon> icons = new ArrayList<ImageIcon>(actions.size());
+		for(String key : actions) {
+			infoTexts.add( actionProvider.getInfoText(key) );
+			icons.add( actionProvider.getIcon(key) );
+		}
+		
+		this.panel = new ListChooserPanel(actions, infoTexts, "action");
 		this.logPanel = new LogPanel();
 		this.logger = logPanel.getLogger();
+		this.actionProvider = actionProvider;
 		init();
 	}
 	
@@ -53,18 +65,8 @@ public class ActionChooserPanel extends ListChooserPanel implements WizardPanelD
 	 */
 	
 	@Override
-	public void setWizard(TrackMateWizard wizard) {
-		this.wizard = wizard;
-	}
-
-	@Override
-	public void setPlugin(TrackMate_ plugin) {
-		this.plugin = plugin; // duplicate but we need the plugin at construction
-	}
-
-	@Override
 	public Component getComponent() {
-		return this;
+		return panel;
 	}
 
 	@Override
@@ -103,7 +105,7 @@ public class ActionChooserPanel extends ListChooserPanel implements WizardPanelD
 	private void init() {
 		
 		logPanel.setBounds(8, 260, 276, 200);
-		add(logPanel);
+		panel.add(logPanel);
 		
 		final JButton executeButton = new JButton("Execute", EXECUTE_ICON);
 		executeButton.setBounds(6, 220, 100, 30);
@@ -116,13 +118,13 @@ public class ActionChooserPanel extends ListChooserPanel implements WizardPanelD
 					public void run() {
 						try {
 							executeButton.setEnabled(false);
-							fireAction(ACTION_STARTED);
-							String actionName = getChoice();
-							TrackMateAction action = plugin.getActionProvider().getAction(actionName);
+							panel.fireAction(ACTION_STARTED);
+							String actionName = panel.getChoice();
+							TrackMateAction action = actionProvider.getAction(actionName);
 							action.setLogger(logger);
 							action.setWizard(wizard);
-							action.execute(plugin);
-							fireAction(ACTION_FINISHED);
+							action.execute(trackmate);
+							panel.fireAction(ACTION_FINISHED);
 						} finally {
 							executeButton.setEnabled(true);
 						}
@@ -130,15 +132,15 @@ public class ActionChooserPanel extends ListChooserPanel implements WizardPanelD
 				}.start();
 			}
 		});
-		add(executeButton);
+		panel.add(executeButton);
 		
 		HashMap<String, ImageIcon> iconMap = new HashMap<String, ImageIcon>();
 		for (int i = 0; i < icons.size(); i++) { 
-			iconMap.put(items.get(i), icons.get(i));
+			iconMap.put(panel.items.get(i), icons.get(i));
 		}
 		IconListRenderer renderer = new IconListRenderer(iconMap);
-		jComboBoxChoice.setRenderer(renderer);
-		jLabelHelpText.setSize(270, 150);
+		panel.jComboBoxChoice.setRenderer(renderer);
+		panel.jLabelHelpText.setSize(270, 150);
 
 	}
 	
@@ -148,18 +150,18 @@ public class ActionChooserPanel extends ListChooserPanel implements WizardPanelD
 	
 	/**
 	 * Utility methods that fetches the available actions, their infos, and their icons 
-	 * from the factory available in the passed {@link TrackMate_} instance.
+	 * from the factory available in the passed {@link TrackMate} instance.
 	 */
-	public static ActionChooserPanel instantiateForPlugin(TrackMate_ plugin) {
-		List<String> actions = plugin.getActionProvider().getAvailableActions();
+	public static ActionChooserPanel instantiateForPlugin(TrackMate trackmate) {
+		List<String> actions = trackmate.getActionProvider().getAvailableActions();
 		List<String> infoTexts = new ArrayList<String>(actions.size());
 		List<ImageIcon> icons = new ArrayList<ImageIcon>(actions.size());
 		for(String key : actions) {
-			infoTexts.add( plugin.getActionProvider().getInfoText(key) );
-			icons.add( plugin.getActionProvider().getIcon(key) );
+			infoTexts.add( trackmate.getActionProvider().getInfoText(key) );
+			icons.add( trackmate.getActionProvider().getIcon(key) );
 		}
 		
-		return new ActionChooserPanel(actions, infoTexts, icons, plugin);
+		return new ActionChooserPanel(actions, infoTexts, icons, trackmate);
 	}
 	
 

@@ -78,7 +78,7 @@ public class DogDetector <T extends RealType<T>  & NativeType<T>> extends LogDet
 		 * indicate that multi-threading generates some silent problems, with some frames (first ones
 		 * being not present in the final SpotColleciton. 
 		 * On 64-bit platforms, I could see that keeping the DogRNI multi-threaded translated by a 
-		 * speedup of about 10%, which I sacrifice without hesitation if i can make the plugin more stable. */
+		 * speedup of about 10%, which I sacrifice without hesitation if i can make the trackmate more stable. */
 		dog.setNumThreads(1);
 		
 		// Keep laplace image if needed

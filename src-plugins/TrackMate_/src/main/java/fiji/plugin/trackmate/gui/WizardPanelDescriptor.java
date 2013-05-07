@@ -3,25 +3,11 @@ package fiji.plugin.trackmate.gui;
 import java.awt.CardLayout;
 import java.awt.Component;
 
-import fiji.plugin.trackmate.TrackMate_;
-
 /**
  * A base descriptor class used to reference a Component panel for the Wizard, as
  * well as provide general rules as to how the panel should behave.
  */
 public interface WizardPanelDescriptor {
-      
-	/** 
-	 * Set a reference to the model that will embed the GUI component this descriptor controls.
-	 */
-	public void setWizard(TrackMateWizard wizard);
-
-	/**
-	 * Set a reference to the TrackMate plugin that is managed by the GUI. This
-	 * reference can then be used by GUI components to execute actions or change
-	 * the data model. 
-	 */
-	public void setPlugin(TrackMate_ plugin);
 	
     /**
      * @return a java.awt.Component that serves as the actual panel.

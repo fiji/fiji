@@ -4,14 +4,14 @@ import java.awt.Component;
 
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.Settings;
-import fiji.plugin.trackmate.TrackMate_;
+import fiji.plugin.trackmate.TrackMate;
 import fiji.plugin.trackmate.util.TMUtils;
 
 public class DetectorDescriptor implements WizardPanelDescriptor {
 	
 	public static final String DESCRIPTOR = "DetectionPanel";
 	protected LogPanel logPanel;
-	protected TrackMate_ plugin;
+	protected TrackMate trackmate;
 	protected TrackMateWizard wizard;
 	protected Logger logger;
 	protected Thread motherThread;
@@ -24,8 +24,8 @@ public class DetectorDescriptor implements WizardPanelDescriptor {
 	}
 
 	@Override
-	public void setPlugin(TrackMate_ plugin) {
-		this.plugin = plugin;
+	public void setPlugin(TrackMate trackmate) {
+		this.trackmate = trackmate;
 	}
 
 	@Override
@@ -59,7 +59,7 @@ public class DetectorDescriptor implements WizardPanelDescriptor {
 	@Override
 	public void displayingPanel() {
 		wizard.setNextButtonEnabled(false);
-		final Settings settings = plugin.getSettings();
+		final Settings settings = trackmate.getSettings();
 		logger.log("Starting detection using "+settings.detectorFactory.toString()+"\n", Logger.BLUE_COLOR);
 		logger.log("with settings:\n");
 		logger.log(TMUtils.echoMap(settings.detectorSettings, 2));
@@ -67,7 +67,7 @@ public class DetectorDescriptor implements WizardPanelDescriptor {
 			public void run() {
 				long start = System.currentTimeMillis();
 				try {
-					plugin.execDetection();
+					trackmate.execDetection();
 				} catch (Exception e) {
 					logger.error("An error occured:\n"+e+'\n');
 					e.printStackTrace(logger);

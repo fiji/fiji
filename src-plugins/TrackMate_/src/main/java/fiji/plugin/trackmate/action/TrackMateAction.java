@@ -5,7 +5,7 @@ import javax.swing.ImageIcon;
 import fiji.plugin.trackmate.InfoTextable;
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.TrackMateModel;
-import fiji.plugin.trackmate.TrackMate_;
+import fiji.plugin.trackmate.TrackMate;
 import fiji.plugin.trackmate.gui.TrackMateWizard;
 
 /**
@@ -18,9 +18,9 @@ import fiji.plugin.trackmate.gui.TrackMateWizard;
 public interface TrackMateAction extends InfoTextable {
 	
 	/**
-	 * Execute this action using the given plugin
+	 * Execute this action using the given trackmate
 	 */
-	public void execute(final TrackMate_ plugin);
+	public void execute(final TrackMate trackmate);
 
 	/**
 	 * Set the logger that will receive logs when this action is executed.

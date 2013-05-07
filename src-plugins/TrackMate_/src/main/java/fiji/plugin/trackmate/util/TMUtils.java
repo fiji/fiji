@@ -2,7 +2,6 @@ package fiji.plugin.trackmate.util;
 
 import ij.ImagePlus;
 import ij.ImageStack;
-import ij.plugin.Duplicator;
 import ij.process.ColorProcessor;
 import ij.process.StackConverter;
 
@@ -38,10 +37,10 @@ import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
-import fiji.plugin.trackmate.TrackMate_;
+import fiji.plugin.trackmate.TrackMate;
 
 /**
- * List of static utilities for the {@link TrackMate_} plugin
+ * List of static utilities for the {@link TrackMate} trackmate
  */
 public class TMUtils {
 
@@ -717,7 +716,7 @@ public class TMUtils {
 		if (origImp.getType() == ImagePlus.GRAY8)
 			imp = origImp;
 		else {
-			imp = new Duplicator().run(origImp);
+			imp = new ij.plugin.Duplicator().run(origImp);
 			new StackConverter(imp).convertToGray8();
 		}
 

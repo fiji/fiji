@@ -56,7 +56,7 @@ public class TrackerProvider extends AbstractProvider  {
 
 	/**
 	 * This provider provides the GUI with the spot trackers currently available in the 
-	 * TrackMate plugin. Each tracker is identified by a key String, which can be used 
+	 * TrackMate trackmate. Each tracker is identified by a key String, which can be used 
 	 * to retrieve new instance of the tracker, settings for the target tracker and a 
 	 * GUI panel able to configure these settings.
 	 * <p>
@@ -66,7 +66,7 @@ public class TrackerProvider extends AbstractProvider  {
 	 * <p>
 	 * If you want to add custom trackers to TrackMate, a simple way is to extend this
 	 * factory so that it is registered with the custom trackers and pass this 
-	 * extended provider to the {@link TrackMate_} plugin.
+	 * extended provider to the {@link TrackMate} trackmate.
 	 */
 	public TrackerProvider(TrackMateModel model, Settings settings) {
 		this.model = model;

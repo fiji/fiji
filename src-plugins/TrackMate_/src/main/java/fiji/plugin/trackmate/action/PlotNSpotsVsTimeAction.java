@@ -15,7 +15,7 @@ import org.jfree.data.xy.DefaultXYDataset;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.TrackMateModel;
-import fiji.plugin.trackmate.TrackMate_;
+import fiji.plugin.trackmate.TrackMate;
 import fiji.plugin.trackmate.util.ExportableChartPanel;
 import fiji.plugin.trackmate.visualization.trackscheme.TrackSchemeFrame;
 
@@ -33,9 +33,9 @@ public class PlotNSpotsVsTimeAction extends AbstractTMAction {
 	}
 	
 	@Override
-	public void execute(TrackMate_ plugin) {
+	public void execute(TrackMate trackmate) {
 		// Collect data
-		final TrackMateModel model = plugin.getModel();
+		final TrackMateModel model = trackmate.getModel();
 		final SpotCollection spots = model.getSpots();
 		final int nFrames = spots.keySet().size();
 		final double[][] data = new double[2][nFrames];
@@ -47,9 +47,9 @@ public class PlotNSpotsVsTimeAction extends AbstractTMAction {
 		}
 		
 		// Plot data
-		String xAxisLabel = "Time ("+plugin.getSettings().timeUnits+")";
+		String xAxisLabel = "Time ("+trackmate.getSettings().timeUnits+")";
 		String yAxisLabel = "N spots";
-		String title = "Nspots vs Time for "+plugin.getSettings().imp.getShortTitle();
+		String title = "Nspots vs Time for "+trackmate.getSettings().imp.getShortTitle();
 		DefaultXYDataset dataset = new DefaultXYDataset();
 		dataset.addSeries("Nspots", data);
 		

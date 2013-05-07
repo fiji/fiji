@@ -29,12 +29,12 @@ public class ActionProvider {
 	
 	/**
 	 * This provider provides the GUI with the TrackMate actions currently available in the 
-	 * TrackMate plugin. Each action is identified by a key String, which can be used 
+	 * TrackMate trackmate. Each action is identified by a key String, which can be used 
 	 * to retrieve new instance of the action.
 	 * <p>
 	 * If you want to add custom actions to TrackMate, a simple way is to extend this
 	 * factory so that it is registered with the custom actions and provide this 
-	 * extended factory to the {@link TrackMate_} plugin.
+	 * extended factory to the {@link TrackMate} trackmate.
 	 */
 	public ActionProvider() {
 		registerActions();

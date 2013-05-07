@@ -4,7 +4,7 @@ import fiji.plugin.trackmate.FeatureFilter;
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
-import fiji.plugin.trackmate.TrackMate_;
+import fiji.plugin.trackmate.TrackMate;
 import fiji.plugin.trackmate.features.spot.SpotIntensityAnalyzer;
 import fiji.plugin.trackmate.features.spot.SpotIntensityAnalyzerFactory;
 import fiji.plugin.trackmate.gui.FilterGuiPanel;
@@ -114,10 +114,10 @@ public class SpotDisplayer3DTestDrive {
 		// Launch renderer
 		final SpotCollection allSpots = new SpotCollection();
 		allSpots.put(0, spots);
-		final TrackMate_ plugin = new TrackMate_();
-		plugin.getModel().setSpots(allSpots, false);
-		plugin.getSettings().imp = imp;
-		final SpotDisplayer3D displayer = new SpotDisplayer3D(plugin.getModel(), plugin.getSettings());
+		final TrackMate trackmate = new TrackMate();
+		trackmate.getModel().setSpots(allSpots, false);
+		trackmate.getSettings().imp = imp;
+		final SpotDisplayer3D displayer = new SpotDisplayer3D(trackmate.getModel(), trackmate.getSettings());
 		displayer.render();
 		
 		// Launch threshold GUI
@@ -134,8 +134,8 @@ public class SpotDisplayer3DTestDrive {
 		gui.addChangeListener(new ChangeListener() {
 			@Override
 			public void stateChanged(ChangeEvent e) {
-				plugin.getSettings().setSpotFilters(gui.getFeatureFilters());
-				plugin.execSpotFiltering(false);
+				trackmate.getSettings().setSpotFilters(gui.getFeatureFilters());
+				trackmate.execSpotFiltering(false);
 			}
 		});
 		gui.addActionListener(new ActionListener() {

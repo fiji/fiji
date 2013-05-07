@@ -6,7 +6,7 @@ import fiji.plugin.trackmate.FeatureFilter;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.TrackMateModel;
-import fiji.plugin.trackmate.TrackMate_;
+import fiji.plugin.trackmate.TrackMate;
 import fiji.plugin.trackmate.io.TmXmlReader;
 
 public class SpotFilteringPerf_TestDrive {
@@ -16,13 +16,13 @@ public class SpotFilteringPerf_TestDrive {
 		//		ImageJ.main(args);
 
 		File file = new File("/Users/tinevez/Desktop/RECEPTOR.xml");
-		final TrackMate_ plugin = new TrackMate_();
-		TmXmlReader reader = new TmXmlReader(file, plugin );
+		final TrackMate trackmate = new TrackMate();
+		TmXmlReader reader = new TmXmlReader(file, trackmate );
 		if (!reader.checkInput() || !reader.process()) {
 			System.err.println("Problem loading file " + file + ":\n" + reader.getErrorMessage());
 		}
-		TrackMateModel model = plugin.getModel();
-		Settings settings = plugin.getSettings();
+		TrackMateModel model = trackmate.getModel();
+		Settings settings = trackmate.getSettings();
 
 		for (int i = 0; i < 5; i++) {
 
@@ -33,7 +33,7 @@ public class SpotFilteringPerf_TestDrive {
 
 				long start = System.currentTimeMillis();
 				int nspots0 = model.getSpots().getNSpots(true);
-				plugin.execSpotFiltering(true);
+				trackmate.execSpotFiltering(true);
 				long end = System.currentTimeMillis();
 				int nspots1 = model.getSpots().getNSpots(true);
 
@@ -46,7 +46,7 @@ public class SpotFilteringPerf_TestDrive {
 
 				long start = System.currentTimeMillis();
 				int nspots0 = model.getSpots().getNSpots(true);
-				plugin.execSpotFiltering(true);
+				trackmate.execSpotFiltering(true);
 				long end = System.currentTimeMillis();
 				int nspots1 = model.getSpots().getNSpots(true);
 
@@ -70,9 +70,9 @@ public class SpotFilteringPerf_TestDrive {
 			@Override
 			public void stateChanged(ChangeEvent event) {
 				System.out.println("stateChanged caught.");
-				plugin.getModel().getSettings().setSpotFilters(component.getFeatureFilters());
+				trackmate.getModel().getSettings().setSpotFilters(component.getFeatureFilters());
 				long start = System.currentTimeMillis();
-				plugin.execSpotFiltering(true);
+				trackmate.execSpotFiltering(true);
 				System.out.println("Filtering done in " + (System.currentTimeMillis()-start) + " ms.");
 				displayer.refresh();
 			}

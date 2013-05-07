@@ -4,7 +4,7 @@ import java.awt.Component;
 import java.io.File;
 
 import fiji.plugin.trackmate.Logger;
-import fiji.plugin.trackmate.TrackMate_;
+import fiji.plugin.trackmate.TrackMate;
 
 /**
  * An abstract class made for describing panels that generate a dialog, 
@@ -21,7 +21,7 @@ public abstract class SomeDialogDescriptor implements WizardPanelDescriptor {
 	protected static File file;
 
 	protected LogPanel logPanel;
-	protected TrackMate_ plugin;
+	protected TrackMate trackmate;
 	protected TrackMateWizard wizard;
 	protected Logger logger;
 	protected String targetID;
@@ -38,8 +38,8 @@ public abstract class SomeDialogDescriptor implements WizardPanelDescriptor {
 	}
 
 	@Override
-	public void setPlugin(TrackMate_ plugin) {
-		this.plugin = plugin;
+	public void setPlugin(TrackMate trackmate) {
+		this.trackmate = trackmate;
 	}
 
 	@Override

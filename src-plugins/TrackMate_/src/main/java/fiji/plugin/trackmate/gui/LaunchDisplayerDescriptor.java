@@ -5,7 +5,7 @@ import java.awt.Component;
 import mpicbg.imglib.multithreading.SimpleMultiThreading;
 
 import fiji.plugin.trackmate.Logger;
-import fiji.plugin.trackmate.TrackMate_;
+import fiji.plugin.trackmate.TrackMate;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
 
 public class LaunchDisplayerDescriptor implements WizardPanelDescriptor {
@@ -14,7 +14,7 @@ public class LaunchDisplayerDescriptor implements WizardPanelDescriptor {
 	private TrackMateWizard wizard;
 	private LogPanel logPanel;
 	private Logger logger;
-	private TrackMate_ plugin;
+	private TrackMate trackmate;
 
 	@Override
 	public void setWizard(TrackMateWizard wizard) { 
@@ -24,8 +24,8 @@ public class LaunchDisplayerDescriptor implements WizardPanelDescriptor {
 	}
 
 	@Override
-	public void setPlugin(TrackMate_ plugin) {
-		this.plugin = plugin;
+	public void setPlugin(TrackMate trackmate) {
+		this.trackmate = trackmate;
 	}
 
 	@Override
@@ -73,7 +73,7 @@ public class LaunchDisplayerDescriptor implements WizardPanelDescriptor {
 			}
 		};
 		
-		if (plugin.getModel().getSpots().getNSpots(false) > 0) {
+		if (trackmate.getModel().getSpots().getNSpots(false) > 0) {
 
 			/*
 			 * We have some spots so we need to compute spot features will we render them.
@@ -83,7 +83,7 @@ public class LaunchDisplayerDescriptor implements WizardPanelDescriptor {
 			Thread featureCalculationThread = new Thread("TrackMate spot feature calculating mother thread") {
 				public void run() {
 					long start = System.currentTimeMillis();
-					plugin.computeSpotFeatures(true);		
+					trackmate.computeSpotFeatures(true);		
 					long end  = System.currentTimeMillis();
 					logger.log(String.format("Calculating features done in %.1f s.\n", (end-start)/1e3f), Logger.BLUE_COLOR);
 				}

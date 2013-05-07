@@ -7,7 +7,7 @@ import net.imglib2.algorithm.OutputAlgorithm;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
 import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.TrackMate_;
+import fiji.plugin.trackmate.TrackMate;
 
 
 /**
@@ -15,7 +15,7 @@ import fiji.plugin.trackmate.TrackMate_;
  * estimated radius within a 2D or 3D image.
  * <p>
  * Normally, concrete implementation are not expected to be multi-threaded.
- * Indeed, the {@link TrackMate_} plugin generates one instance of the concrete 
+ * Indeed, the {@link TrackMate} trackmate generates one instance of the concrete 
  * implementation per thread, to process multiple frames simultaneously.
  * 
  * @author Jean-Yves Tinevez <jeanyves.tinevez@gmail.com> 2010 - 2012

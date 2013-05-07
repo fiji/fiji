@@ -5,13 +5,13 @@ import java.util.List;
 import java.util.Map;
 
 import fiji.plugin.trackmate.DetectorProvider;
-import fiji.plugin.trackmate.TrackMate_;
+import fiji.plugin.trackmate.TrackMate;
 
 public class DetectorChoiceDescriptor implements WizardPanelDescriptor {
 
 	public static final String DESCRIPTOR = "DetectorChoice";
 	private ListChooserPanel component;
-	private TrackMate_ plugin;
+	private TrackMate trackmate;
 	private TrackMateWizard wizard;
 
 	/*
@@ -51,14 +51,14 @@ public class DetectorChoiceDescriptor implements WizardPanelDescriptor {
 	
 	private void setCurrentChoiceFromPlugin() {
 		String key;
-		if (null != plugin.getSettings().detectorFactory) {
-			key = plugin.getSettings().detectorFactory.getKey();
+		if (null != trackmate.getSettings().detectorFactory) {
+			key = trackmate.getSettings().detectorFactory.getKey();
 		} else {
-			key = plugin.getDetectorProvider().getCurrentKey(); // back to default 
+			key = trackmate.getDetectorProvider().getCurrentKey(); // back to default 
 		}
-		int index = plugin.getDetectorProvider().getKeys().indexOf(key);
+		int index = trackmate.getDetectorProvider().getKeys().indexOf(key);
 		if (index < 0) {
-			wizard.getLogger().error("[DetectorChoiceDescriptor] Cannot find detector named "+key+" in current plugin.");
+			wizard.getLogger().error("[DetectorChoiceDescriptor] Cannot find detector named "+key+" in current trackmate.");
 			return;
 		}
 		component.jComboBoxChoice.setSelectedIndex(index);
@@ -71,31 +71,31 @@ public class DetectorChoiceDescriptor implements WizardPanelDescriptor {
 	public void aboutToHidePanel() {
 		
 		// Configure the detector provider with choice made in panel
-		DetectorProvider provider = plugin.getDetectorProvider();
+		DetectorProvider provider = trackmate.getDetectorProvider();
 		int index = component.jComboBoxChoice.getSelectedIndex();
 		String key = provider.getKeys().get(index);
 		provider.select(key);
 		
-		plugin.getSettings().detectorFactory = provider.getDetectorFactory();
+		trackmate.getSettings().detectorFactory = provider.getDetectorFactory();
 		
 		// Compare current settings with default ones, and substitute default ones
 		// only if the old ones are absent or not compatible with it.
-		Map<String, Object> currentSettings = plugin.getSettings().detectorSettings;
+		Map<String, Object> currentSettings = trackmate.getSettings().detectorSettings;
 		if (!provider.checkSettingsValidity(currentSettings)) {
 			Map<String, Object> defaultSettings = provider.getDefaultSettings();
-			plugin.getSettings().detectorSettings = defaultSettings;
+			trackmate.getSettings().detectorSettings = defaultSettings;
 		}
 		// Instantiate next descriptor for the wizard
 		DetectorConfigurationPanelDescriptor descriptor = new DetectorConfigurationPanelDescriptor();
 		descriptor.setWizard(wizard);
-		descriptor.setPlugin(plugin);
+		descriptor.setPlugin(trackmate);
 		wizard.registerWizardDescriptor(DetectorConfigurationPanelDescriptor.DESCRIPTOR, descriptor);
 	}
 
 	@Override
-	public void setPlugin(TrackMate_ plugin) {
-		this.plugin = plugin;
-		DetectorProvider provider = plugin.getDetectorProvider();
+	public void setPlugin(TrackMate trackmate) {
+		this.trackmate = trackmate;
+		DetectorProvider provider = trackmate.getDetectorProvider();
 		List<String> detectorNames =  provider.getNames();
 		List<String> infoTexts = provider.getInfoTexts();
 		this.component = new ListChooserPanel(detectorNames, infoTexts, "detector");

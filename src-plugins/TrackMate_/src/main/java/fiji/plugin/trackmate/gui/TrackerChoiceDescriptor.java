@@ -4,14 +4,14 @@ import java.awt.Component;
 import java.util.List;
 
 import fiji.plugin.trackmate.Logger;
-import fiji.plugin.trackmate.TrackMate_;
+import fiji.plugin.trackmate.TrackMate;
 import fiji.plugin.trackmate.TrackerProvider;
 
 public class TrackerChoiceDescriptor implements WizardPanelDescriptor {
 
 	public static final String DESCRIPTOR = "TrackerChoice";
 	private ListChooserPanel component;
-	private TrackMate_ plugin;
+	private TrackMate trackmate;
 	private TrackMateWizard wizard;
 	
 	/*
@@ -57,7 +57,7 @@ public class TrackerChoiceDescriptor implements WizardPanelDescriptor {
 	public void aboutToHidePanel() {
 		
 		// Configure the detector provider with choice made in panel
-		TrackerProvider provider = plugin.getTrackerProvider();
+		TrackerProvider provider = trackmate.getTrackerProvider();
 		int index = component.jComboBoxChoice.getSelectedIndex();
 		String key = provider.getKeys().get(index);
 		
@@ -71,22 +71,22 @@ public class TrackerChoiceDescriptor implements WizardPanelDescriptor {
 		// Check
 		if (!ok) {
 			Logger logger = wizard.getLogger();
-			logger.error("Choice panel returned a tracker unkown to this plugin:.\n" +
+			logger.error("Choice panel returned a tracker unkown to this trackmate:.\n" +
 					provider.getErrorMessage()+
 					"Using default "+provider.getCurrentKey());
 		}
 		
 		// Instantiate next descriptor for the wizard
 		TrackerConfigurationPanelDescriptor descriptor = new TrackerConfigurationPanelDescriptor();
-		descriptor.setPlugin(plugin);
+		descriptor.setPlugin(trackmate);
 		descriptor.setWizard(wizard);
 		wizard.registerWizardDescriptor(TrackerConfigurationPanelDescriptor.DESCRIPTOR, descriptor);
 	}
 
 	@Override
-	public void setPlugin(TrackMate_ plugin) {
-		this.plugin = plugin;
-		TrackerProvider provider = plugin.getTrackerProvider();
+	public void setPlugin(TrackMate trackmate) {
+		this.trackmate = trackmate;
+		TrackerProvider provider = trackmate.getTrackerProvider();
 		List<String> trackerNames = provider.getNames();
 		List<String> infoTexts = provider.getInfoTexts();
 		this.component = new ListChooserPanel(trackerNames, infoTexts, "tracker");
@@ -101,15 +101,15 @@ public class TrackerChoiceDescriptor implements WizardPanelDescriptor {
 	void setCurrentChoiceFromPlugin() {
 		
 		String key;
-		if (null != plugin.getSettings().tracker) {
-			key = plugin.getSettings().tracker.getKey();
+		if (null != trackmate.getSettings().tracker) {
+			key = trackmate.getSettings().tracker.getKey();
 		} else {
-			key = plugin.getTrackerProvider().getCurrentKey(); // back to default 
+			key = trackmate.getTrackerProvider().getCurrentKey(); // back to default 
 		}
-		int index = plugin.getTrackerProvider().getKeys().indexOf(key);
+		int index = trackmate.getTrackerProvider().getKeys().indexOf(key);
 		
 		if (index < 0) {
-			wizard.getLogger().error("[TrackerChoiceDescriptor] Cannot find tracker named "+key+" in current plugin.");
+			wizard.getLogger().error("[TrackerChoiceDescriptor] Cannot find tracker named "+key+" in current trackmate.");
 			return;
 		}
 		component.jComboBoxChoice.setSelectedIndex(index);

@@ -3,7 +3,7 @@ package fiji.plugin.trackmate.tests;
 import java.io.File;
 
 import fiji.plugin.trackmate.TrackMateModel;
-import fiji.plugin.trackmate.TrackMate_;
+import fiji.plugin.trackmate.TrackMate;
 import fiji.plugin.trackmate.io.TmXmlReader;
 
 public class TmXmlReaderTestDrive {
@@ -18,20 +18,20 @@ public class TmXmlReaderTestDrive {
 		//		ij.ImageJ.main(args);
 
 		System.out.println("Opening file: "+file.getAbsolutePath());		
-		TrackMate_ plugin = new TrackMate_();
-		TmXmlReader reader = new TmXmlReader(file, plugin);
+		TrackMate trackmate = new TrackMate();
+		TmXmlReader reader = new TmXmlReader(file, trackmate);
 		if (!reader.checkInput() || !reader.process()) {
 			System.err.println("Problem loading the file:");
 			System.err.println(reader.getErrorMessage());
 			return;
 		}
-		TrackMateModel model = plugin.getModel();
+		TrackMateModel model = trackmate.getModel();
 
 		System.out.println(model);
 		
 //		 Instantiate displayer
 		fiji.plugin.trackmate.visualization.AbstractTrackMateModelView displayer 
-			= new fiji.plugin.trackmate.visualization.hyperstack.HyperStackDisplayer(model, plugin.getSettings());
+			= new fiji.plugin.trackmate.visualization.hyperstack.HyperStackDisplayer(model, trackmate.getSettings());
 		displayer.render();
 		displayer.refresh();
 

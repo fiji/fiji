@@ -7,7 +7,7 @@ import fiji.plugin.trackmate.FeatureFilter;
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.TrackMateModel;
-import fiji.plugin.trackmate.TrackMate_;
+import fiji.plugin.trackmate.TrackMate;
 import fiji.plugin.trackmate.util.TMUtils;
 
 public class InitFilterDescriptor implements WizardPanelDescriptor {
@@ -15,7 +15,7 @@ public class InitFilterDescriptor implements WizardPanelDescriptor {
 	public static final String DESCRIPTOR = "InitialThresholding";
 	private TrackMateWizard wizard;
 	private InitFilterPanel component;
-	private TrackMate_ plugin;
+	private TrackMate trackmate;
 	private Map<String, double[]> features;
 	
 	@Override
@@ -24,8 +24,8 @@ public class InitFilterDescriptor implements WizardPanelDescriptor {
 	}
 
 	@Override
-	public void setPlugin(TrackMate_ plugin) {
-		this.plugin = plugin;
+	public void setPlugin(TrackMate trackmate) {
+		this.trackmate = trackmate;
 	}
 
 	@Override
@@ -56,11 +56,11 @@ public class InitFilterDescriptor implements WizardPanelDescriptor {
 
 	@Override
 	public void aboutToDisplayPanel() {
-		TrackMateModel model = plugin.getModel();
-		Settings settings = plugin.getSettings();
+		TrackMateModel model = trackmate.getModel();
+		Settings settings = trackmate.getSettings();
 		features = TMUtils.getSpotFeatureValues(model.getSpots(), settings.getSpotFeatures(), model.getLogger());
 		component = new InitFilterPanel(features);
-		Double initialFilterValue = plugin.getSettings().initialSpotFilterValue;
+		Double initialFilterValue = trackmate.getSettings().initialSpotFilterValue;
 		component.setInitialFilterValue(initialFilterValue);
 		wizard.setNextButtonEnabled(true);
 	}
@@ -75,14 +75,14 @@ public class InitFilterDescriptor implements WizardPanelDescriptor {
 		
 		component.updater.quit();
 		
-		final TrackMateModel model = plugin.getModel();
+		final TrackMateModel model = trackmate.getModel();
 		FeatureFilter initialThreshold = component.getFeatureThreshold();
 		String str = "Initial thresholding with a quality threshold above "+ String.format("%.1f", initialThreshold.value) + " ...\n";
 		Logger logger = wizard.getLogger();
 		logger.log(str,Logger.BLUE_COLOR);
 		int ntotal = model.getSpots().getNSpots(false);
-		plugin.getSettings().initialSpotFilterValue = initialThreshold.value;
-		plugin.execInitialSpotFiltering();
+		trackmate.getSettings().initialSpotFilterValue = initialThreshold.value;
+		trackmate.execInitialSpotFiltering();
 		int nselected = model.getSpots().getNSpots(false);
 		logger.log(String.format("Retained %d spots out of %d.\n", nselected, ntotal));
 	}
