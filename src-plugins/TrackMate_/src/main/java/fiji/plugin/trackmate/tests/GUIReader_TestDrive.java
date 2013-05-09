@@ -2,11 +2,11 @@ package fiji.plugin.trackmate.tests;
 
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.TrackMate;
-import fiji.plugin.trackmate.gui.DisplayerPanel;
 import fiji.plugin.trackmate.gui.GuiReader;
-import fiji.plugin.trackmate.gui.LoadDescriptor;
 import fiji.plugin.trackmate.gui.TrackMateWizard;
 import fiji.plugin.trackmate.gui.TrackMateGUIController;
+import fiji.plugin.trackmate.gui.descriptors.LoadDescriptor;
+import fiji.plugin.trackmate.gui.panels.ConfigureViewsPanel;
 import ij.IJ;
 
 import java.io.File;
@@ -55,7 +55,7 @@ public class GUIReader_TestDrive {
 		greader.loadFile(file);
 		trackmate = greader.getPlugin();
 		
-		wizard.showDescriptorPanelFor(DisplayerPanel.DESCRIPTOR);
+		wizard.showDescriptorPanelFor(ConfigureViewsPanel.DESCRIPTOR);
 		
 	}
 

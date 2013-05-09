@@ -32,12 +32,12 @@ import net.imglib2.multithreading.SimpleMultiThreading;
 import net.imglib2.type.numeric.real.DoubleType;
 import net.imglib2.util.Util;
 import fiji.plugin.trackmate.Dimension;
-import fiji.plugin.trackmate.FeatureFilter;
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.TrackMate;
+import fiji.plugin.trackmate.features.FeatureFilter;
 
 /**
  * List of static utilities for the {@link TrackMate} trackmate

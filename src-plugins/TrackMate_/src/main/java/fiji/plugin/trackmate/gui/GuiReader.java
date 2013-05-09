@@ -18,6 +18,16 @@ import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMate;
 import fiji.plugin.trackmate.detection.SpotDetectorFactory;
+import fiji.plugin.trackmate.gui.descriptors.DetectorChoiceDescriptor;
+import fiji.plugin.trackmate.gui.descriptors.DetectorConfigurationDescriptor;
+import fiji.plugin.trackmate.gui.descriptors.InitFilterDescriptor;
+import fiji.plugin.trackmate.gui.descriptors.SpotFilterDescriptor;
+import fiji.plugin.trackmate.gui.descriptors.TrackFilterDescriptor;
+import fiji.plugin.trackmate.gui.descriptors.TrackerChoiceDescriptor;
+import fiji.plugin.trackmate.gui.descriptors.TrackerConfigurationDescriptor;
+import fiji.plugin.trackmate.gui.descriptors.WizardPanelDescriptor;
+import fiji.plugin.trackmate.gui.panels.ConfigureViewsPanel;
+import fiji.plugin.trackmate.gui.panels.StartDialogPanel;
 import fiji.plugin.trackmate.io.TmXmlReader;
 import fiji.plugin.trackmate.io.TmXmlReader_v12;
 import fiji.plugin.trackmate.tracking.SpotTracker;
@@ -206,12 +216,12 @@ public class GuiReader {
 			detectorChoiceDescriptor.aboutToDisplayPanel();
 
 			// Instantiate descriptor for the detector configuration and update it
-			DetectorConfigurationPanelDescriptor detectConfDescriptor = new DetectorConfigurationPanelDescriptor();
+			DetectorConfigurationDescriptor detectConfDescriptor = new DetectorConfigurationDescriptor();
 			
 			detectConfDescriptor.setPlugin(trackmate);
 			detectConfDescriptor.setWizard(wizard);
 			detectConfDescriptor.updateComponent();
-			wizard.registerWizardDescriptor(DetectorConfigurationPanelDescriptor.DESCRIPTOR, detectConfDescriptor);
+			wizard.registerWizardDescriptor(DetectorConfigurationDescriptor.DESCRIPTOR, detectConfDescriptor);
 		}
 
 
@@ -220,7 +230,7 @@ public class GuiReader {
 			if (null == spots || spots.getNSpots(false) == 0) {
 				logger.log("Detected spots not found in the file.\n");
 				// No spots, so we stop here, and switch to the detector panel
-				targetDescriptor = DetectorConfigurationPanelDescriptor.DESCRIPTOR;
+				targetDescriptor = DetectorConfigurationDescriptor.DESCRIPTOR;
 				if (!imp.isVisible())
 					imp.show();
 				echoLoadingFinished();
@@ -302,17 +312,17 @@ public class GuiReader {
 		trackerChoiceDescriptor.setCurrentChoiceFromPlugin();
 
 		// Instantiate descriptor for the tracker configuration and update it
-		TrackerConfigurationPanelDescriptor trackerDescriptor = new TrackerConfigurationPanelDescriptor();
+		TrackerConfigurationDescriptor trackerDescriptor = new TrackerConfigurationDescriptor();
 		trackerDescriptor.setPlugin(trackmate);
 		trackerDescriptor.updateComponent(); // This will feed the new panel with the current settings content
 
-		wizard.registerWizardDescriptor(TrackerConfigurationPanelDescriptor.DESCRIPTOR, trackerDescriptor);
+		wizard.registerWizardDescriptor(TrackerConfigurationDescriptor.DESCRIPTOR, trackerDescriptor);
 
 		{ // Did we get tracks?
 			int nTracks = model.getTrackModel().getNTracks();
 			if (nTracks < 1) {
 				logger.log("No tracks found in the file.\n");
-				targetDescriptor = TrackerConfigurationPanelDescriptor.DESCRIPTOR;
+				targetDescriptor = TrackerConfigurationDescriptor.DESCRIPTOR;
 				displayer.render();
 				wizard.setDisplayer(displayer);
 				if (!imp.isVisible())
@@ -329,7 +339,7 @@ public class GuiReader {
 		 * At this level, we will find track filters and filtered tracks anyway.
 		 * We we can call it a day and exit the loading GUI
 		 */
-		targetDescriptor = DisplayerPanel.DESCRIPTOR;
+		targetDescriptor = ConfigureViewsPanel.DESCRIPTOR;
 		displayer.render();
 		wizard.setDisplayer(displayer);
 		if (!imp.isVisible())
@@ -340,7 +350,7 @@ public class GuiReader {
 		trackFilterDescriptor.aboutToDisplayPanel();
 
 		// Displayer descriptor
-		DisplayerPanel displayerPanel = (DisplayerPanel) wizard.getPanelDescriptorFor(DisplayerPanel.DESCRIPTOR);
+		ConfigureViewsPanel displayerPanel = (ConfigureViewsPanel) wizard.getPanelDescriptorFor(ConfigureViewsPanel.DESCRIPTOR);
 		displayerPanel.aboutToDisplayPanel();
 
 		echoLoadingFinished();

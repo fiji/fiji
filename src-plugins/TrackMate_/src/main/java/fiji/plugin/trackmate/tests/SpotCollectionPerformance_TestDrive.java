@@ -2,10 +2,10 @@ package fiji.plugin.trackmate.tests;
 
 import java.util.Random;
 
-import fiji.plugin.trackmate.FeatureFilter;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.SpotCollectionHashSet;
+import fiji.plugin.trackmate.features.FeatureFilter;
 
 public class SpotCollectionPerformance_TestDrive {
 

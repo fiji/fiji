@@ -3,7 +3,7 @@ package fiji.plugin.trackmate.action;
 import javax.swing.ImageIcon;
 
 import fiji.plugin.trackmate.TrackMate;
-import fiji.plugin.trackmate.gui.DisplayerPanel;
+import fiji.plugin.trackmate.gui.panels.ConfigureViewsPanel;
 import fiji.plugin.trackmate.visualization.threedviewer.SpotDisplayer3D;
 
 public class LinkNew3DViewerAction extends AbstractTMAction {
@@ -15,7 +15,7 @@ public class LinkNew3DViewerAction extends AbstractTMAction {
 			"<p>" +
 			"Useful to have synchronized 2D vs 3D views." +
 			"</html>" ;
-	public static final ImageIcon ICON = new ImageIcon(DisplayerPanel.class.getResource("images/page_white_link.png"));
+	public static final ImageIcon ICON = new ImageIcon(ConfigureViewsPanel.class.getResource("images/page_white_link.png"));
 	
 	public LinkNew3DViewerAction() {
 		this.icon = ICON;
@@ -28,7 +28,7 @@ public class LinkNew3DViewerAction extends AbstractTMAction {
 				logger.log("Rendering 3D overlay...\n");
 				SpotDisplayer3D newDisplayer = new SpotDisplayer3D(trackmate.getModel(), trackmate.getSettings());
 				newDisplayer.setRenderImageData(false);
-				DisplayerPanel displayerPanel = (DisplayerPanel) wizard.getPanelDescriptorFor(DisplayerPanel.DESCRIPTOR);
+				ConfigureViewsPanel displayerPanel = (ConfigureViewsPanel) wizard.getPanelDescriptorFor(ConfigureViewsPanel.DESCRIPTOR);
 				if (null != displayerPanel) {
 					displayerPanel.register(newDisplayer);
 					displayerPanel.updateDisplaySettings(newDisplayer.getDisplaySettings());

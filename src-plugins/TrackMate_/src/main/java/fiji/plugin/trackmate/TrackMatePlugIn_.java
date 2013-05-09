@@ -7,6 +7,7 @@ import fiji.plugin.trackmate.features.spot.SpotAnalyzer;
 import fiji.plugin.trackmate.features.spot.SpotAnalyzerFactory;
 import fiji.plugin.trackmate.gui.GuiUtils;
 import fiji.plugin.trackmate.gui.TrackMateGUIController;
+import fiji.plugin.trackmate.providers.SpotAnalyzerProvider;
 import ij.IJ;
 import ij.ImageJ;
 import ij.ImagePlus;

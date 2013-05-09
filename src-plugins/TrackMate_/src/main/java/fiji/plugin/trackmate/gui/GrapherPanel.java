@@ -1,7 +1,6 @@
 package fiji.plugin.trackmate.gui;
 
 import java.awt.BorderLayout;
-import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
@@ -23,30 +22,32 @@ import fiji.plugin.trackmate.features.SpotFeatureGrapher;
 import fiji.plugin.trackmate.features.TrackFeatureGrapher;
 import fiji.plugin.trackmate.features.edges.EdgeTimeLocationAnalyzer;
 import fiji.plugin.trackmate.features.track.TrackIndexAnalyzer;
+import fiji.plugin.trackmate.gui.panels.ActionListenablePanel;
+import fiji.plugin.trackmate.gui.panels.components.FeaturePlotSelectionPanel;
 
-public class GrapherPanel extends ActionListenablePanel implements WizardPanelDescriptor {
+public class GrapherPanel extends ActionListenablePanel {
 
 	private static final ImageIcon SPOT_ICON 		= new ImageIcon(GrapherPanel.class.getResource("images/SpotIcon_small.png"));
 	private static final ImageIcon EDGE_ICON 		= new ImageIcon(GrapherPanel.class.getResource("images/EdgeIcon_small.png"));
 	private static final ImageIcon TRACK_ICON 		= new ImageIcon(GrapherPanel.class.getResource("images/TrackIcon_small.png"));
 	
 	private static final long serialVersionUID = 1L;
-	public static final String DESCRIPTOR = "GrapherPanel";
 
-	private TrackMate trackmate;
+	private final TrackMate trackmate;
 	private JPanel panelSpot;
 	private JPanel panelEdges;
 	private JPanel panelTracks;
 	private FeaturePlotSelectionPanel spotFeatureSelectionPanel;
 	private FeaturePlotSelectionPanel edgeFeatureSelectionPanel;
 	private FeaturePlotSelectionPanel trackFeatureSelectionPanel;
-	private TrackMateWizard wizard;
 
 	/*
 	 * CONSTRUCTOR
 	 */
 
-	public GrapherPanel() {
+	public GrapherPanel(TrackMate trackmate) {
+		this.trackmate = trackmate;
+
 		setLayout(new BorderLayout(0, 0));
 
 		JTabbedPane tabbedPane = new JTabbedPane(JTabbedPane.TOP);
@@ -63,6 +64,8 @@ public class GrapherPanel extends ActionListenablePanel implements WizardPanelDe
 		panelTracks = new JPanel();
 		tabbedPane.addTab("Tracks", TRACK_ICON, panelTracks, null);
 		panelTracks.setLayout(new BorderLayout(0, 0));
+		
+		refresh();
 	}
 
 	private void refresh() {
@@ -145,56 +148,5 @@ public class GrapherPanel extends ActionListenablePanel implements WizardPanelDe
 		TrackFeatureGrapher grapher = new TrackFeatureGrapher(xFeature, yFeatures, trackmate.getModel(), trackmate.getSettings());
 		grapher.render();
 	}
-
-	/*
-	 * WIZARDPANELDESCRIPTOR METHODS	
-	 */
-
-	@Override
-	public void setWizard(TrackMateWizard wizard) {
-		this.wizard = wizard;
-	}
-
-	@Override
-	public void setPlugin(TrackMate trackmate) {
-		this.trackmate = trackmate; 
-		refresh();
-	}
-
-	@Override
-	public Component getComponent() {
-		return this;
-	}
-
-	@Override
-	public String getComponentID() {
-		return DESCRIPTOR;
-	}
-
-	@Override
-	public String getDescriptorID() {
-		return DESCRIPTOR;
-	}
-
-	@Override
-	public String getNextDescriptorID() {
-		return ActionChooserPanel.DESCRIPTOR;
-	}
-
-	@Override
-	public String getPreviousDescriptorID() {
-		return DisplayerPanel.DESCRIPTOR;
-	}
-
-	@Override
-	public void aboutToDisplayPanel() { }
-
-	@Override
-	public void displayingPanel() {
-		wizard.setNextButtonEnabled(true);
-	}
-
-	@Override
-	public void aboutToHidePanel() { }
 
 }

@@ -2,12 +2,12 @@ package fiji.plugin.trackmate.tests;
 
 import java.util.Iterator;
 
-import fiji.plugin.trackmate.DetectorProvider;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.TrackMate;
 import fiji.plugin.trackmate.detection.LogDetectorFactory;
+import fiji.plugin.trackmate.providers.DetectorProvider;
 import ij.ImagePlus;
 import ij.gui.NewImage;
 

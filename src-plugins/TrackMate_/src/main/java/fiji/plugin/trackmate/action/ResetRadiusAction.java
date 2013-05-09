@@ -9,11 +9,11 @@ import javax.swing.ImageIcon;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.TrackMate;
-import fiji.plugin.trackmate.gui.DisplayerPanel;
+import fiji.plugin.trackmate.gui.panels.ConfigureViewsPanel;
 
 public class ResetRadiusAction extends AbstractTMAction {
 
-	public static final ImageIcon ICON = new ImageIcon(DisplayerPanel.class.getResource("images/lightbulb_off.png"));
+	public static final ImageIcon ICON = new ImageIcon(ConfigureViewsPanel.class.getResource("images/lightbulb_off.png"));
 	public static final String NAME = "Reset radius to default value";
 	public static final String INFO_TEXT = "<html>" +
 				"This action resets the radius of all retained spots back to the value <br> " +

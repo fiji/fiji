@@ -6,14 +6,45 @@ import ij.ImagePlus;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.TrackMate;
+import fiji.plugin.trackmate.detection.ManualDetectorFactory;
+import fiji.plugin.trackmate.features.track.TrackIndexAnalyzer;
+import fiji.plugin.trackmate.gui.descriptors.ActionChooserDescriptor;
+import fiji.plugin.trackmate.gui.descriptors.ConfigureViewsDescriptor;
+import fiji.plugin.trackmate.gui.descriptors.DetectorChoiceDescriptor;
+import fiji.plugin.trackmate.gui.descriptors.DetectorConfigurationDescriptor;
+import fiji.plugin.trackmate.gui.descriptors.DetectorDescriptor;
+import fiji.plugin.trackmate.gui.descriptors.GrapherDescriptor;
+import fiji.plugin.trackmate.gui.descriptors.TrackerConfigurationDescriptor;
+import fiji.plugin.trackmate.gui.descriptors.ViewChoiceDescriptor;
+import fiji.plugin.trackmate.gui.descriptors.InitFilterDescriptor;
+import fiji.plugin.trackmate.gui.descriptors.LoadDescriptor;
+import fiji.plugin.trackmate.gui.descriptors.LogPanelDescriptor;
+import fiji.plugin.trackmate.gui.descriptors.SaveDescriptor;
+import fiji.plugin.trackmate.gui.descriptors.SpotFilterDescriptor;
+import fiji.plugin.trackmate.gui.descriptors.StartDialogDescriptor;
+import fiji.plugin.trackmate.gui.descriptors.TrackFilterDescriptor;
+import fiji.plugin.trackmate.gui.descriptors.TrackerChoiceDescriptor;
+import fiji.plugin.trackmate.gui.descriptors.TrackingDescriptor;
+import fiji.plugin.trackmate.gui.descriptors.WizardPanelDescriptor;
+import fiji.plugin.trackmate.gui.panels.StartDialogPanel;
+import fiji.plugin.trackmate.providers.ActionProvider;
+import fiji.plugin.trackmate.providers.DetectorProvider;
+import fiji.plugin.trackmate.providers.TrackerProvider;
+import fiji.plugin.trackmate.providers.ViewProvider;
 import fiji.plugin.trackmate.util.TMUtils;
+import fiji.plugin.trackmate.visualization.PerTrackFeatureColorGenerator;
+import fiji.plugin.trackmate.visualization.TrackMateModelView;
 
 public class TrackMateGUIController implements ActionListener {
 	
@@ -28,6 +59,28 @@ public class TrackMateGUIController implements ActionListener {
 	/** The GUI controlled by this controller.  */
 	private final TrackMateWizard gui;
 	private final TrackMateGUIModel guimodel;
+	
+	protected DetectorProvider detectorProvider;
+	protected ViewProvider viewProvider;
+	protected TrackerProvider trackerProvider;
+	protected ActionProvider actionProvider;
+
+	protected DetectorConfigurationDescriptor detectorConfigurationDescriptor;
+	protected DetectorChoiceDescriptor detectorChoiceDescriptor;
+	protected StartDialogDescriptor startDialoDescriptor;
+	protected DetectorDescriptor detectorDescriptor;
+	protected InitFilterDescriptor initFilterDescriptor;
+	protected ViewChoiceDescriptor viewChoiceDescriptor;
+	protected SpotFilterDescriptor spotFilterDescriptor;
+	protected TrackerChoiceDescriptor trackerChoiceDescriptor;
+	protected TrackerConfigurationDescriptor trackerConfigurationDescriptor;
+	protected TrackingDescriptor trackingDescriptor;
+	protected GrapherDescriptor grapherDescriptor;
+	protected TrackFilterDescriptor trackFilterDescriptor;
+	protected ConfigureViewsDescriptor configureViewsDescriptor;
+	protected ActionChooserDescriptor actionChooserDescriptor;
+	protected LogPanelDescriptor logPanelDescriptor;
+	
 
 
 	/*
@@ -51,10 +104,16 @@ public class TrackMateGUIController implements ActionListener {
 			}
 		}
 		
-		this.guimodel = new TrackMateGUIModel();
+		
 		this.gui = new TrackMateWizard(this);
 		this.logger = gui.getLogger();
 		this.trackmate = trackmate;
+		
+		createProviders();
+		createDescriptors();
+
+		this.guimodel = new TrackMateGUIModel();
+		guimodel.currentDescriptor = startDialoDescriptor;
 
 		trackmate.getModel().setLogger(logger);
 		gui.setVisible(true);
@@ -68,6 +127,7 @@ public class TrackMateGUIController implements ActionListener {
 	 * PUBLIC METHODS 
 	 */
 
+	
 	/**
 	 * Expose the {@link TrackMateWizard} instance controlled here.
 	 */
@@ -87,14 +147,240 @@ public class TrackMateGUIController implements ActionListener {
 	/*
 	 * PROTECTED METHODS
 	 */
+	
+	protected void createProviders() {
+		detectorProvider 	= new DetectorProvider(); 
+		viewProvider 		= new ViewProvider(trackmate.getModel(), trackmate.getSettings());
+		trackerProvider 	= new TrackerProvider(trackmate.getModel(), trackmate.getSettings());
+		actionProvider 		= new ActionProvider();
+	}
 
+	/**
+	 * Creates the map of next descriptor for each descriptor.
+	 */
+	protected void createDescriptors() {
+		
+		/*
+		 * Logging panel: receive message, share with the TrackMateModel
+		 */
+		LogPanel logPanel = gui.getLogPanel();
+		logPanelDescriptor = new LogPanelDescriptor(logPanel); 
+		
+		/*
+		 * Start panel
+		 */
+		startDialoDescriptor 		= new StartDialogDescriptor(trackmate);
+		
+		/*
+		 * Choose detector
+		 */
+		detectorChoiceDescriptor 	= new DetectorChoiceDescriptor(detectorProvider, trackmate);
+		
+		/*
+		 * Configure chosen detector
+		 */
+		detectorConfigurationDescriptor = new DetectorConfigurationDescriptor(detectorProvider, trackmate);
+		
+		/*
+		 * Execute and report detection progress
+		 */
+		detectorDescriptor 			= new DetectorDescriptor(logPanel, trackmate);
+		
+		/*
+		 * Initial spot filter: discard obvious spurious spot based on quality.
+		 */
+		initFilterDescriptor		= new InitFilterDescriptor(trackmate);
+		
+		/*
+		 * Select and render a view
+		 */
+		viewChoiceDescriptor		= new ViewChoiceDescriptor(viewProvider);
+		
+		/*
+		 * Spot filtering
+		 */
+		spotFilterDescriptor 		= new SpotFilterDescriptor(trackmate);
+		spotFilterDescriptor.getComponent().addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent ae) {
+				displaySettings.put(TrackMateModelView.KEY_SPOT_COLOR_FEATURE, spotFilterDescriptor.getComponent().getColorByFeature());
+			}
+		});
+		spotFilterDescriptor.getComponent().addChangeListener(new ChangeListener() {
+			@Override
+			public void stateChanged(ChangeEvent event) {
+				if (DEBUG) {
+					System.out.println("[TrackMateGUIControllaer] stateChanged caught in SpotFilterDescriptor.");
+				}
+				// We set the thresholds field of the model but do not touch its selected spot field yet.
+				trackmate.getSettings().setSpotFilters(spotFilterDescriptor.getComponent().getFeatureFilters());
+				trackmate.execSpotFiltering(false);
+			}
+		});
+		
+		/*
+		 * Choose a tracker
+		 */
+		trackerChoiceDescriptor		= new TrackerChoiceDescriptor(trackerProvider, trackmate);
+		
+		/*
+		 * Configure chosen tracker
+		 */
+		trackerConfigurationDescriptor = new TrackerConfigurationDescriptor(trackerProvider, trackmate);
+		
+		/*
+		 * Execute tracking
+		 */
+		trackingDescriptor			= new TrackingDescriptor(logPanel, trackerProvider, trackmate);
+		
+		/*
+		 * Track filtering 
+		 */
+		
+		trackFilterDescriptor		= new TrackFilterDescriptor(trackmate);
+		trackFilterDescriptor.getComponent().addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent event) {
+				PerTrackFeatureColorGenerator generator = new PerTrackFeatureColorGenerator(trackmate.getModel(), TrackIndexAnalyzer.TRACK_INDEX);
+				generator.setFeature(trackFilterDescriptor.getComponent().getColorByFeature());
+				displaySettings.put(TrackMateModelView.KEY_TRACK_COLORING, generator);
+			}
+		});
+		trackFilterDescriptor.getComponent().addChangeListener(new ChangeListener() {
+			@Override
+			public void stateChanged(ChangeEvent event) {
+				// We set the thresholds field of the model but do not touch its selected spot field yet.
+				trackmate.getSettings().setTrackFilters(trackFilterDescriptor.getComponent().getFeatureFilters());
+				trackmate.execTrackFiltering(false);
+			}
+		});
+		
+		/*
+		 * Finished, let's change the display settings.
+		 */
+		configureViewsDescriptor	= new ConfigureViewsDescriptor(trackmate);
+		
+		/*
+		 * Export and graph features.
+		 */
+		grapherDescriptor			= new GrapherDescriptor(trackmate);
+		
+		/*
+		 * Offer to take some actions on the data.
+		 */
+		actionChooserDescriptor		= new ActionChooserDescriptor(actionProvider, trackmate);
+	}
+	
+	protected WizardPanelDescriptor nextDescriptor(WizardPanelDescriptor currentDescriptor) {
+
+		if (currentDescriptor == startDialoDescriptor) {
+			return  detectorChoiceDescriptor;
+			
+		} else if (currentDescriptor == detectorChoiceDescriptor) {
+			return detectorConfigurationDescriptor;
+		} else if (currentDescriptor == detectorConfigurationDescriptor) {
+			
+			if (trackmate.getSettings().detectorFactory.getKey().equals(ManualDetectorFactory.DETECTOR_KEY)) {
+				return viewChoiceDescriptor;
+			} else {
+				return detectorDescriptor;
+			}
+
+		} else if (currentDescriptor == detectorDescriptor) {
+			return initFilterDescriptor;
+			
+		} else if (currentDescriptor == initFilterDescriptor) {
+			return viewChoiceDescriptor;
+			
+		} else if (currentDescriptor == viewChoiceDescriptor) {
+			return spotFilterDescriptor;
+			
+		} else if (currentDescriptor == spotFilterDescriptor) {
+			return trackerChoiceDescriptor;
+			
+		} else if (currentDescriptor == trackerChoiceDescriptor) {
+			return trackerConfigurationDescriptor;
+			
+		} else if (currentDescriptor == trackerConfigurationDescriptor) {
+			return trackingDescriptor;
+			
+		} else if (currentDescriptor == trackingDescriptor) {
+			return trackFilterDescriptor;
+			
+		} else if (currentDescriptor == trackFilterDescriptor) {
+			return configureViewsDescriptor;
+			
+		} else if (currentDescriptor == configureViewsDescriptor) {
+			return grapherDescriptor;
+			
+		} else if (currentDescriptor == grapherDescriptor) {
+			return actionChooserDescriptor;
+			
+		} else if (currentDescriptor == actionChooserDescriptor) {
+			return null;
+			
+		} else {
+			throw new IllegalArgumentException("Next descriptor for " + currentDescriptor + " is unknown.");
+		}
+	}
+	
+	protected  WizardPanelDescriptor previousDescriptor(WizardPanelDescriptor currentDescriptor) {
+		
+		if (currentDescriptor == startDialoDescriptor) {
+			return null;
+			
+		} else if (currentDescriptor == detectorChoiceDescriptor) {
+			return startDialoDescriptor;
+			
+		} else if (currentDescriptor == detectorConfigurationDescriptor) {
+			return detectorChoiceDescriptor;
+			
+		} else if (currentDescriptor == detectorDescriptor) {
+			return detectorConfigurationDescriptor;
+			
+		} else if (currentDescriptor == initFilterDescriptor) {
+			return detectorDescriptor;
+			
+		} else if (currentDescriptor == viewChoiceDescriptor) {
+			return detectorConfigurationDescriptor;
+			
+		} else if (currentDescriptor == spotFilterDescriptor) {
+			return viewChoiceDescriptor;
+			
+		} else if (currentDescriptor == trackerChoiceDescriptor) {
+			return spotFilterDescriptor;
+			
+		} else if (currentDescriptor == trackerConfigurationDescriptor) {
+			return trackerChoiceDescriptor;
+			
+		} else if (currentDescriptor == trackingDescriptor) {
+			return trackerConfigurationDescriptor;
+			
+		} else if (currentDescriptor == trackFilterDescriptor) {
+			return trackerConfigurationDescriptor;
+			
+		} else if (currentDescriptor == configureViewsDescriptor) {
+			return trackFilterDescriptor;
+			
+		} else if (currentDescriptor == grapherDescriptor) {
+			return configureViewsDescriptor;
+			
+		} else if (currentDescriptor == actionChooserDescriptor) {
+			return grapherDescriptor;
+			
+		} else {
+			throw new IllegalArgumentException("Previous descriptor for " + currentDescriptor + " is unknown.");
+		}
+	}
+
+	
+	
 	/**
 	 * Display the first panel
 	 */
 	protected void init() {
-		// We need to listen to events happening on the DisplayerPanel
-		DisplayerPanel displayerPanel = (DisplayerPanel) gui.getPanelDescriptorFor(DisplayerPanel.DESCRIPTOR);
-		displayerPanel.addActionListener(this);
+		// We need to listen to events happening on the View configuration
+		configureViewsDescriptor.getComponent().addActionListener(this);
 
 		// Get start panel id
 		gui.setPreviousButtonEnabled(false);
@@ -116,41 +402,6 @@ public class TrackMateGUIController implements ActionListener {
 		panelDescriptor.displayingPanel();  
 	}
 
-	/**
-	 * Hook for subclassers.
-	 * <p>
-	 * Create the list of {@link WizardPanelDescriptor}s that will be displayed in this GUI.
-	 * By extending this method to return another list, you can add, remove or change 
-	 * some panels. 
-	 */
-	protected List<WizardPanelDescriptor> createWizardPanelDescriptorList() {
-		List<WizardPanelDescriptor> descriptors = new ArrayList<WizardPanelDescriptor>(14);
-		
-		
-		descriptors.add(new StartDialogPanel());
-		descriptors.add(new DetectorChoiceDescriptor());
-		//		descriptors.add(new DetectorConfigurationPanelDescriptor()); // will be instantiated on the fly, see DetectorChoiceDescriptor
-		descriptors.add(new DetectorDescriptor());
-		descriptors.add(new InitFilterDescriptor());
-		descriptors.add(new DisplayerChoiceDescriptor());
-		descriptors.add(new LaunchDisplayerDescriptor());
-		descriptors.add(new SpotFilterDescriptor());
-		descriptors.add(new TrackerChoiceDescriptor());
-		//		descriptors.add(new TrackerConfigurationPanelDescriptor());  // will be instantiated on the fly, see TrackerChoiceDescriptor
-		descriptors.add(new TrackingDescriptor());
-		descriptors.add(new TrackFilterDescriptor());
-		descriptors.add(new DisplayerPanel());
-		descriptors.add(new GrapherPanel());
-		descriptors.add(ActionChooserPanel.instantiateForPlugin(trackmate));
-
-		descriptors.add(new LoadDescriptor());
-		descriptors.add(new SaveDescriptor());
-		
-		WizardPanelDescriptor logPanelDescriptor = new LogPanelDescriptor(gui.getLogPanel());
-		descriptors.add(logPanelDescriptor);
-		return descriptors;
-	}
-
 	/*
 	 * ACTION LISTENER
 	 */
@@ -158,7 +409,7 @@ public class TrackMateGUIController implements ActionListener {
 	@Override
 	public void actionPerformed(ActionEvent event) {
 		if (DEBUG)
-			System.out.println("[TrackMateFrameController] Caught event "+event);
+			System.out.println("[TrackMateGUIController] Caught event "+event);
 
 		if (event == gui.NEXT_BUTTON_PRESSED && guimodel.actionFlag) {
 
@@ -241,16 +492,17 @@ public class TrackMateGUIController implements ActionListener {
 		try {
 
 			// Execute leave action of the old panel
-			WizardPanelDescriptor oldDescriptor = gui.getCurrentPanelDescriptor();
+			WizardPanelDescriptor oldDescriptor = guimodel.currentDescriptor;
 			if (oldDescriptor != null) {
 				oldDescriptor.aboutToHidePanel();
 			}
 
-			String id = oldDescriptor.getNextDescriptorID();
-			WizardPanelDescriptor panelDescriptor  = gui.getPanelDescriptorFor(id);
+			// Find a store new one to display
+			WizardPanelDescriptor panelDescriptor  = nextDescriptor(oldDescriptor);
+			guimodel.currentDescriptor = panelDescriptor;
 
 			// Check if the new panel has a next panel. If not, disable the next button
-			if (null == panelDescriptor.getNextDescriptorID()) {
+			if (null == nextDescriptor(panelDescriptor)) {
 				gui.setNextButtonEnabled(false);
 			}
 
@@ -261,28 +513,27 @@ public class TrackMateGUIController implements ActionListener {
 			panelDescriptor.aboutToDisplayPanel();
 
 			// Display matching panel
-			gui.showDescriptorPanelFor(id);
+			gui.show(panelDescriptor);
 
 			//  Show the panel in the dialog, and execute action after display
 			panelDescriptor.displayingPanel();
 
 		} finally {
 
-
+			gui.setNextButtonEnabled(true);
 		}
 
 	}
 
 	private void previous() {
 		// Move to previous panel, but do not execute its actions
-		WizardPanelDescriptor descriptor = gui.getCurrentPanelDescriptor();
-		descriptor.aboutToHidePanel();
-		String backPanelDescriptor = descriptor.getPreviousDescriptorID();        
-		gui.showDescriptorPanelFor(backPanelDescriptor);
-
+		WizardPanelDescriptor olDescriptor = guimodel.currentDescriptor;
+		WizardPanelDescriptor panelDescriptor = previousDescriptor(olDescriptor);
+		gui.show(panelDescriptor);
+		guimodel.currentDescriptor = panelDescriptor;
+		
 		// Check if the new panel has a next panel. If not, disable the next button
-		WizardPanelDescriptor previousPanel = gui.getPanelDescriptorFor(backPanelDescriptor);
-		if (null == previousPanel.getPreviousDescriptorID()) {
+		if (null == previousDescriptor(panelDescriptor)) {
 			gui.setPreviousButtonEnabled(false);
 		}
 

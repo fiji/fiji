@@ -2,11 +2,11 @@ package fiji.plugin.trackmate.tests;
 
 import java.io.File;
 
-import fiji.plugin.trackmate.FeatureFilter;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMate;
+import fiji.plugin.trackmate.features.FeatureFilter;
 import fiji.plugin.trackmate.io.TmXmlReader;
 
 public class SpotFilteringPerf_TestDrive {

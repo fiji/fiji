@@ -6,8 +6,8 @@ import java.util.Map;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
 import fiji.plugin.trackmate.Dimension;
-import fiji.plugin.trackmate.SpotAnalyzerProvider;
 import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.providers.SpotAnalyzerProvider;
 
 /** 
  * Interface for factories that can generate a {@link SpotAnalyzer} configured

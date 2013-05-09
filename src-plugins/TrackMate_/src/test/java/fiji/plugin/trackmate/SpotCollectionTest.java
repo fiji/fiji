@@ -17,6 +17,8 @@ import java.util.Random;
 import org.junit.Before;
 import org.junit.Test;
 
+import fiji.plugin.trackmate.features.FeatureFilter;
+
 public class SpotCollectionTest {
 
 	private static final int N_SPOTS = 100;

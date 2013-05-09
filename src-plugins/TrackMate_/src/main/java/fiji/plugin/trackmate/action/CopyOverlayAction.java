@@ -9,15 +9,15 @@ import javax.swing.ImageIcon;
 import javax.swing.JFrame;
 
 import fiji.plugin.trackmate.TrackMate;
-import fiji.plugin.trackmate.gui.DisplayerPanel;
-import fiji.plugin.trackmate.gui.ImagePlusChooser;
+import fiji.plugin.trackmate.gui.panels.ConfigureViewsPanel;
+import fiji.plugin.trackmate.gui.panels.components.ImagePlusChooser;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
 import fiji.plugin.trackmate.visualization.hyperstack.HyperStackDisplayer;
 import fiji.plugin.trackmate.visualization.threedviewer.SpotDisplayer3D;
 
 public class CopyOverlayAction extends AbstractTMAction {
 
-	public static final ImageIcon ICON = new ImageIcon(DisplayerPanel.class.getResource("images/page_copy.png"));
+	public static final ImageIcon ICON = new ImageIcon(ConfigureViewsPanel.class.getResource("images/page_copy.png"));
 	public static final String NAME = "Copy overlay to...";
 	public static final String INFO_TEXT = "<html>" +
 			"This action copies the overlay (spots and tracks) to a new existing ImageJ window <br> " +
@@ -57,7 +57,7 @@ public class CopyOverlayAction extends AbstractTMAction {
 							}
 							newDisplayer.render();
 							
-							final DisplayerPanel newDisplayerPanel = new DisplayerPanel();
+							final ConfigureViewsPanel newDisplayerPanel = new ConfigureViewsPanel();
 							newDisplayerPanel.setPlugin(trackmate);
 							newDisplayerPanel.register(newDisplayer);
 							JFrame newFrame = new JFrame(); 

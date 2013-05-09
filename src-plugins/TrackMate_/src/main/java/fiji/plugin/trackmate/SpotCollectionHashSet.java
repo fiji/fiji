@@ -12,6 +12,8 @@ import java.util.TreeMap;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import fiji.plugin.trackmate.features.FeatureFilter;
+
 import mpicbg.imglib.multithreading.SimpleMultiThreading;
 import net.imglib2.algorithm.MultiThreaded;
 

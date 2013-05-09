@@ -1,5 +1,7 @@
 package fiji.plugin.trackmate.gui;
 
+import fiji.plugin.trackmate.gui.descriptors.WizardPanelDescriptor;
+
 public class TrackMateGUIModel {
 
 

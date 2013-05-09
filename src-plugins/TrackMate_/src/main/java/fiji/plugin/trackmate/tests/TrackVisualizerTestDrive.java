@@ -1,12 +1,12 @@
 package fiji.plugin.trackmate.tests;
 
-import fiji.plugin.trackmate.FeatureFilter;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMate;
+import fiji.plugin.trackmate.features.FeatureFilter;
 import fiji.plugin.trackmate.features.track.TrackBranchingAnalyzer;
-import fiji.plugin.trackmate.gui.DisplayerPanel;
 import fiji.plugin.trackmate.gui.GrapherPanel;
+import fiji.plugin.trackmate.gui.panels.ConfigureViewsPanel;
 import fiji.plugin.trackmate.io.TmXmlReader;
 import fiji.plugin.trackmate.visualization.hyperstack.HyperStackDisplayer;
 import fiji.plugin.trackmate.visualization.threedviewer.SpotDisplayer3D;
@@ -86,7 +86,7 @@ public class TrackVisualizerTestDrive {
 		trackScheme.render();
 		
 		// Show control panel
-		DisplayerPanel panel = new DisplayerPanel();
+		ConfigureViewsPanel panel = new ConfigureViewsPanel();
 		panel.setPlugin(trackmate);
 		panel.register(trackScheme);
 		panel.register(displayer);
