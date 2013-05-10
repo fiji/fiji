@@ -663,7 +663,7 @@ public class Multi_View_Deconvolution implements PlugIn
 			{		
 				LRFFT.cuda.getNameDeviceCUDA( i, name );
 				
-				devices[ i ] = "GPU " + (i+1) + "/" + numDevices  + ": ";
+				devices[ i ] = "GPU_" + (i+1) + "/" + numDevices  + ": ";
 				for ( final byte b : name )
 					if ( b != 0 )
 						devices[ i ] = devices[ i ] + (char)b;
@@ -672,7 +672,7 @@ public class Multi_View_Deconvolution implements PlugIn
 				
 				final long mem = LRFFT.cuda.getMemDeviceCUDA( i );	
 				devices[ i ] = devices[ i ] + " (" + mem/(1024*1024) + " MB, CUDA capability " + LRFFT.cuda.getCUDAcomputeCapabilityMajorVersion( i )  + "." + LRFFT.cuda.getCUDAcomputeCapabilityMinorVersion( i ) + ")";
-				devices[ i ] = devices[ i ].replaceAll( " ", "_" );
+				//devices[ i ] = devices[ i ].replaceAll( " ", "_" );
 			}
 			
 			// get the CPU specs
