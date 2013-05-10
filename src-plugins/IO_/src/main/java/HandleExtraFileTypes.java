@@ -380,7 +380,14 @@ public class HandleExtraFileTypes extends ImagePlus implements PlugIn {
         {
             return tryPlugIn("edu.utexas.clm.archipelago.Fiji_Archipelago", path);
         }
-        
+
+        //Samuel Inverso: open raw files with raw file plugin 
+        if (name.endsWith(".raw"))
+        {
+            return tryPlugIn("ij.plugin.Raw", path);
+        }
+       
+       
 		// ****************** MODIFY HERE ******************
 		// do what ever you have to do to recognise your own file type
 		// and then call appropriate plugin using the above as models
