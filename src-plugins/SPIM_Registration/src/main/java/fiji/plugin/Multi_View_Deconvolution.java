@@ -663,7 +663,7 @@ public class Multi_View_Deconvolution implements PlugIn
 			{		
 				LRFFT.cuda.getNameDeviceCUDA( i, name );
 				
-				devices[ i ] = "GPU_" + (i+1) + "/" + numDevices  + ": ";
+				devices[ i ] = "GPU_" + (i+1) + " of " + numDevices  + ": ";
 				for ( final byte b : name )
 					if ( b != 0 )
 						devices[ i ] = devices[ i ] + (char)b;
