@@ -128,14 +128,16 @@ public class User_Plugins implements PlugIn {
 	private static void overrideCommands() {
 		if (!Menus.getCommands().containsKey("Install PlugIn...")) {
 			Menus.getCommands().put("Install PlugIn...", "fiji.PlugInInstaller");
-			Menu plugins = getMenu("Plugins");
-			if (plugins != null)
-				for (int i = 0; i < plugins.getItemCount(); i++)
-					if (plugins.getItem(i).getLabel().equals("-")) {
-						plugins.insert("Install PlugIn...", i);
-						plugins.getItem(i).addActionListener(IJ.getInstance());
-						break;
-					}
+			if (IJ.getInstance() != null) {
+				Menu plugins = getMenu("Plugins");
+				if (plugins != null)
+					for (int i = 0; i < plugins.getItemCount(); i++)
+						if (plugins.getItem(i).getLabel().equals("-")) {
+							plugins.insert("Install PlugIn...", i);
+							plugins.getItem(i).addActionListener(IJ.getInstance());
+							break;
+						}
+			}
 		}
 		/* make sure "Update Menus" runs _this_ plugin */
 		Menus.getCommands().put("Update Menus",
