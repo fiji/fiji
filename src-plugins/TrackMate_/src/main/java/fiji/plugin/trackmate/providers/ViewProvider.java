@@ -1,11 +1,20 @@
 package fiji.plugin.trackmate.providers;
 
+import ij.ImagePlus;
+import ij3d.Content;
+import ij3d.ContentCreator;
+import ij3d.Image3DUniverse;
+
 import java.util.ArrayList;
 import java.util.List;
 
+import net.imglib2.exception.ImgLibException;
+
+import fiji.plugin.trackmate.SelectionModel;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.TrackMate;
 import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.util.TMUtils;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
 import fiji.plugin.trackmate.visualization.hyperstack.HyperStackDisplayer;
 import fiji.plugin.trackmate.visualization.threedviewer.SpotDisplayer3D;
@@ -17,6 +26,7 @@ public class ViewProvider {
 	protected List<String> names;
 	protected final TrackMateModel model;
 	protected final Settings settings;
+	protected final SelectionModel selectionModel;
 
 	/*
 	 * BLANK CONSTRUCTOR
@@ -31,9 +41,10 @@ public class ViewProvider {
 	 * factory so that it is registered with the custom views and provide this 
 	 * extended factory to the {@link TrackMate} trackmate.
 	 */
-	public ViewProvider(TrackMateModel model, Settings settings) {
+	public ViewProvider(TrackMateModel model, Settings settings, SelectionModel selectionModel) {
 		this.model = model;
 		this.settings = settings;
+		this.selectionModel = selectionModel;
 		registerViews();
 	}
 
@@ -58,9 +69,37 @@ public class ViewProvider {
 	 */
 	public TrackMateModelView getView(String key) {
 		if (key == HyperStackDisplayer.NAME) {
-			return new HyperStackDisplayer(model, settings);
+
+			ImagePlus imp = settings.imp;
+			return new HyperStackDisplayer(model, selectionModel, imp);
+			
 		} else if (key == SpotDisplayer3D.NAME) {
-			return new SpotDisplayer3D(model, settings);
+			
+
+			Image3DUniverse universe = new Image3DUniverse();
+			ImagePlus imp = settings.imp;
+			if (null != imp) {
+				//			if (!settings.imp.isVisible())
+				//				settings.imp.show();
+				ImagePlus[] images;
+				try {
+					images = TMUtils.makeImageForViewer(settings);
+					final Content imageContent = ContentCreator.createContent(
+							imp.getShortTitle(), 
+							images, 
+							Content.VOLUME, 
+							SpotDisplayer3D.DEFAULT_RESAMPLING_FACTOR, 
+							0,
+							null, 
+							SpotDisplayer3D.DEFAULT_THRESHOLD, 
+							new boolean[] {true, true, true});
+					universe.addContentLater(imageContent);	
+				} catch (ImgLibException e) {
+					e.printStackTrace();
+				}
+			}
+			
+			return new SpotDisplayer3D(model, selectionModel, universe);
 		} else {
 			return null;
 		}

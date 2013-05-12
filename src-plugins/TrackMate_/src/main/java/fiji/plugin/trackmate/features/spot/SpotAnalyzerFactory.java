@@ -1,12 +1,9 @@
 package fiji.plugin.trackmate.features.spot;
 
-import java.util.List;
-import java.util.Map;
-
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
-import fiji.plugin.trackmate.Dimension;
 import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.features.FeatureAnalyzer;
 import fiji.plugin.trackmate.providers.SpotAnalyzerProvider;
 
 /** 
@@ -22,7 +19,7 @@ import fiji.plugin.trackmate.providers.SpotAnalyzerProvider;
  * 
  * @author Jean-Yves Tinevez - 2012
  */
-public interface SpotAnalyzerFactory<T extends RealType<T> & NativeType<T>> {
+public interface SpotAnalyzerFactory<T extends RealType<T> & NativeType<T>> extends FeatureAnalyzer {
 	
 	/**
 	 * @return  a configured {@link SpotAnalyzer} ready to operate on the given frame
@@ -35,28 +32,6 @@ public interface SpotAnalyzerFactory<T extends RealType<T> & NativeType<T>> {
 	 */
 	public SpotAnalyzer<T> getAnalyzer(int frame, int channel);
 	
-	/** @return a unique String identifier for this factory. */
-	public String getKey();
 	
-	/**
-	 * @return  the list of features this factory analyzers can compute.
-	 */
-	public List<String> getFeatures();
-	
-	/**
-	 * @return the map of short names for any feature the analyzers
-	 * can compute.
-	 */
-	public Map<String, String> getFeatureShortNames();
-	
-	/**
-	 * @return the map of names for any feature this factory analyzers can compute.
-	 */
-	public Map<String, String> getFeatureNames();
-	
-	/**
-	 * @return the map of feature dimension this factory analyzers can compute.
-	 */
-	public Map<String, Dimension> getFeatureDimensions();
 
 }

@@ -35,10 +35,10 @@ public class TrackSpeedStatisticsAnalyzer implements TrackAnalyzer, MultiThreade
 	//	public static final String 		TRACK_SPEED_KURTOSIS = "TRACK_SPEED_KURTOSIS";
 	//	public static final String 		TRACK_SPEED_SKEWNESS = "TRACK_SPEED_SKEWNESS";
 
-	public static final List<String> FEATURES = new ArrayList<String>(5);
-	public static final Map<String, String> FEATURE_NAMES = new HashMap<String, String>(5);
-	public static final Map<String, String> FEATURE_SHORT_NAMES = new HashMap<String, String>(5);
-	public static final Map<String, Dimension> FEATURE_DIMENSIONS = new HashMap<String, Dimension>(5);
+	private static final List<String> FEATURES = new ArrayList<String>(5);
+	private static final Map<String, String> FEATURE_NAMES = new HashMap<String, String>(5);
+	private static final Map<String, String> FEATURE_SHORT_NAMES = new HashMap<String, String>(5);
+	private static final Map<String, Dimension> FEATURE_DIMENSIONS = new HashMap<String, Dimension>(5);
 
 	static {
 		FEATURES.add(TRACK_MEAN_SPEED);
@@ -208,7 +208,27 @@ public class TrackSpeedStatisticsAnalyzer implements TrackAnalyzer, MultiThreade
 	};
 	
 	@Override
-	public String toString() {
+	public String getKey() {
 		return KEY;
+	}
+
+	@Override
+	public List<String> getFeatures() {
+		return FEATURES;
+	}
+
+	@Override
+	public Map<String, String> getFeatureShortNames() {
+		return FEATURE_SHORT_NAMES;
+	}
+
+	@Override
+	public Map<String, String> getFeatureNames() {
+		return FEATURE_NAMES;
+	}
+
+	@Override
+	public Map<String, Dimension> getFeatureDimensions() {
+		return FEATURE_DIMENSIONS;
 	}
 }

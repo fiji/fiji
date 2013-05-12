@@ -17,7 +17,6 @@ import javax.swing.JLabel;
 import javax.swing.JList;
 
 import fiji.plugin.trackmate.Logger;
-import fiji.plugin.trackmate.TrackMate;
 import fiji.plugin.trackmate.action.TrackMateAction;
 import fiji.plugin.trackmate.gui.LogPanel;
 import fiji.plugin.trackmate.gui.TrackMateWizard;
@@ -31,8 +30,6 @@ public class ActionChooserPanel {
 	public final ActionEvent ACTION_FINISHED = new ActionEvent(this, 1, "ActionFinished");
 	private LogPanel logPanel;
 	private Logger logger;
-	private TrackMateWizard wizard;
-	private TrackMate trackmate;
 	private List<ImageIcon> icons;
 	private final ListChooserPanel panel;
 	private final ActionProvider actionProvider;
@@ -41,7 +38,7 @@ public class ActionChooserPanel {
 	 * CONSTRUCTORS
 	 */
 	
-	public ActionChooserPanel(final ActionProvider actionProvider, final TrackMate trackmate) {
+	public ActionChooserPanel(final ActionProvider actionProvider) {
 		
 		List<String> actions = actionProvider.getAvailableActions();
 		List<String> infoTexts = new ArrayList<String>(actions.size());
@@ -88,11 +85,11 @@ public class ActionChooserPanel {
 						try {
 							executeButton.setEnabled(false);
 							panel.fireAction(ACTION_STARTED);
-							String actionName = panel.getChoice();
+							int actionIndex = panel.getChoice();
+							String actionName = actionProvider.getAvailableActions().get(actionIndex);
 							TrackMateAction action = actionProvider.getAction(actionName);
 							action.setLogger(logger);
-							action.setWizard(wizard);
-							action.execute(trackmate);
+							action.execute();
 							panel.fireAction(ACTION_FINISHED);
 						} finally {
 							executeButton.setEnabled(true);

@@ -18,11 +18,14 @@ import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMate;
+import fiji.plugin.trackmate.gui.TrackMateGUIController;
 import fiji.plugin.trackmate.gui.TrackMateWizard;
 import fiji.plugin.trackmate.io.IOUtils;
 import fiji.plugin.trackmate.util.TMUtils;
 
 public class ExportTracksToXML extends AbstractTMAction {
+
+
 
 	public static final ImageIcon ICON = new ImageIcon(TrackMateWizard.class.getResource("images/page_save.png"));
 	public static final String NAME = "Export tracks to XML file";
@@ -44,7 +47,8 @@ public class ExportTracksToXML extends AbstractTMAction {
 	 * CONSTRUCTOR
 	 */
 
-	public ExportTracksToXML() {
+	public ExportTracksToXML(TrackMate trackmate, TrackMateGUIController controller) {
+		super(trackmate, controller);
 		this.icon = ICON;
 	}
 
@@ -53,7 +57,7 @@ public class ExportTracksToXML extends AbstractTMAction {
 	 */
 
 	@Override
-	public void execute(TrackMate trackmate) {
+	public void execute() {
 
 		logger.log("Exporting tracks to simple XML format.\n");
 		final TrackMateModel model = trackmate.getModel();
@@ -81,7 +85,7 @@ public class ExportTracksToXML extends AbstractTMAction {
 		} catch (NullPointerException npe) {
 			file = new File(folder.getPath() + File.separator + "Tracks.xml");
 		}
-		file = IOUtils.askForFile(file, wizard, logger);
+		file = IOUtils.askForFile(file, controller.getWizard(), logger);
 		if (null == file) {
 			return;
 		}
@@ -114,9 +118,9 @@ public class ExportTracksToXML extends AbstractTMAction {
 		Element content = new Element(CONTENT_KEY);
 		
 		content.setAttribute(NTRACKS_ATT, ""+model.getTrackModel().getNFilteredTracks());
-		content.setAttribute(PHYSUNIT_ATT, settings.spaceUnits);
+		content.setAttribute(PHYSUNIT_ATT, model.getSpaceUnits());
 		content.setAttribute(FRAMEINTERVAL_ATT, ""+settings.dt);
-		content.setAttribute(FRAMEINTERVALUNIT_ATT, ""+settings.timeUnits);
+		content.setAttribute(FRAMEINTERVALUNIT_ATT, ""+model.getTimeUnits());
 		content.setAttribute(DATE_ATT, TMUtils.getCurrentTimeString());
 		content.setAttribute(FROM_ATT, TrackMate.PLUGIN_NAME_STR + " v" + TrackMate.PLUGIN_NAME_VERSION);
 

@@ -3,9 +3,16 @@ package fiji.plugin.trackmate.io;
 import static fiji.plugin.trackmate.io.IOUtils.readBooleanAttribute;
 import static fiji.plugin.trackmate.io.IOUtils.readDoubleAttribute;
 import static fiji.plugin.trackmate.io.IOUtils.readIntAttribute;
+import static fiji.plugin.trackmate.io.TmXmlKeys.CROP_ELEMENT_KEY;
+import static fiji.plugin.trackmate.io.TmXmlKeys.CROP_TEND_ATTRIBUTE_NAME;
+import static fiji.plugin.trackmate.io.TmXmlKeys.CROP_TSTART_ATTRIBUTE_NAME;
+import static fiji.plugin.trackmate.io.TmXmlKeys.CROP_XEND_ATTRIBUTE_NAME;
+import static fiji.plugin.trackmate.io.TmXmlKeys.CROP_XSTART_ATTRIBUTE_NAME;
+import static fiji.plugin.trackmate.io.TmXmlKeys.CROP_YEND_ATTRIBUTE_NAME;
+import static fiji.plugin.trackmate.io.TmXmlKeys.CROP_YSTART_ATTRIBUTE_NAME;
+import static fiji.plugin.trackmate.io.TmXmlKeys.CROP_ZEND_ATTRIBUTE_NAME;
+import static fiji.plugin.trackmate.io.TmXmlKeys.CROP_ZSTART_ATTRIBUTE_NAME;
 import static fiji.plugin.trackmate.io.TmXmlKeys.DETECTOR_SETTINGS_ELEMENT_KEY;
-import static fiji.plugin.trackmate.io.TmXmlKeys.FILTERED_SPOT_COLLECTION_ELEMENT_KEY;
-import static fiji.plugin.trackmate.io.TmXmlKeys.FILTERED_SPOT_ELEMENT_KEY;
 import static fiji.plugin.trackmate.io.TmXmlKeys.FILTERED_TRACK_ELEMENT_KEY;
 import static fiji.plugin.trackmate.io.TmXmlKeys.FILTER_ABOVE_ATTRIBUTE_NAME;
 import static fiji.plugin.trackmate.io.TmXmlKeys.FILTER_ELEMENT_KEY;
@@ -20,31 +27,23 @@ import static fiji.plugin.trackmate.io.TmXmlKeys.IMAGE_NFRAMES_ATTRIBUTE_NAME;
 import static fiji.plugin.trackmate.io.TmXmlKeys.IMAGE_NSLICES_ATTRIBUTE_NAME;
 import static fiji.plugin.trackmate.io.TmXmlKeys.IMAGE_PIXEL_HEIGHT_ATTRIBUTE_NAME;
 import static fiji.plugin.trackmate.io.TmXmlKeys.IMAGE_PIXEL_WIDTH_ATTRIBUTE_NAME;
-import static fiji.plugin.trackmate.io.TmXmlKeys.IMAGE_SPATIAL_UNITS_ATTRIBUTE_NAME;
 import static fiji.plugin.trackmate.io.TmXmlKeys.IMAGE_TIME_INTERVAL_ATTRIBUTE_NAME;
-import static fiji.plugin.trackmate.io.TmXmlKeys.IMAGE_TIME_UNITS_ATTRIBUTE_NAME;
 import static fiji.plugin.trackmate.io.TmXmlKeys.IMAGE_VOXEL_DEPTH_ATTRIBUTE_NAME;
 import static fiji.plugin.trackmate.io.TmXmlKeys.IMAGE_WIDTH_ATTRIBUTE_NAME;
 import static fiji.plugin.trackmate.io.TmXmlKeys.INITIAL_SPOT_FILTER_ELEMENT_KEY;
 import static fiji.plugin.trackmate.io.TmXmlKeys.LOG_ELEMENT_KEY;
+import static fiji.plugin.trackmate.io.TmXmlKeys.MODEL_ELEMENT_KEY;
 import static fiji.plugin.trackmate.io.TmXmlKeys.PLUGIN_VERSION_ATTRIBUTE_NAME;
 import static fiji.plugin.trackmate.io.TmXmlKeys.SETTINGS_ELEMENT_KEY;
-import static fiji.plugin.trackmate.io.TmXmlKeys.SETTINGS_TEND_ATTRIBUTE_NAME;
-import static fiji.plugin.trackmate.io.TmXmlKeys.SETTINGS_TSTART_ATTRIBUTE_NAME;
-import static fiji.plugin.trackmate.io.TmXmlKeys.SETTINGS_XEND_ATTRIBUTE_NAME;
-import static fiji.plugin.trackmate.io.TmXmlKeys.SETTINGS_XSTART_ATTRIBUTE_NAME;
-import static fiji.plugin.trackmate.io.TmXmlKeys.SETTINGS_YEND_ATTRIBUTE_NAME;
-import static fiji.plugin.trackmate.io.TmXmlKeys.SETTINGS_YSTART_ATTRIBUTE_NAME;
-import static fiji.plugin.trackmate.io.TmXmlKeys.SETTINGS_ZEND_ATTRIBUTE_NAME;
-import static fiji.plugin.trackmate.io.TmXmlKeys.SETTINGS_ZSTART_ATTRIBUTE_NAME;
+import static fiji.plugin.trackmate.io.TmXmlKeys.SPATIAL_UNITS_ATTRIBUTE_NAME;
 import static fiji.plugin.trackmate.io.TmXmlKeys.SPOT_COLLECTION_ELEMENT_KEY;
 import static fiji.plugin.trackmate.io.TmXmlKeys.SPOT_COLLECTION_NSPOTS_ATTRIBUTE_NAME;
 import static fiji.plugin.trackmate.io.TmXmlKeys.SPOT_ELEMENT_KEY;
 import static fiji.plugin.trackmate.io.TmXmlKeys.SPOT_FILTER_COLLECTION_ELEMENT_KEY;
 import static fiji.plugin.trackmate.io.TmXmlKeys.SPOT_FRAME_COLLECTION_ELEMENT_KEY;
 import static fiji.plugin.trackmate.io.TmXmlKeys.SPOT_ID_ATTRIBUTE_NAME;
-import static fiji.plugin.trackmate.io.TmXmlKeys.SPOT_ID_ELEMENT_KEY;
 import static fiji.plugin.trackmate.io.TmXmlKeys.SPOT_NAME_ATTRIBUTE_NAME;
+import static fiji.plugin.trackmate.io.TmXmlKeys.TIME_UNITS_ATTRIBUTE_NAME;
 import static fiji.plugin.trackmate.io.TmXmlKeys.TRACKER_SETTINGS_ELEMENT_KEY;
 import static fiji.plugin.trackmate.io.TmXmlKeys.TRACK_COLLECTION_ELEMENT_KEY;
 import static fiji.plugin.trackmate.io.TmXmlKeys.TRACK_EDGE_ELEMENT_KEY;
@@ -66,9 +65,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-import net.imglib2.algorithm.Algorithm;
-import net.imglib2.algorithm.Benchmark;
-
 import org.jdom2.Attribute;
 import org.jdom2.DataConversionException;
 import org.jdom2.Document;
@@ -85,7 +81,6 @@ import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.TrackMateModel;
-import fiji.plugin.trackmate.TrackMate;
 import fiji.plugin.trackmate.detection.SpotDetectorFactory;
 import fiji.plugin.trackmate.features.FeatureFilter;
 import fiji.plugin.trackmate.features.edges.EdgeTargetAnalyzer;
@@ -95,18 +90,12 @@ import fiji.plugin.trackmate.providers.TrackerProvider;
 import fiji.plugin.trackmate.tracking.SpotTracker;
 
 
-public class TmXmlReader implements Algorithm, Benchmark {
+public class TmXmlReader {
 
 	protected static final boolean DEBUG = true;
 
 	protected Document document = null;
-	protected File file;
-	protected Element root;
-	/** The trackmate instance to operate on. This must be provided, in the case we want to load 
-	 * a file created with a subclass of {@link TrackMate} (e.g. with new factories) so that 
-	 * correct detectors, etc... can be instantiated from the extended trackmate.
-	 */
-	protected final TrackMate trackmate;
+	protected final File file;
 	/** A map of all spots loaded. We need this for performance, since we need to recreate 
 	 * both the filtered spot collection and the tracks graph from the same spot objects 
 	 * that the main spot collection.. In the file, they are referenced by their {@link Spot#ID()},
@@ -115,11 +104,8 @@ public class TmXmlReader implements Algorithm, Benchmark {
 	 * multi-threaded way.
 	 */
 	protected ConcurrentHashMap<Integer, Spot> cache;
-
-	protected long processingTime;
 	protected StringBuilderLogger logger = new StringBuilderLogger();
-
-	private String log;
+	private final Element root;
 
 	/*
 	 * CONSTRUCTORS
@@ -127,19 +113,22 @@ public class TmXmlReader implements Algorithm, Benchmark {
 
 	/**
 	 * Initialize this reader to read the file given in argument. 
-	 * <p>
-	 * A trackmate instance must be provided, and this instance must be initialized with providers
-	 * (as in when calling {@link TrackMate#initModules()}. This in the case we want to load 
-	 * a file created with a subclass of {@link TrackMate} (e.g. with new factories) so that 
-	 * correct detectors, etc... can be instantiated from the extended trackmate.
-	 * <p>
-	 * The given trackmate instance will be modified by this class, upon calling the {@link #process()}
-	 * method 
 	 */
-	public TmXmlReader(File file, TrackMate trackmate) {
+	public TmXmlReader(File file) {
 		this.file = file;
-		this.trackmate = trackmate;
-		parse();
+		SAXBuilder sb = new SAXBuilder();
+		Element r = null;
+		try {
+			document = sb.build(file);
+			r  = document.getRootElement();
+		} catch (JDOMException e) {
+			logger.error("Problem parsing "+file.getName()+", it is not a valid TrackMate XML file.\nError message is:\n"
+					+e.getLocalizedMessage()+'\n');
+		} catch (IOException e) {
+			logger.error("Problem reading "+file.getName()
+					+".\nError message is:\n"+e.getLocalizedMessage()+'\n');
+		}
+		this.root = r;
 	}
 
 	/*
@@ -147,85 +136,103 @@ public class TmXmlReader implements Algorithm, Benchmark {
 	 */
 	
 	/**
-	 * @return  the log text saved in the specified file, or <code>null</code> if log
-	 * text was not saved. Must be called after {@link #process()}.
+	 * Returns  the log text saved in the file, or <code>null</code> if log
+	 * text was not saved.
 	 */
-	public String getLogText() {
-		return log;
-	}
-
-	@Override
-	public boolean process() {
-
-		long start = System.currentTimeMillis();
-
-		TrackMateModel model = trackmate.getModel();
-		
-		// Text log
-		log = getLog();
-		
-		// Settings
-		Settings settings = getSettings();
-		getDetectorSettings(settings);
-		getTrackerSettings(settings);
-		settings.imp = getImage();
-
-		// Spot Filters
-		FeatureFilter initialFilter = getInitialFilter();
-		if (null != initialFilter) {
-			trackmate.getSettings().initialSpotFilterValue = initialFilter.value;
+	public String getLog() {
+		Element logElement = root.getChild(LOG_ELEMENT_KEY);
+		if (null != logElement) {
+			return logElement.getTextTrim();
 		} else {
-			trackmate.getSettings().initialSpotFilterValue = null; // So that everyone knows we did NOT find it in the file
+			return "";
 		}
-		List<FeatureFilter> spotFilters = getSpotFeatureFilters();
-		trackmate.getSettings().setSpotFilters(spotFilters);
-		// Spots & their visibility
-		SpotCollection allSpots = getAllSpots();
-		Map<Integer, Set<Integer>> filteredIDs = getFilteredSpotIDs();
-		if (null != filteredIDs) {
-			for (Integer frame : filteredIDs.keySet()) {
-				for (Integer ID : filteredIDs.get(frame)) {
-					cache.get(ID).putFeature(SpotCollection.VISIBLITY, SpotCollection.ONE);
-				}
-			}
+	}
+	
+	
+	/**
+	 * Returns the model saved in the file, or <code>null</code> if a saved model 
+	 * cannot be found in the xml file. 
+	 * @return a new {@link TrackMateModel}.
+	 */
+	public TrackMateModel getModel() {
+		Element modelElement = root.getChild(MODEL_ELEMENT_KEY);
+		if (null == modelElement) {
+			return null;
+		} 
+		TrackMateModel model = new TrackMateModel();
+		
+		// Physical units
+		String spaceUnits = modelElement.getAttributeValue(SPATIAL_UNITS_ATTRIBUTE_NAME);
+		String timeUnits  = modelElement.getAttributeValue(TIME_UNITS_ATTRIBUTE_NAME);
+		model.setPhysicalUnits(spaceUnits, timeUnits);
+		
+		// Spots
+		SpotCollection spots = getSpots(modelElement);
+		model.setSpots(spots, false);
+		
+		// Tracks
+		readTracks(modelElement, model);
+
+		// That's it
+		return model;
+	}
+	
+	/**
+	 * Returns the {@link Settings} object stored in this xml file, or <code>null</code>
+	 * if the file does not contain a saved {@link Settings} object.
+	 * @param detectorProvider the detector provider, required to configure the settings with
+	 * a correct {@link SpotDetectorFactory}. If <code>null</code>, will skip reading detector
+	 * parameters. 
+	 * @param trackerProvider the tracker factory, required to configure the settings with a 
+	 * correct {@link SpotTracker}. If <code>null</code>, will skip reading tracker parameters.
+	 * @return  a new {@link Settings} object.
+	 */
+	public Settings getSettings(DetectorProvider detectorProvider, TrackerProvider trackerProvider) {
+		Element settingsElement = root.getChild(SETTINGS_ELEMENT_KEY);
+		if (null == settingsElement) {
+			return null;
+		} 
+		
+		// Base
+		Settings settings = getBaseSettings(settingsElement);
+		
+		// Detector
+		if (null != detectorProvider) {
+			getDetectorSettings(settingsElement, settings, detectorProvider);
 		}
-		model.setSpots(allSpots, true);
-		// Tracks, filtered tracks and track features all at once
-		if (!readTracks()) {
-			return false;
+		
+		// Tracker
+		if (null != trackerProvider) {
+			getTrackerSettings(settingsElement, settings, trackerProvider);
 		}
+		
+		// Image
+		settings.imp = getImage(settingsElement);
+		
+		// Spot Filters
+		FeatureFilter initialFilter = getInitialFilter(settingsElement);
+		if (null != initialFilter) {
+			settings.initialSpotFilterValue = initialFilter.value;
+		}
+		List<FeatureFilter> spotFilters = getSpotFeatureFilters(settingsElement);
+		settings.setSpotFilters(spotFilters);
 
 		// Track Filters
-		List<FeatureFilter> trackFilters = getTrackFeatureFilters();
-		trackmate.getSettings().setTrackFilters(trackFilters);
+		List<FeatureFilter> trackFilters = getTrackFeatureFilters(settingsElement);
+		settings.setTrackFilters(trackFilters);
 
-		long end = System.currentTimeMillis();
-		processingTime = end - start;
-
-		return true;
+		// TODO: feature analyzers
+		
+		return settings;
 	}
-
+	
 	/**
-	 * @return the version string stored in the file.
+	 * Returns the version string stored in the file.
 	 */
 	public String getVersion() {
 		return root.getAttribute(PLUGIN_VERSION_ATTRIBUTE_NAME).getValue();
 	}
 
-	@Override
-	public long getProcessingTime() {
-		return processingTime;
-	}
-
-	@Override
-	public boolean checkInput() {
-		if (null == document) {
-			return false;
-		}
-		return true;
-	}
-
-	@Override
 	public String getErrorMessage() {
 		return logger.toString();
 	}
@@ -234,20 +241,10 @@ public class TmXmlReader implements Algorithm, Benchmark {
 	 * PRIVATE METHODS
 	 */
 
-	private String getLog() {
-		Element logElement = root.getChild(LOG_ELEMENT_KEY);
-		if (null != logElement) {
-			return logElement.getTextTrim();
-		} else {
-			return "";
-		}
-	}
 
 	
-	private ImagePlus getImage()  {
-		Element imageInfoElement = root.getChild(IMAGE_ELEMENT_KEY);
-		if (null == imageInfoElement)
-			return null; // value will still be null
+	private ImagePlus getImage(Element settingsElement)  {
+		Element imageInfoElement = settingsElement.getChild(IMAGE_ELEMENT_KEY);
 		String filename = imageInfoElement.getAttributeValue(IMAGE_FILENAME_ATTRIBUTE_NAME);
 		String folder 	= imageInfoElement.getAttributeValue(IMAGE_FOLDER_ATTRIBUTE_NAME);
 		if (null == filename || filename.isEmpty())
@@ -267,22 +264,6 @@ public class TmXmlReader implements Algorithm, Benchmark {
 	}
 
 
-	/**
-	 * Parse the file to create a JDom {@link Document}. This method is called at construction.
-	 */
-	private void parse() {
-		SAXBuilder sb = new SAXBuilder();
-		try {
-			document = sb.build(file);
-			root = document.getRootElement();
-		} catch (JDOMException e) {
-			logger.error("Problem parsing "+file.getName()+", it is not a valid TrackMate XML file.\nError message is:\n"
-					+e.getLocalizedMessage()+'\n');
-		} catch (IOException e) {
-			logger.error("Problem reading "+file.getName()
-					+".\nError message is:\n"+e.getLocalizedMessage()+'\n');
-		}
-	}
 
 	/**
 	 * @return a map of the saved track features, as they appear in the file
@@ -334,14 +315,13 @@ public class TmXmlReader implements Algorithm, Benchmark {
 
 
 	/**
-	 * Return the initial threshold on quality stored in this file.
+	 * Return the initial filter value on quality stored in this file.
 	 * Return <code>null</code> if the initial threshold data cannot be found in the file.
+	 * @param settingsElement the settings {@link Element} to read from.
+	 * @return the initial filter, as a {@link FeatureFilter}. 
 	 */
-	private FeatureFilter getInitialFilter()  {
-
-		Element itEl = root.getChild(INITIAL_SPOT_FILTER_ELEMENT_KEY);
-		if (null == itEl)
-			return null;
+	private FeatureFilter getInitialFilter(Element settingsElement)  {
+		Element itEl = settingsElement.getChild(INITIAL_SPOT_FILTER_ELEMENT_KEY);
 		String feature 	= itEl.getAttributeValue(FILTER_FEATURE_ATTRIBUTE_NAME);
 		Double value 	= readDoubleAttribute(itEl, FILTER_VALUE_ATTRIBUTE_NAME, logger);
 		boolean isAbove	= readBooleanAttribute(itEl, FILTER_ABOVE_ATTRIBUTE_NAME, logger);
@@ -352,14 +332,12 @@ public class TmXmlReader implements Algorithm, Benchmark {
 
 	/**
 	 * Return the list of {@link FeatureFilter} for spots stored in this file.
-	 * Return <code>null</code> if the spot feature filters data cannot be found in the file.
+	 * @param settingsElement the settings {@link Element} to read from.
+	 * @return a list of {@link FeatureFilter}s.
 	 */
-	private List<FeatureFilter> getSpotFeatureFilters() {
-
+	private List<FeatureFilter> getSpotFeatureFilters(Element settingsElement) {
 		List<FeatureFilter> featureThresholds = new ArrayList<FeatureFilter>();
-		Element ftCollectionEl = root.getChild(SPOT_FILTER_COLLECTION_ELEMENT_KEY);
-		if (null == ftCollectionEl)
-			return null;
+		Element ftCollectionEl = settingsElement.getChild(SPOT_FILTER_COLLECTION_ELEMENT_KEY);
 		List<Element> ftEls = ftCollectionEl.getChildren(FILTER_ELEMENT_KEY);
 		for (Element ftEl : ftEls) {
 			String feature 	= ftEl.getAttributeValue(FILTER_FEATURE_ATTRIBUTE_NAME);
@@ -372,14 +350,13 @@ public class TmXmlReader implements Algorithm, Benchmark {
 	}
 
 	/**
-	 * @return the list of {@link FeatureFilter} for tracks stored in this file.
-	 * Return <code>null</code> if the track feature filters data cannot be found in the file.
+	 * Returns the list of {@link FeatureFilter} for tracks stored in this file.
+	 * @param settingsElement the settings {@link Element} to read from. 
+	 * @return a list of {@link FeatureFilter}s.
 	 */
-	private List<FeatureFilter> getTrackFeatureFilters() {
+	private List<FeatureFilter> getTrackFeatureFilters(Element settingsElement) {
 		List<FeatureFilter> featureThresholds = new ArrayList<FeatureFilter>();
-		Element ftCollectionEl = root.getChild(TRACK_FILTER_COLLECTION_ELEMENT_KEY);
-		if (null == ftCollectionEl)
-			return null;
+		Element ftCollectionEl = settingsElement.getChild(TRACK_FILTER_COLLECTION_ELEMENT_KEY);
 		List<Element> ftEls = ftCollectionEl.getChildren(FILTER_ELEMENT_KEY);
 		for (Element ftEl : ftEls) {
 			String feature 	= ftEl.getAttributeValue(FILTER_FEATURE_ATTRIBUTE_NAME);
@@ -392,31 +369,28 @@ public class TmXmlReader implements Algorithm, Benchmark {
 	}
 
 	/**
-	 * Return the settings for the TrackMate session saved in this file.
-	 * <p>
-	 * The settings object will have its {@link DetectorSettings} and {@link TrackerSettings} set default values will be
-	 * used.
-	 * 
-	 * @return  a full Settings object
-	 * @throws DataConversionException 
+	 * Returns a settings object, configured with base settings extracted from the specified 
+	 * {@link Element}.
+	 * @param settingsElement the settings {@link Element} to read parameters from. 
+	 * @return  a new {@link Settings} object.
 	 */
-	private Settings getSettings() {
+	private Settings getBaseSettings(Element settingsElement) {
 		Settings settings = new Settings();
 		// Basic settings
-		Element settingsEl = root.getChild(SETTINGS_ELEMENT_KEY);
+		Element settingsEl = settingsElement.getChild(CROP_ELEMENT_KEY);
 		if (null != settingsEl) {
-			settings.xstart = readIntAttribute(settingsEl, SETTINGS_XSTART_ATTRIBUTE_NAME, logger, 1);
-			settings.xend 	= readIntAttribute(settingsEl, SETTINGS_XEND_ATTRIBUTE_NAME, logger, 512);
-			settings.ystart = readIntAttribute(settingsEl, SETTINGS_YSTART_ATTRIBUTE_NAME, logger, 1);
-			settings.yend 	= readIntAttribute(settingsEl, SETTINGS_YEND_ATTRIBUTE_NAME, logger, 512);
-			settings.zstart = readIntAttribute(settingsEl, SETTINGS_ZSTART_ATTRIBUTE_NAME, logger, 1);
-			settings.zend 	= readIntAttribute(settingsEl, SETTINGS_ZEND_ATTRIBUTE_NAME, logger, 10);
-			settings.tstart = readIntAttribute(settingsEl, SETTINGS_TSTART_ATTRIBUTE_NAME, logger, 1);
-			settings.tend 	= readIntAttribute(settingsEl, SETTINGS_TEND_ATTRIBUTE_NAME, logger, 10);
-			//			settings.detectionChannel = readIntAttribute(settingsEl, SETTINGS_DETECTION_CHANNEL_ATTRIBUTE_NAME, logger, 1);
+			settings.xstart = readIntAttribute(settingsEl, CROP_XSTART_ATTRIBUTE_NAME, logger, 1);
+			settings.xend 	= readIntAttribute(settingsEl, CROP_XEND_ATTRIBUTE_NAME, logger, 512);
+			settings.ystart = readIntAttribute(settingsEl, CROP_YSTART_ATTRIBUTE_NAME, logger, 1);
+			settings.yend 	= readIntAttribute(settingsEl, CROP_YEND_ATTRIBUTE_NAME, logger, 512);
+			settings.zstart = readIntAttribute(settingsEl, CROP_ZSTART_ATTRIBUTE_NAME, logger, 1);
+			settings.zend 	= readIntAttribute(settingsEl, CROP_ZEND_ATTRIBUTE_NAME, logger, 10);
+			settings.tstart = readIntAttribute(settingsEl, CROP_TSTART_ATTRIBUTE_NAME, logger, 1);
+			settings.tend 	= readIntAttribute(settingsEl, CROP_TEND_ATTRIBUTE_NAME, logger, 10);
+//			settings.detectionChannel = readIntAttribute(settingsEl, CROP_DETECTION_CHANNEL_ATTRIBUTE_NAME, logger, 1);
 		}
 		// Image info settings
-		Element infoEl 	= root.getChild(IMAGE_ELEMENT_KEY);
+		Element infoEl 	= settingsElement.getChild(IMAGE_ELEMENT_KEY);
 		if (null != infoEl) {
 			settings.dx				= readDoubleAttribute(infoEl, IMAGE_PIXEL_WIDTH_ATTRIBUTE_NAME, logger);
 			settings.dy				= readDoubleAttribute(infoEl, IMAGE_PIXEL_HEIGHT_ATTRIBUTE_NAME, logger);
@@ -426,8 +400,6 @@ public class TmXmlReader implements Algorithm, Benchmark {
 			settings.height			= readIntAttribute(infoEl, IMAGE_HEIGHT_ATTRIBUTE_NAME, logger, 512);
 			settings.nslices		= readIntAttribute(infoEl, IMAGE_NSLICES_ATTRIBUTE_NAME, logger, 1);
 			settings.nframes		= readIntAttribute(infoEl, IMAGE_NFRAMES_ATTRIBUTE_NAME, logger, 1);
-			settings.spaceUnits		= infoEl.getAttributeValue(IMAGE_SPATIAL_UNITS_ATTRIBUTE_NAME);
-			settings.timeUnits		= infoEl.getAttributeValue(IMAGE_TIME_UNITS_ATTRIBUTE_NAME);
 			settings.imageFileName	= infoEl.getAttributeValue(IMAGE_FILENAME_ATTRIBUTE_NAME);
 			settings.imageFolder	= infoEl.getAttributeValue(IMAGE_FOLDER_ATTRIBUTE_NAME);
 		}
@@ -439,21 +411,14 @@ public class TmXmlReader implements Algorithm, Benchmark {
 	 * named {@link Settings#detectorFactory}  and {@link Settings#detectorSettings} read within the XML file
 	 * this reader is initialized with. 
 	 * <p>
-	 * As a side effect, this method also configure the {@link DetectorProvider} stored in 
-	 * the passed {@link TrackMate} trackmate for the found target detector factory. 
-	 * <p>
-	 * If the detector settings XML element is not present in the file, the {@link Settings} 
-	 * object is not updated. 
-
+	 * As a side effect, this method also configure the {@link DetectorProvider}. 
+	 *  
+	 * @param settingsElement the Element in which the {@link Settings} parameters are stored.   
 	 * @param settings  the base {@link Settings} object to update.
+	 * @param provider  a {@link DetectorProvider}, required to read detector parameters. 
 	 */
-	private void getDetectorSettings(Settings settings) {
-		Element element = root.getChild(DETECTOR_SETTINGS_ELEMENT_KEY);
-		if (null == element) {
-			return;
-		}
-
-		DetectorProvider provider = trackmate.getDetectorProvider();
+	private void getDetectorSettings(Element settingsElement, Settings settings, DetectorProvider provider) {
+		Element element = settingsElement.getChild(DETECTOR_SETTINGS_ELEMENT_KEY);
 		Map<String, Object> ds = new HashMap<String, Object>(); 
 		// All the hard work is delegated to the provider. 
 		boolean ok = provider.unmarshall(element, ds);
@@ -472,20 +437,17 @@ public class TmXmlReader implements Algorithm, Benchmark {
 	 * named {@link Settings#trackerSettings} and {@link Settings#tracker} read within the XML file
 	 * this reader is initialized with.
 	 * <p>
-	 * If the tracker settings XML element is not present in the file, the {@link Settings} 
-	 * object is not updated. If the tracker settings or the tracker info can be read, 
+	 * If the tracker settings or the tracker info can be read, 
 	 * but cannot be understood (most likely because the class the XML refers to is unknown) 
-	 * then a default object is substituted.  
+	 * then a default object is substituted.
 	 *   
+	 * @param settingsElement the {@link Element} in which the tracker parameters are stored.
 	 * @param settings  the base {@link Settings} object to update.
+	 * @param trackerProvider the {@link TrackerProvider}, required to read the tracker
+	 * parameters. 
 	 */
-	private void getTrackerSettings(Settings settings) {
-		Element element = root.getChild(TRACKER_SETTINGS_ELEMENT_KEY);
-		if (null == element) {
-			return;
-		}
-
-		TrackerProvider provider = trackmate.getTrackerProvider();
+	private void getTrackerSettings(Element settingsElement, Settings settings, TrackerProvider provider) {
+		Element element = settingsElement.getChild(TRACKER_SETTINGS_ELEMENT_KEY);
 		Map<String, Object> ds = new HashMap<String, Object>(); 
 		// All the hard work is delegated to the provider. 
 		boolean ok = provider.unmarshall(element, ds);
@@ -505,21 +467,19 @@ public class TmXmlReader implements Algorithm, Benchmark {
 	 * Internally, this methods also builds the cache field, which will be required by the
 	 * following methods:
 	 * <ul>
-	 * 	<li> {@link #getFilteredSpotIDs()}
 	 * 	<li> {@link #readTracks()}
 	 * 	<li> {@link #readTrackEdges(SimpleDirectedWeightedGraph)}
 	 * 	<li> {@link #readTrackSpots(SimpleDirectedWeightedGraph)}
 	 * </ul>
-	 * It is therefore sensible to call this method first, just afther {@link #parse()}ing the file.
+	 * It is therefore sensible to call this method first, just after {@link #parse()}ing the file.
 	 * If not called, this method will be called anyway by the other methods to build the cache.
 	 * 
-	 * @return  a {@link SpotCollection}. Return <code>null</code> if the spot section is not present in the file.
+	 * @param modelElement the {@link Element} in which the model content was written. 
+	 * @return  a new {@link SpotCollection}. 
 	 */
-	private SpotCollection getAllSpots() {
+	private SpotCollection getSpots(Element modelElement) {
 		// Root element for collection
-		Element spotCollection = root.getChild(SPOT_COLLECTION_ELEMENT_KEY);
-		if (null == spotCollection)
-			return null;
+		Element spotCollection = modelElement.getChild(SPOT_COLLECTION_ELEMENT_KEY);
 
 		// Retrieve children elements for each frame
 		List<Element> frameContent = spotCollection.getChildren(SPOT_FRAME_COLLECTION_ELEMENT_KEY);
@@ -558,56 +518,14 @@ public class TmXmlReader implements Algorithm, Benchmark {
 	}
 
 	/**
-	 * Read the filtered spots stored in this file, taken from the list of all spots, given in argument.
-	 * <p>
-	 * The {@link Spot} objects in this list will be the same that of the main list given in argument. 
-	 * If a spot ID referenced in the file is in the selection but not in the list given in argument,
-	 * it is simply ignored, and not added to the selection list. That way, it is certain that all spots
-	 * belonging to the selection list also belong to the global list. 
-	 * @param allSpots  the list of all spots, from which this selection is made 
-	 * @return  a {@link SpotCollection}. Each spot of this collection belongs also to the  given collection.
-	 * Return <code>null</code> if the spot selection section does is not present in the file.
-	 */
-	private Map<Integer, Set<Integer>> getFilteredSpotIDs()  {
-		Element selectedSpotCollection = root.getChild(FILTERED_SPOT_ELEMENT_KEY);
-		if (null == selectedSpotCollection)
-			return null;
-
-		List<Element> frameContent = selectedSpotCollection.getChildren(FILTERED_SPOT_COLLECTION_ELEMENT_KEY);
-		Map<Integer, Set<Integer>> visibleIDs = new HashMap<Integer, Set<Integer>>(frameContent.size());
-
-		for (Element currentFrameContent : frameContent) {
-			int currentFrame = readIntAttribute(currentFrameContent, FRAME_ATTRIBUTE_NAME, logger);
-
-			List<Element> spotContent = currentFrameContent.getChildren(SPOT_ID_ELEMENT_KEY);
-			HashSet<Integer> IDList = new HashSet<Integer>(spotContent.size());
-			// Loop over all spot element
-			for (Element spotEl : spotContent) {
-				// Find corresponding spot in cache
-				int ID = readIntAttribute(spotEl, SPOT_ID_ATTRIBUTE_NAME, logger);
-				IDList.add(ID);
-			}
-
-			visibleIDs.put(currentFrame, IDList);
-		}
-		return visibleIDs;
-	}
-
-	/**
 	 * Load the tracks, the track features and the ID of the filtered tracks into the model
 	 * modified by this reader. 
 	 * @return 
-	 * @return true if reading tracks was successsful, false otherwise.
+	 * @return true if reading tracks was successful, false otherwise.
 	 */
-	private boolean readTracks() {
+	private boolean readTracks(Element modelElement, TrackMateModel model) {
 
-		Element allTracksElement = root.getChild(TRACK_COLLECTION_ELEMENT_KEY);
-		if (null == allTracksElement)
-			return true;
-
-		if (null == cache) 
-			getAllSpots(); // build the cache if it's not there
-
+		Element allTracksElement = modelElement.getChild(TRACK_COLLECTION_ELEMENT_KEY);
 		final SimpleDirectedWeightedGraph<Spot, DefaultWeightedEdge> graph = new SimpleDirectedWeightedGraph<Spot, DefaultWeightedEdge>(DefaultWeightedEdge.class);
 
 		// Load tracks
@@ -619,7 +537,7 @@ public class TmXmlReader implements Algorithm, Benchmark {
 		HashMap<Integer, String> savedTrackNames = new HashMap<Integer, String>(trackElements.size());
 		
 		// The list of edge features. that we will set.
-		final FeatureModel fm = trackmate.getModel().getFeatureModel();
+		final FeatureModel fm = model.getFeatureModel();
 		List<String> edgeIntFeatures = new ArrayList<String>();// TODO is there a better way?
 		edgeIntFeatures.add(EdgeTargetAnalyzer.SPOT_SOURCE_ID);
 		edgeIntFeatures.add(EdgeTargetAnalyzer.SPOT_TARGET_ID);
@@ -705,7 +623,6 @@ public class TmXmlReader implements Algorithm, Benchmark {
 		 * map of tracks vs trackID, using the hash as new keys. Because there is a 
 		 * good chance that they saved keys and the new keys differ, we must retrieve
 		 * the mapping between the two using the retrieve spots.	 */
-		final TrackMateModel model = trackmate.getModel();
 		model.getTrackModel().setGraph(graph);
 
 		// Retrieve the new track map

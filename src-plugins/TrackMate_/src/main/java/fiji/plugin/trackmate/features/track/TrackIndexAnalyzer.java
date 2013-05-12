@@ -18,10 +18,10 @@ public class TrackIndexAnalyzer implements TrackAnalyzer {
 	public static final String TRACK_INDEX = "TRACK_INDEX";
 	public static final String TRACK_ID = "TRACK_ID";
 
-	public static final List<String> FEATURES = new ArrayList<String>(1);
-	public static final Map<String, String> FEATURE_NAMES = new HashMap<String, String>(1);
-	public static final Map<String, String> FEATURE_SHORT_NAMES = new HashMap<String, String>(1);
-	public static final Map<String, Dimension> FEATURE_DIMENSIONS = new HashMap<String, Dimension>(1);
+	private static final List<String> FEATURES = new ArrayList<String>(1);
+	private static final Map<String, String> FEATURE_NAMES = new HashMap<String, String>(1);
+	private static final Map<String, String> FEATURE_SHORT_NAMES = new HashMap<String, String>(1);
+	private static final Map<String, Dimension> FEATURE_DIMENSIONS = new HashMap<String, Dimension>(1);
 	
 	static {
 		FEATURES.add(TRACK_INDEX);
@@ -71,7 +71,27 @@ public class TrackIndexAnalyzer implements TrackAnalyzer {
 	}
 	
 	@Override
-	public String toString() {
+	public String getKey() {
 		return KEY;
+	}
+
+	@Override
+	public List<String> getFeatures() {
+		return FEATURES;
+	}
+
+	@Override
+	public Map<String, String> getFeatureShortNames() {
+		return FEATURE_SHORT_NAMES;
+	}
+
+	@Override
+	public Map<String, String> getFeatureNames() {
+		return FEATURE_NAMES;
+	}
+
+	@Override
+	public Map<String, Dimension> getFeatureDimensions() {
+		return FEATURE_DIMENSIONS;
 	}
 }

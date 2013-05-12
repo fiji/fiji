@@ -4,6 +4,7 @@ import java.util.Collection;
 
 import net.imglib2.algorithm.Benchmark;
 import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.features.FeatureAnalyzer;
 
 /**
  * Mother interface for the classes that can compute the feature of tracks.
@@ -29,7 +30,7 @@ import fiji.plugin.trackmate.TrackMateModel;
  * 
  * @author Jean-Yves Tinevez
  */
-public interface TrackAnalyzer extends Benchmark {
+public interface TrackAnalyzer extends Benchmark, FeatureAnalyzer {
 
 	/**
 	 * Score the track whose ID is given.
@@ -37,7 +38,7 @@ public interface TrackAnalyzer extends Benchmark {
 	public void process(final Collection<Integer> trackIDs);
 	
 	/**
-	 * @return <code>true</code> if this analyzer is a local analyzer. That is: a modification that
+	 * Returns <code>true</code> if this analyzer is a local analyzer. That is: a modification that
 	 * affects only one track requires the track features to be re-calculated only for
 	 * this track. If <code>false</code>, any model modification involving edges will trigger
 	 * a recalculation over all the visible tracks of the model.

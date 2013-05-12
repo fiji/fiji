@@ -1,5 +1,8 @@
 package fiji.plugin.trackmate.gui;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import fiji.plugin.trackmate.gui.descriptors.WizardPanelDescriptor;
 
 public class TrackMateGUIModel {
@@ -14,7 +17,7 @@ public class TrackMateGUIModel {
 	boolean actionFlag = true;
 	
 	/** Is used to determine whether we are currently displaying the log panel after the
-	 * user has pressed the log button. */
+	 * user has pressed the log button. If true, then our state is "currently displaying log". */
 	boolean logButtonState = false;
 	
 	boolean loadButtonState;
@@ -25,11 +28,16 @@ public class TrackMateGUIModel {
 	
 	boolean previousButtonState;
 
-	/** Used to store the ID of the previous descriptor before the user pressed the log button.	 */
-	String previousPanelID;
-	
 	/** The panel descriptor currently displayed. */ 
 	WizardPanelDescriptor currentDescriptor;
+
+	/** The panel descriptor previously displayed, e.g. before the user pressed the save button. */ 
+	WizardPanelDescriptor previousDescriptor;
+
+	
+	/** The display settings configuring the look and feel of all the TrackMateModelViews controlled
+	 * by this GUI.  */
+	Map<String, Object> displaySettings = new HashMap<String, Object>(); 
 	
 
 	

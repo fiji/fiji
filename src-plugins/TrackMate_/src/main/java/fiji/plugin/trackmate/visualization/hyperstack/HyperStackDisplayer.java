@@ -1,7 +1,6 @@
 package fiji.plugin.trackmate.visualization.hyperstack;
 
 import ij.ImagePlus;
-import ij.gui.NewImage;
 import ij.gui.Overlay;
 import ij.gui.Roi;
 
@@ -11,10 +10,9 @@ import org.jgrapht.graph.DefaultWeightedEdge;
 
 import fiji.plugin.trackmate.ModelChangeEvent;
 import fiji.plugin.trackmate.SelectionChangeEvent;
-import fiji.plugin.trackmate.Settings;
+import fiji.plugin.trackmate.SelectionModel;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.TrackMateModel;
-import fiji.plugin.trackmate.util.TMUtils;
 import fiji.plugin.trackmate.visualization.AbstractTrackMateModelView;
 import fiji.plugin.trackmate.visualization.TrackColorGenerator;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
@@ -46,11 +44,9 @@ public class HyperStackDisplayer extends AbstractTrackMateModelView  {
 			"	<li><b>Space</b> + mouse drag moves the spot under the mouse" +
 			"</ul>" +
 			"</html>";
-	protected ImagePlus imp;
-	double[] calibration;
-	final Settings settings;
-	SpotOverlay spotOverlay;
-	private TrackOverlay trackOverlay;
+	protected final ImagePlus imp;
+	protected SpotOverlay spotOverlay;
+	protected TrackOverlay trackOverlay;
 
 	private SpotEditTool editTool;
 	private Roi initialROI;
@@ -59,9 +55,9 @@ public class HyperStackDisplayer extends AbstractTrackMateModelView  {
 	 * CONSTRUCTORS
 	 */
 
-	public HyperStackDisplayer(final TrackMateModel model, final Settings settings) {	
-		super(model);
-		this.settings = settings;
+	public HyperStackDisplayer(final TrackMateModel model, final SelectionModel selectionModel,  final ImagePlus imp) {	
+		super(model, selectionModel);
+		this.imp = imp;
 	}
 
 	/*
@@ -127,8 +123,8 @@ public class HyperStackDisplayer extends AbstractTrackMateModelView  {
 	@Override
 	public void selectionChanged(SelectionChangeEvent event) {
 		// Highlight selection
-		trackOverlay.setHighlight(model.getSelectionModel().getEdgeSelection());
-		spotOverlay.setSpotSelection(model.getSelectionModel().getSpotSelection());
+		trackOverlay.setHighlight(selectionModel.getEdgeSelection());
+		spotOverlay.setSpotSelection(selectionModel.getSpotSelection());
 		// Center on last spot
 		super.selectionChanged(event);
 		// Redraw
@@ -138,18 +134,13 @@ public class HyperStackDisplayer extends AbstractTrackMateModelView  {
 	@Override
 	public void centerViewOn(Spot spot) {
 		int frame = spot.getFeature(Spot.FRAME).intValue();
-		long z = Math.round(spot.getFeature(Spot.POSITION_Z) / calibration[2] ) + 1;
+		double dz = imp.getCalibration().pixelDepth;
+		long z = Math.round(spot.getFeature(Spot.POSITION_Z) / dz  ) + 1;
 		imp.setPosition(1, (int) z, frame+1);
 	}
 
 	@Override
 	public void render() {
-		imp = settings.imp;
-		if (null == imp) {
-			imp = NewImage.createByteImage("Empty", settings.width, settings.height, settings.nframes*settings.nslices, NewImage.FILL_BLACK);
-			imp.setDimensions(1, settings.nslices, settings.nframes);
-		}
-		calibration = TMUtils.getSpatialCalibration(imp);
 		initialROI = imp.getRoi();
 		if (initialROI != null) {
 			imp.killRoi();
@@ -203,12 +194,11 @@ public class HyperStackDisplayer extends AbstractTrackMateModelView  {
 	public String toString() {
 		return NAME;
 	}
-	
-	public Settings getSettings() {
-		return settings;
+
+	public SelectionModel getSelectionModel() {
+		return selectionModel;
 	}
-
-
+	
 	/*
 	 * PRIVATE METHODS
 	 */

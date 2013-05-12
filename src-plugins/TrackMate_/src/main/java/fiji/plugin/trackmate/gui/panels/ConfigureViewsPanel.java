@@ -127,7 +127,7 @@ public class ConfigureViewsPanel extends ActionListenablePanel {
 		if (trackColorGUI != null) {
 			jPanelTrackOptions.remove(trackColorGUI);
 		}
-		trackColorGUI = new TrackColorByFeatureGUI(trackmate.getModel(), this);
+		trackColorGUI = new TrackColorByFeatureGUI(trackmate.getModel());
 		trackColorGUI.setPreferredSize(new java.awt.Dimension(265, 45));
 		jPanelTrackOptions.add(trackColorGUI);
 	}

@@ -14,7 +14,7 @@ public class ActionListenablePanel extends JPanel {
 	protected ArrayList<ActionListener> actionListeners = new ArrayList<ActionListener>();
 	
 	/**
-	 * Add an {@link ActionListener} to this panel. These listeners will be notified when
+	 * Adds an {@link ActionListener} to this panel. These listeners will be notified when
 	 * a button is pushed or when the feature to color is changed.
 	 */
 	public void addActionListener(ActionListener listener) {
@@ -22,7 +22,7 @@ public class ActionListenablePanel extends JPanel {
 	}
 	
 	/**
-	 * Remove an ActionListener from this panel. 
+	 * Removes an ActionListener from this panel. 
 	 * @return true if the listener was in the ActionListener collection of this instance.
 	 */
 	public boolean removeActionListener(ActionListener listener) {
@@ -35,7 +35,7 @@ public class ActionListenablePanel extends JPanel {
 	
 
 	/** 
-	 * Forward the given {@link ActionEvent} to all the {@link ActionListener} of this panel.
+	 * Forwards the given {@link ActionEvent} to all the {@link ActionListener} of this panel.
 	 */
 	protected void fireAction(ActionEvent e) {
 		for (ActionListener l : actionListeners)

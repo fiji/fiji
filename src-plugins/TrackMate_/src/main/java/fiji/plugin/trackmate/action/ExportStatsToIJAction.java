@@ -15,9 +15,11 @@ import fiji.plugin.trackmate.FeatureModel;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMate;
+import fiji.plugin.trackmate.gui.TrackMateGUIController;
 import fiji.plugin.trackmate.gui.TrackMateWizard;
 
 public class ExportStatsToIJAction extends AbstractTMAction {
+
 
 	public static final ImageIcon ICON = new ImageIcon(TrackMateWizard.class.getResource("images/calculator.png"));
 	public static final String NAME = "Export statistics to tables";
@@ -34,12 +36,13 @@ public class ExportStatsToIJAction extends AbstractTMAction {
 				"of this export." +
 				"</html>";
 
-	public ExportStatsToIJAction() {
+	public ExportStatsToIJAction(TrackMate trackmate, TrackMateGUIController controller) {
+		super(trackmate, controller);
 		this.icon = ICON;
 	}
-	
+
 	@Override
-	public void execute(final TrackMate trackmate) {
+	public void execute() {
 		logger.log("Exporting statistics.\n");
 		
 		// Compute links features Links

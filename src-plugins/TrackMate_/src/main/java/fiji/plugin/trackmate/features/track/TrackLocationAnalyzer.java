@@ -26,10 +26,10 @@ public class TrackLocationAnalyzer implements TrackAnalyzer, MultiThreaded, Benc
 	public static final String Y_LOCATION = "Y_LOCATION";
 	public static final String Z_LOCATION = "Z_LOCATION";
 
-	public static final List<String> FEATURES = new ArrayList<String>(4);
-	public static final Map<String, String> FEATURE_NAMES = new HashMap<String, String>(4);
-	public static final Map<String, String> FEATURE_SHORT_NAMES = new HashMap<String, String>(4);
-	public static final Map<String, Dimension> FEATURE_DIMENSIONS = new HashMap<String, Dimension>(4);
+	private static final List<String> FEATURES = new ArrayList<String>(4);
+	private static final Map<String, String> FEATURE_NAMES = new HashMap<String, String>(4);
+	private static final Map<String, String> FEATURE_SHORT_NAMES = new HashMap<String, String>(4);
+	private static final Map<String, Dimension> FEATURE_DIMENSIONS = new HashMap<String, Dimension>(4);
 
 	static {
 		FEATURES.add(X_LOCATION);
@@ -139,7 +139,27 @@ public class TrackLocationAnalyzer implements TrackAnalyzer, MultiThreaded, Benc
 	};
 
 	@Override
-	public String toString() {
+	public String getKey() {
 		return KEY;
+	}
+
+	@Override
+	public List<String> getFeatures() {
+		return FEATURES;
+	}
+
+	@Override
+	public Map<String, String> getFeatureShortNames() {
+		return FEATURE_SHORT_NAMES;
+	}
+
+	@Override
+	public Map<String, String> getFeatureNames() {
+		return FEATURE_NAMES;
+	}
+
+	@Override
+	public Map<String, Dimension> getFeatureDimensions() {
+		return FEATURE_DIMENSIONS;
 	}
 }

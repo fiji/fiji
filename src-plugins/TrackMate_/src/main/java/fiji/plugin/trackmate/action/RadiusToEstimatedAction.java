@@ -8,9 +8,11 @@ import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.TrackMate;
 import fiji.plugin.trackmate.features.spot.SpotRadiusEstimatorFactory;
+import fiji.plugin.trackmate.gui.TrackMateGUIController;
 import fiji.plugin.trackmate.gui.panels.ConfigureViewsPanel;
 
 public class RadiusToEstimatedAction extends AbstractTMAction {
+
 
 	public static final ImageIcon ICON = new ImageIcon(ConfigureViewsPanel.class.getResource("images/lightbulb.png"));
 	public static final String NAME = "Set radius to estimated value";
@@ -19,7 +21,8 @@ public class RadiusToEstimatedAction extends AbstractTMAction {
 				"to its estimated value, calculated with the radius estimator <br> " +
 				"</html>" ;
 	
-	public RadiusToEstimatedAction() {
+	public RadiusToEstimatedAction(TrackMate trackmate, TrackMateGUIController controller) {
+		super(trackmate, controller);
 		this.icon = ICON;
 	}
 	
@@ -34,7 +37,7 @@ public class RadiusToEstimatedAction extends AbstractTMAction {
 	}
 
 	@Override
-	public void execute(final TrackMate trackmate) {
+	public void execute() {
 		logger.log("Setting all spot radiuses to their estimated value.\n");
 		SpotCollection spots = trackmate.getModel().getSpots();
 		int valid = 0;
@@ -59,8 +62,5 @@ public class RadiusToEstimatedAction extends AbstractTMAction {
 			logger.log(String.format("Updated %d spots, left %d spots unchanged.\n", valid, invalid));
 		}
 		logger.log("Done.\n");
-		if (null != wizard) {
-			wizard.getDisplayer().refresh();
-		}
 	}
 }

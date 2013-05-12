@@ -754,7 +754,7 @@ public class TMUtils {
 	 * Return a String unit for the given dimension. When suitable, the unit is taken from the settings
 	 * field, which contains the spatial and time units. Otherwise, default units are used.
 	 */
-	public static final String getUnitsFor(final Dimension dimension, final Settings settings) {
+	public static final String getUnitsFor(final Dimension dimension, String spaceUnits, String timeUnits) {
 		String units = "no unit";
 		switch (dimension) {
 		case ANGLE:
@@ -771,16 +771,16 @@ public class TMUtils {
 			break;
 		case POSITION:
 		case LENGTH:
-			units = settings.spaceUnits;
+			units = spaceUnits;
 			break;
 		case QUALITY:
 			units = "Quality";
 			break;
 		case TIME:
-			units = settings.timeUnits;
+			units = timeUnits;
 			break;
 		case VELOCITY:
-			units = settings.spaceUnits + "/" + settings.timeUnits;
+			units = spaceUnits + "/" + timeUnits;
 			break;
 		default:
 			break;

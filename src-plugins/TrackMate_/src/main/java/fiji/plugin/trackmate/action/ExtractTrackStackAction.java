@@ -23,11 +23,13 @@ import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMate;
+import fiji.plugin.trackmate.gui.TrackMateGUIController;
 import fiji.plugin.trackmate.gui.TrackMateWizard;
 import fiji.plugin.trackmate.util.TMUtils;
 import fiji.plugin.trackmate.visualization.trackscheme.SpotIconGrabber;
 
 public class ExtractTrackStackAction extends AbstractTMAction {
+
 
 	public static final String NAME = "Extract track stack";
 	public static final String INFO_TEXT =  "<html> " +
@@ -47,14 +49,12 @@ public class ExtractTrackStackAction extends AbstractTMAction {
 	/** By how much we resize the capture window to get a nice border around the spot. */
 	private static final float RESIZE_FACTOR = 1.5f;
 	
-	
-	
-	
 	/*
 	 * CONSTRUCTOR
 	 */
 
-	public ExtractTrackStackAction() {
+	public ExtractTrackStackAction(TrackMate trackmate, TrackMateGUIController controller) {
+		super(trackmate, controller);
 		this.icon = ICON;
 	}
 
@@ -64,11 +64,11 @@ public class ExtractTrackStackAction extends AbstractTMAction {
 	
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	@Override
-	public void execute(TrackMate trackmate) {
+	public void execute() {
 		logger.log("Capturing track stack.\n");
 		
 		TrackMateModel model = trackmate.getModel();
-		Set<Spot> selection = model.getSelectionModel().getSpotSelection();
+		Set<Spot> selection = controller.getSelectionModel().getSpotSelection();
 		int nspots = selection.size();
 		if (nspots != 2) {
 			logger.error("Expected 2 spots in the selection, got "+nspots+".\nAborting.\n");

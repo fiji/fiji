@@ -120,7 +120,7 @@ public class TrackMateModel {
 	 * CONSTANTS
 	 */
 
-	private static final boolean DEBUG = false;
+	private static final boolean DEBUG = true;
 
 	/*
 	 * FIELDS
@@ -172,14 +172,12 @@ public class TrackMateModel {
 	 */
 	private HashSet<Integer> eventCache = new HashSet<Integer>();
 
-	// SELECTION
-
-	private final SelectionModel selectionModel;
-
 	// OTHERS
 
 	/** The logger to append processes messages */
 	private Logger logger = Logger.DEFAULT_LOGGER;
+	private String spaceUnits = "pixels";
+	private String timeUnits = "frames";
 
 	// LISTENERS
 
@@ -193,6 +191,7 @@ public class TrackMateModel {
 
 
 
+
 	/*
 	 * CONSTRUCTOR
 	 */
@@ -200,7 +199,6 @@ public class TrackMateModel {
 	public TrackMateModel() {
 		featureModel = new FeatureModel(this);
 		trackGraphModel = new TrackGraphModel(this);
-		selectionModel = new SelectionModel(this);
 	}
 
 
@@ -258,21 +256,35 @@ public class TrackMateModel {
 	}
 
 	/*
-	 * DEAL WITH SELECTION CHANGE LISTENER
+	 * PHYSICAL UNITS
 	 */
-
-	public boolean addTrackMateSelectionChangeListener(SelectionChangeListener listener) {
-		return selectionModel.addTrackMateSelectionChangeListener(listener);
+	
+	/**
+	 * Sets the physical units for the quantities stored in this model. 
+	 * @param spaceUnits  the spatial units (e.g. μm).
+	 * @param timeUnits  the time units (e.g. min).
+	 */
+	public void setPhysicalUnits(String spaceUnits, String timeUnits) {
+		this.spaceUnits = spaceUnits;
+		this.timeUnits = timeUnits;
 	}
-
-	public boolean removeTrackMateSelectionChangeListener(SelectionChangeListener listener) {
-		return selectionModel.removeTrackMateSelectionChangeListener(listener);
+	
+	/**
+	 * Returns the spatial units for the quantities stored in this model.
+	 * @return  the spatial units.
+	 */
+	public String getSpaceUnits() {
+		return spaceUnits;
 	}
-
-	public List<SelectionChangeListener> getTrackMateSelectionChangeListener() {
-		return selectionModel.getTrackMateSelectionChangeListener();
+	
+	/**
+	 * Returns the time units for the quantities stored in this model.
+	 * @return the time units.
+	 */
+	public String getTimeUnits() {
+		return timeUnits;
 	}
-
+	
 	/*
 	 * GRAPH MODIFICATION
 	 */
@@ -377,13 +389,7 @@ public class TrackMateModel {
 		return featureModel;
 	}
 
-	/*
-	 * SELECTION METHODS we delegate to the SelectionModel component
-	 */
-
-	public SelectionModel getSelectionModel() {
-		return selectionModel;
-	}
+	
 
 	/*
 	 * MODEL CHANGE METHODS
@@ -453,7 +459,6 @@ public class TrackMateModel {
 			if (DEBUG) {
 				System.out.println("[TrackMateModel] Removing spot " + spotToRemove + " from frame " + fromFrame);
 			}
-			selectionModel.removeSpotFromSelection(spotToRemove);
 			trackGraphModel.removeSpot(spotToRemove); // changes to edges will be caught automatically by the TrackGraphModel
 			return spotToRemove;
 		} else {

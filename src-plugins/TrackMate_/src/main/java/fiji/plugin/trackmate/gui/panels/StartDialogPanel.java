@@ -3,17 +3,10 @@ package fiji.plugin.trackmate.gui.panels;
 import static fiji.plugin.trackmate.gui.TrackMateWizard.BIG_FONT;
 import static fiji.plugin.trackmate.gui.TrackMateWizard.SMALL_FONT;
 import static fiji.plugin.trackmate.gui.TrackMateWizard.TEXTFIELD_DIMENSION;
-import fiji.plugin.trackmate.Settings;
-import fiji.plugin.trackmate.TrackMate;
-import fiji.plugin.trackmate.gui.TrackMateWizard;
-import fiji.plugin.trackmate.gui.descriptors.DetectorChoiceDescriptor;
-import fiji.plugin.trackmate.gui.descriptors.WizardPanelDescriptor;
-import fiji.plugin.trackmate.gui.panels.components.JNumericTextField;
 import ij.ImagePlus;
 import ij.WindowManager;
 import ij.gui.Roi;
 
-import java.awt.Component;
 import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -21,11 +14,18 @@ import java.awt.event.ActionListener;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 
+import fiji.plugin.trackmate.Settings;
+import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.gui.panels.components.JNumericTextField;
+
 public class StartDialogPanel extends ActionListenablePanel {
 
 	private static final long serialVersionUID = -1L;
 
 	public static final String DESCRIPTOR = "StartDialog";
+
+	/** ActionEvent fired when the user press the refresh button. */
+	private final ActionEvent IMAGEPLUS_REFRESHED = new ActionEvent(this, 0, "ImagePlus refreshed");
 
 	private JLabel jLabelCheckCalibration;
 	private JNumericTextField jTextFieldPixelWidth;
@@ -59,12 +59,9 @@ public class StartDialogPanel extends ActionListenablePanel {
 	private JNumericTextField jTextFieldTimeInterval;
 	private JLabel jLabelTimeInterval;
 	private JLabel jLabelUnits4;
-
 	private ImagePlus imp;
+	private boolean impValid = false;
 
-	private TrackMate trackmate;
-
-	
 	public StartDialogPanel() {
 		initGUI();
 	}
@@ -76,10 +73,19 @@ public class StartDialogPanel extends ActionListenablePanel {
 	 */
 
 	/**
+	 * Returns <code>true</code> if the {@link ImagePlus} selected is valid and can
+	 * be processed.
+	 * @return  a boolean flag.
+	 */
+	public boolean isImpValid() {
+		return impValid;
+	}
+	
+	/**
 	 * Update the specified settings object, with the parameters set in this panel.	
 	 * @param settings  the Settings to update. Cannot be <code>null</code>.
 	 */
-	public void getSettings(Settings settings) {
+	public void updateTo(TrackMateModel model, Settings settings) {
 		settings.imp = imp;
 		// Crop cube
 		settings.tstart = Math.round(Float.parseFloat(jTextFieldTStart.getText()));
@@ -95,12 +101,12 @@ public class StartDialogPanel extends ActionListenablePanel {
 		settings.dy 	= Float.parseFloat(jTextFieldPixelHeight.getText());
 		settings.dz 	= Float.parseFloat(jTextFieldVoxelDepth.getText());
 		settings.dt 	= Float.parseFloat(jTextFieldTimeInterval.getText());
-		settings.spaceUnits = jLabelUnits1.getText();
-		settings.timeUnits  = jLabelUnits4.getText();
 		settings.width 		= imp.getWidth();
 		settings.height		= imp.getHeight();
 		settings.nslices	= imp.getNSlices();
 		settings.nframes	= imp.getNFrames();
+		// Units
+		model.setPhysicalUnits(jLabelUnits1.getText(), jLabelUnits4.getText());
 		// Roi
 		Roi roi = imp.getRoi();
 		if (null != roi) {
@@ -121,16 +127,16 @@ public class StartDialogPanel extends ActionListenablePanel {
 	/**
 	 * Fill the text fields with the parameters grabbed in the {@link Settings} argument.
 	 */
-	public void echoSettings(Settings settings) {
+	public void echoSettings(TrackMateModel model, Settings settings) {
 		jLabelImageName.setText(settings.imp.getTitle());
 		jTextFieldPixelWidth.setText(""+settings.dx);
 		jTextFieldPixelHeight.setText(""+settings.dy);
 		jTextFieldVoxelDepth.setText(""+settings.dz);
 		jTextFieldTimeInterval.setText(""+settings.dt);
-		jLabelUnits1.setText(settings.spaceUnits);
-		jLabelUnits2.setText(settings.spaceUnits);
-		jLabelUnits3.setText(settings.spaceUnits);
-		jLabelUnits4.setText(settings.timeUnits);
+		jLabelUnits1.setText(model.getSpaceUnits());
+		jLabelUnits2.setText(model.getSpaceUnits());
+		jLabelUnits3.setText(model.getSpaceUnits());
+		jLabelUnits4.setText(model.getTimeUnits());
 		jTextFieldXStart.setText(""+settings.xstart); 
 		jTextFieldYStart.setText(""+settings.ystart);
 		jTextFieldXEnd.setText(""+settings.xend);
@@ -143,17 +149,22 @@ public class StartDialogPanel extends ActionListenablePanel {
 
 
 	/**
-	 * Fill the text fields with parameters grabbed from current ImagePlus. If the image is valid,
-	 * enable the {@link #target} component.
+	 * Fill the text fields with parameters grabbed from specified ImagePlus. 
 	 */
-	private void refresh(ImagePlus imp) {
+	public void getFrom(ImagePlus imp) {
 		
 		this.imp = imp;
+		
+		if (null == imp) {
+			jLabelImageName.setText("No image selected.");
+			impValid = false;
+			return;
+		}
 		
 		if (imp.getType() == ImagePlus.COLOR_RGB) {
 			// We do not know how to process RGB images
 			jLabelImageName.setText(imp.getShortTitle()+" is RGB: invalid.");
-			wizard.setNextButtonEnabled(false);
+			impValid = false;
 			return;
 		}
 
@@ -183,12 +194,10 @@ public class StartDialogPanel extends ActionListenablePanel {
 		jTextFieldZEnd.setText(""+(imp.getNSlices()-1));
 		jTextFieldTStart.setText(""+0); 
 		jTextFieldTEnd.setText(""+(imp.getNFrames()-1));
-
-		// Re-enable target component, because we have a valid target image to operate on.
-		wizard.setNextButtonEnabled(true);
+		
+		impValid = true;
 	}
-
-
+	
 	private void initGUI() {
 		try {
 			this.setPreferredSize(new java.awt.Dimension(266, 476));
@@ -419,7 +428,8 @@ public class StartDialogPanel extends ActionListenablePanel {
 				jButtonRefresh.addActionListener(new ActionListener() {
 					public void actionPerformed(ActionEvent e) {
 						imp = WindowManager.getCurrentImage();
-						refresh();
+						getFrom(imp);
+						fireAction(IMAGEPLUS_REFRESHED);
 					}
 				});
 			}

@@ -30,10 +30,10 @@ public class TrackBranchingAnalyzer implements TrackAnalyzer, MultiThreaded {
 	public static final String 		NUMBER_COMPLEX = "NUMBER_COMPLEX";
 	public static final String 		NUMBER_SPOTS = "NUMBER_SPOTS";
 
-	public static final List<String> FEATURES = new ArrayList<String>(5);
-	public static final Map<String, String> FEATURE_NAMES = new HashMap<String, String>(5);
-	public static final Map<String, String> FEATURE_SHORT_NAMES = new HashMap<String, String>(5);
-	public static final Map<String, Dimension> FEATURE_DIMENSIONS = new HashMap<String, Dimension>(5);
+	private static final List<String> FEATURES = new ArrayList<String>(5);
+	private static final Map<String, String> FEATURE_NAMES = new HashMap<String, String>(5);
+	private static final Map<String, String> FEATURE_SHORT_NAMES = new HashMap<String, String>(5);
+	private static final Map<String, Dimension> FEATURE_DIMENSIONS = new HashMap<String, Dimension>(5);
 
 	static {
 		FEATURES.add(NUMBER_SPOTS);
@@ -163,11 +163,6 @@ public class TrackBranchingAnalyzer implements TrackAnalyzer, MultiThreaded {
 	}
 	
 	@Override
-	public String toString() {
-		return KEY;
-	}
-
-	@Override
 	public int getNumThreads() {
 		return numThreads;
 	}
@@ -186,6 +181,31 @@ public class TrackBranchingAnalyzer implements TrackAnalyzer, MultiThreaded {
 	@Override
 	public long getProcessingTime() {
 		return processingTime;
+	}
+
+	@Override
+	public List<String> getFeatures() {
+		return FEATURES;
+	}
+
+	@Override
+	public Map<String, String> getFeatureShortNames() {
+		return FEATURE_SHORT_NAMES;
+	}
+
+	@Override
+	public Map<String, String> getFeatureNames() {
+		return FEATURE_NAMES;
+	}
+
+	@Override
+	public Map<String, Dimension> getFeatureDimensions() {
+		return FEATURE_DIMENSIONS;
+	}
+
+	@Override
+	public String getKey() {
+		return KEY;
 	}
 
 }

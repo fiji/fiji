@@ -27,10 +27,10 @@ public class EdgeTargetAnalyzer implements EdgeAnalyzer, MultiThreaded {
 	public static final String SPOT_TARGET_ID = "SPOT_TARGET_ID";
 	public static final String EDGE_COST = "LINK_COST";
 
-	public static final List<String> FEATURES = new ArrayList<String>(4);
-	public static final Map<String, String> FEATURE_NAMES = new HashMap<String, String>(4);
-	public static final Map<String, String> FEATURE_SHORT_NAMES = new HashMap<String, String>(4);
-	public static final Map<String, Dimension> FEATURE_DIMENSIONS = new HashMap<String, Dimension>(4);
+	private static final List<String> FEATURES = new ArrayList<String>(4);
+	private static final Map<String, String> FEATURE_NAMES = new HashMap<String, String>(4);
+	private static final Map<String, String> FEATURE_SHORT_NAMES = new HashMap<String, String>(4);
+	private static final Map<String, Dimension> FEATURE_DIMENSIONS = new HashMap<String, Dimension>(4);
 
 	static {
 		FEATURES.add(SPOT_SOURCE_ID);
@@ -107,7 +107,7 @@ public class EdgeTargetAnalyzer implements EdgeAnalyzer, MultiThreaded {
 
 
 	@Override
-	public String toString() {
+	public String getKey() {
 		return KEY;
 	}
 
@@ -130,5 +130,25 @@ public class EdgeTargetAnalyzer implements EdgeAnalyzer, MultiThreaded {
 	@Override
 	public long getProcessingTime() {
 		return processingTime;
+	}
+
+	@Override
+	public List<String> getFeatures() {
+		return FEATURES;
+	}
+
+	@Override
+	public Map<String, String> getFeatureShortNames() {
+		return FEATURE_SHORT_NAMES;
+	}
+
+	@Override
+	public Map<String, String> getFeatureNames() {
+		return FEATURE_NAMES;
+	}
+
+	@Override
+	public Map<String, Dimension> getFeatureDimensions() {
+		return FEATURE_DIMENSIONS;
 	};
 }

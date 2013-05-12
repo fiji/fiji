@@ -170,14 +170,14 @@ public class TrackerProvider extends AbstractProvider  {
 	}
 
 	/**
-	 * @return a new GUI panel able to configure the settings suitable for the target tracker 
+	 * Returns a new GUI panel able to configure the settings suitable for the target tracker 
 	 * identified by the key parameter. 
 	 * If the key is unknown to this factory, <code>null</code> is returned. 
 	 */
 	public ConfigurationPanel getTrackerConfigurationPanel(Settings settings) 	{
 
 		String trackerName = getName();
-		String spaceUnits = settings.spaceUnits;
+		String spaceUnits = model.getSpaceUnits();
 		Collection<String> features = settings.getSpotFeatures();
 		Map<String, String> featureNames = settings.getSpotFeatureNames();
 

@@ -42,6 +42,7 @@ import javax.swing.table.JTableHeader;
 
 import fiji.plugin.trackmate.SelectionChangeEvent;
 import fiji.plugin.trackmate.SelectionChangeListener;
+import fiji.plugin.trackmate.SelectionModel;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.TrackMateModel;
@@ -60,11 +61,13 @@ public class InfoPane extends JPanel implements SelectionChangeListener {
 	private boolean doHighlightSelection = true;
 	private final TrackMateModel model;
 	private final Settings settings;
+	private final SelectionModel selectionModel;
 	/** A copy of the last spot collection highlighted in this infopane, sorted by frame order. */
 	private Collection<Spot> spotSelection;
 	private final OnRequestUpdater updater;
 	/** The table headers, taken from spot feature names. */
 	private final String[] headers;
+
 
 
 
@@ -80,9 +83,10 @@ public class InfoPane extends JPanel implements SelectionChangeListener {
 	 * @param model the {@link TrackMateModel} from which the spot collection is taken.
 	 * @param settings  the {@link Settings} object we use to retrieve spot feature names.
 	 */
-	public InfoPane(final TrackMateModel model, final Settings settings) {
+	public InfoPane(TrackMateModel model, Settings settings, SelectionModel selectionModel) {
 		this.model = model;
 		this.settings = settings;
+		this.selectionModel = selectionModel;
 		List<String> features = settings.getSpotFeatures();
 		Map<String, String> featureNames = settings.getSpotFeatureShortNames();
 		headers = TMUtils.getArrayFromMaping(features, featureNames).toArray(new String[] {});
@@ -100,14 +104,14 @@ public class InfoPane extends JPanel implements SelectionChangeListener {
 		addAncestorListener(new AncestorListener() {			
 			@Override
 			public void ancestorRemoved(AncestorEvent event) {
-				model.removeTrackMateSelectionChangeListener(InfoPane.this);
+				InfoPane.this.selectionModel.removeTrackMateSelectionChangeListener(InfoPane.this);
 			}
 			@Override
 			public void ancestorMoved(AncestorEvent event) {}
 			@Override
 			public void ancestorAdded(AncestorEvent event) {}
 		});
-		model.addTrackMateSelectionChangeListener(this);
+		selectionModel.addTrackMateSelectionChangeListener(this);
 		init();
 	}
 
@@ -120,7 +124,7 @@ public class InfoPane extends JPanel implements SelectionChangeListener {
 		// Echo changed in a different thread for performance 
 		new Thread("TrackScheme info pane thread") {
 			public void run() {
-				highlightSpots(model.getSelectionModel().getSpotSelection());
+				highlightSpots(selectionModel.getSpotSelection());
 			}
 		}.start();
 	}
@@ -313,7 +317,7 @@ public class InfoPane extends JPanel implements SelectionChangeListener {
 	 * @param yFeatures  the features to plot as Y axis.
 	 */
 	private void plotSelectionData(String xFeature, Set<String> yFeatures) {
-		Set<Spot> spots = model.getSelectionModel().getSpotSelection();
+		Set<Spot> spots = selectionModel.getSpotSelection();
 		if (yFeatures.isEmpty() || spots.isEmpty()) {
 			return;
 		}

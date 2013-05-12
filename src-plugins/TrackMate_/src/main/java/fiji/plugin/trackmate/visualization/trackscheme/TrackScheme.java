@@ -109,8 +109,8 @@ public class TrackScheme extends AbstractTrackMateModelView {
 	 * CONSTRUCTORS
 	 */
 
-	public TrackScheme(final TrackMateModel model, final Settings settings)  {
-		super(model);
+	public TrackScheme(TrackMateModel model, Settings settings, SelectionModel selectionModel)  {
+		super(model, selectionModel);
 		this.settings = settings;
 		spotImageUpdater = new SpotImageUpdater(settings);
 		initDisplaySettings();
@@ -122,6 +122,9 @@ public class TrackScheme extends AbstractTrackMateModelView {
 	 * METHODS
 	 */
 
+	public SelectionModel getSelectionModel() {
+		return selectionModel;
+	}
 
 	/**
 	 * @return the column index that is the first one after all the track columns.
@@ -402,7 +405,7 @@ public class TrackScheme extends AbstractTrackMateModelView {
 			} finally {
 				graphModel.endUpdate();
 				model.endUpdate();
-				model.getSelectionModel().clearEdgeSelection();
+				selectionModel.clearEdgeSelection();
 			}
 		}
 	}
@@ -424,7 +427,6 @@ public class TrackScheme extends AbstractTrackMateModelView {
 
 		/* Performance issue: we do our highlighting here, in batch, bypassing highlight* methods		 */
 		{
-			SelectionModel selectionModel = model.getSelectionModel();
 			ArrayList<Object> newSelection = new ArrayList<Object>(selectionModel.getSpotSelection().size() + selectionModel.getEdgeSelection().size());
 			Iterator<DefaultWeightedEdge> edgeIt = selectionModel.getEdgeSelection().iterator();
 			while(edgeIt.hasNext()) {
@@ -787,7 +789,6 @@ public class TrackScheme extends AbstractTrackMateModelView {
 		if (DEBUG_SELECTION)
 			System.out.println("[TrackScheme] userChangeSelection: sending selection change to model.");
 		doFireSelectionChangeEvent = false;
-		SelectionModel selectionModel = model.getSelectionModel();
 		if (!edgesToAdd.isEmpty())
 			selectionModel.addEdgeToSelection(edgesToAdd);
 		if (!spotsToAdd.isEmpty())
@@ -854,7 +855,7 @@ public class TrackScheme extends AbstractTrackMateModelView {
 			doFireModelChangeEvent = false;
 			model.beginUpdate();
 			try {
-				model.getSelectionModel().clearSelection();
+				selectionModel.clearSelection();
 				// We remove edges first so that we ensure we do not end having orphan edges.
 				// Normally JGraphT handles that well, but we enforce things here. To be sure.
 				for (DefaultWeightedEdge edge : edgesToRemove) {
@@ -993,7 +994,7 @@ public class TrackScheme extends AbstractTrackMateModelView {
 
 		// Sort spots by time
 		TreeMap<Integer, Spot> spotsInTime = new TreeMap<Integer, Spot>();
-		for (Spot spot : model.getSelectionModel().getSpotSelection()) {
+		for (Spot spot : selectionModel.getSpotSelection()) {
 			spotsInTime.put(spot.getFeature(Spot.FRAME).intValue(), spot);
 		}
 
@@ -1105,7 +1106,7 @@ public class TrackScheme extends AbstractTrackMateModelView {
 			inspectionEdges.add(dwe);
 		}
 		// Forward to selection model
-		model.getSelectionModel().selectTrack(inspectionSpots, inspectionEdges, direction);
+		selectionModel.selectTrack(inspectionSpots, inspectionEdges, direction);
 	}
 
 }

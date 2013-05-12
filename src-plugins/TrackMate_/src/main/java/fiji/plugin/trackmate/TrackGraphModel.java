@@ -257,7 +257,6 @@ public class TrackGraphModel {
 		boolean removed = graph.removeEdge(edge);
 		if (removed) {
 			edgesRemoved.add(edge);
-			model.getSelectionModel().removeEdgeFromSelection(edge);
 			if (DEBUG)
 				System.out.println("[TrackGraphModel] Removing edge " + edge + " between " + graph.getEdgeSource(edge) + " and " + graph.getEdgeTarget(edge));
 		}

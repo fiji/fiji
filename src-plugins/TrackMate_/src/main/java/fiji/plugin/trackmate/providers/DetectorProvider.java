@@ -23,6 +23,7 @@ import org.jdom2.Element;
 
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.TrackMate;
+import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.detection.DetectorKeys;
 import fiji.plugin.trackmate.detection.DogDetectorFactory;
 import fiji.plugin.trackmate.detection.DownsampleLogDetectorFactory;
@@ -41,17 +42,24 @@ public class DetectorProvider extends AbstractProvider {
 	 * BLANK CONSTRUCTOR
 	 */
 
+	private TrackMateModel model;
+	private Settings settings;
+
 	/**
 	 * This provider provides the GUI with the spot detectors currently available in the 
-	 * TrackMate trackmate. Each detector is identified by a key String, which can be used 
+	 * current TrackMate version. Each detector is identified by a key String, which can be used 
 	 * to retrieve new instance of the detector, settings for the target detector and a 
 	 * GUI panel able to configure these settings.
 	 * <p>
-	 * If you want to add custom detectors to TrackMate, a simple way is to extend this
+	 * If you want to add custom detectors to TrackMate GUI, a simple way is to extend this
 	 * factory so that it is registered with the custom detectors and pass this 
 	 * extended provider to the {@link TrackMate} trackmate.
+	 * @param settings 
+	 * @param model 
 	 */
-	public DetectorProvider() {
+	public DetectorProvider(TrackMateModel model, Settings settings) {
+		this.model = model;
+		this.settings = settings;
 		registerDetectors();
 		currentKey = LogDetectorFactory.DETECTOR_KEY;
 	}
@@ -86,7 +94,7 @@ public class DetectorProvider extends AbstractProvider {
 	}
 
 	/**
-	 * Marshall a settings map to a JDom element, ready for saving to XML. 
+	 * Marshalls a settings map to a JDom element, ready for saving to XML. 
 	 * The element is <b>updated</b> with new attributes.
 	 * <p>
 	 * Only parameters specific to the target detector factory are marshalled.
@@ -128,7 +136,7 @@ public class DetectorProvider extends AbstractProvider {
 	}
 
 	/**
-	 * Un-marshall a JDom element to update a settings map, and sets the target 
+	 * Un-marshalls a JDom element to update a settings map, and sets the target 
 	 * detector factory of this provider from the element. 
 	 * <p>
 	 * Concretely: the detector key is read from the element, and is used to set 
@@ -221,7 +229,7 @@ public class DetectorProvider extends AbstractProvider {
 	}
 
 	/**
-	 * @return a new default settings map suitable for the target detector identified by 
+	 * Returns a new default settings map suitable for the target detector identified by 
 	 * the {@link #currentKey}. Settings are instantiated with default values.  
 	 * If the key is unknown to this provider, <code>null</code> is returned. 
 	 */
@@ -254,7 +262,7 @@ public class DetectorProvider extends AbstractProvider {
 	}
 
 	/**
-	 * @return the html String containing a descriptive information about the target detector,
+	 * Returns the html String containing a descriptive information about the target detector,
 	 * or <code>null</code> if it is unknown to this provider.
 	 */
 	public String getInfoText() {
@@ -277,13 +285,13 @@ public class DetectorProvider extends AbstractProvider {
 	}
 
 	/**
-	 * @return a new GUI panel able to configure the settings suitable for the target detector 
+	 * Returns a new GUI panel able to configure the settings suitable for the target detector 
 	 * factory. If the key is unknown to this provider, <code>null</code> is returned.
 	 */
-	public ConfigurationPanel getDetectorConfigurationPanel(final Settings settings) 	{
+	public ConfigurationPanel getDetectorConfigurationPanel() 	{
 		
 		ImagePlus imp = settings.imp;
-		String spaceUnits = settings.spaceUnits;
+		String spaceUnits = model.getSpaceUnits();
 		
 		if (currentKey.equals(LogDetectorFactory.DETECTOR_KEY)) {
 			return new LogDetectorConfigurationPanel(imp, LogDetectorFactory.INFO_TEXT, LogDetectorFactory.NAME, spaceUnits);

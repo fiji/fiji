@@ -1,8 +1,6 @@
 package fiji.plugin.trackmate.visualization.threedviewer;
 
-import ij.ImagePlus;
 import ij3d.Content;
-import ij3d.ContentCreator;
 import ij3d.ContentInstant;
 import ij3d.Image3DUniverse;
 
@@ -17,14 +15,12 @@ import javax.media.j3d.BadTransformException;
 import javax.vecmath.Color3f;
 import javax.vecmath.Point4d;
 
-import net.imglib2.exception.ImgLibException;
-
 import org.jfree.chart.renderer.InterpolatePaintScale;
 import org.jgrapht.graph.DefaultWeightedEdge;
 
 import fiji.plugin.trackmate.ModelChangeEvent;
 import fiji.plugin.trackmate.SelectionChangeEvent;
-import fiji.plugin.trackmate.Settings;
+import fiji.plugin.trackmate.SelectionModel;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.TrackMateModel;
@@ -59,19 +55,15 @@ public class SpotDisplayer3D extends AbstractTrackMateModelView {
 	private Content spotContent;
 	private Content trackContent;
 	private final Image3DUniverse universe;
-	private final Settings settings;
 	// For highlighting
 	private ArrayList<Spot> previousSpotHighlight;
 	private HashMap<Spot, Color3f> previousColorHighlight;
 	private HashMap<Spot, Integer> previousFrameHighlight;
 	private HashMap<DefaultWeightedEdge, Color> previousEdgeHighlight;
-	/**  the flag specifying whether to render image data or not. By default, it is true. */
-	private boolean doRenderImage = true;
 
-	public SpotDisplayer3D(TrackMateModel model, final Settings settings) {
-		super(model);
-		this.settings = settings;
-		this.universe = new Image3DUniverse();
+	public SpotDisplayer3D(TrackMateModel model, final SelectionModel selectionModel, Image3DUniverse universe) {
+		super(model, selectionModel);
+		this.universe = universe;
 		setModel(model);
 	}
 
@@ -115,8 +107,8 @@ public class SpotDisplayer3D extends AbstractTrackMateModelView {
 	@Override
 	public void selectionChanged(SelectionChangeEvent event) {
 		// Highlight
-		highlightEdges(model.getSelectionModel().getEdgeSelection());
-		highlightSpots(model.getSelectionModel().getSpotSelection());
+		highlightEdges(selectionModel.getEdgeSelection());
+		highlightSpots(selectionModel.getSpotSelection());
 		// Center on last spot
 		super.selectionChanged(event);
 	}
@@ -152,31 +144,10 @@ public class SpotDisplayer3D extends AbstractTrackMateModelView {
 			trackNode.setTrackDisplayDepth((Integer) displaySettings.get(KEY_TRACK_DISPLAY_DEPTH));
 			updateTrackColors();
 			trackNode.refresh();
-		}
-
-		universe.show();
-		if (doRenderImage && null != settings.imp) {
-			//			if (!settings.imp.isVisible())
-			//				settings.imp.show();
-			ImagePlus[] images;
-			try {
-				images = TMUtils.makeImageForViewer(settings);
-				final Content imageContent = ContentCreator.createContent(
-						settings.imp.getShortTitle(), 
-						images, 
-						Content.VOLUME, 
-						SpotDisplayer3D.DEFAULT_RESAMPLING_FACTOR, 
-						0,
-						null, 
-						SpotDisplayer3D.DEFAULT_THRESHOLD, 
-						new boolean[] {true, true, true});
-				universe.addContentLater(imageContent);	
-			} catch (ImgLibException e) {
-				e.printStackTrace();
-			}
-		} else {
 			universe.updateStartAndEndTime(blobs.firstKey(), blobs.lastKey());
 		}
+		
+		universe.show();
 	}
 
 	@Override
@@ -219,20 +190,6 @@ public class SpotDisplayer3D extends AbstractTrackMateModelView {
 	public String toString() {
 		return NAME;
 	}
-
-	/*
-	 * PUBLIC SPECIFIC METHODS
-	 */
-
-	/**
-	 * Set a flag that specifies whether the next call to {@link #render()} will cause
-	 * image data to be imported and displayer in this viewer   
-	 * @param doRenderImage  the flag specifying whether to render image data or not. By default, it is true.
-	 */
-	public void setRenderImageData(boolean doRenderImage) {
-		this.doRenderImage = doRenderImage;
-	}
-
 
 	/*
 	 * PRIVATE METHODS

@@ -135,7 +135,7 @@ public class GrapherPanel extends ActionListenablePanel {
 		// Prepare grapher
 		String xFeature = edgeFeatureSelectionPanel.getXKey();
 		Set<String> yFeatures = edgeFeatureSelectionPanel.getYKeys();
-		EdgeFeatureGrapher grapher = new EdgeFeatureGrapher(xFeature, yFeatures, edges , trackmate.getModel(), trackmate.getSettings());
+		EdgeFeatureGrapher grapher = new EdgeFeatureGrapher(xFeature, yFeatures, edges , trackmate.getModel());
 		grapher.render();
 	}
 	
@@ -145,7 +145,7 @@ public class GrapherPanel extends ActionListenablePanel {
 		// Prepare grapher
 		String xFeature = trackFeatureSelectionPanel.getXKey();
 		Set<String> yFeatures = trackFeatureSelectionPanel.getYKeys();
-		TrackFeatureGrapher grapher = new TrackFeatureGrapher(xFeature, yFeatures, trackmate.getModel(), trackmate.getSettings());
+		TrackFeatureGrapher grapher = new TrackFeatureGrapher(xFeature, yFeatures, trackmate.getModel());
 		grapher.render();
 	}
 

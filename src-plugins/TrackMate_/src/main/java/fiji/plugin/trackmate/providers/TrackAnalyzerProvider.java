@@ -1,11 +1,8 @@
 package fiji.plugin.trackmate.providers;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
-import fiji.plugin.trackmate.Dimension;
 import fiji.plugin.trackmate.TrackMate;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.features.track.TrackAnalyzer;
@@ -19,9 +16,7 @@ import fiji.plugin.trackmate.features.track.TrackSpeedStatisticsAnalyzer;
  * A provider for the track analyzers provided in the GUI.
  * <p>
  * Concrete implementation must declare what features they can compute numerically, 
- * using the method {@link #getFeaturesForKey(String)}. The names and dimension of these 
- * features are also stored and provided: {@link #getFeatureName(String)}, {@link #getFeatureShortName(String)}
- * and {@link #getFeatureDimension(String)}.
+ * using the method {@link #getFeaturesForKey(String)}. 
  * <p>
  * Feature key names are for historical reason all capitalized in an enum manner. For instance: POSITION_X,
  * MAX_INTENSITY, etc... They must be suitable to be used as a attribute key in an xml file.
@@ -32,14 +27,6 @@ public class TrackAnalyzerProvider {
 	/** The detector names, in the order they will appear in the GUI.
 	 * These names will be used as keys to access relevant track analyzer classes.  */
 	protected List<String> names;
-	/** Map of the features per analyzer. */
-	protected Map<String, List<String>> features;
-	/** Map a feature to its name. */
-	protected Map<String,String> featureNames;
-	/** Map a feature to its short name. */
-	protected Map<String, String> featureShortNames;
-	/** Map a feature to its dimension. */
-	protected Map<String, Dimension> featureDimensions;
 	/** The target model to operate on. */
 	protected final TrackMateModel model;
 	/** The {@link TrackIndexAnalyzer} is the only analyzer we do not re-instantiate 
@@ -82,34 +69,6 @@ public class TrackAnalyzerProvider {
 		names.add(TrackSpeedStatisticsAnalyzer.KEY);
 		names.add(TrackLocationAnalyzer.KEY);
 		names.add(TrackIndexAnalyzer.KEY);
-		// features
-		features = new HashMap<String, List<String>>();
-		features.put(TrackBranchingAnalyzer.KEY, TrackBranchingAnalyzer.FEATURES);
-		features.put(TrackDurationAnalyzer.KEY, TrackDurationAnalyzer.FEATURES);
-		features.put(TrackSpeedStatisticsAnalyzer.KEY, TrackSpeedStatisticsAnalyzer.FEATURES);
-		features.put(TrackLocationAnalyzer.KEY, TrackLocationAnalyzer.FEATURES);
-		features.put(TrackIndexAnalyzer.KEY, TrackIndexAnalyzer.FEATURES);
-		// features names
-		featureNames = new HashMap<String, String>();
-		featureNames.putAll(TrackSpeedStatisticsAnalyzer.FEATURE_NAMES);
-		featureNames.putAll(TrackDurationAnalyzer.FEATURE_NAMES);
-		featureNames.putAll(TrackBranchingAnalyzer.FEATURE_NAMES);
-		featureNames.putAll(TrackLocationAnalyzer.FEATURE_NAMES);
-		featureNames.putAll(TrackIndexAnalyzer.FEATURE_NAMES);
-		// features short names
-		featureShortNames = new HashMap<String, String>();
-		featureShortNames.putAll(TrackSpeedStatisticsAnalyzer.FEATURE_SHORT_NAMES);
-		featureShortNames.putAll(TrackDurationAnalyzer.FEATURE_SHORT_NAMES);
-		featureShortNames.putAll(TrackBranchingAnalyzer.FEATURE_SHORT_NAMES);
-		featureShortNames.putAll(TrackLocationAnalyzer.FEATURE_SHORT_NAMES);
-		featureShortNames.putAll(TrackIndexAnalyzer.FEATURE_SHORT_NAMES);
-		// feature dimensions
-		featureDimensions = new HashMap<String, Dimension>();
-		featureDimensions.putAll(TrackSpeedStatisticsAnalyzer.FEATURE_DIMENSIONS);
-		featureDimensions.putAll(TrackDurationAnalyzer.FEATURE_DIMENSIONS);
-		featureDimensions.putAll(TrackBranchingAnalyzer.FEATURE_DIMENSIONS);
-		featureDimensions.putAll(TrackLocationAnalyzer.FEATURE_DIMENSIONS);
-		featureDimensions.putAll(TrackIndexAnalyzer.FEATURE_DIMENSIONS);
 	}
 
 	/**
@@ -137,54 +96,6 @@ public class TrackAnalyzerProvider {
 	 */
 	public List<String> getAvailableTrackFeatureAnalyzers() {
 		return names;
-	}
-
-
-	/**
-	 * @return the list of features the analyzer with the specified key 
-	 * generates, or <code>null</code> if the analyzer is unknown to this provider.
-	 */
-	public List<String> getFeaturesForKey(String key) {
-		return features.get(key);
-	}
-	
-	/**
-	 * @return the key of the analyzer that can generate the specified feature,
-	 * or <code>null</code> if this feature is unknown to this provider.
-	 */
-	public String getKeyForAnalyzer(String feature) {
-		for (String key : features.keySet()) {
-			if (features.get(key).contains(feature)) {
-				return key;
-			}
-		}
-		return null;
-	}
-	
-	
-
-	/**
-	 * @return the short names of a feature, 
-	 * or <code>null</code> if the feature is unknown to this provider.
-	 */
-	public String getFeatureShortName(String key) {
-		return featureShortNames.get(key);
-	}
-
-	/**
-	 * @return the name of a feature, 
-	 * or <code>null</code> if the feature is unknown to this provider.
-	 */
-	public String getFeatureName(String key) {
-		return featureNames.get(key);
-	}
-
-	/**
-	 * @return the dimension of a feature, 
-	 * or <code>null</code> if the feature is unknown to this provider.
-	 */
-	public Dimension getFeatureDimension(String key) {
-		return featureDimensions.get(key);
 	}
 
 }

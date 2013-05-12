@@ -16,6 +16,8 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import fiji.plugin.trackmate.Logger;
+import fiji.plugin.trackmate.SelectionChangeListener;
+import fiji.plugin.trackmate.SelectionModel;
 import fiji.plugin.trackmate.TrackMate;
 import fiji.plugin.trackmate.detection.ManualDetectorFactory;
 import fiji.plugin.trackmate.features.track.TrackIndexAnalyzer;
@@ -40,6 +42,9 @@ import fiji.plugin.trackmate.gui.descriptors.WizardPanelDescriptor;
 import fiji.plugin.trackmate.gui.panels.StartDialogPanel;
 import fiji.plugin.trackmate.providers.ActionProvider;
 import fiji.plugin.trackmate.providers.DetectorProvider;
+import fiji.plugin.trackmate.providers.EdgeAnalyzerProvider;
+import fiji.plugin.trackmate.providers.SpotAnalyzerProvider;
+import fiji.plugin.trackmate.providers.TrackAnalyzerProvider;
 import fiji.plugin.trackmate.providers.TrackerProvider;
 import fiji.plugin.trackmate.providers.ViewProvider;
 import fiji.plugin.trackmate.util.TMUtils;
@@ -60,6 +65,9 @@ public class TrackMateGUIController implements ActionListener {
 	private final TrackMateWizard gui;
 	private final TrackMateGUIModel guimodel;
 	
+	protected SpotAnalyzerProvider spotAnalyzerProvider;
+	protected EdgeAnalyzerProvider edgeAnalyzerProvider;
+	protected TrackAnalyzerProvider trackAnalyzerProvider;
 	protected DetectorProvider detectorProvider;
 	protected ViewProvider viewProvider;
 	protected TrackerProvider trackerProvider;
@@ -80,7 +88,9 @@ public class TrackMateGUIController implements ActionListener {
 	protected ConfigureViewsDescriptor configureViewsDescriptor;
 	protected ActionChooserDescriptor actionChooserDescriptor;
 	protected LogPanelDescriptor logPanelDescriptor;
+	protected SaveDescriptor saveDescriptor;
 	
+	protected SelectionModel selectionModel;
 
 
 	/*
@@ -111,6 +121,7 @@ public class TrackMateGUIController implements ActionListener {
 		
 		createProviders();
 		createDescriptors();
+		createSelectionModel();
 
 		this.guimodel = new TrackMateGUIModel();
 		guimodel.currentDescriptor = startDialoDescriptor;
@@ -128,31 +139,47 @@ public class TrackMateGUIController implements ActionListener {
 	 */
 
 	
+
 	/**
-	 * Expose the {@link TrackMateWizard} instance controlled here.
+	 * Exposes the {@link TrackMateWizard} instance controlled here.
 	 */
 	public TrackMateWizard getWizard() {
 		return gui;
 	}
 
 	/**
-	 * Expose the {@link TrackMate} trackmate piloted by the wizard.
+	 * Exposes the {@link TrackMate} trackmate piloted by the wizard.
 	 */
 	public TrackMate getPlugin() {
 		return trackmate;
 	}
-
-
+	
+	/**
+	 * Exposes the {@link SelectionModel} shared amongst all {@link SelectionChangeListener}s
+	 * controlled by this instance.
+	 * @return the {@link SelectionModel}.
+	 */
+	public SelectionModel getSelectionModel() {
+		return selectionModel;
+	}
 
 	/*
 	 * PROTECTED METHODS
 	 */
 	
+
+	protected void createSelectionModel() {
+		selectionModel = new SelectionModel(trackmate.getModel());
+	}
+	
 	protected void createProviders() {
-		detectorProvider 	= new DetectorProvider(); 
-		viewProvider 		= new ViewProvider(trackmate.getModel(), trackmate.getSettings());
+		spotAnalyzerProvider = new SpotAnalyzerProvider(trackmate.getModel());
+		edgeAnalyzerProvider = new EdgeAnalyzerProvider(trackmate.getModel());
+		trackAnalyzerProvider = new TrackAnalyzerProvider(trackmate.getModel());
+		detectorProvider 	= new DetectorProvider(trackmate.getModel(), trackmate.getSettings()); 
+		viewProvider 		= new ViewProvider(trackmate.getModel(), trackmate.getSettings(), selectionModel);
 		trackerProvider 	= new TrackerProvider(trackmate.getModel(), trackmate.getSettings());
-		actionProvider 		= new ActionProvider();
+		actionProvider 		= new ActionProvider(trackmate, this);
 	}
 
 	/**
@@ -169,7 +196,18 @@ public class TrackMateGUIController implements ActionListener {
 		/*
 		 * Start panel
 		 */
-		startDialoDescriptor 		= new StartDialogDescriptor(trackmate);
+		startDialoDescriptor 		= new StartDialogDescriptor(trackmate, spotAnalyzerProvider, edgeAnalyzerProvider, trackAnalyzerProvider);
+		// Listen if the selected imp is valid and toggle next button accordingly.
+		startDialoDescriptor.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				if (startDialoDescriptor.isImpValid()) {
+					gui.setNextButtonEnabled(true);
+				} else {
+					gui.setNextButtonEnabled(false);
+				}
+			}
+		});
 		
 		/*
 		 * Choose detector
@@ -203,7 +241,7 @@ public class TrackMateGUIController implements ActionListener {
 		spotFilterDescriptor.getComponent().addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent ae) {
-				displaySettings.put(TrackMateModelView.KEY_SPOT_COLOR_FEATURE, spotFilterDescriptor.getComponent().getColorByFeature());
+				guimodel.displaySettings.put(TrackMateModelView.KEY_SPOT_COLOR_FEATURE, spotFilterDescriptor.getComponent().getColorByFeature());
 			}
 		});
 		spotFilterDescriptor.getComponent().addChangeListener(new ChangeListener() {
@@ -243,7 +281,7 @@ public class TrackMateGUIController implements ActionListener {
 			public void actionPerformed(ActionEvent event) {
 				PerTrackFeatureColorGenerator generator = new PerTrackFeatureColorGenerator(trackmate.getModel(), TrackIndexAnalyzer.TRACK_INDEX);
 				generator.setFeature(trackFilterDescriptor.getComponent().getColorByFeature());
-				displaySettings.put(TrackMateModelView.KEY_TRACK_COLORING, generator);
+				guimodel.displaySettings.put(TrackMateModelView.KEY_TRACK_COLORING, generator);
 			}
 		});
 		trackFilterDescriptor.getComponent().addChangeListener(new ChangeListener() {
@@ -268,9 +306,19 @@ public class TrackMateGUIController implements ActionListener {
 		/*
 		 * Offer to take some actions on the data.
 		 */
-		actionChooserDescriptor		= new ActionChooserDescriptor(actionProvider, trackmate);
+		actionChooserDescriptor		= new ActionChooserDescriptor(actionProvider);
+		
+		/*
+		 * Save descriptor
+		 */
+		
+		saveDescriptor 				= new SaveDescriptor(logPanel, trackmate, detectorProvider, trackerProvider, gui);
 	}
 	
+	protected WizardPanelDescriptor getFirstDescriptor() {
+		return startDialoDescriptor;
+	}
+
 	protected WizardPanelDescriptor nextDescriptor(WizardPanelDescriptor currentDescriptor) {
 
 		if (currentDescriptor == startDialoDescriptor) {
@@ -384,8 +432,7 @@ public class TrackMateGUIController implements ActionListener {
 
 		// Get start panel id
 		gui.setPreviousButtonEnabled(false);
-		String id = StartDialogPanel.DESCRIPTOR;
-		WizardPanelDescriptor panelDescriptor  = gui.getPanelDescriptorFor(id);
+		WizardPanelDescriptor panelDescriptor = getFirstDescriptor();
 		
 		String welcomeMessage = TrackMate.PLUGIN_NAME_STR + "v" + TrackMate.PLUGIN_NAME_VERSION + " started on:\n" + 
 				TMUtils.getCurrentTimeString() + '\n';
@@ -396,7 +443,7 @@ public class TrackMateGUIController implements ActionListener {
 		panelDescriptor.aboutToDisplayPanel();
 
 		// Display matching panel
-		gui.showDescriptorPanelFor(id);
+		gui.show(panelDescriptor);
 
 		//  Show the panel in the dialog, and execute action after display
 		panelDescriptor.displayingPanel();  
@@ -413,54 +460,35 @@ public class TrackMateGUIController implements ActionListener {
 
 		if (event == gui.NEXT_BUTTON_PRESSED && guimodel.actionFlag) {
 
-			new Thread("TrackMate moving to next step thread.") {
-				public void run() {
-					next();
-				};
-			}.start();
-
+			next();
 
 		} else if (event == gui.PREVIOUS_BUTTON_PRESSED && guimodel.actionFlag) {
 
-			new Thread("TrackMate moving to previous step thread.") {
-				public void run() {
-					previous();
-				};
-			}.start();
+			previous();
 
 		} else if (event == gui.LOAD_BUTTON_PRESSED && guimodel.actionFlag) {
 
 			guimodel.actionFlag = false;
 			gui.jButtonNext.setText("Resume");
 			disableButtonsAndStoreState();
+			load();
 
-			new Thread("TrackMate moving to load state thread.") {
-				public void run() {
-					load();
-				};
-			}.start();
 
 		} else if (event == gui.SAVE_BUTTON_PRESSED && guimodel.actionFlag) {
 
 			guimodel.actionFlag = false;
 			gui.jButtonNext.setText("Resume");
 			disableButtonsAndStoreState();
-
-			new Thread("TrackMate moving to save state thread.") {
-				public void run() {
-					save();
-				};
-			}.start();
+			save();
 
 		} else if ((event == gui.NEXT_BUTTON_PRESSED || 
 				event == gui.PREVIOUS_BUTTON_PRESSED || 
 				event == gui.LOAD_BUTTON_PRESSED ||
 				event == gui.SAVE_BUTTON_PRESSED) && !guimodel.actionFlag ) {
 
-			// Display old panel, but do not execute its actions
+			// Display previous panel, but do not execute its actions
 			guimodel.actionFlag = true;
-			String id = gui.getCurrentPanelDescriptor().getNextDescriptorID();
-			gui.showDescriptorPanelFor(id);
+			gui.show(guimodel.previousDescriptor);
 
 			// Put back buttons
 			gui.jButtonNext.setText("Next");
@@ -471,13 +499,13 @@ public class TrackMateGUIController implements ActionListener {
 			if (guimodel.logButtonState) {
 				
 				restoreButtonsState();
-				gui.showDescriptorPanelFor(guimodel.previousPanelID);
+				gui.show(guimodel.previousDescriptor);
 				
 			} else {
 				
 				disableButtonsAndStoreState();
-				guimodel.previousPanelID = gui.getCurrentPanelDescriptor().getComponentID();
-				gui.showDescriptorPanelFor(LogPanelDescriptor.DESCRIPTOR);
+				guimodel.previousDescriptor = guimodel.currentDescriptor;
+				gui.show(logPanelDescriptor);
 				
 			}
 			guimodel.logButtonState = !guimodel.logButtonState;
@@ -543,41 +571,24 @@ public class TrackMateGUIController implements ActionListener {
 
 	private void load() {
 		// Store current state
-		WizardPanelDescriptor oldDescriptor = gui.getCurrentPanelDescriptor();
+		guimodel.previousDescriptor = guimodel.currentDescriptor;
 
 		// Move to load state and show log panel
-		final LoadDescriptor loadDescriptor = (LoadDescriptor) gui.getPanelDescriptorFor(LoadDescriptor.DESCRIPTOR);
-		loadDescriptor.setTargetNextID(oldDescriptor.getDescriptorID());
 		loadDescriptor.aboutToDisplayPanel();
-		gui.showDescriptorPanelFor(LoadDescriptor.DESCRIPTOR);
+		gui.show(loadDescriptor);
 
 		// Instantiate GuiReader, ask for file, and load it in memory
 		loadDescriptor.displayingPanel();
-
-		// Enable or disable next and previous button depending on the target descriptor.
-		WizardPanelDescriptor nextPanel = gui.getPanelDescriptorFor(loadDescriptor.getNextDescriptorID());
-		if (nextPanel.getNextDescriptorID() == null) {
-			guimodel.nextButtonState = false;
-		} else {
-			guimodel.nextButtonState = true;
-		}
-		if (nextPanel.getPreviousDescriptorID() == null) {
-			guimodel.previousButtonState = false;
-		} else {
-			guimodel.previousButtonState = true;
-		}
-
 	}
 
 	private void save() {
 		// Store current state
-		WizardPanelDescriptor oldDescriptor = gui.getCurrentPanelDescriptor();
+		guimodel.previousDescriptor = guimodel.currentDescriptor;
 
 		// Move to save state and execute
-		SaveDescriptor saveDescriptor = (SaveDescriptor) gui.getPanelDescriptorFor(SaveDescriptor.DESCRIPTOR);
-		saveDescriptor.setTargetNextID(oldDescriptor.getDescriptorID());
 		saveDescriptor.aboutToDisplayPanel();
-		gui.showDescriptorPanelFor(SaveDescriptor.DESCRIPTOR);
+
+		gui.show(saveDescriptor);
 		gui.getLogger().log(TMUtils.getCurrentTimeString() + '\n', Logger.BLUE_COLOR);
 		saveDescriptor.displayingPanel();
 	}

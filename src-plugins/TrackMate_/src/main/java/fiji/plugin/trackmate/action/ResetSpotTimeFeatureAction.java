@@ -11,6 +11,7 @@ import javax.swing.ImageIcon;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.TrackMate;
+import fiji.plugin.trackmate.gui.TrackMateGUIController;
 import fiji.plugin.trackmate.gui.panels.ConfigureViewsPanel;
 
 /**
@@ -19,6 +20,7 @@ import fiji.plugin.trackmate.gui.panels.ConfigureViewsPanel;
  */
 public class ResetSpotTimeFeatureAction extends AbstractTMAction {
 
+
 	public static final ImageIcon ICON = new ImageIcon(ConfigureViewsPanel.class.getResource("images/time.png"));
 	public static final String NAME = "Reset spot time";
 	public static final String INFO_TEXT = "<html>" +
@@ -26,12 +28,13 @@ public class ResetSpotTimeFeatureAction extends AbstractTMAction {
 			"times the time resolution. " +
 			"</html>";
 	
-	public ResetSpotTimeFeatureAction() {
+	public ResetSpotTimeFeatureAction(TrackMate trackmate, TrackMateGUIController controller) {
+		super(trackmate, controller);
 		this.icon = ICON;
 	}
 	
 	@Override
-	public void execute(TrackMate trackmate) {
+	public void execute() {
 		logger.log("Reset spot time.\n");
 		double dt = trackmate.getSettings().dt;
 		if (dt == 0) {

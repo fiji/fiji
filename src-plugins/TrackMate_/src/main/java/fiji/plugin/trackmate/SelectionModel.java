@@ -33,7 +33,7 @@ public class SelectionModel {
 	 * DEFAULT VISIBILITY CONSTRUCTOR
 	 */
 
-	SelectionModel(TrackMateModel parent) {
+	public SelectionModel(TrackMateModel parent) {
 		this.model = parent;
 	}
 

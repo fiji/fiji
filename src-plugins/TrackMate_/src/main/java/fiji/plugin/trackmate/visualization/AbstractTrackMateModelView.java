@@ -1,14 +1,14 @@
 package fiji.plugin.trackmate.visualization;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
-import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.ModelChangeListener;
 import fiji.plugin.trackmate.SelectionChangeEvent;
 import fiji.plugin.trackmate.SelectionChangeListener;
+import fiji.plugin.trackmate.SelectionModel;
+import fiji.plugin.trackmate.Spot;
+import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.features.track.TrackIndexAnalyzer;
 
 /**
@@ -23,8 +23,6 @@ public abstract class AbstractTrackMateModelView implements SelectionChangeListe
 	 * FIELDS
 	 */
 
-	private final static boolean DEBUG = false;
-	
 	/**
 	 * A map of String/Object that configures the look and feel of the display.
 	 */
@@ -32,17 +30,19 @@ public abstract class AbstractTrackMateModelView implements SelectionChangeListe
 
 	/** The model displayed by this class. */
 	protected TrackMateModel model;
-	
-	/** The list of listener to warn for spot selection change. */
-	protected ArrayList<SelectionChangeListener> selectionChangeListeners = new ArrayList<SelectionChangeListener>();
 
+	protected final  SelectionModel selectionModel;
+	
 
 	/*
 	 * PROTECTED CONSTRUCTOR
 	 */
 
-	protected AbstractTrackMateModelView(TrackMateModel model) {
-		setModel(model);
+	protected AbstractTrackMateModelView(TrackMateModel model, SelectionModel selectionModel) {
+		this.selectionModel = selectionModel;
+		this.model = model;
+		model.addTrackMateModelChangeListener(this);
+		selectionModel.addTrackMateSelectionChangeListener(this);
 		initDisplaySettings(model);
 	}
 	
@@ -106,16 +106,4 @@ public abstract class AbstractTrackMateModelView implements SelectionChangeListe
 		return model;
 	}
 	
-	/*
-	 * PRIVATE METHOD
-	 */
-	
-	private void setModel(TrackMateModel model) {
-		if (DEBUG) {
-			System.out.println("[AbstractTrackMateModelView] Registering "+this.hashCode()+" as listener of "+model);
-		}
-		this.model = model;
-		this.model.addTrackMateModelChangeListener(this);
-		this.model.addTrackMateSelectionChangeListener(this);
-	}
 }

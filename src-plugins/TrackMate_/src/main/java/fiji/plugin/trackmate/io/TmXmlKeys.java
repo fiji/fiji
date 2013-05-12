@@ -21,6 +21,12 @@ class TmXmlKeys {
 
 	public static final String ROOT_ELEMENT_KEY 					= "TrackMate";
 	public static final String PLUGIN_VERSION_ATTRIBUTE_NAME		= "version";
+	public static final String MODEL_ELEMENT_KEY 					= "Model";
+	public static final String SETTINGS_ELEMENT_KEY 				= "Settings";
+	public static final String SPATIAL_UNITS_ATTRIBUTE_NAME 		= "spatialunits";
+	public static final String TIME_UNITS_ATTRIBUTE_NAME 			= "timeunits";
+
+	
 	
 	/*
 	 * LOG
@@ -32,16 +38,16 @@ class TmXmlKeys {
 	 * SETTINGS elements
 	 */
 	
-	public static final String SETTINGS_ELEMENT_KEY 				= "BasicSettings";
-	public static final String SETTINGS_XSTART_ATTRIBUTE_NAME 		= "xstart";
-	public static final String SETTINGS_YSTART_ATTRIBUTE_NAME 		= "ystart";
-	public static final String SETTINGS_ZSTART_ATTRIBUTE_NAME 		= "zstart";
-	public static final String SETTINGS_TSTART_ATTRIBUTE_NAME 		= "tstart";
-	public static final String SETTINGS_XEND_ATTRIBUTE_NAME 		= "xend";
-	public static final String SETTINGS_YEND_ATTRIBUTE_NAME 		= "yend";
-	public static final String SETTINGS_ZEND_ATTRIBUTE_NAME 		= "zend";
-	public static final String SETTINGS_TEND_ATTRIBUTE_NAME 		= "tend";
-	public static final String SETTINGS_DETECTION_CHANNEL_ATTRIBUTE_NAME 		= "detectionchannel";
+	public static final String CROP_ELEMENT_KEY 				= "BasicSettings";
+	public static final String CROP_XSTART_ATTRIBUTE_NAME 		= "xstart";
+	public static final String CROP_YSTART_ATTRIBUTE_NAME 		= "ystart";
+	public static final String CROP_ZSTART_ATTRIBUTE_NAME 		= "zstart";
+	public static final String CROP_TSTART_ATTRIBUTE_NAME 		= "tstart";
+	public static final String CROP_XEND_ATTRIBUTE_NAME 		= "xend";
+	public static final String CROP_YEND_ATTRIBUTE_NAME 		= "yend";
+	public static final String CROP_ZEND_ATTRIBUTE_NAME 		= "zend";
+	public static final String CROP_TEND_ATTRIBUTE_NAME 		= "tend";
+	public static final String CROP_DETECTION_CHANNEL_ATTRIBUTE_NAME 		= "detectionchannel";
 
 	/*
 	 * DETECTOR SETTINGS
@@ -72,8 +78,6 @@ class TmXmlKeys {
 	public static final String IMAGE_NSLICES_ATTRIBUTE_NAME 		= "nslices";
 	public static final String IMAGE_TIME_INTERVAL_ATTRIBUTE_NAME 	= "timeinterval";
 	public static final String IMAGE_NFRAMES_ATTRIBUTE_NAME 		= "nframes";
-	public static final String IMAGE_SPATIAL_UNITS_ATTRIBUTE_NAME 	= "spatialunits";
-	public static final String IMAGE_TIME_UNITS_ATTRIBUTE_NAME 		= "timeunits";
 	
 	/*
 	 * ALL SPOTS element
@@ -101,14 +105,6 @@ class TmXmlKeys {
 	public static final String FILTER_VALUE_ATTRIBUTE_NAME 				= "value";
 	public static final String FILTER_ABOVE_ATTRIBUTE_NAME 				= "isabove";
 	
-	/*
-	 * SPOT FILTERED elements
-	 */
-	
-	public static final String FILTERED_SPOT_ELEMENT_KEY 				= "FilteredSpots";
-	public static final String FILTERED_SPOT_COLLECTION_ELEMENT_KEY 	= "FilteredSpotsInFrame";
-	public static final String SPOT_ID_ELEMENT_KEY 						= "SpotID";
-
 	/*
 	 * TRACK elements
 	 */

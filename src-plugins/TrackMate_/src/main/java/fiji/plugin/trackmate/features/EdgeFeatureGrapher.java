@@ -20,7 +20,6 @@ import org.jgrapht.graph.DefaultWeightedEdge;
 
 import fiji.plugin.trackmate.Dimension;
 import fiji.plugin.trackmate.FeatureModel;
-import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.util.ExportableChartPanel;
 import fiji.plugin.trackmate.util.TMUtils;
@@ -34,22 +33,20 @@ public class EdgeFeatureGrapher extends AbstractFeatureGrapher {
 	private final Dimension xDimension;
 	private final Map<String, Dimension> yDimensions;
 	private final Map<String, String> featureNames;
-	private final Settings settings;
 
-	public EdgeFeatureGrapher(String xFeature, Set<String> yFeatures, List<DefaultWeightedEdge> edges, TrackMateModel model, Settings settings) {
+	public EdgeFeatureGrapher(String xFeature, Set<String> yFeatures, List<DefaultWeightedEdge> edges, TrackMateModel model) {
 		super(xFeature, yFeatures, model);
 		this.edges = edges;
 		this.xDimension = model.getFeatureModel().getEdgeFeatureDimensions().get(xFeature);
 		this.yDimensions = model.getFeatureModel().getEdgeFeatureDimensions();
 		this.featureNames = model.getFeatureModel().getEdgeFeatureNames();
-		this.settings = settings;
 	}
 
 	@Override
 	public void render() {
 
 		// Check x units
-		String xdim= TMUtils.getUnitsFor(xDimension, settings);
+		String xdim= TMUtils.getUnitsFor(xDimension, model.getSpaceUnits(), model.getTimeUnits());
 		if (null == xdim) { // not a number feature
 			return; 
 		}
@@ -65,7 +62,7 @@ public class EdgeFeatureGrapher extends AbstractFeatureGrapher {
 		for (Dimension dimension : dimensions) {
 
 			// Y label
-			String yAxisLabel = TMUtils.getUnitsFor(dimension, settings);
+			String yAxisLabel = TMUtils.getUnitsFor(dimension, model.getSpaceUnits(), model.getTimeUnits());
 			
 			// Check y units
 			if (null == yAxisLabel) { // not a number feature

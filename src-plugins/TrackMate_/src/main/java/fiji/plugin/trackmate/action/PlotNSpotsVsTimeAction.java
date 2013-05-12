@@ -16,10 +16,12 @@ import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMate;
+import fiji.plugin.trackmate.gui.TrackMateGUIController;
 import fiji.plugin.trackmate.util.ExportableChartPanel;
 import fiji.plugin.trackmate.visualization.trackscheme.TrackSchemeFrame;
 
 public class PlotNSpotsVsTimeAction extends AbstractTMAction {
+
 
 	public static final ImageIcon ICON = new ImageIcon(TrackSchemeFrame.class.getResource("resources/plots.png"));
 	public static final String NAME = "Plot N spots vs time";
@@ -28,12 +30,13 @@ public class PlotNSpotsVsTimeAction extends AbstractTMAction {
 			"of time. Only the filtered spots are taken into account. " +
 			"</html>";
 
-	public PlotNSpotsVsTimeAction() {
+	public PlotNSpotsVsTimeAction(TrackMate trackmate, TrackMateGUIController controller) {
+		super(trackmate, controller);
 		this.icon = ICON;
 	}
 	
 	@Override
-	public void execute(TrackMate trackmate) {
+	public void execute() {
 		// Collect data
 		final TrackMateModel model = trackmate.getModel();
 		final SpotCollection spots = model.getSpots();
@@ -47,7 +50,7 @@ public class PlotNSpotsVsTimeAction extends AbstractTMAction {
 		}
 		
 		// Plot data
-		String xAxisLabel = "Time ("+trackmate.getSettings().timeUnits+")";
+		String xAxisLabel = "Time ("+trackmate.getModel().getTimeUnits()+")";
 		String yAxisLabel = "N spots";
 		String title = "Nspots vs Time for "+trackmate.getSettings().imp.getShortTitle();
 		DefaultXYDataset dataset = new DefaultXYDataset();

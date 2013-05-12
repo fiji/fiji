@@ -12,6 +12,7 @@ import net.imglib2.view.HyperSliceImgPlus;
 
 public class DogDetectorFactory<T extends RealType<T> & NativeType<T>> extends LogDetectorFactory<T> {
 
+
 	/*
 	 * CONSTANTS
 	 */

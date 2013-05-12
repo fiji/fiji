@@ -15,8 +15,6 @@ import com.mxgraph.util.mxEvent;
 import com.mxgraph.util.mxEventObject;
 import com.mxgraph.util.mxEventSource.mxIEventListener;
 
-import fiji.plugin.trackmate.TrackMateModel;
-
 public class TrackSchemePopupMenu extends JPopupMenu {
 
 	private static final long serialVersionUID = -1L;
@@ -126,8 +124,6 @@ public class TrackSchemePopupMenu extends JPopupMenu {
 	@SuppressWarnings("serial")
 	private void init() {
 
-		final TrackMateModel model = trackScheme.getModel();
-
 		// Build selection categories
 		final Object[] selection = trackScheme.getGraph().getSelectionCells();
 		final ArrayList<mxCell> vertices = new ArrayList<mxCell>();
@@ -182,12 +178,12 @@ public class TrackSchemePopupMenu extends JPopupMenu {
 			}
 
 			// Link
-			Action linkAction = new AbstractAction("Link " + model.getSelectionModel().getSpotSelection().size() +" spots") {
+			Action linkAction = new AbstractAction("Link " + trackScheme.getSelectionModel().getSpotSelection().size() +" spots") {
 				public void actionPerformed(ActionEvent e) { 
 					linkSpots(); 
 				}
 			};
-			if (model.getSelectionModel().getSpotSelection().size() > 1) {
+			if (trackScheme.getSelectionModel().getSpotSelection().size() > 1) {
 				add(linkAction);
 			}
 		}

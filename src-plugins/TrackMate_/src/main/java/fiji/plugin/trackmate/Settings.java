@@ -12,9 +12,12 @@ import java.util.Map;
 
 import fiji.plugin.trackmate.detection.SpotDetector;
 import fiji.plugin.trackmate.detection.SpotDetectorFactory;
+import fiji.plugin.trackmate.features.FeatureAnalyzer;
 import fiji.plugin.trackmate.features.FeatureFilter;
+import fiji.plugin.trackmate.features.edges.EdgeAnalyzer;
 import fiji.plugin.trackmate.features.spot.SpotAnalyzer;
 import fiji.plugin.trackmate.features.spot.SpotAnalyzerFactory;
+import fiji.plugin.trackmate.features.track.TrackAnalyzer;
 import fiji.plugin.trackmate.tracking.SpotTracker;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
 
@@ -61,8 +64,6 @@ public class Settings {
 	public int nframes;
 	public String imageFolder 		= "";
 	public String imageFileName 	= "";
-	public String timeUnits 		= "frames";
-	public String spaceUnits 		= "pixels";
 	
 	/** The name of the detector factory to use. It will be used to generate {@link SpotDetector}
 	 * for each target frame. */
@@ -84,7 +85,7 @@ public class Settings {
 	 * The initial quality filter value that is used to clip spots of low
 	 * quality from {@link TrackMateModel#spots}.
 	 */
-	public Double initialSpotFilterValue;
+	public Double initialSpotFilterValue = Double.valueOf(0);
 	/** The track filter list that is used to prune track and spots. */
 	protected List<FeatureFilter> trackFilters = new ArrayList<FeatureFilter>();
 	protected String errorMessage;
@@ -96,23 +97,28 @@ public class Settings {
 	 * They are ordered in a {@link List} in case some analyzers requires the results
 	 * of another analyzer to proceed. */
 	protected List<SpotAnalyzerFactory<?>> spotAnalyzerFactories = new ArrayList<SpotAnalyzerFactory<?>>(); 
-	
-	
+
+	// Edge features
+
+	/** The {@link EdgeAnalyzer}s that will be used to compute edge features.
+	 * They are ordered in a {@link List} in case some analyzers requires the results
+	 * of another analyzer to proceed. */
+	protected List<EdgeAnalyzer> edgeAnalyzers = new ArrayList<EdgeAnalyzer>();
+
+	// Track features
+
+	/** The {@link TrackAnalyzer}s that will be used to compute track features.
+	 * They are ordered in a {@link List} in case some analyzers requires the results
+	 * of another analyzer to proceed. */
+	protected List<TrackAnalyzer> trackAnalyzers = new ArrayList<TrackAnalyzer>(); 
+
+		
 	
 	/*
-	 * CONSTRUCTORS
+	 * METHODS
 	 */
 	
-	/**
-	 * Default empty constructor.
-	 */
-	public Settings() {	}
-	
-	/**
-	 * Create a new settings object, with some fields set according to the given imp.
-	 * @param imp
-	 */
-	public Settings(ImagePlus imp) {
+	public void setFrom(ImagePlus imp) {
 		// Source image
 		this.imp = imp;
 		
@@ -132,12 +138,9 @@ public class Settings {
 		this.dy = (float) imp.getCalibration().pixelHeight;
 		this.dz = (float) imp.getCalibration().pixelDepth;
 		this.dt = (float) imp.getCalibration().frameInterval;
-		this.spaceUnits = imp.getCalibration().getUnit();
-		this.timeUnits = imp.getCalibration().getTimeUnit();
 		
 		if (dt == 0) {
 			dt = 1;
-			timeUnits = "frame";
 		}
 		
 		// Crop cube
@@ -169,7 +172,7 @@ public class Settings {
 	 */
 	
 	/**
-	 * @return a string description of the target image.
+	 * Returns a string description of the target image.
 	 */
 	public String toStringImageInfo() {
 		StringBuilder str = new StringBuilder(); 
@@ -192,11 +195,38 @@ public class Settings {
 		}
 		
 		str.append("Geometry:\n");
-		str.append(String.format("  X = %4d - %4d, dx = %g %s\n", xstart, xend, dx, spaceUnits));
-		str.append(String.format("  Y = %4d - %4d, dy = %g %s\n", ystart, yend, dy, spaceUnits));
-		str.append(String.format("  Z = %4d - %4d, dz = %g %s\n", zstart, zend, dz, spaceUnits));
-		str.append(String.format("  T = %4d - %4d, dt = %g %s\n", tstart, tend, dt, timeUnits));
+		str.append(String.format("  X = %4d - %4d, dx = %g\n", xstart, xend, dx));
+		str.append(String.format("  Y = %4d - %4d, dy = %g\n", ystart, yend, dy));
+		str.append(String.format("  Z = %4d - %4d, dz = %g\n", zstart, zend, dz));
+		str.append(String.format("  T = %4d - %4d, dt = %g\n", tstart, tend, dt));
 
+		return str.toString();
+	}
+	
+	public String toStringFeatureAnalyzersInfo() {
+		StringBuilder str = new StringBuilder();
+		
+		if (spotAnalyzerFactories.isEmpty()) {
+			str.append("No spot feature analyzers.\n");
+		} else {
+			str.append("Spot feature analyzers:\n");
+			prettyPrintFeatureAnalyzer(spotAnalyzerFactories, str);
+		}
+		
+		if (edgeAnalyzers.isEmpty()) {
+			str.append("No edge feature analyzers.\n");
+		} else {
+			str.append("Edge feature analyzers:\n");
+			prettyPrintFeatureAnalyzer(edgeAnalyzers, str);
+		}
+		
+		if (trackAnalyzers.isEmpty()) {
+			str.append("No track feature analyzers.\n");
+		} else {
+			str.append("Track feature analyzers:\n");
+			prettyPrintFeatureAnalyzer(trackAnalyzers, str);
+		}
+		
 		return str.toString();
 	}
 	
@@ -221,6 +251,9 @@ public class Settings {
 				str.append('\n');
 			}
 		}
+		
+		str.append('\n');
+		str.append(toStringFeatureAnalyzersInfo());
 		
 		str.append('\n');
 		str.append("Initial spot filter:\n");
@@ -305,6 +338,13 @@ public class Settings {
 	/*
 	 * SPOT FEATURES
 	 */
+	
+	/**
+	 * Remove any {@link SpotAnalyzerFactory} to this object.
+	 */
+	public void clearSpotAnalyzerFactories() {
+		spotAnalyzerFactories.clear();
+	}
 	
 	/**
 	 * Returns a copy of the list of {@link SpotAnalyzerFactory}s configured in this settings object.
@@ -393,6 +433,203 @@ public class Settings {
 		return featureDimensions;
 	}
 	
+	/*
+	 * EDGE FEATURES
+	 */
+	
+	/**
+	 * Remove any {@link EdgeAnalyzer} to this object.
+	 */
+	public void clearEdgeAnalyzers() {
+		edgeAnalyzers.clear();
+	}
+	
+	/**
+	 * Returns a copy of the list of {@link EdgeAnalyzer}s configured in this settings object.
+	 * They are returned in an ordered list, to enforce processing order in case some
+	 * analyzers requires the results of another analyzers to proceed.
+	 * @return the list of {@link EdgeAnalyzer}s.
+	 */
+	public List<EdgeAnalyzer> getEdgeAnalyzers() {
+		return new ArrayList<EdgeAnalyzer>(edgeAnalyzers);
+	}
+	
+	/**
+	 * Adds a {@link EdgeAnalyzer} to the {@link List} of edge analyzers configured.
+	 * @param edgeAnalyzer the {@link EdgeAnalyzer} to add, at the end of the list.
+	 */
+	public void addEdgeAnalyzer(EdgeAnalyzer edgeAnalyzer) {
+		edgeAnalyzers.add(edgeAnalyzer);
+	}	
+
+	/**
+	 * Adds a {@link EdgeAnalyzer} to the {@link List} of edge analyzers configured,
+	 * at the specified index. 
+	 * @param edgeAnalyzer the {@link EdgeAnalyzer} to add, at the specified index in the list.
+	 */
+	public void addEdgeAnalyzer(int index, EdgeAnalyzer edgeAnalyzer) {
+		edgeAnalyzers.add(index, edgeAnalyzer);
+	}
+	
+	/**
+	 * Removes the specified {@link EdgeAnalyzer} from the analyzers configured.  
+	 * @param edgeAnalyzer the {@link EdgeAnalyzer} to remove.
+	 * @return  true if the specified {@link EdgeAnalyzer} was in the list and was removed.
+	 */
+	public boolean removeEdgeAnalyzer(EdgeAnalyzer edgeAnalyzer) {
+		return edgeAnalyzers.remove(edgeAnalyzer);
+	}
+
+	/**
+	 * Returns the collection of features calculated from the {@link EdgeAnalyzer}s configured.
+	 * @return the collection of edge features, as strings.
+	 */
+	public List<String> getEdgeFeatures() {
+		ArrayList<String> features = new ArrayList<String>();
+		for (EdgeAnalyzer edgeAnalyzer: edgeAnalyzers) {
+			features.addAll(edgeAnalyzer.getFeatures());
+		}
+		return features;
+	}
+	
+	/**
+	 * Returns the map that links each edge feature configured to be calculated 
+	 * to its name.
+	 * @return  a map of edge feature names.
+	 */
+	public Map<String, String> getEdgeFeatureNames() {
+		HashMap<String, String> featureNames = new HashMap<String, String>();
+		for (EdgeAnalyzer edgeAnalyzer: edgeAnalyzers) {
+			featureNames.putAll(edgeAnalyzer.getFeatureNames());
+		}
+		return featureNames;
+	}
+	
+	/**
+	 * Returns the map that links each edge feature configured to be calculated 
+	 * to its short name.
+	 * @return  a map of edge feature short names.
+	 */
+	public Map<String, String> getEdgeFeatureShortNames() {
+		HashMap<String, String> featureNames = new HashMap<String, String>();
+		for (EdgeAnalyzer edgeAnalyzer: edgeAnalyzers) {
+			featureNames.putAll(edgeAnalyzer.getFeatureShortNames());
+		}
+		return featureNames;
+	}
+	
+	/**
+	 * Returns the map that links each edge feature configured to be calculated 
+	 * to its dimension.
+	 * @return  a map of edge feature names.
+	 */
+	public Map<String, Dimension> getEdgeFeatureDimensions() {
+		HashMap<String, Dimension> featureDimensions = new HashMap<String, Dimension>();
+		for (EdgeAnalyzer edgeAnalyzer: edgeAnalyzers) {
+			featureDimensions.putAll(edgeAnalyzer.getFeatureDimensions());
+		}
+		return featureDimensions;
+	}
+	
+
+	/*
+	 * TRACK FEATURES
+	 */
+	
+	/**
+	 * Remove any {@link TrackAnalyzer} to this object.
+	 */
+	public void clearTrackAnalyzers() {
+		trackAnalyzers.clear();
+	}
+	
+	/**
+	 * Returns a copy of the list of {@link TrackAnalyzer}s configured in this settings object.
+	 * They are returned in an ordered list, to enforce processing order in case some
+	 * analyzers requires the results of another analyzers to proceed.
+	 * @return the list of {@link TrackAnalyzer}s.
+	 */
+	public List<TrackAnalyzer> getTrackAnalyzers() {
+		return new ArrayList<TrackAnalyzer>(trackAnalyzers);
+	}
+	
+	/**
+	 * Adds a {@link TrackAnalyzer} to the {@link List} of track analyzers configured.
+	 * @param trackAnalyzer the {@link TrackAnalyzer} to add, at the end of the list.
+	 */
+	public void addTrackAnalyzer(TrackAnalyzer trackAnalyzer) {
+		trackAnalyzers.add(trackAnalyzer);
+	}	
+
+	/**
+	 * Adds a {@link TrackAnalyzer} to the {@link List} of track analyzers configured,
+	 * at the specified index. 
+	 * @param trackAnalyzer the {@link TrackAnalyzer} to add, at the specified index in the list.
+	 */
+	public void addTrackAnalyzer(int index, TrackAnalyzer trackAnalyzer) {
+		trackAnalyzers.add(index, trackAnalyzer);
+	}
+	
+	/**
+	 * Removes the specified {@link TrackAnalyzer} from the analyzers configured.  
+	 * @param trackAnalyzer the {@link TrackAnalyzer} to remove.
+	 * @return  true if the specified {@link TrackAnalyzer} was in the list and was removed.
+	 */
+	public boolean removeTrackAnalyzer(TrackAnalyzer trackAnalyzer) {
+		return trackAnalyzers.remove(trackAnalyzer);
+	}
+
+	/**
+	 * Returns the collection of features calculated from the {@link TrackAnalyzer}s configured.
+	 * @return the collection of track features, as strings.
+	 */
+	public List<String> getTrackFeatures() {
+		ArrayList<String> features = new ArrayList<String>();
+		for (TrackAnalyzer trackAnalyzer: trackAnalyzers) {
+			features.addAll(trackAnalyzer.getFeatures());
+		}
+		return features;
+	}
+	
+	/**
+	 * Returns the map that links each track feature configured to be calculated 
+	 * to its name.
+	 * @return  a map of track feature names.
+	 */
+	public Map<String, String> getTrackFeatureNames() {
+		HashMap<String, String> featureNames = new HashMap<String, String>();
+		for (TrackAnalyzer trackAnalyzer: trackAnalyzers) {
+			featureNames.putAll(trackAnalyzer.getFeatureNames());
+		}
+		return featureNames;
+	}
+	
+	/**
+	 * Returns the map that links each track feature configured to be calculated 
+	 * to its short name.
+	 * @return  a map of track feature short names.
+	 */
+	public Map<String, String> getTrackFeatureShortNames() {
+		HashMap<String, String> featureNames = new HashMap<String, String>();
+		for (TrackAnalyzer trackAnalyzer: trackAnalyzers) {
+			featureNames.putAll(trackAnalyzer.getFeatureShortNames());
+		}
+		return featureNames;
+	}
+	
+	/**
+	 * Returns the map that links each track feature configured to be calculated 
+	 * to its dimension.
+	 * @return  a map of track feature names.
+	 */
+	public Map<String, Dimension> getTrackFeatureDimensions() {
+		HashMap<String, Dimension> featureDimensions = new HashMap<String, Dimension>();
+		for (TrackAnalyzer trackAnalyzer: trackAnalyzers) {
+			featureDimensions.putAll(trackAnalyzer.getFeatureDimensions());
+		}
+		return featureDimensions;
+	}
+	
 	
 	
 	/*
@@ -446,5 +683,24 @@ public class Settings {
 		this.trackFilters = trackFilters;
 	}
 
+	
+	
+	/*
+	 * PRIVATE METHODS
+	 */
+	
+	private final void prettyPrintFeatureAnalyzer(List<? extends FeatureAnalyzer> analyzers, StringBuilder str) {
+		for (FeatureAnalyzer analyzer : analyzers) {
+			str.append(" - " + analyzer.getKey() +" provides: ");
+			for (String feature : analyzer.getFeatures()) {
+				str.append(analyzer.getFeatureShortNames().get(feature) +", ");
+			}
+			str.deleteCharAt(str.length());
+			str.deleteCharAt(str.length());
+			str.append(".\n");
+		}
+	}
+	
+	
 
 }

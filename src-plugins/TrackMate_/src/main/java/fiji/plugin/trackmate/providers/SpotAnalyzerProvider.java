@@ -22,7 +22,6 @@ public class SpotAnalyzerProvider {
 	 * These names will be used as keys to access relevant spot analyzer classes.  */
 	protected List<String> analyzerNames;
 	protected final TrackMateModel model;
-	protected final ImgPlus<?> img;
 
 	/*
 	 * CONSTRUCTOR
@@ -37,9 +36,8 @@ public class SpotAnalyzerProvider {
 	 * factory so that it is registered with the custom spotFeatureAnalyzers and provide this 
 	 * extended factory to the {@link TrackMate} trackmate.
 	 */
-	public SpotAnalyzerProvider(TrackMateModel model, ImgPlus<?> img) {
+	public SpotAnalyzerProvider(TrackMateModel model) {
 		this.model = model;
-		this.img = img;
 		registerSpotFeatureAnalyzers();
 	}
 
@@ -59,11 +57,12 @@ public class SpotAnalyzerProvider {
 	}
 
 	/**
-	 * Returns a new instance of the target spotFeatureAnalyzer identified by the key parameter. 
+	 * Returns a new instance of the target spotFeatureAnalyzer identified by the key parameter,
+	 * and configured to operate on the specified {@link ImgPlus}.
 	 * If the key is unknown to this provider, <code>null</code> is returned. 
 	 */
 	@SuppressWarnings({ "rawtypes", "unchecked" })
-	public SpotAnalyzerFactory getSpotFeatureAnalyzer(String key) {
+	public SpotAnalyzerFactory getSpotFeatureAnalyzer(String key, ImgPlus<?> img) {
 		if (key == SpotIntensityAnalyzerFactory.KEY) {
 			return new SpotIntensityAnalyzerFactory(model, img);
 		} else if (key == SpotContrastAndSNRAnalyzerFactory.KEY) {

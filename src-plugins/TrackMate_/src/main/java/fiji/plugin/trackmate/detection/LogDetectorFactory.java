@@ -38,6 +38,10 @@ public class LogDetectorFactory<T extends RealType<T> & NativeType<T>>  implemen
 			"</html>";
 
 
+	public LogDetectorFactory() {
+		// TODO Auto-generated constructor stub
+	}
+	
 
 	/*
 	 * FIELDS

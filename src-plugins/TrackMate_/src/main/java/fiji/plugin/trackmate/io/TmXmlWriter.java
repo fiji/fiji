@@ -1,8 +1,15 @@
 package fiji.plugin.trackmate.io;
 
+import static fiji.plugin.trackmate.io.TmXmlKeys.CROP_ELEMENT_KEY;
+import static fiji.plugin.trackmate.io.TmXmlKeys.CROP_TEND_ATTRIBUTE_NAME;
+import static fiji.plugin.trackmate.io.TmXmlKeys.CROP_TSTART_ATTRIBUTE_NAME;
+import static fiji.plugin.trackmate.io.TmXmlKeys.CROP_XEND_ATTRIBUTE_NAME;
+import static fiji.plugin.trackmate.io.TmXmlKeys.CROP_XSTART_ATTRIBUTE_NAME;
+import static fiji.plugin.trackmate.io.TmXmlKeys.CROP_YEND_ATTRIBUTE_NAME;
+import static fiji.plugin.trackmate.io.TmXmlKeys.CROP_YSTART_ATTRIBUTE_NAME;
+import static fiji.plugin.trackmate.io.TmXmlKeys.CROP_ZEND_ATTRIBUTE_NAME;
+import static fiji.plugin.trackmate.io.TmXmlKeys.CROP_ZSTART_ATTRIBUTE_NAME;
 import static fiji.plugin.trackmate.io.TmXmlKeys.DETECTOR_SETTINGS_ELEMENT_KEY;
-import static fiji.plugin.trackmate.io.TmXmlKeys.FILTERED_SPOT_COLLECTION_ELEMENT_KEY;
-import static fiji.plugin.trackmate.io.TmXmlKeys.FILTERED_SPOT_ELEMENT_KEY;
 import static fiji.plugin.trackmate.io.TmXmlKeys.FILTERED_TRACK_ELEMENT_KEY;
 import static fiji.plugin.trackmate.io.TmXmlKeys.FILTER_ABOVE_ATTRIBUTE_NAME;
 import static fiji.plugin.trackmate.io.TmXmlKeys.FILTER_ELEMENT_KEY;
@@ -17,32 +24,24 @@ import static fiji.plugin.trackmate.io.TmXmlKeys.IMAGE_NFRAMES_ATTRIBUTE_NAME;
 import static fiji.plugin.trackmate.io.TmXmlKeys.IMAGE_NSLICES_ATTRIBUTE_NAME;
 import static fiji.plugin.trackmate.io.TmXmlKeys.IMAGE_PIXEL_HEIGHT_ATTRIBUTE_NAME;
 import static fiji.plugin.trackmate.io.TmXmlKeys.IMAGE_PIXEL_WIDTH_ATTRIBUTE_NAME;
-import static fiji.plugin.trackmate.io.TmXmlKeys.IMAGE_SPATIAL_UNITS_ATTRIBUTE_NAME;
 import static fiji.plugin.trackmate.io.TmXmlKeys.IMAGE_TIME_INTERVAL_ATTRIBUTE_NAME;
-import static fiji.plugin.trackmate.io.TmXmlKeys.IMAGE_TIME_UNITS_ATTRIBUTE_NAME;
 import static fiji.plugin.trackmate.io.TmXmlKeys.IMAGE_VOXEL_DEPTH_ATTRIBUTE_NAME;
 import static fiji.plugin.trackmate.io.TmXmlKeys.IMAGE_WIDTH_ATTRIBUTE_NAME;
 import static fiji.plugin.trackmate.io.TmXmlKeys.INITIAL_SPOT_FILTER_ELEMENT_KEY;
 import static fiji.plugin.trackmate.io.TmXmlKeys.LOG_ELEMENT_KEY;
+import static fiji.plugin.trackmate.io.TmXmlKeys.MODEL_ELEMENT_KEY;
 import static fiji.plugin.trackmate.io.TmXmlKeys.PLUGIN_VERSION_ATTRIBUTE_NAME;
 import static fiji.plugin.trackmate.io.TmXmlKeys.ROOT_ELEMENT_KEY;
 import static fiji.plugin.trackmate.io.TmXmlKeys.SETTINGS_ELEMENT_KEY;
-import static fiji.plugin.trackmate.io.TmXmlKeys.SETTINGS_TEND_ATTRIBUTE_NAME;
-import static fiji.plugin.trackmate.io.TmXmlKeys.SETTINGS_TSTART_ATTRIBUTE_NAME;
-import static fiji.plugin.trackmate.io.TmXmlKeys.SETTINGS_XEND_ATTRIBUTE_NAME;
-import static fiji.plugin.trackmate.io.TmXmlKeys.SETTINGS_XSTART_ATTRIBUTE_NAME;
-import static fiji.plugin.trackmate.io.TmXmlKeys.SETTINGS_YEND_ATTRIBUTE_NAME;
-import static fiji.plugin.trackmate.io.TmXmlKeys.SETTINGS_YSTART_ATTRIBUTE_NAME;
-import static fiji.plugin.trackmate.io.TmXmlKeys.SETTINGS_ZEND_ATTRIBUTE_NAME;
-import static fiji.plugin.trackmate.io.TmXmlKeys.SETTINGS_ZSTART_ATTRIBUTE_NAME;
+import static fiji.plugin.trackmate.io.TmXmlKeys.SPATIAL_UNITS_ATTRIBUTE_NAME;
 import static fiji.plugin.trackmate.io.TmXmlKeys.SPOT_COLLECTION_ELEMENT_KEY;
 import static fiji.plugin.trackmate.io.TmXmlKeys.SPOT_COLLECTION_NSPOTS_ATTRIBUTE_NAME;
 import static fiji.plugin.trackmate.io.TmXmlKeys.SPOT_ELEMENT_KEY;
 import static fiji.plugin.trackmate.io.TmXmlKeys.SPOT_FILTER_COLLECTION_ELEMENT_KEY;
 import static fiji.plugin.trackmate.io.TmXmlKeys.SPOT_FRAME_COLLECTION_ELEMENT_KEY;
 import static fiji.plugin.trackmate.io.TmXmlKeys.SPOT_ID_ATTRIBUTE_NAME;
-import static fiji.plugin.trackmate.io.TmXmlKeys.SPOT_ID_ELEMENT_KEY;
 import static fiji.plugin.trackmate.io.TmXmlKeys.SPOT_NAME_ATTRIBUTE_NAME;
+import static fiji.plugin.trackmate.io.TmXmlKeys.TIME_UNITS_ATTRIBUTE_NAME;
 import static fiji.plugin.trackmate.io.TmXmlKeys.TRACKER_SETTINGS_ELEMENT_KEY;
 import static fiji.plugin.trackmate.io.TmXmlKeys.TRACK_COLLECTION_ELEMENT_KEY;
 import static fiji.plugin.trackmate.io.TmXmlKeys.TRACK_EDGE_ELEMENT_KEY;
@@ -63,9 +62,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import net.imglib2.algorithm.Algorithm;
-import net.imglib2.algorithm.Benchmark;
-
 import org.jdom2.Attribute;
 import org.jdom2.Document;
 import org.jdom2.Element;
@@ -78,14 +74,13 @@ import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.TrackMateModel;
-import fiji.plugin.trackmate.TrackMate;
 import fiji.plugin.trackmate.features.FeatureFilter;
 import fiji.plugin.trackmate.features.edges.EdgeTargetAnalyzer;
 import fiji.plugin.trackmate.features.track.TrackIndexAnalyzer;
 import fiji.plugin.trackmate.providers.DetectorProvider;
 import fiji.plugin.trackmate.providers.TrackerProvider;
 
-public class TmXmlWriter implements Algorithm, Benchmark  {
+public class TmXmlWriter {
 
 	/*
 	 * FIELD
@@ -93,88 +88,35 @@ public class TmXmlWriter implements Algorithm, Benchmark  {
 
 	private final Element root;
 	private final Logger logger;
-	private final TrackMate trackmate;
-	private final TrackMateModel model;
-	private final String log;
-	private long processingTime;
+	private final File file;
 
 	/*
 	 * CONSTRUCTORS
 	 */
 
 	/**
-	 * Create a new XML file write for the specified TrackMate trackmate.
-	 * No log is added to the file.
-	 *  
-	 * @param trackmate the trackmate to write to XML. 
+	 * Creates a new XML file writer for TrackMate. 
+	 *
+	 * @param file the xml file to write to, will be overwritten.
 	 */
-	public TmXmlWriter(final TrackMate trackmate) {
-		this(trackmate, null);
-	}
-
-	/**
-	 * Create a new XML file write for the specified TrackMate trackmate.
-	 * This constructor will cause the specified log string to be appended to the file
-	 * as plain text content.
-	 *  
-	 * @param trackmate the trackmate to write to XML. 
-	 * @param log  the log text to add to the file.
-	 */
-	public TmXmlWriter(TrackMate trackmate, String log) {
+	public TmXmlWriter(File file) {
 		this.root = new Element(ROOT_ELEMENT_KEY);
 		root.setAttribute(PLUGIN_VERSION_ATTRIBUTE_NAME, fiji.plugin.trackmate.TrackMate.PLUGIN_NAME_VERSION);
 		this.logger = new Logger.StringBuilderLogger();
-		this.trackmate = trackmate;
-		this.log = log;
-		this.model = trackmate.getModel();
+		this.file = file;
 	}
 
 	/*
 	 * PUBLIC METHODS
 	 */
 
-	@Override
-	public long getProcessingTime() {
-		return processingTime;
-	}
-
-	@Override
-	public boolean checkInput() {
-		return true;
-	}
-
-	@Override
-	public boolean process() {
-		long start = System.currentTimeMillis();
-		
-		echoLog();
-		echoImageInfo();
-		echoBaseSettings();
-		echoDetectorSettings();
-		echoInitialSpotFilter();
-		echoSpotFilters();
-		echoTrackerSettings();
-		echoTrackFilters();
-		echoTracks(); // dense stuff is put at the end of file
-		echoFilteredTracks();
-		echoAllSpots();
-		echoFilteredSpots();
-
-		long end = System.currentTimeMillis();
-		processingTime = end - start;
-
-		return true;
-	}
-
-	@Override
-	public String getErrorMessage() {
-		return logger.toString();
-	}
-
 	/**
-	 * Write the document to the given file.
+	 * Writes the document to the file. Content must be appended first.
+	 * @see #appendLog(String)
+	 * @see #appendModel(TrackMateModel)
+	 * @see #appendSettings(Settings, DetectorProvider, TrackerProvider)
 	 */
-	public void writeToFile(File file) throws FileNotFoundException, IOException {
+	public void writeToFile() throws FileNotFoundException, IOException {
 		logger.log("  Writing to file.\n");
 		Document document = new Document(root);
 		XMLOutputter outputter = new XMLOutputter(Format.getPrettyFormat());
@@ -183,8 +125,6 @@ public class TmXmlWriter implements Algorithm, Benchmark  {
 
 	@Override
 	public String toString() {
-		String str = "";
-
 		Document document = new Document(root);
 		XMLOutputter outputter = new XMLOutputter(Format.getPrettyFormat());
 		StringWriter writer = new StringWriter();
@@ -193,15 +133,63 @@ public class TmXmlWriter implements Algorithm, Benchmark  {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		str = writer.toString();
-		return str;
+		return writer.toString();
 	}
 
-	/*
-	 * PRIVATE METHODS
+	/**
+	 * Appends the content of a {@link TrackMateModel} to the file generated by this writer.
+	 * @param model the {@link TrackMateModel} to write.
 	 */
+	public void appendModel(TrackMateModel model) {
+		Element modelElement = new Element(MODEL_ELEMENT_KEY);
+		modelElement.setAttribute(SPATIAL_UNITS_ATTRIBUTE_NAME, model.getSpaceUnits());
+		modelElement.setAttribute(TIME_UNITS_ATTRIBUTE_NAME, model.getTimeUnits());
+		
+		Element spotElement = echoSpots(model);
+		modelElement.addContent(spotElement);
+		
+		Element trackElement = echoTracks(model);
+		modelElement.addContent(trackElement);
+		
+		Element filteredTrackElement = echoFilteredTracks(model);
+		modelElement.addContent(filteredTrackElement);
+		
+		root.addContent(modelElement);
+	}
 	
-	private void echoLog() {
+	/**
+	 * Appends the content of a {@link Settings} object to the file generated by this writer.
+	 * @param settings  the {@link Settings} to write.
+	 * @param detectorProvider 
+	 */
+	public void appendSettings(Settings settings, DetectorProvider detectorProvider, TrackerProvider trackerProvider) {
+		Element settingsElement = new Element(SETTINGS_ELEMENT_KEY);
+		
+		Element imageInfoElement = echoImageInfo(settings);
+		settingsElement.addContent(imageInfoElement);
+		
+		Element cropElement = echoCropSettings(settings);
+		settingsElement.addContent(cropElement);
+		
+		Element detectorElement = echoDetectorSettings(settings, detectorProvider);
+		settingsElement.addContent(detectorElement);
+		
+		Element initFilter = echoInitialSpotFilter(settings);
+		settingsElement.addContent(initFilter);
+		
+		Element spotFiltersElement = echoSpotFilters(settings);
+		settingsElement.addContent(spotFiltersElement);
+		
+		Element trackerElement = echoTrackerSettings(settings, trackerProvider);
+		settingsElement.addContent(trackerElement);
+		
+		Element trackFiltersElement = echoTrackFilters(settings);
+		settingsElement.addContent(trackFiltersElement);
+		
+		root.addContent(settingsElement);
+	}
+
+	public void appendLog(String log) {
 		if (null != log) {
 			Element logElement = new Element(LOG_ELEMENT_KEY);
 			logElement.addContent(log);
@@ -210,60 +198,54 @@ public class TmXmlWriter implements Algorithm, Benchmark  {
 		}
 	}
 
+	/*
+	 * PRIVATE METHODS
+	 */
+	
 
-	private void echoBaseSettings() {
-		Settings settings = trackmate.getSettings();
-		Element settingsElement = new Element(SETTINGS_ELEMENT_KEY);
-		settingsElement.setAttribute(SETTINGS_XSTART_ATTRIBUTE_NAME, ""+settings.xstart);
-		settingsElement.setAttribute(SETTINGS_XEND_ATTRIBUTE_NAME, ""+settings.xend);
-		settingsElement.setAttribute(SETTINGS_YSTART_ATTRIBUTE_NAME, ""+settings.ystart);
-		settingsElement.setAttribute(SETTINGS_YEND_ATTRIBUTE_NAME, ""+settings.yend);
-		settingsElement.setAttribute(SETTINGS_ZSTART_ATTRIBUTE_NAME, ""+settings.zstart);
-		settingsElement.setAttribute(SETTINGS_ZEND_ATTRIBUTE_NAME, ""+settings.zend);
-		settingsElement.setAttribute(SETTINGS_TSTART_ATTRIBUTE_NAME, ""+settings.tstart);
-		settingsElement.setAttribute(SETTINGS_TEND_ATTRIBUTE_NAME, ""+settings.tend);
-		root.addContent(settingsElement);
-		logger.log("  Added base settings.\n");
+
+	private Element echoCropSettings(Settings settings) {
+		Element settingsElement = new Element(CROP_ELEMENT_KEY);
+		settingsElement.setAttribute(CROP_XSTART_ATTRIBUTE_NAME, ""+settings.xstart);
+		settingsElement.setAttribute(CROP_XEND_ATTRIBUTE_NAME, ""+settings.xend);
+		settingsElement.setAttribute(CROP_YSTART_ATTRIBUTE_NAME, ""+settings.ystart);
+		settingsElement.setAttribute(CROP_YEND_ATTRIBUTE_NAME, ""+settings.yend);
+		settingsElement.setAttribute(CROP_ZSTART_ATTRIBUTE_NAME, ""+settings.zstart);
+		settingsElement.setAttribute(CROP_ZEND_ATTRIBUTE_NAME, ""+settings.zend);
+		settingsElement.setAttribute(CROP_TSTART_ATTRIBUTE_NAME, ""+settings.tstart);
+		settingsElement.setAttribute(CROP_TEND_ATTRIBUTE_NAME, ""+settings.tend);
+		logger.log("  Added crop settings.\n");
+		return settingsElement;
 	}
 
-	private void echoDetectorSettings() {
+	private Element echoDetectorSettings(Settings settings, DetectorProvider provider) {
 		Element el = new Element(DETECTOR_SETTINGS_ELEMENT_KEY);
-		if (null == trackmate.getSettings().detectorFactory) {
-			return; // and write nothing
-		}
-		DetectorProvider provider = trackmate.getDetectorProvider();
-		boolean ok = provider.select(trackmate.getSettings().detectorFactory.getKey());
+		boolean ok = provider.select(settings.detectorFactory.getKey());
 		if (!ok) {
 			logger.error(provider.getErrorMessage());
 		} else {
-			provider.marshall(trackmate.getSettings().detectorSettings, el);
+			provider.marshall(settings.detectorSettings, el);
 		}
 
-		root.addContent(el);
 		logger.log("  Added detector settings.\n");
+		return el;
 	}
 
-	private void echoTrackerSettings() {
+	private Element echoTrackerSettings(Settings settings, TrackerProvider provider) {
 		Element el = new Element(TRACKER_SETTINGS_ELEMENT_KEY);
-		if (null == trackmate.getSettings().tracker) {
-			return; // and write nothing
-		}
 		
-		TrackerProvider provider = trackmate.getTrackerProvider();
-		boolean ok = provider.select(trackmate.getSettings().tracker.getKey());
+		boolean ok = provider.select(settings.tracker.getKey());
 		if (!ok) {
 			logger.error(provider.getErrorMessage());
 		} else {
-			provider.marshall(trackmate.getSettings().trackerSettings, el);
+			provider.marshall(settings.trackerSettings, el);
 		}
 
-		root.addContent(el);
 		logger.log("  Added tracker settings.\n");
+		return el;
 	}
 
-	private void echoTracks() {
-		if (model.getTrackModel().getNTracks() == 0)
-			return;
+	private Element echoTracks(TrackMateModel model) {
 
 		Element allTracksElement = new Element(TRACK_COLLECTION_ELEMENT_KEY);
 
@@ -326,16 +308,11 @@ public class TmXmlWriter implements Algorithm, Benchmark  {
 			}
 			allTracksElement.addContent(trackElement);
 		}
-		root.addContent(allTracksElement);
 		logger.log("  Added tracks.\n");
-		return;
+		return allTracksElement;
 	}
 
-	private void echoFilteredTracks() {
-		if (model.getTrackModel().getFilteredTrackIDs() == null) {
-			return;
-		}
-
+	private Element echoFilteredTracks(TrackMateModel model) {
 		Element filteredTracksElement = new Element(FILTERED_TRACK_ELEMENT_KEY);
 		Set<Integer> filteredTrackKeys = model.getTrackModel().getFilteredTrackIDs();
 		for (int trackID : filteredTrackKeys) {
@@ -343,14 +320,11 @@ public class TmXmlWriter implements Algorithm, Benchmark  {
 			trackIDElement.setAttribute(TrackIndexAnalyzer.TRACK_ID, ""+trackID);
 			filteredTracksElement.addContent(trackIDElement);
 		}
-		root.addContent(filteredTracksElement);
 		logger.log("  Added filtered tracks.\n");
+		return filteredTracksElement;
 	}
 
-	private void echoImageInfo() {
-		Settings settings = trackmate.getSettings();
-		if (null == settings || null == settings.imp)
-			return;
+	private Element echoImageInfo(Settings settings) {
 		Element imEl = new Element(IMAGE_ELEMENT_KEY);
 		imEl.setAttribute(IMAGE_FILENAME_ATTRIBUTE_NAME, 		settings.imageFileName);
 		imEl.setAttribute(IMAGE_FOLDER_ATTRIBUTE_NAME, 			settings.imageFolder);
@@ -362,21 +336,16 @@ public class TmXmlWriter implements Algorithm, Benchmark  {
 		imEl.setAttribute(IMAGE_PIXEL_HEIGHT_ATTRIBUTE_NAME, 	""+settings.dy);
 		imEl.setAttribute(IMAGE_VOXEL_DEPTH_ATTRIBUTE_NAME, 	""+settings.dz);
 		imEl.setAttribute(IMAGE_TIME_INTERVAL_ATTRIBUTE_NAME, 	""+settings.dt);
-		imEl.setAttribute(IMAGE_SPATIAL_UNITS_ATTRIBUTE_NAME,	settings.spaceUnits);
-		imEl.setAttribute(IMAGE_TIME_UNITS_ATTRIBUTE_NAME,		settings.timeUnits);
-		root.addContent(imEl);
 		logger.log("  Added image information.\n");
-		return;
+		return imEl;
 	}
 
-	private void echoAllSpots() {		
+	private Element echoSpots(TrackMateModel model) {
 		SpotCollection spots = model.getSpots();
-		if (null == spots || spots.keySet().isEmpty())
-			return; // and write nothing
 
-		Element spotCollection = new Element(SPOT_COLLECTION_ELEMENT_KEY);
+		Element spotCollectionElement = new Element(SPOT_COLLECTION_ELEMENT_KEY);
 		// Store total number of spots
-		spotCollection.setAttribute(SPOT_COLLECTION_NSPOTS_ATTRIBUTE_NAME, ""+spots.getNSpots(false));
+		spotCollectionElement.setAttribute(SPOT_COLLECTION_NSPOTS_ATTRIBUTE_NAME, ""+spots.getNSpots(false));
 
 		for (int frame : spots.keySet()) {
 
@@ -387,82 +356,49 @@ public class TmXmlWriter implements Algorithm, Benchmark  {
 				Element spotElement = marshalSpot(it.next());
 				frameSpotsElement.addContent(spotElement);
 			}
-			spotCollection.addContent(frameSpotsElement);
+			spotCollectionElement.addContent(frameSpotsElement);
 		}
-		root.addContent(spotCollection);
 		logger.log("  Added " + spots.getNSpots(false) + " spots.\n");
-		return;
+		return spotCollectionElement;
 	}
 
-	private void echoInitialSpotFilter() {
-		Double filterVal = trackmate.getSettings().initialSpotFilterValue;
-		if (null == filterVal) {
-			return; // and write nothing
-		}
+	private Element echoInitialSpotFilter(Settings settings) {
 		Element itElement = new Element(INITIAL_SPOT_FILTER_ELEMENT_KEY);
 		itElement.setAttribute(FILTER_FEATURE_ATTRIBUTE_NAME, Spot.QUALITY);
-		itElement.setAttribute(FILTER_VALUE_ATTRIBUTE_NAME, "" + filterVal);
+		itElement.setAttribute(FILTER_VALUE_ATTRIBUTE_NAME, "" + settings.initialSpotFilterValue);
 		itElement.setAttribute(FILTER_ABOVE_ATTRIBUTE_NAME, "" + true);
-		root.addContent(itElement);
 		logger.log("  Added initial spot filter.\n");
-		return;
+		return itElement;
 	}
 
-	private void echoSpotFilters() {
-		List<FeatureFilter> featureThresholds = trackmate.getSettings().getSpotFilters();
+	private Element echoSpotFilters(Settings settings) {
+		List<FeatureFilter> featureThresholds = settings.getSpotFilters();
 
-		Element allTresholdElement = new Element(SPOT_FILTER_COLLECTION_ELEMENT_KEY);
+		Element filtersElement = new Element(SPOT_FILTER_COLLECTION_ELEMENT_KEY);
 		for (FeatureFilter threshold : featureThresholds) {
 			Element thresholdElement = new Element(FILTER_ELEMENT_KEY);
 			thresholdElement.setAttribute(FILTER_FEATURE_ATTRIBUTE_NAME, threshold.feature);
 			thresholdElement.setAttribute(FILTER_VALUE_ATTRIBUTE_NAME, threshold.value.toString());
 			thresholdElement.setAttribute(FILTER_ABOVE_ATTRIBUTE_NAME, ""+threshold.isAbove);
-			allTresholdElement.addContent(thresholdElement);
+			filtersElement.addContent(thresholdElement);
 		}
-		root.addContent(allTresholdElement);
 		logger.log("  Added spot feature filters.\n");
-		return;
+		return filtersElement;
 	}
 
-	private void echoTrackFilters() {
-		List<FeatureFilter> featureThresholds = trackmate.getSettings().getTrackFilters();
+	private Element echoTrackFilters(Settings settings) {
+		List<FeatureFilter> filters = settings.getTrackFilters();
 
-		Element allTresholdElement = new Element(TRACK_FILTER_COLLECTION_ELEMENT_KEY);
-		for (FeatureFilter threshold : featureThresholds) {
+		Element trackFiltersElement = new Element(TRACK_FILTER_COLLECTION_ELEMENT_KEY);
+		for (FeatureFilter filter : filters) {
 			Element thresholdElement = new Element(FILTER_ELEMENT_KEY);
-			thresholdElement.setAttribute(FILTER_FEATURE_ATTRIBUTE_NAME, threshold.feature);
-			thresholdElement.setAttribute(FILTER_VALUE_ATTRIBUTE_NAME, threshold.value.toString());
-			thresholdElement.setAttribute(FILTER_ABOVE_ATTRIBUTE_NAME, ""+threshold.isAbove);
-			allTresholdElement.addContent(thresholdElement);
+			thresholdElement.setAttribute(FILTER_FEATURE_ATTRIBUTE_NAME, filter.feature);
+			thresholdElement.setAttribute(FILTER_VALUE_ATTRIBUTE_NAME, filter.value.toString());
+			thresholdElement.setAttribute(FILTER_ABOVE_ATTRIBUTE_NAME, ""+filter.isAbove);
+			trackFiltersElement.addContent(thresholdElement);
 		}
-		root.addContent(allTresholdElement);
 		logger.log("  Added track feature filters.\n");
-		return;
-	}
-
-	private void echoFilteredSpots() {
-		SpotCollection spots =  model.getSpots();
-		if (null == spots || spots.getNSpots(true) == 0)
-			return;
-
-		Element spotCollection = new Element(FILTERED_SPOT_ELEMENT_KEY);
-
-		for (int frame : spots.keySet()) {
-
-			Element frameSpotsElement = new Element(FILTERED_SPOT_COLLECTION_ELEMENT_KEY);
-			frameSpotsElement.setAttribute(FRAME_ATTRIBUTE_NAME, ""+frame);
-
-			for (Iterator<Spot> it = spots.iterator(frame, true); it.hasNext();) {
-				Element spotIDElement = new Element(SPOT_ID_ELEMENT_KEY);
-				spotIDElement.setAttribute(SPOT_ID_ATTRIBUTE_NAME, "" + it.next().ID());
-				frameSpotsElement.addContent(spotIDElement);
-			}
-			spotCollection.addContent(frameSpotsElement);
-		}
-
-		root.addContent(spotCollection);
-		logger.log("  Added " + spots.getNSpots(true) + " filtered spots.\n");
-		return;
+		return trackFiltersElement;
 	}
 
 	private static final Element marshalSpot(final Spot spot) {

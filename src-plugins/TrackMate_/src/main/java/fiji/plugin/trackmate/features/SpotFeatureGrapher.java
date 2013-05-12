@@ -35,7 +35,6 @@ public class SpotFeatureGrapher extends AbstractFeatureGrapher  {
 	private final Dimension xDimension;
 	private final Map<String, Dimension> yDimensions;
 	private final Map<String, String> featureNames;
-	private final Settings settings;
 
 	/*
 	 * CONSTRUCTOR
@@ -47,7 +46,6 @@ public class SpotFeatureGrapher extends AbstractFeatureGrapher  {
 		this.xDimension = settings.getSpotFeatureDimensions().get(xFeature);
 		this.yDimensions = settings.getSpotFeatureDimensions();
 		this.featureNames = settings.getSpotFeatureNames();
-		this.settings = settings;
 	}
 	
 	/*
@@ -59,7 +57,7 @@ public class SpotFeatureGrapher extends AbstractFeatureGrapher  {
 	public void render() {
 				
 		// X label
-		String xAxisLabel = xFeature + " (" + TMUtils.getUnitsFor(xDimension, settings)+")";
+		String xAxisLabel = xFeature + " (" + TMUtils.getUnitsFor(xDimension, model.getSpaceUnits(), model.getTimeUnits())+")";
 		
 		// Find how many different dimensions
 		Set<Dimension> dimensions = getUniqueValues(yFeatures, yDimensions);
@@ -69,7 +67,7 @@ public class SpotFeatureGrapher extends AbstractFeatureGrapher  {
 		for (Dimension dimension : dimensions) {
 			
 			// Y label
-			String yAxisLabel = TMUtils.getUnitsFor(dimension, settings);
+			String yAxisLabel = TMUtils.getUnitsFor(dimension, model.getSpaceUnits(), model.getTimeUnits());
 			
 			// Collect suitable feature for this dimension
 			List<String> featuresThisDimension = getCommonKeys(dimension, yFeatures, yDimensions);
