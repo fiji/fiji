@@ -1,5 +1,6 @@
 package mpicbg.spim.postprocessing.deconvolution;
 
+import fiji.plugin.Multi_View_Deconvolution;
 import ij.IJ;
 
 import java.util.ArrayList;
@@ -32,9 +33,6 @@ import mpicbg.spim.registration.bead.BeadRegistration;
 
 public class ExtractPSF
 {
-	public static int psfsize = 17;
-	public static boolean psfisotropic = false;
-	
 	final ViewStructure viewStructure;
 	final ArrayList<Image<FloatType>> pointSpreadFunctions;
 	Image<FloatType> avgPSF;
@@ -63,7 +61,7 @@ public class ExtractPSF
 		this.pointSpreadFunctions = new ArrayList<Image<FloatType>>();
 		this.conf = config;
 		
-		setPSFSize( psfsize, psfisotropic );
+		setPSFSize( Multi_View_Deconvolution.psfSize, Multi_View_Deconvolution.isotropic );
 	}
 	
 	public ExtractPSF( final ViewStructure viewStructure )
@@ -72,7 +70,7 @@ public class ExtractPSF
 		this.pointSpreadFunctions = new ArrayList<Image<FloatType>>();
 		this.conf = viewStructure.getSPIMConfiguration();
 		
-		setPSFSize( psfsize, psfisotropic );
+		setPSFSize( Multi_View_Deconvolution.psfSize, Multi_View_Deconvolution.isotropic );
 	}
 	
 	/**
