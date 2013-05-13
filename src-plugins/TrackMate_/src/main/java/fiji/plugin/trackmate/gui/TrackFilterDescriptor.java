@@ -13,9 +13,12 @@ import fiji.plugin.trackmate.FeatureFilter;
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMate_;
+import fiji.plugin.trackmate.features.track.TrackIndexAnalyzer;
+import fiji.plugin.trackmate.visualization.PerTrackFeatureColorGenerator;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
 
 public class TrackFilterDescriptor implements WizardPanelDescriptor {
+	
 	public static final String DESCRIPTOR = "TrackFilter";
 	private TrackMateWizard wizard;
 	private FilterGuiPanel component = new FilterGuiPanel();
@@ -60,14 +63,22 @@ public class TrackFilterDescriptor implements WizardPanelDescriptor {
 	public void aboutToDisplayPanel() {
 		TrackMateModel model = plugin.getModel();
 		component.setTarget(model.getFeatureModel().getTrackFeatures(), model.getSettings().getTrackFilters(),  
-				model.getFeatureModel().getTrackFeatureNames(), model.getFeatureModel().getTrackFeatureValues(), "tracks"); 
+				model.getFeatureModel().getTrackFeatureNames(), model.getFeatureModel().getTrackFeatureValues(), "tracks");
+		linkGuiToView();
+		component.jPanelColorByFeatureGUI.setColorByFeature(TrackIndexAnalyzer.TRACK_INDEX);
+		
+		PerTrackFeatureColorGenerator generator = new PerTrackFeatureColorGenerator(plugin.getModel(), TrackIndexAnalyzer.TRACK_INDEX);
+		generator.setFeature(component.getColorByFeature());
+		wizard.getDisplayer().setDisplaySettings(TrackMateModelView.KEY_TRACK_COLORING, generator);
+		wizard.getDisplayer().refresh();
 	}
 
 	@Override
-	public void displayingPanel() {
+	public void displayingPanel() {}
+	
+	public void linkGuiToView() {
 
 		// Link displayer and component
-		final TrackMateModelView displayer = wizard.getDisplayer();
 		SwingUtilities.invokeLater(new Runnable() {			
 			@Override
 			public void run() {
@@ -75,8 +86,10 @@ public class TrackFilterDescriptor implements WizardPanelDescriptor {
 				component.addActionListener(new ActionListener() {
 					@Override
 					public void actionPerformed(ActionEvent event) {
-						displayer.setDisplaySettings(TrackMateModelView.KEY_TRACK_COLOR_FEATURE, component.getColorByFeature());
-						displayer.refresh();
+						PerTrackFeatureColorGenerator generator = new PerTrackFeatureColorGenerator(plugin.getModel(), TrackIndexAnalyzer.TRACK_INDEX);
+						generator.setFeature(component.getColorByFeature());
+						wizard.getDisplayer().setDisplaySettings(TrackMateModelView.KEY_TRACK_COLORING, generator);
+						wizard.getDisplayer().refresh();
 					}
 				});
 
@@ -85,7 +98,7 @@ public class TrackFilterDescriptor implements WizardPanelDescriptor {
 					public void stateChanged(ChangeEvent event) {
 						// We set the thresholds field of the model but do not touch its selected spot field yet.
 						plugin.getModel().getSettings().setTrackFilters(component.getFeatureFilters());
-						plugin.execTrackFiltering();
+						plugin.execTrackFiltering(false);
 					}
 				});
 				
@@ -101,10 +114,10 @@ public class TrackFilterDescriptor implements WizardPanelDescriptor {
 		List<FeatureFilter> featureFilters = component.getFeatureFilters();
 		final TrackMateModel model = plugin.getModel();
 		model.getSettings().setTrackFilters(featureFilters);
-		plugin.execTrackFiltering();
+		plugin.execTrackFiltering(true);
 
 		if (featureFilters == null || featureFilters.isEmpty()) {
-			logger.log("No feature threshold set, kept the " + model.getNTracks() + " tracks.\n");
+			logger.log("No feature threshold set, kept the " + model.getTrackModel().getNTracks() + " tracks.\n");
 		} else {
 			for (FeatureFilter ft : featureFilters) {
 				String str = "  - on "+model.getFeatureModel().getTrackFeatureNames().get(ft.feature);
@@ -116,7 +129,9 @@ public class TrackFilterDescriptor implements WizardPanelDescriptor {
 				str += '\n';
 				logger.log(str);
 			}
-			logger.log("Kept "+model.getNFilteredTracks()+" tracks out of "+model.getNTracks()+".\n");
-		}		
+			logger.log("Kept "+model.getTrackModel().getNFilteredTracks()+" tracks out of "+model.getTrackModel().getNTracks()+".\n");
+		}
+
+		plugin.computeEdgeFeatures(true);
 	}
 }

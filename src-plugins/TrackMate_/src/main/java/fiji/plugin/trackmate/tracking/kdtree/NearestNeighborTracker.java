@@ -1,24 +1,28 @@
 package fiji.plugin.trackmate.tracking.kdtree;
 
+import static fiji.plugin.trackmate.tracking.TrackerKeys.KEY_LINKING_MAX_DISTANCE;
+import static fiji.plugin.trackmate.util.TMUtils.checkMapKeys;
+import static fiji.plugin.trackmate.util.TMUtils.checkParameter;
+
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.jgrapht.graph.DefaultWeightedEdge;
-import org.jgrapht.graph.SimpleWeightedGraph;
+import net.imglib2.RealPoint;
+import net.imglib2.algorithm.MultiThreadedBenchmarkAlgorithm;
+import net.imglib2.collection.KDTree;
+import net.imglib2.multithreading.SimpleMultiThreading;
 
-import mpicbg.imglib.algorithm.MultiThreadedBenchmarkAlgorithm;
-import mpicbg.imglib.algorithm.kdtree.KDTree;
-import mpicbg.imglib.algorithm.kdtree.NNearestNeighborSearch;
-import mpicbg.imglib.algorithm.kdtree.NearestNeighborSearch;
-import mpicbg.imglib.multithreading.SimpleMultiThreading;
+import org.jgrapht.graph.DefaultWeightedEdge;
+import org.jgrapht.graph.SimpleDirectedWeightedGraph;
+
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
-import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.tracking.SpotTracker;
-import fiji.plugin.trackmate.tracking.TrackerSettings;
+import fiji.plugin.trackmate.util.TMUtils;
 
 public class NearestNeighborTracker extends MultiThreadedBenchmarkAlgorithm	implements SpotTracker {
 
@@ -26,34 +30,70 @@ public class NearestNeighborTracker extends MultiThreadedBenchmarkAlgorithm	impl
 	 * FIELDS
 	 */
 
-	private SpotCollection spots;
-	private Logger logger = Logger.DEFAULT_LOGGER;
-	private SimpleWeightedGraph<Spot, DefaultWeightedEdge> graph;
-	private NearestNeighborTrackerSettings settings;
+	public static final String TRACKER_KEY = "NEAREST_NEIGHBOR_TRACKER";
+	public static final String NAME = "Nearest neighbor search";
+	public static final String INFO_TEXT = "<html>" +
+				"This tracker is the most simple one, and is based on nearest neighbor <br>" +
+				"search. The spots in the target frame are searched for the nearest neighbor <br> " +
+				"of each spot in the source frame. If the spots found are closer than the <br>" +
+				"maximal allowed distance, a link between the two is created. <br>" +
+				"<p>" +
+				"The nearest neighbor search relies upon the KD-tree technique implemented <br>" +
+				"in imglib by Johannes Schindelin and friends. This ensure a very efficient " +
+				"tracking and makes this tracker suitable for situation where a huge number <br>" +
+				"of particles are to be tracked over a very large number of frames. However, <br>" +
+				"because of the naiveness of its principles, it can result in pathological <br>" +
+				"tracks. It can only do frame-to-frame linking; there cannot be any track <br>" +
+				"merging or splitting, and gaps will not be closed. Also, the end results are non-" +
+				"deterministic." +
+				" </html>";
+	
+	protected final SpotCollection spots;
+	protected final Logger logger;
+	protected SimpleDirectedWeightedGraph<Spot, DefaultWeightedEdge> graph;
+	protected Map<String, Object> settings;
 
 	/*
 	 * CONSTRUCTOR
 	 */
 
-	public NearestNeighborTracker() {
-		super();
+	public NearestNeighborTracker(final SpotCollection spots, final Logger logger) {
+		this.spots = spots;
+		this.logger = logger;
+	}
+
+	public NearestNeighborTracker(final SpotCollection spots) {
+		this(spots, Logger.VOID_LOGGER);
 	}
 
 
 	/*
 	 * PUBLIC METHODS
 	 */
+	
+	@Override
+	public void setSettings(Map<String, Object> settings) {
+		this.settings = settings;
+	}
 
 	@Override
 	public boolean checkInput() {
-		return true;
+		StringBuilder errrorHolder = new StringBuilder();;
+		boolean ok = checkInput(settings, errrorHolder);
+		if (!ok) {
+			errorMessage = errrorHolder.toString();
+		}
+		return ok;
 	}
 
 	@Override
 	public boolean process() {
 		long start = System.currentTimeMillis();
 
-		final double maxDistSquare = settings.maxLinkingDistance * settings.maxLinkingDistance;
+		reset();
+		
+		final double maxLinkingDistance = (Double) settings.get(KEY_LINKING_MAX_DISTANCE);
+		final double maxDistSquare = maxLinkingDistance  * maxLinkingDistance;
 
 		final TreeSet<Integer> frames = new TreeSet<Integer>(spots.keySet());
 		Thread[] threads = new Thread[numThreads];
@@ -74,71 +114,44 @@ public class NearestNeighborTracker extends MultiThreadedBenchmarkAlgorithm	impl
 						int targetFrame = frames.higher(i);
 						List<Spot> sourceSpots = spots.get(sourceFrame);
 						List<Spot> targetSpots = spots.get(targetFrame);
-
-						// Build KD-tree for target frame
-						ArrayList<SpotNode> targetNodes = new ArrayList<SpotNode>(targetSpots.size());
-						for (Spot spot : targetSpots) {
-							targetNodes.add(new SpotNode(spot));
+						
+						List<RealPoint> targetCoords = new ArrayList<RealPoint>(targetSpots.size());
+						List<FlagNode<Spot>> targetNodes = new ArrayList<FlagNode<Spot>>(targetSpots.size());
+						for(Spot spot : targetSpots) {
+							double[] coords = new double[3];
+							TMUtils.localize(spot, coords);
+							targetCoords.add(new RealPoint(coords));
+							targetNodes.add(new FlagNode<Spot>(spot));
 						}
-						KDTree<SpotNode> kdTree = new KDTree<SpotNode>(targetNodes);
-						NearestNeighborSearch<SpotNode> search = new NearestNeighborSearch<SpotNode>(kdTree);
-						NNearestNeighborSearch<SpotNode> multiSearch = new NNearestNeighborSearch<SpotNode>(kdTree);
-
+						
+						
+						KDTree<FlagNode<Spot>> tree = new KDTree<FlagNode<Spot>>(targetNodes, targetCoords);
+						NearestNeighborFlagSearchOnKDTree<Spot> search = new NearestNeighborFlagSearchOnKDTree<Spot>(tree);
+						
 						// For each spot in the source frame, find its nearest neighbor in the target frame
 						for (Spot source : sourceSpots) {
 
-							SpotNode sourceNode = new SpotNode(source);
-							SpotNode targetNode = search.findNearestNeighbor(sourceNode);
-							double squareDist = targetNode.distanceTo(sourceNode);
+							double[] coords = new double[3];
+							TMUtils.localize(source, coords);
+							RealPoint sourceCoords = new RealPoint(coords);
+							search.search(sourceCoords);
+							
+							double squareDist = search.getSquareDistance();
+							FlagNode<Spot> targetNode = search.getSampler().get();
+							
 							if (squareDist > maxDistSquare) {
 								// The closest we could find is too far. We skip this source spot and do not create a link
 								continue;								
 							}
 
-							boolean doNotCreateALink = false;
-							if (targetNode.isAssigned) {
-								// Bad luck: the closes node we have found is already taken. So we need to find the
-								// closest one, not yet taken, and not farther than the max dist.
-								// This is inefficient because we always recalculate the first neighbors, which we
-								// had at the previous iteration. We do it like that for the moment, keeping in mind
-								// that for this application, such situations are marginal.
-								for (int currentNeighbor = 2; currentNeighbor < targetNodes.size(); currentNeighbor++) {
-
-									SpotNode[] found = multiSearch.findNNearestNeighbors(sourceNode, currentNeighbor);
-									targetNode = found[currentNeighbor-1];
-
-									squareDist = targetNode.distanceTo(sourceNode);
-									if (squareDist > maxDistSquare) {
-										// We have found that the next closest node is already too far. Give up and stop searching.
-										doNotCreateALink = true;
-										break;				
-									}
-
-									if (!targetNode.isAssigned) {
-										// Success! We finally found one that is both within max dist and free. We stop
-										// searching and create a link
-										break;
-									}
-									
-									// Damn. This one is taken as well. So we look further.
-								}
-								
-								// If we reached this point, that means that we exhausted all target nodes and still
-								// did not find one that is both free and within max dist. So we give up, and set 
-								// a flag that states not to create a link.
-								doNotCreateALink = true;
-							}
-
-							if (doNotCreateALink) {
-								// The closest we could find is too far. We skip this source spot and do not create a link
-								continue;
-							}
-
 							// Everything is ok. This mode is free and below max dist. We create a link
 							// and mark this node as assigned.
-							DefaultWeightedEdge edge = graph.addEdge(source, targetNode.getSpot());
-							graph.setEdgeWeight(edge, squareDist);
-							targetNode.isAssigned = true;
+
+							targetNode.setVisited(true);
+							synchronized (graph) {
+								DefaultWeightedEdge edge = graph.addEdge(source, targetNode.getValue());
+								graph.setEdgeWeight(edge, squareDist);
+							}
 
 						}
 						logger.setProgress(progress.incrementAndGet() / (float)frames.size() );
@@ -165,55 +178,30 @@ public class NearestNeighborTracker extends MultiThreadedBenchmarkAlgorithm	impl
 
 	@Override
 	public String toString() {
-		return "Nearest neighbor search";
-	}
-	
-	@Override
-	public String getInfoText() {
-		return "<html>" +
-				"This tracker is the most simple one, and is based on nearest neighbor <br>" +
-				"search. The spots in the target frame are searched for the nearest neighbor <br> " +
-				"of each spot in the source frame. If the spots found are closer than the <br>" +
-				"maximal allowed distance, a link between the two is created. <br>" +
-				"<p>" +
-				"The nearest neighbor search relies upon the KD-tree technique implemented <br>" +
-				"in imglib by Johannes Schindelin and friends. This ensure a very efficient " +
-				"tracking and makes this tracker suitable for situation where a huge number <br>" +
-				"of particles are to be tracked over a very large number of frames. However, <br>" +
-				"because of the naiveness of its principles, it can result in pathological <br>" +
-				"tracks. It can only do frame-to-frame linking; there cannot be any track <br>" +
-				"merging or splitting, and gaps will not be closed." +
-				" </html>";	
+		return NAME;
 	}
 
 	@Override
-	public void setModel(TrackMateModel model) {
-		this.spots = model.getFilteredSpots();
-		this.settings = (NearestNeighborTrackerSettings) model.getSettings().trackerSettings;
-		reset();
-	}
-
-	@Override
-	public void setLogger(Logger logger) {
-		this.logger  = logger;
-
-	}
-
-	@Override
-	public SimpleWeightedGraph<Spot, DefaultWeightedEdge> getResult() {
+	public SimpleDirectedWeightedGraph<Spot, DefaultWeightedEdge> getResult() {
 		return graph;
 	}
 
-	@Override
-	public TrackerSettings createDefaultSettings() {
-		return new NearestNeighborTrackerSettings();
-	}
-
 	public void reset() {
-		graph = new SimpleWeightedGraph<Spot, DefaultWeightedEdge>(DefaultWeightedEdge.class);
+		graph = new SimpleDirectedWeightedGraph<Spot, DefaultWeightedEdge>(DefaultWeightedEdge.class);
 		for(Spot spot : spots) 
 			graph.addVertex(spot);
 	}
 
-
+	@Override
+	public String getKey() {
+		return TRACKER_KEY;
+	}
+	
+	public static boolean checkInput(final Map<String, Object> settings, StringBuilder errrorHolder) {
+		boolean ok = checkParameter(settings, KEY_LINKING_MAX_DISTANCE, Double.class, errrorHolder);
+		List<String> mandatoryKeys = new ArrayList<String>();
+		mandatoryKeys.add(KEY_LINKING_MAX_DISTANCE);
+		ok = ok & checkMapKeys(settings, mandatoryKeys, null, errrorHolder);
+		return ok;
+	}
 }

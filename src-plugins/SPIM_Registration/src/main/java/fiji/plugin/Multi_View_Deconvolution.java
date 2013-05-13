@@ -49,6 +49,8 @@ import mpicbg.spim.registration.ViewStructure;
 public class Multi_View_Deconvolution implements PlugIn
 {
 	final private String myURL = "http://fly.mpi-cbg.de/preibisch";
+	public static int psfSize = 17;
+	public static boolean isotropic = false;
 	
 	@Override
 	public void run(String arg0) 
@@ -160,7 +162,7 @@ public class Multi_View_Deconvolution implements PlugIn
 		else
 			deconvolved = new BayesMVDeconvolution( deconvolutionData, iterationType, numIterations, 0, "deconvolved" ).getPsi();
 		
-		if ( conf.writeOutputImage || conf.showOutputImage )
+		if ( conf.writeOutputImage > 0 || conf.showOutputImage )
 		{
 			String name = viewStructure.getSPIMConfiguration().inputFilePattern;			
 			String replaceTP = SPIMConfiguration.getReplaceStringTimePoints( name );
@@ -180,16 +182,29 @@ public class Multi_View_Deconvolution implements PlugIn
 				ImageJFunctions.copyToImagePlus( deconvolved ).show();
 			}
 
-			if ( conf.writeOutputImage )
+			if ( conf.writeOutputImage == 1 )
+			{
 				ImageJFunctions.saveAsTiffs( deconvolved, conf.outputdirectory, "DC(l=" + lambda + ")_t" + timePoint + "_ch" + viewStructure.getChannelNum( 0 ), ImageJFunctions.GRAY32 );
+			}
+			else if ( conf.writeOutputImage == 2 )
+			{
+				final File dir = new File( conf.outputdirectory, "" + timePoint );
+				if ( !dir.exists() && !dir.mkdirs() )
+				{
+						IOFunctions.printErr("(" + new Date(System.currentTimeMillis()) + "): Cannot create directory '" + dir.getAbsolutePath() + "', quitting.");
+						return;
+				}
+				ImageJFunctions.saveAsTiffs( deconvolved, dir.getAbsolutePath(), "DC(l=" + lambda + ")_t" + timePoint + "_ch" + viewStructure.getChannelNum( 0 ), ImageJFunctions.GRAY32 );
+			}
 		}		
 	}
 
 	public static String defaultPSFFileField = "";
 	public static int defaultExtractPSF = 0;
 	public static boolean defaultLoadImagesSequentially = false;
-	public static boolean displayFusedImageStatic = true;
-	public static boolean saveFusedImageStatic = true;
+	//public static boolean displayFusedImageStatic = true;
+	//public static boolean saveFusedImageStatic = true;
+	public static int defaultOutputType = 1;
 	public static int defaultNumIterations = 10;
 	public static boolean defaultUseTikhonovRegularization = true;
 	public static double defaultLambda = 0.006;
@@ -437,9 +452,10 @@ public class Multi_View_Deconvolution implements PlugIn
 		gd2.addCheckbox( "Show_averaged_PSF", showAveragePSF );
 		gd2.addCheckbox( "Debug_mode", defaultDebugMode );
 		gd2.addMessage( "" );
-		gd2.addCheckbox( "Display_fused_image", displayFusedImageStatic );
-		gd2.addCheckbox( "Save_fused_image", saveFusedImageStatic );
 		gd2.addCheckbox( "Load_input_images_sequentially", defaultLoadImagesSequentially );
+		//gd2.addCheckbox( "Display_fused_image", displayFusedImageStatic );
+		//gd2.addCheckbox( "Save_fused_image", saveFusedImageStatic );
+		gd2.addChoice( "Fused_image_output", Multi_View_Fusion.outputType, Multi_View_Fusion.outputType[ defaultOutputType ] );
 
 		gd2.addMessage("");
 		gd2.addMessage("This Plugin is developed by Stephan Preibisch\n" + myURL);
@@ -556,8 +572,7 @@ public class Multi_View_Deconvolution implements PlugIn
 		defaultExtractPSF = gd2.getNextChoiceIndex();
 		showAveragePSF = gd2.getNextBoolean();
 		defaultDebugMode = debugMode = gd2.getNextBoolean();
-		displayFusedImageStatic = gd2.getNextBoolean(); 
-		saveFusedImageStatic = gd2.getNextBoolean();
+
 		defaultLoadImagesSequentially = loadImagesSequentially = gd2.getNextBoolean();
 		
 		if ( defaultExtractPSF == 0 )
@@ -582,6 +597,10 @@ public class Multi_View_Deconvolution implements PlugIn
 			
 			conf.psfFile = defaultPSFFileField = gd3.getNextString();
 		}
+
+		//displayFusedImageStatic = gd2.getNextBoolean(); 
+		//saveFusedImageStatic = gd2.getNextBoolean();
+		defaultOutputType = gd2.getNextChoiceIndex();
 		
 		if ( blockSizeIndex == 0 )
 		{
@@ -679,7 +698,7 @@ public class Multi_View_Deconvolution implements PlugIn
 			{		
 				LRFFT.cuda.getNameDeviceCUDA( i, name );
 				
-				devices[ i ] = "GPU " + (i+1) + "/" + numDevices  + ": ";
+				devices[ i ] = "GPU_" + (i+1) + " of " + numDevices  + ": ";
 				for ( final byte b : name )
 					if ( b != 0 )
 						devices[ i ] = devices[ i ] + (char)b;
@@ -688,7 +707,7 @@ public class Multi_View_Deconvolution implements PlugIn
 				
 				final long mem = LRFFT.cuda.getMemDeviceCUDA( i );	
 				devices[ i ] = devices[ i ] + " (" + mem/(1024*1024) + " MB, CUDA capability " + LRFFT.cuda.getCUDAcomputeCapabilityMajorVersion( i )  + "." + LRFFT.cuda.getCUDAcomputeCapabilityMinorVersion( i ) + ")";
-				devices[ i ] = devices[ i ].replaceAll( " ", "_" );
+				//devices[ i ] = devices[ i ].replaceAll( " ", "_" );
 			}
 			
 			// get the CPU specs
@@ -801,18 +820,15 @@ public class Multi_View_Deconvolution implements PlugIn
 		conf.deconvolutionShowAveragePSF = showAveragePSF;
 		conf.extractPSF = extractPSF;
 		
-		if ( displayFusedImageStatic  )
+		if ( defaultOutputType == 0 )
 			conf.showOutputImage = true;
 		else
 			conf.showOutputImage = false;
-		
-		if ( saveFusedImageStatic )
-			conf.writeOutputImage = true;
-		else
-			conf.writeOutputImage = false;
+		conf.writeOutputImage = defaultOutputType;
 		
 		conf.useLinearBlening = true;
-		conf.useGauss = false;
+		conf.useGaussContentBased = false;
+		conf.useIntegralContentBased = false;
 		conf.scale = 1;
 		conf.cropOffsetX = Multi_View_Fusion.cropOffsetXStatic;
 		conf.cropOffsetY = Multi_View_Fusion.cropOffsetYStatic;

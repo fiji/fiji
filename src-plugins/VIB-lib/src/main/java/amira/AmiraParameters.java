@@ -124,8 +124,7 @@ public class AmiraParameters {
 		if (info1 == null || !(info1 instanceof String))
 			return false;
 		String info = (String)info1;
-		return (info.indexOf("CoordType") >= 0
-				&& info.indexOf("Materials") >= 0);
+		return (info.indexOf("Materials") >= 0);
 	}
 
 	public static boolean isAmiraLabelfield(Properties p) {

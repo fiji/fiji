@@ -1,17 +1,19 @@
 package fiji.plugin.trackmate;
 
-import fiji.plugin.trackmate.segmentation.SegmenterSettings;
-import fiji.plugin.trackmate.segmentation.SpotSegmenter;
-import fiji.plugin.trackmate.tracking.SpotTracker;
-import fiji.plugin.trackmate.tracking.TrackerSettings;
 import ij.ImagePlus;
 import ij.gui.Roi;
 
+import java.awt.Polygon;
 import java.awt.Rectangle;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
-import mpicbg.imglib.type.numeric.RealType;
+import fiji.plugin.trackmate.detection.SpotDetector;
+import fiji.plugin.trackmate.detection.SpotDetectorFactory;
+import fiji.plugin.trackmate.tracking.SpotTracker;
+import fiji.plugin.trackmate.visualization.TrackMateModelView;
 
 /**
  * This class is used to store user settings for the {@link TrackMate_} plugin.
@@ -19,10 +21,13 @@ import mpicbg.imglib.type.numeric.RealType;
  */
 public class Settings {
 	
-	public static final Settings DEFAULT = new Settings();
-			
-	/** The ImagePlus to operate on. */
+	/** The ImagePlus to operate on. Will also be used by some {@link TrackMateModelView} 
+	 * as a GUI target. */
 	public ImagePlus imp;
+	/** The polygon of interest. This will be used to crop the image and to discard 
+	 * found spots out of the polygon. If <code>null</code>, the whole image is 
+	 * considered. */
+	public Polygon polygon;
 	// Crop cube
 	/** The time-frame index, <b>0-based</b>, of the first time-point to process. */
 	public int tstart;
@@ -40,13 +45,13 @@ public class Settings {
 	public int zstart;
 	/** The lowest pixel Z position, <b>0-based</b>, of the volume to process. */
 	public int zend;
-	/** Target channel for segmentation, <b>1-based</b>. */
-	public int segmentationChannel = 1;
+	/** Target channel for detection, <b>1-based</b>. */
+//	public int detectionChannel = 1;
 	// Image info
-	public float dt 	= 1;
-	public float dx 	= 1;
-	public float dy 	= 1;
-	public float dz 	= 1;
+	public double dt 	= 1;
+	public double dx 	= 1;
+	public double dy 	= 1;
+	public double dz 	= 1;
 	public int width;
 	public int height;
 	public int nslices;
@@ -56,11 +61,14 @@ public class Settings {
 	public String timeUnits 		= "frames";
 	public String spaceUnits 		= "pixels";
 	
-	public SpotSegmenter<? extends RealType<?>> segmenter;
+	/** The name of the detector factory to use. It will be used to generate {@link SpotDetector}
+	 * for each target frame. */
+	public SpotDetectorFactory<?> detectorFactory;
+	/** The the tracker to use. */
 	public SpotTracker tracker;
 	
-	public SegmenterSettings segmenterSettings = null;
-	public TrackerSettings trackerSettings = null;
+	public Map<String, Object> detectorSettings = new HashMap<String, Object>();
+	public Map<String, Object> trackerSettings = new HashMap<String, Object>();
 	
 	// Filters
 	
@@ -73,9 +81,10 @@ public class Settings {
 	 * The initial quality filter value that is used to clip spots of low
 	 * quality from {@link TrackMateModel#spots}.
 	 */
-	public Float initialSpotFilterValue;
+	public Double initialSpotFilterValue;
 	/** The track filter list that is used to prune track and spots. */
 	protected List<FeatureFilter> trackFilters = new ArrayList<FeatureFilter>();
+	protected String errorMessage;
 	
 	
 	/*
@@ -94,6 +103,11 @@ public class Settings {
 	public Settings(ImagePlus imp) {
 		// Source image
 		this.imp = imp;
+		
+		if (null == imp) {
+			return; // we leave field default values
+		}
+		
 		// File info
 		this.imageFileName = imp.getFileInfo().fileName;
 		this.imageFolder = imp.getFileInfo().directory;
@@ -125,12 +139,15 @@ public class Settings {
 			this.xend = width-1;
 			this.ystart = 0;
 			this.yend = height-1;
+			this.polygon = null;
 		} else {
 			Rectangle boundingRect = roi.getBounds();
 			this.xstart = boundingRect.x; 
 			this.xend = boundingRect.width;
 			this.ystart = boundingRect.y;
 			this.yend = boundingRect.height+boundingRect.y;
+			this.polygon = roi.getPolygon();
+			
 		}
 		// The rest is left to the user
 	}
@@ -138,31 +155,141 @@ public class Settings {
 	/*
 	 * METHODS
 	 */
-		
+	
 	/**
-	 * A utility method that returns a new float array with the 3 elements building the spatial calibration
-	 * (pixel size).
+	 * @return a string description of the target image.
 	 */
-	public float[] getCalibration() {
-		return new float[] {dx, dy, dz};
+	public String toStringImageInfo() {
+		StringBuilder str = new StringBuilder(); 
+		
+		str.append("Image data:\n");
+		if (null == imp) {
+			str.append("Source image not set.\n");
+		} else {
+			str.append("For the image named: "+imp.getTitle() + ".\n");			
+		}
+		if (imageFileName == null || imageFileName == "") {
+			str.append("Not matching any file.\n");
+		} else {
+			str.append("Matching file " + imageFileName + " ");
+			if (imageFolder == null || imageFolder == "") {
+				str.append("in current folder.\n");
+			} else {
+				str.append("in folder: "+imageFolder + "\n");
+			}
+		}
+		
+		str.append("Geometry:\n");
+		str.append(String.format("  X = %4d - %4d, dx = %g %s\n", xstart, xend, dx, spaceUnits));
+		str.append(String.format("  Y = %4d - %4d, dy = %g %s\n", ystart, yend, dy, spaceUnits));
+		str.append(String.format("  Z = %4d - %4d, dz = %g %s\n", zstart, zend, dz, spaceUnits));
+		str.append(String.format("  T = %4d - %4d, dt = %g %s\n", tstart, tend, dt, timeUnits));
+
+		return str.toString();
 	}
 	
 	
 	@Override
 	public String toString() {
-		String str = ""; 
-		if (null == imp) {
-			str = "Image with:\n";
+		StringBuilder str = new StringBuilder(); 
+		
+		str.append(toStringImageInfo());
+		
+		str.append('\n');
+		str.append("Spot detection:\n");
+		if (null == detectorFactory) {
+			str.append("No detector factory set.\n");
 		} else {
-			str = "For image: "+imp.getShortTitle()+'\n';			
+			str.append("Detector: " + detectorFactory.toString() + ".\n");
+			if (null == detectorSettings) {
+				str.append("No detector settings found.\n");
+			} else {
+				str.append("Detector settings:\n");
+				str.append(detectorSettings);
+				str.append('\n');
+			}
 		}
-		str += String.format("  X = %4d - %4d, dx = %g %s\n", xstart, xend, dx, spaceUnits);
-		str += String.format("  Y = %4d - %4d, dy = %g %s\n", ystart, yend, dy, spaceUnits);
-		str += String.format("  Z = %4d - %4d, dz = %g %s\n", zstart, zend, dz, spaceUnits);
-		str += String.format("  T = %4d - %4d, dt = %g %s\n", tstart, tend, dt, timeUnits);
-		str += String.format("  Target channel for segmentation: %d\n", segmentationChannel);
-		return str;
+		
+		str.append('\n');
+		str.append("Initial spot filter:\n");
+		if (null == initialSpotFilterValue) {
+			str.append("No initial quality filter.\n");
+		} else {
+			str.append("Initial quality filter value: " + initialSpotFilterValue + ".\n");
+		}
+
+		str.append('\n');
+		str.append("Spot feature filters:\n");
+		if (spotFilters == null || spotFilters.size() == 0) {
+			str.append("No spot feature filters.\n");
+		} else {
+			str.append("Set with "+spotFilters.size()+" spot feature filters:\n");
+			for (FeatureFilter featureFilter : spotFilters) {
+				str.append(" - "+featureFilter + "\n");
+			}
+		}
+		
+		str.append('\n');
+		str.append("Particle linking:\n");
+		if (null == tracker) {
+			str.append("No spot tracker set.\n");
+		} else {
+			str.append("Tracker: " + tracker.toString() + ".\n");
+			if (null == trackerSettings) {
+				str.append("No tracker settings found.\n");
+			} else {
+				str.append("Tracker settings:\n");
+				str.append(trackerSettings);
+				str.append('\n');
+			}
+		}
+		
+		str.append('\n');
+		str.append("Track feature filters:\n");
+		if (trackFilters == null || trackFilters.size() == 0) {
+			str.append("No track feature filters.\n");
+		} else {
+			str.append("Set with "+trackFilters.size()+" track feature filters:\n");
+			for (FeatureFilter featureFilter : trackFilters) {
+				str.append(" - "+featureFilter + "\n");
+			}
+		}
+		
+		return str.toString();
 	}
+	
+	public boolean checkValidity() {
+		if (null == imp) {
+			errorMessage = "The source image is null.\n";
+			return false;
+		}
+		if (null == detectorFactory) {
+			errorMessage = "The detector factory is null.\n";
+			return false;
+		}
+		if (null == detectorSettings) {
+			errorMessage = "The detector settings is null.\n";
+			return false;
+		}
+		if (null == initialSpotFilterValue) {
+			errorMessage = "Initial spot quality threshold is not set.\n";
+			return false;
+		}
+		if (null == tracker) {
+			errorMessage = "The tracker in settings is null.\n";
+			return false;
+		}
+		if (!tracker.checkInput()) {
+			errorMessage = "The tracker has invalid input:\n"+tracker.getErrorMessage();
+			return false;
+		}
+		return true;
+	}
+	
+	public String getErrorMessage() {
+		return errorMessage;
+	}
+	
 	
 	/*
 	 * FEATURE FILTERS

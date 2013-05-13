@@ -1,5 +1,11 @@
 package fiji.plugin.trackmate.tracking.costfunction;
 
+import static fiji.plugin.trackmate.tracking.TrackerKeys.KEY_ALLOW_GAP_CLOSING;
+import static fiji.plugin.trackmate.tracking.TrackerKeys.KEY_BLOCKING_VALUE;
+import static fiji.plugin.trackmate.tracking.TrackerKeys.KEY_GAP_CLOSING_FEATURE_PENALTIES;
+import static fiji.plugin.trackmate.tracking.TrackerKeys.KEY_GAP_CLOSING_MAX_DISTANCE;
+import static fiji.plugin.trackmate.tracking.TrackerKeys.KEY_GAP_CLOSING_MAX_FRAME_GAP;
+
 import java.util.List;
 import java.util.Map;
 import java.util.SortedSet;
@@ -9,7 +15,6 @@ import mpicbg.imglib.multithreading.SimpleMultiThreading;
 import Jama.Matrix;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.tracking.LAPTracker;
-import fiji.plugin.trackmate.tracking.LAPTrackerSettings;
 import fiji.plugin.trackmate.tracking.LAPUtils;
 
 /**
@@ -33,23 +38,26 @@ import fiji.plugin.trackmate.tracking.LAPUtils;
 public class GapClosingCostFunction {
 
 	/** If false, gap closing will be prohibited. */
-	private boolean allowed;
-	/** The time cutoff, and distance cutoff, respectively */
-	protected double timeCutoff, maxDist;
+	protected final boolean allowed;
+	/** The distance cutoff: no gap is closed if the two spots are further than this distance. */
+	protected final double maxDist;
+	/** The max frame gap above which gap to close are not sought. */
+	protected final int frameCutoff;
 	/** The value to use to block an assignment in the cost matrix. */
-	protected double blockingValue;
-	/** Thresholds for the feature ratios. */
-	protected Map<String, Double> featurePenalties;
-	/** A flag stating if we should use multi--threading for some calculations. */
+	protected final double blockingValue;
+	/** Feature penalties. */
+	protected final Map<String, Double> featurePenalties;
+	/** A flag stating if we should use multi--threading for some calculations. */ // FIXME THIS IS LAME
 	protected boolean useMultithreading = fiji.plugin.trackmate.TrackMate_.DEFAULT_USE_MULTITHREADING;
 
 
-	public GapClosingCostFunction(LAPTrackerSettings settings) {
-		this.timeCutoff 		= settings.gapClosingTimeCutoff;
-		this.maxDist 			= settings.gapClosingDistanceCutoff;
-		this.blockingValue		= settings.blockingValue;
-		this.featurePenalties	= settings.gapClosingFeaturePenalties;
-		this.allowed 			= settings.allowGapClosing;
+	@SuppressWarnings("unchecked")
+	public GapClosingCostFunction(final Map<String, Object> settings) {
+		this.frameCutoff 		= (Integer) settings.get(KEY_GAP_CLOSING_MAX_FRAME_GAP);
+		this.maxDist 			= (Double) settings.get(KEY_GAP_CLOSING_MAX_DISTANCE);
+		this.blockingValue		= (Double) settings.get(KEY_BLOCKING_VALUE);
+		this.featurePenalties	= (Map<String, Double>) settings.get(KEY_GAP_CLOSING_FEATURE_PENALTIES);
+		this.allowed 			= (Boolean) settings.get(KEY_ALLOW_GAP_CLOSING);
 	}
 
 	public Matrix getCostFunction(final List<SortedSet<Spot>> trackSegments) {
@@ -81,7 +89,7 @@ public class GapClosingCostFunction {
 
 						SortedSet<Spot> seg1 = trackSegments.get(i);
 						Spot end = seg1.last();				// get last Spot of seg1
-						Float tend = end.getFeature(Spot.POSITION_T); // we want at least tstart > tend
+						int endFrame = end.getFeature(Spot.FRAME).intValue(); // we want at least tstart > tend
 
 						// Set the gap closing scores for each segment start and end pair
 						for (int j = 0; j < n; j++) {
@@ -94,10 +102,12 @@ public class GapClosingCostFunction {
 
 							SortedSet<Spot> seg2 = trackSegments.get(j);
 							Spot start = seg2.first();			// get first Spot of seg2
-							Float tstart = start.getFeature(Spot.POSITION_T);
+							int startFrame = start.getFeature(Spot.FRAME).intValue();
 
-							// Frame cutoff
-							if (tstart - tend > timeCutoff || tend >= tstart) {
+							// Frame cutoff. A value of 1 means a gap of 1 frame. If the end spot 
+							// is in frame 10, the start spot in frame 12, and if the max gap is 1
+							// then we should sought to bridge this gap (12 to 10 is a gap of 1 frame).
+							if (startFrame - endFrame > (frameCutoff+1) || endFrame >= startFrame) {
 								m.set(i, j, blockingValue);
 								continue;
 							}

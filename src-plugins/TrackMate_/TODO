@@ -8,7 +8,6 @@ go in the separate configuration panel.
 
 
 Bugs:
-- Check if TrackScheme still reports edge deletion problems.
 - Unsolvable bug: in TrackScheme, when TrackMate is launched from Fiji, the cells
 are not movable???!
 - Sometimes, this appears:
@@ -36,10 +35,9 @@ Exception in thread "AWT-EventQueue-0" java.lang.NullPointerException
 No idea what to do with that. Google was not helpful. 
 
 Features:
-- Implement edge features. Maybe not.
 
 
-Segmenting:
+Detection:
 - Implement the C.elegans algo from Santella et al 2010.
 - Implement an algorithm to segment cell imaged in phase-contrast.
 
@@ -50,7 +48,6 @@ Actions:
 Track scheme
 - Add the ability to name tracks.
 - Add a side table to display track features.
-- Allow to export side tables content to csv or xls.
 
 
 Export/Import

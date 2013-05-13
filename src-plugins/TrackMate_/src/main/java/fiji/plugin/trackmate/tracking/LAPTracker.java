@@ -1,24 +1,29 @@
 package fiji.plugin.trackmate.tracking;
 
+import static fiji.plugin.trackmate.tracking.TrackerKeys.KEY_ALLOW_GAP_CLOSING;
+import static fiji.plugin.trackmate.tracking.TrackerKeys.KEY_ALLOW_TRACK_MERGING;
+import static fiji.plugin.trackmate.tracking.TrackerKeys.KEY_ALLOW_TRACK_SPLITTING;
+import static fiji.plugin.trackmate.tracking.TrackerKeys.KEY_BLOCKING_VALUE;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import mpicbg.imglib.algorithm.MultiThreadedBenchmarkAlgorithm;
-import mpicbg.imglib.multithreading.SimpleMultiThreading;
+import net.imglib2.algorithm.MultiThreadedBenchmarkAlgorithm;
+import net.imglib2.multithreading.SimpleMultiThreading;
 
 import org.jgrapht.graph.DefaultWeightedEdge;
-import org.jgrapht.graph.SimpleWeightedGraph;
+import org.jgrapht.graph.SimpleDirectedWeightedGraph;
 import org.jgrapht.traverse.DepthFirstIterator;
 
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
-import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.tracking.costmatrix.LinkingCostMatrixCreator;
 import fiji.plugin.trackmate.tracking.costmatrix.TrackSegmentCostMatrixCreator;
 import fiji.plugin.trackmate.tracking.hungarian.AssignmentAlgorithm;
@@ -112,13 +117,21 @@ import fiji.plugin.trackmate.tracking.hungarian.HungarianAlgorithm;
  */
 public class LAPTracker extends MultiThreadedBenchmarkAlgorithm implements SpotTracker {
 
+	public static final String TRACKER_KEY = "LAP_TRACKER";
+	public static final String NAME = "LAP Tracker";
+	public static final String INFO_TEXT = "<html>" +
+			"This tracker is based on the Linear Assignment Problem mathematical framework. <br>" +
+			"Its implementation is derived from the following paper: <br>" +
+			"<i>Robust single-particle tracking in live-cell time-lapse sequences</i> - <br>" +
+			"Jaqaman <i> et al.</i>, 2008, Nature Methods. <br>" +
+			"</html>";
+
 	private final static String BASE_ERROR_MESSAGE = "LAPTracker: ";
 	private static final boolean DEBUG = false;
 
+
 	/** Logger used to echo progress on tracking. */
-	protected Logger logger = Logger.DEFAULT_LOGGER;
-	/** Stores whether the user has run checkInput() or not. */
-	protected boolean inputChecked = false;
+	protected final Logger logger;
 
 	/** The cost matrix for linking individual track segments (step 2). */
 	protected double[][] segmentCosts = null;
@@ -152,12 +165,25 @@ public class LAPTracker extends MultiThreadedBenchmarkAlgorithm implements SpotT
 	 * the track segment index that the middle point belongs to. */
 	protected int[] splittingMiddlePointsSegmentIndices;
 	/** The graph this tracker will use to link spots. */
-	protected SimpleWeightedGraph<Spot, DefaultWeightedEdge> graph;
+	protected SimpleDirectedWeightedGraph<Spot, DefaultWeightedEdge> graph;
 	/** The Spot collection that will be linked in the {@link #graph.} */
-	protected SpotCollection spots;
-	/** The settings object that configures this tracker. */
-	protected LAPTrackerSettings settings;
+	protected final SpotCollection spots;
+	/** The settings map that configures this tracker. */
+	protected Map<String, Object> settings;
 
+	/*
+	 * CONSTRUCTOR
+	 */
+	
+	public LAPTracker(final SpotCollection spots,final Logger logger) {
+		this.spots = spots;
+		this.logger = logger;
+	}
+	
+	public LAPTracker(final SpotCollection spots) {
+		this(spots, Logger.VOID_LOGGER);
+	}
+	
 	/*	
 	 * PROTECTED METHODS
 	 */
@@ -178,23 +204,22 @@ public class LAPTracker extends MultiThreadedBenchmarkAlgorithm implements SpotT
 	 */
 
 	@Override
-	public void setModel(TrackMateModel model) {
-		this.spots = model.getFilteredSpots();
-		this.settings = (LAPTrackerSettings) model.getSettings().trackerSettings;
-		reset();
+	public void setSettings(Map<String, Object> settings) {
+		this.settings = settings;
 	}
-
+	
 	/**
 	 * Reset any link created in the graph result in this tracker, effectively creating a new graph, 
 	 * containing the spots but no edge.
 	 */
 	public void reset() {
-		graph = new SimpleWeightedGraph<Spot, DefaultWeightedEdge>(DefaultWeightedEdge.class);
+		graph = new SimpleDirectedWeightedGraph<Spot, DefaultWeightedEdge>(DefaultWeightedEdge.class);
 		for(Spot spot : spots) 
 			graph.addVertex(spot);
 	}
 
-	public SimpleWeightedGraph<Spot,DefaultWeightedEdge> getResult() {
+	@Override
+	public SimpleDirectedWeightedGraph<Spot,DefaultWeightedEdge> getResult() {
 		return graph;
 	}
 
@@ -247,11 +272,16 @@ public class LAPTracker extends MultiThreadedBenchmarkAlgorithm implements SpotT
 			}
 		}
 		if (empty) {
-			errorMessage = BASE_ERROR_MESSAGE + "The filtered spot collection is empty.";
+			errorMessage = BASE_ERROR_MESSAGE + "The spot collection is empty.";
 			return false;
 		}
 
-		inputChecked = true;
+		// Check parameters
+		StringBuilder errorHolder = new StringBuilder();
+		if (!LAPUtils.checkSettingsValidity(settings, errorHolder)) {
+			errorMessage = errorHolder.toString();
+			return false;
+		}
 		return true;
 	}
 
@@ -268,16 +298,15 @@ public class LAPTracker extends MultiThreadedBenchmarkAlgorithm implements SpotT
 	@Override
 	public boolean process() {
 		long tend, tstart;
-
-		// Make sure checkInput() has been executed.
-		if (!inputChecked) {
-			errorMessage = BASE_ERROR_MESSAGE + "checkInput() must be executed before process().";
-			return false;
-		}
-
 		reset();
 		processingTime = 0;
-
+		
+		// Step 0 - Extract parameter values
+		final boolean allowGapClosing = (Boolean) settings.get(KEY_ALLOW_GAP_CLOSING);
+		final boolean allowSplitting = (Boolean) settings.get(KEY_ALLOW_TRACK_SPLITTING);
+		final boolean allowMerging = (Boolean) settings.get(KEY_ALLOW_TRACK_MERGING);
+		
+		
 		// Step 1 - Link objects into track segments
 		tstart = System.currentTimeMillis();
 		if (!linkObjectsToTrackSegments()) return false;
@@ -286,7 +315,7 @@ public class LAPTracker extends MultiThreadedBenchmarkAlgorithm implements SpotT
 		processingTime += (tend-tstart);
 
 		// Skip 2nd step if there is no rules to link track segments
-		if (!settings.allowGapClosing && !settings.allowSplitting && !settings.allowMerging) {
+		if (!allowGapClosing && !allowSplitting && !allowMerging) {
 			logger.setProgress(1);
 			logger.setStatus("");
 			return true;
@@ -371,7 +400,8 @@ public class LAPTracker extends MultiThreadedBenchmarkAlgorithm implements SpotT
 	 * @return True if execution completes successfully, false otherwise.
 	 */
 	public boolean linkTrackSegmentsToFinalTracks() {
-
+		final double blockingValue = (Double) settings.get(KEY_BLOCKING_VALUE);
+		
 		// Check that there are track segments.
 		if (null == trackSegments || trackSegments.size() < 1) {
 			errorMessage = "There are no track segments to link.";
@@ -392,7 +422,7 @@ public class LAPTracker extends MultiThreadedBenchmarkAlgorithm implements SpotT
 				System.out.println("Final cost matrix is "+segmentCosts.length+" x " + segmentCosts[0].length+".\n" +
 						"Too big to display.");
 			} else {
-				LAPUtils.displayCostMatrix(segmentCosts, trackSegments.size(), splittingMiddlePoints.size(), settings.blockingValue, finalTrackSolutions);
+				LAPUtils.displayCostMatrix(segmentCosts, trackSegments.size(), splittingMiddlePoints.size(), blockingValue, finalTrackSolutions);
 			}
 		}
 
@@ -413,7 +443,8 @@ public class LAPTracker extends MultiThreadedBenchmarkAlgorithm implements SpotT
 	 * @see LAPTracker#createFrameToFrameLinkingCostMatrix(List, List, TrackerSettings)
 	 */
 	public boolean solveLAPForTrackSegments() {
-
+		final double blockingValue = (Double) settings.get(KEY_BLOCKING_VALUE);
+		
 		// Prepare frame pairs in order, not necessarily separated by 1.
 		final ArrayList<int[]> framePairs = new ArrayList<int[]>(spots.keySet().size()-1);
 		final Iterator<Integer> frameIterator = spots.keySet().iterator(); 		
@@ -455,7 +486,7 @@ public class LAPTracker extends MultiThreadedBenchmarkAlgorithm implements SpotT
 						boolean allBlocked = true;
 						for (int j = 0; j < t0.size(); j++) {
 							for (int k = 0; k < t1.size(); k++) {
-								if (costMatrix[j][k] != settings.blockingValue) {
+								if (costMatrix[j][k] != blockingValue) {
 									allBlocked = false;
 									break;
 								}
@@ -517,7 +548,7 @@ public class LAPTracker extends MultiThreadedBenchmarkAlgorithm implements SpotT
 	 * @param settings  the tracker settings that specifies how this cost should be created
 	 * @return  the cost matrix as an array of array of double
 	 */
-	protected double[][] createFrameToFrameLinkingCostMatrix(final List<Spot> t0, List<Spot> t1, final LAPTrackerSettings settings) {
+	protected double[][] createFrameToFrameLinkingCostMatrix(final List<Spot> t0, List<Spot> t1, final Map<String, Object> settings) {
 		// Create cost matrix
 		LinkingCostMatrixCreator objCosts = new LinkingCostMatrixCreator(t0, t1, settings);
 		if (!objCosts.checkInput() || !objCosts.process()) {
@@ -566,7 +597,7 @@ public class LAPTracker extends MultiThreadedBenchmarkAlgorithm implements SpotT
 		while (!spotPool.isEmpty()) {
 			source = spotPool.iterator().next();
 			graphIterator = new DepthFirstIterator<Spot, DefaultWeightedEdge>(graph, source);
-			trackSegment = new TreeSet<Spot>(Spot.frameComparator);
+			trackSegment = new TreeSet<Spot>(Spot.timeComparator);
 
 			while(graphIterator.hasNext()) {
 				current = graphIterator.next();
@@ -658,9 +689,8 @@ public class LAPTracker extends MultiThreadedBenchmarkAlgorithm implements SpotT
 					SortedSet<Spot> segmentStart = trackSegments.get(j);
 					Spot start = segmentStart.first();
 					Spot mother = splittingMiddlePoints.get(i - numTrackSegments);
-					Spot target = mother;
 					weight = segmentCosts[i][j];
-					DefaultWeightedEdge edge = graph.addEdge(start, target);
+					DefaultWeightedEdge edge = graph.addEdge(mother, start);
 					graph.setEdgeWeight(edge, weight);
 
 					if(DEBUG) {
@@ -688,28 +718,13 @@ public class LAPTracker extends MultiThreadedBenchmarkAlgorithm implements SpotT
 	}
 
 	@Override
-	public String getInfoText() {
-		return "<html>" +
-				"This tracker is based on the Linear Assignment Problem mathematical framework. <br>" +
-				"Its implementation is derived from the following paper: <br>" +
-				"<i>Robust single-particle tracking in live-cell time-lapse sequences</i> - <br>" +
-				"Jaqaman <i> et al.</i>, 2008, Nature Methods. <br>" +
-				"</html>";
-	}
-	
-	@Override
-	public TrackerSettings createDefaultSettings() {
-		return new LAPTrackerSettings();
-	}
-
-	@Override
 	public String toString() {
-		return "LAP Tracker";
+		return NAME;
 	}
 	
 	@Override
-	public void setLogger(Logger logger) {
-		this.logger = logger;
+	public String getKey() {
+		return TRACKER_KEY;
 	}
+	
 }
-

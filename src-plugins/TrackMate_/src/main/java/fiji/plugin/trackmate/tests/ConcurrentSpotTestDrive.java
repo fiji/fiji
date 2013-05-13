@@ -1,21 +1,16 @@
 package fiji.plugin.trackmate.tests;
 
+import fiji.plugin.trackmate.DetectorProvider;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
-import fiji.plugin.trackmate.SpotImp;
 import fiji.plugin.trackmate.TrackMate_;
-import fiji.plugin.trackmate.segmentation.DogSegmenter;
-import fiji.plugin.trackmate.segmentation.LogSegmenterSettings;
+import fiji.plugin.trackmate.detection.LogDetectorFactory;
 import ij.ImagePlus;
 import ij.gui.NewImage;
 
 public class ConcurrentSpotTestDrive {
 
-	/**
-	 * @param args
-	 */
-	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public static void main(String[] args) {
 		
 		int nFrames = 20;
@@ -34,25 +29,26 @@ public class ConcurrentSpotTestDrive {
 		// Run track mate on it
 		
 		// Make settings
+		DetectorProvider provider = new DetectorProvider();
+		provider.select(LogDetectorFactory.DETECTOR_KEY);
+		
 		Settings settings = new Settings(imp);
-		settings.segmenter = new DogSegmenter();
-		LogSegmenterSettings dss = new LogSegmenterSettings();
-		dss.expectedRadius = 2f;
-		settings.segmenterSettings = dss;
+		settings.detectorFactory = provider.getDetectorFactory();
+		settings.detectorSettings = provider.getDefaultSettings();
 
 		// Instantiate plugin
 		TrackMate_ plugin = new TrackMate_(settings);
 		
-		// Execute segmentation
-		plugin.execSegmentation();
+		// Execute detection
+		plugin.execDetection();
 		
 		// Retrieve spots
 		SpotCollection spots = plugin.getModel().getSpots();
 		
 		// Parse spots and detect duplicate IDs
-		int[] IDs = new int[SpotImp.IDcounter.get()];
+		int[] IDs = new int[Spot.IDcounter.get()];
 		for (Spot spot : spots) {
-			SpotImp si = (SpotImp) spot;
+			Spot si = spot;
 			int id = si.ID();
 			IDs[id]++;
 		}

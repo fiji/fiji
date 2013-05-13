@@ -24,6 +24,8 @@ import spimopener.SPIMExperiment;
 
 public class SPIMConfiguration
 {
+	public enum SegmentationTypes { THRESHOLD, DOG, DOM };
+	
 	// general
 	public String timepointPattern;
 	public int timepoints[];
@@ -49,7 +51,6 @@ public class SPIMConfiguration
 	public String debugLevel;
 	public int debugLevelInt = ViewStructure.DEBUG_MAIN;
 	public boolean showImageJWindow = false;
-	public boolean multiThreadedOpening = false;
 	public boolean collectRegistrationStatistics = false;
 	public String transformationModel = "Affine";
 	// time lapse
@@ -77,13 +78,13 @@ public class SPIMConfiguration
 	public OutOfBoundsStrategyFactory<FloatType> strategyFactoryGauss = new OutOfBoundsStrategyMirrorFactory<FloatType>();
 
 	// segmentation
-	public boolean writeOutputImage = true;
+	public int writeOutputImage = 1;
 	public boolean showOutputImage = false;
-	public boolean useScaleSpace = true;
 
 	// which fusion weightening
     public boolean useEntropy = false;
-    public boolean useGauss = false;
+    public boolean useIntegralContentBased = false;
+    public boolean useGaussContentBased = false;
     public boolean useLinearBlening = true;
 
     public boolean paralellFusion = true;
@@ -109,6 +110,14 @@ public class SPIMConfiguration
 	public double zStretching = 1;
 	public int background = 0;
 
+	// re-localize true correspondences with a gauss fit?
+	// 0 == no, 1 == quadratic fit, 2 == only correspondences gauss, 3 == all detections gauss
+	public int doFit = 0;
+	public boolean doGaussKeepImagesOpen = false;
+	
+	// by default we do a DoG
+	public SegmentationTypes segmentation = SegmentationTypes.DOG;
+	
 	// threshold segmentation
 	public float threshold = 0.9f;
 	public float fixedThreshold = 0.02f;
@@ -131,6 +140,11 @@ public class SPIMConfiguration
 	public boolean detectSmallestStructures = false;
 	public int scaleSpaceNumberOfThreads = 0;
 
+	// Integral image parameters
+	public int[] integralImgRadius1 = new int[]{ 2 };
+	public int[] integralImgRadius2 = new int[]{ 3 };
+	public float[] integralImgThreshold = new float[]{ 0.02f };
+	
 	// PointDescriptor properties
 	public double differenceThreshold = 50;
 	public double ratioOfDistance = 10;
@@ -393,7 +407,7 @@ public class SPIMConfiguration
     		}
     	}
 
-	if ( useScaleSpace && !fuseOnly )
+	if ( segmentation == SegmentationTypes.DOG && !fuseOnly )
 	{
 		final int numChannelsRegister = channelsRegister.length;
 
@@ -779,9 +793,10 @@ public class SPIMConfiguration
 
     	IOFunctions.println("writeOutputImage: " + writeOutputImage);
     	IOFunctions.println("showOutputImage: " + showOutputImage);
-    	IOFunctions.println("useScaleSpace: " + useScaleSpace);
+    	IOFunctions.println("segmentation type: " + segmentation);
     	IOFunctions.println("useEntropy: " + useEntropy);
-    	IOFunctions.println("useGauss: " + useGauss);
+    	IOFunctions.println("useGaussContentBased: " + useGaussContentBased);
+    	IOFunctions.println("useIntegralContentBased: " + useIntegralContentBased);
     	IOFunctions.println("useLinearBlening: " + useLinearBlening);
 
     	IOFunctions.println("paralellFusion: " + paralellFusion);

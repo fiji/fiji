@@ -5,13 +5,14 @@ import static fiji.plugin.trackmate.gui.TrackMateWizard.FONT;
 import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 import javax.swing.DefaultListCellRenderer;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
-import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JList;
 
@@ -19,7 +20,7 @@ import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.TrackMate_;
 import fiji.plugin.trackmate.action.TrackMateAction;
 
-public class ActionChooserPanel extends ListChooserPanel<TrackMateAction> implements WizardPanelDescriptor {
+public class ActionChooserPanel extends ListChooserPanel implements WizardPanelDescriptor {
 
 	private static final long serialVersionUID = 1L;
 	private static final Icon EXECUTE_ICON = new ImageIcon(TrackMateWizard.class.getResource("images/control_play_blue.png"));
@@ -31,13 +32,21 @@ public class ActionChooserPanel extends ListChooserPanel<TrackMateAction> implem
 	private Logger logger;
 	private TrackMateWizard wizard;
 	private TrackMate_ plugin;
+	private List<ImageIcon> icons;
 
-	public ActionChooserPanel(TrackMate_ plugin) {
-		super(plugin.getAvailableActions(), "action");
+	/*
+	 * CONSTRUCTORS
+	 */
+	
+	
+	public ActionChooserPanel(final List<String> actions, final List<String> infoTexts, final List<ImageIcon> icons, TrackMate_ plugin) {
+		super(actions, infoTexts, "action");
+		this.icons = icons;
 		this.logPanel = new LogPanel();
 		this.logger = logPanel.getLogger();
 		init();
 	}
+	
 	
 	/*
 	 * PUBLIC METHODS
@@ -75,7 +84,7 @@ public class ActionChooserPanel extends ListChooserPanel<TrackMateAction> implem
 
 	@Override
 	public String getPreviousDescriptorID() {
-		return DisplayerPanel.DESCRIPTOR;
+		return GrapherPanel.DESCRIPTOR;
 	}
 
 	@Override
@@ -93,8 +102,6 @@ public class ActionChooserPanel extends ListChooserPanel<TrackMateAction> implem
 	
 	private void init() {
 		
-		jLabelHelpText.setSize(270, 150);
-		
 		logPanel.setBounds(8, 260, 276, 200);
 		add(logPanel);
 		
@@ -110,7 +117,8 @@ public class ActionChooserPanel extends ListChooserPanel<TrackMateAction> implem
 						try {
 							executeButton.setEnabled(false);
 							fireAction(ACTION_STARTED);
-							TrackMateAction action = getChoice();
+							String actionName = getChoice();
+							TrackMateAction action = plugin.getActionProvider().getAction(actionName);
 							action.setLogger(logger);
 							action.setWizard(wizard);
 							action.execute(plugin);
@@ -124,14 +132,13 @@ public class ActionChooserPanel extends ListChooserPanel<TrackMateAction> implem
 		});
 		add(executeButton);
 		
-		HashMap<String, ImageIcon> icons = new HashMap<String, ImageIcon>();
-		String[] names = new String[list.size()];
-		for (int i = 0; i < list.size(); i++) { 
-			names[i] = list.get(i).toString();
-			icons.put(names[i], list.get(i).getIcon());
+		HashMap<String, ImageIcon> iconMap = new HashMap<String, ImageIcon>();
+		for (int i = 0; i < icons.size(); i++) { 
+			iconMap.put(items.get(i), icons.get(i));
 		}
-		IconListRenderer renderer = new IconListRenderer(icons);
+		IconListRenderer renderer = new IconListRenderer(iconMap);
 		jComboBoxChoice.setRenderer(renderer);
+		jLabelHelpText.setSize(270, 150);
 
 	}
 	
@@ -139,12 +146,22 @@ public class ActionChooserPanel extends ListChooserPanel<TrackMateAction> implem
 	 * MAIN METHOD
 	 */
 	
-	public static void main(String[] args) {
-		JFrame frame = new JFrame();
-		frame.getContentPane().add(new ActionChooserPanel(new TrackMate_()));
-		frame.setSize(300, 520);
-		frame.setVisible(true);
+	/**
+	 * Utility methods that fetches the available actions, their infos, and their icons 
+	 * from the factory available in the passed {@link TrackMate_} instance.
+	 */
+	public static ActionChooserPanel instantiateForPlugin(TrackMate_ plugin) {
+		List<String> actions = plugin.getActionProvider().getAvailableActions();
+		List<String> infoTexts = new ArrayList<String>(actions.size());
+		List<ImageIcon> icons = new ArrayList<ImageIcon>(actions.size());
+		for(String key : actions) {
+			infoTexts.add( plugin.getActionProvider().getInfoText(key) );
+			icons.add( plugin.getActionProvider().getIcon(key) );
+		}
+		
+		return new ActionChooserPanel(actions, infoTexts, icons, plugin);
 	}
+	
 
 	/*
 	 * INNER CLASS

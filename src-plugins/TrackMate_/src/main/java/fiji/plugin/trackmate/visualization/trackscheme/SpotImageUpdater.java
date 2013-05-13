@@ -1,45 +1,60 @@
 package fiji.plugin.trackmate.visualization.trackscheme;
 
-import mpicbg.imglib.image.Image;
+import static fiji.plugin.trackmate.detection.DetectorKeys.KEY_TARGET_CHANNEL;
+
+import java.util.Map;
+
+import net.imglib2.img.ImgPlus;
+import net.imglib2.view.HyperSliceImgPlus;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.TrackMateModel;
-import fiji.plugin.trackmate.features.spot.SpotIconGrabber;
 import fiji.plugin.trackmate.util.TMUtils;
 
 public class SpotImageUpdater {
 	
-	private final SpotIconGrabber grabber;
 	private final TrackMateModel model;
-	private final float[] calibration;
 	private Integer previousFrame;
+	private SpotIconGrabber<?> grabber;
 
 	public SpotImageUpdater(final TrackMateModel model) {
 		this.model = model;
-		this.grabber = new SpotIconGrabber();
 		this.previousFrame = -1;
-		this.calibration = model.getSettings().getCalibration();
 	}
 
 	/**
-	 * Update the image string of the given spot, based on the raw images contained in the given model.
+	 * @return the image string of the given spot, based on the raw images contained in the given model.
+	 * For performance, the image at target frame is stored for subsequent calls of this method. 
+	 * So it is a good idea to group calls to this method for spots that belong to the
+	 * same frame.
 	 */
-	@SuppressWarnings({ "unchecked", "rawtypes" })
-	public void update(final Spot spot) {
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	public String getImageString(final Spot spot) {
 
-		Integer frame = model.getSpots().getFrame(spot);
+		Integer frame = spot.getFeature(Spot.FRAME).intValue();
 		if (null == frame)
-			return;
+			return "";
 		if (frame == previousFrame) {
 			// Keep the same image than in memory
 		} else {
 			Settings settings = model.getSettings();
-			int targetChannel = settings.segmentationChannel; // TODO: be more flexible about that
-			Image img = TMUtils.getUncroppedSingleFrameAsImage(settings.imp, frame, targetChannel); // We have to use the un-cropped version, since the spots are referring to the un-cropped image at this time.
-			grabber.setTarget(img, calibration);
+			ImgPlus img = TMUtils.rawWraps(settings.imp);
+			int targetChannel = 0;
+			if (settings != null && settings.detectorSettings != null) {
+				// Try to extract it from detector settings target channel
+				Map<String, Object> ds = settings.detectorSettings;
+				Object obj = ds.get(KEY_TARGET_CHANNEL);
+				if (null != obj && obj instanceof Integer) {
+					targetChannel = ((Integer) obj) - 1;
+				}
+			} // TODO: be more flexible about that
+			ImgPlus<?> imgCT = HyperSliceImgPlus.fixTimeAxis( 
+					HyperSliceImgPlus.fixChannelAxis(img, targetChannel), 
+					frame);
+			grabber = new SpotIconGrabber(imgCT);
 			previousFrame = frame;
 		}
-		grabber.process(spot);			
+		return grabber.getImageString(spot);			
 	}
 
 }

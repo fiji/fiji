@@ -30,8 +30,9 @@ public class Multi_View_Fusion implements PlugIn
 	final private String paperURL = "http://www.nature.com/nmeth/journal/v7/n6/full/nmeth0610-418.html";
 
 	final static String fusionType[] = new String[] { "Single-channel", "Multi-channel" };
-	static int defaultFusionType = 0;
-
+	final static String outputType[] = new String[] { "Display only", "Save 2d-slices, all in one directory", "Save 2d-slices, one directory per time-point" };
+	public static int defaultFusionType = 0;
+	
 	@Override
 	public void run(String arg0) 
 	{
@@ -78,8 +79,10 @@ public class Multi_View_Fusion implements PlugIn
 	public static int defaultParalellViews = 0;
 	public static boolean fusionUseBlendingStatic = true;
 	public static boolean fusionUseContentBasedStatic = false;
-	public static boolean displayFusedImageStatic = true;
-	public static boolean saveFusedImageStatic = true;
+	public static boolean fusionUseContentBasedIntegralStatic = false;
+	//public static boolean displayFusedImageStatic = true;
+	//public static boolean saveFusedImageStatic = true;
+	public static int defaultOutputType = 1;
 	public static int outputImageScalingStatic = 1;
 	public static int cropOffsetXStatic = 0;
 	public static int cropOffsetYStatic = 0;
@@ -411,8 +414,9 @@ public class Multi_View_Fusion implements PlugIn
 		gd2.addChoice( "Process_views_in_paralell", views, views[ defaultParalellViews ] );
 		
 		gd2.addMessage( "" );
-		gd2.addCheckbox( "Apply_blending", fusionUseBlendingStatic );
-		gd2.addCheckbox( "Apply_content_based_weightening", fusionUseContentBasedStatic );
+		gd2.addCheckbox( "Blending", fusionUseBlendingStatic );
+		gd2.addCheckbox( "Content_based weights", fusionUseContentBasedStatic );
+		gd2.addCheckbox( "Content_based_weights_(fast, approximate)", fusionUseContentBasedIntegralStatic );
 		gd2.addMessage( "" );
 		gd2.addNumericField( "Downsample_output image n-times", outputImageScalingStatic, 0 );
 		gd2.addNumericField( "Crop_output_image_offset_x", cropOffsetXStatic, 0 );
@@ -422,8 +426,9 @@ public class Multi_View_Fusion implements PlugIn
 		gd2.addNumericField( "Crop_output_image_size_y", cropSizeYStatic, 0 );
 		gd2.addNumericField( "Crop_output_image_size_z", cropSizeZStatic, 0 );
 		gd2.addMessage( "" );
-		gd2.addCheckbox( "Display_fused_image", displayFusedImageStatic );
-		gd2.addCheckbox( "Save_fused_image", saveFusedImageStatic );
+		//gd2.addCheckbox( "Display_fused_image", displayFusedImageStatic );
+		//gd2.addCheckbox( "Save_fused_image", saveFusedImageStatic );
+		gd2.addChoice( "Fused_image_output", outputType, outputType[ defaultOutputType ] );
 
 		gd2.addMessage("");
 		gd2.addMessage("This Plugin is developed by Stephan Preibisch\n" + myURL);
@@ -519,6 +524,7 @@ public class Multi_View_Fusion implements PlugIn
 		defaultParalellViews = gd2.getNextChoiceIndex(); // 0 = all
 		fusionUseBlendingStatic = gd2.getNextBoolean();
 		fusionUseContentBasedStatic = gd2.getNextBoolean();
+		fusionUseContentBasedIntegralStatic = gd2.getNextBoolean();
 		outputImageScalingStatic = (int)Math.round( gd2.getNextNumber() );
 		cropOffsetXStatic = (int)Math.round( gd2.getNextNumber() );
 		cropOffsetYStatic = (int)Math.round( gd2.getNextNumber() );
@@ -526,8 +532,9 @@ public class Multi_View_Fusion implements PlugIn
 		cropSizeXStatic  = (int)Math.round( gd2.getNextNumber() );
 		cropSizeYStatic = (int)Math.round( gd2.getNextNumber() );
 		cropSizeZStatic = (int)Math.round( gd2.getNextNumber() );
-		displayFusedImageStatic = gd2.getNextBoolean(); 
-		saveFusedImageStatic = gd2.getNextBoolean(); 		
+		defaultOutputType = gd2.getNextChoiceIndex();
+		//displayFusedImageStatic = gd2.getNextBoolean(); 
+		//saveFusedImageStatic = gd2.getNextBoolean(); 		
 
 		conf.paralellFusion = false;
 		conf.sequentialFusion = false;
@@ -547,18 +554,15 @@ public class Multi_View_Fusion implements PlugIn
 			conf.multipleImageFusion = true;
 		}
 		
-		if ( displayFusedImageStatic  )
+		if ( defaultOutputType == 0 )
 			conf.showOutputImage = true;
 		else
 			conf.showOutputImage = false;
-		
-		if ( saveFusedImageStatic )
-			conf.writeOutputImage = true;
-		else
-			conf.writeOutputImage = false;
+		conf.writeOutputImage = defaultOutputType;
 		
 		conf.useLinearBlening = fusionUseBlendingStatic;
-		conf.useGauss = fusionUseContentBasedStatic;
+		conf.useGaussContentBased = fusionUseContentBasedStatic;
+		conf.useIntegralContentBased = fusionUseContentBasedIntegralStatic;
 		conf.scale = outputImageScalingStatic;
 		conf.cropOffsetX = cropOffsetXStatic;
 		conf.cropOffsetY = cropOffsetYStatic;

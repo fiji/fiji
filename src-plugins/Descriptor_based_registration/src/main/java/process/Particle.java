@@ -50,7 +50,7 @@ public class Particle extends Point implements Leaf<Particle>
 		}
 	}
 	
-	public int getID() { return id; }	
+	public long getID() { return id; }
 	public void setWeight( final double weight ){ this.weight = weight; }
 	public double getWeight(){ return weight; }
 	public void setDiameter( final float diameter ) { this.diameter = diameter; }

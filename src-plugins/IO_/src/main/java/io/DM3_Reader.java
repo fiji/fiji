@@ -8,6 +8,8 @@ import ij.process.*;
 import ij.io.*;
 import ij.measure.*;
 import ij.gui.*;
+import java.nio.ByteBuffer; // for blreadDouble
+import java.nio.ByteOrder;
 //import ij.IJ.*;
 
 // ------------------------------------------
@@ -18,13 +20,15 @@ import ij.gui.*;
 // Made a start using the Analyze_Reader plugin by Guy Williams and
 // the Biorad_Reader as a base, but not that much remains.
 // The guts were significantly inspired by the GatanDM3.C and
-// GatanDM3.h files of the EMAN project source code:
-// http://ncmi.bcm.tmc.edu/~stevel/EMAN/doc/
+// GatanDM3.h files of the EMAN project source code. These correspond to the
+// dm3io.cpp and dm3io.h files of the current EMAN2 code base, visible at:
+// http://blake.bcm.edu/eman2/doxygen_html/dm3io_8cpp_source.html
 // ------------------------------------
-// Greg Jefferis,
-// Dept Biological Sciences,
-// Stanford University
-// jefferis@stanford.edu
+// Gregory Jefferis
+// Division of Neurobiology
+// MRC Laboratory of Molecular Biology
+// Cambridge, UK.
+// jefferis@gmail.com
 // -------------------------------------------
 // as of v1.0.1 030615
 // -------------------------------------------
@@ -156,6 +160,14 @@ import ij.gui.*;
 // - Add support for REAL8_DATA, RGB_UINT8_1_DATA, RGB_UINT16_DATA
 //   NB the last two are guesses, but very likely correct
 // - remove terminal whitespace
+// ------------------------------------
+// v 1.4.2 130222
+// - Important bugfix to blreadDouble() which is used to read double values in
+//   metadata. An implementation error resulted in NaN values for perfectly 
+//   valid metadata tags. Most test file had at least one incorrect NaN.
+//   Thanks to Nuno Goncalo Dias for the bug report that initially identified
+//   this problem.
+// - Update GJ contact details and EMAN project cross reference
 
 public class DM3_Reader extends ImagePlus implements PlugIn
 {
@@ -1151,12 +1163,15 @@ public class DM3_Reader extends ImagePlus implements PlugIn
 	}
 	
 	double blreadDouble() throws IOException
-	// new fn to read 8 byte doubles using blreadLong as a base
+	// Use nio ByteBuffer to reorder bytes & get double for little endian case
+	//   (i.e. essentially all DM3 files)
+	// Corrected in v1.4.2 from an incorrect implementation using
+	//   Double.longBitsToDouble() which gave NaN for some valid doubles.
 	{
 		if (!littleEndian) return f.readDouble();
-		
-		long orig = blreadLong();
-		return (Double.longBitsToDouble(orig));
+		byte[] eightbytes = new byte[8];
+		f.read(eightbytes);
+		return ByteBuffer.wrap(eightbytes).order(ByteOrder.LITTLE_ENDIAN).getDouble();
 	}
 	
 	float blreadFloat() throws IOException

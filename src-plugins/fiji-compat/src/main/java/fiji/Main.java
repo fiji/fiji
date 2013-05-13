@@ -24,6 +24,7 @@ import java.awt.event.AWTEventListener;
 import java.awt.event.WindowEvent;
 
 import java.io.File;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
 import java.net.URL;
@@ -61,9 +62,31 @@ public class Main {
 		gentlyRunPlugIn("fiji.util.Recent_Commands", "install");
 	}
 
+	private static boolean setAWTAppClassName(Class<?> appClass) {
+		String headless = System.getProperty("java.awt.headless");
+		if ("true".equalsIgnoreCase(headless))
+			return false;
+		try {
+			Toolkit toolkit = Toolkit.getDefaultToolkit();
+			if (toolkit == null)
+				return false;
+			Class<?> clazz = toolkit.getClass();
+			if (!"sun.awt.X11.XToolkit".equals(clazz.getName()))
+				return false;
+			Field field = clazz.getDeclaredField("awtAppClassName");
+			field.setAccessible(true);
+			field.set(toolkit, appClass.getName().replace('.', '-'));
+			return true;
+		} catch (Throwable t) {
+			t.printStackTrace();
+			return false;
+		}
+	}
+
 	public static void premain() {
 		FileDialogDecorator.registerAutomaticDecorator();
 		JFileChooserDecorator.registerAutomaticDecorator();
+		setAWTAppClassName(Main.class);
 	}
 
 	/*

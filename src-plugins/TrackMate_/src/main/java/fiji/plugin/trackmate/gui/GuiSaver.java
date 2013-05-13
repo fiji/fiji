@@ -38,88 +38,28 @@ public class GuiSaver {
 	 */
 
 
-	public void writeFile(final File file, final TrackMateModel model, final String targetID) {
+	/**
+	 * Write the model in the plugin managed by this GUI in the file specified.
+	 * @param file  the file to write in.
+	 */
+	public void writeFile(final File file) {
 
-		TmXmlWriter writer = new TmXmlWriter(model, logger);
+		String log = wizard.getLogPanel().getTextContent();
 
-		if (targetID.equals(StartDialogPanel.DESCRIPTOR) || targetID.equals(SegmenterChoiceDescriptor.DESCRIPTOR) ) {
-
-			model.setSettings( ((StartDialogPanel) wizard.getPanelDescriptorFor(StartDialogPanel.DESCRIPTOR)).getSettings());
-			writer.appendBasicSettings(); 
-			
-		} else if ( targetID.equals(SegmenterConfigurationPanelDescriptor.DESCRIPTOR) ) {
-
-				writer.appendBasicSettings();
-				writer.appendSegmenterSettings();
-
-		} else if (targetID.equals(SegmentationDescriptor.DESCRIPTOR) || targetID.equals(InitFilterPanel.DESCRIPTOR) ) {
-
-			writer.appendBasicSettings();
-			writer.appendSegmenterSettings();
-			writer.appendSpots();
-
-		} else if  (targetID.equals(LaunchDisplayerDescriptor.DESCRIPTOR) || targetID.equals(DisplayerChoiceDescriptor.DESCRIPTOR) ) {
-
-			writer.appendBasicSettings();
-			writer.appendSegmenterSettings();
-			writer.appendInitialSpotFilter();
-			writer.appendSpots();
-			
-		} else if  (targetID.equals(SpotFilterDescriptor.DESCRIPTOR) || targetID.equals(TrackerChoiceDescriptor.DESCRIPTOR) ) {
-			
-			writer.appendBasicSettings();
-			writer.appendSegmenterSettings();
-			writer.appendInitialSpotFilter();
-			writer.appendSpotFilters();
-			writer.appendSpots();
-			
-		} else if  (targetID.equals(TrackerConfigurationPanelDescriptor.DESCRIPTOR) ) {
-
-			writer.appendBasicSettings();
-			writer.appendSegmenterSettings();
-			writer.appendTrackerSettings();
-			writer.appendInitialSpotFilter();
-			writer.appendSpotFilters();
-			writer.appendFilteredSpots();
-			writer.appendSpots();
-
-		} else if  (targetID.equals(TrackingDescriptor.DESCRIPTOR)) {
-
-			writer.appendBasicSettings();
-			writer.appendSegmenterSettings();
-			writer.appendTrackerSettings();
-			writer.appendInitialSpotFilter();
-			writer.appendSpotFilters();
-			writer.appendFilteredSpots();
-			writer.appendTracks();
-			writer.appendSpots();
-			
-		} else if  (targetID.equals(TrackFilterDescriptor.DESCRIPTOR) ) {
-
-			writer.appendBasicSettings();
-			writer.appendSegmenterSettings();
-			writer.appendTrackerSettings();
-			writer.appendInitialSpotFilter();
-			writer.appendSpotFilters();
-			writer.appendFilteredSpots();
-			writer.appendTracks();
-			writer.appendTrackFilters();
-			writer.appendSpots();
-
-		} else {
-			
-			writer.appendBasicSettings();
-			writer.appendSegmenterSettings();
-			writer.appendTrackerSettings();
-			writer.appendInitialSpotFilter();
-			writer.appendSpotFilters();
-			writer.appendFilteredSpots();
-			writer.appendTracks();
-			writer.appendTrackFilters();
-			writer.appendFilteredTracks();
-			writer.appendSpots();
-
+		TmXmlWriter writer = new TmXmlWriter(wizard.getController().getPlugin(), log);
+		
+		if (!writer.checkInput()) {
+			logger.error("There was some errors preparing to write:\n" + writer.getErrorMessage());
+			logger.error("Aborting.\n");
+			return;
 		}
+
+		if (!writer.process()) {
+			logger.error("There was some errors when preparing the file:\n" + writer.getErrorMessage());
+			logger.error("Aborting.\n");
+			return;
+		}
+		
 		try {
 			writer.writeToFile(file);
 			logger.log("Data saved to: "+file.toString()+'\n');

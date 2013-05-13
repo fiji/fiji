@@ -72,6 +72,7 @@ public class Refresh_Macros extends RefreshScripts {
 		return super.isThisLanguage(command) ||
 			(command != null &&
 			 command.startsWith("ij.plugin.Macro_Runner(\"") &&
+			 command.indexOf("\"JAR:") < 0 &&
 			 (command.endsWith(".ijm\")") || command.endsWith(".txt\")")));
 	}
 

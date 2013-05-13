@@ -23,7 +23,6 @@
 		<module>3D_Blob_Segmentation</module>
 		<module>3D_Objects_Counter</module>
 		<module>3D_Viewer</module>
-		<module>Action_Bar</module>
 		<module>Algorithm_Launcher</module>
 		<module>AnalyzeSkeleton_</module>
 		<module>Analyze_Reader_Writer</module>
@@ -131,6 +130,7 @@
 		<module>imagescience</module>
 		<module>imageware</module>
 		<module>jep</module>
+		<module>legacy-imglib1</module>
 		<module>level_sets</module>
 		<module>mij</module>
 		<module>pal-optimization</module>

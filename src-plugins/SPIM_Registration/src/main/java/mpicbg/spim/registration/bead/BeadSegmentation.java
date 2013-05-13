@@ -5,39 +5,50 @@ import ij.IJ;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
+import java.util.Vector;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.vecmath.Point3d;
 import javax.vecmath.Point3i;
 
+import mpicbg.imglib.algorithm.integral.IntegralImageLong;
 import mpicbg.imglib.algorithm.math.LocalizablePoint;
+import mpicbg.imglib.algorithm.peak.GaussianPeakFitterND;
+import mpicbg.imglib.algorithm.scalespace.DifferenceOfGaussian.SpecialPoint;
 import mpicbg.imglib.algorithm.scalespace.DifferenceOfGaussianPeak;
 import mpicbg.imglib.algorithm.scalespace.DifferenceOfGaussianReal1;
 import mpicbg.imglib.algorithm.scalespace.SubpixelLocalization;
 import mpicbg.imglib.cursor.LocalizableByDimCursor3D;
 import mpicbg.imglib.cursor.special.HyperSphereIterator;
+import mpicbg.imglib.function.Converter;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.image.ImageFactory;
 import mpicbg.imglib.image.display.imagej.ImageJFunctions;
+import mpicbg.imglib.multithreading.Chunk;
 import mpicbg.imglib.multithreading.SimpleMultiThreading;
 import mpicbg.imglib.outofbounds.OutOfBoundsStrategyValueFactory;
 import mpicbg.imglib.type.numeric.integer.IntType;
+import mpicbg.imglib.type.numeric.integer.LongType;
 import mpicbg.imglib.type.numeric.real.FloatType;
 import mpicbg.imglib.util.Util;
-import mpicbg.models.IllDefinedDataPointsException;
-import mpicbg.models.NotEnoughDataPointsException;
 import mpicbg.spim.io.IOFunctions;
 import mpicbg.spim.io.SPIMConfiguration;
+import mpicbg.spim.io.SPIMConfiguration.SegmentationTypes;
 import mpicbg.spim.registration.ViewDataBeads;
 import mpicbg.spim.registration.ViewStructure;
 import mpicbg.spim.registration.bead.laplace.LaPlaceFunctions;
 import mpicbg.spim.registration.threshold.ComponentProperties;
 import mpicbg.spim.registration.threshold.ConnectedComponent;
+import mpicbg.spim.segmentation.DOM;
+import mpicbg.spim.segmentation.IntegralImage3d;
+import mpicbg.spim.segmentation.InteractiveIntegral;
+import mpicbg.spim.segmentation.SimplePeak;
 
 public class BeadSegmentation
 {	
 	public static final boolean debugBeads = false;
 	public ViewStructure viewStructure;
+	public SegmentationBenchmark benchmark = new SegmentationBenchmark();
 	
 	public BeadSegmentation( final ViewStructure viewStructure ) 
 	{
@@ -56,103 +67,186 @@ public class BeadSegmentation
 		//
 		// Extract the beads
 		// 		
-		if ( conf.multiThreadedOpening )
+		for ( final ViewDataBeads view : views )
 		{
-			final int numThreads = views.size();
-			
-			for ( final ViewDataBeads view : views )
-				if ( view.getUseForRegistration() )
-					view.getImage();
-
-			final AtomicInteger ai = new AtomicInteger(0);					
-	        Thread[] threads = SimpleMultiThreading.newThreads( numThreads );
-
-			for (int ithread = 0; ithread < threads.length; ++ithread)
-	            threads[ithread] = new Thread(new Runnable()
-	            {
-	                public void run()
-	                {
-	                    final int myNumber = ai.getAndIncrement();
-
-	                    final ViewDataBeads view = views.get( myNumber );
-	                    
-	                    if ( view.getUseForRegistration() )
-	                    {	                    
-		        			if (conf.useScaleSpace)					
-		        			{
-		        	    		if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_MAIN )
-		        	    			IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Starting Scale Space Bead Extraction for " + view.getName() );
-		        				
-		        	    		view.setBeadStructure( extractBeadsLaPlaceImgLib( view, conf ) );
-
-		        				view.closeImage();
-		        			}
-		        			else
-		        			{
-		        	    		if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_MAIN )
-		        	    			IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Starting Threshold Bead Extraction");					
-		        				
-		        				view.setBeadStructure( extractBeadsThresholdSegmentation( view, threshold, conf.minSize, conf.maxSize, conf.minBlackBorder) );
-		        				
-		        				view.closeImage();				
-		        			}
-		        				
-		        			if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_MAIN )
-		        				IOFunctions.println( "Found peaks (possible beads): " + view.getBeadStructure().getBeadList().size() );
-		        			
-		        			//
-		        			// Store segmentation in a file
-		        			//
-		        			if ( conf.writeSegmentation )
-		        				IOFunctions.writeSegmentation( view, conf.registrationFiledirectory );
-	                    }
-	                }
-	            });
-			
-			SimpleMultiThreading.startAndJoin( threads );
-		}
-		else
-		{		
-			for ( final ViewDataBeads view : views )
+			if ( conf.segmentation == SegmentationTypes.DOG )					
 			{
-				if (conf.useScaleSpace)					
-				{
-		    		if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_MAIN )
-		    			IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Starting Scale Space Bead Extraction for " + view.getName() );
-					
-		    		view.setBeadStructure( extractBeadsLaPlaceImgLib( view, conf ) );
-		    		
-		    		if ( debugBeads )
-		    		{
-						Image<FloatType> img = getFoundBeads( view );				
-						img.setName( "imglib" );
-						img.getDisplay().setMinMax();
-						ImageJFunctions.copyToImagePlus( img ).show();				
-						SimpleMultiThreading.threadHaltUnClean();		    			
-		    		}
-		    		
-					view.closeImage();
-				}
-				else
-				{
-		    		if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_MAIN )
-		    			IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Starting Threshold Bead Extraction");					
-					
-					view.setBeadStructure( extractBeadsThresholdSegmentation( view, threshold, conf.minSize, conf.maxSize, conf.minBlackBorder) );
-					
-					view.closeImage();				
-				}
-					
-				if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_MAIN )
-					IOFunctions.println( "Found peaks (possible beads): " + view.getBeadStructure().getBeadList().size() );
+	    		if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_MAIN )
+	    			IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Starting Scale Space Bead Extraction for " + view.getName() );
 				
-				//
-				// Store segmentation in a file
-				//
-				if ( conf.writeSegmentation )
-					IOFunctions.writeSegmentation( view, conf.registrationFiledirectory );										
+	    		view.setBeadStructure( extractBeadsLaPlaceImgLib( view, conf ) );
+	    		
+	    		if ( debugBeads )
+	    		{
+					Image<FloatType> img = getFoundBeads( view );				
+					img.setName( "imglib" );
+					img.getDisplay().setMinMax();
+					ImageJFunctions.copyToImagePlus( img ).show();				
+					SimpleMultiThreading.threadHaltUnClean();		    			
+	    		}
+			}
+			else if ( conf.segmentation == SegmentationTypes.THRESHOLD )
+			{
+	    		if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_MAIN )
+	    			IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Starting Threshold Bead Extraction for " + view.getName() );				
+				
+				view.setBeadStructure( extractBeadsThresholdSegmentation( view, threshold, conf.minSize, conf.maxSize, conf.minBlackBorder) );
+			}
+			else if ( conf.segmentation == SegmentationTypes.DOM )
+			{
+	    		if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_MAIN )
+	    			IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Starting Integral Image based DOM Bead Extraction for " + view.getName() );
+	    		
+				view.setBeadStructure( extractBeadsDOM( view, conf ) );
+			}
+			else
+			{
+				throw new RuntimeException( "Unknown segmentation: " + conf.segmentation );
+			}
+
+			if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_MAIN )
+				IOFunctions.println( "Found peaks (possible beads): " + view.getBeadStructure().getBeadList().size() + " in view " + view.getName() );
+
+			//
+			// do we want to re-localize all detections with a gauss fit?
+			//
+			if ( conf.doFit == 3 )
+			{
+				if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_MAIN )
+	    			IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Starting Gaussian fit for all detections (this will take a little)");
+				
+				double sxy = 2;//10;
+				double sz = 2;//(1.5 * sxy) / conf.zStretching;
+				
+				IJ.log( "Assumed sigma: [" + sxy + ", " + sxy + ", " + sz + "]" );
+					
+				final double[] typicalSigma = new double[]{ sxy, sxy, sz };
+				
+				gaussFit( view.getImage(), view.getBeadStructure().getBeadList(), typicalSigma );
+			}
+				
+			// close the image if no re-localization is required and/or the memory is low
+			if ( !( conf.doFit == 2 && conf.doGaussKeepImagesOpen ) )
+				view.closeImage();
+			
+			//
+			// Store segmentation in a file
+			//
+			if ( conf.writeSegmentation )
+				IOFunctions.writeSegmentation( view, conf.registrationFiledirectory );										
+		}
+		
+		if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_MAIN )
+		{
+			int p1 = (int)Math.round( (double)benchmark.openFiles/((double)benchmark.computation+(double)benchmark.openFiles) * 100 );
+			int p2 = (int)Math.round( (double)benchmark.computation/((double)benchmark.computation+(double)benchmark.openFiles) * 100 );
+			IJ.log( "Opening files took: " + benchmark.openFiles/1000 + " sec (" + p1 + " %)" );
+			IJ.log( "Computation took: " + benchmark.computation/1000 + " sec (" + p2 + " %)" );
+		}
+	}
+	
+	public int reLocalizeTrueCorrespondences( final boolean run )
+	{
+		// how many beads are (potentially) relocalized
+		int count = 0;
+		
+		for ( final ViewDataBeads view : viewStructure.getViews() )
+		{
+			final ArrayList< Bead > beadList = new ArrayList<Bead>();
+			
+			// list all beads that have RANSAC correspondences
+			for ( final Bead bead : view.getBeadStructure().getBeadList() )
+				if ( bead.getRANSACCorrespondence().size() > 0 && !bead.relocalized )
+					beadList.add( bead );
+			
+			count += beadList.size();
+			
+			if ( run )
+			{
+				if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_MAIN )
+	    			IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Re-localizing " + beadList.size() + " beads using gaussian fit for view " + view.getName() );
+				
+				gaussFit( view.getImage( false ), beadList, new double[]{ 1, 1, 2 } );
+				
+				if ( !viewStructure.getSPIMConfiguration().doGaussKeepImagesOpen )
+					view.closeImage();
 			}
 		}
+		
+		return count;
+	}
+	
+	public static void gaussFit( final Image< FloatType > image, final ArrayList< Bead > beadList, final double[] typicalSigma )
+	{
+		final AtomicInteger ai = new AtomicInteger( 0 );					
+        final Thread[] threads = SimpleMultiThreading.newThreads();
+        
+		final Vector<Chunk> threadChunks = SimpleMultiThreading.divideIntoChunks( beadList.size(), threads.length );
+		
+		final int[] count = new int[ threads.length ];
+		final double[][] sigmas = new double[ threads.length ][ 3 ];
+		
+        for (int ithread = 0; ithread < threads.length; ++ithread)
+            threads[ithread] = new Thread(new Runnable()
+            {
+                public void run()
+                {
+                 	// Thread ID
+                	final int myNumber = ai.getAndIncrement();
+                	
+                	// get chunk of beads to process
+                	final Chunk myChunk = threadChunks.get( myNumber );
+                	final int loopSize = (int)myChunk.getLoopSize();
+                	final int start = (int)myChunk.getStartPosition();
+                	final int end = start + loopSize;
+                	
+                	final GaussianPeakFitterND<FloatType> fitter = new GaussianPeakFitterND<FloatType>( image );
+                	
+            		// do as many pixels as wanted by this thread
+                    for ( int j = start; j < end; ++j )
+                    {
+                    	final Bead bead = beadList.get( j );
+                    	
+            			final double[] results = fitter.process( new LocalizablePoint( bead.getL() ), typicalSigma );
+            			
+            			//double a = results[ 0 ];
+            			//double x = results[ 1 ];
+            			//double y = results[ 2 ];
+            			//double z = results[ 3 ];
+            			double sx = 1/Math.sqrt( results[ 4 ] );
+            			double sy = 1/Math.sqrt( results[ 5 ] );
+            			double sz = 1/Math.sqrt( results[ 6 ] );
+            			
+            			bead.getL()[ 0 ] = bead.getW()[ 0 ] = (float)results[ 1 ];
+            			bead.getL()[ 1 ] = bead.getW()[ 1 ] = (float)results[ 2 ];
+            			bead.getL()[ 2 ] = bead.getW()[ 2 ] = (float)results[ 3 ];
+            			
+            			bead.relocalized = true;
+            			
+            			if ( ! (Double.isNaN( sx ) || Double.isNaN( sy ) || Double.isNaN( sz ) ) )
+            			{
+            				sigmas[ myNumber ][ 0 ] += sx;
+            				sigmas[ myNumber ][ 1 ] += sy;
+            				sigmas[ myNumber ][ 2 ] += sz;
+            				count[ myNumber ]++;
+            			}
+
+                    }
+                }
+            });
+        
+        SimpleMultiThreading.startAndJoin( threads );
+
+        // compute final average sigma's
+		for ( int i = 1; i < sigmas.length; ++i )
+		{
+			sigmas[ 0 ][ 0 ] += sigmas[ i ][ 0 ];
+			sigmas[ 0 ][ 1 ] += sigmas[ i ][ 1 ];
+			sigmas[ 0 ][ 2 ] += sigmas[ i ][ 2 ];
+			count[ 0 ] += count[ i ];
+		}
+		
+		IJ.log( "avg sigma: [" + ( sigmas[ 0 ][ 0 ] / count[ 0 ] ) + " px, " + ( sigmas[ 0 ][ 1 ] / count[ 0 ] ) + " px, " + ( sigmas[ 0 ][ 2 ] / count[ 0 ] ) + " px]" );
 	}
 		
 	public Image<FloatType> getFoundBeads( final ViewDataBeads view )
@@ -179,12 +273,160 @@ public class BeadSegmentation
 
 		return img;
 	}
+
+	public static boolean subpixel = true;
+	
+	/**
+	 * Computes potential beads based on the difference-of-mean (DOM). The computation of the DOM is based on
+	 * integral images for high performance
+	 *  
+	 * @param view
+	 * @param conf
+	 * @return
+	 */
+	protected BeadStructure extractBeadsDOM( final ViewDataBeads view, final SPIMConfiguration conf )
+	{
+		long time1 = System.currentTimeMillis();
+		
+		if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_MAIN )
+			IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Opening Image");					
+
+		final Image< FloatType > img = view.getImage( false ); 
+
+		long time2 = System.currentTimeMillis();
+		benchmark.openFiles += time2 - time1;
+
+		if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_MAIN )
+			IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Computing Integral Image");					
+		/*
+		final IntegralImageLong< FloatType > intImg = new IntegralImageLong<FloatType>( img, new Converter< FloatType, LongType >()
+		{
+			@Override
+			public void convert( final FloatType input, final LongType output ) { output.set( Util.round( input.get() ) ); } 
+		} 
+		);
+		
+		intImg.process();
+		
+		final Image< LongType > integralImg = intImg.getResult();
+		*/
+		
+		final Image< LongType > integralImg = IntegralImage3d.computeArray( img );
+		
+		final FloatType min = new FloatType();
+		final FloatType max = new FloatType();
+		
+		DOM.computeMinMax( img, min, max );
+
+		if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_MAIN )
+			IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): min intensity = " + min.get() + ", max intensity = " + max.get() );
+		
+		// in-place
+		final int r1 = view.getIntegralRadius1();
+		final int r2 = view.getIntegralRadius2();
+		final float t = view.getIntegralThreshold();
+		
+		final int s1 = r1*2 + 1;
+		final int s2 = r2*2 + 1;
+
+		if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_MAIN )
+			IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Computing Difference-of-Mean");					
+
+		// in-place overwriting img if no adjacent Gauss fit is required
+		final Image< FloatType > domImg;
+		
+		if ( conf.doFit == 3 || ( conf.doFit == 2 && conf.doGaussKeepImagesOpen ) )
+		{
+			domImg = img.createNewImage();
+		}
+		else
+		{
+			domImg = img;
+			for ( final FloatType tt : img )
+				tt.setZero();
+		}
+		
+		DOM.computeDifferencOfMean3d( integralImg, domImg, s1, s1, s1, s2, s2, s2, min.get(), max.get() );
+		
+		// close integral img
+		integralImg.close();
+		
+		if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_MAIN )
+			IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Extracting peaks");					
+
+		// compute the maxima/minima
+		final ArrayList< SimplePeak > peaks = InteractiveIntegral.findPeaks( domImg, t );
+
+		final BeadStructure beads = new BeadStructure();
+		int id = 0;
+
+		// do quadratic fit??
+		if ( conf.doFit == 1 )
+		{
+			if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_MAIN )
+				IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Subpixel localization using quadratic n-dimensional fit");					
+
+	        final ArrayList< DifferenceOfGaussianPeak<FloatType> > peakList = new ArrayList<DifferenceOfGaussianPeak<FloatType>>();
+
+	        for ( final SimplePeak peak : peaks )
+	        	if ( peak.isMax ) 
+	        		peakList.add( new DifferenceOfGaussianPeak<FloatType>( peak.location, new FloatType( peak.intensity ), SpecialPoint.MAX ) );
+
 			
+	        final SubpixelLocalization<FloatType> spl = new SubpixelLocalization<FloatType>( domImg, peakList );
+			spl.setAllowMaximaTolerance( true );
+			spl.setMaxNumMoves( 10 );
+			
+			if ( !spl.checkInput() || !spl.process() )
+			{
+	    		if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_ERRORONLY )
+	    			IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Warning! Failed to compute subpixel localization " + spl.getErrorMessage() );
+			}
+			
+			final float[] pos = new float[ img.getNumDimensions() ];
+	                
+	        for ( DifferenceOfGaussianPeak<FloatType> maximum : peakList )
+	        {
+	        	if ( maximum.isMax() ) 
+	        	{
+	        		maximum.getSubPixelPosition( pos );
+		        	final Bead bead = new Bead( id, new Point3d( pos[ 0 ], pos[ 1 ], pos[ 2 ] ), view );
+		        	beads.addDetection( bead );
+		        	id++;
+	        	}
+	        }
+		}
+		else
+		{
+	        for ( final SimplePeak peak : peaks )
+	        {
+	        	if ( peak.isMax ) 
+	        	{
+		        	final Bead bead = new Bead( id++, new Point3d( peak.location[ 0 ], peak.location[ 1 ], peak.location[ 2 ] ), view );
+		        	beads.addDetection( bead );
+	        	}
+	        }
+		}       
+
+		// if we made a copy we close it now
+        if ( domImg != img )
+        	domImg.close();
+        
+        benchmark.computation += System.currentTimeMillis() - time2;
+        
+		return beads;
+	}
+	
 	protected BeadStructure extractBeadsLaPlaceImgLib( final ViewDataBeads view, final SPIMConfiguration conf )
 	{
+		long time1 = System.currentTimeMillis();
+		
 		// load the image
 		final Image<FloatType> img = view.getImage();
 
+		long time2 = System.currentTimeMillis();
+		benchmark.openFiles += time2 - time1;
+		
         float imageSigma = conf.imageSigma;
         float initialSigma = view.getInitialSigma();
 
@@ -195,8 +437,8 @@ public class BeadSegmentation
         // we stop doing that for now...
         if ( view.getMaxValueUnnormed() > 256 )
         {
-		minPeakValue = view.getMinPeakValue();///3;
-		minInitialPeakValue = view.getMinInitialPeakValue();///3;
+        	minPeakValue = view.getMinPeakValue();///3;
+        	minInitialPeakValue = view.getMinInitialPeakValue();///3;
         }
         else
         {
@@ -218,7 +460,12 @@ public class BeadSegmentation
          
 		// compute difference of gaussian
 		final DifferenceOfGaussianReal1<FloatType> dog = new DifferenceOfGaussianReal1<FloatType>( img, conf.strategyFactoryGauss, sigmaDiff[0], sigmaDiff[1], minInitialPeakValue, K_MIN1_INV );
-		dog.setKeepDoGImage( true );
+		
+		// do quadratic fit??
+		if ( conf.doFit == 1 )
+			dog.setKeepDoGImage( true );
+		else
+			dog.setKeepDoGImage( false );
 		
 		if ( !dog.checkInput() || !dog.process() )
 		{
@@ -234,18 +481,22 @@ public class BeadSegmentation
         	if ( peakList.get( i ).isMin() )
         		peakList.remove( i );
 		
-        final SubpixelLocalization<FloatType> spl = new SubpixelLocalization<FloatType>( dog.getDoGImage(), dog.getPeaks() );
-		spl.setAllowMaximaTolerance( true );
-		spl.setMaxNumMoves( 10 );
-		
-		if ( !spl.checkInput() || !spl.process() )
+		// do quadratic fit??
+		if ( conf.doFit == 1 )
 		{
-    		if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_ERRORONLY )
-    			IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Warning! Failed to compute subpixel localization " + spl.getErrorMessage() );
+	        final SubpixelLocalization<FloatType> spl = new SubpixelLocalization<FloatType>( dog.getDoGImage(), dog.getPeaks() );
+			spl.setAllowMaximaTolerance( true );
+			spl.setMaxNumMoves( 10 );
+			
+			if ( !spl.checkInput() || !spl.process() )
+			{
+	    		if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_ERRORONLY )
+	    			IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Warning! Failed to compute subpixel localization " + spl.getErrorMessage() );
+			}
+	
+			dog.getDoGImage().close();
 		}
-
-		dog.getDoGImage().close();
-    	
+		
         final BeadStructure beads = new BeadStructure();
         int id = 0;
         final float[] pos = new float[ img.getNumDimensions() ];
@@ -284,6 +535,8 @@ public class BeadSegmentation
 	        IOFunctions.println( "max: " + max );
 	        IOFunctions.println( "peak to low: " + peakTooLow );
 		}
+		
+		benchmark.computation += System.currentTimeMillis() - time2;
 		
 		return beads;
 		

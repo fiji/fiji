@@ -24,4 +24,6 @@ public interface GlobalErrorStatistics
     public int getAlignmentErrorCount();
     
     public double getAverageLocalAlignmentError();
+    
+    public void reset();
 }

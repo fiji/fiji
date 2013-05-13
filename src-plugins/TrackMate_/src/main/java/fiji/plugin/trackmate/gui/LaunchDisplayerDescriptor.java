@@ -2,6 +2,8 @@ package fiji.plugin.trackmate.gui;
 
 import java.awt.Component;
 
+import mpicbg.imglib.multithreading.SimpleMultiThreading;
+
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.TrackMate_;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
@@ -13,8 +15,6 @@ public class LaunchDisplayerDescriptor implements WizardPanelDescriptor {
 	private LogPanel logPanel;
 	private Logger logger;
 	private TrackMate_ plugin;
-	private boolean renderingDone;
-	private boolean calculateFeaturesDone;
 
 	@Override
 	public void setWizard(TrackMateWizard wizard) { 
@@ -32,7 +32,7 @@ public class LaunchDisplayerDescriptor implements WizardPanelDescriptor {
 	public Component getComponent() {
 		return logPanel;
 	}
-	
+
 	@Override
 	public String getComponentID() {
 		return LogPanel.DESCRIPTOR;
@@ -60,56 +60,57 @@ public class LaunchDisplayerDescriptor implements WizardPanelDescriptor {
 	public void displayingPanel() {
 		// Launch renderer
 		logger.log("Rendering results...\n",Logger.BLUE_COLOR);
-		renderingDone = false;
-		calculateFeaturesDone = false;
 		wizard.setNextButtonEnabled(false);
 		final TrackMateModelView displayer = wizard.getDisplayer();
-		
-		if (plugin.getModel().getSpots().getNSpots() > 0) {
-			logger.log("Calculating features...\n",Logger.BLUE_COLOR);
-			// Calculate features
-			new Thread("TrackMate spot feature calculating mother thread") {
-				public void run() {
-					try {
-						long start = System.currentTimeMillis();
-						plugin.computeSpotFeatures();		
-						long end  = System.currentTimeMillis();
-						logger.log(String.format("Calculating features done in %.1f s.\n", (end-start)/1e3f), Logger.BLUE_COLOR);
-					} finally {
-						calculateFeaturesDone = true;
-						if (renderingDone) {
-							wizard.setNextButtonEnabled(true);
-						}
-					}
-				}
-			}.start();
-			
-		} else {
-			calculateFeaturesDone = true;
-		}
 
 		// Thread for rendering
-		new Thread("TrackMate rendering thread") {
-			
+		Thread renderingThread = new Thread("TrackMate rendering thread") {
+
 			public void run() {
 				// Instantiate displayer
-				if (null != displayer) {
-					displayer.clear();
-				}
-				try {
-					displayer.setModel(plugin.getModel());
-					displayer.render();
-				} finally {
-					// Re-enable the GUI
-					renderingDone = true;
-					logger.log("Rendering done.\n", Logger.BLUE_COLOR);
-					if (calculateFeaturesDone) {
-						wizard.setNextButtonEnabled(true);
-					}
-				}
+				displayer.render();
+				logger.log("Rendering done.\n", Logger.BLUE_COLOR);
 			}
-		}.start();
+		};
 		
+		if (plugin.getModel().getSpots().getNSpots() > 0) {
+
+			/*
+			 * We have some spots so we need to compute spot features will we render them.
+			 */
+			logger.log("Calculating spot features...\n",Logger.BLUE_COLOR);
+			// Calculate features
+			Thread featureCalculationThread = new Thread("TrackMate spot feature calculating mother thread") {
+				public void run() {
+					long start = System.currentTimeMillis();
+					plugin.computeSpotFeatures(true);		
+					long end  = System.currentTimeMillis();
+					logger.log(String.format("Calculating features done in %.1f s.\n", (end-start)/1e3f), Logger.BLUE_COLOR);
+				}
+			};
+			// Launch threads
+			Thread[] threads = new Thread[] { featureCalculationThread, renderingThread };
+			SimpleMultiThreading.startAndJoin(threads);
+			
+		} else {
+			
+			/*
+			 * We don't have any spot. Let's just render the view.
+			 */
+			renderingThread.start();
+			try {
+				renderingThread.join();
+			} catch (InterruptedException e) {
+				logger.error("Error rendering the view:\n" + e.getLocalizedMessage());
+				e.printStackTrace();
+			}
+			
+		}
+
+		// Re-enable the GUI
+		wizard.setVisible(true);
+		wizard.setNextButtonEnabled(true);
+
 	}
 
 	@Override

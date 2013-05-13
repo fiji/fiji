@@ -2,6 +2,7 @@ package fiji.plugin.trackmate;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
@@ -12,6 +13,8 @@ import java.util.TreeMap;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import net.imglib2.algorithm.MultiThreaded;
+
 import mpicbg.imglib.multithreading.SimpleMultiThreading;
 
 /**
@@ -19,13 +22,17 @@ import mpicbg.imglib.multithreading.SimpleMultiThreading;
  * in each frame with a few utility methods.
  * <p>
  * Internally we rely on ConcurrentSkipListMap to allow concurrent access without clashes.
- * @author Jean-Yves Tinevez <jeanyves.tinevez@gmail.com> - Feb - June 2011
+ * <p>
+ * This class is {@link MultiThreaded}. There are a few processes that can benefit from multithreaded
+ * computation ({@link #filter(Collection)}, {@link #filter(FeatureFilter)}
+ * @author Jean-Yves Tinevez <jeanyves.tinevez@gmail.com> - Feb 2011 - 2013
  *
  */
-public class SpotCollection implements Iterable<Spot>, SortedMap<Integer, List<Spot>>  {
+public class SpotCollection implements Iterable<Spot>, SortedMap<Integer, List<Spot>>, MultiThreaded  {
 
 	/** The frame by frame list of spot this object wrap. */
 	private ConcurrentSkipListMap<Integer, List<Spot>> content;
+	private int numThreads;
 
 	/*
 	 * CONSTRUCTORS
@@ -37,7 +44,7 @@ public class SpotCollection implements Iterable<Spot>, SortedMap<Integer, List<S
 	 */
 	public SpotCollection(ConcurrentSkipListMap<Integer, List<Spot>> content) {
 		this.content = content;
-
+		setNumThreads();
 	}
 
 	/**
@@ -97,6 +104,8 @@ public class SpotCollection implements Iterable<Spot>, SortedMap<Integer, List<S
 	/**
 	 * Add the given spot to this collection, at the given frame. If the frame collection does not exist yet,
 	 * it is created. If <code>null</code> is passed for the frame, nothing is done and false is returned. 
+	 * Upon adding, the added spot has its feature {@link Spot#FRAME} updated with the passed frame value,
+	 * if it is not <code>null</code>.
 	 * @return true if adding was successful.
 	 */
 	public boolean add(Spot spot, Integer frame) {
@@ -107,6 +116,7 @@ public class SpotCollection implements Iterable<Spot>, SortedMap<Integer, List<S
 			spots = new ArrayList<Spot>(1);
 			content.put(frame, spots);
 		}
+		spot.putFeature(Spot.FRAME, frame);
 		return spots.add(spot);
 	}
 
@@ -116,6 +126,7 @@ public class SpotCollection implements Iterable<Spot>, SortedMap<Integer, List<S
 	 */
 	public final SpotCollection filter(final FeatureFilter featurefilter) {
 		final SpotCollection selectedSpots = new SpotCollection();
+		selectedSpots.setNumThreads(numThreads);
 
 		final int[] keys = new int[content.keySet().size()];
 		Iterator<Integer> it = content.keySet().iterator();
@@ -133,7 +144,7 @@ public class SpotCollection implements Iterable<Spot>, SortedMap<Integer, List<S
 
 					Collection<Spot> spotThisFrame, spotToRemove;
 					List<Spot> spotToKeep;
-					Float val, tval;	
+					Double val, tval;	
 
 					for (int i = ai.getAndIncrement(); i < keys.length; i = ai.getAndIncrement()) {
 					
@@ -184,9 +195,10 @@ public class SpotCollection implements Iterable<Spot>, SortedMap<Integer, List<S
 	 */
 	public final SpotCollection filter(final Collection<FeatureFilter> filters) {
 		SpotCollection selectedSpots = new SpotCollection();
+		selectedSpots.setNumThreads(numThreads);
 		Collection<Spot> spotThisFrame, spotToRemove;
 		List<Spot> spotToKeep;
-		Float val, tval;	
+		Double val, tval;	
 
 		for (int timepoint : content.keySet()) {
 
@@ -235,8 +247,8 @@ public class SpotCollection implements Iterable<Spot>, SortedMap<Integer, List<S
 		final List<Spot> spots = content.get(frame);
 		if (null == spots)	
 			return null;
-		float d2;
-		float minDist = Float.POSITIVE_INFINITY;
+		double d2;
+		double minDist = Double.POSITIVE_INFINITY;
 		Spot target = null;
 		for(Spot s : spots) {
 			d2 = s.squareDistanceTo(location);
@@ -258,7 +270,7 @@ public class SpotCollection implements Iterable<Spot>, SortedMap<Integer, List<S
 		final List<Spot> spots = content.get(frame);
 		if (null == spots)	
 			return null;
-		float d2;
+		double d2;
 		for(Spot s : spots) {
 			d2 = s.squareDistanceTo(location);
 			if (d2 < s.getFeature(Spot.RADIUS) * s.getFeature(Spot.RADIUS)) {
@@ -275,19 +287,20 @@ public class SpotCollection implements Iterable<Spot>, SortedMap<Integer, List<S
 	 * spots in the frame is exhausted, a shorter set is returned.
 	 * <p>
 	 * The list is ordered by increasing distance to the given location.
+	 *  TODO Rewrite using kD tree.
 	 */
 	public final List<Spot> getNClosestSpots(final Spot location, final int frame, int n) {
 		final List<Spot> spots = content.get(frame);
-		final TreeMap<Float, Spot> distanceToSpot = new TreeMap<Float, Spot>();
+		final TreeMap<Double, Spot> distanceToSpot = new TreeMap<Double, Spot>();
 
-		float d2;
+		double d2;
 		for(Spot s : spots) {
 			d2 = s.squareDistanceTo(location);
 			distanceToSpot.put(d2, s);
 		}
 
 		final List<Spot> selectedSpots = new ArrayList<Spot>(n);
-		final Iterator<Float> it = distanceToSpot.keySet().iterator();
+		final Iterator<Double> it = distanceToSpot.keySet().iterator();
 		while (n > 0 && it.hasNext()) {
 			selectedSpots.add(distanceToSpot.get(it.next()));
 			n--;
@@ -300,6 +313,18 @@ public class SpotCollection implements Iterable<Spot>, SortedMap<Integer, List<S
 	 * in this collection, return <code>null</code>.
 	 */
 	public final Integer getFrame(final Spot spot) {
+		/* NOTE: we have to search manually for the frame, which costs time and his
+		 * a bit inelegant. The alternative would be to maintain a Map<Spot, Integer> 
+		 * that knows in what frame can be found is a spot.		 */
+		// Check if we can trust the Spot.FRAME feature
+		Double candidateFrame = spot.getFeature(Spot.FRAME);
+		if (null != candidateFrame) {
+			int cf = candidateFrame.intValue();
+			if (null != content.get(cf) && content.get(cf).contains(spot)) {
+				return cf;
+			}
+		}
+		// We have to find it manually
 		Integer frame = null;
 		for(Integer key : content.keySet()) {
 			if (content.get(key).contains(spot)) {
@@ -311,7 +336,7 @@ public class SpotCollection implements Iterable<Spot>, SortedMap<Integer, List<S
 	}
 
 	/**
-	 * Return the total number of spots in this collection, over all frames.
+	 * @return the total number of spots in this collection, over all frames.
 	 */
 	public final int getNSpots() {
 		int nspots = 0;
@@ -322,7 +347,7 @@ public class SpotCollection implements Iterable<Spot>, SortedMap<Integer, List<S
 
 
 	/**
-	 * Return the number of spots at the given frame.
+	 * @return the number of spots at the given frame.
 	 */
 	public int getNSpots(int key) {
 		List<Spot> spots = content.get(key);
@@ -333,7 +358,7 @@ public class SpotCollection implements Iterable<Spot>, SortedMap<Integer, List<S
 	}
 
 	/**
-	 * Return a new list made of all the spot in this collection.
+	 * @return a new list made of all the spot in this collection.
 	 * <p>
 	 * Spots are listed according to the comparator given to the content
 	 * treemap (if none was given, the it is the natural order for the frame 
@@ -394,13 +419,26 @@ public class SpotCollection implements Iterable<Spot>, SortedMap<Integer, List<S
 		return content.containsValue(value);
 	}
 
+	/**
+	 * Return the spots for the specified frame. An empty list is returned
+	 * if the specified frame contains no spots.
+	 */
 	@Override
 	public List<Spot> get(Object key) {
-		return content.get(key);
+		List<Spot> spots = content.get(key);
+		if (null == spots) {
+			return Collections.emptyList();
+		}
+		return spots;
 	}
 
 	@Override
 	public List<Spot> put(Integer key, List<Spot> value) {
+		if (key == null)
+			return null;
+		for (Spot spot : value) {
+			spot.putFeature(Spot.FRAME, key);
+		}
 		return content.put(key, value);
 	}
 
@@ -411,7 +449,7 @@ public class SpotCollection implements Iterable<Spot>, SortedMap<Integer, List<S
 
 	@Override
 	public void putAll(Map<? extends Integer, ? extends List<Spot>> map) {
-		content.putAll(map);
+		throw new UnsupportedOperationException("Adding a map to a SpotCollection is not supported."); // because it messes with the Spot#FRAME feature
 	}
 
 	@Override
@@ -457,6 +495,21 @@ public class SpotCollection implements Iterable<Spot>, SortedMap<Integer, List<S
 	@Override
 	public Set<java.util.Map.Entry<Integer, List<Spot>>> entrySet() {
 		return content.entrySet();
+	}
+
+	@Override
+	public void setNumThreads() {
+		this.numThreads = Runtime.getRuntime().availableProcessors();
+	}
+
+	@Override
+	public void setNumThreads(int numThreads) {
+		this.numThreads = numThreads;
+	}
+
+	@Override
+	public int getNumThreads() {
+		return numThreads;
 	}
 
 

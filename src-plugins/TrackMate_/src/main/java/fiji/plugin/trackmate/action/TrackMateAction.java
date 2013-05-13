@@ -15,7 +15,7 @@ import fiji.plugin.trackmate.gui.TrackMateWizard;
  * @author Jean-Yves Tinevez <jeanyves.tinevez@gmail.com> 2011
  *
  */
-public interface TrackMateAction  extends InfoTextable {
+public interface TrackMateAction extends InfoTextable {
 	
 	/**
 	 * Execute this action using the given plugin

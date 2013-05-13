@@ -39,28 +39,19 @@ import com.mxgraph.view.mxGraph;
 
 import fiji.plugin.trackmate.util.DefaultFileFilter;
 
-/**
- * $Id: EditorActions.java,v 1.35 2011-02-14 15:45:58 gaudenz Exp $
- * Copyright (c) 2001-2010, Gaudenz Alder, David Benson
- * 
- * All rights reserved.
- * 
- * See LICENSE file for license details. If you are unable to locate
- * this file please contact info (at) jgraph (dot) com.
- */
 public class SaveAction extends AbstractAction {
 
 	private static final long serialVersionUID = 7672151690754466760L;
 	private static final ImageIcon ICON = new ImageIcon(TrackSchemeFrame.class.getResource("resources/camera_export.png"));
 	protected String lastDir = null;
-	protected TrackSchemeFrame frame;
+	private final TrackScheme trackScheme;
 
 	/**
 	 * 
 	 */
-	public SaveAction(TrackSchemeFrame frame) {
+	public SaveAction(TrackScheme trackScheme) {
 		putValue(Action.SMALL_ICON, ICON);
-		this.frame = frame;
+		this.trackScheme = trackScheme;
 
 	}
 
@@ -68,8 +59,8 @@ public class SaveAction extends AbstractAction {
 	 * Saves XML+PNG format.
 	 */
 	protected void saveXmlPng(TrackSchemeFrame frame, String filename, Color bg) throws IOException {
-		mxGraphComponent graphComponent = frame.getGraphComponent();
-		mxGraph graph = frame.getGraph();
+		final mxGraphComponent graphComponent = trackScheme.getGUI().graphComponent;
+		final mxGraph graph = trackScheme.getGraph();
 
 		// Creates the image for the PNG file
 		BufferedImage image = mxCellRenderer.createBufferedImage(graph,	null, 1, bg, graphComponent.isAntiAlias(), null, graphComponent.getCanvas());
@@ -100,8 +91,8 @@ public class SaveAction extends AbstractAction {
 	 */
 	public void actionPerformed(ActionEvent e) {
 
-		mxGraphComponent graphComponent = frame.getGraphComponent();
-		mxGraph graph =frame.getGraph();
+		final mxGraphComponent graphComponent = trackScheme.getGUI().graphComponent;
+		final mxGraph graph = trackScheme.getGraph();
 		FileFilter selectedFilter = null;
 		DefaultFileFilter xmlPngFilter = new DefaultFileFilter(".png", "PNG+XML file (.png)");
 		FileFilter vmlFileFilter = new DefaultFileFilter(".html", "VML file (.html)");
@@ -182,7 +173,7 @@ public class SaveAction extends AbstractAction {
 			if (ext.equalsIgnoreCase("svg")) {
 				mxSvgCanvas canvas = (mxSvgCanvas) mxCellRenderer.drawCells(graph, null, 1, null, new CanvasFactory() {
 					public mxICanvas createCanvas(int width, int height) {
-						mxTrackSchemeSvgCanvas canvas = new mxTrackSchemeSvgCanvas(mxDomUtils.createSvgDocument(width, height));
+						TrackSchemeSvgCanvas canvas = new TrackSchemeSvgCanvas(mxDomUtils.createSvgDocument(width, height));
 						canvas.setEmbedded(true);
 						return canvas;
 					}
@@ -202,7 +193,7 @@ public class SaveAction extends AbstractAction {
 				mxUtils.writeFile(xml, filename);
 
 			} else if (ext.equalsIgnoreCase("txt")) {
-				String content = mxGdCodec.encode(graph).getDocumentString();
+				String content = mxGdCodec.encode(graph); // .getDocumentString();
 				mxUtils.writeFile(content, filename);
 
 			} else if (ext.equalsIgnoreCase("pdf")) {
@@ -218,7 +209,7 @@ public class SaveAction extends AbstractAction {
 				}
 
 				if (selectedFilter == xmlPngFilter || (ext.equalsIgnoreCase("png") && !dialogShown)) {
-					saveXmlPng(frame, filename, bg);
+					saveXmlPng(trackScheme.getGUI(), filename, bg);
 				} else {
 					BufferedImage image = mxCellRenderer.createBufferedImage(graph, null, 1, bg, graphComponent.isAntiAlias(), null, graphComponent.getCanvas());
 
@@ -237,7 +228,7 @@ public class SaveAction extends AbstractAction {
 	}
 
 	private void exportGraphToPdf(mxGraph graph, String filename) {
-		Rectangle bounds = new Rectangle(frame.getGraphComponent().getViewport().getViewSize());
+		Rectangle bounds = new Rectangle(trackScheme.getGUI().graphComponent.getViewport().getViewSize());
 		// step 1
 		com.itextpdf.text.Rectangle pageSize = new com.itextpdf.text.Rectangle(bounds.x, bounds.y, bounds.width, bounds.height);
 		com.itextpdf.text.Document document = new com.itextpdf.text.Document(pageSize);
@@ -251,7 +242,7 @@ public class SaveAction extends AbstractAction {
 			// step 4
 			PdfContentByte canvas = writer.getDirectContent();
 			g2 = canvas.createGraphics(pageSize.getWidth(), pageSize.getHeight());
-			frame.getGraphComponent().getViewport().paintComponents(g2);
+			trackScheme.getGUI().graphComponent.getViewport().paintComponents(g2);
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		} catch (DocumentException e) {

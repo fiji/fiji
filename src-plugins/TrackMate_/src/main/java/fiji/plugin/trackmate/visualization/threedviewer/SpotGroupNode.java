@@ -22,10 +22,11 @@ import javax.media.j3d.TransformGroup;
 import javax.media.j3d.View;
 import javax.vecmath.Color3f;
 import javax.vecmath.Color4f;
+import javax.vecmath.Point3d;
 import javax.vecmath.Point3f;
-import javax.vecmath.Point4f;
+import javax.vecmath.Point4d;
 import javax.vecmath.Tuple3d;
-import javax.vecmath.Vector3f;
+import javax.vecmath.Vector3d;
 
 import customnode.CustomTriangleMesh;
 import customnode.MeshMaker;
@@ -34,11 +35,18 @@ public class SpotGroupNode<K> extends ContentNode {
 
 	private static final int DEFAULT_MERIDIAN_NUMBER = 12;
 	private static final int DEFAULT_PARALLEL_NUMBER = 12;
-	
+	/**
+	 * Holder (cache) for the coordinates of the mesh of a globe of radius 1,
+	 * centered at (0, 0, 0), that will be used to generate all spheres in this
+	 * group. We put it in a static field so that it is shared amongst all
+	 * instances.
+	 */
+	private static final float[][][] globe = generateGlobe(DEFAULT_MERIDIAN_NUMBER, DEFAULT_PARALLEL_NUMBER);
+
 	/**
 	 * Hold the center and radius position of all spots.
 	 */
-	protected Map<K, Point4f>  centers;
+	protected Map<K, Point4d>  centers;
 	/**
 	 * Hold the color and transparency of all spots.
 	 */
@@ -66,11 +74,6 @@ public class SpotGroupNode<K> extends ContentNode {
 	 */
 	protected HashMap<K, Integer> indices;
 	/**
-	 * Holder (cache) for the coordinates of the mesh of a globe of radius 1, centered at (0, 0, 0), that will be used to 
-	 * generate all spheres in this group.
-	 */
-	private float[][][] globe;
-	/**
 	 * If true, the text label will be displayed next to the balls.
 	 */
 	private boolean showLabels = false;
@@ -83,7 +86,7 @@ public class SpotGroupNode<K> extends ContentNode {
 	/**
 	 * Create a new {@link SpotGroupNode} with spots at position and with color given in argument.
 	 * <p>
-	 * The positions are given by a {@link Point4f} map. The <code>x</code>,  <code>y</code>,  <code>z</code>
+	 * The positions are given by a {@link Point4d} map. The <code>x</code>,  <code>y</code>,  <code>z</code>
 	 * are used to specify the spot center, and the <code>w</code> field its radius.
 	 * Colors are specified by a {@link Color4f} map. The <code>x</code>,  <code>y</code>,  <code>z</code>
 	 * are used to specify the R, G and B component, and the <code>w</code> field the spot transparency.
@@ -92,8 +95,8 @@ public class SpotGroupNode<K> extends ContentNode {
 	 * @param centers
 	 * @param colors
 	 */
-	public SpotGroupNode(final Map<K, Point4f>  centers, final Map<K, Color4f> colors) {
-		this.centers = new HashMap<K, Point4f>(centers);
+	public SpotGroupNode(final Map<K, Point4d>  centers, final Map<K, Color4f> colors) {
+		this.centers = new HashMap<K, Point4d>(centers);
 		this.colors = new HashMap<K, Color4f>(colors);
 		//
 		this.spotSwitch = new Switch(Switch.CHILD_MASK);
@@ -113,7 +116,7 @@ public class SpotGroupNode<K> extends ContentNode {
 	/**
 	 * Create a new {@link SpotGroupNode} with spots at position and with color given in argument.
 	 * <p>
-	 * The positions are given by a {@link Point4f} map. The <code>x</code>,  <code>y</code>,  <code>z</code>
+	 * The positions are given by a {@link Point4d} map. The <code>x</code>,  <code>y</code>,  <code>z</code>
 	 * are used to specify the spot center, and the <code>w</code> field its radius.
 	 * The same color is used for all the spots, with a transparency of 0.
 	 * <p>
@@ -121,8 +124,8 @@ public class SpotGroupNode<K> extends ContentNode {
 	 * @param centers
 	 * @param colors
 	 */
-	public SpotGroupNode(HashMap<K, Point4f> centers, Color3f color) {
-		this.centers = new HashMap<K, Point4f>(centers);
+	public SpotGroupNode(HashMap<K, Point4d> centers, Color3f color) {
+		this.centers = new HashMap<K, Point4d>(centers);
 		this.colors = new HashMap<K, Color4f>(centers.size());
 		for(K key : centers.keySet()) {
 			colors.put(key, new Color4f(color.x, color.y, color.z, 0));
@@ -140,6 +143,36 @@ public class SpotGroupNode<K> extends ContentNode {
 		this.switchMask = new BitSet();
 		makeMeshes();
 	}
+	
+	
+	@Override
+	public String toString() {
+		StringBuilder str = new StringBuilder();
+		str.append("SpotGroupNode with " + centers.size() + " spots.\n");
+		str.append("  - showLabels: " + showLabels + "\n");
+		str.append("  - fontSize: " + fontsize + "\n");
+		//
+		Tuple3d center = new Point3d();
+		getCenter(center);
+		str.append("  - center: " + center + "\n");
+		//
+		Tuple3d min = new Point3d();
+		getMin(min);
+		str.append("  - min: " + min + "\n");
+		//
+		Tuple3d max = new Point3d();
+		getMax(max);
+		str.append("  - max: " + max + "\n");
+		//
+		str.append("  - content:\n");
+		for (K spot : centers.keySet()) {
+			int index = indices.get(spot);
+			str.append("     - " + spot + ": color = " +colors.get(spot) + "; center = " 
+					+ centers.get(spot) + "; visible = " + switchMask.get(index)  + "\n"); 
+		}
+		return str.toString();
+	}
+	
 	/*
 	 * PRIVATE METHODS
 	 */
@@ -151,12 +184,10 @@ public class SpotGroupNode<K> extends ContentNode {
 	 * This resets the {@link #spotSwitch} and the {@link #switchMask} fields with new values.
 	 */
 	protected void makeMeshes() {
-		generateGlobe();
-		
 		List<Point3f> points;
 		CustomTriangleMesh node;
 		Color4f color;
-		Point4f center;
+		Point4d center;
 		meshes = new HashMap<K, CustomTriangleMesh>(centers.size());
 		indices = new HashMap<K, Integer>(centers.size());
 		spotSwitch.removeAllChildren();
@@ -186,7 +217,7 @@ public class SpotGroupNode<K> extends ContentNode {
 			// Deal with the text
 			Transform3D translation = new Transform3D();
 			translation.rotX(Math.PI);
-			translation.setTranslation(new Vector3f(center.x + 1.5f*center.w, center.y, center.z));
+			translation.setTranslation(new Vector3d(center.x + 1.5f*center.w, center.y, center.z));
 			TransformGroup tg = new TransformGroup(translation);
 			
 			OrientedShape3D textShape = new OrientedShape3D();
@@ -217,24 +248,12 @@ public class SpotGroupNode<K> extends ContentNode {
 	}
 	
 	/**
-	 * Generate the globe that will be used as a template to build all the meshes
-	 * of each sphere. We put it here, so that we do not rebuild it every time we generate 
-	 * a sphere.
-	 * <p>
-	 * This method must be called before the meshes are created by {@link #makeMeshes()}, otherwise
-	 * a NPE will be thrown.
-	 */
-	private void generateGlobe() {
-		globe = generateGlobe(DEFAULT_MERIDIAN_NUMBER, DEFAULT_PARALLEL_NUMBER);
-	}
-	
-	/**
 	 * Create the list of points of the mesh of sphere, centered on (x, y, z) of radius r, based on
 	 * the {@link #globe} cache calculated by {@link #generateGlobe()}.
 	 * <p>
 	 * Will throw a NPE if {@link #generateGlobe()} is not called before.
 	 */
-	private List<Point3f> createSphere(final float x, final float y, final float z, final float r) {
+	private List<Point3f> createSphere(final double x, final double y, final double z, final double r) {
 		
 		// Create triangular faces and add them to the list
 		final ArrayList<Point3f> list = new ArrayList<Point3f>();
@@ -244,32 +263,32 @@ public class SpotGroupNode<K> extends ContentNode {
 					
 					// Half quadrant (a triangle)
 					list.add(new Point3f(
-							globe[j+1][k+1][0] * r + x, 
-							globe[j+1][k+1][1] * r + y, 
-							globe[j+1][k+1][2] * r + z));
+							(float) (globe[j+1][k+1][0] * r + x), 
+							(float) (globe[j+1][k+1][1] * r + y), 
+							(float) (globe[j+1][k+1][2] * r + z)));
 					list.add(new Point3f(
-							globe[j][k][0] * r + x, 
-							globe[j][k][1] * r + y, 
-							globe[j][k][2] * r + z));
+							(float) (globe[j][k][0] * r + x), 
+							(float) (globe[j][k][1] * r + y), 
+							(float) (globe[j][k][2] * r + z)));
 					list.add(new Point3f(
-							globe[j+1][k][0] * r + x, 
-							globe[j+1][k][1] * r + y, 
-							globe[j+1][k][2] * r + z));
+							(float) (globe[j+1][k][0] * r + x), 
+							(float) (globe[j+1][k][1] * r + y), 
+							(float) (globe[j+1][k][2] * r + z)));
 				}
 				if(j != 0) {
 					// The other half quadrant
 					list.add(new Point3f(
-							globe[j][k][0] * r + x, 
-							globe[j][k][1] * r + y, 
-							globe[j][k][2] * r + z));
+							(float) (globe[j][k][0] * r + x), 
+							(float) (globe[j][k][1] * r + y), 
+							(float) (globe[j][k][2] * r + z)));
 					list.add(new Point3f(
-							globe[j+1][k+1][0] * r + x, 
-							globe[j+1][k+1][1] * r + y, 
-							globe[j+1][k+1][2] * r + z));
+							(float) (globe[j+1][k+1][0] * r + x), 
+							(float) (globe[j+1][k+1][1] * r + y), 
+							(float) (globe[j+1][k+1][2] * r + z)));
 					list.add(new Point3f(
-							globe[j][k+1][0] * r + x, 
-							globe[j][k+1][1] * r + y, 
-							globe[j][k+1][2] * r + z));
+							(float) (globe[j][k+1][0] * r + x), 
+							(float) (globe[j][k+1][1] * r + y), 
+							(float) (globe[j][k+1][2] * r + z)));
 				}
 			}
 		}
@@ -382,11 +401,11 @@ public class SpotGroupNode<K> extends ContentNode {
 	 * Move the spot <code>key</code> center to the position given by the {@link Point3f}.
 	 * Its radius is unchanged.
 	 */
-	public void setCenter(final K key, final Point3f center) {
+	public void setCenter(final K key, final Point3d center) {
 		CustomTriangleMesh mesh = meshes.get(key);
 		if (null == mesh)
 			return;
-		float r = centers.get(key).w;
+		double r = centers.get(key).w;
 		mesh.setMesh(MeshMaker.createSphere(center.x, center.y, center.z, r, DEFAULT_MERIDIAN_NUMBER, DEFAULT_PARALLEL_NUMBER));
 		centers.get(key).x = center.x;
 		centers.get(key).y = center.y;
@@ -395,25 +414,25 @@ public class SpotGroupNode<K> extends ContentNode {
 	
 	/**
 	 * Move the spot <code>key</code> center to the position given by the 
-	 * <code>x</code>,  <code>y</code>,  <code>z</code> fields of the {@link Point4f}.
+	 * <code>x</code>,  <code>y</code>,  <code>z</code> fields of the {@link Point4d}.
 	 * Its radius is set by the <code>w</code> field.
 	 */
-	public void setCenter(final K key, final Point4f center) {
+	public void setCenter(final K key, final Point4d center) {
 		CustomTriangleMesh mesh = meshes.get(key);
 		if (null == mesh)
 			return;
 		mesh.setMesh(MeshMaker.createSphere(center.x, center.y, center.z, center.w, DEFAULT_MERIDIAN_NUMBER, DEFAULT_PARALLEL_NUMBER));
-		centers.put(key, new Point4f(center));
+		centers.put(key, new Point4d(center));
 	}
 	
 	/**
 	 * Change the radius of the spot <code>key</code>. Its position is unchanged.
 	 */
-	public void setRadius(final K key, final float radius) {
+	public void setRadius(final K key, final double radius) {
 		CustomTriangleMesh mesh = meshes.get(key);
 		if (null == mesh)
 			return;
-		Point4f center = centers.get(key);
+		Point4d center = centers.get(key);
 		mesh.setMesh(MeshMaker.createSphere(center.x, center.y, center.z, radius, DEFAULT_MERIDIAN_NUMBER, DEFAULT_PARALLEL_NUMBER));
 		center.w = radius;
 	}
@@ -443,7 +462,7 @@ public class SpotGroupNode<K> extends ContentNode {
 	@Override
 	public void getCenter(Tuple3d center) {
 		double x = 0, y = 0, z = 0;
-		for (Point4f c : centers.values()) {
+		for (Point4d c : centers.values()) {
 			x += c.x;
 			y += c.y;
 			z += c.z;
@@ -459,10 +478,10 @@ public class SpotGroupNode<K> extends ContentNode {
 
 	@Override
 	public void getMax(Tuple3d max) {
-		float xmax = Float.NEGATIVE_INFINITY;
-		float ymax = Float.NEGATIVE_INFINITY;
-		float zmax = Float.NEGATIVE_INFINITY;
-		for (Point4f center : centers.values()) {
+		double xmax = Double.NEGATIVE_INFINITY;
+		double ymax = Double.NEGATIVE_INFINITY;
+		double zmax = Double.NEGATIVE_INFINITY;
+		for (Point4d center : centers.values()) {
 			if (xmax < center.x + center.w)
 				xmax =  center.x + center.w;
 			if (ymax < center.y + center.w)
@@ -477,10 +496,10 @@ public class SpotGroupNode<K> extends ContentNode {
 
 	@Override
 	public void getMin(Tuple3d min) {
-		float xmin = Float.POSITIVE_INFINITY;
-		float ymin = Float.POSITIVE_INFINITY;
-		float zmin = Float.POSITIVE_INFINITY;
-		for (Point4f center : centers.values()) {
+		double xmin = Double.POSITIVE_INFINITY;
+		double ymin = Double.POSITIVE_INFINITY;
+		double zmin = Double.POSITIVE_INFINITY;
+		for (Point4d center : centers.values()) {
 			if (xmin > center.x - center.w)
 				xmin =  center.x - center.w;
 			if (ymin > center.y - center.w)

@@ -157,6 +157,7 @@ public class IOFunctions
 		catch (IOException e)
 		{
 			IOFunctions.printErr("BeadDetection(): " + e);
+			e.printStackTrace();
 			return false;
 		}		
 		
@@ -279,6 +280,7 @@ public class IOFunctions
 		catch (IOException e)
 		{
 			IOFunctions.printErr("IOFunctions.writeNucleiCorrespondences(): " + e);
+			e.printStackTrace();
 			return false;
 		}		
 			
@@ -306,7 +308,7 @@ public class IOFunctions
 		final HashMap<Integer, Nucleus> lookupTable = new HashMap<Integer, Nucleus>();
 
 		for ( final Nucleus nucleus : view.getNucleiStructure().getNucleiList() )
-			lookupTable.put( nucleus.getID(), nucleus );
+			lookupTable.put( (int)nucleus.getID(), nucleus );
 
 		int countLine = 0;
 		try
@@ -573,6 +575,7 @@ public class IOFunctions
 		catch (IOException e)
 		{
 			IOFunctions.printErr("BeadDetection(): " + e);
+			e.printStackTrace();
 			return false;
 		}		
 		
@@ -711,6 +714,7 @@ public class IOFunctions
 		catch (IOException e) 
 		{
 			IOFunctions.printErr( "Cannot write dim file for " + view + ": " + e );
+			e.printStackTrace();
 			return false;
 		}				
 		
@@ -861,6 +865,7 @@ public class IOFunctions
 			catch (Exception e)
 			{
 				IOFunctions.printErr("Cannot write registration file: " + fileName + " because: " + e);
+				e.printStackTrace();
 				return false;
 			}
 		}		

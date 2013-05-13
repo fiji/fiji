@@ -1,8 +1,11 @@
 package fiji.plugin.trackmate.tracking.costmatrix;
 
+import static fiji.plugin.trackmate.tracking.TrackerKeys.KEY_BLOCKING_VALUE;
+
+import java.util.Map;
+
 import Jama.Matrix;
 import fiji.plugin.trackmate.tracking.LAPTracker;
-import fiji.plugin.trackmate.tracking.LAPTrackerSettings;
 
 /**
  * Contains the mutually shared fields and private functions used by the two 
@@ -18,16 +21,14 @@ public abstract class LAPTrackerCostMatrixCreator implements CostMatrixCreator {
 	protected Matrix costs;
 	/** Stores a message describing an error incurred during use of the class. */
 	protected String errorMessage;
-	/** Stores whether the user has run checkInput() or not. */
-	protected boolean inputChecked = false;
 	/** The settings to comply to create a cost matrix. */
-	protected LAPTrackerSettings settings;
+	protected final Map<String, Object> settings;
 	
 	/*
 	 * CONSTRUCTOR
 	 */
 	
-	protected LAPTrackerCostMatrixCreator(LAPTrackerSettings settings) {
+	protected LAPTrackerCostMatrixCreator(final Map<String, Object> settings) {
 		this.settings = settings;
 	}
 	
@@ -53,10 +54,11 @@ public abstract class LAPTrackerCostMatrixCreator implements CostMatrixCreator {
 	 * but basically it has to be made this way so that the LAP is solvable. 
 	 */
 	protected Matrix getLowerRight(Matrix topLeft, double cutoff) {
+		final double blockingValue = (Double) settings.get(KEY_BLOCKING_VALUE);
 		Matrix lowerRight = topLeft.transpose();
 		for (int i = 0; i < lowerRight.getRowDimension(); i++) {
 			for (int j = 0; j < lowerRight.getColumnDimension(); j++) {
-				if (lowerRight.get(i, j) < settings.blockingValue) {
+				if (lowerRight.get(i, j) < blockingValue) {
 					lowerRight.set(i, j, cutoff);
 				}
 			}
@@ -71,7 +73,8 @@ public abstract class LAPTrackerCostMatrixCreator implements CostMatrixCreator {
 	 * the diagonal that runs from top left to bottom right.
 	 */
 	protected Matrix getAlternativeScores(int n, double cutoff) {
-		final Matrix alternativeScores = new Matrix(n, n, settings.blockingValue);
+		final double blockingValue = (Double) settings.get(KEY_BLOCKING_VALUE);
+		final Matrix alternativeScores = new Matrix(n, n, blockingValue);
 		
 		// Set the cutoff along the diagonal (top left to bottom right)
 		for (int i = 0; i < alternativeScores.getRowDimension(); i++) {

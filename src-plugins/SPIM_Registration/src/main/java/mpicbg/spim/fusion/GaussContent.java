@@ -24,12 +24,9 @@ public class GaussContent extends IsolatedPixelWeightener<GaussContent>
 		
 		try
 		{			
-			final int numThreads = Math.max( 1, Runtime.getRuntime().availableProcessors() / view.getNumViews() );
-			
 			final SPIMConfiguration conf = view.getViewStructure().getSPIMConfiguration();
 			
-			// get the kernels
-			
+			// get the kernels			
 			final double[] k1 = new double[ view.getNumDimensions() ];
 			final double[] k2 = new double[ view.getNumDimensions() ];
 			
@@ -48,7 +45,6 @@ public class GaussContent extends IsolatedPixelWeightener<GaussContent>
 			// compute I*sigma1
 			FourierConvolution<FloatType, FloatType> fftConv1 = new FourierConvolution<FloatType, FloatType>( view.getImage(), kernel1 );
 			
-			fftConv1.setNumThreads( numThreads );
 			fftConv1.process();		
 			final Image<FloatType> conv1 = fftConv1.getResult();
 			
@@ -71,7 +67,6 @@ public class GaussContent extends IsolatedPixelWeightener<GaussContent>
 	
 			// compute ( ( I - I*sigma1 )^2 ) * sigma2
 			FourierConvolution<FloatType, FloatType> fftConv2 = new FourierConvolution<FloatType, FloatType>( conv1, kernel2 );
-			fftConv2.setNumThreads( numThreads );
 			fftConv2.process();	
 			
 			gaussContent = fftConv2.getResult();

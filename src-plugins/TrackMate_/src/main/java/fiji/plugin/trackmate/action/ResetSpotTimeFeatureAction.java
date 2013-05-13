@@ -18,7 +18,12 @@ import fiji.plugin.trackmate.gui.DisplayerPanel;
  */
 public class ResetSpotTimeFeatureAction extends AbstractTMAction {
 
-	private static final ImageIcon ICON = new ImageIcon(DisplayerPanel.class.getResource("images/time.png"));
+	public static final ImageIcon ICON = new ImageIcon(DisplayerPanel.class.getResource("images/time.png"));
+	public static final String NAME = "Reset spot time";
+	public static final String INFO_TEXT = "<html>" +
+			"Reset the time feature of all spots: it is set to the frame number "  +
+			"times the time resolution. " +
+			"</html>";
 	
 	public ResetSpotTimeFeatureAction() {
 		this.icon = ICON;
@@ -27,7 +32,7 @@ public class ResetSpotTimeFeatureAction extends AbstractTMAction {
 	@Override
 	public void execute(TrackMate_ plugin) {
 		logger.log("Reset spot time.\n");
-		float dt = plugin.getModel().getSettings().dt;
+		double dt = plugin.getModel().getSettings().dt;
 		if (dt == 0) {
 			dt = 1;
 		}
@@ -37,7 +42,7 @@ public class ResetSpotTimeFeatureAction extends AbstractTMAction {
 			for(Spot spot : spots) {
 				spot.putFeature(Spot.POSITION_T, frame * dt); 
 			}
-			logger.setProgress((float) (frame + 1) / frames.size());
+			logger.setProgress((double) (frame + 1) / frames.size());
 		}
 		logger.log("Done.\n");
 		logger.setProgress(0);
@@ -45,14 +50,11 @@ public class ResetSpotTimeFeatureAction extends AbstractTMAction {
 
 	@Override
 	public String getInfoText() {
-		return "<html>" +
-				"Reset the time feature of all spots: it is set to the frame number "  +
-				"times the time resolution. " +
-				"</html>";
+		return INFO_TEXT;
 	}
 
 	@Override
 	public String toString() {
-		return "Reset spot time";
+		return NAME;
 	}
 }

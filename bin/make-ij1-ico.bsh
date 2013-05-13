@@ -1,0 +1,26 @@
+import ij.IJ;
+import java.awt.MediaTracker;
+import java.awt.Toolkit;
+import java.net.URL;
+import java.awt.image.BufferedImage;
+import java.util.ArrayList;
+import javax.swing.JLabel;
+import net.sf.image4j.util.ImageUtil;
+import net.sf.image4j.codec.ico.ICOEncoder;
+
+url = new URL("http://imagej.nih.gov/ij/images/ImageJ.png");
+image = Toolkit.getDefaultToolkit().getImage(url);
+tracker = new MediaTracker(new JLabel("dummy"));
+tracker.addImage(image, 1);
+tracker.waitForAll();
+
+buffered = new BufferedImage(image.getWidth(), image.getHeight(), BufferedImage.TYPE_INT_ARGB);
+g = buffered.getGraphics();
+g.drawImage(image, 0, 0, null);
+
+list = new ArrayList();
+list.add(buffered);
+for (width = buffered.getWidth() / 2, height = buffered.getHeight() / 2; width >= 16; width /= 2, height /= 2)
+	list.add(ImageUtil.scaleImage(buffered, width, height));
+
+ICOEncoder.write(list, new File(IJ.getDirectory("imagej"), "images/ij1.ico"));

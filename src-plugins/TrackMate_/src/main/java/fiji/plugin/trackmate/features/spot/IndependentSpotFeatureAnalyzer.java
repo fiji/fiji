@@ -2,25 +2,48 @@ package fiji.plugin.trackmate.features.spot;
 
 import java.util.Collection;
 
+import net.imglib2.img.ImgPlus;
+import net.imglib2.type.numeric.RealType;
 import fiji.plugin.trackmate.Spot;
 
-/**
- * Abstract class for spot feature analyzer for which features can be computed for one spot
- * independently of all other spots.
- * @author Jean-Yves Tinevez, 2010-2011
- *
- */
-public abstract class IndependentSpotFeatureAnalyzer extends AbstractSpotFeatureAnalyzer {
+public abstract class IndependentSpotFeatureAnalyzer<T extends RealType<T>> implements SpotAnalyzer<T> {
 
-	@Override
-	public void process(Collection<Spot> spots) {
-		for (Spot spot : spots)
-			process(spot);
+	protected final ImgPlus<T> img;
+	protected final Collection<Spot> spots;
+	protected String errorMessage;
+	private long processingTime;
+
+	public IndependentSpotFeatureAnalyzer(final ImgPlus<T> img, final Collection<Spot> spots) {
+		this.img = img;
+		this.spots = spots;
 	}
 	
-	/**
-	 * Compute all the features this analyzer can on the single spot given.
-	 * @param spot  the spot to evaluate
-	 */
-	public abstract void process(Spot spot);
+	
+	public abstract void process(final Spot spot);
+
+	@Override
+	public boolean checkInput() {
+		return true;
+	}
+
+	@Override
+	public boolean process() {
+		final long start = System.currentTimeMillis();
+		for(Spot spot: spots) {
+			process(spot);
+		}
+		processingTime = System.currentTimeMillis() - start;
+		return true;
+	}
+
+	@Override
+	public String getErrorMessage() {
+		return errorMessage;
+	}
+
+	@Override
+	public long getProcessingTime() {
+		return processingTime;
+	}
+
 }

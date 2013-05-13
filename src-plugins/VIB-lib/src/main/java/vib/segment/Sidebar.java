@@ -75,6 +75,7 @@ public class Sidebar extends Panel implements CustomCanvas.CanvasListener, ItemL
 		addZoom();
 		addSelection();
 		addTools();
+    addHints();
 
 		this.itemStateChanged(null);
 	}
@@ -284,9 +285,26 @@ public class Sidebar extends Panel implements CustomCanvas.CanvasListener, ItemL
 		bThreshold.setActionCommand("threshold");
 		bOpen = addImageButton("iconOpen.png", al);
 		bOpen.setActionCommand("open");
+		constr.gridwidth = GridBagConstraints.REMAINDER;
+		constr.fill = GridBagConstraints.NONE;
 		bClose = addImageButton("iconClose.png", al);
 		bClose.setActionCommand("close");
 		constr.fill = GridBagConstraints.BOTH;
+	}
+
+	private void addHints() {
+		// larger font to distinguish keys more easily
+		Font keyFont = new Font("Monospaced", Font.PLAIN, 12);
+
+		addLabel("Hints:");
+
+		Label label = new Label("Jump to prev/next selection:");
+		label.setFont(font);
+		add(label, constr);
+
+		label = new Label("\",\"\t/\t\".\"");
+		label.setFont(keyFont);
+		add(label, constr);
 	}
 
 	private String readURL(URL url) {

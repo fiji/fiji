@@ -36,7 +36,16 @@ public class XYTextSimpleAnnotation extends AbstractXYAnnotation {
 			ValueAxis domainAxis, ValueAxis rangeAxis, int rendererIndex,
 			PlotRenderingInfo info) {
 		
-		float sx = (float) plot.getDomainAxis().valueToJava2D(x, chartPanel.getScreenDataArea(), plot.getDomainAxisEdge());
+		Rectangle2D box = chartPanel.getScreenDataArea();
+		float sx = (float) plot.getDomainAxis().valueToJava2D(x, box, plot.getDomainAxisEdge());
+		float maxXLim = (float) box.getWidth() - g2.getFontMetrics().stringWidth(text); 
+		if (sx > maxXLim) {
+			sx = maxXLim;
+		}
+		if (sx < box.getMinX()) {
+			sx = (float) box.getMinX();
+		}
+		
 		float sy = (float) plot.getRangeAxis().valueToJava2D(y, chartPanel.getScreenDataArea(), plot.getRangeAxisEdge());
 		g2.setTransform(new AffineTransform());
 		g2.setColor(color);
@@ -52,6 +61,9 @@ public class XYTextSimpleAnnotation extends AbstractXYAnnotation {
 	
 	public void setText(String text) { this.text = text; }
 	public void setFont(Font font) { this.font = font;	}
-	public void setColor(Color color) {this.color = color; }
+	public void setColor(Color color) {
+		this.color = color; 
+		notifyListeners(new AnnotationChangeEvent(this, this));
+	}
 
 }

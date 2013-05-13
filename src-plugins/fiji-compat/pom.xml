@@ -25,12 +25,47 @@
 		<dependency>
 			<groupId>org.javassist</groupId>
 			<artifactId>javassist</artifactId>
-			<version>3.14.0-GA</version>
+			<version>3.16.1-GA</version>
+		</dependency>
+		<dependency>
+			<groupId>${scijava-common.groupId}</groupId>
+			<artifactId>scijava-common</artifactId>
+			<version>${scijava-common.version}</version>
 		</dependency>
 	</dependencies>
 
 	<build>
 		<plugins>
+			<plugin>
+				<artifactId>maven-invoker-plugin</artifactId>
+				<version>1.8</version>
+				<configuration>
+					<!-- <debug>true</debug> -->
+					<showErrors>true</showErrors>
+					<streamLogs>true</streamLogs>
+					<addTestClassPath>true</addTestClassPath>
+					<properties>
+						<imagej1.version>${imagej1.version}</imagej1.version>
+					</properties>
+					<projectsDirectory>src/it</projectsDirectory>
+					<cloneProjectsTo>${project.build.directory}/it</cloneProjectsTo>
+					<pomIncludes>
+						<pomInclude>*/pom.xml</pomInclude>
+					</pomIncludes>
+					<settingsFile>src/it/settings.xml</settingsFile>
+					<localRepositoryPath>${project.build.directory}/local-repo</localRepositoryPath>
+					<postBuildHookScript>verify.bsh</postBuildHookScript>
+				</configuration>
+				<executions>
+					<execution>
+						<id>integration-test</id>
+						<goals>
+							<goal>install</goal>
+							<goal>run</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
 			<plugin>
 				<artifactId>maven-jar-plugin</artifactId>
 				<configuration>

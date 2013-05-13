@@ -7,7 +7,6 @@ import javax.swing.ImageIcon;
 import javax.swing.JFrame;
 
 import org.jfree.chart.ChartFactory;
-import org.jfree.chart.ExportableChartPanel;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.chart.plot.XYPlot;
@@ -16,11 +15,17 @@ import org.jfree.data.xy.DefaultXYDataset;
 import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMate_;
+import fiji.plugin.trackmate.util.ExportableChartPanel;
 import fiji.plugin.trackmate.visualization.trackscheme.TrackSchemeFrame;
 
 public class PlotNSpotsVsTimeAction extends AbstractTMAction {
 
-	private static final ImageIcon ICON = new ImageIcon(TrackSchemeFrame.class.getResource("resources/plots.png"));
+	public static final ImageIcon ICON = new ImageIcon(TrackSchemeFrame.class.getResource("resources/plots.png"));
+	public static final String NAME = "Plot N spots vs time";
+	public static final String INFO_TEXT =  "<html>" +
+			"Plot the number of spots in each frame as a function <br>" +
+			"of time. Only the filtered spots are taken into account. " +
+			"</html>";
 
 	public PlotNSpotsVsTimeAction() {
 		this.icon = ICON;
@@ -70,15 +75,12 @@ public class PlotNSpotsVsTimeAction extends AbstractTMAction {
 
 	@Override
 	public String getInfoText() {
-		return "<html>" +
-				"Plot the number of spots in each frame as a function <br>" +
-				"of time. Only the filtered spots are taken into account. " +
-				"</html>";
+		return INFO_TEXT;
 	}
 	
 	@Override
 	public String toString() {
-		return "Plot N spots vs time.";
+		return NAME;
 	}
 
 }
