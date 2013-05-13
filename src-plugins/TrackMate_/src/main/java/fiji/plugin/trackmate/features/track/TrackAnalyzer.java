@@ -3,6 +3,7 @@ package fiji.plugin.trackmate.features.track;
 import java.util.Collection;
 
 import net.imglib2.algorithm.Benchmark;
+import net.imglib2.algorithm.MultiThreaded;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.features.FeatureAnalyzer;
 
@@ -30,7 +31,7 @@ import fiji.plugin.trackmate.features.FeatureAnalyzer;
  * 
  * @author Jean-Yves Tinevez
  */
-public interface TrackAnalyzer extends Benchmark, FeatureAnalyzer {
+public interface TrackAnalyzer extends Benchmark, FeatureAnalyzer, MultiThreaded {
 
 	/**
 	 * Score the track whose ID is given.

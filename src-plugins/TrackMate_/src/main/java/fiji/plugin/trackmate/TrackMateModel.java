@@ -566,9 +566,6 @@ public class TrackMateModel {
 			spotsToUpdate.addAll(spotsAdded);
 			spotsToUpdate.addAll(spotsMoved);
 			spotsToUpdate.addAll(spotsUpdated);
-			// Update these spots features
-			SpotCollection subset = SpotCollection.fromCollection(spotsToUpdate);
-			featureModel.computeSpotFeatures(subset , false);
 		}
 
 		// Initialize event
@@ -657,7 +654,7 @@ public class TrackMateModel {
 		/*
 		 *  If required, recompute features for new tracks or tracks that 
 		 *  have been modified, BEFORE any other listeners to model changes, 
-		 *  and that night need to exploit new feature values (e.g. model views).
+		 *  and that might need to exploit new feature values (e.g. model views).
 		 */
 		if (nEdgesToSignal > 0) {
 			if (null != featureModel.trackAnalyzerProvider) {

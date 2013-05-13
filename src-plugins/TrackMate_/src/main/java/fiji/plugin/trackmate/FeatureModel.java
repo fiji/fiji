@@ -1,20 +1,13 @@
 package fiji.plugin.trackmate;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.jgrapht.graph.DefaultWeightedEdge;
-
-import fiji.plugin.trackmate.features.edges.EdgeAnalyzer;
-import fiji.plugin.trackmate.features.track.TrackAnalyzer;
-import fiji.plugin.trackmate.providers.EdgeAnalyzerProvider;
-import fiji.plugin.trackmate.providers.SpotAnalyzerProvider;
-import fiji.plugin.trackmate.providers.TrackAnalyzerProvider;
 
 /**
  * This class represents the part of the {@link TrackMateModel} that is in charge 
@@ -24,13 +17,11 @@ import fiji.plugin.trackmate.providers.TrackAnalyzerProvider;
  */
 public class FeatureModel {
 
-	//	private static final boolean DEBUG = true;
-
 	/*
 	 * FIELDS
 	 */
 
-	private ArrayList<String> trackFeatures = new ArrayList<String>();
+	private Collection<String> trackFeatures = new HashSet<String>();
 	private HashMap<String, String> trackFeatureNames = new HashMap<String, String>();
 	private HashMap<String, String> trackFeatureShortNames = new HashMap<String, String>();
 	private HashMap<String, Dimension> trackFeatureDimensions = new HashMap<String, Dimension>();
@@ -44,20 +35,20 @@ public class FeatureModel {
 	/**
 	 * Feature storage for edges.
 	 */
-	protected ConcurrentHashMap<DefaultWeightedEdge, ConcurrentHashMap<String, Double>> edgeFeatureValues 
-	= new ConcurrentHashMap<DefaultWeightedEdge, ConcurrentHashMap<String, Double>>();
+	protected ConcurrentHashMap<DefaultWeightedEdge, ConcurrentHashMap<String, Double>> edgeFeatureValues = 
+			new ConcurrentHashMap<DefaultWeightedEdge, ConcurrentHashMap<String, Double>>();
 
-	private ArrayList<String> edgeFeatures = new ArrayList<String>();
+	private Collection<String> edgeFeatures = new HashSet<String>();
 	private HashMap<String, String> edgeFeatureNames = new HashMap<String, String>();
 	private HashMap<String, String> edgeFeatureShortNames = new HashMap<String, String>();
 	private HashMap<String, Dimension> edgeFeatureDimensions = new HashMap<String, Dimension>();
 
-	protected SpotAnalyzerProvider spotAnalyzerProvider;
-	protected TrackAnalyzerProvider trackAnalyzerProvider;
-	protected EdgeAnalyzerProvider edgeAnalyzerProvider;
+	private Collection<String> spotFeatures = new HashSet<String>();
+	private Map<String,String> spotFeatureNames = new HashMap<String, String>();
+	private Map<String,String> spotFeatureShortNames = new HashMap<String, String>();
+	private Map<String,String> spotFeatureDimensions = new HashMap<String, String>();
 
 	private TrackMateModel model;
-
 
 	/*
 	 * CONSTRUCTOR
@@ -71,59 +62,14 @@ public class FeatureModel {
 	 * METHODS
 	 */
 	
-	/** 
-	 * Set the list of track feature analyzers that will be used to compute track features.
-	 * Setting this field will automatically sets the derived fields: {@link #trackFeatures},
-	 * {@link #trackFeatureNames}, {@link #trackFeatureShortNames} and {@link #trackFeatureDimensions}.
-	 * These fields will be generated from the {@link TrackAnalyzer} content, returned 
-	 * by its methods {@link TrackAnalyzer#getFeatures()}, etc... and will be added
-	 * in the order given by the list.
-	 * 
-	 * @see #computeTrackFeatures()
-	 */
-	public void setTrackAnalyzerProvider(TrackAnalyzerProvider trackAnalyzerProvider) {
-		this.trackAnalyzerProvider = trackAnalyzerProvider;
-		// Collect all the track feature we will have to deal with
-		trackFeatures = new ArrayList<String>();
-		for (String analyzer : trackAnalyzerProvider.getAvailableTrackFeatureAnalyzers()) {
-			trackFeatures.addAll(trackAnalyzerProvider.getFeaturesForKey(analyzer));
-		}
-		// Collect track feature metadata
-		trackFeatureNames = new HashMap<String, String>();
-		trackFeatureShortNames = new HashMap<String, String>();
-		trackFeatureDimensions = new HashMap<String, Dimension>();
-		for (String trackFeature : trackFeatures) {
-			trackFeatureNames.put(trackFeature, trackAnalyzerProvider.getFeatureName(trackFeature));
-			trackFeatureShortNames.put(trackFeature, trackAnalyzerProvider.getFeatureShortName(trackFeature));
-			trackFeatureDimensions.put(trackFeature, trackAnalyzerProvider.getFeatureDimension(trackFeature));
-		}
-		this.trackFeatureValues = new ConcurrentHashMap<Integer, Map<String, Double>>();
-	}
-
-	public void setEdgeAnalyzerProvider(final EdgeAnalyzerProvider edgeFeatureAnalyzerProvider) {
-		this.edgeAnalyzerProvider = edgeFeatureAnalyzerProvider;
-
-		edgeFeatures = new ArrayList<String>();
-		for (String analyzer : edgeFeatureAnalyzerProvider.getAvailableEdgeFeatureAnalyzers()) {
-			edgeFeatures.addAll(edgeFeatureAnalyzerProvider.getFeatures(analyzer));
-		}
-
-		edgeFeatureNames = new HashMap<String, String>();
-		edgeFeatureShortNames = new HashMap<String, String>();
-		edgeFeatureDimensions = new HashMap<String, Dimension>();
-		for (String edgeFeature : edgeFeatures) {
-			edgeFeatureNames.put(edgeFeature, edgeFeatureAnalyzerProvider.getFeatureName(edgeFeature));
-			edgeFeatureShortNames.put(edgeFeature, edgeFeatureAnalyzerProvider.getFeatureShortName(edgeFeature));
-			edgeFeatureDimensions.put(edgeFeature, edgeFeatureAnalyzerProvider.getFeatureDimension(edgeFeature));
-		}
-	}
 
 	/**
-	 * @return a new double array with all the values for the specified track feature.
+	 * Returns a new double array with all the values for the specified track feature.
 	 * @param trackFeature the track feature to parse. Throw an {@link IllegalArgumentException}
 	 * if the feature is unknown.
 	 * @param filteredOnly if <code>true</code>, will only include filtered tracks, 
 	 * all the tracks otherwise.
+	 * @return a new <code>double[]</code>, one element per track.
 	 */
 	public double[] getTrackFeatureValues(String trackFeature, boolean filteredOnly) {
 		if (!trackFeatures.contains(trackFeature)) {
@@ -144,11 +90,12 @@ public class FeatureModel {
 	}
 	
 	/**
-	 * @return a new double array with all the values for the specified edge feature.
+	 * Returns a new double array with all the values for the specified edge feature.
 	 * @param edgeFeature the track feature to parse. Throw an {@link IllegalArgumentException}
 	 * if the feature is unknown.
 	 * @param filteredOnly if <code>true</code>, will only include edges in filtered tracks, 
 	 * in all the tracks otherwise.
+	 * @return a new <code>double[]</code>, one element per edge.
 	 */
 	public double[] getEdgeFeatureValues(String edgeFeature, boolean filteredOnly) {
 		if (!edgeFeatures.contains(edgeFeature)) {
@@ -181,13 +128,27 @@ public class FeatureModel {
 	 * EDGE FEATURES
 	 */
 
-	public synchronized void putEdgeFeature(DefaultWeightedEdge edge, final String featureName, final Double featureValue) {
+	/**
+	 * Stores a numerical feature for an edge of this model. The specified edge must exist in 
+	 * the model, and the feature must have been declared. 
+	 * @param edge  the edge whose features to update.
+	 * @param feature  the feature.
+	 * @param value  the feature value
+	 * @return <code>true</code> if the specified edge and feature belong to the model and had its feature
+	 * updated; <code>false</code> otherwise. 
+	 */
+	public synchronized boolean putEdgeFeature(DefaultWeightedEdge edge, final String feature, final Double value) {
+		if (!model.getTrackModel().edgeSet().contains(edge) || !edgeFeatures.contains(feature)) {
+			return false;
+		}
+		
 		ConcurrentHashMap<String, Double> map = edgeFeatureValues.get(edge);
 		if (null == map) {
 			map = new ConcurrentHashMap<String, Double>();
 			edgeFeatureValues.put(edge, map);
 		}
-		map.put(featureName, featureValue);
+		map.put(feature, value);
+		return true;
 	}
 
 	public Double getEdgeFeature(DefaultWeightedEdge edge, final String featureName) {
@@ -198,29 +159,79 @@ public class FeatureModel {
 		return map.get(featureName);
 	}
 
-	public List<String> getEdgeFeatures() {
+	/**
+	 * Returns edge features as declared in this model. 
+	 * @return the edge features.
+	 */ 
+	public Collection<String> getEdgeFeatures() {
 		return edgeFeatures;
+	}
+	
+
+	/**
+	 * Resets the edge features, names, short names, dimensions and values. 
+	 * New features will have to be declared prior to storing them.
+	 */
+	public void clearEdgeFeatures() {
+		edgeFeatures.clear();
+		edgeFeatureNames.clear();
+		edgeFeatureShortNames.clear();
+		edgeFeatureDimensions.clear();
+		edgeFeatureValues.clear();
+	}
+	
+	/**
+	 * Declares edge features, by specifying their name, short name and dimension.
+	 * An {@link IllegalArgumentException} will be thrown if any of the map misses
+	 * a feature.
+	 * @param features  the list of edge features to register. 
+	 * @param featureNames  the name of these features.
+	 * @param featureShortNames  the short name of these features.
+	 * @param featureDimensions  the dimension of these features.
+	 */
+	public void declareEdgeFeatures(Collection<String> features, Map<String, String> featureNames, 
+			Map<String, String> featureShortNames, Map<String, Dimension> featureDimensions) {
+		edgeFeatures.addAll(features);
+		for (String feature : features) {
+			
+			String name = featureNames.get(feature);
+			if (null == name) {
+				throw new IllegalArgumentException("Feature " + feature + " misses a name.");
+			}
+			edgeFeatureNames.put(feature, name);
+			
+			String shortName = featureShortNames.get(feature);
+			if (null == shortName) {
+				throw new IllegalArgumentException("Feature " + feature + " misses a short name.");
+			}
+			edgeFeatureShortNames.put(feature, shortName);
+			
+			Dimension dimension = featureDimensions.get(feature);
+			if (null == dimension) {
+				throw new IllegalArgumentException("Feature " + feature + " misses a dimension.");
+			}
+		}
 	}
 
 	/**
-	 * Return the name mapping of the edge features that are dealt with in this model.
-	 * @return
+	 * Returns the name mapping of the edge features that are dealt with in this model.
+	 * @return the map of edge feature names.
 	 */
 	public Map<String, String> getEdgeFeatureNames() {
 		return edgeFeatureNames;
 	}
 
 	/**
-	 * Return the short name mapping of the edge features that are dealt with in this model.
-	 * @return
+	 * Returns the short name mapping of the edge features that are dealt with in this model.
+	 * @return the map of edge short names.
 	 */
 	public Map<String, String> getEdgeFeatureShortNames() {
 		return edgeFeatureShortNames;
 	}
 
 	/**
-	 * Return the dimension mapping of the edge features that are dealt with in this model.
-	 * @return
+	 * Returns the dimension mapping of the edge features that are dealt with in this model.
+	 * @return the map of edge feature dimensions.
 	 */
 	public Map<String, Dimension> getEdgeFeatureDimensions() {
 		return edgeFeatureDimensions;
@@ -231,25 +242,67 @@ public class FeatureModel {
 	 * TRACK FEATURES
 	 */
 
-
-
 	/**
-	 * Return the list of the track features that are dealt with in this model.
+	 * Returns the track features that are dealt with in this model.
 	 */
-	public List<String> getTrackFeatures() {
+	public Collection<String> getTrackFeatures() {
 		return trackFeatures;
+	}
+	
+	/**
+	 * Resets the track features, names, short names, dimensions and values. 
+	 * New features will have to be declared prior to storing them.
+	 */
+	public void clearTrackFeatures() {
+		trackFeatures.clear();
+		trackFeatureNames.clear();
+		trackFeatureShortNames.clear();
+		trackFeatureDimensions.clear();
+		trackFeatureValues.clear();
+	}
+	
+	/**
+	 * Declares track features, by specifying their names, short name and dimension.
+	 * An {@link IllegalArgumentException} will be thrown if any of the map misses
+	 * a feature.
+	 * @param features  the list of track feature to register. 
+	 * @param featureNames  the name of these features.
+	 * @param featureShortNames  the short name of these features.
+	 * @param featureDimensions  the dimension of these features.
+	 */
+	public void declareTrackFeatures(Collection<String> features, Map<String, String> featureNames, 
+			Map<String, String> featureShortNames, Map<String, Dimension> featureDimensions) {
+		trackFeatures.addAll(features);
+		for (String feature : features) {
+			
+			String name = featureNames.get(feature);
+			if (null == name) {
+				throw new IllegalArgumentException("Feature " + feature + " misses a name.");
+			}
+			trackFeatureNames.put(feature, name);
+			
+			String shortName = featureShortNames.get(feature);
+			if (null == shortName) {
+				throw new IllegalArgumentException("Feature " + feature + " misses a short name.");
+			}
+			trackFeatureShortNames.put(feature, shortName);
+			
+			Dimension dimension = featureDimensions.get(feature);
+			if (null == dimension) {
+				throw new IllegalArgumentException("Feature " + feature + " misses a dimension.");
+			}
+		}
 	}
 
 	/**
-	 * Return the name mapping of the track features that are dealt with in this model.
-	 * @return
+	 * Returns the name mapping of the track features that are dealt with in this model.
 	 */
 	public Map<String, String> getTrackFeatureNames() {
 		return trackFeatureNames;
 	}
 
 	/**
-	 * Return the short name mapping of the track features that are dealt with in this model.
+	 * Returns the short name mapping of the track features that are dealt with in this model.
 	 * @return
 	 */
 	public Map<String, String> getTrackFeatureShortNames() {
@@ -257,20 +310,35 @@ public class FeatureModel {
 	}
 
 	/**
-	 * Return the dimension mapping of the track features that are dealt with in this model.
-	 * @return
+	 * Returns the dimension mapping of the track features that are dealt with in this model.
 	 */
 	public Map<String, Dimension> getTrackFeatureDimensions() {
 		return trackFeatureDimensions;
 	}
 
-	public synchronized void putTrackFeature(final Integer trackID, final String feature, final Double value) {
+	/**
+	 * Stores a track numerical feature. The track ID must exist in the model and 
+	 * the specified feature must have been declared.
+	 * @param trackID  the ID of the track. It must be an existing track ID.
+	 * @param feature  the feature.
+	 * @param value  the feature value.
+	 * @return <code>true</code> if the specified track ID and feature was found in the model and the 
+	 * specified feature has been updated, <code>false</code> otherwise.
+	 */
+	public synchronized boolean putTrackFeature(final Integer trackID, final String feature, final Double value) {
+		
+		// We use getTrackSpots, because it is seldom recomputed.
+		if (!model.getTrackModel().getTrackSpots().keySet().contains(trackID) || !trackFeatures.contains(feature)) {
+			return false;
+		}
+		
 		Map<String, Double> trackFeatureMap = trackFeatureValues.get(trackID);
 		if (null == trackFeatureMap) {
 			trackFeatureMap = new HashMap<String, Double>(trackFeatures.size());
 			trackFeatureValues.put(trackID, trackFeatureMap);
 		}
 		trackFeatureMap.put(feature, value);
+		return true;
 	}
 
 	/**
@@ -307,40 +375,53 @@ public class FeatureModel {
 		}
 		return featureValues;
 	}
+	
+	/*
+	 * SPOT FEATURES
+	 * the spot features are stored in the Spot object themselves, but we declare them here.
+	 */
+	
 
 	/**
-	 * Calculate all features for the tracks with the given IDs.
+	 * Resets the spot features, names, short names and dimensions.
 	 */
-	public void computeTrackFeatures(final Collection<Integer> trackIDs, boolean doLogIt) {
-		final Logger logger = model.getLogger();
-		if (doLogIt) {
-			logger.log("Computing track features:\n", Logger.BLUE_COLOR);		
-		}
-		// Reset track feature value map
-		trackFeatureValues.clear();
-		/*
-		 *  Compute new track feature. Analyzers will use the #putFeature method to store results,
-		 *  which will regenerate the value map.
-		 */
-		for (String analyzerKey : trackAnalyzerProvider.getAvailableTrackFeatureAnalyzers()) {
-			// Compute features
-			TrackAnalyzer analyzer = trackAnalyzerProvider.getTrackFeatureAnalyzer(analyzerKey);
-			analyzer.process(trackIDs);
-			if (doLogIt)
-				logger.log("  - " + analyzer.toString() + " in " + analyzer.getProcessingTime() + " ms.\n");
-		}
+	public void clearSpotFeatures() {
+		spotFeatures .clear();
+		spotFeatureNames .clear();
+		spotFeatureShortNames .clear();
+		spotFeatureDimensions .clear();
 	}
-
-	public void computeEdgeFeatures(final Collection<DefaultWeightedEdge> edges, boolean doLogIt) {
-		final Logger logger = model.getLogger();
-		if (doLogIt) {
-			logger.log("Computing edge features:\n", Logger.BLUE_COLOR);		
-		}
-		for(String key : edgeAnalyzerProvider.getAvailableEdgeFeatureAnalyzers()) {
-			EdgeAnalyzer analyzer = edgeAnalyzerProvider.getEdgeFeatureAnalyzer(key);
-			analyzer.process(edges);
-			if (doLogIt)
-				logger.log("  - " + analyzer.toString() + " in " + analyzer.getProcessingTime() + " ms.\n");
+	
+	/**
+	 * Declares spot features, by specifying their names, short name and dimension.
+	 * An {@link IllegalArgumentException} will be thrown if any of the map misses
+	 * a feature.
+	 * @param features  the list of spot feature to register. 
+	 * @param featureNames  the name of these features.
+	 * @param featureShortNames  the short name of these features.
+	 * @param featureDimensions  the dimension of these features.
+	 */
+	public void declareSpotFeatures(Collection<String> features, Map<String, String> featureNames, 
+			Map<String, String> featureShortNames, Map<String, Dimension> featureDimensions) {
+		spotFeatures.addAll(features);
+		for (String feature : features) {
+			
+			String name = featureNames.get(feature);
+			if (null == name) {
+				throw new IllegalArgumentException("Feature " + feature + " misses a name.");
+			}
+			spotFeatureNames.put(feature, name);
+			
+			String shortName = featureShortNames.get(feature);
+			if (null == shortName) {
+				throw new IllegalArgumentException("Feature " + feature + " misses a short name.");
+			}
+			spotFeatureShortNames.put(feature, shortName);
+			
+			Dimension dimension = featureDimensions.get(feature);
+			if (null == dimension) {
+				throw new IllegalArgumentException("Feature " + feature + " misses a dimension.");
+			}
 		}
 	}
 

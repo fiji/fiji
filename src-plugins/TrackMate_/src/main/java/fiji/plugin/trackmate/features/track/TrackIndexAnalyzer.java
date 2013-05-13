@@ -94,4 +94,25 @@ public class TrackIndexAnalyzer implements TrackAnalyzer {
 	public Map<String, Dimension> getFeatureDimensions() {
 		return FEATURE_DIMENSIONS;
 	}
+
+	/**
+	 * Ignored. This analyzer is single-threaded.
+	 */
+	@Override
+	public void setNumThreads() {
+	}
+
+	/**
+	 * Ignored. This analyzer is single-threaded.
+	 */
+	@Override
+	public void setNumThreads(int numThreads) {}
+
+	/**
+	 * Ignore. This analyzer is single-threaded.
+	 */
+	@Override
+	public int getNumThreads() {
+		return 1;
+	}
 }

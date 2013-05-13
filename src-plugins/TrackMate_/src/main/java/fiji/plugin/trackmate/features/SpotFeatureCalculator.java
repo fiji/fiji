@@ -3,12 +3,14 @@ package fiji.plugin.trackmate.features;
 import static fiji.plugin.trackmate.detection.DetectorKeys.KEY_TARGET_CHANNEL;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import net.imglib2.algorithm.MultiThreadedBenchmarkAlgorithm;
 import net.imglib2.multithreading.SimpleMultiThreading;
+import fiji.plugin.trackmate.Dimension;
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.SpotCollection;
@@ -36,7 +38,7 @@ public class SpotFeatureCalculator extends MultiThreadedBenchmarkAlgorithm {
 	/*
 	 * METHODS
 	 */
-	
+		
 	@Override
 	public boolean checkInput() {
 		if (null == model) {
@@ -52,7 +54,7 @@ public class SpotFeatureCalculator extends MultiThreadedBenchmarkAlgorithm {
 	
 	/**
 	 * Calculates the spot features configured in the {@link Settings} 
-	 * for the all spots of this model,
+	 * for all the spots of this model,
 	 * <p>
 	 * Features are calculated for each spot, using their location, and the raw
 	 * image. Since a {@link SpotAnalyzer} can compute more than a feature
@@ -62,53 +64,24 @@ public class SpotFeatureCalculator extends MultiThreadedBenchmarkAlgorithm {
 	public boolean process() {
 		long start = System.currentTimeMillis();
 		
+		// Clean
+		model.getFeatureModel().clearSpotFeatures();
+		
+		// Declare what you do.
+		for (SpotAnalyzerFactory<?> factory : settings.getSpotAnalyzerFactories()) {
+			Collection<String> features = factory.getFeatures();
+			Map<String, String> featureNames = factory.getFeatureNames();
+			Map<String, String> featureShortNames = factory.getFeatureShortNames();
+			Map<String, Dimension> featureDimensions = factory.getFeatureDimensions();
+			model.getFeatureModel().declareSpotFeatures(features, featureNames, featureShortNames, featureDimensions);
+		}
+		
+		// Do it.
 		computeSpotFeaturesAgent(model.getSpots(), settings.getSpotAnalyzerFactories(), true);
 		
 		long end = System.currentTimeMillis();
 		processingTime = end - start;
 		return true;
-	}
-	
-
-
-	/**
-	 * Calculates the specified features for the all spots of this model,
-	 * according to the {@link Settings} specified at construction.
-	 * <p>
-	 * Features are calculated for each spot, using their location, and the raw
-	 * image. Since a {@link SpotAnalyzer} can compute more than a feature
-	 * at once, spots might received more data than required.
-	 */
-	public void computeSpotFeatures(final List<String> features, boolean doLogIt) {
-		computeSpotFeatures(model.getSpots(), features, doLogIt);
-	}
-
-	/**
-	 * Calculates the specified feature for the all spots of this model.
-	 */
-	public void computeSpotFeatures(final String feature, final Settings settings, boolean doLogIt) {
-		ArrayList<String> features = new ArrayList<String>(1);
-		features.add(feature);
-		computeSpotFeatures(features, doLogIt);
-	}
-
-	/**
-	 * Calculates specified features for the specified spots.
-	 * <p>
-	 * Features are calculated for each spot, using their location, and the raw
-	 * images. Since a {@link SpotAnalyzer} can compute more than a feature
-	 * at once, spots might received more data than required.
-	 */
-	public void computeSpotFeatures(final SpotCollection toCompute, final List<String> features, boolean doLogIt) {
-		final List<SpotAnalyzerFactory<?>> selectedAnalyzers = new ArrayList<SpotAnalyzerFactory<?>>(); // We want to keep ordering
-		for(String feature : features) {
-			for(SpotAnalyzerFactory<?> analyzer : settings.getSpotAnalyzerFactories()) {
-				if (analyzer.getFeatures().contains(feature)) {
-					selectedAnalyzers.add(analyzer);
-				}
-			}
-		}
-		computeSpotFeaturesAgent(toCompute, selectedAnalyzers, doLogIt);
 	}
 
 	/**
@@ -141,7 +114,8 @@ public class SpotFeatureCalculator extends MultiThreadedBenchmarkAlgorithm {
 		// Can't compute any spot feature without an image to compute on.
 		if (settings.imp == null)
 			return;
-
+		
+		// Do it.
 		final List<Integer> frameSet = new ArrayList<Integer>(toCompute.keySet());
 		final int numFrames = frameSet.size();
 
@@ -171,7 +145,8 @@ public class SpotFeatureCalculator extends MultiThreadedBenchmarkAlgorithm {
 
 						int frame = frameSet.get(index);
 						for (SpotAnalyzerFactory<?> factory : analyzerFactories) {
-							factory.getAnalyzer(frame, targetChannel).process();
+							SpotAnalyzer<?> analyzer = factory.getAnalyzer(frame, targetChannel);
+							analyzer.process();
 						}
 
 						logger.setProgress(progress.incrementAndGet() / (float) numFrames);

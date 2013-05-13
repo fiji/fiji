@@ -3,13 +3,14 @@ package fiji.plugin.trackmate.features.edges;
 import java.util.Collection;
 
 import net.imglib2.algorithm.Benchmark;
+import net.imglib2.algorithm.MultiThreaded;
 
 import org.jgrapht.graph.DefaultWeightedEdge;
 
 import fiji.plugin.trackmate.FeatureModel;
 import fiji.plugin.trackmate.features.FeatureAnalyzer;
 
-public interface EdgeAnalyzer extends Benchmark, FeatureAnalyzer {
+public interface EdgeAnalyzer extends Benchmark, FeatureAnalyzer, MultiThreaded {
 
 	/**
 	 * Scores a collection of link between two spots. 
