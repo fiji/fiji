@@ -20,6 +20,7 @@ import fiji.plugin.trackmate.SelectionChangeListener;
 import fiji.plugin.trackmate.SelectionModel;
 import fiji.plugin.trackmate.TrackMate;
 import fiji.plugin.trackmate.detection.ManualDetectorFactory;
+import fiji.plugin.trackmate.features.ModelFeatureUpdater;
 import fiji.plugin.trackmate.features.track.TrackIndexAnalyzer;
 import fiji.plugin.trackmate.gui.descriptors.ActionChooserDescriptor;
 import fiji.plugin.trackmate.gui.descriptors.ConfigureViewsDescriptor;
@@ -118,6 +119,9 @@ public class TrackMateGUIController implements ActionListener {
 		this.gui = new TrackMateWizard(this);
 		this.logger = gui.getLogger();
 		this.trackmate = trackmate;
+		
+		// Feature updater
+		new ModelFeatureUpdater(trackmate.getModel(), trackmate.getSettings());
 		
 		createProviders();
 		createDescriptors();

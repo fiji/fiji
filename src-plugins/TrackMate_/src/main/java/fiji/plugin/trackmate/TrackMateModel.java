@@ -11,9 +11,6 @@ import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.graph.SimpleDirectedWeightedGraph;
 
 import fiji.plugin.trackmate.features.FeatureFilter;
-import fiji.plugin.trackmate.features.SpotFeatureCalculator;
-import fiji.plugin.trackmate.features.edges.EdgeAnalyzer;
-import fiji.plugin.trackmate.features.track.TrackAnalyzer;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
 
 /**
@@ -614,63 +611,6 @@ public class TrackMateModel {
 		// Configure it with the tracks we found need updating
 		event.setTracksUpdated(tracksToUpdate);
 
-		/*
-		 * Update features if needed
-		 * In this order: edges then tracks (in case track features depend on edge features) 
-		 */
-
-		int nEdgesToUpdate = trackGraphModel.edgesAdded.size() + trackGraphModel.edgesModified.size();
-		if (nEdgesToUpdate > 0) {
-			if (null != featureModel.trackAnalyzerProvider) {
-				HashSet<DefaultWeightedEdge> edgesToUpdate =  
-						new HashSet<DefaultWeightedEdge>(trackGraphModel.edgesAdded.size() + trackGraphModel.edgesModified.size());
-				edgesToUpdate.addAll(trackGraphModel.edgesAdded);
-				edgesToUpdate.addAll(trackGraphModel.edgesModified);
-				HashSet<DefaultWeightedEdge> globalEdgesToUpdate = null; // for now - compute it only if we need
-
-				for (String analyzerKey : featureModel.edgeAnalyzerProvider.getAvailableEdgeFeatureAnalyzers()) {
-					EdgeAnalyzer analyzer = featureModel.edgeAnalyzerProvider.getEdgeFeatureAnalyzer(analyzerKey);
-					if (analyzer.isLocal()) {
-
-						analyzer.process(edgesToUpdate);
-
-					} else {
-
-						// Get the all the edges of the track they belong to
-						if (null == globalEdgesToUpdate) {
-							globalEdgesToUpdate = new HashSet<DefaultWeightedEdge>();
-							for (DefaultWeightedEdge edge : edgesToUpdate) {
-								Integer motherTrackID = trackGraphModel.getTrackIDOf(edge);
-								globalEdgesToUpdate.addAll(trackGraphModel.getTrackEdges(motherTrackID));
-							}
-						}
-						analyzer.process(globalEdgesToUpdate);
-					}
-				}
-			}
-
-		}
-
-		/*
-		 *  If required, recompute features for new tracks or tracks that 
-		 *  have been modified, BEFORE any other listeners to model changes, 
-		 *  and that might need to exploit new feature values (e.g. model views).
-		 */
-		if (nEdgesToSignal > 0) {
-			if (null != featureModel.trackAnalyzerProvider) {
-				for (String analyzerKey : featureModel.trackAnalyzerProvider.getAvailableTrackFeatureAnalyzers()) {
-					TrackAnalyzer analyzer = featureModel.trackAnalyzerProvider.getTrackFeatureAnalyzer(analyzerKey);
-					if (analyzer.isLocal()) {
-						if (!tracksToUpdate.isEmpty()) {
-							analyzer.process(tracksToUpdate);
-						}
-					} else {
-						analyzer.process(trackGraphModel.getFilteredTrackIDs());
-					}
-				}
-			}
-		}
-
 		try {
 			if (nEdgesToSignal + nSpotsToSignal > 0) {
 				if (DEBUG) {
@@ -704,10 +644,5 @@ public class TrackMateModel {
 		}
 
 	}
-
-
-
-
-
 
 }

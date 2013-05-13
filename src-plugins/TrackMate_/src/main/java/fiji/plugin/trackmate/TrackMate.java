@@ -16,8 +16,10 @@ import org.jgrapht.graph.SimpleWeightedGraph;
 
 import fiji.plugin.trackmate.detection.SpotDetector;
 import fiji.plugin.trackmate.detection.SpotDetectorFactory;
+import fiji.plugin.trackmate.features.EdgeFeatureCalculator;
 import fiji.plugin.trackmate.features.FeatureFilter;
 import fiji.plugin.trackmate.features.SpotFeatureCalculator;
+import fiji.plugin.trackmate.features.TrackFeatureCalculator;
 import fiji.plugin.trackmate.tracking.SpotTracker;
 import fiji.plugin.trackmate.util.CropImgView;
 import fiji.plugin.trackmate.util.TMUtils;
@@ -126,7 +128,13 @@ public class TrackMate implements Benchmark, MultiThreaded, Algorithm {
 	/**
 	 * Calculate all features for all detected spots.
 	 * <p>
-	 * Features are calculated for each spot, using their location, and the raw image. 
+	 * Features are calculated for each spot, using their location, and the raw image.
+	 * Features to be calculated and analyzers are taken from the settings field
+	 * of this object.
+	 * 
+	 * @param doLogIt if <code>true</code>, the {@link Logger} of the model will be notified.
+	 * @return <code>true</code> if the calculation was performed successfuly, <code>false</code>
+	 * otherwise. 
 	 */
 	public boolean computeSpotFeatures(boolean doLogIt) {
 		final Logger logger = model.getLogger();
@@ -143,16 +151,49 @@ public class TrackMate implements Benchmark, MultiThreaded, Algorithm {
 		}
 	}
 
-	public void computeEdgeFeatures(boolean doLogIt) {
-		model.getFeatureModel().computeEdgeFeatures(model.getTrackModel().edgeSet(), doLogIt);
+	/**
+	 * Calculate all features for all detected spots.
+	 * <p>
+	 * Features are calculated for each spot, using their location, and the raw image.
+	 * Features to be calculated and analyzers are taken from the settings field
+	 * of this object.
+	 * 
+	 * @param doLogIt if <code>true</code>, the {@link Logger} of the model will be notified.
+	 * @return <code>true</code> if the calculation was performed successfuly, <code>false</code>
+	 * otherwise. 
+	 */
+	public boolean computeEdgeFeatures(boolean doLogIt) {
+		final Logger logger = model.getLogger();
+		logger.log("Computing edge features.\n");
+		EdgeFeatureCalculator calculator = new EdgeFeatureCalculator(model, settings);
+		if (calculator.checkInput() && calculator.process()) {
+			if (doLogIt) {
+				logger.log("Computation done in " + calculator.getProcessingTime() + " ms.\n");
+			}
+			return true;
+		} else {
+			errorMessage = "Edge features calculation failed:\n"+calculator.getErrorMessage();
+			return false;
+		}
 	}
 	
 	/**
 	 * Calculate all features for all tracks.
+	 * @return 
 	 */
-	public void computeTrackFeatures(boolean doLogIt) {
-		model.getFeatureModel().computeTrackFeatures(model.getTrackModel().getTrackIDs(), doLogIt);
-	}
+	public boolean computeTrackFeatures(boolean doLogIt) {
+		final Logger logger = model.getLogger();
+		logger.log("Computing spot features.\n");
+		TrackFeatureCalculator calculator = new TrackFeatureCalculator(model, settings);
+		if (calculator.checkInput() && calculator.process()) {
+			if (doLogIt) {
+				logger.log("Computation done in " + calculator.getProcessingTime() + " ms.\n");
+			}
+			return true;
+		} else {
+			errorMessage = "Track features calculation failed:\n"+calculator.getErrorMessage();
+			return false;
+		}	}
 
 	/**
 	 * Execute the tracking part.
