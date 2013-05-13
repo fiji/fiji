@@ -470,8 +470,6 @@ public class BeadSegmentation
 		else
 			dog.setKeepDoGImage( false );
 		
-		IOFunctions.println( "compute dog ... " );
-		
 		if ( !dog.checkInput() || !dog.process() )
 		{
     		if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_ERRORONLY )
@@ -479,8 +477,6 @@ public class BeadSegmentation
 			
 			return new BeadStructure();
 		}
-
-		IOFunctions.println( "remove minima ... out of " + dog.getPeaks().size() );
 		
 		// remove all minima
         final ArrayList< DifferenceOfGaussianPeak<FloatType> > peakListOld = dog.getPeaks();
@@ -489,12 +485,6 @@ public class BeadSegmentation
         for ( int i = peakListOld.size() - 1; i >= 0; --i )
         	if ( peakListOld.get( i ).isMax() )
         		peakList.add( peakListOld.get( i ) );
-
-        //for ( int i = peakListOld.size() - 1; i >= 0; --i )
-        //	if ( peakList.get( i ).isMin() )
-        //		peakList.remove( i );
-
-		IOFunctions.println( "quadratic fit ... with " + peakList.size() );
 
 		// do quadratic fit??
 		if ( conf.doFit == 1 )
