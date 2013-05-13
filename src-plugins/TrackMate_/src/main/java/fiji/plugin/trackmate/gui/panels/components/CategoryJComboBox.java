@@ -7,6 +7,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -49,7 +50,7 @@ public class CategoryJComboBox<K, V> extends JComboBox {
 	 * CONSTRUCTOR
 	 */
 
-	public CategoryJComboBox(Map<K, List<V>> items, Map<V, String> itemNames, Map<K, String> categoryNames) {
+	public CategoryJComboBox(Map<K, Collection<V>> items, Map<V, String> itemNames, Map<K, String> categoryNames) {
 		super();
 		this.invertMap = new HashMap<V, K>();
 		this.itemNames = itemNames;
@@ -60,7 +61,7 @@ public class CategoryJComboBox<K, V> extends JComboBox {
 		for (K category : items.keySet()) {
 			addItem(category, true);
 
-			List<V> categoryItems = items.get(category);
+			Collection<V> categoryItems = items.get(category);
 			for (V item : categoryItems) {
 				addItem(item, false);
 				invertMap.put(item, category);
@@ -209,7 +210,7 @@ public class CategoryJComboBox<K, V> extends JComboBox {
 		computers.add("PC");
 		computers.add("Mac");
 		//
-		LinkedHashMap<String, List<String>> items = new LinkedHashMap<String, List<String>>(3);
+		LinkedHashMap<String, Collection<String>> items = new LinkedHashMap<String, Collection<String>>(3);
 		items.put("Fruits", fruits);
 		items.put("Cars", cars);
 		items.put("Computers", computers);

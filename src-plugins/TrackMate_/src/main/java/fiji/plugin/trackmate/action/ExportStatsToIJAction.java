@@ -4,7 +4,6 @@ package fiji.plugin.trackmate.action;
 import ij.measure.ResultsTable;
 
 import java.util.Collection;
-import java.util.List;
 import java.util.Set;
 
 import javax.swing.ImageIcon;
@@ -13,8 +12,8 @@ import org.jgrapht.graph.DefaultWeightedEdge;
 
 import fiji.plugin.trackmate.FeatureModel;
 import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMate;
+import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.gui.TrackMateGUIController;
 import fiji.plugin.trackmate.gui.TrackMateWizard;
 
@@ -90,7 +89,7 @@ public class ExportStatsToIJAction extends AbstractTMAction {
 		// Export edges
 		logger.log("  - Exporting links statistics...");
 		// Yield available edge feature
-		List<String> edgeFeatures = fm.getEdgeFeatures();
+		Collection<String> edgeFeatures = fm.getEdgeFeatures();
 		
 		// Create table
 		ResultsTable edgeTable = new ResultsTable();
@@ -118,7 +117,7 @@ public class ExportStatsToIJAction extends AbstractTMAction {
 		// Export tracks
 		logger.log("  - Exporting tracks statistics...");
 		// Yield available edge feature
-		List<String> trackFeatures = fm.getTrackFeatures();
+		Collection<String> trackFeatures = fm.getTrackFeatures();
 
 		// Create table
 		ResultsTable trackTable = new ResultsTable();

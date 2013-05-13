@@ -38,7 +38,6 @@ import com.mxgraph.view.mxGraphSelectionModel;
 import fiji.plugin.trackmate.ModelChangeEvent;
 import fiji.plugin.trackmate.SelectionChangeEvent;
 import fiji.plugin.trackmate.SelectionModel;
-import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.visualization.AbstractTrackMateModelView;
@@ -98,21 +97,18 @@ public class TrackScheme extends AbstractTrackMateModelView {
 	private int unlaidSpotColumn = 3;
 	/**
 	 * The instance in charge of generating the string image representation 
-	 * of spots imported in this view.
+	 * of spots imported in this view. If <code>null</code>, nothing is done.
 	 */
-	private final SpotImageUpdater spotImageUpdater;
+	private SpotImageUpdater spotImageUpdater;
 
 	TrackSchemeStylist stylist;
-	final Settings settings;
 
 	/*
 	 * CONSTRUCTORS
 	 */
 
-	public TrackScheme(TrackMateModel model, Settings settings, SelectionModel selectionModel)  {
+	public TrackScheme(TrackMateModel model, SelectionModel selectionModel)  {
 		super(model, selectionModel);
-		this.settings = settings;
-		spotImageUpdater = new SpotImageUpdater(settings);
 		initDisplaySettings();
 		initGUI();
 	}
@@ -121,6 +117,10 @@ public class TrackScheme extends AbstractTrackMateModelView {
 	/*
 	 * METHODS
 	 */
+
+	public void setSpotImageUpdater(SpotImageUpdater spotImageUpdater) {
+		this.spotImageUpdater = spotImageUpdater;
+	}
 
 	public SelectionModel getSelectionModel() {
 		return selectionModel;
@@ -145,29 +145,34 @@ public class TrackScheme extends AbstractTrackMateModelView {
 	}
 
 	/**
-	 * @return the GUI frame controlled by this class.
+	 * Returns the GUI frame controlled by this class.
 	 */
 	public TrackSchemeFrame getGUI() {
 		return gui;
 	}
 
 	/**
-	 * @return the {@link JGraphXAdapter} that serves as a model for the graph displayed in this frame.
+	 * Returns the {@link JGraphXAdapter} that serves as a model for the graph displayed in this frame.
 	 */
 	public JGraphXAdapter getGraph() {
 		return graph;
 	}
 
 	/**
-	 * @return the graph layout in charge of arranging the cells on the graph.
+	 * Returns the graph layout in charge of arranging the cells on the graph.
 	 */
 	public TrackSchemeGraphLayout getGraphLayout() {
 		return graphLayout;	
 	}
 
+	
+	/*
+	 * PRIVATE METHODS
+	 */
+	
+	
 	/**
 	 * Used to instantiate and configure the {@link JGraphXAdapter} that will be used for display.
-	 * Hook for subclassers.
 	 */
 	private JGraphXAdapter createGraph() {
 
@@ -196,28 +201,30 @@ public class TrackScheme extends AbstractTrackMateModelView {
 				spotPerFrame.get(frame).add(spot);
 			}
 		}
-		
-		// Set spot image to cell style
-		gui.logger.setStatus("Collecting spot thumbnails.");
-		int index = 0;
-		try {
-			graph.getModel().beginUpdate();
-			
-			// Iterate per frame
-			for (Integer frame : frames) {
-				for (Spot spot : spotPerFrame.get(frame)) {
 
-					mxICell cell = graph.getCellFor(spot);
-					String imageStr = spotImageUpdater.getImageString(spot);
-					graph.getModel().setStyle(cell, mxConstants.STYLE_IMAGE+"="+"data:image/base64," + imageStr);
-					
+		// Set spot image to cell style
+		if (null != spotImageUpdater) {
+			gui.logger.setStatus("Collecting spot thumbnails.");
+			int index = 0;
+			try {
+				graph.getModel().beginUpdate();
+
+				// Iterate per frame
+				for (Integer frame : frames) {
+					for (Spot spot : spotPerFrame.get(frame)) {
+
+						mxICell cell = graph.getCellFor(spot);
+						String imageStr = spotImageUpdater.getImageString(spot);
+						graph.getModel().setStyle(cell, mxConstants.STYLE_IMAGE+"="+"data:image/base64," + imageStr);
+
+					}
+					gui.logger.setProgress( (double) index++ / frames.size() );
 				}
-				gui.logger.setProgress( (double) index++ / frames.size() );
+			} finally {
+				graph.getModel().endUpdate();
+				gui.logger.setProgress(0d);
+				gui.logger.setStatus("");
 			}
-		} finally {
-			graph.getModel().endUpdate();
-			gui.logger.setProgress(0d);
-			gui.logger.setStatus("");
 		}
 
 		// Cells removed from JGraphX
@@ -231,7 +238,7 @@ public class TrackScheme extends AbstractTrackMateModelView {
 	}
 
 	/**
-	 * Update or create a cell for the target spot. Is called after the user modified a spot 
+	 * Updates or creates a cell for the target spot. Is called after the user modified a spot 
 	 * (location, radius, ...) somewhere else. 
 	 * @param spot  the spot that was modified.
 	 */
@@ -239,7 +246,7 @@ public class TrackScheme extends AbstractTrackMateModelView {
 
 		mxICell cell = graph.getCellFor(spot);
 		if (DEBUG)
-			System.out.println("[TrackSchemeFrame] modelChanged: updating cell for spot "+spot);
+			System.out.println("[TrackScheme] modelChanged: updating cell for spot "+spot);
 		if (null == cell) {
 			// mxCell not present in graph. Most likely because the corresponding spot belonged
 			// to an invisible track, and a cell was not created for it when TrackScheme was
@@ -251,13 +258,16 @@ public class TrackScheme extends AbstractTrackMateModelView {
 		}
 
 		// Update cell look
-		String imageStr = spotImageUpdater.getImageString(spot);
-		String style = cell.getStyle();
-		style = mxStyleUtils.setStyle(style, mxConstants.STYLE_IMAGE, "data:image/base64," + imageStr);
-		graph.getModel().setStyle(cell, style);
-		final double dx = spotImageUpdater.getPixelSize();
-		long height = Math.min(DEFAULT_CELL_WIDTH, Math.round(2 * spot.getFeature(Spot.RADIUS) / dx ));
-		height = Math.max(height, DEFAULT_CELL_HEIGHT/3);
+		long height = DEFAULT_CELL_HEIGHT;
+		if (spotImageUpdater != null) {
+			String style = cell.getStyle();
+			String imageStr = spotImageUpdater.getImageString(spot);
+			style = mxStyleUtils.setStyle(style, mxConstants.STYLE_IMAGE, "data:image/base64," + imageStr);
+			graph.getModel().setStyle(cell, style);
+			final double dx = spotImageUpdater.getPixelSize();
+			height = Math.min(DEFAULT_CELL_WIDTH, Math.round(2 * spot.getFeature(Spot.RADIUS) / dx ));
+			height = Math.max(height, DEFAULT_CELL_HEIGHT/3);
+		}
 		graph.getModel().getGeometry(cell).setHeight(height);
 	}
 
@@ -1068,7 +1078,7 @@ public class TrackScheme extends AbstractTrackMateModelView {
 	}
 
 	/**
-	 * Remove the cell selected by the user in the GUI.
+	 * Removes the cell selected by the user in the GUI.
 	 */
 	public void removeSelectedCells() {
 		graph.getModel().beginUpdate();

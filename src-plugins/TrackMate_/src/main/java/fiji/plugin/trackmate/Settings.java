@@ -434,7 +434,7 @@ public class Settings {
 	}
 	
 	/*
-	 * EDGE FEATURES
+	 * EDGE FEATURE ANALYZERS
 	 */
 	
 	/**
@@ -480,60 +480,8 @@ public class Settings {
 		return edgeAnalyzers.remove(edgeAnalyzer);
 	}
 
-	/**
-	 * Returns the collection of features calculated from the {@link EdgeAnalyzer}s configured.
-	 * @return the collection of edge features, as strings.
-	 */
-	public List<String> getEdgeFeatures() {
-		ArrayList<String> features = new ArrayList<String>();
-		for (EdgeAnalyzer edgeAnalyzer: edgeAnalyzers) {
-			features.addAll(edgeAnalyzer.getFeatures());
-		}
-		return features;
-	}
-	
-	/**
-	 * Returns the map that links each edge feature configured to be calculated 
-	 * to its name.
-	 * @return  a map of edge feature names.
-	 */
-	public Map<String, String> getEdgeFeatureNames() {
-		HashMap<String, String> featureNames = new HashMap<String, String>();
-		for (EdgeAnalyzer edgeAnalyzer: edgeAnalyzers) {
-			featureNames.putAll(edgeAnalyzer.getFeatureNames());
-		}
-		return featureNames;
-	}
-	
-	/**
-	 * Returns the map that links each edge feature configured to be calculated 
-	 * to its short name.
-	 * @return  a map of edge feature short names.
-	 */
-	public Map<String, String> getEdgeFeatureShortNames() {
-		HashMap<String, String> featureNames = new HashMap<String, String>();
-		for (EdgeAnalyzer edgeAnalyzer: edgeAnalyzers) {
-			featureNames.putAll(edgeAnalyzer.getFeatureShortNames());
-		}
-		return featureNames;
-	}
-	
-	/**
-	 * Returns the map that links each edge feature configured to be calculated 
-	 * to its dimension.
-	 * @return  a map of edge feature names.
-	 */
-	public Map<String, Dimension> getEdgeFeatureDimensions() {
-		HashMap<String, Dimension> featureDimensions = new HashMap<String, Dimension>();
-		for (EdgeAnalyzer edgeAnalyzer: edgeAnalyzers) {
-			featureDimensions.putAll(edgeAnalyzer.getFeatureDimensions());
-		}
-		return featureDimensions;
-	}
-	
-
 	/*
-	 * TRACK FEATURES
+	 * TRACK FEATURE ANALYZERS
 	 */
 	
 	/**
@@ -578,59 +526,6 @@ public class Settings {
 	public boolean removeTrackAnalyzer(TrackAnalyzer trackAnalyzer) {
 		return trackAnalyzers.remove(trackAnalyzer);
 	}
-
-	/**
-	 * Returns the collection of features calculated from the {@link TrackAnalyzer}s configured.
-	 * @return the collection of track features, as strings.
-	 */
-	public List<String> getTrackFeatures() {
-		ArrayList<String> features = new ArrayList<String>();
-		for (TrackAnalyzer trackAnalyzer: trackAnalyzers) {
-			features.addAll(trackAnalyzer.getFeatures());
-		}
-		return features;
-	}
-	
-	/**
-	 * Returns the map that links each track feature configured to be calculated 
-	 * to its name.
-	 * @return  a map of track feature names.
-	 */
-	public Map<String, String> getTrackFeatureNames() {
-		HashMap<String, String> featureNames = new HashMap<String, String>();
-		for (TrackAnalyzer trackAnalyzer: trackAnalyzers) {
-			featureNames.putAll(trackAnalyzer.getFeatureNames());
-		}
-		return featureNames;
-	}
-	
-	/**
-	 * Returns the map that links each track feature configured to be calculated 
-	 * to its short name.
-	 * @return  a map of track feature short names.
-	 */
-	public Map<String, String> getTrackFeatureShortNames() {
-		HashMap<String, String> featureNames = new HashMap<String, String>();
-		for (TrackAnalyzer trackAnalyzer: trackAnalyzers) {
-			featureNames.putAll(trackAnalyzer.getFeatureShortNames());
-		}
-		return featureNames;
-	}
-	
-	/**
-	 * Returns the map that links each track feature configured to be calculated 
-	 * to its dimension.
-	 * @return  a map of track feature names.
-	 */
-	public Map<String, Dimension> getTrackFeatureDimensions() {
-		HashMap<String, Dimension> featureDimensions = new HashMap<String, Dimension>();
-		for (TrackAnalyzer trackAnalyzer: trackAnalyzers) {
-			featureDimensions.putAll(trackAnalyzer.getFeatureDimensions());
-		}
-		return featureDimensions;
-	}
-	
-	
 	
 	/*
 	 * FEATURE FILTERS

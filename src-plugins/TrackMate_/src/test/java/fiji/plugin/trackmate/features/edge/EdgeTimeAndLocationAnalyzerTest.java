@@ -6,15 +6,17 @@ import static org.junit.Assert.assertTrue;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 
 import org.jgrapht.graph.DefaultWeightedEdge;
 import org.junit.Before;
 import org.junit.Test;
 
-import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.Dimension;
 import fiji.plugin.trackmate.ModelChangeEvent;
 import fiji.plugin.trackmate.ModelChangeListener;
+import fiji.plugin.trackmate.Spot;
+import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.features.edges.EdgeTimeLocationAnalyzer;
 
 public class EdgeTimeAndLocationAnalyzerTest {
@@ -33,6 +35,7 @@ public class EdgeTimeAndLocationAnalyzerTest {
 
 		model = new TrackMateModel();
 		model.beginUpdate();
+		
 		try {
 
 
@@ -69,8 +72,15 @@ public class EdgeTimeAndLocationAnalyzerTest {
 
 	@Test
 	public final void testProcess() {
-		// Process model
+		// Create analyzer
 		EdgeTimeLocationAnalyzer analyzer = new EdgeTimeLocationAnalyzer(model);
+		// Register it in the model
+		Collection<String> features = analyzer.getFeatures();
+		Map<String, String> featureNames = analyzer.getFeatureNames();
+		Map<String, String> featureShortNames = analyzer.getFeatureShortNames();
+		Map<String, Dimension> featureDimensions = analyzer.getFeatureDimensions();
+		model.getFeatureModel().declareEdgeFeatures(features, featureNames, featureShortNames, featureDimensions);
+		// Process model
 		analyzer.process(model.getTrackModel().edgeSet());
 
 		// Collect features
@@ -84,6 +94,13 @@ public class EdgeTimeAndLocationAnalyzerTest {
 	public final void testModelChanged() {
 		// Initial calculation
 		final TestEdgeTimeLocationAnalyzer analyzer = new TestEdgeTimeLocationAnalyzer(model);
+		// Register it in the model
+		Collection<String> features = analyzer.getFeatures();
+		Map<String, String> featureNames = analyzer.getFeatureNames();
+		Map<String, String> featureShortNames = analyzer.getFeatureShortNames();
+		Map<String, Dimension> featureDimensions = analyzer.getFeatureDimensions();
+		model.getFeatureModel().declareEdgeFeatures(features, featureNames, featureShortNames, featureDimensions);
+		// Process model
 		analyzer.process(model.getTrackModel().edgeSet());
 
 		// Prepare listener

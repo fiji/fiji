@@ -85,7 +85,7 @@ public class GrapherPanel extends ActionListenablePanel {
 		
 		// regen edge features
 		panelEdges.removeAll();
-		List<String> edgeFeatures = trackmate.getModel().getFeatureModel().getEdgeFeatures();
+		Collection<String> edgeFeatures = trackmate.getModel().getFeatureModel().getEdgeFeatures();
 		Map<String, String> edgeFeatureNames = trackmate.getModel().getFeatureModel().getEdgeFeatureNames();
 		edgeFeatureSelectionPanel = new FeaturePlotSelectionPanel(EdgeTimeLocationAnalyzer.TIME, edgeFeatures, edgeFeatureNames);
 		panelEdges.add(edgeFeatureSelectionPanel);
@@ -98,7 +98,7 @@ public class GrapherPanel extends ActionListenablePanel {
 		
 		// regen trak features
 		panelTracks.removeAll();
-		List<String> trackFeatures = trackmate.getModel().getFeatureModel().getTrackFeatures();
+		Collection<String> trackFeatures = trackmate.getModel().getFeatureModel().getTrackFeatures();
 		Map<String, String> trackFeatureNames = trackmate.getModel().getFeatureModel().getTrackFeatureNames();
 		trackFeatureSelectionPanel = new FeaturePlotSelectionPanel(TrackIndexAnalyzer.TRACK_INDEX, trackFeatures, trackFeatureNames);
 		panelTracks.add(trackFeatureSelectionPanel);
@@ -120,7 +120,7 @@ public class GrapherPanel extends ActionListenablePanel {
 			spots.addAll(trackmate.getModel().getTrackModel().getTrackSpots(trackID));
 		}
 		
-		SpotFeatureGrapher grapher = new SpotFeatureGrapher(xFeature, yFeatures, spots, trackmate.getModel(), trackmate.getSettings());
+		SpotFeatureGrapher grapher = new SpotFeatureGrapher(xFeature, yFeatures, spots, trackmate.getModel());
 		grapher.render();
 	}
 	
@@ -130,8 +130,6 @@ public class GrapherPanel extends ActionListenablePanel {
 		for (Integer trackID : trackmate.getModel().getTrackModel().getFilteredTrackIDs()) {
 			edges.addAll(trackmate.getModel().getTrackModel().getTrackEdges(trackID));
 		}
-		// Recompute edge features
-		trackmate.getModel().getFeatureModel().computeEdgeFeatures(edges, true);
 		// Prepare grapher
 		String xFeature = edgeFeatureSelectionPanel.getXKey();
 		Set<String> yFeatures = edgeFeatureSelectionPanel.getYKeys();
@@ -140,8 +138,6 @@ public class GrapherPanel extends ActionListenablePanel {
 	}
 	
 	private void plotTrackFeatures() {
-		// Recompute track features
-		trackmate.getModel().getFeatureModel().computeTrackFeatures(trackmate.getModel().getTrackModel().getFilteredTrackIDs(), true);
 		// Prepare grapher
 		String xFeature = trackFeatureSelectionPanel.getXKey();
 		Set<String> yFeatures = trackFeatureSelectionPanel.getYKeys();

@@ -252,7 +252,7 @@ public class TrackMateGUIController implements ActionListener {
 			@Override
 			public void stateChanged(ChangeEvent event) {
 				if (DEBUG) {
-					System.out.println("[TrackMateGUIControllaer] stateChanged caught in SpotFilterDescriptor.");
+					System.out.println("[TrackMateGUIController] stateChanged caught in SpotFilterDescriptor.");
 				}
 				// We set the thresholds field of the model but do not touch its selected spot field yet.
 				trackmate.getSettings().setSpotFilters(spotFilterDescriptor.getComponent().getFeatureFilters());
@@ -301,6 +301,7 @@ public class TrackMateGUIController implements ActionListener {
 		 * Finished, let's change the display settings.
 		 */
 		configureViewsDescriptor	= new ConfigureViewsDescriptor(trackmate);
+		// TODO listen to user events and button presses occurring in the panel.
 		
 		/*
 		 * Export and graph features.

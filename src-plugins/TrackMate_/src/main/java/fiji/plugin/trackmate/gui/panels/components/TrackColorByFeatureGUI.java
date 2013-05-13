@@ -10,9 +10,9 @@ import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 
 import javax.swing.Box;
@@ -54,7 +54,7 @@ public class TrackColorByFeatureGUI extends ActionListenablePanel {
 	 * DEFAULT VISIBILITY
 	 */
 
-	private final Map<TrackColorGenerator, List<String>> features;
+	private final Map<TrackColorGenerator, Collection<String>> features;
 	private final Map<String, String> featureNames;
 	private final Map<TrackColorGenerator, String> categoryNames;
 
@@ -69,12 +69,12 @@ public class TrackColorByFeatureGUI extends ActionListenablePanel {
 	public TrackColorByFeatureGUI(TrackMateModel model) {
 		super();
 		// Build features map
-		features = new LinkedHashMap<TrackColorGenerator, List<String>>(2);
+		features = new LinkedHashMap<TrackColorGenerator, Collection<String>>(2);
 		trackColorGenerator = new PerTrackFeatureColorGenerator(model, TrackIndexAnalyzer.TRACK_INDEX);
-		List<String> trackFeatures = model.getFeatureModel().getTrackFeatures();
+		Collection<String> trackFeatures = model.getFeatureModel().getTrackFeatures();
 		features.put(trackColorGenerator, trackFeatures);
 		edgeColorGenerator = new PerEdgeFeatureColorGenerator(model, EdgeVelocityAnalyzer.VELOCITY);
-		List<String> edgeFeatures = model.getFeatureModel().getEdgeFeatures();
+		Collection<String> edgeFeatures = model.getFeatureModel().getEdgeFeatures();
 		features.put(edgeColorGenerator, edgeFeatures);
 		// Build feature names
 		featureNames = new HashMap<String, String>(trackFeatures.size() + edgeFeatures.size());

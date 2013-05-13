@@ -60,7 +60,6 @@ public class InfoPane extends JPanel implements SelectionChangeListener {
 	private JScrollPane scrollTable;
 	private boolean doHighlightSelection = true;
 	private final TrackMateModel model;
-	private final Settings settings;
 	private final SelectionModel selectionModel;
 	/** A copy of the last spot collection highlighted in this infopane, sorted by frame order. */
 	private Collection<Spot> spotSelection;
@@ -83,12 +82,11 @@ public class InfoPane extends JPanel implements SelectionChangeListener {
 	 * @param model the {@link TrackMateModel} from which the spot collection is taken.
 	 * @param settings  the {@link Settings} object we use to retrieve spot feature names.
 	 */
-	public InfoPane(TrackMateModel model, Settings settings, SelectionModel selectionModel) {
+	public InfoPane(TrackMateModel model, SelectionModel selectionModel) {
 		this.model = model;
-		this.settings = settings;
 		this.selectionModel = selectionModel;
-		List<String> features = settings.getSpotFeatures();
-		Map<String, String> featureNames = settings.getSpotFeatureShortNames();
+		List<String> features = new ArrayList<String>(model.getFeatureModel().getSpotFeatures());
+		Map<String, String> featureNames = model.getFeatureModel().getSpotFeatureShortNames();
 		headers = TMUtils.getArrayFromMaping(features, featureNames).toArray(new String[] {});
 
 		this.updater = new OnRequestUpdater(new Refreshable() {
@@ -157,7 +155,7 @@ public class InfoPane extends JPanel implements SelectionChangeListener {
 			public boolean isCellEditable(int row, int column) { return false; }
 		};
 
-		List<String> features = settings.getSpotFeatures();
+		List<String> features = new ArrayList<String>(model.getFeatureModel().getSpotFeatures());
 		for (Spot spot : sortedSpots) {
 			if (null == spot) {
 				continue;
@@ -219,7 +217,7 @@ public class InfoPane extends JPanel implements SelectionChangeListener {
 
 	private void exportTableToImageJ() {
 		ResultsTable table = new ResultsTable();
-		List<String> features = settings.getSpotFeatures();
+		List<String> features = new ArrayList<String>(model.getFeatureModel().getSpotFeatures());
 		
 		int ncols = spotSelection.size();
 		int nrows = headers.length;
@@ -289,8 +287,8 @@ public class InfoPane extends JPanel implements SelectionChangeListener {
 		scrollTable.getViewport().setOpaque(false);
 		scrollTable.setVisible(false); // for now
 
-		List<String> features = settings.getSpotFeatures();
-		Map<String, String> featureNames = settings.getSpotFeatureShortNames();
+		List<String> features = new ArrayList<String>(model.getFeatureModel().getSpotFeatures());
+		Map<String, String> featureNames = model.getFeatureModel().getSpotFeatureShortNames();
 		featureSelectionPanel = new FeaturePlotSelectionPanel(Spot.POSITION_T, features, featureNames);
 
 		setLayout(new BorderLayout());
@@ -322,7 +320,7 @@ public class InfoPane extends JPanel implements SelectionChangeListener {
 			return;
 		}
 
-		SpotFeatureGrapher grapher = new SpotFeatureGrapher(xFeature, yFeatures, spots, model, settings);
+		SpotFeatureGrapher grapher = new SpotFeatureGrapher(xFeature, yFeatures, spots, model);
 		grapher.render();
 	}
 	

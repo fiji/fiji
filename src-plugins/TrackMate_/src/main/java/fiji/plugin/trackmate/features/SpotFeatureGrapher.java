@@ -20,7 +20,6 @@ import org.jfree.data.xy.XYSeriesCollection;
 import org.jgrapht.graph.DefaultWeightedEdge;
 
 import fiji.plugin.trackmate.Dimension;
-import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.util.ExportableChartPanel;
@@ -40,12 +39,12 @@ public class SpotFeatureGrapher extends AbstractFeatureGrapher  {
 	 * CONSTRUCTOR
 	 */
 
-	public SpotFeatureGrapher(final String xFeature, final Set<String> yFeatures, final Collection<Spot> spots, final TrackMateModel model, final Settings settings) {
+	public SpotFeatureGrapher(final String xFeature, final Set<String> yFeatures, final Collection<Spot> spots, final TrackMateModel model) {
 		super(xFeature, yFeatures, model);
 		this.spots = spots;
-		this.xDimension = settings.getSpotFeatureDimensions().get(xFeature);
-		this.yDimensions = settings.getSpotFeatureDimensions();
-		this.featureNames = settings.getSpotFeatureNames();
+		this.xDimension = model.getFeatureModel().getSpotFeatureDimensions().get(xFeature);
+		this.yDimensions = model.getFeatureModel().getSpotFeatureDimensions();
+		this.featureNames = model.getFeatureModel().getSpotFeatureNames();
 	}
 	
 	/*

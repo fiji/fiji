@@ -103,7 +103,7 @@ public class TrackSchemeFrame extends JFrame  {
 		graphComponent = createGraphComponent();
 
 		// Add the info pane
-		infoPane = new InfoPane(trackScheme.getModel(), trackScheme.settings, trackScheme.getSelectionModel());
+		infoPane = new InfoPane(trackScheme.getModel(), trackScheme.getSelectionModel());
 		JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, infoPane, graphComponent);
 		splitPane.setDividerLocation(170);
 		getContentPane().add(splitPane, BorderLayout.CENTER);

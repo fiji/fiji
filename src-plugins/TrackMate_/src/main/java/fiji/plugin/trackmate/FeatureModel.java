@@ -44,9 +44,9 @@ public class FeatureModel {
 	private HashMap<String, Dimension> edgeFeatureDimensions = new HashMap<String, Dimension>();
 
 	private Collection<String> spotFeatures = new HashSet<String>();
-	private Map<String,String> spotFeatureNames = new HashMap<String, String>();
-	private Map<String,String> spotFeatureShortNames = new HashMap<String, String>();
-	private Map<String,String> spotFeatureDimensions = new HashMap<String, String>();
+	private Map<String, String> spotFeatureNames = new HashMap<String, String>();
+	private Map<String, String> spotFeatureShortNames = new HashMap<String, String>();
+	private Map<String, Dimension> spotFeatureDimensions = new HashMap<String, Dimension>();
 
 	private TrackMateModel model;
 
@@ -130,16 +130,18 @@ public class FeatureModel {
 
 	/**
 	 * Stores a numerical feature for an edge of this model. The specified edge must exist in 
-	 * the model, and the feature must have been declared. 
+	 * the model, and the feature must have been declared. If not, an {@link IllegalArgumentException}
+	 * is thrown.
 	 * @param edge  the edge whose features to update.
 	 * @param feature  the feature.
 	 * @param value  the feature value
-	 * @return <code>true</code> if the specified edge and feature belong to the model and had its feature
-	 * updated; <code>false</code> otherwise. 
 	 */
-	public synchronized boolean putEdgeFeature(DefaultWeightedEdge edge, final String feature, final Double value) {
-		if (!model.getTrackModel().edgeSet().contains(edge) || !edgeFeatures.contains(feature)) {
-			return false;
+	public synchronized void putEdgeFeature(DefaultWeightedEdge edge, final String feature, final Double value) {
+		if (!model.getTrackModel().edgeSet().contains(edge)) {
+			throw new IllegalArgumentException("Edge cannot be found in the model: " + edge);
+		}
+		if (!edgeFeatures.contains(feature)) {
+			throw new IllegalArgumentException("Edge feature is not registered in the model: " + feature);
 		}
 		
 		ConcurrentHashMap<String, Double> map = edgeFeatureValues.get(edge);
@@ -148,7 +150,6 @@ public class FeatureModel {
 			edgeFeatureValues.put(edge, map);
 		}
 		map.put(feature, value);
-		return true;
 	}
 
 	public Double getEdgeFeature(DefaultWeightedEdge edge, final String featureName) {
@@ -318,18 +319,20 @@ public class FeatureModel {
 
 	/**
 	 * Stores a track numerical feature. The track ID must exist in the model and 
-	 * the specified feature must have been declared.
+	 * the specified feature must have been declared. If not, an {@link IllegalArgumentException}
+	 * is thrown.
 	 * @param trackID  the ID of the track. It must be an existing track ID.
 	 * @param feature  the feature.
 	 * @param value  the feature value.
-	 * @return <code>true</code> if the specified track ID and feature was found in the model and the 
-	 * specified feature has been updated, <code>false</code> otherwise.
 	 */
-	public synchronized boolean putTrackFeature(final Integer trackID, final String feature, final Double value) {
+	public synchronized void putTrackFeature(final Integer trackID, final String feature, final Double value) {
 		
 		// We use getTrackSpots, because it is seldom recomputed.
-		if (!model.getTrackModel().getTrackSpots().keySet().contains(trackID) || !trackFeatures.contains(feature)) {
-			return false;
+		if (!model.getTrackModel().getTrackSpots().keySet().contains(trackID)) {
+			throw new IllegalArgumentException("Track ID cannot be found in the in model: " + trackID);
+		}
+		if (!trackFeatures.contains(feature)) {
+			throw new IllegalArgumentException("Track feature is not registered in the model: " + feature);
 		}
 		
 		Map<String, Double> trackFeatureMap = trackFeatureValues.get(trackID);
@@ -338,7 +341,6 @@ public class FeatureModel {
 			trackFeatureValues.put(trackID, trackFeatureMap);
 		}
 		trackFeatureMap.put(feature, value);
-		return true;
 	}
 
 	/**
@@ -422,7 +424,41 @@ public class FeatureModel {
 			if (null == dimension) {
 				throw new IllegalArgumentException("Feature " + feature + " misses a dimension.");
 			}
+			spotFeatureDimensions.put(feature, dimension);
 		}
 	}
+	
+	/**
+	 * Returns spot features as declared in this model. 
+	 * @return the spot features.
+	 */ 
+	public Collection<String> getSpotFeatures() {
+		return spotFeatures;
+	}
+
+	/**
+	 * Returns the name mapping of the spot features that are dealt with in this model.
+	 * @return the map of spot feature names.
+	 */
+	public Map<String, String> getSpotFeatureNames() {
+		return spotFeatureNames;
+	}
+
+	/**
+	 * Returns the short name mapping of the spot features that are dealt with in this model.
+	 * @return the map of spot short names.
+	 */
+	public Map<String, String> getSpotFeatureShortNames() {
+		return spotFeatureShortNames;
+	}
+
+	/**
+	 * Returns the dimension mapping of the spot features that are dealt with in this model.
+	 * @return the map of spot feature dimensions.
+	 */
+	public Map<String, Dimension> getSpotFeatureDimensions() {
+		return spotFeatureDimensions;
+	}
+
 
 }
