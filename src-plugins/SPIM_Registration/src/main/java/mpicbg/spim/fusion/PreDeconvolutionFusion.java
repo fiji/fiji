@@ -6,6 +6,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.vecmath.Point3f;
 
+import fiji.plugin.Multi_View_Deconvolution;
+
 import mpicbg.imglib.cursor.LocalizableByDimCursor;
 import mpicbg.imglib.cursor.LocalizableCursor;
 import mpicbg.imglib.image.Image;
@@ -69,6 +71,12 @@ public class PreDeconvolutionFusion extends SPIMImageFusion implements PreDeconv
 
 		}		
 	}
+	
+	public static void subtractBackground( final Image< FloatType > img, final float value )
+	{
+		for ( final FloatType t : img )
+			t.set( Math.max( 0, t.get() - value ) );
+	}
 
 	@Override
 	public void fuseSPIMImages( final int channelIndex )
@@ -93,7 +101,17 @@ public class PreDeconvolutionFusion extends SPIMImageFusion implements PreDeconv
 		
 		// load images 
 		for ( final ViewDataBeads view : views )
+		{
 			view.getImage();
+			if ( Multi_View_Deconvolution.subtractBackground != 0 )
+			{
+        		if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_ERRORONLY )
+        			IOFunctions.println( "PreDeconvolutionFusionSequential(): Subtracting background of " + Multi_View_Deconvolution.subtractBackground + " from " + view.getName() );
+
+        		subtractBackground( view.getImage( false ), Multi_View_Deconvolution.subtractBackground );
+				view.getImage( true );
+			}
+		}
 			
 		if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_MAIN && isolatedWeightenerFactories.size() > 0 )
 		{

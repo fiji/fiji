@@ -6,6 +6,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.vecmath.Point3f;
 
+import fiji.plugin.Multi_View_Deconvolution;
+
 import mpicbg.imglib.cursor.LocalizableCursor;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.image.ImageFactory;
@@ -322,6 +324,14 @@ public class PreDeconvolutionFusionSequential extends SPIMImageFusion implements
 			
 			// load image
 			views.get( i ).getImage();
+			if ( Multi_View_Deconvolution.subtractBackground != 0 )
+			{
+        		if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_ERRORONLY )
+        			IOFunctions.println( "PreDeconvolutionFusionSequential(): Subtracting background of " + Multi_View_Deconvolution.subtractBackground + " from " + views.get( i ).getName() );
+        		
+				PreDeconvolutionFusion.subtractBackground( views.get( i ).getImage( false ), Multi_View_Deconvolution.subtractBackground );
+				views.get( i ).getImage( true );
+			}
 			
 	        ai.set( 0 );
 	        threads = SimpleMultiThreading.newThreads(conf.numberOfThreads);
