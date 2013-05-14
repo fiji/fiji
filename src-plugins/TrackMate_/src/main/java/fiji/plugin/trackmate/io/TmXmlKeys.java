@@ -35,7 +35,7 @@ class TmXmlKeys {
 	public static final String LOG_ELEMENT_KEY 						= "Log";
 	
 	/*
-	 * SETTINGS elements
+	 * BASE SETTINGS elements
 	 */
 	
 	public static final String CROP_ELEMENT_KEY 				= "BasicSettings";
@@ -126,5 +126,31 @@ class TmXmlKeys {
 	
 	public static final String FILTERED_TRACK_ELEMENT_KEY 				= "FilteredTracks";
 	public static final String TRACK_ID_ELEMENT_KEY 					= "TrackID";
+	
+	/*
+	 * FEATURES elements
+	 */
+	
+	public static final String FEATURE_DECLARATIONS_ELEMENT_KEY 		= "FeatureDeclarations";
+	public static final String SPOT_FEATURES_ELEMENT_KEY 				= "SpotFeatures";
+	public static final String EDGE_FEATURES_ELEMENT_KEY 				= "EdgeFeatures";
+	public static final String TRACK_FEATURES_ELEMENT_KEY 				= "TrackFeatures";
+	public static final String FEATURE_ELEMENT_KEY 						= "Feature";
+	public static final String FEATURE_ATTRIBUTE						= "feature";
+	public static final String FEATURE_NAME_ATTRIBUTE					= "name";
+	public static final String FEATURE_SHORT_NAME_ATTRIBUTE				= "shortname";
+	public static final String FEATURE_DIMENSION_ATTRIBUTE				= "dimension";
+	
+	/*
+	 * SPOT< EDGE AND TRACK FEATURE ANALYZERS elements
+	 */
+	
+	public static final String ANALYZER_COLLECTION_ELEMENT_KEY 			= "AnalyzerCollection";
+	public static final String SPOT_ANALYSERS_ELEMENT_KEY 				= "SpotAnalyzers";
+	public static final String EDGE_ANALYSERS_ELEMENT_KEY 				= "EdgeAnalyzers";
+	public static final String TRACK_ANALYSERS_ELEMENT_KEY 				= "TrackAnalyzers";
+	public static final String ANALYSER_ELEMENT_KEY 					= "Analyzer";
+	public static final String ANALYSER_KEY_ATTRIBUTE 					= "key";
+
 	
 }

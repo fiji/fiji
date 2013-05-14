@@ -290,14 +290,16 @@ public class Spot {
 
 	/** The position features. */
 	public final static String[] POSITION_FEATURES = new String[] { POSITION_X, POSITION_Y, POSITION_Z };
-	/** The 6 privileged spot features that must be set by a spot detector. */
-	public final static Collection<String> FEATURES = new ArrayList<String>(6);
-	/** The 6 privileged spot feature names. */
-	public final static Map<String, String> FEATURE_NAMES = new HashMap<String, String>(6);
-	/** The 6 privileged spot feature short names. */
-	public final static Map<String, String> FEATURE_SHORT_NAMES = new HashMap<String, String>(6);
-	/** The 6 privileged spot feature dimensions. */
-	public final static Map<String, Dimension> FEATURE_DIMENSIONS = new HashMap<String, Dimension>(6);
+	/** The 7 privileged spot features that must be set by a spot detector: {@link #QUALITY},
+	 * {@link #POSITION_X}, {@link #POSITION_Y}, {@link #POSITION_Z}, {@link #POSITION_Z},
+	 * {@link #RADIUS}, {@link #FRAME}. */
+	public final static Collection<String> FEATURES = new ArrayList<String>(7);
+	/** The 7 privileged spot feature names. */
+	public final static Map<String, String> FEATURE_NAMES = new HashMap<String, String>(7);
+	/** The 7 privileged spot feature short names. */
+	public final static Map<String, String> FEATURE_SHORT_NAMES = new HashMap<String, String>(7);
+	/** The 7 privileged spot feature dimensions. */
+	public final static Map<String, Dimension> FEATURE_DIMENSIONS = new HashMap<String, Dimension>(7);
 
 	static {
 		FEATURES.add(QUALITY);

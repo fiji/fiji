@@ -54,8 +54,16 @@ public class FeatureModel {
 	 * CONSTRUCTOR
 	 */
 
+	/**
+	 * Instantiates a new feature model. 
+	 * The basic spot features (POSITON_*, RADIUS, FRAME, QUALITY) are declared. Edge and track
+	 * feature declarations are left blank.
+	 * @param model
+	 */
 	FeatureModel(TrackMateModel model) {
 		this.model = model;
+		// Adds the base spot features
+		declareSpotFeatures(Spot.FEATURES, Spot.FEATURE_NAMES, Spot.FEATURE_SHORT_NAMES, Spot.FEATURE_DIMENSIONS);
 	}
 
 	/*
@@ -170,14 +178,9 @@ public class FeatureModel {
 	
 
 	/**
-	 * Resets the edge features, names, short names, dimensions and values. 
-	 * New features will have to be declared prior to storing them.
+	 * Clears the edge features values.
 	 */
 	public void clearEdgeFeatures() {
-		edgeFeatures.clear();
-		edgeFeatureNames.clear();
-		edgeFeatureShortNames.clear();
-		edgeFeatureDimensions.clear();
 		edgeFeatureValues.clear();
 	}
 	
@@ -251,14 +254,9 @@ public class FeatureModel {
 	}
 	
 	/**
-	 * Resets the track features, names, short names, dimensions and values. 
-	 * New features will have to be declared prior to storing them.
+	 * Clears the track features values.
 	 */
 	public void clearTrackFeatures() {
-		trackFeatures.clear();
-		trackFeatureNames.clear();
-		trackFeatureShortNames.clear();
-		trackFeatureDimensions.clear();
 		trackFeatureValues.clear();
 	}
 	
@@ -382,17 +380,6 @@ public class FeatureModel {
 	 * SPOT FEATURES
 	 * the spot features are stored in the Spot object themselves, but we declare them here.
 	 */
-	
-
-	/**
-	 * Resets the spot features, names, short names and dimensions.
-	 */
-	public void clearSpotFeatures() {
-		spotFeatures .clear();
-		spotFeatureNames .clear();
-		spotFeatureShortNames .clear();
-		spotFeatureDimensions .clear();
-	}
 	
 	/**
 	 * Declares spot features, by specifying their names, short name and dimension.

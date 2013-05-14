@@ -2,7 +2,7 @@ package fiji.plugin.trackmate.io;
 
 import static fiji.plugin.trackmate.io.TmXmlKeys.CROP_ELEMENT_KEY;
 import static fiji.plugin.trackmate.io.TmXmlKeys.CROP_TEND_ATTRIBUTE_NAME;
-import static fiji.plugin.trackmate.io.TmXmlKeys.CROP_TSTART_ATTRIBUTE_NAME;
+import static fiji.plugin.trackmate.io.TmXmlKeys.*;
 import static fiji.plugin.trackmate.io.TmXmlKeys.CROP_XEND_ATTRIBUTE_NAME;
 import static fiji.plugin.trackmate.io.TmXmlKeys.CROP_XSTART_ATTRIBUTE_NAME;
 import static fiji.plugin.trackmate.io.TmXmlKeys.CROP_YEND_ATTRIBUTE_NAME;
@@ -69,13 +69,18 @@ import org.jdom2.output.Format;
 import org.jdom2.output.XMLOutputter;
 import org.jgrapht.graph.DefaultWeightedEdge;
 
+import fiji.plugin.trackmate.Dimension;
+import fiji.plugin.trackmate.FeatureModel;
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.features.FeatureFilter;
+import fiji.plugin.trackmate.features.edges.EdgeAnalyzer;
 import fiji.plugin.trackmate.features.edges.EdgeTargetAnalyzer;
+import fiji.plugin.trackmate.features.spot.SpotAnalyzerFactory;
+import fiji.plugin.trackmate.features.track.TrackAnalyzer;
 import fiji.plugin.trackmate.features.track.TrackIndexAnalyzer;
 import fiji.plugin.trackmate.providers.DetectorProvider;
 import fiji.plugin.trackmate.providers.TrackerProvider;
@@ -145,6 +150,9 @@ public class TmXmlWriter {
 		modelElement.setAttribute(SPATIAL_UNITS_ATTRIBUTE_NAME, model.getSpaceUnits());
 		modelElement.setAttribute(TIME_UNITS_ATTRIBUTE_NAME, model.getTimeUnits());
 		
+		Element featureDeclarationElement = echoFeaturesDeclaration(model);
+		modelElement.addContent(featureDeclarationElement);
+		
 		Element spotElement = echoSpots(model);
 		modelElement.addContent(spotElement);
 		
@@ -186,8 +194,12 @@ public class TmXmlWriter {
 		Element trackFiltersElement = echoTrackFilters(settings);
 		settingsElement.addContent(trackFiltersElement);
 		
+		Element analyzersElement = echoAnalyzers(settings);
+		settingsElement.addContent(analyzersElement);
+		
 		root.addContent(settingsElement);
 	}
+
 
 	public void appendLog(String log) {
 		if (null != log) {
@@ -202,8 +214,6 @@ public class TmXmlWriter {
 	 * PRIVATE METHODS
 	 */
 	
-
-
 	private Element echoCropSettings(Settings settings) {
 		Element settingsElement = new Element(CROP_ELEMENT_KEY);
 		settingsElement.setAttribute(CROP_XSTART_ATTRIBUTE_NAME, ""+settings.xstart);
@@ -361,6 +371,64 @@ public class TmXmlWriter {
 		logger.log("  Added " + spots.getNSpots(false) + " spots.\n");
 		return spotCollectionElement;
 	}
+	
+	private Element echoFeaturesDeclaration(TrackMateModel model) {
+		
+		FeatureModel fm = model.getFeatureModel();
+		Element featuresElement = new Element(FEATURE_DECLARATIONS_ELEMENT_KEY);
+		
+		// Spots
+		Element spotFeaturesElement = new Element(SPOT_FEATURES_ELEMENT_KEY);
+		Collection<String> features = fm.getSpotFeatures();
+		Map<String, String> featureNames = fm.getSpotFeatureNames();
+		Map<String, String> featureShortNames = fm.getSpotFeatureShortNames();
+		Map<String, Dimension> featureDimensions = fm.getSpotFeatureDimensions();
+		for (String feature : features) {
+			Element fel = new Element(FEATURE_ELEMENT_KEY);
+			fel.setAttribute(FEATURE_ATTRIBUTE, feature);
+			fel.setAttribute(FEATURE_NAME_ATTRIBUTE, featureNames.get(feature));
+			fel.setAttribute(FEATURE_SHORT_NAME_ATTRIBUTE, featureShortNames.get(feature));
+			fel.setAttribute(FEATURE_DIMENSION_ATTRIBUTE, featureDimensions.get(feature).name());
+			spotFeaturesElement.addContent(fel);
+		}
+		featuresElement.addContent(spotFeaturesElement);
+		
+		// Edges
+		Element edgeFeaturesElement = new Element(EDGE_FEATURES_ELEMENT_KEY);
+		features = fm.getEdgeFeatures();
+		featureNames = fm.getEdgeFeatureNames();
+		featureShortNames = fm.getEdgeFeatureShortNames();
+		featureDimensions = fm.getEdgeFeatureDimensions();
+		for (String feature : features) {
+			Element fel = new Element(FEATURE_ELEMENT_KEY);
+			fel.setAttribute(FEATURE_ATTRIBUTE, feature);
+			fel.setAttribute(FEATURE_NAME_ATTRIBUTE, featureNames.get(feature));
+			fel.setAttribute(FEATURE_SHORT_NAME_ATTRIBUTE, featureShortNames.get(feature));
+			fel.setAttribute(FEATURE_DIMENSION_ATTRIBUTE, featureDimensions.get(feature).name());
+			edgeFeaturesElement.addContent(fel);
+		}
+		featuresElement.addContent(edgeFeaturesElement);
+		
+		// Tracks
+		Element trackFeaturesElement = new Element(TRACK_FEATURES_ELEMENT_KEY);
+		features = fm.getTrackFeatures();
+		featureNames = fm.getTrackFeatureNames();
+		featureShortNames = fm.getTrackFeatureShortNames();
+		featureDimensions = fm.getTrackFeatureDimensions();
+		for (String feature : features) {
+			Element fel = new Element(FEATURE_ELEMENT_KEY);
+			fel.setAttribute(FEATURE_ATTRIBUTE, feature);
+			fel.setAttribute(FEATURE_NAME_ATTRIBUTE, featureNames.get(feature));
+			fel.setAttribute(FEATURE_SHORT_NAME_ATTRIBUTE, featureShortNames.get(feature));
+			fel.setAttribute(FEATURE_DIMENSION_ATTRIBUTE, featureDimensions.get(feature).name());
+			trackFeaturesElement.addContent(fel);
+		}
+		featuresElement.addContent(trackFeaturesElement);
+		
+		logger.log("  Added spot, edge and track feature declarations.");
+		return featuresElement;
+	}
+
 
 	private Element echoInitialSpotFilter(Settings settings) {
 		Element itElement = new Element(INITIAL_SPOT_FILTER_ELEMENT_KEY);
@@ -400,6 +468,44 @@ public class TmXmlWriter {
 		logger.log("  Added track feature filters.\n");
 		return trackFiltersElement;
 	}
+	
+	private Element echoAnalyzers(Settings settings) {
+		Element analyzersElement = new Element(ANALYZER_COLLECTION_ELEMENT_KEY);
+		
+		// Spot analyzers
+		Element spotAnalyzersEl = new Element(SPOT_ANALYSERS_ELEMENT_KEY);
+		for (SpotAnalyzerFactory<?> analyzer : settings.getSpotAnalyzerFactories()) {
+			Element analyzerEl = new Element(ANALYSER_ELEMENT_KEY);
+			analyzerEl.setAttribute(ANALYSER_KEY_ATTRIBUTE, analyzer.getKey());
+		}
+		analyzersElement.addContent(spotAnalyzersEl);
+		
+		// Edge analyzers
+		Element edgeAnalyzersEl = new Element(EDGE_ANALYSERS_ELEMENT_KEY);
+		for (EdgeAnalyzer analyzer : settings.getEdgeAnalyzers()) {
+			Element analyzerEl = new Element(ANALYSER_ELEMENT_KEY);
+			analyzerEl.setAttribute(ANALYSER_KEY_ATTRIBUTE, analyzer.getKey());
+		}
+		analyzersElement.addContent(edgeAnalyzersEl);
+
+		// Track analyzers
+		Element trackAnalyzersEl = new Element(TRACK_ANALYSERS_ELEMENT_KEY);
+		for (TrackAnalyzer analyzer : settings.getTrackAnalyzers()) {
+			Element analyzerEl = new Element(ANALYSER_ELEMENT_KEY);
+			analyzerEl.setAttribute(ANALYSER_KEY_ATTRIBUTE, analyzer.getKey());
+		}
+		analyzersElement.addContent(trackAnalyzersEl);
+
+		logger.log("  Added spot, edge and track analyzers.\n");
+		return analyzersElement;
+	}
+
+	
+	
+	
+	/*
+	 * STATIC METHODS
+	 */
 
 	private static final Element marshalSpot(final Spot spot) {
 		Collection<Attribute> attributes = new ArrayList<Attribute>();

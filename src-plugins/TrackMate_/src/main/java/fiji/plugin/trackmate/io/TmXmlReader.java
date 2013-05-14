@@ -4,7 +4,7 @@ import static fiji.plugin.trackmate.io.IOUtils.readBooleanAttribute;
 import static fiji.plugin.trackmate.io.IOUtils.readDoubleAttribute;
 import static fiji.plugin.trackmate.io.IOUtils.readIntAttribute;
 import static fiji.plugin.trackmate.io.TmXmlKeys.CROP_ELEMENT_KEY;
-import static fiji.plugin.trackmate.io.TmXmlKeys.CROP_TEND_ATTRIBUTE_NAME;
+import static fiji.plugin.trackmate.io.TmXmlKeys.*;
 import static fiji.plugin.trackmate.io.TmXmlKeys.CROP_TSTART_ATTRIBUTE_NAME;
 import static fiji.plugin.trackmate.io.TmXmlKeys.CROP_XEND_ATTRIBUTE_NAME;
 import static fiji.plugin.trackmate.io.TmXmlKeys.CROP_XSTART_ATTRIBUTE_NAME;
@@ -13,6 +13,13 @@ import static fiji.plugin.trackmate.io.TmXmlKeys.CROP_YSTART_ATTRIBUTE_NAME;
 import static fiji.plugin.trackmate.io.TmXmlKeys.CROP_ZEND_ATTRIBUTE_NAME;
 import static fiji.plugin.trackmate.io.TmXmlKeys.CROP_ZSTART_ATTRIBUTE_NAME;
 import static fiji.plugin.trackmate.io.TmXmlKeys.DETECTOR_SETTINGS_ELEMENT_KEY;
+import static fiji.plugin.trackmate.io.TmXmlKeys.EDGE_FEATURES_ELEMENT_KEY;
+import static fiji.plugin.trackmate.io.TmXmlKeys.FEATURE_ATTRIBUTE;
+import static fiji.plugin.trackmate.io.TmXmlKeys.FEATURE_DECLARATIONS_ELEMENT_KEY;
+import static fiji.plugin.trackmate.io.TmXmlKeys.FEATURE_DIMENSION_ATTRIBUTE;
+import static fiji.plugin.trackmate.io.TmXmlKeys.FEATURE_ELEMENT_KEY;
+import static fiji.plugin.trackmate.io.TmXmlKeys.FEATURE_NAME_ATTRIBUTE;
+import static fiji.plugin.trackmate.io.TmXmlKeys.FEATURE_SHORT_NAME_ATTRIBUTE;
 import static fiji.plugin.trackmate.io.TmXmlKeys.FILTERED_TRACK_ELEMENT_KEY;
 import static fiji.plugin.trackmate.io.TmXmlKeys.FILTER_ABOVE_ATTRIBUTE_NAME;
 import static fiji.plugin.trackmate.io.TmXmlKeys.FILTER_ELEMENT_KEY;
@@ -39,6 +46,7 @@ import static fiji.plugin.trackmate.io.TmXmlKeys.SPATIAL_UNITS_ATTRIBUTE_NAME;
 import static fiji.plugin.trackmate.io.TmXmlKeys.SPOT_COLLECTION_ELEMENT_KEY;
 import static fiji.plugin.trackmate.io.TmXmlKeys.SPOT_COLLECTION_NSPOTS_ATTRIBUTE_NAME;
 import static fiji.plugin.trackmate.io.TmXmlKeys.SPOT_ELEMENT_KEY;
+import static fiji.plugin.trackmate.io.TmXmlKeys.SPOT_FEATURES_ELEMENT_KEY;
 import static fiji.plugin.trackmate.io.TmXmlKeys.SPOT_FILTER_COLLECTION_ELEMENT_KEY;
 import static fiji.plugin.trackmate.io.TmXmlKeys.SPOT_FRAME_COLLECTION_ELEMENT_KEY;
 import static fiji.plugin.trackmate.io.TmXmlKeys.SPOT_ID_ATTRIBUTE_NAME;
@@ -48,6 +56,7 @@ import static fiji.plugin.trackmate.io.TmXmlKeys.TRACKER_SETTINGS_ELEMENT_KEY;
 import static fiji.plugin.trackmate.io.TmXmlKeys.TRACK_COLLECTION_ELEMENT_KEY;
 import static fiji.plugin.trackmate.io.TmXmlKeys.TRACK_EDGE_ELEMENT_KEY;
 import static fiji.plugin.trackmate.io.TmXmlKeys.TRACK_ELEMENT_KEY;
+import static fiji.plugin.trackmate.io.TmXmlKeys.TRACK_FEATURES_ELEMENT_KEY;
 import static fiji.plugin.trackmate.io.TmXmlKeys.TRACK_FILTER_COLLECTION_ELEMENT_KEY;
 import static fiji.plugin.trackmate.io.TmXmlKeys.TRACK_ID_ELEMENT_KEY;
 import static fiji.plugin.trackmate.io.TmXmlKeys.TRACK_NAME_ATTRIBUTE_NAME;
@@ -58,12 +67,16 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+
+import net.imglib2.img.ImagePlusAdapter;
+import net.imglib2.img.ImgPlus;
 
 import org.jdom2.Attribute;
 import org.jdom2.DataConversionException;
@@ -77,15 +90,22 @@ import org.jgrapht.graph.SimpleDirectedWeightedGraph;
 import fiji.plugin.trackmate.FeatureModel;
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.Logger.StringBuilderLogger;
+import fiji.plugin.trackmate.Dimension;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.detection.SpotDetectorFactory;
 import fiji.plugin.trackmate.features.FeatureFilter;
+import fiji.plugin.trackmate.features.edges.EdgeAnalyzer;
 import fiji.plugin.trackmate.features.edges.EdgeTargetAnalyzer;
+import fiji.plugin.trackmate.features.spot.SpotAnalyzerFactory;
+import fiji.plugin.trackmate.features.track.TrackAnalyzer;
 import fiji.plugin.trackmate.features.track.TrackIndexAnalyzer;
 import fiji.plugin.trackmate.providers.DetectorProvider;
+import fiji.plugin.trackmate.providers.EdgeAnalyzerProvider;
+import fiji.plugin.trackmate.providers.SpotAnalyzerProvider;
+import fiji.plugin.trackmate.providers.TrackAnalyzerProvider;
 import fiji.plugin.trackmate.providers.TrackerProvider;
 import fiji.plugin.trackmate.tracking.SpotTracker;
 
@@ -106,6 +126,9 @@ public class TmXmlReader {
 	protected ConcurrentHashMap<Integer, Spot> cache;
 	protected StringBuilderLogger logger = new StringBuilderLogger();
 	private final Element root;
+	/** If <code>false</code>, an error occured during reading. 
+	 * @see #getErrorMessage(). */
+	private boolean ok = true;
 
 	/*
 	 * CONSTRUCTORS
@@ -122,11 +145,13 @@ public class TmXmlReader {
 			document = sb.build(file);
 			r  = document.getRootElement();
 		} catch (JDOMException e) {
+			ok = false;
 			logger.error("Problem parsing "+file.getName()+", it is not a valid TrackMate XML file.\nError message is:\n"
 					+e.getLocalizedMessage()+'\n');
 		} catch (IOException e) {
 			logger.error("Problem reading "+file.getName()
 					+".\nError message is:\n"+e.getLocalizedMessage()+'\n');
+			ok = false;
 		}
 		this.root = r;
 	}
@@ -134,7 +159,7 @@ public class TmXmlReader {
 	/*
 	 * PUBLIC METHODS
 	 */
-	
+
 	/**
 	 * Returns  the log text saved in the file, or <code>null</code> if log
 	 * text was not saved.
@@ -147,8 +172,8 @@ public class TmXmlReader {
 			return "";
 		}
 	}
-	
-	
+
+
 	/**
 	 * Returns the model saved in the file, or <code>null</code> if a saved model 
 	 * cannot be found in the xml file. 
@@ -160,55 +185,70 @@ public class TmXmlReader {
 			return null;
 		} 
 		TrackMateModel model = new TrackMateModel();
-		
+
 		// Physical units
 		String spaceUnits = modelElement.getAttributeValue(SPATIAL_UNITS_ATTRIBUTE_NAME);
 		String timeUnits  = modelElement.getAttributeValue(TIME_UNITS_ATTRIBUTE_NAME);
 		model.setPhysicalUnits(spaceUnits, timeUnits);
-		
+
+		// Feature declarations
+		readFeatureDeclarations(modelElement, model);
+
 		// Spots
 		SpotCollection spots = getSpots(modelElement);
 		model.setSpots(spots, false);
-		
+
 		// Tracks
-		readTracks(modelElement, model);
+		if (!readTracks(modelElement, model)) {
+			ok = false;
+		}
 
 		// That's it
 		return model;
 	}
-	
+
+
 	/**
 	 * Returns the {@link Settings} object stored in this xml file, or <code>null</code>
 	 * if the file does not contain a saved {@link Settings} object.
 	 * @param detectorProvider the detector provider, required to configure the settings with
 	 * a correct {@link SpotDetectorFactory}. If <code>null</code>, will skip reading detector
 	 * parameters. 
-	 * @param trackerProvider the tracker factory, required to configure the settings with a 
+	 * @param trackerProvider the tracker provider, required to configure the settings with a 
 	 * correct {@link SpotTracker}. If <code>null</code>, will skip reading tracker parameters.
+	 * @param spotAnalyzerProvider the spot analyzer provider, required to instantiates the saved
+	 * {@link SpotAnalyzerFactory}s. If <code>null</code>, will skip reading spot analyzers.
+	 * @param edgeAnalyzerProvider the edge analyzer provider, required to instantiates the saved
+	 * {@link EdgeAnalyzer}s. If <code>null</code>, will skip reading edge analyzers.
+	 * @param trackAnalyzerProvider the track analyzer provider, required to instantiates the saved
+	 * {@link TrackAnalyzer}s. If <code>null</code>, will skip reading track analyzers.
+	 * 
 	 * @return  a new {@link Settings} object.
 	 */
-	public Settings getSettings(DetectorProvider detectorProvider, TrackerProvider trackerProvider) {
+	public Settings getSettings(DetectorProvider detectorProvider, TrackerProvider trackerProvider, 
+			SpotAnalyzerProvider spotAnalyzerProvider, EdgeAnalyzerProvider edgeAnalyzerProvider, 
+			TrackAnalyzerProvider trackAnalyzerProvider) {
 		Element settingsElement = root.getChild(SETTINGS_ELEMENT_KEY);
 		if (null == settingsElement) {
 			return null;
 		} 
-		
+
 		// Base
 		Settings settings = getBaseSettings(settingsElement);
-		
+
 		// Detector
 		if (null != detectorProvider) {
 			getDetectorSettings(settingsElement, settings, detectorProvider);
 		}
-		
+
 		// Tracker
 		if (null != trackerProvider) {
 			getTrackerSettings(settingsElement, settings, trackerProvider);
 		}
-		
+
 		// Image
 		settings.imp = getImage(settingsElement);
-		
+
 		// Spot Filters
 		FeatureFilter initialFilter = getInitialFilter(settingsElement);
 		if (null != initialFilter) {
@@ -221,11 +261,13 @@ public class TmXmlReader {
 		List<FeatureFilter> trackFilters = getTrackFeatureFilters(settingsElement);
 		settings.setTrackFilters(trackFilters);
 
-		// TODO: feature analyzers
-		
+		// Features analyzers
+		readAnalyzers(settingsElement, settings, spotAnalyzerProvider, edgeAnalyzerProvider, trackAnalyzerProvider);
+
 		return settings;
 	}
-	
+
+
 	/**
 	 * Returns the version string stored in the file.
 	 */
@@ -233,8 +275,23 @@ public class TmXmlReader {
 		return root.getAttribute(PLUGIN_VERSION_ATTRIBUTE_NAME).getValue();
 	}
 
+	/**
+	 * Returns an explanatory message about the last unsuccessful read attempt.
+	 * @return an error message.
+	 * @see #isReadingOk()
+	 */
 	public String getErrorMessage() {
 		return logger.toString();
+	}
+	
+	/**
+	 * Returns <code>true</code> if the last reading method call happened 
+	 * without any warning or error, <code>false</code> otherwise. 
+	 * @return <code>true</code> if reading was ok.
+	 * @see #getErrorMessage()
+	 */
+	public boolean isReadingOk() {
+		return ok;
 	}
 
 	/*
@@ -242,7 +299,7 @@ public class TmXmlReader {
 	 */
 
 
-	
+
 	private ImagePlus getImage(Element settingsElement)  {
 		Element imageInfoElement = settingsElement.getChild(IMAGE_ELEMENT_KEY);
 		String filename = imageInfoElement.getAttributeValue(IMAGE_FILENAME_ATTRIBUTE_NAME);
@@ -285,6 +342,7 @@ public class TmXmlReader {
 				trackID = trackElement.getAttribute(TrackIndexAnalyzer.TRACK_ID).getIntValue();
 			} catch (DataConversionException e1) {
 				logger.error("Found a track with invalid trackID for " + trackElement + ". Skipping.\n");
+				ok = false;
 				continue;
 			}
 
@@ -299,6 +357,7 @@ public class TmXmlReader {
 					attVal = attribute.getDoubleValue();
 				} catch (DataConversionException e) {
 					logger.error("Track "+trackID+": Cannot read the feature "+attName+" value. Skipping.\n");
+					ok = false;
 					continue;
 				}
 
@@ -387,7 +446,7 @@ public class TmXmlReader {
 			settings.zend 	= readIntAttribute(settingsEl, CROP_ZEND_ATTRIBUTE_NAME, logger, 10);
 			settings.tstart = readIntAttribute(settingsEl, CROP_TSTART_ATTRIBUTE_NAME, logger, 1);
 			settings.tend 	= readIntAttribute(settingsEl, CROP_TEND_ATTRIBUTE_NAME, logger, 10);
-//			settings.detectionChannel = readIntAttribute(settingsEl, CROP_DETECTION_CHANNEL_ATTRIBUTE_NAME, logger, 1);
+			//			settings.detectionChannel = readIntAttribute(settingsEl, CROP_DETECTION_CHANNEL_ATTRIBUTE_NAME, logger, 1);
 		}
 		// Image info settings
 		Element infoEl 	= settingsElement.getChild(IMAGE_ELEMENT_KEY);
@@ -425,6 +484,7 @@ public class TmXmlReader {
 
 		if (!ok) {
 			logger.error(provider.getErrorMessage());
+			this.ok = false;
 			return;
 		}
 
@@ -454,6 +514,7 @@ public class TmXmlReader {
 
 		if (!ok) {
 			logger.error(provider.getErrorMessage());
+			this.ok = false;
 			return;
 		}
 
@@ -535,13 +596,13 @@ public class TmXmlReader {
 		// A temporary map that maps stored track key to one of its spot
 		HashMap<Integer, Spot> savedTrackMap = new HashMap<Integer, Spot>(trackElements.size());
 		HashMap<Integer, String> savedTrackNames = new HashMap<Integer, String>(trackElements.size());
-		
+
 		// The list of edge features. that we will set.
 		final FeatureModel fm = model.getFeatureModel();
 		List<String> edgeIntFeatures = new ArrayList<String>();// TODO is there a better way?
 		edgeIntFeatures.add(EdgeTargetAnalyzer.SPOT_SOURCE_ID);
 		edgeIntFeatures.add(EdgeTargetAnalyzer.SPOT_TARGET_ID);
-		List<String> edgeDoubleFeatures = fm.getEdgeFeatures();
+		Collection<String> edgeDoubleFeatures = fm.getEdgeFeatures();
 		edgeDoubleFeatures.removeAll(edgeIntFeatures);
 
 		for (Element trackElement : trackElements) {
@@ -599,7 +660,7 @@ public class TmXmlReader {
 					return false;
 				} else {
 					graph.setEdgeWeight(edge, weight);
-					
+
 					// Put edge features
 					for (String feature : edgeDoubleFeatures) {
 						double val = readDoubleAttribute(edgeElement, feature, logger);
@@ -609,7 +670,7 @@ public class TmXmlReader {
 						double val = (double) readIntAttribute(edgeElement, feature, logger);
 						fm.putEdgeFeature(edge, feature, val);
 					}
-					
+
 				}
 			} // Finished parsing over the edges of the track
 
@@ -714,8 +775,11 @@ public class TmXmlReader {
 	 */
 	private Set<Integer> readFilteredTrackIDs() {
 		Element filteredTracksElement = root.getChild(FILTERED_TRACK_ELEMENT_KEY);
-		if (null == filteredTracksElement)
+		if (null == filteredTracksElement) {
+			logger.error("Could not find the filtered track IDs in file.\n");
+			ok = false;
 			return null;
+		}
 
 		// We double-check that all trackID in the filtered list exist in the track list
 		// First, prepare a sorted array of all track IDs
@@ -740,6 +804,7 @@ public class TmXmlReader {
 				int search = Arrays.binarySearch(IDs, trackID);
 				if (search < 0) {
 					logger.error("Invalid filtered track index: "+trackID+". Track ID does not exist.\n");
+					ok = false;
 				} else {
 					filteredTrackIndices.add(trackID);
 				}
@@ -768,6 +833,223 @@ public class TmXmlReader {
 			spot.putFeature(att.getName(), Double.valueOf(att.getValue()));
 		}
 		return spot;
+	}
+
+	private void readFeatureDeclarations(Element modelElement, TrackMateModel model) {
+
+		FeatureModel fm = model.getFeatureModel();
+		Element featuresElement = modelElement.getChild(FEATURE_DECLARATIONS_ELEMENT_KEY);
+		if (null == featuresElement) {
+			logger.error("Could not find feature declarations in file.\n");
+			ok = false;
+			return;
+		}
+
+		// Spots
+		Element spotFeaturesElement = modelElement.getChild(SPOT_FEATURES_ELEMENT_KEY);
+		if (null == spotFeaturesElement) {
+			logger.error("Could not find spot feature declarations in file.\n");
+			ok = false;
+
+		} else {
+
+			List<Element> children = spotFeaturesElement.getChildren(FEATURE_ELEMENT_KEY);
+			Collection<String> features = new ArrayList<String>(children.size());
+			Map<String, String> featureNames = new HashMap<String, String>(children.size());
+			Map<String, String> featureShortNames = new HashMap<String, String>(children.size());
+			Map<String, Dimension> featureDimensions = new HashMap<String, Dimension>(children.size());
+			for (Element child : children) {
+				readSingleFeatureDeclaration(child, features, featureNames, featureShortNames, featureDimensions);
+			}
+			fm.declareSpotFeatures(features, featureNames, featureShortNames, featureDimensions);
+		}
+
+		// Edges
+		Element edgeFeaturesElement = modelElement.getChild(EDGE_FEATURES_ELEMENT_KEY);
+		if (null == edgeFeaturesElement) {
+			logger.error("Could not find edge feature declarations in file.\n");
+			ok = false;
+
+		} else {
+
+			List<Element> children = edgeFeaturesElement.getChildren(FEATURE_ELEMENT_KEY);
+			Collection<String> features = new ArrayList<String>(children.size());
+			Map<String, String> featureNames = new HashMap<String, String>(children.size());
+			Map<String, String> featureShortNames = new HashMap<String, String>(children.size());
+			Map<String, Dimension> featureDimensions = new HashMap<String, Dimension>(children.size());
+			for (Element child : children) {
+				readSingleFeatureDeclaration(child, features, featureNames, featureShortNames, featureDimensions);
+			}
+			fm.declareEdgeFeatures(features, featureNames, featureShortNames, featureDimensions);
+		}
+
+		// Tracks
+		Element trackFeaturesElement = modelElement.getChild(TRACK_FEATURES_ELEMENT_KEY);
+		if (null == trackFeaturesElement) {
+			logger.error("Could not find track feature declarations in file.\n");
+			ok = false;
+
+		} else {
+
+			List<Element> children = trackFeaturesElement.getChildren(FEATURE_ELEMENT_KEY);
+			Collection<String> features = new ArrayList<String>(children.size());
+			Map<String, String> featureNames = new HashMap<String, String>(children.size());
+			Map<String, String> featureShortNames = new HashMap<String, String>(children.size());
+			Map<String, Dimension> featureDimensions = new HashMap<String, Dimension>(children.size());
+			for (Element child : children) {
+				readSingleFeatureDeclaration(child, features, featureNames, featureShortNames, featureDimensions);
+			}
+			fm.declareTrackFeatures(features, featureNames, featureShortNames, featureDimensions);
+		}
+	}
+
+	private void readAnalyzers(Element settingsElement, Settings settings, 
+			SpotAnalyzerProvider spotAnalyzerProvider, EdgeAnalyzerProvider edgeAnalyzerProvider, 
+			TrackAnalyzerProvider trackAnalyzerProvider) {
+
+		Element analyzersEl = settingsElement.getChild(ANALYZER_COLLECTION_ELEMENT_KEY);
+		if (null == analyzersEl) {
+			logger.error("Could not find the feature analyzer element.\n");
+			ok = false;
+			return;
+		}
+
+		// Spot analyzers
+		if (null != spotAnalyzerProvider) {
+			Element spotAnalyzerEl = analyzersEl.getChild(SPOT_ANALYSERS_ELEMENT_KEY);
+			if (null == spotAnalyzerEl) {
+				logger.error("Could not find the spot analyzer element.\n");
+				ok = false;
+
+			} else {
+
+				if (settings.imp == null) {
+					logger.error("The source image is not loaded; cannot instantiates spot analzers.\n");
+					ok = false;
+
+				} else {
+
+					ImgPlus<?> img = ImagePlusAdapter.wrapImgPlus(settings.imp);
+					List<Element> children = spotAnalyzerEl.getChildren(ANALYSER_ELEMENT_KEY);
+					for (Element child : children) {
+
+						String key = child.getAttributeValue(ANALYSER_KEY_ATTRIBUTE);
+						if (null == key) {
+							logger.error("Could not find analyzer name for element " + child + ".\n");
+							ok = false;
+							continue;
+						}
+						
+						SpotAnalyzerFactory<?> spotAnalyzer = spotAnalyzerProvider.getSpotFeatureAnalyzer(key, img);
+						if (null == spotAnalyzer) {
+							logger.error("Unknown spot analyzer key: " + key + ".\n");
+							ok = false;
+							
+						} else {
+							settings.addSpotAnalyzerFactory(spotAnalyzer);
+						}
+
+					}
+
+				}
+
+			}
+		}
+
+		// Edge analyzers
+		if (null != edgeAnalyzerProvider) {
+			Element edgeAnalyzerEl = analyzersEl.getChild(EDGE_ANALYSERS_ELEMENT_KEY);
+			if (null == edgeAnalyzerEl) {
+				logger.error("Could not find the edge analyzer element.\n");
+				ok = false;
+
+			} else {
+
+				List<Element> children = edgeAnalyzerEl.getChildren(ANALYSER_ELEMENT_KEY);
+				for (Element child : children) {
+
+					String key = child.getAttributeValue(ANALYSER_KEY_ATTRIBUTE);
+					if (null == key) {
+						logger.error("Could not find analyzer name for element " + child + ".\n");
+						ok = false;
+						continue;
+					}
+					
+					EdgeAnalyzer edgeAnalyzer = edgeAnalyzerProvider.getEdgeFeatureAnalyzer(key);
+					if (null == edgeAnalyzer) {
+						logger.error("Unknown edge analyzer key: " + key + ".\n");
+						ok = false;
+					} else {
+						settings.addEdgeAnalyzer(edgeAnalyzer);
+					}
+				}
+			}
+		}
+		
+		// Track analyzers
+		if (null != trackAnalyzerProvider) {
+			Element trackAnalyzerEl = analyzersEl.getChild(TRACK_ANALYSERS_ELEMENT_KEY);
+			if (null == trackAnalyzerEl) {
+				logger.error("Could not find the track analyzer element.\n");
+				ok = false;
+
+			} else {
+
+				List<Element> children = trackAnalyzerEl.getChildren(ANALYSER_ELEMENT_KEY);
+				for (Element child : children) {
+
+					String key = child.getAttributeValue(ANALYSER_KEY_ATTRIBUTE);
+					if (null == key) {
+						logger.error("Could not find analyzer name for element " + child + ".\n");
+						ok = false;
+						continue;
+					}
+					
+					TrackAnalyzer trackAnalyzer = trackAnalyzerProvider.getTrackFeatureAnalyzer(key);
+					if (null == trackAnalyzer) {
+						logger.error("Unknown track analyzer key: " + key + ".\n");
+						ok = false;
+					} else {
+						settings.addTrackAnalyzer(trackAnalyzer);
+					}
+				}
+			}
+		}
+	}
+
+
+	private void readSingleFeatureDeclaration(Element child, Collection<String> features, 
+			Map<String, String> featureNames, Map<String, String> featureShortNames, Map<String, Dimension> featureDimensions) {
+
+		String feature 				= child.getAttributeValue(FEATURE_ATTRIBUTE);
+		if (null == feature) {
+			logger.error("Could not find feature declaration for element " + child + ".\n");
+			ok = false;
+			return;
+		}
+		String featureName 			= child.getAttributeValue(FEATURE_NAME_ATTRIBUTE);
+		if (null == featureName) {
+			logger.error("Could not find name for feature " + feature + ".\n");
+			ok = false;
+			return;
+		}
+		String featureShortName 	= child.getAttributeValue(FEATURE_SHORT_NAME_ATTRIBUTE);
+		if (null == featureShortName) {
+			logger.error("Could not find short name for feature " + feature + ".\n");
+			ok = false;
+			return;
+		}
+		Dimension featureDimension 	= Dimension.valueOf(child.getAttributeValue(FEATURE_DIMENSION_ATTRIBUTE));
+		if (null == featureDimension) {
+			logger.error("Could not find dimension for feature " + feature + ".\n");
+			ok = false;
+			return;
+		}
+
+		features.add(feature);
+		featureNames.put(feature, featureName);
+		featureShortNames.put(feature, featureShortName);
+		featureDimensions.put(feature, featureDimension);
 	}
 
 

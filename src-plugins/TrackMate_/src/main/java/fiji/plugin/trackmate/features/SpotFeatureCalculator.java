@@ -64,9 +64,6 @@ public class SpotFeatureCalculator extends MultiThreadedBenchmarkAlgorithm {
 	public boolean process() {
 		long start = System.currentTimeMillis();
 		
-		// Clean
-		model.getFeatureModel().clearSpotFeatures();
-		
 		// Declare what you do.
 		for (SpotAnalyzerFactory<?> factory : settings.getSpotAnalyzerFactories()) {
 			Collection<String> features = factory.getFeatures();
