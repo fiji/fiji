@@ -26,6 +26,7 @@ import mpicbg.imglib.outofbounds.OutOfBoundsStrategyMirrorFactory;
 import mpicbg.imglib.type.numeric.integer.UnsignedByteType;
 import mpicbg.imglib.type.numeric.integer.UnsignedShortType;
 import mpicbg.imglib.type.numeric.real.FloatType;
+import mpicbg.imglib.util.Util;
 import mpicbg.models.AbstractAffineModel3D;
 import mpicbg.models.InterpolatedAffineModel2D;
 import mpicbg.models.InterpolatedAffineModel3D;
@@ -203,6 +204,31 @@ public class Matching
 			final ArrayList<ArrayList<DifferenceOfGaussianPeak<FloatType>>> peaks = new ArrayList<ArrayList<DifferenceOfGaussianPeak<FloatType>>>();
 			for ( int t = 0; t < numImages; ++t )
 				peaks.add( filterForROI( params.roi1, peaksComplete.get( t ) ) );
+			
+			// add the offset if wanted
+			if ( Descriptor_based_series_registration.offset != null )
+			{
+				IJ.log( "WARNING: ADDING FOLLWOING OFFSET TO ALL COORDINATES: (" + Util.printCoordinates( Descriptor_based_series_registration.offset ) + ")!!!" );
+				for ( final ArrayList<DifferenceOfGaussianPeak<FloatType>> list : peaks )
+				{
+					for ( final DifferenceOfGaussianPeak<FloatType> peak : list )
+					{
+						final int[] position = peak.getPosition();
+						final float[] subpixel = peak.getSubPixelPositionOffset();
+						
+						for ( int d = 0; d < position.length; ++d )
+						{
+							position[ d ] += Math.floor( Descriptor_based_series_registration.offset[ d ] );
+							subpixel[ d ] += Descriptor_based_series_registration.offset[ d ] - Math.floor( Descriptor_based_series_registration.offset[ d ] );
+						}
+						
+						peak.setPixelLocation( position );
+						peak.setSubPixelLocationOffset( subpixel );
+						
+						System.out.println( Util.printCoordinates( peak.getSubPixelPosition() ) );
+					}
+				}
+			}
 			
 			// compute descriptormatching between all pairs of images
 			final Vector<ComparePair> pairs = descriptorMatching( peaks, numImages, params, zStretching );

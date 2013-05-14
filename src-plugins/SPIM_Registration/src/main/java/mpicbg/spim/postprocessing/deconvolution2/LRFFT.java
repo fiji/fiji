@@ -300,7 +300,7 @@ public class LRFFT
 		{
 			if ( useBlocks )
 			{
-				IJ.log( "Using CPU only on blocks ... " );
+				//IJ.log( "Using CPU only on blocks ... " );
 				
 				final Image< FloatType > result = image.createNewImage();
 				final Image< FloatType > block = factory.createImage( blockSize );
@@ -330,7 +330,7 @@ public class LRFFT
 			}
 			else
 			{
-				IJ.log( "Using CPU only to compute as one block ... " );
+				//IJ.log( "Using CPU only to compute as one block ... " );
 
 				long time = System.currentTimeMillis();
 				final FourierConvolution<FloatType, FloatType> fftConv = fftConvolution1;
@@ -372,7 +372,7 @@ public class LRFFT
 			}
 			
 			block.close();
-			
+
 			return result;
 		}
 		else
@@ -471,11 +471,11 @@ public class LRFFT
 
 				blocks[ i ].pasteBlock( result, block );
 				*/
-				LRFFTThreads.convolve2BlockCUDA( blocks[ i ], device0, image, result, block, block, blockSize );
+				LRFFTThreads.convolve2BlockCUDA( blocks[ i ], device0, image, result, block, kernel2, blockSize );
 			}
 			
 			block.close();
-			
+
 			return result;
 		}
 		else

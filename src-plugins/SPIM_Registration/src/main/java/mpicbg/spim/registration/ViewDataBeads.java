@@ -6,6 +6,8 @@ import ij.ImagePlus;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.Vector;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.media.j3d.BranchGroup;
 import javax.media.j3d.Transform3D;
@@ -19,6 +21,8 @@ import mpicbg.imglib.cursor.Cursor;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.image.display.imagej.ImageJFunctions;
 import mpicbg.imglib.io.LOCI;
+import mpicbg.imglib.multithreading.Chunk;
+import mpicbg.imglib.multithreading.SimpleMultiThreading;
 import mpicbg.imglib.type.numeric.real.FloatType;
 import mpicbg.models.AbstractAffineModel3D;
 import mpicbg.spim.io.IOFunctions;
@@ -30,6 +34,8 @@ import spimopener.SPIMExperiment;
 
 public class ViewDataBeads implements Comparable< ViewDataBeads >
 {
+	public static float[] minmaxset = null;
+	
 	/**
 	 * @param <M> - an implementation of the {@link AbstractAffineModel3D}
 	 * @param id - an unique id
@@ -262,6 +268,9 @@ public class ViewDataBeads implements Comparable< ViewDataBeads >
 	private float minValue = 0;
 	private float maxValue = 0;
 
+	public float getMinValue() { return minValue; }
+	public float getMaxValue() { return maxValue; }
+	
 	/**
 	 * Gets the number of dimensions from view 1
 	 * @return - the number of dimensions
@@ -455,16 +464,24 @@ public class ViewDataBeads implements Comparable< ViewDataBeads >
 
 			if ( normalize )
 			{
-				final float[] minmax = normalizeImage( image );
+				final float[] minmax = normalizeImage( image, minmaxset );
 				minValue = minmax[ 0 ];
 				maxValue = minmax[ 1 ];
 				isNormalized = true;
 			}
 			else
 			{
-				image.getDisplay().setMinMax();
-				minValue = (float)image.getDisplay().getMin();
-				maxValue = (float)image.getDisplay().getMax();
+				if ( minmaxset == null )
+				{
+					image.getDisplay().setMinMax();
+					minValue = (float)image.getDisplay().getMin();
+					maxValue = (float)image.getDisplay().getMax();
+				}
+				else
+				{
+					minValue = minmaxset[ 0 ];
+					maxValue = minmaxset[ 1 ];					
+				}
 				isNormalized = false;
 			}
 			setImageSize( image.getDimensions() );
@@ -518,11 +535,28 @@ public class ViewDataBeads implements Comparable< ViewDataBeads >
 
 	/**
 	 * Normalizes the image to the range [0...1]
+	 * 
 	 * @param image - the image to normalize
+	 * @return - a float[] array with array[ 0 ] == min and array[ 1 ] == max
 	 */
 	public static float[] normalizeImage( final Image<FloatType> image )
 	{
-		image.getDisplay().setMinMax();
+		return normalizeImage( image, null );
+	}
+	
+	/**
+	 * Normalizes the image to the range [0...1]
+	 * 
+	 * @param image - the image to normalize
+	 * @param minmax - null or a predefined min/max range (array[ 0 ] == min and array[ 1 ] == max)
+	 * @return - a new float[] array with array[ 0 ] == min and array[ 1 ] == max
+	 */
+	public static float[] normalizeImage( final Image<FloatType> image, float[] minmax )
+	{
+		if ( minmax == null || minmax.length < 2 )
+			image.getDisplay().setMinMax();
+		else
+			image.getDisplay().setMinMax( minmax[ 0 ], minmax[ 1 ] );
 
 		final float min = (float)image.getDisplay().getMin();
 		final float max = (float)image.getDisplay().getMax();
@@ -534,23 +568,46 @@ public class ViewDataBeads implements Comparable< ViewDataBeads >
 			return new float[]{ min, max };
 		}
 
-		final Cursor<FloatType> cursor = image.createCursor();
+		final Vector< Chunk > threadChunks = SimpleMultiThreading.divideIntoChunks( image.getNumPixels(), Runtime.getRuntime().availableProcessors() );
+		final int numThreads = threadChunks.size();
 
-		while ( cursor.hasNext() )
-		{
-			cursor.fwd();
+		final AtomicInteger ai = new AtomicInteger(0);					
+        final Thread[] threads = SimpleMultiThreading.newThreads( numThreads );
+        for ( int ithread = 0; ithread < threads.length; ++ithread )
+            threads[ithread] = new Thread(new Runnable()
+            {
+                public void run()
+                {
+                	// Thread ID
+                	final int myNumber = ai.getAndIncrement();
+        
+                	// get chunk of pixels to process
+                	final Chunk myChunk = threadChunks.get( myNumber );
+                	final long loopSize = myChunk.getLoopSize();
+                	
+            		final Cursor<FloatType> cursor = image.createCursor();            		
+            		cursor.fwd( myChunk.getStartPosition() );
 
-			final float value = cursor.getType().get();
-			final float norm = (value - min) / diff;
+            		for ( long l = 0; l < loopSize; ++l )
+            		{
+            			cursor.fwd();
 
-			cursor.getType().set( norm );
-		}
+            			final float value = cursor.getType().get();
+            			final float norm = (value - min) / diff;
 
+            			cursor.getType().set( norm );
+            		}
+
+                }
+            });
+        
+        SimpleMultiThreading.startAndJoin( threads );
+	
 		image.getDisplay().setMinMax(0, 1);
 
 		return new float[]{ min, max };
 	}
-
+	
 	/**
 	 * Closes the input image stack of this view
 	 */
