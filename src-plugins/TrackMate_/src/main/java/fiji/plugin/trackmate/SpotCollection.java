@@ -438,7 +438,7 @@ public class SpotCollection implements MultiThreaded  {
 	public Iterator<Spot> iterator(Integer frame, boolean visibleSpotsOnly) {
 		HashSet<Spot> frameContent = content.get(frame);
 		if (null == frameContent) {
-			return null;
+			return EMPTY_ITERATOR;
 		}
 		if (visibleSpotsOnly) {
 			return new VisibleSpotsFrameIterator(frameContent);
@@ -819,6 +819,23 @@ public class SpotCollection implements MultiThreaded  {
 			return new VisibleSpotsFrameIterator(content.get(frame));
 		}
 	}
+	
+	private static final Iterator<Spot> EMPTY_ITERATOR = new Iterator<Spot>() {
+
+		@Override
+		public boolean hasNext() {
+			return false;
+		}
+
+		@Override
+		public Spot next() {
+			return null;
+		}
+
+		@Override
+		public void remove() { }
+	};
+
 
 	
 	/*

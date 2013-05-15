@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -495,17 +496,18 @@ public class TMUtils {
 	 * Each feature maps a double array, with 1 element per {@link Spot}, all pooled
 	 * together.
 	 */
-	public static Map<String, double[]> getSpotFeatureValues(final SpotCollection spots, final List<String> features, final Logger logger) {
+	public static Map<String, double[]> getSpotFeatureValues(final SpotCollection spots, final Collection<String> features, final Logger logger) {
 		final Map<String, double[]> featureValues = new  ConcurrentHashMap<String, double[]>(features.size());
 		if (null == spots || spots.keySet().isEmpty())
 			return featureValues;
 		// Get the total quantity of spot we have
 		final int spotNumber = spots.getNSpots(false);
 
-		final AtomicInteger ai = new AtomicInteger();
 		final AtomicInteger progress = new AtomicInteger();
 		Thread[] threads = SimpleMultiThreading.newThreads();
 
+		final ArrayBlockingQueue<String> queue = new ArrayBlockingQueue<String>(features.size(), false, features);
+		
 		for (int ithread = 0; ithread < threads.length; ithread++) {
 
 			threads[ithread] = new Thread("TrackMate collecting spot feature values thread "+ithread) {
@@ -516,9 +518,8 @@ public class TMUtils {
 					Double val;
 					boolean noDataFlag = true;
 
-					for (int i = ai.getAndIncrement(); i < features.size(); i = ai.getAndIncrement()) {
-
-						String feature = features.get(i);
+					String feature;
+					while ((feature = queue.poll()) != null) {
 
 						// Make a double array to comply to JFreeChart histograms
 						double[] values = new double[spotNumber];
@@ -536,7 +537,6 @@ public class TMUtils {
 						} else { 
 							featureValues.put(feature, values);
 						}
-
 						logger.setProgress(progress.incrementAndGet() / (double) features.size());
 					}
 				}

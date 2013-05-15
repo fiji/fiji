@@ -89,9 +89,9 @@ public class SpotOverlay extends Roi {
 		g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 		fm = g2d.getFontMetrics();
 
-		final int frame = imp.getFrame()-1;
 		final double zslice = (imp.getSlice()-1) * calibration[2];
 		final double mag = magnification;
+		final int frame = imp.getFrame()-1;
 
 		// Deal with normal spots.
 		g2d.setStroke(new BasicStroke(1.0f));

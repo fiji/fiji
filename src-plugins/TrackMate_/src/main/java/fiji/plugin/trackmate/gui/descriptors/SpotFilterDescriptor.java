@@ -32,9 +32,10 @@ public class SpotFilterDescriptor implements WizardPanelDescriptor {
 	public void aboutToDisplayPanel() {
 		TrackMateModel model = trackmate.getModel();
 		Settings settings = trackmate.getSettings();
-		Map<String, double[]> values = TMUtils.getSpotFeatureValues(model.getSpots(), settings.getSpotFeatures(), model.getLogger());
-		component.setTarget(settings.getSpotFeatures(), settings.getSpotFilters(),  
-				settings.getSpotFeatureNames(), values , "spots");
+		Map<String, double[]> values = TMUtils.getSpotFeatureValues(model.getSpots(), 
+				model.getFeatureModel().getSpotFeatures(), model.getLogger());
+		component.setTarget(model.getFeatureModel().getSpotFeatures(), settings.getSpotFilters(),  
+				model.getFeatureModel().getSpotFeatureNames(), values , "spots");
 	}
 
 	@Override
@@ -57,7 +58,7 @@ public class SpotFilterDescriptor implements WizardPanelDescriptor {
 			logger.log("No feature threshold set, kept the " + ntotal + " spots.\n");
 		} else {
 			for (FeatureFilter ft : featureFilters) {
-				String str = "  - on "+trackmate.getSettings().getSpotFeatureNames().get(ft.feature);
+				String str = "  - on "+trackmate.getModel().getFeatureModel().getSpotFeatureNames().get(ft.feature);
 				if (ft.isAbove) 
 					str += " above ";
 				else

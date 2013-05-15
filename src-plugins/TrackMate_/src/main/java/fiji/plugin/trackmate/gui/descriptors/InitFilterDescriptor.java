@@ -1,16 +1,12 @@
 package fiji.plugin.trackmate.gui.descriptors;
 
-import java.util.Map;
-
 import fiji.plugin.trackmate.Logger;
-import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.TrackMate;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.features.FeatureFilter;
 import fiji.plugin.trackmate.gui.panels.InitFilterPanel;
-import fiji.plugin.trackmate.util.TMUtils;
 
 public class InitFilterDescriptor implements WizardPanelDescriptor {
 

@@ -20,6 +20,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -37,7 +38,6 @@ import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 import javax.swing.border.LineBorder;
 
-import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.TrackMate;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.gui.TrackMateWizard;
@@ -120,9 +120,9 @@ public class ConfigureViewsPanel extends ActionListenablePanel {
 
 
 	public void refresh() {
-		Settings settings = trackmate.getSettings(); 
 		TrackMateModel model = trackmate.getModel();
-		Map<String, double[]> featureValues = TMUtils.getSpotFeatureValues(model.getSpots(), settings.getSpotFeatures(), model.getLogger());
+		Map<String, double[]> featureValues = TMUtils.getSpotFeatureValues(model.getSpots(), 
+				model.getFeatureModel().getSpotFeatures(), model.getLogger());
 		jPanelSpotColor.setFeatureValues(featureValues);
 
 		if (trackColorGUI != null) {
@@ -316,8 +316,9 @@ public class ConfigureViewsPanel extends ActionListenablePanel {
 					});
 				}
 				{
-					List<String> features = trackmate.getSettings().getSpotFeatures();
-					Map<String, String> featureNames = trackmate.getSettings().getSpotFeatureNames();
+					List<String> features = new ArrayList<String>(
+							trackmate.getModel().getFeatureModel().getSpotFeatures());
+					Map<String, String> featureNames = trackmate.getModel().getFeatureModel().getSpotFeatureNames();
 					jPanelSpotColor = new JPanelColorByFeatureGUI(features, featureNames);
 					jPanelSpotOptions.add(jPanelSpotColor);
 					jPanelSpotColor.addActionListener(new ActionListener() {

@@ -40,7 +40,6 @@ public class StartDialogDescriptor  implements WizardPanelDescriptor {
 		this.trackAnalyzerProvider = trackAnalyzerProvider;
 		this.panel = new StartDialogPanel();
 		panel.addActionListener(new ActionListener() {
-			
 			@Override
 			public void actionPerformed(ActionEvent event) {
 				fireAction(event);

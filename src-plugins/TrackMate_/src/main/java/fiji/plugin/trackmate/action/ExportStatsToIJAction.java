@@ -61,7 +61,7 @@ public class ExportStatsToIJAction extends AbstractTMAction {
 		// Export spots
 		logger.log("  - Exporting spot statistics...");
 		Set<Integer> trackIDs = model.getTrackModel().getFilteredTrackIDs();
-		Collection<String> spotFeatures = trackmate.getSettings().getSpotFeatures();
+		Collection<String> spotFeatures = trackmate.getModel().getFeatureModel().getSpotFeatures();
 
 		// Create table
 		ResultsTable spotTable = new ResultsTable();

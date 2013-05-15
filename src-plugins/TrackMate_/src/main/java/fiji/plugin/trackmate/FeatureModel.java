@@ -2,7 +2,7 @@ package fiji.plugin.trackmate;
 
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -21,7 +21,7 @@ public class FeatureModel {
 	 * FIELDS
 	 */
 
-	private Collection<String> trackFeatures = new HashSet<String>();
+	private Collection<String> trackFeatures = new LinkedHashSet<String>();
 	private HashMap<String, String> trackFeatureNames = new HashMap<String, String>();
 	private HashMap<String, String> trackFeatureShortNames = new HashMap<String, String>();
 	private HashMap<String, Dimension> trackFeatureDimensions = new HashMap<String, Dimension>();
@@ -38,12 +38,12 @@ public class FeatureModel {
 	protected ConcurrentHashMap<DefaultWeightedEdge, ConcurrentHashMap<String, Double>> edgeFeatureValues = 
 			new ConcurrentHashMap<DefaultWeightedEdge, ConcurrentHashMap<String, Double>>();
 
-	private Collection<String> edgeFeatures = new HashSet<String>();
+	private Collection<String> edgeFeatures = new LinkedHashSet<String>();
 	private HashMap<String, String> edgeFeatureNames = new HashMap<String, String>();
 	private HashMap<String, String> edgeFeatureShortNames = new HashMap<String, String>();
 	private HashMap<String, Dimension> edgeFeatureDimensions = new HashMap<String, Dimension>();
 
-	private Collection<String> spotFeatures = new HashSet<String>();
+	private Collection<String> spotFeatures = new LinkedHashSet<String>();
 	private Map<String, String> spotFeatureNames = new HashMap<String, String>();
 	private Map<String, String> spotFeatureShortNames = new HashMap<String, String>();
 	private Map<String, Dimension> spotFeatureDimensions = new HashMap<String, Dimension>();

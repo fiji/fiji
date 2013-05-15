@@ -72,8 +72,8 @@ public class GrapherPanel extends ActionListenablePanel {
 		
 		// regen spot features
 		panelSpot.removeAll();
-		Collection<String> spotFeatures = trackmate.getSettings().getSpotFeatures();
-		Map<String, String> spotFeatureNames = trackmate.getSettings().getSpotFeatureNames();
+		Collection<String> spotFeatures = trackmate.getModel().getFeatureModel().getSpotFeatures();
+		Map<String, String> spotFeatureNames = trackmate.getModel().getFeatureModel().getSpotFeatureNames();
 		spotFeatureSelectionPanel = new FeaturePlotSelectionPanel(Spot.POSITION_T, spotFeatures, spotFeatureNames);
 		panelSpot.add(spotFeatureSelectionPanel);
 		spotFeatureSelectionPanel.addActionListener(new ActionListener() {

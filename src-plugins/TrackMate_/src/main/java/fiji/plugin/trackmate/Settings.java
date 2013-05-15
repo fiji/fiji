@@ -382,57 +382,6 @@ public class Settings {
 		return spotAnalyzerFactories.remove(spotAnalyzer);
 	}
 
-	/**
-	 * Returns the collection of features calculated from the {@link SpotAnalyzerFactory}s configured.
-	 * @return the collection of spot features, as strings.
-	 */
-	public List<String> getSpotFeatures() {
-		ArrayList<String> features = new ArrayList<String>();
-		for (SpotAnalyzerFactory<?> spotAnalyzer: spotAnalyzerFactories) {
-			features.addAll(spotAnalyzer.getFeatures());
-		}
-		return features;
-	}
-	
-	/**
-	 * Returns the map that links each spot feature configured to be calculated 
-	 * to its name.
-	 * @return  a map of spot feature names.
-	 */
-	public Map<String, String> getSpotFeatureNames() {
-		HashMap<String, String> featureNames = new HashMap<String, String>();
-		for (SpotAnalyzerFactory<?> spotAnalyzer: spotAnalyzerFactories) {
-			featureNames.putAll(spotAnalyzer.getFeatureNames());
-		}
-		return featureNames;
-	}
-	
-	/**
-	 * Returns the map that links each spot feature configured to be calculated 
-	 * to its short name.
-	 * @return  a map of spot feature short names.
-	 */
-	public Map<String, String> getSpotFeatureShortNames() {
-		HashMap<String, String> featureNames = new HashMap<String, String>();
-		for (SpotAnalyzerFactory<?> spotAnalyzer: spotAnalyzerFactories) {
-			featureNames.putAll(spotAnalyzer.getFeatureShortNames());
-		}
-		return featureNames;
-	}
-	
-	/**
-	 * Returns the map that links each spot feature configured to be calculated 
-	 * to its dimension.
-	 * @return  a map of spot feature names.
-	 */
-	public Map<String, Dimension> getSpotFeatureDimensions() {
-		HashMap<String, Dimension> featureDimensions = new HashMap<String, Dimension>();
-		for (SpotAnalyzerFactory<?> spotAnalyzer: spotAnalyzerFactories) {
-			featureDimensions.putAll(spotAnalyzer.getFeatureDimensions());
-		}
-		return featureDimensions;
-	}
-	
 	/*
 	 * EDGE FEATURE ANALYZERS
 	 */
