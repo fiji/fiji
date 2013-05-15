@@ -26,6 +26,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import fiji.plugin.trackmate.features.FeatureFilter;
+import fiji.plugin.trackmate.gui.TrackMateWizard;
 import fiji.plugin.trackmate.gui.panels.ActionListenablePanel;
 import fiji.plugin.trackmate.gui.panels.FilterPanel;
 
@@ -74,6 +75,8 @@ public class FilterGuiPanel extends ActionListenablePanel implements ChangeListe
 	/*
 	 * PUBLIC METHODS
 	 */
+	
+	
 
 	/**
 	 * Set the feature filters to display and layout this panel. Calling this method
@@ -347,7 +350,7 @@ public class FilterGuiPanel extends ActionListenablePanel implements ChangeListe
 						jPanelButtons.add(Box.createHorizontalStrut(5));
 						jButtonAddThreshold = new JButton();
 						jPanelButtons.add(jButtonAddThreshold);
-						jButtonAddThreshold.setIcon(new ImageIcon(getClass().getResource(ADD_ICON)));
+						jButtonAddThreshold.setIcon(new ImageIcon(TrackMateWizard.class.getResource(ADD_ICON)));
 						jButtonAddThreshold.setFont(SMALL_FONT);
 						jButtonAddThreshold.setPreferredSize(new java.awt.Dimension(24, 24));
 						jButtonAddThreshold.setSize(24, 24);
@@ -362,7 +365,7 @@ public class FilterGuiPanel extends ActionListenablePanel implements ChangeListe
 						jPanelButtons.add(Box.createHorizontalStrut(5));
 						jButtonRemoveThreshold = new JButton();
 						jPanelButtons.add(jButtonRemoveThreshold);
-						jButtonRemoveThreshold.setIcon(new ImageIcon(getClass().getResource(REMOVE_ICON)));
+						jButtonRemoveThreshold.setIcon(new ImageIcon(TrackMateWizard.class.getResource(REMOVE_ICON)));
 						jButtonRemoveThreshold.setFont(SMALL_FONT);
 						jButtonRemoveThreshold.setPreferredSize(new java.awt.Dimension(24, 24));
 						jButtonRemoveThreshold.setSize(24, 24);

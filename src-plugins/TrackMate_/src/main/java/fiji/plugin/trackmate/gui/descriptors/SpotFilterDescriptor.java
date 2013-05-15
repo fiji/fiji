@@ -13,7 +13,7 @@ import fiji.plugin.trackmate.util.TMUtils;
 
 public class SpotFilterDescriptor implements WizardPanelDescriptor {
 
-	public static final String DESCRIPTOR = "SpotFilter";
+	private static final String KEY = "SpotFilter";
 	private final FilterGuiPanel component;
 	private final TrackMate trackmate;
 	
@@ -70,4 +70,10 @@ public class SpotFilterDescriptor implements WizardPanelDescriptor {
 			logger.log("Kept "+nselected+" spots out of " + ntotal + ".\n");
 		}		
 	}
+
+	@Override
+	public String getKey() {
+		return KEY;
+	}
+
 }

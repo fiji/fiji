@@ -6,9 +6,7 @@ import ij.ImagePlus;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.Collection;
 
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
@@ -26,10 +24,8 @@ import fiji.plugin.trackmate.gui.descriptors.ActionChooserDescriptor;
 import fiji.plugin.trackmate.gui.descriptors.ConfigureViewsDescriptor;
 import fiji.plugin.trackmate.gui.descriptors.DetectorChoiceDescriptor;
 import fiji.plugin.trackmate.gui.descriptors.DetectorConfigurationDescriptor;
-import fiji.plugin.trackmate.gui.descriptors.DetectorDescriptor;
+import fiji.plugin.trackmate.gui.descriptors.DetectionDescriptor;
 import fiji.plugin.trackmate.gui.descriptors.GrapherDescriptor;
-import fiji.plugin.trackmate.gui.descriptors.TrackerConfigurationDescriptor;
-import fiji.plugin.trackmate.gui.descriptors.ViewChoiceDescriptor;
 import fiji.plugin.trackmate.gui.descriptors.InitFilterDescriptor;
 import fiji.plugin.trackmate.gui.descriptors.LoadDescriptor;
 import fiji.plugin.trackmate.gui.descriptors.LogPanelDescriptor;
@@ -38,9 +34,10 @@ import fiji.plugin.trackmate.gui.descriptors.SpotFilterDescriptor;
 import fiji.plugin.trackmate.gui.descriptors.StartDialogDescriptor;
 import fiji.plugin.trackmate.gui.descriptors.TrackFilterDescriptor;
 import fiji.plugin.trackmate.gui.descriptors.TrackerChoiceDescriptor;
+import fiji.plugin.trackmate.gui.descriptors.TrackerConfigurationDescriptor;
 import fiji.plugin.trackmate.gui.descriptors.TrackingDescriptor;
+import fiji.plugin.trackmate.gui.descriptors.ViewChoiceDescriptor;
 import fiji.plugin.trackmate.gui.descriptors.WizardPanelDescriptor;
-import fiji.plugin.trackmate.gui.panels.StartDialogPanel;
 import fiji.plugin.trackmate.providers.ActionProvider;
 import fiji.plugin.trackmate.providers.DetectorProvider;
 import fiji.plugin.trackmate.providers.EdgeAnalyzerProvider;
@@ -77,7 +74,7 @@ public class TrackMateGUIController implements ActionListener {
 	protected DetectorConfigurationDescriptor detectorConfigurationDescriptor;
 	protected DetectorChoiceDescriptor detectorChoiceDescriptor;
 	protected StartDialogDescriptor startDialoDescriptor;
-	protected DetectorDescriptor detectorDescriptor;
+	protected DetectionDescriptor detectorDescriptor;
 	protected InitFilterDescriptor initFilterDescriptor;
 	protected ViewChoiceDescriptor viewChoiceDescriptor;
 	protected SpotFilterDescriptor spotFilterDescriptor;
@@ -90,6 +87,9 @@ public class TrackMateGUIController implements ActionListener {
 	protected ActionChooserDescriptor actionChooserDescriptor;
 	protected LogPanelDescriptor logPanelDescriptor;
 	protected SaveDescriptor saveDescriptor;
+	protected LoadDescriptor loadDescriptor;
+	
+	protected Collection<WizardPanelDescriptor> registeredDescriptors;
 	
 	protected SelectionModel selectionModel;
 
@@ -124,7 +124,7 @@ public class TrackMateGUIController implements ActionListener {
 		new ModelFeatureUpdater(trackmate.getModel(), trackmate.getSettings());
 		
 		createProviders();
-		createDescriptors();
+		registeredDescriptors = createDescriptors();
 		createSelectionModel();
 
 		this.guimodel = new TrackMateGUIModel();
@@ -142,12 +142,17 @@ public class TrackMateGUIController implements ActionListener {
 	 * PUBLIC METHODS 
 	 */
 
+	/**
+	 * Closes the GUI controlled by this instance. 
+	 */
+	public void quit() {
+		gui.dispose();
+	}
 	
-
 	/**
 	 * Exposes the {@link TrackMateWizard} instance controlled here.
 	 */
-	public TrackMateWizard getWizard() {
+	public TrackMateWizard getGUI() {
 		return gui;
 	}
 
@@ -165,6 +170,40 @@ public class TrackMateGUIController implements ActionListener {
 	 */
 	public SelectionModel getSelectionModel() {
 		return selectionModel;
+	}
+	
+	/**
+	 * Returns the key string of the current descriptor, representing the "state"
+	 * of the GUI. Load, Save and Log descriptors are not returned; the descriptor
+	 * that is displayed prior to call any of these 3 descriptor stands as the GUI
+	 * state.
+	 * @return  the state string.
+	 */
+	public String getGUIStateString() {
+		return guimodel.currentDescriptor.getKey();
+	}
+	
+	/**
+	 * Sets the GUI current state via a key string. Registered descriptors are parsed
+	 * until one is found that has a matching key. Then it is displayed. If a matching
+	 * key is not found, nothing is done, and an error is logged in the {@link LogPanel}.
+	 * @param stateKey the target state string. 
+	 */
+	public void setGUIStateString(String stateKey) {
+		for (WizardPanelDescriptor descriptor : registeredDescriptors) {
+			if (stateKey.equals(descriptor.getKey())) {
+				gui.show(descriptor);
+				if (null == nextDescriptor(descriptor)) {
+					gui.setNextButtonEnabled(false);
+				}
+				if (null == previousDescriptor(descriptor)) {
+					gui.setPreviousButtonEnabled(false);
+				}
+				return;
+			}
+		}
+		
+		logger.error("Cannot move to state " + stateKey +". Unknown state.\n");
 	}
 
 	/*
@@ -188,14 +227,15 @@ public class TrackMateGUIController implements ActionListener {
 
 	/**
 	 * Creates the map of next descriptor for each descriptor.
+	 * @return 
 	 */
-	protected void createDescriptors() {
+	protected Collection<WizardPanelDescriptor> createDescriptors() {
 		
 		/*
 		 * Logging panel: receive message, share with the TrackMateModel
 		 */
 		LogPanel logPanel = gui.getLogPanel();
-		logPanelDescriptor = new LogPanelDescriptor(logPanel); 
+		logPanelDescriptor = new LogPanelDescriptor(logPanel);
 		
 		/*
 		 * Start panel
@@ -226,7 +266,7 @@ public class TrackMateGUIController implements ActionListener {
 		/*
 		 * Execute and report detection progress
 		 */
-		detectorDescriptor 			= new DetectorDescriptor(logPanel, trackmate);
+		detectorDescriptor 			= new DetectionDescriptor(this, trackmate);
 		
 		/*
 		 * Initial spot filter: discard obvious spurious spot based on quality.
@@ -278,7 +318,6 @@ public class TrackMateGUIController implements ActionListener {
 		/*
 		 * Track filtering 
 		 */
-		
 		trackFilterDescriptor		= new TrackFilterDescriptor(trackmate);
 		trackFilterDescriptor.getComponent().addActionListener(new ActionListener() {
 			@Override
@@ -316,8 +355,36 @@ public class TrackMateGUIController implements ActionListener {
 		/*
 		 * Save descriptor
 		 */
+		saveDescriptor 				= new SaveDescriptor(this, detectorProvider, trackerProvider);
 		
-		saveDescriptor 				= new SaveDescriptor(logPanel, trackmate, detectorProvider, trackerProvider, gui);
+		/*
+		 * Load descriptor
+		 */
+		loadDescriptor 				= new LoadDescriptor(this, detectorProvider, trackerProvider, 
+				spotAnalyzerProvider, edgeAnalyzerProvider, trackAnalyzerProvider);
+		
+		/*
+		 * Store created descriptors
+		 */
+		ArrayList<WizardPanelDescriptor> descriptors = new ArrayList<WizardPanelDescriptor>(16);
+		descriptors.add(actionChooserDescriptor);
+		descriptors.add(configureViewsDescriptor);
+		descriptors.add(detectorChoiceDescriptor);
+		descriptors.add(detectorConfigurationDescriptor);
+		descriptors.add(detectorDescriptor);
+		descriptors.add(grapherDescriptor);
+		descriptors.add(initFilterDescriptor);
+		descriptors.add(loadDescriptor);
+		descriptors.add(logPanelDescriptor);
+		descriptors.add(saveDescriptor);
+		descriptors.add(spotFilterDescriptor);
+		descriptors.add(startDialoDescriptor);
+		descriptors.add(trackFilterDescriptor);
+		descriptors.add(trackerChoiceDescriptor);
+		descriptors.add(trackerConfigurationDescriptor);
+		descriptors.add(trackingDescriptor);
+		descriptors.add(viewChoiceDescriptor);
+		return descriptors;
 	}
 	
 	protected WizardPanelDescriptor getFirstDescriptor() {
@@ -439,7 +506,7 @@ public class TrackMateGUIController implements ActionListener {
 		gui.setPreviousButtonEnabled(false);
 		WizardPanelDescriptor panelDescriptor = getFirstDescriptor();
 		
-		String welcomeMessage = TrackMate.PLUGIN_NAME_STR + "v" + TrackMate.PLUGIN_NAME_VERSION + " started on:\n" + 
+		String welcomeMessage = TrackMate.PLUGIN_NAME_STR + " v" + TrackMate.PLUGIN_NAME_VERSION + " started on:\n" + 
 				TMUtils.getCurrentTimeString() + '\n';
 		// Log GUI processing start
 		gui.getLogger().log(welcomeMessage, Logger.BLUE_COLOR);
@@ -533,6 +600,7 @@ public class TrackMateGUIController implements ActionListener {
 			// Find a store new one to display
 			WizardPanelDescriptor panelDescriptor  = nextDescriptor(oldDescriptor);
 			guimodel.currentDescriptor = panelDescriptor;
+			
 
 			// Check if the new panel has a next panel. If not, disable the next button
 			if (null == nextDescriptor(panelDescriptor)) {

@@ -12,7 +12,7 @@ import fiji.plugin.trackmate.util.TMUtils;
 
 public class InitFilterDescriptor implements WizardPanelDescriptor {
 
-	public static final String DESCRIPTOR = "InitialThresholding";
+	private static final String KEY = "InitialFiltering";
 	private InitFilterPanel component;
 	private final TrackMate trackmate;
 	private Map<String, double[]> features;
@@ -67,4 +67,11 @@ public class InitFilterDescriptor implements WizardPanelDescriptor {
 		long end  = System.currentTimeMillis();
 		logger.log(String.format("Calculating features done in %.1f s.\n", (end-start)/1e3f), Logger.BLUE_COLOR);
 	}
+	
+	@Override
+	public String getKey() {
+		return KEY;
+	}
+
 }
+

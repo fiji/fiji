@@ -172,6 +172,28 @@ public class TmXmlReader {
 			return "";
 		}
 	}
+	
+	/**
+	 * Appends the current GUI state as a state string to the document. 
+	 * @param guiState  the key string representing the GUI state.
+	 * @return the saved GUI state, as a string.
+	 */
+	public String getGUIState() {
+		Element guiel = root.getChild(GUI_STATE_ELEMENT_KEY);
+		if (null != guiel) {
+			String guiState = guiel.getAttributeValue(GUI_STATE_ATTRIBUTE);
+			if (null == guiState) {
+				logger.error("Could not find GUI state attribute.\n");
+				ok = false;
+			}
+			return guiState;
+			
+		} else {
+			logger.error("Could not find GUI state element.\n");
+			ok = false;
+			return null;
+		}
+	}
 
 
 	/**
@@ -236,6 +258,9 @@ public class TmXmlReader {
 		// Base
 		Settings settings = getBaseSettings(settingsElement);
 
+		// Image
+		settings.imp = getImage(settingsElement);
+
 		// Detector
 		if (null != detectorProvider) {
 			getDetectorSettings(settingsElement, settings, detectorProvider);
@@ -245,9 +270,6 @@ public class TmXmlReader {
 		if (null != trackerProvider) {
 			getTrackerSettings(settingsElement, settings, trackerProvider);
 		}
-
-		// Image
-		settings.imp = getImage(settingsElement);
 
 		// Spot Filters
 		FeatureFilter initialFilter = getInitialFilter(settingsElement);
@@ -304,16 +326,22 @@ public class TmXmlReader {
 		Element imageInfoElement = settingsElement.getChild(IMAGE_ELEMENT_KEY);
 		String filename = imageInfoElement.getAttributeValue(IMAGE_FILENAME_ATTRIBUTE_NAME);
 		String folder 	= imageInfoElement.getAttributeValue(IMAGE_FOLDER_ATTRIBUTE_NAME);
-		if (null == filename || filename.isEmpty())
+		if (null == filename || filename.isEmpty()) {
+			logger.error("Cannot find image file name in xml file.\n");
+			ok = false;
 			return null;
-		if (null == folder || folder.isEmpty())
+		}
+		if (null == folder || folder.isEmpty()) {
 			folder = file.getParent(); // it is a relative path, then
+		}
 		File imageFile = new File(folder, filename);
 		if (!imageFile.exists() || !imageFile.canRead()) {
 			// Could not find it to the absolute path. Then we look for the same path of the xml file
 			folder = file.getParent();
 			imageFile = new File(folder, filename);
 			if (!imageFile.exists() || !imageFile.canRead()) {
+				logger.error("Cannot read image file: " + imageFile + ".\n");
+				ok = false;
 				return null;
 			}
 		}

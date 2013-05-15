@@ -7,7 +7,7 @@ import fiji.plugin.trackmate.providers.TrackerProvider;
 
 public class TrackingDescriptor implements WizardPanelDescriptor {
 
-	public static final String DESCRIPTOR = "TrackingPanel";
+	private static final String KEY = "Tracking";
 	private final LogPanel logPanel;
 	private final TrackMate trackmate;
 	private final TrackerProvider trackerProvider;
@@ -59,5 +59,10 @@ public class TrackingDescriptor implements WizardPanelDescriptor {
 			e.printStackTrace();
 		}
 		
+	}
+	
+	@Override
+	public String getKey() {
+		return KEY;
 	}
 }

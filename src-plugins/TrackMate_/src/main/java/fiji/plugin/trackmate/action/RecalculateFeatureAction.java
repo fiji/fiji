@@ -3,15 +3,15 @@ package fiji.plugin.trackmate.action;
 import javax.swing.ImageIcon;
 
 import fiji.plugin.trackmate.Logger;
-import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMate;
+import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.gui.TrackMateGUIController;
-import fiji.plugin.trackmate.gui.panels.ConfigureViewsPanel;
+import fiji.plugin.trackmate.gui.TrackMateWizard;
 
 public class RecalculateFeatureAction extends AbstractTMAction {
 
 
-	public static final ImageIcon ICON = new ImageIcon(ConfigureViewsPanel.class.getResource("images/calculator.png"));
+	public static final ImageIcon ICON = new ImageIcon(TrackMateWizard.class.getResource("images/calculator.png"));
 	public static final String NAME = "Recompute all spot features";
 	public static final String INFO_TEXT = "<html>" +
 			"Calling this action causes the model to recompute all the feautures <br>" +

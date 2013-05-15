@@ -9,7 +9,10 @@ import java.awt.Component;
 public interface WizardPanelDescriptor {
 	
 	
-	
+	/**
+	 * Returns a unique key that identifies the GUI state this descriptor represents.
+	 */
+	public String getKey();
 	
     /**
      * Returns a java.awt.Component that serves as the actual panel.

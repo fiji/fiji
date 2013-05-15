@@ -24,7 +24,7 @@ public class ExportStats_TestDrive {
 		ij.ImageJ.main(args);
 		
 		TrackMate trackmate = new TrackMate();
-		TmXmlReader reader = new TmXmlReader(file, trackmate);
+		TmXmlReader reader = new TmXmlReader(file);
 		if (!reader.checkInput() || !reader.process()) {
 			System.err.println("Problem loading the file:");
 			System.err.println(reader.getErrorMessage());

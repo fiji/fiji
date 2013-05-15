@@ -10,7 +10,7 @@ import fiji.plugin.trackmate.visualization.TrackMateModelView;
 
 public class ViewChoiceDescriptor implements WizardPanelDescriptor {
 
-	public static final String DESCRIPTOR = "DisplayerChoice";
+	private static final String KEY = "ChooseView";
 	private final ListChooserPanel component;
 	private final ViewProvider viewProvider;
 
@@ -52,4 +52,8 @@ public class ViewChoiceDescriptor implements WizardPanelDescriptor {
 		}.start();
 	}
 
+	@Override
+	public String getKey() {
+		return KEY;
+	}
 }

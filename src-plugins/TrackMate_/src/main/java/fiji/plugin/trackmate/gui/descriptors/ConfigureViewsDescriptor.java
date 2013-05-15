@@ -5,6 +5,7 @@ import fiji.plugin.trackmate.gui.panels.ConfigureViewsPanel;
 
 public class ConfigureViewsDescriptor implements WizardPanelDescriptor {
 
+	private static final String KEY = "ConfigureViews";
 	private ConfigureViewsPanel panel;
 
 	public ConfigureViewsDescriptor(TrackMate trackmate) {
@@ -28,4 +29,10 @@ public class ConfigureViewsDescriptor implements WizardPanelDescriptor {
 
 	@Override
 	public void aboutToHidePanel() { }
+
+
+	@Override
+	public String getKey() {
+		return KEY;
+	}
 }

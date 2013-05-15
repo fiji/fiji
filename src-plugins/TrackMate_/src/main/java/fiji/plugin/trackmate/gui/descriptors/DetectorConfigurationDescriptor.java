@@ -10,7 +10,7 @@ import fiji.plugin.trackmate.providers.DetectorProvider;
 
 public class DetectorConfigurationDescriptor implements WizardPanelDescriptor {
 
-	public static final String DESCRIPTOR = "DetectorConfigurationPanel";
+	private static final String KEY = "ConfigureDetector";
 	private final TrackMate trackmate;
 	private final DetectorProvider detectorProvider;
 	private ConfigurationPanel configPanel;
@@ -63,6 +63,11 @@ public class DetectorConfigurationDescriptor implements WizardPanelDescriptor {
 			settings = detectorProvider.getDefaultSettings();
 		}
 		trackmate.getSettings().detectorSettings = settings;
+	}
+	
+	@Override
+	public String getKey() {
+		return KEY;
 	}
 
 }

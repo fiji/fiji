@@ -1,28 +1,19 @@
 package fiji.plugin.trackmate.gui.descriptors;
 
-import java.awt.Component;
-import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.List;
 
-import javax.swing.SwingUtilities;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
-
 import fiji.plugin.trackmate.Logger;
-import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMate;
+import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.features.FeatureFilter;
 import fiji.plugin.trackmate.features.track.TrackIndexAnalyzer;
-import fiji.plugin.trackmate.gui.TrackMateWizard;
-import fiji.plugin.trackmate.gui.panels.ConfigureViewsPanel;
 import fiji.plugin.trackmate.gui.panels.components.FilterGuiPanel;
 import fiji.plugin.trackmate.visualization.PerTrackFeatureColorGenerator;
-import fiji.plugin.trackmate.visualization.TrackMateModelView;
 
 public class TrackFilterDescriptor implements WizardPanelDescriptor {
 	
-	public static final String DESCRIPTOR = "TrackFilter";
+	private static final String KEY = "FilterTracks";
 	private final FilterGuiPanel component;
 	private final TrackMate trackmate;
 	
@@ -41,48 +32,19 @@ public class TrackFilterDescriptor implements WizardPanelDescriptor {
 		TrackMateModel model = trackmate.getModel();
 		component.setTarget(model.getFeatureModel().getTrackFeatures(), trackmate.getSettings().getTrackFilters(),  
 				model.getFeatureModel().getTrackFeatureNames(), model.getFeatureModel().getTrackFeatureValues(), "tracks");
-		linkGuiToView();
 		component.setColorByFeature(TrackIndexAnalyzer.TRACK_INDEX);
 		
 		PerTrackFeatureColorGenerator generator = new PerTrackFeatureColorGenerator(model, TrackIndexAnalyzer.TRACK_INDEX);
 		generator.setFeature(component.getColorByFeature());
-		wizard.getDisplayer().setDisplaySettings(TrackMateModelView.KEY_TRACK_COLORING, generator);
-		wizard.getDisplayer().refresh();
+		
+		for (ActionListener listener : component.getActionListeners()) {
+			listener.actionPerformed(component.COLOR_FEATURE_CHANGED);
+		}
 	}
 
 	@Override
 	public void displayingPanel() {}
 	
-	public void linkGuiToView() {
-
-		// Link displayer and component
-		SwingUtilities.invokeLater(new Runnable() {			
-			@Override
-			public void run() {
-
-				component.addActionListener(new ActionListener() {
-					@Override
-					public void actionPerformed(ActionEvent event) {
-						PerTrackFeatureColorGenerator generator = new PerTrackFeatureColorGenerator(trackmate.getModel(), TrackIndexAnalyzer.TRACK_INDEX);
-						generator.setFeature(component.getColorByFeature());
-						wizard.getDisplayer().setDisplaySettings(TrackMateModelView.KEY_TRACK_COLORING, generator);
-						wizard.getDisplayer().refresh();
-					}
-				});
-
-				component.addChangeListener(new ChangeListener() {
-					@Override
-					public void stateChanged(ChangeEvent event) {
-						// We set the thresholds field of the model but do not touch its selected spot field yet.
-						trackmate.getSettings().setTrackFilters(component.getFeatureFilters());
-						trackmate.execTrackFiltering(false);
-					}
-				});
-				
-				wizard.setNextButtonEnabled(true);
-			}
-		});
-	}
 
 	@Override
 	public void aboutToHidePanel() {
@@ -110,5 +72,10 @@ public class TrackFilterDescriptor implements WizardPanelDescriptor {
 		}
 
 		trackmate.computeEdgeFeatures(true);
+	}
+	
+	@Override
+	public String getKey() {
+		return KEY;
 	}
 }

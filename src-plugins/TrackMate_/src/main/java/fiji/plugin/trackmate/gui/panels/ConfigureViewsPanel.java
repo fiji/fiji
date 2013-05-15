@@ -40,6 +40,7 @@ import javax.swing.border.LineBorder;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.TrackMate;
 import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.gui.TrackMateWizard;
 import fiji.plugin.trackmate.gui.panels.components.JNumericTextField;
 import fiji.plugin.trackmate.gui.panels.components.JPanelColorByFeatureGUI;
 import fiji.plugin.trackmate.gui.panels.components.TrackColorByFeatureGUI;
@@ -56,7 +57,7 @@ public class ConfigureViewsPanel extends ActionListenablePanel {
 
 	private static final long serialVersionUID = 1L;
 
-	private static final Icon DO_ANALYSIS_ICON = new ImageIcon(ConfigureViewsPanel.class.getResource("images/calculator.png"));
+	private static final Icon DO_ANALYSIS_ICON = new ImageIcon(TrackMateWizard.class.getResource("images/calculator.png"));
 	public ActionEvent TRACK_SCHEME_BUTTON_PRESSED 	= new ActionEvent(this, 0, "TrackSchemeButtonPushed");
 	public ActionEvent DO_ANALYSIS_BUTTON_PRESSED 	= new ActionEvent(this, 1, "DoAnalysisButtonPushed");
 
@@ -224,20 +225,6 @@ public class ConfigureViewsPanel extends ActionListenablePanel {
 						}
 					});
 				}
-				{
-
-					List<String> features = trackmate.getSettings().getSpotFeatures();
-					Map<String, String> featureNames = trackmate.getSettings().getSpotFeatureNames();
-					jPanelSpotColor = new JPanelColorByFeatureGUI(features, featureNames);
-					jPanelSpotOptions.add(jPanelSpotColor);
-					jPanelSpotColor.addActionListener(new ActionListener() {
-						@Override
-						public void actionPerformed(ActionEvent e) {
-							displaySettings.put(KEY_SPOT_COLOR_FEATURE, jPanelSpotColor.getSelectedFeature());
-							fireAction(e);
-						}
-					});
-				}
 			}
 			{
 				jCheckBoxDisplayTracks = new JCheckBox();
@@ -324,6 +311,19 @@ public class ConfigureViewsPanel extends ActionListenablePanel {
 						@Override
 						public void actionPerformed(ActionEvent e) {
 							displaySettings.put(KEY_DISPLAY_SPOT_NAMES, jCheckBoxDisplayNames.isSelected());
+							fireAction(e);
+						}
+					});
+				}
+				{
+					List<String> features = trackmate.getSettings().getSpotFeatures();
+					Map<String, String> featureNames = trackmate.getSettings().getSpotFeatureNames();
+					jPanelSpotColor = new JPanelColorByFeatureGUI(features, featureNames);
+					jPanelSpotOptions.add(jPanelSpotColor);
+					jPanelSpotColor.addActionListener(new ActionListener() {
+						@Override
+						public void actionPerformed(ActionEvent e) {
+							displaySettings.put(KEY_SPOT_COLOR_FEATURE, jPanelSpotColor.getSelectedFeature());
 							fireAction(e);
 						}
 					});

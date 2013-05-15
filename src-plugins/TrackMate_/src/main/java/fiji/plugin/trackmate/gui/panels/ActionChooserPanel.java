@@ -42,7 +42,7 @@ public class ActionChooserPanel {
 		
 		List<String> actions = actionProvider.getAvailableActions();
 		List<String> infoTexts = new ArrayList<String>(actions.size());
-		List<ImageIcon> icons = new ArrayList<ImageIcon>(actions.size());
+		icons = new ArrayList<ImageIcon>(actions.size());
 		for(String key : actions) {
 			infoTexts.add( actionProvider.getInfoText(key) );
 			icons.add( actionProvider.getIcon(key) );

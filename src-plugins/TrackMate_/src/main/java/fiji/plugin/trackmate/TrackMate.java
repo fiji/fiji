@@ -401,6 +401,7 @@ public class TrackMate implements Benchmark, MultiThreaded, Algorithm {
 		} catch (RuntimeException e) {
 			ok.set(false);
 			if (e.getCause() != null && e.getCause() instanceof InterruptedException) {
+				errorMessage = "Detection workers interrupted.\n";
 				for (final Thread thread : threads) thread.interrupt();
 				for (final Thread thread : threads) {
 					if (thread.isAlive()) try {
@@ -418,7 +419,8 @@ public class TrackMate implements Benchmark, MultiThreaded, Algorithm {
 		if (ok.get()) {
 			logger.log("Found "+spotFound.get()+" spots.\n");
 		} else {
-			logger.error("Detection failed after "+progress.get()+" frame:\n"+errorMessage);
+			logger.error("Detection failed after "+progress.get()+" frames:\n"+errorMessage);
+			logger.log("Found "+spotFound.get()+" spots prior failure.\n");
 		}
 		logger.setProgress(1);
 		logger.setStatus("");

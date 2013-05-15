@@ -41,13 +41,15 @@ public class TrackMateWizard extends JFrame implements ActionListener {
 	public static final Font BIG_FONT = new Font("Arial", Font.PLAIN, 14);
 	public static final Font SMALL_FONT = FONT.deriveFont(8);
 	public static final Dimension TEXTFIELD_DIMENSION = new Dimension(40,18);
+	public static final Icon NEXT_ICON = new ImageIcon(TrackMateWizard.class.getResource("images/arrow_right.png"));
+	public static final String NEXT_TEXT = "Next";
+	public static final String RESUME_TEXT = "Resume";
 
 	/*
 	 * PRIVATE CONSTANTS
 	 */
 
 	private static final long serialVersionUID = -4092131926852771798L;
-	private static final Icon NEXT_ICON = new ImageIcon(TrackMateWizard.class.getResource("images/arrow_right.png"));
 	private static final Icon PREVIOUS_ICON = new ImageIcon(TrackMateWizard.class.getResource("images/arrow_left.png"));
 	private static final Icon LOAD_ICON = new ImageIcon(TrackMateWizard.class.getResource("images/page_go.png"));
 	private static final Icon SAVE_ICON = new ImageIcon(TrackMateWizard.class.getResource("images/page_save.png"));
@@ -80,6 +82,7 @@ public class TrackMateWizard extends JFrame implements ActionListener {
 	private LogPanel logPanel;
 	private TrackMateModelView displayer;
 	private final TrackMateGUIController controller;
+	@SuppressWarnings("unused")
 	private JButton jButtonLog;
 
 
@@ -166,6 +169,8 @@ public class TrackMateWizard extends JFrame implements ActionListener {
 				// Register component instance with the layout on the fly
 				jPanelMain.removeAll();
 				jPanelMain.add(descriptor.getComponent(), BorderLayout.CENTER);
+				jPanelMain.validate();
+				jPanelMain.repaint();
 			}
 		});
 	}
@@ -237,7 +242,7 @@ public class TrackMateWizard extends JFrame implements ActionListener {
 			jButtonSave = addButton("Save", SAVE_ICON, 78, 2, 76, 25, SAVE_BUTTON_PRESSED);
 			jButtonLog = addButton(null, LOG_ICON, 157, 2, 30, 25, LOG_BUTTON_PRESSED);
 			jButtonPrevious = addButton(null, PREVIOUS_ICON, 190, 2, 30, 25, PREVIOUS_BUTTON_PRESSED);
-			jButtonNext = addButton("Next", NEXT_ICON, 220, 2, 73, 25, NEXT_BUTTON_PRESSED);
+			jButtonNext = addButton(NEXT_TEXT, NEXT_ICON, 220, 2, 73, 25, NEXT_BUTTON_PRESSED);
 			pack();
 			// Only instantiate the logger panel, the rest will be done by the controller
 			{
@@ -264,6 +269,10 @@ public class TrackMateWizard extends JFrame implements ActionListener {
 			}
 		});
 		return button;
+	}
+
+	public JButton getNextButton() {
+		return jButtonNext;
 	}
 
 }

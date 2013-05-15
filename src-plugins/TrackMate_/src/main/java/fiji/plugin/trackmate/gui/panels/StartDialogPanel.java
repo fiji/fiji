@@ -21,8 +21,11 @@ import fiji.plugin.trackmate.gui.panels.components.JNumericTextField;
 public class StartDialogPanel extends ActionListenablePanel {
 
 	private static final long serialVersionUID = -1L;
-
-	public static final String DESCRIPTOR = "StartDialog";
+	private static final String TOOLTIP = "<html>" +
+			"Pressing this button will make the current <br>" +
+			"ImagePlus the source for TrackMate. If the <br>" +
+			"image has a ROI, it will be used to set the <br>" +
+			"crop rectangle as well.</html>";
 
 	/** ActionEvent fired when the user press the refresh button. */
 	private final ActionEvent IMAGEPLUS_REFRESHED = new ActionEvent(this, 0, "ImagePlus refreshed");
@@ -420,9 +423,10 @@ public class StartDialogPanel extends ActionListenablePanel {
 			
 			{
 				jButtonRefresh = new JButton();
-				jButtonRefresh.setBounds(10, 430, 78, 21);
+				jButtonRefresh.setBounds(10, 422, 108, 29);
 				this.add(jButtonRefresh);
-				jButtonRefresh.setText("Refresh");
+				jButtonRefresh.setText("Refresh source");
+				jButtonRefresh.setToolTipText(TOOLTIP);
 				jButtonRefresh.setFont(SMALL_FONT);
 
 				jButtonRefresh.addActionListener(new ActionListener() {

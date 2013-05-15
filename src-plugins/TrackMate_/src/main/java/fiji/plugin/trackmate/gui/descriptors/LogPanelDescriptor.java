@@ -6,7 +6,7 @@ import fiji.plugin.trackmate.gui.LogPanel;
 
 public class LogPanelDescriptor implements WizardPanelDescriptor {
 	
-	public static final String DESCRIPTOR = "LogPanel";
+	private static final String KEY = "LogPanel";
 	private final LogPanel logPanel;
 
 	public LogPanelDescriptor(LogPanel logPanel) {
@@ -26,5 +26,10 @@ public class LogPanelDescriptor implements WizardPanelDescriptor {
 
 	@Override
 	public void aboutToHidePanel() {}
+
+	@Override
+	public String getKey() {
+		return KEY;
+	}
 
 }

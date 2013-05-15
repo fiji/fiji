@@ -85,7 +85,7 @@ public class ExportTracksToXML extends AbstractTMAction {
 		} catch (NullPointerException npe) {
 			file = new File(folder.getPath() + File.separator + "Tracks.xml");
 		}
-		file = IOUtils.askForFile(file, controller.getWizard(), logger);
+		file = IOUtils.askForFile(file, controller.getGUI(), logger);
 		if (null == file) {
 			return;
 		}

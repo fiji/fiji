@@ -2,6 +2,7 @@ package fiji.plugin.trackmate.tests;
 
 import fiji.SampleImageLoader;
 import fiji.plugin.trackmate.TrackMate;
+import fiji.plugin.trackmate.TrackMatePlugIn_;
 import ij.IJ;
 import ij.ImageJ;
 import ij.ImagePlus;
@@ -34,7 +35,7 @@ public class TrackMate_TestDrive {
 //		IJ.run(imp, "Crop", "");
 //		IJ.run(imp, "Subtract Background...", "rolling=50 stack");
 		
-		final TrackMate st = new TrackMate();
+		final TrackMatePlugIn_ plugin = new TrackMatePlugIn_();
 		System.out.println("Running the trackmate...");
 //		new Thread() {
 //			public void run() {
@@ -46,7 +47,7 @@ public class TrackMate_TestDrive {
 //				st.getModel().setLogger(fiji.plugin.trackmate.Logger.DEFAULT_LOGGER);
 //			};
 //		}.start();
-		st.run(null); // launch the GUI;
+		plugin.run(null); // launch the GUI;
 		
 	}
 }

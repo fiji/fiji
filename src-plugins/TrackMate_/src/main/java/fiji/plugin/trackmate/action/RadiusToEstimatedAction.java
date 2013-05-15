@@ -9,12 +9,12 @@ import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.TrackMate;
 import fiji.plugin.trackmate.features.spot.SpotRadiusEstimatorFactory;
 import fiji.plugin.trackmate.gui.TrackMateGUIController;
-import fiji.plugin.trackmate.gui.panels.ConfigureViewsPanel;
+import fiji.plugin.trackmate.gui.TrackMateWizard;
 
 public class RadiusToEstimatedAction extends AbstractTMAction {
 
 
-	public static final ImageIcon ICON = new ImageIcon(ConfigureViewsPanel.class.getResource("images/lightbulb.png"));
+	public static final ImageIcon ICON = new ImageIcon(TrackMateWizard.class.getResource("images/lightbulb.png"));
 	public static final String NAME = "Set radius to estimated value";
 	public static final String INFO_TEXT =  "<html>" +
 				"This action changes the radius feature of all retained spots <br> " +

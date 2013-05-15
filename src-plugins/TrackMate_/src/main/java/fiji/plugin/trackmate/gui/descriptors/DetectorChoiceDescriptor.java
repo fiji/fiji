@@ -9,7 +9,7 @@ import fiji.plugin.trackmate.providers.DetectorProvider;
 
 public class DetectorChoiceDescriptor implements WizardPanelDescriptor {
 
-	public static final String DESCRIPTOR = "DetectorChoice";
+	private static final String KEY = "ChooseDetector";
 	private ListChooserPanel component;
 	private final TrackMate trackmate;
 	private final DetectorProvider detectorProvider;
@@ -77,6 +77,11 @@ public class DetectorChoiceDescriptor implements WizardPanelDescriptor {
 			Map<String, Object> defaultSettings = detectorProvider.getDefaultSettings();
 			trackmate.getSettings().detectorSettings = defaultSettings;
 		}
+	}
+	
+	@Override
+	public String getKey() {
+		return KEY;
 	}
 
 

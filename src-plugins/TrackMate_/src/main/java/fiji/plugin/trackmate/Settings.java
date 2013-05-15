@@ -590,9 +590,13 @@ public class Settings {
 			for (String feature : analyzer.getFeatures()) {
 				str.append(analyzer.getFeatureShortNames().get(feature) +", ");
 			}
-			str.deleteCharAt(str.length());
-			str.deleteCharAt(str.length());
-			str.append(".\n");
+			str.deleteCharAt(str.length()-1);
+			str.deleteCharAt(str.length()-1);
+			// be precise
+			if (str.charAt(str.length()-1) != '.') {
+				str.append('.');
+			}
+			str.append('\n');
 		}
 	}
 	

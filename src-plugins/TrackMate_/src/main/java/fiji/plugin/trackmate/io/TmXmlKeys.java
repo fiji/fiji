@@ -152,5 +152,11 @@ class TmXmlKeys {
 	public static final String ANALYSER_ELEMENT_KEY 					= "Analyzer";
 	public static final String ANALYSER_KEY_ATTRIBUTE 					= "key";
 
+	/*
+	 * GUI
+	 */
+	
+	public static final String GUI_STATE_ELEMENT_KEY 					= "GUIState";
+	public static final String GUI_STATE_ATTRIBUTE 						= "state";
 	
 }

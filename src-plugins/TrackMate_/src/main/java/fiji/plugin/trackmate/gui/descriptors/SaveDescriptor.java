@@ -1,13 +1,12 @@
 package fiji.plugin.trackmate.gui.descriptors;
 
-import java.awt.Frame;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.TrackMate;
-import fiji.plugin.trackmate.gui.LogPanel;
+import fiji.plugin.trackmate.gui.TrackMateGUIController;
 import fiji.plugin.trackmate.io.IOUtils;
 import fiji.plugin.trackmate.io.TmXmlWriter;
 import fiji.plugin.trackmate.providers.DetectorProvider;
@@ -15,17 +14,18 @@ import fiji.plugin.trackmate.providers.TrackerProvider;
 
 public class SaveDescriptor extends SomeDialogDescriptor {
 
+	private static final String KEY = "Saving";
 	private final TrackMate trackmate;
-	private final Frame frame;
 	private final DetectorProvider detectorProvider;
 	private final TrackerProvider trackerProvider;
+	private final TrackMateGUIController controller;
 
-	public SaveDescriptor(LogPanel logPanel, TrackMate trackmate, DetectorProvider detectorProvider, TrackerProvider trackerProvider, Frame frame) {
-		super(logPanel);
-		this.trackmate = trackmate;
+	public SaveDescriptor(TrackMateGUIController controller, DetectorProvider detectorProvider, TrackerProvider trackerProvider) {
+		super(controller.getGUI().getLogPanel());
+		this.trackmate = controller.getPlugin();
+		this.controller = controller;
 		this.detectorProvider = detectorProvider;
 		this.trackerProvider = trackerProvider;
-		this.frame = frame;
 	}
 
 
@@ -50,27 +50,39 @@ public class SaveDescriptor extends SomeDialogDescriptor {
 			trackmate.computeTrackFeatures(true);
 		}
 
-		File tmpFile = IOUtils.askForFile(file, frame, logger);
+		File tmpFile = IOUtils.askForFile(file, controller.getGUI(), logger);
 		if (null == tmpFile) {
 			return;
 		}
 		file = tmpFile;
+		
+		/*
+		 * Write model, settings and GUI state
+		 */
 
 		TmXmlWriter writer = new TmXmlWriter(file);
 
 		writer.appendLog(logPanel.getTextContent());
 		writer.appendModel(trackmate.getModel());
 		writer.appendSettings(trackmate.getSettings(), detectorProvider, trackerProvider);
+		writer.appendGUIState(controller.getGUIStateString());
 
 		try {
 			writer.writeToFile();
 			logger.log("Data saved to: "+file.toString()+'\n');
 		} catch (FileNotFoundException e) {
 			logger.error("File not found:\n"+e.getMessage()+'\n');
+			return;
 		} catch (IOException e) {
 			logger.error("Input/Output error:\n"+e.getMessage()+'\n');
-		} 
-
+			return;
+		}
+				
+	}
+	
+	@Override
+	public String getKey() {
+		return KEY;
 	}
 
 }

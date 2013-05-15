@@ -25,6 +25,7 @@ import fiji.plugin.trackmate.providers.TrackAnalyzerProvider;
 
 public class StartDialogDescriptor  implements WizardPanelDescriptor {
 
+	private static final String KEY = "Start";
 	private final StartDialogPanel panel;
 	private final TrackMate trackmate;
 	private SpotAnalyzerProvider spotAnalyzerProvider;
@@ -125,8 +126,12 @@ public class StartDialogDescriptor  implements WizardPanelDescriptor {
 			settings.addTrackAnalyzer(trackAnalyzer);
 		}
 		
-		trackmate.getModel().getLogger().log("\n" + settings.toStringFeatureAnalyzersInfo());
-				
+		trackmate.getModel().getLogger().log(settings.toStringFeatureAnalyzersInfo());
+	}
+
+	@Override
+	public String getKey() {
+		return KEY;
 	}
 	
 	/*
@@ -162,4 +167,5 @@ public class StartDialogDescriptor  implements WizardPanelDescriptor {
 			l.actionPerformed(e);
 	}
 
+	
 }

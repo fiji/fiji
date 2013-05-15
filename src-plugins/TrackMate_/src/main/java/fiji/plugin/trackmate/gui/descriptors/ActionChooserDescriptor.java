@@ -6,6 +6,7 @@ import fiji.plugin.trackmate.providers.ActionProvider;
 
 public class ActionChooserDescriptor implements WizardPanelDescriptor {
 
+	private static final String KEY = "Actions";
 	private ActionChooserPanel panel;
 
 	public ActionChooserDescriptor(ActionProvider actionProvider) {
@@ -25,5 +26,10 @@ public class ActionChooserDescriptor implements WizardPanelDescriptor {
 
 	@Override
 	public void aboutToHidePanel() { }
+
+	@Override
+	public String getKey() {
+		return KEY;
+	}
 	
 }

@@ -12,6 +12,7 @@ import javax.swing.JFrame;
 import fiji.plugin.trackmate.SelectionModel;
 import fiji.plugin.trackmate.TrackMate;
 import fiji.plugin.trackmate.gui.TrackMateGUIController;
+import fiji.plugin.trackmate.gui.TrackMateWizard;
 import fiji.plugin.trackmate.gui.panels.ConfigureViewsPanel;
 import fiji.plugin.trackmate.gui.panels.components.ImagePlusChooser;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
@@ -20,7 +21,7 @@ import fiji.plugin.trackmate.visualization.threedviewer.SpotDisplayer3D;
 
 public class CopyOverlayAction extends AbstractTMAction {
 
-	public static final ImageIcon ICON = new ImageIcon(ConfigureViewsPanel.class.getResource("images/page_copy.png"));
+	public static final ImageIcon ICON = new ImageIcon(TrackMateWizard.class.getResource("images/page_copy.png"));
 	public static final String NAME = "Copy overlay to...";
 	public static final String INFO_TEXT = "<html>" +
 			"This action copies the overlay (spots and tracks) to a new existing ImageJ window <br> " +

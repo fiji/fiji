@@ -10,7 +10,7 @@ import fiji.plugin.trackmate.providers.TrackerProvider;
 
 public class TrackerChoiceDescriptor implements WizardPanelDescriptor {
 
-	public static final String DESCRIPTOR = "TrackerChoice";
+	private static final String KEY = "ChooseTracker";
 	private final ListChooserPanel component;
 	private final TrackMate trackmate;
 	private final TrackerProvider trackerProvider;
@@ -75,6 +75,11 @@ public class TrackerChoiceDescriptor implements WizardPanelDescriptor {
 			return;
 		}
 		component.setChoice(index);
+	}
+
+	@Override
+	public String getKey() {
+		return KEY;
 	}
 	
 }

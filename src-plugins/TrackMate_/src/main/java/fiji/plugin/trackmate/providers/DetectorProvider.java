@@ -153,6 +153,11 @@ public class DetectorProvider extends AbstractProvider {
 		settings.clear();
 
 		String detectorKey = element.getAttributeValue(XML_ATTRIBUTE_DETECTOR_NAME);
+		if (null == detectorKey) {
+			errorMessage = "Detector element not found, using default detector.\n";
+			currentKey = LogDetectorFactory.DETECTOR_KEY;
+			return false;
+		}
 		// Try to set the state of this provider from the key read in xml.
 		boolean ok = select(detectorKey);
 		if (!ok) {

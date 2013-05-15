@@ -9,7 +9,7 @@ import fiji.plugin.trackmate.providers.TrackerProvider;
 
 public class TrackerConfigurationDescriptor implements WizardPanelDescriptor {
 
-	public static final String DESCRIPTOR = "TrackerConfigurationPanel";
+	private static final String KEY = "ConfigureTracker";
 	private final TrackMate trackmate;
 	private ConfigurationPanel configPanel;
 	private final TrackerProvider trackerProvider;
@@ -61,5 +61,10 @@ public class TrackerConfigurationDescriptor implements WizardPanelDescriptor {
 			settings = trackerProvider.getDefaultSettings();
 		}
 		trackmate.getSettings().trackerSettings = settings;
+	}
+	
+	@Override
+	public String getKey() {
+		return KEY;
 	}
 }

@@ -37,6 +37,9 @@ import javax.swing.event.ChangeListener;
 public class LogDetectorConfigurationPanel extends ConfigurationPanel {
 
 	private static final long serialVersionUID = 4519313560718180405L;
+	private static final String TOOLTIP = "<html>" +
+			"Will read the threshold from the current <br>" +
+			"ImagePlus and use its value here.</html>";
 	private JLabel jLabel1;
 	protected JLabel jLabelSegmenterName;
 	private JLabel jLabel2;
@@ -226,9 +229,10 @@ public class LogDetectorConfigurationPanel extends ConfigurationPanel {
 			}
 			{
 				jButtonRefresh = new JButton();
-				jButtonRefresh.setBounds(5, 370, 67, 21);
+				jButtonRefresh.setBounds(5, 370, 111, 25);
 				this.add(jButtonRefresh);
-				jButtonRefresh.setText("Refresh Treshold");
+				jButtonRefresh.setText("Refresh treshold");
+				jButtonRefresh.setToolTipText(TOOLTIP);
 				jButtonRefresh.setFont(SMALL_FONT);
 				jButtonRefresh.addActionListener(new ActionListener() {
 					public void actionPerformed(ActionEvent e) {

@@ -7,6 +7,7 @@ import fiji.plugin.trackmate.gui.GrapherPanel;
 
 public class GrapherDescriptor implements WizardPanelDescriptor  {
 
+	private static final String KEY = "GraphFeatures";
 	private final GrapherPanel panel;
 
 	public GrapherDescriptor(TrackMate trackmate) {
@@ -27,4 +28,8 @@ public class GrapherDescriptor implements WizardPanelDescriptor  {
 	@Override
 	public void aboutToHidePanel() { }
 
+	@Override
+	public String getKey() {
+		return KEY;
+	}
 }

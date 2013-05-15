@@ -6,7 +6,7 @@ import javax.swing.ImageIcon;
 
 import fiji.plugin.trackmate.TrackMate;
 import fiji.plugin.trackmate.gui.TrackMateGUIController;
-import fiji.plugin.trackmate.gui.panels.ConfigureViewsPanel;
+import fiji.plugin.trackmate.gui.TrackMateWizard;
 import fiji.plugin.trackmate.visualization.threedviewer.SpotDisplayer3D;
 
 public class LinkNew3DViewerAction extends AbstractTMAction {
@@ -19,7 +19,7 @@ public class LinkNew3DViewerAction extends AbstractTMAction {
 			"<p>" +
 			"Useful to have synchronized 2D vs 3D views." +
 			"</html>" ;
-	public static final ImageIcon ICON = new ImageIcon(ConfigureViewsPanel.class.getResource("images/page_white_link.png"));
+	public static final ImageIcon ICON = new ImageIcon(TrackMateWizard.class.getResource("images/page_white_link.png"));
 	
 	public LinkNew3DViewerAction(TrackMate trackmate, TrackMateGUIController controller) {
 		super(trackmate, controller);
