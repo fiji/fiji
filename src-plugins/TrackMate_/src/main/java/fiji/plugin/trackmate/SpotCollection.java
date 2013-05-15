@@ -429,7 +429,6 @@ public class SpotCollection implements MultiThreaded  {
 
 	/**
 	 * Return an iterator that iterates over the spots in the specified frame.
-	 * If the specified frame is not a key of this collection, <code>null</code> is returned.
 	 * @param visibleSpotsOnly  if true, the returned iterator will only iterate through visible
 	 * spots. If false, it will iterate over all spots.
 	 * @param frame  the frame to iterate over.

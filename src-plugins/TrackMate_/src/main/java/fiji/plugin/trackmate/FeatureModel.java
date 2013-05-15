@@ -214,6 +214,7 @@ public class FeatureModel {
 			if (null == dimension) {
 				throw new IllegalArgumentException("Feature " + feature + " misses a dimension.");
 			}
+			edgeFeatureDimensions.put(feature, dimension);
 		}
 	}
 
@@ -290,6 +291,7 @@ public class FeatureModel {
 			if (null == dimension) {
 				throw new IllegalArgumentException("Feature " + feature + " misses a dimension.");
 			}
+			trackFeatureDimensions.put(feature, dimension);
 		}
 	}
 
