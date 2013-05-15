@@ -123,6 +123,12 @@ public class FilterGuiPanel extends ActionListenablePanel implements ChangeListe
 		}
 		jPanelColorByFeatureGUI = new JPanelColorByFeatureGUI(this.features, featureNames);
 		COLOR_FEATURE_CHANGED = jPanelColorByFeatureGUI.COLOR_FEATURE_CHANGED;
+		jPanelColorByFeatureGUI.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				fireAction(COLOR_FEATURE_CHANGED);
+			}
+		});
 		jPanelColorByFeatureGUI.setFeatureValues(featureValues);
 		jPanelBottom.add(jPanelColorByFeatureGUI, BorderLayout.CENTER);
 

@@ -122,12 +122,16 @@ public class TrackMateGUIController implements ActionListener {
 		
 		// Feature updater
 		new ModelFeatureUpdater(trackmate.getModel(), trackmate.getSettings());
-		
-		createProviders();
-		registeredDescriptors = createDescriptors();
-		createSelectionModel();
 
+		// 0.
 		this.guimodel = new TrackMateGUIModel();
+		// 1.
+		createSelectionModel();
+		// 2.
+		createProviders();
+		// 3.
+		registeredDescriptors = createDescriptors();
+
 		guimodel.currentDescriptor = startDialoDescriptor;
 
 		trackmate.getModel().setLogger(logger);
@@ -276,24 +280,30 @@ public class TrackMateGUIController implements ActionListener {
 		/*
 		 * Select and render a view
 		 */
-		viewChoiceDescriptor		= new ViewChoiceDescriptor(viewProvider);
+		// We need the GUI model to register the created view there.
+		viewChoiceDescriptor		= new ViewChoiceDescriptor(viewProvider, guimodel);
 		
 		/*
 		 * Spot filtering
 		 */
 		spotFilterDescriptor 		= new SpotFilterDescriptor(trackmate);
+		// display color changed
 		spotFilterDescriptor.getComponent().addActionListener(new ActionListener() {
+			
 			@Override
-			public void actionPerformed(ActionEvent ae) {
-				guimodel.displaySettings.put(TrackMateModelView.KEY_SPOT_COLOR_FEATURE, spotFilterDescriptor.getComponent().getColorByFeature());
+			public void actionPerformed(ActionEvent event) {
+				if (event == spotFilterDescriptor.getComponent().COLOR_FEATURE_CHANGED) {
+					for (TrackMateModelView view : guimodel.views) {
+						view.setDisplaySettings(TrackMateModelView.KEY_SPOT_COLOR_FEATURE, 
+								spotFilterDescriptor.getComponent().getColorByFeature());
+					}
+				}
 			}
 		});
+		// Filtered
 		spotFilterDescriptor.getComponent().addChangeListener(new ChangeListener() {
 			@Override
 			public void stateChanged(ChangeEvent event) {
-				if (DEBUG) {
-					System.out.println("[TrackMateGUIController] stateChanged caught in SpotFilterDescriptor.");
-				}
 				// We set the thresholds field of the model but do not touch its selected spot field yet.
 				trackmate.getSettings().setSpotFilters(spotFilterDescriptor.getComponent().getFeatureFilters());
 				trackmate.execSpotFiltering(false);
@@ -324,7 +334,9 @@ public class TrackMateGUIController implements ActionListener {
 			public void actionPerformed(ActionEvent event) {
 				PerTrackFeatureColorGenerator generator = new PerTrackFeatureColorGenerator(trackmate.getModel(), TrackIndexAnalyzer.TRACK_INDEX);
 				generator.setFeature(trackFilterDescriptor.getComponent().getColorByFeature());
-				guimodel.displaySettings.put(TrackMateModelView.KEY_TRACK_COLORING, generator);
+				for (TrackMateModelView view : guimodel.views) {
+					view.setDisplaySettings(TrackMateModelView.KEY_TRACK_COLORING, generator);
+				}
 			}
 		});
 		trackFilterDescriptor.getComponent().addChangeListener(new ChangeListener() {

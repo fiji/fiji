@@ -41,15 +41,14 @@ public class InitFilterPanel extends ActionListenablePanel  {
 	private JLabel jLabelExplanation;
 	private JLabel jLabelSelectedSpots;
 	private JPanel jPanelText;
+	private double[] values;
 	OnRequestUpdater updater;
-	private Map<String, double[]> features;
 
 
 	/**
 	 * Default constructor, initialize component. 
 	 */
-	public InitFilterPanel(Map<String, double[]> features) {
-		this.features = features;
+	public InitFilterPanel() {
 		this.updater = new OnRequestUpdater(new Refreshable() {
 			@Override
 			public void refresh() {
@@ -63,6 +62,36 @@ public class InitFilterPanel extends ActionListenablePanel  {
 	/*
 	 * PUBLIC METHOD
 	 */
+	
+	public void setValues(double[] values) {
+		this.values = values;
+		
+		if (null != jPanelThreshold) {
+			this.remove(jPanelThreshold);
+		}
+		
+		ArrayList<String> keys = new ArrayList<String>(1);
+		keys.add(Spot.QUALITY);
+		HashMap<String, String> keyNames = new HashMap<String, String>(1);
+		keyNames.put(Spot.QUALITY, Spot.FEATURE_NAMES.get(Spot.QUALITY));
+
+		Map<String, double[]> features = new HashMap<String, double[]>(1);
+		features.put(Spot.QUALITY, values);
+		
+		jPanelThreshold = new FilterPanel(features , keys, keyNames);
+		jPanelThreshold.jComboBoxFeature.setEnabled(false);
+		jPanelThreshold.jRadioButtonAbove.setEnabled(false);
+		jPanelThreshold.jRadioButtonBelow.setEnabled(false);
+		this.add(jPanelThreshold, BorderLayout.CENTER);
+		jPanelThreshold.setPreferredSize(new java.awt.Dimension(300, 200));
+		jPanelThreshold.addChangeListener(new ChangeListener() {
+			public void stateChanged(ChangeEvent e) {
+				updater.doUpdate();
+			}
+		});
+
+		
+	}
 
 	public void setInitialFilterValue(Double initialFilterValue) {
 		if (null != initialFilterValue) {
@@ -92,7 +121,6 @@ public class InitFilterPanel extends ActionListenablePanel  {
 	private void thresholdChanged() {
 		double threshold  = jPanelThreshold.getThreshold();
 		boolean isAbove = jPanelThreshold.isAboveThreshold();
-		double[] values = features.get(Spot.QUALITY);
 		if (null == values)
 			return;
 		int nspots = values.length;
@@ -147,24 +175,6 @@ public class InitFilterPanel extends ActionListenablePanel  {
 					jLabelExplanation.setText(EXPLANATION_TEXT);
 					jLabelExplanation.setBounds(12, 39, 276, 100);
 					jLabelExplanation.setFont(FONT.deriveFont(Font.ITALIC));
-				}
-				{
-					ArrayList<String> keys = new ArrayList<String>(1);
-					keys.add(Spot.QUALITY);
-					HashMap<String, String> keyNames = new HashMap<String, String>(1);
-					keyNames.put(Spot.QUALITY, Spot.FEATURE_NAMES.get(Spot.QUALITY));
-
-					jPanelThreshold = new FilterPanel(features, keys, keyNames);
-					jPanelThreshold.jComboBoxFeature.setEnabled(false);
-					jPanelThreshold.jRadioButtonAbove.setEnabled(false);
-					jPanelThreshold.jRadioButtonBelow.setEnabled(false);
-					this.add(jPanelThreshold, BorderLayout.CENTER);
-					jPanelThreshold.setPreferredSize(new java.awt.Dimension(300, 200));
-					jPanelThreshold.addChangeListener(new ChangeListener() {
-						public void stateChanged(ChangeEvent e) {
-							updater.doUpdate();
-						}
-					});
 				}
 			}
 		} catch (Exception e) {

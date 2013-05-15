@@ -1,9 +1,10 @@
 package fiji.plugin.trackmate.gui;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.Collection;
+import java.util.HashSet;
 
 import fiji.plugin.trackmate.gui.descriptors.WizardPanelDescriptor;
+import fiji.plugin.trackmate.visualization.TrackMateModelView;
 
 public class TrackMateGUIModel {
 
@@ -34,11 +35,35 @@ public class TrackMateGUIModel {
 	/** The panel descriptor previously displayed, e.g. before the user pressed the save button. */ 
 	WizardPanelDescriptor previousDescriptor;
 
-	
-	/** The display settings configuring the look and feel of all the TrackMateModelViews controlled
-	 * by this GUI.  */
-	Map<String, Object> displaySettings = new HashMap<String, Object>(); 
-	
+	/** The collection of views instantiated and registered in the GUI. 
+	 * We need to keep track of them so that we can forward them the 
+	 * changes in display settings.	 */
+	Collection<TrackMateModelView> views = new HashSet<TrackMateModelView>();
 
+	/**
+	 * Returns the collection of views instantiated and registered in the GUI. 
+	 * @return the collection of {@link TrackMateModelView}.
+	 */
+	public Collection<TrackMateModelView> getViews() {
+		return views;
+	}
+	
+	/**
+	 * Adds the specified {@link TrackMateModelView} to the collection of views
+	 * managed by this GUI.
+	 * @param view the {@link TrackMateModelView} to add.
+	 */
+	public void addView(TrackMateModelView view) {
+		views.add(view);
+	}
+	
+	/**
+	 * Removes the specified {@link TrackMateModelView} to the collection of views
+	 * managed by this GUI.
+	 * @param view the {@link TrackMateModelView} to remove.
+	 */
+	public void removeView(TrackMateModelView view) {
+		views.remove(view);
+	}
 	
 }

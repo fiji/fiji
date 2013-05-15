@@ -4,6 +4,7 @@ import java.awt.Component;
 import java.util.ArrayList;
 import java.util.List;
 
+import fiji.plugin.trackmate.gui.TrackMateGUIModel;
 import fiji.plugin.trackmate.gui.panels.ListChooserPanel;
 import fiji.plugin.trackmate.providers.ViewProvider;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
@@ -13,9 +14,11 @@ public class ViewChoiceDescriptor implements WizardPanelDescriptor {
 	private static final String KEY = "ChooseView";
 	private final ListChooserPanel component;
 	private final ViewProvider viewProvider;
+	private final TrackMateGUIModel guimodel;
 
-	public ViewChoiceDescriptor(ViewProvider viewProvider) {
+	public ViewChoiceDescriptor(ViewProvider viewProvider, TrackMateGUIModel guimodel) {
 		this.viewProvider = viewProvider;
+		this.guimodel = guimodel;
 		List<String> viewerNames = viewProvider.getAvailableViews();
 		List<String> infoTexts = new ArrayList<String>(viewerNames.size());
 		for(String key : viewerNames) {
@@ -42,11 +45,12 @@ public class ViewChoiceDescriptor implements WizardPanelDescriptor {
 
 	@Override
 	public void aboutToHidePanel() {
-		int index = component.getChoice();
-		String viewName = viewProvider.getAvailableViews().get(index);
-		final TrackMateModelView view = viewProvider.getView(viewName);
+		final int index = component.getChoice();
 		new Thread("TrackMate view rendering thread") {
 			public void run() {
+				String viewName = viewProvider.getAvailableViews().get(index);
+				TrackMateModelView view = viewProvider.getView(viewName);
+				guimodel.addView(view);
 				view.render();
 			};
 		}.start();

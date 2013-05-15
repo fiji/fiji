@@ -4,6 +4,8 @@ import java.util.Map;
 
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.Settings;
+import fiji.plugin.trackmate.Spot;
+import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.TrackMate;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.features.FeatureFilter;
@@ -13,13 +15,13 @@ import fiji.plugin.trackmate.util.TMUtils;
 public class InitFilterDescriptor implements WizardPanelDescriptor {
 
 	private static final String KEY = "InitialFiltering";
-	private InitFilterPanel component;
+	private final InitFilterPanel component;
 	private final TrackMate trackmate;
-	private Map<String, double[]> features;
 	
 	
 	public InitFilterDescriptor(TrackMate trackmate) {
 		this.trackmate = trackmate;
+		this.component = new InitFilterPanel();
 	}
 	
 	
@@ -30,10 +32,16 @@ public class InitFilterDescriptor implements WizardPanelDescriptor {
 
 	@Override
 	public void aboutToDisplayPanel() {
-		TrackMateModel model = trackmate.getModel();
-		Settings settings = trackmate.getSettings();
-		features = TMUtils.getSpotFeatureValues(model.getSpots(), settings.getSpotFeatures(), model.getLogger());
-		component = new InitFilterPanel(features);
+		
+		SpotCollection spots = trackmate.getModel().getSpots();
+		
+		double[] values = new double[spots.getNSpots(false)];
+		int index = 0;
+		for (Spot spot : spots.iterable(false)) {
+			values[index++] = spot.getFeature(Spot.QUALITY);
+		}
+		component.setValues(values);
+		
 		Double initialFilterValue = trackmate.getSettings().initialSpotFilterValue;
 		component.setInitialFilterValue(initialFilterValue);
 	}

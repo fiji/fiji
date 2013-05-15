@@ -20,7 +20,7 @@ public class SpotFilterDescriptor implements WizardPanelDescriptor {
 	
 	public SpotFilterDescriptor(TrackMate trackmate) {
 		this.trackmate = trackmate;
-		this.component = new FilterGuiPanel(); 
+		this.component = new FilterGuiPanel();
 	}
 	
 	@Override

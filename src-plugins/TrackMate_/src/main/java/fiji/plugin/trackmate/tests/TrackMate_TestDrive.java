@@ -17,9 +17,10 @@ public class TrackMate_TestDrive {
 	
 	public static void main(String[] args) {
 		
+		ImageJ.main(args);
+
 		final File file = new File(AppUtils.getBaseDirectory(TrackMate.class), "samples/FakeTracks.tif");
 		
-		new ImageJ();
 		if (!file.exists()) try {
 			final File parent = file.getParentFile();
 			if (!parent.isDirectory()) parent.mkdirs();
