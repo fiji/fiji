@@ -161,7 +161,7 @@ public class LogDetector <T extends RealType<T>  & NativeType<T>> implements Spo
 		}
 
 		// Do sub-pixel localization
-		if (doSubPixelLocalization ) {
+		if (doSubPixelLocalization && !peaks.isEmpty()) {
 			// Create localizer and apply it to the list. The list object will be updated
 			final QuadraticSubpixelLocalization<T> locator = new QuadraticSubpixelLocalization<T>(intermediateImage, peaks);
 			locator.setNumThreads(1); // Since the calls to a detector  are already multi-threaded.
