@@ -43,7 +43,6 @@ public class DetectorProvider extends AbstractProvider {
 	 */
 
 	private TrackMateModel model;
-	private Settings settings;
 
 	/**
 	 * This provider provides the GUI with the spot detectors currently available in the 
@@ -57,9 +56,8 @@ public class DetectorProvider extends AbstractProvider {
 	 * @param settings 
 	 * @param model 
 	 */
-	public DetectorProvider(TrackMateModel model, Settings settings) {
+	public DetectorProvider(TrackMateModel model) {
 		this.model = model;
-		this.settings = settings;
 		registerDetectors();
 		currentKey = LogDetectorFactory.DETECTOR_KEY;
 	}
@@ -293,7 +291,7 @@ public class DetectorProvider extends AbstractProvider {
 	 * Returns a new GUI panel able to configure the settings suitable for the target detector 
 	 * factory. If the key is unknown to this provider, <code>null</code> is returned.
 	 */
-	public ConfigurationPanel getDetectorConfigurationPanel() 	{
+	public ConfigurationPanel getDetectorConfigurationPanel(Settings settings) 	{
 		
 		ImagePlus imp = settings.imp;
 		String spaceUnits = model.getSpaceUnits();

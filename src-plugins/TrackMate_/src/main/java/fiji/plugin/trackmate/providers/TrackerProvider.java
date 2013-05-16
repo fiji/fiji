@@ -27,7 +27,6 @@ import java.util.Map;
 import org.jdom2.Element;
 
 import fiji.plugin.trackmate.Logger;
-import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.TrackMate;
 import fiji.plugin.trackmate.TrackMateModel;
@@ -53,7 +52,6 @@ public class TrackerProvider extends AbstractProvider  {
 	protected static final String XML_ELEMENT_NAME_FEATURE_PENALTIES = "FeaturePenalties";
 
 	protected final TrackMateModel model;
-	protected final Settings settings;
 
 	/*
 	 * CONSTRUCTOR
@@ -73,9 +71,8 @@ public class TrackerProvider extends AbstractProvider  {
 	 * factory so that it is registered with the custom trackers and pass this 
 	 * extended provider to the {@link TrackMate} trackmate.
 	 */
-	public TrackerProvider(TrackMateModel model, Settings settings) {
+	public TrackerProvider(TrackMateModel model) {
 		this.model = model;
-		this.settings = settings;
 		this.currentKey = SimpleFastLAPTracker.TRACKER_KEY;
 		registerTrackers();
 	}

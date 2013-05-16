@@ -35,7 +35,7 @@ public class DetectorConfigurationDescriptor implements WizardPanelDescriptor {
 	 */
 	private void updateComponent() {
 		// Regenerate panel
-		configPanel = detectorProvider.getDetectorConfigurationPanel();
+		configPanel = detectorProvider.getDetectorConfigurationPanel(trackmate.getSettings());
 		// We assume the provider is already configured with the right target detector factory
 		Map<String, Object> settings = trackmate.getSettings().detectorSettings;
 		// Bulletproof null

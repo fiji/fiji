@@ -667,7 +667,7 @@ public class TrackGraphModel {
 
 
 	/**
-	 * Compute the two track lists {@link #trackSpots} and {@link #trackSpots}
+	 * Computes the two track lists {@link #trackSpots} and {@link #trackSpots}
 	 * from the {@link #graph}. These two track lists are the only objects
 	 * reflecting the tracks visible from outside the model.
 	 * <p>
@@ -708,7 +708,7 @@ public class TrackGraphModel {
 				continue;
 			}
 
-			Integer uniqueKey = track.hashCode();
+			Integer uniqueKey = track.hashCode(); // FIXME is not actually unique, since it is the sum of spot IDs. A track made of 2 spots with IDs 2 & 5 will have the same hash that of a track made of the spots with IDs 3 & 4.
 			// Add to spot set collection
 			trackSpots.put(uniqueKey, track);
 			// Add to edge set collection, using the same hash as a key

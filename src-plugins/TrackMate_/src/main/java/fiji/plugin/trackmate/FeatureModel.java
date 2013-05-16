@@ -331,7 +331,7 @@ public class FeatureModel {
 	}
 
 	/**
-	 * @return the numerical value of the specified track feature for the specified track.
+	 * Returns the numerical value of the specified track feature for the specified track.  
 	 * @param trackID the track ID to quest.
 	 * @param feature the desired feature.
 	 */
