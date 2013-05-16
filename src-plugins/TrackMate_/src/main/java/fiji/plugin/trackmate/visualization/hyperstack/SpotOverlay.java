@@ -72,6 +72,7 @@ public class SpotOverlay extends Roi {
 		double magnification = getMagnification();
 		SpotCollection spots = model.getSpots();
 
+		
 		boolean spotVisible = (Boolean) displaySettings.get(TrackMateModelView.KEY_SPOTS_VISIBLE);
 		if (!spotVisible  || spots.getNSpots(true) == 0)
 			return;
@@ -212,9 +213,17 @@ public class SpotOverlay extends Roi {
 			boolean spotNameVisible = (Boolean) displaySettings.get(TrackMateModelView.KEY_DISPLAY_SPOT_NAMES);
 			if (spotNameVisible ) {
 				String str = spot.toString();
-				int xindent = fm.stringWidth(str) / 2;
+				
+				int xindent = fm.stringWidth(str);
+				int xtext = (int) (xs + apparentRadius + 5);
+				if (xtext + xindent > imp.getWindow().getWidth()) {
+					xtext = (int) (xs - apparentRadius - 5 - xindent);
+				}
+
 				int yindent = fm.getAscent() / 2;
-				g2d.drawString(spot.toString(), (int) xs-xindent, (int) ys+yindent);
+				int ytext = (int) ys + yindent;;
+				
+				g2d.drawString(spot.toString(), xtext, ytext);
 			}
 		}
 	}

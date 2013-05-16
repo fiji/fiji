@@ -5,7 +5,9 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.NavigableSet;
+import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.concurrent.ConcurrentSkipListMap;
@@ -42,8 +44,8 @@ public class SpotCollection implements MultiThreaded  {
 	private static final long TIME_OUT_DELAY = 1;
 	
 	/** The frame by frame list of spot this object wrap. */
-	private ConcurrentSkipListMap<Integer, HashSet<Spot>> content = 	
-			new ConcurrentSkipListMap<Integer, HashSet<Spot>>();
+	private ConcurrentSkipListMap<Integer, Set<Spot>> content = 	
+			new ConcurrentSkipListMap<Integer, Set<Spot>>();
 	private int numThreads;
 
 	/*
@@ -80,7 +82,7 @@ public class SpotCollection implements MultiThreaded  {
 	 * the passed frame value.
 	 */
 	public void add(Spot spot, Integer frame) {
-		HashSet<Spot> spots = content.get(frame);
+		Set<Spot> spots = content.get(frame);
 		if (null == spots) {
 			spots = new HashSet<Spot>();
 			content.put(frame, spots);
@@ -98,7 +100,7 @@ public class SpotCollection implements MultiThreaded  {
 	 * nothing is done and <code>false</code> is returned.
 	 */
 	public boolean remove(Spot spot, Integer frame) {
-		HashSet<Spot> spots = content.get(frame);
+		Set<Spot> spots = content.get(frame);
 		if (null == spots) {
 			return false;
 		}
@@ -120,7 +122,7 @@ public class SpotCollection implements MultiThreaded  {
 				@Override
 				public void run() {
 
-					HashSet<Spot> spots = content.get(frame);
+					Set<Spot> spots = content.get(frame);
 					for (Spot spot : spots) {
 						spot.putFeature(VISIBLITY, val);
 					}
@@ -155,7 +157,7 @@ public class SpotCollection implements MultiThreaded  {
 
 					Double val, tval;	
 
-					HashSet<Spot> spots = content.get(frame);
+					Set<Spot> spots = content.get(frame);
 					tval = featurefilter.value;
 
 					if (featurefilter.isAbove) {
@@ -207,7 +209,7 @@ public class SpotCollection implements MultiThreaded  {
 			Runnable command = new Runnable() {
 				@Override
 				public void run() {
-					HashSet<Spot> spots = content.get(frame);
+					Set<Spot> spots = content.get(frame);
 
 					Double val, tval;
 					boolean isAbove, shouldNotBeVisible;
@@ -261,7 +263,7 @@ public class SpotCollection implements MultiThreaded  {
 	 * @return  the closest spot to the specified location, member of this collection.
 	 */
 	public final Spot getClosestSpot(final Spot location, final int frame, boolean visibleSpotsOnly) {
-		final HashSet<Spot> spots = content.get(frame);
+		final Set<Spot> spots = content.get(frame);
 		if (null == spots)	
 			return null;
 		double d2;
@@ -295,7 +297,7 @@ public class SpotCollection implements MultiThreaded  {
 	 * or <code>null</code> is such a spots cannot be found.
 	 */
 	public final Spot getSpotAt(final Spot location, final int frame, boolean visibleSpotsOnly) {
-		final HashSet<Spot> spots = content.get(frame);
+		final Set<Spot> spots = content.get(frame);
 		if (null == spots || spots.isEmpty()) {
 			return null;
 		}
@@ -334,7 +336,7 @@ public class SpotCollection implements MultiThreaded  {
 	 * @return  a new list, with of at most <code>n</code> spots, ordered by increasing distance from the specified location.
 	 */
 	public final List<Spot> getNClosestSpots(final Spot location, final int frame, int n, boolean visibleSpotsOnly) {
-		final HashSet<Spot> spots = content.get(frame);
+		final Set<Spot> spots = content.get(frame);
 		final TreeMap<Double, Spot> distanceToSpot = new TreeMap<Double, Spot>();
 
 		double d2;
@@ -376,7 +378,7 @@ public class SpotCollection implements MultiThreaded  {
 
 		} else {
 			
-			for (HashSet<Spot> spots : content.values())
+			for (Set<Spot> spots : content.values())
 				nspots += spots.size();
 		}
 		return nspots;
@@ -401,7 +403,7 @@ public class SpotCollection implements MultiThreaded  {
 
 		} else {
 			
-			HashSet<Spot> spots = content.get(frame);
+			Set<Spot> spots = content.get(frame);
 			if (null == spots)
 				return 0;
 			else
@@ -435,7 +437,7 @@ public class SpotCollection implements MultiThreaded  {
 	 * @return an iterator that iterates over the content of a frame of this collection.
 	 */
 	public Iterator<Spot> iterator(Integer frame, boolean visibleSpotsOnly) {
-		HashSet<Spot> frameContent = content.get(frame);
+		Set<Spot> frameContent = content.get(frame);
 		if (null == frameContent) {
 			return EMPTY_ITERATOR;
 		}
@@ -489,7 +491,7 @@ public class SpotCollection implements MultiThreaded  {
 	 * @param spots  the spots to store.
 	 */
 	public void put(int frame, Collection<Spot> spots) {
-		HashSet<Spot> value = new HashSet<Spot>(spots);
+		Set<Spot> value = new HashSet<Spot>(spots);
 		for (Spot spot : value) {
 			spot.putFeature(Spot.FRAME, Double.valueOf(frame));
 			spot.putFeature(VISIBLITY, ZERO);
@@ -572,7 +574,7 @@ public class SpotCollection implements MultiThreaded  {
 				hasNext = false;
 				return;
 			}
-			HashSet<Spot> currentFrameContent = content.get(frameIterator.next());
+			Set<Spot> currentFrameContent = content.get(frameIterator.next());
 			contentIterator = currentFrameContent.iterator();
 			iterate();
 		}
@@ -626,7 +628,7 @@ public class SpotCollection implements MultiThreaded  {
 		private final Iterator<Integer> frameIterator;
 		private Iterator<Spot> contentIterator;
 		private Spot next = null;
-		private HashSet<Spot> currentFrameContent;
+		private Set<Spot> currentFrameContent;
 
 		public VisibleSpotsIterator() {
 			this.frameIterator = content.keySet().iterator();
@@ -693,7 +695,7 @@ public class SpotCollection implements MultiThreaded  {
 		private Spot next = null;
 		private final Iterator<Spot> contentIterator;
 
-		public VisibleSpotsFrameIterator(HashSet<Spot> frameContent) {
+		public VisibleSpotsFrameIterator(Set<Spot> frameContent) {
 			this.contentIterator = frameContent.iterator();
 			iterate();
 		}
@@ -752,8 +754,8 @@ public class SpotCollection implements MultiThreaded  {
 			Runnable command = new Runnable() {
 				@Override
 				public void run() {
-					HashSet<Spot> fc = content.get(frame);
-					HashSet<Spot> nfc = new HashSet<Spot>(getNSpots(frame, true));
+					Set<Spot> fc = content.get(frame);
+					Set<Spot> nfc = new HashSet<Spot>(getNSpots(frame, true));
 					
 					for (Spot spot : fc) {
 						if (spot.getFeature(VISIBLITY).compareTo(ZERO) > 0) {
@@ -853,7 +855,7 @@ public class SpotCollection implements MultiThreaded  {
 		SpotCollection sc = new SpotCollection();
 		for (Spot spot : spots) {
 			int frame = spot.getFeature(Spot.FRAME).intValue();
-			HashSet<Spot> fc = sc.content.get(frame);
+			Set<Spot> fc = sc.content.get(frame);
 			if (null == fc) {
 				fc = new HashSet<Spot>();
 				sc.content.put(frame, fc);
@@ -863,4 +865,18 @@ public class SpotCollection implements MultiThreaded  {
 		return sc;
 	}
 
+
+	/**
+	 * Creates a new {@link SpotCollection} from a copy of the specified map of sets.
+	 * The spots added this way are completely untouched. In particular, their
+	 * {@link #VISIBLITY} feature is left untouched,  which makes this method
+	 * suitable to de-serialize a {@link SpotCollection}.
+	 * @param source  the map to buidl the spot collection from.
+	 * @return  a new SpotCollection.
+	 */
+	public static SpotCollection fromMap(Map<Integer, Set<Spot>> source) {
+		SpotCollection sc = new SpotCollection();
+		sc.content = new ConcurrentSkipListMap<Integer, Set<Spot>>(source);
+		return sc;
+	}
 }

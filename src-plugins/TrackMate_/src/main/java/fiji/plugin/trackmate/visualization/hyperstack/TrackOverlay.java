@@ -182,7 +182,7 @@ public class TrackOverlay extends Roi {
 					if (sourceFrame < minT || sourceFrame >= maxT)
 						continue;
 
-					transparency = (float) (1 - Math.abs(sourceFrame-currentFrame) / trackDisplayDepth);
+					transparency = (float) (1 - Math.abs((double)sourceFrame-currentFrame) / trackDisplayDepth);
 					target = model.getTrackModel().getEdgeTarget(edge);
 					g2d.setColor(colorGenerator.color(edge));
 					drawEdge(g2d, source, target, xcorner, ycorner, magnification, transparency);

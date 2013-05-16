@@ -44,16 +44,6 @@ public class ExportStatsToIJAction extends AbstractTMAction {
 	public void execute() {
 		logger.log("Exporting statistics.\n");
 		
-		// Compute links features Links
-		logger.log("  - Calculating statistics on links...");
-		trackmate.computeEdgeFeatures(true);
-		logger.log(" Done.\n");
-		
-		// Compute track features
-		logger.log("  - Calculating statistics on tracks...");
-		trackmate.computeTrackFeatures(true);
-		logger.log(" Done.\n");
-		
 		// Model
 		final TrackMateModel model = trackmate.getModel();
 		final FeatureModel fm = model.getFeatureModel();
@@ -103,10 +93,6 @@ public class ExportStatsToIJAction extends AbstractTMAction {
 				edgeTable.addLabel(edge.toString());
 				for(String feature : edgeFeatures) {
 					Object o = fm.getEdgeFeature(edge, feature);
-					
-					System.out.println(edge + ", " + feature +", " + o + ", " + trackID); // DEBUG
-					System.out.println(fm.getEdgeFeatureValues(feature, false));
-					
 					if (o instanceof String) {
 						continue;
 					}

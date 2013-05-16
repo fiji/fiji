@@ -30,12 +30,12 @@ public class FeatureModel {
 	 * track to its feature map. The feature map maps each
 	 * feature to the double value for the specified feature.
 	 */
-	protected Map<Integer, Map<String, Double>> trackFeatureValues =  new ConcurrentHashMap<Integer, Map<String, Double>>();
+	Map<Integer, Map<String, Double>> trackFeatureValues =  new ConcurrentHashMap<Integer, Map<String, Double>>();
 
 	/**
 	 * Feature storage for edges.
 	 */
-	protected ConcurrentHashMap<DefaultWeightedEdge, ConcurrentHashMap<String, Double>> edgeFeatureValues = 
+	private ConcurrentHashMap<DefaultWeightedEdge, ConcurrentHashMap<String, Double>> edgeFeatureValues = 
 			new ConcurrentHashMap<DefaultWeightedEdge, ConcurrentHashMap<String, Double>>();
 
 	private Collection<String> edgeFeatures = new LinkedHashSet<String>();
@@ -436,5 +436,62 @@ public class FeatureModel {
 		return spotFeatureDimensions;
 	}
 
+	
+	/**
+	 * Echoes the full content of this {@link FeatureModel}.
+	 */
+	@Override
+	public String toString() {
+		StringBuilder str = new StringBuilder();
+
+		// Spots
+		str.append("Spot features:\n");
+		str.append(" - Declared:\n");
+		appendFeatureDeclarations(str, spotFeatures, spotFeatureNames, spotFeatureShortNames, spotFeatureDimensions);
+		str.append('\n');
+		
+		// Edges
+		str.append("Edge features:\n");
+		str.append(" - Declared:\n");
+		appendFeatureDeclarations(str, edgeFeatures, edgeFeatureNames, edgeFeatureShortNames, edgeFeatureDimensions);
+		str.append('\n');
+		str.append(" - Values:\n");
+		appendFeatureValues(str, edgeFeatureValues);
+
+		// Track
+		str.append("Track features:\n");
+		str.append(" - Declared:\n");
+		appendFeatureDeclarations(str, trackFeatures, trackFeatureNames, trackFeatureShortNames, trackFeatureDimensions);
+		str.append('\n');
+		str.append(" - Values:\n");
+		appendFeatureValues(str, trackFeatureValues);
+
+		return str.toString();
+	}
+	
+	
+	/*
+	 * STATIC UTILS
+	 */
+	
+	private static final <K> void appendFeatureValues(StringBuilder str,  Map<K, ? extends Map<String, Double>> values) {
+		for (K key : values.keySet()) {
+			String header = "   - " + key.toString() + ":\n"; 
+			str.append(header);
+			Map<String, Double> map = values.get(key);
+			for (String feature : map.keySet()) {
+				str.append("     - " + feature + " = "  + map.get(feature) + '\n');
+			}
+		}
+	}
+	
+	
+	private static final void appendFeatureDeclarations(StringBuilder str, Collection<String> features, 
+			Map<String, String> featureNames, Map<String, String> featureShortNames, Map<String, Dimension> featureDimensions) {
+		for (String feature : features) {
+			str.append("   - " + feature + ": " + featureNames.get(feature)  + ", '" +
+					featureShortNames.get(feature) + "' (" + featureDimensions.get(feature) + ").\n");
+		}
+	}
 
 }

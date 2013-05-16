@@ -1,46 +1,42 @@
 package fiji.plugin.trackmate.tests;
 
+import ij.ImagePlus;
+
 import java.io.File;
 import java.io.IOException;
 
 import org.jdom2.JDOMException;
+import org.scijava.util.AppUtils;
 
-import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.SelectionModel;
 import fiji.plugin.trackmate.TrackMate;
+import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.io.TmXmlReader;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
 import fiji.plugin.trackmate.visualization.hyperstack.HyperStackDisplayer;
-import fiji.plugin.trackmate.visualization.trackscheme.TrackScheme;
 
 
 public class HyperStackDisplayerTestDrive {
 
-//	private static final File file = new File("E:/Users/JeanYves/Desktop/Data/FakeTracks.xml");
-	private static final File file = new File("/Users/tinevez/Desktop/Data/FakeTracks.xml");
-
 	public static void main(String[] args) throws JDOMException, IOException {
-		
-		TrackMate trackmate = new TrackMate();
-		TmXmlReader reader = new TmXmlReader(file, trackmate);
-		if (!reader.checkInput() || !reader.process()) {
-			System.err.println("Problem loading the file:");
-			System.err.println(reader.getErrorMessage());
-		}
-		TrackMateModel model = trackmate.getModel();
-		
+
 		ij.ImageJ.main(args);
+
+		File file = new File(AppUtils.getBaseDirectory(TrackMate.class), "samples/FakeTracks.xml");
+		TmXmlReader reader = new TmXmlReader(file);
+
+		TrackMateModel model = reader.getModel();
+		ImagePlus imp = reader.getSettings(null, null, null, null, null).imp;
 		
-		if (null != trackmate.getSettings().imp) {
-			trackmate.computeSpotFeatures(false);
-		}
-				
-		final TrackMateModelView displayer = new HyperStackDisplayer(model, trackmate.getSettings());
+		SelectionModel selectionModel = new SelectionModel(model);
+		HyperStackDisplayer displayer = new HyperStackDisplayer(model, selectionModel, imp);
 		displayer.render();
-//		displayer.setDisplaySettings(TrackMateModelView.KEY_TRACK_DISPLAY_MODE, TrackMateModelView.TRACK_DISPLAY_MODE_LOCAL_FORWARD);
+		displayer.setDisplaySettings(TrackMateModelView.KEY_TRACK_DISPLAY_MODE, TrackMateModelView.TRACK_DISPLAY_MODE_LOCAL_BACKWARD);
 		displayer.setDisplaySettings(TrackMateModelView.KEY_DISPLAY_SPOT_NAMES, true);
+		displayer.setDisplaySettings(TrackMateModelView.KEY_SPOTS_VISIBLE, true);
 		
-		final TrackScheme trackScheme = new TrackScheme(model, trackmate.getSettings());
-		trackScheme.render();
+//		TrackScheme trackScheme = new TrackScheme(model, selectionModel);
+//		trackScheme.render();
 		
 	}
 	

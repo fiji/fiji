@@ -165,15 +165,14 @@ public class TrackMate implements Benchmark, MultiThreaded, Algorithm {
 	public boolean computeEdgeFeatures(boolean doLogIt) {
 		final Logger logger = model.getLogger();
 		EdgeFeatureCalculator calculator = new EdgeFeatureCalculator(model, settings);
-		if (calculator.checkInput() && calculator.process()) {
-			if (doLogIt) {
-				logger.log("Computation done in " + calculator.getProcessingTime() + " ms.\n");
-			}
-			return true;
-		} else {
-			errorMessage = "Edge features calculation failed:\n"+calculator.getErrorMessage();
+		if (!calculator.checkInput() || ! calculator.process()) {
+			errorMessage = "Edge features calculation failed:\n" + calculator.getErrorMessage();
 			return false;
 		}
+		if (doLogIt) {
+			logger.log("Computation done in " + calculator.getProcessingTime() + " ms.\n");
+		}
+		return true;
 	}
 	
 	/**

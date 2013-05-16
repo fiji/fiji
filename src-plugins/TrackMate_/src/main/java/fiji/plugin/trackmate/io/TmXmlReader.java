@@ -603,22 +603,20 @@ public class TmXmlReader {
 
 		// Load collection and build cache
 		int currentFrame = 0;
-		ArrayList<Spot> spotList;
-		SpotCollection allSpots = new SpotCollection();
-
+		Map<Integer, Set<Spot>> content = new HashMap<Integer, Set<Spot>>(frameContent.size());
 		for (Element currentFrameContent : frameContent) {
 
 			currentFrame = readIntAttribute(currentFrameContent, FRAME_ATTRIBUTE_NAME, logger);
 			List<Element> spotContent = currentFrameContent.getChildren(SPOT_ELEMENT_KEY);
-			spotList = new ArrayList<Spot>(spotContent.size());
+			Set<Spot> spotSet = new HashSet<Spot>(spotContent.size());
 			for (Element spotElement : spotContent) {
 				Spot spot = createSpotFrom(spotElement);
-				spotList.add(spot);
+				spotSet.add(spot);
 				cache.put(spot.ID(), spot);
 			}
-
-			allSpots.put(currentFrame, spotList);	
+			content.put(currentFrame, spotSet);
 		}
+		SpotCollection allSpots = SpotCollection.fromMap(content);
 		return allSpots;
 	}
 
