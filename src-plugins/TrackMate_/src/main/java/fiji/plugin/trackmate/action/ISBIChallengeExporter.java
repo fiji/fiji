@@ -66,7 +66,7 @@ public class ISBIChallengeExporter extends AbstractTMAction {
 		} catch (NullPointerException npe) {
 			file = new File(folder.getPath() + File.separator + "ISBIChallenge2012Result.xml");
 		}
-		file = IOUtils.askForFile(file, controller.getGUI(), logger);
+		file = IOUtils.askForFileForSaving(file, controller.getGUI(), logger);
 
 		exportToFile(model, trackmate.getSettings(), file);
 	}

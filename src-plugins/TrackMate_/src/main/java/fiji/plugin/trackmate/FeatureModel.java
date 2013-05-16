@@ -137,21 +137,15 @@ public class FeatureModel {
 	 */
 
 	/**
-	 * Stores a numerical feature for an edge of this model. The specified edge must exist in 
-	 * the model, and the feature must have been declared. If not, an {@link IllegalArgumentException}
-	 * is thrown.
+	 * Stores a numerical feature for an edge of this model.
+	 * <p>
+	 * Note that no checks are made to ensures that the edge exists in the {@link TrackGraphModel},
+	 * and that the feature is declared in this {@link FeatureModel}.
 	 * @param edge  the edge whose features to update.
 	 * @param feature  the feature.
 	 * @param value  the feature value
 	 */
 	public synchronized void putEdgeFeature(DefaultWeightedEdge edge, final String feature, final Double value) {
-		if (!model.getTrackModel().edgeSet().contains(edge)) {
-			throw new IllegalArgumentException("Edge cannot be found in the model: " + edge);
-		}
-		if (!edgeFeatures.contains(feature)) {
-			throw new IllegalArgumentException("Edge feature is not registered in the model: " + feature);
-		}
-		
 		ConcurrentHashMap<String, Double> map = edgeFeatureValues.get(edge);
 		if (null == map) {
 			map = new ConcurrentHashMap<String, Double>();
@@ -318,23 +312,16 @@ public class FeatureModel {
 	}
 
 	/**
-	 * Stores a track numerical feature. The track ID must exist in the model and 
-	 * the specified feature must have been declared. If not, an {@link IllegalArgumentException}
-	 * is thrown.
+	 * Stores a track numerical feature. 
+ 	 * <p>
+	 * Note that no checks are made to ensures that the track ID exists in the {@link TrackGraphModel},
+	 * and that the feature is declared in this {@link FeatureModel}.
+	 * 
 	 * @param trackID  the ID of the track. It must be an existing track ID.
 	 * @param feature  the feature.
 	 * @param value  the feature value.
 	 */
 	public synchronized void putTrackFeature(final Integer trackID, final String feature, final Double value) {
-		
-		// We use getTrackSpots, because it is seldom recomputed.
-		if (!model.getTrackModel().getTrackSpots().keySet().contains(trackID)) {
-			throw new IllegalArgumentException("Track ID cannot be found in the in model: " + trackID);
-		}
-		if (!trackFeatures.contains(feature)) {
-			throw new IllegalArgumentException("Track feature is not registered in the model: " + feature);
-		}
-		
 		Map<String, Double> trackFeatureMap = trackFeatureValues.get(trackID);
 		if (null == trackFeatureMap) {
 			trackFeatureMap = new HashMap<String, Double>(trackFeatures.size());

@@ -103,7 +103,7 @@ public class EdgeFeatureCalculator extends MultiThreadedBenchmarkAlgorithm {
 			analyzer.setNumThreads(numThreads);
 			analyzer.process(edges);
 			if (doLogIt)
-				logger.log("  - " + analyzer.toString() + " in " + analyzer.getProcessingTime() + " ms.\n");
+				logger.log("  - " + analyzer.getKey() + " in " + analyzer.getProcessingTime() + " ms.\n");
 		}
 	}
 

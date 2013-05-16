@@ -103,6 +103,10 @@ public class ExportStatsToIJAction extends AbstractTMAction {
 				edgeTable.addLabel(edge.toString());
 				for(String feature : edgeFeatures) {
 					Object o = fm.getEdgeFeature(edge, feature);
+					
+					System.out.println(edge + ", " + feature +", " + o + ", " + trackID); // DEBUG
+					System.out.println(fm.getEdgeFeatureValues(feature, false));
+					
 					if (o instanceof String) {
 						continue;
 					}

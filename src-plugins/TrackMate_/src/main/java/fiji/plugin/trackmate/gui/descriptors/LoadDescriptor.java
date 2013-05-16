@@ -54,7 +54,7 @@ public class LoadDescriptor extends SomeDialogDescriptor {
 		}
 
 		Logger logger = logPanel.getLogger();
-		File tmpFile = IOUtils.askForFile(file, controller.getGUI(), logger );
+		File tmpFile = IOUtils.askForFileForLoading(file, controller.getGUI(), logger );
 		if (null == tmpFile) {
 			return;
 		}

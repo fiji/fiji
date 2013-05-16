@@ -516,24 +516,27 @@ public class TmXmlWriter {
 		// Spot analyzers
 		Element spotAnalyzersEl = new Element(SPOT_ANALYSERS_ELEMENT_KEY);
 		for (SpotAnalyzerFactory<?> analyzer : settings.getSpotAnalyzerFactories()) {
-			Element analyzerEl = new Element(ANALYSER_ELEMENT_KEY);
-			analyzerEl.setAttribute(ANALYSER_KEY_ATTRIBUTE, analyzer.getKey());
+			Element el = new Element(ANALYSER_ELEMENT_KEY);
+			el.setAttribute(ANALYSER_KEY_ATTRIBUTE, analyzer.getKey());
+			spotAnalyzersEl.addContent(el);
 		}
 		analyzersElement.addContent(spotAnalyzersEl);
 		
 		// Edge analyzers
 		Element edgeAnalyzersEl = new Element(EDGE_ANALYSERS_ELEMENT_KEY);
 		for (EdgeAnalyzer analyzer : settings.getEdgeAnalyzers()) {
-			Element analyzerEl = new Element(ANALYSER_ELEMENT_KEY);
-			analyzerEl.setAttribute(ANALYSER_KEY_ATTRIBUTE, analyzer.getKey());
+			Element el = new Element(ANALYSER_ELEMENT_KEY);
+			el.setAttribute(ANALYSER_KEY_ATTRIBUTE, analyzer.getKey());
+			edgeAnalyzersEl.addContent(el);
 		}
 		analyzersElement.addContent(edgeAnalyzersEl);
 
 		// Track analyzers
 		Element trackAnalyzersEl = new Element(TRACK_ANALYSERS_ELEMENT_KEY);
 		for (TrackAnalyzer analyzer : settings.getTrackAnalyzers()) {
-			Element analyzerEl = new Element(ANALYSER_ELEMENT_KEY);
-			analyzerEl.setAttribute(ANALYSER_KEY_ATTRIBUTE, analyzer.getKey());
+			Element el = new Element(ANALYSER_ELEMENT_KEY);
+			el.setAttribute(ANALYSER_KEY_ATTRIBUTE, analyzer.getKey());
+			trackAnalyzersEl.addContent(el);
 		}
 		analyzersElement.addContent(trackAnalyzersEl);
 

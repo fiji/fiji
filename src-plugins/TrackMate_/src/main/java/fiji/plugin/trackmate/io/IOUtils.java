@@ -27,14 +27,14 @@ public class IOUtils {
 
 
 	/**
-	 * Prompt the user for a target xml file.
+	 * Prompts the user for a xml file to save to.
 	 *  
 	 * @param file  a default file, will be used to display a default choice in the file chooser.
 	 * @param parent  the {@link Frame} to lock on this dialog.
 	 * @param logger  a {@link Logger} to report what is happening.
 	 * @return  the selected file, or <code>null</code> if the user pressed the "cancel" button.
 	 */
-	public static File askForFile(File file, Frame parent, Logger logger) {
+	public static File askForFileForSaving(File file, Frame parent, Logger logger) {
 
 		if(IJ.isMacintosh()) {
 			// use the native file dialog on the mac
@@ -68,6 +68,54 @@ public class IOUtils {
 				file = fileChooser.getSelectedFile();
 			} else {
 				logger.log("Save data aborted.\n");
+				return null;  	    		
+			}
+		}
+		return file;
+	}
+	
+	/**
+	 * Prompts the user for a xml file to load from.
+	 *  
+	 * @param file  a default file, will be used to display a default choice in the file chooser.
+	 * @param parent  the {@link Frame} to lock on this dialog.
+	 * @param logger  a {@link Logger} to report what is happening.
+	 * @return  the selected file, or <code>null</code> if the user pressed the "cancel" button.
+	 */
+	public static File askForFileForLoading(File file, Frame parent, Logger logger) {
+
+		if(IJ.isMacintosh()) {
+			// use the native file dialog on the mac
+			FileDialog dialog =	new FileDialog(parent, "Load from a XML file", FileDialog.LOAD);
+			dialog.setDirectory(file.getParent());
+			dialog.setFile(file.getName());
+			FilenameFilter filter = new FilenameFilter() {
+				@Override
+				public boolean accept(File dir, String name) {
+					return name.endsWith(".xml");
+				}
+			};
+			dialog.setFilenameFilter(filter);
+			dialog.setVisible(true);
+			String selectedFile = dialog.getFile();
+			if (null == selectedFile) {
+				logger.log("Load data aborted.\n");
+				return null;
+			}
+			if (!selectedFile.endsWith(".xml"))
+				selectedFile += ".xml";
+			file = new File(dialog.getDirectory(), selectedFile);
+		} else {
+			JFileChooser fileChooser = new JFileChooser(file.getParent());
+			fileChooser.setSelectedFile(file);
+			FileNameExtensionFilter filter = new FileNameExtensionFilter("XML files", "xml");
+			fileChooser.setFileFilter(filter);
+
+			int returnVal = fileChooser.showOpenDialog(parent);
+			if(returnVal == JFileChooser.APPROVE_OPTION) {
+				file = fileChooser.getSelectedFile();
+			} else {
+				logger.log("Load data aborted.\n");
 				return null;  	    		
 			}
 		}

@@ -58,14 +58,19 @@ public class EdgeAnalyzerProvider {
 	 * If the key is unknown to this factory, <code>null</code> is returned. 
 	 */
 	public EdgeAnalyzer getEdgeFeatureAnalyzer(String key) {
-		if (key == EdgeTargetAnalyzer.KEY) {
+		
+		if (key.equals(EdgeTargetAnalyzer.KEY)) {
 			return new EdgeTargetAnalyzer(model);
-		} else if (key == EdgeVelocityAnalyzer.KEY) {
+			
+		} else if (key.equals(EdgeVelocityAnalyzer.KEY)) {
 			return new EdgeVelocityAnalyzer(model);
-		} else if (key == EdgeTimeLocationAnalyzer.KEY) {
+			
+		} else if (key.equals(EdgeTimeLocationAnalyzer.KEY)) {
 			return new EdgeTimeLocationAnalyzer(model);
+			
 		} else {
 			return null;
+			
 		}
 	}
 

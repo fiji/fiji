@@ -63,12 +63,16 @@ public class SpotAnalyzerProvider {
 	 */
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public SpotAnalyzerFactory getSpotFeatureAnalyzer(String key, ImgPlus<?> img) {
-		if (key == SpotIntensityAnalyzerFactory.KEY) {
+		
+		if (key.equals(SpotIntensityAnalyzerFactory.KEY)) {
 			return new SpotIntensityAnalyzerFactory(model, img);
-		} else if (key == SpotContrastAndSNRAnalyzerFactory.KEY) {
+			
+		} else if (key.equals(SpotContrastAndSNRAnalyzerFactory.KEY)) {
 			return new SpotContrastAndSNRAnalyzerFactory(model, img);
-		} else if (key == SpotRadiusEstimatorFactory.KEY) {
+			
+		} else if (key.equals(SpotRadiusEstimatorFactory.KEY)) {
 			return new SpotRadiusEstimatorFactory(model, img);
+			
 		} else {
 			return null;
 		}

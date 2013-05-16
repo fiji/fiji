@@ -3,8 +3,11 @@ package fiji.plugin.trackmate.io;
 import static fiji.plugin.trackmate.io.IOUtils.readBooleanAttribute;
 import static fiji.plugin.trackmate.io.IOUtils.readDoubleAttribute;
 import static fiji.plugin.trackmate.io.IOUtils.readIntAttribute;
+import static fiji.plugin.trackmate.io.TmXmlKeys.ANALYSER_ELEMENT_KEY;
+import static fiji.plugin.trackmate.io.TmXmlKeys.ANALYSER_KEY_ATTRIBUTE;
+import static fiji.plugin.trackmate.io.TmXmlKeys.ANALYZER_COLLECTION_ELEMENT_KEY;
 import static fiji.plugin.trackmate.io.TmXmlKeys.CROP_ELEMENT_KEY;
-import static fiji.plugin.trackmate.io.TmXmlKeys.*;
+import static fiji.plugin.trackmate.io.TmXmlKeys.CROP_TEND_ATTRIBUTE_NAME;
 import static fiji.plugin.trackmate.io.TmXmlKeys.CROP_TSTART_ATTRIBUTE_NAME;
 import static fiji.plugin.trackmate.io.TmXmlKeys.CROP_XEND_ATTRIBUTE_NAME;
 import static fiji.plugin.trackmate.io.TmXmlKeys.CROP_XSTART_ATTRIBUTE_NAME;
@@ -13,6 +16,7 @@ import static fiji.plugin.trackmate.io.TmXmlKeys.CROP_YSTART_ATTRIBUTE_NAME;
 import static fiji.plugin.trackmate.io.TmXmlKeys.CROP_ZEND_ATTRIBUTE_NAME;
 import static fiji.plugin.trackmate.io.TmXmlKeys.CROP_ZSTART_ATTRIBUTE_NAME;
 import static fiji.plugin.trackmate.io.TmXmlKeys.DETECTOR_SETTINGS_ELEMENT_KEY;
+import static fiji.plugin.trackmate.io.TmXmlKeys.EDGE_ANALYSERS_ELEMENT_KEY;
 import static fiji.plugin.trackmate.io.TmXmlKeys.EDGE_FEATURES_ELEMENT_KEY;
 import static fiji.plugin.trackmate.io.TmXmlKeys.FEATURE_ATTRIBUTE;
 import static fiji.plugin.trackmate.io.TmXmlKeys.FEATURE_DECLARATIONS_ELEMENT_KEY;
@@ -26,6 +30,8 @@ import static fiji.plugin.trackmate.io.TmXmlKeys.FILTER_ELEMENT_KEY;
 import static fiji.plugin.trackmate.io.TmXmlKeys.FILTER_FEATURE_ATTRIBUTE_NAME;
 import static fiji.plugin.trackmate.io.TmXmlKeys.FILTER_VALUE_ATTRIBUTE_NAME;
 import static fiji.plugin.trackmate.io.TmXmlKeys.FRAME_ATTRIBUTE_NAME;
+import static fiji.plugin.trackmate.io.TmXmlKeys.GUI_STATE_ATTRIBUTE;
+import static fiji.plugin.trackmate.io.TmXmlKeys.GUI_STATE_ELEMENT_KEY;
 import static fiji.plugin.trackmate.io.TmXmlKeys.IMAGE_ELEMENT_KEY;
 import static fiji.plugin.trackmate.io.TmXmlKeys.IMAGE_FILENAME_ATTRIBUTE_NAME;
 import static fiji.plugin.trackmate.io.TmXmlKeys.IMAGE_FOLDER_ATTRIBUTE_NAME;
@@ -43,6 +49,7 @@ import static fiji.plugin.trackmate.io.TmXmlKeys.MODEL_ELEMENT_KEY;
 import static fiji.plugin.trackmate.io.TmXmlKeys.PLUGIN_VERSION_ATTRIBUTE_NAME;
 import static fiji.plugin.trackmate.io.TmXmlKeys.SETTINGS_ELEMENT_KEY;
 import static fiji.plugin.trackmate.io.TmXmlKeys.SPATIAL_UNITS_ATTRIBUTE_NAME;
+import static fiji.plugin.trackmate.io.TmXmlKeys.SPOT_ANALYSERS_ELEMENT_KEY;
 import static fiji.plugin.trackmate.io.TmXmlKeys.SPOT_COLLECTION_ELEMENT_KEY;
 import static fiji.plugin.trackmate.io.TmXmlKeys.SPOT_COLLECTION_NSPOTS_ATTRIBUTE_NAME;
 import static fiji.plugin.trackmate.io.TmXmlKeys.SPOT_ELEMENT_KEY;
@@ -53,6 +60,7 @@ import static fiji.plugin.trackmate.io.TmXmlKeys.SPOT_ID_ATTRIBUTE_NAME;
 import static fiji.plugin.trackmate.io.TmXmlKeys.SPOT_NAME_ATTRIBUTE_NAME;
 import static fiji.plugin.trackmate.io.TmXmlKeys.TIME_UNITS_ATTRIBUTE_NAME;
 import static fiji.plugin.trackmate.io.TmXmlKeys.TRACKER_SETTINGS_ELEMENT_KEY;
+import static fiji.plugin.trackmate.io.TmXmlKeys.TRACK_ANALYSERS_ELEMENT_KEY;
 import static fiji.plugin.trackmate.io.TmXmlKeys.TRACK_COLLECTION_ELEMENT_KEY;
 import static fiji.plugin.trackmate.io.TmXmlKeys.TRACK_EDGE_ELEMENT_KEY;
 import static fiji.plugin.trackmate.io.TmXmlKeys.TRACK_ELEMENT_KEY;
@@ -87,10 +95,10 @@ import org.jdom2.input.SAXBuilder;
 import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.graph.SimpleDirectedWeightedGraph;
 
+import fiji.plugin.trackmate.Dimension;
 import fiji.plugin.trackmate.FeatureModel;
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.Logger.StringBuilderLogger;
-import fiji.plugin.trackmate.Dimension;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
@@ -224,7 +232,7 @@ public class TmXmlReader {
 		if (!readTracks(modelElement, model)) {
 			ok = false;
 		}
-
+		
 		// That's it
 		return model;
 	}
@@ -353,13 +361,16 @@ public class TmXmlReader {
 	/**
 	 * @return a map of the saved track features, as they appear in the file
 	 */
-	private Map<Integer,Map<String,Double>> readTrackFeatures() {
+	private Map<Integer,Map<String,Double>> readTrackFeatures(Element modelElement) {
 
 		HashMap<Integer, Map<String, Double>> featureMap = new HashMap<Integer, Map<String, Double>>();
 
-		Element allTracksElement = root.getChild(TRACK_COLLECTION_ELEMENT_KEY);
-		if (null == allTracksElement)
+		Element allTracksElement = modelElement.getChild(TRACK_COLLECTION_ELEMENT_KEY);
+		if (null == allTracksElement) {
+			logger.error("Cannot find the track collection in file.\n");
+			ok = false;
 			return null;
+		}
 
 		// Load tracks
 		List<Element> trackElements = allTracksElement.getChildren(TRACK_ELEMENT_KEY);
@@ -380,6 +391,11 @@ public class TmXmlReader {
 			for(Attribute attribute : attributes) {
 
 				String attName = attribute.getName();
+				if (attName.equals(TRACK_NAME_ATTRIBUTE_NAME)) { // Skip trackID attribute
+					continue;
+				}
+				
+				
 				Double attVal = Double.NaN;
 				try {
 					attVal = attribute.getDoubleValue();
@@ -750,7 +766,10 @@ public class TmXmlReader {
 		 * Now we know who's who. We can therefore retrieve the saved filtered track index, and 
 		 * match it to the proper new track IDs. 
 		 */
-		Set<Integer> savedFilteredTrackIDs = readFilteredTrackIDs();
+		Set<Integer> savedFilteredTrackIDs = readFilteredTrackIDs(modelElement);
+		if (null == savedFilteredTrackIDs) {
+			return false;
+		}
 		// Build a new set with the new trackIDs;
 		Set<Integer> newFilteredTrackIDs = new HashSet<Integer>(savedFilteredTrackIDs.size());
 		for (Integer savedKey : savedFilteredTrackIDs) {
@@ -764,7 +783,7 @@ public class TmXmlReader {
 		 * We do the same thing for the track features.
 		 */
 		try {
-			Map<Integer, Map<String, Double>> savedFeatureMap = readTrackFeatures();
+			Map<Integer, Map<String, Double>> savedFeatureMap = readTrackFeatures(modelElement);
 			for (Integer savedKey : savedFeatureMap.keySet()) {
 
 				Map<String, Double> savedFeatures = savedFeatureMap.get(savedKey);
@@ -801,8 +820,8 @@ public class TmXmlReader {
 	 * Read and return the list of track indices that define the filtered track collection.
 	 * @throws DataConversionException 
 	 */
-	private Set<Integer> readFilteredTrackIDs() {
-		Element filteredTracksElement = root.getChild(FILTERED_TRACK_ELEMENT_KEY);
+	private Set<Integer> readFilteredTrackIDs(Element modelElement) {
+		Element filteredTracksElement = modelElement.getChild(FILTERED_TRACK_ELEMENT_KEY);
 		if (null == filteredTracksElement) {
 			logger.error("Could not find the filtered track IDs in file.\n");
 			ok = false;
@@ -811,7 +830,13 @@ public class TmXmlReader {
 
 		// We double-check that all trackID in the filtered list exist in the track list
 		// First, prepare a sorted array of all track IDs
-		Element allTracksElement = root.getChild(TRACK_COLLECTION_ELEMENT_KEY);
+		Element allTracksElement = modelElement.getChild(TRACK_COLLECTION_ELEMENT_KEY);
+		if (null == allTracksElement) {
+			logger.error("Could not find the track collection in file.\n");
+			ok = false;
+			return null;
+		}
+		
 		List<Element> trackElements = allTracksElement.getChildren(TRACK_ELEMENT_KEY);
 		int[] IDs = new int[trackElements.size()];
 		int index = 0;
@@ -874,7 +899,7 @@ public class TmXmlReader {
 		}
 
 		// Spots
-		Element spotFeaturesElement = modelElement.getChild(SPOT_FEATURES_ELEMENT_KEY);
+		Element spotFeaturesElement = featuresElement.getChild(SPOT_FEATURES_ELEMENT_KEY);
 		if (null == spotFeaturesElement) {
 			logger.error("Could not find spot feature declarations in file.\n");
 			ok = false;
@@ -893,7 +918,7 @@ public class TmXmlReader {
 		}
 
 		// Edges
-		Element edgeFeaturesElement = modelElement.getChild(EDGE_FEATURES_ELEMENT_KEY);
+		Element edgeFeaturesElement = featuresElement.getChild(EDGE_FEATURES_ELEMENT_KEY);
 		if (null == edgeFeaturesElement) {
 			logger.error("Could not find edge feature declarations in file.\n");
 			ok = false;
@@ -912,7 +937,7 @@ public class TmXmlReader {
 		}
 
 		// Tracks
-		Element trackFeaturesElement = modelElement.getChild(TRACK_FEATURES_ELEMENT_KEY);
+		Element trackFeaturesElement = featuresElement.getChild(TRACK_FEATURES_ELEMENT_KEY);
 		if (null == trackFeaturesElement) {
 			logger.error("Could not find track feature declarations in file.\n");
 			ok = false;

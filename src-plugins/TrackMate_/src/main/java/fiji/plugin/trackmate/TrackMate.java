@@ -164,7 +164,6 @@ public class TrackMate implements Benchmark, MultiThreaded, Algorithm {
 	 */
 	public boolean computeEdgeFeatures(boolean doLogIt) {
 		final Logger logger = model.getLogger();
-		logger.log("Computing edge features.\n");
 		EdgeFeatureCalculator calculator = new EdgeFeatureCalculator(model, settings);
 		if (calculator.checkInput() && calculator.process()) {
 			if (doLogIt) {
@@ -183,7 +182,6 @@ public class TrackMate implements Benchmark, MultiThreaded, Algorithm {
 	 */
 	public boolean computeTrackFeatures(boolean doLogIt) {
 		final Logger logger = model.getLogger();
-		logger.log("Computing spot features.\n");
 		TrackFeatureCalculator calculator = new TrackFeatureCalculator(model, settings);
 		if (calculator.checkInput() && calculator.process()) {
 			if (doLogIt) {

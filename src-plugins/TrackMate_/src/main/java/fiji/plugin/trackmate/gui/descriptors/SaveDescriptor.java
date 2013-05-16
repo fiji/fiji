@@ -50,7 +50,7 @@ public class SaveDescriptor extends SomeDialogDescriptor {
 			trackmate.computeTrackFeatures(true);
 		}
 
-		File tmpFile = IOUtils.askForFile(file, controller.getGUI(), logger);
+		File tmpFile = IOUtils.askForFileForSaving(file, controller.getGUI(), logger);
 		if (null == tmpFile) {
 			return;
 		}

@@ -99,7 +99,7 @@ public class TrackFeatureCalculator extends MultiThreadedBenchmarkAlgorithm {
 			analyzer.setNumThreads(numThreads);
 			analyzer.process(trackIDs);
 			if (doLogIt)
-				logger.log("  - " + analyzer.toString() + " in " + analyzer.getProcessingTime() + " ms.\n");
+				logger.log("  - " + analyzer.getKey() + " in " + analyzer.getProcessingTime() + " ms.\n");
 		}
 	}
 }

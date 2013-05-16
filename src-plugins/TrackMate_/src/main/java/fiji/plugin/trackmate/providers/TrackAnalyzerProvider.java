@@ -76,16 +76,22 @@ public class TrackAnalyzerProvider {
 	 * If the key is unknown to this factory, <code>null</code> is returned. 
 	 */
 	public TrackAnalyzer getTrackFeatureAnalyzer(String key) {
-		if (key == TrackDurationAnalyzer.KEY) {
+		
+		if (key.equals(TrackDurationAnalyzer.KEY)) {
 			return new TrackDurationAnalyzer(model);
-		} else if (key == TrackBranchingAnalyzer.KEY) {
+			
+		} else if (key.equals(TrackBranchingAnalyzer.KEY)) {
 			return new TrackBranchingAnalyzer(model);
-		} else if (key == TrackSpeedStatisticsAnalyzer.KEY) {
+			
+		} else if (key.equals(TrackSpeedStatisticsAnalyzer.KEY)) {
 			return new TrackSpeedStatisticsAnalyzer(model);
-		} else if (key == TrackLocationAnalyzer.KEY) {
+			
+		} else if (key.equals(TrackLocationAnalyzer.KEY)) {
 			return new TrackLocationAnalyzer(model);
-		} else if (key == TrackIndexAnalyzer.KEY) {
+			
+		} else if (key.equals(TrackIndexAnalyzer.KEY)) {
 			return trackIndexAnalyzer;
+			
 		} else {
 			return null;
 		}
