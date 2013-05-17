@@ -2,6 +2,7 @@ package fiji.plugin.trackmate.gui;
 
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Map;
 
 import fiji.plugin.trackmate.gui.descriptors.WizardPanelDescriptor;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
@@ -40,6 +41,10 @@ public class TrackMateGUIModel {
 	 * changes in display settings.	 */
 	Collection<TrackMateModelView> views = new HashSet<TrackMateModelView>();
 
+	/** The current display settings, that will be passed to any new view
+	 * registered in the GUI.  */
+	private Map<String, Object> displaySettings;
+
 	/**
 	 * Returns the collection of views instantiated and registered in the GUI. 
 	 * @return the collection of {@link TrackMateModelView}.
@@ -65,5 +70,12 @@ public class TrackMateGUIModel {
 	public void removeView(TrackMateModelView view) {
 		views.remove(view);
 	}
+
+	public Map<String, Object> getDisplaySettings() {
+		return displaySettings;
+	}
 	
+	public void setDisplaySettings(Map<String, Object> displaySettings) {
+		this.displaySettings = displaySettings;
+	}
 }

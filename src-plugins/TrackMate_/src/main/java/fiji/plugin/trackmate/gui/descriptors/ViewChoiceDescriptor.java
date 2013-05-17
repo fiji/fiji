@@ -50,6 +50,9 @@ public class ViewChoiceDescriptor implements WizardPanelDescriptor {
 			public void run() {
 				String viewName = viewProvider.getAvailableViews().get(index);
 				TrackMateModelView view = viewProvider.getView(viewName);
+				for (String settingKey : guimodel.getDisplaySettings().keySet()) {
+					view.setDisplaySettings(settingKey, guimodel.getDisplaySettings().get(settingKey));
+				}
 				guimodel.addView(view);
 				view.render();
 			};

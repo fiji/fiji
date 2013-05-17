@@ -1,5 +1,7 @@
 package fiji.plugin.trackmate.gui;
 
+
+import static fiji.plugin.trackmate.visualization.TrackMateModelView.*;
 import ij.IJ;
 import ij.ImagePlus;
 
@@ -7,7 +9,10 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 
+import javax.swing.JButton;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 import javax.swing.event.ChangeEvent;
@@ -17,14 +22,16 @@ import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.SelectionChangeListener;
 import fiji.plugin.trackmate.SelectionModel;
 import fiji.plugin.trackmate.TrackMate;
+import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.action.ExportStatsToIJAction;
 import fiji.plugin.trackmate.detection.ManualDetectorFactory;
 import fiji.plugin.trackmate.features.ModelFeatureUpdater;
 import fiji.plugin.trackmate.features.track.TrackIndexAnalyzer;
 import fiji.plugin.trackmate.gui.descriptors.ActionChooserDescriptor;
 import fiji.plugin.trackmate.gui.descriptors.ConfigureViewsDescriptor;
+import fiji.plugin.trackmate.gui.descriptors.DetectionDescriptor;
 import fiji.plugin.trackmate.gui.descriptors.DetectorChoiceDescriptor;
 import fiji.plugin.trackmate.gui.descriptors.DetectorConfigurationDescriptor;
-import fiji.plugin.trackmate.gui.descriptors.DetectionDescriptor;
 import fiji.plugin.trackmate.gui.descriptors.GrapherDescriptor;
 import fiji.plugin.trackmate.gui.descriptors.InitFilterDescriptor;
 import fiji.plugin.trackmate.gui.descriptors.LoadDescriptor;
@@ -38,6 +45,8 @@ import fiji.plugin.trackmate.gui.descriptors.TrackerConfigurationDescriptor;
 import fiji.plugin.trackmate.gui.descriptors.TrackingDescriptor;
 import fiji.plugin.trackmate.gui.descriptors.ViewChoiceDescriptor;
 import fiji.plugin.trackmate.gui.descriptors.WizardPanelDescriptor;
+import fiji.plugin.trackmate.gui.panels.ConfigureViewsPanel.DisplaySettingsEvent;
+import fiji.plugin.trackmate.gui.panels.ConfigureViewsPanel.DisplaySettingsListener;
 import fiji.plugin.trackmate.providers.ActionProvider;
 import fiji.plugin.trackmate.providers.DetectorProvider;
 import fiji.plugin.trackmate.providers.EdgeAnalyzerProvider;
@@ -48,6 +57,8 @@ import fiji.plugin.trackmate.providers.ViewProvider;
 import fiji.plugin.trackmate.util.TMUtils;
 import fiji.plugin.trackmate.visualization.PerTrackFeatureColorGenerator;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
+import fiji.plugin.trackmate.visualization.trackscheme.SpotImageUpdater;
+import fiji.plugin.trackmate.visualization.trackscheme.TrackScheme;
 
 public class TrackMateGUIController implements ActionListener {
 	
@@ -125,6 +136,7 @@ public class TrackMateGUIController implements ActionListener {
 
 		// 0.
 		this.guimodel = new TrackMateGUIModel();
+		this.guimodel.setDisplaySettings(createDisplaySettings(trackmate.getModel()));
 		// 1.
 		createSelectionModel();
 		// 2.
@@ -352,7 +364,29 @@ public class TrackMateGUIController implements ActionListener {
 		 * Finished, let's change the display settings.
 		 */
 		configureViewsDescriptor	= new ConfigureViewsDescriptor(trackmate);
-		// TODO listen to user events and button presses occurring in the panel.
+		configureViewsDescriptor.getComponent().addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent event) {
+				if (event == configureViewsDescriptor.getComponent().TRACK_SCHEME_BUTTON_PRESSED) {
+					launchTrackScheme();
+					
+				} else if (event == configureViewsDescriptor.getComponent().DO_ANALYSIS_BUTTON_PRESSED) {
+					launchDoAnalysis();
+					
+				} else {
+					System.out.println("[TrackMateGUIController] Caught unknown event: " + event);
+				}
+			}
+		});
+		configureViewsDescriptor.getComponent().addDisplaySettingsChangeListener(new DisplaySettingsListener() {
+			@Override
+			public void displaySettingsChanged(DisplaySettingsEvent event) {
+				guimodel.getDisplaySettings().put(event.getKey(), event.getNewValue());
+				for (TrackMateModelView view : guimodel.views) {
+					view.setDisplaySettings(event.getKey(), event.getNewValue());
+				}
+			}
+		});
 		
 		/*
 		 * Export and graph features.
@@ -532,6 +566,30 @@ public class TrackMateGUIController implements ActionListener {
 		//  Show the panel in the dialog, and execute action after display
 		panelDescriptor.displayingPanel();  
 	}
+	
+	/**
+	 * Returns the starting display settings that will be passed to any new view
+	 * registered within this GUI.
+	 * @param model  the model this GUI will configure; might be required by some display settings.
+	 * @return a map of display settings mappings.
+	 */
+	protected Map<String, Object> createDisplaySettings(TrackMateModel model) {
+		Map<String, Object> displaySettings = new HashMap<String, Object>();
+		displaySettings.put(KEY_COLOR, DEFAULT_COLOR);
+		displaySettings.put(KEY_HIGHLIGHT_COLOR, DEFAULT_HIGHLIGHT_COLOR);
+		displaySettings.put(KEY_SPOTS_VISIBLE, true);
+		displaySettings.put(KEY_DISPLAY_SPOT_NAMES, false);
+		displaySettings.put(KEY_SPOT_COLOR_FEATURE, null);
+		displaySettings.put(KEY_SPOT_RADIUS_RATIO, 1.0f);
+		displaySettings.put(KEY_TRACKS_VISIBLE, true);
+		displaySettings.put(KEY_TRACK_DISPLAY_MODE, DEFAULT_TRACK_DISPLAY_MODE);
+		displaySettings.put(KEY_TRACK_DISPLAY_DEPTH, DEFAULT_TRACK_DISPLAY_DEPTH);
+		displaySettings.put(KEY_TRACK_COLORING, new PerTrackFeatureColorGenerator(model, TrackIndexAnalyzer.TRACK_INDEX));
+		displaySettings.put(KEY_COLORMAP, DEFAULT_COLOR_MAP);
+		return displaySettings;
+	}
+
+	
 
 	/*
 	 * ACTION LISTENER
@@ -705,4 +763,42 @@ public class TrackMateGUIController implements ActionListener {
 		gui.setNextButtonEnabled(guimodel.nextButtonState);
 	}
 
+	private void launchTrackScheme() {
+		final JButton button = configureViewsDescriptor.getComponent().getTrackSchemeButton();
+		button.setEnabled(false);
+		new Thread("Launching TrackScheme thread") {
+			public void run() {
+				TrackScheme trackscheme = new TrackScheme(trackmate.getModel(), selectionModel);
+				SpotImageUpdater thumbnailUpdater = new SpotImageUpdater(trackmate.getSettings());
+				trackscheme.setSpotImageUpdater(thumbnailUpdater);
+				for (String settingKey : guimodel.getDisplaySettings().keySet()) {
+					trackscheme.setDisplaySettings(settingKey, guimodel.getDisplaySettings().get(settingKey));
+				}
+				trackscheme.render();
+				guimodel.addView(trackscheme);
+				button.setEnabled(true);
+			};
+		}.start();
+	}
+
+	private void launchDoAnalysis() {
+		final JButton button = configureViewsDescriptor.getComponent().getDoAnalysisButton();
+		button.setEnabled(false);
+		disableButtonsAndStoreState();
+		gui.show(logPanelDescriptor);
+		new Thread("TrackMate export analysis to IJ thread.") {
+			public void run() {
+				try {
+					ExportStatsToIJAction action = new ExportStatsToIJAction(trackmate, TrackMateGUIController.this);
+					action.execute();
+				} finally {
+					gui.show(configureViewsDescriptor);
+					restoreButtonsState();
+					button.setEnabled(true);
+				}
+			};
+		}.start();
+	}
+
+	
 }

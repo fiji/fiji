@@ -8,7 +8,6 @@ import static fiji.plugin.trackmate.visualization.TrackMateModelView.KEY_SPOTS_V
 import static fiji.plugin.trackmate.visualization.TrackMateModelView.KEY_SPOT_COLOR_FEATURE;
 import static fiji.plugin.trackmate.visualization.TrackMateModelView.KEY_SPOT_RADIUS_RATIO;
 import static fiji.plugin.trackmate.visualization.TrackMateModelView.KEY_TRACKS_VISIBLE;
-import static fiji.plugin.trackmate.visualization.TrackMateModelView.KEY_TRACK_COLORING;
 import static fiji.plugin.trackmate.visualization.TrackMateModelView.KEY_TRACK_DISPLAY_DEPTH;
 import static fiji.plugin.trackmate.visualization.TrackMateModelView.KEY_TRACK_DISPLAY_MODE;
 import static fiji.plugin.trackmate.visualization.trackscheme.TrackScheme.TRACK_SCHEME_ICON;
@@ -21,7 +20,10 @@ import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.EventObject;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
@@ -84,6 +86,8 @@ public class ConfigureViewsPanel extends ActionListenablePanel {
 
 	private final TrackMate trackmate;
 
+	private Collection<DisplaySettingsListener> listeners = new HashSet<DisplaySettingsListener>();
+
 
 	/*
 	 * CONSTRUCTOR 
@@ -97,26 +101,61 @@ public class ConfigureViewsPanel extends ActionListenablePanel {
 	/*
 	 * PUBLIC METHODS
 	 */
-
+	
+	/**
+	 * Adds the specified {@link DisplaySettingsListener} to the collection of listeners
+	 * that will be notified when a display settings change is made on this GUI.
+	 * @param listener the listener to add.
+	 */
+	public void addDisplaySettingsChangeListener(DisplaySettingsListener listener) {
+		listeners.add(listener);
+	}
+	
+	/**
+	 * Removes the specified {@link DisplaySettingsListener} from the collection of listeners
+	 * of this GUI.
+	 * @param listener the listener to remove.
+	 * @return <code>true</code> if the listener belonged to the list of registered listener
+	 * and was successfully removed.
+	 */
+	public boolean removeDisplaySettingsChangeListener(DisplaySettingsListener listener) {
+		return listeners.remove(listener);
+	}
 
 	/**
-	 * Update the values of the given map to reflect the user settings made in this panel.
+	 * Exposes the {@link JButton} that should trigger the launch of TrackScheme.
+	 * @return the TrackScheme {@link JButton}.
 	 */
-	public void updateDisplaySettings(final Map<String, Object> displaySettings) {
-		displaySettings.put(KEY_TRACK_DISPLAY_MODE, jComboBoxDisplayMode.getSelectedIndex());
-		displaySettings.put(KEY_TRACKS_VISIBLE, jCheckBoxDisplayTracks.isSelected());
-		displaySettings.put(KEY_DISPLAY_SPOT_NAMES, jCheckBoxDisplayNames.isSelected());
-		displaySettings.put(KEY_SPOT_COLOR_FEATURE, jPanelSpotColor.getSelectedFeature());
-		displaySettings.put(KEY_SPOT_RADIUS_RATIO, (float) jTextFieldSpotRadius.getValue());
-		displaySettings.put(KEY_SPOTS_VISIBLE, jCheckBoxDisplaySpots.isSelected());
-		displaySettings.put(KEY_TRACK_COLORING, trackColorGUI.getColorGenerator());
-		int depth;
-		if (jCheckBoxLimitDepth.isSelected())
-			depth = Integer.parseInt(jTextFieldFrameDepth.getText());
-		else
-			depth = Integer.MAX_VALUE;
-		displaySettings.put(KEY_TRACK_DISPLAY_DEPTH, depth);
+	public JButton getTrackSchemeButton() {
+		return jButtonShowTrackScheme;
 	}
+	
+	/**
+	 * Exposes the {@link JButton} that should trigger the launch of analysis.
+	 * @return the analysis {@link JButton}.
+	 */
+	public JButton getDoAnalysisButton() {
+		return jButtonDoAnalysis;
+	}
+
+//	/**
+//	 * Update the values of the given map to reflect the user settings made in this panel.
+//	 */
+//	public void updateDisplaySettings(final Map<String, Object> displaySettings) {
+//		displaySettings.put(KEY_TRACK_DISPLAY_MODE, jComboBoxDisplayMode.getSelectedIndex());
+//		displaySettings.put(KEY_TRACKS_VISIBLE, jCheckBoxDisplayTracks.isSelected());
+//		displaySettings.put(KEY_DISPLAY_SPOT_NAMES, jCheckBoxDisplayNames.isSelected());
+//		displaySettings.put(KEY_SPOT_COLOR_FEATURE, jPanelSpotColor.getSelectedFeature());
+//		displaySettings.put(KEY_SPOT_RADIUS_RATIO, (float) jTextFieldSpotRadius.getValue());
+//		displaySettings.put(KEY_SPOTS_VISIBLE, jCheckBoxDisplaySpots.isSelected());
+//		displaySettings.put(KEY_TRACK_COLORING, trackColorGUI.getColorGenerator());
+//		int depth;
+//		if (jCheckBoxLimitDepth.isSelected())
+//			depth = Integer.parseInt(jTextFieldFrameDepth.getText());
+//		else
+//			depth = Integer.MAX_VALUE;
+//		displaySettings.put(KEY_TRACK_DISPLAY_DEPTH, depth);
+//	}
 
 
 	public void refresh() {
@@ -136,6 +175,12 @@ public class ConfigureViewsPanel extends ActionListenablePanel {
 	/*
 	 * PRIVATE METHODS
 	 */
+	
+	private void fireDisplaySettingsChange(DisplaySettingsEvent event) {
+		for (DisplaySettingsListener listener : listeners) {
+			listener.displaySettingsChanged(event);
+		}
+	}
 
 	private void initGUI() {
 		try {
@@ -176,8 +221,12 @@ public class ConfigureViewsPanel extends ActionListenablePanel {
 					jComboBoxDisplayMode.addActionListener(new ActionListener() {
 						@Override
 						public void actionPerformed(ActionEvent e) {
-							displaySettings.put(KEY_TRACK_DISPLAY_MODE, jComboBoxDisplayMode.getSelectedIndex());
-							fireAction(e);
+							Integer oldValue = (Integer) displaySettings.get(KEY_TRACK_DISPLAY_MODE);
+							Integer newValue = jComboBoxDisplayMode.getSelectedIndex();
+							displaySettings.put(KEY_TRACK_DISPLAY_MODE, newValue);
+							
+							DisplaySettingsEvent event = new DisplaySettingsEvent(ConfigureViewsPanel.this, KEY_TRACK_DISPLAY_MODE, newValue, oldValue);
+							fireDisplaySettingsChange(event);
 						}
 					});
 				}
@@ -192,14 +241,17 @@ public class ConfigureViewsPanel extends ActionListenablePanel {
 					jCheckBoxLimitDepth.addActionListener(new ActionListener() {
 						@Override
 						public void actionPerformed(ActionEvent e) {
-							int depth;
+							Integer depth;
 							if (jCheckBoxLimitDepth.isSelected()) {
 								depth = Integer.parseInt(jTextFieldFrameDepth.getText());
 							} else {
 								depth = (int) 1e9;
 							}
+							Integer oldValue = (Integer) displaySettings.get(KEY_TRACK_DISPLAY_DEPTH);
 							displaySettings.put(KEY_TRACK_DISPLAY_DEPTH, depth);
-							fireAction(e);
+							
+							DisplaySettingsEvent event = new DisplaySettingsEvent(ConfigureViewsPanel.this, KEY_TRACK_DISPLAY_DEPTH, depth, oldValue);
+							fireDisplaySettingsChange(event);
 						}
 					});
 				}
@@ -219,9 +271,12 @@ public class ConfigureViewsPanel extends ActionListenablePanel {
 					jTextFieldFrameDepth.addActionListener(new ActionListener() {
 						@Override
 						public void actionPerformed(ActionEvent e) {
-							int depth = Integer.parseInt(jTextFieldFrameDepth.getText());
+							Integer depth = Integer.parseInt(jTextFieldFrameDepth.getText());
+							Integer oldValue = (Integer) displaySettings.get(KEY_TRACK_DISPLAY_DEPTH);
 							displaySettings.put(KEY_TRACK_DISPLAY_DEPTH, depth);
-							fireAction(e);
+							
+							DisplaySettingsEvent event = new DisplaySettingsEvent(ConfigureViewsPanel.this, KEY_TRACK_DISPLAY_DEPTH, depth, oldValue);
+							fireDisplaySettingsChange(event);
 						}
 					});
 				}
@@ -236,10 +291,12 @@ public class ConfigureViewsPanel extends ActionListenablePanel {
 				jCheckBoxDisplayTracks.addActionListener(new ActionListener() {
 					@Override
 					public void actionPerformed(ActionEvent e) {
-						boolean isSelected = jCheckBoxDisplayTracks.isSelected();
-						jPanelTrackOptions.setEnabled(isSelected);
-						displaySettings.put(KEY_TRACKS_VISIBLE, isSelected);
-						fireAction(e);
+						Boolean oldValue = (Boolean) displaySettings.get(KEY_TRACKS_VISIBLE);
+						Boolean newValue =  jCheckBoxDisplayTracks.isSelected();
+						displaySettings.put(KEY_TRACKS_VISIBLE, newValue);
+						
+						DisplaySettingsEvent event = new DisplaySettingsEvent(ConfigureViewsPanel.this, KEY_TRACKS_VISIBLE, newValue, oldValue);
+						fireDisplaySettingsChange(event);
 					}
 				});
 			}
@@ -253,10 +310,12 @@ public class ConfigureViewsPanel extends ActionListenablePanel {
 				jCheckBoxDisplaySpots.addActionListener(new ActionListener() {
 					@Override
 					public void actionPerformed(ActionEvent e) {
-						boolean isSelected = jCheckBoxDisplaySpots.isSelected();
-						jPanelSpotOptions.setEnabled(isSelected);
-						displaySettings.put(KEY_SPOTS_VISIBLE, isSelected);
-						fireAction(e);
+						Boolean oldValue = (Boolean) displaySettings.get(KEY_SPOTS_VISIBLE);
+						Boolean newValue =  jCheckBoxDisplaySpots.isSelected();
+						displaySettings.put(KEY_SPOTS_VISIBLE, newValue);
+						
+						DisplaySettingsEvent event = new DisplaySettingsEvent(ConfigureViewsPanel.this, KEY_SPOTS_VISIBLE, newValue, oldValue);
+						fireDisplaySettingsChange(event);
 					}
 				});
 			}
@@ -287,15 +346,23 @@ public class ConfigureViewsPanel extends ActionListenablePanel {
 					jTextFieldSpotRadius.addActionListener(new ActionListener() {
 						@Override
 						public void actionPerformed(ActionEvent e) {
-							displaySettings.put(KEY_SPOT_RADIUS_RATIO, (float) jTextFieldSpotRadius.getValue());
-							fireAction(e);
+							Float oldValue = (Float) displaySettings.get(KEY_SPOT_RADIUS_RATIO);
+							Float newValue =  (float) jTextFieldSpotRadius.getValue();
+							displaySettings.put(KEY_SPOT_RADIUS_RATIO, newValue);
+							
+							DisplaySettingsEvent event = new DisplaySettingsEvent(ConfigureViewsPanel.this, KEY_SPOT_RADIUS_RATIO, newValue, oldValue);
+							fireDisplaySettingsChange(event);
 						}
 					});
 					jTextFieldSpotRadius.addFocusListener(new FocusListener() {
 						@Override
 						public void focusLost(FocusEvent e) {
-							displaySettings.put(KEY_SPOT_RADIUS_RATIO, (float) jTextFieldSpotRadius.getValue());
-							fireAction(new ActionEvent(jTextFieldSpotRadius, 0, "Spot radius changed"));
+							Float oldValue = (Float) displaySettings.get(KEY_SPOT_RADIUS_RATIO);
+							Float newValue =  (float) jTextFieldSpotRadius.getValue();
+							displaySettings.put(KEY_SPOT_RADIUS_RATIO, newValue);
+							
+							DisplaySettingsEvent event = new DisplaySettingsEvent(ConfigureViewsPanel.this, KEY_SPOT_RADIUS_RATIO, newValue, oldValue);
+							fireDisplaySettingsChange(event);
 						}
 						@Override
 						public void focusGained(FocusEvent e) {}
@@ -310,8 +377,12 @@ public class ConfigureViewsPanel extends ActionListenablePanel {
 					jCheckBoxDisplayNames.addActionListener(new ActionListener() {
 						@Override
 						public void actionPerformed(ActionEvent e) {
-							displaySettings.put(KEY_DISPLAY_SPOT_NAMES, jCheckBoxDisplayNames.isSelected());
-							fireAction(e);
+							Boolean oldValue = (Boolean) displaySettings.get(KEY_DISPLAY_SPOT_NAMES);
+							Boolean newValue = (Boolean) jCheckBoxDisplayNames.isSelected(); 
+							displaySettings.put(KEY_DISPLAY_SPOT_NAMES, newValue);
+							
+							DisplaySettingsEvent event = new DisplaySettingsEvent(ConfigureViewsPanel.this, KEY_DISPLAY_SPOT_NAMES, newValue, oldValue);
+							fireDisplaySettingsChange(event);
 						}
 					});
 				}
@@ -324,8 +395,12 @@ public class ConfigureViewsPanel extends ActionListenablePanel {
 					jPanelSpotColor.addActionListener(new ActionListener() {
 						@Override
 						public void actionPerformed(ActionEvent e) {
-							displaySettings.put(KEY_SPOT_COLOR_FEATURE, jPanelSpotColor.getSelectedFeature());
-							fireAction(e);
+							String oldValue = (String) displaySettings.get(KEY_SPOT_COLOR_FEATURE);
+							String newValue = jPanelSpotColor.getSelectedFeature();
+							displaySettings.put(KEY_SPOT_COLOR_FEATURE, newValue);
+							
+							DisplaySettingsEvent event = new DisplaySettingsEvent(ConfigureViewsPanel.this, KEY_SPOT_COLOR_FEATURE, newValue, oldValue);
+							fireDisplaySettingsChange(event);
 						}
 					});
 				}
@@ -369,4 +444,57 @@ public class ConfigureViewsPanel extends ActionListenablePanel {
 			e.printStackTrace();
 		}
 	}
+	
+	
+	/*
+	 * INNER CLASSES
+	 */
+	
+	/**
+	 * An event object fired when the user changes one of the display settings through
+	 * this GUI panel. It stores the display settings key related to this display settings,
+	 * its new values and its old value.
+	 * @author Jean-Yves Tinevez - 2013
+	 * @see TrackMateModelView
+	 */
+	public class DisplaySettingsEvent extends EventObject {
+
+		private static final long serialVersionUID = 4259460590261659068L;
+		private final String key;
+		private final Object newValue;
+		private final Object oldValue;
+
+		public DisplaySettingsEvent(Object source, String key, Object newValue, Object oldValue) {
+			super(source);
+			this.key = key;
+			this.newValue = newValue;
+			this.oldValue = oldValue;
+		}
+		
+		public String getKey() {
+			return key;
+		}
+		
+		public Object getOldValue() {
+			return oldValue;
+		}
+		
+		public Object getNewValue() {
+			return newValue;
+		}
+	}
+
+	/**
+	 * Interface for classes that listen to display settings changes on a GUI.
+	 * @author Jean-Yves Tinevez - 2013
+	 */
+	public interface DisplaySettingsListener {
+		
+		/**
+		 * Called when a display settings is changed on a GUI.
+		 * @param event  the {@link DisplaySettingsEvent} containing the settings change.
+		 */
+		public void displaySettingsChanged(DisplaySettingsEvent event);
+	}
+	
 }
