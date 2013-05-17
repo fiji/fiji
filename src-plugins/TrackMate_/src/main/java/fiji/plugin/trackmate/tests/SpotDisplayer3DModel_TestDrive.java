@@ -21,8 +21,6 @@ public class SpotDisplayer3DModel_TestDrive {
 	public static void main(String[] args) {
 		System.out.println(Install_J3D.getJava3DVersion());
 		
-
-
 		File file = new File(AppUtils.getBaseDirectory(TrackMate.class), "samples/FakeTracks.xml");
 		ij.ImageJ.main(args);
 		

@@ -10,7 +10,9 @@ import java.util.List;
 import org.jdom2.JDOMException;
 import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.graph.SimpleDirectedWeightedGraph;
+import org.scijava.util.AppUtils;
 
+import fiji.plugin.trackmate.SelectionModel;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.TrackMateModel;
@@ -25,16 +27,9 @@ public class SpotFeatureGrapher_TestDrive {
 	public static void main(String[] args) throws JDOMException, IOException {
 
 		// Load objects 
-		File file = new File("/Users/tinevez/Desktop/Data/Tree.xml");
-//		File file = new File("E:/Users/JeanYves/Desktop/Data/FakeTracks.xml");
-		TrackMate trackmate = new TrackMate();
-		TmXmlReader reader = new TmXmlReader(file, trackmate);
-		if (!reader.checkInput() || !reader.process()) {
-			System.err.println("Problem loading the file:");
-			System.err.println(reader.getErrorMessage());
-			return;
-		}
-		TrackMateModel model = trackmate.getModel();
+		File file = new File(AppUtils.getBaseDirectory(TrackMate.class), "samples/FakeTracks.xml");
+		TmXmlReader reader = new TmXmlReader(file);
+		TrackMateModel model = reader.getModel();
 
 		HashSet<String> Y = new HashSet<String>(1);
 		Y.add(Spot.POSITION_T);
@@ -43,13 +38,13 @@ public class SpotFeatureGrapher_TestDrive {
 			spots.add(it.next());
 		}
 		
-		SpotFeatureGrapher grapher = new SpotFeatureGrapher(Spot.POSITION_X, Y, spots , trackmate.getModel(), trackmate.getSettings());
+		SpotFeatureGrapher grapher = new SpotFeatureGrapher(Spot.POSITION_X, Y, spots , model);
 		grapher.render();
 		
 		TrackIndexAnalyzer analyzer = new TrackIndexAnalyzer(model);
 		analyzer.process(model.getTrackModel().getFilteredTrackIDs()); // need for trackScheme
 		
-		TrackScheme trackScheme = new TrackScheme(model, trackmate.getSettings());
+		TrackScheme trackScheme = new TrackScheme(model, new SelectionModel(model));
 		trackScheme.render();
 		
 	}

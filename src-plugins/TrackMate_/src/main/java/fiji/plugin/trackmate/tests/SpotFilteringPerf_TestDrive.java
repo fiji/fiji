@@ -2,12 +2,17 @@ package fiji.plugin.trackmate.tests;
 
 import java.io.File;
 
+import org.scijava.util.AppUtils;
+
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.TrackMate;
 import fiji.plugin.trackmate.features.FeatureFilter;
 import fiji.plugin.trackmate.io.TmXmlReader;
+import fiji.plugin.trackmate.providers.EdgeAnalyzerProvider;
+import fiji.plugin.trackmate.providers.SpotAnalyzerProvider;
+import fiji.plugin.trackmate.providers.TrackAnalyzerProvider;
 
 public class SpotFilteringPerf_TestDrive {
 
@@ -15,17 +20,15 @@ public class SpotFilteringPerf_TestDrive {
 
 		//		ImageJ.main(args);
 
-		File file = new File("/Users/tinevez/Desktop/RECEPTOR.xml");
-		final TrackMate trackmate = new TrackMate();
-		TmXmlReader reader = new TmXmlReader(file, trackmate );
-		if (!reader.checkInput() || !reader.process()) {
-			System.err.println("Problem loading file " + file + ":\n" + reader.getErrorMessage());
-		}
-		TrackMateModel model = trackmate.getModel();
-		Settings settings = trackmate.getSettings();
+//		File file = new File("/Users/tinevez/Desktop/RECEPTOR.xml");
+		File file = new File(AppUtils.getBaseDirectory(TrackMate.class), "samples/FakeTracks.xml");
+		TmXmlReader reader = new TmXmlReader(file);
+		TrackMateModel model = reader.getModel();
+		Settings settings = reader.getSettings(null, null, 
+				new SpotAnalyzerProvider(model), new EdgeAnalyzerProvider(model), new TrackAnalyzerProvider(model));
+		TrackMate trackmate = new TrackMate(model, settings);
 
 		for (int i = 0; i < 5; i++) {
-
 
 			{
 				// Remove filter

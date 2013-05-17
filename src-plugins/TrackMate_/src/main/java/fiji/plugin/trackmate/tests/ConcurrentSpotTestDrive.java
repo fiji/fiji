@@ -36,7 +36,7 @@ public class ConcurrentSpotTestDrive {
 		// Make settings
 		Settings settings = new Settings();
 		settings.setFrom(imp);
-		DetectorProvider provider = new DetectorProvider(model, settings);
+		DetectorProvider provider = new DetectorProvider(model);
 		provider.select(LogDetectorFactory.DETECTOR_KEY);
 		settings.detectorFactory = provider.getDetectorFactory();
 		settings.detectorSettings = provider.getDefaultSettings();
