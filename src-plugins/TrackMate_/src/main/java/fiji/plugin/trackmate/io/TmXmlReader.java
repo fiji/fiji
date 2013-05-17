@@ -133,7 +133,7 @@ public class TmXmlReader {
 	 */
 	protected ConcurrentHashMap<Integer, Spot> cache;
 	protected StringBuilderLogger logger = new StringBuilderLogger();
-	private final Element root;
+	protected final Element root;
 	/** If <code>false</code>, an error occured during reading. 
 	 * @see #getErrorMessage(). */
 	private boolean ok = true;

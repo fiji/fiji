@@ -231,6 +231,12 @@ public class TrackMateModel {
 			str.append("Contains " + trackGraphModel.getNFilteredTracks() + " filtered tracks.\n");
 		}
 
+		str.append('\n');
+		str.append("Physical units:\n  space units: " + spaceUnits + "\n  time units: " + timeUnits + '\n' );
+		
+		str.append('\n');
+		str.append(featureModel.toString());
+		
 		return str.toString();
 	}
 

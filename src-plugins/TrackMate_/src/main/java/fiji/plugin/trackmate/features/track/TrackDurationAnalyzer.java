@@ -23,10 +23,10 @@ public class TrackDurationAnalyzer implements TrackAnalyzer, MultiThreaded {
 	public static final String 		TRACK_STOP = "TRACK_STOP";
 	public static final String 		TRACK_DISPLACEMENT = "TRACK_DISPLACEMENT";
 
-	private static final List<String> FEATURES = new ArrayList<String>(4);
-	private static final Map<String, String> FEATURE_NAMES = new HashMap<String, String>(4);
-	private static final Map<String, String> FEATURE_SHORT_NAMES = new HashMap<String, String>(4);
-	private static final Map<String, Dimension> FEATURE_DIMENSIONS = new HashMap<String, Dimension>(4);
+	public static final List<String> FEATURES = new ArrayList<String>(4);
+	public static final Map<String, String> FEATURE_NAMES = new HashMap<String, String>(4);
+	public static final Map<String, String> FEATURE_SHORT_NAMES = new HashMap<String, String>(4);
+	public static final Map<String, Dimension> FEATURE_DIMENSIONS = new HashMap<String, Dimension>(4);
 
 	static {
 		FEATURES.add(TRACK_DURATION);

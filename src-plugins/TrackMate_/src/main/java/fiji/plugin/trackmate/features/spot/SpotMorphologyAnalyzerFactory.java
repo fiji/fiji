@@ -67,9 +67,9 @@ public class SpotMorphologyAnalyzerFactory<T extends RealType<T> & NativeType<T>
 		FEATURE_DIMENSIONS.put(featurelist_phi[0], Dimension.ANGLE);
 		FEATURE_DIMENSIONS.put(featurelist_phi[1], Dimension.ANGLE);
 		FEATURE_DIMENSIONS.put(featurelist_phi[2], Dimension.ANGLE);
-		FEATURE_DIMENSIONS.put(featurelist_sa[0], Dimension.ANGLE);
-		FEATURE_DIMENSIONS.put(featurelist_sa[1], Dimension.ANGLE);
-		FEATURE_DIMENSIONS.put(featurelist_sa[2], Dimension.ANGLE);
+		FEATURE_DIMENSIONS.put(featurelist_theta[0], Dimension.ANGLE);
+		FEATURE_DIMENSIONS.put(featurelist_theta[1], Dimension.ANGLE);
+		FEATURE_DIMENSIONS.put(featurelist_theta[2], Dimension.ANGLE);
 
 	}
 	public static final String KEY = "Spot morphology";

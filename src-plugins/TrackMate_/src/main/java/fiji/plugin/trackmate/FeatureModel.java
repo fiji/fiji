@@ -436,12 +436,32 @@ public class FeatureModel {
 		return spotFeatureDimensions;
 	}
 
+	@Override
+	public String toString() {
+		StringBuilder str = new StringBuilder();
+
+		// Spots
+		str.append("Spot features declared:\n");
+		appendFeatureDeclarations(str, spotFeatures, spotFeatureNames, spotFeatureShortNames, spotFeatureDimensions);
+		str.append('\n');
+		
+		// Edges
+		str.append("Edge features declared:\n");
+		appendFeatureDeclarations(str, edgeFeatures, edgeFeatureNames, edgeFeatureShortNames, edgeFeatureDimensions);
+		str.append('\n');
+
+		// Track
+		str.append("Track features declared:\n");
+		appendFeatureDeclarations(str, trackFeatures, trackFeatureNames, trackFeatureShortNames, trackFeatureDimensions);
+		str.append('\n');
+
+		return str.toString();
+	};
 	
 	/**
 	 * Echoes the full content of this {@link FeatureModel}.
 	 */
-	@Override
-	public String toString() {
+	public String echo() {
 		StringBuilder str = new StringBuilder();
 
 		// Spots
