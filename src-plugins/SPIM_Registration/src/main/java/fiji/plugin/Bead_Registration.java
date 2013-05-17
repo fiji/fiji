@@ -527,7 +527,7 @@ public class Bead_Registration implements PlugIn
 
 		gd.addMessage( "" );
 
-		gd.addChoice( "Transformation_model", model, model[ defaultBeadBrightness ] );
+		gd.addChoice( "Transformation_model", model, model[ defaultModel ] );
 		gd.addCheckbox( "Re-use_per_timepoint_registration", loadRegistration );
 
 		gd.addMessage( "" );
