@@ -180,11 +180,11 @@ public class DetectionRegistration
 			final Model<?> model, 
 			final float maxEpsilon, 
 			final float minInlierRatio, 
-			final int minNumberInlierFactor, 
+			final float minNumberInlierFactor, 
 			final int numIterations)
 	{
 		final int numCorrespondences = correspondenceCandidates.size();
-		final int minNumCorrespondences = model.getMinNumMatches() * minNumberInlierFactor;
+		final int minNumCorrespondences = Math.max( model.getMinNumMatches(), Math.round( model.getMinNumMatches() * minNumberInlierFactor ) );
 		
 		/*
 		 * First remove the inconsistent correspondences

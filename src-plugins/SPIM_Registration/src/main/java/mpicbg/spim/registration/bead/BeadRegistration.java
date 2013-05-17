@@ -34,7 +34,7 @@ import mpicbg.util.TransformUtils;
 
 public class BeadRegistration
 {
-	public static int minInlierFactor = 3;
+	public static float minInlierFactor = 3;
 	
 	final ViewStructure viewStructure;
 	final static NumberFormat nf = NumberFormat.getPercentInstance();
