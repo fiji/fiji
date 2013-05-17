@@ -1,9 +1,6 @@
 package fiji.plugin.trackmate.util;
 
 import ij.ImagePlus;
-import ij.ImageStack;
-import ij.process.ColorProcessor;
-import ij.process.StackConverter;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -23,7 +20,6 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import net.imglib2.exception.ImgLibException;
 import net.imglib2.img.ImagePlusAdapter;
 import net.imglib2.img.ImgPlus;
 import net.imglib2.meta.Axes;
@@ -34,7 +30,6 @@ import net.imglib2.type.numeric.real.DoubleType;
 import net.imglib2.util.Util;
 import fiji.plugin.trackmate.Dimension;
 import fiji.plugin.trackmate.Logger;
-import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.TrackMate;
@@ -700,54 +695,6 @@ public class TMUtils {
 		if (zj != null && zi != null)
 			eucD += (zj-zi)*(zj-zi);
 		return eucD;
-	}
-
-
-	/**
-	 * Ensure an 8-bit gray image is sent to the 3D viewer.
-	 * @throws ImgLibException 
-	 */
-	public static final ImagePlus[] makeImageForViewer(final Settings settings) throws ImgLibException {
-
-		final ImagePlus origImp = settings.imp;
-		origImp.killRoi();
-		final ImagePlus imp;
-
-		if (origImp.getType() == ImagePlus.GRAY8)
-			imp = origImp;
-		else {
-			imp = new ij.plugin.Duplicator().run(origImp);
-			new StackConverter(imp).convertToGray8();
-		}
-
-		int nChannels = imp.getNChannels();
-		int nSlices = settings.nslices;
-		int nFrames = settings.nframes;
-		ImagePlus[] ret = new ImagePlus[nFrames];
-		int w = imp.getWidth(), h = imp.getHeight();
-
-		ImageStack oldStack = imp.getStack();
-		String oldTitle = imp.getTitle();
-
-		for(int i = 0; i < nFrames; i++) {
-
-			ImageStack newStack = new ImageStack(w, h);
-			for(int j = 0; j < nSlices; j++) {
-				int index = imp.getStackIndex(1, j+1, i+settings.tstart+1);
-				Object pixels;
-				if (nChannels > 1) {
-					imp.setPositionWithoutUpdate(1, j+1, i+1);
-					pixels = new ColorProcessor(imp.getImage()).getPixels();
-				}
-				else
-					pixels = oldStack.getPixels(index);
-				newStack.addSlice(oldStack.getSliceLabel(index), pixels);
-			}
-			ret[i] = new ImagePlus(oldTitle	+ " (frame " + i + ")", newStack);
-			ret[i].setCalibration(imp.getCalibration().copy());
-
-		}
-		return ret;
 	}
 
 	/**

@@ -86,8 +86,10 @@ public class SpotDisplayer3D extends AbstractTrackMateModelView {
 		case ModelChangeEvent.SPOTS_FILTERED:
 			for (int frame : blobs.keySet()) {
 				SpotGroupNode<Spot> frameBlobs = blobs.get(frame);
-				for (Iterator<Spot> it = model.getSpots().iterator(frame, true); it.hasNext();) {
-					frameBlobs.setVisible(it.next(), true);
+				for (Iterator<Spot> it = model.getSpots().iterator(frame, false); it.hasNext();) {
+					Spot spot = it.next();
+					boolean visible = spot.getFeature(SpotCollection.VISIBLITY).compareTo(SpotCollection.ZERO) > 0;
+					frameBlobs.setVisible(spot, visible);
 				}
 			}
 			break;
@@ -121,9 +123,6 @@ public class SpotDisplayer3D extends AbstractTrackMateModelView {
 		universe.showTimepoint(frame);
 	}
 
-
-
-
 	@Override
 	public void refresh() {
 		if (null != trackNode)
@@ -145,9 +144,8 @@ public class SpotDisplayer3D extends AbstractTrackMateModelView {
 			updateTrackColors();
 			trackNode.refresh();
 			universe.updateStartAndEndTime(blobs.firstKey(), blobs.lastKey());
+			universe.updateTimelineGUI();
 		}
-		
-		universe.show();
 	}
 
 	@Override
@@ -199,12 +197,12 @@ public class SpotDisplayer3D extends AbstractTrackMateModelView {
 		if (model.getSpots() != null) {
 			spotContent = makeSpotContent();
 			universe.removeContent(SPOT_CONTENT_NAME);
-			universe.addContent(spotContent);
+			universe.addContentLater(spotContent);
 		}
 		if (model.getTrackModel().getNFilteredTracks() > 0) {
 			trackContent = makeTrackContent();
 			universe.removeContent(TRACK_CONTENT_NAME);
-			universe.addContent(trackContent);
+			universe.addContentLater(trackContent);
 		}
 	}
 

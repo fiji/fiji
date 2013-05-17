@@ -1,20 +1,18 @@
 package fiji.plugin.trackmate.providers;
 
 import ij.ImagePlus;
-import ij3d.Content;
-import ij3d.ContentCreator;
 import ij3d.Image3DUniverse;
 
+import java.awt.Color;
 import java.util.ArrayList;
 import java.util.List;
 
-import net.imglib2.exception.ImgLibException;
+import javax.vecmath.Color3f;
 
 import fiji.plugin.trackmate.SelectionModel;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.TrackMate;
 import fiji.plugin.trackmate.TrackMateModel;
-import fiji.plugin.trackmate.util.TMUtils;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
 import fiji.plugin.trackmate.visualization.hyperstack.HyperStackDisplayer;
 import fiji.plugin.trackmate.visualization.threedviewer.SpotDisplayer3D;
@@ -69,37 +67,20 @@ public class ViewProvider {
 	 */
 	public TrackMateModelView getView(String key) {
 		if (key == HyperStackDisplayer.NAME) {
-
 			ImagePlus imp = settings.imp;
 			return new HyperStackDisplayer(model, selectionModel, imp);
 			
 		} else if (key == SpotDisplayer3D.NAME) {
-			
-
 			Image3DUniverse universe = new Image3DUniverse();
+			universe.show();
 			ImagePlus imp = settings.imp;
 			if (null != imp) {
-				//			if (!settings.imp.isVisible())
-				//				settings.imp.show();
-				ImagePlus[] images;
-				try {
-					images = TMUtils.makeImageForViewer(settings);
-					final Content imageContent = ContentCreator.createContent(
-							imp.getShortTitle(), 
-							images, 
-							Content.VOLUME, 
-							SpotDisplayer3D.DEFAULT_RESAMPLING_FACTOR, 
-							0,
-							null, 
-							SpotDisplayer3D.DEFAULT_THRESHOLD, 
-							new boolean[] {true, true, true});
-					universe.addContentLater(imageContent);	
-				} catch (ImgLibException e) {
-					e.printStackTrace();
-				}
+				universe.addVoltex(imp, new Color3f(Color.WHITE), 
+						imp.getShortTitle(), 0, new boolean[] {true, true, true}, 1);
 			}
 			
 			return new SpotDisplayer3D(model, selectionModel, universe);
+			
 		} else {
 			return null;
 		}

@@ -1,6 +1,7 @@
 package fiji.plugin.trackmate.tests;
 
 import fiji.plugin.trackmate.Logger;
+import fiji.plugin.trackmate.SelectionModel;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.TrackMate;
@@ -14,6 +15,7 @@ import fiji.plugin.trackmate.visualization.TrackMateModelView;
 import fiji.plugin.trackmate.visualization.threedviewer.SpotDisplayer3D;
 import ij.ImagePlus;
 import ij.process.StackConverter;
+import ij3d.Image3DUniverse;
 import ij3d.Install_J3D;
 
 import java.awt.event.ActionEvent;
@@ -117,7 +119,9 @@ public class SpotDisplayer3DTestDrive {
 		final TrackMate trackmate = new TrackMate();
 		trackmate.getModel().setSpots(allSpots, false);
 		trackmate.getSettings().imp = imp;
-		final SpotDisplayer3D displayer = new SpotDisplayer3D(trackmate.getModel(), trackmate.getSettings());
+		Image3DUniverse universe = new Image3DUniverse();
+		universe.show();
+		final SpotDisplayer3D displayer = new SpotDisplayer3D(trackmate.getModel(), new SelectionModel(trackmate.getModel()), universe);
 		displayer.render();
 		
 		// Launch threshold GUI
@@ -143,7 +147,7 @@ public class SpotDisplayer3DTestDrive {
 				if (e == gui.COLOR_FEATURE_CHANGED) {
 					String feature = gui.getColorByFeature();
 					displayer.setDisplaySettings(TrackMateModelView.KEY_SPOT_COLOR_FEATURE, feature);
-					displayer.setDisplaySettings(TrackMateModelView.KEY_SPOT_RADIUS_RATIO, RAN.nextFloat());
+					displayer.setDisplaySettings(TrackMateModelView.KEY_SPOT_RADIUS_RATIO, RAN.nextFloat()+1);
 					displayer.refresh();
 				}
 			}

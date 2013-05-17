@@ -1,14 +1,19 @@
 package fiji.plugin.trackmate.tests;
 
 import static fiji.plugin.trackmate.tracking.TrackerKeys.KEY_LINKING_MAX_DISTANCE;
+import ij.ImagePlus;
 
 import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.scijava.util.AppUtils;
+
 import fiji.plugin.trackmate.Logger;
-import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.SelectionModel;
+import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.TrackMate;
+import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.io.TmXmlReader;
 import fiji.plugin.trackmate.tracking.kdtree.NearestNeighborTracker;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
@@ -16,32 +21,24 @@ import fiji.plugin.trackmate.visualization.hyperstack.HyperStackDisplayer;
 
 public class NNTrackerTest {
 
-	
-	private static final File SPLITTING_CASE_3 = new File("/Users/tinevez/Desktop/Data/FakeTracks.xml");
-//	private static final File SPLITTING_CASE_3 = new File("E:/Users/JeanYves/Desktop/Data/FakeTracks.xml");
-
 	/*
 	 * MAIN METHOD
 	 */
 	
 	public static void main(String args[]) {
 		
-		File file = SPLITTING_CASE_3;
+
+		File file = new File(AppUtils.getBaseDirectory(TrackMate.class), "samples/FakeTracks.xml");
 		
 		// 1 - Load test spots
 		System.out.println("Opening file: "+file.getAbsolutePath());		
-		TrackMate trackmate = new TrackMate();
-		TmXmlReader reader = new TmXmlReader(file, trackmate);
-		if (!reader.checkInput() || !reader.process()) {
-			System.err.println("Problem loading the file:");
-			System.err.println(reader.getErrorMessage());
-		}
-		TrackMateModel model = trackmate.getModel();
+		TmXmlReader reader = new TmXmlReader(file);
+		TrackMateModel model = reader.getModel();
+		Settings gs = reader.getSettings(null, null, null, null, null);
 		
 		System.out.println("Spots: "+ model.getSpots());
 		System.out.println("Found "+model.getTrackModel().getNTracks()+" tracks in the file:");
 		System.out.println("Track features: ");
-		trackmate.computeTrackFeatures(true);
 		for (Integer trackID : model.getTrackModel().getTrackIDs()) {
 			System.out.println(model.getTrackModel().trackToString(trackID));
 		}
@@ -69,23 +66,13 @@ public class NNTrackerTest {
 		System.out.println("Whole tracking done in "+(end-start)+" ms.");
 		System.out.println();
 
-
-		// 4 - Detailed info
-//		System.out.println("Segment costs:");
-//		LAPUtils.echoMatrix(lap.getSegmentCosts());
-		
-		System.out.println("Track features: ");
-		trackmate.computeTrackFeatures(true);
-		for (Integer trackID : model.getTrackModel().getTrackIDs()) {
-			System.out.println(model.getTrackModel().trackToString(trackID));
-		}
-		
 		
 		// 5 - Display tracks
 		// Load Image
 		ij.ImageJ.main(args);
 		
-		TrackMateModelView sd2d = new HyperStackDisplayer(model, trackmate.getSettings());
+		ImagePlus imp = gs.imp;
+		TrackMateModelView sd2d = new HyperStackDisplayer(model, new SelectionModel(model), imp);
 		sd2d.render();
 		sd2d.setDisplaySettings(TrackMateModelView.KEY_TRACK_DISPLAY_MODE, TrackMateModelView.TRACK_DISPLAY_MODE_WHOLE);
 	}
