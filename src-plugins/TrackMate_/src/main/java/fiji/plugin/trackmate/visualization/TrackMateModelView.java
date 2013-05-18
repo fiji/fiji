@@ -201,14 +201,14 @@ public interface TrackMateModelView extends InfoTextable {
 	 */
 
 	/**
-	 * Initialize this displayer and render it according to its concrete implementation, 
+	 * Initializes this displayer and render it according to its concrete implementation, 
 	 * target model.
 	 * @see #setModel(TrackMateModel)
 	 */
 	public void render();
 
 	/**
-	 * Refresh the displayer display with current model. If the underlying model was modified,
+	 * Refreshes the displayer display with current model. If the underlying model was modified,
 	 * or the display settings were changed, calling this method should be enough to update 
 	 * the display with changes.
 	 * @see #setDisplaySettings(String, Object)
@@ -216,17 +216,17 @@ public interface TrackMateModelView extends InfoTextable {
 	public void refresh();
 
 	/**
-	 * Remove any overlay (for spots or tracks) from this displayer.
+	 * Removes any overlay (for spots or tracks) from this displayer.
 	 */
 	public void clear();
 	
 	/**
-	 * Center the view on the given spot.
+	 * Centers the view on the given spot.
 	 */
 	public void centerViewOn(final Spot spot);
 
 	/**
-	 * @return the current display settings map.
+	 * Returns the current display settings map.
 	 */
 	public Map<String, Object> getDisplaySettings();
 
@@ -238,12 +238,17 @@ public interface TrackMateModelView extends InfoTextable {
 	public void setDisplaySettings(final String key, final Object value);
 	
 	/**
-	 * @return the value of a specific display parameter. 
+	 * Returns the value of a specific display parameter. 
 	 */
 	public Object getDisplaySettings(final String key);
 	
 	/**
-	 * @return the model displayed in this view.
+	 * Returns the model displayed in this view.
 	 */
 	public TrackMateModel getModel();
+	
+	/**
+	 * Returns a unique identifier that identifies this view.
+	 */
+	public String getKey();
 }

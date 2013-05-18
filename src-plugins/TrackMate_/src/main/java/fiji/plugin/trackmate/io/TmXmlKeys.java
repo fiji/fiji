@@ -158,5 +158,6 @@ class TmXmlKeys {
 	
 	public static final String GUI_STATE_ELEMENT_KEY 					= "GUIState";
 	public static final String GUI_STATE_ATTRIBUTE 						= "state";
-	
+	public static final String GUI_VIEW_ELEMENT_KEY 					= "View";
+	public static final String GUI_VIEW_ATTRIBUTE 						= "key";
 }

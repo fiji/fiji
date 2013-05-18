@@ -1,6 +1,6 @@
 package fiji.plugin.trackmate.io;
 
-import static fiji.plugin.trackmate.io.TmXmlKeys.ANALYSER_ELEMENT_KEY;
+import static fiji.plugin.trackmate.io.TmXmlKeys.*;
 import static fiji.plugin.trackmate.io.TmXmlKeys.ANALYSER_KEY_ATTRIBUTE;
 import static fiji.plugin.trackmate.io.TmXmlKeys.ANALYZER_COLLECTION_ELEMENT_KEY;
 import static fiji.plugin.trackmate.io.TmXmlKeys.CROP_ELEMENT_KEY;
@@ -99,8 +99,10 @@ import fiji.plugin.trackmate.features.edges.EdgeTargetAnalyzer;
 import fiji.plugin.trackmate.features.spot.SpotAnalyzerFactory;
 import fiji.plugin.trackmate.features.track.TrackAnalyzer;
 import fiji.plugin.trackmate.features.track.TrackIndexAnalyzer;
+import fiji.plugin.trackmate.gui.TrackMateGUIModel;
 import fiji.plugin.trackmate.providers.DetectorProvider;
 import fiji.plugin.trackmate.providers.TrackerProvider;
+import fiji.plugin.trackmate.visualization.TrackMateModelView;
 
 public class TmXmlWriter {
 
@@ -241,12 +243,21 @@ public class TmXmlWriter {
 	}
 	
 	/**
-	 * Appends the current GUI state as a state string to the document. 
-	 * @param guiState  the key string representing the GUI state.
+	 * Appends the current GUI state as a state string to the document.
+	 * @param guimodel the GUI model from which the GUI state and registered
+	 * view will be read. 
 	 */
-	public void appendGUIState(String guiState) {
+	public void appendGUIState(TrackMateGUIModel guimodel) {
 		Element guiel = new Element(GUI_STATE_ELEMENT_KEY);
-		guiel.setAttribute(GUI_STATE_ATTRIBUTE, guiState);
+		// state
+		guiel.setAttribute(GUI_STATE_ATTRIBUTE, guimodel.getGUIStateString());
+		// views
+		for (TrackMateModelView view : guimodel.getViews()) {
+			Element viewel = new Element(GUI_VIEW_ELEMENT_KEY);
+			viewel.setAttribute(GUI_VIEW_ATTRIBUTE, view.getKey());
+			guiel.addContent(viewel);
+		}
+		
 		root.addContent(guiel);
 		logger.log("  Added GUI current state.\n");
 	}

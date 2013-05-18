@@ -78,4 +78,15 @@ public class TrackMateGUIModel {
 	public void setDisplaySettings(Map<String, Object> displaySettings) {
 		this.displaySettings = displaySettings;
 	}
+	
+	/**
+	 * Returns the key string of the current descriptor, representing the "state"
+	 * of the GUI. Load, Save and Log descriptors are not returned; the descriptor
+	 * that is displayed prior to call any of these 3 descriptor stands as the GUI
+	 * state.
+	 * @return  the state string.
+	 */
+	public String getGUIStateString() {
+		return currentDescriptor.getKey();
+	}
 }

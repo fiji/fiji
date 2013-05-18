@@ -45,8 +45,6 @@ import fiji.plugin.trackmate.gui.descriptors.TrackerConfigurationDescriptor;
 import fiji.plugin.trackmate.gui.descriptors.TrackingDescriptor;
 import fiji.plugin.trackmate.gui.descriptors.ViewChoiceDescriptor;
 import fiji.plugin.trackmate.gui.descriptors.WizardPanelDescriptor;
-import fiji.plugin.trackmate.gui.panels.ConfigureViewsPanel.DisplaySettingsEvent;
-import fiji.plugin.trackmate.gui.panels.ConfigureViewsPanel.DisplaySettingsListener;
 import fiji.plugin.trackmate.providers.ActionProvider;
 import fiji.plugin.trackmate.providers.DetectorProvider;
 import fiji.plugin.trackmate.providers.EdgeAnalyzerProvider;
@@ -136,7 +134,7 @@ public class TrackMateGUIController implements ActionListener {
 
 		// 0.
 		this.guimodel = new TrackMateGUIModel();
-		this.guimodel.setDisplaySettings(createDisplaySettings(trackmate.getModel()));
+		this.getGuimodel().setDisplaySettings(createDisplaySettings(trackmate.getModel()));
 		// 1.
 		createSelectionModel();
 		// 2.
@@ -144,7 +142,7 @@ public class TrackMateGUIController implements ActionListener {
 		// 3.
 		registeredDescriptors = createDescriptors();
 
-		guimodel.currentDescriptor = startDialoDescriptor;
+		getGuimodel().currentDescriptor = startDialoDescriptor;
 
 		trackmate.getModel().setLogger(logger);
 		gui.setVisible(true);
@@ -186,17 +184,6 @@ public class TrackMateGUIController implements ActionListener {
 	 */
 	public SelectionModel getSelectionModel() {
 		return selectionModel;
-	}
-	
-	/**
-	 * Returns the key string of the current descriptor, representing the "state"
-	 * of the GUI. Load, Save and Log descriptors are not returned; the descriptor
-	 * that is displayed prior to call any of these 3 descriptor stands as the GUI
-	 * state.
-	 * @return  the state string.
-	 */
-	public String getGUIStateString() {
-		return guimodel.currentDescriptor.getKey();
 	}
 	
 	/**
@@ -293,7 +280,7 @@ public class TrackMateGUIController implements ActionListener {
 		 * Select and render a view
 		 */
 		// We need the GUI model to register the created view there.
-		viewChoiceDescriptor		= new ViewChoiceDescriptor(viewProvider, guimodel);
+		viewChoiceDescriptor		= new ViewChoiceDescriptor(viewProvider, getGuimodel());
 		
 		/*
 		 * Spot filtering
@@ -305,7 +292,7 @@ public class TrackMateGUIController implements ActionListener {
 			@Override
 			public void actionPerformed(ActionEvent event) {
 				if (event == spotFilterDescriptor.getComponent().COLOR_FEATURE_CHANGED) {
-					for (TrackMateModelView view : guimodel.views) {
+					for (TrackMateModelView view : getGuimodel().views) {
 						view.setDisplaySettings(TrackMateModelView.KEY_SPOT_COLOR_FEATURE, 
 								spotFilterDescriptor.getComponent().getColorByFeature());
 					}
@@ -344,9 +331,10 @@ public class TrackMateGUIController implements ActionListener {
 		trackFilterDescriptor.getComponent().addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent event) {
+				System.out.println(event);// DEBUG
 				PerTrackFeatureColorGenerator generator = new PerTrackFeatureColorGenerator(trackmate.getModel(), TrackIndexAnalyzer.TRACK_INDEX);
 				generator.setFeature(trackFilterDescriptor.getComponent().getColorByFeature());
-				for (TrackMateModelView view : guimodel.views) {
+				for (TrackMateModelView view : getGuimodel().views) {
 					view.setDisplaySettings(TrackMateModelView.KEY_TRACK_COLORING, generator);
 				}
 			}
@@ -381,8 +369,8 @@ public class TrackMateGUIController implements ActionListener {
 		configureViewsDescriptor.getComponent().addDisplaySettingsChangeListener(new DisplaySettingsListener() {
 			@Override
 			public void displaySettingsChanged(DisplaySettingsEvent event) {
-				guimodel.getDisplaySettings().put(event.getKey(), event.getNewValue());
-				for (TrackMateModelView view : guimodel.views) {
+				getGuimodel().getDisplaySettings().put(event.getKey(), event.getNewValue());
+				for (TrackMateModelView view : getGuimodel().views) {
 					view.setDisplaySettings(event.getKey(), event.getNewValue());
 				}
 			}
@@ -407,7 +395,7 @@ public class TrackMateGUIController implements ActionListener {
 		 * Load descriptor
 		 */
 		loadDescriptor 				= new LoadDescriptor(this, detectorProvider, trackerProvider, 
-				spotAnalyzerProvider, edgeAnalyzerProvider, trackAnalyzerProvider);
+				spotAnalyzerProvider, edgeAnalyzerProvider, trackAnalyzerProvider, viewProvider);
 		
 		/*
 		 * Store created descriptors
@@ -600,25 +588,25 @@ public class TrackMateGUIController implements ActionListener {
 		if (DEBUG)
 			System.out.println("[TrackMateGUIController] Caught event "+event);
 
-		if (event == gui.NEXT_BUTTON_PRESSED && guimodel.actionFlag) {
+		if (event == gui.NEXT_BUTTON_PRESSED && getGuimodel().actionFlag) {
 
 			next();
 
-		} else if (event == gui.PREVIOUS_BUTTON_PRESSED && guimodel.actionFlag) {
+		} else if (event == gui.PREVIOUS_BUTTON_PRESSED && getGuimodel().actionFlag) {
 
 			previous();
 
-		} else if (event == gui.LOAD_BUTTON_PRESSED && guimodel.actionFlag) {
+		} else if (event == gui.LOAD_BUTTON_PRESSED && getGuimodel().actionFlag) {
 
-			guimodel.actionFlag = false;
+			getGuimodel().actionFlag = false;
 			gui.jButtonNext.setText("Resume");
 			disableButtonsAndStoreState();
 			load();
 
 
-		} else if (event == gui.SAVE_BUTTON_PRESSED && guimodel.actionFlag) {
+		} else if (event == gui.SAVE_BUTTON_PRESSED && getGuimodel().actionFlag) {
 
-			guimodel.actionFlag = false;
+			getGuimodel().actionFlag = false;
 			gui.jButtonNext.setText("Resume");
 			disableButtonsAndStoreState();
 			save();
@@ -626,11 +614,11 @@ public class TrackMateGUIController implements ActionListener {
 		} else if ((event == gui.NEXT_BUTTON_PRESSED || 
 				event == gui.PREVIOUS_BUTTON_PRESSED || 
 				event == gui.LOAD_BUTTON_PRESSED ||
-				event == gui.SAVE_BUTTON_PRESSED) && !guimodel.actionFlag ) {
+				event == gui.SAVE_BUTTON_PRESSED) && !getGuimodel().actionFlag ) {
 
 			// Display previous panel, but do not execute its actions
-			guimodel.actionFlag = true;
-			gui.show(guimodel.previousDescriptor);
+			getGuimodel().actionFlag = true;
+			gui.show(getGuimodel().previousDescriptor);
 
 			// Put back buttons
 			gui.jButtonNext.setText("Next");
@@ -638,19 +626,19 @@ public class TrackMateGUIController implements ActionListener {
 
 		} else if (event == gui.LOG_BUTTON_PRESSED) {
 			
-			if (guimodel.logButtonState) {
+			if (getGuimodel().logButtonState) {
 				
 				restoreButtonsState();
-				gui.show(guimodel.previousDescriptor);
+				gui.show(getGuimodel().previousDescriptor);
 				
 			} else {
 				
 				disableButtonsAndStoreState();
-				guimodel.previousDescriptor = guimodel.currentDescriptor;
+				getGuimodel().previousDescriptor = getGuimodel().currentDescriptor;
 				gui.show(logPanelDescriptor);
 				
 			}
-			guimodel.logButtonState = !guimodel.logButtonState;
+			getGuimodel().logButtonState = !getGuimodel().logButtonState;
 			
 		}
 	}
@@ -662,14 +650,14 @@ public class TrackMateGUIController implements ActionListener {
 		try {
 
 			// Execute leave action of the old panel
-			WizardPanelDescriptor oldDescriptor = guimodel.currentDescriptor;
+			WizardPanelDescriptor oldDescriptor = getGuimodel().currentDescriptor;
 			if (oldDescriptor != null) {
 				oldDescriptor.aboutToHidePanel();
 			}
 
 			// Find a store new one to display
 			WizardPanelDescriptor panelDescriptor  = nextDescriptor(oldDescriptor);
-			guimodel.currentDescriptor = panelDescriptor;
+			getGuimodel().currentDescriptor = panelDescriptor;
 			
 
 			// Check if the new panel has a next panel. If not, disable the next button
@@ -698,10 +686,10 @@ public class TrackMateGUIController implements ActionListener {
 
 	private void previous() {
 		// Move to previous panel, but do not execute its actions
-		WizardPanelDescriptor olDescriptor = guimodel.currentDescriptor;
+		WizardPanelDescriptor olDescriptor = getGuimodel().currentDescriptor;
 		WizardPanelDescriptor panelDescriptor = previousDescriptor(olDescriptor);
 		gui.show(panelDescriptor);
-		guimodel.currentDescriptor = panelDescriptor;
+		getGuimodel().currentDescriptor = panelDescriptor;
 		
 		// Check if the new panel has a next panel. If not, disable the next button
 		if (null == previousDescriptor(panelDescriptor)) {
@@ -714,7 +702,7 @@ public class TrackMateGUIController implements ActionListener {
 
 	private void load() {
 		// Store current state
-		guimodel.previousDescriptor = guimodel.currentDescriptor;
+		getGuimodel().previousDescriptor = getGuimodel().currentDescriptor;
 
 		// Move to load state and show log panel
 		loadDescriptor.aboutToDisplayPanel();
@@ -726,7 +714,7 @@ public class TrackMateGUIController implements ActionListener {
 
 	private void save() {
 		// Store current state
-		guimodel.previousDescriptor = guimodel.currentDescriptor;
+		getGuimodel().previousDescriptor = getGuimodel().currentDescriptor;
 
 		// Move to save state and execute
 		saveDescriptor.aboutToDisplayPanel();
@@ -742,10 +730,10 @@ public class TrackMateGUIController implements ActionListener {
 	 * can be restored when calling {@link #restoreButtonsState()}. 
 	 */
 	private void disableButtonsAndStoreState() {
-		guimodel.loadButtonState 		= gui.jButtonLoad.isEnabled();
-		guimodel.saveButtonState 		= gui.jButtonSave.isEnabled();
-		guimodel.previousButtonState 	= gui.jButtonPrevious.isEnabled();
-		guimodel.nextButtonState 		= gui.jButtonNext.isEnabled();
+		getGuimodel().loadButtonState 		= gui.jButtonLoad.isEnabled();
+		getGuimodel().saveButtonState 		= gui.jButtonSave.isEnabled();
+		getGuimodel().previousButtonState 	= gui.jButtonPrevious.isEnabled();
+		getGuimodel().nextButtonState 		= gui.jButtonNext.isEnabled();
 		gui.setLoadButtonEnabled(false);
 		gui.setSaveButtonEnabled(false);
 		gui.setPreviousButtonEnabled(false);
@@ -757,10 +745,10 @@ public class TrackMateGUIController implements ActionListener {
 	 * Do nothing if {@link #disableButtonsAndStoreState()} was not called before. 
 	 */
 	private void restoreButtonsState() {
-		gui.setLoadButtonEnabled(guimodel.loadButtonState);
-		gui.setSaveButtonEnabled(guimodel.saveButtonState);
-		gui.setPreviousButtonEnabled(guimodel.previousButtonState);
-		gui.setNextButtonEnabled(guimodel.nextButtonState);
+		gui.setLoadButtonEnabled(getGuimodel().loadButtonState);
+		gui.setSaveButtonEnabled(getGuimodel().saveButtonState);
+		gui.setPreviousButtonEnabled(getGuimodel().previousButtonState);
+		gui.setNextButtonEnabled(getGuimodel().nextButtonState);
 	}
 
 	private void launchTrackScheme() {
@@ -771,11 +759,11 @@ public class TrackMateGUIController implements ActionListener {
 				TrackScheme trackscheme = new TrackScheme(trackmate.getModel(), selectionModel);
 				SpotImageUpdater thumbnailUpdater = new SpotImageUpdater(trackmate.getSettings());
 				trackscheme.setSpotImageUpdater(thumbnailUpdater);
-				for (String settingKey : guimodel.getDisplaySettings().keySet()) {
-					trackscheme.setDisplaySettings(settingKey, guimodel.getDisplaySettings().get(settingKey));
+				for (String settingKey : getGuimodel().getDisplaySettings().keySet()) {
+					trackscheme.setDisplaySettings(settingKey, getGuimodel().getDisplaySettings().get(settingKey));
 				}
 				trackscheme.render();
-				guimodel.addView(trackscheme);
+				getGuimodel().addView(trackscheme);
 				button.setEnabled(true);
 			};
 		}.start();
@@ -798,6 +786,10 @@ public class TrackMateGUIController implements ActionListener {
 				}
 			};
 		}.start();
+	}
+
+	public TrackMateGUIModel getGuimodel() {
+		return guimodel;
 	}
 
 	

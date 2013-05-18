@@ -21,7 +21,6 @@ import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.EventObject;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -42,6 +41,8 @@ import javax.swing.border.LineBorder;
 
 import fiji.plugin.trackmate.TrackMate;
 import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.gui.DisplaySettingsEvent;
+import fiji.plugin.trackmate.gui.DisplaySettingsListener;
 import fiji.plugin.trackmate.gui.TrackMateWizard;
 import fiji.plugin.trackmate.gui.panels.components.JNumericTextField;
 import fiji.plugin.trackmate.gui.panels.components.JPanelColorByFeatureGUI;
@@ -443,58 +444,6 @@ public class ConfigureViewsPanel extends ActionListenablePanel {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-	}
-	
-	
-	/*
-	 * INNER CLASSES
-	 */
-	
-	/**
-	 * An event object fired when the user changes one of the display settings through
-	 * this GUI panel. It stores the display settings key related to this display settings,
-	 * its new values and its old value.
-	 * @author Jean-Yves Tinevez - 2013
-	 * @see TrackMateModelView
-	 */
-	public class DisplaySettingsEvent extends EventObject {
-
-		private static final long serialVersionUID = 4259460590261659068L;
-		private final String key;
-		private final Object newValue;
-		private final Object oldValue;
-
-		public DisplaySettingsEvent(Object source, String key, Object newValue, Object oldValue) {
-			super(source);
-			this.key = key;
-			this.newValue = newValue;
-			this.oldValue = oldValue;
-		}
-		
-		public String getKey() {
-			return key;
-		}
-		
-		public Object getOldValue() {
-			return oldValue;
-		}
-		
-		public Object getNewValue() {
-			return newValue;
-		}
-	}
-
-	/**
-	 * Interface for classes that listen to display settings changes on a GUI.
-	 * @author Jean-Yves Tinevez - 2013
-	 */
-	public interface DisplaySettingsListener {
-		
-		/**
-		 * Called when a display settings is changed on a GUI.
-		 * @param event  the {@link DisplaySettingsEvent} containing the settings change.
-		 */
-		public void displaySettingsChanged(DisplaySettingsEvent event);
 	}
 	
 }

@@ -188,6 +188,11 @@ public class SpotDisplayer3D extends AbstractTrackMateModelView {
 	public String toString() {
 		return NAME;
 	}
+	
+	@Override
+	public String getKey() {
+		return NAME;
+	}
 
 	/*
 	 * PRIVATE METHODS

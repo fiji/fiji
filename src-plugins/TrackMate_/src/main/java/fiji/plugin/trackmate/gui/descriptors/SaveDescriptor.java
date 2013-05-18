@@ -65,7 +65,7 @@ public class SaveDescriptor extends SomeDialogDescriptor {
 		writer.appendLog(logPanel.getTextContent());
 		writer.appendModel(trackmate.getModel());
 		writer.appendSettings(trackmate.getSettings(), detectorProvider, trackerProvider);
-		writer.appendGUIState(controller.getGUIStateString());
+		writer.appendGUIState(controller.getGuimodel());
 
 		try {
 			writer.writeToFile();

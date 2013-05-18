@@ -51,6 +51,13 @@ public class TrackScheme extends AbstractTrackMateModelView {
 	 */
 	private static final boolean DEBUG = false;
 	private static final boolean DEBUG_SELECTION = false;
+	public static final String NAME = "TrackScheme";
+	public static final String INFO_TEXT = "<html>" +
+			"TrackScheme displays the tracking results as track lanes, <br>" +
+			"ignoring the spot actual position. " +
+			"<p>" +
+			"Tracks can be edited through link creation and removal." +
+			"</html>";
 	static final int Y_COLUMN_SIZE = 96;
 	static final int X_COLUMN_SIZE = 160;
 
@@ -163,6 +170,11 @@ public class TrackScheme extends AbstractTrackMateModelView {
 	 */
 	public TrackSchemeGraphLayout getGraphLayout() {
 		return graphLayout;	
+	}
+	
+	@Override
+	public String getKey() {
+		return NAME;
 	}
 
 	

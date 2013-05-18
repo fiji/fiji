@@ -1,6 +1,8 @@
 package fiji.plugin.trackmate.gui.descriptors;
 
 import java.io.File;
+import java.util.Collection;
+import java.util.Map;
 
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.Settings;
@@ -14,6 +16,9 @@ import fiji.plugin.trackmate.providers.EdgeAnalyzerProvider;
 import fiji.plugin.trackmate.providers.SpotAnalyzerProvider;
 import fiji.plugin.trackmate.providers.TrackAnalyzerProvider;
 import fiji.plugin.trackmate.providers.TrackerProvider;
+import fiji.plugin.trackmate.providers.ViewProvider;
+import fiji.plugin.trackmate.visualization.TrackMateModelView;
+import fiji.plugin.trackmate.visualization.hyperstack.HyperStackDisplayer;
 
 public class LoadDescriptor extends SomeDialogDescriptor {
 
@@ -25,11 +30,14 @@ public class LoadDescriptor extends SomeDialogDescriptor {
 	private final EdgeAnalyzerProvider edgeAnalyzerProvider;
 	private final TrackAnalyzerProvider trackAnalyzerProvider;
 	private final TrackMateGUIController controller;
+	private final ViewProvider viewProvider;
 
 	public LoadDescriptor(TrackMateGUIController controller, DetectorProvider detectorProvider, TrackerProvider trackerProvider, 
-			SpotAnalyzerProvider spotAnalyzerProvider, EdgeAnalyzerProvider edgeAnalyzerProvider, TrackAnalyzerProvider trackAnalyzerProvider) {
+			SpotAnalyzerProvider spotAnalyzerProvider, EdgeAnalyzerProvider edgeAnalyzerProvider, TrackAnalyzerProvider trackAnalyzerProvider,
+			ViewProvider viewProvider) {
 		super(controller.getGUI().getLogPanel());
 		this.controller = controller;
+		this.viewProvider = viewProvider;
 		this.trackmate = controller.getPlugin();
 		this.detectorProvider = detectorProvider;
 		this.trackerProvider = trackerProvider;
@@ -68,11 +76,17 @@ public class LoadDescriptor extends SomeDialogDescriptor {
 			return;
 		}
 		
+		// Log
 		String logText = reader.getLog();
+		// Model
 		TrackMateModel model = reader.getModel();
+		// Settings
 		Settings settings = reader.getSettings(detectorProvider, trackerProvider, 
 				spotAnalyzerProvider, edgeAnalyzerProvider, trackAnalyzerProvider);
+		// GUI state
 		String guiState = reader.getGUIState();
+		// Views
+		Collection<TrackMateModelView> views = reader.getViews(viewProvider);
 
 		if (!reader.isReadingOk()) {
 			logger.error("Some errors occured while reading file:\n");
@@ -80,7 +94,7 @@ public class LoadDescriptor extends SomeDialogDescriptor {
 		}
 		
 		/*
-		 *  Reinstantiate a GUI and close the old one
+		 *  Re-instantiate a GUI and close the old one
 		 */
 		
 		TrackMate newtrackmate = new TrackMate(model, settings);
@@ -93,6 +107,19 @@ public class LoadDescriptor extends SomeDialogDescriptor {
 		}
 		newcontroller.setGUIStateString(guiState);
 
+		// Setup and render views
+		if (views.isEmpty()) { // at least one view.
+			views.add(new HyperStackDisplayer(model, newcontroller.getSelectionModel(), settings.imp));
+		}
+		Map<String, Object> displaySettings = newcontroller.getGuimodel().getDisplaySettings();
+		for (TrackMateModelView view : views) {
+			for (String key : displaySettings.keySet()) {
+				view.setDisplaySettings(key, displaySettings.get(key));
+			}
+			view.render();
+		}
+
+		
 		// Clsoe the old one
 		controller.quit();
 	}

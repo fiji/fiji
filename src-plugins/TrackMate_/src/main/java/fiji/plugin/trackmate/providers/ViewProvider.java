@@ -16,6 +16,7 @@ import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
 import fiji.plugin.trackmate.visualization.hyperstack.HyperStackDisplayer;
 import fiji.plugin.trackmate.visualization.threedviewer.SpotDisplayer3D;
+import fiji.plugin.trackmate.visualization.trackscheme.TrackScheme;
 
 public class ViewProvider {
 
@@ -54,7 +55,7 @@ public class ViewProvider {
 	/**
 	 * Register the standard views shipped with TrackMate.
 	 */
-	protected void registerViews() {
+	protected void registerViews() { // We do not put TrackScheme here. It has its own launcher in the last panel
 		// Names
 		names = new ArrayList<String>(2);
 		names.add(HyperStackDisplayer.NAME);
@@ -66,11 +67,14 @@ public class ViewProvider {
 	 * If the key is unknown to this factory, <code>null</code> is returned. 
 	 */
 	public TrackMateModelView getView(String key) {
-		if (key == HyperStackDisplayer.NAME) {
+
+		if (key.equals(HyperStackDisplayer.NAME)) {
+
 			ImagePlus imp = settings.imp;
 			return new HyperStackDisplayer(model, selectionModel, imp);
-			
-		} else if (key == SpotDisplayer3D.NAME) {
+
+		} else if (key.equals(SpotDisplayer3D.NAME)) {
+
 			Image3DUniverse universe = new Image3DUniverse();
 			universe.show();
 			ImagePlus imp = settings.imp;
@@ -78,9 +82,15 @@ public class ViewProvider {
 				universe.addVoltex(imp, new Color3f(Color.WHITE), 
 						imp.getShortTitle(), 0, new boolean[] {true, true, true}, 1);
 			}
-			
+
 			return new SpotDisplayer3D(model, selectionModel, universe);
+
+
+		} else if (key.equals(TrackScheme.NAME)) {
+
+			return new TrackScheme(model, selectionModel);
 			
+
 		} else {
 			return null;
 		}
@@ -98,16 +108,21 @@ public class ViewProvider {
 	 * or <code>null</code> if it is unknown to this factory.
 	 */
 	public String getInfoText(String key) {
-		int index = names.indexOf(key);
-		if (index < 0) {
-			return null;
-		}
-		switch (index) {
-		case 0:
+		
+		if (key.equals(HyperStackDisplayer.NAME)) {
+
 			return HyperStackDisplayer.INFO_TEXT;
-		case 1:
+
+		} else if (key.equals(SpotDisplayer3D.NAME)) {
+
 			return SpotDisplayer3D.INFO_TEXT;
-		default:
+
+
+		} else if (key.equals(TrackScheme.NAME)) {
+
+			return TrackScheme.INFO_TEXT;
+
+		} else {
 			return null;
 		}
 	}

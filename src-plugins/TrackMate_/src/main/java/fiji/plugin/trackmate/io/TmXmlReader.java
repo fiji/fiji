@@ -13,7 +13,7 @@ import static fiji.plugin.trackmate.io.TmXmlKeys.CROP_XEND_ATTRIBUTE_NAME;
 import static fiji.plugin.trackmate.io.TmXmlKeys.CROP_XSTART_ATTRIBUTE_NAME;
 import static fiji.plugin.trackmate.io.TmXmlKeys.CROP_YEND_ATTRIBUTE_NAME;
 import static fiji.plugin.trackmate.io.TmXmlKeys.CROP_YSTART_ATTRIBUTE_NAME;
-import static fiji.plugin.trackmate.io.TmXmlKeys.CROP_ZEND_ATTRIBUTE_NAME;
+import static fiji.plugin.trackmate.io.TmXmlKeys.*;
 import static fiji.plugin.trackmate.io.TmXmlKeys.CROP_ZSTART_ATTRIBUTE_NAME;
 import static fiji.plugin.trackmate.io.TmXmlKeys.DETECTOR_SETTINGS_ELEMENT_KEY;
 import static fiji.plugin.trackmate.io.TmXmlKeys.EDGE_ANALYSERS_ELEMENT_KEY;
@@ -115,7 +115,9 @@ import fiji.plugin.trackmate.providers.EdgeAnalyzerProvider;
 import fiji.plugin.trackmate.providers.SpotAnalyzerProvider;
 import fiji.plugin.trackmate.providers.TrackAnalyzerProvider;
 import fiji.plugin.trackmate.providers.TrackerProvider;
+import fiji.plugin.trackmate.providers.ViewProvider;
 import fiji.plugin.trackmate.tracking.SpotTracker;
+import fiji.plugin.trackmate.visualization.TrackMateModelView;
 
 
 public class TmXmlReader {
@@ -182,8 +184,7 @@ public class TmXmlReader {
 	}
 	
 	/**
-	 * Appends the current GUI state as a state string to the document. 
-	 * @param guiState  the key string representing the GUI state.
+	 * Returns the GUI state saved in the file. 
 	 * @return the saved GUI state, as a string.
 	 */
 	public String getGUIState() {
@@ -195,6 +196,45 @@ public class TmXmlReader {
 				ok = false;
 			}
 			return guiState;
+			
+		} else {
+			logger.error("Could not find GUI state element.\n");
+			ok = false;
+			return null;
+		}
+	}
+	
+	/**
+	 * Returns the collection of views that were saved in this file. The views returned
+	 * are not rendered yet.
+	 * @param provider  the {@link ViewProvider} to instantiate the view. Each saved 
+	 * view must be known by the specified provider.
+	 * @return the collection of views.
+	 * @see TrackMateModelView#render()
+	 */
+	public Collection<TrackMateModelView> getViews(ViewProvider provider) {
+		Element guiel = root.getChild(GUI_STATE_ELEMENT_KEY);
+		if (null != guiel) {
+			
+			List<Element> children = guiel.getChildren(GUI_VIEW_ELEMENT_KEY);
+			Collection<TrackMateModelView> views = new ArrayList<TrackMateModelView>(children.size());
+
+			for (Element child : children) {
+				String viewKey = child.getAttributeValue(GUI_VIEW_ATTRIBUTE);
+				if (null == viewKey) {
+					logger.error("Could not find view key attribute for element " + child +".\n");
+					ok = false;
+				} else {
+					TrackMateModelView view = provider.getView(viewKey);
+					if (null == view) {
+						logger.error("Unknown view for key " + viewKey +".\n");
+						ok = false;
+					} else {
+						views.add(view);
+					}
+				}
+			}
+			return views;
 			
 		} else {
 			logger.error("Could not find GUI state element.\n");
