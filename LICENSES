@@ -29,6 +29,7 @@ Name					File					Author(s)						Contact								License
 * Bean Shell language 			bsh.jar 											http://www.beanshell.org/ 					SPL/LGPL
 * Bean Shell Interpreter 		BSH_Interpreter.jar			Johannes Schindelin					Johannes.Schindelin@gmx.de					GPL
 * Bleach Corrector	 		CorrectBleach_.jar			Kota Miura						miura@embl.de							GPL
+* Bug Submitter	 			Bug_Submitter.jar			Mark Longair, Johannes Schindelin, Curtis Rueden	http://fiji.sc/							BSD
 * bUnwarpJ				bUnwarpJ_.jar				Ignacio	Arganda et al.					ignacio.arganda@uam.es						GPL
 * Clojure				clojure.jar				Rich Hickey						http://clojure.sourceforge.net/					EPL
 * Clojure Interpreter			Clojure_Interpreter.jar 		Albert Cardona 						acardona@ini.phys.ethz.ch					GPL
@@ -59,6 +60,8 @@ Name					File					Author(s)						Contact								License
 * Javascript Rhino Engine 		js.jar 					http://www.mozilla.org/rhino/ 				http://www.mozilla.org/rhino/ 					MPL 1.1/GPL 2  see http://developer.mozilla.org/en/docs/Rhino_License
 * Javascript Interpreter 		Javascript_Interpreter.jar 		Albert Cardona 						acardona@ini.phys.ethz.ch 					GPL
 * JFreeChart	 			jfreechart.jar 				http://www.jfree.org/jfreechart/			http://www.jfree.org/jfreechart/ 				LGPL
+* JGraphT				jgrapht-jdk1.6.jar			http://jgrapht.org/					http://jgrapht.org/						LGPL
+* JGraphX				jgraphx.jar				http://www.jgraph.com/					http://www.jgraph.com/						BSD
 * JPedal PDF library 			jpedalSTD.jar 				http://www.jpedal.org/ 					http://www.jpedal.org/ 						GPL/commercial
 * JRuby Interpreter 			JRuby_Interpreter.jar			Mark Longair						Mark.Longair@ed.ac.uk						GPL
 * JRuby 				jruby.jar				Thomas E. Enebo						http://jruby.codehaus.org/					CPL/GPL/LGPL
@@ -68,6 +71,7 @@ Name					File					Author(s)						Contact								License
 * jzlib 				jzlib.jar	 			ymnk 							jzlib@jcraft.com 						BSD-like http://www.jcraft.com/jzlib/LICENSE.txt
 * Kalman Stack Filter			contained in Stack_Manipulation.jar	Christopher Philip Mauer				-								BSD-like
 * Kuwahara Filter			Kuwahara_Filter.jar			Wayne Rasband						http://imagej.nih.gov/ij/plugins/kuwahara.html			PD
+* MTrackJ	 			MTrackJ_.jar	 			Erik Meijering	 					http://www.imagescience.org/meijering/software/mtrackj/		imagescience (see below)
 * Multi Kymograph			Multi_Kymograph.jar			Jens Rietdorf & Arne Seitz				http://www.embl.de/eamnet/html/body_kymograph.html		BSD
 * Linear Kuwahara			Linear_Kuwahara.jar			Christian Tischer													GPL
 * Local Thickness			LocalThickness_.jar			Bob Dougherty						rpd@optinav.com							BSD
@@ -86,6 +90,7 @@ Name					File					Author(s)						Contact								License
 * Register virtual stack slices 	register_virtual_stack_slices.jar 	Albert Cardona 						acardona@ini.phys.ethz.ch					GPL
 * Script Editor				Script_Editor.jar			Johannes Schindelin et al				fiji@googlegroups.com						BSD
 * Shepp-Logan Phantom			SheppLogan_.jar				Philippe Thevenaz					http://bigwww.epfl.ch/thevenaz/shepplogan/			BIG (see below)
+* Sholl Analysis			Sholl_Analysis.jar			Tiago Ferreira, Tom Maddock				http://fiji.sc/Sholl_Analysis					GPL 3 or later
 * Snakuscule				Snakuscule_.jar				Philippe Thevenaz					http://bigwww.epfl.ch/thevenaz/snakuscule/			BIG (see below)
 * Stack Reverser 			Stack_Reverser.class 			Anthony Padua, Daniel Barboriak 			http://rsb.info.nih.gov/ij/plugins/substack-maker.html		PD
 * StackReg				StackReg_.jar				Philippe Thevenaz					http://bigwww.epfl.ch/thevenaz/stackreg/			BIG (see below)
@@ -96,9 +101,11 @@ Name					File					Author(s)						Contact								License
 * TurboReg				TurboReg_.jar				Philippe Thévenaz					philippe.thevenaz@epfl.ch					Citationware (see below)
 * UnwarpJ				UnwarpJ_.jar				Carlos Oscar Sanchez Sorzano				http://bigwww.epfl.ch/thevenaz/UnwarpJ/				BIG (see below)
 * VIB as VIB_.jar plugin bundle		VIB_.jar, VIB-lib.jar			J. Schindelin, Benjamin Schmid, M. Longair		bene.schmid@gmail.com						GPL
-* Video Editing			Video_Editing.jar				Benjamin Schmid						bene.schmid@gmail.com						GPL
+* Vaa3D Reader				Vaa3D_Reader.jar			Christopher M. Bruns					christopher.bruns@gmail.com					BSD
+* Video Editing				Video_Editing.jar			Benjamin Schmid						bene.schmid@gmail.com						GPL
 * View5D 				View5D_.jar 				Rainer Heintzmann					heintzmannd@gmail.com						GPL 2
-* Volume Viewer / 3D Reslicer 		Volume_Viewer.jar 			Kai Uwe Barthel 					k.barthel@fhtw-berlin.de 					PD
+* Volume Calculator	 		Volume_Calculator.jar 			Peter C. Marks						peter.c.marks@gmail.com 					BSD
+* Volume Viewer / 3D Reslicer 		Volume_Viewer.jar 			Kai Uwe Barthel						k.barthel@fhtw-berlin.de 					PD
 * wavelets.jar				wavelets.jar				Daniel Sage et al					http://bigwww.epfl.ch/						BIG (see below)
 
 
@@ -150,8 +157,3 @@ Multi Kymograph:
 Unresolved (TODO):
 * Example/ scripts folder
 * Java Advanced Imaging jai_codec.jar, jai_core.jar, jai_imageio.jar
-
-
-Problematic:
-* imagescience.jar
-* TransformJ

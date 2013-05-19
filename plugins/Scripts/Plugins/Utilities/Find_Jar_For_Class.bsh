@@ -1,0 +1,55 @@
+import java.util.Collections;
+
+String stripURL(String url) {
+	bang = url.indexOf("!/");
+	if (bang > 0)
+		url = url.substring(0, bang);
+	if (url.startsWith("jar:"))
+		url = url.substring(4);
+	if (url.startsWith("file:"))
+		url = url.substring(5);
+	return url;
+}
+
+String getJarName(String className) {
+	if (className == null || className.equals(""))
+		return null;
+	className = className.replace('/', '.');
+	message = "The class " + className;
+	try {
+		Class clazz = IJ.getClassLoader().loadClass(className);
+		if (clazz == null)
+			throw new ClassNotFoundException();
+		if (clazz.getEnclosingClass() != null)
+			className2 = clazz.getEnclosingClass().getName();
+		else
+			className2 = className;
+		path = className2.replace('.', '/') + ".class";
+		url = stripURL(clazz.getResource("/" + path).toString());
+		message += " is contained in " + url;
+		urls = IJ.getClassLoader().getResources(path);
+		while (urls.hasMoreElements()) {
+			url2 = stripURL(urls.nextElement().toString());
+			if (url != null && !url2.equals(url))
+				message += "\nWARNING! " + className + " is also contained in " + url2 + "!";
+		}
+	} catch (ClassNotFoundException e) {
+		message += " was not found in ImageJ's class path";
+	}
+	return message;
+}
+
+void printJarName() {
+	message = getJarName(IJ.getString("Classname?", null));
+	if (message != null)
+		IJ.log(message);
+}
+
+// Try it with org.apache.commons.logging.Log
+if (bsh.args == void || bsh.args.length == 0)
+	printJarName();
+else {
+	import ij.IJ;
+	for (String arg : bsh.args)
+		print(getJarName(arg));
+}

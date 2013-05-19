@@ -1,0 +1,110 @@
+/**
+ * Compose two RGB image series as a YCbCr merge.
+ *
+ * The result has the luminance of series `target' and the
+ * Cb and Cr channels of `source'.  That looks like using the `color' of
+ * `source' over `target' but is not exactly that because Cb and Cr still
+ * carry some luminance information.  That is, color over black or white will
+ * not be black or white but visible color.
+ *
+ * @author Stephan Saalfeld <saalfeld@mpi-cbg.de>
+ *
+ */
+import java.awt.Graphics2D;
+import java.awt.image.BufferedImage;
+
+import ij.IJ;
+import ij.ImagePlus;
+import ij.ImageStack;
+import ij.WindowManager;
+import ij.gui.GenericDialog;
+import ij.plugin.PlugIn;
+import ij.process.ColorProcessor;
+import ini.trakem2.display.graphics.*;
+import java.awt.Composite;
+
+Composite getComposite( int mode, float alpha )
+{
+	switch ( mode )
+	{
+	case 1:
+		return AddARGBComposite.getInstance( alpha );
+	case 2:
+		return SubtractARGBComposite.getInstance( alpha );
+	case 3:
+		return MultiplyARGBComposite.getInstance( alpha );
+	case 4:
+		return DifferenceARGBComposite.getInstance( alpha );
+	case 5:
+		return ColorYCbCrComposite.getInstance( alpha );
+	default:
+		return AlphaComposite.getInstance( AlphaComposite.SRC_OVER, alpha );
+	}
+}
+
+int[] ids = WindowManager.getIDList();
+
+if ( ids == null || ids.length == 0 ) return;
+
+String[] titles = new String[ ids.length ];
+		
+for ( int i = 0; i < ids.length; ++i )
+	titles[ i ] = WindowManager.getImage( ids[ i ] ).getTitle();
+
+String[] modes = new String[]{
+		"Normal",
+		"Add",
+		"Subtract",
+		"Multiply",
+		"Difference",
+		"Color (YCbCr)" };
+
+GenericDialog gd = new GenericDialog( "Compose Stacks" );
+gd.addChoice( "source : ", titles,  titles[ 0 ] );
+gd.addChoice( "target : ", titles,  titles[ 1 ] );
+gd.addChoice( "composition method : ", modes, modes[ 5 ] );
+gd.addSlider( "alpha : ", ( double )0.0, ( double )1.00001, 1.0 );
+
+gd.showDialog();
+
+if ( gd.wasCanceled() ) return;
+
+ImagePlus impSource = WindowManager.getImage( ids[ gd.getNextChoiceIndex() ] );
+ImagePlus impTarget = WindowManager.getImage( ids[ gd.getNextChoiceIndex() ] );
+int mode = gd.getNextChoiceIndex();
+composite = getComposite( mode, ( float )Math.max( 0.0, Math.min( 1.0, gd.getNextNumber() ) ) );
+
+ImageStack sSource = impSource.getStack();
+ImageStack sTarget = impTarget.getStack();
+
+if (
+		impSource.getType() != ImagePlus.COLOR_RGB || impTarget.getType() != ImagePlus.COLOR_RGB ||
+		impSource.getImageStackSize() != impTarget.getImageStackSize() ||
+		impSource.getWidth() != impTarget.getWidth() || 
+		impSource.getHeight() != impTarget.getHeight() )
+{
+	IJ.error( "Both stacks must be RGB and of the same size." );
+	return;
+}
+
+n = impTarget.getImageStackSize();
+
+for ( int i = 1; i <= n; ++i )
+{
+	IJ.showProgress( i - 1, n );
+	
+	BufferedImage src = sSource.getProcessor( i ).getBufferedImage();
+	BufferedImage dst = sTarget.getProcessor( i ).getBufferedImage();
+	
+	Graphics2D g = dst.createGraphics();
+	g.setComposite( composite );
+	
+	g.drawImage( src, 0, 0, null );
+	
+	sTarget.setPixels( new ColorProcessor( dst ).getPixels(), i );
+	impTarget.setStack( impTarget.getTitle(), sTarget );
+	impTarget.updateAndDraw();
+	
+}
+IJ.showProgress( n, n );
+impTarget.updateAndDraw();

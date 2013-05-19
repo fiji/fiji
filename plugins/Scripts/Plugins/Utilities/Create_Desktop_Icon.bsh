@@ -1,0 +1,44 @@
+import ij.IJ;
+
+import java.io.File;
+import java.io.FileWriter;
+import java.io.PrintWriter;
+
+void writeLinuxDesktopFile() {
+	writeLinuxDesktopFile(new File(System.getProperty("user.home"),
+		"Desktop/Fiji.desktop"));
+}
+
+void writeLinuxDesktopFile(File file) {
+	if (file.exists()) {
+		IJ.error("The file '" + file + "' already exists!");
+		return;
+	}
+	ijDir = System.getProperty("ij.dir");
+	if (!ijDir.endsWith("/"))
+		ijDir += "/";
+	icon = ijDir + "images/icon.png";
+	exec = ijDir + "ImageJ-linux" + (IJ.is64Bit() ? "64" : "32");
+	out = new PrintWriter(new FileWriter(file));
+	out.println("[Desktop Entry]");
+	out.println("Version=1.0");
+	out.println("Name=Fiji Is Just ImageJ");
+	out.println("GenericName=Fiji Is Just ImageJ");
+	out.println("X-GNOME-FullName=Fiji Is Just ImageJ");
+	out.println("Comment=Scientific Image Analysis");
+	out.println("Type=Application");
+	out.println("Categories=Education;Science;ImageProcessing;");
+	out.println("Exec=" + exec);
+	out.println("TryExec=" + exec);
+	out.println("Terminal=false");
+	out.println("StartupNotify=true");
+	out.println("Icon=" + icon);
+	out.println("StartupWMClass=fiji-Main");
+	out.close();
+	file.setExecutable(true);
+}
+
+if (IJ.isLinux())
+	writeLinuxDesktopFile();
+else
+	IJ.error("This script can only write Linux .desktop files yet");

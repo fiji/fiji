@@ -134,18 +134,42 @@ macro "Time-Lapse Color Coder" {
 		CreateScale(Glut, Gstartf, Gendf);
 }
 
+function makeLUTsArray() {
+	eval("script", "importClass(Packages.ij.IJ);\n"
+		+ "\n"
+		+ "result = [];\n"
+		+ "if (IJ.getInstance() != null) {\n"
+		+ "	importClass(Packages.fiji.User_Plugins);\n"
+		+ "	importClass(Packages.ij.Menus);\n"
+		+ "\n"
+		+ "	commands = Menus.getCommands();\n"
+		+ "	lutsMenu = User_Plugins.getMenu('Image>Lookup Tables');\n"
+		+ "	if (lutsMenu != null) {\n"
+		+ "		for (i = 0; i < lutsMenu.getItemCount(); i++) {\n"
+		+ "			menuItem = lutsMenu.getItem(i);\n"
+		+ "			if (menuItem.getActionListeners().length == 0) {\n"
+		+ "				// is a separator\n"
+		+ "				continue;\n"
+		+ "			}\n"
+		+ "			label = menuItem.getLabel();\n"
+		+ "			if (label.equals('Invert LUT') || label.equals('Apply LUT')) {\n"
+		+ "				// no lookup table\n"
+		+ "				continue;\n"
+		+ "			}\n"
+		+ "			command = commands.get(label);\n"
+		+ "			if (command == null || command.startsWith('ij.plugin.LutLoader')) {\n"
+		+ "				result.push(label);\n"
+		+ "			}\n"
+		+ "		}\n"
+		+ "	}\n"
+		+ "}\n"
+		+ "// ImageJ's eval('script', script) erroneously always returns null\n"
+		+ "System.setProperty('result', result.join('\\n'));\n");
+	return split(call("java.lang.System.getProperty", "result"), "\n");
+}
+
 function showDialog() {
-	lutA = newArray(10);
-	lutA[0] = "Spectrum";
-	lutA[1] = "Fire";
-	lutA[2] = "Ice";
-	lutA[3] = "3-3-2 RGB";
-	lutA[4] = "brgbcmyw";
-	lutA[5] = "Green Fire Blue";
-	lutA[6] = "royal";
-	lutA[7] = "thal";
-	lutA[8] = "smart";
-	lutA[9] = "unionjack";
+	lutA = makeLUTsArray();
 
  	Dialog.create("Color Code Settings");
 	Dialog.addChoice("LUT", lutA);

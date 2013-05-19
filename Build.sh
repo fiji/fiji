@@ -11,6 +11,8 @@ CWD="$(dirname "$0")" || {
 	exit 1
 }
 
+# MinGW does not necessarily have dirname.exe
+
 dirname () {
 	case "$1" in
 	*/*)
@@ -25,19 +27,6 @@ dirname () {
 	esac
 }
 
-look_for_tools_jar () {
-	for d in "$@"
-	do
-		test -d "$d" || continue
-		for j in java default-java
-		do
-			test -f "$d/$j/lib/tools.jar" || continue
-			export TOOLS_JAR="$d/$j/lib/tools.jar"
-			return
-		done
-	done
-}
-
 get_java_home () {
 	if test -d "$JAVA_HOME"
 	then
@@ -50,57 +39,39 @@ get_java_home () {
 	fi
 }
 
-need_to_build_fake () {
-	(cd "$CWD" &&
-	 test -f jars/fake.jar || {
-		echo YesPlease
-		return
-	 }
-	 for source in $(find src-plugins/fake/ -name \*.java)
-	 do
-		test "$source" -nt jars/fake.jar && {
-			echo YesPlease
-			return
-		}
-	 done)
-	return
-}
-
-ensure_fake_is_built () {
-	# test whether we need to build it
-	test -z "$(need_to_build_fake)" && return
-
-	(cd "$CWD" &&
-	 : blow previous builds away
-	 rm -rf build/jars/fake/ &&
-	 mkdir -p build/jars/fake/ &&
-	 : compile classes
-	 javac -source 1.5 -target 1.5 -classpath precompiled/javac.jar -d build/jars/fake/ $(find src-plugins/fake/ -name \*.java) &&
-	 : compile .jar using Fiji Build
-	 java -classpath build/jars/fake/"$PATHSEP"precompiled/javac.jar fiji.build.Fake jars/fake.jar-rebuild ImageJ)
-}
+# platform-specific stuff
 
 PATHSEP=:
-case "$(uname -s)" in
+UNAME_S="$(uname -s)"
+LAUNCHER=bin/ImageJ.sh
+FIJILAUNCHER=
+case "$UNAME_S" in
 Darwin)
-	JAVA_HOME=/System/Library/Frameworks/JavaVM.framework/Home
+	JAVA_HOME=/System/Library/Frameworks/JavaVM.framework/Versions/1.6/Home
 	java_submodule=macosx-java3d
 	case "$(uname -r)" in
 	8.*) platform=tiger;;
 	*) platform=macosx;;
-	esac; exe=;;
+	esac
+	exe=
+	LAUNCHER=Contents/MacOS/ImageJ-$platform
+	FIJILAUNCHER=Contents/MacOS/fiji-$platform
+	;;
 Linux)
 	case "$(uname -m)" in
 	x86_64)
 		platform=linux64
 		java_submodule=linux-amd64
-		look_for_tools_jar /usr/lib64/jvm /usr/lib/jvm
 		;;
 	*)	platform=linux32
 		java_submodule=linux
-		look_for_tools_jar /usr/lib/jvm
 		;;
-	esac; exe=;;
+	esac
+	exe=
+	LAUNCHER=ImageJ-$platform
+	FIJILAUNCHER=fiji-$platform
+	FIJILAUNCHER=${FIJILAUNCHER%32}
+	;;
 MINGW*|CYGWIN*)
 	CWD="$(cd "$CWD" && pwd)"
 	PATHSEP=\;
@@ -108,7 +79,10 @@ MINGW*|CYGWIN*)
 	'') platform=win32; java_submodule=$platform;;
 	*) platform=win64; java_submodule=$platform;;
 	esac
-	exe=.exe;;
+	exe=.exe
+	LAUNCHER=ImageJ-$platform.exe
+	FIJILAUNCHER=fiji-$platform.exe
+	;;
 FreeBSD)
 	platform=freebsd
 	if test -z "$JAVA_HOME"
@@ -116,7 +90,8 @@ FreeBSD)
 		JAVA_HOME=/usr/local/jdk1.6.0/jre
 		export JAVA_HOME
 	fi
-	if ! test -f "$JAVA_HOME/jre/lib/ext/vecmath.jar" && ! test -f "$JAVA_HOME/lib/ext/vecmath.jar"
+	if ! test -f "$JAVA_HOME/jre/lib/ext/vecmath.jar" &&
+		! test -f "$JAVA_HOME/lib/ext/vecmath.jar"
 	then
 		echo "You are missing Java3D. Please install with"
 		echo ""
@@ -124,16 +99,19 @@ FreeBSD)
 		echo ""
 		echo "(This requires some time)"
 		exit 1
-	fi;;
+	fi
+	;;
 *)
 	platform=
 	TOOLS_JAR="$(ls -t /usr/jdk*/lib/tools.jar \
 		/usr/local/jdk*/lib/tools.jar 2> /dev/null |
 		head -n 1)"
 	test -z "$TOOLS_JAR" ||
-	export TOOLS_JAR;;
+	export TOOLS_JAR
+	;;
 esac
 
+# Java
 
 test -n "$platform" &&
 test -z "$JAVA_HOME" &&
@@ -165,43 +143,220 @@ test -f "$CWD"/java/"$java_submodule"/Home/lib/ext/vecmath.jar || {
 	}
 }
 
+case "$JAVA_HOME" in
+[A-Z]:*)
+	# assume this is MSys
+	JAVA_HOME="$(cd "$JAVA_HOME" && pwd)" ||
+	unset JAVA_HOME
+	;;
+esac
+
 test -n "$JAVA_HOME" &&
 test -d "$JAVA_HOME" ||
 for d in java/$java_submodule/*
 do
+	test "$d/jre" || continue
 	if test -z "$JAVA_HOME" || test "$d" -nt "$JAVA_HOME"
 	then
-		JAVA_HOME="$d"
+		JAVA_HOME="$CWD/$d/jre"
 	fi
 done
 
 if test -d "$JAVA_HOME"
 then
-	export PATH=$JAVA_HOME/bin:$PATH
+	if test -d "$JAVA_HOME/jre"
+	then
+		JAVA_HOME="$JAVA_HOME/jre"
+	fi
+	export PATH="$JAVA_HOME/bin:$PATH"
 fi
 
-: build fake.jar, making sure javac is in the PATH
-PATH="$PATH:$(get_java_home)/bin:$(get_java_home)/../bin" \
-ensure_fake_is_built || {
-	echo "Could not build Fiji Build" >&2
-	exit 1
-}
+# make sure java is in the PATH
+PATH="$PATH:$(get_java_home)/bin:$(get_java_home)/../bin"
+export PATH
 
-# on Win64, with a 32-bit compiler, do not try to compile
-case $platform in
-win64)
-	W64_GCC=/src/mingw-w64/sysroot/bin/x86_64-w64-mingw32-gcc.exe
-	test -f "$W64_GCC" && export CC="$W64_GCC"
-
-	case "$CC,$(gcc --version)" in
-	,*mingw32*)
-		# cannot compile! Fall back to copying
-		test "$CWD"/ImageJ.exe -nt "$CWD"/ImageJ.c &&
-		test "$CWD"/ImageJ.exe -nt "$CWD"/precompiled/ImageJ-win64.exe &&
-		test "$CWD"/ImageJ.exe -nt "$CWD"/Fakefile &&
-		test "$CWD"/ImageJ.exe -nt "$CWD"/$jar ||
-		cp precompiled/ImageJ-win64.exe ImageJ.exe
-	esac
+# JAVA_HOME needs to be a DOS path for Windows from here on
+case "$UNAME_S" in
+MINGW*)
+	export JAVA_HOME="$(cd "$JAVA_HOME" && pwd -W)"
+	;;
+CYGWIN*)
+	export JAVA_HOME="$(cygpath -d "$JAVA_HOME")"
+	;;
 esac
 
-sh "$CWD/bin/ImageJ.sh" --build "$@"
+# Thanks, MacOSX (or for that matter, BSD)
+
+get_mtime () {
+        stat -c %Y "$1"
+}
+if test Darwin = "$(uname -s 2> /dev/null)"
+then
+        get_mtime () {
+                stat -f %m "$1"
+        }
+fi
+
+# figure out whether $1 is newer than $2, or if $2 is a SNAPSHOT .jar
+# whether it is older than a day
+
+uptodate () {
+	test -f "$2" &&
+	test "$2" -nt "$1" &&
+	case "$2" in
+	*-SNAPSHOT.jar)
+		test "$(($(get_mtime "$2")-$(date +%s)))" -gt -86400
+		;;
+	esac
+}
+
+# we need an absolute CWD from now on
+case "$CWD" in
+[A-Z]:*|/*)
+	# is already absolute
+	;;
+*)
+	CWD="$(cd "$CWD" && pwd)"
+	;;
+esac
+
+# pseudo-Maven (thanks to SciJava's maven-helper)
+
+ARGV0="$CWD/$0"
+SCIJAVA_COMMON="$CWD/modules/scijava-common"
+MAVEN_DOWNLOAD="$SCIJAVA_COMMON/bin/maven-helper.sh"
+maven_update () {
+	force_update=
+	uptodate "$ARGV0" "$MAVEN_DOWNLOAD" || {
+		force_update=t
+		if test -d "$SCIJAVA_COMMON/.git"
+		then
+			(cd "$SCIJAVA_COMMON" &&
+			 git pull -k)
+		else
+			git clone https://github.com/scijava/scijava-common \
+				"$SCIJAVA_COMMON"
+		fi
+		if test ! -f "$MAVEN_DOWNLOAD"
+		then
+			echo "Could not find $MAVEN_DOWNLOAD!" >&2
+			exit 1
+		fi
+		touch "$MAVEN_DOWNLOAD"
+	}
+	for gav in "$@"
+	do
+		artifactId="${gav#*:}"
+		version="${artifactId#*:}"
+		artifactId="${artifactId%%:*}"
+		path="jars/$artifactId-$version.jar"
+
+		test -z "$force_update" ||
+		rm -f "$path"
+
+		(cd "$CWD"
+		 test -f jars/"$artifactId".jar && rm jars/"$artifactId".jar
+		 for file in jars/"$artifactId"-[0-9]*.jar
+		 do
+			test "a$file" = a"$path" && continue
+			test -f "$file" || continue
+			rm "$file"
+		 done
+
+		 uptodate "$ARGV0" "$path" && continue
+		 echo "Downloading $gav" >&2
+		 (cd jars/ && sh "$MAVEN_DOWNLOAD" install "$gav")
+		 if test ! -f "$path"
+		 then
+			echo "Failure to download $path" >&2
+			exit 1
+		 fi)
+	done
+}
+
+update_launcher () {
+	case "$LAUNCHER" in
+	bin/ImageJ.sh)
+		test -z "$exe" || rm -f "$CWD/fiji$exe"
+		uptodate "$ARGV0" "$CWD/fiji" || {
+			cat > "$CWD/fiji" << EOF
+#!/bin/sh
+
+exec "$CWD/$LAUNCHER" "$@"
+EOF
+			chmod a+x "$CWD/fiji"
+		}
+		;;
+	*)
+		uptodate "$ARGV0" "$CWD/$LAUNCHER" ||
+		(cd $CWD &&
+		 sh bin/download-launchers.sh snapshot $platform)
+		;;
+	esac
+	test -z "$FIJILAUNCHER" ||
+	test ! -f "$CWD/$FIJILAUNCHER" ||
+	rm "$CWD/$FIJILAUNCHER"
+}
+
+# make sure that javac and ij-minimaven are up-to-date
+
+VERSION=2.0.0-SNAPSHOT
+maven_update sc.fiji:javac:$VERSION \
+	net.imagej:ij-minimaven:$VERSION \
+	net.imagej:ij-updater-ssh:$VERSION
+
+# command-line options
+
+OPTIONS="-Dimagej.app.directory=\"$CWD\""
+while test $# -gt 0
+do
+	case "$1" in
+	verbose=*)
+		OPTIONS="$OPTIONS -Dminimaven.verbose=true"
+		;;
+	-D*)
+		OPTIONS="$OPTIONS $1"
+		;;
+	*=*)
+		OPTIONS="$OPTIONS -D$1"
+		;;
+	*)
+		break
+		;;
+	esac
+	shift
+done
+
+# handle targets
+
+if test $# = 0
+then
+	eval sh "$CWD/bin/ImageJ.sh" --mini-maven "$OPTIONS" install
+	update_launcher
+else
+	for name in "$@"
+	do
+		case "$name" in
+		fiji|ImageJ)
+			update_launcher
+			continue
+			;;
+		clean)
+			eval sh \"$CWD/bin/ImageJ.sh\" --mini-maven \
+                                "$OPTIONS" clean
+			continue
+			;;
+		esac
+		artifactId="${name##*/}"
+		artifactId="${artifactId%.jar}"
+		artifactId="${artifactId%%-[0-9]*}"
+		case "$name" in
+		*-rebuild)
+			eval sh "$CWD/bin/ImageJ.sh" --mini-maven \
+				"$OPTIONS" -DartifactId="$artifactId" clean
+			;;
+		esac
+		eval sh "$CWD/bin/ImageJ.sh" --mini-maven \
+			"$OPTIONS" -DartifactId="$artifactId" install
+	done
+fi

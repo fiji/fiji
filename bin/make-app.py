@@ -88,19 +88,14 @@ def copy_platform_specific_files(platform):
 	if platform == 'macosx':
 		macos='Fiji.app/Contents/MacOS/'
 		os.makedirs(macos)
-		if (host_platform == "osx10.5"):
-			shutil.copy('ImageJ', macos + 'ImageJ-macosx')
-			shutil.copy('ImageJ-tiger', macos)
-		else:
-			shutil.copy('precompiled/ImageJ-macosx',
-					macos + 'ImageJ-macosx')
-			shutil.copy('precompiled/ImageJ-tiger', macos)
+		shutil.copy('Contents/MacOS/ImageJ-macosx', macos + 'ImageJ-macosx')
+		shutil.copy('Contents/MacOS/ImageJ-tiger', macos)
 		chmod(macos + 'ImageJ-macosx', 0755)
 		chmod(macos + 'ImageJ-tiger', 0755)
 		shutil.copy('Contents/Info.plist', 'Fiji.app/Contents/')
 		images='Fiji.app/Contents/Resources/'
 		os.makedirs(images)
-		shutil.copy('images/Fiji.icns', images)
+		shutil.copy('Contents/Resources/Fiji.icns', images)
 	else:
 		if platform.startswith('win'):
 			exe = ".exe"
@@ -108,13 +103,11 @@ def copy_platform_specific_files(platform):
 			exe = ''
 
 		binary = 'ImageJ-' + platform + exe
-		if (host_platform == platform):
-			shutil.copy('ImageJ' + exe, 'Fiji.app/' + binary)
-		else:
-			shutil.copy('precompiled/' + binary, 'Fiji.app/' + binary)
+		shutil.copy(binary, 'Fiji.app/' + binary)
 		chmod('Fiji.app/' + binary, 0755)
 
 make_app()
+execute('bin/download-launchers.sh snapshot')
 if platform == 'all':
 	for p in all_platforms:
 		copy_platform_specific_files(p)

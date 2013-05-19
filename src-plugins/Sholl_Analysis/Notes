@@ -1,0 +1,73 @@
+Sholl Analysis
+
+WISH LIST
+=========
+    - Restrict analysis to area ROIs (rather than hemicircles/spheres?)
+
+RELEASE NOTES
+=============
+Version 3.0 (latest)
+    - 3D Sholl:
+      - Better handling of anisotropic voxels
+      - Option to ignore isolated (noise) voxels
+      - Minimized rounding errors related to digitization of spheres
+    - 2D Sholl:
+      - Substituted "Radius span" with "Samples per radius" to avoid misinterpretations of
+        the former parameter. A draconian maximum of 10 "Samples per radius" is
+        deliberately imposed to encourage "Continuos Sholl"
+    - General improvements:
+      - 3D and 2D algorithms are ~25% faster (3D analysis remains rather slow)
+      - Allows thresholded grayscale images as input
+      - Analyzes polarized arbors by restricting the analysis to hemicircles/hemispheres.
+        This requires the user to define the center of analysis with an orthogonal radius,
+        using the Straight Line Tool and holding Shift
+      - Arbor size is calculated as the area/volume of the smallest bounding circle/sphere
+        containing the segmented arbor
+      - When "End radius" is empty (or NaN), the largest (hemi)circle/sphere is used. This
+        allows macros to easily process images without line selections
+      - Precision (Scientific notation and number of decimal places) in Sholl table is set
+        by "Analyze>Set Measurements..."
+      - Sholl mask is coded with Matlab's "jet" color map
+      - Major code clean up, which solved several issues
+      - Plugin is now registered in the Analyze Menu: "Analyze>Sholl Analysis...".
+        Implemented the auxiliary commands "File>Open Samples>ddaC neuron" (2D sample
+        image), "Image>Lookup Tables>Sholl LUT" and "Help>About Plugins...>Sholl Plugins"
+      - Prettified plot
+
+Version 3d
+    - 3D Analysis is now restricted to the volume of each Sholl shell, rather than parsing
+      all the segmented voxels
+
+Version 3c
+    - 3D Sholl is usable for the first time, but remains extremely slow
+
+Version 3a-b
+    - Experimental: Performs 3D Sholl without spike suppression if input image is a stack
+
+Version 2.5
+    - Fixed duplicated points in Bresenham's algorithm
+    - Option to save data on image directory, if available
+    - Long analyses can be aborted by holding Esc
+
+Version 2.4
+    - Fixed a 2.3 regression in which -1 tagged pixels were being counted
+    - Improved Sholl mask: Minimized rounding errors. Center of analysis is now marked
+    - Improved Sholl Table and Plot display
+
+Version 2.3
+    - Results are printed to a dedicated table
+    - Sholl decay is always calculated
+    - Fixed exception in the calculation of critical value in non bell-shaped profiles
+    - Impose valid parameters in dialog, rather than keep prompting the user (which was
+      not amenable to macro recording)
+    - Major code cleaning
+
+Version 2.1-2
+    - Fixed several bugs and regressions introduced in version 2.0
+    - Checks for reasonable Radius span values
+
+Version 2.0
+     - Curve Fitting, modernization of Tom's code
+
+Version 1.0
+     - Initial version by Tom Maddock

@@ -24,3 +24,8 @@
 /SDKs/
 /build-macgcc-ppc/
 /build-odcctools-ppc/
+/Mac-Carbon-0.82/
+/Mac-Finder-DSStore-0.96/
+/Test-NoWarnings-1.04/
+/Test-Simple-0.98/
+/Test-Tester-0.108/

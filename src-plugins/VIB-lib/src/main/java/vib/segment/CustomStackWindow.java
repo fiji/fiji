@@ -25,6 +25,7 @@ public class CustomStackWindow extends StackWindow
 	
 	private Roi[] savedRois;
 	private int oldSlice;
+	private boolean roisLocked;
 
 	/* Listener for the ok button, to get informed when 
 	 * labelling is finished */
@@ -44,7 +45,10 @@ public class CustomStackWindow extends StackWindow
 		if (sliceSelector == null)
 			sliceSelector = new Scrollbar(Scrollbar.HORIZONTAL,
 				1, 1, 1, 2);
+		else
+			sliceSelector.setValue(cc.getImage().getCurrentSlice());
 		oldSlice = sliceSelector.getValue();
+		roisLocked = false;
 		sliceSelector.addAdjustmentListener(this);
 		
 		// Remove ij from the key listeners to avoid zooming 
@@ -101,6 +105,7 @@ public class CustomStackWindow extends StackWindow
 	}
 
 	public void cleanUp() {
+		roisLocked = false;
 		savedRois = null;
 		al = null;
 		sidebar.getMaterials().labels = null;
@@ -139,6 +144,8 @@ public class CustomStackWindow extends StackWindow
 	}
 
 	public void processPlusButton(){
+		if(roisLocked)
+			return;
 		int currentSlice = cc.getImage().getCurrentSlice();
 		Roi roi = cc.getImage().getRoi();
 		assignSliceTo(currentSlice,roi,sidebar.currentMaterialID());	
@@ -160,6 +167,8 @@ public class CustomStackWindow extends StackWindow
 	}
 	
 	public void processMinusButton(){
+		if(roisLocked)
+			return;
 		int currentSlice = cc.getImage().getCurrentSlice();
 		Roi roi = cc.getImage().getRoi();
 		releaseSliceFrom(currentSlice, roi, sidebar.currentMaterialID());
@@ -181,11 +190,18 @@ public class CustomStackWindow extends StackWindow
 	}
 
 	public void processInterpolateButton() {
+		if(roisLocked)
+			return;
 		updateRois();
+		roisLocked = true;
 		new Thread(new Runnable() {
 			public void run() {
 				setCursor(Cursor.WAIT_CURSOR);
 				new BinaryInterpolator().run(cc.getImage(), savedRois);
+				// Also undo any unvoluntary changes which happened
+				// during the interpolation
+				transferRois(savedRois, true);
+				roisLocked = false;
 				setCursor(Cursor.DEFAULT_CURSOR);
 			}
 		}).start();
@@ -256,25 +272,40 @@ public class CustomStackWindow extends StackWindow
 		int w = labels.getWidth(), h = labels.getHeight();
 		ImageProcessor labP = labels.getStack().getProcessor(slice);
 		labP.setRoi(roi);
-		Rectangle bounds = roi.getBoundingRect();
+		Rectangle bounds = roi.getBounds();
 		int x1 = bounds.x > 0 ? bounds.x : 0;
 		int y1 = bounds.y > 0 ? bounds.y : 0;
-		int x2 = x1 + bounds.width <= w ? x1 + bounds.width : w;
-		int y2 = y1 + bounds.height <= h ? y1 + bounds.height : h;
+		int x2 = bounds.x + bounds.width  <= w ? bounds.x + bounds.width  : w;
+		int y2 = bounds.y + bounds.height <= h ? bounds.y + bounds.height : h;
 
-		for(int i = x1; i < x2; i++){
-			for(int j = y1; j < y2; j++) {
-				if(roi.contains(i,j)) {
-					int oldID = labP.get(i, j);
-					if(!sidebar.getMaterials().
-							isLocked(oldID))
-						labP.set(i,j,materialID);
+		ImageProcessor maskP = roi.getMask();
+		if(maskP == null) {
+			// This case is fast anyways
+			for(int i = x1; i < x2; i++){
+				for(int j = y1; j < y2; j++) {
+					if(roi.contains(i,j)) {
+						int oldID = labP.get(i, j);
+						if(!sidebar.getMaterials().isLocked(oldID))
+							labP.set(i,j,materialID);
+					}
+				}
+			}
+		} else {
+			int maskX = (int)Math.round(roi.getBounds().getX());
+			int maskY = (int)Math.round(roi.getBounds().getY());
+			for(int i = x1; i < x2; i++){
+				for(int j = y1; j < y2; j++) {
+					if(maskP.get(i - maskX, j - maskY) == 255) {
+						int oldID = labP.get(i, j);
+						if(!sidebar.getMaterials().isLocked(oldID))
+							labP.set(i,j,materialID);
+					}
 				}
 			}
 		}
 		cc.updateSlice(slice);
 	}
-	
+
 	public void releaseSliceFrom(int slice, Roi roi, int materialID){
 		ImagePlus grey = cc.getImage();
 		ImagePlus labels = cc.getLabels();
@@ -287,17 +318,33 @@ public class CustomStackWindow extends StackWindow
 		int w = labels.getWidth(), h = labels.getHeight();
 		ImageProcessor labP = labels.getStack().getProcessor(slice);
 		labP.setRoi(roi);
-		Rectangle bounds = roi.getBoundingRect();
+		Rectangle bounds = roi.getBounds();
 
 		int x1 = bounds.x > 0 ? bounds.x : 0;
 		int y1 = bounds.y > 0 ? bounds.y : 0;
-		int x2 = x1 + bounds.width <= w ? x1 + bounds.width : w;
-		int y2 = y1 + bounds.height <= h ? y1 + bounds.height : h;
+		int x2 = bounds.x + bounds.width  <= w ? bounds.x + bounds.width  : w;
+		int y2 = bounds.y + bounds.height <= h ? bounds.y + bounds.height : h;
 
-		for(int i = x1; i < x2; i++){
-			for(int j = y1; j < y2; j++) {
-				if(roi.contains(i,j) && labP.get(i,j)==materialID){ 
-					labP.set(i,j,sidebar.getMaterials().getDefaultMaterialID());
+		int defaultMaterialID = sidebar.getMaterials().getDefaultMaterialID();
+		ImageProcessor maskP = roi.getMask();
+		if(maskP == null) {
+			// This case is fast anyways
+			for(int i = x1; i < x2; i++){
+				for(int j = y1; j < y2; j++) {
+					if(roi.contains(i, j) && labP.get(i, j)==materialID){
+						labP.set(i, j, defaultMaterialID);
+					}
+				}
+			}
+		} else {
+			int maskX = (int)Math.round(roi.getBounds().getX());
+			int maskY = (int)Math.round(roi.getBounds().getY());
+			for(int i = x1; i < x2; i++){
+				for(int j = y1; j < y2; j++) {
+					if(maskP.get(i - maskX, j - maskY) == 255 &&
+					   labP.get(i, j)==materialID){
+						labP.set(i, j, defaultMaterialID);
+					}
 				}
 			}
 		}
@@ -319,7 +366,23 @@ public class CustomStackWindow extends StackWindow
 		return savedRois[slice];
 	}
 
+	public void transferRois(Roi[] rois){
+		transferRois(rois, false);
+	}
+
+	public void transferRois(Roi[] rois, boolean overrideLocking){
+		for(int i = 0; i < rois.length; ++i) {
+			setRoi(i, rois[i], overrideLocking);
+		}
+	}
+
 	public void setRoi(int slice, Roi roi) {
+		setRoi(slice, roi, false);
+	}
+
+	public void setRoi(int slice, Roi roi, boolean overrideLocking) {
+		if(roisLocked && !overrideLocking)
+			return;
 		if (slice != oldSlice)
 			savedRois[slice] = roi;
 		else if (roi == null)
@@ -420,7 +483,10 @@ public class CustomStackWindow extends StackWindow
 	 * AdjustmentListener interface
 	 */
 	public synchronized void adjustmentValueChanged(AdjustmentEvent e) {
-		super.adjustmentValueChanged(e);
+		imp.setSlice(e.getValue());
+		sliceSelector.setValue(e.getValue());
+		// This seems to corrupt the scrollbar position.
+		//super.adjustmentValueChanged(e);
 		updateRois();
 	}
 
@@ -429,6 +495,8 @@ public class CustomStackWindow extends StackWindow
 	}
 
 	public synchronized void updateRois(int newSlice) {
+		if(roisLocked)
+			return;
 		savedRois[oldSlice] = imp.getRoi();
 		oldSlice = newSlice;
 		if (savedRois[oldSlice] == null)
@@ -454,33 +522,47 @@ public class CustomStackWindow extends StackWindow
 		int c = e.getKeyCode();
         char ch = e.getKeyChar();
 		if(c == KeyEvent.VK_DOWN || c == KeyEvent.VK_RIGHT || ch == '>'){
-			imp.setSlice(oldSlice + 1);
+			int newSlice = clamp(oldSlice + 1);
+			adjustmentValueChanged(new AdjustmentEvent(
+						sliceSelector,
+						AdjustmentEvent.ADJUSTMENT_VALUE_CHANGED,
+						AdjustmentEvent.UNIT_INCREMENT,
+						newSlice));
+		} else if (c == KeyEvent.VK_UP || c == KeyEvent.VK_LEFT || ch == '<'){
+			int newSlice = clamp(oldSlice - 1);
+			adjustmentValueChanged(new AdjustmentEvent(
+						sliceSelector,
+						AdjustmentEvent.ADJUSTMENT_VALUE_CHANGED,
+						AdjustmentEvent.UNIT_DECREMENT,
+						newSlice));
+		} else if (c == KeyEvent.VK_PAGE_UP){
+			int newSlice = clamp(oldSlice -5);
+			adjustmentValueChanged(new AdjustmentEvent(
+						sliceSelector,
+						AdjustmentEvent.ADJUSTMENT_VALUE_CHANGED,
+						AdjustmentEvent.BLOCK_DECREMENT,
+						newSlice));
+		} else if (c == KeyEvent.VK_PAGE_DOWN){
+			int newSlice = clamp(oldSlice + 5);
 			adjustmentValueChanged(new AdjustmentEvent(
 						sliceSelector,
 						AdjustmentEvent.ADJUSTMENT_VALUE_CHANGED,
 						AdjustmentEvent.BLOCK_INCREMENT,
-						oldSlice+1));
-		} else if (c == KeyEvent.VK_UP || c == KeyEvent.VK_LEFT || ch == '<'){
-			imp.setSlice(oldSlice - 1);
+						newSlice));
+		} else if (ch == '.'){
+			int newSlice = nextRoiSlice();
 			adjustmentValueChanged(new AdjustmentEvent(
 						sliceSelector,
 						AdjustmentEvent.ADJUSTMENT_VALUE_CHANGED,
-						AdjustmentEvent.BLOCK_DECREMENT,
-						oldSlice-1));
-		} else if (c == KeyEvent.VK_PAGE_UP){
-			imp.setSlice(oldSlice - 5);
+						AdjustmentEvent.BLOCK_INCREMENT,
+						newSlice));
+		} else if (ch == ','){
+			int newSlice = prevRoiSlice();
 			adjustmentValueChanged(new AdjustmentEvent(
 						sliceSelector,
 						AdjustmentEvent.ADJUSTMENT_VALUE_CHANGED,
-						AdjustmentEvent.BLOCK_DECREMENT,
-						oldSlice-5));
-		} else if (c == KeyEvent.VK_PAGE_DOWN){
-			imp.setSlice(oldSlice + 5);
-			adjustmentValueChanged(new AdjustmentEvent(
-						sliceSelector,
-						AdjustmentEvent.ADJUSTMENT_VALUE_CHANGED,
-						AdjustmentEvent.BLOCK_DECREMENT,
-						oldSlice+5));
+						AdjustmentEvent.BLOCK_INCREMENT,
+						newSlice));
 		} else if (ch == '+' || ch == '='){
 			processPlusButton();
 		} else if (ch == '-'){
@@ -495,4 +577,46 @@ public class CustomStackWindow extends StackWindow
 			processCloseButton();
 		}
 	}
+
+	protected int clamp(int targetSlice) {
+		return targetSlice < 1 ?
+			1 :
+			(targetSlice > cc.getImage().getNSlices() ?
+			 cc.getImage().getNSlices() :
+			 targetSlice);
+	}
+
+	protected int nextRoiSlice() {
+		return findRoiSlice(1);
+	}
+
+	protected int prevRoiSlice() {
+		return findRoiSlice(-1);
+	}
+
+	protected int findRoiSlice(int direction) {
+		boolean found = false;
+		int foundSlice = 0;
+		for (int i = 1; i < savedRois.length; i++) {
+			if (i == oldSlice) {
+				if (direction < 0)
+					break;
+				else
+					foundSlice = 0;
+			}
+			if (savedRois[i] == null)
+				continue;
+
+			foundSlice = i;
+
+			if (i > oldSlice)
+				break;
+		}
+
+		if (foundSlice == 0)
+			return oldSlice;
+		else
+			return foundSlice;
+	}
+
 }
