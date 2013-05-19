@@ -126,13 +126,5 @@ public class ViewProvider {
 			return null;
 		}
 	}
-	
-	/**
-	 * Returns a copy of this provider, but initialized to generate view on the specified model, 
-	 * using the specified settings and selection model.
-	 */
-	public ViewProvider copyOn(TrackMateModel model, Settings settings, SelectionModel selectionModel) {
-		return new ViewProvider(model, settings, selectionModel);
-	}
 
 }

@@ -16,6 +16,8 @@ import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JPanel;
 
+import fiji.plugin.trackmate.gui.TrackMateGUIController;
+
 public class JPanelFeatureSelectionGui extends javax.swing.JPanel {
 
 	private static final long serialVersionUID = -891462567905389989L;
@@ -128,7 +130,7 @@ public class JPanelFeatureSelectionGui extends javax.swing.JPanel {
 				{
 					jButtonRemove = new JButton();
 					jPanelButtons.add(jButtonRemove);
-					jButtonRemove.setIcon(new ImageIcon(getClass().getResource(REMOVE_ICON)));
+					jButtonRemove.setIcon(new ImageIcon(TrackMateGUIController.class.getResource(REMOVE_ICON)));
 					jButtonRemove.setBounds(48, 5, 21, 22);
 					jButtonRemove.addActionListener(new ActionListener() {
 						public void actionPerformed(ActionEvent e) {
@@ -140,7 +142,7 @@ public class JPanelFeatureSelectionGui extends javax.swing.JPanel {
 				{
 					jButtonAdd = new JButton();
 					jPanelButtons.add(jButtonAdd);
-					jButtonAdd.setIcon(new ImageIcon(getClass().getResource(ADD_ICON)));
+					jButtonAdd.setIcon(new ImageIcon(TrackMateGUIController.class.getResource(ADD_ICON)));
 					jButtonAdd.setBounds(12, 5, 24, 22);
 					jButtonAdd.addActionListener(new ActionListener() {
 						public void actionPerformed(ActionEvent e) {

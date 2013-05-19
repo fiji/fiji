@@ -296,6 +296,9 @@ public class TmXmlWriter {
 	private Element echoTrackerSettings(Settings settings, TrackerProvider provider) {
 		Element el = new Element(TRACKER_SETTINGS_ELEMENT_KEY);
 		
+		if (null == settings.tracker) {
+			return el;
+		}
 		boolean ok = provider.select(settings.tracker.getKey());
 		if (!ok) {
 			logger.error(provider.getErrorMessage());

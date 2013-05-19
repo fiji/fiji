@@ -279,8 +279,11 @@ public class TmXmlReader {
 
 
 	/**
-	 * Returns the {@link Settings} object stored in this xml file, or <code>null</code>
-	 * if the file does not contain a saved {@link Settings} object.
+	 * Reads the settings element of the file, and set the fields of the specified 
+	 * {@link Settings} object stored according to the xml file content.
+	 * The provided {@link Settings} object is left untouched if the settings element
+	 * cannot be found in the file.
+	 * @param settings the {@link Settings} object to flesh out.
 	 * @param detectorProvider the detector provider, required to configure the settings with
 	 * a correct {@link SpotDetectorFactory}. If <code>null</code>, will skip reading detector
 	 * parameters. 
@@ -292,19 +295,18 @@ public class TmXmlReader {
 	 * {@link EdgeAnalyzer}s. If <code>null</code>, will skip reading edge analyzers.
 	 * @param trackAnalyzerProvider the track analyzer provider, required to instantiates the saved
 	 * {@link TrackAnalyzer}s. If <code>null</code>, will skip reading track analyzers.
-	 * 
-	 * @return  a new {@link Settings} object.
 	 */
-	public Settings getSettings(DetectorProvider detectorProvider, TrackerProvider trackerProvider, 
+	public void readSettings(Settings settings, 
+			DetectorProvider detectorProvider, TrackerProvider trackerProvider, 
 			SpotAnalyzerProvider spotAnalyzerProvider, EdgeAnalyzerProvider edgeAnalyzerProvider, 
 			TrackAnalyzerProvider trackAnalyzerProvider) {
 		Element settingsElement = root.getChild(SETTINGS_ELEMENT_KEY);
 		if (null == settingsElement) {
-			return null;
+			return;
 		} 
 
 		// Base
-		Settings settings = getBaseSettings(settingsElement);
+		getBaseSettings(settingsElement, settings);
 
 		// Image
 		settings.imp = getImage(settingsElement);
@@ -333,8 +335,6 @@ public class TmXmlReader {
 
 		// Features analyzers
 		readAnalyzers(settingsElement, settings, spotAnalyzerProvider, edgeAnalyzerProvider, trackAnalyzerProvider);
-
-		return settings;
 	}
 
 
@@ -512,13 +512,12 @@ public class TmXmlReader {
 	}
 
 	/**
-	 * Returns a settings object, configured with base settings extracted from the specified 
+	 * Set the base settings of the provided {@link Settings} object, extracted from the specified 
 	 * {@link Element}.
 	 * @param settingsElement the settings {@link Element} to read parameters from. 
 	 * @return  a new {@link Settings} object.
 	 */
-	private Settings getBaseSettings(Element settingsElement) {
-		Settings settings = new Settings();
+	private void getBaseSettings(Element settingsElement, Settings settings) {
 		// Basic settings
 		Element settingsEl = settingsElement.getChild(CROP_ELEMENT_KEY);
 		if (null != settingsEl) {
@@ -546,7 +545,6 @@ public class TmXmlReader {
 			settings.imageFileName	= infoEl.getAttributeValue(IMAGE_FILENAME_ATTRIBUTE_NAME);
 			settings.imageFolder	= infoEl.getAttributeValue(IMAGE_FOLDER_ATTRIBUTE_NAME);
 		}
-		return settings;
 	}
 
 	/**

@@ -8,6 +8,7 @@ import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.TrackMate;
 import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.gui.GuiUtils;
 import fiji.plugin.trackmate.gui.TrackMateGUIController;
 import fiji.plugin.trackmate.io.IOUtils;
 import fiji.plugin.trackmate.io.TmXmlReader;
@@ -24,32 +25,17 @@ public class LoadDescriptor extends SomeDialogDescriptor {
 
 	private static final String KEY = "Loading";
 	private final TrackMate trackmate;
-	private final DetectorProvider detectorProvider;
-	private final TrackerProvider trackerProvider;
-	private final SpotAnalyzerProvider spotAnalyzerProvider;
-	private final EdgeAnalyzerProvider edgeAnalyzerProvider;
-	private final TrackAnalyzerProvider trackAnalyzerProvider;
 	private final TrackMateGUIController controller;
-	private final ViewProvider viewProvider;
 
-	public LoadDescriptor(TrackMateGUIController controller, DetectorProvider detectorProvider, TrackerProvider trackerProvider, 
-			SpotAnalyzerProvider spotAnalyzerProvider, EdgeAnalyzerProvider edgeAnalyzerProvider, TrackAnalyzerProvider trackAnalyzerProvider,
-			ViewProvider viewProvider) {
+	public LoadDescriptor(TrackMateGUIController controller) {
 		super(controller.getGUI().getLogPanel());
 		this.controller = controller;
-		this.viewProvider = viewProvider;
 		this.trackmate = controller.getPlugin();
-		this.detectorProvider = detectorProvider;
-		this.trackerProvider = trackerProvider;
-		this.spotAnalyzerProvider = spotAnalyzerProvider;
-		this.edgeAnalyzerProvider = edgeAnalyzerProvider;
-		this.trackAnalyzerProvider = trackAnalyzerProvider;
 	}
 
 
 	@Override
 	public void displayingPanel() {
-
 
 		if (null == file) {
 			try {
@@ -80,24 +66,32 @@ public class LoadDescriptor extends SomeDialogDescriptor {
 		String logText = reader.getLog();
 		// Model
 		TrackMateModel model = reader.getModel();
-		// Settings
-		Settings settings = reader.getSettings(detectorProvider, trackerProvider, 
+		// Settings -> empty for now.
+		Settings settings = new Settings();
+		
+		// With this we can create a new controller from the provided one:
+		TrackMate trackmate = new TrackMate(model, settings);
+		TrackMateGUIController newcontroller = controller.createOn(trackmate);
+		
+		// We feed then the reader with the providers taken from the NEW controller.
+		DetectorProvider detectorProvider = newcontroller.getDetectorProvider();
+		TrackerProvider trackerProvider = newcontroller.getTrackerProvider();
+		SpotAnalyzerProvider spotAnalyzerProvider = newcontroller.getSpotAnalyzerProvider();
+		EdgeAnalyzerProvider edgeAnalyzerProvider = newcontroller.getEdgeAnalyzerProvider();
+		TrackAnalyzerProvider trackAnalyzerProvider = newcontroller.getTrackAnalyzerProvider();
+		reader.readSettings(settings, detectorProvider, trackerProvider, 
 				spotAnalyzerProvider, edgeAnalyzerProvider, trackAnalyzerProvider);
+		
+		// GUI position
+		GuiUtils.positionWindow(newcontroller.getGUI(), settings.imp.getWindow());
+		
 		// GUI state
 		String guiState = reader.getGUIState();
-		
-		/*
-		 *  Re-instantiate a GUI and close the old one
-		 */
-		
-		TrackMate newtrackmate = new TrackMate(model, settings);
-		TrackMateGUIController newcontroller = new TrackMateGUIController(newtrackmate, settings.imp);
 		newcontroller.getGUI().getLogPanel().setTextContent(logText);
 		
 		// Views
-		// We need a new view provider, with the new model and settings etc...
-		ViewProvider newViewProvider = viewProvider.copyOn(model, settings, newcontroller.getSelectionModel());
-		Collection<TrackMateModelView> views = reader.getViews(newViewProvider);
+		ViewProvider viewProvider = newcontroller.getViewProvider();
+		Collection<TrackMateModelView> views = reader.getViews(viewProvider);
 		
 		if (!reader.isReadingOk()) {
 			Logger newlogger = newcontroller.getGUI().getLogger();
