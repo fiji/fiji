@@ -280,7 +280,7 @@ public class TrackMateGUIController implements ActionListener {
 		 * Select and render a view
 		 */
 		// We need the GUI model to register the created view there.
-		viewChoiceDescriptor		= new ViewChoiceDescriptor(viewProvider, getGuimodel());
+		viewChoiceDescriptor		= new ViewChoiceDescriptor(viewProvider, guimodel);
 		
 		/*
 		 * Spot filtering

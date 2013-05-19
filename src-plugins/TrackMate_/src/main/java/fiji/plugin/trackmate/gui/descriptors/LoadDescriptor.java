@@ -85,13 +85,6 @@ public class LoadDescriptor extends SomeDialogDescriptor {
 				spotAnalyzerProvider, edgeAnalyzerProvider, trackAnalyzerProvider);
 		// GUI state
 		String guiState = reader.getGUIState();
-		// Views
-		Collection<TrackMateModelView> views = reader.getViews(viewProvider);
-
-		if (!reader.isReadingOk()) {
-			logger.error("Some errors occured while reading file:\n");
-			logger.error(reader.getErrorMessage());
-		}
 		
 		/*
 		 *  Re-instantiate a GUI and close the old one
@@ -100,6 +93,12 @@ public class LoadDescriptor extends SomeDialogDescriptor {
 		TrackMate newtrackmate = new TrackMate(model, settings);
 		TrackMateGUIController newcontroller = new TrackMateGUIController(newtrackmate, settings.imp);
 		newcontroller.getGUI().getLogPanel().setTextContent(logText);
+		
+		// Views
+		// We need a new view provider, with the new model and settings etc...
+		ViewProvider newViewProvider = viewProvider.copyOn(model, settings, newcontroller.getSelectionModel());
+		Collection<TrackMateModelView> views = reader.getViews(newViewProvider);
+		
 		if (!reader.isReadingOk()) {
 			Logger newlogger = newcontroller.getGUI().getLogger();
 			newlogger.error("Some errors occured while reading file:\n");
@@ -119,8 +118,7 @@ public class LoadDescriptor extends SomeDialogDescriptor {
 			view.render();
 		}
 
-		
-		// Clsoe the old one
+		// Close the old one
 		controller.quit();
 	}
 
