@@ -32,8 +32,9 @@ public class LinkNew3DViewerAction extends AbstractTMAction {
 			public void run() {
 				logger.log("Rendering 3D overlay...\n");
 				Image3DUniverse universe = new Image3DUniverse();
+				universe.show();
 				SpotDisplayer3D newDisplayer = new SpotDisplayer3D(trackmate.getModel(), controller.getSelectionModel(), universe );
-				// TODO link listeners and diaplay settings
+				// TODO link listeners and display settings
 				newDisplayer.render();
 				logger.log("Done.\n");
 			}

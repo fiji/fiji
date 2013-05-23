@@ -45,7 +45,7 @@ public class PlotNSpotsVsTimeAction extends AbstractTMAction {
 		int index = 0;
 		for (int frame : spots.keySet()) {
 			data[0][index] = spots.iterator(frame, false).next().getFeature(Spot.POSITION_T);
-			data[1][index] = spots.getNSpots(true);
+			data[1][index] = spots.getNSpots(frame, true);
 			index++;
 		}
 		

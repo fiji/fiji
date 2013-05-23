@@ -62,17 +62,17 @@ public class ActionProvider {
 	protected void registerActions() {
 		// Names
 		names = new ArrayList<String>(10);
+		names.add(ExportTracksToXML.NAME);
 		names.add(ExtractTrackStackAction.NAME);
 		names.add(LinkNew3DViewerAction.NAME);
 		names.add(CopyOverlayAction.NAME);
 		names.add(PlotNSpotsVsTimeAction.NAME);
 		names.add(CaptureOverlayAction.NAME);
-		names.add(ResetSpotTimeFeatureAction.NAME);
+//		names.add(ResetSpotTimeFeatureAction.NAME);
 		names.add(RecalculateFeatureAction.NAME);
 		names.add(RadiusToEstimatedAction.NAME);
 		names.add(ResetRadiusAction.NAME);
 //		names.add(fiji.plugin.trackmate.action.ISBIChallengeExporter.NAME);
-		names.add(ExportTracksToXML.NAME);
 	}
 	
 	/**
