@@ -28,6 +28,5 @@ public abstract class ConfigurationPanel extends ActionListenablePanel {
 	 * by this panel.
 	 */
 	public abstract Map<String, Object> getSettings();
-	
-	
+
 }

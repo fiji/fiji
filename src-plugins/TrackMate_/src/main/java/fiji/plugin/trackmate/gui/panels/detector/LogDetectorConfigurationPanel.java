@@ -8,6 +8,10 @@ import static fiji.plugin.trackmate.detection.DetectorKeys.KEY_THRESHOLD;
 import static fiji.plugin.trackmate.gui.TrackMateWizard.BIG_FONT;
 import static fiji.plugin.trackmate.gui.TrackMateWizard.FONT;
 import static fiji.plugin.trackmate.gui.TrackMateWizard.SMALL_FONT;
+import fiji.plugin.trackmate.Settings;
+import fiji.plugin.trackmate.TrackMate;
+import fiji.plugin.trackmate.detection.LogDetectorFactory;
+import fiji.plugin.trackmate.detection.SpotDetectorFactory;
 import fiji.plugin.trackmate.gui.ConfigurationPanel;
 import fiji.plugin.trackmate.gui.panels.components.JNumericTextField;
 import ij.ImagePlus;
@@ -36,14 +40,15 @@ import javax.swing.event.ChangeListener;
  */
 public class LogDetectorConfigurationPanel extends ConfigurationPanel {
 
-	private static final long serialVersionUID = 4519313560718180405L;
-	private static final String TOOLTIP = "<html>" +
+	private static final String TOOLTIP_PREVIEW = "<html>Preview the current settings on the current frame.</html>";
+	private static final String TOOLTIP_REFRESH = "<html>" +
 			"Will read the threshold from the current <br>" +
 			"ImagePlus and use its value here.</html>";
 	private JLabel jLabel1;
 	protected JLabel jLabelSegmenterName;
 	private JLabel jLabel2;
 	protected JButton jButtonRefresh;
+	protected JButton btnPreview;
 	protected JTextField jTextFieldThreshold;
 	protected JLabel jLabelThreshold;
 	protected JLabel jLabelHelpText;
@@ -110,11 +115,50 @@ public class LogDetectorConfigurationPanel extends ConfigurationPanel {
 		jCheckSubPixel.setSelected((Boolean) settings.get(KEY_DO_SUBPIXEL_LOCALIZATION));
 	}
 
-
+	/**
+	 * Returns a new instance of the {@link SpotDetectorFactory} that this configuration
+	 * panels configures. The new instance will in turn be used for the preview 
+	 * mechanism. Therefore, classes extending this class are advised to return a 
+	 * suitable implementation of the factory.
+	 * @return  a new {@link SpotDetectorFactory}.
+	 */
+	@SuppressWarnings("rawtypes")
+	protected SpotDetectorFactory<?> getDetectorFactory() {
+		return new LogDetectorFactory();
+	}
+	
 	/*
 	 * PRIVATE METHODS
 	 */
 
+	/**
+	 * Launch detection on the current frame.
+	 */
+	private void preview() {
+		// TODO 
+		btnPreview.setEnabled(false);
+		new Thread("TrackMate preview detection thread") {
+			public void run() {
+				Settings settings = new Settings();
+				settings.setFrom(imp);
+				int frame = imp.getFrame()-1;
+				settings.tstart = frame;
+				settings.tend = frame;
+				
+				settings.detectorFactory = getDetectorFactory();
+				settings.detectorSettings = getSettings();
+				
+				TrackMate trackmate = new TrackMate(settings);
+				trackmate.execDetection();
+				
+				System.out.println("Found " + trackmate.getModel().getSpots().getNSpots(false) + " spots.");//DEBUG 
+				
+				btnPreview.setEnabled(true);
+				
+			};
+		}.start();
+	}
+	
 	/**
 	 * Fill the text fields with parameters grabbed from stored ImagePlus.
 	 */
@@ -170,7 +214,7 @@ public class LogDetectorConfigurationPanel extends ConfigurationPanel {
 			}
 			{
 				jCheckBoxMedianFilter = new JCheckBox();
-				jCheckBoxMedianFilter.setBounds(11, 290, 230, 21);
+				jCheckBoxMedianFilter.setBounds(11, 312, 230, 21);
 				this.add(jCheckBoxMedianFilter);
 				jCheckBoxMedianFilter.setText("Use median filter ");
 				jCheckBoxMedianFilter.setFont(FONT);
@@ -203,7 +247,7 @@ public class LogDetectorConfigurationPanel extends ConfigurationPanel {
 			{
 				// Add sub-pixel checkbox
 				jCheckSubPixel = new JCheckBox();
-				jCheckSubPixel.setBounds(11, 314, 231, 21);
+				jCheckSubPixel.setBounds(11, 336, 231, 21);
 				this.add(jCheckSubPixel);
 				jCheckSubPixel.setText("Do sub-pixel localization ");
 				jCheckSubPixel.setFont(FONT);
@@ -229,22 +273,39 @@ public class LogDetectorConfigurationPanel extends ConfigurationPanel {
 			}
 			{
 				jButtonRefresh = new JButton();
-				jButtonRefresh.setBounds(5, 370, 111, 25);
+				jButtonRefresh.setBounds(5, 370, 120, 25);
 				this.add(jButtonRefresh);
 				jButtonRefresh.setText("Refresh treshold");
-				jButtonRefresh.setToolTipText(TOOLTIP);
+				jButtonRefresh.setToolTipText(TOOLTIP_REFRESH);
 				jButtonRefresh.setFont(SMALL_FONT);
 				jButtonRefresh.addActionListener(new ActionListener() {
 					public void actionPerformed(ActionEvent e) {
 						refresh();
 					}
 				});
-				
+			}
+			{
+				btnPreview = new JButton("Preview");
+				btnPreview.setToolTipText(TOOLTIP_PREVIEW);
+				btnPreview.setBounds(161, 370, 120, 25);
+				this.add(btnPreview);
+				btnPreview.setFont(SMALL_FONT);
+				btnPreview.addActionListener(new ActionListener() {
+					@Override
+					public void actionPerformed(ActionEvent e) {
+						preview();
+					}
+				});
+			}
+
+			{
+
 				// Deal with channels: the slider and channel labels are only visible if we find more than one channel.
 				int n_channels = imp.getNChannels();
 				sliderChannel.setMaximum(n_channels);
 				sliderChannel.setMinimum(1);
 				sliderChannel.setValue(imp.getChannel());
+
 				if (n_channels <= 1) {
 					labelChannel.setVisible(false);
 					lblSegmentInChannel.setVisible(false);
@@ -259,5 +320,4 @@ public class LogDetectorConfigurationPanel extends ConfigurationPanel {
 			e.printStackTrace();
 		}
 	}
-
 }
