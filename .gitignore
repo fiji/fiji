@@ -249,21 +249,18 @@ hs_err*.log
 /jars/scijava-common-[0-9]*.jar
 
 # ImgLib #
-/jars/legacy-imglib1-[0-9]*.jar
-/jars/imglib-algorithms-[0-9]*.jar
-/jars/imglib-ij-[0-9]*.jar
-/jars/imglib-io-[0-9]*.jar
-/jars/imglib-scripting-[0-9]*.jar
-/jars/imglib-[0-9]*.jar
 /jars/imglib2-[0-9]*.jar
 /jars/imglib2-algorithms-[0-9]*.jar
 /jars/imglib2-algorithms-gpl-[0-9]*.jar
 /jars/imglib2-algorithms-legacy-[0-9]*.jar
-/jars/imglib2-algorithms-[0-9]*.jar
+/jars/imglib2-examples-[0-9]*.jar
 /jars/imglib2-ij-[0-9]*.jar
 /jars/imglib2-io-[0-9]*.jar
 /jars/imglib2-ops-[0-9]*.jar
-/jars/imglib2-[0-9]*.jar
+/jars/imglib2-realtransform-[0-9]*.jar
+/jars/imglib2-scripting-[0-9]*.jar
+/jars/imglib2-ui-[0-9]*.jar
+/jars/legacy-imglib1-[0-9]*.jar
 
 # Bio-Formats #
 /jars/bio-formats-[0-9]*.jar
@@ -285,7 +282,6 @@ hs_err*.log
 /jars/serializer-[0-9]*.jar
 /jars/slf4j-api-[0-9]*.jar
 /jars/slf4j-log4j12-[0-9]*.jar
-/jars/turbojpeg-[0-9]*.jar
 /jars/xalan-[0-9]*.jar
 /jars/xml-apis-[0-9]*.jar
 

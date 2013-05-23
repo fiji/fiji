@@ -12,8 +12,6 @@ import javax.swing.SwingUtilities;
 import fiji.util.gui.GenericDialogPlus;
 import fiji.util.gui.OverlayedImageCanvas;
 
-import hr.irb.fastRandomForest.FastRandomForest;
-
 import ij.IJ;
 import ij.plugin.PlugIn;
 import ij.plugin.frame.Recorder;
@@ -113,8 +111,8 @@ import weka.gui.visualize.ThresholdVisualizePanel;
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
- * Authors: Ignacio Arganda-Carreras (iarganda@mit.edu), Verena Kaynig (verena.kaynig@inf.ethz.ch),
- *          Albert Cardona (acardona@ini.phys.ethz.ch)
+ * Authors: Ignacio Arganda-Carreras (iargandacarreras@gmail.com), Verena Kaynig,
+ *          Albert Cardona
  */
 
 
@@ -218,7 +216,7 @@ public class Weka_Segmentation implements PlugIn
 	public static final String CREATE_CLASS = "createNewClass";
 	/** name of the macro method to launch the Weka Chooser */
 	public static final String LAUNCH_WEKA = "launchWeka";
-	/** name of the macro method to enable/disbale a feature */
+	/** name of the macro method to enable/disable a feature */
 	public static final String SET_FEATURE = "setFeature";
 	/** name of the macro method to set the membrane thickness */
 	public static final String SET_MEMBRANE_THICKNESS = "setMembraneThickness";
@@ -228,7 +226,7 @@ public class Weka_Segmentation implements PlugIn
 	public static final String SET_MINIMUM_SIGMA = "setMinimumSigma";
 	/** name of the macro method to set the maximum kernel radius */
 	public static final String SET_MAXIMUM_SIGMA = "setMaximumSigma";
-	/** name of the macro method to enable/disble the class homogenization */
+	/** name of the macro method to enable/disable the class homogenization */
 	public static final String SET_HOMOGENIZATION = "setClassHomogenization";
 	/** name of the macro method to set a new classifier */
 	public static final String SET_CLASSIFIER = "setClassifier";
@@ -545,7 +543,7 @@ public class Weka_Segmentation implements PlugIn
 	}
 
 	/**
-	 * Custom window to define the Advanced Weka Segmentation GUI
+	 * Custom window to define the Trainable Weka Segmentation GUI
 	 */
 	private class CustomWindow extends StackWindow
 	{
@@ -606,7 +604,7 @@ public class Weka_Segmentation implements PlugIn
 			// Remove the canvas from the window, to add it later
 			removeAll();
 
-			setTitle("Advanced Weka Segmentation");
+			setTitle("Trainable Weka Segmentation");
 
 			// Annotations panel
 			annotationsConstraints.anchor = GridBagConstraints.NORTHWEST;
@@ -1218,7 +1216,7 @@ public class Weka_Segmentation implements PlugIn
 					"might take some time depending on your computer.\n");
 
 
-		//trainingImage.setProcessor("Advanced Weka Segmentation", trainingImage.getProcessor().duplicate().convertToByte(true));
+		//trainingImage.setProcessor("Trainable Weka Segmentation", trainingImage.getProcessor().duplicate().convertToByte(true));
 		//wekaSegmentation.loadNewImage(trainingImage);
 		/*
 		if(trainingImage.getImageStackSize() > 1)
@@ -1230,7 +1228,7 @@ public class Weka_Segmentation implements PlugIn
 		
 		// The display image is a copy of the training image (single image or stack)
 		displayImage = trainingImage.duplicate();
-		displayImage.setTitle("Advanced Weka Segmentation");
+		displayImage.setTitle("Trainable Weka Segmentation");
 
 		ij.gui.Toolbar.getInstance().setTool(ij.gui.Toolbar.FREELINE);
 
@@ -1755,6 +1753,7 @@ public class Weka_Segmentation implements PlugIn
 		if( false == wekaSegmentation.loadClassifier(od.getDirectory() + od.getFileName()) )
 		{
 			IJ.error("Error when loading Weka classifier from file");
+			IJ.log("Error: classifier could not be loaded.");
 			win.updateButtonsEnabling();
 			return;
 		}
@@ -1912,7 +1911,7 @@ public class Weka_Segmentation implements PlugIn
 
 		// Updating image
 		displayImage = new ImagePlus();
-		displayImage.setProcessor("Advanced Weka Segmentation", trainingImage.getProcessor().duplicate());
+		displayImage.setProcessor("Trainable Weka Segmentation", trainingImage.getProcessor().duplicate());
 
 		// Remove current classification result image
 		win.resultOverlay.setImage(null);
@@ -1975,7 +1974,7 @@ public class Weka_Segmentation implements PlugIn
 	{
 		if(wekaSegmentation.getNumOfClasses() == WekaSegmentation.MAX_NUM_CLASSES)
 		{
-			IJ.showMessage("Advanced Weka Segmentation", "Sorry, maximum number of classes has been reached");
+			IJ.showMessage("Trainable Weka Segmentation", "Sorry, maximum number of classes has been reached");
 			return;
 		}
 
@@ -2102,7 +2101,7 @@ public class Weka_Segmentation implements PlugIn
 		gd.addCheckbox("Homogenize classes", wekaSegmentation.doHomogenizeClasses());
 		gd.addButton("Save feature stack", new SaveFeatureStackButtonListener("Select location to save feature stack", wekaSegmentation.getFeatureStackArray()));
 		gd.addSlider("Result overlay opacity", 0, 100, win.overlayOpacity);
-		gd.addHelp("http://fiji.sc/wiki/Trainable_Segmentation_Plugin");
+		gd.addHelp("http://fiji.sc/Trainable_Weka_Segmentation");
 
 		gd.showDialog();
 

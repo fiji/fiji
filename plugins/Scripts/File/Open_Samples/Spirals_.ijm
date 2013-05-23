@@ -10,12 +10,22 @@ w = h = 512;
 cx = w / 2;
 cy = h / 2;
 count1 = 8;
-count2 = 8 * 16;
 factor = 2 * PI / w;
 
-yellow = (150 << 16) | (250 << 8) | 0;
-red = (240 << 16) | (20 << 8) | 0;
-green = (70 << 16) | (190 << 8) | 0;
+useOnlyRedAndGreen = !isKeyDown("alt");
+if (useOnlyRedAndGreen) {
+	count2 = 8 * 16;
+
+	yellow = (150 << 16) | (250 << 8) | 0;
+	red = (240 << 16) | (20 << 8) | 0;
+	green = (70 << 16) | (190 << 8) | 0;
+} else {
+	count2 = 8 * 8;
+
+	yellow = 0x0096be;
+	red = 0xfa14a0;
+	green = 0xc8c864;
+}
 
 function modulo(x, base) {
 	return x - base * floor(x / base);
