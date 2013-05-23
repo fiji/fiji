@@ -9,6 +9,7 @@ import org.jdom2.JDOMException;
 import org.scijava.util.AppUtils;
 
 import fiji.plugin.trackmate.SelectionModel;
+import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.TrackMate;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.io.TmXmlReader;
@@ -26,7 +27,9 @@ public class HyperStackDisplayerTestDrive {
 		TmXmlReader reader = new TmXmlReader(file);
 
 		TrackMateModel model = reader.getModel();
-		ImagePlus imp = reader.getSettings(null, null, null, null, null).imp;
+		Settings settings = new Settings();
+		reader.readSettings(settings, null, null, null, null, null);
+		ImagePlus imp = settings.imp;
 		
 		SelectionModel selectionModel = new SelectionModel(model);
 		HyperStackDisplayer displayer = new HyperStackDisplayer(model, selectionModel, imp);

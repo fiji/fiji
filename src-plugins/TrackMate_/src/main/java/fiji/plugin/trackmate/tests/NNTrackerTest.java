@@ -34,7 +34,8 @@ public class NNTrackerTest {
 		System.out.println("Opening file: "+file.getAbsolutePath());		
 		TmXmlReader reader = new TmXmlReader(file);
 		TrackMateModel model = reader.getModel();
-		Settings gs = reader.getSettings(null, null, null, null, null);
+		Settings gs = new Settings();
+		reader.readSettings(gs, null, null, null, null, null);
 		
 		System.out.println("Spots: "+ model.getSpots());
 		System.out.println("Found "+model.getTrackModel().getNTracks()+" tracks in the file:");

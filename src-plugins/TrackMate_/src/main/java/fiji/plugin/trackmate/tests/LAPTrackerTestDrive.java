@@ -39,8 +39,8 @@ public class LAPTrackerTestDrive {
 		System.out.println("Opening file: "+file.getAbsolutePath());		
 		TmXmlReader reader = new TmXmlReader(file);
 		TrackMateModel model = reader.getModel();
-		Settings settings = null;
-		settings = reader.getSettings(null, new TrackerProvider(model), null, null, null);
+		Settings settings = new Settings();
+		reader.readSettings(settings, null, new TrackerProvider(model), null, null, null);
 		
 		System.out.println("Spots: "+ model.getSpots());
 		System.out.println("Found "+model.getTrackModel().getNTracks()+" tracks in the file:");

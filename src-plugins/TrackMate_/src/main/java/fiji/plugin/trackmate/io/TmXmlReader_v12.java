@@ -209,11 +209,11 @@ public class TmXmlReader_v12 extends TmXmlReader {
 	
 	
 	@Override
-	public Settings getSettings(DetectorProvider detectorProvider, TrackerProvider trackerProvider, SpotAnalyzerProvider spotAnalyzerProvider,
+	public void readSettings(Settings settings, DetectorProvider detectorProvider, TrackerProvider trackerProvider, SpotAnalyzerProvider spotAnalyzerProvider,
 			EdgeAnalyzerProvider edgeAnalyzerProvider, TrackAnalyzerProvider trackAnalyzerProvider) {
 
 		// Settings
-		Settings settings = getSettings();
+		getBaseSettings(settings);
 		getDetectorSettings(settings, detectorProvider);
 		getTrackerSettings(settings, trackerProvider);
 		settings.imp = getImage();
@@ -251,8 +251,6 @@ public class TmXmlReader_v12 extends TmXmlReader {
 			TrackAnalyzer trackAnalyzer = trackAnalyzerProvider.getTrackFeatureAnalyzer(key);
 			settings.addTrackAnalyzer(trackAnalyzer);
 		}
-		
-		return settings;
 	}
 	
 	@Override
@@ -586,8 +584,7 @@ public class TmXmlReader_v12 extends TmXmlReader {
 	 * @return  a full Settings object
 	 * @throws DataConversionException
 	 */
-	private Settings getSettings() {
-		Settings settings = new Settings();
+	private void getBaseSettings(Settings settings) {
 		// Basic settings
 		Element settingsEl = root.getChild(SETTINGS_ELEMENT_KEY_v12);
 		if (null != settingsEl) {
@@ -614,7 +611,6 @@ public class TmXmlReader_v12 extends TmXmlReader {
 			settings.imageFileName  = infoEl.getAttributeValue(IMAGE_FILENAME_v12_ATTRIBUTE_NAME_v12);
 			settings.imageFolder    = infoEl.getAttributeValue(IMAGE_FOLDER_ATTRIBUTE_NAME_v12);
 		}
-		return settings;
 	}
 
 	private void getDetectorSettings(Settings settings, DetectorProvider provider) {

@@ -24,7 +24,8 @@ public class SpotFilteringPerf_TestDrive {
 		File file = new File(AppUtils.getBaseDirectory(TrackMate.class), "samples/FakeTracks.xml");
 		TmXmlReader reader = new TmXmlReader(file);
 		TrackMateModel model = reader.getModel();
-		Settings settings = reader.getSettings(null, null, 
+		Settings settings = new Settings();
+		reader.readSettings(settings, null, null, 
 				new SpotAnalyzerProvider(model), new EdgeAnalyzerProvider(model), new TrackAnalyzerProvider(model));
 		TrackMate trackmate = new TrackMate(model, settings);
 

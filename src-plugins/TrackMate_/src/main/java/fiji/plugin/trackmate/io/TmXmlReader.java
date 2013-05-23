@@ -279,8 +279,8 @@ public class TmXmlReader {
 
 
 	/**
-	 * Reads the settings element of the file, and set the fields of the specified 
-	 * {@link Settings} object stored according to the xml file content.
+	 * Reads the settings element of the file, and sets the fields of the specified 
+	 * {@link Settings} object according to the xml file content.
 	 * The provided {@link Settings} object is left untouched if the settings element
 	 * cannot be found in the file.
 	 * @param settings the {@link Settings} object to flesh out.

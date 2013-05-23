@@ -33,7 +33,8 @@ public class TrackVisualizerTestDrive {
 		
 		TmXmlReader reader = new TmXmlReader(file);
 		TrackMateModel model = reader.getModel();
-		Settings settings = reader.getSettings(null, null, null, null, null);
+		Settings settings = new Settings();
+		reader.readSettings(settings, null, null, null, null, null);
 		TrackMate trackmate = new TrackMate(model, settings);
 		
 		System.out.println("From the XML file:");
