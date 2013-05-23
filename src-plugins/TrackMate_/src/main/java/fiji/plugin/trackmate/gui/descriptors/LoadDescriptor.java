@@ -107,6 +107,7 @@ public class LoadDescriptor extends SomeDialogDescriptor {
 		Map<String, Object> displaySettings = newcontroller.getGuimodel().getDisplaySettings();
 		for (TrackMateModelView view : views) {
 			for (String key : displaySettings.keySet()) {
+				newcontroller.getGuimodel().addView(view);
 				view.setDisplaySettings(key, displaySettings.get(key));
 			}
 			view.render();

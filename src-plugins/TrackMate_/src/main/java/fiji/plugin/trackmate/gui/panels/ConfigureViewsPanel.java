@@ -9,6 +9,7 @@ import static fiji.plugin.trackmate.visualization.TrackMateModelView.KEY_SPOT_CO
 import static fiji.plugin.trackmate.visualization.TrackMateModelView.KEY_SPOT_RADIUS_RATIO;
 import static fiji.plugin.trackmate.visualization.TrackMateModelView.KEY_TRACKS_VISIBLE;
 import static fiji.plugin.trackmate.visualization.TrackMateModelView.KEY_TRACK_DISPLAY_DEPTH;
+import static fiji.plugin.trackmate.visualization.TrackMateModelView.KEY_TRACK_COLORING;
 import static fiji.plugin.trackmate.visualization.TrackMateModelView.KEY_TRACK_DISPLAY_MODE;
 import static fiji.plugin.trackmate.visualization.trackscheme.TrackScheme.TRACK_SCHEME_ICON;
 
@@ -49,6 +50,7 @@ import fiji.plugin.trackmate.gui.panels.components.JPanelColorByFeatureGUI;
 import fiji.plugin.trackmate.gui.panels.components.TrackColorByFeatureGUI;
 import fiji.plugin.trackmate.util.TMUtils;
 import fiji.plugin.trackmate.visualization.AbstractTrackMateModelView;
+import fiji.plugin.trackmate.visualization.TrackColorGenerator;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
 
 /**
@@ -170,6 +172,16 @@ public class ConfigureViewsPanel extends ActionListenablePanel {
 		}
 		trackColorGUI = new TrackColorByFeatureGUI(trackmate.getModel());
 		trackColorGUI.setPreferredSize(new java.awt.Dimension(265, 45));
+		trackColorGUI.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				TrackColorGenerator oldValue = (TrackColorGenerator) displaySettings.get(KEY_TRACK_COLORING);
+				TrackColorGenerator newValue = trackColorGUI.getColorGenerator();
+				displaySettings.put(KEY_TRACK_COLORING, newValue);
+				DisplaySettingsEvent event = new DisplaySettingsEvent(trackColorGUI, KEY_TRACK_COLORING, newValue, oldValue);
+				fireDisplaySettingsChange(event);
+			}
+		});
 		jPanelTrackOptions.add(trackColorGUI);
 	}
 
