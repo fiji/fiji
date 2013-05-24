@@ -88,7 +88,7 @@ public class TrackMateGUIController implements ActionListener {
 	protected DetectorConfigurationDescriptor detectorConfigurationDescriptor;
 	protected DetectorChoiceDescriptor detectorChoiceDescriptor;
 	protected StartDialogDescriptor startDialoDescriptor;
-	protected DetectionDescriptor detectorDescriptor;
+	protected DetectionDescriptor detectionDescriptor;
 	protected InitFilterDescriptor initFilterDescriptor;
 	protected ViewChoiceDescriptor viewChoiceDescriptor;
 	protected SpotFilterDescriptor spotFilterDescriptor;
@@ -346,7 +346,7 @@ public class TrackMateGUIController implements ActionListener {
 		/*
 		 * Execute and report detection progress
 		 */
-		detectorDescriptor 			= new DetectionDescriptor(this, trackmate);
+		detectionDescriptor 		= new DetectionDescriptor(this);
 
 		/*
 		 * Initial spot filter: discard obvious spurious spot based on quality.
@@ -399,7 +399,7 @@ public class TrackMateGUIController implements ActionListener {
 		/*
 		 * Execute tracking
 		 */
-		trackingDescriptor			= new TrackingDescriptor(logPanel, trackerProvider, trackmate);
+		trackingDescriptor			= new TrackingDescriptor(this);
 
 		/*
 		 * Track filtering 
@@ -481,7 +481,7 @@ public class TrackMateGUIController implements ActionListener {
 		descriptors.add(configureViewsDescriptor);
 		descriptors.add(detectorChoiceDescriptor);
 		descriptors.add(detectorConfigurationDescriptor);
-		descriptors.add(detectorDescriptor);
+		descriptors.add(detectionDescriptor);
 		descriptors.add(grapherDescriptor);
 		descriptors.add(initFilterDescriptor);
 		descriptors.add(loadDescriptor);
@@ -513,10 +513,10 @@ public class TrackMateGUIController implements ActionListener {
 			if (trackmate.getSettings().detectorFactory.getKey().equals(ManualDetectorFactory.DETECTOR_KEY)) {
 				return viewChoiceDescriptor;
 			} else {
-				return detectorDescriptor;
+				return detectionDescriptor;
 			}
 
-		} else if (currentDescriptor == detectorDescriptor) {
+		} else if (currentDescriptor == detectionDescriptor) {
 			return initFilterDescriptor;
 
 		} else if (currentDescriptor == initFilterDescriptor) {
@@ -565,11 +565,11 @@ public class TrackMateGUIController implements ActionListener {
 		} else if (currentDescriptor == detectorConfigurationDescriptor) {
 			return detectorChoiceDescriptor;
 
-		} else if (currentDescriptor == detectorDescriptor) {
+		} else if (currentDescriptor == detectionDescriptor) {
 			return detectorConfigurationDescriptor;
 
 		} else if (currentDescriptor == initFilterDescriptor) {
-			return detectorDescriptor;
+			return detectionDescriptor;
 
 		} else if (currentDescriptor == viewChoiceDescriptor) {
 			return detectorConfigurationDescriptor;

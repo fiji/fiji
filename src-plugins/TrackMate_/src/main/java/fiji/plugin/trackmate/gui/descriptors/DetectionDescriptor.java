@@ -27,10 +27,10 @@ public class DetectionDescriptor implements WizardPanelDescriptor {
 	protected TrackMateGUIController controller;
 
 
-	public DetectionDescriptor(TrackMateGUIController controller, TrackMate trackmate) {
+	public DetectionDescriptor(TrackMateGUIController controller) {
 		this.controller = controller;
 		this.logPanel = controller.getGUI().getLogPanel();
-		this.trackmate = trackmate;
+		this.trackmate = controller.getPlugin();
 	}
 	
 	@Override
