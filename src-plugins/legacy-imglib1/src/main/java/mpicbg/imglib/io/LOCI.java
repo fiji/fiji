@@ -47,6 +47,9 @@ import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.Arrays;
 
+import loci.common.services.DependencyException;
+import loci.common.services.ServiceException;
+import loci.common.services.ServiceFactory;
 import loci.formats.ChannelSeparator;
 import loci.formats.FormatException;
 import loci.formats.FormatTools;
@@ -54,6 +57,7 @@ import loci.formats.IFormatReader;
 import loci.formats.MetadataTools;
 import loci.formats.meta.IMetadata;
 import loci.formats.meta.MetadataRetrieve;
+import loci.formats.services.OMEXMLService;
 import mpicbg.imglib.container.ContainerFactory;
 import mpicbg.imglib.container.array.ArrayContainerFactory;
 import mpicbg.imglib.cursor.LocalizablePlaneCursor;
@@ -168,14 +172,38 @@ public class LOCI
 	{
 		return openLOCIUnsigned12BitType( path, fileName, new ImageFactory<Unsigned12BitType>( new Unsigned12BitType(), factory ), from, to );
 	}
-	
+
+	private static boolean createOMEXMLMetadata(final IFormatReader r)
+	{
+		try {
+			final ServiceFactory serviceFactory = new ServiceFactory();
+			final OMEXMLService service = serviceFactory
+					.getInstance(OMEXMLService.class);
+			final IMetadata omexmlMeta = service.createOMEXMLMetadata();
+			r.setMetadataStore(omexmlMeta);
+		} catch (final ServiceException e) {
+			e.printStackTrace();
+			return false;
+		} catch (final DependencyException e) {
+			e.printStackTrace();
+			return false;
+		}
+		return true;
+	}
+
 	public static Image<Unsigned12BitType> openLOCIUnsigned12BitType( String path, final String fileName, final ImageFactory<Unsigned12BitType> factory, int from, int to )
 	{				
 		path = checkPath( path );
 		final IFormatReader r = new ChannelSeparator();
 
-		final IMetadata omexmlMeta = MetadataTools.createOMEXMLMetadata();
-		r.setMetadataStore( omexmlMeta );
+		if ( !createOMEXMLMetadata(r) ) {
+			try {
+				r.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			return null;
+		}
 
 		final String id = path + fileName;
 		
@@ -338,8 +366,14 @@ public class LOCI
 		path = checkPath( path );
 		final IFormatReader r = new ChannelSeparator();
 
-		final IMetadata omexmlMeta = MetadataTools.createOMEXMLMetadata();
-		r.setMetadataStore( omexmlMeta );
+		if ( !createOMEXMLMetadata(r) ) {
+			try {
+				r.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			return null;
+		}
 
 		final String id = path + fileName;
 
@@ -642,8 +676,14 @@ public class LOCI
 
 		final IFormatReader r = new ChannelSeparator();
 
-		final IMetadata omexmlMeta = MetadataTools.createOMEXMLMetadata();
-		r.setMetadataStore( omexmlMeta );
+		if ( !createOMEXMLMetadata(r) ) {
+			try {
+				r.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			return null;
+		}
 		
 		final String id = path + fileName;
 		
@@ -822,8 +862,14 @@ public class LOCI
 		path = checkPath( path );
 		final IFormatReader r = new ChannelSeparator();
 
-		final IMetadata omexmlMeta = MetadataTools.createOMEXMLMetadata();
-		r.setMetadataStore( omexmlMeta );
+		if ( !createOMEXMLMetadata(r) ) {
+			try {
+				r.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			return null;
+		}
 
 		final String id = path + fileName;
 		
@@ -971,8 +1017,14 @@ public class LOCI
 		path = checkPath( path );
 		final IFormatReader r = new ChannelSeparator();
 
-		final IMetadata omexmlMeta = MetadataTools.createOMEXMLMetadata();
-		r.setMetadataStore( omexmlMeta );
+		if ( !createOMEXMLMetadata(r) ) {
+			try {
+				r.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			return null;
+		}
 
 		final String id = path + fileName;
 		
@@ -1105,8 +1157,14 @@ public class LOCI
 		path = checkPath( path );
 		final IFormatReader r = new ChannelSeparator();
 
-		final IMetadata omexmlMeta = MetadataTools.createOMEXMLMetadata();
-		r.setMetadataStore( omexmlMeta );
+		if ( !createOMEXMLMetadata(r) ) {
+			try {
+				r.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			return null;
+		}
 
 		final String id = path + fileName;
 		
