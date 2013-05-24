@@ -220,9 +220,13 @@ public class TrackMateGUIController implements ActionListener {
 				gui.show(descriptor);
 				if (null == nextDescriptor(descriptor)) {
 					gui.setNextButtonEnabled(false);
+				} else {
+					gui.setNextButtonEnabled(true);
 				}
 				if (null == previousDescriptor(descriptor)) {
 					gui.setPreviousButtonEnabled(false);
+				} else {
+					gui.setPreviousButtonEnabled(true);
 				}
 				descriptor.displayingPanel();
 				return;

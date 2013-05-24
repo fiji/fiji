@@ -18,6 +18,7 @@ import fiji.plugin.trackmate.providers.SpotAnalyzerProvider;
 import fiji.plugin.trackmate.providers.TrackAnalyzerProvider;
 import fiji.plugin.trackmate.providers.TrackerProvider;
 import fiji.plugin.trackmate.providers.ViewProvider;
+import fiji.plugin.trackmate.util.TMUtils;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
 import fiji.plugin.trackmate.visualization.hyperstack.HyperStackDisplayer;
 
@@ -58,12 +59,12 @@ public class LoadDescriptor extends SomeDialogDescriptor {
 		TmXmlReader reader = new TmXmlReader(file);
 		if (!reader.isReadingOk()) {
 			logger.error(reader.getErrorMessage());
-			logger.error("Aborting.\n"); // If I cannot even open the xml file, it is not worh going on.
+			logger.error("Aborting.\n"); // If I cannot even open the xml file, it is not work going on.
 			return;
 		}
 		
 		// Log
-		String logText = reader.getLog();
+		String logText = reader.getLog() + '\n';
 		// Model
 		TrackMateModel model = reader.getModel();
 		// Settings -> empty for now.
@@ -87,7 +88,6 @@ public class LoadDescriptor extends SomeDialogDescriptor {
 		
 		// GUI state
 		String guiState = reader.getGUIState();
-		newcontroller.getGUI().getLogPanel().setTextContent(logText);
 		
 		// Views
 		ViewProvider viewProvider = newcontroller.getViewProvider();
@@ -115,6 +115,10 @@ public class LoadDescriptor extends SomeDialogDescriptor {
 
 		// Close the old one
 		controller.quit();
+
+		// Text
+		newcontroller.getGUI().getLogPanel().setTextContent(logText);
+		model.getLogger().log("File loaded on " + TMUtils.getCurrentTimeString() + '\n', Logger.BLUE_COLOR);
 	}
 
 	@Override
