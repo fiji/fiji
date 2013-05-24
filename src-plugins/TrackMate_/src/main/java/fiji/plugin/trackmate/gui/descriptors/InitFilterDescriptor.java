@@ -48,8 +48,6 @@ public class InitFilterDescriptor implements WizardPanelDescriptor {
 	@Override
 	public void aboutToHidePanel() {
 		
-		component.quit();
-		
 		final TrackMateModel model = trackmate.getModel();
 		Logger logger = model.getLogger();
 		FeatureFilter initialThreshold = component.getFeatureThreshold();
