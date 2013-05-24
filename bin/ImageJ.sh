@@ -8,7 +8,7 @@ DIRECTORY="`dirname "$0"`"
 PATHSEPARATOR=:
 ISWINDOWS=
 ISCYGWIN=
-case "$(uname -s)" in
+case "`uname -s`" in
 MINGW*)
 	ISWINDOWS=t
 	PATHSEPARATOR=";"
@@ -21,7 +21,7 @@ CYGWIN*)
 	FIJI_ROOT="$(cygpath -d "$(cd "$DIRECTORY" && pwd)" | tr \\\\ /)"
 	;;
 *)
-	FIJI_ROOT="$(cd "$DIRECTORY" && pwd)"
+	FIJI_ROOT="`cd "$DIRECTORY" && pwd`"
 	;;
 esac
 
@@ -185,7 +185,7 @@ get_first () {
 	echo "$1"
 }
 
-case "$main_class,$(get_first $ij_options)" in
+case "$main_class,`get_first $ij_options`" in
 fiji.Main,*.py)
 	main_class=org.python.util.jython
 	;;
@@ -201,17 +201,17 @@ fiji.Main,*.bsh)
 esac
 
 discover_tools_jar () {
-	javac="$(which javac)" &&
+	javac="`which javac`" &&
 	while test -h "$javac"
 	do
-		javac="$(readlink "$javac")"
+		javac="`readlink "$javac"`"
 	done
 	if test -n "$javac"
 	then
 		JAVA_HOME="${javac%/bin/javac}"
 		if test -n "$ISWINDOWS"
 		then
-			JAVA_HOME="$(cd "$JAVA_HOME" && pwd -W)"
+			JAVA_HOME="`cd "$JAVA_HOME" && pwd -W`"
 		fi
 		export JAVA_HOME
 		echo "$JAVA_HOME/lib/tools.jar"
@@ -225,7 +225,7 @@ discover_jar () {
 }
 
 test -z "$needs_tools_jar" || {
-	add_classpath "$(discover_tools_jar)"
+	add_classpath "`discover_tools_jar`"
 	case "$main_class" in
 	*.ant.*)
 		;;
@@ -239,10 +239,10 @@ case "$main_class" in
 fiji.Main|ij.ImageJ)
 	ij_options="$main_class -port7 $ij_options"
 	main_class="imagej.ClassLauncher -ijjarpath jars/ -ijjarpath plugins/"
-	add_classpath "$(discover_jar ij-launcher)" "$(discover_jar ij)" "$(discover_jar javassist)"
+	add_classpath "`discover_jar ij-launcher`" "`discover_jar ij`" "`discover_jar javassist`"
 	;;
 fiji.build.Fake)
-	add_classpath "$(discover_jar fake)"
+	add_classpath "`discover_jar fake`"
 	;;
 org.apache.tools.ant.Main)
 	for path in "$FIJI_ROOT"/jars/ant*.jar
@@ -281,7 +281,7 @@ case "$EXECUTABLE_NAME" in
 esac
 
 EXT_OPTION=
-case "$(uname -s)" in
+case "`uname -s`" in
 Darwin)
 	EXT_OPTION=-Djava.ext.dirs="$FIJI_ROOT_SQ"/java/macosx-java3d/Home/lib/ext:/Library/Java/Extensions:/System/Library/Java/Extensions:/System/Library/Frameworks/JavaVM.framework/Home/lib/ext
 	;;
@@ -291,7 +291,7 @@ eval java $EXT_OPTION \
 	-Dpython.cachedir.skip=true \
 	-Xincgc -XX:PermSize=128m \
 	-Dplugins.dir=$FIJI_ROOT_SQ \
-	-Djava.class.path="$(sq_quote "$CLASSPATH")" \
+	-Djava.class.path="`sq_quote "$CLASSPATH"`" \
 	-Dsun.java.command=Fiji -Dij.dir=$FIJI_ROOT_SQ \
 	-Dfiji.dir=$FIJI_ROOT_SQ \
 	-Dfiji.executable="`sq_quote "$EXECUTABLE_NAME"`" \
