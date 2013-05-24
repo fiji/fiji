@@ -233,6 +233,7 @@ maven_update () {
 		if test -d "$SCIJAVA_COMMON/.git"
 		then
 			(cd "$SCIJAVA_COMMON" &&
+			 test arefs/heads/master != "$(git rev-parse --symbolic-full-name HEAD)" ||
 			 git pull -k)
 		else
 			git clone https://github.com/scijava/scijava-common \
