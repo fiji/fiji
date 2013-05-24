@@ -65,7 +65,10 @@ public class DetectorChoiceDescriptor implements WizardPanelDescriptor {
 		// Configure the detector provider with choice made in panel
 		int index = component.getChoice();
 		String key = detectorProvider.getKeys().get(index);
-		detectorProvider.select(key);
+		boolean ok = detectorProvider.select(key);
+		if (!ok) {
+			trackmate.getModel().getLogger().error(detectorProvider.getErrorMessage());
+		}
 		
 		// Configure trackmate settings with selected detector
 		trackmate.getSettings().detectorFactory = detectorProvider.getDetectorFactory();

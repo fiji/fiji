@@ -320,7 +320,7 @@ public class TrackMateGUIController implements ActionListener {
 		/*
 		 * Start panel
 		 */
-		startDialoDescriptor 		= new StartDialogDescriptor(trackmate, spotAnalyzerProvider, edgeAnalyzerProvider, trackAnalyzerProvider);
+		startDialoDescriptor 		= new StartDialogDescriptor(this);
 		// Listen if the selected imp is valid and toggle next button accordingly.
 		startDialoDescriptor.addActionListener(new ActionListener() {
 			@Override

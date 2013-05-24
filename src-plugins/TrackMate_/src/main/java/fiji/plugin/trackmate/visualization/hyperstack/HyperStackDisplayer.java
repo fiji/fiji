@@ -183,6 +183,7 @@ public class HyperStackDisplayer extends AbstractTrackMateModelView  {
 		if (initialROI != null) {
 			imp.getOverlay().add(initialROI);
 		}
+		refresh();
 	}	
 
 	public void addOverlay(Roi overlay) {

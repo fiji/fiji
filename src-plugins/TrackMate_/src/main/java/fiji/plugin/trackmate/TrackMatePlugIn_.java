@@ -21,9 +21,8 @@ public class TrackMatePlugIn_ implements PlugIn {
 		settings 	= createSettings(imp);
 		trackmate 	= createTrackMate();
 		
-		
 		/*
-		 * Launch GUI
+		 * Launch GUI.
 		 */
 		
 		TrackMateGUIController controller = new TrackMateGUIController(trackmate);

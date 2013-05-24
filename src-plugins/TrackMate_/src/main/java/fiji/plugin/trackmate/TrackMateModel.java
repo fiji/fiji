@@ -247,6 +247,9 @@ public class TrackMateModel {
 	 */
 
 	public void addTrackMateModelChangeListener(ModelChangeListener listener) {
+		if (modelChangeListeners.contains(listener)) {
+			return;
+		}
 		modelChangeListeners.add(listener);
 	}
 
@@ -254,7 +257,7 @@ public class TrackMateModel {
 		return modelChangeListeners.remove(listener);
 	}
 
-	public List<ModelChangeListener> getTrackMateModelChangeListener(ModelChangeListener listener) {
+	public List<ModelChangeListener> getTrackMateModelChangeListener() {
 		return modelChangeListeners;
 	}
 
