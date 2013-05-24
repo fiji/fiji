@@ -6,6 +6,7 @@
 # with the filenames of the .jar files to be built
 
 set -a
+unset CDPATH
 CWD="$(dirname "$0")" || {
 	echo "Huh? Cannot cd to $(dirname "$0")" >&2
 	exit 1

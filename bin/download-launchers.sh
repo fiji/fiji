@@ -3,6 +3,7 @@
 # This script fetches the ImageJ launcher from http://maven.imagej.net/
 
 set -e
+unset CDPATH
 cd "$(dirname "$0")/.."
 
 case "$1" in

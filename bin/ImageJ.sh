@@ -3,6 +3,8 @@
 # A fallback shell script to launch Fiji without the ImageJ launcher
 # (i.e. when all else fails)
 
+unset CDPATH
+
 # bend over for SunOS' sh, and use `` instead of $()
 DIRECTORY="`dirname "$0"`"
 PATHSEPARATOR=:
