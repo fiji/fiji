@@ -696,7 +696,11 @@ public class SpotCollection implements MultiThreaded  {
 		private final Iterator<Spot> contentIterator;
 
 		public VisibleSpotsFrameIterator(Set<Spot> frameContent) {
-			this.contentIterator = frameContent.iterator();
+			if (null == frameContent) {
+				this.contentIterator = EMPTY_ITERATOR;
+			} else {
+				this.contentIterator = frameContent.iterator();
+			}
 			iterate();
 		}
 
@@ -847,7 +851,7 @@ public class SpotCollection implements MultiThreaded  {
 	 * Creates a new {@link SpotCollection} containing only the specified spots. 
 	 * Their frame origin is retrieved from their {@link Spot#FRAME} feature, so
 	 * it must be set properly for all spots. All the spots of the new collection
-	 * will be marked as not-visible.
+	 * have the same visibility that the one they carry.
 	 * @param spots  the spot collection to build from. 
 	 * @return  a new {@link SpotCollection} instance.
 	 */
@@ -860,8 +864,8 @@ public class SpotCollection implements MultiThreaded  {
 				fc = new HashSet<Spot>();
 				sc.content.put(frame, fc);
 			}
+			fc.add(spot);
 		}
-		sc.setVisible(false);
 		return sc;
 	}
 
