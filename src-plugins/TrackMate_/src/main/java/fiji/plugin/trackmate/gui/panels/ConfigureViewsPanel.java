@@ -40,7 +40,6 @@ import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 import javax.swing.border.LineBorder;
 
-import fiji.plugin.trackmate.TrackMate;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.gui.DisplaySettingsEvent;
 import fiji.plugin.trackmate.gui.DisplaySettingsListener;
@@ -87,17 +86,16 @@ public class ConfigureViewsPanel extends ActionListenablePanel {
 	private JCheckBox jCheckBoxDisplayNames;
 	private TrackColorByFeatureGUI trackColorGUI;
 
-	private final TrackMate trackmate;
-
 	private Collection<DisplaySettingsListener> listeners = new HashSet<DisplaySettingsListener>();
+	private final TrackMateModel model;
 
 
 	/*
 	 * CONSTRUCTOR 
 	 */
 
-	public ConfigureViewsPanel(TrackMate trackmate) {
-		this.trackmate = trackmate;
+	public ConfigureViewsPanel(TrackMateModel model) {
+		this.model = model;
 		initGUI();
 	}
 
@@ -162,7 +160,6 @@ public class ConfigureViewsPanel extends ActionListenablePanel {
 
 
 	public void refresh() {
-		TrackMateModel model = trackmate.getModel();
 		Map<String, double[]> featureValues = TMUtils.getSpotFeatureValues(model.getSpots(), 
 				model.getFeatureModel().getSpotFeatures(), model.getLogger());
 		jPanelSpotColor.setFeatureValues(featureValues);
@@ -170,7 +167,7 @@ public class ConfigureViewsPanel extends ActionListenablePanel {
 		if (trackColorGUI != null) {
 			jPanelTrackOptions.remove(trackColorGUI);
 		}
-		trackColorGUI = new TrackColorByFeatureGUI(trackmate.getModel());
+		trackColorGUI = new TrackColorByFeatureGUI(model);
 		trackColorGUI.setPreferredSize(new java.awt.Dimension(265, 45));
 		trackColorGUI.addActionListener(new ActionListener() {
 			@Override
@@ -401,8 +398,8 @@ public class ConfigureViewsPanel extends ActionListenablePanel {
 				}
 				{
 					List<String> features = new ArrayList<String>(
-							trackmate.getModel().getFeatureModel().getSpotFeatures());
-					Map<String, String> featureNames = trackmate.getModel().getFeatureModel().getSpotFeatureNames();
+							model.getFeatureModel().getSpotFeatures());
+					Map<String, String> featureNames = model.getFeatureModel().getSpotFeatureNames();
 					jPanelSpotColor = new JPanelColorByFeatureGUI(features, featureNames);
 					jPanelSpotOptions.add(jPanelSpotColor);
 					jPanelSpotColor.addActionListener(new ActionListener() {

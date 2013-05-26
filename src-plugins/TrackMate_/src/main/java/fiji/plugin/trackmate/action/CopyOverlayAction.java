@@ -63,7 +63,7 @@ public class CopyOverlayAction extends AbstractTMAction {
 							}
 							newDisplayer.render();
 							
-							final ConfigureViewsPanel newDisplayerPanel = new ConfigureViewsPanel(trackmate); // TODO link view and panel
+							final ConfigureViewsPanel newDisplayerPanel = new ConfigureViewsPanel(trackmate.getModel()); // TODO link view and panel
 							JFrame newFrame = new JFrame(); 
 							newFrame.getContentPane().add(newDisplayerPanel);
 							newFrame.pack();

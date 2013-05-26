@@ -80,7 +80,7 @@ public class TrackVisualizerTestDrive {
 		trackScheme.render();
 		
 		// Show control panel
-		ConfigureViewsPanel panel = new ConfigureViewsPanel(trackmate);
+		ConfigureViewsPanel panel = new ConfigureViewsPanel(trackmate.getModel());
 		JFrame frame = new JFrame();
 		frame.getContentPane().add(panel);
 		frame.setSize(300, 500);

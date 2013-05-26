@@ -504,6 +504,9 @@ public class SpotCollection implements MultiThreaded  {
 	 * @return the first (lowest) frame currently in this collection.
 	 */
 	public Integer firstKey() {
+		if (content.isEmpty()) {
+			return 0;
+		}
 		return content.firstKey();
 	}
 
@@ -512,6 +515,9 @@ public class SpotCollection implements MultiThreaded  {
 	 * @return the last (highest) frame currently in this collection.
 	 */
 	public Integer lastKey() {
+		if (content.isEmpty()) {
+			return 0;
+		}
 		return content.lastKey();
 	}
 

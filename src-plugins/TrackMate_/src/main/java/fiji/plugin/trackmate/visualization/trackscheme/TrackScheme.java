@@ -447,7 +447,6 @@ public class TrackScheme extends AbstractTrackMateModelView {
 			return;
 		doFireSelectionChangeEvent = false;
 
-		/* Performance issue: we do our highlighting here, in batch, bypassing highlight* methods		 */
 		{
 			ArrayList<Object> newSelection = new ArrayList<Object>(selectionModel.getSpotSelection().size() + selectionModel.getEdgeSelection().size());
 			Iterator<DefaultWeightedEdge> edgeIt = selectionModel.getEdgeSelection().iterator();

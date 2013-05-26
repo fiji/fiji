@@ -9,7 +9,7 @@ public class ConfigureViewsDescriptor implements WizardPanelDescriptor {
 	private ConfigureViewsPanel panel;
 
 	public ConfigureViewsDescriptor(TrackMate trackmate) {
-		this.panel = new ConfigureViewsPanel(trackmate);
+		this.panel = new ConfigureViewsPanel(trackmate.getModel());
 	}
 
 
