@@ -69,8 +69,8 @@ public class ConfigureViewsPanel extends ActionListenablePanel {
 	protected Map<String, Object> displaySettings = new HashMap<String, Object>();
 
 
-	JButton jButtonShowTrackScheme;
-	JButton jButtonDoAnalysis;
+	protected JButton jButtonShowTrackScheme;
+	protected JButton jButtonDoAnalysis;
 	private JLabel jLabelTrackDisplayMode;
 	private JComboBox jComboBoxDisplayMode;
 	private JLabel jLabelDisplayOptions;
