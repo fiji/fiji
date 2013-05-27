@@ -55,7 +55,7 @@ public class HyperStackDisplayer extends AbstractTrackMateModelView  {
 	 * CONSTRUCTORS
 	 */
 
-	public HyperStackDisplayer(final TrackMateModel model, final SelectionModel selectionModel,  final ImagePlus imp) {	
+	public HyperStackDisplayer(final TrackMateModel model, final SelectionModel selectionModel, final ImagePlus imp) {	
 		super(model, selectionModel);
 		this.imp = imp;
 		this.spotOverlay = createSpotOverlay();
@@ -112,7 +112,6 @@ public class HyperStackDisplayer extends AbstractTrackMateModelView  {
 			break;
 
 		case ModelChangeEvent.SPOTS_COMPUTED:
-			if (spotOverlay != null) spotOverlay.computeSpotColors();
 			redoOverlay = true;
 			break;
 
@@ -227,15 +226,15 @@ public class HyperStackDisplayer extends AbstractTrackMateModelView  {
 	public void setDisplaySettings(String key, Object value) {
 		boolean dorefresh = false;
 		
-		// If we modified the feature coloring, then we recompute NOW the colors.
-		if (key == TrackMateModelView.KEY_SPOT_COLOR_FEATURE) {
-			spotOverlay.computeSpotColors();
+		if (key == TrackMateModelView.KEY_SPOT_COLORING) {
 			dorefresh = true;
 			
 		} else if (key == TrackMateModelView.KEY_TRACK_COLORING) {
 			// unregister the old one
 			TrackColorGenerator oldColorGenerator = (TrackColorGenerator) displaySettings.get(KEY_TRACK_COLORING);
-			oldColorGenerator.terminate();
+			if (null != oldColorGenerator) {
+				oldColorGenerator.terminate();
+			}
 			// pass the new one to the track overlay - we ignore its spot coloring and keep the spot coloring
 			TrackColorGenerator colorGenerator = (TrackColorGenerator) value;
 			trackOverlay.setTrackColorGenerator(colorGenerator);

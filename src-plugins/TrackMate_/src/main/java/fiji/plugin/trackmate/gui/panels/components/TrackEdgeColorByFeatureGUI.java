@@ -13,7 +13,6 @@ import java.awt.event.ActionListener;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
-import java.util.Map;
 
 import javax.swing.Box;
 import javax.swing.BoxLayout;
@@ -22,20 +21,20 @@ import javax.swing.JPanel;
 
 import org.jfree.chart.renderer.InterpolatePaintScale;
 
+import fiji.plugin.trackmate.ModelChangeEvent;
+import fiji.plugin.trackmate.ModelChangeListener;
 import fiji.plugin.trackmate.TrackMateModel;
-import fiji.plugin.trackmate.features.edges.EdgeVelocityAnalyzer;
 import fiji.plugin.trackmate.features.track.TrackIndexAnalyzer;
 import fiji.plugin.trackmate.gui.panels.ActionListenablePanel;
-import fiji.plugin.trackmate.visualization.PerEdgeFeatureColorGenerator;
-import fiji.plugin.trackmate.visualization.PerTrackFeatureColorGenerator;
-import fiji.plugin.trackmate.visualization.TrackColorGenerator;
 
-public class TrackColorByFeatureGUI extends ActionListenablePanel {
+public class TrackEdgeColorByFeatureGUI extends ActionListenablePanel {
 
 	/*
 	 * FIELDS
 	 */
 
+	public static final String EDGE_CATEGORY_KEY = "Edges";
+	public static final String TRACK_CATEGORY_KEY = "Tracks";
 	private static final long serialVersionUID = 1L;
 	/**
 	 * This action is fired when the feature to color in the "Set color by feature"
@@ -43,48 +42,20 @@ public class TrackColorByFeatureGUI extends ActionListenablePanel {
 	 */
 	public final ActionEvent TRACK_COLOR_FEATURE_CHANGED = new ActionEvent(this, 1, "TrackColorFeatureChanged");
 	private JLabel jLabelSetColorBy;
-	private CategoryJComboBox<TrackColorGenerator, String> jComboBoxSetColorBy;
+	private CategoryJComboBox<String, String> jComboBoxSetColorBy;
 	private JPanel jPanelByFeature;
 	private Canvas canvasColor;
 	private JPanel jPanelColor;
 
 	protected InterpolatePaintScale colorMap = InterpolatePaintScale.Jet;
-
-	/*
-	 * DEFAULT VISIBILITY
-	 */
-
-	private final Map<TrackColorGenerator, Collection<String>> features;
-	private final Map<String, String> featureNames;
-	private final Map<TrackColorGenerator, String> categoryNames;
-
-	private final PerTrackFeatureColorGenerator trackColorGenerator;
-	private final PerEdgeFeatureColorGenerator edgeColorGenerator;
-	private final TrackMateModel model;
+	protected final TrackMateModel model;
 
 	/*
 	 * CONSTRUCTOR
 	 */
-
-	public TrackColorByFeatureGUI(TrackMateModel model) {
+	
+	public TrackEdgeColorByFeatureGUI(TrackMateModel model) {
 		super();
-		// Build features map
-		features = new LinkedHashMap<TrackColorGenerator, Collection<String>>(2);
-		trackColorGenerator = new PerTrackFeatureColorGenerator(model, TrackIndexAnalyzer.TRACK_INDEX);
-		Collection<String> trackFeatures = model.getFeatureModel().getTrackFeatures();
-		features.put(trackColorGenerator, trackFeatures);
-		edgeColorGenerator = new PerEdgeFeatureColorGenerator(model, EdgeVelocityAnalyzer.VELOCITY);
-		Collection<String> edgeFeatures = model.getFeatureModel().getEdgeFeatures();
-		features.put(edgeColorGenerator, edgeFeatures);
-		// Build feature names
-		featureNames = new HashMap<String, String>(trackFeatures.size() + edgeFeatures.size());
-		featureNames.putAll(model.getFeatureModel().getTrackFeatureNames());
-		featureNames.putAll(model.getFeatureModel().getEdgeFeatureNames());
-		// Build category names
-		categoryNames = new HashMap<TrackColorGenerator, String>(2);
-		categoryNames.put(trackColorGenerator, "Track features:");
-		categoryNames.put(edgeColorGenerator, "Edge features:");
-		// The rest
 		this.model = model;
 		initGUI();
 	}
@@ -104,10 +75,22 @@ public class TrackColorByFeatureGUI extends ActionListenablePanel {
 	}
 
 	/**
-	 * @return a configured {@link TrackColorGenerator} matching the user choice on this GUI component.
+	 * Returns a key to the color generator category selected in the combo box. 
+	 * Can be {@link #TRACK_CATEGORY_KEY} or {@link #EDGE_CATEGORY_KEY}.
+	 * @return the selected category.
+	 * @see #getColorFeature() 
 	 */
-	public TrackColorGenerator getColorGenerator() {
+	public String getColorGeneratorCategory() {
 		return jComboBoxSetColorBy.getSelectedCategory();
+	}
+	
+	/**
+	 * Returns the selected feature in the combo box.
+	 * @return the selected feature.
+	 * @see #getColorGeneratorCategory()
+	 */
+	public String getColorFeature() {
+		return jComboBoxSetColorBy.getSelectedItem();
 	}
 	
 	/*
@@ -119,13 +102,6 @@ public class TrackColorByFeatureGUI extends ActionListenablePanel {
 	 * Forward the 'color by feature' action to the caller of this GUI.
 	 */
 	private void colorByFeatureChanged() {
-		// Configure color generator
-		if (jComboBoxSetColorBy.getSelectedCategory() == trackColorGenerator) {
-			trackColorGenerator.setFeature(jComboBoxSetColorBy.getSelectedItem());
-		} else {
-			edgeColorGenerator.setFeature(jComboBoxSetColorBy.getSelectedItem());
-		}
-		// pass event
 		super.fireAction(TRACK_COLOR_FEATURE_CHANGED);
 	}
 
@@ -135,12 +111,7 @@ public class TrackColorByFeatureGUI extends ActionListenablePanel {
 			return;
 		}
 
-		final double[] values;
-		if (jComboBoxSetColorBy.getSelectedCategory() == trackColorGenerator) {
-			values = model.getFeatureModel().getTrackFeatureValues(jComboBoxSetColorBy.getSelectedItem(), true);
-		} else {
-			values = model.getFeatureModel().getEdgeFeatureValues(jComboBoxSetColorBy.getSelectedItem(), true);
-		}
+		final double[] values = getValues(jComboBoxSetColorBy);
 		
 		if (null == values) {
 			g.clearRect(0, 0, canvasColor.getWidth(), canvasColor.getHeight());
@@ -195,7 +166,7 @@ public class TrackColorByFeatureGUI extends ActionListenablePanel {
 				jLabelSetColorBy.setFont(SMALL_FONT);
 			}
 			{
-				jComboBoxSetColorBy = new CategoryJComboBox<TrackColorGenerator, String>(features, featureNames, categoryNames);
+				jComboBoxSetColorBy = createComboBoxSelector();
 				jComboBoxSetColorBy.setSelectedItem(TrackIndexAnalyzer.TRACK_INDEX);
 				jPanelByFeature.add(Box.createHorizontalStrut(5));
 				jPanelByFeature.add(Box.createHorizontalStrut(5));
@@ -203,6 +174,14 @@ public class TrackColorByFeatureGUI extends ActionListenablePanel {
 				jComboBoxSetColorBy.addActionListener(new ActionListener() {
 					public void actionPerformed(ActionEvent e) {
 						colorByFeatureChanged();
+						canvasColor.repaint();
+					}
+				});
+			}
+			{
+				model.addTrackMateModelChangeListener(new ModelChangeListener() {
+					@Override
+					public void modelChanged(ModelChangeEvent event) {
 						canvasColor.repaint();
 					}
 				});
@@ -227,4 +206,46 @@ public class TrackColorByFeatureGUI extends ActionListenablePanel {
 			}
 		}
 	}
+
+	/**
+	 * Return the {@link CategoryJComboBox} that configures this selector. 
+	 * Subclasses can override this method to decide what items are in the combo box list.
+	 * @return a new {@link CategoryJComboBox}.
+	 */
+	protected CategoryJComboBox<String, String> createComboBoxSelector() {
+		LinkedHashMap<String, Collection<String>> features = new LinkedHashMap<String, Collection<String>>(2);
+		Collection<String> trackFeatures = model.getFeatureModel().getTrackFeatures();
+		features.put(TRACK_CATEGORY_KEY, trackFeatures);
+		Collection<String> edgeFeatures = model.getFeatureModel().getEdgeFeatures();
+		features.put(EDGE_CATEGORY_KEY, edgeFeatures);
+		// Build feature names
+		HashMap<String, String> featureNames = new HashMap<String, String>(trackFeatures.size() + edgeFeatures.size());
+		featureNames.putAll(model.getFeatureModel().getTrackFeatureNames());
+		featureNames.putAll(model.getFeatureModel().getEdgeFeatureNames());
+		// Build category names
+		HashMap<String, String> categoryNames = new HashMap<String, String>(2);
+		categoryNames.put(TRACK_CATEGORY_KEY, "Track features:");
+		categoryNames.put(EDGE_CATEGORY_KEY, "Edge features:");
+		return new CategoryJComboBox<String, String>(features, featureNames, categoryNames);
+	}
+	
+
+	/**
+	 * Returns the feature values for the item currently selected in the combo box.
+	 * @param cb  the {@link CategoryJComboBox} to interrogate.
+	 * @return a new double array containing the feature values.
+	 */
+	protected double[] getValues(CategoryJComboBox<String, String> cb) {
+		double[] values;
+		String category = cb.getSelectedCategory();
+		if (category.equals(TRACK_CATEGORY_KEY)) {
+			values = model.getFeatureModel().getTrackFeatureValues(cb.getSelectedItem(), true);
+		} else if (category.equals(EDGE_CATEGORY_KEY)) {
+			values = model.getFeatureModel().getEdgeFeatureValues(cb.getSelectedItem(), true);
+		} else {
+			throw new IllegalArgumentException("Unknown category: " + category);
+		}
+		return values;
+	}
+
 }

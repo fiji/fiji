@@ -16,9 +16,11 @@ public class TrackFilterDescriptor implements WizardPanelDescriptor {
 	private static final String KEY = "FilterTracks";
 	private final FilterGuiPanel component;
 	private final TrackMate trackmate;
+	private final PerTrackFeatureColorGenerator generator;
 	
-	public TrackFilterDescriptor(TrackMate trackmate) {
+	public TrackFilterDescriptor(TrackMate trackmate, PerTrackFeatureColorGenerator trackColorGenerator) {
 		this.trackmate = trackmate;
+		this.generator = trackColorGenerator;
 		this.component = new FilterGuiPanel();
 	}
 
@@ -34,7 +36,6 @@ public class TrackFilterDescriptor implements WizardPanelDescriptor {
 				model.getFeatureModel().getTrackFeatureNames(), model.getFeatureModel().getTrackFeatureValues(), "tracks");
 		component.setColorByFeature(TrackIndexAnalyzer.TRACK_INDEX);
 		
-		PerTrackFeatureColorGenerator generator = new PerTrackFeatureColorGenerator(model, TrackIndexAnalyzer.TRACK_INDEX);
 		generator.setFeature(component.getColorByFeature());
 		
 		for (ActionListener listener : component.getActionListeners()) {

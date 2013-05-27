@@ -11,11 +11,10 @@ import org.jfree.chart.renderer.InterpolatePaintScale;
 import org.jgrapht.graph.DefaultWeightedEdge;
 
 import fiji.plugin.trackmate.FeatureModel;
-import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.TrackGraphModel;
-import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.ModelChangeEvent;
 import fiji.plugin.trackmate.ModelChangeListener;
+import fiji.plugin.trackmate.TrackGraphModel;
+import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.features.track.TrackIndexAnalyzer;
 
 /**
@@ -36,8 +35,8 @@ public class PerTrackFeatureColorGenerator implements TrackColorGenerator, Model
 
 	public PerTrackFeatureColorGenerator(TrackMateModel model, String feature) {
 		this.model = model;
-		setFeature(feature);
 		model.addTrackMateModelChangeListener(this);
+		setFeature(feature);
 	}
 
 	/**
@@ -50,6 +49,7 @@ public class PerTrackFeatureColorGenerator implements TrackColorGenerator, Model
 	 * @param feature  the track feature that will control coloring.
 	 * @throws IllegalArgumentException if the specified feature is unknown to the feature model.
 	 */
+	@Override
 	public void setFeature(String feature) {
 		// Special case: if null, then all tracks should be green
 		if (null == feature) {
@@ -140,12 +140,7 @@ public class PerTrackFeatureColorGenerator implements TrackColorGenerator, Model
 			if (edges.size() > 0) {
 				refresh();
 			} 
-		}		
-	}
-
-	@Override
-	public Color color(Spot spot) {
-		return colorMap.get(trackID);
+		}
 	}
 
 	@Override

@@ -1,20 +1,17 @@
 package fiji.plugin.trackmate.visualization;
 
 import java.awt.Color;
-import java.util.Set;
 
 import org.jfree.chart.renderer.InterpolatePaintScale;
 import org.jgrapht.graph.DefaultWeightedEdge;
 
-import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.ModelChangeEvent;
 import fiji.plugin.trackmate.ModelChangeListener;
+import fiji.plugin.trackmate.TrackMateModel;
 
 public class PerEdgeFeatureColorGenerator implements ModelChangeListener, TrackColorGenerator {
 
 	private static final InterpolatePaintScale colorMap = InterpolatePaintScale.Jet;
-	private static final Color DEFAULT_COLOR = Color.WHITE;
 	private final TrackMateModel model;
 	private String feature;
 	private double min;
@@ -28,6 +25,7 @@ public class PerEdgeFeatureColorGenerator implements ModelChangeListener, TrackC
 		setFeature(feature);
 	}
 
+	@Override
 	public void setFeature(String feature) {
 		if (feature.equals(this.feature)) {
 			return;
@@ -36,16 +34,6 @@ public class PerEdgeFeatureColorGenerator implements ModelChangeListener, TrackC
 		resetMinAndMax();
 	}
 	
-	@Override
-	public Color color(Spot spot) {
-		Set<DefaultWeightedEdge> edges = model.getTrackModel().edgesOf(spot);
-		if (edges.isEmpty()) {
-			return DEFAULT_COLOR;
-		} else {
-			return color(edges.iterator().next());
-		}
-	}
-
 	@Override
 	public Color color(DefaultWeightedEdge edge) {
 		double val = model.getFeatureModel().getEdgeFeature(edge, feature).doubleValue();

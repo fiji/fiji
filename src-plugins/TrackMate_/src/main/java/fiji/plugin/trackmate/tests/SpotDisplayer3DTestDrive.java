@@ -146,7 +146,7 @@ public class SpotDisplayer3DTestDrive {
 			public void actionPerformed(ActionEvent e) {
 				if (e == gui.COLOR_FEATURE_CHANGED) {
 					String feature = gui.getColorByFeature();
-					displayer.setDisplaySettings(TrackMateModelView.KEY_SPOT_COLOR_FEATURE, feature);
+					displayer.setDisplaySettings(TrackMateModelView.KEY_SPOT_COLORING, feature);
 					displayer.setDisplaySettings(TrackMateModelView.KEY_SPOT_RADIUS_RATIO, RAN.nextFloat()+1);
 					displayer.refresh();
 				}

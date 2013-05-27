@@ -67,7 +67,6 @@ public class CategoryJComboBox<K, V> extends JComboBox {
 				invertMap.put(item, category);
 			}
 		}
-		
 		setSelectedIndex(1);
 	}
 

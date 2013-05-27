@@ -148,7 +148,7 @@ public class FilterGuiPanel extends ActionListenablePanel implements ChangeListe
 	}
 
 	/**
-	 * @eeturn the thresholds currently set by this GUI.
+	 * Returns the thresholds currently set by this GUI.
 	 */
 	public List<FeatureFilter> getFeatureFilters() {
 		return featureFilters;
@@ -156,8 +156,8 @@ public class FilterGuiPanel extends ActionListenablePanel implements ChangeListe
 
 
 	/**
-	 * Return the feature selected in the "Set color by feature" comb-box. 
-	 * Return <code>null</code> if the item "Default" is selected.
+	 * Returns the feature selected in the "color by feature" comb-box. 
+	 * Returns <code>null</code> if the item "Default" is selected.
 	 */
 	public String getColorByFeature() {
 		return jPanelColorByFeatureGUI.getSelectedFeature();

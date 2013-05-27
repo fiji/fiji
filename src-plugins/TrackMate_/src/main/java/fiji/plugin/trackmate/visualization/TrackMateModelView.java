@@ -78,20 +78,10 @@ public interface TrackMateModelView extends InfoTextable {
 	public static final String KEY_SPOT_RADIUS_RATIO = "SpotRadiusRatio";
 
 	/**
-	 * Defines the key for the feature that determines the spot color. Values can
-	 * be any {@link SpotFeature} or <code>null</code>. In the later case, the default
-	 * color #DEFAULT_COLOR is used for all spots. Otherwise, each spot color 
-	 * is set according to the selected feature value.
+	 * Defines the key for the spot coloring method. Accepted values are implementation
+	 * of {@link FeatureColorGenerator}
 	 */
-	public static final String KEY_SPOT_COLOR_FEATURE = "SpotColorFeature";
-
-	/**
-	 * Defines the key for the feature that determines the track color. Values can
-	 * be any {@link TrackFeature} or <code>null</code>. In the later case, the default
-	 * color #DEFAULT_COLOR is used for all spots. Otherwise, each track color 
-	 * is set according to the selected feature value.
-	 */
-//	public static final String KEY_TRACK_COLOR_FEATURE = "TrackColorFeature";
+	public static final String KEY_SPOT_COLORING = "SpotColoring";
 
 	/**
 	 * Defines the key for the color map to use for painting overlay. Acceptable

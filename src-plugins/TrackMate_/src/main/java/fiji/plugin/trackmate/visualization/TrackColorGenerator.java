@@ -1,7 +1,5 @@
 package fiji.plugin.trackmate.visualization;
 
-import java.awt.Color;
-
 import org.jgrapht.graph.DefaultWeightedEdge;
 
 import fiji.plugin.trackmate.Spot;
@@ -20,24 +18,8 @@ import fiji.plugin.trackmate.Spot;
  *  
  * @author Jean-Yves Tinevez
  */
-public interface TrackColorGenerator {
+public interface TrackColorGenerator extends FeatureColorGenerator<DefaultWeightedEdge> {
 
-	/** @return a color for the given spot, that must belong to the 
-	 * track with the specified ID.
-	 * <p>
-	 * Specifying the track ID allows save computations, but the
-	 * ID must be accurate or inadequate rendering will happen.
-	 */
-	public Color color(final Spot spot);
-
-	/** @return a color for the given edge, that must belong to the 
-	 * track with the specified ID.
-	 * <p>
-	 * Specifying the track ID allows save computations, but the
-	 * ID must be accurate or inadequate rendering will happen.
-	 */
-	public Color color(final DefaultWeightedEdge edge);
-	
 	/**
 	 * This is a hack for performance:
 	 * <p>
@@ -51,12 +33,5 @@ public interface TrackColorGenerator {
 	 * @param trackID
 	 */
 	public void setCurrentTrackID(Integer trackID);
-	
-	/**
-	 * When this color generator is replaced by another one, calling this method ensures
-	 * that it gets correctly unregistered and cleaned, should it be a model listener
-	 * or have a heavy memory footprint. 
-	 */
-	public void terminate();
 
 }

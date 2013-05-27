@@ -623,7 +623,9 @@ public class TrackMateModel {
 		try {
 			if (nEdgesToSignal + nSpotsToSignal > 0) {
 				if (DEBUG) {
-					System.out.println("[TrackMateModel] #flushUpdate(): firing model modified event.");
+					System.out.println("[TrackMateModel] #flushUpdate(): firing model modified event");
+					System.out.println("[TrackMateModel] to " + modelChangeListeners); 
+
 				}
 				for (final ModelChangeListener listener : modelChangeListeners) {
 					listener.modelChanged(event);
