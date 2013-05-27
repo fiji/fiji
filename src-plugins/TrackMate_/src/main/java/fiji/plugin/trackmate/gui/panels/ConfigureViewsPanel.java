@@ -20,11 +20,10 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 
 import javax.swing.ComboBoxModel;
@@ -47,10 +46,9 @@ import fiji.plugin.trackmate.features.track.TrackIndexAnalyzer;
 import fiji.plugin.trackmate.gui.DisplaySettingsEvent;
 import fiji.plugin.trackmate.gui.DisplaySettingsListener;
 import fiji.plugin.trackmate.gui.TrackMateWizard;
+import fiji.plugin.trackmate.gui.panels.components.ColorByFeatureGUIPanel;
+import fiji.plugin.trackmate.gui.panels.components.ColorByFeatureGUIPanel.Category;
 import fiji.plugin.trackmate.gui.panels.components.JNumericTextField;
-import fiji.plugin.trackmate.gui.panels.components.JPanelColorByFeatureGUI;
-import fiji.plugin.trackmate.gui.panels.components.TrackEdgeColorByFeatureGUI;
-import fiji.plugin.trackmate.util.TMUtils;
 import fiji.plugin.trackmate.visualization.AbstractTrackMateModelView;
 import fiji.plugin.trackmate.visualization.FeatureColorGenerator;
 import fiji.plugin.trackmate.visualization.PerEdgeFeatureColorGenerator;
@@ -88,10 +86,10 @@ public class ConfigureViewsPanel extends ActionListenablePanel {
 	private JCheckBox jCheckBoxLimitDepth;
 	private JTextField jTextFieldFrameDepth;
 	private JLabel jLabelFrameDepth;
-	private JPanelColorByFeatureGUI jPanelSpotColor;
+	private ColorByFeatureGUIPanel jPanelSpotColor;
 	private JNumericTextField jTextFieldSpotRadius;
 	private JCheckBox jCheckBoxDisplayNames;
-	private TrackEdgeColorByFeatureGUI trackColorGUI;
+	private ColorByFeatureGUIPanel trackColorGUI;
 
 	private Collection<DisplaySettingsListener> listeners = new HashSet<DisplaySettingsListener>();
 	private final TrackMateModel model;
@@ -178,12 +176,6 @@ public class ConfigureViewsPanel extends ActionListenablePanel {
 	public void setSpotColorGenerator(FeatureColorGenerator<Spot> spotColorGenerator) {
 		this.spotColorGenerator.terminate();
 		this.spotColorGenerator = spotColorGenerator;
-	}
-
-	public void refresh() {
-		Map<String, double[]> featureValues = TMUtils.getSpotFeatureValues(model.getSpots(), 
-				model.getFeatureModel().getSpotFeatures(), model.getLogger());
-		jPanelSpotColor.setFeatureValues(featureValues);
 	}
 
 	/*
@@ -315,19 +307,21 @@ public class ConfigureViewsPanel extends ActionListenablePanel {
 				});
 			}
 			{
-				trackColorGUI = new TrackEdgeColorByFeatureGUI(model);
+				trackColorGUI = new ColorByFeatureGUIPanel(model, Arrays.asList(new Category[] { Category.TRACKS, Category.EDGES } ));
 				trackColorGUI.setPreferredSize(new java.awt.Dimension(265, 45));
 				trackColorGUI.addActionListener(new ActionListener() {
 					@Override
 					public void actionPerformed(ActionEvent e) {
 						TrackColorGenerator oldValue = (TrackColorGenerator) displaySettings.get(KEY_TRACK_COLORING);
-						String category = trackColorGUI.getColorGeneratorCategory();
 						TrackColorGenerator newValue;
-						if (category.equals(TrackEdgeColorByFeatureGUI.TRACK_CATEGORY_KEY)) {
+						Category category = trackColorGUI.getColorGeneratorCategory();
+						switch (category) {
+						case TRACKS:
 							newValue = trackColorGenerator;
-						} else if (category.equals(TrackEdgeColorByFeatureGUI.EDGE_CATEGORY_KEY)) {
+							break;
+						case EDGES:
 							newValue = edgeColorGenerator;
-						} else {
+						default:
 							throw new IllegalArgumentException("Unknow track color generator category: " + category);
 						}
 						newValue.setFeature(trackColorGUI.getColorFeature());
@@ -426,15 +420,11 @@ public class ConfigureViewsPanel extends ActionListenablePanel {
 					});
 				}
 				{
-					List<String> features = new ArrayList<String>(
-							model.getFeatureModel().getSpotFeatures());
-					Map<String, String> featureNames = model.getFeatureModel().getSpotFeatureNames();
-					jPanelSpotColor = new JPanelColorByFeatureGUI(features, featureNames);
-					jPanelSpotOptions.add(jPanelSpotColor);
+					jPanelSpotColor = new ColorByFeatureGUIPanel(model, Arrays.asList(new Category[] { Category.SPOTS } ));
 					jPanelSpotColor.addActionListener(new ActionListener() {
 						@Override
 						public void actionPerformed(ActionEvent e) {
-							spotColorGenerator.setFeature(jPanelSpotColor.getSelectedFeature());
+							spotColorGenerator.setFeature(jPanelSpotColor.getColorFeature());
 							DisplaySettingsEvent event = new DisplaySettingsEvent(ConfigureViewsPanel.this, KEY_SPOT_COLORING, spotColorGenerator, spotColorGenerator);
 							fireDisplaySettingsChange(event);
 						}

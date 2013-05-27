@@ -1,7 +1,13 @@
 package fiji.plugin.trackmate.gui.descriptors;
 
+import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.TrackMate;
@@ -9,19 +15,21 @@ import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.features.FeatureFilter;
 import fiji.plugin.trackmate.features.track.TrackIndexAnalyzer;
 import fiji.plugin.trackmate.gui.panels.components.FilterGuiPanel;
+import fiji.plugin.trackmate.gui.panels.components.ColorByFeatureGUIPanel.Category;
 import fiji.plugin.trackmate.visualization.PerTrackFeatureColorGenerator;
 
 public class TrackFilterDescriptor implements WizardPanelDescriptor {
 	
+	private ArrayList<ChangeListener> changeListeners = new ArrayList<ChangeListener>();
+	private ArrayList<ActionListener> actionListeners = new ArrayList<ActionListener>();
 	private static final String KEY = "FilterTracks";
-	private final FilterGuiPanel component;
+	private FilterGuiPanel component;
 	private final TrackMate trackmate;
 	private final PerTrackFeatureColorGenerator generator;
 	
 	public TrackFilterDescriptor(TrackMate trackmate, PerTrackFeatureColorGenerator trackColorGenerator) {
 		this.trackmate = trackmate;
 		this.generator = trackColorGenerator;
-		this.component = new FilterGuiPanel();
 	}
 
 	@Override
@@ -31,12 +39,23 @@ public class TrackFilterDescriptor implements WizardPanelDescriptor {
 
 	@Override
 	public void aboutToDisplayPanel() {
-		TrackMateModel model = trackmate.getModel();
-		component.setTarget(model.getFeatureModel().getTrackFeatures(), trackmate.getSettings().getTrackFilters(),  
-				model.getFeatureModel().getTrackFeatureNames(), model.getFeatureModel().getTrackFeatureValues(), "tracks");
-		component.setColorByFeature(TrackIndexAnalyzer.TRACK_INDEX);
+		component = new FilterGuiPanel(trackmate.getModel(), Category.TRACKS);
+		component.setFilters(trackmate.getSettings().getTrackFilters());
+		component.setColorFeature(TrackIndexAnalyzer.TRACK_INDEX);
+		component.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent event) {
+				fireAction(event);
+			}
+		});
+		component.addChangeListener(new ChangeListener() {
+			@Override
+			public void stateChanged(ChangeEvent event) {
+				fireThresholdChanged(event);
+			}
+		});
 		
-		generator.setFeature(component.getColorByFeature());
+		generator.setFeature(component.getColorFeature());
 		
 		for (ActionListener listener : component.getActionListeners()) {
 			listener.actionPerformed(component.COLOR_FEATURE_CHANGED);
@@ -78,5 +97,62 @@ public class TrackFilterDescriptor implements WizardPanelDescriptor {
 	@Override
 	public String getKey() {
 		return KEY;
+	}
+	
+	/**
+	 * Adds an {@link ActionListener} to this panel. These listeners will be notified when
+	 * a button is pushed or when the feature to color is changed.
+	 */
+	public void addActionListener(ActionListener listener) {
+		actionListeners.add(listener);
+	}
+	
+	/**
+	 * Removes an ActionListener from this panel. 
+	 * @return true if the listener was in the ActionListener collection of this instance.
+	 */
+	public boolean removeActionListener(ActionListener listener) {
+		return actionListeners.remove(listener);
+	}
+	
+	public Collection<ActionListener> getActionListeners() {
+		return actionListeners;
+	}
+	
+
+	/** 
+	 * Forwards the given {@link ActionEvent} to all the {@link ActionListener} of this panel.
+	 */
+	private void fireAction(ActionEvent e) {
+		for (ActionListener l : actionListeners)
+			l.actionPerformed(e);
+	}
+	
+	/**
+	 * Add an {@link ChangeListener} to this panel. The {@link ChangeListener} will
+	 * be notified when a change happens to the thresholds displayed by this panel, whether
+	 * due to the slider being move, the auto-threshold button being pressed, or
+	 * the combo-box selection being changed.
+	 */
+	public void addChangeListener(ChangeListener listener) {
+		changeListeners.add(listener);
+	}
+
+	/**
+	 * Remove a ChangeListener from this panel. 
+	 * @return true if the listener was in listener collection of this instance.
+	 */
+	public boolean removeChangeListener(ChangeListener listener) {
+		return changeListeners.remove(listener);
+	}
+
+	public Collection<ChangeListener> getChangeListeners() {
+		return changeListeners;
+	}
+	
+	private void fireThresholdChanged(ChangeEvent e) {
+		for (ChangeListener cl : changeListeners)  {
+			cl.stateChanged(e);
+		}
 	}
 }

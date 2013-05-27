@@ -1,6 +1,5 @@
 package fiji.plugin.trackmate.tests;
 
-import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.SelectionModel;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
@@ -8,9 +7,9 @@ import fiji.plugin.trackmate.TrackMate;
 import fiji.plugin.trackmate.features.FeatureFilter;
 import fiji.plugin.trackmate.features.spot.SpotIntensityAnalyzer;
 import fiji.plugin.trackmate.features.spot.SpotIntensityAnalyzerFactory;
+import fiji.plugin.trackmate.gui.panels.components.ColorByFeatureGUIPanel.Category;
 import fiji.plugin.trackmate.gui.panels.components.FilterGuiPanel;
 import fiji.plugin.trackmate.util.SpotNeighborhood;
-import fiji.plugin.trackmate.util.TMUtils;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
 import fiji.plugin.trackmate.visualization.threedviewer.SpotDisplayer3D;
 import ij.ImagePlus;
@@ -126,13 +125,8 @@ public class SpotDisplayer3DTestDrive {
 		
 		// Launch threshold GUI
 		List<FeatureFilter> ff = new ArrayList<FeatureFilter>();
-		final FilterGuiPanel gui = new FilterGuiPanel();
-		gui.setTarget(
-				SpotIntensityAnalyzerFactory.FEATURES, 
-				ff,
-				SpotIntensityAnalyzerFactory.FEATURE_NAMES,
-				TMUtils.getSpotFeatureValues(allSpots, SpotIntensityAnalyzerFactory.FEATURES, Logger.DEFAULT_LOGGER),
-				"spots");
+		final FilterGuiPanel gui = new FilterGuiPanel(trackmate.getModel(), Category.SPOTS);
+		gui.setFilters(ff);
 
 		// Set listeners
 		gui.addChangeListener(new ChangeListener() {
@@ -145,7 +139,7 @@ public class SpotDisplayer3DTestDrive {
 		gui.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				if (e == gui.COLOR_FEATURE_CHANGED) {
-					String feature = gui.getColorByFeature();
+					String feature = gui.getColorFeature();
 					displayer.setDisplaySettings(TrackMateModelView.KEY_SPOT_COLORING, feature);
 					displayer.setDisplaySettings(TrackMateModelView.KEY_SPOT_RADIUS_RATIO, RAN.nextFloat()+1);
 					displayer.refresh();

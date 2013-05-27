@@ -107,8 +107,7 @@ public class CategoryJComboBox<K, V> extends JComboBox {
 	public void setSelectedIndex(int index) {
 		if(categoryIndexSet.contains(index)) {
 			isCategoryIndex = true;
-		}else{
-			//isDisableIndex = false;
+		} else {
 			super.setSelectedIndex(index);
 		}
 	}

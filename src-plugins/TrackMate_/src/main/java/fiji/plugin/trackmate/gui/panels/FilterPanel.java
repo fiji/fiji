@@ -165,6 +165,27 @@ public class FilterPanel extends javax.swing.JPanel {
 	public Collection<ChangeListener> getChangeListeners() {
 		return listeners;
 	}
+	
+	public void refresh() {
+		
+		System.out.println("DEBUG ME!!!!");// DEBUG FIXME
+		
+		key = allKeys.get(jComboBoxFeature.getSelectedIndex());
+		double[] values = valuesMap.get(key);
+		if (null == values || 0 == values.length) {
+			dataset = new LogHistogramDataset();
+			annotation.setLocation(0.5f, 0.5f);
+			annotation.setText("No data");
+		} else {
+			int nBins = TMUtils.getNBins(values, 8, 100);
+			dataset = new LogHistogramDataset();
+			if (nBins > 1) {
+				dataset.addSeries(DATA_SERIES_NAME, values, nBins);
+			}
+		}
+		plot.setDataset(dataset);
+		chartPanel.repaint();
+	}
 
 	/*
 	 * PRIVATE METHODS

@@ -395,12 +395,12 @@ public class TrackMateGUIController implements ActionListener {
 		 */
 		spotFilterDescriptor 		= new SpotFilterDescriptor(trackmate);
 		// display color changed
-		spotFilterDescriptor.getComponent().addActionListener(new ActionListener() {
+		spotFilterDescriptor.addActionListener(new ActionListener() {
 
 			@Override
 			public void actionPerformed(ActionEvent event) {
 				if (event == spotFilterDescriptor.getComponent().COLOR_FEATURE_CHANGED) {
-					String targetFeature = spotFilterDescriptor.getComponent().getColorByFeature();
+					String targetFeature = spotFilterDescriptor.getComponent().getColorFeature();
 					spotColorGenerator.setFeature(targetFeature);
 					for (TrackMateModelView view : guimodel.views) {
 						view.setDisplaySettings(TrackMateModelView.KEY_SPOT_COLORING, spotColorGenerator);
@@ -409,7 +409,7 @@ public class TrackMateGUIController implements ActionListener {
 			}
 		});
 		// Filtered
-		spotFilterDescriptor.getComponent().addChangeListener(new ChangeListener() {
+		spotFilterDescriptor.addChangeListener(new ChangeListener() {
 			@Override
 			public void stateChanged(ChangeEvent event) {
 				// We set the thresholds field of the model but do not touch its selected spot field yet.
@@ -437,17 +437,17 @@ public class TrackMateGUIController implements ActionListener {
 		 * Track filtering 
 		 */
 		trackFilterDescriptor		= new TrackFilterDescriptor(trackmate, trackColorGenerator);
-		trackFilterDescriptor.getComponent().addActionListener(new ActionListener() {
+		trackFilterDescriptor.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent event) {
-				trackColorGenerator.setFeature(trackFilterDescriptor.getComponent().getColorByFeature());
+				trackColorGenerator.setFeature(trackFilterDescriptor.getComponent().getColorFeature());
 				for (TrackMateModelView view : guimodel.views) {
 					view.setDisplaySettings(TrackMateModelView.KEY_TRACK_COLORING, trackColorGenerator);
 					view.refresh();
 				}
 			}
 		});
-		trackFilterDescriptor.getComponent().addChangeListener(new ChangeListener() {
+		trackFilterDescriptor.addChangeListener(new ChangeListener() {
 			@Override
 			public void stateChanged(ChangeEvent event) {
 				// We set the thresholds field of the model but do not touch its selected spot field yet.
