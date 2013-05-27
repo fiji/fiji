@@ -315,7 +315,7 @@ void editParentPOM(String stripPath) {
 
 void fsckEclipse(String stripPath) {
 	factoryPath = "<factorypath>\n"
-		+ "\t<factorypathentry kind=\"VARJAR\" id=\"M2_REPO/net/java/sezpoz/sezpoz/1.9/sezpoz-1.9.jar\" enabled=\"true\" runInBatchMode=\"true\"/>\n"
+		+ "\t<factorypathentry kind=\"VARJAR\" id=\"M2_REPO/net/java/sezpoz/sezpoz/1.9-imagej/sezpoz-1.9-imagej.jar\" enabled=\"true\" runInBatchMode=\"true\"/>\n"
 		+ "</factorypath>";
 	writeAndAddFile(factoryPath, new File(fijiDir, stripPath + ".factorypath"));
 	settings = "#Sun Jan 15 20:38:51 CET 2010\n"
