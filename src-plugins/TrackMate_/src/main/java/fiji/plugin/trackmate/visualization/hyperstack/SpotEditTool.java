@@ -33,7 +33,7 @@ import fiji.tool.AbstractTool;
 
 public class SpotEditTool extends AbstractTool implements MouseMotionListener, MouseListener, MouseWheelListener, KeyListener {
 
-	private static final boolean DEBUG = false;
+	private static final boolean DEBUG = true;
 
 	private static final double COARSE_STEP = 2;
 	private static final double FINE_STEP = 0.2f;
@@ -124,9 +124,18 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 	 * respond.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      
 	 */
 	public void register(final ImagePlus imp, final HyperStackDisplayer displayer) {
-		if (DEBUG)
-			System.out.println("[SpotEditTool] Registering "+imp+" and "+displayer);
+		if (DEBUG) System.out.println("[SpotEditTool] Currently registered: " + displayers);
+		
+		if (displayers.containsKey(imp)) {
+			unregisterTool(imp);
+			if (DEBUG) System.out.println("[SpotEditTool] De-registering " + imp + " as tool listener.");
+		}
+		
 		displayers.put(imp, displayer);
+		if (DEBUG) {
+			System.out.println("[SpotEditTool] Registering "+imp+" and "+displayer + "." +
+					" Currently registered: " + displayers);
+		}
 	}
 
 	/*

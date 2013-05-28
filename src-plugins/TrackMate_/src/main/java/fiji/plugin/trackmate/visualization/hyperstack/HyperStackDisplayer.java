@@ -195,11 +195,6 @@ public class HyperStackDisplayer extends AbstractTrackMateModelView  {
 	}
 	
 	@Override
-	public String toString() {
-		return NAME;
-	}
-	
-	@Override
 	public String getKey() {
 		return NAME;
 	}

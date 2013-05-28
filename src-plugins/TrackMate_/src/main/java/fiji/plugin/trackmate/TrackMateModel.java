@@ -1,10 +1,9 @@
 package fiji.plugin.trackmate;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 import org.jgrapht.graph.DefaultWeightedEdge;
@@ -182,7 +181,7 @@ public class TrackMateModel {
 	 * The list of listeners listening to model content change, that is, changes
 	 * in {@link #spots}, {@link #filteredSpots} and {@link #trackGraph}.
 	 */
-	List<ModelChangeListener> modelChangeListeners = new ArrayList<ModelChangeListener>();
+	Set<ModelChangeListener> modelChangeListeners = new LinkedHashSet<ModelChangeListener>();
 
 
 
@@ -257,7 +256,7 @@ public class TrackMateModel {
 		return modelChangeListeners.remove(listener);
 	}
 
-	public List<ModelChangeListener> getTrackMateModelChangeListener() {
+	public Set<ModelChangeListener> getTrackMateModelChangeListener() {
 		return modelChangeListeners;
 	}
 
