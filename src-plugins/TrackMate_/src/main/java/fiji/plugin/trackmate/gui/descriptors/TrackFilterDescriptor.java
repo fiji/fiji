@@ -63,7 +63,12 @@ public class TrackFilterDescriptor implements WizardPanelDescriptor {
 	}
 
 	@Override
-	public void displayingPanel() {}
+	public void displayingPanel() {
+		if (null == component) {
+			// Happens when loading at this stage.
+			aboutToDisplayPanel();
+		}
+	}
 	
 
 	@Override

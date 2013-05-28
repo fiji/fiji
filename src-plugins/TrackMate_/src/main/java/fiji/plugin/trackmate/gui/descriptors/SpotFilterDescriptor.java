@@ -57,6 +57,10 @@ public class SpotFilterDescriptor implements WizardPanelDescriptor {
 
 	@Override
 	public void displayingPanel() {
+		if (null == component) {
+			// This happens when we load data: the component gets initialized only in another method
+			aboutToDisplayPanel();
+		}
 		trackmate.getSettings().setSpotFilters(component.getFeatureFilters());
 		trackmate.execSpotFiltering(false);
 	}
