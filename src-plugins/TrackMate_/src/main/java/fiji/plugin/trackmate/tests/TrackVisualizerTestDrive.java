@@ -9,6 +9,7 @@ import fiji.plugin.trackmate.gui.DisplayerPanel;
 import fiji.plugin.trackmate.gui.GrapherPanel;
 import fiji.plugin.trackmate.io.TmXmlReader;
 import fiji.plugin.trackmate.visualization.hyperstack.HyperStackDisplayer;
+import fiji.plugin.trackmate.visualization.threedviewer.SpotDisplayer3D;
 import fiji.plugin.trackmate.visualization.trackscheme.TrackScheme;
 import ij.IJ;
 import ij.ImagePlus;
@@ -20,6 +21,7 @@ import javax.swing.JFrame;
 
 import org.jdom2.JDOMException;
 
+@SuppressWarnings("unused")
 public class TrackVisualizerTestDrive {
 	
 	public static void main(String[] args) throws JDOMException, IOException {
@@ -74,6 +76,8 @@ public class TrackVisualizerTestDrive {
 		
 		// Instantiate displayer
 		final HyperStackDisplayer displayer = new HyperStackDisplayer(model);
+//		final SpotDisplayer3D displayer = new SpotDisplayer3D(model);
+//		displayer.setRenderImageData(false);
 		displayer.render();
 		displayer.refresh();
 		

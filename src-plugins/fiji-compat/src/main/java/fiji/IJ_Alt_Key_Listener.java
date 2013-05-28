@@ -3,6 +3,8 @@ package fiji;
 import ij.IJ;
 import ij.ImageJ;
 
+import fiji.gui.InvokeLater;
+
 import java.awt.AWTException;
 import java.awt.Menu;
 import java.awt.MenuBar;
@@ -19,11 +21,12 @@ import java.awt.event.MouseEvent;
 
 import java.lang.reflect.Method;
 
-public class IJ_Alt_Key_Listener extends KeyAdapter implements FocusListener {
-	boolean altPressed;
-	int pressedKeys;
-	Runnable openMenu = getOpener();
+public class IJ_Alt_Key_Listener extends KeyAdapter implements FocusListener, Runnable {
+	private boolean altPressed;
+	private int pressedKeys;
+	private final Runnable openMenu = getOpener();
 
+	@Override
 	public void run() {
 		if (removeRegisteredListeners()) {
 			if (IJ.debugMode)
@@ -62,25 +65,30 @@ public class IJ_Alt_Key_Listener extends KeyAdapter implements FocusListener {
 		return false;
 	}
 
+	@Override
 	public void keyPressed(KeyEvent e) {
 		if (pressedKeys == 0 && e.getKeyCode() == KeyEvent.VK_ALT)
 			altPressed = true;
 		pressedKeys++;
 	}
 
+	@Override
 	public void keyReleased(KeyEvent e) {
 		if (e.getKeyCode() == KeyEvent.VK_ALT) {
 			altPressed = false;
-			if (pressedKeys == 1 && openMenu != null)
-				openMenu.run();
+			if (pressedKeys == 1 && openMenu != null) {
+				new InvokeLater(25, openMenu).later(50);
+			}
 		}
 		pressedKeys = Math.max(0, pressedKeys - 1);
 	}
 
+	@Override
 	public void focusGained(FocusEvent e) {
 		pressedKeys = 0;
 	}
 
+	@Override
 	public void focusLost(FocusEvent e) {
 		pressedKeys = 0;
 	}
@@ -102,13 +110,16 @@ public class IJ_Alt_Key_Listener extends KeyAdapter implements FocusListener {
 					new Class[] { KeyEvent.class });
 		method.setAccessible(true);
 		return new Runnable() {
+			@Override
 			public void run() {
+				final ImageJ ij = IJ.getInstance();
+				if (ij == null ||!ij.isFocused()) return;
 				KeyEvent event = new KeyEvent(IJ.getInstance(),
 					KeyEvent.VK_F10,
 					System.currentTimeMillis(), 0,
 					KeyEvent.VK_F10);
 				try {
-					method.invoke(IJ.getInstance().getMenuBar().getPeer(),
+					method.invoke(ij.getMenuBar().getPeer(),
 						new Object[] { event });
 				} catch (Exception e) { /* ignore */ }
 			}
@@ -123,7 +134,10 @@ public class IJ_Alt_Key_Listener extends KeyAdapter implements FocusListener {
 		 * MacOSX to gain keyboard control to the menu bar.
 		 */
 		return new Runnable() {
+			@Override
 			public void run() {
+				final ImageJ ij = IJ.getInstance();
+				if (ij == null ||!ij.isFocused()) return;
 				try {
 					Robot robot = new Robot();
 					robot.delay(10);

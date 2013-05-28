@@ -87,8 +87,8 @@ public class MergingCostFunction {
 							Spot middle = middlePoints.get(j);
 
 							// Frame threshold - middle Spot must be one frame ahead of the end Spot
-							int endFrame = end.getFeature(Spot.POSITION_T).intValue();
-							int middleFrame = middle.getFeature(Spot.POSITION_T).intValue();
+							int endFrame = end.getFeature(Spot.FRAME).intValue();
+							int middleFrame = middle.getFeature(Spot.FRAME).intValue();
 							// We only merge from one frame to the next one, no more
 							if (middleFrame - endFrame != 1) {
 								m.set(i, j, blockingValue);

@@ -39,8 +39,11 @@ public class RedirectErrAndOut implements PlugIn {
 	 * Detects whether a PrintStream is already redirected.
 	 */
 	private boolean isRedirected(final PrintStream stream) {
-		return stream != null &&
-			stream.getClass().getName().startsWith("fiji.");
+		if (stream == null) {
+			return false;
+		}
+		final String name = stream.getClass().getName();
+		return name.startsWith("fiji.") || name.startsWith("ij.");
 	}
 
 	/**

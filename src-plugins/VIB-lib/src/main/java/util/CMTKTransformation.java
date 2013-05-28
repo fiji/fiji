@@ -308,6 +308,7 @@ public class CMTKTransformation {
 
 				line = br.readLine();
 			}
+			br.close();
 		} catch( IOException e ) {
 			IJ.error("IOException in parseTypedStreamAffine: "+e);
 			return null;
@@ -399,6 +400,7 @@ public class CMTKTransformation {
 				line = br.readLine();
 				if( line == null ) {
 					IJ.error("Couldn't find "+pSplineSection);
+					br.close();
 					return null;
 				}
 				Matcher m = pSplineSection.matcher(line);
@@ -411,6 +413,7 @@ public class CMTKTransformation {
 				line = br.readLine();
 				if( line == null ) {
 					IJ.error("Couldn't find "+pEndOfSection);
+					br.close();
 					return null;
 				}
 				Matcher m = pEndOfSection.matcher(line);
@@ -447,6 +450,7 @@ public class CMTKTransformation {
 				if( m.find() ) {
 					if( dimsx < 0 ) {
 						IJ.error("Failed: got 'coefficients' before 'dims'");
+						br.close();
 						return null;
 					}
 					coeffs = new double[dimsx*dimsy*dimsz][3];
@@ -469,12 +473,13 @@ public class CMTKTransformation {
 						String error = "Number of coefficients ("+added+") didn't match expected number ("+pointsExpected+")";
 						IJ.error(error);
 						System.out.println("Error is: "+error);
+						br.close();
 						return null;
 					}
 					break;
 				}
 			}
-
+			br.close();
 		} catch( IOException e ) {
 			IJ.error("IOException in parseTypedStreamWarp: "+e);
 			return null;
@@ -878,6 +883,7 @@ public class CMTKTransformation {
 						int modelZ = (int)( (p / (modelWidth * modelHeight)) % modelDepth );
 						target[modelZ][modelY*modelWidth+modelX] = dis.readShort();
 					}
+					dis.close();
 				}
 
 			} catch( Exception e ) {

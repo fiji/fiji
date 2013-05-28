@@ -8,7 +8,7 @@ public abstract class AbstractDetection< T extends AbstractDetection< T > > exte
 {
 	private static final long serialVersionUID = 1L;
 	
-	final protected int id;
+	final protected long id;
 	protected double weight;
 	protected boolean useW = false;
 
@@ -33,7 +33,7 @@ public abstract class AbstractDetection< T extends AbstractDetection< T > > exte
 
 	public void setWeight( final double weight ){ this.weight = weight; }
 	public double getWeight(){ return weight; }
-	public int getID() { return id; }
+	public long getID() { return id; }
 	public void setDistance( float distance )  { this.distance = distance; }
 	public float getDistance() { return distance; }
 	public boolean isUsed() { return isUsed; }

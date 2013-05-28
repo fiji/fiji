@@ -291,14 +291,11 @@ public class TrackDisplayNode extends ContentNode implements TimelapseListener {
 	}
 
 	/**
-	 * Set the color of the given edge mesh.
+	 * Sets the color of the given edge mesh.
 	 */
 	public void setColor(final DefaultWeightedEdge edge, final Color color) {
 		// First, find to what track it belongs to
-		Integer trackID = model.getTrackModel().getTrackIDOf(edge);
-		if (null == trackID) {
-			return;
-		}
+		int trackID = model.getTrackModel().getTrackIDOf(edge);
 
 		// Set color of corresponding line primitive
 		Color4f color4 = new Color4f(); 
@@ -317,24 +314,15 @@ public class TrackDisplayNode extends ContentNode implements TimelapseListener {
 	}
 
 	/**
-	 * Return the color of the specified edge mesh.
+	 * Returns the color of the specified edge mesh.
 	 */
 	public Color getColor(final DefaultWeightedEdge edge) {
 		// First, find to what track it belongs to
-		final int ntracks = model.getTrackModel().getNTracks();
-		int trackIndex = -1;
-		for (int i = 0; i < ntracks; i++) {
-			if (model.getTrackModel().getTrackEdges(i).contains(edge)) {
-				trackIndex = i;
-				break;
-			}
-		} 
-		if (trackIndex < 0)
-			return null;
+		int trackID = model.getTrackModel().getTrackIDOf(edge);
 		// Retrieve color from index
 		Color4f color = new Color4f();
-		int index = edgeIndices.get(trackIndex).get(edge);
-		LineArray line = lines.get(trackIndex);
+		int index = edgeIndices.get(trackID).get(edge);
+		LineArray line = lines.get(trackID);
 		if (null == line) {
 			return null;
 		}	

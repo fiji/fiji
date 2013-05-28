@@ -8,7 +8,7 @@ public class DetectionStructure< T extends DetectionView< ?, T > >
 		
 	public void addDetection( final T detection ) { detections.add( detection ); }
 	public ArrayList<T> getDetectionList() { return detections; }
-	public T getDetection( final int i ) { return detections.get( i ); }
+	public T getDetection( final long detectionID ) { return detections.get( (int)detectionID ); }
 	
 	public T getDetection( final float x, final float y, final float z )
 	{

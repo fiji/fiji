@@ -17,11 +17,11 @@ import java.awt.event.MouseEvent;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeSet;
 
 import javax.swing.AbstractListModel;
 import javax.swing.JLabel;
@@ -44,10 +44,10 @@ import javax.swing.table.JTableHeader;
 import com.mxgraph.model.mxCell;
 import com.mxgraph.model.mxICell;
 
-import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.SelectionChangeEvent;
 import fiji.plugin.trackmate.SelectionChangeListener;
+import fiji.plugin.trackmate.Spot;
+import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.features.SpotFeatureGrapher;
 import fiji.plugin.trackmate.util.OnRequestUpdater;
 import fiji.plugin.trackmate.util.OnRequestUpdater.Refreshable;
@@ -155,9 +155,10 @@ public class InfoPane extends JPanel implements SelectionChangeListener {
 	}
 
 	private void update() {
-
-		TreeSet<Spot> sortedSpots = new TreeSet<Spot>(Spot.frameComparator);
-		sortedSpots.addAll(spotSelection);
+		/* Sort using a list; TreeSet does not allow several identical frames,
+		 * which is likely to happen.  */
+		List<Spot> sortedSpots = new ArrayList<Spot>(spotSelection);
+		Collections.sort(sortedSpots, Spot.frameComparator);
 		
 		@SuppressWarnings("serial")
 		DefaultTableModel dm = new DefaultTableModel() { // Un-editable model

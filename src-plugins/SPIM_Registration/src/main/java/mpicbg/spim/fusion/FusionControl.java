@@ -1,5 +1,6 @@
 package mpicbg.spim.fusion;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Date;
 
@@ -32,8 +33,11 @@ public class FusionControl
 		if (conf.useEntropy)
 			isolatedWeightenerFactories.add( new EntropyFastFactory( conf.entropyFactory ) );
 
-		if (conf.useGauss)
+		if (conf.useGaussContentBased)
 			isolatedWeightenerFactories.add( new GaussContentFactory( conf.entropyFactory ) );
+
+		if (conf.useIntegralContentBased)
+			isolatedWeightenerFactories.add( new AverageContentFactory( conf.entropyFactory ) );
 
 		if (conf.useLinearBlening)
 		{
@@ -44,7 +48,9 @@ public class FusionControl
 				combinedWeightenerFactories.add( new BlendingSimpleFactory( 0, 0.3f ) );
 		}
 		
-		if ( conf.isDeconvolution )
+		if ( conf.isDeconvolution && conf.deconvolutionLoadSequentially )
+			fusion = new PreDeconvolutionFusionSequential( viewStructure, referenceViewStructure, isolatedWeightenerFactories, combinedWeightenerFactories );
+		else if ( conf.isDeconvolution )
 			fusion = new PreDeconvolutionFusion( viewStructure, referenceViewStructure, isolatedWeightenerFactories, combinedWeightenerFactories );
 		else if (conf.multipleImageFusion)
 			fusion = new MappingFusionSequentialDifferentOutput( viewStructure, referenceViewStructure, isolatedWeightenerFactories, combinedWeightenerFactories );
@@ -137,13 +143,24 @@ public class FusionControl
 				}
 			}
 			
-			if ( conf.writeOutputImage )
+			if ( conf.writeOutputImage == 1)
 			{			
 				if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_MAIN )
 					IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Writing output file (Channel " + channelIndex +  ").");
 				
 				fusion.saveAsTiffs( conf.outputdirectory, "img_tl" + timePoint, channelIndex );
-			}					
+			}
+			else if ( conf.writeOutputImage == 2 )
+			{
+				final File dir = new File( conf.outputdirectory, "" + timePoint );
+				if ( !dir.exists() && !dir.mkdirs() )
+				{
+					IOFunctions.printErr("(" + new Date(System.currentTimeMillis()) + "): Cannot create directory '" + dir.getAbsolutePath() + "', quitting.");
+					return;
+				}
+				fusion.saveAsTiffs( dir.getAbsolutePath(), "img_tl" + timePoint, channelIndex );
+			}
+			
 		}
 		
 		if  ( !conf.isDeconvolution )

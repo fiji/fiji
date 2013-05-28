@@ -27,6 +27,7 @@ public class SampleImageLoader implements PlugIn {
 	protected final static String menuPath = "File>Open Samples";
 	protected final static String menuItemLabel = "Cache Sample Images";
 
+	@Override
 	public void run(String arg) {
 		if ("cache".equals(arg)) {
 			fetchSamples();
@@ -67,7 +68,7 @@ public class SampleImageLoader implements PlugIn {
 		if (menu == null)
 			return;
 
-		Hashtable commands = Menus.getCommands();
+		Hashtable<?, ?> commands = Menus.getCommands();
 		for (int i = 0; i < menu.getItemCount(); i++) {
 			String label = menu.getItem(i).getLabel();
 			String command = (String)commands.get(label);
@@ -91,13 +92,14 @@ public class SampleImageLoader implements PlugIn {
 	}
 
 	protected static class InstallHandler implements SampleHandler {
-		protected Hashtable commands;
+		protected Hashtable<String, String> commands;
 		protected boolean hasUncached = false;
 
-		public InstallHandler(Hashtable commands) {
+		public InstallHandler(Hashtable<String, String> commands) {
 			this.commands = commands;
 		}
 
+		@Override
 		public void handle(String label, String url) {
 			commands.put(label, thisPlugin + "(\"" + url + "\")");
 			 if (getCached(url) == null)
@@ -106,7 +108,8 @@ public class SampleImageLoader implements PlugIn {
 	}
 
 	public static void install() {
-		Hashtable commands = Menus.getCommands();
+		@SuppressWarnings("unchecked")
+		Hashtable<String, String> commands = Menus.getCommands();
 
 		InstallHandler handler = new InstallHandler(commands);
 		handleSamples(handler);
@@ -122,6 +125,7 @@ public class SampleImageLoader implements PlugIn {
 	public static void fetchSamples() {
 		final List<String> urls = new ArrayList<String>();
 		handleSamples(new SampleHandler() {
+			@Override
 			public void handle(String label, String url) {
 				if (getCached(url) == null)
 					urls.add(url);

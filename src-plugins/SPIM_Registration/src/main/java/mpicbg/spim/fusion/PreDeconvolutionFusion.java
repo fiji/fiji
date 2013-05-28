@@ -6,6 +6,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.vecmath.Point3f;
 
+import fiji.plugin.Multi_View_Deconvolution;
+
 import mpicbg.imglib.cursor.LocalizableByDimCursor;
 import mpicbg.imglib.cursor.LocalizableCursor;
 import mpicbg.imglib.image.Image;
@@ -17,14 +19,16 @@ import mpicbg.imglib.util.Util;
 import mpicbg.models.AbstractAffineModel3D;
 import mpicbg.models.NoninvertibleModelException;
 import mpicbg.spim.io.IOFunctions;
+import mpicbg.spim.postprocessing.deconvolution.ExtractPSF;
 import mpicbg.spim.registration.ViewDataBeads;
 import mpicbg.spim.registration.ViewStructure;
 
-public class PreDeconvolutionFusion extends SPIMImageFusion
+public class PreDeconvolutionFusion extends SPIMImageFusion implements PreDeconvolutionFusionInterface
 {
 	final Image<FloatType> images[], weights[];
 	final int numViews;
 	final boolean normalize;
+	final ExtractPSF extractPSF;
 	
 	public PreDeconvolutionFusion( final ViewStructure viewStructure, final ViewStructure referenceViewStructure, 
 								  final ArrayList<IsolatedPixelWeightenerFactory<?>> isolatedWeightenerFactories, 
@@ -41,9 +45,17 @@ public class PreDeconvolutionFusion extends SPIMImageFusion
 		final ImageFactory<FloatType> imageFactory = new ImageFactory<FloatType>( new FloatType(), conf.outputImageFactory );
 		numViews = viewStructure.getNumViews();
 		
+		if ( conf.extractPSF )
+			extractPSF = new ExtractPSF( viewStructure );
+		else
+			extractPSF = ExtractPSF.loadAndTransformPSF( conf.psfFile, conf.deconvolutionShowAveragePSF, viewStructure );			
+		
 		images = new Image[ numViews ];
 		weights = new Image[ numViews ];
-		
+
+		if ( extractPSF == null )
+			return;
+
 		for ( int view = 0; view < numViews; view++ )
 		{
 			weights[ view ] = imageFactory.createImage( new int[]{ imgW, imgH, imgD }, "weights_" + view );
@@ -58,6 +70,12 @@ public class PreDeconvolutionFusion extends SPIMImageFusion
 			}
 
 		}		
+	}
+	
+	public static void subtractBackground( final Image< FloatType > img, final float value )
+	{
+		for ( final FloatType t : img )
+			t.set( Math.max( 0, t.get() - value ) );
 	}
 
 	@Override
@@ -83,7 +101,17 @@ public class PreDeconvolutionFusion extends SPIMImageFusion
 		
 		// load images 
 		for ( final ViewDataBeads view : views )
+		{
 			view.getImage();
+			if ( Multi_View_Deconvolution.subtractBackground != 0 )
+			{
+        		if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_ERRORONLY )
+        			IOFunctions.println( "PreDeconvolutionFusionSequential(): Subtracting background of " + Multi_View_Deconvolution.subtractBackground + " from " + view.getName() );
+
+        		subtractBackground( view.getImage( false ), Multi_View_Deconvolution.subtractBackground );
+				view.getImage( true );
+			}
+		}
 			
 		if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_MAIN && isolatedWeightenerFactories.size() > 0 )
 		{
@@ -138,13 +166,13 @@ public class PreDeconvolutionFusion extends SPIMImageFusion
 						
 			if ( !successful )
 			{
-				IOFunctions.println( "Not enough memory for running the content-based fusion, running without it" );
+				IOFunctions.println( "Not enough memory for computing the weights for the multi-view deconvolution." );
 				isoWinit = new IsolatedPixelWeightener[ 0 ][ 0 ];
 			}
 		}
 		catch (Exception e)
 		{				
-			IOFunctions.println( "Not enough memory for running the content-based fusion, running without it" );
+			IOFunctions.println( "Not enough memory for computing the weights for the multi-view deconvolution." );
 			isoWinit = new IsolatedPixelWeightener[ 0 ][ 0 ];
 		}
 		
@@ -389,9 +417,16 @@ public class PreDeconvolutionFusion extends SPIMImageFusion
 		if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_MAIN )
 			IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Closing all input images (Channel " + channelIndex +  ").");
 
-		// do not unload images, we need them to extract the beads!
-		//for ( final ViewDataBeads view : views ) 
-		//	view.closeImage();
+		// extract all PSF's
+		if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_MAIN )
+			IOFunctions.println( "Extracting all PSF's" );
+		
+		if ( conf.extractPSF )
+			extractPSF.extract( conf.deconvolutionShowAveragePSF );
+		
+		// unload images
+		for ( final ViewDataBeads view : views ) 
+			view.closeImage();
 			
 		// close weighteners		
 		// close isolated pixel weighteners
@@ -413,13 +448,22 @@ public class PreDeconvolutionFusion extends SPIMImageFusion
 	@Override
 	public Image<FloatType> getFusedImage() { return null; }
 	
+	@Override
 	public Image<FloatType> getFusedImage( final int index ) { return images[ index ]; }
+	@Override
 	public Image<FloatType> getWeightImage( final int index ) { return weights[ index ]; }
 
 	@Override
 	public void closeImages() 
 	{
-		// do nothing, we still need them!
+		for ( final ViewDataBeads view : viewStructure.getViews() ) 
+			view.closeImage();
 	}
+
+	@Override
+	public ArrayList<Image<FloatType>> getPointSpreadFunctions() { return extractPSF.getPSFs(); }
+
+	@Override
+	public ExtractPSF getExtractPSFInstance() { return this.extractPSF; }
 
 }

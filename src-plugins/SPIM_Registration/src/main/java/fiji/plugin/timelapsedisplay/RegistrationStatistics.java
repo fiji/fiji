@@ -69,7 +69,7 @@ public class RegistrationStatistics
 		maxRatio = 0;
 		avgRatio = 0;
 		int numViews = 0;
-		ViewDataBeads worstView = null;
+		ViewDataBeads worstView = viewStructure.getViews().get( 0 );
 
 		for ( final ViewDataBeads view : viewStructure.getViews() )
 		{
@@ -90,7 +90,7 @@ public class RegistrationStatistics
 				{
 					final double ratio = (double)correspondences / (double)candidates;
 
-					if ( ratio < minRatio )
+					if ( ratio <= minRatio )
 					{
 						minRatio = ratio;
 						worstView = view;

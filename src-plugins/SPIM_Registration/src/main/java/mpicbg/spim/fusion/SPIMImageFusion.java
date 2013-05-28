@@ -21,7 +21,7 @@ public abstract class SPIMImageFusion
 	protected SPIMConfiguration conf;
 	final protected ArrayList <IsolatedPixelWeightenerFactory<?>> isolatedWeightenerFactories;
 	final protected ArrayList <CombinedPixelWeightenerFactory<?>> combinedWeightenerFactories;
-	protected Point3f min = null, max = null, size = null;	
+	protected Point3f min = null, max = null, size = null, location000 = null;	
 	protected int cropOffsetX, cropOffsetY, cropOffsetZ, imgW, imgH, imgD, scale;
 	
 	final protected ViewStructure viewStructure;
@@ -41,6 +41,15 @@ public abstract class SPIMImageFusion
 		
 		// compute cropped image size
 		initFusion();
+		
+		// compute location of point (0,0,0) in the global coordinate system
+		location000 = new Point3f();
+		location000.x = cropOffsetX * scale + min.x;
+		location000.y = cropOffsetY * scale + min.y;
+		location000.z = cropOffsetZ * scale + min.z;
+		
+		if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_MAIN )
+			IOFunctions.println( "Location of pixel (0,0,0) in global coordinates is: " + location000 );
 	}
 	
 	public abstract void fuseSPIMImages( int channelIndex );	
@@ -114,44 +123,19 @@ public abstract class SPIMImageFusion
 			
 			final int[] dim = view.getImageSize();			
 			
+			// transform the corner points of the current view
 			final float[] minCoordinate = new float[]{ 0, 0, 0 };
 			final float[] maxCoordinate = new float[]{ dim[0], dim[1], dim[2] };
 			
 			((AbstractAffineModel3D<?>)view.getTile().getModel()).estimateBounds( minCoordinate, maxCoordinate );
 
-			if ( minCoordinate[ 0 ] < min.x ) min.x = minCoordinate[ 0 ];
-			if ( minCoordinate[ 1 ] < min.y ) min.y = minCoordinate[ 1 ];
-			if ( minCoordinate[ 2 ] < min.z ) min.z = minCoordinate[ 2 ];
-			
-			if ( maxCoordinate[ 0 ] > max.x) max.x = maxCoordinate[ 0 ];
-			if ( maxCoordinate[ 1 ] > max.y) max.y = maxCoordinate[ 1 ];
-			if ( maxCoordinate[ 2 ] > max.z) max.z = maxCoordinate[ 2 ];
-			
-			/*Point3f points[] = new Point3f[8];
-			points[0] = new Point3f(0, 0, 0);
-			points[1] = new Point3f((dim[0] - 1), 0, 0);
-			points[2] = new Point3f((dim[0] - 1), (dim[1] - 1), 0);
-			points[3] = new Point3f(0, (dim[1] - 1), 0);
+			min.x = Math.min( minCoordinate[ 0 ], min.x );
+			min.y = Math.min( minCoordinate[ 1 ], min.y );
+			min.z = Math.min( minCoordinate[ 2 ], min.z );
 
-			points[4] = new Point3f(0, 0, (dim[2] - 1));
-			points[5] = new Point3f((dim[0] - 1), 0, (dim[2] - 1));
-			points[6] = new Point3f((dim[0] - 1), (dim[1] - 1), (dim[2] - 1));
-			points[7] = new Point3f(0, (dim[1] - 1) , (dim[2] - 1));
-			
-			// transform the points
-			for (Point3f point : points)
-				view.transformation.transform(point);
-
-			for (Point3f point : points)
-			{
-				if (point.x < min.x) min.x = point.x;
-				if (point.y < min.y) min.y = point.y;
-				if (point.z < min.z) min.z = point.z;
-				
-				if (point.x > max.x) max.x = point.x;
-				if (point.y > max.y) max.y = point.y;
-				if (point.z > max.z) max.z = point.z;
-			}*/
+			max.x = Math.max( maxCoordinate[ 0 ], max.x );
+			max.y = Math.max( maxCoordinate[ 1 ], max.y );
+			max.z = Math.max( maxCoordinate[ 2 ], max.z );
 		}
 		
 		size.sub(max, min);

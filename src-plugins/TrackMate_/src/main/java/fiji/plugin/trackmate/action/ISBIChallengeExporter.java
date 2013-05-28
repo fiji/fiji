@@ -143,13 +143,13 @@ public class ISBIChallengeExporter extends AbstractTMAction {
 			sortedTrack.addAll(track);
 			
 			for (Spot spot : sortedTrack) {
-				double t = spot.getFeature(Spot.POSITION_T);
+				int t = spot.getFeature(Spot.FRAME).intValue();
 				double x = spot.getFeature(Spot.POSITION_X);
 				double y = spot.getFeature(Spot.POSITION_Y);
 				double z = spot.getFeature(Spot.POSITION_Z);
 
 				Element spotElement = new Element(SPOT_KEY);
-				spotElement.setAttribute(T_ATT, ""+ (int)t);
+				spotElement.setAttribute(T_ATT, ""+t);
 				spotElement.setAttribute(X_ATT, ""+x);
 				spotElement.setAttribute(Y_ATT, ""+y);
 				spotElement.setAttribute(Z_ATT, ""+z);

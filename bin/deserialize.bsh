@@ -1,0 +1,56 @@
+#!/bin/sh
+/*/. 2>/dev/null; exec "$(dirname "$0")"/ImageJ.sh "$0" "$@" # exec with fiji */
+
+import java.io.EOFException;
+import java.io.FileInputStream;
+import java.io.ObjectInputStream;
+import java.util.zip.GZIPInputStream;
+
+usage() {
+	System.err.println("Usage: " + this.interpreter.getSourceFileInfo()
+		+ " [--gzip] [-<max-count>] <serialized-objects>");
+	System.exit(1);
+}
+
+i = 0;
+gzip = false;
+count = -1;
+while (bsh.args.length > i && bsh.args[i].startsWith("-")) {
+	option = bsh.args[i++];
+	if (option.equals("--gzip")) {
+		gzip = true;
+	} else if (option.matches("^-[1-9]+$")) {
+		count = Integer.parseInt(option.substring(1));
+	} else if (option.equals("-")) {
+		i--;
+		break;
+	} else {
+		usage();
+	}
+}
+
+if (bsh.args.length != i + 1) {
+	usage();
+}
+
+input = bsh.args[i].equals("-") ? System.in : new FileInputStream(bsh.args[i]);
+if (gzip) {
+	input = new GZIPInputStream(input);
+}
+input = new ObjectInputStream(input);
+for (;;) try {
+	if (count-- == 0) {
+		break;
+	}
+	Object object = input.readObject();
+	if (object == null) break;
+	System.out.print("Found object of class " + object.getClass());
+	System.out.println(":\n" + object);
+} catch (Throwable e) {
+	if (e instanceof EOFException) {
+		// ignore & close
+		break;
+	}
+	System.out.println(e.getClass().getName() + ": " + e.getMessage());
+}
+input.close();

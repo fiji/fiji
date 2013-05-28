@@ -8,7 +8,7 @@
 	<parent>
 		<groupId>org.scijava</groupId>
 		<artifactId>pom-scijava</artifactId>
-		<version>1.27</version>
+		<version>1.42</version>
 	</parent>
 
 	<groupId>sc.fiji</groupId>
@@ -20,11 +20,14 @@
 	<description></description>
 
 	<properties>
+		<autocomplete.version>2.0.2</autocomplete.version>
 		<imagej.app.directory>${rootdir}</imagej.app.directory>
 		<imagescience.version>2.4.1</imagescience.version>
 		<jcommon.version>1.0.17</jcommon.version>
 		<jfreechart.version>1.0.14</jfreechart.version>
+		<jsch.version>0.1.49</jsch.version>
 		<mpicbg.version>0.6.0-SNAPSHOT</mpicbg.version>
+		<rsyntaxtextarea.version>2.0.4.1</rsyntaxtextarea.version>
 		<trakem2.version>1.0b-SNAPSHOT</trakem2.version>
 	</properties>
 
@@ -66,6 +69,7 @@
 						<link>http://jenkins.imagej.net/job/ImageJ-daily/javadoc</link>
 						<link>http://jenkins.imagej.net/job/ImgLib-daily/javadoc</link>
 						<link>http://jenkins.imagej.net/job/ImageJ1-javadoc/javadoc</link>
+						<link>http://weka.sourceforge.net/doc.dev/</link>
 					</links>
 				</configuration>
 			</plugin>

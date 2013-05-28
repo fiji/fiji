@@ -116,6 +116,7 @@ import weka.core.Instances;
 import fiji.util.gui.GenericDialogPlus;
 import fiji.util.gui.OverlayedImageCanvas;
 import hr.irb.fastRandomForest.FastRandomForest;
+
 @Deprecated
 public class Trainable_Segmentation implements PlugIn 
 {
