@@ -116,7 +116,7 @@ public class TrackMateModel {
 	 * CONSTANTS
 	 */
 
-	private static final boolean DEBUG = true;
+	private static final boolean DEBUG = false;
 
 	/*
 	 * FIELDS

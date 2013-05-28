@@ -22,7 +22,7 @@ public class Spot {
 	 * FIELDS
 	 */
 
-	public static AtomicInteger IDcounter = new AtomicInteger(0); 
+	public static AtomicInteger IDcounter = new AtomicInteger(0);
 
 	/** Store the individual features, and their values. */
 	private final ConcurrentHashMap<String, Double> features = new ConcurrentHashMap<String, Double>();

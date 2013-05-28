@@ -10,7 +10,6 @@ import java.util.Map;
 import java.util.Set;
 
 import org.jgrapht.VertexFactory;
-import org.jgrapht.alg.ConnectivityInspector;
 import org.jgrapht.alg.DijkstraShortestPath;
 import org.jgrapht.alg.DirectedNeighborIndex;
 import org.jgrapht.event.GraphEdgeChangeEvent;
@@ -24,6 +23,7 @@ import org.jgrapht.graph.SimpleDirectedWeightedGraph;
 import org.jgrapht.traverse.BreadthFirstIterator;
 import org.jgrapht.traverse.DepthFirstIterator;
 
+import fiji.plugin.trackmate.graph.IncrementalConnectivityInspector;
 import fiji.plugin.trackmate.graph.Function1;
 import fiji.plugin.trackmate.graph.SortedDepthFirstIterator;
 import fiji.plugin.trackmate.util.TMUtils;
@@ -34,7 +34,7 @@ import fiji.plugin.trackmate.util.TMUtils;
  */
 public class TrackGraphModel {
 
-	private static final boolean DEBUG = true;
+	private static final boolean DEBUG = false;
 
 	private static int currentNameIndex;
 
@@ -67,6 +67,8 @@ public class TrackGraphModel {
 	 * filtering, and set visible. The user can manually add to or remove from
 	 * this list.	 */
 	private Set<Integer> filteredTrackKeys = new HashSet<Integer>();
+	private IncrementalConnectivityInspector<Spot, DefaultWeightedEdge> aci;
+	private final MyGraphListener mgl;
 
 	/*
 	 * TRANSACTION FIELDS
@@ -84,7 +86,10 @@ public class TrackGraphModel {
 	 */
 	TrackGraphModel(final TrackMateModel parentModel) {
 		this.model = parentModel;
-		graph.addGraphListener(new MyGraphListener());
+		this.aci = new IncrementalConnectivityInspector<Spot, DefaultWeightedEdge>(graph);
+		this.mgl = new MyGraphListener();
+		graph.addGraphListener(mgl);
+		graph.addGraphListener(aci);
 	}
 
 	/*
@@ -144,8 +149,16 @@ public class TrackGraphModel {
 	 * trigger the calculation of the track features. 
 	 */
 	public void setGraph(final SimpleDirectedWeightedGraph<Spot, DefaultWeightedEdge> graph) {
+		
+		// De-register the old one
+		this.graph.removeGraphListener(mgl);
+		this.graph.removeGraphListener(aci);
+		
+		// Register new one
 		this.graph = new ListenableDirectedGraph<Spot, DefaultWeightedEdge>(graph);
-		this.graph.addGraphListener(new MyGraphListener());
+		this.graph.addGraphListener(mgl);
+		this.aci = new IncrementalConnectivityInspector<Spot, DefaultWeightedEdge>(this.graph);
+		this.graph.addGraphListener(aci);
 		//
 		computeTracksFromGraph();
 		//
@@ -695,154 +708,15 @@ public class TrackGraphModel {
 		}
 
 		// Build new track lists
-		List<Set<Spot>> connectedSets = new ConnectivityInspector<Spot, DefaultWeightedEdge>(graph).connectedSets();
-		this.trackSpots = new HashMap<Integer, Set<Spot>>(connectedSets.size());
-		this.trackEdges = new HashMap<Integer, Set<DefaultWeightedEdge>>(connectedSets.size());
-		this.trackNames = new HashMap<Integer, String>(connectedSets.size());
-
-		for (Set<Spot> track : connectedSets) {
-
-			// We DO NOT WANT tracks made of a single spot. They will reside on the side, 
-			// as lonely spots
-			if (track.size() < 2) {
-				continue;
-			}
-
-			Integer uniqueKey = track.hashCode(); // FIXME is not actually unique, since it is the sum of spot IDs. A track made of 2 spots with IDs 2 & 5 will have the same hash that of a track made of the spots with IDs 3 & 4.
-			// Add to spot set collection
-			trackSpots.put(uniqueKey, track);
-			// Add to edge set collection, using the same hash as a key
-			Set<DefaultWeightedEdge> spotEdge = new HashSet<DefaultWeightedEdge>();
-			for (Spot spot : track) {
-				spotEdge.addAll(graph.edgesOf(spot));
-			}
-			trackEdges.put(uniqueKey, spotEdge);
-
+		this.trackSpots = aci.connectedVertexSets();
+		this.trackEdges = aci.connectedEdgeSets();
+		
+		// Leave track names and visibility aside for now
+		this.trackNames = new HashMap<Integer, String>(trackSpots.size());
+		for (Integer id : trackSpots.keySet()) {
+			trackNames.put(id, ""+id);
 		}
-
-		if (DEBUG) {
-			System.out.println("[TrackGraphModel] #computeTracksFromGraph(): found " + trackSpots.size() + " new spot tracks.");
-		}
-
-		// Try to infer correct visibility
-		final int noldtracks = oldTrackSpots.size();
-		final Map<Integer, Boolean> oldTrackVisibility = new HashMap<Integer, Boolean>(noldtracks);
-		for (Integer oldKey : oldTrackSpots.keySet()) {
-			oldTrackVisibility.put(oldKey, filteredTrackKeys.contains(oldKey));
-		}
-		filteredTrackKeys = new HashSet<Integer>(noldtracks); // Approx
-
-		/* A special case: if there is some completely new track appearing, it 
-		 * should be visible by default. It also needs a default name.
-		 * How do we know that some tracks are "de novo"?
-		 * For de novo tracks, there is no spot in the Set<Spot> that can be found in 
-		 * oldTrackSpots.	 */
-
-		/*
-		 * Map the new track IDs to the old ones. That is, the new track with ID newID
-		 * is built from parts of the old tracks with old IDs contained in the matching value set.
-		 */
-		Map<Integer, Set<Integer>> newToOldKeyMap = new HashMap<Integer, Set<Integer>>(trackSpots.size());
-		for (Integer trackID : trackSpots.keySet()) {
-			newToOldKeyMap.put(trackID, new HashSet<Integer>());
-		}
-
-		// Loop over old tracks to get where they can be found in the new tracks
-		if (DEBUG) {
-			System.out.println("[TrackGraphModel] #computeTracksFromGraph(): inspecting old tracks.");
-		}
-
-		for (Integer oldKey : oldTrackSpots.keySet()) {
-			Set<Spot> oldTrack = oldTrackSpots.get(oldKey);
-
-			for (Integer trackKey : trackSpots.keySet()) { // Iterate over new tracks
-				Set<Spot> track = trackSpots.get(trackKey);
-
-				boolean found = false;
-				for (Spot spot : track) {
-					if (oldTrack.contains(spot)) {
-						found = true;
-						break;
-					}
-				}
-
-				if (found) {
-					// There were common elements. We store this old track ID as part of the new track, and skip the rest
-					if (DEBUG) {
-						System.out.println("[TrackGraphModel] #computeTracksFromGraph(): old track " + oldKey + " parts were found in new track " + trackKey);
-					}
-					newToOldKeyMap.get(trackKey).add(oldKey);
-					// FIXME can we skip once we have found one?
-				}
-
-			} // Finished iterating over new tracks
-
-		}
-
-
-
-
-		// Assemble visibility and name from old parts
-
-		if (DEBUG) {
-			System.out.println("[TrackGraphModel] #computeTracksFromGraph(): assembling new tracks visibility and name.");
-		}
-
-
-		// Build this map
-		for (Integer trackKey : trackSpots.keySet()) {
-
-			if (newToOldKeyMap.get(trackKey).isEmpty()) {
-				// Is new, so we make it visible and give it a default name.
-				filteredTrackKeys.add(trackKey);
-				trackNames.put(trackKey, generateDefaultTrackName() );
-				if (DEBUG) {
-					System.out.println("[TrackGraphModel] #computeTracksFromGraph(): track " + trackKey + " is completely new. Making it visible with name " + trackNames.get(trackKey));
-				}
-
-			} else {
-				/* Is made of old tracks, so we can pick its name and visibility from there.
-				 * 
-				 * We copy the name from the largest old track that is part of this one now.
-				 * 
-				 * How to know if a new track should be visible or not?
-				 * We can say this: the new track should be visible if it has at least
-				 * one spot that can be found in a visible old track. */
-				Iterator<Integer> it = newToOldKeyMap.get(trackKey).iterator();
-				Integer keyOfLargestOldTracks = it.next();
-				boolean shouldBeVisible = oldTrackVisibility.get(keyOfLargestOldTracks);
-				while (it.hasNext()) {
-					Integer oldKey = it.next();
-					if (oldTrackSpots.get(oldKey).size() > oldTrackSpots.get(keyOfLargestOldTracks).size()) {
-						keyOfLargestOldTracks = oldKey;	
-					}
-					shouldBeVisible = shouldBeVisible | oldTrackVisibility.get(oldKey);
-				}
-				trackNames.put(trackKey, oldNames.get(keyOfLargestOldTracks));
-				if (shouldBeVisible) {
-					filteredTrackKeys.add(trackKey);
-				}
-				if (DEBUG) {
-					System.out.println("[TrackGraphModel] #computeTracksFromGraph(): track " + trackKey + " is not new; it is made in parts of old tracks " +  newToOldKeyMap.get(trackKey));
-					System.out.println("[TrackGraphModel] #computeTracksFromGraph():  - giving it the name: " + trackNames.get(trackKey));
-					System.out.println("[TrackGraphModel] #computeTracksFromGraph():  - making it visible? " + shouldBeVisible);
-
-				}
-			}
-		}
-
-
-		// Clean track feature value map
-		HashSet<Integer> trackIDsToRemove = new HashSet<Integer>(oldTrackSpots.keySet());
-		trackIDsToRemove.removeAll(trackSpots.keySet());
-		for (Integer toRemove : trackIDsToRemove) {
-			model.getFeatureModel().trackFeatureValues.remove(toRemove);
-		}
-
-
-		if (DEBUG) {
-			System.out.println("[TrackGraphModel] #computeTracksFromGraph(): the end; found " + trackSpots.size() + " new spot tracks.");
-		}
+		filteredTrackKeys = new HashSet<Integer>(trackSpots.keySet()); 
 	}
 
 
