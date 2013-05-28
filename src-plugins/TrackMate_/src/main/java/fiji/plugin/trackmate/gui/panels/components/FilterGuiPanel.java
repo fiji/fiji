@@ -38,12 +38,12 @@ import fiji.plugin.trackmate.gui.panels.components.ColorByFeatureGUIPanel.Catego
 import fiji.plugin.trackmate.util.OnRequestUpdater;
 
 public class FilterGuiPanel extends ActionListenablePanel implements ChangeListener {
-	
+
 	private static final boolean DEBUG = false;
 	private static final long serialVersionUID = -1L;
 	private static final String ADD_ICON = "images/add.png";
 	private static final String REMOVE_ICON = "images/delete.png";
-	
+
 	private final ChangeEvent CHANGE_EVENT = new ChangeEvent(this);
 	/** Will be set to the value of the {@link JPanelColorByFeatureGUI}. */
 	public ActionEvent COLOR_FEATURE_CHANGED = null;
@@ -65,7 +65,7 @@ public class FilterGuiPanel extends ActionListenablePanel implements ChangeListe
 
 	private List<FeatureFilter> featureFilters = new ArrayList<FeatureFilter>();
 	private ArrayList<ChangeListener> changeListeners = new ArrayList<ChangeListener>();
-	
+
 	private final Map<String, String> featureNames;
 	private final Category category;
 	private final TrackMateModel model;
@@ -80,18 +80,20 @@ public class FilterGuiPanel extends ActionListenablePanel implements ChangeListe
 
 	public FilterGuiPanel(TrackMateModel model, Category category) {
 		this.model = model;
-		
+
 		model.addTrackMateModelChangeListener(new ModelChangeListener() {
-			
+
 			@Override
 			public void modelChanged(ModelChangeEvent event) {
-				refreshDisplayedFeatureValues();
-				for (FilterPanel fp : thresholdPanels) {
-					fp.refresh();
+				if (event.getEventID() == ModelChangeEvent.MODEL_MODIFIED) {
+					refreshDisplayedFeatureValues();
+					for (FilterPanel fp : thresholdPanels) {
+						fp.refresh();
+					}
 				}
 			}
 		});
-		
+
 		this.category = category;
 		switch (category) {
 		case SPOTS:
@@ -115,7 +117,7 @@ public class FilterGuiPanel extends ActionListenablePanel implements ChangeListe
 				FilterGuiPanel.this.refresh();
 			}
 		});
-		
+
 		this.featureValues = new HashMap<String, double[]>();
 		refreshDisplayedFeatureValues();
 		initGUI();
@@ -145,7 +147,7 @@ public class FilterGuiPanel extends ActionListenablePanel implements ChangeListe
 		featureValues.clear();
 		featureValues.putAll(fv);
 	}
-	
+
 	/**
 	 * Set the feature filters to display and layout in this panel. 
 	 * @param filters  the list of {@link FeatureFilter}s that should be already present in the GUI 
@@ -193,7 +195,7 @@ public class FilterGuiPanel extends ActionListenablePanel implements ChangeListe
 	public String getColorFeature() {
 		return jPanelColorByFeatureGUI.getColorFeature();
 	}
-	
+
 	public void setColorFeature(String feature) {
 		jPanelColorByFeatureGUI.setColorFeature(feature);
 	}
@@ -300,7 +302,7 @@ public class FilterGuiPanel extends ActionListenablePanel implements ChangeListe
 	private void updateInfoText() {
 		String info = "";
 		int nobjects = 0;
-		
+
 		for (double[] values : featureValues.values()) { // bulletproof against unspecified features, which are signaled by empty arrays
 			if (values.length > 0) {
 				nobjects = values.length;
@@ -438,6 +440,6 @@ public class FilterGuiPanel extends ActionListenablePanel implements ChangeListe
 			e.printStackTrace();
 		}
 	}
-	
-	
+
+
 }

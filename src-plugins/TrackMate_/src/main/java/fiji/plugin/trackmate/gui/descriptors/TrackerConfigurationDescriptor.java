@@ -49,7 +49,12 @@ public class TrackerConfigurationDescriptor implements WizardPanelDescriptor {
 	}
 
 	@Override
-	public void displayingPanel() {	}
+	public void displayingPanel() {	
+		if (null == configPanel) {
+			// happens after loading.
+			aboutToDisplayPanel();
+		}
+	}
 
 	@Override
 	public void aboutToHidePanel() {

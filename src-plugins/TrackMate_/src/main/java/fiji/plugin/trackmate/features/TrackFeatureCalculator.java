@@ -77,9 +77,9 @@ public class TrackFeatureCalculator extends MultiThreadedBenchmarkAlgorithm {
 	 * Calculates all the track features configured in the {@link Settings} object 
 	 * for the specified tracks. 
 	 */
-	public void computeSpotFeatures(final Collection<Integer> trackIDs, boolean doLogIt) {
-		List<TrackAnalyzer> spotFeatureAnalyzers = settings.getTrackAnalyzers();
-		computeTrackFeaturesAgent(trackIDs, spotFeatureAnalyzers, doLogIt);
+	public void computeTrackFeatures(final Collection<Integer> trackIDs, boolean doLogIt) {
+		List<TrackAnalyzer> trackFeatureAnalyzers = settings.getTrackAnalyzers();
+		computeTrackFeaturesAgent(trackIDs, trackFeatureAnalyzers, doLogIt);
 	}
 
 	/*
@@ -97,7 +97,11 @@ public class TrackFeatureCalculator extends MultiThreadedBenchmarkAlgorithm {
 		
 		for (TrackAnalyzer analyzer : analyzers) {
 			analyzer.setNumThreads(numThreads);
-			analyzer.process(trackIDs);
+			if (analyzer.isLocal()) {
+				analyzer.process(trackIDs);
+			} else {
+				analyzer.process(model.getTrackModel().getTrackIDs());
+			}
 			if (doLogIt)
 				logger.log("  - " + analyzer.getKey() + " in " + analyzer.getProcessingTime() + " ms.\n");
 		}
