@@ -33,7 +33,6 @@ public class SpotColorGenerator implements FeatureColorGenerator<Spot>, ModelCha
 		model.removeTrackMateModelChangeListener(this);
 	}
 	
-	
 
 	@Override
 	public void modelChanged(ModelChangeEvent event) {

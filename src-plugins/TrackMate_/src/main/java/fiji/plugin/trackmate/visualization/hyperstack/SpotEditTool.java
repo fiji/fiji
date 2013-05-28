@@ -434,6 +434,7 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 				newSpot.putFeature(Spot.FRAME, Double.valueOf(frame));
 				newSpot.putFeature(Spot.POSITION_Z, zpos);
 				newSpot.putFeature(Spot.RADIUS, radius);
+				newSpot.putFeature(Spot.QUALITY, -1d);
 
 				model.beginUpdate();
 				try {

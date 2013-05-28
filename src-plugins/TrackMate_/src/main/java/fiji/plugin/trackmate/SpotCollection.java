@@ -416,11 +416,12 @@ public class SpotCollection implements MultiThreaded  {
 	 */
 	
 	/**
-	 * Builds and returns a map of feature values for this spot collection.
+	 * Builds and returns a new map of feature values for this spot collection.
 	 * Each feature maps a double array, with 1 element per {@link Spot}, all pooled
 	 * together.
 	 * @param features  the features to collect 
 	 * @param visibleOnly  if <code>true</code>, only the visible spot values will be collected.
+	 * @return a new map instance.
 	 */
 	public Map<String, double[]> collectValues(Collection<String> features, final boolean visibleOnly) {
 		final Map<String, double[]> featureValues = new ConcurrentHashMap<String, double[]>(features.size());

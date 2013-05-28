@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.EmptyStackException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Stack;
@@ -69,7 +70,9 @@ public class FilterGuiPanel extends ActionListenablePanel implements ChangeListe
 	private final Category category;
 	private final TrackMateModel model;
 	private final List<String> features;
-	private Map<String, double[]> featureValues;
+	/** Holds the map of feature values. Is made final so that the instance can be shared with the components
+	 * of this panel. */
+	private final Map<String, double[]> featureValues;
 
 	/*
 	 * CONSTRUCTOR
@@ -82,6 +85,7 @@ public class FilterGuiPanel extends ActionListenablePanel implements ChangeListe
 			
 			@Override
 			public void modelChanged(ModelChangeEvent event) {
+				refreshDisplayedFeatureValues();
 				for (FilterPanel fp : thresholdPanels) {
 					fp.refresh();
 				}
@@ -111,6 +115,8 @@ public class FilterGuiPanel extends ActionListenablePanel implements ChangeListe
 				FilterGuiPanel.this.refresh();
 			}
 		});
+		
+		this.featureValues = new HashMap<String, double[]>();
 		refreshDisplayedFeatureValues();
 		initGUI();
 	}
@@ -125,16 +131,19 @@ public class FilterGuiPanel extends ActionListenablePanel implements ChangeListe
 	 * panels. 
 	 */
 	public void refreshDisplayedFeatureValues() {
+		Map<String, double[]> fv;
 		switch (category) {
 		case SPOTS:
-			featureValues = model.getSpots().collectValues(model.getFeatureModel().getSpotFeatures(), false);
+			fv = model.getSpots().collectValues(model.getFeatureModel().getSpotFeatures(), false);
 			break;
 		case TRACKS:
-			featureValues = model.getFeatureModel().getTrackFeatureValues();
+			fv = model.getFeatureModel().getTrackFeatureValues();
 			break;
 		default:
 			throw new IllegalArgumentException("Don't know what to do with category: " + category);
 		}
+		featureValues.clear();
+		featureValues.putAll(fv);
 	}
 	
 	/**
@@ -310,7 +319,7 @@ public class FilterGuiPanel extends ActionListenablePanel implements ChangeListe
 				boolean ok = true;
 				for (FeatureFilter filter : featureFilters) {
 					double[] values =  featureValues.get(filter.feature);
-					if (values.length == 0) { // bulletproof against unspecified features, which are signaled by empty arrays
+					if (i >= values.length || values.length == 0) { // bulletproof 
 						continue;
 					}
 					val = values[i];

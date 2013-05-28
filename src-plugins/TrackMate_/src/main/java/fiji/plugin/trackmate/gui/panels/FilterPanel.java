@@ -76,7 +76,7 @@ public class FilterPanel extends javax.swing.JPanel {
 	private XYPlot plot;
 	private IntervalMarker intervalMarker;
 	private double threshold;
-	private Map<String, double[]> valuesMap;
+	private final Map<String, double[]> valuesMap;
 	private XYTextSimpleAnnotation annotation;
 	private String key;
 	private List<String> allKeys;
@@ -166,12 +166,15 @@ public class FilterPanel extends javax.swing.JPanel {
 		return listeners;
 	}
 	
+	/**
+	 * Refreshes the histogram content. Call this method when the values in the 
+	 * {@link #valuesMap} changed to update histogram display. 
+	 */
 	public void refresh() {
-		
-		System.out.println("DEBUG ME!!!!");// DEBUG FIXME
-		
+		double old = getThreshold();
 		key = allKeys.get(jComboBoxFeature.getSelectedIndex());
 		double[] values = valuesMap.get(key);
+		
 		if (null == values || 0 == values.length) {
 			dataset = new LogHistogramDataset();
 			annotation.setLocation(0.5f, 0.5f);
@@ -184,6 +187,7 @@ public class FilterPanel extends javax.swing.JPanel {
 			}
 		}
 		plot.setDataset(dataset);
+		threshold = old;
 		chartPanel.repaint();
 	}
 
