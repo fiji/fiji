@@ -321,6 +321,7 @@ public class ConfigureViewsPanel extends ActionListenablePanel {
 							break;
 						case EDGES:
 							newValue = edgeColorGenerator;
+							break;
 						default:
 							throw new IllegalArgumentException("Unknow track color generator category: " + category);
 						}

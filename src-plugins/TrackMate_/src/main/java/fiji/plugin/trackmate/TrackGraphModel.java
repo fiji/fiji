@@ -34,7 +34,7 @@ import fiji.plugin.trackmate.util.TMUtils;
  */
 public class TrackGraphModel {
 
-	private static final boolean DEBUG = false;
+	private static final boolean DEBUG = true;
 
 	private static int currentNameIndex;
 
@@ -673,7 +673,7 @@ public class TrackGraphModel {
 	 * <p>
 	 * The guts of this method are a bit convoluted: we must make sure that
 	 * tracks that were visible previous to the changes that called for this
-	 * method are still visible after, event if some tracks are merge, deleted
+	 * method are still visible after, event if some tracks are merged, deleted
 	 * or split.
 	 * 
 	 * @return  the map of the old track parts ID vs new ID: That is, all spots and edges 
@@ -700,7 +700,7 @@ public class TrackGraphModel {
 		this.trackEdges = new HashMap<Integer, Set<DefaultWeightedEdge>>(connectedSets.size());
 		this.trackNames = new HashMap<Integer, String>(connectedSets.size());
 
-		for(Set<Spot> track : connectedSets) {
+		for (Set<Spot> track : connectedSets) {
 
 			// We DO NOT WANT tracks made of a single spot. They will reside on the side, 
 			// as lonely spots
