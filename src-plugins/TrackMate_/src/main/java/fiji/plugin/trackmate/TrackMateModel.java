@@ -128,7 +128,7 @@ public class TrackMateModel {
 
 	// TRACKS
 
-	private final TrackGraphModel trackGraphModel;
+	private final TrackModel trackGraphModel;
 
 	// SPOTS
 
@@ -194,7 +194,7 @@ public class TrackMateModel {
 
 	public TrackMateModel() {
 		featureModel = new FeatureModel(this);
-		trackGraphModel = new TrackGraphModel(this);
+		trackGraphModel = new TrackModel(this);
 	}
 
 
@@ -219,15 +219,15 @@ public class TrackMateModel {
 		}
 
 		str.append('\n');
-		if (trackGraphModel.getNTracks() == 0) {
+		if (trackGraphModel.nTracks(false) == 0) {
 			str.append("No tracks.\n");
 		} else {
-			str.append("Contains " + trackGraphModel.getNTracks() + " tracks in total.\n");
+			str.append("Contains " + trackGraphModel.nTracks(false) + " tracks in total.\n");
 		}
-		if (trackGraphModel.getNFilteredTracks() == 0) {
+		if (trackGraphModel.nTracks(true) == 0) {
 			str.append("No filtered tracks.\n");
 		} else {
-			str.append("Contains " + trackGraphModel.getNFilteredTracks() + " filtered tracks.\n");
+			str.append("Contains " + trackGraphModel.nTracks(true) + " filtered tracks.\n");
 		}
 
 		str.append('\n');
@@ -246,9 +246,6 @@ public class TrackMateModel {
 	 */
 
 	public void addTrackMateModelChangeListener(ModelChangeListener listener) {
-		if (modelChangeListeners.contains(listener)) {
-			return;
-		}
 		modelChangeListeners.add(listener);
 	}
 
@@ -316,9 +313,9 @@ public class TrackMateModel {
 	 */
 
 	/**
-	 * @return the {@link TrackGraphModel} that manages tracks for this model.
+	 * Returns the {@link TrackModel} that manages tracks for this model.
 	 */
-	public TrackGraphModel getTrackModel() {
+	public TrackModel getTrackModel() {
 		return trackGraphModel;
 	}
 
@@ -490,28 +487,28 @@ public class TrackMateModel {
 	}
 
 	/**
-	 * @see TrackGraphModel#addEdge(Spot, Spot, double)
+	 * @see TrackModel#addEdge(Spot, Spot, double)
 	 */
 	public DefaultWeightedEdge addEdge(final Spot source, final Spot target, final double weight) {
 		return trackGraphModel.addEdge(source, target, weight);
 	}
 
 	/**
-	 * @see TrackGraphModel#removeEdge(Spot, Spot)
+	 * @see TrackModel#removeEdge(Spot, Spot)
 	 */
 	public DefaultWeightedEdge removeEdge(final Spot source, final Spot target) {
 		return trackGraphModel.removeEdge(source, target);
 	}
 
 	/**
-	 * @see TrackGraphModel#removeEdge(DefaultWeightedEdge)
+	 * @see TrackModel#removeEdge(DefaultWeightedEdge)
 	 */
 	public boolean removeEdge(final DefaultWeightedEdge edge) {
 		return trackGraphModel.removeEdge(edge);
 	}
 
 	/**
-	 * @see TrackGraphModel#setEdgeWeight(DefaultWeightedEdge, double)
+	 * @see TrackModel#setEdgeWeight(DefaultWeightedEdge, double)
 	 */
 	public void setEdgeWeight(final DefaultWeightedEdge edge, double weight) {
 		trackGraphModel.setEdgeWeight(edge, weight);
@@ -538,12 +535,12 @@ public class TrackMateModel {
 		HashMap<DefaultWeightedEdge, Integer> edgeRemovedOrigins = new HashMap<DefaultWeightedEdge, Integer>(trackGraphModel.edgesRemoved.size());
 		if (trackGraphModel.edgesRemoved.size() > 0) {
 			for (DefaultWeightedEdge edge : trackGraphModel.edgesRemoved) {
-				edgeRemovedOrigins.put(edge, getTrackModel().getTrackIDOf(edge)); // we store old track IDs
+				edgeRemovedOrigins.put(edge, getTrackModel().trackIDOf(edge)); // we store old track IDs
 			}
 		}
 
 		// Store old track IDs to monitor what tracks are new
-		HashSet<Integer> oldTrackIDs = new HashSet<Integer>(trackGraphModel.getTrackIDs());
+		HashSet<Integer> oldTrackIDs = new HashSet<Integer>(trackGraphModel.trackIDs(false));
 
 		/* We recompute tracks only if some edges have been added or removed,
 		 * (if some spots have been removed that causes edges to be removes, we already know about it).
@@ -556,7 +553,7 @@ public class TrackMateModel {
 		}
 
 		// Do we have new track appearing?
-		HashSet<Integer> tracksToUpdate = new HashSet<Integer>(trackGraphModel.getTrackIDs());
+		HashSet<Integer> tracksToUpdate = new HashSet<Integer>(trackGraphModel.trackIDs(false));
 		tracksToUpdate.removeAll(oldTrackIDs);
 
 		// We also want to update the tracks that have edges that were modified

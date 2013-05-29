@@ -74,7 +74,7 @@ public class ISBIChallengeExporter extends AbstractTMAction {
 	public static void exportToFile(final TrackMateModel model, Settings settings, final File file) {
 		final Logger logger = model.getLogger();
 		logger.log("Exporting to ISBI 2012 particle tracking challenge format.\n");
-		int ntracks = model.getTrackModel().getNFilteredTracks();
+		int ntracks = model.getTrackModel().nTracks(true);
 		if (ntracks == 0) {
 			logger.log("No visible track found. Aborting.\n");
 			return;
@@ -136,12 +136,12 @@ public class ISBIChallengeExporter extends AbstractTMAction {
 		content.setAttribute(DATE_ATT, new Date().toString());
 
 		logger.setStatus("Marshalling...");
-		Integer[] visibleTracks = model.getTrackModel().getFilteredTrackIDs().toArray(new Integer[] {});
-		for (int i = 0 ; i < model.getTrackModel().getNFilteredTracks() ; i++) {
+		Integer[] visibleTracks = model.getTrackModel().trackIDs(true).toArray(new Integer[] {});
+		for (int i = 0 ; i < model.getTrackModel().nTracks(true) ; i++) {
 
 			Element trackElement = new Element(TRACK_KEY);
 			int trackindex = visibleTracks[i];
-			Set<Spot> track = model.getTrackModel().getTrackSpots(trackindex);
+			Set<Spot> track = model.getTrackModel().trackSpots(trackindex);
 			// Sort them by time 
 			TreeSet<Spot> sortedTrack = new TreeSet<Spot>(Spot.timeComparator);
 			sortedTrack.addAll(track);
@@ -160,7 +160,7 @@ public class ISBIChallengeExporter extends AbstractTMAction {
 				trackElement.addContent(spotElement);
 			}
 			content.addContent(trackElement);
-			logger.setProgress(i / (0d + model.getTrackModel().getNFilteredTracks()));
+			logger.setProgress(i / (0d + model.getTrackModel().nTracks(true)));
 		}
 
 		logger.setStatus("");

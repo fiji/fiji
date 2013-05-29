@@ -45,7 +45,7 @@ public class SaveDescriptor extends SomeDialogDescriptor {
 		}
 
 		// If we are to save tracks, we better ensures that track and edge features are there, even if we have to enforce it
-		if (trackmate.getModel().getTrackModel().getNTracks() > 0) {
+		if (trackmate.getModel().getTrackModel().nTracks(false) > 0) {
 			trackmate.computeEdgeFeatures(true);
 			trackmate.computeTrackFeatures(true);
 		}

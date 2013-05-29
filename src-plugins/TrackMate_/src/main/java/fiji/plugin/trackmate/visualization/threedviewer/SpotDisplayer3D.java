@@ -100,7 +100,7 @@ public class SpotDisplayer3D extends AbstractTrackMateModelView {
 			break;
 		case ModelChangeEvent.TRACKS_VISIBILITY_CHANGED:
 			updateTrackColors();
-			trackNode.setTrackVisible(model.getTrackModel().getFilteredTrackIDs());
+			trackNode.setTrackVisible(model.getTrackModel().trackIDs(true));
 			break;
 
 		}
@@ -204,7 +204,7 @@ public class SpotDisplayer3D extends AbstractTrackMateModelView {
 			universe.removeContent(SPOT_CONTENT_NAME);
 			universe.addContentLater(spotContent);
 		}
-		if (model.getTrackModel().getNFilteredTracks() > 0) {
+		if (model.getTrackModel().nTracks(true) > 0) {
 			trackContent = makeTrackContent();
 			universe.removeContent(TRACK_CONTENT_NAME);
 			universe.addContentLater(trackContent);
@@ -309,9 +309,9 @@ public class SpotDisplayer3D extends AbstractTrackMateModelView {
 	private void updateTrackColors() {
 		final TrackColorGenerator colorGenerator = (TrackColorGenerator) displaySettings.get(KEY_TRACK_COLORING);
 
-		for(Integer trackID : model.getTrackModel().getFilteredTrackIDs()) {
+		for(Integer trackID : model.getTrackModel().trackIDs(true)) {
 			colorGenerator.setCurrentTrackID(trackID);
-			for (DefaultWeightedEdge edge : model.getTrackModel().getTrackEdges(trackID)) {
+			for (DefaultWeightedEdge edge : model.getTrackModel().trackEdges(trackID)) {
 				Color color =  colorGenerator.color(edge);
 				trackNode.setColor(edge, color);
 			}

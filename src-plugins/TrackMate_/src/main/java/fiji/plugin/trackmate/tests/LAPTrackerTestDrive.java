@@ -43,9 +43,7 @@ public class LAPTrackerTestDrive {
 		reader.readSettings(settings, null, new TrackerProvider(model), null, null, null);
 		
 		System.out.println("Spots: "+ model.getSpots());
-		System.out.println("Found "+model.getTrackModel().getNTracks()+" tracks in the file:");
-		for (Integer trackID : model.getTrackModel().getTrackEdges().keySet())
-			System.out.println('\t'+model.getTrackModel().trackToString(trackID));
+		System.out.println("Found "+model.getTrackModel().nTracks(false)+" tracks in the file:");
 		System.out.println();
 		
 		// 1.5 - Set the tracking settings
@@ -76,10 +74,10 @@ public class LAPTrackerTestDrive {
 		// 2.5 check the track visibility prior and after
 		System.out.println("Track visibility before new graph allocation:");
 		System.out.println("On the following tracks ID:");
-		for (Integer trackID : model.getTrackModel().getTrackIDs()) 
+		for (Integer trackID : model.getTrackModel().trackIDs(false)) 
 			System.out.print(trackID + ", ");
 		System.out.println("\nthe following were filtered:");
-		for (Integer trackID : model.getTrackModel().getFilteredTrackIDs()) 
+		for (Integer trackID : model.getTrackModel().trackIDs(true)) 
 			System.out.print(trackID + ", ");
 		System.out.println();
 		System.out.println();
@@ -89,10 +87,10 @@ public class LAPTrackerTestDrive {
 
 		System.out.println("Track visibility after new graph allocation:");
 		System.out.println("On the following tracks ID:");
-		for (Integer trackID : model.getTrackModel().getTrackIDs()) 
+		for (Integer trackID : model.getTrackModel().trackIDs(false)) 
 			System.out.print(trackID + ", ");
 		System.out.println("\nthe following were filtered:");
-		for (Integer trackID : model.getTrackModel().getFilteredTrackIDs()) 
+		for (Integer trackID : model.getTrackModel().trackIDs(true)) 
 			System.out.print(trackID + ", ");
 		System.out.println();
 
@@ -101,7 +99,7 @@ public class LAPTrackerTestDrive {
 		System.out.println();
 		System.out.println();
 		System.out.println();
-		System.out.println("Found " + model.getTrackModel().getNTracks() + " final tracks.");
+		System.out.println("Found " + model.getTrackModel().nTracks(false) + " final tracks.");
 		System.out.println("Whole tracking done in "+(end-start)+" ms.");
 		System.out.println();
 

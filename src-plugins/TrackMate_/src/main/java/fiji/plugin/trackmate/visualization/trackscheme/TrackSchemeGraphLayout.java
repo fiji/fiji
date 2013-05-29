@@ -105,7 +105,7 @@ public class TrackSchemeGraphLayout extends mxGraphLayout implements Benchmark {
 			/*
 			 * Pass n tracks info on component
 			 */
-			final int ntracks = model.getTrackModel().getNFilteredTracks();
+			final int ntracks = model.getTrackModel().nTracks(true);
 			component.columnWidths = new int[ntracks];
 			component.columnTrackIDs = new Integer[ntracks];
 
@@ -118,10 +118,10 @@ public class TrackSchemeGraphLayout extends mxGraphLayout implements Benchmark {
 			}
 
 			int trackIndex = 0;
-			for (Integer trackID : model.getTrackModel().getFilteredTrackIDs()) { // will be sorted by track name
+			for (Integer trackID : model.getTrackModel().trackIDs(true)) { // will be sorted by track name
 
 				// Get Tracks
-				final Set<Spot> track = model.getTrackModel().getTrackSpots(trackID);
+				final Set<Spot> track = model.getTrackModel().trackSpots(trackID);
 
 				// Pass name & trackID to component
 				component.columnTrackIDs[trackIndex] = trackID;

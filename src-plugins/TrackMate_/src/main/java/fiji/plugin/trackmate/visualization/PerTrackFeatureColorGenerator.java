@@ -13,7 +13,7 @@ import org.jgrapht.graph.DefaultWeightedEdge;
 import fiji.plugin.trackmate.FeatureModel;
 import fiji.plugin.trackmate.ModelChangeEvent;
 import fiji.plugin.trackmate.ModelChangeListener;
-import fiji.plugin.trackmate.TrackGraphModel;
+import fiji.plugin.trackmate.TrackModel;
 import fiji.plugin.trackmate.TrackMateModel;
 import fiji.plugin.trackmate.features.track.TrackIndexAnalyzer;
 
@@ -71,8 +71,8 @@ public class PerTrackFeatureColorGenerator implements TrackColorGenerator, Model
 	}
 
 	private synchronized void refreshNull() {
-		TrackGraphModel trackModel = model.getTrackModel();
-		Set<Integer> trackIDs = trackModel.getFilteredTrackIDs();
+		TrackModel trackModel = model.getTrackModel();
+		Set<Integer> trackIDs = trackModel.trackIDs(true);
 
 		// Create value->color map
 		colorMap = new HashMap<Integer, Color>(trackIDs.size());
@@ -85,8 +85,8 @@ public class PerTrackFeatureColorGenerator implements TrackColorGenerator, Model
 	 * A shortcut for the track index feature
 	 */
 	private synchronized void refreshIndex() {
-		TrackGraphModel trackModel = model.getTrackModel();
-		Set<Integer> trackIDs = trackModel.getFilteredTrackIDs();
+		TrackModel trackModel = model.getTrackModel();
+		Set<Integer> trackIDs = trackModel.trackIDs(true);
 
 		// Create value->color map
 		colorMap = new HashMap<Integer, Color>(trackIDs.size());
@@ -99,8 +99,8 @@ public class PerTrackFeatureColorGenerator implements TrackColorGenerator, Model
 
 	private synchronized void refresh() {
 
-		TrackGraphModel trackModel = model.getTrackModel();
-		Set<Integer> trackIDs = trackModel.getFilteredTrackIDs();
+		TrackModel trackModel = model.getTrackModel();
+		Set<Integer> trackIDs = trackModel.trackIDs(true);
 
 		// Get min & max & all values
 		FeatureModel fm = model .getFeatureModel();

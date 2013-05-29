@@ -110,6 +110,7 @@ import fiji.plugin.trackmate.features.edges.EdgeTargetAnalyzer;
 import fiji.plugin.trackmate.features.spot.SpotAnalyzerFactory;
 import fiji.plugin.trackmate.features.track.TrackAnalyzer;
 import fiji.plugin.trackmate.features.track.TrackIndexAnalyzer;
+import fiji.plugin.trackmate.graph.IncrementalConnectivityInspector;
 import fiji.plugin.trackmate.providers.DetectorProvider;
 import fiji.plugin.trackmate.providers.EdgeAnalyzerProvider;
 import fiji.plugin.trackmate.providers.SpotAnalyzerProvider;
@@ -399,7 +400,7 @@ public class TmXmlReader {
 
 
 	/**
-	 * @return a map of the saved track features, as they appear in the file
+	 * Returns a map of the saved track features, as they appear in the file
 	 */
 	private Map<Integer,Map<String,Double>> readTrackFeatures(Element modelElement) {
 
@@ -667,15 +668,13 @@ public class TmXmlReader {
 	private boolean readTracks(Element modelElement, TrackMateModel model) {
 
 		Element allTracksElement = modelElement.getChild(TRACK_COLLECTION_ELEMENT_KEY);
-		final SimpleDirectedWeightedGraph<Spot, DefaultWeightedEdge> graph = new SimpleDirectedWeightedGraph<Spot, DefaultWeightedEdge>(DefaultWeightedEdge.class);
-
-		// Load tracks
 		List<Element> trackElements = allTracksElement.getChildren(TRACK_ELEMENT_KEY);
-		List<Element> edgeElements;
 
-		// A temporary map that maps stored track key to one of its spot
-		HashMap<Integer, Spot> savedTrackMap = new HashMap<Integer, Spot>(trackElements.size());
-		HashMap<Integer, String> savedTrackNames = new HashMap<Integer, String>(trackElements.size());
+		// What we have to flesh out from the file
+		final SimpleDirectedWeightedGraph<Spot, DefaultWeightedEdge> graph = new SimpleDirectedWeightedGraph<Spot, DefaultWeightedEdge>(DefaultWeightedEdge.class);
+		final Map<Integer, Set<Spot>> connectedVertexSet = new HashMap<Integer, Set<Spot>>(trackElements.size());
+		final Map<Integer, Set<DefaultWeightedEdge>> connectedEdgeSet = new HashMap<Integer, Set<DefaultWeightedEdge>>(trackElements.size());
+		final Map<Integer, String> savedTrackNames = new HashMap<Integer, String>(trackElements.size());
 
 		// The list of edge features. that we will set.
 		final FeatureModel fm = model.getFeatureModel();
@@ -693,11 +692,11 @@ public class TmXmlReader {
 			if (null == trackName) {
 				trackName = "Unnamed";
 			}
-			// Keep a reference of one of the spot for outside the loop.
-			Spot sourceSpot = null; 
 
-			// Iterate over edges
-			edgeElements = trackElement.getChildren(TRACK_EDGE_ELEMENT_KEY);
+			// Iterate over edges & spots
+			List<Element> edgeElements = trackElement.getChildren(TRACK_EDGE_ELEMENT_KEY);
+			Set<DefaultWeightedEdge> edges = new HashSet<DefaultWeightedEdge>(edgeElements.size());
+			Set<Spot> spots = new HashSet<Spot>(edgeElements.size());
 
 			for (Element edgeElement : edgeElements) {
 
@@ -706,7 +705,7 @@ public class TmXmlReader {
 				int targetID = readIntAttribute(edgeElement, EdgeTargetAnalyzer.SPOT_TARGET_ID, logger);
 
 				// Get matching spots from the cache
-				sourceSpot = cache.get(sourceID);
+				Spot sourceSpot = cache.get(sourceID);
 				Spot targetSpot = cache.get(targetID);
 
 				// Get weight
@@ -729,6 +728,11 @@ public class TmXmlReader {
 					logger.error("Bad link for track " + trackID + ". Source = Target with ID: " + sourceID + "\n");
 					return false;
 				}
+				
+				// Add spots to connected set. We might add the same spot twice (because we iterate over edges)
+				// but this is fine for we use a set.
+				spots.add(sourceSpot);
+				spots.add(targetSpot);
 
 				// Add spots to graph and build edge
 				graph.addVertex(sourceSpot);
@@ -752,102 +756,39 @@ public class TmXmlReader {
 					}
 
 				}
+				
+				// Adds the edge to the set
+				edges.add(edge);
+				
 			} // Finished parsing over the edges of the track
 
 			// Store one of the spot in the saved trackID key map
-			savedTrackMap.put(trackID, sourceSpot);
+			connectedVertexSet.put(trackID, spots);
+			connectedEdgeSet.put(trackID, edges);
 			savedTrackNames.put(trackID, trackName);
-
-		}
-
-		/* Pass the loaded graph to the model. The model will in turn regenerate a new 
-		 * map of tracks vs trackID, using the hash as new keys. Because there is a 
-		 * good chance that they saved keys and the new keys differ, we must retrieve
-		 * the mapping between the two using the retrieve spots.	 */
-		model.getTrackModel().setGraph(graph);
-
-		// Retrieve the new track map
-		Map<Integer, Set<Spot>> newTrackMap = model.getTrackModel().getTrackSpots();
-
-		// Build a map of saved key vs new key
-		HashMap<Integer, Integer> newKeyMap = new HashMap<Integer, Integer>();
-		HashSet<Integer> newKeysToMatch = new HashSet<Integer>(newTrackMap.keySet());
-		for (Integer savedKey : savedTrackMap.keySet()) {
-			Spot spotToFind = savedTrackMap.get(savedKey);
-			for (Integer newKey : newTrackMap.keySet()) {
-				Set<Spot> track = newTrackMap.get(newKey);
-				if (track.contains(spotToFind)) {
-					newKeyMap.put(savedKey, newKey);
-					newKeysToMatch.remove(newKey);
-					break;
-				}
-			}
-			if (null == newKeyMap.get(savedKey)) {
-				logger.error("The track saved with ID = " + savedKey + " and containing the spot " + spotToFind + " has no matching track in the computed model.\n");
-				return false;
-			}
-		}
-
-		// Check that we matched all the new keys
-		if (!newKeysToMatch.isEmpty()) {
-			StringBuilder sb = new StringBuilder("Some of the computed tracks could not be matched to saved tracks:\n");
-			for (Integer unmatchedKey : newKeysToMatch) {
-				sb.append(" - track with ID " + unmatchedKey + " with spots " + newTrackMap.get(unmatchedKey) + "\n");
-			}
-			logger.error(sb.toString());
-			return false;
 		}
 
 		/* 
-		 * Now we know who's who. We can therefore retrieve the saved filtered track index, and 
-		 * match it to the proper new track IDs. 
+		 * Now on to the visibility.
 		 */
 		Set<Integer> savedFilteredTrackIDs = readFilteredTrackIDs(modelElement);
-		if (null == savedFilteredTrackIDs) {
-			return false;
+		Map<Integer, Boolean> visibility = new HashMap<Integer, Boolean>(connectedEdgeSet.size());
+		Set<Integer> ids = new HashSet<Integer>(connectedEdgeSet.keySet());
+		for (Integer id : savedFilteredTrackIDs) {
+			visibility.put(id, Boolean.TRUE);
 		}
-		// Build a new set with the new trackIDs;
-		Set<Integer> newFilteredTrackIDs = new HashSet<Integer>(savedFilteredTrackIDs.size());
-		for (Integer savedKey : savedFilteredTrackIDs) {
-			Integer newKey = newKeyMap.get(savedKey);
-			newFilteredTrackIDs.add(newKey);
+		ids.removeAll(savedFilteredTrackIDs);
+		for (Integer id : ids) {
+			visibility.put(id, Boolean.FALSE);
 		}
-		model.getTrackModel().setFilteredTrackIDs(newFilteredTrackIDs, false);
-
-
-		/* 
-		 * We do the same thing for the track features.
-		 */
-		try {
-			Map<Integer, Map<String, Double>> savedFeatureMap = readTrackFeatures(modelElement);
-			for (Integer savedKey : savedFeatureMap.keySet()) {
-
-				Map<String, Double> savedFeatures = savedFeatureMap.get(savedKey);
-				for (String feature : savedFeatures.keySet()) {
-					Integer newKey = newKeyMap.get(savedKey);
-					fm.putTrackFeature(newKey, feature, savedFeatures.get(feature));
-				}
-			}
-		} catch (RuntimeException re) {
-			logger.error("Problem populating track features:\n");
-			logger.error(re.getMessage());
-			return false;
-		}
-
+		
+		
 		/*
-		 * We can name correctly the tracks
+		 * Pass read results to model.
 		 */
-
-		try {
-			for (Integer savedTrackID : savedTrackNames.keySet()) {
-				Integer newKey = newKeyMap.get(savedTrackID);
-				model.getTrackModel().setTrackName(newKey, savedTrackNames.get(savedTrackID));
-			}
-		} catch (RuntimeException rte) {
-			logger.error("Problem setting track names:\n");
-			logger.error(rte.getMessage());
-			return false;
-		}
+		
+		IncrementalConnectivityInspector<Spot, DefaultWeightedEdge> aci = 
+				IncrementalConnectivityInspector.fromSets(graph, connectedVertexSet, connectedEdgeSet, visibility, savedTrackNames);
 
 		return true;
 	}

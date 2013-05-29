@@ -110,7 +110,7 @@ public class TrackSpeedStatisticsAnalyzer implements TrackAnalyzer, MultiThreade
 					Integer trackID;
 					while ((trackID = queue.poll()) != null) {
 
-						Set<DefaultWeightedEdge> track = model.getTrackModel().getTrackEdges(trackID);
+						Set<DefaultWeightedEdge> track = model.getTrackModel().trackEdges(trackID);
 
 						double sum = 0;
 						double mean = 0;

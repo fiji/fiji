@@ -75,20 +75,15 @@ public class FeatureModel {
 	 * Returns a new double array with all the values for the specified track feature.
 	 * @param trackFeature the track feature to parse. Throw an {@link IllegalArgumentException}
 	 * if the feature is unknown.
-	 * @param filteredOnly if <code>true</code>, will only include filtered tracks, 
+	 * @param visibleOnly if <code>true</code>, will only include visible tracks, 
 	 * all the tracks otherwise.
 	 * @return a new <code>double[]</code>, one element per track.
 	 */
-	public double[] getTrackFeatureValues(String trackFeature, boolean filteredOnly) {
+	public double[] getTrackFeatureValues(String trackFeature, boolean visibleOnly) {
 		if (!trackFeatures.contains(trackFeature)) {
 			throw new IllegalArgumentException("Unknown track feature: " + trackFeature);
 		}
-		final Set<Integer> keys;
-		if (filteredOnly) {
-			keys = model.getTrackModel().getFilteredTrackIDs();
-		} else {
-			keys = model.getTrackModel().getTrackIDs();
-		}
+		Set<Integer> keys = model.getTrackModel().trackIDs(visibleOnly);
 		double[] val = new double[keys.size()];
 		int index = 0;
 		for (Integer trackID : keys) {
@@ -101,29 +96,24 @@ public class FeatureModel {
 	 * Returns a new double array with all the values for the specified edge feature.
 	 * @param edgeFeature the track feature to parse. Throw an {@link IllegalArgumentException}
 	 * if the feature is unknown.
-	 * @param filteredOnly if <code>true</code>, will only include edges in filtered tracks, 
+	 * @param visibleOnly if <code>true</code>, will only include edges in visible tracks, 
 	 * in all the tracks otherwise.
 	 * @return a new <code>double[]</code>, one element per edge.
 	 */
-	public double[] getEdgeFeatureValues(String edgeFeature, boolean filteredOnly) {
+	public double[] getEdgeFeatureValues(String edgeFeature, boolean visibleOnly) {
 		if (!edgeFeatures.contains(edgeFeature)) {
 			throw new IllegalArgumentException("Unknown edge feature: " + edgeFeature);
 		}
-		final Set<Integer> keys;
-		if (filteredOnly) {
-			keys = model.getTrackModel().getFilteredTrackIDs();
-		} else {
-			keys = model.getTrackModel().getTrackIDs();
-		}
+		Set<Integer> keys = model.getTrackModel().trackIDs(visibleOnly);
 		int nvals = 0;
 		for (Integer trackID : keys) {
-			nvals += model.getTrackModel().getTrackEdges(trackID).size();
+			nvals += model.getTrackModel().trackEdges(trackID).size();
 		}
 		
 		double[] val = new double[nvals];
 		int index = 0;
 		for (Integer trackID : keys) {
-			for (DefaultWeightedEdge edge : model.getTrackModel().getTrackEdges(trackID)) {
+			for (DefaultWeightedEdge edge : model.getTrackModel().trackEdges(trackID)) {
 				val[index++] = getEdgeFeature(edge, edgeFeature).doubleValue(); 
 			}
 		}
@@ -139,7 +129,7 @@ public class FeatureModel {
 	/**
 	 * Stores a numerical feature for an edge of this model.
 	 * <p>
-	 * Note that no checks are made to ensures that the edge exists in the {@link TrackGraphModel},
+	 * Note that no checks are made to ensures that the edge exists in the {@link TrackModel},
 	 * and that the feature is declared in this {@link FeatureModel}.
 	 * @param edge  the edge whose features to update.
 	 * @param feature  the feature.
@@ -314,7 +304,7 @@ public class FeatureModel {
 	/**
 	 * Stores a track numerical feature. 
  	 * <p>
-	 * Note that no checks are made to ensures that the track ID exists in the {@link TrackGraphModel},
+	 * Note that no checks are made to ensures that the track ID exists in the {@link TrackModel},
 	 * and that the feature is declared in this {@link FeatureModel}.
 	 * 
 	 * @param trackID  the ID of the track. It must be an existing track ID.
@@ -340,16 +330,20 @@ public class FeatureModel {
 		return valueMap.get(feature);
 	}
 
+	/**
+	 * Returns the map of all track features declared for all tracks of the model. 
+	 * @return a new mapping of feature vs its numerical values.
+	 */
 	public Map<String, double[]> getTrackFeatureValues() {
 		final Map<String, double[]> featureValues = new HashMap<String, double[]>();
 		Double val;
-		int nTracks = model.getTrackModel().getNTracks();
+		int nTracks = model.getTrackModel().nTracks(false);
 		for (String feature : trackFeatures) {
 			// Make a double array to comply to JFreeChart histograms
 			boolean noDataFlag = true;
 			final double[] values = new double[nTracks];
 			int index = 0;
-			for (Integer trackID : model.getTrackModel().getTrackIDs()) {
+			for (Integer trackID : model.getTrackModel().trackIDs(false)) {
 				val = getTrackFeature(trackID, feature);
 				if (null == val)
 					continue;

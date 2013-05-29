@@ -38,11 +38,8 @@ public class NNTrackerTest {
 		reader.readSettings(gs, null, null, null, null, null);
 		
 		System.out.println("Spots: "+ model.getSpots());
-		System.out.println("Found "+model.getTrackModel().getNTracks()+" tracks in the file:");
+		System.out.println("Found "+model.getTrackModel().nTracks(false)+" tracks in the file:");
 		System.out.println("Track features: ");
-		for (Integer trackID : model.getTrackModel().getTrackIDs()) {
-			System.out.println(model.getTrackModel().trackToString(trackID));
-		}
 		System.out.println();
 		
 		// 2 - Track the test spots
@@ -63,7 +60,7 @@ public class NNTrackerTest {
 		System.out.println();
 		System.out.println();
 		System.out.println();
-		System.out.println("Found " + model.getTrackModel().getNTracks() + " final tracks.");
+		System.out.println("Found " + model.getTrackModel().nTracks(false) + " final tracks.");
 		System.out.println("Whole tracking done in "+(end-start)+" ms.");
 		System.out.println();
 

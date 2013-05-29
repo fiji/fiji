@@ -488,9 +488,7 @@ public class TrackMate implements Benchmark, MultiThreaded, Algorithm {
 			Logger logger = model.getLogger();
 			logger.log("Starting track filtering process.\n");
 		}
-		HashSet<Integer> filteredTrackIndices = new HashSet<Integer>(); // will work, for the hash of Integer is its int
-
-		for (Integer trackID : model.getTrackModel().getTrackIDs()) {
+		for (Integer trackID : model.getTrackModel().trackIDs(false)) {
 			boolean trackIsOk = true;
 			for(FeatureFilter filter : settings.getTrackFilters()) {
 				Double tval = filter.value;
@@ -510,10 +508,8 @@ public class TrackMate implements Benchmark, MultiThreaded, Algorithm {
 					}
 				}
 			}
-			if (trackIsOk)
-				filteredTrackIndices.add(trackID);
+			model.getTrackModel().setVisible(trackID, trackIsOk, false);
 		}
-		model.getTrackModel().setFilteredTrackIDs(filteredTrackIndices, true);
 		return true;
 	}
 

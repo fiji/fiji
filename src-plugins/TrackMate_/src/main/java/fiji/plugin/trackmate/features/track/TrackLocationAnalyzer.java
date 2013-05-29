@@ -85,7 +85,7 @@ public class TrackLocationAnalyzer implements TrackAnalyzer, MultiThreaded, Benc
 					Integer trackID;
 					while ((trackID = queue.poll()) != null) {
 
-						Set<Spot> track = model.getTrackModel().getTrackSpots(trackID);
+						Set<Spot> track = model.getTrackModel().trackSpots(trackID);
 
 						double x = 0;
 						double y = 0;

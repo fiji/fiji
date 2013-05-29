@@ -56,7 +56,7 @@ public class TrackIndexAnalyzerTest {
 	@Test
 	public final void testProcess() {
 		// Compute track index
-		Set<Integer> trackIDs = model.getTrackModel().getFilteredTrackIDs();
+		Set<Integer> trackIDs = model.getTrackModel().trackIDs(true);
 		TrackIndexAnalyzer analyzer = new TrackIndexAnalyzer(model);
 		analyzer.process(trackIDs);
 
@@ -80,7 +80,7 @@ public class TrackIndexAnalyzerTest {
 
 
 		// Compute track index
-		Set<Integer> trackIDs = model.getTrackModel().getFilteredTrackIDs();
+		Set<Integer> trackIDs = model.getTrackModel().trackIDs(true);
 		final TestTrackIndexAnalyzer analyzer = new TestTrackIndexAnalyzer(model);
 		analyzer.process(trackIDs);
 		assertTrue(analyzer.hasBeenCalled);
@@ -101,7 +101,7 @@ public class TrackIndexAnalyzerTest {
 				if (analyzer.isLocal()) {
 					analyzer.process(event.getTrackUpdated());
 				} else {
-					analyzer.process(model.getTrackModel().getFilteredTrackIDs());
+					analyzer.process(model.getTrackModel().trackIDs(true));
 				}
 			}
 		};
@@ -140,7 +140,7 @@ public class TrackIndexAnalyzerTest {
 		assertTrue(analyzer.hasBeenCalled);
 
 		// There must N_TRACKS+1 indices now
-		trackIDs = model.getTrackModel().getFilteredTrackIDs();
+		trackIDs = model.getTrackModel().trackIDs(true);
 		assertEquals((long) N_TRACKS+1,	(long) trackIDs.size());
 
 		// With correct indices

@@ -106,8 +106,8 @@ public class EdgeVelocityAnalyzerTest {
 					// Get the all the edges of the track they belong to
 					HashSet<DefaultWeightedEdge> globalEdgesToUpdate = new HashSet<DefaultWeightedEdge>();
 					for (DefaultWeightedEdge edge : edgesToUpdate) {
-						Integer motherTrackID = model.getTrackModel().getTrackIDOf(edge);
-						globalEdgesToUpdate.addAll(model.getTrackModel().getTrackEdges(motherTrackID));
+						Integer motherTrackID = model.getTrackModel().trackIDOf(edge);
+						globalEdgesToUpdate.addAll(model.getTrackModel().trackEdges(motherTrackID));
 					}
 					analyzer.process(globalEdgesToUpdate);
 				}

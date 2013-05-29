@@ -118,7 +118,7 @@ public class TrackFeatureGrapher extends AbstractFeatureGrapher {
 		final FeatureModel fm = model.getFeatureModel();
 		for(String feature : targetYFeatures) {
 			XYSeries series = new XYSeries(featureNames.get(feature));
-			for(Integer trackID : model.getTrackModel().getFilteredTrackIDs()) {
+			for(Integer trackID : model.getTrackModel().trackIDs(true)) {
 				Double x = fm.getTrackFeature(trackID, xFeature);
 				Double y = fm.getTrackFeature(trackID, feature);
 				if (null == x || null == y) {

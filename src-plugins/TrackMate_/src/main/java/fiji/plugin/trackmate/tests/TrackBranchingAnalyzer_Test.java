@@ -19,7 +19,7 @@ public class TrackBranchingAnalyzer_Test {
 		
 		// Analyze
 		TrackBranchingAnalyzer analyzer = new TrackBranchingAnalyzer(reader.getModel());
-		analyzer.process(reader.getModel().getTrackModel().getTrackIDs());
+		analyzer.process(reader.getModel().getTrackModel().trackIDs(false));
 		System.out.println("Analysis done in " + analyzer.getProcessingTime() + " ms.");
 		
 	}

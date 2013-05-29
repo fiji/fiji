@@ -38,22 +38,19 @@ public class TrackVisualizerTestDrive {
 		TrackMate trackmate = new TrackMate(model, settings);
 		
 		System.out.println("From the XML file:");
-		System.out.println("Found "+model.getTrackModel().getNTracks()+" tracks in total.");
+		System.out.println("Found "+model.getTrackModel().nTracks(false)+" tracks in total.");
 		System.out.println("There were "+settings.getTrackFilters().size() + " track filter(s) applied on this list,");
-		System.out.println("resulting in having only "+model.getTrackModel().getNFilteredTracks()+" visible tracks after filtering.");
-		for(int i : model.getTrackModel().getFilteredTrackIDs()) {
-			System.out.println(" - "+model.getTrackModel().trackToString(i));
-		}
+		System.out.println("resulting in having only "+model.getTrackModel().nTracks(true)+" visible tracks after filtering.");
 		System.out.println("Filtered tracks at this stage:");
-		System.out.println(model.getTrackModel().getFilteredTrackIDs());
+		System.out.println(model.getTrackModel().trackIDs(true));
 		System.out.println();
 		
 		FeatureFilter filter = new FeatureFilter(TrackBranchingAnalyzer.NUMBER_SPOTS, 5d, true);
 		System.out.println("We add an extra track filter: "+filter);
 		settings.addTrackFilter(filter);
 		trackmate.execTrackFiltering(true);
-		System.out.println("After filtering, retaining "+model.getTrackModel().getNFilteredTracks()+" tracks, which are:");
-		System.out.println(model.getTrackModel().getFilteredTrackIDs());
+		System.out.println("After filtering, retaining "+model.getTrackModel().nTracks(true)+" tracks, which are:");
+		System.out.println(model.getTrackModel().trackIDs(true));
 		System.out.println();
 			
 		ImagePlus imp = settings.imp;

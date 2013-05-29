@@ -42,7 +42,7 @@ public class SpotFeatureGrapher_TestDrive {
 		grapher.render();
 		
 		TrackIndexAnalyzer analyzer = new TrackIndexAnalyzer(model);
-		analyzer.process(model.getTrackModel().getFilteredTrackIDs()); // need for trackScheme
+		analyzer.process(model.getTrackModel().trackIDs(true)); // needed for trackScheme
 		
 		TrackScheme trackScheme = new TrackScheme(model, new SelectionModel(model));
 		trackScheme.render();

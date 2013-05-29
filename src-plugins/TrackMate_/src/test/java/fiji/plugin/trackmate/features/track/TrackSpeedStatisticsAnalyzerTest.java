@@ -69,10 +69,10 @@ public class TrackSpeedStatisticsAnalyzerTest {
 	public final void testProcess() {
 		// Process model
 		TrackSpeedStatisticsAnalyzer analyzer = new TrackSpeedStatisticsAnalyzer(model);
-		analyzer.process(model.getTrackModel().getFilteredTrackIDs());
+		analyzer.process(model.getTrackModel().trackIDs(true));
 
 		// Collect features
-		for (Integer trackID : model.getTrackModel().getFilteredTrackIDs()) {
+		for (Integer trackID : model.getTrackModel().trackIDs(true)) {
 
 			assertEquals(expectedVmax.get(trackID), model.getFeatureModel().getTrackFeature(trackID, TrackSpeedStatisticsAnalyzer.TRACK_MAX_SPEED));
 			assertEquals(expectedVmean.get(trackID), model.getFeatureModel().getTrackFeature(trackID, TrackSpeedStatisticsAnalyzer.TRACK_MEAN_SPEED));
@@ -116,10 +116,10 @@ public class TrackSpeedStatisticsAnalyzerTest {
 
 		// Process model
 		TrackSpeedStatisticsAnalyzer analyzer = new TrackSpeedStatisticsAnalyzer(model2);
-		analyzer.process(model2.getTrackModel().getFilteredTrackIDs());
+		analyzer.process(model2.getTrackModel().trackIDs(true));
 
 		// Collect features
-		for (Integer trackID : model2.getTrackModel().getFilteredTrackIDs()) {
+		for (Integer trackID : model2.getTrackModel().trackIDs(true)) {
 
 			assertEquals(meanV, model2.getFeatureModel().getTrackFeature(trackID, TrackSpeedStatisticsAnalyzer.TRACK_MEAN_SPEED), Double.MIN_VALUE);
 			assertEquals(stdV, model2.getFeatureModel().getTrackFeature(trackID, TrackSpeedStatisticsAnalyzer.TRACK_STD_SPEED), 1e-6);
@@ -133,7 +133,7 @@ public class TrackSpeedStatisticsAnalyzerTest {
 	@Test
 	public final void testModelChanged() {
 		// Copy old keys
-		HashSet<Integer> oldKeys = new HashSet<Integer>(model.getTrackModel().getFilteredTrackIDs());
+		HashSet<Integer> oldKeys = new HashSet<Integer>(model.getTrackModel().trackIDs(true));
 
 		// First analysis
 		final TestTrackSpeedStatisticsAnalyzer analyzer = new TestTrackSpeedStatisticsAnalyzer(model);
@@ -179,7 +179,7 @@ public class TrackSpeedStatisticsAnalyzerTest {
 	@Test
 	public final void testModelChanged2() {
 		// Copy old keys
-		HashSet<Integer> oldKeys = new HashSet<Integer>(model.getTrackModel().getFilteredTrackIDs());
+		HashSet<Integer> oldKeys = new HashSet<Integer>(model.getTrackModel().trackIDs(true));
 
 		// First analysis
 		final TestTrackSpeedStatisticsAnalyzer analyzer = new TestTrackSpeedStatisticsAnalyzer(model);
@@ -201,7 +201,7 @@ public class TrackSpeedStatisticsAnalyzerTest {
 		// New change: remove the first spot on the first track - the new track emerging should be re-analyzed
 		Integer firstKey = oldKeys.iterator().next();
 		TreeSet<Spot> sortedTrack = new TreeSet<Spot>(Spot.frameComparator);
-		sortedTrack.addAll( model.getTrackModel().getTrackSpots(firstKey));
+		sortedTrack.addAll( model.getTrackModel().trackSpots(firstKey));
 		Iterator<Spot> it = sortedTrack.iterator();
 		Spot firstSpot = it.next();
 		Spot secondSpot = it.next();
@@ -219,7 +219,7 @@ public class TrackSpeedStatisticsAnalyzerTest {
 		// Check the track IDs: must be of size 1 since we removed the first spot of a track
 		assertEquals(1, analyzer.keys.size());
 		Integer newKey = analyzer.keys.iterator().next();
-		assertEquals(model.getTrackModel().getTrackIDOf(secondSpot).longValue(), newKey.longValue());
+		assertEquals(model.getTrackModel().trackIDOf(secondSpot).longValue(), newKey.longValue());
 
 		// That did not affect speed values )was a constant speed track)
 		assertEquals(expectedVmean.get(firstKey).doubleValue(), model.getFeatureModel().getTrackFeature(newKey, TrackSpeedStatisticsAnalyzer.TRACK_MEAN_SPEED).doubleValue(), Double.MIN_VALUE);
@@ -229,7 +229,7 @@ public class TrackSpeedStatisticsAnalyzerTest {
 	@Test
 	public final void testModelChanged3() {
 		// Copy old keys
-		HashSet<Integer> oldKeys = new HashSet<Integer>(model.getTrackModel().getFilteredTrackIDs());
+		HashSet<Integer> oldKeys = new HashSet<Integer>(model.getTrackModel().trackIDs(true));
 
 		// First analysis
 		final TestTrackSpeedStatisticsAnalyzer analyzer = new TestTrackSpeedStatisticsAnalyzer(model);
@@ -251,7 +251,7 @@ public class TrackSpeedStatisticsAnalyzerTest {
 		// New change: we displace the last spot of first track, making the edge faster
 		Integer firstKey = oldKeys.iterator().next();
 		TreeSet<Spot> sortedTrack = new TreeSet<Spot>(Spot.frameComparator);
-		sortedTrack.addAll( model.getTrackModel().getTrackSpots(firstKey));
+		sortedTrack.addAll( model.getTrackModel().trackSpots(firstKey));
 		Iterator<Spot> it = sortedTrack.descendingIterator();
 		Spot lastSpot = it.next();
 		Spot penultimateSpot = it.next();
@@ -270,7 +270,7 @@ public class TrackSpeedStatisticsAnalyzerTest {
 		// Check the track IDs: must be of size 1 since we removed the first spot of a track
 		assertEquals(1, analyzer.keys.size());
 		Integer newKey = analyzer.keys.iterator().next();
-		assertEquals(model.getTrackModel().getTrackIDOf(lastSpot).longValue(), newKey.longValue());
+		assertEquals(model.getTrackModel().trackIDOf(lastSpot).longValue(), newKey.longValue());
 
 		// Track must be faster now
 		assertTrue(expectedVmean.get(firstKey).doubleValue() < model.getFeatureModel().getTrackFeature(newKey, TrackSpeedStatisticsAnalyzer.TRACK_MEAN_SPEED).doubleValue());

@@ -84,10 +84,9 @@ public class PerEdgeFeatureColorGenerator implements ModelChangeListener, TrackC
 		min = Double.POSITIVE_INFINITY;
 		max = Double.NEGATIVE_INFINITY;
 		// Only iterate over filtered edges
-		for (Integer trackID : model.getTrackModel().getFilteredTrackIDs()) {
-			for (DefaultWeightedEdge edge : model.getTrackModel().getTrackEdges(trackID)) {
+		for (Integer trackID : model.getTrackModel().trackIDs(true)) {
+			for (DefaultWeightedEdge edge : model.getTrackModel().trackEdges(trackID)) {
 				Double feat = model.getFeatureModel().getEdgeFeature(edge, feature);
-//				if (null == feat) continue;
 				double val = feat.doubleValue();
 				if (val < min) {
 					min = val;

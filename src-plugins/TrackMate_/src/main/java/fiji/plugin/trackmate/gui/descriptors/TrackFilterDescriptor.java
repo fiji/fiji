@@ -81,7 +81,7 @@ public class TrackFilterDescriptor implements WizardPanelDescriptor {
 		trackmate.execTrackFiltering(true);
 
 		if (featureFilters == null || featureFilters.isEmpty()) {
-			logger.log("No feature threshold set, kept the " + model.getTrackModel().getNTracks() + " tracks.\n");
+			logger.log("No feature threshold set, kept the " + model.getTrackModel().nTracks(false) + " tracks.\n");
 		} else {
 			for (FeatureFilter ft : featureFilters) {
 				String str = "  - on "+model.getFeatureModel().getTrackFeatureNames().get(ft.feature);
@@ -93,7 +93,7 @@ public class TrackFilterDescriptor implements WizardPanelDescriptor {
 				str += '\n';
 				logger.log(str);
 			}
-			logger.log("Kept "+model.getTrackModel().getNFilteredTracks()+" tracks out of "+model.getTrackModel().getNTracks()+".\n");
+			logger.log("Kept "+model.getTrackModel().nTracks(true)+" tracks out of "+model.getTrackModel().nTracks(false)+".\n");
 		}
 
 		trackmate.computeEdgeFeatures(true);

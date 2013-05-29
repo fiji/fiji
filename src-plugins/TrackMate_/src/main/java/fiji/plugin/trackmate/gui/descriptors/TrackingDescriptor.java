@@ -44,7 +44,7 @@ public class TrackingDescriptor implements WizardPanelDescriptor {
 				long start = System.currentTimeMillis();
 				trackmate.execTracking();
 				long end = System.currentTimeMillis();
-				logger.log("Found "	 + trackmate.getModel().getTrackModel().getNTracks() + " tracks.\n");
+				logger.log("Found "	 + trackmate.getModel().getTrackModel().nTracks(false) + " tracks.\n");
 				logger.log(String.format("Tracking done in %.1f s.\n", (end-start)/1e3f), Logger.BLUE_COLOR);
 				controller.restoreButtonsState();
 				controller.getGUI().getNextButton().setEnabled(true);

@@ -314,8 +314,6 @@ public class TmXmlWriter {
 
 		Element allTracksElement = new Element(TRACK_COLLECTION_ELEMENT_KEY);
 
-		Map<Integer, Set<DefaultWeightedEdge>> trackEdges = model.getTrackModel().getTrackEdges();
-		
 		// Prepare track features for writing: we separate ints from doubles 
 		List<String> trackIntFeatures = new ArrayList<String>();
 		trackIntFeatures.add(TrackIndexAnalyzer.TRACK_ID);
@@ -330,11 +328,12 @@ public class TmXmlWriter {
 		List<String> edgeDoubleFeatures = new ArrayList<String>(model.getFeatureModel().getEdgeFeatures());
 		edgeDoubleFeatures.removeAll(edgeIntFeatures);
 		
-		for (int trackID : trackEdges.keySet()) {
-			Set<DefaultWeightedEdge> track = trackEdges.get(trackID);
+		Set<Integer> trackIDs = model.getTrackModel().trackIDs(false);
+		for (int trackID : trackIDs) {
+			Set<DefaultWeightedEdge> track = model.getTrackModel().trackEdges(trackID);
 
 			Element trackElement = new Element(TRACK_ELEMENT_KEY);
-			trackElement.setAttribute(TRACK_NAME_ATTRIBUTE_NAME, model.getTrackModel().getTrackName(trackID));
+			trackElement.setAttribute(TRACK_NAME_ATTRIBUTE_NAME, model.getTrackModel().name(trackID));
 			
 			for(String feature : trackDoubleFeatures) {
 				Double val = model.getFeatureModel().getTrackFeature(trackID, feature);
@@ -379,7 +378,7 @@ public class TmXmlWriter {
 
 	private Element echoFilteredTracks(TrackMateModel model) {
 		Element filteredTracksElement = new Element(FILTERED_TRACK_ELEMENT_KEY);
-		Set<Integer> filteredTrackKeys = model.getTrackModel().getFilteredTrackIDs();
+		Set<Integer> filteredTrackKeys = model.getTrackModel().trackIDs(true);
 		for (int trackID : filteredTrackKeys) {
 			Element trackIDElement = new Element(TRACK_ID_ELEMENT_KEY);
 			trackIDElement.setAttribute(TrackIndexAnalyzer.TRACK_ID, ""+trackID);

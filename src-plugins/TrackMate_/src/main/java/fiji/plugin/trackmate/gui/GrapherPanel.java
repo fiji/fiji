@@ -116,8 +116,8 @@ public class GrapherPanel extends ActionListenablePanel {
 		
 		// Collect only the spots that are in tracks
 		List<Spot> spots = new ArrayList<Spot>();
-		for(Integer trackID : trackmate.getModel().getTrackModel().getTrackIDs()) {
-			spots.addAll(trackmate.getModel().getTrackModel().getTrackSpots(trackID));
+		for(Integer trackID : trackmate.getModel().getTrackModel().trackIDs(false)) {
+			spots.addAll(trackmate.getModel().getTrackModel().trackSpots(trackID));
 		}
 		
 		SpotFeatureGrapher grapher = new SpotFeatureGrapher(xFeature, yFeatures, spots, trackmate.getModel());
@@ -127,8 +127,8 @@ public class GrapherPanel extends ActionListenablePanel {
 	private void plotEdgeFeatures() {
 		// Collect edges in filtered tracks
 		List<DefaultWeightedEdge> edges = new ArrayList<DefaultWeightedEdge>();
-		for (Integer trackID : trackmate.getModel().getTrackModel().getFilteredTrackIDs()) {
-			edges.addAll(trackmate.getModel().getTrackModel().getTrackEdges(trackID));
+		for (Integer trackID : trackmate.getModel().getTrackModel().trackIDs(true)) {
+			edges.addAll(trackmate.getModel().getTrackModel().trackEdges(trackID));
 		}
 		// Prepare grapher
 		String xFeature = edgeFeatureSelectionPanel.getXKey();
