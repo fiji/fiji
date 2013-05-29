@@ -51,7 +51,6 @@ public class ModelChangeEvent extends EventObject {
 	public static final int 	SPOTS_COMPUTED = 4;
 	/** 
 	 * Event type indicating that the spots of the model were filtered.
-	 * Result of filtering is now accessible through {@link TrackMateModel#getFilteredSpots()}. 
 	 */
 	public static final int 	SPOTS_FILTERED = 5;
 	/** 

@@ -321,7 +321,7 @@ public class TrackScheme extends AbstractTrackMateModelView {
 		graph.getModel().beginUpdate();
 		try {
 			// Flag original track as visible
-			model.getTrackModel().setFilteredTrackID(trackIndex, true, false);
+			model.setTrackVisibility(trackIndex, true);
 			// Find adequate column
 			int targetColumn = getUnlaidSpotColumn();
 			// Create cells for track
@@ -408,10 +408,10 @@ public class TrackScheme extends AbstractTrackMateModelView {
 						cell.setValue(String.format("%.1f", model.getTrackModel().getEdgeWeight(edge)));
 						// We also need now to check if the edge belonged to a visible track. If not,
 						// we make it visible.
-						int index = model.getTrackModel().trackIDOf(edge); 
+						int ID = model.getTrackModel().trackIDOf(edge); 
 						// This will work, because track indices will be reprocessed only after the graphModel.endUpdate() 
 						// reaches 0. So now, it's like we are dealing with the track indices priori to modification.
-						if (model.getTrackModel().isTrackFiltered(index)) {
+						if (model.getTrackModel().isVisible(ID)) {
 							if (DEBUG) {
 								System.out.println("[TrackScheme] #addEdgeManually: Track was visible. Do nothing.");
 							}
@@ -419,7 +419,7 @@ public class TrackScheme extends AbstractTrackMateModelView {
 							if (DEBUG) {
 								System.out.println("[TrackScheme] #addEdgeManually: Track was invisible. Make it visible.");
 							}
-							importTrack(index);
+							importTrack(ID);
 						}
 					}
 					graph.mapEdgeToCell(edge, cell);
@@ -1031,18 +1031,18 @@ public class TrackScheme extends AbstractTrackMateModelView {
 			Integer previousTime = it.next();
 			Spot previousSpot = spotsInTime.get(previousTime);
 			// If this spot belong to an invisible track, we make it visible
-			Integer index = model.getTrackModel().trackIDOf(previousSpot);
-			if (index != null && !model.getTrackModel().isTrackFiltered(index)) {
-				importTrack(index);
+			Integer ID = model.getTrackModel().trackIDOf(previousSpot);
+			if (ID != null && !model.getTrackModel().isVisible(ID)) {
+				importTrack(ID);
 			}
 
 			while(it.hasNext()) {
 				Integer currentTime = it.next();
 				Spot currentSpot = spotsInTime.get(currentTime);
 				// If this spot belong to an invisible track, we make it visible
-				index = model.getTrackModel().trackIDOf(currentSpot);
-				if (index != null && !model.getTrackModel().isTrackFiltered(index)) {
-					importTrack(index);
+				ID = model.getTrackModel().trackIDOf(currentSpot);
+				if (ID != null && !model.getTrackModel().isVisible(ID)) {
+					importTrack(ID);
 				}
 				// Check that the cells matching the 2 spots exist in the graph
 				mxICell currentCell = graph.getCellFor(currentSpot);
@@ -1076,9 +1076,9 @@ public class TrackScheme extends AbstractTrackMateModelView {
 					mxCell cell = (mxCell) graph.addJGraphTEdge(edge);
 					cell.setValue(String.format("%.1f", model.getTrackModel().getEdgeWeight(edge)));
 					// Also, if the existing edge belonged to an existing invisible track, we make it visible.
-					index = model.getTrackModel().trackIDOf(edge);
-					if (index != null && !model.getTrackModel().isTrackFiltered(index)) {
-						importTrack(index);
+					ID = model.getTrackModel().trackIDOf(edge);
+					if (ID != null && !model.getTrackModel().isVisible(ID)) {
+						importTrack(ID);
 					}
 				}
 				previousSpot = currentSpot;

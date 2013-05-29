@@ -89,7 +89,13 @@ public class TrackMateModelTest {
 		//		System.out.println("The spot "+s4+" is in track "+track2);
 
 		// Make it invisible
-		boolean modified = model.getTrackModel().setFilteredTrackID(track2, false, false);
+		model.beginUpdate();
+		boolean modified;
+		try {
+			modified = model.setTrackVisibility(track2, false);
+		} finally {
+			model.endUpdate();
+		}
 
 		// We must have modified something: it was visible, now it is invisible
 		assertTrue(modified);
@@ -418,7 +424,12 @@ public class TrackMateModelTest {
 
 
 		System.out.println("Making the first track invisible:");
-		model.getTrackModel().setFilteredTrackID(model.getTrackModel().trackIDs(false).iterator().next(), false, true);
+		model.beginUpdate();
+		try {
+			model.setTrackVisibility(model.getTrackModel().trackIDs(false).iterator().next(), false);
+		} finally {
+			model.endUpdate();
+		}
 
 		System.out.println("Track visibility is:");
 		System.out.println(model.getTrackModel().trackIDs(true));

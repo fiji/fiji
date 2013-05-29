@@ -13,7 +13,7 @@ import static fiji.plugin.trackmate.io.TmXmlKeys.CROP_XEND_ATTRIBUTE_NAME;
 import static fiji.plugin.trackmate.io.TmXmlKeys.CROP_XSTART_ATTRIBUTE_NAME;
 import static fiji.plugin.trackmate.io.TmXmlKeys.CROP_YEND_ATTRIBUTE_NAME;
 import static fiji.plugin.trackmate.io.TmXmlKeys.CROP_YSTART_ATTRIBUTE_NAME;
-import static fiji.plugin.trackmate.io.TmXmlKeys.*;
+import static fiji.plugin.trackmate.io.TmXmlKeys.CROP_ZEND_ATTRIBUTE_NAME;
 import static fiji.plugin.trackmate.io.TmXmlKeys.CROP_ZSTART_ATTRIBUTE_NAME;
 import static fiji.plugin.trackmate.io.TmXmlKeys.DETECTOR_SETTINGS_ELEMENT_KEY;
 import static fiji.plugin.trackmate.io.TmXmlKeys.EDGE_ANALYSERS_ELEMENT_KEY;
@@ -32,6 +32,8 @@ import static fiji.plugin.trackmate.io.TmXmlKeys.FILTER_VALUE_ATTRIBUTE_NAME;
 import static fiji.plugin.trackmate.io.TmXmlKeys.FRAME_ATTRIBUTE_NAME;
 import static fiji.plugin.trackmate.io.TmXmlKeys.GUI_STATE_ATTRIBUTE;
 import static fiji.plugin.trackmate.io.TmXmlKeys.GUI_STATE_ELEMENT_KEY;
+import static fiji.plugin.trackmate.io.TmXmlKeys.GUI_VIEW_ATTRIBUTE;
+import static fiji.plugin.trackmate.io.TmXmlKeys.GUI_VIEW_ELEMENT_KEY;
 import static fiji.plugin.trackmate.io.TmXmlKeys.IMAGE_ELEMENT_KEY;
 import static fiji.plugin.trackmate.io.TmXmlKeys.IMAGE_FILENAME_ATTRIBUTE_NAME;
 import static fiji.plugin.trackmate.io.TmXmlKeys.IMAGE_FOLDER_ATTRIBUTE_NAME;
@@ -110,7 +112,6 @@ import fiji.plugin.trackmate.features.edges.EdgeTargetAnalyzer;
 import fiji.plugin.trackmate.features.spot.SpotAnalyzerFactory;
 import fiji.plugin.trackmate.features.track.TrackAnalyzer;
 import fiji.plugin.trackmate.features.track.TrackIndexAnalyzer;
-import fiji.plugin.trackmate.graph.IncrementalConnectivityInspector;
 import fiji.plugin.trackmate.providers.DetectorProvider;
 import fiji.plugin.trackmate.providers.EdgeAnalyzerProvider;
 import fiji.plugin.trackmate.providers.SpotAnalyzerProvider;
@@ -274,6 +275,23 @@ public class TmXmlReader {
 			ok = false;
 		}
 		
+		// Track features
+		
+		try {
+			Map<Integer, Map<String, Double>> savedFeatureMap = readTrackFeatures(modelElement);
+			for (Integer savedKey : savedFeatureMap.keySet()) {
+
+				Map<String, Double> savedFeatures = savedFeatureMap.get(savedKey);
+				for (String feature : savedFeatures.keySet()) {
+					model.getFeatureModel().putTrackFeature(savedKey, feature, savedFeatures.get(feature));
+				}
+			}
+		} catch (RuntimeException re) {
+			logger.error("Problem populating track features:\n");
+			logger.error(re.getMessage());
+			ok = false;
+		}
+		
 		// That's it
 		return model;
 	}
@@ -402,7 +420,7 @@ public class TmXmlReader {
 	/**
 	 * Returns a map of the saved track features, as they appear in the file
 	 */
-	private Map<Integer,Map<String,Double>> readTrackFeatures(Element modelElement) {
+	private Map<Integer, Map<String,Double>> readTrackFeatures(Element modelElement) {
 
 		HashMap<Integer, Map<String, Double>> featureMap = new HashMap<Integer, Map<String, Double>>();
 
@@ -786,9 +804,7 @@ public class TmXmlReader {
 		/*
 		 * Pass read results to model.
 		 */
-		
-		IncrementalConnectivityInspector<Spot, DefaultWeightedEdge> aci = 
-				IncrementalConnectivityInspector.fromSets(graph, connectedVertexSet, connectedEdgeSet, visibility, savedTrackNames);
+		model.getTrackModel().from(graph, connectedVertexSet, connectedEdgeSet, visibility, savedTrackNames);
 
 		return true;
 	}

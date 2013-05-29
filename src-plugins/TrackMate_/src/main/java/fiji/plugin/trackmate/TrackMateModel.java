@@ -1,7 +1,6 @@
 package fiji.plugin.trackmate;
 
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -152,7 +151,7 @@ public class TrackMateModel {
 	/**
 	 * The event cache. During a transaction, some modifications might trigger
 	 * the need to fire a model change event. We want to fire these events only
-	 * when the transaction closes (when the updayeLevel reaches 0), so we store
+	 * when the transaction closes (when the updateLevel reaches 0), so we store
 	 * the event ID in this cache in the meantime. The event cache contains only
 	 * the int IDs of the events listed in {@link ModelChangeEvent},
 	 * namely
@@ -194,7 +193,7 @@ public class TrackMateModel {
 
 	public TrackMateModel() {
 		featureModel = new FeatureModel(this);
-		trackGraphModel = new TrackModel(this);
+		trackGraphModel = new TrackModel();
 	}
 
 
@@ -401,6 +400,17 @@ public class TrackMateModel {
 	 * Moves a single spot from a frame to another, make it visible if it was not, 
 	 * then mark it for feature update. If the source spot could not be found
 	 * in the source frame, nothing is done and <code>null</code> is returned.
+	 * <p>
+	 * For the model update to happen correctly and listeners to be notified
+	 * properly, a call to this method must happen within a transaction, as in:
+	 * <pre>
+	 * model.beginUpdate();
+	 * try {
+	 * 	... // model modifications here
+	 * } finally {
+	 * 	model.endUpdate();
+	 * }
+	 * </pre>
 	 * 
 	 * @param spotToMove  the spot to move
 	 * @param fromFrame  the frame the spot originated from
@@ -432,6 +442,17 @@ public class TrackMateModel {
 	/**
 	 * Adds a single spot to the collections managed by this model, mark it as visible, 
 	 * then update its features.
+	 * <p>
+	 * For the model update to happen correctly and listeners to be notified
+	 * properly, a call to this method must happen within a transaction, as in:
+	 * <pre>
+	 * model.beginUpdate();
+	 * try {
+	 * 	... // model modifications here
+	 * } finally {
+	 * 	model.endUpdate();
+	 * }
+	 * </pre>
 	 * @return the spot just added.
 	 */
 	public Spot addSpotTo(Spot spotToAdd, Integer toFrame) {
@@ -448,7 +469,17 @@ public class TrackMateModel {
 	 * Removes a single spot from the collections managed by this model.
 	 * If the spot cannot be found in the specified frame, nothing is done
 	 * and <code>null</code> is returned. 
-	 * 
+	 * <p>
+	 * For the model update to happen correctly and listeners to be notified
+	 * properly, a call to this method must happen within a transaction, as in:
+	 * <pre>
+	 * model.beginUpdate();
+	 * try {
+	 * 	... // model modifications here
+	 * } finally {
+	 * 	model.endUpdate();
+	 * }
+	 * </pre>
 	 * @param spotToRemove  the spot to remove.
 	 * @param fromFrame   the frame the spot is in.
 	 * @return the spot removed, or <code>null</code> if it could not be found in the
@@ -476,6 +507,17 @@ public class TrackMateModel {
 	 * Mark the specified spot for update. At the end of the model transaction, its features 
 	 * will be recomputed, and other edge and track features that depends on it will 
 	 * be as well.
+	 * <p>
+	 * For the model update to happen correctly and listeners to be notified
+	 * properly, a call to this method must happen within a transaction, as in:
+	 * <pre>
+	 * model.beginUpdate();
+	 * try {
+	 * 	... // model modifications here
+	 * } finally {
+	 * 	model.endUpdate();
+	 * }
+	 * </pre>
 	 * @param spotToUpdate  the spot to mark for update
 	 */
 	public void updateFeatures(final Spot spotToUpdate) {
@@ -487,33 +529,105 @@ public class TrackMateModel {
 	}
 
 	/**
-	 * @see TrackModel#addEdge(Spot, Spot, double)
+	 * Creates a new edge between two spots, with the specified weight.
+	 * <p>
+	 * For the model update to happen correctly and listeners to be notified
+	 * properly, a call to this method must happen within a transaction, as in:
+	 * <pre>
+	 * model.beginUpdate();
+	 * try {
+	 * 	... // model modifications here
+	 * } finally {
+	 * 	model.endUpdate();
+	 * }
+	 * </pre>
+	 * @param source  the source spot.
+	 * @param target  the target spot.
+	 * @param weight  the weight of the edge.
+	 * @return  the edge created.
 	 */
 	public DefaultWeightedEdge addEdge(final Spot source, final Spot target, final double weight) {
 		return trackGraphModel.addEdge(source, target, weight);
 	}
 
 	/**
-	 * @see TrackModel#removeEdge(Spot, Spot)
+	 * Removes an edge between two spots and returns it. Returns <code>null</code>
+	 * and do nothing to the tracks if the edge did not exist.
+	 * @param source the source spot.
+	 * @param target the target spot.
+	 * @return  the edge between the two spots, if it existed.
 	 */
 	public DefaultWeightedEdge removeEdge(final Spot source, final Spot target) {
 		return trackGraphModel.removeEdge(source, target);
 	}
 
 	/**
-	 * @see TrackModel#removeEdge(DefaultWeightedEdge)
+	 * Removes an existing edge from the model.
+	 * <p>
+	 * For the model update to happen correctly and listeners to be notified
+	 * properly, a call to this method must happen within a transaction, as in:
+	 * <pre>
+	 * model.beginUpdate();
+	 * try {
+	 * 	... // model modifications here
+	 * } finally {
+	 * 	model.endUpdate();
+	 * }
+	 * </pre> 
+	 * @param edge  the edge to remove.
+	 * @return <code>true</code> if the edge existed in the model and was successfully,
+	 * <code>false</code> otherwise.
 	 */
 	public boolean removeEdge(final DefaultWeightedEdge edge) {
 		return trackGraphModel.removeEdge(edge);
 	}
 
 	/**
-	 * @see TrackModel#setEdgeWeight(DefaultWeightedEdge, double)
+	 * Sets the weight of the specified edge.
+	 * <p>
+	 * For the model update to happen correctly and listeners to be notified
+	 * properly, a call to this method must happen within a transaction, as in:
+	 * <pre>
+	 * model.beginUpdate();
+	 * try {
+	 * 	... // model modifications here
+	 * } finally {
+	 * 	model.endUpdate();
+	 * }
+	 * </pre>
+	 * @param edge  the edge.
+	 * @param weight  the weight to set.
 	 */
 	public void setEdgeWeight(final DefaultWeightedEdge edge, double weight) {
 		trackGraphModel.setEdgeWeight(edge, weight);
 	}
 
+	/**
+	 * Sets the visibility of the specified track. Throws a {@link NullPointerException} if the
+	 * track ID is unknown to the model.
+	 * <p>
+	 * For the model update to happen correctly and listeners to be notified
+	 * properly, a call to this method must happen within a transaction, as in:
+	 * <pre>
+	 * model.beginUpdate();
+	 * try {
+	 * 	... // model modifications here
+	 * } finally {
+	 * 	model.endUpdate();
+	 * }
+	 * </pre>
+	 * @param trackID  the track ID.
+	 * @param visible  the desired visibility.
+	 * @return  the specified track visibility prior to calling this method.
+	 */
+	public boolean setTrackVisibility(Integer trackID, boolean visible) {
+		boolean oldvis = trackGraphModel.setVisibility(trackID, visible);
+		boolean modified = oldvis != visible;
+		if (modified) {
+			eventCache.add(ModelChangeEvent.TRACKS_VISIBILITY_CHANGED);
+		}
+		return oldvis;
+	}
 
 	/*
 	 * PRIVATE METHODS
@@ -530,35 +644,18 @@ public class TrackMateModel {
 			System.out.println("[TrackMateModel] #flushUpdate(): Event cache is :" + eventCache);
 		}
 
-		/* Before they enter void, we grab the trackID of removed edges. We will need to 
-		 * know from where they were removed to recompute trackIDs intelligently. Or so */
-		HashMap<DefaultWeightedEdge, Integer> edgeRemovedOrigins = new HashMap<DefaultWeightedEdge, Integer>(trackGraphModel.edgesRemoved.size());
-		if (trackGraphModel.edgesRemoved.size() > 0) {
-			for (DefaultWeightedEdge edge : trackGraphModel.edgesRemoved) {
-				edgeRemovedOrigins.put(edge, getTrackModel().trackIDOf(edge)); // we store old track IDs
-			}
-		}
-
-		// Store old track IDs to monitor what tracks are new
-		HashSet<Integer> oldTrackIDs = new HashSet<Integer>(trackGraphModel.trackIDs(false));
-
 		/* We recompute tracks only if some edges have been added or removed,
 		 * (if some spots have been removed that causes edges to be removes, we already know about it).
 		 * We do NOT recompute tracks if spots have been added: they will not result in
 		 * new tracks made of single spots.	 */
 		int nEdgesToSignal = trackGraphModel.edgesAdded.size() + trackGraphModel.edgesRemoved.size() + trackGraphModel.edgesModified.size();
-		if (nEdgesToSignal > 0) {
-			// First, regenerate the tracks
-			trackGraphModel.computeTracksFromGraph();
-		}
 
-		// Do we have new track appearing?
-		HashSet<Integer> tracksToUpdate = new HashSet<Integer>(trackGraphModel.trackIDs(false));
-		tracksToUpdate.removeAll(oldTrackIDs);
+		// Do we have tracks to update?
+		HashSet<Integer> tracksToUpdate = new HashSet<Integer>(trackGraphModel.tracksUpdated);
 
 		// We also want to update the tracks that have edges that were modified
 		for (DefaultWeightedEdge modifiedEdge : trackGraphModel.edgesModified) {
-			tracksToUpdate.add(trackGraphModel.getTrackIDOf(modifiedEdge));
+			tracksToUpdate.add(trackGraphModel.trackIDOf(modifiedEdge));
 		}
 
 		// Deal with new or moved spots: we need to update their features.

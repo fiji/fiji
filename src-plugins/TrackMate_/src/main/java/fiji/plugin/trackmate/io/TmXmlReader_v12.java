@@ -404,7 +404,7 @@ public class TmXmlReader_v12 extends TmXmlReader {
 		model.getTrackModel().setGraph(graph);
 
 		// Retrieve the new track map
-		Map<Integer, Set<Spot>> newTrackMap = model.getTrackModel().getTrackSpots();
+		Map<Integer, Set<Spot>> newTrackMap = model.getTrackModel().trackSpots();
 
 		// Build a map of old key vs new key
 		HashMap<Integer, Integer> newKeyMap = new HashMap<Integer, Integer>();
