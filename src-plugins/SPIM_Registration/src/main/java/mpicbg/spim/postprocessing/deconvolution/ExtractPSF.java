@@ -38,6 +38,7 @@ public class ExtractPSF
 	Image<FloatType> avgPSF;
 	final SPIMConfiguration conf;
 	
+	int[] size3d = null;
 	int size = 17;
 	boolean isotropic = false;
 	
@@ -61,7 +62,7 @@ public class ExtractPSF
 		this.pointSpreadFunctions = new ArrayList<Image<FloatType>>();
 		this.conf = config;
 		
-		setPSFSize( Multi_View_Deconvolution.psfSize, Multi_View_Deconvolution.isotropic );
+		setPSFSize( Multi_View_Deconvolution.psfSize, Multi_View_Deconvolution.isotropic, Multi_View_Deconvolution.psfSize3d );
 	}
 	
 	public ExtractPSF( final ViewStructure viewStructure )
@@ -70,7 +71,7 @@ public class ExtractPSF
 		this.pointSpreadFunctions = new ArrayList<Image<FloatType>>();
 		this.conf = viewStructure.getSPIMConfiguration();
 		
-		setPSFSize( Multi_View_Deconvolution.psfSize, Multi_View_Deconvolution.isotropic );
+		setPSFSize( Multi_View_Deconvolution.psfSize, Multi_View_Deconvolution.isotropic, Multi_View_Deconvolution.psfSize3d );
 	}
 	
 	/**
@@ -79,10 +80,11 @@ public class ExtractPSF
 	 * @param size - number of pixels in xy
 	 * @param isotropic - if isotropic, than same size applies to z (in px), otherwise it is divided by half the z-stretching
 	 */
-	public void setPSFSize( final int size, final boolean isotropic )
+	public void setPSFSize( final int size, final boolean isotropic, final int[] size3d )
 	{
 		this.size = size;
 		this.isotropic = isotropic;
+		this.size3d = size3d;
 	}
 	
 	public ArrayList< Image< FloatType > > getPSFs() { return pointSpreadFunctions; }
@@ -165,12 +167,21 @@ public class ExtractPSF
 		final ArrayList<ViewDataBeads > views = viewStructure.getViews();
 		final int numDimensions = 3;
 		
-		final int[] size = Util.getArrayFromValue( this.size, numDimensions );
-		if ( !this.isotropic )
+		final int[] size;
+		
+		if ( this.size3d == null )
 		{
-			size[ numDimensions - 1 ] *= Math.max( 1, 5.0/views.get( 0 ).getZStretching() );
-			if ( size[ numDimensions - 1 ] % 2 == 0 )
-				size[ numDimensions - 1 ]++;
+			size = Util.getArrayFromValue( this.size, numDimensions );
+			if ( !this.isotropic )
+			{
+				size[ numDimensions - 1 ] *= Math.max( 1, 5.0/views.get( 0 ).getZStretching() );
+				if ( size[ numDimensions - 1 ] % 2 == 0 )
+					size[ numDimensions - 1 ]++;
+			}
+		}
+		else
+		{
+			size = this.size3d.clone();
 		}
 		
 		IJ.log ( "PSF size: " + Util.printCoordinates( size ) );
@@ -235,12 +246,21 @@ public class ExtractPSF
 		final ArrayList<ViewDataBeads > views = viewStructure.getViews();
 		final int numDimensions = 3;
 		
-		final int[] size = Util.getArrayFromValue( this.size, numDimensions );
-		if ( !this.isotropic )
+		final int[] size;
+		if ( this.size3d == null )
 		{
-			size[ numDimensions - 1 ] *= Math.max( 1, 5.0/views.get( 0 ).getZStretching() );
-			if ( size[ numDimensions - 1 ] % 2 == 0 )
-				size[ numDimensions - 1 ]++;
+			size = Util.getArrayFromValue( this.size, numDimensions );
+		
+			if ( !this.isotropic )
+			{
+				size[ numDimensions - 1 ] *= Math.max( 1, 5.0/views.get( 0 ).getZStretching() );
+				if ( size[ numDimensions - 1 ] % 2 == 0 )
+					size[ numDimensions - 1 ]++;
+			}
+		}
+		else
+		{
+			size = this.size3d.clone();
 		}
 		
 		IJ.log ( "PSF size: " + Util.printCoordinates( size ) );
@@ -452,7 +472,40 @@ public class ExtractPSF
 		
 		return minMaxDim;
 	}
-	
+
+	/**
+	 * Make image the same size as defined, center it
+	 * 
+	 * @param img
+	 * @return
+	 */
+	public static Image< FloatType > makeSameSize( final Image< FloatType > img, final int[] size )
+	{
+		float min = Float.MAX_VALUE;
+		
+		for ( final FloatType f : img )
+			min = Math.min( min, f.get() );
+		
+		final Image< FloatType > square = img.createNewImage( size );
+		
+		final LocalizableCursor< FloatType > squareCursor = square.createLocalizableCursor();
+		final LocalizableByDimCursor< FloatType > inputCursor = img.createLocalizableByDimCursor( new OutOfBoundsStrategyValueFactory<FloatType>( new FloatType( min ) ) );
+		
+		while ( squareCursor.hasNext() )
+		{
+			squareCursor.fwd();
+			squareCursor.getPosition( size );
+			
+			for ( int d = 0; d < img.getNumDimensions(); ++d )
+				size[ d ] =  size[ d ] - square.getDimension( d )/2 + img.getDimension( d )/2;
+
+			inputCursor.setPosition( size );
+			squareCursor.getType().set( inputCursor.getType().get() );
+		}
+		
+		return square;
+	}
+
 	public static ExtractPSF loadAndTransformPSF( final String fileName, final boolean computeAveragePSF, final ViewStructure viewStructure )
 	{
 		ExtractPSF extractPSF = new ExtractPSF( viewStructure );

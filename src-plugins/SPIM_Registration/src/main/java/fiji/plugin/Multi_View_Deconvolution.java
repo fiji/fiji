@@ -49,8 +49,16 @@ import mpicbg.spim.registration.ViewStructure;
 public class Multi_View_Deconvolution implements PlugIn
 {
 	final private String myURL = "http://fly.mpi-cbg.de/preibisch";
+	
+	// for optimization of block size this is essential
+	public static boolean makeAllPSFSameSize = false;
+	
+	// used in case psfSize3d == null
 	public static int psfSize = 17;
 	public static boolean isotropic = false;
+	
+	// this psfsize will be used in case it is not null
+	public static int[] psfSize3d = null;
 	public static float subtractBackground = 0;
 	
 	@Override
@@ -95,7 +103,29 @@ public class Multi_View_Deconvolution implements PlugIn
 		//final ExtractPSF extractPSF = new ExtractPSF( viewStructure, showAveragePSF );
 		//extractPSF.extract();
 		
-		final ArrayList< Image< FloatType > > pointSpreadFunctions = fusion.getPointSpreadFunctions();
+		final ArrayList< Image< FloatType > > pointSpreadFunctions;
+		
+		if ( makeAllPSFSameSize )
+		{
+			final ArrayList< Image< FloatType > > tmpKernels = fusion.getPointSpreadFunctions();
+			
+			int[] size = tmpKernels.get( 0 ).getDimensions();
+			
+			for ( final Image< FloatType > image : tmpKernels )
+			{
+				for ( int d = 0; d < image.getNumDimensions(); ++d )
+					size[ d ] = Math.max( size[ d ], image.getDimension( d ) );
+			}
+			
+			pointSpreadFunctions = new ArrayList<Image<FloatType>>();
+
+			for ( final Image< FloatType > image : tmpKernels )
+				pointSpreadFunctions.add( ExtractPSF.makeSameSize( image, size ) );
+		}
+		else
+		{
+			pointSpreadFunctions = fusion.getPointSpreadFunctions();
+		}
 		
 		if ( conf.deconvolutionShowAveragePSF )
 			ImageJFunctions.show( fusion.getExtractPSFInstance().getMaxProjectionAveragePSF() );
