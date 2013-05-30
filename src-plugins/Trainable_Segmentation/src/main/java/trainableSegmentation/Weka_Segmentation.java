@@ -1754,6 +1754,7 @@ public class Weka_Segmentation implements PlugIn
 		if( false == wekaSegmentation.loadClassifier(od.getDirectory() + od.getFileName()) )
 		{
 			IJ.error("Error when loading Weka classifier from file");
+			IJ.log("Error: classifier could not be loaded.");
 			win.updateButtonsEnabling();
 			return;
 		}
