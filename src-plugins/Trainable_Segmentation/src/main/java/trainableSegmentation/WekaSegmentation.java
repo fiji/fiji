@@ -595,6 +595,7 @@ public class WekaSegmentation {
 				catch (Exception e)
 				{
 					IJ.error("Load Failed", "Error while loading train header");
+					e.printStackTrace();
 					return false;
 				}
 				finally
