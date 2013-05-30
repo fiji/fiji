@@ -17,7 +17,7 @@ public class Memory implements PlugIn {
 			final PrintStream out = new PrintStream(new FileOutputStream(configFile));
 			out.println(".");
 			out.println(IJ.isWindows() ? "jre\\bin\\javaw.exe" : "jre/bin/java");
-			out.println("-Xmx" +(maxMemory() >> 20) + "  -cp ij.jar ij.ImageJ");
+			out.println("-Xmx" +(maxMemory() >> 20) + "m -cp ij.jar ij.ImageJ");
 			out.close();
 		} catch (final IOException e) {
 			IJ.error("Could not write initial ImageJ.cfg!");
