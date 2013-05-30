@@ -12,7 +12,7 @@ import javax.swing.event.ChangeListener;
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.TrackMate;
-import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.Model;
 import fiji.plugin.trackmate.features.FeatureFilter;
 import fiji.plugin.trackmate.gui.panels.components.ColorByFeatureGUIPanel.Category;
 import fiji.plugin.trackmate.gui.panels.components.FilterGuiPanel;
@@ -69,7 +69,7 @@ public class SpotFilterDescriptor implements WizardPanelDescriptor {
 	public void aboutToHidePanel() {
 		Logger logger = trackmate.getModel().getLogger();
 		logger.log("Performing spot filtering on the following features:\n", Logger.BLUE_COLOR);
-		final TrackMateModel model = trackmate.getModel();
+		final Model model = trackmate.getModel();
 		List<FeatureFilter> featureFilters = component.getFeatureFilters();
 		trackmate.getSettings().setSpotFilters(featureFilters);
 		trackmate.execSpotFiltering(false);

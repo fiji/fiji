@@ -27,7 +27,7 @@ import org.jgrapht.graph.DefaultWeightedEdge;
 import fiji.plugin.trackmate.SelectionModel;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
-import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.Model;
 import fiji.plugin.trackmate.util.TMUtils;
 import fiji.tool.AbstractTool;
 
@@ -163,7 +163,7 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 
 		final Spot clickLocation = makeSpot(imp, displayer, getImageCanvas(e), e.getPoint());
 		final int frame = displayer.imp.getFrame() - 1;
-		final TrackMateModel model = displayer.getModel();
+		final Model model = displayer.getModel();
 		Spot target = model.getSpots().getSpotAt(clickLocation, frame, true);
 		Spot editedSpot = editedSpots.get(imp);
 
@@ -379,7 +379,7 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 		if (null == displayer)
 			return;
 
-		TrackMateModel model = displayer.getModel();
+		Model model = displayer.getModel();
 		SelectionModel selectionModel = displayer.getSelectionModel();
 		Spot editedSpot = editedSpots.get(imp);
 		final ImageCanvas canvas = getImageCanvas(e);
@@ -651,7 +651,7 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 			final HyperStackDisplayer displayer = displayers.get(imp);
 			if (null == displayer)
 				return;
-			TrackMateModel model = displayer.getModel();
+			Model model = displayer.getModel();
 			model.beginUpdate();
 			try {
 				model.updateFeatures(quickEditedSpot);

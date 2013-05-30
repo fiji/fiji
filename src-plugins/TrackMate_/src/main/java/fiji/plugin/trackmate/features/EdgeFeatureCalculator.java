@@ -11,7 +11,7 @@ import org.jgrapht.graph.DefaultWeightedEdge;
 import fiji.plugin.trackmate.Dimension;
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.Settings;
-import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.Model;
 import fiji.plugin.trackmate.features.edges.EdgeAnalyzer;
 
 /**
@@ -24,9 +24,9 @@ public class EdgeFeatureCalculator extends MultiThreadedBenchmarkAlgorithm {
 
 	private static final String BASE_ERROR_MSG = "[EdgeFeatureCalculator] ";
 	private final Settings settings;
-	private final TrackMateModel model;
+	private final Model model;
 
-	public EdgeFeatureCalculator(final TrackMateModel model, final Settings settings) {
+	public EdgeFeatureCalculator(final Model model, final Settings settings) {
 		this.settings = settings;
 		this.model = model;
 	}

@@ -11,7 +11,7 @@ import org.scijava.util.AppUtils;
 import fiji.plugin.trackmate.SelectionModel;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.TrackMate;
-import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.Model;
 import fiji.plugin.trackmate.io.TmXmlReader;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
 import fiji.plugin.trackmate.visualization.hyperstack.HyperStackDisplayer;
@@ -26,7 +26,7 @@ public class HyperStackDisplayerTestDrive {
 		File file = new File(AppUtils.getBaseDirectory(TrackMate.class), "samples/FakeTracks.xml");
 		TmXmlReader reader = new TmXmlReader(file);
 
-		TrackMateModel model = reader.getModel();
+		Model model = reader.getModel();
 		Settings settings = new Settings();
 		reader.readSettings(settings, null, null, null, null, null);
 		ImagePlus imp = settings.imp;

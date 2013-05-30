@@ -39,7 +39,7 @@ import fiji.plugin.trackmate.ModelChangeEvent;
 import fiji.plugin.trackmate.SelectionChangeEvent;
 import fiji.plugin.trackmate.SelectionModel;
 import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.Model;
 import fiji.plugin.trackmate.visualization.AbstractTrackMateModelView;
 import fiji.plugin.trackmate.visualization.SpotColorGenerator;
 import fiji.plugin.trackmate.visualization.TrackColorGenerator;
@@ -115,7 +115,7 @@ public class TrackScheme extends AbstractTrackMateModelView {
 	 * CONSTRUCTORS
 	 */
 
-	public TrackScheme(TrackMateModel model, SelectionModel selectionModel)  {
+	public TrackScheme(Model model, SelectionModel selectionModel)  {
 		super(model, selectionModel);
 		initDisplaySettings();
 		initGUI();
@@ -313,7 +313,7 @@ public class TrackScheme extends AbstractTrackMateModelView {
 
 
 	/**
-	 * Import a whole track from the {@link TrackMateModel} and make it visible
+	 * Import a whole track from the {@link Model} and make it visible
 	 * @param trackIndex  the index of the track to show in TrackScheme 
 	 */
 	private void importTrack(int trackIndex) {
@@ -489,7 +489,7 @@ public class TrackScheme extends AbstractTrackMateModelView {
 	 * Used to catch spot creation events that occurred elsewhere, for instance by manual editing in 
 	 * the {@link AbstractTrackMateModelView}. 
 	 * <p>
-	 * We have to deal with the graph modification ourselves here, because the {@link TrackMateModel} model
+	 * We have to deal with the graph modification ourselves here, because the {@link Model} model
 	 * holds a non-listenable JGraphT instance. A modification made to the model would not be reflected
 	 * on the graph here.
 	 */
@@ -710,7 +710,7 @@ public class TrackScheme extends AbstractTrackMateModelView {
 	}
 
 	@Override
-	public TrackMateModel getModel() {
+	public Model getModel() {
 		return model;
 	}
 
@@ -1008,8 +1008,8 @@ public class TrackScheme extends AbstractTrackMateModelView {
 
 
 	/**
-	 * Create links between all the spots currently in the {@link TrackMateModel} selection.
-	 * We update simultaneously the {@link TrackMateModel} and the 
+	 * Create links between all the spots currently in the {@link Model} selection.
+	 * We update simultaneously the {@link Model} and the 
 	 * {@link JGraphXAdapter}.
 	 */
 	public void linkSpots() {

@@ -13,7 +13,7 @@ import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.TrackMate;
-import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.Model;
 import fiji.plugin.trackmate.detection.LogDetectorFactory;
 import fiji.plugin.trackmate.detection.SpotDetectorFactory;
 import fiji.plugin.trackmate.gui.ConfigurationPanel;
@@ -86,7 +86,7 @@ public class LogDetectorConfigurationPanel extends ConfigurationPanel {
 	protected final String spaceUnits;
 	protected final String detectorName;
 	protected final ImagePlus imp;
-	protected final TrackMateModel model;
+	protected final Model model;
 	private Logger localLogger;
 
 	/*
@@ -99,11 +99,11 @@ public class LogDetectorConfigurationPanel extends ConfigurationPanel {
 	 * @param imp  the {@link ImagePlus} to read the image content from as well as other metadata. 
 	 * @param infoText  the detector info text, will be displayed on the panel.
 	 * @param detectorName the detector name, will be displayed on the panel. 
-	 * @param model the {@link TrackMateModel} that will be fed with the preview results. It 
+	 * @param model the {@link Model} that will be fed with the preview results. It 
 	 * is the responsibility of the views registered to listen to model change to display 
 	 * the preview results.
 	 */
-	public LogDetectorConfigurationPanel(ImagePlus imp, String infoText, String detectorName, TrackMateModel model) {
+	public LogDetectorConfigurationPanel(ImagePlus imp, String infoText, String detectorName, Model model) {
 		this.imp = imp;
 		this.infoText = infoText;
 		this.detectorName = detectorName;

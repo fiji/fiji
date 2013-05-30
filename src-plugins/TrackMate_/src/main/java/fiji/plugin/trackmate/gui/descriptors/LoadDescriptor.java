@@ -7,7 +7,7 @@ import java.util.Map;
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.TrackMate;
-import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.Model;
 import fiji.plugin.trackmate.gui.GuiUtils;
 import fiji.plugin.trackmate.gui.TrackMateGUIController;
 import fiji.plugin.trackmate.io.IOUtils;
@@ -66,7 +66,7 @@ public class LoadDescriptor extends SomeDialogDescriptor {
 		// Log
 		String logText = reader.getLog() + '\n';
 		// Model
-		TrackMateModel model = reader.getModel();
+		Model model = reader.getModel();
 		// Settings -> empty for now.
 		Settings settings = new Settings();
 		

@@ -17,13 +17,13 @@ import org.junit.Test;
 import fiji.plugin.trackmate.ModelChangeEvent;
 import fiji.plugin.trackmate.ModelChangeListener;
 import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.Model;
 
 public class TrackDurationAnalyzerTest {
 
 	private static final int N_TRACKS = 10;
 	private static final int DEPTH = 9; // must be at least 6 to avoid tracks too shorts - may make this test fail sometimes
-	private TrackMateModel model;
+	private Model model;
 	private HashMap<Integer, Double> expectedDuration;
 	private HashMap<Integer, Double> expectedStart;
 	private HashMap<Integer, Double> expectedStop;
@@ -33,7 +33,7 @@ public class TrackDurationAnalyzerTest {
 	@Before
 	public void setUp() {
 		Random ran = new Random();
-		model = new TrackMateModel();
+		model = new Model();
 		model.beginUpdate();
 		try {
 			
@@ -64,7 +64,7 @@ public class TrackDurationAnalyzerTest {
 				}
 				previous.putFeature(Spot.POSITION_X, displacement);
 				
-				key = track.hashCode(); // a hack: the track ID will be the hash of the spot set 
+				key = model.getTrackModel().trackIDOf(previous);
 				expectedDuration.put(key, Double.valueOf(duration));
 				expectedStart.put(key, Double.valueOf(start));
 				expectedStop.put(key, Double.valueOf(stop));
@@ -113,7 +113,7 @@ public class TrackDurationAnalyzerTest {
 				analyzer.process(event.getTrackUpdated());
 			}
 		};
-		model.addTrackMateModelChangeListener(listener);
+		model.addModelChangeListener(listener);
 		
 		// Add a new track to the model - the old tracks should not be affected
 		model.beginUpdate();
@@ -198,7 +198,7 @@ public class TrackDurationAnalyzerTest {
 				analyzer.process(event.getTrackUpdated());
 			}
 		};
-		model.addTrackMateModelChangeListener(listener);
+		model.addModelChangeListener(listener);
 
 		// Get a track
 		Integer aKey = model.getTrackModel().trackIDs(true).iterator().next();
@@ -252,7 +252,7 @@ public class TrackDurationAnalyzerTest {
 				analyzer.process(event.getTrackUpdated());
 			}
 		};
-		model.addTrackMateModelChangeListener(listener);
+		model.addModelChangeListener(listener);
 
 		// Get its middle spot
 		TreeSet<Spot> sortedTrack = new TreeSet<Spot>(Spot.frameComparator);
@@ -297,7 +297,7 @@ public class TrackDurationAnalyzerTest {
 		private boolean hasBeenCalled = false;
 		private Collection<Integer> keys;
 		
-		public TestTrackDurationAnalyzer(TrackMateModel model) {
+		public TestTrackDurationAnalyzer(Model model) {
 			super(model);
 		}
 		

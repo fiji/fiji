@@ -29,7 +29,7 @@ import javax.swing.event.ChangeListener;
 
 import fiji.plugin.trackmate.ModelChangeEvent;
 import fiji.plugin.trackmate.ModelChangeListener;
-import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.Model;
 import fiji.plugin.trackmate.features.FeatureFilter;
 import fiji.plugin.trackmate.gui.TrackMateWizard;
 import fiji.plugin.trackmate.gui.panels.ActionListenablePanel;
@@ -68,7 +68,7 @@ public class FilterGuiPanel extends ActionListenablePanel implements ChangeListe
 
 	private final Map<String, String> featureNames;
 	private final Category category;
-	private final TrackMateModel model;
+	private final Model model;
 	private final List<String> features;
 	/** Holds the map of feature values. Is made final so that the instance can be shared with the components
 	 * of this panel. */
@@ -78,10 +78,10 @@ public class FilterGuiPanel extends ActionListenablePanel implements ChangeListe
 	 * CONSTRUCTOR
 	 */
 
-	public FilterGuiPanel(TrackMateModel model, Category category) {
+	public FilterGuiPanel(Model model, Category category) {
 		this.model = model;
 
-		model.addTrackMateModelChangeListener(new ModelChangeListener() {
+		model.addModelChangeListener(new ModelChangeListener() {
 
 			@Override
 			public void modelChanged(ModelChangeEvent event) {

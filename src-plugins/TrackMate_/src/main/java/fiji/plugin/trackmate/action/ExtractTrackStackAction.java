@@ -21,7 +21,7 @@ import org.jgrapht.graph.DefaultWeightedEdge;
 
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.Model;
 import fiji.plugin.trackmate.TrackMate;
 import fiji.plugin.trackmate.gui.TrackMateGUIController;
 import fiji.plugin.trackmate.gui.TrackMateWizard;
@@ -67,7 +67,7 @@ public class ExtractTrackStackAction extends AbstractTMAction {
 	public void execute() {
 		logger.log("Capturing track stack.\n");
 		
-		TrackMateModel model = trackmate.getModel();
+		Model model = trackmate.getModel();
 		Set<Spot> selection = controller.getSelectionModel().getSpotSelection();
 		int nspots = selection.size();
 		if (nspots != 2) {

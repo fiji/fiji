@@ -8,7 +8,7 @@ import fiji.plugin.trackmate.SelectionChangeEvent;
 import fiji.plugin.trackmate.SelectionChangeListener;
 import fiji.plugin.trackmate.SelectionModel;
 import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.Model;
 
 /**
  * An abstract class for spot displayers, that can overlay detected spots and tracks on top
@@ -28,7 +28,7 @@ public abstract class AbstractTrackMateModelView implements SelectionChangeListe
 	protected Map<String, Object> displaySettings = new HashMap<String, Object>();
 
 	/** The model displayed by this class. */
-	protected TrackMateModel model;
+	protected Model model;
 
 	protected final  SelectionModel selectionModel;
 	
@@ -37,11 +37,11 @@ public abstract class AbstractTrackMateModelView implements SelectionChangeListe
 	 * PROTECTED CONSTRUCTOR
 	 */
 
-	protected AbstractTrackMateModelView(TrackMateModel model, SelectionModel selectionModel) {
+	protected AbstractTrackMateModelView(Model model, SelectionModel selectionModel) {
 		this.selectionModel = selectionModel;
 		this.model = model;
-		model.addTrackMateModelChangeListener(this);
-		selectionModel.addTrackMateSelectionChangeListener(this);
+		model.addModelChangeListener(this);
+		selectionModel.addSelectionChangeListener(this);
 	}
 	
 	/*
@@ -81,7 +81,7 @@ public abstract class AbstractTrackMateModelView implements SelectionChangeListe
 	}
 	
 	@Override
-	public TrackMateModel getModel() {
+	public Model getModel() {
 		return model;
 	}
 	

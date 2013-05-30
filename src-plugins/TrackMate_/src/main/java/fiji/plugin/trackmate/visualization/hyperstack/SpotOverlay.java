@@ -3,7 +3,7 @@ package fiji.plugin.trackmate.visualization.hyperstack;
 import static fiji.plugin.trackmate.visualization.TrackMateModelView.KEY_SPOT_COLORING;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
-import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.Model;
 import fiji.plugin.trackmate.util.TMUtils;
 import fiji.plugin.trackmate.visualization.FeatureColorGenerator;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
@@ -42,13 +42,13 @@ public class SpotOverlay extends Roi {
 	protected FontMetrics fm;
 	protected Collection<Spot> spotSelection = new ArrayList<Spot>();
 	protected Map<String, Object> displaySettings;
-	protected final TrackMateModel model;
+	protected final Model model;
 
 	/*
 	 * CONSTRUCTOR
 	 */
 
-	public SpotOverlay(final TrackMateModel model, final ImagePlus imp, final Map<String, Object> displaySettings) {
+	public SpotOverlay(final Model model, final ImagePlus imp, final Map<String, Object> displaySettings) {
 		super(0, 0, imp);
 		this.model = model;
 		this.imp = imp;

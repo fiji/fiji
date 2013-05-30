@@ -111,7 +111,7 @@ import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
-import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.Model;
 import fiji.plugin.trackmate.detection.DogDetectorFactory;
 import fiji.plugin.trackmate.detection.DownsampleLogDetectorFactory;
 import fiji.plugin.trackmate.detection.LogDetectorFactory;
@@ -254,8 +254,8 @@ public class TmXmlReader_v12 extends TmXmlReader {
 	}
 	
 	@Override
-	public TrackMateModel getModel() {
-		TrackMateModel model = new TrackMateModel();
+	public Model getModel() {
+		Model model = new Model();
 
 		// Spots
 		SpotCollection allSpots = getAllSpots();
@@ -319,7 +319,7 @@ public class TmXmlReader_v12 extends TmXmlReader {
 	 * @param model 
 	 * @return true if the tracks were found in the file, false otherwise.
 	 */
-	private void readTracks(TrackMateModel model) {
+	private void readTracks(Model model) {
 
 		Element allTracksElement = root.getChild(TRACK_COLLECTION_ELEMENT_KEY_v12);
 		if (null == allTracksElement)
@@ -332,21 +332,22 @@ public class TmXmlReader_v12 extends TmXmlReader {
 
 		// Load tracks
 		List<Element> trackElements = allTracksElement.getChildren(TRACK_ELEMENT_KEY_v12);
-		List<Element> edgeElements;
-
-		// A temporary map that maps stored track key to one of its spot
-		HashMap<Integer, Spot> savedTrackMap = new HashMap<Integer, Spot>();
-
+		
+		Map<Integer, Set<Spot>> trackSpots = new HashMap<Integer, Set<Spot>>(trackElements.size());
+		Map<Integer, Set<DefaultWeightedEdge>> trackEdges = new HashMap<Integer, Set<DefaultWeightedEdge>>(trackElements.size());
+		Map<Integer, String> trackNames = new HashMap<Integer, String>(trackElements.size());
 
 		for (Element trackElement : trackElements) {
+			
 
 			// Get track ID as it is saved on disk
 			int trackID = readIntAttribute(trackElement, TRACK_ID_ATTRIBUTE_NAME_v12, logger);
-			// Keep a reference of one of the spot for outside the loop.
-			Spot sourceSpot = null; 
 
 			// Iterate over edges
-			edgeElements = trackElement.getChildren(TRACK_EDGE_ELEMENT_KEY_v12);
+			List<Element> edgeElements = trackElement.getChildren(TRACK_EDGE_ELEMENT_KEY_v12);
+			
+			Set<Spot> spots = new HashSet<Spot>(edgeElements.size());
+			Set<DefaultWeightedEdge> edges = new HashSet<DefaultWeightedEdge>(edgeElements.size());
 
 			for (Element edgeElement : edgeElements) {
 
@@ -355,7 +356,7 @@ public class TmXmlReader_v12 extends TmXmlReader {
 				int targetID = readIntAttribute(edgeElement, TRACK_EDGE_TARGET_ATTRIBUTE_NAME_v12, logger);
 
 				// Get matching spots from the cache
-				sourceSpot = cache.get(sourceID);
+				Spot sourceSpot = cache.get(sourceID);
 				Spot targetSpot = cache.get(targetID);
 
 				// Get weight
@@ -390,63 +391,37 @@ public class TmXmlReader_v12 extends TmXmlReader {
 				} else {
 					graph.setEdgeWeight(edge, weight);
 				}
+				
+				// Add to current track sets
+				spots.add(sourceSpot);
+				spots.add(targetSpot);
+				edges.add(edge);
+				
+				
 			} // Finished parsing over the edges of the track
 
 			// Store one of the spot in the saved trackID key map
-			savedTrackMap.put(trackID, sourceSpot);
-
+			trackSpots.put(trackID, spots);
+			trackEdges.put(trackID, edges);
+			trackNames.put(trackID, "Track_" + trackID); // Default name
 		}
 
-		/* Pass the loaded graph to the model. The model will in turn regenerate a new 
-		 * map of tracks vs trackID, using the hash as new keys. Because there is a 
-		 * good chance that they saved keys and the new keys differ, we must retrieve
-		 * the mapping between the two using the retrieve spots.	 */
-		model.getTrackModel().setGraph(graph);
-
-		// Retrieve the new track map
-		Map<Integer, Set<Spot>> newTrackMap = model.getTrackModel().trackSpots();
-
-		// Build a map of old key vs new key
-		HashMap<Integer, Integer> newKeyMap = new HashMap<Integer, Integer>();
-		HashSet<Integer> newKeysToMatch = new HashSet<Integer>(newTrackMap.keySet());
-		for (Integer savedKey : savedTrackMap.keySet()) {
-			Spot spotToFind = savedTrackMap.get(savedKey);
-			for (Integer newKey : newTrackMap.keySet()) {
-				Set<Spot> track = newTrackMap.get(newKey);
-				if (track.contains(spotToFind)) {
-					newKeyMap.put(savedKey, newKey);
-					newKeysToMatch.remove(newKey);
-					break;
-				}
-			}
-			if (null == newKeyMap.get(savedKey)) {
-				logger.error("The track saved with ID = " + savedKey + " and containing the spot " + spotToFind + " has no matching track in the computed model.");
-			}
-		}
-
-		// Check that we matched all the new keys
-		if (!newKeysToMatch.isEmpty()) {
-			StringBuilder sb = new StringBuilder("Some of the computed tracks could not be matched to saved tracks:\n");
-			for (Integer unmatchedKey : newKeysToMatch) {
-				sb.append(" - track with ID " + unmatchedKey + " with spots " + newTrackMap.get(unmatchedKey) + "\n");
-			}
-			logger.error(sb.toString());
-		}
-
-		/* 
-		 * Now we know who's who. We can therefore retrieve the saved filtered track index, and 
-		 * match it to the proper new track IDs. 
-		 */
+		Map<Integer, Boolean> trackVisibility = new HashMap<Integer, Boolean>(trackElements.size());
 		Set<Integer> savedFilteredTrackIDs = readFilteredTrackIDs();
-		
-		// Build a new set with the new trackIDs;
-		Set<Integer> newFilteredTrackIDs = new HashSet<Integer>(savedFilteredTrackIDs.size());
-		for (Integer savedKey : savedFilteredTrackIDs) {
-			Integer newKey = newKeyMap.get(savedKey);
-			newFilteredTrackIDs.add(newKey);
+		for (Integer id : savedFilteredTrackIDs) {
+			trackVisibility.put(id, Boolean.TRUE);
 		}
-		model.getTrackModel().setFilteredTrackIDs(newFilteredTrackIDs, false);
-
+		Set<Integer> ids = new HashSet<Integer>(trackSpots.keySet());
+		ids.removeAll(savedFilteredTrackIDs);
+		for (Integer id : ids) {
+			trackVisibility.put(id, Boolean.FALSE);
+		}
+		
+		/*
+		 * Pass all of this to the model
+		 */
+		model.getTrackModel().from(graph, trackSpots, trackEdges, trackVisibility, trackNames);
+		
 		/* 
 		 * We do the same thing for the track features.
 		 */
@@ -455,12 +430,8 @@ public class TmXmlReader_v12 extends TmXmlReader {
 		for (Integer savedKey : savedFeatureMap.keySet()) {
 
 			Map<String, Double> savedFeatures = savedFeatureMap.get(savedKey);
-			Integer newKey = newKeyMap.get(savedKey);
-			if (null == newKey) {
-				continue;
-			}
 			for (String feature : savedFeatures.keySet()) {
-				fm.putTrackFeature(newKey, feature, savedFeatures.get(feature));
+				fm.putTrackFeature(savedKey, feature, savedFeatures.get(feature));
 			}
 
 		}

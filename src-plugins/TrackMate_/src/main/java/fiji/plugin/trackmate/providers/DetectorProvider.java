@@ -23,7 +23,7 @@ import org.jdom2.Element;
 
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.TrackMate;
-import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.Model;
 import fiji.plugin.trackmate.detection.DetectorKeys;
 import fiji.plugin.trackmate.detection.DogDetectorFactory;
 import fiji.plugin.trackmate.detection.DownsampleLogDetectorFactory;
@@ -43,7 +43,7 @@ public class DetectorProvider extends AbstractProvider {
 	 * BLANK CONSTRUCTOR
 	 */
 
-	private TrackMateModel model;
+	private Model model;
 
 	/**
 	 * This provider provides the GUI with the spot detectors currently available in the 
@@ -57,7 +57,7 @@ public class DetectorProvider extends AbstractProvider {
 	 * @param settings 
 	 * @param model 
 	 */
-	public DetectorProvider(TrackMateModel model) {
+	public DetectorProvider(Model model) {
 		this.model = model;
 		registerDetectors();
 		currentKey = LogDetectorFactory.DETECTOR_KEY;

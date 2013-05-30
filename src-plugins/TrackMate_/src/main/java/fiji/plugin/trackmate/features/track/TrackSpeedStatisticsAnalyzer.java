@@ -18,7 +18,7 @@ import org.jgrapht.graph.DefaultWeightedEdge;
 import fiji.plugin.trackmate.Dimension;
 import fiji.plugin.trackmate.FeatureModel;
 import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.Model;
 
 public class TrackSpeedStatisticsAnalyzer implements TrackAnalyzer, MultiThreaded, Benchmark {
 
@@ -76,9 +76,9 @@ public class TrackSpeedStatisticsAnalyzer implements TrackAnalyzer, MultiThreade
 
 	private int numThreads;
 	private long processingTime;
-	private final TrackMateModel model;
+	private final Model model;
 
-	public TrackSpeedStatisticsAnalyzer(final TrackMateModel model) {
+	public TrackSpeedStatisticsAnalyzer(final Model model) {
 		this.model = model;
 		setNumThreads();
 	}

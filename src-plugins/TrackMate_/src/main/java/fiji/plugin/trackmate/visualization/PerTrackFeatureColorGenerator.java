@@ -14,7 +14,7 @@ import fiji.plugin.trackmate.FeatureModel;
 import fiji.plugin.trackmate.ModelChangeEvent;
 import fiji.plugin.trackmate.ModelChangeListener;
 import fiji.plugin.trackmate.TrackModel;
-import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.Model;
 import fiji.plugin.trackmate.features.track.TrackIndexAnalyzer;
 
 /**
@@ -29,13 +29,13 @@ public class PerTrackFeatureColorGenerator implements TrackColorGenerator, Model
 	private static final Color DEFAULT_COLOR = Color.GREEN;
 	private static final InterpolatePaintScale generator = InterpolatePaintScale.Jet;
 	private HashMap<Integer,Color> colorMap;
-	private final TrackMateModel model;
+	private final Model model;
 	private String feature;
 	private Integer trackID;
 
-	public PerTrackFeatureColorGenerator(TrackMateModel model, String feature) {
+	public PerTrackFeatureColorGenerator(Model model, String feature) {
 		this.model = model;
-		model.addTrackMateModelChangeListener(this);
+		model.addModelChangeListener(this);
 		setFeature(feature);
 	}
 
@@ -155,7 +155,7 @@ public class PerTrackFeatureColorGenerator implements TrackColorGenerator, Model
 
 	@Override
 	public void terminate() {
-		model.removeTrackMateModelChangeListener(this);
+		model.removeModelChangeListener(this);
 	}
 	
 }

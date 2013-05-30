@@ -17,7 +17,7 @@ import org.junit.Test;
 import fiji.plugin.trackmate.ModelChangeEvent;
 import fiji.plugin.trackmate.ModelChangeListener;
 import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.Model;
 
 /**
  * @author Jean-Yves Tinevez
@@ -26,12 +26,12 @@ public class TrackIndexAnalyzerTest {
 
 	private static final int N_TRACKS = 10;
 	private static final int DEPTH = 5;
-	private TrackMateModel model;
+	private Model model;
 
 	/** Create a simple linear graph with {@value #N_TRACKS} tracks. */
 	@Before
 	public void setUp() {
-		model = new TrackMateModel();
+		model = new Model();
 		model.beginUpdate();
 		try {
 			for (int i = 0; i < N_TRACKS; i++) {
@@ -111,7 +111,7 @@ public class TrackIndexAnalyzerTest {
 		 *  We attach a new spot to an existing track. It must not modify the 
 		 *  track indices, nor generate a call to recalculate them. 
 		 */
-		model.addTrackMateModelChangeListener(listener);
+		model.addModelChangeListener(listener);
 		model.beginUpdate();
 		try {
 			Spot targetSpot = model.getSpots().iterator(0, true).next();
@@ -127,7 +127,7 @@ public class TrackIndexAnalyzerTest {
 		/*
 		 * Second modification: we create a new track by cutting one track in the middle
 		 */
-		model.addTrackMateModelChangeListener(listener);
+		model.addModelChangeListener(listener);
 		model.beginUpdate();
 		try {
 			Spot targetSpot = model.getSpots().iterator(DEPTH/2, true).next();
@@ -161,7 +161,7 @@ public class TrackIndexAnalyzerTest {
 
 		private boolean hasBeenCalled = false;
 
-		public TestTrackIndexAnalyzer(TrackMateModel model) {
+		public TestTrackIndexAnalyzer(Model model) {
 			super(model);
 		}
 

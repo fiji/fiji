@@ -13,7 +13,7 @@ import net.imglib2.multithreading.SimpleMultiThreading;
 import fiji.plugin.trackmate.Dimension;
 import fiji.plugin.trackmate.FeatureModel;
 import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.Model;
 
 public class TrackDurationAnalyzer implements TrackAnalyzer, MultiThreaded {
 
@@ -52,9 +52,9 @@ public class TrackDurationAnalyzer implements TrackAnalyzer, MultiThreaded {
 
 	private int numThreads;
 	private long processingTime;
-	private final TrackMateModel model;
+	private final Model model;
 
-	public TrackDurationAnalyzer(TrackMateModel model) {
+	public TrackDurationAnalyzer(Model model) {
 		this.model = model;
 		setNumThreads();
 	}

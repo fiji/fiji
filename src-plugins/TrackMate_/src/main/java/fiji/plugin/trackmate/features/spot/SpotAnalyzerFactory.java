@@ -2,7 +2,7 @@ package fiji.plugin.trackmate.features.spot;
 
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
-import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.Model;
 import fiji.plugin.trackmate.features.FeatureAnalyzer;
 import fiji.plugin.trackmate.providers.SpotAnalyzerProvider;
 
@@ -24,7 +24,7 @@ public interface SpotAnalyzerFactory<T extends RealType<T> & NativeType<T>> exte
 	/**
 	 * @return  a configured {@link SpotAnalyzer} ready to operate on the given frame
 	 * (0-based) and given channel (0-based). 
-	 * The target frame image and the target spots are retrieved from the {@link TrackMateModel}
+	 * The target frame image and the target spots are retrieved from the {@link Model}
 	 * thanks to the given frame and channel index.
 	 * 
 	 * @param frame  the target frame to operate on.

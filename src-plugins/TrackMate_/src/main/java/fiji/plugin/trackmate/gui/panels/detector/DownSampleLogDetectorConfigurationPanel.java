@@ -5,7 +5,7 @@ import static fiji.plugin.trackmate.detection.DetectorKeys.KEY_RADIUS;
 import static fiji.plugin.trackmate.detection.DetectorKeys.KEY_TARGET_CHANNEL;
 import static fiji.plugin.trackmate.detection.DetectorKeys.KEY_THRESHOLD;
 import static fiji.plugin.trackmate.gui.TrackMateWizard.FONT;
-import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.Model;
 import fiji.plugin.trackmate.detection.DownsampleLogDetectorFactory;
 import fiji.plugin.trackmate.detection.SpotDetectorFactory;
 import fiji.plugin.trackmate.gui.panels.components.JNumericTextField;
@@ -27,7 +27,7 @@ public class DownSampleLogDetectorConfigurationPanel extends LogDetectorConfigur
 	 * CONSTRUCTOR
 	 */
 	
-	public DownSampleLogDetectorConfigurationPanel(ImagePlus imp, TrackMateModel model) {
+	public DownSampleLogDetectorConfigurationPanel(ImagePlus imp, Model model) {
 		super(imp, DownsampleLogDetectorFactory.INFO_TEXT, DownsampleLogDetectorFactory.NAME, model);
 	}
 

@@ -25,7 +25,7 @@ import org.jfree.chart.renderer.InterpolatePaintScale;
 import fiji.plugin.trackmate.ModelChangeEvent;
 import fiji.plugin.trackmate.ModelChangeListener;
 import fiji.plugin.trackmate.SpotCollection;
-import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.Model;
 import fiji.plugin.trackmate.features.track.TrackIndexAnalyzer;
 import fiji.plugin.trackmate.gui.panels.ActionListenablePanel;
 
@@ -70,14 +70,14 @@ public class ColorByFeatureGUIPanel extends ActionListenablePanel {
 	private JPanel jPanelColor;
 
 	protected InterpolatePaintScale colorMap = InterpolatePaintScale.Jet;
-	protected final TrackMateModel model;
+	protected final Model model;
 	private final List<Category> categories;
 
 	/*
 	 * CONSTRUCTOR
 	 */
 	
-	public ColorByFeatureGUIPanel(TrackMateModel model, List<Category> categories) {
+	public ColorByFeatureGUIPanel(Model model, List<Category> categories) {
 		super();
 		this.model = model;
 		this.categories = categories;
@@ -207,7 +207,7 @@ public class ColorByFeatureGUIPanel extends ActionListenablePanel {
 				});
 			}
 			{
-				model.addTrackMateModelChangeListener(new ModelChangeListener() {
+				model.addModelChangeListener(new ModelChangeListener() {
 					@Override
 					public void modelChanged(ModelChangeEvent event) {
 						canvasColor.repaint();

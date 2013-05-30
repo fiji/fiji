@@ -14,7 +14,7 @@ import org.junit.Test;
 import fiji.plugin.trackmate.ModelChangeEvent;
 import fiji.plugin.trackmate.ModelChangeListener;
 import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.Model;
 
 public class TrackBranchingAnalyzerTest {
 
@@ -23,7 +23,7 @@ public class TrackBranchingAnalyzerTest {
 	private static final int N_TRACKS_WITH_SPLITS = 9;
 	private static final int N_TRACKS_WITH_MERGES = 11;
 	private static final int DEPTH = 9;
-	private TrackMateModel model;
+	private Model model;
 	private Spot split;
 	private Spot lastSpot1;
 	private Spot lastSpot2;
@@ -31,7 +31,7 @@ public class TrackBranchingAnalyzerTest {
 
 	@Before
 	public void setUp() {
-		model = new TrackMateModel();
+		model = new Model();
 		model.beginUpdate();
 		try {
 			// linear tracks
@@ -167,7 +167,7 @@ public class TrackBranchingAnalyzerTest {
 				analyzer.process(event.getTrackUpdated());
 			}
 		};
-		model.addTrackMateModelChangeListener(listener);
+		model.addModelChangeListener(listener);
 
 		// Add a new track to the model - the old tracks should not be affected
 		model.beginUpdate();
@@ -184,6 +184,7 @@ public class TrackBranchingAnalyzerTest {
 		assertTrue(analyzer.hasBeenCalled);
 
 		// Check the track IDs the analyzer received - none of the old keys must be in it
+		System.out.println(analyzer.keys);//DEBUG 
 		for (Integer calledKey : analyzer.keys) {
 			if (oldKeys.contains(calledKey)) {
 				fail("Track with ID " + calledKey + " should not have been re-analyzed.");
@@ -239,7 +240,7 @@ public class TrackBranchingAnalyzerTest {
 				analyzer.process(event.getTrackUpdated());
 			}
 		};
-		model.addTrackMateModelChangeListener(listener);
+		model.addModelChangeListener(listener);
 		// Reset analyzer
 		analyzer.hasBeenCalled = false;
 		analyzer.keys = null;
@@ -304,7 +305,7 @@ public class TrackBranchingAnalyzerTest {
 				analyzer.process(event.getTrackUpdated());
 			}
 		};
-		model.addTrackMateModelChangeListener(listener);
+		model.addModelChangeListener(listener);
 		// Reset analyzer
 		analyzer.hasBeenCalled = false;
 		analyzer.keys = null;
@@ -354,7 +355,7 @@ public class TrackBranchingAnalyzerTest {
 		private boolean hasBeenCalled = false;
 		private Collection<Integer> keys;
 
-		public TestTrackBranchingAnalyzer(TrackMateModel model) {
+		public TestTrackBranchingAnalyzer(Model model) {
 			super(model);
 		}
 

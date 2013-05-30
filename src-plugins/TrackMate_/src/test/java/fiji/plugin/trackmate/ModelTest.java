@@ -9,7 +9,7 @@ import java.util.Set;
 import org.jgrapht.graph.DefaultWeightedEdge;
 import org.junit.Test;
 
-public class TrackMateModelTest {
+public class ModelTest {
 
 
 	/**
@@ -17,7 +17,7 @@ public class TrackMateModelTest {
 	 */
 	@Test 
 	public void testTrackVisibility() {
-		TrackMateModel model = new TrackMateModel();
+		Model model = new Model();
 		// Build track 1 with 5 spots
 		final Spot s1 = new Spot(new double[3], "S1");
 		final Spot s2 = new Spot(new double[3], "S2");
@@ -132,7 +132,7 @@ public class TrackMateModelTest {
 	 */
 	@Test
 	public void testTrackNumber() {
-		TrackMateModel model = new TrackMateModel();
+		Model model = new Model();
 
 		// Empty model, should get 0 tracks
 		assertEquals(0, model.getTrackModel().nTracks(false));
@@ -195,7 +195,7 @@ public class TrackMateModelTest {
 	public void testTrackModelChangeEvent() {
 
 		// Create a model with 5 spots, that forms a single branch track
-		final TrackMateModel model = new TrackMateModel();
+		final Model model = new Model();
 
 		// Add an event listener for that checks for adding spots and edges
 		ModelChangeListener eventLogger = new ModelChangeListener() {
@@ -218,7 +218,7 @@ public class TrackMateModelTest {
 				}
 			}
 		};
-		model.addTrackMateModelChangeListener(eventLogger);
+		model.addModelChangeListener(eventLogger);
 
 
 		final Spot s1 = new Spot(new double[3], "S1");
@@ -246,7 +246,7 @@ public class TrackMateModelTest {
 
 
 		// Remove old eventLogger
-		model.removeTrackMateModelChangeListener(eventLogger);
+		model.removeModelChangeListener(eventLogger);
 
 		/*
 		 * We will now remove the middle spot in the newly created track.
@@ -291,7 +291,7 @@ public class TrackMateModelTest {
 			}
 		};
 
-		model.addTrackMateModelChangeListener(eventLogger);
+		model.addModelChangeListener(eventLogger);
 
 		model.beginUpdate();
 		try {
@@ -306,7 +306,7 @@ public class TrackMateModelTest {
 		 * with 1 edge and 0 spots. 
 		 */
 
-		model.removeTrackMateModelChangeListener(eventLogger);
+		model.removeModelChangeListener(eventLogger);
 
 		eventLogger = new ModelChangeListener() {
 			@Override
@@ -334,7 +334,7 @@ public class TrackMateModelTest {
 			}
 		};
 
-		model.addTrackMateModelChangeListener(eventLogger);
+		model.addModelChangeListener(eventLogger);
 
 		model.beginUpdate();
 		try {
@@ -358,10 +358,10 @@ public class TrackMateModelTest {
 	public void exampleManipulation() {
 
 		// Create a model with 5 spots, that forms a single branch track
-		TrackMateModel model = new TrackMateModel();
+		Model model = new Model();
 
 		// Add an event listener now
-		model.addTrackMateModelChangeListener(new EventLogger());
+		model.addModelChangeListener(new EventLogger());
 
 		Spot s1 = new Spot(new double[3], "S1");
 		Spot s2 = new Spot(new double[3], "S2");
@@ -466,7 +466,7 @@ public class TrackMateModelTest {
 
 
 	public static void main(String[] args) {
-		new TrackMateModelTest().exampleManipulation();
+		new ModelTest().exampleManipulation();
 	}
 
 	private static class EventLogger implements ModelChangeListener {

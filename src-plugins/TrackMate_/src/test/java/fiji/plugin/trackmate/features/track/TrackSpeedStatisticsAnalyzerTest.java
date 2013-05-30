@@ -16,19 +16,19 @@ import org.junit.Test;
 import fiji.plugin.trackmate.ModelChangeEvent;
 import fiji.plugin.trackmate.ModelChangeListener;
 import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.Model;
 
 public class TrackSpeedStatisticsAnalyzerTest {
 
 	private static final int N_TRACKS = 10;
 	private static final int DEPTH = 9;
-	private TrackMateModel model;
+	private Model model;
 	private HashMap<Integer, Double> expectedVmean;
 	private HashMap<Integer, Double> expectedVmax;
 
 	@Before
 	public void setUp() {
-		model = new TrackMateModel();
+		model = new Model();
 		model.beginUpdate();
 		try {
 
@@ -54,7 +54,7 @@ public class TrackSpeedStatisticsAnalyzerTest {
 					previous = spot;
 				}
 
-				int key = track.hashCode(); // a hack: the track ID will be the hash of the spot set
+				int key = model.getTrackModel().trackIDOf(previous);
 				double speed = i; 
 				expectedVmean.put(key, Double.valueOf(speed));
 				expectedVmax.put(key, Double.valueOf(speed));
@@ -83,7 +83,7 @@ public class TrackSpeedStatisticsAnalyzerTest {
 	@Test
 	public final void testProcess2() {
 		// Build parabolic model
-		TrackMateModel model2 = new TrackMateModel();
+		Model model2 = new Model();
 		model2.beginUpdate();
 		try {
 
@@ -150,7 +150,7 @@ public class TrackSpeedStatisticsAnalyzerTest {
 				analyzer.process(event.getTrackUpdated());
 			}
 		};
-		model.addTrackMateModelChangeListener(listener);
+		model.addModelChangeListener(listener);
 
 		// Add a new track to the model - the old tracks should not be affected
 		model.beginUpdate();
@@ -196,7 +196,7 @@ public class TrackSpeedStatisticsAnalyzerTest {
 				analyzer.process(event.getTrackUpdated());
 			}
 		};
-		model.addTrackMateModelChangeListener(listener);
+		model.addModelChangeListener(listener);
 
 		// New change: remove the first spot on the first track - the new track emerging should be re-analyzed
 		Integer firstKey = oldKeys.iterator().next();
@@ -246,7 +246,7 @@ public class TrackSpeedStatisticsAnalyzerTest {
 				analyzer.process(event.getTrackUpdated());
 			}
 		};
-		model.addTrackMateModelChangeListener(listener);
+		model.addModelChangeListener(listener);
 
 		// New change: we displace the last spot of first track, making the edge faster
 		Integer firstKey = oldKeys.iterator().next();
@@ -287,7 +287,7 @@ public class TrackSpeedStatisticsAnalyzerTest {
 		private boolean hasBeenCalled = false;
 		private Collection<Integer> keys;
 
-		public TestTrackSpeedStatisticsAnalyzer(TrackMateModel model) {
+		public TestTrackSpeedStatisticsAnalyzer(Model model) {
 			super(model);
 		}
 

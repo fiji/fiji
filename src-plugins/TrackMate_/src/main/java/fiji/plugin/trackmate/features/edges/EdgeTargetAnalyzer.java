@@ -15,7 +15,7 @@ import org.jgrapht.graph.DefaultWeightedEdge;
 import fiji.plugin.trackmate.Dimension;
 import fiji.plugin.trackmate.FeatureModel;
 import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.Model;
 
 public class EdgeTargetAnalyzer implements EdgeAnalyzer, MultiThreaded {
 
@@ -53,13 +53,13 @@ public class EdgeTargetAnalyzer implements EdgeAnalyzer, MultiThreaded {
 	private int numThreads;
 	private long processingTime;
 	private final FeatureModel featureModel;
-	private final TrackMateModel model;
+	private final Model model;
 
 	/*
 	 * CONSTRUCTOR
 	 */
 
-	public EdgeTargetAnalyzer(final TrackMateModel model) {
+	public EdgeTargetAnalyzer(final Model model) {
 		this.model = model;
 		this.featureModel = model.getFeatureModel();
 		setNumThreads();

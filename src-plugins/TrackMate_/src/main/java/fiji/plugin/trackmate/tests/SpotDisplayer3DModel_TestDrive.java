@@ -2,7 +2,7 @@ package fiji.plugin.trackmate.tests;
 
 import fiji.plugin.trackmate.SelectionModel;
 import fiji.plugin.trackmate.TrackMate;
-import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.Model;
 import fiji.plugin.trackmate.io.TmXmlReader;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
 import fiji.plugin.trackmate.visualization.threedviewer.SpotDisplayer3D;
@@ -25,7 +25,7 @@ public class SpotDisplayer3DModel_TestDrive {
 		ij.ImageJ.main(args);
 		
 		TmXmlReader reader = new TmXmlReader(file);
-		TrackMateModel model = reader.getModel();
+		Model model = reader.getModel();
 		
 		Image3DUniverse universe = new Image3DUniverse();
 		universe.show();

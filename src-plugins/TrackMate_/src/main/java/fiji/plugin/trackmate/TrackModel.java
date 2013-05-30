@@ -35,12 +35,10 @@ import fiji.plugin.trackmate.util.AlphanumComparator;
 import fiji.plugin.trackmate.util.TMUtils;
 
 /**
- * A component of {@link TrackMateModel} specialized for tracks
+ * A component of {@link Model} specialized for tracks
  * @author Jean-Yves Tinevez
  */
 public class TrackModel {
-
-	private static final boolean DEBUG = false;
 
 	/**
 	 * The mother graph, from which all subsequent fields are calculated. This
@@ -207,7 +205,7 @@ public class TrackModel {
 	}
 	
 	DefaultWeightedEdge addEdge(Spot source, Spot target, double weight) {
-		DefaultWeightedEdge edge = graph.addEdge(source, source);
+		DefaultWeightedEdge edge = graph.addEdge(source, target);
 		graph.setEdgeWeight(edge, weight);
 		return edge;
 	}
@@ -720,10 +718,7 @@ public class TrackModel {
 			if (null == set) {
 				throw new RuntimeException("Unknown set ID: " + id);
 			}
-			boolean removed = set.remove(v);
-			if (!removed) {
-				throw new RuntimeException("Could not removed vertex " + v + " from set with ID: " + id);
-			}
+			set.remove(v);
 			vertexToID.remove(v);
 			
 			if (set.isEmpty()) {
@@ -814,6 +809,30 @@ public class TrackModel {
 				// Name: the new set gets the name of the largest one.
 				names.remove(rid); // 'nid' already has the right name.
 				
+			} else if (null == sid && null == tid) {
+				// Case 4: the edge was added between two lonely vertices.
+				// Create a new set id from this
+				HashSet<Spot> nvs = new HashSet<Spot>(2);
+				nvs.add(graph.getEdgeSource(e));
+				nvs.add(graph.getEdgeTarget(e));
+				
+				HashSet<DefaultWeightedEdge> nes = new HashSet<DefaultWeightedEdge>(1);
+				nes.add(e);
+				
+				int nid = IDcounter++;
+				connectedEdgeSets.put(nid, nes);
+				connectedVertexSets.put(nid, nvs);
+				vertexToID.put(sv, nid);
+				vertexToID.put(tv, nid);
+				edgeToID.put(e, nid);
+				
+				// Give it visibility
+				visibility.put(nid, Boolean.TRUE);
+				// and a default name.
+				names.put(nid, nameGenerator.next());
+				// Transaction: we mark the new track as updated
+				tracksUpdated.add(nid);
+				
 			} else if (null == sid) {
 				// Case 2: the edge was added to the target set. No source set, but there is a source vertex.
 				// Add it, with the source vertex, to the target id.
@@ -836,28 +855,8 @@ public class TrackModel {
 				// Transaction: we mark the mother track as updated
 				tracksUpdated.add(sid);
 				
-			} else {
-				// Case 4: the edge was added between two lonely vertices.
-				// Create a new set id from this
-				HashSet<Spot> nvs = new HashSet<Spot>(2);
-				nvs.add(graph.getEdgeSource(e));
-				nvs.add(graph.getEdgeTarget(e));
+			} 
 				
-				HashSet<DefaultWeightedEdge> nes = new HashSet<DefaultWeightedEdge>(1);
-				nes.add(e);
-				
-				int nid = IDcounter++;
-				connectedEdgeSets.put(nid, nes);
-				connectedVertexSets.put(nid, nvs);
-				
-				// Give it visibility
-				visibility.put(nid, Boolean.TRUE);
-				// and a default name.
-				names.put(nid, nameGenerator.next());
-				// Transaction: we mark the new track as updated
-				tracksUpdated.add(nid);
-				
-			}
 			
 		}
 
@@ -902,21 +901,19 @@ public class TrackModel {
 			} else {
 				// So there are some edges remaining in the set.
 				// Look at the connected component of its source and target.
-				// Source
+				// Source 
 				HashSet<Spot> sourceVCS = new HashSet<Spot>();
 				HashSet<DefaultWeightedEdge> sourceECS = new HashSet<DefaultWeightedEdge>();
 				{
 					Spot source = graph.getEdgeSource(e);
-					if (source != null) {
-						// Get its connected set
-						BreadthFirstIterator<Spot, DefaultWeightedEdge> i = 
-								new BreadthFirstIterator<Spot, DefaultWeightedEdge>(
-										new AsUndirectedGraph<Spot, DefaultWeightedEdge>(graph), source);
-						while (i.hasNext()) {
-							Spot sv = i.next();
-							sourceVCS.add(sv);
-							sourceECS.addAll(graph.edgesOf(sv));
-						}
+					// Get its connected set
+					BreadthFirstIterator<Spot, DefaultWeightedEdge> i = 
+							new BreadthFirstIterator<Spot, DefaultWeightedEdge>(
+									new AsUndirectedGraph<Spot, DefaultWeightedEdge>(graph), source);
+					while (i.hasNext()) {
+						Spot sv = i.next();
+						sourceVCS.add(sv);
+						sourceECS.addAll(graph.edgesOf(sv));
 					}
 				}
 				// Target
@@ -924,14 +921,12 @@ public class TrackModel {
 				HashSet<DefaultWeightedEdge> targetECS = new HashSet<DefaultWeightedEdge>();
 				{
 					Spot target = graph.getEdgeTarget(e);
-					if (target != null) {
-						// Get its connected set
-						BreadthFirstIterator<Spot, DefaultWeightedEdge> i = new BreadthFirstIterator<Spot, DefaultWeightedEdge>(graph, target);
-						while (i.hasNext()) {
-							Spot sv = i.next();
-							targetVCS.add(sv);
-							targetECS.addAll(graph.edgesOf(sv));
-						}
+					// Get its connected set
+					BreadthFirstIterator<Spot, DefaultWeightedEdge> i = new BreadthFirstIterator<Spot, DefaultWeightedEdge>(graph, target);
+					while (i.hasNext()) {
+						Spot sv = i.next();
+						targetVCS.add(sv);
+						targetECS.addAll(graph.edgesOf(sv));
 					}
 				}
 				/*
@@ -945,8 +940,10 @@ public class TrackModel {
 					
 					connectedEdgeSets.put(id, targetECS);
 					connectedVertexSets.put(id, targetVCS); // they already have the right id in #vertexToId
+					tracksUpdated.add(id); // old track has changed
 					
-					if (sourceVCS.size() > 0) {
+					if (sourceECS.size() > 0) {
+						// the smaller part is still a track
 						int newid = IDcounter++;
 						connectedEdgeSets.put(newid, sourceECS); // otherwise forget it
 						for (DefaultWeightedEdge te : sourceECS) {
@@ -960,17 +957,35 @@ public class TrackModel {
 						visibility.put(newid, targetVisibility);
 						names.put(newid, nameGenerator.next());
 						// Transaction: both children tracks are marked for update.
-						tracksUpdated.add(id);
 						tracksUpdated.add(newid);
 					}
 					
 				} else {
 					
-					if (sourceVCS.size() > 0) {
+					if (sourceECS.size() > 0) {
 						// There are still some pieces left. It is worth noting it.
 						connectedEdgeSets.put(id, sourceECS);
 						connectedVertexSets.put(id, sourceVCS); 
 						tracksUpdated.add(id);
+						
+						if (targetECS.size() > 0) {
+							// the small part is still a track
+							int newid = IDcounter++;
+							connectedEdgeSets.put(newid, targetECS);
+							for (DefaultWeightedEdge te : targetECS) {
+								edgeToID.put(te, newid);
+							}
+							connectedVertexSets.put(newid, targetVCS);
+							for (Spot v : targetVCS) {
+								vertexToID.put(v, newid);
+							}
+							Boolean targetVisibility = visibility.get(id);
+							visibility.put(newid, targetVisibility);
+							names.put(newid, nameGenerator.next());
+							// Transaction: both children tracks are marked for update.
+							tracksUpdated.add(newid);
+						}
+						
 					} else {
 						// Nothing remains (maybe a solitary vertex) -> forget about it all.
 						connectedEdgeSets.remove(id);
@@ -980,22 +995,6 @@ public class TrackModel {
 						tracksUpdated.remove(id);
 					}
 					
-					if (targetVCS.size() > 0) {
-						int newid = IDcounter++;
-						connectedEdgeSets.put(newid, targetECS);
-						for (DefaultWeightedEdge te : targetECS) {
-							edgeToID.put(te, newid);
-						}
-						connectedVertexSets.put(newid, targetVCS);
-						for (Spot v : targetVCS) {
-							vertexToID.put(v, newid);
-						}
-						Boolean targetVisibility = visibility.get(id);
-						visibility.put(newid, targetVisibility);
-						names.put(newid, nameGenerator.next());
-						// Transaction: both children tracks are marked for update.
-						tracksUpdated.add(newid);
-					}
 				}
 			}
 		}

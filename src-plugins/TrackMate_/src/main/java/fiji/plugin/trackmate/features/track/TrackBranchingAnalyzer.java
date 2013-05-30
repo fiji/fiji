@@ -16,7 +16,7 @@ import org.jgrapht.graph.DefaultWeightedEdge;
 
 import fiji.plugin.trackmate.Dimension;
 import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.Model;
 
 public class TrackBranchingAnalyzer implements TrackAnalyzer, MultiThreaded {
 
@@ -63,9 +63,9 @@ public class TrackBranchingAnalyzer implements TrackAnalyzer, MultiThreaded {
 
 	private int numThreads;
 	private long processingTime;
-	private final TrackMateModel model;
+	private final Model model;
 
-	public TrackBranchingAnalyzer(final TrackMateModel model) {
+	public TrackBranchingAnalyzer(final Model model) {
 		this.model = model;
 		setNumThreads();
 	}

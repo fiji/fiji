@@ -13,7 +13,7 @@ import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.SelectionModel;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.TrackMate;
-import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.Model;
 import fiji.plugin.trackmate.io.TmXmlReader;
 import fiji.plugin.trackmate.tracking.kdtree.NearestNeighborTracker;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
@@ -33,7 +33,7 @@ public class NNTrackerTest {
 		// 1 - Load test spots
 		System.out.println("Opening file: "+file.getAbsolutePath());		
 		TmXmlReader reader = new TmXmlReader(file);
-		TrackMateModel model = reader.getModel();
+		Model model = reader.getModel();
 		Settings gs = new Settings();
 		reader.readSettings(gs, null, null, null, null, null);
 		

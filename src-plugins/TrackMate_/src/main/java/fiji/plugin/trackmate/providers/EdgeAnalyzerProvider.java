@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import fiji.plugin.trackmate.TrackMate;
-import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.Model;
 import fiji.plugin.trackmate.features.edges.EdgeAnalyzer;
 import fiji.plugin.trackmate.features.edges.EdgeTargetAnalyzer;
 import fiji.plugin.trackmate.features.edges.EdgeTimeLocationAnalyzer;
@@ -16,7 +16,7 @@ import fiji.plugin.trackmate.features.edges.EdgeVelocityAnalyzer;
 public class EdgeAnalyzerProvider {
 
 
-	protected final TrackMateModel model;
+	protected final Model model;
 	protected List<String> names;
 	
 	/*
@@ -32,7 +32,7 @@ public class EdgeAnalyzerProvider {
 	 * factory so that it is registered with the custom spotFeatureAnalyzers and provide this 
 	 * extended factory to the {@link TrackMate} trackmate.
 	 */
-	public EdgeAnalyzerProvider(TrackMateModel model) {
+	public EdgeAnalyzerProvider(Model model) {
 		this.model = model;
 		registerEdgeFeatureAnalyzers();
 	}

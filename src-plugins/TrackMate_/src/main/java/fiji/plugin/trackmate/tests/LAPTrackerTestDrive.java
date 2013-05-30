@@ -16,7 +16,7 @@ import org.scijava.util.AppUtils;
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.SelectionModel;
 import fiji.plugin.trackmate.Settings;
-import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.Model;
 import fiji.plugin.trackmate.TrackMate;
 import fiji.plugin.trackmate.io.TmXmlReader;
 import fiji.plugin.trackmate.providers.TrackerProvider;
@@ -38,7 +38,7 @@ public class LAPTrackerTestDrive {
 		// 1 - Load test spots
 		System.out.println("Opening file: "+file.getAbsolutePath());		
 		TmXmlReader reader = new TmXmlReader(file);
-		TrackMateModel model = reader.getModel();
+		Model model = reader.getModel();
 		Settings settings = new Settings();
 		reader.readSettings(settings, null, new TrackerProvider(model), null, null, null);
 		

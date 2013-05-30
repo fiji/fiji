@@ -23,7 +23,7 @@ import com.mxgraph.model.mxGeometry;
 import com.mxgraph.model.mxICell;
 
 import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.Model;
 import fiji.plugin.trackmate.graph.GraphUtils;
 import fiji.plugin.trackmate.graph.SortedDepthFirstIterator;
 
@@ -40,7 +40,7 @@ public class TrackSchemeGraphLayout extends mxGraphLayout implements Benchmark {
 	private static final int START_COLUMN = 2;
 
 	/** The target model to draw spot from. */
-	private final TrackMateModel model;
+	private final Model model;
 	private final JGraphXAdapter graph;
 	private final TrackSchemeGraphComponent component;
 	/**
@@ -58,7 +58,7 @@ public class TrackSchemeGraphLayout extends mxGraphLayout implements Benchmark {
 	 * CONSTRUCTOR
 	 */
 
-	public TrackSchemeGraphLayout(final JGraphXAdapter graph, final TrackMateModel model, final TrackSchemeGraphComponent component) {
+	public TrackSchemeGraphLayout(final JGraphXAdapter graph, final Model model, final TrackSchemeGraphComponent component) {
 		super(graph);
 		this.graph = graph;
 		this.model = model;

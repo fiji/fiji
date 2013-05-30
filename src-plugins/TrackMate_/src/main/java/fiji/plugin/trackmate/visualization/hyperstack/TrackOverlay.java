@@ -20,7 +20,7 @@ import java.util.Set;
 import org.jgrapht.graph.DefaultWeightedEdge;
 
 import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.Model;
 import fiji.plugin.trackmate.util.TMUtils;
 import fiji.plugin.trackmate.visualization.TrackColorGenerator;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
@@ -34,14 +34,14 @@ public class TrackOverlay extends Roi {
 	protected final double[] calibration;
 	protected Collection<DefaultWeightedEdge> highlight = new HashSet<DefaultWeightedEdge>();
 	protected Map<String, Object> displaySettings;
-	protected final TrackMateModel model;
+	protected final Model model;
 	private TrackColorGenerator colorGenerator;
 
 	/*
 	 * CONSTRUCTOR
 	 */
 
-	public TrackOverlay(final TrackMateModel model, final ImagePlus imp, final Map<String, Object> displaySettings) {
+	public TrackOverlay(final Model model, final ImagePlus imp, final Map<String, Object> displaySettings) {
 		super(0, 0, imp);
 		this.model = model;
 		this.calibration = TMUtils.getSpatialCalibration(imp);

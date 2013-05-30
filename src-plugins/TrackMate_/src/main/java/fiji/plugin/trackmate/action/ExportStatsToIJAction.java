@@ -13,7 +13,7 @@ import org.jgrapht.graph.DefaultWeightedEdge;
 import fiji.plugin.trackmate.FeatureModel;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.TrackMate;
-import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.Model;
 import fiji.plugin.trackmate.gui.TrackMateGUIController;
 import fiji.plugin.trackmate.gui.TrackMateWizard;
 
@@ -45,7 +45,7 @@ public class ExportStatsToIJAction extends AbstractTMAction {
 		logger.log("Exporting statistics.\n");
 		
 		// Model
-		final TrackMateModel model = trackmate.getModel();
+		final Model model = trackmate.getModel();
 		final FeatureModel fm = model.getFeatureModel();
 		
 		// Export spots

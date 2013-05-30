@@ -23,7 +23,7 @@ import fiji.plugin.trackmate.SelectionChangeListener;
 import fiji.plugin.trackmate.SelectionModel;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.TrackMate;
-import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.Model;
 import fiji.plugin.trackmate.action.ExportStatsToIJAction;
 import fiji.plugin.trackmate.detection.ManualDetectorFactory;
 import fiji.plugin.trackmate.detection.SpotDetectorFactory;
@@ -669,7 +669,7 @@ public class TrackMateGUIController implements ActionListener {
 	 * @param model  the model this GUI will configure; might be required by some display settings.
 	 * @return a map of display settings mappings.
 	 */
-	protected Map<String, Object> createDisplaySettings(TrackMateModel model) {
+	protected Map<String, Object> createDisplaySettings(Model model) {
 		Map<String, Object> displaySettings = new HashMap<String, Object>();
 		displaySettings.put(KEY_COLOR, DEFAULT_COLOR);
 		displaySettings.put(KEY_HIGHLIGHT_COLOR, DEFAULT_HIGHLIGHT_COLOR);

@@ -40,7 +40,7 @@ import javax.swing.SwingConstants;
 import javax.swing.border.LineBorder;
 
 import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.Model;
 import fiji.plugin.trackmate.features.edges.EdgeVelocityAnalyzer;
 import fiji.plugin.trackmate.features.track.TrackIndexAnalyzer;
 import fiji.plugin.trackmate.gui.DisplaySettingsEvent;
@@ -92,7 +92,7 @@ public class ConfigureViewsPanel extends ActionListenablePanel {
 	private ColorByFeatureGUIPanel trackColorGUI;
 
 	private Collection<DisplaySettingsListener> listeners = new HashSet<DisplaySettingsListener>();
-	private final TrackMateModel model;
+	private final Model model;
 
 	private PerTrackFeatureColorGenerator trackColorGenerator;
 	private PerEdgeFeatureColorGenerator edgeColorGenerator;
@@ -103,7 +103,7 @@ public class ConfigureViewsPanel extends ActionListenablePanel {
 	 * CONSTRUCTOR 
 	 */
 
-	public ConfigureViewsPanel(TrackMateModel model) {
+	public ConfigureViewsPanel(Model model) {
 		this.model = model;
 		this.trackColorGenerator = new PerTrackFeatureColorGenerator(model, TrackIndexAnalyzer.TRACK_INDEX);
 		this.edgeColorGenerator = new PerEdgeFeatureColorGenerator(model, EdgeVelocityAnalyzer.VELOCITY);

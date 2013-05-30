@@ -104,7 +104,7 @@ import fiji.plugin.trackmate.Logger.StringBuilderLogger;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
-import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.Model;
 import fiji.plugin.trackmate.detection.SpotDetectorFactory;
 import fiji.plugin.trackmate.features.FeatureFilter;
 import fiji.plugin.trackmate.features.edges.EdgeAnalyzer;
@@ -249,14 +249,14 @@ public class TmXmlReader {
 	/**
 	 * Returns the model saved in the file, or <code>null</code> if a saved model 
 	 * cannot be found in the xml file. 
-	 * @return a new {@link TrackMateModel}.
+	 * @return a new {@link Model}.
 	 */
-	public TrackMateModel getModel() {
+	public Model getModel() {
 		Element modelElement = root.getChild(MODEL_ELEMENT_KEY);
 		if (null == modelElement) {
 			return null;
 		} 
-		TrackMateModel model = new TrackMateModel();
+		Model model = new Model();
 
 		// Physical units
 		String spaceUnits = modelElement.getAttributeValue(SPATIAL_UNITS_ATTRIBUTE_NAME);
@@ -683,7 +683,7 @@ public class TmXmlReader {
 	 * @return 
 	 * @return true if reading tracks was successful, false otherwise.
 	 */
-	private boolean readTracks(Element modelElement, TrackMateModel model) {
+	private boolean readTracks(Element modelElement, Model model) {
 
 		Element allTracksElement = modelElement.getChild(TRACK_COLLECTION_ELEMENT_KEY);
 		List<Element> trackElements = allTracksElement.getChildren(TRACK_ELEMENT_KEY);
@@ -881,7 +881,7 @@ public class TmXmlReader {
 		return spot;
 	}
 
-	private void readFeatureDeclarations(Element modelElement, TrackMateModel model) {
+	private void readFeatureDeclarations(Element modelElement, Model model) {
 
 		FeatureModel fm = model.getFeatureModel();
 		Element featuresElement = modelElement.getChild(FEATURE_DECLARATIONS_ELEMENT_KEY);

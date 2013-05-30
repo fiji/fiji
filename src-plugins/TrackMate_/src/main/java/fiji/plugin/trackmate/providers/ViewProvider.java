@@ -12,7 +12,7 @@ import javax.vecmath.Color3f;
 import fiji.plugin.trackmate.SelectionModel;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.TrackMate;
-import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.Model;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
 import fiji.plugin.trackmate.visualization.hyperstack.HyperStackDisplayer;
 import fiji.plugin.trackmate.visualization.threedviewer.SpotDisplayer3D;
@@ -23,7 +23,7 @@ public class ViewProvider {
 	/** The view names, in the order they will appear in the GUI.
 	 * These names will be used as keys to access relevant view classes.  */
 	protected List<String> names;
-	protected final TrackMateModel model;
+	protected final Model model;
 	protected final Settings settings;
 	protected final SelectionModel selectionModel;
 
@@ -40,7 +40,7 @@ public class ViewProvider {
 	 * factory so that it is registered with the custom views and provide this 
 	 * extended factory to the {@link TrackMate} trackmate.
 	 */
-	public ViewProvider(TrackMateModel model, Settings settings, SelectionModel selectionModel) {
+	public ViewProvider(Model model, Settings settings, SelectionModel selectionModel) {
 		this.model = model;
 		this.settings = settings;
 		this.selectionModel = selectionModel;

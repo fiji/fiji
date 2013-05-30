@@ -11,7 +11,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.Model;
 
 public class SortedDepthFirstIteratorTest {
 
@@ -19,7 +19,7 @@ public class SortedDepthFirstIteratorTest {
 	private static Random rnd = new Random();
 	private static int N_CHILDREN = 50;
 	private static int N_LEVELS = 5;
-	private static TrackMateModel model;
+	private static Model model;
 	private static Spot root;
 	private static String[] names;
 	private static Comparator<Spot> spotNameComparator;
@@ -44,7 +44,7 @@ public class SortedDepthFirstIteratorTest {
 		 * The graph
 		 */
 		
-		model = new TrackMateModel();
+		model = new Model();
 		model.beginUpdate();
 		try {
 

@@ -20,7 +20,7 @@ import org.jdom2.output.XMLOutputter;
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.Model;
 import fiji.plugin.trackmate.TrackMate;
 import fiji.plugin.trackmate.gui.TrackMateGUIController;
 import fiji.plugin.trackmate.gui.TrackMateWizard;
@@ -56,7 +56,7 @@ public class ISBIChallengeExporter extends AbstractTMAction {
 
 	@Override
 	public void execute() {
-		final TrackMateModel model = trackmate.getModel();
+		final Model model = trackmate.getModel();
 		File file;
 		File folder = new File(System.getProperty("user.dir")).getParentFile().getParentFile();
 		try {
@@ -71,7 +71,7 @@ public class ISBIChallengeExporter extends AbstractTMAction {
 		exportToFile(model, trackmate.getSettings(), file);
 	}
 	
-	public static void exportToFile(final TrackMateModel model, Settings settings, final File file) {
+	public static void exportToFile(final Model model, Settings settings, final File file) {
 		final Logger logger = model.getLogger();
 		logger.log("Exporting to ISBI 2012 particle tracking challenge format.\n");
 		int ntracks = model.getTrackModel().nTracks(true);
@@ -107,7 +107,7 @@ public class ISBIChallengeExporter extends AbstractTMAction {
 		return NAME;
 	}
 
-	private static final Element marshall(TrackMateModel model, Settings settings) {
+	private static final Element marshall(Model model, Settings settings) {
 		final Logger logger = model.getLogger();
 		
 		Element root = new Element("root");

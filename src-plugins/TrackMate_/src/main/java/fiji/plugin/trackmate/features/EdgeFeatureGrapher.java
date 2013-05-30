@@ -20,7 +20,7 @@ import org.jgrapht.graph.DefaultWeightedEdge;
 
 import fiji.plugin.trackmate.Dimension;
 import fiji.plugin.trackmate.FeatureModel;
-import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.Model;
 import fiji.plugin.trackmate.util.ExportableChartPanel;
 import fiji.plugin.trackmate.util.TMUtils;
 import fiji.plugin.trackmate.util.XYEdgeRenderer;
@@ -34,7 +34,7 @@ public class EdgeFeatureGrapher extends AbstractFeatureGrapher {
 	private final Map<String, Dimension> yDimensions;
 	private final Map<String, String> featureNames;
 
-	public EdgeFeatureGrapher(String xFeature, Set<String> yFeatures, List<DefaultWeightedEdge> edges, TrackMateModel model) {
+	public EdgeFeatureGrapher(String xFeature, Set<String> yFeatures, List<DefaultWeightedEdge> edges, Model model) {
 		super(xFeature, yFeatures, model);
 		this.edges = edges;
 		this.xDimension = model.getFeatureModel().getEdgeFeatureDimensions().get(xFeature);

@@ -22,7 +22,7 @@ import fiji.plugin.trackmate.SelectionChangeEvent;
 import fiji.plugin.trackmate.SelectionModel;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
-import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.Model;
 import fiji.plugin.trackmate.util.TMUtils;
 import fiji.plugin.trackmate.visualization.AbstractTrackMateModelView;
 import fiji.plugin.trackmate.visualization.FeatureColorGenerator;
@@ -61,7 +61,7 @@ public class SpotDisplayer3D extends AbstractTrackMateModelView {
 	private HashMap<Spot, Integer> previousFrameHighlight;
 	private HashMap<DefaultWeightedEdge, Color> previousEdgeHighlight;
 
-	public SpotDisplayer3D(TrackMateModel model, final SelectionModel selectionModel, Image3DUniverse universe) {
+	public SpotDisplayer3D(Model model, final SelectionModel selectionModel, Image3DUniverse universe) {
 		super(model, selectionModel);
 		this.universe = universe;
 		setModel(model);
@@ -198,7 +198,7 @@ public class SpotDisplayer3D extends AbstractTrackMateModelView {
 	 * PRIVATE METHODS
 	 */
 
-	private void setModel(TrackMateModel model) {
+	private void setModel(Model model) {
 		if (model.getSpots() != null) {
 			spotContent = makeSpotContent();
 			universe.removeContent(SPOT_CONTENT_NAME);

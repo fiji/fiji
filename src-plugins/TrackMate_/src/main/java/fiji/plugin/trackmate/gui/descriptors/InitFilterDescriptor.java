@@ -4,7 +4,7 @@ import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.TrackMate;
-import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.Model;
 import fiji.plugin.trackmate.features.FeatureFilter;
 import fiji.plugin.trackmate.gui.panels.InitFilterPanel;
 
@@ -48,7 +48,7 @@ public class InitFilterDescriptor implements WizardPanelDescriptor {
 	@Override
 	public void aboutToHidePanel() {
 		
-		final TrackMateModel model = trackmate.getModel();
+		final Model model = trackmate.getModel();
 		Logger logger = model.getLogger();
 		FeatureFilter initialThreshold = component.getFeatureThreshold();
 		String str = "Initial thresholding with a quality threshold above "+ String.format("%.1f", initialThreshold.value) + " ...\n";

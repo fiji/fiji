@@ -9,7 +9,7 @@ import javax.swing.ImageIcon;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.TrackMate;
-import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.Model;
 import fiji.plugin.trackmate.gui.TrackMateGUIController;
 import fiji.plugin.trackmate.gui.TrackMateWizard;
 
@@ -39,7 +39,7 @@ public class ResetRadiusAction extends AbstractTMAction {
 		}
 		
 		logger.log(String.format("Setting all spot radiuses to %.1f " + trackmate.getModel().getSpaceUnits() + "\n", radius));
-		TrackMateModel model = trackmate.getModel();
+		Model model = trackmate.getModel();
 		SpotCollection spots = model.getSpots();
 		model.beginUpdate();
 		try {

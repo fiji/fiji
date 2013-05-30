@@ -16,7 +16,7 @@ import org.jdom2.output.XMLOutputter;
 
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.Model;
 import fiji.plugin.trackmate.TrackMate;
 import fiji.plugin.trackmate.gui.TrackMateGUIController;
 import fiji.plugin.trackmate.gui.TrackMateWizard;
@@ -60,7 +60,7 @@ public class ExportTracksToXML extends AbstractTMAction {
 	public void execute() {
 
 		logger.log("Exporting tracks to simple XML format.\n");
-		final TrackMateModel model = trackmate.getModel();
+		final Model model = trackmate.getModel();
 		int ntracks = model.getTrackModel().nTracks(true);
 		if (ntracks == 0) {
 			logger.log("No visible track found. Aborting.\n");
@@ -113,7 +113,7 @@ public class ExportTracksToXML extends AbstractTMAction {
 		return NAME;
 	}
 
-	private Element marshall(TrackMateModel model, Settings settings) {
+	private Element marshall(Model model, Settings settings) {
 		logger.setStatus("Marshalling...");
 		Element content = new Element(CONTENT_KEY);
 		

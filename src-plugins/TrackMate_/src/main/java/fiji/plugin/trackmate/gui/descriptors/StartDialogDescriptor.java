@@ -16,7 +16,7 @@ import net.imglib2.img.ImgPlus;
 import fiji.plugin.trackmate.SelectionModel;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.TrackMate;
-import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.Model;
 import fiji.plugin.trackmate.features.edges.EdgeAnalyzer;
 import fiji.plugin.trackmate.features.spot.SpotAnalyzerFactory;
 import fiji.plugin.trackmate.features.track.TrackAnalyzer;
@@ -92,7 +92,7 @@ public class StartDialogDescriptor  implements WizardPanelDescriptor {
 	public void aboutToHidePanel() {
 		TrackMate trackmate = controller.getPlugin();
 		Settings settings = trackmate.getSettings();
-		TrackMateModel model = trackmate.getModel();
+		Model model = trackmate.getModel();
 		
 		/*
 		 *  Get settings and pass them to the trackmate managed by the wizard
@@ -140,7 +140,7 @@ public class StartDialogDescriptor  implements WizardPanelDescriptor {
 		// De-register old one, if any.
 		if (mainView != null) {
 			mainView.clear();
-			model.removeTrackMateModelChangeListener(mainView);
+			model.removeModelChangeListener(mainView);
 		}
 		
 		SelectionModel selectionModel = controller.getSelectionModel();

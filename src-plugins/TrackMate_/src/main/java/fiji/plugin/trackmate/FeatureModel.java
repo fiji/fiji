@@ -10,7 +10,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.jgrapht.graph.DefaultWeightedEdge;
 
 /**
- * This class represents the part of the {@link TrackMateModel} that is in charge 
+ * This class represents the part of the {@link Model} that is in charge 
  * of dealing with spot features and track features.
  * @author Jean-Yves Tinevez, 2011, 2012
  *
@@ -48,7 +48,7 @@ public class FeatureModel {
 	private Map<String, String> spotFeatureShortNames = new HashMap<String, String>();
 	private Map<String, Dimension> spotFeatureDimensions = new HashMap<String, Dimension>();
 
-	private TrackMateModel model;
+	private Model model;
 
 	/*
 	 * CONSTRUCTOR
@@ -60,7 +60,7 @@ public class FeatureModel {
 	 * feature declarations are left blank.
 	 * @param model
 	 */
-	FeatureModel(TrackMateModel model) {
+	FeatureModel(Model model) {
 		this.model = model;
 		// Adds the base spot features
 		declareSpotFeatures(Spot.FEATURES, Spot.FEATURE_NAMES, Spot.FEATURE_SHORT_NAMES, Spot.FEATURE_DIMENSIONS);

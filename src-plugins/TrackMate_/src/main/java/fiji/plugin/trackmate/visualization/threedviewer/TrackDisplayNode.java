@@ -1,7 +1,7 @@
 package fiji.plugin.trackmate.visualization.threedviewer;
 
 import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.Model;
 import fiji.plugin.trackmate.util.TMUtils;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
 import ij3d.ContentNode;
@@ -34,7 +34,7 @@ import org.jgrapht.graph.DefaultWeightedEdge;
 public class TrackDisplayNode extends ContentNode implements TimelapseListener {
 
 	/** The model, needed to retrieve connectivity. */
-	private final TrackMateModel model;
+	private final Model model;
 
 	/** Hold the color and transparency of all spots for a given track. */
 	private HashMap<Integer,Color> colors = new HashMap<Integer, Color>();
@@ -82,7 +82,7 @@ public class TrackDisplayNode extends ContentNode implements TimelapseListener {
 	 * CONSTRUCTOR
 	 */
 
-	public TrackDisplayNode(TrackMateModel model) {
+	public TrackDisplayNode(Model model) {
 		this.model = model;
 
 		this.trackSwitch = new Switch(Switch.CHILD_MASK);

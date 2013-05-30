@@ -2,7 +2,7 @@ package fiji.plugin.trackmate.tests;
 
 import fiji.plugin.trackmate.SelectionModel;
 import fiji.plugin.trackmate.Settings;
-import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.Model;
 import fiji.plugin.trackmate.TrackMate;
 import fiji.plugin.trackmate.features.FeatureFilter;
 import fiji.plugin.trackmate.features.track.TrackBranchingAnalyzer;
@@ -32,7 +32,7 @@ public class TrackVisualizerTestDrive {
 		ij.ImageJ.main(args);
 		
 		TmXmlReader reader = new TmXmlReader(file);
-		TrackMateModel model = reader.getModel();
+		Model model = reader.getModel();
 		Settings settings = new Settings();
 		reader.readSettings(settings, null, null, null, null, null);
 		TrackMate trackmate = new TrackMate(model, settings);

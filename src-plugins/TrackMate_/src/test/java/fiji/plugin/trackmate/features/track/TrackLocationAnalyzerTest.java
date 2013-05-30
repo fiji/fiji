@@ -13,23 +13,23 @@ import java.util.TreeSet;
 import org.junit.Before;
 import org.junit.Test;
 
+import fiji.plugin.trackmate.Model;
 import fiji.plugin.trackmate.ModelChangeEvent;
 import fiji.plugin.trackmate.ModelChangeListener;
 import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.TrackMateModel;
 
 public class TrackLocationAnalyzerTest {
 
 	private static final int N_TRACKS = 10;
 	private static final int DEPTH = 9;
-	private TrackMateModel model;
+	private Model model;
 	private HashMap<Integer, Double> expectedX;
 	private HashMap<Integer, Double> expectedY;
 	private HashMap<Integer, Double> expectedZ;
 
 	@Before
 	public void setUp() {
-		model = new TrackMateModel();
+		model = new Model();
 		model.beginUpdate();
 		try {
 			
@@ -54,7 +54,8 @@ public class TrackLocationAnalyzerTest {
 					previous = spot;
 				}
 				
-				int key = track.hashCode(); // a hack: the track ID will be the hash of the spot set
+				
+				int key = model.getTrackModel().trackIDOf(previous);
 				double mean = (double) DEPTH / 2 + (double) i;  
 				expectedX.put(key, Double.valueOf(mean));
 				expectedY.put(key, Double.valueOf(mean));
@@ -102,7 +103,7 @@ public class TrackLocationAnalyzerTest {
 				analyzer.process(event.getTrackUpdated());
 			}
 		};
-		model.addTrackMateModelChangeListener(listener);
+		model.addModelChangeListener(listener);
 		
 		// Add a new track to the model - the old tracks should not be affected
 		model.beginUpdate();
@@ -168,7 +169,7 @@ public class TrackLocationAnalyzerTest {
 		private boolean hasBeenCalled = false;
 		private Collection<Integer> keys;
 		
-		public TestTrackLocationAnalyzer(TrackMateModel model) {
+		public TestTrackLocationAnalyzer(Model model) {
 			super(model);
 		}
 		

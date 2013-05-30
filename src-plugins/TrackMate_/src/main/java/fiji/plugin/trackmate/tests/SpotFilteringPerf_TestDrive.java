@@ -6,7 +6,7 @@ import org.scijava.util.AppUtils;
 
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.Model;
 import fiji.plugin.trackmate.TrackMate;
 import fiji.plugin.trackmate.features.FeatureFilter;
 import fiji.plugin.trackmate.io.TmXmlReader;
@@ -23,7 +23,7 @@ public class SpotFilteringPerf_TestDrive {
 //		File file = new File("/Users/tinevez/Desktop/RECEPTOR.xml");
 		File file = new File(AppUtils.getBaseDirectory(TrackMate.class), "samples/FakeTracks.xml");
 		TmXmlReader reader = new TmXmlReader(file);
-		TrackMateModel model = reader.getModel();
+		Model model = reader.getModel();
 		Settings settings = new Settings();
 		reader.readSettings(settings, null, null, 
 				new SpotAnalyzerProvider(model), new EdgeAnalyzerProvider(model), new TrackAnalyzerProvider(model));

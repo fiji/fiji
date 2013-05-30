@@ -1,7 +1,7 @@
 package fiji.plugin.trackmate.gui.panels.detector;
 
 import static fiji.plugin.trackmate.detection.DetectorKeys.KEY_RADIUS;
-import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.Model;
 import ij.ImagePlus;
 
 import java.util.HashMap;
@@ -13,7 +13,7 @@ public class BasicDetectorConfigurationPanel extends LogDetectorConfigurationPan
 
 	private static final long serialVersionUID = -1L;
 
-	public BasicDetectorConfigurationPanel(ImagePlus imp, String infoText, String detectorName, TrackMateModel model)  {
+	public BasicDetectorConfigurationPanel(ImagePlus imp, String infoText, String detectorName, Model model)  {
 		super(imp, infoText, detectorName, model);
 		final JComponent[] uselessComponents = new JComponent[] {
 				super.sliderChannel,

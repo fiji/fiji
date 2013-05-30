@@ -9,7 +9,7 @@ import fiji.plugin.trackmate.ModelChangeListener;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
-import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.Model;
 
 /**
  * A utility class that listens to the change occurring in a model, and updates
@@ -23,7 +23,7 @@ public class ModelFeatureUpdater implements ModelChangeListener {
 	private final SpotFeatureCalculator spotFeatureCalculator;
 	private final EdgeFeatureCalculator edgeFeatureCalculator;
 	private final TrackFeatureCalculator trackFeatureCalculator;
-	private final TrackMateModel model;
+	private final Model model;
 
 	/**
 	 * Constructs and activate a {@link ModelFeatureUpdater}. The new instance is 
@@ -32,12 +32,12 @@ public class ModelFeatureUpdater implements ModelChangeListener {
 	 * @param settings the {@link Settings} the model is built against. Required 
 	 * to access the raw data.
 	 */
-	public ModelFeatureUpdater(TrackMateModel model, Settings settings) {
+	public ModelFeatureUpdater(Model model, Settings settings) {
 		this.model = model;
 		this.spotFeatureCalculator = new SpotFeatureCalculator(model, settings);
 		this.edgeFeatureCalculator = new EdgeFeatureCalculator(model, settings);
 		this.trackFeatureCalculator = new TrackFeatureCalculator(model, settings);
-		model.addTrackMateModelChangeListener(this);
+		model.addModelChangeListener(this);
 	}
 
 	/**
@@ -83,7 +83,7 @@ public class ModelFeatureUpdater implements ModelChangeListener {
 	 * updating its features.
 	 */
 	public void quit() {
-		model.removeTrackMateModelChangeListener(this);
+		model.removeModelChangeListener(this);
 	}
 
 }

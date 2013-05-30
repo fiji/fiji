@@ -109,7 +109,7 @@ import fiji.plugin.trackmate.visualization.TrackMateModelView;
  * @author Jean-Yves Tinevez <tinevez@pasteur.fr> - 2010-2011
  * 
  */
-public class TrackMateModel {
+public class Model {
 
 	/*
 	 * CONSTANTS
@@ -127,7 +127,7 @@ public class TrackMateModel {
 
 	// TRACKS
 
-	private final TrackModel trackGraphModel;
+	private final TrackModel trackModel;
 
 	// SPOTS
 
@@ -191,9 +191,9 @@ public class TrackMateModel {
 	 * CONSTRUCTOR
 	 */
 
-	public TrackMateModel() {
+	public Model() {
 		featureModel = new FeatureModel(this);
-		trackGraphModel = new TrackModel();
+		trackModel = new TrackModel();
 	}
 
 
@@ -218,15 +218,15 @@ public class TrackMateModel {
 		}
 
 		str.append('\n');
-		if (trackGraphModel.nTracks(false) == 0) {
+		if (trackModel.nTracks(false) == 0) {
 			str.append("No tracks.\n");
 		} else {
-			str.append("Contains " + trackGraphModel.nTracks(false) + " tracks in total.\n");
+			str.append("Contains " + trackModel.nTracks(false) + " tracks in total.\n");
 		}
-		if (trackGraphModel.nTracks(true) == 0) {
+		if (trackModel.nTracks(true) == 0) {
 			str.append("No filtered tracks.\n");
 		} else {
-			str.append("Contains " + trackGraphModel.nTracks(true) + " filtered tracks.\n");
+			str.append("Contains " + trackModel.nTracks(true) + " filtered tracks.\n");
 		}
 
 		str.append('\n');
@@ -244,15 +244,15 @@ public class TrackMateModel {
 	 * DEAL WITH MODEL CHANGE LISTENER
 	 */
 
-	public void addTrackMateModelChangeListener(ModelChangeListener listener) {
+	public void addModelChangeListener(ModelChangeListener listener) {
 		modelChangeListeners.add(listener);
 	}
 
-	public boolean removeTrackMateModelChangeListener(ModelChangeListener listener) {
+	public boolean removeModelChangeListener(ModelChangeListener listener) {
 		return modelChangeListeners.remove(listener);
 	}
 
-	public Set<ModelChangeListener> getTrackMateModelChangeListener() {
+	public Set<ModelChangeListener> getModelChangeListener() {
 		return modelChangeListeners;
 	}
 
@@ -315,7 +315,7 @@ public class TrackMateModel {
 	 * Returns the {@link TrackModel} that manages tracks for this model.
 	 */
 	public TrackModel getTrackModel() {
-		return trackGraphModel;
+		return trackModel;
 	}
 
 	/*
@@ -434,7 +434,7 @@ public class TrackMateModel {
 		}
 
 		// Mark for update spot and edges
-		trackGraphModel.edgesModified.addAll(trackGraphModel.edgesOf(spotToMove));
+		trackModel.edgesModified.addAll(trackModel.edgesOf(spotToMove));
 		spotsMoved.add(spotToMove); 
 		return spotToMove;
 	}
@@ -461,7 +461,7 @@ public class TrackMateModel {
 		if (DEBUG) {
 			System.out.println("[TrackMateModel] Adding spot " + spotToAdd + " to frame " + toFrame);
 		}
-		trackGraphModel.addSpot(spotToAdd);
+		trackModel.addSpot(spotToAdd);
 		return spotToAdd;
 	}
 
@@ -492,7 +492,7 @@ public class TrackMateModel {
 			if (DEBUG) {
 				System.out.println("[TrackMateModel] Removing spot " + spotToRemove + " from frame " + fromFrame);
 			}
-			trackGraphModel.removeSpot(spotToRemove); // changes to edges will be caught automatically by the TrackGraphModel
+			trackModel.removeSpot(spotToRemove); // changes to edges will be caught automatically by the TrackGraphModel
 			return spotToRemove;
 		} else {
 			if (DEBUG) {
@@ -522,9 +522,9 @@ public class TrackMateModel {
 	 */
 	public void updateFeatures(final Spot spotToUpdate) {
 		spotsUpdated.add(spotToUpdate); // Enlist for feature update when transaction is marked as finished
-		Set<DefaultWeightedEdge> touchingEdges = trackGraphModel.edgesOf(spotToUpdate);
+		Set<DefaultWeightedEdge> touchingEdges = trackModel.edgesOf(spotToUpdate);
 		if (null != touchingEdges) {
-			trackGraphModel.edgesModified.addAll(touchingEdges);
+			trackModel.edgesModified.addAll(touchingEdges);
 		}
 	}
 
@@ -547,7 +547,7 @@ public class TrackMateModel {
 	 * @return  the edge created.
 	 */
 	public DefaultWeightedEdge addEdge(final Spot source, final Spot target, final double weight) {
-		return trackGraphModel.addEdge(source, target, weight);
+		return trackModel.addEdge(source, target, weight);
 	}
 
 	/**
@@ -558,7 +558,7 @@ public class TrackMateModel {
 	 * @return  the edge between the two spots, if it existed.
 	 */
 	public DefaultWeightedEdge removeEdge(final Spot source, final Spot target) {
-		return trackGraphModel.removeEdge(source, target);
+		return trackModel.removeEdge(source, target);
 	}
 
 	/**
@@ -579,7 +579,7 @@ public class TrackMateModel {
 	 * <code>false</code> otherwise.
 	 */
 	public boolean removeEdge(final DefaultWeightedEdge edge) {
-		return trackGraphModel.removeEdge(edge);
+		return trackModel.removeEdge(edge);
 	}
 
 	/**
@@ -599,7 +599,7 @@ public class TrackMateModel {
 	 * @param weight  the weight to set.
 	 */
 	public void setEdgeWeight(final DefaultWeightedEdge edge, double weight) {
-		trackGraphModel.setEdgeWeight(edge, weight);
+		trackModel.setEdgeWeight(edge, weight);
 	}
 
 	/**
@@ -621,7 +621,7 @@ public class TrackMateModel {
 	 * @return  the specified track visibility prior to calling this method.
 	 */
 	public boolean setTrackVisibility(Integer trackID, boolean visible) {
-		boolean oldvis = trackGraphModel.setVisibility(trackID, visible);
+		boolean oldvis = trackModel.setVisibility(trackID, visible);
 		boolean modified = oldvis != visible;
 		if (modified) {
 			eventCache.add(ModelChangeEvent.TRACKS_VISIBILITY_CHANGED);
@@ -642,20 +642,21 @@ public class TrackMateModel {
 		if (DEBUG) {
 			System.out.println("[TrackMateModel] #flushUpdate().");
 			System.out.println("[TrackMateModel] #flushUpdate(): Event cache is :" + eventCache);
+			System.out.println("[TrackMateModel] #flushUpdate(): Track content is:\n" + trackModel.echo());
 		}
 
 		/* We recompute tracks only if some edges have been added or removed,
 		 * (if some spots have been removed that causes edges to be removes, we already know about it).
 		 * We do NOT recompute tracks if spots have been added: they will not result in
 		 * new tracks made of single spots.	 */
-		int nEdgesToSignal = trackGraphModel.edgesAdded.size() + trackGraphModel.edgesRemoved.size() + trackGraphModel.edgesModified.size();
+		int nEdgesToSignal = trackModel.edgesAdded.size() + trackModel.edgesRemoved.size() + trackModel.edgesModified.size();
 
 		// Do we have tracks to update?
-		HashSet<Integer> tracksToUpdate = new HashSet<Integer>(trackGraphModel.tracksUpdated);
+		HashSet<Integer> tracksToUpdate = new HashSet<Integer>(trackModel.tracksUpdated);
 
 		// We also want to update the tracks that have edges that were modified
-		for (DefaultWeightedEdge modifiedEdge : trackGraphModel.edgesModified) {
-			tracksToUpdate.add(trackGraphModel.trackIDOf(modifiedEdge));
+		for (DefaultWeightedEdge modifiedEdge : trackModel.edgesModified) {
+			tracksToUpdate.add(trackModel.trackIDOf(modifiedEdge));
 		}
 
 		// Deal with new or moved spots: we need to update their features.
@@ -695,17 +696,17 @@ public class TrackMateModel {
 
 		// Configure it with edges to signal.
 		if (nEdgesToSignal > 0) {
-			event.addAllEdges(trackGraphModel.edgesAdded);
-			event.addAllEdges(trackGraphModel.edgesRemoved);
-			event.addAllEdges(trackGraphModel.edgesModified);
+			event.addAllEdges(trackModel.edgesAdded);
+			event.addAllEdges(trackModel.edgesRemoved);
+			event.addAllEdges(trackModel.edgesModified);
 
-			for (DefaultWeightedEdge edge : trackGraphModel.edgesAdded) {
+			for (DefaultWeightedEdge edge : trackModel.edgesAdded) {
 				event.putEdgeFlag(edge, ModelChangeEvent.FLAG_EDGE_ADDED);
 			}
-			for (DefaultWeightedEdge edge : trackGraphModel.edgesRemoved) {
+			for (DefaultWeightedEdge edge : trackModel.edgesRemoved) {
 				event.putEdgeFlag(edge, ModelChangeEvent.FLAG_EDGE_REMOVED);
 			}
-			for (DefaultWeightedEdge edge : trackGraphModel.edgesModified) {
+			for (DefaultWeightedEdge edge : trackModel.edgesModified) {
 				event.putEdgeFlag(edge, ModelChangeEvent.FLAG_EDGE_MODIFIED);
 			}
 		}
@@ -741,9 +742,10 @@ public class TrackMateModel {
 			spotsRemoved.clear();
 			spotsMoved.clear();
 			spotsUpdated.clear();
-			trackGraphModel.edgesAdded.clear();
-			trackGraphModel.edgesRemoved.clear();
-			trackGraphModel.edgesModified.clear();
+			trackModel.edgesAdded.clear();
+			trackModel.edgesRemoved.clear();
+			trackModel.edgesModified.clear();
+			trackModel.tracksUpdated.clear();
 			eventCache.clear();
 		}
 

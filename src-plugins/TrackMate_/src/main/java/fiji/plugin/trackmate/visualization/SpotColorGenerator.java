@@ -10,17 +10,17 @@ import org.jfree.chart.renderer.InterpolatePaintScale;
 import fiji.plugin.trackmate.ModelChangeEvent;
 import fiji.plugin.trackmate.ModelChangeListener;
 import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.Model;
 
 public class SpotColorGenerator implements FeatureColorGenerator<Spot>, ModelChangeListener {
 
 	private final Map<Spot, Color> spotColorMap = new HashMap<Spot, Color>();
-	private final TrackMateModel model;
+	private final Model model;
 	private String feature = null;
 
-	public SpotColorGenerator(TrackMateModel model) {
+	public SpotColorGenerator(Model model) {
 		this.model = model;
-		model.addTrackMateModelChangeListener(this);
+		model.addModelChangeListener(this);
 	}
 	
 	@Override
@@ -30,7 +30,7 @@ public class SpotColorGenerator implements FeatureColorGenerator<Spot>, ModelCha
 
 	@Override
 	public void terminate() {
-		model.removeTrackMateModelChangeListener(this);
+		model.removeModelChangeListener(this);
 	}
 	
 

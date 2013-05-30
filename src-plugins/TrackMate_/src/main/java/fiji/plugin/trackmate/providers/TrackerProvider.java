@@ -29,7 +29,7 @@ import org.jdom2.Element;
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.TrackMate;
-import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.Model;
 import fiji.plugin.trackmate.detection.SpotDetector;
 import fiji.plugin.trackmate.gui.ConfigurationPanel;
 import fiji.plugin.trackmate.gui.panels.tracker.LAPTrackerSettingsPanel;
@@ -51,7 +51,7 @@ public class TrackerProvider extends AbstractProvider  {
 	protected static final String XML_ELEMENT_NAME_SPLITTING = "TrackSplitting";
 	protected static final String XML_ELEMENT_NAME_FEATURE_PENALTIES = "FeaturePenalties";
 
-	protected final TrackMateModel model;
+	protected final Model model;
 
 	/*
 	 * CONSTRUCTOR
@@ -71,7 +71,7 @@ public class TrackerProvider extends AbstractProvider  {
 	 * factory so that it is registered with the custom trackers and pass this 
 	 * extended provider to the {@link TrackMate} trackmate.
 	 */
-	public TrackerProvider(TrackMateModel model) {
+	public TrackerProvider(Model model) {
 		this.model = model;
 		this.currentKey = SimpleFastLAPTracker.TRACKER_KEY;
 		registerTrackers();

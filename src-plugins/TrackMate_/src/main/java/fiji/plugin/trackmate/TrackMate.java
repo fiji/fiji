@@ -41,7 +41,7 @@ public class TrackMate implements Benchmark, MultiThreaded, Algorithm {
 	/** 
 	 * The model this trackmate will shape.
 	 */
-	protected final TrackMateModel model;
+	protected final Model model;
 	protected final Settings settings;
 	protected long processingTime;
 	protected String errorMessage;
@@ -52,16 +52,16 @@ public class TrackMate implements Benchmark, MultiThreaded, Algorithm {
 	 */
 
 	public TrackMate(Settings settings) {
-		this(new TrackMateModel(), settings);
+		this(new Model(), settings);
 	}
 
-	public TrackMate(TrackMateModel model, Settings settings) {
+	public TrackMate(Model model, Settings settings) {
 		this.model = model;
 		this.settings = settings;
 	}
 
 	public TrackMate() {
-		this(new TrackMateModel(), new Settings());
+		this(new Model(), new Settings());
 	}
 
 	/*
@@ -111,7 +111,7 @@ public class TrackMate implements Benchmark, MultiThreaded, Algorithm {
 	 * METHODS
 	 */
 
-	public TrackMateModel getModel() {
+	public Model getModel() {
 		return model;
 	}
 
@@ -470,7 +470,7 @@ public class TrackMate implements Benchmark, MultiThreaded, Algorithm {
 	 * <p>
 	 * The {@link ModelChangeListener}s of this model will be notified with a {@link ModelChangeEvent#SPOTS_FILTERED}
 	 * event.
-	 * @param doLogIt  if true, will send a message to the {@link TrackMateModel#logger}.
+	 * @param doLogIt  if true, will send a message to the {@link Model#logger}.
 	 * @see #getFilteredSpots()
 	 */
 	public boolean execSpotFiltering(boolean doLogIt) {

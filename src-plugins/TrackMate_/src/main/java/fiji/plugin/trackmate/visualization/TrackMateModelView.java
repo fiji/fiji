@@ -7,7 +7,7 @@ import org.jfree.chart.renderer.InterpolatePaintScale;
 
 import fiji.plugin.trackmate.InfoTextable;
 import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.Model;
 
 public interface TrackMateModelView extends InfoTextable {
 
@@ -193,7 +193,7 @@ public interface TrackMateModelView extends InfoTextable {
 	/**
 	 * Initializes this displayer and render it according to its concrete implementation, 
 	 * target model.
-	 * @see #setModel(TrackMateModel)
+	 * @see #setModel(Model)
 	 */
 	public void render();
 
@@ -235,7 +235,7 @@ public interface TrackMateModelView extends InfoTextable {
 	/**
 	 * Returns the model displayed in this view.
 	 */
-	public TrackMateModel getModel();
+	public Model getModel();
 	
 	/**
 	 * Returns a unique identifier that identifies this view.

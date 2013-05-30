@@ -9,14 +9,14 @@ import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.traverse.DepthFirstIterator;
 
 import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.Model;
 import fiji.plugin.trackmate.graph.GraphUtils;
 
 public class Graph_Test {
 
 	public static void main(String[] args) {
 
-		TrackMateModel model = getExampleModel();
+		Model model = getExampleModel();
 //		TrackMateModel model = getComplicatedExample();
 		countOverallLeaves(model);
 		pickLeavesOfOneTrack(model);
@@ -27,7 +27,7 @@ public class Graph_Test {
 	}
 
 
-	private static void pickLeavesOfOneTrack(final TrackMateModel model) {
+	private static void pickLeavesOfOneTrack(final Model model) {
 		DirectedNeighborIndex<Spot, DefaultWeightedEdge> cache = model.getTrackModel().getDirectedNeighborIndex();
 		TreeSet<Spot> spots = new TreeSet<Spot>(Spot.frameComparator);
 		spots.addAll(model.getTrackModel().vertexSet());
@@ -50,7 +50,7 @@ public class Graph_Test {
 		}
 	}	
 
-	private static void countOverallLeaves(final TrackMateModel model) {
+	private static void countOverallLeaves(final Model model) {
 		DirectedNeighborIndex<Spot, DefaultWeightedEdge> cache = model.getTrackModel().getDirectedNeighborIndex();
 		int nleaves = 0;
 		Set<Spot> spots = model.getTrackModel().vertexSet();
@@ -63,9 +63,9 @@ public class Graph_Test {
 		System.out.println("Found " + nleaves +" leaves.");
 	}
 
-	public static final TrackMateModel getExampleModel() {
+	public static final Model getExampleModel() {
 
-		TrackMateModel model = new TrackMateModel();
+		Model model = new Model();
 
 		// Create spots
 
@@ -136,8 +136,8 @@ public class Graph_Test {
 		return model;
 	}
 
-	public static final TrackMateModel getComplicatedExample() {
-		TrackMateModel model = getExampleModel();
+	public static final Model getComplicatedExample() {
+		Model model = getExampleModel();
 
 		// Retrieve target spot by name
 		Spot P3 = null;

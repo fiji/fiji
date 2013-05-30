@@ -31,7 +31,7 @@ import com.mxgraph.util.mxPoint;
 import com.mxgraph.view.mxCellState;
 import com.mxgraph.view.mxGraph;
 
-import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.Model;
 
 public class TrackSchemeGraphComponent extends mxGraphComponent implements mxIEventListener {
 
@@ -414,7 +414,7 @@ public class TrackSchemeGraphComponent extends mxGraphComponent implements mxIEv
 	
 	/** 
 	 * This listener method will be invoked when a new edge has been created interactively
-	 * in the graph component. It is used then to update the underlying {@link TrackMateModel}.
+	 * in the graph component. It is used then to update the underlying {@link Model}.
 	 */
 	@Override
 	public void invoke(Object sender, mxEventObject evt) {
