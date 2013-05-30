@@ -33,7 +33,7 @@ import fiji.tool.AbstractTool;
 
 public class SpotEditTool extends AbstractTool implements MouseMotionListener, MouseListener, MouseWheelListener, KeyListener {
 
-	private static final boolean DEBUG = true;
+	private static final boolean DEBUG = false;
 
 	private static final double COARSE_STEP = 2;
 	private static final double FINE_STEP = 0.2f;

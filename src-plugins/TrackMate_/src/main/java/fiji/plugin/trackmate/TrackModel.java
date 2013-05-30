@@ -620,7 +620,7 @@ public class TrackModel {
 		 */
 		@Override
 		public void connectedComponentFinished(ConnectedComponentTraversalEvent event) {
-			if (currentConnectedVertexSet.size() <= 1 || connectedEdgeSets.size() == 0) {
+			if (currentConnectedVertexSet.size() <= 1 || currentConnectedEdgeSet.size() == 0) {
 				// Forget them
 				for (DefaultWeightedEdge e : currentConnectedEdgeSet) {
 					edgeToID.remove(e);

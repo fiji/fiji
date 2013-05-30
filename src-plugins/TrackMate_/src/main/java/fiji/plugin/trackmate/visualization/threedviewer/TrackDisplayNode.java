@@ -135,7 +135,7 @@ public class TrackDisplayNode extends ContentNode implements TimelapseListener {
 	void refresh() {
 		// Holder for passing values 
 		Color4f color = new Color4f();
-		switch(displayMode) {
+		switch (displayMode) {
 
 		case TrackMateModelView.TRACK_DISPLAY_MODE_WHOLE: {
 			break;

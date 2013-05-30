@@ -20,15 +20,17 @@ public class SpotFilteringPerf_TestDrive {
 
 		//		ImageJ.main(args);
 
-//		File file = new File("/Users/tinevez/Desktop/RECEPTOR.xml");
-		File file = new File(AppUtils.getBaseDirectory(TrackMate.class), "samples/FakeTracks.xml");
+//		File file = new File(AppUtils.getBaseDirectory(TrackMate.class), "samples/FakeTracks.xml");
+		File file = new File(AppUtils.getBaseDirectory(TrackMate.class), "samples/RECEPTOR.xml");
+		System.out.println("Loading " + file); 
 		TmXmlReader reader = new TmXmlReader(file);
 		Model model = reader.getModel();
 		Settings settings = new Settings();
 		reader.readSettings(settings, null, null, 
 				new SpotAnalyzerProvider(model), new EdgeAnalyzerProvider(model), new TrackAnalyzerProvider(model));
 		TrackMate trackmate = new TrackMate(model, settings);
-
+		System.out.println("Done loading.");
+		
 		for (int i = 0; i < 5; i++) {
 
 			{

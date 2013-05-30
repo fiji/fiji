@@ -67,7 +67,6 @@ public class SpotOverlay extends Roi {
 		int ycorner = ic.offScreenY(0);
 		double magnification = getMagnification();
 		SpotCollection spots = model.getSpots();
-
 		
 		boolean spotVisible = (Boolean) displaySettings.get(TrackMateModelView.KEY_SPOTS_VISIBLE);
 		if (!spotVisible  || spots.getNSpots(true) == 0)
@@ -157,7 +156,7 @@ public class SpotOverlay extends Roi {
 		final double z = spot.getFeature(Spot.POSITION_Z);
 		final double dz2 = (z - zslice) * (z - zslice);
 		double radiusRatio = (Float) displaySettings.get(TrackMateModelView.KEY_SPOT_RADIUS_RATIO);
-		final double radius = spot.getFeature(Spot.RADIUS)*radiusRatio;
+		final double radius = spot.getFeature(Spot.RADIUS) * radiusRatio;
 		// In pixel units
 		final double xp = x / calibration[0] + 0.5f;
 		final double yp = y / calibration[1] + 0.5f; // so that spot centers are displayed on the pixel centers

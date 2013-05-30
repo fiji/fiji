@@ -9,6 +9,9 @@ import fiji.plugin.trackmate.features.track.TrackBranchingAnalyzer;
 import fiji.plugin.trackmate.gui.GrapherPanel;
 import fiji.plugin.trackmate.gui.panels.ConfigureViewsPanel;
 import fiji.plugin.trackmate.io.TmXmlReader;
+import fiji.plugin.trackmate.providers.EdgeAnalyzerProvider;
+import fiji.plugin.trackmate.providers.SpotAnalyzerProvider;
+import fiji.plugin.trackmate.providers.TrackAnalyzerProvider;
 import fiji.plugin.trackmate.visualization.hyperstack.HyperStackDisplayer;
 import fiji.plugin.trackmate.visualization.threedviewer.SpotDisplayer3D;
 import fiji.plugin.trackmate.visualization.trackscheme.TrackScheme;
@@ -34,7 +37,8 @@ public class TrackVisualizerTestDrive {
 		TmXmlReader reader = new TmXmlReader(file);
 		Model model = reader.getModel();
 		Settings settings = new Settings();
-		reader.readSettings(settings, null, null, null, null, null);
+		reader.readSettings(settings, null, null, 
+				new SpotAnalyzerProvider(model), new EdgeAnalyzerProvider(model), new TrackAnalyzerProvider(model));
 		TrackMate trackmate = new TrackMate(model, settings);
 		
 		System.out.println("From the XML file:");

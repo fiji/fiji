@@ -201,7 +201,8 @@ public class FilterPanel extends javax.swing.JPanel {
 	}
 
 	private void comboBoxSelectionChanged() {
-		key = allKeys.get(jComboBoxFeature.getSelectedIndex());
+		int index = jComboBoxFeature.getSelectedIndex();
+		key = allKeys.get(index);
 		double[] values = valuesMap.get(key);
 		if (null == values || 0 == values.length) {
 			dataset = new LogHistogramDataset();

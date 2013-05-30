@@ -6,10 +6,10 @@ import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.TrackMate;
 import fiji.plugin.trackmate.features.FeatureFilter;
 import fiji.plugin.trackmate.features.spot.SpotIntensityAnalyzer;
-import fiji.plugin.trackmate.features.spot.SpotIntensityAnalyzerFactory;
 import fiji.plugin.trackmate.gui.panels.components.ColorByFeatureGUIPanel.Category;
 import fiji.plugin.trackmate.gui.panels.components.FilterGuiPanel;
 import fiji.plugin.trackmate.util.SpotNeighborhood;
+import fiji.plugin.trackmate.visualization.FeatureColorGenerator;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
 import fiji.plugin.trackmate.visualization.threedviewer.SpotDisplayer3D;
 import ij.ImagePlus;
@@ -139,10 +139,17 @@ public class SpotDisplayer3DTestDrive {
 		gui.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				if (e == gui.COLOR_FEATURE_CHANGED) {
-					String feature = gui.getColorFeature();
-					displayer.setDisplaySettings(TrackMateModelView.KEY_SPOT_COLORING, feature);
-					displayer.setDisplaySettings(TrackMateModelView.KEY_SPOT_RADIUS_RATIO, RAN.nextFloat()+1);
-					displayer.refresh();
+					new Thread() {
+						public void run() {
+							String feature = gui.getColorFeature();
+							@SuppressWarnings("unchecked")
+							FeatureColorGenerator<Spot> spotColorGenerator = (FeatureColorGenerator<Spot>) displayer.getDisplaySettings(TrackMateModelView.KEY_SPOT_COLORING);
+							spotColorGenerator.setFeature(feature);
+							displayer.setDisplaySettings(TrackMateModelView.KEY_SPOT_COLORING, spotColorGenerator);
+							displayer.setDisplaySettings(TrackMateModelView.KEY_SPOT_RADIUS_RATIO, RAN.nextFloat()+1);
+							displayer.refresh();
+						};
+					}.start();
 				}
 			}
 		});
@@ -155,7 +162,7 @@ public class SpotDisplayer3DTestDrive {
 		frame.setVisible(true);
 
 		// Add a panel
-		gui.addFilterPanel(SpotIntensityAnalyzerFactory.MEAN_INTENSITY);		
+		gui.addFilterPanel(Spot.POSITION_Z);
 		
 	}
 	

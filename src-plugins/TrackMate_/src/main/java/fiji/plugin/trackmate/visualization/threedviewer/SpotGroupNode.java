@@ -29,7 +29,6 @@ import javax.vecmath.Tuple3d;
 import javax.vecmath.Vector3d;
 
 import customnode.CustomTriangleMesh;
-import customnode.MeshMaker;
 
 public class SpotGroupNode<K> extends ContentNode {
 
@@ -406,7 +405,7 @@ public class SpotGroupNode<K> extends ContentNode {
 		if (null == mesh)
 			return;
 		double r = centers.get(key).w;
-		mesh.setMesh(MeshMaker.createSphere(center.x, center.y, center.z, r, DEFAULT_MERIDIAN_NUMBER, DEFAULT_PARALLEL_NUMBER));
+		mesh.setMesh(createSphere(center.x, center.y, center.z, r));
 		centers.get(key).x = center.x;
 		centers.get(key).y = center.y;
 		centers.get(key).z = center.z;
@@ -421,7 +420,7 @@ public class SpotGroupNode<K> extends ContentNode {
 		CustomTriangleMesh mesh = meshes.get(key);
 		if (null == mesh)
 			return;
-		mesh.setMesh(MeshMaker.createSphere(center.x, center.y, center.z, center.w, DEFAULT_MERIDIAN_NUMBER, DEFAULT_PARALLEL_NUMBER));
+		mesh.setMesh(createSphere(center.x, center.y, center.z, center.w));
 		centers.put(key, new Point4d(center));
 	}
 	
@@ -433,7 +432,8 @@ public class SpotGroupNode<K> extends ContentNode {
 		if (null == mesh)
 			return;
 		Point4d center = centers.get(key);
-		mesh.setMesh(MeshMaker.createSphere(center.x, center.y, center.z, radius, DEFAULT_MERIDIAN_NUMBER, DEFAULT_PARALLEL_NUMBER));
+		List<Point3f> newmesh = createSphere(center.x, center.y, center.z, radius);
+		mesh.setMesh(newmesh);
 		center.w = radius;
 	}
 	

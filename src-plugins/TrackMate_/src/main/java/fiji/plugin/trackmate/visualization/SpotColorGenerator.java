@@ -25,7 +25,11 @@ public class SpotColorGenerator implements FeatureColorGenerator<Spot>, ModelCha
 	
 	@Override
 	public Color color(Spot spot) {
-		return spotColorMap.get(spot);
+		if (null == feature) {
+			return TrackMateModelView.DEFAULT_COLOR;
+		} else {
+			return spotColorMap.get(spot);
+		}
 	}
 
 	@Override
@@ -36,6 +40,9 @@ public class SpotColorGenerator implements FeatureColorGenerator<Spot>, ModelCha
 
 	@Override
 	public void modelChanged(ModelChangeEvent event) {
+		if (feature == null) {
+			return; // nothing to do.
+		}
 		if (event.getEventID() ==  ModelChangeEvent.MODEL_MODIFIED) {
 			Set<Spot> spots = event.getSpots();
 			if (spots.size() > 0) {
@@ -58,7 +65,9 @@ public class SpotColorGenerator implements FeatureColorGenerator<Spot>, ModelCha
 			return;
 		}
 		this.feature = feature;
-		computeSpotColors(feature);
+		if (null != feature) {
+			computeSpotColors(feature);
+		}
 	}
 
 	
@@ -69,14 +78,6 @@ public class SpotColorGenerator implements FeatureColorGenerator<Spot>, ModelCha
 
 	private void computeSpotColors(final String feature) {
 		spotColorMap.clear();
-		// Check null
-		if (null == feature) {
-			for(Spot spot : model.getSpots().iterable(false)) {
-				spotColorMap.put(spot, TrackMateModelView.DEFAULT_COLOR);
-			}
-			return;
-		}
-
 		// Get min & max
 		double min = Float.POSITIVE_INFINITY;
 		double max = Float.NEGATIVE_INFINITY;

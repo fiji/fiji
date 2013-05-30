@@ -53,7 +53,7 @@ public class LAPTrackerTestDrive {
 		ts.put(KEY_GAP_CLOSING_MAX_DISTANCE, 15d);
 		ts.put(KEY_ALLOW_TRACK_MERGING, true);
 		ts.put(KEY_MERGING_MAX_DISTANCE, 10d);
-		ts.put(KEY_ALLOW_TRACK_SPLITTING, true);
+		ts.put(KEY_ALLOW_TRACK_SPLITTING, false);
 		ts.put(KEY_SPLITTING_MAX_DISTANCE, 10d);
 		settings.trackerSettings = ts;
 		System.out.println("Tracker settings:");
@@ -89,11 +89,10 @@ public class LAPTrackerTestDrive {
 		System.out.println("On the following tracks ID:");
 		for (Integer trackID : model.getTrackModel().trackIDs(false)) 
 			System.out.print(trackID + ", ");
-		System.out.println("\nthe following were filtered:");
+		System.out.println("\nthe following were visible:");
 		for (Integer trackID : model.getTrackModel().trackIDs(true)) 
 			System.out.print(trackID + ", ");
 		System.out.println();
-
 		
 		// 3 - Print out results for testing		
 		System.out.println();

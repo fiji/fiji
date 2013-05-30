@@ -285,7 +285,6 @@ public class SpotDisplayer3D extends AbstractTrackMateModelView {
 
 		for (int frame : blobs.keySet()) {
 			SpotGroupNode<Spot> spotGroup = blobs.get(frame);
-
 			for (Iterator<Spot> iterator = model.getSpots().iterator(frame, false); iterator.hasNext();) {
 				Spot spot = iterator.next();
 				spotGroup.setRadius(spot, radiusRatio*spot.getFeature(Spot.RADIUS));
