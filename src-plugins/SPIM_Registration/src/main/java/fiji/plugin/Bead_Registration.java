@@ -274,16 +274,20 @@ public class Bead_Registration implements PlugIn
 				return true;
 			}
 		} );
+		
 		System.out.println( "init Bead_Registration dialog: tfSpimDataDirectory.getText() = " + tfSpimDataDirectory.getText() );
+		
 		File f = new File( tfSpimDataDirectory.getText() );
+		
 		if ( f.exists() && f.isFile() && f.getName().endsWith( ".xml" ) )
 		{
 			// disable file pattern field
 			tfFilePattern.setEnabled( false );
 		}
+		
 		gd.showDialog();
 		
-		if ( gd.wasCanceled() )
+		if ( gd.wasCanceled() || conf == null )
 			return null;
 
 		return conf;
@@ -527,7 +531,7 @@ public class Bead_Registration implements PlugIn
 
 		gd.addMessage( "" );
 
-		gd.addChoice( "Transformation_model", model, model[ defaultBeadBrightness ] );
+		gd.addChoice( "Transformation_model", model, model[ defaultModel ] );
 		gd.addCheckbox( "Re-use_per_timepoint_registration", loadRegistration );
 
 		gd.addMessage( "" );
@@ -856,25 +860,25 @@ public class Bead_Registration implements PlugIn
 			}
 		}
 
-		final GenericDialog gd = new GenericDialog( "Select Difference-of-Gaussian Parameters" );
+		final GenericDialog gd1 = new GenericDialog( "Select Difference-of-Gaussian Parameters" );
 		
 		for ( int i = 0; i < channelIndices.length; ++i )
 		{
 			final int channel = channelIndices[ i ];
 
-			gd.addNumericField( "Channel_" + channel + "_Initial_sigma", defaultDoGParameters[ i ][ 0 ], 4 );
-			gd.addNumericField( "Channel_" + channel + "_Threshold", defaultDoGParameters[ i ][ 1 ], 4 );
+			gd1.addNumericField( "Channel_" + channel + "_Initial_sigma", defaultDoGParameters[ i ][ 0 ], 4 );
+			gd1.addNumericField( "Channel_" + channel + "_Threshold", defaultDoGParameters[ i ][ 1 ], 4 );
 		}
 		
-		gd.showDialog();
+		gd1.showDialog();
 		
-		if ( gd.wasCanceled() )
+		if ( gd1.wasCanceled() )
 			return null;
 		
 		for ( int i = 0; i < channelIndices.length; ++i )
 		{
-			defaultDoGParameters[ i ][ 0 ] = gd.getNextNumber();
-			defaultDoGParameters[ i ][ 1 ] = gd.getNextNumber();
+			defaultDoGParameters[ i ][ 0 ] = gd1.getNextNumber();
+			defaultDoGParameters[ i ][ 1 ] = gd1.getNextNumber();
 		}
 		
 		return defaultDoGParameters.clone();
