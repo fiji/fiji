@@ -552,6 +552,11 @@ public class Multi_View_Fusion implements PlugIn
 		else
 		{
 			conf.multipleImageFusion = true;
+			
+			if ( defaultParalellViews == 0 )
+				conf.numParalellViews = views.length;
+			else
+				conf.numParalellViews = defaultParalellViews;
 		}
 		
 		if ( defaultOutputType == 0 )
