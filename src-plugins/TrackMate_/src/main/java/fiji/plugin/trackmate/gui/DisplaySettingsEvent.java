@@ -36,4 +36,10 @@ public class DisplaySettingsEvent extends EventObject {
 	public Object getNewValue() {
 		return newValue;
 	}
+	
+	@Override
+	public String toString() {
+		String str = "DisplaySettingsEvent[source=" + source.getClass() + ", key="+key +", new="+newValue +", old="+oldValue;
+		return str;
+	}
 }

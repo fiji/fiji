@@ -45,7 +45,7 @@ import fiji.plugin.trackmate.SelectionChangeListener;
 import fiji.plugin.trackmate.SelectionModel;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.Model;
 import fiji.plugin.trackmate.features.SpotFeatureGrapher;
 import fiji.plugin.trackmate.util.OnRequestUpdater;
 import fiji.plugin.trackmate.util.OnRequestUpdater.Refreshable;
@@ -59,7 +59,7 @@ public class InfoPane extends JPanel implements SelectionChangeListener {
 	private JTable table;
 	private JScrollPane scrollTable;
 	private boolean doHighlightSelection = true;
-	private final TrackMateModel model;
+	private final Model model;
 	private final SelectionModel selectionModel;
 	/** A copy of the last spot collection highlighted in this infopane, sorted by frame order. */
 	private Collection<Spot> spotSelection;
@@ -79,10 +79,10 @@ public class InfoPane extends JPanel implements SelectionChangeListener {
 	 * Creates a new Info pane that displays information on the current spot selection in 
 	 * a table. 
 	 * 
-	 * @param model the {@link TrackMateModel} from which the spot collection is taken.
+	 * @param model the {@link Model} from which the spot collection is taken.
 	 * @param settings  the {@link Settings} object we use to retrieve spot feature names.
 	 */
-	public InfoPane(TrackMateModel model, SelectionModel selectionModel) {
+	public InfoPane(Model model, SelectionModel selectionModel) {
 		this.model = model;
 		this.selectionModel = selectionModel;
 		List<String> features = new ArrayList<String>(model.getFeatureModel().getSpotFeatures());
@@ -102,14 +102,14 @@ public class InfoPane extends JPanel implements SelectionChangeListener {
 		addAncestorListener(new AncestorListener() {			
 			@Override
 			public void ancestorRemoved(AncestorEvent event) {
-				InfoPane.this.selectionModel.removeTrackMateSelectionChangeListener(InfoPane.this);
+				InfoPane.this.selectionModel.removeSelectionChangeListener(InfoPane.this);
 			}
 			@Override
 			public void ancestorMoved(AncestorEvent event) {}
 			@Override
 			public void ancestorAdded(AncestorEvent event) {}
 		});
-		selectionModel.addTrackMateSelectionChangeListener(this);
+		selectionModel.addSelectionChangeListener(this);
 		init();
 	}
 

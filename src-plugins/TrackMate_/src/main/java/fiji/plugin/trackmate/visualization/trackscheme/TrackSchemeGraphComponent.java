@@ -31,7 +31,7 @@ import com.mxgraph.util.mxPoint;
 import com.mxgraph.view.mxCellState;
 import com.mxgraph.view.mxGraph;
 
-import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.Model;
 
 public class TrackSchemeGraphComponent extends mxGraphComponent implements mxIEventListener {
 
@@ -289,7 +289,7 @@ public class TrackSchemeGraphComponent extends mxGraphComponent implements mxIEv
 						return;
 					}
 					
-					String oldName = trackScheme.getModel().getTrackModel().getTrackName(columnTrackIDs[column]);
+					String oldName = trackScheme.getModel().getTrackModel().name(columnTrackIDs[column]);
 					final Integer trackID = columnTrackIDs[column];
 
 					final JScrollPane scrollPane = new JScrollPane();
@@ -316,7 +316,7 @@ public class TrackSchemeGraphComponent extends mxGraphComponent implements mxIEv
 						@Override
 						public void actionPerformed(ActionEvent arg0) {
 							String newname = textArea.getText();
-							trackScheme.getModel().getTrackModel().setTrackName(trackID, newname);
+							trackScheme.getModel().getTrackModel().setName(trackID, newname);
 							scrollPane.remove(textArea);
 							getGraphControl().remove(scrollPane);
 							TrackSchemeGraphComponent.this.repaint();
@@ -396,7 +396,7 @@ public class TrackSchemeGraphComponent extends mxGraphComponent implements mxIEv
 			x = xcs;
 			for (int i = 0; i < columnWidths.length; i++) {
 				int cw = columnWidths[i];
-				String columnName = trackScheme.getModel().getTrackModel().getTrackName(columnTrackIDs[i]);
+				String columnName = trackScheme.getModel().getTrackModel().name(columnTrackIDs[i]);
 				if (null == columnName) {
 					columnName = "Name not set";
 				}
@@ -414,7 +414,7 @@ public class TrackSchemeGraphComponent extends mxGraphComponent implements mxIEv
 	
 	/** 
 	 * This listener method will be invoked when a new edge has been created interactively
-	 * in the graph component. It is used then to update the underlying {@link TrackMateModel}.
+	 * in the graph component. It is used then to update the underlying {@link Model}.
 	 */
 	@Override
 	public void invoke(Object sender, mxEventObject evt) {

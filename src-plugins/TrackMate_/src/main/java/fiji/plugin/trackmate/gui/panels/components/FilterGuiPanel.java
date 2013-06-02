@@ -9,8 +9,10 @@ import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.EmptyStackException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Stack;
@@ -25,118 +27,150 @@ import javax.swing.JScrollPane;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
+import fiji.plugin.trackmate.ModelChangeEvent;
+import fiji.plugin.trackmate.ModelChangeListener;
+import fiji.plugin.trackmate.Model;
 import fiji.plugin.trackmate.features.FeatureFilter;
 import fiji.plugin.trackmate.gui.TrackMateWizard;
 import fiji.plugin.trackmate.gui.panels.ActionListenablePanel;
 import fiji.plugin.trackmate.gui.panels.FilterPanel;
+import fiji.plugin.trackmate.gui.panels.components.ColorByFeatureGUIPanel.Category;
+import fiji.plugin.trackmate.util.OnRequestUpdater;
 
 public class FilterGuiPanel extends ActionListenablePanel implements ChangeListener {
-	
+
 	private static final boolean DEBUG = false;
 	private static final long serialVersionUID = -1L;
 	private static final String ADD_ICON = "images/add.png";
 	private static final String REMOVE_ICON = "images/delete.png";
-	
+
 	private final ChangeEvent CHANGE_EVENT = new ChangeEvent(this);
 	/** Will be set to the value of the {@link JPanelColorByFeatureGUI}. */
 	public ActionEvent COLOR_FEATURE_CHANGED = null;
 
 	private JPanel jPanelBottom;
-	JPanelColorByFeatureGUI jPanelColorByFeatureGUI;
+	private ColorByFeatureGUIPanel jPanelColorByFeatureGUI;
 	private JScrollPane jScrollPaneThresholds;
 	private JPanel jPanelAllThresholds;
 	private JPanel jPanelButtons;
 	private JButton jButtonRemoveThreshold;
 	private JButton jButtonAddThreshold;
 	private JLabel jLabelInfo;
+	private JLabel jTopLabel;
+	private OnRequestUpdater updater;
 
 	private Stack<FilterPanel> thresholdPanels = new Stack<FilterPanel>();
 	private Stack<Component> struts = new Stack<Component>();
-	private Map<String, double[]> featureValues;
 	private int newFeatureIndex;
 
 	private List<FeatureFilter> featureFilters = new ArrayList<FeatureFilter>();
 	private ArrayList<ChangeListener> changeListeners = new ArrayList<ChangeListener>();
-	private List<String> features;
-	private String objectDescription;
-	private Map<String, String> featureNames;
-	private JLabel jTopLabel;
-	private Updater updater;
+
+	private final Map<String, String> featureNames;
+	private final Category category;
+	private final Model model;
+	private final List<String> features;
+	/** Holds the map of feature values. Is made final so that the instance can be shared with the components
+	 * of this panel. */
+	private final Map<String, double[]> featureValues;
 
 	/*
 	 * CONSTRUCTOR
 	 */
 
-	public FilterGuiPanel() {
-		this.updater = new Updater();
+	public FilterGuiPanel(Model model, Category category) {
+		this.model = model;
+
+		model.addModelChangeListener(new ModelChangeListener() {
+
+			@Override
+			public void modelChanged(ModelChangeEvent event) {
+				if (event.getEventID() == ModelChangeEvent.MODEL_MODIFIED) {
+					refreshDisplayedFeatureValues();
+					for (FilterPanel fp : thresholdPanels) {
+						fp.refresh();
+					}
+				}
+			}
+		});
+
+		this.category = category;
+		switch (category) {
+		case SPOTS:
+			this.features = new ArrayList<String>(model.getFeatureModel().getSpotFeatures());
+			this.featureNames = model.getFeatureModel().getSpotFeatureNames();
+			break;
+		case EDGES:
+			this.features = new ArrayList<String>(model.getFeatureModel().getEdgeFeatures());
+			this.featureNames = model.getFeatureModel().getEdgeFeatureNames();
+			break;
+		case TRACKS:
+			this.features = new ArrayList<String>(model.getFeatureModel().getTrackFeatures());
+			this.featureNames = model.getFeatureModel().getTrackFeatureNames();
+			break;
+		default:
+			throw new IllegalArgumentException("Unkown actegory: " + category);
+		}
+		this.updater = new OnRequestUpdater(new OnRequestUpdater.Refreshable() {
+			@Override
+			public void refresh() {
+				FilterGuiPanel.this.refresh();
+			}
+		});
+
+		this.featureValues = new HashMap<String, double[]>();
+		refreshDisplayedFeatureValues();
 		initGUI();
 	}
+
 
 	/*
 	 * PUBLIC METHODS
 	 */
-	
-	
 
 	/**
-	 * Set the feature filters to display and layout this panel. Calling this method
-	 * re-instantiate some components, so that they reflect the passed arguments.
-	 * But the core components are not regenerated.
-	 * 
-	 * @param features  the list of all feature that can be chosen from in {@link FilterPanel}s
+	 * Calls the re-calculation of the feature values displayed in the filter
+	 * panels. 
+	 */
+	public void refreshDisplayedFeatureValues() {
+		Map<String, double[]> fv;
+		switch (category) {
+		case SPOTS:
+			fv = model.getSpots().collectValues(model.getFeatureModel().getSpotFeatures(), false);
+			break;
+		case TRACKS:
+			fv = model.getFeatureModel().getTrackFeatureValues();
+			break;
+		default:
+			throw new IllegalArgumentException("Don't know what to do with category: " + category);
+		}
+		featureValues.clear();
+		featureValues.putAll(fv);
+	}
+
+	/**
+	 * Set the feature filters to display and layout in this panel. 
 	 * @param filters  the list of {@link FeatureFilter}s that should be already present in the GUI 
 	 * (for loading purpose). Can be <code>null</code> or empty.
-	 * @param featureNames  a mapping linking the feature with a string to represent them.
-	 * @param featureValues  a mapping linking the features to their value array.
-	 * @param objectDescription  a single word description of the object to filter
 	 */
-	public void setTarget(Collection<String> features, List<FeatureFilter> filters,  Map<String, String> featureNames, Map<String, double[]> featureValues, String objectDescription) {
-		this.features = new ArrayList<String>(features);
-		this.featureNames = featureNames;
-		this.featureValues = featureValues;
-		this.objectDescription = objectDescription;
-
+	public void setFilters(List<FeatureFilter> filters) {
 		// Clean current panels
 		int n_panels = thresholdPanels.size();
 		for (int i = 0; i < n_panels; i++) {
 			removeThresholdPanel();
 		}
 
-		if (null != featureValues) {
+		if (null != filters) {
 
-			if (null != filters) {
-
-				for (FeatureFilter ft : filters) {
-					addFilterPanel(ft);
-				}
-				if (filters.isEmpty())
-					newFeatureIndex = 0;
-				else
-					newFeatureIndex = this.features.indexOf(filters.get(filters.size()-1).feature);
-
+			for (FeatureFilter ft : filters) {
+				addFilterPanel(ft);
 			}
+			if (filters.isEmpty())
+				newFeatureIndex = 0;
+			else
+				newFeatureIndex = this.features.indexOf(filters.get(filters.size()-1).feature);
+
 		}
-
-		// Color panel
-		if (jPanelColorByFeatureGUI != null) {
-			jPanelBottom.remove(jPanelColorByFeatureGUI);
-		}
-		jPanelColorByFeatureGUI = new JPanelColorByFeatureGUI(this.features, featureNames);
-		COLOR_FEATURE_CHANGED = jPanelColorByFeatureGUI.COLOR_FEATURE_CHANGED;
-		jPanelColorByFeatureGUI.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				fireAction(COLOR_FEATURE_CHANGED);
-			}
-		});
-		jPanelColorByFeatureGUI.setFeatureValues(featureValues);
-		jPanelBottom.add(jPanelColorByFeatureGUI, BorderLayout.CENTER);
-
-		// Title
-		jTopLabel.setText("      Set filters on "+objectDescription);
-
-		// Info text
-		updateInfoText();
 	}
 
 	/**
@@ -148,23 +182,22 @@ public class FilterGuiPanel extends ActionListenablePanel implements ChangeListe
 	}
 
 	/**
-	 * @eeturn the thresholds currently set by this GUI.
+	 * Returns the thresholds currently set by this GUI.
 	 */
 	public List<FeatureFilter> getFeatureFilters() {
 		return featureFilters;
 	}
 
-
 	/**
-	 * Return the feature selected in the "Set color by feature" comb-box. 
-	 * Return <code>null</code> if the item "Default" is selected.
+	 * Returns the feature selected in the "color by feature" comb-box. 
+	 * Returns <code>null</code> if the item "Default" is selected.
 	 */
-	public String getColorByFeature() {
-		return jPanelColorByFeatureGUI.getSelectedFeature();
+	public String getColorFeature() {
+		return jPanelColorByFeatureGUI.getColorFeature();
 	}
-	
-	public void setColorByFeature(String feature) {
-		jPanelColorByFeatureGUI.setColorByFeature(feature);
+
+	public void setColorFeature(String feature) {
+		jPanelColorByFeatureGUI.setColorFeature(feature);
 	}
 
 	/**
@@ -269,7 +302,7 @@ public class FilterGuiPanel extends ActionListenablePanel implements ChangeListe
 	private void updateInfoText() {
 		String info = "";
 		int nobjects = 0;
-		
+
 		for (double[] values : featureValues.values()) { // bulletproof against unspecified features, which are signaled by empty arrays
 			if (values.length > 0) {
 				nobjects = values.length;
@@ -280,7 +313,7 @@ public class FilterGuiPanel extends ActionListenablePanel implements ChangeListe
 		if (nobjects == 0)	{
 			info = "No objects.";
 		} else if (featureFilters == null || featureFilters.isEmpty() ) {
-			info = "Keep all "+nobjects+" "+objectDescription+".";
+			info = "Keep all "+nobjects+" "+category+".";
 		} else {
 			int nselected = 0;
 			double val;
@@ -288,7 +321,7 @@ public class FilterGuiPanel extends ActionListenablePanel implements ChangeListe
 				boolean ok = true;
 				for (FeatureFilter filter : featureFilters) {
 					double[] values =  featureValues.get(filter.feature);
-					if (values.length == 0) { // bulletproof against unspecified features, which are signaled by empty arrays
+					if (i >= values.length || values.length == 0) { // bulletproof 
 						continue;
 					}
 					val = values[i];
@@ -307,7 +340,7 @@ public class FilterGuiPanel extends ActionListenablePanel implements ChangeListe
 				if (ok)
 					nselected++;
 			}
-			info = "Keep "+nselected+" "+objectDescription+" out of  "+nobjects+".";
+			info = "Keep "+nselected+" "+category+" out of  "+nobjects+".";
 		}
 		jLabelInfo.setText(info);
 
@@ -321,6 +354,7 @@ public class FilterGuiPanel extends ActionListenablePanel implements ChangeListe
 			setPreferredSize(new Dimension(270, 500));
 			{
 				jTopLabel = new JLabel();
+				jTopLabel.setText("      Set filters on " + category.toString());
 				jTopLabel.setFont(BIG_FONT);
 				jTopLabel.setPreferredSize(new Dimension(300, 40));
 				this.add(jTopLabel, BorderLayout.NORTH);
@@ -390,67 +424,22 @@ public class FilterGuiPanel extends ActionListenablePanel implements ChangeListe
 						jPanelButtons.add(jLabelInfo);
 					}
 				}
+				{
+					jPanelColorByFeatureGUI = new ColorByFeatureGUIPanel(model, Arrays.asList(new Category[] { category } ));
+					COLOR_FEATURE_CHANGED = jPanelColorByFeatureGUI.COLOR_FEATURE_CHANGED;
+					jPanelColorByFeatureGUI.addActionListener(new ActionListener() {
+						@Override
+						public void actionPerformed(ActionEvent e) {
+							fireAction(COLOR_FEATURE_CHANGED);
+						}
+					});
+					jPanelBottom.add(jPanelColorByFeatureGUI);
+				}
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
-	
-	/**
-	 * This is a helper class that delegates the
-	 * repainting of the destination window to another thread.
-	 * 
-	 * @author Albert Cardona
-	 */
-	private class Updater extends Thread {
-		private long request = 0;
 
-		// Constructor autostarts thread
-		Updater() {
-			super("TrackMate FilterGuiPanel repaint thread");
-			setPriority(Thread.NORM_PRIORITY);
-			start();
-		}
 
-		void doUpdate() {
-			if (isInterrupted())
-				return;
-			synchronized (this) {
-				request++;
-				notify();
-			}
-		}
-
-		@SuppressWarnings("unused")
-		void quit() {
-			interrupt();
-			synchronized (this) {
-				notify();
-			}
-		}
-
-		public void run() {
-			while (!isInterrupted()) {
-				try {
-					final long r;
-					synchronized (this) {
-						r = request;
-					}
-					// Call update from this thread
-					if (r > 0) {
-						refresh();
-					}
-						
-					synchronized (this) {
-						if (r == request) {
-							request = 0; // reset
-							wait();
-						}
-						// else loop through to update again
-					}
-				} catch (Exception e) {
-				}
-			}
-		}
-	}
 }

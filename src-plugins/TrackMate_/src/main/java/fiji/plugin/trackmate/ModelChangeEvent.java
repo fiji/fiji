@@ -46,12 +46,11 @@ public class ModelChangeEvent extends EventObject {
 	
 	/** 
 	 * Event type indicating that the spots of the model were computed, and 
-	 * are now accessible through {@link TrackMateModel#getSpots()}. 
+	 * are now accessible through {@link Model#getSpots()}. 
 	 */
 	public static final int 	SPOTS_COMPUTED = 4;
 	/** 
 	 * Event type indicating that the spots of the model were filtered.
-	 * Result of filtering is now accessible through {@link TrackMateModel#getFilteredSpots()}. 
 	 */
 	public static final int 	SPOTS_FILTERED = 5;
 	/** 
@@ -90,7 +89,7 @@ public class ModelChangeEvent extends EventObject {
 	private Set<Integer> trackUpdated;
 
 	/**
-	 * Create a new event, reflecting a change in a {@link TrackMateModel}.
+	 * Create a new event, reflecting a change in a {@link Model}.
 	 * 
 	 * @param source  the object source of this event
 	 */

@@ -13,7 +13,7 @@ import net.imglib2.type.numeric.RealType;
 import net.imglib2.view.HyperSliceImgPlus;
 import fiji.plugin.trackmate.Dimension;
 import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.Model;
 
 public class SpotMorphologyAnalyzerFactory<T extends RealType<T> & NativeType<T>> implements SpotAnalyzerFactory<T> {
 
@@ -83,14 +83,14 @@ public class SpotMorphologyAnalyzerFactory<T extends RealType<T> & NativeType<T>
 	public static final Double SCALENE = Double.valueOf(3);
 	
 
-	private final TrackMateModel model;
+	private final Model model;
 	private final ImgPlus<T> img;
 
 	/*
 	 * CONSTRUCTOR
 	 */
 	
-	public SpotMorphologyAnalyzerFactory(final TrackMateModel model, final ImgPlus<T> img) {
+	public SpotMorphologyAnalyzerFactory(final Model model, final ImgPlus<T> img) {
 		this.model = model;
 		this.img = img;
 	}

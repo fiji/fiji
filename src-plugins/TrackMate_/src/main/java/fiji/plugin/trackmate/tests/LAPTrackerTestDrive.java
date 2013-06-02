@@ -16,7 +16,7 @@ import org.scijava.util.AppUtils;
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.SelectionModel;
 import fiji.plugin.trackmate.Settings;
-import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.Model;
 import fiji.plugin.trackmate.TrackMate;
 import fiji.plugin.trackmate.io.TmXmlReader;
 import fiji.plugin.trackmate.providers.TrackerProvider;
@@ -38,14 +38,12 @@ public class LAPTrackerTestDrive {
 		// 1 - Load test spots
 		System.out.println("Opening file: "+file.getAbsolutePath());		
 		TmXmlReader reader = new TmXmlReader(file);
-		TrackMateModel model = reader.getModel();
-		Settings settings = null;
-		settings = reader.getSettings(null, new TrackerProvider(model), null, null, null);
+		Model model = reader.getModel();
+		Settings settings = new Settings();
+		reader.readSettings(settings, null, new TrackerProvider(model), null, null, null);
 		
 		System.out.println("Spots: "+ model.getSpots());
-		System.out.println("Found "+model.getTrackModel().getNTracks()+" tracks in the file:");
-		for (Integer trackID : model.getTrackModel().getTrackEdges().keySet())
-			System.out.println('\t'+model.getTrackModel().trackToString(trackID));
+		System.out.println("Found "+model.getTrackModel().nTracks(false)+" tracks in the file:");
 		System.out.println();
 		
 		// 1.5 - Set the tracking settings
@@ -55,7 +53,7 @@ public class LAPTrackerTestDrive {
 		ts.put(KEY_GAP_CLOSING_MAX_DISTANCE, 15d);
 		ts.put(KEY_ALLOW_TRACK_MERGING, true);
 		ts.put(KEY_MERGING_MAX_DISTANCE, 10d);
-		ts.put(KEY_ALLOW_TRACK_SPLITTING, true);
+		ts.put(KEY_ALLOW_TRACK_SPLITTING, false);
 		ts.put(KEY_SPLITTING_MAX_DISTANCE, 10d);
 		settings.trackerSettings = ts;
 		System.out.println("Tracker settings:");
@@ -76,10 +74,10 @@ public class LAPTrackerTestDrive {
 		// 2.5 check the track visibility prior and after
 		System.out.println("Track visibility before new graph allocation:");
 		System.out.println("On the following tracks ID:");
-		for (Integer trackID : model.getTrackModel().getTrackIDs()) 
+		for (Integer trackID : model.getTrackModel().trackIDs(false)) 
 			System.out.print(trackID + ", ");
 		System.out.println("\nthe following were filtered:");
-		for (Integer trackID : model.getTrackModel().getFilteredTrackIDs()) 
+		for (Integer trackID : model.getTrackModel().trackIDs(true)) 
 			System.out.print(trackID + ", ");
 		System.out.println();
 		System.out.println();
@@ -89,19 +87,18 @@ public class LAPTrackerTestDrive {
 
 		System.out.println("Track visibility after new graph allocation:");
 		System.out.println("On the following tracks ID:");
-		for (Integer trackID : model.getTrackModel().getTrackIDs()) 
+		for (Integer trackID : model.getTrackModel().trackIDs(false)) 
 			System.out.print(trackID + ", ");
-		System.out.println("\nthe following were filtered:");
-		for (Integer trackID : model.getTrackModel().getFilteredTrackIDs()) 
+		System.out.println("\nthe following were visible:");
+		for (Integer trackID : model.getTrackModel().trackIDs(true)) 
 			System.out.print(trackID + ", ");
 		System.out.println();
-
 		
 		// 3 - Print out results for testing		
 		System.out.println();
 		System.out.println();
 		System.out.println();
-		System.out.println("Found " + model.getTrackModel().getNTracks() + " final tracks.");
+		System.out.println("Found " + model.getTrackModel().nTracks(false) + " final tracks.");
 		System.out.println("Whole tracking done in "+(end-start)+" ms.");
 		System.out.println();
 

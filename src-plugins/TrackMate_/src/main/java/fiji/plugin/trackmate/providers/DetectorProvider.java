@@ -23,7 +23,7 @@ import org.jdom2.Element;
 
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.TrackMate;
-import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.Model;
 import fiji.plugin.trackmate.detection.DetectorKeys;
 import fiji.plugin.trackmate.detection.DogDetectorFactory;
 import fiji.plugin.trackmate.detection.DownsampleLogDetectorFactory;
@@ -33,6 +33,7 @@ import fiji.plugin.trackmate.detection.SpotDetector;
 import fiji.plugin.trackmate.detection.SpotDetectorFactory;
 import fiji.plugin.trackmate.gui.ConfigurationPanel;
 import fiji.plugin.trackmate.gui.panels.detector.BasicDetectorConfigurationPanel;
+import fiji.plugin.trackmate.gui.panels.detector.DogDetectorConfigurationPanel;
 import fiji.plugin.trackmate.gui.panels.detector.DownSampleLogDetectorConfigurationPanel;
 import fiji.plugin.trackmate.gui.panels.detector.LogDetectorConfigurationPanel;
 
@@ -42,7 +43,7 @@ public class DetectorProvider extends AbstractProvider {
 	 * BLANK CONSTRUCTOR
 	 */
 
-	private TrackMateModel model;
+	private Model model;
 
 	/**
 	 * This provider provides the GUI with the spot detectors currently available in the 
@@ -56,7 +57,7 @@ public class DetectorProvider extends AbstractProvider {
 	 * @param settings 
 	 * @param model 
 	 */
-	public DetectorProvider(TrackMateModel model) {
+	public DetectorProvider(Model model) {
 		this.model = model;
 		registerDetectors();
 		currentKey = LogDetectorFactory.DETECTOR_KEY;
@@ -294,19 +295,18 @@ public class DetectorProvider extends AbstractProvider {
 	public ConfigurationPanel getDetectorConfigurationPanel(Settings settings) 	{
 		
 		ImagePlus imp = settings.imp;
-		String spaceUnits = model.getSpaceUnits();
 		
 		if (currentKey.equals(LogDetectorFactory.DETECTOR_KEY)) {
-			return new LogDetectorConfigurationPanel(imp, LogDetectorFactory.INFO_TEXT, LogDetectorFactory.NAME, spaceUnits);
+			return new LogDetectorConfigurationPanel(imp, LogDetectorFactory.INFO_TEXT, LogDetectorFactory.NAME, model);
 
 		} else if (currentKey.equals(DogDetectorFactory.DETECTOR_KEY)){
-			return new LogDetectorConfigurationPanel(imp, DogDetectorFactory.INFO_TEXT, DogDetectorFactory.NAME, spaceUnits);
+			return new DogDetectorConfigurationPanel(imp, DogDetectorFactory.INFO_TEXT, DogDetectorFactory.NAME, model);
 
 		} else if (currentKey.equals(DownsampleLogDetectorFactory.DETECTOR_KEY)) {
-			return new DownSampleLogDetectorConfigurationPanel(imp, spaceUnits);
+			return new DownSampleLogDetectorConfigurationPanel(imp, model);
 
 		} else if (currentKey.equals(ManualDetectorFactory.DETECTOR_KEY)) {
-			return new BasicDetectorConfigurationPanel(imp, ManualDetectorFactory.INFO_TEXT, ManualDetectorFactory.NAME, spaceUnits);
+			return new BasicDetectorConfigurationPanel(imp, ManualDetectorFactory.INFO_TEXT, ManualDetectorFactory.NAME, model);
 
 		} else {
 			return null;

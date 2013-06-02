@@ -1,5 +1,6 @@
 package fiji.plugin.trackmate;
 
+import fiji.plugin.trackmate.gui.GuiUtils;
 import fiji.plugin.trackmate.gui.TrackMateGUIController;
 import ij.ImageJ;
 import ij.ImagePlus;
@@ -20,13 +21,12 @@ public class TrackMatePlugIn_ implements PlugIn {
 		settings 	= createSettings(imp);
 		trackmate 	= createTrackMate();
 		
-		
 		/*
-		 * Launch GUI
+		 * Launch GUI.
 		 */
 		
-		new TrackMateGUIController(trackmate, imp);
-		
+		TrackMateGUIController controller = new TrackMateGUIController(trackmate);
+		GuiUtils.positionWindow(controller.getGUI(), imp.getWindow());
 	}
 
 

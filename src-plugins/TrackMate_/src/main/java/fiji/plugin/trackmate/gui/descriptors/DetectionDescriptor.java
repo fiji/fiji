@@ -27,10 +27,10 @@ public class DetectionDescriptor implements WizardPanelDescriptor {
 	protected TrackMateGUIController controller;
 
 
-	public DetectionDescriptor(TrackMateGUIController controller, TrackMate trackmate) {
+	public DetectionDescriptor(TrackMateGUIController controller) {
 		this.controller = controller;
 		this.logPanel = controller.getGUI().getLogPanel();
-		this.trackmate = trackmate;
+		this.trackmate = controller.getPlugin();
 	}
 	
 	@Override
@@ -43,6 +43,7 @@ public class DetectionDescriptor implements WizardPanelDescriptor {
 
 	@Override
 	public void displayingPanel() {
+		controller.disableButtonsAndStoreState();
 		final Settings settings = trackmate.getSettings();
 		final Logger logger = logPanel.getLogger();
 		logger.log("Starting detection using "+settings.detectorFactory.toString()+"\n", Logger.BLUE_COLOR);
@@ -62,6 +63,7 @@ public class DetectionDescriptor implements WizardPanelDescriptor {
 				nextButton.setIcon(CANCEL_ICON);
 				CancelListener cancel = new CancelListener();
 				nextButton.addActionListener(cancel);
+				nextButton.setEnabled(true);
 				
 				long start = System.currentTimeMillis();
 				try {
@@ -76,6 +78,7 @@ public class DetectionDescriptor implements WizardPanelDescriptor {
 				motherThread = null;
 				
 				// Restore
+				controller.restoreButtonsState();
 				nextButton.removeActionListener(cancel);
 				for (ActionListener actionListener : actionListeners) {
 					nextButton.addActionListener(actionListener);

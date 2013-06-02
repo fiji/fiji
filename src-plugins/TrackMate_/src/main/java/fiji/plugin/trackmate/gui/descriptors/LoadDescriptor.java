@@ -7,7 +7,8 @@ import java.util.Map;
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.TrackMate;
-import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.Model;
+import fiji.plugin.trackmate.gui.GuiUtils;
 import fiji.plugin.trackmate.gui.TrackMateGUIController;
 import fiji.plugin.trackmate.io.IOUtils;
 import fiji.plugin.trackmate.io.TmXmlReader;
@@ -17,6 +18,7 @@ import fiji.plugin.trackmate.providers.SpotAnalyzerProvider;
 import fiji.plugin.trackmate.providers.TrackAnalyzerProvider;
 import fiji.plugin.trackmate.providers.TrackerProvider;
 import fiji.plugin.trackmate.providers.ViewProvider;
+import fiji.plugin.trackmate.util.TMUtils;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
 import fiji.plugin.trackmate.visualization.hyperstack.HyperStackDisplayer;
 
@@ -24,32 +26,17 @@ public class LoadDescriptor extends SomeDialogDescriptor {
 
 	private static final String KEY = "Loading";
 	private final TrackMate trackmate;
-	private final DetectorProvider detectorProvider;
-	private final TrackerProvider trackerProvider;
-	private final SpotAnalyzerProvider spotAnalyzerProvider;
-	private final EdgeAnalyzerProvider edgeAnalyzerProvider;
-	private final TrackAnalyzerProvider trackAnalyzerProvider;
 	private final TrackMateGUIController controller;
-	private final ViewProvider viewProvider;
 
-	public LoadDescriptor(TrackMateGUIController controller, DetectorProvider detectorProvider, TrackerProvider trackerProvider, 
-			SpotAnalyzerProvider spotAnalyzerProvider, EdgeAnalyzerProvider edgeAnalyzerProvider, TrackAnalyzerProvider trackAnalyzerProvider,
-			ViewProvider viewProvider) {
+	public LoadDescriptor(TrackMateGUIController controller) {
 		super(controller.getGUI().getLogPanel());
 		this.controller = controller;
-		this.viewProvider = viewProvider;
 		this.trackmate = controller.getPlugin();
-		this.detectorProvider = detectorProvider;
-		this.trackerProvider = trackerProvider;
-		this.spotAnalyzerProvider = spotAnalyzerProvider;
-		this.edgeAnalyzerProvider = edgeAnalyzerProvider;
-		this.trackAnalyzerProvider = trackAnalyzerProvider;
 	}
 
 
 	@Override
 	public void displayingPanel() {
-
 
 		if (null == file) {
 			try {
@@ -72,34 +59,40 @@ public class LoadDescriptor extends SomeDialogDescriptor {
 		TmXmlReader reader = new TmXmlReader(file);
 		if (!reader.isReadingOk()) {
 			logger.error(reader.getErrorMessage());
-			logger.error("Aborting.\n"); // If I cannot even open the xml file, it is not worh going on.
+			logger.error("Aborting.\n"); // If I cannot even open the xml file, it is not work going on.
 			return;
 		}
 		
 		// Log
-		String logText = reader.getLog();
+		String logText = reader.getLog() + '\n';
 		// Model
-		TrackMateModel model = reader.getModel();
-		// Settings
-		Settings settings = reader.getSettings(detectorProvider, trackerProvider, 
+		Model model = reader.getModel();
+		// Settings -> empty for now.
+		Settings settings = new Settings();
+		
+		// With this we can create a new controller from the provided one:
+		TrackMate trackmate = new TrackMate(model, settings);
+		TrackMateGUIController newcontroller = controller.createOn(trackmate);
+		
+		// We feed then the reader with the providers taken from the NEW controller.
+		DetectorProvider detectorProvider = newcontroller.getDetectorProvider();
+		TrackerProvider trackerProvider = newcontroller.getTrackerProvider();
+		SpotAnalyzerProvider spotAnalyzerProvider = newcontroller.getSpotAnalyzerProvider();
+		EdgeAnalyzerProvider edgeAnalyzerProvider = newcontroller.getEdgeAnalyzerProvider();
+		TrackAnalyzerProvider trackAnalyzerProvider = newcontroller.getTrackAnalyzerProvider();
+		reader.readSettings(settings, detectorProvider, trackerProvider, 
 				spotAnalyzerProvider, edgeAnalyzerProvider, trackAnalyzerProvider);
+		
+		// GUI position
+		GuiUtils.positionWindow(newcontroller.getGUI(), settings.imp.getWindow());
+		
 		// GUI state
 		String guiState = reader.getGUIState();
+		
 		// Views
+		ViewProvider viewProvider = newcontroller.getViewProvider();
 		Collection<TrackMateModelView> views = reader.getViews(viewProvider);
-
-		if (!reader.isReadingOk()) {
-			logger.error("Some errors occured while reading file:\n");
-			logger.error(reader.getErrorMessage());
-		}
 		
-		/*
-		 *  Re-instantiate a GUI and close the old one
-		 */
-		
-		TrackMate newtrackmate = new TrackMate(model, settings);
-		TrackMateGUIController newcontroller = new TrackMateGUIController(newtrackmate, settings.imp);
-		newcontroller.getGUI().getLogPanel().setTextContent(logText);
 		if (!reader.isReadingOk()) {
 			Logger newlogger = newcontroller.getGUI().getLogger();
 			newlogger.error("Some errors occured while reading file:\n");
@@ -114,14 +107,18 @@ public class LoadDescriptor extends SomeDialogDescriptor {
 		Map<String, Object> displaySettings = newcontroller.getGuimodel().getDisplaySettings();
 		for (TrackMateModelView view : views) {
 			for (String key : displaySettings.keySet()) {
+				newcontroller.getGuimodel().addView(view);
 				view.setDisplaySettings(key, displaySettings.get(key));
 			}
 			view.render();
 		}
 
-		
-		// Clsoe the old one
+		// Close the old one
 		controller.quit();
+
+		// Text
+		newcontroller.getGUI().getLogPanel().setTextContent(logText);
+		model.getLogger().log("File loaded on " + TMUtils.getCurrentTimeString() + '\n', Logger.BLUE_COLOR);
 	}
 
 	@Override

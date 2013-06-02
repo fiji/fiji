@@ -12,7 +12,7 @@ import net.imglib2.type.numeric.RealType;
 import net.imglib2.view.HyperSliceImgPlus;
 import fiji.plugin.trackmate.Dimension;
 import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.Model;
 
 public class SpotContrastAnalyzerFactory<T extends RealType<T> & NativeType<T>> implements SpotAnalyzerFactory<T> {
 
@@ -33,14 +33,14 @@ public class SpotContrastAnalyzerFactory<T extends RealType<T> & NativeType<T>> 
 		FEATURE_DIMENSIONS.put(KEY, Dimension.NONE);
 	}
 	
-	private final TrackMateModel model;
+	private final Model model;
 	private final ImgPlus<T> img;
 	
 	/*
 	 * CONSTRUCTOR
 	 */
 	
-	public SpotContrastAnalyzerFactory(final TrackMateModel model, ImgPlus<T> img) {
+	public SpotContrastAnalyzerFactory(final Model model, ImgPlus<T> img) {
 		this.model = model;
 		this.img = img;
 	}

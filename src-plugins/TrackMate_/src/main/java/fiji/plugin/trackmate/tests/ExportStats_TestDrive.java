@@ -2,7 +2,7 @@ package fiji.plugin.trackmate.tests;
 
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.TrackMate;
-import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.Model;
 import fiji.plugin.trackmate.action.ExportStatsToIJAction;
 import fiji.plugin.trackmate.io.TmXmlReader;
 import ij.ImageJ;
@@ -21,7 +21,7 @@ public class ExportStats_TestDrive {
 		ij.ImageJ.main(args);
 		
 		TmXmlReader reader = new TmXmlReader(file);
-		TrackMateModel model = reader.getModel();
+		Model model = reader.getModel();
 		
 		model.setLogger(Logger.DEFAULT_LOGGER);
 //		System.out.println(model);

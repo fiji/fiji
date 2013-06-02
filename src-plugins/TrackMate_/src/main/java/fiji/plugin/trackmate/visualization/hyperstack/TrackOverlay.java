@@ -20,7 +20,7 @@ import java.util.Set;
 import org.jgrapht.graph.DefaultWeightedEdge;
 
 import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.Model;
 import fiji.plugin.trackmate.util.TMUtils;
 import fiji.plugin.trackmate.visualization.TrackColorGenerator;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
@@ -34,14 +34,14 @@ public class TrackOverlay extends Roi {
 	protected final double[] calibration;
 	protected Collection<DefaultWeightedEdge> highlight = new HashSet<DefaultWeightedEdge>();
 	protected Map<String, Object> displaySettings;
-	protected final TrackMateModel model;
+	protected final Model model;
 	private TrackColorGenerator colorGenerator;
 
 	/*
 	 * CONSTRUCTOR
 	 */
 
-	public TrackOverlay(final TrackMateModel model, final ImagePlus imp, final Map<String, Object> displaySettings) {
+	public TrackOverlay(final Model model, final ImagePlus imp, final Map<String, Object> displaySettings) {
 		super(0, 0, imp);
 		this.model = model;
 		this.calibration = TMUtils.getSpatialCalibration(imp);
@@ -64,7 +64,7 @@ public class TrackOverlay extends Roi {
 		double magnification = getMagnification();
 
 		boolean tracksVisible = (Boolean) displaySettings.get(TrackMateModelView.KEY_TRACKS_VISIBLE);
-		if (!tracksVisible  || model.getTrackModel().getNFilteredTracks() == 0)
+		if (!tracksVisible  || model.getTrackModel().nTracks(true) == 0)
 			return;
 
 		final Graphics2D g2d = (Graphics2D)g;
@@ -88,8 +88,7 @@ public class TrackOverlay extends Roi {
 		final int currentFrame = imp.getFrame() - 1;
 		final int trackDisplayMode = (Integer) displaySettings.get(TrackMateModelView.KEY_TRACK_DISPLAY_MODE);
 		final int trackDisplayDepth = (Integer) displaySettings.get(TrackMateModelView.KEY_TRACK_DISPLAY_DEPTH);
-		final Map<Integer,Set<DefaultWeightedEdge>> trackEdges = model.getTrackModel().getTrackEdges(); 
-		final Set<Integer> filteredTrackKeys = model.getTrackModel().getFilteredTrackIDs();
+		final Set<Integer> filteredTrackKeys = model.getTrackModel().trackIDs(true);
 		
 		g2d.setStroke(new BasicStroke(2.0f,  BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
 		if (trackDisplayMode == TrackMateModelView.TRACK_DISPLAY_MODE_LOCAL || trackDisplayMode == TrackMateModelView.TRACK_DISPLAY_MODE_LOCAL_QUICK) 
@@ -121,7 +120,7 @@ public class TrackOverlay extends Roi {
 
 		case TrackMateModelView.TRACK_DISPLAY_MODE_WHOLE: {
 			for (Integer trackID : filteredTrackKeys) {
-				final Set<DefaultWeightedEdge> track = trackEdges.get(trackID);
+				final Set<DefaultWeightedEdge> track = model.getTrackModel().trackEdges(trackID);
 				colorGenerator.setCurrentTrackID(trackID);
 				for (DefaultWeightedEdge edge : track) {
 					if (highlight.contains(edge))
@@ -144,7 +143,7 @@ public class TrackOverlay extends Roi {
 
 			for (Integer trackID : filteredTrackKeys) {
 				colorGenerator.setCurrentTrackID(trackID);
-				final Set<DefaultWeightedEdge> track= trackEdges.get(trackID);
+				final Set<DefaultWeightedEdge> track = model.getTrackModel().trackEdges(trackID);
 
 				for (DefaultWeightedEdge edge : track) {
 					if (highlight.contains(edge))
@@ -171,7 +170,7 @@ public class TrackOverlay extends Roi {
 
 			for (Integer trackID : filteredTrackKeys) {
 				colorGenerator.setCurrentTrackID(trackID);
-				final Set<DefaultWeightedEdge> track= trackEdges.get(trackID);
+				final Set<DefaultWeightedEdge> track = model.getTrackModel().trackEdges(trackID);
 
 				for (DefaultWeightedEdge edge : track) {
 					if (highlight.contains(edge))

@@ -12,7 +12,7 @@ import net.imglib2.type.numeric.RealType;
 import net.imglib2.view.HyperSliceImgPlus;
 import fiji.plugin.trackmate.Dimension;
 import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.Model;
 
 public class SpotRadiusEstimatorFactory<T extends RealType<T> & NativeType<T>>  implements SpotAnalyzerFactory<T> {
 	
@@ -33,14 +33,14 @@ public class SpotRadiusEstimatorFactory<T extends RealType<T> & NativeType<T>>  
 		FEATURE_DIMENSIONS.put(ESTIMATED_DIAMETER, Dimension.LENGTH);
 	}
 	public static final String KEY = "Spot radius estimator";
-	private final TrackMateModel model;
+	private final Model model;
 	private final ImgPlus<T> img;
 	
 	/*
 	 * CONSTRUCTOR
 	 */
 	
-	public SpotRadiusEstimatorFactory(final TrackMateModel model, final ImgPlus<T> img) {
+	public SpotRadiusEstimatorFactory(final Model model, final ImgPlus<T> img) {
 		this.model = model;
 		this.img = img;
 	}

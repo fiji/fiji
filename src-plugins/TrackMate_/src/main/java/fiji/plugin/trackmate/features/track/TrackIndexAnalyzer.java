@@ -8,7 +8,7 @@ import java.util.Map;
 
 import fiji.plugin.trackmate.Dimension;
 import fiji.plugin.trackmate.FeatureModel;
-import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.Model;
 
 public class TrackIndexAnalyzer implements TrackAnalyzer {
 
@@ -37,10 +37,10 @@ public class TrackIndexAnalyzer implements TrackAnalyzer {
 		FEATURE_DIMENSIONS.put(TRACK_ID, Dimension.NONE);
 	}
 	
-	private final TrackMateModel model;
+	private final Model model;
 	private long processingTime;
 	
-	public TrackIndexAnalyzer(final TrackMateModel model) {
+	public TrackIndexAnalyzer(final Model model) {
 		this.model = model;
 	}
 	

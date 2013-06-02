@@ -13,7 +13,7 @@ import org.jgrapht.graph.DefaultWeightedEdge;
 import fiji.plugin.trackmate.FeatureModel;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.TrackMate;
-import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.Model;
 import fiji.plugin.trackmate.gui.TrackMateGUIController;
 import fiji.plugin.trackmate.gui.TrackMateWizard;
 
@@ -45,12 +45,12 @@ public class ExportStatsToIJAction extends AbstractTMAction {
 		logger.log("Exporting statistics.\n");
 		
 		// Model
-		final TrackMateModel model = trackmate.getModel();
+		final Model model = trackmate.getModel();
 		final FeatureModel fm = model.getFeatureModel();
 		
 		// Export spots
 		logger.log("  - Exporting spot statistics...");
-		Set<Integer> trackIDs = model.getTrackModel().getFilteredTrackIDs();
+		Set<Integer> trackIDs = model.getTrackModel().trackIDs(true);
 		Collection<String> spotFeatures = trackmate.getModel().getFeatureModel().getSpotFeatures();
 
 		// Create table
@@ -58,7 +58,7 @@ public class ExportStatsToIJAction extends AbstractTMAction {
 		
 		// Parse spots to insert values as objects
 		for (Integer trackID : trackIDs) {
-			Set<Spot> track = model.getTrackModel().getTrackSpots(trackID);
+			Set<Spot> track = model.getTrackModel().trackSpots(trackID);
 			for (Spot spot : track) {
 				spotTable.incrementCounter();
 				spotTable.addLabel(spot.getName());
@@ -87,7 +87,7 @@ public class ExportStatsToIJAction extends AbstractTMAction {
 		// Sort by track
 		for (Integer trackID : trackIDs) {
 			
-			Set<DefaultWeightedEdge> track = model.getTrackModel().getTrackEdges(trackID);
+			Set<DefaultWeightedEdge> track = model.getTrackModel().trackEdges(trackID);
 			for (DefaultWeightedEdge edge : track) {
 				edgeTable.incrementCounter();
 				edgeTable.addLabel(edge.toString());
@@ -115,7 +115,7 @@ public class ExportStatsToIJAction extends AbstractTMAction {
 		// Sort by track
 		for (Integer trackID : trackIDs) {
 			trackTable.incrementCounter();
-			trackTable.addLabel(model.getTrackModel().getTrackName(trackID));
+			trackTable.addLabel(model.getTrackModel().name(trackID));
 			for (String feature : trackFeatures) {
 				Double val = fm.getTrackFeature(trackID, feature);
 				if (null == val) {

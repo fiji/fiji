@@ -16,7 +16,7 @@ import org.jgrapht.graph.DefaultWeightedEdge;
 
 import fiji.plugin.trackmate.Dimension;
 import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.Model;
 
 public class TrackBranchingAnalyzer implements TrackAnalyzer, MultiThreaded {
 
@@ -63,9 +63,9 @@ public class TrackBranchingAnalyzer implements TrackAnalyzer, MultiThreaded {
 
 	private int numThreads;
 	private long processingTime;
-	private final TrackMateModel model;
+	private final Model model;
 
-	public TrackBranchingAnalyzer(final TrackMateModel model) {
+	public TrackBranchingAnalyzer(final Model model) {
 		this.model = model;
 		setNumThreads();
 	}
@@ -92,7 +92,7 @@ public class TrackBranchingAnalyzer implements TrackAnalyzer, MultiThreaded {
 					Integer trackID;
 					while ((trackID = queue.poll()) != null) {
 
-						Set<Spot> track = model.getTrackModel().getTrackSpots(trackID);
+						Set<Spot> track = model.getTrackModel().trackSpots(trackID);
 
 						int nmerges = 0;
 						int nsplits = 0;
@@ -135,7 +135,7 @@ public class TrackBranchingAnalyzer implements TrackAnalyzer, MultiThreaded {
 						}
 
 						int ngaps = 0;
-						for(DefaultWeightedEdge edge : model.getTrackModel().getTrackEdges(trackID)) {
+						for(DefaultWeightedEdge edge : model.getTrackModel().trackEdges(trackID)) {
 							Spot source = model.getTrackModel().getEdgeSource(edge);
 							Spot target = model.getTrackModel().getEdgeTarget(edge);
 							if (Math.abs( target.diffTo(source, Spot.FRAME)) > 1) {

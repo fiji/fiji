@@ -1,26 +1,33 @@
 package fiji.plugin.trackmate.gui.descriptors;
 
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
-import java.util.Map;
+
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.TrackMate;
-import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.Model;
 import fiji.plugin.trackmate.features.FeatureFilter;
+import fiji.plugin.trackmate.gui.panels.components.ColorByFeatureGUIPanel.Category;
 import fiji.plugin.trackmate.gui.panels.components.FilterGuiPanel;
-import fiji.plugin.trackmate.util.TMUtils;
 
 public class SpotFilterDescriptor implements WizardPanelDescriptor {
 
+	private ArrayList<ActionListener> actionListeners = new ArrayList<ActionListener>();
+	private ArrayList<ChangeListener> changeListeners = new ArrayList<ChangeListener>();
 	private static final String KEY = "SpotFilter";
-	private final FilterGuiPanel component;
+	private FilterGuiPanel component;
 	private final TrackMate trackmate;
 	
 	
 	public SpotFilterDescriptor(TrackMate trackmate) {
 		this.trackmate = trackmate;
-		this.component = new FilterGuiPanel();
 	}
 	
 	@Override
@@ -30,16 +37,30 @@ public class SpotFilterDescriptor implements WizardPanelDescriptor {
 
 	@Override
 	public void aboutToDisplayPanel() {
-		TrackMateModel model = trackmate.getModel();
+		component = new FilterGuiPanel(trackmate.getModel(), Category.SPOTS);
+		component.refreshDisplayedFeatureValues();
 		Settings settings = trackmate.getSettings();
-		Map<String, double[]> values = TMUtils.getSpotFeatureValues(model.getSpots(), 
-				model.getFeatureModel().getSpotFeatures(), model.getLogger());
-		component.setTarget(model.getFeatureModel().getSpotFeatures(), settings.getSpotFilters(),  
-				model.getFeatureModel().getSpotFeatureNames(), values , "spots");
+		component.setFilters(settings.getSpotFilters());
+		component.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent event) {
+				fireAction(event);
+			}
+		});
+		component.addChangeListener(new ChangeListener() {
+			@Override
+			public void stateChanged(ChangeEvent event) {
+				fireThresholdChanged(event);
+			}
+		});
 	}
 
 	@Override
 	public void displayingPanel() {
+		if (null == component) {
+			// This happens when we load data: the component gets initialized only in another method
+			aboutToDisplayPanel();
+		}
 		trackmate.getSettings().setSpotFilters(component.getFeatureFilters());
 		trackmate.execSpotFiltering(false);
 	}
@@ -48,7 +69,7 @@ public class SpotFilterDescriptor implements WizardPanelDescriptor {
 	public void aboutToHidePanel() {
 		Logger logger = trackmate.getModel().getLogger();
 		logger.log("Performing spot filtering on the following features:\n", Logger.BLUE_COLOR);
-		final TrackMateModel model = trackmate.getModel();
+		final Model model = trackmate.getModel();
 		List<FeatureFilter> featureFilters = component.getFeatureFilters();
 		trackmate.getSettings().setSpotFilters(featureFilters);
 		trackmate.execSpotFiltering(false);
@@ -77,4 +98,61 @@ public class SpotFilterDescriptor implements WizardPanelDescriptor {
 		return KEY;
 	}
 
+	
+	/**
+	 * Adds an {@link ActionListener} to this panel. These listeners will be notified when
+	 * a button is pushed or when the feature to color is changed.
+	 */
+	public void addActionListener(ActionListener listener) {
+		actionListeners.add(listener);
+	}
+	
+	/**
+	 * Removes an ActionListener from this panel. 
+	 * @return true if the listener was in the ActionListener collection of this instance.
+	 */
+	public boolean removeActionListener(ActionListener listener) {
+		return actionListeners.remove(listener);
+	}
+	
+	public Collection<ActionListener> getActionListeners() {
+		return actionListeners;
+	}
+	
+
+	/** 
+	 * Forwards the given {@link ActionEvent} to all the {@link ActionListener} of this panel.
+	 */
+	private void fireAction(ActionEvent e) {
+		for (ActionListener l : actionListeners)
+			l.actionPerformed(e);
+	}
+	
+	/**
+	 * Add an {@link ChangeListener} to this panel. The {@link ChangeListener} will
+	 * be notified when a change happens to the thresholds displayed by this panel, whether
+	 * due to the slider being move, the auto-threshold button being pressed, or
+	 * the combo-box selection being changed.
+	 */
+	public void addChangeListener(ChangeListener listener) {
+		changeListeners.add(listener);
+	}
+
+	/**
+	 * Remove a ChangeListener from this panel. 
+	 * @return true if the listener was in listener collection of this instance.
+	 */
+	public boolean removeChangeListener(ChangeListener listener) {
+		return changeListeners.remove(listener);
+	}
+
+	public Collection<ChangeListener> getChangeListeners() {
+		return changeListeners;
+	}
+	
+	private void fireThresholdChanged(ChangeEvent e) {
+		for (ChangeListener cl : changeListeners)  {
+			cl.stateChanged(e);
+		}
+	}
 }

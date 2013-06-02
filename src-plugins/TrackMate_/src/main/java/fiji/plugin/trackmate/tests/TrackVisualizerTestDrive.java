@@ -2,13 +2,16 @@ package fiji.plugin.trackmate.tests;
 
 import fiji.plugin.trackmate.SelectionModel;
 import fiji.plugin.trackmate.Settings;
-import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.Model;
 import fiji.plugin.trackmate.TrackMate;
 import fiji.plugin.trackmate.features.FeatureFilter;
 import fiji.plugin.trackmate.features.track.TrackBranchingAnalyzer;
 import fiji.plugin.trackmate.gui.GrapherPanel;
 import fiji.plugin.trackmate.gui.panels.ConfigureViewsPanel;
 import fiji.plugin.trackmate.io.TmXmlReader;
+import fiji.plugin.trackmate.providers.EdgeAnalyzerProvider;
+import fiji.plugin.trackmate.providers.SpotAnalyzerProvider;
+import fiji.plugin.trackmate.providers.TrackAnalyzerProvider;
 import fiji.plugin.trackmate.visualization.hyperstack.HyperStackDisplayer;
 import fiji.plugin.trackmate.visualization.threedviewer.SpotDisplayer3D;
 import fiji.plugin.trackmate.visualization.trackscheme.TrackScheme;
@@ -32,27 +35,26 @@ public class TrackVisualizerTestDrive {
 		ij.ImageJ.main(args);
 		
 		TmXmlReader reader = new TmXmlReader(file);
-		TrackMateModel model = reader.getModel();
-		Settings settings = reader.getSettings(null, null, null, null, null);
+		Model model = reader.getModel();
+		Settings settings = new Settings();
+		reader.readSettings(settings, null, null, 
+				new SpotAnalyzerProvider(model), new EdgeAnalyzerProvider(model), new TrackAnalyzerProvider(model));
 		TrackMate trackmate = new TrackMate(model, settings);
 		
 		System.out.println("From the XML file:");
-		System.out.println("Found "+model.getTrackModel().getNTracks()+" tracks in total.");
+		System.out.println("Found "+model.getTrackModel().nTracks(false)+" tracks in total.");
 		System.out.println("There were "+settings.getTrackFilters().size() + " track filter(s) applied on this list,");
-		System.out.println("resulting in having only "+model.getTrackModel().getNFilteredTracks()+" visible tracks after filtering.");
-		for(int i : model.getTrackModel().getFilteredTrackIDs()) {
-			System.out.println(" - "+model.getTrackModel().trackToString(i));
-		}
+		System.out.println("resulting in having only "+model.getTrackModel().nTracks(true)+" visible tracks after filtering.");
 		System.out.println("Filtered tracks at this stage:");
-		System.out.println(model.getTrackModel().getFilteredTrackIDs());
+		System.out.println(model.getTrackModel().trackIDs(true));
 		System.out.println();
 		
 		FeatureFilter filter = new FeatureFilter(TrackBranchingAnalyzer.NUMBER_SPOTS, 5d, true);
 		System.out.println("We add an extra track filter: "+filter);
 		settings.addTrackFilter(filter);
 		trackmate.execTrackFiltering(true);
-		System.out.println("After filtering, retaining "+model.getTrackModel().getNFilteredTracks()+" tracks, which are:");
-		System.out.println(model.getTrackModel().getFilteredTrackIDs());
+		System.out.println("After filtering, retaining "+model.getTrackModel().nTracks(true)+" tracks, which are:");
+		System.out.println(model.getTrackModel().trackIDs(true));
 		System.out.println();
 			
 		ImagePlus imp = settings.imp;
@@ -79,7 +81,7 @@ public class TrackVisualizerTestDrive {
 		trackScheme.render();
 		
 		// Show control panel
-		ConfigureViewsPanel panel = new ConfigureViewsPanel(trackmate);
+		ConfigureViewsPanel panel = new ConfigureViewsPanel(trackmate.getModel());
 		JFrame frame = new JFrame();
 		frame.getContentPane().add(panel);
 		frame.setSize(300, 500);

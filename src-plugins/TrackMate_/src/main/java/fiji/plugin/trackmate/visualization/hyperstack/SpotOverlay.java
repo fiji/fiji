@@ -1,9 +1,11 @@
 package fiji.plugin.trackmate.visualization.hyperstack;
 
+import static fiji.plugin.trackmate.visualization.TrackMateModelView.KEY_SPOT_COLORING;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
-import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.Model;
 import fiji.plugin.trackmate.util.TMUtils;
+import fiji.plugin.trackmate.visualization.FeatureColorGenerator;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
 import ij.ImagePlus;
 import ij.gui.Roi;
@@ -21,11 +23,8 @@ import java.awt.Stroke;
 import java.awt.geom.AffineTransform;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
-
-import org.jfree.chart.renderer.InterpolatePaintScale;
 
 /**
  * The overlay class in charge of drawing the spot images on the hyperstack window.
@@ -37,27 +36,24 @@ public class SpotOverlay extends Roi {
 	private static final Font LABEL_FONT = new Font("Arial", Font.BOLD, 12);
 	private static final boolean DEBUG = false;
 
-	/** The color mapping of the target collection. */
-	protected Map<Spot, Color> targetColor;
 	protected Spot editingSpot;
 	protected final double[] calibration;
 	protected Composite composite = AlphaComposite.getInstance(AlphaComposite.SRC_OVER);
 	protected FontMetrics fm;
 	protected Collection<Spot> spotSelection = new ArrayList<Spot>();
 	protected Map<String, Object> displaySettings;
-	protected final TrackMateModel model;
+	protected final Model model;
 
 	/*
 	 * CONSTRUCTOR
 	 */
 
-	public SpotOverlay(final TrackMateModel model, final ImagePlus imp, final Map<String, Object> displaySettings) {
+	public SpotOverlay(final Model model, final ImagePlus imp, final Map<String, Object> displaySettings) {
 		super(0, 0, imp);
 		this.model = model;
 		this.imp = imp;
 		this.calibration = TMUtils.getSpatialCalibration(imp);
 		this.displaySettings = displaySettings; 
-		computeSpotColors();
 	}
 
 	/*
@@ -71,7 +67,6 @@ public class SpotOverlay extends Roi {
 		int ycorner = ic.offScreenY(0);
 		double magnification = getMagnification();
 		SpotCollection spots = model.getSpots();
-
 		
 		boolean spotVisible = (Boolean) displaySettings.get(TrackMateModelView.KEY_SPOTS_VISIBLE);
 		if (!spotVisible  || spots.getNSpots(true) == 0)
@@ -95,17 +90,16 @@ public class SpotOverlay extends Roi {
 		final int frame = imp.getFrame()-1;
 
 		// Deal with normal spots.
+		@SuppressWarnings("unchecked")
+		FeatureColorGenerator<Spot> colorGenerator = (FeatureColorGenerator<Spot>) displaySettings.get(KEY_SPOT_COLORING);
 		g2d.setStroke(new BasicStroke(1.0f));
-		Color color;
 		for (Iterator<Spot> iterator = spots.iterator(frame, true); iterator.hasNext();) {
 			Spot spot = iterator.next();
 
 			if (editingSpot == spot || (spotSelection  != null && spotSelection.contains(spot)))
 				continue;
 
-			color = targetColor.get(spot);
-			if (null == color)
-				color = TrackMateModelView.DEFAULT_COLOR;
+			Color color = colorGenerator.color(spot);
 			g2d.setColor(color);
 			drawSpot(g2d, spot, zslice, xcorner, ycorner, mag);
 
@@ -152,39 +146,6 @@ public class SpotOverlay extends Roi {
 		g2d.setFont(originalFont);
 	}
 
-	public void computeSpotColors() {
-		final String feature = (String) displaySettings.get(TrackMateModelView.KEY_SPOT_COLOR_FEATURE);
-		SpotCollection spots = model.getSpots();
-		targetColor = new HashMap<Spot, Color>(spots.getNSpots(false));
-		// Check null
-		if (null == feature) {
-			for (Iterator<Spot> iterator = spots.iterator(false); iterator.hasNext();) {
-				targetColor.put(iterator.next(), TrackMateModelView.DEFAULT_COLOR);
-			}
-			return;
-		}
-
-		// Get min & max
-		double min = Float.POSITIVE_INFINITY;
-		double max = Float.NEGATIVE_INFINITY;
-		Double val;
-		for (Iterator<Spot> iterator = spots.iterator(false); iterator.hasNext();) {
-			val = iterator.next().getFeature(feature);
-			if (val > max) max = val;
-			if (val < min) min = val;
-		}
-
-		for (Iterator<Spot> iterator = spots.iterator(false); iterator.hasNext();) {
-			Spot spot = iterator.next();
-			val = spot.getFeature(feature);
-			InterpolatePaintScale  colorMap = (InterpolatePaintScale) displaySettings.get(TrackMateModelView.KEY_COLORMAP);
-			if (null == val)
-				targetColor.put(spot, TrackMateModelView.DEFAULT_COLOR);
-			else
-				targetColor.put(spot, colorMap .getPaint((val-min)/(max-min)) );
-		}
-	}
-
 	public void setSpotSelection(Collection<Spot> spots) {
 		this.spotSelection = spots;
 	}
@@ -195,7 +156,7 @@ public class SpotOverlay extends Roi {
 		final double z = spot.getFeature(Spot.POSITION_Z);
 		final double dz2 = (z - zslice) * (z - zslice);
 		double radiusRatio = (Float) displaySettings.get(TrackMateModelView.KEY_SPOT_RADIUS_RATIO);
-		final double radius = spot.getFeature(Spot.RADIUS)*radiusRatio;
+		final double radius = spot.getFeature(Spot.RADIUS) * radiusRatio;
 		// In pixel units
 		final double xp = x / calibration[0] + 0.5f;
 		final double yp = y / calibration[1] + 0.5f; // so that spot centers are displayed on the pixel centers

@@ -22,7 +22,7 @@ import org.jfree.chart.renderer.InterpolatePaintScale;
 import org.jgrapht.graph.DefaultWeightedEdge;
 
 import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.Model;
 import fiji.plugin.trackmate.util.ExportableChartPanel;
 
 public abstract class AbstractFeatureGrapher {
@@ -32,9 +32,9 @@ public abstract class AbstractFeatureGrapher {
 	protected final InterpolatePaintScale paints = InterpolatePaintScale.Jet; 
 	protected final String xFeature;
 	protected final Set<String> yFeatures;
-	protected final TrackMateModel model;
+	protected final Model model;
 
-	public AbstractFeatureGrapher(final String xFeature, final Set<String> yFeatures,final TrackMateModel model) {
+	public AbstractFeatureGrapher(final String xFeature, final Set<String> yFeatures,final Model model) {
 		this.xFeature = xFeature;
 		this.yFeatures = yFeatures;
 		this.model = model;

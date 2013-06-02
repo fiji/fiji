@@ -5,7 +5,7 @@ import java.util.List;
 
 import net.imglib2.img.ImgPlus;
 import fiji.plugin.trackmate.TrackMate;
-import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.Model;
 import fiji.plugin.trackmate.features.spot.SpotAnalyzer;
 import fiji.plugin.trackmate.features.spot.SpotContrastAndSNRAnalyzerFactory;
 import fiji.plugin.trackmate.features.spot.SpotAnalyzerFactory;
@@ -21,7 +21,7 @@ public class SpotAnalyzerProvider {
 	/** The detector names, in the order they will appear in the GUI.
 	 * These names will be used as keys to access relevant spot analyzer classes.  */
 	protected List<String> analyzerNames;
-	protected final TrackMateModel model;
+	protected final Model model;
 
 	/*
 	 * CONSTRUCTOR
@@ -36,7 +36,7 @@ public class SpotAnalyzerProvider {
 	 * factory so that it is registered with the custom spotFeatureAnalyzers and provide this 
 	 * extended factory to the {@link TrackMate} trackmate.
 	 */
-	public SpotAnalyzerProvider(TrackMateModel model) {
+	public SpotAnalyzerProvider(Model model) {
 		this.model = model;
 		registerSpotFeatureAnalyzers();
 	}

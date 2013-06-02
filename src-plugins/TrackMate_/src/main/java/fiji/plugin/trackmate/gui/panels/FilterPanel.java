@@ -76,7 +76,7 @@ public class FilterPanel extends javax.swing.JPanel {
 	private XYPlot plot;
 	private IntervalMarker intervalMarker;
 	private double threshold;
-	private Map<String, double[]> valuesMap;
+	private final Map<String, double[]> valuesMap;
 	private XYTextSimpleAnnotation annotation;
 	private String key;
 	private List<String> allKeys;
@@ -165,6 +165,31 @@ public class FilterPanel extends javax.swing.JPanel {
 	public Collection<ChangeListener> getChangeListeners() {
 		return listeners;
 	}
+	
+	/**
+	 * Refreshes the histogram content. Call this method when the values in the 
+	 * {@link #valuesMap} changed to update histogram display. 
+	 */
+	public void refresh() {
+		double old = getThreshold();
+		key = allKeys.get(jComboBoxFeature.getSelectedIndex());
+		double[] values = valuesMap.get(key);
+		
+		if (null == values || 0 == values.length) {
+			dataset = new LogHistogramDataset();
+			annotation.setLocation(0.5f, 0.5f);
+			annotation.setText("No data");
+		} else {
+			int nBins = TMUtils.getNBins(values, 8, 100);
+			dataset = new LogHistogramDataset();
+			if (nBins > 1) {
+				dataset.addSeries(DATA_SERIES_NAME, values, nBins);
+			}
+		}
+		plot.setDataset(dataset);
+		threshold = old;
+		chartPanel.repaint();
+	}
 
 	/*
 	 * PRIVATE METHODS
@@ -176,7 +201,8 @@ public class FilterPanel extends javax.swing.JPanel {
 	}
 
 	private void comboBoxSelectionChanged() {
-		key = allKeys.get(jComboBoxFeature.getSelectedIndex());
+		int index = jComboBoxFeature.getSelectedIndex();
+		key = allKeys.get(index);
 		double[] values = valuesMap.get(key);
 		if (null == values || 0 == values.length) {
 			dataset = new LogHistogramDataset();

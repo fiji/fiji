@@ -83,7 +83,7 @@ public class Settings {
 	protected List<FeatureFilter> spotFilters = new ArrayList<FeatureFilter>();
 	/**
 	 * The initial quality filter value that is used to clip spots of low
-	 * quality from {@link TrackMateModel#spots}.
+	 * quality from {@link Model#spots}.
 	 */
 	public Double initialSpotFilterValue = Double.valueOf(0);
 	/** The track filter list that is used to prune track and spots. */

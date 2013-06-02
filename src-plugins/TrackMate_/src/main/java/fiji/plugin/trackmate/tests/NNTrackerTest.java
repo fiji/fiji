@@ -13,7 +13,7 @@ import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.SelectionModel;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.TrackMate;
-import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.Model;
 import fiji.plugin.trackmate.io.TmXmlReader;
 import fiji.plugin.trackmate.tracking.kdtree.NearestNeighborTracker;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
@@ -33,15 +33,13 @@ public class NNTrackerTest {
 		// 1 - Load test spots
 		System.out.println("Opening file: "+file.getAbsolutePath());		
 		TmXmlReader reader = new TmXmlReader(file);
-		TrackMateModel model = reader.getModel();
-		Settings gs = reader.getSettings(null, null, null, null, null);
+		Model model = reader.getModel();
+		Settings gs = new Settings();
+		reader.readSettings(gs, null, null, null, null, null);
 		
 		System.out.println("Spots: "+ model.getSpots());
-		System.out.println("Found "+model.getTrackModel().getNTracks()+" tracks in the file:");
+		System.out.println("Found "+model.getTrackModel().nTracks(false)+" tracks in the file:");
 		System.out.println("Track features: ");
-		for (Integer trackID : model.getTrackModel().getTrackIDs()) {
-			System.out.println(model.getTrackModel().trackToString(trackID));
-		}
 		System.out.println();
 		
 		// 2 - Track the test spots
@@ -62,7 +60,7 @@ public class NNTrackerTest {
 		System.out.println();
 		System.out.println();
 		System.out.println();
-		System.out.println("Found " + model.getTrackModel().getNTracks() + " final tracks.");
+		System.out.println("Found " + model.getTrackModel().nTracks(false) + " final tracks.");
 		System.out.println("Whole tracking done in "+(end-start)+" ms.");
 		System.out.println();
 

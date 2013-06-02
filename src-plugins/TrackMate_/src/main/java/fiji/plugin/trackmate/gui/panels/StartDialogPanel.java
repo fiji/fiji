@@ -15,7 +15,7 @@ import javax.swing.JButton;
 import javax.swing.JLabel;
 
 import fiji.plugin.trackmate.Settings;
-import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.Model;
 import fiji.plugin.trackmate.gui.panels.components.JNumericTextField;
 
 public class StartDialogPanel extends ActionListenablePanel {
@@ -88,7 +88,7 @@ public class StartDialogPanel extends ActionListenablePanel {
 	 * Update the specified settings object, with the parameters set in this panel.	
 	 * @param settings  the Settings to update. Cannot be <code>null</code>.
 	 */
-	public void updateTo(TrackMateModel model, Settings settings) {
+	public void updateTo(Model model, Settings settings) {
 		settings.imp = imp;
 		// Crop cube
 		settings.tstart = Math.round(Float.parseFloat(jTextFieldTStart.getText()));
@@ -130,7 +130,7 @@ public class StartDialogPanel extends ActionListenablePanel {
 	/**
 	 * Fill the text fields with the parameters grabbed in the {@link Settings} argument.
 	 */
-	public void echoSettings(TrackMateModel model, Settings settings) {
+	public void echoSettings(Model model, Settings settings) {
 		jLabelImageName.setText(settings.imp.getTitle());
 		jTextFieldPixelWidth.setText(""+settings.dx);
 		jTextFieldPixelHeight.setText(""+settings.dy);

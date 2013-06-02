@@ -10,14 +10,14 @@ import java.util.NavigableSet;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-import fiji.plugin.trackmate.features.FeatureFilter;
-
 import net.imglib2.algorithm.MultiThreaded;
+import fiji.plugin.trackmate.features.FeatureFilter;
 
 /**
  * A utility class that wrap the {@link SortedMap} we use to store the spots contained
@@ -410,6 +410,65 @@ public class SpotCollection implements MultiThreaded  {
 				return spots.size();
 		}
 	}
+	
+	/*
+	 * FEATURES
+	 */
+	
+	/**
+	 * Builds and returns a new map of feature values for this spot collection.
+	 * Each feature maps a double array, with 1 element per {@link Spot}, all pooled
+	 * together.
+	 * @param features  the features to collect 
+	 * @param visibleOnly  if <code>true</code>, only the visible spot values will be collected.
+	 * @return a new map instance.
+	 */
+	public Map<String, double[]> collectValues(Collection<String> features, final boolean visibleOnly) {
+		final Map<String, double[]> featureValues = new ConcurrentHashMap<String, double[]>(features.size());
+		ExecutorService executors = Executors.newFixedThreadPool(numThreads);
+		
+		for (final String feature : features) {
+			Runnable command = new Runnable() {
+				@Override
+				public void run() {
+					double[] values = collectValues(feature, visibleOnly);
+					featureValues.put(feature, values);
+				}
+
+			};
+			executors.execute(command);
+		}
+		
+		executors.shutdown();
+		try {
+			boolean ok = executors.awaitTermination(TIME_OUT_DELAY, TIME_OUT_UNITS);
+			if (!ok) {
+				System.err.println("[SpotCollection.collectValues()] Timeout of " + TIME_OUT_DELAY + " " 
+						+ TIME_OUT_UNITS + " reached while filtering.");
+			}
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+		
+		return featureValues;
+	}
+
+	/**
+	 * Returns the feature values of this Spot collection as a new double array.
+	 * @param feature the feature to collect.
+	 * @param visibleOnly  if <code>true</code>, only the visible spot values will be collected.
+	 * @return a new <code>double</code> array.
+	 */
+	public final double[] collectValues(String feature, boolean visibleOnly) {
+		final double[] values = new double[getNSpots(visibleOnly)];
+		int index = 0;
+		for(Spot spot : iterable(visibleOnly)) {
+			values[index] = spot.getFeature(feature);
+			index++;
+		}
+		return values;
+	}
+
 
 	/*
 	 * ITERABLE & co
@@ -504,6 +563,9 @@ public class SpotCollection implements MultiThreaded  {
 	 * @return the first (lowest) frame currently in this collection.
 	 */
 	public Integer firstKey() {
+		if (content.isEmpty()) {
+			return 0;
+		}
 		return content.firstKey();
 	}
 
@@ -512,6 +574,9 @@ public class SpotCollection implements MultiThreaded  {
 	 * @return the last (highest) frame currently in this collection.
 	 */
 	public Integer lastKey() {
+		if (content.isEmpty()) {
+			return 0;
+		}
 		return content.lastKey();
 	}
 
@@ -696,7 +761,11 @@ public class SpotCollection implements MultiThreaded  {
 		private final Iterator<Spot> contentIterator;
 
 		public VisibleSpotsFrameIterator(Set<Spot> frameContent) {
-			this.contentIterator = frameContent.iterator();
+			if (null == frameContent) {
+				this.contentIterator = EMPTY_ITERATOR;
+			} else {
+				this.contentIterator = frameContent.iterator();
+			}
 			iterate();
 		}
 
@@ -847,7 +916,7 @@ public class SpotCollection implements MultiThreaded  {
 	 * Creates a new {@link SpotCollection} containing only the specified spots. 
 	 * Their frame origin is retrieved from their {@link Spot#FRAME} feature, so
 	 * it must be set properly for all spots. All the spots of the new collection
-	 * will be marked as not-visible.
+	 * have the same visibility that the one they carry.
 	 * @param spots  the spot collection to build from. 
 	 * @return  a new {@link SpotCollection} instance.
 	 */
@@ -860,8 +929,8 @@ public class SpotCollection implements MultiThreaded  {
 				fc = new HashSet<Spot>();
 				sc.content.put(frame, fc);
 			}
+			fc.add(spot);
 		}
-		sc.setVisible(false);
 		return sc;
 	}
 

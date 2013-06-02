@@ -6,7 +6,7 @@ import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.TrackMate;
-import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.Model;
 import fiji.plugin.trackmate.detection.LogDetectorFactory;
 import fiji.plugin.trackmate.providers.DetectorProvider;
 import ij.ImagePlus;
@@ -18,7 +18,7 @@ public class ConcurrentSpotTestDrive {
 		
 		int nFrames = 20;
 		
-		TrackMateModel model = new TrackMateModel();
+		Model model = new Model();
 		
 		// Create blank image
 		ImagePlus imp = NewImage.createByteImage("Noise", 200, 200, nFrames, NewImage.FILL_BLACK);

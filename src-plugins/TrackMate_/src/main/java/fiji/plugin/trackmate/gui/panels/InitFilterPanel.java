@@ -108,11 +108,6 @@ public class InitFilterPanel extends ActionListenablePanel  {
 	public FeatureFilter getFeatureThreshold() {
 		return new FeatureFilter(jPanelThreshold.getKey(), new Double(jPanelThreshold.getThreshold()), jPanelThreshold.isAboveThreshold());
 	}
-	
-	public void quit() {
-		updater.quit();
-	}	
-
 
 	/*
 	 * PRIVATE METHODS

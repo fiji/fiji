@@ -39,8 +39,9 @@ import fiji.plugin.trackmate.ModelChangeEvent;
 import fiji.plugin.trackmate.SelectionChangeEvent;
 import fiji.plugin.trackmate.SelectionModel;
 import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.Model;
 import fiji.plugin.trackmate.visualization.AbstractTrackMateModelView;
+import fiji.plugin.trackmate.visualization.SpotColorGenerator;
 import fiji.plugin.trackmate.visualization.TrackColorGenerator;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
 
@@ -114,7 +115,7 @@ public class TrackScheme extends AbstractTrackMateModelView {
 	 * CONSTRUCTORS
 	 */
 
-	public TrackScheme(TrackMateModel model, SelectionModel selectionModel)  {
+	public TrackScheme(Model model, SelectionModel selectionModel)  {
 		super(model, selectionModel);
 		initDisplaySettings();
 		initGUI();
@@ -207,8 +208,8 @@ public class TrackScheme extends AbstractTrackMateModelView {
 		for (Integer frame : frames) {
 			spotPerFrame.put(frame, new HashSet<Spot>(model.getSpots().getNSpots(frame, true))); // max size
 		}
-		for (Integer trackID : model.getTrackModel().getFilteredTrackIDs()) {
-			for (Spot spot : model.getTrackModel().getTrackSpots(trackID)) {
+		for (Integer trackID : model.getTrackModel().trackIDs(true)) {
+			for (Spot spot : model.getTrackModel().trackSpots(trackID)) {
 				int frame = spot.getFeature(Spot.FRAME).intValue();
 				spotPerFrame.get(frame).add(spot);
 			}
@@ -312,7 +313,7 @@ public class TrackScheme extends AbstractTrackMateModelView {
 
 
 	/**
-	 * Import a whole track from the {@link TrackMateModel} and make it visible
+	 * Import a whole track from the {@link Model} and make it visible
 	 * @param trackIndex  the index of the track to show in TrackScheme 
 	 */
 	private void importTrack(int trackIndex) {
@@ -320,18 +321,18 @@ public class TrackScheme extends AbstractTrackMateModelView {
 		graph.getModel().beginUpdate();
 		try {
 			// Flag original track as visible
-			model.getTrackModel().setFilteredTrackID(trackIndex, true, false);
+			model.setTrackVisibility(trackIndex, true);
 			// Find adequate column
 			int targetColumn = getUnlaidSpotColumn();
 			// Create cells for track
-			Set<Spot> trackSpots = model.getTrackModel().getTrackSpots(trackIndex);
+			Set<Spot> trackSpots = model.getTrackModel().trackSpots(trackIndex);
 			for (Spot trackSpot : trackSpots) {
 				int frame = trackSpot.getFeature(Spot.FRAME).intValue();
 				int column = Math.max(targetColumn, getNextFreeColumn(frame));
 				insertSpotInGraph(trackSpot, column);
 				rowLengths.put(frame , column);
 			}
-			Set<DefaultWeightedEdge> trackEdges = model.getTrackModel().getTrackEdges(trackIndex);
+			Set<DefaultWeightedEdge> trackEdges = model.getTrackModel().trackEdges(trackIndex);
 			for (DefaultWeightedEdge trackEdge : trackEdges) {
 				graph.addJGraphTEdge(trackEdge);
 			}
@@ -407,10 +408,10 @@ public class TrackScheme extends AbstractTrackMateModelView {
 						cell.setValue(String.format("%.1f", model.getTrackModel().getEdgeWeight(edge)));
 						// We also need now to check if the edge belonged to a visible track. If not,
 						// we make it visible.
-						int index = model.getTrackModel().getTrackIDOf(edge); 
+						int ID = model.getTrackModel().trackIDOf(edge); 
 						// This will work, because track indices will be reprocessed only after the graphModel.endUpdate() 
 						// reaches 0. So now, it's like we are dealing with the track indices priori to modification.
-						if (model.getTrackModel().isTrackFiltered(index)) {
+						if (model.getTrackModel().isVisible(ID)) {
 							if (DEBUG) {
 								System.out.println("[TrackScheme] #addEdgeManually: Track was visible. Do nothing.");
 							}
@@ -418,7 +419,7 @@ public class TrackScheme extends AbstractTrackMateModelView {
 							if (DEBUG) {
 								System.out.println("[TrackScheme] #addEdgeManually: Track was invisible. Make it visible.");
 							}
-							importTrack(index);
+							importTrack(ID);
 						}
 					}
 					graph.mapEdgeToCell(edge, cell);
@@ -447,7 +448,6 @@ public class TrackScheme extends AbstractTrackMateModelView {
 			return;
 		doFireSelectionChangeEvent = false;
 
-		/* Performance issue: we do our highlighting here, in batch, bypassing highlight* methods		 */
 		{
 			ArrayList<Object> newSelection = new ArrayList<Object>(selectionModel.getSpotSelection().size() + selectionModel.getEdgeSelection().size());
 			Iterator<DefaultWeightedEdge> edgeIt = selectionModel.getEdgeSelection().iterator();
@@ -489,7 +489,7 @@ public class TrackScheme extends AbstractTrackMateModelView {
 	 * Used to catch spot creation events that occurred elsewhere, for instance by manual editing in 
 	 * the {@link AbstractTrackMateModelView}. 
 	 * <p>
-	 * We have to deal with the graph modification ourselves here, because the {@link TrackMateModel} model
+	 * We have to deal with the graph modification ourselves here, because the {@link Model} model
 	 * holds a non-listenable JGraphT instance. A modification made to the model would not be reflected
 	 * on the graph here.
 	 */
@@ -588,7 +588,7 @@ public class TrackScheme extends AbstractTrackMateModelView {
 							graph.getModel().add(graph.getDefaultParent(), edgeCell, 0);
 
 							// Add it to the map of cells to recolor
-							Integer trackID = model.getTrackModel().getTrackIDOf(edge);
+							Integer trackID = model.getTrackModel().trackIDOf(edge);
 							Set<mxCell> edgeSet = edgesToUpdate.get(trackID);
 							if (edgesToUpdate.get(trackID) == null) {
 								edgeSet = new HashSet<mxCell>();
@@ -598,7 +598,7 @@ public class TrackScheme extends AbstractTrackMateModelView {
 
 						} else if (event.getEdgeFlag(edge) == ModelChangeEvent.FLAG_EDGE_MODIFIED) {
 							// Add it to the map of cells to recolor
-							Integer trackID = model.getTrackModel().getTrackIDOf(edge);
+							Integer trackID = model.getTrackModel().trackIDOf(edge);
 							Set<mxCell> edgeSet = edgesToUpdate.get(trackID);
 							if (edgesToUpdate.get(trackID) == null) {
 								edgeSet = new HashSet<mxCell>();
@@ -710,7 +710,7 @@ public class TrackScheme extends AbstractTrackMateModelView {
 	}
 
 	@Override
-	public TrackMateModel getModel() {
+	public Model getModel() {
 		return model;
 	}
 
@@ -721,7 +721,7 @@ public class TrackScheme extends AbstractTrackMateModelView {
 	protected void initDisplaySettings() {
 		displaySettings.put(KEY_SPOTS_VISIBLE, true);
 		displaySettings.put(KEY_DISPLAY_SPOT_NAMES, false);
-		displaySettings.put(KEY_SPOT_COLOR_FEATURE, null);
+		displaySettings.put(KEY_SPOT_COLORING, new SpotColorGenerator(model));
 		displaySettings.put(KEY_SPOT_RADIUS_RATIO, 1.0f);
 		displaySettings.put(KEY_TRACKS_VISIBLE, true);
 		displaySettings.put(KEY_TRACK_DISPLAY_MODE, DEFAULT_TRACK_DISPLAY_MODE);
@@ -945,10 +945,10 @@ public class TrackScheme extends AbstractTrackMateModelView {
 		gui.logger.setStatus("Setting style.");
 
 		// Collect edges 
-		Set<Integer> trackIDs = model.getTrackModel().getFilteredTrackIDs();
+		Set<Integer> trackIDs = model.getTrackModel().trackIDs(true);
 		HashMap<Integer, Set<mxCell>> edgeMap = new HashMap<Integer, Set<mxCell>>(trackIDs.size());
 		for (Integer trackID : trackIDs) {
-			Set<DefaultWeightedEdge> edges = model.getTrackModel().getTrackEdges(trackID);
+			Set<DefaultWeightedEdge> edges = model.getTrackModel().trackEdges(trackID);
 			HashSet<mxCell> set = new HashSet<mxCell>(edges.size());
 			for (DefaultWeightedEdge edge : edges) {
 				set.add(graph.getCellFor(edge));
@@ -1008,8 +1008,8 @@ public class TrackScheme extends AbstractTrackMateModelView {
 
 
 	/**
-	 * Create links between all the spots currently in the {@link TrackMateModel} selection.
-	 * We update simultaneously the {@link TrackMateModel} and the 
+	 * Create links between all the spots currently in the {@link Model} selection.
+	 * We update simultaneously the {@link Model} and the 
 	 * {@link JGraphXAdapter}.
 	 */
 	public void linkSpots() {
@@ -1031,18 +1031,18 @@ public class TrackScheme extends AbstractTrackMateModelView {
 			Integer previousTime = it.next();
 			Spot previousSpot = spotsInTime.get(previousTime);
 			// If this spot belong to an invisible track, we make it visible
-			Integer index = model.getTrackModel().getTrackIDOf(previousSpot);
-			if (index != null && !model.getTrackModel().isTrackFiltered(index)) {
-				importTrack(index);
+			Integer ID = model.getTrackModel().trackIDOf(previousSpot);
+			if (ID != null && !model.getTrackModel().isVisible(ID)) {
+				importTrack(ID);
 			}
 
 			while(it.hasNext()) {
 				Integer currentTime = it.next();
 				Spot currentSpot = spotsInTime.get(currentTime);
 				// If this spot belong to an invisible track, we make it visible
-				index = model.getTrackModel().getTrackIDOf(currentSpot);
-				if (index != null && !model.getTrackModel().isTrackFiltered(index)) {
-					importTrack(index);
+				ID = model.getTrackModel().trackIDOf(currentSpot);
+				if (ID != null && !model.getTrackModel().isVisible(ID)) {
+					importTrack(ID);
 				}
 				// Check that the cells matching the 2 spots exist in the graph
 				mxICell currentCell = graph.getCellFor(currentSpot);
@@ -1076,9 +1076,9 @@ public class TrackScheme extends AbstractTrackMateModelView {
 					mxCell cell = (mxCell) graph.addJGraphTEdge(edge);
 					cell.setValue(String.format("%.1f", model.getTrackModel().getEdgeWeight(edge)));
 					// Also, if the existing edge belonged to an existing invisible track, we make it visible.
-					index = model.getTrackModel().getTrackIDOf(edge);
-					if (index != null && !model.getTrackModel().isTrackFiltered(index)) {
-						importTrack(index);
+					ID = model.getTrackModel().trackIDOf(edge);
+					if (ID != null && !model.getTrackModel().isVisible(ID)) {
+						importTrack(ID);
 					}
 				}
 				previousSpot = currentSpot;

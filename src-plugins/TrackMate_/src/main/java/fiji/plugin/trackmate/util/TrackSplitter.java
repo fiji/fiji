@@ -10,7 +10,7 @@ import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.traverse.DepthFirstIterator;
 
 import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.Model;
 
 public class TrackSplitter {
 
@@ -25,9 +25,9 @@ public class TrackSplitter {
 	public static final int COMPLEX_POINT		= 128;
 	public static final int NOT_IN_GRAPH		= 256;
 	
-	private TrackMateModel model; 
+	private Model model; 
 	
-	public TrackSplitter(final TrackMateModel model) {
+	public TrackSplitter(final Model model) {
 		this.model = model;
 	}
 	
@@ -109,7 +109,7 @@ public class TrackSplitter {
 		return prunedBranches;
 	}
 	
-	public static final int getVertexType(final TrackMateModel model, final Spot spot) {
+	public static final int getVertexType(final Model model, final Spot spot) {
 		if (!model.getTrackModel().vertexSet().contains(spot))
 			return NOT_IN_GRAPH;
 		

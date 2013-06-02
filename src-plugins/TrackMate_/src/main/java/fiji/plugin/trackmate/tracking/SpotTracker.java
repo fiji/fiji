@@ -8,14 +8,14 @@ import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.graph.SimpleDirectedWeightedGraph;
 
 import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.Model;
 
 /**
  * This interface should be used when creating algorithms for linking objects across
  * multiple frames in time-lapse images.
  * <p>
  * A SpotTracker algorithm is simply expected to <b>create</b> a new {@link SimpleDirectedWeightedGraph}
- * from the spot collection help in the {@link TrackMateModel} that is given to it. We 
+ * from the spot collection help in the {@link Model} that is given to it. We 
  * use a simple directed weighted graph:
  * <ul>
  * 	<li> Though the weights themselves are not used for subsequent steps, it is 

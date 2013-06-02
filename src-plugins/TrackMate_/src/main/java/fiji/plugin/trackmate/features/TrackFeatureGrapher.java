@@ -19,7 +19,7 @@ import org.jfree.data.xy.XYSeriesCollection;
 
 import fiji.plugin.trackmate.Dimension;
 import fiji.plugin.trackmate.FeatureModel;
-import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.Model;
 import fiji.plugin.trackmate.util.ExportableChartPanel;
 import fiji.plugin.trackmate.util.TMUtils;
 
@@ -29,7 +29,7 @@ public class TrackFeatureGrapher extends AbstractFeatureGrapher {
 	private final Map<String, Dimension> yDimensions;
 	private final Map<String, String> featureNames;
 
-	public TrackFeatureGrapher(String xFeature, Set<String> yFeatures, TrackMateModel model) {
+	public TrackFeatureGrapher(String xFeature, Set<String> yFeatures, Model model) {
 		super(xFeature, yFeatures, model);
 		this.xDimension = model.getFeatureModel().getTrackFeatureDimensions().get(xFeature);
 		this.yDimensions = model.getFeatureModel().getTrackFeatureDimensions();
@@ -118,7 +118,7 @@ public class TrackFeatureGrapher extends AbstractFeatureGrapher {
 		final FeatureModel fm = model.getFeatureModel();
 		for(String feature : targetYFeatures) {
 			XYSeries series = new XYSeries(featureNames.get(feature));
-			for(Integer trackID : model.getTrackModel().getFilteredTrackIDs()) {
+			for(Integer trackID : model.getTrackModel().trackIDs(true)) {
 				Double x = fm.getTrackFeature(trackID, xFeature);
 				Double y = fm.getTrackFeature(trackID, feature);
 				if (null == x || null == y) {

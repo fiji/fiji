@@ -3,6 +3,7 @@ package fiji.plugin.trackmate.gui.descriptors;
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.TrackMate;
 import fiji.plugin.trackmate.gui.LogPanel;
+import fiji.plugin.trackmate.gui.TrackMateGUIController;
 import fiji.plugin.trackmate.providers.TrackerProvider;
 
 public class TrackingDescriptor implements WizardPanelDescriptor {
@@ -10,12 +11,12 @@ public class TrackingDescriptor implements WizardPanelDescriptor {
 	private static final String KEY = "Tracking";
 	private final LogPanel logPanel;
 	private final TrackMate trackmate;
-	private final TrackerProvider trackerProvider;
+	private final TrackMateGUIController controller;
 	
-	public TrackingDescriptor(LogPanel logPanel, TrackerProvider trackerProvider, TrackMate trackmate) {
-		this.trackmate = trackmate;
-		this.logPanel = logPanel;
-		this.trackerProvider = trackerProvider;
+	public TrackingDescriptor(TrackMateGUIController controller) {
+		this.controller = controller;
+		this.trackmate = controller.getPlugin();
+		this.logPanel = controller.getGUI().getLogPanel();
 	}
 	
 	
@@ -30,17 +31,25 @@ public class TrackingDescriptor implements WizardPanelDescriptor {
 		
 	@Override
 	public void displayingPanel() {
+		controller.disableButtonsAndStoreState();
+		controller.getGUI().getNextButton().setEnabled(false);
 		final Logger logger = trackmate.getModel().getLogger();
+		TrackerProvider trackerProvider = controller.getTrackerProvider();
 		logger.log("Starting tracking using " + trackmate.getSettings().tracker +"\n", Logger.BLUE_COLOR);
 		logger.log("with settings:\n");
 		logger.log(trackerProvider.toString(trackmate.getSettings().trackerSettings));
+		
 		new Thread("TrackMate tracking thread") {					
 			public void run() {
 				long start = System.currentTimeMillis();
 				trackmate.execTracking();
 				long end = System.currentTimeMillis();
+				logger.log("Found "	 + trackmate.getModel().getTrackModel().nTracks(false) + " tracks.\n");
 				logger.log(String.format("Tracking done in %.1f s.\n", (end-start)/1e3f), Logger.BLUE_COLOR);
+				controller.restoreButtonsState();
+				controller.getGUI().getNextButton().setEnabled(true);
 			}
+			
 		}.start();
 	}
 

@@ -9,29 +9,22 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import net.imglib2.img.ImagePlusAdapter;
 import net.imglib2.img.ImgPlus;
 import net.imglib2.meta.Axes;
 import net.imglib2.meta.AxisType;
 import net.imglib2.meta.Metadata;
-import net.imglib2.multithreading.SimpleMultiThreading;
 import net.imglib2.type.numeric.real.DoubleType;
 import net.imglib2.util.Util;
 import fiji.plugin.trackmate.Dimension;
-import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.TrackMate;
 import fiji.plugin.trackmate.features.FeatureFilter;
 
@@ -48,14 +41,14 @@ public class TMUtils {
 	 */
 
 	/**
-	 * @return a new map sorted by its values.
-	 * Taken from http://stackoverflow.com/questions/109383/how-to-sort-a-mapkey-value-on-the-values-in-java
+	 * Return a new map sorted by its values.
+	 * Adapted from http://stackoverflow.com/questions/109383/how-to-sort-a-mapkey-value-on-the-values-in-java
 	 */
-	public static <K, V extends Comparable<? super V>> Map<K, V> sortByValue( Map<K, V> map) {
+	public static <K, V extends Comparable<? super V>> Map<K, V> sortByValue( Map<K, V> map, final Comparator<V> comparator) {
 		List<Map.Entry<K, V>> list = new LinkedList<Map.Entry<K, V>>( map.entrySet() );
 		Collections.sort( list, new Comparator<Map.Entry<K, V>>() {
 			public int compare( Map.Entry<K, V> o1, Map.Entry<K, V> o2 )			{
-				return (o1.getValue()).compareTo( o2.getValue() );
+				return comparator.compare(o1.getValue(), o2.getValue()); 
 			}
 		} );
 
@@ -461,20 +454,6 @@ public class TMUtils {
 		}		
 		return new double[] {(max-min), min, max};
 	}
-
-	/**
-	 * @return the feature values of this Spot collection as a new double array.
-	 */
-	public static final double[] getFeature(final Collection<Spot> spots, final String feature) {
-		final double[] values = new double[spots.size()];
-		int index = 0;
-		for(Spot spot : spots) {
-			values[index] = spot.getFeature(feature);
-			index++;
-		}
-		return values;
-	}
-
 	
 	/**
 	 * Store the x, y, z coordinates of the specified spot 
@@ -485,69 +464,6 @@ public class TMUtils {
 		coords[1] = spot.getFeature(Spot.POSITION_Y).doubleValue();
 		coords[2] = spot.getFeature(Spot.POSITION_Z).doubleValue();
 	}
-	
-	/**
-	 * Builds and returns a map of {@link SpotFeature} values for the spot collection given.
-	 * Each feature maps a double array, with 1 element per {@link Spot}, all pooled
-	 * together.
-	 */
-	public static Map<String, double[]> getSpotFeatureValues(final SpotCollection spots, final Collection<String> features, final Logger logger) {
-		final Map<String, double[]> featureValues = new  ConcurrentHashMap<String, double[]>(features.size());
-		if (null == spots || spots.keySet().isEmpty())
-			return featureValues;
-		// Get the total quantity of spot we have
-		final int spotNumber = spots.getNSpots(false);
-
-		final AtomicInteger progress = new AtomicInteger();
-		Thread[] threads = SimpleMultiThreading.newThreads();
-
-		final ArrayBlockingQueue<String> queue = new ArrayBlockingQueue<String>(features.size(), false, features);
-		
-		for (int ithread = 0; ithread < threads.length; ithread++) {
-
-			threads[ithread] = new Thread("TrackMate collecting spot feature values thread "+ithread) {
-
-				public void run() {
-
-					int index;
-					Double val;
-					boolean noDataFlag = true;
-
-					String feature;
-					while ((feature = queue.poll()) != null) {
-
-						// Make a double array to comply to JFreeChart histograms
-						double[] values = new double[spotNumber];
-						index = 0;
-						for (Iterator<Spot> iterator = spots.iterator(false); iterator.hasNext();) {
-							val = iterator.next().getFeature(feature);
-							if (null == val)
-								continue;
-							values[index] = val; 
-							index++;
-							noDataFlag = false;
-						}
-						if (noDataFlag) {
-							featureValues.put(feature, new double[0]);
-						} else { 
-							featureValues.put(feature, values);
-						}
-						logger.setProgress(progress.incrementAndGet() / (double) features.size());
-					}
-				}
-
-			};
-
-		}
-
-		logger.setStatus("Collecting spot feature values");
-		SimpleMultiThreading.startAndJoin(threads);
-		logger.setProgress(0);
-		logger.setStatus("");
-		return featureValues;
-	}
-
-
 
 	/**
 	 * Return the optimal bin number for a histogram of the data given in array, using the 

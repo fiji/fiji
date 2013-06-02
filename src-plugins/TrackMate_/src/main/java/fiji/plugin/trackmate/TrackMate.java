@@ -1,7 +1,6 @@
 package fiji.plugin.trackmate;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -42,7 +41,7 @@ public class TrackMate implements Benchmark, MultiThreaded, Algorithm {
 	/** 
 	 * The model this trackmate will shape.
 	 */
-	protected final TrackMateModel model;
+	protected final Model model;
 	protected final Settings settings;
 	protected long processingTime;
 	protected String errorMessage;
@@ -53,16 +52,16 @@ public class TrackMate implements Benchmark, MultiThreaded, Algorithm {
 	 */
 
 	public TrackMate(Settings settings) {
-		this(new TrackMateModel(), settings);
+		this(new Model(), settings);
 	}
 
-	public TrackMate(TrackMateModel model, Settings settings) {
+	public TrackMate(Model model, Settings settings) {
 		this.model = model;
 		this.settings = settings;
 	}
 
 	public TrackMate() {
-		this(new TrackMateModel(), new Settings());
+		this(new Model(), new Settings());
 	}
 
 	/*
@@ -112,10 +111,10 @@ public class TrackMate implements Benchmark, MultiThreaded, Algorithm {
 	 * METHODS
 	 */
 
-	public TrackMateModel getModel() {
+	public Model getModel() {
 		return model;
 	}
-	
+
 	public Settings getSettings() {
 		return settings;
 	}
@@ -174,7 +173,7 @@ public class TrackMate implements Benchmark, MultiThreaded, Algorithm {
 		}
 		return true;
 	}
-	
+
 	/**
 	 * Calculate all features for all tracks.
 	 * @return 
@@ -228,7 +227,7 @@ public class TrackMate implements Benchmark, MultiThreaded, Algorithm {
 	public boolean execDetection() {
 		final Logger logger = model.getLogger();
 		logger.log("Starting detection process.\n");
-		
+
 		final SpotDetectorFactory<?> factory = settings.detectorFactory;
 		if (null == factory) {
 			errorMessage = "Detector factory is null.\n";
@@ -296,7 +295,7 @@ public class TrackMate implements Benchmark, MultiThreaded, Algorithm {
 			CropImgView cropView = new CropImgView(rawImg, min, max);
 			// Put back metadata in a new ImgPlus 
 			img = new ImgPlus(cropView, rawImg);
-			
+
 		} else {
 			img = rawImg;
 		}
@@ -446,15 +445,15 @@ public class TrackMate implements Benchmark, MultiThreaded, Algorithm {
 	public boolean execInitialSpotFiltering() {
 		final Logger logger = model.getLogger();
 		logger.log("Starting initial filtering process.\n");
-		
+
 		Double initialSpotFilterValue = settings.initialSpotFilterValue;
 		FeatureFilter featureFilter = new FeatureFilter(Spot.QUALITY, initialSpotFilterValue, true);
-		
+
 		SpotCollection spots = model.getSpots();
 		spots.filter(featureFilter);
-		
+
 		spots = spots.crop();
-		
+
 		model.setSpots(spots, true); // Forget about the previous one
 		return true;
 	}
@@ -471,7 +470,7 @@ public class TrackMate implements Benchmark, MultiThreaded, Algorithm {
 	 * <p>
 	 * The {@link ModelChangeListener}s of this model will be notified with a {@link ModelChangeEvent#SPOTS_FILTERED}
 	 * event.
-	 * @param doLogIt  if true, will send a message to the {@link TrackMateModel#logger}.
+	 * @param doLogIt  if true, will send a message to the {@link Model#logger}.
 	 * @see #getFilteredSpots()
 	 */
 	public boolean execSpotFiltering(boolean doLogIt) {
@@ -488,32 +487,34 @@ public class TrackMate implements Benchmark, MultiThreaded, Algorithm {
 			Logger logger = model.getLogger();
 			logger.log("Starting track filtering process.\n");
 		}
-		HashSet<Integer> filteredTrackIndices = new HashSet<Integer>(); // will work, for the hash of Integer is its int
 
-		for (Integer trackID : model.getTrackModel().getTrackIDs()) {
-			boolean trackIsOk = true;
-			for(FeatureFilter filter : settings.getTrackFilters()) {
-				Double tval = filter.value;
-				Double val = model.getFeatureModel().getTrackFeature(trackID, filter.feature);
-				if (null == val)
-					continue;
+		model.beginUpdate();
+		try {
+			for (Integer trackID : model.getTrackModel().trackIDs(false)) {
+				boolean trackIsOk = true;
+				for(FeatureFilter filter : settings.getTrackFilters()) {
+					Double tval = filter.value;
+					Double val = model.getFeatureModel().getTrackFeature(trackID, filter.feature);
+					if (null == val)
+						continue;
 
-				if (filter.isAbove) {
-					if (val < tval) {
-						trackIsOk = false;
-						break;
-					}
-				} else {
-					if (val > tval) {
-						trackIsOk = false;
-						break;
+					if (filter.isAbove) {
+						if (val < tval) {
+							trackIsOk = false;
+							break;
+						}
+					} else {
+						if (val > tval) {
+							trackIsOk = false;
+							break;
+						}
 					}
 				}
+				model.setTrackVisibility(trackID, trackIsOk);
 			}
-			if (trackIsOk)
-				filteredTrackIndices.add(trackID);
+		} finally {
+			model.endUpdate();
 		}
-		model.getTrackModel().setFilteredTrackIDs(filteredTrackIndices, true);
 		return true;
 	}
 
@@ -525,7 +526,7 @@ public class TrackMate implements Benchmark, MultiThreaded, Algorithm {
 	/*
 	 * ALGORITHM METHODS
 	 */
-	
+
 	@Override
 	public boolean checkInput() {
 		if (null == model) {
@@ -583,14 +584,14 @@ public class TrackMate implements Benchmark, MultiThreaded, Algorithm {
 	@Override
 	public void setNumThreads(int numThreads) {
 		this.numThreads = numThreads;
-		
+
 	}
 
 	@Override
 	public long getProcessingTime() {
 		return processingTime;
 	};
-	
+
 }
 
 

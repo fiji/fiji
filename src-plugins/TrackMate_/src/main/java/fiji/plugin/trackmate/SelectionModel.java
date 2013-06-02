@@ -13,7 +13,7 @@ import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.traverse.DepthFirstIterator;
 
 /**
- * A component of {@link TrackMateModel} that handles spot and edges selection.
+ * A component of {@link Model} that handles spot and edges selection.
  * @author Jean-Yves Tinevez
  */
 public class SelectionModel {
@@ -27,13 +27,13 @@ public class SelectionModel {
 	/** The list of listener listening to change in selection. */
 	private List<SelectionChangeListener> selectionChangeListeners = new ArrayList<SelectionChangeListener>();
 
-	private final TrackMateModel model;
+	private final Model model;
 
 	/*
 	 * DEFAULT VISIBILITY CONSTRUCTOR
 	 */
 
-	public SelectionModel(TrackMateModel parent) {
+	public SelectionModel(Model parent) {
 		this.model = parent;
 	}
 
@@ -41,15 +41,15 @@ public class SelectionModel {
 	 * DEAL WITH SELECTION CHANGE LISTENER
 	 */
 
-	public boolean addTrackMateSelectionChangeListener(SelectionChangeListener listener) {
+	public boolean addSelectionChangeListener(SelectionChangeListener listener) {
 		return selectionChangeListeners.add(listener);
 	}
 
-	public boolean removeTrackMateSelectionChangeListener(SelectionChangeListener listener) {
+	public boolean removeSelectionChangeListener(SelectionChangeListener listener) {
 		return selectionChangeListeners.remove(listener);
 	}
 
-	public List<SelectionChangeListener> getTrackMateSelectionChangeListener() {
+	public List<SelectionChangeListener> getSelectionChangeListener() {
 		return selectionChangeListeners;
 	}
 

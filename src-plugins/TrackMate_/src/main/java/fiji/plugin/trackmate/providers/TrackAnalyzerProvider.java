@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import fiji.plugin.trackmate.TrackMate;
-import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.Model;
 import fiji.plugin.trackmate.features.track.TrackAnalyzer;
 import fiji.plugin.trackmate.features.track.TrackBranchingAnalyzer;
 import fiji.plugin.trackmate.features.track.TrackDurationAnalyzer;
@@ -28,7 +28,7 @@ public class TrackAnalyzerProvider {
 	 * These names will be used as keys to access relevant track analyzer classes.  */
 	protected List<String> names;
 	/** The target model to operate on. */
-	protected final TrackMateModel model;
+	protected final Model model;
 	/** The {@link TrackIndexAnalyzer} is the only analyzer we do not re-instantiate 
 	 * at every {@link #getTrackFeatureAnalyzer(String)} call, for it has an internal state 
 	 * useful for lazy computation of track features. */
@@ -47,7 +47,7 @@ public class TrackAnalyzerProvider {
 	 * factory so that it is registered with the custom trackFeatureAnalyzers and provide this 
 	 * extended factory to the {@link TrackMate} trackmate.
 	 */
-	public TrackAnalyzerProvider(TrackMateModel model) {
+	public TrackAnalyzerProvider(Model model) {
 		this.model = model;
 		registerTrackFeatureAnalyzers();
 		this.trackIndexAnalyzer = new TrackIndexAnalyzer(model);

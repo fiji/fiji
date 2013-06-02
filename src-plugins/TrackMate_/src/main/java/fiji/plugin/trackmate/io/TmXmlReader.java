@@ -13,7 +13,7 @@ import static fiji.plugin.trackmate.io.TmXmlKeys.CROP_XEND_ATTRIBUTE_NAME;
 import static fiji.plugin.trackmate.io.TmXmlKeys.CROP_XSTART_ATTRIBUTE_NAME;
 import static fiji.plugin.trackmate.io.TmXmlKeys.CROP_YEND_ATTRIBUTE_NAME;
 import static fiji.plugin.trackmate.io.TmXmlKeys.CROP_YSTART_ATTRIBUTE_NAME;
-import static fiji.plugin.trackmate.io.TmXmlKeys.*;
+import static fiji.plugin.trackmate.io.TmXmlKeys.CROP_ZEND_ATTRIBUTE_NAME;
 import static fiji.plugin.trackmate.io.TmXmlKeys.CROP_ZSTART_ATTRIBUTE_NAME;
 import static fiji.plugin.trackmate.io.TmXmlKeys.DETECTOR_SETTINGS_ELEMENT_KEY;
 import static fiji.plugin.trackmate.io.TmXmlKeys.EDGE_ANALYSERS_ELEMENT_KEY;
@@ -32,6 +32,8 @@ import static fiji.plugin.trackmate.io.TmXmlKeys.FILTER_VALUE_ATTRIBUTE_NAME;
 import static fiji.plugin.trackmate.io.TmXmlKeys.FRAME_ATTRIBUTE_NAME;
 import static fiji.plugin.trackmate.io.TmXmlKeys.GUI_STATE_ATTRIBUTE;
 import static fiji.plugin.trackmate.io.TmXmlKeys.GUI_STATE_ELEMENT_KEY;
+import static fiji.plugin.trackmate.io.TmXmlKeys.GUI_VIEW_ATTRIBUTE;
+import static fiji.plugin.trackmate.io.TmXmlKeys.GUI_VIEW_ELEMENT_KEY;
 import static fiji.plugin.trackmate.io.TmXmlKeys.IMAGE_ELEMENT_KEY;
 import static fiji.plugin.trackmate.io.TmXmlKeys.IMAGE_FILENAME_ATTRIBUTE_NAME;
 import static fiji.plugin.trackmate.io.TmXmlKeys.IMAGE_FOLDER_ATTRIBUTE_NAME;
@@ -102,7 +104,7 @@ import fiji.plugin.trackmate.Logger.StringBuilderLogger;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
-import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.Model;
 import fiji.plugin.trackmate.detection.SpotDetectorFactory;
 import fiji.plugin.trackmate.features.FeatureFilter;
 import fiji.plugin.trackmate.features.edges.EdgeAnalyzer;
@@ -247,14 +249,14 @@ public class TmXmlReader {
 	/**
 	 * Returns the model saved in the file, or <code>null</code> if a saved model 
 	 * cannot be found in the xml file. 
-	 * @return a new {@link TrackMateModel}.
+	 * @return a new {@link Model}.
 	 */
-	public TrackMateModel getModel() {
+	public Model getModel() {
 		Element modelElement = root.getChild(MODEL_ELEMENT_KEY);
 		if (null == modelElement) {
 			return null;
 		} 
-		TrackMateModel model = new TrackMateModel();
+		Model model = new Model();
 
 		// Physical units
 		String spaceUnits = modelElement.getAttributeValue(SPATIAL_UNITS_ATTRIBUTE_NAME);
@@ -273,14 +275,34 @@ public class TmXmlReader {
 			ok = false;
 		}
 		
+		// Track features
+		
+		try {
+			Map<Integer, Map<String, Double>> savedFeatureMap = readTrackFeatures(modelElement);
+			for (Integer savedKey : savedFeatureMap.keySet()) {
+
+				Map<String, Double> savedFeatures = savedFeatureMap.get(savedKey);
+				for (String feature : savedFeatures.keySet()) {
+					model.getFeatureModel().putTrackFeature(savedKey, feature, savedFeatures.get(feature));
+				}
+			}
+		} catch (RuntimeException re) {
+			logger.error("Problem populating track features:\n");
+			logger.error(re.getMessage());
+			ok = false;
+		}
+		
 		// That's it
 		return model;
 	}
 
 
 	/**
-	 * Returns the {@link Settings} object stored in this xml file, or <code>null</code>
-	 * if the file does not contain a saved {@link Settings} object.
+	 * Reads the settings element of the file, and sets the fields of the specified 
+	 * {@link Settings} object according to the xml file content.
+	 * The provided {@link Settings} object is left untouched if the settings element
+	 * cannot be found in the file.
+	 * @param settings the {@link Settings} object to flesh out.
 	 * @param detectorProvider the detector provider, required to configure the settings with
 	 * a correct {@link SpotDetectorFactory}. If <code>null</code>, will skip reading detector
 	 * parameters. 
@@ -292,19 +314,18 @@ public class TmXmlReader {
 	 * {@link EdgeAnalyzer}s. If <code>null</code>, will skip reading edge analyzers.
 	 * @param trackAnalyzerProvider the track analyzer provider, required to instantiates the saved
 	 * {@link TrackAnalyzer}s. If <code>null</code>, will skip reading track analyzers.
-	 * 
-	 * @return  a new {@link Settings} object.
 	 */
-	public Settings getSettings(DetectorProvider detectorProvider, TrackerProvider trackerProvider, 
+	public void readSettings(Settings settings, 
+			DetectorProvider detectorProvider, TrackerProvider trackerProvider, 
 			SpotAnalyzerProvider spotAnalyzerProvider, EdgeAnalyzerProvider edgeAnalyzerProvider, 
 			TrackAnalyzerProvider trackAnalyzerProvider) {
 		Element settingsElement = root.getChild(SETTINGS_ELEMENT_KEY);
 		if (null == settingsElement) {
-			return null;
+			return;
 		} 
 
 		// Base
-		Settings settings = getBaseSettings(settingsElement);
+		getBaseSettings(settingsElement, settings);
 
 		// Image
 		settings.imp = getImage(settingsElement);
@@ -333,8 +354,6 @@ public class TmXmlReader {
 
 		// Features analyzers
 		readAnalyzers(settingsElement, settings, spotAnalyzerProvider, edgeAnalyzerProvider, trackAnalyzerProvider);
-
-		return settings;
 	}
 
 
@@ -399,9 +418,9 @@ public class TmXmlReader {
 
 
 	/**
-	 * @return a map of the saved track features, as they appear in the file
+	 * Returns a map of the saved track features, as they appear in the file
 	 */
-	private Map<Integer,Map<String,Double>> readTrackFeatures(Element modelElement) {
+	private Map<Integer, Map<String,Double>> readTrackFeatures(Element modelElement) {
 
 		HashMap<Integer, Map<String, Double>> featureMap = new HashMap<Integer, Map<String, Double>>();
 
@@ -512,13 +531,12 @@ public class TmXmlReader {
 	}
 
 	/**
-	 * Returns a settings object, configured with base settings extracted from the specified 
+	 * Set the base settings of the provided {@link Settings} object, extracted from the specified 
 	 * {@link Element}.
 	 * @param settingsElement the settings {@link Element} to read parameters from. 
 	 * @return  a new {@link Settings} object.
 	 */
-	private Settings getBaseSettings(Element settingsElement) {
-		Settings settings = new Settings();
+	private void getBaseSettings(Element settingsElement, Settings settings) {
 		// Basic settings
 		Element settingsEl = settingsElement.getChild(CROP_ELEMENT_KEY);
 		if (null != settingsEl) {
@@ -546,7 +564,6 @@ public class TmXmlReader {
 			settings.imageFileName	= infoEl.getAttributeValue(IMAGE_FILENAME_ATTRIBUTE_NAME);
 			settings.imageFolder	= infoEl.getAttributeValue(IMAGE_FOLDER_ATTRIBUTE_NAME);
 		}
-		return settings;
 	}
 
 	/**
@@ -666,18 +683,16 @@ public class TmXmlReader {
 	 * @return 
 	 * @return true if reading tracks was successful, false otherwise.
 	 */
-	private boolean readTracks(Element modelElement, TrackMateModel model) {
+	private boolean readTracks(Element modelElement, Model model) {
 
 		Element allTracksElement = modelElement.getChild(TRACK_COLLECTION_ELEMENT_KEY);
-		final SimpleDirectedWeightedGraph<Spot, DefaultWeightedEdge> graph = new SimpleDirectedWeightedGraph<Spot, DefaultWeightedEdge>(DefaultWeightedEdge.class);
-
-		// Load tracks
 		List<Element> trackElements = allTracksElement.getChildren(TRACK_ELEMENT_KEY);
-		List<Element> edgeElements;
 
-		// A temporary map that maps stored track key to one of its spot
-		HashMap<Integer, Spot> savedTrackMap = new HashMap<Integer, Spot>(trackElements.size());
-		HashMap<Integer, String> savedTrackNames = new HashMap<Integer, String>(trackElements.size());
+		// What we have to flesh out from the file
+		final SimpleDirectedWeightedGraph<Spot, DefaultWeightedEdge> graph = new SimpleDirectedWeightedGraph<Spot, DefaultWeightedEdge>(DefaultWeightedEdge.class);
+		final Map<Integer, Set<Spot>> connectedVertexSet = new HashMap<Integer, Set<Spot>>(trackElements.size());
+		final Map<Integer, Set<DefaultWeightedEdge>> connectedEdgeSet = new HashMap<Integer, Set<DefaultWeightedEdge>>(trackElements.size());
+		final Map<Integer, String> savedTrackNames = new HashMap<Integer, String>(trackElements.size());
 
 		// The list of edge features. that we will set.
 		final FeatureModel fm = model.getFeatureModel();
@@ -695,11 +710,11 @@ public class TmXmlReader {
 			if (null == trackName) {
 				trackName = "Unnamed";
 			}
-			// Keep a reference of one of the spot for outside the loop.
-			Spot sourceSpot = null; 
 
-			// Iterate over edges
-			edgeElements = trackElement.getChildren(TRACK_EDGE_ELEMENT_KEY);
+			// Iterate over edges & spots
+			List<Element> edgeElements = trackElement.getChildren(TRACK_EDGE_ELEMENT_KEY);
+			Set<DefaultWeightedEdge> edges = new HashSet<DefaultWeightedEdge>(edgeElements.size());
+			Set<Spot> spots = new HashSet<Spot>(edgeElements.size());
 
 			for (Element edgeElement : edgeElements) {
 
@@ -708,7 +723,7 @@ public class TmXmlReader {
 				int targetID = readIntAttribute(edgeElement, EdgeTargetAnalyzer.SPOT_TARGET_ID, logger);
 
 				// Get matching spots from the cache
-				sourceSpot = cache.get(sourceID);
+				Spot sourceSpot = cache.get(sourceID);
 				Spot targetSpot = cache.get(targetID);
 
 				// Get weight
@@ -731,6 +746,11 @@ public class TmXmlReader {
 					logger.error("Bad link for track " + trackID + ". Source = Target with ID: " + sourceID + "\n");
 					return false;
 				}
+				
+				// Add spots to connected set. We might add the same spot twice (because we iterate over edges)
+				// but this is fine for we use a set.
+				spots.add(sourceSpot);
+				spots.add(targetSpot);
 
 				// Add spots to graph and build edge
 				graph.addVertex(sourceSpot);
@@ -754,102 +774,37 @@ public class TmXmlReader {
 					}
 
 				}
+				
+				// Adds the edge to the set
+				edges.add(edge);
+				
 			} // Finished parsing over the edges of the track
 
 			// Store one of the spot in the saved trackID key map
-			savedTrackMap.put(trackID, sourceSpot);
+			connectedVertexSet.put(trackID, spots);
+			connectedEdgeSet.put(trackID, edges);
 			savedTrackNames.put(trackID, trackName);
-
-		}
-
-		/* Pass the loaded graph to the model. The model will in turn regenerate a new 
-		 * map of tracks vs trackID, using the hash as new keys. Because there is a 
-		 * good chance that they saved keys and the new keys differ, we must retrieve
-		 * the mapping between the two using the retrieve spots.	 */
-		model.getTrackModel().setGraph(graph);
-
-		// Retrieve the new track map
-		Map<Integer, Set<Spot>> newTrackMap = model.getTrackModel().getTrackSpots();
-
-		// Build a map of saved key vs new key
-		HashMap<Integer, Integer> newKeyMap = new HashMap<Integer, Integer>();
-		HashSet<Integer> newKeysToMatch = new HashSet<Integer>(newTrackMap.keySet());
-		for (Integer savedKey : savedTrackMap.keySet()) {
-			Spot spotToFind = savedTrackMap.get(savedKey);
-			for (Integer newKey : newTrackMap.keySet()) {
-				Set<Spot> track = newTrackMap.get(newKey);
-				if (track.contains(spotToFind)) {
-					newKeyMap.put(savedKey, newKey);
-					newKeysToMatch.remove(newKey);
-					break;
-				}
-			}
-			if (null == newKeyMap.get(savedKey)) {
-				logger.error("The track saved with ID = " + savedKey + " and containing the spot " + spotToFind + " has no matching track in the computed model.\n");
-				return false;
-			}
-		}
-
-		// Check that we matched all the new keys
-		if (!newKeysToMatch.isEmpty()) {
-			StringBuilder sb = new StringBuilder("Some of the computed tracks could not be matched to saved tracks:\n");
-			for (Integer unmatchedKey : newKeysToMatch) {
-				sb.append(" - track with ID " + unmatchedKey + " with spots " + newTrackMap.get(unmatchedKey) + "\n");
-			}
-			logger.error(sb.toString());
-			return false;
 		}
 
 		/* 
-		 * Now we know who's who. We can therefore retrieve the saved filtered track index, and 
-		 * match it to the proper new track IDs. 
+		 * Now on to the visibility.
 		 */
 		Set<Integer> savedFilteredTrackIDs = readFilteredTrackIDs(modelElement);
-		if (null == savedFilteredTrackIDs) {
-			return false;
+		Map<Integer, Boolean> visibility = new HashMap<Integer, Boolean>(connectedEdgeSet.size());
+		Set<Integer> ids = new HashSet<Integer>(connectedEdgeSet.keySet());
+		for (Integer id : savedFilteredTrackIDs) {
+			visibility.put(id, Boolean.TRUE);
 		}
-		// Build a new set with the new trackIDs;
-		Set<Integer> newFilteredTrackIDs = new HashSet<Integer>(savedFilteredTrackIDs.size());
-		for (Integer savedKey : savedFilteredTrackIDs) {
-			Integer newKey = newKeyMap.get(savedKey);
-			newFilteredTrackIDs.add(newKey);
+		ids.removeAll(savedFilteredTrackIDs);
+		for (Integer id : ids) {
+			visibility.put(id, Boolean.FALSE);
 		}
-		model.getTrackModel().setFilteredTrackIDs(newFilteredTrackIDs, false);
-
-
-		/* 
-		 * We do the same thing for the track features.
-		 */
-		try {
-			Map<Integer, Map<String, Double>> savedFeatureMap = readTrackFeatures(modelElement);
-			for (Integer savedKey : savedFeatureMap.keySet()) {
-
-				Map<String, Double> savedFeatures = savedFeatureMap.get(savedKey);
-				for (String feature : savedFeatures.keySet()) {
-					Integer newKey = newKeyMap.get(savedKey);
-					fm.putTrackFeature(newKey, feature, savedFeatures.get(feature));
-				}
-			}
-		} catch (RuntimeException re) {
-			logger.error("Problem populating track features:\n");
-			logger.error(re.getMessage());
-			return false;
-		}
-
+		
+		
 		/*
-		 * We can name correctly the tracks
+		 * Pass read results to model.
 		 */
-
-		try {
-			for (Integer savedTrackID : savedTrackNames.keySet()) {
-				Integer newKey = newKeyMap.get(savedTrackID);
-				model.getTrackModel().setTrackName(newKey, savedTrackNames.get(savedTrackID));
-			}
-		} catch (RuntimeException rte) {
-			logger.error("Problem setting track names:\n");
-			logger.error(rte.getMessage());
-			return false;
-		}
+		model.getTrackModel().from(graph, connectedVertexSet, connectedEdgeSet, visibility, savedTrackNames);
 
 		return true;
 	}
@@ -926,7 +881,7 @@ public class TmXmlReader {
 		return spot;
 	}
 
-	private void readFeatureDeclarations(Element modelElement, TrackMateModel model) {
+	private void readFeatureDeclarations(Element modelElement, Model model) {
 
 		FeatureModel fm = model.getFeatureModel();
 		Element featuresElement = modelElement.getChild(FEATURE_DECLARATIONS_ELEMENT_KEY);

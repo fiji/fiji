@@ -14,7 +14,7 @@ import net.imglib2.multithreading.SimpleMultiThreading;
 import fiji.plugin.trackmate.Dimension;
 import fiji.plugin.trackmate.FeatureModel;
 import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.Model;
 
 public class TrackLocationAnalyzer implements TrackAnalyzer, MultiThreaded, Benchmark {
 
@@ -51,13 +51,13 @@ public class TrackLocationAnalyzer implements TrackAnalyzer, MultiThreaded, Benc
 
 	private int numThreads;
 	private long processingTime;
-	private final TrackMateModel model;
+	private final Model model;
 
 	/*
 	 * CONSTRUCTOR
 	 */
 
-	public TrackLocationAnalyzer(final TrackMateModel model) {
+	public TrackLocationAnalyzer(final Model model) {
 		this.model = model;
 		setNumThreads();
 	}
@@ -85,7 +85,7 @@ public class TrackLocationAnalyzer implements TrackAnalyzer, MultiThreaded, Benc
 					Integer trackID;
 					while ((trackID = queue.poll()) != null) {
 
-						Set<Spot> track = model.getTrackModel().getTrackSpots(trackID);
+						Set<Spot> track = model.getTrackModel().trackSpots(trackID);
 
 						double x = 0;
 						double y = 0;
