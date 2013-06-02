@@ -6,7 +6,11 @@ WISH LIST
 
 RELEASE NOTES
 =============
-Version 3.0 (latest)
+Version 3.1 (latest)
+    - New descriptors: Median and Barycenter of sampled profile (linear Sholl)
+    - Minor improvements in Results table
+
+Version 3.0
     - 3D Sholl:
       - Better handling of anisotropic voxels
       - Option to ignore isolated (noise) voxels

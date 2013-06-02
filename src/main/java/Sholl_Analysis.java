@@ -55,8 +55,8 @@ import java.util.Vector;
 public class Sholl_Analysis implements PlugIn, TextListener, ItemListener {
 
     /* Plugin Information */
-    public static final String VERSION = "3.0";
-    private static final String URL = "http://imagejdocu.tudor.lu/doku.php?id=plugin:analysis:asa:start";
+    public static final String VERSION = "3.1";
+    private static final String URL = "http://fiji.sc/Sholl_Analysis";
 
     /* Sholl Type Definitions */
     public static final String[] SHOLL_TYPES = { "Intersections", "Norm. Intersections", "Semi-Log", "Log-Log" };
@@ -978,8 +978,8 @@ public class Sholl_Analysis implements PlugIn, TextListener, ItemListener {
         rt.incrementCounter();
         rt.setPrecision(getPrecision());
         rt.addLabel("Image", title + " (" + unit + ")");
-        rt.addValue("Lower Thold", lowerT);
-        rt.addValue("Upper Thold", upperT);
+        rt.addValue("Lower threshold", lowerT);
+        rt.addValue("Upper threshold", upperT);
         rt.addValue("Method #", mthd + 1);
         rt.addValue("X center (px)", xc);
         rt.addValue("Y center (px)", yc);
@@ -987,15 +987,22 @@ public class Sholl_Analysis implements PlugIn, TextListener, ItemListener {
         rt.addValue("Starting radius", startRadius);
         rt.addValue("Ending radius", endRadius);
         rt.addValue("Radius step", stepRadius);
-        rt.addValue("Samples per radius", is3D ? 1 : nSpans);
+        rt.addValue("Samples/radius", is3D ? 1 : nSpans);
         rt.addValue("Intersecting radii", nsize);
-        rt.addValue("Sum Inters.", sumY);
-        rt.addValue("Avg Inters.", sumY/nsize);
-        rt.addValue("Max Inters.", maxIntersect);
-        rt.addValue("Max Inters. radius", maxR);
+        rt.addValue("Sum inters.", sumY);
+        rt.addValue("Mean inters.", sumY/nsize);
+        rt.addValue("Median inters.", getMedian(y));
+        rt.addValue("Max inters.", maxIntersect);
+        rt.addValue("Max inters. radius", maxR);
+        rt.addValue("Ramification index (sampled)", ri);
+
+        // Calculate the 'center of mass' for the sampled curve (linear Sholl);
+        final double[] centroid = baryCenter(x, y);
+        rt.addValue("Centroid radius", centroid[0]);
+        rt.addValue("Centroid inters.", centroid[1]);
+
         rt.addValue("Enclosing radius", lastR);
         rt.addValue("Enclosed field", field);
-        rt.addValue("Ramification index", ri);
 
         // Calculate Sholl decay: the slope of fitted regression on Semi-log Sholl
         CurveFitter cf = new CurveFitter(x, logY);
@@ -1003,8 +1010,8 @@ public class Sholl_Analysis implements PlugIn, TextListener, ItemListener {
 
         double[] parameters = cf.getParams();
         plotLabel.append("k= " + IJ.d2s(-parameters[1], -2));
-        rt.addValue("Sholl Regression Coefficient", -parameters[1]); // Slope of regression
-        rt.addValue("Regression Intercept", parameters[0]);
+        rt.addValue("Sholl regression coefficient", -parameters[1]); // Slope of regression
+        rt.addValue("Regression intercept", parameters[0]);
         rt.addValue("Regression R^2", cf.getRSquared());
         rt.show(shollTable);
 
@@ -1156,12 +1163,12 @@ public class Sholl_Analysis implements PlugIn, TextListener, ItemListener {
         rt.addValue("Critical value", cv);
         rt.addValue("Critical radius", cr);
         rt.addValue("Mean value", mv);
-        rt.addValue("Ramification index (cv)", rif);
+        rt.addValue("Ramification index (Cv)", rif);
         rt.addValue("Polyn. degree", mthd==SHOLL_N ? parameters.length-2 : Double.NaN);
 
         // Register quality of fit
         plotLabel.append("\nR\u00B2= "+ IJ.d2s(cf.getRSquared(), 3));
-        rt.addValue("R^2 (fit)", cf.getRSquared());
+        rt.addValue("Polyn. R^2", cf.getRSquared());
 
         // Plot fitted curve
         plot.setColor(Color.BLUE);
@@ -1343,6 +1350,35 @@ public class Sholl_Analysis implements PlugIn, TextListener, ItemListener {
         return new IndexColorModel(8, 256, reds, greens, blues);
     }
 
+    /**
+     * Calculates the centroid of a non-self-intersecting closed polygon as
+     * described in http://en.wikipedia.org/wiki/Centroid#Centroid_of_polygon
+     * It is assumed that arrays of x,y points have the same size
+     */
+    private static double[] baryCenter(final double[] xpoints, final double[] ypoints) {
+    	double area = 0, sumx = 0, sumy = 0;
+    	for (int i=1; i<xpoints.length; i++) {
+    		double cfactor = (xpoints[i-1]*ypoints[i]) - (xpoints[i]*ypoints[i-1]);
+    		sumx += (xpoints[i-1] + xpoints[i]) * cfactor;
+    		sumy += (ypoints[i-1] + ypoints[i]) * cfactor;
+    		area += cfactor/2;
+    	}
+    	return new double[] { sumx/(6*area), sumy/(6*area) };
+    }
+
+     /** Retrieves the median of an array */
+    private static double getMedian(final double[] array) {
+		final int size = array.length;
+		final double[] sArray = array.clone();
+		Arrays.sort(sArray);
+		final double median;
+		if (size % 2 == 0)
+    		median = (sArray[size/2] + sArray[size/2 -1])/2;
+		else
+    		median = sArray[size/2];
+    	return median;
+    }
+
     /** Creates an empty plot (the default constructor using "flags" requires data arrays) */
     private static Plot createEmptyPlot(final String title, final String xTitle, final String yTitle) {
         final double[] empty = null;
@@ -1374,7 +1410,7 @@ public class Sholl_Analysis implements PlugIn, TextListener, ItemListener {
                 rt.saveAs(path + Prefs.get("options.ext", ".csv"));
                 IJ.saveAs(plot.getImagePlus(), "png", path + ".png");
             } catch (final IOException e) {
-                IJ.log(">>>> An error occured when saving "+ title +"'s profile:\n"+ e);
+                IJ.log(">>>> An error occurred when saving "+ title +"'s profile:\n"+ e);
             }
         }
     }
