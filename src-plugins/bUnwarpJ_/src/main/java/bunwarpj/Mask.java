@@ -69,7 +69,7 @@ public class Mask
      * mask information.
      *
      * @param ip image
-     * @param take_mask flag to take the mask from the stack of images
+     * @param take_mask flag to take the mask information from input image processor
      */
     public Mask (final ImageProcessor ip, boolean take_mask)
     {

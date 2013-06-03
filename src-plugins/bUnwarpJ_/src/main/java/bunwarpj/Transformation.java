@@ -28,9 +28,11 @@ import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.io.SaveDialog;
+import ij.process.ByteProcessor;
 import ij.process.ColorProcessor;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
+import ij.process.ShortProcessor;
 
 import java.awt.Point;
 import java.awt.Rectangle;
@@ -79,9 +81,9 @@ public class Transformation
 	private ImagePlus sourceImp;
 	/** pointer to the target image representation */
 	private ImagePlus targetImp;
-	/** pointer to the source image model */
+	/** pointer to the source image model (source image represented by B-splines) */
 	private BSplineModel source;
-	/** pointer to the target image model */
+	/** pointer to the target image model (target image represented by B-splines) */
 	private BSplineModel target;
 
 	// Original image processors
@@ -6227,7 +6229,22 @@ public class Transformation
 		min_val = auxSourceImp.getProcessor().getMin();
 		max_val = auxSourceImp.getProcessor().getMax();
 		fpg.setMinAndMax(min_val,max_val);
-		auxSourceImp.setProcessor(auxSourceImp.getTitle(),fpg);
+		
+		// If the input has a mask as second slice, we need to convert 
+		// the image with the grid before displaying
+		if( auxSourceImp.getImageStackSize() < 2 )
+			auxSourceImp.setProcessor(auxSourceImp.getTitle(),fpg);
+		else
+		{
+			final ImageProcessor ipToDisplay; 
+			if( auxSourceImp.getProcessor() instanceof ByteProcessor )
+				ipToDisplay = fpg.convertToByte( false );
+			else if( auxSourceImp.getProcessor() instanceof ShortProcessor )
+				ipToDisplay = fpg.convertToShort( false );
+			else
+				ipToDisplay = fpg;
+			auxSourceImp.setProcessor(auxSourceImp.getTitle(), ipToDisplay );
+		}
 		auxSourceImp.updateImage();
 	}
 	
