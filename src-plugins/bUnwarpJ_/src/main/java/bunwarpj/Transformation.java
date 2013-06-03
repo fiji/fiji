@@ -79,9 +79,9 @@ public class Transformation
 	private ImagePlus sourceImp;
 	/** pointer to the target image representation */
 	private ImagePlus targetImp;
-	/** pointer to the source image model */
+	/** pointer to the source image model (source image represented by B-splines) */
 	private BSplineModel source;
-	/** pointer to the target image model */
+	/** pointer to the target image model (target image represented by B-splines) */
 	private BSplineModel target;
 
 	// Original image processors
