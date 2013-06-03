@@ -73,7 +73,7 @@ public class Multi_View_Fusion implements PlugIn
 		new Reconstruction( conf );
 	}
 
-	public static String allChannels = "0, 1";
+	//public static String allChannels = "0, 1";
 	public static String[] fusionMethodList = { "Fuse into a single image", "Create independent registered images" };	
 	public static int defaultFusionMethod = 0;
 	public static int defaultParalellViews = 0;
@@ -97,7 +97,12 @@ public class Multi_View_Fusion implements PlugIn
 		
 		gd.addDirectoryOrFileField( "SPIM_data_directory", Bead_Registration.spimDataDirectory );
 		final TextField tfSpimDataDirectory = (TextField) gd.getStringFields().lastElement();
-		gd.addStringField( "Pattern_of_SPIM files", Bead_Registration.fileNamePattern, 25 );
+		
+		if ( multichannel )
+			gd.addStringField( "Pattern_of_SPIM files", Bead_Registration.fileNamePatternMC, 25 );
+		else
+			gd.addStringField( "Pattern_of_SPIM files", Bead_Registration.fileNamePattern, 25 );
+		
 		final TextField tfFilePattern = (TextField) gd.getStringFields().lastElement();
 		gd.addStringField( "Timepoints_to_process", Bead_Registration.timepoints );
 		final TextField tfTimepoints = (TextField) gd.getStringFields().lastElement();
@@ -107,7 +112,7 @@ public class Multi_View_Fusion implements PlugIn
 		final TextField tfChannels;
 		if ( multichannel )
 		{
-			gd.addStringField( "Channels to process", allChannels );
+			gd.addStringField( "Channels to process", Bead_Registration.channelsBeadsMC );
 			tfChannels = (TextField) gd.getStringFields().lastElement();
 		}
 		else
@@ -204,7 +209,10 @@ public class Multi_View_Fusion implements PlugIn
 			return null;
 
 		Bead_Registration.spimDataDirectory = gd.getNextString();
-		Bead_Registration.fileNamePattern = gd.getNextString();
+		if ( multichannel )
+			Bead_Registration.fileNamePatternMC = gd.getNextString();
+		else
+			Bead_Registration.fileNamePattern = gd.getNextString();
 		Bead_Registration.timepoints = gd.getNextString();
 		Bead_Registration.angles = gd.getNextString();
 
@@ -226,22 +234,22 @@ public class Multi_View_Fusion implements PlugIn
 		// verify this part
 		if ( multichannel )
 		{
-			allChannels = gd.getNextString();
+			Bead_Registration.channelsBeadsMC = gd.getNextString();
 			
 			try
 			{
-				channels = SPIMConfiguration.parseIntegerString( allChannels );
+				channels = SPIMConfiguration.parseIntegerString( Bead_Registration.channelsBeadsMC );
 				numChannels = channels.size();
 			}
 			catch (ConfigurationParserException e)
 			{
-				IOFunctions.printErr( "Cannot understand/parse the channels: " + allChannels );
+				IOFunctions.printErr( "Cannot understand/parse the channels: " + Bead_Registration.channelsBeadsMC );
 				return null;
 			}
 
 			if ( numChannels < 1 )
 			{
-				IOFunctions.printErr( "There are no channels given: " + allChannels );
+				IOFunctions.printErr( "There are no channels given: " + Bead_Registration.channelsBeadsMC );
 				return null;
 			}
 		}
@@ -259,18 +267,19 @@ public class Multi_View_Fusion implements PlugIn
 		conf.anglePattern = Bead_Registration.angles;
 		if ( multichannel )
 		{
-			conf.channelPattern = allChannels;
-			conf.channelsToRegister = allChannels;
-			conf.channelsToFuse = allChannels;
+			conf.channelPattern = Bead_Registration.channelsBeadsMC;
+			conf.channelsToRegister = Bead_Registration.channelsBeadsMC;
+			conf.channelsToFuse = Bead_Registration.channelsBeadsMC;
+			conf.inputFilePattern = Bead_Registration.fileNamePatternMC;
 		}
 		else
 		{
 			conf.channelPattern = "";
 			conf.channelsToRegister = "";
 			conf.channelsToFuse = "";			
-		}
-		conf.inputFilePattern = Bead_Registration.fileNamePattern;
-
+			conf.inputFilePattern = Bead_Registration.fileNamePattern;
+		}		
+		
 		f = new File( Bead_Registration.spimDataDirectory );
 		if ( f.exists() && f.isFile() && f.getName().endsWith( ".xml" ) )
 		{

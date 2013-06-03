@@ -18,7 +18,6 @@ import mpicbg.models.IllDefinedDataPointsException;
 import mpicbg.models.Model;
 import mpicbg.models.NotEnoughDataPointsException;
 import mpicbg.models.RigidModel3D;
-import mpicbg.models.TileConfiguration;
 import mpicbg.models.TranslationModel3D;
 import mpicbg.pointdescriptor.model.RigidModelOld3D;
 import mpicbg.spim.io.IOFunctions;
