@@ -27,7 +27,7 @@ public class MappingFusionSequentialDifferentOutput extends SPIMImageFusion
 	final int numParalellStacks;
 	
 	//int angleIndicies[] = new int[]{ 0, 6, 7 };
-	int angleIndicies[] = null;
+	public static int angleIndicies[] = null;
 
 	public MappingFusionSequentialDifferentOutput( final ViewStructure viewStructure, final ViewStructure referenceViewStructure,
 			  									   final ArrayList<IsolatedPixelWeightenerFactory<?>> isolatedWeightenerFactories,
