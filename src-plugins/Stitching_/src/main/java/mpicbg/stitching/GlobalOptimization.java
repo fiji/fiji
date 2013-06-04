@@ -16,6 +16,8 @@ import mpicbg.models.TranslationModel3D;
 
 public class GlobalOptimization 
 {
+	public static boolean ignoreZ = false;
+	
 	public static ArrayList< ImagePlusTimePoint > optimize( final Vector< ComparePair > pairs, final ImagePlusTimePoint fixedImage, final StitchingParameters params )
 	{
 		boolean redo;
@@ -38,7 +40,11 @@ public class GlobalOptimization
 					{
 						// the transformations that map each tile into the relative global coordinate system (that's why the "-")
 						p1 = new Point( new float[]{ 0,0,0 } );
-						p2 = new Point( new float[]{ -pair.getRelativeShift()[ 0 ], -pair.getRelativeShift()[ 1 ], -pair.getRelativeShift()[ 2 ] } );
+						
+						if ( ignoreZ )
+							p2 = new Point( new float[]{ -pair.getRelativeShift()[ 0 ], -pair.getRelativeShift()[ 1 ], 0 } );
+						else
+							p2 = new Point( new float[]{ -pair.getRelativeShift()[ 0 ], -pair.getRelativeShift()[ 1 ], -pair.getRelativeShift()[ 2 ] } );
 					}
 					else 
 					{
