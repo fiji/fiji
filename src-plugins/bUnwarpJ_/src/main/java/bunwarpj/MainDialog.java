@@ -926,8 +926,8 @@ public class MainDialog extends GenericDialog
 		sourceImp = imageList[sourceChoiceIndex];	
 
 		// Save original image processor
-		if(this.sourceImp.getStackSize() > 1)
-			this.originalSourceIP = this.sourceImp.getStack().getProcessor(1);
+		if(this.sourceImp.getImageStackSize() > 1)
+			this.originalSourceIP = this.sourceImp.getImageStack().getProcessor(1);
 		else
 			this.originalSourceIP = this.sourceImp.getProcessor();
 
@@ -942,7 +942,7 @@ public class MainDialog extends GenericDialog
 		sourceIc  = (null == sourceImp.getWindow()) ? null : sourceImp.getWindow().getCanvas();
 		
 		// If it is an stack, the second slice is considered a mask
-		if (sourceImp.getStackSize() == 1) 
+		if (sourceImp.getImageStackSize() == 1) 
 		{
 			// Create an empty mask
 			sourceMsk = new Mask(sourceImp.getProcessor(),false);
@@ -950,7 +950,7 @@ public class MainDialog extends GenericDialog
 		else 
 		{
 			// Take the mask from the second slice			
-			sourceMsk = new Mask(sourceImp.getStack().getProcessor(2), true);
+			sourceMsk = new Mask(sourceImp.getImageStack().getProcessor(2), true);
 		}
 		sourcePh = new PointHandler(sourceImp, tb, sourceMsk, this);
 				
@@ -980,8 +980,8 @@ public class MainDialog extends GenericDialog
 		targetImp = imageList[targetChoiceIndex];
 		
 		// Save original image processor
-		if(this.targetImp.getStackSize() > 1)
-			this.originalTargetIP = this.targetImp.getStack().getProcessor(1);
+		if(this.targetImp.getImageStackSize() > 1)
+			this.originalTargetIP = this.targetImp.getImageStack().getProcessor(1);
 		else
 			this.originalTargetIP = this.targetImp.getProcessor();
 
@@ -996,7 +996,7 @@ public class MainDialog extends GenericDialog
 		this.targetIc  = (null == targetImp.getWindow()) ? null : targetImp.getWindow().getCanvas();
 
 		// If it is an stack, the second slice is considered a mask
-		if (targetImp.getStackSize()==1) 
+		if (targetImp.getImageStackSize()==1) 
 		{
 			// Create an empty mask
 			this.targetMsk = new Mask(targetImp.getProcessor(), false);
@@ -1004,7 +1004,7 @@ public class MainDialog extends GenericDialog
 		else 
 		{
 			// Take the mask from the second slice
-			this.targetMsk = new Mask(targetImp.getStack().getProcessor(2), true);
+			this.targetMsk = new Mask(targetImp.getImageStack().getProcessor(2), true);
 		}
 		this.targetPh = new PointHandler(targetImp, tb, targetMsk, this);
 		this.tb.setTarget(targetImp, targetPh);

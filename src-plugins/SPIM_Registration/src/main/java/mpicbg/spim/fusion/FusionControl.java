@@ -53,7 +53,7 @@ public class FusionControl
 		else if ( conf.isDeconvolution )
 			fusion = new PreDeconvolutionFusion( viewStructure, referenceViewStructure, isolatedWeightenerFactories, combinedWeightenerFactories );
 		else if (conf.multipleImageFusion)
-			fusion = new MappingFusionSequentialDifferentOutput( viewStructure, referenceViewStructure, isolatedWeightenerFactories, combinedWeightenerFactories );
+			fusion = new MappingFusionSequentialDifferentOutput( viewStructure, referenceViewStructure, isolatedWeightenerFactories, combinedWeightenerFactories, conf.numParalellViews );
 		else if (conf.paralellFusion)
 			fusion = new MappingFusionParalell( viewStructure, referenceViewStructure, isolatedWeightenerFactories, combinedWeightenerFactories ); //TODO: Remove Max Weight
 		else
