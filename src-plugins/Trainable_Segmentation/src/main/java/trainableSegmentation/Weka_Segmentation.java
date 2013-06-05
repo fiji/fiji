@@ -12,8 +12,6 @@ import javax.swing.SwingUtilities;
 import fiji.util.gui.GenericDialogPlus;
 import fiji.util.gui.OverlayedImageCanvas;
 
-import hr.irb.fastRandomForest.FastRandomForest;
-
 import ij.IJ;
 import ij.plugin.PlugIn;
 import ij.plugin.frame.Recorder;
@@ -218,7 +216,7 @@ public class Weka_Segmentation implements PlugIn
 	public static final String CREATE_CLASS = "createNewClass";
 	/** name of the macro method to launch the Weka Chooser */
 	public static final String LAUNCH_WEKA = "launchWeka";
-	/** name of the macro method to enable/disbale a feature */
+	/** name of the macro method to enable/disable a feature */
 	public static final String SET_FEATURE = "setFeature";
 	/** name of the macro method to set the membrane thickness */
 	public static final String SET_MEMBRANE_THICKNESS = "setMembraneThickness";
@@ -228,7 +226,7 @@ public class Weka_Segmentation implements PlugIn
 	public static final String SET_MINIMUM_SIGMA = "setMinimumSigma";
 	/** name of the macro method to set the maximum kernel radius */
 	public static final String SET_MAXIMUM_SIGMA = "setMaximumSigma";
-	/** name of the macro method to enable/disble the class homogenization */
+	/** name of the macro method to enable/disable the class homogenization */
 	public static final String SET_HOMOGENIZATION = "setClassHomogenization";
 	/** name of the macro method to set a new classifier */
 	public static final String SET_CLASSIFIER = "setClassifier";
@@ -2102,7 +2100,7 @@ public class Weka_Segmentation implements PlugIn
 		gd.addCheckbox("Homogenize classes", wekaSegmentation.doHomogenizeClasses());
 		gd.addButton("Save feature stack", new SaveFeatureStackButtonListener("Select location to save feature stack", wekaSegmentation.getFeatureStackArray()));
 		gd.addSlider("Result overlay opacity", 0, 100, win.overlayOpacity);
-		gd.addHelp("http://fiji.sc/wiki/Trainable_Segmentation_Plugin");
+		gd.addHelp("http://fiji.sc/Trainable_Weka_Segmentation");
 
 		gd.showDialog();
 
