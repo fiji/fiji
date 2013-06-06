@@ -171,7 +171,7 @@ public class Sholl_Analysis implements PlugIn, TextListener, ItemListener {
         final boolean validRoi = roi!=null && (roi.getType()==Roi.LINE || roi.getType()==Roi.POINT);
 
         if (!IJ.macroRunning() && !validRoi) {
-            img.deleteRoi();
+            img.killRoi();
             Toolbar.getInstance().setTool("line");
             final WaitForUserDialog wd = new WaitForUserDialog(
                               "Please define the largest Sholl radius by creating\n"
@@ -1274,7 +1274,7 @@ public class Sholl_Analysis implements PlugIn, TextListener, ItemListener {
             exitmsg = "Composite images are not supported.";
         } else {
             ip = img.getProcessor();
-            final int type = ip.getBitDepth();
+            final int type = img.getBitDepth();
             if (type==24)
                 exitmsg = "RGB color images are not supported.";
             else if (type==32)
@@ -1356,27 +1356,27 @@ public class Sholl_Analysis implements PlugIn, TextListener, ItemListener {
      * It is assumed that arrays of x,y points have the same size
      */
     private static double[] baryCenter(final double[] xpoints, final double[] ypoints) {
-    	double area = 0, sumx = 0, sumy = 0;
-    	for (int i=1; i<xpoints.length; i++) {
-    		double cfactor = (xpoints[i-1]*ypoints[i]) - (xpoints[i]*ypoints[i-1]);
-    		sumx += (xpoints[i-1] + xpoints[i]) * cfactor;
-    		sumy += (ypoints[i-1] + ypoints[i]) * cfactor;
-    		area += cfactor/2;
-    	}
-    	return new double[] { sumx/(6*area), sumy/(6*area) };
+        double area = 0, sumx = 0, sumy = 0;
+        for (int i=1; i<xpoints.length; i++) {
+            double cfactor = (xpoints[i-1]*ypoints[i]) - (xpoints[i]*ypoints[i-1]);
+            sumx += (xpoints[i-1] + xpoints[i]) * cfactor;
+            sumy += (ypoints[i-1] + ypoints[i]) * cfactor;
+            area += cfactor/2;
+        }
+        return new double[] { sumx/(6*area), sumy/(6*area) };
     }
 
      /** Retrieves the median of an array */
     private static double getMedian(final double[] array) {
-		final int size = array.length;
-		final double[] sArray = array.clone();
-		Arrays.sort(sArray);
-		final double median;
-		if (size % 2 == 0)
-    		median = (sArray[size/2] + sArray[size/2 -1])/2;
-		else
-    		median = sArray[size/2];
-    	return median;
+        final int size = array.length;
+        final double[] sArray = array.clone();
+        Arrays.sort(sArray);
+        final double median;
+        if (size % 2 == 0)
+            median = (sArray[size/2] + sArray[size/2 -1])/2;
+        else
+            median = sArray[size/2];
+        return median;
     }
 
     /** Creates an empty plot (the default constructor using "flags" requires data arrays) */
@@ -1424,17 +1424,17 @@ public class Sholl_Analysis implements PlugIn, TextListener, ItemListener {
         final String[] lines = Tools.split(label, "\n");
         for (int i = 0; i<lines.length; i++) {
             final int length = lines[i].length();
-			if (length>maxLength)
-			    { maxLength = length; maxLine = lines[i]; }
+            if (length>maxLength)
+                { maxLength = length; maxLine = lines[i]; }
         }
 
         final FontMetrics metrics = ip.getFontMetrics();
         final int textWidth = metrics.stringWidth(maxLine+" ");
         final int lineHeight = metrics.getHeight();
         final int textHeight = lineHeight * lines.length;
-		final int yTop = Plot.TOP_MARGIN + margin + lineHeight;
-		final int xRight = Plot.LEFT_MARGIN + PlotWindow.plotWidth - margin - textWidth;
-		final int xLeft  = Plot.LEFT_MARGIN + margin;
+        final int yTop = Plot.TOP_MARGIN + margin + lineHeight;
+        final int xRight = Plot.LEFT_MARGIN + PlotWindow.plotWidth - margin - textWidth;
+        final int xLeft  = Plot.LEFT_MARGIN + margin;
 
         ip.setRoi(xLeft, yTop, textWidth, textHeight);
         final double meanLeft = ImageStatistics.getStatistics(ip, Measurements.MEAN, null).mean;
@@ -1446,11 +1446,11 @@ public class Sholl_Analysis implements PlugIn, TextListener, ItemListener {
 
     /** Retrieves precision according to Analyze>Set Measurements...*/
     private static int getPrecision() {
-		final boolean sNotation = (Analyzer.getMeasurements()&Measurements.SCIENTIFIC_NOTATION)!=0;
+        final boolean sNotation = (Analyzer.getMeasurements()&Measurements.SCIENTIFIC_NOTATION)!=0;
         int precision = Analyzer.getPrecision();
-		if (sNotation)
-		    precision = -precision;
-		return precision;
+        if (sNotation)
+            precision = -precision;
+        return precision;
     }
 
     /** Returns a Results Table with profile data */
