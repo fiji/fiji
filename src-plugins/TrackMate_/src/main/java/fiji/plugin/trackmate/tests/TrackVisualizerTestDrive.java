@@ -5,6 +5,7 @@ import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Model;
 import fiji.plugin.trackmate.TrackMate;
 import fiji.plugin.trackmate.features.FeatureFilter;
+import fiji.plugin.trackmate.features.ModelFeatureUpdater;
 import fiji.plugin.trackmate.features.track.TrackBranchingAnalyzer;
 import fiji.plugin.trackmate.gui.GrapherPanel;
 import fiji.plugin.trackmate.gui.panels.ConfigureViewsPanel;
@@ -40,6 +41,7 @@ public class TrackVisualizerTestDrive {
 		reader.readSettings(settings, null, null, 
 				new SpotAnalyzerProvider(model), new EdgeAnalyzerProvider(model), new TrackAnalyzerProvider(model));
 		TrackMate trackmate = new TrackMate(model, settings);
+		new ModelFeatureUpdater(model, settings);
 		
 		System.out.println("From the XML file:");
 		System.out.println("Found "+model.getTrackModel().nTracks(false)+" tracks in total.");

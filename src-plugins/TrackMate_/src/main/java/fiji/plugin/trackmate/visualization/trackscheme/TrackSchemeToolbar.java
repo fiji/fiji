@@ -14,9 +14,7 @@ import javax.swing.Box;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
-import javax.swing.JLabel;
 import javax.swing.JToolBar;
-import javax.swing.SwingConstants;
 
 public class TrackSchemeToolbar extends JToolBar {
 
@@ -107,62 +105,17 @@ public class TrackSchemeToolbar extends JToolBar {
 		resetZoomButton.setToolTipText("Reset zoom");
 
 		// Redo layout
-		final Action redoLayoutAction = new AbstractAction(null, REFRESH_ICON) {
+		
+		final JButton redoLayoutButton = new JButton("Layout", REFRESH_ICON);
+		redoLayoutButton.setFont(FONT);
+		redoLayoutButton.setToolTipText("Re-arrange the tracks.");
+		redoLayoutButton.addActionListener(new ActionListener() {
+			@Override
 			public void actionPerformed(ActionEvent e) {
 				trackScheme.doTrackLayout();
 				trackScheme.refresh();
 			}
-		};
-		final JButton redoLayoutButton = new JButton(redoLayoutAction);
-		redoLayoutButton.setToolTipText("Redo layout");
-
-		/* 
-		 * Folding
-		 */
-
-		//		boolean defaultEnabled = frame.getGraphLayout().isBranchGroupingEnabled();
-		//		final JButton foldAllButton = new JButton(null, FOLD_ALL_BRANCHES_ICON);
-		//		foldAllButton.addActionListener(new ActionListener() {
-		//			@Override
-		//			public void actionPerformed(ActionEvent e) {
-		//				frame.getGraphLayout().setAllFolded(true);
-		//			}
-		//		});
-		//		final JButton unFoldAllButton = new JButton(null, UNFOLD_ALL_BRANCHES_ICON);
-		//		unFoldAllButton.addActionListener(new ActionListener() {
-		//			@Override
-		//			public void actionPerformed(ActionEvent e) {
-		//				frame.getGraphLayout().setAllFolded(false);
-		//			}
-		//		});
-		//		final JButton toggleEnableFoldingButton = new JButton(null, 
-		//						defaultEnabled ? 
-		//						BRANCH_FOLDING_ON_ICON : BRANCH_FOLDING_OFF_ICON);
-		//		toggleEnableFoldingButton.addActionListener(new ActionListener() {
-		//			@Override
-		//			public void actionPerformed(ActionEvent e) {
-		//				boolean enabled = frame.getGraphLayout().isBranchGroupingEnabled();
-		//				frame.getGraphLayout().setBranchGrouping(!enabled);
-		//				
-		//				if (enabled) {
-		//					toggleEnableFoldingButton.setIcon(BRANCH_FOLDING_OFF_ICON);	
-		//					foldAllButton.setEnabled(false);
-		//					unFoldAllButton.setEnabled(false);
-		//				} else {
-		//					toggleEnableFoldingButton.setIcon(BRANCH_FOLDING_ON_ICON);
-		//					foldAllButton.setEnabled(true);
-		//					unFoldAllButton.setEnabled(true);
-		//				}
-		//			}
-		//		});
-		//		toggleEnableFoldingButton.setToolTipText("Toggle folding (redo layout)");
-		//		foldAllButton.setToolTipText("Fold all branches");
-		//		unFoldAllButton.setToolTipText("Unfold all branches");
-		//		if (!defaultEnabled) {
-		//			foldAllButton.setEnabled(false);
-		//			unFoldAllButton.setEnabled(false);
-		//		}
-
+		});
 
 		// Capture 
 		final Action captureUndecoratedAction = new AbstractAction(null, CAPTURE_UNDECORATED_ICON) {			
@@ -184,30 +137,6 @@ public class TrackSchemeToolbar extends JToolBar {
 		captureUndecoratedButton.setToolTipText("Capture undecorated track scheme");
 		captureDecoratedButton.setToolTipText("Capture decorated track scheme");
 		saveButton.setToolTipText("Export to..");
-
-
-		/*
-		 * display labels on edges
-		 */
-
-		//		JButton toggleDisplayCostsButton;
-		//		{
-		//			boolean defaultDisplayCosts= TrackScheme.DEFAULT_DO_DISPLAY_COSTS_ON_EDGES;
-		//			final Action toggleDisplayCostsAction = new AbstractAction(null, defaultDisplayCosts ? DISPLAY_COST_ON_ICON : DISPLAY_COST_OFF_ICON) {
-		//				public void actionPerformed(ActionEvent e) {
-		//					boolean enabled = trackScheme.toggleDisplayCosts();
-		//					ImageIcon displayIcon;
-		//					if (enabled)
-		//						displayIcon = DISPLAY_COST_OFF_ICON;
-		//					else
-		//						displayIcon = DISPLAY_COST_ON_ICON;
-		//					putValue(SMALL_ICON, displayIcon);
-		//
-		//				}
-		//			};
-		//			toggleDisplayCostsButton = new JButton(toggleDisplayCostsAction);
-		//			toggleDisplayCostsButton.setToolTipText("Toggle costs display (redo layout)");
-		//		}
 
 		/*
 		 * display background decorations
@@ -235,10 +164,23 @@ public class TrackSchemeToolbar extends JToolBar {
 		/*
 		 * styles
 		 */
-		final JLabel selectStyleLabel;
+		final JButton selectStyleButton;
 		{
-			selectStyleLabel = new JLabel("Style:", SELECT_STYLE_ICON, SwingConstants.RIGHT);
-			selectStyleLabel.setFont(FONT);
+			selectStyleButton = new JButton("Style:", SELECT_STYLE_ICON);
+			selectStyleButton.setFont(FONT);
+			selectStyleButton.setToolTipText("Re-apply current style after model changes.");
+			selectStyleButton.addActionListener(new ActionListener() {
+				
+				@Override
+				public void actionPerformed(ActionEvent arg0) {
+					new Thread("TrackScheme re-applying style thread") {
+						public void run() {
+							trackScheme.doTrackStyle();
+							trackScheme.refresh();
+						}
+					}.start();
+				}
+			});
 		}
 
 		final JComboBox selectStyleBox;
@@ -246,7 +188,7 @@ public class TrackSchemeToolbar extends JToolBar {
 			Set<String> styleNames = new HashSet<String>(TrackSchemeStylist.VERTEX_STYLES.keySet());
 			selectStyleBox = new JComboBox(styleNames.toArray());
 			selectStyleBox.setSelectedItem(TrackSchemeStylist.DEFAULT_STYLE_NAME);
-			selectStyleBox.setMaximumSize(new Dimension(100, 20));
+			selectStyleBox.setMaximumSize(new Dimension(100, 30));
 			selectStyleBox.setFont(FONT);
 			selectStyleBox.addActionListener(new ActionListener() {
 
@@ -271,6 +213,11 @@ public class TrackSchemeToolbar extends JToolBar {
 
 		// Layout
 		add(redoLayoutButton);
+		// Separator
+		addSeparator();
+		// Set display style
+		add(selectStyleButton);
+		add(selectStyleBox);
 		// Separator
 		addSeparator();
 		// Linking
@@ -299,12 +246,9 @@ public class TrackSchemeToolbar extends JToolBar {
 		//		add(toggleDisplayCostsButton);
 		// Display background decorations
 		add(toggleDisplayDecorationsButton);
-		// Separator
-		addSeparator();
-		// Set display style
-		add(selectStyleLabel);
-		add(selectStyleBox);
 		add(Box.createHorizontalGlue());
 
+		Dimension dim = new Dimension(100, 30);
+		setPreferredSize(dim);
 	}
 }
