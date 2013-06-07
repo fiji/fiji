@@ -1,7 +1,6 @@
 package fiji;
 
 import ij.IJ;
-import ij.ImageJ;
 import ij.Menus;
 
 import ij.plugin.PlugIn;

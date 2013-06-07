@@ -117,6 +117,7 @@ import fiji.util.gui.GenericDialogPlus;
 import fiji.util.gui.OverlayedImageCanvas;
 import hr.irb.fastRandomForest.FastRandomForest;
 
+@Deprecated
 public class Trainable_Segmentation implements PlugIn 
 {
 	final Composite transparency050 = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.50f );

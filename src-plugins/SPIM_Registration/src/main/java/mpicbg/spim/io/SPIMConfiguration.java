@@ -354,7 +354,8 @@ public class SPIMConfiguration
     	else
     	{
     		// there is always channel 0 - wrong, only always the same channel that also gets registered
-    		channelsFuse = channelsRegister.clone();
+    		// there is always the first channel
+    		channelsFuse = new int[]{ channelsRegister[ 0 ] };
 
     		// ...except when it is Huisken format, then we just take the first channel (which might not be 0)
     		if ( isHuiskenFormat() )

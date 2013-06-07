@@ -16,6 +16,8 @@ import mpicbg.models.TranslationModel3D;
 
 public class GlobalOptimization 
 {
+	public static boolean ignoreZ = false;
+	
 	public static ArrayList< ImagePlusTimePoint > optimize( final Vector< ComparePair > pairs, final ImagePlusTimePoint fixedImage, final StitchingParameters params )
 	{
 		boolean redo;
@@ -38,7 +40,11 @@ public class GlobalOptimization
 					{
 						// the transformations that map each tile into the relative global coordinate system (that's why the "-")
 						p1 = new Point( new float[]{ 0,0,0 } );
-						p2 = new Point( new float[]{ -pair.getRelativeShift()[ 0 ], -pair.getRelativeShift()[ 1 ], -pair.getRelativeShift()[ 2 ] } );
+						
+						if ( ignoreZ )
+							p2 = new Point( new float[]{ -pair.getRelativeShift()[ 0 ], -pair.getRelativeShift()[ 1 ], 0 } );
+						else
+							p2 = new Point( new float[]{ -pair.getRelativeShift()[ 0 ], -pair.getRelativeShift()[ 1 ], -pair.getRelativeShift()[ 2 ] } );
 					}
 					else 
 					{
@@ -130,30 +136,53 @@ public class GlobalOptimization
 			}
 			//IJ.log(" tiles size =" + tiles.size());
 			//IJ.log(" tc.getTiles() size =" + tc.getTiles().size());
-			
+
 			try
 			{
 				tc.preAlign();
 				tc.optimize( 10, 1000, 200 );
-	
+
 				double avgError = tc.getError();
 				double maxError = tc.getMaxError();				
-				
+
 				if ( ( ( avgError*params.relativeThreshold < maxError && maxError > 0.95 ) || avgError > params.absoluteThreshold ) )
 				{
+					float longestDisplacement = 0;
+					PointMatch worstMatch = null;
+
+					// new way of finding biggest error to look for the largest displacement
+					for ( final Tile t : tc.getTiles() )
+					{
+						for ( PointMatch p :  (Set< PointMatch >)t.getMatches() )
+						{
+							if ( p.getDistance() > longestDisplacement )
+							{
+								longestDisplacement = p.getDistance();
+								worstMatch = p;
+							}
+						}
+					}
+
+					/*
 					Tile worstTile = tc.getWorstTile();
 					Set< PointMatch > matches = worstTile.getMatches();
 					
-					float longestDisplacement = Float.MIN_VALUE;
+					float longestDisplacement = 0;
 					PointMatch worstMatch = null;
 					
+					//IJ.log( "worstTile: " + ((ImagePlusTimePoint)worstTile).getImagePlus().getTitle() );
+
 					for (PointMatch p : matches)
+					{
+						//IJ.log( "distance: " + p.getDistance() + " to " + ((PointMatchStitching)p).getPair().getImagePlus2().getTitle() );
+
 						if (p.getDistance() > longestDisplacement)
 						{
 							longestDisplacement = p.getDistance();
 							worstMatch = p;
 						}
-					
+					}
+					*/
 					final ComparePair pair = ((PointMatchStitching)worstMatch).getPair();
 					
 					IJ.log( "Identified link between " + pair.getImagePlus1().getTitle() + "[" + pair.getTile1().getTimePoint() + "] and " + 

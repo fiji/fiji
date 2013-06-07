@@ -25,6 +25,8 @@ public class ViewStructure
 	final public static int DEBUG_ALL = 0;
 	final public static int DEBUG_MAIN = 1;
 	final public static int DEBUG_ERRORONLY = 2;
+	
+	public static int firstID = 0;
 
 	/**
 	 * The link to the Views
@@ -331,9 +333,11 @@ public class ViewStructure
 			image.close();
 		}
 
-		int idNr = 0;
+		int idNr = firstID;
 		final int numChannels = conf.file[ timePointIndex ].length;
 
+		IOFunctions.println( "Using model: " + model.getClass().getCanonicalName() );
+		
 		for (int c = 0; c < conf.file[ timePointIndex ].length; c++)
 			for (int a = 0; a < conf.file[ timePointIndex ][ c ].length; a++)
 				for ( int i = 0; i < conf.file[ timePointIndex ][ c ][ a ].length; ++i )

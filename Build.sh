@@ -6,6 +6,7 @@
 # with the filenames of the .jar files to be built
 
 set -a
+unset CDPATH
 CWD="$(dirname "$0")" || {
 	echo "Huh? Cannot cd to $(dirname "$0")" >&2
 	exit 1
@@ -232,6 +233,7 @@ maven_update () {
 		if test -d "$SCIJAVA_COMMON/.git"
 		then
 			(cd "$SCIJAVA_COMMON" &&
+			 test arefs/heads/master != "$(git rev-parse --symbolic-full-name HEAD)" ||
 			 git pull -k)
 		else
 			git clone https://github.com/scijava/scijava-common \
