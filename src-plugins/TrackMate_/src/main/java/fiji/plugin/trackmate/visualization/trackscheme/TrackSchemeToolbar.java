@@ -20,22 +20,18 @@ public class TrackSchemeToolbar extends JToolBar {
 
 	private static final long serialVersionUID = 3442140463984241266L;
 	private static final ImageIcon LINKING_ON_ICON 	= new ImageIcon(TrackSchemeFrame.class.getResource("resources/connect.png")); 
-	private static final ImageIcon LINKING_OFF_ICON = new ImageIcon(TrackSchemeFrame.class.getResource("resources/forbid_connect.png")); 
+	private static final ImageIcon LINKING_OFF_ICON = new ImageIcon(TrackSchemeFrame.class.getResource("resources/connect_bw.png")); 
+	private static final ImageIcon THUMBNAIL_ON_ICON = new ImageIcon(TrackSchemeFrame.class.getResource("resources/images.png"));
+	private static final ImageIcon THUMBNAIL_OFF_ICON = new ImageIcon(TrackSchemeFrame.class.getResource("resources/images_bw.png"));;
 	private static final ImageIcon RESET_ZOOM_ICON 	= new ImageIcon(TrackSchemeFrame.class.getResource("resources/zoom.png")); 
 	private static final ImageIcon ZOOM_IN_ICON 	= new ImageIcon(TrackSchemeFrame.class.getResource("resources/zoom_in.png")); 
 	private static final ImageIcon ZOOM_OUT_ICON 	= new ImageIcon(TrackSchemeFrame.class.getResource("resources/zoom_out.png")); 
 	private static final ImageIcon REFRESH_ICON		= new ImageIcon(TrackSchemeFrame.class.getResource("resources/refresh.png"));
 	private static final ImageIcon CAPTURE_UNDECORATED_ICON = new ImageIcon(TrackSchemeFrame.class.getResource("resources/camera_go.png"));
 	private static final ImageIcon CAPTURE_DECORATED_ICON = new ImageIcon(TrackSchemeFrame.class.getResource("resources/camera_edit.png"));
-	//	private static final ImageIcon BRANCH_FOLDING_ON_ICON 	= new ImageIcon(TrackSchemeFrame.class.getResource("resources/shape_square.png"));
-	//	private static final ImageIcon BRANCH_FOLDING_OFF_ICON 	= new ImageIcon(TrackSchemeFrame.class.getResource("resources/shape_square-forbid.png"));
-	//	private static final ImageIcon FOLD_ALL_BRANCHES_ICON	= new ImageIcon(TrackSchemeFrame.class.getResource("resources/shape_group.png"));
-	//	private static final ImageIcon UNFOLD_ALL_BRANCHES_ICON	= new ImageIcon(TrackSchemeFrame.class.getResource("resources/shape_ungroup.png"));
-	//	private static final ImageIcon DISPLAY_COST_ON_ICON		= new ImageIcon(TrackSchemeFrame.class.getResource("resources/Label-icons.png"));
-	//	private static final ImageIcon DISPLAY_COST_OFF_ICON	= new ImageIcon(TrackSchemeFrame.class.getResource("resources/Label-icons-disabled.png"));
 	private static final ImageIcon DISPLAY_DECORATIONS_ON_ICON	= new ImageIcon(TrackSchemeFrame.class.getResource("resources/application_view_columns.png"));
 	private static final ImageIcon DISPLAY_DECORATIONS_OFF_ICON	= new ImageIcon(TrackSchemeFrame.class.getResource("resources/application.png"));
-	private static final ImageIcon SELECT_STYLE_ICON = new ImageIcon(TrackSchemeFrame.class.getResource("resources/style.png"));
+	private static final ImageIcon SELECT_STYLE_ICON = new ImageIcon(TrackSchemeFrame.class.getResource("resources/theme.png"));
 
 	private final TrackScheme trackScheme;
 
@@ -72,6 +68,32 @@ public class TrackSchemeToolbar extends JToolBar {
 		final JButton toggleLinkingButton = new JButton(toggleLinkingAction);
 		toggleLinkingButton.setToolTipText("Toggle linking");
 
+		/*
+		 * Toggle thumnail mode
+		 */
+		boolean defaultThumbnailsEnabled = TrackScheme.DEFAULT_THUMBNAILS_ENABLED;
+		final Action toggleThumbnailAction = new AbstractAction(null, defaultThumbnailsEnabled ? THUMBNAIL_ON_ICON : THUMBNAIL_OFF_ICON) {
+			public void actionPerformed(ActionEvent e) {
+				new Thread("TrackScheme creating thumbnails thread") {
+					@Override
+					public void run() {
+						boolean enabled = trackScheme.toggleThumbnail();
+						ImageIcon thumbnailIcon;
+						if (!enabled) {
+							thumbnailIcon = THUMBNAIL_OFF_ICON;
+						} else {
+							thumbnailIcon = THUMBNAIL_ON_ICON;
+						}
+						putValue(SMALL_ICON, thumbnailIcon);
+					}
+					
+				}.start();
+			}
+		};
+		final JButton toggleThumbnailsButton = new JButton(toggleThumbnailAction);
+		toggleThumbnailsButton.setToolTipText("<html>If enabled, spot thumnails will be captured <br/>" +
+				"Can take long for large models.</html>");
+		
 		/*
 		 *  Zoom 
 		 */
@@ -218,6 +240,10 @@ public class TrackSchemeToolbar extends JToolBar {
 		// Set display style
 		add(selectStyleButton);
 		add(selectStyleBox);
+		// Separator
+		addSeparator();
+		// Thumbnails
+		add(toggleThumbnailsButton);
 		// Separator
 		addSeparator();
 		// Linking

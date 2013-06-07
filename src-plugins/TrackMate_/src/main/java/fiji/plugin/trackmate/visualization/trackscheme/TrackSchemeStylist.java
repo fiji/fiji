@@ -29,21 +29,23 @@ public class TrackSchemeStylist {
 	private String globalStyle = DEFAULT_STYLE_NAME;
 
 	static final Map<String, Map<String, Object>> VERTEX_STYLES;
-	static final String 			DEFAULT_STYLE_NAME = "full";
+	static final String 			FULL_STYLE_NAME = "full";
 	static final String 			SIMPLE_STYLE_NAME = "simple";
+	static final String 			DEFAULT_STYLE_NAME = SIMPLE_STYLE_NAME;
 
-	private static final HashMap<String, Object> DEFAULT_VERTEX_STYLE = new HashMap<String, Object>();
+	private static final HashMap<String, Object> FULL_VERTEX_STYLE = new HashMap<String, Object>();
 	private static final HashMap<String, Object> SIMPLE_VERTEX_STYLE = new HashMap<String, Object>();
 	private static final HashMap<String, Object> BASIC_EDGE_STYLE = new HashMap<String, Object>();
 	static {
-		DEFAULT_VERTEX_STYLE.put(mxConstants.STYLE_FILLCOLOR, "white");
-		DEFAULT_VERTEX_STYLE.put(mxConstants.STYLE_FONTCOLOR, "black");
-		DEFAULT_VERTEX_STYLE.put(mxConstants.STYLE_ALIGN, mxConstants.ALIGN_RIGHT);
-		DEFAULT_VERTEX_STYLE.put(mxConstants.STYLE_SHAPE, mxScaledLabelShape.SHAPE_NAME);
-		DEFAULT_VERTEX_STYLE.put(mxConstants.STYLE_IMAGE_ALIGN, mxConstants.ALIGN_LEFT);
-		DEFAULT_VERTEX_STYLE.put(mxConstants.STYLE_ROUNDED, true);
-		DEFAULT_VERTEX_STYLE.put(mxConstants.STYLE_PERIMETER, mxPerimeter.RectanglePerimeter);
-		DEFAULT_VERTEX_STYLE.put(mxConstants.STYLE_STROKECOLOR, DEFAULT_COLOR);
+		FULL_VERTEX_STYLE.put(mxConstants.STYLE_FILLCOLOR, "white");
+		FULL_VERTEX_STYLE.put(mxConstants.STYLE_FONTCOLOR, "black");
+		FULL_VERTEX_STYLE.put(mxConstants.STYLE_ALIGN, mxConstants.ALIGN_RIGHT);
+		FULL_VERTEX_STYLE.put(mxConstants.STYLE_SHAPE, mxScaledLabelShape.SHAPE_NAME);
+		FULL_VERTEX_STYLE.put(mxConstants.STYLE_IMAGE_ALIGN, mxConstants.ALIGN_LEFT);
+		FULL_VERTEX_STYLE.put(mxConstants.STYLE_ROUNDED, true);
+		FULL_VERTEX_STYLE.put(mxConstants.STYLE_PERIMETER, mxPerimeter.RectanglePerimeter);
+		FULL_VERTEX_STYLE.put(mxConstants.STYLE_STROKECOLOR, DEFAULT_COLOR);
+		FULL_VERTEX_STYLE.put(mxConstants.STYLE_NOLABEL, false);
 
 		SIMPLE_VERTEX_STYLE.put(mxConstants.STYLE_FILLCOLOR, "white");
 		SIMPLE_VERTEX_STYLE.put(mxConstants.STYLE_FONTCOLOR, "black");
@@ -64,7 +66,7 @@ public class TrackSchemeStylist {
 		BASIC_EDGE_STYLE.put(mxConstants.STYLE_STROKECOLOR, DEFAULT_COLOR);
 
 		VERTEX_STYLES = new HashMap<String, Map<String, Object> >(2);
-		VERTEX_STYLES.put(DEFAULT_STYLE_NAME, DEFAULT_VERTEX_STYLE);
+		VERTEX_STYLES.put(FULL_STYLE_NAME, FULL_VERTEX_STYLE);
 		VERTEX_STYLES.put(SIMPLE_STYLE_NAME, SIMPLE_VERTEX_STYLE);
 
 	}
@@ -77,8 +79,8 @@ public class TrackSchemeStylist {
 		// Prepare styles
 		mxStylesheet styleSheet = graphx.getStylesheet();
 		styleSheet.setDefaultEdgeStyle(BASIC_EDGE_STYLE);
-		styleSheet.setDefaultVertexStyle(DEFAULT_VERTEX_STYLE);
-		styleSheet.putCellStyle(DEFAULT_STYLE_NAME, DEFAULT_VERTEX_STYLE);
+		styleSheet.setDefaultVertexStyle(SIMPLE_VERTEX_STYLE);
+		styleSheet.putCellStyle(FULL_STYLE_NAME, FULL_VERTEX_STYLE);
 		styleSheet.putCellStyle(SIMPLE_STYLE_NAME, SIMPLE_VERTEX_STYLE);
 	}
 

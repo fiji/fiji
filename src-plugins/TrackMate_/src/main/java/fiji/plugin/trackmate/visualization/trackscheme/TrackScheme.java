@@ -35,11 +35,11 @@ import com.mxgraph.util.mxRectangle;
 import com.mxgraph.util.mxStyleUtils;
 import com.mxgraph.view.mxGraphSelectionModel;
 
+import fiji.plugin.trackmate.Model;
 import fiji.plugin.trackmate.ModelChangeEvent;
 import fiji.plugin.trackmate.SelectionChangeEvent;
 import fiji.plugin.trackmate.SelectionModel;
 import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.Model;
 import fiji.plugin.trackmate.visualization.AbstractTrackMateModelView;
 import fiji.plugin.trackmate.visualization.SpotColorGenerator;
 import fiji.plugin.trackmate.visualization.TrackColorGenerator;
@@ -76,6 +76,8 @@ public class TrackScheme extends AbstractTrackMateModelView {
 	static final boolean 			DEFAULT_DO_PAINT_DECORATIONS = true;
 	/** Do we toggle linking mode by default? */
 	static final boolean 			DEFAULT_LINKING_ENABLED = false;
+	/** Do we capture thumbnails by default? */
+	static final boolean 			DEFAULT_THUMBNAILS_ENABLED = false;
 
 	/*
 	 * FIELDS
@@ -110,6 +112,10 @@ public class TrackScheme extends AbstractTrackMateModelView {
 	private SpotImageUpdater spotImageUpdater;
 
 	TrackSchemeStylist stylist;
+	/** If <code>true</code>, thumbnail will be captured and displayed with styles allowing it. */
+	private boolean doThumbnailCapture = DEFAULT_THUMBNAILS_ENABLED;
+	/** Flag reporting whether we ran a thumbnail capture. See createThumbnails. */ 
+	private boolean thumbnailCaptured = false;
 
 	/*
 	 * CONSTRUCTORS
@@ -202,44 +208,6 @@ public class TrackScheme extends AbstractTrackMateModelView {
 		graph.setLabelsVisible(true);
 		graph.setDropEnabled(false);
 
-		// Group spots per frame
-		Set<Integer> frames = model.getSpots().keySet();
-		final HashMap<Integer, HashSet<Spot>> spotPerFrame = new HashMap<Integer, HashSet<Spot>>(frames.size());
-		for (Integer frame : frames) {
-			spotPerFrame.put(frame, new HashSet<Spot>(model.getSpots().getNSpots(frame, true))); // max size
-		}
-		for (Integer trackID : model.getTrackModel().trackIDs(true)) {
-			for (Spot spot : model.getTrackModel().trackSpots(trackID)) {
-				int frame = spot.getFeature(Spot.FRAME).intValue();
-				spotPerFrame.get(frame).add(spot);
-			}
-		}
-
-		// Set spot image to cell style
-		if (null != spotImageUpdater) {
-			gui.logger.setStatus("Collecting spot thumbnails.");
-			int index = 0;
-			try {
-				graph.getModel().beginUpdate();
-
-				// Iterate per frame
-				for (Integer frame : frames) {
-					for (Spot spot : spotPerFrame.get(frame)) {
-
-						mxICell cell = graph.getCellFor(spot);
-						String imageStr = spotImageUpdater.getImageString(spot);
-						graph.getModel().setStyle(cell, mxConstants.STYLE_IMAGE+"="+"data:image/base64," + imageStr);
-
-					}
-					gui.logger.setProgress( (double) index++ / frames.size() );
-				}
-			} finally {
-				graph.getModel().endUpdate();
-				gui.logger.setProgress(0d);
-				gui.logger.setStatus("");
-			}
-		}
-
 		// Cells removed from JGraphX
 		graph.addListener(mxEvent.CELLS_REMOVED, new CellRemovalListener());
 
@@ -272,7 +240,7 @@ public class TrackScheme extends AbstractTrackMateModelView {
 
 		// Update cell look
 		long height = DEFAULT_CELL_HEIGHT;
-		if (spotImageUpdater != null) {
+		if (spotImageUpdater != null && doThumbnailCapture) {
 			String style = cell.getStyle();
 			String imageStr = spotImageUpdater.getImageString(spot);
 			style = mxStyleUtils.setStyle(style, mxConstants.STYLE_IMAGE, "data:image/base64," + imageStr);
@@ -658,20 +626,36 @@ public class TrackScheme extends AbstractTrackMateModelView {
 		final long start = System.currentTimeMillis();
 		// Graph to mirror model
 		this.graph = createGraph();
+		long tic = System.currentTimeMillis();
+		System.out.println("[TrackScheme] Created graph in " + (tic-start)/1000 + " s.");//DEBUG 
+		
 		gui.logger.setStatus("Generating GUI components.");
 		SwingUtilities.invokeLater(new Runnable(){
 			public void run()	{
 				// Pass graph to GUI
+				long tic = System.currentTimeMillis();
 				gui.init(graph);
+				long toc = System.currentTimeMillis();
+				System.out.println("Passed the graph to the GUI in " + (toc-tic)/1000 + " s.");//DEBUG 
+				
 				// Init functions that set look and position
 				gui.logger.setStatus("Creating style manager.");
 				TrackScheme.this.stylist = new TrackSchemeStylist(graph, (TrackColorGenerator) displaySettings.get(KEY_TRACK_COLORING));
 				gui.logger.setStatus("Creating layout manager.");
 				TrackScheme.this.graphLayout = new TrackSchemeGraphLayout(graph, model, gui.graphComponent);
+				tic = System.currentTimeMillis();
+				System.out.println("Created style and layout manager in " + (tic-toc)/1000 +" s.");//DEBUG 
+				
 				// Execute style and layout
 				doTrackStyle();
+				toc = System.currentTimeMillis();
+				System.out.println("Applied style in " + (toc-tic)/1000 +" s.");//DEBUG 
+				
 				gui.logger.setStatus("Executing layout.");
 				doTrackLayout();
+				tic = System.currentTimeMillis();
+				System.out.println("Executed layout in " + (tic-toc)/1000 +" s.");//DEBUG 
+				
 				refresh();
 				long end = System.currentTimeMillis();
 				gui.logger.log(String.format("Rendering done in %.1f s.", (end-start)/1000d));
@@ -918,13 +902,26 @@ public class TrackScheme extends AbstractTrackMateModelView {
 
 	/**
 	 * Toggle whether drag-&-drop linking is allowed.
-	 * @return  the current settings value.
+	 * @return  the current settings value, after toggling.
 	 */
 	public boolean toggleLinking() {
 		boolean enabled = gui.graphComponent.getConnectionHandler().isEnabled();
 		gui.graphComponent.getConnectionHandler().setEnabled(!enabled);
 		return !enabled;
 	}
+
+	/**
+	 * Toggle whether thumbnail capture is enabled.
+	 * @return  the current settings value, after toggling.
+	 */
+	public boolean toggleThumbnail() {
+		if (!doThumbnailCapture && !thumbnailCaptured) {
+			createThumbnails();
+		}
+		doThumbnailCapture = !doThumbnailCapture;
+		return doThumbnailCapture;
+	}
+
 
 	public void zoomIn() {
 		gui.graphComponent.zoomIn();
@@ -963,6 +960,52 @@ public class TrackScheme extends AbstractTrackMateModelView {
 		HashSet<mxCell> missedVertices = new HashSet<mxCell>(graph.getVertexCells());
 		missedVertices.removeAll(verticesUpdated);
 		stylist.updateVertexStyle(missedVertices);
+	}
+	
+	/**
+	 * Captures and stores the thumbnail image that will be displayed in each spot cell,
+	 * when using styles that can display images.
+	 */
+	private void createThumbnails() {
+		// Group spots per frame
+		Set<Integer> frames = model.getSpots().keySet();
+		final HashMap<Integer, HashSet<Spot>> spotPerFrame = new HashMap<Integer, HashSet<Spot>>(frames.size());
+		for (Integer frame : frames) {
+			spotPerFrame.put(frame, new HashSet<Spot>(model.getSpots().getNSpots(frame, true))); // max size
+		}
+		for (Integer trackID : model.getTrackModel().trackIDs(true)) {
+			for (Spot spot : model.getTrackModel().trackSpots(trackID)) {
+				int frame = spot.getFeature(Spot.FRAME).intValue();
+				spotPerFrame.get(frame).add(spot);
+			}
+		}
+		// Set spot image to cell style
+		if (null != spotImageUpdater) {
+			gui.logger.setStatus("Collecting spot thumbnails.");
+			int index = 0;
+			try {
+				graph.getModel().beginUpdate();
+
+				// Iterate per frame
+				for (Integer frame : frames) {
+					for (Spot spot : spotPerFrame.get(frame)) {
+
+						mxICell cell = graph.getCellFor(spot);
+						String imageStr = spotImageUpdater.getImageString(spot);
+						String style = cell.getStyle();
+						style = mxStyleUtils.setStyle(style, mxConstants.STYLE_IMAGE, "data:image/base64," + imageStr);
+						graph.getModel().setStyle(cell, style);
+
+					}
+					gui.logger.setProgress( (double) index++ / frames.size() );
+				}
+			} finally {
+				graph.getModel().endUpdate();
+				gui.logger.setProgress(0d);
+				gui.logger.setStatus("");
+				thumbnailCaptured = true; // After that they will be kept in synch thanks to #modelChanged
+			}
+		}
 	}
 
 	public void doTrackLayout() {

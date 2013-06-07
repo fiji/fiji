@@ -15,6 +15,7 @@ import fiji.plugin.trackmate.providers.SpotAnalyzerProvider;
 import fiji.plugin.trackmate.providers.TrackAnalyzerProvider;
 import fiji.plugin.trackmate.visualization.hyperstack.HyperStackDisplayer;
 import fiji.plugin.trackmate.visualization.threedviewer.SpotDisplayer3D;
+import fiji.plugin.trackmate.visualization.trackscheme.SpotImageUpdater;
 import fiji.plugin.trackmate.visualization.trackscheme.TrackScheme;
 import ij.IJ;
 import ij.ImagePlus;
@@ -80,6 +81,7 @@ public class TrackVisualizerTestDrive {
 		
 		// Display Track scheme
 		final TrackScheme trackScheme = new TrackScheme(model, sm);
+		trackScheme.setSpotImageUpdater(new SpotImageUpdater(settings));
 		trackScheme.render();
 		
 		// Show control panel
