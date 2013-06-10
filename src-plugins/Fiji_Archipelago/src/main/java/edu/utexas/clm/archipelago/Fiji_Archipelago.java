@@ -101,6 +101,7 @@ public class Fiji_Archipelago implements PlugIn
         filePrinter = new PrintStream(new FileOutputStream(logFile));
 
         System.setOut(filePrinter);
+        System.setErr(filePrinter);
 
         FijiArchipelago.setDebugLogger(new PrintStreamLogger(filePrinter));
         FijiArchipelago.setErrorLogger(new PrintStreamLogger(filePrinter));

@@ -70,6 +70,11 @@ public abstract class DataChunk<T> implements Serializable
         return lastOn;
     }
     
+    public int getMark()
+    {
+        return mark;
+    }
+    
     /**
      * Returns the data contained in this DataChunk, or null if that is
      * infeasible

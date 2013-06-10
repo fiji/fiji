@@ -23,9 +23,8 @@ public class SSHNodeShell implements NodeShell
                                   NodeShellListener listener)
     {
         final String eroot = param.getExecRoot();
-        return "--jar-path " + eroot +
-                "/plugins/ --jar-path " + eroot +"/jars/ --classpath " + eroot +
-                " --allow-multiple --main-class edu.utexas.clm.archipelago.Fiji_Archipelago "
+        return "--allow-multiple --full-classpath " +
+                " --main-class edu.utexas.clm.archipelago.Fiji_Archipelago "
                 + param.getID();
     }
     
