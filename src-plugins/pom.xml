@@ -27,6 +27,7 @@
 		<module>AnalyzeSkeleton_</module>
 		<module>Analyze_Reader_Writer</module>
 		<module>Anisotropic_Diffusion_2D</module>
+		<module>Archipelago_Plugins</module>
 		<module>Arrow_</module>
 		<module>Auto_Threshold</module>
 		<module>BalloonSegmentation_</module>
