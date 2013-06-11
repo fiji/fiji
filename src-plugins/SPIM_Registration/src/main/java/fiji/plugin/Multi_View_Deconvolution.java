@@ -52,7 +52,7 @@ public class Multi_View_Deconvolution implements PlugIn
 	
 	// for optimization of block size this is essential
 	public static boolean makeAllPSFSameSize = false;
-	
+		
 	// used in case psfSize3d == null
 	public static int psfSize = 17;
 	public static boolean isotropic = false;
