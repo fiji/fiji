@@ -245,7 +245,7 @@ public class WizardController implements ActionListener {
 			} else {
 				
 				wizard.disableButtonsAndStoreState();
-				previousPanelID = wizard.getCurrentPanelDescriptor().getComponentID();
+				previousPanelID = wizard.getCurrentPanelDescriptor().getDescriptorID();
 				wizard.showDescriptorPanelFor(LogPanelDescriptor.DESCRIPTOR);
 				
 			}
