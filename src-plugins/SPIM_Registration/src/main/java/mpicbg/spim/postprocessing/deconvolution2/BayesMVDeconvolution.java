@@ -10,16 +10,23 @@ import java.util.Date;
 import java.util.Vector;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import net.imglib2.util.Util;
+
 import mpicbg.imglib.cursor.Cursor;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.image.display.imagej.ImageJFunctions;
+import mpicbg.imglib.io.LOCI;
 import mpicbg.imglib.multithreading.Chunk;
 import mpicbg.imglib.multithreading.SimpleMultiThreading;
 import mpicbg.imglib.type.numeric.real.FloatType;
+import mpicbg.spim.io.IOFunctions;
 import mpicbg.spim.postprocessing.deconvolution2.LRFFT.PSFTYPE;
 
 public class BayesMVDeconvolution implements Deconvolver
 {
+	// if you want to start from a certain iteration
+	public static String initialImage = null;
+
 	public static boolean debug = true;
 	public static int debugInterval = 1;
 	final static float minValue = 0.0001f;
@@ -53,8 +60,32 @@ public class BayesMVDeconvolution implements Deconvolver
 		this.numDimensions = data.get( 0 ).getImage().getNumDimensions();
 		this.lambda = lambda;
 		
-		this.psi = data.get( 0 ).getImage().createNewImage( "psi (deconvolved image)" );
-		
+		if ( initialImage != null )
+		{
+			IOFunctions.println( "Loading image '" + initialImage + "' as start for iteration." );
+			this.psi = LOCI.openLOCIFloatType( initialImage, data.get( 0 ).getImage().getImageFactory() );
+			
+			if ( this.psi == null )
+			{
+				IOFunctions.println( "Could not image '" + initialImage + "'." );				
+			}
+			else
+			{
+				boolean dimensionsMatch = true;
+				
+				for ( int d = 0; d < this.psi.getNumDimensions(); ++d )
+					if ( this.psi.getDimension( d ) != data.get( 0 ).getImage().getDimension( d ) )
+						dimensionsMatch = false;
+				
+				if ( !dimensionsMatch )
+				{
+					IOFunctions.println( "Dimensions of '" + initialImage + "' do not match: " + Util.printCoordinates( this.psi.getDimensions() ) + " != " + Util.printCoordinates( data.get( 0 ).getImage().getDimensions() ) );
+					this.psi.close();
+					this.psi = null;
+				}
+			}
+		}
+				
 		this.avg = (float)AdjustInput.normAllImages( data );
 		
 		IJ.log( "Average intensity in overlapping area: " + avg );        
@@ -65,8 +96,13 @@ public class BayesMVDeconvolution implements Deconvolver
 		//
 		// the real data image psi is initialized with the average 
 		//	
-		for ( final FloatType f : psi )
-			f.set( avg );
+		if ( this.psi == null )
+		{
+			this.psi = data.get( 0 ).getImage().createNewImage( "psi (deconvolved image)" );
+
+			for ( final FloatType f : psi )
+				f.set( avg );
+		}
 		
 		//this.stack = new ImageStack( this.psi.getDimension( 0 ), this.psi.getDimension( 1 ) );
 		
