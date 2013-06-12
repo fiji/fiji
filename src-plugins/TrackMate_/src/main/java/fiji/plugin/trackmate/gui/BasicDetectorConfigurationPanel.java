@@ -1,6 +1,7 @@
 package fiji.plugin.trackmate.gui;
 
 import static fiji.plugin.trackmate.detection.DetectorKeys.KEY_RADIUS;
+import fiji.util.NumberParser;
 import ij.ImagePlus;
 
 import java.util.HashMap;
@@ -36,7 +37,7 @@ public class BasicDetectorConfigurationPanel extends LogDetectorConfigurationPan
 	@Override
 	public Map<String, Object> getSettings() {
 		Map<String, Object> settings = new HashMap<String, Object>(1);
-		settings.put(KEY_RADIUS, Double.parseDouble(jTextFieldBlobDiameter.getText()));
+		settings.put(KEY_RADIUS, NumberParser.parseDouble(jTextFieldBlobDiameter.getText()));
 		return settings;
 	}
 

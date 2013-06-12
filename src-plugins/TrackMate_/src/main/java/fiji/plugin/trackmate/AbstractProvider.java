@@ -1,5 +1,8 @@
 package fiji.plugin.trackmate;
 
+import fiji.plugin.trackmate.detection.SpotDetectorFactory;
+import fiji.util.NumberParser;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -7,8 +10,6 @@ import java.util.Map;
 import org.jdom2.Attribute;
 import org.jdom2.DataConversionException;
 import org.jdom2.Element;
-
-import fiji.plugin.trackmate.detection.SpotDetectorFactory;
 
 /**
  * A base class for providers, that contains utility methods and fields.
@@ -131,7 +132,7 @@ public abstract class AbstractProvider {
 			return false;
 		}
 		try {
-			double val = Double.parseDouble(str);
+			double val = NumberParser.parseDouble(str);
 			settings.put(parameterKey, val);
 		} catch (NumberFormatException nfe) {
 			errorHolder.append("Could not read "+parameterKey+" attribute as a double value. Got "+str+".\n");
@@ -147,7 +148,7 @@ public abstract class AbstractProvider {
 			return false;
 		}
 		try {
-			int val = Integer.parseInt(str);
+			int val = NumberParser.parseInteger(str);
 			settings.put(parameterKey, val);
 		} catch (NumberFormatException nfe) {
 			errorHolder.append("Could not read "+parameterKey+" attribute as an integer value. Got "+str+".\n");
