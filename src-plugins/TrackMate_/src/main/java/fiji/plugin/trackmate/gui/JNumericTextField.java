@@ -1,5 +1,7 @@
 package fiji.plugin.trackmate.gui;
 
+import fiji.util.NumberParser;
+
 import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -40,7 +42,7 @@ public class JNumericTextField extends JTextField {
 		setBorder(BORDER_UNFOCUSED);
 		if (text != null) {
 			try {
-				value = Double.parseDouble(text);
+				value = NumberParser.parseDouble(text);
 				oldValue = value;
 			} catch (NumberFormatException nfe) {
 				oldValue = 0;
@@ -93,7 +95,7 @@ public class JNumericTextField extends JTextField {
 	private void checkInput() {
 		String str = getText();
 		try {
-			value = Double.parseDouble(str);
+			value = NumberParser.parseDouble(str);
 			oldValue = value;
 		} catch (NumberFormatException nfe) {
 			value = oldValue;

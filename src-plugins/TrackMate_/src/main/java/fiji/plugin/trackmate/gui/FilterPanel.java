@@ -1,5 +1,11 @@
 package fiji.plugin.trackmate.gui;
 
+import fiji.plugin.trackmate.features.spot.SpotContrastAndSNRAnalyzerFactory;
+import fiji.plugin.trackmate.features.spot.SpotIntensityAnalyzerFactory;
+import fiji.plugin.trackmate.features.spot.SpotMorphologyAnalyzerFactory;
+import fiji.plugin.trackmate.util.TMUtils;
+import fiji.util.NumberParser;
+
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Dimension;
@@ -51,11 +57,6 @@ import org.jfree.chart.plot.XYPlot;
 import org.jfree.chart.renderer.xy.StandardXYBarPainter;
 import org.jfree.chart.renderer.xy.XYBarRenderer;
 import org.jfree.data.statistics.LogHistogramDataset;
-
-import fiji.plugin.trackmate.features.spot.SpotContrastAndSNRAnalyzerFactory;
-import fiji.plugin.trackmate.features.spot.SpotIntensityAnalyzerFactory;
-import fiji.plugin.trackmate.features.spot.SpotMorphologyAnalyzerFactory;
-import fiji.plugin.trackmate.util.TMUtils;
 
 public class FilterPanel extends javax.swing.JPanel {
 
@@ -465,7 +466,7 @@ public class FilterPanel extends javax.swing.JPanel {
 			public void run() {
 				// Convert to double and pass it to threshold value
 				try { 
-					double typedThreshold = Double.parseDouble(strNumber);
+					double typedThreshold = NumberParser.parseDouble(strNumber);
 					threshold = typedThreshold;
 					redrawThresholdMarker();
 				} catch (NumberFormatException nfe) { }
