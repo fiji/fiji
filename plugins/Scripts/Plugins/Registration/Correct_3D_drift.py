@@ -5,6 +5,7 @@
 # to compute translations only, in all 3 spatial axes.
 # Operates on a virtual stack.
 # 23/1/13 -
+# update to copy image info and calibration to saved file slices and returned image stack
 # added user dialog to make use of virtual stack an option
 
 from ij import VirtualStack, IJ, CompositeImage, ImageStack
@@ -15,6 +16,7 @@ from mpicbg.imglib.image import ImagePlusAdapter
 from mpicbg.imglib.algorithm.fft import PhaseCorrelation
 from javax.vecmath import Point3i
 from java.io import File, FilenameFilter
+from java.awt.image import ColorModel
 
 # imp stands for ij.ImagePlus instance
 
@@ -172,6 +174,8 @@ def create_registered_hyperstack(imp, channel):
         registeredstack.addSlice(str(name), empty)
 
   registeredstack_imp = ImagePlus("registered time points", registeredstack)
+  registeredstack_imp.setCalibration(imp.getCalibration().copy())
+  registeredstack_imp.setProperty("Info", imp.getProperty("Info"));
   registeredstack_imp.setDimensions(imp.getNChannels(), len(names) / (imp.getNChannels() * imp.getNFrames()), imp.getNFrames())
   registeredstack_imp.setOpenAsHyperStack(True)
 
@@ -240,6 +244,8 @@ def create_registered_virtual_hyperstack(imp, target_folder, channel):
         name = fr + ss + "_c" + zero_pad(ch, channel_digits) +".tif"
         names.append(name)
         currentslice = ImagePlus("", empty)
+        currentslice.setCalibration(imp.getCalibration().copy())
+        currentslice.setProperty("Info", imp.getProperty("Info"));
         FileSaver(currentslice).saveAsTiff(target_folder + "/" + name)
     # Add all proper slices
     for s in range(1, imp.getNSlices()+1):
@@ -251,6 +257,8 @@ def create_registered_virtual_hyperstack(imp, target_folder, channel):
          name = fr + ss + "_c" + zero_pad(ch, channel_digits) +".tif"
          names.append(name)
          currentslice = ImagePlus("", ip2)
+         currentslice.setCalibration(imp.getCalibration().copy())
+         currentslice.setProperty("Info", imp.getProperty("Info"));
          FileSaver(currentslice).saveAsTiff(target_folder + "/" + name)
     # Pad the end
     for s in range(shift.z + imp.getNSlices(), slices):
@@ -259,6 +267,8 @@ def create_registered_virtual_hyperstack(imp, target_folder, channel):
         name = fr + ss + "_c" + zero_pad(ch, channel_digits) +".tif"
         names.append(name)
         currentslice = ImagePlus("", empty)
+        currentslice.setCalibration(imp.getCalibration().copy())
+        currentslice.setProperty("Info", imp.getProperty("Info"));
         FileSaver(currentslice).saveAsTiff(target_folder + "/" + name)
   currentslice.flush()
   
@@ -341,9 +351,20 @@ def run():
       return
 
     registered_imp= create_registered_virtual_hyperstack(imp, target_folder, channel)
+    if 1 == imp.getNChannels():
+        ip=imp.getProcessor()
+    	ip2=registered_imp.getProcessor()
+    	ip2.setColorModel(ip.getCurrentColorModel())
+    	registered_imp.show()
+    else:
+    	registered_imp.copyLuts(imp)
     	registered_imp.show()
   else:
     registered_imp = create_registered_hyperstack(imp, channel)
+    if 1 ==imp.getNChannels():
+    	registered_imp.show()
+    else:
+    	registered_imp.copyLuts(imp)
     	registered_imp.show()
 
 run()
