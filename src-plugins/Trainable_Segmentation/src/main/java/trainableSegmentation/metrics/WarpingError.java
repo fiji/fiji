@@ -316,7 +316,7 @@ public class WarpingError extends Metrics {
 			boolean clusterByError)
 	{
 		
-		if( minThreshold < 0 || minThreshold >= maxThreshold || maxThreshold > 1)
+		if( minThreshold < 0 || minThreshold > maxThreshold || maxThreshold > 1)
 		{
 			IJ.log("Error: unvalid threshold values.");
 			return null;
@@ -369,7 +369,7 @@ public class WarpingError extends Metrics {
 			int radius )
 	{
 		
-		if( minThreshold < 0 || minThreshold >= maxThreshold || maxThreshold > 1)
+		if( minThreshold < 0 || minThreshold > maxThreshold || maxThreshold > 1)
 		{
 			IJ.log("Error: unvalid threshold values.");
 			return null;
@@ -420,7 +420,7 @@ public class WarpingError extends Metrics {
 			boolean clusterByError)
 	{
 		
-		if( minThreshold < 0 || minThreshold >= maxThreshold || maxThreshold > 1)
+		if( minThreshold < 0 || minThreshold > maxThreshold || maxThreshold > 1)
 		{
 			IJ.log("Error: unvalid threshold values.");
 			return -1;
@@ -469,7 +469,7 @@ public class WarpingError extends Metrics {
 			int radius )
 	{
 		
-		if( minThreshold < 0 || minThreshold >= maxThreshold || maxThreshold > 1)
+		if( minThreshold < 0 || minThreshold > maxThreshold || maxThreshold > 1)
 		{
 			IJ.log("Error: unvalid threshold values.");
 			return -1;
@@ -552,7 +552,7 @@ public class WarpingError extends Metrics {
 			double stepThreshold)
 	{
 		
-		if( minThreshold < 0 || minThreshold >= maxThreshold || maxThreshold > 1)
+		if( minThreshold < 0 || minThreshold > maxThreshold || maxThreshold > 1)
 		{
 			IJ.log("Error: unvalid threshold values.");
 			return null;
@@ -637,7 +637,7 @@ public class WarpingError extends Metrics {
 			double stepThreshold)
 	{
 		
-		if( minThreshold < 0 || minThreshold >= maxThreshold || maxThreshold > 1)
+		if( minThreshold < 0 || minThreshold > maxThreshold || maxThreshold > 1)
 		{
 			IJ.log("Error: unvalid threshold values.");
 			return null;
@@ -719,7 +719,7 @@ public class WarpingError extends Metrics {
 			double stepThreshold)
 	{
 		
-		if( minThreshold < 0 || minThreshold >= maxThreshold || maxThreshold > 1)
+		if( minThreshold < 0 || minThreshold > maxThreshold || maxThreshold > 1)
 		{
 			IJ.log("Error: unvalid threshold values.");
 			return null;
