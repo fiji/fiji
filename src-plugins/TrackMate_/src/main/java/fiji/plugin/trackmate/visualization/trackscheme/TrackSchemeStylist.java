@@ -141,21 +141,26 @@ public class TrackSchemeStylist {
 
 	public void updateVertexStyle(Collection<mxCell> vertices) {
 
-		for (mxCell vertex : vertices) {
+		graphx.getModel().beginUpdate();
+		try {
 
-			int nedges = vertex.getEdgeCount();
-			if (nedges == 0) {
-				continue;
-			}
-			mxICell edge;
-			for (int i = 0; i < vertex.getEdgeCount(); i++) {
-				edge = vertex.getEdgeAt(i);
-				if (null != edge.getStyle()) {
-					setVertexStyleFromEdge(vertex, edge);
-					break;
+			for (mxCell vertex : vertices) {
+
+				int nedges = vertex.getEdgeCount();
+				if (nedges == 0) {
+					continue;
+				}
+				mxICell edge;
+				for (int i = 0; i < vertex.getEdgeCount(); i++) {
+					edge = vertex.getEdgeAt(i);
+					if (null != edge.getStyle()) {
+						setVertexStyleFromEdge(vertex, edge);
+						break;
+					}
 				}
 			}
-
+		} finally {
+			graphx.getModel().endUpdate();
 		}
 	}
 

@@ -178,18 +178,18 @@ public class TrackScheme extends AbstractTrackMateModelView {
 	public TrackSchemeGraphLayout getGraphLayout() {
 		return graphLayout;	
 	}
-	
+
 	@Override
 	public String getKey() {
 		return NAME;
 	}
 
-	
+
 	/*
 	 * PRIVATE METHODS
 	 */
-	
-	
+
+
 	/**
 	 * Used to instantiate and configure the {@link JGraphXAdapter} that will be used for display.
 	 */
@@ -626,37 +626,31 @@ public class TrackScheme extends AbstractTrackMateModelView {
 		final long start = System.currentTimeMillis();
 		// Graph to mirror model
 		this.graph = createGraph();
-		long tic = System.currentTimeMillis();
-		System.out.println("[TrackScheme] Created graph in " + (tic-start)/1000 + " s.");//DEBUG 
-		
-		gui.logger.setStatus("Generating GUI components.");
+		gui.logger.setProgress(0.5);
+
 		SwingUtilities.invokeLater(new Runnable(){
 			public void run()	{
 				// Pass graph to GUI
-				long tic = System.currentTimeMillis();
+				gui.logger.setStatus("Generating GUI components.");
 				gui.init(graph);
-				long toc = System.currentTimeMillis();
-				System.out.println("Passed the graph to the GUI in " + (toc-tic)/1000 + " s.");//DEBUG 
-				
+
 				// Init functions that set look and position
 				gui.logger.setStatus("Creating style manager.");
 				TrackScheme.this.stylist = new TrackSchemeStylist(graph, (TrackColorGenerator) displaySettings.get(KEY_TRACK_COLORING));
 				gui.logger.setStatus("Creating layout manager.");
 				TrackScheme.this.graphLayout = new TrackSchemeGraphLayout(graph, model, gui.graphComponent);
-				tic = System.currentTimeMillis();
-				System.out.println("Created style and layout manager in " + (tic-toc)/1000 +" s.");//DEBUG 
-				
+
 				// Execute style and layout
+				gui.logger.setProgress(0.75);
 				doTrackStyle();
-				toc = System.currentTimeMillis();
-				System.out.println("Applied style in " + (toc-tic)/1000 +" s.");//DEBUG 
-				
+
 				gui.logger.setStatus("Executing layout.");
 				doTrackLayout();
-				tic = System.currentTimeMillis();
-				System.out.println("Executed layout in " + (tic-toc)/1000 +" s.");//DEBUG 
 				
+				gui.logger.setProgress(1);
 				refresh();
+
+				gui.logger.setProgress(0);
 				long end = System.currentTimeMillis();
 				gui.logger.log(String.format("Rendering done in %.1f s.", (end-start)/1000d));
 			}
@@ -941,27 +935,34 @@ public class TrackScheme extends AbstractTrackMateModelView {
 		}
 		gui.logger.setStatus("Setting style.");
 
-		// Collect edges 
-		Set<Integer> trackIDs = model.getTrackModel().trackIDs(true);
-		HashMap<Integer, Set<mxCell>> edgeMap = new HashMap<Integer, Set<mxCell>>(trackIDs.size());
-		for (Integer trackID : trackIDs) {
-			Set<DefaultWeightedEdge> edges = model.getTrackModel().trackEdges(trackID);
-			HashSet<mxCell> set = new HashSet<mxCell>(edges.size());
-			for (DefaultWeightedEdge edge : edges) {
-				set.add(graph.getCellFor(edge));
+		graph.getModel().beginUpdate();
+		try {
+
+			// Collect edges 
+			Set<Integer> trackIDs = model.getTrackModel().trackIDs(true);
+			HashMap<Integer, Set<mxCell>> edgeMap = new HashMap<Integer, Set<mxCell>>(trackIDs.size());
+			for (Integer trackID : trackIDs) {
+				Set<DefaultWeightedEdge> edges = model.getTrackModel().trackEdges(trackID);
+				HashSet<mxCell> set = new HashSet<mxCell>(edges.size());
+				for (DefaultWeightedEdge edge : edges) {
+					set.add(graph.getCellFor(edge));
+				}
+				edgeMap.put(trackID, set);
 			}
-			edgeMap.put(trackID, set);
+
+			// Give them style
+			Set<mxICell> verticesUpdated = stylist.execute(edgeMap);
+
+			// Take care of vertices
+			HashSet<mxCell> missedVertices = new HashSet<mxCell>(graph.getVertexCells());
+			missedVertices.removeAll(verticesUpdated);
+			stylist.updateVertexStyle(missedVertices);
+
+		} finally {
+			graph.getModel().endUpdate();
 		}
-
-		// Give them style
-		Set<mxICell> verticesUpdated = stylist.execute(edgeMap);
-
-		// Take care of vertices
-		HashSet<mxCell> missedVertices = new HashSet<mxCell>(graph.getVertexCells());
-		missedVertices.removeAll(verticesUpdated);
-		stylist.updateVertexStyle(missedVertices);
 	}
-	
+
 	/**
 	 * Captures and stores the thumbnail image that will be displayed in each spot cell,
 	 * when using styles that can display images.
