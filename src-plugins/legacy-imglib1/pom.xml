@@ -28,9 +28,9 @@
 			<version>${mpicbg.version}</version>
 		</dependency>
 		<dependency>
-			<groupId>loci</groupId>
+			<groupId>${bio-formats.groupId}</groupId>
 			<artifactId>scifio</artifactId>
-			<version>${scifio.version}</version>
+			<version>${bio-formats.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>edu.mines</groupId>

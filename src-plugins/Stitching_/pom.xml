@@ -48,24 +48,24 @@
 			<version>${imagej.version}</version>
 		</dependency>
 		<dependency>
-			<groupId>loci</groupId>
-			<artifactId>loci-legacy</artifactId>
-			<version>${scifio.version}</version>
+			<groupId>${bio-formats.groupId}</groupId>
+			<artifactId>loci-common</artifactId>
+			<version>${bio-formats.version}</version>
 		</dependency>
 		<dependency>
-			<groupId>loci</groupId>
+			<groupId>${bio-formats.groupId}</groupId>
 			<artifactId>loci_plugins</artifactId>
-			<version>${scifio.version}</version>
+			<version>${bio-formats.version}</version>
 		</dependency>
 		<dependency>
-			<groupId>loci</groupId>
+			<groupId>${bio-formats.groupId}</groupId>
 			<artifactId>ome-xml</artifactId>
-			<version>${scifio.version}</version>
+			<version>${bio-formats.version}</version>
 		</dependency>
 		<dependency>
-			<groupId>loci</groupId>
+			<groupId>${bio-formats.groupId}</groupId>
 			<artifactId>scifio</artifactId>
-			<version>${scifio.version}</version>
+			<version>${bio-formats.version}</version>
 		</dependency>
 	</dependencies>
 
