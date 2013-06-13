@@ -92,12 +92,12 @@
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>ffmpeg-native</artifactId>
-			<version>${imagej.version}</version>
+			<version>${project.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>ffmpeg-native</artifactId>
-			<version>${imagej.version}</version>
+			<version>${project.version}</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
