@@ -6,6 +6,7 @@ import static fiji.plugin.trackmate.detection.DetectorKeys.KEY_TARGET_CHANNEL;
 import static fiji.plugin.trackmate.detection.DetectorKeys.KEY_THRESHOLD;
 import static fiji.plugin.trackmate.gui.TrackMateWizard.FONT;
 import fiji.plugin.trackmate.detection.DownsampleLogDetectorFactory;
+import fiji.util.NumberParser;
 import ij.ImagePlus;
 
 import java.util.HashMap;
@@ -66,9 +67,9 @@ public class DownSampleLogDetectorConfigurationPanel extends LogDetectorConfigur
 	public Map<String, Object> getSettings() {
 		Map<String, Object> settings = new HashMap<String, Object>(5);
 		int targetChannel = sliderChannel.getValue();
-		double expectedRadius = Double.parseDouble(jTextFieldBlobDiameter.getText())/2;
-		double threshold = Double.parseDouble(jTextFieldThreshold.getText());
-		int downsamplefactor = Integer.parseInt(jTextFieldDownSample.getText());
+		double expectedRadius = NumberParser.parseDouble(jTextFieldBlobDiameter.getText())/2;
+		double threshold = NumberParser.parseDouble(jTextFieldThreshold.getText());
+		int downsamplefactor = NumberParser.parseInteger(jTextFieldDownSample.getText());
 		settings.put(KEY_TARGET_CHANNEL, targetChannel);
 		settings.put(KEY_RADIUS, expectedRadius);
 		settings.put(KEY_THRESHOLD, threshold);

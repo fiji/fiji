@@ -27,6 +27,8 @@ import static fiji.plugin.trackmate.tracking.TrackerKeys.KEY_MERGING_FEATURE_PEN
 import static fiji.plugin.trackmate.tracking.TrackerKeys.KEY_MERGING_MAX_DISTANCE;
 import static fiji.plugin.trackmate.tracking.TrackerKeys.KEY_SPLITTING_FEATURE_PENALTIES;
 import static fiji.plugin.trackmate.tracking.TrackerKeys.KEY_SPLITTING_MAX_DISTANCE;
+import fiji.plugin.trackmate.tracking.LAPTracker;
+import fiji.util.NumberParser;
 
 import java.awt.Font;
 import java.awt.GridBagConstraints;
@@ -37,8 +39,6 @@ import java.util.Map;
 
 import javax.swing.JLabel;
 import javax.swing.SwingConstants;
-
-import fiji.plugin.trackmate.tracking.LAPTracker;
 
 /**
  * A simplified configuration panel for the {@link LAPTracker}.
@@ -103,9 +103,9 @@ public class SimpleLAPTrackerSettingsPanel extends ConfigurationPanel {
 		settings.put(KEY_ALTERNATIVE_LINKING_COST_FACTOR, DEFAULT_ALTERNATIVE_LINKING_COST_FACTOR);
 		settings.put(KEY_CUTOFF_PERCENTILE, DEFAULT_CUTOFF_PERCENTILE);
 		// Panel ones
-		settings.put(KEY_LINKING_MAX_DISTANCE, Double.parseDouble(jTextFieldLinkingDistance.getText()));
-		settings.put(KEY_GAP_CLOSING_MAX_DISTANCE, Double.parseDouble(jTextFieldGapClosingDistanceCutoff.getText()));
-		settings.put(KEY_GAP_CLOSING_MAX_FRAME_GAP, Integer.parseInt(jTextFieldGapClosingTimeCutoff.getText()));
+		settings.put(KEY_LINKING_MAX_DISTANCE, NumberParser.parseDouble(jTextFieldLinkingDistance.getText()));
+		settings.put(KEY_GAP_CLOSING_MAX_DISTANCE, NumberParser.parseDouble(jTextFieldGapClosingDistanceCutoff.getText()));
+		settings.put(KEY_GAP_CLOSING_MAX_FRAME_GAP, NumberParser.parseInteger(jTextFieldGapClosingTimeCutoff.getText()));
 		// Hop!
 		return settings;
 	}

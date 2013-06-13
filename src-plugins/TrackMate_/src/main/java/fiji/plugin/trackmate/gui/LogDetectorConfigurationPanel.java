@@ -8,6 +8,7 @@ import static fiji.plugin.trackmate.detection.DetectorKeys.KEY_THRESHOLD;
 import static fiji.plugin.trackmate.gui.TrackMateWizard.BIG_FONT;
 import static fiji.plugin.trackmate.gui.TrackMateWizard.FONT;
 import static fiji.plugin.trackmate.gui.TrackMateWizard.SMALL_FONT;
+import fiji.util.NumberParser;
 import ij.ImagePlus;
 
 import java.awt.Dimension;
@@ -75,8 +76,8 @@ public class LogDetectorConfigurationPanel extends ConfigurationPanel {
 	public Map<String, Object> getSettings() {
 		HashMap<String, Object> settings = new HashMap<String, Object>(5);
 		int targetChannel = sliderChannel.getValue();
-		double expectedRadius = Double.parseDouble(jTextFieldBlobDiameter.getText())/2;
-		double threshold = Double.parseDouble(jTextFieldThreshold.getText());
+		double expectedRadius = NumberParser.parseDouble(jTextFieldBlobDiameter.getText())/2;
+		double threshold = NumberParser.parseDouble(jTextFieldThreshold.getText());
 		boolean useMedianFilter = jCheckBoxMedianFilter.isSelected();
 		boolean doSubPixelLocalization = jCheckSubPixel.isSelected();
 		settings.put(KEY_TARGET_CHANNEL, targetChannel);
