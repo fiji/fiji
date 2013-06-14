@@ -147,6 +147,8 @@ def create_registered_hyperstack(imp, channel, target_folder, virtual):
 
         if virtual is True:
           currentslice = ImagePlus("", empty)
+          currentslice.setCalibration(imp.getCalibration().copy())
+          currentslice.setProperty("Info", imp.getProperty("Info"))
           FileSaver(currentslice).saveAsTiff(target_folder + "/" + name)
         else:
           empty = imp.getProcessor().createProcessor(width, height)
@@ -164,6 +166,8 @@ def create_registered_hyperstack(imp, channel, target_folder, virtual):
 
          if virtual is True:
            currentslice = ImagePlus("", ip2)
+           currentslice.setCalibration(imp.getCalibration().copy())
+           currentslice.setProperty("Info", imp.getProperty("Info"));
            FileSaver(currentslice).saveAsTiff(target_folder + "/" + name)
          else:
            registeredstack.addSlice(str(name), ip2)
@@ -177,6 +181,8 @@ def create_registered_hyperstack(imp, channel, target_folder, virtual):
 
         if virtual is True:
           currentslice = ImagePlus("", empty)
+          currentslice.setCalibration(imp.getCalibration().copy())
+          currentslice.setProperty("Info", imp.getProperty("Info"))
           FileSaver(currentslice).saveAsTiff(target_folder + "/" + name)
         else:
           registeredstack.addSlice(str(name), empty)
@@ -188,10 +194,13 @@ def create_registered_hyperstack(imp, channel, target_folder, virtual):
         registeredstack.addSlice(name)
       registeredstack_imp = ImagePlus("registered time points", registeredstack)
       registeredstack_imp.setDimensions(imp.getNChannels(), len(names) / (imp.getNChannels() * imp.getNFrames()), imp.getNFrames())
+      registeredstack_imp.setCalibration(imp.getCalibration().copy())
       registeredstack_imp.setOpenAsHyperStack(True)
 
   else:
     registeredstack_imp = ImagePlus("registered time points", registeredstack)
+    registeredstack_imp.setCalibration(imp.getCalibration().copy())
+    registeredstack_imp.setProperty("Info", imp.getProperty("Info"))
     registeredstack_imp.setDimensions(imp.getNChannels(), len(names) / (imp.getNChannels() * imp.getNFrames()), imp.getNFrames())
     registeredstack_imp.setOpenAsHyperStack(True)
     if 1 == registeredstack_imp.getChannels():
@@ -267,6 +276,22 @@ def run():
     target_folder = None 
 
   registered_imp= create_registered_hyperstack(imp, channel, target_folder, virtual)
+  if virtual is True:
+    if 1 == imp.getNChannels():
+      ip=imp.getProcessor()
+      ip2=registered_imp.getProcessor()
+      ip2.setColorModel(ip.getCurrentColorModel())
+      registered_imp.show()
+    else:
+    	registered_imp.copyLuts(imp)
+    	registered_imp.show()
+  else:
+    if 1 ==imp.getNChannels():
+    	registered_imp.show()
+    else:
+    	registered_imp.copyLuts(imp)
+    	registered_imp.show()
+  
   registered_imp.show()
 
 run()
