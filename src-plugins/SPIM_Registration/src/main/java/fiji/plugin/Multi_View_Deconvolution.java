@@ -247,7 +247,7 @@ public class Multi_View_Deconvolution implements PlugIn
 	public static int defaultComputationIndex = 0;
 	public static int defaultBlockSizeIndex = 0, defaultBlockSizeX = 256, defaultBlockSizeY = 256, defaultBlockSizeZ = 256;
 	
-	public static String[] iterationTypeString = new String[]{ "Ad-hoc (very fast, imprecise)", "Conditional Probability (fast, precise)", "Independent (slow, precise)" };
+	public static String[] iterationTypeString = new String[]{ "Efficient Bayesian - Optimization II (very fast, imprecise)", "Efficient Bayesian - Optimization I (fast, precise)", "Efficient Bayesian (less fast, more precise)", "Independent (slow, very precise)" };
 	public static String[] imglibContainer = new String[]{ "Array container", "Planar container", "Cell container" };
 	public static String[] computationOn = new String[]{ "CPU (Java)", "GPU (Nvidia CUDA via JNA)" };
 	public static String[] extractPSFs = new String[]{ "Extract from beads", "Provide file with PSF" };
@@ -588,9 +588,11 @@ public class Multi_View_Deconvolution implements PlugIn
 		defaultIterationType = gd2.getNextChoiceIndex();
 		
 		if ( defaultIterationType == 0 )
-			iterationType = PSFTYPE.EXPONENT;
+			iterationType = PSFTYPE.OPTIMIZATION_II;
 		else if ( defaultIterationType == 1 )
-			iterationType = PSFTYPE.CONDITIONAL;
+			iterationType = PSFTYPE.OPTIMIZATION_I;
+		else if ( defaultIterationType == 1 )
+			iterationType = PSFTYPE.EFFICIENT_BAYESIAN;
 		else
 			iterationType = PSFTYPE.INDEPENDENT;
 		
