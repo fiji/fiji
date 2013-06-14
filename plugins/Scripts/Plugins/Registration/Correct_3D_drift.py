@@ -203,7 +203,7 @@ def create_registered_hyperstack(imp, channel, target_folder, virtual):
     registeredstack_imp.setProperty("Info", imp.getProperty("Info"))
     registeredstack_imp.setDimensions(imp.getNChannels(), len(names) / (imp.getNChannels() * imp.getNFrames()), imp.getNFrames())
     registeredstack_imp.setOpenAsHyperStack(True)
-    if 1 == registeredstack_imp.getChannels():
+    if 1 == registeredstack_imp.getNChannels():
       return registeredstack_imp
   IJ.log("\nHyperstack dimensions: time frames:" + str(registeredstack_imp.getNFrames()) + ", slices: " + str(registeredstack_imp.getNSlices()) + ", channels: " + str(registeredstack_imp.getNChannels()))
 
