@@ -9,6 +9,7 @@
 		<groupId>org.scijava</groupId>
 		<artifactId>pom-scijava</artifactId>
 		<version>1.48</version>
+		<relativePath />
 	</parent>
 
 	<groupId>sc.fiji</groupId>
