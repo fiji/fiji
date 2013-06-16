@@ -22,7 +22,7 @@ public class Spot {
 	 * FIELDS
 	 */
 
-	public static AtomicInteger IDcounter = new AtomicInteger(0);
+	public static AtomicInteger IDcounter = new AtomicInteger(-1);
 
 	/** Store the individual features, and their values. */
 	private final ConcurrentHashMap<String, Double> features = new ConcurrentHashMap<String, Double>();
@@ -44,7 +44,7 @@ public class Spot {
 	 * when calculating distances and so on.
 	 */
 	public Spot(double[] coordinates, String name) {
-		this.ID = IDcounter.getAndIncrement();
+		this.ID = IDcounter.incrementAndGet();
 		for (int i = 0; i < 3; i++)
 			putFeature(POSITION_FEATURES[i], coordinates[i]);
 		if (null == name)
@@ -64,8 +64,10 @@ public class Spot {
 	 */
 	public Spot(int ID) {
 		this.ID = ID;
-		if (IDcounter.get() < ID) {
-			IDcounter.set(ID+1);
+		synchronized (IDcounter) {
+			if (IDcounter.get() < ID) {
+				IDcounter.set(ID);
+			}
 		}
 	}
 
