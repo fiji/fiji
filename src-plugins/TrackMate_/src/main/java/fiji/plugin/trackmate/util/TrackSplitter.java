@@ -7,10 +7,10 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 
 import org.jgrapht.graph.DefaultWeightedEdge;
-import org.jgrapht.traverse.DepthFirstIterator;
+import org.jgrapht.traverse.GraphIterator;
 
-import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.Model;
+import fiji.plugin.trackmate.Spot;
 
 public class TrackSplitter {
 
@@ -42,7 +42,7 @@ public class TrackSplitter {
 		ArrayList<ArrayList<Spot>> branches = new ArrayList<ArrayList<Spot>>();
 		ArrayList<Spot> currentParent = null;
 		
-		DepthFirstIterator<Spot, DefaultWeightedEdge> iterator = model.getTrackModel().getDepthFirstIterator(first, false);
+		GraphIterator<Spot, DefaultWeightedEdge> iterator = model.getTrackModel().getDepthFirstIterator(first, false);
 		Spot previousSpot = null;
 		while (iterator.hasNext()) {
 			Spot spot = iterator.next();

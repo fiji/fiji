@@ -13,19 +13,19 @@ import java.util.TreeSet;
 
 import net.imglib2.algorithm.Benchmark;
 
-import org.jgrapht.alg.DirectedNeighborIndex;
 import org.jgrapht.graph.DefaultWeightedEdge;
-import org.jgrapht.traverse.DepthFirstIterator;
+import org.jgrapht.traverse.GraphIterator;
 
 import com.mxgraph.layout.mxGraphLayout;
 import com.mxgraph.model.mxCell;
 import com.mxgraph.model.mxGeometry;
 import com.mxgraph.model.mxICell;
 
-import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.Model;
+import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.graph.GraphUtils;
 import fiji.plugin.trackmate.graph.SortedDepthFirstIterator;
+import fiji.plugin.trackmate.graph.TimeDirectedNeighborIndex;
 
 /**
  * This {@link mxGraphLayout} arranges cells on a graph in lanes corresponding to tracks. 
@@ -87,7 +87,7 @@ public class TrackSchemeGraphLayout extends mxGraphLayout implements Benchmark {
 		/*
 		 *  Get a neighbor cache
 		 */
-		DirectedNeighborIndex<Spot, DefaultWeightedEdge> neighborCache = model.getTrackModel().getDirectedNeighborIndex();
+		TimeDirectedNeighborIndex neighborCache = model.getTrackModel().getDirectedNeighborIndex();
 
 		/*
 		 * Compute column width from recursive cumsum
@@ -191,7 +191,7 @@ public class TrackSchemeGraphLayout extends mxGraphLayout implements Benchmark {
 					boolean previousDirectionDescending = true;
 
 					// First loop: Loop over spots 
-					DepthFirstIterator<Spot, DefaultWeightedEdge> iterator = model.getTrackModel().getDepthFirstIterator(first, false);
+					GraphIterator<Spot, DefaultWeightedEdge> iterator = model.getTrackModel().getDepthFirstIterator(first, false);
 					while(iterator.hasNext()) {
 
 						Spot spot = iterator.next();

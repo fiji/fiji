@@ -4,13 +4,13 @@ import java.util.Iterator;
 import java.util.Set;
 import java.util.TreeSet;
 
-import org.jgrapht.alg.DirectedNeighborIndex;
 import org.jgrapht.graph.DefaultWeightedEdge;
-import org.jgrapht.traverse.DepthFirstIterator;
+import org.jgrapht.traverse.GraphIterator;
 
-import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.Model;
+import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.graph.GraphUtils;
+import fiji.plugin.trackmate.graph.TimeDirectedNeighborIndex;
 
 public class Graph_Test {
 
@@ -28,11 +28,11 @@ public class Graph_Test {
 
 
 	private static void pickLeavesOfOneTrack(final Model model) {
-		DirectedNeighborIndex<Spot, DefaultWeightedEdge> cache = model.getTrackModel().getDirectedNeighborIndex();
+		TimeDirectedNeighborIndex cache = model.getTrackModel().getDirectedNeighborIndex();
 		TreeSet<Spot> spots = new TreeSet<Spot>(Spot.frameComparator);
 		spots.addAll(model.getTrackModel().vertexSet());
 		Spot first = spots.first();
-		DepthFirstIterator<Spot, DefaultWeightedEdge> iterator = model.getTrackModel().getDepthFirstIterator(first, true);
+		GraphIterator<Spot, DefaultWeightedEdge> iterator = model.getTrackModel().getDepthFirstIterator(first, true);
 
 		while (iterator.hasNext()) {
 			Spot spot = iterator.next();
@@ -51,7 +51,7 @@ public class Graph_Test {
 	}	
 
 	private static void countOverallLeaves(final Model model) {
-		DirectedNeighborIndex<Spot, DefaultWeightedEdge> cache = model.getTrackModel().getDirectedNeighborIndex();
+		TimeDirectedNeighborIndex cache = model.getTrackModel().getDirectedNeighborIndex();
 		int nleaves = 0;
 		Set<Spot> spots = model.getTrackModel().vertexSet();
 		for (Spot spot : spots) {

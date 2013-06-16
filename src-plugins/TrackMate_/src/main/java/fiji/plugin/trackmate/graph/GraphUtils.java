@@ -30,7 +30,7 @@ public class GraphUtils {
 		/*
 		 * Get directed cache
 		 */
-		DirectedNeighborIndex<Spot, DefaultWeightedEdge> cache = model.getDirectedNeighborIndex();
+		TimeDirectedNeighborIndex cache = model.getDirectedNeighborIndex();
 		
 		/*
 		 * Check input
@@ -234,13 +234,13 @@ public class GraphUtils {
 	
 	
 	
-	public static final boolean isTree(TrackModel model, DirectedNeighborIndex<Spot, DefaultWeightedEdge> cache) {
+	public static final boolean isTree(TrackModel model, TimeDirectedNeighborIndex cache) {
 		return isTree(model.vertexSet(), cache);
 	}
 	
 
 	
-	public static final boolean isTree(Iterable<Spot> spots, DirectedNeighborIndex<Spot, DefaultWeightedEdge> cache) {
+	public static final boolean isTree(Iterable<Spot> spots, TimeDirectedNeighborIndex cache) {
 		for (Spot spot : spots) {
 			if (cache.predecessorsOf(spot).size() > 1) {
 				return false;
@@ -269,7 +269,7 @@ public class GraphUtils {
 		 * Build isleaf tree
 		 */
 
-		final DirectedNeighborIndex<Spot, DefaultWeightedEdge> cache = model.getDirectedNeighborIndex();
+		final TimeDirectedNeighborIndex cache = model.getDirectedNeighborIndex();
 
 		Function1<Spot, int[]> isLeafFun = new Function1<Spot, int[]>() {
 			@Override

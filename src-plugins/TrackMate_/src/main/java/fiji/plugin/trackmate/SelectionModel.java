@@ -10,7 +10,7 @@ import java.util.Set;
 import java.util.Stack;
 
 import org.jgrapht.graph.DefaultWeightedEdge;
-import org.jgrapht.traverse.DepthFirstIterator;
+import org.jgrapht.traverse.GraphIterator;
 
 /**
  * A component of {@link Model} that handles spot and edges selection.
@@ -255,7 +255,7 @@ public class SelectionModel {
 		if (direction == 0) { // Unconditionally
 			for (Spot spot : inspectionSpots) {
 				spotSelection.add(spot);
-				DepthFirstIterator<Spot, DefaultWeightedEdge> walker = model.getTrackModel().getDepthFirstIterator(spot, false);
+				GraphIterator<Spot, DefaultWeightedEdge> walker = model.getTrackModel().getDepthFirstIterator(spot, false);
 				while (walker.hasNext()) { 
 					Spot target = walker.next();
 					spotSelection.add(target); 

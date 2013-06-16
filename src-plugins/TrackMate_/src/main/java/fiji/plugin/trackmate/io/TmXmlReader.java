@@ -96,6 +96,7 @@ import org.jdom2.JDOMException;
 import org.jdom2.input.SAXBuilder;
 import org.jgrapht.graph.DefaultWeightedEdge;
 import org.jgrapht.graph.SimpleDirectedWeightedGraph;
+import org.jgrapht.graph.SimpleWeightedGraph;
 
 import fiji.plugin.trackmate.Dimension;
 import fiji.plugin.trackmate.FeatureModel;
@@ -689,7 +690,7 @@ public class TmXmlReader {
 		List<Element> trackElements = allTracksElement.getChildren(TRACK_ELEMENT_KEY);
 
 		// What we have to flesh out from the file
-		final SimpleDirectedWeightedGraph<Spot, DefaultWeightedEdge> graph = new SimpleDirectedWeightedGraph<Spot, DefaultWeightedEdge>(DefaultWeightedEdge.class);
+		final SimpleWeightedGraph<Spot, DefaultWeightedEdge> graph = new SimpleWeightedGraph<Spot, DefaultWeightedEdge>(DefaultWeightedEdge.class);
 		final Map<Integer, Set<Spot>> connectedVertexSet = new HashMap<Integer, Set<Spot>>(trackElements.size());
 		final Map<Integer, Set<DefaultWeightedEdge>> connectedEdgeSet = new HashMap<Integer, Set<DefaultWeightedEdge>>(trackElements.size());
 		final Map<Integer, String> savedTrackNames = new HashMap<Integer, String>(trackElements.size());

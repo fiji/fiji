@@ -12,7 +12,6 @@ import org.jgrapht.Graph;
 import org.jgrapht.UndirectedGraph;
 import org.jgrapht.VertexFactory;
 import org.jgrapht.alg.DijkstraShortestPath;
-import org.jgrapht.alg.DirectedNeighborIndex;
 import org.jgrapht.event.ConnectedComponentTraversalEvent;
 import org.jgrapht.event.EdgeTraversalEvent;
 import org.jgrapht.event.GraphEdgeChangeEvent;
@@ -21,16 +20,20 @@ import org.jgrapht.event.GraphVertexChangeEvent;
 import org.jgrapht.event.TraversalListener;
 import org.jgrapht.event.TraversalListenerAdapter;
 import org.jgrapht.event.VertexTraversalEvent;
-import org.jgrapht.graph.AsUndirectedGraph;
 import org.jgrapht.graph.AsUnweightedGraph;
 import org.jgrapht.graph.DefaultWeightedEdge;
-import org.jgrapht.graph.ListenableDirectedGraph;
+import org.jgrapht.graph.ListenableUndirectedGraph;
 import org.jgrapht.graph.SimpleDirectedWeightedGraph;
+import org.jgrapht.graph.SimpleWeightedGraph;
 import org.jgrapht.traverse.BreadthFirstIterator;
 import org.jgrapht.traverse.DepthFirstIterator;
+import org.jgrapht.traverse.GraphIterator;
 
 import fiji.plugin.trackmate.graph.Function1;
 import fiji.plugin.trackmate.graph.SortedDepthFirstIterator;
+import fiji.plugin.trackmate.graph.TimeDirectedDepthFirstIterator;
+import fiji.plugin.trackmate.graph.TimeDirectedNeighborIndex;
+import fiji.plugin.trackmate.graph.TimeDirectedSortedDepthFirstIterator;
 import fiji.plugin.trackmate.util.AlphanumComparator;
 import fiji.plugin.trackmate.util.TMUtils;
 
@@ -47,7 +50,7 @@ public class TrackModel {
 	 * {@link #removeEdge(DefaultWeightedEdge)}, {@link #removeEdge(Spot, Spot)}
 	 * .
 	 */
-	private ListenableDirectedGraph<Spot,DefaultWeightedEdge> graph;
+	private ListenableUndirectedGraph<Spot,DefaultWeightedEdge> graph;
 	private final MyGraphListener mgl;
 
 	/*
@@ -102,10 +105,10 @@ public class TrackModel {
 	 */
 	
 	TrackModel() {
-		this(new SimpleDirectedWeightedGraph<Spot, DefaultWeightedEdge>(DefaultWeightedEdge.class));
+		this(new SimpleWeightedGraph<Spot, DefaultWeightedEdge>(DefaultWeightedEdge.class));
 	}
 
-	private TrackModel(SimpleDirectedWeightedGraph<Spot, DefaultWeightedEdge> graph) {
+	private TrackModel(SimpleWeightedGraph<Spot, DefaultWeightedEdge> graph) {
 		this.mgl = new MyGraphListener();
 		setGraph(graph);
 	}
@@ -122,13 +125,13 @@ public class TrackModel {
 	 * a default name.
 	 * @param graph  the graph to parse for tracks.
 	 */
-	public void setGraph(SimpleDirectedWeightedGraph<Spot, DefaultWeightedEdge> graph) {
+	public void setGraph(SimpleWeightedGraph<Spot, DefaultWeightedEdge> graph) {
 		if (null != this.graph) {
 			this.graph.removeGraphListener(mgl);
 		}
-		this.graph = new ListenableDirectedGraph<Spot, DefaultWeightedEdge>(graph);
+		this.graph = new ListenableUndirectedGraph<Spot, DefaultWeightedEdge>(graph);
 		this.graph.addGraphListener(mgl);
-		init(new AsUndirectedGraph<Spot, DefaultWeightedEdge>(graph));
+		init(graph);
 	}
 	
 	/**
@@ -146,7 +149,7 @@ public class TrackModel {
 	 * @param trackVisibility  the track visibility.
 	 * @param trackNames the track names.
 	 */
-	public void from(SimpleDirectedWeightedGraph<Spot, DefaultWeightedEdge> graph, 
+	public void from(SimpleWeightedGraph<Spot, DefaultWeightedEdge> graph, 
 			Map<Integer, Set<Spot>> trackSpots,
 			Map<Integer, Set<DefaultWeightedEdge>> trackEdges,
 			Map<Integer, Boolean> trackVisibility,
@@ -155,7 +158,7 @@ public class TrackModel {
 		if (null != this.graph) {
 			this.graph.removeGraphListener(mgl);
 		}
-		this.graph = new ListenableDirectedGraph<Spot, DefaultWeightedEdge>(graph);
+		this.graph = new ListenableUndirectedGraph<Spot, DefaultWeightedEdge>(graph);
 		this.graph.addGraphListener(mgl);
 		
 		edgesAdded.clear();
@@ -532,11 +535,11 @@ public class TrackModel {
 	 * randomly and will traverse all the links.
 	 * @param directed  if true returns a directed iterator, undirected if false.
 	 */
-	public DepthFirstIterator<Spot, DefaultWeightedEdge> getDepthFirstIterator(Spot start, boolean directed) {
+	public GraphIterator<Spot, DefaultWeightedEdge> getDepthFirstIterator(Spot start, boolean directed) {
 		if (directed) {
-			return new DepthFirstIterator<Spot, DefaultWeightedEdge>(graph, start);			
+			return new TimeDirectedDepthFirstIterator(graph, start);
 		} else {
-			return new DepthFirstIterator<Spot, DefaultWeightedEdge>(new AsUndirectedGraph<Spot, DefaultWeightedEdge>(graph), start);
+			return new DepthFirstIterator<Spot, DefaultWeightedEdge>(graph, start);			
 		}
 	}
 
@@ -552,24 +555,14 @@ public class TrackModel {
 	 */
 	public SortedDepthFirstIterator<Spot, DefaultWeightedEdge> getSortedDepthFirstIterator(Spot start, Comparator<Spot> comparator, boolean directed) {
 		if (directed) {
+			return new TimeDirectedSortedDepthFirstIterator(graph, start, comparator);
+		} else {
 			return new SortedDepthFirstIterator<Spot, DefaultWeightedEdge>(graph, start, comparator);			
-		} else {
-			return new SortedDepthFirstIterator<Spot, DefaultWeightedEdge>(new AsUndirectedGraph<Spot, DefaultWeightedEdge>(graph), start, comparator);
 		}
 	}
 
-
-	public BreadthFirstIterator<Spot, DefaultWeightedEdge> getBreadthFirstIterator(Spot start, boolean directed) {
-		if (directed) {
-			return new BreadthFirstIterator<Spot, DefaultWeightedEdge>(graph, start);
-		} else {
-			return new BreadthFirstIterator<Spot, DefaultWeightedEdge>(new AsUndirectedGraph<Spot, DefaultWeightedEdge>(graph), start);
-		}
-	}
-
-	/** @see DirectedNeighborIndex */
-	public DirectedNeighborIndex<Spot, DefaultWeightedEdge> getDirectedNeighborIndex() {
-		return new DirectedNeighborIndex<Spot, DefaultWeightedEdge>(graph);
+	public TimeDirectedNeighborIndex getDirectedNeighborIndex() {
+		return new TimeDirectedNeighborIndex(graph);
 	}
 
 	/**
@@ -897,9 +890,7 @@ public class TrackModel {
 				{
 					Spot source = graph.getEdgeSource(e);
 					// Get its connected set
-					BreadthFirstIterator<Spot, DefaultWeightedEdge> i = 
-							new BreadthFirstIterator<Spot, DefaultWeightedEdge>(
-									new AsUndirectedGraph<Spot, DefaultWeightedEdge>(graph), source);
+					BreadthFirstIterator<Spot, DefaultWeightedEdge> i = new BreadthFirstIterator<Spot, DefaultWeightedEdge>(graph, source);
 					while (i.hasNext()) {
 						Spot sv = i.next();
 						sourceVCS.add(sv);
