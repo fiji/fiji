@@ -69,6 +69,8 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 	/** The radius of the previously edited spot. */
 	private Double previousRadius = null;
 	private Spot quickEditedSpot;
+	/** Flag for the auto-linking mode. */
+	private boolean autolinkingmode = false;
 
 
 
@@ -175,20 +177,29 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 
 		case 1: {
 			// Change selection
-			// only if we are not currently editing and if target is non null
-			if (null != editedSpot || target == null)
+			// only if we are not currently editing.
+			if (null != editedSpot) {
 				return;
-			updateStatusBar(target, imp.getCalibration().getUnits());
-			final int addToSelectionMask = InputEvent.SHIFT_DOWN_MASK;
-			if ((e.getModifiersEx() & addToSelectionMask) == addToSelectionMask) { 
-				if (selectionModel.getSpotSelection().contains(target)) {
-					selectionModel.removeSpotFromSelection(target);
+			}
+			// If no target, we clear selection
+			if (null == target) {
+				
+				selectionModel.clearSelection();
+
+			} else {
+
+				updateStatusBar(target, imp.getCalibration().getUnits());
+				final int addToSelectionMask = InputEvent.SHIFT_DOWN_MASK;
+				if ((e.getModifiersEx() & addToSelectionMask) == addToSelectionMask) { 
+					if (selectionModel.getSpotSelection().contains(target)) {
+						selectionModel.removeSpotFromSelection(target);
+					} else {
+						selectionModel.addSpotToSelection(target);
+					}
 				} else {
+					selectionModel.clearSpotSelection();
 					selectionModel.addSpotToSelection(target);
 				}
-			} else {
-				selectionModel.clearSpotSelection();
-				selectionModel.addSpotToSelection(target);
 			}
 			break;
 		}
@@ -618,8 +629,8 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 				/*
 				 * Toggle auto-linking mode
 				 */
-
-				// TODO
+				autolinkingmode = !autolinkingmode;
+				System.out.println("Toggled auto-linking mode " + (autolinkingmode ? "on." : "off."));
 
 			} else {
 				/*
