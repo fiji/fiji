@@ -5,6 +5,7 @@ import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Model;
 import fiji.plugin.trackmate.TrackMate;
 import fiji.plugin.trackmate.features.FeatureFilter;
+import fiji.plugin.trackmate.features.ModelFeatureUpdater;
 import fiji.plugin.trackmate.features.track.TrackBranchingAnalyzer;
 import fiji.plugin.trackmate.gui.GrapherPanel;
 import fiji.plugin.trackmate.gui.panels.ConfigureViewsPanel;
@@ -14,6 +15,7 @@ import fiji.plugin.trackmate.providers.SpotAnalyzerProvider;
 import fiji.plugin.trackmate.providers.TrackAnalyzerProvider;
 import fiji.plugin.trackmate.visualization.hyperstack.HyperStackDisplayer;
 import fiji.plugin.trackmate.visualization.threedviewer.SpotDisplayer3D;
+import fiji.plugin.trackmate.visualization.trackscheme.SpotImageUpdater;
 import fiji.plugin.trackmate.visualization.trackscheme.TrackScheme;
 import ij.IJ;
 import ij.ImagePlus;
@@ -40,6 +42,7 @@ public class TrackVisualizerTestDrive {
 		reader.readSettings(settings, null, null, 
 				new SpotAnalyzerProvider(model), new EdgeAnalyzerProvider(model), new TrackAnalyzerProvider(model));
 		TrackMate trackmate = new TrackMate(model, settings);
+		new ModelFeatureUpdater(model, settings);
 		
 		System.out.println("From the XML file:");
 		System.out.println("Found "+model.getTrackModel().nTracks(false)+" tracks in total.");
@@ -78,6 +81,7 @@ public class TrackVisualizerTestDrive {
 		
 		// Display Track scheme
 		final TrackScheme trackScheme = new TrackScheme(model, sm);
+		trackScheme.setSpotImageUpdater(new SpotImageUpdater(settings));
 		trackScheme.render();
 		
 		// Show control panel

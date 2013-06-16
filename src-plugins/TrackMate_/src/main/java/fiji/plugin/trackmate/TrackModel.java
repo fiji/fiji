@@ -428,12 +428,7 @@ public class TrackModel {
 	 * @return  the track ID it belongs to.
 	 */
 	public Integer trackIDOf(DefaultWeightedEdge edge) {
-		for (Integer id : connectedEdgeSets.keySet()) {
-			if (connectedEdgeSets.get(id).contains(edge)) {
-				return id;
-			}
-		}
-		return null;
+		return edgeToID.get(edge);
 	}
 	
 	/**
@@ -443,12 +438,7 @@ public class TrackModel {
 	 * @return  the track ID it belongs to.
 	 */
 	public Integer trackIDOf(Spot spot) {
-		for (Integer id : connectedVertexSets.keySet()) {
-			if (connectedVertexSets.get(id).contains(spot)) {
-				return id;
-			}
-		}
-		return null;
+		return vertexToID.get(spot);
 	}
 
 

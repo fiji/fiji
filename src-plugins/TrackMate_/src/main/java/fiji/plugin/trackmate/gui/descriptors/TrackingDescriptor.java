@@ -31,8 +31,6 @@ public class TrackingDescriptor implements WizardPanelDescriptor {
 		
 	@Override
 	public void displayingPanel() {
-		controller.disableButtonsAndStoreState();
-		controller.getGUI().getNextButton().setEnabled(false);
 		final Logger logger = trackmate.getModel().getLogger();
 		TrackerProvider trackerProvider = controller.getTrackerProvider();
 		logger.log("Starting tracking using " + trackmate.getSettings().tracker +"\n", Logger.BLUE_COLOR);
@@ -41,6 +39,7 @@ public class TrackingDescriptor implements WizardPanelDescriptor {
 		
 		new Thread("TrackMate tracking thread") {					
 			public void run() {
+				controller.disableButtonsAndStoreState();
 				long start = System.currentTimeMillis();
 				trackmate.execTracking();
 				long end = System.currentTimeMillis();
