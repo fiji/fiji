@@ -171,7 +171,7 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 		Spot editedSpot = editedSpots.get(imp);
 
 		SelectionModel selectionModel = displayer.getSelectionModel();
-
+		
 		// Check desired behavior
 		switch (e.getClickCount()) {
 
@@ -184,7 +184,9 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 			// If no target, we clear selection
 			if (null == target) {
 				
-				selectionModel.clearSelection();
+				if (!autolinkingmode) {
+					selectionModel.clearSelection();
+				}
 
 			} else {
 
@@ -207,9 +209,6 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 		case 2: {
 			// Edit spot
 
-			// Empty current selection
-			selectionModel.clearSelection();
-
 			if (null == editedSpot) {
 				// No spot is currently edited, we pick one to edit
 				Double radius;
@@ -231,6 +230,7 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 				}
 				editedSpot = target;
 				displayer.spotOverlay.editingSpot = editedSpot;
+				displayer.refresh();
 				// Edit spot
 				if (DEBUG)
 					System.out.println("[SpotEditTool] mouseClicked: Set "+editedSpot+" as editing spot for this imp.");
@@ -246,7 +246,7 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 				double calibration[] = TMUtils.getSpatialCalibration(imp);
 				final double zslice = (displayer.imp.getSlice()-1) * calibration[2];
 				editedSpot.putFeature(Spot.POSITION_Z, zslice);
-				Integer initFrame = editedSpot.getFeature(Spot.FRAME).intValue();
+				Double initFrame = editedSpot.getFeature(Spot.FRAME);
 				// Move it in Z
 				final double z = (displayer.imp.getSlice()-1) * calibration[2];
 				editedSpot.putFeature(Spot.POSITION_Z, z);
@@ -260,7 +260,7 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 						model.addSpotTo(editedSpot, frame);
 					} else if (initFrame != frame) {
 						// Move it to the new frame
-						model.moveSpotFrom(editedSpot, initFrame, frame);
+						model.moveSpotFrom(editedSpot, initFrame.intValue(), frame);
 					} else {
 						// The spots pre-existed and was not moved across frames
 						model.updateFeatures(editedSpot);
@@ -269,6 +269,31 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 				} finally {
 					model.endUpdate();
 				}
+				
+				/*
+				 * If we are in auto-link mode, we create an edge with spot in selection,
+				 * if there is just one and if it is in a previous frame
+				 */
+				if (autolinkingmode) {
+					Set<Spot> spotSelection = selectionModel.getSpotSelection();
+					if (spotSelection.size() == 1) {
+						Spot source = spotSelection.iterator().next();
+						if (editedSpot.diffTo(source, Spot.FRAME) > 0) {
+							model.beginUpdate();
+							try {
+								model.addEdge(source, editedSpot, -1);
+								System.out.println("Created a link between " + source + " and " + editedSpot +".");
+							} finally {
+								model.endUpdate();
+							}
+						}
+					}
+				}
+				
+				// Set selection
+				selectionModel.clearSpotSelection();
+				selectionModel.addSpotToSelection(editedSpot);
+				
 				// Forget edited spot, but remember its radius
 				previousRadius = editedSpot.getFeature(Spot.RADIUS);
 				editedSpot = null;
@@ -464,8 +489,31 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 					model.endUpdate();
 				}
 
+				/*
+				 * If we are in auto-link mode, we create an edge with spot in selection,
+				 * if there is just one and if it is in a previous frame
+				 */
+				if (autolinkingmode) {
+					Set<Spot> spotSelection = selectionModel.getSpotSelection();
+					if (spotSelection.size() == 1) {
+						Spot source = spotSelection.iterator().next();
+						if (newSpot.diffTo(source, Spot.FRAME) > 0) {
+							model.beginUpdate();
+							try {
+								model.addEdge(source, newSpot, -1);
+								System.out.println("Created a link between " + source + " and " + newSpot +".");
+							} finally {
+								model.endUpdate();
+							}
+						}
+					}
+					selectionModel.clearSpotSelection();
+					selectionModel.addSpotToSelection(newSpot);
+				}
+				
 				imp.updateAndDraw();
 				e.consume();
+				
 
 			} else {
 

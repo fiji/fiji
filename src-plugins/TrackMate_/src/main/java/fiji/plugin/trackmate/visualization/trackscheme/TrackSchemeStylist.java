@@ -148,6 +148,11 @@ public class TrackSchemeStylist {
 
 				int nedges = vertex.getEdgeCount();
 				if (nedges == 0) {
+					/*
+					 * A lonely spot. We paint it with default color, 
+					 * according to current style.
+					 */
+					setVertexStyle(vertex, DEFAULT_COLOR);
 					continue;
 				}
 				mxICell edge;
@@ -164,10 +169,9 @@ public class TrackSchemeStylist {
 		}
 	}
 
-	private final void setVertexStyleFromEdge(final mxICell vertex, final mxICell edge) {
+	private void setVertexStyle(mxICell vertex, String colorstr) {
 		String targetStyle = vertex.getStyle();
 		targetStyle = mxStyleUtils.removeAllStylenames(targetStyle);
-		String colorstr = getStyleValue(edge.getStyle(), mxConstants.STYLE_STROKECOLOR);
 		targetStyle = mxStyleUtils.setStyle(targetStyle , mxConstants.STYLE_STROKECOLOR, colorstr );
 
 		// Style specifics
@@ -185,7 +189,12 @@ public class TrackSchemeStylist {
 
 		graphx.getModel().setStyle(vertex, targetStyle);
 		graphx.getModel().getGeometry(vertex).setWidth(width);
-		graphx.getModel().getGeometry(vertex).setHeight(height);
+		graphx.getModel().getGeometry(vertex).setHeight(height);	
+	}
+
+	private final void setVertexStyleFromEdge(final mxICell vertex, final mxICell edge) {
+		String colorstr = getStyleValue(edge.getStyle(), mxConstants.STYLE_STROKECOLOR);
+		setVertexStyle(vertex, colorstr);
 	}
 
 

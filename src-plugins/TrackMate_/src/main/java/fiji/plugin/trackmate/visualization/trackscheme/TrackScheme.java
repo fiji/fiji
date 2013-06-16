@@ -223,7 +223,7 @@ public class TrackScheme extends AbstractTrackMateModelView {
 	 * (location, radius, ...) somewhere else. 
 	 * @param spot  the spot that was modified.
 	 */
-	private void updateCellOf(final Spot spot) {
+	private mxICell updateCellOf(final Spot spot) {
 
 		mxICell cell = graph.getCellFor(spot);
 		if (DEBUG)
@@ -250,6 +250,7 @@ public class TrackScheme extends AbstractTrackMateModelView {
 			height = Math.max(height, DEFAULT_CELL_HEIGHT/3);
 		}
 		graph.getModel().getGeometry(cell).setHeight(height);
+		return cell;
 	}
 
 	/**
@@ -474,8 +475,13 @@ public class TrackScheme extends AbstractTrackMateModelView {
 
 			final int targetColumn = getUnlaidSpotColumn();
 
+			System.out.println(event);
+			
 			// Deal with spots
 			if (!event.getSpots().isEmpty()) {
+				
+				Collection<mxCell> spotsWithStyleToUpdate = new HashSet<mxCell>();
+				
 				for (Spot spot : event.getSpots() ) {
 
 					if (event.getSpotFlag(spot) == ModelChangeEvent.FLAG_SPOT_ADDED) {
@@ -483,13 +489,15 @@ public class TrackScheme extends AbstractTrackMateModelView {
 						int frame = spot.getFeature(Spot.FRAME).intValue();
 						// Put in the graph
 						int column = Math.max(targetColumn, getNextFreeColumn(frame));
-						insertSpotInGraph(spot, column); // move in right+1 free column
+						mxICell newCell = insertSpotInGraph(spot, column); // move in right+1 free column
 						rowLengths.put(frame, column);
+						spotsWithStyleToUpdate.add((mxCell) newCell);
 
 					} else if (event.getSpotFlag(spot) == ModelChangeEvent.FLAG_SPOT_MODIFIED) {
 
 						// Change the look of the cell
-						updateCellOf(spot);
+						mxICell cell = updateCellOf(spot);
+						spotsWithStyleToUpdate.add((mxCell) cell);
 
 					}  else if (event.getSpotFlag(spot) == ModelChangeEvent.FLAG_SPOT_REMOVED) {
 
@@ -499,6 +507,7 @@ public class TrackScheme extends AbstractTrackMateModelView {
 					} 
 				}
 				graph.removeCells(cellsToRemove.toArray(), true);
+				stylist.updateVertexStyle(spotsWithStyleToUpdate);
 			}
 			
 
