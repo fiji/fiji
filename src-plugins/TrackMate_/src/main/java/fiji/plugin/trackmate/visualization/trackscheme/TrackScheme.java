@@ -475,7 +475,7 @@ public class TrackScheme extends AbstractTrackMateModelView {
 			final int targetColumn = getUnlaidSpotColumn();
 
 			// Deal with spots
-			if (event.getSpots() != null) {
+			if (!event.getSpots().isEmpty()) {
 				for (Spot spot : event.getSpots() ) {
 
 					if (event.getSpotFlag(spot) == ModelChangeEvent.FLAG_SPOT_ADDED) {
@@ -500,13 +500,14 @@ public class TrackScheme extends AbstractTrackMateModelView {
 				}
 				graph.removeCells(cellsToRemove.toArray(), true);
 			}
+			
 
 		} finally {
 			graph.getModel().endUpdate();
 		}
 
 		// Deal with edges
-		if (event.getEdges() != null) {
+		if (!event.getEdges().isEmpty()) {
 
 			graph.getModel().beginUpdate();
 			try {
@@ -573,6 +574,11 @@ public class TrackScheme extends AbstractTrackMateModelView {
 								edgesToUpdate.put(trackID, edgeSet);
 							}
 							edgeSet.add(graph.getCellFor(edge));
+							
+						} else if (event.getEdgeFlag(edge) == ModelChangeEvent.FLAG_EDGE_REMOVED) {
+							
+							mxCell cell = graph.getCellFor(edge);
+							graph.removeCells(new Object[] { cell } );
 						}
 					}
 

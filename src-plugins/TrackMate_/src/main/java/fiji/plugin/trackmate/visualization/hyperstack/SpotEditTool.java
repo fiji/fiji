@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Set;
 
 import javax.swing.SwingUtilities;
 
@@ -125,12 +126,12 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 	 */
 	public void register(final ImagePlus imp, final HyperStackDisplayer displayer) {
 		if (DEBUG) System.out.println("[SpotEditTool] Currently registered: " + displayers);
-		
+
 		if (displayers.containsKey(imp)) {
 			unregisterTool(imp);
 			if (DEBUG) System.out.println("[SpotEditTool] De-registering " + imp + " as tool listener.");
 		}
-		
+
 		displayers.put(imp, displayer);
 		if (DEBUG) {
 			System.out.println("[SpotEditTool] Registering "+imp+" and "+displayer + "." +
@@ -168,7 +169,7 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 		Spot editedSpot = editedSpots.get(imp);
 
 		SelectionModel selectionModel = displayer.getSelectionModel();
-		
+
 		// Check desired behavior
 		switch (e.getClickCount()) {
 
@@ -609,6 +610,83 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 				e.consume();
 			}
 			break;
+		}
+
+		case KeyEvent.VK_L: {
+
+			if (e.isShiftDown()) {
+				/*
+				 * Toggle auto-linking mode
+				 */
+
+				// TODO
+
+			} else {
+				/*
+				 * Toggle a link between two spots.
+				 */
+				Set<Spot> selectedSpots = selectionModel.getSpotSelection();
+				if (selectedSpots.size() == 2) {
+					Iterator<Spot> it = selectedSpots.iterator();
+					Spot source = it.next();
+					Spot target = it.next();
+
+					if (model.getTrackModel().containsEdge(source, target)) {
+						/*
+						 * Remove it
+						 */
+						model.beginUpdate();
+						try {
+							model.removeEdge(source, target);
+							System.out.println("Removed edge between " + source + " and " + target);
+						} finally {
+							model.endUpdate();
+						}
+
+
+					} else {
+						/*
+						 * Create a new link
+						 */
+						int ts = source.getFeature(Spot.FRAME).intValue();
+						int tt = target.getFeature(Spot.FRAME).intValue();
+
+						if (tt != ts ) {
+							model.beginUpdate();
+							try {
+								model.addEdge(source, target, -1);
+								System.out.println("Created an edge between " + source + " and " + target);
+							} finally { 
+								model.endUpdate();
+							}
+							/*
+							 * To emulate a kind of automatic linking, we put the last 
+							 * spot to the selection, so several spots can be tracked
+							 * in a row without having to de-select one
+							 */
+							Spot single;
+							if (tt > ts) {
+								single = target;
+							} else {
+								single = source;
+							}
+							selectionModel.clearSpotSelection();
+							selectionModel.addSpotToSelection(single);
+							
+						} else {
+							System.out.println("Cannot create an edge between two spots belonging in the same frame.");
+						}
+					}
+
+				} else {
+					System.out.println("Expected selection to contain 2 spots, found " + selectedSpots.size());
+				}
+
+			}
+			e.consume();
+			break;
+
+
 		}
 
 		case KeyEvent.VK_W: {

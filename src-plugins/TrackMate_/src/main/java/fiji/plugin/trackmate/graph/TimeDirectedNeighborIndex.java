@@ -13,9 +13,10 @@ import org.jgrapht.Graph;
 import org.jgrapht.Graphs;
 import org.jgrapht.alg.NeighborIndex;
 import org.jgrapht.event.GraphEdgeChangeEvent;
+import org.jgrapht.event.GraphListener;
 import org.jgrapht.event.GraphVertexChangeEvent;
+import org.jgrapht.event.VertexSetListener;
 import org.jgrapht.graph.DefaultWeightedEdge;
-import org.jgrapht.graph.SimpleGraph;
 import org.jgrapht.util.ModifiableInteger;
 
 import fiji.plugin.trackmate.Spot;
@@ -27,12 +28,13 @@ public class TimeDirectedNeighborIndex extends NeighborIndex<Spot, DefaultWeight
 
 	Map<Spot, Neighbors<Spot, DefaultWeightedEdge>> predecessorMap = new HashMap<Spot, Neighbors<Spot, DefaultWeightedEdge>>();
 	Map<Spot, Neighbors<Spot, DefaultWeightedEdge>> successorMap = new HashMap<Spot, Neighbors<Spot, DefaultWeightedEdge>>();
-	private SimpleGraph<Spot, DefaultWeightedEdge> graph;
+	private Graph<Spot, DefaultWeightedEdge> graph;
 
 	//~ Constructors -----------------------------------------------------------
 
 	public TimeDirectedNeighborIndex(Graph<Spot, DefaultWeightedEdge> g) {
 		super(g);
+		this.graph = g;
 	}
 
 

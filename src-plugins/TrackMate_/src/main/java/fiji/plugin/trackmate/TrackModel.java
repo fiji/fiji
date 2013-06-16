@@ -208,6 +208,12 @@ public class TrackModel {
 	}
 	
 	DefaultWeightedEdge addEdge(Spot source, Spot target, double weight) {
+		if (!graph.containsVertex(source)) {
+			graph.addVertex(source);
+		}
+		if (!graph.containsVertex(target)) {
+			graph.addVertex(target);
+		}
 		DefaultWeightedEdge edge = graph.addEdge(source, target);
 		graph.setEdgeWeight(edge, weight);
 		return edge;
@@ -876,9 +882,19 @@ public class TrackModel {
 			
 			if (set.size() == 0) {
 				// The set is empty, remove it from the map.
-				connectedEdgeSets.remove(id); // we do not remove it from the vertex set, for vertices will be processed elsewhere
+				connectedEdgeSets.remove(id); 
 				names.remove(id);
 				visibility.remove(id);
+				/*
+				 *  We need to remove also the vertices
+				 */
+				Set<Spot> vertexSet = connectedVertexSets.get(id);
+				// Forget the vertices were in a set
+				for (Spot spot : vertexSet) {
+					vertexToID.remove(spot);
+				}
+				// Forget the vertex set
+				connectedVertexSets.remove(id);
 				// We do not mark it as a track to update, for it disappeared.
 				
 			} else {
