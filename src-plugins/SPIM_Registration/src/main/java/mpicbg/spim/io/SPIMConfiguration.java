@@ -303,7 +303,7 @@ public class SPIMConfiguration
 	    	channels = new int[ tmp.size() ];
 
 	    	for (int i = 0; i < tmp.size(); i++)
-	    		channels[i] = tmp.get(i);
+	    		channels[i] = tmp.get(i);	    	
     	}
     	else
     	{
@@ -317,13 +317,16 @@ public class SPIMConfiguration
     		}
     	}
 
+    	IOFunctions.println( "ChannelPattern: " + channelPattern );
+    	IOFunctions.println( "Channels: " + Util.printCoordinates( channels ) );
+
     	if ( channelsToRegister != null && channelsToRegister.trim().length() > 0 )
     	{
 	    	final ArrayList<Integer> tmp = parseIntegerString( channelsToRegister );
 	    	channelsRegister = new int[ tmp.size() ];
 
 	    	for (int i = 0; i < tmp.size(); i++)
-	    		channelsRegister[i] = tmp.get(i);
+	    		channelsRegister[i] = tmp.get(i);	    	
     	}
     	else
     	{
@@ -336,6 +339,9 @@ public class SPIMConfiguration
     			channelsRegister[0] = spimExperiment.channelStart;
     		}
     	}
+    	
+    	IOFunctions.println( "ChannelsToRegister: " + channelsToRegister );
+    	IOFunctions.println( "ChannelsRegister: " + Util.printCoordinates( channelsRegister ) );
 
     	if ( channelsToFuse != null && channelsToFuse.trim().length() > 0 )
     	{
@@ -347,6 +353,7 @@ public class SPIMConfiguration
     	}
     	else
     	{
+    		// there is always channel 0 - wrong, only always the same channel that also gets registered
     		// there is always the first channel
     		channelsFuse = new int[]{ channelsRegister[ 0 ] };
 
@@ -356,6 +363,9 @@ public class SPIMConfiguration
     			channelsFuse[0] = spimExperiment.channelStart;
     		}
     	}
+
+    	IOFunctions.println( "ChannelsToFuse: " + channelsToFuse );
+    	IOFunctions.println( "ChannelsFuse: " + Util.printCoordinates( channelsFuse ) );
 
     	// test validity (channels for registration and fusion have to be a subclass of the channel pattern)
     	for ( final int cR : channelsRegister )

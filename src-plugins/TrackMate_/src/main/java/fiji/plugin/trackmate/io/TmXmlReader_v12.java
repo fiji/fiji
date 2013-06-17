@@ -84,24 +84,6 @@ import static fiji.plugin.trackmate.tracking.TrackerKeys.KEY_MERGING_FEATURE_PEN
 import static fiji.plugin.trackmate.tracking.TrackerKeys.KEY_MERGING_MAX_DISTANCE;
 import static fiji.plugin.trackmate.tracking.TrackerKeys.KEY_SPLITTING_FEATURE_PENALTIES;
 import static fiji.plugin.trackmate.tracking.TrackerKeys.KEY_SPLITTING_MAX_DISTANCE;
-import ij.IJ;
-import ij.ImagePlus;
-
-import java.io.File;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-
-import org.jdom2.Attribute;
-import org.jdom2.DataConversionException;
-import org.jdom2.Element;
-import org.jgrapht.graph.DefaultWeightedEdge;
-import org.jgrapht.graph.SimpleDirectedWeightedGraph;
-
 import fiji.plugin.trackmate.DetectorProvider;
 import fiji.plugin.trackmate.FeatureFilter;
 import fiji.plugin.trackmate.FeatureModel;
@@ -120,6 +102,24 @@ import fiji.plugin.trackmate.tracking.FastLAPTracker;
 import fiji.plugin.trackmate.tracking.SimpleFastLAPTracker;
 import fiji.plugin.trackmate.tracking.SpotTracker;
 import fiji.plugin.trackmate.tracking.kdtree.NearestNeighborTracker;
+import fiji.util.NumberParser;
+import ij.IJ;
+import ij.ImagePlus;
+
+import java.io.File;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+
+import org.jdom2.Attribute;
+import org.jdom2.DataConversionException;
+import org.jdom2.Element;
+import org.jgrapht.graph.DefaultWeightedEdge;
+import org.jgrapht.graph.SimpleDirectedWeightedGraph;
 
 /**
  * A compatibility xml loader than can load TrackMate xml file saved for version
@@ -1193,7 +1193,7 @@ public class TmXmlReader_v12 extends TmXmlReader {
 			return false;
 		}
 		try {
-			double val = Double.parseDouble(str);
+			double val = NumberParser.parseDouble(str);
 			settings.put(mapKey, val);
 		} catch (NumberFormatException nfe) {
 			errorMessage = "Could not read "+attName+" attribute as a double value. Got "+str+".";
@@ -1209,7 +1209,7 @@ public class TmXmlReader_v12 extends TmXmlReader {
 			return false;
 		}
 		try {
-			int val = Integer.parseInt(str);
+			int val = NumberParser.parseInteger(str);
 			settings.put(mapKey, val);
 		} catch (NumberFormatException nfe) {
 			errorMessage = "Could not read "+attName+" attribute as an integer value. Got "+str+".";
