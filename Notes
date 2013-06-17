@@ -1,14 +1,23 @@
-Sholl Analysis
+Sholl Analysis, http://fiji.sc/Sholl_Analysis/
 
 WISH LIST
 =========
+    - Perform curve fitting and compute descriptors from linear profiles obtained
+      elsewhere (perhaps by importing .csv files?)
+    - Obtain a mask for every chosen method (slices of an ImageStack?)
+    - Fix dialog prompt: Can become higher than 700px and may not be displayed on netbooks
+
     - Restrict analysis to area ROIs (rather than hemicircles/spheres?)
 
 RELEASE NOTES
 =============
-Version 3.1 (latest)
-    - New descriptors: Median and Barycenter of sampled profile (linear Sholl)
-    - Minor improvements in Results table
+Version 3.1 (June 2013) [latest]
+    - New descriptors: Median and Barycenter of linear Sholl (sampled profile)
+    - Multiple profiles can be obtained at once
+    - Added a "batch mode" option that saves profiles withou displaying them
+    - Sholl decay is only calculated when "Semi-log" is chosen (v2.2 behavior)
+    - Barycenter and other descriptor are highlighted on plot
+    - Updated the URL of help page to http://fiji.sc/Sholl_Analysis/
 
 Version 3.0
     - 3D Sholl:
