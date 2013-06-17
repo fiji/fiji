@@ -141,7 +141,7 @@ public class TmXmlReader {
 	protected final Element root;
 	/** If <code>false</code>, an error occured during reading. 
 	 * @see #getErrorMessage(). */
-	private boolean ok = true;
+	protected boolean ok = true;
 
 	/*
 	 * CONSTRUCTORS
