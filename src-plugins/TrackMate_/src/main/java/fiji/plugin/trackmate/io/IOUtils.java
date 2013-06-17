@@ -78,15 +78,16 @@ public class IOUtils {
 	 * Prompts the user for a xml file to load from.
 	 *  
 	 * @param file  a default file, will be used to display a default choice in the file chooser.
+	 * @param title  the title to display on the file chooser window 
 	 * @param parent  the {@link Frame} to lock on this dialog.
 	 * @param logger  a {@link Logger} to report what is happening.
 	 * @return  the selected file, or <code>null</code> if the user pressed the "cancel" button.
 	 */
-	public static File askForFileForLoading(File file, Frame parent, Logger logger) {
+	public static File askForFileForLoading(File file, String title, Frame parent, Logger logger) {
 
 		if(IJ.isMacintosh()) {
 			// use the native file dialog on the mac
-			FileDialog dialog =	new FileDialog(parent, "Load from a XML file", FileDialog.LOAD);
+			FileDialog dialog =	new FileDialog(parent, title, FileDialog.LOAD);
 			dialog.setDirectory(file.getParent());
 			dialog.setFile(file.getName());
 			FilenameFilter filter = new FilenameFilter() {
@@ -107,6 +108,7 @@ public class IOUtils {
 			file = new File(dialog.getDirectory(), selectedFile);
 		} else {
 			JFileChooser fileChooser = new JFileChooser(file.getParent());
+			fileChooser.setName(title);
 			fileChooser.setSelectedFile(file);
 			FileNameExtensionFilter filter = new FileNameExtensionFilter("XML files", "xml");
 			fileChooser.setFileFilter(filter);

@@ -49,7 +49,7 @@ public class LoadDescriptor extends SomeDialogDescriptor {
 		}
 
 		Logger logger = logPanel.getLogger();
-		File tmpFile = IOUtils.askForFileForLoading(file, controller.getGUI(), logger );
+		File tmpFile = IOUtils.askForFileForLoading(file, "Load a TrackMate XML file", controller.getGUI(), logger );
 		if (null == tmpFile) {
 			return;
 		}
