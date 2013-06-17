@@ -24,7 +24,7 @@ import ij.measure.Calibration;
 import ij.measure.CurveFitter;
 import ij.measure.Measurements;
 import ij.measure.ResultsTable;
-import ij.plugin.ContrastEnhancer;
+//import ij.plugin.ContrastEnhancer;
 import ij.plugin.PlugIn;
 import ij.plugin.ZProjector;
 import ij.plugin.filter.Analyzer;
@@ -82,7 +82,7 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
     /* Curve Fitting, Results and Descriptors */
     private static boolean fitCurve;
     private static final String[] DEGREES = { "4th degree", "5th degree", "6th degree", "7th degree", "8th degree" };
-    private static final String shollTable = "Sholl Results";
+    private static final String SHOLLTABLE = "Sholl Results";
     private static double[] centroid;
 
 	/* Image path and Output Options */
@@ -96,7 +96,6 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
     private static double endRadius   = 100.0;
     private static double stepRadius  = 1;
     private static double incStep     = 0;
-    private static int shollChoice    = SHOLL_N;
     private static int polyChoice     = 1;
     private static boolean verbose;
     private static boolean mask;
@@ -115,9 +114,13 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
     /* Boundaries of analysis */
     private static boolean orthoChord = false;
     private static boolean trimBounds;
-    private static int quadChoice;
     private static String[] quads = new String[2];
-    private static String quadString; // "None", "Left", "Right", "Above", "Below"
+    private static final String QUAD_NORTH = "Above line";
+    private static final String QUAD_SOUTH = "Below line";
+    private static final String QUAD_EAST  = "Left of line";
+    private static final String QUAD_WEST  = "Right of line";
+    private static String quadString;
+    private static int quadChoice;
     private static int minX;
     private static int maxX;
     private static int minY;
@@ -125,9 +128,8 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
     private static int minZ;
     private static int maxZ;
 
-
     /* Parameters for 3D analysis */
-    private static boolean secludeSingleVoxels = false;
+    private static boolean skipSingleVoxels = false;
 
     /* Parameters for 2D analysis */
     private static final String[] BIN_TYPES = { "Mean", "Median" };
@@ -233,10 +235,10 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
         final int hght = ip.getHeight();
         final double dx, dy, dz, maxEndRadius;
 
-        dx = ((orthoChord && trimBounds && quadString.equalsIgnoreCase("right")) || x<=wdth/2)
+        dx = ((orthoChord && trimBounds && quadString.equalsIgnoreCase(QUAD_NORTH)) || x<=wdth/2)
              ? (x-wdth)*vxWH : x*vxWH;
 
-        dy = ((orthoChord && trimBounds && quadString.equalsIgnoreCase("below")) || y<=hght/2)
+        dy = ((orthoChord && trimBounds && quadString.equalsIgnoreCase(QUAD_SOUTH)) || y<=hght/2)
              ? (y-hght)*vxWH : y*vxWH;
 
         dz = (z<=depth/2) ? (z-depth)*vxD : z*vxD;
@@ -278,13 +280,13 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
         maxZ = Math.min(z+zmaxradius, depth);
 
         if (orthoChord && trimBounds) {
-            if (quadString.equalsIgnoreCase("above"))
+            if (quadString.equalsIgnoreCase(QUAD_NORTH))
                 maxY = (int) Math.min(y + xymaxradius, y);
-            else if (quadString.equalsIgnoreCase("below"))
+            else if (quadString.equalsIgnoreCase(QUAD_NORTH))
                 minY = (int) Math.max(y - xymaxradius, y);
-            else if (quadString.equalsIgnoreCase("right"))
+            else if (quadString.equalsIgnoreCase(QUAD_WEST))
                 minX = x;
-            else if (quadString.equalsIgnoreCase("left"))
+            else if (quadString.equalsIgnoreCase(QUAD_EAST))
                 maxX = x;
         }
 
@@ -299,8 +301,8 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
         IJ.showStatus("Preparing Results...");
 
         // Retrieve pairs of radii, counts for intersecting radii
-        double[][] valuesN = getNonZeroValues(radii, counts);
-		int trimmedCounts = valuesN.length;
+        final double[][] valuesN = getNonZeroValues(radii, counts);
+		final int trimmedCounts = valuesN.length;
         if (trimmedCounts==0) {
             IJ.beep();
             IJ.showProgress(0, 0);
@@ -309,12 +311,12 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
         }
 
         // Retrive stats on sampled data
-        ResultsTable statsTable = createStatsTable(imgTitle, x, y, z, valuesN);
+        final ResultsTable statsTable = createStatsTable(imgTitle, x, y, z, valuesN);
 
         // Transform and fit data
-        double[][] valuesNS   = transformValues(valuesN, true, false, false);
-        double[][] valuesSLOG = transformValues(valuesNS, false, true, false);
-        double[][] valuesLOG  = transformValues(valuesSLOG, false, false, true);
+        final double[][] valuesNS   = transformValues(valuesN, true, false, false);
+        final double[][] valuesSLOG = transformValues(valuesNS, false, true, false);
+        final double[][] valuesLOG  = transformValues(valuesSLOG, false, false, true);
         double[] fvaluesN    = null;
         double[] fvaluesNS   = null;
         double[] fvaluesSLOG = null;
@@ -322,7 +324,7 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
 
         // Create plots
         if (shollN) {
-            Plot plotN = plotValues("Sholl profile (Linear) for "+ imgTitle,
+            final Plot plotN = plotValues("Sholl profile (Linear) for "+ imgTitle,
                     is3D ? "3D distance ("+ unit +")" : "2D distance ("+ unit +")",
                     "N. of Intersections",
                     valuesN);
@@ -332,7 +334,7 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
             savePlot(plotN, SHOLL_N);
         }
         if (shollNS) {
-            Plot plotNS = plotValues("Sholl profile (Linear norm.) for "+ imgTitle,
+            final Plot plotNS = plotValues("Sholl profile (Linear norm.) for "+ imgTitle,
                     is3D ? "3D distance ("+ unit +")" : "2D distance ("+ unit +")",
                     "Inters./"+ (is3D ? NORMS3D[normChoice] : NORMS2D[normChoice]),
                     valuesNS);
@@ -341,7 +343,7 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
             savePlot(plotNS, SHOLL_NS);
         }
         if (shollSLOG) {
-            Plot plotSLOG = plotValues("Sholl profile (Semi-log) for "+ imgTitle,
+            final Plot plotSLOG = plotValues("Sholl profile (Semi-log) for "+ imgTitle,
                     is3D ? "3D distance ("+ unit +")" : "2D distance ("+ unit +")",
                     "log(Inters./"+ (is3D ? NORMS3D[normChoice] : NORMS2D[normChoice]) +")",
                     valuesSLOG);
@@ -350,7 +352,7 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
             savePlot(plotSLOG, SHOLL_SLOG);
         }
         if (shollLOG) {
-            Plot plotLOG = plotValues("Sholl profile (Log-log) for "+ imgTitle,
+            final Plot plotLOG = plotValues("Sholl profile (Log-log) for "+ imgTitle,
                     is3D ? "log(3D distance)" : "log(2D distance)",
                     "log(Inters./"+ (is3D ? NORMS3D[normChoice] : NORMS2D[normChoice]) +")",
                     valuesLOG);
@@ -433,8 +435,8 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
 			final ResultsTable rt, final Plot plot) {
 
 		final int size = values.length;
-		double[] x = new double[size];
-		double[] y = new double[size];
+		final double[] x = new double[size];
+		final double[] y = new double[size];
 		for (int i=0; i <size; i++) {
 			x[i] = values[i][0];
 			y[i] = values[i][1];
@@ -451,7 +453,7 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
 		}
 
 		 // Perform fitting
-		 CurveFitter cf = new CurveFitter(x, y);
+		 final CurveFitter cf = new CurveFitter(x, y);
 		 //cf.setRestarts(4); // default: 2;
 		 //cf.setMaxIterations(50000); //default: 25000
 
@@ -476,7 +478,7 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
 		}
 
 		//IJ.showStatus("Curve fitter status: " + cf.getStatusString());
-		double[] parameters = cf.getParams();
+		final double[] parameters = cf.getParams();
 
 		// Get fitted data
 		final double[] fy = new double[size];
@@ -501,9 +503,9 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
 
 		if (method==SHOLL_SLOG) {
 
-			double k = -parameters[1];           // Sholl decay: slope of Semi-log regression
-			double kIntercept = parameters[0];   // Sholl decay: y-intercept of Semi-log regression
-			double kRSquared = cf.getRSquared(); // Sholl decay: R^2 of Semi-log regression
+			final double k = -parameters[1];           // Sholl decay: slope of Semi-log regression
+			final double kIntercept = parameters[0];   // Sholl decay: y-intercept of Semi-log regression
+			final double kRSquared = cf.getRSquared(); // Sholl decay: R^2 of Semi-log regression
 
 			rt.addValue("Sholl regression coefficient", k);
 			rt.addValue("Regression intercept", kIntercept);
@@ -568,7 +570,7 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
 		}
 
 		makePlotLabel(plot, plotLabel.toString());
-		rt.show(shollTable);
+		rt.show(SHOLLTABLE);
 		return fy;
 
 	}
@@ -623,11 +625,11 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
         orthoChord = (chordAngle > -1 && chordAngle % 90 == 0);
         if (orthoChord) {
             if (chordAngle == 90.0) {
-                quads[0] = "Right of line";
-                quads[1] = "Left of line";
+                quads[0] = QUAD_EAST;
+                quads[1] = QUAD_WEST;
             } else {
-                quads[0] = "Above line";
-                quads[1] = "Below line";
+                quads[0] = QUAD_NORTH;
+                quads[1] = QUAD_SOUTH;
             }
             gd.setInsets(0, xIndent, 0);
             gd.addCheckbox("Restrict analysis to hemi"+ (is3D ? "sphere:" : "circle:"), trimBounds);
@@ -640,7 +642,7 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
             gd.setInsets(2, 0, 2);
             gd.addMessage("II. Noise Reduction:", headerFont);
             gd.setInsets(0, xIndent, 0);
-            gd.addCheckbox("Ignore isolated (6-connected) voxels", secludeSingleVoxels);
+            gd.addCheckbox("Ignore isolated (6-connected) voxels", skipSingleVoxels);
         } else {
             gd.setInsets(10, 0, 2);
             gd.addMessage("II. Multiple Samples per Radius:", headerFont);
@@ -723,7 +725,7 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
     /** Retrieves values from the dialog, disabling dialog components that are not applicable.
         Returns false if user no Analysis method was chosen
      */
-    public boolean dialogItemChanged(GenericDialog gd, AWTEvent e) {
+    public boolean dialogItemChanged(final GenericDialog gd, final AWTEvent e) {
 
         final Vector<?> numericfields = gd.getNumericFields();
         final Vector<?> choices = gd.getChoices();
@@ -745,30 +747,28 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
         if (orthoChord) {
             trimBounds = gd.getNextBoolean();
             quadChoice = gd.getNextChoiceIndex();
-            final String choice = quads[quadChoice];
-            quadString = choice.substring(0, choice.indexOf(" "));
-
-            Checkbox ietrimBounds = (Checkbox)checkboxes.elementAt(checkboxCounter++);
-            Choice iequadChoice = (Choice)choices.elementAt(choiceCounter++);
+            final String quadString = quads[quadChoice];
+            final Checkbox ietrimBounds = (Checkbox)checkboxes.elementAt(checkboxCounter++);
+            final Choice iequadChoice = (Choice)choices.elementAt(choiceCounter++);
             iequadChoice.setEnabled(trimBounds);
         } else
             quadString ="None";
 
         // Part II: Multiple samples (2D) and noise filtering (3D)
         if (is3D) {
-            secludeSingleVoxels = gd.getNextBoolean();
+            skipSingleVoxels = gd.getNextBoolean();
             checkboxCounter++;
         } else {
             nSpans = Math.min(Math.max((int)gd.getNextNumber(), 1), 10);
             fieldCounter++;
             binChoice = gd.getNextChoiceIndex();
-            Choice iebinChoice = (Choice)choices.elementAt(choiceCounter++);
+            final Choice iebinChoice = (Choice)choices.elementAt(choiceCounter++);
             iebinChoice.setEnabled(nSpans>1);
         }
 
         // Part III: Indices and Curve Fitting
         primaryBranches = (int)Math.max(1, gd.getNextNumber());
-        TextField ieprimaryBranches = (TextField)numericfields.elementAt(fieldCounter++);
+        final TextField ieprimaryBranches = (TextField)numericfields.elementAt(fieldCounter++);
         inferPrimary = gd.getNextBoolean();
         checkboxCounter++;
         ieprimaryBranches.setEnabled(!inferPrimary);
@@ -776,7 +776,7 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
         fitCurve = gd.getNextBoolean();
         checkboxCounter++;
         verbose = gd.getNextBoolean();
-        Checkbox ieverbose = (Checkbox)checkboxes.elementAt(checkboxCounter++);
+        final Checkbox ieverbose = (Checkbox)checkboxes.elementAt(checkboxCounter++);
         ieverbose.setEnabled(fitCurve);
 
         // Part IV: Sholl Methods
@@ -784,7 +784,7 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
         checkboxCounter++;
 
         polyChoice = gd.getNextChoiceIndex();
-        Choice iepolyChoice = (Choice)choices.elementAt(choiceCounter++);
+        final Choice iepolyChoice = (Choice)choices.elementAt(choiceCounter++);
         iepolyChoice.setEnabled( fitCurve && shollN );
 
         shollNS = gd.getNextBoolean();
@@ -795,21 +795,21 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
         checkboxCounter++;
 
         normChoice = gd.getNextChoiceIndex();
-        Choice ienormChoice = (Choice)choices.elementAt(choiceCounter++);
+        final Choice ienormChoice = (Choice)choices.elementAt(choiceCounter++);
         ienormChoice.setEnabled( shollNS || shollSLOG || shollLOG);
 
         // Part V: Mask and outputs
         mask = gd.getNextBoolean();
         maskBackground = Math.min(Math.max((int)gd.getNextNumber(), 0), 255);
-        Checkbox iemask = (Checkbox)checkboxes.elementAt(checkboxCounter++);
-        TextField iemaskBackground = (TextField)numericfields.elementAt(fieldCounter++);
+        final Checkbox iemask = (Checkbox)checkboxes.elementAt(checkboxCounter++);
+        final TextField iemaskBackground = (TextField)numericfields.elementAt(fieldCounter++);
         iemaskBackground.setEnabled(mask);
 
         if (validPath) {
             save = gd.getNextBoolean();
 			checkboxCounter++;
 			hideSaved = gd.getNextBoolean();
-			Checkbox iehideSaved = (Checkbox)checkboxes.elementAt(checkboxCounter++);
+			final Checkbox iehideSaved = (Checkbox)checkboxes.elementAt(checkboxCounter++);
 			iehideSaved.setEnabled(save);
 		}
 
@@ -881,7 +881,7 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
     /** Returns true if at least one of the 6-neighboring voxels of this position is thresholded */
     static private boolean hasNeighbors(final int x, final int y, final int z, final ImageStack stack) {
 
-        if (!secludeSingleVoxels)
+        if (!skipSingleVoxels)
             return true;  // Do not proceed if secludeSingleVoxels is not set
 
         final int[][] neighboors = new int[6][3];
@@ -1447,7 +1447,7 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
 
         double area = 0, sumx = 0, sumy = 0;
         for (int i=1; i<xpoints.length; i++) {
-            double cfactor = (xpoints[i-1]*ypoints[i]) - (xpoints[i]*ypoints[i-1]);
+            final double cfactor = (xpoints[i-1]*ypoints[i]) - (xpoints[i]*ypoints[i-1]);
             sumx += (xpoints[i-1] + xpoints[i]) * cfactor;
             sumy += (ypoints[i-1] + ypoints[i]) * cfactor;
             area += cfactor/2;
@@ -1473,10 +1473,10 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
 
     /** Returns the Sholl Summary Table populated with profile statistics */
 	private static ResultsTable createStatsTable(final String rowLabel, final int xc,
-			final int yc, final int zc, double[][] values) {
+			final int yc, final int zc, final double[][] values) {
 
 		ResultsTable rt;
-		final Frame window = WindowManager.getFrame(shollTable);
+		final Frame window = WindowManager.getFrame(SHOLLTABLE);
 		if (window == null)
 			rt = new ResultsTable();
 		else
@@ -1486,8 +1486,8 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
 
 		// Retrieve simple statistics
 		final int size = values.length;
-		double[] x = new double[size];
-		double[] y = new double[size];
+		final double[] x = new double[size];
+		final double[] y = new double[size];
 		for (int i=0; i <size; i++) {
 			x[i] = values[i][0];
 			y[i] = values[i][1];
@@ -1533,7 +1533,7 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
 
 		rt.addValue("Enclosing radius", lastR);
 		rt.addValue("Enclosed field", field);
-		rt.show(shollTable);
+		rt.show(SHOLLTABLE);
 		return rt;
 
 	}
@@ -1543,7 +1543,7 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
 			final boolean logY, final boolean logX) {
 
         double x, y;
-        double[][] transValues = new double[values.length][2];
+        final double[][] transValues = new double[values.length][2];
 
         for (int i=0; i<values.length; i++) {
 
@@ -1583,8 +1583,8 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
 
         // Extract values
         final int size = xy.length;
-        double[] x0 = new double[size];
-        double[] y0 = new double[size];
+        final double[] x0 = new double[size];
+        final double[] y0 = new double[size];
         for (int i=0; i <size; i++) {
             x0[i] = xy[i][0];
             y0[i] = xy[i][1];
@@ -1665,7 +1665,7 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
     }
 
     /** Saves plot according to imgPath */
-    private static void savePlot(final Plot plot, int shollChoice) {
+    private static void savePlot(final Plot plot, final int shollChoice) {
 
 		if (!validPath || (validPath && !hideSaved))
             plot.show();
