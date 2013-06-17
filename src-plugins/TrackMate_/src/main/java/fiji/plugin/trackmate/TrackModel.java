@@ -703,19 +703,22 @@ public class TrackModel {
 
 			Spot v = event.getVertex();
 			Integer id = vertexToID.get(v);
-			Set<Spot> set = connectedVertexSets.get(id);
-			if (null == set) {
-				throw new RuntimeException("Unknown set ID: " + id);
+			if (id != null)
+			{
+				Set<Spot> set = connectedVertexSets.get(id);
+				if (null == set) {
+					throw new RuntimeException("Unknown set ID: " + id);
+				}
+				set.remove(v);
+
+				if (set.isEmpty()) {
+					connectedEdgeSets.remove(id);
+					connectedVertexSets.remove(id);
+					names.remove(id);
+					visibility.remove(id);
+				}
 			}
-			set.remove(v);
 			vertexToID.remove(v);
-			
-			if (set.isEmpty()) {
-				connectedEdgeSets.remove(id);
-				connectedVertexSets.remove(id);
-				names.remove(id);
-				visibility.remove(id);
-			}
 		}
 
 		@Override
