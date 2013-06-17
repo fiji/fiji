@@ -8,6 +8,8 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import net.imglib2.AbstractEuclideanSpace;
+import net.imglib2.RealLocalizable;
 import net.imglib2.util.Util;
 import fiji.plugin.trackmate.util.AlphanumComparator;
 
@@ -16,7 +18,7 @@ import fiji.plugin.trackmate.util.AlphanumComparator;
  * @author Jean-Yves Tinevez <jeanyves.tinevez@gmail.com> Sep 16, 2010, 2012
  *
  */
-public class Spot {
+public class Spot extends AbstractEuclideanSpace implements RealLocalizable {
 
 	/*
 	 * FIELDS
@@ -36,7 +38,7 @@ public class Spot {
 	 */
 
 	/**
-	 * Instantiate a Spot. 
+	 * Instantiate a Spot.
 	 * <p>
 	 * The given coordinate double array <b>must</b> have 3 elements. If the 3rd one is not
 	 * used (2D case), it can be set to a constant value 0. This constructor ensures that
@@ -44,6 +46,7 @@ public class Spot {
 	 * when calculating distances and so on.
 	 */
 	public Spot(double[] coordinates, String name) {
+		super(3);
 		this.ID = IDcounter.incrementAndGet();
 		for (int i = 0; i < 3; i++)
 			putFeature(POSITION_FEATURES[i], coordinates[i]);
@@ -59,10 +62,11 @@ public class Spot {
 
 	/**
 	 * Blank constructor meant to be used when loading a spot collection from a file. <b>Will</b> mess with
-	 * the {@link #IDcounter} field, so this constructor should not be used for normal spot creation. 
+	 * the {@link #IDcounter} field, so this constructor should not be used for normal spot creation.
 	 * @param ID  the spot ID to set
 	 */
 	public Spot(int ID) {
+		super(3);
 		this.ID = ID;
 		synchronized (IDcounter) {
 			if (IDcounter.get() < ID) {
@@ -79,7 +83,7 @@ public class Spot {
 	public int hashCode() {
 		return ID;
 	}
-	
+
 	@Override
 	public boolean equals(Object other){
 	    if (other == null) return false;
@@ -88,7 +92,7 @@ public class Spot {
 	    Spot os = (Spot) other;
 	    return os.ID == this.ID;
 	}
-	
+
 	/**
      * @return the name for this Spot.
      */
@@ -112,7 +116,7 @@ public class Spot {
 		String str;
 		if (null == name || name.equals(""))
 			str = "ID"+ID;
-		else 
+		else
 			str = name;
 		return str;
 	}
@@ -124,7 +128,7 @@ public class Spot {
 		StringBuilder s = new StringBuilder();
 
 		// Name
-		if (null == name) 
+		if (null == name)
 			s.append("Spot: <no name>\n");
 		else
 			s.append("Spot: "+name+"\n");
@@ -138,7 +142,7 @@ public class Spot {
 		s.append("Position: "+Util.printCoordinates(coordinates)+"\n");
 
 		// Feature list
-		if (null == features || features.size() < 1) 
+		if (null == features || features.size() < 1)
 			s.append("No features calculated\n");
 		else {
 			s.append("Feature list:\n");
@@ -161,14 +165,14 @@ public class Spot {
 	 */
 
 	/**
-     * @return and exposes the storage Map of features for this spot. 
+     * @return and exposes the storage Map of features for this spot.
      */
 	public Map<String,Double> getFeatures() {
 		return features;
 	}
 
 	/**
-	 * @return The value corresponding to the specified spot feature. 
+	 * @return The value corresponding to the specified spot feature.
      * @param feature The feature string to retrieve the stored value for.
      * <code>null</code> if it has not been set.
      */
@@ -194,7 +198,7 @@ public class Spot {
 	}
 
 	/**
-     * @return the absolute normalized difference of the feature value of this spot 
+     * @return the absolute normalized difference of the feature value of this spot
      * with the one of the given spot.
      * <p>
      * If <code>a</code> and <code>b</code> are the feature values, then the absolute
@@ -221,7 +225,7 @@ public class Spot {
 		for (String f : POSITION_FEATURES) {
 			thisVal = features.get(f).doubleValue();
 			otherVal = s.getFeature(f).doubleValue();
-			sumSquared += ( otherVal - thisVal ) * ( otherVal - thisVal ); 
+			sumSquared += ( otherVal - thisVal ) * ( otherVal - thisVal );
 		}
 		return sumSquared;
 	}
@@ -230,37 +234,37 @@ public class Spot {
 	 * PUBLIC UTILITY CONSTANTS
 	 */
 
-	/** A comparator used to sort spots by ascending time feature. */ 
+	/** A comparator used to sort spots by ascending time feature. */
 	public final static Comparator<Spot> timeComparator = new Comparator<Spot>() {
 		@Override
 		public int compare(Spot o1, Spot o2) {
 			final double diff = o2.diffTo(o1, POSITION_T);
-			if (diff == 0) 
+			if (diff == 0)
 				return 0;
 			else if (diff < 0)
 				return 1;
-			else 
+			else
 				return -1;
 		}
 
 	};
 
-	/** A comparator used to sort spots by ascending frame. */ 
+	/** A comparator used to sort spots by ascending frame. */
 	public final static Comparator<Spot> frameComparator = new Comparator<Spot>() {
 		@Override
 		public int compare(Spot o1, Spot o2) {
 			final double diff = o2.diffTo(o1, FRAME);
-			if (diff == 0) 
+			if (diff == 0)
 				return 0;
 			else if (diff < 0)
 				return 1;
-			else 
+			else
 				return -1;
 		}
 	};
 
 	/** A comparator used to sort spots by name. The comparison uses numerical natural sorting,
-	 * So that "Spot_4" comes before "Spot_122". */ 
+	 * So that "Spot_4" comes before "Spot_122". */
 	public final static Comparator<Spot> nameComparator = new Comparator<Spot>() {
 		private final AlphanumComparator comparator = AlphanumComparator.instance;
 		@Override
@@ -268,12 +272,12 @@ public class Spot {
 			return comparator.compare(o1.getName(), o2.getName());
 		}
 	};
-	
-	
+
+
 	/*
 	 * STATIC KEYS
 	 */
-	
+
 
 	/** The name of the spot quality feature. */
 	public static final String QUALITY = "QUALITY";
@@ -337,6 +341,32 @@ public class Spot {
 		FEATURE_DIMENSIONS.put(QUALITY, Dimension.QUALITY);
 	}
 
+	@Override
+	public void localize(final float[] position)
+	{
+		assert (position.length >= n);
+		for (int d = 0; d < n; ++d)
+			position[d] = getFloatPosition(d);
+	}
 
+	@Override
+	public void localize(final double[] position)
+	{
+		assert (position.length >= n);
+		for (int d = 0; d < n; ++d)
+			position[d] = getDoublePosition(d);
+	}
 
+	@Override
+	public float getFloatPosition(final int d)
+	{
+		return (float) getDoublePosition(d);
+	}
+
+	@Override
+	public double getDoublePosition(final int d)
+	{
+		assert ( d > 0 && d < n );
+		return getFeature( POSITION_FEATURES[ d ] );
+	}
 }
