@@ -52,7 +52,7 @@ public class TrackScheme extends AbstractTrackMateModelView {
 	 */
 	private static final boolean DEBUG = false;
 	private static final boolean DEBUG_SELECTION = false;
-	public static final String NAME = "TrackScheme";
+	public static final String KEY = "TrackScheme";
 	public static final String INFO_TEXT = "<html>" +
 			"TrackScheme displays the tracking results as track lanes, <br>" +
 			"ignoring the spot actual position. " +
@@ -181,7 +181,7 @@ public class TrackScheme extends AbstractTrackMateModelView {
 
 	@Override
 	public String getKey() {
-		return NAME;
+		return KEY;
 	}
 
 

@@ -86,7 +86,7 @@ public class ViewProvider {
 			return new SpotDisplayer3D(model, selectionModel, universe);
 
 
-		} else if (key.equals(TrackScheme.NAME)) {
+		} else if (key.equals(TrackScheme.KEY)) {
 
 			return new TrackScheme(model, selectionModel);
 			
@@ -118,7 +118,7 @@ public class ViewProvider {
 			return SpotDisplayer3D.INFO_TEXT;
 
 
-		} else if (key.equals(TrackScheme.NAME)) {
+		} else if (key.equals(TrackScheme.KEY)) {
 
 			return TrackScheme.INFO_TEXT;
 

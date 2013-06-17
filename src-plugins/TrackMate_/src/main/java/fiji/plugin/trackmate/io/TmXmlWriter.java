@@ -110,8 +110,8 @@ public class TmXmlWriter {
 	 * FIELD
 	 */
 
-	private final Element root;
-	private final Logger logger;
+	protected final Element root;
+	protected final Logger logger;
 	private final File file;
 
 	/*
@@ -280,7 +280,7 @@ public class TmXmlWriter {
 		return settingsElement;
 	}
 
-	private Element echoDetectorSettings(Settings settings, DetectorProvider provider) {
+	protected Element echoDetectorSettings(Settings settings, DetectorProvider provider) {
 		Element el = new Element(DETECTOR_SETTINGS_ELEMENT_KEY);
 		boolean ok = provider.select(settings.detectorFactory.getKey());
 		if (!ok) {
@@ -293,7 +293,7 @@ public class TmXmlWriter {
 		return el;
 	}
 
-	private Element echoTrackerSettings(Settings settings, TrackerProvider provider) {
+	protected Element echoTrackerSettings(Settings settings, TrackerProvider provider) {
 		Element el = new Element(TRACKER_SETTINGS_ELEMENT_KEY);
 		
 		if (null == settings.tracker) {
@@ -388,7 +388,7 @@ public class TmXmlWriter {
 		return filteredTracksElement;
 	}
 
-	private Element echoImageInfo(Settings settings) {
+	protected Element echoImageInfo(Settings settings) {
 		Element imEl = new Element(IMAGE_ELEMENT_KEY);
 		imEl.setAttribute(IMAGE_FILENAME_ATTRIBUTE_NAME, 		settings.imageFileName);
 		imEl.setAttribute(IMAGE_FOLDER_ATTRIBUTE_NAME, 			settings.imageFolder);
@@ -484,7 +484,7 @@ public class TmXmlWriter {
 	}
 
 
-	private Element echoInitialSpotFilter(Settings settings) {
+	protected Element echoInitialSpotFilter(Settings settings) {
 		Element itElement = new Element(INITIAL_SPOT_FILTER_ELEMENT_KEY);
 		itElement.setAttribute(FILTER_FEATURE_ATTRIBUTE_NAME, Spot.QUALITY);
 		itElement.setAttribute(FILTER_VALUE_ATTRIBUTE_NAME, "" + settings.initialSpotFilterValue);
@@ -493,7 +493,7 @@ public class TmXmlWriter {
 		return itElement;
 	}
 
-	private Element echoSpotFilters(Settings settings) {
+	protected Element echoSpotFilters(Settings settings) {
 		List<FeatureFilter> featureThresholds = settings.getSpotFilters();
 
 		Element filtersElement = new Element(SPOT_FILTER_COLLECTION_ELEMENT_KEY);
@@ -508,7 +508,7 @@ public class TmXmlWriter {
 		return filtersElement;
 	}
 
-	private Element echoTrackFilters(Settings settings) {
+	protected Element echoTrackFilters(Settings settings) {
 		List<FeatureFilter> filters = settings.getTrackFilters();
 
 		Element trackFiltersElement = new Element(TRACK_FILTER_COLLECTION_ELEMENT_KEY);
@@ -523,7 +523,7 @@ public class TmXmlWriter {
 		return trackFiltersElement;
 	}
 	
-	private Element echoAnalyzers(Settings settings) {
+	protected Element echoAnalyzers(Settings settings) {
 		Element analyzersElement = new Element(ANALYZER_COLLECTION_ELEMENT_KEY);
 		
 		// Spot analyzers

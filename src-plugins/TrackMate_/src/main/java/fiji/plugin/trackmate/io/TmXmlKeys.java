@@ -5,7 +5,7 @@ package fiji.plugin.trackmate.io;
  * Contains the key string used for xml marshaling.
  * @author Jean-Yves Tinevez <jeanyves.tinevez@gmail.com>  2010-2011
   */
-class TmXmlKeys {
+public class TmXmlKeys {
 	
 	/*
 	 * GENERIC ATTRIBUTES
@@ -160,4 +160,10 @@ class TmXmlKeys {
 	public static final String GUI_STATE_ATTRIBUTE 						= "state";
 	public static final String GUI_VIEW_ELEMENT_KEY 					= "View";
 	public static final String GUI_VIEW_ATTRIBUTE 						= "key";
+	public static final String GUI_VIEW_ATTRIBUTE_POSITION_X 			= "x";
+	public static final String GUI_VIEW_ATTRIBUTE_POSITION_Y 			= "y";
+	public static final String GUI_VIEW_ATTRIBUTE_POSITION_WIDTH 		= "width";
+	public static final String GUI_VIEW_ATTRIBUTE_POSITION_HEIGHT		= "height";
+	
 }
+
