@@ -28,15 +28,15 @@
 			<version>${mpicbg.version}</version>
 		</dependency>
 		<dependency>
-			<groupId>loci</groupId>
+			<groupId>${bio-formats.groupId}</groupId>
 			<artifactId>scifio</artifactId>
-			<version>${scifio.version}</version>
+			<version>${bio-formats.version}</version>
 		</dependency>
-                <dependency>
-                        <groupId>edu.mines</groupId>
-                        <artifactId>mines-jtk</artifactId>
-                        <version>20100113</version>
-                </dependency>
+		<dependency>
+			<groupId>edu.mines</groupId>
+			<artifactId>mines-jtk</artifactId>
+			<version>20100113</version>
+		</dependency>
 		<dependency>
 			<groupId>org.jfree</groupId>
 			<artifactId>jcommon</artifactId>
@@ -56,17 +56,17 @@
 		<dependency>
 			<groupId>net.imglib2</groupId>
 			<artifactId>imglib2-algorithms</artifactId>
-			<version>${imagej.version}</version>
+			<version>${imglib2.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>net.imglib2</groupId>
 			<artifactId>imglib2-ij</artifactId>
-			<version>${imagej.version}</version>
+			<version>${imglib2.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>net.imglib2</groupId>
 			<artifactId>imglib2</artifactId>
-			<version>${imagej.version}</version>
+			<version>${imglib2.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>junit</groupId>

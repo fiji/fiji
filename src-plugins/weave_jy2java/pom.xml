@@ -20,12 +20,12 @@
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>fiji-compat</artifactId>
-			<version>${imagej.version}</version>
+			<version>${fiji.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>fiji-scripting</artifactId>
-			<version>${imagej.version}</version>
+			<version>${fiji.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>net.imagej</groupId>
@@ -35,12 +35,12 @@
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>Refresh_Javas</artifactId>
-			<version>${imagej.version}</version>
+			<version>${fiji.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>Script_Editor</artifactId>
-			<version>${imagej.version}</version>
+			<version>${fiji.version}</version>
 		</dependency>
 	</dependencies>
 

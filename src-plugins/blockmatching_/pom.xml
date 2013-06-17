@@ -25,12 +25,12 @@
 		<dependency>
 			<groupId>net.imglib2</groupId>
 			<artifactId>imglib2-ij</artifactId>
-			<version>${imagej.version}</version>
+			<version>${imglib2.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>net.imglib2</groupId>
 			<artifactId>imglib2</artifactId>
-			<version>${imagej.version}</version>
+			<version>${imglib2.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>mpicbg</groupId>
