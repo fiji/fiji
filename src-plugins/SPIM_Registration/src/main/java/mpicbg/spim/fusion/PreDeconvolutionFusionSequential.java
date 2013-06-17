@@ -278,7 +278,10 @@ public class PreDeconvolutionFusionSequential extends SPIMImageFusion implements
 			    						{
 			    							if ( use[view] )
 			    							{
-			    								outWeights[ view ].getType().set( tmpWeights[ view ]/sumWeights );
+											if ( sumWeights > 1 )
+				    								outWeights[ view ].getType().set( tmpWeights[ view ]/sumWeights );
+											else
+												outWeights[ view ].getType().set( tmpWeights[ view ] );
 			    							}
 			    						}
 		    						}

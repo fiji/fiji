@@ -79,12 +79,12 @@ public class BlendingSimple extends CombinedPixelWeightener<BlendingSimple>
 	@Override
 	public void updateWeights( final float[][] locations, final boolean[] useView )
 	{
+		/*
 		// check which location are inside its respective view
 		int num = 0;
 		for ( final boolean use : useView )
 			if ( use )
 				++num;
-
 		// if there is only one or no view at this point we can save some work
 		if ( num <= 1 )
 		{
@@ -94,10 +94,14 @@ public class BlendingSimple extends CombinedPixelWeightener<BlendingSimple>
 				else
 					weights[i] = 0;
 		}
-		else
+		else*/
+		
+		for ( int i = 0; i < useView.length; ++i )
 		{
-			for ( int i = 0; i < useView.length; ++i )
+			if ( useView[ i ] )
 				weights[ i ] = (float)computeWeight( locations[ i ], imageSizes[ i ], border, scaling[ i ], percentScaling );
+			else
+				weights[ i ] = 0;
 		}
 	}
 
