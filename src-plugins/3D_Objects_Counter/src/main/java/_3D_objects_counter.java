@@ -55,12 +55,12 @@ public class _3D_objects_counter implements PlugIn, AdjustmentListener, FocusLis
         imp=WindowManager.getCurrentImage();
         
         if (imp==null){
-            IJ.error("Man,\n"+"How can I work\n"+"without an image ?!!!");
+            IJ.error("You need to open an image first.");
             return;
         }
         
         if (imp.getBitDepth()>16){
-            IJ.error("3D objects counter only works on 8- or 16-bits images...");
+            IJ.error("3D objects counter only works on 8- or 16-bits images.");
             return;
         }
         
