@@ -47,7 +47,8 @@ public class PreDeconvolutionFusionSequential extends SPIMImageFusion implements
 		if ( conf.extractPSF )
 			extractPSF = new ExtractPSF( viewStructure );
 		else
-			extractPSF = ExtractPSF.loadAndTransformPSF( conf.psfFile, conf.deconvolutionShowAveragePSF, viewStructure );			
+			extractPSF = ExtractPSF.loadAndTransformPSF( conf.psfFiles, conf.transformPSFs, viewStructure );
+		
 
 		images = new Image[ numViews ];
 		weights = new Image[ numViews ];
@@ -411,18 +412,21 @@ public class PreDeconvolutionFusionSequential extends SPIMImageFusion implements
 	        
 	        SimpleMultiThreading.startAndJoin(threads);
 	        
-	        // extract the PSF for this one	        
-    		if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_MAIN )
-    			IOFunctions.println( "Extracting PSF for " + views.get( i ).getName() );
     		
     		if ( conf.extractPSF )
+    		{
+    	        // extract the PSF for this one	        
+        		if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_MAIN )
+        			IOFunctions.println( "Extracting PSF for " + views.get( i ).getName() );
+
     			extractPSF.extract( i, maxSize );
-	            
+    		}
+    		
 			// unload image
 	        views.get( i ).closeImage();
 		}
 			
-		if ( conf.extractPSF && conf.deconvolutionShowAveragePSF )
+		if ( conf.extractPSF )
 			extractPSF.computeAveragePSF( maxSize );
 		
 		if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_MAIN )

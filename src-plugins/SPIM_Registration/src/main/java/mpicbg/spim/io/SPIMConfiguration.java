@@ -93,9 +93,10 @@ public class SPIMConfiguration
     public boolean multipleImageFusion = false;
     public boolean isDeconvolution = false;
     public boolean deconvolutionLoadSequentially = false;
-    public boolean deconvolutionShowAveragePSF = true;
+    public int deconvolutionDisplayPSF = 1;
     public boolean extractPSF = true;
-    public String psfFile = null;
+    public boolean transformPSFs = true;
+    public ArrayList< String > psfFiles = null;
     public Multi_View_Deconvolution instance = null;
 
     public boolean fuseOnly = false;

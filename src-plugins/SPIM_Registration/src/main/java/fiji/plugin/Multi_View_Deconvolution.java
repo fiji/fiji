@@ -9,25 +9,17 @@ import ij.plugin.PlugIn;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
-
-import spimopener.SPIMRegularStack;
-
-import com.sun.jna.Native;
-import com.sun.jna.NativeLibrary;
 
 import mpicbg.imglib.container.array.ArrayContainerFactory;
 import mpicbg.imglib.container.cell.CellContainerFactory;
 import mpicbg.imglib.container.planar.PlanarContainerFactory;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.image.display.imagej.ImageJFunctions;
-import mpicbg.imglib.multithreading.SimpleMultiThreading;
 import mpicbg.imglib.type.numeric.real.FloatType;
 import mpicbg.imglib.util.Util;
 import mpicbg.spim.Reconstruction;
 import mpicbg.spim.fusion.FusionControl;
-import mpicbg.spim.fusion.PreDeconvolutionFusion;
 import mpicbg.spim.fusion.PreDeconvolutionFusionInterface;
 import mpicbg.spim.io.ConfigurationParserException;
 import mpicbg.spim.io.IOFunctions;
@@ -40,6 +32,8 @@ import mpicbg.spim.postprocessing.deconvolution2.LRFFT.PSFTYPE;
 import mpicbg.spim.postprocessing.deconvolution2.LRInput;
 import mpicbg.spim.registration.ViewDataBeads;
 import mpicbg.spim.registration.ViewStructure;
+
+import com.sun.jna.Native;
 
 /**
  * 
@@ -84,10 +78,8 @@ public class Multi_View_Deconvolution implements PlugIn
 		// set the instance to be called
 		conf.instance = this;
 				
-		// run the first part of fusion
-		final Reconstruction reconstruction = new Reconstruction( conf );
-		
 		// reconstruction calls deconvolve for each timepoint
+		new Reconstruction( conf );
 	}
 	
 	public void deconvolve( final ViewStructure viewStructure, final SPIMConfiguration conf, final int timePoint )
@@ -103,35 +95,55 @@ public class Multi_View_Deconvolution implements PlugIn
 		//final ExtractPSF extractPSF = new ExtractPSF( viewStructure, showAveragePSF );
 		//extractPSF.extract();
 		
+		// compute the common size of all PSF's if necessary
+		int[] size = null;
+		
+		if ( makeAllPSFSameSize || conf.deconvolutionDisplayPSF >= 3 )
+			size = ExtractPSF.commonSize( fusion.getPointSpreadFunctions() );
+		
+		// get/compute the PSF's
 		final ArrayList< Image< FloatType > > pointSpreadFunctions;
 		
 		if ( makeAllPSFSameSize )
 		{
-			final ArrayList< Image< FloatType > > tmpKernels = fusion.getPointSpreadFunctions();
-			
-			int[] size = tmpKernels.get( 0 ).getDimensions();
-			
-			for ( final Image< FloatType > image : tmpKernels )
-			{
-				for ( int d = 0; d < image.getNumDimensions(); ++d )
-					size[ d ] = Math.max( size[ d ], image.getDimension( d ) );
-			}
-			
 			pointSpreadFunctions = new ArrayList<Image<FloatType>>();
 
-			for ( final Image< FloatType > image : tmpKernels )
+			for ( final Image< FloatType > image : fusion.getPointSpreadFunctions() )
 				pointSpreadFunctions.add( ExtractPSF.makeSameSize( image, size ) );
 		}
 		else
 		{
 			pointSpreadFunctions = fusion.getPointSpreadFunctions();
 		}
-		
-		if ( conf.deconvolutionShowAveragePSF )
+
+		// display PSF's if wanted
+		if ( conf.deconvolutionDisplayPSF == 1 )
 			ImageJFunctions.show( fusion.getExtractPSFInstance().getMaxProjectionAveragePSF() );
-		
-		//for ( final Image<FloatType> k : pointSpreadFunctions )
-		//mageJFunctions.show( pointSpreadFunctions.get( 0 ) );
+		else if ( conf.deconvolutionDisplayPSF == 2 )
+			ImageJFunctions.show( fusion.getExtractPSFInstance().getAveragePSF() );
+		else if ( conf.deconvolutionDisplayPSF == 4 )
+			ImageJFunctions.show( fusion.getExtractPSFInstance().getAverageOriginalPSF() );
+		else if ( conf.deconvolutionDisplayPSF == 3 )
+		{
+			for ( int i = 0; i < viewStructure.getNumViews(); ++i )
+			{
+				final Image< FloatType > psf = pointSpreadFunctions.get( i );
+				final String title = "PSF for " + viewStructure.getViews().get( i ).getName();
+				
+				if ( makeAllPSFSameSize )
+					ImageJFunctions.show( psf ).setTitle( title );
+				else
+					ImageJFunctions.show( ExtractPSF.makeSameSize( psf, size ) ).setTitle( title );			
+			}
+		}
+		else if ( conf.deconvolutionDisplayPSF == 5 )
+		{
+			for ( int i = 0; i < viewStructure.getNumViews(); ++i )
+			{
+				final Image< FloatType > psf = fusion.getExtractPSFInstance().getPSFsInInputCalibration().get( i );
+				ImageJFunctions.show( psf ).setTitle( "(original scale) PSF for " + viewStructure.getViews().get( i ).getName() );			
+			}
+		}
 		
 		// now we close all the input images
 		for ( final ViewDataBeads view : viewStructure.getViews() )
@@ -225,21 +237,24 @@ public class Multi_View_Deconvolution implements PlugIn
 						IOFunctions.printErr("(" + new Date(System.currentTimeMillis()) + "): Cannot create directory '" + dir.getAbsolutePath() + "', quitting.");
 						return;
 				}
-				ImageJFunctions.saveAsTiffs( deconvolved, dir.getAbsolutePath(), "DC(l=" + lambda + ")_t" + timePoint + "_ch" + viewStructure.getChannelNum( 0 ), ImageJFunctions.GRAY32 );
+				if ( useTikhonovRegularization )
+					ImageJFunctions.saveAsTiffs( deconvolved, dir.getAbsolutePath(), "DC(l=" + lambda + ")_t" + timePoint + "_ch" + viewStructure.getChannelNum( 0 ), ImageJFunctions.GRAY32 );
+				else
+					ImageJFunctions.saveAsTiffs( deconvolved, dir.getAbsolutePath(), "DC(l=" + 0 + ")_t" + timePoint + "_ch" + viewStructure.getChannelNum( 0 ), ImageJFunctions.GRAY32 );
 			}
 		}		
 	}
 
-	public static String defaultPSFFileField = "";
+	public static ArrayList< String > defaultPSFFileField = null;
+	public static boolean defaultOnePSFForAll = true;
+	public static boolean defaultTransformPSFs = true;
 	public static int defaultExtractPSF = 0;
-	public static boolean defaultLoadImagesSequentially = false;
-	//public static boolean displayFusedImageStatic = true;
-	//public static boolean saveFusedImageStatic = true;
+	public static boolean defaultLoadImagesSequentially = true;
 	public static int defaultOutputType = 1;
 	public static int defaultNumIterations = 10;
 	public static boolean defaultUseTikhonovRegularization = true;
 	public static double defaultLambda = 0.006;
-	public static boolean showAveragePSF = true;
+	public static int defaultDisplayPSF = 1;
 	public static boolean defaultDebugMode = false;
 	public static int defaultDebugInterval = 1;
 	public static int defaultIterationType = 1;
@@ -252,6 +267,7 @@ public class Multi_View_Deconvolution implements PlugIn
 	public static String[] computationOn = new String[]{ "CPU (Java)", "GPU (Nvidia CUDA via JNA)" };
 	public static String[] extractPSFs = new String[]{ "Extract from beads", "Provide file with PSF" };
 	public static String[] blocks = new String[]{ "Entire image at once", "in 64x64x64 blocks", "in 128x128x128 blocks", "in 256x256x256 blocks", "in 512x512x512 blocks", "specify maximal blocksize manually" };
+	public static String[] displayPSF = new String[]{ "Do not show PSFs", "Show MIP of combined PSF's", "Show combined PSF's", "Show individual PSF's", "Show combined PSF's (original scale)", "Show individual PSF's (original scale)" };
 	
 	PSFTYPE iterationType;
 	int numIterations, container, computationType, blockSizeIndex, debugInterval = 1;
@@ -298,7 +314,7 @@ public class Multi_View_Deconvolution implements PlugIn
 		Bead_Registration.timepoints = gd.getNextString();
 		Bead_Registration.angles = gd.getNextString();
 
-		int numViews = 0;
+		int numViews = -1;
 		
 		try
 		{
@@ -480,7 +496,7 @@ public class Multi_View_Deconvolution implements PlugIn
 		gd2.addChoice( "Compute", blocks, blocks[ defaultBlockSizeIndex ] );
 		gd2.addChoice( "Compute_on", computationOn, computationOn[ defaultComputationIndex ] );
 		gd2.addChoice( "PSF_estimation", extractPSFs, extractPSFs[ defaultExtractPSF ] );
-		gd2.addCheckbox( "Show_averaged_PSF", showAveragePSF );
+		gd2.addChoice( "PSF_display", displayPSF, displayPSF[ defaultDisplayPSF ] );
 		gd2.addCheckbox( "Debug_mode", defaultDebugMode );
 		gd2.addMessage( "" );
 		gd2.addCheckbox( "Load_input_images_sequentially", defaultLoadImagesSequentially );
@@ -553,8 +569,8 @@ public class Multi_View_Deconvolution implements PlugIn
 			{
 				tpList = SPIMConfiguration.parseIntegerString( conf.timepointPattern );
 			} 
-			catch (ConfigurationParserException e) {
-				// TODO Auto-generated catch block
+			catch (ConfigurationParserException e) 
+			{
 				e.printStackTrace();
 				IJ.log( "Cannot parse time-point pattern: " + conf.timepointPattern );
 				return null;
@@ -603,7 +619,7 @@ public class Multi_View_Deconvolution implements PlugIn
 		blockSizeIndex = defaultBlockSizeIndex = gd2.getNextChoiceIndex();
 		computationType = defaultComputationIndex = gd2.getNextChoiceIndex();
 		defaultExtractPSF = gd2.getNextChoiceIndex();
-		showAveragePSF = gd2.getNextBoolean();
+		defaultDisplayPSF = gd2.getNextChoiceIndex();
 		defaultDebugMode = debugMode = gd2.getNextBoolean();
 
 		defaultLoadImagesSequentially = loadImagesSequentially = gd2.getNextBoolean();
@@ -615,20 +631,78 @@ public class Multi_View_Deconvolution implements PlugIn
 		else
 		{
 			extractPSF = false;
-			
-			final GenericDialogPlus gd3 = new GenericDialogPlus( "Select PSF File ..." );
-			
-			gd3.addMessage( "Note: the calibration of the PSF has to match" );
-			gd3.addMessage( "the calibration of the input views!" );
-			gd3.addMessage( "" );
-			gd3.addFileField( "PSF_file", defaultPSFFileField );
+
+			final GenericDialogPlus gd3 = new GenericDialogPlus( "Load PSF File ..." );
+
+			gd3.addCheckbox( "Use same PSF for all views", defaultOnePSFForAll );
 			
 			gd3.showDialog();
-			
+
 			if ( gd3.wasCanceled() )
 				return null;
+
+			defaultOnePSFForAll = gd3.getNextBoolean();			
 			
-			conf.psfFile = defaultPSFFileField = gd3.getNextString();
+			final GenericDialogPlus gd4 = new GenericDialogPlus( "Select PSF File ..." );
+			
+			gd4.addMessage( "Note: the calibration of the PSF(s) has to match\n" +
+							"the calibration of the input views if you choose\n" +
+							"to transform them according to the registration of\n" +
+							"the views!" );
+			gd4.addMessage( "" );
+			gd4.addCheckbox( "Transform_PSFs", defaultTransformPSFs );
+			gd4.addMessage( "" );
+
+			int numPSFs;
+			
+			if ( defaultOnePSFForAll )
+				numPSFs = 1;
+			else
+				numPSFs = numViews;
+
+			if ( defaultPSFFileField == null )
+				defaultPSFFileField = new ArrayList<String>();
+
+			if ( defaultPSFFileField.size() < numPSFs )
+			{
+				for ( int i = 0; i < numPSFs; ++i )
+					defaultPSFFileField.add( "" );
+			}
+			else if ( defaultPSFFileField.size() > numPSFs )
+			{
+				for ( int i = numPSFs; i < defaultPSFFileField.size(); ++i )
+					defaultPSFFileField.remove( numPSFs );
+			}
+
+			if ( defaultOnePSFForAll )
+				gd4.addFileField( "PSF_file", defaultPSFFileField.get( 0 ) );
+			else
+				for ( int i = 0; i < numPSFs; ++i )
+					gd4.addFileField( "PSF_file_view_" + i, defaultPSFFileField.get( i ) );
+			
+			gd4.showDialog();
+			
+			if ( gd4.wasCanceled() )
+				return null;
+
+			conf.transformPSFs = defaultTransformPSFs = gd4.getNextBoolean();
+			
+			defaultPSFFileField.clear();
+			
+			for ( int i = 0; i < numPSFs; ++i )
+				defaultPSFFileField.add( gd4.getNextString() );
+				
+			conf.psfFiles = new ArrayList<String>();
+			if ( defaultOnePSFForAll )
+			{
+				for ( int i = 0; i < numViews; ++i )
+					conf.psfFiles.add( defaultPSFFileField.get( 0 ) );
+			}
+			else
+			{
+				conf.psfFiles.addAll( defaultPSFFileField );
+			}
+			
 		}
 
 		//displayFusedImageStatic = gd2.getNextBoolean(); 
@@ -850,7 +924,7 @@ public class Multi_View_Deconvolution implements PlugIn
 		
 		conf.isDeconvolution = true;
 		conf.deconvolutionLoadSequentially = loadImagesSequentially;
-		conf.deconvolutionShowAveragePSF = showAveragePSF;
+		conf.deconvolutionDisplayPSF = defaultDisplayPSF;
 		conf.extractPSF = extractPSF;
 		
 		if ( defaultOutputType == 0 )
