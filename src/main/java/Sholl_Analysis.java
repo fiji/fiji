@@ -119,7 +119,7 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
     private static final String QUAD_SOUTH = "Below line";
     private static final String QUAD_EAST  = "Left of line";
     private static final String QUAD_WEST  = "Right of line";
-    private static String quadString;
+    private static String quadString = "None";
     private static int quadChoice;
     private static int minX;
     private static int maxX;
@@ -235,10 +235,10 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
         final int hght = ip.getHeight();
         final double dx, dy, dz, maxEndRadius;
 
-        dx = ((orthoChord && trimBounds && quadString.equalsIgnoreCase(QUAD_NORTH)) || x<=wdth/2)
+        dx = ((orthoChord && trimBounds && quadString.equals(QUAD_WEST)) || x<=wdth/2)
              ? (x-wdth)*vxWH : x*vxWH;
 
-        dy = ((orthoChord && trimBounds && quadString.equalsIgnoreCase(QUAD_SOUTH)) || y<=hght/2)
+        dy = ((orthoChord && trimBounds && quadString.equals(QUAD_SOUTH)) || y<=hght/2)
              ? (y-hght)*vxWH : y*vxWH;
 
         dz = (z<=depth/2) ? (z-depth)*vxD : z*vxD;
@@ -280,13 +280,13 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
         maxZ = Math.min(z+zmaxradius, depth);
 
         if (orthoChord && trimBounds) {
-            if (quadString.equalsIgnoreCase(QUAD_NORTH))
+            if (quadString.equals(QUAD_NORTH))
                 maxY = (int) Math.min(y + xymaxradius, y);
-            else if (quadString.equalsIgnoreCase(QUAD_NORTH))
+            else if (quadString.equals(QUAD_SOUTH))
                 minY = (int) Math.max(y - xymaxradius, y);
-            else if (quadString.equalsIgnoreCase(QUAD_WEST))
+            else if (quadString.equals(QUAD_WEST))
                 minX = x;
-            else if (quadString.equalsIgnoreCase(QUAD_EAST))
+            else if (quadString.equals(QUAD_EAST))
                 maxX = x;
         }
 
@@ -318,8 +318,7 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
         final double[][] valuesSLOG = transformValues(valuesNS, false, true, false);
         final double[][] valuesLOG  = transformValues(valuesSLOG, false, false, true);
         double[] fvaluesN    = null;
-        double[] fvaluesNS   = null;
-        double[] fvaluesSLOG = null;
+        double[] fvaluesNS    = null;
         double[] fvaluesLOG  = null;
 
         // Create plots
@@ -328,7 +327,7 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
                     is3D ? "3D distance ("+ unit +")" : "2D distance ("+ unit +")",
                     "N. of Intersections",
                     valuesN);
-			markPlotPoint(plotN, centroid);
+			markPlotPoint(plotN, centroid, Color.RED);
             if (fitCurve)
                 fvaluesN = getFittedProfile(valuesN, SHOLL_N, statsTable, plotN);
             savePlot(plotN, SHOLL_N);
@@ -348,7 +347,7 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
                     "log(Inters./"+ (is3D ? NORMS3D[normChoice] : NORMS2D[normChoice]) +")",
                     valuesSLOG);
             if (fitCurve)
-                fvaluesSLOG = getFittedProfile(valuesSLOG, SHOLL_SLOG, statsTable, plotSLOG);
+                plotRegression(valuesSLOG, plotSLOG, statsTable);
             savePlot(plotSLOG, SHOLL_SLOG);
         }
         if (shollLOG) {
@@ -377,23 +376,18 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
             rt.addValue("Norm Inters.", valuesNS[i][1]);
             rt.addValue("log(Radius)", valuesLOG[i][0]);
             rt.addValue("log(Norm Inters.)", valuesLOG[i][0]);
-            if (shollN) {
-                if (fvaluesN!=null) {
-                    rt.addValue("Linear Sholl: Polynomial fx (X)", valuesN[i][0]);
-                    rt.addValue("Linear Sholl: Polynomial fx (Y)", fvaluesN[i]);
-                }
+
+            if (fvaluesN!=null) {
+                rt.addValue("Linear Sholl: Polynomial fx (X)", valuesN[i][0]);
+                rt.addValue("Linear Sholl: Polynomial fx (Y)", fvaluesN[i]);
             }
             if (fvaluesNS!=null) {
                 rt.addValue("Linear (norm.): Power fx (X)", valuesNS[i][0]);
                 rt.addValue("Linear (norm.): Power fx (Y)", fvaluesNS[i]);
             }
-            if (fvaluesSLOG!=null) {
-                rt.addValue("Semi-log: Regression (X)", valuesSLOG[i][0]);
-                rt.addValue("Semi-log: Regression (Y)", fvaluesSLOG[i]);
-            }
             if (fvaluesLOG!=null) {
                 rt.addValue("Log-log: Exponential (X)", valuesLOG[i][0]);
-                rt.addValue("Log-log: Exponential (Y)", fvaluesSLOG[i]);
+                rt.addValue("Log-log: Exponential (Y)", fvaluesLOG[i]);
             }
         }
 
@@ -412,7 +406,7 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
 
         // Create intersections mask, but check first if it is worth proceeding
         if (mask) {
-			final ImagePlus maskimg = makeMask(img, imgTitle, (fitCurve ? fvaluesN : counts), xymaxradius, x, y, cal);
+			final ImagePlus maskimg = makeMask(img, imgTitle, (fvaluesN==null ? counts : fvaluesN), xymaxradius, x, y, cal);
 
             if (maskimg == null) {
 				IJ.beep(); exitmsg = "Error: Mask could not be created! ";
@@ -471,8 +465,6 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
 			}
 		} else if (method == SHOLL_NS) {
 			cf.doFit(CurveFitter.POWER, false);
-		} else if (method==SHOLL_SLOG) {
-			cf.doFit(CurveFitter.STRAIGHT_LINE, false);
 		} else if (method == SHOLL_LOG) {
 			cf.doFit(CurveFitter.EXP_WITH_OFFSET, false);
 		}
@@ -501,20 +493,7 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
 			IJ.log("\n*** "+ longtitle +", fitting details:"+ cf.getResultString());
 		}
 
-		if (method==SHOLL_SLOG) {
-
-			final double k = -parameters[1];           // Sholl decay: slope of Semi-log regression
-			final double kIntercept = parameters[0];   // Sholl decay: y-intercept of Semi-log regression
-			final double kRSquared = cf.getRSquared(); // Sholl decay: R^2 of Semi-log regression
-
-			rt.addValue("Sholl regression coefficient", k);
-			rt.addValue("Regression intercept", kIntercept);
-			rt.addValue("Regression R^2", kRSquared);
-			plotLabel.append("\nk= " + IJ.d2s(k, -2));
-			plotLabel.append("\nIntercept= " + IJ.d2s(kIntercept,2));
-			markPlotPoint(plot, new double[]{0, kIntercept});
-
-		} else if (method==SHOLL_N) {
+		if (method==SHOLL_N) {
 
 			double cv  = 0;	// Polyn. regression: ordinate of maximum
 			double cr  = 0; // Polyn. regression: abscissa of maximum
@@ -552,7 +531,7 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
 			plot.drawLine(xRange[0], mv, xRange[1], mv);
 
 			// Calculate the "fitted" ramification index
-			rif = (inferPrimary || primaryBranches==0) ? cv / y[0] : cv / primaryBranches;
+			rif = (inferPrimary || primaryBranches==0) ? cv/y[0] : cv/primaryBranches;
 
 			// Register parameters
 			plotLabel.append("\nCv= "+ IJ.d2s(cv, 2));
@@ -569,7 +548,7 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
 
 		}
 
-		makePlotLabel(plot, plotLabel.toString());
+		makePlotLabel(plot, plotLabel.toString(), Color.BLACK);
 		rt.show(SHOLLTABLE);
 		return fy;
 
@@ -714,12 +693,12 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
 
         if (gd.wasCanceled())
             return false;
-        else if (!dialogItemChanged(gd, null)) { // Read dialog result
+        else if (dialogItemChanged(gd, null)) { // Read dialog result
+            return true;
+        } else {
             sError("No method(s) chosen.\nAt least one analysis method must be chosen.");
             return false;
-        } else
-            return true;
-
+        }
     }
 
     /** Retrieves values from the dialog, disabling dialog components that are not applicable.
@@ -747,12 +726,12 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
         if (orthoChord) {
             trimBounds = gd.getNextBoolean();
             quadChoice = gd.getNextChoiceIndex();
-            final String quadString = quads[quadChoice];
-            final Checkbox ietrimBounds = (Checkbox)checkboxes.elementAt(checkboxCounter++);
+            quadString = quads[quadChoice];
+            checkboxCounter++;
+            //final Checkbox ietrimBounds = (Checkbox)checkboxes.elementAt(checkboxCounter++);
             final Choice iequadChoice = (Choice)choices.elementAt(choiceCounter++);
             iequadChoice.setEnabled(trimBounds);
-        } else
-            quadString ="None";
+        }
 
         // Part II: Multiple samples (2D) and noise filtering (3D)
         if (is3D) {
@@ -800,8 +779,9 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
 
         // Part V: Mask and outputs
         mask = gd.getNextBoolean();
+        checkboxCounter++;
+        //final Checkbox iemask = (Checkbox)checkboxes.elementAt(checkboxCounter++);
         maskBackground = Math.min(Math.max((int)gd.getNextNumber(), 0), 255);
-        final Checkbox iemask = (Checkbox)checkboxes.elementAt(checkboxCounter++);
         final TextField iemaskBackground = (TextField)numericfields.elementAt(fieldCounter++);
         iemaskBackground.setEnabled(mask);
 
@@ -814,7 +794,7 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
 		}
 
         // Disable the OK button if no method is chosen
-        return (!shollN && !shollNS && !shollSLOG && !shollLOG) ? false : true;
+        return (shollN || shollNS || shollSLOG || shollLOG) ? true : false;
 
     }
 
@@ -1026,9 +1006,9 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
     }
 
     /**
-     * Counts how many groups of value v are present in the given data. A group
-     * consists of a formation of adjacent pixels, where adjacency is true for
-     * all eight neighboring positions around a given pixel.
+     * Counts how many groups of non-zero pixels are present in the given data. A
+     * group consists of a formation of adjacent pixels, where adjacency is true
+     * for all eight neighboring positions around a given pixel.
      */
     static public int countTargetGroups(final int[] pixels, final int[][] rawpoints,
             final ImageProcessor ip) {
@@ -1188,13 +1168,13 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
      * Returns the location of pixels clockwise along a (1-pixel wide) circumference
      * using Bresenham's Circle Algorithm
      */
-    static public int[][] getCircumferencePoints(final int cx, final int cy, int r) {
+    static public int[][] getCircumferencePoints(final int cx, final int cy, int radius) {
 
         // Initialize algorithm variables
-        int i = 0, x = 0, y = r, err = 0, errR, errD;
+        int i = 0, x = 0, y = radius, r = radius+1, err = 0, errR, errD;
 
         // Array to store first 1/8 of points relative to center
-        final int[][] data = new int[++r][2];
+        final int[][] data = new int[r][2];
 
         do {
             // Add this point as part of the circumference
@@ -1216,7 +1196,7 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
         } while (x <= y);
 
         // Create an array to hold the absolute coordinates
-        final int[][] points = new int[r * 8][2];
+        final int[][] points = new int[r*8][2];
 
         // Loop through the relative circumference points
         for (i = 0; i < r; i++) {
@@ -1336,7 +1316,7 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
 
         // Apply calibration, set mask label and mark center of analysis
         img2.setCalibration(cal);
-        img2.setProperty("Label", fitCurve ? "Fitted data" : "Raw data");
+        img2.setProperty("Label", (fitCurve && shollN) ? "Fitted data" : "Raw data");
         img2.setRoi(new PointRoi(xc, yc));
 
         if (validPath && save) {
@@ -1408,7 +1388,7 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
      * Returns an IndexColorModel similar to MATLAB's jet color map. An 8-bit gray color
      * level specified by grayvalue is mapped to index idx.
      */
-    public static IndexColorModel matlabJetColorMap(final int backgroundGrayValue) {
+    public static IndexColorModel matlabJetColorMap(final int backgroundGray) {
 
         // Initialize colors arrays (zero-filled by default)
         final byte[] reds   = new byte[256];
@@ -1432,7 +1412,7 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
             reds[i] = greens[(i+256*6/8) % 256];
 
         // Set background color
-        reds[0] = greens[0] = blues[0] = (byte)backgroundGrayValue;
+        reds[0] = greens[0] = blues[0] = (byte)backgroundGray;
 
         return new IndexColorModel(8, 256, reds, greens, blues);
 
@@ -1443,7 +1423,7 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
      * described in http://en.wikipedia.org/wiki/Centroid#Centroid_of_polygon
      * It is assumed that arrays of x,y points have the same size
      */
-    private static double[] baryCenter(final double[] xpoints, final double[] ypoints) {
+    public static double[] baryCenter(final double[] xpoints, final double[] ypoints) {
 
         double area = 0, sumx = 0, sumy = 0;
         for (int i=1; i<xpoints.length; i++) {
@@ -1620,11 +1600,92 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
 
     }
 
-	/** Highlights a point on the plot, without listing it on the plot table  */
-    private static void markPlotPoint(final Plot plot, final double[] coordinates) {
+	/** Calls plotRegression for both regressions */
+    private static void plotRegression(final double[][]values, final Plot plot,
+			final ResultsTable rt) {
+
+		final int size = values.length;
+		final double[] x = new double[size];
+		final double[] y = new double[size];
+		for (int i=0; i <size; i++) {
+			x[i] = values[i][0];
+			y[i] = values[i][1];
+		}
+		plotRegression(x, y, false, plot, rt);
+		plotRegression(x, y, true, plot, rt);
+
+	}
+
+
+    /** Performs linear regression using the full range data or percentiles 10-90 */
+    private static void plotRegression(final double[] x, final double[] y, final boolean trim,
+			final Plot plot, final ResultsTable rt) {
+
+		final int size = x.length;
+		int start = 0;
+		int end = size-1;
+
+		Color color = Color.BLUE;
+		final StringBuffer label = new StringBuffer();
+		String labelSufix = "";
+
+		final CurveFitter cf;
+		if (trim) {
+
+			color = Color.RED;
+			labelSufix = " [P10-P90]"; //"[P\u2081\u2080 - P\u2089\u2080]";
+			start = (int)(size*0.10);
+			end   = (int)(end-start);
+
+			// Do not proced if there are not enought points
+			if (end <= 6)
+				return;
+
+			final double[] xtrimmed = Arrays.copyOfRange(x, start, end);
+			final double[] ytrimmed = Arrays.copyOfRange(y, start, end);
+
+			cf = new CurveFitter(xtrimmed, ytrimmed);
+
+		} else {
+			cf = new CurveFitter(x, y);
+		}
+
+		cf.doFit(CurveFitter.STRAIGHT_LINE, false);
+		final double[] cfparam = cf.getParams();
+		//IJ.log("Curve fitter status: " + cf.getStatusString());
+
+		final double x1 = x[start];
+		final double x2 = x[end];
+		final double y1 = cf.f(cfparam, x1);
+		final double y2 = cf.f(cfparam, x2);
+
+		plot.setLineWidth(2);
+		plot.setColor(color);
+		plot.drawLine(x1, y1, x2, y2);
+
+		final double k = -cfparam[1];	// slope
+		final double kIntercept = cfparam[0];	// y-intercept
+		final double kRSquared = cf.getRSquared();	// R^2
+
+		rt.addValue("Sholl regression coefficient"+ labelSufix, k);
+		rt.addValue("Regression intercept"+ labelSufix, kIntercept);
+		rt.addValue("Regression R^2"+ labelSufix, kRSquared);
+
+		label.append("R\u00B2= "+ IJ.d2s(kRSquared, 3));
+		label.append("\nk= "+ IJ.d2s(k, -2));
+		label.append("\nIntercept= "+ IJ.d2s(kIntercept,2));
+
+		markPlotPoint(plot, new double[]{0, kIntercept}, color);
+		makePlotLabel(plot, label.toString(), color);
+
+	}
+
+	/** Highlights a point on a plot without listing it on the plot table  */
+    public static void markPlotPoint(final Plot plot, final double[] coordinates,
+			final Color color) {
 
 		plot.setLineWidth(6); // default markSize: 5;
-		plot.setColor(Color.MAGENTA);
+		plot.setColor(color);
 		plot.drawLine(coordinates[0], coordinates[1], coordinates[0], coordinates[1]);
 
 		// restore defaults
@@ -1633,8 +1694,8 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
 
     }
 
-    /** Draws a label at the less "crowded" upper corner of the plot canvas */
-    private static void makePlotLabel(final Plot plot, final String label) {
+    /** Draws a label at the less "crowded" corner of a plot canvas */
+    public static void makePlotLabel(final Plot plot, final String label, final Color color) {
 
         final int margin = 7; // Axes internal margin, 1+Plot.TICK_LENGTH
         final ImageProcessor ip = plot.getProcessor();
@@ -1651,23 +1712,46 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
         final int textWidth = metrics.stringWidth(maxLine+" ");
         final int lineHeight = metrics.getHeight();
         final int textHeight = lineHeight * lines.length;
+
         final int yTop = Plot.TOP_MARGIN + margin + lineHeight;
-        final int xRight = Plot.LEFT_MARGIN + PlotWindow.plotWidth - margin - textWidth;
+		final int yBottom = Plot.TOP_MARGIN + PlotWindow.plotHeight - textHeight;
         final int xLeft  = Plot.LEFT_MARGIN + margin;
+        final int xRight = Plot.LEFT_MARGIN + PlotWindow.plotWidth - margin - textWidth;
 
-        ip.setRoi(xLeft, yTop, textWidth, textHeight);
-        final double meanLeft = ImageStatistics.getStatistics(ip, Measurements.MEAN, null).mean;
-        ip.setRoi(xRight, yTop, textWidth, textHeight);
-        final double meanRight = ImageStatistics.getStatistics(ip, Measurements.MEAN, null).mean;
+        final double northEast = meanRoiValue(ip, xLeft, yTop, textWidth, textHeight);
+        final double northWest = meanRoiValue(ip, xRight, yTop, textWidth, textHeight);
+        final double southEast = meanRoiValue(ip, xLeft, yBottom, textWidth, textHeight);
+        final double southWest = meanRoiValue(ip, xRight, yBottom, textWidth, textHeight);
+        final double pos = Math.max(Math.max(northEast, northWest), Math.max(southEast,southWest));
 
-        ip.drawString(label, meanLeft>meanRight ? xLeft : xRight, yTop);
+		ip.setColor(color);
+		if (pos==northEast) {
+		    ip.drawString(label, xLeft, yTop);
+		} else if (pos==northWest) {
+		    ip.drawString(label, xRight, yTop);
+		} else if (pos==southEast) {
+		    ip.drawString(label, xLeft, yBottom);
+		} else {
+		    ip.drawString(label, xRight, yBottom);
+		}
 
     }
+
+
+    /** Returns the mean value of a rectangular ROI */
+    private static double meanRoiValue(final ImageProcessor ip, final int x, final int y,
+			final int width, final int height) {
+
+		ip.setRoi(x, y, width, height);
+		return ImageStatistics.getStatistics(ip, Measurements.MEAN, null).mean;
+
+	}
+
 
     /** Saves plot according to imgPath */
     private static void savePlot(final Plot plot, final int shollChoice) {
 
-		if (!validPath || (validPath && !hideSaved))
+    	if (!validPath || (validPath && !hideSaved))
             plot.show();
         if (validPath && save) {
             final String path = imgPath + File.separator + imgTitle +"_ShollPlot-"+ SHOLL_TYPES[shollChoice];

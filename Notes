@@ -12,12 +12,19 @@ WISH LIST
 RELEASE NOTES
 =============
 Version 3.1 (June 2013) [latest]
-    - New descriptors: Median and Barycenter of linear Sholl (sampled profile)
+    - Made main dialog more intuitive. This may brake previous macros created with the
+      Macro Recorder
     - Multiple profiles can be obtained at once
-    - Added a "batch mode" option that saves profiles withou displaying them
-    - Sholl decay is only calculated when "Semi-log" is chosen (v2.2 behavior)
-    - Barycenter and other descriptor are highlighted on plot
+    - New descriptors: Median and Barycenter of linear Sholl (sampled profile)
+    - Added a "batch mode" option that saves profiles without displaying them
+    - Sholl decay is calculated using the full rage of data or values within percentiles
+      10 and 90, which usually provides a better fit. However, Sholl decay is only
+      calculated when "Semi-log" is chosen (v2.2 behavior)
+    - Barycenter and other descriptors are highlighted on plot
     - Updated the URL of help page to http://fiji.sc/Sholl_Analysis/
+    - Eliminated prompt for the "Sholl LUT" command. Awkward behavior for an ImageJ LUT
+    - Sholl mask is reports only sampled values (Linear Sholl). Fitted, "Semi-log" and
+      "Linear (norm.)" masks are no longer created. This could be reinstated if needed.
 
 Version 3.0
     - 3D Sholl:
