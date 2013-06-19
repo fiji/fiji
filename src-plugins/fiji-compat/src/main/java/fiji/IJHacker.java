@@ -4,11 +4,12 @@ package fiji;
  * Modify some IJ1 quirks at runtime, thanks to Javassist
  */
 
+import imagej.legacy.LegacyExtensions;
+
 import java.io.File;
 
 import javassist.CannotCompileException;
 import javassist.CtClass;
-import javassist.CtConstructor;
 import javassist.CtField;
 import javassist.CtMethod;
 import javassist.CtNewConstructor;
@@ -19,7 +20,6 @@ import javassist.bytecode.BadBytecode;
 import javassist.bytecode.CodeIterator;
 import javassist.bytecode.MethodInfo;
 import javassist.bytecode.Opcode;
-import javassist.expr.ConstructorCall;
 import javassist.expr.ExprEditor;
 import javassist.expr.FieldAccess;
 import javassist.expr.Handler;
@@ -27,10 +27,6 @@ import javassist.expr.MethodCall;
 import javassist.expr.NewExpr;
 
 public class IJHacker extends JavassistHelper {
-	public final static String appPrefix = "(Fiji Is Just) ";
-	public final static String appName = appPrefix + "ImageJ";
-
-	protected String replaceAppName = ".replace(\"ImageJ\", \"" + appName + "\")";
 
 	@Override
 	public void instrumentClasses() throws BadBytecode, CannotCompileException, NotFoundException {
@@ -84,11 +80,6 @@ public class IJHacker extends JavassistHelper {
 			}
 		});
 
-		// tell the error() method to use "(Fiji Is Just) ImageJ" as window title
-		method = clazz.getMethod("error",
-			"(Ljava/lang/String;Ljava/lang/String;)V");
-		method.insertBefore("if ($1 == null || $1.equals(\"ImageJ\")) $1 = \"" + appName + "\";");
-
 		// Class ij.gui.GenericDialog
 		clazz = get("ij.gui.GenericDialog");
 
@@ -112,25 +103,9 @@ public class IJHacker extends JavassistHelper {
 		// Class ij.ImageJ
 		clazz = get("ij.ImageJ");
 
-		// tell the java.awt.Frame that the window title is "(Fiji Is Just) ImageJ"
-		for (CtConstructor ctor : clazz.getConstructors())
-			ctor.instrument(new ExprEditor() {
-				@Override
-				public void edit(ConstructorCall call) throws CannotCompileException {
-					if (call.getMethodName().equals("super"))
-						call.replace("super(\"" + appName + "\");");
-				}
-			});
-		// tell the version() method to prefix the version with "(Fiji Is Just)"
-		method = clazz.getMethod("version", "()Ljava/lang/String;");
-		method.insertAfter("$_ = \"" + appPrefix + "\" + $_;");
 		// tell the showStatus() method to show the version() instead of empty status
 		method = clazz.getMethod("showStatus", "(Ljava/lang/String;)V");
 		method.insertBefore("if ($1 == null || \"\".equals($1)) $1 = version();");
-		// tell the run() method to use "(Fiji Is Just) ImageJ" in the Quit dialog
-		method = clazz.getMethod("run", "()V");
-		replaceAppNameInNew(method, "ij.gui.GenericDialog", 1, 2);
-		replaceAppNameInCall(method, "addMessage", 1, 1);
 		// use our icon
 		method = clazz.getMethod("setIcon", "()V");
 		method.instrument(new ExprEditor() {
@@ -171,11 +146,6 @@ public class IJHacker extends JavassistHelper {
 		// Class ij.Prefs
 		clazz = get("ij.Prefs");
 
-		// use Fiji instead of ImageJ
-		clazz.getField("vistaHint").setName("originalVistaHint");
-		field = new CtField(pool.get("java.lang.String"), "vistaHint", clazz);
-		field.setModifiers(Modifier.STATIC | Modifier.PUBLIC | Modifier.FINAL);
-		clazz.addField(field, "originalVistaHint" + replaceAppName + ";");
 		// do not use the current directory as IJ home on Windows
 		String prefsDir = System.getenv("IJ_PREFS_DIR");
 		if (prefsDir == null && System.getProperty("os.name").startsWith("Windows"))
@@ -192,33 +162,9 @@ public class IJHacker extends JavassistHelper {
 			});
 		}
 
-		// Class ij.gui.YesNoCancelDialog
-		clazz = get("ij.gui.YesNoCancelDialog");
-
-		// use "(Fiji Is Just) ImageJ" as window title in the Yes/No dialog
-		for (CtConstructor ctor : clazz.getConstructors())
-			ctor.instrument(new ExprEditor() {
-				@Override
-				public void edit(ConstructorCall call) throws CannotCompileException {
-					if (call.getMethodName().equals("super") &&
-							call.getSignature().startsWith("(Ljava/lang/String;)"))
-						call.replace("super($1, \"ImageJ\".equals($2) ? \"" + appName + "\" : $2, $3);");
-				}
-			});
-
 		// Class ij.gui.Toolbar
 		clazz = get("ij.gui.Toolbar");
 
-		// use "(Fiji Is Just) ImageJ" in the status line
-		method = clazz.getMethod("showMessage", "(I)V");
-		method.instrument(new ExprEditor() {
-			@Override
-			public void edit(MethodCall call) throws CannotCompileException {
-				if (call.getMethodName().equals("showStatus"))
-					call.replace("if ($1.startsWith(\"ImageJ \")) $1 = \"" + appPrefix + "/\" + $1;"
-						+ "ij.IJ.showStatus($1);");
-			}
-		});
 		// tool names can be prefixes of other tools, watch out for that!
 		method = clazz.getMethod("getToolId", "(Ljava/lang/String;)I");
 		method.instrument(new ExprEditor() {
@@ -228,32 +174,6 @@ public class IJHacker extends JavassistHelper {
 					call.replace("$_ = $0.equals($1) || $0.startsWith($1 + \"-\") || $0.startsWith($1 + \" -\");");
 			}
 		});
-
-		// Class ij.plugin.CommandFinder
-		clazz = get("ij.plugin.CommandFinder");
-
-		// Replace application name in the window title
-		if (hasMethod(clazz, "export", "()V")) {
-			method = clazz.getMethod("export", "()V");
-			replaceAppNameInNew(method, "ij.text.TextWindow", 1, 5);
-		}
-
-		// Class ij.plugin.Hotkeys
-		clazz = get("ij.plugin.Hotkeys");
-
-		// Replace application name in removeHotkey()
-		method = clazz.getMethod("removeHotkey", "()V");
-		replaceAppNameInCall(method, "addMessage", 1, 1);
-		replaceAppNameInCall(method, "showStatus", 1, 1);
-
-		// Class ij.plugin.Options
-		clazz = get("ij.plugin.Options");
-
-		// Replace application name in restart message
-		try {
-			method = clazz.getMethod("appearance", "()V");
-			replaceAppNameInCall(method, "showMessage", 2, 2);
-		} catch (NotFoundException e) { /* do not patch, then */ }
 
 		// Class JavaScriptEvaluator
 		clazz = get("JavaScriptEvaluator");
@@ -554,48 +474,8 @@ public class IJHacker extends JavassistHelper {
 				}
 			});
 		}
-	}
 
-	/**
-	 * Replace the application name in the given method in the given parameter to the given constructor call
-	 */
-	public void replaceAppNameInNew(final CtMethod method, final String name, final int parameter, final int parameterCount) throws CannotCompileException {
-		final String replace = getReplacement(parameter, parameterCount);
-		method.instrument(new ExprEditor() {
-			@Override
-			public void edit(NewExpr expr) throws CannotCompileException {
-				if (expr.getClassName().equals(name))
-					expr.replace("$_ = new " + name + replace + ";");
-			}
-		});
-	}
-
-	/**
-	 * Replace the application name in the given method in the given parameter to the given method call
-	 */
-	public void replaceAppNameInCall(final CtMethod method, final String name, final int parameter, final int parameterCount) throws CannotCompileException {
-		final String replace = getReplacement(parameter, parameterCount);
-		method.instrument(new ExprEditor() {
-			@Override
-			public void edit(MethodCall call) throws CannotCompileException {
-				if (call.getMethodName().equals(name))
-					call.replace("$0." + name + replace + ";");
-			}
-		});
-	}
-
-	private String getReplacement(int parameter, int parameterCount) {
-		final StringBuilder builder = new StringBuilder();
-		builder.append("(");
-		for (int i = 1; i <= parameterCount; i++) {
-			if (i > 1)
-				builder.append(", ");
-			builder.append("$").append(i);
-			if (i == parameter)
-				builder.append(replaceAppName);
-		}
-		builder.append(")");
-		return builder.toString();
+		LegacyExtensions.setAppName("(Fiji Is Just) ImageJ");
 	}
 
 	private void dontReturnWhenEditorIsNull(MethodInfo info) throws CannotCompileException {
