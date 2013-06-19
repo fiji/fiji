@@ -30,22 +30,22 @@
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>fake</artifactId>
-			<version>${imagej.version}</version>
+			<version>${fiji.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>fiji-compat</artifactId>
-			<version>${imagej.version}</version>
+			<version>${fiji.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>fiji-lib</artifactId>
-			<version>${imagej.version}</version>
+			<version>${fiji.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>fiji-scripting</artifactId>
-			<version>${imagej.version}</version>
+			<version>${fiji.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>net.imagej</groupId>
@@ -55,12 +55,12 @@
 		<dependency>
 			<groupId>net.imglib2</groupId>
 			<artifactId>imglib2-ij</artifactId>
-			<version>${imagej.version}</version>
+			<version>${imglib2.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>net.imglib2</groupId>
 			<artifactId>imglib2</artifactId>
-			<version>${imagej.version}</version>
+			<version>${imglib2.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.jfree</groupId>
@@ -75,37 +75,37 @@
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>BeanShell_Interpreter</artifactId>
-			<version>${imagej.version}</version>
+			<version>${fiji.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>CLI_</artifactId>
-			<version>${imagej.version}</version>
+			<version>${fiji.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>Clojure_Interpreter</artifactId>
-			<version>${imagej.version}</version>
+			<version>${fiji.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>JRuby_Interpreter</artifactId>
-			<version>${imagej.version}</version>
+			<version>${fiji.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>Javascript_</artifactId>
-			<version>${imagej.version}</version>
+			<version>${fiji.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>Jython_Interpreter</artifactId>
-			<version>${imagej.version}</version>
+			<version>${fiji.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>Refresh_Javas</artifactId>
-			<version>${imagej.version}</version>
+			<version>${fiji.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>net.imagej</groupId>

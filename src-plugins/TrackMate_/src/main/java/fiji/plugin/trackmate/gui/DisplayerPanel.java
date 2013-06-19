@@ -6,11 +6,19 @@ import static fiji.plugin.trackmate.gui.TrackMateWizard.SMALL_FONT;
 import static fiji.plugin.trackmate.visualization.TrackMateModelView.KEY_DISPLAY_SPOT_NAMES;
 import static fiji.plugin.trackmate.visualization.TrackMateModelView.KEY_SPOTS_VISIBLE;
 import static fiji.plugin.trackmate.visualization.TrackMateModelView.KEY_SPOT_COLOR_FEATURE;
-import static fiji.plugin.trackmate.visualization.TrackMateModelView.*;
+import static fiji.plugin.trackmate.visualization.TrackMateModelView.KEY_SPOT_RADIUS_RATIO;
 import static fiji.plugin.trackmate.visualization.TrackMateModelView.KEY_TRACKS_VISIBLE;
+import static fiji.plugin.trackmate.visualization.TrackMateModelView.KEY_TRACK_COLORING;
 import static fiji.plugin.trackmate.visualization.TrackMateModelView.KEY_TRACK_DISPLAY_DEPTH;
 import static fiji.plugin.trackmate.visualization.TrackMateModelView.KEY_TRACK_DISPLAY_MODE;
 import static fiji.plugin.trackmate.visualization.trackscheme.TrackScheme.TRACK_SCHEME_ICON;
+import fiji.plugin.trackmate.TrackMateModel;
+import fiji.plugin.trackmate.TrackMate_;
+import fiji.plugin.trackmate.action.ExportStatsToIJAction;
+import fiji.plugin.trackmate.visualization.AbstractTrackMateModelView;
+import fiji.plugin.trackmate.visualization.TrackMateModelView;
+import fiji.plugin.trackmate.visualization.trackscheme.TrackScheme;
+import fiji.util.NumberParser;
 
 import java.awt.Component;
 import java.awt.Dimension;
@@ -37,13 +45,6 @@ import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 import javax.swing.border.LineBorder;
-
-import fiji.plugin.trackmate.TrackMateModel;
-import fiji.plugin.trackmate.TrackMate_;
-import fiji.plugin.trackmate.action.ExportStatsToIJAction;
-import fiji.plugin.trackmate.visualization.AbstractTrackMateModelView;
-import fiji.plugin.trackmate.visualization.TrackMateModelView;
-import fiji.plugin.trackmate.visualization.trackscheme.TrackScheme;
 
 /**
  * A configuration panel used to tune the aspect of spots and tracks in multiple {@link AbstractTrackMateModelView}.
@@ -237,7 +238,7 @@ public class DisplayerPanel extends ActionListenablePanel implements WizardPanel
 		displaySettings.put(KEY_TRACK_COLORING, trackColorGUI.getColorGenerator());
 		int depth;
 		if (jCheckBoxLimitDepth.isSelected())
-			depth = Integer.parseInt(jTextFieldFrameDepth.getText());
+			depth = NumberParser.parseInteger(jTextFieldFrameDepth.getText());
 		else
 			depth = Integer.MAX_VALUE;
 		displaySettings.put(KEY_TRACK_DISPLAY_DEPTH, depth);
@@ -334,7 +335,7 @@ public class DisplayerPanel extends ActionListenablePanel implements WizardPanel
 						public void actionPerformed(ActionEvent e) {
 							int depth;
 							if (jCheckBoxLimitDepth.isSelected())
-								depth = Integer.parseInt(jTextFieldFrameDepth.getText());
+								depth = NumberParser.parseInteger(jTextFieldFrameDepth.getText());
 							else
 								depth = (int) 1e9;
 							for(TrackMateModelView view : views) {
@@ -360,7 +361,7 @@ public class DisplayerPanel extends ActionListenablePanel implements WizardPanel
 					jTextFieldFrameDepth.addActionListener(new ActionListener() {
 						@Override
 						public void actionPerformed(ActionEvent e) {
-							int depth = Integer.parseInt(jTextFieldFrameDepth.getText());
+							int depth = NumberParser.parseInteger(jTextFieldFrameDepth.getText());
 							for(TrackMateModelView view : views) {
 								view.setDisplaySettings(KEY_TRACK_DISPLAY_DEPTH, depth);
 								view.refresh();

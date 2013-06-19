@@ -21,7 +21,7 @@
 	url = https://github.com/axtimwalde/mpicbg
 [submodule "TrakEM2"]
 	path = modules/TrakEM2
-	url = ssh://mob@repo.or.cz/srv/git/trakem2.git
+	url = https://github.com/fiji/TrakEM2
 [submodule "ij-plugins"]
 	path = modules/ij-plugins
 	url = http://fiji.sc/ij-plugins/.git

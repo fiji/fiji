@@ -5,6 +5,7 @@ import static fiji.plugin.trackmate.gui.TrackMateWizard.SMALL_FONT;
 import static fiji.plugin.trackmate.gui.TrackMateWizard.TEXTFIELD_DIMENSION;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.TrackMate_;
+import fiji.util.NumberParser;
 import ij.ImagePlus;
 import ij.WindowManager;
 import ij.gui.Roi;
@@ -154,19 +155,19 @@ public class StartDialogPanel extends ActionListenablePanel implements WizardPan
 	public Settings getSettings() {
 		settings.imp = imp;
 		// Crop cube
-		settings.tstart = Math.round(Float.parseFloat(jTextFieldTStart.getText()));
-		settings.tend 	= Math.round(Float.parseFloat(jTextFieldTEnd.getText()));
-		settings.xstart = Math.round(Float.parseFloat(jTextFieldXStart.getText()));
-		settings.xend 	= Math.round(Float.parseFloat(jTextFieldXEnd.getText()));
-		settings.ystart = Math.round(Float.parseFloat(jTextFieldYStart.getText()));
-		settings.yend 	= Math.round(Float.parseFloat(jTextFieldYEnd.getText()));
-		settings.zstart = Math.round(Float.parseFloat(jTextFieldZStart.getText()));
-		settings.zend 	= Math.round(Float.parseFloat(jTextFieldZEnd.getText()));
+		settings.tstart = NumberParser.parseInteger(jTextFieldTStart.getText());
+		settings.tend 	= NumberParser.parseInteger(jTextFieldTEnd.getText());
+		settings.xstart = NumberParser.parseInteger(jTextFieldXStart.getText());
+		settings.xend 	= NumberParser.parseInteger(jTextFieldXEnd.getText());
+		settings.ystart = NumberParser.parseInteger(jTextFieldYStart.getText());
+		settings.yend 	= NumberParser.parseInteger(jTextFieldYEnd.getText());
+		settings.zstart = NumberParser.parseInteger(jTextFieldZStart.getText());
+		settings.zend 	= NumberParser.parseInteger(jTextFieldZEnd.getText());
 		// Image info
-		settings.dx 	= Float.parseFloat(jTextFieldPixelWidth.getText());
-		settings.dy 	= Float.parseFloat(jTextFieldPixelHeight.getText());
-		settings.dz 	= Float.parseFloat(jTextFieldVoxelDepth.getText());
-		settings.dt 	= Float.parseFloat(jTextFieldTimeInterval.getText());
+		settings.dx 	= NumberParser.parseDouble(jTextFieldPixelWidth.getText());
+		settings.dy 	= NumberParser.parseDouble(jTextFieldPixelHeight.getText());
+		settings.dz 	= NumberParser.parseDouble(jTextFieldVoxelDepth.getText());
+		settings.dt 	= NumberParser.parseDouble(jTextFieldTimeInterval.getText());
 		settings.spaceUnits = jLabelUnits1.getText();
 		settings.timeUnits  = jLabelUnits4.getText();
 		settings.width 		= imp.getWidth();

@@ -232,6 +232,7 @@ hs_err*.log
 /jars/clibwrapper_jiio-[0-9]*.jar
 /jars/clojure-[0-9]*.jar
 /jars/commons-math-[0-9]*.jar
+/jars/hamcrest-core-[0-9]*.jar
 /jars/itext-[0-9]*.jar
 /jars/itextpdf-[0-9]*.jar
 /jars/j3d-core-[0-9]*.jar
@@ -240,6 +241,7 @@ hs_err*.log
 /jars/jama-[0-9]*.jar
 /jars/java-cup-[0-9]*.jar
 /jars/javassist-[0-9]*.jar
+/jars/jcommander-[0-9]*.jar
 /jars/jcommon-[0-9]*.jar
 /jars/jdom-[0-9]*.jar
 /jars/jdom-contrib-[0-9]*.jar
@@ -257,6 +259,8 @@ hs_err*.log
 /jars/mines-jtk-[0-9]*.jar
 /jars/pentaho-package-manager-[0-9]*.jar
 /jars/postgresql-[0-9]*.jar
+/jars/snakeyaml-[0-9]*.jar
+/jars/testng-[0-9]*.jar
 /jars/tools-[0-9]*.jar
 /jars/vecmath-[0-9]*.jar
 /jars/weka-dev-[0-9]*.jar
@@ -312,19 +316,23 @@ hs_err*.log
 /jars/scijava-common-[0-9]*.jar
 
 # ImgLib #
-/jars/legacy-imglib1-[0-9]*.jar
+/jars/imglib-[0-9]*.jar
 /jars/imglib-algorithms-[0-9]*.jar
 /jars/imglib-ij-[0-9]*.jar
 /jars/imglib-io-[0-9]*.jar
 /jars/imglib-scripting-[0-9]*.jar
-/jars/imglib-[0-9]*.jar
+/jars/imglib2-[0-9]*.jar
+/jars/imglib2-algorithms-[0-9]*.jar
 /jars/imglib2-algorithms-gpl-[0-9]*.jar
 /jars/imglib2-algorithms-legacy-[0-9]*.jar
-/jars/imglib2-algorithms-[0-9]*.jar
+/jars/imglib2-examples-[0-9]*.jar
 /jars/imglib2-ij-[0-9]*.jar
 /jars/imglib2-io-[0-9]*.jar
 /jars/imglib2-ops-[0-9]*.jar
-/jars/imglib2-[0-9]*.jar
+/jars/imglib2-realtransform-[0-9]*.jar
+/jars/imglib2-scripting-[0-9]*.jar
+/jars/imglib2-ui-[0-9]*.jar
+/jars/legacy-imglib1-[0-9]*.jar
 
 # Bio-Formats #
 /jars/bio-formats-[0-9]*.jar
@@ -353,6 +361,7 @@ hs_err*.log
 /jars/serializer-[0-9]*.jar
 /jars/slf4j-api-[0-9]*.jar
 /jars/slf4j-log4j12-[0-9]*.jar
+/jars/specification-[0-9]*.jar
 /jars/turbojpeg-[0-9]*.jar
 /jars/xalan-[0-9]*.jar
 /jars/xml-apis-[0-9]*.jar

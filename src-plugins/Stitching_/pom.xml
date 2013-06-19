@@ -25,7 +25,7 @@
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>fiji-lib</artifactId>
-			<version>${imagej.version}</version>
+			<version>${fiji.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>net.imagej</groupId>
@@ -35,7 +35,7 @@
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>legacy-imglib1</artifactId>
-			<version>${imagej.version}</version>
+			<version>${fiji.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>mpicbg</groupId>
@@ -45,27 +45,27 @@
 		<dependency>
 			<groupId>sc.fiji</groupId>
 			<artifactId>Fiji_Plugins</artifactId>
-			<version>${imagej.version}</version>
+			<version>${fiji.version}</version>
 		</dependency>
 		<dependency>
-			<groupId>loci</groupId>
-			<artifactId>loci-legacy</artifactId>
-			<version>${scifio.version}</version>
+			<groupId>${bio-formats.groupId}</groupId>
+			<artifactId>loci-common</artifactId>
+			<version>${bio-formats.version}</version>
 		</dependency>
 		<dependency>
-			<groupId>loci</groupId>
+			<groupId>${bio-formats.groupId}</groupId>
 			<artifactId>loci_plugins</artifactId>
-			<version>${scifio.version}</version>
+			<version>${bio-formats.version}</version>
 		</dependency>
 		<dependency>
-			<groupId>loci</groupId>
+			<groupId>${bio-formats.groupId}</groupId>
 			<artifactId>ome-xml</artifactId>
-			<version>${scifio.version}</version>
+			<version>${bio-formats.version}</version>
 		</dependency>
 		<dependency>
-			<groupId>loci</groupId>
+			<groupId>${bio-formats.groupId}</groupId>
 			<artifactId>scifio</artifactId>
-			<version>${scifio.version}</version>
+			<version>${bio-formats.version}</version>
 		</dependency>
 	</dependencies>
 

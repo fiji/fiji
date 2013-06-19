@@ -20,7 +20,7 @@ esac
 
 groupId=net/imagej
 artifactId=ij-launcher
-baseurl=http://maven.imagej.net/service/local/repositories/$mode/content/$groupId/$artifactId
+baseurl=http://maven.imagej.net/content/repositories/$mode/$groupId/$artifactId
 
 get () {
 	echo "$metadata" |
