@@ -16,9 +16,6 @@ public class IJ1Patcher implements Runnable {
 		if (alreadyPatched || "false".equals(System.getProperty("patch.ij1"))) return;
 		alreadyPatched = true;
 		try {
-			String headless = System.getProperty("java.awt.headless");
-			if ("true".equalsIgnoreCase(headless))
-				new Headless().run();
 			new IJHacker().run();
 			try {
 				// make sure that ImageJ2's LegacyInjector runs
