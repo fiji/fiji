@@ -23,8 +23,8 @@ Version 3.1 (June 2013) [latest]
     - Barycenter and other descriptors are highlighted on plot
     - Updated the URL of help page to http://fiji.sc/Sholl_Analysis/
     - Eliminated prompt for the "Sholl LUT" command. Awkward behavior for an ImageJ LUT
-    - Sholl mask is reports only sampled values (Linear Sholl). Fitted, "Semi-log" and
-      "Linear (norm.)" masks are no longer created. This could be reinstated if needed.
+    - Sholl mask reports only values from "Linear Sholl". Fitted, "Semi-log" and "Linear
+      (norm.)" masks are no longer created. This could be reinstated if needed.
 
 Version 3.0
     - 3D Sholl:

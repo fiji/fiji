@@ -58,15 +58,15 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
     private static final String URL = "http://fiji.sc/Sholl_Analysis";
 
     /* Sholl Type Definitions */
-    public static final String[] SHOLL_TYPES = { "Linear", "Linear (norm.)", "Semi-Log", "Log-Log" };
-    public static final int SHOLL_N    = 0;
-    public static final int SHOLL_NS   = 1;
-    public static final int SHOLL_SLOG = 2;
-    public static final int SHOLL_LOG  = 3;
-    public static boolean shollN    = true;
-    public static boolean shollNS   = false;
-    public static boolean shollSLOG = true;
-    public static boolean shollLOG  = false;
+    private static final String[] SHOLL_TYPES = { "Linear", "Linear norm", "Semi-Log", "Log-Log" };
+    private static final int SHOLL_N    = 0;
+    private static final int SHOLL_NS   = 1;
+    private static final int SHOLL_SLOG = 2;
+    private static final int SHOLL_LOG  = 3;
+    private static boolean shollN    = true;
+    private static boolean shollNS   = false;
+    private static boolean shollSLOG = true;
+    private static boolean shollLOG  = false;
 
     /* Data Normalization */
     private static final String[] NORMS2D = { "Area", "Perimeter" };
@@ -76,7 +76,7 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
     private static int normChoice;
 
     /* Ramification Indices */
-    private static int primaryBranches = 2;
+    private static int primaryBranches = 4;
     private static boolean inferPrimary;
 
     /* Curve Fitting, Results and Descriptors */
@@ -317,13 +317,13 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
         final double[][] valuesNS   = transformValues(valuesN, true, false, false);
         final double[][] valuesSLOG = transformValues(valuesNS, false, true, false);
         final double[][] valuesLOG  = transformValues(valuesSLOG, false, false, true);
-        double[] fvaluesN    = null;
-        double[] fvaluesNS    = null;
-        double[] fvaluesLOG  = null;
+        double[] fvaluesN   = null;
+        double[] fvaluesNS  = null;
+        double[] fvaluesLOG = null;
 
         // Create plots
         if (shollN) {
-            final Plot plotN = plotValues("Sholl profile (Linear) for "+ imgTitle,
+            final Plot plotN = plotValues("Sholl profile ("+ SHOLL_TYPES[SHOLL_N] +") for "+ imgTitle,
                     is3D ? "3D distance ("+ unit +")" : "2D distance ("+ unit +")",
                     "N. of Intersections",
                     valuesN);
@@ -333,7 +333,7 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
             savePlot(plotN, SHOLL_N);
         }
         if (shollNS) {
-            final Plot plotNS = plotValues("Sholl profile (Linear norm.) for "+ imgTitle,
+            final Plot plotNS = plotValues("Sholl profile ("+ SHOLL_TYPES[SHOLL_NS] +") for "+ imgTitle,
                     is3D ? "3D distance ("+ unit +")" : "2D distance ("+ unit +")",
                     "Inters./"+ (is3D ? NORMS3D[normChoice] : NORMS2D[normChoice]),
                     valuesNS);
@@ -342,7 +342,7 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
             savePlot(plotNS, SHOLL_NS);
         }
         if (shollSLOG) {
-            final Plot plotSLOG = plotValues("Sholl profile (Semi-log) for "+ imgTitle,
+            final Plot plotSLOG = plotValues("Sholl profile ("+ SHOLL_TYPES[SHOLL_SLOG] +") for "+ imgTitle,
                     is3D ? "3D distance ("+ unit +")" : "2D distance ("+ unit +")",
                     "log(Inters./"+ (is3D ? NORMS3D[normChoice] : NORMS2D[normChoice]) +")",
                     valuesSLOG);
@@ -351,7 +351,7 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
             savePlot(plotSLOG, SHOLL_SLOG);
         }
         if (shollLOG) {
-            final Plot plotLOG = plotValues("Sholl profile (Log-log) for "+ imgTitle,
+            final Plot plotLOG = plotValues("Sholl profile ("+ SHOLL_TYPES[SHOLL_LOG] +") for "+ imgTitle,
                     is3D ? "log(3D distance)" : "log(2D distance)",
                     "log(Inters./"+ (is3D ? NORMS3D[normChoice] : NORMS2D[normChoice]) +")",
                     valuesLOG);
@@ -635,7 +635,7 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
         gd.addMessage("III. Ramification Indices and Curve Fitting:", headerFont);
         gd.addNumericField("           #_Primary branches", primaryBranches, 0);
         gd.setInsets(0, 2*xIndent, 0);
-        gd.addCheckbox("Infer from Starting radius", fitCurve);
+        gd.addCheckbox("Infer from Starting radius", inferPrimary);
         gd.setInsets(5, xIndent, 0);
         gd.addCheckbox("Fit profile and compute descriptors", fitCurve);
         gd.setInsets(3, 2*xIndent, 0);
@@ -647,18 +647,18 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
         gd.setInsets(0, xIndent, 2);
         gd.addMessage("Profiles Without Normalization:");
         gd.setInsets(0, 2*xIndent, 0);
-        gd.addCheckbox("Linear", fitCurve);
+        gd.addCheckbox("Linear", shollN);
         gd.setInsets(0, 0, 0);
         gd.addChoice("Polynomial", DEGREES, DEGREES[polyChoice]);
 
         gd.setInsets(8, xIndent, 2);
         gd.addMessage("Normalized Profiles:");
         gd.setInsets(0, 2*xIndent, 0);
-        gd.addCheckbox("Linear_", fitCurve);
+        gd.addCheckbox("Linear_", shollNS);
         gd.setInsets(-18, 3*xIndent+33, 0);
-        gd.addCheckbox("Semi-log", fitCurve);
+        gd.addCheckbox("Semi-log", shollSLOG);
         gd.setInsets(-18, 6*xIndent, 0);
-        gd.addCheckbox("Log-log", fitCurve);
+        gd.addCheckbox("Log-log", shollLOG);
 
         gd.setInsets(0, 0, 0);
         if (is3D) {
@@ -1168,10 +1168,12 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
      * Returns the location of pixels clockwise along a (1-pixel wide) circumference
      * using Bresenham's Circle Algorithm
      */
-    static public int[][] getCircumferencePoints(final int cx, final int cy, int radius) {
+    static public int[][] getCircumferencePoints(final int cx, final int cy, final int radius) {
 
         // Initialize algorithm variables
-        int i = 0, x = 0, y = radius, r = radius+1, err = 0, errR, errD;
+        int i = 0, x = 0, y = radius;
+		final int r = radius+1;
+		int err = 0, errR, errD;
 
         // Array to store first 1/8 of points relative to center
         final int[][] data = new int[r][2];
@@ -1531,7 +1533,7 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
 
             if (normY) {
                 if (normChoice==AV_NORM) {
-                    if (is3D) //
+                    if (is3D)
                         transValues[i][1] = y / (Math.PI * x*x*x * 4/3); // Volume of sphere
                     else
                         transValues[i][1] = y / (Math.PI * x*x); // Area of circle
