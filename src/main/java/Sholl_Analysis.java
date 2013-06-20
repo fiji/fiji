@@ -58,7 +58,7 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
     private static final String URL = "http://fiji.sc/Sholl_Analysis";
 
     /* Sholl Type Definitions */
-    private static final String[] SHOLL_TYPES = { "Linear", "Linear norm", "Semi-Log", "Log-Log" };
+    private static final String[] SHOLL_TYPES = { "Linear", "Linear-norm", "Semi-log", "Log-log" };
     private static final int SHOLL_N    = 0;
     private static final int SHOLL_NS   = 1;
     private static final int SHOLL_SLOG = 2;
@@ -654,11 +654,9 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
         gd.setInsets(8, xIndent, 2);
         gd.addMessage("Normalized Profiles:");
         gd.setInsets(0, 2*xIndent, 0);
-        gd.addCheckbox("Linear_", shollNS);
-        gd.setInsets(-18, 3*xIndent+33, 0);
-        gd.addCheckbox("Semi-log", shollSLOG);
-        gd.setInsets(-18, 6*xIndent, 0);
-        gd.addCheckbox("Log-log", shollLOG);
+        gd.addCheckboxGroup(1, 3,
+        		new String[]{SHOLL_TYPES[SHOLL_NS], SHOLL_TYPES[SHOLL_SLOG],SHOLL_TYPES[SHOLL_LOG]},
+        		new boolean[]{shollNS, shollSLOG, shollLOG});
 
         gd.setInsets(0, 0, 0);
         if (is3D) {
@@ -1756,7 +1754,7 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
     	if (!validPath || (validPath && !hideSaved))
             plot.show();
         if (validPath && save) {
-            final String path = imgPath + File.separator + imgTitle +"_ShollPlot-"+ SHOLL_TYPES[shollChoice];
+            final String path = imgPath + File.separator + imgTitle +"_ShollPlot"+ SHOLL_TYPES[shollChoice];
             IJ.saveAs(plot.getImagePlus(), "png", path + ".png");
         }
 
