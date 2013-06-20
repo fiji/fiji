@@ -594,6 +594,7 @@ public class WarpingError extends Metrics {
 	 * @param stepThreshold threshold step value to use during binarization
 	 * @param radius radius in pixels of the local area to look when deciding how to classify some mismatch cases (small radius speed up the method a lot, -1 to use whole image
 	 * @param bordersArePositive set to true if border pixels are positive samples
+	 * @param visualize set to true to display images
 	 * @return pixel error value and derived statistics for each threshold
 	 */
 	public ArrayList< ClassificationStatistics > getPrecisionRecallStatsSplitsAndMergers(
@@ -601,7 +602,8 @@ public class WarpingError extends Metrics {
 			double maxThreshold,
 			double stepThreshold,
 			int radius,
-			boolean bordersArePositive)
+			boolean bordersArePositive,
+			boolean visualize)
 	{
 		
 		if( minThreshold < 0 || minThreshold > maxThreshold || maxThreshold > 1)
@@ -618,7 +620,7 @@ public class WarpingError extends Metrics {
 				IJ.log("  Calculating warping error statistics for threshold value " + String.format("%.3f", th) + "...");
 			
 			WarpingResults[] wrs = simplePointWarp2dMT(originalLabels, proposedLabels, mask, th);
-			
+
 			ImageStack is = new ImageStack( originalLabels.getWidth(), originalLabels.getHeight() );
 			for(int i = 0; i < wrs.length; i ++)
 			{
@@ -641,7 +643,6 @@ public class WarpingError extends Metrics {
 			}
 			
 			ImagePlus warpedSource = new ImagePlus ("warped source", is);
-
 					
 			// We calculate the precision-recall value between the warped original labels and the 
 			// proposed labels 
@@ -650,9 +651,23 @@ public class WarpingError extends Metrics {
 			if( bordersArePositive )
 			{
 				// invert the images to have white borders (so borders are consider positive samples)
-				IJ.run(warpedSource, "Invert", "stack");
+				//IJ.run( warpedSource, "Invert", "stack" );
+				for(int slice=1; slice <= warpedSource.getImageStackSize(); slice++)
+				{
+					final float[] pix = (float[]) warpedSource.getImageStack().getProcessor( slice ).getPixels();
+					for(int kk = 0; kk < pix.length; kk++)
+						 pix[ kk ] = pix[ kk ] == 0f ? 1f : 0f;						
+				}
+				
+				
 				proposal = proposedLabels.duplicate();
-				IJ.run( proposal, "Invert", "stack");
+				IJ.run( proposal, "Invert", "stack" );
+			}
+			
+			if( visualize )
+			{
+				proposal.show();
+				warpedSource.show();
 			}
 			
 			PixelError pixelError = new PixelError( warpedSource, proposal);			
