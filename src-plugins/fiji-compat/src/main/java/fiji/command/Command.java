@@ -11,6 +11,7 @@ import ij.io.OpenDialog;
 
 import ij.plugin.MacroInstaller;
 import ij.plugin.PlugIn;
+import imagej.legacy.LegacyExtensions;
 
 import java.awt.Menu;
 
@@ -151,7 +152,7 @@ public class Command {
 				Throwable cause = e.getCause();
 				if (cause != null &&
 						cause instanceof NoSuchMethodError &&
-						FijiTools.handleNoSuchMethodError((NoSuchMethodError)cause))
+						LegacyExtensions.handleNoSuchMethodError((NoSuchMethodError)cause))
 					return null;
 			}
 			e.printStackTrace();

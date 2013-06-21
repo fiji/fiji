@@ -14,7 +14,6 @@ import javassist.CtField;
 import javassist.CtMethod;
 import javassist.CtNewConstructor;
 import javassist.CtNewMethod;
-import javassist.Modifier;
 import javassist.NotFoundException;
 import javassist.bytecode.BadBytecode;
 import javassist.bytecode.CodeIterator;
@@ -48,37 +47,6 @@ public class IJHacker extends JavassistHelper {
 			method = clazz.getMethod("getClassLoader", "()Ljava/lang/ClassLoader;");
 			method.insertBefore("if (classLoader == null) classLoader = new fiji.FijiClassLoader(true);");
 		}
-
-		// tell runUserPlugIn() to catch NoSuchMethodErrors
-		method = clazz.getMethod("runUserPlugIn",
-			"(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Z)Ljava/lang/Object;");
-		method.addCatch("if (fiji.FijiTools.handleNoSuchMethodError($e)) throw new RuntimeException(ij.Macro.MACRO_CANCELED);"
-			+ "throw $e;", pool.get("java.lang.NoSuchMethodError"), "$e");
-		// tell runUserPlugIn() to be more careful about catching NoClassDefFoundError
-		field = new CtField(pool.get("java.lang.String"), "originalClassName", clazz);
-		field.setModifiers(Modifier.STATIC | Modifier.PRIVATE);
-		clazz.addField(field);
-		method.insertBefore("originalClassName = $2;");
-		method.instrument(new ExprEditor() {
-			@Override
-			public void edit(Handler handler) throws CannotCompileException {
-				try {
-					if (handler.getType().getName().equals("java.lang.NoClassDefFoundError"))
-						handler.insertBefore("String realClassName = $1.getMessage();"
-							+ "int spaceParen = realClassName.indexOf(\" (\");"
-							+ "if (spaceParen > 0) realClassName = realClassName.substring(0, spaceParen);"
-							+ "if (!originalClassName.replace('.', '/').equals(realClassName)) {"
-							+ " if (realClassName.startsWith(\"javax/vecmath/\") || realClassName.startsWith(\"com/sun/j3d/\") || realClassName.startsWith(\"javax/media/j3d/\"))"
-							+ "  ij.IJ.error(\"The class \" + originalClassName + \" did not find Java3D (\" + realClassName + \")\\nPlease call Plugins>3D Viewer to install\");"
-							+ " else"
-							+ "  ij.IJ.handleException($1);"
-							+ " return null;"
-							+ "}");
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-			}
-		});
 
 		// Class ij.gui.GenericDialog
 		clazz = get("ij.gui.GenericDialog");
