@@ -80,7 +80,7 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
     private static boolean inferPrimary;
 
     /* Curve Fitting, Results and Descriptors */
-    private static boolean fitCurve;
+    private static boolean fitCurve = true;
     private static final String[] DEGREES = { "4th degree", "5th degree", "6th degree", "7th degree", "8th degree" };
     private static final String SHOLLTABLE = "Sholl Results";
     private static double[] centroid;
@@ -644,16 +644,16 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
         // Part IV: Sholl Methods
         gd.setInsets(10, 0, 2);
         gd.addMessage("IV. Sholl Methods:", headerFont);
-        gd.setInsets(0, xIndent, 2);
+        gd.setInsets(0, xIndent/2, 2);
         gd.addMessage("Profiles Without Normalization:");
         gd.setInsets(0, 2*xIndent, 0);
         gd.addCheckbox("Linear", shollN);
         gd.setInsets(0, 0, 0);
         gd.addChoice("Polynomial", DEGREES, DEGREES[polyChoice]);
 
-        gd.setInsets(8, xIndent, 2);
+        gd.setInsets(8, xIndent/2, 2);
         gd.addMessage("Normalized Profiles:");
-        gd.setInsets(0, 2*xIndent, 0);
+        gd.setInsets(0, xIndent, 0);
         gd.addCheckboxGroup(1, 3,
         		new String[]{SHOLL_TYPES[SHOLL_NS], SHOLL_TYPES[SHOLL_SLOG],SHOLL_TYPES[SHOLL_LOG]},
         		new boolean[]{shollNS, shollSLOG, shollLOG});
@@ -1670,6 +1670,7 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
 		rt.addValue("Sholl regression coefficient"+ labelSufix, k);
 		rt.addValue("Regression intercept"+ labelSufix, kIntercept);
 		rt.addValue("Regression R^2"+ labelSufix, kRSquared);
+		rt.show(SHOLLTABLE);
 
 		label.append("R\u00B2= "+ IJ.d2s(kRSquared, 3));
 		label.append("\nk= "+ IJ.d2s(k, -2));
