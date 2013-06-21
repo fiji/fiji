@@ -86,23 +86,23 @@ public class Spot extends AbstractEuclideanSpace implements RealLocalizable {
 
 	@Override
 	public boolean equals(Object other){
-	    if (other == null) return false;
-	    if (other == this) return true;
-	    if (!(other instanceof Spot)) return false;
-	    Spot os = (Spot) other;
-	    return os.ID == this.ID;
+		if (other == null) return false;
+		if (other == this) return true;
+		if (!(other instanceof Spot)) return false;
+		Spot os = (Spot) other;
+		return os.ID == this.ID;
 	}
 
 	/**
-     * @return the name for this Spot.
-     */
+	 * @return the name for this Spot.
+	 */
 	public String getName() {
 		return this.name;
 	}
 
 	/**
-     * Set the name of this Spot.
-     */
+	 * Set the name of this Spot.
+	 */
 	public void setName(String name) {
 		this.name = name;
 	}
@@ -138,7 +138,7 @@ public class Spot extends AbstractEuclideanSpace implements RealLocalizable {
 
 		// Coordinates
 		double[] coordinates = new double[3];
-		//		localize(coordinates);
+		localize(coordinates);
 		s.append("Position: "+Util.printCoordinates(coordinates)+"\n");
 
 		// Feature list
@@ -165,32 +165,32 @@ public class Spot extends AbstractEuclideanSpace implements RealLocalizable {
 	 */
 
 	/**
-     * @return and exposes the storage Map of features for this spot.
-     */
+	 * @return and exposes the storage Map of features for this spot.
+	 */
 	public Map<String,Double> getFeatures() {
 		return features;
 	}
 
 	/**
 	 * @return The value corresponding to the specified spot feature.
-     * @param feature The feature string to retrieve the stored value for.
-     * <code>null</code> if it has not been set.
-     */
+	 * @param feature The feature string to retrieve the stored value for.
+	 * <code>null</code> if it has not been set.
+	 */
 	public final Double getFeature(final String feature) {
 		return features.get(feature);
 	}
 
 	/**
-     * Store the specified feature value for this spot.
-     */
+	 * Store the specified feature value for this spot.
+	 */
 	public final void putFeature(final String feature, final Double value) {
 		features.put(feature, value);
 	}
 
-	 /**
-     * @return the difference of the feature value of this spot with the one of the given spot.
-     * By construction, this operation is anti-symmetric (A.diffTo(B) = - B.diffTo(A)).
-     */
+	/**
+	 * @return the difference of the feature value of this spot with the one of the given spot.
+	 * By construction, this operation is anti-symmetric (A.diffTo(B) = - B.diffTo(A)).
+	 */
 	public double diffTo(Spot s, String feature) {
 		double f1 = features.get(feature).doubleValue();
 		double f2 = s.getFeature(feature).doubleValue();
@@ -198,14 +198,14 @@ public class Spot extends AbstractEuclideanSpace implements RealLocalizable {
 	}
 
 	/**
-     * @return the absolute normalized difference of the feature value of this spot
-     * with the one of the given spot.
-     * <p>
-     * If <code>a</code> and <code>b</code> are the feature values, then the absolute
-     * normalized difference is defined as <code> Math.abs( a - b) / ( (a+b)/2 )</code>.
-     * <p>
-     * By construction, this operation is symmetric (A.normalizeDiffTo(B) = B.normalizeDiffTo(A)).
-     */
+	 * @return the absolute normalized difference of the feature value of this spot
+	 * with the one of the given spot.
+	 * <p>
+	 * If <code>a</code> and <code>b</code> are the feature values, then the absolute
+	 * normalized difference is defined as <code> Math.abs( a - b) / ( (a+b)/2 )</code>.
+	 * <p>
+	 * By construction, this operation is symmetric (A.normalizeDiffTo(B) = B.normalizeDiffTo(A)).
+	 */
 	public double normalizeDiffTo(Spot s, String feature) {
 		final double a = features.get(feature).doubleValue();
 		final double b = s.getFeature(feature).doubleValue();
@@ -216,8 +216,8 @@ public class Spot extends AbstractEuclideanSpace implements RealLocalizable {
 	}
 
 	/**
-     * @return the square distance from this spot to another, using the x,y,z position features.
-     */
+	 * @return the square distance from this spot to another, using the x,y,z position features.
+	 */
 	public double squareDistanceTo(Spot s) {
 		double sumSquared = 0d;
 		double thisVal, otherVal;
@@ -234,45 +234,7 @@ public class Spot extends AbstractEuclideanSpace implements RealLocalizable {
 	 * PUBLIC UTILITY CONSTANTS
 	 */
 
-	/** A comparator used to sort spots by ascending time feature. */
-	public final static Comparator<Spot> timeComparator = new Comparator<Spot>() {
-		@Override
-		public int compare(Spot o1, Spot o2) {
-			final double diff = o2.diffTo(o1, POSITION_T);
-			if (diff == 0)
-				return 0;
-			else if (diff < 0)
-				return 1;
-			else
-				return -1;
-		}
-
-	};
-
-	/** A comparator used to sort spots by ascending frame. */
-	public final static Comparator<Spot> frameComparator = new Comparator<Spot>() {
-		@Override
-		public int compare(Spot o1, Spot o2) {
-			final double diff = o2.diffTo(o1, FRAME);
-			if (diff == 0)
-				return 0;
-			else if (diff < 0)
-				return 1;
-			else
-				return -1;
-		}
-	};
-
-	/** A comparator used to sort spots by name. The comparison uses numerical natural sorting,
-	 * So that "Spot_4" comes before "Spot_122". */
-	public final static Comparator<Spot> nameComparator = new Comparator<Spot>() {
-		private final AlphanumComparator comparator = AlphanumComparator.instance;
-		@Override
-		public int compare(Spot o1, Spot o2) {
-			return comparator.compare(o1.getName(), o2.getName());
-		}
-	};
-
+	
 
 	/*
 	 * STATIC KEYS
@@ -369,4 +331,48 @@ public class Spot extends AbstractEuclideanSpace implements RealLocalizable {
 		assert ( d > 0 && d < n );
 		return getFeature( POSITION_FEATURES[ d ] );
 	}
+
+	/*
+	 * STATIC UTILITY
+	 */
+
+
+	/** 
+	 * A comparator used to sort spots by ascending feature values.
+	 * 
+	 * @param feature  the feature to use for comparison. It is the caller responsibility
+	 * to ensure that all spots have the target feature.
+	 * @return a new {@link Comparator}. 
+	 */
+	public final static Comparator<Spot> featureComparator(final String feature) {
+		Comparator<Spot> comparator = new Comparator<Spot>() {
+			public int compare(Spot o1, Spot o2) {
+				final double diff = o2.diffTo(o1, feature);
+				if (diff == 0)
+					return 0;
+				else if (diff < 0)
+					return 1;
+				else
+					return -1;
+			}
+		};
+		return comparator;
+	}
+	
+	/** A comparator used to sort spots by ascending time feature. */
+	public final static Comparator<Spot> timeComparator = featureComparator(POSITION_T);
+
+	/** A comparator used to sort spots by ascending frame. */
+	public final static Comparator<Spot> frameComparator = featureComparator(FRAME);
+
+	/** A comparator used to sort spots by name. The comparison uses numerical natural sorting,
+	 * So that "Spot_4" comes before "Spot_122". */
+	public final static Comparator<Spot> nameComparator = new Comparator<Spot>() {
+		private final AlphanumComparator comparator = AlphanumComparator.instance;
+		@Override
+		public int compare(Spot o1, Spot o2) {
+			return comparator.compare(o1.getName(), o2.getName());
+		}
+	};
+
 }
