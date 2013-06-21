@@ -82,6 +82,7 @@ Authors
 * Ignacio Arganda-Carreras
 * Jean-Yves Tinevez
 * Johannes Schindelin
+* Kota Miura
 * Mark Longair
 * Pavel Tomancak
 * Stephan Preibisch
