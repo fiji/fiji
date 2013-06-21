@@ -23,7 +23,8 @@ public class BasicDetectorConfigurationPanel extends LogDetectorConfigurationPan
 				super.jCheckSubPixel, 
 				super.jLabelThreshold,
 				super.jTextFieldThreshold,
-				super.jButtonRefresh };
+				super.jButtonRefresh,
+				super.btnPreview };
 		for(JComponent c : uselessComponents)
 			c.setVisible(false);
 	}
