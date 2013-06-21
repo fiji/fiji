@@ -703,8 +703,7 @@ public class TrackModel {
 
 			Spot v = event.getVertex();
 			Integer id = vertexToID.get(v);
-			if (id != null)
-			{
+			if (id != null) {
 				Set<Spot> set = connectedVertexSets.get(id);
 				if (null == set) {
 					throw new RuntimeException("Unknown set ID: " + id);
@@ -897,7 +896,7 @@ public class TrackModel {
 					vertexToID.remove(spot);
 				}
 				// Forget the vertex set
-				connectedVertexSets.remove(id);
+//				connectedVertexSets.remove(id);
 				// We do not mark it as a track to update, for it disappeared.
 				
 			} else {
