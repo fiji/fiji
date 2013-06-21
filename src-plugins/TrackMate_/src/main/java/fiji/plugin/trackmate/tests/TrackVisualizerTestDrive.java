@@ -24,6 +24,8 @@ import java.io.File;
 import java.io.IOException;
 
 import javax.swing.JFrame;
+import javax.swing.UIManager;
+import javax.swing.UnsupportedLookAndFeelException;
 
 import org.jdom2.JDOMException;
 import org.scijava.util.AppUtils;
@@ -32,6 +34,20 @@ import org.scijava.util.AppUtils;
 public class TrackVisualizerTestDrive {
 	
 	public static void main(String[] args) throws JDOMException, IOException {
+		
+		if (IJ.isMacOSX() || IJ.isWindows()) {
+			try {
+				UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+			} catch (ClassNotFoundException e) {
+				e.printStackTrace();
+			} catch (InstantiationException e) {
+				e.printStackTrace();
+			} catch (IllegalAccessException e) {
+				e.printStackTrace();
+			} catch (UnsupportedLookAndFeelException e) {
+				e.printStackTrace();
+			}
+		}
 	
 		File file = new File(AppUtils.getBaseDirectory(TrackMate.class), "samples/FakeTracks.xml");
 		ij.ImageJ.main(args);

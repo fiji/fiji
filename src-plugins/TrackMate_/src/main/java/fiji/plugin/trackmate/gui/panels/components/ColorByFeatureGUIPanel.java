@@ -244,7 +244,7 @@ public class ColorByFeatureGUIPanel extends ActionListenablePanel {
 		LinkedHashMap<Category, Collection<String>> features = new LinkedHashMap<Category, Collection<String>>(categories.size());
 		HashMap<Category, String> categoryNames = new HashMap<Category, String>(categories.size());
 		HashMap<String, String> featureNames = new HashMap<String, String>();
-
+		
 		for (Category category : categories) {
 			switch (category) {
 			case SPOTS:
@@ -282,6 +282,7 @@ public class ColorByFeatureGUIPanel extends ActionListenablePanel {
 	 * @return a new double array containing the feature values.
 	 */
 	protected double[] getValues(CategoryJComboBox<Category, String> cb) {
+		
 		double[] values;
 		Category category = cb.getSelectedCategory();
 		String feature = cb.getSelectedItem();

@@ -138,9 +138,15 @@ public class TrackMateGUIController implements ActionListener {
 		}
 
 
+		this.trackmate = trackmate;
+		
+		/*
+		 * Instantiate GUI
+		 */
+
 		this.gui = new TrackMateWizard(this);
 		this.logger = gui.getLogger();
-		this.trackmate = trackmate;
+		
 
 		// Feature updater
 		new ModelFeatureUpdater(trackmate.getModel(), trackmate.getSettings());

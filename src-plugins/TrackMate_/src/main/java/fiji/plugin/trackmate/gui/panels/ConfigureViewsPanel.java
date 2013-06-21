@@ -109,6 +109,7 @@ public class ConfigureViewsPanel extends ActionListenablePanel {
 		this.edgeColorGenerator = new PerEdgeFeatureColorGenerator(model, EdgeVelocityAnalyzer.VELOCITY);
 		this.spotColorGenerator = new SpotColorGenerator(model);
 		initGUI();
+		refreshGUI();
 	}
 
 	/*
@@ -176,6 +177,42 @@ public class ConfigureViewsPanel extends ActionListenablePanel {
 	public void setSpotColorGenerator(FeatureColorGenerator<Spot> spotColorGenerator) {
 		this.spotColorGenerator.terminate();
 		this.spotColorGenerator = spotColorGenerator;
+	}
+
+	/**
+	 * Refreshes some components of this GUI with current values of the model.
+	 */
+	public void refreshGUI() {
+		if (null != trackColorGUI) {
+			jPanelTrackOptions.remove(trackColorGUI);
+		}
+		
+		trackColorGUI = new ColorByFeatureGUIPanel(model, Arrays.asList(new Category[] { Category.TRACKS, Category.EDGES } ));
+		trackColorGUI.setPreferredSize(new java.awt.Dimension(265, 45));
+		trackColorGUI.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				TrackColorGenerator oldValue = (TrackColorGenerator) displaySettings.get(KEY_TRACK_COLORING);
+				TrackColorGenerator newValue;
+				Category category = trackColorGUI.getColorGeneratorCategory();
+				switch (category) {
+				case TRACKS:
+					newValue = trackColorGenerator;
+					break;
+				case EDGES:
+					newValue = edgeColorGenerator;
+					break;
+				default:
+					throw new IllegalArgumentException("Unknow track color generator category: " + category);
+				}
+				newValue.setFeature(trackColorGUI.getColorFeature());
+				displaySettings.put(KEY_TRACK_COLORING, newValue);
+				// new value vs old value does not really hold.
+				DisplaySettingsEvent event = new DisplaySettingsEvent(trackColorGUI, KEY_TRACK_COLORING, newValue, oldValue);
+				fireDisplaySettingsChange(event);
+			}
+		});
+		jPanelTrackOptions.add(trackColorGUI);
 	}
 
 	/*
@@ -305,34 +342,6 @@ public class ConfigureViewsPanel extends ActionListenablePanel {
 						fireDisplaySettingsChange(event);
 					}
 				});
-			}
-			{
-				trackColorGUI = new ColorByFeatureGUIPanel(model, Arrays.asList(new Category[] { Category.TRACKS, Category.EDGES } ));
-				trackColorGUI.setPreferredSize(new java.awt.Dimension(265, 45));
-				trackColorGUI.addActionListener(new ActionListener() {
-					@Override
-					public void actionPerformed(ActionEvent e) {
-						TrackColorGenerator oldValue = (TrackColorGenerator) displaySettings.get(KEY_TRACK_COLORING);
-						TrackColorGenerator newValue;
-						Category category = trackColorGUI.getColorGeneratorCategory();
-						switch (category) {
-						case TRACKS:
-							newValue = trackColorGenerator;
-							break;
-						case EDGES:
-							newValue = edgeColorGenerator;
-							break;
-						default:
-							throw new IllegalArgumentException("Unknow track color generator category: " + category);
-						}
-						newValue.setFeature(trackColorGUI.getColorFeature());
-						displaySettings.put(KEY_TRACK_COLORING, newValue);
-						// new value vs old value does not really hold.
-						DisplaySettingsEvent event = new DisplaySettingsEvent(trackColorGUI, KEY_TRACK_COLORING, newValue, oldValue);
-						fireDisplaySettingsChange(event);
-					}
-				});
-				jPanelTrackOptions.add(trackColorGUI);
 			}
 			{
 				jCheckBoxDisplaySpots = new JCheckBox();
