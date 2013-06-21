@@ -3,7 +3,7 @@ This is Fiji
 
 [ Fiji Is Just ImageJ ]
 
-Fiji will provide an easy way to set up Java+ImageJA+TrakEM2+VIB+a lot of
+Fiji provides an easy way to set up Java+ImageJA+TrakEM2+VIB+a lot of
 other plugins that are useful to biologists, geologists and every other
 scientist who wants to process images.
 
@@ -66,7 +66,7 @@ But those would need to be _very_ compelling reasons.
 Participating
 -------------
 
-See NOTES.
+Pull Requests are very welcome!
 
 Authors
 -------
@@ -74,6 +74,7 @@ Authors
 * Albert Cardona
 * Benjamin Schmid
 * Cornelius Sicker
+* Curtis Rueden
 * Dan White
 * Erwin Frise
 * Gabriel Landini
@@ -88,7 +89,7 @@ Authors
 * Verena Kaynig
 * and all the good people providing ImageJ and plugins
 
-See also http://fiji.sc/wiki/index.php/Contributors
+See also http://fiji.sc/Contributors
 
 Thanks
 ------
