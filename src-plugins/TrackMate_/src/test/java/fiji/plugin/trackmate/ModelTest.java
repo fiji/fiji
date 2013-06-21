@@ -3,6 +3,8 @@ package fiji.plugin.trackmate;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 
@@ -344,6 +346,75 @@ public class ModelTest {
 		}
 
 	}
+	
+	
+
+	@Test
+	public void testRemovingWholeTracksAtOnce() {
+		int N_TRACKS = 2;
+		int DEPTH = 10;
+		Model model = new Model();
+		final Collection<Spot> trackSpots = new HashSet<Spot>();
+		final Collection<DefaultWeightedEdge> trackEdges = new HashSet<DefaultWeightedEdge>();
+
+		
+		// Create model
+		model.beginUpdate();
+		try {
+			for (int i = 0; i < N_TRACKS ; i++) {
+				Spot previous = null;
+				Spot spot = null;
+				for (int j = 0; j < DEPTH; j++) {
+					spot = new Spot(new double[3]);
+					model.addSpotTo(spot, j);
+					if (i == 0) {
+						trackSpots.add(spot);
+					}
+					if (null != previous) {
+						DefaultWeightedEdge edge = model.addEdge(previous, spot, 1);
+						if (0 == i) {
+							trackEdges.add(edge);
+						}
+					}
+					previous = spot;
+				}
+			}
+		} finally {
+			model.endUpdate();
+		}
+
+		model.addModelChangeListener(new ModelChangeListener() {
+			
+			@Override
+			public void modelChanged(ModelChangeEvent event) {
+				
+				for (DefaultWeightedEdge edge : event.getEdges()) {
+					assertEquals(ModelChangeEvent.FLAG_EDGE_REMOVED, event.getEdgeFlag(edge));
+					assertTrue(trackEdges.contains(edge));
+					trackEdges.remove(edge);
+				}
+				assertTrue(trackEdges.isEmpty());
+				
+				for (Spot spot : event.getSpots()) {
+					assertEquals(ModelChangeEvent.FLAG_SPOT_REMOVED, event.getSpotFlag(spot));
+					assertTrue(trackSpots.contains(spot));
+					trackSpots.remove(spot);
+				}
+				assertTrue(trackSpots.isEmpty());
+
+			}
+		});
+		
+		// Remove a whole track
+		model.beginUpdate();
+		for (DefaultWeightedEdge edge : trackEdges) {
+			model.removeEdge(edge);
+		}
+		for (Spot spot : trackSpots) {
+			model.removeSpot(spot);
+		}
+		model.endUpdate();
+	}
 
 
 
@@ -463,6 +534,17 @@ public class ModelTest {
 
 	}
 
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
 
 
 	public static void main(String[] args) {

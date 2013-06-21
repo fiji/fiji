@@ -1,5 +1,7 @@
 package fiji.plugin.trackmate.tests;
 
+import fiji.plugin.trackmate.ModelChangeEvent;
+import fiji.plugin.trackmate.ModelChangeListener;
 import fiji.plugin.trackmate.SelectionModel;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Model;
@@ -84,7 +86,13 @@ public class TrackVisualizerTestDrive {
 			imp.show();
 		}
 		
-		trackmate.computeEdgeFeatures(true);
+		model.addModelChangeListener(new ModelChangeListener() {
+			
+			@Override
+			public void modelChanged(ModelChangeEvent event) {
+				System.out.println(event);// DEBUG				
+			}
+		});
 		
 		// Instantiate displayer
 		SelectionModel sm = new SelectionModel(model);

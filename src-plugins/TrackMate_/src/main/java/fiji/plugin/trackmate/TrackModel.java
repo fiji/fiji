@@ -91,9 +91,9 @@ public class TrackModel {
 
 	private int IDcounter = 0;
 	private Map<Integer, Set<DefaultWeightedEdge>> connectedEdgeSets;
-	private Map<DefaultWeightedEdge, Integer> edgeToID;
+	 Map<DefaultWeightedEdge, Integer> edgeToID;
 	private Map<Integer, Set<Spot>> connectedVertexSets;
-	private Map<Spot, Integer> vertexToID;
+	 Map<Spot, Integer> vertexToID;
 	private Map<Integer, Boolean> visibility;
 	private Map<Integer, String> names;
 	private final Iterator<String> nameGenerator = new DefaultNameGenerator();
@@ -702,11 +702,12 @@ public class TrackModel {
 			}
 
 			Spot v = event.getVertex();
+			vertexToID.remove(v);
 			Integer id = vertexToID.get(v);
 			if (id != null) {
 				Set<Spot> set = connectedVertexSets.get(id);
 				if (null == set) {
-					throw new RuntimeException("Unknown set ID: " + id);
+					return; // it was removed when removing the last edge of a track, most likely.
 				}
 				set.remove(v);
 
@@ -717,7 +718,6 @@ public class TrackModel {
 					visibility.remove(id);
 				}
 			}
-			vertexToID.remove(v);
 		}
 
 		@Override
@@ -887,17 +887,19 @@ public class TrackModel {
 				connectedEdgeSets.remove(id); 
 				names.remove(id);
 				visibility.remove(id);
-				/*
-				 *  We need to remove also the vertices
-				 */
+				/*  We need to remove also the vertices */
 				Set<Spot> vertexSet = connectedVertexSets.get(id);
 				// Forget the vertices were in a set
 				for (Spot spot : vertexSet) {
 					vertexToID.remove(spot);
 				}
 				// Forget the vertex set
-//				connectedVertexSets.remove(id);
-				// We do not mark it as a track to update, for it disappeared.
+				connectedVertexSets.remove(id);
+				/* We do not mark it as a track to update, for it disappeared.
+				 * On the other hand, it might *have been* marked as a track to update.
+				 * Since it just joined oblivion, we remove it from the list of tracks
+				 * to update. */
+				tracksUpdated.remove(id);
 				
 			} else {
 				// So there are some edges remaining in the set.
@@ -957,6 +959,12 @@ public class TrackModel {
 						names.put(newid, nameGenerator.next());
 						// Transaction: both children tracks are marked for update.
 						tracksUpdated.add(newid);
+						
+					} else {
+						/* Nothing remains from the smallest part. The remaining
+						 * solitary vertex has no right to be called a track. */
+						Spot solitary = sourceVCS.iterator().next();
+						vertexToID.remove(solitary);
 					}
 					
 				} else {
@@ -983,6 +991,11 @@ public class TrackModel {
 							names.put(newid, nameGenerator.next());
 							// Transaction: both children tracks are marked for update.
 							tracksUpdated.add(newid);
+						} else {
+							/* Nothing remains from the smallest part. The remaining
+							 * solitary vertex has no right to be called a track. */
+							Spot solitary = targetVCS.iterator().next();
+							vertexToID.remove(solitary);
 						}
 						
 					} else {
