@@ -8,9 +8,11 @@ import net.imglib2.IterableInterval;
 import net.imglib2.IterableRealInterval;
 import net.imglib2.Positionable;
 import net.imglib2.RandomAccess;
+import net.imglib2.RandomAccessible;
 import net.imglib2.RealPositionable;
 import net.imglib2.img.Img;
 import net.imglib2.img.ImgFactory;
+import net.imglib2.type.Type;
 import net.imglib2.view.IntervalView;
 import net.imglib2.view.Views;
 
@@ -19,20 +21,26 @@ import net.imglib2.view.Views;
  * as an {@link Img}.
  * @author Jean-Yves Tinevez <jeanyves.tinevez@gmail.com> - Sep 2012
  */
-public class CropImgView<T> implements Img<T> {
+public class CropImgView<T  extends Type<T>> implements Img<T> {
 
 	protected final IntervalView<T> interval;
 	protected final IterableInterval<T> iterable;
-	protected final Img<T> img;
+	protected final RandomAccessible<T> img;
 	protected final long[] min;
 	protected final long[] max;
+	private final ImgFactory<T> factory;
 
-	public CropImgView(final Img<T> source, final long[] min, final long[] max) {
+	public CropImgView(final RandomAccessible<T> source, final long[] min, final long[] max, ImgFactory<T> factory) {
+		this.factory = factory;
 		this.interval = Views.interval(source, min, max);
 		this.iterable = Views.iterable(interval);
 		this.img = source;
 		this.min = min;
 		this.max = max;
+	}
+	
+	public CropImgView(final Img<T> source, final long[] min, final long[] max) {
+		this(source, min, max, source.factory());
 	}
 
 	@Override
@@ -158,12 +166,24 @@ public class CropImgView<T> implements Img<T> {
 
 	@Override
 	public ImgFactory<T> factory() {
-		return img.factory();
+		return factory;
 	}
 
 	@Override
 	public Img<T> copy() {
-		return new CropImgView<T>(img.copy(), min, max);
+		final Img< T > copy = factory.create( this, iterable.firstElement().createVariable() );
+
+		Cursor< T > srcCursor = localizingCursor();
+		RandomAccess< T > resAccess = copy.randomAccess();
+
+		while ( srcCursor.hasNext() )
+		{
+			srcCursor.fwd();
+			resAccess.setPosition( srcCursor );
+			resAccess.get().set( srcCursor.get() );
+		}
+
+		return copy;
 	}
 
 }
