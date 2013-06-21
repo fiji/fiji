@@ -65,7 +65,9 @@ public class LogDetectorFactory<T extends RealType<T> & NativeType<T>>  implemen
 		final double threshold = (Double) settings.get(KEY_THRESHOLD);
 		final boolean doMedian = (Boolean) settings.get(KEY_DO_MEDIAN_FILTERING);
 		final boolean doSubpixel = (Boolean) settings.get(KEY_DO_SUBPIXEL_LOCALIZATION);
-		return new LogDetector<T>(imgT, radius, threshold, doSubpixel, doMedian);
+		LogDetector<T> detector = new LogDetector<T>(imgT, radius, threshold, doSubpixel, doMedian);
+		detector.setNumThreads(1); // in TrackMate context, we use 1 thread per detector but multiple detectors
+		return detector;
 	}
 
 	@Override

@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import net.imglib2.RandomAccess;
+import net.imglib2.algorithm.MultiThreaded;
 import net.imglib2.algorithm.fft.FourierConvolution;
 import net.imglib2.algorithm.math.PickImagePeaks;
 import net.imglib2.exception.IncompatibleTypeException;
@@ -21,7 +22,7 @@ import fiji.plugin.trackmate.detection.subpixel.SubPixelLocalization.LocationTyp
 import fiji.plugin.trackmate.detection.util.MedianFilter3x3;
 import fiji.plugin.trackmate.util.TMUtils;
 
-public class LogDetector <T extends RealType<T>  & NativeType<T>> implements SpotDetector<T> {
+public class LogDetector <T extends RealType<T>  & NativeType<T>> implements SpotDetector<T>, MultiThreaded {
 
 	/*
 	 * FIELDS
@@ -40,6 +41,7 @@ public class LogDetector <T extends RealType<T>  & NativeType<T>> implements Spo
 	protected List<Spot> spots = new ArrayList<Spot>(); // because this implementation is fast to add elements at the end of the list
 	/** The processing time in ms. */
 	protected long processingTime;
+	private int numThreads;
 
 	/*
 	 * CONSTRUCTORS
@@ -52,6 +54,7 @@ public class LogDetector <T extends RealType<T>  & NativeType<T>> implements Spo
 		this.doSubPixelLocalization = doSubPixelLocalization;
 		this.doMedianFilter = doMedianFilter;
 		this.baseErrorMessage = BASE_ERROR_MESSAGE;
+		setNumThreads();
 	}
 
 	/*
@@ -103,6 +106,8 @@ public class LogDetector <T extends RealType<T>  & NativeType<T>> implements Spo
 			errorMessage = baseErrorMessage + "Fourier convolution failed: "+e.getMessage();
 			return false;
 		}
+
+		fConvGauss.setNumThreads(numThreads);
 		if (!fConvGauss.checkInput() || !fConvGauss.process()) {
 			errorMessage = baseErrorMessage + "Fourier convolution with Gaussian failed:\n" + fConvGauss.getErrorMessage() ;
 			return false;
@@ -117,6 +122,8 @@ public class LogDetector <T extends RealType<T>  & NativeType<T>> implements Spo
 			errorMessage = baseErrorMessage + "Fourier convolution failed: "+e.getMessage();
 			return false;
 		}
+		
+		fConvLaplacian.setNumThreads(numThreads);
 		if (!fConvLaplacian.checkInput() || !fConvLaplacian.process()) {
 			errorMessage = baseErrorMessage + "Fourier Convolution with Laplacian failed:\n" + fConvLaplacian.getErrorMessage() ;
 			return false;
@@ -164,7 +171,7 @@ public class LogDetector <T extends RealType<T>  & NativeType<T>> implements Spo
 		if (doSubPixelLocalization && !peaks.isEmpty()) {
 			// Create localizer and apply it to the list. The list object will be updated
 			final QuadraticSubpixelLocalization<T> locator = new QuadraticSubpixelLocalization<T>(intermediateImage, peaks);
-			locator.setNumThreads(1); // Since the calls to a detector  are already multi-threaded.
+			locator.setNumThreads(numThreads);
 			locator.setCanMoveOutside(true);
 			if ( !locator.checkInput() || !locator.process() )	{
 				errorMessage = baseErrorMessage + locator.getErrorMessage();
@@ -274,6 +281,21 @@ public class LogDetector <T extends RealType<T>  & NativeType<T>> implements Spo
 	@Override
 	public long getProcessingTime() {
 		return processingTime;
+	}
+
+	@Override
+	public void setNumThreads() {
+		this.numThreads = Runtime.getRuntime().availableProcessors();
+	}
+
+	@Override
+	public void setNumThreads(int numThreads) {
+		this.numThreads = numThreads;
+	}
+
+	@Override
+	public int getNumThreads() {
+		return numThreads;
 	}
 
 
