@@ -477,8 +477,6 @@ public class TrackScheme extends AbstractTrackMateModelView {
 
 			final int targetColumn = getUnlaidSpotColumn();
 
-			System.out.println(event);
-			
 			// Deal with spots
 			if (!event.getSpots().isEmpty()) {
 				
