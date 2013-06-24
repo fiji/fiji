@@ -126,7 +126,8 @@ public class Cluster implements NodeStateListener, NodeShellListener
             {
                 if (priority)
                 {
-                    FijiArchipelago.debug("Scheduler: Put job " + pm.getID() + " on the priority queue");
+                    FijiArchipelago.debug("Scheduler: Put job " + pm.getID() +
+                            " on the priority queue");
                 }
                 queue.add(pm);
                 return true;
@@ -134,6 +135,17 @@ public class Cluster implements NodeStateListener, NodeShellListener
             {
                 return false;
             }
+        }
+
+        /**
+         * Convenience function to allow objects with scheduler references but not Cluster
+         *  references to identify ClusterNodes by id.
+         * @param id the id of the desired ClusterNode
+         * @return the ClusterNode with the given id
+         */
+        public ClusterNode getNode(long id)
+        {
+            return self.getNode(id);
         }
         
         private synchronized ClusterNode getFreeNode()
