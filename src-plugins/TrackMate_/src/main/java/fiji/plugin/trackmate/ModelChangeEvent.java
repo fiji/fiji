@@ -182,7 +182,7 @@ public class ModelChangeEvent extends EventObject {
 	
 	@Override
 	public String toString() {
-		StringBuilder str = new StringBuilder("[TrackModelChangeEvent]:\n");
+		StringBuilder str = new StringBuilder("[ModelChangeEvent]:\n");
 		str.append(" - source: "+source.getClass() + "_" + source.hashCode()+"\n");
 		str.append(" - event type: ");
 		switch (eventID) {

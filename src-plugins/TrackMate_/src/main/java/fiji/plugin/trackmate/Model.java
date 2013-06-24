@@ -290,13 +290,13 @@ public class Model {
 	 * GRAPH MODIFICATION
 	 */
 
-	public void beginUpdate() {
+	public synchronized void beginUpdate() {
 		updateLevel++;
 		if (DEBUG)
 			System.out.println("[TrackMateModel] #beginUpdate: increasing update level to " + updateLevel + ".");
 	}
 
-	public void endUpdate() {
+	public synchronized void endUpdate() {
 		updateLevel--;
 		if (DEBUG)
 			System.out.println("[TrackMateModel] #endUpdate: decreasing update level to " + updateLevel + ".");
@@ -420,7 +420,7 @@ public class Model {
 	 * @return the spot that was moved, or <code>null</code> if it could not be
 	 * found in the source frame
 	 */
-	public Spot moveSpotFrom(Spot spotToMove, Integer fromFrame, Integer toFrame) {
+	public synchronized Spot moveSpotFrom(Spot spotToMove, Integer fromFrame, Integer toFrame) {
 		boolean ok = spots.remove(spotToMove, fromFrame);
 		if (!ok) {
 			if (DEBUG) {
@@ -455,7 +455,7 @@ public class Model {
 	 * </pre>
 	 * @return the spot just added.
 	 */
-	public Spot addSpotTo(Spot spotToAdd, Integer toFrame) {
+	public synchronized Spot addSpotTo(Spot spotToAdd, Integer toFrame) {
 		spots.add(spotToAdd, toFrame);
 		spotsAdded.add(spotToAdd); // TRANSACTION
 		if (DEBUG) {
@@ -485,7 +485,7 @@ public class Model {
 	 * @return the spot removed, or <code>null</code> if it could not be found in the
 	 * specified frame.
 	 */
-	public Spot removeSpot(final Spot spotToRemove) {
+	public synchronized Spot removeSpot(final Spot spotToRemove) {
 		int fromFrame = spotToRemove.getFeature(Spot.FRAME).intValue();
 		if (spots.remove(spotToRemove, fromFrame)) {
 			spotsRemoved.add(spotToRemove); // TRANSACTION
@@ -520,7 +520,7 @@ public class Model {
 	 * </pre>
 	 * @param spotToUpdate  the spot to mark for update
 	 */
-	public void updateFeatures(final Spot spotToUpdate) {
+	public synchronized void updateFeatures(final Spot spotToUpdate) {
 		spotsUpdated.add(spotToUpdate); // Enlist for feature update when transaction is marked as finished
 		Set<DefaultWeightedEdge> touchingEdges = trackModel.edgesOf(spotToUpdate);
 		if (null != touchingEdges) {
@@ -546,7 +546,7 @@ public class Model {
 	 * @param weight  the weight of the edge.
 	 * @return  the edge created.
 	 */
-	public DefaultWeightedEdge addEdge(final Spot source, final Spot target, final double weight) {
+	public synchronized DefaultWeightedEdge addEdge(final Spot source, final Spot target, final double weight) {
 		return trackModel.addEdge(source, target, weight);
 	}
 
@@ -557,7 +557,7 @@ public class Model {
 	 * @param target the target spot.
 	 * @return  the edge between the two spots, if it existed.
 	 */
-	public DefaultWeightedEdge removeEdge(final Spot source, final Spot target) {
+	public synchronized DefaultWeightedEdge removeEdge(final Spot source, final Spot target) {
 		return trackModel.removeEdge(source, target);
 	}
 
@@ -578,7 +578,7 @@ public class Model {
 	 * @return <code>true</code> if the edge existed in the model and was successfully,
 	 * <code>false</code> otherwise.
 	 */
-	public boolean removeEdge(final DefaultWeightedEdge edge) {
+	public synchronized boolean removeEdge(final DefaultWeightedEdge edge) {
 		return trackModel.removeEdge(edge);
 	}
 
@@ -598,7 +598,7 @@ public class Model {
 	 * @param edge  the edge.
 	 * @param weight  the weight to set.
 	 */
-	public void setEdgeWeight(final DefaultWeightedEdge edge, double weight) {
+	public synchronized void setEdgeWeight(final DefaultWeightedEdge edge, double weight) {
 		trackModel.setEdgeWeight(edge, weight);
 	}
 
@@ -620,7 +620,7 @@ public class Model {
 	 * @param visible  the desired visibility.
 	 * @return  the specified track visibility prior to calling this method.
 	 */
-	public boolean setTrackVisibility(Integer trackID, boolean visible) {
+	public synchronized boolean setTrackVisibility(Integer trackID, boolean visible) {
 		boolean oldvis = trackModel.setVisibility(trackID, visible);
 		boolean modified = oldvis != visible;
 		if (modified) {

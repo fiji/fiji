@@ -221,7 +221,7 @@ public class TrackMate implements Benchmark, MultiThreaded, Algorithm {
 	 * This method configure the chosen {@link Settings#detectorFactory} with the source image 
 	 * and the detectr settings and execute the detection process for all the frames set 
 	 * in the {@link Settings} object of the target model.
-	 * @return true if the whole detection step has exectued correctly.
+	 * @return true if the whole detection step has executed correctly.
 	 */
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public boolean execDetection() {
