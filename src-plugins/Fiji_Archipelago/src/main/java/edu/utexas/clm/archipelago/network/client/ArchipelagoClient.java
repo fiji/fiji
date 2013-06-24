@@ -188,6 +188,20 @@ public class ArchipelagoClient implements TransceiverListener
             FijiArchipelago.log("Caught an IOE: " + ioe);
             throw ioe;
         }
+
+        if (clientHost.equals(""))
+        {
+            try
+            {
+                clientHost = InetAddress.getLocalHost().getHostName();
+            }
+            catch (UnknownHostException uhe)
+            {
+                FijiArchipelago.log("Could not resolve local name: " + uhe);
+                clientHost = "Unknown";
+            }
+        }
+
         FijiArchipelago.log("Archipelago Client is Active");
     }
     
@@ -261,15 +275,8 @@ public class ArchipelagoClient implements TransceiverListener
                     break;
                 
                 case HOSTNAME:
-                    try
-                    {
-                        xc.queueMessage(MessageType.HOSTNAME,
-                                InetAddress.getLocalHost().getHostName());
-                    }
-                    catch (UnknownHostException uhe)
-                    {
-                        FijiArchipelago.log("Could not resolve local name: " + uhe);
-                    }
+                    xc.queueMessage(MessageType.HOSTNAME,
+                            clientHost);
                     break;
                 
                 case NUMTHREADS:
@@ -325,4 +332,6 @@ public class ArchipelagoClient implements TransceiverListener
         FijiArchipelago.log("Lost socket connection");
         close();
     }
+    
+    public static String clientHost = "";
 }
