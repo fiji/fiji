@@ -54,13 +54,4 @@ public class SpotImageUpdater {
 		}
 		return grabber.getImageString(spot);			
 	}
-
-	
-	/**
-	 * Returns the pixel size for the images created with this image creator.
-	 * @return a double, measuring the physical pixel size.
-	 */
-	public double getPixelSize() {
-		return settings.dx;
-	}
 }

@@ -228,30 +228,30 @@ public class TrackScheme extends AbstractTrackMateModelView {
 	private mxICell updateCellOf(final Spot spot) {
 
 		mxICell cell = graph.getCellFor(spot);
-		if (DEBUG)
-			System.out.println("[TrackScheme] modelChanged: updating cell for spot "+spot);
-		if (null == cell) {
-			// mxCell not present in graph. Most likely because the corresponding spot belonged
-			// to an invisible track, and a cell was not created for it when TrackScheme was
-			// launched. So we create one on the fly now.
-			int row = getUnlaidSpotColumn();
-			cell = insertSpotInGraph(spot, row);
-			int frame = spot.getFeature(Spot.FRAME).intValue();
-			rowLengths.put(frame, row+1);
-		}
+		graph.getModel().beginUpdate();
+		try {
+			if (DEBUG)
+				System.out.println("[TrackScheme] modelChanged: updating cell for spot "+spot);
+			if (null == cell) {
+				// mxCell not present in graph. Most likely because the corresponding spot belonged
+				// to an invisible track, and a cell was not created for it when TrackScheme was
+				// launched. So we create one on the fly now.
+				int row = getUnlaidSpotColumn();
+				cell = insertSpotInGraph(spot, row);
+				int frame = spot.getFeature(Spot.FRAME).intValue();
+				rowLengths.put(frame, row+1);
+			}
 
-		// Update cell look
-		long height = DEFAULT_CELL_HEIGHT;
-		if (spotImageUpdater != null && doThumbnailCapture) {
-			String style = cell.getStyle();
-			String imageStr = spotImageUpdater.getImageString(spot);
-			style = mxStyleUtils.setStyle(style, mxConstants.STYLE_IMAGE, "data:image/base64," + imageStr);
-			graph.getModel().setStyle(cell, style);
-			final double dx = spotImageUpdater.getPixelSize();
-			height = Math.min(DEFAULT_CELL_WIDTH, Math.round(2 * spot.getFeature(Spot.RADIUS) / dx ));
-			height = Math.max(height, DEFAULT_CELL_HEIGHT/3);
+			// Update cell look
+			if (spotImageUpdater != null && doThumbnailCapture) {
+				String style = cell.getStyle();
+				String imageStr = spotImageUpdater.getImageString(spot);
+				style = mxStyleUtils.setStyle(style, mxConstants.STYLE_IMAGE, "data:image/base64," + imageStr);
+				graph.getModel().setStyle(cell, style);
+			}
+		} finally {
+			graph.getModel().endUpdate();
 		}
-		graph.getModel().getGeometry(cell).setHeight(height);
 		return cell;
 	}
 
@@ -271,10 +271,7 @@ public class TrackScheme extends AbstractTrackMateModelView {
 		int row = spot.getFeature(Spot.FRAME).intValue() + 1;
 		double x = (targetColumn-1) * X_COLUMN_SIZE - DEFAULT_CELL_WIDTH/2;
 		double y = (0.5 + row) * Y_COLUMN_SIZE - DEFAULT_CELL_HEIGHT/2; 
-		double dx = spotImageUpdater.getPixelSize();
-		long height = Math.min(DEFAULT_CELL_WIDTH, Math.round(2 * spot.getFeature(Spot.RADIUS) / dx ));
-		height = Math.max(height, 12);
-		mxGeometry geometry = new mxGeometry(x, y, DEFAULT_CELL_WIDTH, height);
+		mxGeometry geometry = new mxGeometry(x, y, DEFAULT_CELL_WIDTH, DEFAULT_CELL_HEIGHT);
 		cellAdded.setGeometry(geometry);
 		// Set its style
 		String imageStr = spotImageUpdater.getImageString(spot);
@@ -479,9 +476,9 @@ public class TrackScheme extends AbstractTrackMateModelView {
 
 			// Deal with spots
 			if (!event.getSpots().isEmpty()) {
-				
+
 				Collection<mxCell> spotsWithStyleToUpdate = new HashSet<mxCell>();
-				
+
 				for (Spot spot : event.getSpots() ) {
 
 					if (event.getSpotFlag(spot) == ModelChangeEvent.FLAG_SPOT_ADDED) {
@@ -509,7 +506,7 @@ public class TrackScheme extends AbstractTrackMateModelView {
 				graph.removeCells(cellsToRemove.toArray(), true);
 				stylist.updateVertexStyle(spotsWithStyleToUpdate);
 			}
-			
+
 
 		} finally {
 			graph.getModel().endUpdate();
@@ -583,9 +580,9 @@ public class TrackScheme extends AbstractTrackMateModelView {
 								edgesToUpdate.put(trackID, edgeSet);
 							}
 							edgeSet.add(graph.getCellFor(edge));
-							
+
 						} else if (event.getEdgeFlag(edge) == ModelChangeEvent.FLAG_EDGE_REMOVED) {
-							
+
 							mxCell cell = graph.getCellFor(edge);
 							graph.removeCells(new Object[] { cell } );
 						}
@@ -661,7 +658,7 @@ public class TrackScheme extends AbstractTrackMateModelView {
 
 				gui.logger.setStatus("Executing layout.");
 				doTrackLayout();
-				
+
 				gui.logger.setProgress(1);
 				refresh();
 
