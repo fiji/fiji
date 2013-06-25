@@ -76,18 +76,26 @@ Authors
 * Cornelius Sicker
 * Curtis Rueden
 * Dan White
+* Daniel Hornung
 * Erwin Frise
 * Gabriel Landini
 * Greg Jefferis
 * Ignacio Arganda-Carreras
+* Jan Eglinger
 * Jean-Yves Tinevez
 * Johannes Schindelin
+* Jolly Jenkins
 * Kota Miura
+* Larry Lindsey
 * Mark Longair
+* Niko Ehrenfeuchter
 * Pavel Tomancak
 * Stephan Preibisch
 * Stephan Saalfeld
+* Tiago Ferreira
+* Tom Kazimiers
 * Verena Kaynig
+* Wayne Rasband
 * and all the good people providing ImageJ and plugins
 
 See also http://fiji.sc/Contributors
