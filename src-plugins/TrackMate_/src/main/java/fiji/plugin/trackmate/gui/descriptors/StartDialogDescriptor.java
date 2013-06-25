@@ -11,12 +11,11 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-import net.imglib2.img.ImagePlusAdapter;
 import net.imglib2.img.ImgPlus;
+import fiji.plugin.trackmate.Model;
 import fiji.plugin.trackmate.SelectionModel;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.TrackMate;
-import fiji.plugin.trackmate.Model;
 import fiji.plugin.trackmate.features.edges.EdgeAnalyzer;
 import fiji.plugin.trackmate.features.spot.SpotAnalyzerFactory;
 import fiji.plugin.trackmate.features.track.TrackAnalyzer;
@@ -25,6 +24,7 @@ import fiji.plugin.trackmate.gui.panels.StartDialogPanel;
 import fiji.plugin.trackmate.providers.EdgeAnalyzerProvider;
 import fiji.plugin.trackmate.providers.SpotAnalyzerProvider;
 import fiji.plugin.trackmate.providers.TrackAnalyzerProvider;
+import fiji.plugin.trackmate.util.TMUtils;
 import fiji.plugin.trackmate.visualization.hyperstack.HyperStackDisplayer;
 
 public class StartDialogDescriptor  implements WizardPanelDescriptor {
@@ -106,7 +106,7 @@ public class StartDialogDescriptor  implements WizardPanelDescriptor {
 		 * in the providers.
 		 */
 		
-		ImgPlus<?> img = ImagePlusAdapter.wrapImgPlus(settings.imp);
+		ImgPlus<?> img = TMUtils.rawWraps(settings.imp);
 		settings.clearSpotAnalyzerFactories();
 		SpotAnalyzerProvider spotAnalyzerProvider = controller.getSpotAnalyzerProvider();
 		List<String> spotAnalyzerKeys = spotAnalyzerProvider.getAvailableSpotFeatureAnalyzers();
