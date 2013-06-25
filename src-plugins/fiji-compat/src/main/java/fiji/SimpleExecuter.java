@@ -8,6 +8,11 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintStream;
 
+/**
+ * @deprecated use {@link org.scijava.util.ProcessUtils#exec(File, PrintStream, PrintStream, String...)} instead
+ * 
+ * @author Johannes Schindelin
+ */
 public class SimpleExecuter {
 	protected StreamDumper stdout, stderr;
 	protected int exitCode;
@@ -44,7 +49,6 @@ public class SimpleExecuter {
 		this(cmdarray, in, out, err, null, null, workingDirectory);
 	}
 
-	@SuppressWarnings("deprecation")
 	public SimpleExecuter(String[] cmdarray, InputStream in, LineHandler out, LineHandler err, OutputStream out2, OutputStream err2, File workingDirectory) throws IOException {
 		if (out != null && out2 != null)
 			throw new RuntimeException("Cannot handle two outputs");
