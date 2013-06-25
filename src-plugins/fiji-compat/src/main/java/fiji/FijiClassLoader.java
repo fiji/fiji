@@ -199,24 +199,24 @@ public class FijiClassLoader extends URLClassLoader {
 	}
 
 
-	public Class forceLoadClass(String name)
+	public Class<?> forceLoadClass(String name)
 		throws ClassNotFoundException {
 			return loadClass(name, true, true);
 		}
 
-	public Class loadClass(String name)
+	public Class<?> loadClass(String name)
 		throws ClassNotFoundException {
 			return loadClass(name, true);
 		}
 
-	public synchronized Class loadClass(String name,
+	public synchronized Class<?> loadClass(String name,
 			boolean resolve) throws ClassNotFoundException {
 		return loadClass(name, resolve, false);
 	}
 
-	public synchronized Class loadClass(String name, boolean resolve,
+	public synchronized Class<?> loadClass(String name, boolean resolve,
 			boolean forceReload) throws ClassNotFoundException {
-		Class result;
+		Class<?> result;
 		try {
 			if (!forceReload) {
 				result = super.loadClass(name, resolve);
