@@ -68,8 +68,8 @@ public class FileDialogDecorator extends KeyAdapter {
 
 	public void keyPressed(KeyEvent e) {
 		int keyCode = e.getKeyCode();
-		if (keyCode < e.VK_SPACE) {
-			if (reRequestFocusAfterEnter && keyCode == e.VK_ENTER)
+		if (keyCode < KeyEvent.VK_SPACE) {
+			if (reRequestFocusAfterEnter && keyCode == KeyEvent.VK_ENTER)
 				// Need to invoke later 2x to give Sun's
 				// KeyEvent handler a chance to request focus
 				// for the "Files" list.
