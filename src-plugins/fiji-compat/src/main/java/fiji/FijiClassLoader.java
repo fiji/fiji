@@ -2,12 +2,14 @@ package fiji;
 
 import ij.IJ;
 import ij.Macro;
+import imagej.util.LineOutputStream;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.PrintStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -17,6 +19,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import org.scijava.util.ProcessUtils;
 
 public class FijiClassLoader extends URLClassLoader {
 
@@ -319,16 +323,24 @@ public class FijiClassLoader extends URLClassLoader {
 		try {
 			IJ.showStatus("Retrotranslating '" + path + "'");
 			File tmpFile = File.createTempFile("retro-", ".jar");
-			SimpleExecuter executer = new SimpleExecuter(new String[] {
-				System.getProperty("ij.executable"),
-				"--jar", System.getProperty("ij.dir") + "/retro/retrotranslator-transformer-1.2.9.jar",
-				"-srcjar", path,
-				"-destjar", tmpFile.getCanonicalPath(),
-				"-target", "1.5"
+			final PrintStream ijLog = new PrintStream(new LineOutputStream() {
+
+				@Override
+				public void println(String line) throws IOException {
+					IJ.log(line);
+				}
+
 			});
-			if (executer.getExitCode() != 0) {
-				IJ.error("Could not retrotranslate '" + path + "':\n"
-					+ executer.getError() + "\n" + executer.getOutput());
+			try {
+				ProcessUtils.exec(null, ijLog, ijLog,
+					System.getProperty("ij.executable"),
+					"--jar", System.getProperty("ij.dir") + "/retro/retrotranslator-transformer-1.2.9.jar",
+					"-srcjar", path,
+					"-destjar", tmpFile.getCanonicalPath(),
+					"-target", "1.5"
+				);
+			} catch (RuntimeException e) {
+				IJ.error("Could not retrotranslate '" + path + "':\n" + e);
 				return;
 			}
 			file.delete();
