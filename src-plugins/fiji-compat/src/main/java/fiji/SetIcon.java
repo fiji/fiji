@@ -17,8 +17,6 @@ public class SetIcon {
 			if (title != null)
 				ij.setTitle(title);
 			URL url = new URL(iconPath);
-			if (url==null)
-				return;
 			ImageProducer ip = (ImageProducer)url.getContent();
 			Image img = ij.createImage(ip);
 			if (img!=null)
