@@ -2,8 +2,6 @@ package fiji;
 
 import ij.IJ;
 import ij.ImageJ;
-import ij.Prefs;
-
 import ij.io.OpenDialog;
 import ij.io.Opener;
 
@@ -15,13 +13,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-
 import java.lang.reflect.Method;
-
 import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
-
 import java.util.Properties;
 
 /*
@@ -82,7 +77,7 @@ public class OtherInstance {
 			file.deleteOnExit();
 
 			// File.setReadable() is Java 6
-			Class[] types = { boolean.class, boolean.class };
+			Class<?>[] types = { boolean.class, boolean.class };
 			Method m = File.class.getMethod("setReadable", types);
 			Object[] arguments = { Boolean.FALSE, Boolean.FALSE };
 			m.invoke(file, arguments);
