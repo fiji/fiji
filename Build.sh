@@ -311,7 +311,6 @@ EOF
 VERSION=2.0.0-SNAPSHOT
 maven_update sc.fiji:javac:$VERSION \
 	net.imagej:ij-minimaven:$VERSION \
-	net.imagej:ij-updater-ssh:$VERSION
 
 # command-line options
 
