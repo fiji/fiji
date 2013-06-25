@@ -225,10 +225,10 @@ esac
 
 ARGV0="$CWD/$0"
 SCIJAVA_COMMON="$CWD/modules/scijava-common"
-MAVEN_DOWNLOAD="$SCIJAVA_COMMON/bin/maven-helper.sh"
-maven_update () {
-	force_update=
-	uptodate "$ARGV0" "$MAVEN_DOWNLOAD" || {
+MAVEN_HELPER="$SCIJAVA_COMMON/bin/maven-helper.sh"
+force_update=
+maven_helper () {
+	uptodate "$ARGV0" "$MAVEN_HELPER" || {
 		force_update=t
 		if test -d "$SCIJAVA_COMMON/.git"
 		then
@@ -239,13 +239,19 @@ maven_update () {
 			git clone https://github.com/scijava/scijava-common \
 				"$SCIJAVA_COMMON"
 		fi
-		if test ! -f "$MAVEN_DOWNLOAD"
+		if test ! -f "$MAVEN_HELPER"
 		then
-			echo "Could not find $MAVEN_DOWNLOAD!" >&2
+			echo "Could not find $MAVEN_HELPER!" >&2
 			exit 1
 		fi
-		touch "$MAVEN_DOWNLOAD"
+		touch "$MAVEN_HELPER"
 	}
+	test $# = 0 ||
+	sh "$MAVEN_HELPER" "$@"
+}
+
+maven_update () {
+	maven_helper
 	for gav in "$@"
 	do
 		artifactId="${gav#*:}"
@@ -267,7 +273,7 @@ maven_update () {
 
 		 uptodate "$ARGV0" "$path" && continue
 		 echo "Downloading $gav" >&2
-		 (cd jars/ && sh "$MAVEN_DOWNLOAD" install "$gav")
+		 (cd jars/ && maven_helper install "$gav")
 		 if test ! -f "$path"
 		 then
 			echo "Failure to download $path" >&2
