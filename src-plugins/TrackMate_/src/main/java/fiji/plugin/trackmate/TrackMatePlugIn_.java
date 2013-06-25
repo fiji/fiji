@@ -26,7 +26,9 @@ public class TrackMatePlugIn_ implements PlugIn {
 		 */
 		
 		TrackMateGUIController controller = new TrackMateGUIController(trackmate);
-		GuiUtils.positionWindow(controller.getGUI(), imp.getWindow());
+		if (imp != null) {
+			GuiUtils.positionWindow(controller.getGUI(), imp.getWindow());
+		}
 	}
 
 
