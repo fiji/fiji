@@ -3,7 +3,6 @@ package fiji;
 import ij.IJ;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -45,6 +44,7 @@ public class SimpleExecuter {
 		this(cmdarray, in, out, err, null, null, workingDirectory);
 	}
 
+	@SuppressWarnings("deprecation")
 	public SimpleExecuter(String[] cmdarray, InputStream in, LineHandler out, LineHandler err, OutputStream out2, OutputStream err2, File workingDirectory) throws IOException {
 		if (out != null && out2 != null)
 			throw new RuntimeException("Cannot handle two outputs");
