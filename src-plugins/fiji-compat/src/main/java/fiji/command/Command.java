@@ -1,27 +1,18 @@
 package fiji.command;
 
-import fiji.FijiTools;
 import fiji.User_Plugins;
-
 import ij.CommandListener;
 import ij.IJ;
 import ij.Menus;
-
 import ij.io.OpenDialog;
-
 import ij.plugin.MacroInstaller;
-import ij.plugin.PlugIn;
 import imagej.legacy.LegacyExtensions;
 
 import java.awt.Menu;
-
 import java.awt.event.ActionEvent;
-
 import java.io.File;
-
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-
 import java.util.Hashtable;
 import java.util.Vector;
 
@@ -60,10 +51,10 @@ public class Command {
 			.append(consumed).append(", time=").append(time).toString();
 	}
 
-	public void notify(Vector listeners, int action) {
+	public void notify(Vector<CommandListener> listeners, int action) {
                 if (listeners.size() > 0) synchronized (listeners) {
                         for (int i = 0; i < listeners.size(); i++) {
-                                CommandListener listener = (CommandListener)listeners.elementAt(i);
+                                CommandListener listener = listeners.elementAt(i);
                                 if (listener instanceof CommandListenerPlus)
                                         notify((CommandListenerPlus)listener, action);
                         }
@@ -74,8 +65,8 @@ public class Command {
 		listener.stateChanged(this, action);
 	}
 
-	public void runCommand(Vector listeners) {
-		Hashtable table = Menus.getCommands();
+	public void runCommand(Vector<CommandListener> listeners) {
+		Hashtable<?, ?> table = Menus.getCommands();
 		className = (String)table.get(command);
 		if (className != null) {
 			arg = "";
