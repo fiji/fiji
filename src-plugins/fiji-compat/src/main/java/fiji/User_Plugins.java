@@ -95,6 +95,7 @@ public class User_Plugins implements PlugIn {
 	/**
 	 * Install the plugins now
 	 */
+	@SuppressWarnings("unchecked")
 	public void run(String arg) {
 		if ("update".equals(arg)) {
 			Menus.updateImageJMenus();
@@ -128,6 +129,7 @@ public class User_Plugins implements PlugIn {
 		Menus.getShortcuts().put(200 + KeyEvent.VK_OPEN_BRACKET, "Script Editor");
 	}
 
+	@SuppressWarnings("unchecked")
 	private static void overrideCommands() {
 		if (!Menus.getCommands().containsKey("Install PlugIn...")) {
 			Menus.getCommands().put("Install PlugIn...", "fiji.PlugInInstaller");
@@ -210,8 +212,8 @@ public class User_Plugins implements PlugIn {
 			installPlugin(menuPath, makeLabel(name), name, file);
 		}
 		else if (name.endsWith(".jar")) try {
-			List plugins = getJarPluginList(file, menuPath);
-			Iterator iter = plugins.iterator();
+			List<String[]> plugins = getJarPluginList(file, menuPath);
+			Iterator<String[]> iter = plugins.iterator();
 			while (iter.hasNext()) {
 				String[] item = (String[])iter.next();
 				if (item[1].equals("-"))
@@ -235,11 +237,11 @@ public class User_Plugins implements PlugIn {
 	 * @param jarFile the .jar file
 	 * @param menuPath the menu into which the discovered plugins are put
 	 */
-	public List getJarPluginList(File jarFile, String menuPath)
+	public List<String[]> getJarPluginList(File jarFile, String menuPath)
 			throws IOException {
-		List result = new ArrayList();
+		List<String[]> result = new ArrayList<String[]>();
 		JarFile jar = new JarFile(jarFile);
-		Enumeration entries = jar.entries();
+		Enumeration<JarEntry> entries = jar.entries();
 		while (entries.hasMoreElements()) {
 			JarEntry entry = (JarEntry)entries.nextElement();
 			String name = entry.getName();
@@ -261,9 +263,9 @@ public class User_Plugins implements PlugIn {
 		return result;
 	}
 
-	protected List parsePluginsConfig(InputStream in, String menuPath)
+	protected List<String[]> parsePluginsConfig(InputStream in, String menuPath)
 			throws IOException {
-		List result = new ArrayList();
+		List<String[]> result = new ArrayList<String[]>();
 		BufferedReader reader =
 			new BufferedReader(new InputStreamReader(in));
 		String line;
@@ -334,6 +336,7 @@ public class User_Plugins implements PlugIn {
 	 * @return the added menu item
 	 */
 	/* TODO: sorted */
+	@SuppressWarnings("unchecked")
 	public static MenuItem installPlugin(String menuPath, String name,
 			String command, File jarFile) {
 		if (Menus.getCommands().get(name) != null) {
@@ -345,7 +348,6 @@ public class User_Plugins implements PlugIn {
 
 		MenuItem item = null;
 		if (IJ.getInstance() != null) {
-			int croc = menuPath.lastIndexOf('>');
 			Menu menu = getMenu(menuPath);
 			item = new MenuItem(name);
 			menu.add(item);
@@ -354,7 +356,7 @@ public class User_Plugins implements PlugIn {
 		Menus.getCommands().put(name, command);
 
 		if (menuEntry2jarFile != null && jarFile != null) try {
-			Map map = (Map)menuEntry2jarFile.get(menuInstance.get(null));
+			Map<String, String> map = (Map<String, String>) menuEntry2jarFile.get(menuInstance.get(null));
 			map.put(name, jarFile.getPath());
 		} catch (Throwable t) {
 			t.printStackTrace();
