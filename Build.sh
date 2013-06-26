@@ -241,7 +241,10 @@ maven_helper () {
 		else
 			git clone https://github.com/scijava/scijava-common \
 				"$SCIJAVA_COMMON"
-		fi >&2
+		fi >&2 || {
+			echo "Could not update SciJava-common" >&2
+			exit 1
+		}
 		if test ! -f "$MAVEN_HELPER"
 		then
 			echo "Could not find $MAVEN_HELPER!" >&2
