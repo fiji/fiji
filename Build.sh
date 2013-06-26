@@ -257,7 +257,6 @@ maven_helper () {
 }
 
 maven_update () {
-	maven_helper
 	for gav in "$@"
 	do
 		artifactId="${gav#*:}"
