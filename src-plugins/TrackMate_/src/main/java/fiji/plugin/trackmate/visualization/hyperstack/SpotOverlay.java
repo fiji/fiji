@@ -110,6 +110,9 @@ public class SpotOverlay extends Roi {
 			g2d.setStroke(new BasicStroke(2.0f));
 			g2d.setColor(TrackMateModelView.DEFAULT_HIGHLIGHT_COLOR);
 			for(Spot spot : spotSelection) {
+				if (spot == editingSpot) {
+					continue;
+				}
 				int sFrame = spot.getFeature(Spot.FRAME).intValue();
 				if (DEBUG)
 					System.out.println("[SpotOverlay] For spot "+spot+" in selection, found frame "+sFrame);

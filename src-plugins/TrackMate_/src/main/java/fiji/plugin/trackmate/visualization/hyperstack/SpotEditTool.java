@@ -332,11 +332,12 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 		Spot editedSpot = editedSpots.get(imp);
 		if (null == editedSpot)
 			return;
-		final double ix = getOffscreenXDouble(e) - 0.5d;  // relative to pixel center
-		final double iy =  getOffscreenYDouble(e) - 0.5d;
-		final double x = ix * calibration[0];
-		final double y = iy * calibration[1];
-		final double z = (displayer.imp.getSlice()-1) * calibration[2];
+		
+		Point mouseLocation = e.getPoint();
+		ImageCanvas canvas = getImageCanvas(e);
+		double x = (-0.5 + canvas.offScreenXD(mouseLocation.x) ) * calibration[0];
+		double y = (-0.5 + canvas.offScreenYD(mouseLocation.y) ) * calibration[1];
+		double z = (imp.getSlice() - 1) * calibration[2];
 		editedSpot.putFeature(Spot.POSITION_X, x);
 		editedSpot.putFeature(Spot.POSITION_Y, y);
 		editedSpot.putFeature(Spot.POSITION_Z, z);
@@ -356,12 +357,13 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 		Spot editedSpot = editedSpots.get(imp);
 		if (null != editedSpot)
 			return;
-
-		final double ix = getOffscreenXDouble(e) - 0.5d;  // relative to pixel center
-		final double iy =  getOffscreenYDouble(e) - 0.5d;;
-		final double x = ix * calibration[0];
-		final double y = iy * calibration[1];
-		final double z = (displayer.imp.getSlice()-1) * calibration[2];
+		
+		Point mouseLocation = e.getPoint();
+		ImageCanvas canvas = getImageCanvas(e);
+		double x = (-0.5 + canvas.offScreenXD(mouseLocation.x) ) * calibration[0];
+		double y = (-0.5 + canvas.offScreenYD(mouseLocation.y) ) * calibration[1];
+		double z = (imp.getSlice() - 1) * calibration[2];
+				
 		quickEditedSpot.putFeature(Spot.POSITION_X, x);
 		quickEditedSpot.putFeature(Spot.POSITION_Y, y);
 		quickEditedSpot.putFeature(Spot.POSITION_Z, z);
@@ -390,6 +392,10 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 		} else { 
 			radius += e.getWheelRotation() * dx * FINE_STEP;
 		}
+		if (radius < dx) {
+			return;
+		}
+		
 		editedSpot.putFeature(Spot.RADIUS, radius);
 		displayer.imp.updateAndDraw();
 		e.consume();
@@ -472,13 +478,10 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 				}
 
 				Spot newSpot = makeSpot(imp, displayer, canvas, null);
-				double dz = imp.getCalibration().pixelDepth;
 				double dt = imp.getCalibration().frameInterval;
-				double zpos = (displayer.imp.getSlice()-1) * dz;
 				int frame = displayer.imp.getFrame() - 1;
 				newSpot.putFeature(Spot.POSITION_T, frame * dt);
 				newSpot.putFeature(Spot.FRAME, Double.valueOf(frame));
-				newSpot.putFeature(Spot.POSITION_Z, zpos);
 				newSpot.putFeature(Spot.RADIUS, radius);
 				newSpot.putFeature(Spot.QUALITY, -1d);
 
@@ -593,7 +596,7 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 				} else { 
 					radius += factor * dx * FINE_STEP;
 				}
-				if (radius <= 2*dx) {
+				if (radius <= dx) {
 					return;
 				}
 
@@ -767,8 +770,8 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 		}
 		final double[] calibration = TMUtils.getSpatialCalibration(imp);
 		return new Spot(new double[] {
-				canvas.offScreenXD(mouseLocation.x) * calibration[0],
-				canvas.offScreenYD(mouseLocation.y) * calibration[1],
+				(-0.5 + canvas.offScreenXD(mouseLocation.x) ) * calibration[0],
+				(-0.5 + canvas.offScreenYD(mouseLocation.y) ) * calibration[1],
 				(imp.getSlice() - 1) * calibration[2]
 		});
 	}
