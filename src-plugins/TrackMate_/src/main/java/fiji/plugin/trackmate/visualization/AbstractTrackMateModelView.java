@@ -3,13 +3,12 @@ package fiji.plugin.trackmate.visualization;
 import java.util.HashMap;
 import java.util.Map;
 
+import fiji.plugin.trackmate.Model;
 import fiji.plugin.trackmate.ModelChangeListener;
 import fiji.plugin.trackmate.SelectionChangeEvent;
 import fiji.plugin.trackmate.SelectionChangeListener;
 import fiji.plugin.trackmate.SelectionModel;
 import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.Model;
-import fiji.plugin.trackmate.features.track.TrackIndexAnalyzer;
 
 /**
  * An abstract class for spot displayers, that can overlay detected spots and tracks on top

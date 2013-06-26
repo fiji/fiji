@@ -10,6 +10,8 @@ import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -22,10 +24,8 @@ import javax.swing.JPanel;
 
 import org.jfree.chart.renderer.InterpolatePaintScale;
 
-import fiji.plugin.trackmate.ModelChangeEvent;
-import fiji.plugin.trackmate.ModelChangeListener;
-import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.Model;
+import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.features.track.TrackIndexAnalyzer;
 import fiji.plugin.trackmate.gui.panels.ActionListenablePanel;
 
@@ -34,25 +34,25 @@ public class ColorByFeatureGUIPanel extends ActionListenablePanel {
 	/*
 	 * ENUM
 	 */
-	
+
 	public static enum Category {
 		SPOTS("spots"),
 		EDGES("edges"),
 		TRACKS("tracks");
-		
+
 		private String name;
 
 		private Category(String name) {
 			this.name = name;
 		}
-		
+
 		@Override
 		public String toString() {
 			return name;
 		}
-		
+
 	}
-	
+
 	/*
 	 * FIELDS
 	 */
@@ -76,7 +76,7 @@ public class ColorByFeatureGUIPanel extends ActionListenablePanel {
 	/*
 	 * CONSTRUCTOR
 	 */
-	
+
 	public ColorByFeatureGUIPanel(Model model, List<Category> categories) {
 		super();
 		this.model = model;
@@ -107,7 +107,7 @@ public class ColorByFeatureGUIPanel extends ActionListenablePanel {
 	public Category getColorGeneratorCategory() {
 		return jComboBoxSetColorBy.getSelectedCategory();
 	}
-	
+
 	/**
 	 * Returns the selected feature in the combo box.
 	 * @return the selected feature.
@@ -116,15 +116,15 @@ public class ColorByFeatureGUIPanel extends ActionListenablePanel {
 	public String getColorFeature() {
 		return jComboBoxSetColorBy.getSelectedItem();
 	}
-	
+
 	public void setColorFeature(String feature) {
 		jComboBoxSetColorBy.setSelectedItem(feature);
 	}
-	
+
 	/*
 	 * PRIVATE METHODS
 	 */
-	
+
 
 	/**
 	 * Forward the 'color by feature' action to the caller of this GUI.
@@ -140,7 +140,7 @@ public class ColorByFeatureGUIPanel extends ActionListenablePanel {
 		}
 
 		final double[] values = getValues(jComboBoxSetColorBy);
-		
+
 		if (null == values) {
 			g.clearRect(0, 0, canvasColor.getWidth(), canvasColor.getHeight());
 			return;
@@ -206,14 +206,6 @@ public class ColorByFeatureGUIPanel extends ActionListenablePanel {
 					}
 				});
 			}
-			{
-				model.addModelChangeListener(new ModelChangeListener() {
-					@Override
-					public void modelChanged(ModelChangeEvent event) {
-						canvasColor.repaint();
-					}
-				});
-			}
 		}
 		{
 			jPanelColor = new JPanel();
@@ -231,7 +223,21 @@ public class ColorByFeatureGUIPanel extends ActionListenablePanel {
 				};
 				jPanelColor.add(canvasColor, BorderLayout.CENTER);
 				canvasColor.setPreferredSize(new java.awt.Dimension(270, 20));
+				canvasColor.addMouseListener(new MouseAdapter() {
+					@Override
+					public void mouseClicked(MouseEvent e) {
+						canvasColor.repaint();
+					}
+				});
 			}
+		}
+		{
+			addMouseListener(new MouseAdapter() {
+				@Override
+				public void mouseClicked(MouseEvent e) {
+					canvasColor.repaint();
+				}
+			});
 		}
 	}
 
@@ -244,7 +250,7 @@ public class ColorByFeatureGUIPanel extends ActionListenablePanel {
 		LinkedHashMap<Category, Collection<String>> features = new LinkedHashMap<Category, Collection<String>>(categories.size());
 		HashMap<Category, String> categoryNames = new HashMap<Category, String>(categories.size());
 		HashMap<String, String> featureNames = new HashMap<String, String>();
-		
+
 		for (Category category : categories) {
 			switch (category) {
 			case SPOTS:
@@ -253,14 +259,14 @@ public class ColorByFeatureGUIPanel extends ActionListenablePanel {
 				features.put(Category.SPOTS, spotFeatures);
 				featureNames.putAll(model.getFeatureModel().getSpotFeatureNames());
 				break;
-				
+
 			case EDGES:
 				categoryNames.put(Category.EDGES, "Edge features:");
 				Collection<String> edgeFeatures = model.getFeatureModel().getEdgeFeatures();
 				features.put(Category.EDGES, edgeFeatures);
 				featureNames.putAll(model.getFeatureModel().getEdgeFeatureNames());
 				break;
-				
+
 			case TRACKS:
 				categoryNames.put(Category.TRACKS, "Track features:");
 				Collection<String> trackFeatures = model.getFeatureModel().getTrackFeatures();
@@ -274,7 +280,7 @@ public class ColorByFeatureGUIPanel extends ActionListenablePanel {
 		}
 		return new CategoryJComboBox<Category, String>(features, featureNames, categoryNames);
 	}
-	
+
 
 	/**
 	 * Returns the feature values for the item currently selected in the combo box.
@@ -282,7 +288,7 @@ public class ColorByFeatureGUIPanel extends ActionListenablePanel {
 	 * @return a new double array containing the feature values.
 	 */
 	protected double[] getValues(CategoryJComboBox<Category, String> cb) {
-		
+
 		double[] values;
 		Category category = cb.getSelectedCategory();
 		String feature = cb.getSelectedItem();
