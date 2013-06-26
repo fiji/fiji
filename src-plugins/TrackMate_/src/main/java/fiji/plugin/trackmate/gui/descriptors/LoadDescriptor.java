@@ -21,6 +21,8 @@ import fiji.plugin.trackmate.providers.ViewProvider;
 import fiji.plugin.trackmate.util.TMUtils;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
 import fiji.plugin.trackmate.visualization.hyperstack.HyperStackDisplayer;
+import fiji.plugin.trackmate.visualization.trackscheme.SpotImageUpdater;
+import fiji.plugin.trackmate.visualization.trackscheme.TrackScheme;
 
 public class LoadDescriptor extends SomeDialogDescriptor {
 
@@ -92,6 +94,12 @@ public class LoadDescriptor extends SomeDialogDescriptor {
 		// Views
 		ViewProvider viewProvider = newcontroller.getViewProvider();
 		Collection<TrackMateModelView> views = reader.getViews(viewProvider);
+		for (TrackMateModelView view : views) {
+			if (view.getKey().equals(TrackScheme.KEY)) {
+				TrackScheme trackscheme = (TrackScheme) view;
+				trackscheme.setSpotImageUpdater(new SpotImageUpdater(settings));
+			}
+		}
 		
 		if (!reader.isReadingOk()) {
 			Logger newlogger = newcontroller.getGUI().getLogger();
