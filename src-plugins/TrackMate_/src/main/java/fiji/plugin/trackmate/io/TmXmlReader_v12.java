@@ -133,6 +133,7 @@ import fiji.plugin.trackmate.tracking.FastLAPTracker;
 import fiji.plugin.trackmate.tracking.SimpleFastLAPTracker;
 import fiji.plugin.trackmate.tracking.SpotTracker;
 import fiji.plugin.trackmate.tracking.kdtree.NearestNeighborTracker;
+import fiji.plugin.trackmate.util.TMUtils;
 
 /**
  * A compatibility xml loader than can load TrackMate xml file saved for version
@@ -230,7 +231,7 @@ public class TmXmlReader_v12 extends TmXmlReader {
 		
 		// Feature analyzers. By default, we add them all.
 		
-		ImgPlus<?> img = ImagePlusAdapter.wrapImgPlus(settings.imp);
+		ImgPlus<?> img = TMUtils.rawWraps(settings.imp);
 		settings.clearSpotAnalyzerFactories();
 		List<String> spotAnalyzerKeys = spotAnalyzerProvider.getAvailableSpotFeatureAnalyzers();
 		for (String key : spotAnalyzerKeys) {

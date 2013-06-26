@@ -85,7 +85,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-import net.imglib2.img.ImagePlusAdapter;
 import net.imglib2.img.ImgPlus;
 
 import org.jdom2.Attribute;
@@ -102,10 +101,10 @@ import fiji.plugin.trackmate.Dimension;
 import fiji.plugin.trackmate.FeatureModel;
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.Logger.StringBuilderLogger;
+import fiji.plugin.trackmate.Model;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
-import fiji.plugin.trackmate.Model;
 import fiji.plugin.trackmate.detection.SpotDetectorFactory;
 import fiji.plugin.trackmate.features.FeatureFilter;
 import fiji.plugin.trackmate.features.edges.EdgeAnalyzer;
@@ -120,6 +119,7 @@ import fiji.plugin.trackmate.providers.TrackAnalyzerProvider;
 import fiji.plugin.trackmate.providers.TrackerProvider;
 import fiji.plugin.trackmate.providers.ViewProvider;
 import fiji.plugin.trackmate.tracking.SpotTracker;
+import fiji.plugin.trackmate.util.TMUtils;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
 
 
@@ -976,7 +976,7 @@ public class TmXmlReader {
 
 				} else {
 
-					ImgPlus<?> img = ImagePlusAdapter.wrapImgPlus(settings.imp);
+					ImgPlus<?> img = TMUtils.rawWraps(settings.imp);
 					List<Element> children = spotAnalyzerEl.getChildren(ANALYSER_ELEMENT_KEY);
 					for (Element child : children) {
 
