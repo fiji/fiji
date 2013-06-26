@@ -283,7 +283,9 @@ maven_update () {
 		 then
 			echo "Failure to download $path" >&2
 			exit 1
-		 fi)
+		 fi
+		 uptodate "$ARGV0" "$path" ||
+		 touch "$path")
 	done
 }
 
