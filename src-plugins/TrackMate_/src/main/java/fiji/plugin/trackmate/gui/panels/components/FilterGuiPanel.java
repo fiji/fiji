@@ -27,8 +27,6 @@ import javax.swing.JScrollPane;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
-import fiji.plugin.trackmate.ModelChangeEvent;
-import fiji.plugin.trackmate.ModelChangeListener;
 import fiji.plugin.trackmate.Model;
 import fiji.plugin.trackmate.features.FeatureFilter;
 import fiji.plugin.trackmate.gui.TrackMateWizard;
@@ -81,18 +79,18 @@ public class FilterGuiPanel extends ActionListenablePanel implements ChangeListe
 	public FilterGuiPanel(Model model, Category category) {
 		this.model = model;
 
-		model.addModelChangeListener(new ModelChangeListener() {
-
-			@Override
-			public void modelChanged(ModelChangeEvent event) {
-				if (event.getEventID() == ModelChangeEvent.MODEL_MODIFIED) {
-					refreshDisplayedFeatureValues();
-					for (FilterPanel fp : thresholdPanels) {
-						fp.refresh();
-					}
-				}
-			}
-		});
+//		model.addModelChangeListener(new ModelChangeListener() {
+//
+//			@Override
+//			public void modelChanged(ModelChangeEvent event) {
+//				if (event.getEventID() == ModelChangeEvent.MODEL_MODIFIED) {
+//					refreshDisplayedFeatureValues();
+//					for (FilterPanel fp : thresholdPanels) {
+//						fp.refresh();
+//					}
+//				}
+//			}
+//		});
 
 		this.category = category;
 		switch (category) {
@@ -190,10 +188,13 @@ public class FilterGuiPanel extends ActionListenablePanel implements ChangeListe
 
 	/**
 	 * Returns the feature selected in the "color by feature" comb-box. 
-	 * Returns <code>null</code> if the item "Default" is selected.
 	 */
 	public String getColorFeature() {
 		return jPanelColorByFeatureGUI.getColorFeature();
+	}
+	
+	public Category getColorCategory() {
+		return jPanelColorByFeatureGUI.getColorGeneratorCategory();
 	}
 
 	public void setColorFeature(String feature) {
@@ -425,7 +426,7 @@ public class FilterGuiPanel extends ActionListenablePanel implements ChangeListe
 					}
 				}
 				{
-					jPanelColorByFeatureGUI = new ColorByFeatureGUIPanel(model, Arrays.asList(new Category[] { category } ));
+					jPanelColorByFeatureGUI = new ColorByFeatureGUIPanel(model, Arrays.asList(new Category[] { category,  Category.DEFAULT } ));
 					COLOR_FEATURE_CHANGED = jPanelColorByFeatureGUI.COLOR_FEATURE_CHANGED;
 					jPanelColorByFeatureGUI.addActionListener(new ActionListener() {
 						@Override
