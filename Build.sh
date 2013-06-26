@@ -237,11 +237,11 @@ maven_helper () {
 		then
 			(cd "$SCIJAVA_COMMON" &&
 			 test arefs/heads/master != "a$(git rev-parse --symbolic-full-name HEAD)" ||
-			 git pull -k)
+			 git pull -k) >&2
 		else
 			git clone https://github.com/scijava/scijava-common \
-				"$SCIJAVA_COMMON"
-		fi >&2 || {
+				"$SCIJAVA_COMMON" >&2
+		fi || {
 			echo "Could not update SciJava-common" >&2
 			exit 1
 		}
