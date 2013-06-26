@@ -236,7 +236,7 @@ maven_helper () {
 		if test -d "$SCIJAVA_COMMON/.git"
 		then
 			(cd "$SCIJAVA_COMMON" &&
-			 test arefs/heads/master != "$(git rev-parse --symbolic-full-name HEAD)" ||
+			 test arefs/heads/master != "a$(git rev-parse --symbolic-full-name HEAD)" ||
 			 git pull -k)
 		else
 			git clone https://github.com/scijava/scijava-common \
