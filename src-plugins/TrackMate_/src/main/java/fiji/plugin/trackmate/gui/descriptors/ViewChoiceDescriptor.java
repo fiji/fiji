@@ -8,6 +8,7 @@ import fiji.plugin.trackmate.gui.TrackMateGUIModel;
 import fiji.plugin.trackmate.gui.panels.ListChooserPanel;
 import fiji.plugin.trackmate.providers.ViewProvider;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
+import fiji.plugin.trackmate.visualization.hyperstack.HyperStackDisplayer;
 
 public class ViewChoiceDescriptor implements WizardPanelDescriptor {
 
@@ -49,6 +50,11 @@ public class ViewChoiceDescriptor implements WizardPanelDescriptor {
 		new Thread("TrackMate view rendering thread") {
 			public void run() {
 				String viewName = viewProvider.getAvailableViews().get(index);
+				
+				if (viewName.equals(HyperStackDisplayer.NAME)) {
+					return; // it is already on.
+				}
+				
 				TrackMateModelView view = viewProvider.getView(viewName);
 				for (String settingKey : guimodel.getDisplaySettings().keySet()) {
 					view.setDisplaySettings(settingKey, guimodel.getDisplaySettings().get(settingKey));
