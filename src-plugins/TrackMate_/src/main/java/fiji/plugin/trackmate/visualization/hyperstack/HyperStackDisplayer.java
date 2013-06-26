@@ -225,11 +225,6 @@ public class HyperStackDisplayer extends AbstractTrackMateModelView  {
 			dorefresh = true;
 			
 		} else if (key == TrackMateModelView.KEY_TRACK_COLORING) {
-			// unregister the old one
-			TrackColorGenerator oldColorGenerator = (TrackColorGenerator) displaySettings.get(KEY_TRACK_COLORING);
-			if (null != oldColorGenerator) {
-				oldColorGenerator.terminate();
-			}
 			// pass the new one to the track overlay - we ignore its spot coloring and keep the spot coloring
 			TrackColorGenerator colorGenerator = (TrackColorGenerator) value;
 			trackOverlay.setTrackColorGenerator(colorGenerator);

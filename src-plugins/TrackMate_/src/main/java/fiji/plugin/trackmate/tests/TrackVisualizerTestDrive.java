@@ -8,13 +8,19 @@ import fiji.plugin.trackmate.Model;
 import fiji.plugin.trackmate.TrackMate;
 import fiji.plugin.trackmate.features.FeatureFilter;
 import fiji.plugin.trackmate.features.ModelFeatureUpdater;
+import fiji.plugin.trackmate.features.edges.EdgeVelocityAnalyzer;
 import fiji.plugin.trackmate.features.track.TrackBranchingAnalyzer;
+import fiji.plugin.trackmate.features.track.TrackIndexAnalyzer;
 import fiji.plugin.trackmate.gui.GrapherPanel;
 import fiji.plugin.trackmate.gui.panels.ConfigureViewsPanel;
 import fiji.plugin.trackmate.io.TmXmlReader;
 import fiji.plugin.trackmate.providers.EdgeAnalyzerProvider;
 import fiji.plugin.trackmate.providers.SpotAnalyzerProvider;
 import fiji.plugin.trackmate.providers.TrackAnalyzerProvider;
+import fiji.plugin.trackmate.visualization.PerEdgeFeatureColorGenerator;
+import fiji.plugin.trackmate.visualization.PerTrackFeatureColorGenerator;
+import fiji.plugin.trackmate.visualization.SpotColorGenerator;
+import fiji.plugin.trackmate.visualization.TrackMateModelView;
 import fiji.plugin.trackmate.visualization.hyperstack.HyperStackDisplayer;
 import fiji.plugin.trackmate.visualization.threedviewer.SpotDisplayer3D;
 import fiji.plugin.trackmate.visualization.trackscheme.SpotImageUpdater;
@@ -94,11 +100,15 @@ public class TrackVisualizerTestDrive {
 			}
 		});
 		
-		// Instantiate displayer
 		SelectionModel sm = new SelectionModel(model);
+		SpotColorGenerator spotColor = new SpotColorGenerator(model);
+		PerEdgeFeatureColorGenerator edgeColor = new PerEdgeFeatureColorGenerator(model, EdgeVelocityAnalyzer.VELOCITY);
+		PerTrackFeatureColorGenerator trackColor = new PerTrackFeatureColorGenerator(model, TrackIndexAnalyzer.TRACK_ID);
+		
+		// Instantiate displayer
 		final HyperStackDisplayer displayer = new HyperStackDisplayer(model, sm, settings.imp);
-//		final SpotDisplayer3D displayer = new SpotDisplayer3D(model);
-//		displayer.setRenderImageData(false);
+		displayer.setDisplaySettings(TrackMateModelView.KEY_SPOT_COLORING, spotColor);
+		displayer.setDisplaySettings(TrackMateModelView.KEY_TRACK_COLORING, edgeColor);
 		displayer.render();
 		displayer.refresh();
 		
@@ -106,10 +116,16 @@ public class TrackVisualizerTestDrive {
 		// Display Track scheme
 		final TrackScheme trackScheme = new TrackScheme(model, sm);
 		trackScheme.setSpotImageUpdater(new SpotImageUpdater(settings));
+		trackScheme.setDisplaySettings(TrackMateModelView.KEY_SPOT_COLORING, spotColor);
+		trackScheme.setDisplaySettings(TrackMateModelView.KEY_TRACK_COLORING, edgeColor);
 		trackScheme.render();
 		
 		// Show control panel
 		ConfigureViewsPanel panel = new ConfigureViewsPanel(trackmate.getModel());
+		panel.setSpotColorGenerator(spotColor);
+		panel.setEdgeColorGenerator(edgeColor);
+		panel.setTrackColorGenerator(trackColor);
+		
 		JFrame frame = new JFrame();
 		frame.getContentPane().add(panel);
 		frame.setSize(300, 500);

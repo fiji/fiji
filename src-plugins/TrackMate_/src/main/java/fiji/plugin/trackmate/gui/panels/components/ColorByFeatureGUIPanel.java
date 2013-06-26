@@ -12,6 +12,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -31,6 +32,12 @@ import fiji.plugin.trackmate.gui.panels.ActionListenablePanel;
 
 public class ColorByFeatureGUIPanel extends ActionListenablePanel {
 
+	/** The key for the default, uniform painting style. */
+	private static final String UNIFORM_KEY = "UNIFORM";
+	/** The name of the default, uniform painting style. */
+	private static final String UNIFORM_NAME = "Uniform color";
+
+
 	/*
 	 * ENUM
 	 */
@@ -38,7 +45,8 @@ public class ColorByFeatureGUIPanel extends ActionListenablePanel {
 	public static enum Category {
 		SPOTS("spots"),
 		EDGES("edges"),
-		TRACKS("tracks");
+		TRACKS("tracks"),
+		DEFAULT("DefauLt");
 
 		private String name;
 
@@ -58,10 +66,8 @@ public class ColorByFeatureGUIPanel extends ActionListenablePanel {
 	 */
 
 	private static final long serialVersionUID = 1L;
-	/**
-	 * This action is fired when the feature to color in the "Set color by feature"
-	 * JComboBox is changed.
-	 */
+	/** This action is fired when the feature to color in the "Set color by feature"
+	 * JComboBox is changed. */
 	public final ActionEvent COLOR_FEATURE_CHANGED = new ActionEvent(this, 1, "ColorFeatureChanged");
 	private JLabel jLabelSetColorBy;
 	private CategoryJComboBox<Category, String> jComboBoxSetColorBy;
@@ -134,7 +140,7 @@ public class ColorByFeatureGUIPanel extends ActionListenablePanel {
 	}
 
 	private void repaintColorCanvas(Graphics g) {
-		if (null == jComboBoxSetColorBy.getSelectedItem()) {
+		if (null == jComboBoxSetColorBy.getSelectedItem() || getColorGeneratorCategory().equals(Category.DEFAULT)) {
 			g.clearRect(0, 0, canvasColor.getWidth(), canvasColor.getHeight());
 			return;
 		}
@@ -273,6 +279,14 @@ public class ColorByFeatureGUIPanel extends ActionListenablePanel {
 				features.put(Category.TRACKS, trackFeatures);
 				featureNames.putAll(model.getFeatureModel().getTrackFeatureNames());
 				break;
+				
+			case DEFAULT:
+				categoryNames.put(Category.DEFAULT, "Default:");
+				Collection<String> defaultOptions = new ArrayList<String>();
+				defaultOptions.add(UNIFORM_KEY);
+				features.put(Category.DEFAULT, defaultOptions );
+				featureNames.put(UNIFORM_KEY, UNIFORM_NAME);
+				break;
 
 			default:
 				throw new IllegalArgumentException("Unknown category: " + category);
@@ -303,6 +317,8 @@ public class ColorByFeatureGUIPanel extends ActionListenablePanel {
 			SpotCollection spots = model.getSpots();
 			values = spots.collectValues(feature, false);
 			break;
+		case DEFAULT:
+			throw new IllegalArgumentException("Cannot return values for " + category);
 		default:
 			throw new IllegalArgumentException("Unknown category: " + category);
 		}

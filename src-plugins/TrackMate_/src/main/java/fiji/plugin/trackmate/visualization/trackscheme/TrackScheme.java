@@ -612,12 +612,8 @@ public class TrackScheme extends AbstractTrackMateModelView {
 
 	@Override
 	public void setDisplaySettings(String key, Object value) {
-
 		if (key == TrackMateModelView.KEY_TRACK_COLORING) {
 			if (null != stylist) {
-				// unregister the old one
-				TrackColorGenerator oldColorGenerator = (TrackColorGenerator) displaySettings.get(KEY_TRACK_COLORING);
-				oldColorGenerator.terminate();
 				// pass the new one to the track overlay - we ignore its spot coloring and keep the spot coloring
 				TrackColorGenerator colorGenerator = (TrackColorGenerator) value;
 				stylist.setColorGenerator(colorGenerator);
@@ -625,7 +621,6 @@ public class TrackScheme extends AbstractTrackMateModelView {
 				refresh();
 			}
 		}
-
 		displaySettings.put(key, value);
 	}
 
