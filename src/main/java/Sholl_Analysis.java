@@ -69,10 +69,11 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
     private static boolean shollLOG  = false;
 
     /* Data Normalization */
-    private static final String[] NORMS2D = { "Area", "Perimeter" };
-    private static final String[] NORMS3D = { "Volume", "Surface" };
-    private static final int AV_NORM = 0;
-    private static final int PS_NORM = 1;
+    private static final String[] NORMS2D = { "Area", "Perimeter", "Annulus" };
+    private static final String[] NORMS3D = { "Volume", "Surface", "Spherical shell" };
+    private static final int AREA_NORM      = 0;
+    private static final int PERIMETER_NORM = 1;
+    private static final int ANNULUS_NORM   = 2;
     private static int normChoice;
 
     /* Ramification Indices */
@@ -323,6 +324,7 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
 
         // Create plots
         if (shollN) {
+
             final Plot plotN = plotValues("Sholl profile ("+ SHOLL_TYPES[SHOLL_N] +") for "+ imgTitle,
                     is3D ? "3D distance ("+ unit +")" : "2D distance ("+ unit +")",
                     "N. of Intersections",
@@ -331,33 +333,40 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
             if (fitCurve)
                 fvaluesN = getFittedProfile(valuesN, SHOLL_N, statsTable, plotN);
             savePlot(plotN, SHOLL_N);
+
         }
         if (shollNS) {
-            final Plot plotNS = plotValues("Sholl profile ("+ SHOLL_TYPES[SHOLL_NS] +") for "+ imgTitle,
+
+			final Plot plotNS = plotValues("Sholl profile ("+ SHOLL_TYPES[SHOLL_NS] +") for "+ imgTitle,
                     is3D ? "3D distance ("+ unit +")" : "2D distance ("+ unit +")",
                     "Inters./"+ (is3D ? NORMS3D[normChoice] : NORMS2D[normChoice]),
                     valuesNS);
             if (fitCurve)
                 fvaluesNS = getFittedProfile(valuesNS, SHOLL_NS, statsTable, plotNS);
             savePlot(plotNS, SHOLL_NS);
+
         }
-        if (shollSLOG) {
-            final Plot plotSLOG = plotValues("Sholl profile ("+ SHOLL_TYPES[SHOLL_SLOG] +") for "+ imgTitle,
+		if (shollSLOG) {
+
+			final Plot plotSLOG = plotValues("Sholl profile ("+ SHOLL_TYPES[SHOLL_SLOG] +") for "+ imgTitle,
                     is3D ? "3D distance ("+ unit +")" : "2D distance ("+ unit +")",
                     "log(Inters./"+ (is3D ? NORMS3D[normChoice] : NORMS2D[normChoice]) +")",
                     valuesSLOG);
             if (fitCurve)
                 plotRegression(valuesSLOG, plotSLOG, statsTable);
             savePlot(plotSLOG, SHOLL_SLOG);
+
         }
-        if (shollLOG) {
-            final Plot plotLOG = plotValues("Sholl profile ("+ SHOLL_TYPES[SHOLL_LOG] +") for "+ imgTitle,
+		if (shollLOG) {
+
+			final Plot plotLOG = plotValues("Sholl profile ("+ SHOLL_TYPES[SHOLL_LOG] +") for "+ imgTitle,
                     is3D ? "log(3D distance)" : "log(2D distance)",
                     "log(Inters./"+ (is3D ? NORMS3D[normChoice] : NORMS2D[normChoice]) +")",
                     valuesLOG);
             if (fitCurve)
                 fvaluesLOG = getFittedProfile(valuesLOG, SHOLL_LOG, statsTable, plotLOG);
             savePlot(plotLOG, SHOLL_LOG);
+
         }
 
         ResultsTable rt;
@@ -406,7 +415,7 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
 
         // Create intersections mask, but check first if it is worth proceeding
         if (mask) {
-			final ImagePlus maskimg = makeMask(img, imgTitle, (fvaluesN==null ? counts : fvaluesN), xymaxradius, x, y, cal);
+			final ImagePlus maskimg = makeMask(img, imgTitle, (fvaluesN==null ? counts : fvaluesN), x, y, cal);
 
             if (maskimg == null) {
 				IJ.beep(); exitmsg = "Error: Mask could not be created! ";
@@ -1259,7 +1268,7 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
      * of a copy of the analyzed image
      */
     private ImagePlus makeMask(final ImagePlus img, final String ttl, final double[] values,
-            final int lastRadius, final int xc, final int yc, final Calibration cal) {
+            final int xc, final int yc, final Calibration cal) {
 
         // Check if analyzed image remains available
         if ( img.getWindow()==null ) return null;
@@ -1280,12 +1289,13 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
             ip = img.getProcessor();
         }
 
-        // Heatmap will be a 32-bit image so that it can hold any real number
-        final ImageProcessor mp = new FloatProcessor(ip.getWidth(), ip.getHeight());
+        // Sholl mask as a 16-bit image. Any negative values from polynomial will become 0
+        final ImageProcessor mp = new ShortProcessor(ip.getWidth(), ip.getHeight());
 
-        final int drawSteps = values.length;
-        final int firstRadius = (int) Math.round(startRadius/vxWH);
-        final int drawWidth = (int) Math.round((lastRadius-startRadius)/drawSteps);
+		final int drawSteps = values.length;
+        final int firstRadius = (int) Math.round( startRadius/vxWH );
+        final int lastRadius = (int) Math.round( (startRadius + (drawSteps-1)*stepRadius)/vxWH) ;
+        final int drawWidth = (int) Math.round( (lastRadius-startRadius)/drawSteps );
 
         for (int i = 0; i < drawSteps; i++) {
 
@@ -1530,16 +1540,23 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
             x = values[i][0]; y = values[i][1];
 
             if (normY) {
-                if (normChoice==AV_NORM) {
+                if (normChoice==AREA_NORM) {
                     if (is3D)
                         transValues[i][1] = y / (Math.PI * x*x*x * 4/3); // Volume of sphere
                     else
                         transValues[i][1] = y / (Math.PI * x*x); // Area of circle
-                } else if (normChoice==PS_NORM) {
+                } else if (normChoice==PERIMETER_NORM) {
                     if (is3D)
                         transValues[i][1] = y / (Math.PI * x*x * 4); // Surface area of sphere
                     else
                         transValues[i][1] = y / (Math.PI * x * 2); // Length of circumference
+                } else if (normChoice==ANNULUS_NORM) {
+                	double r1 = x - stepRadius/2;
+                	double r2 = x + stepRadius/2;
+                    if (is3D)
+                        transValues[i][1] = y / ( Math.PI * 4/3 * (r2*r2*r2 - r1*r1*r1) ); // Volume of spherical shell
+                    else
+                        transValues[i][1] = y / ( Math.PI * (r2*r2 - r1*r1) ); // Area of annulus
                 }
             } else
                 transValues[i][1] = y;
