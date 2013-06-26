@@ -536,7 +536,8 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 					e.consume(); // Consume it anyway, so that we are not bothered by IJ
 					return; 
 				}
-
+				
+				selectionModel.removeSpotFromSelection(target);
 				model.beginUpdate();
 				try {
 					model.removeSpot(target);
