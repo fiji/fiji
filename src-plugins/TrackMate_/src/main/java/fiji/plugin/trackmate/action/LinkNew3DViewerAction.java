@@ -34,7 +34,10 @@ public class LinkNew3DViewerAction extends AbstractTMAction {
 				Image3DUniverse universe = new Image3DUniverse();
 				universe.show();
 				SpotDisplayer3D newDisplayer = new SpotDisplayer3D(trackmate.getModel(), controller.getSelectionModel(), universe );
-				// TODO link listeners and display settings
+				for (String key : controller.getGuimodel().getDisplaySettings().keySet()) {
+					newDisplayer.setDisplaySettings(key, controller.getGuimodel().getDisplaySettings().get(key));
+				}
+				controller.getGuimodel().addView(newDisplayer);
 				newDisplayer.render();
 				logger.log("Done.\n");
 			}
