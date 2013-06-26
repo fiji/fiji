@@ -6,6 +6,9 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics2D;
 import java.awt.Point;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowListener;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -274,8 +277,10 @@ public class TrackScheme extends AbstractTrackMateModelView {
 		mxGeometry geometry = new mxGeometry(x, y, DEFAULT_CELL_WIDTH, DEFAULT_CELL_HEIGHT);
 		cellAdded.setGeometry(geometry);
 		// Set its style
-		String imageStr = spotImageUpdater.getImageString(spot);
-		graph.getModel().setStyle(cellAdded, mxConstants.STYLE_IMAGE+"="+"data:image/base64," + imageStr);
+		if (null != spotImageUpdater && doThumbnailCapture) {
+			String imageStr = spotImageUpdater.getImageString(spot);
+			graph.getModel().setStyle(cellAdded, mxConstants.STYLE_IMAGE+"="+"data:image/base64," + imageStr);
+		}
 		return cellAdded;
 	}
 
@@ -818,6 +823,14 @@ public class TrackScheme extends AbstractTrackMateModelView {
 		String title = "TrackScheme";
 		gui.setTitle(title);
 		gui.setSize(DEFAULT_SIZE);
+		gui.addWindowListener(new WindowAdapter() {
+			@Override
+			public void windowClosing(WindowEvent e) {
+				System.out.println("Closed TrackScheme");//DEBUG
+				model.removeModelChangeListener(TrackScheme.this);
+				System.out.println(model.getModelChangeListener());//DEBUG 
+			}
+		});
 		gui.setVisible(true);
 	}
 
