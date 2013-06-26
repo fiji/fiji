@@ -51,6 +51,7 @@ import fiji.plugin.trackmate.gui.descriptors.TrackerConfigurationDescriptor;
 import fiji.plugin.trackmate.gui.descriptors.TrackingDescriptor;
 import fiji.plugin.trackmate.gui.descriptors.ViewChoiceDescriptor;
 import fiji.plugin.trackmate.gui.descriptors.WizardPanelDescriptor;
+import fiji.plugin.trackmate.gui.panels.components.ColorByFeatureGUIPanel;
 import fiji.plugin.trackmate.providers.ActionProvider;
 import fiji.plugin.trackmate.providers.DetectorProvider;
 import fiji.plugin.trackmate.providers.EdgeAnalyzerProvider;
@@ -442,11 +443,15 @@ public class TrackMateGUIController implements ActionListener {
 		/*
 		 * Track filtering 
 		 */
-		trackFilterDescriptor		= new TrackFilterDescriptor(trackmate, trackColorGenerator);
+		trackFilterDescriptor		= new TrackFilterDescriptor(trackmate);
 		trackFilterDescriptor.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent event) {
-				trackColorGenerator.setFeature(trackFilterDescriptor.getComponent().getColorFeature());
+				if (trackFilterDescriptor.getComponent().getColorCategory().equals(ColorByFeatureGUIPanel.Category.DEFAULT)) {
+					trackColorGenerator.setFeature(null);
+				} else {
+					trackColorGenerator.setFeature(trackFilterDescriptor.getComponent().getColorFeature());
+				}
 				for (TrackMateModelView view : guimodel.views) {
 					view.setDisplaySettings(TrackMateModelView.KEY_TRACK_COLORING, trackColorGenerator);
 					view.refresh();

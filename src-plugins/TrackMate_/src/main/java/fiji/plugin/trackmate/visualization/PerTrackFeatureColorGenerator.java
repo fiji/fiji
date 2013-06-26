@@ -92,7 +92,7 @@ public class PerTrackFeatureColorGenerator implements TrackColorGenerator, Model
 		colorMap = new HashMap<Integer, Color>(trackIDs.size());
 		int index = 0;
 		for (Integer trackID : trackIDs) {
-			Color color = generator.getPaint( (double) index++ / trackIDs.size() );
+			Color color = generator.getPaint( (double) index++ / (trackIDs.size()-1) );
 			colorMap.put(trackID, color);
 		}
 	}

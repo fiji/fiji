@@ -10,13 +10,13 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import fiji.plugin.trackmate.Logger;
-import fiji.plugin.trackmate.TrackMate;
 import fiji.plugin.trackmate.Model;
+import fiji.plugin.trackmate.TrackMate;
 import fiji.plugin.trackmate.features.FeatureFilter;
 import fiji.plugin.trackmate.features.track.TrackIndexAnalyzer;
-import fiji.plugin.trackmate.gui.panels.components.FilterGuiPanel;
+import fiji.plugin.trackmate.gui.panels.components.ColorByFeatureGUIPanel;
 import fiji.plugin.trackmate.gui.panels.components.ColorByFeatureGUIPanel.Category;
-import fiji.plugin.trackmate.visualization.PerTrackFeatureColorGenerator;
+import fiji.plugin.trackmate.gui.panels.components.FilterGuiPanel;
 
 public class TrackFilterDescriptor implements WizardPanelDescriptor {
 	
@@ -25,11 +25,9 @@ public class TrackFilterDescriptor implements WizardPanelDescriptor {
 	private static final String KEY = "FilterTracks";
 	private FilterGuiPanel component;
 	private final TrackMate trackmate;
-	private final PerTrackFeatureColorGenerator generator;
 	
-	public TrackFilterDescriptor(TrackMate trackmate, PerTrackFeatureColorGenerator trackColorGenerator) {
+	public TrackFilterDescriptor(TrackMate trackmate) {
 		this.trackmate = trackmate;
-		this.generator = trackColorGenerator;
 	}
 
 	@Override
@@ -54,12 +52,7 @@ public class TrackFilterDescriptor implements WizardPanelDescriptor {
 				fireThresholdChanged(event);
 			}
 		});
-		
-		generator.setFeature(component.getColorFeature());
-		
-		for (ActionListener listener : component.getActionListeners()) {
-			listener.actionPerformed(component.COLOR_FEATURE_CHANGED);
-		}
+		component.setColorFeature(ColorByFeatureGUIPanel.UNIFORM_KEY);
 	}
 
 	@Override

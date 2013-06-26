@@ -190,7 +190,7 @@ public class ConfigureViewsPanel extends ActionListenablePanel {
 			jPanelTrackOptions.remove(trackColorGUI);
 		}
 		
-		trackColorGUI = new ColorByFeatureGUIPanel(model, Arrays.asList(new Category[] { Category.TRACKS, Category.EDGES } ));
+		trackColorGUI = new ColorByFeatureGUIPanel(model, Arrays.asList(new Category[] { Category.TRACKS, Category.EDGES, Category.DEFAULT } ));
 		trackColorGUI.setPreferredSize(new java.awt.Dimension(265, 45));
 		trackColorGUI.addActionListener(new ActionListener() {
 			@Override
@@ -201,14 +201,19 @@ public class ConfigureViewsPanel extends ActionListenablePanel {
 				switch (category) {
 				case TRACKS:
 					newValue = trackColorGenerator;
+					newValue.setFeature(trackColorGUI.getColorFeature());
 					break;
 				case EDGES:
 					newValue = edgeColorGenerator;
+					newValue.setFeature(trackColorGUI.getColorFeature());
+					break;
+				case DEFAULT:
+					newValue = trackColorGenerator;
+					newValue.setFeature(null);
 					break;
 				default:
 					throw new IllegalArgumentException("Unknow track color generator category: " + category);
 				}
-				newValue.setFeature(trackColorGUI.getColorFeature());
 				displaySettings.put(KEY_TRACK_COLORING, newValue);
 				// new value vs old value does not really hold.
 				DisplaySettingsEvent event = new DisplaySettingsEvent(trackColorGUI, KEY_TRACK_COLORING, newValue, oldValue);
@@ -367,7 +372,7 @@ public class ConfigureViewsPanel extends ActionListenablePanel {
 			}
 			{
 				jPanelSpotOptions = new JPanel() {
-					private static final long serialVersionUID = 3259314983744108471L;
+					private static final long serialVersionUID = 1L;
 					public void setEnabled(boolean enabled) {
 						for(Component c : getComponents())
 							c.setEnabled(enabled);
@@ -433,15 +438,20 @@ public class ConfigureViewsPanel extends ActionListenablePanel {
 					});
 				}
 				{
-					jPanelSpotColor = new ColorByFeatureGUIPanel(model, Arrays.asList(new Category[] { Category.SPOTS } ));
+					jPanelSpotColor = new ColorByFeatureGUIPanel(model, Arrays.asList(new Category[] { Category.SPOTS, Category.DEFAULT } ));
 					jPanelSpotColor.addActionListener(new ActionListener() {
 						@Override
 						public void actionPerformed(ActionEvent e) {
+							if (null == spotColorGenerator) {
+								return;
+							}
 							spotColorGenerator.setFeature(jPanelSpotColor.getColorFeature());
 							DisplaySettingsEvent event = new DisplaySettingsEvent(ConfigureViewsPanel.this, KEY_SPOT_COLORING, spotColorGenerator, spotColorGenerator);
 							fireDisplaySettingsChange(event);
 						}
 					});
+					jPanelSpotColor.setColorFeature(ColorByFeatureGUIPanel.UNIFORM_KEY);
+					jPanelSpotOptions.add(jPanelSpotColor);
 				}
 			}
 			{

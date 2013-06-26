@@ -33,9 +33,9 @@ import fiji.plugin.trackmate.gui.panels.ActionListenablePanel;
 public class ColorByFeatureGUIPanel extends ActionListenablePanel {
 
 	/** The key for the default, uniform painting style. */
-	private static final String UNIFORM_KEY = "UNIFORM";
+	public static final String UNIFORM_KEY = "UNIFORM";
 	/** The name of the default, uniform painting style. */
-	private static final String UNIFORM_NAME = "Uniform color";
+	public static final String UNIFORM_NAME = "Uniform color";
 
 
 	/*
@@ -46,7 +46,7 @@ public class ColorByFeatureGUIPanel extends ActionListenablePanel {
 		SPOTS("spots"),
 		EDGES("edges"),
 		TRACKS("tracks"),
-		DEFAULT("DefauLt");
+		DEFAULT("Default");
 
 		private String name;
 

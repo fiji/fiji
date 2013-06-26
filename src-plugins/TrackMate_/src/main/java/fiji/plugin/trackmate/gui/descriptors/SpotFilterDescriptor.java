@@ -14,6 +14,7 @@ import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.TrackMate;
 import fiji.plugin.trackmate.Model;
 import fiji.plugin.trackmate.features.FeatureFilter;
+import fiji.plugin.trackmate.gui.panels.components.ColorByFeatureGUIPanel;
 import fiji.plugin.trackmate.gui.panels.components.ColorByFeatureGUIPanel.Category;
 import fiji.plugin.trackmate.gui.panels.components.FilterGuiPanel;
 
@@ -41,6 +42,7 @@ public class SpotFilterDescriptor implements WizardPanelDescriptor {
 		component.refreshDisplayedFeatureValues();
 		Settings settings = trackmate.getSettings();
 		component.setFilters(settings.getSpotFilters());
+		component.setColorFeature(ColorByFeatureGUIPanel.UNIFORM_KEY);
 		component.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent event) {
