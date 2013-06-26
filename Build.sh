@@ -241,7 +241,7 @@ maven_helper () {
 		else
 			git clone https://github.com/scijava/scijava-common \
 				"$SCIJAVA_COMMON"
-		fi
+		fi >&2
 		if test ! -f "$MAVEN_HELPER"
 		then
 			echo "Could not find $MAVEN_HELPER!" >&2
