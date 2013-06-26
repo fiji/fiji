@@ -198,8 +198,11 @@ then
         }
 fi
 
-# figure out whether $1 is newer than $2, or if $2 is a SNAPSHOT .jar
-# whether it is older than a day
+# Figure out whether $2 (the destination) is newer than $1 (the source).
+# If $2 is a SNAPSHOT .jar, must not be older than a day, either.
+#
+# This function is mainly used to test whether something is older than
+# Build.sh and hence needs to be updated.
 
 uptodate () {
 	test -f "$2" &&
