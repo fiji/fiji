@@ -119,7 +119,7 @@ download_platform () {
 	esac
 }
 
-curl $baseurl/$basename.nar > jars/ij-launcher-$VERSION.jar
+curl $baseurl/$basename.nar > jars/ij-launcher-$version.jar
 
 if test -z "$platform"
 then
