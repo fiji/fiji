@@ -38,6 +38,8 @@ import mpicbg.spim.registration.bead.BeadRegistration;
 
 public class OverlayFusion 
 {
+	public static boolean useSizeOfFirstImage = false;
+	
 	protected static <T extends RealType<T>> CompositeImage createOverlay( final T targetType, final ImagePlus imp1, final ImagePlus imp2, final InvertibleBoundable finalModel1, final InvertibleBoundable finalModel2, final int dimensionality ) 
 	{
 		final ArrayList< ImagePlus > images = new ArrayList<ImagePlus>();
@@ -72,7 +74,17 @@ public class OverlayFusion
 		
 		// estimate the boundaries of the output image and the offset for fusion (negative coordinates after transform have to be shifted to 0,0,0)
 		estimateBounds( offset, size, imgSizes, models, dimensionality );
-				
+		
+		// use the same size as the first image, this is a little bit ad-hoc
+		if ( useSizeOfFirstImage )
+		{
+			for ( int d = 0; d < dimensionality; ++d )
+			{
+				size[ d ] = imgSizes[ 0 ][ d ];
+				offset[ d ] = 0;
+			}
+		}
+		
 		// for output
 		final ImageFactory<T> f = new ImageFactory<T>( targetType, new ImagePlusContainerFactory() );
 		// the composite
