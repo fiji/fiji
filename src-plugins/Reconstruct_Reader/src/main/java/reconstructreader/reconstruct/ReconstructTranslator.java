@@ -12,6 +12,8 @@ import reconstructreader.Utils;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
+import java.awt.geom.AffineTransform;
+import java.awt.geom.NoninvertibleTransformException;
 import java.io.*;
 import java.util.*;
 
@@ -146,6 +148,8 @@ public class ReconstructTranslator {
     
     private TranslationMessenger messenger;
 
+    private boolean displayTransformWarning;
+
 
 
     public static InputSource getISO8559Source(final File f) throws FileNotFoundException, UnsupportedEncodingException
@@ -188,6 +192,8 @@ public class ReconstructTranslator {
         unuid = Long.toString(System.currentTimeMillis()) + "." + nuid;
 
         layerSetOID = nextOID();
+
+        displayTransformWarning = false;
 
         ready = true;
 
@@ -261,6 +267,10 @@ public class ReconstructTranslator {
                     lastFile = f;
                     addSection(sectionDocuments, builder, f);
                 }
+
+                //It has become somewhat obvious that ReconstructTranslator should be rewritten,
+                //however, it also (mostly) works, and that would take time.
+                fixNonlinearTransforms(sectionDocuments);
 
                 //Sort section files by index.
                 Collections.sort(sectionDocuments, new Utils.ReconstructSectionIndexComparator());
@@ -948,4 +958,293 @@ public class ReconstructTranslator {
     {
         return defaultMag;
     }
+
+    /**
+     * This function fixes the XML so that we present TrakEM2 with only affine transforms. TrakEM2
+     * can't handle Reconstruct's nonliner transforms, and mucking around with the translation code
+     * is rather hairy, so we fix it in XML first. Note: This is a quick fix. Given that this is
+     * easier to do than fixing the translation code, I think it might be best to do a re-write, but
+     * ain't nobody got time for that.
+     *
+     * 1) If we encounter a nonlinearly-transformed image, we set it to the identity transform and
+     * convert all of the traces so that they will lay nicely over the image as if they were
+     * originally traced there.
+     * 2) In addition, if we encounter any traces with nonlinear transforms, we apply the transform
+     * to the trace, then set the transform to the identity.
+     *
+     * @param secDocs a List of XML Documents representing the Section files
+     */
+    private void fixNonlinearTransforms(final Collection<Document> secDocs)
+    {
+        for (final Document secDoc : secDocs)
+        {
+            Element image = null;
+            NodeList transforms = secDoc.getElementsByTagName("Transform");
+            for (int i = 0; i < transforms.getLength() && image == null; ++i)
+            {
+                Element transform = (Element)transforms.item(i);
+                int dim = Integer.parseInt(transform.getAttribute("dim"));
+                if (dim > 3)
+                {
+                    messenger.sendMessage("Got transform with dim " + dim + ". Fixing to dim = 0.");
+                    if ((image = hasImage(transform)) != null)
+                    {
+                        displayTransformWarning = true;
+                        fixImageTransform(secDoc, image);
+                    }
+                    else
+                    {
+                        fixContourTransforms(transform);
+                    }
+                }
+            }
+        }
+    }
+    
+    private Element hasImage(final Element transform)
+    {
+        final NodeList children = transform.getChildNodes();
+        for (int i = 0; i < children.getLength(); ++i)
+        {
+            if (children.item(i).getNodeName().equals("Image"))
+            {
+                return (Element)children.item(i);
+            }
+        }
+        return null;
+    }
+    
+    private void fixImageTransform(final Document secDoc, final Element image)
+    {
+        final Element imageTransform = (Element)image.getParentNode();
+        final double[] xcoef = new double[6];
+        final double[] ycoef = new double[6];
+        Utils.nodeValueToVector(imageTransform.getAttribute("xcoef"), xcoef);
+        Utils.nodeValueToVector(imageTransform.getAttribute("ycoef"), ycoef);
+        
+        final NodeList transforms = secDoc.getElementsByTagName("Transform");
+        
+        for (int i = 0; i < transforms.getLength(); ++i)
+        {
+            final Element transform = (Element)transforms.item(i);
+            if (transform != imageTransform)
+            {
+                final NodeList contours = fixContourTransforms(transform);
+                for (int j = 0; j < contours.getLength(); ++j)
+                {
+                    applyTransform(contours.item(j), xcoef, ycoef, 6, true);
+                }
+            }
+        }
+        
+
+        imageTransform.setAttribute("xcoef", "0 1 0 0 0 0");
+        imageTransform.setAttribute("ycoef", "0 0 1 0 0 0");
+        imageTransform.setAttribute("dim", "0");
+    }
+    
+    private NodeList fixContourTransforms(final Element transform)
+    {
+        final int dim = Integer.parseInt(transform.getAttribute("dim"));
+        final double[] xcoef = new double[6];
+        final double[] ycoef = new double[6];
+        final NodeList contours = transform.getElementsByTagName("Contour");
+
+        Utils.nodeValueToVector(transform.getAttribute("xcoef"), xcoef);
+        Utils.nodeValueToVector(transform.getAttribute("ycoef"), ycoef);
+
+        for (int j = 0; j < contours.getLength(); ++j)
+        {
+            applyTransform(contours.item(j), xcoef, ycoef, dim, false);
+        }
+
+        transform.setAttribute("xcoef", "0 1 0 0 0 0");
+        transform.setAttribute("ycoef", "0 0 1 0 0 0");
+        transform.setAttribute("dim", "0");
+
+        return contours;
+    }
+    
+    private void applyTransform(final Node node, double[] xcoef, double[] ycoef, int dim,
+                                boolean fwd)
+    {
+        final Element contour = (Element)node;
+        final String strPoints = contour.getAttribute("points");
+        final double[] pts = Utils.createNodeValueVector(strPoints);
+        final StringBuilder sbTransPts = new StringBuilder(); 
+        Utils.nodeValueToVector(strPoints, pts);
+        
+        if (fwd)
+        {
+            fwdTrans(xcoef, ycoef, pts, dim);
+        }
+        else
+        {
+            revTrans(xcoef, ycoef, pts, dim);
+        }
+
+        for (int i = 0; i < pts.length; i+=2)
+        {
+            sbTransPts.append(pts[i]).append(" ").append(pts[i+1]).append(",\n");
+        }
+
+        contour.setAttribute("points", sbTransPts.toString());
+    }
+
+    private void fwdTrans(double[] a, double[] b, double[] pts, int dim)
+    {
+
+        if (dim <= 3)
+        {
+            final double[] matrix = new double[6];
+            AffineTransform at;
+            switch (dim)
+            {
+                case 0:
+                    matrix[0] = 1;
+                    matrix[3] = 1;
+                case 1:
+                    matrix[0] = 1;
+                    matrix[3] = 1;
+                    matrix[4] = a[0];
+                    matrix[5] = b[0];// ::sob::
+                    break;
+                case 2:
+                    matrix[0] = a[1];
+                    matrix[3] = b[1];
+                    matrix[4] = a[0];
+                    matrix[5] = a[0];// why would you do that?
+                    break;
+                case 3:
+                    matrix[0] = a[1];
+                    matrix[1] = b[1];
+                    matrix[2] = a[2];
+                    matrix[3] = b[2];
+                    matrix[4] = a[0];
+                    matrix[5] = b[0];
+                    break;
+            }
+            at = new AffineTransform(matrix);
+
+            at.transform(pts, 0, pts, 0, pts.length / 2);
+        }
+        else
+        {
+            for (int i = 0; i < pts.length; i+=2)
+            {
+                double x = pts[i];
+                double y = pts[i + 1];
+                pts[i] = a[0] + (a[1] + a[3] * y + a[4] * x) * x + (a[2] + a[5] * y) * y;
+                pts[i + 1] = b[0] + (b[1] + b[3] * y + b[4] * x) * x + (b[2] + b[5] * y) * y;
+            }
+        }
+
+    }
+
+    private void revTrans(double[] a, double[] b, double[] pts, int dim)
+    {
+
+        if (dim <= 3)
+        {
+            final double[] matrix = new double[6];
+            AffineTransform at;
+            switch (dim)
+            {
+                case 0:
+                    matrix[0] = 1;
+                    matrix[3] = 1;
+                case 1:
+                    matrix[0] = 1;
+                    matrix[3] = 1;
+                    matrix[4] = a[0];
+                    matrix[5] = b[0];
+                    break;
+                case 2:
+                    matrix[0] = a[1];
+                    matrix[3] = b[1];
+                    matrix[4] = a[0];
+                    matrix[5] = a[0];
+                    break;
+                case 3:
+                    matrix[0] = a[1];
+                    matrix[1] = b[1];
+                    matrix[2] = a[2];
+                    matrix[3] = b[2];
+                    matrix[4] = a[0];
+                    matrix[5] = b[0];
+                    break;
+            }
+            at = new AffineTransform(matrix);
+            try
+            {
+                at.inverseTransform(pts, 0, pts, 0, pts.length / 2);
+            }
+            catch (NoninvertibleTransformException nite)
+            {
+                /** do nothing **/
+            }
+        }
+        else
+        {
+            // Lifted from Reconstruct source, nform.cpp::XYinverse
+            int i;
+            double epsilon = 5e-10;
+            double e,l,m,n,o,p,x0,y0,u,v,x,y;
+            double[] uv0;
+
+            for (int j = 0; j < pts.length; j+=2)
+            {
+                x = pts[j];
+                y = pts[j + 1];
+                uv0 = new double[]{0,0};
+
+                u = x;							// (u,v) for which we want (x,y)
+                v = y;
+                x0 = 0.0;						// initial guess of (x,y)
+                y0 = 0.0;
+                fwdTrans(a, b, uv0, dim);
+                //u0 = X(x0,y0);					//	get forward tform of initial guess
+                //v0 = Y(x0,y0);
+                i = 0;							// allow no more than 10 iterations
+                e = 1.0;						// to reduce error to this limit
+                while ( (e > epsilon) && (i<10) ) {
+                    i++;
+                    l = a[1] + a[3]*y0 + 2.0*a[4]*x0;	// compute Jacobian
+                    m = a[2] + a[3]*x0 + 2.0*a[5]*y0;
+                    n = b[1] + b[3]*y0 + 2.0*b[4]*x0;
+                    o = b[2] + b[3]*x0 + 2.0*b[5]*y0;
+                    p = l*o - m*n;						// determinant for inverse
+                    if ( Math.abs(p) > epsilon ) {
+                        x0 += (o*(u-uv0[0]) - m*(v-uv0[1]))/p;	// inverse of Jacobian
+                        y0 += (l*(v-uv0[1]) - n*(u-uv0[0]))/p;	// and use to increment (x0,y0)
+                    }
+                    else {
+                        x0 += l*(u-uv0[0]) + n*(v-uv0[1]);		// try Jacobian transpose instead
+                        y0 += m*(u-uv0[0]) + o*(v-uv0[1]);
+                    }
+                    uv0 = new double[]{x0, y0};
+                    fwdTrans(a, b, uv0, dim);
+                    e = Math.abs(u-uv0[0]) + Math.abs(v-uv0[1]);		// compute closeness to goal
+                }
+
+                pts[j] = x0;
+                pts[j + 1] = y0;
+            }
+        }
+    }
+
+    public String postTranslationMessage()
+    {
+        if (displayTransformWarning)
+        {
+            return "Nonlinear Reconstruct alignments are incompatible with TrakEM2.\n" +
+                    "At least one was found in your project.\n" +
+                    "Each such section has been reset to an unaligned section.";
+        }
+        else
+        {
+            return "";
+        }
+    }
+
 }

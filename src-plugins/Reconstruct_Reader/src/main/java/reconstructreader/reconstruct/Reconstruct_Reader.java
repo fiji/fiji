@@ -43,6 +43,10 @@ public class Reconstruct_Reader implements PlugIn
                 IJ.log("Opening project " + projectFileName);
                 t2p = Project.openFSProject(projectFileName);
                 t2p.getRootLayerSet().setMinimumDimensions();
+                if (!translator.postTranslationMessage().isEmpty())
+                {
+                    IJ.showMessage(translator.postTranslationMessage());
+                }
             }
         }
         else
