@@ -8,7 +8,7 @@
 	<parent>
 		<groupId>org.scijava</groupId>
 		<artifactId>pom-scijava</artifactId>
-		<version>1.48</version>
+		<version>1.51</version>
 		<relativePath />
 	</parent>
 
@@ -24,7 +24,6 @@
 		<autocomplete.version>2.0.2</autocomplete.version>
 		<fiji.version>2.0.0-SNAPSHOT</fiji.version>
 		<imagej.app.directory>${rootdir}</imagej.app.directory>
-		<imagej.version>2.0.0-SNAPSHOT</imagej.version>
 		<imagescience.version>2.4.1</imagescience.version>
 		<jcommon.version>1.0.17</jcommon.version>
 		<jfreechart.version>1.0.14</jfreechart.version>
