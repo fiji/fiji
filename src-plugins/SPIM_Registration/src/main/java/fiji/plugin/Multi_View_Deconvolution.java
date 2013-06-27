@@ -801,7 +801,7 @@ public class Multi_View_Deconvolution implements PlugIn
 			final String[] devices = new String[ numDevices ];
 			final byte[] name = new byte[ 256 ];
 			int highestComputeCapability = 0;
-			int highestMemory = 0;
+			long highestMemory = 0;
 
 			int highestComputeCapabilityDevice = -1;
 			int highestMemoryDevice = -1;
@@ -820,14 +820,19 @@ public class Multi_View_Deconvolution implements PlugIn
 				
 				final long mem = LRFFT.cuda.getMemDeviceCUDA( i );	
 				final int compCap =  10*LRFFT.cuda.getCUDAcomputeCapabilityMajorVersion( i ) + LRFFT.cuda.getCUDAcomputeCapabilityMinorVersion( i );
-				if(compCap > highestComputeCapability){
+				
+				if ( compCap > highestComputeCapability )
+				{
+					highestComputeCapability = compCap;
 				    highestComputeCapabilityDevice = i;
 				}
 				
-				if(mem > highestMemory){
+				if ( mem > highestMemory )
+				{
+					highestMemory = mem;
 				    highestMemoryDevice = i;
 				}
-
+				
 				devices[ i ] = devices[ i ] + " (" + mem/(1024*1024) + " MB, CUDA capability " + LRFFT.cuda.getCUDAcomputeCapabilityMajorVersion( i )  + "." + LRFFT.cuda.getCUDAcomputeCapabilityMinorVersion( i ) + ")";
 				//devices[ i ] = devices[ i ].replaceAll( " ", "_" );
 			}
@@ -905,7 +910,7 @@ public class Multi_View_Deconvolution implements PlugIn
 				final GenericDialog gdCUDA = new GenericDialog( "Choose CUDA device" );
 
 				if ( standardDevice >= devices.length )
-					standardDevice = highestComputeCapability;
+					standardDevice = highestComputeCapabilityDevice;
 				
 				gdCUDA.addChoice( "Device", devices, devices[ standardDevice ] );
 				
