@@ -22,6 +22,14 @@ import java.util.Set;
 
 import org.scijava.util.ProcessUtils;
 
+/**
+ * Special class loader for ImageJ 1.x plugins.
+ * 
+ * @deprecated set the system property <i>ij1.plugin.dirs</i> instead and let
+ *             ImageJ2's LegacyInjector handle it.
+ * 
+ * @author Johannes Schindelin
+ */
 public class FijiClassLoader extends URLClassLoader {
 
 	List<ClassLoader> fallBacks;
