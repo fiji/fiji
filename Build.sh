@@ -305,7 +305,7 @@ EOF
 	*)
 		uptodate "$ARGV0" "$CWD/$LAUNCHER" ||
 		(cd $CWD &&
-		 sh bin/download-launchers.sh snapshot $platform)
+		 sh bin/download-launchers.sh release $platform)
 		;;
 	esac
 	test -z "$FIJILAUNCHER" ||
