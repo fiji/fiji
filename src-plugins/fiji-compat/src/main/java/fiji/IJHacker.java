@@ -12,7 +12,6 @@ import javassist.CannotCompileException;
 import javassist.CtClass;
 import javassist.CtField;
 import javassist.CtMethod;
-import javassist.CtNewConstructor;
 import javassist.CtNewMethod;
 import javassist.NotFoundException;
 import javassist.bytecode.BadBytecode;
@@ -32,15 +31,6 @@ public class IJHacker extends JavassistHelper {
 		CtClass clazz;
 		CtMethod method;
 		CtField field;
-
-		// Class ij.IJ
-		clazz = get("ij.IJ");
-
-		boolean isImageJA = false;
-		try {
-			method = clazz.getMethod("runFijiEditor", "(Ljava/lang/String;Ljava/lang/String;)Z");
-			isImageJA = true;
-		} catch (Exception e) { /* ignore */ }
 
 		// Class ij.gui.GenericDialog
 		clazz = get("ij.gui.GenericDialog");
@@ -77,13 +67,10 @@ public class IJHacker extends JavassistHelper {
 					call.replace("$_ = new java.net.URL(\"file:\" + fiji.FijiTools.getFijiDir() + \"/images/icon.png\");");
 			}
 		});
-		if (isImageJA)
-			clazz.getConstructor("(Lij/ImageJApplet;I)V").insertBeforeBody("if ($2 != 2 /* ij.ImageJ.NO_SHOW */) setIcon();");
-		else {
-			clazz.getConstructor("(Ljava/applet/Applet;I)V").insertBeforeBody("if ($2 != 2 /* ij.ImageJ.NO_SHOW */) setIcon();");
-			method = clazz.getMethod("isRunning", "([Ljava/lang/String;)Z");
-			method.insertBefore("return fiji.OtherInstance.sendArguments($1);");
-		}
+		clazz.getConstructor("(Ljava/applet/Applet;I)V").insertBeforeBody("if ($2 != 2 /* ij.ImageJ.NO_SHOW */) setIcon();");
+		method = clazz.getMethod("isRunning", "([Ljava/lang/String;)Z");
+		method.insertBefore("return fiji.OtherInstance.sendArguments($1);");
+
 		// optionally disallow batch mode from calling System.exit()
 		method = clazz.getMethod("main", "([Ljava/lang/String;)V");
 		method.addLocalVariable("batchModeMayExit", CtClass.booleanType);
@@ -196,7 +183,8 @@ public class IJHacker extends JavassistHelper {
 		method.insertBefore("if (fiji.FijiTools.openStartupMacros())"
 			+ "  return;");
 
-		if (!isImageJA) {
+		boolean scriptEditorStuff = true;
+		if (!scriptEditorStuff) {
 			// Class ij.plugin.frame.Recorder
 			clazz = get("ij.plugin.frame.Recorder");
 
