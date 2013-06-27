@@ -745,13 +745,6 @@ public class TrackModel {
 				// Case 1: it was added between two existing sets. We connect them, therefore
 				// and take the id of the largest one. The other id, disappear.
 				
-				// Vertices:
-				Set<Spot> svs = connectedVertexSets.get(sid);
-				Set<Spot> tvs = connectedVertexSets.get(tid);
-				HashSet<Spot> nvs = new HashSet<Spot>( svs.size() + tvs.size() );
-				nvs.addAll(svs);
-				nvs.addAll(tvs);
-				
 				// Edges:
 				Set<DefaultWeightedEdge> ses = connectedEdgeSets.get(sid);
 				Set<DefaultWeightedEdge> tes = connectedEdgeSets.get(tid);
@@ -759,6 +752,14 @@ public class TrackModel {
 				nes.addAll(ses);
 				nes.addAll(tes);
 				nes.add(e);
+
+				// Vertices:
+				Set<Spot> svs = connectedVertexSets.get(sid);
+				Set<Spot> tvs = connectedVertexSets.get(tid);
+				HashSet<Spot> nvs = new HashSet<Spot>( ses.size() + tes.size() );
+				nvs.addAll(svs);
+				nvs.addAll(tvs);
+				
 				
 				// ID
 				Integer nid, rid;
