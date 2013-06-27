@@ -42,12 +42,6 @@ public class IJHacker extends JavassistHelper {
 			isImageJA = true;
 		} catch (Exception e) { /* ignore */ }
 
-		// use the FijiClassLoader
-		if (!isImageJA) {
-			method = clazz.getMethod("getClassLoader", "()Ljava/lang/ClassLoader;");
-			method.insertBefore("if (classLoader == null) classLoader = new fiji.FijiClassLoader(true);");
-		}
-
 		// Class ij.gui.GenericDialog
 		clazz = get("ij.gui.GenericDialog");
 
