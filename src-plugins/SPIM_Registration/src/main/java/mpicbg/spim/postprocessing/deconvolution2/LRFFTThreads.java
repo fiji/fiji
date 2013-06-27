@@ -42,7 +42,7 @@ public class LRFFTThreads
 	{
 		long time = System.currentTimeMillis();
 		blockStruct.copyBlock( image, block );
-		System.out.println( " block " + i + "(CUDA " + deviceId + "): copy " + (System.currentTimeMillis() - time) );
+		System.out.println( " block " + i + "(CPU  " + deviceId + "): copy " + (System.currentTimeMillis() - time) );
 
 		// convolve block with kernel1 using CUDA
 		time = System.currentTimeMillis();				
@@ -52,7 +52,7 @@ public class LRFFTThreads
 
 		time = System.currentTimeMillis();
 		blockStruct.pasteBlock( result, block );
-		System.out.println( " block " + i + "(CUDA " + deviceId + "): paste " + (System.currentTimeMillis() - time) );
+		System.out.println( " block " + i + "(CPU  " + deviceId + "): paste " + (System.currentTimeMillis() - time) );
 	}
 
 	final protected static void convolve2BlockCUDA( final Block blockStruct, final int deviceId, final Image<FloatType> image, final Image<FloatType> result, final Image<FloatType> block, 
