@@ -32,13 +32,6 @@ public class IJHacker extends JavassistHelper {
 		CtMethod method;
 		CtField field;
 
-		// Class ij.gui.GenericDialog
-		clazz = get("ij.gui.GenericDialog");
-
-		// make sure that the dialog is disposed in macro mode
-		method = clazz.getMethod("showDialog", "()V");
-		method.insertBefore("if (macro) dispose();");
-
 		// Class ij.gui.NonBlockingGenericDialog
 		clazz = get("ij.gui.NonBlockingGenericDialog");
 
