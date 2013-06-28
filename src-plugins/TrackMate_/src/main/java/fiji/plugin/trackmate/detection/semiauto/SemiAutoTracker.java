@@ -36,7 +36,7 @@ public class SemiAutoTracker<T extends RealType<T>  & NativeType<T>> extends Abs
 
 		int tindex = TMUtils.findTAxisIndex(img);
 		if (frame >= img.dimension(tindex)) {
-			logger.log("Spot: " + spot + ": Target source has exhausted its time points");
+			logger.log("Spot: " + spot + ": No more time-points.\n");
 			return null;
 		}
 
@@ -48,6 +48,12 @@ public class SemiAutoTracker<T extends RealType<T>  & NativeType<T>> extends Abs
 		double dx = cal[0];
 		double dy = cal[1];
 		double dz = cal[2];
+
+		/*
+		 * Determine neighborhood size
+		 */
+		
+		double neighborhoodFactor = Math.max(NEIGHBORHOOD_FACTOR, distanceTolerance + 1);
 
 		/*
 		 * Extract source coords

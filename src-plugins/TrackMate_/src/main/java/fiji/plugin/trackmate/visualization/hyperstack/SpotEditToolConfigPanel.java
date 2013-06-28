@@ -6,7 +6,6 @@ import static fiji.plugin.trackmate.gui.TrackMateWizard.SMALL_FONT;
 
 import java.awt.Color;
 import java.awt.Font;
-import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
@@ -20,7 +19,9 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextPane;
 import javax.swing.ScrollPaneConstants;
+import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
+import javax.swing.border.LineBorder;
 import javax.swing.text.AttributeSet;
 import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.StyleConstants;
@@ -30,19 +31,17 @@ import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.gui.TrackMateWizard;
 import fiji.plugin.trackmate.gui.panels.components.JNumericTextField;
 import fiji.plugin.trackmate.visualization.hyperstack.SpotEditTool.SpotEditToolParams;
-import javax.swing.border.LineBorder;
 
 public class SpotEditToolConfigPanel extends JFrame {
 	
 	private static final long serialVersionUID = 1L;
 	private final static ImageIcon ICON = new ImageIcon(TrackMateWizard.class.getResource("images/TrackIcon_small.png"));
 	private final Logger logger;
-	private JNumericTextField jNFNeighborhoodSize;
 	private JNumericTextField jNFQualityThreshold;
 	private JNumericTextField jNFDistanceTolerance;
 	private final SpotEditToolParams params;
 
-	public SpotEditToolConfigPanel(final SpotEditToolParams params, Point point) {
+	public SpotEditToolConfigPanel(final SpotEditToolParams params) {
 		this.params = params;
 		
 		/*
@@ -95,34 +94,19 @@ public class SpotEditToolConfigPanel extends JFrame {
 		lblSemiAutoTracking.setFont(FONT.deriveFont(Font.BOLD));
 		panelSemiAutoParams.add(lblSemiAutoTracking);
 
-		JLabel lblNeighborhoodFactor = new JLabel("Neighborhood size");
-		lblNeighborhoodFactor.setToolTipText("<html>" +
-				"The size of the neighborhood to inspect <br>" +
-				"with the semi automatic tracker. Specified <br>" +
-				"in units of the initial spot diameter.</html>");
-		lblNeighborhoodFactor.setBounds(6, 28, 119, 16);
-		lblNeighborhoodFactor.setFont(SMALL_FONT);
-		panelSemiAutoParams.add(lblNeighborhoodFactor);
-		
-		jNFNeighborhoodSize = new JNumericTextField(params.neighborhoodFactor);
-		jNFNeighborhoodSize.setFont(SMALL_FONT);
-		jNFNeighborhoodSize.setBounds(137, 26, 49, 18);
-		jNFNeighborhoodSize.addActionListener(al);
-		jNFNeighborhoodSize.addFocusListener(fl);
-		panelSemiAutoParams.add(jNFNeighborhoodSize);
-		
 		JLabel lblQualityThreshold = new JLabel("Quality threshold");
 		lblQualityThreshold.setToolTipText("<html>" +
 				"The fraction of the initial spot quality <br>" +
 				"found spots must have to be considered for linking. <br>" +
 				"The higher, the more stringent.</html>");
-		lblQualityThreshold.setBounds(6, 48, 119, 16);
+		lblQualityThreshold.setBounds(6, 35, 119, 16);
 		lblQualityThreshold.setFont(SMALL_FONT);
 		panelSemiAutoParams.add(lblQualityThreshold);
 		
 		jNFQualityThreshold = new JNumericTextField(params.qualityThreshold);
+		jNFQualityThreshold.setHorizontalAlignment(SwingConstants.CENTER);
 		jNFQualityThreshold.setFont(SMALL_FONT);
-		jNFQualityThreshold.setBounds(137, 46, 49, 18);
+		jNFQualityThreshold.setBounds(137, 33, 49, 18);
 		jNFQualityThreshold.addActionListener(al);
 		jNFQualityThreshold.addFocusListener(fl);
 
@@ -132,13 +116,14 @@ public class SpotEditToolConfigPanel extends JFrame {
 		lblDistanceTolerance.setToolTipText("<html>" +
 				"The maximal distance above which found spots are rejected, <br>" +
 				"expressed in units of the initial spot radius.</html>");
-		lblDistanceTolerance.setBounds(6, 68, 119, 16);
+		lblDistanceTolerance.setBounds(6, 55, 119, 16);
 		lblDistanceTolerance.setFont(SMALL_FONT);
 		panelSemiAutoParams.add(lblDistanceTolerance);
 		
 		jNFDistanceTolerance = new JNumericTextField(params.distanceTolerance);
+		jNFDistanceTolerance.setHorizontalAlignment(SwingConstants.CENTER);
 		jNFDistanceTolerance.setFont(SMALL_FONT);
-		jNFDistanceTolerance.setBounds(137, 66, 49, 18);
+		jNFDistanceTolerance.setBounds(137, 53, 49, 18);
 		jNFDistanceTolerance.addActionListener(al);
 		jNFDistanceTolerance.addFocusListener(fl);
 		panelSemiAutoParams.add(jNFDistanceTolerance);
@@ -147,7 +132,7 @@ public class SpotEditToolConfigPanel extends JFrame {
 		JScrollPane scrollPane = new JScrollPane();
 		scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
 		scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
-		scrollPane.setBounds(210, 51, 191, 184);
+		scrollPane.setBounds(210, 51, 254, 184);
 		mainPanel.add(scrollPane);
 		
 		final JTextPane textPane = new JTextPane();
@@ -189,9 +174,8 @@ public class SpotEditToolConfigPanel extends JFrame {
 			public void setProgress(double val) {}
 		};	
 		
-		setSize(408, 262);
-		setLocation(point);
-		setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+		setSize(480, 274);
+		setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
 		setVisible(true);
 	}
 	
@@ -201,7 +185,6 @@ public class SpotEditToolConfigPanel extends JFrame {
 	
 	private void updateParamsFromTextFields() {
 		params.distanceTolerance = jNFDistanceTolerance.getValue();
-		params.neighborhoodFactor = jNFNeighborhoodSize.getValue();
 		params.qualityThreshold = jNFQualityThreshold.getValue();
 	}
 }

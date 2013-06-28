@@ -2,11 +2,9 @@ package fiji.plugin.trackmate.visualization.hyperstack;
 
 import ij.IJ;
 import ij.ImagePlus;
-import ij.WindowManager;
 import ij.gui.ImageCanvas;
 import ij.gui.Toolbar;
 
-import java.awt.GraphicsConfiguration;
 import java.awt.MouseInfo;
 import java.awt.Point;
 import java.awt.event.InputEvent;
@@ -30,10 +28,10 @@ import javax.swing.SwingUtilities;
 import org.jgrapht.graph.DefaultWeightedEdge;
 
 import fiji.plugin.trackmate.Logger;
+import fiji.plugin.trackmate.Model;
 import fiji.plugin.trackmate.SelectionModel;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
-import fiji.plugin.trackmate.Model;
 import fiji.plugin.trackmate.detection.semiauto.SemiAutoTracker;
 import fiji.plugin.trackmate.util.TMUtils;
 import fiji.tool.AbstractTool;
@@ -82,6 +80,8 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 	private SpotEditToolParams params = new SpotEditToolParams();
 
 	private Logger logger = Logger.VOID_LOGGER;
+
+	private SpotEditToolConfigPanel configPanel;
 
 
 
@@ -293,7 +293,7 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 							model.beginUpdate();
 							try {
 								model.addEdge(source, editedSpot, -1);
-								logger.log("Created a link between " + source + " and " + editedSpot +".");
+								logger.log("Created a link between " + source + " and " + editedSpot + ".\n");
 							} finally {
 								model.endUpdate();
 							}
@@ -523,7 +523,7 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 								model.beginUpdate();
 								try {
 									model.addEdge(source, newSpot, -1);
-									logger.log("Created a link between " + source + " and " + newSpot +".");
+									logger.log("Created a link between " + source + " and " + newSpot + ".\n");
 								} finally {
 									model.endUpdate();
 								}
@@ -701,7 +701,7 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 				 * Toggle auto-linking mode
 				 */
 				autolinkingmode = !autolinkingmode;
-				logger.log("Toggled auto-linking mode " + (autolinkingmode ? "on." : "off."));
+				logger.log("Toggled auto-linking mode " + (autolinkingmode ? "on.\n" : "off.\n"));
 
 			} else {
 				/*
@@ -720,7 +720,7 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 						model.beginUpdate();
 						try {
 							model.removeEdge(source, target);
-							logger.log("Removed edge between " + source + " and " + target);
+							logger.log("Removed edge between " + source + " and " + target + ".\n");
 						} finally {
 							model.endUpdate();
 						}
@@ -737,7 +737,7 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 							model.beginUpdate();
 							try {
 								model.addEdge(source, target, -1);
-								logger.log("Created an edge between " + source + " and " + target);
+								logger.log("Created an edge between " + source + " and " + target + ".\n");
 							} finally { 
 								model.endUpdate();
 							}
@@ -761,7 +761,7 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 					}
 
 				} else {
-					logger.error("Expected selection to contain 2 spots, found " + selectedSpots.size());
+					logger.error("Expected selection to contain 2 spots, found " + selectedSpots.size() + ".\n");
 				}
 
 			}
@@ -849,7 +849,7 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 	private void semiAutoTracking(final Model model, SelectionModel selectionModel, ImagePlus imp) {
 		@SuppressWarnings("rawtypes")
 		final SemiAutoTracker autotracker = new SemiAutoTracker(model, selectionModel, imp, logger);
-		autotracker.setParameters(params.neighborhoodFactor, params.qualityThreshold, params.distanceTolerance);
+		autotracker.setParameters(params.qualityThreshold, params.distanceTolerance);
 		autotracker.setNumThreads(4);
 		new Thread("TrackMate semi-automated tracking thread") {
 			@Override
@@ -864,14 +864,18 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 
 	@Override
 	public void showOptionDialog() {
-		SpotEditToolConfigPanel setcp = new SpotEditToolConfigPanel(params, toolbar.getLocation());
-		this.logger = setcp.getLogger();
-		setcp.addWindowListener(new WindowAdapter() {
-			@Override
-			public void windowClosing(WindowEvent e) {
-				logger = Logger.VOID_LOGGER;
-			}
-		});
+		if (null == configPanel) {
+			configPanel = new SpotEditToolConfigPanel(params);
+			configPanel.addWindowListener(new WindowAdapter() {
+				@Override
+				public void windowClosing(WindowEvent e) {
+					logger = Logger.VOID_LOGGER;
+				}
+			});
+		}
+		configPanel.setLocation(toolbar.getLocationOnScreen());
+		configPanel.setVisible(true);
+		logger = configPanel.getLogger();
 	}
 	
 	
@@ -884,8 +888,6 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 		/*
 		 * Semi-auto tracking parameters
 		 */
-		/** The size of the local neighborhood to inspect, in units of the source spot diameter. */
-		double neighborhoodFactor = 3d;
 		/** The fraction of the initial quality above which we keep new spots. The highest, the more intolerant. */
 		double qualityThreshold = 0.5;
 		/** How close must be the new spot found to be accepted, in radius units. */
@@ -893,8 +895,8 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 		
 		@Override
 		public String toString() {
-			return super.toString() + ": NeighborhoodFactor = " + neighborhoodFactor 
-					+ ", QualityThreshold = " + qualityThreshold 
+			return super.toString() + ": "
+					+ "QualityThreshold = " + qualityThreshold 
 					+ ", DistanceTolerance = " + distanceTolerance;
 		}
 	}

@@ -48,8 +48,9 @@ import fiji.plugin.trackmate.tracking.SpotTracker;
  */
 public abstract class AbstractSemiAutoTracker<T extends RealType<T>  & NativeType<T>> implements Algorithm, MultiThreaded {
 
+	/** Minimal size of neighborhoods, in spot diameter units. */
+	protected static final double NEIGHBORHOOD_FACTOR = 2d;
 	protected static final String BASE_ERROR_MESSAGE = "[SemiAutoTracker] ";
-	private static final double NEIGHBORHOOD_FACTOR = 3d;
 	private static final double QUALITY_THRESHOLD = 0.2d;
 	private static final double DISTANCE_TOLERANCE = 1.1d;
 	private final Model model;
@@ -62,8 +63,6 @@ public abstract class AbstractSemiAutoTracker<T extends RealType<T>  & NativeTyp
 	protected double distanceTolerance = DISTANCE_TOLERANCE;
 	/** The fraction of the initial quality above which we keep new spots. The highest, the more intolerant. */
 	protected double qualityThreshold = QUALITY_THRESHOLD;
-	/** The size of the local neighborhood to inspect, in units of the source spot diameter. */
-	protected double neighborhoodFactor = NEIGHBORHOOD_FACTOR;
 
 	/*
 	 * CONSTRUCTOR 
@@ -81,12 +80,10 @@ public abstract class AbstractSemiAutoTracker<T extends RealType<T>  & NativeTyp
 	
 	/**
 	 * Configures this semi-automatic tracker. 
-	 * @param neighborhoodFactor the size of the local neighborhood to inspect, in units of the source spot diameter. 
 	 * @param qualityThreshold   the fraction of the initial quality above which we keep new spots. The highest, the more intolerant.
 	 * @param distanceTolerance  how close must be the new spot found to be accepted, in radius units.
 	 */
-	public void setParameters(double neighborhoodFactor, double qualityThreshold, double distanceTolerance) {
-		this.neighborhoodFactor = neighborhoodFactor;
+	public void setParameters(double qualityThreshold, double distanceTolerance) {
 		this.qualityThreshold = qualityThreshold;
 		this.distanceTolerance = distanceTolerance;
 	}
@@ -96,7 +93,7 @@ public abstract class AbstractSemiAutoTracker<T extends RealType<T>  & NativeTyp
 	public boolean process() {
 		final Set<Spot> spots = new HashSet<Spot>(selectionModel.getSpotSelection());
 		if (spots.isEmpty()) {
-			errorMessage = BASE_ERROR_MESSAGE + "No spots in selection.";
+			errorMessage = BASE_ERROR_MESSAGE + "No spots in selection.\n";
 			return false;
 		}
 		selectionModel.clearSelection();
@@ -164,7 +161,6 @@ public abstract class AbstractSemiAutoTracker<T extends RealType<T>  & NativeTyp
 			if (!detector.checkInput() || !detector.process()) {
 				ok = false;
 				errorMessage = detector.getErrorMessage();
-				logger.error("Spot: " + initialSpot + ": Detection problen: " + detector.getErrorMessage());
 				return;
 			}
 
@@ -174,7 +170,7 @@ public abstract class AbstractSemiAutoTracker<T extends RealType<T>  & NativeTyp
 
 			List<Spot> detectedSpots = detector.getResult();
 			if (detectedSpots.isEmpty()) {
-				logger.log("Spot: " + initialSpot + ": No suitable spot found.");
+				logger.log("Spot: " + initialSpot + ": No suitable spot found.\n");
 				return;
 			}
 			
@@ -206,7 +202,7 @@ public abstract class AbstractSemiAutoTracker<T extends RealType<T>  & NativeTyp
 			}
 
 			if (!found) {
-				logger.log("Spot: " + initialSpot + ": Suitable spot found, but outside the tolerance radius.");
+				logger.log("Spot: " + initialSpot + ": Suitable spot found, but outside the tolerance radius.\n");
 				return;
 			}
 			
@@ -267,11 +263,11 @@ public abstract class AbstractSemiAutoTracker<T extends RealType<T>  & NativeTyp
 	@Override
 	public boolean checkInput() {
 		if (null == model) {
-			errorMessage = BASE_ERROR_MESSAGE + "model is null.";
+			errorMessage = BASE_ERROR_MESSAGE + "model is null.\n";
 			return false;
 		}
 		if (null == selectionModel) {
-			errorMessage = BASE_ERROR_MESSAGE + "selectionModel is null.";
+			errorMessage = BASE_ERROR_MESSAGE + "selectionModel is null.\n";
 			return false;
 		}
 		return true;
