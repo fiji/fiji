@@ -97,7 +97,10 @@ public class OverlayFusion
 			for ( int c = 1; c <= imp.getNChannels(); ++c )
 			{
 				final Image<T> out = f.createImage( size );
-				fuseChannel( out, ImageJFunctions.convertFloat( Hyperstack_rearranger.getImageChunk( imp, c, t ) ), offset, models.get( t - 1 ), new LinearInterpolatorFactory<FloatType>( new OutOfBoundsStrategyValueFactory<FloatType>() ) );
+				if ( useNearestNeighborInterpolation )
+					fuseChannel( out, ImageJFunctions.convertFloat( Hyperstack_rearranger.getImageChunk( imp, c, t ) ), offset, models.get( t - 1 ), new NearestNeighborInterpolatorFactory<FloatType>( new OutOfBoundsStrategyValueFactory<FloatType>() ) );
+				else
+					fuseChannel( out, ImageJFunctions.convertFloat( Hyperstack_rearranger.getImageChunk( imp, c, t ) ), offset, models.get( t - 1 ), new LinearInterpolatorFactory<FloatType>( new OutOfBoundsStrategyValueFactory<FloatType>() ) );
 				try 
 				{
 					final ImagePlus outImp = ((ImagePlusContainer<?,?>)out.getContainer()).getImagePlus();
