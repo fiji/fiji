@@ -32,19 +32,6 @@ public class IJHacker extends JavassistHelper {
 		CtMethod method;
 		CtField field;
 
-		// Class ij.gui.NonBlockingGenericDialog
-		clazz = get("ij.gui.NonBlockingGenericDialog");
-
-		// make sure not to wait in macro mode
-		method = clazz.getMethod("showDialog", "()V");
-		method.instrument(new ExprEditor() {
-			@Override
-			public void edit(MethodCall call) throws CannotCompileException {
-				if (call.getMethodName().equals("wait"))
-					call.replace("if (isShowing()) wait();");
-			}
-		});
-
 		// Class ij.ImageJ
 		clazz = get("ij.ImageJ");
 
