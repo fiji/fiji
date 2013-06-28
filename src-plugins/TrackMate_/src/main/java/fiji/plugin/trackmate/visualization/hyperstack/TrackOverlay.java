@@ -120,7 +120,7 @@ public class TrackOverlay extends Roi {
 
 		case TrackMateModelView.TRACK_DISPLAY_MODE_WHOLE: {
 			for (Integer trackID : filteredTrackKeys) {
-				final Set<DefaultWeightedEdge> track = model.getTrackModel().trackEdges(trackID);
+				final Set<DefaultWeightedEdge> track = new HashSet<DefaultWeightedEdge>(model.getTrackModel().trackEdges(trackID));
 				colorGenerator.setCurrentTrackID(trackID);
 				for (DefaultWeightedEdge edge : track) {
 					if (highlight.contains(edge))
@@ -143,7 +143,7 @@ public class TrackOverlay extends Roi {
 
 			for (Integer trackID : filteredTrackKeys) {
 				colorGenerator.setCurrentTrackID(trackID);
-				final Set<DefaultWeightedEdge> track = model.getTrackModel().trackEdges(trackID);
+				final Set<DefaultWeightedEdge> track = new HashSet<DefaultWeightedEdge>(model.getTrackModel().trackEdges(trackID));
 
 				for (DefaultWeightedEdge edge : track) {
 					if (highlight.contains(edge))
@@ -170,7 +170,7 @@ public class TrackOverlay extends Roi {
 
 			for (Integer trackID : filteredTrackKeys) {
 				colorGenerator.setCurrentTrackID(trackID);
-				final Set<DefaultWeightedEdge> track = model.getTrackModel().trackEdges(trackID);
+				final Set<DefaultWeightedEdge> track = new HashSet<DefaultWeightedEdge>(model.getTrackModel().trackEdges(trackID));
 
 				for (DefaultWeightedEdge edge : track) {
 					if (highlight.contains(edge))

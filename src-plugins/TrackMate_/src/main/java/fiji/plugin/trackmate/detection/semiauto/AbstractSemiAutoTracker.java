@@ -49,18 +49,21 @@ import fiji.plugin.trackmate.tracking.SpotTracker;
 public abstract class AbstractSemiAutoTracker<T extends RealType<T>  & NativeType<T>> implements Algorithm, MultiThreaded {
 
 	protected static final String BASE_ERROR_MESSAGE = "[SemiAutoTracker] ";
-	/** The size of the local neighborhood to inspect, in units of the source spot diameter. */
-	protected static final double NEIGHBORHOOD_FACTOR = 3d;
-	/** The quality drop we tolerate before aborting detection. The highest, the more intolerant. */
-	protected static final double QUALITY_THRESHOLD = 0.2d;
-	/** How close must be the new spot found to be accepted, in radius units. */
-	protected static final double DISTANCE_TOLERANCE = 1.1d;
+	private static final double NEIGHBORHOOD_FACTOR = 3d;
+	private static final double QUALITY_THRESHOLD = 0.2d;
+	private static final double DISTANCE_TOLERANCE = 1.1d;
 	private final Model model;
 	private final SelectionModel selectionModel;
 	protected String errorMessage;
 	private int numThreads;
 	protected boolean ok;
 	protected final Logger logger;
+	/** How close must be the new spot found to be accepted, in radius units. */
+	protected double distanceTolerance = DISTANCE_TOLERANCE;
+	/** The fraction of the initial quality above which we keep new spots. The highest, the more intolerant. */
+	protected double qualityThreshold = QUALITY_THRESHOLD;
+	/** The size of the local neighborhood to inspect, in units of the source spot diameter. */
+	protected double neighborhoodFactor = NEIGHBORHOOD_FACTOR;
 
 	/*
 	 * CONSTRUCTOR 
@@ -75,6 +78,18 @@ public abstract class AbstractSemiAutoTracker<T extends RealType<T>  & NativeTyp
 	/*
 	 * METHODS
 	 */
+	
+	/**
+	 * Configures this semi-automatic tracker. 
+	 * @param neighborhoodFactor the size of the local neighborhood to inspect, in units of the source spot diameter. 
+	 * @param qualityThreshold   the fraction of the initial quality above which we keep new spots. The highest, the more intolerant.
+	 * @param distanceTolerance  how close must be the new spot found to be accepted, in radius units.
+	 */
+	public void setParameters(double neighborhoodFactor, double qualityThreshold, double distanceTolerance) {
+		this.neighborhoodFactor = neighborhoodFactor;
+		this.qualityThreshold = qualityThreshold;
+		this.distanceTolerance = distanceTolerance;
+	}
 	
 	
 	@Override
@@ -91,7 +106,7 @@ public abstract class AbstractSemiAutoTracker<T extends RealType<T>  & NativeTyp
 		
 			
 		ok = true;
-		final ThreadGroup semiAutoTrackingThreadgroup = new ThreadGroup( "Mamut semi-auto tracking threads" );
+		final ThreadGroup semiAutoTrackingThreadgroup = new ThreadGroup( "Semi-automatic tracking threads" );
 		Thread[] threads = SimpleMultiThreading.newThreads(nThreads);
 		for (int i = 0; i < threads.length; i++) {
 			threads[i] = new Thread( semiAutoTrackingThreadgroup, new Runnable() {
@@ -144,7 +159,7 @@ public abstract class AbstractSemiAutoTracker<T extends RealType<T>  & NativeTyp
 			 * Detect spots
 			 */
 			
-			SpotDetector<T> detector = createDetector(neighborhood , radius, quality * QUALITY_THRESHOLD);
+			SpotDetector<T> detector = createDetector(neighborhood , radius, quality * qualityThreshold);
 
 			if (!detector.checkInput() || !detector.process()) {
 				ok = false;
@@ -169,7 +184,7 @@ public abstract class AbstractSemiAutoTracker<T extends RealType<T>  & NativeTyp
 			
 			String[] features = new String[] { Spot.POSITION_X, Spot.POSITION_Y, Spot.POSITION_Z }; 
 			for (Spot ds : detectedSpots) {
-				for (int i = 0; i < features.length; i++) {
+				for (int i = 0; i < min.length; i++) {
 					Double val = ds.getFeature(features[i]);
 					ds.putFeature(features[i], val + (double) min[i] * cal[i]);
 				}
@@ -183,7 +198,7 @@ public abstract class AbstractSemiAutoTracker<T extends RealType<T>  & NativeTyp
 			Spot target = null;
 			for (Iterator<Spot> iterator = sortedSpots.descendingIterator(); iterator.hasNext();) {
 				Spot candidate = iterator.next();
-				if (candidate.squareDistanceTo(spot) < DISTANCE_TOLERANCE * DISTANCE_TOLERANCE * radius * radius) {
+				if (candidate.squareDistanceTo(spot) < distanceTolerance * distanceTolerance * radius * radius) {
 					found = true;
 					target = candidate;
 					break;
