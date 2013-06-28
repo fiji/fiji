@@ -5,6 +5,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
+import java.text.NumberFormat;
+import java.util.Locale;
 
 import javax.swing.JTextField;
 import javax.swing.border.Border;
@@ -81,6 +83,10 @@ public class JNumericTextField extends JTextField {
 		this(null, null, 0);
 	}
 	
+	public JNumericTextField(double value) {
+		this(NumberFormat.getNumberInstance(Locale.US).format(value));
+	}
+	
 	public double getValue() {
 		checkInput();
 		return value;
@@ -97,11 +103,10 @@ public class JNumericTextField extends JTextField {
 			oldValue = value;
 		} catch (NumberFormatException nfe) {
 			value = oldValue;
-			setText(""+value);
+			setText(NumberFormat.getNumberInstance(Locale.US).format(value));
 		}
 		
 	}
-	
 	
 	
 }
