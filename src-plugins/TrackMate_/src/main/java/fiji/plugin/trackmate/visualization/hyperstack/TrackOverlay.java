@@ -12,8 +12,10 @@ import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.Stroke;
 import java.awt.geom.AffineTransform;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
@@ -120,9 +122,10 @@ public class TrackOverlay extends Roi {
 
 		case TrackMateModelView.TRACK_DISPLAY_MODE_WHOLE: {
 			for (Integer trackID : filteredTrackKeys) {
-				final Set<DefaultWeightedEdge> track = new HashSet<DefaultWeightedEdge>(model.getTrackModel().trackEdges(trackID));
 				colorGenerator.setCurrentTrackID(trackID);
-				for (DefaultWeightedEdge edge : track) {
+				Set<DefaultWeightedEdge> track = model.getTrackModel().trackEdges(trackID);
+				for (Iterator<Object> i = Arrays.asList(track.toArray()).iterator(); i.hasNext();) {
+					DefaultWeightedEdge edge = (DefaultWeightedEdge) i.next();
 					if (highlight.contains(edge))
 						continue;
 
@@ -143,9 +146,10 @@ public class TrackOverlay extends Roi {
 
 			for (Integer trackID : filteredTrackKeys) {
 				colorGenerator.setCurrentTrackID(trackID);
-				final Set<DefaultWeightedEdge> track = new HashSet<DefaultWeightedEdge>(model.getTrackModel().trackEdges(trackID));
+				Set<DefaultWeightedEdge> track = model.getTrackModel().trackEdges(trackID);
 
-				for (DefaultWeightedEdge edge : track) {
+				for (Iterator<Object> i = Arrays.asList(track.toArray()).iterator(); i.hasNext();) {
+					DefaultWeightedEdge edge = (DefaultWeightedEdge) i.next();
 					if (highlight.contains(edge))
 						continue;
 
@@ -170,9 +174,10 @@ public class TrackOverlay extends Roi {
 
 			for (Integer trackID : filteredTrackKeys) {
 				colorGenerator.setCurrentTrackID(trackID);
-				final Set<DefaultWeightedEdge> track = new HashSet<DefaultWeightedEdge>(model.getTrackModel().trackEdges(trackID));
+				final Set<DefaultWeightedEdge> track = model.getTrackModel().trackEdges(trackID);
 
-				for (DefaultWeightedEdge edge : track) {
+				for (Iterator<Object> i = Arrays.asList(track.toArray()).iterator(); i.hasNext();) {
+					DefaultWeightedEdge edge = (DefaultWeightedEdge) i.next();
 					if (highlight.contains(edge))
 						continue;
 
