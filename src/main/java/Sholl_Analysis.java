@@ -1093,7 +1093,7 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
 
     /** Counts 1-pixel groups that exist solely on the edge of a "stair" of target pixels */
     static public int countSinglePixels(final int[][] points, final int pointsLength,
-		    final int[] grouping, final ImageProcessor ip) {
+            final int[] grouping, final ImageProcessor ip) {
 
         int counts = 0;
 
@@ -1179,8 +1179,8 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
 
         // Initialize algorithm variables
         int i = 0, x = 0, y = radius;
-		final int r = radius+1;
-		int err = 0, errR, errD;
+        final int r = radius+1;
+        int err = 0, errR, errD;
 
         // Array to store first 1/8 of points relative to center
         final int[][] data = new int[r][2];
@@ -1292,7 +1292,7 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
         // Sholl mask as a 16-bit image. Any negative values from polynomial will become 0
         final ImageProcessor mp = new ShortProcessor(ip.getWidth(), ip.getHeight());
 
-		final int drawSteps = values.length;
+        final int drawSteps = values.length;
         final int firstRadius = (int) Math.round( startRadius/vxWH );
         final int lastRadius = (int) Math.round( (startRadius + (drawSteps-1)*stepRadius)/vxWH) ;
         final int drawWidth = (int) Math.round( (lastRadius-startRadius)/drawSteps );
@@ -1318,8 +1318,8 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
         // Apply LUT
         mp.setColorModel(matlabJetColorMap(maskBackground));
         //(new ContrastEnhancer()).stretchHistogram(mp, 0.35);
-		final double[] range = Tools.getMinMax(values);
-		mp.setMinAndMax(0, range[1]);
+        final double[] range = Tools.getMinMax(values);
+        mp.setMinAndMax(0, range[1]);
 
         final String title = ttl + "_ShollMask.tif";
         final ImagePlus img2 = new ImagePlus(title, mp);
@@ -1654,7 +1654,7 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
 			start = (int)(size*0.10);
 			end   = (int)(end-start);
 
-			// Do not proced if there are not enought points
+			// Do not proceed if there are not enough points
 			if (end <= 6)
 				return;
 
@@ -1670,6 +1670,11 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
 		cf.doFit(CurveFitter.STRAIGHT_LINE, false);
 		final double[] cfparam = cf.getParams();
 		//IJ.log("Curve fitter status: " + cf.getStatusString());
+
+		if (verbose) {
+			IJ.log("\n*** "+ imgTitle +", regression details ("+
+		          (trim ? "all" : "trimmed") +" data):"+ cf.getResultString());
+		}
 
 		final double x1 = x[start];
 		final double x2 = x[end];
