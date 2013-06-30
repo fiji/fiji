@@ -115,7 +115,7 @@ public class SampleImageLoader implements PlugIn {
 		handleSamples(handler);
 
 		if (!commands.containsKey(menuItemLabel)) {
-			MenuItem item = User_Plugins.installPlugin(menuPath, menuItemLabel,
+			MenuItem item = FijiTools.installPlugin(menuPath, menuItemLabel,
 				thisPlugin + "(\"cache\")");
 			if (item != null)
 				item.setEnabled(handler.hasUncached);

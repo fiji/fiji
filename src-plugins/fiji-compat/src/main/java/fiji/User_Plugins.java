@@ -2,32 +2,26 @@ package fiji;
 
 import ij.IJ;
 import ij.Menus;
-
 import ij.plugin.PlugIn;
+import imagej.legacy.CodeHacker;
+import imagej.legacy.LegacyInjector;
 import imagej.legacy.SwitchToModernMode;
 
 import java.awt.Menu;
 import java.awt.MenuBar;
 import java.awt.MenuContainer;
 import java.awt.MenuItem;
-
 import java.awt.event.KeyEvent;
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-
-import java.lang.reflect.Field;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
-
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
@@ -42,24 +36,6 @@ import java.util.jar.JarFile;
 public class User_Plugins implements PlugIn {
 	public String path, menuPath;
 	protected boolean stripPluginsPrefix;
-	private static Field menuInstance;
-	private static Field menuEntry2jarFile;
-
-	static {
-		try {
-			Field instanceField = Menus.class.getDeclaredField("instance");
-			instanceField.setAccessible(true);
-			Field field = Menus.class.getDeclaredField("menuEntry2jarFile");
-			field.setAccessible(true);
-			menuInstance = instanceField;
-			menuEntry2jarFile = field;
-		} catch (Throwable t) {
-			// be nice to ImageJ older than 1.43h
-//			if (IJ.debug)
-				t.printStackTrace();
-		}
-	}
-
 	/**
 	 * Default constructor
 	 */
@@ -133,7 +109,7 @@ public class User_Plugins implements PlugIn {
 		if (!Menus.getCommands().containsKey("Install PlugIn...")) {
 			Menus.getCommands().put("Install PlugIn...", "fiji.PlugInInstaller");
 			if (IJ.getInstance() != null) {
-				Menu plugins = getMenu("Plugins");
+				Menu plugins = FijiTools.getMenu("Plugins");
 				if (plugins != null)
 					for (int i = 0; i < plugins.getItemCount(); i++)
 						if (plugins.getItem(i).getLabel().equals("-")) {
@@ -208,7 +184,7 @@ public class User_Plugins implements PlugIn {
 		}
 		else if (name.endsWith(".class")) {
 			name = name.substring(0, name.length() - 5);
-			installPlugin(menuPath, makeLabel(name), name, file);
+			FijiTools.installPlugin(menuPath, makeLabel(name), name, file);
 		}
 		else if (name.endsWith(".jar")) try {
 			List<String[]> plugins = getJarPluginList(file, menuPath);
@@ -216,9 +192,9 @@ public class User_Plugins implements PlugIn {
 			while (iter.hasNext()) {
 				String[] item = (String[])iter.next();
 				if (item[1].equals("-"))
-					getMenu(item[0]).addSeparator();
+					FijiTools.getMenu(item[0]).addSeparator();
 				else
-					installPlugin(item[0], item[1],
+					FijiTools.installPlugin(item[0], item[1],
 							item[2], file);
 			}
 		} catch (Exception e) {
@@ -319,11 +295,12 @@ public class User_Plugins implements PlugIn {
 	 * @param name the label of the menu item
 	 * @param command the command to run (as per the plugins.config)
 	 * @return the added menu item
+	 * @deprecated Use {@link FijiTools#installPlugin(String,String,String)} instead
 	 */
 	public static MenuItem installPlugin(String menuPath, String name,
 			String command) {
-		return installPlugin(menuPath, name, command, null);
-	}
+				return FijiTools.installPlugin(menuPath, name, command);
+			}
 
 	/**
 	 * Install a single menu item
@@ -333,39 +310,19 @@ public class User_Plugins implements PlugIn {
 	 * @param command the command to run (as per the plugins.config)
 	 * @param file the source file
 	 * @return the added menu item
+	 * @deprecated Use {@link FijiTools#installPlugin(String,String,String,File)} instead
 	 */
-	/* TODO: sorted */
-	@SuppressWarnings("unchecked")
 	public static MenuItem installPlugin(String menuPath, String name,
 			String command, File jarFile) {
-		if (Menus.getCommands().get(name) != null) {
-			IJ.log("The user plugin " + name
-				+ (jarFile == null ? "" : " (in " + jarFile + ")")
-				+ " would override an existing command!");
-			return null;
-		}
+				return FijiTools
+						.installPlugin(menuPath, name, command, jarFile);
+			}
 
-		MenuItem item = null;
-		if (IJ.getInstance() != null) {
-			Menu menu = getMenu(menuPath);
-			item = new MenuItem(name);
-			menu.add(item);
-			item.addActionListener(IJ.getInstance());
-		}
-		Menus.getCommands().put(name, command);
-
-		if (menuEntry2jarFile != null && jarFile != null) try {
-			Map<String, String> map = (Map<String, String>) menuEntry2jarFile.get(menuInstance.get(null));
-			map.put(name, jarFile.getPath());
-		} catch (Throwable t) {
-			t.printStackTrace();
-		}
-
-		return item;
-	}
-
+	/**
+	 * @deprecated Use {@link FijiTools#getMenu(String)} instead
+	 */
 	public static Menu getMenu(String menuPath) {
-		return (Menu)FijiTools.getMenuItem(Menus.getMenuBar(), menuPath, true);
+		return FijiTools.getMenu(menuPath);
 	}
 
 	/**

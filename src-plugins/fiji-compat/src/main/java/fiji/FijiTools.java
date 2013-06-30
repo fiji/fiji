@@ -14,9 +14,15 @@ import java.io.File;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.util.Map;
 
 public class FijiTools {
+
+	private static Field menuEntry2jarFile;
+	private static Field menuInstance;
+
 	/**
 	 * Get the path of the Fiji directory
 	 *
@@ -32,7 +38,7 @@ public class FijiTools {
 			return path;
 		final String prefix = "file:";
 		final String suffix = "/jars/fiji-compat.jar!/fiji/FijiTools.class";
-		path = fiji.FijiTools.class
+		path = FijiTools.class
 			.getResource("FijiTools.class").getPath();
 		if (path.startsWith(prefix))
 			path = path.substring(prefix.length());
@@ -159,7 +165,7 @@ public class FijiTools {
 	 * @param menuPath the menu path, e.g. File>New>Bio-Formats
 	 */
 	public static MenuItem getMenuItem(String menuPath) {
-		return FijiTools.getMenuItem(Menus.getMenuBar(), menuPath, false);
+		return getMenuItem(Menus.getMenuBar(), menuPath, false);
 	}
 
 	/**
@@ -190,7 +196,7 @@ public class FijiTools {
 				name = menuPath.substring(0, croc);
 				menuPath = menuPath.substring(croc + 1);
 			}
-			MenuItem current = FijiTools.getMenuItem(menuBar, menu, name,
+			MenuItem current = getMenuItem(menuBar, menu, name,
 				createMenuIfNecessary);
 			if (current == null || menuPath == null)
 				return current;
@@ -236,6 +242,77 @@ public class FijiTools {
 		}
 		else
 			return null;
+	}
+
+	/**
+	 * Install a single menu item
+	 *
+	 * @param menuPath the menu into which to install it
+	 * @param name the label of the menu item
+	 * @param command the command to run (as per the plugins.config)
+	 * @return the added menu item
+	 */
+	public static MenuItem installPlugin(String menuPath, String name,
+			String command) {
+		return installPlugin(menuPath, name, command, null);
+	}
+
+	/**
+	 * Install a single menu item
+	 *
+	 * @param menuPath the menu into which to install it
+	 * @param name the label of the menu item
+	 * @param command the command to run (as per the plugins.config)
+	 * @param file the source file
+	 * @return the added menu item
+	 */
+	/* TODO: sorted */
+	@SuppressWarnings("unchecked")
+	public static MenuItem installPlugin(String menuPath, String name,
+			String command, File jarFile) {
+		if (Menus.getCommands().get(name) != null) {
+			IJ.log("The user plugin " + name
+				+ (jarFile == null ? "" : " (in " + jarFile + ")")
+				+ " would override an existing command!");
+			return null;
+		}
+
+		MenuItem item = null;
+		if (IJ.getInstance() != null) {
+			Menu menu = getMenu(menuPath);
+			item = new MenuItem(name);
+			menu.add(item);
+			item.addActionListener(IJ.getInstance());
+		}
+		Menus.getCommands().put(name, command);
+
+		if (jarFile != null) {
+			if (menuEntry2jarFile == null) try {
+				final Field instanceField = Menus.class.getDeclaredField("instance");
+				instanceField.setAccessible(true);
+				final Field field = Menus.class.getDeclaredField("menuEntry2jarFile");
+				field.setAccessible(true);
+				menuInstance = instanceField;
+				menuEntry2jarFile = field;
+			} catch (Throwable t) {
+				// be nice to ImageJ older than 1.43h
+//					if (IJ.debug)
+					t.printStackTrace();
+			}
+
+			if (menuEntry2jarFile != null) try {
+				Map<String, String> map = (Map<String, String>) menuEntry2jarFile.get(menuInstance.get(null));
+				map.put(name, jarFile.getPath());
+			} catch (Throwable t) {
+				t.printStackTrace();
+			}
+		}
+
+		return item;
+	}
+
+	public static Menu getMenu(String menuPath) {
+		return (Menu)getMenuItem(Menus.getMenuBar(), menuPath, true);
 	}
 
 }
