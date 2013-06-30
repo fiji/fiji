@@ -33,12 +33,6 @@ public class IJHacker extends JavassistHelper {
 		CtMethod method;
 		CtField field;
 
-		// Class ij.ImageJ
-		clazz = get("ij.ImageJ");
-
-		method = clazz.getMethod("isRunning", "([Ljava/lang/String;)Z");
-		method.insertBefore("return fiji.OtherInstance.sendArguments($1);");
-
 		// optionally disallow batch mode from calling System.exit()
 		method = clazz.getMethod("main", "([Ljava/lang/String;)V");
 		method.addLocalVariable("batchModeMayExit", CtClass.booleanType);
