@@ -35,9 +35,6 @@ public class IJHacker extends JavassistHelper {
 		// Class ij.ImageJ
 		clazz = get("ij.ImageJ");
 
-		// tell the showStatus() method to show the version() instead of empty status
-		method = clazz.getMethod("showStatus", "(Ljava/lang/String;)V");
-		method.insertBefore("if ($1 == null || \"\".equals($1)) $1 = version();");
 		// use our icon
 		method = clazz.getMethod("setIcon", "()V");
 		method.instrument(new ExprEditor() {
