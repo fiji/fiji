@@ -5,6 +5,7 @@ package fiji;
  */
 
 import imagej.legacy.LegacyExtensions;
+import imagej.util.AppUtils;
 
 import java.io.File;
 
@@ -35,16 +36,6 @@ public class IJHacker extends JavassistHelper {
 		// Class ij.ImageJ
 		clazz = get("ij.ImageJ");
 
-		// use our icon
-		method = clazz.getMethod("setIcon", "()V");
-		method.instrument(new ExprEditor() {
-			@Override
-			public void edit(MethodCall call) throws CannotCompileException {
-				if (call.getMethodName().equals("getResource"))
-					call.replace("$_ = new java.net.URL(\"file:\" + fiji.FijiTools.getFijiDir() + \"/images/icon.png\");");
-			}
-		});
-		clazz.getConstructor("(Ljava/applet/Applet;I)V").insertBeforeBody("if ($2 != 2 /* ij.ImageJ.NO_SHOW */) setIcon();");
 		method = clazz.getMethod("isRunning", "([Ljava/lang/String;)Z");
 		method.insertBefore("return fiji.OtherInstance.sendArguments($1);");
 
@@ -241,15 +232,6 @@ public class IJHacker extends JavassistHelper {
 		// Class ij.WindowManager
 		clazz = get("ij.WindowManager");
 
-		method = clazz.getMethod("addWindow", "(Ljava/awt/Frame;)V");
-		method.insertBefore("if ($1 != null) {"
-			+ "  java.net.URL url = fiji.Main.class.getResource(\"/icon.png\");"
-			+ "  if (url != null) {"
-			+ "    java.awt.Image img = $1.createImage((java.awt.image.ImageProducer)url.getContent());"
-			+ "    if (img != null)"
-			+ "      $1.setIconImage(img);"
-			+ "  }"
-			+ "}");
 		if (!hasMethod(clazz, "setCurrentWindow", "(Lij/gui/ImageWindow;Z)V"))
 			clazz.addMethod(CtNewMethod.make("public static void setCurrentWindow(ij.gui.ImageWindow window, boolean suppressRecording /* unfortunately ignored now */) {"
 				+ "  setCurrentWindow(window);"
@@ -343,6 +325,7 @@ public class IJHacker extends JavassistHelper {
 		}
 
 		LegacyExtensions.setAppName("(Fiji Is Just) ImageJ");
+		LegacyExtensions.setIcon(new File(AppUtils.getBaseDirectory(), "images/icon.png"));
 	}
 
 	private void dontReturnWhenEditorIsNull(MethodInfo info) throws CannotCompileException {
