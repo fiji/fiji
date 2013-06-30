@@ -197,7 +197,7 @@ public class SpotGroupNode<K> extends ContentNode {
 		Appearance textAp = new Appearance();
 		LineAttributes lineAttributes = new LineAttributes(1, 1, true);
 		textAp.setLineAttributes(lineAttributes);
-		Color3f color3 = new Color3f(TrackMateModelView.DEFAULT_COLOR);
+		Color3f color3 = new Color3f(TrackMateModelView.DEFAULT_SPOT_COLOR);
 		textAp.setColoringAttributes(new ColoringAttributes(color3, ColoringAttributes.FASTEST));
 		
 		for (K key : centers.keySet()) {

@@ -682,7 +682,7 @@ public class TrackMateGUIController implements ActionListener {
 	 */
 	protected Map<String, Object> createDisplaySettings(Model model) {
 		Map<String, Object> displaySettings = new HashMap<String, Object>();
-		displaySettings.put(KEY_COLOR, DEFAULT_COLOR);
+		displaySettings.put(KEY_COLOR, DEFAULT_SPOT_COLOR);
 		displaySettings.put(KEY_HIGHLIGHT_COLOR, DEFAULT_HIGHLIGHT_COLOR);
 		displaySettings.put(KEY_SPOTS_VISIBLE, true);
 		displaySettings.put(KEY_DISPLAY_SPOT_NAMES, false);

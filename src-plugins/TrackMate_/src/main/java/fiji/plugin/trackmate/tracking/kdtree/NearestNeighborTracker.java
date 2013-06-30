@@ -104,7 +104,7 @@ public class NearestNeighborTracker extends MultiThreadedBenchmarkAlgorithm	impl
 		final AtomicInteger progress = new AtomicInteger(0);
 		for (int ithread = 0; ithread < threads.length; ithread++) {
 
-			threads[ithread] = new Thread("TrackMate spot feature calculating thread "+(1+ithread)+"/"+threads.length) {  
+			threads[ithread] = new Thread("Nearest neighbor tracker thread "+(1+ithread)+"/"+threads.length) {  
 
 				public void run() {
 

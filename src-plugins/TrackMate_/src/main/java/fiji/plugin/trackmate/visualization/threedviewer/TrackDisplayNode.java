@@ -397,7 +397,7 @@ public class TrackDisplayNode extends ContentNode implements TimelapseListener {
 			// Color
 			Color trackColor = colors.get(trackID);
 			if (null == trackColor) {
-				trackColor = TrackMateModelView.DEFAULT_COLOR;
+				trackColor = TrackMateModelView.DEFAULT_SPOT_COLOR;
 			}
 			final Color4f color = new Color4f(trackColor);
 			color.w = 1f; // opaque edge for now

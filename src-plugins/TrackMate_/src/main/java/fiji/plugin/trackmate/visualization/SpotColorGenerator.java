@@ -26,7 +26,7 @@ public class SpotColorGenerator implements FeatureColorGenerator<Spot>, ModelCha
 	@Override
 	public Color color(Spot spot) {
 		if (null == feature) {
-			return TrackMateModelView.DEFAULT_COLOR;
+			return TrackMateModelView.DEFAULT_SPOT_COLOR;
 		} else {
 			return spotColorMap.get(spot);
 		}
@@ -96,7 +96,7 @@ public class SpotColorGenerator implements FeatureColorGenerator<Spot>, ModelCha
 			val = spot.getFeature(feature);
 			InterpolatePaintScale  colorMap = InterpolatePaintScale.Jet;
 			if (null == feature || null == val)
-				spotColorMap.put(spot, TrackMateModelView.DEFAULT_COLOR);
+				spotColorMap.put(spot, TrackMateModelView.DEFAULT_SPOT_COLOR);
 			else
 				spotColorMap.put(spot, colorMap .getPaint((val-min)/(max-min)) );
 		}

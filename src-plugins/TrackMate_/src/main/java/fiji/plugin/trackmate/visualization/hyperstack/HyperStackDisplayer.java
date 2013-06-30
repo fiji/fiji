@@ -16,6 +16,7 @@ import fiji.plugin.trackmate.Model;
 import fiji.plugin.trackmate.visualization.AbstractTrackMateModelView;
 import fiji.plugin.trackmate.visualization.TrackColorGenerator;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
+import fiji.plugin.trackmate.visualization.ViewUtils;
 
 public class HyperStackDisplayer extends AbstractTrackMateModelView  {
 
@@ -57,9 +58,17 @@ public class HyperStackDisplayer extends AbstractTrackMateModelView  {
 
 	public HyperStackDisplayer(final Model model, final SelectionModel selectionModel, final ImagePlus imp) {	
 		super(model, selectionModel);
-		this.imp = imp;
+		if (null != imp) {
+			this.imp = imp;
+		} else {
+			this.imp = ViewUtils.makeEmpytImagePlus(model);
+		}
 		this.spotOverlay = createSpotOverlay();
 		this.trackOverlay = createTrackOverlay(); 
+	}
+	
+	public HyperStackDisplayer(final Model model, final SelectionModel selectionModel) {
+		this(model, selectionModel, null);
 	}
 
 	/*

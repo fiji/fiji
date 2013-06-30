@@ -3,6 +3,8 @@
  */
 package fiji.plugin.trackmate.visualization;
 
+import static fiji.plugin.trackmate.visualization.TrackMateModelView.DEFAULT_TRACK_COLOR;
+
 import java.awt.Color;
 import java.util.HashMap;
 import java.util.Set;
@@ -11,10 +13,10 @@ import org.jfree.chart.renderer.InterpolatePaintScale;
 import org.jgrapht.graph.DefaultWeightedEdge;
 
 import fiji.plugin.trackmate.FeatureModel;
+import fiji.plugin.trackmate.Model;
 import fiji.plugin.trackmate.ModelChangeEvent;
 import fiji.plugin.trackmate.ModelChangeListener;
 import fiji.plugin.trackmate.TrackModel;
-import fiji.plugin.trackmate.Model;
 import fiji.plugin.trackmate.features.track.TrackIndexAnalyzer;
 
 /**
@@ -25,8 +27,6 @@ import fiji.plugin.trackmate.features.track.TrackIndexAnalyzer;
  */
 public class PerTrackFeatureColorGenerator implements TrackColorGenerator, ModelChangeListener {
 
-	/** Default color used when a feature value is missing. */
-	private static final Color DEFAULT_COLOR = Color.GREEN;
 	private static final InterpolatePaintScale generator = InterpolatePaintScale.Jet;
 	private HashMap<Integer,Color> colorMap;
 	private final Model model;
@@ -77,7 +77,7 @@ public class PerTrackFeatureColorGenerator implements TrackColorGenerator, Model
 		// Create value->color map
 		colorMap = new HashMap<Integer, Color>(trackIDs.size());
 		for (Integer trackID : trackIDs) {
-			colorMap.put(trackID, DEFAULT_COLOR);
+			colorMap.put(trackID, DEFAULT_TRACK_COLOR);
 		}
 	}
 
@@ -124,7 +124,7 @@ public class PerTrackFeatureColorGenerator implements TrackColorGenerator, Model
 			Double val = values.get(trackID);
 			Color color;
 			if (null == val) {
-				color = DEFAULT_COLOR;
+				color = DEFAULT_TRACK_COLOR;
 			} else {
 				color = generator.getPaint( (val-min)/(max-min) );
 			}

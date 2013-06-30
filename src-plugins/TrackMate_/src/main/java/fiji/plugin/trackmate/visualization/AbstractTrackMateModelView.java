@@ -93,16 +93,16 @@ public abstract class AbstractTrackMateModelView implements SelectionChangeListe
 	 */
 	protected Map<String, Object> initDisplaySettings(Model model) {
 		Map<String, Object> displaySettings = new HashMap<String, Object>(11);
-		displaySettings.put(KEY_COLOR, DEFAULT_COLOR);
+		displaySettings.put(KEY_COLOR, DEFAULT_SPOT_COLOR);
 		displaySettings.put(KEY_HIGHLIGHT_COLOR, DEFAULT_HIGHLIGHT_COLOR);
 		displaySettings.put(KEY_SPOTS_VISIBLE, true);
 		displaySettings.put(KEY_DISPLAY_SPOT_NAMES, false);
-//		displaySettings.put(KEY_SPOT_COLORING, new SpotColorGenerator(model));
+		displaySettings.put(KEY_SPOT_COLORING, new DummySpotColorGenerator());
 		displaySettings.put(KEY_SPOT_RADIUS_RATIO, 1.0f);
 		displaySettings.put(KEY_TRACKS_VISIBLE, true);
 		displaySettings.put(KEY_TRACK_DISPLAY_MODE, DEFAULT_TRACK_DISPLAY_MODE);
 		displaySettings.put(KEY_TRACK_DISPLAY_DEPTH, DEFAULT_TRACK_DISPLAY_DEPTH);
-//		displaySettings.put(KEY_TRACK_COLORING, new PerTrackFeatureColorGenerator(model, TrackIndexAnalyzer.TRACK_INDEX));
+		displaySettings.put(KEY_TRACK_COLORING, new DummyTrackColorGenerator());
 		displaySettings.put(KEY_COLORMAP, DEFAULT_COLOR_MAP);
 		return displaySettings;
 	}

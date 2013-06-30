@@ -162,9 +162,15 @@ public interface TrackMateModelView extends InfoTextable {
 	 */
 
 	/** 
-	 * The default color.
+	 * The default color for spots.
 	 */
-	public static final Color DEFAULT_COLOR = new Color(1f, 0, 1f);
+	public static final Color DEFAULT_SPOT_COLOR = new Color(1f, 0, 1f);
+	
+	/** 
+	 * The default track color.
+	 */
+	public static final Color DEFAULT_TRACK_COLOR = new Color(250, 250, 0);
+
 
 	/** 
 	 * The default color for highlighting.

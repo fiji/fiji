@@ -817,9 +817,7 @@ public class TrackScheme extends AbstractTrackMateModelView {
 		gui.addWindowListener(new WindowAdapter() {
 			@Override
 			public void windowClosing(WindowEvent e) {
-				System.out.println("Closed TrackScheme");//DEBUG
 				model.removeModelChangeListener(TrackScheme.this);
-				System.out.println(model.getModelChangeListener());//DEBUG 
 			}
 		});
 		gui.setVisible(true);
