@@ -33,27 +33,6 @@ public class IJHacker extends JavassistHelper {
 		CtMethod method;
 		CtField field;
 
-		// optionally disallow batch mode from calling System.exit()
-		method = clazz.getMethod("main", "([Ljava/lang/String;)V");
-		method.addLocalVariable("batchModeMayExit", CtClass.booleanType);
-		method.insertBefore("batchModeMayExit = true;"
-			+ "for (int i = 0; i < $1.length; i++)"
-			+ "  if (\"-batch-no-exit\".equals($1[i])) {"
-			+ "    batchModeMayExit = false;"
-			+ "    $1[i] = \"-batch\";"
-			+ "  }");
-		method.instrument(new ExprEditor() {
-			@Override
-			public void edit(final MethodCall call) throws CannotCompileException {
-				if ("exit".equals(call.getMethodName()) &&
-						"java.lang.System".equals(call.getClassName())) {
-					call.replace("if (batchModeMayExit) System.exit($1);"
-						+ "if ($1 == 0) return;"
-						+ "throw new RuntimeException(\"Exit code: \" + $1);");
-				}
-			}
-		});
-
 		// Class ij.Prefs
 		clazz = get("ij.Prefs");
 
