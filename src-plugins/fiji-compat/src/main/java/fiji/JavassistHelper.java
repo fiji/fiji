@@ -11,11 +11,15 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.io.PrintWriter;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Set;
 import java.util.jar.JarOutputStream;
 import java.util.zip.ZipEntry;
+
+import org.scijava.util.FileUtils;
 
 import javassist.CannotCompileException;
 import javassist.ClassClassPath;
@@ -187,7 +191,10 @@ public abstract class JavassistHelper implements Runnable {
 
 	public static void verify(byte[] bytecode, PrintStream out) {
 		try {
-			ClassLoader loader = new FijiClassLoader(true);
+			final File[] files = FileUtils.getAllVersions(new File(System.getProperty("ij.dir"), "jars"), "jruby.jar");
+			final URL[] urls = new URL[files.length];
+			for (int i = 0; i < urls.length; i++) urls[i] = files[i].toURI().toURL();
+			ClassLoader loader = new URLClassLoader(urls);
 			Class<?> readerClass = loader.loadClass("jruby.objectweb.asm.ClassReader");
 			java.lang.reflect.Constructor<?> ctor = readerClass.getConstructor(new Class[] { bytecode.getClass() });
 			Object reader = ctor.newInstance(bytecode);
