@@ -10,7 +10,6 @@ import java.awt.Menu;
 import java.awt.MenuBar;
 import java.awt.MenuContainer;
 import java.awt.MenuItem;
-import java.awt.PopupMenu;
 
 import java.awt.event.KeyEvent;
 
@@ -366,16 +365,17 @@ public class User_Plugins implements PlugIn {
 	}
 
 	public static Menu getMenu(String menuPath) {
-		return (Menu)getMenuItem(Menus.getMenuBar(), menuPath, true);
+		return (Menu)FijiTools.getMenuItem(Menus.getMenuBar(), menuPath, true);
 	}
 
 	/**
 	 * Get the MenuItem instance for a given menu path
 	 *
 	 * @param menuPath the menu path, e.g. File>New>Bio-Formats
+	 * @deprecated Use {@link FijiTools#getMenuItem(String)} instead
 	 */
 	public static MenuItem getMenuItem(String menuPath) {
-		return getMenuItem(Menus.getMenuBar(), menuPath, false);
+		return FijiTools.getMenuItem(menuPath);
 	}
 
 	/**
@@ -386,73 +386,26 @@ public class User_Plugins implements PlugIn {
 	 * @param container an instance of {@link MenuBar} or {@link Menu}
 	 * @param menuPath the menu path, e.g. File>New>Bio-Formats
 	 * @param createMenuIfNecessary if the menu item was not found, create a menu
+	 * @deprecated Use {@link FijiTools#getMenuItem(MenuContainer,String,boolean)} instead
 	 */
 	public static MenuItem getMenuItem(MenuContainer container,
 			String menuPath, boolean createMenuIfNecessary) {
-		String name;
-		MenuBar menuBar = (container instanceof MenuBar) ?
-			(MenuBar)container : null;
-		Menu menu = (container instanceof Menu) ?
-			(Menu)container : null;
-		while (menuPath.endsWith(">"))
-			menuPath = menuPath.substring(0, menuPath.length() - 1);
-		while (menuPath != null && menuPath.length() > 0) {
-			int croc = menuPath.indexOf('>');
-			if (croc < 0) {
-				name = menuPath;
-				menuPath = null;
+				return FijiTools.getMenuItem(container, menuPath,
+						createMenuIfNecessary);
 			}
-			else {
-				name = menuPath.substring(0, croc);
-				menuPath = menuPath.substring(croc + 1);
-			}
-			MenuItem current = getMenuItem(menuBar, menu, name,
-				createMenuIfNecessary);
-			if (current == null || menuPath == null)
-				return current;
-			menuBar = null;
-			menu = (Menu)current;
-		}
-		return null;
-	}
 
 	/*
 	 * Get the item with the given name either from the menuBar, or if
 	 * that is null, from the menu.
 	 */
+	/**
+	 * @deprecated Use {@link FijiTools#getMenuItem(MenuBar,Menu,String,boolean)} instead
+	 */
 	protected static MenuItem getMenuItem(MenuBar menuBar, Menu menu,
 			String name, boolean createIfNecessary) {
-		if (menuBar == null && menu == null)
-			return null;
-		if (menuBar != null && name.equals("Help")) {
-			menu = menuBar.getHelpMenu();
-			if (menu == null && createIfNecessary) {
-				menu = new PopupMenu("Help");
-				menuBar.setHelpMenu(menu);
+				return FijiTools.getMenuItem(menuBar, menu, name,
+						createIfNecessary);
 			}
-			return menu;
-		}
-
-		int count = menuBar != null ?
-			menuBar.getMenuCount() : menu.getItemCount();
-		for (int i = 0; i < count; i++) {
-			MenuItem current = menuBar != null ?
-				menuBar.getMenu(i) : menu.getItem(i);
-			if (name.equals(current.getLabel()))
-				return current;
-		}
-
-		if (createIfNecessary) {
-			Menu newMenu = new PopupMenu(name);
-			if (menuBar != null)
-				menuBar.add(newMenu);
-			else
-				menu.add(newMenu);
-			return newMenu;
-		}
-		else
-			return null;
-	}
 
 
 	/* defaults */

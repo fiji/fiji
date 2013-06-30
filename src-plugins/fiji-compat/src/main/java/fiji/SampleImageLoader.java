@@ -64,7 +64,7 @@ public class SampleImageLoader implements PlugIn {
 	}
 
 	protected static void handleSamples(SampleHandler handler) {
-		Menu menu = (Menu)User_Plugins.getMenuItem(menuPath);
+		Menu menu = (Menu)FijiTools.getMenuItem(menuPath);
 		if (menu == null)
 			return;
 
@@ -141,7 +141,7 @@ public class SampleImageLoader implements PlugIn {
 				download(new URL(urls.get(i)).openConnection(),
 					getCached(urls.get(i), true),
 					i, urls.size(), logToStderr);
-			User_Plugins.getMenuItem(menuPath + ">" + menuItemLabel)
+			FijiTools.getMenuItem(menuPath + ">" + menuItemLabel)
 				.setEnabled(false);
 		} catch (Exception e) {
 			if (logToStderr)
