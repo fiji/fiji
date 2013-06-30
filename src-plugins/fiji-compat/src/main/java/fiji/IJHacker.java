@@ -33,25 +33,6 @@ public class IJHacker extends JavassistHelper {
 		CtMethod method;
 		CtField field;
 
-		// Class ij.Prefs
-		clazz = get("ij.Prefs");
-
-		// do not use the current directory as IJ home on Windows
-		String prefsDir = System.getenv("IJ_PREFS_DIR");
-		if (prefsDir == null && System.getProperty("os.name").startsWith("Windows"))
-			prefsDir = System.getenv("user.home");
-		if (prefsDir != null) {
-			final String replace = "prefsDir = \"" + prefsDir + "\";";
-			method = clazz.getMethod("load", "(Ljava/lang/Object;Ljava/applet/Applet;)Ljava/lang/String;");
-			method.instrument(new ExprEditor() {
-				@Override
-				public void edit(FieldAccess access) throws CannotCompileException {
-					if (access.getFieldName().equals("prefsDir") && access.isWriter())
-						access.replace(replace);
-				}
-			});
-		}
-
 		// Class ij.gui.Toolbar
 		clazz = get("ij.gui.Toolbar");
 
