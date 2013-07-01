@@ -19,7 +19,6 @@ import javassist.bytecode.CodeIterator;
 import javassist.bytecode.MethodInfo;
 import javassist.bytecode.Opcode;
 import javassist.expr.ExprEditor;
-import javassist.expr.Handler;
 import javassist.expr.MethodCall;
 import javassist.expr.NewExpr;
 
@@ -142,19 +141,6 @@ public class IJHacker extends JavassistHelper {
 		// Class ij.macro.Functions
 		clazz = get("ij.macro.Functions");
 
-		method = clazz.getMethod("call", "()Ljava/lang/String;");
-		method.instrument(new ExprEditor() {
-			@Override
-			public void edit(Handler handler) throws CannotCompileException {
-				try {
-					if (handler.getType().getName().equals("java.lang.reflect.InvocationTargetException"))
-						handler.insertBefore("ij.IJ.handleException($1);"
-							+ "return null;");
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-			}
-		});
 		handleHTTPS(clazz.getMethod("exec", "()Ljava/lang/String;"));
 
 		// handle https:// in addition to http://
