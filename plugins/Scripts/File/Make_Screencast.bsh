@@ -203,15 +203,18 @@ showUI() {
 
 usage() {
 	System.err.println("Usage: " + this.interpreter.getSourceFileInfo()
-                + " [--width <width>] [--fps <fps>] [--geometry <geometry>] <output-file>");
+                + " [--force] [--width <width>] [--fps <fps>] [--geometry <geometry>] <output-file>");
         System.exit(1);
 }
 
 parseCommandLine() {
 	options = new Options();
 
+	force = false;
 	for (i = 0; i < bsh.args.length && bsh.args[i].startsWith("-"); i++) {
-		if (bsh.args[i].equals("--width")) {
+		if (bsh.args[i].equals("--force")) {
+			force = true;
+		} else if (bsh.args[i].equals("--width")) {
 			options.outputWidth = Integer.parseInt(bsh.args[++i]);
 		} else if (bsh.args[i].equals("--fps")) {
 			options.fps = Double.parseDouble(bsh.args[++i]);
@@ -236,7 +239,7 @@ parseCommandLine() {
 		usage();
 	}
 	options.outputFile = new File(bsh.args[i]);
-	if (options.outputFile.exists()) {
+	if (!force && options.outputFile.exists()) {
 		print("File '" + options.outputFile + "' exists already.");
 		System.exit(1);
 	}
