@@ -38,6 +38,7 @@ class Options {
 
 	String vlc;
 	File outputFile;
+	double fps = 15;
 	int outputWidth = 640;
 	int top = -1, left = -1, width = -1, height = -1;
 	boolean interactive = false;
@@ -102,16 +103,20 @@ startScreencast(options) {
 	commandLine.add("dummy");
 	//commandLine.add("-vvv");
 	commandLine.add("screen://");
-	commandLine.add("--screen-fps=15");
+	commandLine.add("--screen-fps=" + options.fps);
 	if (options.left >= 0) {
 		commandLine.add("--screen-left=" + options.left);
 		commandLine.add("--screen-top=" + options.top);
 		commandLine.add("--screen-width=" + options.width);
 		commandLine.add("--screen-height=" + options.height);
 	}
+	if (options.isWindows) {
+		commandLine.add("--dshow-fps=" + options.fps);
+	}
 	commandLine.add("--sout=#transcode{"
 			+ "vcodec=" + vcodec + ","
 			+ "vb=800,"
+			+ "fps=" + options.fps + ","
 			+ "width=" + options.outputWidth + ","
 			+ "acodec=vorb,"
 			+ "ab=128,"
@@ -198,7 +203,7 @@ showUI() {
 
 usage() {
 	System.err.println("Usage: " + this.interpreter.getSourceFileInfo()
-                + " [--width <width>] [--geometry <geometry>] <output-file>");
+                + " [--width <width>] [--fps <fps>] [--geometry <geometry>] <output-file>");
         System.exit(1);
 }
 
@@ -208,6 +213,8 @@ parseCommandLine() {
 	for (i = 0; i < bsh.args.length && bsh.args[i].startsWith("-"); i++) {
 		if (bsh.args[i].equals("--width")) {
 			options.outputWidth = Integer.parseInt(bsh.args[++i]);
+		} else if (bsh.args[i].equals("--fps")) {
+			options.fps = Double.parseDouble(bsh.args[++i]);
 		} else if (bsh.args[i].equals("--geometry")) {
 			pattern = Pattern.compile("(\\d+)x(\\d+)\\+(\\d+)\\+(\\d+)");
 			matcher = pattern.matcher(bsh.args[++i]);
