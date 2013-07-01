@@ -28,7 +28,6 @@ public class IJHacker extends JavassistHelper {
 	public void instrumentClasses() throws BadBytecode, CannotCompileException, NotFoundException {
 		CtClass clazz;
 		CtMethod method;
-		CtField field;
 
 		// Class ij.io.Opener
 		clazz = get("ij.io.Opener");
@@ -153,45 +152,6 @@ public class IJHacker extends JavassistHelper {
 
 		clazz = get("ij.plugin.ListVirtualStack");
 		handleHTTPS(clazz.getMethod("run", "(Ljava/lang/String;)V"));
-
-		// Add back the "Convert to 8-bit Grayscale" checkbox to Import>Image Sequence
-		clazz = get("ij.plugin.FolderOpener");
-		if (!hasField(clazz, "convertToGrayscale")) {
-			field = new CtField(CtClass.booleanType, "convertToGrayscale", clazz);
-			clazz.addField(field);
-			method = clazz.getMethod("run", "(Ljava/lang/String;)V");
-			method.instrument(new ExprEditor() {
-				protected int openImageCount;
-
-				@Override
-				public void edit(MethodCall call) throws CannotCompileException {
-					if (call.getMethodName().equals("openImage") && openImageCount++ == 1)
-						call.replace("$_ = $0.openImage($1, $2);"
-							+ "if (convertToGrayscale)"
-							+ "  ij.IJ.run($_, \"8-bit\", \"\");");
-				}
-			});
-			method = clazz.getMethod("showDialog", "(Lij/ImagePlus;[Ljava/lang/String;)Z");
-			method.instrument(new ExprEditor() {
-				protected int addCheckboxCount, getNextBooleanCount;
-
-				@Override
-				public void edit(MethodCall call) throws CannotCompileException {
-					String name = call.getMethodName();
-					if (name.equals("addCheckbox") && addCheckboxCount++ == 0)
-						call.replace("$0.addCheckbox(\"Convert to 8-bit Grayscale\", convertToGrayscale);"
-							+ "$0.addCheckbox($1, $2);");
-					else if (name.equals("getNextBoolean") && getNextBooleanCount++ == 0)
-						call.replace("convertToGrayscale = $0.getNextBoolean();"
-							+ "$_ = $0.getNextBoolean();"
-							+ "if (convertToGrayscale && $_) {"
-							+ "  ij.IJ.error(\"Cannot convert to grayscale and RGB at the same time.\");"
-							+ "  return false;"
-							+ "}");
-				}
-			});
-
-		}
 
 		// If there is a macros/StartupMacros.fiji.ijm, but no macros/StartupMacros.txt, execute that
 		clazz = get("ij.Menus");
