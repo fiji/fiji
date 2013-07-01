@@ -33,13 +33,6 @@ public class IJHacker extends JavassistHelper {
 		CtMethod method;
 		CtField field;
 
-		// Class JavaScriptEvaluator
-		clazz = get("JavaScriptEvaluator");
-
-		// make sure Rhino gets the correct class loader
-		method = clazz.getMethod("run", "()V");
-		method.insertBefore("Thread.currentThread().setContextClassLoader(ij.IJ.getClassLoader());");
-
 		// Class ij.io.Opener
 		clazz = get("ij.io.Opener");
 
