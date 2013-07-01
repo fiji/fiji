@@ -135,25 +135,6 @@ public class IJHacker extends JavassistHelper {
 		clazz = get("ij.plugin.ListVirtualStack");
 		handleHTTPS(clazz.getMethod("run", "(Ljava/lang/String;)V"));
 
-		// If there is a macros/StartupMacros.fiji.ijm, but no macros/StartupMacros.txt, execute that
-		clazz = get("ij.Menus");
-		File macrosDirectory = new File(FijiTools.getFijiDir(), "macros");
-		File startupMacrosFile = new File(macrosDirectory, "StartupMacros.fiji.ijm");
-		if (startupMacrosFile.exists() &&
-				!new File(macrosDirectory, "StartupMacros.txt").exists() &&
-				!new File(macrosDirectory, "StartupMacros.ijm").exists()) {
-			method = clazz.getMethod("installStartupMacroSet", "()V");
-			final String startupMacrosPath = startupMacrosFile.getPath().replace("\\", "\\\\").replace("\"", "\\\"");
-			method.instrument(new ExprEditor() {
-				@Override
-				public void edit(MethodCall call) throws CannotCompileException {
-					if (call.getMethodName().equals("installFromIJJar"))
-						call.replace("$0.installFile(\"" + startupMacrosPath + "\");"
-							+ "nMacros += $0.getMacroCount();");
-				}
-			});
-		}
-
 		LegacyExtensions.setAppName("(Fiji Is Just) ImageJ");
 		LegacyExtensions.setIcon(new File(AppUtils.getBaseDirectory(), "images/icon.png"));
 	}
