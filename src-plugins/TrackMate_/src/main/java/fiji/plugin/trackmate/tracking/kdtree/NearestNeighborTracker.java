@@ -115,6 +115,10 @@ public class NearestNeighborTracker extends MultiThreadedBenchmarkAlgorithm	impl
 						int targetFrame = frames.higher(i);
 						
 						int nTargetSpots = spots.getNSpots(targetFrame, true);
+						if (nTargetSpots < 1) {
+							continue;
+						}
+						
 						List<RealPoint> targetCoords = new ArrayList<RealPoint>(nTargetSpots);
 						List<FlagNode<Spot>> targetNodes = new ArrayList<FlagNode<Spot>>(nTargetSpots);
 						Iterator<Spot> targetIt = spots.iterator(targetFrame, true);
