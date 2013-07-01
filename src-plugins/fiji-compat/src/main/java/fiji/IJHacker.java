@@ -41,14 +41,6 @@ public class IJHacker extends JavassistHelper {
 
 		handleHTTPS(clazz.getMethod("drop", "(Ljava/awt/dnd/DropTargetDropEvent;)V"));
 
-		// Class ij.plugin.Commands
-		clazz = get("ij.plugin.Commands");
-
-		// open StartupMacros with the Script Editor
-		method = clazz.getMethod("openStartupMacros", "()V");
-		method.insertBefore("if (fiji.FijiTools.openStartupMacros())"
-			+ "  return;");
-
 		boolean scriptEditorStuff = true;
 		if (!scriptEditorStuff) {
 			// Class ij.plugin.frame.Recorder
