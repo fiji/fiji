@@ -85,17 +85,21 @@ public class FijiTools {
 		return false;
 	}
 
-	public static boolean openEditor(String title, String body) {
+	public static boolean openFijiEditor(String title, String body) {
 		try {
-			Class<?> clazz = IJ.getClassLoader().loadClass("fiji.scripting.TextEditor");
-			Constructor<?> ctor = clazz.getConstructor(new Class[] { String.class, String.class });
-			Frame frame = (Frame)ctor.newInstance(new Object[] { title, body });
+			Class<?> textEditor = ij.IJ.getClassLoader().loadClass("fiji.scripting.TextEditor");
+			Constructor<?> ctor = textEditor.getConstructor(String.class, String.class);
+			Frame frame = (Frame)ctor.newInstance(title, body);
+			if (frame == null) return false;
 			frame.setVisible(true);
 			return true;
-		} catch (Exception e) {
-			IJ.handleException(e);
+		} catch (Throwable t) {
+			t.printStackTrace();
 		}
+		return false;
+	}
 
+	public static boolean openIJ1Editor(String title, String body) {
 		try {
 			Class<?> clazz = IJ.getClassLoader().loadClass("ij.plugin.frame.Editor");
 			Constructor<?> ctor = clazz.getConstructor(new Class[] { Integer.TYPE, Integer.TYPE, Integer.TYPE, Integer.TYPE });
@@ -108,6 +112,11 @@ public class FijiTools {
 		}
 
 		return false;
+	}
+
+	public static boolean openEditor(String title, String body) {
+		if (openFijiEditor(title, body)) return true;
+		return openIJ1Editor(title, body);
 	}
 
 	/**
@@ -129,6 +138,20 @@ public class FijiTools {
 					!stackTraceContains("fiji.scripting.TextEditor.open(") &&
 					IJ.runPlugIn("fiji.scripting.Script_Editor", path) != null)
 				return true;
+		} catch (Throwable t) {
+			t.printStackTrace();
+		}
+		return false;
+	}
+
+	public static boolean openFijiEditor(final File file) {
+		try {
+			Class<?> textEditor = ij.IJ.getClassLoader().loadClass("fiji.scripting.TextEditor");
+			Constructor<?> ctor = textEditor.getConstructor(String.class);
+			Frame frame = (Frame)ctor.newInstance(file.getAbsolutePath());
+			if (frame == null) return false;
+			frame.setVisible(true);
+			return true;
 		} catch (Throwable t) {
 			t.printStackTrace();
 		}
