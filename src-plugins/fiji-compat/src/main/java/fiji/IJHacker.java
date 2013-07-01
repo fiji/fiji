@@ -20,7 +20,6 @@ import javassist.bytecode.CodeIterator;
 import javassist.bytecode.MethodInfo;
 import javassist.bytecode.Opcode;
 import javassist.expr.ExprEditor;
-import javassist.expr.FieldAccess;
 import javassist.expr.Handler;
 import javassist.expr.MethodCall;
 import javassist.expr.NewExpr;
@@ -36,19 +35,6 @@ public class IJHacker extends JavassistHelper {
 		// Class ij.io.Opener
 		clazz = get("ij.io.Opener");
 
-		// make sure that the check for Bio-Formats is correct
-		clazz.getClassInitializer().instrument(new ExprEditor() {
-			@Override
-			public void edit(FieldAccess access) throws CannotCompileException {
-				if (access.getFieldName().equals("bioformats") && access.isWriter())
-					access.replace("try {"
-						+ "    ij.IJ.getClassLoader().loadClass(\"loci.plugins.LociImporter\");"
-						+ "    bioformats = true;"
-						+ "} catch (ClassNotFoundException e) {"
-						+ "    bioformats = false;"
-						+ "}");
-			}
-		});
 		// open text in the Fiji Editor
 		method = clazz.getMethod("open", "(Ljava/lang/String;)V");
 		method.insertBefore("if (isText($1) && fiji.FijiTools.maybeOpenEditor($1)) return;");
