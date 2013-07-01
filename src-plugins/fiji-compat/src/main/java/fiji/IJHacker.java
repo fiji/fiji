@@ -36,16 +36,6 @@ public class IJHacker extends JavassistHelper {
 		method = clazz.getMethod("open", "(Ljava/lang/String;)V");
 		method.insertBefore("if (isText($1) && fiji.FijiTools.maybeOpenEditor($1)) return;");
 
-		// Class ij.macro.Interpreter
-		clazz = get("ij.macro.Interpreter");
-
-		// make sure no dialog is opened in headless mode
-		method = clazz.getMethod("showError", "(Ljava/lang/String;Ljava/lang/String;[Ljava/lang/String;)V");
-		method.insertBefore("if (ij.IJ.getInstance() == null) {"
-			+ "  java.lang.System.err.println($1 + \": \" + $2);"
-			+ "  return;"
-			+ "}");
-
 		// Class ij.plugin.DragAndDrop
 		clazz = get("ij.plugin.DragAndDrop");
 
