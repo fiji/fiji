@@ -37,6 +37,7 @@ import fiji.plugin.trackmate.gui.panels.tracker.NearestNeighborTrackerSettingsPa
 import fiji.plugin.trackmate.gui.panels.tracker.SimpleLAPTrackerSettingsPanel;
 import fiji.plugin.trackmate.tracking.FastLAPTracker;
 import fiji.plugin.trackmate.tracking.LAPUtils;
+import fiji.plugin.trackmate.tracking.ManualTracker;
 import fiji.plugin.trackmate.tracking.SimpleFastLAPTracker;
 import fiji.plugin.trackmate.tracking.SpotTracker;
 import fiji.plugin.trackmate.tracking.TrackerKeys;
@@ -83,7 +84,7 @@ public class TrackerProvider extends AbstractProvider  {
 	 */
 
 	/**
-	 * Register the standard trackers shipped with TrackMate.
+	 * Registers the standard trackers shipped with TrackMate.
 	 */
 	protected void registerTrackers() {
 		// keys
@@ -91,22 +92,26 @@ public class TrackerProvider extends AbstractProvider  {
 		keys.add(SimpleFastLAPTracker.TRACKER_KEY);
 		keys.add(FastLAPTracker.TRACKER_KEY);
 		keys.add(NearestNeighborTracker.TRACKER_KEY);
+		keys.add(ManualTracker.TRACKER_KEY);
 		// infoTexts
 		infoTexts = new ArrayList<String>();
 		infoTexts.add(SimpleFastLAPTracker.INFO_TEXT);
 		infoTexts.add(FastLAPTracker.INFO_TEXT);
 		infoTexts.add(NearestNeighborTracker.INFO_TEXT);
+		infoTexts.add(ManualTracker.INFO_TEXT);
 		// Names
 		names = new ArrayList<String>();
 		names.add(SimpleFastLAPTracker.NAME);
 		names.add(FastLAPTracker.NAME);
 		names.add(NearestNeighborTracker.NAME);
+		names.add(ManualTracker.NAME);
 	}
 
 	/**
-	 * @return a new instance of the target tracker identified by the key parameter. 
+	 * Returns a new instance of the target tracker identified by the key parameter. 
 	 * If the key is unknown to this factory, <code>null</code> is returned. 
 	 * The tracker returned is <b>not</b> configured.
+	 * @return a new {@link SpotTracker}.
 	 */
 	public SpotTracker getTracker() {
 
@@ -121,6 +126,9 @@ public class TrackerProvider extends AbstractProvider  {
 
 		} else if (currentKey.equals(NearestNeighborTracker.TRACKER_KEY)) {
 			tracker = new NearestNeighborTracker(spots, logger);
+			
+		} else if (currentKey.equals(ManualTracker.TRACKER_KEY)) {
+			tracker = new ManualTracker();
 
 		} else {
 			return null;
@@ -141,6 +149,9 @@ public class TrackerProvider extends AbstractProvider  {
 
 		} else if (currentKey.equals(NearestNeighborTracker.TRACKER_KEY)) {
 			return NearestNeighborTracker.INFO_TEXT;
+			
+		} else if (currentKey.equals(ManualTracker.TRACKER_KEY)) {
+			return ManualTracker.INFO_TEXT;
 
 		} else {
 			return null;
@@ -148,8 +159,9 @@ public class TrackerProvider extends AbstractProvider  {
 	}
 
 	/**
-	 * @return the name of the target tracker,
+	 * Returns the name of the target tracker,
 	 * or <code>null</code> if it is unknown to this factory.
+	 * @return a String representation of the selected tracker.
 	 */
 	public String getName() {
 		if (currentKey.equals(SimpleFastLAPTracker.TRACKER_KEY)) {
@@ -160,6 +172,9 @@ public class TrackerProvider extends AbstractProvider  {
 
 		} else if (currentKey.equals(NearestNeighborTracker.TRACKER_KEY)) {
 			return NearestNeighborTracker.NAME;
+			
+		} else if (currentKey.equals(ManualTracker.TRACKER_KEY)) {
+			return ManualTracker.NAME;
 
 		} else {
 			return null;
@@ -215,7 +230,7 @@ public class TrackerProvider extends AbstractProvider  {
 	}
 
 	/**
-	 * Marshall a settings map to a JDom element, ready for saving to XML. 
+	 * Marshalls a settings map to a JDom element, ready for saving to XML. 
 	 * The element is <b>updated</b> with new attributes.
 	 * <p>
 	 * Only parameters specific to the target tracker factory are marshalled.
@@ -289,6 +304,10 @@ public class TrackerProvider extends AbstractProvider  {
 		} else if (currentKey.equals(NearestNeighborTracker.TRACKER_KEY)) {
 			return writeAttribute(settings, element, KEY_LINKING_MAX_DISTANCE, Double.class);
 
+		} else if (currentKey.equals(ManualTracker.TRACKER_KEY)) {
+			return true;
+
+			
 		} else {
 
 			errorMessage = "Unknow detector factory key: "+currentKey+".\n";
@@ -423,7 +442,11 @@ public class TrackerProvider extends AbstractProvider  {
 				errorMessage = errorHolder.toString();
 			}
 			return ok;
-			
+
+		} else if (currentKey.equals(ManualTracker.TRACKER_KEY)) {
+
+			return true;
+
 			
 		} else {
 
@@ -480,6 +503,10 @@ public class TrackerProvider extends AbstractProvider  {
 				errorMessage = str.toString();
 			}
 			return ok;
+			
+		} else if (currentKey.equals(ManualTracker.TRACKER_KEY)) {
+
+			return true;
 
 		} else {
 
@@ -531,8 +558,13 @@ public class TrackerProvider extends AbstractProvider  {
 			} else {
 				str.append("  Track merging not allowed.\n");
 			}
+			
 		} else if (currentKey.equals(NearestNeighborTracker.TRACKER_KEY)) {
 			str.append(String.format("  Max distance: %.1f\n", (Double) sm.get(KEY_LINKING_MAX_DISTANCE)));
+			
+		} else if (currentKey.equals(ManualTracker.TRACKER_KEY)) {
+			str.append("  Manual tracking.\n");
+			
 		}
 		return str.toString();
 	}

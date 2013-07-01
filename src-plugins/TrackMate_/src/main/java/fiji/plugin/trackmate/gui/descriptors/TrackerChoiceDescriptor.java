@@ -7,6 +7,8 @@ import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.TrackMate;
 import fiji.plugin.trackmate.gui.panels.ListChooserPanel;
 import fiji.plugin.trackmate.providers.TrackerProvider;
+import fiji.plugin.trackmate.tracking.ManualTracker;
+import fiji.plugin.trackmate.tracking.SpotTracker;
 
 public class TrackerChoiceDescriptor implements WizardPanelDescriptor {
 
@@ -57,7 +59,23 @@ public class TrackerChoiceDescriptor implements WizardPanelDescriptor {
 					"Using default "+trackerProvider.getCurrentKey());
 		}
 		
-		trackmate.getSettings().tracker = trackerProvider.getTracker();
+		SpotTracker tracker = trackerProvider.getTracker();
+		trackmate.getSettings().tracker = tracker; 
+
+		if (tracker.getKey().equals(ManualTracker.TRACKER_KEY)) {
+			Thread trackFeatureCalculationThread = new Thread("TrackMate track feature calculation thread") {
+				@Override
+				public void run() {
+					trackmate.computeTrackFeatures(true);
+				}
+			};
+			trackFeatureCalculationThread.start();
+			try {
+				trackFeatureCalculationThread.join();
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+		}
 	}
 
 	private void setCurrentChoiceFromPlugin() {

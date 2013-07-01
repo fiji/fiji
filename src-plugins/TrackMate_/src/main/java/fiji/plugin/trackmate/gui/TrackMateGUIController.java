@@ -59,6 +59,7 @@ import fiji.plugin.trackmate.providers.SpotAnalyzerProvider;
 import fiji.plugin.trackmate.providers.TrackAnalyzerProvider;
 import fiji.plugin.trackmate.providers.TrackerProvider;
 import fiji.plugin.trackmate.providers.ViewProvider;
+import fiji.plugin.trackmate.tracking.ManualTracker;
 import fiji.plugin.trackmate.tracking.SpotTracker;
 import fiji.plugin.trackmate.util.TMUtils;
 import fiji.plugin.trackmate.visualization.FeatureColorGenerator;
@@ -329,7 +330,8 @@ public class TrackMateGUIController implements ActionListener {
 	}
 
 	protected PerTrackFeatureColorGenerator createTrackColorGenerator() {
-		return new PerTrackFeatureColorGenerator(trackmate.getModel(), TrackIndexAnalyzer.TRACK_INDEX);
+		PerTrackFeatureColorGenerator generator = new PerTrackFeatureColorGenerator(trackmate.getModel(), TrackIndexAnalyzer.TRACK_INDEX);
+		return generator;
 	}
 
 
@@ -551,6 +553,7 @@ public class TrackMateGUIController implements ActionListener {
 
 		} else if (currentDescriptor == detectorChoiceDescriptor) {
 			return detectorConfigurationDescriptor;
+			
 		} else if (currentDescriptor == detectorConfigurationDescriptor) {
 
 			if (trackmate.getSettings().detectorFactory.getKey().equals(ManualDetectorFactory.DETECTOR_KEY)) {
@@ -572,7 +575,11 @@ public class TrackMateGUIController implements ActionListener {
 			return trackerChoiceDescriptor;
 
 		} else if (currentDescriptor == trackerChoiceDescriptor) {
-			return trackerConfigurationDescriptor;
+			if (null == trackmate.getSettings().tracker || trackmate.getSettings().tracker.getKey().equals(ManualTracker.TRACKER_KEY)) {
+				return trackFilterDescriptor;
+			} else {
+				return trackerConfigurationDescriptor;
+			}
 
 		} else if (currentDescriptor == trackerConfigurationDescriptor) {
 			return trackingDescriptor;
@@ -630,7 +637,11 @@ public class TrackMateGUIController implements ActionListener {
 			return trackerConfigurationDescriptor;
 
 		} else if (currentDescriptor == trackFilterDescriptor) {
-			return trackerConfigurationDescriptor;
+			if (null == trackmate.getSettings().tracker || trackmate.getSettings().tracker.getKey().equals(ManualTracker.TRACKER_KEY)) {
+				return trackerChoiceDescriptor; 
+			} else {
+				return trackerConfigurationDescriptor;
+			}
 
 		} else if (currentDescriptor == configureViewsDescriptor) {
 			return trackFilterDescriptor;
@@ -775,7 +786,7 @@ public class TrackMateGUIController implements ActionListener {
 			oldDescriptor.aboutToHidePanel();
 		}
 
-		// Find a store new one to display
+		// Find and store new one to display
 		WizardPanelDescriptor panelDescriptor  = nextDescriptor(oldDescriptor);
 		guimodel.currentDescriptor = panelDescriptor;
 
