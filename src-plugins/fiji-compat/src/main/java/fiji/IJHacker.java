@@ -36,11 +36,6 @@ public class IJHacker extends JavassistHelper {
 		method = clazz.getMethod("open", "(Ljava/lang/String;)V");
 		method.insertBefore("if (isText($1) && fiji.FijiTools.maybeOpenEditor($1)) return;");
 
-		// Class ij.plugin.DragAndDrop
-		clazz = get("ij.plugin.DragAndDrop");
-
-		handleHTTPS(clazz.getMethod("drop", "(Ljava/awt/dnd/DropTargetDropEvent;)V"));
-
 		boolean scriptEditorStuff = true;
 		if (!scriptEditorStuff) {
 			// Class ij.plugin.frame.Recorder
@@ -119,22 +114,6 @@ public class IJHacker extends JavassistHelper {
 			});
 		}
 
-		// Class ij.macro.Functions
-		clazz = get("ij.macro.Functions");
-
-		handleHTTPS(clazz.getMethod("exec", "()Ljava/lang/String;"));
-
-		// handle https:// in addition to http://
-		try {
-			clazz = get("ij.io.PluginInstaller");
-		} catch (NotFoundException e) {
-			clazz = get("ij.plugin.PluginInstaller");
-		}
-		handleHTTPS(clazz.getMethod("install", "(Ljava/lang/String;)Z"));
-
-		clazz = get("ij.plugin.ListVirtualStack");
-		handleHTTPS(clazz.getMethod("run", "(Ljava/lang/String;)V"));
-
 		LegacyExtensions.setAppName("(Fiji Is Just) ImageJ");
 		LegacyExtensions.setIcon(new File(AppUtils.getBaseDirectory(), "images/icon.png"));
 	}
@@ -156,21 +135,6 @@ public class IJHacker extends JavassistHelper {
 			throw new CannotCompileException(e);
 		}
 		throw new CannotCompileException("Check not found");
-	}
-
-	private void handleHTTPS(final CtMethod method) throws CannotCompileException {
-		method.instrument(new ExprEditor() {
-			@Override
-			public void edit(MethodCall call) throws CannotCompileException {
-				try {
-					if (call.getMethodName().equals("startsWith") &&
-							"http://".equals(getLatestArg(call, 0)))
-						call.replace("$_ = $0.startsWith($1) || $0.startsWith(\"https://\");");
-				} catch (BadBytecode e) {
-					e.printStackTrace();
-				}
-			}
-		});
 	}
 
 }
