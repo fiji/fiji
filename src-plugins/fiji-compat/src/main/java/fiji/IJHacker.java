@@ -13,7 +13,6 @@ import javassist.CannotCompileException;
 import javassist.CtClass;
 import javassist.CtField;
 import javassist.CtMethod;
-import javassist.CtNewMethod;
 import javassist.NotFoundException;
 import javassist.bytecode.BadBytecode;
 import javassist.bytecode.CodeIterator;
@@ -139,14 +138,6 @@ public class IJHacker extends JavassistHelper {
 
 			});
 		}
-
-		// Class ij.WindowManager
-		clazz = get("ij.WindowManager");
-
-		if (!hasMethod(clazz, "setCurrentWindow", "(Lij/gui/ImageWindow;Z)V"))
-			clazz.addMethod(CtNewMethod.make("public static void setCurrentWindow(ij.gui.ImageWindow window, boolean suppressRecording /* unfortunately ignored now */) {"
-				+ "  setCurrentWindow(window);"
-				+ "}", clazz));
 
 		// Class ij.macro.Functions
 		clazz = get("ij.macro.Functions");
