@@ -33,19 +33,6 @@ public class IJHacker extends JavassistHelper {
 		CtMethod method;
 		CtField field;
 
-		// Class ij.gui.Toolbar
-		clazz = get("ij.gui.Toolbar");
-
-		// tool names can be prefixes of other tools, watch out for that!
-		method = clazz.getMethod("getToolId", "(Ljava/lang/String;)I");
-		method.instrument(new ExprEditor() {
-			@Override
-			public void edit(MethodCall call) throws CannotCompileException {
-				if (call.getMethodName().equals("startsWith"))
-					call.replace("$_ = $0.equals($1) || $0.startsWith($1 + \"-\") || $0.startsWith($1 + \" -\");");
-			}
-		});
-
 		// Class JavaScriptEvaluator
 		clazz = get("JavaScriptEvaluator");
 
