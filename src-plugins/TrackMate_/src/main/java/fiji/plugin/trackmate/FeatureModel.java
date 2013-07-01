@@ -507,5 +507,4 @@ public class FeatureModel {
 					featureShortNames.get(feature) + "' (" + featureDimensions.get(feature) + ").\n");
 		}
 	}
-
 }

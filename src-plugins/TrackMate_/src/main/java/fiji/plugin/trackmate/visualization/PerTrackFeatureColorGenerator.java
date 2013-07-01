@@ -58,9 +58,6 @@ public class PerTrackFeatureColorGenerator implements TrackColorGenerator, Model
 			return;
 		}
 		
-		if (feature.equals(this.feature)) {
-			return;
-		}
 		this.feature = feature;
 		// A hack if we are asked for track index, which is the default and should never get caught to be null
 		if (feature.equals(TrackIndexAnalyzer.TRACK_INDEX)) {
@@ -98,7 +95,6 @@ public class PerTrackFeatureColorGenerator implements TrackColorGenerator, Model
 	}
 
 	private synchronized void refresh() {
-
 		TrackModel trackModel = model.getTrackModel();
 		Set<Integer> trackIDs = trackModel.trackIDs(true);
 
@@ -138,7 +134,13 @@ public class PerTrackFeatureColorGenerator implements TrackColorGenerator, Model
 		if (event.getEventID() ==  ModelChangeEvent.MODEL_MODIFIED) {
 			Set<DefaultWeightedEdge> edges = event.getEdges();
 			if (edges.size() > 0) {
-				refresh();
+				if (null == feature) {
+					refreshNull();
+				} else if (feature.equals(TrackIndexAnalyzer.TRACK_INDEX)) {
+					refreshIndex();
+				} else {
+					refresh();
+				}
 			} 
 		}
 	}
