@@ -1,5 +1,10 @@
 package fiji.plugin.trackmate.visualization.hyperstack;
 
+import fiji.plugin.trackmate.Model;
+import fiji.plugin.trackmate.Spot;
+import fiji.plugin.trackmate.util.TMUtils;
+import fiji.plugin.trackmate.visualization.TrackColorGenerator;
+import fiji.plugin.trackmate.visualization.TrackMateModelView;
 import ij.ImagePlus;
 import ij.gui.Roi;
 
@@ -12,20 +17,12 @@ import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.Stroke;
 import java.awt.geom.AffineTransform;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
 import org.jgrapht.graph.DefaultWeightedEdge;
-
-import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.Model;
-import fiji.plugin.trackmate.util.TMUtils;
-import fiji.plugin.trackmate.visualization.TrackColorGenerator;
-import fiji.plugin.trackmate.visualization.TrackMateModelView;
 
 /**
  * The overlay class in charge of drawing the tracks on the hyperstack window.
@@ -123,9 +120,11 @@ public class TrackOverlay extends Roi {
 		case TrackMateModelView.TRACK_DISPLAY_MODE_WHOLE: {
 			for (Integer trackID : filteredTrackKeys) {
 				colorGenerator.setCurrentTrackID(trackID);
-				Set<DefaultWeightedEdge> track = model.getTrackModel().trackEdges(trackID);
-				for (Iterator<Object> i = Arrays.asList(track.toArray()).iterator(); i.hasNext();) {
-					DefaultWeightedEdge edge = (DefaultWeightedEdge) i.next();
+				Set<DefaultWeightedEdge> track;
+				synchronized (model) {
+					track = new HashSet<DefaultWeightedEdge>(model.getTrackModel().trackEdges(trackID));
+				}
+				for (DefaultWeightedEdge edge : track) {
 					if (highlight.contains(edge))
 						continue;
 
@@ -146,10 +145,11 @@ public class TrackOverlay extends Roi {
 
 			for (Integer trackID : filteredTrackKeys) {
 				colorGenerator.setCurrentTrackID(trackID);
-				Set<DefaultWeightedEdge> track = model.getTrackModel().trackEdges(trackID);
-
-				for (Iterator<Object> i = Arrays.asList(track.toArray()).iterator(); i.hasNext();) {
-					DefaultWeightedEdge edge = (DefaultWeightedEdge) i.next();
+				Set<DefaultWeightedEdge> track;
+				synchronized (model) {
+					track = new HashSet<DefaultWeightedEdge>(model.getTrackModel().trackEdges(trackID));
+				}
+				for (DefaultWeightedEdge edge : track) {
 					if (highlight.contains(edge))
 						continue;
 
@@ -174,10 +174,11 @@ public class TrackOverlay extends Roi {
 
 			for (Integer trackID : filteredTrackKeys) {
 				colorGenerator.setCurrentTrackID(trackID);
-				final Set<DefaultWeightedEdge> track = model.getTrackModel().trackEdges(trackID);
-
-				for (Iterator<Object> i = Arrays.asList(track.toArray()).iterator(); i.hasNext();) {
-					DefaultWeightedEdge edge = (DefaultWeightedEdge) i.next();
+				final Set<DefaultWeightedEdge> track;
+				synchronized (model) {
+					track = new HashSet<DefaultWeightedEdge>(model.getTrackModel().trackEdges(trackID));
+				}
+				for (DefaultWeightedEdge edge : track) {
 					if (highlight.contains(edge))
 						continue;
 
