@@ -3,6 +3,7 @@ package fiji.plugin.trackmate.visualization.hyperstack;
 import static fiji.plugin.trackmate.gui.TrackMateWizard.BIG_FONT;
 import static fiji.plugin.trackmate.gui.TrackMateWizard.FONT;
 import static fiji.plugin.trackmate.gui.TrackMateWizard.SMALL_FONT;
+import ij.ImagePlus;
 
 import java.awt.Color;
 import java.awt.Font;
@@ -13,6 +14,7 @@ import java.awt.event.FocusListener;
 
 import javax.swing.BoxLayout;
 import javax.swing.ImageIcon;
+import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -29,10 +31,10 @@ import javax.swing.text.StyleContext;
 
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.Model;
+import fiji.plugin.trackmate.SelectionModel;
 import fiji.plugin.trackmate.gui.TrackMateWizard;
 import fiji.plugin.trackmate.gui.panels.components.JNumericTextField;
-import fiji.plugin.trackmate.visualization.hyperstack.SpotEditTool.SpotEditToolParams;
-import javax.swing.JButton;
+import fiji.plugin.trackmate.util.ModelTools;
 
 public class SpotEditToolConfigPanel extends JFrame {
 	
@@ -41,15 +43,17 @@ public class SpotEditToolConfigPanel extends JFrame {
 	private final static ImageIcon SELECT_TRACK_ICON = new ImageIcon(TrackMateWizard.class.getResource("images/arrow_updown.png"));
 	private final static ImageIcon SELECT_TRACK_ICON_UPWARDS = new ImageIcon(TrackMateWizard.class.getResource("images/arrow_up.png"));
 	private final static ImageIcon SELECT_TRACK_ICON_DOWNWARDS = new ImageIcon(TrackMateWizard.class.getResource("images/arrow_down.png"));
+	private final static ImageIcon SEMIAUTO_TRACKING_ICON = new ImageIcon(TrackMateWizard.class.getResource("images/SpotIcon_supersmall.png"));
+	@SuppressWarnings("unused")
 	private final static ImageIcon LINK_SPOTS_ICON = new ImageIcon(TrackMateWizard.class.getResource("images/EdgeIcon_supersmall.png"));
+
 	private final Logger logger;
 	private JNumericTextField jNFQualityThreshold;
 	private JNumericTextField jNFDistanceTolerance;
-	private final SpotEditToolParams params;
-	private Model model;
+	private final SpotEditTool parent;
 
-	public SpotEditToolConfigPanel(final SpotEditToolParams params) {
-		this.params = params;
+	public SpotEditToolConfigPanel(final SpotEditTool parent) {
+		this.parent = parent;
 		
 		/*
 		 * Listeners
@@ -92,7 +96,7 @@ public class SpotEditToolConfigPanel extends JFrame {
 		
 		JPanel panelSemiAutoParams = new JPanel();
 		panelSemiAutoParams.setBorder(new LineBorder(new Color(252, 117, 0), 1, false));
-		panelSemiAutoParams.setBounds(6, 51, 192, 85);
+		panelSemiAutoParams.setBounds(6, 51, 192, 108);
 		mainPanel.add(panelSemiAutoParams);
 		panelSemiAutoParams.setLayout(null);
 		
@@ -106,14 +110,14 @@ public class SpotEditToolConfigPanel extends JFrame {
 				"The fraction of the initial spot quality <br>" +
 				"found spots must have to be considered for linking. <br>" +
 				"The higher, the more stringent.</html>");
-		lblQualityThreshold.setBounds(6, 35, 119, 16);
+		lblQualityThreshold.setBounds(6, 66, 119, 16);
 		lblQualityThreshold.setFont(SMALL_FONT);
 		panelSemiAutoParams.add(lblQualityThreshold);
 		
-		jNFQualityThreshold = new JNumericTextField(params.qualityThreshold);
+		jNFQualityThreshold = new JNumericTextField(parent.params.qualityThreshold);
 		jNFQualityThreshold.setHorizontalAlignment(SwingConstants.CENTER);
 		jNFQualityThreshold.setFont(SMALL_FONT);
-		jNFQualityThreshold.setBounds(137, 33, 49, 18);
+		jNFQualityThreshold.setBounds(137, 64, 49, 18);
 		jNFQualityThreshold.addActionListener(al);
 		jNFQualityThreshold.addFocusListener(fl);
 
@@ -123,23 +127,38 @@ public class SpotEditToolConfigPanel extends JFrame {
 		lblDistanceTolerance.setToolTipText("<html>" +
 				"The maximal distance above which found spots are rejected, <br>" +
 				"expressed in units of the initial spot radius.</html>");
-		lblDistanceTolerance.setBounds(6, 55, 119, 16);
+		lblDistanceTolerance.setBounds(6, 86, 119, 16);
 		lblDistanceTolerance.setFont(SMALL_FONT);
 		panelSemiAutoParams.add(lblDistanceTolerance);
 		
-		jNFDistanceTolerance = new JNumericTextField(params.distanceTolerance);
+		jNFDistanceTolerance = new JNumericTextField(parent.params.distanceTolerance);
 		jNFDistanceTolerance.setHorizontalAlignment(SwingConstants.CENTER);
 		jNFDistanceTolerance.setFont(SMALL_FONT);
-		jNFDistanceTolerance.setBounds(137, 53, 49, 18);
+		jNFDistanceTolerance.setBounds(137, 84, 49, 18);
 		jNFDistanceTolerance.addActionListener(al);
 		jNFDistanceTolerance.addFocusListener(fl);
 		panelSemiAutoParams.add(jNFDistanceTolerance);
 		
+		JButton buttonSemiAutoTracking = new JButton(SEMIAUTO_TRACKING_ICON);
+		buttonSemiAutoTracking.setBounds(6, 31, 33, 23);
+		panelSemiAutoParams.add(buttonSemiAutoTracking);
+		buttonSemiAutoTracking.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
+				semiAutoTracking();
+			}
+		});
+		
+		JLabel labelSemiAutoTracking = new JLabel("Semi-automatic tracking");
+		labelSemiAutoTracking.setToolTipText("Launch semi-automatic tracking on selected spots.");
+		labelSemiAutoTracking.setFont(SMALL_FONT);
+		labelSemiAutoTracking.setBounds(49, 31, 137, 23);
+		panelSemiAutoParams.add(labelSemiAutoTracking);
 		
 		JScrollPane scrollPane = new JScrollPane();
 		scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
 		scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
-		scrollPane.setBounds(210, 51, 254, 246);
+		scrollPane.setBounds(210, 51, 264, 237);
 		mainPanel.add(scrollPane);
 		
 		final JTextPane textPane = new JTextPane();
@@ -149,7 +168,7 @@ public class SpotEditToolConfigPanel extends JFrame {
 		scrollPane.setViewportView(textPane);
 		
 		JPanel panelButtons = new JPanel();
-		panelButtons.setBounds(6, 147, 192, 150);
+		panelButtons.setBounds(6, 171, 192, 117);
 		panelButtons.setBorder(new LineBorder(new Color(252, 117, 0), 1, false));
 		mainPanel.add(panelButtons);
 		panelButtons.setLayout(null);
@@ -161,6 +180,12 @@ public class SpotEditToolConfigPanel extends JFrame {
 		
 		JButton buttonSelectTrack = new JButton(SELECT_TRACK_ICON);
 		buttonSelectTrack.setBounds(10, 36, 33, 23);
+		buttonSelectTrack.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				selectTrack();
+			}
+		});
 		panelButtons.add(buttonSelectTrack);
 
 		JLabel lblSelectTrack = new JLabel("Select track");
@@ -171,6 +196,12 @@ public class SpotEditToolConfigPanel extends JFrame {
 
 		JButton buttonSelectTrackUp = new JButton(SELECT_TRACK_ICON_UPWARDS);
 		buttonSelectTrackUp.setBounds(10, 61, 33, 23);
+		buttonSelectTrackUp.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				selectTrackUpward();
+			}
+		});
 		panelButtons.add(buttonSelectTrackUp);
 
 		JLabel lblSelectTrackUpward = new JLabel("Select track upward");
@@ -183,6 +214,12 @@ public class SpotEditToolConfigPanel extends JFrame {
 
 		JButton buttonSelectTrackDown = new JButton(SELECT_TRACK_ICON_DOWNWARDS);
 		buttonSelectTrackDown.setBounds(10, 86, 33, 23);
+		buttonSelectTrackDown.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				selectTrackDownward();
+			}
+		});
 		panelButtons.add(buttonSelectTrackDown);
 
 		JLabel lblSelectTrackDown = new JLabel("Select track downward");
@@ -192,16 +229,6 @@ public class SpotEditToolConfigPanel extends JFrame {
 				"Select the whole tracks selected spots <br>" +
 				"belong to, forward in time.</html>");
 		panelButtons.add(lblSelectTrackDown);
-
-		JButton buttonLinkSpots = new JButton(LINK_SPOTS_ICON);
-		buttonLinkSpots.setBounds(10, 111, 33, 23);
-		panelButtons.add(buttonLinkSpots);
-		
-		JLabel lblLinkSpots = new JLabel("Link spots");
-		lblLinkSpots.setFont(SMALL_FONT);
-		lblLinkSpots.setToolTipText("Link selected spots, sorted in time.");
-		lblLinkSpots.setBounds(53, 111, 129, 23);
-		panelButtons.add(lblLinkSpots);
 		
 		
 		
@@ -238,11 +265,44 @@ public class SpotEditToolConfigPanel extends JFrame {
 			public void setProgress(double val) {}
 		};	
 		
-		setSize(480, 336);
+		setSize(480, 318);
 		setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
 		setVisible(true);
 	}
 	
+	private void selectTrackDownward() {
+		final ImagePlus imp = parent.imp;
+		if (imp == null)
+			return;
+		final HyperStackDisplayer displayer = parent.displayers.get(imp);
+		if (null == displayer)
+			return;
+		SelectionModel selectionModel = displayer.getSelectionModel();
+		ModelTools.selectTrackDownward(selectionModel);
+	}
+
+	private void selectTrackUpward() {
+		final ImagePlus imp = parent.imp;
+		if (imp == null)
+			return;
+		final HyperStackDisplayer displayer = parent.displayers.get(imp);
+		if (null == displayer)
+			return;
+		SelectionModel selectionModel = displayer.getSelectionModel();
+		ModelTools.selectTrackUpward(selectionModel);
+	}
+
+	private void selectTrack() {
+		final ImagePlus imp = parent.imp;
+		if (imp == null)
+			return;
+		final HyperStackDisplayer displayer = parent.displayers.get(imp);
+		if (null == displayer)
+			return;
+		SelectionModel selectionModel = displayer.getSelectionModel();
+		ModelTools.selectTrack(selectionModel);
+	}
+
 	/**
 	 * Returns the {@link Logger} that outputs on this config panel.
 	 * @return  the {@link Logger} instance of this panel.
@@ -250,17 +310,22 @@ public class SpotEditToolConfigPanel extends JFrame {
 	public Logger getLogger() {
 		return logger;
 	}
-	
-	/**
-	 * Sets the model the tools of this panel will affect.
-	 * @param model  the target model.
-	 */
-	public void setTargetModel(Model model) {
-		this.model = model;
-	}
-	
+
 	private void updateParamsFromTextFields() {
-		params.distanceTolerance = jNFDistanceTolerance.getValue();
-		params.qualityThreshold = jNFQualityThreshold.getValue();
+		parent.params.distanceTolerance = jNFDistanceTolerance.getValue();
+		parent.params.qualityThreshold = jNFQualityThreshold.getValue();
 	}
+	
+	private void semiAutoTracking() {
+		final ImagePlus imp = parent.imp;
+		if (imp == null)
+			return;
+		final HyperStackDisplayer displayer = parent.displayers.get(imp);
+		if (null == displayer)
+			return;
+		Model model = displayer.getModel();
+		SelectionModel selectionModel = displayer.getSelectionModel();
+		parent.semiAutoTracking(model, selectionModel, imp);
+	}
+
 }

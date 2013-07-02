@@ -7,6 +7,7 @@ import ij.gui.Toolbar;
 
 import java.awt.MouseInfo;
 import java.awt.Point;
+import java.awt.event.ComponentEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
@@ -70,18 +71,22 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 	/** Stores the edited spot in each {@link ImagePlus}. */
 	private HashMap<ImagePlus, Spot> editedSpots = new HashMap<ImagePlus, Spot>();
 	/** Stores the view possible attached to each {@link ImagePlus}. */
-	private HashMap<ImagePlus, HyperStackDisplayer> displayers = new HashMap<ImagePlus, HyperStackDisplayer>();
+	HashMap<ImagePlus, HyperStackDisplayer> displayers = new HashMap<ImagePlus, HyperStackDisplayer>();
 	/** The radius of the previously edited spot. */
 	private Double previousRadius = null;
 	private Spot quickEditedSpot;
 	/** Flag for the auto-linking mode. */
 	private boolean autolinkingmode = false;
 
-	private SpotEditToolParams params = new SpotEditToolParams();
+	SpotEditToolParams params = new SpotEditToolParams();
 
 	private Logger logger = Logger.VOID_LOGGER;
 
 	private SpotEditToolConfigPanel configPanel;
+	/**
+	 * The last {@link ImagePlus} on which an action happened.
+	 */
+	ImagePlus imp;
 
 
 
@@ -131,6 +136,16 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 	@Override
 	public String getToolIcon() {
 		return TOOL_ICON;
+	}
+	
+	/**
+	 * Overridden so that we can keep track of the last ImagePlus actions are taken on. 
+	 * Very much like ImageJ.
+	 */
+	@Override
+	public ImagePlus getImagePlus(ComponentEvent e) {
+		imp = super.getImagePlus(e); 
+		return imp;
 	}
 
 	/**
@@ -846,7 +861,7 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 		IJ.showStatus(statusString);
 	}
 	
-	private void semiAutoTracking(final Model model, SelectionModel selectionModel, ImagePlus imp) {
+	void semiAutoTracking(final Model model, SelectionModel selectionModel, ImagePlus imp) {
 		@SuppressWarnings("rawtypes")
 		final SemiAutoTracker autotracker = new SemiAutoTracker(model, selectionModel, imp, logger);
 		autotracker.setParameters(params.qualityThreshold, params.distanceTolerance);
@@ -865,7 +880,7 @@ public class SpotEditTool extends AbstractTool implements MouseMotionListener, M
 	@Override
 	public void showOptionDialog() {
 		if (null == configPanel) {
-			configPanel = new SpotEditToolConfigPanel(params);
+			configPanel = new SpotEditToolConfigPanel(this);
 			configPanel.addWindowListener(new WindowAdapter() {
 				@Override
 				public void windowClosing(WindowEvent e) {
