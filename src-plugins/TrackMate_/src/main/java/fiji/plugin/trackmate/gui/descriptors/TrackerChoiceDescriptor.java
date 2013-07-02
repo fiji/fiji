@@ -63,10 +63,15 @@ public class TrackerChoiceDescriptor implements WizardPanelDescriptor {
 		trackmate.getSettings().tracker = tracker; 
 
 		if (tracker.getKey().equals(ManualTracker.TRACKER_KEY)) {
+			/*
+			 * Compute track and edge features now to ensure they will be available 
+			 * in the next descriptor.
+			 */
 			Thread trackFeatureCalculationThread = new Thread("TrackMate track feature calculation thread") {
 				@Override
 				public void run() {
 					trackmate.computeTrackFeatures(true);
+					trackmate.computeEdgeFeatures(true);
 				}
 			};
 			trackFeatureCalculationThread.start();

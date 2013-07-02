@@ -31,6 +31,11 @@ public class SpotColorGenerator implements FeatureColorGenerator<Spot>, ModelCha
 			return spotColorMap.get(spot);
 		}
 	}
+	
+	@Override
+	public String getFeature() {
+		return feature;
+	}
 
 	@Override
 	public void terminate() {

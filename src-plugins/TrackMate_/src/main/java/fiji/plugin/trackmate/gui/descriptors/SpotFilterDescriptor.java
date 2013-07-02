@@ -3,6 +3,7 @@ package fiji.plugin.trackmate.gui.descriptors;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
@@ -10,13 +11,14 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import fiji.plugin.trackmate.Logger;
-import fiji.plugin.trackmate.Settings;
-import fiji.plugin.trackmate.TrackMate;
 import fiji.plugin.trackmate.Model;
+import fiji.plugin.trackmate.Settings;
+import fiji.plugin.trackmate.Spot;
+import fiji.plugin.trackmate.TrackMate;
 import fiji.plugin.trackmate.features.FeatureFilter;
-import fiji.plugin.trackmate.gui.panels.components.ColorByFeatureGUIPanel;
 import fiji.plugin.trackmate.gui.panels.components.ColorByFeatureGUIPanel.Category;
 import fiji.plugin.trackmate.gui.panels.components.FilterGuiPanel;
+import fiji.plugin.trackmate.visualization.FeatureColorGenerator;
 
 public class SpotFilterDescriptor implements WizardPanelDescriptor {
 
@@ -25,10 +27,12 @@ public class SpotFilterDescriptor implements WizardPanelDescriptor {
 	private static final String KEY = "SpotFilter";
 	private FilterGuiPanel component;
 	private final TrackMate trackmate;
+	private final FeatureColorGenerator<Spot> spotColorGenerator;
 	
 	
-	public SpotFilterDescriptor(TrackMate trackmate) {
+	public SpotFilterDescriptor(TrackMate trackmate, FeatureColorGenerator<Spot> spotColorGenerator) {
 		this.trackmate = trackmate;
+		this.spotColorGenerator = spotColorGenerator;
 	}
 	
 	@Override
@@ -38,11 +42,11 @@ public class SpotFilterDescriptor implements WizardPanelDescriptor {
 
 	@Override
 	public void aboutToDisplayPanel() {
-		component = new FilterGuiPanel(trackmate.getModel(), Category.SPOTS);
+		component = new FilterGuiPanel(trackmate.getModel(), Arrays.asList(new Category[] { Category.SPOTS, Category.DEFAULT }));
 		component.refreshDisplayedFeatureValues();
 		Settings settings = trackmate.getSettings();
 		component.setFilters(settings.getSpotFilters());
-		component.setColorFeature(ColorByFeatureGUIPanel.UNIFORM_KEY);
+		component.setColorFeature(spotColorGenerator.getFeature());
 		component.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent event) {

@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.Map;
 
 import fiji.plugin.trackmate.TrackMate;
+import fiji.plugin.trackmate.detection.ManualDetectorFactory;
+import fiji.plugin.trackmate.detection.SpotDetectorFactory;
 import fiji.plugin.trackmate.gui.panels.ListChooserPanel;
 import fiji.plugin.trackmate.providers.DetectorProvider;
 
@@ -71,7 +73,8 @@ public class DetectorChoiceDescriptor implements WizardPanelDescriptor {
 		}
 		
 		// Configure trackmate settings with selected detector
-		trackmate.getSettings().detectorFactory = detectorProvider.getDetectorFactory();
+		SpotDetectorFactory<?> factory = detectorProvider.getDetectorFactory();
+		trackmate.getSettings().detectorFactory = factory;
 		
 		// Compare current settings with default ones, and substitute default ones
 		// only if the old ones are absent or not compatible with it.
@@ -79,6 +82,25 @@ public class DetectorChoiceDescriptor implements WizardPanelDescriptor {
 		if (!detectorProvider.checkSettingsValidity(currentSettings)) {
 			Map<String, Object> defaultSettings = detectorProvider.getDefaultSettings();
 			trackmate.getSettings().detectorSettings = defaultSettings;
+		}
+		
+		if (factory.getKey().equals(ManualDetectorFactory.DETECTOR_KEY)) {
+			/*
+			 * Compute spot features now to ensure they will be available 
+			 * in the next descriptor.
+			 */
+			Thread spotFeatureCalculationThread = new Thread("TrackMate spot feature calculation thread") {
+				@Override
+				public void run() {
+					trackmate.computeSpotFeatures(true);
+				}
+			};
+			spotFeatureCalculationThread.start();
+			try {
+				spotFeatureCalculationThread.join();
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
 		}
 	}
 	

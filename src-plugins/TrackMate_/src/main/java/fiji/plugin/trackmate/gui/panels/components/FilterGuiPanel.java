@@ -9,7 +9,6 @@ import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.EmptyStackException;
 import java.util.HashMap;
@@ -65,7 +64,7 @@ public class FilterGuiPanel extends ActionListenablePanel implements ChangeListe
 	private ArrayList<ChangeListener> changeListeners = new ArrayList<ChangeListener>();
 
 	private final Map<String, String> featureNames;
-	private final Category category;
+	private final List<Category> categories;
 	private final Model model;
 	private final List<String> features;
 	/** Holds the map of feature values. Is made final so that the instance can be shared with the components
@@ -76,39 +75,35 @@ public class FilterGuiPanel extends ActionListenablePanel implements ChangeListe
 	 * CONSTRUCTOR
 	 */
 
-	public FilterGuiPanel(Model model, Category category) {
+	public FilterGuiPanel(Model model, List<Category> categories) {
 		this.model = model;
-
-//		model.addModelChangeListener(new ModelChangeListener() {
-//
-//			@Override
-//			public void modelChanged(ModelChangeEvent event) {
-//				if (event.getEventID() == ModelChangeEvent.MODEL_MODIFIED) {
-//					refreshDisplayedFeatureValues();
-//					for (FilterPanel fp : thresholdPanels) {
-//						fp.refresh();
-//					}
-//				}
-//			}
-//		});
-
-		this.category = category;
-		switch (category) {
-		case SPOTS:
-			this.features = new ArrayList<String>(model.getFeatureModel().getSpotFeatures());
-			this.featureNames = model.getFeatureModel().getSpotFeatureNames();
-			break;
-		case EDGES:
-			this.features = new ArrayList<String>(model.getFeatureModel().getEdgeFeatures());
-			this.featureNames = model.getFeatureModel().getEdgeFeatureNames();
-			break;
-		case TRACKS:
-			this.features = new ArrayList<String>(model.getFeatureModel().getTrackFeatures());
-			this.featureNames = model.getFeatureModel().getTrackFeatureNames();
-			break;
-		default:
-			throw new IllegalArgumentException("Unkown actegory: " + category);
+		this.categories = categories;
+		
+		this.features = new ArrayList<String>();
+		this.featureNames = new HashMap<String, String>();
+		for (Category category : categories) {
+			switch (category) {
+			case SPOTS:
+				features.addAll(model.getFeatureModel().getSpotFeatures());
+				featureNames.putAll(model.getFeatureModel().getSpotFeatureNames());
+				break;
+			case EDGES:
+				features.addAll(model.getFeatureModel().getEdgeFeatures());
+				featureNames.putAll(model.getFeatureModel().getEdgeFeatureNames());
+				break;
+			case TRACKS:
+				features.addAll(model.getFeatureModel().getTrackFeatures());
+				featureNames.putAll(model.getFeatureModel().getTrackFeatureNames());
+				break;
+			case DEFAULT:
+				features.add(ColorByFeatureGUIPanel.UNIFORM_KEY);
+				featureNames.put(ColorByFeatureGUIPanel.UNIFORM_KEY, ColorByFeatureGUIPanel.UNIFORM_NAME);
+				break;
+			default:
+				throw new IllegalArgumentException("Unkown category: " + category);
+			}
 		}
+
 		this.updater = new OnRequestUpdater(new OnRequestUpdater.Refreshable() {
 			@Override
 			public void refresh() {
@@ -131,19 +126,23 @@ public class FilterGuiPanel extends ActionListenablePanel implements ChangeListe
 	 * panels. 
 	 */
 	public void refreshDisplayedFeatureValues() {
-		Map<String, double[]> fv;
-		switch (category) {
-		case SPOTS:
-			fv = model.getSpots().collectValues(model.getFeatureModel().getSpotFeatures(), false);
-			break;
-		case TRACKS:
-			fv = model.getFeatureModel().getTrackFeatureValues();
-			break;
-		default:
-			throw new IllegalArgumentException("Don't know what to do with category: " + category);
-		}
 		featureValues.clear();
-		featureValues.putAll(fv);
+		for (Category category : categories) {
+			switch (category) {
+			case SPOTS:
+				featureValues.putAll(model.getSpots().collectValues(model.getFeatureModel().getSpotFeatures(), false));
+				break;
+			case TRACKS:
+				featureValues.putAll(model.getFeatureModel().getTrackFeatureValues());
+				break;
+			case DEFAULT:
+				break;
+			case EDGES:
+				throw new IllegalArgumentException("Edge filtering is not implemented.");
+			default:
+				throw new IllegalArgumentException("Don't know what to do with category: " + category);
+			}
+		}
 	}
 
 	/**
@@ -192,7 +191,7 @@ public class FilterGuiPanel extends ActionListenablePanel implements ChangeListe
 	public String getColorFeature() {
 		return jPanelColorByFeatureGUI.getColorFeature();
 	}
-	
+
 	public Category getColorCategory() {
 		return jPanelColorByFeatureGUI.getColorGeneratorCategory();
 	}
@@ -314,7 +313,7 @@ public class FilterGuiPanel extends ActionListenablePanel implements ChangeListe
 		if (nobjects == 0)	{
 			info = "No objects.";
 		} else if (featureFilters == null || featureFilters.isEmpty() ) {
-			info = "Keep all "+nobjects+" "+category+".";
+			info = "Keep all "+nobjects+" "+categories+".";
 		} else {
 			int nselected = 0;
 			double val;
@@ -341,7 +340,7 @@ public class FilterGuiPanel extends ActionListenablePanel implements ChangeListe
 				if (ok)
 					nselected++;
 			}
-			info = "Keep "+nselected+" "+category+" out of  "+nobjects+".";
+			info = "Keep "+nselected+" "+categories+" out of  "+nobjects+".";
 		}
 		jLabelInfo.setText(info);
 
@@ -355,7 +354,7 @@ public class FilterGuiPanel extends ActionListenablePanel implements ChangeListe
 			setPreferredSize(new Dimension(270, 500));
 			{
 				jTopLabel = new JLabel();
-				jTopLabel.setText("      Set filters on " + category.toString());
+				jTopLabel.setText("      Set filters on " + categories.get(0).toString());
 				jTopLabel.setFont(BIG_FONT);
 				jTopLabel.setPreferredSize(new Dimension(300, 40));
 				this.add(jTopLabel, BorderLayout.NORTH);
@@ -426,7 +425,7 @@ public class FilterGuiPanel extends ActionListenablePanel implements ChangeListe
 					}
 				}
 				{
-					jPanelColorByFeatureGUI = new ColorByFeatureGUIPanel(model, Arrays.asList(new Category[] { category,  Category.DEFAULT } ));
+					jPanelColorByFeatureGUI = new ColorByFeatureGUIPanel(model, categories);
 					COLOR_FEATURE_CHANGED = jPanelColorByFeatureGUI.COLOR_FEATURE_CHANGED;
 					jPanelColorByFeatureGUI.addActionListener(new ActionListener() {
 						@Override

@@ -27,7 +27,6 @@ import org.jfree.chart.renderer.InterpolatePaintScale;
 
 import fiji.plugin.trackmate.Model;
 import fiji.plugin.trackmate.SpotCollection;
-import fiji.plugin.trackmate.features.track.TrackIndexAnalyzer;
 import fiji.plugin.trackmate.gui.panels.ActionListenablePanel;
 
 public class ColorByFeatureGUIPanel extends ActionListenablePanel {
@@ -124,7 +123,11 @@ public class ColorByFeatureGUIPanel extends ActionListenablePanel {
 	}
 
 	public void setColorFeature(String feature) {
-		jComboBoxSetColorBy.setSelectedItem(feature);
+		if (null == feature) {
+			jComboBoxSetColorBy.setSelectedItem(UNIFORM_KEY);
+		} else {
+			jComboBoxSetColorBy.setSelectedItem(feature);
+		}
 	}
 
 	/*
@@ -201,7 +204,6 @@ public class ColorByFeatureGUIPanel extends ActionListenablePanel {
 			}
 			{
 				jComboBoxSetColorBy = createComboBoxSelector(categories);
-				jComboBoxSetColorBy.setSelectedItem(TrackIndexAnalyzer.TRACK_INDEX);
 				jPanelByFeature.add(Box.createHorizontalStrut(5));
 				jPanelByFeature.add(Box.createHorizontalStrut(5));
 				jPanelByFeature.add(jComboBoxSetColorBy);

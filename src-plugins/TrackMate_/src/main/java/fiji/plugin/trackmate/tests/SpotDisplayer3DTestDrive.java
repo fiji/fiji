@@ -20,6 +20,7 @@ import ij3d.Install_J3D;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 
@@ -125,7 +126,7 @@ public class SpotDisplayer3DTestDrive {
 		
 		// Launch threshold GUI
 		List<FeatureFilter> ff = new ArrayList<FeatureFilter>();
-		final FilterGuiPanel gui = new FilterGuiPanel(trackmate.getModel(), Category.SPOTS);
+		final FilterGuiPanel gui = new FilterGuiPanel(trackmate.getModel(), Arrays.asList(new Category[] { Category.SPOTS } ) );
 		gui.setFilters(ff);
 
 		// Set listeners

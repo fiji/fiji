@@ -35,6 +35,11 @@ public class PerEdgeFeatureColorGenerator implements ModelChangeListener, TrackC
 	}
 	
 	@Override
+	public String getFeature() {
+		return feature;
+	}
+	
+	@Override
 	public Color color(DefaultWeightedEdge edge) {
 		double val = model.getFeatureModel().getEdgeFeature(edge, feature).doubleValue();
 		return colorMap.getPaint( (val-min)/(max-min) );

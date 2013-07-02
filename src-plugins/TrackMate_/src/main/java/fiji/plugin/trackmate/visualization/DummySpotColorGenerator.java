@@ -5,6 +5,7 @@ import static fiji.plugin.trackmate.visualization.TrackMateModelView.DEFAULT_SPO
 import java.awt.Color;
 
 import fiji.plugin.trackmate.Spot;
+import fiji.plugin.trackmate.gui.panels.components.ColorByFeatureGUIPanel;
 
 /**
  * A dummy spot color generator that always return the default color.
@@ -22,5 +23,10 @@ public class DummySpotColorGenerator implements FeatureColorGenerator<Spot> {
 
 	@Override
 	public void terminate() {}
+
+	@Override
+	public String getFeature() {
+		return ColorByFeatureGUIPanel.UNIFORM_KEY;
+	}
 
 }

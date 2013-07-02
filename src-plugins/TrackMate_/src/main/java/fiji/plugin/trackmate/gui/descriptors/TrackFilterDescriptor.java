@@ -3,6 +3,7 @@ package fiji.plugin.trackmate.gui.descriptors;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
@@ -14,9 +15,9 @@ import fiji.plugin.trackmate.Model;
 import fiji.plugin.trackmate.TrackMate;
 import fiji.plugin.trackmate.features.FeatureFilter;
 import fiji.plugin.trackmate.features.track.TrackIndexAnalyzer;
-import fiji.plugin.trackmate.gui.panels.components.ColorByFeatureGUIPanel;
 import fiji.plugin.trackmate.gui.panels.components.ColorByFeatureGUIPanel.Category;
 import fiji.plugin.trackmate.gui.panels.components.FilterGuiPanel;
+import fiji.plugin.trackmate.visualization.PerTrackFeatureColorGenerator;
 
 public class TrackFilterDescriptor implements WizardPanelDescriptor {
 	
@@ -25,9 +26,11 @@ public class TrackFilterDescriptor implements WizardPanelDescriptor {
 	private static final String KEY = "FilterTracks";
 	private FilterGuiPanel component;
 	private final TrackMate trackmate;
+	private final PerTrackFeatureColorGenerator trackColorGenerator;
 	
-	public TrackFilterDescriptor(TrackMate trackmate) {
+	public TrackFilterDescriptor(TrackMate trackmate, PerTrackFeatureColorGenerator trackColorGenerator) {
 		this.trackmate = trackmate;
+		this.trackColorGenerator = trackColorGenerator;
 	}
 
 	@Override
@@ -37,7 +40,8 @@ public class TrackFilterDescriptor implements WizardPanelDescriptor {
 
 	@Override
 	public void aboutToDisplayPanel() {
-		component = new FilterGuiPanel(trackmate.getModel(), Category.TRACKS);
+		component = new FilterGuiPanel(trackmate.getModel(), 
+				Arrays.asList(new Category[] {Category.TRACKS, Category.DEFAULT }));
 		component.setFilters(trackmate.getSettings().getTrackFilters());
 		component.setColorFeature(TrackIndexAnalyzer.TRACK_INDEX);
 		component.addActionListener(new ActionListener() {
@@ -52,7 +56,7 @@ public class TrackFilterDescriptor implements WizardPanelDescriptor {
 				fireThresholdChanged(event);
 			}
 		});
-		component.setColorFeature(ColorByFeatureGUIPanel.UNIFORM_KEY);
+		component.setColorFeature(trackColorGenerator.getFeature());
 	}
 
 	@Override
@@ -60,6 +64,8 @@ public class TrackFilterDescriptor implements WizardPanelDescriptor {
 		if (null == component) {
 			// Happens when loading at this stage.
 			aboutToDisplayPanel();
+		} else {
+			component.setColorFeature(trackColorGenerator.getFeature());
 		}
 	}
 	

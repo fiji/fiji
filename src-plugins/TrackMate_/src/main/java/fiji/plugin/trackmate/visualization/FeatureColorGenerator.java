@@ -25,10 +25,17 @@ public interface FeatureColorGenerator<K> {
 	public void setFeature(String feature);
 
 	/**
+	 * Returns the feature that this color generator use.
+	 * @return the feature set.
+	 */
+	public String getFeature();
+
+	/**
 	 * When this color generator is replaced by another one, calling this method ensures
 	 * that it gets correctly unregistered and cleaned, should it be a model listener
 	 * or have a heavy memory footprint. 
 	 */
 	public abstract void terminate();
+
 
 }

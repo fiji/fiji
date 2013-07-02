@@ -132,7 +132,7 @@ public class TrackMate implements Benchmark, MultiThreaded, Algorithm {
 	 * of this object.
 	 * 
 	 * @param doLogIt if <code>true</code>, the {@link Logger} of the model will be notified.
-	 * @return <code>true</code> if the calculation was performed successfuly, <code>false</code>
+	 * @return <code>true</code> if the calculation was performed successfully, <code>false</code>
 	 * otherwise. 
 	 */
 	public boolean computeSpotFeatures(boolean doLogIt) {

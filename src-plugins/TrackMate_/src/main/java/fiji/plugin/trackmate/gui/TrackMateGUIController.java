@@ -402,7 +402,7 @@ public class TrackMateGUIController implements ActionListener {
 		/*
 		 * Spot filtering
 		 */
-		spotFilterDescriptor 		= new SpotFilterDescriptor(trackmate);
+		spotFilterDescriptor 		= new SpotFilterDescriptor(trackmate, spotColorGenerator);
 		// display color changed
 		spotFilterDescriptor.addActionListener(new ActionListener() {
 
@@ -445,7 +445,7 @@ public class TrackMateGUIController implements ActionListener {
 		/*
 		 * Track filtering 
 		 */
-		trackFilterDescriptor		= new TrackFilterDescriptor(trackmate);
+		trackFilterDescriptor		= new TrackFilterDescriptor(trackmate, trackColorGenerator);
 		trackFilterDescriptor.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent event) {

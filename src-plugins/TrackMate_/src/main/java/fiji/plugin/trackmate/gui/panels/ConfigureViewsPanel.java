@@ -102,9 +102,6 @@ public class ConfigureViewsPanel extends ActionListenablePanel {
 
 	public ConfigureViewsPanel(Model model) {
 		this.model = model;
-//		this.trackColorGenerator = new PerTrackFeatureColorGenerator(model, TrackIndexAnalyzer.TRACK_INDEX);
-//		this.edgeColorGenerator = new PerEdgeFeatureColorGenerator(model, EdgeVelocityAnalyzer.VELOCITY);
-//		this.spotColorGenerator = new SpotColorGenerator(model);
 		initGUI();
 		refreshGUI();
 	}
@@ -182,10 +179,41 @@ public class ConfigureViewsPanel extends ActionListenablePanel {
 		this.spotColorGenerator = spotColorGenerator;
 	}
 
+	public void refreshColorFeatures() {
+		jPanelSpotColor.setColorFeature(spotColorGenerator.getFeature());
+		trackColorGUI.setColorFeature(trackColorGenerator.getFeature());
+	}
+	
+	
 	/**
 	 * Refreshes some components of this GUI with current values of the model.
 	 */
 	public void refreshGUI() {
+		
+		/*
+		 * Spot coloring
+		 */
+		
+		if (null != jPanelSpotColor) {
+			jPanelSpotOptions.remove(jPanelSpotColor);
+		}
+		jPanelSpotColor = new ColorByFeatureGUIPanel(model, Arrays.asList(new Category[] { Category.SPOTS, Category.DEFAULT } ));
+		jPanelSpotColor.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				if (null == spotColorGenerator) {
+					return;
+				}
+				spotColorGenerator.setFeature(jPanelSpotColor.getColorFeature());
+				DisplaySettingsEvent event = new DisplaySettingsEvent(ConfigureViewsPanel.this, KEY_SPOT_COLORING, spotColorGenerator, spotColorGenerator);
+				fireDisplaySettingsChange(event);
+			}
+		});
+		
+		/*
+		 * Track coloring
+		 */
+		
 		if (null != trackColorGUI) {
 			jPanelTrackOptions.remove(trackColorGUI);
 		}
@@ -437,22 +465,6 @@ public class ConfigureViewsPanel extends ActionListenablePanel {
 						}
 					});
 				}
-				{
-					jPanelSpotColor = new ColorByFeatureGUIPanel(model, Arrays.asList(new Category[] { Category.SPOTS, Category.DEFAULT } ));
-					jPanelSpotColor.addActionListener(new ActionListener() {
-						@Override
-						public void actionPerformed(ActionEvent e) {
-							if (null == spotColorGenerator) {
-								return;
-							}
-							spotColorGenerator.setFeature(jPanelSpotColor.getColorFeature());
-							DisplaySettingsEvent event = new DisplaySettingsEvent(ConfigureViewsPanel.this, KEY_SPOT_COLORING, spotColorGenerator, spotColorGenerator);
-							fireDisplaySettingsChange(event);
-						}
-					});
-					jPanelSpotColor.setColorFeature(ColorByFeatureGUIPanel.UNIFORM_KEY);
-					jPanelSpotOptions.add(jPanelSpotColor);
-				}
 			}
 			{
 				jLabelDisplayOptions = new JLabel();
@@ -493,5 +505,6 @@ public class ConfigureViewsPanel extends ActionListenablePanel {
 			e.printStackTrace();
 		}
 	}
+
 	
 }

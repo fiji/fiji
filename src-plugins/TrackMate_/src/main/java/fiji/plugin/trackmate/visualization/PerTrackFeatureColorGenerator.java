@@ -66,6 +66,11 @@ public class PerTrackFeatureColorGenerator implements TrackColorGenerator, Model
 			refresh();
 		}
 	}
+	
+	@Override
+	public String getFeature() {
+		return feature;
+	}
 
 	private synchronized void refreshNull() {
 		TrackModel trackModel = model.getTrackModel();

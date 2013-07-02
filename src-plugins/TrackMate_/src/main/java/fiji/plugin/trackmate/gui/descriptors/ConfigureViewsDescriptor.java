@@ -31,7 +31,9 @@ public class ConfigureViewsDescriptor implements WizardPanelDescriptor {
 	}
 
 	@Override
-	public void displayingPanel() { }
+	public void displayingPanel() { 
+		panel.refreshColorFeatures();
+	}
 
 
 	@Override
