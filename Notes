@@ -17,14 +17,14 @@ Version 3.1 (June 2013) [latest]
     - Added a "batch mode" option that saves profiles without displaying them
     - Sholl decay is calculated using the full rage of data or values within percentiles
       10 and 90, which usually provides a better fit. However, Sholl decay is only
-      calculated when "Semi-log" is chosen (v2.2 behavior)
+      calculated when logarithmic methods are chosen (v2.2 behavior)
     - Normalization can be performed against: Area of circel/Volume of shere, Perimeter of
       circumference/Surface of sphere or Area of annulus/Volume of spheric shell.
     - Made main dialog more intuitive. This may brake previous macros created with the
       Macro Recorder
     - Barycenter and other descriptors are highlighted on plot
     - Updated the URL of help page to http://fiji.sc/Sholl_Analysis/
-    - Eliminated prompt for the "Sholl LUT" command. Awkward behavior for an ImageJ LUT
+    - Eliminated prompt for the "Sholl LUT" command, an awkward behavior for an ImageJ LUT
     - Sholl mask reports only values from "Linear Sholl". "Semi-log" and "Linear-norm."
       masks are no longer created. This could be reinstated if needed.
 

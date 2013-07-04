@@ -320,7 +320,7 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
         final double[][] valuesLOG  = transformValues(valuesSLOG, false, false, true);
         double[] fvaluesN   = null;
         double[] fvaluesNS  = null;
-        double[] fvaluesLOG = null;
+        //double[] fvaluesLOG = null;
 
         // Create plots
         if (shollN) {
@@ -328,7 +328,7 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
             final Plot plotN = plotValues("Sholl profile ("+ SHOLL_TYPES[SHOLL_N] +") for "+ imgTitle,
                     is3D ? "3D distance ("+ unit +")" : "2D distance ("+ unit +")",
                     "N. of Intersections",
-                    valuesN);
+                    valuesN, SHOLL_N);
 			markPlotPoint(plotN, centroid, Color.RED);
             if (fitCurve)
                 fvaluesN = getFittedProfile(valuesN, SHOLL_N, statsTable, plotN);
@@ -340,7 +340,7 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
 			final Plot plotNS = plotValues("Sholl profile ("+ SHOLL_TYPES[SHOLL_NS] +") for "+ imgTitle,
                     is3D ? "3D distance ("+ unit +")" : "2D distance ("+ unit +")",
                     "Inters./"+ (is3D ? NORMS3D[normChoice] : NORMS2D[normChoice]),
-                    valuesNS);
+                    valuesNS, SHOLL_NS);
             if (fitCurve)
                 fvaluesNS = getFittedProfile(valuesNS, SHOLL_NS, statsTable, plotNS);
             savePlot(plotNS, SHOLL_NS);
@@ -351,9 +351,9 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
 			final Plot plotSLOG = plotValues("Sholl profile ("+ SHOLL_TYPES[SHOLL_SLOG] +") for "+ imgTitle,
                     is3D ? "3D distance ("+ unit +")" : "2D distance ("+ unit +")",
                     "log(Inters./"+ (is3D ? NORMS3D[normChoice] : NORMS2D[normChoice]) +")",
-                    valuesSLOG);
+                    valuesSLOG, SHOLL_SLOG);
             if (fitCurve)
-                plotRegression(valuesSLOG, plotSLOG, statsTable);
+                plotRegression(valuesSLOG, plotSLOG, statsTable, SHOLL_TYPES[SHOLL_SLOG]);
             savePlot(plotSLOG, SHOLL_SLOG);
 
         }
@@ -362,9 +362,10 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
 			final Plot plotLOG = plotValues("Sholl profile ("+ SHOLL_TYPES[SHOLL_LOG] +") for "+ imgTitle,
                     is3D ? "log(3D distance)" : "log(2D distance)",
                     "log(Inters./"+ (is3D ? NORMS3D[normChoice] : NORMS2D[normChoice]) +")",
-                    valuesLOG);
+                    valuesLOG, SHOLL_LOG);
             if (fitCurve)
-                fvaluesLOG = getFittedProfile(valuesLOG, SHOLL_LOG, statsTable, plotLOG);
+                //fvaluesLOG = getFittedProfile(valuesLOG, SHOLL_LOG, statsTable, plotLOG);
+                plotRegression(valuesLOG, plotLOG, statsTable, SHOLL_TYPES[SHOLL_LOG]);
             savePlot(plotLOG, SHOLL_LOG);
 
         }
@@ -394,10 +395,10 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
                 rt.addValue("Linear (norm.): Power fx (X)", valuesNS[i][0]);
                 rt.addValue("Linear (norm.): Power fx (Y)", fvaluesNS[i]);
             }
-            if (fvaluesLOG!=null) {
-                rt.addValue("Log-log: Exponential (X)", valuesLOG[i][0]);
-                rt.addValue("Log-log: Exponential (Y)", fvaluesLOG[i]);
-            }
+            //if (fvaluesLOG!=null) {
+            //   rt.addValue("Log-log: Exponential (X)", valuesLOG[i][0]);
+            //    rt.addValue("Log-log: Exponential (Y)", fvaluesLOG[i]);
+            //}
         }
 
 		if (validPath && save) {
@@ -543,15 +544,15 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
 			rif = (inferPrimary || primaryBranches==0) ? cv/y[0] : cv/primaryBranches;
 
 			// Register parameters
-			plotLabel.append("\nCv= "+ IJ.d2s(cv, 2));
-			plotLabel.append("\nCr= "+ IJ.d2s(cr, 2));
-			plotLabel.append("\nMv= "+ IJ.d2s(mv, 2));
+			plotLabel.append("\nCV= "+ IJ.d2s(cv, 2));
+			plotLabel.append("\nCR= "+ IJ.d2s(cr, 2));
+			plotLabel.append("\nMV= "+ IJ.d2s(mv, 2));
 			plotLabel.append("\n" + DEGREES[polyChoice]);
 
 			rt.addValue("Critical value", cv);
 			rt.addValue("Critical radius", cr);
 			rt.addValue("Mean value", mv);
-			rt.addValue("Ramification index (Cv)", rif);
+			rt.addValue("Ramification index (CV)", rif);
 			rt.addValue("Polyn. degree", parameters.length-2);
 			rt.addValue("Polyn. R^2", cf.getRSquared());
 
@@ -1576,7 +1577,7 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
 
     /** Returns a plot with some axes customizations*/
     private static Plot plotValues(final String title, final String xLabel,
-			final String yLabel, final double[][] xy) {
+			final String yLabel, final double[][] xy, final int method) {
 
         // Extract values
         final int size = xy.length;
@@ -1596,7 +1597,7 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
         // Set limits
         final double[] xScale = Tools.getMinMax(x0);
         final double[] yScale = Tools.getMinMax(y0);
-        setPlotLimits(plot, xScale, yScale);
+        setPlotLimits(plot, method, xScale, yScale);
 
         // Add data (default color is black)
         plot.setColor(Color.GRAY);
@@ -1606,12 +1607,15 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
 
     }
 
-    /** Sets plot limits imposing grid lines  */
-    private static void setPlotLimits(final Plot plot, final double[] xScale,
-			final double[] yScale) {
+    /** Sets plot limits imposing grid lines */
+    private static void setPlotLimits(final Plot plot, final int method,
+    		final double[] xScale, final double[] yScale) {
 
         final boolean gridState = PlotWindow.noGridLines;
         PlotWindow.noGridLines = false;
+		//if (method==SHOLL_NS) {
+		//	plot.setLogScaleY();
+		//}
         plot.setLimits(xScale[0], xScale[1], yScale[0], yScale[1]);
         PlotWindow.noGridLines = gridState;
 
@@ -1619,7 +1623,7 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
 
 	/** Calls plotRegression for both regressions */
     private static void plotRegression(final double[][]values, final Plot plot,
-			final ResultsTable rt) {
+			final ResultsTable rt, final String method) {
 
 		final int size = values.length;
 		final double[] x = new double[size];
@@ -1628,15 +1632,15 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
 			x[i] = values[i][0];
 			y[i] = values[i][1];
 		}
-		plotRegression(x, y, false, plot, rt);
-		plotRegression(x, y, true, plot, rt);
+		plotRegression(x, y, false, plot, rt, method);
+		plotRegression(x, y, true, plot, rt, method);
 
 	}
 
 
     /** Performs linear regression using the full range data or percentiles 10-90 */
     private static void plotRegression(final double[] x, final double[] y, final boolean trim,
-			final Plot plot, final ResultsTable rt) {
+			final Plot plot, final ResultsTable rt, final String method) {
 
 		final int size = x.length;
 		int start = 0;
@@ -1644,13 +1648,13 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
 
 		Color color = Color.BLUE;
 		final StringBuffer label = new StringBuffer();
-		String labelSufix = "";
+		String labelSufix = " ("+ method +")";
 
 		final CurveFitter cf;
 		if (trim) {
 
 			color = Color.RED;
-			labelSufix = " [P10-P90]"; //"[P\u2081\u2080 - P\u2089\u2080]";
+			labelSufix += " [P10-P90]"; //"[P\u2081\u2080 - P\u2089\u2080]";
 			start = (int)(size*0.10);
 			end   = (int)(end-start);
 
@@ -1672,8 +1676,8 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
 		//IJ.log("Curve fitter status: " + cf.getStatusString());
 
 		if (verbose) {
-			IJ.log("\n*** "+ imgTitle +", regression details ("+
-		          (trim ? "all" : "trimmed") +" data):"+ cf.getResultString());
+			IJ.log("\n*** "+ imgTitle +", regression details"
+		        + labelSufix + cf.getResultString());
 		}
 
 		final double x1 = x[start];
@@ -1689,7 +1693,7 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
 		final double kIntercept = cfparam[0];	// y-intercept
 		final double kRSquared = cf.getRSquared();	// R^2
 
-		rt.addValue("Sholl regression coefficient"+ labelSufix, k);
+		rt.addValue("Regression coefficient"+ labelSufix, k);
 		rt.addValue("Regression intercept"+ labelSufix, kIntercept);
 		rt.addValue("Regression R^2"+ labelSufix, kRSquared);
 		rt.show(SHOLLTABLE);
