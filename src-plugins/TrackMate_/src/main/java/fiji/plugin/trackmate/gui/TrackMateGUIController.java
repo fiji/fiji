@@ -1,7 +1,22 @@
 package fiji.plugin.trackmate.gui;
 
 
-import static fiji.plugin.trackmate.visualization.TrackMateModelView.*;
+import static fiji.plugin.trackmate.visualization.TrackMateModelView.DEFAULT_COLOR_MAP;
+import static fiji.plugin.trackmate.visualization.TrackMateModelView.DEFAULT_HIGHLIGHT_COLOR;
+import static fiji.plugin.trackmate.visualization.TrackMateModelView.DEFAULT_SPOT_COLOR;
+import static fiji.plugin.trackmate.visualization.TrackMateModelView.DEFAULT_TRACK_DISPLAY_DEPTH;
+import static fiji.plugin.trackmate.visualization.TrackMateModelView.DEFAULT_TRACK_DISPLAY_MODE;
+import static fiji.plugin.trackmate.visualization.TrackMateModelView.KEY_COLOR;
+import static fiji.plugin.trackmate.visualization.TrackMateModelView.KEY_COLORMAP;
+import static fiji.plugin.trackmate.visualization.TrackMateModelView.KEY_DISPLAY_SPOT_NAMES;
+import static fiji.plugin.trackmate.visualization.TrackMateModelView.KEY_HIGHLIGHT_COLOR;
+import static fiji.plugin.trackmate.visualization.TrackMateModelView.KEY_SPOTS_VISIBLE;
+import static fiji.plugin.trackmate.visualization.TrackMateModelView.KEY_SPOT_COLORING;
+import static fiji.plugin.trackmate.visualization.TrackMateModelView.KEY_SPOT_RADIUS_RATIO;
+import static fiji.plugin.trackmate.visualization.TrackMateModelView.KEY_TRACKS_VISIBLE;
+import static fiji.plugin.trackmate.visualization.TrackMateModelView.KEY_TRACK_COLORING;
+import static fiji.plugin.trackmate.visualization.TrackMateModelView.KEY_TRACK_DISPLAY_DEPTH;
+import static fiji.plugin.trackmate.visualization.TrackMateModelView.KEY_TRACK_DISPLAY_MODE;
 import ij.IJ;
 import ij.ImagePlus;
 
@@ -19,11 +34,11 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import fiji.plugin.trackmate.Logger;
+import fiji.plugin.trackmate.Model;
 import fiji.plugin.trackmate.SelectionChangeListener;
 import fiji.plugin.trackmate.SelectionModel;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.TrackMate;
-import fiji.plugin.trackmate.Model;
 import fiji.plugin.trackmate.action.ExportStatsToIJAction;
 import fiji.plugin.trackmate.detection.ManualDetectorFactory;
 import fiji.plugin.trackmate.detection.SpotDetectorFactory;
@@ -141,18 +156,18 @@ public class TrackMateGUIController implements ActionListener {
 
 
 		this.trackmate = trackmate;
-		
+
 		/*
 		 * Instantiate GUI
 		 */
 
 		this.gui = new TrackMateWizard(this);
 		this.logger = gui.getLogger();
-		
+
 
 		// Feature updater
 		new ModelFeatureUpdater(trackmate.getModel(), trackmate.getSettings());
-		
+
 		// Feature colorers
 		this.spotColorGenerator = createSpotColorGenerator();
 		this.edgeColorGenerator = createEdgeColorGenerator();
@@ -180,7 +195,7 @@ public class TrackMateGUIController implements ActionListener {
 	/*
 	 * PUBLIC METHODS 
 	 */
-	
+
 
 	/**
 	 * Creates a new {@link TrackMateGUIController} instance, set to operate on the
@@ -223,7 +238,7 @@ public class TrackMateGUIController implements ActionListener {
 	public SelectionModel getSelectionModel() {
 		return selectionModel;
 	}
-	
+
 
 	public TrackMateGUIModel getGuimodel() {
 		return guimodel;
@@ -257,7 +272,7 @@ public class TrackMateGUIController implements ActionListener {
 
 		logger.error("Cannot move to state " + stateKey +". Unknown state.\n");
 	}
-	
+
 	/**
 	 * Returns the {@link ViewProvider} instance, serving {@link TrackMateModelView}s to 
 	 * this GUI
@@ -266,7 +281,7 @@ public class TrackMateGUIController implements ActionListener {
 	public ViewProvider getViewProvider() {
 		return viewProvider;
 	}
-	
+
 	/**
 	 * Returns the {@link DetectorProvider} instance, serving {@link SpotDetectorFactory}s 
 	 * to this GUI 
@@ -275,7 +290,7 @@ public class TrackMateGUIController implements ActionListener {
 	public DetectorProvider getDetectorProvider() {
 		return detectorProvider;
 	}
-	
+
 	/**
 	 * Returns the {@link SpotAnalyzerProvider} instance, serving {@link SpotAnalyzerFactory}s
 	 * to this GUI.
@@ -284,7 +299,7 @@ public class TrackMateGUIController implements ActionListener {
 	public SpotAnalyzerProvider getSpotAnalyzerProvider() {
 		return spotAnalyzerProvider;
 	}
-	
+
 	/**
 	 * Returns the {@link EdgeAnalyzerProvider} instance, serving {@link EdgeAnalyzer}s
 	 * to this GUI.
@@ -293,7 +308,7 @@ public class TrackMateGUIController implements ActionListener {
 	public EdgeAnalyzerProvider getEdgeAnalyzerProvider() {
 		return edgeAnalyzerProvider;
 	}
-	
+
 	/**
 	 * Returns the {@link TrackAnalyzerProvider} instance, serving {@link TrackAnalyzer}s
 	 * to this GUI.
@@ -302,7 +317,7 @@ public class TrackMateGUIController implements ActionListener {
 	public TrackAnalyzerProvider getTrackAnalyzerProvider() {
 		return trackAnalyzerProvider;
 	}
-	
+
 	/**
 	 * Returns the {@link TrackerProvider} instance, serving {@link SpotTracker}s 
 	 * to this GUI.
@@ -320,11 +335,11 @@ public class TrackMateGUIController implements ActionListener {
 	protected void createSelectionModel() {
 		selectionModel = new SelectionModel(trackmate.getModel());
 	}
-	
+
 	protected FeatureColorGenerator<Spot> createSpotColorGenerator() {
 		return new SpotColorGenerator(trackmate.getModel());
 	}
-	
+
 	protected PerEdgeFeatureColorGenerator createEdgeColorGenerator() {
 		return new PerEdgeFeatureColorGenerator(trackmate.getModel(), EdgeVelocityAnalyzer.VELOCITY);
 	}
@@ -553,7 +568,7 @@ public class TrackMateGUIController implements ActionListener {
 
 		} else if (currentDescriptor == detectorChoiceDescriptor) {
 			return detectorConfigurationDescriptor;
-			
+
 		} else if (currentDescriptor == detectorConfigurationDescriptor) {
 
 			if (trackmate.getSettings().detectorFactory.getKey().equals(ManualDetectorFactory.DETECTOR_KEY)) {
