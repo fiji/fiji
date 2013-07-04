@@ -11,6 +11,7 @@ import net.imglib2.algorithm.Algorithm;
 import net.imglib2.algorithm.MultiThreaded;
 import net.imglib2.img.ImgPlus;
 import net.imglib2.multithreading.SimpleMultiThreading;
+import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
 import fiji.plugin.trackmate.Logger;
@@ -129,7 +130,6 @@ public abstract class AbstractSemiAutoTracker<T extends RealType<T>  & NativeTyp
 
 		while (true) {
 
-
 			/*
 			 * Extract spot & features
 			 */
@@ -149,8 +149,7 @@ public abstract class AbstractSemiAutoTracker<T extends RealType<T>  & NativeTyp
 			}
 			
 			ImgPlus<T> neighborhood = sn.neighborhood;
-			long[] min = sn.topLeftCorner;
-			double[] cal = sn.calibration;
+			AffineTransform3D transform = sn.transform;
 
 			/*
 			 * Detect spots
@@ -180,9 +179,12 @@ public abstract class AbstractSemiAutoTracker<T extends RealType<T>  & NativeTyp
 			
 			String[] features = new String[] { Spot.POSITION_X, Spot.POSITION_Y, Spot.POSITION_Z }; 
 			for (Spot ds : detectedSpots) {
-				for (int i = 0; i < min.length; i++) {
-					Double val = ds.getFeature(features[i]);
-					ds.putFeature(features[i], val + (double) min[i] * cal[i]);
+				double[] coords = new double[3];
+				ds.localize(coords);
+				double[] target = new double[3];
+				transform.apply(coords, target);
+				for (int i = 0; i < target.length; i++) {
+					ds.putFeature(features[i], target[i]);
 				}
 			}
 			
@@ -302,12 +304,9 @@ public abstract class AbstractSemiAutoTracker<T extends RealType<T>  & NativeTyp
 	public static class SpotNeighborhood <R> {
 		/** The neighborhood, as a calibrated {@link ImgPlus}. */
 		public ImgPlus<R> neighborhood;
-		/**  The location <b>in pixel units</b> of the top-left corner of the generated
-		 * neighborhood. This is required to set the coordinates of the detected spots with the
-		 * correct origin. */ 
-		public long[] topLeftCorner;
-		/** the physical calibration of the raw source. */
-		public double[] calibration;
+		/**  Affine transform that will convert the spot coordinates in the neighborhood reference
+		 * to the global coordinate system. */ 
+		public AffineTransform3D transform;
 	}
 
 }

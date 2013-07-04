@@ -6,6 +6,7 @@ import net.imglib2.img.ImgPlus;
 import net.imglib2.img.array.ArrayImgFactory;
 import net.imglib2.meta.Axes;
 import net.imglib2.meta.AxisType;
+import net.imglib2.realtransform.AffineTransform3D;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.view.HyperSliceImgPlus;
@@ -104,6 +105,16 @@ public class SemiAutoTracker<T extends RealType<T>  & NativeType<T>> extends Abs
 		Img<T> cropimg = new CropImgView<T>(imgT, min, max, new ArrayImgFactory<T>());
 
 		/*
+		 * The transform that will put back the global coordinates.
+		 * In our case it is just a translation.
+		 */
+		
+		AffineTransform3D transform = new AffineTransform3D();
+		for (int i = 0; i < max.length; i++) {
+			transform.set(min[i] * cal[i], i, 3);
+		}
+
+		/*
 		 * Give it a calibration
 		 */
 
@@ -112,8 +123,7 @@ public class SemiAutoTracker<T extends RealType<T>  & NativeType<T>> extends Abs
 		
 		SpotNeighborhood<T> sn = new SpotNeighborhood<T>();
 		sn.neighborhood = imgplus;
-		sn.topLeftCorner = min;
-		sn.calibration = cal;
+		sn.transform = transform;
 		
 		return sn;
 	}
