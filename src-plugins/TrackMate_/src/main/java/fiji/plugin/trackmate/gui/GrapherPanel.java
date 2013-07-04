@@ -79,7 +79,14 @@ public class GrapherPanel extends ActionListenablePanel {
 		spotFeatureSelectionPanel.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
-				plotSpotFeatures();
+				spotFeatureSelectionPanel.setEnabled(false);
+				new Thread("TrackMate plot spot features thread") {
+					@Override
+					public void run() {
+						plotSpotFeatures();
+						spotFeatureSelectionPanel.setEnabled(true);
+					}
+				}.start();
 			}
 		});
 		
@@ -91,8 +98,15 @@ public class GrapherPanel extends ActionListenablePanel {
 		panelEdges.add(edgeFeatureSelectionPanel);
 		edgeFeatureSelectionPanel.addActionListener(new ActionListener() {
 			@Override
-			public void actionPerformed(ActionEvent e) {
-				plotEdgeFeatures();
+			public void actionPerformed(ActionEvent arg0) {
+				edgeFeatureSelectionPanel.setEnabled(false);
+				new Thread("TrackMate plot edge features thread") {
+					@Override
+					public void run() {
+						plotEdgeFeatures();
+						edgeFeatureSelectionPanel.setEnabled(true);
+					}
+				}.start();
 			}
 		});
 		
@@ -104,8 +118,15 @@ public class GrapherPanel extends ActionListenablePanel {
 		panelTracks.add(trackFeatureSelectionPanel);
 		trackFeatureSelectionPanel.addActionListener(new ActionListener() {
 			@Override
-			public void actionPerformed(ActionEvent e) {
-				plotTrackFeatures();
+			public void actionPerformed(ActionEvent arg0) {
+				trackFeatureSelectionPanel.setEnabled(false);
+				new Thread("TrackMate plot track features thread") {
+					@Override
+					public void run() {
+						plotTrackFeatures();
+						trackFeatureSelectionPanel.setEnabled(true);
+					}
+				}.start();
 			}
 		});
 	}
@@ -113,13 +134,11 @@ public class GrapherPanel extends ActionListenablePanel {
 	private void plotSpotFeatures() {
 		String xFeature = spotFeatureSelectionPanel.getXKey();
 		Set<String> yFeatures = spotFeatureSelectionPanel.getYKeys();
-		
 		// Collect only the spots that are in tracks
-		List<Spot> spots = new ArrayList<Spot>();
+		List<Spot> spots = new ArrayList<Spot>(trackmate.getModel().getSpots().getNSpots(true));
 		for(Integer trackID : trackmate.getModel().getTrackModel().trackIDs(false)) {
 			spots.addAll(trackmate.getModel().getTrackModel().trackSpots(trackID));
 		}
-		
 		SpotFeatureGrapher grapher = new SpotFeatureGrapher(xFeature, yFeatures, spots, trackmate.getModel());
 		grapher.render();
 	}

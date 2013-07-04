@@ -23,6 +23,7 @@ import org.jgrapht.graph.DefaultWeightedEdge;
 
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.Model;
+import fiji.plugin.trackmate.TrackModel;
 import fiji.plugin.trackmate.util.ExportableChartPanel;
 
 public abstract class AbstractFeatureGrapher {
@@ -128,25 +129,14 @@ public abstract class AbstractFeatureGrapher {
 	 * @return the list of links that have their source and target in the given spot list.
 	 */
 	protected final List<DefaultWeightedEdge> getInsideEdges(final Collection<Spot> spots) {
-		ArrayList<DefaultWeightedEdge> edges = new ArrayList<DefaultWeightedEdge>();
 		int nspots = spots.size();
-		Spot source, target;
-		Spot[] sarr = spots.toArray(new Spot[] {});
-		
-		for (int i = 0; i < nspots; i++) {
-			source = sarr[i];
-			for (int j = i+1; j < nspots; j++) {
-				target = sarr[j];
-
-				if (model.getTrackModel().containsEdge(source, target)) {
-					DefaultWeightedEdge edge = model.getTrackModel().getEdge(source, target);
-					edges.add(edge);
-				}
-				if(model.getTrackModel().containsEdge(target, source)) { // careful for directed edge
-					DefaultWeightedEdge edge = model.getTrackModel().getEdge(target, source);
-					edges.add(edge);
-				}
-
+		ArrayList<DefaultWeightedEdge> edges = new ArrayList<DefaultWeightedEdge>(nspots);
+		TrackModel trackModel = model.getTrackModel();
+		for (DefaultWeightedEdge edge : trackModel.edgeSet()) {
+			Spot source = trackModel.getEdgeSource(edge);
+			Spot target = trackModel.getEdgeTarget(edge);
+			if (spots.contains(source) && spots.contains(target)) {
+				edges.add(edge);
 			}
 		}
 		return edges;

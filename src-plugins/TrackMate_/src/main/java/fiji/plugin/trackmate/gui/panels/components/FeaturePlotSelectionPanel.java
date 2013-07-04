@@ -82,6 +82,20 @@ public class FeaturePlotSelectionPanel extends ActionListenablePanel {
 	/*
 	 * PUBLIC METHODS
 	 */
+	
+	@Override
+	public void setEnabled(boolean enabled) {
+		for (Component component : topPanel.getComponents()) {
+			component.setEnabled(enabled);
+		}
+		for (Component component : centerPanel.getComponents()) {
+			component.setEnabled(enabled);
+		}
+		for (Component component : jPanelYFeatures.getComponents()) {
+			component.setEnabled(enabled);
+		}
+		super.setEnabled(enabled);
+	}
 
 	/**
 	 * Return the enum constant selected in the X combo-box feature.
