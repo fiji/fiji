@@ -51,7 +51,13 @@ public class DetectorConfigurationDescriptor implements WizardPanelDescriptor {
 	}
 
 	@Override
-	public void displayingPanel() {	}
+	public void displayingPanel() {
+		if (null == configPanel) {
+			// May happen if we move backward here after loading
+			updateComponent();
+		}
+		
+	}
 
 	@Override
 	public void aboutToHidePanel() {
