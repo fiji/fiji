@@ -67,6 +67,12 @@ public class ConfigureViewsPanel extends ActionListenablePanel {
 	public ActionEvent TRACK_SCHEME_BUTTON_PRESSED 	= new ActionEvent(this, 0, "TrackSchemeButtonPushed");
 	public ActionEvent DO_ANALYSIS_BUTTON_PRESSED 	= new ActionEvent(this, 1, "DoAnalysisButtonPushed");
 
+	private static final String ANALYSIS_BUTTON_TOOLTIP = "<html>"
+			+ "Export all spot, edge and track features <br>"
+			+ "to ImageJ tables.</html>";
+	private static final String TRACKSCHEME_BUTTON_TOOLTIP = "<html>"
+			+ "Launch a new instance of TrackScheme.</html>";
+	
 	/** A map of String/Object that configures the look and feel of the views.	 */
 	protected Map<String, Object> displaySettings = new HashMap<String, Object>();
 
@@ -209,6 +215,7 @@ public class ConfigureViewsPanel extends ActionListenablePanel {
 				fireDisplaySettingsChange(event);
 			}
 		});
+		jPanelSpotOptions.add(jPanelSpotColor);
 		
 		/*
 		 * Track coloring
@@ -479,6 +486,7 @@ public class ConfigureViewsPanel extends ActionListenablePanel {
 				jButtonShowTrackScheme.setText("Track scheme");
 				jButtonShowTrackScheme.setIcon(TRACK_SCHEME_ICON);
 				jButtonShowTrackScheme.setFont(FONT);
+				jButtonShowTrackScheme.setToolTipText(TRACKSCHEME_BUTTON_TOOLTIP);
 				jButtonShowTrackScheme.setBounds(10, 411, 120, 30);
 				jButtonShowTrackScheme.addActionListener(new ActionListener() {
 					@Override
@@ -492,6 +500,7 @@ public class ConfigureViewsPanel extends ActionListenablePanel {
 				jButtonDoAnalysis = new JButton("Analysis");
 				jButtonDoAnalysis.setFont(FONT);
 				jButtonDoAnalysis.setIcon(DO_ANALYSIS_ICON);
+				jButtonDoAnalysis.setToolTipText(ANALYSIS_BUTTON_TOOLTIP);
 				jButtonDoAnalysis.setBounds(145, 411, 120, 30);
 				jButtonDoAnalysis.addActionListener(new ActionListener() {
 					@Override
