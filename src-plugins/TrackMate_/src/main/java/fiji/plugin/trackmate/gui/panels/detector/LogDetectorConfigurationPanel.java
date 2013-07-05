@@ -8,21 +8,9 @@ import static fiji.plugin.trackmate.detection.DetectorKeys.KEY_THRESHOLD;
 import static fiji.plugin.trackmate.gui.TrackMateWizard.BIG_FONT;
 import static fiji.plugin.trackmate.gui.TrackMateWizard.FONT;
 import static fiji.plugin.trackmate.gui.TrackMateWizard.SMALL_FONT;
-import fiji.plugin.trackmate.Logger;
-import fiji.plugin.trackmate.Settings;
-import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.SpotCollection;
-import fiji.plugin.trackmate.TrackMate;
-import fiji.plugin.trackmate.Model;
-import fiji.plugin.trackmate.detection.LogDetectorFactory;
-import fiji.plugin.trackmate.detection.SpotDetectorFactory;
-import fiji.plugin.trackmate.gui.ConfigurationPanel;
-import fiji.plugin.trackmate.gui.TrackMateGUIController;
-import fiji.plugin.trackmate.gui.panels.components.JNumericTextField;
 import ij.ImagePlus;
 import ij.measure.Calibration;
 
-import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -37,9 +25,22 @@ import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JSlider;
 import javax.swing.JTextField;
+import javax.swing.SpringLayout;
 import javax.swing.SwingConstants;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+
+import fiji.plugin.trackmate.Logger;
+import fiji.plugin.trackmate.Model;
+import fiji.plugin.trackmate.Settings;
+import fiji.plugin.trackmate.Spot;
+import fiji.plugin.trackmate.SpotCollection;
+import fiji.plugin.trackmate.TrackMate;
+import fiji.plugin.trackmate.detection.LogDetectorFactory;
+import fiji.plugin.trackmate.detection.SpotDetectorFactory;
+import fiji.plugin.trackmate.gui.ConfigurationPanel;
+import fiji.plugin.trackmate.gui.TrackMateGUIController;
+import fiji.plugin.trackmate.gui.panels.components.JNumericTextField;
 import fiji.plugin.trackmate.util.JLabelLogger;
 
 /**
@@ -88,6 +89,8 @@ public class LogDetectorConfigurationPanel extends ConfigurationPanel {
 	protected final ImagePlus imp;
 	protected final Model model;
 	private Logger localLogger;
+	/** The layout in charge of laying out this panel content. */
+	protected SpringLayout layout;
 
 	/*
 	 * CONSTRUCTOR
@@ -226,24 +229,31 @@ public class LogDetectorConfigurationPanel extends ConfigurationPanel {
 	protected void initGUI() {
 		try {
 			this.setPreferredSize(new java.awt.Dimension(300, 461));
-			setLayout(null);
+			layout = new SpringLayout();
+			setLayout(layout);
 			{
 				jLabel1 = new JLabel();
-				jLabel1.setBounds(1, 10, 103, 13);
+				layout.putConstraint(SpringLayout.NORTH, jLabel1, 10, SpringLayout.NORTH, this);
+				layout.putConstraint(SpringLayout.WEST, jLabel1, 5, SpringLayout.WEST, this);
+				layout.putConstraint(SpringLayout.EAST, jLabel1, -5, SpringLayout.EAST, this);
 				this.add(jLabel1);
 				jLabel1.setText("Settings for detector:");
 				jLabel1.setFont(FONT);
 			}
 			{
 				jLabelSegmenterName = new JLabel();
-				jLabelSegmenterName.setBounds(11, 33, 225, 17);
+				layout.putConstraint(SpringLayout.NORTH, jLabelSegmenterName, 33, SpringLayout.NORTH, this);
+				layout.putConstraint(SpringLayout.WEST, jLabelSegmenterName, 11, SpringLayout.WEST, this);
+				layout.putConstraint(SpringLayout.EAST, jLabelSegmenterName, -11, SpringLayout.EAST, this);
 				this.add(jLabelSegmenterName);
 				jLabelSegmenterName.setFont(BIG_FONT);
 				jLabelSegmenterName.setText(detectorName);
 			}
 			{
 				jLabel2 = new JLabel();
-				jLabel2.setBounds(16, 247, 152, 13);
+				layout.putConstraint(SpringLayout.NORTH, jLabel2, 247, SpringLayout.NORTH, this);
+				layout.putConstraint(SpringLayout.WEST, jLabel2, 16, SpringLayout.WEST, this);
+				layout.putConstraint(SpringLayout.EAST, jLabel2, -16, SpringLayout.EAST, this);
 				this.add(jLabel2);
 				jLabel2.setText("Estimated blob diameter:");
 				jLabel2.setFont(FONT);
@@ -251,31 +261,42 @@ public class LogDetectorConfigurationPanel extends ConfigurationPanel {
 			}
 			{
 				jTextFieldBlobDiameter = new JNumericTextField();
+				layout.putConstraint(SpringLayout.NORTH, jTextFieldBlobDiameter, 247, SpringLayout.NORTH, this);
+				layout.putConstraint(SpringLayout.WEST, jTextFieldBlobDiameter, 168, SpringLayout.WEST, this);
+				layout.putConstraint(SpringLayout.SOUTH, jTextFieldBlobDiameter, 263, SpringLayout.NORTH, this);
+				layout.putConstraint(SpringLayout.EAST, jTextFieldBlobDiameter, 208, SpringLayout.WEST, this);
 				jTextFieldBlobDiameter.setHorizontalAlignment(SwingConstants.CENTER);
 				jTextFieldBlobDiameter.setColumns(5);
 				jTextFieldBlobDiameter.setText("5");
-				jTextFieldBlobDiameter.setLocation(168, 247);
-				jTextFieldBlobDiameter.setSize(new Dimension(40, 16));
 				this.add(jTextFieldBlobDiameter);
 				jTextFieldBlobDiameter.setFont(FONT);
 			}
 			{
 				jLabelBlobDiameterUnit = new JLabel();
-				jLabelBlobDiameterUnit.setBounds(228, 245, 40, 17);
+				layout.putConstraint(SpringLayout.NORTH, jLabelBlobDiameterUnit, 245, SpringLayout.NORTH, this);
+				layout.putConstraint(SpringLayout.WEST, jLabelBlobDiameterUnit, 228, SpringLayout.WEST, this);
+				layout.putConstraint(SpringLayout.SOUTH, jLabelBlobDiameterUnit, 262, SpringLayout.NORTH, this);
+				layout.putConstraint(SpringLayout.EAST, jLabelBlobDiameterUnit, 268, SpringLayout.WEST, this);
 				this.add(jLabelBlobDiameterUnit);
 				jLabelBlobDiameterUnit.setFont(FONT);
 				jLabelBlobDiameterUnit.setText(spaceUnits);
 			}
 			{
 				jCheckBoxMedianFilter = new JCheckBox();
-				jCheckBoxMedianFilter.setBounds(11, 312, 230, 21);
+				layout.putConstraint(SpringLayout.NORTH, jCheckBoxMedianFilter, 312, SpringLayout.NORTH, this);
+				layout.putConstraint(SpringLayout.WEST, jCheckBoxMedianFilter, 11, SpringLayout.WEST, this);
+				layout.putConstraint(SpringLayout.SOUTH, jCheckBoxMedianFilter, 333, SpringLayout.NORTH, this);
+				layout.putConstraint(SpringLayout.EAST, jCheckBoxMedianFilter, 241, SpringLayout.WEST, this);
 				this.add(jCheckBoxMedianFilter);
 				jCheckBoxMedianFilter.setText("Use median filter ");
 				jCheckBoxMedianFilter.setFont(FONT);
 			}
 			{
 				jLabelHelpText = new JLabel();
-				jLabelHelpText.setBounds(10, 60, 280, 104);
+				layout.putConstraint(SpringLayout.NORTH, jLabelHelpText, 60, SpringLayout.NORTH, this);
+				layout.putConstraint(SpringLayout.WEST, jLabelHelpText, 10, SpringLayout.WEST, this);
+				layout.putConstraint(SpringLayout.SOUTH, jLabelHelpText, 164, SpringLayout.NORTH, this);
+				layout.putConstraint(SpringLayout.EAST, jLabelHelpText, -10, SpringLayout.EAST, this);
 				this.add(jLabelHelpText);
 				jLabelHelpText.setFont(FONT.deriveFont(Font.ITALIC));
 				jLabelHelpText.setText(infoText
@@ -285,49 +306,69 @@ public class LogDetectorConfigurationPanel extends ConfigurationPanel {
 			}
 			{
 				jLabelThreshold = new JLabel();
-				jLabelThreshold.setBounds(16, 270, 152, 13);
+				layout.putConstraint(SpringLayout.NORTH, jLabelThreshold, -42, SpringLayout.NORTH, jCheckBoxMedianFilter);
+				layout.putConstraint(SpringLayout.WEST, jLabelThreshold, 16, SpringLayout.WEST, this);
+				layout.putConstraint(SpringLayout.SOUTH, jLabelThreshold, -29, SpringLayout.NORTH, jCheckBoxMedianFilter);
+				layout.putConstraint(SpringLayout.EAST, jLabelThreshold, 168, SpringLayout.WEST, this);
 				this.add(jLabelThreshold);
 				jLabelThreshold.setText("Threshold:");
 				jLabelThreshold.setFont(FONT);
 			}
 			{
 				jTextFieldThreshold = new JNumericTextField();
+				layout.putConstraint(SpringLayout.NORTH, jTextFieldThreshold, 268, SpringLayout.NORTH, this);
+				layout.putConstraint(SpringLayout.WEST, jTextFieldThreshold, 168, SpringLayout.WEST, this);
+				layout.putConstraint(SpringLayout.SOUTH, jTextFieldThreshold, 284, SpringLayout.NORTH, this);
+				layout.putConstraint(SpringLayout.EAST, jTextFieldThreshold, 208, SpringLayout.WEST, this);
 				jTextFieldThreshold.setHorizontalAlignment(SwingConstants.CENTER);
 				jTextFieldThreshold.setText("0");
-				jTextFieldThreshold.setBounds(168, 268, 40, 16);
 				this.add(jTextFieldThreshold);
 				jTextFieldThreshold.setFont(FONT);
 			}
 			{
 				// Add sub-pixel checkbox
 				jCheckSubPixel = new JCheckBox();
-				jCheckSubPixel.setBounds(11, 336, 231, 21);
+				layout.putConstraint(SpringLayout.NORTH, jCheckSubPixel, 336, SpringLayout.NORTH, this);
+				layout.putConstraint(SpringLayout.WEST, jCheckSubPixel, 11, SpringLayout.WEST, this);
+				layout.putConstraint(SpringLayout.SOUTH, jCheckSubPixel, 357, SpringLayout.NORTH, this);
+				layout.putConstraint(SpringLayout.EAST, jCheckSubPixel, 242, SpringLayout.WEST, this);
 				this.add(jCheckSubPixel);
 				jCheckSubPixel.setText("Do sub-pixel localization ");
 				jCheckSubPixel.setFont(FONT);
 			}
 			{
 				lblSegmentInChannel = new JLabel("Segment in channel:");
+				layout.putConstraint(SpringLayout.NORTH, lblSegmentInChannel, 219, SpringLayout.NORTH, this);
+				layout.putConstraint(SpringLayout.WEST, lblSegmentInChannel, 16, SpringLayout.WEST, this);
+				layout.putConstraint(SpringLayout.EAST, lblSegmentInChannel, 116, SpringLayout.WEST, this);
 				lblSegmentInChannel.setFont(SMALL_FONT);
-				lblSegmentInChannel.setBounds(16, 219, 100, 13);
 				add(lblSegmentInChannel);
 
 				sliderChannel = new JSlider();
-				sliderChannel.setBounds(126, 213, 91, 23);
+				layout.putConstraint(SpringLayout.NORTH, sliderChannel, 213, SpringLayout.NORTH, this);
+				layout.putConstraint(SpringLayout.WEST, sliderChannel, 126, SpringLayout.WEST, this);
+				layout.putConstraint(SpringLayout.SOUTH, sliderChannel, 236, SpringLayout.NORTH, this);
+				layout.putConstraint(SpringLayout.EAST, sliderChannel, 217, SpringLayout.WEST, this);
 				sliderChannel.addChangeListener(new ChangeListener() {
 					public void stateChanged(ChangeEvent e) { labelChannel.setText(""+sliderChannel.getValue()); }
 				});
 				add(sliderChannel);
 
 				labelChannel = new JLabel("1");
+				layout.putConstraint(SpringLayout.NORTH, labelChannel, 216, SpringLayout.NORTH, this);
+				layout.putConstraint(SpringLayout.WEST, labelChannel, 228, SpringLayout.WEST, this);
+				layout.putConstraint(SpringLayout.SOUTH, labelChannel, 234, SpringLayout.NORTH, this);
+				layout.putConstraint(SpringLayout.EAST, labelChannel, 249, SpringLayout.WEST, this);
 				labelChannel.setHorizontalAlignment(SwingConstants.CENTER);
-				labelChannel.setBounds(228, 216, 21, 18);
 				labelChannel.setFont(SMALL_FONT);
 				add(labelChannel);
 			}
 			{
 				jButtonRefresh = new JButton("Refresh treshold", ICON_REFRESH);
-				jButtonRefresh.setBounds(11, 370, 120, 25);
+				layout.putConstraint(SpringLayout.NORTH, jButtonRefresh, 370, SpringLayout.NORTH, this);
+				layout.putConstraint(SpringLayout.WEST, jButtonRefresh, 11, SpringLayout.WEST, this);
+				layout.putConstraint(SpringLayout.SOUTH, jButtonRefresh, 395, SpringLayout.NORTH, this);
+				layout.putConstraint(SpringLayout.EAST, jButtonRefresh, 131, SpringLayout.WEST, this);
 				this.add(jButtonRefresh);
 				jButtonRefresh.setToolTipText(TOOLTIP_REFRESH);
 				jButtonRefresh.setFont(SMALL_FONT);
@@ -339,8 +380,11 @@ public class LogDetectorConfigurationPanel extends ConfigurationPanel {
 			}
 			{
 				btnPreview = new JButton("Preview", ICON_PREVIEW);
+				layout.putConstraint(SpringLayout.NORTH, btnPreview, 370, SpringLayout.NORTH, this);
+				layout.putConstraint(SpringLayout.WEST, btnPreview, -141, SpringLayout.EAST, this);
+				layout.putConstraint(SpringLayout.SOUTH, btnPreview, 395, SpringLayout.NORTH, this);
+				layout.putConstraint(SpringLayout.EAST, btnPreview, -10, SpringLayout.EAST, this);
 				btnPreview.setToolTipText(TOOLTIP_PREVIEW);
-				btnPreview.setBounds(161, 370, 120, 25);
 				this.add(btnPreview);
 				btnPreview.setFont(SMALL_FONT);
 				btnPreview.addActionListener(new ActionListener() {
@@ -371,7 +415,10 @@ public class LogDetectorConfigurationPanel extends ConfigurationPanel {
 			}
 			{
 				JLabelLogger labelLogger = new JLabelLogger();
-				labelLogger.setBounds(11, 407, 270, 24);
+				layout.putConstraint(SpringLayout.NORTH, labelLogger, 407, SpringLayout.NORTH, this);
+				layout.putConstraint(SpringLayout.WEST, labelLogger, 10, SpringLayout.WEST, this);
+				layout.putConstraint(SpringLayout.SOUTH, labelLogger, 431, SpringLayout.NORTH, this);
+				layout.putConstraint(SpringLayout.EAST, labelLogger, -10, SpringLayout.EAST, this);
 				add(labelLogger);
 				localLogger = labelLogger.getLogger();
 			}

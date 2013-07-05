@@ -19,6 +19,7 @@ import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.features.FeatureFilter;
 import fiji.plugin.trackmate.util.OnRequestUpdater;
 import fiji.plugin.trackmate.util.OnRequestUpdater.Refreshable;
+import javax.swing.SpringLayout;
 
 public class InitFilterPanel extends ActionListenablePanel  {
 
@@ -156,19 +157,26 @@ public class InitFilterPanel extends ActionListenablePanel  {
 				jPanelText = new JPanel();
 				this.add(jPanelText, BorderLayout.NORTH);
 				jPanelText.setPreferredSize(new Dimension(300, 200));
-				jPanelText.setLayout(null);
+				SpringLayout sl_jPanelText = new SpringLayout();
+				jPanelText.setLayout(sl_jPanelText);
 				{
 					jLabelInitialThreshold = new JLabel();
+					sl_jPanelText.putConstraint(SpringLayout.NORTH, jLabelInitialThreshold, 12, SpringLayout.NORTH, jPanelText);
+					sl_jPanelText.putConstraint(SpringLayout.WEST, jLabelInitialThreshold, 12, SpringLayout.WEST, jPanelText);
+					sl_jPanelText.putConstraint(SpringLayout.SOUTH, jLabelInitialThreshold, 27, SpringLayout.NORTH, jPanelText);
+					sl_jPanelText.putConstraint(SpringLayout.EAST, jLabelInitialThreshold, -12, SpringLayout.EAST, jPanelText);
 					jPanelText.add(jLabelInitialThreshold);
 					jLabelInitialThreshold.setText("Initial thresholding");
 					jLabelInitialThreshold.setFont(BIG_FONT);
-					jLabelInitialThreshold.setBounds(12, 12, 276, 15);
 				}
 				{
 					jLabelExplanation = new JLabel();
+					sl_jPanelText.putConstraint(SpringLayout.NORTH, jLabelExplanation, 39, SpringLayout.NORTH, jPanelText);
+					sl_jPanelText.putConstraint(SpringLayout.WEST, jLabelExplanation, 12, SpringLayout.WEST, jPanelText);
+					sl_jPanelText.putConstraint(SpringLayout.SOUTH, jLabelExplanation, -39, SpringLayout.SOUTH, jPanelText);
+					sl_jPanelText.putConstraint(SpringLayout.EAST, jLabelExplanation, -12, SpringLayout.EAST, jPanelText);
 					jPanelText.add(jLabelExplanation);
 					jLabelExplanation.setText(EXPLANATION_TEXT);
-					jLabelExplanation.setBounds(12, 39, 276, 100);
 					jLabelExplanation.setFont(FONT.deriveFont(Font.ITALIC));
 				}
 			}

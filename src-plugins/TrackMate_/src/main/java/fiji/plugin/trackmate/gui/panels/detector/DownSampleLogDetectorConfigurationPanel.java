@@ -15,6 +15,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import javax.swing.JLabel;
+import javax.swing.SpringLayout;
 import javax.swing.SwingConstants;
 
 public class DownSampleLogDetectorConfigurationPanel extends LogDetectorConfigurationPanel {
@@ -53,8 +54,10 @@ public class DownSampleLogDetectorConfigurationPanel extends LogDetectorConfigur
 		// Add down sampling text and textfield
 		{
 			jLabelDownSample = new JLabel();
-			jLabelDownSample.setLocation(16, 290);
-			jLabelDownSample.setSize(175, 16);
+			layout.putConstraint(SpringLayout.NORTH, jLabelDownSample, 290, SpringLayout.NORTH, this);
+			layout.putConstraint(SpringLayout.WEST, jLabelDownSample, 16, SpringLayout.WEST, this);
+			layout.putConstraint(SpringLayout.EAST, jLabelDownSample, 160, SpringLayout.WEST, this);
+
 			jLabelDownSample.setText("Downsampling factor:");
 			jLabelDownSample.setFont(FONT);
 			add(jLabelDownSample);
@@ -63,8 +66,10 @@ public class DownSampleLogDetectorConfigurationPanel extends LogDetectorConfigur
 			jTextFieldDownSample = new JNumericTextField();
 			jTextFieldDownSample.setHorizontalAlignment(SwingConstants.CENTER);
 			jTextFieldDownSample.setText("1");
-			jTextFieldDownSample.setLocation(168, 290);
-			jTextFieldDownSample.setSize(40, 16);
+			
+			layout.putConstraint(SpringLayout.NORTH, jTextFieldDownSample, 290, SpringLayout.NORTH, this);
+			layout.putConstraint(SpringLayout.WEST, jTextFieldDownSample, 168, SpringLayout.WEST, this);
+			layout.putConstraint(SpringLayout.EAST, jTextFieldDownSample, 208, SpringLayout.WEST, this);
 			jTextFieldDownSample.setFont(FONT);
 			add(jTextFieldDownSample);
 		}
