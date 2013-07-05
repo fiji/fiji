@@ -68,7 +68,7 @@ public class GrapherPanel extends ActionListenablePanel {
 		refresh();
 	}
 
-	private void refresh() {
+	public void refresh() {
 		
 		// regen spot features
 		panelSpot.removeAll();

@@ -20,7 +20,9 @@ public class GrapherDescriptor implements WizardPanelDescriptor  {
 	}
 
 	@Override
-	public void aboutToDisplayPanel() { }
+	public void aboutToDisplayPanel() {
+		panel.refresh();
+	}
 
 	@Override
 	public void displayingPanel() { }
