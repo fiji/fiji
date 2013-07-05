@@ -32,6 +32,7 @@ public class TrackMateWizard extends JFrame implements ActionListener {
 	JButton jButtonLoad;
 	JButton jButtonPrevious;
 	JButton jButtonNext;
+	JButton jButtonLog;
 
 	/*
 	 * DEFAULT VISIBILITY & PUBLIC CONSTANTS
@@ -82,9 +83,6 @@ public class TrackMateWizard extends JFrame implements ActionListener {
 	private LogPanel logPanel;
 	private TrackMateModelView displayer;
 	private final TrackMateGUIController controller;
-	@SuppressWarnings("unused")
-	private JButton jButtonLog;
-
 
 	/*
 	 * CONSTRUCTOR
@@ -181,10 +179,22 @@ public class TrackMateWizard extends JFrame implements ActionListener {
 			@Override
 			public void run() { 
 				jButtonNext.setEnabled(b);
-				if (b) jButtonNext.requestFocusInWindow();
+				if (b) {
+					jButtonNext.requestFocusInWindow();
+				} else {
+					jButtonPrevious.requestFocusInWindow();
+				}
 			}
 		});
 	}
+	
+	public void setLogButtonEnabled(final boolean b) {
+		SwingUtilities.invokeLater(new Runnable() {
+			@Override
+			public void run() { jButtonLog.setEnabled(b); }
+		});
+	}
+
 
 	public void setPreviousButtonEnabled(final boolean b) {
 		SwingUtilities.invokeLater(new Runnable() {

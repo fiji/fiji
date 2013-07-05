@@ -755,8 +755,12 @@ public class TrackMateGUIController implements ActionListener {
 			guimodel.actionFlag = false;
 			gui.jButtonNext.setText("Resume");
 			disableButtonsAndStoreState();
-			save();
-			restoreButtonsState();
+			new Thread("TrackMate saving thread") {
+				public void run() {
+					save();
+					gui.jButtonNext.setEnabled(true);
+				};
+			}.start();
 
 		} else if ((event == gui.NEXT_BUTTON_PRESSED || 
 				event == gui.PREVIOUS_BUTTON_PRESSED || 
@@ -772,21 +776,21 @@ public class TrackMateGUIController implements ActionListener {
 			restoreButtonsState();
 
 		} else if (event == gui.LOG_BUTTON_PRESSED) {
-
-			if (guimodel.logButtonState) {
+			
+			if (guimodel.displayingLog) {
 
 				restoreButtonsState();
 				gui.show(guimodel.previousDescriptor);
+				guimodel.displayingLog = false;
 
 			} else {
 
 				disableButtonsAndStoreState();
 				guimodel.previousDescriptor = guimodel.currentDescriptor;
 				gui.show(logPanelDescriptor);
-
+				gui.setLogButtonEnabled(true);
+				guimodel.displayingLog = true;
 			}
-			guimodel.logButtonState = !guimodel.logButtonState;
-
 		}
 	}
 
@@ -878,6 +882,7 @@ public class TrackMateGUIController implements ActionListener {
 		gui.setSaveButtonEnabled(false);
 		gui.setPreviousButtonEnabled(false);
 		gui.setNextButtonEnabled(false);
+		gui.setLogButtonEnabled(false);
 	}
 
 	/**
@@ -889,6 +894,7 @@ public class TrackMateGUIController implements ActionListener {
 		gui.setSaveButtonEnabled(guimodel.saveButtonState);
 		gui.setPreviousButtonEnabled(guimodel.previousButtonState);
 		gui.setNextButtonEnabled(guimodel.nextButtonState);
+		gui.setLogButtonEnabled(true);
 	}
 
 	private void launchTrackScheme() {

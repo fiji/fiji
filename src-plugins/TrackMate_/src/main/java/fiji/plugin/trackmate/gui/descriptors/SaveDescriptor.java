@@ -27,8 +27,7 @@ public class SaveDescriptor extends SomeDialogDescriptor {
 		this.detectorProvider = detectorProvider;
 		this.trackerProvider = trackerProvider;
 	}
-
-
+	
 	@Override
 	public void displayingPanel() {
 
