@@ -1,7 +1,5 @@
 package fiji.plugin.trackmate.gui.descriptors;
 
-import java.lang.reflect.InvocationTargetException;
-
 import javax.swing.SwingUtilities;
 
 import fiji.plugin.trackmate.Logger;
@@ -49,18 +47,12 @@ public class TrackingDescriptor implements WizardPanelDescriptor {
 				long end = System.currentTimeMillis();
 				logger.log("Found "	 + trackmate.getModel().getTrackModel().nTracks(false) + " tracks.\n");
 				logger.log(String.format("Tracking done in %.1f s.\n", (end-start)/1e3f), Logger.BLUE_COLOR);
-				try {
-					SwingUtilities.invokeAndWait(new Runnable() {
-						@Override
-						public void run() {
-							controller.restoreButtonsState();
-						}
-					});
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-				} catch (InvocationTargetException e) {
-					e.printStackTrace();
-				}
+				SwingUtilities.invokeLater(new Runnable() {
+					@Override
+					public void run() {
+						controller.restoreButtonsState();
+					}
+				});
 			}
 			
 		}.start();
