@@ -7,6 +7,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 
+import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
@@ -246,11 +247,19 @@ public class TrackMateWizard extends JFrame implements ActionListener {
 				jPanelMain.setPreferredSize(new java.awt.Dimension(300, 461));
 			}
 			jPanelButtons = new JPanel();
+			jPanelButtons.setLayout(new BoxLayout(jPanelButtons, BoxLayout.X_AXIS));
 			getContentPane().add(jPanelButtons, BorderLayout.SOUTH);
 			jPanelButtons.setLayout(new BoxLayout(jPanelButtons, BoxLayout.LINE_AXIS));
+			
+			/*  We don't show the load button anymore. Load action can be accessed from the menu.
+			 *  Out of simplicity, we leave the load button logic in place, but do not show it. */
 			jButtonLoad = addButton("Load", LOAD_ICON, 2, 2, 76, 25, LOAD_BUTTON_PRESSED);
+			jPanelButtons.remove(jButtonLoad);
+			
 			jButtonSave = addButton("Save", SAVE_ICON, 78, 2, 76, 25, SAVE_BUTTON_PRESSED);
+			jPanelButtons.add(Box.createHorizontalGlue());
 			jButtonLog = addButton(null, LOG_ICON, 157, 2, 30, 25, LOG_BUTTON_PRESSED);
+			jPanelButtons.add(Box.createHorizontalGlue());
 			jButtonPrevious = addButton(null, PREVIOUS_ICON, 190, 2, 30, 25, PREVIOUS_BUTTON_PRESSED);
 			jButtonNext = addButton(NEXT_TEXT, NEXT_ICON, 220, 2, 73, 25, NEXT_BUTTON_PRESSED);
 			pack();
