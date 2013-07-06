@@ -5,6 +5,8 @@ import java.util.Collection;
 import java.util.Map;
 
 import javax.swing.JFrame;
+import javax.swing.UIManager;
+import javax.swing.UnsupportedLookAndFeelException;
 import javax.swing.WindowConstants;
 
 import org.scijava.util.AppUtils;
@@ -26,6 +28,7 @@ import fiji.plugin.trackmate.visualization.TrackMateModelView;
 import fiji.plugin.trackmate.visualization.hyperstack.HyperStackDisplayer;
 import fiji.plugin.trackmate.visualization.trackscheme.SpotImageUpdater;
 import fiji.plugin.trackmate.visualization.trackscheme.TrackScheme;
+import ij.IJ;
 import ij.ImageJ;
 import ij.plugin.PlugIn;
 
@@ -44,7 +47,21 @@ public class LoadTrackMatePlugIn_ extends SomeDialogDescriptor implements PlugIn
 
 	@Override
 	public void run(String arg0) {
-		displayingPanel();
+		
+		// I can't stand the metal look. If this is a problem, contact me (jeanyves.tinevez@gmail.com)
+		if (IJ.isMacOSX() || IJ.isWindows()) {
+			try {
+				UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+			} catch (ClassNotFoundException e) {
+				e.printStackTrace();
+			} catch (InstantiationException e) {
+				e.printStackTrace();
+			} catch (IllegalAccessException e) {
+				e.printStackTrace();
+			} catch (UnsupportedLookAndFeelException e) {
+				e.printStackTrace();
+			}
+		}
 		
 		if (null == file) {
 			File folder = new File(System.getProperty("user.dir")).getParentFile().getParentFile();
@@ -127,7 +144,7 @@ public class LoadTrackMatePlugIn_ extends SomeDialogDescriptor implements PlugIn
 		model.getLogger().log("File loaded on " + TMUtils.getCurrentTimeString() + '\n', Logger.BLUE_COLOR);
 		
 		// Close log
-		frame.dispose();
+//		frame.dispose();
 	}
 
 

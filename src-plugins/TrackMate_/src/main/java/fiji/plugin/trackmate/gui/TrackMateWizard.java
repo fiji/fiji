@@ -46,6 +46,7 @@ public class TrackMateWizard extends JFrame implements ActionListener {
 	public static final Icon NEXT_ICON = new ImageIcon(TrackMateWizard.class.getResource("images/arrow_right.png"));
 	public static final String NEXT_TEXT = "Next";
 	public static final String RESUME_TEXT = "Resume";
+	public static final ImageIcon TRACKMATE_ICON = new ImageIcon(TrackMateWizard.class.getResource("images/TrackIcon_small.png"));
 
 	/*
 	 * PRIVATE CONSTANTS
@@ -55,7 +56,6 @@ public class TrackMateWizard extends JFrame implements ActionListener {
 	private static final Icon PREVIOUS_ICON = new ImageIcon(TrackMateWizard.class.getResource("images/arrow_left.png"));
 	private static final Icon LOAD_ICON = new ImageIcon(TrackMateWizard.class.getResource("images/page_go.png"));
 	private static final Icon SAVE_ICON = new ImageIcon(TrackMateWizard.class.getResource("images/page_save.png"));
-	private static final ImageIcon TRACKMATE_ICON = new ImageIcon(TrackMateWizard.class.getResource("images/TrackIcon_small.png"));
 	private static final Icon LOG_ICON = new ImageIcon(TrackMateWizard.class.getResource("images/information.png"));;
 
 	/*
