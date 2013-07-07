@@ -28,6 +28,7 @@ import ij.measure.ResultsTable;
 import ij.plugin.PlugIn;
 import ij.plugin.ZProjector;
 import ij.plugin.filter.Analyzer;
+import ij.plugin.frame.Recorder;
 import ij.process.*;
 import ij.text.*;
 import ij.util.Tools;
@@ -403,7 +404,7 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
 
 		if (validPath && save) {
 			try {
-				final String path = imgPath + File.separator + profileTable;
+				final String path = imgPath + profileTable;
 				rt.saveAs(path + Prefs.get("options.ext", ".csv"));
 			} catch (final IOException e) {
 				IJ.log(">>>> An error occurred when saving "+ imgTitle +"'s profile(s):\n"+ e);
@@ -1331,7 +1332,7 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
         img2.setRoi(new PointRoi(xc, yc));
 
         if (validPath && save) {
-            IJ.save(img2, imgPath + File.separator + title);
+            IJ.save(img2, imgPath + title);
         }
         return img2;
 
@@ -1781,8 +1782,9 @@ public class Sholl_Analysis implements PlugIn, DialogListener {
     	if (!validPath || (validPath && !hideSaved))
             plot.show();
         if (validPath && save) {
-            final String path = imgPath + File.separator + imgTitle +"_ShollPlot"+ SHOLL_TYPES[shollChoice];
-            IJ.saveAs(plot.getImagePlus(), "png", path + ".png");
+        	Recorder.disablePathRecording();
+            final String path = imgPath + imgTitle +"_ShollPlot"+ SHOLL_TYPES[shollChoice] + ".png";
+            IJ.saveAs(plot.getImagePlus(), "png", path);
         }
 
     }
