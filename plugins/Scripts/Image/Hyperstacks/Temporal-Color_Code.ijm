@@ -163,8 +163,11 @@ function makeLUTsArray() {
 		+ "		}\n"
 		+ "	}\n"
 		+ "}\n"
-		+ "// ImageJ's eval('script', script) erroneously always returns null\n"
-		+ "System.setProperty('result', result.join('\\n'));\n");
+		+ "// ImageJ < 1.47n always returned null from eval('script', script)\n"
+		+ "// To work around this, we set a special system property. Hacky, but works.\n"
+		+ "System.setProperty('result', result.join('\\n'));\n"
+		+ "// ImageJ >= 1.47n *does* return the value of the last evaluated statement\n"
+		+ "null;\n");
 	return split(call("java.lang.System.getProperty", "result"), "\n");
 }
 
