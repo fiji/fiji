@@ -176,27 +176,30 @@ fi
 PATH="$PATH:$(get_java_home)/bin:$(get_java_home)/../bin"
 export PATH
 
+# Thanks, MacOSX (or for that matter, BSD), and Windows, for easy, standard
+# ways to get the mtime of a file.
+
+get_mtime () {
+	stat -c %Y "$1"
+}
+
 # JAVA_HOME needs to be a DOS path for Windows from here on
 case "$UNAME_S" in
 MINGW*)
 	export JAVA_HOME="$(cd "$JAVA_HOME" && pwd -W)"
+	get_mtime () {
+		date -r "$1" +%s
+	}
 	;;
 CYGWIN*)
 	export JAVA_HOME="$(cygpath -d "$JAVA_HOME")"
 	;;
+Darwin*)
+	get_mtime () {
+		stat -f %m "$1"
+	}
+	;;
 esac
-
-# Thanks, MacOSX (or for that matter, BSD)
-
-get_mtime () {
-        stat -c %Y "$1"
-}
-if test Darwin = "$(uname -s 2> /dev/null)"
-then
-        get_mtime () {
-                stat -f %m "$1"
-        }
-fi
 
 # Figure out whether $2 (the destination) is newer than $1 (the source).
 # If $2 is a SNAPSHOT .jar, must not be older than a day, either.
