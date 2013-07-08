@@ -360,7 +360,7 @@ public class ClusterUI implements ClusterStateListener, ArchipelagoUI
         public void actionPerformed(ActionEvent ae) {
             if (ae.getActionCommand().equals("load"))
             {
-                final OpenDialog od = new OpenDialog("Select a .cluster file to load", null);
+                final OpenDialog od = new OpenDialog("Select a .arc file to load", null);
                 final String dirName = od.getDirectory();
                 final String fileName = od.getFileName();
                 if (fileName != null)
@@ -370,7 +370,7 @@ public class ClusterUI implements ClusterStateListener, ArchipelagoUI
             }
             else if (ae.getActionCommand().equals("save"))
             {
-                final OpenDialog od = new OpenDialog("Select a .cluster file to save", null);
+                final OpenDialog od = new OpenDialog("Select a .arc file to save", null);
                 final String dirName = od.getDirectory();
                 final String fileName = od.getFileName();
                 if (fileName != null)

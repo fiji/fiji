@@ -42,6 +42,7 @@ public class HandleExtraFileTypes extends ImagePlus implements PlugIn {
 
 	/** Called from io/Opener.java. */
 	public void run(String path) {
+
 		if (path.equals("")) return;
 		File theFile = new File(path);
 		String fileName = theFile.getName();
@@ -376,7 +377,7 @@ public class HandleExtraFileTypes extends ImagePlus implements PlugIn {
 		
         
         //Larry Lindsey: open Archipelago cluster configuration file        
-        if (name.endsWith(".cluster"))
+        if (name.endsWith(".arc"))
         {
             return tryPlugIn("edu.utexas.clm.archipelago.Fiji_Archipelago", path);
         }
