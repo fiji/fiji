@@ -1,7 +1,6 @@
 package fiji.plugin.trackmate.tracking;
 
 import fiji.plugin.trackmate.Logger;
-import fiji.plugin.trackmate.SpotCollection;
 import fiji.plugin.trackmate.tracking.hungarian.AssignmentAlgorithm;
 import fiji.plugin.trackmate.tracking.hungarian.MunkresKuhnAlgorithm;
 
@@ -27,15 +26,15 @@ public class FastLAPTracker extends LAPTracker {
 			"Solving the LAP relies on the Munkres-Kuhn solver, <br> " +
 			"that solves an assignment problem in O(n^3) instead of O(n^4)." +
 			" </html>";
-	
-	public FastLAPTracker(SpotCollection spots, Logger logger) {
-		super(spots, logger);
+
+	public FastLAPTracker(final Logger logger) {
+		super(logger);
 	}
-	
-	public FastLAPTracker(SpotCollection spots) {
-		this(spots, Logger.VOID_LOGGER);
+
+	public FastLAPTracker() {
+		this(Logger.VOID_LOGGER);
 	}
-	
+
 	@Override
 	protected AssignmentAlgorithm createAssignmentProblemSolver() {
 		return new MunkresKuhnAlgorithm();
@@ -45,7 +44,7 @@ public class FastLAPTracker extends LAPTracker {
 	public String toString() {
 		return NAME;
 	}
-	
+
 	@Override
 	public String getKey() {
 		return TRACKER_KEY;

@@ -48,8 +48,8 @@ public class NearestNeighborTracker extends MultiThreadedBenchmarkAlgorithm	impl
 				"merging or splitting, and gaps will not be closed. Also, the end results are non-" +
 				"deterministic." +
 				" </html>";
-	
-	protected final SpotCollection spots;
+
+	protected SpotCollection spots;
 	protected final Logger logger;
 	protected SimpleWeightedGraph<Spot,DefaultWeightedEdge> graph;
 	protected Map<String, Object> settings;
@@ -58,29 +58,29 @@ public class NearestNeighborTracker extends MultiThreadedBenchmarkAlgorithm	impl
 	 * CONSTRUCTOR
 	 */
 
-	public NearestNeighborTracker(final SpotCollection spots, final Logger logger) {
-		this.spots = spots;
+	public NearestNeighborTracker(final Logger logger) {
 		this.logger = logger;
 	}
 
-	public NearestNeighborTracker(final SpotCollection spots) {
-		this(spots, Logger.VOID_LOGGER);
+	public NearestNeighborTracker() {
+		this(Logger.VOID_LOGGER);
 	}
 
 
 	/*
 	 * PUBLIC METHODS
 	 */
-	
+
 	@Override
-	public void setSettings(Map<String, Object> settings) {
+	public void setTarget(final SpotCollection spots, final Map<String, Object> settings) {
+		this.spots = spots;
 		this.settings = settings;
 	}
 
 	@Override
 	public boolean checkInput() {
-		StringBuilder errrorHolder = new StringBuilder();;
-		boolean ok = checkInput(settings, errrorHolder);
+		final StringBuilder errrorHolder = new StringBuilder();;
+		final boolean ok = checkInput(settings, errrorHolder);
 		if (!ok) {
 			errorMessage = errrorHolder.toString();
 		}
@@ -89,66 +89,67 @@ public class NearestNeighborTracker extends MultiThreadedBenchmarkAlgorithm	impl
 
 	@Override
 	public boolean process() {
-		long start = System.currentTimeMillis();
+		final long start = System.currentTimeMillis();
 
 		reset();
-		
+
 		final double maxLinkingDistance = (Double) settings.get(KEY_LINKING_MAX_DISTANCE);
 		final double maxDistSquare = maxLinkingDistance  * maxLinkingDistance;
 
 		final TreeSet<Integer> frames = new TreeSet<Integer>(spots.keySet());
-		Thread[] threads = new Thread[numThreads];
+		final Thread[] threads = new Thread[numThreads];
 
 		// Prepare the thread array
 		final AtomicInteger ai = new AtomicInteger(frames.first());
 		final AtomicInteger progress = new AtomicInteger(0);
 		for (int ithread = 0; ithread < threads.length; ithread++) {
 
-			threads[ithread] = new Thread("Nearest neighbor tracker thread "+(1+ithread)+"/"+threads.length) {  
+			threads[ithread] = new Thread("Nearest neighbor tracker thread "+(1+ithread)+"/"+threads.length) {
 
+				@Override
 				public void run() {
 
 					for (int i = ai.getAndIncrement(); i < frames.last(); i = ai.getAndIncrement()) {
 
 						// Build frame pair
-						int sourceFrame = i;
-						int targetFrame = frames.higher(i);
-						
-						int nTargetSpots = spots.getNSpots(targetFrame, true);
+						final int sourceFrame = i;
+						final int targetFrame = frames.higher(i);
+
+						final int nTargetSpots = spots.getNSpots(targetFrame, true);
 						if (nTargetSpots < 1) {
 							continue;
 						}
-						
-						List<RealPoint> targetCoords = new ArrayList<RealPoint>(nTargetSpots);
-						List<FlagNode<Spot>> targetNodes = new ArrayList<FlagNode<Spot>>(nTargetSpots);
-						Iterator<Spot> targetIt = spots.iterator(targetFrame, true);
+
+						final List<RealPoint> targetCoords = new ArrayList<RealPoint>(nTargetSpots);
+						final List<FlagNode<Spot>> targetNodes = new ArrayList<FlagNode<Spot>>(nTargetSpots);
+						final Iterator<Spot> targetIt = spots.iterator(targetFrame, true);
 						while (targetIt.hasNext()) {
-							double[] coords = new double[3];
-							Spot spot = targetIt.next();
+							final double[] coords = new double[3];
+							final Spot spot = targetIt.next();
 							TMUtils.localize(spot, coords);
 							targetCoords.add(new RealPoint(coords));
 							targetNodes.add(new FlagNode<Spot>(spot));
 						}
-						
-						
-						KDTree<FlagNode<Spot>> tree = new KDTree<FlagNode<Spot>>(targetNodes, targetCoords);
-						NearestNeighborFlagSearchOnKDTree<Spot> search = new NearestNeighborFlagSearchOnKDTree<Spot>(tree);
-						
+
+
+						final KDTree<FlagNode<Spot>> tree = new KDTree<FlagNode<Spot>>(targetNodes, targetCoords);
+						final NearestNeighborFlagSearchOnKDTree<Spot> search = new NearestNeighborFlagSearchOnKDTree<Spot>(tree);
+
 						// For each spot in the source frame, find its nearest neighbor in the target frame
-						Iterator<Spot> sourceIt = spots.iterator(sourceFrame, true);
+						final Iterator<Spot> sourceIt = spots.iterator(sourceFrame, true);
 						while (sourceIt.hasNext()) {
-							Spot source = sourceIt.next();
-							double[] coords = new double[3];
+							final Spot source = sourceIt.next();
+							final double[] coords = new double[3];
 							TMUtils.localize(source, coords);
-							RealPoint sourceCoords = new RealPoint(coords);
+							final RealPoint sourceCoords = new RealPoint(coords);
 							search.search(sourceCoords);
-							
-							double squareDist = search.getSquareDistance();
-							FlagNode<Spot> targetNode = search.getSampler().get();
-							
+
+							final double squareDist = search.getSquareDistance();
+							final FlagNode<Spot> targetNode = search.getSampler().get();
+
 							if (squareDist > maxDistSquare) {
 								// The closest we could find is too far. We skip this source spot and do not create a link
-								continue;								
+								continue;
 							}
 
 							// Everything is ok. This mode is free and below max dist. We create a link
@@ -156,7 +157,7 @@ public class NearestNeighborTracker extends MultiThreadedBenchmarkAlgorithm	impl
 
 							targetNode.setVisited(true);
 							synchronized (graph) {
-								DefaultWeightedEdge edge = graph.addEdge(source, targetNode.getValue());
+								final DefaultWeightedEdge edge = graph.addEdge(source, targetNode.getValue());
 								graph.setEdgeWeight(edge, squareDist);
 							}
 
@@ -167,18 +168,18 @@ public class NearestNeighborTracker extends MultiThreadedBenchmarkAlgorithm	impl
 				}
 			};
 
-			
+
 		}
-		
+
 		logger.setStatus("Tracking...");
 		logger.setProgress(0);
-		
+
 		SimpleMultiThreading.startAndJoin(threads);
-		
+
 		logger.setProgress(1);
 		logger.setStatus("");
-		
-		long end = System.currentTimeMillis();
+
+		final long end = System.currentTimeMillis();
 		processingTime = end - start;
 		return true;
 	}
@@ -195,7 +196,7 @@ public class NearestNeighborTracker extends MultiThreadedBenchmarkAlgorithm	impl
 
 	public void reset() {
 		graph = new SimpleWeightedGraph<Spot, DefaultWeightedEdge>(DefaultWeightedEdge.class);
-		Iterator<Spot> it = spots.iterator(true);
+		final Iterator<Spot> it = spots.iterator(true);
 		while (it.hasNext()) {
 			graph.addVertex(it.next());
 		}
@@ -205,10 +206,10 @@ public class NearestNeighborTracker extends MultiThreadedBenchmarkAlgorithm	impl
 	public String getKey() {
 		return TRACKER_KEY;
 	}
-	
-	public static boolean checkInput(final Map<String, Object> settings, StringBuilder errrorHolder) {
+
+	public static boolean checkInput(final Map<String, Object> settings, final StringBuilder errrorHolder) {
 		boolean ok = checkParameter(settings, KEY_LINKING_MAX_DISTANCE, Double.class, errrorHolder);
-		List<String> mandatoryKeys = new ArrayList<String>();
+		final List<String> mandatoryKeys = new ArrayList<String>();
 		mandatoryKeys.add(KEY_LINKING_MAX_DISTANCE);
 		ok = ok & checkMapKeys(settings, mandatoryKeys, null, errrorHolder);
 		return ok;
