@@ -12,9 +12,10 @@ import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.chart.plot.XYPlot;
 import org.jfree.data.xy.DefaultXYDataset;
 
+import fiji.plugin.trackmate.Model;
+import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotCollection;
-import fiji.plugin.trackmate.Model;
 import fiji.plugin.trackmate.TrackMate;
 import fiji.plugin.trackmate.gui.TrackMateGUIController;
 import fiji.plugin.trackmate.util.ExportableChartPanel;
@@ -30,47 +31,52 @@ public class PlotNSpotsVsTimeAction extends AbstractTMAction {
 			"of time. Only the filtered spots are taken into account. " +
 			"</html>";
 
-	public PlotNSpotsVsTimeAction(TrackMate trackmate, TrackMateGUIController controller) {
+	public PlotNSpotsVsTimeAction(final TrackMate trackmate, final TrackMateGUIController controller) {
 		super(trackmate, controller);
 		this.icon = ICON;
 	}
-	
+
 	@Override
 	public void execute() {
 		// Collect data
 		final Model model = trackmate.getModel();
+		final Settings settings = trackmate.getSettings();
 		final SpotCollection spots = model.getSpots();
 		final int nFrames = spots.keySet().size();
 		final double[][] data = new double[2][nFrames];
 		int index = 0;
-		for (int frame : spots.keySet()) {
-			data[0][index] = spots.iterator(frame, false).next().getFeature(Spot.POSITION_T);
+		for (final int frame : spots.keySet()) {
 			data[1][index] = spots.getNSpots(frame, true);
+			if (data[1][index] > 0) {
+				data[0][index] = spots.iterator(frame, false).next().getFeature(Spot.POSITION_T);
+			} else {
+				data[0][index] = frame * settings.dt;
+			}
 			index++;
 		}
-		
+
 		// Plot data
-		String xAxisLabel = "Time ("+trackmate.getModel().getTimeUnits()+")";
-		String yAxisLabel = "N spots";
-		String title = "Nspots vs Time for "+trackmate.getSettings().imp.getShortTitle();
-		DefaultXYDataset dataset = new DefaultXYDataset();
+		final String xAxisLabel = "Time ("+trackmate.getModel().getTimeUnits()+")";
+		final String yAxisLabel = "N spots";
+		final String title = "Nspots vs Time for "+trackmate.getSettings().imp.getShortTitle();
+		final DefaultXYDataset dataset = new DefaultXYDataset();
 		dataset.addSeries("Nspots", data);
-		
-		JFreeChart chart = ChartFactory.createXYLineChart(title, xAxisLabel, yAxisLabel, dataset, PlotOrientation.VERTICAL, true, true, false);
+
+		final JFreeChart chart = ChartFactory.createXYLineChart(title, xAxisLabel, yAxisLabel, dataset, PlotOrientation.VERTICAL, true, true, false);
 		chart.getTitle().setFont(FONT);
 		chart.getLegend().setItemFont(SMALL_FONT);
 
 		// The plot
-		XYPlot plot = chart.getXYPlot();
+		final XYPlot plot = chart.getXYPlot();
 //		plot.setRenderer(0, pointRenderer);
 		plot.getRangeAxis().setLabelFont(FONT);
 		plot.getRangeAxis().setTickLabelFont(SMALL_FONT);
 		plot.getDomainAxis().setLabelFont(FONT);
 		plot.getDomainAxis().setTickLabelFont(SMALL_FONT);
-		
-		ExportableChartPanel panel = new ExportableChartPanel(chart);
-		
-		JFrame frame = new JFrame(title);
+
+		final ExportableChartPanel panel = new ExportableChartPanel(chart);
+
+		final JFrame frame = new JFrame(title);
 		frame.setSize(500, 270);
 		frame.getContentPane().add(panel);
 		frame.setVisible(true);
@@ -80,7 +86,7 @@ public class PlotNSpotsVsTimeAction extends AbstractTMAction {
 	public String getInfoText() {
 		return INFO_TEXT;
 	}
-	
+
 	@Override
 	public String toString() {
 		return NAME;
