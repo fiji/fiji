@@ -338,6 +338,14 @@ do
 	*=*)
 		OPTIONS="$OPTIONS -D$1"
 		;;
+	--)
+		shift
+		break
+		;;
+	-*)
+		echo "Invalid option: $1" >&2
+		exit 1
+		;;
 	*)
 		break
 		;;
