@@ -4,14 +4,17 @@ import java.awt.Component;
 
 import fiji.plugin.trackmate.TrackMate;
 import fiji.plugin.trackmate.gui.GrapherPanel;
+import fiji.plugin.trackmate.gui.TrackMateGUIController;
 
 public class GrapherDescriptor implements WizardPanelDescriptor  {
 
 	private static final String KEY = "GraphFeatures";
 	private final GrapherPanel panel;
+	private final TrackMateGUIController controller;
 
-	public GrapherDescriptor(TrackMate trackmate) {
+	public GrapherDescriptor(final TrackMate trackmate, final TrackMateGUIController controller) {
 		this.panel = new GrapherPanel(trackmate);
+		this.controller = controller;
 	}
 
 	@Override
@@ -25,7 +28,9 @@ public class GrapherDescriptor implements WizardPanelDescriptor  {
 	}
 
 	@Override
-	public void displayingPanel() { }
+	public void displayingPanel() {
+		controller.getGUI().setNextButtonEnabled(true);
+	}
 
 	@Override
 	public void aboutToHidePanel() { }

@@ -2,6 +2,7 @@ package fiji.plugin.trackmate.gui.descriptors;
 
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.TrackMate;
+import fiji.plugin.trackmate.gui.TrackMateGUIController;
 import fiji.plugin.trackmate.gui.panels.ConfigureViewsPanel;
 import fiji.plugin.trackmate.visualization.FeatureColorGenerator;
 import fiji.plugin.trackmate.visualization.PerEdgeFeatureColorGenerator;
@@ -10,9 +11,13 @@ import fiji.plugin.trackmate.visualization.PerTrackFeatureColorGenerator;
 public class ConfigureViewsDescriptor implements WizardPanelDescriptor {
 
 	private static final String KEY = "ConfigureViews";
-	private ConfigureViewsPanel panel;
+	private final ConfigureViewsPanel panel;
+	private final TrackMateGUIController controller;
 
-	public ConfigureViewsDescriptor(TrackMate trackmate, FeatureColorGenerator<Spot> spotColorGenerator, PerEdgeFeatureColorGenerator edgeColorGenerator, PerTrackFeatureColorGenerator trackColorGenerator) {
+	public ConfigureViewsDescriptor(final TrackMate trackmate, final FeatureColorGenerator<Spot> spotColorGenerator,
+			final PerEdgeFeatureColorGenerator edgeColorGenerator, final PerTrackFeatureColorGenerator trackColorGenerator,
+			final TrackMateGUIController controller) {
+		this.controller = controller;
 		this.panel = new ConfigureViewsPanel(trackmate.getModel());
 		panel.setSpotColorGenerator(spotColorGenerator);
 		panel.setEdgeColorGenerator(edgeColorGenerator);
@@ -28,10 +33,11 @@ public class ConfigureViewsDescriptor implements WizardPanelDescriptor {
 	@Override
 	public void aboutToDisplayPanel() {
 		panel.refreshGUI();
+		controller.getGUI().setNextButtonEnabled(true);
 	}
 
 	@Override
-	public void displayingPanel() { 
+	public void displayingPanel() {
 		panel.refreshColorFeatures();
 	}
 

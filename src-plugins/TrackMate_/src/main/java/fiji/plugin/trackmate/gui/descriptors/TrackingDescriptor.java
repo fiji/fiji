@@ -14,14 +14,14 @@ public class TrackingDescriptor implements WizardPanelDescriptor {
 	private final LogPanel logPanel;
 	private final TrackMate trackmate;
 	private final TrackMateGUIController controller;
-	
-	public TrackingDescriptor(TrackMateGUIController controller) {
+
+	public TrackingDescriptor(final TrackMateGUIController controller) {
 		this.controller = controller;
 		this.trackmate = controller.getPlugin();
 		this.logPanel = controller.getGUI().getLogPanel();
 	}
-	
-	
+
+
 	@Override
 	public LogPanel getComponent() {
 		return logPanel;
@@ -30,21 +30,22 @@ public class TrackingDescriptor implements WizardPanelDescriptor {
 
 	@Override
 	public void aboutToDisplayPanel() {	}
-		
+
 	@Override
 	public void displayingPanel() {
 		final Logger logger = trackmate.getModel().getLogger();
-		TrackerProvider trackerProvider = controller.getTrackerProvider();
+		final TrackerProvider trackerProvider = controller.getTrackerProvider();
 		logger.log("Starting tracking using " + trackmate.getSettings().tracker +"\n", Logger.BLUE_COLOR);
 		logger.log("with settings:\n");
 		logger.log(trackerProvider.toString(trackmate.getSettings().trackerSettings));
-		
-		new Thread("TrackMate tracking thread") {					
+		controller.disableButtonsAndStoreState();
+
+		new Thread("TrackMate tracking thread") {
+			@Override
 			public void run() {
-				controller.disableButtonsAndStoreState();
-				long start = System.currentTimeMillis();
+				final long start = System.currentTimeMillis();
 				trackmate.execTracking();
-				long end = System.currentTimeMillis();
+				final long end = System.currentTimeMillis();
 				logger.log("Found "	 + trackmate.getModel().getTrackModel().nTracks(false) + " tracks.\n");
 				logger.log(String.format("Tracking done in %.1f s.\n", (end-start)/1e3f), Logger.BLUE_COLOR);
 				SwingUtilities.invokeLater(new Runnable() {
@@ -54,13 +55,13 @@ public class TrackingDescriptor implements WizardPanelDescriptor {
 					}
 				});
 			}
-			
+
 		}.start();
 	}
 
 	@Override
-	public void aboutToHidePanel() { 
-		Thread trackFeatureCalculationThread = new Thread("TrackMate track feature calculation thread") {
+	public void aboutToHidePanel() {
+		final Thread trackFeatureCalculationThread = new Thread("TrackMate track feature calculation thread") {
 			@Override
 			public void run() {
 				trackmate.computeTrackFeatures(true);
@@ -69,12 +70,12 @@ public class TrackingDescriptor implements WizardPanelDescriptor {
 		trackFeatureCalculationThread.start();
 		try {
 			trackFeatureCalculationThread.join();
-		} catch (InterruptedException e) {
+		} catch (final InterruptedException e) {
 			e.printStackTrace();
 		}
-		
+
 	}
-	
+
 	@Override
 	public String getKey() {
 		return KEY;

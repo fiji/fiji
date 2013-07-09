@@ -5,6 +5,7 @@ import java.util.Map;
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.TrackMate;
 import fiji.plugin.trackmate.gui.ConfigurationPanel;
+import fiji.plugin.trackmate.gui.TrackMateGUIController;
 import fiji.plugin.trackmate.providers.TrackerProvider;
 
 public class TrackerConfigurationDescriptor implements WizardPanelDescriptor {
@@ -13,13 +14,15 @@ public class TrackerConfigurationDescriptor implements WizardPanelDescriptor {
 	private final TrackMate trackmate;
 	private ConfigurationPanel configPanel;
 	private final TrackerProvider trackerProvider;
-	
-	public TrackerConfigurationDescriptor(TrackerProvider trackerProvider, TrackMate trackmate) {
+	private final TrackMateGUIController controller;
+
+	public TrackerConfigurationDescriptor(final TrackerProvider trackerProvider, final TrackMate trackmate, final TrackMateGUIController controller) {
 		this.trackmate = trackmate;
 		this.trackerProvider = trackerProvider;
+		this.controller = controller;
 	}
-	
-	
+
+
 	/*
 	 * METHODS
 	 */
@@ -37,7 +40,7 @@ public class TrackerConfigurationDescriptor implements WizardPanelDescriptor {
 		}
 		configPanel.setSettings(settings);
 	}
-	
+
 	@Override
 	public ConfigurationPanel getComponent() {
 		return configPanel;
@@ -49,25 +52,26 @@ public class TrackerConfigurationDescriptor implements WizardPanelDescriptor {
 	}
 
 	@Override
-	public void displayingPanel() {	
+	public void displayingPanel() {
 		if (null == configPanel) {
 			// happens after loading.
 			aboutToDisplayPanel();
 		}
+		controller.getGUI().setNextButtonEnabled(true);
 	}
 
 	@Override
 	public void aboutToHidePanel() {
 		Map<String, Object> settings = configPanel.getSettings();
-		boolean settingsOk = trackerProvider.checkSettingsValidity(settings);
+		final boolean settingsOk = trackerProvider.checkSettingsValidity(settings);
 		if (!settingsOk) {
-			Logger logger = trackmate.getModel().getLogger();
+			final Logger logger = trackmate.getModel().getLogger();
 			logger.error("Config panel returned bad settings map:\n"+trackerProvider.getErrorMessage()+"Using defaults settings.\n");
 			settings = trackerProvider.getDefaultSettings();
 		}
 		trackmate.getSettings().trackerSettings = settings;
 	}
-	
+
 	@Override
 	public String getKey() {
 		return KEY;
