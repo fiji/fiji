@@ -256,7 +256,7 @@ maven_helper () {
 		touch "$MAVEN_HELPER"
 	}
 	test $# = 0 ||
-	sh "$MAVEN_HELPER" "$@"
+	sh -$- "$MAVEN_HELPER" "$@"
 }
 
 maven_update () {
@@ -308,7 +308,7 @@ EOF
 	*)
 		uptodate "$ARGV0" "$CWD/$LAUNCHER" ||
 		(cd $CWD &&
-		 sh bin/download-launchers.sh release $platform)
+		 sh -$- bin/download-launchers.sh release $platform)
 		;;
 	esac
 	test -z "$FIJILAUNCHER" ||
@@ -357,7 +357,7 @@ done
 
 if test $# = 0
 then
-	eval sh "$CWD/bin/ImageJ.sh" --mini-maven "$OPTIONS" install
+	eval sh -$- "$CWD/bin/ImageJ.sh" --mini-maven "$OPTIONS" install
 	update_launcher
 else
 	for name in "$@"
@@ -368,7 +368,7 @@ else
 			continue
 			;;
 		clean)
-			eval sh \"$CWD/bin/ImageJ.sh\" --mini-maven \
+			eval sh -$- \"$CWD/bin/ImageJ.sh\" --mini-maven \
                                 "$OPTIONS" clean
 			continue
 			;;
@@ -378,11 +378,11 @@ else
 		artifactId="${artifactId%%-[0-9]*}"
 		case "$name" in
 		*-rebuild)
-			eval sh "$CWD/bin/ImageJ.sh" --mini-maven \
+			eval sh -$- "$CWD/bin/ImageJ.sh" --mini-maven \
 				"$OPTIONS" -DartifactId="$artifactId" clean
 			;;
 		esac
-		eval sh "$CWD/bin/ImageJ.sh" --mini-maven \
+		eval sh -$- "$CWD/bin/ImageJ.sh" --mini-maven \
 			"$OPTIONS" -DartifactId="$artifactId" install
 	done
 fi
