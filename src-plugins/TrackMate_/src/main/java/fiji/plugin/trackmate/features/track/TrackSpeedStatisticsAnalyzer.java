@@ -17,8 +17,8 @@ import org.jgrapht.graph.DefaultWeightedEdge;
 
 import fiji.plugin.trackmate.Dimension;
 import fiji.plugin.trackmate.FeatureModel;
-import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.Model;
+import fiji.plugin.trackmate.Spot;
 
 public class TrackSpeedStatisticsAnalyzer implements TrackAnalyzer, MultiThreaded, Benchmark {
 
@@ -35,10 +35,10 @@ public class TrackSpeedStatisticsAnalyzer implements TrackAnalyzer, MultiThreade
 	//	public static final String 		TRACK_SPEED_KURTOSIS = "TRACK_SPEED_KURTOSIS";
 	//	public static final String 		TRACK_SPEED_SKEWNESS = "TRACK_SPEED_SKEWNESS";
 
-	private static final List<String> FEATURES = new ArrayList<String>(5);
-	private static final Map<String, String> FEATURE_NAMES = new HashMap<String, String>(5);
-	private static final Map<String, String> FEATURE_SHORT_NAMES = new HashMap<String, String>(5);
-	private static final Map<String, Dimension> FEATURE_DIMENSIONS = new HashMap<String, Dimension>(5);
+	public static final List<String> FEATURES = new ArrayList<String>(5);
+	public static final Map<String, String> FEATURE_NAMES = new HashMap<String, String>(5);
+	public static final Map<String, String> FEATURE_SHORT_NAMES = new HashMap<String, String>(5);
+	public static final Map<String, Dimension> FEATURE_DIMENSIONS = new HashMap<String, Dimension>(5);
 
 	static {
 		FEATURES.add(TRACK_MEAN_SPEED);
@@ -86,23 +86,23 @@ public class TrackSpeedStatisticsAnalyzer implements TrackAnalyzer, MultiThreade
 	/*
 	 * METHODS
 	 */
-	
+
 	@Override
 	public boolean isLocal() {
 		return true;
 	}
-	
+
 	@Override
 	public void process(final Collection<Integer> trackIDs) {
-		
+
 		if (trackIDs.isEmpty()) {
 			return;
 		}
-		
+
 		final ArrayBlockingQueue<Integer> queue = new ArrayBlockingQueue<Integer>(trackIDs.size(), false, trackIDs);
 		final FeatureModel fm = model.getFeatureModel();
 
-		Thread[] threads = SimpleMultiThreading.newThreads(numThreads);
+		final Thread[] threads = SimpleMultiThreading.newThreads(numThreads);
 		for (int i = 0; i < threads.length; i++) {
 			threads[i] = new Thread("TrackLocationAnalyzer thread " + i) {
 				@Override
@@ -110,7 +110,7 @@ public class TrackSpeedStatisticsAnalyzer implements TrackAnalyzer, MultiThreade
 					Integer trackID;
 					while ((trackID = queue.poll()) != null) {
 
-						Set<DefaultWeightedEdge> track = model.getTrackModel().trackEdges(trackID);
+						final Set<DefaultWeightedEdge> track = model.getTrackModel().trackEdges(trackID);
 
 						double sum = 0;
 						double mean = 0;
@@ -127,13 +127,13 @@ public class TrackSpeedStatisticsAnalyzer implements TrackAnalyzer, MultiThreade
 						final double[] velocities = new double[track.size()];
 						int n = 0;
 
-						for(DefaultWeightedEdge edge : track) {
-							Spot source = model.getTrackModel().getEdgeSource(edge);
-							Spot target = model.getTrackModel().getEdgeTarget(edge);
+						for(final DefaultWeightedEdge edge : track) {
+							final Spot source = model.getTrackModel().getEdgeSource(edge);
+							final Spot target = model.getTrackModel().getEdgeTarget(edge);
 
 							// Edge velocity
-							Double d2 = source.squareDistanceTo(target);
-							Double dt = source.diffTo(target, Spot.POSITION_T);
+							final Double d2 = source.squareDistanceTo(target);
+							final Double dt = source.diffTo(target, Spot.POSITION_T);
 							if (d2 == null || dt == null)
 								continue;
 							val = Math.sqrt(d2) / Math.abs(dt);
@@ -157,11 +157,11 @@ public class TrackSpeedStatisticsAnalyzer implements TrackAnalyzer, MultiThreade
 						}
 
 						Util.quicksort(velocities, 0, track.size()-1);
-						double median = velocities[track.size()/2];
-						double min = velocities[0];
-						double max = velocities[track.size()-1];
+						final double median = velocities[track.size()/2];
+						final double min = velocities[0];
+						final double max = velocities[track.size()-1];
 						mean = sum / track.size();
-						double variance = M2 / (track.size()-1);
+						final double variance = M2 / (track.size()-1);
 						//			double kurtosis = (n*M4) / (M2*M2) - 3;
 						//			double skewness =  Math.sqrt(n) * M3 / Math.pow(M2, 3/2.0) ;
 
@@ -180,9 +180,9 @@ public class TrackSpeedStatisticsAnalyzer implements TrackAnalyzer, MultiThreade
 			};
 		}
 
-		long start = System.currentTimeMillis();
+		final long start = System.currentTimeMillis();
 		SimpleMultiThreading.startAndJoin(threads);
-		long end = System.currentTimeMillis();
+		final long end = System.currentTimeMillis();
 		processingTime = end - start;
 	}
 
@@ -193,11 +193,11 @@ public class TrackSpeedStatisticsAnalyzer implements TrackAnalyzer, MultiThreade
 
 	@Override
 	public void setNumThreads() {
-		this.numThreads = Runtime.getRuntime().availableProcessors();  
+		this.numThreads = Runtime.getRuntime().availableProcessors();
 	}
 
 	@Override
-	public void setNumThreads(int numThreads) {
+	public void setNumThreads(final int numThreads) {
 		this.numThreads = numThreads;
 
 	}
@@ -206,7 +206,7 @@ public class TrackSpeedStatisticsAnalyzer implements TrackAnalyzer, MultiThreade
 	public long getProcessingTime() {
 		return processingTime;
 	};
-	
+
 	@Override
 	public String getKey() {
 		return KEY;

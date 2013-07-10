@@ -10,7 +10,7 @@ import fiji.plugin.trackmate.visualization.PerTrackFeatureColorGenerator;
 
 public class ConfigureViewsDescriptor implements WizardPanelDescriptor {
 
-	private static final String KEY = "ConfigureViews";
+	public static final String KEY = "ConfigureViews";
 	private final ConfigureViewsPanel panel;
 	private final TrackMateGUIController controller;
 

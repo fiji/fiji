@@ -129,17 +129,17 @@ public class TmXmlReader {
 
 	protected Document document = null;
 	protected final File file;
-	/** A map of all spots loaded. We need this for performance, since we need to recreate 
-	 * both the filtered spot collection and the tracks graph from the same spot objects 
+	/** A map of all spots loaded. We need this for performance, since we need to recreate
+	 * both the filtered spot collection and the tracks graph from the same spot objects
 	 * that the main spot collection.. In the file, they are referenced by their {@link Spot#ID()},
 	 * and parsing them all to retrieve the one with the right ID is a drag.
-	 * We made this cache a {@link ConcurrentHashMap} because we hope to load large data in a 
+	 * We made this cache a {@link ConcurrentHashMap} because we hope to load large data in a
 	 * multi-threaded way.
 	 */
 	protected ConcurrentHashMap<Integer, Spot> cache;
 	protected StringBuilderLogger logger = new StringBuilderLogger();
 	protected final Element root;
-	/** If <code>false</code>, an error occured during reading. 
+	/** If <code>false</code>, an error occured during reading.
 	 * @see #getErrorMessage(). */
 	protected boolean ok = true;
 
@@ -148,20 +148,20 @@ public class TmXmlReader {
 	 */
 
 	/**
-	 * Initialize this reader to read the file given in argument. 
+	 * Initialize this reader to read the file given in argument.
 	 */
-	public TmXmlReader(File file) {
+	public TmXmlReader(final File file) {
 		this.file = file;
-		SAXBuilder sb = new SAXBuilder();
+		final SAXBuilder sb = new SAXBuilder();
 		Element r = null;
 		try {
 			document = sb.build(file);
 			r  = document.getRootElement();
-		} catch (JDOMException e) {
+		} catch (final JDOMException e) {
 			ok = false;
 			logger.error("Problem parsing "+file.getName()+", it is not a valid TrackMate XML file.\nError message is:\n"
 					+e.getLocalizedMessage()+'\n');
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			logger.error("Problem reading "+file.getName()
 					+".\nError message is:\n"+e.getLocalizedMessage()+'\n');
 			ok = false;
@@ -178,57 +178,57 @@ public class TmXmlReader {
 	 * text was not saved.
 	 */
 	public String getLog() {
-		Element logElement = root.getChild(LOG_ELEMENT_KEY);
+		final Element logElement = root.getChild(LOG_ELEMENT_KEY);
 		if (null != logElement) {
 			return logElement.getTextTrim();
 		} else {
 			return "";
 		}
 	}
-	
+
 	/**
-	 * Returns the GUI state saved in the file. 
+	 * Returns the GUI state saved in the file.
 	 * @return the saved GUI state, as a string.
 	 */
 	public String getGUIState() {
-		Element guiel = root.getChild(GUI_STATE_ELEMENT_KEY);
+		final Element guiel = root.getChild(GUI_STATE_ELEMENT_KEY);
 		if (null != guiel) {
-			String guiState = guiel.getAttributeValue(GUI_STATE_ATTRIBUTE);
+			final String guiState = guiel.getAttributeValue(GUI_STATE_ATTRIBUTE);
 			if (null == guiState) {
 				logger.error("Could not find GUI state attribute.\n");
 				ok = false;
 			}
 			return guiState;
-			
+
 		} else {
 			logger.error("Could not find GUI state element.\n");
 			ok = false;
 			return null;
 		}
 	}
-	
+
 	/**
 	 * Returns the collection of views that were saved in this file. The views returned
 	 * are not rendered yet.
-	 * @param provider  the {@link ViewProvider} to instantiate the view. Each saved 
+	 * @param provider  the {@link ViewProvider} to instantiate the view. Each saved
 	 * view must be known by the specified provider.
 	 * @return the collection of views.
 	 * @see TrackMateModelView#render()
 	 */
-	public Collection<TrackMateModelView> getViews(ViewProvider provider) {
-		Element guiel = root.getChild(GUI_STATE_ELEMENT_KEY);
+	public Collection<TrackMateModelView> getViews(final ViewProvider provider) {
+		final Element guiel = root.getChild(GUI_STATE_ELEMENT_KEY);
 		if (null != guiel) {
-			
-			List<Element> children = guiel.getChildren(GUI_VIEW_ELEMENT_KEY);
-			Collection<TrackMateModelView> views = new ArrayList<TrackMateModelView>(children.size());
 
-			for (Element child : children) {
-				String viewKey = child.getAttributeValue(GUI_VIEW_ATTRIBUTE);
+			final List<Element> children = guiel.getChildren(GUI_VIEW_ELEMENT_KEY);
+			final Collection<TrackMateModelView> views = new ArrayList<TrackMateModelView>(children.size());
+
+			for (final Element child : children) {
+				final String viewKey = child.getAttributeValue(GUI_VIEW_ATTRIBUTE);
 				if (null == viewKey) {
 					logger.error("Could not find view key attribute for element " + child +".\n");
 					ok = false;
 				} else {
-					TrackMateModelView view = provider.getView(viewKey);
+					final TrackMateModelView view = provider.getView(viewKey);
 					if (null == view) {
 						logger.error("Unknown view for key " + viewKey +".\n");
 						ok = false;
@@ -238,7 +238,7 @@ public class TmXmlReader {
 				}
 			}
 			return views;
-			
+
 		} else {
 			logger.error("Could not find GUI state element.\n");
 			ok = false;
@@ -248,66 +248,66 @@ public class TmXmlReader {
 
 
 	/**
-	 * Returns the model saved in the file, or <code>null</code> if a saved model 
-	 * cannot be found in the xml file. 
+	 * Returns the model saved in the file, or <code>null</code> if a saved model
+	 * cannot be found in the xml file.
 	 * @return a new {@link Model}.
 	 */
 	public Model getModel() {
-		Element modelElement = root.getChild(MODEL_ELEMENT_KEY);
+		final Element modelElement = root.getChild(MODEL_ELEMENT_KEY);
 		if (null == modelElement) {
 			return null;
-		} 
-		Model model = new Model();
+		}
+		final Model model = new Model();
 
 		// Physical units
-		String spaceUnits = modelElement.getAttributeValue(SPATIAL_UNITS_ATTRIBUTE_NAME);
-		String timeUnits  = modelElement.getAttributeValue(TIME_UNITS_ATTRIBUTE_NAME);
+		final String spaceUnits = modelElement.getAttributeValue(SPATIAL_UNITS_ATTRIBUTE_NAME);
+		final String timeUnits  = modelElement.getAttributeValue(TIME_UNITS_ATTRIBUTE_NAME);
 		model.setPhysicalUnits(spaceUnits, timeUnits);
 
 		// Feature declarations
 		readFeatureDeclarations(modelElement, model);
 
 		// Spots
-		SpotCollection spots = getSpots(modelElement);
+		final SpotCollection spots = getSpots(modelElement);
 		model.setSpots(spots, false);
 
 		// Tracks
 		if (!readTracks(modelElement, model)) {
 			ok = false;
 		}
-		
-		// Track features
-		
-		try {
-			Map<Integer, Map<String, Double>> savedFeatureMap = readTrackFeatures(modelElement);
-			for (Integer savedKey : savedFeatureMap.keySet()) {
 
-				Map<String, Double> savedFeatures = savedFeatureMap.get(savedKey);
-				for (String feature : savedFeatures.keySet()) {
+		// Track features
+
+		try {
+			final Map<Integer, Map<String, Double>> savedFeatureMap = readTrackFeatures(modelElement);
+			for (final Integer savedKey : savedFeatureMap.keySet()) {
+
+				final Map<String, Double> savedFeatures = savedFeatureMap.get(savedKey);
+				for (final String feature : savedFeatures.keySet()) {
 					model.getFeatureModel().putTrackFeature(savedKey, feature, savedFeatures.get(feature));
 				}
 			}
-		} catch (RuntimeException re) {
+		} catch (final RuntimeException re) {
 			logger.error("Problem populating track features:\n");
 			logger.error(re.getMessage());
 			ok = false;
 		}
-		
+
 		// That's it
 		return model;
 	}
 
 
 	/**
-	 * Reads the settings element of the file, and sets the fields of the specified 
+	 * Reads the settings element of the file, and sets the fields of the specified
 	 * {@link Settings} object according to the xml file content.
 	 * The provided {@link Settings} object is left untouched if the settings element
 	 * cannot be found in the file.
 	 * @param settings the {@link Settings} object to flesh out.
 	 * @param detectorProvider the detector provider, required to configure the settings with
 	 * a correct {@link SpotDetectorFactory}. If <code>null</code>, will skip reading detector
-	 * parameters. 
-	 * @param trackerProvider the tracker provider, required to configure the settings with a 
+	 * parameters.
+	 * @param trackerProvider the tracker provider, required to configure the settings with a
 	 * correct {@link SpotTracker}. If <code>null</code>, will skip reading tracker parameters.
 	 * @param spotAnalyzerProvider the spot analyzer provider, required to instantiates the saved
 	 * {@link SpotAnalyzerFactory}s. If <code>null</code>, will skip reading spot analyzers.
@@ -316,14 +316,14 @@ public class TmXmlReader {
 	 * @param trackAnalyzerProvider the track analyzer provider, required to instantiates the saved
 	 * {@link TrackAnalyzer}s. If <code>null</code>, will skip reading track analyzers.
 	 */
-	public void readSettings(Settings settings, 
-			DetectorProvider detectorProvider, TrackerProvider trackerProvider, 
-			SpotAnalyzerProvider spotAnalyzerProvider, EdgeAnalyzerProvider edgeAnalyzerProvider, 
-			TrackAnalyzerProvider trackAnalyzerProvider) {
-		Element settingsElement = root.getChild(SETTINGS_ELEMENT_KEY);
+	public void readSettings(final Settings settings,
+			final DetectorProvider detectorProvider, final TrackerProvider trackerProvider,
+			final SpotAnalyzerProvider spotAnalyzerProvider, final EdgeAnalyzerProvider edgeAnalyzerProvider,
+			final TrackAnalyzerProvider trackAnalyzerProvider) {
+		final Element settingsElement = root.getChild(SETTINGS_ELEMENT_KEY);
 		if (null == settingsElement) {
 			return;
-		} 
+		}
 
 		// Base
 		getBaseSettings(settingsElement, settings);
@@ -342,15 +342,15 @@ public class TmXmlReader {
 		}
 
 		// Spot Filters
-		FeatureFilter initialFilter = getInitialFilter(settingsElement);
+		final FeatureFilter initialFilter = getInitialFilter(settingsElement);
 		if (null != initialFilter) {
 			settings.initialSpotFilterValue = initialFilter.value;
 		}
-		List<FeatureFilter> spotFilters = getSpotFeatureFilters(settingsElement);
+		final List<FeatureFilter> spotFilters = getSpotFeatureFilters(settingsElement);
 		settings.setSpotFilters(spotFilters);
 
 		// Track Filters
-		List<FeatureFilter> trackFilters = getTrackFeatureFilters(settingsElement);
+		final List<FeatureFilter> trackFilters = getTrackFeatureFilters(settingsElement);
 		settings.setTrackFilters(trackFilters);
 
 		// Features analyzers
@@ -373,10 +373,10 @@ public class TmXmlReader {
 	public String getErrorMessage() {
 		return logger.toString();
 	}
-	
+
 	/**
-	 * Returns <code>true</code> if the last reading method call happened 
-	 * without any warning or error, <code>false</code> otherwise. 
+	 * Returns <code>true</code> if the last reading method call happened
+	 * without any warning or error, <code>false</code> otherwise.
 	 * @return <code>true</code> if reading was ok.
 	 * @see #getErrorMessage()
 	 */
@@ -390,9 +390,9 @@ public class TmXmlReader {
 
 
 
-	private ImagePlus getImage(Element settingsElement)  {
-		Element imageInfoElement = settingsElement.getChild(IMAGE_ELEMENT_KEY);
-		String filename = imageInfoElement.getAttributeValue(IMAGE_FILENAME_ATTRIBUTE_NAME);
+	private ImagePlus getImage(final Element settingsElement)  {
+		final Element imageInfoElement = settingsElement.getChild(IMAGE_ELEMENT_KEY);
+		final String filename = imageInfoElement.getAttributeValue(IMAGE_FILENAME_ATTRIBUTE_NAME);
 		String folder 	= imageInfoElement.getAttributeValue(IMAGE_FOLDER_ATTRIBUTE_NAME);
 		if (null == filename || filename.isEmpty()) {
 			logger.error("Cannot find image file name in xml file.\n");
@@ -421,11 +421,11 @@ public class TmXmlReader {
 	/**
 	 * Returns a map of the saved track features, as they appear in the file
 	 */
-	private Map<Integer, Map<String,Double>> readTrackFeatures(Element modelElement) {
+	private Map<Integer, Map<String,Double>> readTrackFeatures(final Element modelElement) {
 
-		HashMap<Integer, Map<String, Double>> featureMap = new HashMap<Integer, Map<String, Double>>();
+		final HashMap<Integer, Map<String, Double>> featureMap = new HashMap<Integer, Map<String, Double>>();
 
-		Element allTracksElement = modelElement.getChild(TRACK_COLLECTION_ELEMENT_KEY);
+		final Element allTracksElement = modelElement.getChild(TRACK_COLLECTION_ELEMENT_KEY);
 		if (null == allTracksElement) {
 			logger.error("Cannot find the track collection in file.\n");
 			ok = false;
@@ -433,33 +433,33 @@ public class TmXmlReader {
 		}
 
 		// Load tracks
-		List<Element> trackElements = allTracksElement.getChildren(TRACK_ELEMENT_KEY);
-		for (Element trackElement : trackElements) {
+		final List<Element> trackElements = allTracksElement.getChildren(TRACK_ELEMENT_KEY);
+		for (final Element trackElement : trackElements) {
 
 			int trackID = -1;
 			try {
 				trackID = trackElement.getAttribute(TrackIndexAnalyzer.TRACK_ID).getIntValue();
-			} catch (DataConversionException e1) {
+			} catch (final DataConversionException e1) {
 				logger.error("Found a track with invalid trackID for " + trackElement + ". Skipping.\n");
 				ok = false;
 				continue;
 			}
 
-			HashMap<String, Double> trackMap = new HashMap<String, Double>();
+			final HashMap<String, Double> trackMap = new HashMap<String, Double>();
 
-			List<Attribute> attributes = trackElement.getAttributes();
-			for(Attribute attribute : attributes) {
+			final List<Attribute> attributes = trackElement.getAttributes();
+			for(final Attribute attribute : attributes) {
 
-				String attName = attribute.getName();
+				final String attName = attribute.getName();
 				if (attName.equals(TRACK_NAME_ATTRIBUTE_NAME)) { // Skip trackID attribute
 					continue;
 				}
-				
-				
+
+
 				Double attVal = Double.NaN;
 				try {
 					attVal = attribute.getDoubleValue();
-				} catch (DataConversionException e) {
+				} catch (final DataConversionException e) {
 					logger.error("Track "+trackID+": Cannot read the feature "+attName+" value. Skipping.\n");
 					ok = false;
 					continue;
@@ -481,14 +481,14 @@ public class TmXmlReader {
 	 * Return the initial filter value on quality stored in this file.
 	 * Return <code>null</code> if the initial threshold data cannot be found in the file.
 	 * @param settingsElement the settings {@link Element} to read from.
-	 * @return the initial filter, as a {@link FeatureFilter}. 
+	 * @return the initial filter, as a {@link FeatureFilter}.
 	 */
-	private FeatureFilter getInitialFilter(Element settingsElement)  {
-		Element itEl = settingsElement.getChild(INITIAL_SPOT_FILTER_ELEMENT_KEY);
-		String feature 	= itEl.getAttributeValue(FILTER_FEATURE_ATTRIBUTE_NAME);
-		Double value 	= readDoubleAttribute(itEl, FILTER_VALUE_ATTRIBUTE_NAME, logger);
-		boolean isAbove	= readBooleanAttribute(itEl, FILTER_ABOVE_ATTRIBUTE_NAME, logger);
-		FeatureFilter ft = new FeatureFilter(feature, value, isAbove);
+	private FeatureFilter getInitialFilter(final Element settingsElement)  {
+		final Element itEl = settingsElement.getChild(INITIAL_SPOT_FILTER_ELEMENT_KEY);
+		final String feature 	= itEl.getAttributeValue(FILTER_FEATURE_ATTRIBUTE_NAME);
+		final Double value 	= readDoubleAttribute(itEl, FILTER_VALUE_ATTRIBUTE_NAME, logger);
+		final boolean isAbove	= readBooleanAttribute(itEl, FILTER_ABOVE_ATTRIBUTE_NAME, logger);
+		final FeatureFilter ft = new FeatureFilter(feature, value, isAbove);
 		return ft;
 	}
 
@@ -498,15 +498,15 @@ public class TmXmlReader {
 	 * @param settingsElement the settings {@link Element} to read from.
 	 * @return a list of {@link FeatureFilter}s.
 	 */
-	private List<FeatureFilter> getSpotFeatureFilters(Element settingsElement) {
-		List<FeatureFilter> featureThresholds = new ArrayList<FeatureFilter>();
-		Element ftCollectionEl = settingsElement.getChild(SPOT_FILTER_COLLECTION_ELEMENT_KEY);
-		List<Element> ftEls = ftCollectionEl.getChildren(FILTER_ELEMENT_KEY);
-		for (Element ftEl : ftEls) {
-			String feature 	= ftEl.getAttributeValue(FILTER_FEATURE_ATTRIBUTE_NAME);
-			Double value 	= readDoubleAttribute(ftEl, FILTER_VALUE_ATTRIBUTE_NAME, logger);
-			boolean isAbove	= readBooleanAttribute(ftEl, FILTER_ABOVE_ATTRIBUTE_NAME, logger);
-			FeatureFilter ft = new FeatureFilter(feature, value, isAbove);
+	private List<FeatureFilter> getSpotFeatureFilters(final Element settingsElement) {
+		final List<FeatureFilter> featureThresholds = new ArrayList<FeatureFilter>();
+		final Element ftCollectionEl = settingsElement.getChild(SPOT_FILTER_COLLECTION_ELEMENT_KEY);
+		final List<Element> ftEls = ftCollectionEl.getChildren(FILTER_ELEMENT_KEY);
+		for (final Element ftEl : ftEls) {
+			final String feature 	= ftEl.getAttributeValue(FILTER_FEATURE_ATTRIBUTE_NAME);
+			final Double value 	= readDoubleAttribute(ftEl, FILTER_VALUE_ATTRIBUTE_NAME, logger);
+			final boolean isAbove	= readBooleanAttribute(ftEl, FILTER_ABOVE_ATTRIBUTE_NAME, logger);
+			final FeatureFilter ft = new FeatureFilter(feature, value, isAbove);
 			featureThresholds.add(ft);
 		}
 		return featureThresholds;
@@ -514,32 +514,32 @@ public class TmXmlReader {
 
 	/**
 	 * Returns the list of {@link FeatureFilter} for tracks stored in this file.
-	 * @param settingsElement the settings {@link Element} to read from. 
+	 * @param settingsElement the settings {@link Element} to read from.
 	 * @return a list of {@link FeatureFilter}s.
 	 */
-	private List<FeatureFilter> getTrackFeatureFilters(Element settingsElement) {
-		List<FeatureFilter> featureThresholds = new ArrayList<FeatureFilter>();
-		Element ftCollectionEl = settingsElement.getChild(TRACK_FILTER_COLLECTION_ELEMENT_KEY);
-		List<Element> ftEls = ftCollectionEl.getChildren(FILTER_ELEMENT_KEY);
-		for (Element ftEl : ftEls) {
-			String feature 	= ftEl.getAttributeValue(FILTER_FEATURE_ATTRIBUTE_NAME);
-			Double value 	= readDoubleAttribute(ftEl, FILTER_VALUE_ATTRIBUTE_NAME, logger);
-			boolean isAbove	= readBooleanAttribute(ftEl, FILTER_ABOVE_ATTRIBUTE_NAME, logger);
-			FeatureFilter ft = new FeatureFilter(feature, value, isAbove);
+	private List<FeatureFilter> getTrackFeatureFilters(final Element settingsElement) {
+		final List<FeatureFilter> featureThresholds = new ArrayList<FeatureFilter>();
+		final Element ftCollectionEl = settingsElement.getChild(TRACK_FILTER_COLLECTION_ELEMENT_KEY);
+		final List<Element> ftEls = ftCollectionEl.getChildren(FILTER_ELEMENT_KEY);
+		for (final Element ftEl : ftEls) {
+			final String feature 	= ftEl.getAttributeValue(FILTER_FEATURE_ATTRIBUTE_NAME);
+			final Double value 	= readDoubleAttribute(ftEl, FILTER_VALUE_ATTRIBUTE_NAME, logger);
+			final boolean isAbove	= readBooleanAttribute(ftEl, FILTER_ABOVE_ATTRIBUTE_NAME, logger);
+			final FeatureFilter ft = new FeatureFilter(feature, value, isAbove);
 			featureThresholds.add(ft);
 		}
 		return featureThresholds;
 	}
 
 	/**
-	 * Set the base settings of the provided {@link Settings} object, extracted from the specified 
+	 * Set the base settings of the provided {@link Settings} object, extracted from the specified
 	 * {@link Element}.
-	 * @param settingsElement the settings {@link Element} to read parameters from. 
+	 * @param settingsElement the settings {@link Element} to read parameters from.
 	 * @return  a new {@link Settings} object.
 	 */
-	private void getBaseSettings(Element settingsElement, Settings settings) {
+	private void getBaseSettings(final Element settingsElement, final Settings settings) {
 		// Basic settings
-		Element settingsEl = settingsElement.getChild(CROP_ELEMENT_KEY);
+		final Element settingsEl = settingsElement.getChild(CROP_ELEMENT_KEY);
 		if (null != settingsEl) {
 			settings.xstart = readIntAttribute(settingsEl, CROP_XSTART_ATTRIBUTE_NAME, logger, 1);
 			settings.xend 	= readIntAttribute(settingsEl, CROP_XEND_ATTRIBUTE_NAME, logger, 512);
@@ -552,7 +552,7 @@ public class TmXmlReader {
 			//			settings.detectionChannel = readIntAttribute(settingsEl, CROP_DETECTION_CHANNEL_ATTRIBUTE_NAME, logger, 1);
 		}
 		// Image info settings
-		Element infoEl 	= settingsElement.getChild(IMAGE_ELEMENT_KEY);
+		final Element infoEl 	= settingsElement.getChild(IMAGE_ELEMENT_KEY);
 		if (null != infoEl) {
 			settings.dx				= readDoubleAttribute(infoEl, IMAGE_PIXEL_WIDTH_ATTRIBUTE_NAME, logger);
 			settings.dy				= readDoubleAttribute(infoEl, IMAGE_PIXEL_HEIGHT_ATTRIBUTE_NAME, logger);
@@ -570,19 +570,19 @@ public class TmXmlReader {
 	/**
 	 * Update the given {@link Settings} object with the {@link SpotDetectorFactory} and settings map fields
 	 * named {@link Settings#detectorFactory}  and {@link Settings#detectorSettings} read within the XML file
-	 * this reader is initialized with. 
+	 * this reader is initialized with.
 	 * <p>
-	 * As a side effect, this method also configure the {@link DetectorProvider}. 
-	 *  
-	 * @param settingsElement the Element in which the {@link Settings} parameters are stored.   
+	 * As a side effect, this method also configure the {@link DetectorProvider}.
+	 *
+	 * @param settingsElement the Element in which the {@link Settings} parameters are stored.
 	 * @param settings  the base {@link Settings} object to update.
-	 * @param provider  a {@link DetectorProvider}, required to read detector parameters. 
+	 * @param provider  a {@link DetectorProvider}, required to read detector parameters.
 	 */
-	private void getDetectorSettings(Element settingsElement, Settings settings, DetectorProvider provider) {
-		Element element = settingsElement.getChild(DETECTOR_SETTINGS_ELEMENT_KEY);
-		Map<String, Object> ds = new HashMap<String, Object>(); 
-		// All the hard work is delegated to the provider. 
-		boolean ok = provider.unmarshall(element, ds);
+	private void getDetectorSettings(final Element settingsElement, final Settings settings, final DetectorProvider provider) {
+		final Element element = settingsElement.getChild(DETECTOR_SETTINGS_ELEMENT_KEY);
+		final Map<String, Object> ds = new HashMap<String, Object>();
+		// All the hard work is delegated to the provider.
+		final boolean ok = provider.unmarshall(element, ds);
 
 		if (!ok) {
 			logger.error(provider.getErrorMessage());
@@ -595,24 +595,24 @@ public class TmXmlReader {
 	}
 
 	/**
-	 * Update the given {@link Settings} object with {@link SpotTracker} proper settings map fields 
+	 * Update the given {@link Settings} object with {@link SpotTracker} proper settings map fields
 	 * named {@link Settings#trackerSettings} and {@link Settings#tracker} read within the XML file
 	 * this reader is initialized with.
 	 * <p>
-	 * If the tracker settings or the tracker info can be read, 
-	 * but cannot be understood (most likely because the class the XML refers to is unknown) 
+	 * If the tracker settings or the tracker info can be read,
+	 * but cannot be understood (most likely because the class the XML refers to is unknown)
 	 * then a default object is substituted.
-	 *   
+	 *
 	 * @param settingsElement the {@link Element} in which the tracker parameters are stored.
 	 * @param settings  the base {@link Settings} object to update.
 	 * @param trackerProvider the {@link TrackerProvider}, required to read the tracker
-	 * parameters. 
+	 * parameters.
 	 */
-	private void getTrackerSettings(Element settingsElement, Settings settings, TrackerProvider provider) {
-		Element element = settingsElement.getChild(TRACKER_SETTINGS_ELEMENT_KEY);
-		Map<String, Object> ds = new HashMap<String, Object>(); 
-		// All the hard work is delegated to the provider. 
-		boolean ok = provider.unmarshall(element, ds);
+	private void getTrackerSettings(final Element settingsElement, final Settings settings, final TrackerProvider provider) {
+		final Element element = settingsElement.getChild(TRACKER_SETTINGS_ELEMENT_KEY);
+		final Map<String, Object> ds = new HashMap<String, Object>();
+		// All the hard work is delegated to the provider.
+		final boolean ok = provider.unmarshall(element, ds);
 
 		if (!ok) {
 			logger.error(provider.getErrorMessage());
@@ -636,22 +636,22 @@ public class TmXmlReader {
 	 * </ul>
 	 * It is therefore sensible to call this method first, just after {@link #parse()}ing the file.
 	 * If not called, this method will be called anyway by the other methods to build the cache.
-	 * 
-	 * @param modelElement the {@link Element} in which the model content was written. 
-	 * @return  a new {@link SpotCollection}. 
+	 *
+	 * @param modelElement the {@link Element} in which the model content was written.
+	 * @return  a new {@link SpotCollection}.
 	 */
-	private SpotCollection getSpots(Element modelElement) {
+	private SpotCollection getSpots(final Element modelElement) {
 		// Root element for collection
-		Element spotCollection = modelElement.getChild(SPOT_COLLECTION_ELEMENT_KEY);
+		final Element spotCollection = modelElement.getChild(SPOT_COLLECTION_ELEMENT_KEY);
 
 		// Retrieve children elements for each frame
-		List<Element> frameContent = spotCollection.getChildren(SPOT_FRAME_COLLECTION_ELEMENT_KEY);
+		final List<Element> frameContent = spotCollection.getChildren(SPOT_FRAME_COLLECTION_ELEMENT_KEY);
 
 		// Determine total number of spots
 		int nspots = readIntAttribute(spotCollection, SPOT_COLLECTION_NSPOTS_ATTRIBUTE_NAME, Logger.VOID_LOGGER);
 		if (nspots == 0) {
 			// Could not find it or read it. Determine it by quick sweeping through children element
-			for (Element currentFrameContent : frameContent) {
+			for (final Element currentFrameContent : frameContent) {
 				nspots += currentFrameContent.getChildren(SPOT_ELEMENT_KEY).size();
 			}
 		}
@@ -661,33 +661,33 @@ public class TmXmlReader {
 
 		// Load collection and build cache
 		int currentFrame = 0;
-		Map<Integer, Set<Spot>> content = new HashMap<Integer, Set<Spot>>(frameContent.size());
-		for (Element currentFrameContent : frameContent) {
+		final Map<Integer, Set<Spot>> content = new HashMap<Integer, Set<Spot>>(frameContent.size());
+		for (final Element currentFrameContent : frameContent) {
 
 			currentFrame = readIntAttribute(currentFrameContent, FRAME_ATTRIBUTE_NAME, logger);
-			List<Element> spotContent = currentFrameContent.getChildren(SPOT_ELEMENT_KEY);
-			Set<Spot> spotSet = new HashSet<Spot>(spotContent.size());
-			for (Element spotElement : spotContent) {
-				Spot spot = createSpotFrom(spotElement);
+			final List<Element> spotContent = currentFrameContent.getChildren(SPOT_ELEMENT_KEY);
+			final Set<Spot> spotSet = new HashSet<Spot>(spotContent.size());
+			for (final Element spotElement : spotContent) {
+				final Spot spot = createSpotFrom(spotElement);
 				spotSet.add(spot);
 				cache.put(spot.ID(), spot);
 			}
 			content.put(currentFrame, spotSet);
 		}
-		SpotCollection allSpots = SpotCollection.fromMap(content);
+		final SpotCollection allSpots = SpotCollection.fromMap(content);
 		return allSpots;
 	}
 
 	/**
 	 * Load the tracks, the track features and the ID of the filtered tracks into the model
-	 * modified by this reader. 
-	 * @return 
+	 * specified. The track collection element is expected to be found as a child of the
+	 * specified element.
 	 * @return true if reading tracks was successful, false otherwise.
 	 */
-	private boolean readTracks(Element modelElement, Model model) {
+	protected boolean readTracks(final Element modelElement, final Model model) {
 
-		Element allTracksElement = modelElement.getChild(TRACK_COLLECTION_ELEMENT_KEY);
-		List<Element> trackElements = allTracksElement.getChildren(TRACK_ELEMENT_KEY);
+		final Element allTracksElement = modelElement.getChild(TRACK_COLLECTION_ELEMENT_KEY);
+		final List<Element> trackElements = allTracksElement.getChildren(TRACK_ELEMENT_KEY);
 
 		// What we have to flesh out from the file
 		final SimpleWeightedGraph<Spot, DefaultWeightedEdge> graph = new SimpleWeightedGraph<Spot, DefaultWeightedEdge>(DefaultWeightedEdge.class);
@@ -697,35 +697,35 @@ public class TmXmlReader {
 
 		// The list of edge features. that we will set.
 		final FeatureModel fm = model.getFeatureModel();
-		List<String> edgeIntFeatures = new ArrayList<String>();// TODO is there a better way?
+		final List<String> edgeIntFeatures = new ArrayList<String>();// TODO is there a better way?
 		edgeIntFeatures.add(EdgeTargetAnalyzer.SPOT_SOURCE_ID);
 		edgeIntFeatures.add(EdgeTargetAnalyzer.SPOT_TARGET_ID);
-		Collection<String> edgeDoubleFeatures = fm.getEdgeFeatures();
+		final Collection<String> edgeDoubleFeatures = fm.getEdgeFeatures();
 		edgeDoubleFeatures.removeAll(edgeIntFeatures);
 
-		for (Element trackElement : trackElements) {
+		for (final Element trackElement : trackElements) {
 
 			// Get track ID as it is saved on disk
-			int trackID = readIntAttribute(trackElement, TrackIndexAnalyzer.TRACK_ID, logger);
+			final int trackID = readIntAttribute(trackElement, TrackIndexAnalyzer.TRACK_ID, logger);
 			String trackName = trackElement.getAttributeValue(TRACK_NAME_ATTRIBUTE_NAME);
 			if (null == trackName) {
 				trackName = "Unnamed";
 			}
 
 			// Iterate over edges & spots
-			List<Element> edgeElements = trackElement.getChildren(TRACK_EDGE_ELEMENT_KEY);
-			Set<DefaultWeightedEdge> edges = new HashSet<DefaultWeightedEdge>(edgeElements.size());
-			Set<Spot> spots = new HashSet<Spot>(edgeElements.size());
+			final List<Element> edgeElements = trackElement.getChildren(TRACK_EDGE_ELEMENT_KEY);
+			final Set<DefaultWeightedEdge> edges = new HashSet<DefaultWeightedEdge>(edgeElements.size());
+			final Set<Spot> spots = new HashSet<Spot>(edgeElements.size());
 
-			for (Element edgeElement : edgeElements) {
+			for (final Element edgeElement : edgeElements) {
 
 				// Get source and target ID for this edge
-				int sourceID = readIntAttribute(edgeElement, EdgeTargetAnalyzer.SPOT_SOURCE_ID, logger);
-				int targetID = readIntAttribute(edgeElement, EdgeTargetAnalyzer.SPOT_TARGET_ID, logger);
+				final int sourceID = readIntAttribute(edgeElement, EdgeTargetAnalyzer.SPOT_SOURCE_ID, logger);
+				final int targetID = readIntAttribute(edgeElement, EdgeTargetAnalyzer.SPOT_TARGET_ID, logger);
 
 				// Get matching spots from the cache
-				Spot sourceSpot = cache.get(sourceID);
-				Spot targetSpot = cache.get(targetID);
+				final Spot sourceSpot = cache.get(sourceID);
+				final Spot targetSpot = cache.get(targetID);
 
 				// Get weight
 				double weight = 0;
@@ -747,7 +747,7 @@ public class TmXmlReader {
 					logger.error("Bad link for track " + trackID + ". Source = Target with ID: " + sourceID + "\n");
 					return false;
 				}
-				
+
 				// Add spots to connected set. We might add the same spot twice (because we iterate over edges)
 				// but this is fine for we use a set.
 				spots.add(sourceSpot);
@@ -756,7 +756,7 @@ public class TmXmlReader {
 				// Add spots to graph and build edge
 				graph.addVertex(sourceSpot);
 				graph.addVertex(targetSpot);
-				DefaultWeightedEdge edge = graph.addEdge(sourceSpot, targetSpot);
+				final DefaultWeightedEdge edge = graph.addEdge(sourceSpot, targetSpot);
 
 				if (edge == null) {
 					logger.error("Bad edge found for track " + trackID + "\n");
@@ -765,20 +765,20 @@ public class TmXmlReader {
 					graph.setEdgeWeight(edge, weight);
 
 					// Put edge features
-					for (String feature : edgeDoubleFeatures) {
-						double val = readDoubleAttribute(edgeElement, feature, logger);
+					for (final String feature : edgeDoubleFeatures) {
+						final double val = readDoubleAttribute(edgeElement, feature, logger);
 						fm.putEdgeFeature(edge, feature, val);
 					}
-					for (String feature : edgeIntFeatures) {
-						double val = (double) readIntAttribute(edgeElement, feature, logger);
+					for (final String feature : edgeIntFeatures) {
+						final double val = readIntAttribute(edgeElement, feature, logger);
 						fm.putEdgeFeature(edge, feature, val);
 					}
 
 				}
-				
+
 				// Adds the edge to the set
 				edges.add(edge);
-				
+
 			} // Finished parsing over the edges of the track
 
 			// Store one of the spot in the saved trackID key map
@@ -787,21 +787,21 @@ public class TmXmlReader {
 			savedTrackNames.put(trackID, trackName);
 		}
 
-		/* 
+		/*
 		 * Now on to the visibility.
 		 */
-		Set<Integer> savedFilteredTrackIDs = readFilteredTrackIDs(modelElement);
-		Map<Integer, Boolean> visibility = new HashMap<Integer, Boolean>(connectedEdgeSet.size());
-		Set<Integer> ids = new HashSet<Integer>(connectedEdgeSet.keySet());
-		for (Integer id : savedFilteredTrackIDs) {
+		final Set<Integer> savedFilteredTrackIDs = readFilteredTrackIDs(modelElement);
+		final Map<Integer, Boolean> visibility = new HashMap<Integer, Boolean>(connectedEdgeSet.size());
+		final Set<Integer> ids = new HashSet<Integer>(connectedEdgeSet.keySet());
+		for (final Integer id : savedFilteredTrackIDs) {
 			visibility.put(id, Boolean.TRUE);
 		}
 		ids.removeAll(savedFilteredTrackIDs);
-		for (Integer id : ids) {
+		for (final Integer id : ids) {
 			visibility.put(id, Boolean.FALSE);
 		}
-		
-		
+
+
 		/*
 		 * Pass read results to model.
 		 */
@@ -812,10 +812,10 @@ public class TmXmlReader {
 
 	/**
 	 * Read and return the list of track indices that define the filtered track collection.
-	 * @throws DataConversionException 
+	 * @throws DataConversionException
 	 */
-	private Set<Integer> readFilteredTrackIDs(Element modelElement) {
-		Element filteredTracksElement = modelElement.getChild(FILTERED_TRACK_ELEMENT_KEY);
+	private Set<Integer> readFilteredTrackIDs(final Element modelElement) {
+		final Element filteredTracksElement = modelElement.getChild(FILTERED_TRACK_ELEMENT_KEY);
 		if (null == filteredTracksElement) {
 			logger.error("Could not find the filtered track IDs in file.\n");
 			ok = false;
@@ -824,31 +824,31 @@ public class TmXmlReader {
 
 		// We double-check that all trackID in the filtered list exist in the track list
 		// First, prepare a sorted array of all track IDs
-		Element allTracksElement = modelElement.getChild(TRACK_COLLECTION_ELEMENT_KEY);
+		final Element allTracksElement = modelElement.getChild(TRACK_COLLECTION_ELEMENT_KEY);
 		if (null == allTracksElement) {
 			logger.error("Could not find the track collection in file.\n");
 			ok = false;
 			return null;
 		}
-		
-		List<Element> trackElements = allTracksElement.getChildren(TRACK_ELEMENT_KEY);
-		int[] IDs = new int[trackElements.size()];
+
+		final List<Element> trackElements = allTracksElement.getChildren(TRACK_ELEMENT_KEY);
+		final int[] IDs = new int[trackElements.size()];
 		int index = 0;
-		for (Element trackElement : trackElements) {
-			int trackID = readIntAttribute(trackElement, TrackIndexAnalyzer.TRACK_ID, logger);
+		for (final Element trackElement : trackElements) {
+			final int trackID = readIntAttribute(trackElement, TrackIndexAnalyzer.TRACK_ID, logger);
 			IDs[index] = trackID;
 			index++;
 		}
 		Arrays.sort(IDs);
 
-		List<Element> elements = filteredTracksElement.getChildren(TRACK_ID_ELEMENT_KEY);
-		HashSet<Integer> filteredTrackIndices = new HashSet<Integer>(elements.size());
-		for (Element indexElement : elements) {
-			Integer trackID = readIntAttribute(indexElement, TrackIndexAnalyzer.TRACK_ID, logger);
+		final List<Element> elements = filteredTracksElement.getChildren(TRACK_ID_ELEMENT_KEY);
+		final HashSet<Integer> filteredTrackIndices = new HashSet<Integer>(elements.size());
+		for (final Element indexElement : elements) {
+			final Integer trackID = readIntAttribute(indexElement, TrackIndexAnalyzer.TRACK_ID, logger);
 			if (null != trackID) {
 
 				// Check if this one exist in the list
-				int search = Arrays.binarySearch(IDs, trackID);
+				final int search = Arrays.binarySearch(IDs, trackID);
 				if (search < 0) {
 					logger.error("Invalid filtered track index: "+trackID+". Track ID does not exist.\n");
 					ok = false;
@@ -861,10 +861,10 @@ public class TmXmlReader {
 	}
 
 	private Spot createSpotFrom(final Element spotEl) {
-		int ID = readIntAttribute(spotEl, SPOT_ID_ATTRIBUTE_NAME, logger);
-		Spot spot = new Spot(ID);
+		final int ID = readIntAttribute(spotEl, SPOT_ID_ATTRIBUTE_NAME, logger);
+		final Spot spot = new Spot(ID);
 
-		List<Attribute> atts = spotEl.getAttributes();
+		final List<Attribute> atts = spotEl.getAttributes();
 		atts.remove(SPOT_ID_ATTRIBUTE_NAME);
 
 		String name = spotEl.getAttributeValue(SPOT_NAME_ATTRIBUTE_NAME);
@@ -873,7 +873,7 @@ public class TmXmlReader {
 		spot.setName(name);
 		atts.remove(SPOT_NAME_ATTRIBUTE_NAME);
 
-		for (Attribute att : atts) {
+		for (final Attribute att : atts) {
 			if (att.getName().equals(SPOT_NAME_ATTRIBUTE_NAME) || att.getName().equals(SPOT_ID_ATTRIBUTE_NAME)) {
 				continue;
 			}
@@ -882,10 +882,10 @@ public class TmXmlReader {
 		return spot;
 	}
 
-	private void readFeatureDeclarations(Element modelElement, Model model) {
+	private void readFeatureDeclarations(final Element modelElement, final Model model) {
 
-		FeatureModel fm = model.getFeatureModel();
-		Element featuresElement = modelElement.getChild(FEATURE_DECLARATIONS_ELEMENT_KEY);
+		final FeatureModel fm = model.getFeatureModel();
+		final Element featuresElement = modelElement.getChild(FEATURE_DECLARATIONS_ELEMENT_KEY);
 		if (null == featuresElement) {
 			logger.error("Could not find feature declarations in file.\n");
 			ok = false;
@@ -893,68 +893,68 @@ public class TmXmlReader {
 		}
 
 		// Spots
-		Element spotFeaturesElement = featuresElement.getChild(SPOT_FEATURES_ELEMENT_KEY);
+		final Element spotFeaturesElement = featuresElement.getChild(SPOT_FEATURES_ELEMENT_KEY);
 		if (null == spotFeaturesElement) {
 			logger.error("Could not find spot feature declarations in file.\n");
 			ok = false;
 
 		} else {
 
-			List<Element> children = spotFeaturesElement.getChildren(FEATURE_ELEMENT_KEY);
-			Collection<String> features = new ArrayList<String>(children.size());
-			Map<String, String> featureNames = new HashMap<String, String>(children.size());
-			Map<String, String> featureShortNames = new HashMap<String, String>(children.size());
-			Map<String, Dimension> featureDimensions = new HashMap<String, Dimension>(children.size());
-			for (Element child : children) {
+			final List<Element> children = spotFeaturesElement.getChildren(FEATURE_ELEMENT_KEY);
+			final Collection<String> features = new ArrayList<String>(children.size());
+			final Map<String, String> featureNames = new HashMap<String, String>(children.size());
+			final Map<String, String> featureShortNames = new HashMap<String, String>(children.size());
+			final Map<String, Dimension> featureDimensions = new HashMap<String, Dimension>(children.size());
+			for (final Element child : children) {
 				readSingleFeatureDeclaration(child, features, featureNames, featureShortNames, featureDimensions);
 			}
 			fm.declareSpotFeatures(features, featureNames, featureShortNames, featureDimensions);
 		}
 
 		// Edges
-		Element edgeFeaturesElement = featuresElement.getChild(EDGE_FEATURES_ELEMENT_KEY);
+		final Element edgeFeaturesElement = featuresElement.getChild(EDGE_FEATURES_ELEMENT_KEY);
 		if (null == edgeFeaturesElement) {
 			logger.error("Could not find edge feature declarations in file.\n");
 			ok = false;
 
 		} else {
 
-			List<Element> children = edgeFeaturesElement.getChildren(FEATURE_ELEMENT_KEY);
-			Collection<String> features = new ArrayList<String>(children.size());
-			Map<String, String> featureNames = new HashMap<String, String>(children.size());
-			Map<String, String> featureShortNames = new HashMap<String, String>(children.size());
-			Map<String, Dimension> featureDimensions = new HashMap<String, Dimension>(children.size());
-			for (Element child : children) {
+			final List<Element> children = edgeFeaturesElement.getChildren(FEATURE_ELEMENT_KEY);
+			final Collection<String> features = new ArrayList<String>(children.size());
+			final Map<String, String> featureNames = new HashMap<String, String>(children.size());
+			final Map<String, String> featureShortNames = new HashMap<String, String>(children.size());
+			final Map<String, Dimension> featureDimensions = new HashMap<String, Dimension>(children.size());
+			for (final Element child : children) {
 				readSingleFeatureDeclaration(child, features, featureNames, featureShortNames, featureDimensions);
 			}
 			fm.declareEdgeFeatures(features, featureNames, featureShortNames, featureDimensions);
 		}
 
 		// Tracks
-		Element trackFeaturesElement = featuresElement.getChild(TRACK_FEATURES_ELEMENT_KEY);
+		final Element trackFeaturesElement = featuresElement.getChild(TRACK_FEATURES_ELEMENT_KEY);
 		if (null == trackFeaturesElement) {
 			logger.error("Could not find track feature declarations in file.\n");
 			ok = false;
 
 		} else {
 
-			List<Element> children = trackFeaturesElement.getChildren(FEATURE_ELEMENT_KEY);
-			Collection<String> features = new ArrayList<String>(children.size());
-			Map<String, String> featureNames = new HashMap<String, String>(children.size());
-			Map<String, String> featureShortNames = new HashMap<String, String>(children.size());
-			Map<String, Dimension> featureDimensions = new HashMap<String, Dimension>(children.size());
-			for (Element child : children) {
+			final List<Element> children = trackFeaturesElement.getChildren(FEATURE_ELEMENT_KEY);
+			final Collection<String> features = new ArrayList<String>(children.size());
+			final Map<String, String> featureNames = new HashMap<String, String>(children.size());
+			final Map<String, String> featureShortNames = new HashMap<String, String>(children.size());
+			final Map<String, Dimension> featureDimensions = new HashMap<String, Dimension>(children.size());
+			for (final Element child : children) {
 				readSingleFeatureDeclaration(child, features, featureNames, featureShortNames, featureDimensions);
 			}
 			fm.declareTrackFeatures(features, featureNames, featureShortNames, featureDimensions);
 		}
 	}
 
-	private void readAnalyzers(Element settingsElement, Settings settings, 
-			SpotAnalyzerProvider spotAnalyzerProvider, EdgeAnalyzerProvider edgeAnalyzerProvider, 
-			TrackAnalyzerProvider trackAnalyzerProvider) {
+	private void readAnalyzers(final Element settingsElement, final Settings settings,
+			final SpotAnalyzerProvider spotAnalyzerProvider, final EdgeAnalyzerProvider edgeAnalyzerProvider,
+			final TrackAnalyzerProvider trackAnalyzerProvider) {
 
-		Element analyzersEl = settingsElement.getChild(ANALYZER_COLLECTION_ELEMENT_KEY);
+		final Element analyzersEl = settingsElement.getChild(ANALYZER_COLLECTION_ELEMENT_KEY);
 		if (null == analyzersEl) {
 			logger.error("Could not find the feature analyzer element.\n");
 			ok = false;
@@ -963,7 +963,7 @@ public class TmXmlReader {
 
 		// Spot analyzers
 		if (null != spotAnalyzerProvider) {
-			Element spotAnalyzerEl = analyzersEl.getChild(SPOT_ANALYSERS_ELEMENT_KEY);
+			final Element spotAnalyzerEl = analyzersEl.getChild(SPOT_ANALYSERS_ELEMENT_KEY);
 			if (null == spotAnalyzerEl) {
 				logger.error("Could not find the spot analyzer element.\n");
 				ok = false;
@@ -976,22 +976,22 @@ public class TmXmlReader {
 
 				} else {
 
-					ImgPlus<?> img = TMUtils.rawWraps(settings.imp);
-					List<Element> children = spotAnalyzerEl.getChildren(ANALYSER_ELEMENT_KEY);
-					for (Element child : children) {
+					final ImgPlus<?> img = TMUtils.rawWraps(settings.imp);
+					final List<Element> children = spotAnalyzerEl.getChildren(ANALYSER_ELEMENT_KEY);
+					for (final Element child : children) {
 
-						String key = child.getAttributeValue(ANALYSER_KEY_ATTRIBUTE);
+						final String key = child.getAttributeValue(ANALYSER_KEY_ATTRIBUTE);
 						if (null == key) {
 							logger.error("Could not find analyzer name for element " + child + ".\n");
 							ok = false;
 							continue;
 						}
-						
-						SpotAnalyzerFactory<?> spotAnalyzer = spotAnalyzerProvider.getSpotFeatureAnalyzer(key, img);
+
+						final SpotAnalyzerFactory<?> spotAnalyzer = spotAnalyzerProvider.getSpotFeatureAnalyzer(key, img);
 						if (null == spotAnalyzer) {
 							logger.error("Unknown spot analyzer key: " + key + ".\n");
 							ok = false;
-							
+
 						} else {
 							settings.addSpotAnalyzerFactory(spotAnalyzer);
 						}
@@ -1005,24 +1005,24 @@ public class TmXmlReader {
 
 		// Edge analyzers
 		if (null != edgeAnalyzerProvider) {
-			Element edgeAnalyzerEl = analyzersEl.getChild(EDGE_ANALYSERS_ELEMENT_KEY);
+			final Element edgeAnalyzerEl = analyzersEl.getChild(EDGE_ANALYSERS_ELEMENT_KEY);
 			if (null == edgeAnalyzerEl) {
 				logger.error("Could not find the edge analyzer element.\n");
 				ok = false;
 
 			} else {
 
-				List<Element> children = edgeAnalyzerEl.getChildren(ANALYSER_ELEMENT_KEY);
-				for (Element child : children) {
+				final List<Element> children = edgeAnalyzerEl.getChildren(ANALYSER_ELEMENT_KEY);
+				for (final Element child : children) {
 
-					String key = child.getAttributeValue(ANALYSER_KEY_ATTRIBUTE);
+					final String key = child.getAttributeValue(ANALYSER_KEY_ATTRIBUTE);
 					if (null == key) {
 						logger.error("Could not find analyzer name for element " + child + ".\n");
 						ok = false;
 						continue;
 					}
-					
-					EdgeAnalyzer edgeAnalyzer = edgeAnalyzerProvider.getEdgeFeatureAnalyzer(key);
+
+					final EdgeAnalyzer edgeAnalyzer = edgeAnalyzerProvider.getEdgeFeatureAnalyzer(key);
 					if (null == edgeAnalyzer) {
 						logger.error("Unknown edge analyzer key: " + key + ".\n");
 						ok = false;
@@ -1032,27 +1032,27 @@ public class TmXmlReader {
 				}
 			}
 		}
-		
+
 		// Track analyzers
 		if (null != trackAnalyzerProvider) {
-			Element trackAnalyzerEl = analyzersEl.getChild(TRACK_ANALYSERS_ELEMENT_KEY);
+			final Element trackAnalyzerEl = analyzersEl.getChild(TRACK_ANALYSERS_ELEMENT_KEY);
 			if (null == trackAnalyzerEl) {
 				logger.error("Could not find the track analyzer element.\n");
 				ok = false;
 
 			} else {
 
-				List<Element> children = trackAnalyzerEl.getChildren(ANALYSER_ELEMENT_KEY);
-				for (Element child : children) {
+				final List<Element> children = trackAnalyzerEl.getChildren(ANALYSER_ELEMENT_KEY);
+				for (final Element child : children) {
 
-					String key = child.getAttributeValue(ANALYSER_KEY_ATTRIBUTE);
+					final String key = child.getAttributeValue(ANALYSER_KEY_ATTRIBUTE);
 					if (null == key) {
 						logger.error("Could not find analyzer name for element " + child + ".\n");
 						ok = false;
 						continue;
 					}
-					
-					TrackAnalyzer trackAnalyzer = trackAnalyzerProvider.getTrackFeatureAnalyzer(key);
+
+					final TrackAnalyzer trackAnalyzer = trackAnalyzerProvider.getTrackFeatureAnalyzer(key);
 					if (null == trackAnalyzer) {
 						logger.error("Unknown track analyzer key: " + key + ".\n");
 						ok = false;
@@ -1065,28 +1065,28 @@ public class TmXmlReader {
 	}
 
 
-	private void readSingleFeatureDeclaration(Element child, Collection<String> features, 
-			Map<String, String> featureNames, Map<String, String> featureShortNames, Map<String, Dimension> featureDimensions) {
+	private void readSingleFeatureDeclaration(final Element child, final Collection<String> features,
+			final Map<String, String> featureNames, final Map<String, String> featureShortNames, final Map<String, Dimension> featureDimensions) {
 
-		String feature 				= child.getAttributeValue(FEATURE_ATTRIBUTE);
+		final String feature 				= child.getAttributeValue(FEATURE_ATTRIBUTE);
 		if (null == feature) {
 			logger.error("Could not find feature declaration for element " + child + ".\n");
 			ok = false;
 			return;
 		}
-		String featureName 			= child.getAttributeValue(FEATURE_NAME_ATTRIBUTE);
+		final String featureName 			= child.getAttributeValue(FEATURE_NAME_ATTRIBUTE);
 		if (null == featureName) {
 			logger.error("Could not find name for feature " + feature + ".\n");
 			ok = false;
 			return;
 		}
-		String featureShortName 	= child.getAttributeValue(FEATURE_SHORT_NAME_ATTRIBUTE);
+		final String featureShortName 	= child.getAttributeValue(FEATURE_SHORT_NAME_ATTRIBUTE);
 		if (null == featureShortName) {
 			logger.error("Could not find short name for feature " + feature + ".\n");
 			ok = false;
 			return;
 		}
-		Dimension featureDimension 	= Dimension.valueOf(child.getAttributeValue(FEATURE_DIMENSION_ATTRIBUTE));
+		final Dimension featureDimension 	= Dimension.valueOf(child.getAttributeValue(FEATURE_DIMENSION_ATTRIBUTE));
 		if (null == featureDimension) {
 			logger.error("Could not find dimension for feature " + feature + ".\n");
 			ok = false;

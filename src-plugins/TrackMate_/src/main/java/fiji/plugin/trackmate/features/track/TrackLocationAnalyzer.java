@@ -26,10 +26,10 @@ public class TrackLocationAnalyzer implements TrackAnalyzer, MultiThreaded, Benc
 	public static final String Y_LOCATION = "TRACK_Y_LOCATION";
 	public static final String Z_LOCATION = "TRACK_Z_LOCATION";
 
-	private static final List<String> FEATURES = new ArrayList<String>(4);
-	private static final Map<String, String> FEATURE_NAMES = new HashMap<String, String>(4);
-	private static final Map<String, String> FEATURE_SHORT_NAMES = new HashMap<String, String>(4);
-	private static final Map<String, Dimension> FEATURE_DIMENSIONS = new HashMap<String, Dimension>(4);
+	public static final List<String> FEATURES = new ArrayList<String>(4);
+	public static final Map<String, String> FEATURE_NAMES = new HashMap<String, String>(4);
+	public static final Map<String, String> FEATURE_SHORT_NAMES = new HashMap<String, String>(4);
+	public static final Map<String, Dimension> FEATURE_DIMENSIONS = new HashMap<String, Dimension>(4);
 
 	static {
 		FEATURES.add(X_LOCATION);

@@ -5,13 +5,15 @@ import java.util.Collection;
 import java.util.Map;
 
 import fiji.plugin.trackmate.Logger;
+import fiji.plugin.trackmate.Model;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.TrackMate;
-import fiji.plugin.trackmate.Model;
 import fiji.plugin.trackmate.gui.GuiUtils;
 import fiji.plugin.trackmate.gui.TrackMateGUIController;
 import fiji.plugin.trackmate.io.IOUtils;
 import fiji.plugin.trackmate.io.TmXmlReader;
+import fiji.plugin.trackmate.io.TmXmlReader_v12;
+import fiji.plugin.trackmate.io.TmXmlReader_v20;
 import fiji.plugin.trackmate.providers.DetectorProvider;
 import fiji.plugin.trackmate.providers.EdgeAnalyzerProvider;
 import fiji.plugin.trackmate.providers.SpotAnalyzerProvider;
@@ -19,6 +21,7 @@ import fiji.plugin.trackmate.providers.TrackAnalyzerProvider;
 import fiji.plugin.trackmate.providers.TrackerProvider;
 import fiji.plugin.trackmate.providers.ViewProvider;
 import fiji.plugin.trackmate.util.TMUtils;
+import fiji.plugin.trackmate.util.Version;
 import fiji.plugin.trackmate.visualization.TrackMateModelView;
 import fiji.plugin.trackmate.visualization.hyperstack.HyperStackDisplayer;
 import fiji.plugin.trackmate.visualization.trackscheme.SpotImageUpdater;
@@ -30,7 +33,7 @@ public class LoadDescriptor extends SomeDialogDescriptor {
 	private final TrackMate trackmate;
 	private final TrackMateGUIController controller;
 
-	public LoadDescriptor(TrackMateGUIController controller) {
+	public LoadDescriptor(final TrackMateGUIController controller) {
 		super(controller.getGUI().getLogPanel());
 		this.controller = controller;
 		this.trackmate = controller.getPlugin();
@@ -42,16 +45,16 @@ public class LoadDescriptor extends SomeDialogDescriptor {
 
 		if (null == file) {
 			try {
-				File folder = new File(trackmate.getSettings().imp.getOriginalFileInfo().directory);
+				final File folder = new File(trackmate.getSettings().imp.getOriginalFileInfo().directory);
 				file = new File(folder.getPath() + File.separator + trackmate.getSettings().imp.getShortTitle() +".xml");
-			} catch (NullPointerException npe) {
-				File folder = new File(System.getProperty("user.dir")).getParentFile().getParentFile();
+			} catch (final NullPointerException npe) {
+				final File folder = new File(System.getProperty("user.dir")).getParentFile().getParentFile();
 				file = new File(folder.getPath() + File.separator + "TrackMateData.xml");
 			}
 		}
 
-		Logger logger = logPanel.getLogger();
-		File tmpFile = IOUtils.askForFileForLoading(file, "Load a TrackMate XML file", controller.getGUI(), logger );
+		final Logger logger = logPanel.getLogger();
+		final File tmpFile = IOUtils.askForFileForLoading(file, "Load a TrackMate XML file", controller.getGUI(), logger );
 		if (null == tmpFile) {
 			return;
 		}
@@ -59,50 +62,58 @@ public class LoadDescriptor extends SomeDialogDescriptor {
 
 		// Read the file content
 		TmXmlReader reader = new TmXmlReader(file);
+		final Version version = new Version(reader.getVersion());
+		if (version.compareTo(new Version("2.0.0")) < 0) {
+			logger.log("Detecting a file version " + version +". Using the right reader.\n", Logger.GREEN_COLOR);
+			reader = new TmXmlReader_v12(file);
+		} else if (version.compareTo(new Version("2.1.0")) < 0) {
+			logger.log("Detecting a file version " + version +". Using the right reader.\n", Logger.GREEN_COLOR);
+			reader = new TmXmlReader_v20(file);
+		}
 		if (!reader.isReadingOk()) {
 			logger.error(reader.getErrorMessage());
-			logger.error("Aborting.\n"); // If I cannot even open the xml file, it is not work going on.
+			logger.error("Aborting.\n"); // If I cannot even open the xml file, it is not worth going on.
 			return;
 		}
-		
+
 		// Log
-		String logText = reader.getLog() + '\n';
+		final String logText = reader.getLog() + '\n';
 		// Model
-		Model model = reader.getModel();
+		final Model model = reader.getModel();
 		// Settings -> empty for now.
-		Settings settings = new Settings();
-		
+		final Settings settings = new Settings();
+
 		// With this we can create a new controller from the provided one:
-		TrackMate trackmate = new TrackMate(model, settings);
-		TrackMateGUIController newcontroller = controller.createOn(trackmate);
-		
+		final TrackMate trackmate = new TrackMate(model, settings);
+		final TrackMateGUIController newcontroller = controller.createOn(trackmate);
+
 		// We feed then the reader with the providers taken from the NEW controller.
-		DetectorProvider detectorProvider = newcontroller.getDetectorProvider();
-		TrackerProvider trackerProvider = newcontroller.getTrackerProvider();
-		SpotAnalyzerProvider spotAnalyzerProvider = newcontroller.getSpotAnalyzerProvider();
-		EdgeAnalyzerProvider edgeAnalyzerProvider = newcontroller.getEdgeAnalyzerProvider();
-		TrackAnalyzerProvider trackAnalyzerProvider = newcontroller.getTrackAnalyzerProvider();
-		reader.readSettings(settings, detectorProvider, trackerProvider, 
+		final DetectorProvider detectorProvider = newcontroller.getDetectorProvider();
+		final TrackerProvider trackerProvider = newcontroller.getTrackerProvider();
+		final SpotAnalyzerProvider spotAnalyzerProvider = newcontroller.getSpotAnalyzerProvider();
+		final EdgeAnalyzerProvider edgeAnalyzerProvider = newcontroller.getEdgeAnalyzerProvider();
+		final TrackAnalyzerProvider trackAnalyzerProvider = newcontroller.getTrackAnalyzerProvider();
+		reader.readSettings(settings, detectorProvider, trackerProvider,
 				spotAnalyzerProvider, edgeAnalyzerProvider, trackAnalyzerProvider);
-		
+
 		// GUI position
 		GuiUtils.positionWindow(newcontroller.getGUI(), settings.imp.getWindow());
-		
+
 		// GUI state
-		String guiState = reader.getGUIState();
-		
+		final String guiState = reader.getGUIState();
+
 		// Views
-		ViewProvider viewProvider = newcontroller.getViewProvider();
-		Collection<TrackMateModelView> views = reader.getViews(viewProvider);
-		for (TrackMateModelView view : views) {
+		final ViewProvider viewProvider = newcontroller.getViewProvider();
+		final Collection<TrackMateModelView> views = reader.getViews(viewProvider);
+		for (final TrackMateModelView view : views) {
 			if (view.getKey().equals(TrackScheme.KEY)) {
-				TrackScheme trackscheme = (TrackScheme) view;
+				final TrackScheme trackscheme = (TrackScheme) view;
 				trackscheme.setSpotImageUpdater(new SpotImageUpdater(settings));
 			}
 		}
-		
+
 		if (!reader.isReadingOk()) {
-			Logger newlogger = newcontroller.getGUI().getLogger();
+			final Logger newlogger = newcontroller.getGUI().getLogger();
 			newlogger.error("Some errors occured while reading file:\n");
 			newlogger.error(reader.getErrorMessage());
 		}
@@ -112,9 +123,9 @@ public class LoadDescriptor extends SomeDialogDescriptor {
 		if (views.isEmpty()) { // at least one view.
 			views.add(new HyperStackDisplayer(model, newcontroller.getSelectionModel(), settings.imp));
 		}
-		Map<String, Object> displaySettings = newcontroller.getGuimodel().getDisplaySettings();
-		for (TrackMateModelView view : views) {
-			for (String key : displaySettings.keySet()) {
+		final Map<String, Object> displaySettings = newcontroller.getGuimodel().getDisplaySettings();
+		for (final TrackMateModelView view : views) {
+			for (final String key : displaySettings.keySet()) {
 				newcontroller.getGuimodel().addView(view);
 				view.setDisplaySettings(key, displaySettings.get(key));
 			}

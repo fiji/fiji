@@ -14,22 +14,22 @@ import org.jgrapht.graph.DefaultWeightedEdge;
 
 import fiji.plugin.trackmate.Dimension;
 import fiji.plugin.trackmate.FeatureModel;
-import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.Model;
+import fiji.plugin.trackmate.Spot;
 
 public class EdgeVelocityAnalyzer implements EdgeAnalyzer, MultiThreaded {
 
 	public static final String KEY = "Edge velocity";
 	/*
-	 * FEATURE NAMES 
+	 * FEATURE NAMES
 	 */
 	public static final String VELOCITY = "VELOCITY";
 	public static final String DISPLACEMENT = "DISPLACEMENT";
 
-	private static final List<String> FEATURES = new ArrayList<String>(2);
-	private static final Map<String, String> FEATURE_NAMES = new HashMap<String, String>(2);
-	private static final Map<String, String> FEATURE_SHORT_NAMES = new HashMap<String, String>(2);
-	private static final Map<String, Dimension> FEATURE_DIMENSIONS = new HashMap<String, Dimension>(2);
+	public static final List<String> FEATURES = new ArrayList<String>(2);
+	public static final Map<String, String> FEATURE_NAMES = new HashMap<String, String>(2);
+	public static final Map<String, String> FEATURE_SHORT_NAMES = new HashMap<String, String>(2);
+	public static final Map<String, Dimension> FEATURE_DIMENSIONS = new HashMap<String, Dimension>(2);
 
 	static {
 		FEATURES.add(VELOCITY);
@@ -68,29 +68,29 @@ public class EdgeVelocityAnalyzer implements EdgeAnalyzer, MultiThreaded {
 
 	@Override
 	public void process(final Collection<DefaultWeightedEdge> edges) {
-		
+
 		if (edges.isEmpty()) {
 			return;
 		}
-		
+
 		final ArrayBlockingQueue<DefaultWeightedEdge> queue = new ArrayBlockingQueue<DefaultWeightedEdge>(edges.size(), false, edges);
 
-		Thread[] threads = SimpleMultiThreading.newThreads(numThreads);
+		final Thread[] threads = SimpleMultiThreading.newThreads(numThreads);
 		for (int i = 0; i < threads.length; i++) {
 			threads[i] = new Thread("EdgeVelocityAnalyzer thread " + i) {
 				@Override
 				public void run() {
 					DefaultWeightedEdge edge;
 					while ((edge = queue.poll()) != null) {
-						Spot source = model.getTrackModel().getEdgeSource(edge);
-						Spot target = model.getTrackModel().getEdgeTarget(edge);
+						final Spot source = model.getTrackModel().getEdgeSource(edge);
+						final Spot target = model.getTrackModel().getEdgeTarget(edge);
 
-						double dx = target.diffTo(source, Spot.POSITION_X);
-						double dy = target.diffTo(source, Spot.POSITION_Y);
-						double dz = target.diffTo(source, Spot.POSITION_Z);
-						double dt = target.diffTo(source, Spot.POSITION_T);
-						double D = Math.sqrt(dx*dx + dy*dy + dz*dz);
-						double V = D / Math.abs(dt);
+						final double dx = target.diffTo(source, Spot.POSITION_X);
+						final double dy = target.diffTo(source, Spot.POSITION_Y);
+						final double dz = target.diffTo(source, Spot.POSITION_Z);
+						final double dt = target.diffTo(source, Spot.POSITION_T);
+						final double D = Math.sqrt(dx*dx + dy*dy + dz*dz);
+						final double V = D / Math.abs(dt);
 
 						featureModel.putEdgeFeature(edge, VELOCITY, V);
 						featureModel.putEdgeFeature(edge, DISPLACEMENT, D);
@@ -100,9 +100,9 @@ public class EdgeVelocityAnalyzer implements EdgeAnalyzer, MultiThreaded {
 			};
 		}
 
-		long start = System.currentTimeMillis();
+		final long start = System.currentTimeMillis();
 		SimpleMultiThreading.startAndJoin(threads);
-		long end = System.currentTimeMillis();
+		final long end = System.currentTimeMillis();
 		processingTime = end - start;
 	}
 
@@ -119,11 +119,11 @@ public class EdgeVelocityAnalyzer implements EdgeAnalyzer, MultiThreaded {
 
 	@Override
 	public void setNumThreads() {
-		this.numThreads = Runtime.getRuntime().availableProcessors();  
+		this.numThreads = Runtime.getRuntime().availableProcessors();
 	}
 
 	@Override
-	public void setNumThreads(int numThreads) {
+	public void setNumThreads(final int numThreads) {
 		this.numThreads = numThreads;
 
 	}

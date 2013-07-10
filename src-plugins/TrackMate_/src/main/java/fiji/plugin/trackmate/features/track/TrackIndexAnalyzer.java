@@ -18,11 +18,11 @@ public class TrackIndexAnalyzer implements TrackAnalyzer {
 	public static final String TRACK_INDEX = "TRACK_INDEX";
 	public static final String TRACK_ID = "TRACK_ID";
 
-	private static final List<String> FEATURES = new ArrayList<String>(1);
-	private static final Map<String, String> FEATURE_NAMES = new HashMap<String, String>(1);
-	private static final Map<String, String> FEATURE_SHORT_NAMES = new HashMap<String, String>(1);
-	private static final Map<String, Dimension> FEATURE_DIMENSIONS = new HashMap<String, Dimension>(1);
-	
+	public static final List<String> FEATURES = new ArrayList<String>(2);
+	public static final Map<String, String> FEATURE_NAMES = new HashMap<String, String>(2);
+	public static final Map<String, String> FEATURE_SHORT_NAMES = new HashMap<String, String>(2);
+	public static final Map<String, Dimension> FEATURE_DIMENSIONS = new HashMap<String, Dimension>(2);
+
 	static {
 		FEATURES.add(TRACK_INDEX);
 		FEATURES.add(TRACK_ID);
@@ -36,14 +36,14 @@ public class TrackIndexAnalyzer implements TrackAnalyzer {
 		FEATURE_DIMENSIONS.put(TRACK_INDEX, Dimension.NONE);
 		FEATURE_DIMENSIONS.put(TRACK_ID, Dimension.NONE);
 	}
-	
+
 	private final Model model;
 	private long processingTime;
-	
+
 	public TrackIndexAnalyzer(final Model model) {
 		this.model = model;
 	}
-	
+
 	/**
 	 * {@link TrackIndexAnalyzer} is not local, since the indices are re-arranged according to names.
 	 */
@@ -51,17 +51,17 @@ public class TrackIndexAnalyzer implements TrackAnalyzer {
 	public boolean isLocal() {
 		return false;
 	}
-	
+
 	@Override
-	public void process(Collection<Integer> trackIDs) {
-		long start = System.currentTimeMillis();
-		FeatureModel fm = model.getFeatureModel();
+	public void process(final Collection<Integer> trackIDs) {
+		final long start = System.currentTimeMillis();
+		final FeatureModel fm = model.getFeatureModel();
 		int index = 0;
-		for (Integer trackID : trackIDs) {
+		for (final Integer trackID : trackIDs) {
 			fm.putTrackFeature(trackID, TRACK_INDEX, Double.valueOf(index++));
 			fm.putTrackFeature(trackID, TRACK_ID, Double.valueOf(trackID));
 		}
-		long end = System.currentTimeMillis();
+		final long end = System.currentTimeMillis();
 		processingTime = end - start;
 	}
 
@@ -69,7 +69,7 @@ public class TrackIndexAnalyzer implements TrackAnalyzer {
 	public long getProcessingTime() {
 		return processingTime;
 	}
-	
+
 	@Override
 	public String getKey() {
 		return KEY;
@@ -106,7 +106,7 @@ public class TrackIndexAnalyzer implements TrackAnalyzer {
 	 * Ignored. This analyzer is single-threaded.
 	 */
 	@Override
-	public void setNumThreads(int numThreads) {}
+	public void setNumThreads(final int numThreads) {}
 
 	/**
 	 * Ignore. This analyzer is single-threaded.
